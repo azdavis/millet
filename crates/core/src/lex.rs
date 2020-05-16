@@ -239,7 +239,10 @@ impl<'a> Lexer<'a> {
       while let Some(&b) = self.bs.get(self.i) {
         match b {
           b'\n' => return Err(LexError::UnclosedStringConstant),
-          b'"' => return Ok(Token::Str(String::from_utf8(str_bs).unwrap())),
+          b'"' => {
+            self.advance(1);
+            return Ok(Token::Str(String::from_utf8(str_bs).unwrap()));
+          }
           b'\\' => {
             self.advance(1);
             let b = match self.bs.get(self.i) {
