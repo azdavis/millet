@@ -514,15 +514,11 @@ fn mk_real(
     Ok(n) => n,
     Err(_) => return Err(LexError::InvalidNumConstant),
   };
-  let exp: u32 = match exp.try_into() {
+  let exp: f64 = match exp.try_into() {
     Ok(n) => n,
     Err(_) => return Err(LexError::InvalidNumConstant),
   };
-  let exp: f64 = match 10_i32.pow(exp).try_into() {
-    Ok(n) => n,
-    Err(_) => return Err(LexError::InvalidNumConstant),
-  };
-  Ok(Token::Real((before_dec + after_dec) * exp))
+  Ok(Token::Real((before_dec + after_dec) * 10_f64.powf(exp)))
 }
 
 #[cfg(test)]
