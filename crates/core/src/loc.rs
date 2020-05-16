@@ -1,8 +1,10 @@
+#[derive(Debug)]
 pub struct Loc {
   pub line: usize,
   pub col: usize,
 }
 
+#[derive(Debug)]
 pub struct Located<T> {
   pub val: T,
   pub loc: Loc,

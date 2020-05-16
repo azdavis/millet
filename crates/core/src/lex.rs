@@ -17,6 +17,7 @@ pub struct Lexer<'a> {
   col: usize,
 }
 
+#[derive(Debug)]
 pub enum LexError {
   UnmatchedCloseComment,
   UnmatchedOpenComment,
@@ -194,9 +195,9 @@ impl<'a> Lexer<'a> {
         // hex integer
         if b == b'x' {
           self.advance(2);
-          return self
-            .pos_hex_int()
-            .map(|n| Token::HexInt(if neg { -n } else { n }));
+          let n = self.pos_hex_int()?;
+          let n = if neg { -n } else { n };
+          return Ok(Token::HexInt(n));
         }
         // at this point, we've just seen '0', we know there are more bytes
         // after the '0', and the first byte after the '0' is neither 'w' nor
