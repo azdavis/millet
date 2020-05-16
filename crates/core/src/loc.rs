@@ -1,10 +1,10 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Loc {
   pub line: usize,
   pub col: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Located<T> {
   pub val: T,
   pub loc: Loc,

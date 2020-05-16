@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
   // reserved words
   Abstype,
@@ -74,7 +74,7 @@ pub enum Token {
   SymbolicId(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TyVar {
   pub name: String,
   pub equality: bool,

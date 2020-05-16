@@ -526,7 +526,8 @@ fn mk_real(
 
 #[cfg(test)]
 mod tests {
-  use super::{get, hex};
+  use super::{get, hex, Loc, Located, Token};
+  use pretty_assertions::assert_eq;
 
   #[test]
   fn test_hex() {
@@ -563,5 +564,152 @@ mod tests {
     assert_eq!(hex(b'G'), None);
     assert_eq!(hex(b'*'), None);
     assert_eq!(hex(b'?'), None);
+  }
+
+  #[test]
+  fn simple() {
+    let inp = include_bytes!("../../../tests/simple.sml");
+    let out: Vec<_> = get(inp).map(|x| x.unwrap()).collect();
+    assert_eq!(
+      out,
+      vec![
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 1, col: 1 }
+        },
+        Located {
+          val: Token::AlphaNumId("decInt".to_owned()),
+          loc: Loc { line: 1, col: 5 }
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 1, col: 12 }
+        },
+        Located {
+          val: Token::DecInt(123),
+          loc: Loc { line: 1, col: 14 }
+        },
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 2, col: 1 }
+        },
+        Located {
+          val: Token::AlphaNumId("hexInt".to_owned()),
+          loc: Loc { line: 2, col: 5 }
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 2, col: 12 }
+        },
+        Located {
+          val: Token::HexInt(65278),
+          loc: Loc { line: 2, col: 14 }
+        },
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 4, col: 1 }
+        },
+        Located {
+          val: Token::AlphaNumId("decWord".to_owned()),
+          loc: Loc { line: 4, col: 5 }
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 4, col: 13 }
+        },
+        Located {
+          val: Token::DecWord(345),
+          loc: Loc { line: 4, col: 15 }
+        },
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 5, col: 1 }
+        },
+        Located {
+          val: Token::AlphaNumId("hexWord".to_owned()),
+          loc: Loc { line: 5, col: 5 }
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 5, col: 13 }
+        },
+        Located {
+          val: Token::HexWord(48879),
+          loc: Loc { line: 5, col: 15 }
+        },
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 6, col: 1 }
+        },
+        Located {
+          val: Token::AlphaNumId("reals".to_owned()),
+          loc: Loc { line: 6, col: 5 }
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 6, col: 11 }
+        },
+        Located {
+          val: Token::LSquare,
+          loc: Loc { line: 6, col: 13 }
+        },
+        Located {
+          val: Token::Real(0.7),
+          loc: Loc { line: 6, col: 14 }
+        },
+        Located {
+          val: Token::Comma,
+          loc: Loc { line: 6, col: 17 }
+        },
+        Located {
+          val: Token::Real(332000.0),
+          loc: Loc { line: 6, col: 19 }
+        },
+        Located {
+          val: Token::Comma,
+          loc: Loc { line: 6, col: 25 }
+        },
+        Located {
+          val: Token::Real(0.0000003),
+          loc: Loc { line: 6, col: 27 }
+        },
+        Located {
+          val: Token::RSquare,
+          loc: Loc { line: 6, col: 31 }
+        },
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 7, col: 1 }
+        },
+        Located {
+          val: Token::AlphaNumId("str".to_owned()),
+          loc: Loc { line: 7, col: 5 }
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 7, col: 9 }
+        },
+        Located {
+          val: Token::Str("foo".to_owned()),
+          loc: Loc { line: 7, col: 11 }
+        },
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 8, col: 1 },
+        },
+        Located {
+          val: Token::SymbolicId("<=>".to_owned()),
+          loc: Loc { line: 8, col: 5 },
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 8, col: 9 },
+        },
+        Located {
+          val: Token::Str("bar quz".to_owned()),
+          loc: Loc { line: 9, col: 3 },
+        },
+      ]
+    );
   }
 }
