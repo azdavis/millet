@@ -56,13 +56,14 @@ pub enum Token {
   /// (maybe) numeric label (otherwise just an integer). the i64 inside will be
   /// greater than 0.
   MaybeNumLab(i32),
-  // special constants (char is represented by 1-len String)
+  // special constants
   DecInt(i32),
   HexInt(i32),
   DecWord(i32),
   HexWord(i32),
   Real(f64),
   Str(String),
+  Char(u8),
   // identifiers. we can't know the syntax class of most identifiers (VId,
   // TyCon, Lab, StrId) without having the lexer be sophisticated to the point
   // of essentially being a parser. but, we can determine whether something is a

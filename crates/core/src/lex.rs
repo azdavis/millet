@@ -26,6 +26,7 @@ pub enum LexError {
   InvalidNumConstant,
   UnclosedStringConstant,
   InvalidStringConstant,
+  InvalidCharConstant,
 }
 
 impl<'a> Iterator for Lexer<'a> {
@@ -232,6 +233,13 @@ impl<'a> Lexer<'a> {
         Some(_) => return Ok(mk_int(n, starts_with_zero)),
       }
     }
+    // character constant
+    let (b, is_char) = if b == b'#' && self.bs.get(self.i + 1) == Some(&b'"') {
+      self.advance(1);
+      (b'"', true)
+    } else {
+      (b, false)
+    };
     // string constants
     if b == b'"' {
       self.advance(1);
@@ -241,7 +249,16 @@ impl<'a> Lexer<'a> {
           b'\n' => return Err(LexError::UnclosedStringConstant),
           b'"' => {
             self.advance(1);
-            return Ok(Token::Str(String::from_utf8(str_bs).unwrap()));
+            return if is_char {
+              if str_bs.len() == 1 {
+                let b = str_bs.pop().unwrap();
+                Ok(Token::Char(b))
+              } else {
+                Err(LexError::InvalidCharConstant)
+              }
+            } else {
+              Ok(Token::Str(String::from_utf8(str_bs).unwrap()))
+            };
           }
           b'\\' => {
             self.advance(1);
@@ -709,6 +726,22 @@ mod tests {
         Located {
           val: Token::Str("bar quz".to_owned()),
           loc: Loc { line: 9, col: 3 },
+        },
+        Located {
+          val: Token::Val,
+          loc: Loc { line: 11, col: 1 },
+        },
+        Located {
+          val: Token::AlphaNumId("c".to_owned()),
+          loc: Loc { line: 11, col: 5 },
+        },
+        Located {
+          val: Token::Equal,
+          loc: Loc { line: 11, col: 7 },
+        },
+        Located {
+          val: Token::Char(63),
+          loc: Loc { line: 11, col: 9 },
         },
       ]
     );

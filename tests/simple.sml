@@ -8,3 +8,4 @@ val str = "foo"
 val <=> =
   "bar \
   \quz"
+val c = #"?"
