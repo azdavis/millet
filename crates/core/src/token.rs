@@ -138,7 +138,8 @@ pub const SYMBOLIC: [(&[u8], Token); 6] = [
   (b"|", Token::Bar),
 ];
 
-/// These can't be mistake for identifiers. Sorted first by length, then alphabetically.
+/// These can't be mistaken for identifiers. Sorted first by length, then
+/// alphabetically.
 pub const OTHER: [(&[u8], Token); 11] = [
   // 3
   (b"...", Token::DotDotDot),
