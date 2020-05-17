@@ -297,13 +297,14 @@ impl<'a> Lexer<'a> {
                     _ => return Err(LexError::InvalidStringConstant),
                   }
                 } else if is_formatting(b) {
+                  let mut b = b;
                   loop {
                     if b == b'\n' {
                       self.advance_newline();
                     } else {
                       self.advance(1);
                     }
-                    let b = match self.bs.get(self.i) {
+                    b = match self.bs.get(self.i) {
                       None => return Err(LexError::UnclosedStringConstant),
                       Some(x) => *x,
                     };
