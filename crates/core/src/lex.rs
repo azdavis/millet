@@ -31,7 +31,7 @@ pub enum LexError {
 }
 
 impl<'s> Iterator for Lexer<'s> {
-  type Item = Result<Located<Token>, LexError>;
+  type Item = Result<Located<Token>, Located<LexError>>;
 
   fn next(&mut self) -> Option<Self::Item> {
     let mut comments: usize = 0;
@@ -50,7 +50,10 @@ impl<'s> Iterator for Lexer<'s> {
       // comment end
       if b == b'*' && self.bs.get(self.i + 1) == Some(&b')') {
         if comments == 0 {
-          return Some(Err(LexError::UnmatchedCloseComment));
+          return Some(Err(Located::new(
+            self.cur_loc(),
+            LexError::UnmatchedCloseComment,
+          )));
         }
         self.advance(2);
         comments -= 1;
@@ -62,23 +65,23 @@ impl<'s> Iterator for Lexer<'s> {
         continue;
       }
       // the actual meat of the impl
-      let loc = Loc {
-        line: self.line,
-        col: self.col,
-      };
+      let loc = self.cur_loc();
       return Some(match self.next_impl(b) {
         Ok(t) => Ok(Located::new(loc, t)),
         Err(e) => {
           // ensure we always return None after returning a Some(Err(..))
           self.i = self.bs.len();
-          Err(e)
+          Err(Located::new(loc, e))
         }
       });
     }
     if comments == 0 {
       None
     } else {
-      Some(Err(LexError::UnmatchedOpenComment))
+      Some(Err(Located::new(
+        self.cur_loc(),
+        LexError::UnmatchedOpenComment,
+      )))
     }
   }
 }
@@ -386,6 +389,13 @@ impl<'a> Lexer<'a> {
     self.i += 1;
     self.col = 1;
     self.line += 1;
+  }
+
+  fn cur_loc(&self) -> Loc {
+    Loc {
+      line: self.line,
+      col: self.col,
+    }
   }
 
   fn pos_dec_int(&mut self) -> Result<i32, LexError> {
