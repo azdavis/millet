@@ -9,8 +9,8 @@ pub struct Loc {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Located<T> {
-  pub val: T,
-  pub loc: Loc,
+  val: T,
+  loc: Loc,
 }
 
 impl<'s, T> Located<T> {

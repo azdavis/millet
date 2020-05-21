@@ -625,162 +625,48 @@ mod tests {
       file_id,
     );
     let out: Vec<_> = get(&inp).map(|x| x.unwrap()).collect();
-    let mk_loc = |line, col| Loc { file_id, line, col };
+    let mk = |line, col, tok| Located::new(Loc { file_id, line, col }, tok);
     assert_eq!(
       out,
       vec![
-        Located {
-          val: Token::Val,
-          loc: mk_loc(1, 1)
-        },
-        Located {
-          val: Token::AlphaNumId("decInt".to_owned()),
-          loc: mk_loc(1, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(1, 12)
-        },
-        Located {
-          val: Token::DecInt(123),
-          loc: mk_loc(1, 14)
-        },
-        Located {
-          val: Token::Val,
-          loc: mk_loc(2, 1)
-        },
-        Located {
-          val: Token::AlphaNumId("hexInt".to_owned()),
-          loc: mk_loc(2, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(2, 12)
-        },
-        Located {
-          val: Token::HexInt(65278),
-          loc: mk_loc(2, 14)
-        },
-        Located {
-          val: Token::Val,
-          loc: mk_loc(4, 1)
-        },
-        Located {
-          val: Token::AlphaNumId("decWord".to_owned()),
-          loc: mk_loc(4, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(4, 13)
-        },
-        Located {
-          val: Token::DecWord(345),
-          loc: mk_loc(4, 15)
-        },
-        Located {
-          val: Token::Val,
-          loc: mk_loc(5, 1)
-        },
-        Located {
-          val: Token::AlphaNumId("hexWord".to_owned()),
-          loc: mk_loc(5, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(5, 13)
-        },
-        Located {
-          val: Token::HexWord(48879),
-          loc: mk_loc(5, 15)
-        },
-        Located {
-          val: Token::Val,
-          loc: mk_loc(6, 1)
-        },
-        Located {
-          val: Token::AlphaNumId("reals".to_owned()),
-          loc: mk_loc(6, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(6, 11)
-        },
-        Located {
-          val: Token::LSquare,
-          loc: mk_loc(6, 13)
-        },
-        Located {
-          val: Token::Real(0.7),
-          loc: mk_loc(6, 14)
-        },
-        Located {
-          val: Token::Comma,
-          loc: mk_loc(6, 17)
-        },
-        Located {
-          val: Token::Real(332000.0),
-          loc: mk_loc(6, 19)
-        },
-        Located {
-          val: Token::Comma,
-          loc: mk_loc(6, 25)
-        },
-        Located {
-          val: Token::Real(0.0000003),
-          loc: mk_loc(6, 27)
-        },
-        Located {
-          val: Token::RSquare,
-          loc: mk_loc(6, 31)
-        },
-        Located {
-          val: Token::Val,
-          loc: mk_loc(7, 1)
-        },
-        Located {
-          val: Token::AlphaNumId("str".to_owned()),
-          loc: mk_loc(7, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(7, 9)
-        },
-        Located {
-          val: Token::Str("foo".to_owned()),
-          loc: mk_loc(7, 11)
-        },
-        Located {
-          val: Token::Val,
-          loc: mk_loc(8, 1)
-        },
-        Located {
-          val: Token::SymbolicId("<=>".to_owned()),
-          loc: mk_loc(8, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(8, 9)
-        },
-        Located {
-          val: Token::Str("bar quz".to_owned()),
-          loc: mk_loc(9, 3)
-        },
-        Located {
-          val: Token::Val,
-          loc: mk_loc(11, 1)
-        },
-        Located {
-          val: Token::AlphaNumId("c".to_owned()),
-          loc: mk_loc(11, 5)
-        },
-        Located {
-          val: Token::Equal,
-          loc: mk_loc(11, 7)
-        },
-        Located {
-          val: Token::Char(63),
-          loc: mk_loc(11, 9)
-        },
+        mk(01, 01, Token::Val),
+        mk(01, 05, Token::AlphaNumId("decInt".to_owned())),
+        mk(01, 12, Token::Equal),
+        mk(01, 14, Token::DecInt(123)),
+        mk(02, 01, Token::Val),
+        mk(02, 05, Token::AlphaNumId("hexInt".to_owned())),
+        mk(02, 12, Token::Equal),
+        mk(02, 14, Token::HexInt(65278)),
+        mk(04, 01, Token::Val),
+        mk(04, 05, Token::AlphaNumId("decWord".to_owned())),
+        mk(04, 13, Token::Equal),
+        mk(04, 15, Token::DecWord(345)),
+        mk(05, 01, Token::Val),
+        mk(05, 05, Token::AlphaNumId("hexWord".to_owned())),
+        mk(05, 13, Token::Equal),
+        mk(05, 15, Token::HexWord(48879)),
+        mk(06, 01, Token::Val),
+        mk(06, 05, Token::AlphaNumId("reals".to_owned())),
+        mk(06, 11, Token::Equal),
+        mk(06, 13, Token::LSquare),
+        mk(06, 14, Token::Real(0.7)),
+        mk(06, 17, Token::Comma),
+        mk(06, 19, Token::Real(332000.0)),
+        mk(06, 25, Token::Comma),
+        mk(06, 27, Token::Real(0.0000003)),
+        mk(06, 31, Token::RSquare),
+        mk(07, 01, Token::Val),
+        mk(07, 05, Token::AlphaNumId("str".to_owned())),
+        mk(07, 09, Token::Equal),
+        mk(07, 11, Token::Str("foo".to_owned())),
+        mk(08, 01, Token::Val),
+        mk(08, 05, Token::SymbolicId("<=>".to_owned())),
+        mk(08, 09, Token::Equal),
+        mk(09, 03, Token::Str("bar quz".to_owned())),
+        mk(11, 01, Token::Val),
+        mk(11, 05, Token::AlphaNumId("c".to_owned())),
+        mk(11, 07, Token::Equal),
+        mk(11, 09, Token::Char(63)),
       ]
     );
   }
