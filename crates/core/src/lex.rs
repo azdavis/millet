@@ -587,10 +587,10 @@ mod tests {
 
   #[test]
   fn simple() {
-    let inp = SourceFile {
-      name: "simple".to_owned(),
-      bytes: include_bytes!("../../../tests/simple.sml").to_vec(),
-    };
+    let inp = SourceFile::new(
+      "simple".to_owned(),
+      include_bytes!("../../../tests/simple.sml").to_vec(),
+    );
     let out: Vec<_> = get(&inp).map(|x| x.unwrap()).collect();
     assert_eq!(
       out,
