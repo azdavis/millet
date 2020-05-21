@@ -2,7 +2,7 @@ use crate::loc::{Loc, Located};
 use crate::source_file::SourceFile;
 use crate::token::{Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 
-pub fn get(file: &SourceFile) -> Lexer<'_> {
+pub fn get<'s>(file: &'s SourceFile) -> Lexer<'s> {
   Lexer {
     bs: file.as_bytes(),
     i: 0,
@@ -11,8 +11,8 @@ pub fn get(file: &SourceFile) -> Lexer<'_> {
   }
 }
 
-pub struct Lexer<'a> {
-  bs: &'a [u8],
+pub struct Lexer<'s> {
+  bs: &'s [u8],
   i: usize,
   line: usize,
   col: usize,
@@ -30,7 +30,7 @@ pub enum LexError {
   InvalidCharConstant,
 }
 
-impl<'a> Iterator for Lexer<'a> {
+impl<'s> Iterator for Lexer<'s> {
   type Item = Result<Located<Token>, LexError>;
 
   fn next(&mut self) -> Option<Self::Item> {
