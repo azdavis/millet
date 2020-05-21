@@ -1,6 +1,7 @@
 use crate::loc::{Loc, Located};
 use crate::source_file::SourceFile;
 use crate::token::{Token, TyVar, ALPHA, OTHER, SYMBOLIC};
+use std::fmt;
 
 pub fn get<'s>(file: &'s SourceFile) -> Lexer<'s> {
   Lexer {
@@ -23,12 +24,29 @@ pub enum LexError {
   UnmatchedCloseComment,
   UnmatchedOpenComment,
   IncompleteTypeVar,
-  UnknownByte,
+  UnknownByte(u8),
   InvalidNumConstant,
   UnclosedStringConstant,
   InvalidStringConstant,
   InvalidCharConstant,
 }
+
+impl fmt::Display for LexError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::UnmatchedCloseComment => write!(f, "unmatched close comment"),
+      Self::UnmatchedOpenComment => write!(f, "unmatched open comment"),
+      Self::IncompleteTypeVar => write!(f, "incomplete type var"),
+      Self::UnknownByte(b) => write!(f, "unknown byte: {}", b),
+      Self::InvalidNumConstant => write!(f, "invalid numeric constant"),
+      Self::UnclosedStringConstant => write!(f, "unclosed string constant"),
+      Self::InvalidStringConstant => write!(f, "invalid string constant"),
+      Self::InvalidCharConstant => write!(f, "invalid character constant"),
+    }
+  }
+}
+
+impl std::error::Error for LexError {}
 
 impl<'s> Iterator for Lexer<'s> {
   type Item = Result<Located<Token>, Located<LexError>>;
@@ -376,7 +394,7 @@ impl<'a> Lexer<'a> {
       }
     }
     // unknown byte
-    return Err(LexError::UnknownByte);
+    return Err(LexError::UnknownByte(b));
   }
 
   /// Increase i and col by the given amount.
