@@ -1,5 +1,8 @@
+use crate::source_file::SourceFileId;
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Loc {
+  pub file_id: SourceFileId,
   pub line: usize,
   pub col: usize,
 }
@@ -10,7 +13,7 @@ pub struct Located<T> {
   pub loc: Loc,
 }
 
-impl<T> Located<T> {
+impl<'s, T> Located<T> {
   pub fn new(loc: Loc, val: T) -> Self {
     Self { loc, val }
   }
