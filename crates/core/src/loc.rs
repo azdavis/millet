@@ -2,9 +2,15 @@ use crate::source_file::SourceFileId;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Loc {
-  pub file_id: SourceFileId,
-  pub line: usize,
-  pub col: usize,
+  file_id: SourceFileId,
+  line: usize,
+  col: usize,
+}
+
+impl Loc {
+  pub fn new(file_id: SourceFileId, line: usize, col: usize) -> Self {
+    Self { file_id, line, col }
+  }
 }
 
 #[derive(Debug, PartialEq, Eq)]

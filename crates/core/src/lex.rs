@@ -412,11 +412,7 @@ impl<'s> Lexer<'s> {
   }
 
   fn cur_loc(&self) -> Loc {
-    Loc {
-      file_id: self.file_id,
-      line: self.line,
-      col: self.col,
-    }
+    Loc::new(self.file_id, self.line, self.col)
   }
 
   fn pos_dec_int(&mut self) -> Result<i32, LexError> {
@@ -625,7 +621,7 @@ mod tests {
       file_id,
     );
     let out: Vec<_> = get(&inp).map(|x| x.unwrap()).collect();
-    let mk = |line, col, tok| Located::new(Loc { file_id, line, col }, tok);
+    let mk = |line, col, tok| Located::new(Loc::new(file_id, line, col), tok);
     assert_eq!(
       out,
       vec![
