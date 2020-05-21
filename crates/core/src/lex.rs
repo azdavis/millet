@@ -1,9 +1,10 @@
 use crate::loc::{Loc, Located};
+use crate::source_file::SourceFile;
 use crate::token::{Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 
-pub fn get(bs: &[u8]) -> Lexer<'_> {
+pub fn get(file: &SourceFile) -> Lexer<'_> {
   Lexer {
-    bs,
+    bs: file.as_bytes(),
     i: 0,
     line: 1,
     col: 1,
@@ -544,7 +545,7 @@ fn mk_real(
 
 #[cfg(test)]
 mod tests {
-  use super::{get, hex, Loc, Located, Token};
+  use super::{get, hex, Loc, Located, SourceFile, Token};
   use pretty_assertions::assert_eq;
 
   #[test]
@@ -586,8 +587,11 @@ mod tests {
 
   #[test]
   fn simple() {
-    let inp = include_bytes!("../../../tests/simple.sml");
-    let out: Vec<_> = get(inp).map(|x| x.unwrap()).collect();
+    let inp = SourceFile {
+      name: "simple".to_owned(),
+      bytes: include_bytes!("../../../tests/simple.sml").to_vec(),
+    };
+    let out: Vec<_> = get(&inp).map(|x| x.unwrap()).collect();
     assert_eq!(
       out,
       vec![
