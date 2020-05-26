@@ -1,3 +1,4 @@
+/// A point location in the source.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Loc {
   file_id: SourceFileId,
@@ -11,6 +12,8 @@ impl Loc {
   }
 }
 
+/// A generic wrapper for some value which was ultimately derived from some
+/// location in the source.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Located<T> {
   val: T,
@@ -23,6 +26,7 @@ impl<'s, T> Located<T> {
   }
 }
 
+/// An opaque identifier for a source file.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct SourceFileId(usize);
 
@@ -33,6 +37,7 @@ impl SourceFileId {
   }
 }
 
+/// A source file.
 pub struct SourceFile {
   name: String,
   bytes: Vec<u8>,
@@ -44,6 +49,7 @@ impl SourceFile {
   }
 }
 
+/// A collection of all the source files.
 #[derive(Default)]
 pub struct SourceMap {
   files: Vec<SourceFile>,
