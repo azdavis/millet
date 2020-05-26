@@ -1,12 +1,11 @@
-use crate::loc::{Loc, Located};
-use crate::source_file::{SourceFile, SourceFileId};
+use crate::source::{Loc, Located, SourceFileId};
 use crate::token::{Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 use std::fmt;
 
-pub fn get<'s>(file: &'s SourceFile) -> Lexer<'s> {
+pub fn get<'s>(file_id: SourceFileId, bs: &'s [u8]) -> Lexer<'s> {
   Lexer {
-    file_id: file.id(),
-    bs: file.as_bytes(),
+    file_id,
+    bs,
     i: 0,
     line: 1,
     col: 1,
@@ -572,7 +571,7 @@ fn mk_real(
 
 #[cfg(test)]
 mod tests {
-  use super::{get, hex, Loc, Located, SourceFile, SourceFileId, Token};
+  use super::{get, hex, Loc, Located, SourceFileId, Token};
   use pretty_assertions::assert_eq;
 
   #[test]
@@ -615,12 +614,8 @@ mod tests {
   #[test]
   fn simple() {
     let file_id = SourceFileId::new(0);
-    let inp = SourceFile::new(
-      "simple".to_owned(),
-      include_bytes!("../../../tests/simple.sml").to_vec(),
-      file_id,
-    );
-    let out: Vec<_> = get(&inp).map(|x| x.unwrap()).collect();
+    let inp = include_bytes!("../../../tests/simple.sml");
+    let out: Vec<_> = get(file_id, inp).map(|x| x.unwrap()).collect();
     let mk = |line, col, tok| Located::new(Loc::new(file_id, line, col), tok);
     assert_eq!(
       out,

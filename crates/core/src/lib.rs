@@ -1,9 +1,7 @@
 mod lex;
-mod loc;
-mod source_file;
+mod source;
 mod token;
 
-pub fn get(file: &source_file::SourceFile) -> usize {
-  let ts = lex::get(file);
+pub fn get() -> usize {
   123
 }
