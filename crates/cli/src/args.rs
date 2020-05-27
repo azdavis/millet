@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches};
 
 pub fn get() -> Args {
   get_impl(app().get_matches())
@@ -16,7 +16,7 @@ fn app() -> App<'static, 'static> {
     .arg(Arg::with_name("file").help("Source file").multiple(true))
 }
 
-fn get_impl(matches: clap::ArgMatches<'static>) -> Args {
+fn get_impl(matches: ArgMatches<'static>) -> Args {
   Args {
     files: match matches.values_of("file") {
       None => vec![],
