@@ -20,7 +20,7 @@ pub struct Located<T> {
   loc: Loc,
 }
 
-impl<'s, T> Located<T> {
+impl<T> Located<T> {
   pub fn new(loc: Loc, val: T) -> Self {
     Self { loc, val }
   }
