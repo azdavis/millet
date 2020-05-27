@@ -67,12 +67,11 @@ impl<W> SourceMap<W> {
     self.files.push(SourceFile { name, contents });
   }
 
-  pub fn iter(&self) -> impl Iterator<Item = (SourceFileId, &SourceFile)> {
-    self
-      .files
-      .iter()
-      .enumerate()
-      .map(|(id, sf)| (SourceFileId(id), sf))
+  pub fn iter(&self) -> Iter {
+    Iter {
+      files: &self.files,
+      idx: 0,
+    }
   }
 }
 
@@ -120,4 +119,18 @@ fn get_line(bs: &[u8], loc: Loc) -> &[u8] {
     }
   }
   &bs[start.unwrap()..end.unwrap()]
+}
+
+pub struct Iter<'s> {
+  files: &'s [SourceFile],
+  idx: usize,
+}
+
+impl<'s> Iterator for Iter<'s> {
+  type Item = (SourceFileId, &'s SourceFile);
+  fn next(&mut self) -> Option<Self::Item> {
+    let ret = Some((SourceFileId(self.idx), self.files.get(self.idx)?));
+    self.idx += 1;
+    ret
+  }
 }
