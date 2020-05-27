@@ -6,7 +6,7 @@ pub fn get() -> Args {
 
 #[derive(Debug)]
 pub struct Args {
-  files: Vec<String>,
+  pub files: Vec<String>,
 }
 
 fn app() -> App<'static, 'static> {
