@@ -40,12 +40,12 @@ impl SourceFileId {
 /// A source file.
 pub struct SourceFile {
   name: String,
-  bytes: Vec<u8>,
+  contents: String,
 }
 
 impl SourceFile {
   pub fn as_bytes(&self) -> &[u8] {
-    &self.bytes
+    &self.contents.as_bytes()
   }
 }
 
@@ -63,8 +63,8 @@ impl<W> SourceMap<W> {
     }
   }
 
-  pub fn add(&mut self, name: String, bytes: Vec<u8>) {
-    self.files.push(SourceFile { name, bytes });
+  pub fn insert(&mut self, name: String, contents: String) {
+    self.files.push(SourceFile { name, contents });
   }
 
   pub fn iter(&self) -> impl Iterator<Item = (SourceFileId, &SourceFile)> {
