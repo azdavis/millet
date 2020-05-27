@@ -1,5 +1,8 @@
+mod args;
+
 fn run() -> bool {
-  println!("Hello, world!");
+  let args = args::get();
+  println!("args = {:?}", args);
   true
 }
 
