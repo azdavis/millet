@@ -6,4 +6,5 @@ edition = "2018"
 publish = false
 
 [dependencies]
+clap = "2.33.1"
 millet-core = { path = "../core" }
