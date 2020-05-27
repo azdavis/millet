@@ -50,17 +50,13 @@ impl SourceFile {
 }
 
 /// A collection of all the source files.
-pub struct SourceMap<W> {
+pub struct SourceMap {
   files: Vec<SourceFile>,
-  writer: W,
 }
 
-impl<W> SourceMap<W> {
-  pub fn new(writer: W) -> Self {
-    Self {
-      files: Vec::new(),
-      writer,
-    }
+impl SourceMap {
+  pub fn new() -> Self {
+    Self { files: Vec::new() }
   }
 
   pub fn insert(&mut self, name: String, contents: String) {
@@ -73,54 +69,32 @@ impl<W> SourceMap<W> {
       idx: 0,
     }
   }
-}
 
-impl<W> SourceMap<W>
-where
-  W: std::io::Write,
-{
-  pub fn report<T>(&mut self, err: Located<T>) -> std::io::Result<()>
-  where
-    T: std::error::Error,
-  {
-    let file = &self.files[err.loc.file_id.0];
-    let loc = err.loc;
-    writeln!(self.writer, "error: {}", err.val)?;
-    writeln!(self.writer, " --> {}:{}:{}", file.name, loc.line, loc.col)?;
-    writeln!(self.writer, "  |")?;
-    write!(self.writer, "  | ")?;
-    self.writer.write(get_line(file.as_bytes(), loc))?;
-    writeln!(self.writer)?;
-    write!(self.writer, "  | ")?;
-    for _ in 0..loc.col {
-      write!(self.writer, " ")?;
+  fn get_name_and_line(&self, loc: Loc) -> (&str, &str) {
+    let file = &self.files[loc.file_id.0];
+    let bs = file.as_bytes();
+    let mut line = 1;
+    let mut start: Option<usize> = None;
+    let mut end: Option<usize> = None;
+    for (i, &b) in bs.iter().enumerate() {
+      if b != b'\n' {
+        continue;
+      }
+      if line == loc.line {
+        end = Some(i);
+        break;
+      }
+      line += 1;
+      if line == loc.line {
+        start = Some(i);
+      }
     }
-    writeln!(self.writer, "^")?;
-    write!(self.writer, "  |")?;
-    Ok(())
+    let line = std::str::from_utf8(&bs[start.unwrap()..end.unwrap()]).unwrap();
+    (&file.name, line)
   }
 }
 
-fn get_line(bs: &[u8], loc: Loc) -> &[u8] {
-  let mut line = 1;
-  let mut start: Option<usize> = None;
-  let mut end: Option<usize> = None;
-  for (i, &b) in bs.iter().enumerate() {
-    if b != b'\n' {
-      continue;
-    }
-    if line == loc.line {
-      end = Some(i);
-      break;
-    }
-    line += 1;
-    if line == loc.line {
-      start = Some(i);
-    }
-  }
-  &bs[start.unwrap()..end.unwrap()]
-}
-
+/// An iterator of all the source files and their IDs.
 pub struct Iter<'s> {
   files: &'s [SourceFile],
   idx: usize,
@@ -132,5 +106,59 @@ impl<'s> Iterator for Iter<'s> {
     let ret = Some((SourceFileId(self.idx), self.files.get(self.idx)?));
     self.idx += 1;
     ret
+  }
+}
+
+/// A reporter of errors.
+pub struct Reporter<W> {
+  writer: W,
+}
+
+impl<W> Reporter<W> {
+  pub fn new(writer: W) -> Self {
+    Self { writer }
+  }
+}
+
+impl<W> Reporter<W>
+where
+  W: std::io::Write,
+{
+  pub fn report<T>(
+    &mut self,
+    map: &SourceMap,
+    err: Located<T>,
+  ) -> std::io::Result<()>
+  where
+    T: std::error::Error,
+  {
+    let (name, line) = map.get_name_and_line(err.loc);
+    writeln!(self.writer, "error: {}", err.val)?;
+    writeln!(
+      self.writer,
+      " --> {}:{}:{}",
+      name, err.loc.line, err.loc.col
+    )?;
+    writeln!(self.writer, "  |")?;
+    write!(self.writer, "  | ")?;
+    self.writer.write(line.as_bytes())?;
+    writeln!(self.writer)?;
+    write!(self.writer, "  | ")?;
+    for _ in 0..err.loc.col {
+      write!(self.writer, " ")?;
+    }
+    writeln!(self.writer, "^")?;
+    write!(self.writer, "  |")?;
+    Ok(())
+  }
+
+  pub fn report_io(
+    &mut self,
+    name: &str,
+    err: std::io::Error,
+  ) -> std::io::Result<()> {
+    writeln!(self.writer, "error: {}", err)?;
+    writeln!(self.writer, " --> {}", name)?;
+    Ok(())
   }
 }
