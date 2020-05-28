@@ -133,9 +133,9 @@ where
   where
     T: std::error::Error,
   {
-    let loc = err.loc();
-    let (name, line) = map.get_name_and_line(err.loc);
-    let err = err.into_inner();
+    let loc = err.loc;
+    let err = err.inner;
+    let (name, line) = map.get_name_and_line(loc);
     writeln!(self.writer, "error: {}", err)?;
     writeln!(self.writer, " --> {}:{}:{}", name, loc.line, loc.col)?;
     writeln!(self.writer, "  |")?;
