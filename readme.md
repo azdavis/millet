@@ -1,8 +1,8 @@
 # Millet
 
 An implementation of Standard ML being developed mainly for use in
-[15-150][150], [Carnegie Mellon University][cmu]'s introductory functional
-programming course.
+[15-150][150], Carnegie Mellon University's introductory functional programming
+course.
 
 ## Development
 
@@ -61,6 +61,5 @@ probably result in faster-running code.
 
 [smlnj]: https://www.smlnj.org
 [150]: http://www.cs.cmu.edu/~15150/
-[cmu]: https://www.cmu.edu
 [sml-def]: https://smlfamily.github.io/sml97-defn.pdf
 [rustup]: https://rustup.rs
