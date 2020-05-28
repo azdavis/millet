@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
   // reserved words
@@ -73,6 +75,77 @@ pub enum Token {
   AlphaNumId(String),
   /// definitely not a structure identifier (symbolic).
   SymbolicId(String),
+}
+
+impl Token {
+  pub fn desc(&self) -> &'static str {
+    match self {
+      Self::Abstype => "`abstype`",
+      Self::And => "`and`",
+      Self::Andalso => "`andalso`",
+      Self::As => "`as`",
+      Self::Case => "`case`",
+      Self::Datatype => "`datatype`",
+      Self::Do => "`do`",
+      Self::Else => "`else`",
+      Self::End => "`end`",
+      Self::Exception => "`exception`",
+      Self::Fn => "`fn`",
+      Self::Fun => "`fun`",
+      Self::Handle => "`handle`",
+      Self::If => "`if`",
+      Self::In => "`in`",
+      Self::Infix => "`infix`",
+      Self::Infixr => "`infixr`",
+      Self::Let => "`let`",
+      Self::Local => "`local`",
+      Self::Nonfix => "`nonfix`",
+      Self::Of => "`of`",
+      Self::Op => "`op`",
+      Self::Open => "`open`",
+      Self::Orelse => "`orelse`",
+      Self::Raise => "`raise`",
+      Self::Rec => "`rec`",
+      Self::Then => "`then`",
+      Self::Type => "`type`",
+      Self::Val => "`val`",
+      Self::With => "`with`",
+      Self::Withtype => "`withtype`",
+      Self::While => "`while`",
+      Self::LRound => "`(`",
+      Self::RRound => "`)`",
+      Self::LSquare => "`[`",
+      Self::RSquare => "`]`",
+      Self::LCurly => "`{`",
+      Self::RCurly => "`}`",
+      Self::Comma => "`,`",
+      Self::Colon => "`:`",
+      Self::Semicolon => "`;`",
+      Self::DotDotDot => "`...`",
+      Self::Underscore => "`_`",
+      Self::Bar => "`|`",
+      Self::Equal => "`=`",
+      Self::BigArrow => "`=>`",
+      Self::Arrow => "`->`",
+      Self::Pound => "`#`",
+      Self::Dot => "`.`",
+      Self::MaybeNumLab(_) | Self::DecInt(_) | Self::HexInt(_) => {
+        "an integer constant"
+      }
+      Self::DecWord(_) | Self::HexWord(_) => "a word constant",
+      Self::Real(_) => "a real constant",
+      Self::Str(_) => "a string constant",
+      Self::Char(_) => "a character constant",
+      Self::TyVar(_) => "a type variable",
+      Self::AlphaNumId(_) | Self::SymbolicId(_) => "an identifier",
+    }
+  }
+}
+
+impl fmt::Display for Token {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.desc().fmt(f)
+  }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
