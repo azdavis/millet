@@ -16,13 +16,14 @@ impl Loc {
 /// location in the source.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Located<T> {
-  val: T,
+  inner: T,
   loc: Loc,
 }
 
 impl<T> Located<T> {
-  pub fn new(loc: Loc, val: T) -> Self {
-    Self { loc, val }
+  pub fn new(loc: Loc, inner: T) -> Self {
+    Self { loc, inner }
+  }
   }
 }
 
@@ -132,19 +133,17 @@ where
   where
     T: std::error::Error,
   {
+    let loc = err.loc();
     let (name, line) = map.get_name_and_line(err.loc);
-    writeln!(self.writer, "error: {}", err.val)?;
-    writeln!(
-      self.writer,
-      " --> {}:{}:{}",
-      name, err.loc.line, err.loc.col
-    )?;
+    let err = err.into_inner();
+    writeln!(self.writer, "error: {}", err)?;
+    writeln!(self.writer, " --> {}:{}:{}", name, loc.line, loc.col)?;
     writeln!(self.writer, "  |")?;
     write!(self.writer, "  | ")?;
     self.writer.write(line.as_bytes())?;
     writeln!(self.writer)?;
     write!(self.writer, "  | ")?;
-    for _ in 0..err.loc.col {
+    for _ in 0..loc.col {
       write!(self.writer, " ")?;
     }
     writeln!(self.writer, "^")?;
