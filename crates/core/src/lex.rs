@@ -9,6 +9,7 @@ pub fn get<'s>(file_id: SourceFileId, bs: &'s [u8]) -> Lexer<'s> {
     i: 0,
     line: 1,
     col: 1,
+    last_loc: Loc::new(file_id, 1, 1),
   }
 }
 
@@ -18,6 +19,7 @@ pub struct Lexer<'s> {
   i: usize,
   line: usize,
   col: usize,
+  last_loc: Loc,
 }
 
 #[derive(Debug)]
@@ -49,10 +51,8 @@ impl fmt::Display for LexError {
 
 impl std::error::Error for LexError {}
 
-impl<'s> Iterator for Lexer<'s> {
-  type Item = Result<Located<Token>, Located<LexError>>;
-
-  fn next(&mut self) -> Option<Self::Item> {
+impl<'s> Lexer<'s> {
+  pub fn next(&mut self) -> Result<Located<Token>, Located<LexError>> {
     let mut comments: usize = 0;
     while let Some(&b) = self.bs.get(self.i) {
       // newline
@@ -69,10 +69,10 @@ impl<'s> Iterator for Lexer<'s> {
       // comment end
       if b == b'*' && self.bs.get(self.i + 1) == Some(&b')') {
         if comments == 0 {
-          return Some(Err(Located::new(
+          return Err(Located::new(
             self.cur_loc(),
             LexError::UnmatchedCloseComment,
-          )));
+          ));
         }
         self.advance(2);
         comments -= 1;
@@ -85,29 +85,19 @@ impl<'s> Iterator for Lexer<'s> {
       }
       // the actual meat of the impl
       let loc = self.cur_loc();
-      return Some(match self.next_impl(b) {
+      self.last_loc = loc;
+      return match self.next_impl(b) {
         Ok(t) => Ok(Located::new(loc, t)),
-        Err(e) => {
-          // ensure we always return None after returning a Some(Err(..))
-          self.i = self.bs.len();
-          Err(Located::new(loc, e))
-        }
-      });
+        Err(e) => Err(Located::new(loc, e)),
+      };
     }
     if comments == 0 {
-      None
+      Ok(Located::new(self.last_loc, Token::EOF))
     } else {
-      Some(Err(Located::new(
-        self.cur_loc(),
-        LexError::UnmatchedOpenComment,
-      )))
+      Err(Located::new(self.cur_loc(), LexError::UnmatchedOpenComment))
     }
   }
-}
 
-impl<'s> std::iter::FusedIterator for Lexer<'s> {}
-
-impl<'s> Lexer<'s> {
   fn next_impl(&mut self, b: u8) -> Result<Token, LexError> {
     // alphanumeric identifiers (including type variables) and alphabetic
     // reserved words
@@ -615,50 +605,47 @@ mod tests {
   fn simple() {
     let file_id = SourceFileId::new(0);
     let inp = include_bytes!("../../../tests/simple.sml");
-    let out: Vec<_> = get(file_id, inp).map(|x| x.unwrap()).collect();
+    let mut out = get(file_id, inp);
     let mk = |line, col, tok| Located::new(Loc::new(file_id, line, col), tok);
-    assert_eq!(
-      out,
-      vec![
-        mk(01, 01, Token::Val),
-        mk(01, 05, Token::AlphaNumId("decInt".to_owned())),
-        mk(01, 12, Token::Equal),
-        mk(01, 14, Token::DecInt(123)),
-        mk(02, 01, Token::Val),
-        mk(02, 05, Token::AlphaNumId("hexInt".to_owned())),
-        mk(02, 12, Token::Equal),
-        mk(02, 14, Token::HexInt(65278)),
-        mk(04, 01, Token::Val),
-        mk(04, 05, Token::AlphaNumId("decWord".to_owned())),
-        mk(04, 13, Token::Equal),
-        mk(04, 15, Token::DecWord(345)),
-        mk(05, 01, Token::Val),
-        mk(05, 05, Token::AlphaNumId("hexWord".to_owned())),
-        mk(05, 13, Token::Equal),
-        mk(05, 15, Token::HexWord(48879)),
-        mk(06, 01, Token::Val),
-        mk(06, 05, Token::AlphaNumId("reals".to_owned())),
-        mk(06, 11, Token::Equal),
-        mk(06, 13, Token::LSquare),
-        mk(06, 14, Token::Real(0.7)),
-        mk(06, 17, Token::Comma),
-        mk(06, 19, Token::Real(332000.0)),
-        mk(06, 25, Token::Comma),
-        mk(06, 27, Token::Real(0.0000003)),
-        mk(06, 31, Token::RSquare),
-        mk(07, 01, Token::Val),
-        mk(07, 05, Token::AlphaNumId("str".to_owned())),
-        mk(07, 09, Token::Equal),
-        mk(07, 11, Token::Str("foo".to_owned())),
-        mk(08, 01, Token::Val),
-        mk(08, 05, Token::SymbolicId("<=>".to_owned())),
-        mk(08, 09, Token::Equal),
-        mk(09, 03, Token::Str("bar quz".to_owned())),
-        mk(11, 01, Token::Val),
-        mk(11, 05, Token::AlphaNumId("c".to_owned())),
-        mk(11, 07, Token::Equal),
-        mk(11, 09, Token::Char(63)),
-      ]
-    );
+    let mut next = || out.next().unwrap();
+    assert_eq!(next(), mk(01, 01, Token::Val));
+    assert_eq!(next(), mk(01, 05, Token::AlphaNumId("decInt".to_owned())));
+    assert_eq!(next(), mk(01, 12, Token::Equal));
+    assert_eq!(next(), mk(01, 14, Token::DecInt(123)));
+    assert_eq!(next(), mk(02, 01, Token::Val));
+    assert_eq!(next(), mk(02, 05, Token::AlphaNumId("hexInt".to_owned())));
+    assert_eq!(next(), mk(02, 12, Token::Equal));
+    assert_eq!(next(), mk(02, 14, Token::HexInt(65278)));
+    assert_eq!(next(), mk(04, 01, Token::Val));
+    assert_eq!(next(), mk(04, 05, Token::AlphaNumId("decWord".to_owned())));
+    assert_eq!(next(), mk(04, 13, Token::Equal));
+    assert_eq!(next(), mk(04, 15, Token::DecWord(345)));
+    assert_eq!(next(), mk(05, 01, Token::Val));
+    assert_eq!(next(), mk(05, 05, Token::AlphaNumId("hexWord".to_owned())));
+    assert_eq!(next(), mk(05, 13, Token::Equal));
+    assert_eq!(next(), mk(05, 15, Token::HexWord(48879)));
+    assert_eq!(next(), mk(06, 01, Token::Val));
+    assert_eq!(next(), mk(06, 05, Token::AlphaNumId("reals".to_owned())));
+    assert_eq!(next(), mk(06, 11, Token::Equal));
+    assert_eq!(next(), mk(06, 13, Token::LSquare));
+    assert_eq!(next(), mk(06, 14, Token::Real(0.7)));
+    assert_eq!(next(), mk(06, 17, Token::Comma));
+    assert_eq!(next(), mk(06, 19, Token::Real(332000.0)));
+    assert_eq!(next(), mk(06, 25, Token::Comma));
+    assert_eq!(next(), mk(06, 27, Token::Real(0.0000003)));
+    assert_eq!(next(), mk(06, 31, Token::RSquare));
+    assert_eq!(next(), mk(07, 01, Token::Val));
+    assert_eq!(next(), mk(07, 05, Token::AlphaNumId("str".to_owned())));
+    assert_eq!(next(), mk(07, 09, Token::Equal));
+    assert_eq!(next(), mk(07, 11, Token::Str("foo".to_owned())));
+    assert_eq!(next(), mk(08, 01, Token::Val));
+    assert_eq!(next(), mk(08, 05, Token::SymbolicId("<=>".to_owned())));
+    assert_eq!(next(), mk(08, 09, Token::Equal));
+    assert_eq!(next(), mk(09, 03, Token::Str("bar quz".to_owned())));
+    assert_eq!(next(), mk(11, 01, Token::Val));
+    assert_eq!(next(), mk(11, 05, Token::AlphaNumId("c".to_owned())));
+    assert_eq!(next(), mk(11, 07, Token::Equal));
+    assert_eq!(next(), mk(11, 09, Token::Char(63)));
+    assert_eq!(next(), mk(11, 09, Token::EOF));
   }
 }

@@ -75,6 +75,8 @@ pub enum Token {
   AlphaNumId(String),
   /// definitely not a structure identifier (symbolic).
   SymbolicId(String),
+  /// not actually a token, but makes the api simpler.
+  EOF,
 }
 
 impl Token {
@@ -138,6 +140,7 @@ impl Token {
       Self::Char(_) => "a character constant",
       Self::TyVar(_) => "a type variable",
       Self::AlphaNumId(_) | Self::SymbolicId(_) => "an identifier",
+      Self::EOF => "end of file",
     }
   }
 }
