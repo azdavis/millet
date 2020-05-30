@@ -145,6 +145,8 @@ impl Token {
   }
 }
 
+/// this is here (and not in ast.rs) because we know when lexing whether
+/// something a type var
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TyVar<I> {
   pub name: I,
