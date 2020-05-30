@@ -1,3 +1,4 @@
+use crate::ident::Ident;
 use crate::source::{Loc, Located, SourceFileId};
 use crate::token::{Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 use std::fmt;
@@ -124,6 +125,7 @@ impl<'s> Lexer<'s> {
         let name = std::str::from_utf8(&self.bs[start..self.i])
           .unwrap()
           .to_owned();
+        let name = Ident::new(name);
         return Ok(Token::TyVar(TyVar { name, equality }));
       }
       Some(AlphaNum::Alpha) => {

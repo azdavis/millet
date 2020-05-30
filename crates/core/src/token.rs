@@ -1,4 +1,4 @@
-use std::fmt;
+use crate::ident::Ident;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
@@ -70,7 +70,7 @@ pub enum Token {
   // TyCon, Lab, StrId) without having the lexer be sophisticated to the point
   // of essentially being a parser. but, we can determine whether something is a
   // TyVar, and we can also know whether something might be a valid StrId.
-  TyVar(TyVar),
+  TyVar(TyVar<Ident>),
   /// maybe a structure identifier (alphanumeric and doesn't start with prime).
   AlphaNumId(String),
   /// definitely not a structure identifier (symbolic).
@@ -145,15 +145,9 @@ impl Token {
   }
 }
 
-impl fmt::Display for Token {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    self.desc().fmt(f)
-  }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct TyVar {
-  pub name: String,
+pub struct TyVar<I> {
+  pub name: I,
   pub equality: bool,
 }
 
