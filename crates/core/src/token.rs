@@ -2,7 +2,7 @@ use crate::ident::Ident;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
-  // reserved words
+  // core reserved words
   Abstype,
   And,
   Andalso,
@@ -51,6 +51,17 @@ pub enum Token {
   BigArrow,
   Arrow,
   Pound,
+  // modules reserved words
+  Eqtype,
+  Functor,
+  Include,
+  Sharing,
+  Sig,
+  Signature,
+  Struct,
+  Structure,
+  Where,
+  ColonGt,
   /// not a reserved word. only used in qualified names. not strictly speaking
   /// an "item of lexical analysis" as per the Definition but it's easier to
   /// handle it as such and figure out the qualified names later (in parsing).
@@ -130,6 +141,16 @@ impl Token {
       Self::BigArrow => "`=>`",
       Self::Arrow => "`->`",
       Self::Pound => "`#`",
+      Self::Eqtype => "`eqtype`",
+      Self::Functor => "`functor`",
+      Self::Include => "`include`",
+      Self::Sharing => "`sharing`",
+      Self::Sig => "`sig`",
+      Self::Signature => "`signature`",
+      Self::Struct => "`struct`",
+      Self::Structure => "`structure`",
+      Self::Where => "`where`",
+      Self::ColonGt => "`:>`",
       Self::Dot => "`.`",
       Self::MaybeNumLab(_) | Self::DecInt(_) | Self::HexInt(_) => {
         "an integer constant"
@@ -155,24 +176,32 @@ pub struct TyVar<I> {
 
 /// These look like alphanumeric identifiers. Sorted first by length, then
 /// alphabetically.
-pub const ALPHA: [(&[u8], Token); 32] = [
+pub const ALPHA: [(&[u8], Token); 41] = [
   // 9
   (b"exception", Token::Exception),
+  (b"signature", Token::Signature),
+  (b"structure", Token::Structure),
   // 8
   (b"datatype", Token::Datatype),
   (b"withtype", Token::Withtype),
   // 7
   (b"abstype", Token::Abstype),
   (b"andalso", Token::Andalso),
+  (b"functor", Token::Functor),
+  (b"include", Token::Include),
+  (b"sharing", Token::Sharing),
   // 6
+  (b"eqtype", Token::Eqtype),
   (b"handle", Token::Handle),
   (b"infixr", Token::Infixr),
   (b"nonfix", Token::Nonfix),
   (b"orelse", Token::Orelse),
+  (b"struct", Token::Struct),
   // 5
   (b"infix", Token::Infix),
   (b"local", Token::Local),
   (b"raise", Token::Raise),
+  (b"where", Token::Where),
   (b"while", Token::While),
   // 4
   (b"case", Token::Case),
@@ -187,6 +216,7 @@ pub const ALPHA: [(&[u8], Token); 32] = [
   (b"fun", Token::Fun),
   (b"let", Token::Let),
   (b"rec", Token::Rec),
+  (b"sig", Token::Sig),
   (b"val", Token::Val),
   // 2
   (b"as", Token::As),
@@ -200,9 +230,10 @@ pub const ALPHA: [(&[u8], Token); 32] = [
 
 /// These look like symbolic identifiers. Sorted first by length, then
 /// alphabetically.
-pub const SYMBOLIC: [(&[u8], Token); 6] = [
+pub const SYMBOLIC: [(&[u8], Token); 7] = [
   // 2
   (b"->", Token::Arrow),
+  (b":>", Token::ColonGt),
   (b"=>", Token::BigArrow),
   // 1
   (b":", Token::Colon),
