@@ -76,9 +76,9 @@ pub enum Dec<I> {
   Open(Vec<Long<I>>),
   /// requires decs.len() >= 2
   Seq(Vec<Dec<I>>),
-  /// requires d >= 1 && !vids.is_empty()
+  /// requires !vids.is_empty()
   Infix(u32, Vec<I>),
-  /// requires d >= 1 && !vids.is_empty()
+  /// requires !vids.is_empty()
   Infixr(u32, Vec<I>),
   /// requires !vids.is_empty()
   Nonfix(Vec<I>),
