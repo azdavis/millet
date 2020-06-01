@@ -62,13 +62,13 @@ pub enum Dec<I> {
   Val(Vec<TyVar<I>>, Vec<ValBind<I>>),
   /// requires !fval_binds.is_empty()
   Fun(Vec<TyVar<I>>, Vec<FValBind<I>>),
-  /// requires !typ_binds.is_empty()
-  Type(Vec<TypBind<I>>),
+  /// requires !ty_binds.is_empty()
+  Type(Vec<TyBind<I>>),
   /// requires !dat_binds.is_empty()
-  Datatype(Vec<DatBind<I>>, Vec<TypBind<I>>),
+  Datatype(Vec<DatBind<I>>, Vec<TyBind<I>>),
   DatatypeCopy(I, Long<I>),
   /// requires !dat_binds.is_empty()
-  Abstype(Vec<DatBind<I>>, Vec<TypBind<I>>, Box<Dec<I>>),
+  Abstype(Vec<DatBind<I>>, Vec<TyBind<I>>, Box<Dec<I>>),
   /// requires !ex_binds.is_empty()
   Exception(Vec<ExBind<I>>),
   Local(Box<Dec<I>>, Box<Dec<I>>),
@@ -103,7 +103,7 @@ pub struct FValBindCase<I> {
   pub body: Exp<I>,
 }
 
-pub struct TypBind<I> {
+pub struct TyBind<I> {
   pub ty_vars: Vec<TyVar<I>>,
   pub ty_con: I,
   pub ty: Ty<I>,
