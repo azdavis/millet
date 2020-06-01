@@ -3,6 +3,7 @@ use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
 use crate::source::{Loc, Located};
 use crate::token::Token;
+use std::collections::HashMap;
 use std::convert::TryInto as _;
 use std::fmt;
 
@@ -17,6 +18,7 @@ pub fn get<'s>(lex: Lexer<'s>) -> Result<()> {
 pub enum ParseError {
   LexError(LexError),
   ExpectedButFound(&'static str, &'static str),
+  InfixWithoutOp(Ident),
 }
 
 impl fmt::Display for ParseError {
@@ -26,6 +28,9 @@ impl fmt::Display for ParseError {
       Self::ExpectedButFound(exp, fnd) => {
         write!(f, "expected {}, found {}", exp, fnd)
       }
+      Self::InfixWithoutOp(id) => {
+        write!(f, "infix identifier `{}` used without preceding `op`", id)
+      }
     }
   }
 }
@@ -34,7 +39,7 @@ impl std::error::Error for ParseError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
       Self::LexError(e) => Some(e),
-      Self::ExpectedButFound(..) => None,
+      Self::ExpectedButFound(..) | Self::InfixWithoutOp(..) => None,
     }
   }
 }
@@ -45,9 +50,20 @@ impl From<LexError> for ParseError {
   }
 }
 
+struct Fixity {
+  prec: u32,
+  assoc: Assoc,
+}
+
+enum Assoc {
+  Left,
+  Right,
+}
+
 struct Parser<'s> {
   lex: Lexer<'s>,
   lookahead: Option<(Loc, Token)>,
+  fixity: HashMap<Ident, Fixity>,
 }
 
 impl<'s> Parser<'s> {
@@ -55,6 +71,7 @@ impl<'s> Parser<'s> {
     Self {
       lex,
       lookahead: None,
+      fixity: HashMap::new(),
     }
   }
 
@@ -177,7 +194,10 @@ impl<'s> Parser<'s> {
         }
         Exp::Let(dec, exprs)
       }
-      Token::AlphaNumId(..) | Token::SymbolicId(..) => {
+      Token::AlphaNumId(ref id) | Token::SymbolicId(ref id) => {
+        if self.fixity.contains_key(id) {
+          return Err(loc.wrap(ParseError::InfixWithoutOp(id.clone())));
+        }
         self.back(loc, tok);
         Exp::LongVid(self.long_vid()?)
       }
