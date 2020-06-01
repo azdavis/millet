@@ -82,9 +82,9 @@ pub enum Token {
   // TyVar, and we can also know whether something might be a valid StrId.
   TyVar(TyVar<Ident>),
   /// maybe a structure identifier (alphanumeric and doesn't start with prime).
-  AlphaNumId(String),
+  AlphaNumId(Ident),
   /// definitely not a structure identifier (symbolic).
-  SymbolicId(String),
+  SymbolicId(Ident),
   /// not actually a token, but makes the api simpler.
   EOF,
 }

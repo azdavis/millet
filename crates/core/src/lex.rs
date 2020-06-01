@@ -122,10 +122,8 @@ impl<'s> Lexer<'s> {
           }
           self.advance(1);
         }
-        let name = std::str::from_utf8(&self.bs[start..self.i])
-          .unwrap()
-          .to_owned();
-        let name = Ident::new(name);
+        let name =
+          mk_ident(std::str::from_utf8(&self.bs[start..self.i]).unwrap());
         return Ok(Token::TyVar(TyVar { name, equality }));
       }
       Some(AlphaNum::Alpha) => {
@@ -150,7 +148,7 @@ impl<'s> Lexer<'s> {
             }
           }
         }
-        let got = std::str::from_utf8(got).unwrap().to_owned();
+        let got = mk_ident(std::str::from_utf8(got).unwrap());
         return Ok(Token::AlphaNumId(got));
       }
       Some(AlphaNum::NumOrUnderscore) | None => {}
@@ -375,7 +373,7 @@ impl<'s> Lexer<'s> {
           return Ok(tok.clone());
         }
       }
-      let got = std::str::from_utf8(got).unwrap().to_owned();
+      let got = mk_ident(std::str::from_utf8(got).unwrap());
       return Ok(Token::SymbolicId(got));
     }
     // other reserved words (that couldn't be mistaken for identifiers)
@@ -561,9 +559,13 @@ fn mk_real(
   Ok(Token::Real((before_dec + after_dec) * 10_f64.powf(exp)))
 }
 
+fn mk_ident(s: &str) -> Ident {
+  Ident::new(s.to_owned())
+}
+
 #[cfg(test)]
 mod tests {
-  use super::{get, hex, Loc, Located, SourceFileId, Token};
+  use super::{get, hex, mk_ident, Loc, Located, SourceFileId, Token};
   use pretty_assertions::assert_eq;
 
   #[test]
@@ -611,23 +613,23 @@ mod tests {
     let mk = |line, col, tok| Located::new(Loc::new(file_id, line, col), tok);
     let mut next = || out.next().unwrap();
     assert_eq!(next(), mk(01, 01, Token::Val));
-    assert_eq!(next(), mk(01, 05, Token::AlphaNumId("decInt".to_owned())));
+    assert_eq!(next(), mk(01, 05, Token::AlphaNumId(mk_ident("decInt"))));
     assert_eq!(next(), mk(01, 12, Token::Equal));
     assert_eq!(next(), mk(01, 14, Token::DecInt(123)));
     assert_eq!(next(), mk(02, 01, Token::Val));
-    assert_eq!(next(), mk(02, 05, Token::AlphaNumId("hexInt".to_owned())));
+    assert_eq!(next(), mk(02, 05, Token::AlphaNumId(mk_ident("hexInt"))));
     assert_eq!(next(), mk(02, 12, Token::Equal));
     assert_eq!(next(), mk(02, 14, Token::HexInt(65278)));
     assert_eq!(next(), mk(04, 01, Token::Val));
-    assert_eq!(next(), mk(04, 05, Token::AlphaNumId("decWord".to_owned())));
+    assert_eq!(next(), mk(04, 05, Token::AlphaNumId(mk_ident("decWord"))));
     assert_eq!(next(), mk(04, 13, Token::Equal));
     assert_eq!(next(), mk(04, 15, Token::DecWord(345)));
     assert_eq!(next(), mk(05, 01, Token::Val));
-    assert_eq!(next(), mk(05, 05, Token::AlphaNumId("hexWord".to_owned())));
+    assert_eq!(next(), mk(05, 05, Token::AlphaNumId(mk_ident("hexWord"))));
     assert_eq!(next(), mk(05, 13, Token::Equal));
     assert_eq!(next(), mk(05, 15, Token::HexWord(48879)));
     assert_eq!(next(), mk(06, 01, Token::Val));
-    assert_eq!(next(), mk(06, 05, Token::AlphaNumId("reals".to_owned())));
+    assert_eq!(next(), mk(06, 05, Token::AlphaNumId(mk_ident("reals"))));
     assert_eq!(next(), mk(06, 11, Token::Equal));
     assert_eq!(next(), mk(06, 13, Token::LSquare));
     assert_eq!(next(), mk(06, 14, Token::Real(0.7)));
@@ -637,15 +639,15 @@ mod tests {
     assert_eq!(next(), mk(06, 27, Token::Real(0.0000003)));
     assert_eq!(next(), mk(06, 31, Token::RSquare));
     assert_eq!(next(), mk(07, 01, Token::Val));
-    assert_eq!(next(), mk(07, 05, Token::AlphaNumId("str".to_owned())));
+    assert_eq!(next(), mk(07, 05, Token::AlphaNumId(mk_ident("str"))));
     assert_eq!(next(), mk(07, 09, Token::Equal));
     assert_eq!(next(), mk(07, 11, Token::Str("foo".to_owned())));
     assert_eq!(next(), mk(08, 01, Token::Val));
-    assert_eq!(next(), mk(08, 05, Token::SymbolicId("<=>".to_owned())));
+    assert_eq!(next(), mk(08, 05, Token::SymbolicId(mk_ident("<=>"))));
     assert_eq!(next(), mk(08, 09, Token::Equal));
     assert_eq!(next(), mk(09, 03, Token::Str("bar quz".to_owned())));
     assert_eq!(next(), mk(11, 01, Token::Val));
-    assert_eq!(next(), mk(11, 05, Token::AlphaNumId("c".to_owned())));
+    assert_eq!(next(), mk(11, 05, Token::AlphaNumId(mk_ident("c"))));
     assert_eq!(next(), mk(11, 07, Token::Equal));
     assert_eq!(next(), mk(11, 09, Token::Char(63)));
     assert_eq!(next(), mk(11, 09, Token::EOF));
