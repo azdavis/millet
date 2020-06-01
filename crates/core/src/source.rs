@@ -10,6 +10,10 @@ impl Loc {
   pub fn new(file_id: SourceFileId, line: usize, col: usize) -> Self {
     Self { file_id, line, col }
   }
+
+  pub fn wrap<T>(self, val: T) -> Located<T> {
+    Located { val, loc: self }
+  }
 }
 
 /// A generic wrapper for some value which was ultimately derived from some
@@ -18,12 +22,6 @@ impl Loc {
 pub struct Located<T> {
   pub val: T,
   pub loc: Loc,
-}
-
-impl<T> Located<T> {
-  pub fn new(loc: Loc, val: T) -> Self {
-    Self { loc, val }
-  }
 }
 
 /// An opaque identifier for a source file.

@@ -70,10 +70,7 @@ impl<'s> Lexer<'s> {
       // comment end
       if b == b'*' && self.bs.get(self.i + 1) == Some(&b')') {
         if comments == 0 {
-          return Err(Located::new(
-            self.cur_loc(),
-            LexError::UnmatchedCloseComment,
-          ));
+          return Err(self.cur_loc().wrap(LexError::UnmatchedCloseComment));
         }
         self.advance(2);
         comments -= 1;
@@ -88,14 +85,14 @@ impl<'s> Lexer<'s> {
       let loc = self.cur_loc();
       self.last_loc = loc;
       return match self.next_impl(b) {
-        Ok(t) => Ok(Located::new(loc, t)),
-        Err(e) => Err(Located::new(loc, e)),
+        Ok(t) => Ok(loc.wrap(t)),
+        Err(e) => Err(loc.wrap(e)),
       };
     }
     if comments == 0 {
-      Ok(Located::new(self.last_loc, Token::EOF))
+      Ok(self.last_loc.wrap(Token::EOF))
     } else {
-      Err(Located::new(self.cur_loc(), LexError::UnmatchedOpenComment))
+      Err(self.cur_loc().wrap(LexError::UnmatchedOpenComment))
     }
   }
 
@@ -565,7 +562,7 @@ fn mk_ident(s: &str) -> Ident {
 
 #[cfg(test)]
 mod tests {
-  use super::{get, hex, mk_ident, Loc, Located, SourceFileId, Token};
+  use super::{get, hex, mk_ident, Loc, SourceFileId, Token};
   use pretty_assertions::assert_eq;
 
   #[test]
@@ -610,7 +607,7 @@ mod tests {
     let file_id = SourceFileId::new(0);
     let inp = include_bytes!("../../../tests/simple.sml");
     let mut out = get(file_id, inp);
-    let mk = |line, col, tok| Located::new(Loc::new(file_id, line, col), tok);
+    let mk = |line, col, tok| Loc::new(file_id, line, col).wrap(tok);
     let mut next = || out.next().unwrap();
     assert_eq!(next(), mk(01, 01, Token::Val));
     assert_eq!(next(), mk(01, 05, Token::AlphaNumId(mk_ident("decInt"))));
