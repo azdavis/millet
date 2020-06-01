@@ -1,4 +1,4 @@
-use crate::ast::{Dec, Exp, Label, Long, Match, Row};
+use crate::ast::{Dec, Exp, Label, Long, Match, Row, Ty};
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
 use crate::source::{Loc, Located};
@@ -50,7 +50,7 @@ impl From<LexError> for ParseError {
   }
 }
 
-struct InfixOp {
+struct OpInfo {
   num: u32,
   assoc: Assoc,
 }
@@ -63,7 +63,7 @@ enum Assoc {
 struct Parser<'s> {
   lex: Lexer<'s>,
   lookahead: Option<(Loc, Token)>,
-  fixity: HashMap<Ident, InfixOp>,
+  ops: HashMap<Ident, OpInfo>,
 }
 
 impl<'s> Parser<'s> {
@@ -71,7 +71,7 @@ impl<'s> Parser<'s> {
     Self {
       lex,
       lookahead: None,
-      fixity: HashMap::new(),
+      ops: HashMap::new(),
     }
   }
 
@@ -100,7 +100,11 @@ impl<'s> Parser<'s> {
     self.lookahead = Some((loc, tok));
   }
 
-  fn at_exp(&mut self) -> Result<Located<Exp<Ident>>> {
+  /// returns:
+  /// - Ok(Some(..)) if did parse an atomic exp.
+  /// - Ok(None) if couldn't parse an atomic exp and didn't consume tokens.
+  /// - Err(..) if couldn't parse an atomic exp and did consume tokens.
+  fn at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
     let (loc, tok) = self.next()?;
     let exp = match tok {
       Token::MaybeNumLab(n) | Token::DecInt(n) => Exp::DecInt(n),
@@ -130,7 +134,7 @@ impl<'s> Parser<'s> {
       Token::LRound => {
         let (loc2, tok2) = self.next()?;
         if let Token::RRound = tok2 {
-          return Ok(loc.wrap(Exp::Tuple(Vec::new())));
+          return Ok(Some(loc.wrap(Exp::Tuple(Vec::new()))));
         }
         self.back(loc2, tok2);
         let fst = self.exp()?;
@@ -169,7 +173,7 @@ impl<'s> Parser<'s> {
       Token::LSquare => {
         let (loc2, tok2) = self.next()?;
         if let Token::RSquare = tok2 {
-          return Ok(loc.wrap(Exp::List(Vec::new())));
+          return Ok(Some(loc.wrap(Exp::List(Vec::new()))));
         }
         self.back(loc2, tok2);
         let mut exprs = Vec::new();
@@ -200,15 +204,20 @@ impl<'s> Parser<'s> {
         Exp::Let(dec, exprs)
       }
       Token::AlphaNumId(ref id) | Token::SymbolicId(ref id) => {
-        if self.fixity.contains_key(id) {
+        if self.ops.contains_key(id) {
           return Err(loc.wrap(ParseError::InfixWithoutOp(id.clone())));
         }
         self.back(loc, tok);
         Exp::LongVid(self.long_vid()?)
       }
-      _ => return self.fail("an expression", loc, tok),
+      _ => {
+        // this is the one time we return Ok(None). we need this info to do
+        // application expressions correctly.
+        self.back(loc, tok);
+        return Ok(None);
+      }
     };
-    Ok(loc.wrap(exp))
+    Ok(Some(loc.wrap(exp)))
   }
 
   fn long_vid(&mut self) -> Result<Long<Ident>> {
@@ -277,7 +286,38 @@ impl<'s> Parser<'s> {
         let match_ = self.match_()?;
         Exp::Fn(match_)
       }
-      _ => todo!(),
+      _ => {
+        self.back(loc, tok);
+        let mut exp = match self.at_exp()? {
+          Some(x) => x,
+          None => {
+            let (loc, tok) = self.next()?;
+            return self.fail("an expression", loc, tok);
+          }
+        };
+        while let Some(x) = self.at_exp()? {
+          exp = exp.loc.wrap(Exp::App(exp.into(), x.into()));
+        }
+        loop {
+          let (loc, tok) = self.next()?;
+          exp = exp.loc.wrap(match tok {
+            Token::AlphaNumId(id) | Token::SymbolicId(id) => {
+              let op_info =
+                self.ops.get(&id).expect("should have parsed as App");
+              Exp::InfixApp(exp.into(), loc.wrap(id), self.exp()?.into())
+            }
+            Token::Colon => Exp::Typed(exp.into(), self.ty()?),
+            Token::Andalso => Exp::Andalso(exp.into(), self.exp()?.into()),
+            Token::Orelse => Exp::Orelse(exp.into(), self.exp()?.into()),
+            Token::Handle => Exp::Handle(exp.into(), self.match_()?),
+            _ => {
+              self.back(loc, tok);
+              break;
+            }
+          });
+        }
+        exp.val
+      }
     };
     Ok(loc.wrap(exp))
   }
@@ -287,6 +327,10 @@ impl<'s> Parser<'s> {
   }
 
   fn match_(&mut self) -> Result<Match<Ident>> {
+    todo!()
+  }
+
+  fn ty(&mut self) -> Result<Located<Ty<Ident>>> {
     todo!()
   }
 
