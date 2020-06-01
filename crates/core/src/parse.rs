@@ -1,0 +1,237 @@
+use crate::ast::{Dec, Exp, Label, Long, Row};
+use crate::ident::Ident;
+use crate::lex::{LexError, Lexer};
+use crate::source::{Loc, Located};
+use crate::token::Token;
+use std::convert::TryInto as _;
+use std::fmt;
+
+pub type Result<T> = std::result::Result<T, Located<ParseError>>;
+
+pub fn get<'s>(lex: Lexer<'s>) -> Result<()> {
+  let p = Parser::new(lex);
+  Ok(())
+}
+
+#[derive(Debug)]
+pub enum ParseError {
+  LexError(LexError),
+  ExpectedButFound(&'static str, &'static str),
+}
+
+impl fmt::Display for ParseError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::LexError(e) => e.fmt(f),
+      Self::ExpectedButFound(exp, fnd) => {
+        write!(f, "expected {}, found {}", exp, fnd)
+      }
+    }
+  }
+}
+
+impl std::error::Error for ParseError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Self::LexError(e) => Some(e),
+      Self::ExpectedButFound(..) => None,
+    }
+  }
+}
+
+impl From<LexError> for ParseError {
+  fn from(val: LexError) -> Self {
+    Self::LexError(val)
+  }
+}
+
+struct Parser<'s> {
+  lex: Lexer<'s>,
+  lookahead: Option<(Loc, Token)>,
+}
+
+impl<'s> Parser<'s> {
+  fn new(lex: Lexer<'s>) -> Self {
+    Self {
+      lex,
+      lookahead: None,
+    }
+  }
+
+  fn next(&mut self) -> Result<(Loc, Token)> {
+    if let Some(look) = self.lookahead.take() {
+      return Ok(look);
+    }
+    let tok = match self.lex.next() {
+      Ok(x) => x,
+      Err(e) => return Err(e.loc.wrap(e.val.into())),
+    };
+    Ok((tok.loc, tok.val))
+  }
+
+  fn eat(&mut self, tok: Token) -> Result<()> {
+    let (loc, got) = self.next()?;
+    if got == tok {
+      Ok(())
+    } else {
+      self.fail(tok.desc(), loc, got)
+    }
+  }
+
+  fn back(&mut self, loc: Loc, tok: Token) {
+    assert!(self.lookahead.is_none());
+    self.lookahead = Some((loc, tok));
+  }
+
+  fn at_exp(&mut self) -> Result<Located<Exp<Ident>>> {
+    let (loc, tok) = self.next()?;
+    let exp = match tok {
+      Token::MaybeNumLab(n) | Token::DecInt(n) => Exp::DecInt(n),
+      Token::HexInt(n) => Exp::HexInt(n),
+      Token::DecWord(n) => Exp::DecWord(n),
+      Token::HexWord(n) => Exp::HexWord(n),
+      Token::Real(n) => Exp::Real(n),
+      Token::Str(s) => Exp::Str(s),
+      Token::Char(c) => Exp::Char(c),
+      Token::Op => Exp::LongVid(self.long_vid()?),
+      Token::LCurly => {
+        let mut rows = Vec::new();
+        while let Ok(lab) = self.label() {
+          self.eat(Token::Equal)?;
+          let exp = self.exp()?;
+          rows.push(Row { lab, exp });
+        }
+        self.eat(Token::RCurly)?;
+        Exp::Record(rows)
+      }
+      Token::Pound => Exp::Select(self.label()?),
+      Token::LRound => {
+        let (loc2, tok2) = self.next()?;
+        if let Token::RRound = tok2 {
+          return Ok(loc.wrap(Exp::Tuple(Vec::new())));
+        }
+        self.back(loc2, tok2);
+        let fst = self.exp()?;
+        let (loc2, tok2) = self.next()?;
+        match tok2 {
+          Token::RRound => fst.val,
+          Token::Comma => {
+            let mut exprs = vec![fst];
+            loop {
+              exprs.push(self.exp()?);
+              let (loc2, tok2) = self.next()?;
+              match tok2 {
+                Token::RRound => break,
+                Token::Comma => continue,
+                _ => return self.fail("`)` or `,`", loc2, tok2),
+              }
+            }
+            Exp::Tuple(exprs)
+          }
+          Token::Semicolon => {
+            let mut exprs = vec![fst];
+            loop {
+              exprs.push(self.exp()?);
+              let (loc2, tok2) = self.next()?;
+              match tok2 {
+                Token::RRound => break,
+                Token::Semicolon => continue,
+                _ => return self.fail("`)` or `;`", loc2, tok2),
+              }
+            }
+            Exp::Sequence(exprs)
+          }
+          _ => return self.fail("`)`, `,`, or `;`", loc2, tok2),
+        }
+      }
+      Token::LSquare => {
+        let (loc2, tok2) = self.next()?;
+        if let Token::RSquare = tok2 {
+          return Ok(loc.wrap(Exp::List(Vec::new())));
+        }
+        self.back(loc2, tok2);
+        let mut exprs = Vec::new();
+        loop {
+          exprs.push(self.exp()?);
+          let (loc2, tok2) = self.next()?;
+          match tok2 {
+            Token::RSquare => break,
+            Token::Comma => continue,
+            _ => return self.fail("`]` or `,`", loc2, tok2),
+          }
+        }
+        Exp::List(exprs)
+      }
+      Token::Let => {
+        let dec = self.dec()?;
+        self.eat(Token::In)?;
+        let mut exprs = Vec::new();
+        loop {
+          exprs.push(self.exp()?);
+          let (loc2, tok2) = self.next()?;
+          match tok2 {
+            Token::End => break,
+            Token::Semicolon => continue,
+            _ => return self.fail("`end` or `;`", loc2, tok2),
+          }
+        }
+        Exp::Let(dec, exprs)
+      }
+      Token::AlphaNumId(..) | Token::SymbolicId(..) => {
+        self.back(loc, tok);
+        Exp::LongVid(self.long_vid()?)
+      }
+      _ => return self.fail("an expression", loc, tok),
+    };
+    Ok(loc.wrap(exp))
+  }
+
+  fn long_vid(&mut self) -> Result<Long<Ident>> {
+    let mut idents = Vec::new();
+    loop {
+      let (loc, tok) = self.next()?;
+      match tok {
+        Token::AlphaNumId(id) => {
+          idents.push(loc.wrap(id));
+          let (loc2, tok2) = self.next()?;
+          if let Token::Dot = tok2 {
+            continue;
+          } else {
+            self.back(loc2, tok2);
+            return Ok(Long { idents });
+          }
+        }
+        Token::SymbolicId(id) => {
+          idents.push(loc.wrap(id));
+          return Ok(Long { idents });
+        }
+        _ => return self.fail("an identifier", loc, tok),
+      }
+    }
+  }
+
+  /// iff this returns Err(..), then this consumed no tokens.
+  fn label(&mut self) -> Result<Located<Label>> {
+    let (loc, tok) = self.next()?;
+    let lab = match tok {
+      Token::MaybeNumLab(n) => Label::Num(n.try_into().unwrap()),
+      Token::AlphaNumId(id) | Token::SymbolicId(id) => Label::Vid(id),
+      _ => return self.fail("a label", loc, tok),
+    };
+    Ok(loc.wrap(lab))
+  }
+
+  fn exp(&mut self) -> Result<Located<Exp<Ident>>> {
+    todo!()
+  }
+
+  fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
+    todo!()
+  }
+
+  fn fail<T>(&mut self, exp: &'static str, loc: Loc, tok: Token) -> Result<T> {
+    let desc = tok.desc();
+    self.back(loc, tok);
+    Err(loc.wrap(ParseError::ExpectedButFound(exp, desc)))
+  }
+}
