@@ -35,12 +35,12 @@ pub enum Exp<I> {
 
 pub struct Long<I> {
   /// requires !idents.is_empty()
-  idents: Vec<I>,
+  pub idents: Vec<I>,
 }
 
 pub struct Row<I> {
-  lab: Label,
-  exp: Exp<I>,
+  pub lab: Label,
+  pub exp: Exp<I>,
 }
 
 pub enum Label {
@@ -49,12 +49,12 @@ pub enum Label {
 }
 
 pub struct Match<I> {
-  arms: Vec<Arm<I>>,
+  pub arms: Vec<Arm<I>>,
 }
 
 pub struct Arm<I> {
-  pat: Pat<I>,
-  exp: Exp<I>,
+  pub pat: Pat<I>,
+  pub exp: Exp<I>,
 }
 
 pub enum Dec<I> {
@@ -85,45 +85,45 @@ pub enum Dec<I> {
 }
 
 pub struct ValBind<I> {
-  rec: bool,
-  pat: Pat<I>,
-  exp: Exp<I>,
+  pub rec: bool,
+  pub pat: Pat<I>,
+  pub exp: Exp<I>,
 }
 
 pub struct FValBind<I> {
   /// requires !cases.is_empty()
-  cases: Vec<FValBindCase<I>>,
+  pub cases: Vec<FValBindCase<I>>,
 }
 
 pub struct FValBindCase<I> {
-  name: I,
+  pub name: I,
   /// requires !pats.is_empty()
-  pats: Vec<Pat<I>>,
-  ret_ty: Option<Ty<I>>,
-  body: Exp<I>,
+  pub pats: Vec<Pat<I>>,
+  pub ret_ty: Option<Ty<I>>,
+  pub body: Exp<I>,
 }
 
 pub struct TypBind<I> {
-  ty_vars: Vec<TyVar<I>>,
-  ty_con: I,
-  ty: Ty<I>,
+  pub ty_vars: Vec<TyVar<I>>,
+  pub ty_con: I,
+  pub ty: Ty<I>,
 }
 
 pub struct DatBind<I> {
-  ty_vars: Vec<TyVar<I>>,
-  ty_con: I,
+  pub ty_vars: Vec<TyVar<I>>,
+  pub ty_con: I,
   /// requires !cons.is_empty()
-  cons: Vec<ConBind<I>>,
+  pub cons: Vec<ConBind<I>>,
 }
 
 pub struct ConBind<I> {
-  name: I,
-  ty: Option<Ty<I>>,
+  pub name: I,
+  pub ty: Option<Ty<I>>,
 }
 
 pub struct ExBind<I> {
-  name: I,
-  inner: Option<ExBindInner<I>>,
+  pub name: I,
+  pub inner: Option<ExBindInner<I>>,
 }
 
 pub enum ExBindInner<I> {
@@ -169,6 +169,6 @@ pub enum Ty<I> {
 }
 
 pub struct TyRow<I> {
-  lab: Label,
-  ty: Ty<I>,
+  pub lab: Label,
+  pub ty: Ty<I>,
 }
