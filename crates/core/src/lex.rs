@@ -532,10 +532,10 @@ fn hex(b: u8) -> Option<u8> {
 
 fn mk_int(n: i32, starts_with_zero: bool) -> Token {
   // a number could be a NumLab if is positive and doesn't have a leading zero.
-  if n <= 0 || starts_with_zero {
-    Token::DecInt(n)
-  } else {
+  if n > 0 && !starts_with_zero {
     Token::MaybeNumLab(n)
+  } else {
+    Token::DecInt(n)
   }
 }
 
