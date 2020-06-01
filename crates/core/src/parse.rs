@@ -113,12 +113,17 @@ impl<'s> Parser<'s> {
       Token::Op => Exp::LongVid(self.long_vid()?),
       Token::LCurly => {
         let mut rows = Vec::new();
-        while let Ok(lab) = self.label() {
+        loop {
+          let (loc2, tok2) = self.next()?;
+          if let Token::RCurly = tok2 {
+            break;
+          }
+          self.back(loc2, tok2);
+          let lab = self.label()?;
           self.eat(Token::Equal)?;
           let exp = self.exp()?;
           rows.push(Row { lab, exp });
         }
-        self.eat(Token::RCurly)?;
         Exp::Record(rows)
       }
       Token::Pound => Exp::Select(self.label()?),
@@ -230,7 +235,6 @@ impl<'s> Parser<'s> {
     }
   }
 
-  /// iff this returns Err(..), then this consumed no tokens.
   fn label(&mut self) -> Result<Located<Label>> {
     let (loc, tok) = self.next()?;
     let lab = match tok {
@@ -250,8 +254,6 @@ impl<'s> Parser<'s> {
   }
 
   fn fail<T>(&mut self, exp: &'static str, loc: Loc, tok: Token) -> Result<T> {
-    let desc = tok.desc();
-    self.back(loc, tok);
-    Err(loc.wrap(ParseError::ExpectedButFound(exp, desc)))
+    Err(loc.wrap(ParseError::ExpectedButFound(exp, tok.desc())))
   }
 }
