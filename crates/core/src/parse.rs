@@ -1,8 +1,8 @@
-use crate::ast::{Dec, Exp, Label, Long, Match, Row, Ty};
+use crate::ast::{Arm, Dec, Exp, Label, Long, Match, Pat, Row, Ty, ValBind};
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
 use crate::source::{Loc, Located};
-use crate::token::Token;
+use crate::token::{Token, TyVar};
 use std::collections::HashMap;
 use std::convert::TryInto as _;
 use std::fmt;
@@ -323,14 +323,100 @@ impl<'s> Parser<'s> {
   }
 
   fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
-    todo!()
+    let (loc, tok) = self.next()?;
+    let dec = match tok {
+      Token::Val => {
+        let ty_vars = self.ty_var_seq()?;
+        let mut val_binds = Vec::new();
+        loop {
+          let (loc, tok) = self.next()?;
+          let rec = if let Token::Rec = tok {
+            true
+          } else {
+            self.back(loc, tok);
+            false
+          };
+          let pat = self.pat()?;
+          self.eat(Token::Equal)?;
+          let exp = self.exp()?;
+          val_binds.push(ValBind { rec, pat, exp });
+          let (loc, tok) = self.next()?;
+          if let Token::And = tok {
+            continue;
+          } else {
+            self.back(loc, tok);
+            break;
+          }
+        }
+        Dec::Val(ty_vars, val_binds)
+      }
+      Token::Fun => todo!(),
+      Token::Type => todo!(),
+      Token::Datatype => todo!(),
+      Token::Abstype => todo!(),
+      Token::Exception => todo!(),
+      Token::Local => todo!(),
+      Token::Open => todo!(),
+      Token::Infix => todo!(),
+      Token::Infixr => todo!(),
+      Token::Nonfix => todo!(),
+      _ => return self.fail("a declaration", loc, tok),
+    };
+    Ok(loc.wrap(dec))
   }
 
   fn match_(&mut self) -> Result<Match<Ident>> {
-    todo!()
+    let mut arms = Vec::new();
+    loop {
+      let pat = self.pat()?;
+      self.eat(Token::BigArrow)?;
+      let exp = self.exp()?;
+      arms.push(Arm { pat, exp });
+      let (loc, tok) = self.next()?;
+      if let Token::Bar = tok {
+        continue;
+      } else {
+        self.back(loc, tok);
+        break;
+      }
+    }
+    Ok(Match { arms })
+  }
+
+  fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
+    let (loc, tok) = self.next()?;
+    match tok {
+      Token::TyVar(ty_var) => Ok(vec![loc.wrap(ty_var)]),
+      Token::LRound => {
+        let mut ty_vars = Vec::new();
+        loop {
+          let (loc, tok) = self.next()?;
+          if let Token::TyVar(ty_var) = tok {
+            ty_vars.push(loc.wrap(ty_var));
+          } else {
+            return self.fail("a type variable", loc, tok);
+          }
+          let (loc, tok) = self.next()?;
+          match tok {
+            Token::RRound => break,
+            Token::Comma => continue,
+            _ => return self.fail("`)` or `,`", loc, tok),
+          }
+        }
+        Ok(ty_vars)
+      }
+      _ => {
+        self.back(loc, tok);
+        Ok(Vec::new())
+      }
+    }
   }
 
   fn ty(&mut self) -> Result<Located<Ty<Ident>>> {
+    todo!()
+  }
+
+  fn pat(&mut self) -> Result<Located<Pat<Ident>>> {
     todo!()
   }
 
