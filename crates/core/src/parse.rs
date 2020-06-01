@@ -1,4 +1,4 @@
-use crate::ast::{Dec, Exp, Label, Long, Row};
+use crate::ast::{Dec, Exp, Label, Long, Match, Row};
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
 use crate::source::{Loc, Located};
@@ -50,8 +50,8 @@ impl From<LexError> for ParseError {
   }
 }
 
-struct Fixity {
-  prec: u32,
+struct InfixOp {
+  num: u32,
   assoc: Assoc,
 }
 
@@ -63,7 +63,7 @@ enum Assoc {
 struct Parser<'s> {
   lex: Lexer<'s>,
   lookahead: Option<(Loc, Token)>,
-  fixity: HashMap<Ident, Fixity>,
+  fixity: HashMap<Ident, InfixOp>,
 }
 
 impl<'s> Parser<'s> {
@@ -245,11 +245,48 @@ impl<'s> Parser<'s> {
     Ok(loc.wrap(lab))
   }
 
+  // TODO prec
   fn exp(&mut self) -> Result<Located<Exp<Ident>>> {
-    todo!()
+    let (loc, tok) = self.next()?;
+    let exp = match tok {
+      Token::Raise => {
+        let e = self.exp()?;
+        Exp::Raise(e.into())
+      }
+      Token::If => {
+        let e_cond = self.exp()?;
+        self.eat(Token::Then)?;
+        let e_then = self.exp()?;
+        self.eat(Token::Else)?;
+        let e_else = self.exp()?;
+        Exp::If(e_cond.into(), e_then.into(), e_else.into())
+      }
+      Token::While => {
+        let e_cond = self.exp()?;
+        self.eat(Token::Do)?;
+        let e_body = self.exp()?;
+        Exp::While(e_cond.into(), e_body.into())
+      }
+      Token::Case => {
+        let e_head = self.exp()?;
+        self.eat(Token::Of)?;
+        let match_ = self.match_()?;
+        Exp::Case(e_head.into(), match_)
+      }
+      Token::Fn => {
+        let match_ = self.match_()?;
+        Exp::Fn(match_)
+      }
+      _ => todo!(),
+    };
+    Ok(loc.wrap(exp))
   }
 
   fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
+    todo!()
+  }
+
+  fn match_(&mut self) -> Result<Match<Ident>> {
     todo!()
   }
 
