@@ -96,7 +96,7 @@ pub struct FValBind<I> {
 }
 
 pub struct FValBindCase<I> {
-  pub name: I,
+  pub vid: I,
   /// requires !pats.is_empty()
   pub pats: Vec<Pat<I>>,
   pub ret_ty: Option<Ty<I>>,
@@ -117,12 +117,12 @@ pub struct DatBind<I> {
 }
 
 pub struct ConBind<I> {
-  pub name: I,
+  pub vid: I,
   pub ty: Option<Ty<I>>,
 }
 
 pub struct ExBind<I> {
-  pub name: I,
+  pub vid: I,
   pub inner: Option<ExBindInner<I>>,
 }
 
