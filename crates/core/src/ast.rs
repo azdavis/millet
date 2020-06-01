@@ -172,3 +172,101 @@ pub struct TyRow<I> {
   pub lab: Label,
   pub ty: Ty<I>,
 }
+
+pub enum StrExp<I> {
+  Struct(StrDec<I>),
+  LongStrId(Long<I>),
+  Transparent(Box<StrExp<I>>, SigExp<I>),
+  Opaque(Box<StrExp<I>>, SigExp<I>),
+  FunctorApp(Long<I>, Box<StrExp<I>>),
+  Let(StrDec<I>, Box<StrExp<I>>),
+}
+
+pub enum StrDec<I> {
+  Dec(Dec<I>),
+  /// requires !str_binds.is_empty()
+  Structure(Vec<StrBind<I>>),
+  Local(Box<StrDec<I>>, Box<StrDec<I>>),
+}
+
+pub struct StrBind<I> {
+  pub strid: I,
+  pub exp: StrExp<I>,
+}
+
+pub enum SigExp<I> {
+  Sig(Spec<I>),
+  SigId(Long<I>),
+  Where(Box<SigExp<I>>, Vec<TyVar<I>>, Long<I>, Ty<I>),
+}
+
+pub struct SigBind<I> {
+  pub sigid: I,
+  pub exp: SigExp<I>,
+}
+
+pub enum Spec<I> {
+  /// requires !val_descs.is_empty()
+  Val(Vec<ValDesc<I>>),
+  /// requires !ty_descs.is_empty()
+  Type(Vec<TyDesc<I>>),
+  /// requires !ty_descs.is_empty()
+  Eqtype(Vec<TyDesc<I>>),
+  /// requires !dat_descs.is_empty()
+  Datatype(Vec<DatDesc<I>>),
+  DatatypeCopy(I, Long<I>),
+  /// requires !ex_descs.is_empty()
+  Exception(Vec<ExDesc<I>>),
+  /// requires !str_descs.is_empty()
+  Structure(Vec<StrDesc<I>>),
+  Include(Box<SigExp<I>>),
+  /// requires specs.len() != 1
+  Seq(Vec<Spec<I>>),
+}
+
+pub struct ValDesc<I> {
+  pub vid: I,
+  pub ty: Ty<I>,
+}
+
+pub struct TyDesc<I> {
+  pub ty_vars: Vec<TyVar<I>>,
+  pub ty_con: I,
+}
+
+pub struct DatDesc<I> {
+  pub ty_vars: Vec<TyVar<I>>,
+  pub ty_con: I,
+  /// requires !con_descs.is_empty()
+  pub con_descs: Vec<ConDesc<I>>,
+}
+
+pub struct ConDesc<I> {
+  pub vid: I,
+  pub ty: Option<Ty<I>>,
+}
+
+pub struct ExDesc<I> {
+  pub vid: I,
+  pub ty: Option<Ty<I>>,
+}
+
+pub struct StrDesc<I> {
+  pub str_id: I,
+  pub exp: SigExp<I>,
+}
+
+pub struct FunBind<I> {
+  pub fun_id: Long<I>,
+  pub str_id: Long<I>,
+  pub sig_exp: SigExp<I>,
+  pub str_exp: StrExp<I>,
+}
+
+pub enum TopDec<I> {
+  StrDec(StrDec<I>),
+  /// requires !sig_binds.is_empty()
+  SigDec(Vec<SigBind<I>>),
+  /// requires !fun_binds.is_empty()
+  FunDec(Vec<FunBind<I>>),
+}
