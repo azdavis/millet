@@ -322,6 +322,24 @@ impl<'s> Parser<'s> {
     Ok(loc.wrap(exp))
   }
 
+  fn match_(&mut self) -> Result<Match<Ident>> {
+    let mut arms = Vec::new();
+    loop {
+      let pat = self.pat()?;
+      self.eat(Token::BigArrow)?;
+      let exp = self.exp()?;
+      arms.push(Arm { pat, exp });
+      let (loc, tok) = self.next()?;
+      if let Token::Bar = tok {
+        continue;
+      } else {
+        self.back(loc, tok);
+        break;
+      }
+    }
+    Ok(Match { arms })
+  }
+
   fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
     let (loc, tok) = self.next()?;
     let dec = match tok {
@@ -363,24 +381,6 @@ impl<'s> Parser<'s> {
       _ => return self.fail("a declaration", loc, tok),
     };
     Ok(loc.wrap(dec))
-  }
-
-  fn match_(&mut self) -> Result<Match<Ident>> {
-    let mut arms = Vec::new();
-    loop {
-      let pat = self.pat()?;
-      self.eat(Token::BigArrow)?;
-      let exp = self.exp()?;
-      arms.push(Arm { pat, exp });
-      let (loc, tok) = self.next()?;
-      if let Token::Bar = tok {
-        continue;
-      } else {
-        self.back(loc, tok);
-        break;
-      }
-    }
-    Ok(Match { arms })
   }
 
   fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
