@@ -151,15 +151,16 @@ impl Token {
       Self::Where => "`where`",
       Self::ColonGt => "`:>`",
       Self::Dot => "`.`",
-      Self::MaybeNumLab(_) | Self::DecInt(_) | Self::HexInt(_) => {
-        "an integer constant"
-      }
-      Self::DecWord(_) | Self::HexWord(_) => "a word constant",
+      Self::MaybeNumLab(_) | Self::DecInt(_) => "an integer constant",
+      Self::HexInt(_) => "a hexadecimal integer constant",
+      Self::DecWord(_) => "a word constant",
+      Self::HexWord(_) => "a hexadecimal word constant",
       Self::Real(_) => "a real constant",
       Self::Str(_) => "a string constant",
       Self::Char(_) => "a character constant",
       Self::TyVar(_) => "a type variable",
-      Self::AlphaNumId(_) | Self::SymbolicId(_) => "an identifier",
+      Self::AlphaNumId(_) => "an identifier",
+      Self::SymbolicId(_) => "a symbolic identifier",
       Self::EOF => "end of file",
     }
   }
