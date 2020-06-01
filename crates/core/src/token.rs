@@ -66,8 +66,7 @@ pub enum Token {
   /// an "item of lexical analysis" as per the Definition but it's easier to
   /// handle it as such and figure out the qualified names later (in parsing).
   Dot,
-  /// (maybe) numeric label (otherwise just an integer). the i64 inside will be
-  /// greater than 0.
+  /// (maybe) numeric label (otherwise just an integer). requires n > 0.
   MaybeNumLab(i32),
   // special constants
   DecInt(i32),
