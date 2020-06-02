@@ -106,7 +106,7 @@ impl<'s> Parser<'s> {
   /// - Err(..) if couldn't parse an atomic exp and did consume tokens.
   fn at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
     let tok = self.next()?;
-    let loc = tok.loc;
+    let exp_loc = tok.loc;
     let exp = match tok.val {
       Token::DecInt(n, _) => Exp::DecInt(n),
       Token::HexInt(n) => Exp::HexInt(n),
@@ -119,11 +119,11 @@ impl<'s> Parser<'s> {
       Token::LCurly => {
         let mut rows = Vec::new();
         loop {
-          let tok2 = self.next()?;
-          if let Token::RCurly = tok2.val {
+          let tok = self.next()?;
+          if let Token::RCurly = tok.val {
             break;
           }
-          self.back(tok2);
+          self.back(tok);
           let lab = self.label()?;
           self.eat(Token::Equal)?;
           let exp = self.exp()?;
@@ -133,24 +133,24 @@ impl<'s> Parser<'s> {
       }
       Token::Pound => Exp::Select(self.label()?),
       Token::LRound => {
-        let tok2 = self.next()?;
-        if let Token::RRound = tok2.val {
-          return Ok(Some(tok.loc.wrap(Exp::Tuple(Vec::new()))));
+        let tok = self.next()?;
+        if let Token::RRound = tok.val {
+          return Ok(Some(exp_loc.wrap(Exp::Tuple(Vec::new()))));
         }
-        self.back(tok2);
+        self.back(tok);
         let fst = self.exp()?;
-        let tok2 = self.next()?;
-        match tok2.val {
+        let tok = self.next()?;
+        match tok.val {
           Token::RRound => fst.val,
           Token::Comma => {
             let mut exprs = vec![fst];
             loop {
               exprs.push(self.exp()?);
-              let tok2 = self.next()?;
-              match tok2.val {
+              let tok = self.next()?;
+              match tok.val {
                 Token::RRound => break,
                 Token::Comma => continue,
-                _ => return self.fail("`)` or `,`", tok2),
+                _ => return self.fail("`)` or `,`", tok),
               }
             }
             Exp::Tuple(exprs)
@@ -159,32 +159,32 @@ impl<'s> Parser<'s> {
             let mut exprs = vec![fst];
             loop {
               exprs.push(self.exp()?);
-              let tok2 = self.next()?;
-              match tok2.val {
+              let tok = self.next()?;
+              match tok.val {
                 Token::RRound => break,
                 Token::Semicolon => continue,
-                _ => return self.fail("`)` or `;`", tok2),
+                _ => return self.fail("`)` or `;`", tok),
               }
             }
             Exp::Sequence(exprs)
           }
-          _ => return self.fail("`)`, `,`, or `;`", tok2),
+          _ => return self.fail("`)`, `,`, or `;`", tok),
         }
       }
       Token::LSquare => {
-        let tok2 = self.next()?;
-        if let Token::RSquare = tok2.val {
-          return Ok(Some(tok.loc.wrap(Exp::List(Vec::new()))));
+        let tok = self.next()?;
+        if let Token::RSquare = tok.val {
+          return Ok(Some(exp_loc.wrap(Exp::List(Vec::new()))));
         }
-        self.back(tok2);
+        self.back(tok);
         let mut exprs = Vec::new();
         loop {
           exprs.push(self.exp()?);
-          let tok2 = self.next()?;
-          match tok2.val {
+          let tok = self.next()?;
+          match tok.val {
             Token::RSquare => break,
             Token::Comma => continue,
-            _ => return self.fail("`]` or `,`", tok2),
+            _ => return self.fail("`]` or `,`", tok),
           }
         }
         Exp::List(exprs)
@@ -218,7 +218,7 @@ impl<'s> Parser<'s> {
         return Ok(None);
       }
     };
-    Ok(Some(loc.wrap(exp)))
+    Ok(Some(exp_loc.wrap(exp)))
   }
 
   fn long_vid(&mut self) -> Result<Long<Ident>> {
@@ -257,7 +257,7 @@ impl<'s> Parser<'s> {
   // TODO prec
   fn exp(&mut self) -> Result<Located<Exp<Ident>>> {
     let tok = self.next()?;
-    let loc = tok.loc;
+    let exp_loc = tok.loc;
     let exp = match tok.val {
       Token::Raise => {
         let e = self.exp()?;
@@ -320,7 +320,7 @@ impl<'s> Parser<'s> {
         exp.val
       }
     };
-    Ok(loc.wrap(exp))
+    Ok(exp_loc.wrap(exp))
   }
 
   fn match_(&mut self) -> Result<Match<Ident>> {
