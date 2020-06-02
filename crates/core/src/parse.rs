@@ -3,7 +3,7 @@ use crate::ast::{
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
-use crate::source::Located;
+use crate::source::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar};
 use std::collections::HashMap;
 use std::convert::TryInto as _;
@@ -546,7 +546,7 @@ impl<'s> Parser<'s> {
       }
     };
     if let Pat::LongVid(long_vid) = pat.val {
-      pat = pat.loc.wrap(self.pat_long_vid(long_vid)?)
+      pat = pat.loc.wrap(self.pat_long_vid(pat.loc, long_vid)?);
     }
     loop {
       let tok = self.next()?;
@@ -568,21 +568,23 @@ impl<'s> Parser<'s> {
     Ok(pat)
   }
 
-  fn pat_long_vid(&mut self, mut long_vid: Long<Ident>) -> Result<Pat<Ident>> {
+  fn pat_long_vid(
+    &mut self,
+    loc: Loc,
+    mut long_vid: Long<Ident>,
+  ) -> Result<Pat<Ident>> {
     if long_vid.idents.len() == 1 {
       let ty = self.maybe_colon_ty()?;
-      let as_pat = self.maybe_as_pat()?;
-      match as_pat {
-        None => {
-          if ty.is_some() {
-            let tok = self.next()?;
-            return self.fail("`as`", tok);
+      match self.maybe_as_pat()? {
+        None => match ty {
+          None => {}
+          Some(ty) => {
+            return Ok(Pat::Typed(loc.wrap(Pat::LongVid(long_vid)).into(), ty))
           }
-          // fall through
-        }
-        Some(x) => {
+        },
+        Some(as_pat) => {
           let vid = long_vid.idents.pop().unwrap();
-          return Ok(Pat::As(vid, ty, x.into()));
+          return Ok(Pat::As(vid, ty, as_pat.into()));
         }
       }
     }
