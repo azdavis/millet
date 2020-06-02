@@ -427,66 +427,6 @@ impl<'s> Parser<'s> {
     }
   }
 
-  fn ty(&mut self) -> Result<Located<Ty<Ident>>> {
-    todo!()
-  }
-
-  // TODO prec
-  fn pat(&mut self) -> Result<Located<Pat<Ident>>> {
-    let mut pat = match self.at_pat()? {
-      Some(x) => x,
-      None => {
-        let tok = self.next()?;
-        return self.fail("a pattern", tok);
-      }
-    };
-    if let Pat::LongVid(long_vid) = pat.val {
-      pat = pat.loc.wrap(self.pat_long_vid(long_vid)?)
-    }
-    loop {
-      let tok = self.next()?;
-      pat = pat.loc.wrap(match tok.val {
-        Token::Colon => {
-          let ty = self.ty()?;
-          Pat::Typed(pat.into(), ty)
-        }
-        Token::Ident(id, _) => {
-          let op_info = self.ops.get(&id).unwrap();
-          Pat::InfixCtor(pat.into(), tok.loc.wrap(id), self.pat()?.into())
-        }
-        _ => {
-          self.back(tok);
-          break;
-        }
-      });
-    }
-    Ok(pat)
-  }
-
-  fn pat_long_vid(&mut self, mut long_vid: Long<Ident>) -> Result<Pat<Ident>> {
-    if long_vid.idents.len() == 1 {
-      let ty = self.maybe_colon_ty()?;
-      let as_pat = self.maybe_as_pat()?;
-      match as_pat {
-        None => {
-          if ty.is_some() {
-            let tok = self.next()?;
-            return self.fail("`as`", tok);
-          }
-          // fall through
-        }
-        Some(x) => {
-          let vid = long_vid.idents.pop().unwrap();
-          return Ok(Pat::As(vid, ty, x.into()));
-        }
-      }
-    }
-    match self.at_pat()? {
-      None => Ok(Pat::LongVid(long_vid)),
-      Some(x) => Ok(Pat::Ctor(long_vid, x.into())),
-    }
-  }
-
   /// returns:
   /// - Ok(Some(..)) if did parse an atomic pat.
   /// - Ok(None) if couldn't parse an atomic pat and didn't consume tokens.
@@ -597,6 +537,62 @@ impl<'s> Parser<'s> {
     Ok(Some(pat_loc.wrap(pat)))
   }
 
+  // TODO prec
+  fn pat(&mut self) -> Result<Located<Pat<Ident>>> {
+    let mut pat = match self.at_pat()? {
+      Some(x) => x,
+      None => {
+        let tok = self.next()?;
+        return self.fail("a pattern", tok);
+      }
+    };
+    if let Pat::LongVid(long_vid) = pat.val {
+      pat = pat.loc.wrap(self.pat_long_vid(long_vid)?)
+    }
+    loop {
+      let tok = self.next()?;
+      pat = pat.loc.wrap(match tok.val {
+        Token::Colon => {
+          let ty = self.ty()?;
+          Pat::Typed(pat.into(), ty)
+        }
+        Token::Ident(id, _) => {
+          let op_info = self.ops.get(&id).unwrap();
+          Pat::InfixCtor(pat.into(), tok.loc.wrap(id), self.pat()?.into())
+        }
+        _ => {
+          self.back(tok);
+          break;
+        }
+      });
+    }
+    Ok(pat)
+  }
+
+  fn pat_long_vid(&mut self, mut long_vid: Long<Ident>) -> Result<Pat<Ident>> {
+    if long_vid.idents.len() == 1 {
+      let ty = self.maybe_colon_ty()?;
+      let as_pat = self.maybe_as_pat()?;
+      match as_pat {
+        None => {
+          if ty.is_some() {
+            let tok = self.next()?;
+            return self.fail("`as`", tok);
+          }
+          // fall through
+        }
+        Some(x) => {
+          let vid = long_vid.idents.pop().unwrap();
+          return Ok(Pat::As(vid, ty, x.into()));
+        }
+      }
+    }
+    match self.at_pat()? {
+      None => Ok(Pat::LongVid(long_vid)),
+      Some(x) => Ok(Pat::Ctor(long_vid, x.into())),
+    }
+  }
+
   fn maybe_colon_ty(&mut self) -> Result<Option<Located<Ty<Ident>>>> {
     let tok = self.next()?;
     if let Token::Colon = tok.val {
@@ -615,6 +611,10 @@ impl<'s> Parser<'s> {
       self.back(tok);
       Ok(None)
     }
+  }
+
+  fn ty(&mut self) -> Result<Located<Ty<Ident>>> {
+    todo!()
   }
 
   fn fail<T>(&mut self, exp: &'static str, tok: Located<Token>) -> Result<T> {
