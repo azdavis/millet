@@ -1,5 +1,5 @@
 use crate::ident::Ident;
-use crate::source::Located;
+use crate::source::{Loc, Located};
 use crate::token::TyVar;
 
 pub enum Exp<I> {
@@ -149,7 +149,8 @@ pub enum Pat<I> {
   Char(u8),
   // end special constants
   LongVid(Long<I>),
-  Record(Vec<Located<PatRow<I>>>),
+  /// the loc is for the `...` if there was one
+  Record(Vec<PatRow<I>>, Option<Loc>),
   /// requires pats.len() != 1
   Tuple(Vec<Located<Pat<I>>>),
   List(Vec<Located<Pat<I>>>),
@@ -160,7 +161,6 @@ pub enum Pat<I> {
 }
 
 pub enum PatRow<I> {
-  DotDotDot,
   LabelAndPat(Located<Label>, Located<Pat<I>>),
   LabelAsVid(Located<I>, Option<Located<Ty<I>>>, Option<Located<Pat<I>>>),
 }
