@@ -736,8 +736,8 @@ impl<'s> Parser<'s> {
     Ok(types)
   }
 
-  fn fail<T>(&mut self, exp: &'static str, tok: Located<Token>) -> Result<T> {
-    let err = ParseError::ExpectedButFound(exp, tok.val.desc());
+  fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
+    let err = ParseError::ExpectedButFound(want, tok.val.desc());
     Err(tok.loc.wrap(err))
   }
 }
