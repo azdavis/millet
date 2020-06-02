@@ -121,7 +121,7 @@ impl<'s> Parser<'s> {
       Token::Real(n) => Exp::Real(n),
       Token::Str(s) => Exp::Str(s),
       Token::Char(c) => Exp::Char(c),
-      Token::Op => Exp::LongVid(self.long_vid(true)?),
+      Token::Op => Exp::LongVid(self.long_id(true)?),
       Token::LCurly => {
         let tok = self.next()?;
         if let Token::RCurly = tok.val {
@@ -216,7 +216,7 @@ impl<'s> Parser<'s> {
         }
         Exp::Let(dec, exprs)
       }
-      Token::Ident(..) => Exp::LongVid(self.long_vid(false)?),
+      Token::Ident(..) => Exp::LongVid(self.long_id(false)?),
       _ => {
         // this is the one time we return Ok(None). we need this info to do
         // application expressions correctly.
@@ -227,7 +227,7 @@ impl<'s> Parser<'s> {
     Ok(Some(exp_loc.wrap(exp)))
   }
 
-  fn long_vid(&mut self, just_saw_op: bool) -> Result<Long<Ident>> {
+  fn long_id(&mut self, allow_infix: bool) -> Result<Long<Ident>> {
     let mut idents = Vec::new();
     loop {
       let tok = self.next()?;
@@ -248,7 +248,7 @@ impl<'s> Parser<'s> {
         _ => return self.fail("an identifier", tok),
       }
     }
-    if !just_saw_op
+    if !allow_infix
       && idents.len() == 1
       && self.ops.contains_key(&idents.first().unwrap().val)
     {
@@ -443,7 +443,7 @@ impl<'s> Parser<'s> {
       Token::Real(..) => return Err(pat_loc.wrap(ParseError::RealPat)),
       Token::Str(s) => Pat::Str(s),
       Token::Char(c) => Pat::Char(c),
-      Token::Op => Pat::LongVid(self.long_vid(true)?),
+      Token::Op => Pat::LongVid(self.long_id(true)?),
       Token::LCurly => {
         let tok = self.next()?;
         if let Token::RCurly = tok.val {
@@ -528,7 +528,7 @@ impl<'s> Parser<'s> {
         }
         Pat::List(pats)
       }
-      Token::Ident(..) => Pat::LongVid(self.long_vid(false)?),
+      Token::Ident(..) => Pat::LongVid(self.long_id(false)?),
       _ => {
         self.back(tok);
         return Ok(None);
