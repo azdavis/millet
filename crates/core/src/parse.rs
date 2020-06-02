@@ -121,7 +121,7 @@ impl<'s> Parser<'s> {
       Token::Real(n) => Exp::Real(n),
       Token::Str(s) => Exp::Str(s),
       Token::Char(c) => Exp::Char(c),
-      Token::Op => Exp::LongVid(self.long_vid()?),
+      Token::Op => Exp::LongVid(self.long_vid(true)?),
       Token::LCurly => {
         let tok = self.next()?;
         if let Token::RCurly = tok.val {
@@ -216,13 +216,7 @@ impl<'s> Parser<'s> {
         }
         Exp::Let(dec, exprs)
       }
-      Token::Ident(ref id, _) => {
-        if self.ops.contains_key(id) {
-          return Err(tok.loc.wrap(ParseError::InfixWithoutOp(id.clone())));
-        }
-        self.back(tok);
-        Exp::LongVid(self.long_vid()?)
-      }
+      Token::Ident(ref id, _) => Exp::LongVid(self.long_vid(false)?),
       _ => {
         // this is the one time we return Ok(None). we need this info to do
         // application expressions correctly.
@@ -233,7 +227,7 @@ impl<'s> Parser<'s> {
     Ok(Some(exp_loc.wrap(exp)))
   }
 
-  fn long_vid(&mut self) -> Result<Long<Ident>> {
+  fn long_vid(&mut self, just_saw_op: bool) -> Result<Long<Ident>> {
     let mut idents = Vec::new();
     loop {
       let tok = self.next()?;
@@ -241,18 +235,27 @@ impl<'s> Parser<'s> {
         Token::Ident(id, typ) => {
           idents.push(tok.loc.wrap(id));
           if let IdentType::Symbolic = typ {
-            return Ok(Long { idents });
+            break;
           }
           let tok2 = self.next()?;
           if let Token::Dot = tok2.val {
             continue;
           } else {
             self.back(tok2);
-            return Ok(Long { idents });
+            break;
           }
         }
         _ => return self.fail("an identifier", tok),
       }
+    }
+    if !just_saw_op
+      && idents.len() == 1
+      && self.ops.contains_key(&idents.first().unwrap().val)
+    {
+      let id = idents.pop().unwrap();
+      Err(id.loc.wrap(ParseError::InfixWithoutOp(id.val)))
+    } else {
+      Ok(Long { idents })
     }
   }
 
@@ -449,7 +452,7 @@ impl<'s> Parser<'s> {
       Token::Real(..) => return Err(pat_loc.wrap(ParseError::RealPat)),
       Token::Str(s) => Pat::Str(s),
       Token::Char(c) => Pat::Char(c),
-      Token::Op => Pat::LongVid(self.long_vid()?),
+      Token::Op => Pat::LongVid(self.long_vid(true)?),
       Token::LCurly => {
         let tok = self.next()?;
         if let Token::RCurly = tok.val {
@@ -534,13 +537,7 @@ impl<'s> Parser<'s> {
         }
         Pat::List(pats)
       }
-      Token::Ident(ref id, _) => {
-        if self.ops.contains_key(id) {
-          return Err(tok.loc.wrap(ParseError::InfixWithoutOp(id.clone())));
-        }
-        self.back(tok);
-        Pat::LongVid(self.long_vid()?)
-      }
+      Token::Ident(ref id, _) => Pat::LongVid(self.long_vid(false)?),
       _ => {
         self.back(tok);
         return Ok(None);
