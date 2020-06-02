@@ -2,7 +2,7 @@ use crate::ast::{Arm, Dec, Exp, Label, Long, Match, Pat, Row, Ty, ValBind};
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
 use crate::source::{Loc, Located};
-use crate::token::{Token, TyVar};
+use crate::token::{IdentType, IsNumLab, Token, TyVar};
 use std::collections::HashMap;
 use std::convert::TryInto as _;
 use std::fmt;
@@ -107,7 +107,7 @@ impl<'s> Parser<'s> {
   fn at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
     let (loc, tok) = self.next()?;
     let exp = match tok {
-      Token::MaybeNumLab(n) | Token::DecInt(n) => Exp::DecInt(n),
+      Token::DecInt(n, _) => Exp::DecInt(n),
       Token::HexInt(n) => Exp::HexInt(n),
       Token::DecWord(n) => Exp::DecWord(n),
       Token::HexWord(n) => Exp::HexWord(n),
@@ -203,7 +203,7 @@ impl<'s> Parser<'s> {
         }
         Exp::Let(dec, exprs)
       }
-      Token::AlphaNumId(ref id) | Token::SymbolicId(ref id) => {
+      Token::Ident(ref id, _) => {
         if self.ops.contains_key(id) {
           return Err(loc.wrap(ParseError::InfixWithoutOp(id.clone())));
         }
@@ -225,8 +225,11 @@ impl<'s> Parser<'s> {
     loop {
       let (loc, tok) = self.next()?;
       match tok {
-        Token::AlphaNumId(id) => {
+        Token::Ident(id, typ) => {
           idents.push(loc.wrap(id));
+          if let IdentType::Symbolic = typ {
+            return Ok(Long { idents });
+          }
           let (loc2, tok2) = self.next()?;
           if let Token::Dot = tok2 {
             continue;
@@ -234,10 +237,6 @@ impl<'s> Parser<'s> {
             self.back(loc2, tok2);
             return Ok(Long { idents });
           }
-        }
-        Token::SymbolicId(id) => {
-          idents.push(loc.wrap(id));
-          return Ok(Long { idents });
         }
         _ => return self.fail("an identifier", loc, tok),
       }
@@ -247,8 +246,8 @@ impl<'s> Parser<'s> {
   fn label(&mut self) -> Result<Located<Label>> {
     let (loc, tok) = self.next()?;
     let lab = match tok {
-      Token::MaybeNumLab(n) => Label::Num(n.try_into().unwrap()),
-      Token::AlphaNumId(id) | Token::SymbolicId(id) => Label::Vid(id),
+      Token::DecInt(n, IsNumLab::Maybe) => Label::Num(n.try_into().unwrap()),
+      Token::Ident(id, _) => Label::Vid(id),
       _ => return self.fail("a label", loc, tok),
     };
     Ok(loc.wrap(lab))
@@ -301,7 +300,7 @@ impl<'s> Parser<'s> {
         loop {
           let (loc, tok) = self.next()?;
           exp = exp.loc.wrap(match tok {
-            Token::AlphaNumId(id) | Token::SymbolicId(id) => {
+            Token::Ident(id, _) => {
               let op_info =
                 self.ops.get(&id).expect("should have parsed as App");
               Exp::InfixApp(exp.into(), loc.wrap(id), self.exp()?.into())

@@ -66,10 +66,8 @@ pub enum Token {
   /// an "item of lexical analysis" as per the Definition but it's easier to
   /// handle it as such and figure out the qualified names later (in parsing).
   Dot,
-  /// (maybe) numeric label (otherwise just an integer). requires n > 0.
-  MaybeNumLab(i32),
   // special constants
-  DecInt(i32),
+  DecInt(i32, IsNumLab),
   HexInt(i32),
   DecWord(i32),
   HexWord(i32),
@@ -81,12 +79,21 @@ pub enum Token {
   // of essentially being a parser. but, we can determine whether something is a
   // TyVar, and we can also know whether something might be a valid StrId.
   TyVar(TyVar<Ident>),
-  /// maybe a structure identifier (alphanumeric and doesn't start with prime).
-  AlphaNumId(Ident),
-  /// definitely not a structure identifier (symbolic).
-  SymbolicId(Ident),
+  Ident(Ident, IdentType),
   /// not actually a token, but makes the api simpler.
   EOF,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum IsNumLab {
+  Maybe,
+  No,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum IdentType {
+  AlphaNum,
+  Symbolic,
 }
 
 impl Token {
@@ -151,16 +158,16 @@ impl Token {
       Self::Where => "`where`",
       Self::ColonGt => "`:>`",
       Self::Dot => "`.`",
-      Self::MaybeNumLab(_) | Self::DecInt(_) => "an integer constant",
-      Self::HexInt(_) => "a hexadecimal integer constant",
-      Self::DecWord(_) => "a word constant",
-      Self::HexWord(_) => "a hexadecimal word constant",
-      Self::Real(_) => "a real constant",
-      Self::Str(_) => "a string constant",
-      Self::Char(_) => "a character constant",
-      Self::TyVar(_) => "a type variable",
-      Self::AlphaNumId(_) => "an identifier",
-      Self::SymbolicId(_) => "a symbolic identifier",
+      Self::DecInt(..) => "an integer constant",
+      Self::HexInt(..) => "a hexadecimal integer constant",
+      Self::DecWord(..) => "a word constant",
+      Self::HexWord(..) => "a hexadecimal word constant",
+      Self::Real(..) => "a real constant",
+      Self::Str(..) => "a string constant",
+      Self::Char(..) => "a character constant",
+      Self::TyVar(..) => "a type variable",
+      Self::Ident(_, IdentType::AlphaNum) => "an identifier",
+      Self::Ident(_, IdentType::Symbolic) => "a symbolic identifier",
       Self::EOF => "end of file",
     }
   }
