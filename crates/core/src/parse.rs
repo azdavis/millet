@@ -1,5 +1,5 @@
 use crate::ast::{
-  Arm, Dec, Exp, Label, Long, Match, Pat, PatRow, Row, Ty, ValBind,
+  Arm, Dec, Exp, Label, Long, Match, Pat, PatRow, Row, Ty, TyRow, ValBind,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -629,7 +629,111 @@ impl<'s> Parser<'s> {
   }
 
   fn ty(&mut self) -> Result<Located<Ty<Ident>>> {
-    todo!()
+    match self.maybe_ty()? {
+      Some(x) => Ok(x),
+      None => {
+        let tok = self.next()?;
+        self.fail("a type", tok)
+      }
+    }
+  }
+
+  // TODO prec
+  fn maybe_ty(&mut self) -> Result<Option<Located<Ty<Ident>>>> {
+    let tok = self.next()?;
+    let ty_loc = tok.loc;
+    let ty = match tok.val {
+      Token::TyVar(tv) => Ty::TyVar(tv),
+      Token::LCurly => {
+        let tok = self.next()?;
+        if let Token::RCurly = tok.val {
+          return Ok(Some(ty_loc.wrap(Ty::Record(Vec::new()))));
+        }
+        self.back(tok);
+        let mut rows = Vec::new();
+        loop {
+          let lab = self.label()?;
+          self.eat(Token::Colon)?;
+          let ty = self.ty()?;
+          rows.push(TyRow { lab, ty });
+          let tok = self.next()?;
+          match tok.val {
+            Token::RCurly => break,
+            Token::Comma => continue,
+            _ => return self.fail("`}` or `,`", tok),
+          }
+        }
+        Ty::Record(rows)
+      }
+      _ => {
+        self.back(tok);
+        let mut ty_seq = self.ty_seq()?;
+        let long_ty_con = self.maybe_long_id()?;
+        let ty = match (ty_seq.len(), long_ty_con) {
+          (0, None) => return Ok(None),
+          (1, None) => ty_seq.pop().unwrap(),
+          (_, None) => {
+            let tok = self.next()?;
+            return self.fail("an identifier", tok);
+          }
+          (_, Some(x)) => ty_loc.wrap(Ty::TyCon(ty_seq, x)),
+        };
+        let mut types = vec![ty];
+        loop {
+          let tok = self.next()?;
+          if let Token::Ident(ref id, _) = tok.val {
+            if id.is_star() {
+              let ty = self.ty()?;
+              types.push(ty);
+              continue;
+            }
+          }
+          self.back(tok);
+          break;
+        }
+        let mut ty = if types.len() == 1 {
+          types.pop().unwrap()
+        } else {
+          ty_loc.wrap(Ty::Tuple(types))
+        };
+        loop {
+          let tok = self.next()?;
+          if let Token::Arrow = tok.val {
+            ty = ty.loc.wrap(Ty::Arrow(ty.into(), self.ty()?.into()));
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        ty.val
+      }
+    };
+    Ok(Some(ty_loc.wrap(ty)))
+  }
+
+  fn ty_seq(&mut self) -> Result<Vec<Located<Ty<Ident>>>> {
+    if let Some(ty) = self.maybe_ty()? {
+      return Ok(vec![ty]);
+    }
+    let tok = self.next()?;
+    if let Token::LRound = tok.val {
+      //
+    } else {
+      self.back(tok);
+      return Ok(Vec::new());
+    }
+    let mut types = Vec::new();
+    loop {
+      let ty = self.ty()?;
+      types.push(ty);
+      let tok = self.next()?;
+      match tok.val {
+        Token::RRound => break,
+        Token::Comma => continue,
+        _ => return self.fail("`)` or `,`", tok),
+      }
+    }
+    Ok(types)
   }
 
   fn fail<T>(&mut self, exp: &'static str, tok: Located<Token>) -> Result<T> {

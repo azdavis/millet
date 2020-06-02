@@ -9,6 +9,10 @@ impl Ident {
   pub fn new(inner: String) -> Self {
     Self { inner }
   }
+
+  pub fn is_star(&self) -> bool {
+    self.inner == "*"
+  }
 }
 
 impl fmt::Display for Ident {
