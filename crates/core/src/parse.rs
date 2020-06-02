@@ -128,6 +128,12 @@ impl<'s> Parser<'s> {
           self.eat(Token::Equal)?;
           let exp = self.exp()?;
           rows.push(Row { lab, exp });
+          let tok = self.next()?;
+          match tok.val {
+            Token::RCurly => break,
+            Token::Comma => continue,
+            _ => return self.fail("`}` or `,`", tok),
+          }
         }
         Exp::Record(rows)
       }
