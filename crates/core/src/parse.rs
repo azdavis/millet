@@ -207,11 +207,11 @@ impl<'s> Parser<'s> {
         let mut exprs = Vec::new();
         loop {
           exprs.push(self.exp()?);
-          let tok2 = self.next()?;
-          match tok2.val {
+          let tok = self.next()?;
+          match tok.val {
             Token::End => break,
             Token::Semicolon => continue,
-            _ => return self.fail("`end` or `;`", tok2),
+            _ => return self.fail("`end` or `;`", tok),
           }
         }
         Exp::Let(dec, exprs)
@@ -231,22 +231,20 @@ impl<'s> Parser<'s> {
     let mut idents = Vec::new();
     loop {
       let tok = self.next()?;
-      match tok.val {
-        Token::Ident(id, typ) => {
-          idents.push(tok.loc.wrap(id));
-          if let IdentType::Symbolic = typ {
-            break;
-          }
-          let tok2 = self.next()?;
-          if let Token::Dot = tok2.val {
-            continue;
-          } else {
-            self.back(tok2);
-            break;
-          }
+      if let Token::Ident(id, typ) = tok.val {
+        idents.push(tok.loc.wrap(id));
+        if let IdentType::Symbolic = typ {
+          break;
         }
-        _ => return self.fail("an identifier", tok),
+        let tok = self.next()?;
+        if let Token::Dot = tok.val {
+          continue;
+        } else {
+          self.back(tok);
+          break;
+        }
       }
+      return self.fail("an identifier", tok);
     }
     if !allow_infix
       && idents.len() == 1
