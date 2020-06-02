@@ -401,30 +401,29 @@ impl<'s> Parser<'s> {
   fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
     let tok = self.next()?;
     match tok.val {
-      Token::TyVar(ty_var) => Ok(vec![tok.loc.wrap(ty_var)]),
-      Token::LRound => {
-        let mut ty_vars = Vec::new();
-        loop {
-          let tok = self.next()?;
-          if let Token::TyVar(ty_var) = tok.val {
-            ty_vars.push(tok.loc.wrap(ty_var));
-          } else {
-            return self.fail("a type variable", tok);
-          }
-          let tok = self.next()?;
-          match tok.val {
-            Token::RRound => break,
-            Token::Comma => continue,
-            _ => return self.fail("`)` or `,`", tok),
-          }
-        }
-        Ok(ty_vars)
-      }
+      Token::TyVar(ty_var) => return Ok(vec![tok.loc.wrap(ty_var)]),
+      Token::LRound => {}
       _ => {
         self.back(tok);
-        Ok(Vec::new())
+        return Ok(Vec::new());
       }
     }
+    let mut ty_vars = Vec::new();
+    loop {
+      let tok = self.next()?;
+      if let Token::TyVar(ty_var) = tok.val {
+        ty_vars.push(tok.loc.wrap(ty_var));
+      } else {
+        return self.fail("a type variable", tok);
+      }
+      let tok = self.next()?;
+      match tok.val {
+        Token::RRound => break,
+        Token::Comma => continue,
+        _ => return self.fail("`)` or `,`", tok),
+      }
+    }
+    Ok(ty_vars)
   }
 
   /// returns:
