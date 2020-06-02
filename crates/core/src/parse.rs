@@ -227,7 +227,7 @@ impl<'s> Parser<'s> {
     Ok(Some(exp_loc.wrap(exp)))
   }
 
-  fn long_id(&mut self, allow_infix: bool) -> Result<Long<Ident>> {
+  fn maybe_long_id(&mut self) -> Result<Option<Long<Ident>>> {
     let mut idents = Vec::new();
     loop {
       let tok = self.next()?;
@@ -244,16 +244,32 @@ impl<'s> Parser<'s> {
           break;
         }
       }
-      return self.fail("an identifier", tok);
+      return if idents.is_empty() {
+        self.back(tok);
+        Ok(None)
+      } else {
+        self.fail("an identifier", tok)
+      };
     }
+    Ok(Some(Long { idents }))
+  }
+
+  fn long_id(&mut self, allow_infix: bool) -> Result<Long<Ident>> {
+    let mut ret = match self.maybe_long_id()? {
+      Some(x) => x,
+      None => {
+        let tok = self.next()?;
+        return self.fail("an identifier", tok);
+      }
+    };
     if !allow_infix
-      && idents.len() == 1
-      && self.ops.contains_key(&idents.first().unwrap().val)
+      && ret.idents.len() == 1
+      && self.ops.contains_key(&ret.idents.first().unwrap().val)
     {
-      let id = idents.pop().unwrap();
+      let id = ret.idents.pop().unwrap();
       Err(id.loc.wrap(ParseError::InfixWithoutOp(id.val)))
     } else {
-      Ok(Long { idents })
+      Ok(ret)
     }
   }
 
