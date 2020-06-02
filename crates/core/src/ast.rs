@@ -139,12 +139,11 @@ pub enum ExBindInner<I> {
 
 pub enum Pat<I> {
   Wildcard,
-  // begin special constants
+  // begin special constants (note: no real)
   DecInt(i32),
   HexInt(i32),
   DecWord(i32),
   HexWord(i32),
-  Real(f64),
   Str(String),
   Char(u8),
   // end special constants

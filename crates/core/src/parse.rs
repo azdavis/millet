@@ -1,4 +1,6 @@
-use crate::ast::{Arm, Dec, Exp, Label, Long, Match, Pat, Row, Ty, ValBind};
+use crate::ast::{
+  Arm, Dec, Exp, Label, Long, Match, Pat, PatRow, Row, Ty, ValBind,
+};
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
 use crate::source::Located;
@@ -19,6 +21,7 @@ pub enum ParseError {
   LexError(LexError),
   ExpectedButFound(&'static str, &'static str),
   InfixWithoutOp(Ident),
+  RealPat,
 }
 
 impl fmt::Display for ParseError {
@@ -31,6 +34,7 @@ impl fmt::Display for ParseError {
       Self::InfixWithoutOp(id) => {
         write!(f, "infix identifier `{}` used without preceding `op`", id)
       }
+      Self::RealPat => write!(f, "real constant used as a pattern"),
     }
   }
 }
@@ -39,7 +43,9 @@ impl std::error::Error for ParseError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
       Self::LexError(e) => Some(e),
-      Self::ExpectedButFound(..) | Self::InfixWithoutOp(..) => None,
+      Self::ExpectedButFound(..) | Self::InfixWithoutOp(..) | Self::RealPat => {
+        None
+      }
     }
   }
 }
@@ -425,6 +431,142 @@ impl<'s> Parser<'s> {
 
   fn pat(&mut self) -> Result<Located<Pat<Ident>>> {
     todo!()
+  }
+
+  /// returns:
+  /// - Ok(Some(..)) if did parse an atomic pat.
+  /// - Ok(None) if couldn't parse an atomic pat and didn't consume tokens.
+  /// - Err(..) if couldn't parse an atomic pat and did consume tokens.
+  fn at_pat(&mut self) -> Result<Option<Located<Pat<Ident>>>> {
+    let tok = self.next()?;
+    let pat_loc = tok.loc;
+    let pat = match tok.val {
+      Token::Underscore => Pat::Wildcard,
+      Token::DecInt(n, _) => Pat::DecInt(n),
+      Token::HexInt(n) => Pat::HexInt(n),
+      Token::DecWord(n) => Pat::DecWord(n),
+      Token::HexWord(n) => Pat::HexWord(n),
+      Token::Real(..) => return Err(pat_loc.wrap(ParseError::RealPat)),
+      Token::Str(s) => Pat::Str(s),
+      Token::Char(c) => Pat::Char(c),
+      Token::Op => Pat::LongVid(self.long_vid()?),
+      Token::LCurly => {
+        let tok = self.next()?;
+        if let Token::RCurly = tok.val {
+          return Ok(Some(pat_loc.wrap(Pat::Record(Vec::new(), None))));
+        }
+        self.back(tok);
+        let mut rows = Vec::new();
+        let mut rest_loc = None;
+        loop {
+          let tok = self.next()?;
+          if let Token::DotDotDot = tok.val {
+            rest_loc = Some(tok.loc);
+            let tok = self.next()?;
+            if let Token::RCurly = tok.val {
+              break;
+            } else {
+              return self.fail("`}`", tok);
+            }
+          }
+          self.back(tok);
+          let lab = self.label()?;
+          let tok = self.next()?;
+          let row = if let Token::Equal = tok.val {
+            let pat = self.pat()?;
+            PatRow::LabelAndPat(lab, pat)
+          } else {
+            let vid = match lab.val {
+              Label::Vid(x) => lab.loc.wrap(x),
+              Label::Num(..) => return self.fail("an identifier", tok),
+            };
+            let ty = self.maybe_colon_ty()?;
+            let as_pat = self.maybe_as_pat()?;
+            PatRow::LabelAsVid(vid, ty, as_pat)
+          };
+          rows.push(row);
+          let tok = self.next()?;
+          match tok.val {
+            Token::RCurly => break,
+            Token::Comma => continue,
+            _ => return self.fail("`}` or `,`", tok),
+          }
+        }
+        Pat::Record(rows, rest_loc)
+      }
+      Token::LRound => {
+        let tok = self.next()?;
+        if let Token::RRound = tok.val {
+          return Ok(Some(pat_loc.wrap(Pat::Tuple(Vec::new()))));
+        }
+        self.back(tok);
+        let mut pats = Vec::new();
+        loop {
+          pats.push(self.pat()?);
+          let tok = self.next()?;
+          match tok.val {
+            Token::RRound => break,
+            Token::Comma => continue,
+            _ => return self.fail("`)` or `,`", tok),
+          }
+        }
+        if pats.len() == 1 {
+          pats.pop().unwrap().val
+        } else {
+          Pat::Tuple(pats)
+        }
+      }
+      Token::LSquare => {
+        let tok = self.next()?;
+        if let Token::RSquare = tok.val {
+          return Ok(Some(pat_loc.wrap(Pat::List(Vec::new()))));
+        }
+        self.back(tok);
+        let mut pats = Vec::new();
+        loop {
+          pats.push(self.pat()?);
+          let tok = self.next()?;
+          match tok.val {
+            Token::RSquare => break,
+            Token::Comma => continue,
+            _ => return self.fail("`]` or `,`", tok),
+          }
+        }
+        Pat::List(pats)
+      }
+      Token::Ident(ref id, _) => {
+        if self.ops.contains_key(id) {
+          return Err(tok.loc.wrap(ParseError::InfixWithoutOp(id.clone())));
+        }
+        self.back(tok);
+        Pat::LongVid(self.long_vid()?)
+      }
+      _ => {
+        self.back(tok);
+        return Ok(None);
+      }
+    };
+    Ok(Some(pat_loc.wrap(pat)))
+  }
+
+  fn maybe_colon_ty(&mut self) -> Result<Option<Located<Ty<Ident>>>> {
+    let tok = self.next()?;
+    if let Token::Colon = tok.val {
+      Ok(Some(self.ty()?))
+    } else {
+      self.back(tok);
+      Ok(None)
+    }
+  }
+
+  fn maybe_as_pat(&mut self) -> Result<Option<Located<Pat<Ident>>>> {
+    let tok = self.next()?;
+    if let Token::As = tok.val {
+      Ok(Some(self.pat()?))
+    } else {
+      self.back(tok);
+      Ok(None)
+    }
   }
 
   fn fail<T>(&mut self, exp: &'static str, tok: Located<Token>) -> Result<T> {
