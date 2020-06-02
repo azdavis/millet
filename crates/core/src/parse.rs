@@ -117,13 +117,13 @@ impl<'s> Parser<'s> {
       Token::Char(c) => Exp::Char(c),
       Token::Op => Exp::LongVid(self.long_vid()?),
       Token::LCurly => {
+        let tok = self.next()?;
+        if let Token::RCurly = tok.val {
+          return Ok(Some(exp_loc.wrap(Exp::Record(Vec::new()))));
+        }
+        self.back(tok);
         let mut rows = Vec::new();
         loop {
-          let tok = self.next()?;
-          if let Token::RCurly = tok.val {
-            break;
-          }
-          self.back(tok);
           let lab = self.label()?;
           self.eat(Token::Equal)?;
           let exp = self.exp()?;
