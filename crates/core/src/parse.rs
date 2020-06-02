@@ -216,7 +216,7 @@ impl<'s> Parser<'s> {
         }
         Exp::Let(dec, exprs)
       }
-      Token::Ident(ref id, _) => Exp::LongVid(self.long_vid(false)?),
+      Token::Ident(..) => Exp::LongVid(self.long_vid(false)?),
       _ => {
         // this is the one time we return Ok(None). we need this info to do
         // application expressions correctly.
@@ -537,7 +537,7 @@ impl<'s> Parser<'s> {
         }
         Pat::List(pats)
       }
-      Token::Ident(ref id, _) => Pat::LongVid(self.long_vid(false)?),
+      Token::Ident(..) => Pat::LongVid(self.long_vid(false)?),
       _ => {
         self.back(tok);
         return Ok(None);
