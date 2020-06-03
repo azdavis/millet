@@ -258,6 +258,15 @@ impl<'s> Parser<'s> {
     }
   }
 
+  fn ident(&mut self) -> Result<Located<Ident>> {
+    let tok = self.next()?;
+    if let Token::Ident(id, _) = tok.val {
+      Ok(tok.loc.wrap(id))
+    } else {
+      self.fail("an identifier", tok)
+    }
+  }
+
   fn maybe_long_id(&mut self) -> Result<Option<Long<Ident>>> {
     let mut idents = Vec::new();
     loop {
@@ -462,35 +471,20 @@ impl<'s> Parser<'s> {
   fn fval_bind_case(&mut self) -> Result<FValBindCase<Ident>> {
     let tok = self.next()?;
     let (vid, pat) = match tok.val {
-      Token::Op => {
-        let tok = self.next()?;
-        let id = if let Token::Ident(id, _) = tok.val {
-          tok.loc.wrap(id)
-        } else {
-          return self.fail("an identifier", tok);
-        };
-        (id, self.at_pat()?)
-      }
+      Token::Op => (self.ident()?, self.at_pat()?),
       Token::LRound => {
         let fst = self.at_pat()?;
-        let id = if let Token::Ident(id, _) = tok.val {
-          if !self.ops.contains_key(&id) {
-            return Err(tok.loc.wrap(ParseError::NotInfix(id)));
-          }
-          tok.loc.wrap(id)
-        } else {
-          return self.fail("an identifier", tok);
-        };
-        let snd = self.at_pat()?;
-        (id, fst.loc.wrap(Pat::Tuple(vec![fst, snd])))
+        let id = self.ident()?;
+        if !self.ops.contains_key(&id.val) {
+          return Err(tok.loc.wrap(ParseError::NotInfix(id.val)));
+        }
+        (id, fst.loc.wrap(Pat::Tuple(vec![fst, self.at_pat()?])))
       }
       Token::Ident(id, _) => {
-        let id = if self.ops.contains_key(&id) {
+        if self.ops.contains_key(&id) {
           return Err(tok.loc.wrap(ParseError::InfixWithoutOp(id)));
-        } else {
-          tok.loc.wrap(id)
-        };
-        (id, self.at_pat()?)
+        }
+        (tok.loc.wrap(id), self.at_pat()?)
       }
       _ => return self.fail("`op`, `(`, or an identifier", tok),
     };
