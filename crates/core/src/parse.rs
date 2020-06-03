@@ -460,16 +460,16 @@ impl<'s> Parser<'s> {
   // also be dropped if `: ty` or `=` follows immediately." I can't figure out a
   // way to be both spec compliant and also not require unbounded lookahead.
   fn fval_bind_case(&mut self) -> Result<FValBindCase<Ident>> {
-    let mut pats = Vec::new();
     let tok = self.next()?;
-    let vid = match tok.val {
+    let (vid, pat) = match tok.val {
       Token::Op => {
         let tok = self.next()?;
-        if let Token::Ident(id, _) = tok.val {
+        let id = if let Token::Ident(id, _) = tok.val {
           tok.loc.wrap(id)
         } else {
           return self.fail("an identifier", tok);
-        }
+        };
+        (id, self.at_pat()?)
       }
       Token::LRound => {
         let fst = self.at_pat()?;
@@ -482,20 +482,21 @@ impl<'s> Parser<'s> {
           return self.fail("an identifier", tok);
         };
         let snd = self.at_pat()?;
-        pats.push(fst.loc.wrap(Pat::Tuple(vec![fst, snd])));
-        id
+        (id, fst.loc.wrap(Pat::Tuple(vec![fst, snd])))
       }
       Token::Ident(id, _) => {
-        if self.ops.contains_key(&id) {
+        let id = if self.ops.contains_key(&id) {
           return Err(tok.loc.wrap(ParseError::InfixWithoutOp(id)));
         } else {
           tok.loc.wrap(id)
-        }
+        };
+        (id, self.at_pat()?)
       }
       _ => return self.fail("`op`, `(`, or an identifier", tok),
     };
-    while let Some(ap) = self.maybe_at_pat()? {
-      pats.push(ap);
+    let mut pats = vec![pat];
+    while let Some(pat) = self.maybe_at_pat()? {
+      pats.push(pat);
     }
     let ret_ty = self.maybe_colon_ty()?;
     self.eat(Token::Equal)?;
