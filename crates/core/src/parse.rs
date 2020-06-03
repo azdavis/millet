@@ -108,7 +108,7 @@ impl<'s> Parser<'s> {
     Ok(tok)
   }
 
-  /// if the next token is `tok`, return Ok(()), else error.
+  /// if the next token is `tok`, return `Ok(())`, else return `Err(..)`.
   fn eat(&mut self, tok: Token) -> Result<()> {
     let next = self.next()?;
     if next.val == tok {
