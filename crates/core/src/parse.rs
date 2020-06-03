@@ -72,6 +72,12 @@ struct Parser<'s> {
   ops: HashMap<Ident, OpInfo>,
 }
 
+// note: the `maybe` family of functions return Result<Option<T>>. these
+// functions return:
+// - Ok(Some(..)) if they did parse a T
+// - Ok(None) if they couldn't parse a T but didn't consume any tokens
+// - Err(..) if they couldn't parse a T but did consume tokens
+
 impl<'s> Parser<'s> {
   fn new(lex: Lexer<'s>) -> Self {
     Self {
@@ -106,10 +112,6 @@ impl<'s> Parser<'s> {
     self.lookahead = Some(tok);
   }
 
-  /// returns:
-  /// - Ok(Some(..)) if did parse an atomic exp.
-  /// - Ok(None) if couldn't parse an atomic exp and didn't consume tokens.
-  /// - Err(..) if couldn't parse an atomic exp and did consume tokens.
   fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
     let tok = self.next()?;
     let exp_loc = tok.loc;
@@ -444,10 +446,6 @@ impl<'s> Parser<'s> {
     Ok(ty_vars)
   }
 
-  /// returns:
-  /// - Ok(Some(..)) if did parse an atomic pat.
-  /// - Ok(None) if couldn't parse an atomic pat and didn't consume tokens.
-  /// - Err(..) if couldn't parse an atomic pat and did consume tokens.
   fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat<Ident>>>> {
     let tok = self.next()?;
     let pat_loc = tok.loc;
