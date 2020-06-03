@@ -1,5 +1,6 @@
 use crate::ast::{
-  Arm, Dec, Exp, Label, Long, Match, Pat, PatRow, Row, Ty, TyRow, ValBind,
+  Arm, Dec, Exp, FValBind, FValBindCase, Label, Long, Match, Pat, PatRow, Row,
+  Ty, TyRow, ValBind,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -21,6 +22,7 @@ pub enum ParseError {
   LexError(LexError),
   ExpectedButFound(&'static str, &'static str),
   InfixWithoutOp(Ident),
+  NotInfix(Ident),
   RealPat,
 }
 
@@ -34,6 +36,9 @@ impl fmt::Display for ParseError {
       Self::InfixWithoutOp(id) => {
         write!(f, "infix identifier `{}` used without preceding `op`", id)
       }
+      Self::NotInfix(id) => {
+        write!(f, "non-infix identifier `{}` used as infix", id)
+      }
       Self::RealPat => write!(f, "real constant used as a pattern"),
     }
   }
@@ -43,9 +48,10 @@ impl std::error::Error for ParseError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
       Self::LexError(e) => Some(e),
-      Self::ExpectedButFound(..) | Self::InfixWithoutOp(..) | Self::RealPat => {
-        None
-      }
+      Self::ExpectedButFound(..)
+      | Self::InfixWithoutOp(..)
+      | Self::NotInfix(..)
+      | Self::RealPat => None,
     }
   }
 }
@@ -403,7 +409,26 @@ impl<'s> Parser<'s> {
         }
         Dec::Val(ty_vars, val_binds)
       }
-      Token::Fun => todo!(),
+      Token::Fun => {
+        let ty_vars = self.ty_var_seq()?;
+        let mut cases = Vec::new();
+        let mut binds = Vec::new();
+        loop {
+          cases.push(self.fval_bind_case()?);
+          let tok = self.next()?;
+          if let Token::Bar = tok.val {
+            continue;
+          }
+          binds.push(FValBind { cases });
+          if let Token::And = tok.val {
+            cases = Vec::new();
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        Dec::Fun(ty_vars, binds)
+      }
       Token::Type => todo!(),
       Token::Datatype => todo!(),
       Token::Abstype => todo!(),
@@ -416,6 +441,58 @@ impl<'s> Parser<'s> {
       _ => return self.fail("a declaration", tok),
     };
     Ok(tok.loc.wrap(dec))
+  }
+
+  // NOTE this is not compliant with the spec (page 78): "the parentheses may
+  // also be dropped if `: ty` or `=` follows immediately." I can't figure out a
+  // way to be both spec compliant and also not require unbounded lookahead.
+  fn fval_bind_case(&mut self) -> Result<FValBindCase<Ident>> {
+    let mut pats = Vec::new();
+    let tok = self.next()?;
+    let vid = match tok.val {
+      Token::Op => {
+        let tok = self.next()?;
+        if let Token::Ident(id, _) = tok.val {
+          tok.loc.wrap(id)
+        } else {
+          return self.fail("an identifier", tok);
+        }
+      }
+      Token::LRound => {
+        let fst = self.at_pat()?;
+        let id = if let Token::Ident(id, _) = tok.val {
+          if !self.ops.contains_key(&id) {
+            return Err(tok.loc.wrap(ParseError::NotInfix(id)));
+          }
+          tok.loc.wrap(id)
+        } else {
+          return self.fail("an identifier", tok);
+        };
+        let snd = self.at_pat()?;
+        pats.push(fst.loc.wrap(Pat::Tuple(vec![fst, snd])));
+        id
+      }
+      Token::Ident(id, _) => {
+        if self.ops.contains_key(&id) {
+          return Err(tok.loc.wrap(ParseError::InfixWithoutOp(id)));
+        } else {
+          tok.loc.wrap(id)
+        }
+      }
+      _ => return self.fail("`op`, `(`, or an identifier", tok),
+    };
+    while let Some(ap) = self.maybe_at_pat()? {
+      pats.push(ap);
+    }
+    let ret_ty = self.maybe_colon_ty()?;
+    self.eat(Token::Equal)?;
+    let body = self.exp()?;
+    Ok(FValBindCase {
+      vid,
+      pats,
+      ret_ty,
+      body,
+    })
   }
 
   fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
