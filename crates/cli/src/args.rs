@@ -1,3 +1,5 @@
+//! Command-line arguments.
+
 use clap::{App, Arg, ArgMatches};
 
 pub fn get() -> Args {

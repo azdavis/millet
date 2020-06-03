@@ -1,3 +1,5 @@
+//! An implementation of Standard ML.
+
 pub mod ast;
 pub mod ident;
 pub mod lex;

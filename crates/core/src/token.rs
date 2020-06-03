@@ -1,3 +1,5 @@
+//! Lexical tokens.
+
 use crate::ident::Ident;
 
 #[derive(Debug, PartialEq, Clone)]

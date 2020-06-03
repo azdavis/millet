@@ -1,3 +1,5 @@
+//! A CLI for millet.
+
 mod args;
 
 use millet_core::lex;

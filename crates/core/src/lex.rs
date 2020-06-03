@@ -1,3 +1,5 @@
+//! Lexical analysis.
+
 use crate::ident::Ident;
 use crate::source::{Loc, Located, SourceFileId};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};

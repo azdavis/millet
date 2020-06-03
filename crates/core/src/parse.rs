@@ -1,3 +1,5 @@
+//! Parsing.
+
 use crate::ast::{
   Arm, Dec, Exp, FValBind, FValBindCase, Label, Long, Match, Pat, PatRow, Row,
   Ty, TyRow, ValBind,

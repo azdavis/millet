@@ -1,3 +1,5 @@
+//! Utilities for dealing with source code.
+
 /// A point location in the source.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Loc {
