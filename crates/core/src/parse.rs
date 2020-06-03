@@ -118,6 +118,11 @@ impl<'s> Parser<'s> {
     self.lookahead = Some(tok);
   }
 
+  fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
+    let err = ParseError::ExpectedButFound(want, tok.val.desc());
+    Err(tok.loc.wrap(err))
+  }
+
   fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
     let tok = self.next()?;
     let exp_loc = tok.loc;
@@ -817,10 +822,5 @@ impl<'s> Parser<'s> {
       }
     }
     Ok(types)
-  }
-
-  fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
-    let err = ParseError::ExpectedButFound(want, tok.val.desc());
-    Err(tok.loc.wrap(err))
   }
 }
