@@ -85,6 +85,7 @@ struct Parser<'s> {
 // - Err(..) if they couldn't parse a T but did consume tokens
 
 impl<'s> Parser<'s> {
+  /// constructs a new Parser.
   fn new(lex: Lexer<'s>) -> Self {
     Self {
       lex,
@@ -93,6 +94,7 @@ impl<'s> Parser<'s> {
     }
   }
 
+  /// gets the next token.
   fn next(&mut self) -> Result<Located<Token>> {
     if let Some(look) = self.lookahead.take() {
       return Ok(look);
@@ -104,6 +106,7 @@ impl<'s> Parser<'s> {
     Ok(tok)
   }
 
+  /// if the next token is `tok`, return Ok(()), else error.
   fn eat(&mut self, tok: Token) -> Result<()> {
     let next = self.next()?;
     if next.val == tok {
@@ -113,11 +116,14 @@ impl<'s> Parser<'s> {
     }
   }
 
+  /// backtracks 1 token. this is how lookahead is implemented. the next call to
+  /// `next()` will return `tok`. requires that there be no current lookahead.
   fn back(&mut self, tok: Located<Token>) {
     assert!(self.lookahead.is_none());
     self.lookahead = Some(tok);
   }
 
+  /// returns an ExpectedButFound error, where we expected `want` but got `tok`.
   fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
     let err = ParseError::ExpectedButFound(want, tok.val.desc());
     Err(tok.loc.wrap(err))
