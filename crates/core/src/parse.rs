@@ -110,7 +110,7 @@ impl<'s> Parser<'s> {
   /// - Ok(Some(..)) if did parse an atomic exp.
   /// - Ok(None) if couldn't parse an atomic exp and didn't consume tokens.
   /// - Err(..) if couldn't parse an atomic exp and did consume tokens.
-  fn at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
+  fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
     let tok = self.next()?;
     let exp_loc = tok.loc;
     let exp = match tok.val {
@@ -227,6 +227,16 @@ impl<'s> Parser<'s> {
     Ok(Some(exp_loc.wrap(exp)))
   }
 
+  fn at_exp(&mut self) -> Result<Located<Exp<Ident>>> {
+    match self.maybe_at_exp()? {
+      Some(x) => Ok(x),
+      None => {
+        let tok = self.next()?;
+        self.fail("an expression", tok)
+      }
+    }
+  }
+
   fn maybe_long_id(&mut self) -> Result<Option<Long<Ident>>> {
     let mut idents = Vec::new();
     loop {
@@ -318,14 +328,8 @@ impl<'s> Parser<'s> {
       }
       _ => {
         self.back(tok);
-        let mut exp = match self.at_exp()? {
-          Some(x) => x,
-          None => {
-            let tok = self.next()?;
-            return self.fail("an expression", tok);
-          }
-        };
-        while let Some(x) = self.at_exp()? {
+        let mut exp = self.at_exp()?;
+        while let Some(x) = self.maybe_at_exp()? {
           exp = exp.loc.wrap(Exp::App(exp.into(), x.into()));
         }
         loop {
@@ -444,7 +448,7 @@ impl<'s> Parser<'s> {
   /// - Ok(Some(..)) if did parse an atomic pat.
   /// - Ok(None) if couldn't parse an atomic pat and didn't consume tokens.
   /// - Err(..) if couldn't parse an atomic pat and did consume tokens.
-  fn at_pat(&mut self) -> Result<Option<Located<Pat<Ident>>>> {
+  fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat<Ident>>>> {
     let tok = self.next()?;
     let pat_loc = tok.loc;
     let pat = match tok.val {
@@ -550,15 +554,19 @@ impl<'s> Parser<'s> {
     Ok(Some(pat_loc.wrap(pat)))
   }
 
-  // TODO prec
-  fn pat(&mut self) -> Result<Located<Pat<Ident>>> {
-    let mut pat = match self.at_pat()? {
-      Some(x) => x,
+  fn at_pat(&mut self) -> Result<Located<Pat<Ident>>> {
+    match self.maybe_at_pat()? {
+      Some(x) => Ok(x),
       None => {
         let tok = self.next()?;
-        return self.fail("a pattern", tok);
+        self.fail("a pattern", tok)
       }
-    };
+    }
+  }
+
+  // TODO prec
+  fn pat(&mut self) -> Result<Located<Pat<Ident>>> {
+    let mut pat = self.at_pat()?;
     if let Pat::LongVid(long_vid) = pat.val {
       pat = pat.loc.wrap(self.pat_long_vid(pat.loc, long_vid)?);
     }
@@ -602,7 +610,7 @@ impl<'s> Parser<'s> {
         }
       }
     }
-    match self.at_pat()? {
+    match self.maybe_at_pat()? {
       None => Ok(Pat::LongVid(long_vid)),
       Some(x) => Ok(Pat::Ctor(long_vid, x.into())),
     }
