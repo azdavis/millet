@@ -1,12 +1,12 @@
 # Millet
 
 An implementation of Standard ML being developed mainly for use in
-[15-150][150], Carnegie Mellon University's introductory functional programming
-course.
+[15-150][one-fifty], Carnegie Mellon University's introductory functional
+programming course.
 
 ## Development
 
-First install Rust and Cargo, probably with [rustup][rustup].
+First install Rust and Cargo, probably with [rustup][].
 
 Then clone the repository, cd inside, and run `cargo build`.
 
@@ -26,11 +26,11 @@ Goals are listed in order of importance.
 Bugs in a program are never desirable. They are, however, _especially_
 undesirable when the program is intended for use by students, many of whom are
 first being introduced to functional programming. We must, therefore, strive to
-implement the [Definition of Standard ML correctly][sml-def].
+implement the [Definition of Standard ML][sml-def] correctly.
 
 ### Have good error messages
 
-In the past, 15-150 has used [Standard ML of New Jersey][smlnj], which
+In the past, 15-150 has used [Standard ML of New Jersey][sml-nj], which
 unfortunately has error messages that can be at times hard to understand. To
 provide a great experience for our students, it is important to have great error
 messages.
@@ -59,7 +59,7 @@ generally very short-lived. It is probably sufficient to implement the dynamic
 semantics with an interpreter, and not worry about compilation, which would
 probably result in faster-running code.
 
-[smlnj]: https://www.smlnj.org
-[150]: http://www.cs.cmu.edu/~15150/
-[sml-def]: https://smlfamily.github.io/sml97-defn.pdf
+[one-fifty]: http://www.cs.cmu.edu/~15150/
 [rustup]: https://rustup.rs
+[sml-def]: https://smlfamily.github.io/sml97-defn.pdf
+[sml-nj]: https://www.smlnj.org
