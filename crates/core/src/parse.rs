@@ -1,8 +1,8 @@
 //! Parsing.
 
 use crate::ast::{
-  Arm, Dec, Exp, FValBind, FValBindCase, Label, Long, Match, Pat, PatRow, Row,
-  Ty, TyRow, ValBind,
+  Arm, ConBind, DatBind, Dec, Exp, FValBind, FValBindCase, Label, Long, Match,
+  Pat, PatRow, Row, Ty, TyBind, TyRow, ValBind,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -405,6 +405,7 @@ impl<'s> Parser<'s> {
 
   fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
     let tok = self.next()?;
+    let dec_loc = tok.loc;
     let dec = match tok.val {
       Token::Val => {
         let ty_vars = self.ty_var_seq()?;
@@ -451,8 +452,46 @@ impl<'s> Parser<'s> {
         }
         Dec::Fun(ty_vars, binds)
       }
-      Token::Type => todo!(),
-      Token::Datatype => todo!(),
+      Token::Type => Dec::Type(self.ty_binds()?),
+      Token::Datatype => {
+        let tok = self.next()?;
+        let dat_bind = if let Token::Ident(id, _) = tok.val {
+          let ty_con = tok.loc.wrap(id);
+          self.eat(Token::Equal)?;
+          let tok = self.next()?;
+          if let Token::Datatype = tok.val {
+            let long = self.long_id(true)?;
+            return Ok(dec_loc.wrap(Dec::DatatypeCopy(ty_con, long)));
+          }
+          self.back(tok);
+          let cons = self.con_binds()?;
+          DatBind {
+            ty_vars: Vec::new(),
+            ty_con,
+            cons,
+          }
+        } else {
+          self.dat_bind()?
+        };
+        let mut dat_binds = vec![dat_bind];
+        loop {
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            dat_binds.push(self.dat_bind()?);
+          } else {
+            self.back(tok);
+            break;
+          }
+        }
+        let tok = self.next()?;
+        let ty_binds = if let Token::Withtype = tok.val {
+          self.ty_binds()?
+        } else {
+          self.back(tok);
+          Vec::new()
+        };
+        Dec::Datatype(dat_binds, ty_binds)
+      }
       Token::Abstype => todo!(),
       Token::Exception => todo!(),
       Token::Local => todo!(),
@@ -462,7 +501,7 @@ impl<'s> Parser<'s> {
       Token::Nonfix => todo!(),
       _ => return self.fail("a declaration", tok),
     };
-    Ok(tok.loc.wrap(dec))
+    Ok(dec_loc.wrap(dec))
   }
 
   // NOTE this is not compliant with the spec (page 78): "the parentheses may
@@ -501,6 +540,36 @@ impl<'s> Parser<'s> {
       ret_ty,
       body,
     })
+  }
+
+  fn ty_binds(&mut self) -> Result<Vec<TyBind<Ident>>> {
+    let mut ty_binds = Vec::new();
+    loop {
+      let ty_vars = self.ty_var_seq()?;
+      let ty_con = self.ident()?;
+      self.eat(Token::Equal)?;
+      let ty = self.ty()?;
+      ty_binds.push(TyBind {
+        ty_vars,
+        ty_con,
+        ty,
+      });
+      let tok = self.next()?;
+      if let Token::And = tok.val {
+        continue;
+      }
+      self.back(tok);
+      break;
+    }
+    Ok(ty_binds)
+  }
+
+  fn con_binds(&mut self) -> Result<Vec<ConBind<Ident>>> {
+    todo!()
+  }
+
+  fn dat_bind(&mut self) -> Result<DatBind<Ident>> {
+    todo!()
   }
 
   fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
