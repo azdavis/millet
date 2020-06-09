@@ -131,11 +131,11 @@ pub struct ConBind<I> {
 
 pub struct ExBind<I> {
   pub vid: Located<I>,
-  pub inner: Option<ExBindInner<I>>,
+  pub inner: ExBindInner<I>,
 }
 
 pub enum ExBindInner<I> {
-  Ty(Located<Ty<I>>),
+  Ty(Option<Located<Ty<I>>>),
   Long(Long<I>),
 }
 
