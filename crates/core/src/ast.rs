@@ -194,10 +194,11 @@ pub enum StrDec<I> {
   /// requires !str_binds.is_empty()
   Structure(Vec<StrBind<I>>),
   Local(Box<Located<StrDec<I>>>, Box<Located<StrDec<I>>>),
+  Seq(Vec<Located<StrDec<I>>>),
 }
 
 pub struct StrBind<I> {
-  pub strid: Located<I>,
+  pub id: Located<I>,
   pub exp: Located<StrExp<I>>,
 }
 
