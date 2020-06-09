@@ -2,7 +2,8 @@
 
 use crate::ast::{
   Arm, ConBind, DatBind, Dec, ExBind, ExBindInner, Exp, FValBind, FValBindCase,
-  Label, Long, Match, Pat, PatRow, Row, Ty, TyBind, TyRow, ValBind,
+  Label, Long, Match, Pat, PatRow, Row, SigExp, StrBind, StrDec, StrExp, Ty,
+  TyBind, TyRow, ValBind,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -132,6 +133,125 @@ impl<'s> Parser<'s> {
   fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
     let err = ParseError::ExpectedButFound(want, tok.val.desc());
     Err(tok.loc.wrap(err))
+  }
+
+  fn str_exp(&mut self) -> Result<Located<StrExp<Ident>>> {
+    let tok = self.next()?;
+    let loc = tok.loc;
+    let mut ret = match tok.val {
+      Token::Struct => {
+        let dec = self.str_dec()?;
+        self.eat(Token::End)?;
+        StrExp::Struct(dec)
+      }
+      Token::Let => {
+        let dec = self.str_dec()?;
+        self.eat(Token::In)?;
+        let exp = self.str_exp()?;
+        self.eat(Token::End)?;
+        StrExp::Let(dec.into(), exp.into())
+      }
+      Token::Ident(_, IdentType::AlphaNum) => {
+        self.back(tok);
+        let long_id = self.long_alpha_num_id()?;
+        let tok = self.next()?;
+        if let Token::LRound = tok.val {
+          let exp = self.str_exp()?;
+          self.eat(Token::RRound)?;
+          StrExp::FunctorApp(long_id, exp.into())
+        } else {
+          StrExp::LongStrId(long_id)
+        }
+      }
+      _ => return self.fail("a structure expression", tok),
+    };
+    loop {
+      let tok = self.next()?;
+      ret = match tok.val {
+        Token::Colon => {
+          let exp = self.sig_exp()?;
+          StrExp::Transparent(loc.wrap(ret).into(), exp)
+        }
+        Token::ColonGt => {
+          let exp = self.sig_exp()?;
+          StrExp::Opaque(loc.wrap(ret).into(), exp)
+        }
+        _ => {
+          self.back(tok);
+          break;
+        }
+      };
+    }
+    Ok(loc.wrap(ret))
+  }
+
+  fn maybe_str_dec(&mut self) -> Result<Option<Located<StrDec<Ident>>>> {
+    let tok = self.next()?;
+    let loc = tok.loc;
+    let ret = match tok.val {
+      Token::Structure => {
+        let mut str_binds = Vec::new();
+        loop {
+          let id = self.alpha_num_id()?;
+          self.eat(Token::Equal)?;
+          let exp = self.str_exp()?;
+          str_binds.push(StrBind { id, exp });
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        StrDec::Structure(str_binds)
+      }
+      Token::Local => {
+        let fst = self.str_dec()?;
+        self.eat(Token::In)?;
+        let snd = self.str_dec()?;
+        self.eat(Token::End)?;
+        StrDec::Local(fst.into(), snd.into())
+      }
+      _ => {
+        self.back(tok);
+        let dec = self.dec()?;
+        if let Dec::Seq(ref xs) = dec.val {
+          if xs.is_empty() {
+            return Ok(None);
+          }
+        }
+        StrDec::Dec(dec)
+      }
+    };
+    Ok(Some(loc.wrap(ret)))
+  }
+
+  fn str_dec(&mut self) -> Result<Located<StrDec<Ident>>> {
+    let mut decs = Vec::new();
+    while let Some(dec) = self.maybe_str_dec()? {
+      decs.push(dec);
+      let tok = self.next()?;
+      if let Token::Semicolon = tok.val {
+        continue;
+      }
+      self.back(tok);
+    }
+    let ret = match decs.len() {
+      0 => {
+        // NOTE we conjure up a 'fake' loc
+        let tok = self.next()?;
+        let loc = tok.loc;
+        self.back(tok);
+        loc.wrap(StrDec::Seq(Vec::new()))
+      }
+      1 => decs.pop().unwrap(),
+      _ => decs.first().unwrap().loc.wrap(StrDec::Seq(decs)),
+    };
+    Ok(ret)
+  }
+
+  fn sig_exp(&mut self) -> Result<Located<SigExp<Ident>>> {
+    todo!()
   }
 
   fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
@@ -264,6 +384,15 @@ impl<'s> Parser<'s> {
   fn ident(&mut self) -> Result<Located<Ident>> {
     let tok = self.next()?;
     if let Token::Ident(id, _) = tok.val {
+      Ok(tok.loc.wrap(id))
+    } else {
+      self.fail("an identifier", tok)
+    }
+  }
+
+  fn alpha_num_id(&mut self) -> Result<Located<Ident>> {
+    let tok = self.next()?;
+    if let Token::Ident(id, IdentType::AlphaNum) = tok.val {
       Ok(tok.loc.wrap(id))
     } else {
       self.fail("an identifier", tok)
