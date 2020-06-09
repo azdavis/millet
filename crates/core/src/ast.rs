@@ -236,6 +236,7 @@ pub enum Spec<I> {
   Include(Box<Located<SigExp<I>>>),
   /// requires specs.len() != 1
   Seq(Vec<Located<Spec<I>>>),
+  Sharing(Vec<Long<I>>),
 }
 
 pub struct ValDesc<I> {
@@ -251,8 +252,8 @@ pub struct TyDesc<I> {
 pub struct DatDesc<I> {
   pub ty_vars: Vec<Located<TyVar<I>>>,
   pub ty_con: Located<I>,
-  /// requires !con_descs.is_empty()
-  pub con_descs: Vec<ConDesc<I>>,
+  /// requires !cons.is_empty()
+  pub cons: Vec<ConDesc<I>>,
 }
 
 pub struct ConDesc<I> {
