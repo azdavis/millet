@@ -86,11 +86,11 @@ impl SourceMap {
       }
       line += 1;
       if line == loc.line {
-        start = Some(i);
+        start = Some(i + 1);
       }
     }
     let start = start.unwrap();
-    let end = end.unwrap();
+    let end = end.unwrap_or_else(|| bs.len());
     let line = std::str::from_utf8(&bs[start..end]).unwrap();
     (&file.name, line)
   }
@@ -149,7 +149,7 @@ where
       write!(self.writer, " ")?;
     }
     writeln!(self.writer, "^")?;
-    writeln!(self.writer, "  |")?;
+    writeln!(self.writer)?;
     Ok(())
   }
 
@@ -160,6 +160,7 @@ where
   ) -> std::io::Result<()> {
     writeln!(self.writer, "error: {}", err)?;
     writeln!(self.writer, " --> {}", name)?;
+    writeln!(self.writer)?;
     Ok(())
   }
 }
