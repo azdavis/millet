@@ -89,7 +89,9 @@ impl SourceMap {
         start = Some(i);
       }
     }
-    let line = std::str::from_utf8(&bs[start.unwrap()..end.unwrap()]).unwrap();
+    let start = start.unwrap();
+    let end = end.unwrap();
+    let line = std::str::from_utf8(&bs[start..end]).unwrap();
     (&file.name, line)
   }
 }
