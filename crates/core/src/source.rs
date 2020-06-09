@@ -74,7 +74,7 @@ impl SourceMap {
     let file = &self.files[loc.file_id.0];
     let bs = file.as_bytes();
     let mut line = 1;
-    let mut start: Option<usize> = None;
+    let mut start: Option<usize> = if loc.line == 1 { Some(0) } else { None };
     let mut end: Option<usize> = None;
     for (i, &b) in bs.iter().enumerate() {
       if b != b'\n' {
@@ -145,11 +145,11 @@ where
     self.writer.write(line.as_bytes())?;
     writeln!(self.writer)?;
     write!(self.writer, "  | ")?;
-    for _ in 0..loc.col {
+    for _ in 1..loc.col {
       write!(self.writer, " ")?;
     }
     writeln!(self.writer, "^")?;
-    write!(self.writer, "  |")?;
+    writeln!(self.writer, "  |")?;
     Ok(())
   }
 
