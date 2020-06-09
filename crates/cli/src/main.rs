@@ -1,15 +1,16 @@
 //! A CLI for millet.
 
 mod args;
+mod reporter;
 
-use millet_core::source::{Reporter, SourceMap};
+use millet_core::source::SourceMap;
 use millet_core::{lex, parse};
 
 fn run() -> bool {
   let args = args::get();
   let stdout = std::io::stdout();
   let mut m = SourceMap::new();
-  let mut w = Reporter::new(stdout.lock());
+  let mut w = reporter::Reporter::new(stdout.lock());
   for name in args.files {
     match std::fs::read_to_string(&name) {
       Ok(s) => m.insert(name, s),

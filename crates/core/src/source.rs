@@ -54,6 +54,13 @@ pub struct SourceMap {
   files: Vec<SourceFile>,
 }
 
+pub struct SourceCtx<'a> {
+  pub line_num: usize,
+  pub col_num: usize,
+  pub file_name: &'a str,
+  pub line: &'a str,
+}
+
 impl SourceMap {
   pub fn new() -> Self {
     Self { files: Vec::new() }
@@ -70,7 +77,7 @@ impl SourceMap {
     }
   }
 
-  fn get_name_and_line(&self, loc: Loc) -> (&str, &str) {
+  pub fn get_ctx(&self, loc: Loc) -> SourceCtx<'_> {
     let file = &self.files[loc.file_id.0];
     let bs = file.as_bytes();
     let mut line = 1;
@@ -92,7 +99,12 @@ impl SourceMap {
     let start = start.unwrap();
     let end = end.unwrap_or_else(|| bs.len());
     let line = std::str::from_utf8(&bs[start..end]).unwrap();
-    (&file.name, line)
+    SourceCtx {
+      file_name: &file.name,
+      line,
+      line_num: loc.line,
+      col_num: loc.col,
+    }
   }
 }
 
@@ -109,58 +121,5 @@ impl<'s> Iterator for Iter<'s> {
     let ret = Some((SourceFileId(self.idx), self.files.get(self.idx)?));
     self.idx += 1;
     ret
-  }
-}
-
-/// A reporter of errors.
-pub struct Reporter<W> {
-  writer: W,
-}
-
-impl<W> Reporter<W> {
-  pub fn new(writer: W) -> Self {
-    Self { writer }
-  }
-}
-
-impl<W> Reporter<W>
-where
-  W: std::io::Write,
-{
-  pub fn report<T>(
-    &mut self,
-    map: &SourceMap,
-    err: Located<T>,
-  ) -> std::io::Result<()>
-  where
-    T: std::error::Error,
-  {
-    let loc = err.loc;
-    let err = err.val;
-    let (name, line) = map.get_name_and_line(loc);
-    writeln!(self.writer, "error: {}", err)?;
-    writeln!(self.writer, " --> {}:{}:{}", name, loc.line, loc.col)?;
-    writeln!(self.writer, "  |")?;
-    write!(self.writer, "  | ")?;
-    self.writer.write(line.as_bytes())?;
-    writeln!(self.writer)?;
-    write!(self.writer, "  | ")?;
-    for _ in 1..loc.col {
-      write!(self.writer, " ")?;
-    }
-    writeln!(self.writer, "^")?;
-    writeln!(self.writer)?;
-    Ok(())
-  }
-
-  pub fn report_io(
-    &mut self,
-    name: &str,
-    err: std::io::Error,
-  ) -> std::io::Result<()> {
-    writeln!(self.writer, "error: {}", err)?;
-    writeln!(self.writer, " --> {}", name)?;
-    writeln!(self.writer)?;
-    Ok(())
   }
 }
