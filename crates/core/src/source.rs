@@ -102,6 +102,7 @@ pub struct Iter<'s> {
 
 impl<'s> Iterator for Iter<'s> {
   type Item = (SourceFileId, &'s SourceFile);
+
   fn next(&mut self) -> Option<Self::Item> {
     let ret = Some((SourceFileId(self.idx), self.files.get(self.idx)?));
     self.idx += 1;
