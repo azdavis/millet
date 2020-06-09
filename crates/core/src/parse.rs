@@ -26,6 +26,7 @@ pub enum ParseError {
   InfixWithoutOp(Ident),
   NotInfix(Ident),
   RealPat,
+  NegativeFixity(i32),
 }
 
 impl fmt::Display for ParseError {
@@ -42,6 +43,7 @@ impl fmt::Display for ParseError {
         write!(f, "non-infix identifier `{}` used as infix", id)
       }
       Self::RealPat => write!(f, "real constant used as a pattern"),
+      Self::NegativeFixity(n) => write!(f, "fixity `{}` is negative", n),
     }
   }
 }
@@ -53,7 +55,8 @@ impl std::error::Error for ParseError {
       Self::ExpectedButFound(..)
       | Self::InfixWithoutOp(..)
       | Self::NotInfix(..)
-      | Self::RealPat => None,
+      | Self::RealPat
+      | Self::NegativeFixity(..) => None,
     }
   }
 }
@@ -312,6 +315,24 @@ impl<'s> Parser<'s> {
     }
   }
 
+  fn long_str_id(&mut self) -> Result<Long<Ident>> {
+    let mut idents = Vec::new();
+    loop {
+      let tok = self.next()?;
+      if let Token::Ident(id, IdentType::AlphaNum) = tok.val {
+        idents.push(tok.loc.wrap(id));
+        let tok = self.next()?;
+        if let Token::Dot = tok.val {
+          continue;
+        }
+        self.back(tok);
+        break;
+      }
+      return self.fail("an identifier", tok);
+    }
+    Ok(Long { idents })
+  }
+
   fn label(&mut self) -> Result<Located<Label>> {
     let tok = self.next()?;
     let lab = match tok.val {
@@ -535,11 +556,40 @@ impl<'s> Parser<'s> {
         }
         Dec::Exception(ex_binds)
       }
-      Token::Local => todo!(),
-      Token::Open => todo!(),
-      Token::Infix => todo!(),
-      Token::Infixr => todo!(),
-      Token::Nonfix => todo!(),
+      Token::Local => {
+        let fst = self.dec()?;
+        self.eat(Token::In)?;
+        let snd = self.dec()?;
+        Dec::Local(fst.into(), snd.into())
+      }
+      Token::Open => {
+        let mut str_ids = Vec::new();
+        loop {
+          str_ids.push(self.long_str_id()?);
+          let tok = self.next()?;
+          if let Token::Ident(..) = tok.val {
+            self.back(tok);
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        Dec::Open(str_ids)
+      }
+      Token::Infix => {
+        let n = self.fixity_num()?;
+        let idents = self.fixity_idents()?;
+        Dec::Infix(n, idents)
+      }
+      Token::Infixr => {
+        let n = self.fixity_num()?;
+        let idents = self.fixity_idents()?;
+        Dec::Infixr(n, idents)
+      }
+      Token::Nonfix => {
+        let idents = self.fixity_idents()?;
+        Dec::Nonfix(idents)
+      }
       _ => return self.fail("a declaration", tok),
     };
     Ok(dec_loc.wrap(dec))
@@ -975,5 +1025,33 @@ impl<'s> Parser<'s> {
       self.back(tok);
       Ok(None)
     }
+  }
+
+  fn fixity_num(&mut self) -> Result<Located<u32>> {
+    let tok = self.next()?;
+    let loc = tok.loc;
+    let n = if let Token::DecInt(n, _) = tok.val {
+      if n < 0 {
+        return Err(loc.wrap(ParseError::NegativeFixity(n)));
+      }
+      n.try_into().unwrap()
+    } else {
+      self.back(tok);
+      0
+    };
+    Ok(loc.wrap(n))
+  }
+
+  fn fixity_idents(&mut self) -> Result<Vec<Located<Ident>>> {
+    let mut ret = Vec::new();
+    loop {
+      let tok = self.next()?;
+      if let Token::Ident(id, _) = tok.val {
+        ret.push(tok.loc.wrap(id));
+        continue;
+      }
+      break;
+    }
+    Ok(ret)
   }
 }
