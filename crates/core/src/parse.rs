@@ -315,7 +315,7 @@ impl<'s> Parser<'s> {
     }
   }
 
-  fn long_str_id(&mut self) -> Result<Long<Ident>> {
+  fn long_alpha_num_id(&mut self) -> Result<Long<Ident>> {
     let mut idents = Vec::new();
     loop {
       let tok = self.next()?;
@@ -565,7 +565,7 @@ impl<'s> Parser<'s> {
       Token::Open => {
         let mut str_ids = Vec::new();
         loop {
-          str_ids.push(self.long_str_id()?);
+          str_ids.push(self.long_alpha_num_id()?);
           let tok = self.next()?;
           if let Token::Ident(..) = tok.val {
             self.back(tok);
