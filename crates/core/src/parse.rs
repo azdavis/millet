@@ -279,10 +279,9 @@ impl<'s> Parser<'s> {
         let tok = self.next()?;
         if let Token::Dot = tok.val {
           continue;
-        } else {
-          self.back(tok);
-          break;
         }
+        self.back(tok);
+        break;
       }
       return if idents.is_empty() {
         self.back(tok);
@@ -395,10 +394,9 @@ impl<'s> Parser<'s> {
       let tok = self.next()?;
       if let Token::Bar = tok.val {
         continue;
-      } else {
-        self.back(tok);
-        break;
       }
+      self.back(tok);
+      break;
     }
     Ok(Match { arms })
   }
@@ -425,10 +423,9 @@ impl<'s> Parser<'s> {
           let tok = self.next()?;
           if let Token::And = tok.val {
             continue;
-          } else {
-            self.back(tok);
-            break;
           }
+          self.back(tok);
+          break;
         }
         Dec::Val(ty_vars, val_binds)
       }
@@ -575,10 +572,9 @@ impl<'s> Parser<'s> {
       let tok = self.next()?;
       if let Token::Bar = tok.val {
         continue;
-      } else {
-        self.back(tok);
-        break;
       }
+      self.back(tok);
+      break;
     }
     Ok(ret)
   }
@@ -651,9 +647,8 @@ impl<'s> Parser<'s> {
             let tok = self.next()?;
             if let Token::RCurly = tok.val {
               break;
-            } else {
-              return self.fail("`}`", tok);
             }
+            return self.fail("`}`", tok);
           }
           self.back(tok);
           let lab = self.label()?;
