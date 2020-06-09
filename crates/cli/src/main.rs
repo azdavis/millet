@@ -2,8 +2,8 @@
 
 mod args;
 
-use millet_core::lex;
 use millet_core::source::{Reporter, SourceMap};
+use millet_core::{lex, parse};
 
 fn run() -> bool {
   let args = args::get();
@@ -19,8 +19,14 @@ fn run() -> bool {
       }
     }
   }
-  for _ in m.iter().map(|(id, file)| lex::get(id, file.as_bytes())) {
-    //
+  for (id, file) in m.iter() {
+    match parse::get(lex::get(id, file.as_bytes())) {
+      Ok(_) => {}
+      Err(e) => {
+        w.report(&m, e).unwrap();
+        return false;
+      }
+    }
   }
   true
 }
@@ -29,4 +35,5 @@ fn main() {
   if !run() {
     std::process::exit(1);
   }
+  println!("OK");
 }
