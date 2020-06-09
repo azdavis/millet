@@ -194,6 +194,7 @@ pub enum StrDec<I> {
   /// requires !str_binds.is_empty()
   Structure(Vec<StrBind<I>>),
   Local(Box<Located<StrDec<I>>>, Box<Located<StrDec<I>>>),
+  /// requires specs.len() != 1
   Seq(Vec<Located<StrDec<I>>>),
 }
 
