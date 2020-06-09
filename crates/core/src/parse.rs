@@ -16,9 +16,8 @@ use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Located<ParseError>>;
 
-pub fn get<'s>(lex: Lexer<'s>) -> Result<()> {
-  let p = Parser::new(lex);
-  Ok(())
+pub fn get<'s>(lex: Lexer<'s>) -> Result<Vec<Located<TopDec<Ident>>>> {
+  Parser::new(lex).program()
 }
 
 #[derive(Debug)]
@@ -134,6 +133,19 @@ impl<'s> Parser<'s> {
   fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
     let err = ParseError::ExpectedButFound(want, tok.val.desc());
     Err(tok.loc.wrap(err))
+  }
+
+  fn program(&mut self) -> Result<Vec<Located<TopDec<Ident>>>> {
+    let mut ret = Vec::new();
+    loop {
+      let tok = self.next()?;
+      if let Token::EOF = tok.val {
+        break;
+      }
+      self.back(tok);
+      ret.push(self.top_dec()?);
+    }
+    Ok(ret)
   }
 
   fn top_dec(&mut self) -> Result<Located<TopDec<Ident>>> {
