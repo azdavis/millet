@@ -568,20 +568,9 @@ impl<'s> Parser<'s> {
   fn con_binds(&mut self) -> Result<Vec<ConBind<Ident>>> {
     let mut ret = Vec::new();
     loop {
-      let tok = self.next()?;
-      if let Token::Op = tok.val {
-        //
-      } else {
-        self.back(tok);
-      }
+      self.maybe_op()?;
       let vid = self.ident()?;
-      let tok = self.next()?;
-      let ty = if let Token::Of = tok.val {
-        Some(self.ty()?)
-      } else {
-        self.back(tok);
-        None
-      };
+      let ty = self.maybe_of_ty()?;
       ret.push(ConBind { vid, ty });
       let tok = self.next()?;
       if let Token::Bar = tok.val {
@@ -928,5 +917,25 @@ impl<'s> Parser<'s> {
       }
     }
     Ok(types)
+  }
+
+  fn maybe_op(&mut self) -> Result<bool> {
+    let tok = self.next()?;
+    if let Token::Op = tok.val {
+      Ok(true)
+    } else {
+      self.back(tok);
+      Ok(false)
+    }
+  }
+
+  fn maybe_of_ty(&mut self) -> Result<Option<Located<Ty<Ident>>>> {
+    let tok = self.next()?;
+    if let Token::Of = tok.val {
+      Ok(Some(self.ty()?))
+    } else {
+      self.back(tok);
+      Ok(None)
+    }
   }
 }
