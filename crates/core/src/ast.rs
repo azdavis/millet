@@ -4,6 +4,7 @@ use crate::ident::Ident;
 use crate::source::{Loc, Located};
 use crate::token::TyVar;
 
+#[derive(Debug)]
 pub enum Exp<I> {
   // begin special constants
   DecInt(i32),
@@ -41,30 +42,36 @@ pub enum Exp<I> {
   Fn(Match<I>),
 }
 
+#[derive(Debug)]
 pub struct Long<I> {
   /// requires !idents.is_empty()
   pub idents: Vec<Located<I>>,
 }
 
+#[derive(Debug)]
 pub struct Row<I> {
   pub lab: Located<Label>,
   pub exp: Located<Exp<I>>,
 }
 
+#[derive(Debug)]
 pub enum Label {
   Vid(Ident),
   Num(u32),
 }
 
+#[derive(Debug)]
 pub struct Match<I> {
   pub arms: Vec<Arm<I>>,
 }
 
+#[derive(Debug)]
 pub struct Arm<I> {
   pub pat: Located<Pat<I>>,
   pub exp: Located<Exp<I>>,
 }
 
+#[derive(Debug)]
 pub enum Dec<I> {
   /// requires !val_binds.is_empty()
   Val(Vec<Located<TyVar<I>>>, Vec<ValBind<I>>),
@@ -92,17 +99,20 @@ pub enum Dec<I> {
   Nonfix(Vec<Located<I>>),
 }
 
+#[derive(Debug)]
 pub struct ValBind<I> {
   pub rec: bool,
   pub pat: Located<Pat<I>>,
   pub exp: Located<Exp<I>>,
 }
 
+#[derive(Debug)]
 pub struct FValBind<I> {
   /// requires !cases.is_empty()
   pub cases: Vec<FValBindCase<I>>,
 }
 
+#[derive(Debug)]
 pub struct FValBindCase<I> {
   pub vid: Located<I>,
   /// requires !pats.is_empty()
@@ -111,12 +121,14 @@ pub struct FValBindCase<I> {
   pub body: Located<Exp<I>>,
 }
 
+#[derive(Debug)]
 pub struct TyBind<I> {
   pub ty_vars: Vec<Located<TyVar<I>>>,
   pub ty_con: Located<I>,
   pub ty: Located<Ty<I>>,
 }
 
+#[derive(Debug)]
 pub struct DatBind<I> {
   pub ty_vars: Vec<Located<TyVar<I>>>,
   pub ty_con: Located<I>,
@@ -124,21 +136,25 @@ pub struct DatBind<I> {
   pub cons: Vec<ConBind<I>>,
 }
 
+#[derive(Debug)]
 pub struct ConBind<I> {
   pub vid: Located<I>,
   pub ty: Option<Located<Ty<I>>>,
 }
 
+#[derive(Debug)]
 pub struct ExBind<I> {
   pub vid: Located<I>,
   pub inner: ExBindInner<I>,
 }
 
+#[derive(Debug)]
 pub enum ExBindInner<I> {
   Ty(Option<Located<Ty<I>>>),
   Long(Long<I>),
 }
 
+#[derive(Debug)]
 pub enum Pat<I> {
   Wildcard,
   // begin special constants (note: no real)
@@ -161,11 +177,13 @@ pub enum Pat<I> {
   As(Located<I>, Option<Located<Ty<I>>>, Box<Located<Pat<I>>>),
 }
 
+#[derive(Debug)]
 pub enum PatRow<I> {
   LabelAndPat(Located<Label>, Located<Pat<I>>),
   LabelAsVid(Located<I>, Option<Located<Ty<I>>>, Option<Located<Pat<I>>>),
 }
 
+#[derive(Debug)]
 pub enum Ty<I> {
   TyVar(TyVar<I>),
   Record(Vec<TyRow<I>>),
@@ -175,11 +193,13 @@ pub enum Ty<I> {
   Arrow(Box<Located<Ty<I>>>, Box<Located<Ty<I>>>),
 }
 
+#[derive(Debug)]
 pub struct TyRow<I> {
   pub lab: Located<Label>,
   pub ty: Located<Ty<I>>,
 }
 
+#[derive(Debug)]
 pub enum StrExp<I> {
   Struct(Located<StrDec<I>>),
   LongStrId(Long<I>),
@@ -189,6 +209,7 @@ pub enum StrExp<I> {
   Let(Located<StrDec<I>>, Box<Located<StrExp<I>>>),
 }
 
+#[derive(Debug)]
 pub enum StrDec<I> {
   Dec(Located<Dec<I>>),
   /// requires !str_binds.is_empty()
@@ -198,11 +219,13 @@ pub enum StrDec<I> {
   Seq(Vec<Located<StrDec<I>>>),
 }
 
+#[derive(Debug)]
 pub struct StrBind<I> {
   pub id: Located<I>,
   pub exp: Located<StrExp<I>>,
 }
 
+#[derive(Debug)]
 pub enum SigExp<I> {
   Sig(Located<Spec<I>>),
   SigId(Long<I>),
@@ -214,11 +237,13 @@ pub enum SigExp<I> {
   ),
 }
 
+#[derive(Debug)]
 pub struct SigBind<I> {
   pub id: Located<I>,
   pub exp: Located<SigExp<I>>,
 }
 
+#[derive(Debug)]
 pub enum Spec<I> {
   /// requires !val_descs.is_empty()
   Val(Vec<ValDesc<I>>),
@@ -239,16 +264,19 @@ pub enum Spec<I> {
   Sharing(Vec<Long<I>>),
 }
 
+#[derive(Debug)]
 pub struct ValDesc<I> {
   pub vid: Located<I>,
   pub ty: Located<Ty<I>>,
 }
 
+#[derive(Debug)]
 pub struct TyDesc<I> {
   pub ty_vars: Vec<Located<TyVar<I>>>,
   pub ty_con: Located<I>,
 }
 
+#[derive(Debug)]
 pub struct DatDesc<I> {
   pub ty_vars: Vec<Located<TyVar<I>>>,
   pub ty_con: Located<I>,
@@ -256,21 +284,25 @@ pub struct DatDesc<I> {
   pub cons: Vec<ConDesc<I>>,
 }
 
+#[derive(Debug)]
 pub struct ConDesc<I> {
   pub vid: Located<I>,
   pub ty: Option<Located<Ty<I>>>,
 }
 
+#[derive(Debug)]
 pub struct ExDesc<I> {
   pub vid: Located<I>,
   pub ty: Option<Located<Ty<I>>>,
 }
 
+#[derive(Debug)]
 pub struct StrDesc<I> {
   pub str_id: Located<I>,
   pub exp: Located<SigExp<I>>,
 }
 
+#[derive(Debug)]
 pub struct FunBind<I> {
   pub fun_id: Located<I>,
   pub str_id: Located<I>,
@@ -278,6 +310,7 @@ pub struct FunBind<I> {
   pub str_exp: Located<StrExp<I>>,
 }
 
+#[derive(Debug)]
 pub enum TopDec<I> {
   StrDec(Located<StrDec<I>>),
   /// requires !sig_binds.is_empty()
