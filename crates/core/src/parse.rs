@@ -604,10 +604,9 @@ impl<'s> Parser<'s> {
       decs.push(dec);
       let tok = self.next()?;
       if let Token::Semicolon = tok.val {
-        //
-      } else {
-        self.back(tok);
+        continue;
       }
+      self.back(tok);
     }
     let ret = match decs.len() {
       0 => {
