@@ -1,8 +1,8 @@
 //! Parsing.
 
 use crate::ast::{
-  Arm, ConBind, DatBind, Dec, Exp, FValBind, FValBindCase, Label, Long, Match,
-  Pat, PatRow, Row, Ty, TyBind, TyRow, ValBind,
+  Arm, ConBind, DatBind, Dec, ExBind, ExBindInner, Exp, FValBind, FValBindCase,
+  Label, Long, Match, Pat, PatRow, Row, Ty, TyBind, TyRow, ValBind,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -490,8 +490,51 @@ impl<'s> Parser<'s> {
         };
         Dec::Datatype(dat_binds, ty_binds)
       }
-      Token::Abstype => todo!(),
-      Token::Exception => todo!(),
+      Token::Abstype => {
+        let mut dat_binds = vec![self.dat_bind()?];
+        loop {
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            dat_binds.push(self.dat_bind()?);
+          } else {
+            self.back(tok);
+            break;
+          }
+        }
+        let tok = self.next()?;
+        let ty_binds = if let Token::Withtype = tok.val {
+          self.ty_binds()?
+        } else {
+          Vec::new()
+        };
+        self.eat(Token::With)?;
+        let dec = self.dec()?;
+        self.eat(Token::End)?;
+        Dec::Abstype(dat_binds, ty_binds, dec.into())
+      }
+      Token::Exception => {
+        let mut ex_binds = Vec::new();
+        loop {
+          self.maybe_op()?;
+          let vid = self.ident()?;
+          let tok = self.next()?;
+          let inner = if let Token::Equal = tok.val {
+            self.maybe_op()?;
+            ExBindInner::Long(self.long_id(true)?)
+          } else {
+            self.back(tok);
+            ExBindInner::Ty(self.maybe_of_ty()?)
+          };
+          ex_binds.push(ExBind { vid, inner });
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        Dec::Exception(ex_binds)
+      }
       Token::Local => todo!(),
       Token::Open => todo!(),
       Token::Infix => todo!(),
