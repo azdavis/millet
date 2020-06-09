@@ -471,6 +471,7 @@ impl<'s> Parser<'s> {
             cons,
           }
         } else {
+          self.back(tok);
           self.dat_bind()?
         };
         let mut dat_binds = vec![dat_bind];
@@ -565,11 +566,44 @@ impl<'s> Parser<'s> {
   }
 
   fn con_binds(&mut self) -> Result<Vec<ConBind<Ident>>> {
-    todo!()
+    let mut ret = Vec::new();
+    loop {
+      let tok = self.next()?;
+      if let Token::Op = tok.val {
+        //
+      } else {
+        self.back(tok);
+      }
+      let vid = self.ident()?;
+      let tok = self.next()?;
+      let ty = if let Token::Of = tok.val {
+        Some(self.ty()?)
+      } else {
+        self.back(tok);
+        None
+      };
+      ret.push(ConBind { vid, ty });
+      let tok = self.next()?;
+      if let Token::Bar = tok.val {
+        continue;
+      } else {
+        self.back(tok);
+        break;
+      }
+    }
+    Ok(ret)
   }
 
   fn dat_bind(&mut self) -> Result<DatBind<Ident>> {
-    todo!()
+    let ty_vars = self.ty_var_seq()?;
+    let ty_con = self.ident()?;
+    self.eat(Token::Equal)?;
+    let cons = self.con_binds()?;
+    Ok(DatBind {
+      ty_vars,
+      ty_con,
+      cons,
+    })
   }
 
   fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
