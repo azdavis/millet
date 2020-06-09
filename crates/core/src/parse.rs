@@ -2,9 +2,9 @@
 
 use crate::ast::{
   Arm, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc,
-  Exp, FValBind, FValBindCase, Label, Long, Match, Pat, PatRow, Row, SigExp,
-  Spec, StrBind, StrDec, StrDesc, StrExp, Ty, TyBind, TyDesc, TyRow, ValBind,
-  ValDesc,
+  Exp, FValBind, FValBindCase, FunBind, Label, Long, Match, Pat, PatRow, Row,
+  SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec, Ty, TyBind,
+  TyDesc, TyRow, ValBind, ValDesc,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -134,6 +134,60 @@ impl<'s> Parser<'s> {
   fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
     let err = ParseError::ExpectedButFound(want, tok.val.desc());
     Err(tok.loc.wrap(err))
+  }
+
+  fn top_dec(&mut self) -> Result<Located<TopDec<Ident>>> {
+    let tok = self.next()?;
+    let loc = tok.loc;
+    let ret = match tok.val {
+      Token::Signature => {
+        let mut sig_binds = Vec::new();
+        loop {
+          let id = self.alpha_num_id()?;
+          self.eat(Token::Equal)?;
+          let exp = self.sig_exp()?;
+          sig_binds.push(SigBind { id, exp });
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        TopDec::SigDec(sig_binds)
+      }
+      Token::Functor => {
+        let mut fun_binds = Vec::new();
+        loop {
+          let fun_id = self.alpha_num_id()?;
+          self.eat(Token::LRound)?;
+          let str_id = self.alpha_num_id()?;
+          self.eat(Token::Colon)?;
+          let sig_exp = self.sig_exp()?;
+          self.eat(Token::RRound)?;
+          self.eat(Token::Equal)?;
+          let str_exp = self.str_exp()?;
+          fun_binds.push(FunBind {
+            fun_id,
+            str_id,
+            sig_exp,
+            str_exp,
+          });
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        TopDec::FunDec(fun_binds)
+      }
+      _ => {
+        self.back(tok);
+        TopDec::StrDec(self.str_dec()?)
+      }
+    };
+    Ok(loc.wrap(ret))
   }
 
   fn str_exp(&mut self) -> Result<Located<StrExp<Ident>>> {

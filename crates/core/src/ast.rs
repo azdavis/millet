@@ -215,7 +215,7 @@ pub enum SigExp<I> {
 }
 
 pub struct SigBind<I> {
-  pub sigid: Located<I>,
+  pub id: Located<I>,
   pub exp: Located<SigExp<I>>,
 }
 
@@ -272,8 +272,8 @@ pub struct StrDesc<I> {
 }
 
 pub struct FunBind<I> {
-  pub fun_id: Long<I>,
-  pub str_id: Long<I>,
+  pub fun_id: Located<I>,
+  pub str_id: Located<I>,
   pub sig_exp: Located<SigExp<I>>,
   pub str_exp: Located<StrExp<I>>,
 }
