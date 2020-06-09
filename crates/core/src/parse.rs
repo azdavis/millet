@@ -136,7 +136,7 @@ impl<'s> Parser<'s> {
 
   fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
     let tok = self.next()?;
-    let exp_loc = tok.loc;
+    let loc = tok.loc;
     let exp = match tok.val {
       Token::DecInt(n, _) => Exp::DecInt(n),
       Token::HexInt(n) => Exp::HexInt(n),
@@ -149,7 +149,7 @@ impl<'s> Parser<'s> {
       Token::LCurly => {
         let tok = self.next()?;
         if let Token::RCurly = tok.val {
-          return Ok(Some(exp_loc.wrap(Exp::Record(Vec::new()))));
+          return Ok(Some(loc.wrap(Exp::Record(Vec::new()))));
         }
         self.back(tok);
         let mut rows = Vec::new();
@@ -171,7 +171,7 @@ impl<'s> Parser<'s> {
       Token::LRound => {
         let tok = self.next()?;
         if let Token::RRound = tok.val {
-          return Ok(Some(exp_loc.wrap(Exp::Tuple(Vec::new()))));
+          return Ok(Some(loc.wrap(Exp::Tuple(Vec::new()))));
         }
         self.back(tok);
         let fst = self.exp()?;
@@ -210,7 +210,7 @@ impl<'s> Parser<'s> {
       Token::LSquare => {
         let tok = self.next()?;
         if let Token::RSquare = tok.val {
-          return Ok(Some(exp_loc.wrap(Exp::List(Vec::new()))));
+          return Ok(Some(loc.wrap(Exp::List(Vec::new()))));
         }
         self.back(tok);
         let mut exprs = Vec::new();
@@ -248,7 +248,7 @@ impl<'s> Parser<'s> {
         return Ok(None);
       }
     };
-    Ok(Some(exp_loc.wrap(exp)))
+    Ok(Some(loc.wrap(exp)))
   }
 
   fn at_exp(&mut self) -> Result<Located<Exp<Ident>>> {
@@ -346,7 +346,7 @@ impl<'s> Parser<'s> {
   // TODO prec
   fn exp(&mut self) -> Result<Located<Exp<Ident>>> {
     let tok = self.next()?;
-    let exp_loc = tok.loc;
+    let loc = tok.loc;
     let exp = match tok.val {
       Token::Raise => {
         let e = self.exp()?;
@@ -402,7 +402,7 @@ impl<'s> Parser<'s> {
         exp.val
       }
     };
-    Ok(exp_loc.wrap(exp))
+    Ok(loc.wrap(exp))
   }
 
   fn match_(&mut self) -> Result<Match<Ident>> {
@@ -424,7 +424,7 @@ impl<'s> Parser<'s> {
 
   fn maybe_dec(&mut self) -> Result<Option<Located<Dec<Ident>>>> {
     let tok = self.next()?;
-    let dec_loc = tok.loc;
+    let loc = tok.loc;
     let dec = match tok.val {
       Token::Val => {
         let ty_vars = self.ty_var_seq()?;
@@ -479,7 +479,7 @@ impl<'s> Parser<'s> {
           let tok = self.next()?;
           if let Token::Datatype = tok.val {
             let long = self.long_id(true)?;
-            return Ok(Some(dec_loc.wrap(Dec::DatatypeCopy(ty_con, long))));
+            return Ok(Some(loc.wrap(Dec::DatatypeCopy(ty_con, long))));
           }
           self.back(tok);
           let cons = self.con_binds()?;
@@ -595,7 +595,7 @@ impl<'s> Parser<'s> {
         return Ok(None);
       }
     };
-    Ok(Some(dec_loc.wrap(dec)))
+    Ok(Some(loc.wrap(dec)))
   }
 
   fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
@@ -742,21 +742,21 @@ impl<'s> Parser<'s> {
 
   fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat<Ident>>>> {
     let tok = self.next()?;
-    let pat_loc = tok.loc;
+    let loc = tok.loc;
     let pat = match tok.val {
       Token::Underscore => Pat::Wildcard,
       Token::DecInt(n, _) => Pat::DecInt(n),
       Token::HexInt(n) => Pat::HexInt(n),
       Token::DecWord(n) => Pat::DecWord(n),
       Token::HexWord(n) => Pat::HexWord(n),
-      Token::Real(..) => return Err(pat_loc.wrap(ParseError::RealPat)),
+      Token::Real(..) => return Err(loc.wrap(ParseError::RealPat)),
       Token::Str(s) => Pat::Str(s),
       Token::Char(c) => Pat::Char(c),
       Token::Op => Pat::LongVid(self.long_id(true)?),
       Token::LCurly => {
         let tok = self.next()?;
         if let Token::RCurly = tok.val {
-          return Ok(Some(pat_loc.wrap(Pat::Record(Vec::new(), None))));
+          return Ok(Some(loc.wrap(Pat::Record(Vec::new(), None))));
         }
         self.back(tok);
         let mut rows = Vec::new();
@@ -799,7 +799,7 @@ impl<'s> Parser<'s> {
       Token::LRound => {
         let tok = self.next()?;
         if let Token::RRound = tok.val {
-          return Ok(Some(pat_loc.wrap(Pat::Tuple(Vec::new()))));
+          return Ok(Some(loc.wrap(Pat::Tuple(Vec::new()))));
         }
         self.back(tok);
         let mut pats = Vec::new();
@@ -821,7 +821,7 @@ impl<'s> Parser<'s> {
       Token::LSquare => {
         let tok = self.next()?;
         if let Token::RSquare = tok.val {
-          return Ok(Some(pat_loc.wrap(Pat::List(Vec::new()))));
+          return Ok(Some(loc.wrap(Pat::List(Vec::new()))));
         }
         self.back(tok);
         let mut pats = Vec::new();
@@ -842,7 +842,7 @@ impl<'s> Parser<'s> {
         return Ok(None);
       }
     };
-    Ok(Some(pat_loc.wrap(pat)))
+    Ok(Some(loc.wrap(pat)))
   }
 
   fn at_pat(&mut self) -> Result<Located<Pat<Ident>>> {
