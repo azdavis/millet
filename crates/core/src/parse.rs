@@ -227,27 +227,7 @@ impl<'s> Parser<'s> {
   }
 
   fn str_dec(&mut self) -> Result<Located<StrDec<Ident>>> {
-    let mut decs = Vec::new();
-    while let Some(dec) = self.maybe_str_dec()? {
-      decs.push(dec);
-      let tok = self.next()?;
-      if let Token::Semicolon = tok.val {
-        continue;
-      }
-      self.back(tok);
-    }
-    let ret = match decs.len() {
-      0 => {
-        // NOTE we conjure up a 'fake' loc
-        let tok = self.next()?;
-        let loc = tok.loc;
-        self.back(tok);
-        loc.wrap(StrDec::Seq(Vec::new()))
-      }
-      1 => decs.pop().unwrap(),
-      _ => decs.first().unwrap().loc.wrap(StrDec::Seq(decs)),
-    };
-    Ok(ret)
+    self.semicolon_seq(Self::maybe_str_dec, StrDec::Seq)
   }
 
   fn sig_exp(&mut self) -> Result<Located<SigExp<Ident>>> {
@@ -760,27 +740,7 @@ impl<'s> Parser<'s> {
   }
 
   fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
-    let mut decs = Vec::new();
-    while let Some(dec) = self.maybe_dec()? {
-      decs.push(dec);
-      let tok = self.next()?;
-      if let Token::Semicolon = tok.val {
-        continue;
-      }
-      self.back(tok);
-    }
-    let ret = match decs.len() {
-      0 => {
-        // NOTE we conjure up a 'fake' loc
-        let tok = self.next()?;
-        let loc = tok.loc;
-        self.back(tok);
-        loc.wrap(Dec::Seq(Vec::new()))
-      }
-      1 => decs.pop().unwrap(),
-      _ => decs.first().unwrap().loc.wrap(Dec::Seq(decs)),
-    };
-    Ok(ret)
+    self.semicolon_seq(Self::maybe_dec, Dec::Seq)
   }
 
   // NOTE this is not compliant with the spec (page 78): "the parentheses may
@@ -1193,6 +1153,34 @@ impl<'s> Parser<'s> {
       }
     }
     Ok(types)
+  }
+
+  fn semicolon_seq<T, F, G>(&mut self, one: F, seq: G) -> Result<Located<T>>
+  where
+    F: Fn(&mut Self) -> Result<Option<Located<T>>>,
+    G: FnOnce(Vec<Located<T>>) -> T,
+  {
+    let mut xs = Vec::new();
+    while let Some(x) = one(self)? {
+      xs.push(x);
+      let tok = self.next()?;
+      if let Token::Semicolon = tok.val {
+        continue;
+      }
+      self.back(tok);
+    }
+    let ret = match xs.len() {
+      0 => {
+        // NOTE we conjure up a 'fake' loc
+        let tok = self.next()?;
+        let loc = tok.loc;
+        self.back(tok);
+        loc.wrap(seq(Vec::new()))
+      }
+      1 => xs.pop().unwrap(),
+      _ => xs.first().unwrap().loc.wrap(seq(xs)),
+    };
+    Ok(ret)
   }
 
   fn maybe_op(&mut self) -> Result<bool> {
