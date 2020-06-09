@@ -2,8 +2,8 @@
 
 use crate::ast::{
   Arm, ConBind, DatBind, Dec, ExBind, ExBindInner, Exp, FValBind, FValBindCase,
-  Label, Long, Match, Pat, PatRow, Row, SigExp, StrBind, StrDec, StrExp, Ty,
-  TyBind, TyRow, ValBind,
+  Label, Long, Match, Pat, PatRow, Row, SigExp, Spec, StrBind, StrDec, StrExp,
+  Ty, TyBind, TyRow, ValBind,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -251,6 +251,38 @@ impl<'s> Parser<'s> {
   }
 
   fn sig_exp(&mut self) -> Result<Located<SigExp<Ident>>> {
+    let tok = self.next()?;
+    let loc = tok.loc;
+    let mut ret = match tok.val {
+      Token::Sig => {
+        let spec = self.spec()?;
+        self.eat(Token::End)?;
+        SigExp::Sig(spec)
+      }
+      Token::Ident(_, IdentType::AlphaNum) => {
+        self.back(tok);
+        let long_id = self.long_alpha_num_id()?;
+        SigExp::SigId(long_id)
+      }
+      _ => return self.fail("a signature expression", tok),
+    };
+    loop {
+      let tok = self.next()?;
+      if let Token::Where = tok.val {
+        let ty_vars = self.ty_var_seq()?;
+        let ty_con = self.long_id(true)?;
+        self.eat(Token::Equal)?;
+        let ty = self.ty()?;
+        ret = SigExp::Where(loc.wrap(ret).into(), ty_vars, ty_con, ty);
+      } else {
+        self.back(tok);
+        break;
+      }
+    }
+    Ok(loc.wrap(ret))
+  }
+
+  fn spec(&mut self) -> Result<Located<Spec<Ident>>> {
     todo!()
   }
 
