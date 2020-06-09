@@ -1,9 +1,10 @@
 //! Parsing.
 
 use crate::ast::{
-  Arm, ConBind, DatBind, Dec, ExBind, ExBindInner, Exp, FValBind, FValBindCase,
-  Label, Long, Match, Pat, PatRow, Row, SigExp, Spec, StrBind, StrDec, StrExp,
-  Ty, TyBind, TyRow, ValBind,
+  Arm, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc,
+  Exp, FValBind, FValBindCase, Label, Long, Match, Pat, PatRow, Row, SigExp,
+  Spec, StrBind, StrDec, StrDesc, StrExp, Ty, TyBind, TyDesc, TyRow, ValBind,
+  ValDesc,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -262,8 +263,176 @@ impl<'s> Parser<'s> {
     Ok(loc.wrap(ret))
   }
 
+  fn maybe_spec(&mut self) -> Result<Option<Located<Spec<Ident>>>> {
+    let tok = self.next()?;
+    let loc = tok.loc;
+    let mut ret = match tok.val {
+      Token::Val => {
+        let mut val_descs = Vec::new();
+        loop {
+          let vid = self.ident()?;
+          self.eat(Token::Colon)?;
+          let ty = self.ty()?;
+          val_descs.push(ValDesc { vid, ty });
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        Spec::Val(val_descs)
+      }
+      Token::Type => Spec::Type(self.ty_descs()?),
+      Token::Eqtype => Spec::Eqtype(self.ty_descs()?),
+      Token::Datatype => self.spec_datatype()?,
+      Token::Exception => {
+        let mut ex_descs = Vec::new();
+        loop {
+          let vid = self.ident()?;
+          let ty = self.maybe_of_ty()?;
+          ex_descs.push(ExDesc { vid, ty });
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        Spec::Exception(ex_descs)
+      }
+      Token::Structure => {
+        let mut str_descs = Vec::new();
+        loop {
+          let str_id = self.alpha_num_id()?;
+          self.eat(Token::Colon)?;
+          let exp = self.sig_exp()?;
+          str_descs.push(StrDesc { str_id, exp });
+          let tok = self.next()?;
+          if let Token::And = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        Spec::Structure(str_descs)
+      }
+      Token::Include => {
+        let exp = self.sig_exp()?;
+        Spec::Include(exp.into())
+      }
+      _ => {
+        self.back(tok);
+        return Ok(None);
+      }
+    };
+    loop {
+      let tok = self.next()?;
+      if let Token::Sharing = tok.val {
+        self.eat(Token::Type)?;
+        let mut ty_cons = Vec::new();
+        loop {
+          ty_cons.push(self.long_id(true)?);
+          let tok = self.next()?;
+          if let Token::Equal = tok.val {
+            continue;
+          }
+          self.back(tok);
+          break;
+        }
+        if ty_cons.len() < 2 {
+          let tok = self.next()?;
+          return self.fail("an identifier", tok);
+        }
+        ret = Spec::Sharing(ty_cons);
+      } else {
+        self.back(tok);
+        break;
+      }
+    }
+    Ok(Some(loc.wrap(ret)))
+  }
+
+  fn spec_datatype(&mut self) -> Result<Spec<Ident>> {
+    let tok = self.next()?;
+    let dat_desc = if let Token::Ident(id, _) = tok.val {
+      let ty_con = tok.loc.wrap(id);
+      self.eat(Token::Equal)?;
+      let tok = self.next()?;
+      if let Token::Datatype = tok.val {
+        let long = self.long_id(true)?;
+        return Ok(Spec::DatatypeCopy(ty_con, long));
+      }
+      self.back(tok);
+      let cons = self.con_descs()?;
+      DatDesc {
+        ty_vars: Vec::new(),
+        ty_con,
+        cons,
+      }
+    } else {
+      self.back(tok);
+      self.dat_desc()?
+    };
+    let mut dat_descs = vec![dat_desc];
+    loop {
+      let tok = self.next()?;
+      if let Token::And = tok.val {
+        dat_descs.push(self.dat_desc()?);
+      } else {
+        self.back(tok);
+        break;
+      }
+    }
+    Ok(Spec::Datatype(dat_descs))
+  }
+
+  fn dat_desc(&mut self) -> Result<DatDesc<Ident>> {
+    let ty_vars = self.ty_var_seq()?;
+    let ty_con = self.ident()?;
+    self.eat(Token::Equal)?;
+    let cons = self.con_descs()?;
+    Ok(DatDesc {
+      ty_vars,
+      ty_con,
+      cons,
+    })
+  }
+
+  fn con_descs(&mut self) -> Result<Vec<ConDesc<Ident>>> {
+    let mut ret = Vec::new();
+    loop {
+      let vid = self.ident()?;
+      let ty = self.maybe_of_ty()?;
+      ret.push(ConDesc { vid, ty });
+      let tok = self.next()?;
+      if let Token::Bar = tok.val {
+        continue;
+      }
+      self.back(tok);
+      break;
+    }
+    Ok(ret)
+  }
+
+  fn ty_descs(&mut self) -> Result<Vec<TyDesc<Ident>>> {
+    let mut ret = Vec::new();
+    loop {
+      let ty_vars = self.ty_var_seq()?;
+      let ty_con = self.ident()?;
+      ret.push(TyDesc { ty_vars, ty_con });
+      let tok = self.next()?;
+      if let Token::And = tok.val {
+        continue;
+      }
+      self.back(tok);
+      break;
+    }
+    Ok(ret)
+  }
+
   fn spec(&mut self) -> Result<Located<Spec<Ident>>> {
-    todo!()
+    self.semicolon_seq(Self::maybe_spec, Spec::Seq)
   }
 
   fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<Ident>>>> {
