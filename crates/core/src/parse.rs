@@ -422,7 +422,7 @@ impl<'s> Parser<'s> {
     Ok(Match { arms })
   }
 
-  fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
+  fn maybe_dec(&mut self) -> Result<Option<Located<Dec<Ident>>>> {
     let tok = self.next()?;
     let dec_loc = tok.loc;
     let dec = match tok.val {
@@ -479,7 +479,7 @@ impl<'s> Parser<'s> {
           let tok = self.next()?;
           if let Token::Datatype = tok.val {
             let long = self.long_id(true)?;
-            return Ok(dec_loc.wrap(Dec::DatatypeCopy(ty_con, long)));
+            return Ok(Some(dec_loc.wrap(Dec::DatatypeCopy(ty_con, long))));
           }
           self.back(tok);
           let cons = self.con_binds()?;
@@ -590,9 +590,37 @@ impl<'s> Parser<'s> {
         let idents = self.fixity_idents()?;
         Dec::Nonfix(idents)
       }
-      _ => return self.fail("a declaration", tok),
+      _ => {
+        self.back(tok);
+        return Ok(None);
+      }
     };
-    Ok(dec_loc.wrap(dec))
+    Ok(Some(dec_loc.wrap(dec)))
+  }
+
+  fn dec(&mut self) -> Result<Located<Dec<Ident>>> {
+    let mut decs = Vec::new();
+    while let Some(dec) = self.maybe_dec()? {
+      decs.push(dec);
+      let tok = self.next()?;
+      if let Token::Semicolon = tok.val {
+        //
+      } else {
+        self.back(tok);
+      }
+    }
+    let ret = match decs.len() {
+      0 => {
+        // NOTE we conjure up a 'fake' loc
+        let tok = self.next()?;
+        let loc = tok.loc;
+        self.back(tok);
+        loc.wrap(Dec::Seq(Vec::new()))
+      }
+      1 => decs.pop().unwrap(),
+      _ => decs.first().unwrap().loc.wrap(Dec::Seq(decs)),
+    };
+    Ok(ret)
   }
 
   // NOTE this is not compliant with the spec (page 78): "the parentheses may
