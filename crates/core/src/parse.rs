@@ -1295,111 +1295,110 @@ impl<'s> Parser<'s> {
   }
 
   fn ty(&mut self) -> Result<Located<Ty<Ident>>> {
-    match self.maybe_ty()? {
-      Some(x) => Ok(x),
-      None => {
-        let tok = self.next()?;
-        self.fail("a type", tok)
-      }
-    }
+    self.ty_prec(TyPrec::Arrow)
   }
 
   // TODO prec
-  fn maybe_ty(&mut self) -> Result<Option<Located<Ty<Ident>>>> {
+  fn ty_prec(&mut self, min_prec: TyPrec) -> Result<Located<Ty<Ident>>> {
     let tok = self.next()?;
-    let ty_loc = tok.loc;
-    let ret = match tok.val {
+    let loc = tok.loc;
+    let mut ret = match tok.val {
       Token::TyVar(tv) => Ty::TyVar(tv),
       Token::LCurly => {
         let tok = self.next()?;
-        if let Token::RCurly = tok.val {
-          return Ok(Some(ty_loc.wrap(Ty::Record(Vec::new()))));
-        }
-        self.back(tok);
         let mut rows = Vec::new();
-        loop {
-          let lab = self.label()?;
-          self.eat(Token::Colon)?;
-          let ty = self.ty()?;
-          rows.push(TyRow { lab, ty });
-          let tok = self.next()?;
-          match tok.val {
-            Token::RCurly => break,
-            Token::Comma => continue,
-            _ => return self.fail("`}` or `,`", tok),
+        if let Token::RCurly = tok.val {
+          //
+        } else {
+          self.back(tok);
+          loop {
+            let lab = self.label()?;
+            self.eat(Token::Colon)?;
+            let ty = self.ty()?;
+            rows.push(TyRow { lab, ty });
+            let tok = self.next()?;
+            match tok.val {
+              Token::RCurly => break,
+              Token::Comma => continue,
+              _ => return self.fail("`}` or `,`", tok),
+            }
           }
         }
         Ty::Record(rows)
       }
-      _ => {
-        self.back(tok);
-        let mut ty_seq = self.ty_seq()?;
+      Token::LRound => {
+        let mut types = Vec::new();
+        loop {
+          types.push(self.ty()?);
+          match tok.val {
+            Token::RRound => break,
+            Token::Comma => continue,
+            _ => return self.fail("`(` or `,`", tok),
+          }
+        }
         let long_ty_con = self.maybe_long_id()?;
-        let ty = match (ty_seq.len(), long_ty_con) {
-          (0, None) => return Ok(None),
-          (1, None) => ty_seq.pop().unwrap(),
+        match (types.len(), long_ty_con) {
+          (1, None) => types.pop().unwrap().val,
           (_, None) => {
             let tok = self.next()?;
             return self.fail("an identifier", tok);
           }
-          (_, Some(x)) => ty_loc.wrap(Ty::TyCon(ty_seq, x)),
-        };
-        let mut types = vec![ty];
-        loop {
-          let tok = self.next()?;
-          if let Token::Ident(ref id, _) = tok.val {
-            if id.is_star() {
-              let ty = self.ty()?;
-              types.push(ty);
-              continue;
-            }
-          }
-          self.back(tok);
-          break;
+          (_, Some(x)) => Ty::TyCon(types, x),
         }
-        let mut ty = if types.len() == 1 {
-          types.pop().unwrap()
-        } else {
-          ty_loc.wrap(Ty::Tuple(types))
-        };
-        loop {
-          let tok = self.next()?;
-          if let Token::Arrow = tok.val {
-            ty = ty.loc.wrap(Ty::Arrow(ty.into(), self.ty()?.into()));
-            continue;
-          }
-          self.back(tok);
-          break;
-        }
-        ty.val
       }
+      Token::Ident(ref id, _) => {
+        if id.is_star() {
+          return self.fail("an identifier", tok);
+        }
+        self.back(tok);
+        let long_ty_con = self.long_id(true)?;
+        Ty::TyCon(Vec::new(), long_ty_con)
+      }
+      _ => return self.fail("a type", tok),
     };
-    Ok(Some(ty_loc.wrap(ret)))
-  }
-
-  fn ty_seq(&mut self) -> Result<Vec<Located<Ty<Ident>>>> {
-    if let Some(ty) = self.maybe_ty()? {
-      return Ok(vec![ty]);
-    }
-    let tok = self.next()?;
-    if let Token::LRound = tok.val {
-      //
-    } else {
-      self.back(tok);
-      return Ok(Vec::new());
-    }
-    let mut types = Vec::new();
     loop {
-      let ty = self.ty()?;
-      types.push(ty);
       let tok = self.next()?;
       match tok.val {
-        Token::RRound => break,
-        Token::Comma => continue,
-        _ => return self.fail("`)` or `,`", tok),
+        Token::Arrow => {
+          if TyPrec::Arrow < min_prec {
+            self.back(tok);
+            break;
+          }
+          let rhs = self.ty_prec(TyPrec::Arrow)?;
+          ret = Ty::Arrow(loc.wrap(ret).into(), rhs.into());
+        }
+        Token::Ident(ref id, _) => {
+          if id.is_star() {
+            if TyPrec::Star < min_prec {
+              self.back(tok);
+              break;
+            }
+            let mut types = vec![loc.wrap(ret)];
+            loop {
+              types.push(self.ty_prec(TyPrec::App)?);
+              let tok = self.next()?;
+              if let Token::Ident(ref id, _) = tok.val {
+                if id.is_star() {
+                  continue;
+                }
+              }
+              self.back(tok);
+              break;
+            }
+            ret = Ty::Tuple(types);
+          } else {
+            if TyPrec::App < min_prec {
+              unreachable!()
+            }
+            self.back(tok);
+            let long = self.long_id(true)?;
+            ret = Ty::TyCon(vec![loc.wrap(ret)], long);
+          }
+        }
+        _ => break,
       }
     }
-    Ok(types)
+    Ok(loc.wrap(ret))
   }
 
   fn semicolon_seq<T, F, G>(&mut self, one: F, seq: G) -> Result<Located<T>>
@@ -1477,4 +1476,11 @@ impl<'s> Parser<'s> {
     }
     Ok(ret)
   }
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+enum TyPrec {
+  Arrow,
+  Star,
+  App,
 }
