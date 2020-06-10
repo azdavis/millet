@@ -1,7 +1,7 @@
 //! Abstract syntax trees.
 
 use crate::ident::Ident;
-use crate::source::{Loc, Located};
+use crate::loc::{Loc, Located};
 use crate::token::TyVar;
 
 #[derive(Debug)]

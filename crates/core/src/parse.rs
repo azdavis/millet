@@ -8,7 +8,7 @@ use crate::ast::{
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
-use crate::source::{Loc, Located};
+use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar};
 use std::collections::HashMap;
 use std::convert::TryInto as _;

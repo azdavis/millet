@@ -1,53 +1,10 @@
-//! Utilities for dealing with source code.
+//! Utilities for dealing with (collections of) source files.
 
-use std::fmt;
-
-/// A range in the source.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct Loc {
-  start: usize,
-  end: usize,
-}
-
-impl Loc {
-  /// Returns a enw Loc. The start is inclusive, the end is not inclusive.
-  pub fn new(start: usize, end: usize) -> Self {
-    Self { start, end }
-  }
-
-  /// Wraps a value in a Loc.
-  pub fn wrap<T>(self, val: T) -> Located<T> {
-    Located { val, loc: self }
-  }
-}
-
-/// A generic wrapper for some value which was ultimately derived from some
-/// location in the source.
-#[derive(PartialEq, Eq)]
-pub struct Located<T> {
-  pub val: T,
-  pub loc: Loc,
-}
-
-impl<T> fmt::Debug for Located<T>
-where
-  T: fmt::Debug,
-{
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    self.val.fmt(f)
-  }
-}
+use millet_core::loc::Loc;
 
 /// An opaque identifier for a source file.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct SourceFileId(usize);
-
-#[cfg(test)]
-impl SourceFileId {
-  pub fn new(id: usize) -> Self {
-    Self(id)
-  }
-}
 
 /// A source file.
 pub struct SourceFile {

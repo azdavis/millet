@@ -2,14 +2,14 @@
 
 mod args;
 mod reporter;
+mod source;
 
-use millet_core::source::SourceMap;
 use millet_core::{lex, parse};
 
 fn run() -> bool {
   let args = args::get();
   let stdout = std::io::stdout();
-  let mut m = SourceMap::new();
+  let mut m = source::SourceMap::new();
   let mut w = reporter::Reporter::new(stdout.lock());
   for name in args.files {
     match std::fs::read_to_string(&name) {
@@ -21,7 +21,7 @@ fn run() -> bool {
     }
   }
   for (id, file) in m.iter() {
-    match parse::get(lex::get(id, file.as_bytes())) {
+    match parse::get(lex::get(file.as_bytes())) {
       Ok(xs) => eprintln!("parsed: {:#?}", xs),
       Err(e) => {
         w.report(&m, id, e).unwrap();

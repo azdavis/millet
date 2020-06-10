@@ -1,6 +1,7 @@
 //! Error reporting to the console.
 
-use millet_core::source::{Located, SourceFileId, SourceMap};
+use crate::source::{SourceFileId, SourceMap};
+use millet_core::loc::Located;
 
 /// A reporter of errors.
 pub struct Reporter<W> {

@@ -1,13 +1,12 @@
 //! Lexical analysis.
 
 use crate::ident::Ident;
-use crate::source::{Loc, Located, SourceFileId};
+use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 use std::fmt;
 
-pub fn get<'s>(file_id: SourceFileId, bs: &'s [u8]) -> Lexer<'s> {
+pub fn get<'s>(bs: &'s [u8]) -> Lexer<'s> {
   Lexer {
-    file_id,
     bs,
     i: 0,
     last_loc: Loc::new(0, 0),
@@ -15,7 +14,6 @@ pub fn get<'s>(file_id: SourceFileId, bs: &'s [u8]) -> Lexer<'s> {
 }
 
 pub struct Lexer<'s> {
-  file_id: SourceFileId,
   bs: &'s [u8],
   i: usize,
   last_loc: Loc,
@@ -97,10 +95,6 @@ impl<'s> Lexer<'s> {
     } else {
       Err(Loc::new(self.i - 1, self.i).wrap(LexError::UnmatchedOpenComment))
     }
-  }
-
-  pub fn file_id(&self) -> SourceFileId {
-    self.file_id
   }
 
   fn next_impl(&mut self, b: u8) -> Result<Token, LexError> {
