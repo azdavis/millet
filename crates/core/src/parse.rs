@@ -521,21 +521,22 @@ impl<'s> Parser<'s> {
       Token::Op => Exp::LongVid(self.long_id(true)?),
       Token::LCurly => {
         let tok = self.next()?;
-        if let Token::RCurly = tok.val {
-          return Ok(Some(loc.wrap(Exp::Record(Vec::new()))));
-        }
-        self.back(tok);
         let mut rows = Vec::new();
-        loop {
-          let lab = self.label()?;
-          self.eat(Token::Equal)?;
-          let exp = self.exp()?;
-          rows.push(Row { lab, exp });
-          let tok = self.next()?;
-          match tok.val {
-            Token::RCurly => break,
-            Token::Comma => continue,
-            _ => return self.fail("`}` or `,`", tok),
+        if let Token::RCurly = tok.val {
+          //
+        } else {
+          self.back(tok);
+          loop {
+            let lab = self.label()?;
+            self.eat(Token::Equal)?;
+            let exp = self.exp()?;
+            rows.push(Row { lab, exp });
+            let tok = self.next()?;
+            match tok.val {
+              Token::RCurly => break,
+              Token::Comma => continue,
+              _ => return self.fail("`}` or `,`", tok),
+            }
           }
         }
         Exp::Record(rows)
@@ -582,18 +583,19 @@ impl<'s> Parser<'s> {
       }
       Token::LSquare => {
         let tok = self.next()?;
-        if let Token::RSquare = tok.val {
-          return Ok(Some(loc.wrap(Exp::List(Vec::new()))));
-        }
-        self.back(tok);
         let mut exprs = Vec::new();
-        loop {
-          exprs.push(self.exp()?);
-          let tok = self.next()?;
-          match tok.val {
-            Token::RSquare => break,
-            Token::Comma => continue,
-            _ => return self.fail("`]` or `,`", tok),
+        if let Token::RSquare = tok.val {
+          //
+        } else {
+          self.back(tok);
+          loop {
+            exprs.push(self.exp()?);
+            let tok = self.next()?;
+            match tok.val {
+              Token::RSquare => break,
+              Token::Comma => continue,
+              _ => return self.fail("`]` or `,`", tok),
+            }
           }
         }
         Exp::List(exprs)
@@ -1119,61 +1121,63 @@ impl<'s> Parser<'s> {
       Token::Op => Pat::LongVid(self.long_id(true)?),
       Token::LCurly => {
         let tok = self.next()?;
-        if let Token::RCurly = tok.val {
-          return Ok(Some(loc.wrap(Pat::Record(Vec::new(), None))));
-        }
-        self.back(tok);
         let mut rows = Vec::new();
         let mut rest_loc = None;
-        loop {
-          let tok = self.next()?;
-          if let Token::DotDotDot = tok.val {
-            rest_loc = Some(tok.loc);
-            let tok = self.next()?;
-            if let Token::RCurly = tok.val {
-              break;
-            }
-            return self.fail("`}`", tok);
-          }
+        if let Token::RCurly = tok.val {
+          //
+        } else {
           self.back(tok);
-          let lab = self.label()?;
-          let tok = self.next()?;
-          let row = if let Token::Equal = tok.val {
-            let pat = self.pat()?;
-            PatRow::LabelAndPat(lab, pat)
-          } else {
-            let vid = match lab.val {
-              Label::Vid(x) => lab.loc.wrap(x),
-              Label::Num(..) => return self.fail("an identifier", tok),
+          loop {
+            let tok = self.next()?;
+            if let Token::DotDotDot = tok.val {
+              rest_loc = Some(tok.loc);
+              let tok = self.next()?;
+              if let Token::RCurly = tok.val {
+                break;
+              }
+              return self.fail("`}`", tok);
+            }
+            self.back(tok);
+            let lab = self.label()?;
+            let tok = self.next()?;
+            let row = if let Token::Equal = tok.val {
+              let pat = self.pat()?;
+              PatRow::LabelAndPat(lab, pat)
+            } else {
+              let vid = match lab.val {
+                Label::Vid(x) => lab.loc.wrap(x),
+                Label::Num(..) => return self.fail("an identifier", tok),
+              };
+              let ty = self.maybe_colon_ty()?;
+              let as_pat = self.maybe_as_pat()?;
+              PatRow::LabelAsVid(vid, ty, as_pat)
             };
-            let ty = self.maybe_colon_ty()?;
-            let as_pat = self.maybe_as_pat()?;
-            PatRow::LabelAsVid(vid, ty, as_pat)
-          };
-          rows.push(row);
-          let tok = self.next()?;
-          match tok.val {
-            Token::RCurly => break,
-            Token::Comma => continue,
-            _ => return self.fail("`}` or `,`", tok),
+            rows.push(row);
+            let tok = self.next()?;
+            match tok.val {
+              Token::RCurly => break,
+              Token::Comma => continue,
+              _ => return self.fail("`}` or `,`", tok),
+            }
           }
         }
         Pat::Record(rows, rest_loc)
       }
       Token::LRound => {
         let tok = self.next()?;
-        if let Token::RRound = tok.val {
-          return Ok(Some(loc.wrap(Pat::Tuple(Vec::new()))));
-        }
-        self.back(tok);
         let mut pats = Vec::new();
-        loop {
-          pats.push(self.pat()?);
-          let tok = self.next()?;
-          match tok.val {
-            Token::RRound => break,
-            Token::Comma => continue,
-            _ => return self.fail("`)` or `,`", tok),
+        if let Token::RRound = tok.val {
+          //
+        } else {
+          self.back(tok);
+          loop {
+            pats.push(self.pat()?);
+            let tok = self.next()?;
+            match tok.val {
+              Token::RRound => break,
+              Token::Comma => continue,
+              _ => return self.fail("`)` or `,`", tok),
+            }
           }
         }
         if pats.len() == 1 {
@@ -1184,18 +1188,19 @@ impl<'s> Parser<'s> {
       }
       Token::LSquare => {
         let tok = self.next()?;
-        if let Token::RSquare = tok.val {
-          return Ok(Some(loc.wrap(Pat::List(Vec::new()))));
-        }
-        self.back(tok);
         let mut pats = Vec::new();
-        loop {
-          pats.push(self.pat()?);
-          let tok = self.next()?;
-          match tok.val {
-            Token::RSquare => break,
-            Token::Comma => continue,
-            _ => return self.fail("`]` or `,`", tok),
+        if let Token::RSquare = tok.val {
+          //
+        } else {
+          self.back(tok);
+          loop {
+            pats.push(self.pat()?);
+            let tok = self.next()?;
+            match tok.val {
+              Token::RSquare => break,
+              Token::Comma => continue,
+              _ => return self.fail("`]` or `,`", tok),
+            }
           }
         }
         Pat::List(pats)
