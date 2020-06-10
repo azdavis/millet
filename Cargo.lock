@@ -42,6 +42,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "codespan-reporting"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ceface2475f2f57a7ece9ba239b96e06bda8323ee68aa6df539752f13a74f60"
+dependencies = [
+ "termcolor",
+ "unicode-width",
+]
+
+[[package]]
 name = "ctor"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -77,8 +87,8 @@ name = "millet-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "codespan-reporting",
  "millet-core",
- "termcolor",
 ]
 
 [[package]]

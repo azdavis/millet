@@ -7,5 +7,5 @@ publish = false
 
 [dependencies]
 clap = "2.33.1"
-termcolor = "1.1"
+codespan-reporting = "0.9.4"
 millet-core = { path = "../core" }
