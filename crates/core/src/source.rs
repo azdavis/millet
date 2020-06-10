@@ -1,5 +1,7 @@
 //! Utilities for dealing with source code.
 
+use std::fmt;
+
 /// A point location in the source.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Loc {
@@ -20,10 +22,19 @@ impl Loc {
 
 /// A generic wrapper for some value which was ultimately derived from some
 /// location in the source.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct Located<T> {
   pub val: T,
   pub loc: Loc,
+}
+
+impl<T> fmt::Debug for Located<T>
+where
+  T: fmt::Debug,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.val.fmt(f)
+  }
 }
 
 /// An opaque identifier for a source file.
