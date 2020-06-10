@@ -1,6 +1,6 @@
 //! Utilities for dealing with (collections of) source files.
 
-use millet_core::loc::Loc;
+use codespan_reporting::files::Files;
 
 /// An opaque identifier for a source file.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -38,13 +38,6 @@ pub struct SourceMap {
   files: Vec<SourceFile>,
 }
 
-pub struct SourceCtx<'a> {
-  pub line_num: usize,
-  pub col_num: usize,
-  pub file_name: &'a str,
-  pub line: &'a str,
-}
-
 impl SourceMap {
   pub fn new() -> Self {
     Self { files: Vec::new() }
@@ -60,27 +53,57 @@ impl SourceMap {
       idx: 0,
     }
   }
+}
 
-  pub fn get_ctx(&self, id: SourceFileId, loc: Loc) -> SourceCtx<'_> {
-    let file = &self.files[id.0];
-    let bs = file.as_bytes();
-    let start = loc.into_range().start;
-    let (idx, end) = match file.new_lines.iter().position(|&x| start < x) {
-      Some(idx) => (idx, file.new_lines[idx]),
-      None => (file.new_lines.len(), bs.len()),
-    };
-    let (col_num, start) = if idx == 0 {
-      (start + 1, 0)
-    } else {
-      let prev = file.new_lines[idx - 1];
-      (start - prev, prev + 1)
-    };
-    SourceCtx {
-      file_name: &file.name,
-      line: std::str::from_utf8(&bs[start..end]).unwrap(),
-      line_num: idx + 1,
-      col_num,
+impl<'a> Files<'a> for SourceMap {
+  type FileId = SourceFileId;
+  type Name = &'a str;
+  type Source = &'a str;
+
+  fn name(&'a self, id: Self::FileId) -> Option<Self::Name> {
+    let file = self.files.get(id.0)?;
+    Some(file.name.as_str())
+  }
+
+  fn source(&'a self, id: Self::FileId) -> Option<Self::Source> {
+    let file = self.files.get(id.0)?;
+    Some(file.contents.as_str())
+  }
+
+  fn line_index(
+    &'a self,
+    id: Self::FileId,
+    byte_index: usize,
+  ) -> Option<usize> {
+    let file = self.files.get(id.0)?;
+    let ret = file
+      .new_lines
+      .iter()
+      .position(|&x| byte_index < x)
+      .unwrap_or_else(|| file.new_lines.len());
+    Some(ret)
+  }
+
+  fn line_range(
+    &'a self,
+    id: Self::FileId,
+    line_index: usize,
+  ) -> Option<std::ops::Range<usize>> {
+    let file = self.files.get(id.0)?;
+    if line_index > file.new_lines.len() {
+      return None;
     }
+    let begin = if line_index == 0 {
+      0
+    } else {
+      file.new_lines[line_index - 1] + 1
+    };
+    let end = if line_index == file.new_lines.len() {
+      file.as_bytes().len()
+    } else {
+      file.new_lines[line_index]
+    };
+    Some(begin..end)
   }
 }
 

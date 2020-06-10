@@ -19,10 +19,11 @@ impl Loc {
   pub fn wrap<T>(self, val: T) -> Located<T> {
     Located { val, loc: self }
   }
+}
 
-  /// Converts this Loc into a Range.
-  pub fn into_range(self) -> std::ops::Range<usize> {
-    self.start..self.end
+impl From<Loc> for std::ops::Range<usize> {
+  fn from(val: Loc) -> std::ops::Range<usize> {
+    val.start..val.end
   }
 }
 
