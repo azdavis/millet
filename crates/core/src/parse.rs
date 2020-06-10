@@ -68,11 +68,29 @@ impl From<LexError> for ParseError {
   }
 }
 
+#[derive(Clone, Copy)]
 struct OpInfo {
   num: u32,
   assoc: Assoc,
 }
 
+impl OpInfo {
+  fn left(num: u32) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Left,
+    }
+  }
+
+  fn right(num: u32) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Right,
+    }
+  }
+}
+
+#[derive(Clone, Copy)]
 enum Assoc {
   Left,
   Right,
@@ -213,15 +231,19 @@ impl<'s> Parser<'s> {
     let loc = tok.loc;
     let mut ret = match tok.val {
       Token::Struct => {
+        let ops = self.ops.clone();
         let dec = self.str_dec()?;
         self.eat(Token::End)?;
+        self.ops = ops;
         StrExp::Struct(dec)
       }
       Token::Let => {
+        let ops = self.ops.clone();
         let dec = self.str_dec()?;
         self.eat(Token::In)?;
         let exp = self.str_exp()?;
         self.eat(Token::End)?;
+        self.ops = ops;
         StrExp::Let(dec.into(), exp.into())
       }
       Token::Ident(_, IdentType::AlphaNum) => {
@@ -279,10 +301,12 @@ impl<'s> Parser<'s> {
         StrDec::Structure(str_binds)
       }
       Token::Local => {
+        let ops = self.ops.clone();
         let fst = self.str_dec()?;
         self.eat(Token::In)?;
         let snd = self.str_dec()?;
         self.eat(Token::End)?;
+        self.ops = ops;
         StrDec::Local(fst.into(), snd.into())
       }
       _ => {
@@ -601,6 +625,7 @@ impl<'s> Parser<'s> {
         Exp::List(exprs)
       }
       Token::Let => {
+        let ops = self.ops.clone();
         let dec = self.dec()?;
         self.eat(Token::In)?;
         let mut exprs = Vec::new();
@@ -613,6 +638,7 @@ impl<'s> Parser<'s> {
             _ => return self.fail("`end` or `;`", tok),
           }
         }
+        self.ops = ops;
         Exp::Let(dec, exprs)
       }
       Token::Ident(..) => {
@@ -944,9 +970,11 @@ impl<'s> Parser<'s> {
         Dec::Exception(ex_binds)
       }
       Token::Local => {
+        let ops = self.ops.clone();
         let fst = self.dec()?;
         self.eat(Token::In)?;
         let snd = self.dec()?;
+        self.ops = ops;
         Dec::Local(fst.into(), snd.into())
       }
       Token::Open => {
@@ -966,15 +994,24 @@ impl<'s> Parser<'s> {
       Token::Infix => {
         let n = self.fixity_num()?;
         let idents = self.fixity_idents()?;
+        for id in idents.iter() {
+          self.ops.insert(id.val.clone(), OpInfo::left(n.val));
+        }
         Dec::Infix(n, idents)
       }
       Token::Infixr => {
         let n = self.fixity_num()?;
         let idents = self.fixity_idents()?;
+        for id in idents.iter() {
+          self.ops.insert(id.val.clone(), OpInfo::right(n.val));
+        }
         Dec::Infixr(n, idents)
       }
       Token::Nonfix => {
         let idents = self.fixity_idents()?;
+        for id in idents.iter() {
+          self.ops.remove(&id.val);
+        }
         Dec::Nonfix(idents)
       }
       _ => {
