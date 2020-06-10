@@ -10,9 +10,7 @@ pub fn get<'s>(file_id: SourceFileId, bs: &'s [u8]) -> Lexer<'s> {
     file_id,
     bs,
     i: 0,
-    line: 1,
-    col: 1,
-    last_loc: Loc::new(file_id, 1, 1),
+    last_loc: Loc::new(0, 0),
   }
 }
 
@@ -20,8 +18,6 @@ pub struct Lexer<'s> {
   file_id: SourceFileId,
   bs: &'s [u8],
   i: usize,
-  line: usize,
-  col: usize,
   last_loc: Loc,
 }
 
@@ -60,33 +56,38 @@ impl<'s> Lexer<'s> {
     while let Some(&b) = self.bs.get(self.i) {
       // newline
       if b == b'\n' {
-        self.advance_newline();
+        self.i += 1;
         continue;
       }
       // comment start
       if b == b'(' && self.bs.get(self.i + 1) == Some(&b'*') {
-        self.advance(2);
+        self.i += 2;
         comments += 1;
         continue;
       }
       // comment end
       if b == b'*' && self.bs.get(self.i + 1) == Some(&b')') {
         if comments == 0 {
-          return Err(self.cur_loc().wrap(LexError::UnmatchedCloseComment));
+          return Err(
+            Loc::new(self.i, self.i + 2).wrap(LexError::UnmatchedCloseComment),
+          );
         }
-        self.advance(2);
+        self.i += 2;
         comments -= 1;
         continue;
       }
       // inside comment or formatting
       if comments != 0 || is_formatting(b) {
-        self.advance(1);
+        self.i += 1;
         continue;
       }
       // the actual meat of the impl
-      let loc = self.cur_loc();
+      let start = self.i;
+      let ret = self.next_impl(b);
+      let end = self.i;
+      let loc = Loc::new(start, end);
       self.last_loc = loc;
-      return match self.next_impl(b) {
+      return match ret {
         Ok(t) => Ok(loc.wrap(t)),
         Err(e) => Err(loc.wrap(e)),
       };
@@ -94,8 +95,12 @@ impl<'s> Lexer<'s> {
     if comments == 0 {
       Ok(self.last_loc.wrap(Token::EOF))
     } else {
-      Err(self.cur_loc().wrap(LexError::UnmatchedOpenComment))
+      Err(Loc::new(self.i - 1, self.i).wrap(LexError::UnmatchedOpenComment))
     }
+  }
+
+  pub fn file_id(&self) -> SourceFileId {
+    self.file_id
   }
 
   fn next_impl(&mut self, b: u8) -> Result<Token, LexError> {
@@ -104,7 +109,7 @@ impl<'s> Lexer<'s> {
     match alpha_num(b) {
       Some(AlphaNum::Prime) => {
         let start = self.i;
-        self.advance(1);
+        self.i += 1;
         let b = match self.bs.get(self.i) {
           None => return Err(LexError::IncompleteTypeVar),
           Some(x) => *x,
@@ -114,12 +119,12 @@ impl<'s> Lexer<'s> {
           Some(_) => false,
           None => return Err(LexError::IncompleteTypeVar),
         };
-        self.advance(1);
+        self.i += 1;
         while let Some(&b) = self.bs.get(self.i) {
           if alpha_num(b).is_none() {
             break;
           }
-          self.advance(1);
+          self.i += 1;
         }
         let name =
           mk_ident(std::str::from_utf8(&self.bs[start..self.i]).unwrap());
@@ -127,7 +132,7 @@ impl<'s> Lexer<'s> {
       }
       Some(AlphaNum::Alpha) => {
         let start = self.i;
-        self.advance(1);
+        self.i += 1;
         let mut all_alpha = true;
         while let Some(&b) = self.bs.get(self.i) {
           match alpha_num(b) {
@@ -135,7 +140,7 @@ impl<'s> Lexer<'s> {
             Some(_) => all_alpha = false,
             None => break,
           }
-          self.advance(1);
+          self.i += 1;
         }
         let got = &self.bs[start..self.i];
         // small optimization. we only need to check the ALPHA reserved words
@@ -164,7 +169,7 @@ impl<'s> Lexer<'s> {
         None => (b, false),
         Some(&new_b) => {
           if new_b.is_ascii_digit() {
-            self.advance(1);
+            self.i += 1;
             // fall through. this will immediately enter the below 'if'.
             (new_b, true)
           } else {
@@ -181,7 +186,7 @@ impl<'s> Lexer<'s> {
       let starts_with_zero = if b == b'0' {
         let b = match self.bs.get(self.i + 1) {
           None => {
-            self.advance(1);
+            self.i += 1;
             return Ok(Token::DecInt(0, IsNumLab::No));
           }
           Some(x) => *x,
@@ -191,14 +196,14 @@ impl<'s> Lexer<'s> {
           if neg {
             return Err(LexError::InvalidNumConstant);
           }
-          self.advance(2);
+          self.i += 2;
           let b = match self.bs.get(self.i) {
             None => return Err(LexError::InvalidNumConstant),
             Some(x) => *x,
           };
           return if b == b'x' {
             // hex word
-            self.advance(1);
+            self.i += 1;
             self.pos_hex_int().map(Token::HexWord)
           } else {
             // decimal word
@@ -207,7 +212,7 @@ impl<'s> Lexer<'s> {
         }
         // hex integer
         if b == b'x' {
-          self.advance(2);
+          self.i += 2;
           let n = self.pos_hex_int()?;
           let n = if neg { -n } else { n };
           return Ok(Token::HexInt(n));
@@ -230,7 +235,7 @@ impl<'s> Lexer<'s> {
           match self.bs.get(self.i) {
             None => return mk_real(n, after_dec, 0),
             Some(&b'e') | Some(&b'E') => {
-              self.advance(1);
+              self.i += 1;
               let exp = self.real_exp()?;
               return mk_real(n, after_dec, exp);
             }
@@ -238,7 +243,7 @@ impl<'s> Lexer<'s> {
           }
         }
         Some(&b'e') | Some(&b'E') => {
-          self.advance(1);
+          self.i += 1;
           let exp = self.real_exp()?;
           return mk_real(n, 0.0, exp);
         }
@@ -247,20 +252,20 @@ impl<'s> Lexer<'s> {
     }
     // character constant
     let (b, is_char) = if b == b'#' && self.bs.get(self.i + 1) == Some(&b'"') {
-      self.advance(1);
+      self.i += 1;
       (b'"', true)
     } else {
       (b, false)
     };
     // string constants
     if b == b'"' {
-      self.advance(1);
+      self.i += 1;
       let mut str_bs = Vec::new();
       while let Some(&b) = self.bs.get(self.i) {
         match b {
           b'\n' => return Err(LexError::UnclosedStringConstant),
           b'"' => {
-            self.advance(1);
+            self.i += 1;
             return if is_char {
               if str_bs.len() == 1 {
                 let b = str_bs.pop().unwrap();
@@ -273,7 +278,7 @@ impl<'s> Lexer<'s> {
             };
           }
           b'\\' => {
-            self.advance(1);
+            self.i += 1;
             let b = match self.bs.get(self.i) {
               None => return Err(LexError::UnclosedStringConstant),
               Some(x) => *x,
@@ -287,7 +292,7 @@ impl<'s> Lexer<'s> {
               b'f' => str_bs.push(12),
               b'r' => str_bs.push(13),
               b'^' => {
-                self.advance(1);
+                self.i += 1;
                 let b = match self.bs.get(self.i) {
                   None => return Err(LexError::UnclosedStringConstant),
                   Some(x) => *x,
@@ -306,7 +311,7 @@ impl<'s> Lexer<'s> {
                 ) {
                   (Some(0), Some(0), Some(d1), Some(d2)) => {
                     str_bs.push(d1 * 16 + d2);
-                    self.advance(4);
+                    self.i += 4;
                   }
                   _ => return Err(LexError::InvalidStringConstant),
                 }
@@ -321,7 +326,7 @@ impl<'s> Lexer<'s> {
                   match (dec(self.bs[self.i + 1]), dec(self.bs[self.i + 2])) {
                     (Some(d2), Some(d3)) => {
                       str_bs.push((d1 * 10 + d2) * 10 + d3);
-                      self.advance(2);
+                      self.i += 2;
                     }
                     _ => return Err(LexError::InvalidStringConstant),
                   }
@@ -329,9 +334,9 @@ impl<'s> Lexer<'s> {
                   let mut b = b;
                   loop {
                     if b == b'\n' {
-                      self.advance_newline();
+                      self.i += 1;
                     } else {
-                      self.advance(1);
+                      self.i += 1;
                     }
                     b = match self.bs.get(self.i) {
                       None => return Err(LexError::UnclosedStringConstant),
@@ -352,19 +357,19 @@ impl<'s> Lexer<'s> {
           }
           b => str_bs.push(b),
         }
-        self.advance(1);
+        self.i += 1;
       }
       return Err(LexError::UnclosedStringConstant);
     }
     // symbolic identifiers and reserved words
     if is_symbolic(b) {
       let start = self.i;
-      self.advance(1);
+      self.i += 1;
       while let Some(&b) = self.bs.get(self.i) {
         if !is_symbolic(b) {
           break;
         }
-        self.advance(1);
+        self.i += 1;
       }
       let got = &self.bs[start..self.i];
       for &(tok_bs, ref tok) in SYMBOLIC.iter() {
@@ -379,28 +384,12 @@ impl<'s> Lexer<'s> {
     for &(tok_bs, ref tok) in OTHER.iter() {
       let tok_n = tok_bs.len();
       if self.bs.get(self.i..self.i + tok_n) == Some(tok_bs) {
-        self.advance(tok_n);
+        self.i += tok_n;
         return Ok(tok.clone());
       }
     }
     // unknown byte
     return Err(LexError::UnknownByte(b));
-  }
-
-  /// Increase i and col by the given amount.
-  fn advance(&mut self, n: usize) {
-    self.i += n;
-    self.col += n;
-  }
-
-  fn advance_newline(&mut self) {
-    self.i += 1;
-    self.col = 1;
-    self.line += 1;
-  }
-
-  fn cur_loc(&self) -> Loc {
-    Loc::new(self.file_id, self.line, self.col)
   }
 
   fn pos_dec_int(&mut self) -> Result<i32, LexError> {
@@ -409,7 +398,7 @@ impl<'s> Lexer<'s> {
       if !b.is_ascii_digit() {
         break;
       }
-      self.advance(1);
+      self.i += 1;
     }
     if start == self.i {
       return Err(LexError::InvalidNumConstant);
@@ -425,12 +414,12 @@ impl<'s> Lexer<'s> {
   // Requires that self.bs[self.i] currently be on a '.'
   fn real_after_dec(&mut self) -> Result<f64, LexError> {
     let start = self.i;
-    self.advance(1);
+    self.i += 1;
     while let Some(b) = self.bs.get(self.i) {
       if !b.is_ascii_digit() {
         break;
       }
-      self.advance(1);
+      self.i += 1;
     }
     if start == self.i {
       return Err(LexError::InvalidNumConstant);
@@ -449,7 +438,7 @@ impl<'s> Lexer<'s> {
       if !b.is_ascii_hexdigit() {
         break;
       }
-      self.advance(1);
+      self.i += 1;
     }
     if start == self.i {
       return Err(LexError::InvalidNumConstant);
@@ -468,7 +457,7 @@ impl<'s> Lexer<'s> {
       Some(x) => *x,
     };
     let neg = if b == b'~' {
-      self.advance(1);
+      self.i += 1;
       true
     } else {
       false
@@ -565,9 +554,7 @@ fn mk_ident(s: &str) -> Ident {
 
 #[cfg(test)]
 mod tests {
-  use super::{
-    get, hex, mk_ident, IdentType, IsNumLab, Loc, SourceFileId, Token,
-  };
+  use super::hex;
   use pretty_assertions::assert_eq;
 
   #[test]
@@ -605,61 +592,5 @@ mod tests {
     assert_eq!(hex(b'G'), None);
     assert_eq!(hex(b'*'), None);
     assert_eq!(hex(b'?'), None);
-  }
-
-  fn alpha_num(s: &str) -> Token {
-    Token::Ident(mk_ident(s), IdentType::AlphaNum)
-  }
-
-  fn symbolic(s: &str) -> Token {
-    Token::Ident(mk_ident(s), IdentType::Symbolic)
-  }
-
-  #[test]
-  fn simple() {
-    let file_id = SourceFileId::new(0);
-    let inp = include_bytes!("../../../tests/simple.sml");
-    let mut out = get(file_id, inp);
-    let mk = |line, col, tok| Loc::new(file_id, line, col).wrap(tok);
-    let mut next = || out.next().unwrap();
-    assert_eq!(next(), mk(01, 01, Token::Val));
-    assert_eq!(next(), mk(01, 05, alpha_num("decInt")));
-    assert_eq!(next(), mk(01, 12, Token::Equal));
-    assert_eq!(next(), mk(01, 14, Token::DecInt(123, IsNumLab::No)));
-    assert_eq!(next(), mk(02, 01, Token::Val));
-    assert_eq!(next(), mk(02, 05, alpha_num("hexInt")));
-    assert_eq!(next(), mk(02, 12, Token::Equal));
-    assert_eq!(next(), mk(02, 14, Token::HexInt(65278)));
-    assert_eq!(next(), mk(04, 01, Token::Val));
-    assert_eq!(next(), mk(04, 05, alpha_num("decWord")));
-    assert_eq!(next(), mk(04, 13, Token::Equal));
-    assert_eq!(next(), mk(04, 15, Token::DecWord(345)));
-    assert_eq!(next(), mk(05, 01, Token::Val));
-    assert_eq!(next(), mk(05, 05, alpha_num("hexWord")));
-    assert_eq!(next(), mk(05, 13, Token::Equal));
-    assert_eq!(next(), mk(05, 15, Token::HexWord(48879)));
-    assert_eq!(next(), mk(06, 01, Token::Val));
-    assert_eq!(next(), mk(06, 05, alpha_num("reals")));
-    assert_eq!(next(), mk(06, 11, Token::Equal));
-    assert_eq!(next(), mk(06, 13, Token::LSquare));
-    assert_eq!(next(), mk(06, 14, Token::Real(0.7)));
-    assert_eq!(next(), mk(06, 17, Token::Comma));
-    assert_eq!(next(), mk(06, 19, Token::Real(332000.0)));
-    assert_eq!(next(), mk(06, 25, Token::Comma));
-    assert_eq!(next(), mk(06, 27, Token::Real(0.0000003)));
-    assert_eq!(next(), mk(06, 31, Token::RSquare));
-    assert_eq!(next(), mk(07, 01, Token::Val));
-    assert_eq!(next(), mk(07, 05, alpha_num("str")));
-    assert_eq!(next(), mk(07, 09, Token::Equal));
-    assert_eq!(next(), mk(07, 11, Token::Str("foo".to_owned())));
-    assert_eq!(next(), mk(08, 01, Token::Val));
-    assert_eq!(next(), mk(08, 05, symbolic("<=>")));
-    assert_eq!(next(), mk(08, 09, Token::Equal));
-    assert_eq!(next(), mk(09, 03, Token::Str("bar quz".to_owned())));
-    assert_eq!(next(), mk(11, 01, Token::Val));
-    assert_eq!(next(), mk(11, 05, alpha_num("c")));
-    assert_eq!(next(), mk(11, 07, Token::Equal));
-    assert_eq!(next(), mk(11, 09, Token::Char(63)));
-    assert_eq!(next(), mk(11, 09, Token::EOF));
   }
 }

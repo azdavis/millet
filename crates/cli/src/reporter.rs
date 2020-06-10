@@ -1,6 +1,6 @@
 //! Error reporting to the console.
 
-use millet_core::source::{Located, SourceMap};
+use millet_core::source::{Located, SourceFileId, SourceMap};
 
 /// A reporter of errors.
 pub struct Reporter<W> {
@@ -20,14 +20,14 @@ where
   pub fn report<T>(
     &mut self,
     map: &SourceMap,
+    file_id: SourceFileId,
     err: Located<T>,
   ) -> std::io::Result<()>
   where
     T: std::error::Error,
   {
-    let loc = err.loc;
+    let ctx = map.get_ctx(file_id, err.loc);
     let err = err.val;
-    let ctx = map.get_ctx(loc);
     writeln!(self.writer, "error: {}", err)?;
     writeln!(
       self.writer,

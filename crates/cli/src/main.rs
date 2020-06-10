@@ -24,7 +24,7 @@ fn run() -> bool {
     match parse::get(lex::get(id, file.as_bytes())) {
       Ok(xs) => eprintln!("parsed: {:#?}", xs),
       Err(e) => {
-        w.report(&m, e).unwrap();
+        w.report(&m, id, e).unwrap();
         return false;
       }
     }

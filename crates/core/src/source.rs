@@ -2,19 +2,20 @@
 
 use std::fmt;
 
-/// A point location in the source.
+/// A range in the source.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Loc {
-  file_id: SourceFileId,
-  line: usize,
-  col: usize,
+  start: usize,
+  end: usize,
 }
 
 impl Loc {
-  pub fn new(file_id: SourceFileId, line: usize, col: usize) -> Self {
-    Self { file_id, line, col }
+  /// Returns a enw Loc. The start is inclusive, the end is not inclusive.
+  pub fn new(start: usize, end: usize) -> Self {
+    Self { start, end }
   }
 
+  /// Wraps a value in a Loc.
   pub fn wrap<T>(self, val: T) -> Located<T> {
     Located { val, loc: self }
   }
@@ -52,9 +53,24 @@ impl SourceFileId {
 pub struct SourceFile {
   name: String,
   contents: String,
+  new_lines: Vec<usize>,
 }
 
 impl SourceFile {
+  fn new(name: String, contents: String) -> Self {
+    let new_lines = contents
+      .as_bytes()
+      .iter()
+      .enumerate()
+      .filter_map(|(idx, &b)| if b == b'\n' { Some(idx) } else { None })
+      .collect();
+    Self {
+      name,
+      contents,
+      new_lines,
+    }
+  }
+
   pub fn as_bytes(&self) -> &[u8] {
     self.contents.as_bytes()
   }
@@ -78,7 +94,7 @@ impl SourceMap {
   }
 
   pub fn insert(&mut self, name: String, contents: String) {
-    self.files.push(SourceFile { name, contents });
+    self.files.push(SourceFile::new(name, contents));
   }
 
   pub fn iter(&self) -> Iter {
@@ -88,33 +104,24 @@ impl SourceMap {
     }
   }
 
-  pub fn get_ctx(&self, loc: Loc) -> SourceCtx<'_> {
-    let file = &self.files[loc.file_id.0];
+  pub fn get_ctx(&self, id: SourceFileId, loc: Loc) -> SourceCtx<'_> {
+    let file = &self.files[id.0];
     let bs = file.as_bytes();
-    let mut line = 1;
-    let mut start: Option<usize> = if loc.line == 1 { Some(0) } else { None };
-    let mut end: Option<usize> = None;
-    for (i, &b) in bs.iter().enumerate() {
-      if b != b'\n' {
-        continue;
-      }
-      if line == loc.line {
-        end = Some(i);
-        break;
-      }
-      line += 1;
-      if line == loc.line {
-        start = Some(i + 1);
-      }
-    }
-    let start = start.unwrap();
-    let end = end.unwrap_or_else(|| bs.len());
-    let line = std::str::from_utf8(&bs[start..end]).unwrap();
+    let (idx, end) = match file.new_lines.iter().position(|&x| loc.start < x) {
+      Some(idx) => (idx, file.new_lines[idx]),
+      None => (file.new_lines.len(), bs.len()),
+    };
+    let (col_num, start) = if idx == 0 {
+      (loc.start + 1, 0)
+    } else {
+      let prev = file.new_lines[idx - 1];
+      (loc.start - prev, prev + 1)
+    };
     SourceCtx {
       file_name: &file.name,
-      line,
-      line_num: loc.line,
-      col_num: loc.col,
+      line: std::str::from_utf8(&bs[start..end]).unwrap(),
+      line_num: idx + 1,
+      col_num,
     }
   }
 }
