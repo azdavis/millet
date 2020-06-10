@@ -137,18 +137,18 @@ impl<'s> Parser<'s> {
 
   fn program(&mut self) -> Result<Vec<Located<TopDec<Ident>>>> {
     let mut ret = Vec::new();
-    loop {
-      let tok = self.next()?;
-      if let Token::EOF = tok.val {
-        break;
-      }
-      self.back(tok);
-      ret.push(self.top_dec()?);
+    while let Some(td) = self.maybe_top_dec()? {
+      ret.push(td);
     }
-    Ok(ret)
+    let tok = self.next()?;
+    if let Token::EOF = tok.val {
+      Ok(ret)
+    } else {
+      self.fail("a top-level declaration", tok)
+    }
   }
 
-  fn top_dec(&mut self) -> Result<Located<TopDec<Ident>>> {
+  fn maybe_top_dec(&mut self) -> Result<Option<Located<TopDec<Ident>>>> {
     let tok = self.next()?;
     let loc = tok.loc;
     let ret = match tok.val {
@@ -196,10 +196,16 @@ impl<'s> Parser<'s> {
       }
       _ => {
         self.back(tok);
-        TopDec::StrDec(self.str_dec()?)
+        let sd = self.str_dec()?;
+        if let StrDec::Seq(ref s) = sd.val {
+          if s.is_empty() {
+            return Ok(None);
+          }
+        }
+        TopDec::StrDec(sd)
       }
     };
-    Ok(loc.wrap(ret))
+    Ok(Some(loc.wrap(ret)))
   }
 
   fn str_exp(&mut self) -> Result<Located<StrExp<Ident>>> {
