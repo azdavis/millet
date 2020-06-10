@@ -1340,7 +1340,6 @@ impl<'s> Parser<'s> {
     self.ty_prec(TyPrec::Arrow)
   }
 
-  // TODO prec
   fn ty_prec(&mut self, min_prec: TyPrec) -> Result<Located<Ty<Ident>>> {
     let tok = self.next()?;
     let loc = tok.loc;
