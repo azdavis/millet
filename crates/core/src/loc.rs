@@ -5,8 +5,8 @@ use std::fmt;
 /// A range in the source. The start is inclusive, the end is not inclusive.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Loc {
-  pub start: usize,
-  pub end: usize,
+  start: usize,
+  end: usize,
 }
 
 impl Loc {
@@ -18,6 +18,11 @@ impl Loc {
   /// Wraps a value in a Loc.
   pub fn wrap<T>(self, val: T) -> Located<T> {
     Located { val, loc: self }
+  }
+
+  /// Converts this Loc into a Range.
+  pub fn into_range(self) -> std::ops::Range<usize> {
+    self.start..self.end
   }
 }
 

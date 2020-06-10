@@ -64,15 +64,16 @@ impl SourceMap {
   pub fn get_ctx(&self, id: SourceFileId, loc: Loc) -> SourceCtx<'_> {
     let file = &self.files[id.0];
     let bs = file.as_bytes();
-    let (idx, end) = match file.new_lines.iter().position(|&x| loc.start < x) {
+    let start = loc.into_range().start;
+    let (idx, end) = match file.new_lines.iter().position(|&x| start < x) {
       Some(idx) => (idx, file.new_lines[idx]),
       None => (file.new_lines.len(), bs.len()),
     };
     let (col_num, start) = if idx == 0 {
-      (loc.start + 1, 0)
+      (start + 1, 0)
     } else {
       let prev = file.new_lines[idx - 1];
-      (loc.start - prev, prev + 1)
+      (start - prev, prev + 1)
     };
     SourceCtx {
       file_name: &file.name,
