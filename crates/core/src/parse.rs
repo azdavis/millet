@@ -829,7 +829,7 @@ impl Parser {
               // copied from fval_bind_case
               let vid = self.ident()?;
               if !self.ops.contains_key(&vid.val) {
-                return Err(tok.loc.wrap(ParseError::NotInfix(vid.val)));
+                return Err(vid.loc.wrap(ParseError::NotInfix(vid.val)));
               }
               let snd = self.at_pat()?;
               self.eat(Token::RRound)?;
@@ -1034,7 +1034,7 @@ impl Parser {
         let fst = self.at_pat()?;
         let vid = self.ident()?;
         if !self.ops.contains_key(&vid.val) {
-          return Err(tok.loc.wrap(ParseError::NotInfix(vid.val)));
+          return Err(vid.loc.wrap(ParseError::NotInfix(vid.val)));
         }
         let snd = self.at_pat()?;
         self.eat(Token::RRound)?;
