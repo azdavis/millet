@@ -12,26 +12,26 @@ use std::io::Write as _;
 fn run() -> bool {
   let args = args::get();
   let config = term::Config::default();
-  let w = StandardStream::stdout(ColorChoice::Auto);
-  let mut w = w.lock();
-  let mut m = source::SourceMap::new();
+  let writer = StandardStream::stdout(ColorChoice::Auto);
+  let mut writer = writer.lock();
+  let mut source_map = source::SourceMap::new();
   for name in args.files {
     match std::fs::read_to_string(&name) {
-      Ok(s) => m.insert(name, s),
+      Ok(s) => source_map.insert(name, s),
       Err(e) => {
-        writeln!(w, "io error: {}: {}", name, e).unwrap();
+        writeln!(writer, "io error: {}: {}", name, e).unwrap();
         return false;
       }
     }
   }
-  for (id, file) in m.iter() {
+  for (id, file) in source_map.iter() {
     let lexer = match lex::get(file.as_bytes()) {
       Ok(x) => x,
       Err(e) => {
         term::emit(
-          &mut w,
+          &mut writer,
           &config,
-          &m,
+          &source_map,
           &diagnostic::new(id, e.loc.wrap(error::Error::Lex(e.val))),
         )
         .unwrap();
@@ -42,9 +42,9 @@ fn run() -> bool {
       Ok(xs) => eprintln!("parsed: {:#?}", xs),
       Err(e) => {
         term::emit(
-          &mut w,
+          &mut writer,
           &config,
-          &m,
+          &source_map,
           &diagnostic::new(id, e.loc.wrap(error::Error::Parse(e.val))),
         )
         .unwrap();
