@@ -32,10 +32,10 @@ impl fmt::Display for ParseError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::ExpectedButFound(exp, fnd) => write!(f, "expected {}, found {}", exp, fnd),
-      Self::InfixWithoutOp(id) => {
-        write!(f, "infix identifier `{}` used without preceding `op`", id)
-      }
-      Self::NotInfix(id) => write!(f, "non-infix identifier `{}` used as infix", id),
+      Self::InfixWithoutOp(..) => todo!(),
+      // write!(f, "infix identifier `{}` used without preceding `op`", id)
+      Self::NotInfix(..) => todo!(),
+      // write!(f, "non-infix identifier `{}` used as infix", id)
       Self::RealPat => write!(f, "real constant used as a pattern"),
       Self::NegativeFixity(n) => write!(f, "fixity `{}` is negative", n),
     }

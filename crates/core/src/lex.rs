@@ -1,12 +1,12 @@
 //! Lexical analysis.
 
-use crate::ident::Ident;
+use crate::ident::{Ident, IdentMaker};
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 use std::fmt;
 
-pub fn get(bs: &[u8]) -> Result<Lexer, Located<LexError>> {
-  Ok(Lexer::new(TokenBuilder::new(bs).build()?))
+pub fn get(ident_maker: &mut IdentMaker, bs: &[u8]) -> Result<Lexer, Located<LexError>> {
+  Ok(Lexer::new(TokenMaker::new(ident_maker, bs).build()?))
 }
 
 pub struct Lexer {
@@ -62,14 +62,24 @@ impl fmt::Display for LexError {
 
 impl std::error::Error for LexError {}
 
-struct TokenBuilder<'s> {
+struct TokenMaker<'s> {
+  ident_maker: &'s mut IdentMaker,
   bs: &'s [u8],
   i: usize,
 }
 
-impl<'s> TokenBuilder<'s> {
-  fn new(bs: &'s [u8]) -> Self {
-    Self { bs, i: 0 }
+impl<'s> TokenMaker<'s> {
+  fn new(ident_maker: &'s mut IdentMaker, bs: &'s [u8]) -> Self {
+    Self {
+      ident_maker,
+      bs,
+      i: 0,
+    }
+  }
+
+  fn mk_ident(&mut self, bs: &[u8]) -> Ident {
+    let s = std::str::from_utf8(bs).unwrap().to_owned();
+    self.ident_maker.insert(s)
   }
 
   fn build(mut self) -> Result<Vec<Located<Token>>, Located<LexError>> {
@@ -141,7 +151,7 @@ impl<'s> TokenBuilder<'s> {
           }
           self.i += 1;
         }
-        let name = mk_ident(std::str::from_utf8(&self.bs[start..self.i]).unwrap());
+        let name = self.mk_ident(&self.bs[start..self.i]);
         return Ok(Token::TyVar(TyVar { name, equality }));
       }
       Some(AlphaNum::Alpha) => {
@@ -166,8 +176,7 @@ impl<'s> TokenBuilder<'s> {
             }
           }
         }
-        let got = mk_ident(std::str::from_utf8(got).unwrap());
-        return Ok(Token::Ident(got, IdentType::AlphaNum));
+        return Ok(Token::Ident(self.mk_ident(got), IdentType::AlphaNum));
       }
       Some(AlphaNum::NumOrUnderscore) | None => {}
     }
@@ -391,8 +400,7 @@ impl<'s> TokenBuilder<'s> {
           return Ok(tok.clone());
         }
       }
-      let got = mk_ident(std::str::from_utf8(got).unwrap());
-      return Ok(Token::Ident(got, IdentType::Symbolic));
+      return Ok(Token::Ident(self.mk_ident(got), IdentType::Symbolic));
     }
     // other reserved words (that couldn't be mistaken for identifiers)
     for &(tok_bs, ref tok) in OTHER.iter() {
@@ -554,10 +562,6 @@ fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Result<Token, LexError>
     Err(_) => return Err(LexError::InvalidNumConstant),
   };
   Ok(Token::Real((before_dec + after_dec) * 10_f64.powf(exp)))
-}
-
-fn mk_ident(s: &str) -> Ident {
-  Ident::new(s.to_owned())
 }
 
 #[cfg(test)]

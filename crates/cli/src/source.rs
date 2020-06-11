@@ -53,6 +53,10 @@ impl SourceMap {
       idx: 0,
     }
   }
+
+  pub fn len(&self) -> usize {
+    self.files.len()
+  }
 }
 
 impl<'a> Files<'a> for SourceMap {
