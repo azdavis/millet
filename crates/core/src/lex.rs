@@ -5,18 +5,32 @@ use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 use std::fmt;
 
-pub fn get<'s>(bs: &'s [u8]) -> Lexer<'s> {
-  Lexer {
-    bs,
-    i: 0,
-    last_loc: Loc::new(0, 0),
-  }
+pub fn get(bs: &[u8]) -> Result<Lexer, Located<LexError>> {
+  Ok(Lexer::new(TokenBuilder::new(bs).build()?))
 }
 
-pub struct Lexer<'s> {
-  bs: &'s [u8],
-  i: usize,
+pub struct Lexer {
+  ts: std::vec::IntoIter<Located<Token>>,
   last_loc: Loc,
+}
+
+impl Lexer {
+  fn new(ts: Vec<Located<Token>>) -> Self {
+    Self {
+      ts: ts.into_iter(),
+      last_loc: Loc::new(0, 0),
+    }
+  }
+
+  pub fn next(&mut self) -> Located<Token> {
+    match self.ts.next() {
+      Some(x) => {
+        self.last_loc = x.loc;
+        x
+      }
+      None => self.last_loc.wrap(Token::EOF),
+    }
+  }
 }
 
 #[derive(Debug)]
@@ -48,9 +62,19 @@ impl fmt::Display for LexError {
 
 impl std::error::Error for LexError {}
 
-impl<'s> Lexer<'s> {
-  pub fn next(&mut self) -> Result<Located<Token>, Located<LexError>> {
+struct TokenBuilder<'s> {
+  bs: &'s [u8],
+  i: usize,
+}
+
+impl<'s> TokenBuilder<'s> {
+  fn new(bs: &'s [u8]) -> Self {
+    Self { bs, i: 0 }
+  }
+
+  fn build(mut self) -> Result<Vec<Located<Token>>, Located<LexError>> {
     let mut comments: usize = 0;
+    let mut ts = Vec::new();
     while let Some(&b) = self.bs.get(self.i) {
       // newline
       if b == b'\n' {
@@ -82,14 +106,13 @@ impl<'s> Lexer<'s> {
       let ret = self.next_impl(b);
       let end = self.i;
       let loc = Loc::new(start, end);
-      self.last_loc = loc;
-      return match ret {
-        Ok(t) => Ok(loc.wrap(t)),
-        Err(e) => Err(loc.wrap(e)),
-      };
+      match ret {
+        Ok(t) => ts.push(loc.wrap(t)),
+        Err(e) => return Err(loc.wrap(e)),
+      }
     }
     if comments == 0 {
-      Ok(self.last_loc.wrap(Token::EOF))
+      Ok(ts)
     } else {
       Err(Loc::new(self.i - 1, self.i).wrap(LexError::UnmatchedOpenComment))
     }

@@ -6,7 +6,7 @@ mod source;
 
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
-use millet_core::{lex, parse};
+use millet_core::{error, lex, parse};
 use std::io::Write as _;
 
 fn run() -> bool {
@@ -25,10 +25,29 @@ fn run() -> bool {
     }
   }
   for (id, file) in m.iter() {
-    match parse::get(lex::get(file.as_bytes())) {
+    let lexer = match lex::get(file.as_bytes()) {
+      Ok(x) => x,
+      Err(e) => {
+        term::emit(
+          &mut w,
+          &config,
+          &m,
+          &diagnostic::new(id, e.loc.wrap(error::Error::Lex(e.val))),
+        )
+        .unwrap();
+        return false;
+      }
+    };
+    match parse::get(lexer) {
       Ok(xs) => eprintln!("parsed: {:#?}", xs),
       Err(e) => {
-        term::emit(&mut w, &config, &m, &diagnostic::new(id, e)).unwrap();
+        term::emit(
+          &mut w,
+          &config,
+          &m,
+          &diagnostic::new(id, e.loc.wrap(error::Error::Parse(e.val))),
+        )
+        .unwrap();
         return false;
       }
     }
