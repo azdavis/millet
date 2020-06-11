@@ -981,6 +981,26 @@ impl Parser {
     self.semicolon_seq(Self::maybe_dec, Dec::Seq)
   }
 
+  fn fval_bind_case_inner(
+    &mut self,
+    vid: Located<Ident>,
+    pat: Located<Pat<Ident>>,
+  ) -> Result<FValBindCase<Ident>> {
+    let mut pats = vec![pat];
+    while let Some(pat) = self.maybe_at_pat()? {
+      pats.push(pat);
+    }
+    let ret_ty = self.maybe_colon_ty()?;
+    self.eat(Token::Equal)?;
+    let body = self.exp()?;
+    Ok(FValBindCase {
+      vid,
+      pats,
+      ret_ty,
+      body,
+    })
+  }
+
   // NOTE this is not compliant with the spec (page 78): "the parentheses may
   // also be dropped if `: ty` or `=` follows immediately." I can't figure out a
   // way to be both spec compliant and also not require unbounded lookahead.
@@ -1004,19 +1024,7 @@ impl Parser {
       }
       _ => return self.fail("`op`, `(`, or an identifier", tok),
     };
-    let mut pats = vec![pat];
-    while let Some(pat) = self.maybe_at_pat()? {
-      pats.push(pat);
-    }
-    let ret_ty = self.maybe_colon_ty()?;
-    self.eat(Token::Equal)?;
-    let body = self.exp()?;
-    Ok(FValBindCase {
-      vid,
-      pats,
-      ret_ty,
-      body,
-    })
+    self.fval_bind_case_inner(vid, pat)
   }
 
   fn ty_binds(&mut self) -> Result<Vec<TyBind<Ident>>> {
@@ -1070,16 +1078,7 @@ impl Parser {
     })
   }
 
-  fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
-    let tok = self.next();
-    match tok.val {
-      Token::TyVar(ty_var) => return Ok(vec![tok.loc.wrap(ty_var)]),
-      Token::LRound => {}
-      _ => {
-        self.back(tok);
-        return Ok(Vec::new());
-      }
-    }
+  fn ty_var_seq_inner(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
     let mut ret = Vec::new();
     loop {
       let tok = self.next();
@@ -1096,6 +1095,18 @@ impl Parser {
       }
     }
     Ok(ret)
+  }
+
+  fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<Ident>>>> {
+    let tok = self.next();
+    match tok.val {
+      Token::TyVar(ty_var) => Ok(vec![tok.loc.wrap(ty_var)]),
+      Token::LRound => self.ty_var_seq_inner(),
+      _ => {
+        self.back(tok);
+        Ok(Vec::new())
+      }
+    }
   }
 
   fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat<Ident>>>> {
