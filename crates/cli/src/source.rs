@@ -79,7 +79,7 @@ impl<'a> Files<'a> for SourceMap {
     let ret = file
       .new_lines
       .iter()
-      .position(|&x| byte_index < x)
+      .position(|&x| byte_index <= x)
       .unwrap_or_else(|| file.new_lines.len());
     Some(ret)
   }
