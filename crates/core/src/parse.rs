@@ -1010,17 +1010,17 @@ impl Parser {
       Token::Op => (self.ident()?, self.at_pat()?),
       Token::LRound => {
         let fst = self.at_pat()?;
-        let id = self.ident()?;
-        if !self.ops.contains_key(&id.val) {
-          return Err(tok.loc.wrap(ParseError::NotInfix(id.val)));
+        let vid = self.ident()?;
+        if !self.ops.contains_key(&vid.val) {
+          return Err(tok.loc.wrap(ParseError::NotInfix(vid.val)));
         }
-        (id, fst.loc.wrap(Pat::Tuple(vec![fst, self.at_pat()?])))
+        (vid, fst.loc.wrap(Pat::Tuple(vec![fst, self.at_pat()?])))
       }
-      Token::Ident(id, _) => {
-        if self.ops.contains_key(&id) {
-          return Err(tok.loc.wrap(ParseError::InfixWithoutOp(id)));
+      Token::Ident(vid, _) => {
+        if self.ops.contains_key(&vid) {
+          return Err(tok.loc.wrap(ParseError::InfixWithoutOp(vid)));
         }
-        (tok.loc.wrap(id), self.at_pat()?)
+        (tok.loc.wrap(vid), self.at_pat()?)
       }
       _ => return self.fail("`op`, `(`, or an identifier", tok),
     };
