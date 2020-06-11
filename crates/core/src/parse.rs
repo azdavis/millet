@@ -831,7 +831,9 @@ impl Parser {
               if !self.ops.contains_key(&vid.val) {
                 return Err(tok.loc.wrap(ParseError::NotInfix(vid.val)));
               }
-              let pat = fst.loc.wrap(Pat::Tuple(vec![fst, self.at_pat()?]));
+              let snd = self.at_pat()?;
+              self.eat(Token::RRound)?;
+              let pat = fst.loc.wrap(Pat::Tuple(vec![fst, snd]));
               (Vec::new(), self.fval_bind_case_inner(vid, pat)?)
             }
           }
@@ -1034,7 +1036,9 @@ impl Parser {
         if !self.ops.contains_key(&vid.val) {
           return Err(tok.loc.wrap(ParseError::NotInfix(vid.val)));
         }
-        (vid, fst.loc.wrap(Pat::Tuple(vec![fst, self.at_pat()?])))
+        let snd = self.at_pat()?;
+        self.eat(Token::RRound)?;
+        (vid, fst.loc.wrap(Pat::Tuple(vec![fst, snd])))
       }
       Token::Ident(vid, _) => {
         if self.ops.contains_key(&vid) {
