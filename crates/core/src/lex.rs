@@ -66,9 +66,7 @@ impl<'s> Lexer<'s> {
       // comment end
       if b == b'*' && self.bs.get(self.i + 1) == Some(&b')') {
         if comments == 0 {
-          return Err(
-            Loc::new(self.i, self.i + 2).wrap(LexError::UnmatchedCloseComment),
-          );
+          return Err(Loc::new(self.i, self.i + 2).wrap(LexError::UnmatchedCloseComment));
         }
         self.i += 2;
         comments -= 1;
@@ -120,8 +118,7 @@ impl<'s> Lexer<'s> {
           }
           self.i += 1;
         }
-        let name =
-          mk_ident(std::str::from_utf8(&self.bs[start..self.i]).unwrap());
+        let name = mk_ident(std::str::from_utf8(&self.bs[start..self.i]).unwrap());
         return Ok(Token::TyVar(TyVar { name, equality }));
       }
       Some(AlphaNum::Alpha) => {
@@ -463,10 +460,8 @@ impl<'s> Lexer<'s> {
 
 fn is_symbolic(b: u8) -> bool {
   match b {
-    b'!' | b'%' | b'&' | b'$' | b'#' | b'+' | b'-' | b'/' | b':' | b'<'
-    | b'=' | b'>' | b'?' | b'@' | b'\\' | b'~' | b'`' | b'^' | b'|' | b'*' => {
-      true
-    }
+    b'!' | b'%' | b'&' | b'$' | b'#' | b'+' | b'-' | b'/' | b':' | b'<' | b'=' | b'>' | b'?'
+    | b'@' | b'\\' | b'~' | b'`' | b'^' | b'|' | b'*' => true,
     _ => false,
   }
 }
@@ -525,11 +520,7 @@ fn mk_int(n: i32, starts_with_zero: bool) -> Token {
   Token::DecInt(n, is_num_lab)
 }
 
-fn mk_real(
-  before_dec: i32,
-  after_dec: f64,
-  exp: i32,
-) -> Result<Token, LexError> {
+fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Result<Token, LexError> {
   use std::convert::TryInto as _;
   let before_dec: f64 = match before_dec.try_into() {
     Ok(n) => n,

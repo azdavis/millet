@@ -1,10 +1,9 @@
 //! Parsing.
 
 use crate::ast::{
-  Arm, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc,
-  Exp, FValBind, FValBindCase, FunBind, Label, Long, Match, Pat, PatRow, Row,
-  SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec, Ty, TyBind,
-  TyDesc, TyRow, ValBind, ValDesc,
+  Arm, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind,
+  FValBindCase, FunBind, Label, Long, Match, Pat, PatRow, Row, SigBind, SigExp, Spec, StrBind,
+  StrDec, StrDesc, StrExp, TopDec, Ty, TyBind, TyDesc, TyRow, ValBind, ValDesc,
 };
 use crate::ident::Ident;
 use crate::lex::{LexError, Lexer};
@@ -34,15 +33,11 @@ impl fmt::Display for ParseError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::LexError(e) => e.fmt(f),
-      Self::ExpectedButFound(exp, fnd) => {
-        write!(f, "expected {}, found {}", exp, fnd)
-      }
+      Self::ExpectedButFound(exp, fnd) => write!(f, "expected {}, found {}", exp, fnd),
       Self::InfixWithoutOp(id) => {
         write!(f, "infix identifier `{}` used without preceding `op`", id)
       }
-      Self::NotInfix(id) => {
-        write!(f, "non-infix identifier `{}` used as infix", id)
-      }
+      Self::NotInfix(id) => write!(f, "non-infix identifier `{}` used as infix", id),
       Self::RealPat => write!(f, "real constant used as a pattern"),
       Self::NegativeFixity(n) => write!(f, "fixity `{}` is negative", n),
     }
@@ -1290,19 +1285,13 @@ impl<'s> Parser<'s> {
     Ok(ret)
   }
 
-  fn pat_long_vid(
-    &mut self,
-    loc: Loc,
-    mut long_vid: Long<Ident>,
-  ) -> Result<Pat<Ident>> {
+  fn pat_long_vid(&mut self, loc: Loc, mut long_vid: Long<Ident>) -> Result<Pat<Ident>> {
     if long_vid.idents.len() == 1 {
       let ty = self.maybe_colon_ty()?;
       match self.maybe_as_pat()? {
         None => match ty {
           None => {}
-          Some(ty) => {
-            return Ok(Pat::Typed(loc.wrap(Pat::LongVid(long_vid)).into(), ty))
-          }
+          Some(ty) => return Ok(Pat::Typed(loc.wrap(Pat::LongVid(long_vid)).into(), ty)),
         },
         Some(as_pat) => {
           let vid = long_vid.idents.pop().unwrap();

@@ -70,11 +70,7 @@ impl<'a> Files<'a> for SourceMap {
     Some(file.contents.as_str())
   }
 
-  fn line_index(
-    &'a self,
-    id: Self::FileId,
-    byte_index: usize,
-  ) -> Option<usize> {
+  fn line_index(&'a self, id: Self::FileId, byte_index: usize) -> Option<usize> {
     let file = self.files.get(id.0)?;
     let ret = file
       .new_lines
@@ -84,11 +80,7 @@ impl<'a> Files<'a> for SourceMap {
     Some(ret)
   }
 
-  fn line_range(
-    &'a self,
-    id: Self::FileId,
-    line_index: usize,
-  ) -> Option<std::ops::Range<usize>> {
+  fn line_range(&'a self, id: Self::FileId, line_index: usize) -> Option<std::ops::Range<usize>> {
     let file = self.files.get(id.0)?;
     if line_index > file.new_lines.len() {
       return None;
