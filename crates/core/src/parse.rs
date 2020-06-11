@@ -1479,6 +1479,7 @@ impl Parser {
         ret.push(tok.loc.wrap(id));
         continue;
       }
+      self.back(tok);
       break;
     }
     Ok(ret)
