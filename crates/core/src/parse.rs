@@ -819,18 +819,37 @@ impl Parser {
         Dec::Val(ty_vars, val_binds)
       }
       Token::Fun => {
-        let ty_vars = self.ty_var_seq()?;
-        let mut cases = Vec::new();
+        // have to contort the case for seeing an initial `(` after the `fun` because it could be
+        // the beginning of a ty var seq OR the wrapping of an infix fval bind case head.
+        let tok = self.next();
+        let (ty_vars, fst_case) = if let Token::LRound = tok.val {
+          match self.maybe_at_pat()? {
+            None => (self.ty_var_seq_inner()?, self.fval_bind_case()?),
+            Some(fst) => {
+              // copied from fval_bind_case
+              let vid = self.ident()?;
+              if !self.ops.contains_key(&vid.val) {
+                return Err(tok.loc.wrap(ParseError::NotInfix(vid.val)));
+              }
+              let pat = fst.loc.wrap(Pat::Tuple(vec![fst, self.at_pat()?]));
+              (Vec::new(), self.fval_bind_case_inner(vid, pat)?)
+            }
+          }
+        } else {
+          self.back(tok);
+          (self.ty_var_seq()?, self.fval_bind_case()?)
+        };
+        let mut cases = vec![fst_case];
         let mut binds = Vec::new();
         loop {
-          cases.push(self.fval_bind_case()?);
           let tok = self.next();
           if let Token::Bar = tok.val {
+            cases.push(self.fval_bind_case()?);
             continue;
           }
           binds.push(FValBind { cases });
           if let Token::And = tok.val {
-            cases = Vec::new();
+            cases = vec![self.fval_bind_case()?];
             continue;
           }
           self.back(tok);
@@ -1001,9 +1020,10 @@ impl Parser {
     })
   }
 
-  // NOTE this is not compliant with the spec (page 78): "the parentheses may
-  // also be dropped if `: ty` or `=` follows immediately." I can't figure out a
-  // way to be both spec compliant and also not require unbounded lookahead.
+  // NOTE this is not compliant with the spec (page 78): "the parentheses may also be dropped if `:
+  // ty` or `=` follows immediately." I can't figure out a way to be both spec compliant and also
+  // not require unbounded lookahead. also note there is already nastiness with `fun (`, see the Fun
+  // case for maybe_dec.
   fn fval_bind_case(&mut self) -> Result<FValBindCase<Ident>> {
     let tok = self.next();
     let (vid, pat) = match tok.val {
