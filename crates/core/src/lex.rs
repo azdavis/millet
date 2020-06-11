@@ -3,7 +3,6 @@
 use crate::ident::{Ident, IdentMaker};
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
-use std::fmt;
 
 pub fn get(ident_maker: &mut IdentMaker, bs: &[u8]) -> Result<Lexer, Located<LexError>> {
   Ok(Lexer::new(TokenMaker::new(ident_maker, bs).build()?))
@@ -44,23 +43,6 @@ pub enum LexError {
   InvalidStringConstant,
   InvalidCharConstant,
 }
-
-impl fmt::Display for LexError {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::UnmatchedCloseComment => write!(f, "unmatched close comment"),
-      Self::UnmatchedOpenComment => write!(f, "unmatched open comment"),
-      Self::IncompleteTypeVar => write!(f, "incomplete type var"),
-      Self::UnknownByte(b) => write!(f, "unknown byte: {}", b),
-      Self::InvalidNumConstant => write!(f, "invalid numeric constant"),
-      Self::UnclosedStringConstant => write!(f, "unclosed string constant"),
-      Self::InvalidStringConstant => write!(f, "invalid string constant"),
-      Self::InvalidCharConstant => write!(f, "invalid character constant"),
-    }
-  }
-}
-
-impl std::error::Error for LexError {}
 
 struct TokenMaker<'s> {
   ident_maker: &'s mut IdentMaker,

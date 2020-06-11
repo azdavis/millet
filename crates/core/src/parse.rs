@@ -11,7 +11,6 @@ use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar};
 use std::collections::HashMap;
 use std::convert::TryInto as _;
-use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Located<ParseError>>;
 
@@ -27,22 +26,6 @@ pub enum ParseError {
   RealPat,
   NegativeFixity(i32),
 }
-
-impl fmt::Display for ParseError {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::ExpectedButFound(exp, fnd) => write!(f, "expected {}, found {}", exp, fnd),
-      Self::InfixWithoutOp(..) => todo!(),
-      // write!(f, "infix identifier `{}` used without preceding `op`", id)
-      Self::NotInfix(..) => todo!(),
-      // write!(f, "non-infix identifier `{}` used as infix", id)
-      Self::RealPat => write!(f, "real constant used as a pattern"),
-      Self::NegativeFixity(n) => write!(f, "fixity `{}` is negative", n),
-    }
-  }
-}
-
-impl std::error::Error for ParseError {}
 
 #[derive(Clone, Copy)]
 struct OpInfo {

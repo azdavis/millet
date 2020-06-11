@@ -34,7 +34,7 @@ fn run() -> bool {
           &mut writer,
           &config,
           &source_map,
-          &diagnostic::new(id, e.loc.wrap(error::Error::Lex(e.val))),
+          &diagnostic::new(&ident_maker.into_store(), id, error::Error::Lex(e)),
         )
         .unwrap();
         return false;
@@ -50,7 +50,7 @@ fn run() -> bool {
           &mut writer,
           &config,
           &source_map,
-          &diagnostic::new(id, e.loc.wrap(error::Error::Parse(e.val))),
+          &diagnostic::new(&ident_store, id, error::Error::Parse(e)),
         )
         .unwrap();
         return false;
