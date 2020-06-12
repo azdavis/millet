@@ -10,6 +10,16 @@ pub struct Ident(usize);
 // TODO generate this with a macro?
 impl Ident {
   pub const STAR: Ident = Ident(0);
+  pub const INT: Ident = Ident(1);
+  pub const REAL: Ident = Ident(2);
+  pub const WORD: Ident = Ident(3);
+  pub const CHAR: Ident = Ident(4);
+  pub const STRING: Ident = Ident(5);
+  pub const LIST: Ident = Ident(6);
+  pub const NIL: Ident = Ident(7);
+  pub const CONS: Ident = Ident(8);
+  pub const TRUE: Ident = Ident(9);
+  pub const FALSE: Ident = Ident(10);
 }
 
 /// A mutable factory of Idents. Allows creating new Idents from Strings.
@@ -21,8 +31,18 @@ pub struct IdentMaker {
 impl IdentMaker {
   /// Returns an empty IdentMaker.
   pub fn new() -> Self {
-    let mut store = HashMap::new();
+    let mut store = HashMap::with_capacity(11);
     store.insert("*".to_owned(), Ident::STAR);
+    store.insert("int".to_owned(), Ident::INT);
+    store.insert("real".to_owned(), Ident::REAL);
+    store.insert("word".to_owned(), Ident::WORD);
+    store.insert("char".to_owned(), Ident::CHAR);
+    store.insert("string".to_owned(), Ident::STRING);
+    store.insert("list".to_owned(), Ident::LIST);
+    store.insert("nil".to_owned(), Ident::NIL);
+    store.insert("::".to_owned(), Ident::CONS);
+    store.insert("true".to_owned(), Ident::TRUE);
+    store.insert("false".to_owned(), Ident::FALSE);
     Self {
       next: store.len(),
       store,
