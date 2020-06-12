@@ -754,8 +754,12 @@ impl Parser {
           let tok = self.next();
           exp = exp.loc.wrap(match tok.val {
             Token::Ident(id, _) => {
-              let op_info = self.ops.get(&id).unwrap();
-              Exp::InfixApp(exp.into(), tok.loc.wrap(id), self.exp()?.into())
+              let rhs = self.exp()?;
+              let op_info = match self.ops.get(&id) {
+                Some(x) => x,
+                None => return Err(tok.loc.wrap(ParseError::NotInfix(id))),
+              };
+              Exp::InfixApp(exp.into(), tok.loc.wrap(id), rhs.into())
             }
             Token::Colon => Exp::Typed(exp.into(), self.ty()?),
             Token::Andalso => Exp::Andalso(exp.into(), self.exp()?.into()),
@@ -1268,8 +1272,12 @@ impl Parser {
           Pat::Typed(ret.into(), ty)
         }
         Token::Ident(id, _) => {
-          let op_info = self.ops.get(&id).unwrap();
-          Pat::InfixCtor(ret.into(), tok.loc.wrap(id), self.pat()?.into())
+          let rhs = self.pat()?;
+          let op_info = match self.ops.get(&id) {
+            Some(x) => x,
+            None => return Err(tok.loc.wrap(ParseError::NotInfix(id))),
+          };
+          Pat::InfixCtor(ret.into(), tok.loc.wrap(id), rhs.into())
         }
         _ => {
           self.back(tok);
