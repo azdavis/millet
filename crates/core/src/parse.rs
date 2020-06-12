@@ -27,34 +27,6 @@ pub enum ParseError {
   NegativeFixity(i32),
 }
 
-#[derive(Clone, Copy)]
-struct OpInfo {
-  num: u32,
-  assoc: Assoc,
-}
-
-impl OpInfo {
-  fn left(num: u32) -> Self {
-    Self {
-      num,
-      assoc: Assoc::Left,
-    }
-  }
-
-  fn right(num: u32) -> Self {
-    Self {
-      num,
-      assoc: Assoc::Right,
-    }
-  }
-}
-
-#[derive(Clone, Copy)]
-enum Assoc {
-  Left,
-  Right,
-}
-
 struct Parser {
   lexer: Lexer,
   lookahead: Option<Located<Token>>,
@@ -1510,6 +1482,34 @@ impl Parser {
     }
     Ok(ret)
   }
+}
+
+#[derive(Clone, Copy)]
+struct OpInfo {
+  num: u32,
+  assoc: Assoc,
+}
+
+impl OpInfo {
+  fn left(num: u32) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Left,
+    }
+  }
+
+  fn right(num: u32) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Right,
+    }
+  }
+}
+
+#[derive(Clone, Copy)]
+enum Assoc {
+  Left,
+  Right,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
