@@ -1518,3 +1518,9 @@ enum TyPrec {
   Star,
   App,
 }
+
+#[test]
+fn test_ty_prec() {
+  assert!(TyPrec::Arrow < TyPrec::Star);
+  assert!(TyPrec::Star < TyPrec::App);
+}
