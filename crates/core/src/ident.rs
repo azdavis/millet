@@ -34,7 +34,7 @@ impl IdentMaker {
     }
   }
 
-  /// Insert a string into this IdentMaker. Return an Ident corresponding to that string.
+  /// Inserts a string into this IdentMaker. Returns an Ident corresponding to that string.
   pub fn insert(&mut self, s: String) -> Ident {
     if let Some(&id) = self.store.get(&s) {
       return id;
@@ -45,7 +45,7 @@ impl IdentMaker {
     ret
   }
 
-  /// Convert this IdentMaker into an IdentStore, preventing further mutation.
+  /// Converts this IdentMaker into an IdentStore, preventing further mutation.
   pub fn into_store(self) -> IdentStore {
     let mut store = vec![String::new(); self.store.len()];
     for (s, id) in self.store {
@@ -61,7 +61,7 @@ pub struct IdentStore {
 }
 
 impl IdentStore {
-  /// Return the string slice corresponding to this Ident.
+  /// Returns the string slice corresponding to this Ident.
   pub fn get(&self, id: Ident) -> &str {
     self.store[id.0].as_str()
   }

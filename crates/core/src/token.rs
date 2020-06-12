@@ -64,9 +64,9 @@ pub enum Token {
   Structure,
   Where,
   ColonGt,
-  /// not a reserved word. only used in qualified names. not strictly speaking
-  /// an "item of lexical analysis" as per the Definition but it's easier to
-  /// handle it as such and figure out the qualified names later (in parsing).
+  /// not a reserved word. only used in qualified names. not strictly speaking an "item of lexical
+  /// analysis" as per the Definition but it's easier to handle it as such and figure out the
+  /// qualified names later (in parsing).
   Dot,
   // special constants
   DecInt(i32, IsNumLab),
@@ -76,10 +76,10 @@ pub enum Token {
   Real(f64),
   Str(String),
   Char(u8),
-  // identifiers. we can't know the syntax class of most identifiers (VId,
-  // TyCon, Lab, StrId) without having the lexer be sophisticated to the point
-  // of essentially being a parser. but, we can determine whether something is a
-  // TyVar, and we can also know whether something might be a valid StrId.
+  // identifiers. we can't know the syntax class of most identifiers (VId, TyCon, Lab, StrId)
+  // without having the lexer be sophisticated to the point of essentially being a parser. but, we
+  // can determine whether something is a TyVar, and we can also know whether something might be a
+  // valid StrId.
   TyVar(TyVar<Ident>),
   Ident(Ident, IdentType),
   /// not actually a token, but makes the api simpler.
@@ -175,16 +175,14 @@ impl Token {
   }
 }
 
-/// this is here (and not in ast.rs) because we know when lexing whether
-/// something a type var
+/// This is here (and not in ast.rs) because we know when lexing whether something is a type var.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TyVar<I> {
   pub name: I,
   pub equality: bool,
 }
 
-/// These look like alphanumeric identifiers. Sorted first by length, then
-/// alphabetically.
+/// These look like alphanumeric identifiers. Sorted first by length, then alphabetically.
 pub const ALPHA: [(&[u8], Token); 41] = [
   // 9
   (b"exception", Token::Exception),
