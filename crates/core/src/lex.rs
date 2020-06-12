@@ -38,10 +38,25 @@ pub enum LexError {
   UnmatchedOpenComment,
   IncompleteTypeVar,
   UnknownByte(u8),
-  InvalidNumConstant,
+  InvalidIntConstant(core::num::ParseIntError),
+  InvalidRealConstant(core::num::ParseFloatError),
+  NegativeWordConstant,
+  IncompleteNumConstant,
   UnclosedStringConstant,
   InvalidStringConstant,
   InvalidCharConstant,
+}
+
+impl From<core::num::ParseIntError> for LexError {
+  fn from(val: core::num::ParseIntError) -> Self {
+    Self::InvalidIntConstant(val)
+  }
+}
+
+impl From<core::num::ParseFloatError> for LexError {
+  fn from(val: core::num::ParseFloatError) -> Self {
+    Self::InvalidRealConstant(val)
+  }
 }
 
 struct TokenMaker<'s> {
@@ -199,11 +214,11 @@ impl<'s> TokenMaker<'s> {
         // word
         if b == b'w' {
           if neg {
-            return Err(LexError::InvalidNumConstant);
+            return Err(LexError::NegativeWordConstant);
           }
           self.i += 2;
           let b = match self.bs.get(self.i) {
-            None => return Err(LexError::InvalidNumConstant),
+            None => return Err(LexError::IncompleteNumConstant),
             Some(x) => *x,
           };
           return if b == b'x' {
@@ -405,13 +420,10 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(LexError::InvalidNumConstant);
+      return Err(LexError::IncompleteNumConstant);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
-    let n = match i32::from_str_radix(n, 10) {
-      Ok(n) => n,
-      Err(_) => return Err(LexError::InvalidNumConstant),
-    };
+    let n = i32::from_str_radix(n, 10)?;
     Ok(n)
   }
 
@@ -426,13 +438,10 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(LexError::InvalidNumConstant);
+      return Err(LexError::IncompleteNumConstant);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
-    let n: f64 = match n.parse() {
-      Ok(n) => n,
-      Err(_) => return Err(LexError::InvalidNumConstant),
-    };
+    let n: f64 = n.parse()?;
     Ok(n)
   }
 
@@ -445,19 +454,16 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(LexError::InvalidNumConstant);
+      return Err(LexError::IncompleteNumConstant);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
-    let n = match i32::from_str_radix(n, 16) {
-      Ok(n) => n,
-      Err(_) => return Err(LexError::InvalidNumConstant),
-    };
+    let n = i32::from_str_radix(n, 16)?;
     Ok(n)
   }
 
   fn real_exp(&mut self) -> Result<i32, LexError> {
     let b = match self.bs.get(self.i) {
-      None => return Err(LexError::InvalidNumConstant),
+      None => return Err(LexError::IncompleteNumConstant),
       Some(x) => *x,
     };
     let neg = if b == b'~' {
