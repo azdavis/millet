@@ -2,8 +2,8 @@
 
 use std::collections::HashMap;
 
-/// A reference to an identifier in source code. To learn what string this Ident represents, you
-/// must ask the IdentStore created from the IdentMaker that returned this Ident to you.
+/// A identifier. To learn what string this Ident represents, you must ask the IdentStore created
+/// from the IdentMaker that returned this Ident to you.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Ident(usize);
 
