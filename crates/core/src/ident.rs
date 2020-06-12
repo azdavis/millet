@@ -8,13 +8,8 @@ use std::collections::HashMap;
 pub struct Ident(usize);
 
 // TODO generate this with a macro?
-const STAR: Ident = Ident(0);
-
 impl Ident {
-  /// Returns whether this is the special identifier '*'.
-  pub fn is_star(&self) -> bool {
-    *self == STAR
-  }
+  pub const STAR: Ident = Ident(0);
 }
 
 /// A mutable factory of Idents. Allows creating new Idents from Strings.
@@ -27,7 +22,7 @@ impl IdentMaker {
   /// Returns an empty IdentMaker.
   pub fn new() -> Self {
     let mut store = HashMap::new();
-    store.insert("*".to_owned(), STAR);
+    store.insert("*".to_owned(), Ident::STAR);
     Self {
       next: store.len(),
       store,

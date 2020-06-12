@@ -1380,7 +1380,7 @@ impl Parser {
         }
       }
       Token::Ident(ref id, _) => {
-        if id.is_star() {
+        if *id == Ident::STAR {
           return self.fail("an identifier", tok);
         }
         self.back(tok);
@@ -1401,7 +1401,7 @@ impl Parser {
           ret = Ty::Arrow(loc.wrap(ret).into(), rhs.into());
         }
         Token::Ident(ref id, _) => {
-          if id.is_star() {
+          if *id == Ident::STAR {
             if TyPrec::Star < min_prec {
               self.back(tok);
               break;
@@ -1411,7 +1411,7 @@ impl Parser {
               types.push(self.ty_prec(TyPrec::App)?);
               let tok = self.next();
               if let Token::Ident(ref id, _) = tok.val {
-                if id.is_star() {
+                if *id == Ident::STAR {
                   continue;
                 }
               }
