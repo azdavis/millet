@@ -540,15 +540,8 @@ fn mk_int(n: i32, starts_with_zero: bool) -> Token {
 }
 
 fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Result<Token, LexError> {
-  use std::convert::TryInto as _;
-  let before_dec: f64 = match before_dec.try_into() {
-    Ok(n) => n,
-    Err(_) => return Err(LexError::InvalidNumConstant),
-  };
-  let exp: f64 = match exp.try_into() {
-    Ok(n) => n,
-    Err(_) => return Err(LexError::InvalidNumConstant),
-  };
+  let before_dec: f64 = before_dec.into();
+  let exp: f64 = exp.into();
   Ok(Token::Real((before_dec + after_dec) * 10_f64.powf(exp)))
 }
 
