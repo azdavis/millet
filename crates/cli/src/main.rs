@@ -6,7 +6,7 @@ mod source;
 
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
-use millet_core::{error, ident, lex, parse};
+use millet_core::{error, intern, lex, parse};
 use std::io::Write as _;
 
 fn run() -> bool {
@@ -15,7 +15,7 @@ fn run() -> bool {
   let writer = StandardStream::stdout(ColorChoice::Auto);
   let mut writer = writer.lock();
   let mut source_map = source::SourceMap::new();
-  let mut ident_maker = ident::IdentMaker::new();
+  let mut store = intern::StrStoreMut::new();
   for name in args.files {
     match std::fs::read_to_string(&name) {
       Ok(s) => source_map.insert(name, s),
@@ -27,21 +27,21 @@ fn run() -> bool {
   }
   let mut lexers = Vec::with_capacity(source_map.len());
   for (id, file) in source_map.iter() {
-    match lex::get(&mut ident_maker, file.as_bytes()) {
+    match lex::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
         term::emit(
           &mut writer,
           &config,
           &source_map,
-          &diagnostic::new(&ident_maker.into_store(), id, error::Error::Lex(e)),
+          &diagnostic::new(&store.finish(), id, error::Error::Lex(e)),
         )
         .unwrap();
         return false;
       }
     }
   }
-  let ident_store = ident_maker.into_store();
+  let store = store.finish();
   for ((id, _), lexer) in source_map.iter().zip(lexers) {
     match parse::get(lexer) {
       Ok(xs) => eprintln!("parsed: {:#?}", xs),
@@ -50,7 +50,7 @@ fn run() -> bool {
           &mut writer,
           &config,
           &source_map,
-          &diagnostic::new(&ident_store, id, error::Error::Parse(e)),
+          &diagnostic::new(&store, id, error::Error::Parse(e)),
         )
         .unwrap();
         return false;

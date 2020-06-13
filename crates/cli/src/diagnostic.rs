@@ -1,13 +1,13 @@
 //! Conversion from library error types to codespan Diagnostics.
 
-use crate::ident::IdentStore;
 use crate::source::SourceFileId;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use millet_core::error::Error;
+use millet_core::intern::StrStore;
 use millet_core::lex::LexError;
 use millet_core::parse::ParseError;
 
-pub fn new(store: &IdentStore, file_id: SourceFileId, err: Error) -> Diagnostic<SourceFileId> {
+pub fn new(store: &StrStore, file_id: SourceFileId, err: Error) -> Diagnostic<SourceFileId> {
   let (loc, message) = match err {
     Error::Lex(lex_err) => (
       lex_err.loc,

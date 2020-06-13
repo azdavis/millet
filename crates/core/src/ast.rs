@@ -1,6 +1,6 @@
 //! Abstract syntax trees.
 
-use crate::ident::Ident;
+use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::token::TyVar;
 
@@ -56,7 +56,7 @@ pub struct Row<I> {
 
 #[derive(Debug)]
 pub enum Label {
-  Vid(Ident),
+  Vid(StrRef),
   Num(u32),
 }
 

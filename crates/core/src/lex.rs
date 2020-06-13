@@ -1,11 +1,11 @@
 //! Lexical analysis.
 
-use crate::ident::{Ident, IdentMaker};
+use crate::intern::{StrRef, StrStoreMut};
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 
-pub fn get(ident_maker: &mut IdentMaker, bs: &[u8]) -> Result<Lexer, Located<LexError>> {
-  Ok(Lexer::new(TokenMaker::new(ident_maker, bs).build()?))
+pub fn get(store: &mut StrStoreMut, bs: &[u8]) -> Result<Lexer, Located<LexError>> {
+  Ok(Lexer::new(TokenMaker::new(store, bs).build()?))
 }
 
 pub struct Lexer {
@@ -60,23 +60,19 @@ impl From<core::num::ParseFloatError> for LexError {
 }
 
 struct TokenMaker<'s> {
-  ident_maker: &'s mut IdentMaker,
+  store: &'s mut StrStoreMut,
   bs: &'s [u8],
   i: usize,
 }
 
 impl<'s> TokenMaker<'s> {
-  fn new(ident_maker: &'s mut IdentMaker, bs: &'s [u8]) -> Self {
-    Self {
-      ident_maker,
-      bs,
-      i: 0,
-    }
+  fn new(store: &'s mut StrStoreMut, bs: &'s [u8]) -> Self {
+    Self { store, bs, i: 0 }
   }
 
-  fn mk_ident(&mut self, bs: &[u8]) -> Ident {
+  fn mk_str_ref(&mut self, bs: &[u8]) -> StrRef {
     let s = std::str::from_utf8(bs).unwrap().to_owned();
-    self.ident_maker.insert(s)
+    self.store.insert(s)
   }
 
   fn build(mut self) -> Result<Vec<Located<Token>>, Located<LexError>> {
@@ -126,8 +122,7 @@ impl<'s> TokenMaker<'s> {
   }
 
   fn next_impl(&mut self, b: u8) -> Result<Token, LexError> {
-    // alphanumeric identifiers (including type variables) and alphabetic
-    // reserved words
+    // alphanumeric identifiers (including type variables) and alphabetic reserved words
     match alpha_num(b) {
       Some(AlphaNum::Prime) => {
         let start = self.i;
@@ -148,7 +143,7 @@ impl<'s> TokenMaker<'s> {
           }
           self.i += 1;
         }
-        let name = self.mk_ident(&self.bs[start..self.i]);
+        let name = self.mk_str_ref(&self.bs[start..self.i]);
         return Ok(Token::TyVar(TyVar { name, equality }));
       }
       Some(AlphaNum::Alpha) => {
@@ -164,8 +159,8 @@ impl<'s> TokenMaker<'s> {
           self.i += 1;
         }
         let got = &self.bs[start..self.i];
-        // small optimization. we only need to check the ALPHA reserved words
-        // if this identifier was all alpha.
+        // small optimization. we only need to check the ALPHA reserved words if this identifier was
+        // all alpha.
         if all_alpha {
           for &(tok_bs, ref tok) in ALPHA.iter() {
             if got == tok_bs {
@@ -173,17 +168,15 @@ impl<'s> TokenMaker<'s> {
             }
           }
         }
-        return Ok(Token::Ident(self.mk_ident(got), IdentType::AlphaNum));
+        return Ok(Token::Ident(self.mk_str_ref(got), IdentType::AlphaNum));
       }
       Some(AlphaNum::NumOrUnderscore) | None => {}
     }
-    // numeric constants. this must come before checking for symbolic
-    // identifiers and reserved words, since e.g. `~3` does not actually parse
-    // as the negation function ~ followed by the integer literal 3, but
-    // rather the ~ is part of the integer literal. this contrasts with e.g.
-    // the expression `~ 3` which does parse as the negation function ~
-    // followed by the integer literal 3. this first part just handles the
-    // optional negation symbol.
+    // numeric constants. this must come before checking for symbolic identifiers and reserved
+    // words, since e.g. `~3` does not actually parse as the negation function ~ followed by the
+    // integer literal 3, but rather the ~ is part of the integer literal. this contrasts with e.g.
+    // the expression `~ 3` which does parse as the negation function ~ followed by the integer
+    // literal 3. this first part just handles the optional negation symbol.
     let (b, neg) = if b == b'~' {
       match self.bs.get(self.i + 1) {
         None => (b, false),
@@ -237,10 +230,9 @@ impl<'s> TokenMaker<'s> {
           let n = if neg { -n } else { n };
           return Ok(Token::HexInt(n));
         }
-        // at this point, we've just seen '0', we know there are more bytes
-        // after the '0', and the first byte after the '0' is neither 'w' nor
-        // 'x'. then this is the beginning of either a decimal integer
-        // constant or the first decimal integer part of a real constant.
+        // at this point, we've just seen '0', we know there are more bytes after the '0', and the
+        // first byte after the '0' is neither 'w' nor 'x'. then this is the beginning of either a
+        // decimal integer constant or the first decimal integer part of a real constant.
         false
       } else {
         true
@@ -397,7 +389,7 @@ impl<'s> TokenMaker<'s> {
           return Ok(tok.clone());
         }
       }
-      return Ok(Token::Ident(self.mk_ident(got), IdentType::Symbolic));
+      return Ok(Token::Ident(self.mk_str_ref(got), IdentType::Symbolic));
     }
     // other reserved words (that couldn't be mistaken for identifiers)
     for &(tok_bs, ref tok) in OTHER.iter() {

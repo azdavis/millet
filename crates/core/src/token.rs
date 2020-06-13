@@ -1,6 +1,6 @@
 //! Lexical tokens.
 
-use crate::ident::Ident;
+use crate::intern::StrRef;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
@@ -80,8 +80,8 @@ pub enum Token {
   // without having the lexer be sophisticated to the point of essentially being a parser. but, we
   // can determine whether something is a TyVar, and we can also know whether something might be a
   // valid StrId.
-  TyVar(TyVar<Ident>),
-  Ident(Ident, IdentType),
+  TyVar(TyVar<StrRef>),
+  Ident(StrRef, IdentType),
   /// not actually a token, but makes the api simpler.
   EOF,
 }
