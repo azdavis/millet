@@ -719,27 +719,30 @@ impl Parser {
       _ => {
         self.back(tok);
         let mut exp = self.at_exp()?;
-        while let Some(x) = self.maybe_at_exp()? {
-          exp = exp.loc.wrap(Exp::App(exp.into(), x.into()));
-        }
         loop {
           let tok = self.next();
           exp = exp.loc.wrap(match tok.val {
-            Token::Ident(id, _) => {
-              let rhs = self.exp()?;
-              let op_info = match self.ops.get(&id) {
-                Some(x) => x,
-                None => return Err(tok.loc.wrap(ParseError::NotInfix(id))),
-              };
-              Exp::InfixApp(exp.into(), tok.loc.wrap(id), rhs.into())
-            }
+            Token::Ident(ref id, _) => match self.ops.get(id) {
+              Some(op_info) => {
+                let rhs = self.exp()?;
+                Exp::InfixApp(exp.into(), tok.loc.wrap(*id), rhs.into())
+              }
+              None => {
+                self.back(tok);
+                let rhs = exp.loc.wrap(Exp::LongVid(self.long_id(true)?));
+                Exp::App(exp.into(), rhs.into())
+              }
+            },
             Token::Colon => Exp::Typed(exp.into(), self.ty()?),
             Token::Andalso => Exp::Andalso(exp.into(), self.exp()?.into()),
             Token::Orelse => Exp::Orelse(exp.into(), self.exp()?.into()),
             Token::Handle => Exp::Handle(exp.into(), self.match_()?),
             _ => {
               self.back(tok);
-              break;
+              match self.maybe_at_exp()? {
+                Some(rhs) => Exp::App(exp.into(), rhs.into()),
+                None => break,
+              }
             }
           });
         }
