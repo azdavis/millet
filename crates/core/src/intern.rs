@@ -26,6 +26,23 @@ impl StrRef {
   pub const NONE: StrRef = StrRef(14);
   pub const NIL: StrRef = StrRef(15);
   pub const CONS: StrRef = StrRef(16);
+  pub const PLUS: StrRef = StrRef(17);
+  pub const MINUS: StrRef = StrRef(18);
+  pub const SLASH: StrRef = StrRef(19);
+  pub const CARAT: StrRef = StrRef(20);
+  pub const AT: StrRef = StrRef(21);
+  pub const NOT: StrRef = StrRef(22);
+  pub const DIV: StrRef = StrRef(23);
+  pub const LT: StrRef = StrRef(24);
+  pub const LT_EQ: StrRef = StrRef(25);
+  pub const GT: StrRef = StrRef(26);
+  pub const GT_EQ: StrRef = StrRef(27);
+  pub const NEQ: StrRef = StrRef(28);
+  pub const TILDE: StrRef = StrRef(29);
+  pub const ORDER: StrRef = StrRef(30);
+  pub const LESS: StrRef = StrRef(31);
+  pub const EQUAL: StrRef = StrRef(32);
+  pub const GREATER: StrRef = StrRef(33);
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
@@ -37,7 +54,7 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let next = 17;
+    let next = 34;
     let mut store = HashMap::with_capacity(next);
     store.insert("*".to_owned(), StrRef::STAR);
     store.insert("unit".to_owned(), StrRef::UNIT);
@@ -56,6 +73,23 @@ impl StrStoreMut {
     store.insert("NONE".to_owned(), StrRef::NONE);
     store.insert("nil".to_owned(), StrRef::NIL);
     store.insert("::".to_owned(), StrRef::CONS);
+    store.insert("+".to_owned(), StrRef::PLUS);
+    store.insert("-".to_owned(), StrRef::MINUS);
+    store.insert("/".to_owned(), StrRef::SLASH);
+    store.insert("^".to_owned(), StrRef::CARAT);
+    store.insert("@".to_owned(), StrRef::AT);
+    store.insert("not".to_owned(), StrRef::NOT);
+    store.insert("div".to_owned(), StrRef::DIV);
+    store.insert("<".to_owned(), StrRef::LT);
+    store.insert("<=".to_owned(), StrRef::LT_EQ);
+    store.insert(">".to_owned(), StrRef::GT);
+    store.insert(">=".to_owned(), StrRef::GT_EQ);
+    store.insert("<>".to_owned(), StrRef::NEQ);
+    store.insert("~".to_owned(), StrRef::TILDE);
+    store.insert("order".to_owned(), StrRef::ORDER);
+    store.insert("LESS".to_owned(), StrRef::LESS);
+    store.insert("EQUAL".to_owned(), StrRef::EQUAL);
+    store.insert("GREATER".to_owned(), StrRef::GREATER);
     Self { store, next }
   }
 
