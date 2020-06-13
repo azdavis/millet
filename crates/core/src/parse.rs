@@ -1484,7 +1484,7 @@ impl Parser {
   }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct OpInfo {
   num: u32,
   assoc: Assoc,
@@ -1506,7 +1506,7 @@ impl OpInfo {
   }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 enum Assoc {
   Left,
   Right,

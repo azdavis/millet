@@ -2,7 +2,7 @@
 
 use crate::intern::StrRef;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
   // core reserved words
   Abstype,
@@ -86,13 +86,13 @@ pub enum Token {
   EOF,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum IsNumLab {
   Maybe,
   No,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum IdentType {
   AlphaNum,
   Symbolic,
@@ -176,7 +176,7 @@ impl Token {
 }
 
 /// This is here (and not in ast.rs) because we know when lexing whether something is a type var.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TyVar<I> {
   pub name: I,
   pub equality: bool,
