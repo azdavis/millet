@@ -44,8 +44,8 @@ pub enum Exp<I> {
 
 #[derive(Debug)]
 pub struct Long<I> {
-  /// requires !idents.is_empty()
   pub idents: Vec<Located<I>>,
+  pub last: Located<I>,
 }
 
 #[derive(Debug)]

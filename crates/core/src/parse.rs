@@ -632,7 +632,8 @@ impl Parser {
         self.fail("an identifier", tok)
       };
     }
-    Ok(Some(Long { idents }))
+    let last = idents.pop().unwrap();
+    Ok(Some(Long { idents, last }))
   }
 
   fn long_id(&mut self, allow_infix: bool) -> Result<Long<StrRef>> {
@@ -670,7 +671,8 @@ impl Parser {
       }
       return self.fail("an identifier", tok);
     }
-    Ok(Long { idents })
+    let last = idents.pop().unwrap();
+    Ok(Long { idents, last })
   }
 
   fn label(&mut self) -> Result<Located<Label>> {
