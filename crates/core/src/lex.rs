@@ -71,8 +71,8 @@ impl<'s> TokenMaker<'s> {
   }
 
   fn mk_str_ref(&mut self, bs: &[u8]) -> StrRef {
-    let s = std::str::from_utf8(bs).unwrap().to_owned();
-    self.store.insert(s)
+    let s = std::str::from_utf8(bs).unwrap();
+    self.store.insert_str(s)
   }
 
   fn build(mut self) -> Result<Vec<Located<Token>>, Located<LexError>> {
@@ -286,7 +286,8 @@ impl<'s> TokenMaker<'s> {
                 Err(LexError::InvalidCharConstant)
               }
             } else {
-              Ok(Token::Str(String::from_utf8(str_bs).unwrap()))
+              let str_ref = self.store.insert_string(String::from_utf8(str_bs).unwrap());
+              Ok(Token::Str(str_ref))
             };
           }
           b'\\' => {

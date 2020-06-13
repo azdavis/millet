@@ -74,7 +74,7 @@ pub enum Token {
   DecWord(i32),
   HexWord(i32),
   Real(f64),
-  Str(String),
+  Str(StrRef),
   Char(u8),
   // identifiers. we can't know the syntax class of most identifiers (VId, TyCon, Lab, StrId)
   // without having the lexer be sophisticated to the point of essentially being a parser. but, we
