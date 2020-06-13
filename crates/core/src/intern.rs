@@ -10,16 +10,22 @@ pub struct StrRef(usize);
 // TODO generate this with a macro?
 impl StrRef {
   pub const STAR: StrRef = StrRef(0);
-  pub const INT: StrRef = StrRef(1);
-  pub const REAL: StrRef = StrRef(2);
-  pub const WORD: StrRef = StrRef(3);
-  pub const CHAR: StrRef = StrRef(4);
-  pub const STRING: StrRef = StrRef(5);
-  pub const LIST: StrRef = StrRef(6);
-  pub const NIL: StrRef = StrRef(7);
-  pub const CONS: StrRef = StrRef(8);
-  pub const TRUE: StrRef = StrRef(9);
-  pub const FALSE: StrRef = StrRef(10);
+  pub const UNIT: StrRef = StrRef(1);
+  pub const BOOL: StrRef = StrRef(2);
+  pub const INT: StrRef = StrRef(3);
+  pub const REAL: StrRef = StrRef(4);
+  pub const WORD: StrRef = StrRef(5);
+  pub const CHAR: StrRef = StrRef(6);
+  pub const STRING: StrRef = StrRef(7);
+  pub const OPTION: StrRef = StrRef(8);
+  pub const LIST: StrRef = StrRef(9);
+  pub const REF: StrRef = StrRef(10);
+  pub const TRUE: StrRef = StrRef(11);
+  pub const FALSE: StrRef = StrRef(12);
+  pub const SOME: StrRef = StrRef(13);
+  pub const NONE: StrRef = StrRef(14);
+  pub const NIL: StrRef = StrRef(15);
+  pub const CONS: StrRef = StrRef(16);
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
@@ -31,22 +37,26 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let mut store = HashMap::with_capacity(11);
+    let next = 17;
+    let mut store = HashMap::with_capacity(next);
     store.insert("*".to_owned(), StrRef::STAR);
+    store.insert("unit".to_owned(), StrRef::UNIT);
+    store.insert("bool".to_owned(), StrRef::BOOL);
     store.insert("int".to_owned(), StrRef::INT);
     store.insert("real".to_owned(), StrRef::REAL);
     store.insert("word".to_owned(), StrRef::WORD);
     store.insert("char".to_owned(), StrRef::CHAR);
     store.insert("string".to_owned(), StrRef::STRING);
+    store.insert("option".to_owned(), StrRef::OPTION);
     store.insert("list".to_owned(), StrRef::LIST);
-    store.insert("nil".to_owned(), StrRef::NIL);
-    store.insert("::".to_owned(), StrRef::CONS);
+    store.insert("ref".to_owned(), StrRef::REF);
     store.insert("true".to_owned(), StrRef::TRUE);
     store.insert("false".to_owned(), StrRef::FALSE);
-    Self {
-      next: store.len(),
-      store,
-    }
+    store.insert("SOME".to_owned(), StrRef::SOME);
+    store.insert("NONE".to_owned(), StrRef::NONE);
+    store.insert("nil".to_owned(), StrRef::NIL);
+    store.insert("::".to_owned(), StrRef::CONS);
+    Self { store, next }
   }
 
   /// Inserts a string slice into this StrStoreMut. Returns an StrRef corresponding to that string.
