@@ -33,8 +33,7 @@ struct Parser {
   ops: HashMap<StrRef, OpInfo>,
 }
 
-// note: the `maybe` family of functions return Result<Option<T>>. these
-// functions return:
+// note: the `maybe` family of functions return Result<Option<T>>. these functions return:
 // - Ok(Some(..)) if they did parse a T
 // - Ok(None) if they couldn't parse a T but didn't consume any tokens
 // - Err(..) if they couldn't parse a T but did consume tokens
