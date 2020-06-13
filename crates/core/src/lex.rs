@@ -17,7 +17,7 @@ impl Lexer {
   fn new(ts: Vec<Located<Token>>) -> Self {
     Self {
       ts: ts.into_iter(),
-      last_loc: Loc::new(0, 0),
+      last_loc: Loc::new(0, 1),
     }
   }
 

@@ -10,8 +10,9 @@ pub struct Loc {
 }
 
 impl Loc {
-  /// Returns a new Loc.
+  /// Returns a new Loc. Panics if start >= end.
   pub fn new(start: usize, end: usize) -> Self {
+    assert!(start < end);
     Self { start, end }
   }
 
