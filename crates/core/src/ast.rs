@@ -62,6 +62,7 @@ pub enum Label {
 
 #[derive(Debug)]
 pub struct Match<I> {
+  /// requires !arms.is_empty()
   pub arms: Vec<Arm<I>>,
 }
 
@@ -261,7 +262,7 @@ pub enum Spec<I> {
   Include(Box<Located<SigExp<I>>>),
   /// requires specs.len() != 1
   Seq(Vec<Located<Spec<I>>>),
-  Sharing(Vec<Long<I>>),
+  Sharing(Box<Located<Spec<I>>>, Vec<Long<I>>),
 }
 
 #[derive(Debug)]

@@ -76,6 +76,16 @@ impl Parser {
     self.i += 1;
   }
 
+  /// combines a 'begin' loc with the 'end' loc, which is the loc of the last token we consumed, and
+  /// uses it to wrap val.
+  fn wrap<T>(&self, begin: Loc, val: T) -> Located<T> {
+    let end = match self.lexer.get(self.i - 1) {
+      Some(tok) => tok.loc,
+      None => self.last_loc,
+    };
+    begin.span(end).wrap(val)
+  }
+
   /// if the current token is `tok`, return `Ok(())` and advance, else return `Err(..)`.
   fn eat(&mut self, tok: Token) -> Result<()> {
     let next = self.peek();
@@ -95,7 +105,7 @@ impl Parser {
 
   fn top_dec(&mut self) -> Result<Located<TopDec<StrRef>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let ret = match tok.val {
       Token::Signature => {
         self.skip();
@@ -149,12 +159,12 @@ impl Parser {
         TopDec::StrDec(sd)
       }
     };
-    Ok(loc.wrap(ret))
+    Ok(self.wrap(begin, ret))
   }
 
   fn str_exp(&mut self) -> Result<Located<StrExp<StrRef>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let mut ret = match tok.val {
       Token::Struct => {
         self.skip();
@@ -192,22 +202,22 @@ impl Parser {
         Token::Colon => {
           self.skip();
           let exp = self.sig_exp()?;
-          StrExp::Transparent(loc.wrap(ret).into(), exp)
+          StrExp::Transparent(self.wrap(begin, ret).into(), exp)
         }
         Token::ColonGt => {
           self.skip();
           let exp = self.sig_exp()?;
-          StrExp::Opaque(loc.wrap(ret).into(), exp)
+          StrExp::Opaque(self.wrap(begin, ret).into(), exp)
         }
         _ => break,
       };
     }
-    Ok(loc.wrap(ret))
+    Ok(self.wrap(begin, ret))
   }
 
   fn maybe_str_dec(&mut self) -> Result<Option<Located<StrDec<StrRef>>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let ret = match tok.val {
       Token::Structure => {
         self.skip();
@@ -245,7 +255,7 @@ impl Parser {
         StrDec::Dec(dec)
       }
     };
-    Ok(Some(loc.wrap(ret)))
+    Ok(Some(self.wrap(begin, ret)))
   }
 
   fn str_dec(&mut self) -> Result<Located<StrDec<StrRef>>> {
@@ -254,7 +264,7 @@ impl Parser {
 
   fn sig_exp(&mut self) -> Result<Located<SigExp<StrRef>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let mut ret = match tok.val {
       Token::Sig => {
         self.skip();
@@ -275,17 +285,17 @@ impl Parser {
         let ty_con = self.long_id(true)?;
         self.eat(Token::Equal)?;
         let ty = self.ty()?;
-        ret = SigExp::Where(loc.wrap(ret).into(), ty_vars, ty_con, ty);
+        ret = SigExp::Where(self.wrap(begin, ret).into(), ty_vars, ty_con, ty);
       } else {
         break;
       }
     }
-    Ok(loc.wrap(ret))
+    Ok(self.wrap(begin, ret))
   }
 
   fn maybe_spec(&mut self) -> Result<Option<Located<Spec<StrRef>>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let mut ret = match tok.val {
       Token::Val => {
         self.skip();
@@ -368,12 +378,12 @@ impl Parser {
         if ty_cons.len() < 2 {
           return self.fail("an identifier", self.peek());
         }
-        ret = Spec::Sharing(ty_cons);
+        ret = Spec::Sharing(self.wrap(begin, ret).into(), ty_cons);
       } else {
         break;
       }
     }
-    Ok(Some(loc.wrap(ret)))
+    Ok(Some(self.wrap(begin, ret)))
   }
 
   fn spec_datatype(&mut self) -> Result<Spec<StrRef>> {
@@ -456,7 +466,7 @@ impl Parser {
 
   fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<StrRef>>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let ret = match tok.val {
       Token::DecInt(n, _) => {
         self.skip();
@@ -520,7 +530,7 @@ impl Parser {
         self.skip();
         if let Token::RRound = self.peek().val {
           self.skip();
-          return Ok(Some(loc.wrap(Exp::Tuple(Vec::new()))));
+          return Ok(Some(self.wrap(begin, Exp::Tuple(Vec::new()))));
         }
         let fst = self.exp()?;
         let tok = self.peek();
@@ -599,7 +609,7 @@ impl Parser {
       Token::Ident(..) => Exp::LongVid(self.long_id(false)?),
       _ => return Ok(None),
     };
-    Ok(Some(loc.wrap(ret)))
+    Ok(Some(self.wrap(begin, ret)))
   }
 
   fn at_exp(&mut self) -> Result<Located<Exp<StrRef>>> {
@@ -707,7 +717,7 @@ impl Parser {
   // TODO prec
   fn exp(&mut self) -> Result<Located<Exp<StrRef>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let ret = match tok.val {
       Token::Raise => {
         self.skip();
@@ -788,7 +798,7 @@ impl Parser {
         exp.val
       }
     };
-    Ok(loc.wrap(ret))
+    Ok(self.wrap(begin, ret))
   }
 
   fn match_(&mut self) -> Result<Match<StrRef>> {
@@ -809,7 +819,7 @@ impl Parser {
 
   fn maybe_dec(&mut self) -> Result<Option<Located<Dec<StrRef>>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let ret = match tok.val {
       Token::Val => {
         self.skip();
@@ -891,7 +901,7 @@ impl Parser {
           if let Token::Datatype = self.peek().val {
             self.skip();
             let long = self.long_id(true)?;
-            return Ok(Some(loc.wrap(Dec::DatatypeCopy(ty_con, long))));
+            return Ok(Some(self.wrap(begin, Dec::DatatypeCopy(ty_con, long))));
           }
           let cons = self.con_binds()?;
           DatBind {
@@ -1017,7 +1027,7 @@ impl Parser {
       }
       _ => return Ok(None),
     };
-    Ok(Some(loc.wrap(ret)))
+    Ok(Some(self.wrap(begin, ret)))
   }
 
   fn dec(&mut self) -> Result<Located<Dec<StrRef>>> {
@@ -1163,7 +1173,7 @@ impl Parser {
 
   fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat<StrRef>>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let ret = match tok.val {
       Token::Underscore => {
         self.skip();
@@ -1185,7 +1195,7 @@ impl Parser {
         self.skip();
         Pat::HexWord(n)
       }
-      Token::Real(..) => return Err(loc.wrap(ParseError::RealPat)),
+      Token::Real(..) => return Err(begin.wrap(ParseError::RealPat)),
       Token::Str(s) => {
         self.skip();
         Pat::Str(s)
@@ -1286,7 +1296,7 @@ impl Parser {
       Token::Ident(..) => Pat::LongVid(self.long_id(false)?),
       _ => return Ok(None),
     };
-    Ok(Some(loc.wrap(ret)))
+    Ok(Some(self.wrap(begin, ret)))
   }
 
   fn at_pat(&mut self) -> Result<Located<Pat<StrRef>>> {
@@ -1369,7 +1379,7 @@ impl Parser {
 
   fn ty_prec(&mut self, min_prec: TyPrec) -> Result<Located<Ty<StrRef>>> {
     let tok = self.peek();
-    let loc = tok.loc;
+    let begin = tok.loc;
     let mut ret = match tok.val {
       Token::TyVar(tv) => {
         self.skip();
@@ -1433,17 +1443,18 @@ impl Parser {
           if TyPrec::Arrow < min_prec {
             break;
           }
+          let lhs = self.wrap(begin, ret);
           self.skip();
           let rhs = self.ty_prec(TyPrec::Arrow)?;
-          ret = Ty::Arrow(loc.wrap(ret).into(), rhs.into());
+          ret = Ty::Arrow(lhs.into(), rhs.into());
         }
         Token::Ident(ref id, _) => {
           if *id == StrRef::STAR {
             if TyPrec::Star < min_prec {
               break;
             }
+            let mut types = vec![self.wrap(begin, ret)];
             self.skip();
-            let mut types = vec![loc.wrap(ret)];
             loop {
               types.push(self.ty_prec(TyPrec::App)?);
               if let Token::Ident(ref id, _) = self.peek().val {
@@ -1458,14 +1469,15 @@ impl Parser {
           } else if TyPrec::App < min_prec {
             unreachable!()
           } else {
+            let lhs = self.wrap(begin, ret);
             let long = self.long_id(true)?;
-            ret = Ty::TyCon(vec![loc.wrap(ret)], long);
+            ret = Ty::TyCon(vec![lhs], long);
           }
         }
         _ => break,
       }
     }
-    Ok(loc.wrap(ret))
+    Ok(self.wrap(begin, ret))
   }
 
   fn semicolon_seq<T, F, G>(&mut self, one: F, seq: G) -> Result<Located<T>>

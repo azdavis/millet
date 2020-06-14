@@ -16,6 +16,16 @@ impl Loc {
     Self { start, end }
   }
 
+  /// Returns a new Loc that begins where self began and ends where other ends. Panics if other
+  /// starts before self starts.
+  pub fn span(self, other: Self) -> Self {
+    assert!(self.start <= other.start);
+    Self {
+      start: self.start,
+      end: other.end,
+    }
+  }
+
   /// Wraps a value in a Loc.
   pub fn wrap<T>(self, val: T) -> Located<T> {
     Located { val, loc: self }
