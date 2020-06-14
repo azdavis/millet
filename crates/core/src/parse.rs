@@ -607,7 +607,7 @@ impl Parser {
         self.ops = ops;
         Exp::Let(dec, exprs)
       }
-      Token::Ident(..) => Exp::LongVid(self.long_id(false)?),
+      Token::Ident(..) | Token::Equal => Exp::LongVid(self.long_id(false)?),
       _ => return Ok(None),
     };
     Ok(Some(self.wrap(begin, ret)))
@@ -625,11 +625,11 @@ impl Parser {
 
   fn ident(&mut self) -> Result<Located<StrRef>> {
     let tok = self.peek();
-    if let Token::Ident(id, _) = tok.val {
-      self.skip();
-      Ok(tok.loc.wrap(id))
-    } else {
-      self.fail("an identifier", tok)
+    self.skip();
+    match tok.val {
+      Token::Ident(id, _) => Ok(tok.loc.wrap(id)),
+      Token::Equal => Ok(tok.loc.wrap(StrRef::EQ)),
+      _ => self.fail("an identifier", tok),
     }
   }
 
@@ -647,17 +647,25 @@ impl Parser {
     let mut structures = Vec::new();
     loop {
       let tok = self.peek();
-      if let Token::Ident(id, typ) = tok.val {
-        self.skip();
-        structures.push(tok.loc.wrap(id));
-        if let IdentType::Symbolic = typ {
-          break;
-        }
-        if let Token::Dot = self.peek().val {
+      match tok.val {
+        Token::Ident(id, typ) => {
           self.skip();
-        } else {
+          structures.push(tok.loc.wrap(id));
+          if let IdentType::Symbolic = typ {
+            break;
+          }
+          if let Token::Dot = self.peek().val {
+            self.skip();
+          } else {
+            break;
+          }
+        }
+        Token::Equal => {
+          self.skip();
+          structures.push(tok.loc.wrap(StrRef::EQ));
           break;
         }
+        _ => {}
       }
       return if structures.is_empty() {
         Ok(None)
@@ -754,7 +762,7 @@ impl Parser {
         loop {
           let tok = self.peek();
           exp = exp.loc.wrap(match tok.val {
-            Token::Ident(..) => {
+            Token::Ident(..) | Token::Equal => {
               let long = self.long_id(true)?;
               match (long.structures.is_empty(), self.ops.get(&long.last.val)) {
                 (true, Some(op_info)) => {
@@ -1528,11 +1536,16 @@ impl Parser {
     let mut ret = Vec::new();
     loop {
       let tok = self.peek();
-      if let Token::Ident(id, _) = tok.val {
-        self.skip();
-        ret.push(tok.loc.wrap(id));
-      } else {
-        break;
+      match tok.val {
+        Token::Ident(id, _) => {
+          self.skip();
+          ret.push(tok.loc.wrap(id));
+        }
+        Token::Equal => {
+          self.skip();
+          ret.push(tok.loc.wrap(StrRef::EQ));
+        }
+        _ => break,
       }
     }
     if ret.is_empty() {
