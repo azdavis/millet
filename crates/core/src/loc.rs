@@ -30,7 +30,7 @@ impl From<Loc> for std::ops::Range<usize> {
 
 /// A generic wrapper for some value which was ultimately derived from some
 /// location in the source.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct Located<T> {
   pub val: T,
   pub loc: Loc,
