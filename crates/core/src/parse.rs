@@ -669,7 +669,7 @@ impl Parser {
   }
 
   fn long_id(&mut self, allow_infix: bool) -> Result<Long<StrRef>> {
-    let mut ret = match self.maybe_long_id()? {
+    let ret = match self.maybe_long_id()? {
       Some(x) => x,
       None => return self.fail("an identifier", self.peek()),
     };
@@ -1331,7 +1331,7 @@ impl Parser {
     Ok(ret)
   }
 
-  fn pat_long_vid(&mut self, loc: Loc, mut long_vid: Long<StrRef>) -> Result<Pat<StrRef>> {
+  fn pat_long_vid(&mut self, loc: Loc, long_vid: Long<StrRef>) -> Result<Pat<StrRef>> {
     if long_vid.structures.is_empty() {
       let ty = self.maybe_colon_ty()?;
       match self.maybe_as_pat()? {
