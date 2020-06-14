@@ -998,7 +998,7 @@ impl Parser {
       Token::Infix => {
         self.skip();
         let n = self.fixity_num()?;
-        let idents = self.fixity_idents();
+        let idents = self.fixity_idents()?;
         for id in idents.iter() {
           self.ops.insert(id.val.clone(), OpInfo::left(n.val));
         }
@@ -1007,7 +1007,7 @@ impl Parser {
       Token::Infixr => {
         self.skip();
         let n = self.fixity_num()?;
-        let idents = self.fixity_idents();
+        let idents = self.fixity_idents()?;
         for id in idents.iter() {
           self.ops.insert(id.val.clone(), OpInfo::right(n.val));
         }
@@ -1015,7 +1015,7 @@ impl Parser {
       }
       Token::Nonfix => {
         self.skip();
-        let idents = self.fixity_idents();
+        let idents = self.fixity_idents()?;
         for id in idents.iter() {
           self.ops.remove(&id.val);
         }
@@ -1520,7 +1520,7 @@ impl Parser {
     Ok(loc.wrap(ret))
   }
 
-  fn fixity_idents(&mut self) -> Vec<Located<StrRef>> {
+  fn fixity_idents(&mut self) -> Result<Vec<Located<StrRef>>> {
     let mut ret = Vec::new();
     loop {
       let tok = self.peek();
@@ -1531,7 +1531,11 @@ impl Parser {
         break;
       }
     }
-    ret
+    if ret.is_empty() {
+      self.fail("an identifier", self.peek())
+    } else {
+      Ok(ret)
+    }
   }
 }
 
