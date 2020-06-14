@@ -44,7 +44,7 @@ pub enum Exp<I> {
 
 #[derive(Debug)]
 pub struct Long<I> {
-  pub idents: Vec<Located<I>>,
+  pub structures: Vec<Located<I>>,
   pub last: Located<I>,
 }
 

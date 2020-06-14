@@ -643,12 +643,12 @@ impl Parser {
   }
 
   fn maybe_long_id(&mut self) -> Result<Option<Long<StrRef>>> {
-    let mut idents = Vec::new();
+    let mut structures = Vec::new();
     loop {
       let tok = self.peek();
       if let Token::Ident(id, typ) = tok.val {
         self.skip();
-        idents.push(tok.loc.wrap(id));
+        structures.push(tok.loc.wrap(id));
         if let IdentType::Symbolic = typ {
           break;
         }
@@ -658,14 +658,14 @@ impl Parser {
           break;
         }
       }
-      return if idents.is_empty() {
+      return if structures.is_empty() {
         Ok(None)
       } else {
         self.fail("an identifier", self.peek())
       };
     }
-    let last = idents.pop().unwrap();
-    Ok(Some(Long { idents, last }))
+    let last = structures.pop().unwrap();
+    Ok(Some(Long { structures, last }))
   }
 
   fn long_id(&mut self, allow_infix: bool) -> Result<Long<StrRef>> {
@@ -673,24 +673,20 @@ impl Parser {
       Some(x) => x,
       None => return self.fail("an identifier", self.peek()),
     };
-    if !allow_infix
-      && ret.idents.len() == 1
-      && self.ops.contains_key(&ret.idents.first().unwrap().val)
-    {
-      let id = ret.idents.pop().unwrap();
-      Err(id.loc.wrap(ParseError::InfixWithoutOp(id.val)))
+    if !allow_infix && ret.structures.is_empty() && self.ops.contains_key(&ret.last.val) {
+      Err(ret.last.loc.wrap(ParseError::InfixWithoutOp(ret.last.val)))
     } else {
       Ok(ret)
     }
   }
 
   fn long_alpha_num_id(&mut self) -> Result<Long<StrRef>> {
-    let mut idents = Vec::new();
+    let mut structures = Vec::new();
     loop {
       let tok = self.peek();
       if let Token::Ident(id, IdentType::AlphaNum) = tok.val {
         self.skip();
-        idents.push(tok.loc.wrap(id));
+        structures.push(tok.loc.wrap(id));
         if let Token::Dot = self.peek().val {
           self.skip();
         } else {
@@ -699,8 +695,8 @@ impl Parser {
       }
       return self.fail("an identifier", self.peek());
     }
-    let last = idents.pop().unwrap();
-    Ok(Long { idents, last })
+    let last = structures.pop().unwrap();
+    Ok(Long { structures, last })
   }
 
   fn label(&mut self) -> Result<Located<Label>> {
@@ -759,7 +755,7 @@ impl Parser {
           exp = exp.loc.wrap(match tok.val {
             Token::Ident(..) => {
               let long = self.long_id(true)?;
-              match (long.idents.is_empty(), self.ops.get(&long.last.val)) {
+              match (long.structures.is_empty(), self.ops.get(&long.last.val)) {
                 (true, Some(op_info)) => {
                   let rhs = self.exp()?;
                   Exp::InfixApp(exp.into(), tok.loc.wrap(long.last.val), rhs.into())
@@ -1336,7 +1332,7 @@ impl Parser {
   }
 
   fn pat_long_vid(&mut self, loc: Loc, mut long_vid: Long<StrRef>) -> Result<Pat<StrRef>> {
-    if long_vid.idents.len() == 1 {
+    if long_vid.structures.is_empty() {
       let ty = self.maybe_colon_ty()?;
       match self.maybe_as_pat()? {
         None => match ty {
@@ -1344,8 +1340,7 @@ impl Parser {
           Some(ty) => return Ok(Pat::Typed(loc.wrap(Pat::LongVid(long_vid)).into(), ty)),
         },
         Some(as_pat) => {
-          let vid = long_vid.idents.pop().unwrap();
-          return Ok(Pat::As(vid, ty, as_pat.into()));
+          return Ok(Pat::As(long_vid.last, ty, as_pat.into()));
         }
       }
     }
