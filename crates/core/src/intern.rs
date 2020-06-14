@@ -1,5 +1,6 @@
 //! String interning.
 
+use maplit::hashmap;
 use std::collections::HashMap;
 
 /// A reference to a string. To learn what string this represents, you must ask the StrStore created
@@ -56,45 +57,48 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let next = 36;
-    let mut store = HashMap::with_capacity(next);
-    store.insert("*".to_owned(), StrRef::STAR);
-    store.insert("unit".to_owned(), StrRef::UNIT);
-    store.insert("bool".to_owned(), StrRef::BOOL);
-    store.insert("int".to_owned(), StrRef::INT);
-    store.insert("real".to_owned(), StrRef::REAL);
-    store.insert("word".to_owned(), StrRef::WORD);
-    store.insert("char".to_owned(), StrRef::CHAR);
-    store.insert("string".to_owned(), StrRef::STRING);
-    store.insert("option".to_owned(), StrRef::OPTION);
-    store.insert("list".to_owned(), StrRef::LIST);
-    store.insert("ref".to_owned(), StrRef::REF);
-    store.insert("true".to_owned(), StrRef::TRUE);
-    store.insert("false".to_owned(), StrRef::FALSE);
-    store.insert("SOME".to_owned(), StrRef::SOME);
-    store.insert("NONE".to_owned(), StrRef::NONE);
-    store.insert("nil".to_owned(), StrRef::NIL);
-    store.insert("::".to_owned(), StrRef::CONS);
-    store.insert("+".to_owned(), StrRef::PLUS);
-    store.insert("-".to_owned(), StrRef::MINUS);
-    store.insert("/".to_owned(), StrRef::SLASH);
-    store.insert("^".to_owned(), StrRef::CARAT);
-    store.insert("@".to_owned(), StrRef::AT);
-    store.insert("not".to_owned(), StrRef::NOT);
-    store.insert("div".to_owned(), StrRef::DIV);
-    store.insert("<".to_owned(), StrRef::LT);
-    store.insert("<=".to_owned(), StrRef::LT_EQ);
-    store.insert(">".to_owned(), StrRef::GT);
-    store.insert(">=".to_owned(), StrRef::GT_EQ);
-    store.insert("<>".to_owned(), StrRef::NEQ);
-    store.insert("~".to_owned(), StrRef::TILDE);
-    store.insert("order".to_owned(), StrRef::ORDER);
-    store.insert("LESS".to_owned(), StrRef::LESS);
-    store.insert("EQUAL".to_owned(), StrRef::EQUAL);
-    store.insert("GREATER".to_owned(), StrRef::GREATER);
-    store.insert("=".to_owned(), StrRef::EQ);
-    store.insert(":=".to_owned(), StrRef::ASSIGN);
-    Self { store, next }
+    let store = hashmap! {
+      "*".to_owned() => StrRef::STAR,
+      "unit".to_owned() => StrRef::UNIT,
+      "bool".to_owned() => StrRef::BOOL,
+      "int".to_owned() => StrRef::INT,
+      "real".to_owned() => StrRef::REAL,
+      "word".to_owned() => StrRef::WORD,
+      "char".to_owned() => StrRef::CHAR,
+      "string".to_owned() => StrRef::STRING,
+      "option".to_owned() => StrRef::OPTION,
+      "list".to_owned() => StrRef::LIST,
+      "ref".to_owned() => StrRef::REF,
+      "true".to_owned() => StrRef::TRUE,
+      "false".to_owned() => StrRef::FALSE,
+      "SOME".to_owned() => StrRef::SOME,
+      "NONE".to_owned() => StrRef::NONE,
+      "nil".to_owned() => StrRef::NIL,
+      "::".to_owned() => StrRef::CONS,
+      "+".to_owned() => StrRef::PLUS,
+      "-".to_owned() => StrRef::MINUS,
+      "/".to_owned() => StrRef::SLASH,
+      "^".to_owned() => StrRef::CARAT,
+      "@".to_owned() => StrRef::AT,
+      "not".to_owned() => StrRef::NOT,
+      "div".to_owned() => StrRef::DIV,
+      "<".to_owned() => StrRef::LT,
+      "<=".to_owned() => StrRef::LT_EQ,
+      ">".to_owned() => StrRef::GT,
+      ">=".to_owned() => StrRef::GT_EQ,
+      "<>".to_owned() => StrRef::NEQ,
+      "~".to_owned() => StrRef::TILDE,
+      "order".to_owned() => StrRef::ORDER,
+      "LESS".to_owned() => StrRef::LESS,
+      "EQUAL".to_owned() => StrRef::EQUAL,
+      "GREATER".to_owned() => StrRef::GREATER,
+      "=".to_owned() => StrRef::EQ,
+      ":=".to_owned() => StrRef::ASSIGN,
+    };
+    Self {
+      next: store.len(),
+      store,
+    }
   }
 
   /// Inserts a string slice into this StrStoreMut. Returns an StrRef corresponding to that string.
