@@ -43,6 +43,8 @@ impl StrRef {
   pub const LESS: StrRef = StrRef(31);
   pub const EQUAL: StrRef = StrRef(32);
   pub const GREATER: StrRef = StrRef(33);
+  pub const EQ: StrRef = StrRef(34);
+  pub const ASSIGN: StrRef = StrRef(35);
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
@@ -54,7 +56,7 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let next = 34;
+    let next = 36;
     let mut store = HashMap::with_capacity(next);
     store.insert("*".to_owned(), StrRef::STAR);
     store.insert("unit".to_owned(), StrRef::UNIT);
@@ -90,6 +92,8 @@ impl StrStoreMut {
     store.insert("LESS".to_owned(), StrRef::LESS);
     store.insert("EQUAL".to_owned(), StrRef::EQUAL);
     store.insert("GREATER".to_owned(), StrRef::GREATER);
+    store.insert("=".to_owned(), StrRef::EQ);
+    store.insert(":=".to_owned(), StrRef::ASSIGN);
     Self { store, next }
   }
 
