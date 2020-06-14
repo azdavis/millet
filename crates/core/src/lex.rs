@@ -9,26 +9,22 @@ pub fn get(store: &mut StrStoreMut, bs: &[u8]) -> Result<Lexer, Located<LexError
 }
 
 pub struct Lexer {
-  ts: std::vec::IntoIter<Located<Token>>,
-  last_loc: Loc,
+  ts: Vec<Located<Token>>,
 }
 
 impl Lexer {
   fn new(ts: Vec<Located<Token>>) -> Self {
-    Self {
-      ts: ts.into_iter(),
-      last_loc: Loc::new(0, 1),
-    }
+    Self { ts }
   }
 
-  pub fn next(&mut self) -> Located<Token> {
-    match self.ts.next() {
-      Some(x) => {
-        self.last_loc = x.loc;
-        x
-      }
-      None => self.last_loc.wrap(Token::EOF),
-    }
+  /// Gets the ith token. Never returns `Some(EOF)`.
+  pub fn get(&self, i: usize) -> Option<Located<Token>> {
+    self.ts.get(i).copied()
+  }
+
+  /// Returns the loc of the last token, if there was one.
+  pub fn last_loc(&self) -> Option<Loc> {
+    self.ts.last().map(|x| x.loc)
   }
 }
 

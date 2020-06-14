@@ -15,7 +15,19 @@ use std::convert::TryInto as _;
 pub type Result<T> = std::result::Result<T, Located<ParseError>>;
 
 pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec<StrRef>>>> {
-  Parser::new(lexer).program()
+  let mut ret = Vec::new();
+  let last_loc = match lexer.last_loc() {
+    Some(x) => x,
+    None => return Ok(ret),
+  };
+  let mut p = Parser::new(lexer, last_loc);
+  loop {
+    if let Token::EOF = p.peek().val {
+      break;
+    }
+    ret.push(p.top_dec()?);
+  }
+  Ok(ret)
 }
 
 #[derive(Debug)]
@@ -29,8 +41,9 @@ pub enum ParseError {
 
 struct Parser {
   lexer: Lexer,
-  lookahead: Option<Located<Token>>,
+  i: usize,
   ops: HashMap<StrRef, OpInfo>,
+  last_loc: Loc,
 }
 
 // note: the `maybe` family of functions return Result<Option<T>>. these functions return:
@@ -40,37 +53,38 @@ struct Parser {
 
 impl Parser {
   /// constructs a new Parser.
-  fn new(lexer: Lexer) -> Self {
+  fn new(lexer: Lexer, last_loc: Loc) -> Self {
     Self {
       lexer,
-      lookahead: None,
+      last_loc,
+      i: 0,
       ops: HashMap::new(),
     }
   }
 
-  /// gets the next token.
-  fn next(&mut self) -> Located<Token> {
-    if let Some(look) = self.lookahead.take() {
-      return look;
+  /// gets the current token. does not advance the parser.
+  fn peek(&self) -> Located<Token> {
+    match self.lexer.get(self.i) {
+      Some(tok) => tok,
+      None => self.last_loc.wrap(Token::EOF),
     }
-    self.lexer.next()
   }
 
-  /// if the next token is `tok`, return `Ok(())`, else return `Err(..)`.
+  /// advances the parser ahead 1 token.
+  #[inline]
+  fn skip(&mut self) {
+    self.i += 1;
+  }
+
+  /// if the current token is `tok`, return `Ok(())` and advance, else return `Err(..)`.
   fn eat(&mut self, tok: Token) -> Result<()> {
-    let next = self.next();
+    let next = self.peek();
     if next.val == tok {
+      self.skip();
       Ok(())
     } else {
       self.fail(tok.desc(), next)
     }
-  }
-
-  /// backtracks 1 token. this is how lookahead is implemented. the next call to
-  /// `next()` will return `tok`. requires that there be no current lookahead.
-  fn back(&mut self, tok: Located<Token>) {
-    assert!(self.lookahead.is_none());
-    self.lookahead = Some(tok);
   }
 
   /// returns an ExpectedButFound error, where we expected `want` but got `tok`.
@@ -79,40 +93,28 @@ impl Parser {
     Err(tok.loc.wrap(err))
   }
 
-  fn program(&mut self) -> Result<Vec<Located<TopDec<StrRef>>>> {
-    let mut ret = Vec::new();
-    while let Some(td) = self.maybe_top_dec()? {
-      ret.push(td);
-    }
-    let tok = self.next();
-    if let Token::EOF = tok.val {
-      Ok(ret)
-    } else {
-      self.fail("a top-level declaration", tok)
-    }
-  }
-
-  fn maybe_top_dec(&mut self) -> Result<Option<Located<TopDec<StrRef>>>> {
-    let tok = self.next();
+  fn top_dec(&mut self) -> Result<Located<TopDec<StrRef>>> {
+    let tok = self.peek();
     let loc = tok.loc;
     let ret = match tok.val {
       Token::Signature => {
+        self.skip();
         let mut sig_binds = Vec::new();
         loop {
           let id = self.alpha_num_id()?;
           self.eat(Token::Equal)?;
           let exp = self.sig_exp()?;
           sig_binds.push(SigBind { id, exp });
-          let tok = self.next();
-          if let Token::And = tok.val {
-            continue;
+          if let Token::And = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         TopDec::SigDec(sig_binds)
       }
       Token::Functor => {
+        self.skip();
         let mut fun_binds = Vec::new();
         loop {
           let fun_id = self.alpha_num_id()?;
@@ -129,34 +131,33 @@ impl Parser {
             sig_exp,
             str_exp,
           });
-          let tok = self.next();
-          if let Token::And = tok.val {
+          if let Token::And = self.peek().val {
             continue;
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         TopDec::FunDec(fun_binds)
       }
       _ => {
-        self.back(tok);
         let sd = self.str_dec()?;
-        if let StrDec::Seq(ref s) = sd.val {
-          if s.is_empty() {
-            return Ok(None);
+        if let StrDec::Seq(ref xs) = sd.val {
+          if xs.is_empty() {
+            return self.fail("a top-level declaration", self.peek());
           }
         }
         TopDec::StrDec(sd)
       }
     };
-    Ok(Some(loc.wrap(ret)))
+    Ok(loc.wrap(ret))
   }
 
   fn str_exp(&mut self) -> Result<Located<StrExp<StrRef>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let mut ret = match tok.val {
       Token::Struct => {
+        self.skip();
         let ops = self.ops.clone();
         let dec = self.str_dec()?;
         self.eat(Token::End)?;
@@ -164,6 +165,7 @@ impl Parser {
         StrExp::Struct(dec)
       }
       Token::Let => {
+        self.skip();
         let ops = self.ops.clone();
         let dec = self.str_dec()?;
         self.eat(Token::In)?;
@@ -173,10 +175,9 @@ impl Parser {
         StrExp::Let(dec.into(), exp.into())
       }
       Token::Ident(_, IdentType::AlphaNum) => {
-        self.back(tok);
         let long_id = self.long_alpha_num_id()?;
-        let tok = self.next();
-        if let Token::LRound = tok.val {
+        if let Token::LRound = self.peek().val {
+          self.skip();
           let exp = self.str_exp()?;
           self.eat(Token::RRound)?;
           StrExp::FunctorApp(long_id, exp.into())
@@ -187,46 +188,45 @@ impl Parser {
       _ => return self.fail("a structure expression", tok),
     };
     loop {
-      let tok = self.next();
-      ret = match tok.val {
+      ret = match self.peek().val {
         Token::Colon => {
+          self.skip();
           let exp = self.sig_exp()?;
           StrExp::Transparent(loc.wrap(ret).into(), exp)
         }
         Token::ColonGt => {
+          self.skip();
           let exp = self.sig_exp()?;
           StrExp::Opaque(loc.wrap(ret).into(), exp)
         }
-        _ => {
-          self.back(tok);
-          break;
-        }
+        _ => break,
       };
     }
     Ok(loc.wrap(ret))
   }
 
   fn maybe_str_dec(&mut self) -> Result<Option<Located<StrDec<StrRef>>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let ret = match tok.val {
       Token::Structure => {
+        self.skip();
         let mut str_binds = Vec::new();
         loop {
           let id = self.alpha_num_id()?;
           self.eat(Token::Equal)?;
           let exp = self.str_exp()?;
           str_binds.push(StrBind { id, exp });
-          let tok = self.next();
-          if let Token::And = tok.val {
-            continue;
+          if let Token::And = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         StrDec::Structure(str_binds)
       }
       Token::Local => {
+        self.skip();
         let ops = self.ops.clone();
         let fst = self.str_dec()?;
         self.eat(Token::In)?;
@@ -236,7 +236,6 @@ impl Parser {
         StrDec::Local(fst.into(), snd.into())
       }
       _ => {
-        self.back(tok);
         let dec = self.dec()?;
         if let Dec::Seq(ref xs) = dec.val {
           if xs.is_empty() {
@@ -254,31 +253,30 @@ impl Parser {
   }
 
   fn sig_exp(&mut self) -> Result<Located<SigExp<StrRef>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let mut ret = match tok.val {
       Token::Sig => {
+        self.skip();
         let spec = self.spec()?;
         self.eat(Token::End)?;
         SigExp::Sig(spec)
       }
       Token::Ident(_, IdentType::AlphaNum) => {
-        self.back(tok);
         let long_id = self.long_alpha_num_id()?;
         SigExp::SigId(long_id)
       }
       _ => return self.fail("a signature expression", tok),
     };
     loop {
-      let tok = self.next();
-      if let Token::Where = tok.val {
+      if let Token::Where = self.peek().val {
+        self.skip();
         let ty_vars = self.ty_var_seq()?;
         let ty_con = self.long_id(true)?;
         self.eat(Token::Equal)?;
         let ty = self.ty()?;
         ret = SigExp::Where(loc.wrap(ret).into(), ty_vars, ty_con, ty);
       } else {
-        self.back(tok);
         break;
       }
     }
@@ -286,56 +284,65 @@ impl Parser {
   }
 
   fn maybe_spec(&mut self) -> Result<Option<Located<Spec<StrRef>>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let mut ret = match tok.val {
       Token::Val => {
+        self.skip();
         let mut val_descs = Vec::new();
         loop {
           let vid = self.ident()?;
           self.eat(Token::Colon)?;
           let ty = self.ty()?;
           val_descs.push(ValDesc { vid, ty });
-          let tok = self.next();
-          if let Token::And = tok.val {
-            continue;
+          if let Token::And = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         Spec::Val(val_descs)
       }
-      Token::Type => Spec::Type(self.ty_descs()?),
-      Token::Eqtype => Spec::Eqtype(self.ty_descs()?),
-      Token::Datatype => self.spec_datatype()?,
+      Token::Type => {
+        self.skip();
+        Spec::Type(self.ty_descs()?)
+      }
+      Token::Eqtype => {
+        self.skip();
+        Spec::Eqtype(self.ty_descs()?)
+      }
+      Token::Datatype => {
+        self.skip();
+        self.spec_datatype()?
+      }
       Token::Exception => {
+        self.skip();
         let mut ex_descs = Vec::new();
         loop {
           let vid = self.ident()?;
           let ty = self.maybe_of_ty()?;
           ex_descs.push(ExDesc { vid, ty });
-          let tok = self.next();
-          if let Token::And = tok.val {
-            continue;
+          if let Token::And = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         Spec::Exception(ex_descs)
       }
       Token::Structure => {
+        self.skip();
         let mut str_descs = Vec::new();
         loop {
           let str_id = self.alpha_num_id()?;
           self.eat(Token::Colon)?;
           let exp = self.sig_exp()?;
           str_descs.push(StrDesc { str_id, exp });
-          let tok = self.next();
-          if let Token::And = tok.val {
-            continue;
+          if let Token::And = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         Spec::Structure(str_descs)
       }
@@ -343,32 +350,26 @@ impl Parser {
         let exp = self.sig_exp()?;
         Spec::Include(exp.into())
       }
-      _ => {
-        self.back(tok);
-        return Ok(None);
-      }
+      _ => return Ok(None),
     };
     loop {
-      let tok = self.next();
-      if let Token::Sharing = tok.val {
+      if let Token::Sharing = self.peek().val {
+        self.skip();
         self.eat(Token::Type)?;
         let mut ty_cons = Vec::new();
         loop {
           ty_cons.push(self.long_id(true)?);
-          let tok = self.next();
-          if let Token::Equal = tok.val {
-            continue;
+          if let Token::Equal = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         if ty_cons.len() < 2 {
-          let tok = self.next();
-          return self.fail("an identifier", tok);
+          return self.fail("an identifier", self.peek());
         }
         ret = Spec::Sharing(ty_cons);
       } else {
-        self.back(tok);
         break;
       }
     }
@@ -376,16 +377,16 @@ impl Parser {
   }
 
   fn spec_datatype(&mut self) -> Result<Spec<StrRef>> {
-    let tok = self.next();
+    let tok = self.peek();
     let dat_desc = if let Token::Ident(id, _) = tok.val {
       let ty_con = tok.loc.wrap(id);
+      self.skip();
       self.eat(Token::Equal)?;
-      let tok = self.next();
-      if let Token::Datatype = tok.val {
+      if let Token::Datatype = self.peek().val {
+        self.skip();
         let long = self.long_id(true)?;
         return Ok(Spec::DatatypeCopy(ty_con, long));
       }
-      self.back(tok);
       let cons = self.con_descs()?;
       DatDesc {
         ty_vars: Vec::new(),
@@ -393,16 +394,14 @@ impl Parser {
         cons,
       }
     } else {
-      self.back(tok);
       self.dat_desc()?
     };
     let mut dat_descs = vec![dat_desc];
     loop {
-      let tok = self.next();
-      if let Token::And = tok.val {
+      if let Token::And = self.peek().val {
+        self.skip();
         dat_descs.push(self.dat_desc()?);
       } else {
-        self.back(tok);
         break;
       }
     }
@@ -427,12 +426,11 @@ impl Parser {
       let vid = self.ident()?;
       let ty = self.maybe_of_ty()?;
       ret.push(ConDesc { vid, ty });
-      let tok = self.next();
-      if let Token::Bar = tok.val {
-        continue;
+      if let Token::Bar = self.peek().val {
+        self.skip();
+      } else {
+        break;
       }
-      self.back(tok);
-      break;
     }
     Ok(ret)
   }
@@ -443,12 +441,11 @@ impl Parser {
       let ty_vars = self.ty_var_seq()?;
       let ty_con = self.ident()?;
       ret.push(TyDesc { ty_vars, ty_con });
-      let tok = self.next();
-      if let Token::And = tok.val {
-        continue;
+      if let Token::And = self.peek().val {
+        self.skip();
+      } else {
+        break;
       }
-      self.back(tok);
-      break;
     }
     Ok(ret)
   }
@@ -458,30 +455,54 @@ impl Parser {
   }
 
   fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<StrRef>>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let ret = match tok.val {
-      Token::DecInt(n, _) => Exp::DecInt(n),
-      Token::HexInt(n) => Exp::HexInt(n),
-      Token::DecWord(n) => Exp::DecWord(n),
-      Token::HexWord(n) => Exp::HexWord(n),
-      Token::Real(n) => Exp::Real(n),
-      Token::Str(s) => Exp::Str(s),
-      Token::Char(c) => Exp::Char(c),
-      Token::Op => Exp::LongVid(self.long_id(true)?),
+      Token::DecInt(n, _) => {
+        self.skip();
+        Exp::DecInt(n)
+      }
+      Token::HexInt(n) => {
+        self.skip();
+        Exp::HexInt(n)
+      }
+      Token::DecWord(n) => {
+        self.skip();
+        Exp::DecWord(n)
+      }
+      Token::HexWord(n) => {
+        self.skip();
+        Exp::HexWord(n)
+      }
+      Token::Real(n) => {
+        self.skip();
+        Exp::Real(n)
+      }
+      Token::Str(s) => {
+        self.skip();
+        Exp::Str(s)
+      }
+      Token::Char(c) => {
+        self.skip();
+        Exp::Char(c)
+      }
+      Token::Op => {
+        self.skip();
+        Exp::LongVid(self.long_id(true)?)
+      }
       Token::LCurly => {
-        let tok = self.next();
+        self.skip();
         let mut rows = Vec::new();
-        if let Token::RCurly = tok.val {
-          //
+        if let Token::RCurly = self.peek().val {
+          self.skip();
         } else {
-          self.back(tok);
           loop {
             let lab = self.label()?;
             self.eat(Token::Equal)?;
             let exp = self.exp()?;
             rows.push(Row { lab, exp });
-            let tok = self.next();
+            let tok = self.peek();
+            self.skip();
             match tok.val {
               Token::RCurly => break,
               Token::Comma => continue,
@@ -491,22 +512,27 @@ impl Parser {
         }
         Exp::Record(rows)
       }
-      Token::Pound => Exp::Select(self.label()?),
+      Token::Pound => {
+        self.skip();
+        Exp::Select(self.label()?)
+      }
       Token::LRound => {
-        let tok = self.next();
-        if let Token::RRound = tok.val {
+        self.skip();
+        if let Token::RRound = self.peek().val {
+          self.skip();
           return Ok(Some(loc.wrap(Exp::Tuple(Vec::new()))));
         }
-        self.back(tok);
         let fst = self.exp()?;
-        let tok = self.next();
+        let tok = self.peek();
+        self.skip();
         match tok.val {
           Token::RRound => fst.val,
           Token::Comma => {
             let mut exprs = vec![fst];
             loop {
               exprs.push(self.exp()?);
-              let tok = self.next();
+              let tok = self.peek();
+              self.skip();
               match tok.val {
                 Token::RRound => break,
                 Token::Comma => continue,
@@ -519,7 +545,8 @@ impl Parser {
             let mut exprs = vec![fst];
             loop {
               exprs.push(self.exp()?);
-              let tok = self.next();
+              let tok = self.peek();
+              self.skip();
               match tok.val {
                 Token::RRound => break,
                 Token::Semicolon => continue,
@@ -532,15 +559,15 @@ impl Parser {
         }
       }
       Token::LSquare => {
-        let tok = self.next();
+        self.skip();
         let mut exprs = Vec::new();
-        if let Token::RSquare = tok.val {
-          //
+        if let Token::RSquare = self.peek().val {
+          self.skip();
         } else {
-          self.back(tok);
           loop {
             exprs.push(self.exp()?);
-            let tok = self.next();
+            let tok = self.peek();
+            self.skip();
             match tok.val {
               Token::RSquare => break,
               Token::Comma => continue,
@@ -551,13 +578,15 @@ impl Parser {
         Exp::List(exprs)
       }
       Token::Let => {
+        self.skip();
         let ops = self.ops.clone();
         let dec = self.dec()?;
         self.eat(Token::In)?;
         let mut exprs = Vec::new();
         loop {
           exprs.push(self.exp()?);
-          let tok = self.next();
+          let tok = self.peek();
+          self.skip();
           match tok.val {
             Token::End => break,
             Token::Semicolon => continue,
@@ -567,16 +596,8 @@ impl Parser {
         self.ops = ops;
         Exp::Let(dec, exprs)
       }
-      Token::Ident(..) => {
-        self.back(tok);
-        Exp::LongVid(self.long_id(false)?)
-      }
-      _ => {
-        // this is the one time we return Ok(None). we need this info to do
-        // application expressions correctly.
-        self.back(tok);
-        return Ok(None);
-      }
+      Token::Ident(..) => Exp::LongVid(self.long_id(false)?),
+      _ => return Ok(None),
     };
     Ok(Some(loc.wrap(ret)))
   }
@@ -585,15 +606,16 @@ impl Parser {
     match self.maybe_at_exp()? {
       Some(x) => Ok(x),
       None => {
-        let tok = self.next();
+        let tok = self.peek();
         self.fail("an expression", tok)
       }
     }
   }
 
   fn ident(&mut self) -> Result<Located<StrRef>> {
-    let tok = self.next();
+    let tok = self.peek();
     if let Token::Ident(id, _) = tok.val {
+      self.skip();
       Ok(tok.loc.wrap(id))
     } else {
       self.fail("an identifier", tok)
@@ -601,8 +623,9 @@ impl Parser {
   }
 
   fn alpha_num_id(&mut self) -> Result<Located<StrRef>> {
-    let tok = self.next();
+    let tok = self.peek();
     if let Token::Ident(id, IdentType::AlphaNum) = tok.val {
+      self.skip();
       Ok(tok.loc.wrap(id))
     } else {
       self.fail("an identifier", tok)
@@ -612,24 +635,23 @@ impl Parser {
   fn maybe_long_id(&mut self) -> Result<Option<Long<StrRef>>> {
     let mut idents = Vec::new();
     loop {
-      let tok = self.next();
+      let tok = self.peek();
       if let Token::Ident(id, typ) = tok.val {
+        self.skip();
         idents.push(tok.loc.wrap(id));
         if let IdentType::Symbolic = typ {
           break;
         }
-        let tok = self.next();
-        if let Token::Dot = tok.val {
-          continue;
+        if let Token::Dot = self.peek().val {
+          self.skip();
+        } else {
+          break;
         }
-        self.back(tok);
-        break;
       }
       return if idents.is_empty() {
-        self.back(tok);
         Ok(None)
       } else {
-        self.fail("an identifier", tok)
+        self.fail("an identifier", self.peek())
       };
     }
     let last = idents.pop().unwrap();
@@ -639,17 +661,13 @@ impl Parser {
   fn long_id(&mut self, allow_infix: bool) -> Result<Long<StrRef>> {
     let mut ret = match self.maybe_long_id()? {
       Some(x) => x,
-      None => {
-        let tok = self.next();
-        return self.fail("an identifier", tok);
-      }
+      None => return self.fail("an identifier", self.peek()),
     };
     if !allow_infix
       && ret.idents.len() == 1
       && self.ops.contains_key(&ret.idents.first().unwrap().val)
     {
       let id = ret.idents.pop().unwrap();
-      eprintln!("NO {:?}", allow_infix);
       Err(id.loc.wrap(ParseError::InfixWithoutOp(id.val)))
     } else {
       Ok(ret)
@@ -659,24 +677,25 @@ impl Parser {
   fn long_alpha_num_id(&mut self) -> Result<Long<StrRef>> {
     let mut idents = Vec::new();
     loop {
-      let tok = self.next();
+      let tok = self.peek();
       if let Token::Ident(id, IdentType::AlphaNum) = tok.val {
+        self.skip();
         idents.push(tok.loc.wrap(id));
-        let tok = self.next();
-        if let Token::Dot = tok.val {
-          continue;
+        if let Token::Dot = self.peek().val {
+          self.skip();
+        } else {
+          break;
         }
-        self.back(tok);
-        break;
       }
-      return self.fail("an identifier", tok);
+      return self.fail("an identifier", self.peek());
     }
     let last = idents.pop().unwrap();
     Ok(Long { idents, last })
   }
 
   fn label(&mut self) -> Result<Located<Label>> {
-    let tok = self.next();
+    let tok = self.peek();
+    self.skip();
     let ret = match tok.val {
       Token::DecInt(n, IsNumLab::Maybe) => Label::Num(n.try_into().unwrap()),
       Token::Ident(id, _) => Label::Vid(id),
@@ -687,14 +706,16 @@ impl Parser {
 
   // TODO prec
   fn exp(&mut self) -> Result<Located<Exp<StrRef>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let ret = match tok.val {
       Token::Raise => {
+        self.skip();
         let e = self.exp()?;
         Exp::Raise(e.into())
       }
       Token::If => {
+        self.skip();
         let e_cond = self.exp()?;
         self.eat(Token::Then)?;
         let e_then = self.exp()?;
@@ -703,49 +724,65 @@ impl Parser {
         Exp::If(e_cond.into(), e_then.into(), e_else.into())
       }
       Token::While => {
+        self.skip();
         let e_cond = self.exp()?;
         self.eat(Token::Do)?;
         let e_body = self.exp()?;
         Exp::While(e_cond.into(), e_body.into())
       }
       Token::Case => {
+        self.skip();
         let e_head = self.exp()?;
         self.eat(Token::Of)?;
         let match_ = self.match_()?;
         Exp::Case(e_head.into(), match_)
       }
       Token::Fn => {
+        self.skip();
         let match_ = self.match_()?;
         Exp::Fn(match_)
       }
       _ => {
-        self.back(tok);
         let mut exp = self.at_exp()?;
         loop {
-          let tok = self.next();
+          let tok = self.peek();
           exp = exp.loc.wrap(match tok.val {
-            Token::Ident(ref id, _) => match self.ops.get(id) {
-              Some(op_info) => {
-                let rhs = self.exp()?;
-                Exp::InfixApp(exp.into(), tok.loc.wrap(*id), rhs.into())
-              }
-              None => {
-                self.back(tok);
-                let rhs = exp.loc.wrap(Exp::LongVid(self.long_id(true)?));
-                Exp::App(exp.into(), rhs.into())
-              }
-            },
-            Token::Colon => Exp::Typed(exp.into(), self.ty()?),
-            Token::Andalso => Exp::Andalso(exp.into(), self.exp()?.into()),
-            Token::Orelse => Exp::Orelse(exp.into(), self.exp()?.into()),
-            Token::Handle => Exp::Handle(exp.into(), self.match_()?),
-            _ => {
-              self.back(tok);
-              match self.maybe_at_exp()? {
-                Some(rhs) => Exp::App(exp.into(), rhs.into()),
-                None => break,
+            Token::Ident(..) => {
+              let long = self.long_id(true)?;
+              match (long.idents.is_empty(), self.ops.get(&long.last.val)) {
+                (true, Some(op_info)) => {
+                  let rhs = self.exp()?;
+                  Exp::InfixApp(exp.into(), tok.loc.wrap(long.last.val), rhs.into())
+                }
+                _ => {
+                  let rhs = exp.loc.wrap(Exp::LongVid(long));
+                  Exp::App(exp.into(), rhs.into())
+                }
               }
             }
+            Token::Colon => {
+              self.skip();
+              let ty = self.ty()?;
+              Exp::Typed(exp.into(), ty)
+            }
+            Token::Andalso => {
+              self.skip();
+              let rhs = self.exp()?;
+              Exp::Andalso(exp.into(), rhs.into())
+            }
+            Token::Orelse => {
+              self.skip();
+              let rhs = self.exp()?;
+              Exp::Orelse(exp.into(), rhs.into())
+            }
+            Token::Handle => {
+              self.skip();
+              Exp::Handle(exp.into(), self.match_()?)
+            }
+            _ => match self.maybe_at_exp()? {
+              Some(rhs) => Exp::App(exp.into(), rhs.into()),
+              None => break,
+            },
           });
         }
         exp.val
@@ -761,49 +798,49 @@ impl Parser {
       self.eat(Token::BigArrow)?;
       let exp = self.exp()?;
       arms.push(Arm { pat, exp });
-      let tok = self.next();
-      if let Token::Bar = tok.val {
-        continue;
+      if let Token::Bar = self.peek().val {
+        self.skip();
+      } else {
+        break;
       }
-      self.back(tok);
-      break;
     }
     Ok(Match { arms })
   }
 
   fn maybe_dec(&mut self) -> Result<Option<Located<Dec<StrRef>>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let ret = match tok.val {
       Token::Val => {
+        self.skip();
         let ty_vars = self.ty_var_seq()?;
         let mut val_binds = Vec::new();
         loop {
-          let tok = self.next();
-          let rec = if let Token::Rec = tok.val {
+          let rec = if let Token::Rec = self.peek().val {
+            self.skip();
             true
           } else {
-            self.back(tok);
             false
           };
           let pat = self.pat()?;
           self.eat(Token::Equal)?;
           let exp = self.exp()?;
           val_binds.push(ValBind { rec, pat, exp });
-          let tok = self.next();
-          if let Token::And = tok.val {
-            continue;
+          if let Token::And = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         Dec::Val(ty_vars, val_binds)
       }
       Token::Fun => {
         // have to contort the case for seeing an initial `(` after the `fun` because it could be
         // the beginning of a ty var seq OR the wrapping of an infix fval bind case head.
-        let tok = self.next();
+        self.skip();
+        let tok = self.peek();
         let (ty_vars, fst_case) = if let Token::LRound = tok.val {
+          self.skip();
           match self.maybe_at_pat()? {
             None => (self.ty_var_seq_inner()?, self.fval_bind_case()?),
             Some(fst) => {
@@ -819,39 +856,43 @@ impl Parser {
             }
           }
         } else {
-          self.back(tok);
           (self.ty_var_seq()?, self.fval_bind_case()?)
         };
         let mut cases = vec![fst_case];
         let mut binds = Vec::new();
         loop {
-          let tok = self.next();
+          let tok = self.peek();
           if let Token::Bar = tok.val {
+            self.skip();
             cases.push(self.fval_bind_case()?);
             continue;
           }
           binds.push(FValBind { cases });
           if let Token::And = tok.val {
+            self.skip();
             cases = vec![self.fval_bind_case()?];
             continue;
           }
-          self.back(tok);
           break;
         }
         Dec::Fun(ty_vars, binds)
       }
-      Token::Type => Dec::Type(self.ty_binds()?),
+      Token::Type => {
+        self.skip();
+        Dec::Type(self.ty_binds()?)
+      }
       Token::Datatype => {
-        let tok = self.next();
+        self.skip();
+        let tok = self.peek();
         let dat_bind = if let Token::Ident(id, _) = tok.val {
+          self.skip();
           let ty_con = tok.loc.wrap(id);
           self.eat(Token::Equal)?;
-          let tok = self.next();
-          if let Token::Datatype = tok.val {
+          if let Token::Datatype = self.peek().val {
+            self.skip();
             let long = self.long_id(true)?;
             return Ok(Some(loc.wrap(Dec::DatatypeCopy(ty_con, long))));
           }
-          self.back(tok);
           let cons = self.con_binds()?;
           DatBind {
             ty_vars: Vec::new(),
@@ -859,41 +900,38 @@ impl Parser {
             cons,
           }
         } else {
-          self.back(tok);
           self.dat_bind()?
         };
         let mut dat_binds = vec![dat_bind];
         loop {
-          let tok = self.next();
-          if let Token::And = tok.val {
+          if let Token::And = self.peek().val {
+            self.skip();
             dat_binds.push(self.dat_bind()?);
           } else {
-            self.back(tok);
             break;
           }
         }
-        let tok = self.next();
-        let ty_binds = if let Token::Withtype = tok.val {
+        let ty_binds = if let Token::Withtype = self.peek().val {
+          self.skip();
           self.ty_binds()?
         } else {
-          self.back(tok);
           Vec::new()
         };
         Dec::Datatype(dat_binds, ty_binds)
       }
       Token::Abstype => {
+        self.skip();
         let mut dat_binds = vec![self.dat_bind()?];
         loop {
-          let tok = self.next();
-          if let Token::And = tok.val {
+          if let Token::And = self.peek().val {
+            self.skip();
             dat_binds.push(self.dat_bind()?);
           } else {
-            self.back(tok);
             break;
           }
         }
-        let tok = self.next();
-        let ty_binds = if let Token::Withtype = tok.val {
+        let ty_binds = if let Token::Withtype = self.peek().val {
+          self.skip();
           self.ty_binds()?
         } else {
           Vec::new()
@@ -904,29 +942,33 @@ impl Parser {
         Dec::Abstype(dat_binds, ty_binds, dec.into())
       }
       Token::Exception => {
+        self.skip();
         let mut ex_binds = Vec::new();
         loop {
-          self.maybe_op()?;
+          if let Token::Op = self.peek().val {
+            self.skip();
+          }
           let vid = self.ident()?;
-          let tok = self.next();
-          let inner = if let Token::Equal = tok.val {
-            self.maybe_op()?;
+          let inner = if let Token::Equal = self.peek().val {
+            self.skip();
+            if let Token::Op = self.peek().val {
+              self.skip();
+            }
             ExBindInner::Long(self.long_id(true)?)
           } else {
-            self.back(tok);
             ExBindInner::Ty(self.maybe_of_ty()?)
           };
           ex_binds.push(ExBind { vid, inner });
-          let tok = self.next();
-          if let Token::And = tok.val {
-            continue;
+          if let Token::And = self.peek().val {
+            self.skip();
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         Dec::Exception(ex_binds)
       }
       Token::Local => {
+        self.skip();
         let ops = self.ops.clone();
         let fst = self.dec()?;
         self.eat(Token::In)?;
@@ -935,46 +977,45 @@ impl Parser {
         Dec::Local(fst.into(), snd.into())
       }
       Token::Open => {
+        self.skip();
         let mut str_ids = Vec::new();
         loop {
           str_ids.push(self.long_alpha_num_id()?);
-          let tok = self.next();
-          if let Token::Ident(..) = tok.val {
-            self.back(tok);
+          if let Token::Ident(..) = self.peek().val {
             continue;
+          } else {
+            break;
           }
-          self.back(tok);
-          break;
         }
         Dec::Open(str_ids)
       }
       Token::Infix => {
+        self.skip();
         let n = self.fixity_num()?;
-        let idents = self.fixity_idents()?;
+        let idents = self.fixity_idents();
         for id in idents.iter() {
           self.ops.insert(id.val.clone(), OpInfo::left(n.val));
         }
         Dec::Infix(n, idents)
       }
       Token::Infixr => {
+        self.skip();
         let n = self.fixity_num()?;
-        let idents = self.fixity_idents()?;
+        let idents = self.fixity_idents();
         for id in idents.iter() {
           self.ops.insert(id.val.clone(), OpInfo::right(n.val));
         }
         Dec::Infixr(n, idents)
       }
       Token::Nonfix => {
-        let idents = self.fixity_idents()?;
+        self.skip();
+        let idents = self.fixity_idents();
         for id in idents.iter() {
           self.ops.remove(&id.val);
         }
         Dec::Nonfix(idents)
       }
-      _ => {
-        self.back(tok);
-        return Ok(None);
-      }
+      _ => return Ok(None),
     };
     Ok(Some(loc.wrap(ret)))
   }
@@ -1008,7 +1049,8 @@ impl Parser {
   // not require unbounded lookahead. also note there is already nastiness with `fun (`, see the Fun
   // case for maybe_dec.
   fn fval_bind_case(&mut self) -> Result<FValBindCase<StrRef>> {
-    let tok = self.next();
+    let tok = self.peek();
+    self.skip();
     let (vid, pat) = match tok.val {
       Token::Op => (self.ident()?, self.at_pat()?),
       Token::LRound => {
@@ -1044,12 +1086,11 @@ impl Parser {
         ty_con,
         ty,
       });
-      let tok = self.next();
-      if let Token::And = tok.val {
-        continue;
+      if let Token::And = self.peek().val {
+        self.skip();
+      } else {
+        break;
       }
-      self.back(tok);
-      break;
     }
     Ok(ty_binds)
   }
@@ -1057,16 +1098,17 @@ impl Parser {
   fn con_binds(&mut self) -> Result<Vec<ConBind<StrRef>>> {
     let mut ret = Vec::new();
     loop {
-      self.maybe_op()?;
+      if let Token::Op = self.peek().val {
+        self.skip();
+      }
       let vid = self.ident()?;
       let ty = self.maybe_of_ty()?;
       ret.push(ConBind { vid, ty });
-      let tok = self.next();
-      if let Token::Bar = tok.val {
-        continue;
+      if let Token::Bar = self.peek().val {
+        self.skip();
+      } else {
+        break;
       }
-      self.back(tok);
-      break;
     }
     Ok(ret)
   }
@@ -1086,13 +1128,15 @@ impl Parser {
   fn ty_var_seq_inner(&mut self) -> Result<Vec<Located<TyVar<StrRef>>>> {
     let mut ret = Vec::new();
     loop {
-      let tok = self.next();
+      let tok = self.peek();
       if let Token::TyVar(ty_var) = tok.val {
+        self.skip();
         ret.push(tok.loc.wrap(ty_var));
       } else {
         return self.fail("a type variable", tok);
       }
-      let tok = self.next();
+      let tok = self.peek();
+      self.skip();
       match tok.val {
         Token::RRound => break,
         Token::Comma => continue,
@@ -1103,52 +1147,78 @@ impl Parser {
   }
 
   fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<StrRef>>>> {
-    let tok = self.next();
+    let tok = self.peek();
     match tok.val {
-      Token::TyVar(ty_var) => Ok(vec![tok.loc.wrap(ty_var)]),
-      Token::LRound => self.ty_var_seq_inner(),
-      _ => {
-        self.back(tok);
-        Ok(Vec::new())
+      Token::TyVar(ty_var) => {
+        self.skip();
+        Ok(vec![tok.loc.wrap(ty_var)])
       }
+      Token::LRound => {
+        self.skip();
+        self.ty_var_seq_inner()
+      }
+      _ => Ok(Vec::new()),
     }
   }
 
   fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat<StrRef>>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let ret = match tok.val {
-      Token::Underscore => Pat::Wildcard,
-      Token::DecInt(n, _) => Pat::DecInt(n),
-      Token::HexInt(n) => Pat::HexInt(n),
-      Token::DecWord(n) => Pat::DecWord(n),
-      Token::HexWord(n) => Pat::HexWord(n),
+      Token::Underscore => {
+        self.skip();
+        Pat::Wildcard
+      }
+      Token::DecInt(n, _) => {
+        self.skip();
+        Pat::DecInt(n)
+      }
+      Token::HexInt(n) => {
+        self.skip();
+        Pat::HexInt(n)
+      }
+      Token::DecWord(n) => {
+        self.skip();
+        Pat::DecWord(n)
+      }
+      Token::HexWord(n) => {
+        self.skip();
+        Pat::HexWord(n)
+      }
       Token::Real(..) => return Err(loc.wrap(ParseError::RealPat)),
-      Token::Str(s) => Pat::Str(s),
-      Token::Char(c) => Pat::Char(c),
-      Token::Op => Pat::LongVid(self.long_id(true)?),
+      Token::Str(s) => {
+        self.skip();
+        Pat::Str(s)
+      }
+      Token::Char(c) => {
+        self.skip();
+        Pat::Char(c)
+      }
+      Token::Op => {
+        self.skip();
+        Pat::LongVid(self.long_id(true)?)
+      }
       Token::LCurly => {
-        let tok = self.next();
         let mut rows = Vec::new();
         let mut rest_loc = None;
-        if let Token::RCurly = tok.val {
-          //
+        if let Token::RCurly = self.peek().val {
+          self.skip();
         } else {
-          self.back(tok);
           loop {
-            let tok = self.next();
+            let tok = self.peek();
             if let Token::DotDotDot = tok.val {
+              self.skip();
               rest_loc = Some(tok.loc);
-              let tok = self.next();
-              if let Token::RCurly = tok.val {
+              if let Token::RCurly = self.peek().val {
+                self.skip();
                 break;
               }
               return self.fail("`}`", tok);
             }
-            self.back(tok);
             let lab = self.label()?;
-            let tok = self.next();
+            let tok = self.peek();
             let row = if let Token::Equal = tok.val {
+              self.skip();
               let pat = self.pat()?;
               PatRow::LabelAndPat(lab, pat)
             } else {
@@ -1161,7 +1231,8 @@ impl Parser {
               PatRow::LabelAsVid(vid, ty, as_pat)
             };
             rows.push(row);
-            let tok = self.next();
+            let tok = self.peek();
+            self.skip();
             match tok.val {
               Token::RCurly => break,
               Token::Comma => continue,
@@ -1172,15 +1243,15 @@ impl Parser {
         Pat::Record(rows, rest_loc)
       }
       Token::LRound => {
-        let tok = self.next();
+        let tok = self.peek();
         let mut pats = Vec::new();
         if let Token::RRound = tok.val {
-          //
+          self.skip();
         } else {
-          self.back(tok);
           loop {
             pats.push(self.pat()?);
-            let tok = self.next();
+            let tok = self.peek();
+            self.skip();
             match tok.val {
               Token::RRound => break,
               Token::Comma => continue,
@@ -1195,15 +1266,14 @@ impl Parser {
         }
       }
       Token::LSquare => {
-        let tok = self.next();
         let mut pats = Vec::new();
-        if let Token::RSquare = tok.val {
-          //
+        if let Token::RSquare = self.peek().val {
+          self.skip();
         } else {
-          self.back(tok);
           loop {
             pats.push(self.pat()?);
-            let tok = self.next();
+            let tok = self.peek();
+            self.skip();
             match tok.val {
               Token::RSquare => break,
               Token::Comma => continue,
@@ -1213,14 +1283,8 @@ impl Parser {
         }
         Pat::List(pats)
       }
-      Token::Ident(..) => {
-        self.back(tok);
-        Pat::LongVid(self.long_id(false)?)
-      }
-      _ => {
-        self.back(tok);
-        return Ok(None);
-      }
+      Token::Ident(..) => Pat::LongVid(self.long_id(false)?),
+      _ => return Ok(None),
     };
     Ok(Some(loc.wrap(ret)))
   }
@@ -1228,10 +1292,7 @@ impl Parser {
   fn at_pat(&mut self) -> Result<Located<Pat<StrRef>>> {
     match self.maybe_at_pat()? {
       Some(x) => Ok(x),
-      None => {
-        let tok = self.next();
-        self.fail("a pattern", tok)
-      }
+      None => self.fail("a pattern", self.peek()),
     }
   }
 
@@ -1242,13 +1303,15 @@ impl Parser {
       ret = ret.loc.wrap(self.pat_long_vid(ret.loc, long_vid)?);
     }
     loop {
-      let tok = self.next();
+      let tok = self.peek();
       ret = ret.loc.wrap(match tok.val {
         Token::Colon => {
+          self.skip();
           let ty = self.ty()?;
           Pat::Typed(ret.into(), ty)
         }
         Token::Ident(id, _) => {
+          self.skip();
           let rhs = self.pat()?;
           let op_info = match self.ops.get(&id) {
             Some(x) => x,
@@ -1256,10 +1319,7 @@ impl Parser {
           };
           Pat::InfixCtor(ret.into(), tok.loc.wrap(id), rhs.into())
         }
-        _ => {
-          self.back(tok);
-          break;
-        }
+        _ => break,
       });
     }
     Ok(ret)
@@ -1286,21 +1346,19 @@ impl Parser {
   }
 
   fn maybe_colon_ty(&mut self) -> Result<Option<Located<Ty<StrRef>>>> {
-    let tok = self.next();
-    if let Token::Colon = tok.val {
+    if let Token::Colon = self.peek().val {
+      self.skip();
       Ok(Some(self.ty()?))
     } else {
-      self.back(tok);
       Ok(None)
     }
   }
 
   fn maybe_as_pat(&mut self) -> Result<Option<Located<Pat<StrRef>>>> {
-    let tok = self.next();
-    if let Token::As = tok.val {
+    if let Token::As = self.peek().val {
+      self.skip();
       Ok(Some(self.pat()?))
     } else {
-      self.back(tok);
       Ok(None)
     }
   }
@@ -1310,23 +1368,26 @@ impl Parser {
   }
 
   fn ty_prec(&mut self, min_prec: TyPrec) -> Result<Located<Ty<StrRef>>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let mut ret = match tok.val {
-      Token::TyVar(tv) => Ty::TyVar(tv),
+      Token::TyVar(tv) => {
+        self.skip();
+        Ty::TyVar(tv)
+      }
       Token::LCurly => {
-        let tok = self.next();
+        self.skip();
         let mut rows = Vec::new();
-        if let Token::RCurly = tok.val {
-          //
+        if let Token::RCurly = self.peek().val {
+          self.skip();
         } else {
-          self.back(tok);
           loop {
             let lab = self.label()?;
             self.eat(Token::Colon)?;
             let ty = self.ty()?;
             rows.push(TyRow { lab, ty });
-            let tok = self.next();
+            let tok = self.peek();
+            self.skip();
             match tok.val {
               Token::RCurly => break,
               Token::Comma => continue,
@@ -1337,9 +1398,12 @@ impl Parser {
         Ty::Record(rows)
       }
       Token::LRound => {
+        self.skip();
         let mut types = Vec::new();
         loop {
           types.push(self.ty()?);
+          let tok = self.peek();
+          self.skip();
           match tok.val {
             Token::RRound => break,
             Token::Comma => continue,
@@ -1349,10 +1413,7 @@ impl Parser {
         let long_ty_con = self.maybe_long_id()?;
         match (types.len(), long_ty_con) {
           (1, None) => types.pop().unwrap().val,
-          (_, None) => {
-            let tok = self.next();
-            return self.fail("an identifier", tok);
-          }
+          (_, None) => return self.fail("an identifier", self.peek()),
           (_, Some(x)) => Ty::TyCon(types, x),
         }
       }
@@ -1360,47 +1421,43 @@ impl Parser {
         if *id == StrRef::STAR {
           return self.fail("an identifier", tok);
         }
-        self.back(tok);
         let long_ty_con = self.long_id(true)?;
         Ty::TyCon(Vec::new(), long_ty_con)
       }
       _ => return self.fail("a type", tok),
     };
     loop {
-      let tok = self.next();
+      let tok = self.peek();
       match tok.val {
         Token::Arrow => {
           if TyPrec::Arrow < min_prec {
-            self.back(tok);
             break;
           }
+          self.skip();
           let rhs = self.ty_prec(TyPrec::Arrow)?;
           ret = Ty::Arrow(loc.wrap(ret).into(), rhs.into());
         }
         Token::Ident(ref id, _) => {
           if *id == StrRef::STAR {
             if TyPrec::Star < min_prec {
-              self.back(tok);
               break;
             }
+            self.skip();
             let mut types = vec![loc.wrap(ret)];
             loop {
               types.push(self.ty_prec(TyPrec::App)?);
-              let tok = self.next();
-              if let Token::Ident(ref id, _) = tok.val {
+              if let Token::Ident(ref id, _) = self.peek().val {
                 if *id == StrRef::STAR {
+                  self.skip();
                   continue;
                 }
               }
-              self.back(tok);
               break;
             }
             ret = Ty::Tuple(types);
+          } else if TyPrec::App < min_prec {
+            unreachable!()
           } else {
-            if TyPrec::App < min_prec {
-              unreachable!()
-            }
-            self.back(tok);
             let long = self.long_id(true)?;
             ret = Ty::TyCon(vec![loc.wrap(ret)], long);
           }
@@ -1419,73 +1476,55 @@ impl Parser {
     let mut xs = Vec::new();
     while let Some(x) = one(self)? {
       xs.push(x);
-      let tok = self.next();
-      if let Token::Semicolon = tok.val {
-        continue;
+      if let Token::Semicolon = self.peek().val {
+        self.skip();
       }
-      self.back(tok);
     }
     let ret = match xs.len() {
-      0 => {
-        // NOTE we conjure up a 'fake' loc
-        let tok = self.next();
-        let loc = tok.loc;
-        self.back(tok);
-        loc.wrap(seq(Vec::new()))
-      }
+      // NOTE we conjure up a 'fake' loc in the 0 case
+      0 => self.peek().loc.wrap(seq(Vec::new())),
       1 => xs.pop().unwrap(),
       _ => xs.first().unwrap().loc.wrap(seq(xs)),
     };
     Ok(ret)
   }
 
-  fn maybe_op(&mut self) -> Result<bool> {
-    let tok = self.next();
-    if let Token::Op = tok.val {
-      Ok(true)
-    } else {
-      self.back(tok);
-      Ok(false)
-    }
-  }
-
   fn maybe_of_ty(&mut self) -> Result<Option<Located<Ty<StrRef>>>> {
-    let tok = self.next();
-    if let Token::Of = tok.val {
+    if let Token::Of = self.peek().val {
+      self.skip();
       Ok(Some(self.ty()?))
     } else {
-      self.back(tok);
       Ok(None)
     }
   }
 
   fn fixity_num(&mut self) -> Result<Located<u32>> {
-    let tok = self.next();
+    let tok = self.peek();
     let loc = tok.loc;
     let ret = if let Token::DecInt(n, _) = tok.val {
       if n < 0 {
         return Err(loc.wrap(ParseError::NegativeFixity(n)));
       }
+      self.skip();
       n.try_into().unwrap()
     } else {
-      self.back(tok);
       0
     };
     Ok(loc.wrap(ret))
   }
 
-  fn fixity_idents(&mut self) -> Result<Vec<Located<StrRef>>> {
+  fn fixity_idents(&mut self) -> Vec<Located<StrRef>> {
     let mut ret = Vec::new();
     loop {
-      let tok = self.next();
+      let tok = self.peek();
       if let Token::Ident(id, _) = tok.val {
+        self.skip();
         ret.push(tok.loc.wrap(id));
-        continue;
+      } else {
+        break;
       }
-      self.back(tok);
-      break;
     }
-    Ok(ret)
+    ret
   }
 }
 
