@@ -357,6 +357,7 @@ impl Parser {
         Spec::Structure(str_descs)
       }
       Token::Include => {
+        self.skip();
         let exp = self.sig_exp()?;
         Spec::Include(exp.into())
       }
@@ -1205,6 +1206,7 @@ impl Parser {
         Pat::LongVid(self.long_id(true)?)
       }
       Token::LCurly => {
+        self.skip();
         let mut rows = Vec::new();
         let mut rest_loc = None;
         if let Token::RCurly = self.peek().val {
@@ -1249,6 +1251,7 @@ impl Parser {
         Pat::Record(rows, rest_loc)
       }
       Token::LRound => {
+        self.skip();
         let tok = self.peek();
         let mut pats = Vec::new();
         if let Token::RRound = tok.val {
@@ -1272,6 +1275,7 @@ impl Parser {
         }
       }
       Token::LSquare => {
+        self.skip();
         let mut pats = Vec::new();
         if let Token::RSquare = self.peek().val {
           self.skip();
