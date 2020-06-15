@@ -783,8 +783,8 @@ impl Parser {
             Token::Ident(..) | Token::Equal => {
               let long = self.long_id(true)?;
               if long.structures.is_empty() {
-                match self.ops.get(&long.last.val).copied() {
-                  Some(op_info) => {
+                match self.ops.get(&long.last.val) {
+                  Some(&op_info) => {
                     if Some(op_info.num) < min_prec {
                       break;
                     }
