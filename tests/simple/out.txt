@@ -1,0 +1,176 @@
+inp.sml: [
+    StrDec(
+        Dec(
+            Seq(
+                [
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            37,
+                                        ),
+                                    },
+                                ),
+                                exp: DecInt(
+                                    123,
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            38,
+                                        ),
+                                    },
+                                ),
+                                exp: HexInt(
+                                    65278,
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            39,
+                                        ),
+                                    },
+                                ),
+                                exp: DecWord(
+                                    345,
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            40,
+                                        ),
+                                    },
+                                ),
+                                exp: HexWord(
+                                    48879,
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            41,
+                                        ),
+                                    },
+                                ),
+                                exp: List(
+                                    [
+                                        Real(
+                                            0.7,
+                                        ),
+                                        Real(
+                                            332000.0,
+                                        ),
+                                        Real(
+                                            0.0000003,
+                                        ),
+                                    ],
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            42,
+                                        ),
+                                    },
+                                ),
+                                exp: Str(
+                                    StrRef(
+                                        43,
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            44,
+                                        ),
+                                    },
+                                ),
+                                exp: Str(
+                                    StrRef(
+                                        45,
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            46,
+                                        ),
+                                    },
+                                ),
+                                exp: Char(
+                                    63,
+                                ),
+                            },
+                        ],
+                    ),
+                ],
+            ),
+        ),
+    ),
+]

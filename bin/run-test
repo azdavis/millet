@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -eu
+
+old_pwd="$PWD"
+
+for x in "$@"; do
+  cd "$x"
+  ok="true"
+  if ! sh -eu run.sh; then
+    ok="false"
+  fi
+  touch foo.tmp
+  rm *.tmp
+  if "$ok"; then
+    echo "$x: ok"
+  else
+    echo "$x: FAIL"
+  fi
+  cd "$old_pwd"
+done
