@@ -779,15 +779,20 @@ impl Parser {
           exp = exp.loc.wrap(match tok.val {
             Token::Ident(..) | Token::Equal => {
               let long = self.long_id(true)?;
-              match (long.structures.is_empty(), self.ops.get(&long.last.val)) {
-                (true, Some(op_info)) => {
-                  let rhs = self.exp()?;
-                  Exp::InfixApp(exp.into(), tok.loc.wrap(long.last.val), rhs.into())
+              if long.structures.is_empty() {
+                match self.ops.get(&long.last.val) {
+                  Some(op_info) => {
+                    let rhs = self.exp()?;
+                    Exp::InfixApp(exp.into(), tok.loc.wrap(long.last.val), rhs.into())
+                  }
+                  None => {
+                    let rhs = exp.loc.wrap(Exp::LongVid(long));
+                    Exp::App(exp.into(), rhs.into())
+                  }
                 }
-                _ => {
-                  let rhs = exp.loc.wrap(Exp::LongVid(long));
-                  Exp::App(exp.into(), rhs.into())
-                }
+              } else {
+                let rhs = exp.loc.wrap(Exp::LongVid(long));
+                Exp::App(exp.into(), rhs.into())
               }
             }
             Token::Colon => {
