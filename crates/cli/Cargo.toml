@@ -5,6 +5,10 @@ authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
 edition = "2018"
 publish = false
 
+[[bin]]
+name = "millet"
+path = "src/main.rs"
+
 [dependencies]
 clap = "2.33.1"
 codespan-reporting = "0.9.4"
