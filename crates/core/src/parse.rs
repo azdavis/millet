@@ -734,8 +734,11 @@ impl Parser {
     Ok(tok.loc.wrap(ret))
   }
 
-  // TODO prec
   fn exp(&mut self) -> Result<Located<Exp<StrRef>>> {
+    self.exp_prec(None)
+  }
+
+  fn exp_prec(&mut self, min_prec: Option<u32>) -> Result<Located<Exp<StrRef>>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -782,7 +785,14 @@ impl Parser {
               if long.structures.is_empty() {
                 match self.ops.get(&long.last.val) {
                   Some(op_info) => {
-                    let rhs = self.exp()?;
+                    if Some(op_info.num) < min_prec {
+                      break;
+                    }
+                    let new_min = match op_info.assoc {
+                      Assoc::Left => op_info.num,
+                      Assoc::Right => op_info.num - 1,
+                    };
+                    let rhs = self.exp_prec(Some(new_min))?;
                     Exp::InfixApp(exp.into(), tok.loc.wrap(long.last.val), rhs.into())
                   }
                   None => {
@@ -796,21 +806,33 @@ impl Parser {
               }
             }
             Token::Colon => {
+              if min_prec.is_some() {
+                break;
+              }
               self.skip();
               let ty = self.ty()?;
               Exp::Typed(exp.into(), ty)
             }
             Token::Andalso => {
+              if min_prec.is_some() {
+                break;
+              }
               self.skip();
               let rhs = self.exp()?;
               Exp::Andalso(exp.into(), rhs.into())
             }
             Token::Orelse => {
+              if min_prec.is_some() {
+                break;
+              }
               self.skip();
               let rhs = self.exp()?;
               Exp::Orelse(exp.into(), rhs.into())
             }
             Token::Handle => {
+              if min_prec.is_some() {
+                break;
+              }
               self.skip();
               Exp::Handle(exp.into(), self.match_()?)
             }
@@ -1615,4 +1637,13 @@ enum TyPrec {
 fn test_ty_prec() {
   assert!(TyPrec::Arrow < TyPrec::Star);
   assert!(TyPrec::Star < TyPrec::App);
+}
+
+#[test]
+fn option_compare() {
+  let none: Option<usize> = None;
+  assert!(none == none);
+  assert!(none < Some(3));
+  assert!(Some(3) == Some(3));
+  assert!(Some(3) < Some(5));
 }
