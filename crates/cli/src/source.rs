@@ -28,6 +28,10 @@ impl SourceFile {
     }
   }
 
+  pub fn name(&self) -> &str {
+    self.name.as_str()
+  }
+
   pub fn as_bytes(&self) -> &[u8] {
     self.contents.as_bytes()
   }

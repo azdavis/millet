@@ -37,11 +37,11 @@ fn run() -> bool {
     }
   }
   let store = store.finish();
-  for ((id, _), lexer) in src.iter().zip(lexers) {
+  for ((id, file), lexer) in src.iter().zip(lexers) {
     match parse::get(lexer) {
       Ok(xs) => {
         if args.show_ast {
-          writeln!(w, "parsed: {:#?}", xs).unwrap()
+          writeln!(w, "{}: {:#?}", file.name(), xs).unwrap()
         }
       }
       Err(e) => {
