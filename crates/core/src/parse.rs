@@ -783,16 +783,12 @@ impl Parser {
             Token::Ident(..) | Token::Equal => {
               let long = self.long_id(true)?;
               if long.structures.is_empty() {
-                match self.ops.get(&long.last.val) {
+                match self.ops.get(&long.last.val).copied() {
                   Some(op_info) => {
                     if Some(op_info.num) < min_prec {
                       break;
                     }
-                    let new_min = match op_info.assoc {
-                      Assoc::Left => op_info.num,
-                      Assoc::Right => op_info.num - 1,
-                    };
-                    let rhs = self.exp_prec(Some(new_min))?;
+                    let rhs = self.exp_prec(Some(op_info.min_prec()))?;
                     Exp::InfixApp(exp.into(), tok.loc.wrap(long.last.val), rhs.into())
                   }
                   None => {
@@ -1598,29 +1594,42 @@ impl Parser {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 struct OpInfo {
   num: u32,
   assoc: Assoc,
 }
 
 impl OpInfo {
+  /// Returns a new OpInfo with left associativity.
   fn left(num: u32) -> Self {
+    // we won't ever sub 1 from this in min_prec, but add 1 anyway to be consistent with `right`.
     Self {
-      num,
+      num: num + 1,
       assoc: Assoc::Left,
     }
   }
 
+  /// Returns a new OpInfo with right associativity.
   fn right(num: u32) -> Self {
+    // add one to the num so we can maybe later sub 1 in min_prec if num == 0.
     Self {
-      num,
+      num: num + 1,
       assoc: Assoc::Right,
+    }
+  }
+
+  /// Calculates the minimum precedence for this OpInfo. This is suitable to be passed to a
+  /// recursive call to a Pratt parser function.
+  fn min_prec(&self) -> u32 {
+    match self.assoc {
+      Assoc::Left => self.num,
+      Assoc::Right => self.num - 1,
     }
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 enum Assoc {
   Left,
   Right,
