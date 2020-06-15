@@ -39,7 +39,11 @@ fn run() -> bool {
   let store = store.finish();
   for ((id, _), lexer) in src.iter().zip(lexers) {
     match parse::get(lexer) {
-      Ok(xs) => writeln!(w, "parsed: {:#?}", xs).unwrap(),
+      Ok(xs) => {
+        if args.show_ast {
+          writeln!(w, "parsed: {:#?}", xs).unwrap()
+        }
+      }
       Err(e) => {
         let diag = diagnostic::new(&store, id, error::Error::Parse(e));
         term::emit(&mut w, &config, &src, &diag).unwrap();
