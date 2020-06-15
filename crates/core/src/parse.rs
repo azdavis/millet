@@ -1352,8 +1352,11 @@ impl Parser {
     }
   }
 
-  // TODO prec
   fn pat(&mut self) -> Result<Located<Pat<StrRef>>> {
+    self.pat_prec(None)
+  }
+
+  fn pat_prec(&mut self, min_prec: Option<u32>) -> Result<Located<Pat<StrRef>>> {
     let mut ret = self.at_pat()?;
     if let Pat::LongVid(long_vid) = ret.val {
       ret = ret.loc.wrap(self.pat_long_vid(ret.loc, long_vid)?);
@@ -1362,17 +1365,23 @@ impl Parser {
       let tok = self.peek();
       ret = ret.loc.wrap(match tok.val {
         Token::Colon => {
+          if min_prec.is_some() {
+            break;
+          }
           self.skip();
           let ty = self.ty()?;
           Pat::Typed(ret.into(), ty)
         }
         Token::Ident(id, _) => {
-          self.skip();
-          let rhs = self.pat()?;
           let op_info = match self.ops.get(&id) {
-            Some(x) => x,
+            Some(x) => *x,
             None => return Err(tok.loc.wrap(ParseError::NotInfix(id))),
           };
+          if Some(op_info.num) < min_prec {
+            break;
+          }
+          self.skip();
+          let rhs = self.pat_prec(Some(op_info.min_prec()))?;
           Pat::InfixCtor(ret.into(), tok.loc.wrap(id), rhs.into())
         }
         _ => break,
@@ -1392,6 +1401,12 @@ impl Parser {
         Some(as_pat) => {
           return Ok(Pat::As(long_vid.last, ty, as_pat.into()));
         }
+      }
+    }
+    if let Token::Ident(id, _) = self.peek().val {
+      if self.ops.get(&id).is_some() {
+        // fall back out to pat_prec.
+        return Ok(Pat::LongVid(long_vid));
       }
     }
     match self.maybe_at_pat()? {
