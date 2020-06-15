@@ -12,47 +12,37 @@ use std::io::Write as _;
 fn run() -> bool {
   let args = args::get();
   let config = term::Config::default();
-  let writer = StandardStream::stdout(ColorChoice::Auto);
-  let mut writer = writer.lock();
-  let mut source_map = source::SourceMap::new();
+  let w = StandardStream::stdout(ColorChoice::Auto);
+  let mut w = w.lock();
+  let mut src = source::SourceMap::new();
   let mut store = intern::StrStoreMut::new();
   for name in args.files {
     match std::fs::read_to_string(&name) {
-      Ok(s) => source_map.insert(name, s),
+      Ok(s) => src.insert(name, s),
       Err(e) => {
-        writeln!(writer, "io error: {}: {}", name, e).unwrap();
+        writeln!(w, "io error: {}: {}", name, e).unwrap();
         return false;
       }
     }
   }
-  let mut lexers = Vec::with_capacity(source_map.len());
-  for (id, file) in source_map.iter() {
+  let mut lexers = Vec::with_capacity(src.len());
+  for (id, file) in src.iter() {
     match lex::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
-        term::emit(
-          &mut writer,
-          &config,
-          &source_map,
-          &diagnostic::new(&store.finish(), id, error::Error::Lex(e)),
-        )
-        .unwrap();
+        let diag = diagnostic::new(&store.finish(), id, error::Error::Lex(e));
+        term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
     }
   }
   let store = store.finish();
-  for ((id, _), lexer) in source_map.iter().zip(lexers) {
+  for ((id, _), lexer) in src.iter().zip(lexers) {
     match parse::get(lexer) {
-      Ok(xs) => eprintln!("parsed: {:#?}", xs),
+      Ok(xs) => writeln!(w, "parsed: {:#?}", xs).unwrap(),
       Err(e) => {
-        term::emit(
-          &mut writer,
-          &config,
-          &source_map,
-          &diagnostic::new(&store, id, error::Error::Parse(e)),
-        )
-        .unwrap();
+        let diag = diagnostic::new(&store, id, error::Error::Parse(e));
+        term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
     }
@@ -61,8 +51,14 @@ fn run() -> bool {
 }
 
 fn main() {
-  if !run() {
+  let res = std::thread::Builder::new()
+    .name("run".to_owned())
+    .stack_size(10 * 1024 * 1024)
+    .spawn(run)
+    .expect("couldn't spawn run")
+    .join()
+    .expect("couldn't join run");
+  if !res {
     std::process::exit(1);
   }
-  println!("OK");
 }
