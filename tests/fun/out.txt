@@ -1,0 +1,514 @@
+inp.sml: [
+    StrDec(
+        Dec(
+            Seq(
+                [
+                    Infix(
+                        0,
+                        [
+                            StrRef(
+                                38,
+                            ),
+                        ],
+                    ),
+                    Fun(
+                        [],
+                        [
+                            FValBind {
+                                cases: [
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            38,
+                                        ),
+                                        pats: [
+                                            Tuple(
+                                                [
+                                                    LongVid(
+                                                        Long {
+                                                            structures: [],
+                                                            last: StrRef(
+                                                                39,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    LongVid(
+                                                        Long {
+                                                            structures: [],
+                                                            last: StrRef(
+                                                                40,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                        ret_ty: None,
+                                        body: Tuple(
+                                            [
+                                                LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            39,
+                                                        ),
+                                                    },
+                                                ),
+                                                LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            40,
+                                                        ),
+                                                    },
+                                                ),
+                                            ],
+                                        ),
+                                    },
+                                ],
+                            },
+                        ],
+                    ),
+                    Infix(
+                        0,
+                        [
+                            StrRef(
+                                41,
+                            ),
+                        ],
+                    ),
+                    Fun(
+                        [],
+                        [
+                            FValBind {
+                                cases: [
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            41,
+                                        ),
+                                        pats: [
+                                            Tuple(
+                                                [
+                                                    Tuple(
+                                                        [
+                                                            LongVid(
+                                                                Long {
+                                                                    structures: [],
+                                                                    last: StrRef(
+                                                                        42,
+                                                                    ),
+                                                                },
+                                                            ),
+                                                            LongVid(
+                                                                Long {
+                                                                    structures: [],
+                                                                    last: StrRef(
+                                                                        43,
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        ],
+                                                    ),
+                                                    Tuple(
+                                                        [
+                                                            LongVid(
+                                                                Long {
+                                                                    structures: [],
+                                                                    last: StrRef(
+                                                                        44,
+                                                                    ),
+                                                                },
+                                                            ),
+                                                            LongVid(
+                                                                Long {
+                                                                    structures: [],
+                                                                    last: StrRef(
+                                                                        45,
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                        ret_ty: None,
+                                        body: DecInt(
+                                            3,
+                                        ),
+                                    },
+                                ],
+                            },
+                        ],
+                    ),
+                    Infix(
+                        0,
+                        [
+                            StrRef(
+                                46,
+                            ),
+                        ],
+                    ),
+                    Fun(
+                        [],
+                        [
+                            FValBind {
+                                cases: [
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            46,
+                                        ),
+                                        pats: [
+                                            Tuple(
+                                                [
+                                                    Tuple(
+                                                        [],
+                                                    ),
+                                                    DecInt(
+                                                        4,
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                        ret_ty: None,
+                                        body: DecInt(
+                                            5,
+                                        ),
+                                    },
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            46,
+                                        ),
+                                        pats: [
+                                            Tuple(
+                                                [
+                                                    Tuple(
+                                                        [],
+                                                    ),
+                                                    Wildcard,
+                                                ],
+                                            ),
+                                        ],
+                                        ret_ty: None,
+                                        body: DecInt(
+                                            6,
+                                        ),
+                                    },
+                                ],
+                            },
+                        ],
+                    ),
+                    Infix(
+                        0,
+                        [
+                            StrRef(
+                                47,
+                            ),
+                        ],
+                    ),
+                    Fun(
+                        [
+                            TyVar {
+                                name: StrRef(
+                                    48,
+                                ),
+                                equality: false,
+                            },
+                            TyVar {
+                                name: StrRef(
+                                    49,
+                                ),
+                                equality: false,
+                            },
+                        ],
+                        [
+                            FValBind {
+                                cases: [
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            47,
+                                        ),
+                                        pats: [
+                                            Tuple(
+                                                [
+                                                    Typed(
+                                                        LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    39,
+                                                                ),
+                                                            },
+                                                        ),
+                                                        Arrow(
+                                                            TyVar(
+                                                                TyVar {
+                                                                    name: StrRef(
+                                                                        48,
+                                                                    ),
+                                                                    equality: false,
+                                                                },
+                                                            ),
+                                                            TyVar(
+                                                                TyVar {
+                                                                    name: StrRef(
+                                                                        49,
+                                                                    ),
+                                                                    equality: false,
+                                                                },
+                                                            ),
+                                                        ),
+                                                    ),
+                                                    Typed(
+                                                        List(
+                                                            [],
+                                                        ),
+                                                        TyCon(
+                                                            [
+                                                                TyVar(
+                                                                    TyVar {
+                                                                        name: StrRef(
+                                                                            48,
+                                                                        ),
+                                                                        equality: false,
+                                                                    },
+                                                                ),
+                                                            ],
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    9,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                        ret_ty: Some(
+                                            TyCon(
+                                                [
+                                                    TyVar(
+                                                        TyVar {
+                                                            name: StrRef(
+                                                                49,
+                                                            ),
+                                                            equality: false,
+                                                        },
+                                                    ),
+                                                ],
+                                                Long {
+                                                    structures: [],
+                                                    last: StrRef(
+                                                        9,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                        body: List(
+                                            [],
+                                        ),
+                                    },
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            47,
+                                        ),
+                                        pats: [
+                                            Tuple(
+                                                [
+                                                    LongVid(
+                                                        Long {
+                                                            structures: [],
+                                                            last: StrRef(
+                                                                39,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    InfixCtor(
+                                                        LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    50,
+                                                                ),
+                                                            },
+                                                        ),
+                                                        StrRef(
+                                                            16,
+                                                        ),
+                                                        LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    51,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                        ret_ty: None,
+                                        body: InfixApp(
+                                            App(
+                                                LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            39,
+                                                        ),
+                                                    },
+                                                ),
+                                                LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            50,
+                                                        ),
+                                                    },
+                                                ),
+                                            ),
+                                            StrRef(
+                                                16,
+                                            ),
+                                            InfixApp(
+                                                LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            39,
+                                                        ),
+                                                    },
+                                                ),
+                                                StrRef(
+                                                    47,
+                                                ),
+                                                LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            51,
+                                                        ),
+                                                    },
+                                                ),
+                                            ),
+                                        ),
+                                    },
+                                ],
+                            },
+                        ],
+                    ),
+                    Fun(
+                        [],
+                        [
+                            FValBind {
+                                cases: [
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            52,
+                                        ),
+                                        pats: [
+                                            LongVid(
+                                                Long {
+                                                    structures: [],
+                                                    last: StrRef(
+                                                        50,
+                                                    ),
+                                                },
+                                            ),
+                                        ],
+                                        ret_ty: None,
+                                        body: InfixApp(
+                                            LongVid(
+                                                Long {
+                                                    structures: [],
+                                                    last: StrRef(
+                                                        50,
+                                                    ),
+                                                },
+                                            ),
+                                            StrRef(
+                                                17,
+                                            ),
+                                            DecInt(
+                                                1,
+                                            ),
+                                        ),
+                                    },
+                                ],
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: Wildcard,
+                                exp: InfixApp(
+                                    LongVid(
+                                        Long {
+                                            structures: [],
+                                            last: StrRef(
+                                                52,
+                                            ),
+                                        },
+                                    ),
+                                    StrRef(
+                                        47,
+                                    ),
+                                    List(
+                                        [
+                                            DecInt(
+                                                1,
+                                            ),
+                                            DecInt(
+                                                2,
+                                            ),
+                                            DecInt(
+                                                3,
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Infix(
+                        0,
+                        [
+                            StrRef(
+                                53,
+                            ),
+                        ],
+                    ),
+                    Fun(
+                        [],
+                        [
+                            FValBind {
+                                cases: [
+                                    FValBindCase {
+                                        vid: StrRef(
+                                            53,
+                                        ),
+                                        pats: [
+                                            Tuple(
+                                                [
+                                                    Wildcard,
+                                                    Wildcard,
+                                                ],
+                                            ),
+                                        ],
+                                        ret_ty: None,
+                                        body: DecInt(
+                                            123,
+                                        ),
+                                    },
+                                ],
+                            },
+                        ],
+                    ),
+                ],
+            ),
+        ),
+    ),
+]
