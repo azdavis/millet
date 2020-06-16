@@ -2,8 +2,11 @@
 
 set -eu
 
-old_pwd="$PWD"
+if [ "$#" -eq 0 ]; then
+  echo "usage: $0 <path>..."
+fi
 
+old_pwd="$PWD"
 for x in "$@"; do
   cd "$x"
   ok="true"
