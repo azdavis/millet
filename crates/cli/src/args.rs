@@ -1,35 +1,17 @@
 //! Command-line arguments.
 
-use clap::{App, Arg, ArgMatches};
+use gumdrop::Options;
 
 pub fn get() -> Args {
-  get_impl(app().get_matches())
+  Args::parse_args_default_or_exit()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Options)]
 pub struct Args {
+  #[options(free, help = "Source file(s)")]
   pub files: Vec<String>,
+  #[options(help = "Just show AST")]
   pub show_ast: bool,
-}
-
-fn app() -> App<'static, 'static> {
-  App::new("millet")
-    .version(clap::crate_version!())
-    .about("An implementation of Standard ML")
-    .arg(
-      Arg::with_name("show-ast")
-        .help("Just show AST")
-        .long("show-ast"),
-    )
-    .arg(Arg::with_name("file").help("Source file").multiple(true))
-}
-
-fn get_impl(matches: ArgMatches<'static>) -> Args {
-  Args {
-    files: match matches.values_of("file") {
-      None => vec![],
-      Some(fs) => fs.map(ToOwned::to_owned).collect(),
-    },
-    show_ast: matches.is_present("show-ast"),
-  }
+  #[options(help = "Show this help")]
+  pub help: bool,
 }
