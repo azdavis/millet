@@ -23,7 +23,7 @@ pub enum Exp<I> {
   List(Vec<Located<Exp<I>>>),
   /// requires vec.len() >= 2
   Sequence(Vec<Located<Exp<I>>>),
-  /// requires vec.len != 0
+  /// requires !vec.is_empty()
   Let(Located<Dec<I>>, Vec<Located<Exp<I>>>),
   App(Box<Located<Exp<I>>>, Box<Located<Exp<I>>>),
   InfixApp(Box<Located<Exp<I>>>, Located<I>, Box<Located<Exp<I>>>),
