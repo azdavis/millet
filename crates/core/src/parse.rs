@@ -641,10 +641,10 @@ impl Parser {
   fn ident(&mut self) -> Result<Located<StrRef>> {
     let tok = self.peek();
     self.skip();
-    match tok.val {
-      Token::Ident(id, _) => Ok(tok.loc.wrap(id)),
-      Token::Equal => Ok(tok.loc.wrap(StrRef::EQ)),
-      _ => self.fail("an identifier", tok),
+    if let Token::Ident(id, _) = tok.val {
+      Ok(tok.loc.wrap(id))
+    } else {
+      self.fail("an identifier", tok)
     }
   }
 
