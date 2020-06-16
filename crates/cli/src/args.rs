@@ -8,7 +8,7 @@ pub fn get() -> Args {
 
 #[derive(Debug, Options)]
 pub struct Args {
-  #[options(free, help = "Source file(s)")]
+  #[options(free, help = "Source files")]
   pub files: Vec<String>,
   #[options(help = "Show this help")]
   pub help: bool,
