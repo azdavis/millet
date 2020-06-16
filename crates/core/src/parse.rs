@@ -903,41 +903,40 @@ impl Parser {
       }
       Token::Fun => {
         // have to contort the case for seeing an initial `(` after the `fun` because it could be
-        // the beginning of a ty var seq OR the wrapping of an infix fval bind case head.
+        // the beginning of a ty var seq OR the wrapping of an infix fval bind case head OR the
+        // beginning of an at_pat.
         self.skip();
         let tok = self.peek();
-        let (ty_vars, fst_case) = if let Token::LRound = tok.val {
-          self.skip();
-          match self.maybe_at_pat()? {
-            None => (self.ty_var_seq_inner()?, self.fval_bind_case()?),
-            Some(fst) => {
-              // copied from fval_bind_case
-              let vid = self.ident()?;
-              if !self.ops.contains_key(&vid.val) {
-                return Err(vid.loc.wrap(ParseError::NotInfix(vid.val)));
-              }
-              let snd = self.at_pat()?;
-              self.eat(Token::RRound)?;
-              let pat = fst.loc.wrap(Pat::Tuple(vec![fst, snd]));
-              (Vec::new(), self.fval_bind_case_inner(vid, pat)?)
+        let ty_vars = match tok.val {
+          Token::TyVar(tv) => {
+            self.skip();
+            vec![tok.loc.wrap(tv)]
+          }
+          Token::LRound => {
+            self.skip();
+            let has_seq = matches!(self.peek().val, Token::TyVar(..));
+            self.i -= 1;
+            if has_seq {
+              self.ty_var_seq()?
+            } else {
+              Vec::new()
             }
           }
-        } else {
-          (self.ty_var_seq()?, self.fval_bind_case()?)
+          _ => Vec::new(),
         };
-        let mut cases = vec![fst_case];
+        let mut cases = Vec::new();
         let mut binds = Vec::new();
         loop {
+          cases.push(self.fval_bind_case()?);
           let tok = self.peek();
           if let Token::Bar = tok.val {
             self.skip();
-            cases.push(self.fval_bind_case()?);
             continue;
           }
           binds.push(FValBind { cases });
           if let Token::And = tok.val {
             self.skip();
-            cases = vec![self.fval_bind_case()?];
+            cases = Vec::new();
             continue;
           }
           break;
@@ -1091,26 +1090,6 @@ impl Parser {
     self.semicolon_seq(Self::maybe_dec, Dec::Seq)
   }
 
-  fn fval_bind_case_inner(
-    &mut self,
-    vid: Located<StrRef>,
-    pat: Located<Pat<StrRef>>,
-  ) -> Result<FValBindCase<StrRef>> {
-    let mut pats = vec![pat];
-    while let Some(pat) = self.maybe_at_pat()? {
-      pats.push(pat);
-    }
-    let ret_ty = self.maybe_colon_ty()?;
-    self.eat(Token::Equal)?;
-    let body = self.exp()?;
-    Ok(FValBindCase {
-      vid,
-      pats,
-      ret_ty,
-      body,
-    })
-  }
-
   // NOTE this is not compliant with the spec (page 78): "the parentheses may also be dropped if `:
   // ty` or `=` follows immediately." I can't figure out a way to be both spec compliant and also
   // not require unbounded lookahead. also note there is already nastiness with `fun (`, see the Fun
@@ -1138,7 +1117,19 @@ impl Parser {
       }
       _ => return self.fail("`op`, `(`, or an identifier", tok),
     };
-    self.fval_bind_case_inner(vid, pat)
+    let mut pats = vec![pat];
+    while let Some(pat) = self.maybe_at_pat()? {
+      pats.push(pat);
+    }
+    let ret_ty = self.maybe_colon_ty()?;
+    self.eat(Token::Equal)?;
+    let body = self.exp()?;
+    Ok(FValBindCase {
+      vid,
+      pats,
+      ret_ty,
+      body,
+    })
   }
 
   fn ty_binds(&mut self) -> Result<Vec<TyBind<StrRef>>> {
@@ -1192,27 +1183,6 @@ impl Parser {
     })
   }
 
-  fn ty_var_seq_inner(&mut self) -> Result<Vec<Located<TyVar<StrRef>>>> {
-    let mut ret = Vec::new();
-    loop {
-      let tok = self.peek();
-      if let Token::TyVar(ty_var) = tok.val {
-        self.skip();
-        ret.push(tok.loc.wrap(ty_var));
-      } else {
-        return self.fail("a type variable", tok);
-      }
-      let tok = self.peek();
-      self.skip();
-      match tok.val {
-        Token::RRound => break,
-        Token::Comma => continue,
-        _ => return self.fail("`)` or `,`", tok),
-      }
-    }
-    Ok(ret)
-  }
-
   fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<StrRef>>>> {
     let tok = self.peek();
     match tok.val {
@@ -1222,7 +1192,24 @@ impl Parser {
       }
       Token::LRound => {
         self.skip();
-        self.ty_var_seq_inner()
+        let mut ret = Vec::new();
+        loop {
+          let tok = self.peek();
+          if let Token::TyVar(ty_var) = tok.val {
+            self.skip();
+            ret.push(tok.loc.wrap(ty_var));
+          } else {
+            return self.fail("a type variable", tok);
+          }
+          let tok = self.peek();
+          self.skip();
+          match tok.val {
+            Token::RRound => break,
+            Token::Comma => continue,
+            _ => return self.fail("`)` or `,`", tok),
+          }
+        }
+        Ok(ret)
       }
       _ => Ok(Vec::new()),
     }
