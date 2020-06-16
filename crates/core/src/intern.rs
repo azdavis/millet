@@ -47,6 +47,7 @@ impl StrRef {
   pub const EQ: StrRef = StrRef(34);
   pub const ASSIGN: StrRef = StrRef(35);
   pub const MOD: StrRef = StrRef(36);
+  pub const EXN: StrRef = StrRef(37);
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
@@ -96,6 +97,7 @@ impl StrStoreMut {
       "=".to_owned() => StrRef::EQ,
       ":=".to_owned() => StrRef::ASSIGN,
       "mod".to_owned() => StrRef::MOD,
+      "exn".to_owned() => StrRef::EXN,
     };
     Self {
       next: store.len(),
