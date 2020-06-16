@@ -688,7 +688,7 @@ impl Parser {
         self.fail("an identifier", self.peek())
       };
     }
-    let last = structures.pop().unwrap();
+    let last = structures.pop().expect("empty structures list");
     Ok(Some(Long { structures, last }))
   }
 
@@ -719,7 +719,7 @@ impl Parser {
       }
       return self.fail("an identifier", self.peek());
     }
-    let last = structures.pop().unwrap();
+    let last = structures.pop().expect("empty structures list");
     Ok(Long { structures, last })
   }
 
@@ -727,7 +727,9 @@ impl Parser {
     let tok = self.peek();
     self.skip();
     let ret = match tok.val {
-      Token::DecInt(n, IsNumLab::Maybe) => Label::Num(n.try_into().unwrap()),
+      Token::DecInt(n, IsNumLab::Maybe) => {
+        Label::Num(n.try_into().expect("couldn't convert a number"))
+      }
       Token::Ident(id, _) => Label::Vid(id),
       _ => return self.fail("a label", tok),
     };
@@ -1315,7 +1317,7 @@ impl Parser {
           }
         }
         if pats.len() == 1 {
-          pats.pop().unwrap().val
+          pats.pop().expect("empty patterns list").val
         } else {
           Pat::Tuple(pats)
         }
@@ -1482,7 +1484,7 @@ impl Parser {
         }
         let long_ty_con = self.maybe_long_id()?;
         match (types.len(), long_ty_con) {
-          (1, None) => types.pop().unwrap().val,
+          (1, None) => types.pop().expect("empty types list").val,
           (_, None) => return self.fail("an identifier", self.peek()),
           (_, Some(x)) => Ty::TyCon(types, x),
         }
@@ -1555,8 +1557,8 @@ impl Parser {
     let ret = match xs.len() {
       // NOTE we conjure up a 'fake' loc in the 0 case
       0 => self.peek().loc.wrap(seq(Vec::new())),
-      1 => xs.pop().unwrap(),
-      _ => xs.first().unwrap().loc.wrap(seq(xs)),
+      1 => xs.pop().expect("empty list"),
+      _ => xs.first().expect("empty list").loc.wrap(seq(xs)),
     };
     Ok(ret)
   }
@@ -1578,7 +1580,7 @@ impl Parser {
         return Err(loc.wrap(ParseError::NegativeFixity(n)));
       }
       self.skip();
-      n.try_into().unwrap()
+      n.try_into().expect("couldn't convert number")
     } else {
       0
     };

@@ -20,7 +20,7 @@ fn run() -> bool {
     match std::fs::read_to_string(&name) {
       Ok(s) => src.insert(name, s),
       Err(e) => {
-        writeln!(w, "io error: {}: {}", name, e).unwrap();
+        writeln!(w, "io error: {}: {}", name, e).expect("couldn't output");
         return false;
       }
     }
@@ -31,7 +31,7 @@ fn run() -> bool {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
         let diag = diagnostic::new(&store.finish(), id, error::Error::Lex(e));
-        term::emit(&mut w, &config, &src, &diag).unwrap();
+        term::emit(&mut w, &config, &src, &diag).expect("couldn't output");
         return false;
       }
     }
@@ -41,12 +41,12 @@ fn run() -> bool {
     match parse::get(lexer) {
       Ok(xs) => {
         if args.show_ast {
-          writeln!(w, "{}: {:#?}", file.name(), xs).unwrap()
+          writeln!(w, "{}: {:#?}", file.name(), xs).expect("couldn't output")
         }
       }
       Err(e) => {
         let diag = diagnostic::new(&store, id, error::Error::Parse(e));
-        term::emit(&mut w, &config, &src, &diag).unwrap();
+        term::emit(&mut w, &config, &src, &diag).expect("couldn't output");
         return false;
       }
     }

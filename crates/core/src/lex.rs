@@ -67,7 +67,7 @@ impl<'s> TokenMaker<'s> {
   }
 
   fn mk_str_ref(&mut self, bs: &[u8]) -> StrRef {
-    let s = std::str::from_utf8(bs).unwrap();
+    let s = std::str::from_utf8(bs).expect("couldn't convert to utf-8");
     self.store.insert_str(s)
   }
 
@@ -276,13 +276,14 @@ impl<'s> TokenMaker<'s> {
             self.i += 1;
             return if is_char {
               if str_bs.len() == 1 {
-                let b = str_bs.pop().unwrap();
+                let b = str_bs.pop().expect("empty string");
                 Ok(Token::Char(b))
               } else {
                 Err(LexError::InvalidCharConstant)
               }
             } else {
-              let str_ref = self.store.insert_string(String::from_utf8(str_bs).unwrap());
+              let string = String::from_utf8(str_bs).expect("couldn't convert to utf-8");
+              let str_ref = self.store.insert_string(string);
               Ok(Token::Str(str_ref))
             };
           }
@@ -411,7 +412,7 @@ impl<'s> TokenMaker<'s> {
     if start == self.i {
       return Err(LexError::IncompleteNumConstant);
     }
-    let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
+    let n = std::str::from_utf8(&self.bs[start..self.i]).expect("couldn't convert to utf-8");
     let n = i32::from_str_radix(n, 10)?;
     Ok(n)
   }
@@ -429,7 +430,7 @@ impl<'s> TokenMaker<'s> {
     if start == self.i {
       return Err(LexError::IncompleteNumConstant);
     }
-    let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
+    let n = std::str::from_utf8(&self.bs[start..self.i]).expect("couldn't convert to utf-8");
     let n: f64 = n.parse()?;
     Ok(n)
   }
@@ -445,7 +446,7 @@ impl<'s> TokenMaker<'s> {
     if start == self.i {
       return Err(LexError::IncompleteNumConstant);
     }
-    let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
+    let n = std::str::from_utf8(&self.bs[start..self.i]).expect("couldn't convert to utf-8");
     let n = i32::from_str_radix(n, 16)?;
     Ok(n)
   }
