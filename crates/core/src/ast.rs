@@ -54,7 +54,7 @@ pub struct Row<I> {
   pub exp: Located<Exp<I>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Label {
   Vid(StrRef),
   Num(u32),
