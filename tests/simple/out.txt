@@ -12,7 +12,7 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            37,
+                                            38,
                                         ),
                                     },
                                 ),
@@ -31,7 +31,7 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            38,
+                                            39,
                                         ),
                                     },
                                 ),
@@ -50,7 +50,7 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            39,
+                                            40,
                                         ),
                                     },
                                 ),
@@ -69,7 +69,7 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            40,
+                                            41,
                                         ),
                                     },
                                 ),
@@ -88,7 +88,7 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            41,
+                                            42,
                                         ),
                                     },
                                 ),
@@ -117,13 +117,13 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            42,
+                                            43,
                                         ),
                                     },
                                 ),
                                 exp: Str(
                                     StrRef(
-                                        43,
+                                        44,
                                     ),
                                 ),
                             },
@@ -138,13 +138,13 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            44,
+                                            45,
                                         ),
                                     },
                                 ),
                                 exp: Str(
                                     StrRef(
-                                        45,
+                                        46,
                                     ),
                                 ),
                             },
@@ -159,7 +159,7 @@ inp.sml: [
                                     Long {
                                         structures: [],
                                         last: StrRef(
-                                            46,
+                                            47,
                                         ),
                                     },
                                 ),

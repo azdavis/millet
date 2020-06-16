@@ -1,2 +1,2 @@
-cargo run -- --show-ast inp.sml >out.tmp 2>/dev/null
+cargo run -- --show-ast inp.sml >out.tmp
 diff out.txt out.tmp
