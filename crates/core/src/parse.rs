@@ -1100,14 +1100,9 @@ impl Parser {
     let (vid, pat) = match tok.val {
       Token::Op => (self.ident()?, self.at_pat()?),
       Token::LRound => {
-        let fst = self.at_pat()?;
-        let vid = self.ident()?;
-        if !self.ops.contains_key(&vid.val) {
-          return Err(vid.loc.wrap(ParseError::NotInfix(vid.val)));
-        }
-        let snd = self.at_pat()?;
+        let x = self.fval_bind_case_no_parens()?;
         self.eat(Token::RRound)?;
-        (vid, fst.loc.wrap(Pat::Tuple(vec![fst, snd])))
+        x
       }
       Token::Ident(vid, _) => {
         if self.ops.contains_key(&vid) {
@@ -1130,6 +1125,16 @@ impl Parser {
       ret_ty,
       body,
     })
+  }
+
+  fn fval_bind_case_no_parens(&mut self) -> Result<(Located<StrRef>, Located<Pat<StrRef>>)> {
+    let fst = self.at_pat()?;
+    let vid = self.ident()?;
+    if !self.ops.contains_key(&vid.val) {
+      return Err(vid.loc.wrap(ParseError::NotInfix(vid.val)));
+    }
+    let snd = self.at_pat()?;
+    Ok((vid, fst.loc.wrap(Pat::Tuple(vec![fst, snd]))))
   }
 
   fn ty_binds(&mut self) -> Result<Vec<TyBind<StrRef>>> {
