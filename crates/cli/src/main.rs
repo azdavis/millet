@@ -55,14 +55,14 @@ fn run() -> bool {
 }
 
 fn main() {
-  let res = std::thread::Builder::new()
+  match std::thread::Builder::new()
     .name("run".to_owned())
     .stack_size(10 * 1024 * 1024)
     .spawn(run)
     .expect("couldn't spawn run")
     .join()
-    .expect("couldn't join run");
-  if !res {
-    std::process::exit(1);
+  {
+    Err(_) | Ok(false) => std::process::exit(1),
+    Ok(true) => {}
   }
 }
