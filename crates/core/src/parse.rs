@@ -1095,27 +1095,32 @@ impl Parser {
   // not require unbounded lookahead. also note there is already nastiness with `fun (`, see the Fun
   // case for maybe_dec.
   fn fval_bind_case(&mut self) -> Result<FValBindCase<StrRef>> {
-    let tok = self.peek();
-    self.skip();
-    let (vid, pat) = match tok.val {
-      Token::Op => (self.ident()?, self.at_pat()?),
-      Token::LRound => {
-        let x = self.fval_bind_case_no_parens()?;
-        self.eat(Token::RRound)?;
-        x
-      }
-      Token::Ident(vid, _) => {
-        if self.ops.contains_key(&vid) {
-          return Err(tok.loc.wrap(ParseError::InfixWithoutOp(vid)));
+    let (vid, pats) = if 1 == 2 {
+      todo!()
+    } else {
+      let tok = self.peek();
+      self.skip();
+      let (vid, pat) = match tok.val {
+        Token::Op => (self.ident()?, self.at_pat()?),
+        Token::LRound => {
+          let x = self.fval_bind_case_no_parens()?;
+          self.eat(Token::RRound)?;
+          x
         }
-        (tok.loc.wrap(vid), self.at_pat()?)
+        Token::Ident(vid, _) => {
+          if self.ops.contains_key(&vid) {
+            return Err(tok.loc.wrap(ParseError::InfixWithoutOp(vid)));
+          }
+          (tok.loc.wrap(vid), self.at_pat()?)
+        }
+        _ => return self.fail("`op`, `(`, or an identifier", tok),
+      };
+      let mut pats = vec![pat];
+      while let Some(pat) = self.maybe_at_pat()? {
+        pats.push(pat);
       }
-      _ => return self.fail("`op`, `(`, or an identifier", tok),
+      (vid, pats)
     };
-    let mut pats = vec![pat];
-    while let Some(pat) = self.maybe_at_pat()? {
-      pats.push(pat);
-    }
     let ret_ty = self.maybe_colon_ty()?;
     self.eat(Token::Equal)?;
     let body = self.exp()?;
