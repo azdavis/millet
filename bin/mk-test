@@ -11,7 +11,7 @@ for x in "$@"; do
   mkdir "$x"
   cd "$x"
   touch run.sh inp.sml out.txt
-  echo "cargo run -- inp.sml >out.tmp" >> run.sh
+  echo "cargo run --quiet -- inp.sml >out.tmp" >> run.sh
   echo "diff out.txt out.tmp" >> run.sh
   cd "$old_pwd"
 done
