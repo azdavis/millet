@@ -9,13 +9,9 @@ fi
 old_pwd="$PWD"
 for x in "$@"; do
   cd "$x"
-  ok="true"
-  if ! sh -eu run.sh; then
-    ok="false"
-  fi
-  touch foo.tmp
-  rm *.tmp
-  if "$ok"; then
+  if sh -eu run.sh; then
+    touch foo.tmp
+    rm *.tmp
     echo "$x: ok"
   else
     echo "$x: FAIL"
