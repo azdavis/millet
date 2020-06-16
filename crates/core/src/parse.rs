@@ -783,24 +783,36 @@ impl Parser {
           let tok = self.peek();
           exp = exp.loc.wrap(match tok.val {
             Token::Ident(..) | Token::Equal => {
-              let long = self.long_id(true)?;
-              if long.structures.is_empty() {
-                match self.ops.get(&long.last.val) {
+              let id = match tok.val {
+                Token::Ident(id, _) => id,
+                Token::Equal => StrRef::EQ,
+                _ => unreachable!(),
+              };
+              self.skip();
+              if self.peek().val == Token::Dot {
+                self.i -= 1;
+                let long = self.long_id(true)?;
+                let rhs = exp.loc.wrap(Exp::LongVid(long));
+                Exp::App(exp.into(), rhs.into())
+              } else {
+                match self.ops.get(&id) {
                   Some(&op_info) => {
-                    if Some(op_info.num) < min_prec {
+                    if Some(op_info.num) <= min_prec {
+                      self.i -= 1;
                       break;
                     }
                     let rhs = self.exp_prec(Some(op_info.min_prec()))?;
-                    Exp::InfixApp(exp.into(), tok.loc.wrap(long.last.val), rhs.into())
+                    Exp::InfixApp(exp.into(), tok.loc.wrap(id), rhs.into())
                   }
                   None => {
-                    let rhs = exp.loc.wrap(Exp::LongVid(long));
+                    // not a LongVid because we just saw not Dot after this.
+                    let rhs = exp.loc.wrap(Exp::LongVid(Long {
+                      structures: Vec::new(),
+                      last: tok.loc.wrap(id),
+                    }));
                     Exp::App(exp.into(), rhs.into())
                   }
                 }
-              } else {
-                let rhs = exp.loc.wrap(Exp::LongVid(long));
-                Exp::App(exp.into(), rhs.into())
               }
             }
             Token::Colon => {
@@ -1379,7 +1391,7 @@ impl Parser {
             Some(x) => *x,
             None => return Err(tok.loc.wrap(ParseError::NotInfix(id))),
           };
-          if Some(op_info.num) < min_prec {
+          if Some(op_info.num) <= min_prec {
             break;
           }
           self.skip();
@@ -1507,7 +1519,7 @@ impl Parser {
           }
           let lhs = self.wrap(begin, ret);
           self.skip();
-          let rhs = self.ty_prec(TyPrec::Arrow)?;
+          let rhs = self.ty_prec(TyPrec::Star)?;
           ret = Ty::Arrow(lhs.into(), rhs.into());
         }
         Token::Ident(ref id, _) => {
@@ -1528,8 +1540,6 @@ impl Parser {
               break;
             }
             ret = Ty::Tuple(types);
-          } else if TyPrec::App < min_prec {
-            unreachable!()
           } else {
             let lhs = self.wrap(begin, ret);
             let long = self.long_id(true)?;
