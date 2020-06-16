@@ -1,9 +1,9 @@
 //! Parsing.
 
 use crate::ast::{
-  Arm, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind,
-  FValBindCase, FunBind, Label, Long, Match, Pat, PatRow, Row, SigBind, SigExp, Spec, StrBind,
-  StrDec, StrDesc, StrExp, TopDec, Ty, TyBind, TyDesc, TyRow, ValBind, ValDesc,
+  Arm, Cases, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind,
+  FValBindCase, FunBind, Label, Long, Pat, PatRow, Row, SigBind, SigExp, Spec, StrBind, StrDec,
+  StrDesc, StrExp, TopDec, Ty, TyBind, TyDesc, TyRow, ValBind, ValDesc,
 };
 use crate::intern::StrRef;
 use crate::lex::Lexer;
@@ -767,13 +767,13 @@ impl Parser {
         self.skip();
         let e_head = self.exp()?;
         self.eat(Token::Of)?;
-        let match_ = self.match_()?;
-        Exp::Case(e_head.into(), match_)
+        let cases = self.cases()?;
+        Exp::Case(e_head.into(), cases)
       }
       Token::Fn => {
         self.skip();
-        let match_ = self.match_()?;
-        Exp::Fn(match_)
+        let cases = self.cases()?;
+        Exp::Fn(cases)
       }
       _ => {
         let mut exp = self.at_exp()?;
@@ -830,7 +830,7 @@ impl Parser {
                 break;
               }
               self.skip();
-              Exp::Handle(exp.into(), self.match_()?)
+              Exp::Handle(exp.into(), self.cases()?)
             }
             _ => match self.maybe_at_exp()? {
               Some(rhs) => Exp::App(exp.into(), rhs.into()),
@@ -844,7 +844,7 @@ impl Parser {
     Ok(self.wrap(begin, ret))
   }
 
-  fn match_(&mut self) -> Result<Match<StrRef>> {
+  fn cases(&mut self) -> Result<Cases<StrRef>> {
     let mut arms = Vec::new();
     loop {
       let pat = self.pat()?;
@@ -857,7 +857,7 @@ impl Parser {
         break;
       }
     }
-    Ok(Match { arms })
+    Ok(Cases { arms })
   }
 
   fn maybe_dec(&mut self) -> Result<Option<Located<Dec<StrRef>>>> {

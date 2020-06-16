@@ -30,7 +30,7 @@ pub enum Exp<I> {
   Typed(Box<Located<Exp<I>>>, Located<Ty<I>>),
   Andalso(Box<Located<Exp<I>>>, Box<Located<Exp<I>>>),
   Orelse(Box<Located<Exp<I>>>, Box<Located<Exp<I>>>),
-  Handle(Box<Located<Exp<I>>>, Match<I>),
+  Handle(Box<Located<Exp<I>>>, Cases<I>),
   Raise(Box<Located<Exp<I>>>),
   If(
     Box<Located<Exp<I>>>,
@@ -38,8 +38,8 @@ pub enum Exp<I> {
     Box<Located<Exp<I>>>,
   ),
   While(Box<Located<Exp<I>>>, Box<Located<Exp<I>>>),
-  Case(Box<Located<Exp<I>>>, Match<I>),
-  Fn(Match<I>),
+  Case(Box<Located<Exp<I>>>, Cases<I>),
+  Fn(Cases<I>),
 }
 
 #[derive(Debug)]
@@ -60,8 +60,9 @@ pub enum Label {
   Num(u32),
 }
 
+/// called a 'match' in the Definition. we call it 'cases' to avoid conflicts with the Rust keyword.
 #[derive(Debug)]
-pub struct Match<I> {
+pub struct Cases<I> {
   /// requires !arms.is_empty()
   pub arms: Vec<Arm<I>>,
 }
