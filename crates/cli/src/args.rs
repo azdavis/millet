@@ -10,8 +10,8 @@ pub fn get() -> Args {
 pub struct Args {
   #[options(free, help = "Source file(s)")]
   pub files: Vec<String>,
-  #[options(help = "Just show AST")]
-  pub show_ast: bool,
   #[options(help = "Show this help")]
   pub help: bool,
+  #[options(help = "Show AST")]
+  pub show_ast: bool,
 }
