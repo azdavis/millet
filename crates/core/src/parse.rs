@@ -1095,9 +1095,12 @@ impl Parser {
   // not require unbounded lookahead. also note there is already nastiness with `fun (`, see the Fun
   // case for maybe_dec.
   fn fval_bind_case(&mut self) -> Result<FValBindCase<StrRef>> {
-    let (vid, pats) = if 1 == 2 {
-      todo!()
+    let cur = self.i;
+    let (vid, pats) = if let Ok((vid, pat)) = self.fval_bind_case_no_parens() {
+      (vid, vec![pat])
     } else {
+      // NOTE unbounded backtrack
+      self.i = cur;
       let tok = self.peek();
       self.skip();
       let (vid, pat) = match tok.val {
