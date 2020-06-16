@@ -4,6 +4,7 @@ set -eu
 
 if [ "$#" -eq 0 ]; then
   echo "usage: $0 <path>..."
+  exit 1
 fi
 
 old_pwd="$PWD"
