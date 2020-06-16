@@ -1,0 +1,393 @@
+inp.sml: [
+    StrDec(
+        Dec(
+            Seq(
+                [
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(
+                                    38,
+                                ),
+                                ty: Arrow(
+                                    Arrow(
+                                        Tuple(
+                                            [
+                                                TyCon(
+                                                    [
+                                                        TyCon(
+                                                            [
+                                                                TyCon(
+                                                                    [],
+                                                                    Long {
+                                                                        structures: [],
+                                                                        last: StrRef(
+                                                                            3,
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                            ],
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    9,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ],
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            8,
+                                                        ),
+                                                    },
+                                                ),
+                                                TyCon(
+                                                    [
+                                                        TyCon(
+                                                            [],
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    3,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ],
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            10,
+                                                        ),
+                                                    },
+                                                ),
+                                            ],
+                                        ),
+                                        Tuple(
+                                            [
+                                                TyCon(
+                                                    [],
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            3,
+                                                        ),
+                                                    },
+                                                ),
+                                                TyCon(
+                                                    [],
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            2,
+                                                        ),
+                                                    },
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    TyCon(
+                                        [
+                                            TyCon(
+                                                [],
+                                                Long {
+                                                    structures: [],
+                                                    last: StrRef(
+                                                        3,
+                                                    ),
+                                                },
+                                            ),
+                                        ],
+                                        Long {
+                                            structures: [],
+                                            last: StrRef(
+                                                9,
+                                            ),
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            39,
+                                        ),
+                                    },
+                                ),
+                                exp: InfixApp(
+                                    InfixApp(
+                                        InfixApp(
+                                            InfixApp(
+                                                InfixApp(
+                                                    DecInt(
+                                                        1,
+                                                    ),
+                                                    StrRef(
+                                                        17,
+                                                    ),
+                                                    DecInt(
+                                                        2,
+                                                    ),
+                                                ),
+                                                StrRef(
+                                                    17,
+                                                ),
+                                                DecInt(
+                                                    3,
+                                                ),
+                                            ),
+                                            StrRef(
+                                                17,
+                                            ),
+                                            InfixApp(
+                                                InfixApp(
+                                                    InfixApp(
+                                                        DecInt(
+                                                            4,
+                                                        ),
+                                                        StrRef(
+                                                            0,
+                                                        ),
+                                                        DecInt(
+                                                            5,
+                                                        ),
+                                                    ),
+                                                    StrRef(
+                                                        0,
+                                                    ),
+                                                    DecInt(
+                                                        6,
+                                                    ),
+                                                ),
+                                                StrRef(
+                                                    0,
+                                                ),
+                                                DecInt(
+                                                    7,
+                                                ),
+                                            ),
+                                        ),
+                                        StrRef(
+                                            17,
+                                        ),
+                                        DecInt(
+                                            8,
+                                        ),
+                                    ),
+                                    StrRef(
+                                        17,
+                                    ),
+                                    DecInt(
+                                        9,
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: LongVid(
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(
+                                            40,
+                                        ),
+                                    },
+                                ),
+                                exp: InfixApp(
+                                    InfixApp(
+                                        DecInt(
+                                            1,
+                                        ),
+                                        StrRef(
+                                            17,
+                                        ),
+                                        DecInt(
+                                            2,
+                                        ),
+                                    ),
+                                    StrRef(
+                                        16,
+                                    ),
+                                    InfixApp(
+                                        InfixApp(
+                                            DecInt(
+                                                3,
+                                            ),
+                                            StrRef(
+                                                0,
+                                            ),
+                                            DecInt(
+                                                4,
+                                            ),
+                                        ),
+                                        StrRef(
+                                            16,
+                                        ),
+                                        InfixApp(
+                                            InfixApp(
+                                                DecInt(
+                                                    5,
+                                                ),
+                                                StrRef(
+                                                    23,
+                                                ),
+                                                DecInt(
+                                                    6,
+                                                ),
+                                            ),
+                                            StrRef(
+                                                16,
+                                            ),
+                                            LongVid(
+                                                Long {
+                                                    structures: [],
+                                                    last: StrRef(
+                                                        15,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: Wildcard,
+                                exp: Case(
+                                    LongVid(
+                                        Long {
+                                            structures: [],
+                                            last: StrRef(
+                                                40,
+                                            ),
+                                        },
+                                    ),
+                                    Cases {
+                                        arms: [
+                                            Arm {
+                                                pat: List(
+                                                    [],
+                                                ),
+                                                exp: LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            39,
+                                                        ),
+                                                    },
+                                                ),
+                                            },
+                                            Arm {
+                                                pat: List(
+                                                    [
+                                                        LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    41,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ],
+                                                ),
+                                                exp: LongVid(
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(
+                                                            41,
+                                                        ),
+                                                    },
+                                                ),
+                                            },
+                                            Arm {
+                                                pat: InfixCtor(
+                                                    LongVid(
+                                                        Long {
+                                                            structures: [],
+                                                            last: StrRef(
+                                                                41,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    StrRef(
+                                                        16,
+                                                    ),
+                                                    InfixCtor(
+                                                        LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    42,
+                                                                ),
+                                                            },
+                                                        ),
+                                                        StrRef(
+                                                            16,
+                                                        ),
+                                                        Wildcard,
+                                                    ),
+                                                ),
+                                                exp: InfixApp(
+                                                    LongVid(
+                                                        Long {
+                                                            structures: [],
+                                                            last: StrRef(
+                                                                41,
+                                                            ),
+                                                        },
+                                                    ),
+                                                    StrRef(
+                                                        17,
+                                                    ),
+                                                    InfixApp(
+                                                        LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    42,
+                                                                ),
+                                                            },
+                                                        ),
+                                                        StrRef(
+                                                            0,
+                                                        ),
+                                                        LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(
+                                                                    39,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ),
+                                                ),
+                                            },
+                                        ],
+                                    },
+                                ),
+                            },
+                        ],
+                    ),
+                ],
+            ),
+        ),
+    ),
+]
