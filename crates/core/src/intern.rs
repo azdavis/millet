@@ -59,7 +59,7 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let store = hashmap! {
+    let store = hashmap![
       "*".to_owned() => StrRef::STAR,
       "unit".to_owned() => StrRef::UNIT,
       "bool".to_owned() => StrRef::BOOL,
@@ -98,7 +98,7 @@ impl StrStoreMut {
       ":=".to_owned() => StrRef::ASSIGN,
       "mod".to_owned() => StrRef::MOD,
       "exn".to_owned() => StrRef::EXN,
-    };
+    ];
     Self {
       next: store.len(),
       store,

@@ -59,7 +59,7 @@ impl Parser {
       lexer,
       last_loc,
       i: 0,
-      ops: hashmap! {
+      ops: hashmap![
         StrRef::CONS => OpInfo::right(5),
         StrRef::EQ => OpInfo::left(4),
         StrRef::ASSIGN => OpInfo::left(3),
@@ -73,7 +73,7 @@ impl Parser {
         StrRef::GT => OpInfo::left(4),
         StrRef::LT_EQ => OpInfo::left(4),
         StrRef::GT_EQ => OpInfo::left(4),
-      },
+      ],
     }
   }
 
