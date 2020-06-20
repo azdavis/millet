@@ -10,44 +10,54 @@ pub struct StrRef(usize);
 
 // TODO generate this with a macro?
 impl StrRef {
-  pub const STAR: StrRef = StrRef(0);
-  pub const UNIT: StrRef = StrRef(1);
-  pub const BOOL: StrRef = StrRef(2);
-  pub const INT: StrRef = StrRef(3);
-  pub const REAL: StrRef = StrRef(4);
-  pub const WORD: StrRef = StrRef(5);
-  pub const CHAR: StrRef = StrRef(6);
-  pub const STRING: StrRef = StrRef(7);
-  pub const OPTION: StrRef = StrRef(8);
-  pub const LIST: StrRef = StrRef(9);
-  pub const REF: StrRef = StrRef(10);
-  pub const TRUE: StrRef = StrRef(11);
-  pub const FALSE: StrRef = StrRef(12);
-  pub const SOME: StrRef = StrRef(13);
-  pub const NONE: StrRef = StrRef(14);
-  pub const NIL: StrRef = StrRef(15);
-  pub const CONS: StrRef = StrRef(16);
-  pub const PLUS: StrRef = StrRef(17);
-  pub const MINUS: StrRef = StrRef(18);
-  pub const SLASH: StrRef = StrRef(19);
-  pub const CARAT: StrRef = StrRef(20);
-  pub const AT: StrRef = StrRef(21);
-  pub const NOT: StrRef = StrRef(22);
-  pub const DIV: StrRef = StrRef(23);
-  pub const LT: StrRef = StrRef(24);
-  pub const LT_EQ: StrRef = StrRef(25);
-  pub const GT: StrRef = StrRef(26);
-  pub const GT_EQ: StrRef = StrRef(27);
-  pub const NEQ: StrRef = StrRef(28);
-  pub const TILDE: StrRef = StrRef(29);
-  pub const ORDER: StrRef = StrRef(30);
-  pub const LESS: StrRef = StrRef(31);
-  pub const EQUAL: StrRef = StrRef(32);
-  pub const GREATER: StrRef = StrRef(33);
-  pub const EQ: StrRef = StrRef(34);
-  pub const ASSIGN: StrRef = StrRef(35);
-  pub const MOD: StrRef = StrRef(36);
-  pub const EXN: StrRef = StrRef(37);
+  // unit, char, exn
+  pub const UNIT: Self = Self(0);
+  pub const CHAR: Self = Self(1);
+  pub const EXN: Self = Self(2);
+  // bool
+  pub const BOOL: Self = Self(3);
+  pub const TRUE: Self = Self(4);
+  pub const FALSE: Self = Self(5);
+  pub const NOT: Self = Self(6);
+  // string
+  pub const STRING: Self = Self(7);
+  pub const CARAT: Self = Self(8);
+  // word, int
+  pub const WORD: Self = Self(9);
+  pub const INT: Self = Self(10);
+  pub const TILDE: Self = Self(11);
+  pub const PLUS: Self = Self(12);
+  pub const MINUS: Self = Self(13);
+  pub const STAR: Self = Self(14);
+  pub const DIV: Self = Self(15);
+  pub const MOD: Self = Self(16);
+  // real
+  pub const REAL: Self = Self(17);
+  pub const SLASH: Self = Self(18);
+  // order
+  pub const ORDER: Self = Self(19);
+  pub const LESS: Self = Self(20);
+  pub const EQUAL: Self = Self(21);
+  pub const GREATER: Self = Self(22);
+  // comparison
+  pub const EQ: Self = Self(23);
+  pub const NEQ: Self = Self(24);
+  pub const GT: Self = Self(25);
+  pub const GT_EQ: Self = Self(26);
+  pub const LT: Self = Self(27);
+  pub const LT_EQ: Self = Self(28);
+  // option
+  pub const OPTION: Self = Self(29);
+  pub const SOME: Self = Self(30);
+  pub const NONE: Self = Self(31);
+  // list
+  pub const LIST: Self = Self(32);
+  pub const NIL: Self = Self(33);
+  pub const CONS: Self = Self(34);
+  pub const AT: Self = Self(35);
+  // ref
+  pub const REF: Self = Self(36);
+  pub const ASSIGN: Self = Self(37);
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
@@ -59,45 +69,56 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
+    let s = |x| String::from(x);
     let store = hashmap![
-      "*".to_owned() => StrRef::STAR,
-      "unit".to_owned() => StrRef::UNIT,
-      "bool".to_owned() => StrRef::BOOL,
-      "int".to_owned() => StrRef::INT,
-      "real".to_owned() => StrRef::REAL,
-      "word".to_owned() => StrRef::WORD,
-      "char".to_owned() => StrRef::CHAR,
-      "string".to_owned() => StrRef::STRING,
-      "option".to_owned() => StrRef::OPTION,
-      "list".to_owned() => StrRef::LIST,
-      "ref".to_owned() => StrRef::REF,
-      "true".to_owned() => StrRef::TRUE,
-      "false".to_owned() => StrRef::FALSE,
-      "SOME".to_owned() => StrRef::SOME,
-      "NONE".to_owned() => StrRef::NONE,
-      "nil".to_owned() => StrRef::NIL,
-      "::".to_owned() => StrRef::CONS,
-      "+".to_owned() => StrRef::PLUS,
-      "-".to_owned() => StrRef::MINUS,
-      "/".to_owned() => StrRef::SLASH,
-      "^".to_owned() => StrRef::CARAT,
-      "@".to_owned() => StrRef::AT,
-      "not".to_owned() => StrRef::NOT,
-      "div".to_owned() => StrRef::DIV,
-      "<".to_owned() => StrRef::LT,
-      "<=".to_owned() => StrRef::LT_EQ,
-      ">".to_owned() => StrRef::GT,
-      ">=".to_owned() => StrRef::GT_EQ,
-      "<>".to_owned() => StrRef::NEQ,
-      "~".to_owned() => StrRef::TILDE,
-      "order".to_owned() => StrRef::ORDER,
-      "LESS".to_owned() => StrRef::LESS,
-      "EQUAL".to_owned() => StrRef::EQUAL,
-      "GREATER".to_owned() => StrRef::GREATER,
-      "=".to_owned() => StrRef::EQ,
-      ":=".to_owned() => StrRef::ASSIGN,
-      "mod".to_owned() => StrRef::MOD,
-      "exn".to_owned() => StrRef::EXN,
+      // unit, char, exn
+      s("unit") => StrRef::UNIT,
+      s("char") => StrRef::CHAR,
+      s("exn") => StrRef::EXN,
+      // bool
+      s("bool") => StrRef::BOOL,
+      s("true") => StrRef::TRUE,
+      s("false") => StrRef::FALSE,
+      s("not") => StrRef::NOT,
+      // string
+      s("string") => StrRef::STRING,
+      s("^") => StrRef::CARAT,
+      // word, int
+      s("word") => StrRef::WORD,
+      s("int") => StrRef::INT,
+      s("~") => StrRef::TILDE,
+      s("+") => StrRef::PLUS,
+      s("-") => StrRef::MINUS,
+      s("*") => StrRef::STAR,
+      s("div") => StrRef::DIV,
+      s("mod") => StrRef::MOD,
+      // real
+      s("real") => StrRef::REAL,
+      s("/") => StrRef::SLASH,
+      // order
+      s("order") => StrRef::ORDER,
+      s("LESS") => StrRef::LESS,
+      s("EQUAL") => StrRef::EQUAL,
+      s("GREATER") => StrRef::GREATER,
+      // comparison
+      s("=") => StrRef::EQ,
+      s("<>") => StrRef::NEQ,
+      s("<") => StrRef::LT,
+      s("<=") => StrRef::LT_EQ,
+      s(">") => StrRef::GT,
+      s(">=") => StrRef::GT_EQ,
+      // option
+      s("option") => StrRef::OPTION,
+      s("SOME") => StrRef::SOME,
+      s("NONE") => StrRef::NONE,
+      // list
+      s("list") => StrRef::LIST,
+      s("nil") => StrRef::NIL,
+      s("::") => StrRef::CONS,
+      s("@") => StrRef::AT,
+      // ref
+      s("ref") => StrRef::REF,
+      s(":=") => StrRef::ASSIGN,
     ];
     Self {
       next: store.len(),

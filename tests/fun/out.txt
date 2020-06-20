@@ -276,7 +276,7 @@ inp.sml: [
                                                             Long {
                                                                 structures: [],
                                                                 last: StrRef(
-                                                                    9,
+                                                                    32,
                                                                 ),
                                                             },
                                                         ),
@@ -299,7 +299,7 @@ inp.sml: [
                                                 Long {
                                                     structures: [],
                                                     last: StrRef(
-                                                        9,
+                                                        32,
                                                     ),
                                                 },
                                             ),
@@ -333,7 +333,7 @@ inp.sml: [
                                                             },
                                                         ),
                                                         StrRef(
-                                                            16,
+                                                            34,
                                                         ),
                                                         LongVid(
                                                             Long {
@@ -368,7 +368,7 @@ inp.sml: [
                                                 ),
                                             ),
                                             StrRef(
-                                                16,
+                                                34,
                                             ),
                                             InfixApp(
                                                 LongVid(
@@ -427,7 +427,7 @@ inp.sml: [
                                                 },
                                             ),
                                             StrRef(
-                                                17,
+                                                12,
                                             ),
                                             DecInt(
                                                 1,
