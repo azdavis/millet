@@ -12,7 +12,7 @@ for x in "$@"; do
   mkdir "$x"
   cd "$x"
   touch run.sh inp.sml out.txt
-  echo "cargo run --quiet -- inp.sml >out.tmp" >> run.sh
+  echo "NO_COLOR=1 cargo run --quiet -- inp.sml >out.tmp" >> run.sh
   echo "diff out.txt out.tmp" >> run.sh
   cd "$old_pwd"
 done
