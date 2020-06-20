@@ -93,12 +93,14 @@ pub enum Dec<I> {
   Open(Vec<Long<I>>),
   /// requires decs.len() >= 2
   Seq(Vec<Located<Dec<I>>>),
+  // the fixity specifiers are not generic over the type of identifier because the identifiers
+  // mentioned are not resolved. these declarations only affect the behavior of parsing.
   /// requires !vids.is_empty()
-  Infix(Located<u32>, Vec<Located<I>>),
+  Infix(Located<u32>, Vec<Located<StrRef>>),
   /// requires !vids.is_empty()
-  Infixr(Located<u32>, Vec<Located<I>>),
+  Infixr(Located<u32>, Vec<Located<StrRef>>),
   /// requires !vids.is_empty()
-  Nonfix(Vec<Located<I>>),
+  Nonfix(Vec<Located<StrRef>>),
 }
 
 #[derive(Debug)]
