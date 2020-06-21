@@ -398,6 +398,7 @@ impl<'s> TokenMaker<'s> {
       }
     }
     // unknown byte
+    self.i += 1;
     return Err(LexError::UnknownByte(b));
   }
 
