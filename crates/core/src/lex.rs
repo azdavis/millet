@@ -539,7 +539,6 @@ fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Result<Token, LexError>
 #[cfg(test)]
 mod tests {
   use super::hex;
-  use pretty_assertions::assert_eq;
 
   #[test]
   fn test_hex() {

@@ -7,6 +7,3 @@ publish = false
 
 [dependencies]
 maplit = "1.0.2"
-
-[dev-dependencies]
-pretty_assertions = "0.6.1"
