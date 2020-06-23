@@ -9,12 +9,15 @@ use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use millet_core::{intern, lex, parse};
 use std::io::Write as _;
 
-fn run() -> std::io::Result<()> {
-  let args = args::get();
-  if args.version {
-    println!("{}", env!("CARGO_PKG_VERSION"));
-    return Ok(());
-  }
+fn run() -> bool {
+  let args = match args::get() {
+    Ok(Some(x)) => x,
+    Ok(None) => return true,
+    Err(e) => {
+      eprintln!("{}", e);
+      return false;
+    }
+  };
   let config = term::Config::default();
   let w = StandardStream::stdout(ColorChoice::Auto);
   let mut w = w.lock();
@@ -23,14 +26,20 @@ fn run() -> std::io::Result<()> {
   for name in args.files {
     match std::fs::read_to_string(&name) {
       Ok(s) => src.insert(name, s),
-      Err(e) => return term::emit(&mut w, &config, &src, &diagnostic::io(&name, e)),
+      Err(e) => {
+        term::emit(&mut w, &config, &src, &diagnostic::io(&name, e)).expect("io error");
+        return false;
+      }
     }
   }
   let mut lexers = Vec::with_capacity(src.len());
   for (id, file) in src.iter() {
     match lex::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
-      Err(e) => return term::emit(&mut w, &config, &src, &diagnostic::lex(id, e)),
+      Err(e) => {
+        term::emit(&mut w, &config, &src, &diagnostic::lex(id, e)).expect("io error");
+        return false;
+      }
     }
   }
   let store = store.finish();
@@ -38,13 +47,16 @@ fn run() -> std::io::Result<()> {
     match parse::get(lexer) {
       Ok(xs) => {
         if args.show_ast {
-          writeln!(w, "{}: {:#?}", file.name(), xs)?;
+          writeln!(w, "{}: {:#?}", file.name(), xs).expect("io error");
         }
       }
-      Err(e) => return term::emit(&mut w, &config, &src, &diagnostic::parse(&store, id, e)),
+      Err(e) => {
+        term::emit(&mut w, &config, &src, &diagnostic::parse(&store, id, e)).expect("io error");
+        return false;
+      }
     }
   }
-  Ok(())
+  true
 }
 
 fn main() {
@@ -55,7 +67,7 @@ fn main() {
     .expect("couldn't spawn run")
     .join()
   {
-    Err(_) | Ok(Err(_)) => std::process::exit(1),
-    Ok(Ok(())) => {}
+    Err(_) | Ok(false) => std::process::exit(1),
+    Ok(true) => {}
   }
 }

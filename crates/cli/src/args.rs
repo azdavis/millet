@@ -1,20 +1,22 @@
 //! Command-line arguments.
 
-use gumdrop::Options;
-
-pub fn get() -> Args {
-  Args::parse_args_default_or_exit()
+pub fn get() -> Result<Option<Args>, pico_args::Error> {
+  let mut args = pico_args::Arguments::from_env();
+  if args.contains(["-h", "--help"]) {
+    print!("{}", include_str!("help.txt"));
+    return Ok(None);
+  }
+  if args.contains(["-v", "--version"]) {
+    println!("{}", env!("CARGO_PKG_VERSION"));
+    return Ok(None);
+  }
+  Ok(Some(Args {
+    show_ast: args.contains("--show-ast"),
+    files: args.free()?,
+  }))
 }
 
-#[derive(Options)]
 pub struct Args {
-  /// Always `false` since `get` exits the process when `--help` is passed.
-  #[options(help = "Show this help")]
-  help: bool,
-  #[options(help = "Show the version")]
-  pub version: bool,
-  #[options(help = "Show AST")]
   pub show_ast: bool,
-  #[options(free, help = "Source files")]
   pub files: Vec<String>,
 }

@@ -1,0 +1,9 @@
+usage: millet [options] <file>...
+
+options:
+  -h, --help
+    show this help
+  -v, --version
+    show the version
+  --show-ast
+    show AST after parsing
