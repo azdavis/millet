@@ -24,7 +24,7 @@ fn run() -> bool {
     match std::fs::read_to_string(&name) {
       Ok(s) => src.insert(name, s),
       Err(e) => {
-        writeln!(w, "io error: {}: {}", name, e).expect("couldn't output");
+        term::emit(&mut w, &config, &src, &diagnostic::io(&name, e)).expect("couldn't output");
         return false;
       }
     }

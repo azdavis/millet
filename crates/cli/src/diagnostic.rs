@@ -9,6 +9,10 @@ use millet_core::parse::ParseError;
 
 pub type Diagnostic = codespan_reporting::diagnostic::Diagnostic<SourceId>;
 
+pub fn io(name: &str, err: std::io::Error) -> Diagnostic {
+  Diagnostic::error().with_message(format!("{}: {}", name, err))
+}
+
 pub fn lex(id: SourceId, err: Located<LexError>) -> Diagnostic {
   let msg = match err.val {
     LexError::UnmatchedCloseComment => format!("unmatched close comment"),
