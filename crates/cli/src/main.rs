@@ -9,11 +9,11 @@ use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use millet_core::{intern, lex, parse};
 use std::io::Write as _;
 
-fn run() -> bool {
+fn run() -> std::io::Result<()> {
   let args = args::get();
   if args.version {
     println!("{}", env!("CARGO_PKG_VERSION"));
-    return true;
+    return Ok(());
   }
   let config = term::Config::default();
   let w = StandardStream::stdout(ColorChoice::Auto);
@@ -23,21 +23,14 @@ fn run() -> bool {
   for name in args.files {
     match std::fs::read_to_string(&name) {
       Ok(s) => src.insert(name, s),
-      Err(e) => {
-        term::emit(&mut w, &config, &src, &diagnostic::io(&name, e)).expect("couldn't output");
-        return false;
-      }
+      Err(e) => return term::emit(&mut w, &config, &src, &diagnostic::io(&name, e)),
     }
   }
   let mut lexers = Vec::with_capacity(src.len());
   for (id, file) in src.iter() {
     match lex::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
-      Err(e) => {
-        let diag = diagnostic::lex(id, e);
-        term::emit(&mut w, &config, &src, &diag).expect("couldn't output");
-        return false;
-      }
+      Err(e) => return term::emit(&mut w, &config, &src, &diagnostic::lex(id, e)),
     }
   }
   let store = store.finish();
@@ -45,17 +38,13 @@ fn run() -> bool {
     match parse::get(lexer) {
       Ok(xs) => {
         if args.show_ast {
-          writeln!(w, "{}: {:#?}", file.name(), xs).expect("couldn't output")
+          writeln!(w, "{}: {:#?}", file.name(), xs)?;
         }
       }
-      Err(e) => {
-        let diag = diagnostic::parse(&store, id, e);
-        term::emit(&mut w, &config, &src, &diag).expect("couldn't output");
-        return false;
-      }
+      Err(e) => return term::emit(&mut w, &config, &src, &diagnostic::parse(&store, id, e)),
     }
   }
-  true
+  Ok(())
 }
 
 fn main() {
@@ -66,7 +55,7 @@ fn main() {
     .expect("couldn't spawn run")
     .join()
   {
-    Err(_) | Ok(false) => std::process::exit(1),
-    Ok(true) => {}
+    Err(_) | Ok(Err(_)) => std::process::exit(1),
+    Ok(Ok(())) => {}
   }
 }
