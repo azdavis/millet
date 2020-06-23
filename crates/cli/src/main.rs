@@ -11,6 +11,10 @@ use std::io::Write as _;
 
 fn run() -> bool {
   let args = args::get();
+  if args.version {
+    println!("{}", env!("CARGO_PKG_VERSION"));
+    return true;
+  }
   let config = term::Config::default();
   let w = StandardStream::stdout(ColorChoice::Auto);
   let mut w = w.lock();
