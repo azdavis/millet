@@ -69,7 +69,7 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let s = |x| String::from(x);
+    let s = String::from;
     let store = hashmap![
       // unit, char, exn
       s("unit") => StrRef::UNIT,
