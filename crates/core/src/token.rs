@@ -235,8 +235,7 @@ pub const ALPHA: [(&[u8], Token); 41] = [
   (b"op", Token::Op),
 ];
 
-/// These look like symbolic identifiers. Sorted first by length, then
-/// alphabetically.
+/// These look like symbolic identifiers. Sorted first by length, then alphabetically.
 pub const SYMBOLIC: [(&[u8], Token); 7] = [
   // 2
   (b"->", Token::Arrow),
@@ -249,8 +248,7 @@ pub const SYMBOLIC: [(&[u8], Token); 7] = [
   (b"|", Token::Bar),
 ];
 
-/// These can't be mistaken for identifiers. Sorted first by length, then
-/// alphabetically.
+/// These can't be mistaken for identifiers. Sorted first by length, then alphabetically.
 pub const OTHER: [(&[u8], Token); 11] = [
   // 3
   (b"...", Token::DotDotDot),
