@@ -1,4 +1,4 @@
-//! Parsing.
+//! Parsing from tokens to ASTs.
 
 use crate::ast::{
   Arm, Cases, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind,

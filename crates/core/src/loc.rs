@@ -1,4 +1,4 @@
-//! Utilities for dealing with locations in source code.
+//! Source code locations.
 
 use std::fmt;
 

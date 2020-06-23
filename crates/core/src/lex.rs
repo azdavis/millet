@@ -1,4 +1,4 @@
-//! Lexical analysis.
+//! Lexing from bytes to tokens.
 
 use crate::intern::{StrRef, StrStoreMut};
 use crate::loc::{Loc, Located};
