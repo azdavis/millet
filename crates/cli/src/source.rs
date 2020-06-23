@@ -4,16 +4,16 @@ use codespan_reporting::files::Files;
 
 /// An opaque identifier for a source file.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct SourceFileId(usize);
+pub struct SourceId(usize);
 
 /// A source file.
-pub struct SourceFile {
+pub struct Source {
   name: String,
   contents: String,
   new_lines: Vec<usize>,
 }
 
-impl SourceFile {
+impl Source {
   fn new(name: String, contents: String) -> Self {
     let new_lines = contents
       .as_bytes()
@@ -39,7 +39,7 @@ impl SourceFile {
 
 /// A collection of all the source files.
 pub struct SourceMap {
-  files: Vec<SourceFile>,
+  files: Vec<Source>,
 }
 
 impl SourceMap {
@@ -48,7 +48,7 @@ impl SourceMap {
   }
 
   pub fn insert(&mut self, name: String, contents: String) {
-    self.files.push(SourceFile::new(name, contents));
+    self.files.push(Source::new(name, contents));
   }
 
   pub fn iter(&self) -> Iter {
@@ -64,7 +64,7 @@ impl SourceMap {
 }
 
 impl<'a> Files<'a> for SourceMap {
-  type FileId = SourceFileId;
+  type FileId = SourceId;
   type Name = &'a str;
   type Source = &'a str;
 
@@ -109,15 +109,15 @@ impl<'a> Files<'a> for SourceMap {
 
 /// An iterator of all the source files and their IDs.
 pub struct Iter<'s> {
-  files: &'s [SourceFile],
+  files: &'s [Source],
   idx: usize,
 }
 
 impl<'s> Iterator for Iter<'s> {
-  type Item = (SourceFileId, &'s SourceFile);
+  type Item = (SourceId, &'s Source);
 
   fn next(&mut self) -> Option<Self::Item> {
-    let ret = Some((SourceFileId(self.idx), self.files.get(self.idx)?));
+    let ret = Some((SourceId(self.idx), self.files.get(self.idx)?));
     self.idx += 1;
     ret
   }

@@ -6,7 +6,7 @@ mod source;
 
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
-use millet_core::{error, intern, lex, parse};
+use millet_core::{intern, lex, parse};
 use std::io::Write as _;
 
 fn run() -> bool {
@@ -34,7 +34,7 @@ fn run() -> bool {
     match lex::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
-        let diag = diagnostic::new(&store.finish(), id, error::Error::Lex(e));
+        let diag = diagnostic::lex(id, e);
         term::emit(&mut w, &config, &src, &diag).expect("couldn't output");
         return false;
       }
@@ -49,7 +49,7 @@ fn run() -> bool {
         }
       }
       Err(e) => {
-        let diag = diagnostic::new(&store, id, error::Error::Parse(e));
+        let diag = diagnostic::parse(&store, id, e);
         term::emit(&mut w, &config, &src, &diag).expect("couldn't output");
         return false;
       }
