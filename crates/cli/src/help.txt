@@ -1,4 +1,5 @@
-usage: millet [options] <file>...
+usage:
+  millet [options] <file>...
 
 options:
   -h, --help
