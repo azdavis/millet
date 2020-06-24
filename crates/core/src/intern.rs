@@ -58,6 +58,9 @@ impl StrRef {
   // ref
   pub const REF: Self = Self(36);
   pub const ASSIGN: Self = Self(37);
+  // exceptions
+  pub const MATCH: Self = Self(38);
+  pub const BIND: Self = Self(39);
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
@@ -120,6 +123,9 @@ impl StrStoreMut {
       // ref
       s("ref") => StrRef::REF,
       s(":=") => StrRef::ASSIGN,
+      // exceptions
+      s("Match") => StrRef::MATCH,
+      s("Bind") => StrRef::BIND,
     ];
     Self {
       next: store.len(),
