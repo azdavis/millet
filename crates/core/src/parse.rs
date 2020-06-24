@@ -197,7 +197,7 @@ impl Parser {
         let exp = self.str_exp()?;
         self.eat(Token::End)?;
         self.ops = ops;
-        StrExp::Let(dec.into(), exp.into())
+        StrExp::Let(dec, exp.into())
       }
       Token::Ident(_, IdentType::AlphaNum) => {
         let long_id = self.long_alpha_num_id()?;
@@ -293,17 +293,13 @@ impl Parser {
       }
       _ => return self.fail("a signature expression", tok),
     };
-    loop {
-      if let Token::Where = self.peek().val {
-        self.skip();
-        let ty_vars = self.ty_var_seq()?;
-        let ty_con = self.long_id(true)?;
-        self.eat(Token::Equal)?;
-        let ty = self.ty()?;
-        ret = SigExp::Where(self.wrap(begin, ret).into(), ty_vars, ty_con, ty);
-      } else {
-        break;
-      }
+    while let Token::Where = self.peek().val {
+      self.skip();
+      let ty_vars = self.ty_var_seq()?;
+      let ty_con = self.long_id(true)?;
+      self.eat(Token::Equal)?;
+      let ty = self.ty()?;
+      ret = SigExp::Where(self.wrap(begin, ret).into(), ty_vars, ty_con, ty);
     }
     Ok(self.wrap(begin, ret))
   }
@@ -378,26 +374,22 @@ impl Parser {
       }
       _ => return Ok(None),
     };
-    loop {
-      if let Token::Sharing = self.peek().val {
-        self.skip();
-        self.eat(Token::Type)?;
-        let mut ty_cons = Vec::new();
-        loop {
-          ty_cons.push(self.long_id(true)?);
-          if let Token::Equal = self.peek().val {
-            self.skip();
-          } else {
-            break;
-          }
+    while let Token::Sharing = self.peek().val {
+      self.skip();
+      self.eat(Token::Type)?;
+      let mut ty_cons = Vec::new();
+      loop {
+        ty_cons.push(self.long_id(true)?);
+        if let Token::Equal = self.peek().val {
+          self.skip();
+        } else {
+          break;
         }
-        if ty_cons.len() < 2 {
-          return self.fail("an identifier", self.peek());
-        }
-        ret = Spec::Sharing(self.wrap(begin, ret).into(), ty_cons);
-      } else {
-        break;
       }
+      if ty_cons.len() < 2 {
+        return self.fail("an identifier", self.peek());
+      }
+      ret = Spec::Sharing(self.wrap(begin, ret).into(), ty_cons);
     }
     Ok(Some(self.wrap(begin, ret)))
   }
@@ -423,13 +415,9 @@ impl Parser {
       self.dat_desc()?
     };
     let mut dat_descs = vec![dat_desc];
-    loop {
-      if let Token::And = self.peek().val {
-        self.skip();
-        dat_descs.push(self.dat_desc()?);
-      } else {
-        break;
-      }
+    while let Token::And = self.peek().val {
+      self.skip();
+      dat_descs.push(self.dat_desc()?);
     }
     Ok(Spec::Datatype(dat_descs))
   }
@@ -671,9 +659,9 @@ impl Parser {
           }
           if let Token::Dot = self.peek().val {
             self.skip();
-          } else {
-            break;
+            continue;
           }
+          break;
         }
         Token::Equal => {
           self.skip();
@@ -713,9 +701,9 @@ impl Parser {
         structures.push(tok.loc.wrap(id));
         if let Token::Dot = self.peek().val {
           self.skip();
-        } else {
-          break;
+          continue;
         }
+        break;
       }
       return self.fail("an identifier", self.peek());
     }
@@ -969,13 +957,9 @@ impl Parser {
           self.dat_bind()?
         };
         let mut dat_binds = vec![dat_bind];
-        loop {
-          if let Token::And = self.peek().val {
-            self.skip();
-            dat_binds.push(self.dat_bind()?);
-          } else {
-            break;
-          }
+        while let Token::And = self.peek().val {
+          self.skip();
+          dat_binds.push(self.dat_bind()?);
         }
         let ty_binds = if let Token::Withtype = self.peek().val {
           self.skip();
@@ -988,13 +972,9 @@ impl Parser {
       Token::Abstype => {
         self.skip();
         let mut dat_binds = vec![self.dat_bind()?];
-        loop {
-          if let Token::And = self.peek().val {
-            self.skip();
-            dat_binds.push(self.dat_bind()?);
-          } else {
-            break;
-          }
+        while let Token::And = self.peek().val {
+          self.skip();
+          dat_binds.push(self.dat_bind()?);
         }
         let ty_binds = if let Token::Withtype = self.peek().val {
           self.skip();
@@ -1060,7 +1040,7 @@ impl Parser {
         let n = self.fixity_num()?;
         let idents = self.fixity_idents()?;
         for id in idents.iter() {
-          self.ops.insert(id.val.clone(), OpInfo::left(n.val));
+          self.ops.insert(id.val, OpInfo::left(n.val));
         }
         Dec::Infix(n, idents)
       }
@@ -1069,7 +1049,7 @@ impl Parser {
         let n = self.fixity_num()?;
         let idents = self.fixity_idents()?;
         for id in idents.iter() {
-          self.ops.insert(id.val.clone(), OpInfo::right(n.val));
+          self.ops.insert(id.val, OpInfo::right(n.val));
         }
         Dec::Infixr(n, idents)
       }
@@ -1678,7 +1658,6 @@ fn test_ty_prec() {
 #[test]
 fn option_compare() {
   let none: Option<usize> = None;
-  assert!(none == none);
   assert!(none < Some(3));
   assert!(Some(3) == Some(3));
   assert!(Some(3) < Some(5));

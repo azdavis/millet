@@ -67,6 +67,7 @@ pub struct StrStoreMut {
 }
 
 impl StrStoreMut {
+  #[allow(clippy::new_without_default)]
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
     let s = String::from;

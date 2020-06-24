@@ -160,7 +160,7 @@ impl<'s> TokenMaker<'s> {
         if all_alpha {
           for &(tok_bs, ref tok) in ALPHA.iter() {
             if got == tok_bs {
-              return Ok(tok.clone());
+              return Ok(*tok);
             }
           }
         }
@@ -341,14 +341,9 @@ impl<'s> TokenMaker<'s> {
                     _ => return Err(LexError::InvalidStringConstant),
                   }
                 } else if is_formatting(b) {
-                  let mut b = b;
                   loop {
-                    if b == b'\n' {
-                      self.i += 1;
-                    } else {
-                      self.i += 1;
-                    }
-                    b = match self.bs.get(self.i) {
+                    self.i += 1;
+                    let b = match self.bs.get(self.i) {
                       None => return Err(LexError::UnclosedStringConstant),
                       Some(x) => *x,
                     };
@@ -384,7 +379,7 @@ impl<'s> TokenMaker<'s> {
       let got = &self.bs[start..self.i];
       for &(tok_bs, ref tok) in SYMBOLIC.iter() {
         if got == tok_bs {
-          return Ok(tok.clone());
+          return Ok(*tok);
         }
       }
       return Ok(Token::Ident(self.mk_str_ref(got), IdentType::Symbolic));
@@ -394,12 +389,12 @@ impl<'s> TokenMaker<'s> {
       let tok_n = tok_bs.len();
       if self.bs.get(self.i..self.i + tok_n) == Some(tok_bs) {
         self.i += tok_n;
-        return Ok(tok.clone());
+        return Ok(*tok);
       }
     }
     // unknown byte
     self.i += 1;
-    return Err(LexError::UnknownByte(b));
+    Err(LexError::UnknownByte(b))
   }
 
   fn pos_dec_int(&mut self) -> Result<i32, LexError> {
