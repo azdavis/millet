@@ -9,7 +9,7 @@ use std::fmt;
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct StrRef(usize);
 
-const SPECIAL_STR_REF: usize = 40;
+const SPECIAL_STR_REF: usize = 41;
 
 impl fmt::Debug for StrRef {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -63,6 +63,7 @@ impl StrRef {
   pub const ASSIGN: Self = Self(37);
   pub const MATCH: Self = Self(38);
   pub const BIND: Self = Self(39);
+  pub const ABS: Self = Self(40);
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
@@ -117,6 +118,7 @@ impl StrStoreMut {
       s(":=") => StrRef::ASSIGN,
       s("Match") => StrRef::MATCH,
       s("Bind") => StrRef::BIND,
+      s("abs") => StrRef::ABS,
     ];
     assert_eq!(store.len(), SPECIAL_STR_REF);
     Self {
