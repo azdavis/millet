@@ -48,6 +48,15 @@ pub struct Long<I> {
   pub last: Located<I>,
 }
 
+impl<I> Long<I> {
+  pub fn loc(&self) -> Loc {
+    match self.structures.first() {
+      None => self.last.loc,
+      Some(x) => x.loc.span(self.last.loc),
+    }
+  }
+}
+
 #[derive(Debug)]
 pub struct Row<I> {
   pub lab: Located<Label>,
