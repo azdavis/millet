@@ -813,7 +813,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         assert!(!val_bind.rec);
         let (other, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
         ck_no_forbidden_bindings(&other, val_bind.pat.loc)?;
-        merge_val_env(&mut val_env, other, val_bind.pat.loc)?;
+        merge_env(&mut val_env, other, val_bind.pat.loc)?;
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
         st.constraints.add(dec.loc, pat_ty, exp_ty);
       }
@@ -863,9 +863,9 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   Ok(ret)
 }
 
-fn merge_val_env(lhs: &mut ValEnv, rhs: ValEnv, loc: Loc) -> Result<()> {
-  for (name, info) in rhs {
-    if lhs.insert(name, info).is_some() {
+fn merge_env<T>(lhs: &mut HashMap<StrRef, T>, rhs: HashMap<StrRef, T>, loc: Loc) -> Result<()> {
+  for (name, thing) in rhs {
+    if lhs.insert(name, thing).is_some() {
       return Err(StaticsError::Redefined(loc.wrap(name)));
     }
   }
@@ -922,7 +922,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         if !keys.insert(row.lab.val) {
           return Err(StaticsError::DuplicateLabel(row.lab));
         }
-        merge_val_env(&mut ve, other_ve, row.pat.loc)?;
+        merge_env(&mut ve, other_ve, row.pat.loc)?;
         ty_rows.push((row.lab.val, ty));
       }
       (ve, Ty::Record(ty_rows))
@@ -933,7 +933,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       for (idx, pat) in pats.iter().enumerate() {
         let (other_ve, ty) = ck_pat(cx, st, pat)?;
         let lab = tuple_lab(idx);
-        merge_val_env(&mut ve, other_ve, pat.loc)?;
+        merge_env(&mut ve, other_ve, pat.loc)?;
         ty_rows.push((lab, ty));
       }
       (ve, Ty::Record(ty_rows))
@@ -943,7 +943,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       let mut ve = ValEnv::new();
       for pat in pats {
         let (other_ve, ty) = ck_pat(cx, st, pat)?;
-        merge_val_env(&mut ve, other_ve, pat.loc)?;
+        merge_env(&mut ve, other_ve, pat.loc)?;
         st.constraints.add(pat.loc, elem.clone(), ty);
       }
       (ve, Ty::list(elem))
@@ -971,7 +971,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       let func_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
       let (mut val_env, lhs_ty) = ck_pat(cx, st, lhs)?;
       let (other_ve, rhs_ty) = ck_pat(cx, st, rhs)?;
-      merge_val_env(&mut val_env, other_ve, pat.loc)?;
+      merge_env(&mut val_env, other_ve, pat.loc)?;
       let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(
         Ty::Record(vec![(Label::Num(1), lhs_ty), (Label::Num(2), rhs_ty)]).into(),
@@ -1004,7 +1004,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         ty_scheme: TyScheme::mono(pat_ty.clone()),
         id_status: IdStatus::Val,
       };
-      merge_val_env(&mut val_env, hashmap![vid.val => val_info], pat.loc)?;
+      merge_env(&mut val_env, hashmap![vid.val => val_info], pat.loc)?;
       (val_env, pat_ty)
     }
   };
