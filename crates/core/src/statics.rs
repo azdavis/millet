@@ -808,13 +808,15 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   let ret = match &dec.val {
     Dec::Val(ty_vars, val_binds) => {
       assert!(ty_vars.is_empty());
-      assert_eq!(val_binds.len(), 1);
-      let val_bind = val_binds.first().unwrap();
-      assert!(!val_bind.rec);
-      let (val_env, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
-      ck_no_forbidden_bindings(&val_env, val_bind.pat.loc)?;
-      let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
-      st.constraints.add(dec.loc, pat_ty, exp_ty);
+      let mut val_env = ValEnv::new();
+      for val_bind in val_binds {
+        assert!(!val_bind.rec);
+        let (other, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
+        ck_no_forbidden_bindings(&other, val_bind.pat.loc)?;
+        val_env.extend(other);
+        let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
+        st.constraints.add(dec.loc, pat_ty, exp_ty);
+      }
       val_env.into()
     }
     Dec::Fun(_, _) => {
