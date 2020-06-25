@@ -38,6 +38,7 @@ pub enum ParseError {
   NotInfix(StrRef),
   RealPat,
   NegativeFixity(i32),
+  SameFixityDiffAssoc,
 }
 
 struct Parser {
@@ -738,7 +739,7 @@ impl Parser {
     self.exp_prec(None)
   }
 
-  fn exp_prec(&mut self, min_prec: Option<u32>) -> Result<Located<Exp<StrRef>>> {
+  fn exp_prec(&mut self, min_prec: Option<OpInfo>) -> Result<Located<Exp<StrRef>>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -795,11 +796,11 @@ impl Parser {
               } else {
                 match self.ops.get(&id) {
                   Some(&op_info) => {
-                    if Some(op_info.num) <= min_prec {
+                    if op_info.should_break(min_prec, tok.loc)? {
                       self.i -= 1;
                       break;
                     }
-                    let rhs = self.exp_prec(Some(op_info.min_prec()))?;
+                    let rhs = self.exp_prec(Some(op_info))?;
                     Exp::InfixApp(exp.into(), tok.loc.wrap(id), rhs.into())
                   }
                   None => {
@@ -1361,7 +1362,7 @@ impl Parser {
     self.pat_prec(None)
   }
 
-  fn pat_prec(&mut self, min_prec: Option<u32>) -> Result<Located<Pat<StrRef>>> {
+  fn pat_prec(&mut self, min_prec: Option<OpInfo>) -> Result<Located<Pat<StrRef>>> {
     let mut ret = self.at_pat()?;
     if let Pat::LongVid(long_vid) = ret.val {
       ret = ret.loc.wrap(self.pat_long_vid(ret.loc, long_vid)?);
@@ -1382,11 +1383,11 @@ impl Parser {
             Some(x) => *x,
             None => return Err(tok.loc.wrap(ParseError::NotInfix(id))),
           };
-          if Some(op_info.num) <= min_prec {
+          if op_info.should_break(min_prec, tok.loc)? {
             break;
           }
           self.skip();
-          let rhs = self.pat_prec(Some(op_info.min_prec()))?;
+          let rhs = self.pat_prec(Some(op_info))?;
           Pat::InfixCtor(ret.into(), tok.loc.wrap(id), rhs.into())
         }
         _ => break,
@@ -1626,33 +1627,37 @@ struct OpInfo {
 impl OpInfo {
   /// Returns a new OpInfo with left associativity.
   fn left(num: u32) -> Self {
-    // we won't ever sub 1 from this in min_prec, but add 1 anyway to be consistent with `right`.
     Self {
-      num: num + 1,
+      num,
       assoc: Assoc::Left,
     }
   }
 
   /// Returns a new OpInfo with right associativity.
   fn right(num: u32) -> Self {
-    // add one to the num so we can maybe later sub 1 in min_prec if num == 0.
     Self {
-      num: num + 1,
+      num,
       assoc: Assoc::Right,
     }
   }
 
-  /// Calculates the minimum precedence for this OpInfo. This is suitable to be passed to a
-  /// recursive call to a Pratt parser function.
-  fn min_prec(&self) -> u32 {
-    match self.assoc {
-      Assoc::Left => self.num,
-      Assoc::Right => self.num - 1,
+  fn should_break(&self, min_prec: Option<Self>, loc: Loc) -> Result<bool> {
+    match min_prec {
+      None => Ok(false),
+      Some(min_prec) => {
+        if self.num == min_prec.num && self.assoc != min_prec.assoc {
+          return Err(loc.wrap(ParseError::SameFixityDiffAssoc));
+        }
+        match min_prec.assoc {
+          Assoc::Left => Ok(self.num <= min_prec.num),
+          Assoc::Right => Ok(self.num < min_prec.num),
+        }
+      }
     }
   }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Assoc {
   Left,
   Right,

@@ -42,6 +42,9 @@ pub fn parse(store: &StrStore, id: SourceId, err: Located<ParseError>) -> Diagno
     ParseError::NotInfix(id) => format!("non-infix identifier used as infix: {}", store.get(id)),
     ParseError::RealPat => "real constant used as a pattern".to_owned(),
     ParseError::NegativeFixity(n) => format!("fixity is negative: {}", n),
+    ParseError::SameFixityDiffAssoc => {
+      "consecutive infix identifiers with same fixity but different associativity".to_owned()
+    }
   };
   simple(msg, id, err.loc)
 }
