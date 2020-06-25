@@ -103,18 +103,12 @@ impl fmt::Display for TyVar {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct Subst {
   inner: HashMap<TyVar, Ty>,
 }
 
 impl Subst {
-  fn new() -> Self {
-    Self {
-      inner: HashMap::new(),
-    }
-  }
-
   fn extend(&mut self, mut other: Self) {
     for (_, ty) in other.inner.iter_mut() {
       ty.apply(&self);
@@ -269,14 +263,6 @@ struct TyEnv {
   inner: HashMap<StrRef, TyInfo>,
 }
 
-impl TyEnv {
-  fn new() -> Self {
-    Self {
-      inner: HashMap::new(),
-    }
-  }
-}
-
 impl Substitutable for TyEnv {
   fn apply(&mut self, subst: &Subst) {
     for (_, ty_info) in self.inner.iter_mut() {
@@ -327,7 +313,7 @@ impl From<ValEnv> for Env {
   fn from(val_env: ValEnv) -> Self {
     Self {
       str_env: StrEnv::new(),
-      ty_env: TyEnv::new(),
+      ty_env: TyEnv::default(),
       val_env,
     }
   }
@@ -439,7 +425,7 @@ impl Constraints {
   }
 
   fn solve(self) -> Result<Subst> {
-    let mut ret = Subst::new();
+    let mut ret = Subst::default();
     for (loc, mut lhs, mut rhs) in self.regular {
       lhs.apply(&ret);
       rhs.apply(&ret);
@@ -477,7 +463,7 @@ impl State {
 }
 
 fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
-  let mut subst = Subst::new();
+  let mut subst = Subst::default();
   match &ty_scheme.overload {
     None => {
       for &tv in ty_scheme.ty_vars.iter() {
@@ -523,7 +509,7 @@ fn generalize(env: &TyEnv, ty: Ty) -> TyScheme {
 fn bind(loc: Loc, tv: TyVar, ty: Ty) -> Result<Subst> {
   if let Ty::Var(other) = ty {
     if tv == other {
-      return Ok(Subst::new());
+      return Ok(Subst::default());
     }
   }
   if ty.free_ty_vars().contains(&tv) {
@@ -542,7 +528,7 @@ fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
       let mut map_l: HashMap<_, _> = rows_l.into_iter().collect();
       let mut map_r: HashMap<_, _> = rows_r.into_iter().collect();
       let keys: HashSet<_> = map_l.keys().chain(map_r.keys()).copied().collect();
-      let mut subst = Subst::new();
+      let mut subst = Subst::default();
       for k in keys {
         match (map_l.remove(&k), map_r.remove(&k)) {
           (Some(mut ty_l), Some(mut ty_r)) => {
@@ -572,7 +558,7 @@ fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
         ));
       }
       assert_eq!(args_l.len(), args_r.len(), "mismatched Ctor args len");
-      let mut subst = Subst::new();
+      let mut subst = Subst::default();
       for (mut arg_l, mut arg_r) in args_l.into_iter().zip(args_r) {
         arg_l.apply(&subst);
         arg_r.apply(&subst);
@@ -769,7 +755,7 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
       if want_len != args.len() {
         return Err(StaticsError::WrongNumTyArgs(ty.loc, want_len, args.len()));
       }
-      let mut subst = Subst::new();
+      let mut subst = Subst::default();
       for (&ty_var, ty) in ty_info.ty_fcn.ty_vars.iter().zip(args.iter()) {
         let ty = ck_ty(cx, st, ty)?;
         subst.inner.insert(ty_var, ty);
