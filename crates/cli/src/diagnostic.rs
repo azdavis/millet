@@ -94,9 +94,9 @@ pub fn statics(store: &StrStore, id: SourceId, err: StaticsError) -> Diagnostic 
       );
       simple(msg, id, name.loc)
     }
-    StaticsError::ForbiddenBinding(loc, name) => {
-      let msg = format!("forbidden identifier in binding: {}", store.get(name));
-      simple(msg, id, loc)
+    StaticsError::ForbiddenBinding(name) => {
+      let msg = format!("forbidden identifier in binding: {}", store.get(name.val));
+      simple(msg, id, name.loc)
     }
     StaticsError::NoSuitableOverload(loc) => simple("no suitable overload found", id, loc),
     StaticsError::TyNameEscape(loc) => {

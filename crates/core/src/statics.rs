@@ -36,7 +36,7 @@ pub enum StaticsError {
   ValAsPat(Loc),
   WrongNumTyArgs(Loc, usize, usize),
   NonVarInAs(Located<StrRef>),
-  ForbiddenBinding(Loc, StrRef),
+  ForbiddenBinding(Located<StrRef>),
   NoSuitableOverload(Loc),
   TyNameEscape(Loc),
   Todo(Loc),
@@ -806,8 +806,8 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   Ok(ret)
 }
 
-fn ck_no_forbidden_bindings(val_env: &ValEnv, loc: Loc) -> Result<()> {
-  for name in [
+fn ck_binding(name: Located<StrRef>) -> Result<()> {
+  for &other in [
     StrRef::TRUE,
     StrRef::FALSE,
     StrRef::NIL,
@@ -816,8 +816,8 @@ fn ck_no_forbidden_bindings(val_env: &ValEnv, loc: Loc) -> Result<()> {
   ]
   .iter()
   {
-    if val_env.contains_key(name) {
-      return Err(StaticsError::ForbiddenBinding(loc, *name));
+    if name.val == other {
+      return Err(StaticsError::ForbiddenBinding(name));
     }
   }
   Ok(())
@@ -831,7 +831,9 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       for val_bind in val_binds {
         assert!(!val_bind.rec);
         let (other, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
-        ck_no_forbidden_bindings(&other, val_bind.pat.loc)?;
+        for &name in other.keys() {
+          ck_binding(val_bind.pat.loc.wrap(name))?;
+        }
         env_merge(&mut val_env, other, val_bind.pat.loc)?;
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
         st.constraints.add(dec.loc, pat_ty, exp_ty);
