@@ -46,7 +46,7 @@ fn run() -> bool {
   for ((id, file), lexer) in src.iter().zip(lexers) {
     match parse::get(lexer) {
       Ok(xs) => {
-        if args.show_ast {
+        if args.just_ast {
           writeln!(w, "{}: {:#?}", file.name(), xs).expect("io error");
         }
       }
@@ -55,6 +55,9 @@ fn run() -> bool {
         return false;
       }
     }
+  }
+  if args.just_ast {
+    return true;
   }
   true
 }

@@ -6,5 +6,5 @@ options:
     show this help
   -v, --version
     show the version
-  --show-ast
-    show AST after parsing
+  --just-ast
+    just show the AST after parsing

@@ -11,12 +11,12 @@ pub fn get() -> Result<Option<Args>, pico_args::Error> {
     return Ok(None);
   }
   Ok(Some(Args {
-    show_ast: args.contains("--show-ast"),
+    just_ast: args.contains("--just-ast"),
     files: args.free()?,
   }))
 }
 
 pub struct Args {
-  pub show_ast: bool,
+  pub just_ast: bool,
   pub files: Vec<String>,
 }
