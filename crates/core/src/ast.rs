@@ -191,9 +191,9 @@ pub enum Pat<I> {
 }
 
 #[derive(Debug)]
-pub enum PatRow<I> {
-  LabelAndPat(Located<Label>, Located<Pat<I>>),
-  LabelAsVid(Located<I>, Option<Located<Ty<I>>>, Option<Located<Pat<I>>>),
+pub struct PatRow<I> {
+  pub lab: Located<Label>,
+  pub pat: Located<Pat<I>>,
 }
 
 #[derive(Debug)]

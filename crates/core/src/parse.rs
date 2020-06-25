@@ -1265,20 +1265,34 @@ impl Parser {
             }
             let lab = self.label()?;
             let tok = self.peek();
-            let row = if let Token::Equal = tok.val {
+            let pat = if let Token::Equal = tok.val {
               self.skip();
-              let pat = self.pat()?;
-              PatRow::LabelAndPat(lab, pat)
+              self.pat()?
             } else {
               let vid = match lab.val {
                 Label::Vid(x) => lab.loc.wrap(x),
-                Label::Num(..) => return self.fail("an identifier", tok),
+                Label::Num(..) => return self.fail("`=`", tok),
               };
               let ty = self.maybe_colon_ty()?;
               let as_pat = self.maybe_as_pat()?;
-              PatRow::LabelAsVid(vid, ty, as_pat)
+              match as_pat {
+                Some(as_pat) => vid
+                  .loc
+                  .span(as_pat.loc)
+                  .wrap(Pat::As(vid, ty, as_pat.into())),
+                None => {
+                  let pat = vid.loc.wrap(Pat::LongVid(Long {
+                    structures: Vec::new(),
+                    last: vid,
+                  }));
+                  match ty {
+                    None => pat,
+                    Some(ty) => vid.loc.span(ty.loc).wrap(Pat::Typed(pat.into(), ty)),
+                  }
+                }
+              }
             };
-            rows.push(row);
+            rows.push(PatRow { lab, pat });
             let tok = self.peek();
             self.skip();
             match tok.val {
