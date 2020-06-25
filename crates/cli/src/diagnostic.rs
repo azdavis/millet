@@ -5,7 +5,7 @@ use codespan_reporting::diagnostic::Label;
 use millet_core::ast::Label as AstLabel;
 use millet_core::intern::StrStore;
 use millet_core::lex::LexError;
-use millet_core::loc::Located;
+use millet_core::loc::{Loc, Located};
 use millet_core::parse::ParseError;
 use millet_core::statics::{StaticsError, Ty};
 
@@ -29,9 +29,7 @@ pub fn lex(id: SourceId, err: Located<LexError>) -> Diagnostic {
     LexError::InvalidStringConstant => "invalid string constant".to_owned(),
     LexError::InvalidCharConstant => "invalid character constant".to_owned(),
   };
-  Diagnostic::error()
-    .with_message(msg)
-    .with_labels(vec![Label::primary(id, err.loc)])
+  simple(msg, id, err.loc)
 }
 
 pub fn parse(store: &StrStore, id: SourceId, err: Located<ParseError>) -> Diagnostic {
@@ -45,67 +43,67 @@ pub fn parse(store: &StrStore, id: SourceId, err: Located<ParseError>) -> Diagno
     ParseError::RealPat => "real constant used as a pattern".to_owned(),
     ParseError::NegativeFixity(n) => format!("fixity is negative: {}", n),
   };
-  Diagnostic::error()
-    .with_message(msg)
-    .with_labels(vec![Label::primary(id, err.loc)])
+  simple(msg, id, err.loc)
 }
 
 pub fn statics(store: &StrStore, id: SourceId, err: StaticsError) -> Diagnostic {
-  let (loc, msg) = match err {
-    StaticsError::Undefined(item, id) => (
-      id.loc,
-      format!("undefined {} identifier: {}", item, store.get(id.val)),
-    ),
-    StaticsError::Redefined(id) => (
-      id.loc,
-      format!("redefined identifier: {}", store.get(id.val)),
-    ),
-    StaticsError::DuplicateLabel(lab) => (
-      lab.loc,
-      format!("duplicate label: {}", show_lab(store, lab.val)),
-    ),
-    StaticsError::Circularity(loc, ty_var, ty) => (
-      loc,
-      format!("circularity: {} in {}", ty_var, show_ty(store, &ty)),
-    ),
-    StaticsError::HeadMismatch(loc, lhs, rhs) => (
-      loc,
-      format!(
+  match err {
+    StaticsError::Undefined(item, name) => {
+      let msg = format!("undefined {} identifier: {}", item, store.get(name.val));
+      simple(msg, id, name.loc)
+    }
+    StaticsError::Redefined(name) => {
+      let msg = format!("redefined identifier: {}", store.get(name.val));
+      simple(msg, id, name.loc)
+    }
+    StaticsError::DuplicateLabel(lab) => {
+      let msg = format!("duplicate label: {}", show_lab(store, lab.val));
+      simple(msg, id, lab.loc)
+    }
+    StaticsError::Circularity(loc, ty_var, ty) => {
+      let msg = format!("circularity: {} in {}", ty_var, show_ty(store, &ty));
+      simple(msg, id, loc)
+    }
+    StaticsError::HeadMismatch(loc, lhs, rhs) => {
+      let msg = format!(
         "mismatched types: {} vs {}",
         show_ty(store, &lhs),
         show_ty(store, &rhs)
-      ),
-    ),
-    StaticsError::MissingLabel(loc, lab) => (
-      loc,
-      format!("type is missing label {}", show_lab(store, lab),),
-    ),
-    StaticsError::ValAsPat(loc) => (loc, "value binding used as pattern".to_owned()),
-    StaticsError::WrongNumTyArgs(loc, want, got) => (
-      loc,
-      format!(
+      );
+      simple(msg, id, loc)
+    }
+    StaticsError::MissingLabel(loc, lab) => {
+      let msg = format!("type is missing label {}", show_lab(store, lab));
+      simple(msg, id, loc)
+    }
+    StaticsError::ValAsPat(loc) => simple("value binding used as pattern", id, loc),
+    StaticsError::WrongNumTyArgs(loc, want, got) => {
+      let msg = format!(
         "wrong number of type arguments: expected {}, found {}",
         want, got
-      ),
-    ),
-    StaticsError::NonVarInAs(name) => (
-      name.loc,
-      format!(
+      );
+      simple(msg, id, loc)
+    }
+    StaticsError::NonVarInAs(name) => {
+      let msg = format!(
         "pattern to left of `as` is not a variable: {}",
         store.get(name.val)
-      ),
-    ),
-    StaticsError::ForbiddenBinding(loc, name) => (
-      loc,
-      format!("forbidden identifier in binding: {}", store.get(name)),
-    ),
-    StaticsError::NoSuitableOverload(loc) => (loc, "no suitable overload found".to_owned()),
-    StaticsError::TyNameEscape(loc) => (
-      loc,
-      "expression causes a type name to escape its scope".to_owned(),
-    ),
-    StaticsError::Todo(loc) => (loc, "unimplemented language construct".to_owned()),
-  };
+      );
+      simple(msg, id, name.loc)
+    }
+    StaticsError::ForbiddenBinding(loc, name) => {
+      let msg = format!("forbidden identifier in binding: {}", store.get(name));
+      simple(msg, id, loc)
+    }
+    StaticsError::NoSuitableOverload(loc) => simple("no suitable overload found", id, loc),
+    StaticsError::TyNameEscape(loc) => {
+      simple("expression causes a type name to escape its scope", id, loc)
+    }
+    StaticsError::Todo(loc) => simple("unimplemented language construct", id, loc),
+  }
+}
+
+fn simple<M: Into<String>>(msg: M, id: SourceId, loc: Loc) -> Diagnostic {
   Diagnostic::error()
     .with_message(msg)
     .with_labels(vec![Label::primary(id, loc)])
