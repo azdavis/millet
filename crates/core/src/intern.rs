@@ -137,7 +137,7 @@ impl StrStoreMut {
     ret
   }
 
-  /// Same as insert, but better if you already have ownership of the string.
+  /// Same as `insert_str`, but better if you already have ownership via a String.
   pub fn insert_string(&mut self, s: String) -> StrRef {
     if let Some(&id) = self.store.get(&s) {
       return id;
