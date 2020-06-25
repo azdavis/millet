@@ -1022,12 +1022,12 @@ fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> R
   match &top_dec.val {
     TopDec::StrDec(str_dec) => match &str_dec.val {
       StrDec::Dec(dec) => {
-        let cx = Cx {
+        let mut cx = Cx {
           ty_names: bs.ty_names,
           ty_vars: TyVarSet::new(),
           env: bs.env,
         };
-        let env = ck_dec(&cx, st, dec)?;
+        cx.env.extend(ck_dec(&cx, st, dec)?);
         Ok(Basis {
           env: cx.env,
           ty_names: cx.ty_names,
