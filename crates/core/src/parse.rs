@@ -1562,7 +1562,12 @@ impl Parser {
       // NOTE we conjure up a 'fake' loc in the 0 case
       0 => self.peek().loc.wrap(seq(Vec::new())),
       1 => xs.pop().expect("empty list"),
-      _ => xs.first().expect("empty list").loc.wrap(seq(xs)),
+      _ => xs
+        .first()
+        .expect("empty list")
+        .loc
+        .span(xs.last().expect("empty list").loc)
+        .wrap(seq(xs)),
     };
     Ok(ret)
   }
