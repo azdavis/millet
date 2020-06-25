@@ -110,8 +110,8 @@ struct Subst {
 
 impl Subst {
   fn extend(&mut self, mut other: Self) {
-    for (_, ty) in other.inner.iter_mut() {
-      ty.apply(&self);
+    for (_, ty) in self.inner.iter_mut() {
+      ty.apply(&other);
     }
     for (tv, ty) in other.inner {
       assert!(
