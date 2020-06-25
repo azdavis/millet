@@ -38,6 +38,7 @@ pub enum StaticsError {
   NonVarInAs(Located<StrRef>),
   ForbiddenBinding(Loc, StrRef),
   NoSuitableOverload(Loc),
+  TyNameEscape(Loc),
   Todo(Loc),
 }
 
@@ -155,6 +156,17 @@ impl Ty {
 
   fn ref_(elem: Self) -> Self {
     Self::Ctor(vec![elem], Sym::base(StrRef::REF))
+  }
+
+  fn ty_names(&self) -> TyNameSet {
+    match self {
+      Self::Var(_) => TyNameSet::new(),
+      Self::Record(rows) => rows.iter().flat_map(|(_, ty)| ty.ty_names()).collect(),
+      Self::Arrow(arg, res) => arg.ty_names().into_iter().chain(res.ty_names()).collect(),
+      Self::Ctor(args, sym) => std::iter::once(sym.name())
+        .chain(args.iter().flat_map(Self::ty_names))
+        .collect(),
+    }
   }
 
   const CHAR: Self = Self::base(StrRef::CHAR);
@@ -646,9 +658,15 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       }
       ret.expect("empty exps")
     }
-    Exp::Let(_, _) => {
-      //
-      todo!()
+    Exp::Let(dec, inner) => {
+      let env = ck_dec(cx, st, dec)?;
+      let mut cx = cx.clone();
+      cx.env.extend(env);
+      let ty = ck_exp(&cx, st, inner)?;
+      if !ty.ty_names().is_subset(&cx.ty_names) {
+        return Err(StaticsError::TyNameEscape(inner.loc));
+      }
+      ty
     }
     Exp::App(func, arg) => {
       let func_ty = ck_exp(cx, st, func)?;

@@ -100,6 +100,10 @@ pub fn statics(store: &StrStore, id: SourceId, err: StaticsError) -> Diagnostic 
       format!("forbidden identifier in binding: {}", store.get(name)),
     ),
     StaticsError::NoSuitableOverload(loc) => (loc, "no suitable overload found".to_owned()),
+    StaticsError::TyNameEscape(loc) => (
+      loc,
+      "expression causes a type name to escape its scope".to_owned(),
+    ),
     StaticsError::Todo(loc) => (loc, "unimplemented language construct".to_owned()),
   };
   Diagnostic::error()
