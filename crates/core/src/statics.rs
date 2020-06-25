@@ -813,7 +813,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         assert!(!val_bind.rec);
         let (other, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
         ck_no_forbidden_bindings(&other, val_bind.pat.loc)?;
-        val_env.extend(other);
+        merge_val_env(&mut val_env, other, val_bind.pat.loc)?;
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
         st.constraints.add(dec.loc, pat_ty, exp_ty);
       }
