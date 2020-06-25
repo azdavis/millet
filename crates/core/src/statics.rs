@@ -319,6 +319,16 @@ impl From<ValEnv> for Env {
   }
 }
 
+impl From<TyEnv> for Env {
+  fn from(ty_env: TyEnv) -> Self {
+    Self {
+      str_env: StrEnv::new(),
+      ty_env,
+      val_env: ValEnv::new(),
+    }
+  }
+}
+
 impl Substitutable for Env {
   fn apply(&mut self, subst: &Subst) {
     for (_, env) in self.str_env.iter_mut() {
@@ -809,9 +819,20 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       //
       todo!()
     }
-    Dec::Type(_) => {
-      //
-      todo!()
+    Dec::Type(ty_binds) => {
+      let mut ty_env = TyEnv::default();
+      for ty_bind in ty_binds {
+        assert!(ty_bind.ty_vars.is_empty());
+        let ty = ck_ty(cx, st, &ty_bind.ty)?;
+        let info = TyInfo {
+          ty_fcn: TyScheme::mono(ty),
+          val_env: ValEnv::new(),
+        };
+        if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
+          return Err(StaticsError::Redefined(ty_bind.ty_con));
+        }
+      }
+      ty_env.into()
     }
     Dec::Datatype(_, _) => {
       //
