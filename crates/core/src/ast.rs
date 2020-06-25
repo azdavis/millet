@@ -200,9 +200,9 @@ pub struct PatRow<I> {
 pub enum Ty<I> {
   TyVar(TyVar<I>),
   Record(Vec<TyRow<I>>),
-  TyCon(Vec<Located<Ty<I>>>, Long<I>),
   /// requires tys.len() >= 2
   Tuple(Vec<Located<Ty<I>>>),
+  TyCon(Vec<Located<Ty<I>>>, Long<I>),
   Arrow(Box<Located<Ty<I>>>, Box<Located<Ty<I>>>),
 }
 
