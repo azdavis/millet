@@ -59,6 +59,21 @@ generally very short-lived. It is probably sufficient to implement the dynamic
 semantics with an interpreter, and not worry about compilation, which would
 probably result in faster-running code.
 
+## Testing
+
+To make a new test, run `bin/mk-test tests/<name>` from the top level of the
+repo.
+
+A test is a directory `d`. The parent of `d` must be the directory `tests`.
+
+`d` must contain a `run.sh` file, that, when run with `sh -eu run.sh`, must
+produce `out.tmp` directly inside `d`.
+
+`d` must also contain a `out.txt` file that contains the expected contents of
+`out.tmp`. This `out.txt` will be diffed against `out.tmp` and the test will be
+marked as failing if there is a difference. The test will also be marked as
+failing if `run.sh` exits with a non-zero exit code.
+
 [one-fifty]: http://www.cs.cmu.edu/~15150/
 [rustup]: https://rustup.rs
 [sml-def]: https://smlfamily.github.io/sml97-defn.pdf
