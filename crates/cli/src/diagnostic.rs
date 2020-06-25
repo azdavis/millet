@@ -2,10 +2,12 @@
 
 use crate::source::SourceId;
 use codespan_reporting::diagnostic::Label;
+use millet_core::ast::Label as AstLabel;
 use millet_core::intern::StrStore;
 use millet_core::lex::LexError;
 use millet_core::loc::Located;
 use millet_core::parse::ParseError;
+use millet_core::statics::{StaticsError, Ty};
 
 pub type Diagnostic = codespan_reporting::diagnostic::Diagnostic<SourceId>;
 
@@ -46,4 +48,122 @@ pub fn parse(store: &StrStore, id: SourceId, err: Located<ParseError>) -> Diagno
   Diagnostic::error()
     .with_message(msg)
     .with_labels(vec![Label::primary(id, err.loc)])
+}
+
+pub fn statics(store: &StrStore, id: SourceId, err: StaticsError) -> Diagnostic {
+  let (loc, msg) = match err {
+    StaticsError::Undefined(item, id) => (
+      id.loc,
+      format!("undefined {} identifier: {}", item, store.get(id.val)),
+    ),
+    StaticsError::Redefined(id) => (
+      id.loc,
+      format!("redefined identifier: {}", store.get(id.val)),
+    ),
+    StaticsError::DuplicateLabel(lab) => (
+      lab.loc,
+      format!("duplicate label: {}", show_lab(store, lab.val)),
+    ),
+    StaticsError::Circularity(loc, ty_var, ty) => (
+      loc,
+      format!("circularity: {} in {}", ty_var, show_ty(store, &ty)),
+    ),
+    StaticsError::HeadMismatch(loc, lhs, rhs) => (
+      loc,
+      format!(
+        "mismatched types: {} vs {}",
+        show_ty(store, &lhs),
+        show_ty(store, &rhs)
+      ),
+    ),
+    StaticsError::MissingLabel(loc, lab) => (
+      loc,
+      format!("type is missing label {}", show_lab(store, lab),),
+    ),
+    StaticsError::ValAsPat(loc) => (loc, "value binding used as pattern".to_owned()),
+    StaticsError::WrongNumTyArgs(loc, want, got) => (
+      loc,
+      format!(
+        "wrong number of type arguments: expected {}, found {}",
+        want, got
+      ),
+    ),
+    StaticsError::NonVarInAs(name) => (
+      name.loc,
+      format!(
+        "pattern to left of `as` is not a variable: {}",
+        store.get(name.val)
+      ),
+    ),
+    StaticsError::ForbiddenBinding(loc, name) => (
+      loc,
+      format!("forbidden identifier in binding: {}", store.get(name)),
+    ),
+    StaticsError::NoSuitableOverload(loc) => (loc, "no suitable overload found".to_owned()),
+    StaticsError::Todo(loc) => (loc, "unimplemented language construct".to_owned()),
+  };
+  Diagnostic::error()
+    .with_message(msg)
+    .with_labels(vec![Label::primary(id, loc)])
+}
+
+fn show_lab(store: &StrStore, lab: AstLabel) -> String {
+  match lab {
+    AstLabel::Vid(id) => store.get(id).to_owned(),
+    AstLabel::Num(n) => format!("{}", n),
+  }
+}
+
+fn show_ty(store: &StrStore, ty: &Ty) -> String {
+  let mut buf = String::new();
+  show_ty_impl(&mut buf, store, ty);
+  buf
+}
+
+fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty) {
+  match ty {
+    Ty::Var(tv) => buf.push_str(&tv.to_string()),
+    Ty::Record(rows) => {
+      buf.push_str("{ ");
+      let mut rows = rows.iter();
+      if let Some((lab, ty)) = rows.next() {
+        show_row(buf, store, *lab, ty);
+      }
+      for (lab, ty) in rows {
+        buf.push_str(", ");
+        show_row(buf, store, *lab, ty);
+      }
+      buf.push_str(" }");
+    }
+    Ty::Arrow(lhs, rhs) => {
+      buf.push_str("(");
+      show_ty_impl(buf, store, lhs);
+      buf.push_str(") -> (");
+      show_ty_impl(buf, store, rhs);
+      buf.push_str(")");
+    }
+    Ty::Ctor(args, sym) => {
+      if args.is_empty() {
+        buf.push_str(store.get(sym.name()));
+        return;
+      }
+      buf.push_str("(");
+      let mut args = args.iter();
+      if let Some(arg) = args.next() {
+        show_ty_impl(buf, store, arg);
+      }
+      for arg in args {
+        buf.push_str(", ");
+        show_ty_impl(buf, store, arg);
+      }
+      buf.push_str(") ");
+      buf.push_str(store.get(sym.name()));
+    }
+  }
+}
+
+fn show_row(buf: &mut String, store: &StrStore, lab: AstLabel, ty: &Ty) {
+  buf.push_str(&show_lab(store, lab));
+  buf.push_str(" : ");
+  show_ty_impl(buf, store, ty);
 }

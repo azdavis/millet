@@ -6,7 +6,7 @@ mod source;
 
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
-use millet_core::{intern, lex, parse};
+use millet_core::{intern, lex, parse, statics};
 use std::io::Write as _;
 
 fn run() -> bool {
@@ -43,11 +43,14 @@ fn run() -> bool {
     }
   }
   let store = store.finish();
+  let mut top_decs = Vec::with_capacity(src.len());
   for ((id, file), lexer) in src.iter().zip(lexers) {
     match parse::get(lexer) {
       Ok(xs) => {
         if args.just_ast {
           writeln!(w, "{}: {:#?}", file.name(), xs).expect("io error");
+        } else {
+          top_decs.push((id, xs));
         }
       }
       Err(e) => {
@@ -58,6 +61,15 @@ fn run() -> bool {
   }
   if args.just_ast {
     return true;
+  }
+  for (id, xs) in top_decs {
+    match statics::get(&xs) {
+      Ok(()) => {}
+      Err(e) => {
+        term::emit(&mut w, &config, &src, &diagnostic::statics(&store, id, e)).expect("io error");
+        return false;
+      }
+    }
   }
   true
 }
