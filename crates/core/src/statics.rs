@@ -787,7 +787,7 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   Ok(ret)
 }
 
-fn ck_no_forbidden(val_env: &ValEnv, loc: Loc) -> Result<()> {
+fn ck_no_forbidden_bindings(val_env: &ValEnv, loc: Loc) -> Result<()> {
   for name in [
     StrRef::TRUE,
     StrRef::FALSE,
@@ -812,7 +812,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       let val_bind = val_binds.first().unwrap();
       assert!(!val_bind.rec);
       let (val_env, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
-      ck_no_forbidden(&val_env, val_bind.pat.loc)?;
+      ck_no_forbidden_bindings(&val_env, val_bind.pat.loc)?;
       let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
       st.constraints.add(dec.loc, pat_ty, exp_ty);
       val_env.into()
