@@ -856,9 +856,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       ret
     }
-    Dec::Infix(..) => todo!(),
-    Dec::Infixr(..) => todo!(),
-    Dec::Nonfix(..) => todo!(),
+    Dec::Infix(..) | Dec::Infixr(..) | Dec::Nonfix(..) => Env::default(),
   };
   Ok(ret)
 }
