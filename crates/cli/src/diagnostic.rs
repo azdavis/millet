@@ -36,12 +36,12 @@ pub fn parse(store: &StrStore, id: SourceId, err: Located<ParseError>) -> Diagno
   let msg = match err.val {
     ParseError::ExpectedButFound(exp, fnd) => format!("expected {}, found {}", exp, fnd),
     ParseError::InfixWithoutOp(id) => format!(
-      "infix identifier `{}` used without preceding `op`",
+      "infix identifier used without preceding `op`: {}",
       store.get(id)
     ),
-    ParseError::NotInfix(id) => format!("non-infix identifier `{}` used as infix", store.get(id)),
+    ParseError::NotInfix(id) => format!("non-infix identifier used as infix: {}", store.get(id)),
     ParseError::RealPat => "real constant used as a pattern".to_owned(),
-    ParseError::NegativeFixity(n) => format!("fixity `{}` is negative", n),
+    ParseError::NegativeFixity(n) => format!("fixity is negative: {}", n),
   };
   Diagnostic::error()
     .with_message(msg)
