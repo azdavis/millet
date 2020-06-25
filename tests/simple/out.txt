@@ -11,9 +11,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            38,
-                                        ),
+                                        last: StrRef(regular: 0),
                                     },
                                 ),
                                 exp: DecInt(
@@ -30,9 +28,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            39,
-                                        ),
+                                        last: StrRef(regular: 1),
                                     },
                                 ),
                                 exp: HexInt(
@@ -49,9 +45,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            40,
-                                        ),
+                                        last: StrRef(regular: 2),
                                     },
                                 ),
                                 exp: DecWord(
@@ -68,9 +62,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            41,
-                                        ),
+                                        last: StrRef(regular: 3),
                                     },
                                 ),
                                 exp: HexWord(
@@ -87,9 +79,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            42,
-                                        ),
+                                        last: StrRef(regular: 4),
                                     },
                                 ),
                                 exp: List(
@@ -116,15 +106,11 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            43,
-                                        ),
+                                        last: StrRef(regular: 5),
                                     },
                                 ),
                                 exp: Str(
-                                    StrRef(
-                                        44,
-                                    ),
+                                    StrRef(regular: 6),
                                 ),
                             },
                         ],
@@ -137,15 +123,11 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            45,
-                                        ),
+                                        last: StrRef(regular: 7),
                                     },
                                 ),
                                 exp: Str(
-                                    StrRef(
-                                        46,
-                                    ),
+                                    StrRef(regular: 8),
                                 ),
                             },
                         ],
@@ -158,9 +140,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            47,
-                                        ),
+                                        last: StrRef(regular: 9),
                                     },
                                 ),
                                 exp: Char(

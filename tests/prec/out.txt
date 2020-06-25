@@ -7,9 +7,7 @@ inp.sml: [
                         [
                             TyBind {
                                 ty_vars: [],
-                                ty_con: StrRef(
-                                    38,
-                                ),
+                                ty_con: StrRef(regular: 0),
                                 ty: Arrow(
                                     Arrow(
                                         Tuple(
@@ -22,25 +20,19 @@ inp.sml: [
                                                                     [],
                                                                     Long {
                                                                         structures: [],
-                                                                        last: StrRef(
-                                                                            10,
-                                                                        ),
+                                                                        last: StrRef(special: 10),
                                                                     },
                                                                 ),
                                                             ],
                                                             Long {
                                                                 structures: [],
-                                                                last: StrRef(
-                                                                    32,
-                                                                ),
+                                                                last: StrRef(special: 32),
                                                             },
                                                         ),
                                                     ],
                                                     Long {
                                                         structures: [],
-                                                        last: StrRef(
-                                                            29,
-                                                        ),
+                                                        last: StrRef(special: 29),
                                                     },
                                                 ),
                                                 TyCon(
@@ -49,17 +41,13 @@ inp.sml: [
                                                             [],
                                                             Long {
                                                                 structures: [],
-                                                                last: StrRef(
-                                                                    10,
-                                                                ),
+                                                                last: StrRef(special: 10),
                                                             },
                                                         ),
                                                     ],
                                                     Long {
                                                         structures: [],
-                                                        last: StrRef(
-                                                            36,
-                                                        ),
+                                                        last: StrRef(special: 36),
                                                     },
                                                 ),
                                             ],
@@ -70,18 +58,14 @@ inp.sml: [
                                                     [],
                                                     Long {
                                                         structures: [],
-                                                        last: StrRef(
-                                                            10,
-                                                        ),
+                                                        last: StrRef(special: 10),
                                                     },
                                                 ),
                                                 TyCon(
                                                     [],
                                                     Long {
                                                         structures: [],
-                                                        last: StrRef(
-                                                            3,
-                                                        ),
+                                                        last: StrRef(special: 3),
                                                     },
                                                 ),
                                             ],
@@ -93,17 +77,13 @@ inp.sml: [
                                                 [],
                                                 Long {
                                                     structures: [],
-                                                    last: StrRef(
-                                                        10,
-                                                    ),
+                                                    last: StrRef(special: 10),
                                                 },
                                             ),
                                         ],
                                         Long {
                                             structures: [],
-                                            last: StrRef(
-                                                32,
-                                            ),
+                                            last: StrRef(special: 32),
                                         },
                                     ),
                                 ),
@@ -118,9 +98,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            39,
-                                        ),
+                                        last: StrRef(regular: 1),
                                     },
                                 ),
                                 exp: InfixApp(
@@ -131,61 +109,45 @@ inp.sml: [
                                                     DecInt(
                                                         1,
                                                     ),
-                                                    StrRef(
-                                                        12,
-                                                    ),
+                                                    StrRef(special: 12),
                                                     DecInt(
                                                         2,
                                                     ),
                                                 ),
-                                                StrRef(
-                                                    12,
-                                                ),
+                                                StrRef(special: 12),
                                                 DecInt(
                                                     3,
                                                 ),
                                             ),
-                                            StrRef(
-                                                12,
-                                            ),
+                                            StrRef(special: 12),
                                             InfixApp(
                                                 InfixApp(
                                                     InfixApp(
                                                         DecInt(
                                                             4,
                                                         ),
-                                                        StrRef(
-                                                            14,
-                                                        ),
+                                                        StrRef(special: 14),
                                                         DecInt(
                                                             5,
                                                         ),
                                                     ),
-                                                    StrRef(
-                                                        14,
-                                                    ),
+                                                    StrRef(special: 14),
                                                     DecInt(
                                                         6,
                                                     ),
                                                 ),
-                                                StrRef(
-                                                    14,
-                                                ),
+                                                StrRef(special: 14),
                                                 DecInt(
                                                     7,
                                                 ),
                                             ),
                                         ),
-                                        StrRef(
-                                            12,
-                                        ),
+                                        StrRef(special: 12),
                                         DecInt(
                                             8,
                                         ),
                                     ),
-                                    StrRef(
-                                        12,
-                                    ),
+                                    StrRef(special: 12),
                                     DecInt(
                                         9,
                                     ),
@@ -201,9 +163,7 @@ inp.sml: [
                                 pat: LongVid(
                                     Long {
                                         structures: [],
-                                        last: StrRef(
-                                            40,
-                                        ),
+                                        last: StrRef(regular: 2),
                                     },
                                 ),
                                 exp: InfixApp(
@@ -211,52 +171,38 @@ inp.sml: [
                                         DecInt(
                                             1,
                                         ),
-                                        StrRef(
-                                            12,
-                                        ),
+                                        StrRef(special: 12),
                                         DecInt(
                                             2,
                                         ),
                                     ),
-                                    StrRef(
-                                        34,
-                                    ),
+                                    StrRef(special: 34),
                                     InfixApp(
                                         InfixApp(
                                             DecInt(
                                                 3,
                                             ),
-                                            StrRef(
-                                                14,
-                                            ),
+                                            StrRef(special: 14),
                                             DecInt(
                                                 4,
                                             ),
                                         ),
-                                        StrRef(
-                                            34,
-                                        ),
+                                        StrRef(special: 34),
                                         InfixApp(
                                             InfixApp(
                                                 DecInt(
                                                     5,
                                                 ),
-                                                StrRef(
-                                                    15,
-                                                ),
+                                                StrRef(special: 15),
                                                 DecInt(
                                                     6,
                                                 ),
                                             ),
-                                            StrRef(
-                                                34,
-                                            ),
+                                            StrRef(special: 34),
                                             LongVid(
                                                 Long {
                                                     structures: [],
-                                                    last: StrRef(
-                                                        33,
-                                                    ),
+                                                    last: StrRef(special: 33),
                                                 },
                                             ),
                                         ),
@@ -275,9 +221,7 @@ inp.sml: [
                                     LongVid(
                                         Long {
                                             structures: [],
-                                            last: StrRef(
-                                                40,
-                                            ),
+                                            last: StrRef(regular: 2),
                                         },
                                     ),
                                     Cases {
@@ -289,9 +233,7 @@ inp.sml: [
                                                 exp: LongVid(
                                                     Long {
                                                         structures: [],
-                                                        last: StrRef(
-                                                            39,
-                                                        ),
+                                                        last: StrRef(regular: 1),
                                                     },
                                                 ),
                                             },
@@ -301,9 +243,7 @@ inp.sml: [
                                                         LongVid(
                                                             Long {
                                                                 structures: [],
-                                                                last: StrRef(
-                                                                    41,
-                                                                ),
+                                                                last: StrRef(regular: 3),
                                                             },
                                                         ),
                                                     ],
@@ -311,9 +251,7 @@ inp.sml: [
                                                 exp: LongVid(
                                                     Long {
                                                         structures: [],
-                                                        last: StrRef(
-                                                            41,
-                                                        ),
+                                                        last: StrRef(regular: 3),
                                                     },
                                                 ),
                                             },
@@ -322,26 +260,18 @@ inp.sml: [
                                                     LongVid(
                                                         Long {
                                                             structures: [],
-                                                            last: StrRef(
-                                                                41,
-                                                            ),
+                                                            last: StrRef(regular: 3),
                                                         },
                                                     ),
-                                                    StrRef(
-                                                        34,
-                                                    ),
+                                                    StrRef(special: 34),
                                                     InfixCtor(
                                                         LongVid(
                                                             Long {
                                                                 structures: [],
-                                                                last: StrRef(
-                                                                    42,
-                                                                ),
+                                                                last: StrRef(regular: 4),
                                                             },
                                                         ),
-                                                        StrRef(
-                                                            34,
-                                                        ),
+                                                        StrRef(special: 34),
                                                         Wildcard,
                                                     ),
                                                 ),
@@ -349,32 +279,22 @@ inp.sml: [
                                                     LongVid(
                                                         Long {
                                                             structures: [],
-                                                            last: StrRef(
-                                                                41,
-                                                            ),
+                                                            last: StrRef(regular: 3),
                                                         },
                                                     ),
-                                                    StrRef(
-                                                        12,
-                                                    ),
+                                                    StrRef(special: 12),
                                                     InfixApp(
                                                         LongVid(
                                                             Long {
                                                                 structures: [],
-                                                                last: StrRef(
-                                                                    42,
-                                                                ),
+                                                                last: StrRef(regular: 4),
                                                             },
                                                         ),
-                                                        StrRef(
-                                                            14,
-                                                        ),
+                                                        StrRef(special: 14),
                                                         LongVid(
                                                             Long {
                                                                 structures: [],
-                                                                last: StrRef(
-                                                                    39,
-                                                                ),
+                                                                last: StrRef(regular: 1),
                                                             },
                                                         ),
                                                     ),

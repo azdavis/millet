@@ -2,11 +2,24 @@
 
 use maplit::hashmap;
 use std::collections::HashMap;
+use std::fmt;
 
 /// A reference to a string. To learn what string this represents, you must ask the StrStore created
 /// from the StrStoreMut that returned this StrRef to you.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct StrRef(usize);
+
+const SPECIAL_STR_REF: usize = 40;
+
+impl fmt::Debug for StrRef {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    if self.0 < SPECIAL_STR_REF {
+      write!(f, "StrRef(special: {})", self.0)
+    } else {
+      write!(f, "StrRef(regular: {})", self.0 - SPECIAL_STR_REF)
+    }
+  }
+}
 
 /// New StrRefs should be appended to the bottom. This can help avoid big diffs.
 impl StrRef {
@@ -105,8 +118,9 @@ impl StrStoreMut {
       s("Match") => StrRef::MATCH,
       s("Bind") => StrRef::BIND,
     ];
+    assert_eq!(store.len(), SPECIAL_STR_REF);
     Self {
-      next: store.len(),
+      next: SPECIAL_STR_REF,
       store,
     }
   }
