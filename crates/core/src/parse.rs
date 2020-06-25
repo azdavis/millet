@@ -890,28 +890,8 @@ impl Parser {
         Dec::Val(ty_vars, val_binds)
       }
       Token::Fun => {
-        // have to contort the case for seeing an initial `(` after the `fun` because it could be
-        // the beginning of a ty var seq OR the wrapping of an infix fval bind case head OR the
-        // beginning of an at_pat.
         self.skip();
-        let tok = self.peek();
-        let ty_vars = match tok.val {
-          Token::TyVar(tv) => {
-            self.skip();
-            vec![tok.loc.wrap(tv)]
-          }
-          Token::LRound => {
-            self.skip();
-            let has_seq = matches!(self.peek().val, Token::TyVar(..));
-            self.i -= 1;
-            if has_seq {
-              self.ty_var_seq()?
-            } else {
-              Vec::new()
-            }
-          }
-          _ => Vec::new(),
-        };
+        let ty_vars = self.ty_var_seq()?;
         let mut cases = Vec::new();
         let mut binds = Vec::new();
         loop {
@@ -1186,6 +1166,13 @@ impl Parser {
       Token::LRound => {
         self.skip();
         let mut ret = Vec::new();
+        if let Token::TyVar(..) = self.peek().val {
+          // proceed.
+        } else {
+          // go back. this might be `fun (a f b) = ...` or `val (a, b) = ...` or something.
+          self.i -= 1;
+          return Ok(ret);
+        }
         loop {
           let tok = self.peek();
           if let Token::TyVar(ty_var) = tok.val {
