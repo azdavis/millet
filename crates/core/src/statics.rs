@@ -330,6 +330,15 @@ impl Env {
       self.val_env.insert(name, val_info);
     }
   }
+
+  fn ty_names(&self) -> TyNameSet {
+    self
+      .str_env
+      .iter()
+      .flat_map(|(_, env)| env.ty_names())
+      .chain(self.ty_env.inner.keys().copied())
+      .collect()
+  }
 }
 
 impl From<ValEnv> for Env {
@@ -388,6 +397,16 @@ struct Cx {
   ty_names: TyNameSet,
   ty_vars: TyVarSet,
   env: Env,
+}
+
+impl Cx {
+  // this is the o-plus operation defined in the Definition, which extends a context by an
+  // environment and that environment's type name set.
+  fn o_plus(&mut self, env: Env) {
+    let ty_names = env.ty_names();
+    self.env.extend(env);
+    self.ty_names.extend(ty_names);
+  }
 }
 
 struct Sig {
@@ -687,7 +706,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::Let(dec, inner) => {
       let env = ck_dec(cx, st, dec)?;
       let mut cx = cx.clone();
-      cx.env.extend(env);
+      cx.o_plus(env);
       let ty = ck_exp(&cx, st, inner)?;
       if !ty.ty_names().is_subset(&cx.ty_names) {
         return Err(StaticsError::TyNameEscape(inner.loc));
@@ -951,7 +970,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       let mut cx = cx.clone();
       let mut ret = Env::default();
       for dec in decs {
-        cx.env.extend(ret.clone());
+        cx.o_plus(ret.clone());
         ret.extend(ck_dec(&cx, st, dec)?);
       }
       ret
@@ -1118,7 +1137,7 @@ fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> R
           ty_vars: TyVarSet::new(),
           env: bs.env,
         };
-        cx.env.extend(ck_dec(&cx, st, dec)?);
+        cx.o_plus(ck_dec(&cx, st, dec)?);
         Ok(Basis {
           env: cx.env,
           ty_names: cx.ty_names,
