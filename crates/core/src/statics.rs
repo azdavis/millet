@@ -80,13 +80,6 @@ impl Sym {
   }
 }
 
-#[derive(Clone, PartialEq, Eq)]
-enum IdStatus {
-  Ctor,
-  Exn,
-  Val,
-}
-
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TyVar {
   id: usize,
@@ -279,10 +272,40 @@ impl Substitutable for TyEnv {
   }
 }
 
+#[derive(Clone, PartialEq, Eq)]
+enum IdStatus {
+  Ctor,
+  Exn,
+  Val,
+}
+
 #[derive(Clone)]
 struct ValInfo {
   ty_scheme: TyScheme,
   id_status: IdStatus,
+}
+
+impl ValInfo {
+  fn ctor(ty_scheme: TyScheme) -> Self {
+    Self {
+      ty_scheme,
+      id_status: IdStatus::Ctor,
+    }
+  }
+
+  fn exn() -> Self {
+    Self {
+      ty_scheme: TyScheme::mono(Ty::EXN),
+      id_status: IdStatus::Ctor,
+    }
+  }
+
+  fn val(ty_scheme: TyScheme) -> Self {
+    Self {
+      ty_scheme,
+      id_status: IdStatus::Ctor,
+    }
+  }
 }
 
 type ValEnv = HashMap<StrRef, ValInfo>;
@@ -910,10 +933,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         None => {
           // TODO should this be TyScheme::mono?
           let a = Ty::Var(st.new_ty_var(false));
-          let val_info = ValInfo {
-            ty_scheme: TyScheme::mono(a.clone()),
-            id_status: IdStatus::Val,
-          };
+          let val_info = ValInfo::val(TyScheme::mono(a.clone()));
           (hashmap![vid.last.val => val_info], a)
         }
         Some(ty_scheme) => {
@@ -1013,10 +1033,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         let ty = ck_ty(cx, st, ty)?;
         st.constraints.add(pat.loc, pat_ty.clone(), ty);
       }
-      let val_info = ValInfo {
-        ty_scheme: TyScheme::mono(pat_ty.clone()),
-        id_status: IdStatus::Val,
-      };
+      let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));
       env_ins(&mut val_env, *vid, val_info)?;
       (val_env, pat_ty)
     }
@@ -1058,126 +1075,88 @@ fn prim_ty_info(ty: Ty) -> TyInfo {
 
 fn bool_val_env() -> ValEnv {
   hashmap![
-    StrRef::TRUE => ValInfo {
-      ty_scheme: TyScheme::mono(Ty::BOOL),
-      id_status: IdStatus::Ctor,
-    },
-    StrRef::FALSE => ValInfo {
-      ty_scheme: TyScheme::mono(Ty::BOOL),
-      id_status: IdStatus::Ctor,
-    },
+    StrRef::TRUE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
+    StrRef::FALSE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
   ]
 }
 
 fn list_val_env(st: &mut State) -> ValEnv {
-  hashmap![
-    StrRef::NIL => ValInfo {
-      ty_scheme: {
-        let a = st.new_ty_var(false);
-        TyScheme {
-          ty_vars: vec![a],
-          ty: Ty::list(Ty::Var(a)),
-          overload: None,
-        }
-      },
-      id_status: IdStatus::Ctor,
-    },
-    StrRef::CONS => ValInfo {
-      ty_scheme: {
-        let a = st.new_ty_var(false);
-        TyScheme {
-          ty_vars: vec![a],
-          ty: Ty::Arrow(
-            Ty::Record(vec![
-              (Label::Num(1), Ty::Var(a)),
-              (Label::Num(2), Ty::list(Ty::Var(a))),
-            ])
-            .into(),
-            Ty::list(Ty::Var(a)).into(),
-          ),
-          overload: None,
-        }
-      },
-      id_status: IdStatus::Ctor,
-    },
-  ]
+  let a = st.new_ty_var(false);
+  let nil = ValInfo::ctor(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::list(Ty::Var(a)),
+    overload: None,
+  });
+  let a = st.new_ty_var(false);
+  let cons = ValInfo::ctor(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::Arrow(
+      Ty::Record(vec![
+        (Label::Num(1), Ty::Var(a)),
+        (Label::Num(2), Ty::list(Ty::Var(a))),
+      ])
+      .into(),
+      Ty::list(Ty::Var(a)).into(),
+    ),
+    overload: None,
+  });
+  hashmap![StrRef::NIL => nil, StrRef::CONS => cons]
 }
 
 fn ref_val_env(st: &mut State) -> ValEnv {
-  hashmap![
-    StrRef::REF => ValInfo {
-      ty_scheme: {
-        let a = st.new_ty_var(false);
-        TyScheme {
-          ty_vars: vec![a],
-          ty: Ty::Arrow(Ty::Var(a).into(), Ty::ref_(Ty::Var(a)).into()),
-          overload: None,
-        }
-      },
-      id_status: IdStatus::Ctor,
-    },
-  ]
+  let a = st.new_ty_var(false);
+  let ref_ = ValInfo::ctor(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::Arrow(Ty::Var(a).into(), Ty::ref_(Ty::Var(a)).into()),
+    overload: None,
+  });
+  hashmap![StrRef::REF => ref_]
 }
 
 fn order_val_env() -> ValEnv {
   hashmap![
-    StrRef::LESS => ValInfo {
-      ty_scheme: TyScheme::mono(Ty::ORDER),
-      id_status: IdStatus::Ctor,
-    },
-    StrRef::EQUAL => ValInfo {
-      ty_scheme: TyScheme::mono(Ty::ORDER),
-      id_status: IdStatus::Ctor,
-    },
-    StrRef::GREATER => ValInfo {
-      ty_scheme: TyScheme::mono(Ty::ORDER),
-      id_status: IdStatus::Ctor,
-    },
+    StrRef::LESS => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
+    StrRef::EQUAL => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
+    StrRef::GREATER => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
   ]
 }
 
 fn overloaded(st: &mut State, overloads: Vec<StrRef>) -> ValInfo {
   let a = st.new_ty_var(false);
-  ValInfo {
-    ty_scheme: TyScheme {
-      ty_vars: vec![a],
-      ty: Ty::Arrow(
-        Ty::Record(vec![
-          (Label::Num(1), Ty::Var(a)),
-          (Label::Num(2), Ty::Var(a)),
-        ])
-        .into(),
-        Ty::Var(a).into(),
-      ),
-      overload: Some(overloads),
-    },
-    id_status: IdStatus::Val,
-  }
+  ValInfo::val(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::Arrow(
+      Ty::Record(vec![
+        (Label::Num(1), Ty::Var(a)),
+        (Label::Num(2), Ty::Var(a)),
+      ])
+      .into(),
+      Ty::Var(a).into(),
+    ),
+    overload: Some(overloads),
+  })
 }
 
 fn overloaded_cmp(st: &mut State) -> ValInfo {
   let a = st.new_ty_var(false);
-  ValInfo {
-    ty_scheme: TyScheme {
-      ty_vars: vec![a],
-      ty: Ty::Arrow(
-        Ty::Record(vec![
-          (Label::Num(1), Ty::Var(a)),
-          (Label::Num(2), Ty::Var(a)),
-        ])
-        .into(),
-        Ty::base(StrRef::BOOL).into(),
-      ),
-      overload: Some(vec![
-        StrRef::INT,
-        StrRef::WORD,
-        StrRef::REAL,
-        StrRef::STRING,
-        StrRef::CHAR,
-      ]),
-    },
-    id_status: IdStatus::Val,
-  }
+  ValInfo::val(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::Arrow(
+      Ty::Record(vec![
+        (Label::Num(1), Ty::Var(a)),
+        (Label::Num(2), Ty::Var(a)),
+      ])
+      .into(),
+      Ty::base(StrRef::BOOL).into(),
+    ),
+    overload: Some(vec![
+      StrRef::INT,
+      StrRef::WORD,
+      StrRef::REAL,
+      StrRef::STRING,
+      StrRef::CHAR,
+    ]),
+  })
 }
 
 fn std_lib() -> (Basis, State) {
@@ -1249,50 +1228,41 @@ fn std_lib() -> (Basis, State) {
         .chain(ref_val_env(&mut st))
         .chain(order_val_env())
         .chain(hashmap![
-          StrRef::EQ => ValInfo {
-            ty_scheme: {
-              let a = st.new_ty_var(true);
-              TyScheme {
-                ty_vars: vec![a],
-                ty: Ty::Arrow(
-                  Ty::Record(vec![
-                    (Label::Num(1), Ty::Var(a)),
-                    (Label::Num(2), Ty::Var(a)),
-                  ])
-                  .into(),
-                  Ty::BOOL.into(),
-                ),
-                overload: None,
-              }
-            },
-            id_status: IdStatus::Val,
-          },
-          StrRef::ASSIGN => ValInfo {
-            ty_scheme: {
-              let a = st.new_ty_var(false);
-              TyScheme {
-                ty_vars: vec![a],
-                ty: Ty::Arrow(
-                  Ty::Record(vec![
-                    (Label::Num(1), Ty::Ctor(vec![Ty::Var(a)], Sym::base(StrRef::REF))),
-                    (Label::Num(2), Ty::Var(a)),
-                  ])
-                  .into(),
-                  Ty::Record(Vec::new()).into(),
-                ),
-                overload: None,
-              }
-            },
-            id_status: IdStatus::Val,
-          },
-          StrRef::MATCH => ValInfo {
-            ty_scheme: TyScheme::mono(Ty::EXN),
-            id_status: IdStatus::Exn,
-          },
-          StrRef::BIND => ValInfo {
-            ty_scheme: TyScheme::mono(Ty::EXN),
-            id_status: IdStatus::Exn,
-          },
+          StrRef::EQ => ValInfo::val({
+            let a = st.new_ty_var(true);
+            TyScheme {
+              ty_vars: vec![a],
+              ty: Ty::Arrow(
+                Ty::Record(vec![
+                  (Label::Num(1), Ty::Var(a)),
+                  (Label::Num(2), Ty::Var(a)),
+                ])
+                .into(),
+                Ty::BOOL.into(),
+              ),
+              overload: None,
+            }
+          }),
+          StrRef::ASSIGN => ValInfo::val({
+            let a = st.new_ty_var(false);
+            TyScheme {
+              ty_vars: vec![a],
+              ty: Ty::Arrow(
+                Ty::Record(vec![
+                  (
+                    Label::Num(1),
+                    Ty::Ctor(vec![Ty::Var(a)], Sym::base(StrRef::REF)),
+                  ),
+                  (Label::Num(2), Ty::Var(a)),
+                ])
+                .into(),
+                Ty::Record(Vec::new()).into(),
+              ),
+              overload: None,
+            }
+          }),
+          StrRef::MATCH => ValInfo::exn(),
+          StrRef::BIND => ValInfo::exn(),
           StrRef::ABS => overloaded(&mut st, real_int()),
           StrRef::TILDE => overloaded(&mut st, real_int()),
           StrRef::DIV => overloaded(&mut st, word_int()),
