@@ -469,6 +469,7 @@ impl Substitutable for Basis {
 struct Constraints {
   regular: Vec<(Loc, Ty, Ty)>,
   overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
+  ty_name: Vec<(Loc, Ty, TyNameSet)>,
 }
 
 impl Constraints {
@@ -495,6 +496,12 @@ impl Constraints {
         }
       }
       return Err(StaticsError::NoSuitableOverload(loc));
+    }
+    for (loc, mut ty, ty_names) in self.ty_name {
+      ty.apply(&ret);
+      if !ty.ty_names().is_subset(&ty_names) {
+        return Err(StaticsError::TyNameEscape(loc));
+      }
     }
     Ok(ret)
   }
@@ -709,9 +716,9 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let ty_names = cx.ty_names.clone();
       cx.o_plus(env);
       let ty = ck_exp(&cx, st, inner)?;
-      if !ty.ty_names().is_subset(&ty_names) {
-        return Err(StaticsError::TyNameEscape(inner.loc));
-      }
+      st.constraints
+        .ty_name
+        .push((inner.loc, ty.clone(), ty_names));
       ty
     }
     Exp::App(func, arg) => {
