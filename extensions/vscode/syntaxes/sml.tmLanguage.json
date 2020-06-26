@@ -16,8 +16,8 @@
   "repository": {
     "blockComment": {
       "name": "comment.block.sml",
-      "begin": "(\\*",
-      "end": "\\*)",
+      "begin": "\\(\\*",
+      "end": "\\*\\)",
       "patterns": [{ "include": "#blockComment" }]
     },
     "string": {
