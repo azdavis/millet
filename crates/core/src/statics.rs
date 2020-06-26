@@ -706,9 +706,10 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::Let(dec, inner) => {
       let env = ck_dec(cx, st, dec)?;
       let mut cx = cx.clone();
+      let ty_names = cx.ty_names.clone();
       cx.o_plus(env);
       let ty = ck_exp(&cx, st, inner)?;
-      if !ty.ty_names().is_subset(&cx.ty_names) {
+      if !ty.ty_names().is_subset(&ty_names) {
         return Err(StaticsError::TyNameEscape(inner.loc));
       }
       ty
