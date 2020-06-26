@@ -19,16 +19,9 @@
     "vscode": "^1.46.1"
   },
   "activationEvents": [
-    "onCommand:extension.helloWorld",
     "onLanguage:sml"
   ],
   "contributes": {
-    "commands": [
-      {
-        "command": "extension.helloWorld",
-        "title": "Hello World"
-      }
-    ],
     "languages": [
       {
         "id": "sml",
