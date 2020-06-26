@@ -11,7 +11,9 @@
     { "include": "#decInt" },
     { "include": "#bool" },
     { "include": "#tyVar" },
-    { "include": "#keyword" }
+    { "include": "#controlKeyword" },
+    { "include": "#otherKeyword" },
+    { "include": "#invalidKeyword" }
   ],
   "repository": {
     "blockComment": {
@@ -59,9 +61,17 @@
       "name": "entity.name.type-variable-sml",
       "match": "'+[A-Za-z][A-Za-z0-9']*"
     },
-    "keyword": {
+    "controlKeyword": {
+      "name": "keyword.control.sml",
+      "match": "\\b(andalso|case|do|else|end|handle|if|in|let|local|of|op|orelse|raise|then)\\b"
+    },
+    "otherKeyword": {
       "name": "keyword.other.sml",
-      "match": "\\b(abstype|and|andalso|as|case|datatype|do|else|end|exception|fn|fun|handle|if|in|infix|infixr|let|local|nonfix|of|op|open|orelse|raise|rec|then|type|val|with|withtype|while|eqtype|functor|include|sharing|sig|signature|struct|structure|where)\\b"
+      "match": "\\b(and|as|datatype|exception|fn|fun|infix|infixr|nonfix|open|rec|type|val)\\b"
+    },
+    "invalidKeyword": {
+      "name": "invalid.deprecated.sml",
+      "match": "\\b(abstype|with|withtype|while|eqtype|functor|include|sharing|sig|signature|struct|structure|where)\\b"
     }
   }
 }
