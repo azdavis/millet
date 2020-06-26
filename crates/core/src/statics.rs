@@ -896,7 +896,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         // create a new symbol for the type being generated with this DatBind.
         let sym = st.new_sym(dat_bind.ty_con);
         // tell the original context that this new type does exist, but just with an empty ValEnv.
-        // also perform dupe checking on the name of the new type. TODO update ty_names too?
+        // also perform dupe checking on the name of the new type.
         env_ins(
           &mut cx.env.ty_env.inner,
           dat_bind.ty_con,
@@ -905,6 +905,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             val_env: ValEnv::new(),
           },
         )?;
+        cx.ty_names.insert(dat_bind.ty_con.val);
         // this ValEnv is specific to this DatBind.
         let mut bind_val_env = ValEnv::new();
         for con_bind in dat_bind.cons.iter() {
