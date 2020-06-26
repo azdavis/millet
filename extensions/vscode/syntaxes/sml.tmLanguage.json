@@ -1,0 +1,67 @@
+{
+  "name": "Standard ML",
+  "scopeName": "source.sml",
+  "patterns": [
+    { "include": "#blockComment" },
+    { "include": "#char" },
+    { "include": "#string" },
+    { "include": "#hexWord" },
+    { "include": "#decWord" },
+    { "include": "#hexInt" },
+    { "include": "#decInt" },
+    { "include": "#bool" },
+    { "include": "#tyVar" },
+    { "include": "#keyword" }
+  ],
+  "repository": {
+    "blockComment": {
+      "name": "comment.block.sml",
+      "begin": "(\\*",
+      "end": "\\*)",
+      "patterns": [{ "include": "#blockComment" }]
+    },
+    "string": {
+      "name": "string.quoted.double.sml",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [{ "include": "#escapeChar" }]
+    },
+    "char": {
+      "name": "string.quoted.single.sml",
+      "begin": "#\"",
+      "end": "\""
+    },
+    "escapeChar": {
+      "name": "constant.character.escape.sml",
+      "match": "\\\\[abtnvfr]"
+    },
+    "decInt": {
+      "name": "constant.numeric.integer.decimal.sml",
+      "match": "\\b~?[0-9]+\\b"
+    },
+    "hexInt": {
+      "name": "constant.numeric.integer.hexadecimal.sml",
+      "match": "\\b~?0x[0-9A-Fa-f]+\\b"
+    },
+    "decWord": {
+      "name": "constant.numeric.word.decimal.sml",
+      "match": "\\b0w[0-9]+\\b"
+    },
+    "hexWord": {
+      "name": "constant.numeric.word.hexadecimal.sml",
+      "match": "\\b0wx[0-9A-Fa-f]+\\b"
+    },
+    "bool": {
+      "name": "constant.language.boolean.sml",
+      "match": "\\b(true|false)\\b"
+    },
+    "tyVar": {
+      "name": "entity.name.type-variable-sml",
+      "match": "'+[A-Za-z][A-Za-z0-9']*"
+    },
+    "keyword": {
+      "name": "keyword.other.sml",
+      "match": "\\b(abstype|and|andalso|as|case|datatype|do|else|end|exception|fn|fun|handle|if|in|infix|infixr|let|local|nonfix|of|op|open|orelse|raise|rec|then|type|val|with|withtype|while|eqtype|functor|include|sharing|sig|signature|struct|structure|where)\\b"
+    }
+  }
+}
