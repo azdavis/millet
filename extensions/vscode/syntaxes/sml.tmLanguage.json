@@ -5,6 +5,7 @@
     { "include": "#blockComment" },
     { "include": "#char" },
     { "include": "#string" },
+    { "include": "#real" },
     { "include": "#hexWord" },
     { "include": "#decWord" },
     { "include": "#hexInt" },
@@ -39,11 +40,11 @@
     },
     "decInt": {
       "name": "constant.numeric.integer.decimal.sml",
-      "match": "\\b~?[0-9]+\\b"
+      "match": "(\\b|~)[0-9]+\\b"
     },
     "hexInt": {
       "name": "constant.numeric.integer.hexadecimal.sml",
-      "match": "\\b~?0x[0-9A-Fa-f]+\\b"
+      "match": "(\\b|~)0x[0-9A-Fa-f]+\\b"
     },
     "decWord": {
       "name": "constant.numeric.word.decimal.sml",
@@ -52,6 +53,10 @@
     "hexWord": {
       "name": "constant.numeric.word.hexadecimal.sml",
       "match": "\\b0wx[0-9A-Fa-f]+\\b"
+    },
+    "real": {
+      "name": "constant.numeric.float.decimal.sml",
+      "match": "(\\b|~)[0-9]+\\.[0-9]+([Ee]~?[0-9]+)?\\b"
     },
     "bool": {
       "name": "constant.language.boolean.sml",
