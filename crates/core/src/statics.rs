@@ -791,7 +791,20 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
 }
 
 fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Ty, Ty)> {
-  todo!()
+  let arg_ty = Ty::Var(st.new_ty_var(false));
+  let res_ty = Ty::Var(st.new_ty_var(false));
+  for arm in cases.arms.iter() {
+    // TODO clone in loop - expensive?
+    let mut cx = cx.clone();
+    let (val_env, pat_ty) = ck_pat(&cx, st, &arm.pat)?;
+    // TODO what about type variables? The Definition says this should allow new free type variables
+    // to enter the Cx, but right now we do nothing with `cx.ty_vars`.
+    cx.env.val_env.extend(val_env);
+    let exp_ty = ck_exp(&cx, st, &arm.exp)?;
+    st.constraints.add(arm.pat.loc, arg_ty.clone(), pat_ty);
+    st.constraints.add(arm.exp.loc, res_ty.clone(), exp_ty);
+  }
+  Ok((arg_ty, res_ty))
 }
 
 fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
@@ -984,7 +997,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       todo!()
     }
     Dec::Seq(decs) => {
-      // TODO inefficient?
+      // TODO clone in loop - expensive?
       let mut cx = cx.clone();
       let mut ret = Env::default();
       for dec in decs {
