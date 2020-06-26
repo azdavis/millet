@@ -1,0 +1,6 @@
+error: expression causes a type name to escape its scope
+  ┌─ inp.sml:6:5
+  │
+6 │     quz
+  │     ^^^
+
