@@ -7,7 +7,7 @@
 // TODO rm
 #![allow(unused)]
 
-use crate::ast::{Dec, Exp, Label, Long, Pat, StrDec, TopDec, Ty as AstTy};
+use crate::ast::{Cases, Dec, Exp, Label, Long, Pat, StrDec, TopDec, Ty as AstTy};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use maplit::{hashmap, hashset};
@@ -755,9 +755,12 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.constraints.add(rhs.loc, rhs_ty, Ty::BOOL);
       Ty::BOOL
     }
-    Exp::Handle(_, _) => {
-      //
-      todo!()
+    Exp::Handle(head, cases) => {
+      let head_ty = ck_exp(cx, st, head)?;
+      let (arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      st.constraints.add(exp.loc, arg_ty, Ty::EXN);
+      st.constraints.add(exp.loc, head_ty.clone(), res_ty);
+      head_ty
     }
     Exp::Raise(exp) => {
       let exp_ty = ck_exp(cx, st, exp)?;
@@ -773,16 +776,22 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       then_ty
     }
     Exp::While(..) => return Err(StaticsError::Todo(exp.loc)),
-    Exp::Case(_, _) => {
-      //
-      todo!()
+    Exp::Case(head, cases) => {
+      let head_ty = ck_exp(cx, st, head)?;
+      let (arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      st.constraints.add(exp.loc, head_ty, arg_ty);
+      res_ty
     }
-    Exp::Fn(_) => {
-      //
-      todo!()
+    Exp::Fn(cases) => {
+      let (arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      Ty::Arrow(arg_ty.into(), res_ty.into())
     }
   };
   Ok(ret)
+}
+
+fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Ty, Ty)> {
+  todo!()
 }
 
 fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
