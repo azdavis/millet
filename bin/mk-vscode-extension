@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -eu
+cd "$(dirname "$0")"
+cd ..
+cargo build
+mkdir -p extensions/vscode/out
+cp target/debug/millet-ls extensions/vscode/out
+cd extensions/vscode
+npm run build
