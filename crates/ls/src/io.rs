@@ -6,7 +6,7 @@ use crossbeam_channel::{Receiver, Sender};
 use std::io::BufRead as _;
 use std::io::Read as _;
 
-pub fn read_from_stdin(s: Sender<Request>) {
+pub fn read_stdin(s: Sender<Request>) {
   let stdin = std::io::stdin();
   let mut stdin = stdin.lock();
   let mut buf = Vec::new();
@@ -37,4 +37,4 @@ pub fn read_from_stdin(s: Sender<Request>) {
   }
 }
 
-pub fn write_to_stdout(r: Receiver<Response>) {}
+pub fn write_stdout(r: Receiver<Response>) {}
