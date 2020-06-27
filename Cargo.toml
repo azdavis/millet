@@ -2,5 +2,5 @@
 members = [
   "crates/cli",
   "crates/core",
-  "crates/lsp",
+  "crates/ls",
 ]

@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "millet-lsp"
+name = "millet-ls"
 version = "0.1.0"
 
 [[package]]
