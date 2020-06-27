@@ -1,4 +1,4 @@
-//! The main handler.
+//! The core of the server logic.
 
 use crate::serde::{Request, Response};
 
@@ -8,8 +8,8 @@ impl State {
   pub fn new() -> Self {
     Self {}
   }
-}
 
-pub fn get(st: &mut State, req: Request) -> Response {
-  todo!()
+  pub fn handle(&mut self, req: Request) -> Response {
+    todo!()
+  }
 }

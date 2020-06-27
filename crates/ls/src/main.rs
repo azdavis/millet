@@ -1,9 +1,9 @@
 //! A language server for Standard ML.
 
-mod handle;
 mod headers;
 mod io;
 mod serde;
+mod state;
 
 fn main() {
   let (s_req, r_req) = crossbeam_channel::unbounded();
@@ -16,10 +16,10 @@ fn main() {
     .name("write_stdout".to_owned())
     .spawn(|| io::write_stdout(r_res))
     .unwrap();
-  let mut st = handle::State::new();
+  let mut st = state::State::new();
   loop {
     let req = r_req.recv().unwrap();
-    let res = handle::get(&mut st, req);
+    let res = st.handle(req);
     s_res.send(res).unwrap();
   }
 }
