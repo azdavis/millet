@@ -17,7 +17,7 @@ pub enum RequestParams {
 #[derive(Debug)]
 pub struct Request {
   pub id: Id,
-  params: RequestParams,
+  pub params: RequestParams,
 }
 
 impl Request {
@@ -40,4 +40,28 @@ impl Request {
   }
 }
 
-pub struct Response {}
+pub type ResponseSuccess = ();
+
+pub enum ErrorCode {
+  ParseError = -32700,
+  InvalidRequest = -32600,
+  MethodNotFound = -32601,
+  InvalidParams = -32602,
+  InternalError = -32603,
+  serverErrorStart = -32099,
+  serverErrorEnd = -32000,
+  ServerNotInitialized = -32002,
+  UnknownErrorCode = -32001,
+  RequestCancelled = -32800,
+  ContentModified = -32801,
+}
+
+pub struct ResponseError {
+  pub code: ErrorCode,
+  pub message: String,
+}
+
+pub struct Response {
+  pub id: Option<Id>,
+  pub res: Result<ResponseSuccess, ResponseError>,
+}
