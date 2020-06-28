@@ -3,6 +3,8 @@
 use lsp_types::{InitializeParams, InitializeResult};
 use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Value};
 
+const JSON_RPC_VERSION: &str = "2.0";
+
 pub enum Id {
   Number(u64),
   String(String),
@@ -20,7 +22,7 @@ pub struct Request {
 impl Request {
   pub fn try_parse(bs: &[u8]) -> Option<Self> {
     let mut val: Value = from_slice(bs).ok()?;
-    if val.get("jsonrpc")?.as_str()? != "2.0" {
+    if val.get("jsonrpc")?.as_str()? != JSON_RPC_VERSION {
       return None;
     }
     let id = match std::mem::take(val.get_mut("id")?) {
@@ -73,7 +75,8 @@ impl Response {
       Some(Id::Number(n)) => Value::Number(n.into()),
       Some(Id::String(s)) => Value::String(s),
     };
-    let mut map = Map::with_capacity(2);
+    let mut map = Map::with_capacity(3);
+    map.insert("jsonrpc".to_owned(), JSON_RPC_VERSION.into());
     map.insert("id".to_owned(), id);
     let (key, val) = match self.res {
       Ok(good) => (
