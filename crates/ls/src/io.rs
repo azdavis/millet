@@ -37,4 +37,11 @@ pub fn read_stdin(s: Sender<Request>) {
   }
 }
 
-pub fn write_stdout(r: Receiver<Response>) {}
+pub fn write_stdout(r: Receiver<Response>) {
+  let stdout = std::io::stdout();
+  let mut stdout = stdout.lock();
+  loop {
+    let res = r.recv().unwrap();
+    res.into_writer(&mut stdout).unwrap();
+  }
+}

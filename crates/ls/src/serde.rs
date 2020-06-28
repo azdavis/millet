@@ -1,20 +1,17 @@
 //! Types for messages to and from the server.
 
-use lsp_types::InitializeParams;
-use serde_json::{from_slice, from_value, Value};
+use lsp_types::{InitializeParams, InitializeResult};
+use serde_json::{from_slice, from_value, json, to_value, to_writer, Error, Map, Value};
 
-#[derive(Debug)]
 pub enum Id {
   Number(u64),
   String(String),
 }
 
-#[derive(Debug)]
 pub enum RequestParams {
   Initialize(InitializeParams),
 }
 
-#[derive(Debug)]
 pub struct Request {
   pub id: Id,
   pub params: RequestParams,
@@ -40,7 +37,9 @@ impl Request {
   }
 }
 
-pub type ResponseSuccess = ();
+pub enum ResponseSuccess {
+  Initialize(InitializeResult),
+}
 
 pub enum ErrorCode {
   ParseError = -32700,
@@ -48,8 +47,8 @@ pub enum ErrorCode {
   MethodNotFound = -32601,
   InvalidParams = -32602,
   InternalError = -32603,
-  serverErrorStart = -32099,
-  serverErrorEnd = -32000,
+  ServerErrorStart = -32099,
+  ServerErrorEnd = -32000,
   ServerNotInitialized = -32002,
   UnknownErrorCode = -32001,
   RequestCancelled = -32800,
@@ -64,4 +63,33 @@ pub struct ResponseError {
 pub struct Response {
   pub id: Option<Id>,
   pub res: Result<ResponseSuccess, ResponseError>,
+}
+
+impl Response {
+  pub fn into_writer<W>(self, writer: W) -> Result<(), Error>
+  where
+    W: std::io::Write,
+  {
+    let id = match self.id {
+      None => Value::Null,
+      Some(Id::Number(n)) => Value::Number(n.into()),
+      Some(Id::String(s)) => Value::String(s),
+    };
+    let mut map = Map::with_capacity(2);
+    map.insert("id".to_owned(), id);
+    let (key, val) = match self.res {
+      Ok(good) => (
+        "result",
+        match good {
+          ResponseSuccess::Initialize(x) => to_value(x)?,
+        },
+      ),
+      Err(bad) => (
+        "error",
+        json!({"code": bad.code as i32, "message": bad.message}),
+      ),
+    };
+    map.insert(key.to_owned(), val);
+    to_writer(writer, &Value::Object(map))
+  }
 }
