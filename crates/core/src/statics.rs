@@ -811,7 +811,7 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   let ret = match &ty.val {
     AstTy::TyVar(_) => {
       //
-      todo!()
+      return Err(StaticsError::Todo(ty.loc));
     }
     AstTy::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());
@@ -898,7 +898,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::Fun(_, _) => {
       //
-      todo!()
+      return Err(StaticsError::Todo(dec.loc));
     }
     Dec::Type(ty_binds) => {
       let mut ty_env = TyEnv::default();
@@ -981,20 +981,20 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::DatatypeCopy(_, _) => {
       //
-      todo!()
+      return Err(StaticsError::Todo(dec.loc));
     }
     Dec::Abstype(..) => return Err(StaticsError::Todo(dec.loc)),
     Dec::Exception(_) => {
       //
-      todo!()
+      return Err(StaticsError::Todo(dec.loc));
     }
     Dec::Local(_, _) => {
       //
-      todo!()
+      return Err(StaticsError::Todo(dec.loc));
     }
     Dec::Open(_) => {
       //
-      todo!()
+      return Err(StaticsError::Todo(dec.loc));
     }
     Dec::Seq(decs) => {
       // TODO clone in loop - expensive?
@@ -1175,12 +1175,12 @@ fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> R
           ..bs
         })
       }
-      StrDec::Structure(_) => todo!(),
-      StrDec::Local(_, _) => todo!(),
-      StrDec::Seq(_) => todo!(),
+      StrDec::Structure(_) => Err(StaticsError::Todo(top_dec.loc)),
+      StrDec::Local(_, _) => Err(StaticsError::Todo(top_dec.loc)),
+      StrDec::Seq(_) => Err(StaticsError::Todo(top_dec.loc)),
     },
-    TopDec::SigDec(_) => todo!(),
-    TopDec::FunDec(_) => todo!(),
+    TopDec::SigDec(_) => Err(StaticsError::Todo(top_dec.loc)),
+    TopDec::FunDec(_) => Err(StaticsError::Todo(top_dec.loc)),
   }
 }
 
