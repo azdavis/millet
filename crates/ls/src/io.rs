@@ -2,7 +2,7 @@
 
 use crate::headers::content_length;
 use crate::serde::{Request, Response};
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::{Receiver, RecvError, SendError, Sender};
 use std::io::BufRead as _;
 use std::io::Read as _;
 
@@ -33,15 +33,22 @@ pub fn read_stdin(s: Sender<Request>) {
       None => continue,
       Some(x) => x,
     };
-    s.send(req).unwrap();
+    match s.send(req) {
+      Ok(()) => {}
+      Err(SendError(_)) => break,
+    }
   }
 }
 
+#[allow(clippy::while_let_loop)]
 pub fn write_stdout(r: Receiver<Response>) {
   let stdout = std::io::stdout();
   let mut stdout = stdout.lock();
   loop {
-    let res = r.recv().unwrap();
+    let res = match r.recv() {
+      Ok(x) => x,
+      Err(RecvError) => break,
+    };
     res.into_writer(&mut stdout).unwrap();
   }
 }
