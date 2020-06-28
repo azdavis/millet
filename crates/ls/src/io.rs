@@ -5,6 +5,7 @@ use crate::serde::{Request, Response};
 use crossbeam_channel::{Receiver, RecvError, SendError, Sender};
 use std::io::BufRead as _;
 use std::io::Read as _;
+use std::io::Write as _;
 
 pub fn read_stdin(s: Sender<Request>) {
   let stdin = std::io::stdin();
@@ -49,6 +50,8 @@ pub fn write_stdout(r: Receiver<Response>) {
       Ok(x) => x,
       Err(RecvError) => break,
     };
-    res.into_writer(&mut stdout).unwrap();
+    let buf = res.into_vec().unwrap();
+    write!(stdout, "Content-Length: {}\r\n\r\n", buf.len()).unwrap();
+    stdout.write_all(&buf).unwrap();
   }
 }

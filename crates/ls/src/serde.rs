@@ -1,7 +1,7 @@
 //! Types for messages to and from the server.
 
 use lsp_types::{InitializeParams, InitializeResult};
-use serde_json::{from_slice, from_value, json, to_value, to_writer, Error, Map, Value};
+use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Value};
 
 pub enum Id {
   Number(u64),
@@ -67,10 +67,7 @@ pub struct Response {
 }
 
 impl Response {
-  pub fn into_writer<W>(self, writer: W) -> Result<(), Error>
-  where
-    W: std::io::Write,
-  {
+  pub fn into_vec(self) -> Result<Vec<u8>, Error> {
     let id = match self.id {
       None => Value::Null,
       Some(Id::Number(n)) => Value::Number(n.into()),
@@ -91,6 +88,6 @@ impl Response {
       ),
     };
     map.insert(key.to_owned(), val);
-    to_writer(writer, &Value::Object(map))
+    to_vec(&Value::Object(map))
   }
 }
