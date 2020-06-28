@@ -41,6 +41,7 @@ pub enum ResponseSuccess {
   Initialize(InitializeResult),
 }
 
+#[allow(unused)]
 pub enum ErrorCode {
   ParseError = -32700,
   InvalidRequest = -32600,
