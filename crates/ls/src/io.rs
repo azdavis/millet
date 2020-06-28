@@ -53,5 +53,6 @@ pub fn write_stdout(r: Receiver<Response>) {
     let buf = res.into_vec().unwrap();
     write!(stdout, "Content-Length: {}\r\n\r\n", buf.len()).unwrap();
     stdout.write_all(&buf).unwrap();
+    stdout.flush().unwrap();
   }
 }
