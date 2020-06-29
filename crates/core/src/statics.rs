@@ -650,11 +650,11 @@ fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
-fn generalize(env: &TyEnv, ty: Ty) -> TyScheme {
+fn generalize(ty_env: &TyEnv, ty: Ty) -> TyScheme {
   TyScheme {
     ty_vars: ty
       .free_ty_vars()
-      .difference(&env.free_ty_vars())
+      .difference(&ty_env.free_ty_vars())
       .copied()
       .collect(),
     ty,
