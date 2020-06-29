@@ -1207,11 +1207,8 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       let (val_env, arg_ty) = ck_pat(cx, st, arg)?;
       let ctor_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
       let mut ret_ty = Ty::Var(st.new_ty_var(false));
-      st.subst.unify(
-        pat.loc,
-        ctor_ty,
-        Ty::Arrow(arg_ty.into(), ret_ty.clone().into()),
-      )?;
+      let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
+      st.subst.unify(pat.loc, ctor_ty, arrow_ty)?;
       ret_ty.apply(&st.subst);
       (val_env, ret_ty)
     }
