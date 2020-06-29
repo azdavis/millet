@@ -20,10 +20,10 @@ export function activate(cx: ExtensionContext) {
   cx.subscriptions.push(client.start());
 }
 
-export function deactivate(): Promise<void> {
+export function deactivate(): Promise<void> | void {
   if (client === null) {
     console.log("millet-ls: error: cannot re-deactivate");
-    return Promise.resolve();
+    return;
   }
   console.log("millet-ls: deactivate");
   return client.stop();
