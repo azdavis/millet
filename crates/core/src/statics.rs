@@ -355,7 +355,7 @@ impl Substitutable for Ty {
 struct TyScheme {
   ty_vars: Vec<TyVar>,
   ty: Ty,
-  /// See `instantiate` and `Constraints#solve`.
+  /// See `instantiate` and `State#solve`.
   overload: Option<Vec<StrRef>>,
 }
 
