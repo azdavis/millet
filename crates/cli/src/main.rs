@@ -48,7 +48,7 @@ fn run() -> bool {
     match lex::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
-        let diag = simple(e.val.show(), id, e.loc);
+        let diag = simple(e.val.message(), id, e.loc);
         term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
@@ -66,7 +66,7 @@ fn run() -> bool {
         }
       }
       Err(e) => {
-        let diag = simple(e.val.show(&store), id, e.loc);
+        let diag = simple(e.val.message(&store), id, e.loc);
         term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
@@ -79,7 +79,7 @@ fn run() -> bool {
     match statics::get(&xs) {
       Ok(()) => {}
       Err(e) => {
-        let diag = simple(e.val.show(&store), id, e.loc);
+        let diag = simple(e.val.message(&store), id, e.loc);
         term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }

@@ -43,7 +43,7 @@ pub enum StaticsError {
 }
 
 impl StaticsError {
-  pub fn show(&self, store: &StrStore) -> String {
+  pub fn message(&self, store: &StrStore) -> String {
     match self {
       Self::Undefined(item, id) => format!("undefined {} identifier: {}", item, store.get(*id)),
       Self::Redefined(id) => format!("redefined identifier: {}", store.get(*id)),

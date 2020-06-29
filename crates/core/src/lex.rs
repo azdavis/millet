@@ -44,7 +44,7 @@ pub enum LexError {
 }
 
 impl LexError {
-  pub fn show(&self) -> String {
+  pub fn message(&self) -> String {
     match self {
       Self::UnmatchedCloseComment => "unmatched close comment".to_owned(),
       Self::UnmatchedOpenComment => "unmatched open comment".to_owned(),

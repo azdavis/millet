@@ -42,7 +42,7 @@ pub enum ParseError {
 }
 
 impl ParseError {
-  pub fn show(&self, store: &StrStore) -> String {
+  pub fn message(&self, store: &StrStore) -> String {
     match self {
       Self::ExpectedButFound(exp, fnd) => format!("expected {}, found {}", exp, fnd),
       Self::InfixWithoutOp(id) => format!(
