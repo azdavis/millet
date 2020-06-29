@@ -1,1 +1,1 @@
-! NO_COLOR=1 cargo run --quiet -- inp.sml >out.tmp
+! NO_COLOR=1 cargo run --quiet --bin millet -- inp.sml >out.tmp
