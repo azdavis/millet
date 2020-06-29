@@ -1366,7 +1366,7 @@ fn overloaded_cmp(st: &mut State) -> ValInfo {
         (Label::Num(2), Ty::Var(a)),
       ])
       .into(),
-      Ty::base(StrRef::BOOL).into(),
+      Ty::BOOL.into(),
     ),
     overload: Some(vec![
       StrRef::INT,
