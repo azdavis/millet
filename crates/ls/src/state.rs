@@ -1,25 +1,30 @@
 //! The core of the server logic.
 
-use crate::serde::{Request, RequestParams, Response, ResponseSuccess};
-use lsp_types::{InitializeResult, ServerCapabilities, ServerInfo, Url};
+use crate::comm::{Notification, Request, RequestParams, Response, ResponseSuccess};
+use lsp_types::{
+  InitializeResult, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+  TextDocumentSyncKind, Url,
+};
 
 pub struct State {
   root_uri: Option<Url>,
 }
 
 impl State {
+  /// Returns a new State.
   pub fn new() -> Self {
     Self { root_uri: None }
   }
 
-  pub fn handle(&mut self, req: Request) -> Option<Response> {
+  /// Returns the Response for this Request.
+  pub fn handle_req(&mut self, req: Request) -> Response {
     let res = match req.params {
       RequestParams::Initialize(params) => {
-        let _ = params.process_id?;
+        // let _ = params.process_id?;
         self.root_uri = params.root_uri;
         Ok(ResponseSuccess::Initialize(InitializeResult {
           capabilities: ServerCapabilities {
-            hover_provider: Some(true),
+            text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::Full)),
             ..ServerCapabilities::default()
           },
           server_info: Some(ServerInfo {
@@ -28,10 +33,18 @@ impl State {
           }),
         }))
       }
+      RequestParams::Shutdown => Ok(ResponseSuccess::Null),
     };
-    Some(Response {
+    Response {
       id: Some(req.id),
       res,
-    })
+    }
+  }
+
+  /// Returns whether the server should continue running.
+  pub fn handle_notif(&mut self, notif: Notification) -> bool {
+    match notif {
+      Notification::Exit => false,
+    }
   }
 }

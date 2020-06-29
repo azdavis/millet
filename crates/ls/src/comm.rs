@@ -1,6 +1,7 @@
 //! Types for messages to and from the server.
 
 use lsp_types::{InitializeParams, InitializeResult};
+use serde::de::DeserializeOwned;
 use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Value};
 
 const JSON_RPC_VERSION: &str = "2.0";
@@ -12,6 +13,7 @@ pub enum Id {
 
 pub enum RequestParams {
   Initialize(InitializeParams),
+  Shutdown,
 }
 
 pub struct Request {
@@ -19,28 +21,55 @@ pub struct Request {
   pub params: RequestParams,
 }
 
-impl Request {
+pub enum Notification {
+  Exit,
+}
+
+pub enum Message {
+  Request(Request),
+  Notification(Notification),
+}
+
+impl Message {
+  fn request(id: Id, params: RequestParams) -> Self {
+    Self::Request(Request { id, params })
+  }
+
   pub fn try_parse(bs: &[u8]) -> Option<Self> {
     let mut val: Value = from_slice(bs).ok()?;
     if val.get("jsonrpc")?.as_str()? != JSON_RPC_VERSION {
       return None;
     }
-    let id = match std::mem::take(val.get_mut("id")?) {
-      Value::Number(n) => Id::Number(n.as_u64()?),
-      Value::String(s) => Id::String(s),
+    let ret = match val.get("method")?.as_str()? {
+      "initialize" => Message::request(
+        get_id(&mut val)?,
+        RequestParams::Initialize(get_params(&mut val)?),
+      ),
+      // NOTE we ignore "initialized"
       _ => return None,
     };
-    let params = std::mem::take(val.get_mut("params")?);
-    let params = match val.get("method")?.as_str()? {
-      "initialize" => RequestParams::Initialize(from_value(params).ok()?),
-      _ => return None,
-    };
-    Some(Self { id, params })
+    Some(ret)
   }
+}
+
+fn get_id(val: &mut Value) -> Option<Id> {
+  match std::mem::take(val.get_mut("id")?) {
+    Value::Number(n) => Some(Id::Number(n.as_u64()?)),
+    Value::String(s) => Some(Id::String(s)),
+    _ => None,
+  }
+}
+
+fn get_params<T>(val: &mut Value) -> Option<T>
+where
+  T: DeserializeOwned,
+{
+  from_value(std::mem::take(val.get_mut("params")?)).ok()
 }
 
 pub enum ResponseSuccess {
   Initialize(InitializeResult),
+  Null,
 }
 
 #[allow(unused)]
@@ -83,6 +112,7 @@ impl Response {
         "result",
         match good {
           ResponseSuccess::Initialize(x) => to_value(x)?,
+          ResponseSuccess::Null => Value::Null,
         },
       ),
       Err(bad) => (

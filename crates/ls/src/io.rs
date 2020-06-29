@@ -1,13 +1,13 @@
 //! Threads for handling I/O.
 
+use crate::comm::{Message, Response};
 use crate::headers::content_length;
-use crate::serde::{Request, Response};
 use crossbeam_channel::{Receiver, RecvError, SendError, Sender};
 use std::io::BufRead as _;
 use std::io::Read as _;
 use std::io::Write as _;
 
-pub fn read_stdin(s: Sender<Request>) {
+pub fn read_stdin(s: Sender<Message>) {
   let stdin = std::io::stdin();
   let mut stdin = stdin.lock();
   let mut buf = Vec::new();
@@ -30,11 +30,11 @@ pub fn read_stdin(s: Sender<Request>) {
     };
     buf = vec![0; n];
     stdin.read_exact(&mut buf).unwrap();
-    let req = match Request::try_parse(&buf) {
+    let msg = match Message::try_parse(&buf) {
       None => continue,
       Some(x) => x,
     };
-    match s.send(req) {
+    match s.send(msg) {
       Ok(()) => {}
       Err(SendError(_)) => break,
     }
