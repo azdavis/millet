@@ -3,5 +3,5 @@ val _ =
     datatype foo = bar
     val quz = bar
   in
-    quz
+    true; false; bar; 3 + 3; quz
   end

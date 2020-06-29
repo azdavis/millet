@@ -1,6 +1,6 @@
 error: expression causes a type name to escape its scope
-  ┌─ inp.sml:6:5
+  ┌─ inp.sml:6:30
   │
-6 │     quz
-  │     ^^^
+6 │     true; false; bar; 3 + 3; quz
+  │                              ^^^
 
