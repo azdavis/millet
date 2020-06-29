@@ -1,7 +1,7 @@
 //! The core of the server logic.
 
 use crate::comm::{
-  IncomingNotification, Request, RequestParams, Response, ResponseSuccess,
+  IncomingNotification, Outgoing, Request, RequestParams, Response, ResponseSuccess,
 };
 use lsp_types::{
   InitializeResult, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
@@ -53,14 +53,10 @@ impl State {
     }
   }
 
-  /// Returns:
-  /// - `None` if the server should continue running.
-  /// - `Some(true)` if the server should exit successfully.
-  /// - `Some(false)` if the server should exit with an error.
-  pub fn handle_notification(&mut self, notif: IncomingNotification) -> Option<bool> {
+  pub fn handle_notification(&mut self, notif: IncomingNotification) -> NotificationAction {
     match notif {
       IncomingNotification::Initialized => {}
-      IncomingNotification::Exit => return Some(self.got_shutdown),
+      IncomingNotification::Exit => return NotificationAction::Exit(self.got_shutdown),
       IncomingNotification::TextDocOpen(params) => {
         assert!(self
           .files
@@ -75,11 +71,21 @@ impl State {
           .insert(params.text_document.uri, change.text)
           .is_some());
       }
-      InNotif::TextDocSave(_) => {}
-      InNotif::TextDocClose(params) => {
+      IncomingNotification::TextDocSave(_) => {}
+      IncomingNotification::TextDocClose(params) => {
         assert!(self.files.remove(&params.text_document.uri).is_some());
       }
     }
-    None
+    NotificationAction::Nothing
   }
+}
+
+/// An action to take in response to a notification.
+pub enum NotificationAction {
+  /// Do nothing.
+  Nothing,
+  /// Exit the server. The bool is whether the process should exit cleanly.
+  Exit(bool),
+  /// Respond with an outgoing message.
+  Respond(Outgoing),
 }
