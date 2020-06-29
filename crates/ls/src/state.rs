@@ -24,7 +24,7 @@ impl State {
   pub fn handle_req(&mut self, req: Request) -> Response {
     let res = match req.params {
       RequestParams::Initialize(params) => {
-        // let _ = params.process_id?;
+        // TODO do something with params.process_id
         self.root_uri = params.root_uri;
         Ok(ResponseSuccess::Initialize(InitializeResult {
           capabilities: ServerCapabilities {
@@ -48,7 +48,7 @@ impl State {
     }
   }
 
-  /// Returns
+  /// Returns:
   /// - `None` if the server should continue running.
   /// - `Some(true)` if the server should exit successfully.
   /// - `Some(false)` if the server should exit with an error.
