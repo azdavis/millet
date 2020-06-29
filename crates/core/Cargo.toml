@@ -6,4 +6,4 @@ edition = "2018"
 publish = false
 
 [dependencies]
-maplit = "1.0.2"
+maplit = "1.0"

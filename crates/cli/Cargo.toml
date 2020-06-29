@@ -10,6 +10,6 @@ name = "millet"
 path = "src/main.rs"
 
 [dependencies]
-codespan-reporting = "0.9.4"
+codespan-reporting = "0.9"
 millet-core = { path = "../core" }
-pico-args = "0.3.2"
+pico-args = "0.3"
