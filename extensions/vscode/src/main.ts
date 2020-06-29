@@ -7,6 +7,9 @@ export function activate(cx: ExtensionContext) {
   const serverOpts = {
     command: cx.asAbsolutePath(path.join("out", "millet-ls")),
   };
-  const client = new LanguageClient("millet", serverOpts, {}, true);
+  const clientOpts = {
+    documentSelector: [{ scheme: "file", language: "sml" }],
+  };
+  const client = new LanguageClient("millet-ls", serverOpts, clientOpts, true);
   cx.subscriptions.push(client.start());
 }
