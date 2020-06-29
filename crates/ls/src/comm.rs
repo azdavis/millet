@@ -1,6 +1,9 @@
 //! Types for messages to and from the server.
 
-use lsp_types::{InitializeParams, InitializeResult};
+use lsp_types::{
+  DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+  DidSaveTextDocumentParams, InitializeParams, InitializeResult,
+};
 use serde::de::DeserializeOwned;
 use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Value};
 
@@ -24,6 +27,10 @@ pub struct Request {
 pub enum Notification {
   Initialized,
   Exit,
+  TextDocOpen(DidOpenTextDocumentParams),
+  TextDocChange(DidChangeTextDocumentParams),
+  TextDocSave(DidSaveTextDocumentParams),
+  TextDocClose(DidCloseTextDocumentParams),
 }
 
 pub enum Message {
@@ -49,6 +56,18 @@ impl Message {
       "initialized" => Message::Notification(Notification::Initialized),
       "shutdown" => Message::request(get_id(&mut val)?, RequestParams::Shutdown),
       "exit" => Message::Notification(Notification::Exit),
+      "textDocument/didOpen" => {
+        Message::Notification(Notification::TextDocOpen(get_params(&mut val)?))
+      }
+      "textDocument/didClose" => {
+        Message::Notification(Notification::TextDocClose(get_params(&mut val)?))
+      }
+      "textDocument/didChange" => {
+        Message::Notification(Notification::TextDocChange(get_params(&mut val)?))
+      }
+      "textDocument/didSave" => {
+        Message::Notification(Notification::TextDocSave(get_params(&mut val)?))
+      }
       _ => return None,
     };
     Some(ret)

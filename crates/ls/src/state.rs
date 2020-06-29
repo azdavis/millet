@@ -5,10 +5,12 @@ use lsp_types::{
   InitializeResult, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
   TextDocumentSyncKind, Url,
 };
+use std::collections::HashMap;
 
 pub struct State {
   root_uri: Option<Url>,
   got_shutdown: bool,
+  files: HashMap<Url, String>,
 }
 
 impl State {
@@ -17,6 +19,7 @@ impl State {
     Self {
       root_uri: None,
       got_shutdown: false,
+      files: HashMap::new(),
     }
   }
 
@@ -52,10 +55,29 @@ impl State {
   /// - `None` if the server should continue running.
   /// - `Some(true)` if the server should exit successfully.
   /// - `Some(false)` if the server should exit with an error.
-  pub fn handle_notif(&self, notif: Notification) -> Option<bool> {
+  pub fn handle_notif(&mut self, notif: Notification) -> Option<bool> {
     match notif {
-      Notification::Initialized => None,
-      Notification::Exit => Some(self.got_shutdown),
+      Notification::Initialized => {}
+      Notification::Exit => return Some(self.got_shutdown),
+      Notification::TextDocOpen(params) => {
+        assert!(self
+          .files
+          .insert(params.text_document.uri, params.text_document.text)
+          .is_none());
+      }
+      Notification::TextDocChange(mut params) => {
+        assert_eq!(params.content_changes.len(), 1);
+        let change = params.content_changes.pop().unwrap();
+        assert!(self
+          .files
+          .insert(params.text_document.uri, change.text)
+          .is_some());
+      }
+      Notification::TextDocSave(_) => {}
+      Notification::TextDocClose(params) => {
+        assert!(self.files.remove(&params.text_document.uri).is_some());
+      }
     }
+    None
   }
 }
