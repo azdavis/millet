@@ -27,20 +27,22 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
 }
 
 pub enum StaticsError {
-  Undefined(Item, Located<StrRef>),
-  Redefined(Located<StrRef>),
-  DuplicateLabel(Located<Label>),
-  Circularity(Loc, TyVar, Ty),
-  HeadMismatch(Loc, Ty, Ty),
-  MissingLabel(Loc, Label),
-  ValAsPat(Loc),
-  WrongNumTyArgs(Loc, usize, usize),
-  NonVarInAs(Located<StrRef>),
-  ForbiddenBinding(Located<StrRef>),
-  NoSuitableOverload(Loc),
-  TyNameEscape(Loc),
-  Todo(Loc),
+  Undefined(Item, StrRef),
+  Redefined(StrRef),
+  DuplicateLabel(Label),
+  Circularity(TyVar, Ty),
+  HeadMismatch(Ty, Ty),
+  MissingLabel(Label),
+  ValAsPat,
+  WrongNumTyArgs(usize, usize),
+  NonVarInAs(StrRef),
+  ForbiddenBinding(StrRef),
+  NoSuitableOverload,
+  TyNameEscape,
+  Todo,
 }
+
+pub type Result<T> = std::result::Result<T, Located<StaticsError>>;
 
 pub enum Item {
   Value,
@@ -61,8 +63,6 @@ impl fmt::Display for Item {
     }
   }
 }
-
-type Result<T> = std::result::Result<T, StaticsError>;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Sym {
@@ -495,12 +495,12 @@ impl Constraints {
           continue 'outer;
         }
       }
-      return Err(StaticsError::NoSuitableOverload(loc));
+      return Err(loc.wrap(StaticsError::NoSuitableOverload));
     }
     for (loc, mut ty, ty_names) in self.ty_name {
       ty.apply(&ret);
       if !ty.ty_names().is_subset(&ty_names) {
-        return Err(StaticsError::TyNameEscape(loc));
+        return Err(loc.wrap(StaticsError::TyNameEscape));
       }
     }
     Ok(ret)
@@ -579,7 +579,7 @@ fn bind(loc: Loc, tv: TyVar, ty: Ty) -> Result<Subst> {
     }
   }
   if ty.free_ty_vars().contains(&tv) {
-    return Err(StaticsError::Circularity(loc, tv, ty));
+    return Err(loc.wrap(StaticsError::Circularity(tv, ty)));
   }
   Ok(Subst {
     inner: hashmap![tv => ty],
@@ -602,7 +602,9 @@ fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
             ty_r.apply(&subst);
             subst.extend(unify(loc, ty_l, ty_r)?);
           }
-          (Some(..), None) | (None, Some(..)) => return Err(StaticsError::MissingLabel(loc, k)),
+          (Some(..), None) | (None, Some(..)) => {
+            return Err(loc.wrap(StaticsError::MissingLabel(k)))
+          }
           (None, None) => unreachable!(),
         }
       }
@@ -617,11 +619,10 @@ fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
     }
     (Ty::Ctor(args_l, name_l), Ty::Ctor(args_r, name_r)) => {
       if name_l != name_r {
-        return Err(StaticsError::HeadMismatch(
-          loc,
+        return Err(loc.wrap(StaticsError::HeadMismatch(
           Ty::Ctor(args_l, name_l),
           Ty::Ctor(args_r, name_r),
-        ));
+        )));
       }
       assert_eq!(args_l.len(), args_r.len(), "mismatched Ctor args len");
       let mut subst = Subst::default();
@@ -633,7 +634,7 @@ fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
       Ok(subst)
     }
     (lhs @ Ty::Record(..), rhs) | (lhs @ Ty::Arrow(..), rhs) | (lhs @ Ty::Ctor(..), rhs) => {
-      Err(StaticsError::HeadMismatch(loc, lhs, rhs))
+      Err(loc.wrap(StaticsError::HeadMismatch(lhs, rhs)))
     }
   }
 }
@@ -642,7 +643,7 @@ fn get_env<'cx>(cx: &'cx Cx, long: &Long<StrRef>) -> Result<&'cx Env> {
   let mut ret = &cx.env;
   for &s in long.structures.iter() {
     ret = match ret.str_env.get(&s.val) {
-      None => return Err(StaticsError::Undefined(Item::Structure, s)),
+      None => return Err(s.loc.wrap(StaticsError::Undefined(Item::Structure, s.val))),
       Some(x) => x,
     }
   }
@@ -651,7 +652,11 @@ fn get_env<'cx>(cx: &'cx Cx, long: &Long<StrRef>) -> Result<&'cx Env> {
 
 fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   match env.val_env.get(&name.val) {
-    None => Err(StaticsError::Undefined(Item::Value, name)),
+    None => Err(
+      name
+        .loc
+        .wrap(StaticsError::Undefined(Item::Value, name.val)),
+    ),
     Some(val_info) => Ok(val_info),
   }
 }
@@ -679,13 +684,13 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       for row in rows {
         let ty = ck_exp(cx, st, &row.exp)?;
         if !keys.insert(row.lab.val) {
-          return Err(StaticsError::DuplicateLabel(row.lab));
+          return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
         }
         ty_rows.push((row.lab.val, ty));
       }
       Ty::Record(ty_rows)
     }
-    Exp::Select(..) => return Err(StaticsError::Todo(exp.loc)),
+    Exp::Select(..) => return Err(exp.loc.wrap(StaticsError::Todo)),
     Exp::Tuple(exps) => {
       let mut ty_rows = Vec::with_capacity(exps.len());
       for (idx, exp) in exps.iter().enumerate() {
@@ -775,7 +780,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.constraints.add(exp.loc, then_ty.clone(), else_ty);
       then_ty
     }
-    Exp::While(..) => return Err(StaticsError::Todo(exp.loc)),
+    Exp::While(..) => return Err(exp.loc.wrap(StaticsError::Todo)),
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases)?;
@@ -811,7 +816,7 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   let ret = match &ty.val {
     AstTy::TyVar(_) => {
       //
-      return Err(StaticsError::Todo(ty.loc));
+      return Err(ty.loc.wrap(StaticsError::Todo));
     }
     AstTy::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());
@@ -819,7 +824,7 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
       for row in rows {
         let ty = ck_ty(cx, st, &row.ty)?;
         if !keys.insert(row.lab.val) {
-          return Err(StaticsError::DuplicateLabel(row.lab));
+          return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
         }
         ty_rows.push((row.lab.val, ty));
       }
@@ -837,12 +842,22 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
     AstTy::TyCon(args, name) => {
       let env = get_env(cx, name)?;
       let ty_info = match env.ty_env.inner.get(&name.last.val) {
-        None => return Err(StaticsError::Undefined(Item::Type, name.last)),
+        None => {
+          return Err(
+            name
+              .last
+              .loc
+              .wrap(StaticsError::Undefined(Item::Type, name.last.val)),
+          )
+        }
         Some(x) => x,
       };
       let want_len = ty_info.ty_fcn.ty_vars.len();
       if want_len != args.len() {
-        return Err(StaticsError::WrongNumTyArgs(ty.loc, want_len, args.len()));
+        return Err(
+          ty.loc
+            .wrap(StaticsError::WrongNumTyArgs(want_len, args.len())),
+        );
       }
       let mut subst = Subst::default();
       for (&ty_var, ty) in ty_info.ty_fcn.ty_vars.iter().zip(args.iter()) {
@@ -873,7 +888,7 @@ fn ck_binding(name: Located<StrRef>) -> Result<()> {
   .iter()
   {
     if name.val == other {
-      return Err(StaticsError::ForbiddenBinding(name));
+      return Err(name.loc.wrap(StaticsError::ForbiddenBinding(name.val)));
     }
   }
   Ok(())
@@ -898,7 +913,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::Fun(_, _) => {
       //
-      return Err(StaticsError::Todo(dec.loc));
+      return Err(dec.loc.wrap(StaticsError::Todo));
     }
     Dec::Type(ty_binds) => {
       let mut ty_env = TyEnv::default();
@@ -910,7 +925,12 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           val_env: ValEnv::new(),
         };
         if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
-          return Err(StaticsError::Redefined(ty_bind.ty_con));
+          return Err(
+            ty_bind
+              .ty_con
+              .loc
+              .wrap(StaticsError::Redefined(ty_bind.ty_con.val)),
+          );
         }
       }
       ty_env.into()
@@ -981,20 +1001,20 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::DatatypeCopy(_, _) => {
       //
-      return Err(StaticsError::Todo(dec.loc));
+      return Err(dec.loc.wrap(StaticsError::Todo));
     }
-    Dec::Abstype(..) => return Err(StaticsError::Todo(dec.loc)),
+    Dec::Abstype(..) => return Err(dec.loc.wrap(StaticsError::Todo)),
     Dec::Exception(_) => {
       //
-      return Err(StaticsError::Todo(dec.loc));
+      return Err(dec.loc.wrap(StaticsError::Todo));
     }
     Dec::Local(_, _) => {
       //
-      return Err(StaticsError::Todo(dec.loc));
+      return Err(dec.loc.wrap(StaticsError::Todo));
     }
     Dec::Open(_) => {
       //
-      return Err(StaticsError::Todo(dec.loc));
+      return Err(dec.loc.wrap(StaticsError::Todo));
     }
     Dec::Seq(decs) => {
       // TODO clone in loop - expensive?
@@ -1013,7 +1033,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
 
 fn env_ins<T>(map: &mut HashMap<StrRef, T>, key: Located<StrRef>, val: T) -> Result<()> {
   if map.insert(key.val, val).is_some() {
-    Err(StaticsError::Redefined(key))
+    Err(key.loc.wrap(StaticsError::Redefined(key.val)))
   } else {
     Ok(())
   }
@@ -1063,7 +1083,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
     }
     Pat::Record(rows, rest_loc) => {
       if let Some(loc) = rest_loc {
-        return Err(StaticsError::Todo(*loc));
+        return Err(loc.wrap(StaticsError::Todo));
       }
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(rows.len());
@@ -1071,7 +1091,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       for row in rows {
         let (other_ve, ty) = ck_pat(cx, st, &row.pat)?;
         if !keys.insert(row.lab.val) {
-          return Err(StaticsError::DuplicateLabel(row.lab));
+          return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
         }
         env_merge(&mut ve, other_ve, row.pat.loc)?;
         ty_rows.push((row.lab.val, ty));
@@ -1102,7 +1122,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
     Pat::Ctor(vid, arg) => {
       let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
       if val_info.id_status == IdStatus::Val {
-        return Err(StaticsError::ValAsPat(vid.loc()));
+        return Err(vid.loc().wrap(StaticsError::ValAsPat));
       }
       let (val_env, arg_ty) = ck_pat(cx, st, arg)?;
       let ctor_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
@@ -1117,7 +1137,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
     Pat::InfixCtor(lhs, vid, rhs) => {
       let val_info = get_val_info(&cx.env, *vid)?;
       if val_info.id_status == IdStatus::Val {
-        return Err(StaticsError::ValAsPat(vid.loc));
+        return Err(vid.loc.wrap(StaticsError::ValAsPat));
       }
       let func_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
       let (mut val_env, lhs_ty) = ck_pat(cx, st, lhs)?;
@@ -1144,7 +1164,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         .get(&vid.val)
         .map_or(false, |x| x.id_status != IdStatus::Val)
       {
-        return Err(StaticsError::NonVarInAs(*vid));
+        return Err(vid.loc.wrap(StaticsError::NonVarInAs(vid.val)));
       }
       let (mut val_env, pat_ty) = ck_pat(cx, st, inner_pat)?;
       if let Some(ty) = ty {
@@ -1175,12 +1195,12 @@ fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> R
           ..bs
         })
       }
-      StrDec::Structure(_) => Err(StaticsError::Todo(top_dec.loc)),
-      StrDec::Local(_, _) => Err(StaticsError::Todo(top_dec.loc)),
-      StrDec::Seq(_) => Err(StaticsError::Todo(top_dec.loc)),
+      StrDec::Structure(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
+      StrDec::Local(_, _) => Err(top_dec.loc.wrap(StaticsError::Todo)),
+      StrDec::Seq(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
     },
-    TopDec::SigDec(_) => Err(StaticsError::Todo(top_dec.loc)),
-    TopDec::FunDec(_) => Err(StaticsError::Todo(top_dec.loc)),
+    TopDec::SigDec(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
+    TopDec::FunDec(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
   }
 }
 

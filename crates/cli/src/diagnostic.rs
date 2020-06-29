@@ -49,61 +49,39 @@ pub fn parse(store: &StrStore, id: SourceId, err: Located<ParseError>) -> Diagno
   simple(msg, id, err.loc)
 }
 
-pub fn statics(store: &StrStore, id: SourceId, err: StaticsError) -> Diagnostic {
-  match err {
+pub fn statics(store: &StrStore, id: SourceId, err: Located<StaticsError>) -> Diagnostic {
+  let msg = match err.val {
     StaticsError::Undefined(item, name) => {
-      let msg = format!("undefined {} identifier: {}", item, store.get(name.val));
-      simple(msg, id, name.loc)
+      format!("undefined {} identifier: {}", item, store.get(name))
     }
-    StaticsError::Redefined(name) => {
-      let msg = format!("redefined identifier: {}", store.get(name.val));
-      simple(msg, id, name.loc)
+    StaticsError::Redefined(name) => format!("redefined identifier: {}", store.get(name)),
+    StaticsError::DuplicateLabel(lab) => format!("duplicate label: {}", show_lab(store, lab)),
+    StaticsError::Circularity(ty_var, ty) => {
+      format!("circularity: {} in {}", ty_var, show_ty(store, &ty))
     }
-    StaticsError::DuplicateLabel(lab) => {
-      let msg = format!("duplicate label: {}", show_lab(store, lab.val));
-      simple(msg, id, lab.loc)
-    }
-    StaticsError::Circularity(loc, ty_var, ty) => {
-      let msg = format!("circularity: {} in {}", ty_var, show_ty(store, &ty));
-      simple(msg, id, loc)
-    }
-    StaticsError::HeadMismatch(loc, lhs, rhs) => {
-      let msg = format!(
-        "mismatched types: {} vs {}",
-        show_ty(store, &lhs),
-        show_ty(store, &rhs)
-      );
-      simple(msg, id, loc)
-    }
-    StaticsError::MissingLabel(loc, lab) => {
-      let msg = format!("type is missing label {}", show_lab(store, lab));
-      simple(msg, id, loc)
-    }
-    StaticsError::ValAsPat(loc) => simple("value binding used as pattern", id, loc),
-    StaticsError::WrongNumTyArgs(loc, want, got) => {
-      let msg = format!(
-        "wrong number of type arguments: expected {}, found {}",
-        want, got
-      );
-      simple(msg, id, loc)
-    }
-    StaticsError::NonVarInAs(name) => {
-      let msg = format!(
-        "pattern to left of `as` is not a variable: {}",
-        store.get(name.val)
-      );
-      simple(msg, id, name.loc)
-    }
+    StaticsError::HeadMismatch(lhs, rhs) => format!(
+      "mismatched types: {} vs {}",
+      show_ty(store, &lhs),
+      show_ty(store, &rhs)
+    ),
+    StaticsError::MissingLabel(lab) => format!("type is missing label {}", show_lab(store, lab)),
+    StaticsError::ValAsPat => "value binding used as pattern".to_owned(),
+    StaticsError::WrongNumTyArgs(want, got) => format!(
+      "wrong number of type arguments: expected {}, found {}",
+      want, got
+    ),
+    StaticsError::NonVarInAs(name) => format!(
+      "pattern to left of `as` is not a variable: {}",
+      store.get(name)
+    ),
     StaticsError::ForbiddenBinding(name) => {
-      let msg = format!("forbidden identifier in binding: {}", store.get(name.val));
-      simple(msg, id, name.loc)
+      format!("forbidden identifier in binding: {}", store.get(name))
     }
-    StaticsError::NoSuitableOverload(loc) => simple("no suitable overload found", id, loc),
-    StaticsError::TyNameEscape(loc) => {
-      simple("expression causes a type name to escape its scope", id, loc)
-    }
-    StaticsError::Todo(loc) => simple("unimplemented language construct", id, loc),
-  }
+    StaticsError::NoSuitableOverload => "no suitable overload found".to_owned(),
+    StaticsError::TyNameEscape => "expression causes a type name to escape its scope".to_owned(),
+    StaticsError::Todo => "unimplemented language construct".to_owned(),
+  };
+  simple(msg, id, err.loc)
 }
 
 fn simple<M: Into<String>>(msg: M, id: SourceId, loc: Loc) -> Diagnostic {
