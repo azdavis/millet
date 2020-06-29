@@ -44,6 +44,7 @@ impl State {
   /// Returns whether the server should continue running.
   pub fn handle_notif(&mut self, notif: Notification) -> bool {
     match notif {
+      Notification::Initialized => true,
       Notification::Exit => false,
     }
   }

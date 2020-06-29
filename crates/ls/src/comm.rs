@@ -22,6 +22,7 @@ pub struct Request {
 }
 
 pub enum Notification {
+  Initialized,
   Exit,
 }
 
@@ -45,7 +46,9 @@ impl Message {
         get_id(&mut val)?,
         RequestParams::Initialize(get_params(&mut val)?),
       ),
-      // NOTE we ignore "initialized"
+      "initialized" => Message::Notification(Notification::Initialized),
+      "shutdown" => Message::request(get_id(&mut val)?, RequestParams::Shutdown),
+      "exit" => Message::Notification(Notification::Exit),
       _ => return None,
     };
     Some(ret)
