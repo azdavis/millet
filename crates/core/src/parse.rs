@@ -5,7 +5,7 @@ use crate::ast::{
   FValBindCase, FunBind, Label, Long, Pat, PatRow, Row, SigBind, SigExp, Spec, StrBind, StrDec,
   StrDesc, StrExp, TopDec, Ty, TyBind, TyDesc, TyRow, ValBind, ValDesc,
 };
-use crate::intern::StrRef;
+use crate::intern::{StrRef, StrStore};
 use crate::lex::Lexer;
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar};
@@ -39,6 +39,24 @@ pub enum ParseError {
   RealPat,
   NegativeFixity(i32),
   SameFixityDiffAssoc,
+}
+
+impl ParseError {
+  pub fn show(&self, store: &StrStore) -> String {
+    match self {
+      Self::ExpectedButFound(exp, fnd) => format!("expected {}, found {}", exp, fnd),
+      Self::InfixWithoutOp(id) => format!(
+        "infix identifier used without preceding `op`: {}",
+        store.get(*id)
+      ),
+      Self::NotInfix(id) => format!("non-infix identifier used as infix: {}", store.get(*id)),
+      Self::RealPat => "real constant used as a pattern".to_owned(),
+      Self::NegativeFixity(n) => format!("fixity is negative: {}", n),
+      Self::SameFixityDiffAssoc => {
+        "consecutive infix identifiers with same fixity but different associativity".to_owned()
+      }
+    }
+  }
 }
 
 struct Parser {

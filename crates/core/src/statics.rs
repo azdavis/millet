@@ -8,7 +8,7 @@
 #![allow(unused)]
 
 use crate::ast::{Cases, Dec, Exp, Label, Long, Pat, StrDec, TopDec, Ty as AstTy};
-use crate::intern::StrRef;
+use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
 use maplit::{hashmap, hashset};
 use std::collections::{HashMap, HashSet};
@@ -40,6 +40,99 @@ pub enum StaticsError {
   NoSuitableOverload,
   TyNameEscape,
   Todo,
+}
+
+impl StaticsError {
+  pub fn show(&self, store: &StrStore) -> String {
+    match self {
+      Self::Undefined(item, id) => format!("undefined {} identifier: {}", item, store.get(*id)),
+      Self::Redefined(id) => format!("redefined identifier: {}", store.get(*id)),
+      Self::DuplicateLabel(lab) => format!("duplicate label: {}", show_lab(store, *lab)),
+      Self::Circularity(ty_var, ty) => {
+        format!("circularity: {} in {}", ty_var, show_ty(store, &ty))
+      }
+      Self::HeadMismatch(lhs, rhs) => format!(
+        "mismatched types: {} vs {}",
+        show_ty(store, &lhs),
+        show_ty(store, &rhs)
+      ),
+      Self::MissingLabel(lab) => format!("type is missing label {}", show_lab(store, *lab)),
+      Self::ValAsPat => "value binding used as pattern".to_owned(),
+      Self::WrongNumTyArgs(want, got) => format!(
+        "wrong number of type arguments: expected {}, found {}",
+        want, got
+      ),
+      Self::NonVarInAs(id) => format!(
+        "pattern to left of `as` is not a variable: {}",
+        store.get(*id)
+      ),
+      Self::ForbiddenBinding(id) => format!("forbidden identifier in binding: {}", store.get(*id)),
+      Self::NoSuitableOverload => "no suitable overload found".to_owned(),
+      Self::TyNameEscape => "expression causes a type name to escape its scope".to_owned(),
+      Self::Todo => "unimplemented language construct".to_owned(),
+    }
+  }
+}
+
+fn show_lab(store: &StrStore, lab: Label) -> String {
+  match lab {
+    Label::Vid(id) => store.get(id).to_owned(),
+    Label::Num(n) => format!("{}", n),
+  }
+}
+
+fn show_ty(store: &StrStore, ty: &Ty) -> String {
+  let mut buf = String::new();
+  show_ty_impl(&mut buf, store, ty);
+  buf
+}
+
+fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty) {
+  match ty {
+    Ty::Var(tv) => buf.push_str(&tv.to_string()),
+    Ty::Record(rows) => {
+      buf.push_str("{ ");
+      let mut rows = rows.iter();
+      if let Some((lab, ty)) = rows.next() {
+        show_row(buf, store, *lab, ty);
+      }
+      for (lab, ty) in rows {
+        buf.push_str(", ");
+        show_row(buf, store, *lab, ty);
+      }
+      buf.push_str(" }");
+    }
+    Ty::Arrow(lhs, rhs) => {
+      buf.push_str("(");
+      show_ty_impl(buf, store, lhs);
+      buf.push_str(") -> (");
+      show_ty_impl(buf, store, rhs);
+      buf.push_str(")");
+    }
+    Ty::Ctor(args, sym) => {
+      if args.is_empty() {
+        buf.push_str(store.get(sym.name()));
+        return;
+      }
+      buf.push_str("(");
+      let mut args = args.iter();
+      if let Some(arg) = args.next() {
+        show_ty_impl(buf, store, arg);
+      }
+      for arg in args {
+        buf.push_str(", ");
+        show_ty_impl(buf, store, arg);
+      }
+      buf.push_str(") ");
+      buf.push_str(store.get(sym.name()));
+    }
+  }
+}
+
+fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
+  buf.push_str(&show_lab(store, lab));
+  buf.push_str(" : ");
+  show_ty_impl(buf, store, ty);
 }
 
 pub type Result<T> = std::result::Result<T, Located<StaticsError>>;

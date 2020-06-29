@@ -43,6 +43,24 @@ pub enum LexError {
   InvalidCharConstant,
 }
 
+impl LexError {
+  pub fn show(&self) -> String {
+    match self {
+      Self::UnmatchedCloseComment => "unmatched close comment".to_owned(),
+      Self::UnmatchedOpenComment => "unmatched open comment".to_owned(),
+      Self::IncompleteTypeVar => "incomplete type var".to_owned(),
+      Self::UnknownByte(b) => format!("unknown byte: {}", b),
+      Self::InvalidIntConstant(e) => format!("invalid integer constant: {}", e),
+      Self::InvalidRealConstant(e) => format!("invalid real constant: {}", e),
+      Self::NegativeWordConstant => "negative word constant".to_owned(),
+      Self::IncompleteNumConstant => "incomplete numeric constant".to_owned(),
+      Self::UnclosedStringConstant => "unclosed string constant".to_owned(),
+      Self::InvalidStringConstant => "invalid string constant".to_owned(),
+      Self::InvalidCharConstant => "invalid character constant".to_owned(),
+    }
+  }
+}
+
 impl From<core::num::ParseIntError> for LexError {
   fn from(val: core::num::ParseIntError) -> Self {
     Self::InvalidIntConstant(val)
