@@ -1,18 +1,20 @@
 //! The core of the server logic.
 
 use crate::comm::{
-  IncomingNotification, Outgoing, Request, RequestParams, Response, ResponseSuccess,
+  IncomingNotification, Outgoing, OutgoingNotification, Request, RequestParams, Response,
+  ResponseSuccess,
 };
 use lsp_types::{
-  InitializeResult, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-  TextDocumentSyncKind, Url,
+  Diagnostic, InitializeResult, Position, PublishDiagnosticsParams, Range, ServerCapabilities,
+  ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, Url,
 };
-use std::collections::HashMap;
+use millet_core::intern::StrStoreMut;
+use millet_core::loc::Loc;
+use millet_core::{lex, parse, statics};
 
 pub struct State {
   root_uri: Option<Url>,
   got_shutdown: bool,
-  files: HashMap<Url, String>,
 }
 
 impl State {
@@ -21,7 +23,6 @@ impl State {
     Self {
       root_uri: None,
       got_shutdown: false,
-      files: HashMap::new(),
     }
   }
 
@@ -58,27 +59,23 @@ impl State {
     match notif {
       IncomingNotification::Initialized => None,
       IncomingNotification::Exit => Some(Action::Exit(self.got_shutdown)),
-      IncomingNotification::TextDocOpen(params) => {
-        assert!(self
-          .files
-          .insert(params.text_document.uri, params.text_document.text)
-          .is_none());
-        None
-      }
+      IncomingNotification::TextDocOpen(params) => Some(mk_diagnostic_action(
+        params.text_document.uri,
+        Some(params.text_document.version),
+        params.text_document.text.as_bytes(),
+      )),
       IncomingNotification::TextDocChange(mut params) => {
         assert_eq!(params.content_changes.len(), 1);
         let change = params.content_changes.pop().unwrap();
-        assert!(self
-          .files
-          .insert(params.text_document.uri, change.text)
-          .is_some());
-        None
+        assert!(change.range.is_none());
+        Some(mk_diagnostic_action(
+          params.text_document.uri,
+          params.text_document.version,
+          change.text.as_bytes(),
+        ))
       }
       IncomingNotification::TextDocSave(_) => None,
-      IncomingNotification::TextDocClose(params) => {
-        assert!(self.files.remove(&params.text_document.uri).is_some());
-        None
-      }
+      IncomingNotification::TextDocClose(_) => None,
     }
   }
 }
@@ -89,4 +86,66 @@ pub enum Action {
   Exit(bool),
   /// Respond with an outgoing message.
   Respond(Box<Outgoing>),
+}
+
+fn mk_diagnostic_action(uri: Url, version: Option<i64>, bs: &[u8]) -> Action {
+  let diagnostics: Vec<_> = ck_one_file(bs).into_iter().collect();
+  Action::Respond(
+    Outgoing::Notification(OutgoingNotification::PublishDiagnostics(
+      PublishDiagnosticsParams {
+        uri,
+        version,
+        diagnostics,
+      },
+    ))
+    .into(),
+  )
+}
+
+fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
+  let mut store = StrStoreMut::new();
+  let lexer = match lex::get(&mut store, bs) {
+    Ok(x) => x,
+    Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message())),
+  };
+  let store = store.finish();
+  let top_decs = match parse::get(lexer) {
+    Ok(x) => x,
+    Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
+  };
+  match statics::get(&top_decs) {
+    Ok(()) => None,
+    Err(e) => Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
+  }
+}
+
+fn mk_diagnostic(bs: &[u8], loc: Loc, message: String) -> Diagnostic {
+  let range: std::ops::Range<usize> = loc.into();
+  let range = Range {
+    start: position(bs, range.start),
+    end: position(bs, range.end),
+  };
+  Diagnostic {
+    range,
+    message,
+    source: Some("millet-ls".to_owned()),
+    ..Diagnostic::default()
+  }
+}
+
+fn position(bs: &[u8], byte_idx: usize) -> Position {
+  let mut line = 0;
+  let mut character = 0;
+  for (idx, &b) in bs.iter().enumerate() {
+    if idx == byte_idx {
+      break;
+    }
+    if b == b'\n' {
+      line += 1;
+      character = 0;
+    } else {
+      character += 1;
+    }
+  }
+  Position { line, character }
 }
