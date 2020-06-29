@@ -55,13 +55,14 @@ impl State {
 
   pub fn handle_notification(&mut self, notif: IncomingNotification) -> NotificationAction {
     match notif {
-      IncomingNotification::Initialized => {}
-      IncomingNotification::Exit => return NotificationAction::Exit(self.got_shutdown),
+      IncomingNotification::Initialized => NotificationAction::Nothing,
+      IncomingNotification::Exit => NotificationAction::Exit(self.got_shutdown),
       IncomingNotification::TextDocOpen(params) => {
         assert!(self
           .files
           .insert(params.text_document.uri, params.text_document.text)
           .is_none());
+        NotificationAction::Nothing
       }
       IncomingNotification::TextDocChange(mut params) => {
         assert_eq!(params.content_changes.len(), 1);
@@ -70,13 +71,14 @@ impl State {
           .files
           .insert(params.text_document.uri, change.text)
           .is_some());
+        NotificationAction::Nothing
       }
-      IncomingNotification::TextDocSave(_) => {}
+      IncomingNotification::TextDocSave(_) => NotificationAction::Nothing,
       IncomingNotification::TextDocClose(params) => {
         assert!(self.files.remove(&params.text_document.uri).is_some());
+        NotificationAction::Nothing
       }
     }
-    NotificationAction::Nothing
   }
 }
 
