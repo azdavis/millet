@@ -990,10 +990,14 @@ fn ck_binding(name: Located<StrRef>) -> Result<()> {
 fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   let ret = match &dec.val {
     Dec::Val(ty_vars, val_binds) => {
-      assert!(ty_vars.is_empty());
+      if let Some(tv) = ty_vars.first() {
+        return Err(tv.loc.wrap(StaticsError::Todo));
+      }
       let mut val_env = ValEnv::new();
       for val_bind in val_binds {
-        assert!(!val_bind.rec);
+        if val_bind.rec {
+          return Err(dec.loc.wrap(StaticsError::Todo));
+        }
         let (other, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
         for &name in other.keys() {
           ck_binding(val_bind.pat.loc.wrap(name))?;
@@ -1011,7 +1015,9 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     Dec::Type(ty_binds) => {
       let mut ty_env = TyEnv::default();
       for ty_bind in ty_binds {
-        assert!(ty_bind.ty_vars.is_empty());
+        if !ty_bind.ty_vars.is_empty() {
+          return Err(dec.loc.wrap(StaticsError::Todo));
+        }
         let ty = ck_ty(cx, st, &ty_bind.ty)?;
         let info = TyInfo {
           ty_fcn: TyScheme::mono(ty),
@@ -1029,13 +1035,17 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       ty_env.into()
     }
     Dec::Datatype(dat_binds, ty_binds) => {
-      assert!(ty_binds.is_empty());
+      if let Some(x) = ty_binds.first() {
+        return Err(x.ty_con.loc.wrap(StaticsError::Todo));
+      }
       let mut cx = cx.clone();
       // these two are across all dat_binds.
       let mut ty_env = TyEnv::default();
       let mut val_env = ValEnv::new();
       for dat_bind in dat_binds {
-        assert!(dat_bind.ty_vars.is_empty());
+        if let Some(x) = dat_bind.ty_vars.first() {
+          return Err(x.loc.wrap(StaticsError::Todo));
+        }
         // create a new symbol for the type being generated with this DatBind.
         let sym = st.new_sym(dat_bind.ty_con);
         // tell the original context that this new type does exist, but just with an empty ValEnv.
