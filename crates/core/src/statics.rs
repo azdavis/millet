@@ -194,16 +194,13 @@ struct Subst {
 }
 
 impl Subst {
-  fn extend(&mut self, other: Self) {
-    for (_, ty) in self.inner.iter_mut() {
-      ty.apply(&other);
+  fn insert(&mut self, tv: TyVar, ty: Ty) {
+    for (_, other) in self.inner.iter_mut() {
+      other.apply(&Subst {
+        inner: hashmap![tv => ty.clone()],
+      });
     }
-    for (tv, ty) in other.inner {
-      assert!(
-        self.inner.insert(tv, ty).is_none(),
-        "redefinition when extending a subst"
-      );
-    }
+    assert!(self.inner.insert(tv, ty).is_none());
   }
 }
 
@@ -574,7 +571,7 @@ impl Constraints {
     for (loc, mut lhs, mut rhs) in self.regular {
       lhs.apply(&ret);
       rhs.apply(&ret);
-      ret.extend(unify(loc, lhs, rhs)?);
+      unify(&mut ret, loc, lhs, rhs)?;
     }
     'outer: for (loc, tv, overloads) in self.overload {
       for name in overloads {
@@ -582,8 +579,9 @@ impl Constraints {
         let mut rhs = Ty::base(name);
         lhs.apply(&ret);
         rhs.apply(&ret);
-        if let Ok(other) = unify(loc, lhs, rhs) {
-          ret.extend(other);
+        let mut pre = ret.clone();
+        if let Ok(()) = unify(&mut pre, loc, lhs, rhs) {
+          ret = pre;
           continue 'outer;
         }
       }
@@ -664,35 +662,33 @@ fn generalize(ty_env: &TyEnv, ty: Ty) -> TyScheme {
   }
 }
 
-fn bind(loc: Loc, tv: TyVar, ty: Ty) -> Result<Subst> {
+fn bind(subst: &mut Subst, loc: Loc, tv: TyVar, ty: Ty) -> Result<()> {
   if let Ty::Var(other) = ty {
     if tv == other {
-      return Ok(Subst::default());
+      return Ok(());
     }
   }
   if ty.free_ty_vars().contains(&tv) {
     return Err(loc.wrap(StaticsError::Circularity(tv, ty)));
   }
-  Ok(Subst {
-    inner: hashmap![tv => ty],
-  })
+  subst.insert(tv, ty);
+  Ok(())
 }
 
-fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
+fn unify(subst: &mut Subst, loc: Loc, lhs: Ty, rhs: Ty) -> Result<()> {
   match (lhs, rhs) {
-    (Ty::Var(tv), rhs) => bind(loc, tv, rhs),
-    (lhs, Ty::Var(tv)) => bind(loc, tv, lhs),
+    (Ty::Var(tv), rhs) => bind(subst, loc, tv, rhs),
+    (lhs, Ty::Var(tv)) => bind(subst, loc, tv, lhs),
     (Ty::Record(rows_l), Ty::Record(rows_r)) => {
       let mut map_l: HashMap<_, _> = rows_l.into_iter().collect();
       let mut map_r: HashMap<_, _> = rows_r.into_iter().collect();
       let keys: HashSet<_> = map_l.keys().chain(map_r.keys()).copied().collect();
-      let mut subst = Subst::default();
       for k in keys {
         match (map_l.remove(&k), map_r.remove(&k)) {
           (Some(mut ty_l), Some(mut ty_r)) => {
             ty_l.apply(&subst);
             ty_r.apply(&subst);
-            subst.extend(unify(loc, ty_l, ty_r)?);
+            unify(subst, loc, ty_l, ty_r)?;
           }
           (Some(..), None) | (None, Some(..)) => {
             return Err(loc.wrap(StaticsError::MissingLabel(k)))
@@ -700,14 +696,14 @@ fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
           (None, None) => unreachable!(),
         }
       }
-      Ok(subst)
+      Ok(())
     }
     (Ty::Arrow(arg_l, mut res_l), Ty::Arrow(arg_r, mut res_r)) => {
-      let mut subst = unify(loc, *arg_l, *arg_r)?;
+      unify(subst, loc, *arg_l, *arg_r)?;
       res_l.apply(&subst);
       res_r.apply(&subst);
-      subst.extend(unify(loc, *res_l, *res_r)?);
-      Ok(subst)
+      unify(subst, loc, *res_l, *res_r)?;
+      Ok(())
     }
     (Ty::Ctor(args_l, name_l), Ty::Ctor(args_r, name_r)) => {
       if name_l != name_r {
@@ -717,13 +713,12 @@ fn unify(loc: Loc, lhs: Ty, rhs: Ty) -> Result<Subst> {
         )));
       }
       assert_eq!(args_l.len(), args_r.len(), "mismatched Ctor args len");
-      let mut subst = Subst::default();
       for (mut arg_l, mut arg_r) in args_l.into_iter().zip(args_r) {
         arg_l.apply(&subst);
         arg_r.apply(&subst);
-        subst.extend(unify(loc, arg_l, arg_r)?);
+        unify(subst, loc, arg_l, arg_r)?;
       }
-      Ok(subst)
+      Ok(())
     }
     (lhs @ Ty::Record(..), rhs) | (lhs @ Ty::Arrow(..), rhs) | (lhs @ Ty::Ctor(..), rhs) => {
       Err(loc.wrap(StaticsError::HeadMismatch(lhs, rhs)))
