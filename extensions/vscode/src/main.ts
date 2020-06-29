@@ -2,7 +2,7 @@ import { ExtensionContext } from "vscode";
 import { LanguageClient } from "vscode-languageclient";
 import * as path from "path";
 
-let client: LanguageClient | null;
+let client: LanguageClient | null = null;
 
 export function activate(cx: ExtensionContext) {
   if (client !== null) {
