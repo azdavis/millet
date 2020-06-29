@@ -568,19 +568,13 @@ impl Constraints {
 
   fn solve(self) -> Result<Subst> {
     let mut ret = Subst::default();
-    for (loc, mut lhs, mut rhs) in self.regular {
-      lhs.apply(&ret);
-      rhs.apply(&ret);
+    for (loc, lhs, rhs) in self.regular {
       unify(&mut ret, loc, lhs, rhs)?;
     }
     'outer: for (loc, tv, overloads) in self.overload {
       for name in overloads {
-        let mut lhs = Ty::Var(tv);
-        let mut rhs = Ty::base(name);
-        lhs.apply(&ret);
-        rhs.apply(&ret);
         let mut pre = ret.clone();
-        if let Ok(()) = unify(&mut pre, loc, lhs, rhs) {
+        if let Ok(()) = unify(&mut pre, loc, Ty::Var(tv), Ty::base(name)) {
           ret = pre;
           continue 'outer;
         }
@@ -675,7 +669,9 @@ fn bind(subst: &mut Subst, loc: Loc, tv: TyVar, ty: Ty) -> Result<()> {
   Ok(())
 }
 
-fn unify(subst: &mut Subst, loc: Loc, lhs: Ty, rhs: Ty) -> Result<()> {
+fn unify(subst: &mut Subst, loc: Loc, mut lhs: Ty, mut rhs: Ty) -> Result<()> {
+  lhs.apply(&subst);
+  rhs.apply(&subst);
   match (lhs, rhs) {
     (Ty::Var(tv), rhs) => bind(subst, loc, tv, rhs),
     (lhs, Ty::Var(tv)) => bind(subst, loc, tv, lhs),
@@ -685,11 +681,7 @@ fn unify(subst: &mut Subst, loc: Loc, lhs: Ty, rhs: Ty) -> Result<()> {
       let keys: HashSet<_> = map_l.keys().chain(map_r.keys()).copied().collect();
       for k in keys {
         match (map_l.remove(&k), map_r.remove(&k)) {
-          (Some(mut ty_l), Some(mut ty_r)) => {
-            ty_l.apply(&subst);
-            ty_r.apply(&subst);
-            unify(subst, loc, ty_l, ty_r)?;
-          }
+          (Some(ty_l), Some(ty_r)) => unify(subst, loc, ty_l, ty_r)?,
           (Some(..), None) | (None, Some(..)) => {
             return Err(loc.wrap(StaticsError::MissingLabel(k)))
           }
@@ -698,10 +690,8 @@ fn unify(subst: &mut Subst, loc: Loc, lhs: Ty, rhs: Ty) -> Result<()> {
       }
       Ok(())
     }
-    (Ty::Arrow(arg_l, mut res_l), Ty::Arrow(arg_r, mut res_r)) => {
+    (Ty::Arrow(arg_l, res_l), Ty::Arrow(arg_r, res_r)) => {
       unify(subst, loc, *arg_l, *arg_r)?;
-      res_l.apply(&subst);
-      res_r.apply(&subst);
       unify(subst, loc, *res_l, *res_r)?;
       Ok(())
     }
@@ -713,9 +703,7 @@ fn unify(subst: &mut Subst, loc: Loc, lhs: Ty, rhs: Ty) -> Result<()> {
         )));
       }
       assert_eq!(args_l.len(), args_r.len(), "mismatched Ctor args len");
-      for (mut arg_l, mut arg_r) in args_l.into_iter().zip(args_r) {
-        arg_l.apply(&subst);
-        arg_r.apply(&subst);
+      for (arg_l, arg_r) in args_l.into_iter().zip(args_r) {
         unify(subst, loc, arg_l, arg_r)?;
       }
       Ok(())
