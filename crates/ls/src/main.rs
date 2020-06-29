@@ -27,7 +27,7 @@ fn main() {
         None => {}
         Some(action) => match action {
           state::Action::Exit(x) => break x,
-          state::Action::Respond(x) => s_out.send(x).unwrap(),
+          state::Action::Respond(x) => s_out.send(*x).unwrap(),
         },
       },
     }

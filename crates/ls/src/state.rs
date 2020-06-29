@@ -88,5 +88,5 @@ pub enum Action {
   /// Exit the server. The bool is whether the process should exit cleanly.
   Exit(bool),
   /// Respond with an outgoing message.
-  Respond(Outgoing),
+  Respond(Box<Outgoing>),
 }
