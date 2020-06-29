@@ -8,12 +8,16 @@ use lsp_types::{
 
 pub struct State {
   root_uri: Option<Url>,
+  got_shutdown: bool,
 }
 
 impl State {
   /// Returns a new State.
   pub fn new() -> Self {
-    Self { root_uri: None }
+    Self {
+      root_uri: None,
+      got_shutdown: false,
+    }
   }
 
   /// Returns the Response for this Request.
@@ -33,7 +37,10 @@ impl State {
           }),
         }))
       }
-      RequestParams::Shutdown => Ok(ResponseSuccess::Null),
+      RequestParams::Shutdown => {
+        self.got_shutdown = true;
+        Ok(ResponseSuccess::Null)
+      }
     };
     Response {
       id: Some(req.id),
@@ -41,11 +48,14 @@ impl State {
     }
   }
 
-  /// Returns whether the server should continue running.
-  pub fn handle_notif(&mut self, notif: Notification) -> bool {
+  /// Returns
+  /// - `None` if the server should continue running.
+  /// - `Some(true)` if the server should exit successfully.
+  /// - `Some(false)` if the server should exit with an error.
+  pub fn handle_notif(&self, notif: Notification) -> Option<bool> {
     match notif {
-      Notification::Initialized => true,
-      Notification::Exit => false,
+      Notification::Initialized => None,
+      Notification::Exit => Some(self.got_shutdown),
     }
   }
 }

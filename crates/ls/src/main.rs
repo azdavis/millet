@@ -17,22 +17,24 @@ fn main() {
     .spawn(move || io::write_stdout(r_res))
     .unwrap();
   let mut st = state::State::new();
-  loop {
+  let exit_ok = loop {
     let msg = r_msg.recv().unwrap();
     match msg {
       comm::Message::Request(req) => {
         let res = st.handle_req(req);
         s_res.send(res).unwrap();
       }
-      comm::Message::Notification(notif) => {
-        if !st.handle_notif(notif) {
-          break;
-        }
-      }
+      comm::Message::Notification(notif) => match st.handle_notif(notif) {
+        None => {}
+        Some(x) => break x,
+      },
     }
-  }
+  };
   drop(r_msg);
   drop(s_res);
   read_stdin.join().unwrap();
   write_stdout.join().unwrap();
+  if !exit_ok {
+    std::process::exit(1);
+  }
 }
