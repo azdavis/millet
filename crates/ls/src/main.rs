@@ -6,32 +6,32 @@ mod io;
 mod state;
 
 fn main() {
-  let (s_msg, r_msg) = crossbeam_channel::unbounded();
-  let (s_res, r_res) = crossbeam_channel::unbounded();
+  let (s_inc, r_inc) = crossbeam_channel::unbounded();
+  let (s_out, r_out) = crossbeam_channel::unbounded();
   let read_stdin = std::thread::Builder::new()
     .name("read_stdin".to_owned())
-    .spawn(move || io::read_stdin(s_msg))
+    .spawn(move || io::read_stdin(s_inc))
     .unwrap();
   let write_stdout = std::thread::Builder::new()
     .name("write_stdout".to_owned())
-    .spawn(move || io::write_stdout(r_res))
+    .spawn(move || io::write_stdout(r_out))
     .unwrap();
   let mut st = state::State::new();
   let exit_ok = loop {
-    let msg = r_msg.recv().unwrap();
+    let msg = r_inc.recv().unwrap();
     match msg {
       comm::Incoming::Request(req) => {
-        let res = st.handle_req(req);
-        s_res.send(comm::Outgoing::Response(res)).unwrap();
+        let res = st.handle_request(req);
+        s_out.send(comm::Outgoing::Response(res)).unwrap();
       }
-      comm::Incoming::Notification(notif) => match st.handle_notif(notif) {
+      comm::Incoming::Notification(notif) => match st.handle_notification(notif) {
         None => {}
         Some(x) => break x,
       },
     }
   };
-  drop(r_msg);
-  drop(s_res);
+  drop(r_inc);
+  drop(s_out);
   read_stdin.join().unwrap();
   write_stdout.join().unwrap();
   if !exit_ok {

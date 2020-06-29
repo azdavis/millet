@@ -1,7 +1,7 @@
 //! The core of the server logic.
 
 use crate::comm::{
-  IncomingNotification as InNotif, Request, RequestParams, Response, ResponseSuccess,
+  IncomingNotification, Request, RequestParams, Response, ResponseSuccess,
 };
 use lsp_types::{
   InitializeResult, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
@@ -26,7 +26,7 @@ impl State {
   }
 
   /// Returns the Response for this Request.
-  pub fn handle_req(&mut self, req: Request) -> Response {
+  pub fn handle_request(&mut self, req: Request) -> Response {
     let res = match req.params {
       RequestParams::Initialize(params) => {
         // TODO do something with params.process_id
@@ -57,17 +57,17 @@ impl State {
   /// - `None` if the server should continue running.
   /// - `Some(true)` if the server should exit successfully.
   /// - `Some(false)` if the server should exit with an error.
-  pub fn handle_notif(&mut self, notif: InNotif) -> Option<bool> {
+  pub fn handle_notification(&mut self, notif: IncomingNotification) -> Option<bool> {
     match notif {
-      InNotif::Initialized => {}
-      InNotif::Exit => return Some(self.got_shutdown),
-      InNotif::TextDocOpen(params) => {
+      IncomingNotification::Initialized => {}
+      IncomingNotification::Exit => return Some(self.got_shutdown),
+      IncomingNotification::TextDocOpen(params) => {
         assert!(self
           .files
           .insert(params.text_document.uri, params.text_document.text)
           .is_none());
       }
-      InNotif::TextDocChange(mut params) => {
+      IncomingNotification::TextDocChange(mut params) => {
         assert_eq!(params.content_changes.len(), 1);
         let change = params.content_changes.pop().unwrap();
         assert!(self
