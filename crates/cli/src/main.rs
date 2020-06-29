@@ -1,13 +1,23 @@
 //! A CLI for millet.
 
 mod args;
-mod diagnostic;
 mod source;
 
+use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use millet_core::{intern, lex, parse, statics};
 use std::io::Write as _;
+
+fn simple<M, T, R>(msg: M, id: T, loc: R) -> Diagnostic<T>
+where
+  M: Into<String>,
+  R: Into<std::ops::Range<usize>>,
+{
+  Diagnostic::error()
+    .with_message(msg)
+    .with_labels(vec![Label::primary(id, loc)])
+}
 
 fn run() -> bool {
   let args = match args::get() {
@@ -27,7 +37,8 @@ fn run() -> bool {
     match std::fs::read_to_string(&name) {
       Ok(s) => src.insert(name, s),
       Err(e) => {
-        term::emit(&mut w, &config, &src, &diagnostic::io(&name, e)).expect("io error");
+        let diag = Diagnostic::error().with_message(format!("{}: {}", name, e));
+        term::emit(&mut w, &config, &src, &diag).expect("io error");
         return false;
       }
     }
@@ -37,7 +48,8 @@ fn run() -> bool {
     match lex::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
-        term::emit(&mut w, &config, &src, &diagnostic::lex(id, e)).expect("io error");
+        let diag = simple(e.val.show(), id, e.loc);
+        term::emit(&mut w, &config, &src, &diag).expect("io error");
         return false;
       }
     }
@@ -54,7 +66,8 @@ fn run() -> bool {
         }
       }
       Err(e) => {
-        term::emit(&mut w, &config, &src, &diagnostic::parse(&store, id, e)).expect("io error");
+        let diag = simple(e.val.show(&store), id, e.loc);
+        term::emit(&mut w, &config, &src, &diag).expect("io error");
         return false;
       }
     }
@@ -66,7 +79,8 @@ fn run() -> bool {
     match statics::get(&xs) {
       Ok(()) => {}
       Err(e) => {
-        term::emit(&mut w, &config, &src, &diagnostic::statics(&store, id, e)).expect("io error");
+        let diag = simple(e.val.show(&store), id, e.loc);
+        term::emit(&mut w, &config, &src, &diag).expect("io error");
         return false;
       }
     }
