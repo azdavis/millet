@@ -808,15 +808,17 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       }
       ret.unwrap()
     }
-    Exp::Let(dec, inner) => {
+    Exp::Let(dec, exps) => {
       let env = ck_dec(cx, st, dec)?;
       let mut cx = cx.clone();
       let ty_names = cx.ty_names.clone();
       cx.o_plus(env);
-      let ty = ck_exp(&cx, st, inner)?;
-      st.constraints
-        .ty_name
-        .push((inner.loc, ty.clone(), ty_names));
+      let mut last = None;
+      for exp in exps {
+        last = Some((exp.loc, ck_exp(&cx, st, exp)?));
+      }
+      let (loc, ty) = last.unwrap();
+      st.constraints.ty_name.push((loc, ty.clone(), ty_names));
       ty
     }
     Exp::App(func, arg) => {

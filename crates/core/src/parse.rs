@@ -627,17 +627,7 @@ impl Parser {
           }
         }
         self.ops = ops;
-        let exp = if exprs.len() == 1 {
-          exprs.pop().unwrap()
-        } else {
-          exprs
-            .first()
-            .unwrap()
-            .loc
-            .span(exprs.last().unwrap().loc)
-            .wrap(Exp::Sequence(exprs))
-        };
-        Exp::Let(dec, exp.into())
+        Exp::Let(dec, exprs)
       }
       Token::Ident(..) | Token::Equal => Exp::LongVid(self.long_id(false)?),
       _ => return Ok(None),
