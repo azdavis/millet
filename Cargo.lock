@@ -132,6 +132,7 @@ version = "0.1.0"
 dependencies = [
  "crossbeam-channel",
  "lsp-types",
+ "millet-core",
  "serde",
  "serde_json",
 ]
