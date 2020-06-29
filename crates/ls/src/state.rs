@@ -53,6 +53,7 @@ impl State {
     }
   }
 
+  /// Handle a notification by possibly taking some action.
   pub fn handle_notification(&mut self, notif: IncomingNotification) -> Option<Action> {
     match notif {
       IncomingNotification::Initialized => None,
