@@ -755,7 +755,7 @@ fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
 }
 
 fn tuple_lab(idx: usize) -> Label {
-  Label::Num((idx + 1).try_into().expect("couldn't convert num"))
+  Label::Num((idx + 1).try_into().unwrap())
 }
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
@@ -806,7 +806,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       for exp in exps {
         ret = Some(ck_exp(cx, st, exp)?);
       }
-      ret.expect("empty exps")
+      ret.unwrap()
     }
     Exp::Let(dec, inner) => {
       let env = ck_dec(cx, st, dec)?;

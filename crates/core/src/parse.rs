@@ -705,7 +705,7 @@ impl Parser {
         self.fail("an identifier", self.peek())
       };
     }
-    let last = structures.pop().expect("empty structures list");
+    let last = structures.pop().unwrap();
     Ok(Some(Long { structures, last }))
   }
 
@@ -736,7 +736,7 @@ impl Parser {
       }
       return self.fail("an identifier", self.peek());
     }
-    let last = structures.pop().expect("empty structures list");
+    let last = structures.pop().unwrap();
     Ok(Long { structures, last })
   }
 
@@ -744,9 +744,7 @@ impl Parser {
     let tok = self.peek();
     self.skip();
     let ret = match tok.val {
-      Token::DecInt(n, IsNumLab::Maybe) => {
-        Label::Num(n.try_into().expect("couldn't convert a number"))
-      }
+      Token::DecInt(n, IsNumLab::Maybe) => Label::Num(n.try_into().unwrap()),
       Token::Ident(id, _) => Label::Vid(id),
       _ => return self.fail("a label", tok),
     };
@@ -1339,7 +1337,7 @@ impl Parser {
           }
         }
         if pats.len() == 1 {
-          pats.pop().expect("empty patterns list").val
+          pats.pop().unwrap().val
         } else {
           Pat::Tuple(pats)
         }
@@ -1506,7 +1504,7 @@ impl Parser {
         }
         let long_ty_con = self.maybe_long_id()?;
         match (types.len(), long_ty_con) {
-          (1, None) => types.pop().expect("empty types list").val,
+          (1, None) => types.pop().unwrap().val,
           (_, None) => return self.fail("an identifier", self.peek()),
           (_, Some(x)) => Ty::TyCon(types, x),
         }
@@ -1577,12 +1575,12 @@ impl Parser {
     let ret = match xs.len() {
       // NOTE we conjure up a 'fake' loc in the 0 case
       0 => self.peek().loc.wrap(seq(Vec::new())),
-      1 => xs.pop().expect("empty list"),
+      1 => xs.pop().unwrap(),
       _ => xs
         .first()
-        .expect("empty list")
+        .unwrap()
         .loc
-        .span(xs.last().expect("empty list").loc)
+        .span(xs.last().unwrap().loc)
         .wrap(seq(xs)),
     };
     Ok(ret)
@@ -1605,7 +1603,7 @@ impl Parser {
         return Err(loc.wrap(ParseError::NegativeFixity(n)));
       }
       self.skip();
-      n.try_into().expect("couldn't convert number")
+      n.try_into().unwrap()
     } else {
       0
     };

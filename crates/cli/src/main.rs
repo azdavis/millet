@@ -38,7 +38,7 @@ fn run() -> bool {
       Ok(s) => src.insert(name, s),
       Err(e) => {
         let diag = Diagnostic::error().with_message(format!("{}: {}", name, e));
-        term::emit(&mut w, &config, &src, &diag).expect("io error");
+        term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
     }
@@ -49,7 +49,7 @@ fn run() -> bool {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
         let diag = simple(e.val.show(), id, e.loc);
-        term::emit(&mut w, &config, &src, &diag).expect("io error");
+        term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
     }
@@ -60,14 +60,14 @@ fn run() -> bool {
     match parse::get(lexer) {
       Ok(xs) => {
         if args.just_ast {
-          writeln!(w, "{}: {:#?}", file.name(), xs).expect("io error");
+          writeln!(w, "{}: {:#?}", file.name(), xs).unwrap();
         } else {
           top_decs.push((id, xs));
         }
       }
       Err(e) => {
         let diag = simple(e.val.show(&store), id, e.loc);
-        term::emit(&mut w, &config, &src, &diag).expect("io error");
+        term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
     }
@@ -80,7 +80,7 @@ fn run() -> bool {
       Ok(()) => {}
       Err(e) => {
         let diag = simple(e.val.show(&store), id, e.loc);
-        term::emit(&mut w, &config, &src, &diag).expect("io error");
+        term::emit(&mut w, &config, &src, &diag).unwrap();
         return false;
       }
     }
@@ -93,7 +93,7 @@ fn main() {
     .name("run".to_owned())
     .stack_size(10 * 1024 * 1024)
     .spawn(run)
-    .expect("couldn't spawn run")
+    .unwrap()
     .join()
   {
     Err(_) | Ok(false) => std::process::exit(1),
