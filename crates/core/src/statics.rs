@@ -4,9 +4,6 @@
 //!
 //! [1]: http://dev.stephendiehl.com/fun/006_hindley_milner.html
 
-// TODO rm
-#![allow(unused)]
-
 use crate::ast::{Cases, Dec, Exp, Label, Long, Pat, StrDec, TopDec, Ty as AstTy};
 use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
@@ -195,7 +192,7 @@ struct Subst {
 }
 
 impl Subst {
-  fn extend(&mut self, mut other: Self) {
+  fn extend(&mut self, other: Self) {
     for (_, ty) in self.inner.iter_mut() {
       ty.apply(&other);
     }
@@ -389,7 +386,7 @@ impl ValInfo {
   fn exn() -> Self {
     Self {
       ty_scheme: TyScheme::mono(Ty::EXN),
-      id_status: IdStatus::Ctor,
+      id_status: IdStatus::Exn,
     }
   }
 
