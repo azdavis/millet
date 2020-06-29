@@ -22,7 +22,7 @@ fn main() {
     match msg {
       comm::Incoming::Request(req) => {
         let res = st.handle_req(req);
-        s_res.send(res).unwrap();
+        s_res.send(comm::Outgoing::Response(res)).unwrap();
       }
       comm::Incoming::Notification(notif) => match st.handle_notif(notif) {
         None => {}

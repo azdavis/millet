@@ -1,6 +1,8 @@
 //! The core of the server logic.
 
-use crate::comm::{Notification, Request, RequestParams, Response, ResponseSuccess};
+use crate::comm::{
+  IncomingNotification as InNotif, Request, RequestParams, Response, ResponseSuccess,
+};
 use lsp_types::{
   InitializeResult, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
   TextDocumentSyncKind, Url,
@@ -55,17 +57,17 @@ impl State {
   /// - `None` if the server should continue running.
   /// - `Some(true)` if the server should exit successfully.
   /// - `Some(false)` if the server should exit with an error.
-  pub fn handle_notif(&mut self, notif: Notification) -> Option<bool> {
+  pub fn handle_notif(&mut self, notif: InNotif) -> Option<bool> {
     match notif {
-      Notification::Initialized => {}
-      Notification::Exit => return Some(self.got_shutdown),
-      Notification::TextDocOpen(params) => {
+      InNotif::Initialized => {}
+      InNotif::Exit => return Some(self.got_shutdown),
+      InNotif::TextDocOpen(params) => {
         assert!(self
           .files
           .insert(params.text_document.uri, params.text_document.text)
           .is_none());
       }
-      Notification::TextDocChange(mut params) => {
+      InNotif::TextDocChange(mut params) => {
         assert_eq!(params.content_changes.len(), 1);
         let change = params.content_changes.pop().unwrap();
         assert!(self
@@ -73,8 +75,8 @@ impl State {
           .insert(params.text_document.uri, change.text)
           .is_some());
       }
-      Notification::TextDocSave(_) => {}
-      Notification::TextDocClose(params) => {
+      InNotif::TextDocSave(_) => {}
+      InNotif::TextDocClose(params) => {
         assert!(self.files.remove(&params.text_document.uri).is_some());
       }
     }

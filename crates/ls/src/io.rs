@@ -1,6 +1,6 @@
 //! Threads for handling I/O.
 
-use crate::comm::{Incoming, Response};
+use crate::comm::{Incoming, Outgoing};
 use crate::headers::content_length;
 use crossbeam_channel::{Receiver, RecvError, SendError, Sender};
 use std::io::BufRead as _;
@@ -42,7 +42,7 @@ pub fn read_stdin(s: Sender<Incoming>) {
 }
 
 #[allow(clippy::while_let_loop)]
-pub fn write_stdout(r: Receiver<Response>) {
+pub fn write_stdout(r: Receiver<Outgoing>) {
   let stdout = std::io::stdout();
   let mut stdout = stdout.lock();
   loop {

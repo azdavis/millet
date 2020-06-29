@@ -2,7 +2,7 @@
 
 use lsp_types::{
   DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-  DidSaveTextDocumentParams, InitializeParams, InitializeResult,
+  DidSaveTextDocumentParams, InitializeParams, InitializeResult, PublishDiagnosticsParams,
 };
 use serde::de::DeserializeOwned;
 use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Value};
@@ -24,7 +24,7 @@ pub struct Request {
   pub params: RequestParams,
 }
 
-pub enum Notification {
+pub enum IncomingNotification {
   Initialized,
   Exit,
   TextDocOpen(DidOpenTextDocumentParams),
@@ -35,7 +35,7 @@ pub enum Notification {
 
 pub enum Incoming {
   Request(Request),
-  Notification(Notification),
+  Notification(IncomingNotification),
 }
 
 impl Incoming {
@@ -53,20 +53,20 @@ impl Incoming {
         get_id(&mut val)?,
         RequestParams::Initialize(get_params(&mut val)?),
       ),
-      "initialized" => Incoming::Notification(Notification::Initialized),
+      "initialized" => Incoming::Notification(IncomingNotification::Initialized),
       "shutdown" => Incoming::request(get_id(&mut val)?, RequestParams::Shutdown),
-      "exit" => Incoming::Notification(Notification::Exit),
+      "exit" => Incoming::Notification(IncomingNotification::Exit),
       "textDocument/didOpen" => {
-        Incoming::Notification(Notification::TextDocOpen(get_params(&mut val)?))
+        Incoming::Notification(IncomingNotification::TextDocOpen(get_params(&mut val)?))
       }
       "textDocument/didClose" => {
-        Incoming::Notification(Notification::TextDocClose(get_params(&mut val)?))
+        Incoming::Notification(IncomingNotification::TextDocClose(get_params(&mut val)?))
       }
       "textDocument/didChange" => {
-        Incoming::Notification(Notification::TextDocChange(get_params(&mut val)?))
+        Incoming::Notification(IncomingNotification::TextDocChange(get_params(&mut val)?))
       }
       "textDocument/didSave" => {
-        Incoming::Notification(Notification::TextDocSave(get_params(&mut val)?))
+        Incoming::Notification(IncomingNotification::TextDocSave(get_params(&mut val)?))
       }
       _ => return None,
     };
@@ -120,7 +120,7 @@ pub struct Response {
 }
 
 impl Response {
-  pub fn into_vec(self) -> Result<Vec<u8>, Error> {
+  fn into_vec(self) -> Result<Vec<u8>, Error> {
     let id = match self.id {
       None => Value::Null,
       Some(Id::Number(n)) => Value::Number(n.into()),
@@ -144,5 +144,40 @@ impl Response {
     };
     map.insert(key.to_owned(), val);
     to_vec(&Value::Object(map))
+  }
+}
+
+pub enum OutgoingNotification {
+  PublishDiagnostics(PublishDiagnosticsParams),
+}
+
+impl OutgoingNotification {
+  fn into_vec(self) -> Result<Vec<u8>, Error> {
+    let mut map = Map::with_capacity(3);
+    map.insert("jsonrpc".to_owned(), JSON_RPC_VERSION.into());
+    match self {
+      Self::PublishDiagnostics(params) => {
+        map.insert(
+          "method".to_owned(),
+          "textDocument/publishDiagnostics".into(),
+        );
+        map.insert("params".to_owned(), to_value(&params)?);
+      }
+    }
+    to_vec(&Value::Object(map))
+  }
+}
+
+pub enum Outgoing {
+  Response(Response),
+  Notification(OutgoingNotification),
+}
+
+impl Outgoing {
+  pub fn into_vec(self) -> Result<Vec<u8>, Error> {
+    match self {
+      Self::Response(res) => res.into_vec(),
+      Self::Notification(notif) => notif.into_vec(),
+    }
   }
 }
