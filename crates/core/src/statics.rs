@@ -19,8 +19,8 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   for top_dec in top_decs {
     bs = ck_top_dec(bs, &mut st, top_dec)?;
   }
-  st.constraints.solve(&mut st.subst)?;
-  bs.apply(&st.subst);
+  let subst = st.solve()?;
+  bs.apply(&subst);
   assert!(bs.free_ty_vars().is_empty());
   Ok(())
 }
@@ -555,38 +555,11 @@ impl Substitutable for Basis {
 }
 
 #[derive(Default)]
-struct Constraints {
-  overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
-  ty_name: Vec<(Loc, Ty, TyNameSet)>,
-}
-
-impl Constraints {
-  fn solve(self, subst: &mut Subst) -> Result<()> {
-    'outer: for (loc, tv, overloads) in self.overload {
-      for name in overloads {
-        let mut pre = subst.clone();
-        if let Ok(()) = unify(&mut pre, loc, Ty::Var(tv), Ty::base(name)) {
-          *subst = pre;
-          continue 'outer;
-        }
-      }
-      return Err(loc.wrap(StaticsError::NoSuitableOverload));
-    }
-    for (loc, mut ty, ty_names) in self.ty_name {
-      ty.apply(subst);
-      if !ty.ty_names().is_subset(&ty_names) {
-        return Err(loc.wrap(StaticsError::TyNameEscape));
-      }
-    }
-    Ok(())
-  }
-}
-
-#[derive(Default)]
 struct State {
   next_ty_var: usize,
   next_sym: usize,
-  constraints: Constraints,
+  overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
+  ty_name: Vec<(Loc, Ty, TyNameSet)>,
   subst: Subst,
 }
 
@@ -601,6 +574,26 @@ impl State {
     let id = Some(name.loc.wrap(self.next_sym));
     self.next_sym += 1;
     Sym { id, name: name.val }
+  }
+
+  fn solve(mut self) -> Result<Subst> {
+    'outer: for (loc, tv, overloads) in self.overload {
+      for name in overloads {
+        let mut pre = self.subst.clone();
+        if let Ok(()) = unify(&mut pre, loc, Ty::Var(tv), Ty::base(name)) {
+          self.subst = pre;
+          continue 'outer;
+        }
+      }
+      return Err(loc.wrap(StaticsError::NoSuitableOverload));
+    }
+    for (loc, mut ty, ty_names) in self.ty_name {
+      ty.apply(&self.subst);
+      if !ty.ty_names().is_subset(&ty_names) {
+        return Err(loc.wrap(StaticsError::TyNameEscape));
+      }
+    }
+    Ok(self.subst)
   }
 }
 
@@ -626,9 +619,7 @@ fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
       assert!(!tv.equality);
       let new_tv = st.new_ty_var(false);
       subst.inner.insert(tv, Ty::Var(new_tv));
-      st.constraints
-        .overload
-        .push((loc, new_tv, overloads.clone()));
+      st.overload.push((loc, new_tv, overloads.clone()));
     }
   }
   let mut ty = ty_scheme.ty.clone();
@@ -793,7 +784,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
         last = Some((exp.loc, ck_exp(&cx, st, exp)?));
       }
       let (loc, ty) = last.unwrap();
-      st.constraints.ty_name.push((loc, ty.clone(), ty_names));
+      st.ty_name.push((loc, ty.clone(), ty_names));
       ty
     }
     Exp::App(func, arg) => {
