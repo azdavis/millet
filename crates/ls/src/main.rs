@@ -20,11 +20,11 @@ fn main() {
   let exit_ok = loop {
     let msg = r_msg.recv().unwrap();
     match msg {
-      comm::Message::Request(req) => {
+      comm::Incoming::Request(req) => {
         let res = st.handle_req(req);
         s_res.send(res).unwrap();
       }
-      comm::Message::Notification(notif) => match st.handle_notif(notif) {
+      comm::Incoming::Notification(notif) => match st.handle_notif(notif) {
         None => {}
         Some(x) => break x,
       },

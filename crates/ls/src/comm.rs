@@ -33,12 +33,12 @@ pub enum Notification {
   TextDocClose(DidCloseTextDocumentParams),
 }
 
-pub enum Message {
+pub enum Incoming {
   Request(Request),
   Notification(Notification),
 }
 
-impl Message {
+impl Incoming {
   fn request(id: Id, params: RequestParams) -> Self {
     Self::Request(Request { id, params })
   }
@@ -49,24 +49,24 @@ impl Message {
       return None;
     }
     let ret = match val.get("method")?.as_str()? {
-      "initialize" => Message::request(
+      "initialize" => Incoming::request(
         get_id(&mut val)?,
         RequestParams::Initialize(get_params(&mut val)?),
       ),
-      "initialized" => Message::Notification(Notification::Initialized),
-      "shutdown" => Message::request(get_id(&mut val)?, RequestParams::Shutdown),
-      "exit" => Message::Notification(Notification::Exit),
+      "initialized" => Incoming::Notification(Notification::Initialized),
+      "shutdown" => Incoming::request(get_id(&mut val)?, RequestParams::Shutdown),
+      "exit" => Incoming::Notification(Notification::Exit),
       "textDocument/didOpen" => {
-        Message::Notification(Notification::TextDocOpen(get_params(&mut val)?))
+        Incoming::Notification(Notification::TextDocOpen(get_params(&mut val)?))
       }
       "textDocument/didClose" => {
-        Message::Notification(Notification::TextDocClose(get_params(&mut val)?))
+        Incoming::Notification(Notification::TextDocClose(get_params(&mut val)?))
       }
       "textDocument/didChange" => {
-        Message::Notification(Notification::TextDocChange(get_params(&mut val)?))
+        Incoming::Notification(Notification::TextDocChange(get_params(&mut val)?))
       }
       "textDocument/didSave" => {
-        Message::Notification(Notification::TextDocSave(get_params(&mut val)?))
+        Incoming::Notification(Notification::TextDocSave(get_params(&mut val)?))
       }
       _ => return None,
     };
