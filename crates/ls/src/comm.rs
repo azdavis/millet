@@ -2,17 +2,13 @@
 
 use lsp_types::{
   DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-  DidSaveTextDocumentParams, InitializeParams, InitializeResult, PublishDiagnosticsParams,
+  DidSaveTextDocumentParams, InitializeParams, InitializeResult, NumberOrString,
+  PublishDiagnosticsParams,
 };
 use serde::de::DeserializeOwned;
 use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Value};
 
 const JSON_RPC_VERSION: &str = "2.0";
-
-pub enum Id {
-  Number(u64),
-  String(String),
-}
 
 pub enum RequestParams {
   Initialize(InitializeParams),
@@ -20,7 +16,7 @@ pub enum RequestParams {
 }
 
 pub struct Request {
-  pub id: Id,
+  pub id: NumberOrString,
   pub params: RequestParams,
 }
 
@@ -39,7 +35,7 @@ pub enum Incoming {
 }
 
 impl Incoming {
-  fn request(id: Id, params: RequestParams) -> Self {
+  fn request(id: NumberOrString, params: RequestParams) -> Self {
     Self::Request(Request { id, params })
   }
 
@@ -74,12 +70,8 @@ impl Incoming {
   }
 }
 
-fn get_id(val: &mut Value) -> Option<Id> {
-  match std::mem::take(val.get_mut("id")?) {
-    Value::Number(n) => Some(Id::Number(n.as_u64()?)),
-    Value::String(s) => Some(Id::String(s)),
-    _ => None,
-  }
+fn get_id(val: &mut Value) -> Option<NumberOrString> {
+  from_value(std::mem::take(val.get_mut("id")?)).ok()
 }
 
 fn get_params<T>(val: &mut Value) -> Option<T>
@@ -115,20 +107,15 @@ pub struct ResponseError {
 }
 
 pub struct Response {
-  pub id: Option<Id>,
+  pub id: Option<NumberOrString>,
   pub res: Result<ResponseSuccess, ResponseError>,
 }
 
 impl Response {
   fn into_vec(self) -> Result<Vec<u8>, Error> {
-    let id = match self.id {
-      None => Value::Null,
-      Some(Id::Number(n)) => Value::Number(n.into()),
-      Some(Id::String(s)) => Value::String(s),
-    };
     let mut map = Map::with_capacity(3);
     map.insert("jsonrpc".to_owned(), JSON_RPC_VERSION.into());
-    map.insert("id".to_owned(), id);
+    map.insert("id".to_owned(), to_value(&self.id)?);
     let (key, val) = match self.res {
       Ok(good) => (
         "result",
