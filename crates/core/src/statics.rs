@@ -46,7 +46,7 @@ impl StaticsError {
       Self::Redefined(id) => format!("redefined identifier: {}", store.get(*id)),
       Self::DuplicateLabel(lab) => format!("duplicate label: {}", show_lab(store, *lab)),
       Self::Circularity(ty_var, ty) => {
-        format!("circularity: {} in {}", ty_var, show_ty(store, &ty))
+        format!("circularity: {:?} in {}", ty_var, show_ty(store, &ty))
       }
       Self::HeadMismatch(lhs, rhs) => format!(
         "mismatched types: {} vs {}",
@@ -86,7 +86,7 @@ fn show_ty(store: &StrStore, ty: &Ty) -> String {
 
 fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty) {
   match ty {
-    Ty::Var(tv) => buf.push_str(&tv.to_string()),
+    Ty::Var(tv) => buf.push_str(&format!("{:?}", tv)),
     Ty::Record(rows) => {
       buf.push_str("{ ");
       let mut rows = rows.iter();
@@ -170,13 +170,13 @@ impl Sym {
   }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TyVar {
   id: usize,
   equality: bool,
 }
 
-impl fmt::Display for TyVar {
+impl fmt::Debug for TyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "'")?;
     if self.equality {
