@@ -18,8 +18,7 @@ fn main() {
     .unwrap();
   let mut st = state::State::new();
   let exit_ok = loop {
-    let msg = r_inc.recv().unwrap();
-    match msg {
+    match r_inc.recv().unwrap() {
       comm::Incoming::Request(req) => {
         let res = st.handle_request(req);
         s_out.send(comm::Outgoing::Response(res)).unwrap();
