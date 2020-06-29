@@ -4,6 +4,8 @@
 //!
 //! [1]: http://dev.stephendiehl.com/fun/006_hindley_milner.html
 
+#![allow(unused)]
+
 use crate::ast::{Cases, Dec, Exp, Label, Long, Pat, StrDec, TopDec, Ty as AstTy};
 use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
