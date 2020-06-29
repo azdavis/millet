@@ -53,16 +53,16 @@ impl State {
     }
   }
 
-  pub fn handle_notification(&mut self, notif: IncomingNotification) -> NotificationAction {
+  pub fn handle_notification(&mut self, notif: IncomingNotification) -> Option<Action> {
     match notif {
-      IncomingNotification::Initialized => NotificationAction::Nothing,
-      IncomingNotification::Exit => NotificationAction::Exit(self.got_shutdown),
+      IncomingNotification::Initialized => None,
+      IncomingNotification::Exit => Some(Action::Exit(self.got_shutdown)),
       IncomingNotification::TextDocOpen(params) => {
         assert!(self
           .files
           .insert(params.text_document.uri, params.text_document.text)
           .is_none());
-        NotificationAction::Nothing
+        None
       }
       IncomingNotification::TextDocChange(mut params) => {
         assert_eq!(params.content_changes.len(), 1);
@@ -71,21 +71,19 @@ impl State {
           .files
           .insert(params.text_document.uri, change.text)
           .is_some());
-        NotificationAction::Nothing
+        None
       }
-      IncomingNotification::TextDocSave(_) => NotificationAction::Nothing,
+      IncomingNotification::TextDocSave(_) => None,
       IncomingNotification::TextDocClose(params) => {
         assert!(self.files.remove(&params.text_document.uri).is_some());
-        NotificationAction::Nothing
+        None
       }
     }
   }
 }
 
 /// An action to take in response to a notification.
-pub enum NotificationAction {
-  /// Do nothing.
-  Nothing,
+pub enum Action {
   /// Exit the server. The bool is whether the process should exit cleanly.
   Exit(bool),
   /// Respond with an outgoing message.

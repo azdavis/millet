@@ -24,9 +24,11 @@ fn main() {
         s_out.send(comm::Outgoing::Response(res)).unwrap();
       }
       comm::Incoming::Notification(notif) => match st.handle_notification(notif) {
-        state::NotificationAction::Nothing => {}
-        state::NotificationAction::Exit(x) => break x,
-        state::NotificationAction::Respond(x) => s_out.send(x).unwrap(),
+        None => {}
+        Some(action) => match action {
+          state::Action::Exit(x) => break x,
+          state::Action::Respond(x) => s_out.send(x).unwrap(),
+        },
       },
     }
   };
