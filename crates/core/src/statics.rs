@@ -392,6 +392,17 @@ impl TyScheme {
       .copied()
       .collect()
   }
+
+  fn apply_args(&self, args: Vec<Ty>) -> Ty {
+    assert_eq!(args.len(), self.ty_vars.len());
+    let mut subst = Subst::default();
+    for (&tv, ty) in self.ty_vars.iter().zip(args) {
+      subst.insert(tv, ty);
+    }
+    let mut ty = self.ty.clone();
+    ty.apply(&subst);
+    ty
+  }
 }
 
 type TyFcn = TyScheme;
@@ -920,7 +931,7 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
     }
     AstTy::TyCon(args, name) => {
       let env = get_env(cx, name)?;
-      let ty_info = match env.ty_env.inner.get(&name.last.val) {
+      let ty_fcn = match env.ty_env.inner.get(&name.last.val) {
         None => {
           return Err(
             name
@@ -929,24 +940,21 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
               .wrap(StaticsError::Undefined(Item::Type, name.last.val)),
           )
         }
-        Some(x) => x,
+        // NOTE could avoid this clone if we separated datatypes from State
+        Some(x) => x.ty_fcn(&st.datatypes).clone(),
       };
-      let want_len = ty_info.ty_fcn(&st.datatypes).ty_vars.len();
+      let want_len = ty_fcn.ty_vars.len();
       if want_len != args.len() {
         return Err(
           ty.loc
             .wrap(StaticsError::WrongNumTyArgs(want_len, args.len())),
         );
       }
-      let mut subst = Subst::default();
-      let ty_vars = ty_info.ty_fcn(&st.datatypes).ty_vars.clone();
-      for (ty_var, ty) in ty_vars.into_iter().zip(args.iter()) {
-        let ty = ck_ty(cx, st, ty)?;
-        subst.inner.insert(ty_var, ty);
+      let mut new_args = Vec::with_capacity(ty_fcn.ty_vars.len());
+      for ty in args {
+        new_args.push(ck_ty(cx, st, ty)?);
       }
-      let mut ty = ty_info.ty_fcn(&st.datatypes).ty.clone();
-      ty.apply(&subst);
-      ty
+      ty_fcn.apply_args(new_args)
     }
     AstTy::Arrow(arg, res) => {
       let arg = ck_ty(cx, st, arg)?;
