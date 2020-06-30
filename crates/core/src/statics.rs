@@ -19,9 +19,24 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   for top_dec in top_decs {
     bs = ck_top_dec(bs, &mut st, top_dec)?;
   }
-  let (subst, mut datatypes) = st.solve()?;
-  bs.apply(&subst, &mut datatypes);
-  assert!(bs.free_ty_vars(&datatypes).is_empty());
+  'outer: for (loc, tv, overloads) in st.overload {
+    for name in overloads {
+      let mut pre = st.subst.clone();
+      if let Ok(()) = pre.unify(loc, Ty::Var(tv), Ty::base(name)) {
+        st.subst = pre;
+        continue 'outer;
+      }
+    }
+    return Err(loc.wrap(StaticsError::NoSuitableOverload));
+  }
+  for (loc, mut ty, ty_names) in st.ty_name {
+    ty.apply(&st.subst);
+    if !ty.ty_names().is_subset(&ty_names) {
+      return Err(loc.wrap(StaticsError::TyNameEscape));
+    }
+  }
+  bs.apply(&st.subst, &mut st.datatypes);
+  assert!(bs.free_ty_vars(&st.datatypes).is_empty());
   Ok(())
 }
 
@@ -647,26 +662,6 @@ impl State {
     let id = Some(name.loc.wrap(self.next_sym));
     self.next_sym += 1;
     Sym { id, name: name.val }
-  }
-
-  fn solve(mut self) -> Result<(Subst, Datatypes)> {
-    'outer: for (loc, tv, overloads) in self.overload {
-      for name in overloads {
-        let mut pre = self.subst.clone();
-        if let Ok(()) = pre.unify(loc, Ty::Var(tv), Ty::base(name)) {
-          self.subst = pre;
-          continue 'outer;
-        }
-      }
-      return Err(loc.wrap(StaticsError::NoSuitableOverload));
-    }
-    for (loc, mut ty, ty_names) in self.ty_name {
-      ty.apply(&self.subst);
-      if !ty.ty_names().is_subset(&ty_names) {
-        return Err(loc.wrap(StaticsError::TyNameEscape));
-      }
-    }
-    Ok((self.subst, self.datatypes))
   }
 }
 
