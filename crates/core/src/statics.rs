@@ -419,11 +419,17 @@ impl Substitutable for TyEnv {
   }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 enum IdStatus {
   Ctor,
   Exn,
   Val,
+}
+
+impl IdStatus {
+  fn is_val(&self) -> bool {
+    matches!(self, Self::Val)
+  }
 }
 
 #[derive(Clone)]
@@ -1147,7 +1153,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         None
       } else {
         cx.env.val_env.get(&vid.last.val).and_then(|val_info| {
-          if val_info.id_status == IdStatus::Val {
+          if val_info.id_status.is_val() {
             None
           } else {
             Some(&val_info.ty_scheme)
@@ -1209,7 +1215,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
     }
     Pat::Ctor(vid, arg) => {
       let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
-      if val_info.id_status == IdStatus::Val {
+      if val_info.id_status.is_val() {
         return Err(vid.loc().wrap(StaticsError::ValAsPat));
       }
       let (val_env, arg_ty) = ck_pat(cx, st, arg)?;
@@ -1222,7 +1228,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
     }
     Pat::InfixCtor(lhs, vid, rhs) => {
       let val_info = get_val_info(&cx.env, *vid)?;
-      if val_info.id_status == IdStatus::Val {
+      if val_info.id_status.is_val() {
         return Err(vid.loc.wrap(StaticsError::ValAsPat));
       }
       let func_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
@@ -1250,7 +1256,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         .env
         .val_env
         .get(&vid.val)
-        .map_or(false, |x| x.id_status != IdStatus::Val)
+        .map_or(false, |x| !x.id_status.is_val())
       {
         return Err(vid.loc.wrap(StaticsError::NonVarInAs(vid.val)));
       }
