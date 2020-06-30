@@ -77,6 +77,9 @@ Run `bin/run-test tests/<name>` to run a test. The test runner will run
 will be marked as failing if there is a difference. The test will also be marked
 as failing if `sh -eu run.sh` exits with a non-zero exit code.
 
+After you first create a test, or if you update a test, you may want to generate
+an appropriate `out.txt` file. Use `bin/gen-test-out tests/<name>` to do that.
+
 [one-fifty]: http://www.cs.cmu.edu/~15150/
 [rustup]: https://rustup.rs
 [sml-def]: https://smlfamily.github.io/sml97-defn.pdf

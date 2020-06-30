@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -eu
+
+if [ "$#" -eq 0 ]; then
+  echo "usage: $0 <path>..."
+  exit 1
+fi
+
+ec=0
+old_pwd="$PWD"
+for x in "$@"; do
+  cd "$x"
+  if ! sh -eu run.sh; then
+    cat out.tmp
+    echo "$x: FAIL"
+    ec=1
+  else
+    mv out.tmp out.txt
+    cat out.txt
+    echo "$x: ok"
+  fi
+  cd "$old_pwd"
+done
+
+exit "$ec"
