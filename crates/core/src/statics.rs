@@ -262,11 +262,6 @@ impl Subst {
   }
 }
 
-trait Substitutable {
-  fn apply(&mut self, subst: &Subst);
-  fn free_ty_vars(&self) -> TyVarSet;
-}
-
 #[derive(Debug, Clone)]
 pub enum Ty {
   /// TyVar
@@ -303,17 +298,6 @@ impl Ty {
     }
   }
 
-  const CHAR: Self = Self::base(StrRef::CHAR);
-  const EXN: Self = Self::base(StrRef::EXN);
-  const BOOL: Self = Self::base(StrRef::BOOL);
-  const STRING: Self = Self::base(StrRef::STRING);
-  const WORD: Self = Self::base(StrRef::WORD);
-  const INT: Self = Self::base(StrRef::INT);
-  const REAL: Self = Self::base(StrRef::REAL);
-  const ORDER: Self = Self::base(StrRef::ORDER);
-}
-
-impl Substitutable for Ty {
   fn apply(&mut self, subst: &Subst) {
     match self {
       Self::Var(tv) => match subst.inner.get(tv) {
@@ -349,6 +333,15 @@ impl Substitutable for Ty {
       Self::Ctor(args, _) => args.iter().flat_map(Self::free_ty_vars).collect(),
     }
   }
+
+  const CHAR: Self = Self::base(StrRef::CHAR);
+  const EXN: Self = Self::base(StrRef::EXN);
+  const BOOL: Self = Self::base(StrRef::BOOL);
+  const STRING: Self = Self::base(StrRef::STRING);
+  const WORD: Self = Self::base(StrRef::WORD);
+  const INT: Self = Self::base(StrRef::INT);
+  const REAL: Self = Self::base(StrRef::REAL);
+  const ORDER: Self = Self::base(StrRef::ORDER);
 }
 
 #[derive(Clone)]
@@ -367,9 +360,7 @@ impl TyScheme {
       overload: None,
     }
   }
-}
 
-impl Substitutable for TyScheme {
   fn apply(&mut self, subst: &Subst) {
     let mut subst = subst.clone();
     for tv in self.ty_vars.iter() {
@@ -403,7 +394,7 @@ struct TyEnv {
   inner: HashMap<StrRef, TyInfo>,
 }
 
-impl Substitutable for TyEnv {
+impl TyEnv {
   fn apply(&mut self, subst: &Subst) {
     for (_, ty_info) in self.inner.iter_mut() {
       ty_info.ty_fcn.apply(subst);
@@ -492,29 +483,7 @@ impl Env {
       .chain(self.ty_env.inner.keys().copied())
       .collect()
   }
-}
 
-impl From<ValEnv> for Env {
-  fn from(val_env: ValEnv) -> Self {
-    Self {
-      str_env: StrEnv::new(),
-      ty_env: TyEnv::default(),
-      val_env,
-    }
-  }
-}
-
-impl From<TyEnv> for Env {
-  fn from(ty_env: TyEnv) -> Self {
-    Self {
-      str_env: StrEnv::new(),
-      ty_env,
-      val_env: ValEnv::new(),
-    }
-  }
-}
-
-impl Substitutable for Env {
   fn apply(&mut self, subst: &Subst) {
     for (_, env) in self.str_env.iter_mut() {
       env.apply(subst);
@@ -538,6 +507,26 @@ impl Substitutable for Env {
           .flat_map(|(_, vi)| vi.ty_scheme.free_ty_vars()),
       )
       .collect()
+  }
+}
+
+impl From<ValEnv> for Env {
+  fn from(val_env: ValEnv) -> Self {
+    Self {
+      str_env: StrEnv::new(),
+      ty_env: TyEnv::default(),
+      val_env,
+    }
+  }
+}
+
+impl From<TyEnv> for Env {
+  fn from(ty_env: TyEnv) -> Self {
+    Self {
+      str_env: StrEnv::new(),
+      ty_env,
+      val_env: ValEnv::new(),
+    }
   }
 }
 
@@ -584,7 +573,7 @@ struct Basis {
   env: Env,
 }
 
-impl Substitutable for Basis {
+impl Basis {
   fn apply(&mut self, subst: &Subst) {
     for (_, fun_sig) in self.fun_env.iter_mut() {
       fun_sig.env.apply(subst);
