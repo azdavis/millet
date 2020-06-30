@@ -1319,10 +1319,6 @@ fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> R
   }
 }
 
-fn prim_ty_info(ty: Ty) -> TyInfo {
-  TyInfo::Alias(TyScheme::mono(ty))
-}
-
 fn bool_val_env() -> ValEnv {
   hashmap![
     StrRef::TRUE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
@@ -1473,16 +1469,16 @@ fn std_lib() -> (Basis, State) {
       str_env: StrEnv::new(),
       ty_env: TyEnv {
         inner: hashmap![
-          StrRef::UNIT => prim_ty_info(Ty::Record(Vec::new())),
+          StrRef::UNIT => TyInfo::Alias(TyScheme::mono(Ty::Record(Vec::new()))),
           StrRef::BOOL => TyInfo::Datatype(Sym::base(StrRef::BOOL)),
-          StrRef::INT => prim_ty_info(Ty::INT),
-          StrRef::REAL => prim_ty_info(Ty::REAL),
-          StrRef::STRING => prim_ty_info(Ty::STRING),
-          StrRef::CHAR => prim_ty_info(Ty::CHAR),
-          StrRef::WORD => prim_ty_info(Ty::WORD),
+          StrRef::INT => TyInfo::Alias(TyScheme::mono(Ty::INT)),
+          StrRef::REAL => TyInfo::Alias(TyScheme::mono(Ty::REAL)),
+          StrRef::STRING => TyInfo::Alias(TyScheme::mono(Ty::STRING)),
+          StrRef::CHAR => TyInfo::Alias(TyScheme::mono(Ty::CHAR)),
+          StrRef::WORD => TyInfo::Alias(TyScheme::mono(Ty::WORD)),
           StrRef::LIST => TyInfo::Datatype(Sym::base(StrRef::LIST)),
           StrRef::REF => TyInfo::Datatype(Sym::base(StrRef::REF)),
-          StrRef::EXN => prim_ty_info(Ty::EXN),
+          StrRef::EXN => TyInfo::Alias(TyScheme::mono(Ty::EXN)),
           StrRef::ORDER => TyInfo::Datatype(Sym::base(StrRef::ORDER)),
         ],
       },
