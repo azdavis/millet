@@ -450,7 +450,7 @@ impl ValInfo {
   fn val(ty_scheme: TyScheme) -> Self {
     Self {
       ty_scheme,
-      id_status: IdStatus::Ctor,
+      id_status: IdStatus::Val,
     }
   }
 }
