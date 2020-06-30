@@ -19,9 +19,9 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   for top_dec in top_decs {
     bs = ck_top_dec(bs, &mut st, top_dec)?;
   }
-  let subst = st.solve()?;
-  bs.apply(&subst);
-  assert!(bs.free_ty_vars().is_empty());
+  let (subst, mut datatypes) = st.solve()?;
+  bs.apply(&subst, &mut datatypes);
+  assert!(bs.free_ty_vars(&datatypes).is_empty());
   Ok(())
 }
 
@@ -156,7 +156,7 @@ impl fmt::Display for Item {
   }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Sym {
   name: StrRef,
   id: Option<Located<usize>>,
@@ -381,10 +381,26 @@ impl TyScheme {
 
 type TyFcn = TyScheme;
 
-#[derive(Clone)]
-struct TyInfo {
+struct DatatypeInfo {
   ty_fcn: TyFcn,
   val_env: ValEnv,
+}
+
+type Datatypes = HashMap<Sym, DatatypeInfo>;
+
+#[derive(Clone)]
+enum TyInfo {
+  Alias(TyFcn),
+  Datatype(Sym),
+}
+
+impl TyInfo {
+  fn ty_fcn<'a>(&'a self, dts: &'a Datatypes) -> &'a TyFcn {
+    match self {
+      TyInfo::Alias(ty_fcn) => ty_fcn,
+      TyInfo::Datatype(sym) => &dts.get(sym).unwrap().ty_fcn,
+    }
+  }
 }
 
 type StrEnv = HashMap<StrRef, Env>;
@@ -395,17 +411,20 @@ struct TyEnv {
 }
 
 impl TyEnv {
-  fn apply(&mut self, subst: &Subst) {
+  fn apply(&mut self, subst: &Subst, dts: &mut Datatypes) {
     for (_, ty_info) in self.inner.iter_mut() {
-      ty_info.ty_fcn.apply(subst);
+      match ty_info {
+        TyInfo::Alias(ty_fcn) => ty_fcn.apply(subst),
+        TyInfo::Datatype(sym) => dts.get_mut(sym).unwrap().ty_fcn.apply(subst),
+      }
     }
   }
 
-  fn free_ty_vars(&self) -> TyVarSet {
+  fn free_ty_vars(&self, dts: &Datatypes) -> TyVarSet {
     self
       .inner
       .iter()
-      .flat_map(|(_, ty_info)| ty_info.ty_fcn.free_ty_vars())
+      .flat_map(|(_, ty_info)| ty_info.ty_fcn(dts).free_ty_vars())
       .collect()
   }
 }
@@ -484,22 +503,22 @@ impl Env {
       .collect()
   }
 
-  fn apply(&mut self, subst: &Subst) {
+  fn apply(&mut self, subst: &Subst, dts: &mut Datatypes) {
     for (_, env) in self.str_env.iter_mut() {
-      env.apply(subst);
+      env.apply(subst, dts);
     }
-    self.ty_env.apply(subst);
+    self.ty_env.apply(subst, dts);
     for (_, val_info) in self.val_env.iter_mut() {
       val_info.ty_scheme.apply(subst);
     }
   }
 
-  fn free_ty_vars(&self) -> TyVarSet {
+  fn free_ty_vars(&self, dts: &Datatypes) -> TyVarSet {
     self
       .str_env
       .iter()
-      .flat_map(|(_, env)| env.free_ty_vars())
-      .chain(self.ty_env.free_ty_vars())
+      .flat_map(|(_, env)| env.free_ty_vars(dts))
+      .chain(self.ty_env.free_ty_vars(dts))
       .chain(
         self
           .val_env
@@ -574,35 +593,35 @@ struct Basis {
 }
 
 impl Basis {
-  fn apply(&mut self, subst: &Subst) {
+  fn apply(&mut self, subst: &Subst, dts: &mut Datatypes) {
     for (_, fun_sig) in self.fun_env.iter_mut() {
-      fun_sig.env.apply(subst);
-      fun_sig.sig.env.apply(subst);
+      fun_sig.env.apply(subst, dts);
+      fun_sig.sig.env.apply(subst, dts);
     }
     for (_, sig) in self.sig_env.iter_mut() {
-      sig.env.apply(subst);
+      sig.env.apply(subst, dts);
     }
-    self.env.apply(subst);
+    self.env.apply(subst, dts);
   }
 
-  fn free_ty_vars(&self) -> TyVarSet {
+  fn free_ty_vars(&self, dts: &Datatypes) -> TyVarSet {
     self
       .fun_env
       .iter()
       .flat_map(|(_, fun_sig)| {
         fun_sig
           .env
-          .free_ty_vars()
+          .free_ty_vars(dts)
           .into_iter()
-          .chain(fun_sig.sig.env.free_ty_vars())
+          .chain(fun_sig.sig.env.free_ty_vars(dts))
       })
       .chain(
         self
           .sig_env
           .iter()
-          .flat_map(|(_, sig)| sig.env.free_ty_vars()),
+          .flat_map(|(_, sig)| sig.env.free_ty_vars(dts)),
       )
-      .chain(self.env.free_ty_vars())
+      .chain(self.env.free_ty_vars(dts))
       .collect()
   }
 }
@@ -614,6 +633,7 @@ struct State {
   overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
   ty_name: Vec<(Loc, Ty, TyNameSet)>,
   subst: Subst,
+  datatypes: Datatypes,
 }
 
 impl State {
@@ -629,7 +649,7 @@ impl State {
     Sym { id, name: name.val }
   }
 
-  fn solve(mut self) -> Result<Subst> {
+  fn solve(mut self) -> Result<(Subst, Datatypes)> {
     'outer: for (loc, tv, overloads) in self.overload {
       for name in overloads {
         let mut pre = self.subst.clone();
@@ -646,7 +666,7 @@ impl State {
         return Err(loc.wrap(StaticsError::TyNameEscape));
       }
     }
-    Ok(self.subst)
+    Ok((self.subst, self.datatypes))
   }
 }
 
@@ -680,11 +700,11 @@ fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
-fn generalize(ty_env: &TyEnv, ty: Ty) -> TyScheme {
+fn generalize(ty_env: &TyEnv, ty: Ty, dts: &Datatypes) -> TyScheme {
   TyScheme {
     ty_vars: ty
       .free_ty_vars()
-      .difference(&ty_env.free_ty_vars())
+      .difference(&ty_env.free_ty_vars(dts))
       .copied()
       .collect(),
     ty,
@@ -916,7 +936,7 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
         }
         Some(x) => x,
       };
-      let want_len = ty_info.ty_fcn.ty_vars.len();
+      let want_len = ty_info.ty_fcn(&st.datatypes).ty_vars.len();
       if want_len != args.len() {
         return Err(
           ty.loc
@@ -924,11 +944,12 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
         );
       }
       let mut subst = Subst::default();
-      for (&ty_var, ty) in ty_info.ty_fcn.ty_vars.iter().zip(args.iter()) {
+      let ty_vars = ty_info.ty_fcn(&st.datatypes).ty_vars.clone();
+      for (ty_var, ty) in ty_vars.into_iter().zip(args.iter()) {
         let ty = ck_ty(cx, st, ty)?;
         subst.inner.insert(ty_var, ty);
       }
-      let mut ty = ty_info.ty_fcn.ty.clone();
+      let mut ty = ty_info.ty_fcn(&st.datatypes).ty.clone();
       ty.apply(&subst);
       ty
     }
@@ -981,7 +1002,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           // the ValEnv returned from ck_pat are mono.
           assert!(val_info.ty_scheme.ty_vars.is_empty());
           val_info.ty_scheme.apply(&st.subst);
-          val_info.ty_scheme = generalize(&cx.env.ty_env, val_info.ty_scheme.ty);
+          val_info.ty_scheme = generalize(&cx.env.ty_env, val_info.ty_scheme.ty, &st.datatypes);
           env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
         }
       }
@@ -998,10 +1019,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           return Err(dec.loc.wrap(StaticsError::Todo));
         }
         let ty = ck_ty(cx, st, &ty_bind.ty)?;
-        let info = TyInfo {
-          ty_fcn: TyScheme::mono(ty),
-          val_env: ValEnv::new(),
-        };
+        let info = TyInfo::Alias(TyScheme::mono(ty));
         if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
           return Err(
             ty_bind
@@ -1027,17 +1045,31 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         }
         // create a new symbol for the type being generated with this DatBind.
         let sym = st.new_sym(dat_bind.ty_con);
-        // tell the original context that this new type does exist, but just with an empty ValEnv.
-        // also perform dupe checking on the name of the new type.
+        // tell the original context as well as the overall TyEnv that we return that this new
+        // datatype does exist, but tell the State that it has just an empty ValEnv. also perform
+        // dupe checking on the name of the new type and assert for sanity checking after the dupe
+        // check.
         env_ins(
           &mut cx.env.ty_env.inner,
           dat_bind.ty_con,
-          TyInfo {
-            ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
-            val_env: ValEnv::new(),
-          },
+          TyInfo::Datatype(sym),
         )?;
+        // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
         cx.ty_names.insert(dat_bind.ty_con.val);
+        assert!(ty_env
+          .inner
+          .insert(dat_bind.ty_con.val, TyInfo::Datatype(sym))
+          .is_none());
+        assert!(st
+          .datatypes
+          .insert(
+            sym,
+            DatatypeInfo {
+              ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
+              val_env: ValEnv::new(),
+            },
+          )
+          .is_none());
         // this ValEnv is specific to this DatBind.
         let mut bind_val_env = ValEnv::new();
         for con_bind in dat_bind.cons.iter() {
@@ -1061,19 +1093,18 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             .insert(con_bind.vid.val, ValInfo::ctor(TyScheme::mono(ty)))
             .is_none());
         }
-        // insert the DatBind-specific ValEnv into the _overall_ TyEnv. we already did dupe checking
-        // when inserting the "fake" TyInfo into the global Cx earlier, so this time just assert as
-        // a sanity check.
-        assert!(ty_env
-          .inner
+        // now the ValEnv is complete, so we may update st.datatypes with the true definition of
+        // this datatype. assert to check that we inserted the fake answer earlier.
+        assert!(st
+          .datatypes
           .insert(
-            dat_bind.ty_con.val,
-            TyInfo {
+            sym,
+            DatatypeInfo {
               ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
               val_env: bind_val_env,
             },
           )
-          .is_none());
+          .is_some());
       }
       Env {
         ty_env,
@@ -1289,10 +1320,7 @@ fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> R
 }
 
 fn prim_ty_info(ty: Ty) -> TyInfo {
-  TyInfo {
-    ty_fcn: TyScheme::mono(ty),
-    val_env: ValEnv::new(),
-  }
+  TyInfo::Alias(TyScheme::mono(ty))
 }
 
 fn bool_val_env() -> ValEnv {
@@ -1386,6 +1414,46 @@ fn std_lib() -> (Basis, State) {
   let word_int = || vec![StrRef::INT, StrRef::WORD];
   let num = || vec![StrRef::INT, StrRef::WORD, StrRef::REAL];
   let mut st = State::default();
+  st.datatypes.insert(
+    Sym::base(StrRef::BOOL),
+    DatatypeInfo {
+      ty_fcn: TyScheme::mono(Ty::BOOL),
+      val_env: bool_val_env(),
+    },
+  );
+  let a = st.new_ty_var(false);
+  let val_env = list_val_env(&mut st);
+  st.datatypes.insert(
+    Sym::base(StrRef::LIST),
+    DatatypeInfo {
+      ty_fcn: TyScheme {
+        ty_vars: vec![a],
+        ty: Ty::list(Ty::Var(a)),
+        overload: None,
+      },
+      val_env,
+    },
+  );
+  let a = st.new_ty_var(false);
+  let val_env = ref_val_env(&mut st);
+  st.datatypes.insert(
+    Sym::base(StrRef::REF),
+    DatatypeInfo {
+      ty_fcn: TyScheme {
+        ty_vars: vec![a],
+        ty: Ty::ref_(Ty::Var(a)),
+        overload: None,
+      },
+      val_env,
+    },
+  );
+  st.datatypes.insert(
+    Sym::base(StrRef::ORDER),
+    DatatypeInfo {
+      ty_fcn: TyScheme::mono(Ty::ORDER),
+      val_env: order_val_env(),
+    },
+  );
   let bs = Basis {
     ty_names: hashset![
       StrRef::BOOL,
@@ -1406,42 +1474,16 @@ fn std_lib() -> (Basis, State) {
       ty_env: TyEnv {
         inner: hashmap![
           StrRef::UNIT => prim_ty_info(Ty::Record(Vec::new())),
-          StrRef::BOOL => TyInfo {
-            ty_fcn: TyScheme::mono(Ty::BOOL),
-            val_env: bool_val_env(),
-          },
+          StrRef::BOOL => TyInfo::Datatype(Sym::base(StrRef::BOOL)),
           StrRef::INT => prim_ty_info(Ty::INT),
           StrRef::REAL => prim_ty_info(Ty::REAL),
           StrRef::STRING => prim_ty_info(Ty::STRING),
           StrRef::CHAR => prim_ty_info(Ty::CHAR),
           StrRef::WORD => prim_ty_info(Ty::WORD),
-          StrRef::LIST => TyInfo {
-            ty_fcn: {
-              let a = st.new_ty_var(false);
-              TyScheme {
-                ty_vars: vec![a],
-                ty: Ty::list(Ty::Var(a)),
-                overload: None,
-              }
-            },
-            val_env: list_val_env(&mut st),
-          },
-          StrRef::REF => TyInfo {
-            ty_fcn: {
-              let a = st.new_ty_var(false);
-              TyScheme {
-                ty_vars: vec![a],
-                ty: Ty::ref_(Ty::Var(a)),
-                overload: None,
-              }
-            },
-            val_env: ref_val_env(&mut st),
-          },
+          StrRef::LIST => TyInfo::Datatype(Sym::base(StrRef::LIST)),
+          StrRef::REF => TyInfo::Datatype(Sym::base(StrRef::REF)),
           StrRef::EXN => prim_ty_info(Ty::EXN),
-          StrRef::ORDER => TyInfo {
-            ty_fcn: TyScheme::mono(Ty::ORDER),
-            val_env: order_val_env(),
-          },
+          StrRef::ORDER => TyInfo::Datatype(Sym::base(StrRef::ORDER)),
         ],
       },
       val_env: bool_val_env()

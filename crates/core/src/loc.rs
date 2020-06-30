@@ -3,7 +3,7 @@
 use std::fmt;
 
 /// A range in the source. The start is inclusive, the end is not inclusive.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Loc {
   start: usize,
   end: usize,
@@ -40,7 +40,7 @@ impl From<Loc> for std::ops::Range<usize> {
 
 /// A generic wrapper for some value which was ultimately derived from some
 /// location in the source.
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Located<T> {
   pub val: T,
   pub loc: Loc,
