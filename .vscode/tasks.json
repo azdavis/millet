@@ -2,6 +2,12 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "extension: build",
+      "group": "build",
+      "type": "shell",
+      "command": "./bin/mk-vscode-extension"
+    },
+    {
       "label": "tsc: watch",
       "group": "build",
       "type": "typescript",
