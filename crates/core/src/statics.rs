@@ -1445,6 +1445,35 @@ fn std_lib() -> (Basis, State) {
       val_env: order_val_env(),
     },
   );
+  let a = st.new_ty_var(false);
+  let assign = ValInfo::val(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::Arrow(
+      Ty::Record(vec![
+        (
+          Label::Num(1),
+          Ty::Ctor(vec![Ty::Var(a)], Sym::base(StrRef::REF)),
+        ),
+        (Label::Num(2), Ty::Var(a)),
+      ])
+      .into(),
+      Ty::Record(Vec::new()).into(),
+    ),
+    overload: None,
+  });
+  let a = st.new_ty_var(true);
+  let eq = ValInfo::val(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::Arrow(
+      Ty::Record(vec![
+        (Label::Num(1), Ty::Var(a)),
+        (Label::Num(2), Ty::Var(a)),
+      ])
+      .into(),
+      Ty::BOOL.into(),
+    ),
+    overload: None,
+  });
   let bs = Basis {
     ty_names: hashset![
       StrRef::BOOL,
@@ -1483,39 +1512,8 @@ fn std_lib() -> (Basis, State) {
         .chain(ref_val_env(&mut st))
         .chain(order_val_env())
         .chain(hashmap![
-          StrRef::EQ => ValInfo::val({
-            let a = st.new_ty_var(true);
-            TyScheme {
-              ty_vars: vec![a],
-              ty: Ty::Arrow(
-                Ty::Record(vec![
-                  (Label::Num(1), Ty::Var(a)),
-                  (Label::Num(2), Ty::Var(a)),
-                ])
-                .into(),
-                Ty::BOOL.into(),
-              ),
-              overload: None,
-            }
-          }),
-          StrRef::ASSIGN => ValInfo::val({
-            let a = st.new_ty_var(false);
-            TyScheme {
-              ty_vars: vec![a],
-              ty: Ty::Arrow(
-                Ty::Record(vec![
-                  (
-                    Label::Num(1),
-                    Ty::Ctor(vec![Ty::Var(a)], Sym::base(StrRef::REF)),
-                  ),
-                  (Label::Num(2), Ty::Var(a)),
-                ])
-                .into(),
-                Ty::Record(Vec::new()).into(),
-              ),
-              overload: None,
-            }
-          }),
+          StrRef::EQ => eq,
+          StrRef::ASSIGN => assign,
           StrRef::MATCH => ValInfo::exn(),
           StrRef::BIND => ValInfo::exn(),
           StrRef::ABS => overloaded(&mut st, real_int()),
