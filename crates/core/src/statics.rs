@@ -978,9 +978,17 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         for &name in other.keys() {
           ck_binding(val_bind.pat.loc.wrap(name))?;
         }
-        env_merge(&mut val_env, other, val_bind.pat.loc)?;
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
         st.subst.unify(dec.loc, pat_ty, exp_ty)?;
+        for (name, mut val_info) in other {
+          // NOTE could avoid this assert by having ck_pat return not a ValEnv but HashMap<StrRef,
+          // (Ty, IdStatus)>. but this assert should hold because we the only TySchemes we put into
+          // the ValEnv returned from ck_pat are mono.
+          assert!(val_info.ty_scheme.ty_vars.is_empty());
+          val_info.ty_scheme.apply(&st.subst);
+          val_info.ty_scheme = generalize(&cx.env.ty_env, val_info.ty_scheme.ty);
+          env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
+        }
       }
       val_env.into()
     }
