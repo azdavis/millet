@@ -1,0 +1,6 @@
+error: mismatched types: int vs string
+  ┌─ inp.sml:3:9
+  │
+3 │ val _ = inc "nope"
+  │         ^^^^^^^^^^
+
