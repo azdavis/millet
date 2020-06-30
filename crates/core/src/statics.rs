@@ -1148,9 +1148,9 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       } else {
         cx.env.val_env.get(&vid.last.val).and_then(|val_info| {
           if val_info.id_status == IdStatus::Val {
-            Some(&val_info.ty_scheme)
-          } else {
             None
+          } else {
+            Some(&val_info.ty_scheme)
           }
         })
       };
