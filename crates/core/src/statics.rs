@@ -1166,10 +1166,8 @@ fn env_merge<T>(lhs: &mut HashMap<StrRef, T>, rhs: HashMap<StrRef, T>, loc: Loc)
 
 enum Pat {
   Anything,
-  DecInt(i32),
-  HexInt(i32),
-  DecWord(i32),
-  HexWord(i32),
+  Int(i32),
+  Word(i32),
   Str(StrRef),
   Char(u8),
   Record(Vec<(Label, Pat)>),
@@ -1179,10 +1177,10 @@ enum Pat {
 fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty, Pat)> {
   let ret = match &pat.val {
     AstPat::Wildcard => (ValEnv::new(), Ty::Var(st.new_ty_var(false)), Pat::Anything),
-    AstPat::DecInt(n) => (ValEnv::new(), Ty::INT, Pat::DecInt(*n)),
-    AstPat::HexInt(n) => (ValEnv::new(), Ty::INT, Pat::HexInt(*n)),
-    AstPat::DecWord(n) => (ValEnv::new(), Ty::WORD, Pat::DecWord(*n)),
-    AstPat::HexWord(n) => (ValEnv::new(), Ty::WORD, Pat::HexWord(*n)),
+    AstPat::DecInt(n) => (ValEnv::new(), Ty::INT, Pat::Int(*n)),
+    AstPat::HexInt(n) => (ValEnv::new(), Ty::INT, Pat::Int(*n)),
+    AstPat::DecWord(n) => (ValEnv::new(), Ty::WORD, Pat::Word(*n)),
+    AstPat::HexWord(n) => (ValEnv::new(), Ty::WORD, Pat::Word(*n)),
     AstPat::Str(s) => (ValEnv::new(), Ty::STRING, Pat::Str(*s)),
     AstPat::Char(c) => (ValEnv::new(), Ty::CHAR, Pat::Char(*c)),
     AstPat::LongVid(vid) => {
