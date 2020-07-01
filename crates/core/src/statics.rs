@@ -53,6 +53,8 @@ pub enum StaticsError {
   ForbiddenBinding(StrRef),
   NoSuitableOverload,
   TyNameEscape,
+  NonExhaustiveMatch,
+  NonExhaustiveBinding,
   Todo,
 }
 
@@ -83,6 +85,8 @@ impl StaticsError {
       Self::ForbiddenBinding(id) => format!("forbidden identifier in binding: {}", store.get(*id)),
       Self::NoSuitableOverload => "no suitable overload found".to_owned(),
       Self::TyNameEscape => "expression causes a type name to escape its scope".to_owned(),
+      Self::NonExhaustiveMatch => "non-exhaustive match".to_owned(),
+      Self::NonExhaustiveBinding => "non-exhaustive binding".to_owned(),
       Self::Todo => "unimplemented language construct".to_owned(),
     }
   }
@@ -847,7 +851,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     }
     Exp::Handle(head, cases) => {
       let mut head_ty = ck_exp(cx, st, head)?;
-      let (arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       st.subst.unify(exp.loc, arg_ty, Ty::EXN)?;
       st.subst.unify(exp.loc, head_ty.clone(), res_ty)?;
       head_ty.apply(&st.subst);
@@ -870,27 +874,28 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::While(..) => return Err(exp.loc.wrap(StaticsError::Todo)),
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
-      let (arg_ty, mut res_ty) = ck_cases(cx, st, cases)?;
+      let (arg_ty, mut res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       st.subst.unify(exp.loc, head_ty, arg_ty)?;
       res_ty.apply(&st.subst);
       res_ty
     }
     Exp::Fn(cases) => {
-      let (arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       Ty::Arrow(arg_ty.into(), res_ty.into())
     }
   };
   Ok(ret)
 }
 
-fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Ty, Ty)> {
+fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<(Ty, Ty)> {
   let mut arg_ty = Ty::Var(st.new_ty_var(false));
   let mut res_ty = Ty::Var(st.new_ty_var(false));
+  let mut got_pats = Vec::with_capacity(cases.arms.len());
   for arm in cases.arms.iter() {
     // TODO clone in loop - expensive?
     let mut cx = cx.clone();
-    let (val_env, pat_ty, pat) = ck_pat(&cx, st, &arm.pat)?;
-    // TODO do something with pat to check exhaustiveness overall
+    let (val_env, pat_ty, got) = ck_pat(&cx, st, &arm.pat)?;
+    got_pats.push((arm.pat.loc, got));
     // TODO what about type variables? The Definition says this should allow new free type variables
     // to enter the Cx, but right now we do nothing with `cx.ty_vars`.
     cx.env.val_env.extend(val_env);
@@ -900,7 +905,125 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Ty, Ty)> 
     arg_ty.apply(&st.subst);
     res_ty.apply(&st.subst);
   }
-  Ok((arg_ty, res_ty))
+  // TODO check for unreachable pattern
+  let mut need_pats = vec![Pat::Anything];
+  for (loc, got) in got_pats {
+    let mut new_need_pats = Vec::new();
+    for need in need_pats {
+      new_need_pats.append(&mut get_new_need(need, &got, &st.datatypes, &arg_ty));
+    }
+    need_pats = new_need_pats;
+  }
+  if need_pats.is_empty() {
+    Ok((arg_ty, res_ty))
+  } else {
+    Err(loc.wrap(StaticsError::NonExhaustiveMatch))
+  }
+}
+
+fn get_new_need(need: Pat, got: &Pat, dts: &Datatypes, ty: &Ty) -> Vec<Pat> {
+  match got {
+    Pat::Anything => Vec::new(),
+    Pat::Record(got_rows) => {
+      let ty_rows = match ty {
+        Ty::Record(xs) => xs,
+        _ => unreachable!(),
+      };
+      let need_rows = match need {
+        Pat::Anything => ty_rows
+          .iter()
+          .map(|&(lab, _)| (lab, Pat::Anything))
+          .collect(),
+        Pat::Record(xs) => xs,
+        _ => unreachable!(),
+      };
+      let mut ty_rows: HashMap<_, _> = ty_rows.iter().map(|&(lab, ref ty)| (lab, ty)).collect();
+      let mut got_rows: HashMap<_, _> = got_rows.iter().map(|&(lab, ref pat)| (lab, pat)).collect();
+      // note |need_rows| <= |got_rows| since we remove labels as they become completely covered.
+      let mut new_need_rows = Vec::new();
+      for (lab, need) in need_rows {
+        let got = got_rows.remove(&lab).unwrap();
+        let ty = ty_rows.remove(&lab).unwrap();
+        let new_need = get_new_need(need, got, dts, ty);
+        if !new_need.is_empty() {
+          new_need_rows.push((lab, new_need));
+        }
+      }
+      cross(new_need_rows).into_iter().map(Pat::Record).collect()
+    }
+    Pat::Ctor(got_name, got_arg) => {
+      let (ty_args, dt_info) = match ty {
+        Ty::Ctor(ty_args, sym) => (ty_args, dts.get(sym).unwrap()),
+        _ => unreachable!(),
+      };
+      assert!(ty_args.is_empty());
+      match need {
+        Pat::Anything => dt_info
+          .val_env
+          .iter()
+          .flat_map(|(&need_name, val_info)| {
+            assert!(val_info.ty_scheme.ty_vars.is_empty());
+            let (need_arg, ty) = match &val_info.ty_scheme.ty {
+              Ty::Arrow(arg_ty, _) => (Some(Pat::Anything.into()), &**arg_ty),
+              ty => (None, ty),
+            };
+            get_new_need_ctor(need_name, need_arg, *got_name, got_arg, dts, ty)
+          })
+          .collect(),
+        Pat::Ctor(need_name, need_arg) => {
+          let ty = match &dt_info.val_env.get(&need_name).unwrap().ty_scheme.ty {
+            Ty::Arrow(arg_ty, _) => &**arg_ty,
+            ty => ty,
+          };
+          get_new_need_ctor(need_name, need_arg, *got_name, got_arg, dts, ty)
+        }
+        _ => unreachable!(),
+      }
+    }
+    _ => vec![need],
+  }
+}
+
+fn get_new_need_ctor(
+  need_name: StrRef,
+  need_arg: Option<Box<Pat>>,
+  got_name: StrRef,
+  got_arg: &Option<Box<Pat>>,
+  dts: &Datatypes,
+  ty: &Ty,
+) -> Vec<Pat> {
+  if need_name != got_name {
+    return vec![Pat::Ctor(need_name, need_arg)];
+  }
+  match (need_arg, got_arg.as_deref()) {
+    (None, None) => Vec::new(),
+    (Some(need), Some(got)) => get_new_need(*need, got, dts, ty)
+      .into_iter()
+      .map(|p| Pat::Ctor(need_name, Some(p.into())))
+      .collect(),
+    _ => unreachable!(),
+  }
+}
+
+fn cross<T, U>(mut xs: Vec<(T, Vec<U>)>) -> Vec<Vec<(T, U)>>
+where
+  T: Clone,
+  U: Clone,
+{
+  match xs.pop() {
+    None => Vec::new(),
+    Some((t, us)) => {
+      let cross_xs = cross(xs);
+      let mut ret = Vec::with_capacity(us.len() * cross_xs.len());
+      for u in us {
+        for mut ys in cross_xs.clone() {
+          ys.insert(0, (t.clone(), u.clone()));
+          ret.push(ys);
+        }
+      }
+      ret
+    }
+  }
 }
 
 fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
@@ -994,13 +1117,17 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         if val_bind.rec {
           return Err(dec.loc.wrap(StaticsError::Todo));
         }
-        let (other, pat_ty, pat) = ck_pat(cx, st, &val_bind.pat)?;
+        let (other, mut pat_ty, pat) = ck_pat(cx, st, &val_bind.pat)?;
         // TODO check pat is irrefutable
         for &name in other.keys() {
           ck_binding(val_bind.pat.loc.wrap(name))?;
         }
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
-        st.subst.unify(dec.loc, pat_ty, exp_ty)?;
+        st.subst.unify(dec.loc, pat_ty.clone(), exp_ty)?;
+        pat_ty.apply(&st.subst);
+        if !get_new_need(Pat::Anything, &pat, &st.datatypes, &pat_ty).is_empty() {
+          return Err(val_bind.pat.loc.wrap(StaticsError::NonExhaustiveBinding));
+        }
         for (name, mut val_info) in other {
           // NOTE could avoid this assert by having ck_pat return not a ValEnv but HashMap<StrRef,
           // (Ty, IdStatus)>. but this assert should hold because we the only TySchemes we put into
@@ -1164,6 +1291,7 @@ fn env_merge<T>(lhs: &mut HashMap<StrRef, T>, rhs: HashMap<StrRef, T>, loc: Loc)
   Ok(())
 }
 
+#[derive(Clone)]
 enum Pat {
   Anything,
   Int(i32),
