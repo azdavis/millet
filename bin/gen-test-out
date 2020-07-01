@@ -11,14 +11,14 @@ ec=0
 old_pwd="$PWD"
 for x in "$@"; do
   cd "$x"
-  if ! sh -eu run.sh; then
-    cat out.tmp
-    echo "$x: FAIL"
-    ec=1
-  else
+  if sh -eu run.sh; then
     mv out.tmp out.txt
     cat out.txt
     echo "$x: ok"
+  else
+    cat out.tmp
+    echo "$x: FAIL"
+    ec=1
   fi
   cd "$old_pwd"
 done
