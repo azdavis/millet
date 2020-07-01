@@ -889,7 +889,8 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Ty, Ty)> 
   for arm in cases.arms.iter() {
     // TODO clone in loop - expensive?
     let mut cx = cx.clone();
-    let (val_env, pat_ty) = ck_pat(&cx, st, &arm.pat)?;
+    let (val_env, pat_ty, pat) = ck_pat(&cx, st, &arm.pat)?;
+    // TODO do something with pat to check exhaustiveness overall
     // TODO what about type variables? The Definition says this should allow new free type variables
     // to enter the Cx, but right now we do nothing with `cx.ty_vars`.
     cx.env.val_env.extend(val_env);
@@ -993,7 +994,8 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         if val_bind.rec {
           return Err(dec.loc.wrap(StaticsError::Todo));
         }
-        let (other, pat_ty) = ck_pat(cx, st, &val_bind.pat)?;
+        let (other, pat_ty, pat) = ck_pat(cx, st, &val_bind.pat)?;
+        // TODO check pat is irrefutable
         for &name in other.keys() {
           ck_binding(val_bind.pat.loc.wrap(name))?;
         }
@@ -1162,15 +1164,27 @@ fn env_merge<T>(lhs: &mut HashMap<StrRef, T>, rhs: HashMap<StrRef, T>, loc: Loc)
   Ok(())
 }
 
-fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty)> {
+enum Pat {
+  Anything,
+  DecInt(i32),
+  HexInt(i32),
+  DecWord(i32),
+  HexWord(i32),
+  Str(StrRef),
+  Char(u8),
+  Record(Vec<(Label, Pat)>),
+  Ctor(StrRef, Option<Box<Pat>>),
+}
+
+fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty, Pat)> {
   let ret = match &pat.val {
-    AstPat::Wildcard => (ValEnv::new(), Ty::Var(st.new_ty_var(false))),
-    AstPat::DecInt(_) => (ValEnv::new(), Ty::INT),
-    AstPat::HexInt(_) => (ValEnv::new(), Ty::INT),
-    AstPat::DecWord(_) => (ValEnv::new(), Ty::WORD),
-    AstPat::HexWord(_) => (ValEnv::new(), Ty::WORD),
-    AstPat::Str(_) => (ValEnv::new(), Ty::STRING),
-    AstPat::Char(_) => (ValEnv::new(), Ty::CHAR),
+    AstPat::Wildcard => (ValEnv::new(), Ty::Var(st.new_ty_var(false)), Pat::Anything),
+    AstPat::DecInt(n) => (ValEnv::new(), Ty::INT, Pat::DecInt(*n)),
+    AstPat::HexInt(n) => (ValEnv::new(), Ty::INT, Pat::HexInt(*n)),
+    AstPat::DecWord(n) => (ValEnv::new(), Ty::WORD, Pat::DecWord(*n)),
+    AstPat::HexWord(n) => (ValEnv::new(), Ty::WORD, Pat::HexWord(*n)),
+    AstPat::Str(s) => (ValEnv::new(), Ty::STRING, Pat::Str(*s)),
+    AstPat::Char(c) => (ValEnv::new(), Ty::CHAR, Pat::Char(*c)),
     AstPat::LongVid(vid) => {
       let ty_scheme = if vid.structures.is_empty() {
         None
@@ -1188,12 +1202,13 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
           // TODO should this be TyScheme::mono?
           let a = Ty::Var(st.new_ty_var(false));
           let val_info = ValInfo::val(TyScheme::mono(a.clone()));
-          (hashmap![vid.last.val => val_info], a)
+          (hashmap![vid.last.val => val_info], a, Pat::Anything)
         }
         Some(ty_scheme) => {
           // TODO do we need to check ty_scheme yields a ConsType? e.g. `fn op:: => op::` may be
           // problematic
-          (ValEnv::new(), instantiate(st, ty_scheme, pat.loc))
+          let ty = instantiate(st, ty_scheme, pat.loc);
+          (ValEnv::new(), ty, Pat::Ctor(vid.last.val, None))
         }
       }
     }
@@ -1204,50 +1219,66 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(rows.len());
       let mut keys = HashSet::with_capacity(rows.len());
+      let mut pat_rows = Vec::with_capacity(rows.len());
       for row in rows {
-        let (other_ve, ty) = ck_pat(cx, st, &row.pat)?;
+        let (other_ve, ty, pat) = ck_pat(cx, st, &row.pat)?;
         if !keys.insert(row.lab.val) {
           return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
         }
         env_merge(&mut ve, other_ve, row.pat.loc)?;
         ty_rows.push((row.lab.val, ty));
+        pat_rows.push((row.lab.val, pat));
       }
-      (ve, Ty::Record(ty_rows))
+      (ve, Ty::Record(ty_rows), Pat::Record(pat_rows))
     }
     AstPat::Tuple(pats) => {
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(pats.len());
+      let mut pat_rows = Vec::with_capacity(pats.len());
       for (idx, pat) in pats.iter().enumerate() {
-        let (other_ve, ty) = ck_pat(cx, st, pat)?;
+        let (other_ve, ty, new_pat) = ck_pat(cx, st, pat)?;
         let lab = tuple_lab(idx);
         env_merge(&mut ve, other_ve, pat.loc)?;
         ty_rows.push((lab, ty));
+        pat_rows.push((lab, new_pat));
       }
-      (ve, Ty::Record(ty_rows))
+      (ve, Ty::Record(ty_rows), Pat::Record(pat_rows))
     }
     AstPat::List(pats) => {
       let mut elem = Ty::Var(st.new_ty_var(false));
       let mut ve = ValEnv::new();
+      let mut new_pats = Vec::with_capacity(pats.len());
       for pat in pats {
-        let (other_ve, ty) = ck_pat(cx, st, pat)?;
+        let (other_ve, ty, new_pat) = ck_pat(cx, st, pat)?;
         env_merge(&mut ve, other_ve, pat.loc)?;
         st.subst.unify(pat.loc, elem.clone(), ty)?;
+        new_pats.push(new_pat);
         elem.apply(&st.subst);
       }
-      (ve, Ty::list(elem))
+      let pat = new_pats
+        .into_iter()
+        .rev()
+        .fold(Pat::Ctor(StrRef::NIL, None), |ac, x| {
+          Pat::Ctor(
+            StrRef::CONS,
+            Some(Pat::Record(vec![(Label::Num(1), x), (Label::Num(2), ac)]).into()),
+          )
+        });
+      (ve, Ty::list(elem), pat)
     }
     AstPat::Ctor(vid, arg) => {
       let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
       if val_info.id_status.is_val() {
         return Err(vid.loc().wrap(StaticsError::ValAsPat));
       }
-      let (val_env, arg_ty) = ck_pat(cx, st, arg)?;
+      let (val_env, arg_ty, arg_pat) = ck_pat(cx, st, arg)?;
       let ctor_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
       let mut ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
       st.subst.unify(pat.loc, ctor_ty, arrow_ty)?;
       ret_ty.apply(&st.subst);
-      (val_env, ret_ty)
+      let pat = Pat::Ctor(vid.last.val, Some(arg_pat.into()));
+      (val_env, ret_ty, pat)
     }
     AstPat::InfixCtor(lhs, vid, rhs) => {
       let val_info = get_val_info(&cx.env, *vid)?;
@@ -1255,8 +1286,8 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         return Err(vid.loc.wrap(StaticsError::ValAsPat));
       }
       let func_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
-      let (mut val_env, lhs_ty) = ck_pat(cx, st, lhs)?;
-      let (other_ve, rhs_ty) = ck_pat(cx, st, rhs)?;
+      let (mut val_env, lhs_ty, lhs_pat) = ck_pat(cx, st, lhs)?;
+      let (other_ve, rhs_ty, rhs_pat) = ck_pat(cx, st, rhs)?;
       env_merge(&mut val_env, other_ve, pat.loc)?;
       let mut ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(
@@ -1265,14 +1296,18 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       );
       st.subst.unify(pat.loc, func_ty, arrow_ty)?;
       ret_ty.apply(&st.subst);
-      (val_env, ret_ty)
+      let pat = Pat::Ctor(
+        vid.val,
+        Some(Pat::Record(vec![(Label::Num(1), lhs_pat), (Label::Num(2), rhs_pat)]).into()),
+      );
+      (val_env, ret_ty, pat)
     }
     AstPat::Typed(inner_pat, ty) => {
-      let (val_env, mut pat_ty) = ck_pat(cx, st, inner_pat)?;
+      let (val_env, mut pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
       let ty = ck_ty(cx, st, ty)?;
       st.subst.unify(pat.loc, pat_ty.clone(), ty)?;
       pat_ty.apply(&st.subst);
-      (val_env, pat_ty)
+      (val_env, pat_ty, inner_pat)
     }
     AstPat::As(vid, ty, inner_pat) => {
       if cx
@@ -1283,7 +1318,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       {
         return Err(vid.loc.wrap(StaticsError::NonVarInAs(vid.val)));
       }
-      let (mut val_env, mut pat_ty) = ck_pat(cx, st, inner_pat)?;
+      let (mut val_env, mut pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
       if let Some(ty) = ty {
         let ty = ck_ty(cx, st, ty)?;
         st.subst.unify(pat.loc, pat_ty.clone(), ty)?;
@@ -1291,7 +1326,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       }
       let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));
       env_ins(&mut val_env, *vid, val_info)?;
-      (val_env, pat_ty)
+      (val_env, pat_ty, inner_pat)
     }
   };
   Ok(ret)
