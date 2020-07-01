@@ -6,7 +6,7 @@
 
 #![allow(unused)]
 
-use crate::ast::{Cases, Dec, Exp, Label, Long, Pat, StrDec, TopDec, Ty as AstTy};
+use crate::ast::{Cases, Dec, Exp, Label, Long, Pat as AstPat, StrDec, TopDec, Ty as AstTy};
 use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
 use maplit::{hashmap, hashset};
@@ -1162,16 +1162,16 @@ fn env_merge<T>(lhs: &mut HashMap<StrRef, T>, rhs: HashMap<StrRef, T>, loc: Loc)
   Ok(())
 }
 
-fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv, Ty)> {
+fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty)> {
   let ret = match &pat.val {
-    Pat::Wildcard => (ValEnv::new(), Ty::Var(st.new_ty_var(false))),
-    Pat::DecInt(_) => (ValEnv::new(), Ty::INT),
-    Pat::HexInt(_) => (ValEnv::new(), Ty::INT),
-    Pat::DecWord(_) => (ValEnv::new(), Ty::WORD),
-    Pat::HexWord(_) => (ValEnv::new(), Ty::WORD),
-    Pat::Str(_) => (ValEnv::new(), Ty::STRING),
-    Pat::Char(_) => (ValEnv::new(), Ty::CHAR),
-    Pat::LongVid(vid) => {
+    AstPat::Wildcard => (ValEnv::new(), Ty::Var(st.new_ty_var(false))),
+    AstPat::DecInt(_) => (ValEnv::new(), Ty::INT),
+    AstPat::HexInt(_) => (ValEnv::new(), Ty::INT),
+    AstPat::DecWord(_) => (ValEnv::new(), Ty::WORD),
+    AstPat::HexWord(_) => (ValEnv::new(), Ty::WORD),
+    AstPat::Str(_) => (ValEnv::new(), Ty::STRING),
+    AstPat::Char(_) => (ValEnv::new(), Ty::CHAR),
+    AstPat::LongVid(vid) => {
       let ty_scheme = if vid.structures.is_empty() {
         None
       } else {
@@ -1197,7 +1197,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
         }
       }
     }
-    Pat::Record(rows, rest_loc) => {
+    AstPat::Record(rows, rest_loc) => {
       if let Some(loc) = rest_loc {
         return Err(loc.wrap(StaticsError::Todo));
       }
@@ -1214,7 +1214,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       }
       (ve, Ty::Record(ty_rows))
     }
-    Pat::Tuple(pats) => {
+    AstPat::Tuple(pats) => {
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(pats.len());
       for (idx, pat) in pats.iter().enumerate() {
@@ -1225,7 +1225,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       }
       (ve, Ty::Record(ty_rows))
     }
-    Pat::List(pats) => {
+    AstPat::List(pats) => {
       let mut elem = Ty::Var(st.new_ty_var(false));
       let mut ve = ValEnv::new();
       for pat in pats {
@@ -1236,7 +1236,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       }
       (ve, Ty::list(elem))
     }
-    Pat::Ctor(vid, arg) => {
+    AstPat::Ctor(vid, arg) => {
       let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
       if val_info.id_status.is_val() {
         return Err(vid.loc().wrap(StaticsError::ValAsPat));
@@ -1249,7 +1249,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       ret_ty.apply(&st.subst);
       (val_env, ret_ty)
     }
-    Pat::InfixCtor(lhs, vid, rhs) => {
+    AstPat::InfixCtor(lhs, vid, rhs) => {
       let val_info = get_val_info(&cx.env, *vid)?;
       if val_info.id_status.is_val() {
         return Err(vid.loc.wrap(StaticsError::ValAsPat));
@@ -1267,14 +1267,14 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<Pat<StrRef>>) -> Result<(ValEnv
       ret_ty.apply(&st.subst);
       (val_env, ret_ty)
     }
-    Pat::Typed(inner_pat, ty) => {
+    AstPat::Typed(inner_pat, ty) => {
       let (val_env, mut pat_ty) = ck_pat(cx, st, inner_pat)?;
       let ty = ck_ty(cx, st, ty)?;
       st.subst.unify(pat.loc, pat_ty.clone(), ty)?;
       pat_ty.apply(&st.subst);
       (val_env, pat_ty)
     }
-    Pat::As(vid, ty, inner_pat) => {
+    AstPat::As(vid, ty, inner_pat) => {
       if cx
         .env
         .val_env
