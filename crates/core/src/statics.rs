@@ -1013,11 +1013,14 @@ where
   match xs.pop() {
     None => Vec::new(),
     Some((t, us)) => {
+      if xs.is_empty() {
+        return us.into_iter().map(|u| vec![(t.clone(), u)]).collect();
+      }
       let cross_xs = cross(xs);
       let mut ret = Vec::with_capacity(us.len() * cross_xs.len());
       for u in us {
         for mut ys in cross_xs.clone() {
-          ys.insert(0, (t.clone(), u.clone()));
+          ys.push((t.clone(), u.clone()));
           ret.push(ys);
         }
       }
@@ -1703,4 +1706,44 @@ fn std_lib() -> (Basis, State) {
     },
   };
   (bs, st)
+}
+
+#[cfg(test)]
+mod tests {
+  type T = &'static str;
+  type U = usize;
+
+  fn cross(xs: Vec<(T, Vec<U>)>) -> Vec<Vec<(T, U)>> {
+    super::cross(xs)
+  }
+
+  #[test]
+  fn test_cross() {
+    assert_eq!(cross(vec![]), Vec::<Vec<(T, U)>>::new());
+    assert_eq!(
+      cross(vec![("foo", vec![1, 2, 3])]),
+      vec![vec![("foo", 1)], vec![("foo", 2)], vec![("foo", 3)]],
+    );
+    assert_eq!(
+      cross(vec![("foo", vec![1, 2, 3]), ("nope", vec![])]),
+      Vec::<Vec<(T, U)>>::new(),
+    );
+    assert_eq!(
+      cross(vec![("foo", vec![1, 2, 3]), ("bar", vec![3, 4, 5, 6])]),
+      vec![
+        vec![("foo", 1), ("bar", 3)],
+        vec![("foo", 2), ("bar", 3)],
+        vec![("foo", 3), ("bar", 3)],
+        vec![("foo", 1), ("bar", 4)],
+        vec![("foo", 2), ("bar", 4)],
+        vec![("foo", 3), ("bar", 4)],
+        vec![("foo", 1), ("bar", 5)],
+        vec![("foo", 2), ("bar", 5)],
+        vec![("foo", 3), ("bar", 5)],
+        vec![("foo", 1), ("bar", 6)],
+        vec![("foo", 2), ("bar", 6)],
+        vec![("foo", 3), ("bar", 6)],
+      ]
+    );
+  }
 }
