@@ -1312,17 +1312,16 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::Str(s) => (ValEnv::new(), Ty::STRING, Pat::Str(*s)),
     AstPat::Char(c) => (ValEnv::new(), Ty::CHAR, Pat::Char(*c)),
     AstPat::LongVid(vid) => {
-      let ty_scheme = if vid.structures.is_empty() {
-        None
-      } else {
-        cx.env.val_env.get(&vid.last.val).and_then(|val_info| {
+      let ty_scheme = get_env(cx, vid)?
+        .val_env
+        .get(&vid.last.val)
+        .and_then(|val_info| {
           if val_info.id_status.is_val() {
             None
           } else {
             Some(&val_info.ty_scheme)
           }
-        })
-      };
+        });
       match ty_scheme {
         None => {
           // TODO should this be TyScheme::mono?
