@@ -4,3 +4,4 @@ error: unreachable pattern
 4 │   | (_, false) => 2
   │     ^^^^^^^^^^
 
+typechecking failed

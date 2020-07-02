@@ -4,3 +4,4 @@ error: non-exhaustive binding
 2 │ val One = One
   │     ^^^
 
+typechecking failed

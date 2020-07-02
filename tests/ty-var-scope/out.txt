@@ -4,3 +4,4 @@ error: mismatched types: int vs string
 1 │ val _ = fn id => (id 3; id "nope")
   │                         ^^^^^^^^^
 
+typechecking failed

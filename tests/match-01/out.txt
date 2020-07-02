@@ -19,3 +19,4 @@ error: non-exhaustive match
 18 │ │   | B 234 => 14
    │ ╰───────────────^
 
+typechecking failed

@@ -6,3 +6,4 @@ error: non-exhaustive match
 4 │ │   | (x, 6) => x
   │ ╰───────────────^
 
+typechecking failed

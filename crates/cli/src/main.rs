@@ -39,6 +39,7 @@ fn run() -> bool {
       Err(e) => {
         let diag = Diagnostic::error().with_message(format!("{}: {}", name, e));
         term::emit(&mut w, &config, &src, &diag).unwrap();
+        writeln!(&mut w, "file i/o failed").unwrap();
         return false;
       }
     }
@@ -50,6 +51,7 @@ fn run() -> bool {
       Err(e) => {
         let diag = simple(e.val.message(), id, e.loc);
         term::emit(&mut w, &config, &src, &diag).unwrap();
+        writeln!(&mut w, "lexing failed").unwrap();
         return false;
       }
     }
@@ -68,6 +70,7 @@ fn run() -> bool {
       Err(e) => {
         let diag = simple(e.val.message(&store), id, e.loc);
         term::emit(&mut w, &config, &src, &diag).unwrap();
+        writeln!(&mut w, "parsing failed").unwrap();
         return false;
       }
     }
@@ -81,6 +84,7 @@ fn run() -> bool {
       Err(e) => {
         let diag = simple(e.val.message(&store), id, e.loc);
         term::emit(&mut w, &config, &src, &diag).unwrap();
+        writeln!(&mut w, "typechecking failed").unwrap();
         return false;
       }
     }
@@ -97,6 +101,6 @@ fn main() {
     .join()
   {
     Err(_) | Ok(false) => std::process::exit(1),
-    Ok(true) => {}
+    Ok(true) => println!("no errors"),
   }
 }

@@ -4,3 +4,4 @@ error: mismatched types: int vs string
 3 │ val _ = inc "nope"
   │         ^^^^^^^^^^
 
+typechecking failed

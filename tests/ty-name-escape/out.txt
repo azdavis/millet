@@ -4,3 +4,4 @@ error: expression causes a type name to escape its scope
 6 │     true; false; bar; 3 + 3; quz
   │                              ^^^
 
+typechecking failed
