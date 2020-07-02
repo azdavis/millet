@@ -55,6 +55,7 @@ pub enum StaticsError {
   TyNameEscape,
   NonExhaustiveMatch,
   NonExhaustiveBinding,
+  UnreachablePattern,
   Todo,
 }
 
@@ -87,6 +88,7 @@ impl StaticsError {
       Self::TyNameEscape => "expression causes a type name to escape its scope".to_owned(),
       Self::NonExhaustiveMatch => "non-exhaustive match".to_owned(),
       Self::NonExhaustiveBinding => "non-exhaustive binding".to_owned(),
+      Self::UnreachablePattern => "unreachable pattern".to_owned(),
       Self::Todo => "unimplemented language construct".to_owned(),
     }
   }
@@ -281,7 +283,7 @@ impl Subst {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ty {
   /// TyVar
   Var(TyVar),
@@ -890,12 +892,12 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
 fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<(Ty, Ty)> {
   let mut arg_ty = Ty::Var(st.new_ty_var(false));
   let mut res_ty = Ty::Var(st.new_ty_var(false));
-  let mut got_pats = Vec::with_capacity(cases.arms.len());
+  let mut pats = Vec::with_capacity(cases.arms.len());
   for arm in cases.arms.iter() {
     // TODO clone in loop - expensive?
     let mut cx = cx.clone();
-    let (val_env, pat_ty, got) = ck_pat(&cx, st, &arm.pat)?;
-    got_pats.push((arm.pat.loc, got));
+    let (val_env, pat_ty, pat) = ck_pat(&cx, st, &arm.pat)?;
+    pats.push(arm.pat.loc.wrap(pat));
     // TODO what about type variables? The Definition says this should allow new free type variables
     // to enter the Cx, but right now we do nothing with `cx.ty_vars`.
     cx.env.val_env.extend(val_env);
@@ -905,106 +907,190 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
     arg_ty.apply(&st.subst);
     res_ty.apply(&st.subst);
   }
-  // TODO check for unreachable pattern
-  let mut need_pats = vec![Pat::Anything];
-  for (loc, got) in got_pats {
-    let mut new_need_pats = Vec::new();
-    for need in need_pats {
-      new_need_pats.append(&mut get_new_need(need, &got, &st.datatypes, &arg_ty));
-    }
-    need_pats = new_need_pats;
-  }
-  if need_pats.is_empty() {
+  if ck_exhaustive(&st.datatypes, &arg_ty, pats)? {
     Ok((arg_ty, res_ty))
   } else {
     Err(loc.wrap(StaticsError::NonExhaustiveMatch))
   }
 }
 
-fn get_new_need(need: Pat, got: &Pat, dts: &Datatypes, ty: &Ty) -> Vec<Pat> {
-  match got {
-    Pat::Anything => Vec::new(),
-    Pat::Record(got_rows) => {
-      let ty_rows = match ty {
-        Ty::Record(xs) => xs,
-        _ => unreachable!(),
-      };
-      let need_rows = match need {
-        Pat::Anything => ty_rows
-          .iter()
-          .map(|&(lab, _)| (lab, Pat::Anything))
-          .collect(),
-        Pat::Record(xs) => xs,
-        _ => unreachable!(),
-      };
-      let mut ty_rows: HashMap<_, _> = ty_rows.iter().map(|&(lab, ref ty)| (lab, ty)).collect();
-      let mut got_rows: HashMap<_, _> = got_rows.iter().map(|&(lab, ref pat)| (lab, pat)).collect();
-      // note |need_rows| <= |got_rows| since we remove labels as they become completely covered.
-      let mut new_need_rows = Vec::new();
-      for (lab, need) in need_rows {
-        let got = got_rows.remove(&lab).unwrap();
-        let ty = ty_rows.remove(&lab).unwrap();
-        let new_need = get_new_need(need, got, dts, ty);
-        if !new_need.is_empty() {
-          new_need_rows.push((lab, new_need));
-        }
-      }
-      cross(new_need_rows).into_iter().map(Pat::Record).collect()
+fn ck_exhaustive(dts: &Datatypes, ty: &Ty, pats: Vec<Located<Pat>>) -> Result<bool> {
+  let mut needs = needs_from_ty(&dts, &ty);
+  for pat in pats {
+    let mut new_needs = Vec::with_capacity(needs.len());
+    let mut diff = false;
+    for need in needs {
+      let (mut ns, d) = ck_need(need, &pat.val, dts);
+      new_needs.append(&mut ns);
+      diff = diff || d;
     }
-    Pat::Ctor(got_name, got_arg) => {
-      let (ty_args, dt_info) = match ty {
-        Ty::Ctor(ty_args, sym) => (ty_args, dts.get(sym).unwrap()),
-        _ => unreachable!(),
-      };
-      assert!(ty_args.is_empty());
-      match need {
-        Pat::Anything => dt_info
-          .val_env
-          .iter()
-          .flat_map(|(&need_name, val_info)| {
-            assert!(val_info.ty_scheme.ty_vars.is_empty());
-            let (need_arg, ty) = match &val_info.ty_scheme.ty {
-              Ty::Arrow(arg_ty, _) => (Some(Pat::Anything.into()), &**arg_ty),
-              ty => (None, ty),
-            };
-            get_new_need_ctor(need_name, need_arg, *got_name, got_arg, dts, ty)
-          })
-          .collect(),
-        Pat::Ctor(need_name, need_arg) => {
-          let ty = match &dt_info.val_env.get(&need_name).unwrap().ty_scheme.ty {
-            Ty::Arrow(arg_ty, _) => &**arg_ty,
-            ty => ty,
+    if !diff {
+      return Err(pat.loc.wrap(StaticsError::UnreachablePattern));
+    }
+    needs = new_needs;
+  }
+  Ok(needs.is_empty())
+}
+
+/// Int, Word, Str, Char each have a set of every element of this type we DO NOT need
+#[derive(Clone)]
+enum Need {
+  Unmatchable,
+  Int(HashSet<i32>),
+  Word(HashSet<i32>),
+  Str(HashSet<StrRef>),
+  Char(HashSet<u8>),
+  Record(HashMap<Label, Need>),
+  Ctor(StrRef, Option<ArgNeed>),
+}
+
+#[derive(Clone)]
+enum ArgNeed {
+  // TODO could avoid storing the type in here if we carried ty along in ck_need.
+  Lazy(Box<Ty>),
+  Forced(Box<Need>),
+}
+
+fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
+  match ty {
+    Ty::Var(_) | Ty::Arrow(_, _) => vec![Need::Unmatchable],
+    Ty::Record(rows) => {
+      let rows = rows
+        .iter()
+        .map(|&(lab, ref ty)| (lab, needs_from_ty(dts, ty)))
+        .collect();
+      cross(rows)
+        .into_iter()
+        .map(|xs| Need::Record(xs.into_iter().collect()))
+        .collect()
+    }
+    Ty::Ctor(args, sym) => {
+      // TODO implement polymorphism
+      assert!(args.is_empty());
+      if *ty == Ty::INT {
+        return vec![Need::Int(HashSet::new())];
+      }
+      if *ty == Ty::WORD {
+        return vec![Need::Word(HashSet::new())];
+      }
+      if *ty == Ty::STRING {
+        return vec![Need::Str(HashSet::new())];
+      }
+      if *ty == Ty::CHAR {
+        return vec![Need::Char(HashSet::new())];
+      }
+      if *ty == Ty::REAL {
+        return vec![Need::Unmatchable];
+      }
+      dts
+        .get(sym)
+        .unwrap()
+        .val_env
+        .iter()
+        .map(|(&name, val_info)| {
+          assert!(matches!(val_info.id_status, IdStatus::Ctor));
+          assert!(val_info.ty_scheme.ty_vars.is_empty());
+          let arg = match &val_info.ty_scheme.ty {
+            Ty::Arrow(arg_ty, _) => Some(ArgNeed::Lazy(arg_ty.clone())),
+            _ => None,
           };
-          get_new_need_ctor(need_name, need_arg, *got_name, got_arg, dts, ty)
+          Need::Ctor(name, arg)
+        })
+        .collect()
+    }
+  }
+}
+
+macro_rules! need_prim {
+  ($need: expr, $elem: expr, $name: ident) => {{
+    let mut set = match $need {
+      Need::$name(set) => set,
+      _ => unreachable!(),
+    };
+    let changed = set.insert($elem);
+    (vec![Need::$name(set)], changed)
+  }};
+}
+
+/// Returns (xs, b) where b is true iff xs is different from need.
+fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> (Vec<Need>, bool) {
+  match pat {
+    Pat::Anything => (Vec::new(), true),
+    Pat::Int(x) => need_prim!(need, *x, Int),
+    Pat::Word(x) => need_prim!(need, *x, Word),
+    Pat::Str(x) => need_prim!(need, *x, Str),
+    Pat::Char(x) => need_prim!(need, *x, Char),
+    Pat::Record(got_rows) => {
+      let mut need_rows = match need {
+        Need::Record(xs) => xs,
+        _ => unreachable!(),
+      };
+      let mut diff = false;
+      let mut new_need_rows = Vec::with_capacity(got_rows.len());
+      for (lab, got) in got_rows {
+        let need = need_rows.get(&lab).unwrap().clone();
+        let (ns, d) = ck_need(need, got, dts);
+        new_need_rows.push((*lab, ns));
+        diff = diff || d;
+      }
+      if new_need_rows.iter().all(|(_, ns)| ns.is_empty()) {
+        (Vec::new(), true)
+      } else {
+        let needs = cross(
+          new_need_rows
+            .into_iter()
+            .map(|(lab, ns)| {
+              let ns = if ns.is_empty() {
+                vec![need_rows.remove(&lab).unwrap()]
+              } else {
+                ns
+              };
+              (lab, ns)
+            })
+            .collect(),
+        )
+        .into_iter()
+        .map(|rows| Need::Record(rows.into_iter().collect()))
+        .collect();
+        (needs, diff)
+      }
+    }
+    Pat::Ctor(pat_name, pat_arg) => {
+      let (need_name, need_arg) = match need {
+        Need::Ctor(x, y) => (x, y),
+        _ => unreachable!(),
+      };
+      if need_name != *pat_name {
+        return (vec![Need::Ctor(need_name, need_arg)], false);
+      }
+      match (need_arg, pat_arg.as_deref()) {
+        (None, None) => (Vec::new(), true),
+        (Some(need), Some(got)) => {
+          let needs = match need {
+            ArgNeed::Lazy(ty) => needs_from_ty(dts, &ty),
+            ArgNeed::Forced(need) => vec![*need],
+          };
+          let mut diff = false;
+          let mut new_needs = Vec::new();
+          for need in needs {
+            let (ns, d) = ck_need(need, got, dts);
+            let mut ns = ns
+              .into_iter()
+              .map(|n| Need::Ctor(need_name, Some(ArgNeed::Forced(n.into()))))
+              .collect();
+            new_needs.append(&mut ns);
+            diff = diff || d;
+          }
+          (new_needs, diff)
         }
         _ => unreachable!(),
       }
     }
-    _ => vec![need],
   }
 }
 
-fn get_new_need_ctor(
-  need_name: StrRef,
-  need_arg: Option<Box<Pat>>,
-  got_name: StrRef,
-  got_arg: &Option<Box<Pat>>,
-  dts: &Datatypes,
-  ty: &Ty,
-) -> Vec<Pat> {
-  if need_name != got_name {
-    return vec![Pat::Ctor(need_name, need_arg)];
-  }
-  match (need_arg, got_arg.as_deref()) {
-    (None, None) => Vec::new(),
-    (Some(need), Some(got)) => get_new_need(*need, got, dts, ty)
-      .into_iter()
-      .map(|p| Pat::Ctor(need_name, Some(p.into())))
-      .collect(),
-    _ => unreachable!(),
-  }
-}
-
+// TODO make more generic (iterator) or output Vec<HashMap<T, U>> to avoid another into_iter the one
+// place we use this?
 fn cross<T, U>(mut xs: Vec<(T, Vec<U>)>) -> Vec<Vec<(T, U)>>
 where
   T: Clone,
@@ -1128,7 +1214,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
         st.subst.unify(dec.loc, pat_ty.clone(), exp_ty)?;
         pat_ty.apply(&st.subst);
-        if !get_new_need(Pat::Anything, &pat, &st.datatypes, &pat_ty).is_empty() {
+        if !ck_exhaustive(&st.datatypes, &pat_ty, vec![val_bind.pat.loc.wrap(pat)])? {
           return Err(val_bind.pat.loc.wrap(StaticsError::NonExhaustiveBinding));
         }
         for (name, mut val_info) in other {
