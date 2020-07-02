@@ -1,0 +1,6 @@
+error: unreachable pattern
+  ┌─ inp.sml:4:5
+  │
+4 │   | (_, false) => 2
+  │     ^^^^^^^^^^
+
