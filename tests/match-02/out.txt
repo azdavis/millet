@@ -1,0 +1,8 @@
+error: non-exhaustive match
+  ┌─ inp.sml:2:3
+  │  
+2 │ ╭   case (1, 2) of
+3 │ │     (3, 4) => 0
+4 │ │   | (x, 6) => x
+  │ ╰───────────────^
+

@@ -1,0 +1,6 @@
+error: non-exhaustive binding
+  ┌─ inp.sml:2:5
+  │
+2 │ val One = One
+  │     ^^^
+
