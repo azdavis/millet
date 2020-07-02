@@ -1,0 +1,7 @@
+error: unreachable pattern
+  ┌─ inp.sml:7:5
+  │
+7 │   | [7, 7] => 5
+  │     ^^^^^^
+
+typechecking failed
