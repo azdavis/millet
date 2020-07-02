@@ -69,7 +69,7 @@ impl StaticsError {
         format!("circularity: {:?} in {}", ty_var, show_ty(store, &ty))
       }
       Self::HeadMismatch(lhs, rhs) => format!(
-        "mismatched types: {} vs {}",
+        "mismatched types: expected {}, found {}",
         show_ty(store, &lhs),
         show_ty(store, &rhs)
       ),
@@ -237,6 +237,8 @@ impl Subst {
     Ok(())
   }
 
+  /// lhs = expected, rhs = found. the types immediately have self applied to them upon entry to
+  /// this function, so no need to do it yourself before calling.
   fn unify(&mut self, loc: Loc, mut lhs: Ty, mut rhs: Ty) -> Result<()> {
     lhs.apply(self);
     rhs.apply(self);
@@ -840,35 +842,35 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::Typed(inner, ty) => {
       let mut exp_ty = ck_exp(cx, st, inner)?;
       let ty_ty = ck_ty(cx, st, ty)?;
-      st.subst.unify(exp.loc, exp_ty.clone(), ty_ty)?;
+      st.subst.unify(exp.loc, ty_ty, exp_ty.clone())?;
       exp_ty.apply(&st.subst);
       exp_ty
     }
     Exp::Andalso(lhs, rhs) | Exp::Orelse(lhs, rhs) => {
       let lhs_ty = ck_exp(cx, st, lhs)?;
       let rhs_ty = ck_exp(cx, st, rhs)?;
-      st.subst.unify(lhs.loc, lhs_ty, Ty::BOOL)?;
-      st.subst.unify(rhs.loc, rhs_ty, Ty::BOOL)?;
+      st.subst.unify(lhs.loc, Ty::BOOL, lhs_ty)?;
+      st.subst.unify(rhs.loc, Ty::BOOL, rhs_ty)?;
       Ty::BOOL
     }
     Exp::Handle(head, cases) => {
       let mut head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
-      st.subst.unify(exp.loc, arg_ty, Ty::EXN)?;
+      st.subst.unify(exp.loc, Ty::EXN, arg_ty)?;
       st.subst.unify(exp.loc, head_ty.clone(), res_ty)?;
       head_ty.apply(&st.subst);
       head_ty
     }
     Exp::Raise(exp) => {
       let exp_ty = ck_exp(cx, st, exp)?;
-      st.subst.unify(exp.loc, exp_ty, Ty::EXN)?;
+      st.subst.unify(exp.loc, Ty::EXN, exp_ty)?;
       Ty::Var(st.new_ty_var(false))
     }
     Exp::If(cond, then_e, else_e) => {
       let cond_ty = ck_exp(cx, st, cond)?;
       let mut then_ty = ck_exp(cx, st, then_e)?;
       let else_ty = ck_exp(cx, st, else_e)?;
-      st.subst.unify(cond.loc, cond_ty, Ty::BOOL)?;
+      st.subst.unify(cond.loc, Ty::BOOL, cond_ty)?;
       st.subst.unify(exp.loc, then_ty.clone(), else_ty)?;
       then_ty.apply(&st.subst);
       then_ty
@@ -1536,7 +1538,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::Typed(inner_pat, ty) => {
       let (val_env, mut pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
       let ty = ck_ty(cx, st, ty)?;
-      st.subst.unify(pat.loc, pat_ty.clone(), ty)?;
+      st.subst.unify(pat.loc, ty, pat_ty.clone())?;
       pat_ty.apply(&st.subst);
       (val_env, pat_ty, inner_pat)
     }
@@ -1552,7 +1554,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let (mut val_env, mut pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
       if let Some(ty) = ty {
         let ty = ck_ty(cx, st, ty)?;
-        st.subst.unify(pat.loc, pat_ty.clone(), ty)?;
+        st.subst.unify(pat.loc, ty, pat_ty.clone())?;
         pat_ty.apply(&st.subst);
       }
       let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));
