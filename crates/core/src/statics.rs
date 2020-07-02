@@ -918,13 +918,19 @@ fn ck_exhaustive(dts: &Datatypes, ty: &Ty, pats: Vec<Located<Pat>>) -> Result<bo
   let mut needs = needs_from_ty(&dts, &ty);
   for pat in pats {
     let mut new_needs = Vec::with_capacity(needs.len());
-    let mut diff = false;
+    // NOTE here, removing is considered a change.
+    let mut changed = false;
     for need in needs {
-      let (mut ns, d) = ck_need(need, &pat.val, dts);
-      new_needs.append(&mut ns);
-      diff = diff || d;
+      match ck_need(need, &pat.val, dts) {
+        NeedRes::Removed => changed = true,
+        NeedRes::Changed(mut ns) => {
+          changed = true;
+          new_needs.append(&mut ns);
+        }
+        NeedRes::Unchanged(n) => new_needs.push(n),
+      }
     }
-    if !diff {
+    if !changed {
       return Err(pat.loc.wrap(StaticsError::UnreachablePattern));
     }
     needs = new_needs;
@@ -933,7 +939,7 @@ fn ck_exhaustive(dts: &Datatypes, ty: &Ty, pats: Vec<Located<Pat>>) -> Result<bo
 }
 
 /// Int, Word, Str, Char each have a set of every element of this type we DO NOT need
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 enum Need {
   Unmatchable,
   Int(HashSet<i32>),
@@ -944,7 +950,7 @@ enum Need {
   Ctor(StrRef, Option<ArgNeed>),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 enum ArgNeed {
   // TODO could avoid storing the type in here if we carried ty along in ck_need.
   Lazy(Box<Ty>),
@@ -1001,59 +1007,62 @@ fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
   }
 }
 
+#[derive(Debug)]
+enum NeedRes {
+  Removed,
+  /// requires !vec.is_empty()
+  Changed(Vec<Need>),
+  Unchanged(Need),
+}
+
 macro_rules! need_prim {
   ($need: expr, $elem: expr, $name: ident) => {{
     let mut set = match $need {
       Need::$name(set) => set,
       _ => unreachable!(),
     };
-    let changed = set.insert($elem);
-    (vec![Need::$name(set)], changed)
+    if set.insert($elem) {
+      NeedRes::Changed(vec![Need::$name(set)])
+    } else {
+      NeedRes::Unchanged(Need::$name(set))
+    }
   }};
 }
 
-/// Returns (xs, b) where b is true iff xs is different from need.
-fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> (Vec<Need>, bool) {
+fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> NeedRes {
   match pat {
-    Pat::Anything => (Vec::new(), true),
+    Pat::Anything => NeedRes::Removed,
     Pat::Int(x) => need_prim!(need, *x, Int),
     Pat::Word(x) => need_prim!(need, *x, Word),
     Pat::Str(x) => need_prim!(need, *x, Str),
     Pat::Char(x) => need_prim!(need, *x, Char),
     Pat::Record(got_rows) => {
-      let mut need_rows = match need {
+      let need_rows = match need {
         Need::Record(xs) => xs,
         _ => unreachable!(),
       };
-      let mut diff = false;
       let mut new_need_rows = Vec::with_capacity(got_rows.len());
       for (lab, got) in got_rows {
         let need = need_rows.get(&lab).unwrap().clone();
-        let (ns, d) = ck_need(need, got, dts);
+        let ns = match ck_need(need.clone(), got, dts) {
+          NeedRes::Removed => vec![],
+          NeedRes::Changed(ns) => ns,
+          NeedRes::Unchanged(n) => return NeedRes::Unchanged(Need::Record(need_rows)),
+        };
         new_need_rows.push((*lab, ns));
-        diff = diff || d;
       }
       if new_need_rows.iter().all(|(_, ns)| ns.is_empty()) {
-        (Vec::new(), true)
-      } else {
-        let needs = cross(
-          new_need_rows
-            .into_iter()
-            .map(|(lab, ns)| {
-              let ns = if ns.is_empty() {
-                vec![need_rows.remove(&lab).unwrap()]
-              } else {
-                ns
-              };
-              (lab, ns)
-            })
-            .collect(),
-        )
-        .into_iter()
-        .map(|rows| Need::Record(rows.into_iter().collect()))
-        .collect();
-        (needs, diff)
+        return NeedRes::Removed;
       }
+      let mut ret = Vec::new();
+      for (lab, needs) in new_need_rows {
+        for need in needs {
+          let mut add = need_rows.clone();
+          assert!(add.insert(lab, need).is_some());
+          ret.push(Need::Record(add));
+        }
+      }
+      NeedRes::Changed(ret)
     }
     Pat::Ctor(pat_name, pat_arg) => {
       let (need_name, need_arg) = match need {
@@ -1061,29 +1070,40 @@ fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> (Vec<Need>, bool) {
         _ => unreachable!(),
       };
       if need_name != *pat_name {
-        return (vec![Need::Ctor(need_name, need_arg)], false);
+        return NeedRes::Unchanged(Need::Ctor(need_name, need_arg));
       }
-      match (need_arg, pat_arg.as_deref()) {
-        (None, None) => (Vec::new(), true),
-        (Some(need), Some(got)) => {
-          let needs = match need {
-            ArgNeed::Lazy(ty) => needs_from_ty(dts, &ty),
-            ArgNeed::Forced(need) => vec![*need],
-          };
-          let mut diff = false;
-          let mut new_needs = Vec::new();
-          for need in needs {
-            let (ns, d) = ck_need(need, got, dts);
-            let mut ns = ns
-              .into_iter()
-              .map(|n| Need::Ctor(need_name, Some(ArgNeed::Forced(n.into()))))
-              .collect();
-            new_needs.append(&mut ns);
-            diff = diff || d;
-          }
-          (new_needs, diff)
-        }
+      let (need, got) = match (need_arg, pat_arg.as_deref()) {
+        (None, None) => return NeedRes::Removed,
+        (Some(need), Some(got)) => (need, got),
         _ => unreachable!(),
+      };
+      let (needs, mut changed) = match need {
+        ArgNeed::Lazy(ty) => (needs_from_ty(dts, &ty), true),
+        ArgNeed::Forced(need) => (vec![*need], false),
+      };
+      let mut new_needs = Vec::new();
+      for need in needs {
+        let ns = match ck_need(need, got, dts) {
+          NeedRes::Removed => Vec::new(),
+          NeedRes::Changed(ns) => {
+            changed = true;
+            ns
+          }
+          NeedRes::Unchanged(n) => vec![n],
+        };
+        let mut ns = ns
+          .into_iter()
+          .map(|n| Need::Ctor(need_name, Some(ArgNeed::Forced(n.into()))))
+          .collect();
+        new_needs.append(&mut ns);
+      }
+      if new_needs.is_empty() {
+        NeedRes::Removed
+      } else if changed {
+        NeedRes::Changed(new_needs)
+      } else {
+        assert_eq!(new_needs.len(), 1);
+        NeedRes::Unchanged(new_needs.pop().unwrap())
       }
     }
   }
@@ -1380,7 +1400,7 @@ fn env_merge<T>(lhs: &mut HashMap<StrRef, T>, rhs: HashMap<StrRef, T>, loc: Loc)
   Ok(())
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 enum Pat {
   Anything,
   Int(i32),
