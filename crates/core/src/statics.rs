@@ -971,8 +971,6 @@ fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
         .collect()
     }
     Ty::Ctor(args, sym) => {
-      // TODO implement polymorphism
-      assert!(args.is_empty());
       if *ty == Ty::INT {
         return vec![Need::Int(HashSet::new())];
       }
@@ -995,9 +993,8 @@ fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
         .iter()
         .map(|(&name, val_info)| {
           assert!(matches!(val_info.id_status, IdStatus::Ctor));
-          assert!(val_info.ty_scheme.ty_vars.is_empty());
-          let arg = match &val_info.ty_scheme.ty {
-            Ty::Arrow(arg_ty, _) => Some(ArgNeed::Lazy(arg_ty.clone())),
+          let arg = match val_info.ty_scheme.apply_args(args.clone()) {
+            Ty::Arrow(arg_ty, _) => Some(ArgNeed::Lazy(arg_ty)),
             _ => None,
           };
           Need::Ctor(name, arg)
