@@ -109,7 +109,7 @@ inp.sml: [
                                         last: StrRef(regular: 5),
                                     },
                                 ),
-                                exp: Str(
+                                exp: String(
                                     StrRef(regular: 6),
                                 ),
                             },
@@ -126,7 +126,7 @@ inp.sml: [
                                         last: StrRef(regular: 7),
                                     },
                                 ),
-                                exp: Str(
+                                exp: String(
                                     StrRef(regular: 8),
                                 ),
                             },

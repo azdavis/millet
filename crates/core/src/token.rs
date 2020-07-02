@@ -74,7 +74,7 @@ pub enum Token {
   DecWord(i32),
   HexWord(i32),
   Real(f64),
-  Str(StrRef),
+  String(StrRef),
   Char(u8),
   // identifiers. we can't know the syntax class of most identifiers (VId, TyCon, Lab, StrId)
   // without having the lexer be sophisticated to the point of essentially being a parser. but, we
@@ -165,7 +165,7 @@ impl Token {
       Self::DecWord(..) => "a decimal word literal",
       Self::HexWord(..) => "a hexadecimal word literal",
       Self::Real(..) => "a real literal",
-      Self::Str(..) => "a string literal",
+      Self::String(..) => "a string literal",
       Self::Char(..) => "a character literal",
       Self::TyVar(..) => "a type variable",
       Self::Ident(_, IdentType::AlphaNum) => "an alphanumeric identifier",

@@ -511,9 +511,9 @@ impl Parser {
         self.skip();
         Exp::Real(n)
       }
-      Token::Str(s) => {
+      Token::String(s) => {
         self.skip();
-        Exp::Str(s)
+        Exp::String(s)
       }
       Token::Char(c) => {
         self.skip();
@@ -1237,9 +1237,9 @@ impl Parser {
         Pat::HexWord(n)
       }
       Token::Real(..) => return Err(begin.wrap(ParseError::RealPat)),
-      Token::Str(s) => {
+      Token::String(s) => {
         self.skip();
-        Pat::Str(s)
+        Pat::String(s)
       }
       Token::Char(c) => {
         self.skip();

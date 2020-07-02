@@ -302,7 +302,7 @@ impl<'s> TokenMaker<'s> {
             } else {
               let string = String::from_utf8(str_bs).unwrap();
               let str_ref = self.store.insert_string(string);
-              Ok(Token::Str(str_ref))
+              Ok(Token::String(str_ref))
             };
           }
           b'\\' => {

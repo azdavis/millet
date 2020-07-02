@@ -757,7 +757,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::DecWord(_) => Ty::WORD,
     Exp::HexWord(_) => Ty::WORD,
     Exp::Real(_) => Ty::REAL,
-    Exp::Str(_) => Ty::STRING,
+    Exp::String(_) => Ty::STRING,
     Exp::Char(_) => Ty::CHAR,
     Exp::LongVid(vid) => {
       let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
@@ -938,13 +938,13 @@ fn ck_exhaustive(dts: &Datatypes, ty: &Ty, pats: Vec<Located<Pat>>) -> Result<bo
   Ok(needs.is_empty())
 }
 
-/// Int, Word, Str, Char each have a set of every element of this type we DO NOT need
+/// Int, Word, String, Char each have a set of every element of this type we DO NOT need
 #[derive(Debug, Clone)]
 enum Need {
   Unmatchable,
   Int(HashSet<i32>),
   Word(HashSet<i32>),
-  Str(HashSet<StrRef>),
+  String(HashSet<StrRef>),
   Char(HashSet<u8>),
   Record(HashMap<Label, Need>),
   Ctor(StrRef, Option<ArgNeed>),
@@ -978,7 +978,7 @@ fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
         return vec![Need::Word(HashSet::new())];
       }
       if *ty == Ty::STRING {
-        return vec![Need::Str(HashSet::new())];
+        return vec![Need::String(HashSet::new())];
       }
       if *ty == Ty::CHAR {
         return vec![Need::Char(HashSet::new())];
@@ -1031,7 +1031,7 @@ fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> NeedRes {
     Pat::Anything => NeedRes::Removed,
     Pat::Int(x) => need_prim!(need, *x, Int),
     Pat::Word(x) => need_prim!(need, *x, Word),
-    Pat::Str(x) => need_prim!(need, *x, Str),
+    Pat::String(x) => need_prim!(need, *x, String),
     Pat::Char(x) => need_prim!(need, *x, Char),
     Pat::Record(got_rows) => {
       let need_rows = match need {
@@ -1402,7 +1402,7 @@ enum Pat {
   Anything,
   Int(i32),
   Word(i32),
-  Str(StrRef),
+  String(StrRef),
   Char(u8),
   Record(Vec<(Label, Pat)>),
   Ctor(StrRef, Option<Box<Pat>>),
@@ -1415,7 +1415,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::HexInt(n) => (ValEnv::new(), Ty::INT, Pat::Int(*n)),
     AstPat::DecWord(n) => (ValEnv::new(), Ty::WORD, Pat::Word(*n)),
     AstPat::HexWord(n) => (ValEnv::new(), Ty::WORD, Pat::Word(*n)),
-    AstPat::Str(s) => (ValEnv::new(), Ty::STRING, Pat::Str(*s)),
+    AstPat::String(s) => (ValEnv::new(), Ty::STRING, Pat::String(*s)),
     AstPat::Char(c) => (ValEnv::new(), Ty::CHAR, Pat::Char(*c)),
     AstPat::LongVid(vid) => {
       let ty_scheme = get_env(cx, vid)?

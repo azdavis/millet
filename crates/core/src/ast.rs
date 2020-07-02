@@ -12,7 +12,7 @@ pub enum Exp<I> {
   DecWord(i32),
   HexWord(i32),
   Real(f64),
-  Str(StrRef),
+  String(StrRef),
   Char(u8),
   // end special constants
   LongVid(Long<I>),
@@ -175,7 +175,7 @@ pub enum Pat<I> {
   HexInt(i32),
   DecWord(i32),
   HexWord(i32),
-  Str(StrRef),
+  String(StrRef),
   Char(u8),
   // end special constants
   LongVid(Long<I>),
