@@ -1226,7 +1226,6 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           return Err(dec.loc.wrap(StaticsError::Todo));
         }
         let (other, mut pat_ty, pat) = ck_pat(cx, st, &val_bind.pat)?;
-        // TODO check pat is irrefutable
         for &name in other.keys() {
           ck_binding(val_bind.pat.loc.wrap(name))?;
         }
