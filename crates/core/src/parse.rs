@@ -1371,11 +1371,13 @@ impl Parser {
   fn pat_prec(&mut self, min_prec: Option<OpInfo>) -> Result<Located<Pat<StrRef>>> {
     let mut ret = self.at_pat()?;
     if let Pat::LongVid(long_vid) = ret.val {
-      ret = ret.loc.wrap(self.pat_long_vid(ret.loc, long_vid)?);
+      let pat = self.pat_long_vid(ret.loc, long_vid)?;
+      ret = self.wrap(ret.loc, pat);
     }
     loop {
+      let loc = ret.loc;
       let tok = self.peek();
-      ret = ret.loc.wrap(match tok.val {
+      let pat = match tok.val {
         Token::Colon => {
           if min_prec.is_some() {
             break;
@@ -1397,7 +1399,8 @@ impl Parser {
           Pat::InfixCtor(ret.into(), tok.loc.wrap(id), rhs.into())
         }
         _ => break,
-      });
+      };
+      ret = self.wrap(loc, pat);
     }
     Ok(ret)
   }
