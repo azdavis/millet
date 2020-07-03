@@ -7,7 +7,7 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
-ec=0
+ok=true
 old_pwd="$PWD"
 for x in "$@"; do
   cd "$x"
@@ -17,9 +17,14 @@ for x in "$@"; do
   else
     cat out.tmp
     echo "$x: FAIL"
-    ec=1
+    ok=false
   fi
   cd "$old_pwd"
 done
 
-exit "$ec"
+if "$ok"; then
+  echo "==> all tests passed."
+else
+  echo "==> some tests failed."
+  exit 1
+fi
