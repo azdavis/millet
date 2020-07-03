@@ -949,14 +949,14 @@ enum Need {
   String(HashSet<StrRef>),
   Char(HashSet<u8>),
   Record(HashMap<Label, Need>),
-  Ctor(StrRef, Option<ArgNeed>),
+  Ctor(StrRef, Option<Box<ArgNeed>>),
 }
 
 #[derive(Debug, Clone)]
 enum ArgNeed {
   // TODO could avoid storing the type in here if we carried ty along in ck_need.
-  Lazy(Box<Ty>),
-  Forced(Box<Need>),
+  Lazy(Ty),
+  Forced(Need),
 }
 
 fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
@@ -996,7 +996,7 @@ fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
         .map(|(&name, val_info)| {
           assert!(matches!(val_info.id_status, IdStatus::Ctor));
           let arg = match val_info.ty_scheme.apply_args(args.clone()) {
-            Ty::Arrow(arg_ty, _) => Some(ArgNeed::Lazy(arg_ty)),
+            Ty::Arrow(arg_ty, _) => Some(ArgNeed::Lazy(*arg_ty).into()),
             _ => None,
           };
           Need::Ctor(name, arg)
@@ -1076,9 +1076,9 @@ fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> NeedRes {
         (Some(need), Some(got)) => (need, got),
         _ => unreachable!(),
       };
-      let (needs, mut changed) = match need {
+      let (needs, mut changed) = match *need {
         ArgNeed::Lazy(ty) => (needs_from_ty(dts, &ty), true),
-        ArgNeed::Forced(need) => (vec![*need], false),
+        ArgNeed::Forced(need) => (vec![need], false),
       };
       let mut new_needs = Vec::new();
       for need in needs {
@@ -1092,7 +1092,7 @@ fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> NeedRes {
         };
         let mut ns = ns
           .into_iter()
-          .map(|n| Need::Ctor(need_name, Some(ArgNeed::Forced(n.into()))))
+          .map(|n| Need::Ctor(need_name, Some(ArgNeed::Forced(n).into())))
           .collect();
         new_needs.append(&mut ns);
       }
