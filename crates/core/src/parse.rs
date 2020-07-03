@@ -1067,10 +1067,6 @@ impl Parser {
     self.semicolon_seq(Self::maybe_dec, Dec::Seq)
   }
 
-  // NOTE this is not compliant with the spec (page 78): "the parentheses may also be dropped if `:
-  // ty` or `=` follows immediately." I can't figure out a way to be both spec compliant and also
-  // not require unbounded lookahead. also note there is already nastiness with `fun (`, see the Fun
-  // case for maybe_dec.
   fn fval_bind_case(&mut self) -> Result<FValBindCase<StrRef>> {
     let cur = self.i;
     let (vid, pats) = if let Ok((vid, pat)) = self.fval_bind_case_no_parens() {
