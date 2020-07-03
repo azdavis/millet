@@ -4,8 +4,6 @@
 //!
 //! [1]: http://dev.stephendiehl.com/fun/006_hindley_milner.html
 
-// #![allow(unused)]
-
 mod ck;
 mod exhaustive;
 mod std_lib;
