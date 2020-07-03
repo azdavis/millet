@@ -170,7 +170,7 @@ pub enum ExBindInner<I> {
 #[derive(Debug)]
 pub enum Pat<I> {
   Wildcard,
-  // begin special constants (note: no real)
+  // begin special constants (NOTE no real)
   DecInt(i32),
   HexInt(i32),
   DecWord(i32),
