@@ -202,7 +202,6 @@ fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> NeedRes {
   }
 }
 
-// TODO make more generic (iterator)?
 fn cross<T, U>(mut xs: Vec<(T, Vec<U>)>) -> Vec<HashMap<T, U>>
 where
   T: Clone + std::hash::Hash + Eq,
@@ -239,7 +238,8 @@ mod tests {
 
   #[test]
   fn test_cross() {
-    assert_eq!(cross(vec![]), Vec::<HashMap<T, U>>::new());
+    assert_eq!(cross(vec![]), vec![]);
+    assert_eq!(cross(vec![("guh", vec![])]), vec![]);
     assert_eq!(
       cross(vec![("foo", vec![1, 2, 3])]),
       vec![
@@ -250,7 +250,7 @@ mod tests {
     );
     assert_eq!(
       cross(vec![("foo", vec![1, 2, 3]), ("nope", vec![])]),
-      Vec::<HashMap<T, U>>::new(),
+      vec![],
     );
     assert_eq!(
       cross(vec![("foo", vec![1, 2, 3]), ("bar", vec![3, 4, 5, 6])]),
