@@ -23,8 +23,8 @@ for x in "$@"; do
 done
 
 if "$ok"; then
-  echo "==> all tests passed."
+  echo "==> all tests ok."
 else
-  echo "==> some tests failed."
+  echo "==> some tests not ok."
   exit 1
 fi
