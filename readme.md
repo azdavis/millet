@@ -6,8 +6,7 @@ programming course.
 
 The main project under current development is a language server, and a
 corresponding Visual Studio Code language client extension. Other projects like
-an automatic formatter, an interpreter, a debugger, and a compiler might be
-explored.
+an formatter, an interpreter, a debugger, and a compiler might be explored.
 
 ## Naming
 
