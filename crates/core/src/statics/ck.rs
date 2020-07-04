@@ -224,12 +224,12 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
   let mut res_ty = Ty::Var(st.new_ty_var(false));
   let mut pats = Vec::with_capacity(cases.arms.len());
   for arm in cases.arms.iter() {
-    // TODO clone in loop - expensive?
-    let mut cx = cx.clone();
-    let (val_env, pat_ty, pat) = ck_pat(&cx, st, &arm.pat)?;
+    let (val_env, pat_ty, pat) = ck_pat(cx, st, &arm.pat)?;
     pats.push(arm.pat.loc.wrap(pat));
     // TODO what about type variables? The Definition says this should allow new free type variables
-    // to enter the Cx, but right now we do nothing with `cx.ty_vars`.
+    // to enter the Cx, but right now we do nothing with `cx.ty_vars`. TODO clone in loop -
+    // expensive?
+    let mut cx = cx.clone();
     cx.env.val_env.extend(val_env);
     let exp_ty = ck_exp(&cx, st, &arm.exp)?;
     st.subst.unify(arm.pat.loc, arg_ty.clone(), pat_ty)?;
