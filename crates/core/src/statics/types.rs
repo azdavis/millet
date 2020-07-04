@@ -23,6 +23,8 @@ pub enum StaticsError {
   NonExhaustiveMatch,
   NonExhaustiveBinding,
   UnreachablePattern,
+  FunDecNameMismatch(StrRef, StrRef),
+  FunDecWrongNumPats(usize, usize),
   Todo,
 }
 
@@ -56,6 +58,15 @@ impl StaticsError {
       Self::NonExhaustiveMatch => "non-exhaustive match".to_owned(),
       Self::NonExhaustiveBinding => "non-exhaustive binding".to_owned(),
       Self::UnreachablePattern => "unreachable pattern".to_owned(),
+      Self::FunDecNameMismatch(want, got) => format!(
+        "name mismatch in function declaration: expected {}, found {}",
+        store.get(*want),
+        store.get(*got)
+      ),
+      Self::FunDecWrongNumPats(want, got) => format!(
+        "wrong number of patterns in function declaration: expected {}, found {}",
+        want, got
+      ),
       Self::Todo => "unimplemented language construct".to_owned(),
     }
   }

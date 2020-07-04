@@ -30,7 +30,7 @@ use crate::loc::{Loc, Located};
 use crate::statics::exhaustive;
 use crate::statics::types::{
   Basis, Cx, DatatypeInfo, Datatypes, Env, Item, Pat, Result, State, StaticsError, StrEnv, Subst,
-  Ty, TyEnv, TyInfo, TyScheme, TyVarSet, ValEnv, ValInfo,
+  Ty, TyEnv, TyInfo, TyScheme, TyVar, TyVarSet, ValEnv, ValInfo,
 };
 use maplit::hashmap;
 use std::collections::{HashMap, HashSet};
@@ -339,6 +339,27 @@ fn ck_binding(name: Located<StrRef>) -> Result<()> {
   Ok(())
 }
 
+struct FunInfo {
+  args: Vec<TyVar>,
+  ret: TyVar,
+}
+
+fn fun_infos_to_ve(fun_infos: &HashMap<StrRef, FunInfo>) -> ValEnv {
+  fun_infos
+    .iter()
+    .map(|(&name, fun_info)| {
+      let ty = fun_info
+        .args
+        .iter()
+        .rev()
+        .fold(Ty::Var(fun_info.ret), |ac, &tv| {
+          Ty::Arrow(Ty::Var(tv).into(), ac.into())
+        });
+      (name, ValInfo::val(TyScheme::mono(ty)))
+    })
+    .collect()
+}
+
 fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   let ret = match &dec.val {
     Dec::Val(ty_vars, val_binds) => {
@@ -372,9 +393,76 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       val_env.into()
     }
-    Dec::Fun(_, _) => {
-      //
-      return Err(dec.loc.wrap(StaticsError::Todo));
+    Dec::Fun(ty_vars, fval_binds) => {
+      if let Some(tv) = ty_vars.first() {
+        return Err(tv.loc.wrap(StaticsError::Todo));
+      }
+      let mut fun_infos = HashMap::with_capacity(fval_binds.len());
+      for fval_bind in fval_binds {
+        let first = fval_bind.cases.first().unwrap();
+        let info = FunInfo {
+          args: first.pats.iter().map(|_| st.new_ty_var(false)).collect(),
+          ret: st.new_ty_var(false),
+        };
+        env_ins(&mut fun_infos, first.vid, info)?;
+      }
+      for fval_bind in fval_binds {
+        let name = fval_bind.cases.first().unwrap().vid.val;
+        let info = fun_infos.get(&name).unwrap();
+        let mut arg_pats = Vec::with_capacity(fval_bind.cases.len());
+        for case in fval_bind.cases.iter() {
+          if name != case.vid.val {
+            let err = StaticsError::FunDecNameMismatch(name, case.vid.val);
+            return Err(case.vid.loc.wrap(err));
+          }
+          if info.args.len() != case.pats.len() {
+            let err = StaticsError::FunDecWrongNumPats(info.args.len(), case.pats.len());
+            return Err(case.vid.loc.wrap(err));
+          }
+          let mut pats_val_env = ValEnv::new();
+          let mut arg_pat = Vec::with_capacity(info.args.len());
+          for (idx, (pat, &tv)) in case.pats.iter().zip(info.args.iter()).enumerate() {
+            let (ve, pat_ty, new_pat) = ck_pat(cx, st, pat)?;
+            st.subst.unify(pat.loc, Ty::Var(tv), pat_ty)?;
+            env_merge(&mut pats_val_env, ve, pat.loc)?;
+            tuple_lab(idx);
+            arg_pat.push((tuple_lab(idx), new_pat));
+          }
+          let begin = case.pats.first().unwrap().loc;
+          let end = case.pats.last().unwrap().loc;
+          arg_pats.push(begin.span(end).wrap(Pat::Record(arg_pat)));
+          if let Some(ty) = &case.ret_ty {
+            let new_ty = ck_ty(cx, st, ty)?;
+            st.subst.unify(ty.loc, Ty::Var(info.ret), new_ty)?;
+          }
+          let mut cx = cx.clone();
+          // no dupe checking here - intentionally shadow.
+          cx.env.val_env.extend(fun_infos_to_ve(&fun_infos));
+          cx.env.val_env.extend(pats_val_env);
+          let body_ty = ck_exp(&cx, st, &case.body)?;
+          st.subst.unify(case.body.loc, Ty::Var(info.ret), body_ty)?;
+        }
+        let mut arg_ty = Ty::Record(
+          info
+            .args
+            .iter()
+            .enumerate()
+            .map(|(idx, &tv)| (tuple_lab(idx), Ty::Var(tv)))
+            .collect(),
+        );
+        arg_ty.apply(&st.subst);
+        if !exhaustive::ck(&st.datatypes, &arg_ty, arg_pats)? {
+          let begin = fval_bind.cases.first().unwrap().vid.loc;
+          let end = fval_bind.cases.last().unwrap().body.loc;
+          return Err(begin.span(end).wrap(StaticsError::NonExhaustiveMatch));
+        }
+      }
+      let mut val_env = fun_infos_to_ve(&fun_infos);
+      for (_, val_info) in val_env.iter_mut() {
+        val_info.ty_scheme.ty.apply(&st.subst);
+        generalize(&cx.env.ty_env, &st.datatypes, &mut val_info.ty_scheme);
+      }
+      val_env.into()
     }
     Dec::Type(ty_binds) => {
       let mut ty_env = TyEnv::default();

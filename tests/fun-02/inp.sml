@@ -1,0 +1,10 @@
+fun append [] ys = ys
+  | append (x :: xs) ys = x :: append xs ys
+and head [] = raise Match
+  | head (x :: _) = x
+and tail [] = raise Bind
+  | tail [x] = x
+  | tail (_ :: xs) = tail xs
+val x = head [1, 2, 3]
+and y = tail [false, true, false]
+and z = append [1, 2, 3] [7, 8, 9]
