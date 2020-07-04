@@ -4,6 +4,7 @@ use crate::ast::Label;
 use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::types::{Datatypes, IdStatus, Pat, Result, StaticsError, Ty};
+use maplit::hashmap;
 use std::collections::{HashMap, HashSet};
 
 /// Note that `ty` _must_ be the unification of `pats`. That is, each pat in `pats` must have been
@@ -63,10 +64,7 @@ fn needs_from_ty(dts: &Datatypes, ty: &Ty) -> Vec<Need> {
         .iter()
         .map(|&(lab, ref ty)| (lab, needs_from_ty(dts, ty)))
         .collect();
-      cross(rows)
-        .into_iter()
-        .map(|xs| Need::Record(xs.into_iter().collect()))
-        .collect()
+      cross(rows).into_iter().map(Need::Record).collect()
     }
     Ty::Ctor(args, sym) => {
       if *ty == Ty::INT {
@@ -204,24 +202,23 @@ fn ck_need(need: Need, pat: &Pat, dts: &Datatypes) -> NeedRes {
   }
 }
 
-// TODO make more generic (iterator) or output Vec<HashMap<T, U>> to avoid another into_iter the one
-// place we use this?
-fn cross<T, U>(mut xs: Vec<(T, Vec<U>)>) -> Vec<Vec<(T, U)>>
+// TODO make more generic (iterator)?
+fn cross<T, U>(mut xs: Vec<(T, Vec<U>)>) -> Vec<HashMap<T, U>>
 where
-  T: Clone,
+  T: Clone + std::hash::Hash + Eq,
   U: Clone,
 {
   match xs.pop() {
     None => Vec::new(),
     Some((t, us)) => {
       if xs.is_empty() {
-        return us.into_iter().map(|u| vec![(t.clone(), u)]).collect();
+        return us.into_iter().map(|u| hashmap![t.clone() => u]).collect();
       }
       let cross_xs = cross(xs);
       let mut ret = Vec::with_capacity(us.len() * cross_xs.len());
       for u in us {
         for mut ys in cross_xs.clone() {
-          ys.push((t.clone(), u.clone()));
+          ys.insert(t.clone(), u.clone());
           ret.push(ys);
         }
       }
@@ -232,39 +229,44 @@ where
 
 #[cfg(test)]
 mod tests {
+  use super::{hashmap, HashMap};
   type T = &'static str;
   type U = usize;
 
-  fn cross(xs: Vec<(T, Vec<U>)>) -> Vec<Vec<(T, U)>> {
+  fn cross(xs: Vec<(T, Vec<U>)>) -> Vec<HashMap<T, U>> {
     super::cross(xs)
   }
 
   #[test]
   fn test_cross() {
-    assert_eq!(cross(vec![]), Vec::<Vec<(T, U)>>::new());
+    assert_eq!(cross(vec![]), Vec::<HashMap<T, U>>::new());
     assert_eq!(
       cross(vec![("foo", vec![1, 2, 3])]),
-      vec![vec![("foo", 1)], vec![("foo", 2)], vec![("foo", 3)]],
+      vec![
+        hashmap!["foo" => 1],
+        hashmap!["foo" => 2],
+        hashmap!["foo" => 3]
+      ],
     );
     assert_eq!(
       cross(vec![("foo", vec![1, 2, 3]), ("nope", vec![])]),
-      Vec::<Vec<(T, U)>>::new(),
+      Vec::<HashMap<T, U>>::new(),
     );
     assert_eq!(
       cross(vec![("foo", vec![1, 2, 3]), ("bar", vec![3, 4, 5, 6])]),
       vec![
-        vec![("foo", 1), ("bar", 3)],
-        vec![("foo", 2), ("bar", 3)],
-        vec![("foo", 3), ("bar", 3)],
-        vec![("foo", 1), ("bar", 4)],
-        vec![("foo", 2), ("bar", 4)],
-        vec![("foo", 3), ("bar", 4)],
-        vec![("foo", 1), ("bar", 5)],
-        vec![("foo", 2), ("bar", 5)],
-        vec![("foo", 3), ("bar", 5)],
-        vec![("foo", 1), ("bar", 6)],
-        vec![("foo", 2), ("bar", 6)],
-        vec![("foo", 3), ("bar", 6)],
+        hashmap!["foo" => 1, "bar" => 3],
+        hashmap!["foo" => 2, "bar" => 3],
+        hashmap!["foo" => 3, "bar" => 3],
+        hashmap!["foo" => 1, "bar" => 4],
+        hashmap!["foo" => 2, "bar" => 4],
+        hashmap!["foo" => 3, "bar" => 4],
+        hashmap!["foo" => 1, "bar" => 5],
+        hashmap!["foo" => 2, "bar" => 5],
+        hashmap!["foo" => 3, "bar" => 5],
+        hashmap!["foo" => 1, "bar" => 6],
+        hashmap!["foo" => 2, "bar" => 6],
+        hashmap!["foo" => 3, "bar" => 6],
       ]
     );
   }
