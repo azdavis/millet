@@ -100,7 +100,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::Ctor(vid, arg) => {
       let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
       if val_info.id_status.is_val() {
-        return Err(vid.loc().wrap(StaticsError::ValAsPat));
+        return Err(vid.loc().wrap(StaticsError::PatWrongIdStatus));
       }
       let (val_env, arg_ty, arg_pat) = ck(cx, st, arg)?;
       let ctor_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
@@ -113,7 +113,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::InfixCtor(lhs, vid, rhs) => {
       let val_info = get_val_info(&cx.env, *vid)?;
       if val_info.id_status.is_val() {
-        return Err(vid.loc.wrap(StaticsError::ValAsPat));
+        return Err(vid.loc.wrap(StaticsError::PatWrongIdStatus));
       }
       let func_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
       let (mut val_env, lhs_ty, lhs_pat) = ck(cx, st, lhs)?;

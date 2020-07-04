@@ -13,7 +13,7 @@ pub enum StaticsError {
   DuplicateLabel(Label),
   Circularity(TyVar, Ty),
   TyMismatch(Ty, Ty),
-  ValAsPat,
+  PatWrongIdStatus,
   WrongNumTyArgs(usize, usize),
   NonVarInAs(StrRef),
   ForbiddenBinding(StrRef),
@@ -41,7 +41,10 @@ impl StaticsError {
         show_ty(store, &lhs),
         show_ty(store, &rhs)
       ),
-      Self::ValAsPat => "value binding used as pattern".to_owned(),
+      Self::PatWrongIdStatus => {
+        "mismatched identifier status: expected a constructor or exception, found a value"
+          .to_owned()
+      }
       Self::WrongNumTyArgs(want, got) => format!(
         "wrong number of type arguments: expected {}, found {}",
         want, got
