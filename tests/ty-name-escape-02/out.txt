@@ -1,0 +1,7 @@
+error: expression causes a type name to escape its scope
+  ┌─ inp.sml:5:5
+  │
+5 │     if 3 < 4 then [] else [(3, bad, false, "hey")]
+  │     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+typechecking failed
