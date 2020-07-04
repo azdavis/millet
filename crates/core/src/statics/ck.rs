@@ -116,11 +116,10 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       Ty::Record(ty_rows)
     }
     Exp::List(exps) => {
-      let mut elem = Ty::Var(st.new_ty_var(false));
+      let elem = Ty::Var(st.new_ty_var(false));
       for exp in exps {
         let ty = ck_exp(cx, st, exp)?;
         st.subst.unify(exp.loc, elem.clone(), ty)?;
-        elem.apply(&st.subst);
       }
       Ty::list(elem)
     }
@@ -147,10 +146,9 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::App(func, arg) => {
       let func_ty = ck_exp(cx, st, func)?;
       let arg_ty = ck_exp(cx, st, arg)?;
-      let mut ret_ty = Ty::Var(st.new_ty_var(false));
+      let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
       st.subst.unify(exp.loc, func_ty, arrow_ty)?;
-      ret_ty.apply(&st.subst);
       ret_ty
     }
     Exp::InfixApp(lhs, func, rhs) => {
@@ -158,20 +156,18 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let func_ty = instantiate(st, &val_info.ty_scheme, exp.loc);
       let lhs_ty = ck_exp(cx, st, lhs)?;
       let rhs_ty = ck_exp(cx, st, rhs)?;
-      let mut ret_ty = Ty::Var(st.new_ty_var(false));
+      let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(
         Ty::Record(vec![(Label::Num(1), lhs_ty), (Label::Num(2), rhs_ty)]).into(),
         ret_ty.clone().into(),
       );
       st.subst.unify(exp.loc, func_ty, arrow_ty)?;
-      ret_ty.apply(&st.subst);
       ret_ty
     }
     Exp::Typed(inner, ty) => {
-      let mut exp_ty = ck_exp(cx, st, inner)?;
+      let exp_ty = ck_exp(cx, st, inner)?;
       let ty_ty = ck_ty(cx, st, ty)?;
       st.subst.unify(exp.loc, ty_ty, exp_ty.clone())?;
-      exp_ty.apply(&st.subst);
       exp_ty
     }
     Exp::Andalso(lhs, rhs) | Exp::Orelse(lhs, rhs) => {
@@ -182,11 +178,10 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       Ty::BOOL
     }
     Exp::Handle(head, cases) => {
-      let mut head_ty = ck_exp(cx, st, head)?;
+      let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       st.subst.unify(exp.loc, Ty::EXN, arg_ty)?;
       st.subst.unify(exp.loc, head_ty.clone(), res_ty)?;
-      head_ty.apply(&st.subst);
       head_ty
     }
     Exp::Raise(exp) => {
@@ -196,19 +191,17 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     }
     Exp::If(cond, then_e, else_e) => {
       let cond_ty = ck_exp(cx, st, cond)?;
-      let mut then_ty = ck_exp(cx, st, then_e)?;
+      let then_ty = ck_exp(cx, st, then_e)?;
       let else_ty = ck_exp(cx, st, else_e)?;
       st.subst.unify(cond.loc, Ty::BOOL, cond_ty)?;
       st.subst.unify(exp.loc, then_ty.clone(), else_ty)?;
-      then_ty.apply(&st.subst);
       then_ty
     }
     Exp::While(..) => return Err(exp.loc.wrap(StaticsError::Todo)),
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
-      let (arg_ty, mut res_ty) = ck_cases(cx, st, cases, exp.loc)?;
+      let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       st.subst.unify(exp.loc, head_ty, arg_ty)?;
-      res_ty.apply(&st.subst);
       res_ty
     }
     Exp::Fn(cases) => {
@@ -221,7 +214,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
 
 fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<(Ty, Ty)> {
   let mut arg_ty = Ty::Var(st.new_ty_var(false));
-  let mut res_ty = Ty::Var(st.new_ty_var(false));
+  let res_ty = Ty::Var(st.new_ty_var(false));
   let mut pats = Vec::with_capacity(cases.arms.len());
   for arm in cases.arms.iter() {
     let (val_env, pat_ty, pat) = ck_pat(cx, st, &arm.pat)?;
@@ -234,9 +227,8 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
     let exp_ty = ck_exp(&cx, st, &arm.exp)?;
     st.subst.unify(arm.pat.loc, arg_ty.clone(), pat_ty)?;
     st.subst.unify(arm.exp.loc, res_ty.clone(), exp_ty)?;
-    arg_ty.apply(&st.subst);
-    res_ty.apply(&st.subst);
   }
+  arg_ty.apply(&st.subst);
   if exhaustive::ck(&st.datatypes, &arg_ty, pats)? {
     Ok((arg_ty, res_ty))
   } else {
@@ -350,7 +342,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           // (Ty, IdStatus)>. but this assert should hold because we the only TySchemes we put into
           // the ValEnv returned from ck_pat are mono.
           assert!(val_info.ty_scheme.ty_vars.is_empty());
-          val_info.ty_scheme.apply(&st.subst);
+          val_info.ty_scheme.ty.apply(&st.subst);
           val_info.ty_scheme = generalize(&cx.env.ty_env, val_info.ty_scheme.ty, &st.datatypes);
           env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
         }
@@ -576,7 +568,7 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       (ve, Ty::Record(ty_rows), Pat::Record(pat_rows))
     }
     AstPat::List(pats) => {
-      let mut elem = Ty::Var(st.new_ty_var(false));
+      let elem = Ty::Var(st.new_ty_var(false));
       let mut ve = ValEnv::new();
       let mut new_pats = Vec::with_capacity(pats.len());
       for pat in pats {
@@ -584,7 +576,6 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         env_merge(&mut ve, other_ve, pat.loc)?;
         st.subst.unify(pat.loc, elem.clone(), ty)?;
         new_pats.push(new_pat);
-        elem.apply(&st.subst);
       }
       let pat = new_pats
         .into_iter()
@@ -604,10 +595,9 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       }
       let (val_env, arg_ty, arg_pat) = ck_pat(cx, st, arg)?;
       let ctor_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
-      let mut ret_ty = Ty::Var(st.new_ty_var(false));
+      let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
       st.subst.unify(pat.loc, ctor_ty, arrow_ty)?;
-      ret_ty.apply(&st.subst);
       let pat = Pat::Ctor(vid.last.val, Some(arg_pat.into()));
       (val_env, ret_ty, pat)
     }
@@ -620,13 +610,12 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let (mut val_env, lhs_ty, lhs_pat) = ck_pat(cx, st, lhs)?;
       let (other_ve, rhs_ty, rhs_pat) = ck_pat(cx, st, rhs)?;
       env_merge(&mut val_env, other_ve, pat.loc)?;
-      let mut ret_ty = Ty::Var(st.new_ty_var(false));
+      let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(
         Ty::Record(vec![(Label::Num(1), lhs_ty), (Label::Num(2), rhs_ty)]).into(),
         ret_ty.clone().into(),
       );
       st.subst.unify(pat.loc, func_ty, arrow_ty)?;
-      ret_ty.apply(&st.subst);
       let pat = Pat::Ctor(
         vid.val,
         Some(Pat::Record(vec![(Label::Num(1), lhs_pat), (Label::Num(2), rhs_pat)]).into()),
@@ -634,10 +623,9 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       (val_env, ret_ty, pat)
     }
     AstPat::Typed(inner_pat, ty) => {
-      let (val_env, mut pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
+      let (val_env, pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
       let ty = ck_ty(cx, st, ty)?;
       st.subst.unify(pat.loc, ty, pat_ty.clone())?;
-      pat_ty.apply(&st.subst);
       (val_env, pat_ty, inner_pat)
     }
     AstPat::As(vid, ty, inner_pat) => {
@@ -649,11 +637,10 @@ fn ck_pat(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       {
         return Err(vid.loc.wrap(StaticsError::NonVarInAs(vid.val)));
       }
-      let (mut val_env, mut pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
+      let (mut val_env, pat_ty, inner_pat) = ck_pat(cx, st, inner_pat)?;
       if let Some(ty) = ty {
         let ty = ck_ty(cx, st, ty)?;
         st.subst.unify(pat.loc, ty, pat_ty.clone())?;
-        pat_ty.apply(&st.subst);
       }
       let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));
       env_ins(&mut val_env, *vid, val_info)?;
