@@ -6,6 +6,12 @@ use crate::loc::Located;
 use crate::statics::types::{Datatypes, IdStatus, Pat, Result, StaticsError, Ty};
 use std::collections::{HashMap, HashSet};
 
+/// Note that `ty` _must_ be the unification of `pats`. That is, each pat in `pats` must have been
+/// derived from a call to `ck_pat`, which returned both a Pat and a Ty. The Pat should be in
+/// `pats`, and the Ty should be unified `ty`. Additionally, after having unified all the pattern
+/// Tys, `ty` must have the resulting Subst applied to it. A better API design might have this
+/// function accept only a vector of AST `Pat`, compute the statics `Pat`s and their types, unify
+/// the types, apply the Subst, and _then_ proceed as we do here.
 pub fn ck(dts: &Datatypes, ty: &Ty, pats: Vec<Located<Pat>>) -> Result<bool> {
   let mut needs = needs_from_ty(&dts, &ty);
   for pat in pats {
