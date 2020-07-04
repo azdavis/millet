@@ -12,6 +12,7 @@
     { "include": "#decInt" },
     { "include": "#bool" },
     { "include": "#tyVar" },
+    { "include": "#symbolicIdent" },
     { "include": "#controlKeyword" },
     { "include": "#otherKeyword" },
     { "include": "#invalidKeyword" }
@@ -65,6 +66,10 @@
     "tyVar": {
       "name": "entity.name.type-variable-sml",
       "match": "'+[A-Za-z][A-Za-z0-9']*"
+    },
+    "symbolicIdent": {
+      "name": "keyword.operator.sml",
+      "match": "[!%&\\$#\\+\\-/:<=>\\?@\\\\~`\\^\\|\\*]+"
     },
     "controlKeyword": {
       "name": "keyword.control.sml",
