@@ -5,7 +5,7 @@
       "label": "extension: build",
       "group": "build",
       "type": "shell",
-      "command": "./bin/mk-vscode-extension"
+      "command": "./bin/mk-vscode-ext"
     },
     {
       "label": "tsc: watch",
