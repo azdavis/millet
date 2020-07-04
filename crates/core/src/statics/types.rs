@@ -12,8 +12,7 @@ pub enum StaticsError {
   Redefined(StrRef),
   DuplicateLabel(Label),
   Circularity(TyVar, Ty),
-  HeadMismatch(Ty, Ty),
-  MissingLabel(Label),
+  TyMismatch(Ty, Ty),
   ValAsPat,
   WrongNumTyArgs(usize, usize),
   NonVarInAs(StrRef),
@@ -37,12 +36,11 @@ impl StaticsError {
       Self::Circularity(ty_var, ty) => {
         format!("circularity: {:?} in {}", ty_var, show_ty(store, &ty))
       }
-      Self::HeadMismatch(lhs, rhs) => format!(
+      Self::TyMismatch(lhs, rhs) => format!(
         "mismatched types: expected {}, found {}",
         show_ty(store, &lhs),
         show_ty(store, &rhs)
       ),
-      Self::MissingLabel(lab) => format!("type is missing label {}", show_lab(store, *lab)),
       Self::ValAsPat => "value binding used as pattern".to_owned(),
       Self::WrongNumTyArgs(want, got) => format!(
         "wrong number of type arguments: expected {}, found {}",
@@ -220,14 +218,17 @@ impl Subst {
       (Ty::Var(tv), got) => self.bind(loc, tv, got),
       (want, Ty::Var(tv)) => self.bind(loc, tv, want),
       (Ty::Record(rows_want), Ty::Record(rows_got)) => {
-        let mut map_want: HashMap<_, _> = rows_want.into_iter().collect();
-        let mut map_got: HashMap<_, _> = rows_got.into_iter().collect();
+        let mut map_want: HashMap<_, _> = rows_want.iter().cloned().collect();
+        let mut map_got: HashMap<_, _> = rows_got.iter().cloned().collect();
         let keys: HashSet<_> = map_want.keys().chain(map_got.keys()).copied().collect();
         for k in keys {
           match (map_want.remove(&k), map_got.remove(&k)) {
             (Some(want), Some(got)) => self.unify(loc, want, got)?,
             (Some(..), None) | (None, Some(..)) => {
-              return Err(loc.wrap(StaticsError::MissingLabel(k)))
+              return Err(loc.wrap(StaticsError::TyMismatch(
+                Ty::Record(rows_want),
+                Ty::Record(rows_got),
+              )))
             }
             (None, None) => unreachable!(),
           }
@@ -241,7 +242,7 @@ impl Subst {
       }
       (Ty::Ctor(args_want, name_want), Ty::Ctor(args_got, name_got)) => {
         if name_want != name_got {
-          return Err(loc.wrap(StaticsError::HeadMismatch(
+          return Err(loc.wrap(StaticsError::TyMismatch(
             Ty::Ctor(args_want, name_want),
             Ty::Ctor(args_got, name_got),
           )));
@@ -253,7 +254,7 @@ impl Subst {
         Ok(())
       }
       (want @ Ty::Record(..), got) | (want @ Ty::Arrow(..), got) | (want @ Ty::Ctor(..), got) => {
-        Err(loc.wrap(StaticsError::HeadMismatch(want, got)))
+        Err(loc.wrap(StaticsError::TyMismatch(want, got)))
       }
     }
   }
