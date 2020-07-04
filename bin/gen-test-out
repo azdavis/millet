@@ -12,7 +12,8 @@ old_pwd="$PWD"
 for x in "$@"; do
   cd "$x"
   if sh -eu run.sh; then
-    tee out.txt < out.tmp
+    mv out.tmp out.txt
+    cat out.txt
     echo "$x: ok"
   else
     cat out.tmp
