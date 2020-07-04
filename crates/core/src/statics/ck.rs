@@ -66,16 +66,15 @@ fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
-fn generalize(ty_env: &TyEnv, ty: Ty, dts: &Datatypes) -> TyScheme {
-  TyScheme {
-    ty_vars: ty
-      .free_ty_vars()
-      .difference(&ty_env.free_ty_vars(dts))
-      .copied()
-      .collect(),
-    ty,
-    overload: None,
-  }
+fn generalize(ty_env: &TyEnv, dts: &Datatypes, ty_scheme: &mut TyScheme) {
+  assert!(ty_scheme.ty_vars.is_empty());
+  assert!(ty_scheme.overload.is_none());
+  ty_scheme.ty_vars = ty_scheme
+    .ty
+    .free_ty_vars()
+    .difference(&ty_env.free_ty_vars(dts))
+    .copied()
+    .collect();
 }
 
 fn get_env<'cx>(cx: &'cx Cx, long: &Long<StrRef>) -> Result<&'cx Env> {
@@ -367,7 +366,7 @@ fn ck_dec(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           // the ValEnv returned from ck_pat are mono.
           assert!(val_info.ty_scheme.ty_vars.is_empty());
           val_info.ty_scheme.ty.apply(&st.subst);
-          val_info.ty_scheme = generalize(&cx.env.ty_env, val_info.ty_scheme.ty, &st.datatypes);
+          generalize(&cx.env.ty_env, &st.datatypes, &mut val_info.ty_scheme);
           env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
         }
       }
