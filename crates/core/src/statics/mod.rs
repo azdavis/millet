@@ -29,12 +29,6 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
     }
     return Err(loc.wrap(StaticsError::NoSuitableOverload));
   }
-  for (loc, mut ty, ty_names) in st.ty_name {
-    ty.apply(&st.subst);
-    if !ty.ty_names().is_subset(&ty_names) {
-      return Err(loc.wrap(StaticsError::TyNameEscape));
-    }
-  }
   bs.apply(&st.subst, &mut st.datatypes);
   assert!(bs.free_ty_vars(&st.datatypes).is_empty());
   Ok(())

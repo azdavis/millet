@@ -628,7 +628,6 @@ pub struct State {
   next_ty_var: usize,
   next_sym: usize,
   pub overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
-  pub ty_name: Vec<(Loc, Ty, TyNameSet)>,
   pub subst: Subst,
   pub datatypes: Datatypes,
 }

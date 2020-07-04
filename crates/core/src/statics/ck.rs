@@ -15,7 +15,8 @@
 //!    obligations the patterns need to fulfil.
 //! 3. Right before calling `generalize`. This is so that we know exactly what type variables ought
 //!    to be generalized and which have already been solved to concrete types by the `Subst`.
-//! 4. Right before checking for type name escape. This is handled in `mod.rs`.
+//! 4. Right before checking for type name escape. This is so that we know exactly what type names
+//!    are mentioned in the type we are checking.
 //!
 //! In short, we only need to call `apply` when we truly need access to _everything_ we currently
 //! know about this type. In many situations, for instance, we don't need to call `apply` on a fresh
@@ -162,8 +163,11 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       for exp in exps {
         last = Some((exp.loc, ck_exp(&cx, st, exp)?));
       }
-      let (loc, ty) = last.unwrap();
-      st.ty_name.push((loc, ty.clone(), ty_names));
+      let (loc, mut ty) = last.unwrap();
+      ty.apply(&st.subst);
+      if !ty.ty_names().is_subset(&ty_names) {
+        return Err(loc.wrap(StaticsError::TyNameEscape));
+      }
       ty
     }
     Exp::App(func, arg) => {
