@@ -304,12 +304,9 @@ fn ck_ty(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
         // NOTE could avoid this clone if we separated datatypes from State
         Some(x) => x.ty_fcn(&st.datatypes).clone(),
       };
-      let want_len = ty_fcn.ty_vars.len();
-      if want_len != args.len() {
-        return Err(
-          ty.loc
-            .wrap(StaticsError::WrongNumTyArgs(want_len, args.len())),
-        );
+      if ty_fcn.ty_vars.len() != args.len() {
+        let err = StaticsError::WrongNumTyArgs(ty_fcn.ty_vars.len(), args.len());
+        return Err(ty.loc.wrap(err));
       }
       let mut new_args = Vec::with_capacity(ty_fcn.ty_vars.len());
       for ty in args {
