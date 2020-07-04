@@ -200,21 +200,21 @@ impl Subst {
     Ok(())
   }
 
-  /// lhs = expected, rhs = found. the types immediately have self applied to them upon entry to
+  /// want = expected, got = found. the types immediately have self applied to them upon entry to
   /// this function, so no need to do it yourself before calling.
-  pub fn unify(&mut self, loc: Loc, mut lhs: Ty, mut rhs: Ty) -> Result<()> {
-    lhs.apply(self);
-    rhs.apply(self);
-    match (lhs, rhs) {
-      (Ty::Var(tv), rhs) => self.bind(loc, tv, rhs),
-      (lhs, Ty::Var(tv)) => self.bind(loc, tv, lhs),
-      (Ty::Record(rows_l), Ty::Record(rows_r)) => {
-        let mut map_l: HashMap<_, _> = rows_l.into_iter().collect();
-        let mut map_r: HashMap<_, _> = rows_r.into_iter().collect();
-        let keys: HashSet<_> = map_l.keys().chain(map_r.keys()).copied().collect();
+  pub fn unify(&mut self, loc: Loc, mut want: Ty, mut got: Ty) -> Result<()> {
+    want.apply(self);
+    got.apply(self);
+    match (want, got) {
+      (Ty::Var(tv), got) => self.bind(loc, tv, got),
+      (want, Ty::Var(tv)) => self.bind(loc, tv, want),
+      (Ty::Record(rows_want), Ty::Record(rows_got)) => {
+        let mut map_want: HashMap<_, _> = rows_want.into_iter().collect();
+        let mut map_got: HashMap<_, _> = rows_got.into_iter().collect();
+        let keys: HashSet<_> = map_want.keys().chain(map_got.keys()).copied().collect();
         for k in keys {
-          match (map_l.remove(&k), map_r.remove(&k)) {
-            (Some(ty_l), Some(ty_r)) => self.unify(loc, ty_l, ty_r)?,
+          match (map_want.remove(&k), map_got.remove(&k)) {
+            (Some(want), Some(got)) => self.unify(loc, want, got)?,
             (Some(..), None) | (None, Some(..)) => {
               return Err(loc.wrap(StaticsError::MissingLabel(k)))
             }
@@ -223,26 +223,26 @@ impl Subst {
         }
         Ok(())
       }
-      (Ty::Arrow(arg_l, res_l), Ty::Arrow(arg_r, res_r)) => {
-        self.unify(loc, *arg_l, *arg_r)?;
-        self.unify(loc, *res_l, *res_r)?;
+      (Ty::Arrow(arg_want, res_want), Ty::Arrow(arg_got, res_got)) => {
+        self.unify(loc, *arg_want, *arg_got)?;
+        self.unify(loc, *res_want, *res_got)?;
         Ok(())
       }
-      (Ty::Ctor(args_l, name_l), Ty::Ctor(args_r, name_r)) => {
-        if name_l != name_r {
+      (Ty::Ctor(args_want, name_want), Ty::Ctor(args_got, name_got)) => {
+        if name_want != name_got {
           return Err(loc.wrap(StaticsError::HeadMismatch(
-            Ty::Ctor(args_l, name_l),
-            Ty::Ctor(args_r, name_r),
+            Ty::Ctor(args_want, name_want),
+            Ty::Ctor(args_got, name_got),
           )));
         }
-        assert_eq!(args_l.len(), args_r.len(), "mismatched Ctor args len");
-        for (arg_l, arg_r) in args_l.into_iter().zip(args_r) {
-          self.unify(loc, arg_l, arg_r)?;
+        assert_eq!(args_want.len(), args_got.len(), "mismatched Ctor args len");
+        for (want, got) in args_want.into_iter().zip(args_got) {
+          self.unify(loc, want, got)?;
         }
         Ok(())
       }
-      (lhs @ Ty::Record(..), rhs) | (lhs @ Ty::Arrow(..), rhs) | (lhs @ Ty::Ctor(..), rhs) => {
-        Err(loc.wrap(StaticsError::HeadMismatch(lhs, rhs)))
+      (want @ Ty::Record(..), got) | (want @ Ty::Arrow(..), got) | (want @ Ty::Ctor(..), got) => {
+        Err(loc.wrap(StaticsError::HeadMismatch(want, got)))
       }
     }
   }
