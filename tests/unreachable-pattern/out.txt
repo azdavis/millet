@@ -1,0 +1,7 @@
+error: unreachable pattern
+  ┌─ err.sml:4:5
+  │
+4 │   | 4 => 2
+  │     ^
+
+typechecking failed

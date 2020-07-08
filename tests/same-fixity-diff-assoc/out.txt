@@ -1,0 +1,7 @@
+error: consecutive infix identifiers with same fixity but different associativity
+  ┌─ err.sml:3:16
+  │
+3 │ val _ = 1 << 2 >> 3
+  │                ^^
+
+parsing failed

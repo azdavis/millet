@@ -1,0 +1,7 @@
+error: mismatched types: expected int, found (int) -> ('t23)
+  ┌─ err.sml:1:9
+  │
+1 │ val _ = 3 4
+  │         ^^^
+
+typechecking failed

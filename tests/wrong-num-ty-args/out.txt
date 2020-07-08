@@ -1,0 +1,7 @@
+error: wrong number of type arguments: expected 1, found 2
+  ┌─ err.sml:1:8
+  │
+1 │ val _: (int, bool) list = []
+  │        ^^^^^^^^^^^^^^^^
+
+typechecking failed

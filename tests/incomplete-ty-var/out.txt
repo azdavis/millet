@@ -1,0 +1,7 @@
+error: incomplete type variable
+  ┌─ err.sml:1:10
+  │
+1 │ datatype ' guh = no
+  │          ^
+
+lexing failed

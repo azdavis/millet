@@ -1,0 +1,7 @@
+error: invalid string constant
+  ┌─ err.sml:1:9
+  │
+1 │ val _ = "bad \ bad \ bad"
+  │         ^^^^^^^
+
+lexing failed

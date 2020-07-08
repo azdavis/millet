@@ -1,0 +1,7 @@
+error: no suitable overload found
+  ┌─ err.sml:1:10
+  │
+1 │ val  _ = false + true
+  │          ^^^^^^^^^^^^
+
+typechecking failed

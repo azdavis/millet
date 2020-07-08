@@ -1,0 +1,7 @@
+error: pattern to left of `as` is not a variable: Bad
+  ┌─ err.sml:4:5
+  │
+4 │     Bad as _ => 1
+  │     ^^^
+
+typechecking failed

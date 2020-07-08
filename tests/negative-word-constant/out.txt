@@ -1,0 +1,7 @@
+error: negative word constant
+  ┌─ err.sml:1:9
+  │
+1 │ val _ = ~0w1
+  │         ^
+
+lexing failed

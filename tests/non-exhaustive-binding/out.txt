@@ -1,0 +1,7 @@
+error: non-exhaustive binding
+  ┌─ err.sml:1:5
+  │
+1 │ val 3 = 1 + 2
+  │     ^
+
+typechecking failed

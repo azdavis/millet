@@ -1,0 +1,7 @@
+error: incomplete numeric constant
+  ┌─ err.sml:1:9
+  │
+1 │ val _ = 0x
+  │         ^^
+
+lexing failed

@@ -1,0 +1,7 @@
+error: mismatched identifier status: expected an exception, found a value
+  ┌─ err.sml:2:17
+  │
+2 │ exception Bad = x
+  │                 ^
+
+typechecking failed

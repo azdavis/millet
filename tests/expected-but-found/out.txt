@@ -1,0 +1,7 @@
+error: expected `=`, found `_`
+  ┌─ err.sml:1:7
+  │
+1 │ val _ _ _ _
+  │       ^
+
+parsing failed

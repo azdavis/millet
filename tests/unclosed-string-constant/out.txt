@@ -1,0 +1,7 @@
+error: unclosed string constant
+  ┌─ err.sml:1:9
+  │
+1 │ val _ = "bad
+  │         ^^^^
+
+lexing failed

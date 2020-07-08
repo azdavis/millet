@@ -1,0 +1,7 @@
+error: infix identifier used without preceding `op`: +
+  ┌─ err.sml:1:9
+  │
+1 │ val _ = + (1, 2)
+  │         ^
+
+parsing failed
