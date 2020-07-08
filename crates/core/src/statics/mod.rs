@@ -28,7 +28,7 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
     }
     return Err(loc.wrap(Error::NoSuitableOverload));
   }
-  bs.apply(&st.subst, &mut st.datatypes);
-  assert!(bs.free_ty_vars(&st.datatypes).is_empty());
+  bs.apply(&st.subst, &mut st.sym_tys);
+  assert!(bs.free_ty_vars(&st.sym_tys).is_empty());
   Ok(())
 }

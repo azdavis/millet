@@ -3,8 +3,8 @@
 use crate::ast::Label;
 use crate::intern::StrRef;
 use crate::statics::types::{
-  Basis, DatatypeInfo, Env, FunEnv, SigEnv, State, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme,
-  ValEnv, ValInfo,
+  Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, ValEnv,
+  ValInfo,
 };
 use maplit::{hashmap, hashset};
 
@@ -99,18 +99,18 @@ pub fn get() -> (Basis, State) {
   let word_int = || vec![StrRef::INT, StrRef::WORD];
   let num = || vec![StrRef::INT, StrRef::WORD, StrRef::REAL];
   let mut st = State::default();
-  st.datatypes.insert(
+  st.sym_tys.insert(
     Sym::base(StrRef::BOOL),
-    DatatypeInfo {
+    SymTyInfo {
       ty_fcn: TyScheme::mono(Ty::BOOL),
       val_env: bool_val_env(),
     },
   );
   let a = st.new_ty_var(false);
   let val_env = list_val_env(&mut st);
-  st.datatypes.insert(
+  st.sym_tys.insert(
     Sym::base(StrRef::LIST),
-    DatatypeInfo {
+    SymTyInfo {
       ty_fcn: TyScheme {
         ty_vars: vec![a],
         ty: Ty::list(Ty::Var(a)),
@@ -121,9 +121,9 @@ pub fn get() -> (Basis, State) {
   );
   let a = st.new_ty_var(false);
   let val_env = ref_val_env(&mut st);
-  st.datatypes.insert(
+  st.sym_tys.insert(
     Sym::base(StrRef::REF),
-    DatatypeInfo {
+    SymTyInfo {
       ty_fcn: TyScheme {
         ty_vars: vec![a],
         ty: Ty::ref_(Ty::Var(a)),
@@ -132,9 +132,9 @@ pub fn get() -> (Basis, State) {
       val_env,
     },
   );
-  st.datatypes.insert(
+  st.sym_tys.insert(
     Sym::base(StrRef::ORDER),
-    DatatypeInfo {
+    SymTyInfo {
       ty_fcn: TyScheme::mono(Ty::ORDER),
       val_env: order_val_env(),
     },
@@ -188,16 +188,16 @@ pub fn get() -> (Basis, State) {
       ty_env: TyEnv {
         inner: hashmap![
           StrRef::UNIT => TyInfo::Alias(TyScheme::mono(Ty::Record(Vec::new()))),
-          StrRef::BOOL => TyInfo::Datatype(Sym::base(StrRef::BOOL)),
+          StrRef::BOOL => TyInfo::Sym(Sym::base(StrRef::BOOL)),
           StrRef::INT => TyInfo::Alias(TyScheme::mono(Ty::INT)),
           StrRef::REAL => TyInfo::Alias(TyScheme::mono(Ty::REAL)),
           StrRef::STRING => TyInfo::Alias(TyScheme::mono(Ty::STRING)),
           StrRef::CHAR => TyInfo::Alias(TyScheme::mono(Ty::CHAR)),
           StrRef::WORD => TyInfo::Alias(TyScheme::mono(Ty::WORD)),
-          StrRef::LIST => TyInfo::Datatype(Sym::base(StrRef::LIST)),
-          StrRef::REF => TyInfo::Datatype(Sym::base(StrRef::REF)),
+          StrRef::LIST => TyInfo::Sym(Sym::base(StrRef::LIST)),
+          StrRef::REF => TyInfo::Sym(Sym::base(StrRef::REF)),
           StrRef::EXN => TyInfo::Alias(TyScheme::mono(Ty::EXN)),
-          StrRef::ORDER => TyInfo::Datatype(Sym::base(StrRef::ORDER)),
+          StrRef::ORDER => TyInfo::Sym(Sym::base(StrRef::ORDER)),
         ],
       },
       val_env: bool_val_env()

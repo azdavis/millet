@@ -6,7 +6,7 @@ use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
 use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate, tuple_lab};
 use crate::statics::types::{
-  Con, Cx, Datatypes, Error, Pat, Result, Span, State, Sym, Ty, TyScheme, ValEnv, ValInfo,
+  Con, Cx, Error, Pat, Result, Span, State, Sym, SymTys, Ty, TyScheme, ValEnv, ValInfo,
 };
 use maplit::hashmap;
 use std::collections::BTreeMap;
@@ -43,7 +43,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
             Ty::Ctor(_, sym) => sym,
             _ => return Err(pat.loc.wrap(Error::PatNotConsType(ty))),
           };
-          let span = get_span(&st.datatypes, sym);
+          let span = get_span(&st.sym_tys, sym);
           let pat = Pat::zero(Con::Ctor(vid.last.val, span));
           (ValEnv::new(), ty, pat)
         }
@@ -170,15 +170,15 @@ fn ctor(
     Ty::Ctor(_, sym) => sym,
     _ => unreachable!(),
   };
-  let span = get_span(&st.datatypes, sym);
+  let span = get_span(&st.sym_tys, sym);
   let pat = Pat::Con(Con::Ctor(long.last.val, span), vec![arg_pat]);
   Ok((ctor_res_ty, pat))
 }
 
-fn get_span(dts: &Datatypes, sym: Sym) -> Span {
+fn get_span(sts: &SymTys, sym: Sym) -> Span {
   if sym == Sym::base(StrRef::EXN) {
     Span::PosInf
   } else {
-    Span::Finite(dts.get(&sym).unwrap().val_env.len())
+    Span::Finite(sts.get(&sym).unwrap().val_env.len())
   }
 }

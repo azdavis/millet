@@ -8,7 +8,7 @@ use crate::statics::ck::util::{
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
-  Cx, DatatypeInfo, Env, Error, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar,
+  Cx, Env, Error, Pat, Result, State, StrEnv, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, TyVar,
   ValEnv, ValInfo,
 };
 use maplit::hashmap;
@@ -231,7 +231,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           // the ValEnv returned from ck_pat are mono.
           assert!(val_info.ty_scheme.ty_vars.is_empty());
           val_info.ty_scheme.ty.apply(&st.subst);
-          generalize(&cx.env.ty_env, &st.datatypes, &mut val_info.ty_scheme);
+          generalize(&cx.env.ty_env, &st.sym_tys, &mut val_info.ty_scheme);
           env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
         }
       }
@@ -293,7 +293,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       let mut val_env = fun_infos_to_ve(&fun_infos);
       for (_, val_info) in val_env.iter_mut() {
         val_info.ty_scheme.ty.apply(&st.subst);
-        generalize(&cx.env.ty_env, &st.datatypes, &mut val_info.ty_scheme);
+        generalize(&cx.env.ty_env, &st.sym_tys, &mut val_info.ty_scheme);
       }
       val_env.into()
     }
@@ -334,22 +334,18 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         // datatype does exist, but tell the State that it has just an empty ValEnv. also perform
         // dupe checking on the name of the new type and assert for sanity checking after the dupe
         // check.
-        env_ins(
-          &mut cx.env.ty_env.inner,
-          dat_bind.ty_con,
-          TyInfo::Datatype(sym),
-        )?;
+        env_ins(&mut cx.env.ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
         // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
         cx.ty_names.insert(dat_bind.ty_con.val);
         assert!(ty_env
           .inner
-          .insert(dat_bind.ty_con.val, TyInfo::Datatype(sym))
+          .insert(dat_bind.ty_con.val, TyInfo::Sym(sym))
           .is_none());
         assert!(st
-          .datatypes
+          .sym_tys
           .insert(
             sym,
-            DatatypeInfo {
+            SymTyInfo {
               ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
               val_env: ValEnv::new(),
             },
@@ -378,13 +374,13 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             .insert(con_bind.vid.val, ValInfo::ctor(TyScheme::mono(ty)))
             .is_none());
         }
-        // now the ValEnv is complete, so we may update st.datatypes with the true definition of
+        // now the ValEnv is complete, so we may update st.sym_tys with the true definition of
         // this datatype. assert to check that we inserted the fake answer earlier.
         assert!(st
-          .datatypes
+          .sym_tys
           .insert(
             sym,
-            DatatypeInfo {
+            SymTyInfo {
               ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
               val_env: bind_val_env,
             },
@@ -400,15 +396,15 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     Dec::DatatypeCopy(vid, long) => {
       let sym = match get_ty_info(get_env(cx, long)?, long.last)? {
         TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
-        TyInfo::Datatype(sym) => *sym,
+        TyInfo::Sym(sym) => *sym,
       };
-      let dt_info = st.datatypes.get(&sym).unwrap();
+      let dt_info = st.sym_tys.get(&sym).unwrap();
       // should hold because of the syntax of datatype copying.
       assert!(dt_info.ty_fcn.ty_vars.is_empty());
       Env {
         str_env: StrEnv::new(),
         ty_env: TyEnv {
-          inner: hashmap![vid.val => TyInfo::Datatype(sym)],
+          inner: hashmap![vid.val => TyInfo::Sym(sym)],
         },
         val_env: dt_info.val_env.clone(),
       }

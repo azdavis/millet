@@ -411,24 +411,25 @@ impl TyScheme {
 
 pub type TyFcn = TyScheme;
 
-pub struct DatatypeInfo {
+/// A 'sym ty' is a type that 'has been generated', like a datatype or a a `type t` in a signature.
+pub struct SymTyInfo {
   pub ty_fcn: TyFcn,
   pub val_env: ValEnv,
 }
 
-pub type Datatypes = HashMap<Sym, DatatypeInfo>;
+pub type SymTys = HashMap<Sym, SymTyInfo>;
 
 #[derive(Clone)]
 pub enum TyInfo {
   Alias(TyFcn),
-  Datatype(Sym),
+  Sym(Sym),
 }
 
 impl TyInfo {
-  pub fn ty_fcn<'a>(&'a self, dts: &'a Datatypes) -> &'a TyFcn {
+  pub fn ty_fcn<'a>(&'a self, sts: &'a SymTys) -> &'a TyFcn {
     match self {
       TyInfo::Alias(ty_fcn) => ty_fcn,
-      TyInfo::Datatype(sym) => &dts.get(sym).unwrap().ty_fcn,
+      TyInfo::Sym(sym) => &sts.get(sym).unwrap().ty_fcn,
     }
   }
 }
@@ -441,20 +442,20 @@ pub struct TyEnv {
 }
 
 impl TyEnv {
-  pub fn apply(&mut self, subst: &Subst, dts: &mut Datatypes) {
+  pub fn apply(&mut self, subst: &Subst, sts: &mut SymTys) {
     for (_, ty_info) in self.inner.iter_mut() {
       match ty_info {
         TyInfo::Alias(ty_fcn) => ty_fcn.apply(subst),
-        TyInfo::Datatype(sym) => dts.get_mut(sym).unwrap().ty_fcn.apply(subst),
+        TyInfo::Sym(sym) => sts.get_mut(sym).unwrap().ty_fcn.apply(subst),
       }
     }
   }
 
-  pub fn free_ty_vars(&self, dts: &Datatypes) -> TyVarSet {
+  pub fn free_ty_vars(&self, sts: &SymTys) -> TyVarSet {
     self
       .inner
       .iter()
-      .flat_map(|(_, ty_info)| ty_info.ty_fcn(dts).free_ty_vars())
+      .flat_map(|(_, ty_info)| ty_info.ty_fcn(sts).free_ty_vars())
       .collect()
   }
 }
@@ -573,22 +574,22 @@ impl Env {
       .collect()
   }
 
-  pub fn apply(&mut self, subst: &Subst, dts: &mut Datatypes) {
+  pub fn apply(&mut self, subst: &Subst, sts: &mut SymTys) {
     for (_, env) in self.str_env.iter_mut() {
-      env.apply(subst, dts);
+      env.apply(subst, sts);
     }
-    self.ty_env.apply(subst, dts);
+    self.ty_env.apply(subst, sts);
     for (_, val_info) in self.val_env.iter_mut() {
       val_info.ty_scheme.apply(subst);
     }
   }
 
-  pub fn free_ty_vars(&self, dts: &Datatypes) -> TyVarSet {
+  pub fn free_ty_vars(&self, sts: &SymTys) -> TyVarSet {
     self
       .str_env
       .iter()
-      .flat_map(|(_, env)| env.free_ty_vars(dts))
-      .chain(self.ty_env.free_ty_vars(dts))
+      .flat_map(|(_, env)| env.free_ty_vars(sts))
+      .chain(self.ty_env.free_ty_vars(sts))
       .chain(
         self
           .val_env
@@ -676,35 +677,35 @@ pub struct Basis {
 }
 
 impl Basis {
-  pub fn apply(&mut self, subst: &Subst, dts: &mut Datatypes) {
+  pub fn apply(&mut self, subst: &Subst, sts: &mut SymTys) {
     for (_, fun_sig) in self.fun_env.iter_mut() {
-      fun_sig.env.apply(subst, dts);
-      fun_sig.sig.env.apply(subst, dts);
+      fun_sig.env.apply(subst, sts);
+      fun_sig.sig.env.apply(subst, sts);
     }
     for (_, sig) in self.sig_env.iter_mut() {
-      sig.env.apply(subst, dts);
+      sig.env.apply(subst, sts);
     }
-    self.env.apply(subst, dts);
+    self.env.apply(subst, sts);
   }
 
-  pub fn free_ty_vars(&self, dts: &Datatypes) -> TyVarSet {
+  pub fn free_ty_vars(&self, sts: &SymTys) -> TyVarSet {
     self
       .fun_env
       .iter()
       .flat_map(|(_, fun_sig)| {
         fun_sig
           .env
-          .free_ty_vars(dts)
+          .free_ty_vars(sts)
           .into_iter()
-          .chain(fun_sig.sig.env.free_ty_vars(dts))
+          .chain(fun_sig.sig.env.free_ty_vars(sts))
       })
       .chain(
         self
           .sig_env
           .iter()
-          .flat_map(|(_, sig)| sig.env.free_ty_vars(dts)),
+          .flat_map(|(_, sig)| sig.env.free_ty_vars(sts)),
       )
-      .chain(self.env.free_ty_vars(dts))
+      .chain(self.env.free_ty_vars(sts))
       .collect()
   }
 
@@ -747,7 +748,7 @@ pub struct State {
   next_sym: usize,
   pub overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
   pub subst: Subst,
-  pub datatypes: Datatypes,
+  pub sym_tys: SymTys,
 }
 
 impl State {

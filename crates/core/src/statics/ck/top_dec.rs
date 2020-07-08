@@ -6,7 +6,7 @@ use crate::loc::Located;
 use crate::statics::ck::util::env_ins;
 use crate::statics::ck::{dec, ty};
 use crate::statics::types::{
-  Basis, DatatypeInfo, Env, Error, FunEnv, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo,
+  Basis, Env, Error, FunEnv, Result, Sig, SigEnv, State, StrEnv, SymTyInfo, Ty, TyEnv, TyInfo,
   TyScheme, ValEnv, ValInfo,
 };
 
@@ -136,10 +136,10 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
           return Err(tv.loc.wrap(Error::Todo));
         }
         let sym = st.new_sym(ty_desc.ty_con);
-        env_ins(&mut ty_env.inner, ty_desc.ty_con, TyInfo::Datatype(sym))?;
-        st.datatypes.insert(
+        env_ins(&mut ty_env.inner, ty_desc.ty_con, TyInfo::Sym(sym))?;
+        st.sym_tys.insert(
           sym,
-          DatatypeInfo {
+          SymTyInfo {
             ty_fcn: TyScheme::mono(Ty::Ctor(vec![], sym)),
             val_env: ValEnv::new(),
           },

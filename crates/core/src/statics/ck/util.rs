@@ -4,7 +4,7 @@ use crate::ast::{Label, Long};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Cx, Datatypes, Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
+  Cx, Env, Error, Item, Result, State, Subst, SymTys, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
 };
 use std::collections::HashMap;
 use std::convert::TryInto as _;
@@ -39,13 +39,13 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
-pub fn generalize(ty_env: &TyEnv, dts: &Datatypes, ty_scheme: &mut TyScheme) {
+pub fn generalize(ty_env: &TyEnv, sts: &SymTys, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.ty_vars.is_empty());
   assert!(ty_scheme.overload.is_none());
   ty_scheme.ty_vars = ty_scheme
     .ty
     .free_ty_vars()
-    .difference(&ty_env.free_ty_vars(dts))
+    .difference(&ty_env.free_ty_vars(sts))
     .copied()
     .collect();
 }

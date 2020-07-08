@@ -36,8 +36,8 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
     }
     AstTy::TyCon(args, name) => {
       let env = get_env(cx, name)?;
-      // NOTE could avoid this clone if we separated datatypes from State
-      let ty_fcn = get_ty_info(env, name.last)?.ty_fcn(&st.datatypes).clone();
+      // NOTE could avoid this clone if we separated sym_tys from State
+      let ty_fcn = get_ty_info(env, name.last)?.ty_fcn(&st.sym_tys).clone();
       if ty_fcn.ty_vars.len() != args.len() {
         let err = Error::WrongNumTyArgs(ty_fcn.ty_vars.len(), args.len());
         return Err(ty.loc.wrap(err));
