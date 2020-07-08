@@ -675,6 +675,12 @@ impl Basis {
       .chain(self.env.free_ty_vars(dts))
       .collect()
   }
+
+  pub fn o_plus(&mut self, env: Env) {
+    let ty_names = env.ty_names();
+    self.env.extend(env);
+    self.ty_names.extend(ty_names);
+  }
 }
 
 #[derive(Default)]
