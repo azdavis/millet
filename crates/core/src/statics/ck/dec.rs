@@ -422,13 +422,18 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       val_env.into()
     }
-    Dec::Local(_, _) => {
-      //
-      return Err(dec.loc.wrap(Error::Todo));
+    Dec::Local(fst, snd) => {
+      let fst_env = ck(cx, st, fst)?;
+      let mut cx = cx.clone();
+      cx.o_plus(fst_env);
+      ck(&cx, st, snd)?
     }
-    Dec::Open(_) => {
-      //
-      return Err(dec.loc.wrap(Error::Todo));
+    Dec::Open(longs) => {
+      let mut env = Env::default();
+      for long in longs {
+        env.extend(get_env(cx, long)?.clone());
+      }
+      env
     }
     Dec::Seq(decs) => {
       // TODO clone in loop - expensive?

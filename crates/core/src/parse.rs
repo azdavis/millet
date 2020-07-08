@@ -1016,6 +1016,7 @@ impl Parser {
         let fst = self.dec()?;
         self.eat(Token::In)?;
         let snd = self.dec()?;
+        self.eat(Token::End)?;
         self.ops = ops;
         Dec::Local(fst.into(), snd.into())
       }
