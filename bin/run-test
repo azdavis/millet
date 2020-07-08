@@ -62,6 +62,9 @@ for x in "$@"; do
     echo "$x: generated"
     continue
   fi
+  if ! [ -e out.txt ]; then
+    echo "no errors" >out.txt
+  fi
   if ! diff out.txt out.tmp; then
     echo "$x: expected lhs, got rhs"
     ok=false
