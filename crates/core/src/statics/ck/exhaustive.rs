@@ -144,7 +144,8 @@ fn static_match(con: Con, d: &Desc) -> StaticMatch {
   }
 }
 
-/// Returns true iff no pattern in Pats was redundant.
+/// Tries to pass the next pat in pats to a fresh call to do_match. Returns false if there are no
+/// patterns left or if the match is otherwise not exhaustive.
 fn fail(cx: &mut Cx, d: Desc, mut pats: Pats) -> bool {
   match pats.next() {
     None => false,
@@ -152,7 +153,8 @@ fn fail(cx: &mut Cx, d: Desc, mut pats: Pats) -> bool {
   }
 }
 
-/// Returns true iff no pattern in Pats was redundant.
+/// Tries to prove a pat located at the Loc is reachable. Removes the Loc from the Cx if it can
+/// prove this. Returns whether the match was exhaustive.
 fn succeed(cx: &mut Cx, loc: Loc, mut work: Work, pats: Pats) -> bool {
   match work.pop() {
     None => {
@@ -172,7 +174,8 @@ fn succeed(cx: &mut Cx, loc: Loc, mut work: Work, pats: Pats) -> bool {
   }
 }
 
-/// Returns true iff no pattern in Pats was redundant.
+/// Updates the work list with new work for the pattern at the Loc, then continues on to succeed.
+/// Returns whether the match was exhaustive.
 fn succeed_with(
   cx: &mut Cx,
   loc: Loc,
@@ -200,7 +203,8 @@ fn succeed_with(
   succeed(cx, loc, work, pats)
 }
 
-/// Returns true iff no pattern in Pats was redundant.
+/// Tries to match the Pat against the Desc using the other helpers. Returns whether the match was
+/// exhaustive.
 fn do_match(cx: &mut Cx, pat: Located<Pat>, d: Desc, work: Work, pats: Pats) -> bool {
   match pat.val {
     Pat::Anything => succeed(cx, pat.loc, augment(work, d), pats),
