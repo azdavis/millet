@@ -129,13 +129,14 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       }
       Ok(val_env.into())
     }
-    Spec::Type(ty_descs) => {
+    Spec::Type(ty_descs, _) => {
       let mut ty_env = TyEnv::default();
       for ty_desc in ty_descs {
         if let Some(tv) = ty_desc.ty_vars.first() {
           return Err(tv.loc.wrap(Error::Todo));
         }
         let sym = st.new_sym(ty_desc.ty_con);
+        // TODO equality check
         env_ins(&mut ty_env.inner, ty_desc.ty_con, TyInfo::Sym(sym))?;
         st.sym_tys.insert(
           sym,
@@ -146,10 +147,6 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
         );
       }
       Ok(ty_env.into())
-    }
-    Spec::Eqtype(_) => {
-      //
-      Err(spec.loc.wrap(Error::Todo))
     }
     Spec::Datatype(_) => {
       //

@@ -345,11 +345,11 @@ impl Parser {
       }
       Token::Type => {
         self.skip();
-        Spec::Type(self.ty_descs()?)
+        Spec::Type(self.ty_descs()?, false)
       }
       Token::Eqtype => {
         self.skip();
-        Spec::Eqtype(self.ty_descs()?)
+        Spec::Type(self.ty_descs()?, true)
       }
       Token::Datatype => {
         self.skip();

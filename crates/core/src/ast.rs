@@ -261,10 +261,8 @@ pub struct SigBind<I> {
 pub enum Spec<I> {
   /// requires !val_descs.is_empty()
   Val(Vec<ValDesc<I>>),
-  /// requires !ty_descs.is_empty()
-  Type(Vec<TyDesc<I>>),
-  /// requires !ty_descs.is_empty()
-  Eqtype(Vec<TyDesc<I>>),
+  /// requires !ty_descs.is_empty(). the bool is true iff this was `eqtype`, false if it was `type`.
+  Type(Vec<TyDesc<I>>, bool),
   /// requires !dat_descs.is_empty()
   Datatype(Vec<DatDesc<I>>),
   DatatypeCopy(Located<I>, Long<I>),
