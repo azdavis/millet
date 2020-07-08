@@ -47,7 +47,7 @@ enum StaticMatch {
   /// The Con is not consistent with the Desc.
   No,
   /// The Con might be consistent with the Desc. If this is returned, then the Desc was Neg.
-  Maybe,
+  Maybe(Vec<Con>),
 }
 
 /// An item in the work list.
@@ -138,7 +138,7 @@ fn static_match(con: Con, d: &Desc) -> StaticMatch {
         // This is the last con.
         StaticMatch::Yes
       } else {
-        StaticMatch::Maybe
+        StaticMatch::Maybe(cons.clone())
       }
     }
   }
@@ -211,11 +211,7 @@ fn do_match(cx: &mut Cx, pat: Located<Pat>, d: Desc, work: Work, pats: Pats) -> 
     Pat::Con(con, args) => match static_match(con, &d) {
       StaticMatch::Yes => succeed_with(cx, pat.loc, work, con, args, d, pats),
       StaticMatch::No => fail(cx, build_desc(d, work), pats),
-      StaticMatch::Maybe => {
-        let mut cons = match &d {
-          Desc::Neg(cons) => cons.clone(),
-          _ => unreachable!(),
-        };
+      StaticMatch::Maybe(mut cons) => {
         cons.push(con);
         // TODO avoid these clones?
         succeed_with(cx, pat.loc, work.clone(), con, args, d, pats.clone())
