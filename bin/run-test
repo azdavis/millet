@@ -31,7 +31,9 @@ fi
 
 ok=true
 old_pwd="$PWD"
+rm_out_txt=false
 for x in "$@"; do
+  rm_out_txt=false
   cd "$old_pwd"
   cd "$x"
   if [ -e run.sh ]; then
@@ -46,6 +48,8 @@ for x in "$@"; do
       ok=false
       continue
     fi
+    echo "no errors" >out.txt
+    rm_out_txt=true
   elif [ -e err.sml ]; then
     if NO_COLOR=1 cargo run --quiet --bin millet -- err.sml >out.tmp; then
       echo "$x: expected failure, got success"
@@ -62,13 +66,16 @@ for x in "$@"; do
     echo "$x: generated"
     continue
   fi
-  if ! [ -e out.txt ]; then
-    echo "no errors" >out.txt
-  fi
   if ! diff out.txt out.tmp; then
+    if "$rm_out_txt"; then
+      rm out.txt
+    fi
     echo "$x: expected lhs, got rhs"
     ok=false
     continue
+  fi
+  if "$rm_out_txt"; then
+    rm out.txt
   fi
   rm out.tmp
   echo "$x: ok"
