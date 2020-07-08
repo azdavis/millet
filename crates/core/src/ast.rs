@@ -65,8 +65,8 @@ pub struct Row<I> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Label {
-  Vid(StrRef),
   Num(u32),
+  Vid(StrRef),
 }
 
 /// called a 'match' in the Definition. we call it 'cases' to avoid conflicts with the Rust keyword.
