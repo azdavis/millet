@@ -6,5 +6,7 @@ options:
     show this help
   -v, --version
     show the version
+  -q, --quiet
+    be quiet, say nothing upon success
   --just-ast
     just show the AST after parsing

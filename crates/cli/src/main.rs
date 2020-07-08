@@ -89,7 +89,9 @@ fn run() -> bool {
       }
     }
   }
-  writeln!(&mut w, "no errors").unwrap();
+  if !args.quiet {
+    writeln!(&mut w, "no errors").unwrap();
+  }
   true
 }
 
