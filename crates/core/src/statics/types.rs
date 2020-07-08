@@ -743,9 +743,16 @@ impl Con {
   pub fn span(&self) -> Span {
     match *self {
       Self::Int(_) | Self::Word(_) | Self::String(_) => Span::PosInf,
-      Self::Char(_) => Span::Finite(256), // 2^8 since a char is a u8
+      Self::Char(_) => Span::Finite(256),
       Self::Record(_) => Span::Finite(1),
       Self::Ctor(_, s) => s,
     }
   }
+}
+
+#[test]
+fn char_span() {
+  // The span of a Con::Char is 256 = 2^8 since a char is a u8. This test and the definition of
+  // `Con#span` should change if Char ever becomes not a u8.
+  assert_eq!(Con::Char(0u8).span(), Span::Finite(256));
 }
