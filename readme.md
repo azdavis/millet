@@ -26,21 +26,24 @@ Then clone the repository, cd inside, and run `cargo build`.
 To make a new test, run `bin/mk-test tests/<name>` from the top level of the
 repo.
 
-A test is a directory with the following properties.
+A test is a directory directly inside the directory `tests`.
 
-- The parent of the test must be the directory `tests`.
-- The test must contain a file called `run.sh`, which when run with
-  `sh -eu run.sh`, must produce `out.tmp` directly inside the test.
-- The test must also contain a `out.txt` file that contains the expected
-  contents of `out.tmp`.
+If the test contains a file `run.sh`, then when that file is run with
+`sh -eu run.sh`, it must produce `out.tmp` inside the test. The test must also
+contain `out.txt` which contains the expected contents of `out.tmp`.
 
-Run `bin/run-test tests/<name>` to run a test. The test runner will run
-`sh -eu run.sh` to produce `out.tmp` and diff it against `out.txt`. The test
-will be marked as failing if there is a difference. The test will also be marked
-as failing if `sh -eu run.sh` exits with a non-zero exit code.
+Else, if the test contains a file `err.sml`, then when the Millet CLI is run
+with that file, it must exit with a non-zero exit code. The test must also
+contain `out.txt` which contains the expected output of the Millet CLI when run
+on this file.
+
+Else, if the test contains a file `ok.sml`, then when the Millet CLI is run with
+that file, it must exit with the exit code 0.
+
+Run `bin/run-test tests/<name>` to run a test.
 
 After you first create a test, or if you update a test, you may want to generate
-an appropriate `out.txt` file. Use `bin/gen-test-out tests/<name>` to do that.
+an appropriate `out.txt` file. Use `bin/run-test -g tests/<name>` to do that.
 
 [one-fifty]: http://www.cs.cmu.edu/~15150/
 [rustup]: https://rustup.rs
