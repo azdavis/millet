@@ -718,6 +718,9 @@ impl Pat {
   }
 }
 
+/// Bit confusing to have both 'Con' and 'Ctor'. We originally used 'Ctor' to mean 'constructor',
+/// and then adopted 'Con' as well from reading the paper which was the basis of the exhaustiveness
+/// checker.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Con {
   Int(i32),
@@ -726,6 +729,7 @@ pub enum Con {
   Char(u8),
   /// This should never be used directly, use `Pat::record` instead. The usize is the arity.
   Record(usize),
+  /// A constructor from a datatype or an exception.
   Ctor(StrRef, Span),
 }
 
