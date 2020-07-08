@@ -62,8 +62,13 @@ for x in "$@"; do
     continue
   fi
   if "$generate"; then
-    mv out.tmp out.txt
-    echo "$x: generated"
+    if "$rm_out_txt"; then
+      rm out.tmp out.txt
+      echo "$x: nothing to generate"
+    else
+      mv out.tmp out.txt
+      echo "$x: generated"
+    fi
     continue
   fi
   if ! diff out.txt out.tmp; then
