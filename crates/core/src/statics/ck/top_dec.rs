@@ -1,21 +1,41 @@
 //! Check top-level declarations.
 
-use crate::ast::{StrDec, TopDec};
+use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::dec;
-use crate::statics::types::{Basis, Cx, Env, Error, Result, State, TyVarSet};
+use crate::statics::types::{
+  Basis, Cx, Env, Error, FunEnv, Result, Sig, SigEnv, State, StrEnv, TyVarSet,
+};
 
-pub fn ck(mut bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<Basis> {
+pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
   match &top_dec.val {
     TopDec::StrDec(str_dec) => {
-      let env = ck_str_dec(&bs, st, str_dec)?;
-      bs.o_plus(env);
-      Ok(bs)
+      let env = ck_str_dec(bs, st, str_dec)?;
+      bs.add_env(env);
     }
-    TopDec::SigDec(_) => Err(top_dec.loc.wrap(Error::Todo)),
-    TopDec::FunDec(_) => Err(top_dec.loc.wrap(Error::Todo)),
+    TopDec::SigDec(sig_binds) => {
+      let mut sig_env = SigEnv::new();
+      for sig_bind in sig_binds {
+        let env = ck_sig_exp(bs, st, &sig_bind.exp)?;
+        sig_env.insert(sig_bind.id.val, env_to_sig(bs, env));
+      }
+      bs.add_sig_env(sig_env);
+    }
+    TopDec::FunDec(fun_binds) => {
+      let fun_env = FunEnv::new();
+      if let Some(fun_bind) = fun_binds.first() {
+        return Err(fun_bind.fun_id.loc.wrap(Error::Todo));
+      }
+      bs.add_fun_env(fun_env);
+    }
   }
+  Ok(())
+}
+
+fn env_to_sig(bs: &Basis, env: Env) -> Sig {
+  let ty_names = env.ty_names().difference(&bs.ty_names).copied().collect();
+  Sig { env, ty_names }
 }
 
 fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> Result<Env> {
@@ -28,11 +48,20 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
       };
       dec::ck(&cx, st, dec)
     }
-    StrDec::Structure(_) => Err(str_dec.loc.wrap(Error::Todo)),
+    StrDec::Structure(str_binds) => {
+      let mut bs = bs.clone();
+      let mut str_env = StrEnv::new();
+      for str_bind in str_binds {
+        let env = ck_str_exp(&bs, st, &str_bind.exp)?;
+        bs.ty_names.extend(env.ty_names());
+        str_env.insert(str_bind.id.val, env);
+      }
+      Ok(str_env.into())
+    }
     StrDec::Local(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
       let mut bs = bs.clone();
-      bs.o_plus(env);
+      bs.add_env(env);
       ck_str_dec(&bs, st, snd)
     }
     StrDec::Seq(str_decs) => {
@@ -40,10 +69,104 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
       let mut bs = bs.clone();
       let mut ret = Env::default();
       for str_dec in str_decs {
-        bs.o_plus(ret.clone());
+        bs.add_env(ret.clone());
         ret.extend(ck_str_dec(&bs, st, str_dec)?);
       }
       Ok(ret)
+    }
+  }
+}
+
+fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> Result<Env> {
+  match &str_exp.val {
+    StrExp::Struct(_) => {
+      //
+      Err(str_exp.loc.wrap(Error::Todo))
+    }
+    StrExp::LongStrId(_) => {
+      //
+      Err(str_exp.loc.wrap(Error::Todo))
+    }
+    StrExp::Transparent(_, _) => {
+      //
+      Err(str_exp.loc.wrap(Error::Todo))
+    }
+    StrExp::Opaque(_, _) => {
+      //
+      Err(str_exp.loc.wrap(Error::Todo))
+    }
+    StrExp::FunctorApp(_, _) => {
+      //
+      Err(str_exp.loc.wrap(Error::Todo))
+    }
+    StrExp::Let(fst, snd) => {
+      let env = ck_str_dec(bs, st, fst)?;
+      let mut bs = bs.clone();
+      bs.add_env(env);
+      ck_str_exp(&bs, st, snd)
+    }
+  }
+}
+
+fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> Result<Env> {
+  match &sig_exp.val {
+    SigExp::Sig(spec) => ck_spec(bs, st, spec),
+    SigExp::SigId(_) => {
+      //
+      Err(sig_exp.loc.wrap(Error::Todo))
+    }
+    SigExp::Where(_, _, _, _) => {
+      //
+      Err(sig_exp.loc.wrap(Error::Todo))
+    }
+  }
+}
+
+fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<Env> {
+  match &spec.val {
+    Spec::Val(_) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Type(_) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Eqtype(_) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Datatype(_) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::DatatypeCopy(_, _) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Exception(_) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Structure(_) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Include(_) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Seq(specs) => {
+      let mut ret = Env::default();
+      for spec in specs {
+        let env = ck_spec(bs, st, spec)?;
+        ret.maybe_extend(env, spec.loc)?;
+      }
+      Err(spec.loc.wrap(Error::Todo))
+    }
+    Spec::Sharing(_, _) => {
+      //
+      Err(spec.loc.wrap(Error::Todo))
     }
   }
 }

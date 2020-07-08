@@ -545,6 +545,25 @@ impl Env {
     }
   }
 
+  pub fn maybe_extend(&mut self, other: Self, loc: Loc) -> Result<()> {
+    for (name, env) in other.str_env {
+      if self.str_env.insert(name, env).is_some() {
+        return Err(loc.wrap(Error::Redefined(name)));
+      }
+    }
+    for (name, ty_info) in other.ty_env.inner {
+      if self.ty_env.inner.insert(name, ty_info).is_some() {
+        return Err(loc.wrap(Error::Redefined(name)));
+      }
+    }
+    for (name, val_info) in other.val_env {
+      if self.val_env.insert(name, val_info).is_some() {
+        return Err(loc.wrap(Error::Redefined(name)));
+      }
+    }
+    Ok(())
+  }
+
   pub fn ty_names(&self) -> TyNameSet {
     self
       .str_env
@@ -595,6 +614,16 @@ impl From<TyEnv> for Env {
     Self {
       str_env: StrEnv::new(),
       ty_env,
+      val_env: ValEnv::new(),
+    }
+  }
+}
+
+impl From<StrEnv> for Env {
+  fn from(str_env: StrEnv) -> Self {
+    Self {
+      str_env,
+      ty_env: TyEnv::default(),
       val_env: ValEnv::new(),
     }
   }
@@ -679,10 +708,28 @@ impl Basis {
       .collect()
   }
 
-  pub fn o_plus(&mut self, env: Env) {
+  pub fn add_env(&mut self, env: Env) {
     let ty_names = env.ty_names();
-    self.env.extend(env);
     self.ty_names.extend(ty_names);
+    self.env.extend(env);
+  }
+
+  pub fn add_sig_env(&mut self, sig_env: SigEnv) {
+    let ty_names = sig_env
+      .iter()
+      .flat_map(|(_, sig)| sig.ty_names.iter())
+      .copied();
+    self.ty_names.extend(ty_names);
+    self.sig_env.extend(sig_env);
+  }
+
+  pub fn add_fun_env(&mut self, fun_env: FunEnv) {
+    let ty_names = fun_env
+      .iter()
+      .flat_map(|(_, sig)| sig.ty_names.iter())
+      .copied();
+    self.ty_names.extend(ty_names);
+    self.fun_env.extend(fun_env);
   }
 }
 

@@ -16,7 +16,7 @@ use crate::statics::types::{Error, Result, Ty};
 pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   let (mut bs, mut st) = std_lib::get();
   for top_dec in top_decs {
-    bs = ck::ck_top_dec(bs, &mut st, top_dec)?;
+    ck::ck_top_dec(&mut bs, &mut st, top_dec)?;
   }
   'outer: for (loc, tv, overloads) in st.overload {
     for name in overloads {
