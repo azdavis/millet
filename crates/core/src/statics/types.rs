@@ -77,12 +77,13 @@ impl Error {
         want, got
       ),
       Self::PatNotConsType(ty) => format!(
-        "pattern does not a constructor type: {}",
+        "pattern does not have a constructor type: {}",
         show_ty(store, ty)
       ),
-      Self::PatNotArrowType(ty) => {
-        format!("pattern does not an arrow type: {}", show_ty(store, ty))
-      }
+      Self::PatNotArrowType(ty) => format!(
+        "pattern does not have an arrow type: {}",
+        show_ty(store, ty)
+      ),
       Self::DatatypeCopyNotDatatype => {
         "right-hand side of datatype copy is not a datatype".to_owned()
       }

@@ -169,6 +169,8 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
   Ok((arg_ty, res_ty))
 }
 
+/// It seems like this error can't actually be emitted, since other errors would have been emitted
+/// before this one (non-exhaustive binding, not a ctor type, etc).
 fn ck_binding(name: Located<StrRef>) -> Result<()> {
   for &other in [
     StrRef::TRUE,
