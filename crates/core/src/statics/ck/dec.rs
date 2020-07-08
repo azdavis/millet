@@ -300,8 +300,8 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     Dec::Type(ty_binds) => {
       let mut ty_env = TyEnv::default();
       for ty_bind in ty_binds {
-        if !ty_bind.ty_vars.is_empty() {
-          return Err(dec.loc.wrap(Error::Todo));
+        if let Some(tv) = ty_bind.ty_vars.first() {
+          return Err(tv.loc.wrap(Error::Todo));
         }
         let ty = ty::ck(cx, st, &ty_bind.ty)?;
         let info = TyInfo::Alias(TyScheme::mono(ty));
@@ -317,16 +317,16 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       ty_env.into()
     }
     Dec::Datatype(dat_binds, ty_binds) => {
-      if let Some(x) = ty_binds.first() {
-        return Err(x.ty_con.loc.wrap(Error::Todo));
+      if let Some(tb) = ty_binds.first() {
+        return Err(tb.ty_con.loc.wrap(Error::Todo));
       }
       let mut cx = cx.clone();
       // these two are across all dat_binds.
       let mut ty_env = TyEnv::default();
       let mut val_env = ValEnv::new();
       for dat_bind in dat_binds {
-        if let Some(x) = dat_bind.ty_vars.first() {
-          return Err(x.loc.wrap(Error::Todo));
+        if let Some(tv) = dat_bind.ty_vars.first() {
+          return Err(tv.loc.wrap(Error::Todo));
         }
         // create a new symbol for the type being generated with this DatBind.
         let sym = st.new_sym(dat_bind.ty_con);

@@ -33,7 +33,6 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         });
       match ty_scheme {
         None => {
-          // TODO should this be TyScheme::mono?
           let a = Ty::Var(st.new_ty_var(false));
           let val_info = ValInfo::val(TyScheme::mono(a.clone()));
           (hashmap![vid.last.val => val_info], a, Pat::Anything)
