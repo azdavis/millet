@@ -2,29 +2,78 @@
 
 set -eu
 
+usage() {
+cat <<EOF
+usage:
+  $0 [options]
+
+options:
+  -h
+    show this help
+  -g
+    generate new expected output from resulting output
+EOF
+exit 1
+}
+
+generate=false
+while getopts 'hg' opt; do
+  case "$opt" in
+  (g) generate=true ;;
+  (*) usage ;;
+  esac
+done
+shift "$((OPTIND - 1))"
+
 if [ "$#" -eq 0 ]; then
-  echo "usage: $0 <path>..."
-  exit 1
+  usage
 fi
 
 ok=true
 old_pwd="$PWD"
 for x in "$@"; do
-  cd "$x"
-  if sh -eu run.sh && diff out.txt out.tmp; then
-    rm -f out.tmp
-    echo "$x: ok"
-  else
-    cat out.tmp
-    echo "$x: FAIL"
-    ok=false
-  fi
   cd "$old_pwd"
+  cd "$x"
+  if [ -e run.sh ]; then
+    if ! sh -eu run.sh; then
+      echo "$x: expected run.sh to exit zero, got non-zero"
+      ok=false
+      continue
+    fi
+  elif [ -e good.sml ]; then
+    if ! NO_COLOR=1 cargo run --quiet --bin millet -- good.sml >out.tmp; then
+      echo "$x: expected success, got failure"
+      ok=false
+      continue
+    fi
+  elif [ -e bad.sml ]; then
+    if NO_COLOR=1 cargo run --quiet --bin millet -- bad.sml >out.tmp; then
+      echo "$x: expected failure, got success"
+      ok=false
+      continue
+    fi
+  else
+    echo "$x: don't know how to run"
+    ok=false
+    continue
+  fi
+  if "$generate"; then
+    mv out.tmp out.txt
+    echo "$x: generated"
+    continue
+  fi
+  if ! diff out.txt out.tmp; then
+    echo "$x: expected lhs, got rhs"
+    ok=false
+    continue
+  fi
+  rm out.tmp
+  echo "$x: ok"
 done
 
 if "$ok"; then
-  echo "==> all tests ok."
+  echo "==> all tests ok"
 else
-  echo "==> some tests not ok."
+  echo "==> some tests not ok"
   exit 1
 fi
