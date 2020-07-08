@@ -49,7 +49,7 @@ impl Error {
       Self::UnmatchedCloseComment => "unmatched close comment".to_owned(),
       Self::UnmatchedOpenComment => "unmatched open comment".to_owned(),
       Self::IncompleteTypeVar => "incomplete type var".to_owned(),
-      Self::UnknownByte(b) => format!("unknown byte: {}", b),
+      Self::UnknownByte(b) => format!("unknown byte: {:#x}", b),
       Self::InvalidIntConstant(e) => format!("invalid integer constant: {}", e),
       Self::InvalidRealConstant(e) => format!("invalid real constant: {}", e),
       Self::NegativeWordConstant => "negative word constant".to_owned(),
