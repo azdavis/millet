@@ -6,8 +6,7 @@ use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{
   env_ins, env_merge, generalize, get_env, get_val_info, instantiate, tuple_lab,
 };
-use crate::statics::ck::{pat, ty};
-use crate::statics::exhaustive;
+use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
   Cx, DatatypeInfo, Env, Pat, Result, State, StaticsError, StrEnv, Ty, TyEnv, TyInfo, TyScheme,
   TyVar, ValEnv, ValInfo,
@@ -150,7 +149,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
 }
 
 fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<(Ty, Ty)> {
-  let mut arg_ty = Ty::Var(st.new_ty_var(false));
+  let arg_ty = Ty::Var(st.new_ty_var(false));
   let res_ty = Ty::Var(st.new_ty_var(false));
   let mut pats = Vec::with_capacity(cases.arms.len());
   for arm in cases.arms.iter() {
@@ -165,12 +164,8 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
     st.subst.unify(arm.pat.loc, arg_ty.clone(), pat_ty)?;
     st.subst.unify(arm.exp.loc, res_ty.clone(), exp_ty)?;
   }
-  arg_ty.apply(&st.subst);
-  if exhaustive::ck(&st.datatypes, &arg_ty, pats)? {
-    Ok((arg_ty, res_ty))
-  } else {
-    Err(loc.wrap(StaticsError::NonExhaustiveMatch))
-  }
+  exhaustive::ck_match(pats, loc)?;
+  Ok((arg_ty, res_ty))
 }
 
 fn ck_binding(name: Located<StrRef>) -> Result<()> {
@@ -222,16 +217,13 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         if val_bind.rec {
           return Err(dec.loc.wrap(StaticsError::Todo));
         }
-        let (other, mut pat_ty, pat) = pat::ck(cx, st, &val_bind.pat)?;
+        let (other, pat_ty, pat) = pat::ck(cx, st, &val_bind.pat)?;
         for &name in other.keys() {
           ck_binding(val_bind.pat.loc.wrap(name))?;
         }
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
         st.subst.unify(dec.loc, pat_ty.clone(), exp_ty)?;
-        pat_ty.apply(&st.subst);
-        if !exhaustive::ck(&st.datatypes, &pat_ty, vec![val_bind.pat.loc.wrap(pat)])? {
-          return Err(val_bind.pat.loc.wrap(StaticsError::NonExhaustiveBinding));
-        }
+        exhaustive::ck_bind(pat, val_bind.pat.loc)?;
         for (name, mut val_info) in other {
           // NOTE could avoid this assert by having ck_pat return not a ValEnv but HashMap<StrRef,
           // (Ty, IdStatus)>. but this assert should hold because we the only TySchemes we put into
@@ -277,11 +269,11 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             st.subst.unify(pat.loc, Ty::Var(tv), pat_ty)?;
             env_merge(&mut pats_val_env, ve, pat.loc)?;
             tuple_lab(idx);
-            arg_pat.push((tuple_lab(idx), new_pat));
+            arg_pat.push(new_pat);
           }
           let begin = case.pats.first().unwrap().loc;
           let end = case.pats.last().unwrap().loc;
-          arg_pats.push(begin.span(end).wrap(Pat::Record(arg_pat)));
+          arg_pats.push(begin.span(end).wrap(Pat::record(arg_pat)));
           if let Some(ty) = &case.ret_ty {
             let new_ty = ty::ck(cx, st, ty)?;
             st.subst.unify(ty.loc, Ty::Var(info.ret), new_ty)?;
@@ -293,20 +285,9 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           let body_ty = ck_exp(&cx, st, &case.body)?;
           st.subst.unify(case.body.loc, Ty::Var(info.ret), body_ty)?;
         }
-        let mut arg_ty = Ty::Record(
-          info
-            .args
-            .iter()
-            .enumerate()
-            .map(|(idx, &tv)| (tuple_lab(idx), Ty::Var(tv)))
-            .collect(),
-        );
-        arg_ty.apply(&st.subst);
-        if !exhaustive::ck(&st.datatypes, &arg_ty, arg_pats)? {
-          let begin = fval_bind.cases.first().unwrap().vid.loc;
-          let end = fval_bind.cases.last().unwrap().body.loc;
-          return Err(begin.span(end).wrap(StaticsError::NonExhaustiveMatch));
-        }
+        let begin = fval_bind.cases.first().unwrap().vid.loc;
+        let end = fval_bind.cases.last().unwrap().body.loc;
+        exhaustive::ck_match(arg_pats, begin.span(end))?;
       }
       let mut val_env = fun_infos_to_ve(&fun_infos);
       for (_, val_info) in val_env.iter_mut() {

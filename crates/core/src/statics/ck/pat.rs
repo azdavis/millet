@@ -1,23 +1,25 @@
 //! Check patterns.
 
-use crate::ast::{Label, Pat as AstPat};
+use crate::ast::{Label, Long, Pat as AstPat};
 use crate::intern::StrRef;
-use crate::loc::Located;
+use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
 use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate, tuple_lab};
-use crate::statics::types::{Cx, Pat, Result, State, StaticsError, Ty, TyScheme, ValEnv, ValInfo};
+use crate::statics::types::{
+  Con, Cx, Datatypes, Pat, Result, Span, State, StaticsError, Sym, Ty, TyScheme, ValEnv, ValInfo,
+};
 use maplit::hashmap;
-use std::collections::HashSet;
+use std::collections::BTreeMap;
 
 pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty, Pat)> {
   let ret = match &pat.val {
     AstPat::Wildcard => (ValEnv::new(), Ty::Var(st.new_ty_var(false)), Pat::Anything),
-    AstPat::DecInt(n) => (ValEnv::new(), Ty::INT, Pat::Int(*n)),
-    AstPat::HexInt(n) => (ValEnv::new(), Ty::INT, Pat::Int(*n)),
-    AstPat::DecWord(n) => (ValEnv::new(), Ty::WORD, Pat::Word(*n)),
-    AstPat::HexWord(n) => (ValEnv::new(), Ty::WORD, Pat::Word(*n)),
-    AstPat::String(s) => (ValEnv::new(), Ty::STRING, Pat::String(*s)),
-    AstPat::Char(c) => (ValEnv::new(), Ty::CHAR, Pat::Char(*c)),
+    AstPat::DecInt(n) => (ValEnv::new(), Ty::INT, Pat::zero(Con::Int(*n))),
+    AstPat::HexInt(n) => (ValEnv::new(), Ty::INT, Pat::zero(Con::Int(*n))),
+    AstPat::DecWord(n) => (ValEnv::new(), Ty::WORD, Pat::zero(Con::Word(*n))),
+    AstPat::HexWord(n) => (ValEnv::new(), Ty::WORD, Pat::zero(Con::Word(*n))),
+    AstPat::String(s) => (ValEnv::new(), Ty::STRING, Pat::zero(Con::String(*s))),
+    AstPat::Char(c) => (ValEnv::new(), Ty::CHAR, Pat::zero(Con::Char(*c))),
     AstPat::LongVid(vid) => {
       let ty_scheme = get_env(cx, vid)?
         .val_env
@@ -37,10 +39,14 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
           (hashmap![vid.last.val => val_info], a, Pat::Anything)
         }
         Some(ty_scheme) => {
-          // TODO do we need to check ty_scheme yields a ConsType? e.g. `fn op:: => op::` may be
-          // problematic
           let ty = instantiate(st, ty_scheme, pat.loc);
-          (ValEnv::new(), ty, Pat::Ctor(vid.last.val, None))
+          let sym = match ty {
+            Ty::Ctor(_, sym) => sym,
+            _ => return Err(pat.loc.wrap(StaticsError::NotConsType(ty))),
+          };
+          let span = get_span(&st.datatypes, sym);
+          let pat = Pat::zero(Con::Ctor(vid.last.val, span));
+          (ValEnv::new(), ty, pat)
         }
       }
     }
@@ -50,31 +56,31 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       }
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(rows.len());
-      let mut keys = HashSet::with_capacity(rows.len());
-      let mut pat_rows = Vec::with_capacity(rows.len());
+      let mut new_pats = BTreeMap::new();
       for row in rows {
         let (other_ve, ty, pat) = ck(cx, st, &row.pat)?;
-        if !keys.insert(row.lab.val) {
+        if new_pats.insert(row.lab.val, pat).is_some() {
           return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
         }
         env_merge(&mut ve, other_ve, row.pat.loc)?;
         ty_rows.push((row.lab.val, ty));
-        pat_rows.push((row.lab.val, pat));
       }
-      (ve, Ty::Record(ty_rows), Pat::Record(pat_rows))
+      let new_pats: Vec<_> = new_pats.into_iter().map(|(_, pat)| pat).collect();
+      let pat = Pat::record(new_pats);
+      (ve, Ty::Record(ty_rows), pat)
     }
     AstPat::Tuple(pats) => {
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(pats.len());
-      let mut pat_rows = Vec::with_capacity(pats.len());
+      let mut new_pats = Vec::with_capacity(pats.len());
       for (idx, pat) in pats.iter().enumerate() {
         let (other_ve, ty, new_pat) = ck(cx, st, pat)?;
-        let lab = tuple_lab(idx);
         env_merge(&mut ve, other_ve, pat.loc)?;
-        ty_rows.push((lab, ty));
-        pat_rows.push((lab, new_pat));
+        ty_rows.push((tuple_lab(idx), ty));
+        new_pats.push(new_pat);
       }
-      (ve, Ty::Record(ty_rows), Pat::Record(pat_rows))
+      let pat = Pat::record(new_pats);
+      (ve, Ty::Record(ty_rows), pat)
     }
     AstPat::List(pats) => {
       let elem = Ty::Var(st.new_ty_var(false));
@@ -86,50 +92,34 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         st.subst.unify(pat.loc, elem.clone(), ty)?;
         new_pats.push(new_pat);
       }
-      let pat = new_pats
-        .into_iter()
-        .rev()
-        .fold(Pat::Ctor(StrRef::NIL, None), |ac, x| {
-          Pat::Ctor(
-            StrRef::CONS,
-            Some(Pat::Record(vec![(Label::Num(1), x), (Label::Num(2), ac)]).into()),
+      let pat = new_pats.into_iter().rev().fold(
+        Pat::zero(Con::Ctor(StrRef::NIL, Span::Finite(2))),
+        |ac, x| {
+          Pat::Con(
+            Con::Ctor(StrRef::CONS, Span::Finite(2)),
+            vec![Pat::record(vec![x, ac])],
           )
-        });
+        },
+      );
       (ve, Ty::list(elem), pat)
     }
-    AstPat::Ctor(vid, arg) => {
-      let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
-      if val_info.id_status.is_val() {
-        return Err(vid.loc().wrap(StaticsError::PatWrongIdStatus));
-      }
+    AstPat::Ctor(long, arg) => {
       let (val_env, arg_ty, arg_pat) = ck(cx, st, arg)?;
-      let ctor_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
-      let ret_ty = Ty::Var(st.new_ty_var(false));
-      let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
-      st.subst.unify(pat.loc, ctor_ty, arrow_ty)?;
-      let pat = Pat::Ctor(vid.last.val, Some(arg_pat.into()));
-      (val_env, ret_ty, pat)
+      let (ty, pat) = ctor(cx, st, pat.loc, long, arg_ty, arg_pat)?;
+      (val_env, ty, pat)
     }
     AstPat::InfixCtor(lhs, vid, rhs) => {
-      let val_info = get_val_info(&cx.env, *vid)?;
-      if val_info.id_status.is_val() {
-        return Err(vid.loc.wrap(StaticsError::PatWrongIdStatus));
-      }
-      let func_ty = instantiate(st, &val_info.ty_scheme, pat.loc);
       let (mut val_env, lhs_ty, lhs_pat) = ck(cx, st, lhs)?;
       let (other_ve, rhs_ty, rhs_pat) = ck(cx, st, rhs)?;
       env_merge(&mut val_env, other_ve, pat.loc)?;
-      let ret_ty = Ty::Var(st.new_ty_var(false));
-      let arrow_ty = Ty::Arrow(
-        Ty::Record(vec![(Label::Num(1), lhs_ty), (Label::Num(2), rhs_ty)]).into(),
-        ret_ty.clone().into(),
-      );
-      st.subst.unify(pat.loc, func_ty, arrow_ty)?;
-      let pat = Pat::Ctor(
-        vid.val,
-        Some(Pat::Record(vec![(Label::Num(1), lhs_pat), (Label::Num(2), rhs_pat)]).into()),
-      );
-      (val_env, ret_ty, pat)
+      let arg_ty = Ty::Record(vec![(Label::Num(1), lhs_ty), (Label::Num(2), rhs_ty)]);
+      let arg_pat = Pat::record(vec![lhs_pat, rhs_pat]);
+      let long = Long {
+        structures: vec![],
+        last: *vid,
+      };
+      let (ty, pat) = ctor(cx, st, pat.loc, &long, arg_ty, arg_pat)?;
+      (val_env, ty, pat)
     }
     AstPat::Typed(inner_pat, ty) => {
       let (val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
@@ -157,4 +147,39 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     }
   };
   Ok(ret)
+}
+
+fn ctor(
+  cx: &Cx,
+  st: &mut State,
+  loc: Loc,
+  long: &Long<StrRef>,
+  arg_ty: Ty,
+  arg_pat: Pat,
+) -> Result<(Ty, Pat)> {
+  let val_info = get_val_info(get_env(cx, long)?, long.last)?;
+  if val_info.id_status.is_val() {
+    return Err(long.loc().wrap(StaticsError::PatWrongIdStatus));
+  }
+  let (ctor_arg_ty, mut ctor_res_ty) = match instantiate(st, &val_info.ty_scheme, loc) {
+    Ty::Arrow(x, y) => (*x, *y),
+    _ => unreachable!(),
+  };
+  st.subst.unify(loc, ctor_arg_ty, arg_ty)?;
+  ctor_res_ty.apply(&st.subst);
+  let sym = match ctor_res_ty {
+    Ty::Ctor(_, sym) => sym,
+    _ => unreachable!(),
+  };
+  let span = get_span(&st.datatypes, sym);
+  let pat = Pat::Con(Con::Ctor(long.last.val, span), vec![arg_pat]);
+  Ok((ctor_res_ty, pat))
+}
+
+fn get_span(dts: &Datatypes, sym: Sym) -> Span {
+  if sym == Sym::base(StrRef::EXN) {
+    Span::PosInf
+  } else {
+    Span::Finite(dts.get(&sym).unwrap().val_env.len())
+  }
 }

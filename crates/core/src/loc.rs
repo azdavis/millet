@@ -3,7 +3,7 @@
 use std::fmt;
 
 /// A range in the source. The start is inclusive, the end is not inclusive.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub struct Loc {
   start: usize,
   end: usize,

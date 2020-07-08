@@ -11,8 +11,8 @@
 //! 1. Right before returning from `instantiate`. This is a bit of a special case because the
 //!    `Subst` there is just a one-off which maps old type variables to new type variables, and is
 //!    not part of the overall global `Subst`.
-//! 2. Right before calling `exhaustive::ck`. This is so that we may correctly compute the
-//!    obligations the patterns need to fulfil.
+//! 2. Right before calling `get_span`. This is so that we may know what the Sym for a type is to
+//!    know its span.
 //! 3. Right before calling `generalize`. This is so that we know exactly what type variables ought
 //!    to be generalized and which have already been solved to concrete types by the `Subst`.
 //! 4. Right before checking for type name escape. This is so that we know exactly what type names
@@ -25,6 +25,7 @@
 //! one of the above noted places that we do call `apply`.
 
 mod dec;
+mod exhaustive;
 mod pat;
 mod ty;
 mod util;

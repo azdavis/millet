@@ -24,6 +24,7 @@ pub enum StaticsError {
   UnreachablePattern,
   FunDecNameMismatch(StrRef, StrRef),
   FunDecWrongNumPats(usize, usize),
+  NotConsType(Ty),
   Todo,
 }
 
@@ -68,6 +69,7 @@ impl StaticsError {
         "wrong number of patterns in function declaration: expected {}, found {}",
         want, got
       ),
+      Self::NotConsType(ty) => format!("not a constructor type: {}", show_ty(store, ty)),
       Self::Todo => "unimplemented language construct".to_owned(),
     }
   }
@@ -664,10 +666,49 @@ impl State {
 #[derive(Debug, Clone)]
 pub enum Pat {
   Anything,
+  Con(Con, Vec<Pat>),
+}
+
+impl Pat {
+  pub fn zero(con: Con) -> Self {
+    Self::Con(con, vec![])
+  }
+
+  /// Requires the patterns be sorted by label.
+  pub fn record(mut pats: Vec<Pat>) -> Self {
+    if pats.len() == 1 {
+      // may happen in the desugaring of `Fun`.
+      pats.pop().unwrap()
+    } else {
+      Self::Con(Con::Record(pats.len()), pats)
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Con {
   Int(i32),
   Word(i32),
   String(StrRef),
   Char(u8),
-  Record(Vec<(Label, Pat)>),
-  Ctor(StrRef, Option<Box<Pat>>),
+  /// This should never be used directly, use `Pat::record` instead. The usize is the arity.
+  Record(usize),
+  Ctor(StrRef, Span),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Span {
+  Finite(usize),
+  PosInf,
+}
+
+impl Con {
+  pub fn span(&self) -> Span {
+    match *self {
+      Self::Int(_) | Self::Word(_) | Self::String(_) => Span::PosInf,
+      Self::Char(_) => Span::Finite(256), // 2^8 since a char is a u8
+      Self::Record(_) => Span::Finite(1),
+      Self::Ctor(_, s) => s,
+    }
+  }
 }

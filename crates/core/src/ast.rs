@@ -63,7 +63,8 @@ pub struct Row<I> {
   pub exp: Located<Exp<I>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// See StrRef for a discussion on PartialOrd + Ord.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Label {
   Num(u32),
   Vid(StrRef),
