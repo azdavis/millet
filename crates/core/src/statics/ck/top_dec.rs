@@ -29,7 +29,21 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
       dec::ck(&cx, st, dec)
     }
     StrDec::Structure(_) => Err(str_dec.loc.wrap(Error::Todo)),
-    StrDec::Local(_, _) => Err(str_dec.loc.wrap(Error::Todo)),
-    StrDec::Seq(_) => Err(str_dec.loc.wrap(Error::Todo)),
+    StrDec::Local(fst, snd) => {
+      let env = ck_str_dec(bs, st, fst)?;
+      let mut bs = bs.clone();
+      bs.o_plus(env);
+      ck_str_dec(&bs, st, snd)
+    }
+    StrDec::Seq(str_decs) => {
+      // TODO clone in loop - expensive?
+      let mut bs = bs.clone();
+      let mut ret = Env::default();
+      for str_dec in str_decs {
+        bs.o_plus(ret.clone());
+        ret.extend(ck_str_dec(&bs, st, str_dec)?);
+      }
+      Ok(ret)
+    }
   }
 }

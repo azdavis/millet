@@ -621,11 +621,13 @@ impl Cx {
   }
 }
 
+#[derive(Clone)]
 pub struct Sig {
   pub ty_names: TyNameSet,
   pub env: Env,
 }
 
+#[derive(Clone)]
 pub struct FunSig {
   pub ty_names: TyNameSet,
   pub env: Env,
@@ -636,6 +638,7 @@ pub type SigEnv = HashMap<StrRef, Sig>;
 
 pub type FunEnv = HashMap<StrRef, FunSig>;
 
+#[derive(Clone)]
 pub struct Basis {
   pub ty_names: TyNameSet,
   pub fun_env: FunEnv,
