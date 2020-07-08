@@ -23,9 +23,6 @@ Then clone the repository, cd inside, and run `cargo build`.
 
 ## Testing
 
-To make a new test, run `bin/mk-test tests/<name>` from the top level of the
-repo.
-
 A test is a directory directly inside the directory `tests`.
 
 If the test contains a file `run.sh`, then when that file is run with
