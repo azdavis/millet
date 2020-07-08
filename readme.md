@@ -2,8 +2,8 @@
 
 An set of tools for Standard ML.
 
-Right now, the set has only one element: a language server for SML, and a
-corresponding Visual Studio Code language client extension.
+Right now, the set has only one element: a language server, with a corresponding
+Visual Studio Code language client extension.
 
 ## Naming
 
@@ -18,6 +18,10 @@ course.
 First install Rust, probably with [rustup][].
 
 Then clone the repository, cd inside, and run `cargo build`.
+
+If you're using VSCode, open the repository in VSCode to get extension
+recommendations for a pleasant Rust developer experience. VSCode also lets you
+debug the language client extension from the Run panel.
 
 ## Testing
 
