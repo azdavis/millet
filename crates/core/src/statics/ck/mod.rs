@@ -6,23 +6,11 @@
 //! successfully updated the `Subst`. This means that _if_ you want to have the types be updated as
 //! well, you must call `Ty#apply` with the new `Subst`.
 //!
-//! It is only strictly necessary to call `Ty#apply` in the following situations:
-//!
-//! 1. Right before returning from `instantiate`. This is a bit of a special case because the
-//!    `Subst` there is just a one-off which maps old type variables to new type variables, and is
-//!    not part of the overall global `Subst`.
-//! 2. Right before calling `get_span`. This is so that we may know what the Sym for a type is to
-//!    know its span.
-//! 3. Right before calling `generalize`. This is so that we know exactly what type variables ought
-//!    to be generalized and which have already been solved to concrete types by the `Subst`.
-//! 4. Right before checking for type name escape. This is so that we know exactly what type names
-//!    are mentioned in the type we are checking.
-//!
-//! In short, we only need to call `apply` when we truly need access to _everything_ we currently
-//! know about this type. In many situations, for instance, we don't need to call `apply` on a fresh
-//! type variable we are about to return from `ck_exp` (e.g. the App case) because we have already
-//! recorded the relevant information in the `Subst` and this information will be surfaced later by
-//! one of the above noted places that we do call `apply`.
+//! It is only strictly necessary to call `Ty#apply` when we truly need access to _everything_ we
+//! currently know about this type. In many situations, for instance, we don't need to call `apply`
+//! on a fresh type variable we are about to return from `ck_exp` (e.g. the App case) because we
+//! have already recorded the relevant information in the `Subst` and this information will be
+//! surfaced later by one of the above noted places that we do call `apply`.
 
 mod dec;
 mod exhaustive;
