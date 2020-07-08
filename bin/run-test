@@ -40,14 +40,14 @@ for x in "$@"; do
       ok=false
       continue
     fi
-  elif [ -e good.sml ]; then
-    if ! NO_COLOR=1 cargo run --quiet --bin millet -- good.sml >out.tmp; then
+  elif [ -e ok.sml ]; then
+    if ! NO_COLOR=1 cargo run --quiet --bin millet -- ok.sml >out.tmp; then
       echo "$x: expected success, got failure"
       ok=false
       continue
     fi
-  elif [ -e bad.sml ]; then
-    if NO_COLOR=1 cargo run --quiet --bin millet -- bad.sml >out.tmp; then
+  elif [ -e err.sml ]; then
+    if NO_COLOR=1 cargo run --quiet --bin millet -- err.sml >out.tmp; then
       echo "$x: expected failure, got success"
       ok=false
       continue
