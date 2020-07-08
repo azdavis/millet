@@ -24,16 +24,17 @@ Then clone the repository, cd inside, and run `cargo build`.
 A test is a directory directly inside the directory `tests`.
 
 If the test contains a file `run.sh`, then when that file is run with
-`sh -eu run.sh`, it must produce `out.tmp` inside the test. The test must also
-contain `out.txt` which contains the expected contents of `out.tmp`.
+`sh -eu run.sh`, it must exit 0.
 
-Else, if the test contains a file `err.sml`, then when the Millet CLI is run
-with that file, it must exit with a non-zero exit code. The test must also
-contain `out.txt` which contains the expected output of the Millet CLI when run
-on this file.
+Else, if the test contains a file `ast.sml`, then when the Millet CLI is run to
+output AST for that file, it must exit 0 and produce the output in `out.txt`.
 
 Else, if the test contains a file `ok.sml`, then when the Millet CLI is run with
-that file, it must exit with the exit code 0.
+that file on quiet mode, it must exit 0 and produce no output.
+
+Else, if the test contains a file `err.sml`, then when the Millet CLI is run
+with that file, it must exit with a non-zero exit code and produce the output in
+`out.txt`.
 
 Run `bin/run-test tests/<name>` to run a test.
 
