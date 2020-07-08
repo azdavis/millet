@@ -1,5 +1,5 @@
 error: invalid character constant
-  ┌─ inp.sml:1:9
+  ┌─ err.sml:1:9
   │
 1 │ val _ = #"あ"
   │         ^^^^^

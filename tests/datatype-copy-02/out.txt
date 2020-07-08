@@ -1,5 +1,5 @@
 error: right-hand side of datatype copy is not a datatype
-  ┌─ inp.sml:1:25
+  ┌─ err.sml:1:25
   │
 1 │ datatype bad = datatype exn
   │                         ^^^

@@ -1,5 +1,5 @@
 error: pattern does not a constructor type: (int) -> (d)
-  ┌─ inp.sml:5:5
+  ┌─ err.sml:5:5
   │
 5 │   | B => 2
   │     ^

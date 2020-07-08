@@ -1,5 +1,5 @@
 error: expression causes a type name to escape its scope
-  ┌─ inp.sml:6:30
+  ┌─ err.sml:6:30
   │
 6 │     true; false; bar; 3 + 3; quz
   │                              ^^^

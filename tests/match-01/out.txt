@@ -1,6 +1,6 @@
 error: non-exhaustive match
-   ┌─ inp.sml:3:3
-   │  
+   ┌─ err.sml:3:3
+   │
  3 │ ╭   case A of
  4 │ │     A => 0
  5 │ │   | B 1 => 1

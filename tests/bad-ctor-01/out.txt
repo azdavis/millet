@@ -1,5 +1,5 @@
 error: pattern does not an arrow type: d
-  ┌─ inp.sml:4:5
+  ┌─ err.sml:4:5
   │
 4 │     A _ => 1
   │     ^^^

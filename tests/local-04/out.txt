@@ -1,5 +1,5 @@
 error: undefined value identifier: x
-  ┌─ inp.sml:5:9
+  ┌─ err.sml:5:9
   │
 5 │ val _ = x
   │         ^

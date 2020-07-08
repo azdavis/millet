@@ -1,5 +1,5 @@
 error: unmatched open comment
-  ┌─ inp.sml:1:11
+  ┌─ err.sml:1:11
   │
 1 │ val x = 3 (*
   │           ^^

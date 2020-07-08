@@ -1,5 +1,5 @@
 error: mismatched types: expected int, found string
-  ┌─ inp.sml:1:25
+  ┌─ err.sml:1:25
   │
 1 │ val _ = fn id => (id 3; id "nope")
   │                         ^^^^^^^^^

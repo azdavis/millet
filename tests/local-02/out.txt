@@ -1,5 +1,5 @@
 error: undefined value identifier: x
-  ┌─ inp.sml:8:5
+  ┌─ err.sml:8:5
   │
 8 │     x
   │     ^

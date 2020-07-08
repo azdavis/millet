@@ -1,5 +1,5 @@
 error: mismatched types: expected int, found string
-  ┌─ inp.sml:3:9
+  ┌─ err.sml:3:9
   │
 3 │ val _ = inc "nope"
   │         ^^^^^^^^^^
