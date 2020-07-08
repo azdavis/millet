@@ -708,6 +708,14 @@ impl Basis {
       .collect()
   }
 
+  pub fn to_cx(&self) -> Cx {
+    Cx {
+      ty_names: self.ty_names.clone(),
+      ty_vars: TyVarSet::new(),
+      env: self.env.clone(),
+    }
+  }
+
   pub fn add_env(&mut self, env: Env) {
     let ty_names = env.ty_names();
     self.ty_names.extend(ty_names);

@@ -3,9 +3,11 @@
 use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use crate::intern::StrRef;
 use crate::loc::Located;
-use crate::statics::ck::dec;
+use crate::statics::ck::util::env_ins;
+use crate::statics::ck::{dec, ty};
 use crate::statics::types::{
-  Basis, Cx, Env, Error, FunEnv, Result, Sig, SigEnv, State, StrEnv, TyVarSet,
+  Basis, DatatypeInfo, Env, Error, FunEnv, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo,
+  TyScheme, ValEnv, ValInfo,
 };
 
 pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
@@ -40,14 +42,7 @@ fn env_to_sig(bs: &Basis, env: Env) -> Sig {
 
 fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> Result<Env> {
   match &str_dec.val {
-    StrDec::Dec(dec) => {
-      let cx = Cx {
-        ty_names: bs.ty_names.clone(),
-        ty_vars: TyVarSet::new(),
-        env: bs.env.clone(),
-      };
-      dec::ck(&cx, st, dec)
-    }
+    StrDec::Dec(dec) => dec::ck(&bs.to_cx(), st, dec),
     StrDec::Structure(str_binds) => {
       let mut bs = bs.clone();
       let mut str_env = StrEnv::new();
@@ -124,13 +119,33 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> 
 
 fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<Env> {
   match &spec.val {
-    Spec::Val(_) => {
-      //
-      Err(spec.loc.wrap(Error::Todo))
+    Spec::Val(val_descs) => {
+      let cx = bs.to_cx();
+      let mut val_env = ValEnv::new();
+      for val_desc in val_descs {
+        let ty = ty::ck(&cx, st, &val_desc.ty)?;
+        // TODO generalize? closure?
+        env_ins(&mut val_env, val_desc.vid, ValInfo::val(TyScheme::mono(ty)))?;
+      }
+      Ok(val_env.into())
     }
-    Spec::Type(_) => {
-      //
-      Err(spec.loc.wrap(Error::Todo))
+    Spec::Type(ty_descs) => {
+      let mut ty_env = TyEnv::default();
+      for ty_desc in ty_descs {
+        if let Some(tv) = ty_desc.ty_vars.first() {
+          return Err(tv.loc.wrap(Error::Todo));
+        }
+        let sym = st.new_sym(ty_desc.ty_con);
+        env_ins(&mut ty_env.inner, ty_desc.ty_con, TyInfo::Datatype(sym))?;
+        st.datatypes.insert(
+          sym,
+          DatatypeInfo {
+            ty_fcn: TyScheme::mono(Ty::Ctor(vec![], sym)),
+            val_env: ValEnv::new(),
+          },
+        );
+      }
+      Ok(ty_env.into())
     }
     Spec::Eqtype(_) => {
       //
