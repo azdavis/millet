@@ -1,23 +1,21 @@
 # Millet
 
-An implementation of Standard ML being developed mainly for use in
-[15-150][one-fifty], Carnegie Mellon University's introductory functional
-programming course.
+An set of tools for Standard ML.
 
-The main project under current development is a language server, and a
-corresponding Visual Studio Code language client extension. Other projects like
-an formatter, an interpreter, a debugger, and a compiler might be explored.
+Right now, the set has only one element: language server for SML, and a
+corresponding Visual Studio Code language client extension.
 
 ## Naming
 
 "Millet" has M and L in it, in that order. So does "Standard ML".
 
 Also, birds eat millet, and a bird named Polly Morphism is the mascot for
-15-150.
+[15-150][one-fifty], Carnegie Mellon's introductory functional programming
+course.
 
 ## Development
 
-First install Rust and Cargo, probably with [rustup][].
+First install Rust, probably with [rustup][].
 
 Then clone the repository, cd inside, and run `cargo build`.
 
@@ -44,5 +42,3 @@ an appropriate `out.txt` file. Use `bin/run-test -g tests/<name>` to do that.
 
 [one-fifty]: http://www.cs.cmu.edu/~15150/
 [rustup]: https://rustup.rs
-[sml-def]: https://smlfamily.github.io/sml97-defn.pdf
-[sml-nj]: https://www.smlnj.org
