@@ -3,8 +3,8 @@
 use crate::ast::Ty as AstTy;
 use crate::intern::StrRef;
 use crate::loc::Located;
-use crate::statics::ck::util::{get_env, tuple_lab};
-use crate::statics::types::{Cx, Error, Item, Result, State, Ty};
+use crate::statics::ck::util::{get_env, get_ty_info, tuple_lab};
+use crate::statics::types::{Cx, Error, Result, State, Ty};
 use std::collections::HashSet;
 
 pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
@@ -36,18 +36,8 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
     }
     AstTy::TyCon(args, name) => {
       let env = get_env(cx, name)?;
-      let ty_fcn = match env.ty_env.inner.get(&name.last.val) {
-        None => {
-          return Err(
-            name
-              .last
-              .loc
-              .wrap(Error::Undefined(Item::Type, name.last.val)),
-          )
-        }
-        // NOTE could avoid this clone if we separated datatypes from State
-        Some(x) => x.ty_fcn(&st.datatypes).clone(),
-      };
+      // NOTE could avoid this clone if we separated datatypes from State
+      let ty_fcn = get_ty_info(env, name.last)?.ty_fcn(&st.datatypes).clone();
       if ty_fcn.ty_vars.len() != args.len() {
         let err = Error::WrongNumTyArgs(ty_fcn.ty_vars.len(), args.len());
         return Err(ty.loc.wrap(err));

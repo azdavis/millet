@@ -4,7 +4,7 @@ use crate::ast::{Label, Long};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Cx, Datatypes, Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyScheme, ValInfo,
+  Cx, Datatypes, Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
 };
 use std::collections::HashMap;
 use std::convert::TryInto as _;
@@ -65,6 +65,13 @@ pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   match env.val_env.get(&name.val) {
     None => Err(name.loc.wrap(Error::Undefined(Item::Value, name.val))),
     Some(val_info) => Ok(val_info),
+  }
+}
+
+pub fn get_ty_info(env: &Env, name: Located<StrRef>) -> Result<&TyInfo> {
+  match env.ty_env.inner.get(&name.val) {
+    None => Err(name.loc.wrap(Error::Undefined(Item::Type, name.val))),
+    Some(ty_info) => Ok(ty_info),
   }
 }
 
