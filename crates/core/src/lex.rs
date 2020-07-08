@@ -131,7 +131,7 @@ impl<'s> TokenMaker<'s> {
     if comments == 0 {
       Ok(ts)
     } else {
-      Err(Loc::new(self.i - 1, self.i).wrap(Error::UnmatchedOpenComment))
+      Err(Loc::new(self.i - 3, self.i - 1).wrap(Error::UnmatchedOpenComment))
     }
   }
 
