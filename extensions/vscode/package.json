@@ -1,10 +1,10 @@
 {
   "private": true,
   "publisher": "azdavis",
-  "name": "millet",
-  "displayName": "Millet",
+  "name": "millet-ls",
+  "displayName": "Millet LS",
   "version": "0.1.0",
-  "description": "Millet support for VSCode",
+  "description": "A language server for Standard ML",
   "author": "Ariel Davis <ariel.z.davis@icloud.com>",
   "main": "./out/main.js",
   "scripts": {
