@@ -32,7 +32,7 @@ impl Lexer {
 pub enum Error {
   UnmatchedCloseComment,
   UnmatchedOpenComment,
-  IncompleteTypeVar,
+  IncompleteTyVar,
   UnknownByte(u8),
   InvalidIntConstant(core::num::ParseIntError),
   InvalidRealConstant(core::num::ParseFloatError),
@@ -48,7 +48,7 @@ impl Error {
     match self {
       Self::UnmatchedCloseComment => "unmatched close comment".to_owned(),
       Self::UnmatchedOpenComment => "unmatched open comment".to_owned(),
-      Self::IncompleteTypeVar => "incomplete type var".to_owned(),
+      Self::IncompleteTyVar => "incomplete type variable".to_owned(),
       Self::UnknownByte(b) => format!("unknown byte: {:#x}", b),
       Self::InvalidIntConstant(e) => format!("invalid integer constant: {}", e),
       Self::InvalidRealConstant(e) => format!("invalid real constant: {}", e),
@@ -142,13 +142,13 @@ impl<'s> TokenMaker<'s> {
         let start = self.i;
         self.i += 1;
         let b = match self.bs.get(self.i) {
-          None => return Err(Error::IncompleteTypeVar),
+          None => return Err(Error::IncompleteTyVar),
           Some(x) => *x,
         };
         let equality = match alpha_num(b) {
           Some(AlphaNum::Prime) => true,
           Some(_) => false,
-          None => return Err(Error::IncompleteTypeVar),
+          None => return Err(Error::IncompleteTyVar),
         };
         self.i += 1;
         while let Some(&b) = self.bs.get(self.i) {
