@@ -5,7 +5,7 @@ set -eu
 usage() {
 cat <<EOF
 usage:
-  $0 [options]
+  $0 [options] <file>...
 
 options:
   -h
