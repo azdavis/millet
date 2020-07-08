@@ -31,59 +31,59 @@ fi
 
 ok=true
 old_pwd="$PWD"
-rm_out_txt=false
 for x in "$@"; do
-  rm_out_txt=false
-  cd "$old_pwd"
   cd "$x"
   if [ -e run.sh ]; then
-    if ! sh -eu run.sh; then
+    if sh -eu run.sh; then
+      echo "$x: ok"
+    else
       echo "$x: expected run.sh to exit zero, got non-zero"
       ok=false
-      continue
     fi
-  elif [ -e ok.sml ]; then
-    if ! NO_COLOR=1 cargo run --quiet --bin millet -- ok.sml >out.tmp; then
+  elif [ -e ast.sml ]; then
+    if ! NO_COLOR=1 cargo run --quiet --bin millet -- --just-ast ast.sml >out.tmp; then
       echo "$x: expected success, got failure"
       ok=false
-      continue
+    elif "$generate"; then
+      mv out.tmp out.txt
+      echo "$x: generated"
+    elif diff out.txt out.tmp; then
+      rm out.tmp
+      echo "$x: ok"
+    else
+      echo "$x: expected lhs, got rhs"
+      ok=false
     fi
-    echo "no errors" >out.txt
-    rm_out_txt=true
+  elif [ -e ok.sml ]; then
+    if ! NO_COLOR=1 cargo run --quiet --bin millet -- --quiet ok.sml >out.tmp; then
+      echo "$x: expected success, got failure"
+      ok=false
+    elif [ -s out.tmp ]; then
+      echo "$x: expected no output, got output"
+      ok=false
+    else
+      rm out.tmp
+      echo "$x: ok"
+    fi
   elif [ -e err.sml ]; then
     if NO_COLOR=1 cargo run --quiet --bin millet -- err.sml >out.tmp; then
       echo "$x: expected failure, got success"
       ok=false
-      continue
+    elif "$generate"; then
+      mv out.tmp out.txt
+      echo "$x: generated"
+    elif diff out.txt out.tmp; then
+      rm out.tmp
+      echo "$x: ok"
+    else
+      echo "$x: expected lhs, got rhs"
+      ok=false
     fi
   else
     echo "$x: don't know how to run"
     ok=false
-    continue
   fi
-  if "$generate"; then
-    if "$rm_out_txt"; then
-      rm out.tmp out.txt
-      echo "$x: nothing to generate"
-    else
-      mv out.tmp out.txt
-      echo "$x: generated"
-    fi
-    continue
-  fi
-  if ! diff out.txt out.tmp; then
-    if "$rm_out_txt"; then
-      rm out.txt
-    fi
-    echo "$x: expected lhs, got rhs"
-    ok=false
-    continue
-  fi
-  if "$rm_out_txt"; then
-    rm out.txt
-  fi
-  rm out.tmp
-  echo "$x: ok"
+  cd "$old_pwd"
 done
 
 if "$ok"; then

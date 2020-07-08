@@ -1,4 +1,4 @@
-inp.sml: [
+ast.sml: [
     StrDec(
         Dec(
             Seq(
