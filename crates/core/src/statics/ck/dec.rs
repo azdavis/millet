@@ -1,6 +1,6 @@
 //! Check declarations and expressions.
 
-use crate::ast::{Cases, Dec, Exp, Label};
+use crate::ast::{Cases, Dec, ExBindInner, Exp, Label};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{
@@ -401,9 +401,26 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       return Err(dec.loc.wrap(Error::Todo));
     }
     Dec::Abstype(..) => return Err(dec.loc.wrap(Error::Todo)),
-    Dec::Exception(_) => {
-      //
-      return Err(dec.loc.wrap(Error::Todo));
+    Dec::Exception(ex_binds) => {
+      let mut val_env = ValEnv::new();
+      for ex_bind in ex_binds {
+        let val_info = match &ex_bind.inner {
+          ExBindInner::Ty(ty) => match ty {
+            None => ValInfo::exn(),
+            Some(ty) => ValInfo::exn_fn(ty::ck(cx, st, ty)?),
+          },
+          ExBindInner::Long(vid) => {
+            let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
+            if !val_info.id_status.is_exn() {
+              let err = Error::ExnWrongIdStatus(val_info.id_status);
+              return Err(vid.loc().wrap(err));
+            }
+            val_info.clone()
+          }
+        };
+        val_env.insert(ex_bind.vid.val, val_info);
+      }
+      val_env.into()
     }
     Dec::Local(_, _) => {
       //

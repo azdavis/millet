@@ -14,6 +14,7 @@ pub enum Error {
   Circularity(TyVar, Ty),
   TyMismatch(Ty, Ty),
   PatWrongIdStatus,
+  ExnWrongIdStatus(IdStatus),
   WrongNumTyArgs(usize, usize),
   NonVarInAs(StrRef),
   ForbiddenBinding(StrRef),
@@ -47,6 +48,10 @@ impl Error {
         "mismatched identifier status: expected a constructor or exception, found a value"
           .to_owned()
       }
+      Self::ExnWrongIdStatus(x) => format!(
+        "mismatched identifier status: expected an exception, found a {}",
+        x
+      ),
       Self::WrongNumTyArgs(want, got) => format!(
         "wrong number of type arguments: expected {}, found {}",
         want, got
@@ -450,7 +455,7 @@ impl TyEnv {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum IdStatus {
   Ctor,
   Exn,
@@ -460,6 +465,20 @@ pub enum IdStatus {
 impl IdStatus {
   pub fn is_val(&self) -> bool {
     matches!(self, Self::Val)
+  }
+
+  pub fn is_exn(&self) -> bool {
+    matches!(self, Self::Exn)
+  }
+}
+
+impl fmt::Display for IdStatus {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::Ctor => write!(f, "constructor"),
+      Self::Exn => write!(f, "exception"),
+      Self::Val => write!(f, "value"),
+    }
   }
 }
 
@@ -480,6 +499,13 @@ impl ValInfo {
   pub fn exn() -> Self {
     Self {
       ty_scheme: TyScheme::mono(Ty::EXN),
+      id_status: IdStatus::Exn,
+    }
+  }
+
+  pub fn exn_fn(ty: Ty) -> Self {
+    Self {
+      ty_scheme: TyScheme::mono(Ty::Arrow(ty.into(), Ty::EXN.into())),
       id_status: IdStatus::Exn,
     }
   }
