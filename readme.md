@@ -2,7 +2,7 @@
 
 An set of tools for Standard ML.
 
-Right now, the set has only one element: language server for SML, and a
+Right now, the set has only one element: a language server for SML, and a
 corresponding Visual Studio Code language client extension.
 
 ## Naming
