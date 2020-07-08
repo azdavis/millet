@@ -264,8 +264,3 @@ pub const OTHER: [(&[u8], Token); 11] = [
   (b"{", Token::LCurly),
   (b"}", Token::RCurly),
 ];
-
-#[test]
-fn test_size() {
-  assert_eq!(std::mem::size_of::<Token>(), 24);
-}
