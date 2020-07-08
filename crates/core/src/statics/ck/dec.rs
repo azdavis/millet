@@ -4,13 +4,14 @@ use crate::ast::{Cases, Dec, ExBindInner, Exp, Label};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{
-  env_ins, env_merge, generalize, get_env, get_val_info, instantiate, tuple_lab,
+  env_ins, env_merge, generalize, get_env, get_ty_info, get_val_info, instantiate, tuple_lab,
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
   Cx, DatatypeInfo, Env, Error, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar,
   ValEnv, ValInfo,
 };
+use maplit::hashmap;
 use std::collections::{HashMap, HashSet};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
@@ -396,9 +397,21 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         str_env: StrEnv::new(),
       }
     }
-    Dec::DatatypeCopy(_, _) => {
-      //
-      return Err(dec.loc.wrap(Error::Todo));
+    Dec::DatatypeCopy(vid, long) => {
+      let sym = match get_ty_info(get_env(cx, long)?, long.last)? {
+        TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
+        TyInfo::Datatype(sym) => *sym,
+      };
+      let dt_info = st.datatypes.get(&sym).unwrap();
+      // should hold because of the syntax of datatype copying.
+      assert!(dt_info.ty_fcn.ty_vars.is_empty());
+      Env {
+        str_env: StrEnv::new(),
+        ty_env: TyEnv {
+          inner: hashmap![vid.val => TyInfo::Datatype(sym)],
+        },
+        val_env: dt_info.val_env.clone(),
+      }
     }
     Dec::Abstype(..) => return Err(dec.loc.wrap(Error::Todo)),
     Dec::Exception(ex_binds) => {

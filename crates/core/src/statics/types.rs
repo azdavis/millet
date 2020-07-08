@@ -27,6 +27,7 @@ pub enum Error {
   FunDecWrongNumPats(usize, usize),
   PatNotConsType(Ty),
   PatNotArrowType(Ty),
+  DatatypeCopyNotDatatype,
   Todo,
 }
 
@@ -81,6 +82,9 @@ impl Error {
       ),
       Self::PatNotArrowType(ty) => {
         format!("pattern does not an arrow type: {}", show_ty(store, ty))
+      }
+      Self::DatatypeCopyNotDatatype => {
+        "right-hand side of datatype copy is not a datatype".to_owned()
       }
       Self::Todo => "unimplemented language construct".to_owned(),
     }
