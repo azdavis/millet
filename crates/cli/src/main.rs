@@ -89,6 +89,7 @@ fn run() -> bool {
       }
     }
   }
+  writeln!(&mut w, "no errors").unwrap();
   true
 }
 
@@ -101,6 +102,6 @@ fn main() {
     .join()
   {
     Err(_) | Ok(false) => std::process::exit(1),
-    Ok(true) => println!("no errors"),
+    Ok(true) => {}
   }
 }
