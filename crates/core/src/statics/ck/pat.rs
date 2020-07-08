@@ -42,7 +42,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
           let ty = instantiate(st, ty_scheme, pat.loc);
           let sym = match ty {
             Ty::Ctor(_, sym) => sym,
-            _ => return Err(pat.loc.wrap(StaticsError::NotConsType(ty))),
+            _ => return Err(pat.loc.wrap(StaticsError::PatNotConsType(ty))),
           };
           let span = get_span(&st.datatypes, sym);
           let pat = Pat::zero(Con::Ctor(vid.last.val, span));
@@ -163,7 +163,7 @@ fn ctor(
   }
   let (ctor_arg_ty, mut ctor_res_ty) = match instantiate(st, &val_info.ty_scheme, loc) {
     Ty::Arrow(x, y) => (*x, *y),
-    _ => unreachable!(),
+    ty => return Err(loc.wrap(StaticsError::PatNotArrowType(ty))),
   };
   st.subst.unify(loc, ctor_arg_ty, arg_ty)?;
   ctor_res_ty.apply(&st.subst);

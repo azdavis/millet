@@ -24,7 +24,8 @@ pub enum StaticsError {
   UnreachablePattern,
   FunDecNameMismatch(StrRef, StrRef),
   FunDecWrongNumPats(usize, usize),
-  NotConsType(Ty),
+  PatNotConsType(Ty),
+  PatNotArrowType(Ty),
   Todo,
 }
 
@@ -69,7 +70,13 @@ impl StaticsError {
         "wrong number of patterns in function declaration: expected {}, found {}",
         want, got
       ),
-      Self::NotConsType(ty) => format!("not a constructor type: {}", show_ty(store, ty)),
+      Self::PatNotConsType(ty) => format!(
+        "pattern does not a constructor type: {}",
+        show_ty(store, ty)
+      ),
+      Self::PatNotArrowType(ty) => {
+        format!("pattern does not an arrow type: {}", show_ty(store, ty))
+      }
       Self::Todo => "unimplemented language construct".to_owned(),
     }
   }
