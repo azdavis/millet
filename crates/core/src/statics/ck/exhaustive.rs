@@ -16,18 +16,18 @@
 //!   strings.
 
 use crate::loc::{Loc, Located};
-use crate::statics::types::{Con, Pat, Result, Span, StaticsError};
+use crate::statics::types::{Con, Error, Pat, Result, Span};
 use std::collections::BTreeSet;
 
 /// Returns Ok(()) iff the pats are exhaustive and not redundant.
 pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
-  ck(pats, loc, StaticsError::NonExhaustiveMatch)
+  ck(pats, loc, Error::NonExhaustiveMatch)
 }
 
 /// Returns Ok(()) iff the singular pat is exhaustive and not redundant. (Well, of course it won't
 /// be redundant.)
 pub fn ck_bind(pat: Pat, loc: Loc) -> Result<()> {
-  ck(vec![loc.wrap(pat)], loc, StaticsError::NonExhaustiveBinding)
+  ck(vec![loc.wrap(pat)], loc, Error::NonExhaustiveBinding)
 }
 
 /// A description of an object being matched (the "match head"). We use this to cumulatively record
@@ -85,12 +85,12 @@ type Cx = BTreeSet<Loc>;
 type Pats = std::vec::IntoIter<Located<Pat>>;
 
 /// A wrapper function which each of the two exported functions actually calls.
-fn ck(pats: Vec<Located<Pat>>, loc: Loc, e: StaticsError) -> Result<()> {
+fn ck(pats: Vec<Located<Pat>>, loc: Loc, e: Error) -> Result<()> {
   let mut cx: Cx = pats.iter().map(|x| x.loc).collect();
   if fail(&mut cx, Desc::Neg(vec![]), pats.into_iter()) {
     match cx.into_iter().next() {
       None => Ok(()),
-      Some(loc) => Err(loc.wrap(StaticsError::UnreachablePattern)),
+      Some(loc) => Err(loc.wrap(Error::UnreachablePattern)),
     }
   } else {
     Err(loc.wrap(e))

@@ -6,7 +6,7 @@ use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
 use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate, tuple_lab};
 use crate::statics::types::{
-  Con, Cx, Datatypes, Pat, Result, Span, State, StaticsError, Sym, Ty, TyScheme, ValEnv, ValInfo,
+  Con, Cx, Datatypes, Error, Pat, Result, Span, State, Sym, Ty, TyScheme, ValEnv, ValInfo,
 };
 use maplit::hashmap;
 use std::collections::BTreeMap;
@@ -42,7 +42,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
           let ty = instantiate(st, ty_scheme, pat.loc);
           let sym = match ty {
             Ty::Ctor(_, sym) => sym,
-            _ => return Err(pat.loc.wrap(StaticsError::PatNotConsType(ty))),
+            _ => return Err(pat.loc.wrap(Error::PatNotConsType(ty))),
           };
           let span = get_span(&st.datatypes, sym);
           let pat = Pat::zero(Con::Ctor(vid.last.val, span));
@@ -52,7 +52,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     }
     AstPat::Record(rows, rest_loc) => {
       if let Some(loc) = rest_loc {
-        return Err(loc.wrap(StaticsError::Todo));
+        return Err(loc.wrap(Error::Todo));
       }
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(rows.len());
@@ -60,7 +60,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       for row in rows {
         let (other_ve, ty, pat) = ck(cx, st, &row.pat)?;
         if new_pats.insert(row.lab.val, pat).is_some() {
-          return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
+          return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
         env_merge(&mut ve, other_ve, row.pat.loc)?;
         ty_rows.push((row.lab.val, ty));
@@ -134,7 +134,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         .get(&vid.val)
         .map_or(false, |x| !x.id_status.is_val())
       {
-        return Err(vid.loc.wrap(StaticsError::NonVarInAs(vid.val)));
+        return Err(vid.loc.wrap(Error::NonVarInAs(vid.val)));
       }
       let (mut val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
       if let Some(ty) = ty {
@@ -159,11 +159,11 @@ fn ctor(
 ) -> Result<(Ty, Pat)> {
   let val_info = get_val_info(get_env(cx, long)?, long.last)?;
   if val_info.id_status.is_val() {
-    return Err(long.loc().wrap(StaticsError::PatWrongIdStatus));
+    return Err(long.loc().wrap(Error::PatWrongIdStatus));
   }
   let (ctor_arg_ty, mut ctor_res_ty) = match instantiate(st, &val_info.ty_scheme, loc) {
     Ty::Arrow(x, y) => (*x, *y),
-    ty => return Err(loc.wrap(StaticsError::PatNotArrowType(ty))),
+    ty => return Err(loc.wrap(Error::PatNotArrowType(ty))),
   };
   st.subst.unify(loc, ctor_arg_ty, arg_ty)?;
   ctor_res_ty.apply(&st.subst);

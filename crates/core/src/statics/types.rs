@@ -7,7 +7,7 @@ use maplit::{hashmap, hashset};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 
-pub enum StaticsError {
+pub enum Error {
   Undefined(Item, StrRef),
   Redefined(StrRef),
   DuplicateLabel(Label),
@@ -29,7 +29,7 @@ pub enum StaticsError {
   Todo,
 }
 
-impl StaticsError {
+impl Error {
   pub fn message(&self, store: &StrStore) -> String {
     match self {
       Self::Undefined(item, id) => format!("undefined {} identifier: {}", item, store.get(*id)),
@@ -143,7 +143,7 @@ fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
   show_ty_impl(buf, store, ty);
 }
 
-pub type Result<T> = std::result::Result<T, Located<StaticsError>>;
+pub type Result<T> = std::result::Result<T, Located<Error>>;
 
 pub enum Item {
   Value,
@@ -215,7 +215,7 @@ impl Subst {
       }
     }
     if ty.free_ty_vars().contains(&tv) {
-      return Err(loc.wrap(StaticsError::Circularity(tv, ty)));
+      return Err(loc.wrap(Error::Circularity(tv, ty)));
     }
     self.insert(tv, ty);
     Ok(())
@@ -237,7 +237,7 @@ impl Subst {
           match (map_want.remove(&k), map_got.remove(&k)) {
             (Some(want), Some(got)) => self.unify(loc, want, got)?,
             (Some(..), None) | (None, Some(..)) => {
-              return Err(loc.wrap(StaticsError::TyMismatch(
+              return Err(loc.wrap(Error::TyMismatch(
                 Ty::Record(rows_want),
                 Ty::Record(rows_got),
               )))
@@ -254,7 +254,7 @@ impl Subst {
       }
       (Ty::Ctor(args_want, name_want), Ty::Ctor(args_got, name_got)) => {
         if name_want != name_got {
-          return Err(loc.wrap(StaticsError::TyMismatch(
+          return Err(loc.wrap(Error::TyMismatch(
             Ty::Ctor(args_want, name_want),
             Ty::Ctor(args_got, name_got),
           )));
@@ -266,7 +266,7 @@ impl Subst {
         Ok(())
       }
       (want @ Ty::Record(..), got) | (want @ Ty::Arrow(..), got) | (want @ Ty::Ctor(..), got) => {
-        Err(loc.wrap(StaticsError::TyMismatch(want, got)))
+        Err(loc.wrap(Error::TyMismatch(want, got)))
       }
     }
   }

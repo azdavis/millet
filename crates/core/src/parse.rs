@@ -13,7 +13,7 @@ use maplit::hashmap;
 use std::collections::HashMap;
 use std::convert::TryInto as _;
 
-pub type Result<T> = std::result::Result<T, Located<ParseError>>;
+pub type Result<T> = std::result::Result<T, Located<Error>>;
 
 pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec<StrRef>>>> {
   let mut ret = Vec::new();
@@ -32,7 +32,7 @@ pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec<StrRef>>>> {
 }
 
 #[derive(Debug)]
-pub enum ParseError {
+pub enum Error {
   ExpectedButFound(&'static str, &'static str),
   InfixWithoutOp(StrRef),
   NotInfix(StrRef),
@@ -41,7 +41,7 @@ pub enum ParseError {
   SameFixityDiffAssoc,
 }
 
-impl ParseError {
+impl Error {
   pub fn message(&self, store: &StrStore) -> String {
     match self {
       Self::ExpectedButFound(exp, fnd) => format!("expected {}, found {}", exp, fnd),
@@ -133,7 +133,7 @@ impl Parser {
 
   /// returns an ExpectedButFound error, where we expected `want` but got `tok`.
   fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
-    let err = ParseError::ExpectedButFound(want, tok.val.desc());
+    let err = Error::ExpectedButFound(want, tok.val.desc());
     Err(tok.loc.wrap(err))
   }
 
@@ -705,7 +705,7 @@ impl Parser {
       None => return self.fail("an identifier", self.peek()),
     };
     if !allow_infix && ret.structures.is_empty() && self.ops.contains_key(&ret.last.val) {
-      Err(ret.last.loc.wrap(ParseError::InfixWithoutOp(ret.last.val)))
+      Err(ret.last.loc.wrap(Error::InfixWithoutOp(ret.last.val)))
     } else {
       Ok(ret)
     }
@@ -1085,7 +1085,7 @@ impl Parser {
         }
         Token::Ident(vid, _) => {
           if self.ops.contains_key(&vid) {
-            return Err(tok.loc.wrap(ParseError::InfixWithoutOp(vid)));
+            return Err(tok.loc.wrap(Error::InfixWithoutOp(vid)));
           }
           (tok.loc.wrap(vid), self.at_pat()?)
         }
@@ -1112,7 +1112,7 @@ impl Parser {
     let fst = self.at_pat()?;
     let vid = self.ident()?;
     if !self.ops.contains_key(&vid.val) {
-      return Err(vid.loc.wrap(ParseError::NotInfix(vid.val)));
+      return Err(vid.loc.wrap(Error::NotInfix(vid.val)));
     }
     let snd = self.at_pat()?;
     Ok((vid, fst.loc.wrap(Pat::Tuple(vec![fst, snd]))))
@@ -1232,7 +1232,7 @@ impl Parser {
         self.skip();
         Pat::HexWord(n)
       }
-      Token::Real(..) => return Err(begin.wrap(ParseError::RealPat)),
+      Token::Real(..) => return Err(begin.wrap(Error::RealPat)),
       Token::String(s) => {
         self.skip();
         Pat::String(s)
@@ -1385,7 +1385,7 @@ impl Parser {
         Token::Ident(id, _) => {
           let op_info = match self.ops.get(&id) {
             Some(x) => *x,
-            None => return Err(tok.loc.wrap(ParseError::NotInfix(id))),
+            None => return Err(tok.loc.wrap(Error::NotInfix(id))),
           };
           if op_info.should_break(min_prec, tok.loc)? {
             break;
@@ -1589,7 +1589,7 @@ impl Parser {
     let loc = tok.loc;
     let ret = if let Token::DecInt(n, _) = tok.val {
       if n < 0 {
-        return Err(loc.wrap(ParseError::NegativeFixity(n)));
+        return Err(loc.wrap(Error::NegativeFixity(n)));
       }
       self.skip();
       n.try_into().unwrap()
@@ -1651,7 +1651,7 @@ impl OpInfo {
       None => Ok(false),
       Some(min_prec) => {
         if self.num == min_prec.num && self.assoc != min_prec.assoc {
-          return Err(loc.wrap(ParseError::SameFixityDiffAssoc));
+          return Err(loc.wrap(Error::SameFixityDiffAssoc));
         }
         match min_prec.assoc {
           Assoc::Left => Ok(self.num <= min_prec.num),

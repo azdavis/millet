@@ -8,8 +8,8 @@ use crate::statics::ck::util::{
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
-  Cx, DatatypeInfo, Env, Pat, Result, State, StaticsError, StrEnv, Ty, TyEnv, TyInfo, TyScheme,
-  TyVar, ValEnv, ValInfo,
+  Cx, DatatypeInfo, Env, Error, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar,
+  ValEnv, ValInfo,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -32,13 +32,13 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       for row in rows {
         let ty = ck_exp(cx, st, &row.exp)?;
         if !keys.insert(row.lab.val) {
-          return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
+          return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
         ty_rows.push((row.lab.val, ty));
       }
       Ty::Record(ty_rows)
     }
-    Exp::Select(..) => return Err(exp.loc.wrap(StaticsError::Todo)),
+    Exp::Select(..) => return Err(exp.loc.wrap(Error::Todo)),
     Exp::Tuple(exps) => {
       let mut ty_rows = Vec::with_capacity(exps.len());
       for (idx, exp) in exps.iter().enumerate() {
@@ -75,7 +75,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let (loc, mut ty) = last.unwrap();
       ty.apply(&st.subst);
       if !ty.ty_names().is_subset(&ty_names) {
-        return Err(loc.wrap(StaticsError::TyNameEscape));
+        return Err(loc.wrap(Error::TyNameEscape));
       }
       ty
     }
@@ -133,7 +133,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.subst.unify(exp.loc, then_ty.clone(), else_ty)?;
       then_ty
     }
-    Exp::While(..) => return Err(exp.loc.wrap(StaticsError::Todo)),
+    Exp::While(..) => return Err(exp.loc.wrap(Error::Todo)),
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
@@ -179,7 +179,7 @@ fn ck_binding(name: Located<StrRef>) -> Result<()> {
   .iter()
   {
     if name.val == other {
-      return Err(name.loc.wrap(StaticsError::ForbiddenBinding(name.val)));
+      return Err(name.loc.wrap(Error::ForbiddenBinding(name.val)));
     }
   }
   Ok(())
@@ -210,12 +210,12 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   let ret = match &dec.val {
     Dec::Val(ty_vars, val_binds) => {
       if let Some(tv) = ty_vars.first() {
-        return Err(tv.loc.wrap(StaticsError::Todo));
+        return Err(tv.loc.wrap(Error::Todo));
       }
       let mut val_env = ValEnv::new();
       for val_bind in val_binds {
         if val_bind.rec {
-          return Err(dec.loc.wrap(StaticsError::Todo));
+          return Err(dec.loc.wrap(Error::Todo));
         }
         let (other, pat_ty, pat) = pat::ck(cx, st, &val_bind.pat)?;
         for &name in other.keys() {
@@ -238,7 +238,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::Fun(ty_vars, fval_binds) => {
       if let Some(tv) = ty_vars.first() {
-        return Err(tv.loc.wrap(StaticsError::Todo));
+        return Err(tv.loc.wrap(Error::Todo));
       }
       let mut fun_infos = HashMap::with_capacity(fval_binds.len());
       for fval_bind in fval_binds {
@@ -255,11 +255,11 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         let mut arg_pats = Vec::with_capacity(fval_bind.cases.len());
         for case in fval_bind.cases.iter() {
           if name != case.vid.val {
-            let err = StaticsError::FunDecNameMismatch(name, case.vid.val);
+            let err = Error::FunDecNameMismatch(name, case.vid.val);
             return Err(case.vid.loc.wrap(err));
           }
           if info.args.len() != case.pats.len() {
-            let err = StaticsError::FunDecWrongNumPats(info.args.len(), case.pats.len());
+            let err = Error::FunDecWrongNumPats(info.args.len(), case.pats.len());
             return Err(case.vid.loc.wrap(err));
           }
           let mut pats_val_env = ValEnv::new();
@@ -300,7 +300,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       let mut ty_env = TyEnv::default();
       for ty_bind in ty_binds {
         if !ty_bind.ty_vars.is_empty() {
-          return Err(dec.loc.wrap(StaticsError::Todo));
+          return Err(dec.loc.wrap(Error::Todo));
         }
         let ty = ty::ck(cx, st, &ty_bind.ty)?;
         let info = TyInfo::Alias(TyScheme::mono(ty));
@@ -309,7 +309,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             ty_bind
               .ty_con
               .loc
-              .wrap(StaticsError::Redefined(ty_bind.ty_con.val)),
+              .wrap(Error::Redefined(ty_bind.ty_con.val)),
           );
         }
       }
@@ -317,7 +317,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::Datatype(dat_binds, ty_binds) => {
       if let Some(x) = ty_binds.first() {
-        return Err(x.ty_con.loc.wrap(StaticsError::Todo));
+        return Err(x.ty_con.loc.wrap(Error::Todo));
       }
       let mut cx = cx.clone();
       // these two are across all dat_binds.
@@ -325,7 +325,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       let mut val_env = ValEnv::new();
       for dat_bind in dat_binds {
         if let Some(x) = dat_bind.ty_vars.first() {
-          return Err(x.loc.wrap(StaticsError::Todo));
+          return Err(x.loc.wrap(Error::Todo));
         }
         // create a new symbol for the type being generated with this DatBind.
         let sym = st.new_sym(dat_bind.ty_con);
@@ -398,20 +398,20 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::DatatypeCopy(_, _) => {
       //
-      return Err(dec.loc.wrap(StaticsError::Todo));
+      return Err(dec.loc.wrap(Error::Todo));
     }
-    Dec::Abstype(..) => return Err(dec.loc.wrap(StaticsError::Todo)),
+    Dec::Abstype(..) => return Err(dec.loc.wrap(Error::Todo)),
     Dec::Exception(_) => {
       //
-      return Err(dec.loc.wrap(StaticsError::Todo));
+      return Err(dec.loc.wrap(Error::Todo));
     }
     Dec::Local(_, _) => {
       //
-      return Err(dec.loc.wrap(StaticsError::Todo));
+      return Err(dec.loc.wrap(Error::Todo));
     }
     Dec::Open(_) => {
       //
-      return Err(dec.loc.wrap(StaticsError::Todo));
+      return Err(dec.loc.wrap(Error::Todo));
     }
     Dec::Seq(decs) => {
       // TODO clone in loop - expensive?

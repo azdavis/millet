@@ -4,14 +4,14 @@ use crate::ast::Ty as AstTy;
 use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{get_env, tuple_lab};
-use crate::statics::types::{Cx, Item, Result, State, StaticsError, Ty};
+use crate::statics::types::{Cx, Error, Item, Result, State, Ty};
 use std::collections::HashSet;
 
 pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   let ret = match &ty.val {
     AstTy::TyVar(_) => {
       //
-      return Err(ty.loc.wrap(StaticsError::Todo));
+      return Err(ty.loc.wrap(Error::Todo));
     }
     AstTy::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());
@@ -19,7 +19,7 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
       for row in rows {
         let ty = ck(cx, st, &row.ty)?;
         if !keys.insert(row.lab.val) {
-          return Err(row.lab.loc.wrap(StaticsError::DuplicateLabel(row.lab.val)));
+          return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
         ty_rows.push((row.lab.val, ty));
       }
@@ -42,14 +42,14 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
             name
               .last
               .loc
-              .wrap(StaticsError::Undefined(Item::Type, name.last.val)),
+              .wrap(Error::Undefined(Item::Type, name.last.val)),
           )
         }
         // NOTE could avoid this clone if we separated datatypes from State
         Some(x) => x.ty_fcn(&st.datatypes).clone(),
       };
       if ty_fcn.ty_vars.len() != args.len() {
-        let err = StaticsError::WrongNumTyArgs(ty_fcn.ty_vars.len(), args.len());
+        let err = Error::WrongNumTyArgs(ty_fcn.ty_vars.len(), args.len());
         return Err(ty.loc.wrap(err));
       }
       let mut new_args = Vec::with_capacity(ty_fcn.ty_vars.len());

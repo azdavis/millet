@@ -4,7 +4,7 @@ use crate::intern::{StrRef, StrStoreMut};
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 
-pub fn get(store: &mut StrStoreMut, bs: &[u8]) -> Result<Lexer, Located<LexError>> {
+pub fn get(store: &mut StrStoreMut, bs: &[u8]) -> Result<Lexer, Located<Error>> {
   Ok(Lexer::new(TokenMaker::new(store, bs).build()?))
 }
 
@@ -29,7 +29,7 @@ impl Lexer {
 }
 
 #[derive(Debug)]
-pub enum LexError {
+pub enum Error {
   UnmatchedCloseComment,
   UnmatchedOpenComment,
   IncompleteTypeVar,
@@ -43,7 +43,7 @@ pub enum LexError {
   InvalidCharConstant,
 }
 
-impl LexError {
+impl Error {
   pub fn message(&self) -> String {
     match self {
       Self::UnmatchedCloseComment => "unmatched close comment".to_owned(),
@@ -61,13 +61,13 @@ impl LexError {
   }
 }
 
-impl From<core::num::ParseIntError> for LexError {
+impl From<core::num::ParseIntError> for Error {
   fn from(val: core::num::ParseIntError) -> Self {
     Self::InvalidIntConstant(val)
   }
 }
 
-impl From<core::num::ParseFloatError> for LexError {
+impl From<core::num::ParseFloatError> for Error {
   fn from(val: core::num::ParseFloatError) -> Self {
     Self::InvalidRealConstant(val)
   }
@@ -89,7 +89,7 @@ impl<'s> TokenMaker<'s> {
     self.store.insert_str(s)
   }
 
-  fn build(mut self) -> Result<Vec<Located<Token>>, Located<LexError>> {
+  fn build(mut self) -> Result<Vec<Located<Token>>, Located<Error>> {
     let mut comments: usize = 0;
     let mut ts = Vec::new();
     while let Some(&b) = self.bs.get(self.i) {
@@ -107,7 +107,7 @@ impl<'s> TokenMaker<'s> {
       // comment end
       if b == b'*' && self.bs.get(self.i + 1) == Some(&b')') {
         if comments == 0 {
-          return Err(Loc::new(self.i, self.i + 2).wrap(LexError::UnmatchedCloseComment));
+          return Err(Loc::new(self.i, self.i + 2).wrap(Error::UnmatchedCloseComment));
         }
         self.i += 2;
         comments -= 1;
@@ -131,24 +131,24 @@ impl<'s> TokenMaker<'s> {
     if comments == 0 {
       Ok(ts)
     } else {
-      Err(Loc::new(self.i - 1, self.i).wrap(LexError::UnmatchedOpenComment))
+      Err(Loc::new(self.i - 1, self.i).wrap(Error::UnmatchedOpenComment))
     }
   }
 
-  fn next_impl(&mut self, b: u8) -> Result<Token, LexError> {
+  fn next_impl(&mut self, b: u8) -> Result<Token, Error> {
     // alphanumeric identifiers (including type variables) and alphabetic reserved words
     match alpha_num(b) {
       Some(AlphaNum::Prime) => {
         let start = self.i;
         self.i += 1;
         let b = match self.bs.get(self.i) {
-          None => return Err(LexError::IncompleteTypeVar),
+          None => return Err(Error::IncompleteTypeVar),
           Some(x) => *x,
         };
         let equality = match alpha_num(b) {
           Some(AlphaNum::Prime) => true,
           Some(_) => false,
-          None => return Err(LexError::IncompleteTypeVar),
+          None => return Err(Error::IncompleteTypeVar),
         };
         self.i += 1;
         while let Some(&b) = self.bs.get(self.i) {
@@ -221,11 +221,11 @@ impl<'s> TokenMaker<'s> {
         // word
         if b == b'w' {
           if neg {
-            return Err(LexError::NegativeWordConstant);
+            return Err(Error::NegativeWordConstant);
           }
           self.i += 2;
           let b = match self.bs.get(self.i) {
-            None => return Err(LexError::IncompleteNumConstant),
+            None => return Err(Error::IncompleteNumConstant),
             Some(x) => *x,
           };
           return if b == b'x' {
@@ -289,7 +289,7 @@ impl<'s> TokenMaker<'s> {
       let mut str_bs = Vec::new();
       while let Some(&b) = self.bs.get(self.i) {
         match b {
-          b'\n' => return Err(LexError::UnclosedStringConstant),
+          b'\n' => return Err(Error::UnclosedStringConstant),
           b'"' => {
             self.i += 1;
             return if is_char {
@@ -297,7 +297,7 @@ impl<'s> TokenMaker<'s> {
                 let b = str_bs.pop().unwrap();
                 Ok(Token::Char(b))
               } else {
-                Err(LexError::InvalidCharConstant)
+                Err(Error::InvalidCharConstant)
               }
             } else {
               let string = String::from_utf8(str_bs).unwrap();
@@ -308,7 +308,7 @@ impl<'s> TokenMaker<'s> {
           b'\\' => {
             self.i += 1;
             let b = match self.bs.get(self.i) {
-              None => return Err(LexError::UnclosedStringConstant),
+              None => return Err(Error::UnclosedStringConstant),
               Some(x) => *x,
             };
             match b {
@@ -322,14 +322,14 @@ impl<'s> TokenMaker<'s> {
               b'^' => {
                 self.i += 1;
                 let b = match self.bs.get(self.i) {
-                  None => return Err(LexError::UnclosedStringConstant),
+                  None => return Err(Error::UnclosedStringConstant),
                   Some(x) => *x,
                 };
                 str_bs.push(b - 64);
               }
               b'u' => {
                 if self.i + 4 >= self.bs.len() {
-                  return Err(LexError::UnclosedStringConstant);
+                  return Err(Error::UnclosedStringConstant);
                 }
                 match (
                   hex(self.bs[self.i + 1]),
@@ -341,7 +341,7 @@ impl<'s> TokenMaker<'s> {
                     str_bs.push(d1 * 16 + d2);
                     self.i += 4;
                   }
-                  _ => return Err(LexError::InvalidStringConstant),
+                  _ => return Err(Error::InvalidStringConstant),
                 }
               }
               b'"' => str_bs.push(b'"'),
@@ -349,31 +349,31 @@ impl<'s> TokenMaker<'s> {
               b => {
                 if let Some(d1) = dec(b) {
                   if self.i + 2 >= self.bs.len() {
-                    return Err(LexError::UnclosedStringConstant);
+                    return Err(Error::UnclosedStringConstant);
                   }
                   match (dec(self.bs[self.i + 1]), dec(self.bs[self.i + 2])) {
                     (Some(d2), Some(d3)) => {
                       str_bs.push((d1 * 10 + d2) * 10 + d3);
                       self.i += 2;
                     }
-                    _ => return Err(LexError::InvalidStringConstant),
+                    _ => return Err(Error::InvalidStringConstant),
                   }
                 } else if is_formatting(b) {
                   loop {
                     self.i += 1;
                     let b = match self.bs.get(self.i) {
-                      None => return Err(LexError::UnclosedStringConstant),
+                      None => return Err(Error::UnclosedStringConstant),
                       Some(x) => *x,
                     };
                     if b == b'\\' {
                       break;
                     }
                     if !is_formatting(b) {
-                      return Err(LexError::InvalidStringConstant);
+                      return Err(Error::InvalidStringConstant);
                     }
                   }
                 } else {
-                  return Err(LexError::InvalidStringConstant);
+                  return Err(Error::InvalidStringConstant);
                 }
               }
             }
@@ -382,7 +382,7 @@ impl<'s> TokenMaker<'s> {
         }
         self.i += 1;
       }
-      return Err(LexError::UnclosedStringConstant);
+      return Err(Error::UnclosedStringConstant);
     }
     // symbolic identifiers and reserved words
     if is_symbolic(b) {
@@ -412,10 +412,10 @@ impl<'s> TokenMaker<'s> {
     }
     // unknown byte
     self.i += 1;
-    Err(LexError::UnknownByte(b))
+    Err(Error::UnknownByte(b))
   }
 
-  fn pos_dec_int(&mut self) -> Result<i32, LexError> {
+  fn pos_dec_int(&mut self) -> Result<i32, Error> {
     let start = self.i;
     while let Some(b) = self.bs.get(self.i) {
       if !b.is_ascii_digit() {
@@ -424,7 +424,7 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(LexError::IncompleteNumConstant);
+      return Err(Error::IncompleteNumConstant);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
     let n = i32::from_str_radix(n, 10)?;
@@ -432,7 +432,7 @@ impl<'s> TokenMaker<'s> {
   }
 
   // Requires that self.bs[self.i] currently be on a '.'
-  fn real_after_dec(&mut self) -> Result<f64, LexError> {
+  fn real_after_dec(&mut self) -> Result<f64, Error> {
     let start = self.i;
     self.i += 1;
     while let Some(b) = self.bs.get(self.i) {
@@ -442,14 +442,14 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(LexError::IncompleteNumConstant);
+      return Err(Error::IncompleteNumConstant);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
     let n: f64 = n.parse()?;
     Ok(n)
   }
 
-  fn pos_hex_int(&mut self) -> Result<i32, LexError> {
+  fn pos_hex_int(&mut self) -> Result<i32, Error> {
     let start = self.i;
     while let Some(b) = self.bs.get(self.i) {
       if !b.is_ascii_hexdigit() {
@@ -458,16 +458,16 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(LexError::IncompleteNumConstant);
+      return Err(Error::IncompleteNumConstant);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
     let n = i32::from_str_radix(n, 16)?;
     Ok(n)
   }
 
-  fn real_exp(&mut self) -> Result<i32, LexError> {
+  fn real_exp(&mut self) -> Result<i32, Error> {
     let b = match self.bs.get(self.i) {
-      None => return Err(LexError::IncompleteNumConstant),
+      None => return Err(Error::IncompleteNumConstant),
       Some(x) => *x,
     };
     let neg = if b == b'~' {
@@ -543,7 +543,7 @@ fn mk_int(n: i32, starts_with_zero: bool) -> Token {
   Token::DecInt(n, is_num_lab)
 }
 
-fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Result<Token, LexError> {
+fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Result<Token, Error> {
   let before_dec: f64 = before_dec.into();
   let exp: f64 = exp.into();
   Ok(Token::Real((before_dec + after_dec) * 10_f64.powf(exp)))

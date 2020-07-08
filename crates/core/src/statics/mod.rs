@@ -11,7 +11,7 @@ mod types;
 use crate::ast::TopDec;
 use crate::intern::StrRef;
 use crate::loc::Located;
-use crate::statics::types::{Result, StaticsError, Ty};
+use crate::statics::types::{Error, Result, Ty};
 
 pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   let (mut bs, mut st) = std_lib::get();
@@ -26,7 +26,7 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
         continue 'outer;
       }
     }
-    return Err(loc.wrap(StaticsError::NoSuitableOverload));
+    return Err(loc.wrap(Error::NoSuitableOverload));
   }
   bs.apply(&st.subst, &mut st.datatypes);
   assert!(bs.free_ty_vars(&st.datatypes).is_empty());

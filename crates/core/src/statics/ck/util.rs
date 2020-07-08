@@ -4,7 +4,7 @@ use crate::ast::{Label, Long};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Cx, Datatypes, Env, Item, Result, State, StaticsError, Subst, Ty, TyEnv, TyScheme, ValInfo,
+  Cx, Datatypes, Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyScheme, ValInfo,
 };
 use std::collections::HashMap;
 use std::convert::TryInto as _;
@@ -54,7 +54,7 @@ pub fn get_env<'cx>(cx: &'cx Cx, long: &Long<StrRef>) -> Result<&'cx Env> {
   let mut ret = &cx.env;
   for &s in long.structures.iter() {
     ret = match ret.str_env.get(&s.val) {
-      None => return Err(s.loc.wrap(StaticsError::Undefined(Item::Structure, s.val))),
+      None => return Err(s.loc.wrap(Error::Undefined(Item::Structure, s.val))),
       Some(x) => x,
     }
   }
@@ -63,11 +63,7 @@ pub fn get_env<'cx>(cx: &'cx Cx, long: &Long<StrRef>) -> Result<&'cx Env> {
 
 pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   match env.val_env.get(&name.val) {
-    None => Err(
-      name
-        .loc
-        .wrap(StaticsError::Undefined(Item::Value, name.val)),
-    ),
+    None => Err(name.loc.wrap(Error::Undefined(Item::Value, name.val))),
     Some(val_info) => Ok(val_info),
   }
 }
@@ -78,7 +74,7 @@ pub fn tuple_lab(idx: usize) -> Label {
 
 pub fn env_ins<T>(map: &mut HashMap<StrRef, T>, key: Located<StrRef>, val: T) -> Result<()> {
   if map.insert(key.val, val).is_some() {
-    Err(key.loc.wrap(StaticsError::Redefined(key.val)))
+    Err(key.loc.wrap(Error::Redefined(key.val)))
   } else {
     Ok(())
   }

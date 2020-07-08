@@ -33,7 +33,7 @@ mod util;
 use crate::ast::{StrDec, TopDec};
 use crate::intern::StrRef;
 use crate::loc::Located;
-use crate::statics::types::{Basis, Cx, Result, State, StaticsError, TyVarSet};
+use crate::statics::types::{Basis, Cx, Error, Result, State, TyVarSet};
 
 pub fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<Basis> {
   match &top_dec.val {
@@ -51,11 +51,11 @@ pub fn ck_top_dec(bs: Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) 
           ..bs
         })
       }
-      StrDec::Structure(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
-      StrDec::Local(_, _) => Err(top_dec.loc.wrap(StaticsError::Todo)),
-      StrDec::Seq(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
+      StrDec::Structure(_) => Err(top_dec.loc.wrap(Error::Todo)),
+      StrDec::Local(_, _) => Err(top_dec.loc.wrap(Error::Todo)),
+      StrDec::Seq(_) => Err(top_dec.loc.wrap(Error::Todo)),
     },
-    TopDec::SigDec(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
-    TopDec::FunDec(_) => Err(top_dec.loc.wrap(StaticsError::Todo)),
+    TopDec::SigDec(_) => Err(top_dec.loc.wrap(Error::Todo)),
+    TopDec::FunDec(_) => Err(top_dec.loc.wrap(Error::Todo)),
   }
 }
