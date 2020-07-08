@@ -186,6 +186,7 @@ fn succeed_with(
     Desc::Neg(_) => args.iter().map(|_| Desc::Neg(vec![])).collect(),
     Desc::Pos(_, descs) => descs,
   };
+  assert_eq!(args.len(), arg_descs.len());
   work.push(WorkItem {
     con,
     descs: vec![],
