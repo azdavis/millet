@@ -1,0 +1,43 @@
+inp.sml: [
+    StrDec(
+        Seq(
+            [
+                Local(
+                    Seq(
+                        [],
+                    ),
+                    Seq(
+                        [],
+                    ),
+                ),
+                Dec(
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: Wildcard,
+                                exp: Let(
+                                    Local(
+                                        Seq(
+                                            [],
+                                        ),
+                                        Seq(
+                                            [],
+                                        ),
+                                    ),
+                                    [
+                                        DecInt(
+                                            3,
+                                        ),
+                                    ],
+                                ),
+                            },
+                        ],
+                    ),
+                ),
+            ],
+        ),
+    ),
+]
+no errors
