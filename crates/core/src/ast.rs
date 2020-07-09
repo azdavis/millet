@@ -142,6 +142,7 @@ pub struct TyBind<I> {
   pub ty: Located<Ty<I>>,
 }
 
+/// Also doubles as DatDesc.
 #[derive(Debug)]
 pub struct DatBind<I> {
   pub ty_vars: Vec<Located<TyVar<I>>>,
@@ -150,6 +151,7 @@ pub struct DatBind<I> {
   pub cons: Vec<ConBind<I>>,
 }
 
+/// Also doubles as ConDesc.
 #[derive(Debug)]
 pub struct ConBind<I> {
   pub vid: Located<I>,
