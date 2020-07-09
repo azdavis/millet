@@ -363,12 +363,8 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
     let ty = ty::ck(cx, st, &ty_bind.ty)?;
     let info = TyInfo::Alias(TyScheme::mono(ty));
     if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
-      return Err(
-        ty_bind
-          .ty_con
-          .loc
-          .wrap(Error::Redefined(ty_bind.ty_con.val)),
-      );
+      let err = Error::Redefined(ty_bind.ty_con.val);
+      return Err(ty_bind.ty_con.loc.wrap(err));
     }
   }
   Ok(ty_env.into())
