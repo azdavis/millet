@@ -21,7 +21,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::String(s) => (ValEnv::new(), Ty::STRING, Pat::zero(Con::String(*s))),
     AstPat::Char(c) => (ValEnv::new(), Ty::CHAR, Pat::zero(Con::Char(*c))),
     AstPat::LongVid(vid) => {
-      let ty_scheme = get_env(cx, vid)?
+      let ty_scheme = get_env(&cx.env, vid)?
         .val_env
         .get(&vid.last.val)
         .and_then(|val_info| {
@@ -156,7 +156,7 @@ fn ctor(
   arg_ty: Ty,
   arg_pat: Pat,
 ) -> Result<(Ty, Pat)> {
-  let val_info = get_val_info(get_env(cx, long)?, long.last)?;
+  let val_info = get_val_info(get_env(&cx.env, long)?, long.last)?;
   if val_info.id_status.is_val() {
     return Err(long.loc().wrap(Error::PatWrongIdStatus));
   }

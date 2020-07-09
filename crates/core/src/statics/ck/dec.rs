@@ -24,7 +24,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::String(_) => Ty::STRING,
     Exp::Char(_) => Ty::CHAR,
     Exp::LongVid(vid) => {
-      let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
+      let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
       instantiate(st, &val_info.ty_scheme, exp.loc)
     }
     Exp::Record(rows) => {
@@ -333,7 +333,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             Some(ty) => ValInfo::exn_fn(ty::ck(cx, st, ty)?),
           },
           ExBindInner::Long(vid) => {
-            let val_info = get_val_info(get_env(cx, vid)?, vid.last)?;
+            let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
             if !val_info.id_status.is_exn() {
               let err = Error::ExnWrongIdStatus(val_info.id_status);
               return Err(vid.loc().wrap(err));
@@ -354,7 +354,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     Dec::Open(longs) => {
       let mut env = Env::default();
       for long in longs {
-        env.extend(get_env(cx, long)?.clone());
+        env.extend(get_env(&cx.env, long)?.clone());
       }
       env
     }
@@ -453,7 +453,7 @@ pub fn ck_dat_copy(
   ty_con: Located<StrRef>,
   long: &Long<StrRef>,
 ) -> Result<Env> {
-  let sym = match get_ty_info(get_env(cx, long)?, long.last)? {
+  let sym = match get_ty_info(get_env(&cx.env, long)?, long.last)? {
     TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
     TyInfo::Sym(sym) => *sym,
   };

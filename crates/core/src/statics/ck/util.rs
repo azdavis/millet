@@ -4,7 +4,7 @@ use crate::ast::{Label, Long};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Cx, Env, Error, Item, Result, State, Subst, SymTys, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
+  Env, Error, Item, Result, State, Subst, SymTys, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
 };
 use std::collections::HashMap;
 use std::convert::TryInto as _;
@@ -50,15 +50,14 @@ pub fn generalize(ty_env: &TyEnv, sts: &SymTys, ty_scheme: &mut TyScheme) {
     .collect();
 }
 
-pub fn get_env<'cx>(cx: &'cx Cx, long: &Long<StrRef>) -> Result<&'cx Env> {
-  let mut ret = &cx.env;
+pub fn get_env<'env>(mut env: &'env Env, long: &Long<StrRef>) -> Result<&'env Env> {
   for &s in long.structures.iter() {
-    ret = match ret.str_env.get(&s.val) {
+    env = match env.str_env.get(&s.val) {
       None => return Err(s.loc.wrap(Error::Undefined(Item::Structure, s.val))),
       Some(x) => x,
     }
   }
-  Ok(ret)
+  Ok(env)
 }
 
 pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {

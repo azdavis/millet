@@ -35,7 +35,7 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
       Ty::Record(ty_rows)
     }
     AstTy::TyCon(args, name) => {
-      let env = get_env(cx, name)?;
+      let env = get_env(&cx.env, name)?;
       // NOTE could avoid this clone if we separated sym_tys from State
       let ty_fcn = get_ty_info(env, name.last)?.ty_fcn(&st.sym_tys).clone();
       if ty_fcn.ty_vars.len() != args.len() {
