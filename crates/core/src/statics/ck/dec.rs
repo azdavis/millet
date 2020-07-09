@@ -1,6 +1,6 @@
 //! Check declarations and expressions.
 
-use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long};
+use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{
@@ -296,30 +296,13 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       Ok(val_env.into())
     }
-    Dec::Type(ty_binds) => {
-      let mut ty_env = TyEnv::default();
-      for ty_bind in ty_binds {
-        if let Some(tv) = ty_bind.ty_vars.first() {
-          return Err(tv.loc.wrap(Error::Todo("type variables")));
-        }
-        let ty = ty::ck(cx, st, &ty_bind.ty)?;
-        let info = TyInfo::Alias(TyScheme::mono(ty));
-        if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
-          return Err(
-            ty_bind
-              .ty_con
-              .loc
-              .wrap(Error::Redefined(ty_bind.ty_con.val)),
-          );
-        }
-      }
-      Ok(ty_env.into())
-    }
+    Dec::Type(ty_binds) => ck_ty_binds(cx, st, ty_binds),
     Dec::Datatype(dat_binds, ty_binds) => {
-      if let Some(tb) = ty_binds.first() {
-        return Err(tb.ty_con.loc.wrap(Error::Todo("`withtype`")));
-      }
-      ck_dat_binds(cx.clone(), st, dat_binds)
+      let mut env = ck_dat_binds(cx.clone(), st, dat_binds)?;
+      let mut cx = cx.clone();
+      cx.o_plus(env.clone());
+      env.extend(ck_ty_binds(&cx, st, ty_binds)?);
+      Ok(env)
     }
     Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, st, *ty_con, long),
     Dec::Abstype(..) => Err(dec.loc.wrap(Error::Todo("`abstype`"))),
@@ -369,6 +352,26 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::Infix(..) | Dec::Infixr(..) | Dec::Nonfix(..) => Ok(Env::default()),
   }
+}
+
+fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<Env> {
+  let mut ty_env = TyEnv::default();
+  for ty_bind in ty_binds {
+    if let Some(tv) = ty_bind.ty_vars.first() {
+      return Err(tv.loc.wrap(Error::Todo("type variables")));
+    }
+    let ty = ty::ck(cx, st, &ty_bind.ty)?;
+    let info = TyInfo::Alias(TyScheme::mono(ty));
+    if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
+      return Err(
+        ty_bind
+          .ty_con
+          .loc
+          .wrap(Error::Redefined(ty_bind.ty_con.val)),
+      );
+    }
+  }
+  Ok(ty_env.into())
 }
 
 pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -> Result<Env> {
