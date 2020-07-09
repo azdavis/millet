@@ -1,4 +1,4 @@
-//! Types used in static analysis, many essentially as describe in the Definition.
+//! Types used in static analysis, many essentially as described in the Definition.
 
 use crate::ast::Label;
 use crate::intern::{StrRef, StrStore};

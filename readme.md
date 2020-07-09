@@ -1,6 +1,6 @@
 # Millet
 
-An set of tools for Standard ML.
+A set of tools for Standard ML.
 
 Right now, the set has only one element: a language server, with a corresponding
 Visual Studio Code language client extension.
