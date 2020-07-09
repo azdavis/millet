@@ -1,0 +1,7 @@
+error: forbidden identifier in binding: ref
+  ┌─ err.sml:1:15
+  │
+1 │ datatype no = ref
+  │               ^^^
+
+typechecking failed
