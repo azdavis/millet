@@ -144,14 +144,8 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       }
       Ok(ty_env.into())
     }
-    Spec::Datatype(_) => {
-      //
-      Err(spec.loc.wrap(Error::Todo))
-    }
-    Spec::DatatypeCopy(_, _) => {
-      //
-      Err(spec.loc.wrap(Error::Todo))
-    }
+    Spec::Datatype(dat_binds) => dec::ck_dat_binds(bs.to_cx(), st, dat_binds),
+    Spec::DatatypeCopy(ty_con, long) => dec::ck_dat_copy(&bs.to_cx(), st, *ty_con, long),
     Spec::Exception(_) => {
       //
       Err(spec.loc.wrap(Error::Todo))
