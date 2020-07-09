@@ -122,7 +122,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     }
     AstPat::Typed(inner_pat, ty) => {
       let (val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
-      let ty = ty::ck(cx, st, ty)?;
+      let ty = ty::ck(cx, &st.sym_tys, ty)?;
       st.subst.unify(pat.loc, ty, pat_ty.clone())?;
       Ok((val_env, pat_ty, inner_pat))
     }
@@ -137,7 +137,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       }
       let (mut val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
       if let Some(ty) = ty {
-        let ty = ty::ck(cx, st, ty)?;
+        let ty = ty::ck(cx, &st.sym_tys, ty)?;
         st.subst.unify(pat.loc, ty, pat_ty.clone())?;
       }
       let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));

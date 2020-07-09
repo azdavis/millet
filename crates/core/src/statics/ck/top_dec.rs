@@ -122,7 +122,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       let cx = bs.to_cx();
       let mut val_env = ValEnv::new();
       for val_desc in val_descs {
-        let ty = ty::ck(&cx, st, &val_desc.ty)?;
+        let ty = ty::ck(&cx, &st.sym_tys, &val_desc.ty)?;
         // TODO generalize? closure?
         env_ins(&mut val_env, val_desc.vid, ValInfo::val(TyScheme::mono(ty)))?;
       }
@@ -148,14 +148,14 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       Ok(ty_env.into())
     }
     Spec::Datatype(dat_binds) => dec::ck_dat_binds(bs.to_cx(), st, dat_binds),
-    Spec::DatatypeCopy(ty_con, long) => dec::ck_dat_copy(&bs.to_cx(), st, *ty_con, long),
+    Spec::DatatypeCopy(ty_con, long) => dec::ck_dat_copy(&bs.to_cx(), &st.sym_tys, *ty_con, long),
     Spec::Exception(ex_descs) => {
       let cx = bs.to_cx();
       let mut val_env = ValEnv::new();
       for ex_desc in ex_descs {
         let val_info = match &ex_desc.ty {
           None => ValInfo::exn(),
-          Some(ty) => ValInfo::exn_fn(ty::ck(&cx, st, ty)?),
+          Some(ty) => ValInfo::exn_fn(ty::ck(&cx, &st.sym_tys, ty)?),
         };
         env_ins(&mut val_env, ex_desc.vid, val_info)?;
       }

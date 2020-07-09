@@ -8,8 +8,8 @@ use crate::statics::ck::util::{
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
-  Cx, Env, Error, Pat, Result, State, StrEnv, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, TyVar,
-  ValEnv, ValInfo,
+  Cx, Env, Error, Pat, Result, State, StrEnv, SymTyInfo, SymTys, Ty, TyEnv, TyInfo, TyScheme,
+  TyVar, ValEnv, ValInfo,
 };
 use maplit::hashmap;
 use std::collections::{HashMap, HashSet};
@@ -103,7 +103,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     }
     Exp::Typed(inner, ty) => {
       let exp_ty = ck_exp(cx, st, inner)?;
-      let ty_ty = ty::ck(cx, st, ty)?;
+      let ty_ty = ty::ck(cx, &st.sym_tys, ty)?;
       st.subst.unify(exp.loc, ty_ty, exp_ty.clone())?;
       Ok(exp_ty)
     }
@@ -275,7 +275,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           let end = case.pats.last().unwrap().loc;
           arg_pats.push(begin.span(end).wrap(Pat::record(arg_pat)));
           if let Some(ty) = &case.ret_ty {
-            let new_ty = ty::ck(cx, st, ty)?;
+            let new_ty = ty::ck(cx, &st.sym_tys, ty)?;
             st.subst.unify(ty.loc, Ty::Var(info.ret), new_ty)?;
           }
           let mut cx = cx.clone();
@@ -304,7 +304,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       env.extend(ck_ty_binds(&cx, st, ty_binds)?);
       Ok(env)
     }
-    Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, st, *ty_con, long),
+    Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, &st.sym_tys, *ty_con, long),
     Dec::Abstype(..) => Err(dec.loc.wrap(Error::Todo("`abstype`"))),
     Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::new();
@@ -312,7 +312,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         let val_info = match &ex_bind.inner {
           ExBindInner::Ty(ty) => match ty {
             None => ValInfo::exn(),
-            Some(ty) => ValInfo::exn_fn(ty::ck(cx, st, ty)?),
+            Some(ty) => ValInfo::exn_fn(ty::ck(cx, &st.sym_tys, ty)?),
           },
           ExBindInner::Long(vid) => {
             let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
@@ -360,7 +360,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
     if let Some(tv) = ty_bind.ty_vars.first() {
       return Err(tv.loc.wrap(Error::Todo("type variables")));
     }
-    let ty = ty::ck(cx, st, &ty_bind.ty)?;
+    let ty = ty::ck(cx, &st.sym_tys, &ty_bind.ty)?;
     let info = TyInfo::Alias(TyScheme::mono(ty));
     if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
       let err = Error::Redefined(ty_bind.ty_con.val);
@@ -410,7 +410,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       if let Some(arg_ty) = &con_bind.ty {
         // if there is an `of t`, then the type of the ctor is `t -> ty`. otherwise, the type of
         // the ctor is just `ty`.
-        ty = Ty::Arrow(ty::ck(&cx, st, arg_ty)?.into(), ty.into());
+        ty = Ty::Arrow(ty::ck(&cx, &st.sym_tys, arg_ty)?.into(), ty.into());
       }
       // insert the ValInfo into the _overall_ ValEnv with dupe checking.
       env_ins(
@@ -446,7 +446,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
 
 pub fn ck_dat_copy(
   cx: &Cx,
-  st: &mut State,
+  sym_tys: &SymTys,
   ty_con: Located<StrRef>,
   long: &Long<StrRef>,
 ) -> Result<Env> {
@@ -454,7 +454,7 @@ pub fn ck_dat_copy(
     TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
     TyInfo::Sym(sym) => *sym,
   };
-  let dt_info = st.sym_tys.get(&sym).unwrap();
+  let dt_info = sym_tys.get(&sym).unwrap();
   Ok(Env {
     str_env: StrEnv::new(),
     ty_env: TyEnv {
