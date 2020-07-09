@@ -167,23 +167,7 @@ impl Parser {
           self.eat(Token::Colon)?;
           let sig_exp = self.sig_exp()?;
           self.eat(Token::RRound)?;
-          let ret_sig_exp = match self.peek().val {
-            Token::Colon => {
-              self.skip();
-              Some((self.sig_exp()?, false))
-            }
-            Token::ColonGt => {
-              self.skip();
-              Some((self.sig_exp()?, true))
-            }
-            _ => None,
-          };
-          self.eat(Token::Equal)?;
-          let mut str_exp = self.str_exp()?;
-          if let Some((sig_exp, opaque)) = ret_sig_exp {
-            let loc = str_exp.loc;
-            str_exp = loc.wrap(StrExp::Ascription(str_exp.into(), sig_exp, opaque));
-          }
+          let str_exp = self.str_exp_sugar()?;
           fun_binds.push(FunBind {
             fun_id,
             str_id,
@@ -209,6 +193,26 @@ impl Parser {
       }
     };
     Ok(self.wrap(begin, ret))
+  }
+
+  fn str_exp_sugar(&mut self) -> Result<Located<StrExp<StrRef>>> {
+    let sig_exp = match self.peek().val {
+      Token::Colon => {
+        self.skip();
+        Some((self.sig_exp()?, false))
+      }
+      Token::ColonGt => {
+        self.skip();
+        Some((self.sig_exp()?, true))
+      }
+      _ => None,
+    };
+    self.eat(Token::Equal)?;
+    let mut ret = self.str_exp()?;
+    if let Some((se, opaque)) = sig_exp {
+      ret = ret.loc.wrap(StrExp::Ascription(ret.into(), se, opaque));
+    }
+    Ok(ret)
   }
 
   fn str_exp(&mut self) -> Result<Located<StrExp<StrRef>>> {
@@ -276,23 +280,7 @@ impl Parser {
         let mut str_binds = Vec::new();
         loop {
           let id = self.alpha_num_id()?;
-          let sig_exp = match self.peek().val {
-            Token::Colon => {
-              self.skip();
-              Some((self.sig_exp()?, false))
-            }
-            Token::ColonGt => {
-              self.skip();
-              Some((self.sig_exp()?, true))
-            }
-            _ => None,
-          };
-          self.eat(Token::Equal)?;
-          let mut exp = self.str_exp()?;
-          if let Some((sig_exp, opaque)) = sig_exp {
-            let loc = exp.loc;
-            exp = loc.wrap(StrExp::Ascription(exp.into(), sig_exp, opaque));
-          }
+          let exp = self.str_exp_sugar()?;
           str_binds.push(StrBind { id, exp });
           if let Token::And = self.peek().val {
             self.skip();
