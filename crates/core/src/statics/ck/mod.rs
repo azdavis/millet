@@ -13,6 +13,7 @@
 //! surfaced later by one of the above noted places that we do call `apply`.
 
 mod dec;
+mod enrich;
 mod exhaustive;
 mod pat;
 mod top_dec;

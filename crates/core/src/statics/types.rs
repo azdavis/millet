@@ -410,6 +410,8 @@ impl TyScheme {
   }
 }
 
+/// NOTE These are defined in exactly the same way in the Definition. Is it worth even having the
+/// type alias here?
 pub type TyFcn = TyScheme;
 
 /// A 'sym ty' is a type that 'has been generated', like a datatype or a a `type t` in a signature.
