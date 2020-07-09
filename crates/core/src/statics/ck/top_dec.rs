@@ -20,6 +20,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
       let mut sig_env = SigEnv::new();
       for sig_bind in sig_binds {
         let env = ck_sig_exp(bs, st, &sig_bind.exp)?;
+        // allow shadowing.
         sig_env.insert(sig_bind.id.val, env_to_sig(bs, env));
       }
       bs.add_sig_env(sig_env);
@@ -49,6 +50,7 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
       for str_bind in str_binds {
         let env = ck_str_exp(&bs, st, &str_bind.exp)?;
         bs.ty_names.extend(env.ty_names());
+        // allow shadowing.
         str_env.insert(str_bind.id.val, env);
       }
       Ok(str_env.into())
