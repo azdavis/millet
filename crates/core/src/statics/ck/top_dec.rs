@@ -28,7 +28,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
     TopDec::FunDec(fun_binds) => {
       let fun_env = FunEnv::new();
       if let Some(fun_bind) = fun_binds.first() {
-        return Err(fun_bind.fun_id.loc.wrap(Error::Todo));
+        return Err(fun_bind.fun_id.loc.wrap(Error::Todo("`functor`")));
       }
       bs.add_fun_env(fun_env);
     }
@@ -78,19 +78,19 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
   match &str_exp.val {
     StrExp::Struct(_) => {
       //
-      Err(str_exp.loc.wrap(Error::Todo))
+      Err(str_exp.loc.wrap(Error::Todo("`struct`")))
     }
     StrExp::LongStrId(_) => {
       //
-      Err(str_exp.loc.wrap(Error::Todo))
+      Err(str_exp.loc.wrap(Error::Todo("structure identifiers")))
     }
     StrExp::Ascription(_, _, _) => {
       //
-      Err(str_exp.loc.wrap(Error::Todo))
+      Err(str_exp.loc.wrap(Error::Todo("signature ascription")))
     }
     StrExp::FunctorApp(_, _) => {
       //
-      Err(str_exp.loc.wrap(Error::Todo))
+      Err(str_exp.loc.wrap(Error::Todo("functor application")))
     }
     StrExp::Let(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
@@ -114,13 +114,13 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> 
           Ok(sig.env.clone())
         } else {
           // TODO rename the type names?
-          Err(sig_exp.loc.wrap(Error::Todo))
+          Err(sig_exp.loc.wrap(Error::Todo("type name set intersection")))
         }
       }
     },
     SigExp::Where(_, _, _, _) => {
       //
-      Err(sig_exp.loc.wrap(Error::Todo))
+      Err(sig_exp.loc.wrap(Error::Todo("`where`")))
     }
   }
 }
@@ -141,7 +141,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       let mut ty_env = TyEnv::default();
       for ty_desc in ty_descs {
         if let Some(tv) = ty_desc.ty_vars.first() {
-          return Err(tv.loc.wrap(Error::Todo));
+          return Err(tv.loc.wrap(Error::Todo("type variables")));
         }
         let sym = st.new_sym(ty_desc.ty_con);
         // TODO equality check
@@ -192,7 +192,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
     }
     Spec::Sharing(_, _) => {
       //
-      Err(spec.loc.wrap(Error::Todo))
+      Err(spec.loc.wrap(Error::Todo("`sharing`")))
     }
   }
 }

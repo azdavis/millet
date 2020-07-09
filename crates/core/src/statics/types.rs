@@ -28,7 +28,7 @@ pub enum Error {
   PatNotConsType(Ty),
   PatNotArrowType(Ty),
   DatatypeCopyNotDatatype,
-  Todo,
+  Todo(&'static str),
 }
 
 impl Error {
@@ -87,7 +87,7 @@ impl Error {
       Self::DatatypeCopyNotDatatype => {
         "right-hand side of datatype copy is not a datatype".to_owned()
       }
-      Self::Todo => "unimplemented language construct".to_owned(),
+      Self::Todo(msg) => format!("unimplemented language construct: {}", msg),
     }
   }
 }

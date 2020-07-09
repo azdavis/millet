@@ -11,7 +11,7 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   let ret = match &ty.val {
     AstTy::TyVar(_) => {
       //
-      return Err(ty.loc.wrap(Error::Todo));
+      return Err(ty.loc.wrap(Error::Todo("type variables")));
     }
     AstTy::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());

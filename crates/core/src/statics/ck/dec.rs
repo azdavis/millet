@@ -39,7 +39,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       }
       Ty::Record(ty_rows)
     }
-    Exp::Select(..) => return Err(exp.loc.wrap(Error::Todo)),
+    Exp::Select(..) => return Err(exp.loc.wrap(Error::Todo("record selectors"))),
     Exp::Tuple(exps) => {
       let mut ty_rows = Vec::with_capacity(exps.len());
       for (idx, exp) in exps.iter().enumerate() {
@@ -134,7 +134,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.subst.unify(exp.loc, then_ty.clone(), else_ty)?;
       then_ty
     }
-    Exp::While(..) => return Err(exp.loc.wrap(Error::Todo)),
+    Exp::While(..) => return Err(exp.loc.wrap(Error::Todo("`while`"))),
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
@@ -211,12 +211,12 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   let ret = match &dec.val {
     Dec::Val(ty_vars, val_binds) => {
       if let Some(tv) = ty_vars.first() {
-        return Err(tv.loc.wrap(Error::Todo));
+        return Err(tv.loc.wrap(Error::Todo("type variables")));
       }
       let mut val_env = ValEnv::new();
       for val_bind in val_binds {
         if val_bind.rec {
-          return Err(dec.loc.wrap(Error::Todo));
+          return Err(dec.loc.wrap(Error::Todo("recursive val binds")));
         }
         let (other, pat_ty, pat) = pat::ck(cx, st, &val_bind.pat)?;
         for &name in other.keys() {
@@ -239,7 +239,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::Fun(ty_vars, fval_binds) => {
       if let Some(tv) = ty_vars.first() {
-        return Err(tv.loc.wrap(Error::Todo));
+        return Err(tv.loc.wrap(Error::Todo("type variables")));
       }
       let mut fun_infos = HashMap::with_capacity(fval_binds.len());
       for fval_bind in fval_binds {
@@ -301,7 +301,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       let mut ty_env = TyEnv::default();
       for ty_bind in ty_binds {
         if let Some(tv) = ty_bind.ty_vars.first() {
-          return Err(tv.loc.wrap(Error::Todo));
+          return Err(tv.loc.wrap(Error::Todo("type variables")));
         }
         let ty = ty::ck(cx, st, &ty_bind.ty)?;
         let info = TyInfo::Alias(TyScheme::mono(ty));
@@ -318,12 +318,12 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     Dec::Datatype(dat_binds, ty_binds) => {
       if let Some(tb) = ty_binds.first() {
-        return Err(tb.ty_con.loc.wrap(Error::Todo));
+        return Err(tb.ty_con.loc.wrap(Error::Todo("`withtype`")));
       }
       ck_dat_binds(cx.clone(), st, dat_binds)?
     }
     Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, st, *ty_con, long)?,
-    Dec::Abstype(..) => return Err(dec.loc.wrap(Error::Todo)),
+    Dec::Abstype(..) => return Err(dec.loc.wrap(Error::Todo("`abstype`"))),
     Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::new();
       for ex_bind in ex_binds {
@@ -379,7 +379,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
   let mut val_env = ValEnv::new();
   for dat_bind in dat_binds {
     if let Some(tv) = dat_bind.ty_vars.first() {
-      return Err(tv.loc.wrap(Error::Todo));
+      return Err(tv.loc.wrap(Error::Todo("type variables")));
     }
     // create a new symbol for the type being generated with this DatBind.
     let sym = st.new_sym(dat_bind.ty_con);

@@ -51,7 +51,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     }
     AstPat::Record(rows, rest_loc) => {
       if let Some(loc) = rest_loc {
-        return Err(loc.wrap(Error::Todo));
+        return Err(loc.wrap(Error::Todo("rest patterns")));
       }
       let mut ve = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(rows.len());
