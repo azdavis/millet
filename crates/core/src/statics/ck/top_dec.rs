@@ -188,7 +188,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
         let env = ck_spec(bs, st, spec)?;
         ret.maybe_extend(env, spec.loc)?;
       }
-      Err(spec.loc.wrap(Error::Todo))
+      Ok(ret)
     }
     Spec::Sharing(_, _) => {
       //
