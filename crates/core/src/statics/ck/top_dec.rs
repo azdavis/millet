@@ -6,8 +6,8 @@ use crate::loc::Located;
 use crate::statics::ck::util::env_ins;
 use crate::statics::ck::{dec, ty};
 use crate::statics::types::{
-  Basis, Env, Error, FunEnv, Result, Sig, SigEnv, State, StrEnv, SymTyInfo, Ty, TyEnv, TyInfo,
-  TyScheme, ValEnv, ValInfo,
+  Basis, Env, Error, FunEnv, Item, Result, Sig, SigEnv, State, StrEnv, SymTyInfo, Ty, TyEnv,
+  TyInfo, TyScheme, ValEnv, ValInfo,
 };
 
 pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
@@ -104,10 +104,20 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
 fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> Result<Env> {
   match &sig_exp.val {
     SigExp::Sig(spec) => ck_spec(bs, st, spec),
-    SigExp::SigId(_) => {
-      //
-      Err(sig_exp.loc.wrap(Error::Todo))
-    }
+    SigExp::SigId(sig_id) => match bs.sig_env.get(&sig_id.val) {
+      None => {
+        let err = Error::Undefined(Item::Signature, sig_id.val);
+        Err(sig_id.loc.wrap(err))
+      }
+      Some(sig) => {
+        if sig.ty_names.is_disjoint(&bs.ty_names) {
+          Ok(sig.env.clone())
+        } else {
+          // TODO rename the type names?
+          Err(sig_exp.loc.wrap(Error::Todo))
+        }
+      }
+    },
     SigExp::Where(_, _, _, _) => {
       //
       Err(sig_exp.loc.wrap(Error::Todo))
