@@ -39,13 +39,13 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
-pub fn generalize(ty_env: &TyEnv, sts: &SymTys, ty_scheme: &mut TyScheme) {
+pub fn generalize(ty_env: &TyEnv, sym_tys: &SymTys, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.ty_vars.is_empty());
   assert!(ty_scheme.overload.is_none());
   ty_scheme.ty_vars = ty_scheme
     .ty
     .free_ty_vars()
-    .difference(&ty_env.free_ty_vars(sts))
+    .difference(&ty_env.free_ty_vars(sym_tys))
     .copied()
     .collect();
 }

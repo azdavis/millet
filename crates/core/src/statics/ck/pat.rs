@@ -174,10 +174,10 @@ fn ctor(
   Ok((ctor_res_ty, pat))
 }
 
-fn get_span(sts: &SymTys, sym: Sym) -> Span {
+fn get_span(sym_tys: &SymTys, sym: Sym) -> Span {
   if sym == Sym::base(StrRef::EXN) {
     Span::PosInf
   } else {
-    Span::Finite(sts.get(&sym).unwrap().val_env.len())
+    Span::Finite(sym_tys.get(&sym).unwrap().val_env.len())
   }
 }

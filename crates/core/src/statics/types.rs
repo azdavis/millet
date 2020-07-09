@@ -427,10 +427,10 @@ pub enum TyInfo {
 }
 
 impl TyInfo {
-  pub fn ty_fcn<'a>(&'a self, sts: &'a SymTys) -> &'a TyFcn {
+  pub fn ty_fcn<'a>(&'a self, sym_tys: &'a SymTys) -> &'a TyFcn {
     match self {
       TyInfo::Alias(ty_fcn) => ty_fcn,
-      TyInfo::Sym(sym) => &sts.get(sym).unwrap().ty_fcn,
+      TyInfo::Sym(sym) => &sym_tys.get(sym).unwrap().ty_fcn,
     }
   }
 }
@@ -443,20 +443,20 @@ pub struct TyEnv {
 }
 
 impl TyEnv {
-  pub fn apply(&mut self, subst: &Subst, sts: &mut SymTys) {
+  pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
     for (_, ty_info) in self.inner.iter_mut() {
       match ty_info {
         TyInfo::Alias(ty_fcn) => ty_fcn.apply(subst),
-        TyInfo::Sym(sym) => sts.get_mut(sym).unwrap().ty_fcn.apply(subst),
+        TyInfo::Sym(sym) => sym_tys.get_mut(sym).unwrap().ty_fcn.apply(subst),
       }
     }
   }
 
-  pub fn free_ty_vars(&self, sts: &SymTys) -> TyVarSet {
+  pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .inner
       .iter()
-      .flat_map(|(_, ty_info)| ty_info.ty_fcn(sts).free_ty_vars())
+      .flat_map(|(_, ty_info)| ty_info.ty_fcn(sym_tys).free_ty_vars())
       .collect()
   }
 }
@@ -575,22 +575,22 @@ impl Env {
       .collect()
   }
 
-  pub fn apply(&mut self, subst: &Subst, sts: &mut SymTys) {
+  pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
     for (_, env) in self.str_env.iter_mut() {
-      env.apply(subst, sts);
+      env.apply(subst, sym_tys);
     }
-    self.ty_env.apply(subst, sts);
+    self.ty_env.apply(subst, sym_tys);
     for (_, val_info) in self.val_env.iter_mut() {
       val_info.ty_scheme.apply(subst);
     }
   }
 
-  pub fn free_ty_vars(&self, sts: &SymTys) -> TyVarSet {
+  pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .str_env
       .iter()
-      .flat_map(|(_, env)| env.free_ty_vars(sts))
-      .chain(self.ty_env.free_ty_vars(sts))
+      .flat_map(|(_, env)| env.free_ty_vars(sym_tys))
+      .chain(self.ty_env.free_ty_vars(sym_tys))
       .chain(
         self
           .val_env
@@ -678,35 +678,35 @@ pub struct Basis {
 }
 
 impl Basis {
-  pub fn apply(&mut self, subst: &Subst, sts: &mut SymTys) {
+  pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
     for (_, fun_sig) in self.fun_env.iter_mut() {
-      fun_sig.env.apply(subst, sts);
-      fun_sig.sig.env.apply(subst, sts);
+      fun_sig.env.apply(subst, sym_tys);
+      fun_sig.sig.env.apply(subst, sym_tys);
     }
     for (_, sig) in self.sig_env.iter_mut() {
-      sig.env.apply(subst, sts);
+      sig.env.apply(subst, sym_tys);
     }
-    self.env.apply(subst, sts);
+    self.env.apply(subst, sym_tys);
   }
 
-  pub fn free_ty_vars(&self, sts: &SymTys) -> TyVarSet {
+  pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .fun_env
       .iter()
       .flat_map(|(_, fun_sig)| {
         fun_sig
           .env
-          .free_ty_vars(sts)
+          .free_ty_vars(sym_tys)
           .into_iter()
-          .chain(fun_sig.sig.env.free_ty_vars(sts))
+          .chain(fun_sig.sig.env.free_ty_vars(sym_tys))
       })
       .chain(
         self
           .sig_env
           .iter()
-          .flat_map(|(_, sig)| sig.env.free_ty_vars(sts)),
+          .flat_map(|(_, sig)| sig.env.free_ty_vars(sym_tys)),
       )
-      .chain(self.env.free_ty_vars(sts))
+      .chain(self.env.free_ty_vars(sym_tys))
       .collect()
   }
 
