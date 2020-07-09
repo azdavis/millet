@@ -458,8 +458,6 @@ pub fn ck_dat_copy(
     TyInfo::Sym(sym) => *sym,
   };
   let dt_info = st.sym_tys.get(&sym).unwrap();
-  // should hold because of the syntax of datatype copying.
-  assert!(dt_info.ty_fcn.ty_vars.is_empty());
   Ok(Env {
     str_env: StrEnv::new(),
     ty_env: TyEnv {
