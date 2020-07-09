@@ -236,12 +236,12 @@ impl Parser {
         Token::Colon => {
           self.skip();
           let exp = self.sig_exp()?;
-          StrExp::Transparent(self.wrap(begin, ret).into(), exp)
+          StrExp::Ascription(self.wrap(begin, ret).into(), exp, false)
         }
         Token::ColonGt => {
           self.skip();
           let exp = self.sig_exp()?;
-          StrExp::Opaque(self.wrap(begin, ret).into(), exp)
+          StrExp::Ascription(self.wrap(begin, ret).into(), exp, true)
         }
         _ => break,
       };

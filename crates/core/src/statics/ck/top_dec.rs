@@ -82,11 +82,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
       //
       Err(str_exp.loc.wrap(Error::Todo))
     }
-    StrExp::Transparent(_, _) => {
-      //
-      Err(str_exp.loc.wrap(Error::Todo))
-    }
-    StrExp::Opaque(_, _) => {
+    StrExp::Ascription(_, _, _) => {
       //
       Err(str_exp.loc.wrap(Error::Todo))
     }

@@ -217,8 +217,8 @@ pub struct TyRow<I> {
 pub enum StrExp<I> {
   Struct(Located<StrDec<I>>),
   LongStrId(Long<I>),
-  Transparent(Box<Located<StrExp<I>>>, Located<SigExp<I>>),
-  Opaque(Box<Located<StrExp<I>>>, Located<SigExp<I>>),
+  /// The bool is false when transparent, true when opaque.
+  Ascription(Box<Located<StrExp<I>>>, Located<SigExp<I>>, bool),
   FunctorApp(Long<I>, Box<Located<StrExp<I>>>),
   Let(Located<StrDec<I>>, Box<Located<StrExp<I>>>),
 }
