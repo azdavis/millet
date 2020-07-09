@@ -76,22 +76,10 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
 
 fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> Result<Env> {
   match &str_exp.val {
-    StrExp::Struct(_) => {
-      //
-      Err(str_exp.loc.wrap(Error::Todo("`struct`")))
-    }
-    StrExp::LongStrId(_) => {
-      //
-      Err(str_exp.loc.wrap(Error::Todo("structure identifiers")))
-    }
-    StrExp::Ascription(_, _, _) => {
-      //
-      Err(str_exp.loc.wrap(Error::Todo("signature ascription")))
-    }
-    StrExp::FunctorApp(_, _) => {
-      //
-      Err(str_exp.loc.wrap(Error::Todo("functor application")))
-    }
+    StrExp::Struct(_) => Err(str_exp.loc.wrap(Error::Todo("`struct`"))),
+    StrExp::LongStrId(_) => Err(str_exp.loc.wrap(Error::Todo("structure identifiers"))),
+    StrExp::Ascription(_, _, _) => Err(str_exp.loc.wrap(Error::Todo("signature ascription"))),
+    StrExp::FunctorApp(_, _) => Err(str_exp.loc.wrap(Error::Todo("functor application"))),
     StrExp::Let(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
       let mut bs = bs.clone();
@@ -118,10 +106,7 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> 
         }
       }
     },
-    SigExp::Where(_, _, _, _) => {
-      //
-      Err(sig_exp.loc.wrap(Error::Todo("`where`")))
-    }
+    SigExp::Where(_, _, _, _) => Err(sig_exp.loc.wrap(Error::Todo("`where`"))),
   }
 }
 
@@ -190,9 +175,6 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       }
       Ok(ret)
     }
-    Spec::Sharing(_, _) => {
-      //
-      Err(spec.loc.wrap(Error::Todo("`sharing`")))
-    }
+    Spec::Sharing(_, _) => Err(spec.loc.wrap(Error::Todo("`sharing`"))),
   }
 }

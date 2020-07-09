@@ -8,11 +8,8 @@ use crate::statics::types::{Cx, Error, Result, State, Ty};
 use std::collections::HashSet;
 
 pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
-  let ret = match &ty.val {
-    AstTy::TyVar(_) => {
-      //
-      return Err(ty.loc.wrap(Error::Todo("type variables")));
-    }
+  match &ty.val {
+    AstTy::TyVar(_) => Err(ty.loc.wrap(Error::Todo("type variables"))),
     AstTy::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());
       let mut keys = HashSet::with_capacity(rows.len());
@@ -23,7 +20,7 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
         }
         ty_rows.push((row.lab.val, ty));
       }
-      Ty::Record(ty_rows)
+      Ok(Ty::Record(ty_rows))
     }
     AstTy::Tuple(tys) => {
       let mut ty_rows = Vec::with_capacity(tys.len());
@@ -32,7 +29,7 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
         let lab = tuple_lab(idx);
         ty_rows.push((lab, ty));
       }
-      Ty::Record(ty_rows)
+      Ok(Ty::Record(ty_rows))
     }
     AstTy::TyCon(args, name) => {
       let env = get_env(&cx.env, name)?;
@@ -46,13 +43,12 @@ pub fn ck(cx: &Cx, st: &mut State, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
       for ty in args {
         new_args.push(ck(cx, st, ty)?);
       }
-      ty_fcn.apply_args(new_args)
+      Ok(ty_fcn.apply_args(new_args))
     }
     AstTy::Arrow(arg, res) => {
       let arg = ck(cx, st, arg)?;
       let res = ck(cx, st, res)?;
-      Ty::Arrow(arg.into(), res.into())
+      Ok(Ty::Arrow(arg.into(), res.into()))
     }
-  };
-  Ok(ret)
+  }
 }

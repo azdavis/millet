@@ -15,17 +15,17 @@ use maplit::hashmap;
 use std::collections::{HashMap, HashSet};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
-  let ret = match &exp.val {
-    Exp::DecInt(_) => Ty::INT,
-    Exp::HexInt(_) => Ty::INT,
-    Exp::DecWord(_) => Ty::WORD,
-    Exp::HexWord(_) => Ty::WORD,
-    Exp::Real(_) => Ty::REAL,
-    Exp::String(_) => Ty::STRING,
-    Exp::Char(_) => Ty::CHAR,
+  match &exp.val {
+    Exp::DecInt(_) => Ok(Ty::INT),
+    Exp::HexInt(_) => Ok(Ty::INT),
+    Exp::DecWord(_) => Ok(Ty::WORD),
+    Exp::HexWord(_) => Ok(Ty::WORD),
+    Exp::Real(_) => Ok(Ty::REAL),
+    Exp::String(_) => Ok(Ty::STRING),
+    Exp::Char(_) => Ok(Ty::CHAR),
     Exp::LongVid(vid) => {
       let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
-      instantiate(st, &val_info.ty_scheme, exp.loc)
+      Ok(instantiate(st, &val_info.ty_scheme, exp.loc))
     }
     Exp::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());
@@ -37,9 +37,9 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
         }
         ty_rows.push((row.lab.val, ty));
       }
-      Ty::Record(ty_rows)
+      Ok(Ty::Record(ty_rows))
     }
-    Exp::Select(..) => return Err(exp.loc.wrap(Error::Todo("record selectors"))),
+    Exp::Select(..) => Err(exp.loc.wrap(Error::Todo("record selectors"))),
     Exp::Tuple(exps) => {
       let mut ty_rows = Vec::with_capacity(exps.len());
       for (idx, exp) in exps.iter().enumerate() {
@@ -47,7 +47,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
         let lab = tuple_lab(idx);
         ty_rows.push((lab, ty));
       }
-      Ty::Record(ty_rows)
+      Ok(Ty::Record(ty_rows))
     }
     Exp::List(exps) => {
       let elem = Ty::Var(st.new_ty_var(false));
@@ -55,14 +55,14 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
         let ty = ck_exp(cx, st, exp)?;
         st.subst.unify(exp.loc, elem.clone(), ty)?;
       }
-      Ty::list(elem)
+      Ok(Ty::list(elem))
     }
     Exp::Sequence(exps) => {
       let mut ret = None;
       for exp in exps {
         ret = Some(ck_exp(cx, st, exp)?);
       }
-      ret.unwrap()
+      Ok(ret.unwrap())
     }
     Exp::Let(dec, exps) => {
       let env = ck(cx, st, dec)?;
@@ -78,7 +78,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       if !ty.ty_names().is_subset(&ty_names) {
         return Err(loc.wrap(Error::TyNameEscape));
       }
-      ty
+      Ok(ty)
     }
     Exp::App(func, arg) => {
       let func_ty = ck_exp(cx, st, func)?;
@@ -86,7 +86,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
       st.subst.unify(exp.loc, func_ty, arrow_ty)?;
-      ret_ty
+      Ok(ret_ty)
     }
     Exp::InfixApp(lhs, func, rhs) => {
       let val_info = get_val_info(&cx.env, *func)?;
@@ -99,32 +99,32 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
         ret_ty.clone().into(),
       );
       st.subst.unify(exp.loc, func_ty, arrow_ty)?;
-      ret_ty
+      Ok(ret_ty)
     }
     Exp::Typed(inner, ty) => {
       let exp_ty = ck_exp(cx, st, inner)?;
       let ty_ty = ty::ck(cx, st, ty)?;
       st.subst.unify(exp.loc, ty_ty, exp_ty.clone())?;
-      exp_ty
+      Ok(exp_ty)
     }
     Exp::Andalso(lhs, rhs) | Exp::Orelse(lhs, rhs) => {
       let lhs_ty = ck_exp(cx, st, lhs)?;
       let rhs_ty = ck_exp(cx, st, rhs)?;
       st.subst.unify(lhs.loc, Ty::BOOL, lhs_ty)?;
       st.subst.unify(rhs.loc, Ty::BOOL, rhs_ty)?;
-      Ty::BOOL
+      Ok(Ty::BOOL)
     }
     Exp::Handle(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       st.subst.unify(exp.loc, Ty::EXN, arg_ty)?;
       st.subst.unify(exp.loc, head_ty.clone(), res_ty)?;
-      head_ty
+      Ok(head_ty)
     }
     Exp::Raise(exp) => {
       let exp_ty = ck_exp(cx, st, exp)?;
       st.subst.unify(exp.loc, Ty::EXN, exp_ty)?;
-      Ty::Var(st.new_ty_var(false))
+      Ok(Ty::Var(st.new_ty_var(false)))
     }
     Exp::If(cond, then_e, else_e) => {
       let cond_ty = ck_exp(cx, st, cond)?;
@@ -132,21 +132,20 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let else_ty = ck_exp(cx, st, else_e)?;
       st.subst.unify(cond.loc, Ty::BOOL, cond_ty)?;
       st.subst.unify(exp.loc, then_ty.clone(), else_ty)?;
-      then_ty
+      Ok(then_ty)
     }
-    Exp::While(..) => return Err(exp.loc.wrap(Error::Todo("`while`"))),
+    Exp::While(..) => Err(exp.loc.wrap(Error::Todo("`while`"))),
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       st.subst.unify(exp.loc, head_ty, arg_ty)?;
-      res_ty
+      Ok(res_ty)
     }
     Exp::Fn(cases) => {
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
-      Ty::Arrow(arg_ty.into(), res_ty.into())
+      Ok(Ty::Arrow(arg_ty.into(), res_ty.into()))
     }
-  };
-  Ok(ret)
+  }
 }
 
 fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<(Ty, Ty)> {
@@ -208,7 +207,7 @@ fn fun_infos_to_ve(fun_infos: &HashMap<StrRef, FunInfo>) -> ValEnv {
 }
 
 pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
-  let ret = match &dec.val {
+  match &dec.val {
     Dec::Val(ty_vars, val_binds) => {
       if let Some(tv) = ty_vars.first() {
         return Err(tv.loc.wrap(Error::Todo("type variables")));
@@ -235,7 +234,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
         }
       }
-      val_env.into()
+      Ok(val_env.into())
     }
     Dec::Fun(ty_vars, fval_binds) => {
       if let Some(tv) = ty_vars.first() {
@@ -295,7 +294,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         val_info.ty_scheme.ty.apply(&st.subst);
         generalize(&cx.env.ty_env, &st.sym_tys, &mut val_info.ty_scheme);
       }
-      val_env.into()
+      Ok(val_env.into())
     }
     Dec::Type(ty_binds) => {
       let mut ty_env = TyEnv::default();
@@ -314,16 +313,16 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           );
         }
       }
-      ty_env.into()
+      Ok(ty_env.into())
     }
     Dec::Datatype(dat_binds, ty_binds) => {
       if let Some(tb) = ty_binds.first() {
         return Err(tb.ty_con.loc.wrap(Error::Todo("`withtype`")));
       }
-      ck_dat_binds(cx.clone(), st, dat_binds)?
+      ck_dat_binds(cx.clone(), st, dat_binds)
     }
-    Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, st, *ty_con, long)?,
-    Dec::Abstype(..) => return Err(dec.loc.wrap(Error::Todo("`abstype`"))),
+    Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, st, *ty_con, long),
+    Dec::Abstype(..) => Err(dec.loc.wrap(Error::Todo("`abstype`"))),
     Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::new();
       for ex_bind in ex_binds {
@@ -343,20 +342,20 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         };
         env_ins(&mut val_env, ex_bind.vid, val_info)?;
       }
-      val_env.into()
+      Ok(val_env.into())
     }
     Dec::Local(fst, snd) => {
       let fst_env = ck(cx, st, fst)?;
       let mut cx = cx.clone();
       cx.o_plus(fst_env);
-      ck(&cx, st, snd)?
+      ck(&cx, st, snd)
     }
     Dec::Open(longs) => {
       let mut env = Env::default();
       for long in longs {
         env.extend(get_env(&cx.env, long)?.clone());
       }
-      env
+      Ok(env)
     }
     Dec::Seq(decs) => {
       // TODO clone in loop - expensive?
@@ -366,11 +365,10 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         cx.o_plus(ret.clone());
         ret.extend(ck(&cx, st, dec)?);
       }
-      ret
+      Ok(ret)
     }
-    Dec::Infix(..) | Dec::Infixr(..) | Dec::Nonfix(..) => Env::default(),
-  };
-  Ok(ret)
+    Dec::Infix(..) | Dec::Infixr(..) | Dec::Nonfix(..) => Ok(Env::default()),
+  }
 }
 
 pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -> Result<Env> {
