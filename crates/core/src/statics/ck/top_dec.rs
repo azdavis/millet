@@ -44,7 +44,13 @@ fn env_to_sig(bs: &Basis, env: Env) -> Sig {
 fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> Result<Env> {
   match &str_exp.val {
     StrExp::Struct(str_dec) => ck_str_dec(bs, st, str_dec),
-    StrExp::LongStrId(long) => Ok(get_env(&bs.env, long)?.clone()),
+    StrExp::LongStrId(long) => match get_env(&bs.env, long)?.str_env.get(&long.last.val) {
+      None => {
+        let err = Error::Undefined(Item::Structure, long.last.val);
+        Err(long.last.loc.wrap(err))
+      }
+      Some(env) => Ok(env.clone()),
+    },
     StrExp::Ascription(_, _, _) => Err(str_exp.loc.wrap(Error::Todo("signature ascription"))),
     StrExp::FunctorApp(_, _) => Err(str_exp.loc.wrap(Error::Todo("functor application"))),
     StrExp::Let(fst, snd) => {
