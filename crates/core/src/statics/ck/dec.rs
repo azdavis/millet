@@ -1,6 +1,6 @@
 //! Check declarations and expressions.
 
-use crate::ast::{Cases, Dec, ExBindInner, Exp, Label};
+use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{
@@ -320,95 +320,9 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       if let Some(tb) = ty_binds.first() {
         return Err(tb.ty_con.loc.wrap(Error::Todo));
       }
-      let mut cx = cx.clone();
-      // these two are across all dat_binds.
-      let mut ty_env = TyEnv::default();
-      let mut val_env = ValEnv::new();
-      for dat_bind in dat_binds {
-        if let Some(tv) = dat_bind.ty_vars.first() {
-          return Err(tv.loc.wrap(Error::Todo));
-        }
-        // create a new symbol for the type being generated with this DatBind.
-        let sym = st.new_sym(dat_bind.ty_con);
-        // tell the original context as well as the overall TyEnv that we return that this new
-        // datatype does exist, but tell the State that it has just an empty ValEnv. also perform
-        // dupe checking on the name of the new type and assert for sanity checking after the dupe
-        // check.
-        env_ins(&mut cx.env.ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
-        // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
-        cx.ty_names.insert(dat_bind.ty_con.val);
-        assert!(ty_env
-          .inner
-          .insert(dat_bind.ty_con.val, TyInfo::Sym(sym))
-          .is_none());
-        assert!(st
-          .sym_tys
-          .insert(
-            sym,
-            SymTyInfo {
-              ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
-              val_env: ValEnv::new(),
-            },
-          )
-          .is_none());
-        // this ValEnv is specific to this DatBind.
-        let mut bind_val_env = ValEnv::new();
-        for con_bind in dat_bind.cons.iter() {
-          ck_binding(con_bind.vid)?;
-          // the type being defined in this declaration is `ty`.
-          let mut ty = Ty::Ctor(Vec::new(), sym);
-          if let Some(arg_ty) = &con_bind.ty {
-            // if there is an `of t`, then the type of the ctor is `t -> ty`. otherwise, the type of
-            // the ctor is just `ty`.
-            ty = Ty::Arrow(ty::ck(&cx, st, arg_ty)?.into(), ty.into());
-          }
-          // insert the ValInfo into the _overall_ ValEnv with dupe checking.
-          env_ins(
-            &mut val_env,
-            con_bind.vid,
-            ValInfo::ctor(TyScheme::mono(ty.clone())),
-          )?;
-          // _also_ insert the ValInfo into the DatBind-specific ValEnv, but this time dupe checking
-          // is unnecessary (just assert as a sanity check).
-          assert!(bind_val_env
-            .insert(con_bind.vid.val, ValInfo::ctor(TyScheme::mono(ty)))
-            .is_none());
-        }
-        // now the ValEnv is complete, so we may update st.sym_tys with the true definition of
-        // this datatype. assert to check that we inserted the fake answer earlier.
-        assert!(st
-          .sym_tys
-          .insert(
-            sym,
-            SymTyInfo {
-              ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
-              val_env: bind_val_env,
-            },
-          )
-          .is_some());
-      }
-      Env {
-        ty_env,
-        val_env,
-        str_env: StrEnv::new(),
-      }
+      ck_dat_binds(cx.clone(), st, dat_binds)?
     }
-    Dec::DatatypeCopy(vid, long) => {
-      let sym = match get_ty_info(get_env(cx, long)?, long.last)? {
-        TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
-        TyInfo::Sym(sym) => *sym,
-      };
-      let dt_info = st.sym_tys.get(&sym).unwrap();
-      // should hold because of the syntax of datatype copying.
-      assert!(dt_info.ty_fcn.ty_vars.is_empty());
-      Env {
-        str_env: StrEnv::new(),
-        ty_env: TyEnv {
-          inner: hashmap![vid.val => TyInfo::Sym(sym)],
-        },
-        val_env: dt_info.val_env.clone(),
-      }
-    }
+    Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, st, *ty_con, long)?,
     Dec::Abstype(..) => return Err(dec.loc.wrap(Error::Todo)),
     Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::new();
@@ -457,4 +371,100 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     Dec::Infix(..) | Dec::Infixr(..) | Dec::Nonfix(..) => Env::default(),
   };
   Ok(ret)
+}
+
+pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -> Result<Env> {
+  // these two are across all dat_binds.
+  let mut ty_env = TyEnv::default();
+  let mut val_env = ValEnv::new();
+  for dat_bind in dat_binds {
+    if let Some(tv) = dat_bind.ty_vars.first() {
+      return Err(tv.loc.wrap(Error::Todo));
+    }
+    // create a new symbol for the type being generated with this DatBind.
+    let sym = st.new_sym(dat_bind.ty_con);
+    // tell the original context as well as the overall TyEnv that we return that this new
+    // datatype does exist, but tell the State that it has just an empty ValEnv. also perform
+    // dupe checking on the name of the new type and assert for sanity checking after the dupe
+    // check.
+    env_ins(&mut cx.env.ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
+    // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
+    cx.ty_names.insert(dat_bind.ty_con.val);
+    assert!(ty_env
+      .inner
+      .insert(dat_bind.ty_con.val, TyInfo::Sym(sym))
+      .is_none());
+    assert!(st
+      .sym_tys
+      .insert(
+        sym,
+        SymTyInfo {
+          ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
+          val_env: ValEnv::new(),
+        },
+      )
+      .is_none());
+    // this ValEnv is specific to this DatBind.
+    let mut bind_val_env = ValEnv::new();
+    for con_bind in dat_bind.cons.iter() {
+      ck_binding(con_bind.vid)?;
+      // the type being defined in this declaration is `ty`.
+      let mut ty = Ty::Ctor(Vec::new(), sym);
+      if let Some(arg_ty) = &con_bind.ty {
+        // if there is an `of t`, then the type of the ctor is `t -> ty`. otherwise, the type of
+        // the ctor is just `ty`.
+        ty = Ty::Arrow(ty::ck(&cx, st, arg_ty)?.into(), ty.into());
+      }
+      // insert the ValInfo into the _overall_ ValEnv with dupe checking.
+      env_ins(
+        &mut val_env,
+        con_bind.vid,
+        ValInfo::ctor(TyScheme::mono(ty.clone())),
+      )?;
+      // _also_ insert the ValInfo into the DatBind-specific ValEnv, but this time dupe checking
+      // is unnecessary (just assert as a sanity check).
+      assert!(bind_val_env
+        .insert(con_bind.vid.val, ValInfo::ctor(TyScheme::mono(ty)))
+        .is_none());
+    }
+    // now the ValEnv is complete, so we may update st.sym_tys with the true definition of
+    // this datatype. assert to check that we inserted the fake answer earlier.
+    assert!(st
+      .sym_tys
+      .insert(
+        sym,
+        SymTyInfo {
+          ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
+          val_env: bind_val_env,
+        },
+      )
+      .is_some());
+  }
+  Ok(Env {
+    ty_env,
+    val_env,
+    str_env: StrEnv::new(),
+  })
+}
+
+pub fn ck_dat_copy(
+  cx: &Cx,
+  st: &mut State,
+  ty_con: Located<StrRef>,
+  long: &Long<StrRef>,
+) -> Result<Env> {
+  let sym = match get_ty_info(get_env(cx, long)?, long.last)? {
+    TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
+    TyInfo::Sym(sym) => *sym,
+  };
+  let dt_info = st.sym_tys.get(&sym).unwrap();
+  // should hold because of the syntax of datatype copying.
+  assert!(dt_info.ty_fcn.ty_vars.is_empty());
+  Ok(Env {
+    str_env: StrEnv::new(),
+    ty_env: TyEnv {
+      inner: hashmap![ty_con.val => TyInfo::Sym(sym)],
+    },
+    val_env: dt_info.val_env.clone(),
+  })
 }
