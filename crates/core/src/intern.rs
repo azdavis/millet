@@ -174,6 +174,10 @@ pub struct StrStore {
 impl StrStore {
   /// Returns the string slice corresponding to this StrRef.
   pub fn get(&self, id: StrRef) -> &str {
-    self.store[id.0].as_str()
+    self
+      .store
+      .get(id.0)
+      .expect("gave a StrStore a StrRef that didn't come from its StrStoreMut")
+      .as_str()
   }
 }
