@@ -244,7 +244,7 @@ pub struct StrBind<I> {
 #[derive(Debug)]
 pub enum SigExp<I> {
   Sig(Located<Spec<I>>),
-  SigId(Long<I>),
+  SigId(Located<I>),
   Where(
     Box<Located<SigExp<I>>>,
     Vec<Located<TyVar<I>>>,

@@ -299,17 +299,14 @@ impl Parser {
   fn sig_exp(&mut self) -> Result<Located<SigExp<StrRef>>> {
     let tok = self.peek();
     let begin = tok.loc;
+    self.skip();
     let mut ret = match tok.val {
       Token::Sig => {
-        self.skip();
         let spec = self.spec()?;
         self.eat(Token::End)?;
         SigExp::Sig(spec)
       }
-      Token::Ident(_, IdentType::AlphaNum) => {
-        let long_id = self.long_alpha_num_id()?;
-        SigExp::SigId(long_id)
-      }
+      Token::Ident(id, IdentType::AlphaNum) => SigExp::SigId(begin.wrap(id)),
       _ => return self.fail("a signature expression", tok),
     };
     while let Token::Where = self.peek().val {
