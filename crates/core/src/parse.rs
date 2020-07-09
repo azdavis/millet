@@ -403,8 +403,23 @@ impl Parser {
       }
       Token::Include => {
         self.skip();
-        let exp = self.sig_exp()?;
-        Spec::Include(exp.into())
+        let mut sig_ids = Vec::new();
+        loop {
+          let tok = self.peek();
+          if let Token::Ident(id, IdentType::AlphaNum) = tok.val {
+            self.skip();
+            let loc = tok.loc;
+            sig_ids.push(loc.wrap(Spec::Include(loc.wrap(SigExp::SigId(loc.wrap(id))).into())));
+          } else {
+            break;
+          }
+        }
+        if sig_ids.is_empty() {
+          let exp = self.sig_exp()?;
+          Spec::Include(exp.into())
+        } else {
+          Spec::Seq(sig_ids)
+        }
       }
       _ => return Ok(None),
     };
