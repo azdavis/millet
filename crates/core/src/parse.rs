@@ -222,7 +222,10 @@ impl Parser {
         let long_id = self.long_alpha_num_id()?;
         if let Token::LRound = self.peek().val {
           self.skip();
-          let exp = self.str_exp()?;
+          let exp = match self.maybe_str_dec()? {
+            Some(sd) => sd.loc.wrap(StrExp::Struct(sd)),
+            None => self.str_exp()?,
+          };
           self.eat(Token::RRound)?;
           StrExp::FunctorApp(long_id, exp.into())
         } else {
@@ -258,8 +261,23 @@ impl Parser {
         let mut str_binds = Vec::new();
         loop {
           let id = self.alpha_num_id()?;
+          let sig_exp = match self.peek().val {
+            Token::Colon => {
+              self.skip();
+              Some((self.sig_exp()?, false))
+            }
+            Token::ColonGt => {
+              self.skip();
+              Some((self.sig_exp()?, true))
+            }
+            _ => None,
+          };
           self.eat(Token::Equal)?;
-          let exp = self.str_exp()?;
+          let mut exp = self.str_exp()?;
+          if let Some((sig_exp, opaque)) = sig_exp {
+            let loc = exp.loc;
+            exp = loc.wrap(StrExp::Ascription(exp.into(), sig_exp, opaque));
+          }
           str_binds.push(StrBind { id, exp });
           if let Token::And = self.peek().val {
             self.skip();
