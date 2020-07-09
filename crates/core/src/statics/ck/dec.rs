@@ -341,7 +341,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             val_info.clone()
           }
         };
-        val_env.insert(ex_bind.vid.val, val_info);
+        env_ins(&mut val_env, ex_bind.vid, val_info)?;
       }
       val_env.into()
     }
