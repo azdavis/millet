@@ -3,7 +3,7 @@
 use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use crate::intern::StrRef;
 use crate::loc::Located;
-use crate::statics::ck::util::env_ins;
+use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, ty};
 use crate::statics::types::{
   Basis, Env, Error, FunEnv, Item, Result, Sig, SigEnv, State, StrEnv, SymTyInfo, Ty, TyEnv,
@@ -43,8 +43,8 @@ fn env_to_sig(bs: &Basis, env: Env) -> Sig {
 
 fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> Result<Env> {
   match &str_exp.val {
-    StrExp::Struct(_) => Err(str_exp.loc.wrap(Error::Todo("`struct`"))),
-    StrExp::LongStrId(_) => Err(str_exp.loc.wrap(Error::Todo("structure identifiers"))),
+    StrExp::Struct(str_dec) => ck_str_dec(bs, st, str_dec),
+    StrExp::LongStrId(long) => Ok(get_env(&bs.env, long)?.clone()),
     StrExp::Ascription(_, _, _) => Err(str_exp.loc.wrap(Error::Todo("signature ascription"))),
     StrExp::FunctorApp(_, _) => Err(str_exp.loc.wrap(Error::Todo("functor application"))),
     StrExp::Let(fst, snd) => {
