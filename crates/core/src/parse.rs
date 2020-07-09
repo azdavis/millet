@@ -167,8 +167,23 @@ impl Parser {
           self.eat(Token::Colon)?;
           let sig_exp = self.sig_exp()?;
           self.eat(Token::RRound)?;
+          let ret_sig_exp = match self.peek().val {
+            Token::Colon => {
+              self.skip();
+              Some((self.sig_exp()?, false))
+            }
+            Token::ColonGt => {
+              self.skip();
+              Some((self.sig_exp()?, true))
+            }
+            _ => None,
+          };
           self.eat(Token::Equal)?;
-          let str_exp = self.str_exp()?;
+          let mut str_exp = self.str_exp()?;
+          if let Some((sig_exp, opaque)) = ret_sig_exp {
+            let loc = str_exp.loc;
+            str_exp = loc.wrap(StrExp::Ascription(str_exp.into(), sig_exp, opaque));
+          }
           fun_binds.push(FunBind {
             fun_id,
             str_id,
