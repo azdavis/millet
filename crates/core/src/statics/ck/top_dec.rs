@@ -160,14 +160,18 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       }
       Ok(val_env.into())
     }
-    Spec::Structure(_) => {
-      //
-      Err(spec.loc.wrap(Error::Todo))
+    Spec::Structure(str_descs) => {
+      let mut bs = bs.clone();
+      let mut str_env = StrEnv::new();
+      for str_desc in str_descs {
+        let env = ck_sig_exp(&bs, st, &str_desc.exp)?;
+        bs.ty_names.extend(env.ty_names());
+        // allow shadowing.
+        str_env.insert(str_desc.str_id.val, env);
+      }
+      Ok(str_env.into())
     }
-    Spec::Include(_) => {
-      //
-      Err(spec.loc.wrap(Error::Todo))
-    }
+    Spec::Include(sig_exp) => ck_sig_exp(bs, st, sig_exp),
     Spec::Seq(specs) => {
       let mut ret = Env::default();
       for spec in specs {
