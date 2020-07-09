@@ -264,7 +264,7 @@ pub enum Spec<I> {
   /// requires !ty_descs.is_empty(). the bool is true iff this was `eqtype`, false if it was `type`.
   Type(Vec<TyDesc<I>>, bool),
   /// requires !dat_descs.is_empty()
-  Datatype(Vec<DatDesc<I>>),
+  Datatype(Vec<DatBind<I>>),
   DatatypeCopy(Located<I>, Long<I>),
   /// requires !ex_descs.is_empty()
   Exception(Vec<ExDesc<I>>),
@@ -286,20 +286,6 @@ pub struct ValDesc<I> {
 pub struct TyDesc<I> {
   pub ty_vars: Vec<Located<TyVar<I>>>,
   pub ty_con: Located<I>,
-}
-
-#[derive(Debug)]
-pub struct DatDesc<I> {
-  pub ty_vars: Vec<Located<TyVar<I>>>,
-  pub ty_con: Located<I>,
-  /// requires !cons.is_empty()
-  pub cons: Vec<ConDesc<I>>,
-}
-
-#[derive(Debug)]
-pub struct ConDesc<I> {
-  pub vid: Located<I>,
-  pub ty: Option<Located<Ty<I>>>,
 }
 
 #[derive(Debug)]

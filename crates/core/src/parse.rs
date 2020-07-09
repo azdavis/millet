@@ -1,9 +1,9 @@
 //! Parsing from tokens to ASTs.
 
 use crate::ast::{
-  Arm, Cases, ConBind, ConDesc, DatBind, DatDesc, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind,
-  FValBindCase, FunBind, Label, Long, Pat, PatRow, Row, SigBind, SigExp, Spec, StrBind, StrDec,
-  StrDesc, StrExp, TopDec, Ty, TyBind, TyDesc, TyRow, ValBind, ValDesc,
+  Arm, Cases, ConBind, DatBind, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind, FValBindCase,
+  FunBind, Label, Long, Pat, PatRow, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp,
+  TopDec, Ty, TyBind, TyDesc, TyRow, ValBind, ValDesc,
 };
 use crate::intern::{StrRef, StrStore};
 use crate::lex::Lexer;
@@ -351,10 +351,10 @@ impl Parser {
         self.skip();
         Spec::Type(self.ty_descs()?, true)
       }
-      Token::Datatype => {
-        self.skip();
-        self.spec_datatype()?
-      }
+      Token::Datatype => match self.datatype_dec(false)? {
+        DatatypeDec::Binds(dat_binds) => Spec::Datatype(dat_binds),
+        DatatypeDec::Copy(ty_con, long) => Spec::DatatypeCopy(ty_con, long),
+      },
       Token::Exception => {
         self.skip();
         let mut ex_descs = Vec::new();
@@ -411,61 +411,6 @@ impl Parser {
       ret = Spec::Sharing(self.wrap(begin, ret).into(), ty_cons);
     }
     Ok(Some(self.wrap(begin, ret)))
-  }
-
-  fn spec_datatype(&mut self) -> Result<Spec<StrRef>> {
-    let tok = self.peek();
-    let dat_desc = if let Token::Ident(id, _) = tok.val {
-      let ty_con = tok.loc.wrap(id);
-      self.skip();
-      self.eat(Token::Equal)?;
-      if let Token::Datatype = self.peek().val {
-        self.skip();
-        let long = self.long_id(true)?;
-        return Ok(Spec::DatatypeCopy(ty_con, long));
-      }
-      let cons = self.con_descs()?;
-      DatDesc {
-        ty_vars: Vec::new(),
-        ty_con,
-        cons,
-      }
-    } else {
-      self.dat_desc()?
-    };
-    let mut dat_descs = vec![dat_desc];
-    while let Token::And = self.peek().val {
-      self.skip();
-      dat_descs.push(self.dat_desc()?);
-    }
-    Ok(Spec::Datatype(dat_descs))
-  }
-
-  fn dat_desc(&mut self) -> Result<DatDesc<StrRef>> {
-    let ty_vars = self.ty_var_seq()?;
-    let ty_con = self.ident()?;
-    self.eat(Token::Equal)?;
-    let cons = self.con_descs()?;
-    Ok(DatDesc {
-      ty_vars,
-      ty_con,
-      cons,
-    })
-  }
-
-  fn con_descs(&mut self) -> Result<Vec<ConDesc<StrRef>>> {
-    let mut ret = Vec::new();
-    loop {
-      let vid = self.ident()?;
-      let ty = self.maybe_of_ty()?;
-      ret.push(ConDesc { vid, ty });
-      if let Token::Bar = self.peek().val {
-        self.skip();
-      } else {
-        break;
-      }
-    }
-    Ok(ret)
   }
 
   fn ty_descs(&mut self) -> Result<Vec<TyDesc<StrRef>>> {
@@ -932,46 +877,24 @@ impl Parser {
         self.skip();
         Dec::Type(self.ty_binds()?)
       }
-      Token::Datatype => {
-        self.skip();
-        let tok = self.peek();
-        let dat_bind = if let Token::Ident(id, _) = tok.val {
-          self.skip();
-          let ty_con = tok.loc.wrap(id);
-          self.eat(Token::Equal)?;
-          if let Token::Datatype = self.peek().val {
+      Token::Datatype => match self.datatype_dec(true)? {
+        DatatypeDec::Binds(dat_binds) => {
+          let ty_binds = if let Token::Withtype = self.peek().val {
             self.skip();
-            let long = self.long_id(true)?;
-            return Ok(Some(self.wrap(begin, Dec::DatatypeCopy(ty_con, long))));
-          }
-          let cons = self.con_binds()?;
-          DatBind {
-            ty_vars: Vec::new(),
-            ty_con,
-            cons,
-          }
-        } else {
-          self.dat_bind()?
-        };
-        let mut dat_binds = vec![dat_bind];
-        while let Token::And = self.peek().val {
-          self.skip();
-          dat_binds.push(self.dat_bind()?);
+            self.ty_binds()?
+          } else {
+            Vec::new()
+          };
+          Dec::Datatype(dat_binds, ty_binds)
         }
-        let ty_binds = if let Token::Withtype = self.peek().val {
-          self.skip();
-          self.ty_binds()?
-        } else {
-          Vec::new()
-        };
-        Dec::Datatype(dat_binds, ty_binds)
-      }
+        DatatypeDec::Copy(ty_con, long) => Dec::DatatypeCopy(ty_con, long),
+      },
       Token::Abstype => {
         self.skip();
-        let mut dat_binds = vec![self.dat_bind()?];
+        let mut dat_binds = vec![self.dat_bind(true)?];
         while let Token::And = self.peek().val {
           self.skip();
-          dat_binds.push(self.dat_bind()?);
+          dat_binds.push(self.dat_bind(true)?);
         }
         let ty_binds = if let Token::Withtype = self.peek().val {
           self.skip();
@@ -1140,11 +1063,42 @@ impl Parser {
     Ok(ty_binds)
   }
 
-  fn con_binds(&mut self) -> Result<Vec<ConBind<StrRef>>> {
+  fn datatype_dec(&mut self, allow_op: bool) -> Result<DatatypeDec<StrRef>> {
+    self.skip();
+    let tok = self.peek();
+    let dat_bind = if let Token::Ident(id, _) = tok.val {
+      let ty_con = tok.loc.wrap(id);
+      self.skip();
+      self.eat(Token::Equal)?;
+      if let Token::Datatype = self.peek().val {
+        self.skip();
+        let long = self.long_id(true)?;
+        return Ok(DatatypeDec::Copy(ty_con, long));
+      }
+      let cons = self.con_binds(allow_op)?;
+      DatBind {
+        ty_vars: Vec::new(),
+        ty_con,
+        cons,
+      }
+    } else {
+      self.dat_bind(allow_op)?
+    };
+    let mut dat_binds = vec![dat_bind];
+    while let Token::And = self.peek().val {
+      self.skip();
+      dat_binds.push(self.dat_bind(allow_op)?);
+    }
+    Ok(DatatypeDec::Binds(dat_binds))
+  }
+
+  fn con_binds(&mut self, allow_op: bool) -> Result<Vec<ConBind<StrRef>>> {
     let mut ret = Vec::new();
     loop {
-      if let Token::Op = self.peek().val {
-        self.skip();
+      if allow_op {
+        if let Token::Op = self.peek().val {
+          self.skip();
+        }
       }
       let vid = self.ident()?;
       let ty = self.maybe_of_ty()?;
@@ -1158,11 +1112,11 @@ impl Parser {
     Ok(ret)
   }
 
-  fn dat_bind(&mut self) -> Result<DatBind<StrRef>> {
+  fn dat_bind(&mut self, allow_op: bool) -> Result<DatBind<StrRef>> {
     let ty_vars = self.ty_var_seq()?;
     let ty_con = self.ident()?;
     self.eat(Token::Equal)?;
-    let cons = self.con_binds()?;
+    let cons = self.con_binds(allow_op)?;
     Ok(DatBind {
       ty_vars,
       ty_con,
@@ -1622,6 +1576,11 @@ impl Parser {
       Ok(ret)
     }
   }
+}
+
+enum DatatypeDec<I> {
+  Binds(Vec<DatBind<I>>),
+  Copy(Located<I>, Long<I>),
 }
 
 #[derive(Clone, Copy)]
