@@ -612,7 +612,15 @@ impl Parser {
         self.ops = ops;
         Exp::Let(dec, exprs)
       }
-      Token::Ident(..) | Token::Equal => Exp::LongVid(self.long_id(false)?),
+      Token::Ident(..) => Exp::LongVid(self.long_id(false)?),
+      Token::Equal => {
+        // someone decided to 'nonfix ='.
+        self.skip();
+        Exp::LongVid(Long {
+          structures: vec![],
+          last: tok.loc.wrap(StrRef::EQ),
+        })
+      }
       _ => return Ok(None),
     };
     Ok(Some(self.wrap(begin, ret)))
@@ -652,25 +660,17 @@ impl Parser {
     let mut structures = Vec::new();
     loop {
       let tok = self.peek();
-      match tok.val {
-        Token::Ident(id, typ) => {
-          self.skip();
-          structures.push(tok.loc.wrap(id));
-          if let IdentType::Symbolic = typ {
-            break;
-          }
-          if let Token::Dot = self.peek().val {
-            self.skip();
-            continue;
-          }
+      if let Token::Ident(id, typ) = tok.val {
+        self.skip();
+        structures.push(tok.loc.wrap(id));
+        if let IdentType::Symbolic = typ {
           break;
         }
-        Token::Equal => {
+        if let Token::Dot = self.peek().val {
           self.skip();
-          structures.push(tok.loc.wrap(StrRef::EQ));
-          break;
+          continue;
         }
-        _ => {}
+        break;
       }
       return if structures.is_empty() {
         Ok(None)

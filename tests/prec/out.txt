@@ -306,6 +306,59 @@ ast.sml: [
                             },
                         ],
                     ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: Typed(
+                                    Wildcard,
+                                    Tuple(
+                                        [
+                                            Record(
+                                                [],
+                                            ),
+                                            Arrow(
+                                                Record(
+                                                    [],
+                                                ),
+                                                Record(
+                                                    [],
+                                                ),
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                                exp: Tuple(
+                                    [
+                                        Tuple(
+                                            [],
+                                        ),
+                                        Fn(
+                                            Cases {
+                                                arms: [
+                                                    Arm {
+                                                        pat: LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(regular: 3),
+                                                            },
+                                                        ),
+                                                        exp: LongVid(
+                                                            Long {
+                                                                structures: [],
+                                                                last: StrRef(regular: 3),
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                ),
+                            },
+                        ],
+                    ),
                 ],
             ),
         ),
