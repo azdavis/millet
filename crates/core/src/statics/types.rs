@@ -97,7 +97,7 @@ impl Error {
       Self::DatatypeCopyNotDatatype => {
         "right-hand side of datatype copy is not a datatype".to_owned()
       }
-      Self::Todo(msg) => format!("unimplemented language construct: {}", msg),
+      Self::Todo(msg) => format!("unsupported language construct: {}", msg),
     }
   }
 }
