@@ -23,7 +23,7 @@ If you're using VSCode, open the repository in VSCode to get extension
 recommendations for a pleasant Rust developer experience. VSCode also lets you
 debug the language client extension from the Run panel.
 
-## Layout
+## Repository layout
 
 - `.vscode` contains configuration for Visual Studio Code, which is invaluable
   when developing the VSCode language client extension.
