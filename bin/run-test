@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Runs tests. See the readme.
+
 set -eu
 
 usage() {

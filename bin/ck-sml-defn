@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Checks whether all of the rules of the statics have been mentioned in the implementation of the
+# statics.
+
 import subprocess
 import re
 import sys
@@ -7,8 +10,9 @@ import sys
 NUM_RULES = 89
 git_re = "SML Definition ([[:digit:]]*)"
 py_re = re.compile(r"^SML Definition \((\d*)\)$")
+path = "crates/core/src/statics"
 git_grep = subprocess.run(
-    ["git", "grep", "-h", "-o", git_re],
+    ["git", "grep", "-h", "-o", git_re, "--", path],
     capture_output=True,
     encoding="ascii"
 )
