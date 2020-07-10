@@ -20,7 +20,7 @@ for i in range(1, NUM_RULES + 1):
     if str(i) not in got:
         need.append(i)
 if len(need) == 0:
-    print("all rules referenced")
+    print("all rules from 1-{} referenced".format(NUM_RULES))
 else:
     print("some rules not referenced: {}".format(need))
     sys.exit(1)
