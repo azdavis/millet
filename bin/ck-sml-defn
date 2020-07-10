@@ -4,6 +4,9 @@ import subprocess
 import re
 import sys
 
+if len(sys.argv) != 1:
+    print("usage: {}".format(sys.argv[0]))
+    sys.exit(1)
 NUM_RULES = 89
 git_re = "SML Definition ([[:digit:]]*)"
 py_re = re.compile(r"^SML Definition \((\d*)\)$")
