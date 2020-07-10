@@ -7,9 +7,6 @@ if [ "$#" -ne 0 ]; then
   exit 1
 fi
 
-cd "$(dirname "$0")"
-cd ..
-
 cargo build
 mkdir -p extensions/vscode/out
 cp target/debug/millet-ls extensions/vscode/out
