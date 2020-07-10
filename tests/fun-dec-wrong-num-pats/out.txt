@@ -1,7 +1,7 @@
 error: wrong number of patterns in function declaration: expected 1, found 2
-  ┌─ err.sml:2:5
+  ┌─ err.sml:2:7
   │
 2 │   | f 3 4 = 5
-  │     ^
+  │       ^^^
 
 typechecking failed

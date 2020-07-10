@@ -285,7 +285,9 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           }
           if info.args.len() != case.pats.len() {
             let err = Error::FunDecWrongNumPats(info.args.len(), case.pats.len());
-            return Err(case.vid.loc.wrap(err));
+            let begin = case.pats.first().unwrap().loc;
+            let end = case.pats.last().unwrap().loc;
+            return Err(begin.span(end).wrap(err));
           }
           let mut pats_val_env = ValEnv::new();
           let mut arg_pat = Vec::with_capacity(info.args.len());
