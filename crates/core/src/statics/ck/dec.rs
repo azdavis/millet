@@ -380,10 +380,9 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     }
     // create a new symbol for the type being generated with this DatBind.
     let sym = st.new_sym(dat_bind.ty_con);
-    // tell the original context as well as the overall TyEnv that we return that this new
-    // datatype does exist, but tell the State that it has just an empty ValEnv. also perform
-    // dupe checking on the name of the new type and assert for sanity checking after the dupe
-    // check.
+    // tell the original context as well as the overall TyEnv that we return that this new datatype
+    // does exist, but tell the State that it has just an empty ValEnv. also perform dupe checking
+    // on the name of the new type and assert for sanity checking after the dupe check.
     env_ins(&mut cx.env.ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
     cx.ty_names.insert(dat_bind.ty_con.val);
@@ -408,8 +407,8 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       // the type being defined in this declaration is `ty`.
       let mut ty = Ty::Ctor(Vec::new(), sym);
       if let Some(arg_ty) = &con_bind.ty {
-        // if there is an `of t`, then the type of the ctor is `t -> ty`. otherwise, the type of
-        // the ctor is just `ty`.
+        // if there is an `of t`, then the type of the ctor is `t -> ty`. otherwise, the type of the
+        // ctor is just `ty`.
         ty = Ty::Arrow(ty::ck(&cx, &st.sym_tys, arg_ty)?.into(), ty.into());
       }
       // insert the ValInfo into the _overall_ ValEnv with dupe checking.
@@ -418,14 +417,14 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         con_bind.vid,
         ValInfo::ctor(TyScheme::mono(ty.clone())),
       )?;
-      // _also_ insert the ValInfo into the DatBind-specific ValEnv, but this time dupe checking
-      // is unnecessary (just assert as a sanity check).
+      // _also_ insert the ValInfo into the DatBind-specific ValEnv, but this time dupe checking is
+      // unnecessary (just assert as a sanity check).
       assert!(bind_val_env
         .insert(con_bind.vid.val, ValInfo::ctor(TyScheme::mono(ty)))
         .is_none());
     }
-    // now the ValEnv is complete, so we may update st.sym_tys with the true definition of
-    // this datatype. assert to check that we inserted the fake answer earlier.
+    // now the ValEnv is complete, so we may update st.sym_tys with the true definition of this
+    // datatype. assert to check that we inserted the fake answer earlier.
     assert!(st
       .sym_tys
       .insert(
