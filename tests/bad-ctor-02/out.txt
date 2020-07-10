@@ -1,4 +1,4 @@
-error: pattern does not have a constructor type: (int) -> (d)
+error: pattern does not have a constructor type: int -> d
   ┌─ err.sml:5:5
   │
 5 │   | B => 2

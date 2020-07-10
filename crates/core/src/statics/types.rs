@@ -5,7 +5,7 @@
 //! guarantee a stable iteration order. As an example, see enrich.rs (or don't if you just came from
 //! the comment there telling you to come here).
 
-use crate::ast::Label;
+use crate::ast::{Label, TyPrec};
 use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
 use maplit::{btreemap, hashmap, hashset};
@@ -110,7 +110,7 @@ fn show_lab(store: &StrStore, lab: Label) -> String {
 
 fn show_ty(store: &StrStore, ty: &Ty) -> String {
   let mut buf = String::new();
-  show_ty_impl(&mut buf, store, ty);
+  show_ty_impl(&mut buf, store, ty, TyPrec::Arrow);
   buf
 }
 
@@ -124,21 +124,24 @@ fn is_tuple_lab((idx, lab): (usize, &Label)) -> bool {
   }
 }
 
-fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty) {
+fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
   match ty {
     Ty::Var(tv) => buf.push_str(&format!("{:?}", tv)),
     Ty::Record(rows) => {
       if rows.is_empty() {
         buf.push_str("unit");
       } else if rows.len() >= 2 && rows.keys().enumerate().all(is_tuple_lab) {
+        if prec > TyPrec::Star {
+          buf.push_str("(");
+        }
         let mut tys = rows.values();
         let ty = tys.next().unwrap();
-        buf.push_str("(");
-        show_ty_impl(buf, store, ty);
-        buf.push_str(")");
+        show_ty_impl(buf, store, ty, TyPrec::App);
         for ty in tys {
-          buf.push_str(" * (");
-          show_ty_impl(buf, store, ty);
+          buf.push_str(" * ");
+          show_ty_impl(buf, store, ty, TyPrec::App);
+        }
+        if prec > TyPrec::Star {
           buf.push_str(")");
         }
       } else {
@@ -154,27 +157,32 @@ fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty) {
       }
     }
     Ty::Arrow(lhs, rhs) => {
-      buf.push_str("(");
-      show_ty_impl(buf, store, lhs);
-      buf.push_str(") -> (");
-      show_ty_impl(buf, store, rhs);
-      buf.push_str(")");
+      if prec > TyPrec::Arrow {
+        buf.push_str("(");
+      }
+      show_ty_impl(buf, store, lhs, TyPrec::Star);
+      buf.push_str(" -> ");
+      show_ty_impl(buf, store, rhs, TyPrec::Arrow);
+      if prec > TyPrec::Arrow {
+        buf.push_str(")");
+      }
     }
     Ty::Ctor(args, sym) => {
-      if args.is_empty() {
-        buf.push_str(store.get(sym.name));
-        return;
+      let mut args_iter = args.iter();
+      if let Some(arg) = args_iter.next() {
+        if args.len() == 1 {
+          show_ty_impl(buf, store, arg, TyPrec::App);
+        } else {
+          buf.push_str("(");
+          show_ty_impl(buf, store, arg, TyPrec::Arrow);
+          for arg in args_iter {
+            buf.push_str(", ");
+            show_ty_impl(buf, store, arg, TyPrec::Arrow);
+          }
+          buf.push_str(")");
+        }
+        buf.push_str(" ");
       }
-      buf.push_str("(");
-      let mut args = args.iter();
-      if let Some(arg) = args.next() {
-        show_ty_impl(buf, store, arg);
-      }
-      for arg in args {
-        buf.push_str(", ");
-        show_ty_impl(buf, store, arg);
-      }
-      buf.push_str(") ");
       buf.push_str(store.get(sym.name));
     }
   }
@@ -183,7 +191,7 @@ fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty) {
 fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
   buf.push_str(&show_lab(store, lab));
   buf.push_str(" : ");
-  show_ty_impl(buf, store, ty);
+  show_ty_impl(buf, store, ty, TyPrec::Arrow);
 }
 
 /// A specialized Result type that many functions doing static analysis return.

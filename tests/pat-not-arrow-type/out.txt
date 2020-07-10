@@ -1,4 +1,4 @@
-error: pattern does not have an arrow type: ('t26) list
+error: pattern does not have an arrow type: 't26 list
   ┌─ err.sml:1:12
   │
 1 │ val _ = fn nil _ => 1 | _ => 2
