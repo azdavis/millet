@@ -1,0 +1,225 @@
+ast.sml: [
+    StrDec(
+        Dec(
+            Seq(
+                [
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: Arrow(
+                                    Record(
+                                        [],
+                                    ),
+                                    Arrow(
+                                        Record(
+                                            [],
+                                        ),
+                                        Record(
+                                            [],
+                                        ),
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: Arrow(
+                                    Tuple(
+                                        [
+                                            Record(
+                                                [],
+                                            ),
+                                            Record(
+                                                [],
+                                            ),
+                                        ],
+                                    ),
+                                    Record(
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: Tuple(
+                                    [
+                                        Record(
+                                            [],
+                                        ),
+                                        Arrow(
+                                            Record(
+                                                [],
+                                            ),
+                                            Record(
+                                                [],
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: Arrow(
+                                    Arrow(
+                                        Record(
+                                            [],
+                                        ),
+                                        Record(
+                                            [],
+                                        ),
+                                    ),
+                                    Record(
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: TyCon(
+                                    [
+                                        TyCon(
+                                            [
+                                                Record(
+                                                    [],
+                                                ),
+                                            ],
+                                            Long {
+                                                structures: [],
+                                                last: StrRef(special: 32),
+                                            },
+                                        ),
+                                    ],
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(special: 32),
+                                    },
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: Arrow(
+                                    Record(
+                                        [],
+                                    ),
+                                    TyCon(
+                                        [
+                                            Record(
+                                                [],
+                                            ),
+                                        ],
+                                        Long {
+                                            structures: [],
+                                            last: StrRef(special: 32),
+                                        },
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: TyCon(
+                                    [
+                                        Arrow(
+                                            Record(
+                                                [],
+                                            ),
+                                            Record(
+                                                [],
+                                            ),
+                                        ),
+                                    ],
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(special: 32),
+                                    },
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: Tuple(
+                                    [
+                                        Record(
+                                            [],
+                                        ),
+                                        TyCon(
+                                            [
+                                                Record(
+                                                    [],
+                                                ),
+                                            ],
+                                            Long {
+                                                structures: [],
+                                                last: StrRef(special: 32),
+                                            },
+                                        ),
+                                    ],
+                                ),
+                            },
+                        ],
+                    ),
+                    Type(
+                        [
+                            TyBind {
+                                ty_vars: [],
+                                ty_con: StrRef(regular: 0),
+                                ty: TyCon(
+                                    [
+                                        Tuple(
+                                            [
+                                                Record(
+                                                    [],
+                                                ),
+                                                Record(
+                                                    [],
+                                                ),
+                                            ],
+                                        ),
+                                    ],
+                                    Long {
+                                        structures: [],
+                                        last: StrRef(special: 32),
+                                    },
+                                ),
+                            },
+                        ],
+                    ),
+                ],
+            ),
+        ),
+    ),
+]

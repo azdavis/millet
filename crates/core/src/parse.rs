@@ -1509,7 +1509,7 @@ impl Parser {
           }
           let lhs = self.wrap(begin, ret);
           self.skip();
-          let rhs = self.ty_prec(TyPrec::Star)?;
+          let rhs = self.ty_prec(TyPrec::Arrow)?;
           ret = Ty::Arrow(lhs.into(), rhs.into());
         }
         Token::Ident(ref id, _) => {

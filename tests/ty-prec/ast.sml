@@ -1,0 +1,9 @@
+type t = {} -> {} -> {}
+type t = {} * {} -> {}
+type t = {} * ({} -> {})
+type t = ({} -> {}) -> {}
+type t = {} list list
+type t = {} -> {} list
+type t = ({} -> {}) list
+type t = {} * {} list
+type t = ({} * {}) list

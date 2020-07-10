@@ -9,49 +9,49 @@ ast.sml: [
                                 ty_vars: [],
                                 ty_con: StrRef(regular: 0),
                                 ty: Arrow(
+                                    Tuple(
+                                        [
+                                            TyCon(
+                                                [
+                                                    TyCon(
+                                                        [
+                                                            TyCon(
+                                                                [],
+                                                                Long {
+                                                                    structures: [],
+                                                                    last: StrRef(special: 10),
+                                                                },
+                                                            ),
+                                                        ],
+                                                        Long {
+                                                            structures: [],
+                                                            last: StrRef(special: 32),
+                                                        },
+                                                    ),
+                                                ],
+                                                Long {
+                                                    structures: [],
+                                                    last: StrRef(special: 29),
+                                                },
+                                            ),
+                                            TyCon(
+                                                [
+                                                    TyCon(
+                                                        [],
+                                                        Long {
+                                                            structures: [],
+                                                            last: StrRef(special: 10),
+                                                        },
+                                                    ),
+                                                ],
+                                                Long {
+                                                    structures: [],
+                                                    last: StrRef(special: 36),
+                                                },
+                                            ),
+                                        ],
+                                    ),
                                     Arrow(
-                                        Tuple(
-                                            [
-                                                TyCon(
-                                                    [
-                                                        TyCon(
-                                                            [
-                                                                TyCon(
-                                                                    [],
-                                                                    Long {
-                                                                        structures: [],
-                                                                        last: StrRef(special: 10),
-                                                                    },
-                                                                ),
-                                                            ],
-                                                            Long {
-                                                                structures: [],
-                                                                last: StrRef(special: 32),
-                                                            },
-                                                        ),
-                                                    ],
-                                                    Long {
-                                                        structures: [],
-                                                        last: StrRef(special: 29),
-                                                    },
-                                                ),
-                                                TyCon(
-                                                    [
-                                                        TyCon(
-                                                            [],
-                                                            Long {
-                                                                structures: [],
-                                                                last: StrRef(special: 10),
-                                                            },
-                                                        ),
-                                                    ],
-                                                    Long {
-                                                        structures: [],
-                                                        last: StrRef(special: 36),
-                                                    },
-                                                ),
-                                            ],
-                                        ),
                                         Tuple(
                                             [
                                                 TyCon(
@@ -70,21 +70,21 @@ ast.sml: [
                                                 ),
                                             ],
                                         ),
-                                    ),
-                                    TyCon(
-                                        [
-                                            TyCon(
-                                                [],
-                                                Long {
-                                                    structures: [],
-                                                    last: StrRef(special: 10),
-                                                },
-                                            ),
-                                        ],
-                                        Long {
-                                            structures: [],
-                                            last: StrRef(special: 32),
-                                        },
+                                        TyCon(
+                                            [
+                                                TyCon(
+                                                    [],
+                                                    Long {
+                                                        structures: [],
+                                                        last: StrRef(special: 10),
+                                                    },
+                                                ),
+                                            ],
+                                            Long {
+                                                structures: [],
+                                                last: StrRef(special: 32),
+                                            },
+                                        ),
                                     ),
                                 ),
                             },
