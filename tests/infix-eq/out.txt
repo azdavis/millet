@@ -1,0 +1,84 @@
+ast.sml: [
+    StrDec(
+        Dec(
+            Seq(
+                [
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: Wildcard,
+                                exp: InfixApp(
+                                    DecInt(
+                                        1,
+                                    ),
+                                    StrRef(special: 23),
+                                    DecInt(
+                                        2,
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Nonfix(
+                        [
+                            StrRef(special: 23),
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: Wildcard,
+                                exp: App(
+                                    LongVid(
+                                        Long {
+                                            structures: [],
+                                            last: StrRef(special: 23),
+                                        },
+                                    ),
+                                    Tuple(
+                                        [
+                                            DecInt(
+                                                3,
+                                            ),
+                                            DecInt(
+                                                4,
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                    Infix(
+                        0,
+                        [
+                            StrRef(special: 23),
+                        ],
+                    ),
+                    Val(
+                        [],
+                        [
+                            ValBind {
+                                rec: false,
+                                pat: Wildcard,
+                                exp: InfixApp(
+                                    DecInt(
+                                        5,
+                                    ),
+                                    StrRef(special: 23),
+                                    DecInt(
+                                        6,
+                                    ),
+                                ),
+                            },
+                        ],
+                    ),
+                ],
+            ),
+        ),
+    ),
+]
