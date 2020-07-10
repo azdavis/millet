@@ -1,4 +1,4 @@
-error: pattern does not have a constructor type: ({ 1 : 't25, 2 : ('t25) list }) -> (('t25) list)
+error: pattern does not have a constructor type: (('t25) * (('t25) list)) -> (('t25) list)
   ┌─ err.sml:1:12
   │
 1 │ val _ = fn op:: => 3

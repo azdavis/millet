@@ -10,6 +10,7 @@ use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
 use maplit::{btreemap, hashmap, hashset};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::convert::TryInto as _;
 use std::fmt;
 
 /// An error encountered during static analysis.
@@ -113,20 +114,44 @@ fn show_ty(store: &StrStore, ty: &Ty) -> String {
   buf
 }
 
+fn is_tuple_lab((idx, lab): (usize, &Label)) -> bool {
+  match lab {
+    Label::Num(n) => {
+      let idx: u32 = (idx + 1).try_into().unwrap();
+      *n == idx
+    }
+    Label::Vid(_) => false,
+  }
+}
+
 fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty) {
   match ty {
     Ty::Var(tv) => buf.push_str(&format!("{:?}", tv)),
     Ty::Record(rows) => {
-      buf.push_str("{ ");
-      let mut rows = rows.iter();
-      if let Some((lab, ty)) = rows.next() {
+      if rows.is_empty() {
+        buf.push_str("unit");
+      } else if rows.len() >= 2 && rows.keys().enumerate().all(is_tuple_lab) {
+        let mut tys = rows.values();
+        let ty = tys.next().unwrap();
+        buf.push_str("(");
+        show_ty_impl(buf, store, ty);
+        buf.push_str(")");
+        for ty in tys {
+          buf.push_str(" * (");
+          show_ty_impl(buf, store, ty);
+          buf.push_str(")");
+        }
+      } else {
+        buf.push_str("{ ");
+        let mut rows = rows.iter();
+        let (lab, ty) = rows.next().unwrap();
         show_row(buf, store, *lab, ty);
+        for (lab, ty) in rows {
+          buf.push_str(", ");
+          show_row(buf, store, *lab, ty);
+        }
+        buf.push_str(" }");
       }
-      for (lab, ty) in rows {
-        buf.push_str(", ");
-        show_row(buf, store, *lab, ty);
-      }
-      buf.push_str(" }");
     }
     Ty::Arrow(lhs, rhs) => {
       buf.push_str("(");
