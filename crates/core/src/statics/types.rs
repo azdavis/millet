@@ -1,4 +1,9 @@
 //! Types used in static analysis, many essentially as described in the Definition.
+//!
+//! Note that in many places we use BTreeMap and not HashMap. Though HashMap might be faster
+//! (haven't actually checked), we use BTreeMap in situations where we need to sort by keys, e.g. to
+//! guarantee a stable iteration order. As an example, see enrich.rs (or don't if you just came from
+//! the comment there telling you to come here).
 
 use crate::ast::Label;
 use crate::intern::{StrRef, StrStore};

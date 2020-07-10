@@ -5,9 +5,12 @@
 
 use crate::statics::types::{Env, Result, SymTys, TyFcn, TyInfo, ValEnv, ValInfo};
 
-/// Returns Ok(()) iff lhs enriches rhs as per the Definition. TODO this will emit different errors
-/// based on hash map iter order. Use BTreeMap instead?
+/// Returns Ok(()) iff lhs enriches rhs as per the Definition.
 pub fn ck(sym_tys: &SymTys, lhs: &Env, rhs: &Env) -> Result<()> {
+  // For these for loops, we need the iteration order to be the same across different runs of the
+  // program on the same file to ensure we get the same error message every time. This is useful for
+  // testing and also is far less surprising for the user. Because of this need, the maps are
+  // BTreeMaps, not HashMaps. See types.rs.
   for (name, rhs) in rhs.str_env.iter() {
     match lhs.str_env.get(name) {
       None => todo!("missing a struct"),
