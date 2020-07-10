@@ -5,57 +5,57 @@
 
 use crate::statics::types::{Env, Result, SymTys, TyFcn, TyInfo, ValEnv, ValInfo};
 
-/// Returns Ok(()) iff lhs enriches rhs as per the Definition.
-pub fn ck(sym_tys: &SymTys, lhs: &Env, rhs: &Env) -> Result<()> {
+/// Returns Ok(()) iff got enriches want as per the Definition.
+pub fn ck(sym_tys: &SymTys, got: &Env, want: &Env) -> Result<()> {
   // For these for loops, we need the iteration order to be the same across different runs of the
   // program on the same file to ensure we get the same error message every time. This is useful for
   // testing and also is far less surprising for the user. Because of this need, the maps are
   // BTreeMaps, not HashMaps. See types.rs.
-  for (name, rhs) in rhs.str_env.iter() {
-    match lhs.str_env.get(name) {
+  for (name, want) in want.str_env.iter() {
+    match got.str_env.get(name) {
       None => todo!("missing a struct"),
-      Some(lhs) => ck(sym_tys, lhs, rhs)?,
+      Some(got) => ck(sym_tys, got, want)?,
     }
   }
-  for (name, rhs) in rhs.ty_env.inner.iter() {
-    match lhs.ty_env.inner.get(name) {
+  for (name, want) in want.ty_env.inner.iter() {
+    match got.ty_env.inner.get(name) {
       None => todo!("missing a type"),
-      Some(lhs) => ck_ty_info(sym_tys, lhs, rhs)?,
+      Some(got) => ck_ty_info(sym_tys, got, want)?,
     }
   }
-  for (name, rhs) in rhs.val_env.iter() {
-    match lhs.val_env.get(name) {
+  for (name, want) in want.val_env.iter() {
+    match got.val_env.get(name) {
       None => todo!("missing a value"),
-      Some(lhs) => ck_val_info(sym_tys, lhs, rhs)?,
+      Some(got) => ck_val_info(sym_tys, got, want)?,
     }
   }
   Ok(())
 }
 
-fn ck_val_info(sym_tys: &SymTys, lhs: &ValInfo, rhs: &ValInfo) -> Result<()> {
+fn ck_val_info(sym_tys: &SymTys, got: &ValInfo, want: &ValInfo) -> Result<()> {
   todo!()
 }
 
-fn ck_ty_info(sym_tys: &SymTys, lhs: &TyInfo, rhs: &TyInfo) -> Result<()> {
-  ck_ty_fcn_eq(lhs.ty_fcn(sym_tys), rhs.ty_fcn(sym_tys))?;
-  let rhs_val_env = match rhs {
+fn ck_ty_info(sym_tys: &SymTys, got: &TyInfo, want: &TyInfo) -> Result<()> {
+  ck_ty_fcn_eq(got.ty_fcn(sym_tys), want.ty_fcn(sym_tys))?;
+  let want = match want {
     TyInfo::Alias(_) => return Ok(()),
     TyInfo::Sym(sym) => &sym_tys.get(sym).unwrap().val_env,
   };
-  if rhs_val_env.is_empty() {
+  if want.is_empty() {
     return Ok(());
   }
-  let lhs_val_env = match lhs {
-    TyInfo::Alias(_) => todo!("lhs empty rhs non-empty"),
+  let got = match got {
+    TyInfo::Alias(_) => todo!("got empty want non-empty"),
     TyInfo::Sym(sym) => &sym_tys.get(sym).unwrap().val_env,
   };
-  ck_val_env_eq(lhs_val_env, rhs_val_env)
+  ck_val_env_eq(got, want)
 }
 
-fn ck_val_env_eq(lhs: &ValEnv, rhs: &ValEnv) -> Result<()> {
+fn ck_val_env_eq(got: &ValEnv, want: &ValEnv) -> Result<()> {
   todo!()
 }
 
-fn ck_ty_fcn_eq(lhs: &TyFcn, rhs: &TyFcn) -> Result<()> {
+fn ck_ty_fcn_eq(got: &TyFcn, want: &TyFcn) -> Result<()> {
   todo!()
 }
