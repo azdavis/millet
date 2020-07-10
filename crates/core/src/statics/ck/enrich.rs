@@ -1,5 +1,6 @@
 //! Check whether an environment enriches another environment.
 
+// TODO remove when done
 #![allow(unused)]
 
 use crate::statics::types::{Env, Result, SymTys, TyFcn, TyInfo, ValEnv, ValInfo};
