@@ -8,6 +8,7 @@
 use crate::ast::{Label, TyPrec};
 use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
+use crate::util::eq_iter;
 use maplit::{btreemap, hashmap, hashset};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::convert::TryInto as _;
@@ -291,20 +292,11 @@ impl Subst {
       (Ty::Var(tv), got) => self.bind(loc, tv, got),
       (want, Ty::Var(tv)) => self.bind(loc, tv, want),
       (Ty::Record(rows_want), Ty::Record(mut rows_got)) => {
-        let mut keys_want = rows_want.keys();
-        let mut keys_got = rows_got.keys();
-        loop {
-          let ok = match (keys_want.next(), keys_got.next()) {
-            (Some(want), Some(got)) => want == got,
-            (Some(_), None) | (None, Some(_)) => false,
-            (None, None) => break,
-          };
-          if !ok {
-            return Err(loc.wrap(Error::TyMismatch(
-              Ty::Record(rows_want),
-              Ty::Record(rows_got),
-            )));
-          }
+        if !eq_iter(rows_want.keys(), rows_got.keys()) {
+          return Err(loc.wrap(Error::TyMismatch(
+            Ty::Record(rows_want),
+            Ty::Record(rows_got),
+          )));
         }
         for (lab, want) in rows_want {
           let got = rows_got.remove(&lab).unwrap();
