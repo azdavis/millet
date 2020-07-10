@@ -41,7 +41,7 @@ pub enum Error {
   InfixWithoutOp(StrRef),
   NotInfix(StrRef),
   RealPat,
-  NegativeFixity(i32),
+  NegativeFixity,
   SameFixityDiffAssoc,
 }
 
@@ -56,7 +56,7 @@ impl Error {
       ),
       Self::NotInfix(id) => format!("non-infix identifier used as infix: {}", store.get(*id)),
       Self::RealPat => "real constant used as a pattern".to_owned(),
-      Self::NegativeFixity(n) => format!("fixity is negative: {}", n),
+      Self::NegativeFixity => "fixity is negative".to_owned(),
       Self::SameFixityDiffAssoc => {
         "consecutive infix identifiers with same fixity but different associativity".to_owned()
       }
@@ -1585,7 +1585,7 @@ impl Parser {
     let loc = tok.loc;
     let ret = if let Token::DecInt(n, _) = tok.val {
       if n < 0 {
-        return Err(loc.wrap(Error::NegativeFixity(n)));
+        return Err(loc.wrap(Error::NegativeFixity));
       }
       self.skip();
       n.try_into().unwrap()
