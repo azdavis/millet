@@ -517,7 +517,7 @@ impl TyEnv {
   }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum IdStatus {
   Ctor,
   Exn,

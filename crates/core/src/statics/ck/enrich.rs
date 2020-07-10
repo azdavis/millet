@@ -33,6 +33,9 @@ pub fn ck(sym_tys: &SymTys, got: &Env, want: &Env) -> Result<()> {
 }
 
 fn ck_val_info(sym_tys: &SymTys, got: &ValInfo, want: &ValInfo) -> Result<()> {
+  if got.id_status != want.id_status && !want.id_status.is_val() {
+    todo!("incompatible id statuses")
+  }
   todo!()
 }
 
