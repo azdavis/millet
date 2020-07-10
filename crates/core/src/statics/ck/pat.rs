@@ -8,7 +8,7 @@ use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instan
 use crate::statics::types::{
   Con, Cx, Error, Pat, Result, Span, State, Sym, SymTys, Ty, TyScheme, ValEnv, ValInfo,
 };
-use maplit::hashmap;
+use maplit::btreemap;
 use std::collections::BTreeMap;
 
 pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty, Pat)> {
@@ -39,7 +39,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         None => {
           let a = Ty::Var(st.new_ty_var(false));
           let val_info = ValInfo::val(TyScheme::mono(a.clone()));
-          Ok((hashmap![vid.last.val => val_info], a, Pat::Anything))
+          Ok((btreemap![vid.last.val => val_info], a, Pat::Anything))
         }
         // SML Definition (35)
         Some(ty_scheme) => {

@@ -6,7 +6,7 @@ use crate::loc::{Loc, Located};
 use crate::statics::types::{
   Env, Error, Item, Result, State, Subst, SymTys, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
 };
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::convert::TryInto as _;
 
 pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
@@ -78,7 +78,7 @@ pub fn tuple_lab(idx: usize) -> Label {
   Label::Num((idx + 1).try_into().unwrap())
 }
 
-pub fn env_ins<T>(map: &mut HashMap<StrRef, T>, key: Located<StrRef>, val: T) -> Result<()> {
+pub fn env_ins<T>(map: &mut BTreeMap<StrRef, T>, key: Located<StrRef>, val: T) -> Result<()> {
   if map.insert(key.val, val).is_some() {
     Err(key.loc.wrap(Error::Redefined(key.val)))
   } else {
@@ -86,7 +86,11 @@ pub fn env_ins<T>(map: &mut HashMap<StrRef, T>, key: Located<StrRef>, val: T) ->
   }
 }
 
-pub fn env_merge<T>(lhs: &mut HashMap<StrRef, T>, rhs: HashMap<StrRef, T>, loc: Loc) -> Result<()> {
+pub fn env_merge<T>(
+  lhs: &mut BTreeMap<StrRef, T>,
+  rhs: BTreeMap<StrRef, T>,
+  loc: Loc,
+) -> Result<()> {
   for (key, val) in rhs {
     env_ins(lhs, loc.wrap(key), val)?;
   }

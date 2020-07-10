@@ -5,10 +5,10 @@ use crate::statics::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, ValEnv,
   ValInfo,
 };
-use maplit::{btreemap, hashmap, hashset};
+use maplit::{btreemap, hashset};
 
 fn bool_val_env() -> ValEnv {
-  hashmap![
+  btreemap![
     StrRef::TRUE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
     StrRef::FALSE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
   ]
@@ -30,7 +30,7 @@ fn list_val_env(st: &mut State) -> ValEnv {
     ),
     overload: None,
   });
-  hashmap![StrRef::NIL => nil, StrRef::CONS => cons]
+  btreemap![StrRef::NIL => nil, StrRef::CONS => cons]
 }
 
 fn ref_val_env(st: &mut State) -> ValEnv {
@@ -40,11 +40,11 @@ fn ref_val_env(st: &mut State) -> ValEnv {
     ty: Ty::Arrow(Ty::Var(a).into(), Ty::ref_(Ty::Var(a)).into()),
     overload: None,
   });
-  hashmap![StrRef::REF => ref_]
+  btreemap![StrRef::REF => ref_]
 }
 
 fn order_val_env() -> ValEnv {
-  hashmap![
+  btreemap![
     StrRef::LESS => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
     StrRef::EQUAL => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
     StrRef::GREATER => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
@@ -153,7 +153,7 @@ pub fn get() -> (Basis, State) {
     env: Env {
       str_env: StrEnv::new(),
       ty_env: TyEnv {
-        inner: hashmap![
+        inner: btreemap![
           StrRef::UNIT => TyInfo::Alias(TyScheme::mono(Ty::Record(btreemap![]))),
           StrRef::BOOL => TyInfo::Sym(Sym::base(StrRef::BOOL)),
           StrRef::INT => TyInfo::Alias(TyScheme::mono(Ty::INT)),
@@ -172,7 +172,7 @@ pub fn get() -> (Basis, State) {
         .chain(list_val_env(&mut st))
         .chain(ref_val_env(&mut st))
         .chain(order_val_env())
-        .chain(hashmap![
+        .chain(btreemap![
           StrRef::EQ => eq,
           StrRef::ASSIGN => assign,
           StrRef::MATCH => ValInfo::exn(),

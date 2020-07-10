@@ -461,11 +461,11 @@ impl TyInfo {
   }
 }
 
-pub type StrEnv = HashMap<StrRef, Env>;
+pub type StrEnv = BTreeMap<StrRef, Env>;
 
 #[derive(Clone, Default)]
 pub struct TyEnv {
-  pub inner: HashMap<StrRef, TyInfo>,
+  pub inner: BTreeMap<StrRef, TyInfo>,
 }
 
 impl TyEnv {
@@ -550,7 +550,7 @@ impl ValInfo {
   }
 }
 
-pub type ValEnv = HashMap<StrRef, ValInfo>;
+pub type ValEnv = BTreeMap<StrRef, ValInfo>;
 
 #[derive(Clone, Default)]
 pub struct Env {

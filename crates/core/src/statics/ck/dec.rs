@@ -11,7 +11,7 @@ use crate::statics::types::{
   Cx, Env, Error, Pat, Result, State, StrEnv, SymTyInfo, SymTys, Ty, TyEnv, TyInfo, TyScheme,
   TyVar, ValEnv, ValInfo,
 };
-use maplit::hashmap;
+use maplit::btreemap;
 use std::collections::{BTreeMap, HashMap};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
@@ -269,7 +269,10 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           args: first.pats.iter().map(|_| st.new_ty_var(false)).collect(),
           ret: st.new_ty_var(false),
         };
-        env_ins(&mut fun_infos, first.vid, info)?;
+        // copied from env_ins in util
+        if fun_infos.insert(first.vid.val, info).is_some() {
+          return Err(first.vid.loc.wrap(Error::Redefined(first.vid.val)));
+        }
       }
       for fval_bind in fval_binds {
         let name = fval_bind.cases.first().unwrap().vid.val;
@@ -498,7 +501,7 @@ pub fn ck_dat_copy(
   Ok(Env {
     str_env: StrEnv::new(),
     ty_env: TyEnv {
-      inner: hashmap![ty_con.val => TyInfo::Sym(sym)],
+      inner: btreemap![ty_con.val => TyInfo::Sym(sym)],
     },
     val_env: dt_info.val_env.clone(),
   })
