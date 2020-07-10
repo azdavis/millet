@@ -39,6 +39,7 @@ pub enum Token {
   With,
   Withtype,
   While,
+  // punctuation, not really 'words'
   LRound,
   RRound,
   LSquare,
@@ -65,6 +66,7 @@ pub enum Token {
   Struct,
   Structure,
   Where,
+  // punctuation, not really a 'word'
   ColonGt,
   /// not a reserved word. only used in qualified names. not strictly speaking an "item of lexical
   /// analysis" as per the Definition but it's easier to handle it as such and figure out the
