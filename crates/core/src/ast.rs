@@ -384,3 +384,20 @@ pub enum TopDec<I> {
   /// A functor declaration. requires !fun_binds.is_empty()
   FunDec(Vec<FunBind<I>>),
 }
+
+/// Precedence of type operations.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum TyPrec {
+  /// `->` precedence, the lowest.
+  Arrow,
+  /// `*` precedence.
+  Star,
+  /// Application precedence (as in `int list` in which `int` is applied to `list`), the highest.
+  App,
+}
+
+#[test]
+fn test_ty_prec() {
+  assert!(TyPrec::Arrow < TyPrec::Star);
+  assert!(TyPrec::Star < TyPrec::App);
+}
