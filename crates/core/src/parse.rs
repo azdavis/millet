@@ -1493,7 +1493,10 @@ impl Parser {
       }
       Token::Ident(ref id, _) => {
         if *id == StrRef::STAR {
-          return self.fail("an identifier", tok);
+          // can't use self.fail here since the error message will say 'expected a type, found a
+          // symbolic identifier' which is just confusing.
+          let err = Error::ExpectedButFound("a type", "`*`");
+          return Err(tok.loc.wrap(err));
         }
         let long_ty_con = self.long_id(true)?;
         Ty::TyCon(Vec::new(), long_ty_con)
