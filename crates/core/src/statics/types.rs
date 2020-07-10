@@ -3,8 +3,8 @@
 use crate::ast::Label;
 use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
-use maplit::{hashmap, hashset};
-use std::collections::{HashMap, HashSet};
+use maplit::{btreemap, hashmap, hashset};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
 /// An error encountered during static analysis.
@@ -252,21 +252,25 @@ impl Subst {
     match (want, got) {
       (Ty::Var(tv), got) => self.bind(loc, tv, got),
       (want, Ty::Var(tv)) => self.bind(loc, tv, want),
-      (Ty::Record(rows_want), Ty::Record(rows_got)) => {
-        let mut map_want: HashMap<_, _> = rows_want.iter().cloned().collect();
-        let mut map_got: HashMap<_, _> = rows_got.iter().cloned().collect();
-        let keys: HashSet<_> = map_want.keys().chain(map_got.keys()).copied().collect();
-        for k in keys {
-          match (map_want.remove(&k), map_got.remove(&k)) {
-            (Some(want), Some(got)) => self.unify(loc, want, got)?,
-            (Some(..), None) | (None, Some(..)) => {
-              return Err(loc.wrap(Error::TyMismatch(
-                Ty::Record(rows_want),
-                Ty::Record(rows_got),
-              )))
-            }
-            (None, None) => unreachable!(),
+      (Ty::Record(rows_want), Ty::Record(mut rows_got)) => {
+        let mut keys_want = rows_want.keys();
+        let mut keys_got = rows_got.keys();
+        loop {
+          let ok = match (keys_want.next(), keys_got.next()) {
+            (Some(want), Some(got)) => want == got,
+            (Some(_), None) | (None, Some(_)) => false,
+            (None, None) => break,
+          };
+          if !ok {
+            return Err(loc.wrap(Error::TyMismatch(
+              Ty::Record(rows_want),
+              Ty::Record(rows_got),
+            )));
           }
+        }
+        for (lab, want) in rows_want {
+          let got = rows_got.remove(&lab).unwrap();
+          self.unify(loc, want, got)?;
         }
         Ok(())
       }
@@ -295,13 +299,13 @@ impl Subst {
   }
 }
 
-/// A type, for the purposes of static analysis
+/// A type, for the purposes of static analysis.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ty {
   /// TyVar
   Var(TyVar),
-  /// RowType. Use a Vec to preserve source order. Tuples are just records. TODO row polymorphism?
-  Record(Vec<(Label, Ty)>),
+  /// RowType. Tuples are just records. TODO "row polymorphism" (rest patterns, etc)?
+  Record(BTreeMap<Label, Ty>),
   /// FunType
   Arrow(Box<Ty>, Box<Ty>),
   /// ConsType
@@ -319,6 +323,10 @@ impl Ty {
 
   pub fn ref_(elem: Self) -> Self {
     Self::Ctor(vec![elem], Sym::base(StrRef::REF))
+  }
+
+  pub fn pair(lhs: Self, rhs: Self) -> Self {
+    Self::Record(btreemap![Label::Num(1) => lhs, Label::Num(2) => rhs])
   }
 
   pub fn ty_names(&self) -> TyNameSet {
@@ -339,7 +347,7 @@ impl Ty {
         Some(ty) => *self = ty.clone(),
       },
       Self::Record(rows) => {
-        for (_, ty) in rows {
+        for ty in rows.values_mut() {
           ty.apply(subst);
         }
       }

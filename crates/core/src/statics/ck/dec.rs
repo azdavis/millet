@@ -1,6 +1,6 @@
 //! Check declarations and expressions.
 
-use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
+use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Long, TyBind};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{
@@ -12,7 +12,7 @@ use crate::statics::types::{
   TyVar, ValEnv, ValInfo,
 };
 use maplit::hashmap;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
   // The special constants are as per SML Definition (1). Note that SML Definition (5) is handled by
@@ -35,26 +35,23 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     }
     // SML Definition (3)
     Exp::Record(rows) => {
-      let mut ty_rows = Vec::with_capacity(rows.len());
-      let mut keys = HashSet::with_capacity(rows.len());
+      let mut ty_rows = BTreeMap::new();
       // SML Definition (6)
       for row in rows {
         let ty = ck_exp(cx, st, &row.val)?;
-        if !keys.insert(row.lab.val) {
+        if ty_rows.insert(row.lab.val, ty).is_some() {
           return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
-        ty_rows.push((row.lab.val, ty));
       }
       Ok(Ty::Record(ty_rows))
     }
     Exp::Select(..) => Err(exp.loc.wrap(Error::Todo("record selectors"))),
     // SML Definition Appendix A - tuples are sugar for records
     Exp::Tuple(exps) => {
-      let mut ty_rows = Vec::with_capacity(exps.len());
+      let mut ty_rows = BTreeMap::new();
       for (idx, exp) in exps.iter().enumerate() {
         let ty = ck_exp(cx, st, exp)?;
-        let lab = tuple_lab(idx);
-        ty_rows.push((lab, ty));
+        assert!(ty_rows.insert(tuple_lab(idx), ty).is_none());
       }
       Ok(Ty::Record(ty_rows))
     }
@@ -109,10 +106,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let lhs_ty = ck_exp(cx, st, lhs)?;
       let rhs_ty = ck_exp(cx, st, rhs)?;
       let ret_ty = Ty::Var(st.new_ty_var(false));
-      let arrow_ty = Ty::Arrow(
-        Ty::Record(vec![(Label::Num(1), lhs_ty), (Label::Num(2), rhs_ty)]).into(),
-        ret_ty.clone().into(),
-      );
+      let arrow_ty = Ty::Arrow(Ty::pair(lhs_ty, rhs_ty).into(), ret_ty.clone().into());
       st.subst.unify(exp.loc, func_ty, arrow_ty)?;
       Ok(ret_ty)
     }

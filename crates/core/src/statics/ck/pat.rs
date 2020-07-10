@@ -1,6 +1,6 @@
 //! Check patterns.
 
-use crate::ast::{Label, Long, Pat as AstPat};
+use crate::ast::{Long, Pat as AstPat};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
@@ -61,7 +61,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         return Err(loc.wrap(Error::Todo("rest patterns")));
       }
       let mut val_env = ValEnv::new();
-      let mut ty_rows = Vec::with_capacity(rows.len());
+      let mut ty_rows = BTreeMap::new();
       let mut new_pats = BTreeMap::new();
       // SML Definition (39)
       for row in rows {
@@ -70,7 +70,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
           return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
         env_merge(&mut val_env, other_ve, row.val.loc)?;
-        ty_rows.push((row.lab.val, ty));
+        assert!(ty_rows.insert(row.lab.val, ty).is_none());
       }
       let new_pats: Vec<_> = new_pats.into_iter().map(|(_, pat)| pat).collect();
       let pat = Pat::record(new_pats);
@@ -79,12 +79,12 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     // SML Definition Appendix A - tuple patterns are sugar for records
     AstPat::Tuple(pats) => {
       let mut val_env = ValEnv::new();
-      let mut ty_rows = Vec::with_capacity(pats.len());
+      let mut ty_rows = BTreeMap::new();
       let mut new_pats = Vec::with_capacity(pats.len());
       for (idx, pat) in pats.iter().enumerate() {
         let (other_ve, ty, new_pat) = ck(cx, st, pat)?;
         env_merge(&mut val_env, other_ve, pat.loc)?;
-        ty_rows.push((tuple_lab(idx), ty));
+        assert!(ty_rows.insert(tuple_lab(idx), ty).is_none());
         new_pats.push(new_pat);
       }
       let pat = Pat::record(new_pats);
@@ -124,7 +124,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let (mut val_env, lhs_ty, lhs_pat) = ck(cx, st, lhs)?;
       let (other_ve, rhs_ty, rhs_pat) = ck(cx, st, rhs)?;
       env_merge(&mut val_env, other_ve, pat.loc)?;
-      let arg_ty = Ty::Record(vec![(Label::Num(1), lhs_ty), (Label::Num(2), rhs_ty)]);
+      let arg_ty = Ty::pair(lhs_ty, rhs_ty);
       let arg_pat = Pat::record(vec![lhs_pat, rhs_pat]);
       let long = Long {
         structures: vec![],

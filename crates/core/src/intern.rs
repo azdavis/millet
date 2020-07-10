@@ -7,7 +7,7 @@ use std::fmt;
 /// A reference to a string. To learn what string this represents, you must ask the StrStore created
 /// from the StrStoreMut that returned this StrRef to you.
 ///
-/// Note that the PartialOrd and Ord implementations are based not on the ordering of the strings
+/// NOTE that the PartialOrd and Ord implementations are based not on the ordering of the strings
 /// represented by a StrRef, but by the internal IDs which are handed out according to source order.
 /// We only use the ordering of StrRefs to sort record labels. It might be better to pass in a
 /// &StrStore to the place where we need to do that so we can sort the labels by the actual strings.

@@ -5,7 +5,7 @@ use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{get_env, get_ty_info, tuple_lab};
 use crate::statics::types::{Cx, Error, Result, SymTys, Ty};
-use std::collections::HashSet;
+use std::collections::BTreeMap;
 
 pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   // SML Definition (48) is handled by the parser
@@ -14,25 +14,22 @@ pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> 
     AstTy::TyVar(_) => Err(ty.loc.wrap(Error::Todo("type variables"))),
     // SML Definition (45)
     AstTy::Record(rows) => {
-      let mut ty_rows = Vec::with_capacity(rows.len());
-      let mut keys = HashSet::with_capacity(rows.len());
+      let mut ty_rows = BTreeMap::new();
       // SML Definition (49)
       for row in rows {
         let ty = ck(cx, sym_tys, &row.val)?;
-        if !keys.insert(row.lab.val) {
+        if ty_rows.insert(row.lab.val, ty).is_some() {
           return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
-        ty_rows.push((row.lab.val, ty));
       }
       Ok(Ty::Record(ty_rows))
     }
     // SML Definition Appendix A - tuples are sugar for records
     AstTy::Tuple(tys) => {
-      let mut ty_rows = Vec::with_capacity(tys.len());
+      let mut ty_rows = BTreeMap::new();
       for (idx, ty) in tys.iter().enumerate() {
         let ty = ck(cx, sym_tys, ty)?;
-        let lab = tuple_lab(idx);
-        ty_rows.push((lab, ty));
+        assert!(ty_rows.insert(tuple_lab(idx), ty).is_none());
       }
       Ok(Ty::Record(ty_rows))
     }

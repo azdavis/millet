@@ -1,12 +1,11 @@
 //! The static standard library.
 
-use crate::ast::Label;
 use crate::intern::StrRef;
 use crate::statics::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, ValEnv,
   ValInfo,
 };
-use maplit::{hashmap, hashset};
+use maplit::{btreemap, hashmap, hashset};
 
 fn bool_val_env() -> ValEnv {
   hashmap![
@@ -26,11 +25,7 @@ fn list_val_env(st: &mut State) -> ValEnv {
   let cons = ValInfo::ctor(TyScheme {
     ty_vars: vec![a],
     ty: Ty::Arrow(
-      Ty::Record(vec![
-        (Label::Num(1), Ty::Var(a)),
-        (Label::Num(2), Ty::list(Ty::Var(a))),
-      ])
-      .into(),
+      Ty::pair(Ty::Var(a), Ty::list(Ty::Var(a))).into(),
       Ty::list(Ty::Var(a)).into(),
     ),
     overload: None,
@@ -60,14 +55,7 @@ fn overloaded(st: &mut State, overloads: Vec<StrRef>) -> ValInfo {
   let a = st.new_ty_var(false);
   ValInfo::val(TyScheme {
     ty_vars: vec![a],
-    ty: Ty::Arrow(
-      Ty::Record(vec![
-        (Label::Num(1), Ty::Var(a)),
-        (Label::Num(2), Ty::Var(a)),
-      ])
-      .into(),
-      Ty::Var(a).into(),
-    ),
+    ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::Var(a).into()),
     overload: Some(overloads),
   })
 }
@@ -76,14 +64,7 @@ fn overloaded_cmp(st: &mut State) -> ValInfo {
   let a = st.new_ty_var(false);
   ValInfo::val(TyScheme {
     ty_vars: vec![a],
-    ty: Ty::Arrow(
-      Ty::Record(vec![
-        (Label::Num(1), Ty::Var(a)),
-        (Label::Num(2), Ty::Var(a)),
-      ])
-      .into(),
-      Ty::BOOL.into(),
-    ),
+    ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::BOOL.into()),
     overload: Some(vec![
       StrRef::INT,
       StrRef::WORD,
@@ -143,29 +124,15 @@ pub fn get() -> (Basis, State) {
   let assign = ValInfo::val(TyScheme {
     ty_vars: vec![a],
     ty: Ty::Arrow(
-      Ty::Record(vec![
-        (
-          Label::Num(1),
-          Ty::Ctor(vec![Ty::Var(a)], Sym::base(StrRef::REF)),
-        ),
-        (Label::Num(2), Ty::Var(a)),
-      ])
-      .into(),
-      Ty::Record(Vec::new()).into(),
+      Ty::pair(Ty::ref_(Ty::Var(a)), Ty::Var(a)).into(),
+      Ty::Record(btreemap![]).into(),
     ),
     overload: None,
   });
   let a = st.new_ty_var(true);
   let eq = ValInfo::val(TyScheme {
     ty_vars: vec![a],
-    ty: Ty::Arrow(
-      Ty::Record(vec![
-        (Label::Num(1), Ty::Var(a)),
-        (Label::Num(2), Ty::Var(a)),
-      ])
-      .into(),
-      Ty::BOOL.into(),
-    ),
+    ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::BOOL.into()),
     overload: None,
   });
   let bs = Basis {
@@ -187,7 +154,7 @@ pub fn get() -> (Basis, State) {
       str_env: StrEnv::new(),
       ty_env: TyEnv {
         inner: hashmap![
-          StrRef::UNIT => TyInfo::Alias(TyScheme::mono(Ty::Record(Vec::new()))),
+          StrRef::UNIT => TyInfo::Alias(TyScheme::mono(Ty::Record(btreemap![]))),
           StrRef::BOOL => TyInfo::Sym(Sym::base(StrRef::BOOL)),
           StrRef::INT => TyInfo::Alias(TyScheme::mono(Ty::INT)),
           StrRef::REAL => TyInfo::Alias(TyScheme::mono(Ty::REAL)),
