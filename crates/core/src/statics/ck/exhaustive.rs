@@ -19,12 +19,12 @@ use crate::loc::{Loc, Located};
 use crate::statics::types::{Con, Error, Pat, Result, Span};
 use std::collections::BTreeSet;
 
-/// Returns Ok(()) iff the pats are exhaustive and not redundant.
+/// Returns `Ok(())` iff the pats are exhaustive and not redundant.
 pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
   ck(pats, loc, Error::NonExhaustiveMatch)
 }
 
-/// Returns Ok(()) iff the singular pat is exhaustive and not redundant. (Well, of course it won't
+/// Returns `Ok(())` iff the singular pat is exhaustive and not redundant. (Well, of course it won't
 /// be redundant.)
 pub fn ck_bind(pat: Pat, loc: Loc) -> Result<()> {
   ck(vec![loc.wrap(pat)], loc, Error::NonExhaustiveBinding)
@@ -78,10 +78,10 @@ type Work = Vec<WorkItem>;
 
 /// The context, passed along through most of the main functions. This is an ordered set of the
 /// locations of the patterns of the match. As we determine a pattern is reachable, we remove its
-/// Loc from this set. At the end, the set contains the locations of all unreachable patterns.
+/// `Loc` from this set. At the end, the set contains the locations of all unreachable patterns.
 type Cx = BTreeSet<Loc>;
 
-/// The patterns, created from an into_iter() call on the passed-in Vec<Located<Pat>>.
+/// The patterns, created from an `into_iter()` call on the passed-in `Vec<Located<Pat>>`.
 type Pats = std::vec::IntoIter<Located<Pat>>;
 
 /// A wrapper function which each of the two exported functions actually calls.
@@ -105,7 +105,7 @@ fn augment(mut work: Work, d: Desc) -> Work {
   work
 }
 
-/// Builds a Desc from a base Desc and a work list.
+/// Builds a `Desc` from a base `Desc` and a work list.
 fn build_desc(mut d: Desc, work: Work) -> Desc {
   // Since we take the from the end of `work`, reverse the iterator.
   for item in work.into_iter().rev() {
@@ -113,15 +113,15 @@ fn build_desc(mut d: Desc, work: Work) -> Desc {
     let mut descs = item.descs;
     // Then this description.
     descs.push(d);
-    // Then the argument descriptions. We reverse because these are stored in reverse, so we reverse
-    // again to straighten it out.
+    // Then the argument descriptions. We reverse because these are stored in reverse, so reversing
+    // again will straighten it out.
     descs.append(&mut item.args.into_iter().rev().map(|x| x.desc).collect());
     d = Desc::Pos(item.con, descs)
   }
   d
 }
 
-/// Statically match a Con against a Desc.
+/// Statically match a `Con` against a `Desc`.
 fn static_match(con: Con, d: &Desc) -> StaticMatch {
   match d {
     Desc::Pos(c, _) => {
@@ -144,8 +144,8 @@ fn static_match(con: Con, d: &Desc) -> StaticMatch {
   }
 }
 
-/// Tries to pass the next pat in pats to a fresh call to do_match. Returns false if there are no
-/// patterns left or if the match is otherwise not exhaustive.
+/// Tries to pass the next pattern in `pats` to a fresh call to `do_match`. Returns whether the
+/// match was exhaustive.
 fn fail(cx: &mut Cx, d: Desc, mut pats: Pats) -> bool {
   match pats.next() {
     None => false,
@@ -153,8 +153,8 @@ fn fail(cx: &mut Cx, d: Desc, mut pats: Pats) -> bool {
   }
 }
 
-/// Tries to prove a pat located at the Loc is reachable. Removes the Loc from the Cx if it can
-/// prove this. Returns whether the match was exhaustive.
+/// Tries to prove a pat located at the `Loc` is reachable. Removes the `Loc` from the `Cx` if it
+/// can prove this. Returns whether the match was exhaustive.
 fn succeed(cx: &mut Cx, loc: Loc, mut work: Work, pats: Pats) -> bool {
   match work.pop() {
     None => {
@@ -174,8 +174,8 @@ fn succeed(cx: &mut Cx, loc: Loc, mut work: Work, pats: Pats) -> bool {
   }
 }
 
-/// Updates the work list with new work for the pattern at the Loc, then continues on to succeed.
-/// Returns whether the match was exhaustive.
+/// Updates the work list with new work for the pattern at the `Loc`, then continues on to
+/// `succeed`. Returns whether the match was exhaustive.
 fn succeed_with(
   cx: &mut Cx,
   loc: Loc,
@@ -203,8 +203,8 @@ fn succeed_with(
   succeed(cx, loc, work, pats)
 }
 
-/// Tries to match the Pat against the Desc using the other helpers. Returns whether the match was
-/// exhaustive.
+/// Tries to match the `Pat` against the `Desc` using the other helpers. Returns whether the match
+/// was exhaustive.
 fn do_match(cx: &mut Cx, pat: Located<Pat>, d: Desc, work: Work, pats: Pats) -> bool {
   match pat.val {
     Pat::Anything => succeed(cx, pat.loc, augment(work, d), pats),
