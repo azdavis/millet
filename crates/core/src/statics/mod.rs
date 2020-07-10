@@ -13,6 +13,7 @@ use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::types::{Error, Result, Ty};
 
+/// Performs static analysis. Returns Ok(()) iff everything typechecks.
 pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   let (mut bs, mut st) = std_lib::get();
   for top_dec in top_decs {

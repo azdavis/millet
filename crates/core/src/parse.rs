@@ -13,8 +13,10 @@ use maplit::hashmap;
 use std::collections::HashMap;
 use std::convert::TryInto as _;
 
+/// A specialized Result that most functions in this module return.
 pub type Result<T> = std::result::Result<T, Located<Error>>;
 
+/// Parse the tokens in the Lexer into a sequence of top-level definitions.
 pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec<StrRef>>>> {
   let mut ret = Vec::new();
   let last_loc = match lexer.last_loc() {
@@ -31,7 +33,9 @@ pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec<StrRef>>>> {
   Ok(ret)
 }
 
+/// An error emitted when parsing.
 #[derive(Debug)]
+#[allow(missing_docs)]
 pub enum Error {
   ExpectedButFound(&'static str, &'static str),
   InfixWithoutOp(StrRef),
@@ -42,6 +46,7 @@ pub enum Error {
 }
 
 impl Error {
+  /// A human-readable message describing this error.
   pub fn message(&self, store: &StrStore) -> String {
     match self {
       Self::ExpectedButFound(exp, fnd) => format!("expected {}, found {}", exp, fnd),

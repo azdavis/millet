@@ -7,6 +7,8 @@ use maplit::{hashmap, hashset};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 
+/// An error encountered during static analysis.
+#[allow(missing_docs)]
 pub enum Error {
   Undefined(Item, StrRef),
   Redefined(StrRef),
@@ -32,6 +34,7 @@ pub enum Error {
 }
 
 impl Error {
+  /// A human-readable description of the error.
   pub fn message(&self, store: &StrStore) -> String {
     match self {
       Self::Undefined(item, id) => format!("undefined {} identifier: {}", item, store.get(*id)),
@@ -153,6 +156,7 @@ fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
   show_ty_impl(buf, store, ty);
 }
 
+/// A specialized Result type that many functions doing static analysis return.
 pub type Result<T> = std::result::Result<T, Located<Error>>;
 
 pub enum Item {
@@ -175,6 +179,7 @@ impl fmt::Display for Item {
   }
 }
 
+/// A symbol, used to uniquely identify a type which 'has been generated'.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Sym {
   name: StrRef,
@@ -187,9 +192,11 @@ impl Sym {
   }
 }
 
+/// A type variable.
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TyVar {
   id: usize,
+  /// Whether this is an equality type variable.
   pub equality: bool,
 }
 
@@ -203,12 +210,17 @@ impl fmt::Debug for TyVar {
   }
 }
 
+/// A substitution, a mapping from type variables to types. The types themselves may be other type
+/// variables, but for all 'output' types in the substitution, there exists no type variable in any
+/// 'output' type which is already mapped to something else in this substitution.
 #[derive(Clone, Default)]
 pub struct Subst {
   inner: HashMap<TyVar, Ty>,
 }
 
 impl Subst {
+  /// Insert a new TyVar => Ty mapping into this Subst. Updates all current mappings to have the
+  /// information contained by this new mapping. Panics if this TyVar already mapped to something.
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {
     for (_, other) in self.inner.iter_mut() {
       other.apply(&Self {
@@ -218,6 +230,7 @@ impl Subst {
     assert!(self.inner.insert(tv, ty).is_none());
   }
 
+  /// a helper for unify, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
   fn bind(&mut self, loc: Loc, tv: TyVar, ty: Ty) -> Result<()> {
     if let Ty::Var(other) = ty {
       if tv == other {
@@ -282,11 +295,12 @@ impl Subst {
   }
 }
 
+/// A type, for the purposes of static analysis
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ty {
   /// TyVar
   Var(TyVar),
-  /// RowType. Use a Vec to preserve source order. TODO row polymorphism?
+  /// RowType. Use a Vec to preserve source order. Tuples are just records. TODO row polymorphism?
   Record(Vec<(Label, Ty)>),
   /// FunType
   Arrow(Box<Ty>, Box<Ty>),
@@ -364,6 +378,7 @@ impl Ty {
   pub const ORDER: Self = Self::base(StrRef::ORDER);
 }
 
+/// A type scheme, a 'forall' type.
 #[derive(Clone)]
 pub struct TyScheme {
   pub ty_vars: Vec<TyVar>,
@@ -414,7 +429,8 @@ impl TyScheme {
 /// type alias here?
 pub type TyFcn = TyScheme;
 
-/// A 'sym ty' is a type that 'has been generated', like a datatype or a a `type t` in a signature.
+/// Information about a type that 'has been generated', like a datatype or a a `type t` in a
+/// signature.
 pub struct SymTyInfo {
   pub ty_fcn: TyFcn,
   pub val_env: ValEnv,
@@ -745,22 +761,31 @@ impl Basis {
   }
 }
 
+/// The state passed around by many of the statics functions. There's only one of these, and it's
+/// constantly being mutably, additively updated as we go.
 #[derive(Default)]
 pub struct State {
+  /// The next type variable ID to hand out.
   next_ty_var: usize,
+  /// The next symbol ID to hand out.
   next_sym: usize,
+  /// The overload constraints. These constraints are solved at the very end.
   pub overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
+  /// The substitution, the unifier of the entire program.
   pub subst: Subst,
+  /// The types that 'have been generated' and information about them.
   pub sym_tys: SymTys,
 }
 
 impl State {
+  /// Returns a fresh type variable.
   pub fn new_ty_var(&mut self, equality: bool) -> TyVar {
     let id = self.next_ty_var;
     self.next_ty_var += 1;
     TyVar { id, equality }
   }
 
+  /// Returns a fresh symbol.
   pub fn new_sym(&mut self, name: Located<StrRef>) -> Sym {
     let id = Some(name.loc.wrap(self.next_sym));
     self.next_sym += 1;
@@ -768,6 +793,7 @@ impl State {
   }
 }
 
+/// A pattern, for the purposes of static analysis. See exhaustive.rs.
 #[derive(Debug, Clone)]
 pub enum Pat {
   Anything,

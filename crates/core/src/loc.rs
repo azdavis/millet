@@ -42,7 +42,9 @@ impl From<Loc> for std::ops::Range<usize> {
 /// location in the source.
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Located<T> {
+  /// The value.
   pub val: T,
+  /// The location of the value.
   pub loc: Loc,
 }
 

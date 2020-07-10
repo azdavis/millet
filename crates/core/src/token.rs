@@ -2,6 +2,8 @@
 
 use crate::intern::StrRef;
 
+/// A token, an "item of lexical analysis" (almost).
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
   // core reserved words
@@ -86,19 +88,28 @@ pub enum Token {
   EOF,
 }
 
+/// Whether a number might be a numeric label.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum IsNumLab {
+  /// It might be.
   Maybe,
+  /// It definitely isn't.
   No,
 }
 
+/// A type of identifier.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum IdentType {
+  /// An alpha-numeric identifier, composed entirely of A-Z a-z 0-9 and starting with A-Z a-z.
   AlphaNum,
+  /// A symbolic identifier, composed entirely of special characters.
   Symbolic,
 }
 
 impl Token {
+  /// A description of this token. For tokens with no arguments, this is just the token itself. For
+  /// tokens with arguments (like special constants), this is a description of what kind of token
+  /// this is.
   pub fn desc(&self) -> &'static str {
     match self {
       Self::Abstype => "`abstype`",
@@ -178,7 +189,10 @@ impl Token {
 /// This is here (and not in ast.rs) because we know when lexing whether something is a type var.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct TyVar<I> {
+  /// The name of this type variable in the source. Includes the primes at the start.
   pub name: I,
+  /// Whether this is an equality type variable (i.e. whether it has 2 or more primes at the start
+  /// of its name).
   pub equality: bool,
 }
 

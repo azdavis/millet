@@ -27,6 +27,7 @@ impl fmt::Debug for StrRef {
 }
 
 /// New StrRefs should be appended to the bottom. This can help avoid big diffs.
+#[allow(missing_docs)]
 impl StrRef {
   pub const UNIT: Self = Self(0);
   pub const CHAR: Self = Self(1);

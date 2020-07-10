@@ -4,10 +4,12 @@ use crate::intern::{StrRef, StrStoreMut};
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 
+/// Transform a sequence of bytes into a sequence of tokens.
 pub fn get(store: &mut StrStoreMut, bs: &[u8]) -> Result<Lexer, Located<Error>> {
   Ok(Lexer::new(TokenMaker::new(store, bs).build()?))
 }
 
+/// A sequence of tokens.
 pub struct Lexer {
   ts: Vec<Located<Token>>,
 }
@@ -28,7 +30,9 @@ impl Lexer {
   }
 }
 
+/// An error emitted when lexing.
 #[derive(Debug)]
+#[allow(missing_docs)]
 pub enum Error {
   UnmatchedCloseComment,
   UnmatchedOpenComment,
@@ -44,6 +48,7 @@ pub enum Error {
 }
 
 impl Error {
+  /// A human-readable message describing this error.
   pub fn message(&self) -> String {
     match self {
       Self::UnmatchedCloseComment => "unmatched close comment".to_owned(),
