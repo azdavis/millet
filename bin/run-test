@@ -12,6 +12,8 @@ usage:
 options:
   -h
     show this help
+  -q
+    be quiet, do not mention individual passing tests
   -g
     generate new expected output from resulting output
 EOF
@@ -19,9 +21,11 @@ exit 1
 }
 
 generate=false
-while getopts 'hg' opt; do
+quiet=false
+while getopts 'hgq' opt; do
   case "$opt" in
   (g) generate=true ;;
+  (q) quiet=true ;;
   (*) usage ;;
   esac
 done
@@ -37,7 +41,9 @@ for x in "$@"; do
   cd "$x"
   if [ -e run.sh ]; then
     if sh -eu run.sh; then
-      echo "$x: ok"
+      if ! "$quiet"; then
+        echo "$x: ok"
+      fi
     else
       echo "$x: expected run.sh to exit zero, got non-zero"
       ok=false
@@ -48,10 +54,14 @@ for x in "$@"; do
       ok=false
     elif "$generate"; then
       mv out.tmp out.txt
-      echo "$x: generated"
+      if ! "$quiet"; then
+        echo "$x: generated"
+      fi
     elif diff out.txt out.tmp; then
       rm out.tmp
-      echo "$x: ok"
+      if ! "$quiet"; then
+        echo "$x: ok"
+      fi
     else
       echo "$x: expected lhs, got rhs"
       ok=false
@@ -65,7 +75,9 @@ for x in "$@"; do
       ok=false
     else
       rm out.tmp
-      echo "$x: ok"
+      if ! "$quiet"; then
+        echo "$x: ok"
+      fi
     fi
   elif [ -e err.sml ]; then
     if NO_COLOR=1 cargo run --quiet --bin millet -- err.sml >out.tmp; then
@@ -76,7 +88,9 @@ for x in "$@"; do
       echo "$x: generated"
     elif diff out.txt out.tmp; then
       rm out.tmp
-      echo "$x: ok"
+      if ! "$quiet"; then
+        echo "$x: ok"
+      fi
     else
       echo "$x: expected lhs, got rhs"
       ok=false
@@ -89,8 +103,8 @@ for x in "$@"; do
 done
 
 if "$ok"; then
-  echo "==> all tests ok"
+  echo "all tests ok"
 else
-  echo "==> some tests not ok"
+  echo "some tests not ok"
   exit 1
 fi
