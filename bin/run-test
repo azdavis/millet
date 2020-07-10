@@ -83,7 +83,9 @@ for x in "$@"; do
       ok=false
     elif "$generate"; then
       mv out.tmp out.txt
-      echo "$x: generated"
+      if ! "$quiet"; then
+        echo "$x: generated"
+      fi
     elif diff out.txt out.tmp; then
       rm out.tmp
       if ! "$quiet"; then
