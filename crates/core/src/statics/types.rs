@@ -263,7 +263,7 @@ impl Subst {
   /// Insert a new TyVar => Ty mapping into this Subst. Updates all current mappings to have the
   /// information contained by this new mapping. Panics if this TyVar already mapped to something.
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {
-    for (_, other) in self.inner.iter_mut() {
+    for other in self.inner.values_mut() {
       other.apply(&Self {
         inner: hashmap![tv => ty.clone()],
       });
@@ -365,7 +365,7 @@ impl Ty {
   pub fn ty_names(&self) -> TyNameSet {
     match self {
       Self::Var(_) => TyNameSet::new(),
-      Self::Record(rows) => rows.iter().flat_map(|(_, ty)| ty.ty_names()).collect(),
+      Self::Record(rows) => rows.values().flat_map(Self::ty_names).collect(),
       Self::Arrow(arg, res) => arg.ty_names().into_iter().chain(res.ty_names()).collect(),
       Self::Ctor(args, sym) => std::iter::once(sym.name)
         .chain(args.iter().flat_map(Self::ty_names))
@@ -399,7 +399,7 @@ impl Ty {
   pub fn free_ty_vars(&self) -> TyVarSet {
     match self {
       Self::Var(tv) => hashset![*tv],
-      Self::Record(rows) => rows.iter().flat_map(|(_, ty)| ty.free_ty_vars()).collect(),
+      Self::Record(rows) => rows.values().flat_map(Self::free_ty_vars).collect(),
       Self::Arrow(lhs, rhs) => lhs
         .free_ty_vars()
         .union(&rhs.free_ty_vars())
@@ -514,8 +514,8 @@ impl TyEnv {
   pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .inner
-      .iter()
-      .flat_map(|(_, ty_info)| ty_info.ty_fcn(sym_tys).free_ty_vars())
+      .values()
+      .flat_map(|ty_info| ty_info.ty_fcn(sym_tys).free_ty_vars())
       .collect()
   }
 }
@@ -628,8 +628,8 @@ impl Env {
   pub fn ty_names(&self) -> TyNameSet {
     self
       .str_env
-      .iter()
-      .flat_map(|(_, env)| env.ty_names())
+      .values()
+      .flat_map(Self::ty_names)
       .chain(self.ty_env.inner.keys().copied())
       .collect()
   }
@@ -647,14 +647,14 @@ impl Env {
   pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .str_env
-      .iter()
-      .flat_map(|(_, env)| env.free_ty_vars(sym_tys))
+      .values()
+      .flat_map(|env| env.free_ty_vars(sym_tys))
       .chain(self.ty_env.free_ty_vars(sym_tys))
       .chain(
         self
           .val_env
-          .iter()
-          .flat_map(|(_, vi)| vi.ty_scheme.free_ty_vars()),
+          .values()
+          .flat_map(|vi| vi.ty_scheme.free_ty_vars()),
       )
       .collect()
   }
@@ -738,11 +738,11 @@ pub struct Basis {
 
 impl Basis {
   pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
-    for (_, fun_sig) in self.fun_env.iter_mut() {
+    for fun_sig in self.fun_env.values_mut() {
       fun_sig.env.apply(subst, sym_tys);
       fun_sig.sig.env.apply(subst, sym_tys);
     }
-    for (_, sig) in self.sig_env.iter_mut() {
+    for sig in self.sig_env.values_mut() {
       sig.env.apply(subst, sym_tys);
     }
     self.env.apply(subst, sym_tys);
@@ -751,8 +751,8 @@ impl Basis {
   pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .fun_env
-      .iter()
-      .flat_map(|(_, fun_sig)| {
+      .values()
+      .flat_map(|fun_sig| {
         fun_sig
           .env
           .free_ty_vars(sym_tys)
@@ -762,8 +762,8 @@ impl Basis {
       .chain(
         self
           .sig_env
-          .iter()
-          .flat_map(|(_, sig)| sig.env.free_ty_vars(sym_tys)),
+          .values()
+          .flat_map(|sig| sig.env.free_ty_vars(sym_tys)),
       )
       .chain(self.env.free_ty_vars(sym_tys))
       .collect()
@@ -785,8 +785,8 @@ impl Basis {
 
   pub fn add_sig_env(&mut self, sig_env: SigEnv) {
     let ty_names = sig_env
-      .iter()
-      .flat_map(|(_, sig)| sig.ty_names.iter())
+      .values()
+      .flat_map(|sig| sig.ty_names.iter())
       .copied();
     self.ty_names.extend(ty_names);
     self.sig_env.extend(sig_env);
@@ -794,8 +794,8 @@ impl Basis {
 
   pub fn add_fun_env(&mut self, fun_env: FunEnv) {
     let ty_names = fun_env
-      .iter()
-      .flat_map(|(_, sig)| sig.ty_names.iter())
+      .values()
+      .flat_map(|sig| sig.ty_names.iter())
       .copied();
     self.ty_names.extend(ty_names);
     self.fun_env.extend(fun_env);

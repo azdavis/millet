@@ -316,7 +316,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         exhaustive::ck_match(arg_pats, begin.span(end))?;
       }
       let mut val_env = fun_infos_to_ve(&fun_infos);
-      for (_, val_info) in val_env.iter_mut() {
+      for val_info in val_env.values_mut() {
         val_info.ty_scheme.ty.apply(&st.subst);
         generalize(&cx.env.ty_env, &st.sym_tys, &mut val_info.ty_scheme);
       }
