@@ -254,6 +254,12 @@ pub struct Subst {
 }
 
 impl Subst {
+  /// Returns an iterator over the keys (the type variables) in this Subst. NOTE this exposes the
+  /// fact that a Subst is just a HashMap.
+  pub fn keys(&self) -> std::collections::hash_map::Keys<'_, TyVar, Ty> {
+    self.inner.keys()
+  }
+
   /// Insert a new TyVar => Ty mapping into this Subst. Updates all current mappings to have the
   /// information contained by this new mapping. Panics if this TyVar already mapped to something.
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {

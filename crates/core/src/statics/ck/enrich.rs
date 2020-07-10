@@ -3,7 +3,8 @@
 // TODO remove when done
 #![allow(unused)]
 
-use crate::statics::types::{Env, Result, SymTys, TyFcn, TyInfo, ValEnv, ValInfo};
+use crate::loc::Loc;
+use crate::statics::types::{Env, Result, Subst, SymTys, TyFcn, TyInfo, TyScheme, ValEnv, ValInfo};
 
 /// Returns Ok(()) iff got enriches want as per the Definition.
 pub fn ck(sym_tys: &SymTys, got: &Env, want: &Env) -> Result<()> {
@@ -61,4 +62,23 @@ fn ck_val_env_eq(got: &ValEnv, want: &ValEnv) -> Result<()> {
 
 fn ck_ty_fcn_eq(got: &TyFcn, want: &TyFcn) -> Result<()> {
   todo!()
+}
+
+/// Returns Ok(s) iff want generalizes got as per the Definition, and s is this witness to this
+/// fact. TODO is this right?
+pub fn ck_generalizes(loc: Loc, want: TyScheme, got: TyScheme) -> Result<Subst> {
+  let want_free_tvs = want.free_ty_vars();
+  for tv in got.ty_vars.iter() {
+    if want_free_tvs.contains(tv) {
+      todo!("no")
+    }
+  }
+  let mut ret = Subst::default();
+  ret.unify(loc, want.ty, got.ty)?;
+  for tv in ret.keys() {
+    if !want_free_tvs.contains(tv) {
+      todo!("no")
+    }
+  }
+  Ok(ret)
 }
