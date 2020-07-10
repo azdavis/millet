@@ -12,6 +12,9 @@ use maplit::hashmap;
 use std::collections::BTreeMap;
 
 pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty, Pat)> {
+  // Wildcard is by SML Definition (32), special constants are by SML Definition (33). Additionally,
+  // SML Definition (37) is handled by the parser, and SML Definition (40) is handed because atomic
+  // and non-atomic Pats are both in the same enum.
   match &pat.val {
     AstPat::Wildcard => Ok((ValEnv::new(), Ty::Var(st.new_ty_var(false)), Pat::Anything)),
     AstPat::DecInt(n) => Ok((ValEnv::new(), Ty::INT, Pat::zero(Con::Int(*n)))),
@@ -32,11 +35,13 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
           }
         });
       match ty_scheme {
+        // SML Definition (34)
         None => {
           let a = Ty::Var(st.new_ty_var(false));
           let val_info = ValInfo::val(TyScheme::mono(a.clone()));
           Ok((hashmap![vid.last.val => val_info], a, Pat::Anything))
         }
+        // SML Definition (35)
         Some(ty_scheme) => {
           let ty = instantiate(st, ty_scheme, pat.loc);
           let sym = match ty {
@@ -49,13 +54,16 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         }
       }
     }
+    // SML Definition (36)
     AstPat::Record(rows, rest_loc) => {
+      // SML Definition (38)
       if let Some(loc) = rest_loc {
         return Err(loc.wrap(Error::Todo("rest patterns")));
       }
       let mut val_env = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(rows.len());
       let mut new_pats = BTreeMap::new();
+      // SML Definition (39)
       for row in rows {
         let (other_ve, ty, pat) = ck(cx, st, &row.pat)?;
         if new_pats.insert(row.lab.val, pat).is_some() {
@@ -68,6 +76,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let pat = Pat::record(new_pats);
       Ok((val_env, Ty::Record(ty_rows), pat))
     }
+    // SML Definition Appendix A - tuple patterns are sugar for records
     AstPat::Tuple(pats) => {
       let mut val_env = ValEnv::new();
       let mut ty_rows = Vec::with_capacity(pats.len());
@@ -81,6 +90,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let pat = Pat::record(new_pats);
       Ok((val_env, Ty::Record(ty_rows), pat))
     }
+    // SML Definition Appendix A - list patterns are sugar for constructors
     AstPat::List(pats) => {
       let elem = Ty::Var(st.new_ty_var(false));
       let mut val_env = ValEnv::new();
@@ -102,11 +112,14 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       );
       Ok((val_env, Ty::list(elem), pat))
     }
+    // SML Definition (41)
     AstPat::Ctor(long, arg) => {
       let (val_env, arg_ty, arg_pat) = ck(cx, st, arg)?;
       let (ty, pat) = ctor(cx, st, pat.loc, long, arg_ty, arg_pat)?;
       Ok((val_env, ty, pat))
     }
+    // SML Definition (41). Infix ctors are the same as `op`ing the ctor and applying it to the
+    // tuple (lhs, rhs).
     AstPat::InfixCtor(lhs, vid, rhs) => {
       let (mut val_env, lhs_ty, lhs_pat) = ck(cx, st, lhs)?;
       let (other_ve, rhs_ty, rhs_pat) = ck(cx, st, rhs)?;
@@ -120,12 +133,14 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let (ty, pat) = ctor(cx, st, pat.loc, &long, arg_ty, arg_pat)?;
       Ok((val_env, ty, pat))
     }
+    // SML Definition (42)
     AstPat::Typed(inner_pat, ty) => {
       let (val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
       let ty = ty::ck(cx, &st.sym_tys, ty)?;
       st.subst.unify(pat.loc, ty, pat_ty.clone())?;
       Ok((val_env, pat_ty, inner_pat))
     }
+    // SML Definition (43)
     AstPat::As(vid, ty, inner_pat) => {
       if cx
         .env
@@ -147,6 +162,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
   }
 }
 
+/// SML Definition (41)
 fn ctor(
   cx: &Cx,
   st: &mut State,

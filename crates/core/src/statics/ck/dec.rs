@@ -15,6 +15,9 @@ use maplit::hashmap;
 use std::collections::{HashMap, HashSet};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
+  // The special constants are as per SML Definition (1). Note that SML Definition (5) is handled by
+  // the parser and SML Definition (7) is handled by having atomic and non-atomic expressions be
+  // part of the same enum.
   match &exp.val {
     Exp::DecInt(_) => Ok(Ty::INT),
     Exp::HexInt(_) => Ok(Ty::INT),
@@ -23,13 +26,18 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::Real(_) => Ok(Ty::REAL),
     Exp::String(_) => Ok(Ty::STRING),
     Exp::Char(_) => Ok(Ty::CHAR),
+    // SML Definition (2). Note that Subst, instantiate, generalize, unify, etc are all borne from
+    // the comment on this rule: "The instantiation of type schemes allows different occurrences of
+    // a single longvid to assume different types."
     Exp::LongVid(vid) => {
       let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
       Ok(instantiate(st, &val_info.ty_scheme, exp.loc))
     }
+    // SML Definition (3)
     Exp::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());
       let mut keys = HashSet::with_capacity(rows.len());
+      // SML Definition (6)
       for row in rows {
         let ty = ck_exp(cx, st, &row.exp)?;
         if !keys.insert(row.lab.val) {
@@ -40,6 +48,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       Ok(Ty::Record(ty_rows))
     }
     Exp::Select(..) => Err(exp.loc.wrap(Error::Todo("record selectors"))),
+    // SML Definition Appendix A - tuples are sugar for records
     Exp::Tuple(exps) => {
       let mut ty_rows = Vec::with_capacity(exps.len());
       for (idx, exp) in exps.iter().enumerate() {
@@ -49,6 +58,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       }
       Ok(Ty::Record(ty_rows))
     }
+    // SML Definition Appendix A - lists are sugar for cons + nil
     Exp::List(exps) => {
       let elem = Ty::Var(st.new_ty_var(false));
       for exp in exps {
@@ -57,6 +67,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       }
       Ok(Ty::list(elem))
     }
+    // SML Definition Appendix A - sequences ignore all but the last expression
     Exp::Sequence(exps) => {
       let mut ret = None;
       for exp in exps {
@@ -64,6 +75,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       }
       Ok(ret.unwrap())
     }
+    // SML Definition (4)
     Exp::Let(dec, exps) => {
       let env = ck(cx, st, dec)?;
       let mut cx = cx.clone();
@@ -80,6 +92,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       }
       Ok(ty)
     }
+    // SML Definition (8)
     Exp::App(func, arg) => {
       let func_ty = ck_exp(cx, st, func)?;
       let arg_ty = ck_exp(cx, st, arg)?;
@@ -88,6 +101,8 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.subst.unify(exp.loc, func_ty, arrow_ty)?;
       Ok(ret_ty)
     }
+    // SML Definition (8). Infix application is the same as `op`ing the infix operator and applying
+    // it to a tuple (lhs, rhs).
     Exp::InfixApp(lhs, func, rhs) => {
       let val_info = get_val_info(&cx.env, *func)?;
       let func_ty = instantiate(st, &val_info.ty_scheme, exp.loc);
@@ -101,12 +116,14 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.subst.unify(exp.loc, func_ty, arrow_ty)?;
       Ok(ret_ty)
     }
+    // SML Definition (9)
     Exp::Typed(inner, ty) => {
       let exp_ty = ck_exp(cx, st, inner)?;
       let ty_ty = ty::ck(cx, &st.sym_tys, ty)?;
       st.subst.unify(exp.loc, ty_ty, exp_ty.clone())?;
       Ok(exp_ty)
     }
+    // SML Definition Appendix A - boolean operators are sugar for `if`
     Exp::Andalso(lhs, rhs) | Exp::Orelse(lhs, rhs) => {
       let lhs_ty = ck_exp(cx, st, lhs)?;
       let rhs_ty = ck_exp(cx, st, rhs)?;
@@ -114,6 +131,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.subst.unify(rhs.loc, Ty::BOOL, rhs_ty)?;
       Ok(Ty::BOOL)
     }
+    // SML Definition (10)
     Exp::Handle(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
@@ -121,11 +139,13 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       st.subst.unify(exp.loc, head_ty.clone(), res_ty)?;
       Ok(head_ty)
     }
+    // SML Definition (11)
     Exp::Raise(exp) => {
       let exp_ty = ck_exp(cx, st, exp)?;
       st.subst.unify(exp.loc, Ty::EXN, exp_ty)?;
       Ok(Ty::Var(st.new_ty_var(false)))
     }
+    // SML Definition Appendix A - `if` is sugar for casing
     Exp::If(cond, then_e, else_e) => {
       let cond_ty = ck_exp(cx, st, cond)?;
       let then_ty = ck_exp(cx, st, then_e)?;
@@ -135,12 +155,14 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       Ok(then_ty)
     }
     Exp::While(..) => Err(exp.loc.wrap(Error::Todo("`while`"))),
+    // SML Definition Appendix A - `case` is sugar for application to a `fn`
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       st.subst.unify(exp.loc, head_ty, arg_ty)?;
       Ok(res_ty)
     }
+    // SML Definition (12)
     Exp::Fn(cases) => {
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
       Ok(Ty::Arrow(arg_ty.into(), res_ty.into()))
@@ -148,10 +170,12 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
   }
 }
 
+/// SML Definition (13)
 fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<(Ty, Ty)> {
   let arg_ty = Ty::Var(st.new_ty_var(false));
   let res_ty = Ty::Var(st.new_ty_var(false));
   let mut pats = Vec::with_capacity(cases.arms.len());
+  // SML Definition (14)
   for arm in cases.arms.iter() {
     let (val_env, pat_ty, pat) = pat::ck(cx, st, &arm.pat)?;
     pats.push(arm.pat.loc.wrap(pat));
@@ -208,12 +232,15 @@ fn fun_infos_to_ve(fun_infos: &HashMap<StrRef, FunInfo>) -> ValEnv {
 
 pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   match &dec.val {
+    // SML Definition (15)
     Dec::Val(ty_vars, val_binds) => {
       if let Some(tv) = ty_vars.first() {
         return Err(tv.loc.wrap(Error::Todo("type variables")));
       }
       let mut val_env = ValEnv::new();
+      // SML Definition (25)
       for val_bind in val_binds {
+        // SML Definition (26)
         if val_bind.rec {
           return Err(dec.loc.wrap(Error::Todo("recursive val binds")));
         }
@@ -236,6 +263,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       Ok(val_env.into())
     }
+    // SML Definition Appendix A - `fun` is sugar for `val rec` and `case`
     Dec::Fun(ty_vars, fval_binds) => {
       if let Some(tv) = ty_vars.first() {
         return Err(tv.loc.wrap(Error::Todo("type variables")));
@@ -296,24 +324,32 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       Ok(val_env.into())
     }
+    // SML Definition (16)
     Dec::Type(ty_binds) => ck_ty_binds(cx, st, ty_binds),
+    // SML Definition (17)
     Dec::Datatype(dat_binds, ty_binds) => {
       let mut env = ck_dat_binds(cx.clone(), st, dat_binds)?;
+      // SML Definition Appendix A - `datatype withtype` is sugar for `datatype; type`
       let mut cx = cx.clone();
       cx.o_plus(env.clone());
       env.extend(ck_ty_binds(&cx, st, ty_binds)?);
       Ok(env)
     }
+    // SML Definition (18)
     Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, &st.sym_tys, *ty_con, long),
+    // SML Definition (19)
     Dec::Abstype(..) => Err(dec.loc.wrap(Error::Todo("`abstype`"))),
+    // SML Definition (20)
     Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::new();
       for ex_bind in ex_binds {
         let val_info = match &ex_bind.inner {
+          // SML Definition (30)
           ExBindInner::Ty(ty) => match ty {
             None => ValInfo::exn(),
             Some(ty) => ValInfo::exn_fn(ty::ck(cx, &st.sym_tys, ty)?),
           },
+          // SML Definition (31)
           ExBindInner::Long(vid) => {
             let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
             if !val_info.id_status.is_exn() {
@@ -327,12 +363,14 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       Ok(val_env.into())
     }
+    // SML Definition (21)
     Dec::Local(fst, snd) => {
       let fst_env = ck(cx, st, fst)?;
       let mut cx = cx.clone();
       cx.o_plus(fst_env);
       ck(&cx, st, snd)
     }
+    // SML Definition (22)
     Dec::Open(longs) => {
       let mut env = Env::default();
       for long in longs {
@@ -340,6 +378,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       Ok(env)
     }
+    // SML Definition (23), SML Definition (24)
     Dec::Seq(decs) => {
       // TODO clone in loop - expensive?
       let mut cx = cx.clone();
@@ -354,8 +393,10 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   }
 }
 
+/// SML Definition (16)
 fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<Env> {
   let mut ty_env = TyEnv::default();
+  // SML Definition (27)
   for ty_bind in ty_binds {
     if let Some(tv) = ty_bind.ty_vars.first() {
       return Err(tv.loc.wrap(Error::Todo("type variables")));
@@ -370,10 +411,14 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
   Ok(ty_env.into())
 }
 
+/// SML Definition (17), SML Definition (71). The checking for {datatype, constructor} {bindings,
+/// descriptions} appear to be essentially identical, so we can unite the ASTs and static checking
+/// functions (this function.)
 pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -> Result<Env> {
   // these two are across all dat_binds.
   let mut ty_env = TyEnv::default();
   let mut val_env = ValEnv::new();
+  // SML Definition (28), SML Definition (81)
   for dat_bind in dat_binds {
     if let Some(tv) = dat_bind.ty_vars.first() {
       return Err(tv.loc.wrap(Error::Todo("type variables")));
@@ -402,6 +447,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       .is_none());
     // this ValEnv is specific to this DatBind.
     let mut bind_val_env = ValEnv::new();
+    // SML Definition (29), SML Definition (82)
     for con_bind in dat_bind.cons.iter() {
       ck_binding(con_bind.vid)?;
       // the type being defined in this declaration is `ty`.
@@ -443,6 +489,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
   })
 }
 
+/// SML Definition (18), SML Definition (72)
 pub fn ck_dat_copy(
   cx: &Cx,
   sym_tys: &SymTys,

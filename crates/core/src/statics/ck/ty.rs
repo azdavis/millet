@@ -8,11 +8,15 @@ use crate::statics::types::{Cx, Error, Result, SymTys, Ty};
 use std::collections::HashSet;
 
 pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
+  // SML Definition (48) is handled by the parser
   match &ty.val {
+    // SML Definition (44)
     AstTy::TyVar(_) => Err(ty.loc.wrap(Error::Todo("type variables"))),
+    // SML Definition (45)
     AstTy::Record(rows) => {
       let mut ty_rows = Vec::with_capacity(rows.len());
       let mut keys = HashSet::with_capacity(rows.len());
+      // SML Definition (49)
       for row in rows {
         let ty = ck(cx, sym_tys, &row.ty)?;
         if !keys.insert(row.lab.val) {
@@ -22,6 +26,7 @@ pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> 
       }
       Ok(Ty::Record(ty_rows))
     }
+    // SML Definition Appendix A - tuples are sugar for records
     AstTy::Tuple(tys) => {
       let mut ty_rows = Vec::with_capacity(tys.len());
       for (idx, ty) in tys.iter().enumerate() {
@@ -31,6 +36,7 @@ pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> 
       }
       Ok(Ty::Record(ty_rows))
     }
+    // SML Definition (46)
     AstTy::TyCon(args, name) => {
       let env = get_env(&cx.env, name)?;
       let ty_fcn = get_ty_info(env, name.last)?.ty_fcn(&sym_tys);
@@ -44,6 +50,7 @@ pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> 
       }
       Ok(ty_fcn.apply_args(new_args))
     }
+    // SML Definition (47)
     AstTy::Arrow(arg, res) => {
       let arg = ck(cx, sym_tys, arg)?;
       let res = ck(cx, sym_tys, res)?;
