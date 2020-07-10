@@ -269,20 +269,6 @@ impl Subst {
     assert!(self.inner.insert(tv, ty).is_none());
   }
 
-  /// a helper for unify, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
-  fn bind(&mut self, loc: Loc, tv: TyVar, ty: Ty) -> Result<()> {
-    if let Ty::Var(other) = ty {
-      if tv == other {
-        return Ok(());
-      }
-    }
-    if ty.free_ty_vars().contains(&tv) {
-      return Err(loc.wrap(Error::Circularity(tv, ty)));
-    }
-    self.insert(tv, ty);
-    Ok(())
-  }
-
   /// want = expected, got = found. the types immediately have self applied to them upon entry to
   /// this function, so no need to do it yourself before calling.
   pub fn unify(&mut self, loc: Loc, mut want: Ty, mut got: Ty) -> Result<()> {
@@ -326,6 +312,20 @@ impl Subst {
         Err(loc.wrap(Error::TyMismatch(want, got)))
       }
     }
+  }
+
+  /// a helper for unify, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
+  fn bind(&mut self, loc: Loc, tv: TyVar, ty: Ty) -> Result<()> {
+    if let Ty::Var(other) = ty {
+      if tv == other {
+        return Ok(());
+      }
+    }
+    if ty.free_ty_vars().contains(&tv) {
+      return Err(loc.wrap(Error::Circularity(tv, ty)));
+    }
+    self.insert(tv, ty);
+    Ok(())
   }
 }
 
