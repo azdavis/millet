@@ -1,4 +1,8 @@
 //! Utilities for checking ASTs.
+//!
+//! There is some overlap between this module and `types.rs`. If a function operating on the types
+//! in `types.rs` is used in multiple other modules, and doesn't need access to internals in
+//! `types.rs`, and doesn't make sense as a method on a type, it should live here.
 
 use crate::ast::Long;
 use crate::intern::StrRef;
@@ -53,6 +57,8 @@ pub fn generalize(ty_env: &TyEnv, sym_tys: &SymTys, ty_scheme: &mut TyScheme) {
     .collect();
 }
 
+/// Returns `Ok(e)` iff `env` contains the environment `e` after traversing the `StrEnv`s of `env`
+/// as directed by `long.structures`.
 pub fn get_env<'env>(mut env: &'env Env, long: &Long<StrRef>) -> Result<&'env Env> {
   for &s in long.structures.iter() {
     env = match env.str_env.get(&s.val) {
@@ -63,6 +69,7 @@ pub fn get_env<'env>(mut env: &'env Env, long: &Long<StrRef>) -> Result<&'env En
   Ok(env)
 }
 
+/// Returns `Ok(vi)` iff `env` contains `vi` in its `ValEnv`.
 pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   match env.val_env.get(&name.val) {
     None => Err(name.loc.wrap(Error::Undefined(Item::Value, name.val))),
@@ -70,6 +77,7 @@ pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   }
 }
 
+/// Returns `Ok(ti)` iff `env` contains `ti` in its `TyEnv`.
 pub fn get_ty_info(env: &Env, name: Located<StrRef>) -> Result<&TyInfo> {
   match env.ty_env.inner.get(&name.val) {
     None => Err(name.loc.wrap(Error::Undefined(Item::Type, name.val))),
@@ -77,6 +85,8 @@ pub fn get_ty_info(env: &Env, name: Located<StrRef>) -> Result<&TyInfo> {
   }
 }
 
+/// Insert the `key`, `val` pair into `map`. Returns `Ok(())` iff the key was not already in this
+/// map.
 pub fn env_ins<T>(map: &mut BTreeMap<StrRef, T>, key: Located<StrRef>, val: T) -> Result<()> {
   if map.insert(key.val, val).is_some() {
     Err(key.loc.wrap(Error::Redefined(key.val)))
@@ -85,6 +95,8 @@ pub fn env_ins<T>(map: &mut BTreeMap<StrRef, T>, key: Located<StrRef>, val: T) -
   }
 }
 
+/// Merges `rhs` into `lhs`. Returns `Ok(()) iff there exists no key in `rhs` that was already in
+/// `lhs`.
 pub fn env_merge<T>(
   lhs: &mut BTreeMap<StrRef, T>,
   rhs: BTreeMap<StrRef, T>,

@@ -265,8 +265,9 @@ impl Subst {
     assert!(self.inner.insert(tv, ty).is_none());
   }
 
-  /// want = expected, got = found. the types immediately have self applied to them upon entry to
-  /// this function, so no need to do it yourself before calling.
+  /// Returns Ok(()) iff want and got can unify, and updates self to explain how. The types
+  /// immediately have self applied to them upon entry to this function, so no need to do it
+  /// yourself before calling.
   pub fn unify(&mut self, loc: Loc, mut want: Ty, mut got: Ty) -> Result<()> {
     want.apply(self);
     got.apply(self);
