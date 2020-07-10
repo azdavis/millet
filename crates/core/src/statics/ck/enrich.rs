@@ -7,7 +7,7 @@ use crate::loc::Loc;
 use crate::statics::types::{Env, Result, Subst, SymTys, TyFcn, TyInfo, TyScheme, ValEnv, ValInfo};
 
 /// Returns Ok(()) iff got enriches want as per the Definition.
-pub fn ck(sym_tys: &SymTys, got: &Env, want: &Env) -> Result<()> {
+pub fn ck(loc: Loc, sym_tys: &SymTys, got: &Env, want: &Env) -> Result<()> {
   // For these for loops, we need the iteration order to be the same across different runs of the
   // program on the same file to ensure we get the same error message every time. This is useful for
   // testing and also is far less surprising for the user. Because of this need, the maps are
@@ -15,7 +15,7 @@ pub fn ck(sym_tys: &SymTys, got: &Env, want: &Env) -> Result<()> {
   for (name, want) in want.str_env.iter() {
     match got.str_env.get(name) {
       None => todo!("missing a struct"),
-      Some(got) => ck(sym_tys, got, want)?,
+      Some(got) => ck(loc, sym_tys, got, want)?,
     }
   }
   for (name, want) in want.ty_env.inner.iter() {
@@ -27,17 +27,18 @@ pub fn ck(sym_tys: &SymTys, got: &Env, want: &Env) -> Result<()> {
   for (name, want) in want.val_env.iter() {
     match got.val_env.get(name) {
       None => todo!("missing a value"),
-      Some(got) => ck_val_info(sym_tys, got, want)?,
+      Some(got) => ck_val_info(loc, sym_tys, got, want)?,
     }
   }
   Ok(())
 }
 
-fn ck_val_info(sym_tys: &SymTys, got: &ValInfo, want: &ValInfo) -> Result<()> {
+fn ck_val_info(loc: Loc, sym_tys: &SymTys, got: &ValInfo, want: &ValInfo) -> Result<()> {
   if got.id_status != want.id_status && !want.id_status.is_val() {
     todo!("incompatible id statuses")
   }
-  todo!()
+  ck_generalizes(loc, want.ty_scheme.clone(), got.ty_scheme.clone())?;
+  Ok(())
 }
 
 fn ck_ty_info(sym_tys: &SymTys, got: &TyInfo, want: &TyInfo) -> Result<()> {
