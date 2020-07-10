@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# Checks whether all of the rules of the statics have been mentioned in the implementation of the
-# statics.
-
 import subprocess
 import re
 import sys

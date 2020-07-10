@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# Builds the VSCode language client extension and language server, and puts the language server
-# binary near the built client.
-
 set -eu
 
 if [ "$#" -eq 0 ]; then
