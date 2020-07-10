@@ -9,6 +9,8 @@ use crate::statics::types::{
 use std::collections::BTreeMap;
 use std::convert::TryInto as _;
 
+/// Replaces all type variables, in the type in this TyScheme, which are bound by that same
+/// TyScheme, with fresh type variables, and returns that type.
 pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   let mut subst = Subst::default();
   match &ty_scheme.overload {
@@ -39,6 +41,8 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
+/// Mutates the TyScheme, which has no type variables, to bind all free type variables in the type
+/// in this TyScheme, except for those type variables which are free in the TyEnv.
 pub fn generalize(ty_env: &TyEnv, sym_tys: &SymTys, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.ty_vars.is_empty());
   assert!(ty_scheme.overload.is_none());
