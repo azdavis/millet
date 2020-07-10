@@ -1,13 +1,12 @@
 //! Utilities for checking ASTs.
 
-use crate::ast::{Label, Long};
+use crate::ast::Long;
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
   Env, Error, Item, Result, State, Subst, SymTys, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
 };
 use std::collections::BTreeMap;
-use std::convert::TryInto as _;
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same
 /// TyScheme, with fresh type variables, and returns that type.
@@ -76,10 +75,6 @@ pub fn get_ty_info(env: &Env, name: Located<StrRef>) -> Result<&TyInfo> {
     None => Err(name.loc.wrap(Error::Undefined(Item::Type, name.val))),
     Some(ty_info) => Ok(ty_info),
   }
-}
-
-pub fn tuple_lab(idx: usize) -> Label {
-  Label::Num((idx + 1).try_into().unwrap())
 }
 
 pub fn env_ins<T>(map: &mut BTreeMap<StrRef, T>, key: Located<StrRef>, val: T) -> Result<()> {

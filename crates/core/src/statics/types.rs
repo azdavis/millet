@@ -11,7 +11,6 @@ use crate::loc::{Loc, Located};
 use crate::util::eq_iter;
 use maplit::{btreemap, hashmap, hashset};
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::convert::TryInto as _;
 use std::fmt;
 
 /// An error encountered during static analysis.
@@ -115,23 +114,20 @@ fn show_ty(store: &StrStore, ty: &Ty) -> String {
   buf
 }
 
-fn is_tuple_lab((idx, lab): (usize, &Label)) -> bool {
-  match lab {
-    Label::Num(n) => {
-      let idx: u32 = (idx + 1).try_into().unwrap();
-      *n == idx
-    }
-    Label::Vid(_) => false,
-  }
-}
-
 fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
   match ty {
     Ty::Var(tv) => buf.push_str(&format!("{:?}", tv)),
     Ty::Record(rows) => {
       if rows.is_empty() {
         buf.push_str("unit");
-      } else if rows.len() >= 2 && rows.keys().enumerate().all(is_tuple_lab) {
+        return;
+      }
+      let is_tuple = rows.len() >= 2
+        && rows
+          .keys()
+          .enumerate()
+          .all(|(idx, lab)| Label::tuple(idx) == *lab);
+      if is_tuple {
         if prec > TyPrec::Star {
           buf.push_str("(");
         }

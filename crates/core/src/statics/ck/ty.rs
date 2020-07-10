@@ -1,9 +1,9 @@
 //! Check types.
 
-use crate::ast::Ty as AstTy;
+use crate::ast::{Label, Ty as AstTy};
 use crate::intern::StrRef;
 use crate::loc::Located;
-use crate::statics::ck::util::{get_env, get_ty_info, tuple_lab};
+use crate::statics::ck::util::{get_env, get_ty_info};
 use crate::statics::types::{Cx, Error, Result, SymTys, Ty};
 use std::collections::BTreeMap;
 
@@ -29,7 +29,7 @@ pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> 
       let mut ty_rows = BTreeMap::new();
       for (idx, ty) in tys.iter().enumerate() {
         let ty = ck(cx, sym_tys, ty)?;
-        assert!(ty_rows.insert(tuple_lab(idx), ty).is_none());
+        assert!(ty_rows.insert(Label::tuple(idx), ty).is_none());
       }
       Ok(Ty::Record(ty_rows))
     }

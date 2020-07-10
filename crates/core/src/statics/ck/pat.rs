@@ -1,10 +1,10 @@
 //! Check patterns.
 
-use crate::ast::{Long, Pat as AstPat};
+use crate::ast::{Label, Long, Pat as AstPat};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
-use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate, tuple_lab};
+use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate};
 use crate::statics::types::{
   Con, Cx, Error, Pat, Result, Span, State, Sym, SymTys, Ty, TyScheme, ValEnv, ValInfo,
 };
@@ -84,7 +84,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       for (idx, pat) in pats.iter().enumerate() {
         let (other_ve, ty, new_pat) = ck(cx, st, pat)?;
         env_merge(&mut val_env, other_ve, pat.loc)?;
-        assert!(ty_rows.insert(tuple_lab(idx), ty).is_none());
+        assert!(ty_rows.insert(Label::tuple(idx), ty).is_none());
         new_pats.push(new_pat);
       }
       let pat = Pat::record(new_pats);

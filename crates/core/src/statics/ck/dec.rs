@@ -1,10 +1,10 @@
 //! Check declarations and expressions.
 
-use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Long, TyBind};
+use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{
-  env_ins, env_merge, generalize, get_env, get_ty_info, get_val_info, instantiate, tuple_lab,
+  env_ins, env_merge, generalize, get_env, get_ty_info, get_val_info, instantiate,
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
@@ -51,7 +51,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let mut ty_rows = BTreeMap::new();
       for (idx, exp) in exps.iter().enumerate() {
         let ty = ck_exp(cx, st, exp)?;
-        assert!(ty_rows.insert(tuple_lab(idx), ty).is_none());
+        assert!(ty_rows.insert(Label::tuple(idx), ty).is_none());
       }
       Ok(Ty::Record(ty_rows))
     }
@@ -291,11 +291,10 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           }
           let mut pats_val_env = ValEnv::new();
           let mut arg_pat = Vec::with_capacity(info.args.len());
-          for (idx, (pat, &tv)) in case.pats.iter().zip(info.args.iter()).enumerate() {
+          for (pat, &tv) in case.pats.iter().zip(info.args.iter()) {
             let (ve, pat_ty, new_pat) = pat::ck(cx, st, pat)?;
             st.subst.unify(pat.loc, Ty::Var(tv), pat_ty)?;
             env_merge(&mut pats_val_env, ve, pat.loc)?;
-            tuple_lab(idx);
             arg_pat.push(new_pat);
           }
           let begin = case.pats.first().unwrap().loc;

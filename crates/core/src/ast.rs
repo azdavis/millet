@@ -3,6 +3,7 @@
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::token::TyVar;
+use std::convert::TryInto as _;
 
 /// An expression.
 #[derive(Debug)]
@@ -79,6 +80,13 @@ pub enum Label {
   Num(u32),
   /// A string label.
   Vid(StrRef),
+}
+
+impl Label {
+  /// Returns the `idx`th tuple label, where `idx` is 0-indexed.
+  pub fn tuple(idx: usize) -> Self {
+    Label::Num((idx + 1).try_into().unwrap())
+  }
 }
 
 /// called C 'match' in the Definition. We call it 'cases' to avoid conflicts with the Rust keyword.
