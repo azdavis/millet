@@ -2,8 +2,8 @@
 
 use crate::ast::{
   Arm, Cases, ConBind, DatBind, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind, FValBindCase,
-  FunBind, Label, Long, Pat, PatRow, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp,
-  TopDec, Ty, TyBind, TyDesc, TyRow, ValBind, ValDesc,
+  FunBind, Label, Long, Pat, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec,
+  Ty, TyBind, TyDesc, ValBind, ValDesc,
 };
 use crate::intern::{StrRef, StrStore};
 use crate::lex::Lexer;
@@ -515,8 +515,8 @@ impl Parser {
           loop {
             let lab = self.label()?;
             self.eat(Token::Equal)?;
-            let exp = self.exp()?;
-            rows.push(Row { lab, exp });
+            let val = self.exp()?;
+            rows.push(Row { lab, val });
             let tok = self.peek();
             self.skip();
             match tok.val {
@@ -1258,7 +1258,7 @@ impl Parser {
             }
             let lab = self.label()?;
             let tok = self.peek();
-            let pat = if let Token::Equal = tok.val {
+            let val = if let Token::Equal = tok.val {
               self.skip();
               self.pat()?
             } else {
@@ -1285,7 +1285,7 @@ impl Parser {
                 }
               }
             };
-            rows.push(PatRow { lab, pat });
+            rows.push(Row { lab, val });
             let tok = self.peek();
             self.skip();
             match tok.val {
@@ -1458,8 +1458,8 @@ impl Parser {
           loop {
             let lab = self.label()?;
             self.eat(Token::Colon)?;
-            let ty = self.ty()?;
-            rows.push(TyRow { lab, ty });
+            let val = self.ty()?;
+            rows.push(Row { lab, val });
             let tok = self.peek();
             self.skip();
             match tok.val {

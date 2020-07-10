@@ -65,11 +65,11 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let mut new_pats = BTreeMap::new();
       // SML Definition (39)
       for row in rows {
-        let (other_ve, ty, pat) = ck(cx, st, &row.pat)?;
+        let (other_ve, ty, pat) = ck(cx, st, &row.val)?;
         if new_pats.insert(row.lab.val, pat).is_some() {
           return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
-        env_merge(&mut val_env, other_ve, row.pat.loc)?;
+        env_merge(&mut val_env, other_ve, row.val.loc)?;
         ty_rows.push((row.lab.val, ty));
       }
       let new_pats: Vec<_> = new_pats.into_iter().map(|(_, pat)| pat).collect();

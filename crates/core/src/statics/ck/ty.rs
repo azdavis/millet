@@ -18,7 +18,7 @@ pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> 
       let mut keys = HashSet::with_capacity(rows.len());
       // SML Definition (49)
       for row in rows {
-        let ty = ck(cx, sym_tys, &row.ty)?;
+        let ty = ck(cx, sym_tys, &row.val)?;
         if !keys.insert(row.lab.val) {
           return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }

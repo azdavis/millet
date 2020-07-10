@@ -18,7 +18,7 @@ pub enum Exp<I> {
   Char(u8),
   // end special constants
   LongVid(Long<I>),
-  Record(Vec<Row<I>>),
+  Record(Vec<Row<Located<Exp<I>>>>),
   Select(Located<Label>),
   /// requires vec.len() != 1
   Tuple(Vec<Located<Exp<I>>>),
@@ -63,13 +63,13 @@ impl<I> Long<I> {
   }
 }
 
-/// An expression row, in a record.
+/// A row, in a record. Used for expression, pattern, and type rows.
 #[derive(Debug)]
-pub struct Row<I> {
+pub struct Row<T> {
   /// The label.
   pub lab: Located<Label>,
-  /// The expression.
-  pub exp: Located<Exp<I>>,
+  /// The value.
+  pub val: T,
 }
 
 /// A label, as in a row. See StrRef for a discussion on PartialOrd + Ord.
@@ -225,7 +225,7 @@ pub enum Pat<I> {
   // end special constants
   LongVid(Long<I>),
   /// the loc is for the `...` if there was one
-  Record(Vec<PatRow<I>>, Option<Loc>),
+  Record(Vec<Row<Located<Pat<I>>>>, Option<Loc>),
   /// requires pats.len() != 1
   Tuple(Vec<Located<Pat<I>>>),
   List(Vec<Located<Pat<I>>>),
@@ -235,34 +235,16 @@ pub enum Pat<I> {
   As(Located<I>, Option<Located<Ty<I>>>, Box<Located<Pat<I>>>),
 }
 
-/// A pattern row, in a record pattern.
-#[derive(Debug)]
-pub struct PatRow<I> {
-  /// The label.
-  pub lab: Located<Label>,
-  /// The pattern.
-  pub pat: Located<Pat<I>>,
-}
-
 /// A type.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum Ty<I> {
   TyVar(TyVar<I>),
-  Record(Vec<TyRow<I>>),
+  Record(Vec<Row<Located<Ty<I>>>>),
   /// requires tys.len() >= 2
   Tuple(Vec<Located<Ty<I>>>),
   TyCon(Vec<Located<Ty<I>>>, Long<I>),
   Arrow(Box<Located<Ty<I>>>, Box<Located<Ty<I>>>),
-}
-
-/// A type row, in a record type.
-#[derive(Debug)]
-pub struct TyRow<I> {
-  /// The label
-  pub lab: Located<Label>,
-  /// The type.
-  pub ty: Located<Ty<I>>,
 }
 
 /// A structure expression.

@@ -39,7 +39,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let mut keys = HashSet::with_capacity(rows.len());
       // SML Definition (6)
       for row in rows {
-        let ty = ck_exp(cx, st, &row.exp)?;
+        let ty = ck_exp(cx, st, &row.val)?;
         if !keys.insert(row.lab.val) {
           return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
