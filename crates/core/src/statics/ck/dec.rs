@@ -431,6 +431,8 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       .inner
       .insert(dat_bind.ty_con.val, TyInfo::Sym(sym))
       .is_none());
+    // NOTE we don't yet know whether this new type respects equality so just baldly assert that
+    // does not.
     assert!(st
       .sym_tys
       .insert(
@@ -438,11 +440,13 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         SymTyInfo {
           ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
           val_env: ValEnv::new(),
+          equality: false,
         },
       )
       .is_none());
     // this ValEnv is specific to this `DatBind`.
     let mut bind_val_env = ValEnv::new();
+    let mut equality = true;
     // SML Definition (29), SML Definition (82)
     for con_bind in dat_bind.cons.iter() {
       ck_binding(con_bind.vid)?;
@@ -450,8 +454,11 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       // that is being defined.
       let mut ty = Ty::Ctor(Vec::new(), sym);
       if let Some(arg_ty) = &con_bind.ty {
-        // if there is an `of t`, then the type of the ctor is `t -> T`.
+        // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
+        // `T` respects equality based on whether `t` does. TODO this check becomes harder once we
+        // support type variables, also probably the `mono` will go away.
         let t = ty::ck(&cx, &st.sym_tys, arg_ty)?;
+        equality = equality && t.is_equality(&st.sym_tys);
         ty = Ty::Arrow(t.into(), ty.into());
       }
       // insert the `ValInfo` into the _overall_ `ValEnv` with dupe checking.
@@ -475,6 +482,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         SymTyInfo {
           ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
           val_env: bind_val_env,
+          equality,
         },
       )
       .is_some());

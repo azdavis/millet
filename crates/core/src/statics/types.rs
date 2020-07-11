@@ -409,6 +409,19 @@ impl Ty {
     }
   }
 
+  /// Returns whether this is an equality type.
+  pub fn is_equality(&self, sym_tys: &SymTys) -> bool {
+    match self {
+      Self::Var(tv) => tv.equality,
+      Self::Record(rows) => rows.values().all(|ty| ty.is_equality(sym_tys)),
+      Self::Arrow(_, _) => false,
+      Self::Ctor(args, sym) => {
+        *sym == Sym::base(StrRef::REF)
+          || sym_tys.get(sym).unwrap().equality && args.iter().all(|ty| ty.is_equality(sym_tys))
+      }
+    }
+  }
+
   pub const CHAR: Self = Self::base(StrRef::CHAR);
   pub const EXN: Self = Self::base(StrRef::EXN);
   pub const BOOL: Self = Self::base(StrRef::BOOL);
@@ -471,10 +484,11 @@ impl TyScheme {
 pub type TyFcn = TyScheme;
 
 /// Information about a type that 'has been generated', like a datatype or a a `type t` in a
-/// signature.
+/// signature. TyStr from the Definition.
 pub struct SymTyInfo {
   pub ty_fcn: TyFcn,
   pub val_env: ValEnv,
+  pub equality: bool,
 }
 
 pub type SymTys = HashMap<Sym, SymTyInfo>;

@@ -150,7 +150,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       Ok(val_env.into())
     }
     // SML Definition (69), SML Definition (70)
-    Spec::Type(ty_descs, _) => {
+    Spec::Type(ty_descs, equality) => {
       let mut ty_env = TyEnv::default();
       // SML Definition (80)
       for ty_desc in ty_descs {
@@ -165,6 +165,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
           SymTyInfo {
             ty_fcn: TyScheme::mono(Ty::Ctor(vec![], sym)),
             val_env: ValEnv::new(),
+            equality: *equality,
           },
         );
       }
