@@ -214,19 +214,6 @@ impl fmt::Display for Item {
   }
 }
 
-/// A symbol, used to uniquely identify a type which 'has been generated'.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct Sym {
-  name: StrRef,
-  id: Option<Located<usize>>,
-}
-
-impl Sym {
-  pub const fn base(name: StrRef) -> Self {
-    Self { name, id: None }
-  }
-}
-
 /// A type variable.
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TyVar {
@@ -329,6 +316,19 @@ impl Subst {
     }
     self.insert(tv, ty);
     Ok(())
+  }
+}
+
+/// A symbol, used to uniquely identify a type which 'has been generated'.
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub struct Sym {
+  name: StrRef,
+  id: Option<Located<usize>>,
+}
+
+impl Sym {
+  pub const fn base(name: StrRef) -> Self {
+    Self { name, id: None }
   }
 }
 
