@@ -75,7 +75,7 @@ pub fn get() -> (Basis, State) {
   let num = || vec![Ty::INT, Ty::WORD, Ty::REAL];
   let mut st = State::default();
   st.sym_tys.insert(
-    Sym::base(StrRef::BOOL),
+    Sym::BOOL,
     SymTyInfo {
       ty_fcn: TyScheme::mono(Ty::BOOL),
       val_env: bool_val_env(),
@@ -85,7 +85,7 @@ pub fn get() -> (Basis, State) {
   let a = st.new_ty_var(false);
   let val_env = list_val_env(&mut st);
   st.sym_tys.insert(
-    Sym::base(StrRef::LIST),
+    Sym::LIST,
     SymTyInfo {
       ty_fcn: TyScheme {
         ty_vars: vec![a],
@@ -99,7 +99,7 @@ pub fn get() -> (Basis, State) {
   let a = st.new_ty_var(false);
   let val_env = ref_val_env(&mut st);
   st.sym_tys.insert(
-    Sym::base(StrRef::REF),
+    Sym::REF,
     SymTyInfo {
       ty_fcn: TyScheme {
         ty_vars: vec![a],
@@ -111,7 +111,7 @@ pub fn get() -> (Basis, State) {
     },
   );
   st.sym_tys.insert(
-    Sym::base(StrRef::ORDER),
+    Sym::ORDER,
     SymTyInfo {
       ty_fcn: TyScheme::mono(Ty::ORDER),
       val_env: order_val_env(),
@@ -153,16 +153,16 @@ pub fn get() -> (Basis, State) {
       ty_env: TyEnv {
         inner: btreemap![
           StrRef::UNIT => TyInfo::Alias(TyScheme::mono(Ty::Record(btreemap![]))),
-          StrRef::BOOL => TyInfo::Sym(Sym::base(StrRef::BOOL)),
+          StrRef::BOOL => TyInfo::Sym(Sym::BOOL),
           StrRef::INT => TyInfo::Alias(TyScheme::mono(Ty::INT)),
           StrRef::REAL => TyInfo::Alias(TyScheme::mono(Ty::REAL)),
           StrRef::STRING => TyInfo::Alias(TyScheme::mono(Ty::STRING)),
           StrRef::CHAR => TyInfo::Alias(TyScheme::mono(Ty::CHAR)),
           StrRef::WORD => TyInfo::Alias(TyScheme::mono(Ty::WORD)),
-          StrRef::LIST => TyInfo::Sym(Sym::base(StrRef::LIST)),
-          StrRef::REF => TyInfo::Sym(Sym::base(StrRef::REF)),
+          StrRef::LIST => TyInfo::Sym(Sym::LIST),
+          StrRef::REF => TyInfo::Sym(Sym::REF),
           StrRef::EXN => TyInfo::Alias(TyScheme::mono(Ty::EXN)),
-          StrRef::ORDER => TyInfo::Sym(Sym::base(StrRef::ORDER)),
+          StrRef::ORDER => TyInfo::Sym(Sym::ORDER),
         ],
       },
       val_env: bool_val_env()

@@ -333,13 +333,24 @@ pub struct Sym {
 }
 
 impl Sym {
-  pub const fn base(name: StrRef) -> Self {
+  const fn base(name: StrRef) -> Self {
     Self { name, id: None }
   }
 
   pub fn is_base(&self) -> bool {
     self.id.is_none()
   }
+
+  pub const CHAR: Self = Self::base(StrRef::CHAR);
+  pub const EXN: Self = Self::base(StrRef::EXN);
+  pub const BOOL: Self = Self::base(StrRef::BOOL);
+  pub const STRING: Self = Self::base(StrRef::STRING);
+  pub const WORD: Self = Self::base(StrRef::WORD);
+  pub const INT: Self = Self::base(StrRef::INT);
+  pub const REAL: Self = Self::base(StrRef::REAL);
+  pub const ORDER: Self = Self::base(StrRef::ORDER);
+  pub const LIST: Self = Self::base(StrRef::LIST);
+  pub const REF: Self = Self::base(StrRef::REF);
 }
 
 /// A type, for the purposes of static analysis.
@@ -356,8 +367,8 @@ pub enum Ty {
 }
 
 impl Ty {
-  const fn base(name: StrRef) -> Self {
-    Self::Ctor(Vec::new(), Sym::base(name))
+  const fn base(sym: Sym) -> Self {
+    Self::Ctor(Vec::new(), sym)
   }
 
   pub fn list(elem: Self) -> Self {
@@ -432,14 +443,14 @@ impl Ty {
     }
   }
 
-  pub const CHAR: Self = Self::base(StrRef::CHAR);
-  pub const EXN: Self = Self::base(StrRef::EXN);
-  pub const BOOL: Self = Self::base(StrRef::BOOL);
-  pub const STRING: Self = Self::base(StrRef::STRING);
-  pub const WORD: Self = Self::base(StrRef::WORD);
-  pub const INT: Self = Self::base(StrRef::INT);
-  pub const REAL: Self = Self::base(StrRef::REAL);
-  pub const ORDER: Self = Self::base(StrRef::ORDER);
+  pub const CHAR: Self = Self::base(Sym::CHAR);
+  pub const EXN: Self = Self::base(Sym::EXN);
+  pub const BOOL: Self = Self::base(Sym::BOOL);
+  pub const STRING: Self = Self::base(Sym::STRING);
+  pub const WORD: Self = Self::base(Sym::WORD);
+  pub const INT: Self = Self::base(Sym::INT);
+  pub const REAL: Self = Self::base(Sym::REAL);
+  pub const ORDER: Self = Self::base(Sym::ORDER);
 }
 
 /// A type scheme, a 'forall' type.
