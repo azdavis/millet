@@ -160,12 +160,14 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
         let sym = st.new_sym(ty_desc.ty_con);
         // TODO equality check
         env_ins(&mut ty_env.inner, ty_desc.ty_con, TyInfo::Sym(sym))?;
+        // TODO is this a datatype?
         st.sym_tys.insert(
           sym,
           SymTyInfo {
             ty_fcn: TyScheme::mono(Ty::Ctor(vec![], sym)),
             val_env: ValEnv::new(),
             equality: *equality,
+            datatype: false,
           },
         );
       }
