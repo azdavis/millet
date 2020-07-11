@@ -441,7 +441,6 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
           ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
           val_env: ValEnv::new(),
           equality: false,
-          datatype: true,
         },
       )
       .is_none());
@@ -484,7 +483,6 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
           ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
           val_env: bind_val_env,
           equality,
-          datatype: true,
         },
       )
       .is_some());
@@ -508,7 +506,7 @@ pub fn ck_dat_copy(
     TyInfo::Sym(sym) => *sym,
   };
   let info = sym_tys.get(&sym).unwrap();
-  if !info.datatype {
+  if info.val_env.is_empty() {
     return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype));
   }
   Ok(Env {

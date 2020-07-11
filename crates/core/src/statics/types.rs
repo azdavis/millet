@@ -504,18 +504,17 @@ impl TyScheme {
 /// type alias here?
 pub type TyFcn = TyScheme;
 
-/// Information about a type that 'has been generated', like a datatype or a a `type t` in a
+/// Information about a type that 'has been generated', like a datatype or a `type t` in a
 /// signature. TyStr from the Definition.
 pub struct SymTyInfo {
   pub ty_fcn: TyFcn,
+  /// NOTE I think this is empty iff this is a special type (int, word, etc) or a `type t` in a
+  /// signature. That is, this is empty iff you _cannot_ datatype copy this symbol.
   pub val_env: ValEnv,
   /// Not strictly in the Definition, but seems to be implicitly mentioned when talking about type
   /// structures respecting equality. Since a `SymTyInfo` is immutable, we compute when creating a
   /// new `SymTyInfo` whether it respects equality and cache that value in here.
   pub equality: bool,
-  /// Not mentioned in the Definition at all, but seems to be required to cause e.g. `datatype bad =
-  /// datatype int` to fail.
-  pub datatype: bool,
 }
 
 pub type SymTys = HashMap<Sym, SymTyInfo>;

@@ -74,7 +74,6 @@ fn base_ty(ty: Ty, equality: bool) -> SymTyInfo {
     ty_fcn: TyScheme::mono(ty),
     val_env: ValEnv::new(),
     equality,
-    datatype: false,
   }
 }
 
@@ -89,7 +88,6 @@ pub fn get() -> (Basis, State) {
       ty_fcn: TyScheme::mono(Ty::BOOL),
       val_env: bool_val_env(),
       equality: true,
-      datatype: true,
     },
   );
   let a = st.new_ty_var(false);
@@ -104,7 +102,6 @@ pub fn get() -> (Basis, State) {
       },
       val_env,
       equality: true,
-      datatype: true,
     },
   );
   let a = st.new_ty_var(false);
@@ -119,7 +116,6 @@ pub fn get() -> (Basis, State) {
       },
       val_env,
       equality: true,
-      datatype: true,
     },
   );
   st.sym_tys.insert(
@@ -128,7 +124,6 @@ pub fn get() -> (Basis, State) {
       ty_fcn: TyScheme::mono(Ty::ORDER),
       val_env: order_val_env(),
       equality: true,
-      datatype: true,
     },
   );
   let a = st.new_ty_var(false);
