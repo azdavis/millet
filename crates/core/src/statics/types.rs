@@ -33,8 +33,8 @@ pub enum Error {
   UnreachablePattern,
   FunDecNameMismatch(StrRef, StrRef),
   FunDecWrongNumPats(usize, usize),
-  PatNotConsType(Ty),
-  PatNotArrowType(Ty),
+  PatNotConsTy(Ty),
+  PatNotArrowTy(Ty),
   DatatypeCopyNotDatatype,
   Todo(&'static str),
 }
@@ -85,11 +85,11 @@ impl Error {
         "wrong number of patterns in function declaration: expected {}, found {}",
         want, got
       ),
-      Self::PatNotConsType(ty) => format!(
+      Self::PatNotConsTy(ty) => format!(
         "pattern does not have a constructor type: {}",
         show_ty(store, ty)
       ),
-      Self::PatNotArrowType(ty) => format!(
+      Self::PatNotArrowTy(ty) => format!(
         "pattern does not have an arrow type: {}",
         show_ty(store, ty)
       ),
