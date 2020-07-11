@@ -5,7 +5,7 @@ use crate::statics::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, ValEnv,
   ValInfo,
 };
-use maplit::{btreemap, hashset};
+use maplit::{btreemap, hashmap, hashset};
 
 fn bool_val_env() -> ValEnv {
   btreemap![
@@ -67,6 +67,14 @@ fn overloaded_cmp(st: &mut State) -> ValInfo {
     ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::BOOL.into()),
     overload: Some(vec![Ty::INT, Ty::WORD, Ty::REAL, Ty::STRING, Ty::CHAR]),
   })
+}
+
+fn base_ty(ty: Ty, equality: bool) -> SymTyInfo {
+  SymTyInfo {
+    ty_fcn: TyScheme::mono(ty),
+    val_env: ValEnv::new(),
+    equality,
+  }
 }
 
 pub fn get() -> (Basis, State) {
@@ -133,6 +141,14 @@ pub fn get() -> (Basis, State) {
     ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::BOOL.into()),
     overload: None,
   });
+  st.sym_tys.extend(hashmap![
+    Sym::INT => base_ty(Ty::INT, true),
+    Sym::REAL => base_ty(Ty::REAL, false),
+    Sym::STRING => base_ty(Ty::STRING, true),
+    Sym::CHAR => base_ty(Ty::CHAR, true),
+    Sym::WORD => base_ty(Ty::WORD, true),
+    Sym::EXN => base_ty(Ty::EXN, false),
+  ]);
   let bs = Basis {
     ty_names: hashset![
       StrRef::BOOL,
@@ -193,5 +209,14 @@ pub fn get() -> (Basis, State) {
         .collect(),
     },
   };
+  // sanity check
+  for name in bs.ty_names.iter() {
+    assert!(bs.env.ty_env.inner.contains_key(name));
+  }
+  for ty_info in bs.env.ty_env.inner.values() {
+    if let TyInfo::Sym(sym) = ty_info {
+      assert!(st.sym_tys.contains_key(sym));
+    }
+  }
   (bs, st)
 }
