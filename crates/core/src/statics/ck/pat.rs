@@ -98,7 +98,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       for pat in pats {
         let (other_ve, ty, new_pat) = ck(cx, st, pat)?;
         env_merge(&mut val_env, other_ve, pat.loc)?;
-        st.subst.unify(pat.loc, elem.clone(), ty)?;
+        st.unify(pat.loc, elem.clone(), ty)?;
         new_pats.push(new_pat);
       }
       let pat = new_pats.into_iter().rev().fold(
@@ -137,7 +137,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::Typed(inner_pat, ty) => {
       let (val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
       let ty = ty::ck(cx, &st.sym_tys, ty)?;
-      st.subst.unify(pat.loc, ty, pat_ty.clone())?;
+      st.unify(pat.loc, ty, pat_ty.clone())?;
       Ok((val_env, pat_ty, inner_pat))
     }
     // SML Definition (43)
@@ -153,7 +153,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let (mut val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
       if let Some(ty) = ty {
         let ty = ty::ck(cx, &st.sym_tys, ty)?;
-        st.subst.unify(pat.loc, ty, pat_ty.clone())?;
+        st.unify(pat.loc, ty, pat_ty.clone())?;
       }
       let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));
       env_ins(&mut val_env, *vid, val_info)?;
@@ -179,7 +179,7 @@ fn ctor(
     Ty::Arrow(x, y) => (*x, *y),
     ty => return Err(loc.wrap(Error::PatNotArrowTy(ty))),
   };
-  st.subst.unify(loc, ctor_arg_ty, arg_ty)?;
+  st.unify(loc, ctor_arg_ty, arg_ty)?;
   ctor_res_ty.apply(&st.subst);
   let sym = match ctor_res_ty {
     Ty::Ctor(_, sym) => sym,

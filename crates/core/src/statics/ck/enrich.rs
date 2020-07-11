@@ -37,7 +37,7 @@ fn ck_val_info(loc: Loc, sym_tys: &SymTys, got: &ValInfo, want: &ValInfo) -> Res
   if got.id_status != want.id_status && !want.id_status.is_val() {
     todo!("incompatible id statuses")
   }
-  ck_generalizes(loc, want.ty_scheme.clone(), got.ty_scheme.clone())?;
+  ck_generalizes(loc, sym_tys, want.ty_scheme.clone(), got.ty_scheme.clone())?;
   Ok(())
 }
 
@@ -67,7 +67,7 @@ fn ck_ty_fcn_eq(got: &TyFcn, want: &TyFcn) -> Result<()> {
 
 /// Returns Ok(s) iff want generalizes got as per the Definition, and s is this witness to this
 /// fact. TODO is this right?
-pub fn ck_generalizes(loc: Loc, want: TyScheme, got: TyScheme) -> Result<Subst> {
+pub fn ck_generalizes(loc: Loc, sym_tys: &SymTys, want: TyScheme, got: TyScheme) -> Result<Subst> {
   let want_free_tvs = want.free_ty_vars();
   for tv in got.ty_vars.iter() {
     if want_free_tvs.contains(tv) {
@@ -75,7 +75,7 @@ pub fn ck_generalizes(loc: Loc, want: TyScheme, got: TyScheme) -> Result<Subst> 
     }
   }
   let mut ret = Subst::default();
-  ret.unify(loc, want.ty, got.ty)?;
+  ret.unify(loc, &sym_tys, want.ty, got.ty)?;
   for tv in ret.keys() {
     if !want_free_tvs.contains(tv) {
       todo!("no")

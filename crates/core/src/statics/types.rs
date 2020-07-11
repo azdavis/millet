@@ -36,6 +36,7 @@ pub enum Error {
   PatNotConsTy(Ty),
   PatNotArrowTy(Ty),
   DatatypeCopyNotDatatype,
+  NotEquality(Ty),
   Todo(&'static str),
 }
 
@@ -96,6 +97,7 @@ impl Error {
       Self::DatatypeCopyNotDatatype => {
         "right-hand side of datatype copy is not a datatype".to_owned()
       }
+      Self::NotEquality(ty) => format!("not an equality type: {}", show_ty(store, ty)),
       Self::Todo(msg) => format!("unsupported language construct: {}", msg),
     }
   }
@@ -261,12 +263,12 @@ impl Subst {
   /// Returns Ok(()) iff want and got can unify, and updates self to explain how. The types
   /// immediately have self applied to them upon entry to this function, so no need to do it
   /// yourself before calling.
-  pub fn unify(&mut self, loc: Loc, mut want: Ty, mut got: Ty) -> Result<()> {
+  pub fn unify(&mut self, loc: Loc, sym_tys: &SymTys, mut want: Ty, mut got: Ty) -> Result<()> {
     want.apply(self);
     got.apply(self);
     match (want, got) {
-      (Ty::Var(tv), got) => self.bind(loc, tv, got),
-      (want, Ty::Var(tv)) => self.bind(loc, tv, want),
+      (Ty::Var(tv), got) => self.bind(loc, sym_tys, tv, got),
+      (want, Ty::Var(tv)) => self.bind(loc, sym_tys, tv, want),
       (Ty::Record(rows_want), Ty::Record(mut rows_got)) => {
         if !eq_iter(rows_want.keys(), rows_got.keys()) {
           return Err(loc.wrap(Error::TyMismatch(
@@ -276,13 +278,13 @@ impl Subst {
         }
         for (lab, want) in rows_want {
           let got = rows_got.remove(&lab).unwrap();
-          self.unify(loc, want, got)?;
+          self.unify(loc, sym_tys, want, got)?;
         }
         Ok(())
       }
       (Ty::Arrow(arg_want, res_want), Ty::Arrow(arg_got, res_got)) => {
-        self.unify(loc, *arg_want, *arg_got)?;
-        self.unify(loc, *res_want, *res_got)?;
+        self.unify(loc, sym_tys, *arg_want, *arg_got)?;
+        self.unify(loc, sym_tys, *res_want, *res_got)?;
         Ok(())
       }
       (Ty::Ctor(args_want, name_want), Ty::Ctor(args_got, name_got)) => {
@@ -294,7 +296,7 @@ impl Subst {
         }
         assert_eq!(args_want.len(), args_got.len(), "mismatched Ctor args len");
         for (want, got) in args_want.into_iter().zip(args_got) {
-          self.unify(loc, want, got)?;
+          self.unify(loc, sym_tys, want, got)?;
         }
         Ok(())
       }
@@ -305,7 +307,7 @@ impl Subst {
   }
 
   /// a helper for unify, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
-  fn bind(&mut self, loc: Loc, tv: TyVar, ty: Ty) -> Result<()> {
+  fn bind(&mut self, loc: Loc, sym_tys: &SymTys, tv: TyVar, ty: Ty) -> Result<()> {
     if let Ty::Var(other) = ty {
       if tv == other {
         return Ok(());
@@ -313,6 +315,10 @@ impl Subst {
     }
     if ty.free_ty_vars().contains(&tv) {
       return Err(loc.wrap(Error::Circularity(tv, ty)));
+    }
+    // here's the single solitary reason we have to pass a `SymTys` all the way down here.
+    if tv.equality && !ty.is_equality(sym_tys) {
+      return Err(loc.wrap(Error::NotEquality(ty)));
     }
     self.insert(tv, ty);
     Ok(())
@@ -845,6 +851,11 @@ impl State {
     let id = Some(name.loc.wrap(self.next_sym));
     self.next_sym += 1;
     Sym { id, name: name.val }
+  }
+
+  /// A thin wrapper over `Subst#unify`, which passes in this `State`'s `SymTys`.
+  pub fn unify(&mut self, loc: Loc, want: Ty, got: Ty) -> Result<()> {
+    self.subst.unify(loc, &self.sym_tys, want, got)
   }
 }
 

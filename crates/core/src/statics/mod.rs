@@ -22,7 +22,7 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   'outer: for (loc, tv, overloads) in st.overload {
     for name in overloads {
       let mut pre = st.subst.clone();
-      if let Ok(()) = pre.unify(loc, Ty::Var(tv), Ty::base(name)) {
+      if let Ok(()) = pre.unify(loc, &st.sym_tys, Ty::Var(tv), Ty::base(name)) {
         st.subst = pre;
         continue 'outer;
       }

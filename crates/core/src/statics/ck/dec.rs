@@ -60,7 +60,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let elem = Ty::Var(st.new_ty_var(false));
       for exp in exps {
         let ty = ck_exp(cx, st, exp)?;
-        st.subst.unify(exp.loc, elem.clone(), ty)?;
+        st.unify(exp.loc, elem.clone(), ty)?;
       }
       Ok(Ty::list(elem))
     }
@@ -95,7 +95,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let arg_ty = ck_exp(cx, st, arg)?;
       let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
-      st.subst.unify(exp.loc, func_ty, arrow_ty)?;
+      st.unify(exp.loc, func_ty, arrow_ty)?;
       Ok(ret_ty)
     }
     // SML Definition (8). Infix application is the same as `op`ing the infix operator and applying
@@ -107,36 +107,36 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let rhs_ty = ck_exp(cx, st, rhs)?;
       let ret_ty = Ty::Var(st.new_ty_var(false));
       let arrow_ty = Ty::Arrow(Ty::pair(lhs_ty, rhs_ty).into(), ret_ty.clone().into());
-      st.subst.unify(exp.loc, func_ty, arrow_ty)?;
+      st.unify(exp.loc, func_ty, arrow_ty)?;
       Ok(ret_ty)
     }
     // SML Definition (9)
     Exp::Typed(inner, ty) => {
       let exp_ty = ck_exp(cx, st, inner)?;
       let ty_ty = ty::ck(cx, &st.sym_tys, ty)?;
-      st.subst.unify(exp.loc, ty_ty, exp_ty.clone())?;
+      st.unify(exp.loc, ty_ty, exp_ty.clone())?;
       Ok(exp_ty)
     }
     // SML Definition Appendix A - boolean operators are sugar for `if`
     Exp::Andalso(lhs, rhs) | Exp::Orelse(lhs, rhs) => {
       let lhs_ty = ck_exp(cx, st, lhs)?;
       let rhs_ty = ck_exp(cx, st, rhs)?;
-      st.subst.unify(lhs.loc, Ty::BOOL, lhs_ty)?;
-      st.subst.unify(rhs.loc, Ty::BOOL, rhs_ty)?;
+      st.unify(lhs.loc, Ty::BOOL, lhs_ty)?;
+      st.unify(rhs.loc, Ty::BOOL, rhs_ty)?;
       Ok(Ty::BOOL)
     }
     // SML Definition (10)
     Exp::Handle(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
-      st.subst.unify(exp.loc, Ty::EXN, arg_ty)?;
-      st.subst.unify(exp.loc, head_ty.clone(), res_ty)?;
+      st.unify(exp.loc, Ty::EXN, arg_ty)?;
+      st.unify(exp.loc, head_ty.clone(), res_ty)?;
       Ok(head_ty)
     }
     // SML Definition (11)
     Exp::Raise(exp) => {
       let exp_ty = ck_exp(cx, st, exp)?;
-      st.subst.unify(exp.loc, Ty::EXN, exp_ty)?;
+      st.unify(exp.loc, Ty::EXN, exp_ty)?;
       Ok(Ty::Var(st.new_ty_var(false)))
     }
     // SML Definition Appendix A - `if` is sugar for casing
@@ -144,8 +144,8 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       let cond_ty = ck_exp(cx, st, cond)?;
       let then_ty = ck_exp(cx, st, then_e)?;
       let else_ty = ck_exp(cx, st, else_e)?;
-      st.subst.unify(cond.loc, Ty::BOOL, cond_ty)?;
-      st.subst.unify(exp.loc, then_ty.clone(), else_ty)?;
+      st.unify(cond.loc, Ty::BOOL, cond_ty)?;
+      st.unify(exp.loc, then_ty.clone(), else_ty)?;
       Ok(then_ty)
     }
     Exp::While(..) => Err(exp.loc.wrap(Error::Todo("`while`"))),
@@ -153,7 +153,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
-      st.subst.unify(exp.loc, head_ty, arg_ty)?;
+      st.unify(exp.loc, head_ty, arg_ty)?;
       Ok(res_ty)
     }
     // SML Definition (12)
@@ -179,8 +179,8 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
     let mut cx = cx.clone();
     cx.env.val_env.extend(val_env);
     let exp_ty = ck_exp(&cx, st, &arm.exp)?;
-    st.subst.unify(arm.pat.loc, arg_ty.clone(), pat_ty)?;
-    st.subst.unify(arm.exp.loc, res_ty.clone(), exp_ty)?;
+    st.unify(arm.pat.loc, arg_ty.clone(), pat_ty)?;
+    st.unify(arm.exp.loc, res_ty.clone(), exp_ty)?;
   }
   exhaustive::ck_match(pats, loc)?;
   Ok((arg_ty, res_ty))
@@ -241,7 +241,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           ck_binding(val_bind.pat.loc.wrap(name))?;
         }
         let exp_ty = ck_exp(cx, st, &val_bind.exp)?;
-        st.subst.unify(dec.loc, pat_ty.clone(), exp_ty)?;
+        st.unify(dec.loc, pat_ty.clone(), exp_ty)?;
         exhaustive::ck_bind(pat, val_bind.pat.loc)?;
         for (name, mut val_info) in other {
           // NOTE could avoid this assert by having ck_pat return not a ValEnv but HashMap<StrRef,
@@ -291,7 +291,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           let mut arg_pat = Vec::with_capacity(info.args.len());
           for (pat, &tv) in case.pats.iter().zip(info.args.iter()) {
             let (ve, pat_ty, new_pat) = pat::ck(cx, st, pat)?;
-            st.subst.unify(pat.loc, Ty::Var(tv), pat_ty)?;
+            st.unify(pat.loc, Ty::Var(tv), pat_ty)?;
             env_merge(&mut pats_val_env, ve, pat.loc)?;
             arg_pat.push(new_pat);
           }
@@ -300,14 +300,14 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           arg_pats.push(begin.span(end).wrap(Pat::record(arg_pat)));
           if let Some(ty) = &case.ret_ty {
             let new_ty = ty::ck(cx, &st.sym_tys, ty)?;
-            st.subst.unify(ty.loc, Ty::Var(info.ret), new_ty)?;
+            st.unify(ty.loc, Ty::Var(info.ret), new_ty)?;
           }
           let mut cx = cx.clone();
           // no dupe checking here - intentionally shadow.
           cx.env.val_env.extend(fun_infos_to_ve(&fun_infos));
           cx.env.val_env.extend(pats_val_env);
           let body_ty = ck_exp(&cx, st, &case.body)?;
-          st.subst.unify(case.body.loc, Ty::Var(info.ret), body_ty)?;
+          st.unify(case.body.loc, Ty::Var(info.ret), body_ty)?;
         }
         let begin = fval_bind.cases.first().unwrap().vid.loc;
         let end = fval_bind.cases.last().unwrap().body.loc;
