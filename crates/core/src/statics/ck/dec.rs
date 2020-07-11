@@ -186,19 +186,17 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
   Ok((arg_ty, res_ty))
 }
 
+/// Returns `Ok(())` iff `name` is not a forbidden binding name. TODO there are more of these in
+/// certain situations
 fn ck_binding(name: Located<StrRef>) -> Result<()> {
-  for &other in [
-    StrRef::TRUE,
-    StrRef::FALSE,
-    StrRef::NIL,
-    StrRef::CONS,
-    StrRef::REF,
-  ]
-  .iter()
+  let val = name.val;
+  if val == StrRef::TRUE
+    || val == StrRef::FALSE
+    || val == StrRef::NIL
+    || val == StrRef::CONS
+    || val == StrRef::REF
   {
-    if name.val == other {
-      return Err(name.loc.wrap(Error::ForbiddenBinding(name.val)));
-    }
+    return Err(name.loc.wrap(Error::ForbiddenBinding(name.val)));
   }
   Ok(())
 }
