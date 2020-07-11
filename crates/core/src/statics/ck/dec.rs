@@ -409,9 +409,9 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
 
 /// SML Definition (17), SML Definition (71). The checking for {datatype, constructor} {bindings,
 /// descriptions} appear to be essentially identical, so we can unite the ASTs and static checking
-/// functions (this function.)
+/// functions (i.e. this function).
 pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -> Result<Env> {
-  // these two are across all dat_binds.
+  // these two are across all `DatBind`s.
   let mut ty_env = TyEnv::default();
   let mut val_env = ValEnv::new();
   // SML Definition (28), SML Definition (81)
@@ -419,11 +419,11 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     if let Some(tv) = dat_bind.ty_vars.first() {
       return Err(tv.loc.wrap(Error::Todo("type variables")));
     }
-    // create a new symbol for the type being generated with this DatBind.
+    // create a new symbol for the type being generated with this `DatBind`.
     let sym = st.new_sym(dat_bind.ty_con);
-    // tell the original context as well as the overall TyEnv that we return that this new datatype
-    // does exist, but tell the State that it has just an empty ValEnv. also perform dupe checking
-    // on the name of the new type and assert for sanity checking after the dupe check.
+    // tell the original context as well as the overall `TyEnv` that we return that this new
+    // datatype does exist, but tell the State that it has just an empty `ValEnv`. also perform dupe
+    // checking on the name of the new type and assert for sanity checking after the dupe check.
     env_ins(&mut cx.env.ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
     cx.ty_names.insert(dat_bind.ty_con.val);
@@ -441,31 +441,32 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         },
       )
       .is_none());
-    // this ValEnv is specific to this DatBind.
+    // this ValEnv is specific to this `DatBind`.
     let mut bind_val_env = ValEnv::new();
     // SML Definition (29), SML Definition (82)
     for con_bind in dat_bind.cons.iter() {
       ck_binding(con_bind.vid)?;
-      // the type being defined in this declaration is `ty`.
+      // if there is no `of t`, then the type of the ctor is just `T`, where `T` is the new sym type
+      // that is being defined.
       let mut ty = Ty::Ctor(Vec::new(), sym);
       if let Some(arg_ty) = &con_bind.ty {
-        // if there is an `of t`, then the type of the ctor is `t -> ty`. otherwise, the type of the
-        // ctor is just `ty`.
-        ty = Ty::Arrow(ty::ck(&cx, &st.sym_tys, arg_ty)?.into(), ty.into());
+        // if there is an `of t`, then the type of the ctor is `t -> T`.
+        let t = ty::ck(&cx, &st.sym_tys, arg_ty)?;
+        ty = Ty::Arrow(t.into(), ty.into());
       }
-      // insert the ValInfo into the _overall_ ValEnv with dupe checking.
+      // insert the `ValInfo` into the _overall_ `ValEnv` with dupe checking.
       env_ins(
         &mut val_env,
         con_bind.vid,
         ValInfo::ctor(TyScheme::mono(ty.clone())),
       )?;
-      // _also_ insert the ValInfo into the DatBind-specific ValEnv, but this time dupe checking is
-      // unnecessary (just assert as a sanity check).
+      // _also_ insert the `ValInfo` into the `DatBind`-specific `ValEnv`, but this time dupe
+      // checking is unnecessary (just assert as a sanity check).
       assert!(bind_val_env
         .insert(con_bind.vid.val, ValInfo::ctor(TyScheme::mono(ty)))
         .is_none());
     }
-    // now the ValEnv is complete, so we may update st.sym_tys with the true definition of this
+    // now the `ValEnv` is complete, so we may update `st.sym_tys` with the true definition of this
     // datatype. assert to check that we inserted the fake answer earlier.
     assert!(st
       .sym_tys
