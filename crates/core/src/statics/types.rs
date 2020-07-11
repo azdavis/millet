@@ -336,6 +336,10 @@ impl Sym {
   pub const fn base(name: StrRef) -> Self {
     Self { name, id: None }
   }
+
+  pub fn is_base(&self) -> bool {
+    self.id.is_none()
+  }
 }
 
 /// A type, for the purposes of static analysis.
@@ -352,7 +356,7 @@ pub enum Ty {
 }
 
 impl Ty {
-  pub const fn base(name: StrRef) -> Self {
+  const fn base(name: StrRef) -> Self {
     Self::Ctor(Vec::new(), Sym::base(name))
   }
 
@@ -444,7 +448,7 @@ pub struct TyScheme {
   pub ty_vars: Vec<TyVar>,
   pub ty: Ty,
   /// See `instantiate` and `statics::get`.
-  pub overload: Option<Vec<StrRef>>,
+  pub overload: Option<Vec<Ty>>,
 }
 
 impl TyScheme {
@@ -831,7 +835,7 @@ pub struct State {
   /// The next symbol ID to hand out.
   next_sym: usize,
   /// The overload constraints. These constraints are solved at the very end.
-  pub overload: Vec<(Loc, TyVar, Vec<StrRef>)>,
+  pub overload: Vec<(Loc, TyVar, Vec<Ty>)>,
   /// The substitution, the unifier of the entire program.
   pub subst: Subst,
   /// The types that 'have been generated' and information about them.

@@ -34,6 +34,15 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
       assert!(iter.next().is_none());
       assert!(!overloads.is_empty());
       assert!(!tv.equality);
+      for ty in overloads {
+        match ty {
+          Ty::Ctor(args, sym) => {
+            assert!(args.is_empty());
+            assert!(sym.is_base());
+          }
+          _ => unreachable!(),
+        }
+      }
       let new_tv = st.new_ty_var(false);
       subst.insert(tv, Ty::Var(new_tv));
       st.overload.push((loc, new_tv, overloads.clone()));

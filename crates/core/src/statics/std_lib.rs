@@ -51,7 +51,7 @@ fn order_val_env() -> ValEnv {
   ]
 }
 
-fn overloaded(st: &mut State, overloads: Vec<StrRef>) -> ValInfo {
+fn overloaded(st: &mut State, overloads: Vec<Ty>) -> ValInfo {
   let a = st.new_ty_var(false);
   ValInfo::val(TyScheme {
     ty_vars: vec![a],
@@ -65,20 +65,14 @@ fn overloaded_cmp(st: &mut State) -> ValInfo {
   ValInfo::val(TyScheme {
     ty_vars: vec![a],
     ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::BOOL.into()),
-    overload: Some(vec![
-      StrRef::INT,
-      StrRef::WORD,
-      StrRef::REAL,
-      StrRef::STRING,
-      StrRef::CHAR,
-    ]),
+    overload: Some(vec![Ty::INT, Ty::WORD, Ty::REAL, Ty::STRING, Ty::CHAR]),
   })
 }
 
 pub fn get() -> (Basis, State) {
-  let real_int = || vec![StrRef::INT, StrRef::REAL];
-  let word_int = || vec![StrRef::INT, StrRef::WORD];
-  let num = || vec![StrRef::INT, StrRef::WORD, StrRef::REAL];
+  let real_int = || vec![Ty::INT, Ty::REAL];
+  let word_int = || vec![Ty::INT, Ty::WORD];
+  let num = || vec![Ty::INT, Ty::WORD, Ty::REAL];
   let mut st = State::default();
   st.sym_tys.insert(
     Sym::base(StrRef::BOOL),
@@ -186,7 +180,7 @@ pub fn get() -> (Basis, State) {
           StrRef::DIV => overloaded(&mut st, word_int()),
           StrRef::MOD => overloaded(&mut st, word_int()),
           StrRef::STAR => overloaded(&mut st, word_int()),
-          StrRef::SLASH => overloaded(&mut st, vec![StrRef::REAL]),
+          StrRef::SLASH => overloaded(&mut st, vec![Ty::REAL]),
           StrRef::PLUS => overloaded(&mut st, num()),
           StrRef::MINUS => overloaded(&mut st, num()),
           // the Definition states these have type numtxt * numtxt -> numtxt but they really should
