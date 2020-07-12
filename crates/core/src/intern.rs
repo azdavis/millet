@@ -1,4 +1,20 @@
 //! String interning.
+//!
+//! There are many times where we want to store or compare user-written strings, for instance when
+//! working with identifiers (which we do a lot). It should be efficient, i.e. O(1), to duplicate a
+//! string and to compare strings for equality.
+//!
+//! However, the String type is heap-allocated, which means duplicating it results in a new heap
+//! allocation. Further, comparing Strings for equality is O(min(len(s1), len(s2))).
+//!
+//! To solve this, we "intern" all user-written strings. When we see a new user-written String, we
+//! generate a new StrRef for it and return that StrRef. If we later see the same String, we return
+//! the same StrRef. Then, string comparison is just seeing if the IDs are equal, which is O(1)
+//! since the IDs are just integers. Duplicating a string is just duplicating its StrRef, which is
+//! again O(1).
+//!
+//! But, we may want to later actually display the string referenced by an ID, for instance in an
+//! error message. For that, we must look up the String referenced by the StrRef.
 
 use maplit::hashmap;
 use std::collections::HashMap;
