@@ -252,10 +252,11 @@ impl Subst {
   /// Insert a new TyVar => Ty mapping into this Subst. Updates all current mappings to have the
   /// information contained by this new mapping. Panics if this TyVar already mapped to something.
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {
+    let subst = Self {
+      inner: hashmap![tv => ty.clone()],
+    };
     for other in self.inner.values_mut() {
-      other.apply(&Self {
-        inner: hashmap![tv => ty.clone()],
-      });
+      other.apply(&subst);
     }
     assert!(self.inner.insert(tv, ty).is_none());
   }
