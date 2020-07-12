@@ -846,15 +846,16 @@ impl Basis {
 /// constantly being mutably, additively updated as we go.
 #[derive(Default)]
 pub struct State {
-  /// The next type variable ID to hand out.
+  /// The next type variable ID to hand out. Invariant: Always increases.
   next_ty_var: usize,
-  /// The next symbol ID to hand out.
+  /// The next symbol ID to hand out. Invariant: Always increase.
   next_sym: usize,
   /// The overload constraints. These constraints are solved at the very end.
   pub overload: Vec<(Loc, TyVar, Vec<Ty>)>,
-  /// The substitution, the unifier of the entire program.
+  /// The substitution, the unifier of the entire program. Invariant: Always grows in size.
   pub subst: Subst,
-  /// The types that 'have been generated' and information about them.
+  /// The types that 'have been generated' and information about them. Invariant: Always grows in
+  /// size.
   pub sym_tys: SymTys,
 }
 
