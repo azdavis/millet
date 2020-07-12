@@ -209,11 +209,11 @@ pub enum Item {
 impl fmt::Display for Item {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::Val => write!(f, "value"),
-      Self::Ty => write!(f, "type"),
-      Self::Struct => write!(f, "structure"),
-      Self::Sig => write!(f, "signature"),
-      Self::Functor => write!(f, "functor"),
+      Self::Val => f.write_str("value"),
+      Self::Ty => f.write_str("type"),
+      Self::Struct => f.write_str("structure"),
+      Self::Sig => f.write_str("signature"),
+      Self::Functor => f.write_str("functor"),
     }
   }
 }
