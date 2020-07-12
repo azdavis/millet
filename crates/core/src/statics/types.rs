@@ -473,11 +473,15 @@ impl TyScheme {
   }
 
   pub fn apply(&mut self, subst: &Subst) {
-    let mut subst = subst.clone();
-    for tv in self.ty_vars.iter() {
-      subst.inner.remove(tv);
+    if self.ty_vars.iter().any(|tv| subst.inner.contains_key(tv)) {
+      let mut subst = subst.clone();
+      for tv in self.ty_vars.iter() {
+        subst.inner.remove(tv);
+      }
+      self.ty.apply(&subst)
+    } else {
+      self.ty.apply(subst);
     }
-    self.ty.apply(&subst)
   }
 
   pub fn free_ty_vars(&self) -> TyVarSet {
