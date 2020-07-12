@@ -2,7 +2,7 @@
 
 use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use crate::intern::StrRef;
-use crate::loc::{Loc, Located};
+use crate::loc::Located;
 use crate::statics::ck::util::{
   env_ins, env_merge, generalize, get_env, get_ty_info, get_val_info, instantiate,
 };
@@ -137,7 +137,8 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     // SML Definition (10)
     Exp::Handle(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
-      let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
+      let (pats, arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      exhaustive::ck_handle(pats)?;
       st.unify(exp.loc, Ty::EXN, arg_ty)?;
       st.unify(exp.loc, head_ty.clone(), res_ty)?;
       Ok(head_ty)
@@ -161,20 +162,22 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     // SML Definition Appendix A - `case` is sugar for application to a `fn`
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
-      let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
+      let (pats, arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      exhaustive::ck_match(pats, exp.loc)?;
       st.unify(exp.loc, head_ty, arg_ty)?;
       Ok(res_ty)
     }
     // SML Definition (12)
     Exp::Fn(cases) => {
-      let (arg_ty, res_ty) = ck_cases(cx, st, cases, exp.loc)?;
+      let (pats, arg_ty, res_ty) = ck_cases(cx, st, cases)?;
+      exhaustive::ck_match(pats, exp.loc)?;
       Ok(Ty::Arrow(arg_ty.into(), res_ty.into()))
     }
   }
 }
 
 /// SML Definition (13)
-fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<(Ty, Ty)> {
+fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Vec<Located<Pat>>, Ty, Ty)> {
   let arg_ty = Ty::Var(st.new_ty_var(false));
   let res_ty = Ty::Var(st.new_ty_var(false));
   let mut pats = Vec::with_capacity(cases.arms.len());
@@ -191,8 +194,7 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>, loc: Loc) -> Result<
     st.unify(arm.pat.loc, arg_ty.clone(), pat_ty)?;
     st.unify(arm.exp.loc, res_ty.clone(), exp_ty)?;
   }
-  exhaustive::ck_match(pats, loc)?;
-  Ok((arg_ty, res_ty))
+  Ok((pats, arg_ty, res_ty))
 }
 
 /// Returns `Ok(())` iff `name` is not a forbidden binding name. TODO there are more of these in

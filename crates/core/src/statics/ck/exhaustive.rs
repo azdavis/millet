@@ -37,6 +37,14 @@ pub fn ck_bind(pat: Pat, loc: Loc) -> Result<()> {
   }
 }
 
+/// Returns `Ok(())` iff the pats are not redundant.
+pub fn ck_handle(pats: Vec<Located<Pat>>) -> Result<()> {
+  match ck(pats) {
+    Res::Exhaustive | Res::NonExhaustive => Ok(()),
+    Res::Unreachable(loc) => Err(loc.wrap(Error::UnreachablePattern)),
+  }
+}
+
 /// A description of an object being matched (the "match head"). We use this to cumulatively record
 /// information about the match head as we see more patterns.
 #[derive(Clone)]
