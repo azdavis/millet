@@ -469,7 +469,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       ck_binding(con_bind.vid)?;
       // if there is no `of t`, then the type of the ctor is just `T`, where `T` is the new sym type
       // that is being defined.
-      let mut ty = Ty::Ctor(Vec::new(), sym);
+      let mut ty = st.sym_tys.get(&sym).unwrap().ty_fcn.ty.clone();
       if let Some(arg_ty) = &con_bind.ty {
         // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
         // `T` respects equality based on whether `t` does. TODO this check becomes harder once we
@@ -478,17 +478,12 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         equality = equality && t.is_equality(&st.sym_tys);
         ty = Ty::Arrow(t.into(), ty.into());
       }
+      let val_info = ValInfo::ctor(TyScheme::mono(ty));
       // insert the `ValInfo` into the _overall_ `ValEnv` with dupe checking.
-      env_ins(
-        &mut val_env,
-        con_bind.vid,
-        ValInfo::ctor(TyScheme::mono(ty.clone())),
-      )?;
+      env_ins(&mut val_env, con_bind.vid, val_info.clone())?;
       // _also_ insert the `ValInfo` into the `DatBind`-specific `ValEnv`, but this time dupe
       // checking is unnecessary (just assert as a sanity check).
-      assert!(bind_val_env
-        .insert(con_bind.vid.val, ValInfo::ctor(TyScheme::mono(ty)))
-        .is_none());
+      assert!(bind_val_env.insert(con_bind.vid.val, val_info).is_none());
     }
     // now the `ValEnv` is complete, so we may update `st.sym_tys` with the true definition of this
     // datatype. TODO closure?
