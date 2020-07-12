@@ -491,18 +491,10 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         .is_none());
     }
     // now the `ValEnv` is complete, so we may update `st.sym_tys` with the true definition of this
-    // datatype. assert to check that we inserted the fake answer earlier. TODO closure?
-    assert!(st
-      .sym_tys
-      .insert(
-        sym,
-        SymTyInfo {
-          ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
-          val_env: bind_val_env,
-          equality,
-        },
-      )
-      .is_some());
+    // datatype. TODO closure?
+    let sym_ty_info = st.sym_tys.get_mut(&sym).unwrap();
+    sym_ty_info.val_env = bind_val_env;
+    sym_ty_info.equality = equality;
   }
   Ok(Env {
     ty_env,
