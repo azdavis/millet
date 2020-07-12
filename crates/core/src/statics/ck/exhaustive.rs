@@ -17,7 +17,7 @@
 
 use crate::loc::{Loc, Located};
 use crate::statics::types::{Con, Error, Pat, Result, Span};
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 
 /// Returns `Ok(())` iff the pats are exhaustive and not redundant.
 pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
@@ -91,10 +91,10 @@ struct Arg {
 /// The work list. The back of the list is the next item to be processed (it's a stack).
 type Work = Vec<WorkItem>;
 
-/// The context, passed along through most of the main functions. This is an ordered set of the
-/// locations of the patterns of the match. As we determine a pattern is reachable, we remove its
-/// `Loc` from this set. At the end, the set contains the locations of all unreachable patterns.
-type Cx = BTreeSet<Loc>;
+/// The context, passed along through most of the main functions. This is an set of the locations of
+/// the patterns of the match. As we determine a pattern is reachable, we remove its `Loc` from this
+/// set. At the end, the set contains the locations of all unreachable patterns.
+type Cx = HashSet<Loc>;
 
 /// The patterns, created from an `into_iter()` call on the passed-in `Vec<Located<Pat>>`.
 type Pats = std::vec::IntoIter<Located<Pat>>;
@@ -113,7 +113,8 @@ enum Res {
 fn ck(pats: Vec<Located<Pat>>) -> Res {
   let mut cx: Cx = pats.iter().map(|x| x.loc).collect();
   if fail(&mut cx, Desc::Neg(vec![]), pats.into_iter()) {
-    match cx.into_iter().next() {
+    // Must choose the minimum loc to get the first unreachable pattern.
+    match cx.into_iter().min() {
       None => Res::Exhaustive,
       Some(loc) => Res::Unreachable(loc),
     }
