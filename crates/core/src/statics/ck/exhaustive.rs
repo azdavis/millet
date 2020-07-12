@@ -21,13 +21,20 @@ use std::collections::BTreeSet;
 
 /// Returns `Ok(())` iff the pats are exhaustive and not redundant.
 pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
-  ck(pats, loc, Error::NonExhaustiveMatch)
+  match ck(pats) {
+    Res::Exhaustive => Ok(()),
+    Res::NonExhaustive => Err(loc.wrap(Error::NonExhaustiveMatch)),
+    Res::Unreachable(loc) => Err(loc.wrap(Error::UnreachablePattern)),
+  }
 }
 
-/// Returns `Ok(())` iff the singular pat is exhaustive and not redundant. (Well, of course it won't
-/// be redundant.)
+/// Returns `Ok(())` iff the singular pat is exhaustive.
 pub fn ck_bind(pat: Pat, loc: Loc) -> Result<()> {
-  ck(vec![loc.wrap(pat)], loc, Error::NonExhaustiveBinding)
+  match ck(vec![loc.wrap(pat)]) {
+    Res::Exhaustive => Ok(()),
+    Res::NonExhaustive => Err(loc.wrap(Error::NonExhaustiveBinding)),
+    Res::Unreachable(_) => unreachable!(),
+  }
 }
 
 /// A description of an object being matched (the "match head"). We use this to cumulatively record
@@ -84,16 +91,26 @@ type Cx = BTreeSet<Loc>;
 /// The patterns, created from an `into_iter()` call on the passed-in `Vec<Located<Pat>>`.
 type Pats = std::vec::IntoIter<Located<Pat>>;
 
-/// A wrapper function which each of the two exported functions actually calls.
-fn ck(pats: Vec<Located<Pat>>, loc: Loc, e: Error) -> Result<()> {
+/// A determination of what the patterns were.
+enum Res {
+  /// They were exhaustive.
+  Exhaustive,
+  /// They were not exhaustive.
+  NonExhaustive,
+  /// There was a pattern which can never be reached.
+  Unreachable(Loc),
+}
+
+/// The main function, which the exported functions ultimately call.
+fn ck(pats: Vec<Located<Pat>>) -> Res {
   let mut cx: Cx = pats.iter().map(|x| x.loc).collect();
   if fail(&mut cx, Desc::Neg(vec![]), pats.into_iter()) {
     match cx.into_iter().next() {
-      None => Ok(()),
-      Some(loc) => Err(loc.wrap(Error::UnreachablePattern)),
+      None => Res::Exhaustive,
+      Some(loc) => Res::Unreachable(loc),
     }
   } else {
-    Err(loc.wrap(e))
+    Res::NonExhaustive
   }
 }
 
