@@ -8,7 +8,7 @@ use crate::ast::Long;
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Env, Error, Item, Result, State, Subst, SymTys, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
+  Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
 };
 use std::collections::BTreeMap;
 
@@ -45,7 +45,7 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
       }
       let new_tv = st.new_ty_var(false);
       subst.insert(tv, Ty::Var(new_tv));
-      st.overload.push((loc, new_tv, overloads.clone()));
+      st.overload.insert(new_tv, (loc, overloads.clone()));
     }
   }
   let mut ty = ty_scheme.ty.clone();
@@ -54,16 +54,20 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
 }
 
 /// Mutates the TyScheme, which has no type variables, to bind all free type variables in the type
-/// in this TyScheme, except for those type variables which are free in the TyEnv.
-pub fn generalize(ty_env: &TyEnv, sym_tys: &SymTys, ty_scheme: &mut TyScheme) {
+/// in this TyScheme, except for those type variables which are either free in the TyEnv, or are
+/// overloaded type variables as noted by the State.
+pub fn generalize(st: &State, ty_env: &TyEnv, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.ty_vars.is_empty());
   assert!(ty_scheme.overload.is_none());
-  ty_scheme.ty_vars = ty_scheme
-    .ty
-    .free_ty_vars()
-    .difference(&ty_env.free_ty_vars(sym_tys))
-    .copied()
-    .collect();
+  // could just be `ty_scheme.apply` by the above assert.
+  ty_scheme.ty.apply(&st.subst);
+  let ty_env_ty_vars = ty_env.free_ty_vars(&st.sym_tys);
+  for tv in ty_scheme.ty.free_ty_vars() {
+    if ty_env_ty_vars.contains(&tv) || st.overload.contains_key(&tv) {
+      continue;
+    }
+    ty_scheme.ty_vars.push(tv);
+  }
 }
 
 /// Returns `Ok(e)` iff `env` contains the environment `e` after traversing the `StrEnv`s of `env`

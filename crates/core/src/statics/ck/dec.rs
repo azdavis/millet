@@ -249,7 +249,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           // the ValEnv returned from ck_pat are mono.
           assert!(val_info.ty_scheme.ty_vars.is_empty());
           val_info.ty_scheme.ty.apply(&st.subst);
-          generalize(&cx.env.ty_env, &st.sym_tys, &mut val_info.ty_scheme);
+          generalize(st, &cx.env.ty_env, &mut val_info.ty_scheme);
           env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
         }
       }
@@ -315,8 +315,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       let mut val_env = fun_infos_to_ve(&fun_infos);
       for val_info in val_env.values_mut() {
-        val_info.ty_scheme.ty.apply(&st.subst);
-        generalize(&cx.env.ty_env, &st.sym_tys, &mut val_info.ty_scheme);
+        generalize(st, &cx.env.ty_env, &mut val_info.ty_scheme);
       }
       Ok(val_env.into())
     }

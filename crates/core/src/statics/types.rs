@@ -856,7 +856,7 @@ pub struct State {
   /// The next symbol ID to hand out. Invariant: Always increase.
   next_sym: usize,
   /// The overload constraints. These constraints are solved at the very end.
-  pub overload: Vec<(Loc, TyVar, Vec<Ty>)>,
+  pub overload: HashMap<TyVar, (Loc, Vec<Ty>)>,
   /// The substitution, the unifier of the entire program. Invariant: Always grows in size.
   pub subst: Subst,
   /// The types that 'have been generated' and information about them. Invariant: Always grows in

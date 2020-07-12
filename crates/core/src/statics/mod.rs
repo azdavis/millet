@@ -19,7 +19,7 @@ pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
   for top_dec in top_decs {
     ck::ck_top_dec(&mut bs, &mut st, top_dec)?;
   }
-  'outer: for (loc, tv, overloads) in st.overload {
+  'outer: for (tv, (loc, overloads)) in st.overload {
     for ty in overloads {
       let mut pre = st.subst.clone();
       if let Ok(()) = pre.unify(loc, &st.sym_tys, Ty::Var(tv), ty) {
