@@ -78,17 +78,21 @@ fn run() -> bool {
   if args.just_ast {
     return true;
   }
+  let mut s = statics::Statics::new();
   for (id, xs) in top_decs {
-    match statics::get(&xs) {
-      Ok(()) => {}
-      Err(e) => {
-        let diag = simple(e.val.message(&store), id, e.loc);
-        term::emit(&mut w, &config, &src, &diag).unwrap();
-        writeln!(&mut w, "typechecking failed").unwrap();
-        return false;
+    for x in xs {
+      match s.get(&x) {
+        Ok(()) => {}
+        Err(e) => {
+          let diag = simple(e.val.message(&store), id, e.loc);
+          term::emit(&mut w, &config, &src, &diag).unwrap();
+          writeln!(&mut w, "typechecking failed").unwrap();
+          return false;
+        }
       }
     }
   }
+  s.finish();
   if !args.quiet {
     writeln!(&mut w, "no errors").unwrap();
   }

@@ -113,10 +113,14 @@ fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
     Ok(x) => x,
     Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
   };
-  match statics::get(&top_decs) {
-    Ok(()) => None,
-    Err(e) => Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
+  let mut s = statics::Statics::new();
+  for top_dec in top_decs {
+    match s.get(&top_dec) {
+      Ok(()) => {}
+      Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
+    }
   }
+  None
 }
 
 fn mk_diagnostic(bs: &[u8], loc: Loc, message: String) -> Diagnostic {

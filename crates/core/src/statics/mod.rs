@@ -11,15 +11,31 @@ mod types;
 use crate::ast::TopDec;
 use crate::intern::StrRef;
 use crate::loc::Located;
-use crate::statics::types::Result;
+use crate::statics::types::{Basis, Result, State};
 
-/// Performs static analysis. Returns `Ok(())` iff everything typechecks.
-pub fn get(top_decs: &[Located<TopDec<StrRef>>]) -> Result<()> {
-  let (mut bs, mut st) = std_lib::get();
-  for top_dec in top_decs {
-    ck::ck_top_dec(&mut bs, &mut st, top_dec)?;
+/// The data computed when running static analysis.
+pub struct Statics {
+  bs: Basis,
+  st: State,
+}
+
+impl Statics {
+  #[allow(clippy::new_without_default)]
+  /// Returns the initial information to begin running the statics.
+  pub fn new() -> Self {
+    let (bs, st) = std_lib::get();
+    Self { bs, st }
   }
-  bs.apply(&st.subst, &mut st.sym_tys);
-  assert!(bs.free_ty_vars(&st.sym_tys).is_empty());
-  Ok(())
+
+  /// Performs static analysis on a top-level declaration. Returns `Ok(())` iff everything
+  /// typechecks.
+  pub fn get(&mut self, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
+    ck::ck_top_dec(&mut self.bs, &mut self.st, top_dec)
+  }
+
+  /// Finish running the statics.
+  pub fn finish(mut self) {
+    self.bs.apply(&self.st.subst, &mut self.st.sym_tys);
+    assert!(self.bs.free_ty_vars(&self.st.sym_tys).is_empty());
+  }
 }
