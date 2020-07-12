@@ -93,10 +93,21 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     Exp::App(func, arg) => {
       let func_ty = ck_exp(cx, st, func)?;
       let arg_ty = ck_exp(cx, st, arg)?;
-      let ret_ty = Ty::Var(st.new_ty_var(false));
-      let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
-      st.unify(exp.loc, func_ty, arrow_ty)?;
-      Ok(ret_ty)
+      // we don't actually _need_ to case on func_ty, since the Var case is actually correct for
+      // _all_ types. we just do this to produce better error messages in the Record and Ctor cases.
+      match func_ty {
+        Ty::Var(_) => {
+          let ret_ty = Ty::Var(st.new_ty_var(false));
+          let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
+          st.unify(exp.loc, func_ty, arrow_ty)?;
+          Ok(ret_ty)
+        }
+        Ty::Arrow(func_arg_ty, func_ret_ty) => {
+          st.unify(exp.loc, *func_arg_ty, arg_ty)?;
+          Ok(*func_ret_ty)
+        }
+        Ty::Record(_) | Ty::Ctor(_, _) => Err(exp.loc.wrap(Error::NotArrowTy(func_ty))),
+      }
     }
     // SML Definition (8). Infix application is the same as `op`ing the infix operator and applying
     // it to a tuple (lhs, rhs).

@@ -1,0 +1,7 @@
+error: not a function type: int
+  ┌─ err.sml:1:9
+  │
+1 │ val _ = 3 3
+  │         ^^^
+
+typechecking failed

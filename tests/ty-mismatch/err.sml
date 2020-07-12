@@ -1,1 +1,2 @@
-val _ = 3 4
+fun f x = x + 1
+val _ = f false

@@ -1,0 +1,7 @@
+error: mismatched types: expected unit, found int -> int -> int -> bool
+  ┌─ err.sml:6:3
+  │
+6 │   f: unit;
+  │   ^^^^^^^
+
+typechecking failed
