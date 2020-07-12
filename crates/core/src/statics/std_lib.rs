@@ -60,6 +60,15 @@ fn overloaded(st: &mut State, overloads: Vec<Ty>) -> ValInfo {
   })
 }
 
+fn overloaded_one(st: &mut State, overloads: Vec<Ty>) -> ValInfo {
+  let a = st.new_ty_var(false);
+  ValInfo::val(TyScheme {
+    ty_vars: vec![a],
+    ty: Ty::Arrow(Ty::Var(a).into(), Ty::Var(a).into()),
+    overload: Some(overloads),
+  })
+}
+
 fn overloaded_cmp(st: &mut State) -> ValInfo {
   let a = st.new_ty_var(false);
   ValInfo::val(TyScheme {
@@ -191,11 +200,11 @@ pub fn get() -> (Basis, State) {
           StrRef::ASSIGN => assign,
           StrRef::MATCH => ValInfo::exn(),
           StrRef::BIND => ValInfo::exn(),
-          StrRef::ABS => overloaded(&mut st, real_int()),
-          StrRef::TILDE => overloaded(&mut st, real_int()),
+          StrRef::ABS => overloaded_one(&mut st, real_int()),
+          StrRef::TILDE => overloaded_one(&mut st, real_int()),
           StrRef::DIV => overloaded(&mut st, word_int()),
           StrRef::MOD => overloaded(&mut st, word_int()),
-          StrRef::STAR => overloaded(&mut st, word_int()),
+          StrRef::STAR => overloaded(&mut st, num()),
           StrRef::SLASH => overloaded(&mut st, vec![Ty::REAL]),
           StrRef::PLUS => overloaded(&mut st, num()),
           StrRef::MINUS => overloaded(&mut st, num()),
