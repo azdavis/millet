@@ -199,20 +199,20 @@ fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
 pub type Result<T> = std::result::Result<T, Located<Error>>;
 
 pub enum Item {
-  Value,
-  Type,
-  Structure,
-  Signature,
+  Val,
+  Ty,
+  Struct,
+  Sig,
   Functor,
 }
 
 impl fmt::Display for Item {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::Value => write!(f, "value"),
-      Self::Type => write!(f, "type"),
-      Self::Structure => write!(f, "structure"),
-      Self::Signature => write!(f, "signature"),
+      Self::Val => write!(f, "value"),
+      Self::Ty => write!(f, "type"),
+      Self::Struct => write!(f, "structure"),
+      Self::Sig => write!(f, "signature"),
       Self::Functor => write!(f, "functor"),
     }
   }

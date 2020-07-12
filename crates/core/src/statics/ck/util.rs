@@ -75,7 +75,7 @@ pub fn generalize(st: &State, ty_env: &TyEnv, ty_scheme: &mut TyScheme) {
 pub fn get_env<'env>(mut env: &'env Env, long: &Long<StrRef>) -> Result<&'env Env> {
   for &s in long.structures.iter() {
     env = match env.str_env.get(&s.val) {
-      None => return Err(s.loc.wrap(Error::Undefined(Item::Structure, s.val))),
+      None => return Err(s.loc.wrap(Error::Undefined(Item::Struct, s.val))),
       Some(x) => x,
     }
   }
@@ -85,7 +85,7 @@ pub fn get_env<'env>(mut env: &'env Env, long: &Long<StrRef>) -> Result<&'env En
 /// Returns `Ok(vi)` iff `env` contains `vi` in its `ValEnv`.
 pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   match env.val_env.get(&name.val) {
-    None => Err(name.loc.wrap(Error::Undefined(Item::Value, name.val))),
+    None => Err(name.loc.wrap(Error::Undefined(Item::Val, name.val))),
     Some(val_info) => Ok(val_info),
   }
 }
@@ -93,7 +93,7 @@ pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
 /// Returns `Ok(ti)` iff `env` contains `ti` in its `TyEnv`.
 pub fn get_ty_info(env: &Env, name: Located<StrRef>) -> Result<&TyInfo> {
   match env.ty_env.inner.get(&name.val) {
-    None => Err(name.loc.wrap(Error::Undefined(Item::Type, name.val))),
+    None => Err(name.loc.wrap(Error::Undefined(Item::Ty, name.val))),
     Some(ty_info) => Ok(ty_info),
   }
 }

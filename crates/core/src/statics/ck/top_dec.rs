@@ -64,7 +64,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
     // SML Definition (51)
     StrExp::LongStrId(long) => match get_env(&bs.env, long)?.str_env.get(&long.last.val) {
       None => {
-        let err = Error::Undefined(Item::Structure, long.last.val);
+        let err = Error::Undefined(Item::Struct, long.last.val);
         Err(long.last.loc.wrap(err))
       }
       Some(env) => Ok(env.clone()),
@@ -128,7 +128,7 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> 
     // SML Definition (63)
     SigExp::SigId(sig_id) => match bs.sig_env.get(&sig_id.val) {
       None => {
-        let err = Error::Undefined(Item::Signature, sig_id.val);
+        let err = Error::Undefined(Item::Sig, sig_id.val);
         Err(sig_id.loc.wrap(err))
       }
       Some(sig) => {
