@@ -19,10 +19,8 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
   // the parser and SML Definition (7) is handled by having atomic and non-atomic expressions be
   // part of the same enum.
   match &exp.val {
-    Exp::DecInt(_) => Ok(Ty::INT),
-    Exp::HexInt(_) => Ok(Ty::INT),
-    Exp::DecWord(_) => Ok(Ty::WORD),
-    Exp::HexWord(_) => Ok(Ty::WORD),
+    Exp::DecInt(_) | Exp::HexInt(_) => Ok(Ty::INT),
+    Exp::DecWord(_) | Exp::HexWord(_) => Ok(Ty::WORD),
     Exp::Real(_) => Ok(Ty::REAL),
     Exp::String(_) => Ok(Ty::STRING),
     Exp::Char(_) => Ok(Ty::CHAR),

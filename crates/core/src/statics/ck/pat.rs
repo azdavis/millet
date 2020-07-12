@@ -17,10 +17,10 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
   // and non-atomic Pats are both in the same enum.
   match &pat.val {
     AstPat::Wildcard => Ok((ValEnv::new(), Ty::Var(st.new_ty_var(false)), Pat::Anything)),
-    AstPat::DecInt(n) => Ok((ValEnv::new(), Ty::INT, Pat::zero(Con::Int(*n)))),
-    AstPat::HexInt(n) => Ok((ValEnv::new(), Ty::INT, Pat::zero(Con::Int(*n)))),
-    AstPat::DecWord(n) => Ok((ValEnv::new(), Ty::WORD, Pat::zero(Con::Word(*n)))),
-    AstPat::HexWord(n) => Ok((ValEnv::new(), Ty::WORD, Pat::zero(Con::Word(*n)))),
+    AstPat::DecInt(n) | AstPat::HexInt(n) => Ok((ValEnv::new(), Ty::INT, Pat::zero(Con::Int(*n)))),
+    AstPat::DecWord(n) | AstPat::HexWord(n) => {
+      Ok((ValEnv::new(), Ty::WORD, Pat::zero(Con::Word(*n))))
+    }
     AstPat::String(s) => Ok((ValEnv::new(), Ty::STRING, Pat::zero(Con::String(*s)))),
     AstPat::Char(c) => Ok((ValEnv::new(), Ty::CHAR, Pat::zero(Con::Char(*c)))),
     AstPat::LongVid(vid) => {
