@@ -1,0 +1,7 @@
+error: no suitable overload found
+  ┌─ err.sml:1:11
+  │
+1 │ val add = op+
+  │           ^^^
+
+typechecking failed
