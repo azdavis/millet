@@ -1,0 +1,7 @@
+error: mismatched types: expected int, found real
+  ┌─ err.sml:3:9
+  │
+3 │ val _ = add (1.1, 2.2)
+  │         ^^^^^^^^^^^^^^
+
+typechecking failed

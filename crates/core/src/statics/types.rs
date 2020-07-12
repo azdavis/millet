@@ -855,7 +855,8 @@ pub struct State {
   next_ty_var: usize,
   /// The next symbol ID to hand out. Invariant: Always increase.
   next_sym: usize,
-  /// The overload constraints. These constraints are solved at the very end.
+  /// The overload constraints. These constraints are solved after each `TopDec`. Invariant: Is
+  /// always empty when the `State` is passed to `top_dec::ck`.
   pub overload: HashMap<TyVar, (Loc, Vec<Ty>)>,
   /// The substitution, the unifier of the entire program. Invariant: Always grows in size.
   pub subst: Subst,

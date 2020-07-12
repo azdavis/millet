@@ -38,6 +38,16 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
       bs.add_fun_env(fun_env);
     }
   }
+  'outer: for (tv, (loc, overloads)) in std::mem::take(&mut st.overload) {
+    for ty in overloads {
+      let mut pre = st.subst.clone();
+      if let Ok(()) = pre.unify(loc, &st.sym_tys, Ty::Var(tv), ty) {
+        st.subst = pre;
+        continue 'outer;
+      }
+    }
+    return Err(loc.wrap(Error::NoSuitableOverload));
+  }
   Ok(())
 }
 
