@@ -424,7 +424,10 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
   // these two are across all `DatBind`s.
   let mut ty_env = TyEnv::default();
   let mut val_env = ValEnv::new();
-  // SML Definition (28), SML Definition (81)
+  // we must first generate new symbols for _all_ the types being defined, since they are allowed to
+  // reference each other. (apparently? according to SML NJ, but it seems like the Definition does
+  // not indicate this, according to my reading of e.g. SML Definition (28).)
+  let mut syms = Vec::new();
   for dat_bind in dat_binds {
     if let Some(tv) = dat_bind.ty_vars.first() {
       return Err(tv.loc.wrap(Error::Todo("type variables")));
@@ -454,6 +457,10 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         },
       )
       .is_none());
+    syms.push(sym);
+  }
+  // SML Definition (28), SML Definition (81)
+  for (dat_bind, sym) in dat_binds.iter().zip(syms) {
     // this ValEnv is specific to this `DatBind`.
     let mut bind_val_env = ValEnv::new();
     let mut equality = true;
@@ -484,7 +491,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         .is_none());
     }
     // now the `ValEnv` is complete, so we may update `st.sym_tys` with the true definition of this
-    // datatype. assert to check that we inserted the fake answer earlier.
+    // datatype. assert to check that we inserted the fake answer earlier. TODO closure?
     assert!(st
       .sym_tys
       .insert(
