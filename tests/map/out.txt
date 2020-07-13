@@ -1,0 +1,7 @@
+error: mismatched types: expected unit, found (('t53 -> 't52) -> 't53 option -> 't52 option) * (('t54 -> 't55) -> 't54 list -> 't55 list)
+   ┌─ err.sml:13:1
+   │
+13 │ val _: unit = (option_map, list_map)
+   │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+typechecking failed

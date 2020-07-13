@@ -1,0 +1,7 @@
+error: mismatched types: expected 't22, found int
+  ┌─ err.sml:1:29
+  │
+1 │ fun 'a f (id: 'a -> 'a) x = id x + 1
+  │                             ^^^^^^^^
+
+typechecking failed

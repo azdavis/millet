@@ -1,0 +1,7 @@
+error: mismatched types: expected int, found bool
+  ┌─ err.sml:2:9
+  │
+2 │ val _ = apply op+ (1, false)
+  │         ^^^^^^^^^^^^^^^^^^^^
+
+typechecking failed

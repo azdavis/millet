@@ -1,0 +1,7 @@
+error: mismatched types: expected unit, found 't27 -> 't27 bad
+  ┌─ err.sml:4:1
+  │
+4 │ val _: unit = Bad
+  │ ^^^^^^^^^^^^^^^^^
+
+typechecking failed

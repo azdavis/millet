@@ -1,0 +1,7 @@
+error: mismatched types: expected unit, found ('t30 -> 't29) * 't30 -> 't29
+  ┌─ err.sml:2:1
+  │
+2 │ val _: unit = apply
+  │ ^^^^^^^^^^^^^^^^^^^
+
+typechecking failed
