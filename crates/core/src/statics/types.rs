@@ -15,6 +15,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
 /// An error encountered during static analysis.
+#[derive(Debug)]
 #[allow(missing_docs)]
 pub enum Error {
   Undefined(Item, StrRef),
@@ -199,6 +200,7 @@ fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
 /// A specialized Result type that many functions doing static analysis return.
 pub type Result<T> = std::result::Result<T, Located<Error>>;
 
+#[derive(Debug)]
 pub enum Item {
   Val,
   Ty,
@@ -575,7 +577,7 @@ impl TyEnv {
   }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IdStatus {
   Ctor,
   Exn,
