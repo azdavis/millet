@@ -244,9 +244,11 @@ impl fmt::Debug for TyVar {
 /// A substitution, a mapping from type variables to types. The types themselves may be other type
 /// variables, but for all 'output' types in the substitution, there exists no type variable in any
 /// 'output' type which is already mapped to something else in this substitution.
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Subst {
   inner: HashMap<TyVar, Ty>,
+  /// Used for user-annotated type variables which may not be substituted for arbitrary types.
+  bound: HashSet<TyVar>,
 }
 
 impl Subst {
@@ -256,12 +258,33 @@ impl Subst {
     self.inner.keys()
   }
 
+  /// Mark a type variable as bound. This type variable will not be allowed to be substituted for
+  /// anything in this `Subst` until `remove_bound` is called. Panics if this was already marked as
+  /// bound or if maps to a `Ty`.
+  pub fn add_bound(&mut self, tv: TyVar) {
+    assert!(!self.inner.contains_key(&tv));
+    assert!(self.bound.insert(tv));
+  }
+
+  /// Un-mark a type variable as bound. This will allow the type variable to be substituted in this
+  /// `Subst` as normal. Panics if this was not already marked as bound or if it maps to a `Ty`.
+  pub fn remove_bound(&mut self, tv: &TyVar) {
+    assert!(!self.inner.contains_key(tv));
+    assert!(self.bound.remove(tv));
+  }
+
+  /// Returns whether the type variable is bound in this `Subst`.
+  pub fn is_bound(&self, tv: &TyVar) -> bool {
+    self.bound.contains(tv)
+  }
+
   /// Insert a new `TyVar` to `Ty` mapping into this `Subst`. Updates all current mappings to have
   /// the information contained by this new mapping. Panics if this `TyVar` already mapped to
   /// something.
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {
     let subst = Self {
       inner: hashmap![tv => ty.clone()],
+      bound: hashset![],
     };
     for other in self.inner.values_mut() {
       other.apply(&subst);
@@ -277,16 +300,35 @@ impl Subst {
     got.apply(self);
     match (want, got) {
       (Ty::Var(want), Ty::Var(got)) => {
+        let want_bound = self.is_bound(&want);
+        let got_bound = self.is_bound(&got);
         if want == got {
+          assert_eq!(want_bound, got_bound);
           Ok(())
-        } else if want.equality {
+        } else if want_bound && got_bound {
+          Err(loc.wrap(Error::TyMismatch(Ty::Var(want), Ty::Var(got))))
+        } else if want_bound || (!got_bound && want.equality) {
+          assert!(!got_bound);
           self.bind(loc, sym_tys, got, Ty::Var(want))
         } else {
+          assert!(!want_bound);
           self.bind(loc, sym_tys, want, Ty::Var(got))
         }
       }
-      (Ty::Var(tv), got) => self.bind(loc, sym_tys, tv, got),
-      (want, Ty::Var(tv)) => self.bind(loc, sym_tys, tv, want),
+      (Ty::Var(tv), got) => {
+        if self.is_bound(&tv) {
+          Err(loc.wrap(Error::TyMismatch(Ty::Var(tv), got)))
+        } else {
+          self.bind(loc, sym_tys, tv, got)
+        }
+      }
+      (want, Ty::Var(tv)) => {
+        if self.is_bound(&tv) {
+          Err(loc.wrap(Error::TyMismatch(want, Ty::Var(tv))))
+        } else {
+          self.bind(loc, sym_tys, tv, want)
+        }
+      }
       (Ty::Record(rows_want), Ty::Record(mut rows_got)) => {
         if !eq_iter(rows_want.keys(), rows_got.keys()) {
           return Err(loc.wrap(Error::TyMismatch(
@@ -325,6 +367,7 @@ impl Subst {
   }
 
   /// A helper for `unify`, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
+  /// Requires that `tv` not be bound.
   fn bind(&mut self, loc: Loc, sym_tys: &SymTys, tv: TyVar, ty: Ty) -> Result<()> {
     if ty.free_ty_vars().contains(&tv) {
       return Err(loc.wrap(Error::Circularity(tv, ty)));
@@ -467,7 +510,7 @@ impl Ty {
 }
 
 /// A type scheme, a 'forall' type.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TyScheme {
   pub ty_vars: Vec<TyVar>,
   pub ty: Ty,

@@ -94,11 +94,15 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
       // we don't actually _need_ to case on func_ty, since the Var case is actually correct for
       // _all_ types. we just do this to produce better error messages in the Record and Ctor cases.
       match func_ty {
-        Ty::Var(_) => {
-          let ret_ty = Ty::Var(st.new_ty_var(false));
-          let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
-          st.unify(exp.loc, func_ty, arrow_ty)?;
-          Ok(ret_ty)
+        Ty::Var(tv) => {
+          if st.subst.is_bound(&tv) {
+            Err(exp.loc.wrap(Error::NotArrowTy(func_ty)))
+          } else {
+            let ret_ty = Ty::Var(st.new_ty_var(false));
+            let arrow_ty = Ty::Arrow(arg_ty.into(), ret_ty.clone().into());
+            st.unify(exp.loc, func_ty, arrow_ty)?;
+            Ok(ret_ty)
+          }
         }
         Ty::Arrow(func_arg_ty, func_ret_ty) => {
           st.unify(exp.loc, *func_arg_ty, arg_ty)?;
@@ -259,12 +263,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         st.unify(dec.loc, pat_ty.clone(), exp_ty)?;
         exhaustive::ck_bind(pat, val_bind.pat.loc)?;
         for (name, mut val_info) in other {
-          // NOTE could avoid this assert by having ck_pat return not a ValEnv but HashMap<StrRef,
-          // (Ty, IdStatus)>. but this assert should hold because we the only TySchemes we put into
-          // the ValEnv returned from ck_pat are mono.
-          assert!(val_info.ty_scheme.ty_vars.is_empty());
-          val_info.ty_scheme.ty.apply(&st.subst);
-          generalize(st, &cx.env.ty_env, &mut val_info.ty_scheme);
+          generalize(&cx, st, ty_vars, &mut val_info.ty_scheme);
           env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
         }
       }
@@ -335,7 +334,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       let mut val_env = fun_infos_to_ve(&fun_infos);
       for val_info in val_env.values_mut() {
-        generalize(st, &cx.env.ty_env, &mut val_info.ty_scheme);
+        generalize(&cx, st, ty_vars, &mut val_info.ty_scheme);
       }
       Ok(val_env.into())
     }

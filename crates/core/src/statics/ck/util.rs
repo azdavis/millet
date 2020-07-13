@@ -8,10 +8,10 @@ use crate::ast::Long;
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Cx, Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
+  Cx, Env, Error, Item, Result, State, Subst, Ty, TyInfo, TyScheme, ValInfo,
 };
 use crate::token::TyVar as AstTyVar;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same
 /// TyScheme, with fresh type variables, and returns that type.
@@ -20,6 +20,7 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   match &ty_scheme.overload {
     None => {
       for &tv in ty_scheme.ty_vars.iter() {
+        assert!(!st.subst.is_bound(&tv));
         subst.insert(tv, Ty::Var(st.new_ty_var(tv.equality)));
       }
     }
@@ -35,6 +36,7 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
       assert!(iter.next().is_none());
       assert!(!overloads.is_empty());
       assert!(!tv.equality);
+      assert!(!st.subst.is_bound(&tv));
       for ty in overloads {
         match ty {
           Ty::Ctor(args, sym) => {
@@ -54,21 +56,41 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
-/// Mutates the TyScheme, which has no type variables, to bind all free type variables in the type
-/// in this TyScheme, except for those type variables which are either free in the TyEnv, or are
-/// overloaded type variables as noted by the State.
-pub fn generalize(st: &State, ty_env: &TyEnv, ty_scheme: &mut TyScheme) {
+/// Mutates the `TyScheme`, which has no type variables, to bind all free type variables in the `Ty`
+/// in this `TyScheme`, except for those type variables which are either free in the `TyEnv` in the
+/// `Cx`, are overloaded type variables as noted by the `State`, or are not actually free as noted
+/// by the `Subst` in the `State`.
+///
+/// But before mutating the TyScheme, it marks all the type variables given by `ty_vars` (and
+/// `cx.ty_vars` which maps the AST ty vars to statics ty vars) as no longer bound.
+pub fn generalize(
+  cx: &Cx,
+  st: &mut State,
+  ty_vars: &[Located<AstTyVar<StrRef>>],
+  ty_scheme: &mut TyScheme,
+) {
   assert!(ty_scheme.ty_vars.is_empty());
   assert!(ty_scheme.overload.is_none());
   // could just be `ty_scheme.apply` by the above assert.
   ty_scheme.ty.apply(&st.subst);
-  let ty_env_ty_vars = ty_env.free_ty_vars(&st.sym_tys);
+  // used as a sanity check. we should be binding all of these type variables right now.s
+  let mut newly_free = HashSet::new();
+  for tv in ty_vars {
+    let tv = cx.ty_vars.get(&tv.val).unwrap();
+    // though the type variable is no longer bound by the `Subst`, it ought to be bound by the
+    // `TyScheme`.
+    st.subst.remove_bound(tv);
+    assert!(newly_free.insert(tv));
+  }
+  let ty_env_ty_vars = cx.env.ty_env.free_ty_vars(&st.sym_tys);
   for tv in ty_scheme.ty.free_ty_vars() {
-    if ty_env_ty_vars.contains(&tv) || st.overload.contains_key(&tv) {
+    if ty_env_ty_vars.contains(&tv) || st.overload.contains_key(&tv) || st.subst.is_bound(&tv) {
       continue;
     }
     ty_scheme.ty_vars.push(tv);
+    newly_free.remove(&tv);
   }
+  assert!(newly_free.is_empty());
 }
 
 /// Returns `Ok(e)` iff `env` contains the environment `e` after traversing the `StrEnv`s of `env`
@@ -125,6 +147,8 @@ pub fn env_merge<T>(
 /// Add new statics ty vars based on the user-written ty vars to the Cx.
 pub fn add_ty_vars(cx: &mut Cx, st: &mut State, ty_vars: &[Located<AstTyVar<StrRef>>]) {
   for tv in ty_vars {
-    cx.ty_vars.insert(tv.val, st.new_ty_var(tv.val.equality));
+    let new_tv = st.new_ty_var(tv.val.equality);
+    cx.ty_vars.insert(tv.val, new_tv);
+    st.subst.add_bound(new_tv);
   }
 }
