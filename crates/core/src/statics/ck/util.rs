@@ -56,13 +56,15 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
   ty
 }
 
-/// Mutates the `TyScheme`, which has no type variables, to bind all free type variables in the `Ty`
-/// in this `TyScheme`, except for those type variables which are either free in the `TyEnv` in the
-/// `Cx`, are overloaded type variables as noted by the `State`, or are not actually free as noted
-/// by the `Subst` in the `State`.
+/// First, this marks all the type variables given by `ty_vars` (and `cx.ty_vars` which maps the AST
+/// ty vars to statics ty vars) as no longer bound in the `Subst` in the `State`.
 ///
-/// But before mutating the TyScheme, it marks all the type variables given by `ty_vars` (and
-/// `cx.ty_vars` which maps the AST ty vars to statics ty vars) as no longer bound.
+/// Then, this mutates the `TyScheme`, which upon entry, binds no type variables, to bind all free
+/// type variables in the `Ty` in the `TyScheme`, except for those type variables which are:
+///
+/// - free in the `TyEnv` in the `Cx`, or
+/// - are overloaded type variables as noted by the `State`, or
+/// - are not actually free as noted by the `Subst` in the `State`.
 pub fn generalize(
   cx: &Cx,
   st: &mut State,
@@ -73,7 +75,7 @@ pub fn generalize(
   assert!(ty_scheme.overload.is_none());
   // could just be `ty_scheme.apply` by the above assert.
   ty_scheme.ty.apply(&st.subst);
-  // used as a sanity check. we should be binding all of these type variables right now.s
+  // used as a sanity check. we should be binding all of these type variables right now.
   let mut newly_free = HashSet::new();
   for tv in ty_vars {
     let tv = cx.ty_vars.get(&tv.val).unwrap();
