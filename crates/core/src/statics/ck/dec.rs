@@ -444,23 +444,20 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       .inner
       .insert(dat_bind.ty_con.val, TyInfo::Sym(sym))
       .is_none());
-    // NOTE we don't yet know whether this new type respects equality so just baldly assert that
-    // does not.
-    assert!(st
-      .sym_tys
-      .insert(
-        sym,
-        SymTyInfo {
-          ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
-          val_env: ValEnv::new(),
-          equality: false,
-        },
-      )
-      .is_none());
+    // we don't yet know whether this new type respects equality so just baldly assert that does
+    // not. also we haven't analyzed the `ConBind`s yet, so the `ValEnv` is empty.
+    let sym_ty_info = SymTyInfo {
+      ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
+      val_env: ValEnv::new(),
+      equality: false,
+    };
+    assert!(st.sym_tys.insert(sym, sym_ty_info).is_none());
     syms.push(sym);
   }
   // SML Definition (28), SML Definition (81)
   for (dat_bind, sym) in dat_binds.iter().zip(syms) {
+    // note that we have to `get` here and then `get_mut` again later because of the borrow checker.
+    let sym_ty_info = st.sym_tys.get(&sym).unwrap();
     // this ValEnv is specific to this `DatBind`.
     let mut bind_val_env = ValEnv::new();
     let mut equality = true;
@@ -469,7 +466,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       ck_binding(con_bind.vid)?;
       // if there is no `of t`, then the type of the ctor is just `T`, where `T` is the new sym type
       // that is being defined.
-      let mut ty = st.sym_tys.get(&sym).unwrap().ty_fcn.ty.clone();
+      let mut ty = sym_ty_info.ty_fcn.ty.clone();
       if let Some(arg_ty) = &con_bind.ty {
         // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
         // `T` respects equality based on whether `t` does. TODO this check becomes harder once we
