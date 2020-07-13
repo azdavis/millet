@@ -248,14 +248,15 @@ pub struct Subst {
 }
 
 impl Subst {
-  /// Returns an iterator over the keys (the type variables) in this Subst. NOTE this exposes the
-  /// fact that a Subst is just a HashMap.
+  /// Returns an iterator over the keys (the type variables) in this `Subst`. NOTE this exposes the
+  /// fact that a `Subst` is just a `HashMap`.
   pub fn keys(&self) -> std::collections::hash_map::Keys<'_, TyVar, Ty> {
     self.inner.keys()
   }
 
-  /// Insert a new TyVar => Ty mapping into this Subst. Updates all current mappings to have the
-  /// information contained by this new mapping. Panics if this TyVar already mapped to something.
+  /// Insert a new `TyVar` to `Ty` mapping into this `Subst`. Updates all current mappings to have
+  /// the information contained by this new mapping. Panics if this `TyVar` already mapped to
+  /// something.
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {
     let subst = Self {
       inner: hashmap![tv => ty.clone()],
@@ -266,7 +267,7 @@ impl Subst {
     assert!(self.inner.insert(tv, ty).is_none());
   }
 
-  /// Returns Ok(()) iff want and got can unify, and updates self to explain how. The types
+  /// Returns `Ok(())` iff want and got can unify, and updates self to explain how. The types
   /// immediately have self applied to them upon entry to this function, so no need to do it
   /// yourself before calling.
   pub fn unify(&mut self, loc: Loc, sym_tys: &SymTys, mut want: Ty, mut got: Ty) -> Result<()> {
@@ -312,7 +313,7 @@ impl Subst {
     }
   }
 
-  /// a helper for unify, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
+  /// A helper for `unify`, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
   fn bind(&mut self, loc: Loc, sym_tys: &SymTys, tv: TyVar, ty: Ty) -> Result<()> {
     if let Ty::Var(other) = ty {
       if tv == other {

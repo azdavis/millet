@@ -122,6 +122,7 @@ pub fn env_merge<T>(
   Ok(())
 }
 
+/// Add new statics ty vars based on the user-written ty vars to the Cx.
 pub fn add_ty_vars(cx: &mut Cx, st: &mut State, ty_vars: &[Located<AstTyVar<StrRef>>]) {
   for tv in ty_vars {
     cx.ty_vars.insert(tv.val, st.new_ty_var(tv.val.equality));
