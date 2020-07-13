@@ -18,13 +18,19 @@ course.
 
 ## Development
 
-First install Rust, probably with [rustup][].
+First, clone the repository and cd inside.
 
-Then clone the repository, cd inside, and run `cargo build`.
+For development of the main codebase in `crates`, install Rust, probably with
+[rustup][]. Then run `cargo build`.
 
-If you're using VSCode, open the repository in VSCode to get extension
-recommendations for a pleasant Rust developer experience. VSCode also lets you
-debug the language client extension from the Run panel.
+For development of the VSCode extension in `extensions/vscode`, first install
+[node][]. Then cd into `extensions/vscode`, and run `npm install`.
+
+If you're using VSCode, open the root directory of this repository in VSCode to
+get extension recommendations for a pleasant Rust developer experience. VSCode
+also lets you debug the language client extension from the Run panel.
+
+Some scripts in `bin/` require either `sh` (POSIX) or `python3`.
 
 ## Repository layout
 
@@ -104,3 +110,4 @@ an appropriate `out.txt` file. Use `bin/run-test -g tests/<name>` to do that.
 [rustup]: https://rustup.rs
 [lang-server]: https://microsoft.github.io/language-server-protocol/
 [vscode]: https://code.visualstudio.com
+[node]: https://nodejs.org/en/
