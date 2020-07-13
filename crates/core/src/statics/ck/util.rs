@@ -11,7 +11,7 @@ use crate::statics::types::{
   Cx, Env, Error, Item, Result, State, Subst, Ty, TyInfo, TyScheme, ValInfo,
 };
 use crate::token::TyVar as AstTyVar;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same
 /// TyScheme, with fresh type variables, and returns that type.
@@ -75,14 +75,11 @@ pub fn generalize(
   assert!(ty_scheme.overload.is_none());
   // could just be `ty_scheme.apply` by the above assert.
   ty_scheme.ty.apply(&st.subst);
-  // used as a sanity check. we should be binding all of these type variables right now.
-  let mut newly_free = HashSet::new();
   for tv in ty_vars {
     let tv = cx.ty_vars.get(&tv.val).unwrap();
     // though the type variable is no longer bound by the `Subst`, it ought to be bound by the
     // `TyScheme`.
     st.subst.remove_bound(tv);
-    assert!(newly_free.insert(tv));
   }
   let ty_env_ty_vars = cx.env.ty_env.free_ty_vars(&st.sym_tys);
   for tv in ty_scheme.ty.free_ty_vars() {
@@ -90,9 +87,7 @@ pub fn generalize(
       continue;
     }
     ty_scheme.ty_vars.push(tv);
-    newly_free.remove(&tv);
   }
-  assert!(newly_free.is_empty());
 }
 
 /// Returns `Ok(e)` iff `env` contains the environment `e` after traversing the `StrEnv`s of `env`

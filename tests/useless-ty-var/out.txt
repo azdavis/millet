@@ -1,0 +1,7 @@
+error: mismatched types: expected unit, found unit -> int
+  ┌─ err.sml:2:1
+  │
+2 │ val _: unit = f
+  │ ^^^^^^^^^^^^^^^
+
+typechecking failed
