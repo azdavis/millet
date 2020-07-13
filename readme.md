@@ -27,8 +27,11 @@ For development of the VSCode extension in `extensions/vscode`, first install
 [node][]. Then cd into `extensions/vscode`, and run `npm install`.
 
 If you're using VSCode, open the root directory of this repository in VSCode to
-get extension recommendations for a pleasant Rust developer experience. VSCode
-also lets you debug the language client extension from the Run panel.
+get extension recommendations for a pleasant Rust developer experience.
+
+VSCode also lets you try out the language client extension from the Run panel.
+Open the Run panel (play button with bug), select 'extension' in the drop down,
+and press the green play button.
 
 Some scripts in `bin/` require either `sh` (POSIX) or `python3`.
 
