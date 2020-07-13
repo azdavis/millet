@@ -274,6 +274,15 @@ impl Subst {
     want.apply(self);
     got.apply(self);
     match (want, got) {
+      (Ty::Var(want), Ty::Var(got)) => {
+        if want == got {
+          Ok(())
+        } else if want.equality {
+          self.bind(loc, sym_tys, got, Ty::Var(want))
+        } else {
+          self.bind(loc, sym_tys, want, Ty::Var(got))
+        }
+      }
       (Ty::Var(tv), got) => self.bind(loc, sym_tys, tv, got),
       (want, Ty::Var(tv)) => self.bind(loc, sym_tys, tv, want),
       (Ty::Record(rows_want), Ty::Record(mut rows_got)) => {
@@ -315,11 +324,6 @@ impl Subst {
 
   /// A helper for `unify`, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
   fn bind(&mut self, loc: Loc, sym_tys: &SymTys, tv: TyVar, ty: Ty) -> Result<()> {
-    if let Ty::Var(other) = ty {
-      if tv == other {
-        return Ok(());
-      }
-    }
     if ty.free_ty_vars().contains(&tv) {
       return Err(loc.wrap(Error::Circularity(tv, ty)));
     }
