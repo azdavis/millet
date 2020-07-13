@@ -261,7 +261,7 @@ impl Subst {
   /// Mark a type variable as bound. This type variable will not be allowed to be substituted for
   /// anything in this `Subst` until `remove_bound` is called. Panics if this was already marked as
   /// bound or if maps to a `Ty`.
-  pub fn add_bound(&mut self, tv: TyVar) {
+  pub fn insert_bound(&mut self, tv: TyVar) {
     assert!(!self.inner.contains_key(&tv));
     assert!(self.bound.insert(tv));
   }

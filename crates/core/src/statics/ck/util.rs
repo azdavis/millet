@@ -146,6 +146,6 @@ pub fn add_ty_vars(cx: &mut Cx, st: &mut State, ty_vars: &[Located<AstTyVar<StrR
   for tv in ty_vars {
     let new_tv = st.new_ty_var(tv.val.equality);
     cx.ty_vars.insert(tv.val, new_tv);
-    st.subst.add_bound(new_tv);
+    st.subst.insert_bound(new_tv);
   }
 }
