@@ -5,6 +5,9 @@ A set of tools for Standard ML.
 Right now, the set has only one element: a language server, with a corresponding
 Visual Studio Code language client extension.
 
+This project is alpha-quality software. It is nearing MVP status, but is not yet
+there. There are many important things not yet implemented. See TODO.
+
 ## Naming
 
 "Millet" has M and L in it, in that order. So does "Standard ML".
@@ -64,6 +67,38 @@ Run `bin/run-test tests/<name>` to run a test.
 
 After you first create a test, or if you update a test, you may want to generate
 an appropriate `out.txt` file. Use `bin/run-test -g tests/<name>` to do that.
+
+## TODO
+
+- statics for type variables
+  - implicit scoping
+  - performing closure operations
+  - checking whether expressions are expansive
+- better statics for equality types
+- statics for rest of modules
+  - environment matching
+  - functors
+- parse derived forms
+  - functor binding input sugar
+  - specifications
+  - signature expressions
+  - programs
+- statics for unused constructs (abstype, while, selectors)?
+- make public
+  - turn on protected branches, etc
+  - use github actions ci
+- publish extension
+  - get azure account or whatever
+- better error messages
+  - prefer 'expected int list, found bool list' instead of 'expected int, found
+    bool' and similar?
+  - show fully qualified names in type errors
+  - better overload errors: maybe we should choose what that overloaded type
+    should be sooner
+  - better parser errors?
+- more LSP features
+  - jump to def
+  - many files, maybe via `millet.json` in the workspace root
 
 [one-fifty]: http://www.cs.cmu.edu/~15150/
 [rustup]: https://rustup.rs
