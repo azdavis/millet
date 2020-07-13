@@ -76,10 +76,6 @@ pub fn ck_generalizes(loc: Loc, sym_tys: &SymTys, want: TyScheme, got: TyScheme)
   }
   let mut ret = Subst::default();
   ret.unify(loc, &sym_tys, want.ty, got.ty)?;
-  for tv in ret.keys() {
-    if !want_free_tvs.contains(tv) {
-      todo!("no")
-    }
-  }
+  // TODO
   Ok(ret)
 }

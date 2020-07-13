@@ -43,7 +43,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         }
         // SML Definition (35)
         Some(ty_scheme) => {
-          let ty = instantiate(st, ty_scheme, pat.loc);
+          let ty = instantiate(st, ty_scheme);
           let sym = match ty {
             Ty::Ctor(_, sym) => sym,
             _ => return Err(pat.loc.wrap(Error::PatNotConsTy(ty))),
@@ -175,7 +175,7 @@ fn ctor(
   if val_info.id_status.is_val() {
     return Err(long.loc().wrap(Error::PatWrongIdStatus));
   }
-  let (ctor_arg_ty, mut ctor_res_ty) = match instantiate(st, &val_info.ty_scheme, loc) {
+  let (ctor_arg_ty, mut ctor_res_ty) = match instantiate(st, &val_info.ty_scheme) {
     Ty::Arrow(x, y) => (*x, *y),
     ty => return Err(loc.wrap(Error::PatNotArrowTy(ty))),
   };

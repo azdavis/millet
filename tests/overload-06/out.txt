@@ -1,7 +1,7 @@
-error: no suitable overload found
-  ┌─ err.sml:1:11
+error: mismatched types: expected one of int, word, real, found bool
+  ┌─ err.sml:2:9
   │
-1 │ val add = op+
-  │           ^^^
+2 │ val _ = add (false, true)
+  │         ^^^^^^^^^^^^^^^^^
 
 typechecking failed

@@ -1,4 +1,4 @@
-error: no suitable overload found
+error: mismatched types: expected one of int, word, real, found bool
   ┌─ err.sml:1:10
   │
 1 │ val  _ = false + true

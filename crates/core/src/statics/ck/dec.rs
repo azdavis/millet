@@ -29,7 +29,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     // a single longvid to assume different types."
     Exp::LongVid(vid) => {
       let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
-      Ok(instantiate(st, &val_info.ty_scheme, exp.loc))
+      Ok(instantiate(st, &val_info.ty_scheme))
     }
     // SML Definition (3)
     Exp::Record(rows) => {
@@ -115,7 +115,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     // it to a tuple (lhs, rhs).
     Exp::InfixApp(lhs, func, rhs) => {
       let val_info = get_val_info(&cx.env, *func)?;
-      let func_ty = instantiate(st, &val_info.ty_scheme, exp.loc);
+      let func_ty = instantiate(st, &val_info.ty_scheme);
       let lhs_ty = ck_exp(cx, st, lhs)?;
       let rhs_ty = ck_exp(cx, st, rhs)?;
       let ret_ty = Ty::Var(st.new_ty_var(false));

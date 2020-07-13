@@ -23,12 +23,12 @@ pub enum Error {
   DuplicateLabel(Label),
   Circularity(TyVar, Ty),
   TyMismatch(Ty, Ty),
+  OverloadTyMismatch(Vec<Ty>, Ty),
   PatWrongIdStatus,
   ExnWrongIdStatus(IdStatus),
   WrongNumTyArgs(usize, usize),
   NonVarInAs(StrRef),
   ForbiddenBinding(StrRef),
-  NoSuitableOverload,
   TyNameEscape,
   NonExhaustiveMatch,
   NonExhaustiveBinding,
@@ -53,11 +53,21 @@ impl Error {
       Self::Circularity(ty_var, ty) => {
         format!("circularity: {:?} in {}", ty_var, show_ty(store, &ty))
       }
-      Self::TyMismatch(lhs, rhs) => format!(
+      Self::TyMismatch(want, got) => format!(
         "mismatched types: expected {}, found {}",
-        show_ty(store, &lhs),
-        show_ty(store, &rhs)
+        show_ty(store, &want),
+        show_ty(store, &got)
       ),
+      Self::OverloadTyMismatch(want, got) => {
+        let mut ret = "mismatched types: expected one of ".to_owned();
+        for ty in want {
+          show_ty_impl(&mut ret, store, ty, TyPrec::Arrow);
+          ret.push_str(", ");
+        }
+        ret.push_str("found ");
+        show_ty_impl(&mut ret, store, got, TyPrec::Arrow);
+        ret
+      }
       Self::PatWrongIdStatus => {
         "mismatched identifier status: expected a constructor or exception, found a value"
           .to_owned()
@@ -75,7 +85,6 @@ impl Error {
         store.get(*id)
       ),
       Self::ForbiddenBinding(id) => format!("forbidden identifier in binding: {}", store.get(*id)),
-      Self::NoSuitableOverload => "no suitable overload found".to_owned(),
       Self::TyNameEscape => "expression causes a type name to escape its scope".to_owned(),
       Self::NonExhaustiveMatch => "non-exhaustive match".to_owned(),
       Self::NonExhaustiveBinding => "non-exhaustive binding".to_owned(),
@@ -246,30 +255,28 @@ impl fmt::Debug for TyVar {
 /// 'output' type which is already mapped to something else in this substitution.
 #[derive(Debug, Clone, Default)]
 pub struct Subst {
-  inner: HashMap<TyVar, Ty>,
+  /// The conventional substitutions.
+  regular: HashMap<TyVar, Ty>,
+  /// The overload constraints.
+  overload: HashMap<TyVar, Vec<Sym>>,
   /// Used for user-annotated type variables which may not be substituted for arbitrary types.
   bound: HashSet<TyVar>,
 }
 
 impl Subst {
-  /// Returns an iterator over the keys (the type variables) in this `Subst`. NOTE this exposes the
-  /// fact that a `Subst` is just a `HashMap`.
-  pub fn keys(&self) -> std::collections::hash_map::Keys<'_, TyVar, Ty> {
-    self.inner.keys()
-  }
-
   /// Mark a type variable as bound. This type variable will not be allowed to be substituted for
-  /// anything in this `Subst` until `remove_bound` is called. Panics if this was already marked as
-  /// bound or if maps to a `Ty`.
+  /// anything in this `Subst` until `remove_bound` is called.
   pub fn insert_bound(&mut self, tv: TyVar) {
-    assert!(!self.inner.contains_key(&tv));
+    assert!(!self.regular.contains_key(&tv));
+    assert!(!self.overload.contains_key(&tv));
     assert!(self.bound.insert(tv));
   }
 
   /// Un-mark a type variable as bound. This will allow the type variable to be substituted in this
-  /// `Subst` as normal. Panics if this was not already marked as bound or if it maps to a `Ty`.
+  /// `Subst` as normal.
   pub fn remove_bound(&mut self, tv: &TyVar) {
-    assert!(!self.inner.contains_key(tv));
+    assert!(!self.regular.contains_key(tv));
+    assert!(!self.overload.contains_key(tv));
     assert!(self.bound.remove(tv));
   }
 
@@ -278,18 +285,44 @@ impl Subst {
     self.bound.contains(tv)
   }
 
+  /// Inserts an overloaded ty var. It will only be allowed to be one of the given base types whose
+  /// symbol is given by `Sym`. The first `Sym` in the `Vec` is the symbol of the default type, used
+  /// if the overloaded ty var is never constrained.
+  pub fn insert_overloaded(&mut self, tv: TyVar, syms: Vec<Sym>) {
+    assert!(!syms.is_empty());
+    assert!(!self.bound.contains(&tv));
+    assert!(!self.regular.contains_key(&tv));
+    assert!(self.overload.insert(tv, syms).is_none());
+  }
+
+  /// Solve all overloaded ty vars which have not already be solved to be their default types.
+  pub fn solve_overloaded(&mut self) {
+    let overload = std::mem::take(&mut self.overload);
+    for (tv, syms) in overload {
+      let ty = Ty::base(*syms.first().unwrap());
+      self.insert(tv, ty);
+    }
+  }
+
+  /// Returns whether this is an overloaded ty var.
+  pub fn is_overloaded(&mut self, tv: &TyVar) -> bool {
+    self.overload.contains_key(&tv)
+  }
+
   /// Insert a new `TyVar` to `Ty` mapping into this `Subst`. Updates all current mappings to have
-  /// the information contained by this new mapping. Panics if this `TyVar` already mapped to
-  /// something.
+  /// the information contained by this new mapping.
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {
+    assert!(!self.overload.contains_key(&tv));
+    assert!(!self.bound.contains(&tv));
     let subst = Self {
-      inner: hashmap![tv => ty.clone()],
+      regular: hashmap![tv => ty.clone()],
+      overload: hashmap![],
       bound: hashset![],
     };
-    for other in self.inner.values_mut() {
+    for other in self.regular.values_mut() {
       other.apply(&subst);
     }
-    assert!(self.inner.insert(tv, ty).is_none());
+    assert!(self.regular.insert(tv, ty).is_none());
   }
 
   /// Returns `Ok(())` iff want and got can unify, and updates self to explain how. The types
@@ -307,7 +340,7 @@ impl Subst {
           Ok(())
         } else if want_bound && got_bound {
           Err(loc.wrap(Error::TyMismatch(Ty::Var(want), Ty::Var(got))))
-        } else if want_bound || (!got_bound && want.equality) {
+        } else if want_bound || (!got_bound && (want.equality || self.is_overloaded(&want))) {
           assert!(!got_bound);
           self.bind(loc, sym_tys, got, Ty::Var(want))
         } else {
@@ -375,6 +408,28 @@ impl Subst {
     // here's the single solitary reason we have to pass a `SymTys` all the way down here.
     if tv.equality && !ty.is_equality(sym_tys) {
       return Err(loc.wrap(Error::NotEquality(ty)));
+    }
+    if let Some(syms) = self.overload.remove(&tv) {
+      let syms = match &ty {
+        Ty::Var(other) => {
+          self.overload.insert(*other, syms);
+          None
+        }
+        Ty::Record(_) | Ty::Arrow(_, _) => Some(syms),
+        Ty::Ctor(args, sym) => {
+          if args.is_empty() && syms.iter().any(|x| x == sym) {
+            None
+          } else {
+            Some(syms)
+          }
+        }
+      };
+      if let Some(syms) = syms {
+        return Err(loc.wrap(Error::OverloadTyMismatch(
+          syms.into_iter().map(Ty::base).collect(),
+          ty,
+        )));
+      }
     }
     self.insert(tv, ty);
     Ok(())
@@ -452,7 +507,7 @@ impl Ty {
 
   pub fn apply(&mut self, subst: &Subst) {
     match self {
-      Self::Var(tv) => match subst.inner.get(tv) {
+      Self::Var(tv) => match subst.regular.get(tv) {
         None => {}
         Some(ty) => *self = ty.clone(),
       },
@@ -514,8 +569,8 @@ impl Ty {
 pub struct TyScheme {
   pub ty_vars: Vec<TyVar>,
   pub ty: Ty,
-  /// See `instantiate` and `statics::get`.
-  pub overload: Option<Vec<Ty>>,
+  /// See `instantiate` and `Subst`.
+  pub overload: Option<Vec<Sym>>,
 }
 
 impl TyScheme {
@@ -528,10 +583,10 @@ impl TyScheme {
   }
 
   pub fn apply(&mut self, subst: &Subst) {
-    if self.ty_vars.iter().any(|tv| subst.inner.contains_key(tv)) {
+    if self.ty_vars.iter().any(|tv| subst.regular.contains_key(tv)) {
       let mut subst = subst.clone();
       for tv in self.ty_vars.iter() {
-        subst.inner.remove(tv);
+        subst.regular.remove(tv);
       }
       self.ty.apply(&subst)
     } else {
@@ -913,9 +968,6 @@ pub struct State {
   next_ty_var: usize,
   /// The next symbol ID to hand out. Invariant: Always increase.
   next_sym: usize,
-  /// The overload constraints. These constraints are solved after each `TopDec`. Invariant: Is
-  /// always empty when the `State` is passed to `top_dec::ck`.
-  pub overload: HashMap<TyVar, (Loc, Vec<Ty>)>,
   /// The substitution, the unifier of the entire program. Invariant: Always grows in size.
   pub subst: Subst,
   /// The types that 'have been generated' and information about them. Invariant: Always grows in

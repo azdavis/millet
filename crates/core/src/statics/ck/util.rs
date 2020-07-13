@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same
 /// TyScheme, with fresh type variables, and returns that type.
-pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
+pub fn instantiate(st: &mut State, ty_scheme: &TyScheme) -> Ty {
   let mut subst = Subst::default();
   match &ty_scheme.overload {
     None => {
@@ -37,18 +37,12 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
       assert!(!overloads.is_empty());
       assert!(!tv.equality);
       assert!(!st.subst.is_bound(&tv));
-      for ty in overloads {
-        match ty {
-          Ty::Ctor(args, sym) => {
-            assert!(args.is_empty());
-            assert!(sym.is_base());
-          }
-          _ => unreachable!(),
-        }
+      for sym in overloads {
+        assert!(sym.is_base());
       }
       let new_tv = st.new_ty_var(false);
       subst.insert(tv, Ty::Var(new_tv));
-      st.overload.insert(new_tv, (loc, overloads.clone()));
+      st.subst.insert_overloaded(new_tv, overloads.clone());
     }
   }
   let mut ty = ty_scheme.ty.clone();
@@ -63,8 +57,8 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme, loc: Loc) -> Ty {
 /// type variables in the `Ty` in the `TyScheme`, except for those type variables which are:
 ///
 /// - free in the `TyEnv` in the `Cx`, or
-/// - are overloaded type variables as noted by the `State`, or
-/// - are not actually free as noted by the `Subst` in the `State`.
+/// - are overloaded type variables as noted by the `Subst`, or
+/// - are actually bound as noted by the `Subst`.
 pub fn generalize(
   cx: &Cx,
   st: &mut State,
@@ -83,7 +77,7 @@ pub fn generalize(
   }
   let ty_env_ty_vars = cx.env.ty_env.free_ty_vars(&st.sym_tys);
   for tv in ty_scheme.ty.free_ty_vars() {
-    if ty_env_ty_vars.contains(&tv) || st.overload.contains_key(&tv) || st.subst.is_bound(&tv) {
+    if ty_env_ty_vars.contains(&tv) || st.subst.is_overloaded(&tv) || st.subst.is_bound(&tv) {
       continue;
     }
     ty_scheme.ty_vars.push(tv);
