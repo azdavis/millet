@@ -102,8 +102,10 @@ an appropriate `out.txt` file. Use `bin/run-test -g tests/<name>` to do that.
   - better overload errors: maybe we should choose what that overloaded type
     should be sooner
   - better parser errors?
+- handle CM? (guh)
 - more LSP features
   - jump to def
+  - hover for type
   - many files, maybe via `millet.json` in the workspace root
 
 [one-fifty]: http://www.cs.cmu.edu/~15150/
