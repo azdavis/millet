@@ -31,7 +31,9 @@ get extension recommendations for a pleasant Rust developer experience.
 
 VSCode also lets you try out the language client extension from the Run panel.
 Open the Run panel (play button with bug), select 'extension' in the drop down,
-and press the green play button.
+and press the green play button. This will build the language server and client
+(it might take a bit), and then open a new VSCode window with the extension
+enabled. From there you can open up a SML file and try it out.
 
 Some scripts in `bin/` require either `sh` (POSIX) or `python3`.
 

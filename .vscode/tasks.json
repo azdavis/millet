@@ -5,7 +5,10 @@
       "label": "extension: build",
       "group": "build",
       "type": "shell",
-      "command": "./bin/mk-vscode-ext"
+      "command": "./bin/mk-vscode-ext",
+      "presentation": {
+        "reveal": "silent"
+      }
     },
     {
       "label": "tsc: watch",
