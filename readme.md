@@ -2,8 +2,8 @@
 
 A set of tools for Standard ML.
 
-Right now, the set has only one element: a language server, with a corresponding
-Visual Studio Code language client extension.
+Right now, the set has only one element: a [language server][lang-server], with
+a corresponding [Visual Studio Code][vscode] language client extension.
 
 This project is alpha-quality software. It is nearing MVP status, but is not yet
 there. There are many important things not yet implemented. See TODO.
@@ -102,3 +102,5 @@ an appropriate `out.txt` file. Use `bin/run-test -g tests/<name>` to do that.
 
 [one-fifty]: http://www.cs.cmu.edu/~15150/
 [rustup]: https://rustup.rs
+[lang-server]: https://microsoft.github.io/language-server-protocol/
+[vscode]: https://code.visualstudio.com
