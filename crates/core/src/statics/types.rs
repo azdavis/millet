@@ -10,8 +10,8 @@ use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
 use crate::token::TyVar as AstTyVar;
 use crate::util::eq_iter;
-use maplit::{btreemap, hashmap, hashset};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use maplit::{btreemap, btreeset, hashmap, hashset};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt;
 
 /// An error encountered during static analysis.
@@ -224,7 +224,7 @@ impl fmt::Display for Item {
 }
 
 /// A type variable.
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Copy)]
 pub struct TyVar {
   id: usize,
   /// Whether this is an equality type variable.
@@ -475,7 +475,7 @@ impl Ty {
 
   pub fn free_ty_vars(&self) -> TyVarSet {
     match self {
-      Self::Var(tv) => hashset![*tv],
+      Self::Var(tv) => btreeset![*tv],
       Self::Record(rows) => rows.values().flat_map(Self::free_ty_vars).collect(),
       Self::Arrow(lhs, rhs) => lhs
         .free_ty_vars()
@@ -792,7 +792,8 @@ impl From<StrEnv> for Env {
 
 pub type TyNameSet = HashSet<StrRef>;
 
-pub type TyVarSet = HashSet<TyVar>;
+/// NOTE this is an ordered set purely to make errors reproducible.
+pub type TyVarSet = BTreeSet<TyVar>;
 
 #[derive(Clone)]
 pub struct Cx {
