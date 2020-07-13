@@ -165,7 +165,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       // SML Definition (80)
       for ty_desc in ty_descs {
         if let Some(tv) = ty_desc.ty_vars.first() {
-          return Err(tv.loc.wrap(Error::Todo("type variables")));
+          return Err(tv.loc.wrap(Error::Todo("type variables in spec")));
         }
         let sym = st.new_sym(ty_desc.ty_con);
         // TODO equality check

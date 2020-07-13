@@ -4,14 +4,17 @@ use crate::ast::{Label, Ty as AstTy};
 use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{get_env, get_ty_info};
-use crate::statics::types::{Cx, Error, Result, SymTys, Ty};
+use crate::statics::types::{Cx, Error, Item, Result, SymTys, Ty};
 use std::collections::BTreeMap;
 
 pub fn ck(cx: &Cx, sym_tys: &SymTys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
   // SML Definition (48) is handled by the parser
   match &ty.val {
     // SML Definition (44)
-    AstTy::TyVar(_) => Err(ty.loc.wrap(Error::Todo("type variables"))),
+    AstTy::TyVar(tv) => match cx.ty_vars.get(tv) {
+      None => Err(ty.loc.wrap(Error::Undefined(Item::TyVar, tv.name))),
+      Some(x) => Ok(Ty::Var(*x)),
+    },
     // SML Definition (45)
     AstTy::Record(rows) => {
       let mut ty_rows = BTreeMap::new();

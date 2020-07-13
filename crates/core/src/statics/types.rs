@@ -8,6 +8,7 @@
 use crate::ast::{Label, TyPrec};
 use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
+use crate::token::TyVar as AstTyVar;
 use crate::util::eq_iter;
 use maplit::{btreemap, hashmap, hashset};
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -201,6 +202,7 @@ pub type Result<T> = std::result::Result<T, Located<Error>>;
 pub enum Item {
   Val,
   Ty,
+  TyVar,
   Struct,
   Sig,
   Functor,
@@ -211,6 +213,7 @@ impl fmt::Display for Item {
     match self {
       Self::Val => f.write_str("value"),
       Self::Ty => f.write_str("type"),
+      Self::TyVar => f.write_str("type variable"),
       Self::Struct => f.write_str("structure"),
       Self::Sig => f.write_str("signature"),
       Self::Functor => f.write_str("functor"),
@@ -744,7 +747,9 @@ pub type TyVarSet = HashSet<TyVar>;
 #[derive(Clone)]
 pub struct Cx {
   pub ty_names: TyNameSet,
-  pub ty_vars: TyVarSet,
+  /// In the Definition this is a set, but here we use it as not just a set, but a mapping from AST
+  /// type variables to statics type variables. Note the mapping is injective but not surjective.
+  pub ty_vars: HashMap<AstTyVar<StrRef>, TyVar>,
   pub env: Env,
 }
 
@@ -819,7 +824,7 @@ impl Basis {
   pub fn to_cx(&self) -> Cx {
     Cx {
       ty_names: self.ty_names.clone(),
-      ty_vars: TyVarSet::new(),
+      ty_vars: HashMap::new(),
       env: self.env.clone(),
     }
   }

@@ -189,7 +189,7 @@ impl Token {
 }
 
 /// This is here (and not in ast.rs) because we know when lexing whether something is a type var.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TyVar<I> {
   /// The name of this type variable in the source. Includes the primes at the start.
   pub name: I,

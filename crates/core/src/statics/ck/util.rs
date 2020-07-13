@@ -8,8 +8,9 @@ use crate::ast::Long;
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
+  Cx, Env, Error, Item, Result, State, Subst, Ty, TyEnv, TyInfo, TyScheme, ValInfo,
 };
+use crate::token::TyVar as AstTyVar;
 use std::collections::BTreeMap;
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same
@@ -119,4 +120,10 @@ pub fn env_merge<T>(
     env_ins(lhs, loc.wrap(key), val)?;
   }
   Ok(())
+}
+
+pub fn add_ty_vars(cx: &mut Cx, st: &mut State, ty_vars: &[Located<AstTyVar<StrRef>>]) {
+  for tv in ty_vars {
+    cx.ty_vars.insert(tv.val, st.new_ty_var(tv.val.equality));
+  }
 }

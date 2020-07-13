@@ -4,7 +4,7 @@ use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{
-  env_ins, env_merge, generalize, get_env, get_ty_info, get_val_info, instantiate,
+  add_ty_vars, env_ins, env_merge, generalize, get_env, get_ty_info, get_val_info, instantiate,
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
@@ -185,9 +185,8 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Vec<Locat
   for arm in cases.arms.iter() {
     let (val_env, pat_ty, pat) = pat::ck(cx, st, &arm.pat)?;
     pats.push(arm.pat.loc.wrap(pat));
-    // TODO what about type variables? The Definition says this should allow new free type variables
-    // to enter the Cx, but right now we do nothing with `cx.ty_vars`. TODO clone in loop -
-    // expensive?
+    // TODO the Definition says this should allow new free type variables to enter the Cx; does it?
+    // Also, clone in loop - expensive?
     let mut cx = cx.clone();
     cx.env.val_env.extend(val_env);
     let exp_ty = ck_exp(&cx, st, &arm.exp)?;
@@ -237,9 +236,14 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
   match &dec.val {
     // SML Definition (15)
     Dec::Val(ty_vars, val_binds) => {
-      if let Some(tv) = ty_vars.first() {
-        return Err(tv.loc.wrap(Error::Todo("type variables")));
-      }
+      let mut cx_cl;
+      let cx = if ty_vars.is_empty() {
+        cx
+      } else {
+        cx_cl = cx.clone();
+        add_ty_vars(&mut cx_cl, st, ty_vars);
+        &cx_cl
+      };
       let mut val_env = ValEnv::new();
       // SML Definition (25)
       for val_bind in val_binds {
@@ -268,9 +272,14 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     // SML Definition Appendix A - `fun` is sugar for `val rec` and `case`
     Dec::Fun(ty_vars, fval_binds) => {
-      if let Some(tv) = ty_vars.first() {
-        return Err(tv.loc.wrap(Error::Todo("type variables")));
-      }
+      let mut cx_cl;
+      let cx = if ty_vars.is_empty() {
+        cx
+      } else {
+        cx_cl = cx.clone();
+        add_ty_vars(&mut cx_cl, st, ty_vars);
+        &cx_cl
+      };
       let mut fun_infos = HashMap::with_capacity(fval_binds.len());
       for fval_bind in fval_binds {
         let first = fval_bind.cases.first().unwrap();
@@ -404,11 +413,24 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
   let mut ty_env = TyEnv::default();
   // SML Definition (27)
   for ty_bind in ty_binds {
-    if let Some(tv) = ty_bind.ty_vars.first() {
-      return Err(tv.loc.wrap(Error::Todo("type variables")));
-    }
+    let mut cx_cl;
+    let cx = if ty_bind.ty_vars.is_empty() {
+      cx
+    } else {
+      cx_cl = cx.clone();
+      add_ty_vars(&mut cx_cl, st, &ty_bind.ty_vars);
+      &cx_cl
+    };
     let ty = ty::ck(cx, &st.sym_tys, &ty_bind.ty)?;
-    let info = TyInfo::Alias(TyScheme::mono(ty));
+    let info = TyInfo::Alias(TyScheme {
+      ty_vars: ty_bind
+        .ty_vars
+        .iter()
+        .map(|tv| *cx.ty_vars.get(&tv.val).unwrap())
+        .collect(),
+      ty,
+      overload: None,
+    });
     if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
       let err = Error::Redefined(ty_bind.ty_con.val);
       return Err(ty_bind.ty_con.loc.wrap(err));
@@ -429,9 +451,6 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
   // not indicate this, according to my reading of e.g. SML Definition (28).)
   let mut syms = Vec::new();
   for dat_bind in dat_binds {
-    if let Some(tv) = dat_bind.ty_vars.first() {
-      return Err(tv.loc.wrap(Error::Todo("type variables")));
-    }
     // create a new symbol for the type being generated with this `DatBind`.
     let sym = st.new_sym(dat_bind.ty_con);
     // tell the original context as well as the overall `TyEnv` that we return that this new
@@ -444,10 +463,22 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       .inner
       .insert(dat_bind.ty_con.val, TyInfo::Sym(sym))
       .is_none());
+    // no mapping from ast ty vars to statics ty vars here. we just need some ty vars to make the
+    // `TyScheme`.
+    let ty_vars: Vec<_> = dat_bind
+      .ty_vars
+      .iter()
+      .map(|tv| st.new_ty_var(tv.val.equality))
+      .collect();
+    let ty_args: Vec<_> = ty_vars.iter().copied().map(Ty::Var).collect();
     // we don't yet know whether this new type respects equality so just baldly assert that does
     // not. also we haven't analyzed the `ConBind`s yet, so the `ValEnv` is empty.
     let sym_ty_info = SymTyInfo {
-      ty_fcn: TyScheme::mono(Ty::Ctor(Vec::new(), sym)),
+      ty_fcn: TyScheme {
+        ty_vars,
+        ty: Ty::Ctor(ty_args, sym),
+        overload: None,
+      },
       val_env: ValEnv::new(),
       equality: false,
     };
@@ -458,6 +489,30 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
   for (dat_bind, sym) in dat_binds.iter().zip(syms) {
     // note that we have to `get` here and then `get_mut` again later because of the borrow checker.
     let sym_ty_info = st.sym_tys.get(&sym).unwrap();
+    let mut cx_cl;
+    let cx = if dat_bind.ty_vars.is_empty() {
+      &cx
+    } else {
+      // it is here that we introduce the mapping from ast ty vars to statics ty vars. we need to do
+      // that in order to check the `ConBind`s. but we cannot introduce the mapping earlier, when we
+      // were generating the statics ty vars and the `Sym`s, because there may be multiple
+      // identically-named ty vars in different `DatBind`s.
+      //
+      // if we wanted we could generate new statics type variables here, but then we'd have to use
+      // those new type variables in the return type of the ctor. it shouldn't matter whether we
+      // generate new type variables here or not (as mentioned, we choose to not) because both the
+      // type function and the ctors of the type will each have a `TyScheme` that binds the type
+      // variables appropriately, so by the magic of alpha conversion they're all distinct anyway.
+      cx_cl = cx.clone();
+      for (ast_tv, &tv) in dat_bind
+        .ty_vars
+        .iter()
+        .zip(sym_ty_info.ty_fcn.ty_vars.iter())
+      {
+        cx_cl.ty_vars.insert(ast_tv.val, tv);
+      }
+      &cx_cl
+    };
     // this ValEnv is specific to this `DatBind`.
     let mut bind_val_env = ValEnv::new();
     let mut equality = true;
@@ -469,13 +524,17 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       let mut ty = sym_ty_info.ty_fcn.ty.clone();
       if let Some(arg_ty) = &con_bind.ty {
         // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
-        // `T` respects equality based on whether `t` does. TODO this check becomes harder once we
-        // support type variables, also probably the `mono` will go away.
+        // `T` respects equality based on whether `t` does. TODO this doesn't handle the equality
+        // check correctly.
         let t = ty::ck(&cx, &st.sym_tys, arg_ty)?;
         equality = equality && t.is_equality(&st.sym_tys);
         ty = Ty::Arrow(t.into(), ty.into());
       }
-      let val_info = ValInfo::ctor(TyScheme::mono(ty));
+      let val_info = ValInfo::ctor(TyScheme {
+        ty_vars: sym_ty_info.ty_fcn.ty_vars.clone(),
+        ty,
+        overload: None,
+      });
       // insert the `ValInfo` into the _overall_ `ValEnv` with dupe checking.
       env_ins(&mut val_env, con_bind.vid, val_info.clone())?;
       // _also_ insert the `ValInfo` into the `DatBind`-specific `ValEnv`, but this time dupe
