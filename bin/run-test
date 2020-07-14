@@ -33,6 +33,10 @@ if [ "$#" -eq 0 ]; then
   usage
 fi
 
+cargo build --bin millet
+export NO_COLOR=1
+export MILLET="$PWD/target/debug/millet"
+
 ok=true
 old_pwd="$PWD"
 for x in "$@"; do
@@ -47,7 +51,7 @@ for x in "$@"; do
       ok=false
     fi
   elif [ -e ast.sml ]; then
-    if ! NO_COLOR=1 cargo run --quiet --bin millet -- --just-ast ast.sml >out.tmp; then
+    if ! "$MILLET" --just-ast ast.sml >out.tmp; then
       echo "$x: expected success, got failure"
       ok=false
     elif "$generate"; then
@@ -65,7 +69,7 @@ for x in "$@"; do
       ok=false
     fi
   elif [ -e ok.sml ]; then
-    if ! NO_COLOR=1 cargo run --quiet --bin millet -- --quiet ok.sml >out.tmp; then
+    if ! "$MILLET" --quiet ok.sml >out.tmp; then
       echo "$x: expected success, got failure"
       ok=false
     elif [ -s out.tmp ]; then
@@ -78,7 +82,7 @@ for x in "$@"; do
       fi
     fi
   elif [ -e err.sml ]; then
-    if NO_COLOR=1 cargo run --quiet --bin millet -- err.sml >out.tmp; then
+    if "$MILLET" err.sml >out.tmp; then
       echo "$x: expected failure, got success"
       ok=false
     elif "$generate"; then
