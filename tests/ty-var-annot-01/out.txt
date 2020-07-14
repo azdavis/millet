@@ -1,4 +1,4 @@
-error: not a function type: 't22
+error: not a function type: '22
   ┌─ err.sml:1:37
   │
 1 │ fun 'a f (x: 'a) = let val y = x in y false; y end

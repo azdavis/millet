@@ -240,13 +240,14 @@ pub struct TyVar {
   pub equality: bool,
 }
 
+/// This impl gives intentionally invalid SML syntax.
 impl fmt::Debug for TyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "'")?;
     if self.equality {
       write!(f, "'")?;
     }
-    write!(f, "t{}", self.id)
+    write!(f, "{}", self.id)
   }
 }
 

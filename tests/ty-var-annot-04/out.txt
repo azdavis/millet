@@ -1,4 +1,4 @@
-error: mismatched types: expected 't22, found bool
+error: mismatched types: expected '22, found bool
   ┌─ err.sml:1:1
   │
 1 │ val 'a _: 'a = false

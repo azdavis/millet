@@ -1,4 +1,4 @@
-error: mismatched types: expected 't23, found 't22
+error: mismatched types: expected '23, found '22
   ┌─ err.sml:1:40
   │
 1 │ fun ('a, 'b) f (xs: 'a list) (x: 'b) = x :: xs
