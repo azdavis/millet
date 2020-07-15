@@ -1,7 +1,8 @@
 {
   "recommendations": [
     "bungcip.better-toml",
-    "vadimcn.vscode-lldb",
-    "matklad.rust-analyzer"
+    "esbenp.prettier-vscode",
+    "matklad.rust-analyzer",
+    "vadimcn.vscode-lldb"
   ]
 }
