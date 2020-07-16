@@ -656,7 +656,7 @@ pub struct TyEnv {
 
 impl TyEnv {
   pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
-    for (_, ty_info) in self.inner.iter_mut() {
+    for ty_info in self.inner.values_mut() {
       match ty_info {
         TyInfo::Alias(ty_fcn) => ty_fcn.apply(subst),
         TyInfo::Sym(sym) => sym_tys.get_mut(sym).unwrap().ty_fcn.apply(subst),
@@ -788,11 +788,11 @@ impl Env {
   }
 
   pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
-    for (_, env) in self.str_env.iter_mut() {
+    for env in self.str_env.values_mut() {
       env.apply(subst, sym_tys);
     }
     self.ty_env.apply(subst, sym_tys);
-    for (_, val_info) in self.val_env.iter_mut() {
+    for val_info in self.val_env.values_mut() {
       val_info.ty_scheme.apply(subst);
     }
   }
