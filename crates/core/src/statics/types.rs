@@ -23,7 +23,7 @@ pub enum Error {
   DuplicateLabel(Label),
   Circularity(TyVar, Ty),
   TyMismatch(Ty, Ty),
-  OverloadTyMismatch(Vec<Ty>, Ty),
+  OverloadTyMismatch(Vec<Sym>, Ty),
   PatWrongIdStatus,
   ExnWrongIdStatus(IdStatus),
   WrongNumTyArgs(usize, usize),
@@ -60,8 +60,8 @@ impl Error {
       ),
       Self::OverloadTyMismatch(want, got) => {
         let mut ret = "mismatched types: expected one of ".to_owned();
-        for ty in want {
-          show_ty_impl(&mut ret, store, ty, TyPrec::Arrow);
+        for &sym in want {
+          show_ty_impl(&mut ret, store, &Ty::base(sym), TyPrec::Arrow);
           ret.push_str(", ");
         }
         ret.push_str("found ");
@@ -426,10 +426,7 @@ impl Subst {
         }
       };
       if let Some(syms) = syms {
-        return Err(loc.wrap(Error::OverloadTyMismatch(
-          syms.into_iter().map(Ty::base).collect(),
-          ty,
-        )));
+        return Err(loc.wrap(Error::OverloadTyMismatch(syms, ty)));
       }
     }
     self.insert(tv, ty);
