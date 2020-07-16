@@ -1,0 +1,7 @@
+error: mismatched types: expected '22, found int
+  ┌─ err.sml:5:25
+  │
+5 │     raise Poly x; raise Poly 3; ()
+  │                         ^^^^^^
+
+typechecking failed
