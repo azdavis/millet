@@ -1,0 +1,7 @@
+error: expression causes a type name to escape its scope
+  ┌─ err.sml:2:33
+  │
+2 │ val _ = let datatype t = Two in Two end
+  │                                 ^^^
+
+typechecking failed
