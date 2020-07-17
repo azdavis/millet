@@ -8,8 +8,8 @@ use crate::statics::ck::util::{
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
-  Cx, Env, Error, Pat, Result, State, StrEnv, SymTyInfo, SymTys, Ty, TyEnv, TyInfo, TyScheme,
-  TyVar, ValEnv, ValInfo,
+  Cx, Env, Error, Pat, Result, State, StrEnv, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys,
+  ValEnv, ValInfo,
 };
 use maplit::btreemap;
 use std::collections::{BTreeMap, HashMap};
@@ -126,7 +126,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
     // SML Definition (9)
     Exp::Typed(inner, ty) => {
       let exp_ty = ck_exp(cx, st, inner)?;
-      let ty_ty = ty::ck(cx, &st.sym_tys, ty)?;
+      let ty_ty = ty::ck(cx, &st.tys, ty)?;
       st.unify(exp.loc, ty_ty, exp_ty.clone())?;
       Ok(exp_ty)
     }
@@ -318,7 +318,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           let end = case.pats.last().unwrap().loc;
           arg_pats.push(begin.span(end).wrap(Pat::record(arg_pat)));
           if let Some(ty) = &case.ret_ty {
-            let new_ty = ty::ck(cx, &st.sym_tys, ty)?;
+            let new_ty = ty::ck(cx, &st.tys, ty)?;
             st.unify(ty.loc, Ty::Var(info.ret), new_ty)?;
           }
           let mut cx = cx.clone();
@@ -350,7 +350,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       Ok(env)
     }
     // SML Definition (18)
-    Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, &st.sym_tys, *ty_con, long),
+    Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, &st.tys, *ty_con, long),
     // SML Definition (19)
     Dec::Abstype(..) => Err(dec.loc.wrap(Error::Todo("`abstype`"))),
     // SML Definition (20)
@@ -361,7 +361,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           // SML Definition (30)
           ExBindInner::Ty(ty) => match ty {
             None => ValInfo::exn(),
-            Some(ty) => ValInfo::exn_fn(ty::ck(cx, &st.sym_tys, ty)?),
+            Some(ty) => ValInfo::exn_fn(ty::ck(cx, &st.tys, ty)?),
           },
           // SML Definition (31)
           ExBindInner::Long(vid) => {
@@ -420,7 +420,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
       add_ty_vars(&mut cx_cl, st, &ty_bind.ty_vars);
       &cx_cl
     };
-    let ty = ty::ck(cx, &st.sym_tys, &ty_bind.ty)?;
+    let ty = ty::ck(cx, &st.tys, &ty_bind.ty)?;
     let info = TyInfo::Alias(TyScheme {
       ty_vars: ty_bind
         .ty_vars
@@ -481,13 +481,13 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       val_env: ValEnv::new(),
       equality: false,
     };
-    assert!(st.sym_tys.insert(sym, sym_ty_info).is_none());
+    assert!(st.tys.insert(sym, sym_ty_info).is_none());
     syms.push(sym);
   }
   // SML Definition (28), SML Definition (81)
   for (dat_bind, sym) in dat_binds.iter().zip(syms) {
     // note that we have to `get` here and then `get_mut` again later because of the borrow checker.
-    let sym_ty_info = st.sym_tys.get(&sym).unwrap();
+    let sym_ty_info = st.tys.get(&sym).unwrap();
     let mut cx_cl;
     let cx = if dat_bind.ty_vars.is_empty() {
       &cx
@@ -525,8 +525,8 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
         // `T` respects equality based on whether `t` does. TODO this doesn't handle the equality
         // check correctly.
-        let t = ty::ck(&cx, &st.sym_tys, arg_ty)?;
-        equality = equality && t.is_equality(&st.sym_tys);
+        let t = ty::ck(&cx, &st.tys, arg_ty)?;
+        equality = equality && t.is_equality(&st.tys);
         ty = Ty::Arrow(t.into(), ty.into());
       }
       let val_info = ValInfo::ctor(TyScheme {
@@ -540,9 +540,9 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       // checking is unnecessary (just assert as a sanity check).
       assert!(bind_val_env.insert(con_bind.vid.val, val_info).is_none());
     }
-    // now the `ValEnv` is complete, so we may update `st.sym_tys` with the true definition of this
+    // now the `ValEnv` is complete, so we may update `st.tys` with the true definition of this
     // datatype. TODO closure?
-    let sym_ty_info = st.sym_tys.get_mut(&sym).unwrap();
+    let sym_ty_info = st.tys.get_mut(&sym).unwrap();
     sym_ty_info.val_env = bind_val_env;
     sym_ty_info.equality = equality;
   }
@@ -556,7 +556,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
 /// SML Definition (18), SML Definition (72)
 pub fn ck_dat_copy(
   cx: &Cx,
-  sym_tys: &SymTys,
+  tys: &Tys,
   ty_con: Located<StrRef>,
   long: &Long<StrRef>,
 ) -> Result<Env> {
@@ -564,7 +564,7 @@ pub fn ck_dat_copy(
     TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
     TyInfo::Sym(sym) => *sym,
   };
-  let info = sym_tys.get(&sym).unwrap();
+  let info = tys.get(&sym).unwrap();
   if info.val_env.is_empty() {
     return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype));
   }

@@ -75,7 +75,7 @@ pub fn generalize(
     // `TyScheme`.
     st.subst.remove_bound(tv);
   }
-  let ty_env_ty_vars = cx.env.ty_env.free_ty_vars(&st.sym_tys);
+  let ty_env_ty_vars = cx.env.ty_env.free_ty_vars(&st.tys);
   for tv in ty_scheme.ty.free_ty_vars() {
     if ty_env_ty_vars.contains(&tv) || st.subst.is_overloaded(&tv) || st.subst.is_bound(&tv) {
       continue;

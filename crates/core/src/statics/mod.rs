@@ -35,7 +35,7 @@ impl Statics {
 
   /// Finish running the statics.
   pub fn finish(mut self) {
-    self.bs.apply(&self.st.subst, &mut self.st.sym_tys);
-    assert!(self.bs.free_ty_vars(&self.st.sym_tys).is_empty());
+    self.bs.apply(&self.st.subst, &mut self.st.tys);
+    assert!(self.bs.free_ty_vars(&self.st.tys).is_empty());
   }
 }

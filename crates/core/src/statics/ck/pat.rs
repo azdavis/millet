@@ -6,7 +6,7 @@ use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
 use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate};
 use crate::statics::types::{
-  Con, Cx, Error, Pat, Result, Span, State, Sym, SymTys, Ty, TyScheme, ValEnv, ValInfo,
+  Con, Cx, Error, Pat, Result, Span, State, Sym, Ty, TyScheme, Tys, ValEnv, ValInfo,
 };
 use maplit::btreemap;
 use std::collections::BTreeMap;
@@ -48,7 +48,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
             Ty::Ctor(_, sym) => sym,
             _ => return Err(pat.loc.wrap(Error::PatNotConsTy(ty))),
           };
-          let span = get_span(&st.sym_tys, sym);
+          let span = get_span(&st.tys, sym);
           let pat = Pat::zero(Con::Ctor(vid.last.val, span));
           Ok((ValEnv::new(), ty, pat))
         }
@@ -136,7 +136,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     // SML Definition (42)
     AstPat::Typed(inner_pat, ty) => {
       let (val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
-      let ty = ty::ck(cx, &st.sym_tys, ty)?;
+      let ty = ty::ck(cx, &st.tys, ty)?;
       st.unify(pat.loc, ty, pat_ty.clone())?;
       Ok((val_env, pat_ty, inner_pat))
     }
@@ -152,7 +152,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       }
       let (mut val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
       if let Some(ty) = ty {
-        let ty = ty::ck(cx, &st.sym_tys, ty)?;
+        let ty = ty::ck(cx, &st.tys, ty)?;
         st.unify(pat.loc, ty, pat_ty.clone())?;
       }
       let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));
@@ -185,15 +185,15 @@ fn ctor(
     Ty::Ctor(_, sym) => sym,
     _ => unreachable!(),
   };
-  let span = get_span(&st.sym_tys, sym);
+  let span = get_span(&st.tys, sym);
   let pat = Pat::Con(Con::Ctor(long.last.val, span), vec![arg_pat]);
   Ok((ctor_res_ty, pat))
 }
 
-fn get_span(sym_tys: &SymTys, sym: Sym) -> Span {
+fn get_span(tys: &Tys, sym: Sym) -> Span {
   if sym == Sym::EXN {
     Span::PosInf
   } else {
-    Span::Finite(sym_tys.get(&sym).unwrap().val_env.len())
+    Span::Finite(tys.get(&sym).unwrap().val_env.len())
   }
 }

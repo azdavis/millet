@@ -342,7 +342,7 @@ impl Subst {
   /// Returns `Ok(())` iff want and got can unify, and updates self to explain how. The types
   /// immediately have self applied to them upon entry to this function, so no need to do it
   /// yourself before calling.
-  pub fn unify(&mut self, loc: Loc, sym_tys: &SymTys, mut want: Ty, mut got: Ty) -> Result<()> {
+  pub fn unify(&mut self, loc: Loc, tys: &Tys, mut want: Ty, mut got: Ty) -> Result<()> {
     want.apply(self);
     got.apply(self);
     match (want, got) {
@@ -356,24 +356,24 @@ impl Subst {
           Err(loc.wrap(Error::TyMismatch(Ty::Var(want), Ty::Var(got))))
         } else if want_bound || (!got_bound && (want.equality || self.is_overloaded(&want))) {
           assert!(!got_bound);
-          self.bind(loc, sym_tys, got, Ty::Var(want))
+          self.bind(loc, tys, got, Ty::Var(want))
         } else {
           assert!(!want_bound);
-          self.bind(loc, sym_tys, want, Ty::Var(got))
+          self.bind(loc, tys, want, Ty::Var(got))
         }
       }
       (Ty::Var(tv), got) => {
         if self.is_bound(&tv) {
           Err(loc.wrap(Error::TyMismatch(Ty::Var(tv), got)))
         } else {
-          self.bind(loc, sym_tys, tv, got)
+          self.bind(loc, tys, tv, got)
         }
       }
       (want, Ty::Var(tv)) => {
         if self.is_bound(&tv) {
           Err(loc.wrap(Error::TyMismatch(want, Ty::Var(tv))))
         } else {
-          self.bind(loc, sym_tys, tv, want)
+          self.bind(loc, tys, tv, want)
         }
       }
       (Ty::Record(rows_want), Ty::Record(mut rows_got)) => {
@@ -385,13 +385,13 @@ impl Subst {
         }
         for (lab, want) in rows_want {
           let got = rows_got.remove(&lab).unwrap();
-          self.unify(loc, sym_tys, want, got)?;
+          self.unify(loc, tys, want, got)?;
         }
         Ok(())
       }
       (Ty::Arrow(arg_want, res_want), Ty::Arrow(arg_got, res_got)) => {
-        self.unify(loc, sym_tys, *arg_want, *arg_got)?;
-        self.unify(loc, sym_tys, *res_want, *res_got)?;
+        self.unify(loc, tys, *arg_want, *arg_got)?;
+        self.unify(loc, tys, *res_want, *res_got)?;
         Ok(())
       }
       (Ty::Ctor(args_want, name_want), Ty::Ctor(args_got, name_got)) => {
@@ -403,7 +403,7 @@ impl Subst {
         }
         assert_eq!(args_want.len(), args_got.len(), "mismatched Ctor args len");
         for (want, got) in args_want.into_iter().zip(args_got) {
-          self.unify(loc, sym_tys, want, got)?;
+          self.unify(loc, tys, want, got)?;
         }
         Ok(())
       }
@@ -415,12 +415,12 @@ impl Subst {
 
   /// A helper for `unify`, which inserts the tv => ty mapping iff tv != ty and tv not in ty.
   /// Requires that `tv` not be bound.
-  fn bind(&mut self, loc: Loc, sym_tys: &SymTys, tv: TyVar, ty: Ty) -> Result<()> {
+  fn bind(&mut self, loc: Loc, tys: &Tys, tv: TyVar, ty: Ty) -> Result<()> {
     if ty.free_ty_vars().contains(&tv) {
       return Err(loc.wrap(Error::Circularity(tv, ty)));
     }
-    // here's the single solitary reason we have to pass a `SymTys` all the way down here.
-    if tv.equality && !ty.is_equality(sym_tys) {
+    // here's the single solitary reason we have to pass a `Tys` all the way down here.
+    if tv.equality && !ty.is_equality(tys) {
       return Err(loc.wrap(Error::NotEquality(ty)));
     }
     if let Some(syms) = self.overload.remove(&tv) {
@@ -447,7 +447,10 @@ impl Subst {
   }
 }
 
-/// A symbol, used to uniquely identify a type which 'has been generated'.
+/// A symbol, a globally unique identifier.
+///
+/// If you have two `StrRef`s that are equal, they may not actually be referring to the same thing.
+/// By contrast, two `Sym`s are equal iff they refer to the exact same thing.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Sym {
   name: StrRef,
@@ -562,14 +565,14 @@ impl Ty {
   }
 
   /// Returns whether this is an equality type.
-  pub fn is_equality(&self, sym_tys: &SymTys) -> bool {
+  pub fn is_equality(&self, tys: &Tys) -> bool {
     match self {
       Self::Var(tv) => tv.equality,
-      Self::Record(rows) => rows.values().all(|ty| ty.is_equality(sym_tys)),
+      Self::Record(rows) => rows.values().all(|ty| ty.is_equality(tys)),
       Self::Arrow(_, _) => false,
       Self::Ctor(args, sym) => {
         *sym == Sym::base(StrRef::REF)
-          || sym_tys.get(sym).unwrap().equality && args.iter().all(|ty| ty.is_equality(sym_tys))
+          || tys.get(sym).unwrap().equality && args.iter().all(|ty| ty.is_equality(tys))
       }
     }
   }
@@ -658,7 +661,7 @@ pub struct SymTyInfo {
 }
 
 /// A collection of symbol types.
-pub type SymTys = HashMap<Sym, SymTyInfo>;
+pub type Tys = HashMap<Sym, SymTyInfo>;
 
 /// Information about a type.
 #[derive(Clone)]
@@ -671,18 +674,18 @@ pub enum TyInfo {
 
 impl TyInfo {
   /// Returns a reference to the type function in this.
-  pub fn ty_fcn<'a>(&'a self, sym_tys: &'a SymTys) -> &'a TyFcn {
+  pub fn ty_fcn<'a>(&'a self, tys: &'a Tys) -> &'a TyFcn {
     match self {
       TyInfo::Alias(ty_fcn) => ty_fcn,
-      TyInfo::Sym(sym) => &sym_tys.get(sym).unwrap().ty_fcn,
+      TyInfo::Sym(sym) => &tys.get(sym).unwrap().ty_fcn,
     }
   }
 
   /// Returns a mutable reference to the type function in this.
-  pub fn ty_fcn_mut<'a>(&'a mut self, sym_tys: &'a mut SymTys) -> &'a mut TyFcn {
+  pub fn ty_fcn_mut<'a>(&'a mut self, tys: &'a mut Tys) -> &'a mut TyFcn {
     match self {
       TyInfo::Alias(ty_fcn) => ty_fcn,
-      TyInfo::Sym(sym) => &mut sym_tys.get_mut(sym).unwrap().ty_fcn,
+      TyInfo::Sym(sym) => &mut tys.get_mut(sym).unwrap().ty_fcn,
     }
   }
 }
@@ -698,18 +701,18 @@ pub struct TyEnv {
 
 impl TyEnv {
   /// Applies a substitution to this.
-  pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
+  pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for ty_info in self.inner.values_mut() {
-      ty_info.ty_fcn_mut(sym_tys).apply(subst);
+      ty_info.ty_fcn_mut(tys).apply(subst);
     }
   }
 
   /// Returns the free type variables in this.
-  pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
+  pub fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
     self
       .inner
       .values()
-      .flat_map(|ty_info| ty_info.ty_fcn(sym_tys).free_ty_vars())
+      .flat_map(|ty_info| ty_info.ty_fcn(tys).free_ty_vars())
       .collect()
   }
 }
@@ -853,23 +856,23 @@ impl Env {
   }
 
   /// Applies a substitution to this.
-  pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
+  pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for env in self.str_env.values_mut() {
-      env.apply(subst, sym_tys);
+      env.apply(subst, tys);
     }
-    self.ty_env.apply(subst, sym_tys);
+    self.ty_env.apply(subst, tys);
     for val_info in self.val_env.values_mut() {
       val_info.ty_scheme.apply(subst);
     }
   }
 
   /// Returns the free type variables in this.
-  pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
+  pub fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
     self
       .str_env
       .values()
-      .flat_map(|env| env.free_ty_vars(sym_tys))
-      .chain(self.ty_env.free_ty_vars(sym_tys))
+      .flat_map(|env| env.free_ty_vars(tys))
+      .chain(self.ty_env.free_ty_vars(tys))
       .chain(
         self
           .val_env
@@ -970,36 +973,36 @@ pub struct Basis {
 
 impl Basis {
   /// Apply a substitution to this.
-  pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
+  pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for fun_sig in self.fun_env.values_mut() {
-      fun_sig.env.apply(subst, sym_tys);
-      fun_sig.sig.env.apply(subst, sym_tys);
+      fun_sig.env.apply(subst, tys);
+      fun_sig.sig.env.apply(subst, tys);
     }
     for sig in self.sig_env.values_mut() {
-      sig.env.apply(subst, sym_tys);
+      sig.env.apply(subst, tys);
     }
-    self.env.apply(subst, sym_tys);
+    self.env.apply(subst, tys);
   }
 
   /// Return the free type variables in this. Should always be empty, as per the Definition.
-  pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
+  pub fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
     self
       .fun_env
       .values()
       .flat_map(|fun_sig| {
         fun_sig
           .env
-          .free_ty_vars(sym_tys)
+          .free_ty_vars(tys)
           .into_iter()
-          .chain(fun_sig.sig.env.free_ty_vars(sym_tys))
+          .chain(fun_sig.sig.env.free_ty_vars(tys))
       })
       .chain(
         self
           .sig_env
           .values()
-          .flat_map(|sig| sig.env.free_ty_vars(sym_tys)),
+          .flat_map(|sig| sig.env.free_ty_vars(tys)),
       )
-      .chain(self.env.free_ty_vars(sym_tys))
+      .chain(self.env.free_ty_vars(tys))
       .collect()
   }
 
@@ -1052,7 +1055,7 @@ pub struct State {
   pub subst: Subst,
   /// The types that 'have been generated' and information about them. Invariant: Always grows in
   /// size.
-  pub sym_tys: SymTys,
+  pub tys: Tys,
 }
 
 impl State {
@@ -1070,9 +1073,9 @@ impl State {
     Sym { id, name: name.val }
   }
 
-  /// A thin wrapper over `Subst#unify`, which passes in this `State`'s `SymTys`.
+  /// A thin wrapper over `Subst#unify`, which passes in this `State`'s `Tys`.
   pub fn unify(&mut self, loc: Loc, want: Ty, got: Ty) -> Result<()> {
-    self.subst.unify(loc, &self.sym_tys, want, got)
+    self.subst.unify(loc, &self.tys, want, got)
   }
 }
 

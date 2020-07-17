@@ -92,7 +92,7 @@ pub fn get() -> (Basis, State) {
   let num = || vec![Sym::INT, Sym::WORD, Sym::REAL];
   let real = || vec![Sym::REAL];
   let mut st = State::default();
-  st.sym_tys.insert(
+  st.tys.insert(
     Sym::BOOL,
     SymTyInfo {
       ty_fcn: TyScheme::mono(Ty::BOOL),
@@ -102,7 +102,7 @@ pub fn get() -> (Basis, State) {
   );
   let a = st.new_ty_var(false);
   let val_env = list_val_env(&mut st);
-  st.sym_tys.insert(
+  st.tys.insert(
     Sym::LIST,
     SymTyInfo {
       ty_fcn: TyScheme {
@@ -116,7 +116,7 @@ pub fn get() -> (Basis, State) {
   );
   let a = st.new_ty_var(false);
   let val_env = ref_val_env(&mut st);
-  st.sym_tys.insert(
+  st.tys.insert(
     Sym::REF,
     SymTyInfo {
       ty_fcn: TyScheme {
@@ -128,7 +128,7 @@ pub fn get() -> (Basis, State) {
       equality: true,
     },
   );
-  st.sym_tys.insert(
+  st.tys.insert(
     Sym::ORDER,
     SymTyInfo {
       ty_fcn: TyScheme::mono(Ty::ORDER),
@@ -151,7 +151,7 @@ pub fn get() -> (Basis, State) {
     ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::BOOL.into()),
     overload: None,
   });
-  st.sym_tys.extend(hashmap![
+  st.tys.extend(hashmap![
     Sym::INT => base_ty(Ty::INT, true),
     Sym::REAL => base_ty(Ty::REAL, false),
     Sym::STRING => base_ty(Ty::STRING, true),
@@ -225,7 +225,7 @@ pub fn get() -> (Basis, State) {
   }
   for ty_info in bs.env.ty_env.inner.values() {
     if let TyInfo::Sym(sym) = ty_info {
-      assert!(st.sym_tys.contains_key(sym));
+      assert!(st.tys.contains_key(sym));
     }
   }
   (bs, st)

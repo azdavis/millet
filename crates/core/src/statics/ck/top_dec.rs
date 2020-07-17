@@ -144,7 +144,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       let mut val_env = ValEnv::new();
       // SML Definition (79)
       for val_desc in val_descs {
-        let ty = ty::ck(&cx, &st.sym_tys, &val_desc.ty)?;
+        let ty = ty::ck(&cx, &st.tys, &val_desc.ty)?;
         // TODO generalize? closure?
         env_ins(&mut val_env, val_desc.vid, ValInfo::val(TyScheme::mono(ty)))?;
       }
@@ -161,7 +161,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
         let sym = st.new_sym(ty_desc.ty_con);
         // TODO equality check
         env_ins(&mut ty_env.inner, ty_desc.ty_con, TyInfo::Sym(sym))?;
-        st.sym_tys.insert(
+        st.tys.insert(
           sym,
           SymTyInfo {
             ty_fcn: TyScheme::mono(Ty::Ctor(vec![], sym)),
@@ -175,7 +175,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
     // SML Definition (71)
     Spec::Datatype(dat_binds) => dec::ck_dat_binds(bs.to_cx(), st, dat_binds),
     // SML Definition (72)
-    Spec::DatatypeCopy(ty_con, long) => dec::ck_dat_copy(&bs.to_cx(), &st.sym_tys, *ty_con, long),
+    Spec::DatatypeCopy(ty_con, long) => dec::ck_dat_copy(&bs.to_cx(), &st.tys, *ty_con, long),
     // SML Definition (73)
     Spec::Exception(ex_descs) => {
       let cx = bs.to_cx();
@@ -184,7 +184,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       for ex_desc in ex_descs {
         let val_info = match &ex_desc.ty {
           None => ValInfo::exn(),
-          Some(ty) => ValInfo::exn_fn(ty::ck(&cx, &st.sym_tys, ty)?),
+          Some(ty) => ValInfo::exn_fn(ty::ck(&cx, &st.tys, ty)?),
         };
         env_ins(&mut val_env, ex_desc.vid, val_info)?;
       }
