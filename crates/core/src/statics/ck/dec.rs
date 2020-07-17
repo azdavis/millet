@@ -455,13 +455,13 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     // tell the original context as well as the overall `TyEnv` that we return that this new
     // datatype does exist, but tell the State that it has just an empty `ValEnv`. also perform dupe
     // checking on the name of the new type and assert for sanity checking after the dupe check.
-    env_ins(&mut cx.env.ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
+    env_ins(&mut ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
+    cx.env
+      .ty_env
+      .inner
+      .insert(dat_bind.ty_con.val, TyInfo::Sym(sym));
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
     cx.ty_names.insert(dat_bind.ty_con.val);
-    assert!(ty_env
-      .inner
-      .insert(dat_bind.ty_con.val, TyInfo::Sym(sym))
-      .is_none());
     // no mapping from ast ty vars to statics ty vars here. we just need some ty vars to make the
     // `TyScheme`.
     let ty_vars: Vec<_> = dat_bind
