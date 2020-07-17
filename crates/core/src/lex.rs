@@ -134,6 +134,7 @@ impl<'s> TokenMaker<'s> {
       }
     }
     if comments == 0 {
+      ret.shrink_to_fit();
       Ok(ret)
     } else {
       Err(Loc::new(self.i - 3, self.i - 1).wrap(Error::UnmatchedOpenComment))
@@ -305,6 +306,7 @@ impl<'s> TokenMaker<'s> {
                 Err(Error::InvalidCharConstant)
               }
             } else {
+              str_bs.shrink_to_fit();
               let string = String::from_utf8(str_bs).unwrap();
               let str_ref = self.store.insert_string(string);
               Ok(Token::String(str_ref))

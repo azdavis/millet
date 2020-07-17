@@ -30,6 +30,7 @@ pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec<StrRef>>>> {
     }
     ret.push(p.top_dec()?);
   }
+  ret.shrink_to_fit();
   Ok(ret)
 }
 
@@ -160,6 +161,7 @@ impl Parser {
             break;
           }
         }
+        sig_binds.shrink_to_fit();
         TopDec::SigDec(sig_binds)
       }
       Token::Functor => {
@@ -185,6 +187,7 @@ impl Parser {
             break;
           }
         }
+        fun_binds.shrink_to_fit();
         TopDec::FunDec(fun_binds)
       }
       _ => {
@@ -293,6 +296,7 @@ impl Parser {
             break;
           }
         }
+        str_binds.shrink_to_fit();
         StrDec::Structure(str_binds)
       }
       Token::Local => {
@@ -364,6 +368,7 @@ impl Parser {
             break;
           }
         }
+        val_descs.shrink_to_fit();
         Spec::Val(val_descs)
       }
       Token::Type => {
@@ -391,6 +396,7 @@ impl Parser {
             break;
           }
         }
+        ex_descs.shrink_to_fit();
         Spec::Exception(ex_descs)
       }
       Token::Structure => {
@@ -407,6 +413,7 @@ impl Parser {
             break;
           }
         }
+        str_descs.shrink_to_fit();
         Spec::Structure(str_descs)
       }
       Token::Include => {
@@ -426,6 +433,7 @@ impl Parser {
           let exp = self.sig_exp()?;
           Spec::Include(exp.into())
         } else {
+          sig_ids.shrink_to_fit();
           Spec::Seq(sig_ids)
         }
       }
@@ -446,6 +454,7 @@ impl Parser {
       if ty_cons.len() < 2 {
         return self.fail("an identifier", self.peek());
       }
+      ty_cons.shrink_to_fit();
       ret = Spec::Sharing(self.wrap(begin, ret).into(), ty_cons);
     }
     Ok(Some(self.wrap(begin, ret)))
@@ -463,6 +472,7 @@ impl Parser {
         break;
       }
     }
+    ret.shrink_to_fit();
     Ok(ret)
   }
 
@@ -526,6 +536,7 @@ impl Parser {
             }
           }
         }
+        rows.shrink_to_fit();
         Exp::Record(rows)
       }
       Token::Pound => {
@@ -591,6 +602,7 @@ impl Parser {
             }
           }
         }
+        exprs.shrink_to_fit();
         Exp::List(exprs)
       }
       Token::Let => {
@@ -610,6 +622,7 @@ impl Parser {
           }
         }
         self.ops = ops;
+        exprs.shrink_to_fit();
         Exp::Let(dec, exprs)
       }
       Token::Ident(..) => Exp::LongVid(self.long_id(false)?),
@@ -679,6 +692,7 @@ impl Parser {
       };
     }
     let last = structures.pop().unwrap();
+    structures.shrink_to_fit();
     Ok(Some(Long { structures, last }))
   }
 
@@ -859,6 +873,7 @@ impl Parser {
         break;
       }
     }
+    arms.shrink_to_fit();
     Ok(Cases { arms })
   }
 
@@ -887,6 +902,7 @@ impl Parser {
             break;
           }
         }
+        val_binds.shrink_to_fit();
         Dec::Val(ty_vars, val_binds)
       }
       Token::Fun => {
@@ -901,6 +917,7 @@ impl Parser {
             self.skip();
             continue;
           }
+          cases.shrink_to_fit();
           binds.push(FValBind { cases });
           if let Token::And = tok.val {
             self.skip();
@@ -909,6 +926,7 @@ impl Parser {
           }
           break;
         }
+        binds.shrink_to_fit();
         Dec::Fun(ty_vars, binds)
       }
       Token::Type => {
@@ -969,6 +987,7 @@ impl Parser {
             break;
           }
         }
+        ex_binds.shrink_to_fit();
         Dec::Exception(ex_binds)
       }
       Token::Local => {
@@ -992,6 +1011,7 @@ impl Parser {
             break;
           }
         }
+        str_ids.shrink_to_fit();
         Dec::Open(str_ids)
       }
       Token::Infix => {
@@ -1098,6 +1118,7 @@ impl Parser {
         break;
       }
     }
+    ret.shrink_to_fit();
     Ok(ret)
   }
 
@@ -1147,6 +1168,7 @@ impl Parser {
         break;
       }
     }
+    ret.shrink_to_fit();
     Ok(ret)
   }
 
@@ -1195,6 +1217,7 @@ impl Parser {
             _ => return self.fail("`)` or `,`", tok),
           }
         }
+        ret.shrink_to_fit();
         Ok(ret)
       }
       _ => Ok(Vec::new()),
@@ -1295,6 +1318,7 @@ impl Parser {
             }
           }
         }
+        rows.shrink_to_fit();
         Pat::Record(rows, rest_loc)
       }
       Token::LRound => {
@@ -1318,6 +1342,7 @@ impl Parser {
         if pats.len() == 1 {
           pats.pop().unwrap().val
         } else {
+          pats.shrink_to_fit();
           Pat::Tuple(pats)
         }
       }
@@ -1338,6 +1363,7 @@ impl Parser {
             }
           }
         }
+        pats.shrink_to_fit();
         Pat::List(pats)
       }
       Token::Ident(..) => Pat::LongVid(self.long_id(false)?),
@@ -1469,6 +1495,7 @@ impl Parser {
             }
           }
         }
+        rows.shrink_to_fit();
         Ty::Record(rows)
       }
       Token::LRound => {
@@ -1485,6 +1512,7 @@ impl Parser {
           }
         }
         let long_ty_con = self.maybe_long_id()?;
+        types.shrink_to_fit();
         match (types.len(), long_ty_con) {
           (1, None) => types.pop().unwrap().val,
           (_, None) => return self.fail("an identifier", self.peek()),
@@ -1557,6 +1585,7 @@ impl Parser {
         self.skip();
       }
     }
+    xs.shrink_to_fit();
     let ret = match xs.len() {
       // NOTE we conjure up a 'fake' loc in the 0 case
       0 => self.peek().loc.wrap(seq(Vec::new())),
@@ -1614,6 +1643,7 @@ impl Parser {
     if ret.is_empty() {
       self.fail("an identifier", self.peek())
     } else {
+      ret.shrink_to_fit();
       Ok(ret)
     }
   }
