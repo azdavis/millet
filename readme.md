@@ -18,7 +18,7 @@ course.
 
 ## Development
 
-First, clone the repository and cd inside.
+First, clone the repository with `git` and cd inside.
 
 For development of the main codebase in `crates`, install Rust, probably with
 [rustup][]. Then run `cargo build`.
