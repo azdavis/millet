@@ -48,13 +48,13 @@ Some scripts in `bin` require either `sh` (POSIX) or `python3`.
     server, and puts the language server binary near the built client.
   - `bin/run-test` runs tests in `tests`. See below.
 - `crates` is the primary location of code implementing Standard ML.
-  - `crates/cli` contains a CLI interface which runs the lexer, parser, and
-    typechecker from `crates/core` on a sequence of files.
+  - `crates/cli` contains a command-line interface which runs the lexer, parser,
+    and typechecker from `crates/core` on a sequence of files.
   - `crates/core` contains the Standard ML lexer, parser, and typechecker.
   - `crates/ls` contains a language server which runs the lexer, parser, and
     typechecker from `crates/core` on files sent to it by the language client.
-- `extensions` contains language client extensions for editors to communicate
-  with the language server.
+- `extensions` contains language client extensions for text editors to
+  communicate with the language server.
 - `tests` contains tests. See below.
 
 ## Testing
