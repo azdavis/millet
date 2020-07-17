@@ -468,6 +468,11 @@ impl Sym {
     self.id.is_none()
   }
 
+  /// Returns the underlying name of this Sym.
+  pub fn name(&self) -> StrRef {
+    self.name
+  }
+
   pub const CHAR: Self = Self::base(StrRef::CHAR);
   pub const EXN: Self = Self::base(StrRef::EXN);
   pub const BOOL: Self = Self::base(StrRef::BOOL);
@@ -521,7 +526,7 @@ impl Ty {
       Self::Var(_) => TyNameSet::new(),
       Self::Record(rows) => rows.values().flat_map(Self::ty_names).collect(),
       Self::Arrow(arg, res) => arg.ty_names().into_iter().chain(res.ty_names()).collect(),
-      Self::Ctor(args, sym) => std::iter::once(sym.name)
+      Self::Ctor(args, sym) => std::iter::once(*sym)
         .chain(args.iter().flat_map(Self::ty_names))
         .collect(),
     }
@@ -826,7 +831,7 @@ impl Env {
       .str_env
       .values()
       .flat_map(Self::ty_names)
-      .chain(self.ty_env.inner.keys().copied())
+      .chain(self.ty_env.inner.values().copied())
       .collect()
   }
 
@@ -889,7 +894,7 @@ impl From<StrEnv> for Env {
 }
 
 /// A set of type names.
-pub type TyNameSet = HashSet<StrRef>;
+pub type TyNameSet = HashSet<Sym>;
 
 /// A set of type variables. NOTE this is an ordered set purely to make errors reproducible.
 pub type TyVarSet = BTreeSet<TyVar>;
@@ -940,6 +945,7 @@ pub type FunEnv = HashMap<StrRef, FunSig>;
 /// program.
 #[derive(Clone)]
 pub struct Basis {
+  // TODO is this really necessary?
   pub ty_names: TyNameSet,
   pub fun_env: FunEnv,
   pub sig_env: SigEnv,

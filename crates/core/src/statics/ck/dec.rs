@@ -462,7 +462,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     env_ins(&mut ty_env.inner, dat_bind.ty_con, sym)?;
     cx.env.ty_env.inner.insert(dat_bind.ty_con.val, sym);
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
-    cx.ty_names.insert(dat_bind.ty_con.val);
+    cx.ty_names.insert(sym);
     // no mapping from ast ty vars to statics ty vars here. we just need some ty vars to make the
     // `TyScheme`.
     let ty_vars: Vec<_> = dat_bind

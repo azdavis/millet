@@ -161,17 +161,17 @@ pub fn get() -> (Basis, State) {
   ]);
   let bs = Basis {
     ty_names: hashset![
-      StrRef::UNIT,
-      StrRef::BOOL,
-      StrRef::INT,
-      StrRef::REAL,
-      StrRef::STRING,
-      StrRef::CHAR,
-      StrRef::WORD,
-      StrRef::LIST,
-      StrRef::REF,
-      StrRef::EXN,
-      StrRef::ORDER,
+      Sym::UNIT,
+      Sym::BOOL,
+      Sym::INT,
+      Sym::REAL,
+      Sym::STRING,
+      Sym::CHAR,
+      Sym::WORD,
+      Sym::LIST,
+      Sym::REF,
+      Sym::EXN,
+      Sym::ORDER,
     ],
     fun_env: FunEnv::new(),
     sig_env: SigEnv::new(),
@@ -221,8 +221,8 @@ pub fn get() -> (Basis, State) {
     },
   };
   // sanity check
-  for name in bs.ty_names.iter() {
-    assert!(bs.env.ty_env.inner.contains_key(name));
+  for sym in bs.ty_names.iter() {
+    assert!(bs.env.ty_env.inner.get(&sym.name()).unwrap() == sym);
   }
   for sym in bs.env.ty_env.inner.values() {
     assert!(st.tys.contains_key(sym));
