@@ -28,6 +28,7 @@ pub fn content_length(bs: &[u8]) -> Option<usize> {
 fn test_content_length() {
   assert_eq!(content_length(b""), None);
   assert_eq!(content_length(b"Content-Length: 123"), None);
+  assert_eq!(content_length(b"Content-Length 123\r\n"), None);
   assert_eq!(content_length(b"Content-Length: 123\n"), None);
   assert_eq!(content_length(b"Content-Length: 123\r"), None);
   assert_eq!(content_length(b"Content-Length:123\r\n"), Some(123));
