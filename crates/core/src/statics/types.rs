@@ -670,12 +670,19 @@ pub enum TyInfo {
 }
 
 impl TyInfo {
-  /// Returns the type function in this. Looks up the type function in the `SymTys` if `self` is
-  /// `Sym`.
+  /// Returns a reference to the type function in this.
   pub fn ty_fcn<'a>(&'a self, sym_tys: &'a SymTys) -> &'a TyFcn {
     match self {
       TyInfo::Alias(ty_fcn) => ty_fcn,
       TyInfo::Sym(sym) => &sym_tys.get(sym).unwrap().ty_fcn,
+    }
+  }
+
+  /// Returns a mutable reference to the type function in this.
+  pub fn ty_fcn_mut<'a>(&'a mut self, sym_tys: &'a mut SymTys) -> &'a mut TyFcn {
+    match self {
+      TyInfo::Alias(ty_fcn) => ty_fcn,
+      TyInfo::Sym(sym) => &mut sym_tys.get_mut(sym).unwrap().ty_fcn,
     }
   }
 }
@@ -693,10 +700,7 @@ impl TyEnv {
   /// Applies a substitution to this.
   pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
     for ty_info in self.inner.values_mut() {
-      match ty_info {
-        TyInfo::Alias(ty_fcn) => ty_fcn.apply(subst),
-        TyInfo::Sym(sym) => sym_tys.get_mut(sym).unwrap().ty_fcn.apply(subst),
-      }
+      ty_info.ty_fcn_mut(sym_tys).apply(subst);
     }
   }
 
