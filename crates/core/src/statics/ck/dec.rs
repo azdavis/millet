@@ -4,12 +4,12 @@ use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{
-  add_ty_vars, env_ins, env_merge, generalize, get_env, get_ty_info, get_val_info, instantiate,
+  add_ty_vars, env_ins, env_merge, generalize, get_env, get_ty_sym, get_val_info, instantiate,
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
-  Cx, Env, Error, Pat, Result, State, StrEnv, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys,
-  ValEnv, ValInfo,
+  Cx, Env, Error, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys, ValEnv,
+  ValInfo,
 };
 use maplit::btreemap;
 use std::collections::{BTreeMap, HashMap};
@@ -421,19 +421,23 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
       &cx_cl
     };
     let ty = ty::ck(cx, &st.tys, &ty_bind.ty)?;
-    let info = TyInfo::Alias(TyScheme {
-      ty_vars: ty_bind
-        .ty_vars
-        .iter()
-        .map(|tv| *cx.ty_vars.get(&tv.val).unwrap())
-        .collect(),
-      ty,
-      overload: None,
-    });
-    if ty_env.inner.insert(ty_bind.ty_con.val, info).is_some() {
-      let err = Error::Redefined(ty_bind.ty_con.val);
-      return Err(ty_bind.ty_con.loc.wrap(err));
-    }
+    let sym = st.new_sym(ty_bind.ty_con);
+    env_ins(&mut ty_env.inner, ty_bind.ty_con, sym)?;
+    let info = TyInfo {
+      ty_fcn: TyScheme {
+        ty_vars: ty_bind
+          .ty_vars
+          .iter()
+          .map(|tv| *cx.ty_vars.get(&tv.val).unwrap())
+          .collect(),
+        ty,
+        overload: None,
+      },
+      val_env: ValEnv::new(),
+      // TODO
+      equality: false,
+    };
+    st.tys.insert(sym, info);
   }
   Ok(ty_env.into())
 }
@@ -455,11 +459,8 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     // tell the original context as well as the overall `TyEnv` that we return that this new
     // datatype does exist, but tell the State that it has just an empty `ValEnv`. also perform dupe
     // checking on the name of the new type and assert for sanity checking after the dupe check.
-    env_ins(&mut ty_env.inner, dat_bind.ty_con, TyInfo::Sym(sym))?;
-    cx.env
-      .ty_env
-      .inner
-      .insert(dat_bind.ty_con.val, TyInfo::Sym(sym));
+    env_ins(&mut ty_env.inner, dat_bind.ty_con, sym)?;
+    cx.env.ty_env.inner.insert(dat_bind.ty_con.val, sym);
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
     cx.ty_names.insert(dat_bind.ty_con.val);
     // no mapping from ast ty vars to statics ty vars here. we just need some ty vars to make the
@@ -472,7 +473,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     let ty_args: Vec<_> = ty_vars.iter().copied().map(Ty::Var).collect();
     // we don't yet know whether this new type respects equality so just baldly assert that does
     // not. also we haven't analyzed the `ConBind`s yet, so the `ValEnv` is empty.
-    let sym_ty_info = SymTyInfo {
+    let info = TyInfo {
       ty_fcn: TyScheme {
         ty_vars,
         ty: Ty::Ctor(ty_args, sym),
@@ -481,7 +482,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       val_env: ValEnv::new(),
       equality: false,
     };
-    assert!(st.tys.insert(sym, sym_ty_info).is_none());
+    assert!(st.tys.insert(sym, info).is_none());
     syms.push(sym);
   }
   // SML Definition (28), SML Definition (81)
@@ -560,10 +561,7 @@ pub fn ck_dat_copy(
   ty_con: Located<StrRef>,
   long: &Long<StrRef>,
 ) -> Result<Env> {
-  let sym = match get_ty_info(get_env(&cx.env, long)?, long.last)? {
-    TyInfo::Alias(_) => return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype)),
-    TyInfo::Sym(sym) => *sym,
-  };
+  let sym = get_ty_sym(get_env(&cx.env, long)?, long.last)?;
   let info = tys.get(&sym).unwrap();
   if info.val_env.is_empty() {
     return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype));
@@ -571,7 +569,7 @@ pub fn ck_dat_copy(
   Ok(Env {
     str_env: StrEnv::new(),
     ty_env: TyEnv {
-      inner: btreemap![ty_con.val => TyInfo::Sym(sym)],
+      inner: btreemap![ty_con.val => sym],
     },
     val_env: info.val_env.clone(),
   })

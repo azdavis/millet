@@ -478,6 +478,7 @@ impl Sym {
   pub const ORDER: Self = Self::base(StrRef::ORDER);
   pub const LIST: Self = Self::base(StrRef::LIST);
   pub const REF: Self = Self::base(StrRef::REF);
+  pub const UNIT: Self = Self::base(StrRef::UNIT);
 }
 
 /// A type, for the purposes of static analysis.
@@ -649,46 +650,20 @@ pub type TyFcn = TyScheme;
 
 /// Information about a type that 'has been generated', like a datatype or a `type t` in a
 /// signature. TyStr from the Definition.
-pub struct SymTyInfo {
+pub struct TyInfo {
   pub ty_fcn: TyFcn,
   /// NOTE I think this is empty iff this is a special type (int, word, etc) or a `type t` in a
   /// signature. That is, this is empty iff you _cannot_ datatype copy this symbol.
   pub val_env: ValEnv,
   /// Not strictly in the Definition, but seems to be implicitly mentioned when talking about type
   /// structures respecting equality. Since a `SymTyInfo` is immutable, we compute when creating a
-  /// new `SymTyInfo` whether it respects equality and cache that value in here.
+  /// new `SymTyInfo` whether it respects equality and cache that value in here. TODO what is this
+  /// was an alias?
   pub equality: bool,
 }
 
 /// A collection of symbol types.
-pub type Tys = HashMap<Sym, SymTyInfo>;
-
-/// Information about a type.
-#[derive(Clone)]
-pub enum TyInfo {
-  /// A type alias, i.e. `type foo = bar`.
-  Alias(TyFcn),
-  /// A symbol type, like a `datatype` or `type t` in a signature.
-  Sym(Sym),
-}
-
-impl TyInfo {
-  /// Returns a reference to the type function in this.
-  pub fn ty_fcn<'a>(&'a self, tys: &'a Tys) -> &'a TyFcn {
-    match self {
-      TyInfo::Alias(ty_fcn) => ty_fcn,
-      TyInfo::Sym(sym) => &tys.get(sym).unwrap().ty_fcn,
-    }
-  }
-
-  /// Returns a mutable reference to the type function in this.
-  pub fn ty_fcn_mut<'a>(&'a mut self, tys: &'a mut Tys) -> &'a mut TyFcn {
-    match self {
-      TyInfo::Alias(ty_fcn) => ty_fcn,
-      TyInfo::Sym(sym) => &mut tys.get_mut(sym).unwrap().ty_fcn,
-    }
-  }
-}
+pub type Tys = HashMap<Sym, TyInfo>;
 
 /// A structure environment.
 pub type StrEnv = BTreeMap<StrRef, Env>;
@@ -696,14 +671,14 @@ pub type StrEnv = BTreeMap<StrRef, Env>;
 /// A type environment.
 #[derive(Clone, Default)]
 pub struct TyEnv {
-  pub inner: BTreeMap<StrRef, TyInfo>,
+  pub inner: BTreeMap<StrRef, Sym>,
 }
 
 impl TyEnv {
   /// Applies a substitution to this.
   pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
-    for ty_info in self.inner.values_mut() {
-      ty_info.ty_fcn_mut(tys).apply(subst);
+    for sym in self.inner.values() {
+      tys.get_mut(sym).unwrap().ty_fcn.apply(subst);
     }
   }
 
@@ -712,7 +687,7 @@ impl TyEnv {
     self
       .inner
       .values()
-      .flat_map(|ty_info| ty_info.ty_fcn(tys).free_ty_vars())
+      .flat_map(|sym| tys.get(sym).unwrap().ty_fcn.free_ty_vars())
       .collect()
   }
 }
@@ -816,8 +791,8 @@ impl Env {
     for (name, env) in other.str_env {
       self.str_env.insert(name, env);
     }
-    for (name, ty_info) in other.ty_env.inner {
-      self.ty_env.inner.insert(name, ty_info);
+    for (name, sym) in other.ty_env.inner {
+      self.ty_env.inner.insert(name, sym);
     }
     for (name, val_info) in other.val_env {
       self.val_env.insert(name, val_info);
@@ -832,8 +807,8 @@ impl Env {
         return Err(loc.wrap(Error::Redefined(name)));
       }
     }
-    for (name, ty_info) in other.ty_env.inner {
-      if self.ty_env.inner.insert(name, ty_info).is_some() {
+    for (name, sym) in other.ty_env.inner {
+      if self.ty_env.inner.insert(name, sym).is_some() {
         return Err(loc.wrap(Error::Redefined(name)));
       }
     }

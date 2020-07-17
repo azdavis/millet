@@ -2,8 +2,7 @@
 
 use crate::intern::StrRef;
 use crate::statics::types::{
-  Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, SymTyInfo, Ty, TyEnv, TyInfo, TyScheme, ValEnv,
-  ValInfo,
+  Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use maplit::{btreemap, hashmap, hashset};
 
@@ -78,8 +77,8 @@ fn overloaded_cmp(st: &mut State) -> ValInfo {
   })
 }
 
-fn base_ty(ty: Ty, equality: bool) -> SymTyInfo {
-  SymTyInfo {
+fn base_ty(ty: Ty, equality: bool) -> TyInfo {
+  TyInfo {
     ty_fcn: TyScheme::mono(ty),
     val_env: ValEnv::new(),
     equality,
@@ -94,7 +93,7 @@ pub fn get() -> (Basis, State) {
   let mut st = State::default();
   st.tys.insert(
     Sym::BOOL,
-    SymTyInfo {
+    TyInfo {
       ty_fcn: TyScheme::mono(Ty::BOOL),
       val_env: bool_val_env(),
       equality: true,
@@ -104,7 +103,7 @@ pub fn get() -> (Basis, State) {
   let val_env = list_val_env(&mut st);
   st.tys.insert(
     Sym::LIST,
-    SymTyInfo {
+    TyInfo {
       ty_fcn: TyScheme {
         ty_vars: vec![a],
         ty: Ty::list(Ty::Var(a)),
@@ -118,7 +117,7 @@ pub fn get() -> (Basis, State) {
   let val_env = ref_val_env(&mut st);
   st.tys.insert(
     Sym::REF,
-    SymTyInfo {
+    TyInfo {
       ty_fcn: TyScheme {
         ty_vars: vec![a],
         ty: Ty::ref_(Ty::Var(a)),
@@ -130,7 +129,7 @@ pub fn get() -> (Basis, State) {
   );
   st.tys.insert(
     Sym::ORDER,
-    SymTyInfo {
+    TyInfo {
       ty_fcn: TyScheme::mono(Ty::ORDER),
       val_env: order_val_env(),
       equality: true,
@@ -158,9 +157,11 @@ pub fn get() -> (Basis, State) {
     Sym::CHAR => base_ty(Ty::CHAR, true),
     Sym::WORD => base_ty(Ty::WORD, true),
     Sym::EXN => base_ty(Ty::EXN, false),
+    Sym::UNIT => base_ty(Ty::Record(btreemap! []), false),
   ]);
   let bs = Basis {
     ty_names: hashset![
+      StrRef::UNIT,
       StrRef::BOOL,
       StrRef::INT,
       StrRef::REAL,
@@ -178,17 +179,17 @@ pub fn get() -> (Basis, State) {
       str_env: StrEnv::new(),
       ty_env: TyEnv {
         inner: btreemap![
-          StrRef::UNIT => TyInfo::Alias(TyScheme::mono(Ty::Record(btreemap![]))),
-          StrRef::BOOL => TyInfo::Sym(Sym::BOOL),
-          StrRef::INT => TyInfo::Sym(Sym::INT),
-          StrRef::REAL => TyInfo::Sym(Sym::REAL),
-          StrRef::STRING => TyInfo::Sym(Sym::STRING),
-          StrRef::CHAR => TyInfo::Sym(Sym::CHAR),
-          StrRef::WORD => TyInfo::Sym(Sym::WORD),
-          StrRef::LIST => TyInfo::Sym(Sym::LIST),
-          StrRef::REF => TyInfo::Sym(Sym::REF),
-          StrRef::EXN => TyInfo::Sym(Sym::EXN),
-          StrRef::ORDER => TyInfo::Sym(Sym::ORDER),
+          StrRef::UNIT => Sym::UNIT,
+          StrRef::BOOL => Sym::BOOL,
+          StrRef::INT => Sym::INT,
+          StrRef::REAL => Sym::REAL,
+          StrRef::STRING => Sym::STRING,
+          StrRef::CHAR => Sym::CHAR,
+          StrRef::WORD => Sym::WORD,
+          StrRef::LIST => Sym::LIST,
+          StrRef::REF => Sym::REF,
+          StrRef::EXN => Sym::EXN,
+          StrRef::ORDER => Sym::ORDER,
         ],
       },
       val_env: bool_val_env()
@@ -223,10 +224,8 @@ pub fn get() -> (Basis, State) {
   for name in bs.ty_names.iter() {
     assert!(bs.env.ty_env.inner.contains_key(name));
   }
-  for ty_info in bs.env.ty_env.inner.values() {
-    if let TyInfo::Sym(sym) = ty_info {
-      assert!(st.tys.contains_key(sym));
-    }
+  for sym in bs.env.ty_env.inner.values() {
+    assert!(st.tys.contains_key(sym));
   }
   (bs, st)
 }

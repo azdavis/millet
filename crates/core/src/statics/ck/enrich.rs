@@ -22,9 +22,10 @@ pub fn ck(loc: Loc, tys: &Tys, got: &Env, want: &Env) -> Result<()> {
     }
   }
   for (name, want) in want.ty_env.inner.iter() {
+    let want = tys.get(want).unwrap();
     match got.ty_env.inner.get(name) {
       None => return Err(loc.wrap(Error::Todo("missing a type"))),
-      Some(got) => ck_ty_info(loc, tys, got, want)?,
+      Some(got) => ck_ty_info(loc, tys, tys.get(got).unwrap(), want)?,
     }
   }
   for (name, want) in want.val_env.iter() {
@@ -45,19 +46,11 @@ fn ck_val_info(loc: Loc, tys: &Tys, got: &ValInfo, want: &ValInfo) -> Result<()>
 }
 
 fn ck_ty_info(loc: Loc, tys: &Tys, got: &TyInfo, want: &TyInfo) -> Result<()> {
-  ck_ty_fcn_eq(loc, tys, got.ty_fcn(tys), want.ty_fcn(tys))?;
-  let want = match want {
-    TyInfo::Alias(_) => return Ok(()),
-    TyInfo::Sym(sym) => &tys.get(sym).unwrap().val_env,
-  };
-  if want.is_empty() {
+  ck_ty_fcn_eq(loc, tys, &got.ty_fcn, &want.ty_fcn)?;
+  if want.val_env.is_empty() {
     return Ok(());
   }
-  let got = match got {
-    TyInfo::Alias(_) => return Err(loc.wrap(Error::Todo("got empty want non-empty"))),
-    TyInfo::Sym(sym) => &tys.get(sym).unwrap().val_env,
-  };
-  ck_val_env_eq(loc, tys, got, want)
+  ck_val_env_eq(loc, tys, &got.val_env, &want.val_env)
 }
 
 fn ck_val_env_eq(loc: Loc, tys: &Tys, got: &ValEnv, want: &ValEnv) -> Result<()> {
@@ -92,7 +85,7 @@ fn ck_generalizes(loc: Loc, tys: &Tys, want: TyScheme, got: TyScheme) -> Result<
     }
   }
   let mut ret = Subst::default();
-  ret.unify(loc, &tys, want.ty, got.ty)?;
+  ret.unify(loc, tys, want.ty, got.ty)?;
   // TODO
   Ok(ret)
 }

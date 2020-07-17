@@ -8,7 +8,7 @@ use crate::ast::Long;
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Cx, Env, Error, Item, Result, State, Subst, Ty, TyInfo, TyScheme, ValInfo,
+  Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyInfo, TyScheme, Tys, ValInfo,
 };
 use crate::token::TyVar as AstTyVar;
 use std::collections::BTreeMap;
@@ -96,7 +96,7 @@ pub fn get_env<'env>(mut env: &'env Env, long: &Long<StrRef>) -> Result<&'env En
   Ok(env)
 }
 
-/// Returns `Ok(vi)` iff `env` contains `vi` in its `ValEnv`.
+/// Returns `Ok(vi)` iff the `ValEnv` of `env` maps `name` to `vi`.
 pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   match env.val_env.get(&name.val) {
     None => Err(name.loc.wrap(Error::Undefined(Item::Val, name.val))),
@@ -104,11 +104,17 @@ pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
   }
 }
 
-/// Returns `Ok(ti)` iff `env` contains `ti` in its `TyEnv`.
-pub fn get_ty_info(env: &Env, name: Located<StrRef>) -> Result<&TyInfo> {
+/// Returns `Ok(ti)` iff the `TyEnv` of `env` maps `name` to `sym` and `tys` maps `sym` to `ti`.
+pub fn get_ty_info<'t>(tys: &'t Tys, env: &Env, name: Located<StrRef>) -> Result<&'t TyInfo> {
+  let sym = get_ty_sym(env, name)?;
+  Ok(tys.get(&sym).unwrap())
+}
+
+/// Returns `Ok(sym)` iff the `TyEnv` of `env` maps `name` to `sym`.
+pub fn get_ty_sym(env: &Env, name: Located<StrRef>) -> Result<Sym> {
   match env.ty_env.inner.get(&name.val) {
     None => Err(name.loc.wrap(Error::Undefined(Item::Ty, name.val))),
-    Some(ty_info) => Ok(ty_info),
+    Some(sym) => Ok(*sym),
   }
 }
 

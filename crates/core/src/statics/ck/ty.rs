@@ -39,7 +39,7 @@ pub fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
     // SML Definition (46)
     AstTy::TyCon(args, name) => {
       let env = get_env(&cx.env, name)?;
-      let ty_fcn = get_ty_info(env, name.last)?.ty_fcn(&tys);
+      let ty_fcn = &get_ty_info(tys, env, name.last)?.ty_fcn;
       if ty_fcn.ty_vars.len() != args.len() {
         let err = Error::WrongNumTyArgs(ty_fcn.ty_vars.len(), args.len());
         return Err(ty.loc.wrap(err));

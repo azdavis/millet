@@ -6,8 +6,8 @@ use crate::loc::Located;
 use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, ty};
 use crate::statics::types::{
-  Basis, Env, Error, FunEnv, Item, Result, Sig, SigEnv, State, StrEnv, SymTyInfo, Ty, TyEnv,
-  TyInfo, TyScheme, ValEnv, ValInfo,
+  Basis, Env, Error, FunEnv, Item, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme,
+  ValEnv, ValInfo,
 };
 
 pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
@@ -160,10 +160,10 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
         }
         let sym = st.new_sym(ty_desc.ty_con);
         // TODO equality check
-        env_ins(&mut ty_env.inner, ty_desc.ty_con, TyInfo::Sym(sym))?;
+        env_ins(&mut ty_env.inner, ty_desc.ty_con, sym)?;
         st.tys.insert(
           sym,
-          SymTyInfo {
+          TyInfo {
             ty_fcn: TyScheme::mono(Ty::Ctor(vec![], sym)),
             val_env: ValEnv::new(),
             equality: *equality,
