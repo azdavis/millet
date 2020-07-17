@@ -96,7 +96,7 @@ impl<'s> TokenMaker<'s> {
 
   fn build(mut self) -> Result<Vec<Located<Token>>, Located<Error>> {
     let mut comments: usize = 0;
-    let mut ts = Vec::new();
+    let mut ret = Vec::new();
     while let Some(&b) = self.bs.get(self.i) {
       // newline
       if b == b'\n' {
@@ -125,16 +125,16 @@ impl<'s> TokenMaker<'s> {
       }
       // the actual meat of the impl
       let start = self.i;
-      let ret = self.next_impl(b);
+      let tok = self.next_impl(b);
       let end = self.i;
       let loc = Loc::new(start, end);
-      match ret {
-        Ok(t) => ts.push(loc.wrap(t)),
-        Err(e) => return Err(loc.wrap(e)),
+      match tok {
+        Ok(tok) => ret.push(loc.wrap(tok)),
+        Err(err) => return Err(loc.wrap(err)),
       }
     }
     if comments == 0 {
-      Ok(ts)
+      Ok(ret)
     } else {
       Err(Loc::new(self.i - 3, self.i - 1).wrap(Error::UnmatchedOpenComment))
     }

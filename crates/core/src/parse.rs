@@ -1081,13 +1081,13 @@ impl Parser {
   }
 
   fn ty_binds(&mut self) -> Result<Vec<TyBind<StrRef>>> {
-    let mut ty_binds = Vec::new();
+    let mut ret = Vec::new();
     loop {
       let ty_vars = self.ty_var_seq()?;
       let ty_con = self.ident()?;
       self.eat(Token::Equal)?;
       let ty = self.ty()?;
-      ty_binds.push(TyBind {
+      ret.push(TyBind {
         ty_vars,
         ty_con,
         ty,
@@ -1098,7 +1098,7 @@ impl Parser {
         break;
       }
     }
-    Ok(ty_binds)
+    Ok(ret)
   }
 
   fn datatype_dec(&mut self, allow_op: bool) -> Result<DatatypeDec<StrRef>> {
