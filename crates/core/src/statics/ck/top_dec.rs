@@ -38,7 +38,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
       bs.add_fun_env(fun_env);
     }
   }
-  st.subst.solve_overloaded();
+  st.subst.use_overloaded_defaults();
   Ok(())
 }
 

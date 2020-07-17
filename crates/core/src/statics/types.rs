@@ -116,6 +116,7 @@ impl Error {
   }
 }
 
+/// Show a label.
 fn show_lab(store: &StrStore, lab: Label) -> String {
   match lab {
     Label::Vid(id) => store.get(id).to_owned(),
@@ -123,12 +124,16 @@ fn show_lab(store: &StrStore, lab: Label) -> String {
   }
 }
 
+/// Show a type.
 fn show_ty(store: &StrStore, ty: &Ty) -> String {
   let mut buf = String::new();
   show_ty_impl(&mut buf, store, ty, TyPrec::Arrow);
   buf
 }
 
+/// The impl of `show_ty`. This has a `TyPrec` argument to correctly show types with minimal amounts
+/// of parentheses while still being correct. It also mutates the input `buf` instead of returning a
+/// new `String`.
 fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
   match ty {
     Ty::Var(tv) => buf.push_str(&format!("{:?}", tv)),
@@ -200,6 +205,7 @@ fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
   }
 }
 
+/// Show a row.
 fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
   buf.push_str(&show_lab(store, lab));
   buf.push_str(" : ");
@@ -209,13 +215,20 @@ fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
 /// A specialized Result type that many functions doing static analysis return.
 pub type Result<T> = std::result::Result<T, Located<Error>>;
 
+/// An item. Used in error messages when something wasn't defined.
 #[derive(Debug)]
 pub enum Item {
+  /// A value.
   Val,
+  /// A type.
   Ty,
+  /// A type variable.
   TyVar,
+  /// A structure.
   Struct,
+  /// A signature.
   Sig,
+  /// A functor.
   Functor,
 }
 
@@ -297,7 +310,7 @@ impl Subst {
   }
 
   /// Solve all overloaded ty vars which have not already be solved to be their default types.
-  pub fn solve_overloaded(&mut self) {
+  pub fn use_overloaded_defaults(&mut self) {
     let overload = std::mem::take(&mut self.overload);
     for (tv, syms) in overload {
       let ty = Ty::base(*syms.first().unwrap());
@@ -442,10 +455,12 @@ pub struct Sym {
 }
 
 impl Sym {
+  /// A helper for constructing a 'base' symbol. Loosely, 'base' = 'from the standard library'.
   const fn base(name: StrRef) -> Self {
     Self { name, id: None }
   }
 
+  /// Returns whether this is a 'base' symbol.
   pub fn is_base(&self) -> bool {
     self.id.is_none()
   }
@@ -476,22 +491,27 @@ pub enum Ty {
 }
 
 impl Ty {
+  /// A helper for constructing a 'base' type.
   const fn base(sym: Sym) -> Self {
     Self::Ctor(Vec::new(), sym)
   }
 
+  /// Given `t`, returns `t list`.
   pub fn list(elem: Self) -> Self {
     Self::Ctor(vec![elem], Sym::base(StrRef::LIST))
   }
 
+  /// Given `t`, returns `t ref`.
   pub fn ref_(elem: Self) -> Self {
     Self::Ctor(vec![elem], Sym::base(StrRef::REF))
   }
 
+  /// Given `t` and `u`, returns `t * u`.
   pub fn pair(lhs: Self, rhs: Self) -> Self {
     Self::Record(btreemap![Label::Num(1) => lhs, Label::Num(2) => rhs])
   }
 
+  /// Returns the type names in this.
   pub fn ty_names(&self) -> TyNameSet {
     match self {
       Self::Var(_) => TyNameSet::new(),
@@ -503,6 +523,7 @@ impl Ty {
     }
   }
 
+  /// Applies a substitution to this.
   pub fn apply(&mut self, subst: &Subst) {
     match self {
       Self::Var(tv) => match subst.regular.get(tv) {
@@ -526,6 +547,7 @@ impl Ty {
     }
   }
 
+  /// Returns the free type variables in this.
   pub fn free_ty_vars(&self) -> TyVarSet {
     match self {
       Self::Var(tv) => btreeset![*tv],
@@ -572,6 +594,7 @@ pub struct TyScheme {
 }
 
 impl TyScheme {
+  /// Given `ty`, returns `forall (). ty`, i.e. no type variables are bound by this forall.
   pub fn mono(ty: Ty) -> Self {
     Self {
       ty_vars: Vec::new(),
@@ -580,6 +603,7 @@ impl TyScheme {
     }
   }
 
+  /// Applies a substitution to this.
   pub fn apply(&mut self, subst: &Subst) {
     if self.ty_vars.iter().any(|tv| subst.regular.contains_key(tv)) {
       let mut subst = subst.clone();
@@ -592,6 +616,7 @@ impl TyScheme {
     }
   }
 
+  /// Returns the free type variables in this.
   pub fn free_ty_vars(&self) -> TyVarSet {
     self
       .ty
@@ -601,6 +626,8 @@ impl TyScheme {
       .collect()
   }
 
+  /// Given that `self` is `forall v1, ..., vn . t` and `args` is `t1, ..., tn`, returns `[t1/v1]
+  /// ... [tn/vn] t`, i.e. substitutes all the argument types for the parameter type variables.
   pub fn apply_args(&self, args: Vec<Ty>) -> Ty {
     assert_eq!(args.len(), self.ty_vars.len());
     let mut subst = Subst::default();
@@ -630,15 +657,21 @@ pub struct SymTyInfo {
   pub equality: bool,
 }
 
+/// A collection of symbol types.
 pub type SymTys = HashMap<Sym, SymTyInfo>;
 
+/// Information about a type.
 #[derive(Clone)]
 pub enum TyInfo {
+  /// A type alias, i.e. `type foo = bar`.
   Alias(TyFcn),
+  /// A symbol type, like a `datatype` or `type t` in a signature.
   Sym(Sym),
 }
 
 impl TyInfo {
+  /// Returns the type function in this. Looks up the type function in the `SymTys` if `self` is
+  /// `Sym`.
   pub fn ty_fcn<'a>(&'a self, sym_tys: &'a SymTys) -> &'a TyFcn {
     match self {
       TyInfo::Alias(ty_fcn) => ty_fcn,
@@ -647,14 +680,17 @@ impl TyInfo {
   }
 }
 
+/// A structure environment.
 pub type StrEnv = BTreeMap<StrRef, Env>;
 
+/// A type environment.
 #[derive(Clone, Default)]
 pub struct TyEnv {
   pub inner: BTreeMap<StrRef, TyInfo>,
 }
 
 impl TyEnv {
+  /// Applies a substitution to this.
   pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
     for ty_info in self.inner.values_mut() {
       match ty_info {
@@ -664,6 +700,7 @@ impl TyEnv {
     }
   }
 
+  /// Returns the free type variables in this.
   pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .inner
@@ -673,18 +710,24 @@ impl TyEnv {
   }
 }
 
+/// An identifier status description.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IdStatus {
+  /// A constructor, `c`.
   Ctor,
+  /// An exception, `e`.
   Exn,
+  /// A value, `v`.
   Val,
 }
 
 impl IdStatus {
+  /// Returns whether this `IdStatus` is `Val`.
   pub fn is_val(&self) -> bool {
     matches!(self, Self::Val)
   }
 
+  /// Returns whether this `IdStatus` is `Exn`.
   pub fn is_exn(&self) -> bool {
     matches!(self, Self::Exn)
   }
@@ -700,13 +743,17 @@ impl fmt::Display for IdStatus {
   }
 }
 
+/// Information about a value.
 #[derive(Clone)]
 pub struct ValInfo {
+  /// Its type scheme.
   pub ty_scheme: TyScheme,
+  /// Its identifier status.
   pub id_status: IdStatus,
 }
 
 impl ValInfo {
+  /// Returns a new `ValInfo` with the given `TyScheme` and constructor identifier status.
   pub fn ctor(ty_scheme: TyScheme) -> Self {
     Self {
       ty_scheme,
@@ -714,6 +761,7 @@ impl ValInfo {
     }
   }
 
+  /// Returns a new `ValInfo` with the type scheme `exn` and exception identifier status.
   pub fn exn() -> Self {
     Self {
       ty_scheme: TyScheme::mono(Ty::EXN),
@@ -721,13 +769,17 @@ impl ValInfo {
     }
   }
 
+  /// Returns a new `ValInfo` with the type scheme `ty -> exn` and exception identifier status.
   pub fn exn_fn(ty: Ty) -> Self {
+    // note that `TyScheme::mono` means there is a lack of generalization here, since in `exception
+    // Foo of 'a` we have `Foo: t -> exn` for some _fixed_ t, not `Foo: forall t. t -> exn`.
     Self {
       ty_scheme: TyScheme::mono(Ty::Arrow(ty.into(), Ty::EXN.into())),
       id_status: IdStatus::Exn,
     }
   }
 
+  /// Returns a new `ValInfo` with the given `TyScheme` and value identifier status.
   pub fn val(ty_scheme: TyScheme) -> Self {
     Self {
       ty_scheme,
@@ -736,17 +788,23 @@ impl ValInfo {
   }
 }
 
+/// An environment of values.
 pub type ValEnv = BTreeMap<StrRef, ValInfo>;
 
+/// An environment. Structures (and therefore the "top-level") and signatures are essentially
+/// represented as this.
 #[derive(Clone, Default)]
 pub struct Env {
+  /// The structures defined in this structure.
   pub str_env: StrEnv,
+  /// The types defined in this structure.
   pub ty_env: TyEnv,
+  /// The values defined in this structure.
   pub val_env: ValEnv,
 }
 
 impl Env {
-  /// `other` overwrites `self`.
+  /// Extends an environment with another. `other` overwrites `self`.
   pub fn extend(&mut self, other: Self) {
     for (name, env) in other.str_env {
       self.str_env.insert(name, env);
@@ -759,6 +817,8 @@ impl Env {
     }
   }
 
+  /// Extends an environment with another, but returns `Ok(())` iff the other environment didn't
+  /// overwrite anything in this.
   pub fn maybe_extend(&mut self, other: Self, loc: Loc) -> Result<()> {
     for (name, env) in other.str_env {
       if self.str_env.insert(name, env).is_some() {
@@ -778,6 +838,7 @@ impl Env {
     Ok(())
   }
 
+  /// Returns the type names in this environment.
   pub fn ty_names(&self) -> TyNameSet {
     self
       .str_env
@@ -787,6 +848,7 @@ impl Env {
       .collect()
   }
 
+  /// Applies a substitution to this.
   pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
     for env in self.str_env.values_mut() {
       env.apply(subst, sym_tys);
@@ -797,6 +859,7 @@ impl Env {
     }
   }
 
+  /// Returns the free type variables in this.
   pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .str_env
@@ -843,23 +906,26 @@ impl From<StrEnv> for Env {
   }
 }
 
+/// A set of type names.
 pub type TyNameSet = HashSet<StrRef>;
 
-/// NOTE this is an ordered set purely to make errors reproducible.
+/// A set of type variables. NOTE this is an ordered set purely to make errors reproducible.
 pub type TyVarSet = BTreeSet<TyVar>;
 
+/// A context.
 #[derive(Clone)]
 pub struct Cx {
   pub ty_names: TyNameSet,
   /// In the Definition this is a set, but here we use it as not just a set, but a mapping from AST
   /// type variables to statics type variables. Note the mapping is injective but not surjective.
   pub ty_vars: HashMap<AstTyVar<StrRef>, TyVar>,
+  /// The environment.
   pub env: Env,
 }
 
 impl Cx {
-  // this is the o-plus operation defined in the Definition, which extends a context by an
-  // environment and that environment's type name set.
+  /// This is the o-plus operation defined in the Definition, which extends a context by an
+  /// environment and that environment's type name set.
   pub fn o_plus(&mut self, env: Env) {
     let ty_names = env.ty_names();
     self.env.extend(env);
@@ -867,12 +933,14 @@ impl Cx {
   }
 }
 
+/// A signature.
 #[derive(Clone)]
 pub struct Sig {
   pub ty_names: TyNameSet,
   pub env: Env,
 }
 
+/// A functor signature.
 #[derive(Clone)]
 pub struct FunSig {
   pub ty_names: TyNameSet,
@@ -880,10 +948,14 @@ pub struct FunSig {
   pub sig: Sig,
 }
 
+/// A signature environment.
 pub type SigEnv = HashMap<StrRef, Sig>;
 
+/// A functor environment.
 pub type FunEnv = HashMap<StrRef, FunSig>;
 
+/// A basis. There's one of these in the whole program, since it basically represents the entire
+/// program.
 #[derive(Clone)]
 pub struct Basis {
   pub ty_names: TyNameSet,
@@ -893,6 +965,7 @@ pub struct Basis {
 }
 
 impl Basis {
+  /// Apply a substitution to this.
   pub fn apply(&mut self, subst: &Subst, sym_tys: &mut SymTys) {
     for fun_sig in self.fun_env.values_mut() {
       fun_sig.env.apply(subst, sym_tys);
@@ -904,6 +977,7 @@ impl Basis {
     self.env.apply(subst, sym_tys);
   }
 
+  /// Return the free type variables in this. Should always be empty, as per the Definition.
   pub fn free_ty_vars(&self, sym_tys: &SymTys) -> TyVarSet {
     self
       .fun_env
@@ -925,6 +999,7 @@ impl Basis {
       .collect()
   }
 
+  /// Returns a context derived from the information in this.
   pub fn to_cx(&self) -> Cx {
     Cx {
       ty_names: self.ty_names.clone(),
@@ -933,12 +1008,14 @@ impl Basis {
     }
   }
 
+  /// Add an environment to this.
   pub fn add_env(&mut self, env: Env) {
     let ty_names = env.ty_names();
     self.ty_names.extend(ty_names);
     self.env.extend(env);
   }
 
+  /// Add an signature environment to this.
   pub fn add_sig_env(&mut self, sig_env: SigEnv) {
     let ty_names = sig_env
       .values()
@@ -948,6 +1025,7 @@ impl Basis {
     self.sig_env.extend(sig_env);
   }
 
+  /// Add an functor environment to this.
   pub fn add_fun_env(&mut self, fun_env: FunEnv) {
     let ty_names = fun_env
       .values()
@@ -997,16 +1075,19 @@ impl State {
 /// A pattern, for the purposes of static analysis. See exhaustive.rs.
 #[derive(Debug, Clone)]
 pub enum Pat {
+  /// Matches anything. Used for variables and wildcards.
   Anything,
+  /// Matches a constructor with the given arguments.
   Con(Con, Vec<Pat>),
 }
 
 impl Pat {
+  /// Returns a constructor pattern with zero arguments.
   pub fn zero(con: Con) -> Self {
     Self::Con(con, vec![])
   }
 
-  /// Requires the patterns be sorted by label.
+  /// Returns a record pattern. Requires the patterns be sorted by label.
   pub fn record(mut pats: Vec<Pat>) -> Self {
     if pats.len() == 1 {
       // may happen in the desugaring of `Fun`.
@@ -1028,7 +1109,7 @@ pub enum Con {
   Char(u8),
   /// This should never be used directly, use `Pat::record` instead. The usize is the arity.
   Record(usize),
-  /// A constructor from a datatype or an exception.
+  /// A constructor from a `datatype` or an `exception`.
   Ctor(StrRef, Span),
 }
 
@@ -1039,6 +1120,7 @@ pub enum Span {
 }
 
 impl Con {
+  /// Returns the span of this.
   pub fn span(&self) -> Span {
     match *self {
       Self::Int(_) | Self::Word(_) | Self::String(_) => Span::PosInf,
@@ -1049,9 +1131,9 @@ impl Con {
   }
 }
 
+/// The span of a Con::Char is 256 = 2^8 since a char is a u8. This test and the definition of
+/// `Con#span` should change if Char ever becomes not a u8.
 #[test]
 fn char_span() {
-  // The span of a Con::Char is 256 = 2^8 since a char is a u8. This test and the definition of
-  // `Con#span` should change if Char ever becomes not a u8.
   assert_eq!(Con::Char(0u8).span(), Span::Finite(256));
 }
