@@ -191,6 +191,11 @@ fn ctor(
 }
 
 fn get_span(tys: &Tys, sym: Sym) -> Span {
+  assert!(sym != Sym::CHAR);
+  assert!(sym != Sym::STRING);
+  assert!(sym != Sym::WORD);
+  assert!(sym != Sym::INT);
+  assert!(sym != Sym::REAL);
   if sym == Sym::EXN {
     Span::PosInf
   } else {
