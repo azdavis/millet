@@ -21,7 +21,8 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme) -> Ty {
   match &ty_scheme.overload {
     None => {
       for &tv in ty_scheme.ty_vars.iter() {
-        assert!(!st.subst.is_bound(&tv));
+        // we cannot `assert!(!st.subst.is_bound(&tv))` because e.g. in `datatype 'a t = A of 'a`
+        // the type variable 'a is bound.
         subst.insert(tv, Ty::Var(st.new_ty_var(tv.equality)));
       }
     }
