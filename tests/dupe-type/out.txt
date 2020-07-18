@@ -1,4 +1,4 @@
-error: redefined identifier: t
+error: duplicate type: t
   ┌─ err.sml:1:18
   │
 1 │ type t = int and t = string

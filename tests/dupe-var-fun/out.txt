@@ -1,4 +1,4 @@
-error: redefined identifier: x
+error: duplicate value: x
   ┌─ err.sml:1:11
   │
 1 │ fun f (x, x) = 3

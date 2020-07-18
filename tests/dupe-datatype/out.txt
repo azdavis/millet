@@ -1,4 +1,4 @@
-error: redefined identifier: t
+error: duplicate type: t
   ┌─ err.sml:1:20
   │
 1 │ datatype t = A and t = B

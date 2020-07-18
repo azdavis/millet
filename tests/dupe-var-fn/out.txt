@@ -1,4 +1,4 @@
-error: redefined identifier: x
+error: duplicate value: x
   ┌─ err.sml:1:16
   │
 1 │ val _ = fn (x, x) => 3

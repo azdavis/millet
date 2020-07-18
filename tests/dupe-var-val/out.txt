@@ -1,4 +1,4 @@
-error: redefined identifier: x
+error: duplicate value: x
   ┌─ err.sml:1:9
   │
 1 │ val (x, x) = (1, 2)

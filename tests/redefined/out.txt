@@ -1,4 +1,4 @@
-error: redefined identifier: x
+error: duplicate value: x
   ┌─ err.sml:2:5
   │
 2 │ and x = 4

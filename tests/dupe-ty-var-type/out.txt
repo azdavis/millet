@@ -1,4 +1,4 @@
-error: redefined identifier: 'a
+error: duplicate type variable: 'a
   ┌─ err.sml:1:11
   │
 1 │ type ('a, 'a) foo = int

@@ -1,4 +1,4 @@
-error: redefined identifier: 'a
+error: duplicate type variable: 'a
   ┌─ err.sml:1:10
   │
 1 │ val ('a, 'a) _: 'a list = []
