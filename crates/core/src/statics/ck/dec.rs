@@ -4,7 +4,7 @@ use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{
-  add_ty_vars, env_ins, env_merge, generalize, get_env, get_ty_sym, get_val_info, instantiate,
+  env_ins, env_merge, generalize, get_env, get_ty_sym, get_val_info, insert_ty_vars, instantiate,
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
@@ -245,7 +245,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         cx
       } else {
         cx_cl = cx.clone();
-        add_ty_vars(&mut cx_cl, st, ty_vars);
+        insert_ty_vars(&mut cx_cl, st, ty_vars);
         &cx_cl
       };
       let mut val_env = ValEnv::new();
@@ -276,7 +276,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         cx
       } else {
         cx_cl = cx.clone();
-        add_ty_vars(&mut cx_cl, st, ty_vars);
+        insert_ty_vars(&mut cx_cl, st, ty_vars);
         &cx_cl
       };
       let mut fun_infos = HashMap::with_capacity(fval_binds.len());
@@ -417,7 +417,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
       cx
     } else {
       cx_cl = cx.clone();
-      add_ty_vars(&mut cx_cl, st, &ty_bind.ty_vars);
+      insert_ty_vars(&mut cx_cl, st, &ty_bind.ty_vars);
       &cx_cl
     };
     let ty = ty::ck(cx, &st.tys, &ty_bind.ty)?;
