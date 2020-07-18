@@ -12,7 +12,7 @@ use crate::statics::types::{
   ValInfo,
 };
 use maplit::btreemap;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
   // The special constants are as per SML Definition (1). Note that SML Definition (5) is handled by
@@ -245,7 +245,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         cx
       } else {
         cx_cl = cx.clone();
-        insert_ty_vars(&mut cx_cl, st, ty_vars);
+        insert_ty_vars(&mut cx_cl, st, ty_vars)?;
         &cx_cl
       };
       let mut val_env = ValEnv::new();
@@ -276,7 +276,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         cx
       } else {
         cx_cl = cx.clone();
-        insert_ty_vars(&mut cx_cl, st, ty_vars);
+        insert_ty_vars(&mut cx_cl, st, ty_vars)?;
         &cx_cl
       };
       let mut fun_infos = HashMap::with_capacity(fval_binds.len());
@@ -417,7 +417,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
       cx
     } else {
       cx_cl = cx.clone();
-      insert_ty_vars(&mut cx_cl, st, &ty_bind.ty_vars);
+      insert_ty_vars(&mut cx_cl, st, &ty_bind.ty_vars)?;
       &cx_cl
     };
     let ty = ty::ck(cx, &st.tys, &ty_bind.ty)?;
@@ -464,12 +464,18 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
     cx.ty_names.insert(sym);
     // no mapping from ast ty vars to statics ty vars here. we just need some ty vars to make the
-    // `TyScheme`.
-    let ty_vars: Vec<_> = dat_bind
-      .ty_vars
-      .iter()
-      .map(|tv| st.new_ty_var(tv.val.equality))
-      .collect();
+    // `TyScheme`. pretty much copied from insert_ty_vars. TODO DRY? this is basically the guts of
+    // `insert_ty_vars`.
+    let mut set = HashSet::new();
+    let mut ty_vars = Vec::new();
+    for tv in dat_bind.ty_vars.iter() {
+      if !set.insert(tv.val.name) {
+        return Err(tv.loc.wrap(Error::Redefined(tv.val.name)));
+      }
+      let new_tv = st.new_ty_var(tv.val.equality);
+      ty_vars.push(new_tv);
+      st.subst.insert_bound(new_tv);
+    }
     let ty_args: Vec<_> = ty_vars.iter().copied().map(Ty::Var).collect();
     // we don't yet know whether this new type respects equality so just baldly assert that does
     // not. also we haven't analyzed the `ConBind`s yet, so the `ValEnv` is empty.
@@ -504,6 +510,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       // type function and the ctors of the type will each have a `TyScheme` that binds the type
       // variables appropriately, so by the magic of alpha conversion they're all distinct anyway.
       cx_cl = cx.clone();
+      assert_eq!(dat_bind.ty_vars.len(), sym_ty_info.ty_fcn.ty_vars.len());
       for (ast_tv, &tv) in dat_bind
         .ty_vars
         .iter()
