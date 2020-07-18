@@ -1,0 +1,7 @@
+error: redefined identifier: 'a
+  ┌─ err.sml:1:11
+  │
+1 │ type ('a, 'a) foo = int
+  │           ^^
+
+typechecking failed

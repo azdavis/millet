@@ -1,0 +1,7 @@
+error: redefined identifier: 'a
+  ┌─ err.sml:1:15
+  │
+1 │ datatype ('a, 'a) t = A of 'a
+  │               ^^
+
+typechecking failed
