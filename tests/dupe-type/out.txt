@@ -1,0 +1,7 @@
+error: redefined identifier: t
+  ┌─ err.sml:1:18
+  │
+1 │ type t = int and t = string
+  │                  ^
+
+typechecking failed

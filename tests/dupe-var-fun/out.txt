@@ -1,0 +1,7 @@
+error: redefined identifier: x
+  ┌─ err.sml:1:11
+  │
+1 │ fun f (x, x) = 3
+  │           ^
+
+typechecking failed

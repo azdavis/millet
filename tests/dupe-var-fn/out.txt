@@ -1,0 +1,7 @@
+error: redefined identifier: x
+  ┌─ err.sml:1:16
+  │
+1 │ val _ = fn (x, x) => 3
+  │                ^
+
+typechecking failed
