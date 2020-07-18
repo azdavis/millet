@@ -14,7 +14,7 @@ there. There are many important things not yet implemented. See TODO.
 
 Also, birds eat millet, and a bird named Polly Morphism is the mascot for
 [15-150][one-fifty], Carnegie Mellon's introductory functional programming
-course.
+course taught in Standard ML.
 
 ## Development
 
