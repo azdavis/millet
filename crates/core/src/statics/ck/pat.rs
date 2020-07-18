@@ -6,7 +6,7 @@ use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
 use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate};
 use crate::statics::types::{
-  Con, Cx, Error, Pat, Result, Span, State, Sym, Ty, TyScheme, Tys, ValEnv, ValInfo,
+  Con, Cx, Error, Item, Pat, Result, Span, State, Sym, Ty, TyScheme, Tys, ValEnv, ValInfo,
 };
 use maplit::btreemap;
 use std::collections::BTreeMap;
@@ -69,7 +69,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         if new_pats.insert(row.lab.val, pat).is_some() {
           return Err(row.lab.loc.wrap(Error::DuplicateLabel(row.lab.val)));
         }
-        env_merge(&mut val_env, other_ve, row.val.loc)?;
+        env_merge(&mut val_env, other_ve, row.val.loc, Item::Val)?;
         assert!(ty_rows.insert(row.lab.val, ty).is_none());
       }
       let new_pats: Vec<_> = new_pats.into_iter().map(|(_, pat)| pat).collect();
@@ -83,7 +83,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let mut new_pats = Vec::with_capacity(pats.len());
       for (idx, pat) in pats.iter().enumerate() {
         let (other_ve, ty, new_pat) = ck(cx, st, pat)?;
-        env_merge(&mut val_env, other_ve, pat.loc)?;
+        env_merge(&mut val_env, other_ve, pat.loc, Item::Val)?;
         assert!(ty_rows.insert(Label::tuple(idx), ty).is_none());
         new_pats.push(new_pat);
       }
@@ -97,7 +97,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
       let mut new_pats = Vec::with_capacity(pats.len());
       for pat in pats {
         let (other_ve, ty, new_pat) = ck(cx, st, pat)?;
-        env_merge(&mut val_env, other_ve, pat.loc)?;
+        env_merge(&mut val_env, other_ve, pat.loc, Item::Val)?;
         st.unify(pat.loc, elem.clone(), ty)?;
         new_pats.push(new_pat);
       }
@@ -123,7 +123,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
     AstPat::InfixCtor(lhs, vid, rhs) => {
       let (mut val_env, lhs_ty, lhs_pat) = ck(cx, st, lhs)?;
       let (other_ve, rhs_ty, rhs_pat) = ck(cx, st, rhs)?;
-      env_merge(&mut val_env, other_ve, pat.loc)?;
+      env_merge(&mut val_env, other_ve, pat.loc, Item::Val)?;
       let arg_ty = Ty::pair(lhs_ty, rhs_ty);
       let arg_pat = Pat::record(vec![lhs_pat, rhs_pat]);
       let long = Long {
@@ -156,7 +156,7 @@ pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(Val
         st.unify(pat.loc, ty, pat_ty.clone())?;
       }
       let val_info = ValInfo::val(TyScheme::mono(pat_ty.clone()));
-      env_ins(&mut val_env, *vid, val_info)?;
+      env_ins(&mut val_env, *vid, val_info, Item::Val)?;
       Ok((val_env, pat_ty, inner_pat))
     }
   }

@@ -19,7 +19,7 @@ use std::fmt;
 #[allow(missing_docs)]
 pub enum Error {
   Undefined(Item, StrRef),
-  Redefined(StrRef),
+  Duplicate(Item, StrRef),
   DuplicateLabel(Label),
   Circularity(TyVar, Ty),
   TyMismatch(Ty, Ty),
@@ -47,8 +47,8 @@ impl Error {
   /// A human-readable description of the error.
   pub fn message(&self, store: &StrStore) -> String {
     match self {
-      Self::Undefined(item, id) => format!("undefined {} identifier: {}", item, store.get(*id)),
-      Self::Redefined(id) => format!("redefined identifier: {}", store.get(*id)),
+      Self::Undefined(item, id) => format!("undefined {}: {}", item, store.get(*id)),
+      Self::Duplicate(item, id) => format!("duplicate {}: {}", item, store.get(*id)),
       Self::DuplicateLabel(lab) => format!("duplicate label: {}", show_lab(store, *lab)),
       Self::Circularity(ty_var, ty) => {
         format!("circularity: {:?} in {}", ty_var, show_ty(store, &ty))
@@ -215,8 +215,8 @@ fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
 /// A specialized Result type that many functions doing static analysis return.
 pub type Result<T> = std::result::Result<T, Located<Error>>;
 
-/// An item. Used in error messages when something wasn't defined.
-#[derive(Debug)]
+/// An item. Used in error messages.
+#[derive(Debug, Clone, Copy)]
 pub enum Item {
   /// A value.
   Val,
@@ -809,17 +809,17 @@ impl Env {
   pub fn maybe_extend(&mut self, other: Self, loc: Loc) -> Result<()> {
     for (name, env) in other.str_env {
       if self.str_env.insert(name, env).is_some() {
-        return Err(loc.wrap(Error::Redefined(name)));
+        return Err(loc.wrap(Error::Duplicate(Item::Struct, name)));
       }
     }
     for (name, sym) in other.ty_env.inner {
       if self.ty_env.inner.insert(name, sym).is_some() {
-        return Err(loc.wrap(Error::Redefined(name)));
+        return Err(loc.wrap(Error::Duplicate(Item::Ty, name)));
       }
     }
     for (name, val_info) in other.val_env {
       if self.val_env.insert(name, val_info).is_some() {
-        return Err(loc.wrap(Error::Redefined(name)));
+        return Err(loc.wrap(Error::Duplicate(Item::Val, name)));
       }
     }
     Ok(())

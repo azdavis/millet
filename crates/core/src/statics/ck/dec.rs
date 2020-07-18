@@ -8,8 +8,8 @@ use crate::statics::ck::util::{
 };
 use crate::statics::ck::{exhaustive, pat, ty};
 use crate::statics::types::{
-  Cx, Env, Error, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys, ValEnv,
-  ValInfo,
+  Cx, Env, Error, Item, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys,
+  ValEnv, ValInfo,
 };
 use maplit::btreemap;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -264,7 +264,8 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         exhaustive::ck_bind(pat, val_bind.pat.loc)?;
         for (name, mut val_info) in other {
           generalize(&cx, st, ty_vars, &mut val_info.ty_scheme);
-          env_ins(&mut val_env, val_bind.pat.loc.wrap(name), val_info)?;
+          let name = val_bind.pat.loc.wrap(name);
+          env_ins(&mut val_env, name, val_info, Item::Val)?;
         }
       }
       Ok(val_env.into())
@@ -288,7 +289,8 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         };
         // copied from env_ins in util
         if fun_infos.insert(first.vid.val, info).is_some() {
-          return Err(first.vid.loc.wrap(Error::Redefined(first.vid.val)));
+          let err = Error::Duplicate(Item::Val, first.vid.val);
+          return Err(first.vid.loc.wrap(err));
         }
       }
       for fval_bind in fval_binds {
@@ -311,7 +313,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           for (pat, &tv) in case.pats.iter().zip(info.args.iter()) {
             let (ve, pat_ty, new_pat) = pat::ck(cx, st, pat)?;
             st.unify(pat.loc, Ty::Var(tv), pat_ty)?;
-            env_merge(&mut pats_val_env, ve, pat.loc)?;
+            env_merge(&mut pats_val_env, ve, pat.loc, Item::Val)?;
             arg_pat.push(new_pat);
           }
           let begin = case.pats.first().unwrap().loc;
@@ -373,7 +375,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
             val_info.clone()
           }
         };
-        env_ins(&mut val_env, ex_bind.vid, val_info)?;
+        env_ins(&mut val_env, ex_bind.vid, val_info, Item::Val)?;
       }
       Ok(val_env.into())
     }
@@ -422,7 +424,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
     };
     let ty = ty::ck(cx, &st.tys, &ty_bind.ty)?;
     let sym = st.new_sym(ty_bind.ty_con);
-    env_ins(&mut ty_env.inner, ty_bind.ty_con, sym)?;
+    env_ins(&mut ty_env.inner, ty_bind.ty_con, sym, Item::Ty)?;
     let info = TyInfo {
       ty_fcn: TyScheme {
         ty_vars: ty_bind
@@ -459,7 +461,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     // tell the original context as well as the overall `TyEnv` that we return that this new
     // datatype does exist, but tell the State that it has just an empty `ValEnv`. also perform dupe
     // checking on the name of the new type and assert for sanity checking after the dupe check.
-    env_ins(&mut ty_env.inner, dat_bind.ty_con, sym)?;
+    env_ins(&mut ty_env.inner, dat_bind.ty_con, sym, Item::Ty)?;
     cx.env.ty_env.inner.insert(dat_bind.ty_con.val, sym);
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
     cx.ty_names.insert(sym);
@@ -470,7 +472,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     let mut ty_vars = Vec::new();
     for tv in dat_bind.ty_vars.iter() {
       if !set.insert(tv.val.name) {
-        return Err(tv.loc.wrap(Error::Redefined(tv.val.name)));
+        return Err(tv.loc.wrap(Error::Duplicate(Item::TyVar, tv.val.name)));
       }
       let new_tv = st.new_ty_var(tv.val.equality);
       ty_vars.push(new_tv);
@@ -543,7 +545,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         overload: None,
       });
       // insert the `ValInfo` into the _overall_ `ValEnv` with dupe checking.
-      env_ins(&mut val_env, con_bind.vid, val_info.clone())?;
+      env_ins(&mut val_env, con_bind.vid, val_info.clone(), Item::Val)?;
       // _also_ insert the `ValInfo` into the `DatBind`-specific `ValEnv`, but this time dupe
       // checking is unnecessary (just assert as a sanity check).
       assert!(bind_val_env.insert(con_bind.vid.val, val_info).is_none());

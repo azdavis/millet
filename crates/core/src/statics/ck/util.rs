@@ -121,9 +121,14 @@ pub fn get_ty_sym(env: &Env, name: Located<StrRef>) -> Result<Sym> {
 
 /// Insert the `key`, `val` pair into `map`. Returns `Ok(())` iff the key was not already in this
 /// map.
-pub fn env_ins<T>(map: &mut BTreeMap<StrRef, T>, key: Located<StrRef>, val: T) -> Result<()> {
+pub fn env_ins<T>(
+  map: &mut BTreeMap<StrRef, T>,
+  key: Located<StrRef>,
+  val: T,
+  item: Item,
+) -> Result<()> {
   if map.insert(key.val, val).is_some() {
-    Err(key.loc.wrap(Error::Redefined(key.val)))
+    Err(key.loc.wrap(Error::Duplicate(item, key.val)))
   } else {
     Ok(())
   }
@@ -135,9 +140,10 @@ pub fn env_merge<T>(
   lhs: &mut BTreeMap<StrRef, T>,
   rhs: BTreeMap<StrRef, T>,
   loc: Loc,
+  item: Item,
 ) -> Result<()> {
   for (key, val) in rhs {
-    env_ins(lhs, loc.wrap(key), val)?;
+    env_ins(lhs, loc.wrap(key), val, item)?;
   }
   Ok(())
 }
@@ -151,7 +157,7 @@ pub fn insert_ty_vars(
   let mut set = HashSet::new();
   for tv in ty_vars {
     if !set.insert(tv.val.name) {
-      return Err(tv.loc.wrap(Error::Redefined(tv.val.name)));
+      return Err(tv.loc.wrap(Error::Duplicate(Item::TyVar, tv.val.name)));
     }
     let new_tv = st.new_ty_var(tv.val.equality);
     cx.ty_vars.insert(tv.val, new_tv);

@@ -146,7 +146,8 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       for val_desc in val_descs {
         let ty = ty::ck(&cx, &st.tys, &val_desc.ty)?;
         // TODO generalize? closure?
-        env_ins(&mut val_env, val_desc.vid, ValInfo::val(TyScheme::mono(ty)))?;
+        let val_info = ValInfo::val(TyScheme::mono(ty));
+        env_ins(&mut val_env, val_desc.vid, val_info, Item::Val)?;
       }
       Ok(val_env.into())
     }
@@ -160,7 +161,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
         }
         let sym = st.new_sym(ty_desc.ty_con);
         // TODO equality check
-        env_ins(&mut ty_env.inner, ty_desc.ty_con, sym)?;
+        env_ins(&mut ty_env.inner, ty_desc.ty_con, sym, Item::Ty)?;
         st.tys.insert(
           sym,
           TyInfo {
@@ -186,7 +187,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
           None => ValInfo::exn(),
           Some(ty) => ValInfo::exn_fn(ty::ck(&cx, &st.tys, ty)?),
         };
-        env_ins(&mut val_env, ex_desc.vid, val_info)?;
+        env_ins(&mut val_env, ex_desc.vid, val_info, Item::Val)?;
       }
       Ok(val_env.into())
     }
