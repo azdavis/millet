@@ -253,9 +253,9 @@ impl<'s> TokenMaker<'s> {
         // at this point, we've just seen '0', we know there are more bytes after the '0', and the
         // first byte after the '0' is neither 'w' nor 'x'. then this is the beginning of either a
         // decimal integer constant or the first decimal integer part of a real constant.
-        false
-      } else {
         true
+      } else {
+        false
       };
       let n = self.pos_dec_int()?;
       let n = if neg { -n } else { n };
