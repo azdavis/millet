@@ -1086,9 +1086,9 @@ impl Pat {
   }
 }
 
-/// Bit confusing to have both 'Con' and 'Ctor'. We originally used 'Ctor' to mean 'constructor',
-/// and then adopted 'Con' as well from reading the paper which was the basis of the exhaustiveness
-/// checker.
+/// A constructor for a pattern. It is a bit confusing to have both 'Con' and 'Ctor'. We originally
+/// used 'Ctor' to mean 'constructor', and then adopted 'Con' as well from reading the paper which
+/// was the basis of the exhaustiveness checker.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Con {
   Int(i32),
@@ -1101,6 +1101,7 @@ pub enum Con {
   Ctor(StrRef, Span),
 }
 
+/// A measure of how many constructors exist for a type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Span {
   Finite(usize),
