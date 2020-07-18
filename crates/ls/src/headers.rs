@@ -6,21 +6,17 @@ pub fn content_length(bs: &[u8]) -> Option<usize> {
     return None;
   }
   i += 1;
-  while bs.get(i)?.is_ascii_whitespace() {
+  while *bs.get(i)? == b' ' {
     i += 1;
   }
   let start = i;
   while bs.get(i)?.is_ascii_digit() {
     i += 1;
   }
-  let end = i;
-  while i < bs.len() && bs[i].is_ascii_whitespace() {
-    i += 1;
-  }
-  if i != bs.len() || bs[i - 1] != b'\n' || bs[i - 2] != b'\r' {
+  if start == i || *bs.get(i)? != b'\r' || *bs.get(i + 1)? != b'\n' || i + 2 != bs.len() {
     return None;
   }
-  let num = std::str::from_utf8(&bs[start..end]).ok()?;
+  let num = std::str::from_utf8(&bs[start..i]).ok()?;
   Some(num.parse().unwrap())
 }
 
@@ -28,13 +24,15 @@ pub fn content_length(bs: &[u8]) -> Option<usize> {
 fn test_content_length() {
   assert_eq!(content_length(b""), None);
   assert_eq!(content_length(b"Content-Length: 123"), None);
+  assert_eq!(content_length(b"Content-Length: \r\n 123\r\n"), None);
+  assert_eq!(content_length(b"Content-Length: 123\r\n\r\n"), None);
   assert_eq!(content_length(b"Content-Length 123\r\n"), None);
   assert_eq!(content_length(b"Content-Length: 123\n"), None);
   assert_eq!(content_length(b"Content-Length: 123\r"), None);
   assert_eq!(content_length(b"Content-Length:123\r\n"), Some(123));
   assert_eq!(content_length(b"Content-Length: 456\r\n"), Some(456));
   assert_eq!(content_length(b" Content-Length: 123\r\n"), None);
-  assert_eq!(content_length(b"Content-Length:   \t  789\r\n"), Some(789));
+  assert_eq!(content_length(b"Content-Length:    789\r\n"), Some(789));
   assert_eq!(content_length(b"Content-Type: 123\r\n"), None);
-  assert_eq!(content_length(b"Content-Type: \r\n"), None);
+  assert_eq!(content_length(b"Content-Length: \r\n"), None);
 }
