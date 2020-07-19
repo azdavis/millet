@@ -6,6 +6,11 @@ use crate::statics::types::{
 };
 use maplit::{btreemap, hashset};
 
+/// Given `t`, returns `t ref`.
+fn ref_ty(t: Ty) -> Ty {
+  Ty::Ctor(vec![t], Sym::REF)
+}
+
 fn bool_val_env() -> ValEnv {
   btreemap![
     StrRef::TRUE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
@@ -36,7 +41,7 @@ fn ref_val_env(st: &mut State) -> ValEnv {
   let a = st.new_ty_var(false);
   let ref_ = ValInfo::ctor(TyScheme {
     ty_vars: vec![a],
-    ty: Ty::Arrow(Ty::Var(a).into(), Ty::ref_(Ty::Var(a)).into()),
+    ty: Ty::Arrow(Ty::Var(a).into(), ref_ty(Ty::Var(a)).into()),
     overload: None,
   });
   btreemap![StrRef::REF => ref_]
@@ -120,7 +125,7 @@ pub fn get() -> (Basis, State) {
     TyInfo {
       ty_fcn: TyScheme {
         ty_vars: vec![a],
-        ty: Ty::ref_(Ty::Var(a)),
+        ty: ref_ty(Ty::Var(a)),
         overload: None,
       },
       val_env,
@@ -139,7 +144,7 @@ pub fn get() -> (Basis, State) {
   let assign = ValInfo::val(TyScheme {
     ty_vars: vec![a],
     ty: Ty::Arrow(
-      Ty::pair(Ty::ref_(Ty::Var(a)), Ty::Var(a)).into(),
+      Ty::pair(ref_ty(Ty::Var(a)), Ty::Var(a)).into(),
       Ty::Record(btreemap![]).into(),
     ),
     overload: None,

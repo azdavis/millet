@@ -507,12 +507,7 @@ impl Ty {
 
   /// Given `t`, returns `t list`.
   pub fn list(elem: Self) -> Self {
-    Self::Ctor(vec![elem], Sym::base(StrRef::LIST))
-  }
-
-  /// Given `t`, returns `t ref`.
-  pub fn ref_(elem: Self) -> Self {
-    Self::Ctor(vec![elem], Sym::base(StrRef::REF))
+    Self::Ctor(vec![elem], Sym::LIST)
   }
 
   /// Given `t` and `u`, returns `t * u`.
@@ -577,8 +572,7 @@ impl Ty {
       Self::Record(rows) => rows.values().all(|ty| ty.is_equality(tys)),
       Self::Arrow(_, _) => false,
       Self::Ctor(args, sym) => {
-        *sym == Sym::base(StrRef::REF)
-          || tys.get(sym).equality && args.iter().all(|ty| ty.is_equality(tys))
+        *sym == Sym::REF || tys.get(sym).equality && args.iter().all(|ty| ty.is_equality(tys))
       }
     }
   }
