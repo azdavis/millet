@@ -8,7 +8,7 @@ use crate::ast::Long;
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::types::{
-  Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyInfo, TyScheme, Tys, ValInfo,
+  Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyScheme, ValInfo,
 };
 use crate::token::TyVar as AstTyVar;
 use std::collections::BTreeMap;
@@ -103,12 +103,6 @@ pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
     None => Err(name.loc.wrap(Error::Undefined(Item::Val, name.val))),
     Some(val_info) => Ok(val_info),
   }
-}
-
-/// Returns `Ok(ti)` iff the `TyEnv` of `env` maps `name` to `sym` and `tys` maps `sym` to `ti`.
-pub fn get_ty_info<'t>(tys: &'t Tys, env: &Env, name: Located<StrRef>) -> Result<&'t TyInfo> {
-  let sym = get_ty_sym(env, name)?;
-  Ok(tys.get(&sym))
 }
 
 /// Returns `Ok(sym)` iff the `TyEnv` of `env` maps `name` to `sym`.
