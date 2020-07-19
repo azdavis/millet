@@ -425,6 +425,8 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
     let ty = ty::ck(cx, &st.tys, &ty_bind.ty)?;
     let sym = st.new_sym(ty_bind.ty_con);
     env_ins(&mut ty_env.inner, ty_bind.ty_con, sym, Item::Ty)?;
+    // TODO
+    let equality = ty.is_equality(&st.tys);
     let info = TyInfo {
       ty_fcn: TyScheme {
         ty_vars: ty_bind
@@ -440,8 +442,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
         overload: None,
       },
       val_env: ValEnv::new(),
-      // TODO
-      equality: false,
+      equality,
     };
     st.tys.insert(sym, info);
   }

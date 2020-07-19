@@ -156,8 +156,8 @@ pub fn get() -> (Basis, State) {
   st.tys.insert(Sym::CHAR, base_ty(Ty::CHAR, true));
   st.tys.insert(Sym::WORD, base_ty(Ty::WORD, true));
   st.tys.insert(Sym::EXN, base_ty(Ty::EXN, false));
-  st.tys
-    .insert(Sym::UNIT, base_ty(Ty::Record(btreemap![]), false));
+  let unit = Ty::Record(btreemap![]);
+  st.tys.insert(Sym::UNIT, base_ty(unit, false));
   let bs = Basis {
     ty_names: hashset![
       Sym::UNIT,
