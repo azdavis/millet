@@ -494,7 +494,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
   // SML Definition (28), SML Definition (81)
   for (dat_bind, sym) in dat_binds.iter().zip(syms) {
     // note that we have to `get` here and then `get_mut` again later because of the borrow checker.
-    let info = st.tys.get(&sym);
+    let ty_fcn = &st.tys.get(&sym).ty_fcn;
     let mut cx_cl;
     let cx = if dat_bind.ty_vars.is_empty() {
       &cx
@@ -510,8 +510,8 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       // type function and the ctors of the type will each have a `TyScheme` that binds the type
       // variables appropriately, so by the magic of alpha conversion they're all distinct anyway.
       cx_cl = cx.clone();
-      assert_eq!(dat_bind.ty_vars.len(), info.ty_fcn.ty_vars.len());
-      for (ast_tv, &tv) in dat_bind.ty_vars.iter().zip(info.ty_fcn.ty_vars.iter()) {
+      assert_eq!(dat_bind.ty_vars.len(), ty_fcn.ty_vars.len());
+      for (ast_tv, &tv) in dat_bind.ty_vars.iter().zip(ty_fcn.ty_vars.iter()) {
         cx_cl.ty_vars.insert(ast_tv.val, tv);
       }
       &cx_cl
@@ -524,7 +524,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       ck_binding(con_bind.vid)?;
       // if there is no `of t`, then the type of the ctor is just `T`, where `T` is the new sym type
       // that is being defined.
-      let mut ty = info.ty_fcn.ty.clone();
+      let mut ty = ty_fcn.ty.clone();
       if let Some(arg_ty) = &con_bind.ty {
         // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
         // `T` respects equality based on whether `t` does. TODO this doesn't handle the equality
@@ -534,7 +534,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         ty = Ty::Arrow(t.into(), ty.into());
       }
       let val_info = ValInfo::ctor(TyScheme {
-        ty_vars: info.ty_fcn.ty_vars.clone(),
+        ty_vars: ty_fcn.ty_vars.clone(),
         ty,
         overload: None,
       });
@@ -563,8 +563,8 @@ pub fn ck_dat_copy(
   long: &Long<StrRef>,
 ) -> Result<Env> {
   let sym = get_ty_sym(get_env(&cx.env, long)?, long.last)?;
-  let info = tys.get(&sym);
-  if info.val_env.is_empty() {
+  let val_env = tys.get(&sym).val_env.clone();
+  if val_env.is_empty() {
     return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype));
   }
   Ok(Env {
@@ -572,6 +572,6 @@ pub fn ck_dat_copy(
     ty_env: TyEnv {
       inner: btreemap![ty_con.val => sym],
     },
-    val_env: info.val_env.clone(),
+    val_env,
   })
 }
