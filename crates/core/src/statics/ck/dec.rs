@@ -430,7 +430,11 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
         ty_vars: ty_bind
           .ty_vars
           .iter()
-          .map(|tv| *cx.ty_vars.get(&tv.val).unwrap())
+          .map(|tv| {
+            let tv = *cx.ty_vars.get(&tv.val).unwrap();
+            st.subst.remove_bound(&tv);
+            tv
+          })
           .collect(),
         ty,
         overload: None,
@@ -476,7 +480,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       }
       let new_tv = st.new_ty_var(tv.val.equality);
       ty_vars.push(new_tv);
-      st.subst.insert_bound(new_tv);
+      // no need to `insert_bound` because no unifying occurs.
     }
     let ty_args: Vec<_> = ty_vars.iter().copied().map(Ty::Var).collect();
     // we don't yet know whether this new type respects equality so just baldly assert that does
