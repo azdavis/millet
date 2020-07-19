@@ -149,7 +149,8 @@ pub fn env_merge<T>(
   Ok(())
 }
 
-/// Add new statics ty vars based on the user-written ty vars to the Cx.
+/// Add new statics ty vars based on the user-written ty vars to the `Cx`, and marks them as bound
+/// in the `Subst` in the `State`.
 pub fn insert_ty_vars(
   cx: &mut Cx,
   st: &mut State,

@@ -263,7 +263,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         st.unify(dec.loc, pat_ty.clone(), exp_ty)?;
         exhaustive::ck_bind(pat, val_bind.pat.loc)?;
         for (name, mut val_info) in other {
-          generalize(&cx, st, ty_vars, &mut val_info.ty_scheme);
+          generalize(cx, st, ty_vars, &mut val_info.ty_scheme);
           let name = val_bind.pat.loc.wrap(name);
           env_ins(&mut val_env, name, val_info, Item::Val)?;
         }
@@ -336,7 +336,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       }
       let mut val_env = fun_infos_to_ve(&fun_infos);
       for val_info in val_env.values_mut() {
-        generalize(&cx, st, ty_vars, &mut val_info.ty_scheme);
+        generalize(cx, st, ty_vars, &mut val_info.ty_scheme);
       }
       Ok(val_env.into())
     }
