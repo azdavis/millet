@@ -22,10 +22,10 @@ pub fn ck(loc: Loc, tys: &Tys, got: &Env, want: &Env) -> Result<()> {
     }
   }
   for (name, want) in want.ty_env.inner.iter() {
-    let want = tys.get(want).unwrap();
+    let want = tys.get(want);
     match got.ty_env.inner.get(name) {
       None => return Err(loc.wrap(Error::Todo("missing a type"))),
-      Some(got) => ck_ty_info(loc, tys, tys.get(got).unwrap(), want)?,
+      Some(got) => ck_ty_info(loc, tys, tys.get(got), want)?,
     }
   }
   for (name, want) in want.val_env.iter() {

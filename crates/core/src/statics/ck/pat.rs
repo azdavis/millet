@@ -199,6 +199,6 @@ fn get_span(tys: &Tys, sym: Sym) -> Span {
   if sym == Sym::EXN {
     Span::PosInf
   } else {
-    Span::Finite(tys.get(&sym).unwrap().val_env.len())
+    Span::Finite(tys.get(&sym).val_env.len())
   }
 }

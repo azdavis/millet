@@ -483,24 +483,18 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       // no need to `insert_bound` because no unifying occurs.
     }
     let ty_args: Vec<_> = ty_vars.iter().copied().map(Ty::Var).collect();
-    // we don't yet know whether this new type respects equality so just baldly assert that does
-    // not. also we haven't analyzed the `ConBind`s yet, so the `ValEnv` is empty.
-    let info = TyInfo {
-      ty_fcn: TyScheme {
-        ty_vars,
-        ty: Ty::Ctor(ty_args, sym),
-        overload: None,
-      },
-      val_env: ValEnv::new(),
-      equality: false,
+    let ty_fcn = TyScheme {
+      ty_vars,
+      ty: Ty::Ctor(ty_args, sym),
+      overload: None,
     };
-    assert!(st.tys.insert(sym, info).is_none());
+    st.tys.insert_datatype(sym, ty_fcn);
     syms.push(sym);
   }
   // SML Definition (28), SML Definition (81)
   for (dat_bind, sym) in dat_binds.iter().zip(syms) {
     // note that we have to `get` here and then `get_mut` again later because of the borrow checker.
-    let sym_ty_info = st.tys.get(&sym).unwrap();
+    let info = st.tys.get(&sym);
     let mut cx_cl;
     let cx = if dat_bind.ty_vars.is_empty() {
       &cx
@@ -516,12 +510,8 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       // type function and the ctors of the type will each have a `TyScheme` that binds the type
       // variables appropriately, so by the magic of alpha conversion they're all distinct anyway.
       cx_cl = cx.clone();
-      assert_eq!(dat_bind.ty_vars.len(), sym_ty_info.ty_fcn.ty_vars.len());
-      for (ast_tv, &tv) in dat_bind
-        .ty_vars
-        .iter()
-        .zip(sym_ty_info.ty_fcn.ty_vars.iter())
-      {
+      assert_eq!(dat_bind.ty_vars.len(), info.ty_fcn.ty_vars.len());
+      for (ast_tv, &tv) in dat_bind.ty_vars.iter().zip(info.ty_fcn.ty_vars.iter()) {
         cx_cl.ty_vars.insert(ast_tv.val, tv);
       }
       &cx_cl
@@ -534,7 +524,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       ck_binding(con_bind.vid)?;
       // if there is no `of t`, then the type of the ctor is just `T`, where `T` is the new sym type
       // that is being defined.
-      let mut ty = sym_ty_info.ty_fcn.ty.clone();
+      let mut ty = info.ty_fcn.ty.clone();
       if let Some(arg_ty) = &con_bind.ty {
         // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
         // `T` respects equality based on whether `t` does. TODO this doesn't handle the equality
@@ -544,7 +534,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         ty = Ty::Arrow(t.into(), ty.into());
       }
       let val_info = ValInfo::ctor(TyScheme {
-        ty_vars: sym_ty_info.ty_fcn.ty_vars.clone(),
+        ty_vars: info.ty_fcn.ty_vars.clone(),
         ty,
         overload: None,
       });
@@ -556,9 +546,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     }
     // now the `ValEnv` is complete, so we may update `st.tys` with the true definition of this
     // datatype. TODO closure?
-    let sym_ty_info = st.tys.get_mut(&sym).unwrap();
-    sym_ty_info.val_env = bind_val_env;
-    sym_ty_info.equality = equality;
+    st.tys.finish_datatype(&sym, bind_val_env, equality);
   }
   Ok(Env {
     ty_env,
@@ -575,7 +563,7 @@ pub fn ck_dat_copy(
   long: &Long<StrRef>,
 ) -> Result<Env> {
   let sym = get_ty_sym(get_env(&cx.env, long)?, long.last)?;
-  let info = tys.get(&sym).unwrap();
+  let info = tys.get(&sym);
   if info.val_env.is_empty() {
     return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype));
   }

@@ -578,7 +578,7 @@ impl Ty {
       Self::Arrow(_, _) => false,
       Self::Ctor(args, sym) => {
         *sym == Sym::base(StrRef::REF)
-          || tys.get(sym).unwrap().equality && args.iter().all(|ty| ty.is_equality(tys))
+          || tys.get(sym).equality && args.iter().all(|ty| ty.is_equality(tys))
       }
     }
   }
@@ -613,7 +613,7 @@ impl TyScheme {
   }
 
   /// Applies a substitution to this.
-  pub fn apply(&mut self, subst: &Subst) {
+  fn apply(&mut self, subst: &Subst) {
     if self.ty_vars.iter().any(|tv| subst.regular.contains_key(tv)) {
       let mut subst = subst.clone();
       for tv in self.ty_vars.iter() {
@@ -668,7 +668,48 @@ pub struct TyInfo {
 }
 
 /// A collection of symbol types.
-pub type Tys = HashMap<Sym, TyInfo>;
+#[derive(Default)]
+pub struct Tys {
+  inner: HashMap<Sym, TyInfo>,
+}
+
+impl Tys {
+  /// Inserts the `Sym`, `TyInfo` pair into this.
+  pub fn insert(&mut self, sym: Sym, ty_info: TyInfo) {
+    assert!(self.inner.insert(sym, ty_info).is_none());
+  }
+
+  /// Inserts a datatype under construction into this.
+  pub fn insert_datatype(&mut self, sym: Sym, ty_fcn: TyFcn) {
+    // we don't yet know whether this new type respects equality so just baldly assert that does
+    // not. also we haven't analyzed the `ConBind`s yet, so the `ValEnv` is empty.
+    let ty_info = TyInfo {
+      ty_fcn,
+      val_env: ValEnv::new(),
+      equality: false,
+    };
+    assert!(self.inner.insert(sym, ty_info).is_none());
+  }
+
+  /// Finishes a datatype under construction.
+  pub fn finish_datatype(&mut self, sym: &Sym, val_env: ValEnv, equality: bool) {
+    let info = self.inner.get_mut(&sym).unwrap();
+    assert!(info.val_env.is_empty());
+    assert!(!info.equality);
+    info.val_env = val_env;
+    info.equality = equality;
+  }
+
+  /// Returns the `TyInfo` referred to by the `Sym`.
+  pub fn get(&self, sym: &Sym) -> &TyInfo {
+    self.inner.get(sym).unwrap()
+  }
+
+  /// Returns whether this contains the `Sym`.
+  pub fn contains_key(&self, sym: &Sym) -> bool {
+    self.inner.contains_key(sym)
+  }
+}
 
 /// A structure environment.
 pub type StrEnv = BTreeMap<StrRef, Env>;
@@ -681,9 +722,11 @@ pub struct TyEnv {
 
 impl TyEnv {
   /// Applies a substitution to this.
-  pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
+  fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for sym in self.inner.values() {
-      tys.get_mut(sym).unwrap().ty_fcn.apply(subst);
+      // NOTE this uses the internals of `Tys` to mutate it non-additively which is usually very
+      // bad, but it's ok since we only `apply` once at the end with `Basis#apply`.
+      tys.inner.get_mut(sym).unwrap().ty_fcn.apply(subst);
     }
   }
 
@@ -692,7 +735,7 @@ impl TyEnv {
     self
       .inner
       .values()
-      .flat_map(|sym| tys.get(sym).unwrap().ty_fcn.free_ty_vars())
+      .flat_map(|sym| tys.get(sym).ty_fcn.free_ty_vars())
       .collect()
   }
 }
@@ -836,7 +879,7 @@ impl Env {
   }
 
   /// Applies a substitution to this.
-  pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
+  fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for env in self.str_env.values_mut() {
       env.apply(subst, tys);
     }

@@ -108,7 +108,7 @@ pub fn get_val_info(env: &Env, name: Located<StrRef>) -> Result<&ValInfo> {
 /// Returns `Ok(ti)` iff the `TyEnv` of `env` maps `name` to `sym` and `tys` maps `sym` to `ti`.
 pub fn get_ty_info<'t>(tys: &'t Tys, env: &Env, name: Located<StrRef>) -> Result<&'t TyInfo> {
   let sym = get_ty_sym(env, name)?;
-  Ok(tys.get(&sym).unwrap())
+  Ok(tys.get(&sym))
 }
 
 /// Returns `Ok(sym)` iff the `TyEnv` of `env` maps `name` to `sym`.

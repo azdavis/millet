@@ -4,7 +4,7 @@ use crate::intern::StrRef;
 use crate::statics::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
-use maplit::{btreemap, hashmap, hashset};
+use maplit::{btreemap, hashset};
 
 fn bool_val_env() -> ValEnv {
   btreemap![
@@ -150,15 +150,14 @@ pub fn get() -> (Basis, State) {
     ty: Ty::Arrow(Ty::pair(Ty::Var(a), Ty::Var(a)).into(), Ty::BOOL.into()),
     overload: None,
   });
-  st.tys.extend(hashmap![
-    Sym::INT => base_ty(Ty::INT, true),
-    Sym::REAL => base_ty(Ty::REAL, false),
-    Sym::STRING => base_ty(Ty::STRING, true),
-    Sym::CHAR => base_ty(Ty::CHAR, true),
-    Sym::WORD => base_ty(Ty::WORD, true),
-    Sym::EXN => base_ty(Ty::EXN, false),
-    Sym::UNIT => base_ty(Ty::Record(btreemap! []), false),
-  ]);
+  st.tys.insert(Sym::INT, base_ty(Ty::INT, true));
+  st.tys.insert(Sym::REAL, base_ty(Ty::REAL, false));
+  st.tys.insert(Sym::STRING, base_ty(Ty::STRING, true));
+  st.tys.insert(Sym::CHAR, base_ty(Ty::CHAR, true));
+  st.tys.insert(Sym::WORD, base_ty(Ty::WORD, true));
+  st.tys.insert(Sym::EXN, base_ty(Ty::EXN, false));
+  st.tys
+    .insert(Sym::UNIT, base_ty(Ty::Record(btreemap![]), false));
   let bs = Basis {
     ty_names: hashset![
       Sym::UNIT,
