@@ -16,6 +16,7 @@ mod dec;
 mod enrich;
 mod exhaustive;
 mod pat;
+mod sig_match;
 mod top_dec;
 mod ty;
 mod util;

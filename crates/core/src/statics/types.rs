@@ -486,6 +486,23 @@ impl Sym {
   pub const UNIT: Self = Self::base(StrRef::UNIT);
 }
 
+/// A mapping from symbols to symbols.
+#[derive(Default)]
+pub struct SymSubst {
+  inner: HashMap<Sym, Sym>,
+}
+
+impl SymSubst {
+  /// Insert the key, val pair into this.
+  pub fn insert(&mut self, key: Sym, val: Sym) {
+    assert!(self.inner.insert(key, val).is_none());
+  }
+
+  fn get(&self, key: Sym) -> Sym {
+    self.inner.get(&key).copied().unwrap_or(key)
+  }
+}
+
 /// A type, for the purposes of static analysis.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ty {
@@ -577,6 +594,29 @@ impl Ty {
     }
   }
 
+  /// Applies the `SymSubst` to this.
+  pub fn apply_sym_subst(&mut self, subst: &SymSubst) {
+    match self {
+      Ty::Var(_) => {}
+      Ty::Record(rows) => {
+        for ty in rows.values_mut() {
+          ty.apply_sym_subst(subst);
+        }
+      }
+      Ty::Arrow(lhs, rhs) => {
+        lhs.apply_sym_subst(subst);
+        rhs.apply_sym_subst(subst);
+      }
+      Ty::Ctor(args, sym) => {
+        for arg in args {
+          arg.apply_sym_subst(subst);
+        }
+        // the one place we actually do something.
+        *sym = subst.get(*sym);
+      }
+    }
+  }
+
   pub const CHAR: Self = Self::base(Sym::CHAR);
   pub const EXN: Self = Self::base(Sym::EXN);
   pub const BOOL: Self = Self::base(Sym::BOOL);
@@ -649,6 +689,7 @@ pub type TyFcn = TyScheme;
 
 /// Information about a type that 'has been generated', like a datatype or a `type t` in a
 /// signature. TyStr from the Definition.
+#[derive(Clone)]
 pub struct TyInfo {
   pub ty_fcn: TyFcn,
   /// NOTE I think this is empty iff this is a special type (int, word, etc) or a `type t` in a
@@ -731,6 +772,15 @@ impl TyEnv {
       .values()
       .flat_map(|sym| tys.get(sym).ty_fcn.free_ty_vars())
       .collect()
+  }
+
+  /// Applies the `SymSubst` to this.
+  pub fn apply_sym_subst(&mut self, subst: &SymSubst) {
+    self.inner = self
+      .inner
+      .iter()
+      .map(|(&name, &sym)| (name, subst.get(sym)))
+      .collect();
   }
 }
 
@@ -897,6 +947,17 @@ impl Env {
           .flat_map(|vi| vi.ty_scheme.free_ty_vars()),
       )
       .collect()
+  }
+
+  /// Applies the `SymSubst` to this.
+  pub fn apply_sym_subst(&mut self, subst: &SymSubst) {
+    for env in self.str_env.values_mut() {
+      env.apply_sym_subst(subst);
+    }
+    self.ty_env.apply_sym_subst(subst);
+    for val_info in self.val_env.values_mut() {
+      val_info.ty_scheme.ty.apply_sym_subst(subst);
+    }
   }
 }
 
