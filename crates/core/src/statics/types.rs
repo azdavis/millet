@@ -572,7 +572,7 @@ impl Ty {
       Self::Record(rows) => rows.values().all(|ty| ty.is_equality(tys)),
       Self::Arrow(_, _) => false,
       Self::Ctor(args, sym) => {
-        *sym == Sym::REF || tys.get(sym).equality && args.iter().all(|ty| ty.is_equality(tys))
+        *sym == Sym::REF || (tys.get(sym).equality && args.iter().all(|ty| ty.is_equality(tys)))
       }
     }
   }
