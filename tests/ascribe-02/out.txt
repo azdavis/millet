@@ -1,0 +1,7 @@
+error: undefined value: x
+  ┌─ err.sml:5:16
+  │
+5 │ val _: int = S.x
+  │                ^
+
+typechecking failed

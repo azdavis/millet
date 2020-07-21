@@ -20,6 +20,7 @@
 - publish extension
   - get azure account or whatever
 - better error messages
+  - improve locs for signature matching
   - prefer 'expected int list, found bool list' instead of 'expected int, found
     bool' and similar?
   - show fully qualified names in type errors
