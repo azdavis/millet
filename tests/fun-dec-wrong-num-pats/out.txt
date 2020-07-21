@@ -1,4 +1,4 @@
-error: wrong number of patterns in function declaration: expected 1, found 2
+error: mismatched number of patterns: expected 1, found 2
   ┌─ err.sml:2:7
   │
 2 │   | f 3 4 = 5

@@ -1,4 +1,4 @@
-error: pattern does not have an arrow type: d
+error: mismatched types: expected an arrow type, found d
   ┌─ err.sml:4:5
   │
 4 │     A _ => 1

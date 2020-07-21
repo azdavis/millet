@@ -1,4 +1,4 @@
-error: mismatched identifier status: expected a constructor or exception, found a value
+error: mismatched identifier status: expected constructor or exception, found value
   ┌─ err.sml:4:5
   │
 4 │     C _ => 1

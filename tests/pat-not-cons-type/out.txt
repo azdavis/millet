@@ -1,4 +1,4 @@
-error: pattern does not have a constructor type: '25 * '25 list -> '25 list
+error: mismatched types: expected a constructor type, found '25 * '25 list -> '25 list
   ┌─ err.sml:1:12
   │
 1 │ val _ = fn op:: => 3

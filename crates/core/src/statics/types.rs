@@ -69,15 +69,14 @@ impl Error {
         ret
       }
       Self::PatWrongIdStatus => {
-        "mismatched identifier status: expected a constructor or exception, found a value"
-          .to_owned()
+        "mismatched identifier status: expected constructor or exception, found value".to_owned()
       }
       Self::ExnWrongIdStatus(x) => format!(
-        "mismatched identifier status: expected an exception, found a {}",
+        "mismatched identifier status: expected exception, found {}",
         x
       ),
       Self::WrongNumTyArgs(want, got) => format!(
-        "wrong number of type arguments: expected {}, found {}",
+        "mismatched number of type arguments: expected {}, found {}",
         want, got
       ),
       Self::NonVarInAs(id) => format!(
@@ -90,20 +89,20 @@ impl Error {
       Self::NonExhaustiveBinding => "non-exhaustive binding".to_owned(),
       Self::UnreachablePattern => "unreachable pattern".to_owned(),
       Self::FunDecNameMismatch(want, got) => format!(
-        "name mismatch in function declaration: expected {}, found {}",
+        "mismatched names: expected {}, found {}",
         store.get(*want),
         store.get(*got)
       ),
       Self::FunDecWrongNumPats(want, got) => format!(
-        "wrong number of patterns in function declaration: expected {}, found {}",
+        "mismatched number of patterns: expected {}, found {}",
         want, got
       ),
       Self::PatNotConsTy(ty) => format!(
-        "pattern does not have a constructor type: {}",
+        "mismatched types: expected a constructor type, found {}",
         show_ty(store, ty)
       ),
       Self::PatNotArrowTy(ty) => format!(
-        "pattern does not have an arrow type: {}",
+        "mismatched types: expected an arrow type, found {}",
         show_ty(store, ty)
       ),
       Self::DatatypeCopyNotDatatype => {
