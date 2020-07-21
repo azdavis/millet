@@ -754,7 +754,7 @@ impl Tys {
 pub type StrEnv = BTreeMap<StrRef, Env>;
 
 /// A type environment.
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct TyEnv {
   pub inner: BTreeMap<StrRef, Sym>,
 }
@@ -822,7 +822,7 @@ impl fmt::Display for IdStatus {
 }
 
 /// Information about a value.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ValInfo {
   /// Its type scheme.
   pub ty_scheme: TyScheme,
@@ -871,7 +871,7 @@ pub type ValEnv = BTreeMap<StrRef, ValInfo>;
 
 /// An environment. Structures (and therefore the "top-level") and signatures are essentially
 /// represented as this.
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Env {
   /// The structures defined in this structure.
   pub str_env: StrEnv,
