@@ -2,7 +2,7 @@
 
 use crate::loc::Loc;
 use crate::statics::types::{
-  Env, Error, Result, Subst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
+  Env, Error, Item, Result, Subst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
 };
 use crate::util::eq_iter;
 
@@ -14,20 +14,20 @@ pub fn ck(loc: Loc, tys: &Tys, got: &Env, want: &Env) -> Result<()> {
   // BTreeMaps, not HashMaps. See types.rs.
   for (name, want) in want.str_env.iter() {
     match got.str_env.get(name) {
-      None => return Err(loc.wrap(Error::Todo("missing a struct"))),
+      None => return Err(loc.wrap(Error::Undefined(Item::Struct, *name))),
       Some(got) => ck(loc, tys, got, want)?,
     }
   }
   for (name, want) in want.ty_env.inner.iter() {
     let want = tys.get(want);
     match got.ty_env.inner.get(name) {
-      None => return Err(loc.wrap(Error::Todo("missing a type"))),
+      None => return Err(loc.wrap(Error::Undefined(Item::Ty, *name))),
       Some(got) => ck_ty_info(loc, tys, tys.get(got), want)?,
     }
   }
   for (name, want) in want.val_env.iter() {
     match got.val_env.get(name) {
-      None => return Err(loc.wrap(Error::Todo("missing a value"))),
+      None => return Err(loc.wrap(Error::Undefined(Item::Val, *name))),
       Some(got) => ck_val_info(loc, tys, got, want)?,
     }
   }
@@ -35,8 +35,9 @@ pub fn ck(loc: Loc, tys: &Tys, got: &Env, want: &Env) -> Result<()> {
 }
 
 fn ck_val_info(loc: Loc, tys: &Tys, got: &ValInfo, want: &ValInfo) -> Result<()> {
-  if got.id_status != want.id_status && !want.id_status.is_val() {
-    return Err(loc.wrap(Error::Todo("incompatible id statuses")));
+  if want.id_status != got.id_status && !want.id_status.is_val() {
+    // TODO improve this error to mention that it's also ok if want is a value?
+    return Err(loc.wrap(Error::IdStatusMismatch(want.id_status, got.id_status)));
   }
   ck_generalizes(loc, tys, want.ty_scheme.clone(), got.ty_scheme.clone())?;
   Ok(())
@@ -52,12 +53,12 @@ fn ck_ty_info(loc: Loc, tys: &Tys, got: &TyInfo, want: &TyInfo) -> Result<()> {
 
 fn ck_val_env_eq(loc: Loc, tys: &Tys, got: &ValEnv, want: &ValEnv) -> Result<()> {
   if !eq_iter(want.keys(), got.keys()) {
-    return Err(loc.wrap(Error::Todo("unequal keys")));
+    return Err(loc.wrap(Error::Todo("unequal value environment keys")));
   }
   for (name, want_vi) in want {
     let got_vi = got.get(name).unwrap();
     if want_vi.id_status != got_vi.id_status {
-      return Err(loc.wrap(Error::Todo("unequal id statuses")));
+      return Err(loc.wrap(Error::IdStatusMismatch(want_vi.id_status, got_vi.id_status)));
     }
     ck_ty_fcn_eq(loc, tys, &got_vi.ty_scheme, &want_vi.ty_scheme)?;
   }

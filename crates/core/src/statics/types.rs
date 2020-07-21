@@ -40,6 +40,7 @@ pub enum Error {
   DatatypeCopyNotDatatype,
   NotEquality(Ty),
   NotArrowTy(Ty),
+  IdStatusMismatch(IdStatus, IdStatus),
   Todo(&'static str),
 }
 
@@ -110,6 +111,10 @@ impl Error {
       }
       Self::NotEquality(ty) => format!("not an equality type: {}", show_ty(store, ty)),
       Self::NotArrowTy(ty) => format!("not a function type: {}", show_ty(store, ty)),
+      Self::IdStatusMismatch(want, got) => format!(
+        "mismatched identifier statuses: expected {}, found {}",
+        want, got
+      ),
       Self::Todo(msg) => format!("unsupported language construct: {}", msg),
     }
   }
