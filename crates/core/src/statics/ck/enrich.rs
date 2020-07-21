@@ -1,15 +1,12 @@
 //! Check whether an environment enriches another environment.
 
-// TODO remove when done
-#![allow(unused)]
-
 use crate::loc::Loc;
 use crate::statics::types::{
   Env, Error, Result, Subst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
 };
 use crate::util::eq_iter;
 
-/// Returns Ok(()) iff got enriches want as per the Definition.
+/// Returns Ok(()) iff got enriches want (`got >> want`) as per the Definition.
 pub fn ck(loc: Loc, tys: &Tys, got: &Env, want: &Env) -> Result<()> {
   // For these for loops, we need the iteration order to be the same across different runs of the
   // program on the same file to ensure we get the same error message every time. This is useful for
