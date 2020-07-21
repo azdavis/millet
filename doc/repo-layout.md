@@ -5,6 +5,7 @@
 - `bin` contains various scripts.
   - `bin/ck-sml-defn` checks whether all of the rules of the statics have been
     mentioned in the implementation of the statics.
+  - `bin/mk-test` makes `ok.sml` tests.
   - `bin/mk-vscode-ext` builds the VSCode language client extension and language
     server, and puts the language server binary near the built client.
   - `bin/run-test` runs tests in `tests`.

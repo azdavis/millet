@@ -15,7 +15,8 @@ Else, if the test contains a file `err.sml`, then when the Millet CLI is run
 with that file, it must exit with a non-zero exit code and produce the output in
 `out.txt`.
 
-Run `bin/run-test tests/<name>` to run a test. The test runner exports two
+Run `bin/mk-test tests/<name>` to make an `ok.sml` test, and run
+`bin/run-test tests/<name>` to run a test. The test runner exports two
 environment variables available for use in any `run.sh`:
 
 - `NO_COLOR=1`, to turn off colored output when running the Millet CLI.
