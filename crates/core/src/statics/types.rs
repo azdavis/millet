@@ -693,7 +693,7 @@ pub type TyFcn = TyScheme;
 
 /// Information about a type that 'has been generated', like a datatype or a `type t` in a
 /// signature. TyStr from the Definition.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TyInfo {
   pub ty_fcn: TyFcn,
   /// NOTE I think this is empty iff this is a special type (int, word, etc) or a `type t` in a
