@@ -38,8 +38,8 @@ pub enum Error {
   UnmatchedOpenComment,
   IncompleteTyVar,
   UnknownByte(u8),
-  InvalidIntConstant(core::num::ParseIntError),
-  InvalidRealConstant(core::num::ParseFloatError),
+  InvalidIntConstant(std::num::ParseIntError),
+  InvalidRealConstant(std::num::ParseFloatError),
   NegativeWordConstant,
   IncompleteNumConstant,
   UnclosedStringConstant,
@@ -66,14 +66,14 @@ impl Error {
   }
 }
 
-impl From<core::num::ParseIntError> for Error {
-  fn from(val: core::num::ParseIntError) -> Self {
+impl From<std::num::ParseIntError> for Error {
+  fn from(val: std::num::ParseIntError) -> Self {
     Self::InvalidIntConstant(val)
   }
 }
 
-impl From<core::num::ParseFloatError> for Error {
-  fn from(val: core::num::ParseFloatError) -> Self {
+impl From<std::num::ParseFloatError> for Error {
+  fn from(val: std::num::ParseFloatError) -> Self {
     Self::InvalidRealConstant(val)
   }
 }
