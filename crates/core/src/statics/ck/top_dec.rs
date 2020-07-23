@@ -215,9 +215,11 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
     Spec::Include(sig_exp) => ck_sig_exp(bs, st, sig_exp),
     // SML Definition (76), SML Definition (77)
     Spec::Seq(specs) => {
+      let mut bs = bs.clone();
       let mut ret = Env::default();
       for spec in specs {
-        let env = ck_spec(bs, st, spec)?;
+        bs.add_env(ret.clone());
+        let env = ck_spec(&bs, st, spec)?;
         ret.maybe_extend(env, spec.loc)?;
       }
       Ok(ret)
