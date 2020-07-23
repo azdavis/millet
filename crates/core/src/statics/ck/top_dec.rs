@@ -129,14 +129,12 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> 
         let err = Error::Undefined(Item::Sig, sig_id.val);
         Err(sig_id.loc.wrap(err))
       }
-      Some(sig) => {
-        if sig.ty_names.is_disjoint(&bs.ty_names) {
-          Ok(sig.env.clone())
-        } else {
-          // TODO rename the type names?
-          Err(sig_exp.loc.wrap(Error::Todo("type name set intersection")))
-        }
-      }
+      // TODO I don't understand the check to see if the type names of the sig are disjoint from the
+      // type names of the basis. It seems like this will _always_ be the case since when we process
+      // a `signature` top dec, we add the type names of that sig to the basis. (Why do we do that?
+      // I don't know). Is the whole "you may need to rename bound type names" thing made not
+      // necessary by `Sym`, which is meant to be globally unique?
+      Some(sig) => Ok(sig.env.clone()),
     },
     // SML Definition (64)
     SigExp::Where(_, _, _, _) => Err(sig_exp.loc.wrap(Error::Todo("`where`"))),

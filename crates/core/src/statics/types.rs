@@ -1102,21 +1102,13 @@ impl Basis {
 
   /// Add an signature environment to this.
   pub fn add_sig_env(&mut self, sig_env: SigEnv) {
-    let ty_names = sig_env
-      .values()
-      .flat_map(|sig| sig.ty_names.iter())
-      .copied();
-    self.ty_names.extend(ty_names);
+    // TODO type names?
     self.sig_env.extend(sig_env);
   }
 
   /// Add an functor environment to this.
   pub fn add_fun_env(&mut self, fun_env: FunEnv) {
-    let ty_names = fun_env
-      .values()
-      .flat_map(|sig| sig.ty_names.iter())
-      .copied();
-    self.ty_names.extend(ty_names);
+    // TODO type names?
     self.fun_env.extend(fun_env);
   }
 }
