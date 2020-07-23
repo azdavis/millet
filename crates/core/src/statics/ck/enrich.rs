@@ -110,9 +110,8 @@ fn ck_ty_fcn_eq(cx: Cx, got: &TyFcn, want: &TyFcn) -> Result<()> {
   Ok(())
 }
 
-/// Returns Ok(s) iff want generalizes got as per the Definition, and s is this witness to this
-/// fact. TODO is this right?
-fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<Subst> {
+/// Returns `Ok(())` iff want generalizes got as per the Definition.
+fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<()> {
   let want_free_tvs = want.free_ty_vars();
   for tv in got.ty_vars.iter() {
     if want_free_tvs.contains(tv) {
@@ -121,8 +120,5 @@ fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<Subst
   }
   want.ty.apply_ty_rzn(cx.ty_rzn);
   got.ty.apply_ty_rzn(cx.ty_rzn);
-  let mut ret = Subst::default();
-  ret.unify(cx.loc, &cx.tys, want.ty, got.ty)?;
-  // TODO
-  Ok(ret)
+  Subst::default().unify(cx.loc, &cx.tys, want.ty, got.ty)
 }
