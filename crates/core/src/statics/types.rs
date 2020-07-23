@@ -500,20 +500,20 @@ impl Sym {
   pub const UNIT: Self = Self::base(StrRef::UNIT);
 }
 
-/// A mapping from symbols to symbols.
+/// A mapping from symbols to type functions.
 #[derive(Debug, Default)]
 pub struct SymSubst {
-  inner: HashMap<Sym, Sym>,
+  inner: HashMap<Sym, TyFcn>,
 }
 
 impl SymSubst {
   /// Insert the key, val pair into this.
-  pub fn insert(&mut self, key: Sym, val: Sym) {
+  pub fn insert(&mut self, key: Sym, val: TyFcn) {
     assert!(self.inner.insert(key, val).is_none());
   }
 
-  fn get(&self, key: Sym) -> Sym {
-    self.inner.get(&key).copied().unwrap_or(key)
+  fn get(&self, key: &Sym) -> Option<&TyFcn> {
+    self.inner.get(key)
   }
 }
 
@@ -622,11 +622,12 @@ impl Ty {
         rhs.apply_sym_subst(subst);
       }
       Ty::Ctor(args, sym) => {
-        for arg in args {
+        for arg in args.iter_mut() {
           arg.apply_sym_subst(subst);
         }
-        // the one place we actually do something.
-        *sym = subst.get(*sym);
+        if let Some(ty_fcn) = subst.get(sym) {
+          *self = ty_fcn.apply_args(args.clone());
+        }
       }
     }
   }

@@ -33,7 +33,8 @@ pub fn ck(st: &mut State, loc: Loc, env: &Env, sig: &Sig) -> Result<Env> {
   for &sig_ty_sym in sig.ty_names.iter() {
     let ty_name = loc.wrap(sig_ty_sym.name());
     let env_ty_sym = get_ty_sym(env, ty_name)?;
-    sym_subst.insert(sig_ty_sym, env_ty_sym);
+    let ty_fcn = st.tys.get(&env_ty_sym).ty_fcn.clone();
+    sym_subst.insert(sig_ty_sym, ty_fcn);
   }
   enrich::ck(loc, &st.tys, &sym_subst, env, &sig.env)?;
   // TODO is this right? what about opaque ascription?
