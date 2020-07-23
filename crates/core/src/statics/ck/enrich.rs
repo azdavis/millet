@@ -122,9 +122,9 @@ fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<Subst
       return Err(cx.loc.wrap(Error::Todo("bad free ty var")));
     }
   }
-  let mut ret = Subst::default();
   want.ty.apply_sym_subst(cx.sym_subst);
   got.ty.apply_sym_subst(cx.sym_subst);
+  let mut ret = Subst::default();
   ret.unify(cx.loc, &cx.tys, want.ty, got.ty)?;
   // TODO
   Ok(ret)
