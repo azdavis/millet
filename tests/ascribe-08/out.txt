@@ -1,0 +1,10 @@
+error: mismatched value environments: expected ["A"], found ["A", "B"]
+  ┌─ err.sml:3:7
+  │  
+3 │   end = struct
+  │ ╭───────^
+4 │ │   datatype d = A | B
+5 │ │ end
+  │ ╰───^
+
+typechecking failed

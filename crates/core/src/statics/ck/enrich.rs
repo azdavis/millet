@@ -2,23 +2,43 @@
 
 use crate::loc::Loc;
 use crate::statics::types::{
-  Env, Error, Item, Result, Subst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
+  Env, Error, Item, Result, Subst, SymSubst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
 };
-use crate::util::eq_iter;
 
-/// Returns `Ok(())` iff got enriches want (`got >> want`) as per the Definition.
-pub fn ck(loc: Loc, tys: &Tys, got: &Env, want: &Env) -> Result<()> {
-  let cx = Cx { loc, tys };
+/// Returns `Ok(())` iff got enriches want (`got >> want`) as per the Definition. `loc` is the
+/// location that errors will be wrapped in if this returns `Err(...)`, `tys` gives information
+/// about types named by a `Sym`, and `sym_subst` is a substitution of symbols that is applied to
+/// every `t`, where `t` is a `Ty` in `want`, before trying to unify `t` with its corresponding `Ty`
+/// in `got`. TODO improve locs of errors.
+pub fn ck(loc: Loc, tys: &Tys, sym_subst: &SymSubst, got: &Env, want: &Env) -> Result<()> {
+  let cx = Cx {
+    loc,
+    tys,
+    sym_subst,
+  };
   ck_impl(cx, got, want)
 }
 
 /// The context, which we pass around to basically every function in this module.
 #[derive(Clone, Copy)]
-struct Cx<'t> {
+struct Cx<'t, 's> {
   /// The location, for errors.
   loc: Loc,
   /// The types.
   tys: &'t Tys,
+  /// The symbol substitution, the type realization.
+  ///
+  /// TODO it's a little unpleasant that this, which is concerned with signature instantiation, is
+  /// present here in this module, which is meant to be concerned with environment enrichment, since
+  /// those problems are supposed to be orthogonal.
+  ///
+  /// But, to be fair, they are both used for the purpose of signature matching, and passing this
+  /// down here means we don't have to do anything like first apply the substitution to the entire
+  /// `want` env, which would require mutating the env and probably would mean we would have to
+  /// create a bunch of new `Sym`s. In fact, I'm not even sure how I would do it. Though, this could
+  /// be an indication that there is something fundamentally wrong with the approach of this
+  /// implementation.
+  sym_subst: &'s SymSubst,
 }
 
 fn ck_impl(cx: Cx, got: &Env, want: &Env) -> Result<()> {
@@ -32,6 +52,8 @@ fn ck_impl(cx: Cx, got: &Env, want: &Env) -> Result<()> {
       Some(got) => ck_impl(cx, got, want)?,
     }
   }
+  // Note that we do _not_ use the `SymSubst` in the `Cx` when looking up the `TyInfo`, since if we
+  // did, we would be passing identical `TyInfo`s to `ck_ty_info`.
   for (name, want) in want.ty_env.inner.iter() {
     let want = cx.tys.get(want);
     match got.ty_env.inner.get(name) {
@@ -67,8 +89,10 @@ fn ck_ty_info(cx: Cx, got: &TyInfo, want: &TyInfo) -> Result<()> {
 }
 
 fn ck_val_env_eq(cx: Cx, got: &ValEnv, want: &ValEnv) -> Result<()> {
-  if !eq_iter(want.keys(), got.keys()) {
-    return Err(cx.loc.wrap(Error::Todo("unequal value environment keys")));
+  let want_keys: Vec<_> = want.keys().copied().collect();
+  let got_keys: Vec<_> = got.keys().copied().collect();
+  if want_keys != got_keys {
+    return Err(cx.loc.wrap(Error::ValEnvMismatch(want_keys, got_keys)));
   }
   for (name, want_vi) in want {
     let got_vi = got.get(name).unwrap();
@@ -91,7 +115,7 @@ fn ck_ty_fcn_eq(cx: Cx, got: &TyFcn, want: &TyFcn) -> Result<()> {
 
 /// Returns Ok(s) iff want generalizes got as per the Definition, and s is this witness to this
 /// fact. TODO is this right?
-fn ck_generalizes(cx: Cx, want: TyScheme, got: TyScheme) -> Result<Subst> {
+fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<Subst> {
   let want_free_tvs = want.free_ty_vars();
   for tv in got.ty_vars.iter() {
     if want_free_tvs.contains(tv) {
@@ -99,6 +123,8 @@ fn ck_generalizes(cx: Cx, want: TyScheme, got: TyScheme) -> Result<Subst> {
     }
   }
   let mut ret = Subst::default();
+  want.ty.apply_sym_subst(cx.sym_subst);
+  got.ty.apply_sym_subst(cx.sym_subst);
   ret.unify(cx.loc, &cx.tys, want.ty, got.ty)?;
   // TODO
   Ok(ret)

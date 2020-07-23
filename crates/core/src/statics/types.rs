@@ -41,6 +41,7 @@ pub enum Error {
   NotEquality(Ty),
   NotArrowTy(Ty),
   IdStatusMismatch(IdStatus, IdStatus),
+  ValEnvMismatch(Vec<StrRef>, Vec<StrRef>),
   Todo(&'static str),
 }
 
@@ -115,6 +116,15 @@ impl Error {
         "mismatched identifier statuses: expected {}, found {}",
         want, got
       ),
+      Self::ValEnvMismatch(want, got) => {
+        // TODO improve
+        let want: Vec<_> = want.into_iter().map(|x| store.get(*x)).collect();
+        let got: Vec<_> = got.into_iter().map(|x| store.get(*x)).collect();
+        format!(
+          "mismatched value environments: expected {:?}, found {:?}",
+          want, got
+        )
+      }
       Self::Todo(msg) => format!("unsupported language construct: {}", msg),
     }
   }
@@ -777,15 +787,6 @@ impl TyEnv {
       .flat_map(|sym| tys.get(sym).ty_fcn.free_ty_vars())
       .collect()
   }
-
-  /// Applies the `SymSubst` to this.
-  pub fn apply_sym_subst(&mut self, subst: &SymSubst) {
-    self.inner = self
-      .inner
-      .iter()
-      .map(|(&name, &sym)| (name, subst.get(sym)))
-      .collect();
-  }
 }
 
 /// An identifier status description.
@@ -952,17 +953,6 @@ impl Env {
       )
       .collect()
   }
-
-  /// Applies the `SymSubst` to this.
-  pub fn apply_sym_subst(&mut self, subst: &SymSubst) {
-    for env in self.str_env.values_mut() {
-      env.apply_sym_subst(subst);
-    }
-    self.ty_env.apply_sym_subst(subst);
-    for val_info in self.val_env.values_mut() {
-      val_info.ty_scheme.ty.apply_sym_subst(subst);
-    }
-  }
 }
 
 impl From<ValEnv> for Env {
@@ -1025,7 +1015,11 @@ impl Cx {
 /// A signature.
 #[derive(Clone)]
 pub struct Sig {
+  /// The set of type names that this signature binds. The "variables" that are "substituted" when
+  /// this signature is matched against an environment (from a structure expression).
   pub ty_names: TyNameSet,
+  /// The environment, which may make reference to the bound type names as well as type names from
+  /// the surrounding environment.
   pub env: Env,
 }
 
