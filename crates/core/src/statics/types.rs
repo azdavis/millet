@@ -501,7 +501,7 @@ impl Sym {
 }
 
 /// A mapping from symbols to symbols.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct SymSubst {
   inner: HashMap<Sym, Sym>,
 }
