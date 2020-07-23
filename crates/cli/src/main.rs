@@ -20,17 +20,17 @@ where
 }
 
 fn run() -> bool {
+  let config = term::Config::default();
+  let w = StandardStream::stdout(ColorChoice::Auto);
+  let mut w = w.lock();
   let args = match args::get() {
     Ok(Some(x)) => x,
     Ok(None) => return true,
     Err(e) => {
-      eprintln!("{}", e);
+      writeln!(&mut w, "{}", e).unwrap();
       return false;
     }
   };
-  let config = term::Config::default();
-  let w = StandardStream::stdout(ColorChoice::Auto);
-  let mut w = w.lock();
   let mut src = source::SourceMap::new();
   let mut store = intern::StrStoreMut::new();
   for name in args.files {
