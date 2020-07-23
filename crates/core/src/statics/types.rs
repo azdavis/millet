@@ -118,8 +118,8 @@ impl Error {
       ),
       Self::ValEnvMismatch(want, got) => {
         // TODO improve
-        let want: Vec<_> = want.into_iter().map(|x| store.get(*x)).collect();
-        let got: Vec<_> = got.into_iter().map(|x| store.get(*x)).collect();
+        let want: Vec<_> = want.iter().map(|x| store.get(*x)).collect();
+        let got: Vec<_> = got.iter().map(|x| store.get(*x)).collect();
         format!(
           "mismatched value environments: expected {:?}, found {:?}",
           want, got
