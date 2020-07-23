@@ -14,9 +14,9 @@
 //! essentially a 2-tuple of a set of bound type names and and environment. Note also that when we
 //! say "the same name", we mean with respect to the `StrRef` inside every `Sym`.)
 //!
-//! To do this, we construct a `SymSubst`, which essentially acts as the type realization, and pass
-//! that down to `enrich::ck`, which applied the `SymSubst` when appropriate, that is, right before
-//! we are about to check if two types unify.
+//! To do this, we construct a `TyRealization` and pass that down to `enrich::ck`, which applies the
+//! `TyRealization` when appropriate, that is, right before we are about to check if two types
+//! unify.
 //!
 //! This approach is mildly unfortunate, since enrichment checking is not supposed to be concerned
 //! with type realizations. Is this what is called a 'leaky abstraction'? Anyway, look at
@@ -25,18 +25,18 @@
 use crate::loc::Loc;
 use crate::statics::ck::enrich;
 use crate::statics::ck::util::get_ty_sym;
-use crate::statics::types::{Env, Result, Sig, State, SymSubst, TyEnv};
+use crate::statics::types::{Env, Result, Sig, State, TyEnv, TyRealization};
 
 /// Returns `Ok(E)` iff `sig >= E` and `env >> E`. TODO pass by value?
 pub fn ck(st: &mut State, loc: Loc, env: &Env, sig: &Sig) -> Result<Env> {
-  let mut sym_subst = SymSubst::default();
+  let mut ty_rzn = TyRealization::default();
   for &sig_ty_sym in sig.ty_names.iter() {
     let ty_name = loc.wrap(sig_ty_sym.name());
     let env_ty_sym = get_ty_sym(env, ty_name)?;
     let ty_fcn = st.tys.get(&env_ty_sym).ty_fcn.clone();
-    sym_subst.insert(sig_ty_sym, ty_fcn);
+    ty_rzn.insert(sig_ty_sym, ty_fcn);
   }
-  enrich::ck(loc, &st.tys, &sym_subst, env, &sig.env)?;
+  enrich::ck(loc, &st.tys, &ty_rzn, env, &sig.env)?;
   // TODO is this right? what about opaque ascription?
   Ok(Env {
     str_env: env

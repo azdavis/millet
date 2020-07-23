@@ -2,20 +2,17 @@
 
 use crate::loc::Loc;
 use crate::statics::types::{
-  Env, Error, Item, Result, Subst, SymSubst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
+  Env, Error, Item, Result, Subst, TyFcn, TyInfo, TyRealization, TyScheme, Tys, ValEnv, ValInfo,
 };
 
-/// Returns `Ok(())` iff got enriches want (`got >> want`) as per the Definition. `loc` is the
-/// location that errors will be wrapped in if this returns `Err(...)`, `tys` gives information
-/// about types named by a `Sym`, and `sym_subst` is a substitution of symbols that is applied to
-/// every `t`, where `t` is a `Ty` in `want`, before trying to unify `t` with its corresponding `Ty`
-/// in `got`. TODO improve locs of errors.
-pub fn ck(loc: Loc, tys: &Tys, sym_subst: &SymSubst, got: &Env, want: &Env) -> Result<()> {
-  let cx = Cx {
-    loc,
-    tys,
-    sym_subst,
-  };
+/// Returns `Ok(())` iff got enriches want (`got >> want`) as per the Definition.
+///
+/// `loc` is the location that errors will be wrapped in if this returns `Err(...)`, `tys` gives
+/// information about types named by a `Sym`, and `ty_rzn` is a substitution of symbols that is
+/// applied to every `t`, where `t` is a `Ty` in `want`, before trying to unify `t` with its
+/// corresponding `Ty` in `got`. TODO improve locs of errors.
+pub fn ck(loc: Loc, tys: &Tys, ty_rzn: &TyRealization, got: &Env, want: &Env) -> Result<()> {
+  let cx = Cx { loc, tys, ty_rzn };
   ck_impl(cx, got, want)
 }
 
@@ -26,7 +23,7 @@ struct Cx<'t, 's> {
   loc: Loc,
   /// The types.
   tys: &'t Tys,
-  /// The symbol substitution, the type realization.
+  /// The type realization.
   ///
   /// TODO it's a little unpleasant that this, which is concerned with signature instantiation, is
   /// present here in this module, which is meant to be concerned with environment enrichment, since
@@ -38,7 +35,7 @@ struct Cx<'t, 's> {
   /// create a bunch of new `Sym`s. In fact, I'm not even sure how I would do it. Though, this could
   /// be an indication that there is something fundamentally wrong with the approach of this
   /// implementation.
-  sym_subst: &'s SymSubst,
+  ty_rzn: &'s TyRealization,
 }
 
 fn ck_impl(cx: Cx, got: &Env, want: &Env) -> Result<()> {
@@ -52,7 +49,7 @@ fn ck_impl(cx: Cx, got: &Env, want: &Env) -> Result<()> {
       Some(got) => ck_impl(cx, got, want)?,
     }
   }
-  // Note that we do _not_ use the `SymSubst` in the `Cx` when looking up the `TyInfo`, since if we
+  // Note that we do _not_ use the `TyRealization` in the `Cx` when looking up the `TyInfo`, since if we
   // did, we would be passing identical `TyInfo`s to `ck_ty_info`.
   for (name, want) in want.ty_env.inner.iter() {
     let want = cx.tys.get(want);
@@ -122,8 +119,8 @@ fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<Subst
       return Err(cx.loc.wrap(Error::Todo("bad free ty var")));
     }
   }
-  want.ty.apply_sym_subst(cx.sym_subst);
-  got.ty.apply_sym_subst(cx.sym_subst);
+  want.ty.apply_ty_rzn(cx.ty_rzn);
+  got.ty.apply_ty_rzn(cx.ty_rzn);
   let mut ret = Subst::default();
   ret.unify(cx.loc, &cx.tys, want.ty, got.ty)?;
   // TODO

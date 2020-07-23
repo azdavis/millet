@@ -502,11 +502,11 @@ impl Sym {
 
 /// A mapping from symbols to type functions.
 #[derive(Debug, Default)]
-pub struct SymSubst {
+pub struct TyRealization {
   inner: HashMap<Sym, TyFcn>,
 }
 
-impl SymSubst {
+impl TyRealization {
   /// Insert the key, val pair into this.
   pub fn insert(&mut self, key: Sym, val: TyFcn) {
     assert!(self.inner.insert(key, val).is_none());
@@ -608,22 +608,22 @@ impl Ty {
     }
   }
 
-  /// Applies the `SymSubst` to this.
-  pub fn apply_sym_subst(&mut self, subst: &SymSubst) {
+  /// Applies the `TyRealization` to this.
+  pub fn apply_ty_rzn(&mut self, subst: &TyRealization) {
     match self {
       Ty::Var(_) => {}
       Ty::Record(rows) => {
         for ty in rows.values_mut() {
-          ty.apply_sym_subst(subst);
+          ty.apply_ty_rzn(subst);
         }
       }
       Ty::Arrow(lhs, rhs) => {
-        lhs.apply_sym_subst(subst);
-        rhs.apply_sym_subst(subst);
+        lhs.apply_ty_rzn(subst);
+        rhs.apply_ty_rzn(subst);
       }
       Ty::Ctor(args, sym) => {
         for arg in args.iter_mut() {
-          arg.apply_sym_subst(subst);
+          arg.apply_ty_rzn(subst);
         }
         if let Some(ty_fcn) = subst.get(sym) {
           *self = ty_fcn.apply_args(args.clone());
