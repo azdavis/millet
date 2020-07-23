@@ -1014,7 +1014,7 @@ impl Cx {
 }
 
 /// A signature.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Sig {
   /// The set of type names that this signature binds. The "variables" that are "substituted" when
   /// this signature is matched against an environment (from a structure expression).
