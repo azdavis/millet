@@ -401,7 +401,8 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
       let mut ret = Env::default();
       for dec in decs {
         cx.o_plus(ret.clone());
-        ret.extend(ck(&cx, st, dec)?);
+        let env = ck(&cx, st, dec)?;
+        ret.extend(env);
       }
       Ok(ret)
     }
