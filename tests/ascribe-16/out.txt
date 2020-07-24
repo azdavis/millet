@@ -1,0 +1,7 @@
+error: mismatched types: expected t, found int
+   ┌─ err.sml:22:9
+   │
+22 │ val _ = A.bar 123
+   │         ^^^^^^^^^
+
+typechecking failed
