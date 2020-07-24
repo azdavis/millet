@@ -7,8 +7,8 @@ use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, sig_match, ty};
 use crate::statics::freshen;
 use crate::statics::types::{
-  Basis, Env, Error, FunEnv, Item, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme,
-  ValEnv, ValInfo,
+  Basis, Env, Error, FunEnv, FunSig, Item, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo,
+  TyScheme, ValEnv, ValInfo,
 };
 
 pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
@@ -31,10 +31,23 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
     }
     // SML Definition (85), SML Definition (89)
     TopDec::FunDec(fun_binds) => {
-      let fun_env = FunEnv::new();
+      let mut fun_env = FunEnv::new();
       // SML Definition (86)
-      if let Some(fun_bind) = fun_binds.first() {
-        return Err(fun_bind.fun_id.loc.wrap(Error::Todo("`functor`")));
+      for fun_bind in fun_binds {
+        let sig_env = ck_sig_exp(bs, st, &fun_bind.sig_exp)?;
+        let mut bs = bs.clone();
+        bs.env.str_env.insert(fun_bind.str_id.val, sig_env.clone());
+        let str_env = ck_str_exp(&bs, st, &fun_bind.str_exp)?;
+        // TODO might not be right? a lot of stuff going on with ty names.
+        let sig_sig = env_to_sig(sig_env);
+        let str_sig = env_to_sig(str_env);
+        let fun_sig = FunSig {
+          ty_names: sig_sig.ty_names,
+          env: sig_sig.env,
+          sig: str_sig,
+        };
+        // allow shadowing.
+        fun_env.insert(fun_bind.fun_id.val, fun_sig);
       }
       bs.fun_env.extend(fun_env);
     }
