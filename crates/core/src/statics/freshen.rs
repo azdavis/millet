@@ -1,7 +1,7 @@
 //! Freshen up a signature with new symbols.
 
 use crate::loc::Loc;
-use crate::statics::types::{Env, Sig, State, Sym, Ty, ValEnv};
+use crate::statics::types::{Env, Sig, State, Sym, Ty, Tys, ValEnv};
 use std::collections::HashMap;
 
 pub fn get(st: &mut State, loc: Loc, mut sig: Sig) -> Env {
@@ -10,22 +10,22 @@ pub fn get(st: &mut State, loc: Loc, mut sig: Sig) -> Env {
     .iter()
     .map(|&old| (old, st.new_sym(loc.wrap(old.name()))))
     .collect();
-  get_env(st, loc, &subst, &mut sig.env);
+  get_env(&mut st.tys, &subst, &mut sig.env);
   sig.env
 }
 
 type Subst = HashMap<Sym, Sym>;
 
-fn get_env(st: &mut State, loc: Loc, subst: &Subst, env: &mut Env) {
+fn get_env(tys: &mut Tys, subst: &Subst, env: &mut Env) {
   for env in env.str_env.values_mut() {
-    get_env(st, loc, subst, env);
+    get_env(tys, subst, env);
   }
   for old in env.ty_env.inner.values_mut() {
-    let mut ty_info = st.tys.get(old).clone();
+    let mut ty_info = tys.get(old).clone();
     get_ty(subst, &mut ty_info.ty_fcn.ty);
     get_val_env(subst, &mut ty_info.val_env);
-    let new = st.new_sym(loc.wrap(old.name()));
-    st.tys.insert(new, ty_info);
+    let new = *subst.get(old).unwrap();
+    tys.insert(new, ty_info);
     *old = new;
   }
   get_val_env(subst, &mut env.val_env);
