@@ -1,0 +1,7 @@
+error: mismatched types: expected t, found t
+   ┌─ err.sml:24:9
+   │
+24 │ val _ = A.doSomething (B.make ())
+   │         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+typechecking failed

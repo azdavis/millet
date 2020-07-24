@@ -33,3 +33,9 @@ fun intEq (a: int) (b: int) = a = b
 
 val _ = assert (isMonoid intEq Add.zero Add.add 3 4 5)
 val _ = assert (isMonoid intEq Mul.zero Mul.add 3 4 5)
+
+val _ = Add.add Add.zero Add.zero
+val _ = Mul.add Mul.zero Mul.zero
+
+(* should pass, since transparent *)
+val _ = Mul.add Mul.zero Add.zero

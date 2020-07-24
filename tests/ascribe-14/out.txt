@@ -1,0 +1,7 @@
+error: mismatched types: expected t, found t
+   ┌─ err.sml:25:9
+   │
+25 │ val _ = Mul.add Mul.zero Add.zero
+   │         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+typechecking failed
