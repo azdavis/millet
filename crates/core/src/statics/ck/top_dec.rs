@@ -142,10 +142,7 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> 
     SigExp::Sig(spec) => ck_spec(bs, st, spec),
     // SML Definition (63)
     SigExp::SigId(sig_id) => match bs.sig_env.get(&sig_id.val) {
-      None => {
-        let err = Error::Undefined(Item::Sig, sig_id.val);
-        Err(sig_id.loc.wrap(err))
-      }
+      None => Err(sig_id.loc.wrap(Error::Undefined(Item::Sig, sig_id.val))),
       // TODO I don't understand the check to see if the type names of the sig are disjoint from the
       // type names of the basis. It seems like this will _always_ be the case since when we process
       // a `signature` top dec, we add the type names of that sig to the basis. (Why do we do that?

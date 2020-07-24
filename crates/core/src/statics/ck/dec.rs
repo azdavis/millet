@@ -369,8 +369,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
           ExBindInner::Long(vid) => {
             let val_info = get_val_info(get_env(&cx.env, vid)?, vid.last)?;
             if !val_info.id_status.is_exn() {
-              let err = Error::ExnWrongIdStatus(val_info.id_status);
-              return Err(vid.loc().wrap(err));
+              return Err(vid.loc().wrap(Error::ExnWrongIdStatus(val_info.id_status)));
             }
             val_info.clone()
           }

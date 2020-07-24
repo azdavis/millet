@@ -139,8 +139,7 @@ impl Parser {
 
   /// returns an ExpectedButFound error, where we expected `want` but got `tok`.
   fn fail<T>(&mut self, want: &'static str, tok: Located<Token>) -> Result<T> {
-    let err = Error::ExpectedButFound(want, tok.val.desc());
-    Err(tok.loc.wrap(err))
+    Err(tok.loc.wrap(Error::ExpectedButFound(want, tok.val.desc())))
   }
 
   fn top_dec(&mut self) -> Result<Located<TopDec<StrRef>>> {
@@ -1525,8 +1524,7 @@ impl Parser {
         if *id == StrRef::STAR {
           // can't use self.fail here since the error message will say 'expected a type, found a
           // symbolic identifier' which is just confusing.
-          let err = Error::ExpectedButFound("a type", "`*`");
-          return Err(tok.loc.wrap(err));
+          return Err(tok.loc.wrap(Error::ExpectedButFound("a type", "`*`")));
         }
         let long_ty_con = self.long_id(true)?;
         Ty::TyCon(Vec::new(), long_ty_con)
