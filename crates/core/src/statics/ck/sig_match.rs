@@ -30,11 +30,11 @@ use crate::statics::types::{Env, Result, Sig, State, TyEnv, TyRealization};
 /// Returns `Ok(E)` iff `sig >= E` and `env >> E`.
 pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
   let mut ty_rzn = TyRealization::default();
-  for &sig_ty_sym in sig.ty_names.iter() {
-    let ty_name = loc.wrap(sig_ty_sym.name());
+  for &bound_ty_sym in sig.ty_names.iter() {
+    let ty_name = loc.wrap(bound_ty_sym.name());
     let env_ty_sym = get_ty_sym(&env, ty_name)?;
     let ty_fcn = st.tys.get(&env_ty_sym).ty_fcn.clone();
-    ty_rzn.insert(sig_ty_sym, ty_fcn);
+    ty_rzn.insert(bound_ty_sym, ty_fcn);
   }
   enrich::ck(loc, &st.tys, &ty_rzn, &env, &sig.env)?;
   Ok(Env {
