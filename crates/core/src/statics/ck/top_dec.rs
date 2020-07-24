@@ -15,7 +15,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
     // SML Definition (87)
     TopDec::StrDec(str_dec) => {
       let env = ck_str_dec(bs, st, str_dec)?;
-      bs.add_env(env);
+      bs.env.extend(env);
     }
     // SML Definition (88)
     TopDec::SigDec(sig_binds) => {
@@ -26,7 +26,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
         // allow shadowing.
         sig_env.insert(sig_bind.id.val, env_to_sig(env));
       }
-      bs.add_sig_env(sig_env);
+      bs.sig_env.extend(sig_env);
     }
     // SML Definition (85), SML Definition (89)
     TopDec::FunDec(fun_binds) => {
@@ -35,7 +35,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
       if let Some(fun_bind) = fun_binds.first() {
         return Err(fun_bind.fun_id.loc.wrap(Error::Todo("`functor`")));
       }
-      bs.add_fun_env(fun_env);
+      bs.fun_env.extend(fun_env);
     }
   }
   st.subst.use_overloaded_defaults();
@@ -78,7 +78,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
     StrExp::Let(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
       let mut bs = bs.clone();
-      bs.add_env(env);
+      bs.env.extend(env);
       ck_str_exp(&bs, st, snd)
     }
   }
@@ -103,7 +103,7 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
     StrDec::Local(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
       let mut bs = bs.clone();
-      bs.add_env(env);
+      bs.env.extend(env);
       ck_str_dec(&bs, st, snd)
     }
     // SML Definition (59), SML Definition (60)
@@ -112,7 +112,7 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
       let mut bs = bs.clone();
       let mut ret = Env::default();
       for str_dec in str_decs {
-        bs.add_env(ret.clone());
+        bs.env.extend(ret.clone());
         ret.extend(ck_str_dec(&bs, st, str_dec)?);
       }
       Ok(ret)
@@ -215,7 +215,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
       let mut bs = bs.clone();
       let mut ret = Env::default();
       for spec in specs {
-        bs.add_env(ret.clone());
+        bs.env.extend(ret.clone());
         let env = ck_spec(&bs, st, spec)?;
         ret.maybe_extend(env, spec.loc)?;
       }

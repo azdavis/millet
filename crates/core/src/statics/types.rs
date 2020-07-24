@@ -1076,21 +1076,6 @@ impl Basis {
       env: self.env.clone(),
     }
   }
-
-  /// Add an environment to this.
-  pub fn add_env(&mut self, env: Env) {
-    self.env.extend(env);
-  }
-
-  /// Add an signature environment to this.
-  pub fn add_sig_env(&mut self, sig_env: SigEnv) {
-    self.sig_env.extend(sig_env);
-  }
-
-  /// Add an functor environment to this.
-  pub fn add_fun_env(&mut self, fun_env: FunEnv) {
-    self.fun_env.extend(fun_env);
-  }
 }
 
 /// The state passed around by many of the statics functions. There's only one of these, and it's
