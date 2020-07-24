@@ -263,7 +263,7 @@ pub enum StrExp<I> {
   LongStrId(Long<I>),
   /// The bool is false when transparent, true when opaque.
   Ascription(Box<Located<StrExp<I>>>, Located<SigExp<I>>, bool),
-  FunctorApp(Long<I>, Box<Located<StrExp<I>>>),
+  FunctorApp(Located<I>, Box<Located<StrExp<I>>>),
   Let(Located<StrDec<I>>, Box<Located<StrExp<I>>>),
 }
 

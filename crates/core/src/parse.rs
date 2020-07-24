@@ -245,8 +245,8 @@ impl Parser {
         self.ops = ops;
         StrExp::Let(dec, exp.into())
       }
-      Token::Ident(_, IdentType::AlphaNum) => {
-        let long_id = self.long_alpha_num_id()?;
+      Token::Ident(id, IdentType::AlphaNum) => {
+        self.skip();
         if let Token::LRound = self.peek().val {
           self.skip();
           let exp = match self.maybe_str_dec()? {
@@ -254,8 +254,10 @@ impl Parser {
             None => self.str_exp()?,
           };
           self.eat(Token::RRound)?;
-          StrExp::FunctorApp(long_id, exp.into())
+          StrExp::FunctorApp(begin.wrap(id), exp.into())
         } else {
+          self.i -= 1;
+          let long_id = self.long_alpha_num_id()?;
           StrExp::LongStrId(long_id)
         }
       }
