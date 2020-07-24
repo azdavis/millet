@@ -25,7 +25,8 @@
 use crate::loc::Loc;
 use crate::statics::ck::enrich;
 use crate::statics::ck::util::get_ty_sym;
-use crate::statics::types::{Env, Result, Sig, State, TyEnv, TyRealization};
+use crate::statics::ty_rzn::TyRealization;
+use crate::statics::types::{Env, Result, Sig, State, TyEnv};
 
 /// Returns `Ok(E)` iff `sig >= E` and `env >> E`.
 pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {

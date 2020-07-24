@@ -501,23 +501,6 @@ impl Sym {
   pub const UNIT: Self = Self::base(StrRef::UNIT);
 }
 
-/// A mapping from symbols to type functions.
-#[derive(Debug, Default)]
-pub struct TyRealization {
-  inner: HashMap<Sym, TyFcn>,
-}
-
-impl TyRealization {
-  /// Insert the key, val pair into this.
-  pub fn insert(&mut self, key: Sym, val: TyFcn) {
-    assert!(self.inner.insert(key, val).is_none());
-  }
-
-  fn get(&self, key: &Sym) -> Option<&TyFcn> {
-    self.inner.get(key)
-  }
-}
-
 /// A type, for the purposes of static analysis.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ty {
@@ -605,30 +588,6 @@ impl Ty {
       Self::Arrow(_, _) => false,
       Self::Ctor(args, sym) => {
         *sym == Sym::REF || (tys.get(sym).equality && args.iter().all(|ty| ty.is_equality(tys)))
-      }
-    }
-  }
-
-  /// Applies the `TyRealization` to this.
-  pub fn apply_ty_rzn(&mut self, subst: &TyRealization) {
-    match self {
-      Ty::Var(_) => {}
-      Ty::Record(rows) => {
-        for ty in rows.values_mut() {
-          ty.apply_ty_rzn(subst);
-        }
-      }
-      Ty::Arrow(lhs, rhs) => {
-        lhs.apply_ty_rzn(subst);
-        rhs.apply_ty_rzn(subst);
-      }
-      Ty::Ctor(args, sym) => {
-        for arg in args.iter_mut() {
-          arg.apply_ty_rzn(subst);
-        }
-        if let Some(ty_fcn) = subst.get(sym) {
-          *self = ty_fcn.apply_args(args.clone());
-        }
       }
     }
   }

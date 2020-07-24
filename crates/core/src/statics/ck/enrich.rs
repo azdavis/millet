@@ -1,8 +1,9 @@
 //! Check whether an environment enriches another environment.
 
 use crate::loc::Loc;
+use crate::statics::ty_rzn::TyRealization;
 use crate::statics::types::{
-  Env, Error, Item, Result, Subst, TyFcn, TyInfo, TyRealization, TyScheme, Tys, ValEnv, ValInfo,
+  Env, Error, Item, Result, Subst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
 };
 
 /// Returns `Ok(())` iff got enriches want (`got >> want`) as per the Definition.
@@ -118,7 +119,7 @@ fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<()> {
       return Err(cx.loc.wrap(Error::Todo("bad free ty var")));
     }
   }
-  want.ty.apply_ty_rzn(cx.ty_rzn);
-  got.ty.apply_ty_rzn(cx.ty_rzn);
+  cx.ty_rzn.apply_to_ty(&mut want.ty);
+  cx.ty_rzn.apply_to_ty(&mut got.ty);
   Subst::default().unify(cx.loc, &cx.tys, want.ty, got.ty)
 }

@@ -7,6 +7,7 @@
 mod ck;
 mod freshen;
 mod std_lib;
+mod ty_rzn;
 mod types;
 
 use crate::ast::TopDec;
