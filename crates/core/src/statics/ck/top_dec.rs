@@ -70,7 +70,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
       if *opaque {
         return Err(str_exp.loc.wrap(Error::Todo("opaque signature ascription")));
       }
-      sig_match::ck(st, str_exp.loc, &env, &sig)
+      sig_match::ck(st, str_exp.loc, env, &sig)
     }
     // SML Definition (54)
     StrExp::FunctorApp(_, _) => Err(str_exp.loc.wrap(Error::Todo("functor application"))),

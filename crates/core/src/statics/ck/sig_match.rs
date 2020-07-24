@@ -27,42 +27,35 @@ use crate::statics::ck::enrich;
 use crate::statics::ck::util::get_ty_sym;
 use crate::statics::types::{Env, Result, Sig, State, TyEnv, TyRealization};
 
-/// Returns `Ok(E)` iff `sig >= E` and `env >> E`. TODO pass by value?
-pub fn ck(st: &mut State, loc: Loc, env: &Env, sig: &Sig) -> Result<Env> {
+/// Returns `Ok(E)` iff `sig >= E` and `env >> E`.
+pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
   let mut ty_rzn = TyRealization::default();
   for &sig_ty_sym in sig.ty_names.iter() {
     let ty_name = loc.wrap(sig_ty_sym.name());
-    let env_ty_sym = get_ty_sym(env, ty_name)?;
+    let env_ty_sym = get_ty_sym(&env, ty_name)?;
     let ty_fcn = st.tys.get(&env_ty_sym).ty_fcn.clone();
     ty_rzn.insert(sig_ty_sym, ty_fcn);
   }
-  enrich::ck(loc, &st.tys, &ty_rzn, env, &sig.env)?;
+  enrich::ck(loc, &st.tys, &ty_rzn, &env, &sig.env)?;
   // TODO is this right? what about opaque ascription?
   Ok(Env {
     str_env: env
       .str_env
-      .iter()
+      .into_iter()
       .filter(|(name, _)| sig.env.str_env.contains_key(name))
-      .map(clone_pair)
       .collect(),
     ty_env: TyEnv {
       inner: env
         .ty_env
         .inner
-        .iter()
+        .into_iter()
         .filter(|(name, _)| sig.env.ty_env.inner.contains_key(name))
-        .map(clone_pair)
         .collect(),
     },
     val_env: env
       .val_env
-      .iter()
+      .into_iter()
       .filter(|(name, _)| sig.env.val_env.contains_key(name))
-      .map(clone_pair)
       .collect(),
   })
-}
-
-fn clone_pair<T: Clone, U: Clone>((x, y): (&T, &U)) -> (T, U) {
-  (x.clone(), y.clone())
 }
