@@ -992,10 +992,9 @@ pub type TyNameSet = HashSet<Sym>;
 /// A set of type variables. NOTE this is an ordered set purely to make errors reproducible.
 pub type TyVarSet = BTreeSet<TyVar>;
 
-/// A context.
+/// A context. NOTE contrary to the Definition, we don't track an explicit TyNameSet here.
 #[derive(Clone)]
 pub struct Cx {
-  pub ty_names: TyNameSet,
   /// In the Definition this is a set, but here we use it as not just a set, but a mapping from AST
   /// type variables to statics type variables. Note the mapping is injective but not surjective.
   pub ty_vars: HashMap<AstTyVar<StrRef>, TyVar>,
@@ -1007,9 +1006,7 @@ impl Cx {
   /// This is the o-plus operation defined in the Definition, which extends a context by an
   /// environment and that environment's type name set.
   pub fn o_plus(&mut self, env: Env) {
-    let ty_names = env.ty_names();
     self.env.extend(env);
-    self.ty_names.extend(ty_names);
   }
 }
 
@@ -1087,7 +1084,6 @@ impl Basis {
   /// Returns a context derived from the information in this.
   pub fn to_cx(&self) -> Cx {
     Cx {
-      ty_names: self.ty_names.clone(),
       ty_vars: HashMap::new(),
       env: self.env.clone(),
     }
@@ -1143,9 +1139,38 @@ impl State {
     Sym { id, name: name.val }
   }
 
+  /// Returns an opaque type that contains information about what symbols have been generated.
+  pub fn generated_syms(&self) -> GeneratedSyms {
+    GeneratedSyms {
+      next_sym: self.next_sym,
+    }
+  }
+
   /// A thin wrapper over `Subst#unify`, which passes in this `State`'s `Tys`.
   pub fn unify(&mut self, loc: Loc, want: Ty, got: Ty) -> Result<()> {
     self.subst.unify(loc, &self.tys, want, got)
+  }
+}
+
+/// Contains information about what symbols have been generated.
+pub struct GeneratedSyms {
+  next_sym: usize,
+}
+
+impl GeneratedSyms {
+  /// Returns whether all symbols in `ty_names` were generated before this `GeneratedSyms` was.
+  pub fn contains(&self, ty_names: &TyNameSet) -> bool {
+    for sym in ty_names {
+      match sym.id {
+        None => continue,
+        Some(id) => {
+          if id.val >= self.next_sym {
+            return false;
+          }
+        }
+      }
+    }
+    true
   }
 }
 
