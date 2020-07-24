@@ -5,6 +5,7 @@
 //! [1]: http://dev.stephendiehl.com/fun/006_hindley_milner.html
 
 mod ck;
+mod freshen;
 mod std_lib;
 mod types;
 

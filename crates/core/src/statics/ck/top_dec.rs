@@ -5,6 +5,7 @@ use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, sig_match, ty};
+use crate::statics::freshen;
 use crate::statics::types::{
   Basis, Env, Error, FunEnv, Item, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme,
   ValEnv, ValInfo,
@@ -67,10 +68,12 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
     StrExp::Ascription(str_exp, sig_exp, opaque) => {
       let env = ck_str_exp(bs, st, str_exp)?;
       let sig = env_to_sig(ck_sig_exp(bs, st, sig_exp)?);
+      let env = sig_match::ck(st, str_exp.loc, env, &sig)?;
       if *opaque {
-        return Err(str_exp.loc.wrap(Error::Todo("opaque signature ascription")));
+        Ok(freshen::get(st, str_exp.loc, sig))
+      } else {
+        Ok(env)
       }
-      sig_match::ck(st, str_exp.loc, env, &sig)
     }
     // SML Definition (54)
     StrExp::FunctorApp(_, _) => Err(str_exp.loc.wrap(Error::Todo("functor application"))),
