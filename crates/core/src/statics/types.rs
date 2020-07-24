@@ -1011,12 +1011,13 @@ pub struct Sig {
   pub env: Env,
 }
 
-/// A functor signature.
+/// A functor signature. Note that in the Definition this is TyNameSet x (Env x Sig) but that's
+/// isomorphic. I feel like the latter makes more sense, though there could be something I'm not
+/// understanding.
 #[derive(Clone)]
 pub struct FunSig {
-  pub ty_names: TyNameSet,
-  pub env: Env,
-  pub sig: Sig,
+  pub input: Sig,
+  pub output: Sig,
 }
 
 /// A signature environment.
@@ -1038,8 +1039,8 @@ impl Basis {
   /// Apply a substitution to this.
   pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for fun_sig in self.fun_env.values_mut() {
-      fun_sig.env.apply(subst, tys);
-      fun_sig.sig.env.apply(subst, tys);
+      fun_sig.input.env.apply(subst, tys);
+      fun_sig.output.env.apply(subst, tys);
     }
     for sig in self.sig_env.values_mut() {
       sig.env.apply(subst, tys);
@@ -1054,10 +1055,11 @@ impl Basis {
       .values()
       .flat_map(|fun_sig| {
         fun_sig
+          .input
           .env
           .free_ty_vars(tys)
           .into_iter()
-          .chain(fun_sig.sig.env.free_ty_vars(tys))
+          .chain(fun_sig.output.env.free_ty_vars(tys))
       })
       .chain(
         self

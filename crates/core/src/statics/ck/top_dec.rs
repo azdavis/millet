@@ -39,12 +39,9 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
         bs.env.str_env.insert(fun_bind.str_id.val, sig_env.clone());
         let str_env = ck_str_exp(&bs, st, &fun_bind.str_exp)?;
         // TODO might not be right? a lot of stuff going on with ty names.
-        let sig_sig = env_to_sig(sig_env);
-        let str_sig = env_to_sig(str_env);
         let fun_sig = FunSig {
-          ty_names: sig_sig.ty_names,
-          env: sig_sig.env,
-          sig: str_sig,
+          input: env_to_sig(sig_env),
+          output: env_to_sig(str_env),
         };
         // allow shadowing.
         fun_env.insert(fun_bind.fun_id.val, fun_sig);
