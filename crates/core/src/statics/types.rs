@@ -323,7 +323,8 @@ impl Subst {
     assert!(self.overload.insert(tv, syms).is_none());
   }
 
-  /// Solve all overloaded ty vars which have not already be solved to be their default types.
+  /// Solve all overloaded ty vars, which have not already be solved to be some concrete type, to be
+  /// their default concrete types.
   pub fn use_overloaded_defaults(&mut self) {
     let overload = std::mem::take(&mut self.overload);
     for (tv, syms) in overload {
