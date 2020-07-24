@@ -3,11 +3,9 @@
 - statics for type variables
   - implicit scoping
   - performing closure operations
-  - checking whether expressions are expansive
+  - checking whether expressions are expansive (oh no!)
 - better statics for equality types
-- statics for rest of modules
-  - environment matching
-  - functors
+- statics for functors
 - parse derived forms
   - functor binding input sugar
   - specifications
