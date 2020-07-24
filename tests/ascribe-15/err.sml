@@ -1,24 +1,23 @@
 signature SIG = sig
   type t
-  val make: unit -> t
-  val doSomething: t -> unit
+  val foo: t
+  val bar: t -> unit
 end
 
 structure A:> SIG = struct
   type t = int
-  fun make () = 3
-  fun doSomething _ = ()
+  val foo = 3
+  fun bar _ = ()
 end
 
 (* note that the `struct` body is textually identical to A... *)
 structure B:> SIG = struct
   type t = int
-  fun make () = 3
-  fun doSomething _ = ()
+  val foo = 3
+  fun bar _ = ()
 end
 
-val _ = A.doSomething (A.make ())
-val _ = B.doSomething (B.make ())
+val _ = A.bar A.foo = B.bar B.foo
 
 (* ...nonetheless, this should fail *)
-val _ = A.doSomething (B.make ())
+val _ = A.bar B.foo
