@@ -523,7 +523,7 @@ impl TyRealization {
 pub enum Ty {
   /// TyVar
   Var(TyVar),
-  /// RowType. Tuples are just records. TODO "row polymorphism" (rest patterns, etc)?
+  /// RowType. Tuples are just records.
   Record(BTreeMap<Label, Ty>),
   /// FunType
   Arrow(Box<Ty>, Box<Ty>),
@@ -703,8 +703,7 @@ impl TyScheme {
 /// type alias here?
 pub type TyFcn = TyScheme;
 
-/// Information about a type that 'has been generated', like a datatype or a `type t` in a
-/// signature. TyStr from the Definition.
+/// Information about a type. TyStr from the Definition.
 #[derive(Debug, Clone)]
 pub struct TyInfo {
   pub ty_fcn: TyFcn,
@@ -713,8 +712,8 @@ pub struct TyInfo {
   pub val_env: ValEnv,
   /// Not strictly in the Definition, but seems to be implicitly mentioned when talking about type
   /// structures respecting equality. Since a `SymTyInfo` is immutable, we compute when creating a
-  /// new `SymTyInfo` whether it respects equality and cache that value in here. TODO what if this
-  /// was an alias?
+  /// new `SymTyInfo` whether it respects equality and cache that value in here. NOTE I think this
+  /// is ignored if this was an alias.
   pub equality: bool,
 }
 

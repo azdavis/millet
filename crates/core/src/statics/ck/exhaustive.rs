@@ -239,7 +239,6 @@ fn do_match(cx: &mut Cx, pat: Located<Pat>, d: Desc, work: Work, pats: Pats) -> 
       StaticMatch::No => fail(cx, build_desc(d, work), pats),
       StaticMatch::Maybe(mut cons) => {
         cons.push(con);
-        // TODO avoid these clones?
         succeed_with(cx, pat.loc, work.clone(), con, args, d, pats.clone())
           && fail(cx, build_desc(Desc::Neg(cons), work), pats)
       }

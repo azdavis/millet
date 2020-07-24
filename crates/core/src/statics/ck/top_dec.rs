@@ -124,7 +124,6 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
     }
     // SML Definition (59), SML Definition (60)
     StrDec::Seq(str_decs) => {
-      // TODO clone in loop - expensive?
       let mut bs = bs.clone();
       let mut ret = Env::default();
       for str_dec in str_decs {

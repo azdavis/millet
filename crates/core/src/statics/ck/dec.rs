@@ -189,8 +189,6 @@ fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Vec<Locat
   for arm in cases.arms.iter() {
     let (val_env, pat_ty, pat) = pat::ck(cx, st, &arm.pat)?;
     pats.push(arm.pat.loc.wrap(pat));
-    // TODO the Definition says this should allow new free type variables to enter the Cx; does it?
-    // Also, clone in loop - expensive?
     let mut cx = cx.clone();
     cx.env.val_env.extend(val_env);
     let exp_ty = ck_exp(&cx, st, &arm.exp)?;
@@ -395,7 +393,6 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
     }
     // SML Definition (23), SML Definition (24)
     Dec::Seq(decs) => {
-      // TODO clone in loop - expensive?
       let mut cx = cx.clone();
       let mut ret = Env::default();
       for dec in decs {
@@ -425,7 +422,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
     let ty = ty::ck(cx, &st.tys, &ty_bind.ty)?;
     let sym = st.new_sym(ty_bind.ty_con);
     env_ins(&mut ty_env.inner, ty_bind.ty_con, sym, Item::Ty)?;
-    // TODO
+    // TODO better equality checks
     let equality = ty.is_equality(&st.tys);
     let info = TyInfo {
       ty_fcn: TyScheme {
@@ -470,8 +467,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     // no assert is_none since we may be shadowing something from an earlier Dec in this Cx.
     cx.env.ty_env.inner.insert(dat_bind.ty_con.val, sym);
     // no mapping from ast ty vars to statics ty vars here. we just need some ty vars to make the
-    // `TyScheme`. pretty much copied from insert_ty_vars. TODO DRY? this is basically the guts of
-    // `insert_ty_vars`.
+    // `TyScheme`. pretty much copied from `insert_ty_vars`.
     let mut set = HashSet::new();
     let mut ty_vars = Vec::new();
     for tv in dat_bind.ty_vars.iter() {
@@ -545,7 +541,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
       assert!(bind_val_env.insert(con_bind.vid.val, val_info).is_none());
     }
     // now the `ValEnv` is complete, so we may update `st.tys` with the true definition of this
-    // datatype. TODO closure?
+    // datatype.
     st.tys.finish_datatype(&sym, bind_val_env, equality);
   }
   Ok(Env {

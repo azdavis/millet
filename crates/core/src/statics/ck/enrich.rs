@@ -25,7 +25,7 @@ struct Cx<'t, 's> {
   tys: &'t Tys,
   /// The type realization.
   ///
-  /// TODO it's a little unpleasant that this, which is concerned with signature instantiation, is
+  /// NOTE it's a little unpleasant that this, which is concerned with signature instantiation, is
   /// present here in this module, which is meant to be concerned with environment enrichment, since
   /// those problems are supposed to be orthogonal.
   ///

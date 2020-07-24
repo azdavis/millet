@@ -37,7 +37,6 @@ pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
     ty_rzn.insert(sig_ty_sym, ty_fcn);
   }
   enrich::ck(loc, &st.tys, &ty_rzn, &env, &sig.env)?;
-  // TODO is this right? what about opaque ascription?
   Ok(Env {
     str_env: env
       .str_env
