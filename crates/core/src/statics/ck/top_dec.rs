@@ -24,7 +24,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
       for sig_bind in sig_binds {
         let env = ck_sig_exp(bs, st, &sig_bind.exp)?;
         // allow shadowing.
-        sig_env.insert(sig_bind.id.val, env_to_sig(bs, env));
+        sig_env.insert(sig_bind.id.val, env_to_sig(env));
       }
       bs.add_sig_env(sig_env);
     }
@@ -43,9 +43,12 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
 }
 
 /// SML Definition (65)
-fn env_to_sig(bs: &Basis, env: Env) -> Sig {
-  let ty_names = env.ty_names().difference(&bs.ty_names).copied().collect();
-  Sig { env, ty_names }
+fn env_to_sig(env: Env) -> Sig {
+  // TODO what about signature specs inside this sig?
+  Sig {
+    ty_names: env.ty_env.inner.values().copied().collect(),
+    env,
+  }
 }
 
 fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> Result<Env> {
@@ -63,7 +66,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
     // SML Definition (52), SML Definition (53)
     StrExp::Ascription(str_exp, sig_exp, opaque) => {
       let env = ck_str_exp(bs, st, str_exp)?;
-      let sig = env_to_sig(bs, ck_sig_exp(bs, st, sig_exp)?);
+      let sig = env_to_sig(ck_sig_exp(bs, st, sig_exp)?);
       if *opaque {
         return Err(str_exp.loc.wrap(Error::Todo("opaque signature ascription")));
       }
@@ -87,12 +90,10 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
     StrDec::Dec(dec) => dec::ck(&bs.to_cx(), st, dec),
     // SML Definition (57)
     StrDec::Structure(str_binds) => {
-      let mut bs = bs.clone();
       let mut str_env = StrEnv::new();
       // SML Definition (61)
       for str_bind in str_binds {
-        let env = ck_str_exp(&bs, st, &str_bind.exp)?;
-        bs.ty_names.extend(env.ty_names());
+        let env = ck_str_exp(bs, st, &str_bind.exp)?;
         // allow shadowing.
         str_env.insert(str_bind.id.val, env);
       }
@@ -198,12 +199,10 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<E
     }
     // SML Definition (74)
     Spec::Structure(str_descs) => {
-      let mut bs = bs.clone();
       let mut str_env = StrEnv::new();
       // SML Definition (84)
       for str_desc in str_descs {
-        let env = ck_sig_exp(&bs, st, &str_desc.exp)?;
-        bs.ty_names.extend(env.ty_names());
+        let env = ck_sig_exp(bs, st, &str_desc.exp)?;
         // allow shadowing.
         str_env.insert(str_desc.str_id.val, env);
       }

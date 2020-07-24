@@ -4,7 +4,7 @@ use crate::intern::StrRef;
 use crate::statics::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
-use maplit::{btreemap, hashset};
+use maplit::btreemap;
 
 /// Given `t`, returns `t ref`.
 fn ref_ty(t: Ty) -> Ty {
@@ -164,19 +164,6 @@ pub fn get() -> (Basis, State) {
   let unit = Ty::Record(btreemap![]);
   st.tys.insert(Sym::UNIT, base_ty(unit, false));
   let bs = Basis {
-    ty_names: hashset![
-      Sym::UNIT,
-      Sym::BOOL,
-      Sym::INT,
-      Sym::REAL,
-      Sym::STRING,
-      Sym::CHAR,
-      Sym::WORD,
-      Sym::LIST,
-      Sym::REF,
-      Sym::EXN,
-      Sym::ORDER,
-    ],
     fun_env: FunEnv::new(),
     sig_env: SigEnv::new(),
     env: Env {
@@ -225,9 +212,6 @@ pub fn get() -> (Basis, State) {
     },
   };
   // sanity check
-  for sym in bs.ty_names.iter() {
-    assert!(bs.env.ty_env.inner.get(&sym.name()).unwrap() == sym);
-  }
   for sym in bs.env.ty_env.inner.values() {
     assert!(st.tys.contains_key(sym));
   }

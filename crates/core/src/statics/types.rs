@@ -918,16 +918,6 @@ impl Env {
     Ok(())
   }
 
-  /// Returns the type names in this environment.
-  pub fn ty_names(&self) -> TyNameSet {
-    self
-      .str_env
-      .values()
-      .flat_map(Self::ty_names)
-      .chain(self.ty_env.inner.values().copied())
-      .collect()
-  }
-
   /// Applies a substitution to this.
   fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for env in self.str_env.values_mut() {
@@ -1039,8 +1029,6 @@ pub type FunEnv = HashMap<StrRef, FunSig>;
 /// program.
 #[derive(Clone)]
 pub struct Basis {
-  // TODO is this really necessary?
-  pub ty_names: TyNameSet,
   pub fun_env: FunEnv,
   pub sig_env: SigEnv,
   pub env: Env,
@@ -1091,20 +1079,16 @@ impl Basis {
 
   /// Add an environment to this.
   pub fn add_env(&mut self, env: Env) {
-    let ty_names = env.ty_names();
-    self.ty_names.extend(ty_names);
     self.env.extend(env);
   }
 
   /// Add an signature environment to this.
   pub fn add_sig_env(&mut self, sig_env: SigEnv) {
-    // TODO type names?
     self.sig_env.extend(sig_env);
   }
 
   /// Add an functor environment to this.
   pub fn add_fun_env(&mut self, fun_env: FunEnv) {
-    // TODO type names?
     self.fun_env.extend(fun_env);
   }
 }
