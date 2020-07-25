@@ -40,7 +40,7 @@ impl TyRealization {
     for old in env.ty_env.inner.values_mut() {
       match self.inner.get(old) {
         None => continue,
-        Some(Out::TyFcn(..)) => todo!(),
+        Some(Out::TyFcn(..)) => unreachable!(),
         Some(&Out::Sym(new)) => {
           let mut ty_info = tys.get(old).clone();
           self.get_ty(&mut ty_info.ty_fcn.ty);

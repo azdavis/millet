@@ -28,8 +28,8 @@ use crate::statics::ck::util::get_ty_sym;
 use crate::statics::ty_rzn::TyRealization;
 use crate::statics::types::{Env, Result, Sig, State, TyEnv};
 
-/// Returns `Ok(E)` iff `sig >= E` and `env >> E`.
-pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
+/// Returns `Ok((E, ty_rzn))` iff `sig >= E` (and `ty_rzn` is the witness) and `env >> E`.
+pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<(Env, TyRealization)> {
   let mut ty_rzn = TyRealization::default();
   for &bound_ty_sym in sig.ty_names.iter() {
     let ty_name = loc.wrap(bound_ty_sym.name());
@@ -58,5 +58,5 @@ pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
       .filter(|(name, _)| sig.env.val_env.contains_key(name))
       .collect(),
   };
-  Ok(env)
+  Ok((env, ty_rzn))
 }

@@ -78,7 +78,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
     StrExp::Ascription(lhs, rhs, opaque) => {
       let env = ck_str_exp(bs, st, lhs)?;
       let mut sig = env_to_sig(ck_sig_exp(bs, st, rhs)?);
-      let env = sig_match::ck(st, lhs.loc, env, &sig)?;
+      let (env, _) = sig_match::ck(st, lhs.loc, env, &sig)?;
       if *opaque {
         let mut ty_rzn = TyRealization::default();
         for &old in sig.ty_names.iter() {
@@ -92,7 +92,20 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
       }
     }
     // SML Definition (54)
-    StrExp::FunctorApp(_, _) => Err(str_exp.loc.wrap(Error::Todo("functor application"))),
+    StrExp::FunctorApp(fun_id, arg) => match bs.fun_env.get(&fun_id.val) {
+      None => Err(fun_id.loc.wrap(Error::Undefined(Item::Functor, fun_id.val))),
+      Some(fun_sig) => {
+        let arg_env = ck_str_exp(bs, st, arg)?;
+        let (_, mut ty_rzn) = sig_match::ck(st, arg.loc, arg_env, &fun_sig.input)?;
+        let mut ret = fun_sig.output.env.clone();
+        for &old in fun_sig.output.ty_names.iter() {
+          let new = st.new_sym(str_exp.loc.wrap(old.name()));
+          ty_rzn.insert_sym(old, new);
+        }
+        ty_rzn.get_env(&mut st.tys, &mut ret);
+        Ok(ret)
+      }
+    },
     // SML Definition (55)
     StrExp::Let(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
