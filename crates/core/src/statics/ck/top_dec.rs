@@ -75,14 +75,14 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
       Some(env) => Ok(env.clone()),
     },
     // SML Definition (52), SML Definition (53)
-    StrExp::Ascription(str_exp, sig_exp, opaque) => {
-      let env = ck_str_exp(bs, st, str_exp)?;
-      let mut sig = env_to_sig(ck_sig_exp(bs, st, sig_exp)?);
-      let env = sig_match::ck(st, str_exp.loc, env, &sig)?;
+    StrExp::Ascription(lhs, rhs, opaque) => {
+      let env = ck_str_exp(bs, st, lhs)?;
+      let mut sig = env_to_sig(ck_sig_exp(bs, st, rhs)?);
+      let env = sig_match::ck(st, lhs.loc, env, &sig)?;
       if *opaque {
         let mut ty_rzn = TyRealization::default();
         for &old in sig.ty_names.iter() {
-          let new = st.new_sym(sig_exp.loc.wrap(old.name()));
+          let new = st.new_sym(str_exp.loc.wrap(old.name()));
           ty_rzn.insert_sym(old, new);
         }
         ty_rzn.get_env(&mut st.tys, &mut sig.env);
