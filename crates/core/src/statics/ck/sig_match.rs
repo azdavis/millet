@@ -38,7 +38,7 @@ pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
     ty_rzn.insert_ty_fcn(bound_ty_sym, ty_fcn);
   }
   enrich::ck(loc, &st.tys, &ty_rzn, &env, &sig.env)?;
-  Ok(Env {
+  let env = Env {
     str_env: env
       .str_env
       .into_iter()
@@ -57,5 +57,6 @@ pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
       .into_iter()
       .filter(|(name, _)| sig.env.val_env.contains_key(name))
       .collect(),
-  })
+  };
+  Ok(env)
 }
