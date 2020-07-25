@@ -2,7 +2,7 @@
 
 use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use crate::intern::StrRef;
-use crate::loc::{Loc, Located};
+use crate::loc::Located;
 use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, sig_match, ty};
 use crate::statics::ty_rzn::TyRealization;
@@ -77,10 +77,16 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
     // SML Definition (52), SML Definition (53)
     StrExp::Ascription(str_exp, sig_exp, opaque) => {
       let env = ck_str_exp(bs, st, str_exp)?;
-      let sig = env_to_sig(ck_sig_exp(bs, st, sig_exp)?);
+      let mut sig = env_to_sig(ck_sig_exp(bs, st, sig_exp)?);
       let env = sig_match::ck(st, str_exp.loc, env, &sig)?;
       if *opaque {
-        Ok(freshen(st, str_exp.loc, sig))
+        let mut ty_rzn = TyRealization::default();
+        for &old in sig.ty_names.iter() {
+          let new = st.new_sym(sig_exp.loc.wrap(old.name()));
+          ty_rzn.insert_sym(old, new);
+        }
+        ty_rzn.get_env(&mut st.tys, &mut sig.env);
+        Ok(sig.env)
       } else {
         Ok(env)
       }
@@ -95,16 +101,6 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
       ck_str_exp(&bs, st, snd)
     }
   }
-}
-
-fn freshen(st: &mut State, loc: Loc, mut sig: Sig) -> Env {
-  let mut ty_rzn = TyRealization::default();
-  for &old in sig.ty_names.iter() {
-    let new = st.new_sym(loc.wrap(old.name()));
-    ty_rzn.insert_sym(old, new);
-  }
-  ty_rzn.get_env(&mut st.tys, &mut sig.env);
-  sig.env
 }
 
 fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> Result<Env> {
