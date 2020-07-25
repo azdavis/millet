@@ -1,0 +1,10 @@
+error: mismatched identifier statuses: expected exception, found value
+  ┌─ err.sml:4:18
+  │  
+4 │   structure S = F (struct
+  │ ╭──────────────────^
+5 │ │   val Foo = Match
+6 │ │ end)
+  │ ╰───^
+
+typechecking failed
