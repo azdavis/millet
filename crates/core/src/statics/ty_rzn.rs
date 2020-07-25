@@ -18,21 +18,21 @@ impl TyRealization {
   }
 
   /// Applies this to a `Ty`.
-  pub fn apply_to_ty(&self, ty: &mut Ty) {
+  pub fn get_ty(&self, ty: &mut Ty) {
     match ty {
       Ty::Var(_) => {}
       Ty::Record(rows) => {
         for ty in rows.values_mut() {
-          self.apply_to_ty(ty);
+          self.get_ty(ty);
         }
       }
       Ty::Arrow(lhs, rhs) => {
-        self.apply_to_ty(lhs);
-        self.apply_to_ty(rhs);
+        self.get_ty(lhs);
+        self.get_ty(rhs);
       }
       Ty::Ctor(args, sym) => {
         for arg in args.iter_mut() {
-          self.apply_to_ty(arg);
+          self.get_ty(arg);
         }
         if let Some(ty_fcn) = self.inner.get(sym) {
           *ty = ty_fcn.apply_args(args.clone());
