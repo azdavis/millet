@@ -35,7 +35,7 @@ pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<Env> {
     let ty_name = loc.wrap(bound_ty_sym.name());
     let env_ty_sym = get_ty_sym(&env, ty_name)?;
     let ty_fcn = st.tys.get(&env_ty_sym).ty_fcn.clone();
-    ty_rzn.insert(bound_ty_sym, ty_fcn);
+    ty_rzn.insert_ty_fcn(bound_ty_sym, ty_fcn);
   }
   enrich::ck(loc, &st.tys, &ty_rzn, &env, &sig.env)?;
   Ok(Env {

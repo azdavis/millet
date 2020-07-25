@@ -2,10 +2,10 @@
 
 use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use crate::intern::StrRef;
-use crate::loc::Located;
+use crate::loc::{Loc, Located};
 use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, sig_match, ty};
-use crate::statics::freshen;
+use crate::statics::ty_rzn::TyRealization;
 use crate::statics::types::{
   Basis, Env, Error, FunEnv, FunSig, Item, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo,
   TyScheme, ValEnv, ValInfo,
@@ -80,7 +80,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
       let sig = env_to_sig(ck_sig_exp(bs, st, sig_exp)?);
       let env = sig_match::ck(st, str_exp.loc, env, &sig)?;
       if *opaque {
-        Ok(freshen::get(st, str_exp.loc, sig))
+        Ok(freshen(st, str_exp.loc, sig))
       } else {
         Ok(env)
       }
@@ -95,6 +95,16 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
       ck_str_exp(&bs, st, snd)
     }
   }
+}
+
+fn freshen(st: &mut State, loc: Loc, mut sig: Sig) -> Env {
+  let mut ty_rzn = TyRealization::default();
+  for &old in sig.ty_names.iter() {
+    let new = st.new_sym(loc.wrap(old.name()));
+    ty_rzn.insert_sym(old, new);
+  }
+  ty_rzn.get_env(&mut st.tys, &mut sig.env);
+  sig.env
 }
 
 fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> Result<Env> {
