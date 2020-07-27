@@ -61,7 +61,8 @@ enum StaticMatch {
   Yes,
   /// The Con is not consistent with the Desc.
   No,
-  /// The Con might be consistent with the Desc. If this is returned, then the Desc was Neg.
+  /// The Con might be consistent with the Desc. If this is returned, then the Desc was Neg, and the
+  /// Vec<Con> was the innards of the Neg.
   Maybe(Vec<Con>),
 }
 
@@ -70,11 +71,11 @@ enum StaticMatch {
 struct WorkItem {
   /// The constructor.
   con: Con,
-  /// Descriptions about the processed arguments to the constructor, in the actual order of the
-  /// arguments. We process the arguments left to right.
+  /// Descriptions about the processed arguments to the constructor. These are in the actual order
+  /// of the arguments, so the first one is the leftmost argument in the source.
   descs: Vec<Desc>,
   /// The un-processed arguments in reverse order. These are backwards, so the first one is the
-  /// rightmost argument in the source.
+  /// rightmost argument in the source, and the last one is the next one to be processed.
   args: Vec<Arg>,
 }
 
@@ -141,7 +142,7 @@ fn build_desc(mut d: Desc, work: Work) -> Desc {
     descs.push(d);
     // Then the argument descriptions. We reverse because these are stored in reverse, so reversing
     // again will straighten it out.
-    descs.append(&mut item.args.into_iter().rev().map(|x| x.desc).collect());
+    descs.extend(item.args.into_iter().rev().map(|x| x.desc));
     d = Desc::Pos(item.con, descs)
   }
   d
@@ -207,19 +208,19 @@ fn succeed_with(
   loc: Loc,
   mut work: Work,
   con: Con,
-  args: Vec<Pat>,
+  arg_pats: Vec<Pat>,
   d: Desc,
   pats: Pats,
 ) -> bool {
   let arg_descs = match d {
-    Desc::Neg(_) => args.iter().map(|_| Desc::Neg(vec![])).collect(),
+    Desc::Neg(_) => arg_pats.iter().map(|_| Desc::Neg(vec![])).collect(),
     Desc::Pos(_, descs) => descs,
   };
-  assert_eq!(args.len(), arg_descs.len());
+  assert_eq!(arg_pats.len(), arg_descs.len());
   work.push(WorkItem {
     con,
     descs: vec![],
-    args: args
+    args: arg_pats
       .into_iter()
       .zip(arg_descs)
       .rev()
