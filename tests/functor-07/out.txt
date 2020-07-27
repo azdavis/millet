@@ -1,0 +1,7 @@
+error: mismatched types: expected t, found t
+   ┌─ err.sml:11:9
+   │
+11 │ val _ = One.f Two.C
+   │         ^^^^^^^^^^^
+
+typechecking failed
