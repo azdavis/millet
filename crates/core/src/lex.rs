@@ -91,7 +91,7 @@ impl<'s> TokenMaker<'s> {
 
   fn mk_str_ref(&mut self, bs: &[u8]) -> StrRef {
     let s = std::str::from_utf8(bs).unwrap();
-    self.store.insert_str(s)
+    self.store.insert(s.into())
   }
 
   fn build(mut self) -> Result<Vec<Located<Token>>, Located<Error>> {
@@ -308,7 +308,7 @@ impl<'s> TokenMaker<'s> {
             } else {
               str_bs.shrink_to_fit();
               let string = String::from_utf8(str_bs).unwrap();
-              let str_ref = self.store.insert_string(string);
+              let str_ref = self.store.insert(string.into());
               Ok(Token::String(str_ref))
             };
           }

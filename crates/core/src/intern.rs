@@ -149,25 +149,13 @@ impl StrStoreMut {
     }
   }
 
-  /// Inserts a string slice into this StrStoreMut. Returns an StrRef corresponding to that string.
-  /// Converts the string slice to an owned String iff this string slice was not already present.
-  pub fn insert_str(&mut self, s: &str) -> StrRef {
-    if let Some(&id) = self.store.get(s) {
+  /// Inserts a string into this StrStoreMut. Returns an StrRef corresponding to that string.
+  pub fn insert(&mut self, s: std::borrow::Cow<'_, str>) -> StrRef {
+    if let Some(&id) = self.store.get(&*s) {
       return id;
     }
     let ret = StrRef(self.next);
-    self.store.insert(s.to_owned(), ret);
-    self.next += 1;
-    ret
-  }
-
-  /// Same as `insert_str`, but better if you already have ownership via a String.
-  pub fn insert_string(&mut self, s: String) -> StrRef {
-    if let Some(&id) = self.store.get(&s) {
-      return id;
-    }
-    let ret = StrRef(self.next);
-    self.store.insert(s, ret);
+    self.store.insert(s.into_owned(), ret);
     self.next += 1;
     ret
   }
