@@ -82,8 +82,12 @@ for x in "$@"; do
       fi
     fi
   elif [ -e err.sml ]; then
-    if "$MILLET" err.sml >out.tmp; then
-      echo "$x: expected failure, got success"
+    set +e
+    "$MILLET" err.sml >out.tmp
+    ec="$?"
+    set -e
+    if [ "$ec" -ne 1 ]; then
+      echo "$x: expected exit 1, got exit $ec"
       ok=false
     elif "$generate"; then
       mv out.tmp out.txt

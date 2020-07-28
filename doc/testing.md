@@ -12,8 +12,7 @@ Else, if the test contains a file `ok.sml`, then when the Millet CLI is run with
 that file on quiet mode, it must exit 0 and produce no output.
 
 Else, if the test contains a file `err.sml`, then when the Millet CLI is run
-with that file, it must exit with a non-zero exit code and produce the output in
-`out.txt`.
+with that file, it must exit 1 and produce the output in `out.txt`.
 
 Run `bin/mk-test tests/<name>` to make an `ok.sml` test, and run
 `bin/run-test tests/<name>` to run a test. The test runner exports two
