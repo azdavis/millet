@@ -100,14 +100,16 @@ fn run() -> bool {
 }
 
 fn main() {
-  match std::thread::Builder::new()
+  let ec = match std::thread::Builder::new()
     .name("run".to_owned())
     .stack_size(10 * 1024 * 1024)
     .spawn(run)
     .unwrap()
     .join()
   {
-    Err(_) | Ok(false) => std::process::exit(1),
-    Ok(true) => {}
-  }
+    Ok(true) => 0,
+    Ok(false) => 1,
+    Err(_) => 2,
+  };
+  std::process::exit(ec)
 }
