@@ -11,6 +11,7 @@ OUT="extensions/vscode/out"
 
 cargo build
 mkdir -p "$OUT"
+rm -rf "$OUT/millet-ls-impl"
 cp target/debug/millet-ls "$OUT"
 
 cd extensions/vscode
