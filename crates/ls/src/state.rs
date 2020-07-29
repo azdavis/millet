@@ -82,7 +82,7 @@ impl State {
 
 /// An action to take in response to a notification.
 pub enum Action {
-  /// Exit the server. The bool is whether the process should exit cleanly.
+  /// Exit the server. The bool is whether the process should exit successfully.
   Exit(bool),
   /// Respond with an outgoing message.
   Respond(Box<Outgoing>),
