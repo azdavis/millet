@@ -7,9 +7,11 @@ if [ "$#" -ne 0 ]; then
   exit 1
 fi
 
+OUT="extensions/vscode/out"
+
 cargo build
-mkdir -p extensions/vscode/out
-cp target/debug/millet-ls extensions/vscode/out
+mkdir -p "$OUT"
+cp target/debug/millet-ls "$OUT"
 
 cd extensions/vscode
 npm run build
