@@ -1,0 +1,9 @@
+{
+  "editor.rulers": [100],
+  "files.exclude": {
+    "extensions/vscode/node_modules": true,
+    "extensions/vscode/out": true,
+    "target": true
+  },
+  "rust-analyzer.checkOnSave.command": "clippy"
+}

@@ -1,5 +1,5 @@
 *.tmp
-/.vscode/settings.json
+/.vscode/cspell.json
 /extensions/vscode/node_modules
 /extensions/vscode/out
 /sml97-defn.pdf
