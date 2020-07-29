@@ -14,9 +14,7 @@ pub fn read_stdin(s: Sender<Incoming>) {
   let mut content_len: Option<usize> = None;
   loop {
     buf.clear();
-    if stdin.read_until(b'\n', &mut buf).unwrap() == 0 {
-      break;
-    }
+    assert_ne!(stdin.read_until(b'\n', &mut buf).unwrap(), 0);
     if let Some(n) = content_length(&buf) {
       content_len = Some(n);
       continue;
