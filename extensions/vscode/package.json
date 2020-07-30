@@ -1,11 +1,15 @@
 {
   "private": true,
-  "publisher": "azdavis",
-  "name": "millet-ls",
-  "displayName": "Millet LS",
+  "name": "millet",
+  "displayName": "Millet",
   "version": "0.1.0",
-  "description": "A language server for Standard ML",
+  "description": "Standard ML support for Visual Studio Code",
+  "publisher": "azdavis",
   "author": "Ariel Davis <ariel.z.davis@icloud.com>",
+  "repository": {
+    "url": "https://github.com/azdavis/millet.git",
+    "type": "git"
+  },
   "main": "./out/main.js",
   "scripts": {
     "build": "tsc"
