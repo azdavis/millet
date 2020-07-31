@@ -1,6 +1,6 @@
 # Millet
 
-Standard ML (SML) support for Visual Studio Code.
+Standard ML (SML) support for VS Code.
 
 ## Features
 
