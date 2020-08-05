@@ -6,4 +6,3 @@ Standard ML (SML) support for VS Code.
 
 - Syntax highlighting
 - Language configuration (comments, brackets, etc)
-- Inline errors
