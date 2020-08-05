@@ -13,6 +13,7 @@
   },
   "main": "./out/main.js",
   "scripts": {
+    "vscode:prepublish": "npm run build",
     "build": "tsc"
   },
   "dependencies": {
