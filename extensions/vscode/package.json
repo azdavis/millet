@@ -29,6 +29,16 @@
     "onLanguage:sml"
   ],
   "contributes": {
+    "configuration": {
+      "title": "Millet",
+      "properties": {
+        "millet.useLanguageServer": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use the language server."
+        }
+      }
+    },
     "languages": [
       {
         "id": "sml",

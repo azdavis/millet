@@ -1,11 +1,12 @@
-import { ExtensionContext } from "vscode";
+import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient";
 import * as path from "path";
 
 let client: LanguageClient | null = null;
 
-export async function activate(cx: ExtensionContext) {
-  if (client !== null) {
+export async function activate(cx: vscode.ExtensionContext) {
+  const config = vscode.workspace.getConfiguration("millet");
+  if (!config.get("useLanguageServer") || client !== null) {
     return;
   }
   const serverOpts = {
