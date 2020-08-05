@@ -1,6 +1,7 @@
 {
   "editor.rulers": [100],
   "files.exclude": {
+    "**/*.vsix": true,
     "extensions/vscode/node_modules": true,
     "extensions/vscode/out": true,
     "target": true
