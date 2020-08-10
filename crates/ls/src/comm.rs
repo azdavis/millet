@@ -142,15 +142,11 @@ impl OutgoingNotification {
   fn into_vec(self) -> Result<Vec<u8>, Error> {
     let mut map = Map::with_capacity(3);
     map.insert("jsonrpc".to_owned(), JSON_RPC_VERSION.into());
-    match self {
-      Self::PublishDiagnostics(params) => {
-        map.insert(
-          "method".to_owned(),
-          "textDocument/publishDiagnostics".into(),
-        );
-        map.insert("params".to_owned(), to_value(&params)?);
-      }
-    }
+    let (method, params) = match self {
+      Self::PublishDiagnostics(params) => ("textDocument/publishDiagnostics", to_value(&params)?),
+    };
+    map.insert("method".to_owned(), method.into());
+    map.insert("params".to_owned(), params);
     to_vec(&Value::Object(map))
   }
 }
