@@ -42,7 +42,9 @@ old_pwd="$PWD"
 for x in "$@"; do
   cd "$x"
   if [ -f skip ] && ! [ -s skip ]; then
-    echo "$x: skipped"
+    if ! "$quiet"; then
+      echo "$x: skipped"
+    fi
   elif [ -e run.sh ]; then
     if sh -eu run.sh; then
       if ! "$quiet"; then
