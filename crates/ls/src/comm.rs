@@ -10,14 +10,20 @@ use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Val
 
 const JSON_RPC_VERSION: &str = "2.0";
 
-pub enum RequestParams {
+pub enum IncomingRequestParams {
   Initialize(InitializeParams),
   Shutdown,
 }
 
-pub struct Request {
+pub struct Request<Params> {
   pub id: NumberOrString,
-  pub params: RequestParams,
+  pub params: Params,
+}
+
+impl<Params> Request<Params> {
+  fn new(id: NumberOrString, params: Params) -> Self {
+    Self { id, params }
+  }
 }
 
 pub enum IncomingNotification {
@@ -30,13 +36,13 @@ pub enum IncomingNotification {
 }
 
 pub enum Incoming {
-  Request(Request),
+  Request(Request<IncomingRequestParams>),
   Notification(IncomingNotification),
 }
 
 impl Incoming {
-  fn request(id: NumberOrString, params: RequestParams) -> Self {
-    Self::Request(Request { id, params })
+  fn request(id: NumberOrString, params: IncomingRequestParams) -> Self {
+    Self::Request(Request::new(id, params))
   }
 
   pub fn try_parse(bs: &[u8]) -> Option<Self> {
@@ -47,10 +53,10 @@ impl Incoming {
     let ret = match val.get("method")?.as_str()? {
       "initialize" => Incoming::request(
         get_id(&mut val)?,
-        RequestParams::Initialize(get_params(&mut val)?),
+        IncomingRequestParams::Initialize(get_params(&mut val)?),
       ),
       "initialized" => Incoming::Notification(IncomingNotification::Initialized),
-      "shutdown" => Incoming::request(get_id(&mut val)?, RequestParams::Shutdown),
+      "shutdown" => Incoming::request(get_id(&mut val)?, IncomingRequestParams::Shutdown),
       "exit" => Incoming::Notification(IncomingNotification::Exit),
       "textDocument/didOpen" => {
         Incoming::Notification(IncomingNotification::TextDocOpen(get_params(&mut val)?))

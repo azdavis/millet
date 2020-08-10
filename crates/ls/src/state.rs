@@ -1,7 +1,7 @@
 //! The core of the server logic.
 
 use crate::comm::{
-  IncomingNotification, Outgoing, OutgoingNotification, Request, RequestParams, Response,
+  IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
   ResponseSuccess,
 };
 use lsp_types::{
@@ -27,9 +27,9 @@ impl State {
   }
 
   /// Returns the Response for this Request.
-  pub fn handle_request(&mut self, req: Request) -> Response {
+  pub fn handle_request(&mut self, req: Request<IncomingRequestParams>) -> Response {
     let res = match req.params {
-      RequestParams::Initialize(params) => {
+      IncomingRequestParams::Initialize(params) => {
         // TODO do something with params.process_id
         self.root_uri = params.root_uri;
         Ok(ResponseSuccess::Initialize(InitializeResult {
@@ -43,7 +43,7 @@ impl State {
           }),
         }))
       }
-      RequestParams::Shutdown => {
+      IncomingRequestParams::Shutdown => {
         self.got_shutdown = true;
         Ok(ResponseSuccess::Null)
       }
