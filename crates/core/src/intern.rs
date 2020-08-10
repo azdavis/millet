@@ -167,6 +167,9 @@ impl StrStoreMut {
       // each index should be assigned exactly once, based on the way we handed out StrRefs.
       store[id.0] = s;
     }
+    for s in store.iter() {
+      assert!(!s.is_empty());
+    }
     StrStore { store }
   }
 }
