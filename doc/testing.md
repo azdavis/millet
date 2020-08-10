@@ -2,7 +2,9 @@
 
 A test is a directory directly inside the directory `tests`.
 
-If the test contains a file `run.sh`, then when that file is run with
+If the test contains an empty file `skip`, then the test is skipped.
+
+Else, if the test contains a file `run.sh`, then when that file is run with
 `sh -eu run.sh`, it must exit 0.
 
 Else, if the test contains a file `ast.sml`, then when the Millet CLI is run to

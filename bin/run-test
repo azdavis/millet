@@ -41,7 +41,9 @@ ok=true
 old_pwd="$PWD"
 for x in "$@"; do
   cd "$x"
-  if [ -e run.sh ]; then
+  if [ -f skip ] && ! [ -s skip ]; then
+    echo "$x: skipped"
+  elif [ -e run.sh ]; then
     if sh -eu run.sh; then
       if ! "$quiet"; then
         echo "$x: ok"
