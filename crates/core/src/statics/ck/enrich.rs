@@ -50,8 +50,8 @@ fn ck_impl(cx: Cx, got: &Env, want: &Env) -> Result<()> {
       Some(got) => ck_impl(cx, got, want)?,
     }
   }
-  // Note that we do _not_ use the `TyRealization` in the `Cx` when looking up the `TyInfo`, since if we
-  // did, we would be passing identical `TyInfo`s to `ck_ty_info`.
+  // Note that we do _not_ use the `TyRealization` in the `Cx` when looking up the `TyInfo`, since
+  // if we did, we would be passing identical `TyInfo`s to `ck_ty_info`.
   for (name, want) in want.ty_env.inner.iter() {
     let want = cx.tys.get(want);
     match got.ty_env.inner.get(name) {
