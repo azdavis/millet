@@ -11,7 +11,7 @@ NUM_RULES=89
 
 mk_temp_dir() {
   while true; do
-    name="/tmp/$(od -N 4 -tu /dev/random | awk 'NR == 1 { print $2 }')"
+    name="/tmp/$(od -A n -N 8 -t u /dev/random | tr -d ' \n')"
     if mkdir -m 700 "$name" 2>/dev/null; then
       echo "$name"
       break
