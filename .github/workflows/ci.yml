@@ -1,0 +1,19 @@
+name: ci
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check formatting
+        run: cargo fmt -- --check
+      - name: Check for SML Definition references
+        run: ./bin/ck-sml-defn
+      - name: Check with clippy
+        run: cargo clippy
+      - name: Build
+        run: cargo build
+      - name: Test with cargo
+        run: cargo test
+      - name: Test with run-test
+        run: ./bin/run-test tests/*
