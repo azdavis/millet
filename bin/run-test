@@ -37,86 +37,99 @@ cargo build --bin millet
 export NO_COLOR=1
 export MILLET="$PWD/target/debug/millet"
 
-ok=true
 old_pwd="$PWD"
+passed=0
+failed=0
+skipped=0
+generated=0
 for x in "$@"; do
   cd "$x"
-  if [ -f skip ] && ! [ -s skip ]; then
-    if ! "$quiet"; then
-      echo "$x: skipped"
+  if [ -f skip ]; then
+    if [ -s skip ]; then
+      echo "$x: expected skip empty, got non-empty"
+      failed=$((failed + 1))
+    else
+      if ! "$quiet"; then
+        echo "$x: skipped"
+      fi
+      skipped=$((skipped + 1))
     fi
-  elif [ -e run.sh ]; then
+  elif [ -f run.sh ]; then
     if sh -eu run.sh; then
       if ! "$quiet"; then
         echo "$x: ok"
       fi
+      passed=$((passed + 1))
     else
       echo "$x: expected run.sh to exit zero, got non-zero"
-      ok=false
+      failed=$((failed + 1))
     fi
-  elif [ -e ast.sml ]; then
+  elif [ -f ast.sml ]; then
     if ! "$MILLET" --just-ast ast.sml >out.tmp; then
       echo "$x: expected success, got failure"
-      ok=false
+      failed=$((failed + 1))
     elif "$generate"; then
       mv out.tmp out.txt
       if ! "$quiet"; then
         echo "$x: generated"
       fi
+      generated=$((generated + 1))
     elif diff out.txt out.tmp; then
       rm out.tmp
       if ! "$quiet"; then
         echo "$x: ok"
       fi
+      passed=$((passed + 1))
     else
       echo "$x: expected lhs, got rhs"
-      ok=false
+      failed=$((failed + 1))
     fi
-  elif [ -e ok.sml ]; then
+  elif [ -f ok.sml ]; then
     if ! "$MILLET" --quiet ok.sml >out.tmp; then
       echo "$x: expected success, got failure"
-      ok=false
+      failed=$((failed + 1))
     elif [ -s out.tmp ]; then
       echo "$x: expected no output, got output"
-      ok=false
+      failed=$((failed + 1))
     else
       rm out.tmp
       if ! "$quiet"; then
         echo "$x: ok"
       fi
+      passed=$((passed + 1))
     fi
-  elif [ -e err.sml ]; then
+  elif [ -f err.sml ]; then
     set +e
     "$MILLET" err.sml >out.tmp
     ec="$?"
     set -e
     if [ "$ec" -ne 1 ]; then
       echo "$x: expected exit 1, got exit $ec"
-      ok=false
+      failed=$((failed + 1))
     elif "$generate"; then
       mv out.tmp out.txt
       if ! "$quiet"; then
         echo "$x: generated"
       fi
+      generated=$((generated + 1))
     elif diff out.txt out.tmp; then
       rm out.tmp
       if ! "$quiet"; then
         echo "$x: ok"
       fi
+      passed=$((passed + 1))
     else
       echo "$x: expected lhs, got rhs"
-      ok=false
+      failed=$((failed + 1))
     fi
   else
     echo "$x: don't know how to run"
-    ok=false
+    failed=$((failed + 1))
   fi
   cd "$old_pwd"
 done
 
-if "$ok"; then
-  echo "all tests ok"
-else
-  echo "some tests not ok"
+echo "test result: $passed passed, $failed failed, $skipped skipped, $generated generated"
+if [ "$failed" -ne 0 ]; then
   exit 1
 fi
