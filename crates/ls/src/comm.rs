@@ -2,8 +2,8 @@
 
 use lsp_types::{
   DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-  DidSaveTextDocumentParams, InitializeParams, InitializeResult, NumberOrString,
-  PublishDiagnosticsParams,
+  DidSaveTextDocumentParams, DocumentSymbolParams, DocumentSymbolResponse, InitializeParams,
+  InitializeResult, NumberOrString, PublishDiagnosticsParams,
 };
 use serde::de::DeserializeOwned;
 use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Value};
@@ -13,6 +13,7 @@ const JSON_RPC_VERSION: &str = "2.0";
 pub enum IncomingRequestParams {
   Initialize(InitializeParams),
   Shutdown,
+  DocumentSymbols(DocumentSymbolParams),
 }
 
 pub struct Request<Params> {
@@ -58,6 +59,10 @@ impl Incoming {
       "initialized" => Incoming::Notification(IncomingNotification::Initialized),
       "shutdown" => Incoming::request(get_id(&mut val)?, IncomingRequestParams::Shutdown),
       "exit" => Incoming::Notification(IncomingNotification::Exit),
+      "textDocument/documentSymbol" => Incoming::request(
+        get_id(&mut val)?,
+        IncomingRequestParams::DocumentSymbols(get_params(&mut val)?),
+      ),
       "textDocument/didOpen" => {
         Incoming::Notification(IncomingNotification::TextDocOpen(get_params(&mut val)?))
       }
@@ -89,6 +94,7 @@ where
 
 pub enum ResponseSuccess {
   Initialize(InitializeResult),
+  DocumentSymbol(DocumentSymbolResponse),
   Null,
 }
 
@@ -127,6 +133,7 @@ impl Response {
         "result",
         match good {
           ResponseSuccess::Initialize(x) => to_value(x)?,
+          ResponseSuccess::DocumentSymbol(x) => to_value(x)?,
           ResponseSuccess::Null => Value::Null,
         },
       ),

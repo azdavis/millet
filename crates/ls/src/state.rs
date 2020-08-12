@@ -2,15 +2,21 @@
 
 use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
-  ResponseSuccess,
+  ResponseError, ResponseSuccess,
 };
 use lsp_types::{
-  Diagnostic, InitializeResult, Position, PublishDiagnosticsParams, Range, ServerCapabilities,
-  ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, Url,
+  Diagnostic, DocumentSymbol, DocumentSymbolResponse, InitializeResult, Position,
+  PublishDiagnosticsParams, Range, ServerCapabilities, ServerInfo, SymbolKind,
+  TextDocumentSyncCapability, TextDocumentSyncKind, Url,
 };
+
+use millet_core::ast::{Dec, StrDec, TopDec};
 use millet_core::intern::StrStoreMut;
-use millet_core::loc::Loc;
+use millet_core::loc::{Loc, Located};
 use millet_core::{lex, parse, statics};
+
+use std::fs::File;
+use std::io::Read;
 
 pub struct State {
   root_uri: Option<Url>,
@@ -35,6 +41,7 @@ impl State {
         Ok(ResponseSuccess::Initialize(InitializeResult {
           capabilities: ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::Full)),
+            document_symbol_provider: Some(true),
             ..ServerCapabilities::default()
           },
           server_info: Some(ServerInfo {
@@ -46,6 +53,27 @@ impl State {
       IncomingRequestParams::Shutdown => {
         self.got_shutdown = true;
         Ok(ResponseSuccess::Null)
+      }
+      IncomingRequestParams::DocumentSymbols(params) => {
+        let bs: Result<Vec<_>, _> = params
+          .text_document
+          .uri
+          .to_file_path()
+          .map_err(|_| {
+            std::io::Error::new(
+              std::io::ErrorKind::NotFound,
+              "conversion of uri to path was unsuccessful",
+            )
+          })
+          .and_then(File::open)
+          .and_then(|f| f.bytes().collect());
+        match bs {
+          Ok(bs) => mk_document_symbols(params.text_document.uri, &bs[..]),
+          Err(_) => Err(ResponseError {
+            code: crate::comm::ErrorCode::ServerErrorStart,
+            message: format!("Issue opening {} for reading", params.text_document.uri),
+          }),
+        }
       }
     };
     Response {
@@ -121,6 +149,93 @@ fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
     }
   }
   None
+}
+
+fn mk_document_symbols(uri: Url, bs: &[u8]) -> Result<ResponseSuccess, ResponseError> {
+  let symbols: Vec<_> = outline_one_file(bs)?;
+  Ok(ResponseSuccess::DocumentSymbol(
+    DocumentSymbolResponse::Nested(symbols),
+  ))
+}
+
+fn outline_one_file(bs: &[u8]) -> Result<Vec<DocumentSymbol>, ResponseError> {
+  let mut store = StrStoreMut::new();
+  let lexer = match lex::get(&mut store, bs) {
+    Ok(x) => x,
+    Err(_) => {
+      return Err(ResponseError {
+        code: crate::comm::ErrorCode::ServerErrorStart, // TODO: better error
+        message: "encountered a lexer error".to_owned(),
+      });
+    }
+  };
+  let store = store.finish();
+  let mut top_decs = match parse::get(lexer) {
+    Ok(x) => x,
+    Err(_) => {
+      return Err(ResponseError {
+        code: crate::comm::ErrorCode::ServerErrorStart, // TODO ibidem
+        message: "encountered a parser error".to_owned(),
+      });
+    }
+  };
+  let ndecs = top_decs.len();
+  Ok(
+    top_decs
+      .drain(..)
+      // TODO: move to new function instead of closure
+      .fold(Vec::with_capacity(ndecs), |mut symbs, dec| {
+        match dec.val {
+          TopDec::StrDec(Located { loc: _, val }) => match val {
+            StrDec::Dec(Located { loc, val }) => match val {
+              Dec::Val(_, binding) => {
+                symbs.push(DocumentSymbol {
+                  name: String::from_utf8_lossy(&bs[std::ops::Range::from(binding[0].pat.loc)])
+                    .into(),
+                  detail: None,
+                  kind: SymbolKind::Variable,
+                  deprecated: None,
+                  range: range_from_loc(bs, loc),
+                  selection_range: range_from_loc(bs, binding[0].pat.loc),
+                  children: None,
+                });
+                symbs
+              }
+              Dec::Fun(_, binding) => {
+                symbs.push(DocumentSymbol {
+                  name: String::from_utf8_lossy(
+                    // Maybe implement SliceIndex for Loc?
+                    &bs[std::ops::Range::from(binding[0].cases[0].vid.loc)],
+                  )
+                  .into(),
+                  detail: Some("'a -> 'a".to_owned()),
+                  kind: SymbolKind::Function,
+                  deprecated: None,
+                  range: range_from_loc(bs, loc),
+                  selection_range: range_from_loc(bs, binding[0].cases[0].vid.loc),
+                  children: None,
+                });
+                symbs
+              }
+              _ => todo!("strdec dec non-val/fun"),
+            },
+            StrDec::Structure(..) => todo!("strdec structure"),
+            StrDec::Local(..) => todo!("strdec local"),
+            StrDec::Seq(..) => todo!("strdec seq"),
+          },
+          TopDec::SigDec(..) => todo!("sigdec"),
+          TopDec::FunDec(..) => todo!("fundec"),
+        }
+      }),
+  )
+}
+
+fn range_from_loc(bs: &[u8], loc: Loc) -> Range {
+  let range: std::ops::Range<usize> = loc.into();
+  Range {
+    start: position(bs, range.start),
+    end: position(bs, range.end),
+  }
 }
 
 fn mk_diagnostic(bs: &[u8], loc: Loc, message: String) -> Diagnostic {
