@@ -10,7 +10,7 @@ use lsp_types::{
   TextDocumentSyncCapability, TextDocumentSyncKind, Url,
 };
 
-use millet_core::ast::{Dec, StrDec, TopDec};
+use millet_core::ast::{Dec, SigExp, StrDec, StrExp, TopDec};
 use millet_core::intern::StrStoreMut;
 use millet_core::loc::{Loc, Located};
 use millet_core::{lex, parse, statics};
@@ -183,18 +183,94 @@ fn outline_one_file(bs: &[u8]) -> Result<Vec<DocumentSymbol>, ResponseError> {
   Ok(
     top_decs
       .drain(..)
-      // TODO: move to new function instead of closure
-      .fold(Vec::with_capacity(ndecs), |symbs, dec| match dec.val {
-        TopDec::StrDec(Located { loc: _, val }) => match val {
-          StrDec::Dec(dec) => fold_dec(bs, symbs, dec),
-          StrDec::Structure(..) => todo!("strdec structure"),
-          StrDec::Local(..) => todo!("strdec local"),
-          StrDec::Seq(..) => todo!("strdec seq"),
-        },
-        TopDec::SigDec(..) => todo!("sigdec"),
-        TopDec::FunDec(..) => todo!("fundec"),
+      .fold(Vec::with_capacity(ndecs), |symbs, dec| {
+        fold_topdec(bs, symbs, dec)
       }),
   )
+}
+
+fn fold_topdec<I>(
+  bs: &[u8],
+  symbs: Vec<DocumentSymbol>,
+  dec: Located<TopDec<I>>,
+) -> Vec<DocumentSymbol> {
+  match dec.val {
+    TopDec::StrDec(strdec) => fold_strdec(bs, symbs, strdec),
+    TopDec::SigDec(sigbinds) => {
+      for binding in sigbinds {
+        symbs.push(DocumentSymbol {
+          name: String::from_utf8_lossy(&bs[std::ops::Range::from(binding.id.loc)]).into(),
+          detail: None,
+          kind: SymbolKind::Module,
+          deprecated: None,
+          range: range_from_loc(bs, dec.loc),
+          selection_range: range_from_loc(bs, binding.id.loc),
+          children: fold_sigexp(bs, Vec::new(), binding.exp),
+        });
+      }
+      symbs
+    }
+    TopDec::FunDec(fctdec) => todo!("fundec"),
+  }
+}
+
+fn fold_sigexp<I>(
+  bs: &[u8],
+  mut symbs: Vec<DocumentSymbol>,
+  exp: Located<SigExp<I>>,
+) -> Option<Vec<DocumentSymbol>> {
+  match exp.val {
+    SigExp::Sig(spec) => Some(fold_spec(bs, symbs, spec)),
+    SigExp::SigId(..) => None,
+    SigExp::Where(..) => todo!("where sigexp"),
+  }
+}
+
+fn fold_spec<I>(
+  bs: &[u8],
+  mut symbs: Vec<DocumentSymbol>,
+  exp: Located<Spec<I>>,
+) -> Vec<DocumentSymbol> {
+}
+
+fn fold_strdec<I>(
+  bs: &[u8],
+  mut symbs: Vec<DocumentSymbol>,
+  dec: Located<StrDec<I>>,
+) -> Vec<DocumentSymbol> {
+  match dec.val {
+    StrDec::Dec(dec) => fold_dec(bs, symbs, dec),
+    StrDec::Structure(bindings) => {
+      for binding in bindings {
+        symbs.push(DocumentSymbol {
+          name: String::from_utf8_lossy(&bs[std::ops::Range::from(binding.id.loc)]).into(),
+          detail: None,
+          kind: SymbolKind::Module,
+          deprecated: None,
+          range: range_from_loc(bs, dec.loc),
+          selection_range: range_from_loc(bs, binding.id.loc),
+          children: fold_strexp(bs, Vec::new(), binding.exp),
+        });
+      }
+      symbs
+    }
+    StrDec::Local(..) => todo!("strdec local"),
+    StrDec::Seq(strdecs) => todo!("strdec seq"),
+  }
+}
+
+fn fold_strexp<I>(
+  bs: &[u8],
+  mut symbs: Vec<DocumentSymbol>,
+  exp: Located<StrExp<I>>,
+) -> Option<Vec<DocumentSymbol>> {
+  match exp.val {
+    StrExp::Struct(members) => Some(fold_strdec(bs, Vec::new(), members)),
+    StrExp::LongStrId(..) => None,
+    StrExp::Ascription(members, _, _) => fold_strexp(bs, Vec::new(), *members),
+    StrExp::FunctorApp(..) => None,
+    StrExp::Let(..) => None,
+  }
 }
 
 fn fold_dec<I>(
@@ -206,7 +282,6 @@ fn fold_dec<I>(
     Dec::Val(_, bindings) => {
       for binding in bindings {
         symbs.push(DocumentSymbol {
-          // Doing for 0 only presumably skips `and` binds; should iterate
           name: String::from_utf8_lossy(&bs[std::ops::Range::from(binding.pat.loc)]).into(),
           detail: None,
           kind: SymbolKind::Variable,
@@ -222,7 +297,7 @@ fn fold_dec<I>(
       for binding in bindings {
         symbs.push(DocumentSymbol {
           name: String::from_utf8_lossy(
-            // Maybe implement SliceIndex for Loc?
+            // Maybe implement SliceIndex for Loc? (requires nightly?)
             &bs[std::ops::Range::from(binding.cases[0].vid.loc)],
           )
           .into(),
@@ -243,7 +318,7 @@ fn fold_dec<I>(
           detail: None,
           kind: SymbolKind::TypeParameter,
           deprecated: None,
-          range: range_from_loc(bs, binding.ty_con.loc),
+          range: range_from_loc(bs, dec.loc),
           selection_range: range_from_loc(bs, binding.ty_con.loc),
           children: None,
         });
@@ -257,7 +332,7 @@ fn fold_dec<I>(
           detail: None,
           kind: SymbolKind::TypeParameter,
           deprecated: None,
-          range: range_from_loc(bs, binding.ty_con.loc),
+          range: range_from_loc(bs, dec.loc),
           selection_range: range_from_loc(bs, binding.ty_con.loc),
           children: Some(
             binding
@@ -284,7 +359,7 @@ fn fold_dec<I>(
         detail: None,
         kind: SymbolKind::TypeParameter,
         deprecated: None,
-        range: range_from_loc(bs, id.loc),
+        range: range_from_loc(bs, dec.loc),
         selection_range: range_from_loc(bs, id.loc),
         children: None,
       });
@@ -301,7 +376,7 @@ fn fold_dec<I>(
           detail: None,
           kind: SymbolKind::TypeParameter,
           deprecated: None,
-          range: range_from_loc(bs, binding.vid.loc),
+          range: range_from_loc(bs, dec.loc),
           selection_range: range_from_loc(bs, binding.vid.loc),
           children: None,
         });
