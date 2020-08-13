@@ -17,8 +17,8 @@ cp target/debug/millet-ls "$OUT/millet-ls-impl"
 rm -rf "$OUT/millet-ls"
 cat <<EOF > "$OUT/millet-ls"
 #!/bin/sh
-rm -rf inp.txt out.txt
-tee inp.txt | "$PWD/$OUT/millet-ls-impl" | tee out.txt
+rm -rf inp.log out.log
+tee inp.log | "$PWD/$OUT/millet-ls-impl" | tee out.log
 EOF
 chmod +x "$OUT/millet-ls"
 
