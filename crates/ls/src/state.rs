@@ -10,7 +10,7 @@ use lsp_types::{
   TextDocumentSyncCapability, TextDocumentSyncKind, Url,
 };
 
-use millet_core::ast::{Dec, SigExp, StrDec, StrExp, TopDec};
+use millet_core::ast::{Dec, FunBind, SigExp, Spec, StrDec, StrExp, TopDec};
 use millet_core::intern::StrStoreMut;
 use millet_core::loc::{Loc, Located};
 use millet_core::{lex, parse, statics};
@@ -68,7 +68,7 @@ impl State {
           .and_then(File::open)
           .and_then(|f| f.bytes().collect());
         match bs {
-          Ok(bs) => mk_document_symbols(params.text_document.uri, &bs[..]),
+          Ok(bs) => mk_document_symbols(&bs[..]),
           Err(_) => Err(ResponseError {
             code: crate::comm::ErrorCode::ServerErrorStart,
             message: format!("Issue opening {} for reading", params.text_document.uri),
@@ -151,7 +151,7 @@ fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
   None
 }
 
-fn mk_document_symbols(uri: Url, bs: &[u8]) -> Result<ResponseSuccess, ResponseError> {
+fn mk_document_symbols(bs: &[u8]) -> Result<ResponseSuccess, ResponseError> {
   let symbols: Vec<_> = outline_one_file(bs)?;
   Ok(ResponseSuccess::DocumentSymbol(
     DocumentSymbolResponse::Nested(symbols),
@@ -169,7 +169,7 @@ fn outline_one_file(bs: &[u8]) -> Result<Vec<DocumentSymbol>, ResponseError> {
       });
     }
   };
-  let store = store.finish();
+  let _store = store.finish(); // TODO: better to use than slices into bs?
   let mut top_decs = match parse::get(lexer) {
     Ok(x) => x,
     Err(_) => {
@@ -191,7 +191,7 @@ fn outline_one_file(bs: &[u8]) -> Result<Vec<DocumentSymbol>, ResponseError> {
 
 fn fold_topdec<I>(
   bs: &[u8],
-  symbs: Vec<DocumentSymbol>,
+  mut symbs: Vec<DocumentSymbol>,
   dec: Located<TopDec<I>>,
 ) -> Vec<DocumentSymbol> {
   match dec.val {
@@ -210,19 +210,41 @@ fn fold_topdec<I>(
       }
       symbs
     }
-    TopDec::FunDec(fctdec) => todo!("fundec"),
+    TopDec::FunDec(bindings) => {
+      for binding in bindings {
+        symbs = fold_funbind(bs, symbs, binding);
+      }
+      symbs
+    }
   }
+}
+
+fn fold_funbind<I>(
+  bs: &[u8],
+  mut symbs: Vec<DocumentSymbol>,
+  bind: FunBind<I>,
+) -> Vec<DocumentSymbol> {
+  symbs.push(DocumentSymbol {
+    name: String::from_utf8_lossy(&bs[std::ops::Range::from(bind.fun_id.loc)]).into(),
+    detail: None,
+    kind: SymbolKind::Module,
+    deprecated: None,
+    range: range_from_loc(bs, bind.fun_id.loc),
+    selection_range: range_from_loc(bs, bind.fun_id.loc),
+    children: fold_strexp(bs, bind.str_exp),
+  });
+  symbs
 }
 
 fn fold_sigexp<I>(
   bs: &[u8],
-  mut symbs: Vec<DocumentSymbol>,
+  symbs: Vec<DocumentSymbol>,
   exp: Located<SigExp<I>>,
 ) -> Option<Vec<DocumentSymbol>> {
   match exp.val {
     SigExp::Sig(spec) => Some(fold_spec(bs, symbs, spec)),
     SigExp::SigId(..) => None,
-    SigExp::Where(..) => todo!("where sigexp"),
+    SigExp::Where(sig, _, _, _) => fold_sigexp(bs, symbs, *sig),
   }
 }
 
@@ -231,6 +253,106 @@ fn fold_spec<I>(
   mut symbs: Vec<DocumentSymbol>,
   exp: Located<Spec<I>>,
 ) -> Vec<DocumentSymbol> {
+  match exp.val {
+    Spec::Val(descs) => {
+      for desc in descs {
+        symbs.push(DocumentSymbol {
+          name: String::from_utf8_lossy(&bs[std::ops::Range::from(desc.vid.loc)]).into(),
+          detail: Some(String::from_utf8_lossy(&bs[std::ops::Range::from(desc.ty.loc)]).into()),
+          kind: SymbolKind::Variable,
+          deprecated: None,
+          range: range_from_loc(bs, desc.vid.loc),
+          selection_range: range_from_loc(bs, desc.vid.loc),
+          children: None,
+        });
+      }
+    }
+    Spec::Type(descs, _) => {
+      for desc in descs {
+        symbs.push(DocumentSymbol {
+          name: String::from_utf8_lossy(&bs[std::ops::Range::from(desc.ty_con.loc)]).into(),
+          detail: None,
+          kind: SymbolKind::TypeParameter,
+          deprecated: None,
+          range: range_from_loc(bs, desc.ty_con.loc),
+          selection_range: range_from_loc(bs, desc.ty_con.loc),
+          children: None,
+        });
+      }
+    }
+    Spec::Datatype(bindings) => {
+      for binding in bindings {
+        symbs.push(DocumentSymbol {
+          name: String::from_utf8_lossy(&bs[std::ops::Range::from(binding.ty_con.loc)]).into(),
+          detail: None,
+          kind: SymbolKind::TypeParameter,
+          deprecated: None,
+          range: range_from_loc(bs, binding.ty_con.loc),
+          selection_range: range_from_loc(bs, binding.ty_con.loc),
+          children: Some(
+            binding
+              .cons
+              .iter()
+              .map(|con| DocumentSymbol {
+                name: String::from_utf8_lossy(&bs[std::ops::Range::from(con.vid.loc)]).into(),
+                detail: None,
+                kind: SymbolKind::Constructor,
+                deprecated: None,
+                range: range_from_loc(bs, con.vid.loc),
+                selection_range: range_from_loc(bs, con.vid.loc),
+                children: None,
+              })
+              .collect(),
+          ),
+        });
+      }
+    }
+    Spec::DatatypeCopy(copy_name, _) => {
+      symbs.push(DocumentSymbol {
+        name: String::from_utf8_lossy(&bs[std::ops::Range::from(copy_name.loc)]).into(),
+        detail: None,
+        kind: SymbolKind::TypeParameter,
+        deprecated: None,
+        range: range_from_loc(bs, copy_name.loc),
+        selection_range: range_from_loc(bs, copy_name.loc),
+        children: None,
+      });
+    }
+    Spec::Exception(descs) => {
+      for desc in descs {
+        symbs.push(DocumentSymbol {
+          name: String::from_utf8_lossy(&bs[std::ops::Range::from(desc.vid.loc)]).into(),
+          detail: None,
+          kind: SymbolKind::Unknown, // TODO
+          deprecated: None,
+          range: range_from_loc(bs, desc.vid.loc),
+          selection_range: range_from_loc(bs, desc.vid.loc),
+          children: None,
+        });
+      }
+    }
+    Spec::Structure(descs) => {
+      for desc in descs {
+        symbs.push(DocumentSymbol {
+          name: String::from_utf8_lossy(&bs[std::ops::Range::from(desc.str_id.loc)]).into(),
+          detail: None,
+          kind: SymbolKind::Unknown, // TODO
+          deprecated: None,
+          range: range_from_loc(bs, desc.str_id.loc),
+          selection_range: range_from_loc(bs, desc.str_id.loc),
+          children: None,
+        });
+      }
+    }
+    Spec::Include(..) => (),
+    Spec::Seq(specs) => {
+      for spec in specs {
+        symbs = fold_spec(bs, symbs, spec)
+      }
+    }
+    Spec::Sharing(..) => {}
+  }
+  symbs
 }
 
 fn fold_strdec<I>(
@@ -249,25 +371,26 @@ fn fold_strdec<I>(
           deprecated: None,
           range: range_from_loc(bs, dec.loc),
           selection_range: range_from_loc(bs, binding.id.loc),
-          children: fold_strexp(bs, Vec::new(), binding.exp),
+          children: fold_strexp(bs, binding.exp),
         });
       }
       symbs
     }
     StrDec::Local(..) => todo!("strdec local"),
-    StrDec::Seq(strdecs) => todo!("strdec seq"),
+    StrDec::Seq(strdecs) => {
+      for dec in strdecs {
+        symbs = fold_strdec(bs, symbs, dec);
+      }
+      symbs
+    }
   }
 }
 
-fn fold_strexp<I>(
-  bs: &[u8],
-  mut symbs: Vec<DocumentSymbol>,
-  exp: Located<StrExp<I>>,
-) -> Option<Vec<DocumentSymbol>> {
+fn fold_strexp<I>(bs: &[u8], exp: Located<StrExp<I>>) -> Option<Vec<DocumentSymbol>> {
   match exp.val {
     StrExp::Struct(members) => Some(fold_strdec(bs, Vec::new(), members)),
     StrExp::LongStrId(..) => None,
-    StrExp::Ascription(members, _, _) => fold_strexp(bs, Vec::new(), *members),
+    StrExp::Ascription(members, _, _) => fold_strexp(bs, *members),
     StrExp::FunctorApp(..) => None,
     StrExp::Let(..) => None,
   }
@@ -291,7 +414,6 @@ fn fold_dec<I>(
           children: None,
         });
       }
-      symbs
     }
     Dec::Fun(_, bindings) => {
       for binding in bindings {
@@ -309,7 +431,6 @@ fn fold_dec<I>(
           children: None,
         });
       }
-      symbs
     }
     Dec::Type(bindings) => {
       for binding in bindings {
@@ -323,7 +444,6 @@ fn fold_dec<I>(
           children: None,
         });
       }
-      symbs
     }
     Dec::Datatype(bindings, _) => {
       for binding in bindings {
@@ -351,7 +471,6 @@ fn fold_dec<I>(
           ),
         });
       }
-      symbs
     }
     Dec::DatatypeCopy(id, _) => {
       symbs.push(DocumentSymbol {
@@ -363,39 +482,31 @@ fn fold_dec<I>(
         selection_range: range_from_loc(bs, id.loc),
         children: None,
       });
-      symbs
     }
-    Dec::Abstype(_, _, _) => {
-      // TODO
-      symbs
-    }
+    Dec::Abstype(_, _, _) => todo!(),
     Dec::Exception(bindings) => {
       for binding in bindings {
         symbs.push(DocumentSymbol {
           name: String::from_utf8_lossy(&bs[std::ops::Range::from(binding.vid.loc)]).into(),
           detail: None,
-          kind: SymbolKind::TypeParameter,
+          kind: SymbolKind::Unknown, // TODO
           deprecated: None,
           range: range_from_loc(bs, dec.loc),
           selection_range: range_from_loc(bs, binding.vid.loc),
           children: None,
         });
       }
-      symbs
     }
-    Dec::Local(_, _) => {
-      // TODO
-      symbs
-    }
+    Dec::Local(_, _) => todo!(),
     Dec::Seq(decs) => {
       for dec in decs {
         symbs = fold_dec(bs, symbs, dec);
       }
-      symbs
     }
     // Don't report these
-    Dec::Open(..) | Dec::Infix(..) | Dec::Infixr(..) | Dec::Nonfix(..) => symbs,
+    Dec::Open(..) | Dec::Infix(..) | Dec::Infixr(..) | Dec::Nonfix(..) => (),
   }
+  symbs
 }
 
 fn range_from_loc(bs: &[u8], loc: Loc) -> Range {
