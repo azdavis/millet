@@ -23,4 +23,7 @@ EOF
 chmod +x "$OUT/millet-ls"
 
 cd extensions/vscode
+if ! [ -e node_modules ]; then
+  npm install
+fi
 npm run build
