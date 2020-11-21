@@ -135,6 +135,7 @@ dependencies = [
  "millet-core",
  "serde",
  "serde_json",
+ "toml",
 ]
 
 [[package]]
@@ -240,6 +241,15 @@ name = "tinyvec"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53953d2d3a5ad81d9f844a32f14ebb121f50b650cd59d0ee2a07cf13c617efed"
+
+[[package]]
+name = "toml"
+version = "0.5.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75cf45bb0bef80604d001caaec0d09da99611b3c0fd39d3080468875cdb65645"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "unicode-bidi"

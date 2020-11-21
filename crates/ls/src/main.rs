@@ -1,6 +1,7 @@
 //! A language server for Standard ML.
 
 mod comm;
+mod config;
 mod headers;
 mod io;
 mod state;

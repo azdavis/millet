@@ -1,20 +1,32 @@
 //! The core of the server logic.
 
+use std::collections::BTreeMap;
+use std::io::{self, Read};
+use std::path::{Path, PathBuf};
+
 use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
   ResponseSuccess,
 };
+use crate::config::Config;
+
 use lsp_types::{
   Diagnostic, InitializeResult, Position, PublishDiagnosticsParams, Range, ServerCapabilities,
   ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, Url,
 };
+
 use millet_core::intern::StrStoreMut;
 use millet_core::loc::Loc;
 use millet_core::{lex, parse, statics};
 
+#[derive(Debug)]
 pub struct State {
   root_uri: Option<Url>,
   got_shutdown: bool,
+  config: Config,
+  // TODO: If this is just cache need separate thing for deps
+  // (idk if just want to store in config? :/)
+  cache: Cache,
 }
 
 impl State {
@@ -23,6 +35,8 @@ impl State {
     Self {
       root_uri: None,
       got_shutdown: false,
+      config: Default::default(),
+      cache: BTreeMap::new(),
     }
   }
 
@@ -32,6 +46,12 @@ impl State {
       IncomingRequestParams::Initialize(params) => {
         // TODO do something with params.process_id
         self.root_uri = params.root_uri;
+        if let Some(ref root) = self.root_uri {
+          if let Ok(c) = Config::new(root) {
+            self.config = c;
+            self.cache = init_cache(self.config.get_files());
+          }
+        }
         Ok(ResponseSuccess::Initialize(InitializeResult {
           capabilities: ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::Full)),
@@ -62,16 +82,22 @@ impl State {
       IncomingNotification::TextDocOpen(params) => Some(mk_diagnostic_action(
         params.text_document.uri,
         Some(params.text_document.version),
-        params.text_document.text.as_bytes(),
+        self.config.get_files(),
+        &self.cache,
       )),
       IncomingNotification::TextDocChange(mut params) => {
         assert_eq!(params.content_changes.len(), 1);
         let change = params.content_changes.pop().unwrap();
         assert!(change.range.is_none());
+        self
+          .cache
+          .entry(params.text_document.uri.clone())
+          .and_modify(|e| e.update(change.text.as_bytes().into()));
         Some(mk_diagnostic_action(
           params.text_document.uri,
           params.text_document.version,
-          change.text.as_bytes(),
+          self.config.get_files(),
+          &self.cache,
         ))
       }
       IncomingNotification::TextDocSave(_) => None,
@@ -88,8 +114,16 @@ pub enum Action {
   Respond(Box<Outgoing>),
 }
 
-fn mk_diagnostic_action(uri: Url, version: Option<i64>, bs: &[u8]) -> Action {
-  let diagnostics: Vec<_> = ck_one_file(bs).into_iter().collect();
+fn mk_diagnostic_action(
+  uri: Url,
+  version: Option<i64>,
+  files: &'_ [Url],
+  cache: &'_ Cache,
+) -> Action {
+  let (uri, diagnostics) = match ck_files(files, cache) {
+    Some((uri, diag)) => (uri, vec![diag]),
+    None => (uri, vec![]),
+  };
   Action::Respond(
     Outgoing::Notification(OutgoingNotification::PublishDiagnostics(
       PublishDiagnosticsParams {
@@ -100,6 +134,60 @@ fn mk_diagnostic_action(uri: Url, version: Option<i64>, bs: &[u8]) -> Action {
     ))
     .into(),
   )
+}
+
+fn ck_files(paths: &'_ [Url], cache: &'_ Cache) -> Option<(Url, Diagnostic)> {
+  let files: Vec<_> = paths
+    .into_iter()
+    .map(|path| cache.get(path).map(|sf| &sf.bytes))
+    .collect::<Option<_>>()?;
+  let mut store = StrStoreMut::new();
+  let lexers: Vec<_> = match files
+    .iter()
+    .enumerate()
+    .map(|(i, bs)| match lex::get(&mut store, bs) {
+      Ok(x) => Ok(x),
+      Err(e) => Err(Some((
+        paths[i].clone(),
+        mk_diagnostic(bs, e.loc, e.val.message()),
+      ))),
+    })
+    .collect()
+  {
+    Ok(x) => x,
+    Err(e) => return e,
+  };
+  let store = store.finish();
+  let file_top_decs: Vec<_> = match lexers
+    .into_iter()
+    .enumerate()
+    .map(|(i, lexer)| match parse::get(lexer) {
+      Ok(x) => Ok((i, x)),
+      Err(e) => Err(Some((
+        paths[i].clone(),
+        mk_diagnostic(&files[i], e.loc, e.val.message(&store)),
+      ))),
+    })
+    .collect()
+  {
+    Ok(x) => x,
+    Err(e) => return e,
+  };
+  let mut s = statics::Statics::new();
+  for (file, top_decs) in file_top_decs {
+    for top_dec in top_decs {
+      match s.get(&top_dec) {
+        Ok(()) => {}
+        Err(e) => {
+          return Some((
+            paths[file].clone(),
+            mk_diagnostic(&files[file], e.loc, e.val.message(&store)),
+          ))
+        }
+      }
+    }
+  }
+  None
 }
 
 fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
@@ -152,4 +240,39 @@ fn position(bs: &[u8], byte_idx: usize) -> Position {
     }
   }
   Position { line, character }
+}
+
+type Cache = BTreeMap<Url, SourceFile>;
+
+fn init_cache(uris: &[Url]) -> Cache {
+  uris
+    .iter()
+    .filter_map(|uri| match SourceFile::new(uri.clone()).ok() {
+      Some(sf) => Some((uri.clone(), sf)),
+      None => None,
+    })
+    .collect()
+}
+
+#[derive(Debug)]
+struct SourceFile {
+  path: PathBuf,
+  bytes: Vec<u8>,
+}
+
+impl SourceFile {
+  fn new(uri: Url) -> io::Result<SourceFile> {
+    let path = uri
+      .to_file_path()
+      .map_err(|_| io::ErrorKind::InvalidInput)?;
+    std::fs::File::open(&path).map(|mut f| {
+      let mut bytes = Vec::new();
+      f.read_to_end(&mut bytes)
+        .and_then(|_| Ok(SourceFile { path, bytes }))
+    })?
+  }
+
+  fn update(&mut self, bs: Vec<u8>) {
+    self.bytes = bs
+  }
 }
