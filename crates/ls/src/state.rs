@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 use std::io::{self, Read};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
