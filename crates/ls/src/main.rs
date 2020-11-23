@@ -1,10 +1,10 @@
 //! A language server for Standard ML.
 
 mod comm;
-mod config;
 mod headers;
 mod io;
 mod state;
+mod workspace;
 
 fn main() {
   let (s_inc, r_inc) = crossbeam_channel::unbounded();

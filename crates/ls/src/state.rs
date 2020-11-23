@@ -8,7 +8,7 @@ use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
   ResponseSuccess,
 };
-use crate::config::Config;
+use crate::workspace::ProjectWorkspace;
 
 use lsp_types::{
   Diagnostic, InitializeResult, Position, PublishDiagnosticsParams, Range, ServerCapabilities,
@@ -23,7 +23,7 @@ use millet_core::{lex, parse, statics};
 pub struct State {
   root_uri: Option<Url>,
   got_shutdown: bool,
-  config: Config,
+  workspace: ProjectWorkspace,
   // TODO: If this is just cache need separate thing for deps
   // (idk if just want to store in config? :/)
   cache: Cache,
@@ -35,7 +35,7 @@ impl State {
     Self {
       root_uri: None,
       got_shutdown: false,
-      config: Default::default(),
+      workspace: Default::default(),
       cache: BTreeMap::new(),
     }
   }
@@ -47,9 +47,9 @@ impl State {
         // TODO do something with params.process_id
         self.root_uri = params.root_uri;
         if let Some(ref root) = self.root_uri {
-          if let Ok(c) = Config::new(root) {
-            self.config = c;
-            self.cache = init_cache(self.config.get_files());
+          if let Ok(c) = ProjectWorkspace::new(root) {
+            self.workspace = c;
+            self.cache = init_cache(self.workspace.get_files());
           }
         }
         Ok(ResponseSuccess::Initialize(InitializeResult {
@@ -82,7 +82,7 @@ impl State {
       IncomingNotification::TextDocOpen(params) => Some(mk_diagnostic_action(
         params.text_document.uri,
         Some(params.text_document.version),
-        self.config.get_files(),
+        self.workspace.get_files(),
         &self.cache,
       )),
       IncomingNotification::TextDocChange(mut params) => {
@@ -96,7 +96,7 @@ impl State {
         Some(mk_diagnostic_action(
           params.text_document.uri,
           params.text_document.version,
-          self.config.get_files(),
+          self.workspace.get_files(),
           &self.cache,
         ))
       }
