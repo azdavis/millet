@@ -189,6 +189,11 @@ fn outline_one_file(bs: &[u8]) -> Result<Vec<DocumentSymbol>, ResponseError> {
   )
 }
 
+// FIXME: currently misses cases where a declaration is inside of an expression (e.g., let
+// expression or similar); should fix. Would be better if this could be made more general, but
+// unclear on the best way to do so---should probably be refactored so that these are all declared
+// in a doc symbols function and share a common constructor function instead of making a bunch of
+// structs kinda ad hoc.
 fn fold_topdec<I>(
   bs: &[u8],
   mut symbs: Vec<DocumentSymbol>,
@@ -428,7 +433,7 @@ fn fold_dec<I>(
           deprecated: None,
           range: range_from_loc(bs, dec.loc),
           selection_range: range_from_loc(bs, binding.cases[0].vid.loc),
-          children: None,
+          children: None, // Should probably traverse cases > body
         });
       }
     }
