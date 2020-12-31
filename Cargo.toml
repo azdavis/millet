@@ -1,5 +1,8 @@
 [workspace]
 members = [
+  "crates/lexer",
+  "crates/parser",
+  "crates/syntax",
   "crates/cli",
   "crates/core",
   "crates/ls",
