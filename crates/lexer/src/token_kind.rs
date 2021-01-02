@@ -131,22 +131,25 @@ pub enum TokenKind {
   // special constants
   #[regex("~?[0-9]+")]
   DECINT,
-  #[regex("~?0x[a-fA-F0-0]+")]
+  #[regex("~?0x[a-fA-F0-9]+")]
   HEXINT,
   #[regex("~?0w[0-9]+")]
   DECWORD,
-  #[regex("~?0wx[a-fA-F0-0]+")]
+  #[regex("~?0wx[a-fA-F0-9]+")]
   HEXWORD,
   #[regex(r"~?[0-9]+\.[0-9]+")]
   #[regex(r"~?[0-9]+(\.[0-9]+)?e~?[0-9]+")]
   REAL,
   #[regex(r#""[^"]*""#)] // TODO: implement escape sequences properly
   STRING,
-  #[regex("#\".\"")] // ditto
+  #[regex(r#"#".""#)] // ditto
   CHAR,
 
   // identifiers
+  #[regex("'[0-9a-zA-Z'_]*")] // unclear if this is 0 or more (as PolyML uses) or 1+ (SML/NJ)
   TYVARID,
+  #[regex("[A-Za-z][0-9a-zA-Z'_]*")]
+  #[regex("[!%&$#+-/:<=>?@\\~`^|*]+")]
   IDENT,
 
   // non-token tokens

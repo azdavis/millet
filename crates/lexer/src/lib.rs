@@ -383,12 +383,12 @@ mod tests {
 
   #[test]
   fn lex_hexword() {
-    check("0xw41AfbC", TokenKind::HEXWORD)
+    check("0wx41AfbC", TokenKind::HEXWORD)
   }
 
   #[test]
   fn lex_negative_hexword() {
-    check("~0xwC0FfeE", TokenKind::HEXWORD)
+    check("~0wxC0FfeE", TokenKind::HEXWORD)
   }
 
   #[test]
