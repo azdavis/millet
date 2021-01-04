@@ -140,9 +140,9 @@ pub enum TokenKind {
   #[regex(r"~?[0-9]+\.[0-9]+")]
   #[regex(r"~?[0-9]+(\.[0-9]+)?e~?[0-9]+")]
   REAL,
-  #[regex(r#""[^"]*""#)] // TODO: implement escape sequences properly
+  #[regex("\"[^\"]*\"")]
   STRING,
-  #[regex(r#"#".""#)] // ditto
+  #[regex("#\".\"")]
   CHAR,
 
   // identifiers
@@ -160,6 +160,12 @@ pub enum TokenKind {
   EOF,
   #[error]
   ERROR,
+}
+
+impl TokenKind {
+  pub fn is_trivia(self) -> bool {
+    matches!(self, Self::WHITESPACE | Self::COMMENT)
+  }
 }
 
 fn comment(lex: &mut Lexer<TokenKind>) -> bool {
@@ -190,6 +196,115 @@ fn comment(lex: &mut Lexer<TokenKind>) -> bool {
       _ => lex.bump(1),
     }
   }
+}
+
+fn _str_lit(_lex: &mut Lexer<TokenKind>) -> bool {
+  // if b == b'"' {
+  //   self.i += 1;
+  //   let mut str_bs = Vec::new();
+  //   while let Some(&b) = self.bs.get(self.i) {
+  //     match b {
+  //       b'\n' => return Err(Error::UnclosedStringConstant),
+  //       b'"' => {
+  //         self.i += 1;
+  //         return if is_char {
+  //           if str_bs.len() == 1 {
+  //             let b = str_bs.pop().unwrap();
+  //             Ok(Token::Char(b))
+  //           } else {
+  //             Err(Error::InvalidCharConstant)
+  //           }
+  //         } else {
+  //           str_bs.shrink_to_fit();
+  //           let string = String::from_utf8(str_bs).unwrap();
+  //           let str_ref = self.store.insert(string.into());
+  //           Ok(Token::String(str_ref))
+  //         };
+  //       }
+  //       b'\\' => {
+  //         self.i += 1;
+  //         let b = match self.bs.get(self.i) {
+  //           None => return Err(Error::UnclosedStringConstant),
+  //           Some(x) => *x,
+  //         };
+  //         match b {
+  //           b'a' => str_bs.push(7),
+  //           b'b' => str_bs.push(8),
+  //           b't' => str_bs.push(9),
+  //           b'n' => str_bs.push(10),
+  //           b'v' => str_bs.push(11),
+  //           b'f' => str_bs.push(12),
+  //           b'r' => str_bs.push(13),
+  //           b'^' => {
+  //             self.i += 1;
+  //             let b = match self.bs.get(self.i) {
+  //               None => return Err(Error::UnclosedStringConstant),
+  //               Some(x) => *x,
+  //             };
+  //             str_bs.push(b - 64);
+  //           }
+  //           b'u' => {
+  //             if self.i + 4 >= self.bs.len() {
+  //               return Err(Error::UnclosedStringConstant);
+  //             }
+  //             match (
+  //               hex(self.bs[self.i + 1]),
+  //               hex(self.bs[self.i + 2]),
+  //               hex(self.bs[self.i + 3]),
+  //               hex(self.bs[self.i + 4]),
+  //             ) {
+  //               (Some(0), Some(0), Some(d1), Some(d2)) => {
+  //                 str_bs.push(d1 * 16 + d2);
+  //                 self.i += 4;
+  //               }
+  //               _ => return Err(Error::InvalidStringConstant),
+  //             }
+  //           }
+  //           b'"' => str_bs.push(b'"'),
+  //           b'\\' => str_bs.push(b'\\'),
+  //           b => {
+  //             if let Some(d1) = dec(b) {
+  //               if self.i + 2 >= self.bs.len() {
+  //                 return Err(Error::UnclosedStringConstant);
+  //               }
+  //               match (dec(self.bs[self.i + 1]), dec(self.bs[self.i + 2])) {
+  //                 (Some(d2), Some(d3)) => {
+  //                   str_bs.push((d1 * 10 + d2) * 10 + d3);
+  //                   self.i += 2;
+  //                 }
+  //                 _ => return Err(Error::InvalidStringConstant),
+  //               }
+  //             } else if is_formatting(b) {
+  //               loop {
+  //                 self.i += 1;
+  //                 let b = match self.bs.get(self.i) {
+  //                   None => return Err(Error::UnclosedStringConstant),
+  //                   Some(x) => *x,
+  //                 };
+  //                 if b == b'\\' {
+  //                   break;
+  //                 }
+  //                 if !is_formatting(b) {
+  //                   return Err(Error::InvalidStringConstant);
+  //                 }
+  //               }
+  //             } else {
+  //               return Err(Error::InvalidStringConstant);
+  //             }
+  //           }
+  //         }
+  //       }
+  //       b => str_bs.push(b),
+  //     }
+  //     self.i += 1;
+  //   }
+  //   return Err(Error::UnclosedStringConstant);
+  // }
+  todo!()
+}
+
+fn _char_lit(_lex: &mut Lexer<TokenKind>) -> bool {
+  todo!()
 }
 
 impl fmt::Display for TokenKind {

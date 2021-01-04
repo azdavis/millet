@@ -27,8 +27,9 @@ impl<'a> Iterator for Lexer<'a> {
 
     let range = {
       let std::ops::Range { start, end } = self.inner.span();
-      let start = TextSize::try_from(start).unwrap();
-      let end = TextSize::try_from(end).unwrap();
+      // Probably a better solution than just cutting off after u32::MAX, but this works :/
+      let start = TextSize::try_from(start).ok()?;
+      let end = TextSize::try_from(end).ok()?;
 
       TextRange::new(start, end)
     };
@@ -409,7 +410,9 @@ mod tests {
   #[test]
   fn lex_string_escapes() {
     check(
-      r#"\a\b\n\v\f\r\t\^C\127\u0412\"\\\             \some chars"#,
+      r#"\a\b\n\v\f\r\t\^C\127\u0412\"\\\        
+
+      \some chars"#,
       TokenKind::STRING,
     )
   }
