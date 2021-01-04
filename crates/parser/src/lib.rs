@@ -43,3 +43,8 @@ impl Parse {
     s
   }
 }
+
+#[cfg(test)]
+pub(crate) fn check(input: &str, expected_tree: expect_test::Expect) {
+  expected_tree.assert_eq(&parse(input).debug_tree())
+}

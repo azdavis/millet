@@ -23,6 +23,8 @@ pub type SyntaxNode = rowan::SyntaxNode<SML>;
 pub enum SyntaxKind {
   // Non-terminals
   // (TODO)
+  ROOT,
+  SCON,
 
   // Terminals
   // core reserved words

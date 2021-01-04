@@ -27,7 +27,7 @@ impl<'a> Iterator for Lexer<'a> {
 
     let range = {
       let std::ops::Range { start, end } = self.inner.span();
-      // Probably a better solution than just cutting off after u32::MAX, but this works :/
+      // Probably a better solution than just cutting off after u32::MAX, but this works :G
       let start = TextSize::try_from(start).ok()?;
       let end = TextSize::try_from(end).ok()?;
 
@@ -448,6 +448,11 @@ mod tests {
   }
 
   #[test]
+  fn lex_hard_symbolic() {
+    check("##", TokenKind::IDENT)
+  }
+
+  #[test]
   fn lex_comment() {
     check("(* this is a comment *)", TokenKind::COMMENT)
   }
@@ -459,5 +464,4 @@ mod tests {
       TokenKind::COMMENT,
     )
   }
-  // WHITESPACE,
 }

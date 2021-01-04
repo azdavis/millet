@@ -4,12 +4,14 @@ mod parse_error;
 pub(crate) use parse_error::ParseError;
 
 use crate::event::Event;
-use crate::grammar;
+use crate::grammar::{self, OpInfo};
 use crate::source::Source;
 use lexer::{Token, TokenKind};
+use maplit::hashmap;
 use marker::Marker;
 use syntax::SyntaxKind;
 
+use std::collections::HashMap;
 use std::mem;
 
 // TODO: probably add top level declaration intros to this (incl. modules)
@@ -20,6 +22,7 @@ pub(crate) struct Parser<'t, 'input> {
   source: Source<'t, 'input>,
   events: Vec<Event>,
   expected_kinds: Vec<TokenKind>,
+  ops: HashMap<&'input str, OpInfo>,
 }
 
 impl<'t, 'input> Parser<'t, 'input> {
@@ -28,6 +31,21 @@ impl<'t, 'input> Parser<'t, 'input> {
       source,
       events: Vec::new(),
       expected_kinds: Vec::new(),
+      ops: hashmap! {
+        "::"  => OpInfo::right(5),
+        "="   => OpInfo::left(4),
+        ":="  => OpInfo::left(3),
+        "div" => OpInfo::left(7),
+        "mod" => OpInfo::left(7),
+        "*"   => OpInfo::left(7),
+        "/"   => OpInfo::left(7),
+        "+"   => OpInfo::left(6),
+        "-"   => OpInfo::left(6),
+        "<"   => OpInfo::left(4),
+        ">"   => OpInfo::left(4),
+        "<="  => OpInfo::left(4),
+        ">="  => OpInfo::left(4),
+      },
     }
   }
 
@@ -101,5 +119,11 @@ impl<'t, 'input> Parser<'t, 'input> {
 
   pub(crate) fn at_end(&mut self) -> bool {
     self.peek().is_none()
+  }
+
+  pub(crate) fn at_op(&mut self) -> Result<&OpInfo, ()> {
+    let Token { text, .. } = self.source.peek_token().ok_or(())?;
+    // TODO: probably should add a "infix operator" class to `expected_kinds` on failure?
+    self.ops.get(text).ok_or(())
   }
 }
