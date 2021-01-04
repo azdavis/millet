@@ -20,9 +20,6 @@
   - via `millet.json` in the workspace root which would list the ordered files
     in this project
 - implement statics for unused constructs (abstype, while, `#` selectors)?
-- make public
-  - turn on protected branches, etc
-  - use github actions ci
 - publish extension
   - get azure account or whatever
 - get better error messages

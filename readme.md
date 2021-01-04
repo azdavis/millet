@@ -1,15 +1,27 @@
 # Millet
 
-A set of tools for [Standard ML][sml-def].
+A [language server][lang-server] for [Standard ML][sml-def], with a
+corresponding [Visual Studio Code][vscode] language client extension.
 
-Right now, the set has only one element: a [language server][lang-server], with
-a corresponding [Visual Studio Code][vscode] language client extension.
+This project is alpha-quality software. There are
+[many important things](doc/todo.md) not yet implemented.
 
-This project is alpha-quality software. It is nearing MVP status, but is not yet
-there. There are [many important things](doc/todo.md) not yet implemented.
+## Build
 
-Note that this readme is intended for users rather than contributors. To learn
-how to contribute, see the [doc readme](doc/readme.md).
+You'll need:
+
+- `cargo` and `rustc`
+- `npm` and `node`
+- `git`
+
+```
+$ git clone https://github.com/azdavis/millet.git
+$ cd millet
+$ cargo build
+$ cd extensions/vscode
+$ npm install
+$ npm run build
+```
 
 ## Naming
 

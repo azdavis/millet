@@ -5,7 +5,7 @@
       "label": "extension: build",
       "group": "build",
       "type": "shell",
-      "command": "./bin/mk-vscode-ext",
+      "command": "./bin/mk-vscode-ext.sh",
       "presentation": {
         "reveal": "silent"
       }

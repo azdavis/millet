@@ -489,11 +489,29 @@ impl<'s> TokenMaker<'s> {
 }
 
 fn is_symbolic(b: u8) -> bool {
-  match b {
-    b'!' | b'%' | b'&' | b'$' | b'#' | b'+' | b'-' | b'/' | b':' | b'<' | b'=' | b'>' | b'?'
-    | b'@' | b'\\' | b'~' | b'`' | b'^' | b'|' | b'*' => true,
-    _ => false,
-  }
+  matches!(
+    b,
+    b'!'
+      | b'%'
+      | b'&'
+      | b'$'
+      | b'#'
+      | b'+'
+      | b'-'
+      | b'/'
+      | b':'
+      | b'<'
+      | b'='
+      | b'>'
+      | b'?'
+      | b'@'
+      | b'\\'
+      | b'~'
+      | b'`'
+      | b'^'
+      | b'|'
+      | b'*'
+  )
 }
 
 enum AlphaNum {
