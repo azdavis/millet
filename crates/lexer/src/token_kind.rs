@@ -148,9 +148,9 @@ pub enum TokenKind {
   // identifiers
   #[regex("'[0-9a-zA-Z'_]*")] // unclear if this is 0 or more (as PolyML uses) or 1+ (SML/NJ)
   TYVARID,
-  #[regex("[A-Za-z][0-9a-zA-Z'_]*")]
-  #[regex("[!%&$#+-/:<=>?@\\~`^|*]+")]
-  IDENT,
+  #[regex("[A-Za-z][0-9a-zA-Z'_]*", |_| IdentType::Alphanumeric)]
+  #[regex("[!%&$#+-/:<=>?@\\~`^|*]+", |_| IdentType::Symbolic)]
+  IDENT(IdentType),
 
   // non-token tokens
   #[token("(*", comment)]
@@ -160,6 +160,12 @@ pub enum TokenKind {
   EOF,
   #[error]
   ERROR,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum IdentType {
+  Alphanumeric,
+  Symbolic,
 }
 
 impl TokenKind {
@@ -386,7 +392,8 @@ impl fmt::Display for TokenKind {
 
       // identifiers
       TokenKind::TYVARID => "type variable identifier",
-      TokenKind::IDENT => "identifier",
+      TokenKind::IDENT(IdentType::Alphanumeric) => "alphanumeric identifier",
+      TokenKind::IDENT(IdentType::Symbolic) => "symbolic identifier",
 
       // non-token tokens
       TokenKind::WHITESPACE => "whitespace",

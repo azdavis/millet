@@ -15,56 +15,52 @@ pub(super) fn expr(p: &mut Parser) -> Option<CompletedMarker> {
 }
 
 fn expr_bp(p: &mut Parser, min_bp: u8) -> Option<CompletedMarker> {
-  let mut lhs = lhs(p)?;
-
-  loop {
-    let (left_bp, right_bp) = match p.at_op() {
-      Ok(&OpInfo(l, r)) => (l, r),
-      Err(()) => break,
-    };
-
-    if left_bp < min_bp {
-      break;
-    }
-
-    p.bump();
-
-    let parsed_rhs = expr_bp(p, right_bp).is_some();
-    lhs = lhs.precede(p).complete(p, SyntaxKind::ERROR);
-
-    if !parsed_rhs {
-      break;
-    }
-  }
-
-  Some(lhs)
-}
-
-fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
-  let cm = if p.at_set(&SPECIAL_CONSTANTS) {
-    scon(p)
-  } else if p.at(TokenKind::IF) {
-    conditional(p)
+  let cm = if p.at(TokenKind::CASE) {
+    case(p)
   } else if p.at(TokenKind::FN) {
     lambda(p)
-  } else if p.at(TokenKind::CASE) {
-    case(p)
+  } else if p.at(TokenKind::IF) {
+    conditional(p)
+  } else if p.at(TokenKind::RAISE) {
+    raise(p)
   } else if p.at(TokenKind::WHILE) {
     while_loop(p)
   } else {
-    p.error();
-    return None;
+    let mut exp = atexp(p)?;
+    todo!()
+  };
+
+  todo!()
+}
+
+fn atexp(p: &mut Parser) -> Option<CompletedMarker> {
+  let m = p.start();
+
+  let cm = if p.at_set(&SPECIAL_CONSTANTS) {
+    p.bump();
+    m.complete(p, SyntaxKind::SCON)
+  } else if p.at(TokenKind::OP) {
+    p.bump();
+    todo!()
+  } else if p.at(TokenKind::LCURLY) {
+    todo!()
+  } else if p.at(TokenKind::POUND) {
+    todo!()
+  } else if p.at(TokenKind::LPAREN) {
+    todo!()
+  } else if p.at(TokenKind::LSQUARE) {
+    todo!()
+  } else if p.at(TokenKind::LET) {
+    todo!()
+  } else if p.at_set(&IDENT) {
+    todo!()
+  } else if p.at(TokenKind::EQUAL) {
+    todo!()
+  } else {
+    todo!() // Original returns Some(None); forget if this is an error or not
   };
 
   Some(cm)
-}
-
-fn scon(p: &mut Parser) -> CompletedMarker {
-  debug_assert!(p.at_set(&SPECIAL_CONSTANTS));
-
-  let m = p.start();
-  p.bump();
-  m.complete(p, SyntaxKind::SCON)
 }
 
 fn conditional(p: &mut Parser) -> CompletedMarker {
@@ -77,7 +73,7 @@ fn conditional(p: &mut Parser) -> CompletedMarker {
   expr(p);
   p.expect(TokenKind::ELSE);
   expr(p);
-  m.complete(p, todo!())
+  m.complete(p, SyntaxKind::EXP_IF)
 }
 
 fn lambda(p: &mut Parser) -> CompletedMarker {
@@ -86,7 +82,7 @@ fn lambda(p: &mut Parser) -> CompletedMarker {
   let m = p.start();
   p.bump();
   pat_match(p);
-  m.complete(p, todo!())
+  m.complete(p, SyntaxKind::EXP_FN)
 }
 
 fn case(p: &mut Parser) -> CompletedMarker {
@@ -97,7 +93,16 @@ fn case(p: &mut Parser) -> CompletedMarker {
   expr(p);
   p.expect(TokenKind::OF);
   pat_match(p);
-  m.complete(p, todo!())
+  m.complete(p, SyntaxKind::EXP_CASE)
+}
+
+fn raise(p: &mut Parser) -> CompletedMarker {
+  debug_assert!(p.at(TokenKind::RAISE));
+
+  let m = p.start();
+  p.bump();
+  expr(p);
+  m.complete(p, SyntaxKind::EXP_RAISE)
 }
 
 fn while_loop(p: &mut Parser) -> CompletedMarker {
@@ -108,7 +113,7 @@ fn while_loop(p: &mut Parser) -> CompletedMarker {
   expr(p);
   p.expect(TokenKind::DO);
   expr(p);
-  m.complete(p, todo!())
+  m.complete(p, SyntaxKind::EXP_WHILE)
 }
 
 fn pat_match(p: &mut Parser) -> CompletedMarker {

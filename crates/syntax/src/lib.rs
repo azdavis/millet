@@ -26,6 +26,20 @@ pub enum SyntaxKind {
   ROOT,
   SCON,
 
+  TOPDEC_SIG,
+  TOPDEC_FUN,
+  TOPDEC_STR,
+
+  SIGEXP_ID,
+  SIGEXP_SIG,
+  SIGEXP_WHERE,
+
+  EXP_CASE,
+  EXP_FN,
+  EXP_IF,
+  EXP_RAISE,
+  EXP_WHILE,
+
   // Terminals
   // core reserved words
   ABSTYPE,
@@ -191,7 +205,7 @@ impl From<TokenKind> for SyntaxKind {
 
       // identifiers
       TokenKind::TYVARID => Self::TYVARID,
-      TokenKind::IDENT => Self::IDENT,
+      TokenKind::IDENT(..) => Self::IDENT,
 
       // non-token tokens
       TokenKind::COMMENT => Self::COMMENT,

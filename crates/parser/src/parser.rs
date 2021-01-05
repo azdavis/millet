@@ -76,6 +76,14 @@ impl<'t, 'input> Parser<'t, 'input> {
     }
   }
 
+  pub(crate) fn expect_set(&mut self, set: &[TokenKind]) {
+    if self.at_set(set) {
+      self.bump();
+    } else {
+      self.error();
+    }
+  }
+
   pub(crate) fn error(&mut self) {
     let (found, range) = if let Some(Token { kind, range, .. }) = self.source.peek_token() {
       (Some(*kind), *range)
@@ -123,7 +131,7 @@ impl<'t, 'input> Parser<'t, 'input> {
 
   pub(crate) fn at_op(&mut self) -> Result<&OpInfo, ()> {
     let Token { text, .. } = self.source.peek_token().ok_or(())?;
-    // TODO: probably should add a "infix operator" class to `expected_kinds` on failure?
+    todo!(r#"probably should add a "infix operator" class to `expected_kinds` on failure?"#);
     self.ops.get(text).ok_or(())
   }
 }

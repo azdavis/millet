@@ -1,13 +1,24 @@
+mod dec;
 mod expr;
+mod ty;
 
 use crate::parser::marker::CompletedMarker;
 use crate::parser::Parser;
-use lexer::TokenKind;
+use lexer::{IdentType, TokenKind};
 use syntax::SyntaxKind;
+
+const IDENT: [TokenKind; 2] = [
+  TokenKind::IDENT(IdentType::Alphanumeric),
+  TokenKind::IDENT(IdentType::Symbolic),
+];
 
 pub(crate) fn root(p: &mut Parser) -> CompletedMarker {
   let m = p.start();
-  expr::expr(p);
+
+  while !p.at_end() {
+    dec::top_dec(p);
+  }
+
   m.complete(p, SyntaxKind::ROOT)
 }
 

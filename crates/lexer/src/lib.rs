@@ -1,5 +1,5 @@
 mod token_kind;
-pub use token_kind::TokenKind;
+pub use token_kind::{IdentType, TokenKind};
 
 use logos::Logos;
 use text_size::{TextRange, TextSize};
