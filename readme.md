@@ -4,7 +4,8 @@ A [language server][lang-server] for [Standard ML][sml-def], with a
 corresponding [Visual Studio Code][vscode] language client extension.
 
 This project is alpha-quality software. There are
-[many important things](todo.md) not yet implemented.
+[many important things](todo.md) not yet implemented. There are things that are
+shoddily implemented (note the skipped tests in `tests/`).
 
 ## Development
 
