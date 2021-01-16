@@ -165,7 +165,7 @@ fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
           .all(|(idx, lab)| Label::tuple(idx) == *lab);
       if is_tuple {
         if prec > TyPrec::Star {
-          buf.push_str("(");
+          buf.push('(');
         }
         let mut tys = rows.values();
         let ty = tys.next().unwrap();
@@ -175,7 +175,7 @@ fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
           show_ty_impl(buf, store, ty, TyPrec::App);
         }
         if prec > TyPrec::Star {
-          buf.push_str(")");
+          buf.push(')');
         }
       } else {
         buf.push_str("{ ");
@@ -191,13 +191,13 @@ fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
     }
     Ty::Arrow(lhs, rhs) => {
       if prec > TyPrec::Arrow {
-        buf.push_str("(");
+        buf.push('(');
       }
       show_ty_impl(buf, store, lhs, TyPrec::Star);
       buf.push_str(" -> ");
       show_ty_impl(buf, store, rhs, TyPrec::Arrow);
       if prec > TyPrec::Arrow {
-        buf.push_str(")");
+        buf.push(')');
       }
     }
     Ty::Ctor(args, sym) => {
@@ -206,15 +206,15 @@ fn show_ty_impl(buf: &mut String, store: &StrStore, ty: &Ty, prec: TyPrec) {
         if args.len() == 1 {
           show_ty_impl(buf, store, arg, TyPrec::App);
         } else {
-          buf.push_str("(");
+          buf.push('(');
           show_ty_impl(buf, store, arg, TyPrec::Arrow);
           for arg in args_iter {
             buf.push_str(", ");
             show_ty_impl(buf, store, arg, TyPrec::Arrow);
           }
-          buf.push_str(")");
+          buf.push(')');
         }
-        buf.push_str(" ");
+        buf.push(' ');
       }
       buf.push_str(store.get(sym.name));
     }
