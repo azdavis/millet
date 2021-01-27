@@ -75,7 +75,7 @@ fn sig_exp(p: &mut Parser) -> Option<CompletedMarker> {
 }
 
 fn spec_ind(p: &mut Parser) -> bool {
-    p.at(TokenKind::VAL)
+  p.at(TokenKind::VAL)
     || p.at(TokenKind::TYPE)
     || p.at(TokenKind::EQTYPE)
     || p.at(TokenKind::DATATYPE)
@@ -89,75 +89,73 @@ fn spec(p: &mut Parser) -> Option<CompletedMarker> {
   // otherwise
   let mut outer: Option<CompletedMarker> = None;
 
-  let cm =
-  loop {
+  let cm = loop {
     // parse a single regular spec
-    let inner =
-      if p.at(TokenKind::VAL) {
-        spec_val(p)
-      } else if p.at(TokenKind::TYPE) {
-        spec_type(p)
-      } else if p.at(TokenKind::EQTYPE) {
-        spec_eqtype(p)
-      } else if p.at(TokenKind::DATATYPE) {
-        let m = p.start();
+    let inner = if p.at(TokenKind::VAL) {
+      spec_val(p)
+    } else if p.at(TokenKind::TYPE) {
+      spec_type(p)
+    } else if p.at(TokenKind::EQTYPE) {
+      spec_eqtype(p)
+    } else if p.at(TokenKind::DATATYPE) {
+      let m = p.start();
+      p.bump();
+
+      if p.at_set(&IDENT) {
         p.bump();
+        p.expect(TokenKind::EQUAL);
 
-        if p.at_set(&IDENT) {
+        if p.at(TokenKind::DATATYPE) {
+          // datatype copy case
           p.bump();
-          p.expect(TokenKind::EQUAL);
-
-          if p.at(TokenKind::DATATYPE) {
-            // datatype copy case
-            p.bump();
-            long_id(p);
-            m.complete(p, SyntaxKind::SPEC_DATATYPE_COPY)
-          } else {
-            // datdesc case
-            loop {
-              con_desc(p);
-              if p.at(TokenKind::BAR) {
-                p.bump();
-              } else {
-                break;
-              }
-            }
-
-            loop {
-              if p.at(TokenKind::AND) {
-                p.bump();
-                dat_desc(p);
-              } else {
-                break;
-              }
-            }
-            m.complete(p, SyntaxKind::DATATYPE)
-          }
+          long_id(p);
+          m.complete(p, SyntaxKind::SPEC_DATATYPE_COPY)
         } else {
           // datdesc case
           loop {
-            dat_desc(p);
-            if p.at(TokenKind::AND) {
+            con_desc(p);
+            if p.at(TokenKind::BAR) {
               p.bump();
             } else {
-              break
+              break;
             }
           }
-          m.complete(p, SyntaxKind::SPEC_DATATYPE)
+
+          loop {
+            if p.at(TokenKind::AND) {
+              p.bump();
+              dat_desc(p);
+            } else {
+              break;
+            }
+          }
+          m.complete(p, SyntaxKind::DATATYPE)
         }
-      } else if p.at(TokenKind::EXCEPTION) {
-          spec_ex(p)
-      } else if p.at(TokenKind::STRUCTURE) {
-          spec_struct(p)
-      } else if p.at(TokenKind::INCLUDE) {
-          spec_include(p)
-      } else if p.at(TokenKind::END) {
-          let m = p.start();
-          return Some(m.complete(p, SyntaxKind::SPEC_EMPTY))
       } else {
-        p.error();
-        None
+        // datdesc case
+        loop {
+          dat_desc(p);
+          if p.at(TokenKind::AND) {
+            p.bump();
+          } else {
+            break;
+          }
+        }
+        m.complete(p, SyntaxKind::SPEC_DATATYPE)
       }
+    } else if p.at(TokenKind::EXCEPTION) {
+      spec_ex(p)
+    } else if p.at(TokenKind::STRUCTURE) {
+      spec_struct(p)
+    } else if p.at(TokenKind::INCLUDE) {
+      spec_include(p)
+    } else if p.at(TokenKind::END) {
+      let m = p.start();
+      return Some(m.complete(p, SyntaxKind::SPEC_EMPTY));
+    } else {
+      p.error();
+      None
+    };
 
     // get rid of optional semicolon
     if p.at(TokenKind::SEMICOLON) {
@@ -170,19 +168,19 @@ fn spec(p: &mut Parser) -> Option<CompletedMarker> {
     }
 
     // if we are not accumulating a seq already and we have a spec next
-    if outer.is_none() && spec_ind(p){
+    if outer.is_none() && spec_ind(p) {
       outer = Some(inner.precede(p));
     }
 
     // collapse the seq we are accumulating if it exists
     if p.at(TokenKind::SHARING) {
       match outer {
-        None =>
-          inner = inner.precede(p),
-        Some(m) =>
+        None => inner = inner.precede(p),
+        Some(m) => {
           let outer_complete = m.complete(p, SyntaxKind::SPEC_SEQ);
           outer = None;
-          inner = outer_complete.precede(p)
+          inner = outer_complete.precede(p);
+        }
       }
       p.bump();
       p.expect(TokenKind::TYPE);
@@ -196,11 +194,11 @@ fn spec(p: &mut Parser) -> Option<CompletedMarker> {
       }
       inner.complete(p, SyntaxKind::SPEC_SHARING);
     }
-  }
+  };
 
   match outer {
-    None => Some(cm)
-    Some(m) => Some(m.complete(p, SyntaxKind::SPEC_SEQ))
+    None => Some(cm),
+    Some(m) => Some(m.complete(p, SyntaxKind::SPEC_SEQ)),
   }
 }
 
@@ -300,7 +298,7 @@ fn con_desc(p: &mut Parser) -> Option<CompletedMarker> {
 
   p.expect_set(&IDENT);
 
-  if p.at(TokenKind::OF){
+  if p.at(TokenKind::OF) {
     p.bump();
     ty::ty(p);
   }
@@ -401,8 +399,7 @@ fn fun_dec(p: &mut Parser) -> Option<CompletedMarker> {
 fn str_exp(p: &mut Parser) -> Option<CompletedMarker> {
   let m = p.start();
 
-  let cm =
-  if p.at(TokenKind::STRUCT) {
+  let cm = if p.at(TokenKind::STRUCT) {
     p.bump();
     str_dec(p)?;
     p.expect(TokenKind::END);
@@ -443,28 +440,27 @@ fn str_exp(p: &mut Parser) -> Option<CompletedMarker> {
     } else {
       m.complete(p, SyntaxKind::STREXP_LONGSTRID)
     }
-  }
+  };
 
   Some(cm)
 }
 
 fn dec_ind_no_local(p: &mut Parser) -> bool {
   p.at(TokenKind::VAL)
-  || p.at(TokenKind::TYPE)
-  || p.at(TokenKind::DATATYPE)
-  || p.at(TokenKind::ABSTYPE)
-  || p.at(TokenKind::EXCEPTION)
-  || p.at(TokenKind::OPEN)
-  || p.at(TokenKind::INFIX)
-  || p.at(TokenKind::INFIXR)
-  || p.at(TokenKind::NONFIX)
+    || p.at(TokenKind::TYPE)
+    || p.at(TokenKind::DATATYPE)
+    || p.at(TokenKind::ABSTYPE)
+    || p.at(TokenKind::EXCEPTION)
+    || p.at(TokenKind::OPEN)
+    || p.at(TokenKind::INFIX)
+    || p.at(TokenKind::INFIXR)
+    || p.at(TokenKind::NONFIX)
 }
 fn str_dec(p: &mut Parser) -> Option<CompletedMarker> {
   let m = p.start();
   let mut outer = None;
 
-  let cm =
-  if p.at(TokenKind::STRUCTURE) {
+  let cm = if p.at(TokenKind::STRUCTURE) {
     p.bump();
     loop {
       p.expect_set(&IDENT);
@@ -483,25 +479,39 @@ fn str_dec(p: &mut Parser) -> Option<CompletedMarker> {
 
     let mut frames = Vec::new();
     frames.push(m);
+    let mut flag = false;
 
+    // loop to get new frames as long as we see "local"
     loop {
       if p.at(TokenKind::LOCAL) {
         let new = p.start();
         p.bump();
         frames.push(new)
+      } else if dec_ind_no_local(p) {
+        flag = true;
+      } else if p.at(TokenKind::STRUCTURE) {
+        flag = false;
       } else {
-        break;
+        p.error();
       }
     }
+
+    // while there are still frames left
+    while !frames.is_empty() {
+      if dec_ind_no_local(p) {
+        // its a dec
+      } else if p.at(TokenKind::STRUCTURE) {
+      }
+      let new_m = frames.pop(); // the most recent frame
+    }
+
     if dec_ind_no_local(p) {
       dec(p);
       p.expect(TokenKind::IN);
       dec(p);
       p.expect(TokenKind::END);
     } else if p.at(TokenKind::STRUCTURE) {
-
     } else if p.at(TokenKind::LOCAL) {
-
     }
     str_dec(p)?;
     p.expect(TokenKind::IN);
@@ -509,8 +519,8 @@ fn str_dec(p: &mut Parser) -> Option<CompletedMarker> {
     p.expect(TokenKind::END);
     m.complete(p, SyntaxKind::STRDEC_LOCAL)
   } else {
+    todo!()
+  };
 
-  }
   Some(cm)
 }
-
