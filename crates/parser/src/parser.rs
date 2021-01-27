@@ -129,13 +129,6 @@ impl<'t, 'input> Parser<'t, 'input> {
     self.peek().is_none()
   }
 
-  pub(crate) fn at_rem(&mut self, kind: TokenKind) -> bool {
-    if self.at(kind) {
-      p.bump();
-    }
-    self.at(kind)
-  }
-
   pub(crate) fn at_op(&mut self) -> Result<&OpInfo, ()> {
     let Token { text, .. } = self.source.peek_token().ok_or(())?;
     todo!(r#"probably should add a "infix operator" class to `expected_kinds` on failure?"#);

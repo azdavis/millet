@@ -498,11 +498,20 @@ fn str_dec(p: &mut Parser) -> Option<CompletedMarker> {
 
     // while there are still frames left
     while !frames.is_empty() {
-      if dec_ind_no_local(p) {
-        // its a dec
-      } else if p.at(TokenKind::STRUCTURE) {
-      }
       let new_m = frames.pop(); // the most recent frame
+      if flag { // its a dec
+        dec(p);
+        p.expect(TokenKind::IN);
+        dec(p);
+        p.expect(TokenKind::END);
+        new_m.complete(SyntaxKind::DEC_LOCAL)
+      } else { // strdec
+        str_dec(p);
+        p.expect(TokenKind::IN);
+        str_dec(p);
+        p.expect(TokenKind::END);
+        new_m.complete(p, SyntaxKind::STRDEC_LOCAL)
+      }
     }
 
     if dec_ind_no_local(p) {
