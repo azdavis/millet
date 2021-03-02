@@ -265,19 +265,19 @@ impl<'s> TokenMaker<'s> {
           // no advance, to fulfill requires of real_after_dec
           let after_dec = self.real_after_dec()?;
           match self.bs.get(self.i) {
-            None => return mk_real(n, after_dec, 0),
+            None => return Ok(mk_real(n, after_dec, 0)),
             Some(&b'e') | Some(&b'E') => {
               self.i += 1;
               let exp = self.real_exp()?;
-              return mk_real(n, after_dec, exp);
+              return Ok(mk_real(n, after_dec, exp));
             }
-            Some(_) => return mk_real(n, after_dec, 0),
+            Some(_) => return Ok(mk_real(n, after_dec, 0)),
           }
         }
         Some(&b'e') | Some(&b'E') => {
           self.i += 1;
           let exp = self.real_exp()?;
-          return mk_real(n, 0.0, exp);
+          return Ok(mk_real(n, 0.0, exp));
         }
         Some(_) => return Ok(mk_int(n, starts_with_zero)),
       }
@@ -568,10 +568,10 @@ fn mk_int(n: i32, starts_with_zero: bool) -> Token {
   Token::DecInt(n, is_num_lab)
 }
 
-fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Result<Token, Error> {
+fn mk_real(before_dec: i32, after_dec: f64, exp: i32) -> Token {
   let before_dec: f64 = before_dec.into();
   let exp: f64 = exp.into();
-  Ok(Token::Real((before_dec + after_dec) * 10_f64.powf(exp)))
+  Token::Real((before_dec + after_dec) * 10_f64.powf(exp))
 }
 
 #[test]
