@@ -1,0 +1,250 @@
+Root = TopDec*
+
+TopDec =
+  StrDecTopDec
+| SigDec
+| FunctorDec
+
+StrDecTopDec = StrDec
+
+StrExp =
+  StructStrExp
+| PathStrExp
+| AscriptionStrExp
+| AppStrExp
+| LetStrExp
+
+StructStrExp = 'struct' StrDec 'end'
+PathStrExp = Path
+AscriptionStrExp = StrExp Ascription SigExp
+AppStrExp = 'Name' '(' StrExp ')'
+LetStrExp = 'let' StrDec 'in' StrExp 'end'
+
+Ascription = ':' | ':>'
+
+StrDec =
+  DecStrDec
+| StructureStrDec
+| LocalStrDec
+
+DecStrDec = Dec
+StructureStrDec = 'structure' StrBind*
+LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
+StrBind = 'Name' '=' StrExp 'and'?
+
+SigExp =
+  SigSigExp
+| NameSigExp
+| WhereSigExp
+
+SigSigExp = 'sig' Spec 'end'
+NameSigExp = 'Name'
+WhereSigExp = SigExp 'where' 'type' TyVarSeq Path '=' Ty
+
+SigDec = 'signature' SigBind*
+SigBind = 'Name' '=' SigExp 'and'?
+
+Spec =
+  ValSpec
+| TySpec
+| EqTySpec
+| DatatypeSpec
+| DatatypeCopySpec
+| ExSpec
+| StructureSpec
+| IncludeSpec
+| SeqSpec
+| SharingSpec
+
+ValSpec = 'val' ValDesc*
+TySpec = 'type' TyDesc*
+EqTySpec = 'eqtype' TySpec*
+DatatypeSpec = 'datatype' DatDesc*
+DatatypeCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
+ExSpec = 'exception' ExDesc*
+StructureSpec = 'structure' StrDesc*
+IncludeSpec = 'include' SigExp*
+SeqSpec = SpecInSeq*
+SharingSpec = Spec 'sharing' 'type' PathEq*
+
+ValDesc = 'Name' ':' Ty 'and'?
+TyDesc = TyVarSeq 'Name' 'and'?
+DatDesc = TyVarSeq 'Name' '=' ConDesc* 'and'?
+ConDesc = 'Name' OfTy? '|'?
+ExDesc = 'Name' OfTy? 'and'?
+StrDesc = 'Name' ':' SigExp 'and'?
+
+SpecInSeq = Spec ';'?
+PathEq = Path '='?
+
+FunctorDec = 'functor' FunctorBind*
+
+FunctorBind = functor_name:'Name' '(' param:'Name' ':' SigExp ')' '=' StrExp 'and'?
+
+Exp =
+  SConExp
+| PathExp
+| RecordExp
+| SelectorExp
+| TupleExp
+| ListExp
+| SeqExp
+| LetExp
+| AppExp
+| InfixExp
+| TypedExp
+| AndalsoExp
+| OrelseExp
+| HandleExp
+| RaiseExp
+| IfExp
+| WhileExp
+| CaseExp
+| FnExp
+
+SConExp = SCon
+PathExp = 'op'? Path
+RecordExp = '{' ExpRow '}'
+SelectorExp = '#' Lab
+TupleExp = '(' ExpArg ')'
+ListExp = '[' ExpArg ']'
+SeqExp = '(' ExpInSeq ')'
+LetExp = 'let' Dec 'in' ExpInSeq* 'end'
+AppExp = func:Exp arg:Exp
+InfixExp = lhs:Exp 'Name' rhs:Exp
+TypedExp = Exp ':' Ty
+AndalsoExp = lhs:Exp 'andalso' rhs:Exp
+OrelseExp = lhs:Exp 'andalso' rhs:Exp
+HandleExp = Exp 'handle' Matcher
+RaiseExp = 'raise' Exp
+IfExp = 'if' cond:Exp 'then' yes:Exp 'else' no:Exp
+WhileExp = 'while' cond:Exp 'do' body:Exp
+CaseExp = 'case' Exp 'of' Matcher
+FnExp = 'fn' Matcher
+
+ExpRow = Lab '=' Exp ','?
+ExpArg = Exp ','?
+ExpInSeq = Exp ';'?
+
+// call it this instead of Match to avoid clash with rust kw
+Matcher = MatchRule*
+MatchRule = Pat '=>' Exp '|'?
+
+Dec =
+  ValDec
+| FunDec
+| TyDec
+| DatatypeDec
+| DatatypeCopyDec
+| AbstypeDec
+| ExDec
+| LocalDec
+| OpenDec
+| SeqDec
+| InfixDec
+| InfixrDec
+| NonfixDec
+
+ValDec = 'val' TyVarSeq ValBind*
+FunDec = 'fun' TyVarSeq FunBind*
+TyDec = 'type' TyBind*
+DatatypeDec = 'datatype' DatBind* WithType?
+DatatypeCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
+AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
+ExDec = 'exception' ExBind*
+LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
+OpenDec = 'open' Path*
+SeqDec = DecInSeq*
+InfixDec = 'infix' 'IntLit'? 'Name'*
+InfixrDec = 'infixr' 'IntLit'? 'Name'*
+NonfixDec = 'nonfix' 'Name'*
+
+ValBind = 'rec'? Pat '=' Exp 'and'?
+FunBind = FunBindCase* 'and'?
+FunBindCase = 'op'? 'Name' Pat* TyAnnotation? '=' Exp '|'?
+TyBind = TyVarSeq 'Name' '=' Ty 'and'?
+DatBind = TyVarSeq 'Name' '=' ConBind* 'and'?
+ConBind = 'op'? 'Name' OfTy? '|'?
+ExBind = NewExBind | CopyExpBind
+NewExBind = 'op'? 'Name' OfTy? 'and'?
+CopyExpBind = 'op'? 'Name' '=' Path 'and'?
+
+DecInSeq = Dec ';'?
+WithType = 'withtype' TyBind*
+
+Pat =
+  WildcardPat
+| SConPat
+| ConPat
+| RecordPat
+| TuplePat
+| ListPat
+| InfixPat
+| TypedPat
+| AsPat
+
+WildcardPat = '_'
+SConPat = SCon
+ConPat = 'op'? Path Pat?
+RecordPat = '{' PatRow* '}'
+TuplePat = '(' PatArg* ')'
+ListPat = '[' PatArg* ']'
+InfixPat = lhs:Pat 'Name' rhs:Pat
+TypedPat = Pat TyAnnotation
+AsPat = 'op'? 'Name' TyAnnotation? AsPatTail
+
+PatRow =
+  RestPatRow
+| LabAndPatPatRow
+| LabPatRow
+
+RestPatRow = '...' ','?
+LabAndPatPatRow = Lab '=' Pat ','?
+LabPatRow = 'Name' TyAnnotation? AsPatTail? ','?
+
+TyAnnotation = ':' Ty
+AsPatTail = 'as' Pat
+PatArg = Pat ','?
+
+Ty =
+  TyVarTy
+| RecordTy
+| ConTy
+| TupleTy
+| FnTy
+| ParenTy
+
+TyVarTy = 'TyVar'
+RecordTy = '{' TyRow* '}'
+ConTy = TySeq? Path
+TupleTy = TyStar*
+FnTy = param:Ty '->' res:Ty
+ParenTy = '(' Ty ')'
+
+TyStar = Ty '*'?
+TyRow = Lab ':' Ty ','?
+
+OfTy = 'of' Ty
+
+Path = NameDot*
+NameDot = 'Name' '.'?
+
+TySeq = OneTy | ManyTy
+OneTy = Ty
+ManyTy = '(' TyArg* ')'
+TyArg = Ty ','?
+
+TyVarSeq = TyVarTy | ManyTyVar
+ManyTyVar = '(' TyVarArg* ')'
+TyVarArg = 'TyVar' ','?
+
+Lab = NameLab | IntLitLab
+NameLab = 'Name'
+IntLitLab = 'IntLit'
+
+SCon =
+  'IntLit'
+| 'RealLit'
+| 'WordLit'
+| 'CharLit'
+| 'StringLit'

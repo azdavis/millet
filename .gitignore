@@ -1,6 +1,8 @@
 *.tmp
 *.vsix
 /.vscode/cspell.json
+/crates/syntax/src/ast.rs
+/crates/syntax/src/kind.rs
 /extensions/vscode/node_modules
 /extensions/vscode/out
 /sml97-defn.pdf

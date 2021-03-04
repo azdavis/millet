@@ -1,0 +1,19 @@
+[package]
+name = "syntax"
+version = "0.1.0"
+authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
+edition = "2018"
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+event-parse = { git = "https://github.com/azdavis/language-server-util.git" }
+rowan = "0.12"
+
+[build-dependencies]
+char-name = { git = "https://github.com/azdavis/language-server-util.git" }
+identifier-case = { git = "https://github.com/azdavis/language-server-util.git" }
+syntax-gen = { git = "https://github.com/azdavis/language-server-util.git" }
