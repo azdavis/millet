@@ -1,0 +1,13 @@
+[package]
+name = "lex"
+version = "0.1.0"
+authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
+edition = "2018"
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+syntax = { path = "../syntax" }

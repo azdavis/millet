@@ -125,6 +125,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "lex"
+version = "0.1.0"
+dependencies = [
+ "syntax",
+]
+
+[[package]]
 name = "lsp-types"
 version = "0.74.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
