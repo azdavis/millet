@@ -44,16 +44,18 @@ WhereSigExp = SigExp 'where' 'type' TyVarSeq Path '=' Ty
 SigDec = 'signature' SigBind*
 SigBind = 'Name' '=' SigExp 'and'?
 
-Spec =
+Spec = SpecInSeq*
+SpecInSeq = SpecOne ';'?
+
+SpecOne =
   ValSpec
 | TySpec
 | EqTySpec
 | DatatypeSpec
 | DatatypeCopySpec
 | ExSpec
-| StructureSpec
+| StrSpec
 | IncludeSpec
-| SeqSpec
 | SharingSpec
 
 ValSpec = 'val' ValDesc*
@@ -62,10 +64,9 @@ EqTySpec = 'eqtype' TySpec*
 DatatypeSpec = 'datatype' DatDesc*
 DatatypeCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 ExSpec = 'exception' ExDesc*
-StructureSpec = 'structure' StrDesc*
+StrSpec = 'structure' StrDesc*
 IncludeSpec = 'include' SigExp*
-SeqSpec = SpecInSeq*
-SharingSpec = Spec 'sharing' 'type' PathEq*
+SharingSpec = SpecOne 'sharing' 'type' PathEq*
 
 ValDesc = 'Name' ':' Ty 'and'?
 TyDesc = TyVarSeq 'Name' 'and'?
@@ -74,11 +75,9 @@ ConDesc = 'Name' OfTy? '|'?
 ExDesc = 'Name' OfTy? 'and'?
 StrDesc = 'Name' ':' SigExp 'and'?
 
-SpecInSeq = Spec ';'?
 PathEq = Path '='?
 
 FunctorDec = 'functor' FunctorBind*
-
 FunctorBind = functor_name:'Name' '(' param:'Name' ':' SigExp ')' '=' StrExp 'and'?
 
 Exp =
@@ -108,7 +107,7 @@ RecordExp = '{' ExpRow '}'
 SelectorExp = '#' Lab
 TupleExp = '(' ExpArg ')'
 ListExp = '[' ExpArg ']'
-SeqExp = '(' ExpInSeq ')'
+SeqExp = '(' ExpInSeq* ')'
 LetExp = 'let' Dec 'in' ExpInSeq* 'end'
 AppExp = func:Exp arg:Exp
 InfixExp = lhs:Exp 'Name' rhs:Exp
@@ -130,7 +129,10 @@ ExpInSeq = Exp ';'?
 Matcher = MatchRule*
 MatchRule = Pat '=>' Exp '|'?
 
-Dec =
+Dec = DecInSeq*
+DecInSeq = DecOne ';'?
+
+DecOne =
   ValDec
 | FunDec
 | TyDec
@@ -140,7 +142,6 @@ Dec =
 | ExDec
 | LocalDec
 | OpenDec
-| SeqDec
 | InfixDec
 | InfixrDec
 | NonfixDec
@@ -154,7 +155,6 @@ AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
 ExDec = 'exception' ExBind*
 LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
 OpenDec = 'open' Path*
-SeqDec = DecInSeq*
 InfixDec = 'infix' 'IntLit'? 'Name'*
 InfixrDec = 'infixr' 'IntLit'? 'Name'*
 NonfixDec = 'nonfix' 'Name'*
@@ -169,7 +169,6 @@ ExBind = NewExBind | CopyExpBind
 NewExBind = 'op'? 'Name' OfTy? 'and'?
 CopyExpBind = 'op'? 'Name' '=' Path 'and'?
 
-DecInSeq = Dec ';'?
 WithType = 'withtype' TyBind*
 
 Pat =
