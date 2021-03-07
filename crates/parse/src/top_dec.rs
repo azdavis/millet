@@ -36,16 +36,11 @@ fn str_dec(p: &mut Parser<'_, SK>) -> Exited {
   let ent = p.enter();
   if p.at(SK::StructureKw) {
     p.bump();
-    loop {
+    many_sep(p, SK::AndKw, SK::StrBind, |p| {
       p.eat(SK::Name);
       p.eat(SK::Eq);
       str_exp(p);
-      if p.at(SK::AndKw) {
-        p.bump();
-      } else {
-        break;
-      }
-    }
+    });
     p.exit(ent, SK::StructureStrDec)
   } else if p.at(SK::LocalKw) {
     // LocalStrDec is a 'superset' of LocalDec, so always use the former
