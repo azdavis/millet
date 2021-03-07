@@ -10,9 +10,16 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_, SK>) -> Exited {
 }
 
 pub(crate) fn of_ty(p: &mut Parser<'_, SK>) -> Option<Exited> {
-  if p.at(SK::OfKw) {
+  tok_ty(p, SK::OfKw, SK::OfTy)
+}
+
+#[must_use]
+fn tok_ty(p: &mut Parser<'_, SK>, tok: SK, wrap: SK) -> Option<Exited> {
+  if p.at(tok) {
+    let ent = p.enter();
     p.bump();
-    Some(ty(p))
+    ty(p);
+    Some(p.exit(ent, wrap))
   } else {
     None
   }
