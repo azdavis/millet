@@ -1,6 +1,6 @@
 use crate::dec::dec;
 use crate::ty::{of_ty, ty, ty_var_seq};
-use crate::util::{many_sep, must, path};
+use crate::util::{many_sep, maybe_semi_sep, must, path};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
@@ -198,17 +198,6 @@ fn spec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
 
 fn spec(p: &mut Parser<'_, SK>) -> Exited {
   let ent = p.enter();
-  // similar to many_sep, but allows the separator (`;`) to not be present
-  loop {
-    let ent = p.enter();
-    if spec_one(p).is_none() {
-      p.abandon(ent);
-      break;
-    }
-    if p.at(SK::Semicolon) {
-      p.bump();
-    }
-    p.exit(ent, SK::SpecInSeq);
-  }
+  maybe_semi_sep(p, SK::SpecInSeq, spec_one);
   p.exit(ent, SK::Spec)
 }

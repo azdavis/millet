@@ -10,6 +10,27 @@ where
   }
 }
 
+/// similar to `many_sep`, but:
+/// - always uses `;` as the separator
+/// - allows the separator to not be present
+/// - in return, `f` must say whether it parsed anything
+pub(crate) fn maybe_semi_sep<F>(p: &mut Parser<'_, SK>, wrap: SK, mut f: F)
+where
+  F: FnMut(&mut Parser<'_, SK>) -> Option<Exited>,
+{
+  loop {
+    let ent = p.enter();
+    if f(p).is_none() {
+      p.abandon(ent);
+      break;
+    }
+    if p.at(SK::Semicolon) {
+      p.bump();
+    }
+    p.exit(ent, wrap);
+  }
+}
+
 /// stops if the sep is not found
 pub(crate) fn many_sep<F>(p: &mut Parser<'_, SK>, sep: SK, wrap: SK, mut f: F)
 where
