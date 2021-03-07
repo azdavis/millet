@@ -51,8 +51,8 @@ SpecOne =
   ValSpec
 | TySpec
 | EqTySpec
-| DatatypeSpec
-| DatatypeCopySpec
+| DatSpec
+| DatCopySpec
 | ExSpec
 | StrSpec
 | IncludeSpec
@@ -61,8 +61,8 @@ SpecOne =
 ValSpec = 'val' ValDesc*
 TySpec = 'type' TyDesc*
 EqTySpec = 'eqtype' TySpec*
-DatatypeSpec = 'datatype' DatDesc*
-DatatypeCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
+DatSpec = 'datatype' DatDesc*
+DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 ExSpec = 'exception' ExDesc*
 StrSpec = 'structure' StrDesc*
 IncludeSpec = 'include' SigExp*
@@ -136,8 +136,8 @@ DecOne =
   ValDec
 | FunDec
 | TyDec
-| DatatypeDec
-| DatatypeCopyDec
+| DatDec
+| DatCopyDec
 | AbstypeDec
 | ExDec
 | LocalDec
@@ -149,8 +149,8 @@ DecOne =
 ValDec = 'val' TyVarSeq ValBind*
 FunDec = 'fun' TyVarSeq FunBind*
 TyDec = 'type' TyBind*
-DatatypeDec = 'datatype' DatBind* WithType?
-DatatypeCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
+DatDec = 'datatype' DatBind* WithType?
+DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
 ExDec = 'exception' ExBind*
 LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'

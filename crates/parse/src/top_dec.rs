@@ -153,7 +153,7 @@ fn spec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
         of_ty(p);
       });
     });
-    p.exit(ent, SK::DatatypeSpec)
+    p.exit(ent, SK::DatSpec)
   } else if p.at(SK::ExceptionKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ExDesc, |p| {
