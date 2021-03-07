@@ -165,10 +165,10 @@ FunBindCase = 'op'? 'Name' Pat* TyAnnotation? '=' Exp '|'?
 TyBind = TyVarSeq 'Name' '=' Ty 'and'?
 DatBind = TyVarSeq 'Name' '=' ConBind* 'and'?
 ConBind = 'op'? 'Name' OfTy? '|'?
-ExBind = NewExBind | CopyExpBind
-NewExBind = 'op'? 'Name' OfTy? 'and'?
-CopyExpBind = 'op'? 'Name' '=' Path 'and'?
+ExBind = 'op'? 'Name' ExBindInner? 'and'?
 
+ExBindInner = OfTy | EqPath
+EqPath = '=' Path
 WithType = 'withtype' TyBind*
 
 Pat =
@@ -201,7 +201,6 @@ RestPatRow = '...' ','?
 LabAndPatPatRow = Lab '=' Pat ','?
 LabPatRow = 'Name' TyAnnotation? AsPatTail? ','?
 
-TyAnnotation = ':' Ty
 AsPatTail = 'as' Pat
 PatArg = Pat ','?
 
@@ -224,6 +223,7 @@ TyStar = Ty '*'?
 TyRow = Lab ':' Ty ','?
 
 OfTy = 'of' Ty
+TyAnnotation = ':' Ty
 
 Path = NameDot*
 NameDot = 'Name' '.'?
