@@ -150,7 +150,7 @@ fn spec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
       p.eat(SK::Eq);
       many_sep(p, SK::Bar, SK::ConDesc, |p| {
         p.eat(SK::Name);
-        of_ty(p);
+        let _ = of_ty(p);
       });
     });
     p.exit(ent, SK::DatSpec)
@@ -158,7 +158,7 @@ fn spec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
     p.bump();
     many_sep(p, SK::AndKw, SK::ExDesc, |p| {
       p.eat(SK::Name);
-      of_ty(p);
+      let _ = of_ty(p);
     });
     p.exit(ent, SK::ExSpec)
   } else if p.at(SK::StructureKw) {

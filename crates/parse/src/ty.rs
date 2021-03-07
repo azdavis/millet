@@ -9,6 +9,7 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_, SK>) -> Exited {
   todo!()
 }
 
+#[must_use]
 pub(crate) fn of_ty(p: &mut Parser<'_, SK>) -> Option<Exited> {
   tok_ty(p, SK::OfKw, SK::OfTy)
 }
