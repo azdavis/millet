@@ -67,6 +67,7 @@ pub(crate) fn path(p: &mut Parser<'_, SK>) -> Option<Exited> {
   Some(p.exit(e, SK::Path))
 }
 
+#[must_use]
 pub(crate) fn scon(p: &mut Parser<'_, SK>) -> bool {
   if p.at(SK::IntLit)
     || p.at(SK::RealLit)

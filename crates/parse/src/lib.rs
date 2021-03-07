@@ -11,6 +11,8 @@ use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::{SyntaxKind as SK, SyntaxNode};
 
 mod dec;
+mod exp;
+mod pat;
 mod root;
 mod top_dec;
 mod ty;

@@ -15,6 +15,11 @@ pub(crate) fn of_ty(p: &mut Parser<'_, SK>) -> Option<Exited> {
 }
 
 #[must_use]
+pub(crate) fn ty_annotation(p: &mut Parser<'_, SK>) -> Option<Exited> {
+  tok_ty(p, SK::Colon, SK::TyAnnotation)
+}
+
+#[must_use]
 fn tok_ty(p: &mut Parser<'_, SK>, tok: SK, wrap: SK) -> Option<Exited> {
   if p.at(tok) {
     let ent = p.enter();
