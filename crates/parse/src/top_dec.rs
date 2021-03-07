@@ -70,7 +70,7 @@ fn str_exp(p: &mut Parser<'_, SK>) -> Exited {
     p.eat(SK::EndKw);
     p.exit(ent, SK::LetStrExp)
   } else if p.at(SK::Name) && p.peek_n(1).map_or(false, |x| x.kind == SK::Dot) {
-    path(p);
+    must(p, path);
     p.exit(ent, SK::PathStrExp)
   } else {
     p.eat(SK::Name);
@@ -108,7 +108,7 @@ fn sig_exp(p: &mut Parser<'_, SK>) -> Option<Exited> {
     p.bump();
     p.eat(SK::TypeKw);
     ty_var_seq(p);
-    path(p);
+    must(p, path);
     p.eat(SK::Eq);
     ty(p);
     ex = p.exit(ent, SK::WhereSigExp);
@@ -184,7 +184,7 @@ fn spec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
     p.bump();
     p.eat(SK::TypeKw);
     many_sep(p, SK::Eq, SK::PathEq, |p| {
-      path(p);
+      must(p, path);
     });
     ex = p.exit(ent, SK::SharingSpec);
   }

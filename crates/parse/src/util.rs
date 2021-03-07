@@ -49,9 +49,13 @@ where
   }
 }
 
-pub(crate) fn path(p: &mut Parser<'_, SK>) -> Exited {
+#[must_use]
+pub(crate) fn path(p: &mut Parser<'_, SK>) -> Option<Exited> {
+  if !p.at(SK::Name) {
+    return None;
+  }
   let e = p.enter();
-  p.eat(SK::Name);
+  p.bump();
   loop {
     if p.at(SK::Dot) {
       p.bump();
@@ -60,7 +64,7 @@ pub(crate) fn path(p: &mut Parser<'_, SK>) -> Exited {
       break;
     }
   }
-  p.exit(e, SK::Path)
+  Some(p.exit(e, SK::Path))
 }
 
 pub(crate) fn scon(p: &mut Parser<'_, SK>) -> bool {
