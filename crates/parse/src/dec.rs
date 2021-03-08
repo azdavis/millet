@@ -30,7 +30,7 @@ fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
     p.bump();
     ty_var_seq(p);
     many_sep(p, SK::AndKw, SK::FunBind, |p| {
-      many_sep(p, SK::Bar, SK::FunBindCase, |p| {
+      many_sep(p, SK::Bar, SK::PrefixFunBindCase, |p| {
         if p.at(SK::OpKw) {
           p.bump();
         }

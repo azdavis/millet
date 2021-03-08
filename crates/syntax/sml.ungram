@@ -161,11 +161,14 @@ NonfixDec = 'nonfix' 'Name'*
 
 ValBind = 'rec'? Pat '=' Exp 'and'?
 FunBind = FunBindCase* 'and'?
-FunBindCase = 'op'? 'Name' Pat* TyAnnotation? '=' Exp '|'?
 TyBind = TyVarSeq 'Name' '=' Ty 'and'?
 DatBind = TyVarSeq 'Name' '=' ConBind* 'and'?
 ConBind = 'op'? 'Name' OfTy? '|'?
 ExBind = 'op'? 'Name' ExBindInner? 'and'?
+
+FunBindCase = PrefixFunBindCase | InfixFunBindCase
+PrefixFunBindCase = 'op'? 'Name' Pat* TyAnnotation? '=' Exp '|'?
+InfixFunBindCase = '('? lhs:Pat 'Name' rhs:Pat ')'? Pat* TyAnnotation? '=' Exp '|'?
 
 ExBindInner = OfTy | EqPath
 EqPath = '=' Path
