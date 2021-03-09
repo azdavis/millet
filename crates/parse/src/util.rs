@@ -55,9 +55,9 @@ pub(crate) enum Assoc {
   Right,
 }
 
-pub(crate) fn must<F>(p: &mut Parser<'_, SK>, f: F)
+pub(crate) fn must<'a, F>(p: &mut Parser<'a, SK>, f: F)
 where
-  F: FnOnce(&mut Parser<'_, SK>) -> Option<Exited>,
+  F: FnOnce(&mut Parser<'a, SK>) -> Option<Exited>,
 {
   if f(p).is_none() {
     p.error();
@@ -68,9 +68,9 @@ where
 /// - always uses `;` as the separator
 /// - allows the separator to not be present
 /// - in return, `f` must say whether it parsed anything
-pub(crate) fn maybe_semi_sep<F>(p: &mut Parser<'_, SK>, wrap: SK, mut f: F)
+pub(crate) fn maybe_semi_sep<'a, F>(p: &mut Parser<'a, SK>, wrap: SK, mut f: F)
 where
-  F: FnMut(&mut Parser<'_, SK>) -> Option<Exited>,
+  F: FnMut(&mut Parser<'a, SK>) -> Option<Exited>,
 {
   loop {
     let ent = p.enter();
@@ -86,9 +86,9 @@ where
 }
 
 /// stops if the sep is not found
-pub(crate) fn many_sep<F>(p: &mut Parser<'_, SK>, sep: SK, wrap: SK, mut f: F)
+pub(crate) fn many_sep<'a, F>(p: &mut Parser<'a, SK>, sep: SK, wrap: SK, mut f: F)
 where
-  F: FnMut(&mut Parser<'_, SK>),
+  F: FnMut(&mut Parser<'a, SK>),
 {
   loop {
     let ent = p.enter();

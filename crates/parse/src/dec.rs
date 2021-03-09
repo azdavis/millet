@@ -1,18 +1,18 @@
 use crate::exp::exp;
 use crate::pat::pat;
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{many_sep, maybe_semi_sep, must, path};
+use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn dec(p: &mut Parser<'_, SK>) -> Exited {
+pub(crate) fn dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
-  maybe_semi_sep(p, SK::DecInSeq, dec_one);
+  maybe_semi_sep(p, SK::DecInSeq, |p| dec_one(p, cx));
   p.exit(ent, SK::Dec)
 }
 
 #[must_use]
-fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
+fn dec_one<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Option<Exited> {
   let ent = p.enter();
   let ex = if p.at(SK::ValKw) {
     p.bump();
@@ -21,9 +21,9 @@ fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
       if p.at(SK::RecKw) {
         p.bump();
       }
-      must(p, pat);
+      must(p, |p| pat(p, cx));
       p.eat(SK::Eq);
-      exp(p);
+      exp(p, cx);
     });
     p.exit(ent, SK::ValDec)
   } else if p.at(SK::FunKw) {
@@ -35,12 +35,12 @@ fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
           p.bump();
         }
         p.eat(SK::Name);
-        while pat(p).is_some() {
+        while pat(p, cx).is_some() {
           // no body
         }
         let _ = ty_annotation(p);
         p.eat(SK::Eq);
-        exp(p);
+        exp(p, cx);
       })
     });
     p.exit(ent, SK::FunDec)
@@ -57,7 +57,7 @@ fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
     p.bump();
     dat_binds_with_type(p);
     p.eat(SK::WithKw);
-    dec(p);
+    dec(p, cx);
     p.eat(SK::EndKw);
     p.exit(ent, SK::AbstypeDec)
   } else if p.at(SK::ExceptionKw) {
@@ -77,9 +77,9 @@ fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
     p.exit(ent, SK::ExDec)
   } else if p.at(SK::LocalKw) {
     p.bump();
-    dec(p);
+    dec(p, cx);
     p.eat(SK::InKw);
-    dec(p);
+    dec(p, cx);
     p.eat(SK::EndKw);
     p.exit(ent, SK::LocalDec)
   } else if p.at(SK::OpenKw) {
@@ -93,18 +93,18 @@ fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
     if p.at(SK::IntLit) {
       p.bump();
     }
-    names(p);
+    names(p, cx);
     p.exit(ent, SK::InfixDec)
   } else if p.at(SK::InfixrKw) {
     p.bump();
     if p.at(SK::IntLit) {
       p.bump();
     }
-    names(p);
+    names(p, cx);
     p.exit(ent, SK::InfixrDec)
   } else if p.at(SK::NonfixKw) {
     p.bump();
-    names(p);
+    names(p, cx);
     p.exit(ent, SK::NonfixDec)
   } else {
     p.abandon(ent);
@@ -114,7 +114,7 @@ fn dec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
 }
 
 /// TODO change the fixity in the state
-fn names(p: &mut Parser<'_, SK>) {
+fn names<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) {
   p.eat(SK::Name);
   while p.at(SK::Name) {
     p.bump();

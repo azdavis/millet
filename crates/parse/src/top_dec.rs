@@ -1,10 +1,10 @@
 use crate::dec::dec;
 use crate::ty::{of_ty, ty, ty_var_seq};
-use crate::util::{many_sep, maybe_semi_sep, must, path};
+use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn top_dec(p: &mut Parser<'_, SK>) -> Exited {
+pub(crate) fn top_dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
   if p.at(SK::FunctorKw) {
     p.bump();
@@ -16,7 +16,7 @@ pub(crate) fn top_dec(p: &mut Parser<'_, SK>) -> Exited {
       must(p, sig_exp);
       p.eat(SK::RRound);
       p.eat(SK::Eq);
-      str_exp(p);
+      str_exp(p, cx);
     });
     p.exit(ent, SK::FunctorDec)
   } else if p.at(SK::SignatureKw) {
@@ -28,45 +28,45 @@ pub(crate) fn top_dec(p: &mut Parser<'_, SK>) -> Exited {
     });
     p.exit(ent, SK::SigDec)
   } else {
-    str_dec(p)
+    str_dec(p, cx)
   }
 }
 
-fn str_dec(p: &mut Parser<'_, SK>) -> Exited {
+fn str_dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
   if p.at(SK::StructureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrBind, |p| {
       p.eat(SK::Name);
       p.eat(SK::Eq);
-      str_exp(p);
+      str_exp(p, cx);
     });
     p.exit(ent, SK::StructureStrDec)
   } else if p.at(SK::LocalKw) {
     // LocalStrDec is a 'superset' of LocalDec, so always use the former
     p.bump();
-    str_dec(p);
+    str_dec(p, cx);
     p.eat(SK::InKw);
-    str_dec(p);
+    str_dec(p, cx);
     p.eat(SK::EndKw);
     p.exit(ent, SK::LocalStrDec)
   } else {
-    dec(p)
+    dec(p, cx)
   }
 }
 
-fn str_exp(p: &mut Parser<'_, SK>) -> Exited {
+fn str_exp<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
   let mut ex = if p.at(SK::StructKw) {
     p.bump();
-    str_dec(p);
+    str_dec(p, cx);
     p.eat(SK::EndKw);
     p.exit(ent, SK::StructStrExp)
   } else if p.at(SK::LetKw) {
     p.bump();
-    str_dec(p);
+    str_dec(p, cx);
     p.eat(SK::InKw);
-    str_exp(p);
+    str_exp(p, cx);
     p.eat(SK::EndKw);
     p.exit(ent, SK::LetStrExp)
   } else if p.at(SK::Name) && p.peek_n(1).map_or(false, |x| x.kind == SK::Dot) {
@@ -75,7 +75,7 @@ fn str_exp(p: &mut Parser<'_, SK>) -> Exited {
   } else {
     p.eat(SK::Name);
     p.eat(SK::LRound);
-    str_exp(p);
+    str_exp(p, cx);
     p.eat(SK::RRound);
     p.exit(ent, SK::AppStrExp)
   };
