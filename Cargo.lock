@@ -203,6 +203,7 @@ dependencies = [
 name = "parse"
 version = "0.1.0"
 dependencies = [
+ "rustc-hash",
  "syntax",
 ]
 

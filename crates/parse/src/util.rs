@@ -1,5 +1,59 @@
+use rustc_hash::FxHashMap;
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
+
+#[derive(Debug)]
+pub(crate) struct OpCx<'a>(FxHashMap<&'a str, OpInfo>);
+
+impl<'a> Default for OpCx<'a> {
+  fn default() -> Self {
+    let mut m = FxHashMap::default();
+    m.insert("::", OpInfo::right(5));
+    m.insert("=", OpInfo::left(4));
+    m.insert(":=", OpInfo::left(3));
+    m.insert("div", OpInfo::left(7));
+    m.insert("mod", OpInfo::left(7));
+    m.insert("*", OpInfo::left(7));
+    m.insert("/", OpInfo::left(7));
+    m.insert("+", OpInfo::left(6));
+    m.insert("-", OpInfo::left(6));
+    m.insert("<", OpInfo::left(4));
+    m.insert(">", OpInfo::left(4));
+    m.insert("<=", OpInfo::left(4));
+    m.insert(">=", OpInfo::left(4));
+    Self(m)
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct OpInfo {
+  num: usize,
+  assoc: Assoc,
+}
+
+impl OpInfo {
+  /// Returns a new OpInfo with left associativity.
+  pub(crate) fn left(num: usize) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Left,
+    }
+  }
+
+  /// Returns a new OpInfo with right associativity.
+  pub(crate) fn right(num: usize) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Right,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Assoc {
+  Left,
+  Right,
+}
 
 pub(crate) fn must<F>(p: &mut Parser<'_, SK>, f: F)
 where

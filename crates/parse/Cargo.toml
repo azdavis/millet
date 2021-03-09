@@ -11,3 +11,4 @@ test = false
 
 [dependencies]
 syntax = { path = "../syntax" }
+rustc-hash = "1"
