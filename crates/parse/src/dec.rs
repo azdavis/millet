@@ -1,7 +1,7 @@
 use crate::exp::exp;
 use crate::pat::pat;
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx};
+use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx, OpInfo};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
@@ -90,21 +90,23 @@ fn dec_one<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Option<Exited> {
     p.exit(ent, SK::OpenDec)
   } else if p.at(SK::InfixKw) {
     p.bump();
-    if p.at(SK::IntLit) {
-      p.bump();
+    let num = fixity(p);
+    for name in names(p) {
+      cx.insert(name, OpInfo::left(num));
     }
-    names(p, cx);
     p.exit(ent, SK::InfixDec)
   } else if p.at(SK::InfixrKw) {
     p.bump();
-    if p.at(SK::IntLit) {
-      p.bump();
+    let num = fixity(p);
+    for name in names(p) {
+      cx.insert(name, OpInfo::right(num));
     }
-    names(p, cx);
     p.exit(ent, SK::InfixrDec)
   } else if p.at(SK::NonfixKw) {
     p.bump();
-    names(p, cx);
+    for name in names(p) {
+      cx.remove(name);
+    }
     p.exit(ent, SK::NonfixDec)
   } else {
     p.abandon(ent);
@@ -113,12 +115,29 @@ fn dec_one<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Option<Exited> {
   Some(ex)
 }
 
-/// TODO change the fixity in the state
-fn names<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) {
-  p.eat(SK::Name);
-  while p.at(SK::Name) {
-    p.bump();
+fn fixity(p: &mut Parser<'_, SK>) -> usize {
+  if p.at(SK::IntLit) {
+    match p.bump().text.parse::<usize>() {
+      Ok(x) => x,
+      Err(e) => {
+        p.error_with(format!("invalid fixity: {}", e));
+        0
+      }
+    }
+  } else {
+    0
   }
+}
+
+fn names<'a>(p: &mut Parser<'a, SK>) -> Vec<&'a str> {
+  let mut ret = Vec::new();
+  while p.at(SK::Name) {
+    ret.push(p.bump().text);
+  }
+  if ret.is_empty() {
+    p.error();
+  }
+  ret
 }
 
 fn dat_binds_with_type(p: &mut Parser<'_, SK>) {

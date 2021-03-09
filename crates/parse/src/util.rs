@@ -25,6 +25,16 @@ impl<'a> Default for OpCx<'a> {
   }
 }
 
+impl<'a> OpCx<'a> {
+  pub(crate) fn insert(&mut self, key: &'a str, val: OpInfo) {
+    self.0.insert(key, val);
+  }
+
+  pub(crate) fn remove(&mut self, key: &'a str) {
+    self.0.remove(key);
+  }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OpInfo {
   num: usize,
