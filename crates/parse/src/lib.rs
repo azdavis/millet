@@ -34,6 +34,8 @@ pub struct Error {
   pub range: TextRange,
   /// The tokens that would have been allowed.
   pub expected: Expected,
+  /// The message (if any).
+  pub message: Option<String>,
 }
 
 /// A list of expected tokens.
@@ -93,10 +95,11 @@ impl Sink<SK> for BuilderSink {
     self.builder.finish_node();
   }
 
-  fn error(&mut self, kinds: Vec<SK>) {
+  fn error(&mut self, kinds: Vec<SK>, message: Option<String>) {
     self.errors.push(Error {
       range: self.range.clone().expect("error with no tokens"),
       expected: Expected { kinds },
+      message,
     });
   }
 }

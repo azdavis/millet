@@ -27,7 +27,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#ff7a74349316632e9eabe14f7bedba56a864daea"
+source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
 
 [[package]]
 name = "codespan-reporting"
@@ -75,7 +75,7 @@ checksum = "9bda8e21c04aca2ae33ffc2fd8c23134f3cac46db123ba97bd9d3f3b8a4a85e1"
 [[package]]
 name = "event-parse"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#ff7a74349316632e9eabe14f7bedba56a864daea"
+source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
 dependencies = [
  "drop_bomb",
 ]
@@ -99,7 +99,7 @@ checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#ff7a74349316632e9eabe14f7bedba56a864daea"
+source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
 
 [[package]]
 name = "idna"
@@ -329,7 +329,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#ff7a74349316632e9eabe14f7bedba56a864daea"
+source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
 dependencies = [
  "identifier-case",
  "proc-macro2",
