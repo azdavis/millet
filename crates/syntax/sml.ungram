@@ -166,9 +166,10 @@ DatBind = TyVarSeq 'Name' '=' ConBind* 'and'?
 ConBind = 'op'? 'Name' OfTy? '|'?
 ExBind = 'op'? 'Name' ExBindInner? 'and'?
 
-FunBindCase = PrefixFunBindCase | InfixFunBindCase
-PrefixFunBindCase = 'op'? 'Name' Pat* TyAnnotation? '=' Exp '|'?
-InfixFunBindCase = '('? lhs:Pat 'Name' rhs:Pat ')'? Pat* TyAnnotation? '=' Exp '|'?
+FunBindCase = FunBindCaseHead Pat* TyAnnotation? '=' Exp '|'?
+FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
+PrefixFunBindCaseHead = 'op'? 'Name'
+InfixFunBindCaseHead = '('? lhs:Pat 'Name' rhs:Pat ')'?
 
 ExBindInner = OfTy | EqPath
 EqPath = '=' Path
