@@ -30,6 +30,10 @@ impl<'a> OpCx<'a> {
     self.0.insert(key, val);
   }
 
+  pub(crate) fn contains_key(&self, key: &'a str) -> bool {
+    self.0.contains_key(key)
+  }
+
   pub(crate) fn remove(&mut self, key: &'a str) {
     self.0.remove(key);
   }

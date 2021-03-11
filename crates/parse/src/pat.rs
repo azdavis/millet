@@ -6,3 +6,8 @@ use syntax::SyntaxKind as SK;
 pub(crate) fn pat<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) -> Option<Exited> {
   todo!()
 }
+
+#[must_use]
+pub(crate) fn at_pat<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) -> Option<Exited> {
+  todo!()
+}

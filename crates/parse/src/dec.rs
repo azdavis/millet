@@ -1,5 +1,5 @@
 use crate::exp::exp;
-use crate::pat::pat;
+use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx, OpInfo};
 use syntax::event_parse::{Exited, Parser};
@@ -31,12 +31,35 @@ fn dec_one<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Option<Exited> {
     ty_var_seq(p);
     many_sep(p, SK::AndKw, SK::FunBind, |p| {
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
-        if p.at(SK::OpKw) {
-          p.bump();
-        }
-        p.eat(SK::Name);
-        while pat(p, cx).is_some() {
-          // no body
+        let save = p.save();
+        let ent = p.enter();
+        prefix_fun_bind_case_head_inner(p, cx);
+        if p.error_since(&save) {
+          p.restore(save);
+          if p.at(SK::LRound) {
+            p.bump();
+            prefix_fun_bind_case_head_inner(p, cx);
+            p.eat(SK::RRound);
+            p.exit(ent, SK::InfixFunBindCaseHead);
+          } else {
+            let saw_op = p.at(SK::OpKw);
+            if saw_op {
+              p.bump();
+            }
+            if let Some(name) = p.eat(SK::Name) {
+              if !saw_op && cx.contains_key(name.text) {
+                p.error_with("infix name used without `op`".to_owned());
+              }
+            }
+            p.exit(ent, SK::InfixFunBindCaseHead);
+          }
+          while at_pat(p, cx).is_some() {
+            // no body
+          }
+        } else {
+          p.exit(ent, SK::InfixFunBindCaseHead);
+          // in the case where the () are dropped, there are no other at_pats allowed.
+          // `ty_annotation` or `=` must immediately follow.
         }
         let _ = ty_annotation(p);
         p.eat(SK::Eq);
@@ -168,4 +191,14 @@ fn ty_binds(p: &mut Parser<'_, SK>) {
     p.eat(SK::Eq);
     ty(p);
   });
+}
+
+fn prefix_fun_bind_case_head_inner<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) {
+  must(p, |p| at_pat(p, cx));
+  if let Some(name) = p.eat(SK::Name) {
+    if !cx.contains_key(name.text) {
+      p.error_with("non-infix name used as infix".to_owned());
+    }
+  }
+  must(p, |p| at_pat(p, cx));
 }
