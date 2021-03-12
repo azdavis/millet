@@ -149,3 +149,19 @@ pub(crate) fn scon(p: &mut Parser<'_, SK>) -> bool {
     false
   }
 }
+
+#[must_use]
+pub(crate) fn lab(p: &mut Parser<'_, SK>) -> Option<Exited> {
+  let ent = p.enter();
+  let ex = if p.at(SK::Name) {
+    p.bump();
+    p.exit(ent, SK::NameLab)
+  } else if p.at(SK::IntLit) {
+    p.bump();
+    p.exit(ent, SK::IntLitLab)
+  } else {
+    p.abandon(ent);
+    return None;
+  };
+  Some(ex)
+}
