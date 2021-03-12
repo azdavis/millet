@@ -10,8 +10,8 @@ doctest = false
 test = false
 
 [dependencies]
-event-parse = { git = "https://github.com/azdavis/language-server-util.git" }
 rowan = "0.12"
+token = { git = "https://github.com/azdavis/language-server-util.git" }
 
 [build-dependencies]
 char-name = { git = "https://github.com/azdavis/language-server-util.git" }

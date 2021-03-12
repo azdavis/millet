@@ -1,10 +1,10 @@
 use crate::dec::dec;
+use crate::parser::{Exited, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx};
-use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn top_dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
+pub(crate) fn top_dec<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
   if p.at(SK::FunctorKw) {
     p.bump();
@@ -32,7 +32,7 @@ pub(crate) fn top_dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
   }
 }
 
-fn str_dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
+fn str_dec<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
   if p.at(SK::StructureKw) {
     p.bump();
@@ -55,7 +55,7 @@ fn str_dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
   }
 }
 
-fn str_exp<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
+fn str_exp<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
   let mut ex = if p.at(SK::StructKw) {
     p.bump();
@@ -89,7 +89,7 @@ fn str_exp<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
 }
 
 #[must_use]
-fn sig_exp(p: &mut Parser<'_, SK>) -> Option<Exited> {
+fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
   let mut ex = if p.at(SK::SigKw) {
     p.bump();
@@ -117,7 +117,7 @@ fn sig_exp(p: &mut Parser<'_, SK>) -> Option<Exited> {
 }
 
 #[must_use]
-fn spec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
+fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
   let mut ex = if p.at(SK::ValKw) {
     p.bump();
@@ -191,7 +191,7 @@ fn spec_one(p: &mut Parser<'_, SK>) -> Option<Exited> {
   Some(ex)
 }
 
-fn spec(p: &mut Parser<'_, SK>) -> Exited {
+fn spec(p: &mut Parser<'_>) -> Exited {
   let ent = p.enter();
   maybe_semi_sep(p, SK::SpecInSeq, spec_one);
   p.exit(ent, SK::Spec)

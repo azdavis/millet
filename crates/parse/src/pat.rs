@@ -1,10 +1,10 @@
+use crate::parser::{Exited, Parser};
 use crate::ty::ty_annotation;
 use crate::util::{lab, many_sep, must, path, scon, OpCx};
-use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 #[must_use]
-pub(crate) fn pat<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) -> Option<Exited> {
+pub(crate) fn pat<'a>(p: &mut Parser<'a>, cx: &OpCx<'a>) -> Option<Exited> {
   // first try the most annoying one
   let ent = p.enter();
   let save = p.save();
@@ -27,7 +27,7 @@ pub(crate) fn pat<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) -> Option<Exited> {
 }
 
 #[must_use]
-pub(crate) fn at_pat<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) -> Option<Exited> {
+pub(crate) fn at_pat<'a>(p: &mut Parser<'a>, cx: &OpCx<'a>) -> Option<Exited> {
   let ent = p.enter();
   let ex = if p.at(SK::Underscore) {
     p.bump();
@@ -80,7 +80,7 @@ pub(crate) fn at_pat<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) -> Option<Exited
 }
 
 #[must_use]
-fn as_pat_tail<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) -> Option<Exited> {
+fn as_pat_tail<'a>(p: &mut Parser<'a>, cx: &OpCx<'a>) -> Option<Exited> {
   if p.at(SK::AsKw) {
     let ent = p.enter();
     p.bump();

@@ -1,5 +1,5 @@
+use crate::parser::{Exited, Parser};
 use rustc_hash::FxHashMap;
-use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 #[derive(Debug)]
@@ -69,9 +69,9 @@ pub(crate) enum Assoc {
   Right,
 }
 
-pub(crate) fn must<'a, F>(p: &mut Parser<'a, SK>, f: F)
+pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F)
 where
-  F: FnOnce(&mut Parser<'a, SK>) -> Option<Exited>,
+  F: FnOnce(&mut Parser<'a>) -> Option<Exited>,
 {
   if f(p).is_none() {
     p.error();
@@ -82,9 +82,9 @@ where
 /// - always uses `;` as the separator
 /// - allows the separator to not be present
 /// - in return, `f` must say whether it parsed anything
-pub(crate) fn maybe_semi_sep<'a, F>(p: &mut Parser<'a, SK>, wrap: SK, mut f: F)
+pub(crate) fn maybe_semi_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, mut f: F)
 where
-  F: FnMut(&mut Parser<'a, SK>) -> Option<Exited>,
+  F: FnMut(&mut Parser<'a>) -> Option<Exited>,
 {
   loop {
     let ent = p.enter();
@@ -100,9 +100,9 @@ where
 }
 
 /// stops if the sep is not found
-pub(crate) fn many_sep<'a, F>(p: &mut Parser<'a, SK>, sep: SK, wrap: SK, mut f: F)
+pub(crate) fn many_sep<'a, F>(p: &mut Parser<'a>, sep: SK, wrap: SK, mut f: F)
 where
-  F: FnMut(&mut Parser<'a, SK>),
+  F: FnMut(&mut Parser<'a>),
 {
   loop {
     let ent = p.enter();
@@ -118,7 +118,7 @@ where
 }
 
 #[must_use]
-pub(crate) fn path(p: &mut Parser<'_, SK>) -> Option<Exited> {
+pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
   if !p.at(SK::Name) {
     return None;
   }
@@ -136,7 +136,7 @@ pub(crate) fn path(p: &mut Parser<'_, SK>) -> Option<Exited> {
 }
 
 #[must_use]
-pub(crate) fn scon(p: &mut Parser<'_, SK>) -> bool {
+pub(crate) fn scon(p: &mut Parser<'_>) -> bool {
   if p.at(SK::IntLit)
     || p.at(SK::RealLit)
     || p.at(SK::WordLit)
@@ -151,7 +151,7 @@ pub(crate) fn scon(p: &mut Parser<'_, SK>) -> bool {
 }
 
 #[must_use]
-pub(crate) fn lab(p: &mut Parser<'_, SK>) -> Option<Exited> {
+pub(crate) fn lab(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
   let ex = if p.at(SK::Name) {
     p.bump();

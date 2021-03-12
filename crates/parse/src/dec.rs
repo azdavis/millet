@@ -1,18 +1,18 @@
 use crate::exp::exp;
+use crate::parser::{Exited, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx, OpInfo};
-use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn dec<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Exited {
+pub(crate) fn dec<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Exited {
   let ent = p.enter();
   maybe_semi_sep(p, SK::DecInSeq, |p| dec_one(p, cx));
   p.exit(ent, SK::Dec)
 }
 
 #[must_use]
-fn dec_one<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Option<Exited> {
+fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
   let ent = p.enter();
   let ex = if p.at(SK::ValKw) {
     p.bump();
@@ -138,7 +138,7 @@ fn dec_one<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Option<Exited> {
   Some(ex)
 }
 
-fn fixity(p: &mut Parser<'_, SK>) -> usize {
+fn fixity(p: &mut Parser<'_>) -> usize {
   if p.at(SK::IntLit) {
     match p.bump().text.parse::<usize>() {
       Ok(x) => x,
@@ -152,7 +152,7 @@ fn fixity(p: &mut Parser<'_, SK>) -> usize {
   }
 }
 
-fn names<'a>(p: &mut Parser<'a, SK>) -> Vec<&'a str> {
+fn names<'a>(p: &mut Parser<'a>) -> Vec<&'a str> {
   let mut ret = Vec::new();
   while p.at(SK::Name) {
     ret.push(p.bump().text);
@@ -163,7 +163,7 @@ fn names<'a>(p: &mut Parser<'a, SK>) -> Vec<&'a str> {
   ret
 }
 
-fn dat_binds_with_type(p: &mut Parser<'_, SK>) {
+fn dat_binds_with_type(p: &mut Parser<'_>) {
   many_sep(p, SK::AndKw, SK::DatBind, |p| {
     ty_var_seq(p);
     p.eat(SK::Name);
@@ -184,7 +184,7 @@ fn dat_binds_with_type(p: &mut Parser<'_, SK>) {
   }
 }
 
-fn ty_binds(p: &mut Parser<'_, SK>) {
+fn ty_binds(p: &mut Parser<'_>) {
   many_sep(p, SK::AndKw, SK::TyBind, |p| {
     ty_var_seq(p);
     p.eat(SK::Name);
@@ -193,7 +193,7 @@ fn ty_binds(p: &mut Parser<'_, SK>) {
   });
 }
 
-fn prefix_fun_bind_case_head_inner<'a>(p: &mut Parser<'a, SK>, cx: &OpCx<'a>) {
+fn prefix_fun_bind_case_head_inner<'a>(p: &mut Parser<'a>, cx: &OpCx<'a>) {
   must(p, |p| at_pat(p, cx));
   if let Some(name) = p.eat(SK::Name) {
     if !cx.contains_key(name.text) {

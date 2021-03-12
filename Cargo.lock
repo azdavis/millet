@@ -27,7 +27,7 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
+source = "git+https://github.com/azdavis/language-server-util.git#882c3d9426fd2d9b3bbb4b4af986f19f5f70a88d"
 
 [[package]]
 name = "codespan-reporting"
@@ -73,14 +73,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9bda8e21c04aca2ae33ffc2fd8c23134f3cac46db123ba97bd9d3f3b8a4a85e1"
 
 [[package]]
-name = "event-parse"
-version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
-dependencies = [
- "drop_bomb",
-]
-
-[[package]]
 name = "form_urlencoded"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -99,7 +91,7 @@ checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
+source = "git+https://github.com/azdavis/language-server-util.git#882c3d9426fd2d9b3bbb4b4af986f19f5f70a88d"
 
 [[package]]
 name = "idna"
@@ -203,6 +195,7 @@ dependencies = [
 name = "parse"
 version = "0.1.0"
 dependencies = [
+ "drop_bomb",
  "rustc-hash",
  "syntax",
 ]
@@ -306,9 +299,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.62"
+version = "1.0.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123a78a3596b24fee53a6464ce52d8ecbf62241e6294c7e7fe12086cd161f512"
+checksum = "8fd9bc7ccc2688b3344c2f48b9b546648b25ce0b20fc717ee7fa7981a8ca9717"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -320,16 +313,16 @@ name = "syntax"
 version = "0.1.0"
 dependencies = [
  "char-name",
- "event-parse",
  "identifier-case",
  "rowan",
  "syntax-gen",
+ "token",
 ]
 
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#4d9eb9194ac35f9a73878367f8ce3774939d4985"
+source = "git+https://github.com/azdavis/language-server-util.git#882c3d9426fd2d9b3bbb4b4af986f19f5f70a88d"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -367,6 +360,11 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
+
+[[package]]
+name = "token"
+version = "0.1.0"
+source = "git+https://github.com/azdavis/language-server-util.git#882c3d9426fd2d9b3bbb4b4af986f19f5f70a88d"
 
 [[package]]
 name = "ungrammar"

@@ -6,9 +6,8 @@
 
 use std::convert::TryInto;
 use std::fmt;
-use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
-use syntax::SyntaxKind as SK;
+use syntax::{token::Token, SyntaxKind as SK};
 
 /// A lexed input.
 #[derive(Debug)]

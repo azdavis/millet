@@ -10,5 +10,6 @@ doctest = false
 test = false
 
 [dependencies]
-syntax = { path = "../syntax" }
+drop_bomb = "0.1"
 rustc-hash = "1"
+syntax = { path = "../syntax" }
