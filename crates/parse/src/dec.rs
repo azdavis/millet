@@ -31,8 +31,8 @@ fn dec_one<'a>(p: &mut Parser<'a, SK>, cx: &mut OpCx<'a>) -> Option<Exited> {
     ty_var_seq(p);
     many_sep(p, SK::AndKw, SK::FunBind, |p| {
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
-        let save = p.save();
         let ent = p.enter();
+        let save = p.save();
         prefix_fun_bind_case_head_inner(p, cx);
         if p.error_since(&save) {
           p.restore(save);
