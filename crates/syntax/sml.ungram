@@ -196,14 +196,15 @@ InfixPat = lhs:Pat 'Name' rhs:Pat
 TypedPat = Pat TyAnnotation
 AsPat = 'op'? 'Name' TyAnnotation? AsPatTail
 
-PatRow =
+PatRow = PatRowInner ','?
+PatRowInner =
   RestPatRow
 | LabAndPatPatRow
 | LabPatRow
 
-RestPatRow = '...' ','?
-LabAndPatPatRow = Lab '=' Pat ','?
-LabPatRow = 'Name' TyAnnotation? AsPatTail? ','?
+RestPatRow = '...'
+LabAndPatPatRow = Lab '=' Pat
+LabPatRow = 'Name' TyAnnotation? AsPatTail?
 
 AsPatTail = 'as' Pat
 PatArg = Pat ','?
