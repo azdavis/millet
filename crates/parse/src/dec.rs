@@ -1,5 +1,5 @@
 use crate::exp::exp;
-use crate::parser::{Exited, OpInfo, Parser};
+use crate::parser::{ErrorKind, Exited, OpInfo, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path};
@@ -48,7 +48,7 @@ fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
             }
             if let Some(name) = p.eat(SK::Name) {
               if !saw_op && p.contains_op(name.text) {
-                p.error_with("infix name used without `op`".to_owned());
+                p.error_with(ErrorKind::InfixWithoutOp);
               }
             }
             p.exit(ent, SK::InfixFunBindCaseHead);
@@ -143,7 +143,7 @@ fn fixity(p: &mut Parser<'_>) -> usize {
     match p.bump().text.parse::<usize>() {
       Ok(x) => x,
       Err(e) => {
-        p.error_with(format!("invalid fixity: {}", e));
+        p.error_with(ErrorKind::InvalidFixity(e));
         0
       }
     }
@@ -197,7 +197,7 @@ fn prefix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
   must(p, at_pat);
   if let Some(name) = p.eat(SK::Name) {
     if !p.contains_op(name.text) {
-      p.error_with("non-infix name used as infix".to_owned());
+      p.error_with(ErrorKind::NotInfix);
     }
   }
   must(p, at_pat);

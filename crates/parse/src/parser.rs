@@ -106,7 +106,7 @@ impl<'input> Parser<'input> {
       .events
       .iter()
       .skip(save.events_len)
-      .any(|ev| matches!(*ev, Some(Event::Expected(..))))
+      .any(|ev| matches!(*ev, Some(Event::Error(..))))
   }
 
   pub(crate) fn restore(&mut self, save: Save) {
@@ -162,19 +162,21 @@ impl<'input> Parser<'input> {
   }
 
   pub(crate) fn error(&mut self) {
-    self._error(None)
-  }
-
-  pub(crate) fn error_with(&mut self, message: String) {
-    self._error(Some(message))
-  }
-
-  fn _error(&mut self, message: Option<String>) {
     let expected = std::mem::take(&mut self.expected);
     if self.peek().is_some() {
       self.bump();
     }
-    self.events.push(Some(Event::Expected(expected, message)));
+    self
+      .events
+      .push(Some(Event::Error(ErrorKind::Expected(expected))));
+  }
+
+  pub(crate) fn error_with(&mut self, kind: ErrorKind) {
+    self.expected.clear();
+    if self.peek().is_some() {
+      self.bump();
+    }
+    self.events.push(Some(Event::Error(kind)))
   }
 
   fn eat_trivia(&mut self, sink: &mut BuilderSink) {
@@ -232,7 +234,7 @@ impl<'input> Parser<'input> {
           sink.token(self.tokens[self.idx]);
           self.idx += 1;
         }
-        Event::Expected(expected, message) => sink.error(expected, message),
+        Event::Error(kind) => sink.error(kind),
       }
     }
     assert_eq!(levels, 0);
@@ -311,7 +313,7 @@ enum Event {
   Enter(SK, Option<usize>),
   Token,
   Exit,
-  Expected(Vec<SK>, Option<String>),
+  Error(ErrorKind),
 }
 
 #[derive(Default)]
@@ -337,11 +339,10 @@ impl BuilderSink {
     self.builder.finish_node();
   }
 
-  fn error(&mut self, kinds: Vec<SK>, message: Option<String>) {
+  fn error(&mut self, kind: ErrorKind) {
     self.errors.push(Error {
       range: self.range.clone().expect("error with no tokens"),
-      expected: Expected { kinds },
-      message,
+      kind,
     });
   }
 }
@@ -351,29 +352,38 @@ impl BuilderSink {
 pub struct Error {
   /// The range of the unexpected token.
   pub range: TextRange,
-  /// The tokens that would have been allowed.
-  pub expected: Expected,
-  /// The message (if any).
-  pub message: Option<String>,
+  /// The kind of error.
+  pub kind: ErrorKind,
 }
 
-/// A list of expected tokens.
+/// A kind of error.
 #[derive(Debug)]
-pub struct Expected {
-  /// The token kinds.
-  pub kinds: Vec<SK>,
+pub enum ErrorKind {
+  Expected(Vec<SK>),
+  NotInfix,
+  SameFixityDiffAssoc,
+  InfixWithoutOp,
+  InvalidFixity(std::num::ParseIntError),
 }
 
-impl fmt::Display for Expected {
+impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut iter = self.kinds.iter();
-    write!(f, "expected any of ")?;
-    if let Some(kind) = iter.next() {
-      write!(f, "{}", kind.token_desc().unwrap_or("<non-token>"))?;
+    match self {
+      Self::Expected(kinds) => {
+        let mut iter = kinds.iter();
+        write!(f, "expected any of ")?;
+        if let Some(kind) = iter.next() {
+          write!(f, "{}", kind.token_desc().unwrap_or("<non-token>"))?;
+        }
+        for kind in iter {
+          write!(f, ", {}", kind.token_desc().unwrap_or("<non-token>"))?;
+        }
+        Ok(())
+      }
+      Self::NotInfix => write!(f, "not infix"),
+      Self::SameFixityDiffAssoc => write!(f, "same fixity but different associativity"),
+      Self::InfixWithoutOp => write!(f, "infix name used without `op`"),
+      Self::InvalidFixity(e) => write!(f, "invalid fixity: {}", e),
     }
-    for kind in iter {
-      write!(f, ", {}", kind.token_desc().unwrap_or("<non-token>"))?;
-    }
-    Ok(())
   }
 }

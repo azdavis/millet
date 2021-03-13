@@ -1,4 +1,4 @@
-use crate::parser::{Exited, OpInfo, Parser};
+use crate::parser::{ErrorKind, Exited, OpInfo, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{lab, many_sep, must, path, scon, should_break};
 use syntax::SyntaxKind as SK;
@@ -43,7 +43,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
       let op_info = match p.get_op(text) {
         Some(x) => x,
         None => {
-          p.error_with("not infix".to_owned());
+          p.error_with(ErrorKind::NotInfix);
           // pretend it is
           OpInfo::left(0)
         }
