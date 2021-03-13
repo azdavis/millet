@@ -119,11 +119,11 @@ impl<'input> Parser<'input> {
     self.ops.insert(k, v);
   }
 
-  pub(crate) fn contains_op(&self, k: &'input str) -> bool {
+  pub(crate) fn contains_op(&self, k: &str) -> bool {
     self.ops.contains_key(k)
   }
 
-  pub(crate) fn remove_op(&mut self, k: &'input str) {
+  pub(crate) fn remove_op(&mut self, k: &str) {
     self.ops.remove(k);
   }
 
