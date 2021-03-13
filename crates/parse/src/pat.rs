@@ -53,7 +53,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
       }
       let ent = p.precede(ex);
       p.bump();
-      pat_prec(p, Some(op_info));
+      must(p, |p| pat_prec(p, Some(op_info)));
       ex = p.exit(ent, SK::InfixPat);
     } else if p.at(SK::Colon) {
       if min_prec.is_some() {
