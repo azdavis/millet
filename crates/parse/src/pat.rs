@@ -8,7 +8,8 @@ pub(crate) fn pat(p: &mut Parser<'_>) -> Option<Exited> {
   pat_prec(p, None)
 }
 
-pub(crate) fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
+#[must_use]
+fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
   // first try AsPat since it's annoying
   let ent = p.enter();
   let save = p.save();
