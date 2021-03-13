@@ -22,8 +22,18 @@ pub(crate) fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<E
     return Some(p.exit(ent, SK::AsPat));
   }
   p.restore(save);
-  p.abandon(ent);
-  let mut ex = pat_one(p)?;
+  // then try ConPat with arg
+  if p.at(SK::OpKw) && p.peek_n(1).map_or(false, |tok| tok.kind == SK::Name) {
+    p.bump();
+  }
+  let mut ex = if path(p).is_some() {
+    let _ = at_pat(p);
+    p.exit(ent, SK::ConPat)
+  } else {
+    // else, it's an atomic pat
+    p.abandon(ent);
+    at_pat(p)?
+  };
   loop {
     if let Some(text) = p
       .peek()
@@ -57,21 +67,6 @@ pub(crate) fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<E
     }
   }
   Some(ex)
-}
-
-#[must_use]
-pub(crate) fn pat_one(p: &mut Parser<'_>) -> Option<Exited> {
-  let ent = p.enter();
-  if p.at(SK::OpKw) && p.peek_n(1).map_or(false, |tok| tok.kind == SK::Name) {
-    p.bump();
-  }
-  if path(p).is_some() {
-    let _ = at_pat(p);
-    Some(p.exit(ent, SK::ConPat))
-  } else {
-    p.abandon(ent);
-    at_pat(p)
-  }
 }
 
 #[must_use]
