@@ -119,6 +119,10 @@ impl<'input> Parser<'input> {
     self.ops.insert(k, v);
   }
 
+  pub(crate) fn get_op(&self, k: &str) -> Option<OpInfo> {
+    self.ops.get(k).copied()
+  }
+
   pub(crate) fn contains_op(&self, k: &str) -> bool {
     self.ops.contains_key(k)
   }
@@ -274,8 +278,8 @@ pub(crate) struct Save {
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OpInfo {
-  num: usize,
-  assoc: Assoc,
+  pub num: usize,
+  pub assoc: Assoc,
 }
 
 impl OpInfo {
@@ -296,7 +300,7 @@ impl OpInfo {
   }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Assoc {
   Left,
   Right,

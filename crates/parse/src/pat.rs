@@ -1,11 +1,15 @@
-use crate::parser::{Exited, Parser};
-use crate::ty::ty_annotation;
-use crate::util::{lab, many_sep, must, path, scon};
+use crate::parser::{Exited, OpInfo, Parser};
+use crate::ty::{ty, ty_annotation};
+use crate::util::{lab, many_sep, must, path, scon, should_break};
 use syntax::SyntaxKind as SK;
 
 #[must_use]
 pub(crate) fn pat(p: &mut Parser<'_>) -> Option<Exited> {
-  // first try the most annoying one
+  pat_prec(p, None)
+}
+
+pub(crate) fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
+  // first try AsPat since it's annoying
   let ent = p.enter();
   let save = p.save();
   if p.at(SK::OpKw) {
@@ -17,13 +21,57 @@ pub(crate) fn pat(p: &mut Parser<'_>) -> Option<Exited> {
   if !p.error_since(&save) {
     return Some(p.exit(ent, SK::AsPat));
   }
-  // then try the second-most annoying one
   p.restore(save);
+  p.abandon(ent);
+  let mut ex = pat_one(p)?;
+  loop {
+    if let Some(text) = p
+      .peek()
+      .and_then(|tok| (tok.kind == SK::Name).then(|| tok.text))
+    {
+      let op_info = match p.get_op(text) {
+        Some(x) => x,
+        None => {
+          p.error_with("not infix".to_owned());
+          // pretend it is
+          OpInfo::left(0)
+        }
+      };
+      if should_break(p, op_info, min_prec) {
+        break;
+      }
+      let ent = p.precede(ex);
+      p.bump();
+      pat_prec(p, Some(op_info));
+      ex = p.exit(ent, SK::InfixPat);
+    } else if p.at(SK::Colon) {
+      if min_prec.is_some() {
+        break;
+      }
+      let ent = p.precede(ex);
+      p.bump();
+      ty(p);
+      ex = p.exit(ent, SK::TypedPat);
+    } else {
+      break;
+    }
+  }
+  Some(ex)
+}
+
+#[must_use]
+pub(crate) fn pat_one(p: &mut Parser<'_>) -> Option<Exited> {
+  let ent = p.enter();
   if p.at(SK::OpKw) && p.peek_n(1).map_or(false, |tok| tok.kind == SK::Name) {
     p.bump();
   }
-  must(p, path);
-  todo!()
+  if path(p).is_some() {
+    let _ = at_pat(p);
+    Some(p.exit(ent, SK::ConPat))
+  } else {
+    p.abandon(ent);
+    at_pat(p)
+  }
 }
 
 #[must_use]

@@ -1,4 +1,4 @@
-use crate::parser::{Exited, Parser};
+use crate::parser::{Assoc, Exited, OpInfo, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F)
@@ -45,6 +45,21 @@ where
     } else {
       p.exit(ent, wrap);
       break;
+    }
+  }
+}
+
+pub(crate) fn should_break(p: &mut Parser<'_>, op_info: OpInfo, min_prec: Option<OpInfo>) -> bool {
+  match min_prec {
+    None => false,
+    Some(min_prec) => {
+      if op_info.num == min_prec.num && op_info.assoc != min_prec.assoc {
+        p.error_with("same fixity but different associativity".to_owned())
+      }
+      match min_prec.assoc {
+        Assoc::Left => op_info.num <= min_prec.num,
+        Assoc::Right => op_info.num < min_prec.num,
+      }
     }
   }
 }
