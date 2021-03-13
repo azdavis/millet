@@ -1,18 +1,18 @@
 use crate::exp::exp;
-use crate::parser::{Exited, Parser};
+use crate::parser::{Exited, OpInfo, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{many_sep, maybe_semi_sep, must, path, OpCx, OpInfo};
+use crate::util::{many_sep, maybe_semi_sep, must, path};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn dec<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Exited {
+pub(crate) fn dec(p: &mut Parser<'_>) -> Exited {
   let ent = p.enter();
-  maybe_semi_sep(p, SK::DecInSeq, |p| dec_one(p, cx));
+  maybe_semi_sep(p, SK::DecInSeq, dec_one);
   p.exit(ent, SK::Dec)
 }
 
 #[must_use]
-fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
+fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
   let ex = if p.at(SK::ValKw) {
     p.bump();
@@ -21,9 +21,9 @@ fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
       if p.at(SK::RecKw) {
         p.bump();
       }
-      must(p, |p| pat(p, cx));
+      must(p, pat);
       p.eat(SK::Eq);
-      exp(p, cx);
+      exp(p);
     });
     p.exit(ent, SK::ValDec)
   } else if p.at(SK::FunKw) {
@@ -33,12 +33,12 @@ fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
         let ent = p.enter();
         let save = p.save();
-        prefix_fun_bind_case_head_inner(p, cx);
+        prefix_fun_bind_case_head_inner(p);
         if p.error_since(&save) {
           p.restore(save);
           if p.at(SK::LRound) {
             p.bump();
-            prefix_fun_bind_case_head_inner(p, cx);
+            prefix_fun_bind_case_head_inner(p);
             p.eat(SK::RRound);
             p.exit(ent, SK::InfixFunBindCaseHead);
           } else {
@@ -47,13 +47,13 @@ fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
               p.bump();
             }
             if let Some(name) = p.eat(SK::Name) {
-              if !saw_op && cx.contains_key(name.text) {
+              if !saw_op && p.contains_op(name.text) {
                 p.error_with("infix name used without `op`".to_owned());
               }
             }
             p.exit(ent, SK::InfixFunBindCaseHead);
           }
-          while at_pat(p, cx).is_some() {
+          while at_pat(p).is_some() {
             // no body
           }
         } else {
@@ -63,7 +63,7 @@ fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
         }
         let _ = ty_annotation(p);
         p.eat(SK::Eq);
-        exp(p, cx);
+        exp(p);
       })
     });
     p.exit(ent, SK::FunDec)
@@ -80,7 +80,7 @@ fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
     p.bump();
     dat_binds_with_type(p);
     p.eat(SK::WithKw);
-    dec(p, cx);
+    dec(p);
     p.eat(SK::EndKw);
     p.exit(ent, SK::AbstypeDec)
   } else if p.at(SK::ExceptionKw) {
@@ -100,9 +100,9 @@ fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
     p.exit(ent, SK::ExDec)
   } else if p.at(SK::LocalKw) {
     p.bump();
-    dec(p, cx);
+    dec(p);
     p.eat(SK::InKw);
-    dec(p, cx);
+    dec(p);
     p.eat(SK::EndKw);
     p.exit(ent, SK::LocalDec)
   } else if p.at(SK::OpenKw) {
@@ -115,20 +115,20 @@ fn dec_one<'a>(p: &mut Parser<'a>, cx: &mut OpCx<'a>) -> Option<Exited> {
     p.bump();
     let num = fixity(p);
     for name in names(p) {
-      cx.insert(name, OpInfo::left(num));
+      p.insert_op(name, OpInfo::left(num));
     }
     p.exit(ent, SK::InfixDec)
   } else if p.at(SK::InfixrKw) {
     p.bump();
     let num = fixity(p);
     for name in names(p) {
-      cx.insert(name, OpInfo::right(num));
+      p.insert_op(name, OpInfo::right(num));
     }
     p.exit(ent, SK::InfixrDec)
   } else if p.at(SK::NonfixKw) {
     p.bump();
     for name in names(p) {
-      cx.remove(name);
+      p.remove_op(name);
     }
     p.exit(ent, SK::NonfixDec)
   } else {
@@ -193,12 +193,12 @@ fn ty_binds(p: &mut Parser<'_>) {
   });
 }
 
-fn prefix_fun_bind_case_head_inner<'a>(p: &mut Parser<'a>, cx: &OpCx<'a>) {
-  must(p, |p| at_pat(p, cx));
+fn prefix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
+  must(p, at_pat);
   if let Some(name) = p.eat(SK::Name) {
-    if !cx.contains_key(name.text) {
+    if !p.contains_op(name.text) {
       p.error_with("non-infix name used as infix".to_owned());
     }
   }
-  must(p, |p| at_pat(p, cx));
+  must(p, at_pat);
 }

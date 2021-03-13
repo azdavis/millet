@@ -17,6 +17,7 @@
 //! And the library isn't even that big, so forking is... okay.
 
 use drop_bomb::DropBomb;
+use rustc_hash::FxHashMap;
 use std::fmt;
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::token::{Token, Triviable};
@@ -29,15 +30,31 @@ pub(crate) struct Parser<'input> {
   idx: usize,
   expected: Vec<SK>,
   events: Vec<Option<Event>>,
+  ops: FxHashMap<&'input str, OpInfo>,
 }
 
 impl<'input> Parser<'input> {
   pub(crate) fn new(tokens: &'input [Token<'input, SK>]) -> Self {
+    let mut ops = FxHashMap::default();
+    ops.insert("::", OpInfo::right(5));
+    ops.insert("=", OpInfo::left(4));
+    ops.insert(":=", OpInfo::left(3));
+    ops.insert("div", OpInfo::left(7));
+    ops.insert("mod", OpInfo::left(7));
+    ops.insert("*", OpInfo::left(7));
+    ops.insert("/", OpInfo::left(7));
+    ops.insert("+", OpInfo::left(6));
+    ops.insert("-", OpInfo::left(6));
+    ops.insert("<", OpInfo::left(4));
+    ops.insert(">", OpInfo::left(4));
+    ops.insert("<=", OpInfo::left(4));
+    ops.insert(">=", OpInfo::left(4));
     Self {
       tokens,
       idx: 0,
       expected: Vec::new(),
       events: Vec::new(),
+      ops,
     }
   }
 
@@ -96,6 +113,18 @@ impl<'input> Parser<'input> {
     self.idx = save.idx;
     self.events.truncate(save.events_len);
     self.expected = save.expected;
+  }
+
+  pub(crate) fn insert_op(&mut self, k: &'input str, v: OpInfo) {
+    self.ops.insert(k, v);
+  }
+
+  pub(crate) fn contains_op(&self, k: &'input str) -> bool {
+    self.ops.contains_key(k)
+  }
+
+  pub(crate) fn remove_op(&mut self, k: &'input str) {
+    self.ops.remove(k);
   }
 
   pub(crate) fn peek(&mut self) -> Option<Token<'input, SK>> {
@@ -241,6 +270,36 @@ pub(crate) struct Save {
   idx: usize,
   events_len: usize,
   expected: Vec<SK>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct OpInfo {
+  num: usize,
+  assoc: Assoc,
+}
+
+impl OpInfo {
+  /// Returns a new OpInfo with left associativity.
+  pub(crate) fn left(num: usize) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Left,
+    }
+  }
+
+  /// Returns a new OpInfo with right associativity.
+  pub(crate) fn right(num: usize) -> Self {
+    Self {
+      num,
+      assoc: Assoc::Right,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Assoc {
+  Left,
+  Right,
 }
 
 #[derive(Debug)]
