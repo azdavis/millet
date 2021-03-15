@@ -5,14 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build
       - name: Check formatting
         run: cargo fmt -- --check
       - name: Check for SML Definition references
         run: ./bin/ck-sml-defn.sh
       - name: Check with clippy
         run: cargo clippy
-      - name: Build
-        run: cargo build
       - name: Test with cargo
         run: cargo test
       - name: Test with run-test.sh
