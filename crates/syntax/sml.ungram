@@ -233,13 +233,10 @@ TyAnnotation = ':' Ty
 Path = NameDot*
 NameDot = 'Name' '.'?
 
-TySeq = OneTy | ManyTy
-OneTy = Ty
-ManyTy = '(' TyArg* ')'
+TySeq = '('? TyArg* ')'?
 TyArg = Ty ','?
 
-TyVarSeq = TyVarTy | ManyTyVar
-ManyTyVar = '(' TyVarArg* ')'
+TyVarSeq = '('? TyVarArg* ')'?
 TyVarArg = 'TyVar' ','?
 
 Lab = NameLab | IntLitLab
