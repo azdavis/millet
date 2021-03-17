@@ -34,8 +34,11 @@ fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
         let ent = p.enter();
         let save = p.save();
         prefix_fun_bind_case_head_inner(p);
-        if p.error_since(&save) {
-          p.restore(save);
+        if p.maybe_discard(save) {
+          p.exit(ent, SK::InfixFunBindCaseHead);
+          // in the case where the () are dropped, there are no other at_pats allowed.
+          // `ty_annotation` or `=` must immediately follow.
+        } else {
           if p.at(SK::LRound) {
             p.bump();
             prefix_fun_bind_case_head_inner(p);
@@ -56,10 +59,6 @@ fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
           while at_pat(p).is_some() {
             // no body
           }
-        } else {
-          p.exit(ent, SK::InfixFunBindCaseHead);
-          // in the case where the () are dropped, there are no other at_pats allowed.
-          // `ty_annotation` or `=` must immediately follow.
         }
         let _ = ty_annotation(p);
         p.eat(SK::Eq);

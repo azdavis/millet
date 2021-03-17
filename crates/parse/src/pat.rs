@@ -19,10 +19,9 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
   p.eat(SK::Name);
   let _ = ty_annotation(p);
   must(p, as_pat_tail);
-  if !p.error_since(&save) {
+  if p.maybe_discard(save) {
     return Some(p.exit(ent, SK::AsPat));
   }
-  p.restore(save);
   // then try ConPat with arg
   if p.at(SK::OpKw) && p.peek_n(1).map_or(false, |tok| tok.kind == SK::Name) {
     p.bump();

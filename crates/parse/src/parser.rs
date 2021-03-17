@@ -97,22 +97,23 @@ impl<'input> Parser<'input> {
     Save {
       idx: self.idx,
       events_len: self.events.len(),
-      expected: std::mem::take(&mut self.expected),
+      expected: self.expected.clone(),
     }
   }
 
-  pub(crate) fn error_since(&self, save: &Save) -> bool {
-    self
+  /// returns whether the save was discarded (i.e. did NOT restore to that save)
+  pub(crate) fn maybe_discard(&mut self, save: Save) -> bool {
+    let error_since = self
       .events
       .iter()
       .skip(save.events_len)
-      .any(|ev| matches!(*ev, Some(Event::Error(..))))
-  }
-
-  pub(crate) fn restore(&mut self, save: Save) {
-    self.idx = save.idx;
-    self.events.truncate(save.events_len);
-    self.expected = save.expected;
+      .any(|ev| matches!(*ev, Some(Event::Error(..))));
+    if error_since {
+      self.idx = save.idx;
+      self.events.truncate(save.events_len);
+      self.expected = save.expected;
+    }
+    !error_since
   }
 
   pub(crate) fn insert_op(&mut self, k: &'input str, v: OpInfo) {
