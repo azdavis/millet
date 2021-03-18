@@ -103,10 +103,10 @@ Exp =
 
 SConExp = SCon
 PathExp = 'op'? Path
-RecordExp = '{' ExpRow '}'
+RecordExp = '{' ExpRow* '}'
 SelectorExp = '#' Lab
-TupleExp = '(' ExpArg ')'
-ListExp = '[' ExpArg ']'
+TupleExp = '(' ExpArg* ')'
+ListExp = '[' ExpArg* ']'
 SeqExp = '(' ExpInSeq* ')'
 LetExp = 'let' Dec 'in' ExpInSeq* 'end'
 AppExp = func:Exp arg:Exp
