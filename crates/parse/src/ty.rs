@@ -1,5 +1,5 @@
 use crate::parser::{Exited, Parser};
-use crate::util::{lab, many_sep, must, path};
+use crate::util::{comma_sep, lab, many_sep, must, path};
 use syntax::SyntaxKind as SK;
 
 const STAR: &str = "*";
@@ -16,8 +16,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     p.exit(ent, SK::TyVarTy)
   } else if p.at(SK::LCurly) {
     p.bump();
-    p.eat(SK::RCurly);
-    many_sep(p, SK::Comma, SK::TyRow, |p| {
+    comma_sep(p, SK::RCurly, SK::TyRow, |p| {
       must(p, lab);
       p.eat(SK::Colon);
       ty(p);
@@ -33,8 +32,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     } else {
       let ty_seq = p.enter();
       p.bump();
-      many_sep(p, SK::Comma, SK::TyArg, ty);
-      p.eat(SK::RRound);
+      comma_sep(p, SK::RRound, SK::TyArg, ty);
       p.exit(ty_seq, SK::TySeq);
       must(p, path);
       p.exit(ent, SK::ConTy)
@@ -99,10 +97,9 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> Exited {
     p.exit(ent, SK::TyVarArg);
   } else if p.at(SK::LRound) && p.peek_n(1).map_or(false, |tok| tok.kind == SK::TyVar) {
     p.bump();
-    many_sep(p, SK::Comma, SK::TyVarArg, |p| {
+    comma_sep(p, SK::RRound, SK::TyVarArg, |p| {
       p.eat(SK::TyVar);
     });
-    p.eat(SK::RRound);
   }
   p.exit(ent, SK::TyVarSeq)
 }

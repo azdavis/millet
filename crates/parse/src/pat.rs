@@ -1,6 +1,6 @@
 use crate::parser::{ErrorKind, Exited, OpInfo, Parser};
 use crate::ty::{ty, ty_annotation};
-use crate::util::{lab, many_sep, must, path, scon, should_break};
+use crate::util::{comma_sep, lab, must, path, scon, should_break};
 use syntax::SyntaxKind as SK;
 
 #[must_use]
@@ -86,7 +86,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::ConPat)
   } else if p.at(SK::LCurly) {
     p.bump();
-    many_sep(p, SK::Comma, SK::PatRow, |p| {
+    comma_sep(p, SK::RCurly, SK::PatRow, |p| {
       let ent = p.enter();
       if p.at(SK::DotDotDot) {
         p.bump();
@@ -103,17 +103,14 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
         p.exit(ent, SK::LabPatRow);
       }
     });
-    p.eat(SK::RCurly);
     p.exit(ent, SK::RecordPat)
   } else if p.at(SK::LRound) {
     p.bump();
-    many_sep(p, SK::Comma, SK::PatArg, |p| must(p, pat));
-    p.eat(SK::RRound);
+    comma_sep(p, SK::RRound, SK::PatArg, |p| must(p, pat));
     p.exit(ent, SK::TuplePat)
   } else if p.at(SK::LSquare) {
     p.bump();
-    many_sep(p, SK::Comma, SK::PatArg, |p| must(p, pat));
-    p.eat(SK::RSquare);
+    comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat));
     p.exit(ent, SK::ListPat)
   } else {
     p.abandon(ent);
