@@ -1,0 +1,15 @@
+[package]
+name = "lower"
+version = "0.1.0"
+authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
+edition = "2018"
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+hir = { path = "../hir" }
+rustc-hash = "1"
+syntax = { path = "../syntax" }

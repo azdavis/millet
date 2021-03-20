@@ -138,6 +138,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lower"
+version = "0.1.0"
+dependencies = [
+ "hir",
+ "rustc-hash",
+ "syntax",
+]
+
+[[package]]
 name = "lsp-types"
 version = "0.74.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
