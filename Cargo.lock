@@ -89,6 +89,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
 
 [[package]]
+name = "hir"
+version = "0.1.0"
+dependencies = [
+ "la-arena",
+ "smol_str",
+]
+
+[[package]]
 name = "identifier-case"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/language-server-util.git#882c3d9426fd2d9b3bbb4b4af986f19f5f70a88d"
@@ -109,6 +117,12 @@ name = "itoa"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
+
+[[package]]
+name = "la-arena"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ac64f89246d9a501a6e713cec4cfd64757a4ae24c20520c8cfe643007338ecf"
 
 [[package]]
 name = "lazy_static"
@@ -296,6 +310,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "smol_str"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ca0f7ce3a29234210f0f4f0b56f8be2e722488b95cb522077943212da3b32eb"
 
 [[package]]
 name = "syn"
