@@ -1,5 +1,5 @@
 use crate::parser::{Exited, Parser};
-use crate::util::{comma_sep, lab, many_sep, must, path};
+use crate::util::{comma_sep, lab, must, path};
 use syntax::SyntaxKind as SK;
 
 const STAR: &str = "*";
