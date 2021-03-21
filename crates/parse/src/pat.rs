@@ -76,6 +76,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     p.exit(ent, SK::WildcardPat)
   } else if scon(p) {
+    p.bump();
     p.exit(ent, SK::SConPat)
   } else if p.at(SK::OpKw) {
     p.bump();

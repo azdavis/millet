@@ -111,17 +111,11 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
 
 #[must_use]
 pub(crate) fn scon(p: &mut Parser<'_>) -> bool {
-  if p.at(SK::IntLit)
+  p.at(SK::IntLit)
     || p.at(SK::RealLit)
     || p.at(SK::WordLit)
     || p.at(SK::CharLit)
     || p.at(SK::StringLit)
-  {
-    p.bump();
-    true
-  } else {
-    false
-  }
 }
 
 #[must_use]

@@ -11,6 +11,7 @@ pub(crate) fn exp(p: &mut Parser<'_>) -> Exited {
 fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
   let ex = if scon(p) {
+    p.bump();
     p.exit(ent, SK::SConExp)
   } else if p.at(SK::OpKw) {
     p.bump();
