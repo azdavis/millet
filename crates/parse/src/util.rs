@@ -57,7 +57,7 @@ where
   }
 }
 
-/// tries `f` at least once. stops if `sep` is not found. `wrap` will wrap both `f` and the comma if
+/// tries `f` at least once. stops if `sep` is not found. `wrap` will wrap both `f` and `sep` if
 /// present.
 pub(crate) fn many_sep<'a, F>(p: &mut Parser<'a>, sep: SK, wrap: SK, mut f: F)
 where
