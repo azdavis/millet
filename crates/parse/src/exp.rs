@@ -33,17 +33,15 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::SelectorExp)
   } else if p.at(SK::LRound) {
     p.bump();
-    comma_sep(p, SK::Comma, SK::ExpArg, |p| {
+    comma_sep(p, SK::RRound, SK::ExpArg, |p| {
       exp(p);
     });
-    p.eat(SK::RRound);
     p.exit(ent, SK::TupleExp)
   } else if p.at(SK::LSquare) {
     p.bump();
-    comma_sep(p, SK::Comma, SK::ExpArg, |p| {
+    comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
       exp(p);
     });
-    p.eat(SK::RSquare);
     p.exit(ent, SK::ListExp)
   } else if p.at(SK::LetKw) {
     p.bump();
