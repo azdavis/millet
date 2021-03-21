@@ -35,7 +35,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     at_pat(p)?
   };
   loop {
-    if let Some(text) = p
+    ex = if let Some(text) = p
       .peek()
       .and_then(|tok| (tok.kind == SK::Name).then(|| tok.text))
     {
@@ -53,7 +53,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
       let ent = p.precede(ex);
       p.bump();
       must(p, |p| pat_prec(p, Some(op_info)));
-      ex = p.exit(ent, SK::InfixPat);
+      p.exit(ent, SK::InfixPat)
     } else if p.at(SK::Colon) {
       if min_prec.is_some() {
         break;
@@ -61,10 +61,10 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
       let ent = p.precede(ex);
       p.bump();
       ty(p);
-      ex = p.exit(ent, SK::TypedPat);
+      p.exit(ent, SK::TypedPat)
     } else {
       break;
-    }
+    };
   }
   Some(ex)
 }

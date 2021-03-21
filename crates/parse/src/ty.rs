@@ -48,14 +48,14 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     return None;
   };
   loop {
-    if p.at(SK::MinusGt) {
+    ex = if p.at(SK::MinusGt) {
       if TyPrec::Arrow < min_prec {
         break;
       }
       let ent = p.precede(ex);
       p.bump();
       must(p, |p| ty_prec(p, TyPrec::Arrow));
-      ex = p.exit(ent, SK::FnTy);
+      p.exit(ent, SK::FnTy)
     } else if p.at(SK::Name) {
       if p.peek().unwrap().text == STAR {
         if TyPrec::Star < min_prec {
@@ -69,15 +69,15 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
           p.bump();
           must(p, |p| ty_prec(p, TyPrec::App));
         }
-        ex = p.exit(ent, SK::TupleTy);
+        p.exit(ent, SK::TupleTy)
       } else {
         let ent = p.precede(ex);
         must(p, path);
-        ex = p.exit(ent, SK::ConTy);
+        p.exit(ent, SK::ConTy)
       }
     } else {
       break;
-    }
+    };
   }
   Some(ex)
 }
