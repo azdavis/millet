@@ -64,6 +64,13 @@ pub type PatArena = Arena<Pat>;
 #[derive(Debug)]
 pub enum Pat {
   None,
+  Wildcard,
+  SCon(SCon),
+  Con(Path, Option<PatIdx>),
+  /// The bool is whether the pattern has a `...` in it.
+  Record(Vec<(Lab, PatIdx)>, bool),
+  Typed(PatIdx, TyIdx),
+  As(Name, Option<TyIdx>, PatIdx),
 }
 
 pub type TyIdx = Idx<Ty>;
@@ -76,8 +83,8 @@ pub enum Ty {
 
 #[derive(Debug)]
 pub enum Lab {
-  Num(usize),
   Name(Name),
+  Num(usize),
 }
 
 #[derive(Debug)]
@@ -93,9 +100,9 @@ pub enum SCon {
 pub struct Path(Vec<Name>);
 
 impl Path {
-  pub fn new(names: Vec<Name>) -> Option<Self> {
+  pub fn new(names: Vec<Name>) -> Self {
     assert!(!names.is_empty());
-    Some(Self(names))
+    Self(names)
   }
 
   pub fn last(&self) -> &Name {
