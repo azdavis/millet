@@ -5,3 +5,6 @@ pub struct Ptrs {}
 /// The result of lowering.
 #[derive(Debug)]
 pub struct Lowered {}
+
+#[derive(Debug, Default)]
+pub(crate) struct Cx {}
