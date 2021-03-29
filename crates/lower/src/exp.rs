@@ -20,7 +20,17 @@ pub(crate) fn _get(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
         })
         .collect::<Option<_>>()?,
     ),
-    Exp::SelectorExp(_) => todo!(),
+    Exp::SelectorExp(exp) => {
+      let lab = get_lab(exp.lab()?)?;
+      let name = cx.fresh();
+      let var = hir::Pat::Con(name.clone().into(), None);
+      let var = cx.arenas.pat.alloc(var);
+      let param = hir::Pat::Record(vec![(lab, var)], true);
+      let param = cx.arenas.pat.alloc(param);
+      let body = hir::Exp::Path(name.into());
+      let body = cx.arenas.exp.alloc(body);
+      hir::Exp::Fn(vec![(param, body)])
+    }
     Exp::TupleExp(_) => todo!(),
     Exp::ListExp(_) => todo!(),
     Exp::SeqExp(_) => todo!(),
