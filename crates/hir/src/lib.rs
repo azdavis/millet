@@ -9,6 +9,14 @@ use std::fmt;
 
 pub use la_arena;
 
+#[derive(Debug, Default)]
+pub struct Arenas {
+  pub exp: ExpArena,
+  pub dec: DecArena,
+  pub pat: PatArena,
+  pub ty: TyArena,
+}
+
 pub type ExpIdx = Idx<Exp>;
 pub type ExpArena = Arena<Exp>;
 
