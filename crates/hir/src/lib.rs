@@ -118,18 +118,28 @@ impl Path {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Name(SmolStr);
 
 impl Name {
-  pub fn new(s: &str) -> Self {
+  pub fn new<S>(s: S) -> Self
+  where
+    S: Into<SmolStr>,
+  {
+    let s = s.into();
     assert!(!s.is_empty());
-    Self(s.into())
+    Self(s)
   }
 
   #[inline(always)]
   pub fn as_str(&self) -> &str {
     self.0.as_str()
+  }
+}
+
+impl From<Name> for Path {
+  fn from(name: Name) -> Path {
+    Path::new(vec![name])
   }
 }
 
