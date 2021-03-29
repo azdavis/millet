@@ -1,4 +1,4 @@
-use crate::common::{lab, path, scon};
+use crate::common::{get_lab, get_path, get_scon};
 use crate::util::Cx;
 use syntax::ast::Exp;
 
@@ -8,13 +8,13 @@ pub(crate) fn get(cx: &mut Cx, exp: Exp) -> hir::ExpIdx {
 
 pub(crate) fn _get(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
   let ret = match exp {
-    Exp::SConExp(exp) => hir::Exp::SCon(scon(exp.s_con()?.kind)),
-    Exp::PathExp(exp) => hir::Exp::Path(path(exp.path()?)?),
+    Exp::SConExp(exp) => hir::Exp::SCon(get_scon(exp.s_con()?.kind)),
+    Exp::PathExp(exp) => hir::Exp::Path(get_path(exp.path()?)?),
     Exp::RecordExp(exp) => hir::Exp::Record(
       exp
         .exp_rows()
         .map(|x| {
-          let l = lab(x.lab()?)?;
+          let l = get_lab(x.lab()?)?;
           let e = get(cx, x.exp()?);
           Some((l, e))
         })
