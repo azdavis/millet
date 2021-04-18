@@ -4,10 +4,6 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use crate::parser::{Error, Parser};
-use syntax::ast::{Cast as _, Root};
-use syntax::{token::Token, SyntaxKind as SK};
-
 mod dec;
 mod exp;
 mod parser;
@@ -16,6 +12,10 @@ mod root;
 mod top_dec;
 mod ty;
 mod util;
+
+use crate::parser::{Error, Parser};
+use syntax::ast::{Cast as _, Root};
+use syntax::{token::Token, SyntaxKind as SK};
 
 /// The result of a parse.
 #[derive(Debug)]
