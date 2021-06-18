@@ -342,7 +342,7 @@ impl BuilderSink {
 
   fn error(&mut self, kind: ErrorKind) {
     self.errors.push(Error {
-      range: self.range.clone().expect("error with no tokens"),
+      range: self.range.expect("error with no tokens"),
       kind,
     });
   }

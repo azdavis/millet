@@ -3,6 +3,7 @@
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
+#![allow(unused)]
 
 mod common;
 mod dec;

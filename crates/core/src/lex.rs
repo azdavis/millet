@@ -433,8 +433,9 @@ impl<'s> TokenMaker<'s> {
     if start == self.i {
       return Err(Error::IncompleteNumConstant);
     }
-    let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
-    let n = i32::from_str_radix(n, 10)?;
+    let n = std::str::from_utf8(&self.bs[start..self.i])
+      .unwrap()
+      .parse::<i32>()?;
     Ok(n)
   }
 

@@ -94,8 +94,8 @@ fn mk_diagnostic_action(uri: Url, version: Option<i64>, bs: &[u8]) -> Action {
     Outgoing::Notification(OutgoingNotification::PublishDiagnostics(
       PublishDiagnosticsParams {
         uri,
-        version,
         diagnostics,
+        version,
       },
     ))
     .into(),

@@ -43,7 +43,6 @@ fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
             p.bump();
             prefix_fun_bind_case_head_inner(p);
             p.eat(SK::RRound);
-            p.exit(ent, SK::InfixFunBindCaseHead);
           } else {
             let saw_op = p.at(SK::OpKw);
             if saw_op {
@@ -54,8 +53,8 @@ fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
                 p.error_with(ErrorKind::InfixWithoutOp);
               }
             }
-            p.exit(ent, SK::InfixFunBindCaseHead);
           }
+          p.exit(ent, SK::InfixFunBindCaseHead);
           while at_pat(p).is_some() {
             // no body
           }
