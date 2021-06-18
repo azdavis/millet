@@ -10,6 +10,7 @@ doctest = false
 test = false
 
 [dependencies]
+ast-ptr = { git = "https://github.com/azdavis/language-server-util.git" }
 rowan = "0.12"
 token = { git = "https://github.com/azdavis/language-server-util.git" }
 
