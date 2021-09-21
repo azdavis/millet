@@ -525,7 +525,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
         // if there is an `of t`, then the type of the ctor is `t -> T`. we must also update whether
         // `T` respects equality based on whether `t` does. TODO this doesn't handle the equality
         // check correctly.
-        let t = ty::ck(&cx, &st.tys, arg_ty)?;
+        let t = ty::ck(cx, &st.tys, arg_ty)?;
         equality = equality && t.is_equality(&st.tys);
         ty = Ty::Arrow(t.into(), ty.into());
       }

@@ -55,12 +55,12 @@ impl Error {
       Self::Duplicate(item, id) => format!("duplicate {}: {}", item, store.get(*id)),
       Self::DuplicateLabel(lab) => format!("duplicate label: {}", show_lab(store, *lab)),
       Self::Circularity(ty_var, ty) => {
-        format!("circularity: {:?} in {}", ty_var, show_ty(store, &ty))
+        format!("circularity: {:?} in {}", ty_var, show_ty(store, ty))
       }
       Self::TyMismatch(want, got) => format!(
         "mismatched types: expected {}, found {}",
-        show_ty(store, &want),
-        show_ty(store, &got)
+        show_ty(store, want),
+        show_ty(store, got)
       ),
       Self::OverloadTyMismatch(want, got) => {
         let mut ret = "mismatched types: expected one of ".to_owned();
@@ -337,7 +337,7 @@ impl Subst {
 
   /// Returns whether this is an overloaded ty var.
   pub fn is_overloaded(&mut self, tv: &TyVar) -> bool {
-    self.overload.contains_key(&tv)
+    self.overload.contains_key(tv)
   }
 
   /// Insert a new `TyVar` to `Ty` mapping into this `Subst`. Updates all current mappings to have
@@ -704,7 +704,7 @@ impl Tys {
 
   /// Finishes a datatype under construction.
   pub fn finish_datatype(&mut self, sym: &Sym, val_env: ValEnv, equality: bool) {
-    let info = self.inner.get_mut(&sym).unwrap();
+    let info = self.inner.get_mut(sym).unwrap();
     assert!(info.val_env.is_empty());
     assert!(!info.equality);
     info.val_env = val_env;

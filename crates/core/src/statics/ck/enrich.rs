@@ -121,5 +121,5 @@ fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<()> {
   }
   cx.ty_rzn.get_ty(&mut want.ty);
   cx.ty_rzn.get_ty(&mut got.ty);
-  Subst::default().unify(cx.loc, &cx.tys, want.ty, got.ty)
+  Subst::default().unify(cx.loc, cx.tys, want.ty, got.ty)
 }

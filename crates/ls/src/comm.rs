@@ -93,6 +93,7 @@ pub enum ResponseSuccess {
 }
 
 #[allow(unused)]
+#[allow(clippy::enum_variant_names)]
 pub enum ErrorCode {
   ParseError = -32700,
   InvalidRequest = -32600,
