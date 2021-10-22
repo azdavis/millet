@@ -11,7 +11,6 @@ use crate::statics::types::{
   Cx, Env, Error, Item, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys,
   ValEnv, ValInfo,
 };
-use maplit::btreemap;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
@@ -566,7 +565,7 @@ pub fn ck_dat_copy(
   Ok(Env {
     str_env: StrEnv::new(),
     ty_env: TyEnv {
-      inner: btreemap![ty_con.val => sym],
+      inner: BTreeMap::from([(ty_con.val, sym)]),
     },
     val_env,
   })

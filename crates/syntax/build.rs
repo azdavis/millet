@@ -1,4 +1,4 @@
-use identifier_case::snake_to_pascal;
+use syntax_gen::{char_name, identifier_case::snake_to_pascal};
 use syntax_gen::{gen, TokenKind};
 
 const SPECIAL: [(&str, &str); 7] = [

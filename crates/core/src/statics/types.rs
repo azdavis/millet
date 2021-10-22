@@ -12,7 +12,6 @@ use crate::intern::{StrRef, StrStore};
 use crate::loc::{Loc, Located};
 use crate::token::TyVar as AstTyVar;
 use crate::util::eq_iter;
-use maplit::{btreemap, btreeset, hashmap, hashset};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt;
 
@@ -346,9 +345,9 @@ impl Subst {
     assert!(!self.overload.contains_key(&tv));
     assert!(!self.bound.contains(&tv));
     let subst = Self {
-      regular: hashmap![tv => ty.clone()],
-      overload: hashmap![],
-      bound: hashset![],
+      regular: HashMap::from([(tv, ty.clone())]),
+      overload: HashMap::new(),
+      bound: HashSet::new(),
     };
     for other in self.regular.values_mut() {
       other.apply(&subst);
@@ -529,7 +528,7 @@ impl Ty {
 
   /// Given `t` and `u`, returns `t * u`.
   pub fn pair(lhs: Self, rhs: Self) -> Self {
-    Self::Record(btreemap![Label::Num(1) => lhs, Label::Num(2) => rhs])
+    Self::Record(BTreeMap::from([(Label::Num(1), lhs), (Label::Num(2), rhs)]))
   }
 
   /// Returns the type names in this.
@@ -571,7 +570,7 @@ impl Ty {
   /// Returns the free type variables in this.
   pub fn free_ty_vars(&self) -> TyVarSet {
     match self {
-      Self::Var(tv) => btreeset![*tv],
+      Self::Var(tv) => BTreeSet::from([*tv]),
       Self::Record(rows) => rows.values().flat_map(Self::free_ty_vars).collect(),
       Self::Arrow(lhs, rhs) => lhs
         .free_ty_vars()

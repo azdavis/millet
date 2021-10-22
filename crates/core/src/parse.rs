@@ -9,9 +9,7 @@ use crate::intern::{StrRef, StrStore};
 use crate::lex::Lexer;
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar};
-use maplit::hashmap;
 use std::collections::HashMap;
-use std::convert::TryInto as _;
 
 /// A specialized Result that most functions in this module return.
 pub type Result<T> = std::result::Result<T, Located<Error>>;
@@ -84,21 +82,21 @@ impl Parser {
       lexer,
       last_loc,
       i: 0,
-      ops: hashmap![
-        StrRef::CONS => OpInfo::right(5),
-        StrRef::EQ => OpInfo::left(4),
-        StrRef::ASSIGN => OpInfo::left(3),
-        StrRef::DIV => OpInfo::left(7),
-        StrRef::MOD => OpInfo::left(7),
-        StrRef::STAR => OpInfo::left(7),
-        StrRef::SLASH => OpInfo::left(7),
-        StrRef::PLUS => OpInfo::left(6),
-        StrRef::MINUS => OpInfo::left(6),
-        StrRef::LT => OpInfo::left(4),
-        StrRef::GT => OpInfo::left(4),
-        StrRef::LT_EQ => OpInfo::left(4),
-        StrRef::GT_EQ => OpInfo::left(4),
-      ],
+      ops: HashMap::from([
+        (StrRef::CONS, OpInfo::right(5)),
+        (StrRef::EQ, OpInfo::left(4)),
+        (StrRef::ASSIGN, OpInfo::left(3)),
+        (StrRef::DIV, OpInfo::left(7)),
+        (StrRef::MOD, OpInfo::left(7)),
+        (StrRef::STAR, OpInfo::left(7)),
+        (StrRef::SLASH, OpInfo::left(7)),
+        (StrRef::PLUS, OpInfo::left(6)),
+        (StrRef::MINUS, OpInfo::left(6)),
+        (StrRef::LT, OpInfo::left(4)),
+        (StrRef::GT, OpInfo::left(4)),
+        (StrRef::LT_EQ, OpInfo::left(4)),
+        (StrRef::GT_EQ, OpInfo::left(4)),
+      ]),
     }
   }
 

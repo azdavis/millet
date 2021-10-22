@@ -3,7 +3,6 @@
 use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::token::TyVar;
-use std::convert::TryInto as _;
 
 /// An expression.
 #[derive(Debug)]

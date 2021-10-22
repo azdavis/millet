@@ -4,7 +4,7 @@ use crate::intern::StrRef;
 use crate::statics::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
-use maplit::btreemap;
+use std::collections::BTreeMap;
 
 /// Given `t`, returns `t ref`.
 fn ref_ty(t: Ty) -> Ty {
@@ -12,10 +12,10 @@ fn ref_ty(t: Ty) -> Ty {
 }
 
 fn bool_val_env() -> ValEnv {
-  btreemap![
-    StrRef::TRUE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
-    StrRef::FALSE => ValInfo::ctor(TyScheme::mono(Ty::BOOL)),
-  ]
+  ValEnv::from([
+    (StrRef::TRUE, ValInfo::ctor(TyScheme::mono(Ty::BOOL))),
+    (StrRef::FALSE, ValInfo::ctor(TyScheme::mono(Ty::BOOL))),
+  ])
 }
 
 fn list_val_env(st: &mut State) -> ValEnv {
@@ -34,7 +34,7 @@ fn list_val_env(st: &mut State) -> ValEnv {
     ),
     overload: None,
   });
-  btreemap![StrRef::NIL => nil, StrRef::CONS => cons]
+  ValEnv::from([(StrRef::NIL, nil), (StrRef::CONS, cons)])
 }
 
 fn ref_val_env(st: &mut State) -> ValEnv {
@@ -44,15 +44,15 @@ fn ref_val_env(st: &mut State) -> ValEnv {
     ty: Ty::Arrow(Ty::Var(a).into(), ref_ty(Ty::Var(a)).into()),
     overload: None,
   });
-  btreemap![StrRef::REF => ref_]
+  ValEnv::from([(StrRef::REF, ref_)])
 }
 
 fn order_val_env() -> ValEnv {
-  btreemap![
-    StrRef::LESS => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
-    StrRef::EQUAL => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
-    StrRef::GREATER => ValInfo::ctor(TyScheme::mono(Ty::ORDER)),
-  ]
+  ValEnv::from([
+    (StrRef::LESS, ValInfo::ctor(TyScheme::mono(Ty::ORDER))),
+    (StrRef::EQUAL, ValInfo::ctor(TyScheme::mono(Ty::ORDER))),
+    (StrRef::GREATER, ValInfo::ctor(TyScheme::mono(Ty::ORDER))),
+  ])
 }
 
 fn overloaded(st: &mut State, overloads: Vec<Sym>) -> ValInfo {
@@ -145,7 +145,7 @@ pub fn get() -> (Basis, State) {
     ty_vars: vec![a],
     ty: Ty::Arrow(
       Ty::pair(ref_ty(Ty::Var(a)), Ty::Var(a)).into(),
-      Ty::Record(btreemap![]).into(),
+      Ty::Record(BTreeMap::new()).into(),
     ),
     overload: None,
   });
@@ -161,7 +161,7 @@ pub fn get() -> (Basis, State) {
   st.tys.insert(Sym::CHAR, base_ty(Ty::CHAR, true));
   st.tys.insert(Sym::WORD, base_ty(Ty::WORD, true));
   st.tys.insert(Sym::EXN, base_ty(Ty::EXN, false));
-  let unit = Ty::Record(btreemap![]);
+  let unit = Ty::Record(BTreeMap::new());
   st.tys.insert(Sym::UNIT, base_ty(unit, false));
   let bs = Basis {
     fun_env: FunEnv::new(),
@@ -169,45 +169,45 @@ pub fn get() -> (Basis, State) {
     env: Env {
       str_env: StrEnv::new(),
       ty_env: TyEnv {
-        inner: btreemap![
-          StrRef::UNIT => Sym::UNIT,
-          StrRef::BOOL => Sym::BOOL,
-          StrRef::INT => Sym::INT,
-          StrRef::REAL => Sym::REAL,
-          StrRef::STRING => Sym::STRING,
-          StrRef::CHAR => Sym::CHAR,
-          StrRef::WORD => Sym::WORD,
-          StrRef::LIST => Sym::LIST,
-          StrRef::REF => Sym::REF,
-          StrRef::EXN => Sym::EXN,
-          StrRef::ORDER => Sym::ORDER,
-        ],
+        inner: BTreeMap::from([
+          (StrRef::UNIT, Sym::UNIT),
+          (StrRef::BOOL, Sym::BOOL),
+          (StrRef::INT, Sym::INT),
+          (StrRef::REAL, Sym::REAL),
+          (StrRef::STRING, Sym::STRING),
+          (StrRef::CHAR, Sym::CHAR),
+          (StrRef::WORD, Sym::WORD),
+          (StrRef::LIST, Sym::LIST),
+          (StrRef::REF, Sym::REF),
+          (StrRef::EXN, Sym::EXN),
+          (StrRef::ORDER, Sym::ORDER),
+        ]),
       },
       val_env: bool_val_env()
         .into_iter()
         .chain(list_val_env(&mut st))
         .chain(ref_val_env(&mut st))
         .chain(order_val_env())
-        .chain(btreemap![
-          StrRef::EQ => eq,
-          StrRef::ASSIGN => assign,
-          StrRef::MATCH => ValInfo::exn(),
-          StrRef::BIND => ValInfo::exn(),
-          StrRef::ABS => overloaded_one(&mut st, real_int()),
-          StrRef::TILDE => overloaded_one(&mut st, real_int()),
-          StrRef::DIV => overloaded(&mut st, word_int()),
-          StrRef::MOD => overloaded(&mut st, word_int()),
-          StrRef::STAR => overloaded(&mut st, num()),
-          StrRef::SLASH => overloaded(&mut st, real()),
-          StrRef::PLUS => overloaded(&mut st, num()),
-          StrRef::MINUS => overloaded(&mut st, num()),
+        .chain(ValEnv::from([
+          (StrRef::EQ, eq),
+          (StrRef::ASSIGN, assign),
+          (StrRef::MATCH, ValInfo::exn()),
+          (StrRef::BIND, ValInfo::exn()),
+          (StrRef::ABS, overloaded_one(&mut st, real_int())),
+          (StrRef::TILDE, overloaded_one(&mut st, real_int())),
+          (StrRef::DIV, overloaded(&mut st, word_int())),
+          (StrRef::MOD, overloaded(&mut st, word_int())),
+          (StrRef::STAR, overloaded(&mut st, num())),
+          (StrRef::SLASH, overloaded(&mut st, real())),
+          (StrRef::PLUS, overloaded(&mut st, num())),
+          (StrRef::MINUS, overloaded(&mut st, num())),
           // the Definition states these have type numtxt * numtxt -> numtxt but they really should
           // be numtxt * numtxt -> bool.
-          StrRef::LT => overloaded_cmp(&mut st),
-          StrRef::GT => overloaded_cmp(&mut st),
-          StrRef::LT_EQ => overloaded_cmp(&mut st),
-          StrRef::GT_EQ => overloaded_cmp(&mut st),
-        ])
+          (StrRef::LT, overloaded_cmp(&mut st)),
+          (StrRef::GT, overloaded_cmp(&mut st)),
+          (StrRef::LT_EQ, overloaded_cmp(&mut st)),
+          (StrRef::GT_EQ, overloaded_cmp(&mut st)),
+        ]))
         .collect(),
     },
   };

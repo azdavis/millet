@@ -4,7 +4,6 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use std::convert::TryInto;
 use std::fmt;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::{token::Token, SyntaxKind as SK};

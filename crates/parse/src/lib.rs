@@ -14,7 +14,6 @@ mod ty;
 mod util;
 
 use crate::parser::{Error, Parser};
-use std::convert::TryFrom as _;
 use syntax::ast::Root;
 use syntax::{token::Token, SyntaxKind as SK};
 
