@@ -14,7 +14,7 @@ mod ty;
 mod util;
 
 use crate::parser::{Error, Parser};
-use syntax::ast::Root;
+use syntax::ast::{AstNode as _, Root};
 use syntax::{token::Token, SyntaxKind as SK};
 
 /// The result of a parse.
@@ -32,7 +32,7 @@ pub fn get(tokens: &[Token<'_, SK>]) -> Parse {
   root::root(&mut p);
   let (node, errors) = p.finish();
   Parse {
-    root: Root::try_from(node).unwrap(),
+    root: Root::cast(node).unwrap(),
     errors,
   }
 }

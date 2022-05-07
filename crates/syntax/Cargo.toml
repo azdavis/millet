@@ -9,9 +9,10 @@ doctest = false
 test = false
 
 [dependencies]
-ast-ptr = { git = "https://github.com/azdavis/language-util.git" }
-rowan = "0.14"
+rowan = "0.15"
 token = { git = "https://github.com/azdavis/language-util.git" }
 
 [build-dependencies]
 syntax-gen = { git = "https://github.com/azdavis/language-util.git" }
+char-name = { git = "https://github.com/azdavis/language-util.git" }
+identifier-case = { git = "https://github.com/azdavis/language-util.git" }
