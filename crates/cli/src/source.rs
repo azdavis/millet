@@ -84,7 +84,7 @@ impl<'a> Files<'a> for SourceMap {
       .new_lines
       .iter()
       .position(|&x| byte_index <= x)
-      .unwrap_or_else(|| file.new_lines.len());
+      .unwrap_or(file.new_lines.len());
     Some(ret)
   }
 

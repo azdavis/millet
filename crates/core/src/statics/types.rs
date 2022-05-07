@@ -335,7 +335,7 @@ impl Subst {
   }
 
   /// Returns whether this is an overloaded ty var.
-  pub fn is_overloaded(&mut self, tv: &TyVar) -> bool {
+  pub fn is_overloaded(&self, tv: &TyVar) -> bool {
     self.overload.contains_key(tv)
   }
 

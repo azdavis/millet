@@ -32,7 +32,7 @@ impl State {
       IncomingRequestParams::Initialize(params) => {
         // TODO do something with params.process_id
         self.root_uri = params.root_uri;
-        Ok(ResponseSuccess::Initialize(InitializeResult {
+        let res = InitializeResult {
           capabilities: ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::Full)),
             ..ServerCapabilities::default()
@@ -41,7 +41,8 @@ impl State {
             name: "millet-ls".to_owned(),
             version: Some(env!("CARGO_PKG_VERSION").to_owned()),
           }),
-        }))
+        };
+        Ok(ResponseSuccess::Initialize(res.into()))
       }
       IncomingRequestParams::Shutdown => {
         self.got_shutdown = true;

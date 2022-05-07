@@ -11,7 +11,7 @@ use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Val
 const JSON_RPC_VERSION: &str = "2.0";
 
 pub enum IncomingRequestParams {
-  Initialize(InitializeParams),
+  Initialize(Box<InitializeParams>),
   Shutdown,
 }
 
@@ -88,7 +88,7 @@ where
 }
 
 pub enum ResponseSuccess {
-  Initialize(InitializeResult),
+  Initialize(Box<InitializeResult>),
   Null,
 }
 
