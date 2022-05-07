@@ -26,19 +26,19 @@ and press the green play button. This will build the language server and client
 (it might take a bit), and then open a new VSCode window with the extension
 enabled. From there you can open up a SML file and try it out.
 
-The scripts in `bin` require a POSIX `sh`.
+The scripts in `scripts` require a POSIX `sh`.
 
 ## Repository layout
 
 - `.vscode` contains configuration for Visual Studio Code, which is invaluable
   when developing the VSCode language client extension.
-- `bin` contains various scripts.
-  - `bin/ck-sml-defn.sh` checks whether all of the rules of the statics have
+- `scripts` contains various scripts.
+  - `scripts/ck-sml-defn.sh` checks whether all of the rules of the statics have
     been mentioned in the implementation of the statics.
-  - `bin/mk-test.sh` makes `ok.sml` tests.
-  - `bin/mk-vscode-ext.sh` builds the VSCode language client extension and
+  - `scripts/mk-test.sh` makes `ok.sml` tests.
+  - `scripts/mk-vscode-ext.sh` builds the VSCode language client extension and
     language server, and puts the language server binary near the built client.
-  - `bin/run-test.sh` runs tests in `tests`.
+  - `scripts/run-test.sh` runs tests in `tests`.
 - `crates` is the primary location of code implementing Standard ML.
   - `crates/cli` contains a command-line interface which runs the lexer, parser,
     and typechecker from `crates/core` on a sequence of files.
@@ -68,15 +68,15 @@ that file on quiet mode, it must exit 0 and produce no output.
 Else, if the test contains a file `err.sml`, then when the Millet CLI is run
 with that file, it must exit 1 and produce the output in `out.txt`.
 
-Run `./bin/mk-test.sh tests/<name>` to make an `ok.sml` test, and run
-`./bin/run-test.sh tests/<name>` to run a test. The test runner exports two
+Run `./scripts/mk-test.sh tests/<name>` to make an `ok.sml` test, and run
+`./scripts/run-test.sh tests/<name>` to run a test. The test runner exports two
 environment variables available for use in any `run.sh`:
 
 - `NO_COLOR=1`, to turn off colored output when running the Millet CLI.
 - `MILLET`, which is an absolute path to the Millet CLI binary.
 
 After you first create a test, or if you update a test, you may want to generate
-an appropriate `out.txt` file. Use `./bin/run-test.sh -g tests/<name>` to do
+an appropriate `out.txt` file. Use `./scripts/run-test.sh -g tests/<name>` to do
 that.
 
 ## Naming

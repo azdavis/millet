@@ -10,10 +10,10 @@ jobs:
       - name: Check formatting
         run: cargo fmt -- --check
       - name: Check for SML Definition references
-        run: ./bin/ck-sml-defn.sh
+        run: ./scripts/ck-sml-defn.sh
       - name: Check with clippy
         run: cargo clippy
       - name: Test with cargo
         run: cargo test
       - name: Test with run-test.sh
-        run: ./bin/run-test.sh tests/*
+        run: ./scripts/run-test.sh tests/*
