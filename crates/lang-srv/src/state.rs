@@ -4,13 +4,13 @@ use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
   ResponseSuccess,
 };
+use base::intern::StrStoreMut;
+use base::loc::Loc;
+use base::{lex, parse, statics};
 use lsp_types::{
   Diagnostic, InitializeResult, Position, PublishDiagnosticsParams, Range, ServerCapabilities,
   ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, Url,
 };
-use millet_core::intern::StrStoreMut;
-use millet_core::loc::Loc;
-use millet_core::{lex, parse, statics};
 
 pub struct State {
   root_uri: Option<Url>,

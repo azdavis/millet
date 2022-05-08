@@ -1,5 +1,5 @@
 [package]
-name = "millet-ls"
+name = "lang-srv"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -7,6 +7,6 @@ publish = false
 [dependencies]
 crossbeam-channel = "0.4"
 lsp-types = "0.74"
-millet-core = { path = "../core" }
+base = { path = "../base" }
 serde = "1.0"
 serde_json = "1.0"

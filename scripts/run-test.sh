@@ -33,9 +33,9 @@ if [ "$#" -eq 0 ]; then
   usage
 fi
 
-cargo build --bin millet
+cargo build --bin cli
 export NO_COLOR=1
-export MILLET="$PWD/target/debug/millet"
+export MILLET="$PWD/target/debug/cli"
 
 old_pwd="$PWD"
 passed=0

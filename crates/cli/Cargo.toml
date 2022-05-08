@@ -1,14 +1,10 @@
 [package]
-name = "millet-cli"
+name = "cli"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
-[[bin]]
-name = "millet"
-path = "src/main.rs"
-
 [dependencies]
 codespan-reporting = "0.9"
-millet-core = { path = "../core" }
+base = { path = "../base" }
 pico-args = "0.3"

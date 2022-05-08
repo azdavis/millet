@@ -3,10 +3,10 @@
 mod args;
 mod source;
 
+use base::{intern, lex, parse, statics};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
-use millet_core::{intern, lex, parse, statics};
 use std::io::Write as _;
 
 fn simple<M, T, R>(msg: M, id: T, loc: R) -> Diagnostic<T>
