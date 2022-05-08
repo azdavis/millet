@@ -1,5 +1,9 @@
 //! Parsing from tokens to ASTs.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 use ast::{
   Arm, Cases, ConBind, DatBind, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind, FValBindCase,
   FunBind, Label, Long, Pat, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec,

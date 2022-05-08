@@ -16,6 +16,10 @@
 //! But, we may want to later actually display the string referenced by an ID, for instance in an
 //! error message. For that, we must look up the String referenced by the StrRef.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 use rustc_hash::FxHashMap;
 use std::fmt;
 
@@ -88,6 +92,7 @@ impl StrRef {
 }
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
+#[derive(Debug)]
 pub struct StrStoreMut {
   store: FxHashMap<String, StrRef>,
   next: usize,
@@ -180,6 +185,7 @@ impl StrStoreMut {
 }
 
 /// An immutable store of Strings. Allows looking up the String corresponding to a StrRef.
+#[derive(Debug)]
 pub struct StrStore {
   store: Vec<String>,
 }

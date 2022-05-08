@@ -678,7 +678,7 @@ pub struct TyInfo {
 }
 
 /// A collection of symbol types.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Tys {
   inner: HashMap<Sym, TyInfo>,
 }
@@ -974,7 +974,7 @@ pub struct Sig {
 /// A functor signature. Note that in the Definition this is TyNameSet x (Env x Sig) but that's
 /// isomorphic. I feel like the latter makes more sense, though there could be something I'm not
 /// understanding.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct FunSig {
   pub input: Sig,
   pub output: Sig,
@@ -988,7 +988,7 @@ pub type FunEnv = HashMap<StrRef, FunSig>;
 
 /// A basis. There's one of these in the whole program, since it basically represents the entire
 /// program.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Basis {
   pub fun_env: FunEnv,
   pub sig_env: SigEnv,
@@ -1042,7 +1042,7 @@ impl Basis {
 
 /// The state passed around by many of the statics functions. There's only one of these, and it's
 /// constantly being mutably, additively updated as we go.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct State {
   /// The next type variable ID to hand out. Invariant: Always increases.
   next_ty_var: usize,

@@ -1,5 +1,9 @@
 //! Lexical tokens.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 use intern::StrRef;
 
 /// A token, an "item of lexical analysis" (almost).

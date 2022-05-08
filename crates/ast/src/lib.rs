@@ -1,5 +1,9 @@
 //! Abstract syntax trees.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 use intern::StrRef;
 use loc::{Loc, Located};
 use token::TyVar;
@@ -393,7 +397,7 @@ pub enum TopDec<I> {
 }
 
 /// Precedence of type operations.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TyPrec {
   /// `->` precedence, the lowest.
   Arrow,

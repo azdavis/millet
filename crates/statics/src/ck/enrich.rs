@@ -39,7 +39,7 @@ struct Cx<'t, 's> {
   ty_rzn: &'s TyRealization,
 }
 
-fn ck_impl(cx: Cx, got: &Env, want: &Env) -> Result<()> {
+fn ck_impl(cx: Cx<'_, '_>, got: &Env, want: &Env) -> Result<()> {
   // For these for loops, we need the iteration order to be the same across different runs of the
   // program on the same file to ensure we get the same error message every time. This is useful for
   // testing and also is far less surprising for the user. Because of this need, the maps are
@@ -68,7 +68,7 @@ fn ck_impl(cx: Cx, got: &Env, want: &Env) -> Result<()> {
   Ok(())
 }
 
-fn ck_val_info(cx: Cx, got: &ValInfo, want: &ValInfo) -> Result<()> {
+fn ck_val_info(cx: Cx<'_, '_>, got: &ValInfo, want: &ValInfo) -> Result<()> {
   if want.id_status != got.id_status && !want.id_status.is_val() {
     // TODO improve this error to mention that it's also ok if want is a value?
     let err = Error::IdStatusMismatch(want.id_status, got.id_status);
@@ -78,7 +78,7 @@ fn ck_val_info(cx: Cx, got: &ValInfo, want: &ValInfo) -> Result<()> {
   Ok(())
 }
 
-fn ck_ty_info(cx: Cx, got: &TyInfo, want: &TyInfo) -> Result<()> {
+fn ck_ty_info(cx: Cx<'_, '_>, got: &TyInfo, want: &TyInfo) -> Result<()> {
   ck_ty_fcn_eq(cx, &got.ty_fcn, &want.ty_fcn)?;
   if want.val_env.is_empty() {
     return Ok(());
@@ -86,7 +86,7 @@ fn ck_ty_info(cx: Cx, got: &TyInfo, want: &TyInfo) -> Result<()> {
   ck_val_env_eq(cx, &got.val_env, &want.val_env)
 }
 
-fn ck_val_env_eq(cx: Cx, got: &ValEnv, want: &ValEnv) -> Result<()> {
+fn ck_val_env_eq(cx: Cx<'_, '_>, got: &ValEnv, want: &ValEnv) -> Result<()> {
   let want_keys: Vec<_> = want.keys().copied().collect();
   let got_keys: Vec<_> = got.keys().copied().collect();
   if want_keys != got_keys {
@@ -105,14 +105,14 @@ fn ck_val_env_eq(cx: Cx, got: &ValEnv, want: &ValEnv) -> Result<()> {
 
 /// Returns `Ok(())` if want = got. From the Definition: "It can be shown that lhs = rhs iff lhs >>>
 /// rhs and rhs >>> lhs."
-fn ck_ty_fcn_eq(cx: Cx, got: &TyFcn, want: &TyFcn) -> Result<()> {
+fn ck_ty_fcn_eq(cx: Cx<'_, '_>, got: &TyFcn, want: &TyFcn) -> Result<()> {
   ck_generalizes(cx, want.clone(), got.clone())?;
   ck_generalizes(cx, got.clone(), want.clone())?;
   Ok(())
 }
 
 /// Returns `Ok(())` iff want generalizes got as per the Definition.
-fn ck_generalizes(cx: Cx, mut want: TyScheme, mut got: TyScheme) -> Result<()> {
+fn ck_generalizes(cx: Cx<'_, '_>, mut want: TyScheme, mut got: TyScheme) -> Result<()> {
   let want_free_tvs = want.free_ty_vars();
   for tv in got.ty_vars.iter() {
     if want_free_tvs.contains(tv) {

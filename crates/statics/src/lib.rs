@@ -4,6 +4,10 @@
 //!
 //! [1]: http://dev.stephendiehl.com/fun/006_hindley_milner.html
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 mod ck;
 mod std_lib;
 mod ty_rzn;
@@ -15,6 +19,7 @@ use intern::StrRef;
 use loc::Located;
 
 /// The data computed when running static analysis.
+#[derive(Debug)]
 pub struct Statics {
   bs: Basis,
   st: State,

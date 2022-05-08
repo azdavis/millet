@@ -1,5 +1,9 @@
 //! Miscellaneous utilities.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 use std::iter::ExactSizeIterator;
 
 /// Returns whether lhs and rhs have the same elements in the same order. Logically the same as

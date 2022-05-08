@@ -1,5 +1,9 @@
 //! Source code locations.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 use std::fmt;
 
 /// A range in the source. The start is inclusive, the end is not inclusive.

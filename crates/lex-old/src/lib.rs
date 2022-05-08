@@ -1,5 +1,9 @@
 //! Lexing from bytes to tokens.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
 use intern::{StrRef, StrStoreMut};
 use loc::{Loc, Located};
 use token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
@@ -10,6 +14,7 @@ pub fn get(store: &mut StrStoreMut, bs: &[u8]) -> Result<Lexer, Located<Error>> 
 }
 
 /// A sequence of tokens.
+#[derive(Debug)]
 pub struct Lexer {
   ts: Vec<Located<Token>>,
 }
