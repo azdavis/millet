@@ -3,81 +3,62 @@
 A [language server][lang-server] for [Standard ML][sml-def], with a
 corresponding [Visual Studio Code][vscode] language client extension.
 
-This project is alpha-quality software. There are
-[many important things](todo.md) not yet implemented. There are things that are
-shoddily implemented (note the skipped tests in `tests/`).
+## Warning
+
+This project is alpha-quality software.
+
+- There are [many important things](todo.md) not yet implemented.
+- There are things that are shoddily implemented. Note the skipped tests in
+  `tests/`.
 
 ## Development
 
-First, get the repository, probably by cloning with `git`, and cd inside.
+`git clone` the repo, `cd` inside, and run `scripts/setup.sh`.
 
-For development of the main codebase in `crates`, install Rust, probably with
-[rustup][]. Then run `cargo build`.
+If you're using VSCode, you can try out the VSCode extension:
 
-For development of the VSCode extension in `extensions/vscode`, first install
-[node][]. Then cd into `extensions/vscode`, and run `npm install && npm build`.
-
-If you're using VSCode, open the root directory of this repository in VSCode to
-get extension recommendations for a pleasant Rust developer experience.
-
-VSCode also lets you try out the language client extension from the Run panel.
-Open the Run panel (play button with bug), select 'extension' in the drop down,
-and press the green play button. This will build the language server and client
-(it might take a bit), and then open a new VSCode window with the extension
-enabled. From there you can open up a SML file and try it out.
-
-The scripts in `scripts` require a POSIX `sh`.
+1. Open the root directory of this repository in VSCode
+2. Open the Run panel from the activity bar (the play button with bug)
+3. Select 'extension' in the drop down
+4. Press the green play button
 
 ## Repository layout
 
-- `.vscode` contains configuration for Visual Studio Code, which is invaluable
-  when developing the VSCode language client extension.
-- `scripts` contains various scripts.
-  - `scripts/ck-sml-defn.sh` checks whether all of the rules of the statics have
-    been mentioned in the implementation of the statics.
-  - `scripts/mk-test.sh` makes `ok.sml` tests.
-  - `scripts/mk-vscode-ext.sh` builds the VSCode language client extension and
-    language server, and puts the language server binary near the built client.
-  - `scripts/run-test.sh` runs tests in `tests`.
-- `crates` is the primary location of code implementing Standard ML.
-  - `crates/cli` contains a command-line interface which runs the lexer, parser,
-    and typechecker from `crates/base` on a sequence of files.
-  - `crates/base` contains the Standard ML lexer, parser, and typechecker.
-  - `crates/ls` contains a language server which runs the lexer, parser, and
-    typechecker from `crates/base` on files sent to it by the language client.
-- `doc` contains documentation.
-- `extensions` contains language client extensions for text editors to
-  communicate with the language server.
-- `tests` contains tests.
+- Mode of the code is in `crates/`.
+- Editor extensions are in `extensions`.
+- Tests are in `tests/` (who'd have guessed?).
+- Various helper scripts are in `scripts/`. They require a POSIX `sh`.
 
 ## Testing
 
-A test is a directory directly inside the directory `tests`.
+A test is a directory directly inside the directory `tests`. Run a test with
+`scripts/run-test.sh`.
 
-If the test contains an empty file `skip`, then the test is skipped.
+A test must be of the given format:
 
-Else, if the test contains a file `run.sh`, then when that file is run with
-`sh -eu run.sh`, it must exit 0.
+1. If the test contains an empty file `skip`, then the test is skipped.
+2. Else, if the test contains a file `run.sh`, then when that file is run with
+   `sh -eu run.sh`, it must exit 0. (See below.)
+3. Else, if the test contains a file `ast.sml`, then when the Millet CLI is run
+   to output AST for that file, it must exit 0 and produce the output in
+   `out.txt`.
+4. Else, if the test contains a file `ok.sml`, then when the Millet CLI is run
+   with that file on quiet mode, it must exit 0 and produce no output.
+5. Else, if the test contains a file `err.sml`, then when the Millet CLI is run
+   with that file, it must exit 1 and produce the output in `out.txt`.
+6. Else, the test is invalid.
 
-Else, if the test contains a file `ast.sml`, then when the Millet CLI is run to
-output AST for that file, it must exit 0 and produce the output in `out.txt`.
+Run `./scripts/mk-test.sh tests/<name>` to make an `ok.sml` test.
 
-Else, if the test contains a file `ok.sml`, then when the Millet CLI is run with
-that file on quiet mode, it must exit 0 and produce no output.
-
-Else, if the test contains a file `err.sml`, then when the Millet CLI is run
-with that file, it must exit 1 and produce the output in `out.txt`.
-
-Run `./scripts/mk-test.sh tests/<name>` to make an `ok.sml` test, and run
-`./scripts/run-test.sh tests/<name>` to run a test. The test runner exports two
-environment variables available for use in any `run.sh`:
+When writing a custom `run.sh` test, the test runner exports two environment
+variables available for use in any `run.sh`:
 
 - `NO_COLOR=1`, to turn off colored output when running the Millet CLI.
 - `MILLET`, which is an absolute path to the Millet CLI binary.
 
-After you first create a test, or if you update a test, you may want to generate
-an appropriate `out.txt` file. Use `./scripts/run-test.sh -g tests/<name>` to do
-that.
+Use the `-g` flag of `scripts/run-test.sh` to generate the expected output from
+the actual output for a test. This helps when you first write a test or update a
+test and want to change the expected files.
 
 ## Naming
 
