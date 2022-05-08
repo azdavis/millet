@@ -93,7 +93,6 @@ pub enum ResponseSuccess {
 }
 
 #[allow(unused)]
-#[allow(clippy::enum_variant_names)]
 pub enum ErrorCode {
   ParseError = -32700,
   InvalidRequest = -32600,
@@ -103,7 +102,7 @@ pub enum ErrorCode {
   ServerErrorStart = -32099,
   ServerErrorEnd = -32000,
   ServerNotInitialized = -32002,
-  UnknownErrorCode = -32001,
+  Unknown = -32001,
   RequestCancelled = -32800,
   ContentModified = -32801,
 }

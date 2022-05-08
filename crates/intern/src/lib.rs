@@ -99,7 +99,6 @@ pub struct StrStoreMut {
 }
 
 impl StrStoreMut {
-  #[allow(clippy::new_without_default)]
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
     let mut store = FxHashMap::with_capacity_and_hasher(
@@ -181,6 +180,12 @@ impl StrStoreMut {
       assert!(!s.is_empty());
     }
     StrStore { store }
+  }
+}
+
+impl Default for StrStoreMut {
+  fn default() -> Self {
+    Self::new()
   }
 }
 

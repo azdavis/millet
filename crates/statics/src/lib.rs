@@ -26,7 +26,6 @@ pub struct Statics {
 }
 
 impl Statics {
-  #[allow(clippy::new_without_default)]
   /// Returns the initial information to begin running the statics.
   pub fn new() -> Self {
     let (bs, st) = std_lib::get();
@@ -43,5 +42,11 @@ impl Statics {
   pub fn finish(mut self) {
     self.bs.apply(&self.st.subst, &mut self.st.tys);
     assert!(self.bs.free_ty_vars(&self.st.tys).is_empty());
+  }
+}
+
+impl Default for Statics {
+  fn default() -> Self {
+    Self::new()
   }
 }
