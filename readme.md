@@ -26,7 +26,7 @@ If you're using VSCode, you can try out the VSCode extension:
 ## Repository layout
 
 - Mode of the code is in `crates/`.
-- Editor extensions are in `extensions`.
+- Editor extensions are in `extensions/`.
 - Tests are in `tests/` (who'd have guessed?).
 - Various helper scripts are in `scripts/`. They require a POSIX `sh`.
 
