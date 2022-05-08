@@ -26,13 +26,13 @@
       "cwd": "${workspaceFolder}"
     },
     {
-      "name": "core tests",
+      "name": "base tests",
       "type": "lldb",
       "request": "launch",
       "cargo": {
-        "args": ["test", "--no-run", "--lib", "--package=millet-core"],
+        "args": ["test", "--no-run", "--lib", "--package=base"],
         "filter": {
-          "name": "millet-core",
+          "name": "base",
           "kind": "lib"
         }
       },

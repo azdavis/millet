@@ -41,10 +41,10 @@ The scripts in `scripts` require a POSIX `sh`.
   - `scripts/run-test.sh` runs tests in `tests`.
 - `crates` is the primary location of code implementing Standard ML.
   - `crates/cli` contains a command-line interface which runs the lexer, parser,
-    and typechecker from `crates/core` on a sequence of files.
-  - `crates/core` contains the Standard ML lexer, parser, and typechecker.
+    and typechecker from `crates/base` on a sequence of files.
+  - `crates/base` contains the Standard ML lexer, parser, and typechecker.
   - `crates/ls` contains a language server which runs the lexer, parser, and
-    typechecker from `crates/core` on files sent to it by the language client.
+    typechecker from `crates/base` on files sent to it by the language client.
 - `doc` contains documentation.
 - `extensions` contains language client extensions for text editors to
   communicate with the language server.
