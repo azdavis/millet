@@ -9,8 +9,8 @@ mod std_lib;
 mod ty_rzn;
 mod types;
 
-use crate::ast::TopDec;
 use crate::statics::types::{Basis, Result, State};
+use ast::TopDec;
 use intern::StrRef;
 use loc::Located;
 

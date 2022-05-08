@@ -7,7 +7,7 @@
 //! guarantee a stable iteration order. As an example, see enrich.rs (or don't if you just came from
 //! the comment there telling you to come here).
 
-use crate::ast::{Label, TyPrec};
+use ast::{Label, TyPrec};
 use intern::{StrRef, StrStore};
 use loc::{Loc, Located};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};

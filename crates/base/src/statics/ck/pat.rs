@@ -1,6 +1,6 @@
 //! Check patterns.
 
-use crate::ast::{Label, Long, Pat as AstPat};
+use ast::{Label, Long, Pat as AstPat};
 use loc::{Loc, Located};
 use crate::statics::ck::ty;
 use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate};

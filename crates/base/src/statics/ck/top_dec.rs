@@ -1,6 +1,6 @@
 //! Check top-level declarations.
 
-use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
+use ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use loc::Located;
 use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, sig_match, ty};

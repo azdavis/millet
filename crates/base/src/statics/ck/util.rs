@@ -4,7 +4,7 @@
 //! in `types.rs` is used in multiple other modules, and doesn't need access to internals in
 //! `types.rs`, and doesn't make sense as a method on a type, it should live here.
 
-use crate::ast::Long;
+use ast::Long;
 use crate::statics::types::{
   Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyScheme, ValInfo,
 };

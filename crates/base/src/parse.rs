@@ -1,6 +1,6 @@
 //! Parsing from tokens to ASTs.
 
-use crate::ast::{
+use ast::{
   Arm, Cases, ConBind, DatBind, Dec, ExBind, ExBindInner, ExDesc, Exp, FValBind, FValBindCase,
   FunBind, Label, Long, Pat, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec,
   Ty, TyBind, TyDesc, TyPrec, ValBind, ValDesc,
