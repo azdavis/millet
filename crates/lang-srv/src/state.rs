@@ -34,7 +34,7 @@ impl State {
         self.root_uri = params.root_uri;
         let res = InitializeResult {
           capabilities: ServerCapabilities {
-            text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::Full)),
+            text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
             ..ServerCapabilities::default()
           },
           server_info: Some(ServerInfo {
@@ -71,7 +71,7 @@ impl State {
         assert!(change.range.is_none());
         Some(mk_diagnostic_action(
           params.text_document.uri,
-          params.text_document.version,
+          Some(params.text_document.version),
           change.text.as_bytes(),
         ))
       }
@@ -89,7 +89,7 @@ pub enum Action {
   Respond(Box<Outgoing>),
 }
 
-fn mk_diagnostic_action(uri: Url, version: Option<i64>, bs: &[u8]) -> Action {
+fn mk_diagnostic_action(uri: Url, version: Option<i32>, bs: &[u8]) -> Action {
   let diagnostics: Vec<_> = ck_one_file(bs).into_iter().collect();
   Action::Respond(
     Outgoing::Notification(OutgoingNotification::PublishDiagnostics(
