@@ -1,6 +1,8 @@
 //! Command-line arguments.
 
-pub fn get() -> Result<Option<Args>, pico_args::Error> {
+use std::ffi::OsString;
+
+pub fn get() -> Result<Option<Args>, OsString> {
   let mut args = pico_args::Arguments::from_env();
   if args.contains(["-h", "--help"]) {
     print!("{}", include_str!("help.txt"));
@@ -13,7 +15,11 @@ pub fn get() -> Result<Option<Args>, pico_args::Error> {
   Ok(Some(Args {
     quiet: args.contains(["-q", "--quiet"]),
     just_ast: args.contains("--just-ast"),
-    files: args.free()?,
+    files: args
+      .finish()
+      .into_iter()
+      .map(|x| x.into_string())
+      .collect::<Result<Vec<_>, _>>()?,
   }))
 }
 

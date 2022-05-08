@@ -27,7 +27,7 @@ fn run() -> bool {
     Ok(Some(x)) => x,
     Ok(None) => return true,
     Err(e) => {
-      writeln!(&mut w, "{}", e).unwrap();
+      writeln!(&mut w, "not a valid path: {:?}", e.as_os_str()).unwrap();
       return false;
     }
   };
