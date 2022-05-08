@@ -4,7 +4,6 @@ use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
   ResponseSuccess,
 };
-use base::statics;
 use intern::StrStoreMut;
 use loc::Loc;
 use lsp_types::{
@@ -114,7 +113,7 @@ fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
     Ok(x) => x,
     Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
   };
-  let mut s = statics::Statics::new();
+  let mut s = statics::statics::Statics::new();
   for top_dec in top_decs {
     match s.get(&top_dec) {
       Ok(()) => {}

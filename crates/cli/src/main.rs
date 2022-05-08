@@ -3,7 +3,6 @@
 mod args;
 mod source;
 
-use base::statics;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
@@ -78,7 +77,7 @@ fn run() -> bool {
   if args.just_ast {
     return true;
   }
-  let mut s = statics::Statics::new();
+  let mut s = statics::statics::Statics::new();
   for (id, xs) in top_decs {
     for x in xs {
       match s.get(&x) {

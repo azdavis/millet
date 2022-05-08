@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 crossbeam-channel = "0.5"
 lsp-types = "0.93"
-base = { path = "../base" }
+statics = { path = "../statics" }
 intern = { path = "../intern" }
 loc = { path = "../loc" }
 lex-old = { path = "../lex-old" }

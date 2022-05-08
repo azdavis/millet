@@ -18,17 +18,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "base"
-version = "0.1.0"
-dependencies = [
- "ast",
- "intern",
- "loc",
- "token 0.1.0",
- "util",
-]
-
-[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -49,12 +38,12 @@ source = "git+https://github.com/azdavis/language-util.git#96a9a1d69ffe604a078cb
 name = "cli"
 version = "0.1.0"
 dependencies = [
- "base",
  "codespan-reporting",
  "intern",
  "lex-old",
  "parse-old",
  "pico-args",
+ "statics",
 ]
 
 [[package]]
@@ -162,7 +151,6 @@ checksum = "d43db9f547ba2787bdeac81ef97ccc80784f385b3b39b4d50344270629a2bee3"
 name = "lang-srv"
 version = "0.1.0"
 dependencies = [
- "base",
  "crossbeam-channel",
  "intern",
  "lex-old",
@@ -171,6 +159,7 @@ dependencies = [
  "parse-old",
  "serde",
  "serde_json",
+ "statics",
 ]
 
 [[package]]
@@ -360,6 +349,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7475118a28b7e3a2e157ce0131ba8c5526ea96e90ee601d9f6bb2e286a35ab44"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "statics"
+version = "0.1.0"
+dependencies = [
+ "ast",
+ "intern",
+ "loc",
+ "token 0.1.0",
+ "util",
 ]
 
 [[package]]
