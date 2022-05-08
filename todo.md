@@ -1,5 +1,14 @@
 # TODO
 
+listed in approximate order they should be addressed in
+
+- modernize
+  - integrate new lexer
+  - integrate new parser (rowan)
+  - integrate lowering + HIR
+  - freshen up statics
+  - allow returning many errors from each 'pass'
+  - remove old code
 - improve statics for type variables
   - implicit scoping
   - performing closure operations
