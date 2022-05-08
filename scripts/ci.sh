@@ -3,7 +3,7 @@
 set -eux
 
 cd "$(git rev-parse --show-toplevel)"
-cargo test -- --no-run
+cargo test --no-run
 cargo fmt -- --check
 ./scripts/ck-sml-defn.sh
 cargo clippy

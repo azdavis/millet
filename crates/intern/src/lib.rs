@@ -107,7 +107,6 @@ impl StrStoreMut {
       };
     }
     ins!("unit", UNIT);
-    ins!("unit", UNIT);
     ins!("char", CHAR);
     ins!("exn", EXN);
     ins!("bool", BOOL);
