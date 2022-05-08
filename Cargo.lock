@@ -127,6 +127,9 @@ dependencies = [
 [[package]]
 name = "intern"
 version = "0.1.0"
+dependencies = [
+ "rustc-hash",
+]
 
 [[package]]
 name = "itoa"

@@ -16,7 +16,7 @@
 //! But, we may want to later actually display the string referenced by an ID, for instance in an
 //! error message. For that, we must look up the String referenced by the StrRef.
 
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use std::fmt;
 
 /// A reference to a string. To learn what string this represents, you must ask the StrStore created
@@ -89,7 +89,7 @@ impl StrRef {
 
 /// A mutable factory of StrRefs. Allows creating new StrRefs from Strings.
 pub struct StrStoreMut {
-  store: HashMap<String, StrRef>,
+  store: FxHashMap<String, StrRef>,
   next: usize,
 }
 
@@ -97,50 +97,57 @@ impl StrStoreMut {
   #[allow(clippy::new_without_default)]
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let s = String::from;
-    let store = HashMap::from([
-      (s("unit"), StrRef::UNIT),
-      (s("char"), StrRef::CHAR),
-      (s("exn"), StrRef::EXN),
-      (s("bool"), StrRef::BOOL),
-      (s("true"), StrRef::TRUE),
-      (s("false"), StrRef::FALSE),
-      (s("not"), StrRef::NOT),
-      (s("string"), StrRef::STRING),
-      (s("^"), StrRef::CARAT),
-      (s("word"), StrRef::WORD),
-      (s("int"), StrRef::INT),
-      (s("~"), StrRef::TILDE),
-      (s("+"), StrRef::PLUS),
-      (s("-"), StrRef::MINUS),
-      (s("*"), StrRef::STAR),
-      (s("div"), StrRef::DIV),
-      (s("mod"), StrRef::MOD),
-      (s("real"), StrRef::REAL),
-      (s("/"), StrRef::SLASH),
-      (s("order"), StrRef::ORDER),
-      (s("LESS"), StrRef::LESS),
-      (s("EQUAL"), StrRef::EQUAL),
-      (s("GREATER"), StrRef::GREATER),
-      (s("="), StrRef::EQ),
-      (s("<>"), StrRef::NEQ),
-      (s("<"), StrRef::LT),
-      (s("<="), StrRef::LT_EQ),
-      (s(">"), StrRef::GT),
-      (s(">="), StrRef::GT_EQ),
-      (s("option"), StrRef::OPTION),
-      (s("SOME"), StrRef::SOME),
-      (s("NONE"), StrRef::NONE),
-      (s("list"), StrRef::LIST),
-      (s("nil"), StrRef::NIL),
-      (s("::"), StrRef::CONS),
-      (s("@"), StrRef::AT),
-      (s("ref"), StrRef::REF),
-      (s(":="), StrRef::ASSIGN),
-      (s("Match"), StrRef::MATCH),
-      (s("Bind"), StrRef::BIND),
-      (s("abs"), StrRef::ABS),
-    ]);
+    let mut store = FxHashMap::with_capacity_and_hasher(
+      SPECIAL_STR_REF,
+      std::hash::BuildHasherDefault::default(),
+    );
+    macro_rules! ins {
+      ($s:expr, $name:ident) => {
+        assert!(store.insert($s.to_owned(), StrRef::$name).is_none());
+      };
+    }
+    ins!("unit", UNIT);
+    ins!("unit", UNIT);
+    ins!("char", CHAR);
+    ins!("exn", EXN);
+    ins!("bool", BOOL);
+    ins!("true", TRUE);
+    ins!("false", FALSE);
+    ins!("not", NOT);
+    ins!("string", STRING);
+    ins!("^", CARAT);
+    ins!("word", WORD);
+    ins!("int", INT);
+    ins!("~", TILDE);
+    ins!("+", PLUS);
+    ins!("-", MINUS);
+    ins!("*", STAR);
+    ins!("div", DIV);
+    ins!("mod", MOD);
+    ins!("real", REAL);
+    ins!("/", SLASH);
+    ins!("order", ORDER);
+    ins!("LESS", LESS);
+    ins!("EQUAL", EQUAL);
+    ins!("GREATER", GREATER);
+    ins!("=", EQ);
+    ins!("<>", NEQ);
+    ins!("<", LT);
+    ins!("<=", LT_EQ);
+    ins!(">", GT);
+    ins!(">=", GT_EQ);
+    ins!("option", OPTION);
+    ins!("SOME", SOME);
+    ins!("NONE", NONE);
+    ins!("list", LIST);
+    ins!("nil", NIL);
+    ins!("::", CONS);
+    ins!("@", AT);
+    ins!("ref", REF);
+    ins!(":=", ASSIGN);
+    ins!("Match", MATCH);
+    ins!("Bind", BIND);
+    ins!("abs", ABS);
     assert_eq!(store.len(), SPECIAL_STR_REF);
     Self {
       next: SPECIAL_STR_REF,
