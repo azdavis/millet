@@ -8,6 +8,7 @@ publish = false
 doctest = false
 
 [dependencies]
+rustc-hash = "1"
 intern = { path = "../intern" }
 token = { path = "../token" }
 util = { path = "../util" }

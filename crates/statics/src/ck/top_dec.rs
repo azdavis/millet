@@ -20,7 +20,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
     }
     // SML Definition (88)
     TopDec::SigDec(sig_binds) => {
-      let mut sig_env = SigEnv::new();
+      let mut sig_env = SigEnv::default();
       // SML Definition (66), SML Definition (67)
       for sig_bind in sig_binds {
         let env = ck_sig_exp(bs, st, &sig_bind.exp)?;
@@ -31,7 +31,7 @@ pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> 
     }
     // SML Definition (85), SML Definition (89)
     TopDec::FunDec(fun_binds) => {
-      let mut fun_env = FunEnv::new();
+      let mut fun_env = FunEnv::default();
       // SML Definition (86)
       for fun_bind in fun_binds {
         let sig_env = ck_sig_exp(bs, st, &fun_bind.sig_exp)?;

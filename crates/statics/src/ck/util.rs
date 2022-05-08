@@ -8,8 +8,8 @@ use crate::types::{Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyScheme
 use ast::Long;
 use intern::StrRef;
 use loc::{Loc, Located};
+use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
-use std::collections::HashSet;
 use token::TyVar as AstTyVar;
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same
@@ -147,7 +147,7 @@ pub fn insert_ty_vars(
   st: &mut State,
   ty_vars: &[Located<AstTyVar<StrRef>>],
 ) -> Result<()> {
-  let mut set = HashSet::new();
+  let mut set = FxHashSet::default();
   for tv in ty_vars {
     if !set.insert(tv.val.name) {
       return Err(tv.loc.wrap(Error::Duplicate(Item::TyVar, tv.val.name)));

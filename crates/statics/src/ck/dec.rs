@@ -11,7 +11,9 @@ use crate::types::{
 use ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use intern::StrRef;
 use loc::Located;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::BTreeMap;
+use std::hash::BuildHasherDefault;
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
   // The special constants are as per SML Definition (1). Note that SML Definition (5) is handled by
@@ -217,7 +219,7 @@ struct FunInfo {
   ret: TyVar,
 }
 
-fn fun_infos_to_ve(fun_infos: &HashMap<StrRef, FunInfo>) -> ValEnv {
+fn fun_infos_to_ve(fun_infos: &FxHashMap<StrRef, FunInfo>) -> ValEnv {
   fun_infos
     .iter()
     .map(|(&name, fun_info)| {
@@ -277,7 +279,8 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
         insert_ty_vars(&mut cx_cl, st, ty_vars)?;
         &cx_cl
       };
-      let mut fun_infos = HashMap::with_capacity(fval_binds.len());
+      let mut fun_infos =
+        FxHashMap::with_capacity_and_hasher(fval_binds.len(), BuildHasherDefault::default());
       for fval_bind in fval_binds {
         let first = fval_bind.cases.first().unwrap();
         let info = FunInfo {
@@ -467,7 +470,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
     cx.env.ty_env.inner.insert(dat_bind.ty_con.val, sym);
     // no mapping from ast ty vars to statics ty vars here. we just need some ty vars to make the
     // `TyScheme`. pretty much copied from `insert_ty_vars`.
-    let mut set = HashSet::new();
+    let mut set = FxHashSet::default();
     let mut ty_vars = Vec::new();
     for tv in dat_bind.ty_vars.iter() {
       if !set.insert(tv.val.name) {

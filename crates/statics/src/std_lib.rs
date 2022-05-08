@@ -164,8 +164,8 @@ pub fn get() -> (Basis, State) {
   let unit = Ty::Record(BTreeMap::new());
   st.tys.insert(Sym::UNIT, base_ty(unit, false));
   let bs = Basis {
-    fun_env: FunEnv::new(),
-    sig_env: SigEnv::new(),
+    fun_env: FunEnv::default(),
+    sig_env: SigEnv::default(),
     env: Env {
       str_env: StrEnv::new(),
       ty_env: TyEnv {

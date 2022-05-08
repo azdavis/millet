@@ -6,12 +6,12 @@
 //! ascription or functor application.
 
 use crate::types::{Env, Sym, Ty, TyFcn, Tys, ValEnv};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 /// A mapping from symbols to type functions.
 #[derive(Debug, Default)]
 pub struct TyRealization {
-  inner: HashMap<Sym, Out>,
+  inner: FxHashMap<Sym, Out>,
 }
 
 /// The output of a subst, i.e. what a Sym maps to.

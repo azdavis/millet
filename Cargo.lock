@@ -242,6 +242,7 @@ dependencies = [
  "intern",
  "lex-old",
  "loc",
+ "rustc-hash",
  "token 0.1.0",
 ]
 
@@ -358,6 +359,7 @@ dependencies = [
  "ast",
  "intern",
  "loc",
+ "rustc-hash",
  "token 0.1.0",
  "util",
 ]

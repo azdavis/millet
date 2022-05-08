@@ -8,6 +8,7 @@ publish = false
 doctest = false
 
 [dependencies]
+rustc-hash = "1"
 ast = { path = "../ast" }
 intern = { path = "../intern" }
 lex-old = { path = "../lex-old" }

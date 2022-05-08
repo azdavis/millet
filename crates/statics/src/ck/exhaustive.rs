@@ -17,7 +17,7 @@
 
 use crate::types::{Con, Error, Pat, Result, Span};
 use loc::{Loc, Located};
-use std::collections::HashSet;
+use rustc_hash::FxHashSet;
 
 /// Returns `Ok(())` iff the pats are exhaustive and not redundant.
 pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
@@ -95,7 +95,7 @@ type Work = Vec<WorkItem>;
 /// The context, passed along through most of the main functions. This is an set of the locations of
 /// the patterns of the match. As we determine a pattern is reachable, we remove its `Loc` from this
 /// set. At the end, the set contains the locations of all unreachable patterns.
-type Cx = HashSet<Loc>;
+type Cx = FxHashSet<Loc>;
 
 /// The patterns, created from an `into_iter()` call on the passed-in `Vec<Located<Pat>>`.
 type Pats = std::vec::IntoIter<Located<Pat>>;

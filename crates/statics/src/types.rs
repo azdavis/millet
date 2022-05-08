@@ -2,7 +2,7 @@
 //!
 //! TODO an effort really ought to be made to split this into smaller, non-cyclic modules.
 //!
-//! Note that in many places we use BTreeMap and not HashMap. Though HashMap might be faster
+//! Note that in many places we use BTreeMap and not FxHashMap. Though FxHashMap might be faster
 //! (haven't actually checked), we use BTreeMap in situations where we need to sort by keys, e.g. to
 //! guarantee a stable iteration order. As an example, see enrich.rs (or don't if you just came from
 //! the comment there telling you to come here).
@@ -10,7 +10,8 @@
 use ast::{Label, TyPrec};
 use intern::{StrRef, StrStore};
 use loc::{Loc, Located};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use token::TyVar as AstTyVar;
 use util::eq_iter;
@@ -285,11 +286,11 @@ impl fmt::Debug for TyVar {
 #[derive(Debug, Clone, Default)]
 pub struct Subst {
   /// The conventional substitutions.
-  regular: HashMap<TyVar, Ty>,
+  regular: FxHashMap<TyVar, Ty>,
   /// The overload constraints.
-  overload: HashMap<TyVar, Vec<Sym>>,
+  overload: FxHashMap<TyVar, Vec<Sym>>,
   /// Used for user-annotated type variables which may not be substituted for arbitrary types.
-  bound: HashSet<TyVar>,
+  bound: FxHashSet<TyVar>,
 }
 
 impl Subst {
@@ -344,10 +345,12 @@ impl Subst {
   pub fn insert(&mut self, tv: TyVar, ty: Ty) {
     assert!(!self.overload.contains_key(&tv));
     assert!(!self.bound.contains(&tv));
+    let mut regular = FxHashMap::default();
+    regular.insert(tv, ty.clone());
     let subst = Self {
-      regular: HashMap::from([(tv, ty.clone())]),
-      overload: HashMap::new(),
-      bound: HashSet::new(),
+      regular,
+      overload: FxHashMap::default(),
+      bound: FxHashSet::default(),
     };
     for other in self.regular.values_mut() {
       other.apply(&subst);
@@ -534,7 +537,7 @@ impl Ty {
   /// Returns the type names in this.
   pub fn ty_names(&self) -> TyNameSet {
     match self {
-      Self::Var(_) => TyNameSet::new(),
+      Self::Var(_) => TyNameSet::default(),
       Self::Record(rows) => rows.values().flat_map(Self::ty_names).collect(),
       Self::Arrow(arg, res) => arg.ty_names().into_iter().chain(res.ty_names()).collect(),
       Self::Ctor(args, sym) => std::iter::once(*sym)
@@ -680,7 +683,7 @@ pub struct TyInfo {
 /// A collection of symbol types.
 #[derive(Debug, Default)]
 pub struct Tys {
-  inner: HashMap<Sym, TyInfo>,
+  inner: FxHashMap<Sym, TyInfo>,
 }
 
 impl Tys {
@@ -937,7 +940,7 @@ impl From<StrEnv> for Env {
 }
 
 /// A set of type names.
-pub type TyNameSet = HashSet<Sym>;
+pub type TyNameSet = FxHashSet<Sym>;
 
 /// A set of type variables. NOTE this is an ordered set purely to make errors reproducible.
 pub type TyVarSet = BTreeSet<TyVar>;
@@ -947,7 +950,7 @@ pub type TyVarSet = BTreeSet<TyVar>;
 pub struct Cx {
   /// In the Definition this is a set, but here we use it as not just a set, but a mapping from AST
   /// type variables to statics type variables. Note the mapping is injective but not surjective.
-  pub ty_vars: HashMap<AstTyVar<StrRef>, TyVar>,
+  pub ty_vars: FxHashMap<AstTyVar<StrRef>, TyVar>,
   /// The environment.
   pub env: Env,
 }
@@ -981,10 +984,10 @@ pub struct FunSig {
 }
 
 /// A signature environment.
-pub type SigEnv = HashMap<StrRef, Sig>;
+pub type SigEnv = FxHashMap<StrRef, Sig>;
 
 /// A functor environment.
-pub type FunEnv = HashMap<StrRef, FunSig>;
+pub type FunEnv = FxHashMap<StrRef, FunSig>;
 
 /// A basis. There's one of these in the whole program, since it basically represents the entire
 /// program.
@@ -1034,7 +1037,7 @@ impl Basis {
   /// Returns a context derived from the information in this.
   pub fn to_cx(&self) -> Cx {
     Cx {
-      ty_vars: HashMap::new(),
+      ty_vars: FxHashMap::default(),
       env: self.env.clone(),
     }
   }

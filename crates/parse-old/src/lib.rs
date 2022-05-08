@@ -12,7 +12,7 @@ use ast::{
 use intern::{StrRef, StrStore};
 use lex_old::Lexer;
 use loc::{Loc, Located};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use token::{IdentType, IsNumLab, Token, TyVar};
 
 /// A specialized Result that most functions in this module return.
@@ -70,7 +70,7 @@ impl Error {
 struct Parser {
   lexer: Lexer,
   i: usize,
-  ops: HashMap<StrRef, OpInfo>,
+  ops: FxHashMap<StrRef, OpInfo>,
   last_loc: Loc,
 }
 
@@ -82,25 +82,30 @@ struct Parser {
 impl Parser {
   /// constructs a new Parser.
   fn new(lexer: Lexer, last_loc: Loc) -> Self {
+    let mut ops = FxHashMap::default();
+    macro_rules! ins {
+      ($name:ident, $lr:ident, $assoc:expr) => {
+        assert!(ops.insert(StrRef::$name, OpInfo::$lr($assoc)).is_none());
+      };
+    }
+    ins!(CONS, right, 5);
+    ins!(EQ, left, 4);
+    ins!(ASSIGN, left, 3);
+    ins!(DIV, left, 7);
+    ins!(MOD, left, 7);
+    ins!(STAR, left, 7);
+    ins!(SLASH, left, 7);
+    ins!(PLUS, left, 6);
+    ins!(MINUS, left, 6);
+    ins!(LT, left, 4);
+    ins!(GT, left, 4);
+    ins!(LT_EQ, left, 4);
+    ins!(GT_EQ, left, 4);
     Self {
       lexer,
       last_loc,
       i: 0,
-      ops: HashMap::from([
-        (StrRef::CONS, OpInfo::right(5)),
-        (StrRef::EQ, OpInfo::left(4)),
-        (StrRef::ASSIGN, OpInfo::left(3)),
-        (StrRef::DIV, OpInfo::left(7)),
-        (StrRef::MOD, OpInfo::left(7)),
-        (StrRef::STAR, OpInfo::left(7)),
-        (StrRef::SLASH, OpInfo::left(7)),
-        (StrRef::PLUS, OpInfo::left(6)),
-        (StrRef::MINUS, OpInfo::left(6)),
-        (StrRef::LT, OpInfo::left(4)),
-        (StrRef::GT, OpInfo::left(4)),
-        (StrRef::LT_EQ, OpInfo::left(4)),
-        (StrRef::GT_EQ, OpInfo::left(4)),
-      ]),
+      ops,
     }
   }
 
