@@ -8,4 +8,5 @@ publish = false
 codespan-reporting = "0.11"
 base = { path = "../base" }
 intern = { path = "../intern" }
+lex-old = { path = "../lex-old" }
 pico-args = "0.4"

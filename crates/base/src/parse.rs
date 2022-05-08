@@ -5,8 +5,8 @@ use crate::ast::{
   FunBind, Label, Long, Pat, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec,
   Ty, TyBind, TyDesc, TyPrec, ValBind, ValDesc,
 };
-use crate::lex::Lexer;
 use intern::{StrRef, StrStore};
+use lex_old::Lexer;
 use loc::{Loc, Located};
 use std::collections::HashMap;
 use token::{IdentType, IsNumLab, Token, TyVar};

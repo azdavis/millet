@@ -13,6 +13,7 @@ name = "base"
 version = "0.1.0"
 dependencies = [
  "intern",
+ "lex-old",
  "loc",
  "token 0.1.0",
  "util",
@@ -42,6 +43,7 @@ dependencies = [
  "base",
  "codespan-reporting",
  "intern",
+ "lex-old",
  "pico-args",
 ]
 
@@ -153,6 +155,7 @@ dependencies = [
  "base",
  "crossbeam-channel",
  "intern",
+ "lex-old",
  "loc",
  "lsp-types",
  "serde",
@@ -170,6 +173,15 @@ name = "lex"
 version = "0.1.0"
 dependencies = [
  "syntax",
+]
+
+[[package]]
+name = "lex-old"
+version = "0.1.0"
+dependencies = [
+ "intern",
+ "loc",
+ "token 0.1.0",
 ]
 
 [[package]]

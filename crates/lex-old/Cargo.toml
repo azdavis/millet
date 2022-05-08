@@ -1,12 +1,14 @@
 [package]
-name = "base"
+name = "lex-old"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
+[lib]
+test = false
+doctest = false
+
 [dependencies]
 intern = { path = "../intern" }
-token = { path = "../token" }
-util = { path = "../util" }
 loc = { path = "../loc" }
-lex-old = { path = "../lex-old" }
+token = { path = "../token" }

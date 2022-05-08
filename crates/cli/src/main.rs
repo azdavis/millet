@@ -3,7 +3,7 @@
 mod args;
 mod source;
 
-use base::{lex, parse, statics};
+use base::{parse, statics};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
@@ -46,7 +46,7 @@ fn run() -> bool {
   }
   let mut lexers = Vec::with_capacity(src.len());
   for (id, file) in src.iter() {
-    match lex::get(&mut store, file.as_bytes()) {
+    match lex_old::get(&mut store, file.as_bytes()) {
       Ok(lexer) => lexers.push(lexer),
       Err(e) => {
         let diag = simple(e.val.message(), id, e.loc);
