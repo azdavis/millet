@@ -9,7 +9,9 @@ info() {
 }
 
 info 'build'
-cargo test --no-run
+# using cargo build here because the sometimes-recommended cargo test --no-run
+# doesn't seem to run build scripts.
+cargo build
 
 info 'check formatting'
 cargo fmt -- --check
