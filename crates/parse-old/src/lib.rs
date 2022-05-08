@@ -118,7 +118,6 @@ impl Parser {
   }
 
   /// advances the parser ahead 1 token.
-  #[inline]
   fn skip(&mut self) {
     self.i += 1;
   }

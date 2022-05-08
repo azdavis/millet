@@ -131,7 +131,6 @@ impl Name {
     Self(s)
   }
 
-  #[inline(always)]
   pub fn as_str(&self) -> &str {
     self.0.as_str()
   }
@@ -163,7 +162,6 @@ impl TyVar {
     self.0.as_bytes()[1] == b'\''
   }
 
-  #[inline(always)]
   pub fn as_str(&self) -> &str {
     self.0.as_str()
   }

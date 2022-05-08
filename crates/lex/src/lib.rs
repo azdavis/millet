@@ -83,7 +83,6 @@ struct Cx {
 /// requires `bs` is a valid `&str`. if `start` is the value of `cx.i` on entry to this function,
 /// this returns `sk` and updates `cx.i` to `end` such that `bs[start..end]` is a `str` and `sk` is
 /// the kind for that `str`.
-#[inline]
 fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
@@ -259,7 +258,6 @@ fn string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
 }
 
 /// returns None iff there was no matching `"` to close the string
-#[inline]
 fn _string(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
   loop {
     match *bs.get(cx.i)? {
