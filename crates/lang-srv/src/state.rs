@@ -4,9 +4,9 @@ use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
   ResponseSuccess,
 };
-use base::intern::StrStoreMut;
 use base::loc::Loc;
 use base::{lex, parse, statics};
+use intern::StrStoreMut;
 use lsp_types::{
   Diagnostic, InitializeResult, Position, PublishDiagnosticsParams, Range, ServerCapabilities,
   ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, Url,

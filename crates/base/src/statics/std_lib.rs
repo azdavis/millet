@@ -1,9 +1,9 @@
 //! The static standard library.
 
-use crate::intern::StrRef;
 use crate::statics::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
+use intern::StrRef;
 use std::collections::BTreeMap;
 
 /// Given `t`, returns `t ref`.

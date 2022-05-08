@@ -5,10 +5,10 @@ use crate::ast::{
   FunBind, Label, Long, Pat, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec,
   Ty, TyBind, TyDesc, TyPrec, ValBind, ValDesc,
 };
-use crate::intern::{StrRef, StrStore};
 use crate::lex::Lexer;
 use crate::loc::{Loc, Located};
 use crate::token::{IdentType, IsNumLab, Token, TyVar};
+use intern::{StrRef, StrStore};
 use std::collections::HashMap;
 
 /// A specialized Result that most functions in this module return.

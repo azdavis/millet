@@ -10,9 +10,9 @@ mod ty_rzn;
 mod types;
 
 use crate::ast::TopDec;
-use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::types::{Basis, Result, State};
+use intern::StrRef;
 
 /// The data computed when running static analysis.
 pub struct Statics {

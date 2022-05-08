@@ -1,8 +1,8 @@
 //! Abstract syntax trees.
 
-use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::token::TyVar;
+use intern::StrRef;
 
 /// An expression.
 #[derive(Debug)]

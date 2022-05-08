@@ -1,7 +1,6 @@
 //! Check declarations and expressions.
 
 use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
-use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{
   env_ins, env_merge, generalize, get_env, get_ty_sym, get_val_info, insert_ty_vars, instantiate,
@@ -11,6 +10,7 @@ use crate::statics::types::{
   Cx, Env, Error, Item, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys,
   ValEnv, ValInfo,
 };
+use intern::StrRef;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {

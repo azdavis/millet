@@ -1,7 +1,6 @@
 //! Check top-level declarations.
 
 use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
-use crate::intern::StrRef;
 use crate::loc::Located;
 use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, sig_match, ty};
@@ -10,6 +9,7 @@ use crate::statics::types::{
   Basis, Env, Error, FunEnv, FunSig, Item, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo,
   TyScheme, ValEnv, ValInfo,
 };
+use intern::StrRef;
 
 pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
   match &top_dec.val {

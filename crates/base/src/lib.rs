@@ -3,7 +3,6 @@
 #![deny(missing_docs)]
 
 pub mod ast;
-pub mod intern;
 pub mod lex;
 pub mod loc;
 pub mod parse;

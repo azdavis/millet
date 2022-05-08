@@ -1,6 +1,6 @@
 //! Lexical tokens.
 
-use crate::intern::StrRef;
+use intern::StrRef;
 
 /// A token, an "item of lexical analysis" (almost).
 #[allow(missing_docs)]

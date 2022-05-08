@@ -11,6 +11,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 [[package]]
 name = "base"
 version = "0.1.0"
+dependencies = [
+ "intern",
+]
 
 [[package]]
 name = "bitflags"
@@ -35,6 +38,7 @@ version = "0.1.0"
 dependencies = [
  "base",
  "codespan-reporting",
+ "intern",
  "pico-args",
 ]
 
@@ -121,6 +125,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "intern"
+version = "0.1.0"
+
+[[package]]
 name = "itoa"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -138,6 +146,7 @@ version = "0.1.0"
 dependencies = [
  "base",
  "crossbeam-channel",
+ "intern",
  "lsp-types",
  "serde",
  "serde_json",

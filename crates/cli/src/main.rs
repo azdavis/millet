@@ -3,7 +3,7 @@
 mod args;
 mod source;
 
-use base::{intern, lex, parse, statics};
+use base::{lex, parse, statics};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};

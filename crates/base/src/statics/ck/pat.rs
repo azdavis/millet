@@ -1,13 +1,13 @@
 //! Check patterns.
 
 use crate::ast::{Label, Long, Pat as AstPat};
-use crate::intern::StrRef;
 use crate::loc::{Loc, Located};
 use crate::statics::ck::ty;
 use crate::statics::ck::util::{env_ins, env_merge, get_env, get_val_info, instantiate};
 use crate::statics::types::{
   Con, Cx, Error, Item, Pat, Result, Span, State, Sym, Ty, TyScheme, Tys, ValEnv, ValInfo,
 };
+use intern::StrRef;
 use std::collections::BTreeMap;
 
 pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat<StrRef>>) -> Result<(ValEnv, Ty, Pat)> {
