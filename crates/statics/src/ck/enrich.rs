@@ -1,7 +1,7 @@
 //! Check whether an environment enriches another environment.
 
-use crate::statics::ty_rzn::TyRealization;
-use crate::statics::types::{
+use crate::ty_rzn::TyRealization;
+use crate::types::{
   Env, Error, Item, Result, Subst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
 };
 use loc::Loc;

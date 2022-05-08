@@ -1,7 +1,7 @@
 //! Check types.
 
-use crate::statics::ck::util::{get_env, get_ty_sym};
-use crate::statics::types::{Cx, Error, Item, Result, Ty, Tys};
+use crate::ck::util::{get_env, get_ty_sym};
+use crate::types::{Cx, Error, Item, Result, Ty, Tys};
 use ast::{Label, Ty as AstTy};
 use intern::StrRef;
 use loc::Located;

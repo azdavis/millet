@@ -5,7 +5,7 @@
 //! implemented as a `Sym`). This is useful when generating new type names as a result of signature
 //! ascription or functor application.
 
-use crate::statics::types::{Env, Sym, Ty, TyFcn, Tys, ValEnv};
+use crate::types::{Env, Sym, Ty, TyFcn, Tys, ValEnv};
 use std::collections::HashMap;
 
 /// A mapping from symbols to type functions.

@@ -1,15 +1,15 @@
 //! Check top-level declarations.
 
-use ast::{SigExp, Spec, StrDec, StrExp, TopDec};
-use loc::Located;
-use crate::statics::ck::util::{env_ins, get_env};
-use crate::statics::ck::{dec, sig_match, ty};
-use crate::statics::ty_rzn::TyRealization;
-use crate::statics::types::{
+use crate::ck::util::{env_ins, get_env};
+use crate::ck::{dec, sig_match, ty};
+use crate::ty_rzn::TyRealization;
+use crate::types::{
   Basis, Env, Error, FunEnv, FunSig, Item, Result, Sig, SigEnv, State, StrEnv, Ty, TyEnv, TyInfo,
   TyScheme, ValEnv, ValInfo,
 };
+use ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use intern::StrRef;
+use loc::Located;
 
 pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
   match &top_dec.val {

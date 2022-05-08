@@ -15,8 +15,8 @@
 //! - We have a few more options for Con because we don't want to represent things like numbers as
 //!   strings.
 
+use crate::types::{Con, Error, Pat, Result, Span};
 use loc::{Loc, Located};
-use crate::statics::types::{Con, Error, Pat, Result, Span};
 use std::collections::HashSet;
 
 /// Returns `Ok(())` iff the pats are exhaustive and not redundant.

@@ -1,6 +1,6 @@
 //! The static standard library.
 
-use crate::statics::types::{
+use crate::types::{
   Basis, Env, FunEnv, SigEnv, State, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use intern::StrRef;

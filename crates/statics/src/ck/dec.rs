@@ -1,10 +1,10 @@
 //! Check declarations and expressions.
 
-use crate::statics::ck::util::{
+use crate::ck::util::{
   env_ins, env_merge, generalize, get_env, get_ty_sym, get_val_info, insert_ty_vars, instantiate,
 };
-use crate::statics::ck::{exhaustive, pat, ty};
-use crate::statics::types::{
+use crate::ck::{exhaustive, pat, ty};
+use crate::types::{
   Cx, Env, Error, Item, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys,
   ValEnv, ValInfo,
 };

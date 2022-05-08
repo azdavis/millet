@@ -77,7 +77,7 @@ fn run() -> bool {
   if args.just_ast {
     return true;
   }
-  let mut s = statics::statics::Statics::new();
+  let mut s = statics::Statics::new();
   for (id, xs) in top_decs {
     for x in xs {
       match s.get(&x) {

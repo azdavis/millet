@@ -22,11 +22,11 @@
 //! with type realizations. Is this what is called a 'leaky abstraction'? Anyway, look at
 //! `enrich.rs` for more commentary.
 
+use crate::ck::enrich;
+use crate::ck::util::get_ty_sym;
+use crate::ty_rzn::TyRealization;
+use crate::types::{Env, Result, Sig, State, TyEnv};
 use loc::Loc;
-use crate::statics::ck::enrich;
-use crate::statics::ck::util::get_ty_sym;
-use crate::statics::ty_rzn::TyRealization;
-use crate::statics::types::{Env, Result, Sig, State, TyEnv};
 
 /// Returns `Ok((E, ty_rzn))` iff `sig >= E` (and `ty_rzn` is the witness) and `env >> E`.
 pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<(Env, TyRealization)> {
