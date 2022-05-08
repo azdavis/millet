@@ -61,7 +61,7 @@ pub fn instantiate(st: &mut State, ty_scheme: &TyScheme) -> Ty {
 pub fn generalize(
   cx: &Cx,
   st: &mut State,
-  ty_vars: &[Located<AstTyVar<StrRef>>],
+  ty_vars: &[Located<AstTyVar>],
   ty_scheme: &mut TyScheme,
 ) {
   assert!(ty_scheme.ty_vars.is_empty());
@@ -85,7 +85,7 @@ pub fn generalize(
 
 /// Returns `Ok(e)` iff `env` contains the environment `e` after traversing the `StrEnv`s of `env`
 /// as directed by `long.structures`.
-pub fn get_env<'env>(mut env: &'env Env, long: &Long<StrRef>) -> Result<&'env Env> {
+pub fn get_env<'env>(mut env: &'env Env, long: &Long) -> Result<&'env Env> {
   for &s in long.structures.iter() {
     env = match env.str_env.get(&s.val) {
       None => return Err(s.loc.wrap(Error::Undefined(Item::Struct, s.val))),
@@ -142,11 +142,7 @@ pub fn env_merge<T>(
 
 /// Add new statics ty vars based on the user-written ty vars to the `Cx`, and marks them as bound
 /// in the `Subst` in the `State`.
-pub fn insert_ty_vars(
-  cx: &mut Cx,
-  st: &mut State,
-  ty_vars: &[Located<AstTyVar<StrRef>>],
-) -> Result<()> {
+pub fn insert_ty_vars(cx: &mut Cx, st: &mut State, ty_vars: &[Located<AstTyVar>]) -> Result<()> {
   let mut set = FxHashSet::default();
   for tv in ty_vars {
     if !set.insert(tv.val.name) {

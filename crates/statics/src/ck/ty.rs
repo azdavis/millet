@@ -3,11 +3,10 @@
 use crate::ck::util::{get_env, get_ty_sym};
 use crate::types::{Cx, Error, Item, Result, Ty, Tys};
 use ast::{Label, Ty as AstTy};
-use intern::StrRef;
 use loc::Located;
 use std::collections::BTreeMap;
 
-pub fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy<StrRef>>) -> Result<Ty> {
+pub fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy>) -> Result<Ty> {
   // SML Definition (48) is handled by the parser
   match &ty.val {
     // SML Definition (44)

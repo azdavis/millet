@@ -15,7 +15,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::hash::BuildHasherDefault;
 
-fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
+fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp>) -> Result<Ty> {
   // The special constants are as per SML Definition (1). Note that SML Definition (5) is handled by
   // the parser and SML Definition (7) is handled by having atomic and non-atomic expressions be
   // part of the same enum.
@@ -182,7 +182,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp<StrRef>>) -> Result<Ty> {
 }
 
 /// SML Definition (13)
-fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases<StrRef>) -> Result<(Vec<Located<Pat>>, Ty, Ty)> {
+fn ck_cases(cx: &Cx, st: &mut State, cases: &Cases) -> Result<(Vec<Located<Pat>>, Ty, Ty)> {
   let arg_ty = Ty::Var(st.new_ty_var(false));
   let res_ty = Ty::Var(st.new_ty_var(false));
   let mut pats = Vec::with_capacity(cases.arms.len());
@@ -235,7 +235,7 @@ fn fun_infos_to_ve(fun_infos: &FxHashMap<StrRef, FunInfo>) -> ValEnv {
     .collect()
 }
 
-pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
+pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec>) -> Result<Env> {
   match &dec.val {
     // SML Definition (15)
     Dec::Val(ty_vars, val_binds) => {
@@ -409,7 +409,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec<StrRef>>) -> Result<Env> {
 }
 
 /// SML Definition (16)
-fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<Env> {
+fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind]) -> Result<Env> {
   let mut ty_env = TyEnv::default();
   // SML Definition (27)
   for ty_bind in ty_binds {
@@ -451,7 +451,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind<StrRef>]) -> Result<E
 /// SML Definition (17), SML Definition (71). The checking for {datatype, constructor} {bindings,
 /// descriptions} appear to be essentially identical, so we can unite the ASTs and static checking
 /// functions (i.e. this function).
-pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -> Result<Env> {
+pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind]) -> Result<Env> {
   // these two are across all `DatBind`s.
   let mut ty_env = TyEnv::default();
   let mut val_env = ValEnv::new();
@@ -554,12 +554,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind<StrRef>]) -
 }
 
 /// SML Definition (18), SML Definition (72)
-pub fn ck_dat_copy(
-  cx: &Cx,
-  tys: &Tys,
-  ty_con: Located<StrRef>,
-  long: &Long<StrRef>,
-) -> Result<Env> {
+pub fn ck_dat_copy(cx: &Cx, tys: &Tys, ty_con: Located<StrRef>, long: &Long) -> Result<Env> {
   let sym = get_ty_sym(get_env(&cx.env, long)?, long.last)?;
   let val_env = tys.get(&sym).val_env.clone();
   if val_env.is_empty() {

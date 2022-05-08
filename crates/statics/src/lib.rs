@@ -15,7 +15,6 @@ mod types;
 
 use crate::types::{Basis, Result, State};
 use ast::TopDec;
-use intern::StrRef;
 use loc::Located;
 
 /// The data computed when running static analysis.
@@ -34,7 +33,7 @@ impl Statics {
 
   /// Performs static analysis on a top-level declaration. Returns `Ok(())` iff everything
   /// typechecks.
-  pub fn get(&mut self, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
+  pub fn get(&mut self, top_dec: &Located<TopDec>) -> Result<()> {
     ck::ck_top_dec(&mut self.bs, &mut self.st, top_dec)
   }
 

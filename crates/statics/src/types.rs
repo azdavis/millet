@@ -950,7 +950,7 @@ pub type TyVarSet = BTreeSet<TyVar>;
 pub struct Cx {
   /// In the Definition this is a set, but here we use it as not just a set, but a mapping from AST
   /// type variables to statics type variables. Note the mapping is injective but not surjective.
-  pub ty_vars: FxHashMap<AstTyVar<StrRef>, TyVar>,
+  pub ty_vars: FxHashMap<AstTyVar, TyVar>,
   /// The environment.
   pub env: Env,
 }

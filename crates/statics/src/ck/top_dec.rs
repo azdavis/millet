@@ -8,10 +8,9 @@ use crate::types::{
   TyScheme, ValEnv, ValInfo,
 };
 use ast::{SigExp, Spec, StrDec, StrExp, TopDec};
-use intern::StrRef;
 use loc::Located;
 
-pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec<StrRef>>) -> Result<()> {
+pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec>) -> Result<()> {
   match &top_dec.val {
     // SML Definition (87)
     TopDec::StrDec(str_dec) => {
@@ -62,7 +61,7 @@ fn env_to_sig(env: Env) -> Sig {
   }
 }
 
-fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> Result<Env> {
+fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp>) -> Result<Env> {
   match &str_exp.val {
     // SML Definition (50)
     StrExp::Struct(str_dec) => ck_str_dec(bs, st, str_dec),
@@ -116,7 +115,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp<StrRef>>) -> 
   }
 }
 
-fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> Result<Env> {
+fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec>) -> Result<Env> {
   match &str_dec.val {
     // SML Definition (56)
     StrDec::Dec(dec) => dec::ck(&bs.to_cx(), st, dec),
@@ -151,7 +150,7 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec<StrRef>>) -> 
   }
 }
 
-fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> Result<Env> {
+fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp>) -> Result<Env> {
   match &sig_exp.val {
     // SML Definition (62)
     SigExp::Sig(spec) => ck_spec(bs, st, spec),
@@ -170,7 +169,7 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp<StrRef>>) -> 
   }
 }
 
-fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec<StrRef>>) -> Result<Env> {
+fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
   match &spec.val {
     // SML Definition (68)
     Spec::Val(val_descs) => {

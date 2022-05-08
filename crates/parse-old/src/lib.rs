@@ -19,7 +19,7 @@ use token::{IdentType, IsNumLab, Token, TyVar};
 pub type Result<T> = std::result::Result<T, Located<Error>>;
 
 /// Parse the tokens in the Lexer into a sequence of top-level definitions.
-pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec<StrRef>>>> {
+pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec>>> {
   let mut ret = Vec::new();
   let last_loc = match lexer.last_loc() {
     Some(x) => x,
@@ -148,7 +148,7 @@ impl Parser {
     Err(tok.loc.wrap(Error::ExpectedButFound(want, tok.val.desc())))
   }
 
-  fn top_dec(&mut self) -> Result<Located<TopDec<StrRef>>> {
+  fn top_dec(&mut self) -> Result<Located<TopDec>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -208,7 +208,7 @@ impl Parser {
     Ok(self.wrap(begin, ret))
   }
 
-  fn str_exp_sugar(&mut self) -> Result<Located<StrExp<StrRef>>> {
+  fn str_exp_sugar(&mut self) -> Result<Located<StrExp>> {
     let sig_exp = match self.peek().val {
       Token::Colon => {
         self.skip();
@@ -228,7 +228,7 @@ impl Parser {
     Ok(ret)
   }
 
-  fn str_exp(&mut self) -> Result<Located<StrExp<StrRef>>> {
+  fn str_exp(&mut self) -> Result<Located<StrExp>> {
     let tok = self.peek();
     let begin = tok.loc;
     let mut ret = match tok.val {
@@ -286,7 +286,7 @@ impl Parser {
     Ok(self.wrap(begin, ret))
   }
 
-  fn maybe_str_dec(&mut self) -> Result<Option<Located<StrDec<StrRef>>>> {
+  fn maybe_str_dec(&mut self) -> Result<Option<Located<StrDec>>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -329,11 +329,11 @@ impl Parser {
     Ok(Some(self.wrap(begin, ret)))
   }
 
-  fn str_dec(&mut self) -> Result<Located<StrDec<StrRef>>> {
+  fn str_dec(&mut self) -> Result<Located<StrDec>> {
     self.semicolon_seq(Self::maybe_str_dec, StrDec::Seq)
   }
 
-  fn sig_exp(&mut self) -> Result<Located<SigExp<StrRef>>> {
+  fn sig_exp(&mut self) -> Result<Located<SigExp>> {
     let tok = self.peek();
     let begin = tok.loc;
     self.skip();
@@ -357,7 +357,7 @@ impl Parser {
     Ok(self.wrap(begin, ret))
   }
 
-  fn maybe_spec(&mut self) -> Result<Option<Located<Spec<StrRef>>>> {
+  fn maybe_spec(&mut self) -> Result<Option<Located<Spec>>> {
     let tok = self.peek();
     let begin = tok.loc;
     let mut ret = match tok.val {
@@ -467,7 +467,7 @@ impl Parser {
     Ok(Some(self.wrap(begin, ret)))
   }
 
-  fn ty_descs(&mut self) -> Result<Vec<TyDesc<StrRef>>> {
+  fn ty_descs(&mut self) -> Result<Vec<TyDesc>> {
     let mut ret = Vec::new();
     loop {
       let ty_vars = self.ty_var_seq()?;
@@ -483,11 +483,11 @@ impl Parser {
     Ok(ret)
   }
 
-  fn spec(&mut self) -> Result<Located<Spec<StrRef>>> {
+  fn spec(&mut self) -> Result<Located<Spec>> {
     self.semicolon_seq(Self::maybe_spec, Spec::Seq)
   }
 
-  fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp<StrRef>>>> {
+  fn maybe_at_exp(&mut self) -> Result<Option<Located<Exp>>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -646,7 +646,7 @@ impl Parser {
     Ok(Some(self.wrap(begin, ret)))
   }
 
-  fn at_exp(&mut self) -> Result<Located<Exp<StrRef>>> {
+  fn at_exp(&mut self) -> Result<Located<Exp>> {
     match self.maybe_at_exp()? {
       Some(x) => Ok(x),
       None => {
@@ -676,7 +676,7 @@ impl Parser {
     }
   }
 
-  fn maybe_long_id(&mut self) -> Result<Option<Long<StrRef>>> {
+  fn maybe_long_id(&mut self) -> Result<Option<Long>> {
     let mut structures = Vec::new();
     loop {
       let tok = self.peek();
@@ -703,7 +703,7 @@ impl Parser {
     Ok(Some(Long { structures, last }))
   }
 
-  fn long_id(&mut self, allow_infix: bool) -> Result<Long<StrRef>> {
+  fn long_id(&mut self, allow_infix: bool) -> Result<Long> {
     let ret = match self.maybe_long_id()? {
       Some(x) => x,
       None => return self.fail("an identifier", self.peek()),
@@ -715,7 +715,7 @@ impl Parser {
     }
   }
 
-  fn long_alpha_num_id(&mut self) -> Result<Long<StrRef>> {
+  fn long_alpha_num_id(&mut self) -> Result<Long> {
     let mut structures = Vec::new();
     loop {
       let tok = self.peek();
@@ -745,11 +745,11 @@ impl Parser {
     Ok(tok.loc.wrap(ret))
   }
 
-  fn exp(&mut self) -> Result<Located<Exp<StrRef>>> {
+  fn exp(&mut self) -> Result<Located<Exp>> {
     self.exp_prec(None)
   }
 
-  fn exp_prec(&mut self, min_prec: Option<OpInfo>) -> Result<Located<Exp<StrRef>>> {
+  fn exp_prec(&mut self, min_prec: Option<OpInfo>) -> Result<Located<Exp>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -867,7 +867,7 @@ impl Parser {
     Ok(self.wrap(begin, ret))
   }
 
-  fn cases(&mut self) -> Result<Cases<StrRef>> {
+  fn cases(&mut self) -> Result<Cases> {
     let mut arms = Vec::new();
     loop {
       let pat = self.pat()?;
@@ -884,7 +884,7 @@ impl Parser {
     Ok(Cases { arms })
   }
 
-  fn maybe_dec(&mut self) -> Result<Option<Located<Dec<StrRef>>>> {
+  fn maybe_dec(&mut self) -> Result<Option<Located<Dec>>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -1052,11 +1052,11 @@ impl Parser {
     Ok(Some(self.wrap(begin, ret)))
   }
 
-  fn dec(&mut self) -> Result<Located<Dec<StrRef>>> {
+  fn dec(&mut self) -> Result<Located<Dec>> {
     self.semicolon_seq(Self::maybe_dec, Dec::Seq)
   }
 
-  fn fval_bind_case(&mut self) -> Result<FValBindCase<StrRef>> {
+  fn fval_bind_case(&mut self) -> Result<FValBindCase> {
     let cur = self.i;
     let (vid, pats) = if let Ok((vid, pat)) = self.fval_bind_case_no_parens() {
       (vid, vec![pat])
@@ -1097,7 +1097,7 @@ impl Parser {
     })
   }
 
-  fn fval_bind_case_no_parens(&mut self) -> Result<(Located<StrRef>, Located<Pat<StrRef>>)> {
+  fn fval_bind_case_no_parens(&mut self) -> Result<(Located<StrRef>, Located<Pat>)> {
     let fst = self.at_pat()?;
     let vid = self.ident()?;
     if !self.ops.contains_key(&vid.val) {
@@ -1107,7 +1107,7 @@ impl Parser {
     Ok((vid, fst.loc.wrap(Pat::Tuple(vec![fst, snd]))))
   }
 
-  fn ty_binds(&mut self) -> Result<Vec<TyBind<StrRef>>> {
+  fn ty_binds(&mut self) -> Result<Vec<TyBind>> {
     let mut ret = Vec::new();
     loop {
       let ty_vars = self.ty_var_seq()?;
@@ -1129,7 +1129,7 @@ impl Parser {
     Ok(ret)
   }
 
-  fn datatype_dec(&mut self, allow_op: bool) -> Result<DatatypeDec<StrRef>> {
+  fn datatype_dec(&mut self, allow_op: bool) -> Result<DatatypeDec> {
     self.skip();
     let tok = self.peek();
     let dat_bind = if let Token::Ident(id, _) = tok.val {
@@ -1158,7 +1158,7 @@ impl Parser {
     Ok(DatatypeDec::Binds(dat_binds))
   }
 
-  fn con_binds(&mut self, allow_op: bool) -> Result<Vec<ConBind<StrRef>>> {
+  fn con_binds(&mut self, allow_op: bool) -> Result<Vec<ConBind>> {
     let mut ret = Vec::new();
     loop {
       if allow_op {
@@ -1179,7 +1179,7 @@ impl Parser {
     Ok(ret)
   }
 
-  fn dat_bind(&mut self, allow_op: bool) -> Result<DatBind<StrRef>> {
+  fn dat_bind(&mut self, allow_op: bool) -> Result<DatBind> {
     let ty_vars = self.ty_var_seq()?;
     let ty_con = self.ident()?;
     self.eat(Token::Equal)?;
@@ -1191,7 +1191,7 @@ impl Parser {
     })
   }
 
-  fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar<StrRef>>>> {
+  fn ty_var_seq(&mut self) -> Result<Vec<Located<TyVar>>> {
     let tok = self.peek();
     match tok.val {
       Token::TyVar(ty_var) => {
@@ -1231,7 +1231,7 @@ impl Parser {
     }
   }
 
-  fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat<StrRef>>>> {
+  fn maybe_at_pat(&mut self) -> Result<Option<Located<Pat>>> {
     let tok = self.peek();
     let begin = tok.loc;
     let ret = match tok.val {
@@ -1379,18 +1379,18 @@ impl Parser {
     Ok(Some(self.wrap(begin, ret)))
   }
 
-  fn at_pat(&mut self) -> Result<Located<Pat<StrRef>>> {
+  fn at_pat(&mut self) -> Result<Located<Pat>> {
     match self.maybe_at_pat()? {
       Some(x) => Ok(x),
       None => self.fail("a pattern", self.peek()),
     }
   }
 
-  fn pat(&mut self) -> Result<Located<Pat<StrRef>>> {
+  fn pat(&mut self) -> Result<Located<Pat>> {
     self.pat_prec(None)
   }
 
-  fn pat_prec(&mut self, min_prec: Option<OpInfo>) -> Result<Located<Pat<StrRef>>> {
+  fn pat_prec(&mut self, min_prec: Option<OpInfo>) -> Result<Located<Pat>> {
     let mut ret = self.at_pat()?;
     if let Pat::LongVid(long_vid) = ret.val {
       let pat = self.pat_long_vid(ret.loc, long_vid)?;
@@ -1427,7 +1427,7 @@ impl Parser {
     Ok(ret)
   }
 
-  fn pat_long_vid(&mut self, loc: Loc, long_vid: Long<StrRef>) -> Result<Pat<StrRef>> {
+  fn pat_long_vid(&mut self, loc: Loc, long_vid: Long) -> Result<Pat> {
     if long_vid.structures.is_empty() {
       let ty = self.maybe_colon_ty()?;
       match self.maybe_as_pat()? {
@@ -1452,7 +1452,7 @@ impl Parser {
     }
   }
 
-  fn maybe_colon_ty(&mut self) -> Result<Option<Located<Ty<StrRef>>>> {
+  fn maybe_colon_ty(&mut self) -> Result<Option<Located<Ty>>> {
     if let Token::Colon = self.peek().val {
       self.skip();
       Ok(Some(self.ty()?))
@@ -1461,7 +1461,7 @@ impl Parser {
     }
   }
 
-  fn maybe_as_pat(&mut self) -> Result<Option<Located<Pat<StrRef>>>> {
+  fn maybe_as_pat(&mut self) -> Result<Option<Located<Pat>>> {
     if let Token::As = self.peek().val {
       self.skip();
       Ok(Some(self.pat()?))
@@ -1470,11 +1470,11 @@ impl Parser {
     }
   }
 
-  fn ty(&mut self) -> Result<Located<Ty<StrRef>>> {
+  fn ty(&mut self) -> Result<Located<Ty>> {
     self.ty_prec(TyPrec::Arrow)
   }
 
-  fn ty_prec(&mut self, min_prec: TyPrec) -> Result<Located<Ty<StrRef>>> {
+  fn ty_prec(&mut self, min_prec: TyPrec) -> Result<Located<Ty>> {
     let tok = self.peek();
     let begin = tok.loc;
     let mut ret = match tok.val {
@@ -1606,7 +1606,7 @@ impl Parser {
     Ok(ret)
   }
 
-  fn maybe_of_ty(&mut self) -> Result<Option<Located<Ty<StrRef>>>> {
+  fn maybe_of_ty(&mut self) -> Result<Option<Located<Ty>>> {
     if let Token::Of = self.peek().val {
       self.skip();
       Ok(Some(self.ty()?))
@@ -1655,9 +1655,9 @@ impl Parser {
   }
 }
 
-enum DatatypeDec<I> {
-  Binds(Vec<DatBind<I>>),
-  Copy(Located<I>, Long<I>),
+enum DatatypeDec {
+  Binds(Vec<DatBind>),
+  Copy(Located<StrRef>, Long),
 }
 
 #[derive(Clone, Copy)]

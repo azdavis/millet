@@ -88,7 +88,7 @@ pub enum Token {
   // without having the lexer be sophisticated to the point of essentially being a parser. but, we
   // can determine whether something is a TyVar, and we can also know whether something might be a
   // valid StrId.
-  TyVar(TyVar<StrRef>),
+  TyVar(TyVar),
   Ident(StrRef, IdentType),
   /// not actually a token, but makes the api simpler.
   EOF,
@@ -194,9 +194,9 @@ impl Token {
 
 /// This is here (and not in ast.rs) because we know when lexing whether something is a type var.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct TyVar<I> {
+pub struct TyVar {
   /// The name of this type variable in the source. Includes the primes at the start.
-  pub name: I,
+  pub name: StrRef,
   /// Whether this is an equality type variable (i.e. whether it has 2 or more primes at the start
   /// of its name).
   pub equality: bool,
