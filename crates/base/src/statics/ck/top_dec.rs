@@ -1,7 +1,7 @@
 //! Check top-level declarations.
 
 use crate::ast::{SigExp, Spec, StrDec, StrExp, TopDec};
-use crate::loc::Located;
+use loc::Located;
 use crate::statics::ck::util::{env_ins, get_env};
 use crate::statics::ck::{dec, sig_match, ty};
 use crate::statics::ty_rzn::TyRealization;

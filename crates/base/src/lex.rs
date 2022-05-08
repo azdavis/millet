@@ -1,7 +1,7 @@
 //! Lexing from bytes to tokens.
 
-use crate::loc::{Loc, Located};
 use intern::{StrRef, StrStoreMut};
+use loc::{Loc, Located};
 use token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 
 /// Transform a sequence of bytes into a sequence of tokens.

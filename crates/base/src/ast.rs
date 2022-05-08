@@ -1,7 +1,7 @@
 //! Abstract syntax trees.
 
-use crate::loc::{Loc, Located};
 use intern::StrRef;
+use loc::{Loc, Located};
 use token::TyVar;
 
 /// An expression.

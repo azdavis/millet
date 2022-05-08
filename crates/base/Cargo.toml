@@ -8,3 +8,4 @@ publish = false
 intern = { path = "../intern" }
 token = { path = "../token" }
 util = { path = "../util" }
+loc = { path = "../loc" }

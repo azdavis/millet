@@ -8,8 +8,8 @@
 //! the comment there telling you to come here).
 
 use crate::ast::{Label, TyPrec};
-use crate::loc::{Loc, Located};
 use intern::{StrRef, StrStore};
+use loc::{Loc, Located};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt;
 use token::TyVar as AstTyVar;

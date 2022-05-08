@@ -22,7 +22,7 @@
 //! with type realizations. Is this what is called a 'leaky abstraction'? Anyway, look at
 //! `enrich.rs` for more commentary.
 
-use crate::loc::Loc;
+use loc::Loc;
 use crate::statics::ck::enrich;
 use crate::statics::ck::util::get_ty_sym;
 use crate::statics::ty_rzn::TyRealization;

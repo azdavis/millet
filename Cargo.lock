@@ -13,6 +13,7 @@ name = "base"
 version = "0.1.0"
 dependencies = [
  "intern",
+ "loc",
  "token 0.1.0",
  "util",
 ]
@@ -152,6 +153,7 @@ dependencies = [
  "base",
  "crossbeam-channel",
  "intern",
+ "loc",
  "lsp-types",
  "serde",
  "serde_json",
@@ -169,6 +171,10 @@ version = "0.1.0"
 dependencies = [
  "syntax",
 ]
+
+[[package]]
+name = "loc"
+version = "0.1.0"
 
 [[package]]
 name = "lower"

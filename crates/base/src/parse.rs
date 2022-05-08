@@ -6,8 +6,8 @@ use crate::ast::{
   Ty, TyBind, TyDesc, TyPrec, ValBind, ValDesc,
 };
 use crate::lex::Lexer;
-use crate::loc::{Loc, Located};
 use intern::{StrRef, StrStore};
+use loc::{Loc, Located};
 use std::collections::HashMap;
 use token::{IdentType, IsNumLab, Token, TyVar};
 

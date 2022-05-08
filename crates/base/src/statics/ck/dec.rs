@@ -1,7 +1,7 @@
 //! Check declarations and expressions.
 
 use crate::ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
-use crate::loc::Located;
+use loc::Located;
 use crate::statics::ck::util::{
   env_ins, env_merge, generalize, get_env, get_ty_sym, get_val_info, insert_ty_vars, instantiate,
 };

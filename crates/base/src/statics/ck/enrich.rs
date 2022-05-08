@@ -1,10 +1,10 @@
 //! Check whether an environment enriches another environment.
 
-use crate::loc::Loc;
 use crate::statics::ty_rzn::TyRealization;
 use crate::statics::types::{
   Env, Error, Item, Result, Subst, TyFcn, TyInfo, TyScheme, Tys, ValEnv, ValInfo,
 };
+use loc::Loc;
 
 /// Returns `Ok(())` iff got enriches want (`got >> want`) as per the Definition.
 ///

@@ -5,11 +5,11 @@
 //! `types.rs`, and doesn't make sense as a method on a type, it should live here.
 
 use crate::ast::Long;
-use crate::loc::{Loc, Located};
 use crate::statics::types::{
   Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyScheme, ValInfo,
 };
 use intern::StrRef;
+use loc::{Loc, Located};
 use std::collections::BTreeMap;
 use std::collections::HashSet;
 use token::TyVar as AstTyVar;
