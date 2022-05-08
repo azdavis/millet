@@ -124,7 +124,7 @@ for x in "$@"; do
       failed=$((failed + 1))
     fi
   else
-    echo "$x: don't know how to run"
+    echo "$x: invalid test"
     failed=$((failed + 1))
   fi
   cd "$old_pwd"
