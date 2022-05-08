@@ -33,6 +33,7 @@ if [ "$#" -eq 0 ]; then
   usage
 fi
 
+cd "$(git rev-parse --show-toplevel)"
 cargo build --bin cli
 export NO_COLOR=1
 export MILLET="$PWD/target/debug/cli"

@@ -7,8 +7,6 @@ if [ "$#" -ne 0 ]; then
   exit 1
 fi
 
-NUM_RULES=89
-
 mk_temp_dir() {
   while true; do
     name="/tmp/$(od -A n -N 8 -t u /dev/random | tr -d ' \n')"
@@ -19,9 +17,11 @@ mk_temp_dir() {
   done
 }
 
+cd "$(git rev-parse --show-toplevel)"
 temp="$(mk_temp_dir)"
 trap "rm -rf $temp" EXIT
 
+NUM_RULES=89
 i=1
 while [ "$i" -le "$NUM_RULES" ]; do
   echo "$i" >>"$temp/want"

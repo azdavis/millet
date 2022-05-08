@@ -29,6 +29,8 @@ if [ "$#" -eq 0 ]; then
   usage
 fi
 
+cd "$(git rev-parse --show-toplevel)"
+
 for x in "$@"; do
   mkdir -p "$x"
   touch "$x/ok.sml"

@@ -9,6 +9,7 @@ fi
 
 OUT="extensions/vscode/out"
 
+cd "$(git rev-parse --show-toplevel)"
 cargo build
 mkdir -p "$OUT"
 rm -rf "$OUT/lang-srv"
