@@ -9,10 +9,10 @@ use crate::loc::{Loc, Located};
 use crate::statics::types::{
   Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyScheme, ValInfo,
 };
-use crate::token::TyVar as AstTyVar;
 use intern::StrRef;
 use std::collections::BTreeMap;
 use std::collections::HashSet;
+use token::TyVar as AstTyVar;
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same
 /// TyScheme, with fresh type variables, and returns that type.

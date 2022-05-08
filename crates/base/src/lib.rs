@@ -7,6 +7,5 @@ pub mod lex;
 pub mod loc;
 pub mod parse;
 pub mod statics;
-pub mod token;
 
 mod util;

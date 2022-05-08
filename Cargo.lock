@@ -13,6 +13,7 @@ name = "base"
 version = "0.1.0"
 dependencies = [
  "intern",
+ "token 0.1.0",
 ]
 
 [[package]]
@@ -339,7 +340,7 @@ dependencies = [
  "identifier-case",
  "rowan",
  "syntax-gen",
- "token",
+ "token 0.1.0 (git+https://github.com/azdavis/language-util.git)",
 ]
 
 [[package]]
@@ -383,6 +384,13 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
+
+[[package]]
+name = "token"
+version = "0.1.0"
+dependencies = [
+ "intern",
+]
 
 [[package]]
 name = "token"

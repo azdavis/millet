@@ -7,9 +7,9 @@ use crate::ast::{
 };
 use crate::lex::Lexer;
 use crate::loc::{Loc, Located};
-use crate::token::{IdentType, IsNumLab, Token, TyVar};
 use intern::{StrRef, StrStore};
 use std::collections::HashMap;
+use token::{IdentType, IsNumLab, Token, TyVar};
 
 /// A specialized Result that most functions in this module return.
 pub type Result<T> = std::result::Result<T, Located<Error>>;

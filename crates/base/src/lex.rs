@@ -1,8 +1,8 @@
 //! Lexing from bytes to tokens.
 
 use crate::loc::{Loc, Located};
-use crate::token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 use intern::{StrRef, StrStoreMut};
+use token::{IdentType, IsNumLab, Token, TyVar, ALPHA, OTHER, SYMBOLIC};
 
 /// Transform a sequence of bytes into a sequence of tokens.
 pub fn get(store: &mut StrStoreMut, bs: &[u8]) -> Result<Lexer, Located<Error>> {
