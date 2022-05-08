@@ -1,6 +1,6 @@
 # Millet
 
-A [language server][lang-server] for [Standard ML][sml-def]
+A [language server][lang-server] for [Standard ML][sml-def].
 
 Also a corresponding [Visual Studio Code][vscode] extension.
 
