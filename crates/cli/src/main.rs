@@ -3,7 +3,7 @@
 mod args;
 mod source;
 
-use base::{parse, statics};
+use base::statics;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
@@ -59,7 +59,7 @@ fn run() -> bool {
   let store = store.finish();
   let mut top_decs = Vec::with_capacity(src.len());
   for ((id, file), lexer) in src.iter().zip(lexers) {
-    match parse::get(lexer) {
+    match parse_old::get(lexer) {
       Ok(xs) => {
         if args.just_ast {
           writeln!(w, "{}: {:#?}", file.name(), xs).unwrap();

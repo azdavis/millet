@@ -54,6 +54,7 @@ dependencies = [
  "codespan-reporting",
  "intern",
  "lex-old",
+ "parse-old",
  "pico-args",
 ]
 
@@ -168,6 +169,7 @@ dependencies = [
  "lex-old",
  "loc",
  "lsp-types",
+ "parse-old",
  "serde",
  "serde_json",
 ]
@@ -242,6 +244,17 @@ dependencies = [
  "drop_bomb",
  "rustc-hash",
  "syntax",
+]
+
+[[package]]
+name = "parse-old"
+version = "0.1.0"
+dependencies = [
+ "ast",
+ "intern",
+ "lex-old",
+ "loc",
+ "token 0.1.0",
 ]
 
 [[package]]

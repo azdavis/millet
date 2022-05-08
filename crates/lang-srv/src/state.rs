@@ -4,7 +4,7 @@ use crate::comm::{
   IncomingNotification, IncomingRequestParams, Outgoing, OutgoingNotification, Request, Response,
   ResponseSuccess,
 };
-use base::{parse, statics};
+use base::statics;
 use intern::StrStoreMut;
 use loc::Loc;
 use lsp_types::{
@@ -110,7 +110,7 @@ fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
     Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message())),
   };
   let store = store.finish();
-  let top_decs = match parse::get(lexer) {
+  let top_decs = match parse_old::get(lexer) {
     Ok(x) => x,
     Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
   };
