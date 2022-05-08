@@ -28,7 +28,7 @@ while [ "$i" -le "$NUM_RULES" ]; do
   i=$((i + 1))
 done
 
-git grep -ho 'SML Definition ([[:digit:]]*)' crates/base/src/statics |
+git grep -ho 'SML Definition ([[:digit:]]*)' crates/statics/src |
   tr -d 'A-Za-z ()' |
   sort -nu >"$temp/got"
 
