@@ -13,6 +13,6 @@ rowan = "0.15"
 token = { git = "https://github.com/azdavis/language-util.git" }
 
 [build-dependencies]
-syntax-gen = { git = "https://github.com/azdavis/language-util.git" }
 char-name = { git = "https://github.com/azdavis/language-util.git" }
 identifier-case = { git = "https://github.com/azdavis/language-util.git" }
+syntax-gen = { git = "https://github.com/azdavis/language-util.git" }

@@ -6,8 +6,8 @@ publish = false
 
 [dependencies]
 codespan-reporting = "0.11"
-statics = { path = "../statics" }
+pico-args = "0.4"
 intern = { path = "../intern" }
 lex-old = { path = "../lex-old" }
 parse-old = { path = "../parse-old" }
-pico-args = "0.4"
+statics = { path = "../statics" }

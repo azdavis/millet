@@ -9,8 +9,8 @@ doctest = false
 
 [dependencies]
 rustc-hash = "1"
+ast = { path = "../ast" }
 intern = { path = "../intern" }
+loc = { path = "../loc" }
 token = { path = "../token" }
 util = { path = "../util" }
-loc = { path = "../loc" }
-ast = { path = "../ast" }
