@@ -23,7 +23,6 @@ version = "0.1.0"
 dependencies = [
  "ast",
  "intern",
- "lex-old",
  "loc",
  "token 0.1.0",
  "util",

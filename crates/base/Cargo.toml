@@ -9,5 +9,4 @@ intern = { path = "../intern" }
 token = { path = "../token" }
 util = { path = "../util" }
 loc = { path = "../loc" }
-lex-old = { path = "../lex-old" }
 ast = { path = "../ast" }
