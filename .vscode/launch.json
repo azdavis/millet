@@ -10,34 +10,6 @@
         "--extensionDevelopmentPath=${workspaceFolder}/extensions/vscode"
       ],
       "preLaunchTask": "extension: build"
-    },
-    {
-      "name": "cli",
-      "type": "lldb",
-      "request": "launch",
-      "cargo": {
-        "args": ["build", "--bin=millet-cli", "--package=millet-cli"],
-        "filter": {
-          "name": "millet-cli",
-          "kind": "bin"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "name": "base tests",
-      "type": "lldb",
-      "request": "launch",
-      "cargo": {
-        "args": ["test", "--no-run", "--lib", "--package=base"],
-        "filter": {
-          "name": "base",
-          "kind": "lib"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
     }
   ]
 }
