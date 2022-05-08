@@ -1,0 +1,27 @@
+{
+  "version": "0.2",
+  "words": [
+    "Abstype",
+    "Andalso",
+    "arity",
+    "descs",
+    "Eqtype",
+    "forall",
+    "fval",
+    "Hasher",
+    "idents",
+    "Infixr",
+    "injective",
+    "longvid",
+    "Nonfix",
+    "notif",
+    "numtxt",
+    "Orelse",
+    "Prec",
+    "rustc",
+    "Sestoft",
+    "surjective",
+    "syms",
+    "withtype"
+  ]
+}
