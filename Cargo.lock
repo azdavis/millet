@@ -14,6 +14,7 @@ version = "0.1.0"
 dependencies = [
  "intern",
  "token 0.1.0",
+ "util",
 ]
 
 [[package]]
@@ -442,6 +443,10 @@ dependencies = [
  "percent-encoding",
  "serde",
 ]
+
+[[package]]
+name = "util"
+version = "0.1.0"
 
 [[package]]
 name = "winapi"

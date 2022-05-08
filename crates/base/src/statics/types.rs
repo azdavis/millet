@@ -9,11 +9,11 @@
 
 use crate::ast::{Label, TyPrec};
 use crate::loc::{Loc, Located};
-use crate::util::eq_iter;
 use intern::{StrRef, StrStore};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt;
 use token::TyVar as AstTyVar;
+use util::eq_iter;
 
 /// An error encountered during static analysis.
 #[derive(Debug)]

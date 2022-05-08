@@ -1,5 +1,5 @@
 [package]
-name = "token"
+name = "util"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -7,6 +7,3 @@ publish = false
 [lib]
 test = false
 doctest = false
-
-[dependencies]
-intern = { path = "../intern" }

@@ -7,3 +7,4 @@ publish = false
 [dependencies]
 intern = { path = "../intern" }
 token = { path = "../token" }
+util = { path = "../util" }
