@@ -49,7 +49,7 @@ A test must be of the given format:
    with that file, it must exit 1 and produce the output in `out.txt`.
 6. Else, the test is invalid.
 
-Run `./scripts/mk-test.sh tests/<name>` to make an `ok.sml` test.
+Run `scripts/mk-test.sh tests/<name>` to make an `ok.sml` test.
 
 When writing a custom `run.sh` test, the test runner exports two environment
 variables available for use in any `run.sh`:
