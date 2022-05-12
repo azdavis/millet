@@ -1704,11 +1704,3 @@ enum Assoc {
   Left,
   Right,
 }
-
-#[test]
-fn option_compare() {
-  let none: Option<usize> = None;
-  assert!(none < Some(3));
-  assert!(Some(3) == Some(3));
-  assert!(Some(3) < Some(5));
-}

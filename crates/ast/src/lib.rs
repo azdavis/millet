@@ -399,7 +399,7 @@ pub enum TyPrec {
 }
 
 #[test]
-fn test_ty_prec() {
+fn ty_prec() {
   assert!(TyPrec::Arrow < TyPrec::Star);
   assert!(TyPrec::Star < TyPrec::App);
 }
