@@ -3,7 +3,7 @@ use crate::dec;
 use crate::util::Cx;
 use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, exp: ast::Exp) -> hir::ExpIdx {
+pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
   todo!()
 }
 
@@ -33,7 +33,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
         .exp_rows()
         .filter_map(|x| {
           let l = get_lab(x.lab()?)?;
-          let e = get(cx, x.exp()?);
+          let e = get(cx, x.exp());
           Some((l, e))
         })
         .collect(),
@@ -52,14 +52,11 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let body = cx.arenas.exp.alloc(body);
       hir::Exp::Fn(vec![(param, body)])
     }
-    ast::Exp::TupleExp(exp) => tuple(exp.exp_args().filter_map(|e| Some(get(cx, e.exp()?)))),
+    ast::Exp::TupleExp(exp) => tuple(exp.exp_args().map(|e| get(cx, e.exp()))),
     ast::Exp::ListExp(exp) => {
       // need to rev()
       #[allow(clippy::needless_collect)]
-      let exps: Vec<_> = exp
-        .exp_args()
-        .filter_map(|e| Some(get(cx, e.exp()?)))
-        .collect();
+      let exps: Vec<_> = exp.exp_args().map(|e| get(cx, e.exp())).collect();
       exps.into_iter().rev().fold(std_val("nil"), |ac, x| {
         let cons = cx.arenas.exp.alloc(std_val("::"));
         let ac = cx.arenas.exp.alloc(ac);
@@ -99,7 +96,7 @@ fn exps_in_seq<I>(cx: &mut Cx, es: I) -> hir::Exp
 where
   I: Iterator<Item = ast::ExpInSeq>,
 {
-  let mut exps: Vec<_> = es.filter_map(|e| Some(get(cx, e.exp()?))).collect();
+  let mut exps: Vec<_> = es.map(|e| get(cx, e.exp())).collect();
   let last = exps.pop().unwrap();
   let dec = hir::Dec::Val(
     vec![],
