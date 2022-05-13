@@ -397,9 +397,3 @@ pub enum TyPrec {
   /// Application precedence (as in `int list` in which `int` is applied to `list`), the highest.
   App,
 }
-
-#[test]
-fn ty_prec() {
-  assert!(TyPrec::Arrow < TyPrec::Star);
-  assert!(TyPrec::Star < TyPrec::App);
-}
