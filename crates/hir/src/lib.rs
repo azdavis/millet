@@ -98,11 +98,11 @@ pub enum Lab {
 
 #[derive(Debug)]
 pub enum SCon {
-  Int,
-  Real,
-  Word,
-  Char,
-  String,
+  Int(i32),
+  Real(f64),
+  Word(i32),
+  Char(u8),
+  String(SmolStr),
 }
 
 #[derive(Debug)]

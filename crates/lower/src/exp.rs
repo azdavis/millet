@@ -8,7 +8,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Exp) -> hir::ExpIdx {
 
 fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
   let ret = match exp {
-    Exp::SConExp(exp) => hir::Exp::SCon(get_scon(exp.s_con()?.kind)),
+    Exp::SConExp(exp) => hir::Exp::SCon(get_scon(exp.s_con()?)?),
     Exp::PathExp(exp) => hir::Exp::Path(get_path(exp.path()?)?),
     Exp::RecordExp(exp) => hir::Exp::Record(
       exp

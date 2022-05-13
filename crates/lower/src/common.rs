@@ -1,14 +1,17 @@
-use syntax::ast::{Lab, Path, SConKind};
+use syntax::ast::{Lab, Path, SCon, SConKind};
 use syntax::SyntaxToken;
 
-pub(crate) fn get_scon(kind: SConKind) -> hir::SCon {
-  match kind {
-    SConKind::IntLit => hir::SCon::Int,
-    SConKind::RealLit => hir::SCon::Real,
-    SConKind::WordLit => hir::SCon::Word,
-    SConKind::CharLit => hir::SCon::Char,
-    SConKind::StringLit => hir::SCon::String,
-  }
+pub(crate) fn get_scon(scon: SCon) -> Option<hir::SCon> {
+  let text = scon.token.text();
+  // TODO give errors?
+  let ret = match scon.kind {
+    SConKind::IntLit => hir::SCon::Int(text.parse().ok()?),
+    SConKind::RealLit => hir::SCon::Real(text.parse().ok()?),
+    SConKind::WordLit => hir::SCon::Word(text.parse().ok()?),
+    SConKind::CharLit => hir::SCon::Char(text.bytes().next()?),
+    SConKind::StringLit => hir::SCon::String(text.into()),
+  };
+  Some(ret)
 }
 
 pub(crate) fn get_path(p: Path) -> Option<hir::Path> {
