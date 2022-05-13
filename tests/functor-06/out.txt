@@ -1,7 +1,0 @@
-error: undefined value: x
-   ┌─ err.sml:11:11
-   │
-11 │ val _ = S.x
-   │           ^
-
-typechecking failed

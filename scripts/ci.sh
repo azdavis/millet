@@ -24,6 +24,3 @@ cargo clippy
 
 info 'run cargo tests'
 cargo test
-
-info 'run tests in tests/'
-./scripts/run-test.sh tests/*

@@ -1,1 +1,0 @@
-datatype no = datatype int

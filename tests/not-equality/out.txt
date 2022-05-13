@@ -1,7 +1,0 @@
-error: not an equality type: real
-  ┌─ err.sml:1:9
-  │
-1 │ val _ = 2.2 = 3.3
-  │         ^^^^^^^^^
-
-typechecking failed

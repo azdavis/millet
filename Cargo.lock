@@ -408,6 +408,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tests"
+version = "0.1.0"
+dependencies = [
+ "intern",
+ "lex-old",
+ "loc",
+ "parse-old",
+ "rustc-hash",
+ "statics",
+]
+
+[[package]]
 name = "text-size"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

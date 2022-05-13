@@ -1,7 +1,0 @@
-error: undefined type: t
-  ┌─ err.sml:4:18
-  │
-4 │ structure S = F (struct end)
-  │                  ^^^^^^^^^^
-
-typechecking failed

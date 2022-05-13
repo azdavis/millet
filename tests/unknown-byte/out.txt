@@ -1,7 +1,0 @@
-error: unknown byte: 0xe7
-  ┌─ err.sml:1:5
-  │
-1 │ val 空条承太郎 = 1
-  │     ^^
-
-lexing failed

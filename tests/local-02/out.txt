@@ -1,7 +1,0 @@
-error: undefined value: x
-  ┌─ err.sml:8:5
-  │
-8 │     x
-  │     ^
-
-typechecking failed

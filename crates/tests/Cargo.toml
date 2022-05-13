@@ -1,0 +1,16 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+doctest = false
+
+[dependencies]
+rustc-hash = "1"
+intern = { path = "../intern" }
+lex-old = { path = "../lex-old" }
+parse-old = { path = "../parse-old" }
+statics = { path = "../statics" }
+loc = { path = "../loc" }

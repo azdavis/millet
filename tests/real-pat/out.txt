@@ -1,7 +1,0 @@
-error: real constant used as a pattern
-  ┌─ err.sml:3:5
-  │
-3 │     1.2 => 1
-  │     ^^^
-
-parsing failed

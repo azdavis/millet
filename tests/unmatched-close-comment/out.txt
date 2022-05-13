@@ -1,7 +1,0 @@
-error: unmatched close comment
-  ┌─ err.sml:1:11
-  │
-1 │ val x = 3 *)
-  │           ^^
-
-lexing failed

@@ -1,7 +1,0 @@
-error: non-exhaustive binding
-  ┌─ err.sml:2:5
-  │
-2 │ val One = One
-  │     ^^^
-
-typechecking failed

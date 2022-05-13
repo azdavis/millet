@@ -1,7 +1,0 @@
-error: non-infix identifier used as infix: C
-  ┌─ err.sml:2:10
-  │
-2 │ fun f (_ C _) = 2
-  │          ^
-
-parsing failed

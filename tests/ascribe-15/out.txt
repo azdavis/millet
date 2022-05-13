@@ -1,7 +1,0 @@
-error: mismatched types: expected t, found t
-   ┌─ err.sml:23:9
-   │
-23 │ val _ = A.bar B.foo
-   │         ^^^^^^^^^^^
-
-typechecking failed

@@ -1,7 +1,0 @@
-error: duplicate label: a
-  ┌─ err.sml:1:18
-  │
-1 │ val _ = { a = 3, a = 4 }
-  │                  ^
-
-typechecking failed

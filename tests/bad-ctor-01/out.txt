@@ -1,7 +1,0 @@
-error: mismatched types: expected an arrow type, found d
-  ┌─ err.sml:4:5
-  │
-4 │     A _ => 1
-  │     ^^^
-
-typechecking failed

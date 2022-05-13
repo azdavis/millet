@@ -1,7 +1,0 @@
-error: invalid character constant
-  ┌─ err.sml:1:9
-  │
-1 │ val _ = #"あ"
-  │         ^^^^^
-
-lexing failed

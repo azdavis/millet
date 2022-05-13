@@ -1,1 +1,0 @@
-datatype bad = datatype exn

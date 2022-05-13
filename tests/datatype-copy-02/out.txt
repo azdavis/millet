@@ -1,7 +1,0 @@
-error: right-hand side of datatype copy is not a datatype
-  ┌─ err.sml:1:25
-  │
-1 │ datatype bad = datatype exn
-  │                         ^^^
-
-typechecking failed

@@ -1,7 +1,0 @@
-error: mismatched identifier status: expected constructor or exception, found value
-  ┌─ err.sml:4:5
-  │
-4 │     C _ => 1
-  │     ^
-
-typechecking failed

@@ -1,7 +1,0 @@
-error: mismatched types: expected int, found string
-  ┌─ err.sml:1:25
-  │
-1 │ val _ = fn id => (id 3; id "nope")
-  │                         ^^^^^^^^^
-
-typechecking failed

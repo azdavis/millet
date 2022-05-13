@@ -1,7 +1,0 @@
-error: mismatched types: expected unit, found '46 tree -> ('46 -> bool) -> ('46 -> '45) -> (unit -> '45) -> '45
-   ┌─ err.sml:10:1
-   │
-10 │ val _ : unit = find
-   │ ^^^^^^^^^^^^^^^^^^^
-
-typechecking failed

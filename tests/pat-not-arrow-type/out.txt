@@ -1,7 +1,0 @@
-error: mismatched types: expected an arrow type, found '26 list
-  ┌─ err.sml:1:12
-  │
-1 │ val _ = fn nil _ => 1 | _ => 2
-  │            ^^^^^
-
-typechecking failed

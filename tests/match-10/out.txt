@@ -1,7 +1,0 @@
-error: unreachable pattern
-  ┌─ err.sml:7:5
-  │
-7 │   | [7, 7] => 5
-  │     ^^^^^^
-
-typechecking failed

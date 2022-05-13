@@ -1,7 +1,0 @@
-error: duplicate value: E
-  ┌─ err.sml:1:17
-  │
-1 │ exception E and E
-  │                 ^
-
-typechecking failed

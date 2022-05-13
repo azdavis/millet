@@ -1,7 +1,0 @@
-error: mismatched types: expected int, found string
-  ┌─ err.sml:3:9
-  │
-3 │ val _ = inc "nope"
-  │         ^^^^^^^^^^
-
-typechecking failed

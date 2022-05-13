@@ -1,7 +1,0 @@
-error: mismatched types: expected '22, found bool
-  ┌─ err.sml:1:1
-  │
-1 │ val 'a _: 'a = false
-  │ ^^^^^^^^^^^^^^^^^^^^
-
-typechecking failed

@@ -1,7 +1,0 @@
-error: mismatched types: expected one of int, word, real, found bool
-  ┌─ err.sml:2:9
-  │
-2 │ val _ = add (false, true)
-  │         ^^^^^^^^^^^^^^^^^
-
-typechecking failed

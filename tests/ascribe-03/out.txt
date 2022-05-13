@@ -1,9 +1,0 @@
-error: undefined value: x
-  ┌─ err.sml:3:7
-  │  
-3 │   end = struct
-  │ ╭───────^
-4 │ │ end
-  │ ╰───^
-
-typechecking failed

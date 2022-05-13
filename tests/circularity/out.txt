@@ -1,7 +1,0 @@
-error: circularity: '23 in '24 -> '23
-  ┌─ err.sml:1:11
-  │
-1 │ fun f _ = f
-  │           ^
-
-typechecking failed

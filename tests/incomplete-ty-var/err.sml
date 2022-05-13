@@ -1,1 +1,0 @@
-datatype ' guh = no

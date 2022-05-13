@@ -1,7 +1,0 @@
-error: mismatched names: expected f, found g
-  ┌─ err.sml:2:5
-  │
-2 │   | g _ = 2
-  │     ^
-
-typechecking failed

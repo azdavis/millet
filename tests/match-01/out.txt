@@ -1,7 +1,0 @@
-error: non-exhaustive match
-  ┌─ err.sml:3:8
-  │
-3 │   case A of
-  │        ^
-
-typechecking failed

@@ -1,7 +1,0 @@
-error: right-hand side of datatype copy is not a datatype
-  ┌─ err.sml:1:24
-  │
-1 │ datatype no = datatype int
-  │                        ^^^
-
-typechecking failed

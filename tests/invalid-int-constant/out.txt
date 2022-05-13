@@ -1,7 +1,0 @@
-error: invalid integer constant: number too large to fit in target type
-  ┌─ err.sml:1:9
-  │
-1 │ val _ = 123123123123123123123123132131
-  │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-lexing failed

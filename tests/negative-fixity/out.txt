@@ -1,7 +1,0 @@
-error: fixity is negative
-  ┌─ err.sml:1:7
-  │
-1 │ infix ~3 bad
-  │       ^^
-
-parsing failed

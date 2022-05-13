@@ -1,7 +1,0 @@
-error: mismatched types: expected int, found t
-   ┌─ err.sml:12:1
-   │
-12 │ val _: int = S.x
-   │ ^^^^^^^^^^^^^^^^
-
-typechecking failed

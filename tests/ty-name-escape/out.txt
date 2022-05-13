@@ -1,7 +1,0 @@
-error: expression causes a type name to escape its scope
-  ┌─ err.sml:3:6
-  │
-3 │   in guh end
-  │      ^^^
-
-typechecking failed

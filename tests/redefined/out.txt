@@ -1,7 +1,0 @@
-error: duplicate value: x
-  ┌─ err.sml:2:5
-  │
-2 │ and x = 4
-  │     ^
-
-typechecking failed

@@ -1,7 +1,0 @@
-error: expected a label, found a decimal integer literal
-  ┌─ err.sml:1:12
-  │
-1 │ type t = { 0: int, 1: bool }
-  │            ^
-
-parsing failed

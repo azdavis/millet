@@ -1,7 +1,0 @@
-error: mismatched types: expected { 1 : int }, found unit
-  ┌─ err.sml:2:1
-  │
-2 │ val _: t = ()
-  │ ^^^^^^^^^^^^^
-
-typechecking failed
