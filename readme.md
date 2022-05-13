@@ -9,7 +9,7 @@ Also a corresponding [Visual Studio Code][vscode] extension.
 This project is alpha-quality software.
 
 - There are [many important things](todo.md) not yet implemented.
-- There are things that are shoddily implemented. Note the skipped tests in `tests/`.
+- There are things that are shoddily implemented. Note the ignored tests.
 
 ## Development
 
@@ -26,7 +26,6 @@ If you're using VSCode, you can try out the VSCode extension:
 
 - Mode of the code is in `crates/`.
 - Editor extensions are in `extensions/`.
-- Tests are in `tests/` (who'd have guessed?).
 - Various helper scripts are in `scripts/`. They require a POSIX `sh`.
 
 ## Testing

@@ -17,7 +17,7 @@ listed in approximate order they should be addressed in
 - fix statics for equality types
   - some TODOs are in the code
 - fix statics for functors
-  - failing skipped tests are in tests/
+  - note ignored tests
 - parse derived forms
   - functor binding input sugar
     - or skip this? seems to be confusing to students

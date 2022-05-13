@@ -21,5 +21,5 @@ info 'check sml defn refs'
 info 'run clippy'
 cargo clippy
 
-info 'run cargo tests'
+info 'run tests'
 cargo test
