@@ -8,7 +8,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
 }
 
 /// NOTE this should be fine since we ban certain names in identifiers.
-fn std_val(s: &str) -> hir::Exp {
+fn name_exp(s: &str) -> hir::Exp {
   hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
 }
 
@@ -57,8 +57,8 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       // need to rev()
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|e| get(cx, e.exp())).collect();
-      exps.into_iter().rev().fold(std_val("nil"), |ac, x| {
-        let cons = cx.arenas.exp.alloc(std_val("::"));
+      exps.into_iter().rev().fold(name_exp("nil"), |ac, x| {
+        let cons = cx.arenas.exp.alloc(name_exp("::"));
         let ac = cx.arenas.exp.alloc(ac);
         hir::Exp::App(cons, cx.arenas.exp.alloc(tuple([x, ac])))
       })
