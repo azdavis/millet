@@ -22,6 +22,7 @@
     "Orelse",
     "POSIX",
     "Prec",
+    "Ptrs",
     "rustc",
     "scon",
     "seqs",
