@@ -13,12 +13,12 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
     Exp::RecordExp(exp) => hir::Exp::Record(
       exp
         .exp_rows()
-        .map(|x| {
+        .filter_map(|x| {
           let l = get_lab(x.lab()?)?;
           let e = get(cx, x.exp()?);
           Some((l, e))
         })
-        .collect::<Option<_>>()?,
+        .collect(),
     ),
     Exp::SelectorExp(exp) => {
       let lab = get_lab(exp.lab()?)?;
