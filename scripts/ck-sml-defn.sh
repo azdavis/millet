@@ -1,12 +1,6 @@
 #!/bin/sh
 
 set -eu
-
-if [ "$#" -ne 0 ]; then
-  echo "usage: $0"
-  exit 1
-fi
-
 cd "$(git rev-parse --show-toplevel)"
 
 NUM_RULES=89

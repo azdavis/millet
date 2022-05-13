@@ -1,15 +1,10 @@
 #!/bin/sh
 
 set -eu
-
-if [ "$#" -ne 0 ]; then
-  echo "usage: $0"
-  exit 1
-fi
+cd "$(git rev-parse --show-toplevel)"
 
 OUT="extensions/vscode/out"
 
-cd "$(git rev-parse --show-toplevel)"
 cargo build
 mkdir -p "$OUT"
 rm -rf "$OUT/lang-srv"

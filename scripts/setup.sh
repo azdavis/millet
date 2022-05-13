@@ -9,6 +9,7 @@ need_cmd() {
 
 need_cmd 'git' 'know where the top level dir is' 'https://git-scm.com'
 cd "$(git rev-parse --show-toplevel)"
+
 need_cmd 'rustc' 'compile rust' 'https://rustup.rs'
 need_cmd 'cargo' 'manage rust projects' 'https://rustup.rs'
 need_cmd 'rustfmt' 'format rust' 'https://rustup.rs'

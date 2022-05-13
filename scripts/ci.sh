@@ -1,16 +1,15 @@
 #!/bin/sh
 
 set -eu
-
 cd "$(git rev-parse --show-toplevel)"
 
 info() {
   echo "==> $1"
 }
 
+# using cargo build here because the sometimes-recommended cargo test --no-run doesn't seem to run
+# build scripts.
 info 'build'
-# using cargo build here because the sometimes-recommended cargo test --no-run
-# doesn't seem to run build scripts.
 cargo build
 
 info 'check formatting'
