@@ -26,18 +26,15 @@ listed in approximate order they should be addressed in
   - programs
 - support many files
   - via CM? (guh)
-  - via `millet.json` in the workspace root which would list the ordered files
-    in this project
+  - via `millet.json` in the workspace root which would list the ordered files in this project
 - implement statics for unused constructs (abstype, while, `#` selectors)?
 - publish extension
   - get azure account or whatever
 - get better error messages
   - improve locs for signature matching
-  - prefer 'expected int list, found bool list' instead of 'expected int, found
-    bool' and similar?
+  - prefer 'expected int list, found bool list' instead of 'expected int, found bool' and similar?
   - show fully qualified names in type errors
-  - better overload errors: maybe we should choose what that overloaded type
-    should be sooner
+  - better overload errors: maybe we should choose what that overloaded type should be sooner
   - better parser errors?
 - impl more LSP features
   - jump to definition
