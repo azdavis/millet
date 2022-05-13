@@ -26,7 +26,6 @@ pub enum Exp {
   SCon(SCon),
   Path(Path),
   Record(Vec<(Lab, ExpIdx)>),
-  Seq(Vec<ExpIdx>),
   Let(DecIdx, ExpIdx),
   App(ExpIdx, ExpIdx),
   Handle(ExpIdx, Vec<(PatIdx, ExpIdx)>),
@@ -72,11 +71,13 @@ pub type PatArena = Arena<Pat>;
 #[derive(Debug)]
 pub enum Pat {
   None,
-  Wildcard,
+  Wild,
   SCon(SCon),
   Con(Path, Option<PatIdx>),
-  /// The bool is whether the pattern has a `...` in it.
-  Record(Vec<(Lab, PatIdx)>, bool),
+  Record {
+    pats: Vec<(Lab, PatIdx)>,
+    allows_other: bool,
+  },
   Typed(PatIdx, TyIdx),
   As(Name, Option<TyIdx>, PatIdx),
 }

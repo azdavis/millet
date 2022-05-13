@@ -23,7 +23,10 @@
     "POSIX",
     "Prec",
     "rustc",
+    "scon",
+    "seqs",
     "Sestoft",
+    "Smol",
     "surjective",
     "syms",
     "withtype"

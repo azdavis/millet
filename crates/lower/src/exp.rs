@@ -25,7 +25,10 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
       let name = cx.fresh();
       let var = hir::Pat::Con(name.clone().into(), None);
       let var = cx.arenas.pat.alloc(var);
-      let param = hir::Pat::Record(vec![(lab, var)], true);
+      let param = hir::Pat::Record {
+        pats: vec![(lab, var)],
+        allows_other: true,
+      };
       let param = cx.arenas.pat.alloc(param);
       let body = hir::Exp::Path(name.into());
       let body = cx.arenas.exp.alloc(body);
