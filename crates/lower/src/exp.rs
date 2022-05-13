@@ -1,15 +1,21 @@
 use crate::common::{get_lab, get_path, get_scon};
-use crate::dec;
 use crate::util::Cx;
+use crate::{dec, pat, ty};
 use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
-  todo!()
+  let exp = exp.and_then(|e| get_(cx, e)).unwrap_or(hir::Exp::None);
+  cx.arenas.exp.alloc(exp)
 }
 
 /// NOTE this should be fine since we ban certain names in identifiers.
 fn name_exp(s: &str) -> hir::Exp {
   hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
+}
+
+/// see [`name_exp`].
+fn name_pat(s: &str) -> hir::Pat {
+  hir::Pat::Con(hir::Path::new(vec![hir::Name::new(s)]), None)
 }
 
 fn tuple<I>(es: I) -> hir::Exp
@@ -69,19 +75,101 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let exp = exps_in_seq(cx, exp.exps_in_seq());
       hir::Exp::Let(dec, cx.arenas.exp.alloc(exp))
     }
-    ast::Exp::AppExp(_) => todo!(),
-    ast::Exp::InfixExp(_) => todo!(),
-    ast::Exp::TypedExp(_) => todo!(),
-    ast::Exp::AndalsoExp(_) => todo!(),
-    ast::Exp::OrelseExp(_) => todo!(),
-    ast::Exp::HandleExp(_) => todo!(),
-    ast::Exp::RaiseExp(_) => todo!(),
-    ast::Exp::IfExp(_) => todo!(),
-    ast::Exp::WhileExp(_) => todo!(),
-    ast::Exp::CaseExp(_) => todo!(),
-    ast::Exp::FnExp(_) => todo!(),
+    ast::Exp::AppExp(exp) => {
+      let func = get(cx, exp.func());
+      let arg = get(cx, exp.arg());
+      hir::Exp::App(func, arg)
+    }
+    ast::Exp::InfixExp(exp) => {
+      let func = exp
+        .name()
+        .map(|x| name_exp(x.text()))
+        .unwrap_or(hir::Exp::None);
+      let func = cx.arenas.exp.alloc(func);
+      let lhs = get(cx, exp.lhs());
+      let rhs = get(cx, exp.rhs());
+      let arg = cx.arenas.exp.alloc(tuple([lhs, rhs]));
+      hir::Exp::App(func, arg)
+    }
+    ast::Exp::TypedExp(exp) => {
+      let e = get(cx, exp.exp());
+      let t = ty::get(cx, exp.ty());
+      hir::Exp::Typed(e, t)
+    }
+    ast::Exp::AndalsoExp(exp) => {
+      let cond = get(cx, exp.lhs());
+      let yes = get(cx, exp.rhs());
+      let no = cx.arenas.exp.alloc(name_exp("false"));
+      if_exp(cx, cond, yes, no)
+    }
+    ast::Exp::OrelseExp(exp) => {
+      let cond = get(cx, exp.lhs());
+      let yes = cx.arenas.exp.alloc(name_exp("true"));
+      let no = get(cx, exp.rhs());
+      if_exp(cx, cond, yes, no)
+    }
+    ast::Exp::HandleExp(exp) => {
+      let head = get(cx, exp.exp());
+      let arms = matcher(cx, exp.matcher());
+      hir::Exp::Handle(head, arms)
+    }
+    ast::Exp::RaiseExp(exp) => hir::Exp::Raise(get(cx, exp.exp())),
+    ast::Exp::IfExp(exp) => {
+      let cond = get(cx, exp.cond());
+      let yes = get(cx, exp.yes());
+      let no = get(cx, exp.no());
+      if_exp(cx, cond, yes, no)
+    }
+    ast::Exp::WhileExp(exp) => {
+      let vid = cx.fresh();
+      let fn_body = {
+        let cond = get(cx, exp.cond());
+        let body = get(cx, exp.body());
+        let call = call_unit_fn(cx, &vid);
+        let yes = exp_idx_in_seq(cx, vec![body, call]);
+        let yes = cx.arenas.exp.alloc(yes);
+        let no = cx.arenas.exp.alloc(hir::Exp::Record(vec![]));
+        let fn_body = if_exp(cx, cond, yes, no);
+        cx.arenas.exp.alloc(fn_body)
+      };
+      let arg_pat = cx.arenas.pat.alloc(hir::Pat::Record {
+        pats: vec![],
+        allows_other: false,
+      });
+      let fn_exp = cx.arenas.exp.alloc(hir::Exp::Fn(vec![(arg_pat, fn_body)]));
+      let vid_pat = cx.arenas.pat.alloc(name_pat(vid.as_str()));
+      let val = cx.arenas.dec.alloc(hir::Dec::Val(
+        vec![],
+        vec![hir::ValBind {
+          rec: true,
+          pat: vid_pat,
+          exp: fn_exp,
+        }],
+      ));
+      hir::Exp::Let(val, call_unit_fn(cx, &vid))
+    }
+    ast::Exp::CaseExp(exp) => {
+      let head = get(cx, exp.exp());
+      let arms = matcher(cx, exp.matcher());
+      case_exp(cx, head, arms)
+    }
+    ast::Exp::FnExp(exp) => hir::Exp::Fn(matcher(cx, exp.matcher())),
   };
   Some(ret)
+}
+
+fn call_unit_fn(cx: &mut Cx, vid: &hir::Name) -> hir::ExpIdx {
+  let vid_exp = cx.arenas.exp.alloc(name_exp(vid.as_str()));
+  let arg_exp = cx.arenas.exp.alloc(hir::Exp::Record(vec![]));
+  cx.arenas.exp.alloc(hir::Exp::App(vid_exp, arg_exp))
+}
+
+fn exps_in_seq<I>(cx: &mut Cx, es: I) -> hir::Exp
+where
+  I: Iterator<Item = ast::ExpInSeq>,
+{
+  let exps: Vec<_> = es.into_iter().map(|e| get(cx, e.exp())).collect();
+  exp_idx_in_seq(cx, exps)
 }
 
 /// the Definition says to do the lowering 1 -> 2 but we do the lowering 1 -> 3. all should be
@@ -92,11 +180,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
 /// 3. `let val _ = e1 and ... and _ = en in e end`
 ///
 /// the iterator must not be empty, since we need a last expression `e`.
-fn exps_in_seq<I>(cx: &mut Cx, es: I) -> hir::Exp
-where
-  I: Iterator<Item = ast::ExpInSeq>,
-{
-  let mut exps: Vec<_> = es.map(|e| get(cx, e.exp())).collect();
+fn exp_idx_in_seq(cx: &mut Cx, mut exps: Vec<hir::ExpIdx>) -> hir::Exp {
   let last = exps.pop().unwrap();
   let dec = hir::Dec::Val(
     vec![],
@@ -110,4 +194,22 @@ where
       .collect(),
   );
   hir::Exp::Let(cx.arenas.dec.alloc(dec), last)
+}
+
+fn if_exp(cx: &mut Cx, cond: hir::ExpIdx, yes: hir::ExpIdx, no: hir::ExpIdx) -> hir::Exp {
+  let yes_pat = cx.arenas.pat.alloc(name_pat("true"));
+  let no_pat = cx.arenas.pat.alloc(name_pat("false"));
+  case_exp(cx, cond, vec![(yes_pat, yes), (no_pat, no)])
+}
+
+fn case_exp(cx: &mut Cx, head: hir::ExpIdx, arms: Vec<(hir::PatIdx, hir::ExpIdx)>) -> hir::Exp {
+  hir::Exp::App(cx.arenas.exp.alloc(hir::Exp::Fn(arms)), head)
+}
+
+fn matcher(cx: &mut Cx, matcher: Option<ast::Matcher>) -> Vec<(hir::PatIdx, hir::ExpIdx)> {
+  matcher
+    .into_iter()
+    .flat_map(|x| x.match_rules())
+    .map(|arm| (pat::get(cx, arm.pat()), get(cx, arm.exp())))
+    .collect()
 }
