@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { LanguageClient } from "vscode-languageclient";
+import { LanguageClient } from "vscode-languageclient/node";
 
 let client: LanguageClient | null = null;
 
@@ -16,7 +16,7 @@ export async function activate(cx: vscode.ExtensionContext) {
     documentSelector: [{ scheme: "file", language: "sml" }],
   };
   client = new LanguageClient("millet", serverOpts, clientOpts, true);
-  cx.subscriptions.push(client.start());
+  client.start();
 }
 
 export async function deactivate() {
