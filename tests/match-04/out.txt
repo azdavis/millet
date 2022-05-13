@@ -1,9 +1,7 @@
 error: non-exhaustive match
-  ┌─ err.sml:2:3
-  │  
-2 │ ╭   case (true, false) of
-3 │ │     (true, _) => 0
-4 │ │   | (_, false) => 1
-  │ ╰───────────────────^
+  ┌─ err.sml:2:8
+  │
+2 │   case (true, false) of
+  │        ^^^^^^^^^^^^^
 
 typechecking failed

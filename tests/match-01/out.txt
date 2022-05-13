@@ -1,13 +1,7 @@
 error: non-exhaustive match
-   ┌─ err.sml:3:3
-   │  
- 3 │ ╭   case A of
- 4 │ │     A => 0
- 5 │ │   | B 1 => 1
- 6 │ │   | B 3 => 2
-   · │
-17 │ │   | C (D "hey") => 13
-18 │ │   | B 234 => 14
-   │ ╰───────────────^
+  ┌─ err.sml:3:8
+  │
+3 │   case A of
+  │        ^
 
 typechecking failed

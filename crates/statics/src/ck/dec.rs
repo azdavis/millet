@@ -168,7 +168,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp>) -> Result<Ty> {
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
       let (pats, arg_ty, res_ty) = ck_cases(cx, st, cases)?;
-      exhaustive::ck_match(pats, exp.loc)?;
+      exhaustive::ck_match(pats, head.loc)?;
       st.unify(exp.loc, head_ty, arg_ty)?;
       Ok(res_ty)
     }

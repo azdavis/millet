@@ -1,10 +1,7 @@
 error: non-exhaustive match
-  ┌─ err.sml:4:3
-  │  
-4 │ ╭   case (A, C, A) of
-5 │ │     (A, C, _) => 0
-6 │ │   | (B, _, _) => 1
-7 │ │   | (_, _, A) => 4
-  │ ╰──────────────────^
+  ┌─ err.sml:4:8
+  │
+4 │   case (A, C, A) of
+  │        ^^^^^^^^^
 
 typechecking failed
