@@ -1,6 +1,7 @@
 use old_loc::Located;
 use rustc_hash::FxHashMap;
 use std::ops::Range;
+use syntax::rowan::TextRange;
 
 /// pass the string of an SML program with some expectation comments.
 ///
@@ -18,32 +19,56 @@ use std::ops::Range;
 /// (**           ^^^ message about quz *)
 /// "#);
 /// ```
+#[track_caller]
 pub(crate) fn check(s: &str) {
   let indices: Vec<_> = s
     .bytes()
     .enumerate()
     .filter_map(|(idx, b)| (b == b'\n').then(|| idx))
     .collect();
-  let mut want: FxHashMap<_, _> = s
+  let want: FxHashMap<_, _> = s
     .lines()
     .enumerate()
     .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
     .collect();
-  if let Err(err) = check_impl(s) {
-    let range = Range::from(err.loc);
-    let line = indices.iter().position(|&idx| range.start <= idx).unwrap();
-    let col = indices[line - 1] + 1;
-    let region = Region {
-      line,
-      col: (range.start - col)..(range.end - col),
-    };
-    let want_msg = want.remove(&region).unwrap();
-    assert_eq!(want_msg, err.val);
+  assert!(matches!(want.len(), 0 | 1));
+  match check_impl_old(s) {
+    Ok(()) => assert!(want.is_empty()),
+    Err(err) => {
+      let range = Range::from(err.loc);
+      let &want_msg = want.get(&get_region(&indices, range)).unwrap();
+      assert_eq!(want_msg, err.val);
+    }
   }
-  assert!(want.is_empty(), "some expected errors were not emitted");
+  if let Err((range, msg)) = check_impl(s) {
+    let start = usize::try_from(range.start()).unwrap();
+    let end = usize::try_from(range.end()).unwrap();
+    let r = get_region(&indices, start..end);
+    dbg!(&want, &r);
+    let &want_msg = want.get(&r).unwrap();
+    assert_eq!(want_msg, msg);
+  }
 }
 
-fn check_impl(s: &str) -> Result<(), Located<String>> {
+fn get_region(indices: &[usize], range: Range<usize>) -> Region {
+  let line = indices.iter().position(|&idx| range.start <= idx).unwrap();
+  let col = indices[line - 1] + 1;
+  Region {
+    line,
+    col: (range.start - col)..(range.end - col),
+  }
+}
+
+fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
+  let lexed = lex::get(s);
+  if let Some(err) = lexed.errors.into_iter().next() {
+    return Err((err.range, err.kind.to_string()));
+  }
+  // TODO use parse, lower, statics
+  Ok(())
+}
+
+fn check_impl_old(s: &str) -> Result<(), Located<String>> {
   let mut store = old_intern::StrStoreMut::new();
   let lexer = match old_lex::get(&mut store, s.as_bytes()) {
     Ok(x) => x,

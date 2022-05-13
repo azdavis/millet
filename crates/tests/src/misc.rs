@@ -267,11 +267,11 @@ infix ~3 bad
 }
 
 #[test]
-fn negative_word_constant() {
+fn negative_word_lit() {
   check(
     r#"
 val _ = ~0w1
-(**     ^ negative word constant *)
+(**     ^^^^ negative word literal *)
 "#,
   );
 }
@@ -460,7 +460,7 @@ and _: real = 3.3 + 3.3
 (* what's this? *)
 and _: word = 0w0 + 0w0
 and _: bool list = [3 > 3]
-and _ = "derp" > "doot"
+and _ = "foo" > "bar"
 val (a, b: real) = (123, 2.34)
 val _ = #"e" > (#"f": char)
 val _ = 3 = 4
@@ -501,7 +501,7 @@ fn unclosed_string_constant() {
   check(
     r#"
 val _ = "bad
-(**     ^^^^ unclosed string constant *)
+(**     ^^^^ unclosed string literal *)
 "#,
   );
 }
@@ -521,7 +521,7 @@ fn unknown_byte() {
   check(
     r#"
 val 空条承太郎 = 1
-(** ^ unknown byte: 0xe7 *)
+(** ^^^ invalid source character *)
 "#,
   );
 }

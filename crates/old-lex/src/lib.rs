@@ -45,9 +45,9 @@ pub enum Error {
   UnmatchedCloseComment,
   UnmatchedOpenComment,
   IncompleteTyVar,
-  UnknownByte(u8),
+  UnknownByte,
   InvalidIntConstant(std::num::ParseIntError),
-  InvalidRealConstant(std::num::ParseFloatError),
+  IncompleteLiteral,
   NegativeWordConstant,
   IncompleteNumConstant,
   UnclosedStringConstant,
@@ -62,14 +62,14 @@ impl Error {
       Self::UnmatchedCloseComment => "unmatched close comment".to_owned(),
       Self::UnmatchedOpenComment => "unmatched open comment".to_owned(),
       Self::IncompleteTyVar => "incomplete type variable".to_owned(),
-      Self::UnknownByte(b) => format!("unknown byte: {:#x}", b),
+      Self::UnknownByte => "invalid source character".to_owned(),
       Self::InvalidIntConstant(e) => format!("invalid integer constant: {}", e),
-      Self::InvalidRealConstant(e) => format!("invalid real constant: {}", e),
-      Self::NegativeWordConstant => "negative word constant".to_owned(),
+      Self::IncompleteLiteral => "incomplete literal".to_owned(),
+      Self::NegativeWordConstant => "negative word literal".to_owned(),
       Self::IncompleteNumConstant => "incomplete numeric constant".to_owned(),
-      Self::UnclosedStringConstant => "unclosed string constant".to_owned(),
-      Self::InvalidStringConstant => "invalid string constant".to_owned(),
-      Self::InvalidCharConstant => "invalid character constant".to_owned(),
+      Self::UnclosedStringConstant => "unclosed string literal".to_owned(),
+      Self::InvalidStringConstant => "invalid string literal".to_owned(),
+      Self::InvalidCharConstant => "character literal must have length 1".to_owned(),
     }
   }
 }
@@ -77,12 +77,6 @@ impl Error {
 impl From<std::num::ParseIntError> for Error {
   fn from(val: std::num::ParseIntError) -> Self {
     Self::InvalidIntConstant(val)
-  }
-}
-
-impl From<std::num::ParseFloatError> for Error {
-  fn from(val: std::num::ParseFloatError) -> Self {
-    Self::InvalidRealConstant(val)
   }
 }
 
@@ -234,21 +228,23 @@ impl<'s> TokenMaker<'s> {
         };
         // word
         if b == b'w' {
-          if neg {
-            return Err(Error::NegativeWordConstant);
-          }
           self.i += 2;
           let b = match self.bs.get(self.i) {
             None => return Err(Error::IncompleteNumConstant),
             Some(x) => *x,
           };
-          return if b == b'x' {
+          let ret = if b == b'x' {
             // hex word
             self.i += 1;
             self.pos_hex_int().map(Token::HexWord)
           } else {
             // decimal word
             self.pos_dec_int().map(Token::DecWord)
+          };
+          return if neg {
+            Err(Error::NegativeWordConstant)
+          } else {
+            ret
           };
         }
         // hex integer
@@ -426,8 +422,14 @@ impl<'s> TokenMaker<'s> {
       }
     }
     // unknown byte
-    self.i += 1;
-    Err(Error::UnknownByte(b))
+    let start = self.i;
+    loop {
+      self.i += 1;
+      if std::str::from_utf8(&self.bs[start..self.i]).is_ok() {
+        break;
+      }
+    }
+    Err(Error::UnknownByte)
   }
 
   fn pos_dec_int(&mut self) -> Result<i32, Error> {
@@ -461,7 +463,7 @@ impl<'s> TokenMaker<'s> {
       return Err(Error::IncompleteNumConstant);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
-    let n: f64 = n.parse()?;
+    let n: f64 = n.parse().map_err(|_| Error::IncompleteLiteral)?;
     Ok(n)
   }
 

@@ -9,6 +9,7 @@ listed in approximate order they should be addressed in
   - freshen up statics
   - allow returning many errors from each 'pass'
   - remove old code
+  - change constant -> literal
 - improve statics for type variables
   - implicit scoping
   - performing closure operations

@@ -5,7 +5,7 @@ fn char() {
   check(
     r#"
 val _ = #"あ"
-(**     ^^^^^^ invalid character constant *)
+(**     ^^^^^^ character literal must have length 1 *)
 "#,
   );
 }
@@ -25,7 +25,7 @@ fn real() {
   check(
     r#"
 val _ = 123.
-(**     ^^^^ invalid real constant: invalid float literal *)
+(**     ^^^^ incomplete literal *)
 "#,
   );
 }
@@ -35,7 +35,7 @@ fn string() {
   check(
     r#"
 val _ = "bad \ bad \ bad"
-(**     ^^^^^^^ invalid string constant *)
+(**     ^^^^^^^ invalid string literal *)
 "#,
   );
 }

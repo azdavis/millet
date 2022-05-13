@@ -32,10 +32,11 @@ pub struct Error {
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum ErrorKind {
-  UnclosedComment,
+  UnmatchedOpenComment,
   IncompleteTyVar,
   IncompleteLit,
-  NegativeLit,
+  UnclosedStringLit,
+  NegativeWordLit,
   WrongLenCharLit,
   InvalidStringLit,
   InvalidSource,
@@ -44,12 +45,13 @@ pub enum ErrorKind {
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match *self {
-      ErrorKind::UnclosedComment => write!(f, "unclosed comment"),
+      ErrorKind::UnmatchedOpenComment => write!(f, "unmatched open comment"),
       ErrorKind::IncompleteTyVar => write!(f, "incomplete type variable"),
       ErrorKind::IncompleteLit => write!(f, "incomplete literal"),
-      ErrorKind::NegativeLit => write!(f, "negative literal"),
+      ErrorKind::UnclosedStringLit => write!(f, "unclosed string literal"),
+      ErrorKind::NegativeWordLit => write!(f, "negative word literal"),
       ErrorKind::WrongLenCharLit => write!(f, "character literal must have length 1"),
-      ErrorKind::InvalidStringLit => write!(f, "invalid string lit"),
+      ErrorKind::InvalidStringLit => write!(f, "invalid string literal"),
       ErrorKind::InvalidSource => write!(f, "invalid source character"),
     }
   }
@@ -103,11 +105,13 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
             break;
           }
         }
-        (None, None) => {
-          err(cx, start, ErrorKind::UnclosedComment);
+        (Some(_), Some(_)) => cx.i += 1,
+        (_, None) => {
+          // TODO handle unmatched close comment
+          err(cx, start, ErrorKind::UnmatchedOpenComment);
           break;
         }
-        _ => cx.i += 1,
+        (None, Some(_)) => unreachable!(),
       }
     }
     return SK::Comment;
@@ -123,7 +127,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       cx.i += 1;
       advance_while(cx, bs, |b| alpha_num(b).is_some());
       if start + 1 == cx.i {
-        err(cx, start, ErrorKind::IncompleteLit);
+        err(cx, start, ErrorKind::IncompleteTyVar);
       }
       return SK::TyVar;
     }
@@ -165,7 +169,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
             err(cx, start, ErrorKind::IncompleteLit)
           }
           if neg {
-            err(cx, start, ErrorKind::NegativeLit)
+            err(cx, start, ErrorKind::NegativeWordLit)
           }
           return SK::WordLit;
         }
@@ -247,18 +251,19 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   SK::Invalid
 }
 
-/// requires we just entered a string (so cx.i - 1 is a `"`"). returns the number of 'characters' in
+/// requires we just entered a string (so cx.i - 1 is a `"`). returns the number of 'characters' in
 /// the string.
 fn string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
   let mut ret = 0;
   if string_(&mut ret, cx, bs).is_none() {
-    err(cx, start, ErrorKind::IncompleteLit)
+    err(cx, start, ErrorKind::UnclosedStringLit)
   }
   ret
 }
 
 /// returns None iff there was no matching `"` to close the string
 fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
+  let start = cx.i - 1;
   loop {
     match *bs.get(cx.i)? {
       b'\n' => return None,
@@ -279,7 +284,7 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
             cx.i += 1;
             for _ in 0..4 {
               if !bs.get(cx.i)?.is_ascii_hexdigit() {
-                err(cx, cx.i - 1, ErrorKind::InvalidStringLit);
+                err(cx, start, ErrorKind::InvalidStringLit);
               }
               cx.i += 1;
             }
@@ -293,19 +298,20 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
                   break;
                 }
                 if !is_whitespace(b) {
-                  err(cx, cx.i - 1, ErrorKind::InvalidStringLit);
+                  // panic!("about to err");
+                  err(cx, start, ErrorKind::InvalidStringLit);
                 }
               }
             } else if b.is_ascii_digit() {
               cx.i += 1;
               for _ in 0..2 {
                 if !bs.get(cx.i)?.is_ascii_digit() {
-                  err(cx, cx.i - 1, ErrorKind::InvalidStringLit);
+                  err(cx, start, ErrorKind::InvalidStringLit);
                 }
                 cx.i += 1;
               }
             } else {
-              err(cx, cx.i - 1, ErrorKind::InvalidStringLit);
+              err(cx, start, ErrorKind::InvalidStringLit);
             }
             cx.i += 1;
           }

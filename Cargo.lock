@@ -389,12 +389,17 @@ dependencies = [
 name = "tests"
 version = "0.1.0"
 dependencies = [
+ "lex",
+ "lower",
  "old-intern",
  "old-lex",
  "old-loc",
  "old-parse",
  "old-statics",
+ "parse",
  "rustc-hash",
+ "statics",
+ "syntax",
 ]
 
 [[package]]
