@@ -1,9 +1,27 @@
 use crate::common::{get_lab, get_path, get_scon};
+use crate::dec;
 use crate::util::Cx;
 use syntax::ast::Exp;
 
 pub(crate) fn get(cx: &mut Cx, exp: Exp) -> hir::ExpIdx {
   todo!()
+}
+
+/// NOTE this should be fine since we ban certain names in identifiers.
+fn std_val(s: &str) -> hir::Exp {
+  hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
+}
+
+fn tuple<I>(es: I) -> hir::Exp
+where
+  I: IntoIterator<Item = hir::ExpIdx>,
+{
+  hir::Exp::Record(
+    es.into_iter()
+      .enumerate()
+      .map(|(idx, e)| (hir::Lab::Num(idx + 1), e))
+      .collect(),
+  )
 }
 
 fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
@@ -34,10 +52,26 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
       let body = cx.arenas.exp.alloc(body);
       hir::Exp::Fn(vec![(param, body)])
     }
-    Exp::TupleExp(_) => todo!(),
-    Exp::ListExp(_) => todo!(),
-    Exp::SeqExp(_) => todo!(),
-    Exp::LetExp(_) => todo!(),
+    Exp::TupleExp(exp) => tuple(exp.exp_args().filter_map(|e| Some(get(cx, e.exp()?)))),
+    Exp::ListExp(exp) => {
+      // need to rev()
+      #[allow(clippy::needless_collect)]
+      let exps: Vec<_> = exp
+        .exp_args()
+        .filter_map(|e| Some(get(cx, e.exp()?)))
+        .collect();
+      exps.into_iter().rev().fold(std_val("nil"), |ac, x| {
+        let cons = cx.arenas.exp.alloc(std_val("::"));
+        let ac = cx.arenas.exp.alloc(ac);
+        hir::Exp::App(cons, cx.arenas.exp.alloc(tuple([x, ac])))
+      })
+    }
+    Exp::SeqExp(exp) => exps_in_seq(cx, exp.exps_in_seq()),
+    Exp::LetExp(exp) => {
+      let dec = dec::get(cx, exp.dec());
+      let exp = exps_in_seq(cx, exp.exps_in_seq());
+      hir::Exp::Let(dec, cx.arenas.exp.alloc(exp))
+    }
     Exp::AppExp(_) => todo!(),
     Exp::InfixExp(_) => todo!(),
     Exp::TypedExp(_) => todo!(),
@@ -51,4 +85,32 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
     Exp::FnExp(_) => todo!(),
   };
   Some(ret)
+}
+
+/// the Definition says to do the lowering 1 -> 2 but we do the lowering 1 -> 3. all should be
+/// equivalent.
+///
+/// 1. `(e1; ...; en; e)`
+/// 2. `case e1 of _ => ... => case en of _ => e`
+/// 3. `let val _ = e1 and ... and _ = en in e end`
+///
+/// the iterator must not be empty, since we need a last expression `e`.
+fn exps_in_seq<I>(cx: &mut Cx, es: I) -> hir::Exp
+where
+  I: Iterator<Item = syntax::ast::ExpInSeq>,
+{
+  let mut exps: Vec<_> = es.filter_map(|e| Some(get(cx, e.exp()?))).collect();
+  let last = exps.pop().unwrap();
+  let dec = hir::Dec::Val(
+    vec![],
+    exps
+      .into_iter()
+      .map(|exp| hir::ValBind {
+        rec: false,
+        pat: cx.arenas.pat.alloc(hir::Pat::Wild),
+        exp,
+      })
+      .collect(),
+  );
+  hir::Exp::Let(cx.arenas.dec.alloc(dec), last)
 }
