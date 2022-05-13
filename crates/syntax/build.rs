@@ -31,7 +31,7 @@ fn main() {
   gen(
     "SML",
     &["Whitespace", "Comment", "Invalid"],
-    include_str!("sml.ungram").parse().unwrap(),
+    include_str!("syntax.ungram").parse().unwrap(),
     get_token,
   )
   .unwrap();
