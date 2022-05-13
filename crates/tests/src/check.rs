@@ -22,18 +22,15 @@ pub(crate) fn check(s: &str) {
   if let Err(err) = check_impl(s) {
     let range = Range::from(err.loc);
     let line = indices.iter().position(|&idx| range.start <= idx).unwrap();
-    let line_end = indices.iter().position(|&idx| range.end <= idx).unwrap();
-    assert_eq!(line, line_end);
     let col = indices[line - 1] + 1;
     let region = Region {
       line,
       col: (range.start - col)..(range.end - col),
     };
-    eprintln!("{want:?} {region:?}");
     let want_msg = want.remove(&region).unwrap();
     assert_eq!(want_msg, err.val);
   }
-  assert!(want.is_empty());
+  assert!(want.is_empty(), "some expected errors were not emitted");
 }
 
 fn check_impl(s: &str) -> Result<(), Located<String>> {
