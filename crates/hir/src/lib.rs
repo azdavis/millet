@@ -31,6 +31,7 @@ pub enum Exp {
   Handle(ExpIdx, Vec<(PatIdx, ExpIdx)>),
   Raise(ExpIdx),
   Fn(Vec<(PatIdx, ExpIdx)>),
+  Typed(ExpIdx, TyIdx),
 }
 
 pub type DecIdx = Idx<Dec>;
