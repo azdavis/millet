@@ -17,16 +17,16 @@ This project is alpha-quality software.
 
 If you're using VSCode, you can try out the VSCode extension:
 
-1. Open the root directory of this repository in VSCode
-2. Open the Run panel from the activity bar (the play button with bug)
-3. Select 'extension' in the drop down
-4. Press the green play button
+1. Open the root directory of this repository in VSCode.
+2. Open the Run panel from the activity bar (the play button with bug).
+3. Select 'extension' in the drop down.
+4. Press the green play button.
 
 ## Repository layout
 
-- Mode of the code is in `crates/`.
+- Most of the code is in `crates/`.
 - Editor extensions are in `extensions/`.
-- Various helper scripts are in `scripts/`. They require a POSIX `sh`.
+- Various helper scripts are in `scripts/`. They require a POSIX `sh` and various other POSIX utilities.
 
 ## Testing
 
