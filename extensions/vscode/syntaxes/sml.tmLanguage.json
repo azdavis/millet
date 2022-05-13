@@ -14,8 +14,7 @@
     { "include": "#tyVar" },
     { "include": "#symbolicIdent" },
     { "include": "#controlKeyword" },
-    { "include": "#otherKeyword" },
-    { "include": "#invalidKeyword" }
+    { "include": "#otherKeyword" }
   ],
   "repository": {
     "blockComment": {
