@@ -1,9 +1,9 @@
 use crate::common::{get_lab, get_path, get_scon};
 use crate::dec;
 use crate::util::Cx;
-use syntax::ast::Exp;
+use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, exp: Exp) -> hir::ExpIdx {
+pub(crate) fn get(cx: &mut Cx, exp: ast::Exp) -> hir::ExpIdx {
   todo!()
 }
 
@@ -24,11 +24,11 @@ where
   )
 }
 
-fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
+fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
   let ret = match exp {
-    Exp::SConExp(exp) => hir::Exp::SCon(get_scon(exp.s_con()?)?),
-    Exp::PathExp(exp) => hir::Exp::Path(get_path(exp.path()?)?),
-    Exp::RecordExp(exp) => hir::Exp::Record(
+    ast::Exp::SConExp(exp) => hir::Exp::SCon(get_scon(exp.s_con()?)?),
+    ast::Exp::PathExp(exp) => hir::Exp::Path(get_path(exp.path()?)?),
+    ast::Exp::RecordExp(exp) => hir::Exp::Record(
       exp
         .exp_rows()
         .filter_map(|x| {
@@ -38,7 +38,7 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
         })
         .collect(),
     ),
-    Exp::SelectorExp(exp) => {
+    ast::Exp::SelectorExp(exp) => {
       let lab = get_lab(exp.lab()?)?;
       let name = cx.fresh();
       let var = hir::Pat::Con(name.clone().into(), None);
@@ -52,8 +52,8 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
       let body = cx.arenas.exp.alloc(body);
       hir::Exp::Fn(vec![(param, body)])
     }
-    Exp::TupleExp(exp) => tuple(exp.exp_args().filter_map(|e| Some(get(cx, e.exp()?)))),
-    Exp::ListExp(exp) => {
+    ast::Exp::TupleExp(exp) => tuple(exp.exp_args().filter_map(|e| Some(get(cx, e.exp()?)))),
+    ast::Exp::ListExp(exp) => {
       // need to rev()
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp
@@ -66,23 +66,23 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
         hir::Exp::App(cons, cx.arenas.exp.alloc(tuple([x, ac])))
       })
     }
-    Exp::SeqExp(exp) => exps_in_seq(cx, exp.exps_in_seq()),
-    Exp::LetExp(exp) => {
+    ast::Exp::SeqExp(exp) => exps_in_seq(cx, exp.exps_in_seq()),
+    ast::Exp::LetExp(exp) => {
       let dec = dec::get(cx, exp.dec());
       let exp = exps_in_seq(cx, exp.exps_in_seq());
       hir::Exp::Let(dec, cx.arenas.exp.alloc(exp))
     }
-    Exp::AppExp(_) => todo!(),
-    Exp::InfixExp(_) => todo!(),
-    Exp::TypedExp(_) => todo!(),
-    Exp::AndalsoExp(_) => todo!(),
-    Exp::OrelseExp(_) => todo!(),
-    Exp::HandleExp(_) => todo!(),
-    Exp::RaiseExp(_) => todo!(),
-    Exp::IfExp(_) => todo!(),
-    Exp::WhileExp(_) => todo!(),
-    Exp::CaseExp(_) => todo!(),
-    Exp::FnExp(_) => todo!(),
+    ast::Exp::AppExp(_) => todo!(),
+    ast::Exp::InfixExp(_) => todo!(),
+    ast::Exp::TypedExp(_) => todo!(),
+    ast::Exp::AndalsoExp(_) => todo!(),
+    ast::Exp::OrelseExp(_) => todo!(),
+    ast::Exp::HandleExp(_) => todo!(),
+    ast::Exp::RaiseExp(_) => todo!(),
+    ast::Exp::IfExp(_) => todo!(),
+    ast::Exp::WhileExp(_) => todo!(),
+    ast::Exp::CaseExp(_) => todo!(),
+    ast::Exp::FnExp(_) => todo!(),
   };
   Some(ret)
 }
@@ -97,7 +97,7 @@ fn get_(cx: &mut Cx, exp: Exp) -> Option<hir::Exp> {
 /// the iterator must not be empty, since we need a last expression `e`.
 fn exps_in_seq<I>(cx: &mut Cx, es: I) -> hir::Exp
 where
-  I: Iterator<Item = syntax::ast::ExpInSeq>,
+  I: Iterator<Item = ast::ExpInSeq>,
 {
   let mut exps: Vec<_> = es.filter_map(|e| Some(get(cx, e.exp()?))).collect();
   let last = exps.pop().unwrap();

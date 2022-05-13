@@ -2,11 +2,15 @@ use hir::{Arenas, Name};
 
 /// Pointers between the AST and the HIR.
 #[derive(Debug)]
-pub struct Ptrs {}
+pub struct Ptrs {
+  // TODO
+}
 
 /// The result of lowering.
 #[derive(Debug)]
-pub struct Lowered {}
+pub struct Lowered {
+  // TODO
+}
 
 #[derive(Debug, Default)]
 pub(crate) struct Cx {

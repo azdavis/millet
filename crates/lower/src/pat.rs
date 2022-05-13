@@ -1,4 +1,6 @@
 use crate::util::Cx;
-use syntax::ast::Pat;
+use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, pat: Pat) {}
+pub(crate) fn get(cx: &mut Cx, pat: ast::Pat) -> hir::PatIdx {
+  todo!()
+}
