@@ -8,28 +8,6 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
   cx.arenas.exp.alloc(exp)
 }
 
-/// NOTE this should be fine since we ban certain names in identifiers.
-fn name_exp(s: &str) -> hir::Exp {
-  hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
-}
-
-/// see [`name_exp`].
-fn name_pat(s: &str) -> hir::Pat {
-  hir::Pat::Con(hir::Path::new(vec![hir::Name::new(s)]), None)
-}
-
-fn tuple<I>(es: I) -> hir::Exp
-where
-  I: IntoIterator<Item = hir::ExpIdx>,
-{
-  hir::Exp::Record(
-    es.into_iter()
-      .enumerate()
-      .map(|(idx, e)| (hir::Lab::Num(idx + 1), e))
-      .collect(),
-  )
-}
-
 fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
   let ret = match exp {
     ast::Exp::SConExp(exp) => hir::Exp::SCon(get_scon(exp.s_con()?)?),
@@ -156,6 +134,28 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     ast::Exp::FnExp(exp) => hir::Exp::Fn(matcher(cx, exp.matcher())),
   };
   Some(ret)
+}
+
+/// NOTE this should be fine since we ban certain names in identifiers.
+fn name_exp(s: &str) -> hir::Exp {
+  hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
+}
+
+/// see [`name_exp`].
+fn name_pat(s: &str) -> hir::Pat {
+  hir::Pat::Con(hir::Path::new(vec![hir::Name::new(s)]), None)
+}
+
+fn tuple<I>(es: I) -> hir::Exp
+where
+  I: IntoIterator<Item = hir::ExpIdx>,
+{
+  hir::Exp::Record(
+    es.into_iter()
+      .enumerate()
+      .map(|(idx, e)| (hir::Lab::Num(idx + 1), e))
+      .collect(),
+  )
 }
 
 fn call_unit_fn(cx: &mut Cx, vid: &hir::Name) -> hir::ExpIdx {
