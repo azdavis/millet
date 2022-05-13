@@ -1,3 +1,0 @@
-error: does-not-exist.sml: No such file or directory (os error 2)
-
-file i/o failed
