@@ -251,14 +251,14 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
 /// the string.
 fn string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
   let mut ret = 0;
-  if _string(&mut ret, cx, bs).is_none() {
+  if string_(&mut ret, cx, bs).is_none() {
     err(cx, start, ErrorKind::IncompleteLit)
   }
   ret
 }
 
 /// returns None iff there was no matching `"` to close the string
-fn _string(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
+fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
   loop {
     match *bs.get(cx.i)? {
       b'\n' => return None,
