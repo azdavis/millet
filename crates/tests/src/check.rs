@@ -1,4 +1,4 @@
-use loc::Located;
+use old_loc::Located;
 use rustc_hash::FxHashMap;
 use std::ops::Range;
 
@@ -44,17 +44,17 @@ pub(crate) fn check(s: &str) {
 }
 
 fn check_impl(s: &str) -> Result<(), Located<String>> {
-  let mut store = intern::StrStoreMut::new();
-  let lexer = match lex_old::get(&mut store, s.as_bytes()) {
+  let mut store = old_intern::StrStoreMut::new();
+  let lexer = match old_lex::get(&mut store, s.as_bytes()) {
     Ok(x) => x,
     Err(e) => return Err(e.loc.wrap(e.val.message())),
   };
   let store = store.finish();
-  let top_decs = match parse_old::get(lexer) {
+  let top_decs = match old_parse::get(lexer) {
     Ok(x) => x,
     Err(e) => return Err(e.loc.wrap(e.val.message(&store))),
   };
-  let mut statics = statics::Statics::new();
+  let mut statics = old_statics::Statics::new();
   for top_dec in top_decs.iter() {
     match statics.get(top_dec) {
       Ok(()) => {}

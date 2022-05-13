@@ -1,5 +1,5 @@
 [package]
-name = "tests"
+name = "old-lex"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -8,9 +8,6 @@ publish = false
 doctest = false
 
 [dependencies]
-rustc-hash = "1"
 old-intern = { path = "../old-intern" }
-old-lex = { path = "../old-lex" }
-old-parse = { path = "../old-parse" }
-old-statics = { path = "../old-statics" }
 old-loc = { path = "../old-loc" }
+old-token = { path = "../old-token" }

@@ -1,5 +1,5 @@
 [package]
-name = "tests"
+name = "old-statics"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -9,8 +9,8 @@ doctest = false
 
 [dependencies]
 rustc-hash = "1"
+old-ast = { path = "../old-ast" }
 old-intern = { path = "../old-intern" }
-old-lex = { path = "../old-lex" }
-old-parse = { path = "../old-parse" }
-old-statics = { path = "../old-statics" }
 old-loc = { path = "../old-loc" }
+old-token = { path = "../old-token" }
+util = { path = "../util" }

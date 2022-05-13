@@ -3,15 +3,6 @@
 version = 3
 
 [[package]]
-name = "ast"
-version = "0.1.0"
-dependencies = [
- "intern",
- "loc",
- "token 0.1.0",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,13 +98,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "intern"
-version = "0.1.0"
-dependencies = [
- "rustc-hash",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -124,21 +108,6 @@ name = "la-arena"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d43db9f547ba2787bdeac81ef97ccc80784f385b3b39b4d50344270629a2bee3"
-
-[[package]]
-name = "lang-srv"
-version = "0.1.0"
-dependencies = [
- "crossbeam-channel",
- "intern",
- "lex-old",
- "loc",
- "lsp-types",
- "parse-old",
- "serde",
- "serde_json",
- "statics",
-]
 
 [[package]]
 name = "lazy_static"
@@ -152,19 +121,6 @@ version = "0.1.0"
 dependencies = [
  "syntax",
 ]
-
-[[package]]
-name = "lex-old"
-version = "0.1.0"
-dependencies = [
- "intern",
- "loc",
- "token 0.1.0",
-]
-
-[[package]]
-name = "loc"
-version = "0.1.0"
 
 [[package]]
 name = "lower"
@@ -204,24 +160,87 @@ dependencies = [
 ]
 
 [[package]]
+name = "old-ast"
+version = "0.1.0"
+dependencies = [
+ "old-intern",
+ "old-loc",
+ "old-token",
+]
+
+[[package]]
+name = "old-intern"
+version = "0.1.0"
+dependencies = [
+ "rustc-hash",
+]
+
+[[package]]
+name = "old-lang-srv"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "lsp-types",
+ "old-intern",
+ "old-lex",
+ "old-loc",
+ "old-parse",
+ "old-statics",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "old-lex"
+version = "0.1.0"
+dependencies = [
+ "old-intern",
+ "old-loc",
+ "old-token",
+]
+
+[[package]]
+name = "old-loc"
+version = "0.1.0"
+
+[[package]]
+name = "old-parse"
+version = "0.1.0"
+dependencies = [
+ "old-ast",
+ "old-intern",
+ "old-lex",
+ "old-loc",
+ "old-token",
+ "rustc-hash",
+]
+
+[[package]]
+name = "old-statics"
+version = "0.1.0"
+dependencies = [
+ "old-ast",
+ "old-intern",
+ "old-loc",
+ "old-token",
+ "rustc-hash",
+ "util",
+]
+
+[[package]]
+name = "old-token"
+version = "0.1.0"
+dependencies = [
+ "old-intern",
+]
+
+[[package]]
 name = "parse"
 version = "0.1.0"
 dependencies = [
  "drop_bomb",
  "rustc-hash",
  "syntax",
-]
-
-[[package]]
-name = "parse-old"
-version = "0.1.0"
-dependencies = [
- "ast",
- "intern",
- "lex-old",
- "loc",
- "rustc-hash",
- "token 0.1.0",
 ]
 
 [[package]]
@@ -325,18 +344,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "statics"
-version = "0.1.0"
-dependencies = [
- "ast",
- "intern",
- "loc",
- "rustc-hash",
- "token 0.1.0",
- "util",
-]
-
-[[package]]
 name = "syn"
 version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -355,7 +362,7 @@ dependencies = [
  "identifier-case",
  "rowan",
  "syntax-gen",
- "token 0.1.0 (git+https://github.com/azdavis/language-util.git)",
+ "token",
 ]
 
 [[package]]
@@ -374,12 +381,12 @@ dependencies = [
 name = "tests"
 version = "0.1.0"
 dependencies = [
- "intern",
- "lex-old",
- "loc",
- "parse-old",
+ "old-intern",
+ "old-lex",
+ "old-loc",
+ "old-parse",
+ "old-statics",
  "rustc-hash",
- "statics",
 ]
 
 [[package]]
@@ -402,13 +409,6 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
-
-[[package]]
-name = "token"
-version = "0.1.0"
-dependencies = [
- "intern",
-]
 
 [[package]]
 name = "token"
