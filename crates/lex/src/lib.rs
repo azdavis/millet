@@ -33,6 +33,7 @@ pub struct Error {
 #[allow(missing_docs)]
 pub enum ErrorKind {
   UnmatchedOpenComment,
+  UnmatchedCloseComment,
   IncompleteTyVar,
   IncompleteLit,
   UnclosedStringLit,
@@ -46,6 +47,7 @@ impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match *self {
       ErrorKind::UnmatchedOpenComment => write!(f, "unmatched open comment"),
+      ErrorKind::UnmatchedCloseComment => write!(f, "unmatched close comment"),
       ErrorKind::IncompleteTyVar => write!(f, "incomplete type variable"),
       ErrorKind::IncompleteLit => write!(f, "incomplete literal"),
       ErrorKind::UnclosedStringLit => write!(f, "unclosed string literal"),
@@ -107,7 +109,6 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         }
         (Some(_), Some(_)) => cx.i += 1,
         (_, None) => {
-          // TODO handle unmatched close comment
           err(cx, start, ErrorKind::UnmatchedOpenComment);
           break;
         }
@@ -115,6 +116,11 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       }
     }
     return SK::Comment;
+  }
+  if b == b'*' && bs.get(cx.i + 1) == Some(&b')') {
+    cx.i += 2;
+    err(cx, start, ErrorKind::UnmatchedCloseComment);
+    return SK::Invalid;
   }
   // whitespace
   if is_whitespace(b) {
