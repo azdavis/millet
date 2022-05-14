@@ -1,5 +1,4 @@
 use syntax::ast::{Lab, Path, SCon, SConKind};
-use syntax::SyntaxToken;
 
 pub(crate) fn get_scon(scon: SCon) -> Option<hir::SCon> {
   let text = scon.token.text();
