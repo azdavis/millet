@@ -133,11 +133,11 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
   Some(ret)
 }
 
-fn name(s: &str) -> hir::Exp {
+pub(crate) fn name(s: &str) -> hir::Exp {
   hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
 }
 
-fn tuple<I>(es: I) -> hir::Exp
+pub(crate) fn tuple<I>(es: I) -> hir::Exp
 where
   I: IntoIterator<Item = hir::ExpIdx>,
 {
@@ -193,7 +193,11 @@ fn if_exp(cx: &mut Cx, cond: hir::ExpIdx, yes: hir::ExpIdx, no: hir::ExpIdx) -> 
   case_exp(cx, cond, vec![(yes_pat, yes), (no_pat, no)])
 }
 
-fn case_exp(cx: &mut Cx, head: hir::ExpIdx, arms: Vec<(hir::PatIdx, hir::ExpIdx)>) -> hir::Exp {
+pub(crate) fn case_exp(
+  cx: &mut Cx,
+  head: hir::ExpIdx,
+  arms: Vec<(hir::PatIdx, hir::ExpIdx)>,
+) -> hir::Exp {
   hir::Exp::App(cx.arenas.exp.alloc(hir::Exp::Fn(arms)), head)
 }
 
