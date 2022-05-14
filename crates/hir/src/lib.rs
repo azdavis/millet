@@ -39,10 +39,14 @@ pub type DecArena = Arena<Dec>;
 
 #[derive(Debug)]
 pub enum Dec {
-  None,
   Val(Vec<TyVar>, Vec<ValBind>),
   Ty(Vec<TyBind>),
   Datatype(Vec<DatBind>),
+  DatatypeCopy(Name, Path),
+  Abstype(Vec<DatBind>, Vec<DecIdx>),
+  Exception(Vec<ExBind>),
+  Local(Vec<DecIdx>, Vec<DecIdx>),
+  Open(Vec<Path>),
 }
 
 #[derive(Debug)]
@@ -64,6 +68,12 @@ pub struct DatBind {
   pub ty_vars: Vec<TyVar>,
   pub name: Name,
   pub cons: Vec<(Name, Option<TyIdx>)>,
+}
+
+#[derive(Debug)]
+pub enum ExBind {
+  New(Name, Option<TyIdx>),
+  Copy(Name, Path),
 }
 
 pub type PatIdx = Idx<Pat>;
