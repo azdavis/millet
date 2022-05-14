@@ -26,7 +26,7 @@ pub enum Exp {
   SCon(SCon),
   Path(Path),
   Record(Vec<(Lab, ExpIdx)>),
-  Let(Vec<DecIdx>, ExpIdx),
+  Let(DecIdx, ExpIdx),
   App(ExpIdx, ExpIdx),
   Handle(ExpIdx, Vec<(PatIdx, ExpIdx)>),
   Raise(ExpIdx),
@@ -43,10 +43,11 @@ pub enum Dec {
   Ty(Vec<TyBind>),
   Datatype(Vec<DatBind>),
   DatatypeCopy(Name, Path),
-  Abstype(Vec<DatBind>, Vec<DecIdx>),
+  Abstype(Vec<DatBind>, DecIdx),
   Exception(Vec<ExBind>),
-  Local(Vec<DecIdx>, Vec<DecIdx>),
+  Local(DecIdx, DecIdx),
   Open(Vec<Path>),
+  Seq(Vec<DecIdx>),
 }
 
 #[derive(Debug)]

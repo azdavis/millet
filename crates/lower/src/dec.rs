@@ -2,8 +2,8 @@ use crate::util::Cx;
 use crate::{exp, pat, ty};
 use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> Vec<hir::DecIdx> {
-  dec
+pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> hir::DecIdx {
+  let mut decs: Vec<_> = dec
     .into_iter()
     .flat_map(|x| x.dec_in_seqs())
     .filter_map(|x| x.dec())
@@ -11,7 +11,12 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> Vec<hir::DecIdx> {
       let res = get_one(cx, dec);
       cx.arenas.dec.alloc(res)
     })
-    .collect()
+    .collect();
+  if decs.len() == 1 {
+    decs.pop().unwrap()
+  } else {
+    cx.arenas.dec.alloc(hir::Dec::Seq(decs))
+  }
 }
 
 fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
