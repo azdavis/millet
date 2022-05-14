@@ -41,8 +41,8 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       // need to rev()
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|e| get(cx, e.exp())).collect();
-      exps.into_iter().rev().fold(name_exp("nil"), |ac, x| {
-        let cons = cx.arenas.exp.alloc(name_exp("::"));
+      exps.into_iter().rev().fold(name("nil"), |ac, x| {
+        let cons = cx.arenas.exp.alloc(name("::"));
         let ac = cx.arenas.exp.alloc(ac);
         hir::Exp::App(cons, cx.arenas.exp.alloc(tuple([x, ac])))
       })
@@ -59,10 +59,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       hir::Exp::App(func, arg)
     }
     ast::Exp::InfixExp(exp) => {
-      let func = exp
-        .name()
-        .map(|x| name_exp(x.text()))
-        .unwrap_or(hir::Exp::None);
+      let func = exp.name().map(|x| name(x.text())).unwrap_or(hir::Exp::None);
       let func = cx.arenas.exp.alloc(func);
       let lhs = get(cx, exp.lhs());
       let rhs = get(cx, exp.rhs());
@@ -77,12 +74,12 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     ast::Exp::AndalsoExp(exp) => {
       let cond = get(cx, exp.lhs());
       let yes = get(cx, exp.rhs());
-      let no = cx.arenas.exp.alloc(name_exp("false"));
+      let no = cx.arenas.exp.alloc(name("false"));
       if_exp(cx, cond, yes, no)
     }
     ast::Exp::OrelseExp(exp) => {
       let cond = get(cx, exp.lhs());
-      let yes = cx.arenas.exp.alloc(name_exp("true"));
+      let yes = cx.arenas.exp.alloc(name("true"));
       let no = get(cx, exp.rhs());
       if_exp(cx, cond, yes, no)
     }
@@ -115,7 +112,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
         allows_other: false,
       });
       let fn_exp = cx.arenas.exp.alloc(hir::Exp::Fn(vec![(arg_pat, fn_body)]));
-      let vid_pat = cx.arenas.pat.alloc(name_pat(vid.as_str()));
+      let vid_pat = cx.arenas.pat.alloc(pat::name(vid.as_str()));
       let val = cx.arenas.dec.alloc(hir::Dec::Val(
         vec![],
         vec![hir::ValBind {
@@ -136,14 +133,8 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
   Some(ret)
 }
 
-/// NOTE this should be fine since we ban certain names in identifiers.
-fn name_exp(s: &str) -> hir::Exp {
+fn name(s: &str) -> hir::Exp {
   hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
-}
-
-/// see [`name_exp`].
-fn name_pat(s: &str) -> hir::Pat {
-  hir::Pat::Con(hir::Path::new(vec![hir::Name::new(s)]), None)
 }
 
 fn tuple<I>(es: I) -> hir::Exp
@@ -159,7 +150,7 @@ where
 }
 
 fn call_unit_fn(cx: &mut Cx, vid: &hir::Name) -> hir::ExpIdx {
-  let vid_exp = cx.arenas.exp.alloc(name_exp(vid.as_str()));
+  let vid_exp = cx.arenas.exp.alloc(name(vid.as_str()));
   let arg_exp = cx.arenas.exp.alloc(hir::Exp::Record(vec![]));
   cx.arenas.exp.alloc(hir::Exp::App(vid_exp, arg_exp))
 }
@@ -197,8 +188,8 @@ fn exp_idx_in_seq(cx: &mut Cx, mut exps: Vec<hir::ExpIdx>) -> hir::Exp {
 }
 
 fn if_exp(cx: &mut Cx, cond: hir::ExpIdx, yes: hir::ExpIdx, no: hir::ExpIdx) -> hir::Exp {
-  let yes_pat = cx.arenas.pat.alloc(name_pat("true"));
-  let no_pat = cx.arenas.pat.alloc(name_pat("false"));
+  let yes_pat = cx.arenas.pat.alloc(pat::name("true"));
+  let no_pat = cx.arenas.pat.alloc(pat::name("false"));
   case_exp(cx, cond, vec![(yes_pat, yes), (no_pat, no)])
 }
 
