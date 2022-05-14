@@ -1,3 +1,4 @@
+use crate::common::get_name;
 use crate::util::Cx;
 use crate::{exp, pat, ty};
 use syntax::ast;
@@ -109,14 +110,14 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
         dec
           .dat_binds()
           .filter_map(|dat_bind| {
-            let name = hir::Name::new(dat_bind.name()?.text());
+            let name = get_name(dat_bind.name())?;
             Some(hir::DatBind {
               ty_vars: ty_var_seq(dat_bind.ty_var_seq()),
               name,
               cons: dat_bind
                 .con_binds()
                 .filter_map(|con_bind| {
-                  let name = hir::Name::new(con_bind.name()?.text());
+                  let name = get_name(con_bind.name())?;
                   let ty = con_bind.of_ty().map(|x| ty::get(cx, x.ty()));
                   Some((name, ty))
                 })
@@ -149,7 +150,7 @@ where
   hir::Dec::Ty(
     iter
       .filter_map(|x| {
-        let name = hir::Name::new(x.name()?.text());
+        let name = get_name(x.name())?;
         Some(hir::TyBind {
           ty_vars: ty_var_seq(x.ty_var_seq()),
           name,

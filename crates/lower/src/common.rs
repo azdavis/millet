@@ -13,16 +13,20 @@ pub(crate) fn get_scon(scon: ast::SCon) -> Option<hir::SCon> {
   Some(ret)
 }
 
+pub(crate) fn get_name(n: Option<syntax::SyntaxToken>) -> Option<hir::Name> {
+  n.map(|x| hir::Name::new(x.text()))
+}
+
 pub(crate) fn get_path(p: ast::Path) -> Option<hir::Path> {
   p.name_dots()
-    .map(|x| x.name().map(|x| hir::Name::new(x.text())))
+    .map(|x| get_name(x.name()))
     .collect::<Option<_>>()
     .map(hir::Path::new)
 }
 
 pub(crate) fn get_lab(l: ast::Lab) -> Option<hir::Lab> {
   match l {
-    ast::Lab::NameLab(l) => l.name().map(|x| hir::Lab::Name(hir::Name::new(x.text()))),
+    ast::Lab::NameLab(l) => get_name(l.name()).map(hir::Lab::Name),
     ast::Lab::IntLitLab(l) => l
       .int_lit()
       .and_then(|x| x.text().parse::<usize>().ok())
