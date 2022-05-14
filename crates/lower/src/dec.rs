@@ -104,7 +104,33 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
       hir::Dec::Val(ty_vars, val_binds)
     }
     ast::Dec::TyDec(dec) => ty_binds(cx, dec.ty_binds()),
-    ast::Dec::DatDec(_) => todo!(),
+    ast::Dec::DatDec(dec) => {
+      let mut ret = hir::Dec::Datatype(
+        dec
+          .dat_binds()
+          .filter_map(|dat_bind| {
+            let name = hir::Name::new(dat_bind.name()?.text());
+            Some(hir::DatBind {
+              ty_vars: ty_var_seq(dat_bind.ty_var_seq()),
+              name,
+              cons: dat_bind
+                .con_binds()
+                .filter_map(|con_bind| {
+                  let name = hir::Name::new(con_bind.name()?.text());
+                  let ty = con_bind.of_ty().map(|x| ty::get(cx, x.ty()));
+                  Some((name, ty))
+                })
+                .collect(),
+            })
+          })
+          .collect(),
+      );
+      if let Some(with_ty) = dec.with_type() {
+        let ty_dec = ty_binds(cx, with_ty.ty_binds());
+        ret = hir::Dec::Seq(vec![cx.arenas.dec.alloc(ret), cx.arenas.dec.alloc(ty_dec)]);
+      }
+      ret
+    }
     ast::Dec::DatCopyDec(_) => todo!(),
     ast::Dec::AbstypeDec(_) => todo!(),
     ast::Dec::ExDec(_) => todo!(),
