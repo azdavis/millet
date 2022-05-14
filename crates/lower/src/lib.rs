@@ -4,7 +4,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 // TODO rm
-#![allow(unused)]
+#![allow(dead_code)]
 
 mod common;
 mod dec;
