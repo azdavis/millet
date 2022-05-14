@@ -1,4 +1,4 @@
-use crate::common::get_name;
+use crate::common::{get_name, get_path};
 use crate::util::Cx;
 use crate::{exp, pat, ty};
 use syntax::ast;
@@ -113,8 +113,27 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
       }
       ret
     }
-    ast::Dec::DatCopyDec(_) => todo!(),
-    ast::Dec::AbstypeDec(_) => todo!(),
+    ast::Dec::DatCopyDec(dec) => {
+      let datatype_copy = get_name(dec.name()).and_then(|name| {
+        dec
+          .path()
+          .and_then(get_path)
+          .map(|path| hir::Dec::DatatypeCopy(name, path))
+      });
+      // HACK: relying on the fact that an empty seq has no effect
+      datatype_copy.unwrap_or(hir::Dec::Seq(Vec::new()))
+    }
+    ast::Dec::AbstypeDec(dec) => {
+      let dbs = dat_binds(cx, dec.dat_binds());
+      let ty_dec = dec.with_type().map(|x| ty_binds(cx, x.ty_binds()));
+      let mut d = get(cx, dec.dec_seq());
+      if let Some(ty_dec) = ty_dec {
+        let ty_dec = cx.arenas.dec.alloc(ty_dec);
+        d = cx.arenas.dec.alloc(hir::Dec::Seq(vec![d, ty_dec]));
+      }
+      // TODO: "see note in text"
+      hir::Dec::Abstype(dbs, d)
+    }
     ast::Dec::ExDec(_) => todo!(),
     ast::Dec::LocalDec(_) => todo!(),
     ast::Dec::OpenDec(_) => todo!(),
