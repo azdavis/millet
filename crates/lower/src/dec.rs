@@ -17,13 +17,7 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> Vec<hir::DecIdx> {
 fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
   match dec {
     ast::Dec::ValDec(dec) => {
-      let vars: Vec<_> = dec
-        .ty_var_seq()
-        .into_iter()
-        .flat_map(|x| x.ty_var_args())
-        .filter_map(|x| x.ty_var())
-        .map(|x| hir::TyVar::new(x.text()))
-        .collect();
+      let ty_vars = ty_var_seq(dec.ty_var_seq());
       let binds: Vec<_> = dec
         .val_binds()
         .map(|x| hir::ValBind {
@@ -32,7 +26,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
           exp: exp::get(cx, x.exp()),
         })
         .collect();
-      hir::Dec::Val(vars, binds)
+      hir::Dec::Val(ty_vars, binds)
     }
     ast::Dec::FunDec(_) => todo!(),
     ast::Dec::TyDec(_) => todo!(),
@@ -46,4 +40,13 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
     ast::Dec::InfixrDec(_) => todo!(),
     ast::Dec::NonfixDec(_) => todo!(),
   }
+}
+
+fn ty_var_seq(tvs: Option<ast::TyVarSeq>) -> Vec<hir::TyVar> {
+  tvs
+    .into_iter()
+    .flat_map(|x| x.ty_var_args())
+    .filter_map(|x| x.ty_var())
+    .map(|tok| hir::TyVar::new(tok.text()))
+    .collect()
 }
