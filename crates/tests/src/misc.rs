@@ -576,7 +576,8 @@ fun 'a f () = 3
 fn value_restriction() {
   check(
     r#"
-val id = (fn x => x) (fn x => x)
+    val id = (fn x => x) (fn x => x)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ oh no! *)
 "#,
   );
 }

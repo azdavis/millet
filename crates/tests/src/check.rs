@@ -15,6 +15,7 @@ use syntax::rowan::TextRange;
 ///
 /// ```ignore
 /// check(r#"
+/// (**       vvv message about bar *)
 /// val foo = bar quz
 /// (**           ^^^ message about quz *)
 /// "#);
@@ -33,7 +34,10 @@ pub(crate) fn check(s: &str) {
     .collect();
   assert!(matches!(want.len(), 0 | 1));
   match check_impl_old(s) {
-    Ok(()) => assert!(want.is_empty()),
+    Ok(()) => assert!(
+      want.is_empty(),
+      "expected errors, but no errors were emitted"
+    ),
     Err(err) => {
       let range = Range::from(err.loc);
       let &want_msg = want.get(&get_region(&indices, range)).unwrap();
@@ -44,7 +48,6 @@ pub(crate) fn check(s: &str) {
     let start = usize::try_from(range.start()).unwrap();
     let end = usize::try_from(range.end()).unwrap();
     let r = get_region(&indices, start..end);
-    dbg!(&want, &r);
     let &want_msg = want.get(&r).unwrap();
     assert_eq!(want_msg, msg);
   }
