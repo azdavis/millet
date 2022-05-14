@@ -13,7 +13,7 @@ This project is alpha-quality software.
 
 ## Development
 
-`git clone` the repo, `cd` inside, and run `scripts/setup.sh`.
+`git clone` the repo, `cd` inside, and run `scripts/ci.sh`.
 
 If you're using VSCode, you can try out the VSCode extension:
 
