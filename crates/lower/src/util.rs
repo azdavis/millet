@@ -14,6 +14,7 @@ pub struct Lowered {
 
 #[derive(Debug, Default)]
 pub(crate) struct Cx {
+  /// TODO put this behind mutator methods that require having an ast ptr?
   pub(crate) arenas: Arenas,
   fresh_idx: u32,
 }
