@@ -98,7 +98,19 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
         .collect();
       hir::Dec::Val(ty_vars, val_binds)
     }
-    ast::Dec::TyDec(_) => todo!(),
+    ast::Dec::TyDec(dec) => hir::Dec::Ty(
+      dec
+        .ty_binds()
+        .filter_map(|x| {
+          let name = hir::Name::new(x.name()?.text());
+          Some(hir::TyBind {
+            ty_vars: ty_var_seq(x.ty_var_seq()),
+            name,
+            ty: ty::get(cx, x.ty()),
+          })
+        })
+        .collect(),
+    ),
     ast::Dec::DatDec(_) => todo!(),
     ast::Dec::DatCopyDec(_) => todo!(),
     ast::Dec::AbstypeDec(_) => todo!(),
