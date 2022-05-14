@@ -27,7 +27,7 @@ StrDec =
 | StructureStrDec
 | LocalStrDec
 
-DecStrDec = Dec
+DecStrDec = DecSeq
 StructureStrDec = 'structure' StrBind*
 LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
 StrBind = 'Name' '=' StrExp 'and'?
@@ -108,7 +108,7 @@ SelectorExp = '#' Lab
 TupleExp = '(' ExpArg* ')'
 ListExp = '[' ExpArg* ']'
 SeqExp = '(' exps_in_seq:ExpInSeq* ')'
-LetExp = 'let' Dec 'in' exps_in_seq:ExpInSeq* 'end'
+LetExp = 'let' DecSeq 'in' exps_in_seq:ExpInSeq* 'end'
 AppExp = func:Exp arg:Exp
 InfixExp = lhs:Exp 'Name' rhs:Exp
 TypedExp = Exp ':' Ty
@@ -129,10 +129,11 @@ ExpInSeq = Exp ';'?
 Matcher = MatchRule*
 MatchRule = Pat '=>' Exp '|'?
 
-Dec = DecInSeq*
-DecInSeq = DecOne ';'?
+// actually 'DecSeq' is 'Dec' in the grammar but this makes the naming a little less awkward, maybe.
+DecSeq = DecInSeq*
+DecInSeq = Dec ';'?
 
-DecOne =
+Dec =
   ValDec
 | FunDec
 | TyDec
@@ -151,9 +152,9 @@ FunDec = 'fun' TyVarSeq FunBind*
 TyDec = 'type' TyBind*
 DatDec = 'datatype' DatBind* WithType?
 DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
-AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
+AbstypeDec = 'abstype' DatBind* WithType? 'with' DecSeq 'end'
 ExDec = 'exception' ExBind*
-LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
+LocalDec = 'local' local_dec:DecSeq 'in' in_dec:DecSeq 'end'
 OpenDec = 'open' Path*
 InfixDec = 'infix' 'IntLit'? 'Name'*
 InfixrDec = 'infixr' 'IntLit'? 'Name'*

@@ -8,7 +8,7 @@ use syntax::SyntaxKind as SK;
 pub(crate) fn dec(p: &mut Parser<'_>) -> Exited {
   let ent = p.enter();
   maybe_semi_sep(p, SK::DecInSeq, dec_one);
-  p.exit(ent, SK::Dec)
+  p.exit(ent, SK::DecSeq)
 }
 
 #[must_use]

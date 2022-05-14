@@ -2,11 +2,11 @@ use crate::util::Cx;
 use crate::{exp, pat};
 use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> Vec<hir::DecIdx> {
+pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> Vec<hir::DecIdx> {
   dec
     .into_iter()
     .flat_map(|x| x.dec_in_seqs())
-    .filter_map(|x| x.dec_one())
+    .filter_map(|x| x.dec())
     .map(|dec| {
       let res = get_one(cx, dec);
       cx.arenas.dec.alloc(res)
@@ -14,9 +14,9 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> Vec<hir::DecIdx> {
     .collect()
 }
 
-fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::Dec {
+fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
   match dec {
-    ast::DecOne::ValDec(dec) => {
+    ast::Dec::ValDec(dec) => {
       let vars: Vec<_> = dec
         .ty_var_seq()
         .into_iter()
@@ -34,16 +34,16 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::Dec {
         .collect();
       hir::Dec::Val(vars, binds)
     }
-    ast::DecOne::FunDec(_) => todo!(),
-    ast::DecOne::TyDec(_) => todo!(),
-    ast::DecOne::DatDec(_) => todo!(),
-    ast::DecOne::DatCopyDec(_) => todo!(),
-    ast::DecOne::AbstypeDec(_) => todo!(),
-    ast::DecOne::ExDec(_) => todo!(),
-    ast::DecOne::LocalDec(_) => todo!(),
-    ast::DecOne::OpenDec(_) => todo!(),
-    ast::DecOne::InfixDec(_) => todo!(),
-    ast::DecOne::InfixrDec(_) => todo!(),
-    ast::DecOne::NonfixDec(_) => todo!(),
+    ast::Dec::FunDec(_) => todo!(),
+    ast::Dec::TyDec(_) => todo!(),
+    ast::Dec::DatDec(_) => todo!(),
+    ast::Dec::DatCopyDec(_) => todo!(),
+    ast::Dec::AbstypeDec(_) => todo!(),
+    ast::Dec::ExDec(_) => todo!(),
+    ast::Dec::LocalDec(_) => todo!(),
+    ast::Dec::OpenDec(_) => todo!(),
+    ast::Dec::InfixDec(_) => todo!(),
+    ast::Dec::InfixrDec(_) => todo!(),
+    ast::Dec::NonfixDec(_) => todo!(),
   }
 }
