@@ -26,7 +26,7 @@ pub enum Exp {
   SCon(SCon),
   Path(Path),
   Record(Vec<(Lab, ExpIdx)>),
-  Let(DecIdx, ExpIdx),
+  Let(Vec<DecIdx>, ExpIdx),
   App(ExpIdx, ExpIdx),
   Handle(ExpIdx, Vec<(PatIdx, ExpIdx)>),
   Raise(ExpIdx),

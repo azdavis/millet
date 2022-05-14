@@ -124,7 +124,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
           exp: fn_exp,
         }],
       ));
-      hir::Exp::Let(val, call_unit_fn(cx, &vid))
+      hir::Exp::Let(vec![val], call_unit_fn(cx, &vid))
     }
     ast::Exp::CaseExp(exp) => {
       let head = get(cx, exp.exp());
@@ -193,7 +193,7 @@ fn exp_idx_in_seq(cx: &mut Cx, mut exps: Vec<hir::ExpIdx>) -> hir::Exp {
       })
       .collect(),
   );
-  hir::Exp::Let(cx.arenas.dec.alloc(dec), last)
+  hir::Exp::Let(vec![cx.arenas.dec.alloc(dec)], last)
 }
 
 fn if_exp(cx: &mut Cx, cond: hir::ExpIdx, yes: hir::ExpIdx, no: hir::ExpIdx) -> hir::Exp {
