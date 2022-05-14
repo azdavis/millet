@@ -1,6 +1,6 @@
 use crate::util::Cx;
 use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) {
+pub(crate) fn get(_: &mut Cx, _: ast::TopDec) {
   todo!()
 }
