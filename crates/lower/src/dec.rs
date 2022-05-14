@@ -106,26 +106,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
     }
     ast::Dec::TyDec(dec) => ty_binds(cx, dec.ty_binds()),
     ast::Dec::DatDec(dec) => {
-      let mut ret = hir::Dec::Datatype(
-        dec
-          .dat_binds()
-          .filter_map(|dat_bind| {
-            let name = get_name(dat_bind.name())?;
-            Some(hir::DatBind {
-              ty_vars: ty_var_seq(dat_bind.ty_var_seq()),
-              name,
-              cons: dat_bind
-                .con_binds()
-                .filter_map(|con_bind| {
-                  let name = get_name(con_bind.name())?;
-                  let ty = con_bind.of_ty().map(|x| ty::get(cx, x.ty()));
-                  Some((name, ty))
-                })
-                .collect(),
-            })
-          })
-          .collect(),
-      );
+      let mut ret = hir::Dec::Datatype(dat_binds(cx, dec.dat_binds()));
       if let Some(with_ty) = dec.with_type() {
         let ty_dec = ty_binds(cx, with_ty.ty_binds());
         ret = hir::Dec::Seq(vec![cx.arenas.dec.alloc(ret), cx.arenas.dec.alloc(ty_dec)]);
@@ -141,6 +122,29 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
     ast::Dec::InfixrDec(_) => todo!(),
     ast::Dec::NonfixDec(_) => todo!(),
   }
+}
+
+fn dat_binds<I>(cx: &mut Cx, iter: I) -> Vec<hir::DatBind>
+where
+  I: Iterator<Item = ast::DatBind>,
+{
+  iter
+    .filter_map(|dat_bind| {
+      let name = get_name(dat_bind.name())?;
+      Some(hir::DatBind {
+        ty_vars: ty_var_seq(dat_bind.ty_var_seq()),
+        name,
+        cons: dat_bind
+          .con_binds()
+          .filter_map(|con_bind| {
+            let name = get_name(con_bind.name())?;
+            let ty = con_bind.of_ty().map(|x| ty::get(cx, x.ty()));
+            Some((name, ty))
+          })
+          .collect(),
+      })
+    })
+    .collect()
 }
 
 fn ty_binds<I>(cx: &mut Cx, iter: I) -> hir::Dec
