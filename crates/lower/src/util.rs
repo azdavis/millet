@@ -19,6 +19,10 @@ pub(crate) struct Cx {
 }
 
 impl Cx {
+  /// Returns a `Name` that is both:
+  /// - not writeable in user code, and will thus not collide with any identifiers in user code;
+  /// - distinct from all other `Name`s returned from this thus far, and will thus not collide
+  ///   with any of those.
   pub(crate) fn fresh(&mut self) -> Name {
     let ret = Name::new(self.fresh_idx.to_string());
     self.fresh_idx += 1;
