@@ -103,19 +103,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
         .collect();
       hir::Dec::Val(ty_vars, val_binds)
     }
-    ast::Dec::TyDec(dec) => hir::Dec::Ty(
-      dec
-        .ty_binds()
-        .filter_map(|x| {
-          let name = hir::Name::new(x.name()?.text());
-          Some(hir::TyBind {
-            ty_vars: ty_var_seq(x.ty_var_seq()),
-            name,
-            ty: ty::get(cx, x.ty()),
-          })
-        })
-        .collect(),
-    ),
+    ast::Dec::TyDec(dec) => ty_binds(cx, dec.ty_binds()),
     ast::Dec::DatDec(_) => todo!(),
     ast::Dec::DatCopyDec(_) => todo!(),
     ast::Dec::AbstypeDec(_) => todo!(),
@@ -126,6 +114,24 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
     ast::Dec::InfixrDec(_) => todo!(),
     ast::Dec::NonfixDec(_) => todo!(),
   }
+}
+
+fn ty_binds<I>(cx: &mut Cx, iter: I) -> hir::Dec
+where
+  I: Iterator<Item = ast::TyBind>,
+{
+  hir::Dec::Ty(
+    iter
+      .filter_map(|x| {
+        let name = hir::Name::new(x.name()?.text());
+        Some(hir::TyBind {
+          ty_vars: ty_var_seq(x.ty_var_seq()),
+          name,
+          ty: ty::get(cx, x.ty()),
+        })
+      })
+      .collect(),
+  )
 }
 
 fn ty_var_seq(tvs: Option<ast::TyVarSeq>) -> Vec<hir::TyVar> {
