@@ -148,12 +148,6 @@ impl Name {
   }
 }
 
-impl From<Name> for Path {
-  fn from(name: Name) -> Path {
-    Path::new(vec![name])
-  }
-}
-
 impl fmt::Display for Name {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)

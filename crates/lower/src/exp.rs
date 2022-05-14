@@ -24,16 +24,13 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     ),
     ast::Exp::SelectorExp(exp) => {
       let lab = get_lab(exp.lab()?)?;
-      let name = cx.fresh();
-      let var = hir::Pat::Con(name.clone().into(), None);
-      let var = cx.arenas.pat.alloc(var);
-      let param = hir::Pat::Record {
-        pats: vec![(lab, var)],
+      let fresh = cx.fresh();
+      let pat = cx.arenas.pat.alloc(pat::name(fresh.as_str()));
+      let param = cx.arenas.pat.alloc(hir::Pat::Record {
+        pats: vec![(lab, pat)],
         allows_other: true,
-      };
-      let param = cx.arenas.pat.alloc(param);
-      let body = hir::Exp::Path(name.into());
-      let body = cx.arenas.exp.alloc(body);
+      });
+      let body = cx.arenas.exp.alloc(name(fresh.as_str()));
       hir::Exp::Fn(vec![(param, body)])
     }
     ast::Exp::TupleExp(exp) => tuple(exp.exp_args().map(|e| get(cx, e.exp()))),
