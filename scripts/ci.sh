@@ -33,12 +33,7 @@ info 'building rust'
 cargo build
 
 info 'building vscode extension'
-cd extensions/vscode
-if ! [ -e node_modules ]; then
-  npm install
-  npm build
-fi
-cd ../..
+./scripts/mk-vscode-ext.sh
 
 info 'checking rust formatting'
 cargo fmt -- --check
