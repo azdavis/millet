@@ -1,7 +1,0 @@
-{
-  "recommendations": [
-    "bungcip.better-toml",
-    "esbenp.prettier-vscode",
-    "matklad.rust-analyzer"
-  ]
-}
