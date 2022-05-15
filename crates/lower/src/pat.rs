@@ -31,13 +31,8 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
           }
           ast::PatRowInner::LabPatRow(row) => {
             let name = get_name(row.name())?;
-            let ty = row.ty_annotation().map(|x| ty::get(cx, x.ty()));
-            let mut inner = get(cx, row.as_pat_tail()?.pat());
-            if let Some(ty) = ty {
-              inner = cx.arenas.pat.alloc(hir::Pat::Typed(inner, ty));
-            }
-            let pat = cx.arenas.pat.alloc(hir::Pat::As(name.clone(), inner));
-            Some((hir::Lab::Name(name), pat))
+            let pat = as_pat(cx, name.clone(), row.ty_annotation(), row.as_pat_tail()?);
+            Some((hir::Lab::Name(name), cx.arenas.pat.alloc(pat)))
           }
         })
         .collect();
@@ -83,4 +78,18 @@ where
       .collect(),
     allows_other: false,
   }
+}
+
+fn as_pat(
+  cx: &mut Cx,
+  name: hir::Name,
+  annot: Option<ast::TyAnnotation>,
+  tail: ast::AsPatTail,
+) -> hir::Pat {
+  let ty = annot.map(|x| ty::get(cx, x.ty()));
+  let mut inner = get(cx, tail.pat());
+  if let Some(ty) = ty {
+    inner = cx.arenas.pat.alloc(hir::Pat::Typed(inner, ty));
+  }
+  hir::Pat::As(name, inner)
 }
