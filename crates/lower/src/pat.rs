@@ -43,9 +43,24 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
         .collect();
       hir::Pat::Record { rows, allows_other }
     }
-    ast::Pat::TuplePat(_) => todo!(),
-    ast::Pat::ListPat(_) => todo!(),
-    ast::Pat::InfixPat(_) => todo!(),
+    ast::Pat::TuplePat(pat) => tuple(pat.pat_args().map(|x| get(cx, x.pat()))),
+    ast::Pat::ListPat(pat) => {
+      // need to rev()
+      #[allow(clippy::needless_collect)]
+      let pats: Vec<_> = pat.pat_args().map(|x| get(cx, x.pat())).collect();
+      pats.into_iter().rev().fold(name("nil"), |ac, x| {
+        let cons = hir::Path::one(hir::Name::new("::"));
+        let ac = cx.arenas.pat.alloc(ac);
+        hir::Pat::Con(cons, Some(cx.arenas.pat.alloc(tuple([x, ac]))))
+      })
+    }
+    ast::Pat::InfixPat(pat) => {
+      let func = hir::Path::one(get_name(pat.name())?);
+      let lhs = get(cx, pat.lhs());
+      let rhs = get(cx, pat.rhs());
+      let arg = cx.arenas.pat.alloc(tuple([lhs, rhs]));
+      hir::Pat::Con(func, Some(arg))
+    }
     ast::Pat::TypedPat(_) => todo!(),
     ast::Pat::AsPat(_) => todo!(),
   };
