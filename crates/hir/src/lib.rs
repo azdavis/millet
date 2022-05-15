@@ -122,11 +122,7 @@ pub struct Path(Vec<Name>);
 
 impl Path {
   pub fn try_new(names: Vec<Name>) -> Option<Self> {
-    if names.is_empty() {
-      None
-    } else {
-      Some(Self(names))
-    }
+    (!names.is_empty()).then(|| Self(names))
   }
 
   pub fn one(name: Name) -> Self {
