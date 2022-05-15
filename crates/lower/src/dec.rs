@@ -149,9 +149,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
       hir::Dec::Local(local_dec, in_dec)
     }
     ast::Dec::OpenDec(dec) => hir::Dec::Open(dec.paths().filter_map(get_path).collect()),
-    ast::Dec::InfixDec(_) => todo!(),
-    ast::Dec::InfixrDec(_) => todo!(),
-    ast::Dec::NonfixDec(_) => todo!(),
+    ast::Dec::InfixDec(_) | ast::Dec::InfixrDec(_) | ast::Dec::NonfixDec(_) => return None,
   };
   Some(ret)
 }
