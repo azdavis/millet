@@ -149,8 +149,12 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
         })
         .collect(),
     ),
-    ast::Dec::LocalDec(_) => todo!(),
-    ast::Dec::OpenDec(_) => todo!(),
+    ast::Dec::LocalDec(dec) => {
+      let local_dec = get(cx, dec.local_dec());
+      let in_dec = get(cx, dec.in_dec());
+      hir::Dec::Local(local_dec, in_dec)
+    }
+    ast::Dec::OpenDec(dec) => hir::Dec::Open(dec.paths().filter_map(get_path).collect()),
     ast::Dec::InfixDec(_) => todo!(),
     ast::Dec::InfixrDec(_) => todo!(),
     ast::Dec::NonfixDec(_) => todo!(),
