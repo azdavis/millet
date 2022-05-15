@@ -56,8 +56,17 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       let arg = cx.arenas.pat.alloc(tuple([lhs, rhs]));
       hir::Pat::Con(func, Some(arg))
     }
-    ast::Pat::TypedPat(_) => todo!(),
-    ast::Pat::AsPat(_) => todo!(),
+    ast::Pat::TypedPat(pat) => {
+      let ty = ty::get(cx, pat.ty_annotation().and_then(|x| x.ty()));
+      let inner = get(cx, pat.pat());
+      hir::Pat::Typed(inner, ty)
+    }
+    ast::Pat::AsPat(pat) => as_pat(
+      cx,
+      get_name(pat.name())?,
+      pat.ty_annotation(),
+      pat.as_pat_tail()?,
+    ),
   };
   Some(ret)
 }
