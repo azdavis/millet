@@ -31,7 +31,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
           }
           ast::PatRowInner::LabPatRow(row) => {
             let name = get_name(row.name())?;
-            let pat = as_pat(cx, name.clone(), row.ty_annotation(), row.as_pat_tail()?);
+            let pat = as_(cx, name.clone(), row.ty_annotation(), row.as_pat_tail()?);
             Some((hir::Lab::Name(name), cx.arenas.pat.alloc(pat)))
           }
         })
@@ -61,7 +61,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       let inner = get(cx, pat.pat());
       hir::Pat::Typed(inner, ty)
     }
-    ast::Pat::AsPat(pat) => as_pat(
+    ast::Pat::AsPat(pat) => as_(
       cx,
       get_name(pat.name())?,
       pat.ty_annotation(),
@@ -89,7 +89,7 @@ where
   }
 }
 
-fn as_pat(
+fn as_(
   cx: &mut Cx,
   name: hir::Name,
   annot: Option<ast::TyAnnotation>,

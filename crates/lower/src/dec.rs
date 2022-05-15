@@ -87,7 +87,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
               .map(|x| cx.arenas.exp.alloc(exp::name(x.as_str()))),
           );
           let head = cx.arenas.exp.alloc(head);
-          let case = exp::case_exp(cx, head, arms);
+          let case = exp::case(cx, head, arms);
           hir::ValBind {
             rec: true,
             pat: cx.arenas.pat.alloc(pat),
