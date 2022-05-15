@@ -104,6 +104,10 @@ pub type TyArena = Arena<Ty>;
 #[derive(Debug)]
 pub enum Ty {
   None,
+  Var(TyVar),
+  Record(Vec<(Lab, TyIdx)>),
+  Con(Path, Vec<TyIdx>),
+  Fn(TyIdx, TyIdx),
 }
 
 #[derive(Debug)]
