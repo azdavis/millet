@@ -18,10 +18,8 @@ pub(crate) fn get_name(n: Option<syntax::SyntaxToken>) -> Option<hir::Name> {
 }
 
 pub(crate) fn get_path(p: ast::Path) -> Option<hir::Path> {
-  p.name_dots()
-    .map(|x| get_name(x.name()))
-    .collect::<Option<_>>()
-    .and_then(hir::Path::try_new)
+  let names: Vec<_> = p.name_dots().filter_map(|x| get_name(x.name())).collect();
+  hir::Path::try_new(names)
 }
 
 pub(crate) fn get_lab(l: ast::Lab) -> Option<hir::Lab> {
