@@ -27,7 +27,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let fresh = cx.fresh();
       let pat = cx.arenas.pat.alloc(pat::name(fresh.as_str()));
       let param = cx.arenas.pat.alloc(hir::Pat::Record {
-        pats: vec![(lab, pat)],
+        rows: vec![(lab, pat)],
         allows_other: true,
       });
       let body = cx.arenas.exp.alloc(name(fresh.as_str()));
@@ -105,7 +105,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
         cx.arenas.exp.alloc(fn_body)
       };
       let arg_pat = cx.arenas.pat.alloc(hir::Pat::Record {
-        pats: vec![],
+        rows: vec![],
         allows_other: false,
       });
       let fn_exp = cx.arenas.exp.alloc(hir::Exp::Fn(vec![(arg_pat, fn_body)]));

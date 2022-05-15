@@ -87,7 +87,7 @@ pub enum Pat {
   SCon(SCon),
   Con(Path, Option<PatIdx>),
   Record {
-    pats: Vec<(Lab, PatIdx)>,
+    rows: Vec<(Lab, PatIdx)>,
     allows_other: bool,
   },
   Typed(PatIdx, TyIdx),

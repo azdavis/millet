@@ -30,7 +30,7 @@ where
   I: IntoIterator<Item = hir::PatIdx>,
 {
   hir::Pat::Record {
-    pats: ps
+    rows: ps
       .into_iter()
       .enumerate()
       .map(|(idx, p)| (hir::Lab::Num(idx + 1), p))
