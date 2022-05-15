@@ -91,7 +91,11 @@ pub enum Pat {
     allows_other: bool,
   },
   Typed(PatIdx, TyIdx),
-  As(Name, Option<TyIdx>, PatIdx),
+  /// the Definition defines as-pats as having a built-in optional type annotation. however, it
+  /// appears that lowering `vid : ty as pat -> vid as pat : ty` should be equivalent modulo
+  /// possible slight error message differences. this lets us avoid the optional type annotation in
+  /// the HIR def for as-pats and instead handle it in lowering.
+  As(Name, PatIdx),
 }
 
 pub type TyIdx = Idx<Ty>;
