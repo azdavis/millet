@@ -2,12 +2,12 @@ use crate::util::Cx;
 use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
-  let pat = pat.map_or(hir::Pat::None, |x| get_(cx, x));
+  let pat = pat.and_then(|x| get_(cx, x)).unwrap_or(hir::Pat::None);
   cx.arenas.pat.alloc(pat)
 }
 
-fn get_(_: &mut Cx, pat: ast::Pat) -> hir::Pat {
-  match pat {
+fn get_(_: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
+  let ret = match pat {
     ast::Pat::WildcardPat(_) => hir::Pat::Wild,
     ast::Pat::SConPat(_) => todo!(),
     ast::Pat::ConPat(_) => todo!(),
@@ -17,7 +17,8 @@ fn get_(_: &mut Cx, pat: ast::Pat) -> hir::Pat {
     ast::Pat::InfixPat(_) => todo!(),
     ast::Pat::TypedPat(_) => todo!(),
     ast::Pat::AsPat(_) => todo!(),
-  }
+  };
+  Some(ret)
 }
 
 pub(crate) fn name(s: &str) -> hir::Pat {
