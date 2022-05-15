@@ -134,7 +134,21 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
       // TODO: "see note in text"
       hir::Dec::Abstype(dbs, d)
     }
-    ast::Dec::ExDec(_) => todo!(),
+    ast::Dec::ExDec(dec) => hir::Dec::Exception(
+      dec
+        .ex_binds()
+        .filter_map(|x| {
+          let name = get_name(x.name())?;
+          let ret = match x.ex_bind_inner()? {
+            ast::ExBindInner::OfTy(x) => {
+              hir::ExBind::New(name, x.ty().map(|x| ty::get(cx, Some(x))))
+            }
+            ast::ExBindInner::EqPath(x) => hir::ExBind::Copy(name, get_path(x.path()?)?),
+          };
+          Some(ret)
+        })
+        .collect(),
+    ),
     ast::Dec::LocalDec(_) => todo!(),
     ast::Dec::OpenDec(_) => todo!(),
     ast::Dec::InfixDec(_) => todo!(),
