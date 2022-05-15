@@ -7,10 +7,9 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> hir::DecIdx {
   let mut decs: Vec<_> = dec
     .into_iter()
     .flat_map(|x| x.dec_in_seqs())
-    .filter_map(|x| x.dec())
-    .map(|dec| {
-      let res = get_one(cx, dec);
-      cx.arenas.dec.alloc(res)
+    .filter_map(|x| {
+      let res = get_one(cx, x.dec()?)?;
+      Some(cx.arenas.dec.alloc(res))
     })
     .collect();
   if decs.len() == 1 {
@@ -20,8 +19,8 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> hir::DecIdx {
   }
 }
 
-fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
-  match dec {
+fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
+  let ret = match dec {
     ast::Dec::ValDec(dec) => {
       let ty_vars = ty_var_seq(dec.ty_var_seq());
       let binds: Vec<_> = dec
@@ -120,8 +119,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
           .and_then(get_path)
           .map(|path| hir::Dec::DatatypeCopy(name, path))
       });
-      // HACK: relying on the fact that an empty seq has no effect
-      datatype_copy.unwrap_or(hir::Dec::Seq(Vec::new()))
+      datatype_copy?
     }
     ast::Dec::AbstypeDec(dec) => {
       let dbs = dat_binds(cx, dec.dat_binds());
@@ -158,7 +156,8 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> hir::Dec {
     ast::Dec::InfixDec(_) => todo!(),
     ast::Dec::InfixrDec(_) => todo!(),
     ast::Dec::NonfixDec(_) => todo!(),
-  }
+  };
+  Some(ret)
 }
 
 fn dat_binds<I>(cx: &mut Cx, iter: I) -> Vec<hir::DatBind>
