@@ -21,7 +21,7 @@ fn get_(_: &mut Cx, pat: ast::Pat) -> hir::Pat {
 }
 
 pub(crate) fn name(s: &str) -> hir::Pat {
-  hir::Pat::Con(hir::Path::new(vec![hir::Name::new(s)]), None)
+  hir::Pat::Con(hir::Path::one(hir::Name::new(s)), None)
 }
 
 pub(crate) fn tuple<I>(ps: I) -> hir::Pat

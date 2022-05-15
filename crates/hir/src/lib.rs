@@ -121,9 +121,16 @@ pub enum SCon {
 pub struct Path(Vec<Name>);
 
 impl Path {
-  pub fn new(names: Vec<Name>) -> Self {
-    assert!(!names.is_empty());
-    Self(names)
+  pub fn try_new(names: Vec<Name>) -> Option<Self> {
+    if names.is_empty() {
+      None
+    } else {
+      Some(Self(names))
+    }
+  }
+
+  pub fn one(name: Name) -> Self {
+    Self(vec![name])
   }
 
   pub fn last(&self) -> &Name {

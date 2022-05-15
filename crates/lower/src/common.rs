@@ -21,7 +21,7 @@ pub(crate) fn get_path(p: ast::Path) -> Option<hir::Path> {
   p.name_dots()
     .map(|x| get_name(x.name()))
     .collect::<Option<_>>()
-    .map(hir::Path::new)
+    .and_then(hir::Path::try_new)
 }
 
 pub(crate) fn get_lab(l: ast::Lab) -> Option<hir::Lab> {

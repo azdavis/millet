@@ -131,7 +131,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
 }
 
 pub(crate) fn name(s: &str) -> hir::Exp {
-  hir::Exp::Path(hir::Path::new(vec![hir::Name::new(s)]))
+  hir::Exp::Path(hir::Path::one(hir::Name::new(s)))
 }
 
 pub(crate) fn tuple<I>(es: I) -> hir::Exp
