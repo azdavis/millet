@@ -100,14 +100,11 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
         let call = call_unit_fn(cx, &vid);
         let yes = exp_idx_in_seq(cx, vec![body, call]);
         let yes = cx.arenas.exp.alloc(yes);
-        let no = cx.arenas.exp.alloc(hir::Exp::Record(vec![]));
+        let no = cx.arenas.exp.alloc(tuple([]));
         let fn_body = if_exp(cx, cond, yes, no);
         cx.arenas.exp.alloc(fn_body)
       };
-      let arg_pat = cx.arenas.pat.alloc(hir::Pat::Record {
-        rows: vec![],
-        allows_other: false,
-      });
+      let arg_pat = cx.arenas.pat.alloc(pat::tuple([]));
       let fn_exp = cx.arenas.exp.alloc(hir::Exp::Fn(vec![(arg_pat, fn_body)]));
       let vid_pat = cx.arenas.pat.alloc(pat::name(vid.as_str()));
       let val = cx.arenas.dec.alloc(hir::Dec::Val(
