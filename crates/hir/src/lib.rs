@@ -168,7 +168,7 @@ pub struct TyVar(SmolStr);
 impl TyVar {
   pub fn new(s: &str) -> Self {
     assert!(s.len() >= 2);
-    assert!(s.as_bytes()[0] == b'\'');
+    assert_eq!(s.as_bytes()[0], b'\'');
     Self(s.into())
   }
 
