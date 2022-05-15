@@ -113,13 +113,9 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
       ret
     }
     ast::Dec::DatCopyDec(dec) => {
-      let datatype_copy = get_name(dec.name()).and_then(|name| {
-        dec
-          .path()
-          .and_then(get_path)
-          .map(|path| hir::Dec::DatatypeCopy(name, path))
-      });
-      datatype_copy?
+      let name = get_name(dec.name())?;
+      let path = get_path(dec.path()?)?;
+      hir::Dec::DatatypeCopy(name, path)
     }
     ast::Dec::AbstypeDec(dec) => {
       let dbs = dat_binds(cx, dec.dat_binds());
