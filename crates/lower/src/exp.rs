@@ -37,7 +37,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     ast::Exp::ListExp(exp) => {
       // need to rev()
       #[allow(clippy::needless_collect)]
-      let exps: Vec<_> = exp.exp_args().map(|e| get(cx, e.exp())).collect();
+      let exps: Vec<_> = exp.exp_args().map(|x| get(cx, x.exp())).collect();
       exps.into_iter().rev().fold(name("nil"), |ac, x| {
         let cons = cx.arenas.exp.alloc(name("::"));
         let ac = cx.arenas.exp.alloc(ac);
