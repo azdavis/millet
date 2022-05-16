@@ -19,7 +19,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       let mut allows_other = false;
       let rows: Vec<_> = pat
         .pat_rows()
-        .filter_map(|x| match x.pat_row_inner()? {
+        .filter_map(|row| match row.pat_row_inner()? {
           ast::PatRowInner::RestPatRow(_) => {
             allows_other = true;
             None

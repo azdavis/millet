@@ -12,7 +12,7 @@ fn get_(cx: &mut Cx, ty: ast::Ty) -> Option<hir::Ty> {
     ast::Ty::TyVarTy(ty) => hir::Ty::Var(hir::TyVar::new(ty.ty_var()?.text())),
     ast::Ty::RecordTy(ty) => hir::Ty::Record(
       ty.ty_rows()
-        .filter_map(|x| Some((get_lab(x.lab()?)?, get(cx, x.ty()))))
+        .filter_map(|row| Some((get_lab(row.lab()?)?, get(cx, row.ty()))))
         .collect(),
     ),
     ast::Ty::ConTy(ty) => hir::Ty::Con(

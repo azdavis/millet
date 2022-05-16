@@ -25,10 +25,10 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
       ty_var_seq(dec.ty_var_seq()),
       dec
         .val_binds()
-        .map(|x| hir::ValBind {
-          rec: x.rec_kw().is_some(),
-          pat: pat::get(cx, x.pat()),
-          exp: exp::get(cx, x.exp()),
+        .map(|val_bind| hir::ValBind {
+          rec: val_bind.rec_kw().is_some(),
+          pat: pat::get(cx, val_bind.pat()),
+          exp: exp::get(cx, val_bind.exp()),
         })
         .collect(),
     ),
@@ -60,7 +60,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
                   }
                 }
               }
-              pats.extend(case.pats().map(|x| pat::get(cx, Some(x))));
+              pats.extend(case.pats().map(|pat| pat::get(cx, Some(pat))));
               match num_pats {
                 None => num_pats = Some(pats.len()),
                 Some(num_pats) => {
@@ -78,12 +78,12 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
               (pat, exp)
             })
             .collect();
-          let pat = name.map_or(hir::Pat::None, |x| pat::name(x.text()));
+          let pat = name.map_or(hir::Pat::None, |tok| pat::name(tok.text()));
           let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
           let head = exp::tuple(
             arg_names
               .iter()
-              .map(|x| cx.arenas.exp.alloc(exp::name(x.as_str()))),
+              .map(|name| cx.arenas.exp.alloc(exp::name(name.as_str()))),
           );
           let head = cx.arenas.exp.alloc(head);
           let case = exp::case(cx, head, arms);
@@ -128,9 +128,9 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
     ast::Dec::ExDec(dec) => hir::Dec::Exception(
       dec
         .ex_binds()
-        .filter_map(|x| {
-          let name = get_name(x.name())?;
-          let ret = match x.ex_bind_inner()? {
+        .filter_map(|ex_bind| {
+          let name = get_name(ex_bind.name())?;
+          let ret = match ex_bind.ex_bind_inner()? {
             ast::ExBindInner::OfTy(x) => {
               hir::ExBind::New(name, x.ty().map(|x| ty::get(cx, Some(x))))
             }
@@ -176,12 +176,12 @@ where
 {
   hir::Dec::Ty(
     iter
-      .filter_map(|x| {
-        let name = get_name(x.name())?;
+      .filter_map(|ty_bind| {
+        let name = get_name(ty_bind.name())?;
         Some(hir::TyBind {
-          ty_vars: ty_var_seq(x.ty_var_seq()),
+          ty_vars: ty_var_seq(ty_bind.ty_var_seq()),
           name,
-          ty: ty::get(cx, x.ty()),
+          ty: ty::get(cx, ty_bind.ty()),
         })
       })
       .collect(),
