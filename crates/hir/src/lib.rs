@@ -11,6 +11,10 @@ pub use la_arena;
 
 #[derive(Debug, Default)]
 pub struct Arenas {
+  pub str_dec: StrDecArena,
+  pub str_exp: StrExpArena,
+  pub sig_exp: SigExpArena,
+  pub spec: SpecArena,
   pub exp: ExpArena,
   pub dec: DecArena,
   pub pat: PatArena,
