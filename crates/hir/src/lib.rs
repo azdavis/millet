@@ -85,7 +85,7 @@ pub type SigExpArena = Arena<SigExp>;
 
 #[derive(Debug)]
 pub enum SigExp {
-  Spec(Spec),
+  Spec(SpecIdx),
   Name(Name),
   Where(SigExpIdx, Vec<TyVar>, Path, TyIdx),
 }
