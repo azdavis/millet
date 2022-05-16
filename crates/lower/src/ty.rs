@@ -34,3 +34,12 @@ fn get_(cx: &mut Cx, ty: ast::Ty) -> Option<hir::Ty> {
   };
   Some(ret)
 }
+
+pub(crate) fn var_seq(tvs: Option<ast::TyVarSeq>) -> Vec<hir::TyVar> {
+  tvs
+    .into_iter()
+    .flat_map(|x| x.ty_var_args())
+    .filter_map(|x| x.ty_var())
+    .map(|tok| hir::TyVar::new(tok.text()))
+    .collect()
+}
