@@ -15,11 +15,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     ast::Exp::RecordExp(exp) => hir::Exp::Record(
       exp
         .exp_rows()
-        .filter_map(|x| {
-          let l = get_lab(x.lab()?)?;
-          let e = get(cx, x.exp());
-          Some((l, e))
-        })
+        .filter_map(|row| Some((get_lab(row.lab()?)?, get(cx, row.exp()))))
         .collect(),
     ),
     ast::Exp::SelectorExp(exp) => {
