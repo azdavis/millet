@@ -13,7 +13,10 @@ SigBind = 'Name' '=' SigExp 'and'?
 FunctorDec = 'functor' FunctorBind*
 FunctorBind = functor_name:'Name' '(' param:'Name' ':' SigExp ')' '=' StrExp 'and'?
 
-StrDec =
+StrDec = StrDecInSeq*
+StrDecInSeq = StrDecOne ';'?
+
+StrDecOne =
   DecStrDec
 | StructureStrDec
 | LocalStrDec

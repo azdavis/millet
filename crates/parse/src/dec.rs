@@ -12,7 +12,7 @@ pub(crate) fn dec(p: &mut Parser<'_>) -> Exited {
 }
 
 #[must_use]
-fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
+pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
   let ex = if p.at(SK::ValKw) {
     p.bump();

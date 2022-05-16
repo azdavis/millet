@@ -53,6 +53,7 @@ pub enum StrDec {
   Dec(DecIdx),
   Structure(Vec<StrBind>),
   Local(StrDecIdx, StrDecIdx),
+  Seq(Vec<StrDecIdx>),
 }
 
 #[derive(Debug)]

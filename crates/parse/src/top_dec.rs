@@ -1,4 +1,4 @@
-use crate::dec::dec;
+use crate::dec::dec_one;
 use crate::parser::{Exited, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path};
@@ -34,7 +34,14 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> Exited {
 
 fn str_dec(p: &mut Parser<'_>) -> Exited {
   let ent = p.enter();
-  if p.at(SK::StructureKw) {
+  maybe_semi_sep(p, SK::StrDecInSeq, str_dec_one);
+  p.exit(ent, SK::StrDec)
+}
+
+#[must_use]
+fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
+  let ent = p.enter();
+  let ex = if p.at(SK::StructureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrBind, |p| {
       p.eat(SK::Name);
@@ -50,9 +57,13 @@ fn str_dec(p: &mut Parser<'_>) -> Exited {
     str_dec(p);
     p.eat(SK::EndKw);
     p.exit(ent, SK::LocalStrDec)
+  } else if dec_one(p).is_some() {
+    p.exit(ent, SK::DecStrDec)
   } else {
-    dec(p)
-  }
+    p.abandon(ent);
+    return None;
+  };
+  Some(ex)
 }
 
 fn str_exp(p: &mut Parser<'_>) -> Exited {
