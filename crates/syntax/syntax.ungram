@@ -60,7 +60,7 @@ SpecOne =
 
 ValSpec = 'val' ValDesc*
 TySpec = 'type' TyDesc*
-EqTySpec = 'eqtype' TySpec*
+EqTySpec = 'eqtype' TyDesc*
 DatSpec = 'datatype' DatDesc*
 DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 ExSpec = 'exception' ExDesc*
