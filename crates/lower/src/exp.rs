@@ -50,11 +50,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let exp = exps_in_seq(cx, exp.exps_in_seq());
       hir::Exp::Let(dec, cx.arenas.exp.alloc(exp))
     }
-    ast::Exp::AppExp(exp) => {
-      let func = get(cx, exp.func());
-      let arg = get(cx, exp.arg());
-      hir::Exp::App(func, arg)
-    }
+    ast::Exp::AppExp(exp) => hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
     ast::Exp::InfixExp(exp) => {
       let func = exp.name().map(|x| name(x.text())).unwrap_or(hir::Exp::None);
       let func = cx.arenas.exp.alloc(func);
@@ -63,11 +59,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let arg = cx.arenas.exp.alloc(tuple([lhs, rhs]));
       hir::Exp::App(func, arg)
     }
-    ast::Exp::TypedExp(exp) => {
-      let e = get(cx, exp.exp());
-      let t = ty::get(cx, exp.ty());
-      hir::Exp::Typed(e, t)
-    }
+    ast::Exp::TypedExp(exp) => hir::Exp::Typed(get(cx, exp.exp()), ty::get(cx, exp.ty())),
     ast::Exp::AndalsoExp(exp) => {
       let cond = get(cx, exp.lhs());
       let yes = get(cx, exp.rhs());
@@ -80,11 +72,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let no = get(cx, exp.rhs());
       if_(cx, cond, yes, no)
     }
-    ast::Exp::HandleExp(exp) => {
-      let head = get(cx, exp.exp());
-      let arms = matcher(cx, exp.matcher());
-      hir::Exp::Handle(head, arms)
-    }
+    ast::Exp::HandleExp(exp) => hir::Exp::Handle(get(cx, exp.exp()), matcher(cx, exp.matcher())),
     ast::Exp::RaiseExp(exp) => hir::Exp::Raise(get(cx, exp.exp())),
     ast::Exp::IfExp(exp) => {
       let cond = get(cx, exp.cond());

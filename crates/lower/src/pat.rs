@@ -13,9 +13,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
     ast::Pat::WildcardPat(_) => hir::Pat::Wild,
     ast::Pat::SConPat(pat) => hir::Pat::SCon(get_scon(pat.s_con()?)?),
     ast::Pat::ConPat(pat) => {
-      let path = get_path(pat.path()?)?;
-      let arg = pat.pat().map(|x| get(cx, Some(x)));
-      hir::Pat::Con(path, arg)
+      hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(cx, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {
       let mut allows_other = false;
@@ -56,11 +54,10 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       let arg = cx.arenas.pat.alloc(tuple([lhs, rhs]));
       hir::Pat::Con(func, Some(arg))
     }
-    ast::Pat::TypedPat(pat) => {
-      let ty = ty::get(cx, pat.ty_annotation().and_then(|x| x.ty()));
-      let inner = get(cx, pat.pat());
-      hir::Pat::Typed(inner, ty)
-    }
+    ast::Pat::TypedPat(pat) => hir::Pat::Typed(
+      get(cx, pat.pat()),
+      ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
+    ),
     ast::Pat::AsPat(pat) => as_(
       cx,
       get_name(pat.name())?,

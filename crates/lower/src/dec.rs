@@ -21,18 +21,17 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> hir::DecIdx {
 
 fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
   let ret = match dec {
-    ast::Dec::ValDec(dec) => {
-      let ty_vars = ty_var_seq(dec.ty_var_seq());
-      let binds: Vec<_> = dec
+    ast::Dec::ValDec(dec) => hir::Dec::Val(
+      ty_var_seq(dec.ty_var_seq()),
+      dec
         .val_binds()
         .map(|x| hir::ValBind {
           rec: x.rec_kw().is_some(),
           pat: pat::get(cx, x.pat()),
           exp: exp::get(cx, x.exp()),
         })
-        .collect();
-      hir::Dec::Val(ty_vars, binds)
-    }
+        .collect(),
+    ),
     ast::Dec::FunDec(dec) => {
       let ty_vars = ty_var_seq(dec.ty_var_seq());
       let val_binds: Vec<_> = dec
@@ -113,9 +112,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
       ret
     }
     ast::Dec::DatCopyDec(dec) => {
-      let name = get_name(dec.name())?;
-      let path = get_path(dec.path()?)?;
-      hir::Dec::DatatypeCopy(name, path)
+      hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
     ast::Dec::AbstypeDec(dec) => {
       let dbs = dat_binds(cx, dec.dat_binds());
@@ -143,11 +140,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
         })
         .collect(),
     ),
-    ast::Dec::LocalDec(dec) => {
-      let local_dec = get(cx, dec.local_dec());
-      let in_dec = get(cx, dec.in_dec());
-      hir::Dec::Local(local_dec, in_dec)
-    }
+    ast::Dec::LocalDec(dec) => hir::Dec::Local(get(cx, dec.local_dec()), get(cx, dec.in_dec())),
     ast::Dec::OpenDec(dec) => hir::Dec::Open(dec.paths().filter_map(get_path).collect()),
     ast::Dec::InfixDec(_) | ast::Dec::InfixrDec(_) | ast::Dec::NonfixDec(_) => return None,
   };
