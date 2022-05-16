@@ -7,6 +7,22 @@ TopDec =
 
 StrDecTopDec = StrDec
 
+SigDec = 'signature' SigBind*
+SigBind = 'Name' '=' SigExp 'and'?
+
+FunctorDec = 'functor' FunctorBind*
+FunctorBind = functor_name:'Name' '(' param:'Name' ':' SigExp ')' '=' StrExp 'and'?
+
+StrDec =
+  DecStrDec
+| StructureStrDec
+| LocalStrDec
+
+DecStrDec = DecSeq
+StructureStrDec = 'structure' StrBind*
+LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
+StrBind = 'Name' '=' StrExp 'and'?
+
 StrExp =
   StructStrExp
 | PathStrExp
@@ -22,16 +38,6 @@ LetStrExp = 'let' StrDec 'in' StrExp 'end'
 
 Ascription = ':' | ':>'
 
-StrDec =
-  DecStrDec
-| StructureStrDec
-| LocalStrDec
-
-DecStrDec = DecSeq
-StructureStrDec = 'structure' StrBind*
-LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
-StrBind = 'Name' '=' StrExp 'and'?
-
 SigExp =
   SigSigExp
 | NameSigExp
@@ -40,9 +46,6 @@ SigExp =
 SigSigExp = 'sig' Spec 'end'
 NameSigExp = 'Name'
 WhereSigExp = SigExp 'where' 'type' TyVarSeq Path '=' Ty
-
-SigDec = 'signature' SigBind*
-SigBind = 'Name' '=' SigExp 'and'?
 
 Spec = SpecInSeq*
 SpecInSeq = SpecOne ';'?
@@ -76,9 +79,6 @@ ExDesc = 'Name' OfTy? 'and'?
 StrDesc = 'Name' ':' SigExp 'and'?
 
 PathEq = Path '='?
-
-FunctorDec = 'functor' FunctorBind*
-FunctorBind = functor_name:'Name' '(' param:'Name' ':' SigExp ')' '=' StrExp 'and'?
 
 Exp =
   SConExp
