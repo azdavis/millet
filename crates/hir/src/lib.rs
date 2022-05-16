@@ -68,7 +68,13 @@ pub struct TyBind {
 pub struct DatBind {
   pub ty_vars: Vec<TyVar>,
   pub name: Name,
-  pub cons: Vec<(Name, Option<TyIdx>)>,
+  pub cons: Vec<ConBind>,
+}
+
+#[derive(Debug)]
+pub struct ConBind {
+  pub name: Name,
+  pub ty: Option<TyIdx>,
 }
 
 #[derive(Debug)]

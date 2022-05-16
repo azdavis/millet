@@ -169,7 +169,7 @@ where
           .filter_map(|con_bind| {
             let name = get_name(con_bind.name())?;
             let ty = con_bind.of_ty().map(|x| ty::get(cx, x.ty()));
-            Some((name, ty))
+            Some(hir::ConBind { name, ty })
           })
           .collect(),
       })
