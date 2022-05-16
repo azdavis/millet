@@ -17,6 +17,121 @@ pub struct Arenas {
   pub ty: TyArena,
 }
 
+// modules
+// =======
+
+#[derive(Debug)]
+pub enum TopDec {
+  Str(StrDecIdx),
+  Sig(Vec<SigBind>),
+  Functor(Vec<FunctorBind>),
+}
+
+#[derive(Debug)]
+pub struct SigBind {
+  pub name: Name,
+  pub sig_exp: SigExpIdx,
+}
+
+#[derive(Debug)]
+pub struct FunctorBind {
+  pub name: Name,
+  pub param_name: Name,
+  pub param_sig: SigExpIdx,
+  pub body: StrExpIdx,
+}
+
+pub type StrDecIdx = Idx<StrDec>;
+pub type StrDecArena = Arena<StrDec>;
+
+#[derive(Debug)]
+pub enum StrDec {
+  Dec(DecIdx),
+  Structure(Vec<StrBind>),
+  Local(StrDecIdx, StrDecIdx),
+}
+
+#[derive(Debug)]
+pub struct StrBind {
+  pub name: Name,
+  pub str_exp: StrExpIdx,
+}
+
+pub type StrExpIdx = Idx<StrExp>;
+pub type StrExpArena = Arena<StrExp>;
+
+#[derive(Debug)]
+pub enum StrExp {
+  Struct(StrDecIdx),
+  Path(Path),
+  Ascription(StrExpIdx, Ascription, SigExpIdx),
+  App(Name, StrExpIdx),
+  Let(StrDecIdx, StrExpIdx),
+}
+
+#[derive(Debug)]
+pub enum Ascription {
+  Transparent,
+  Opaque,
+}
+
+pub type SigExpIdx = Idx<SigExp>;
+pub type SigExpArena = Arena<SigExp>;
+
+#[derive(Debug)]
+pub enum SigExp {
+  Spec(Spec),
+  Name(Name),
+  Where(SigExpIdx, Vec<TyVar>, Path, TyIdx),
+}
+
+pub type SpecIdx = Idx<Spec>;
+pub type SpecArena = Arena<Spec>;
+
+#[derive(Debug)]
+pub enum Spec {
+  Val(Vec<ValDesc>),
+  Ty(Vec<TyDesc>),
+  EqTy(Vec<TyDesc>),
+  Datatype(Vec<DatDesc>),
+  DatatypeCopy(Name, Path),
+  Exception(Vec<ExDesc>),
+  Str(Vec<StrDesc>),
+  Include(SigExpIdx),
+  Sharing(SpecIdx, Vec<Path>),
+  Seq(Vec<SpecIdx>),
+}
+
+#[derive(Debug)]
+pub struct ValDesc {
+  pub name: Name,
+  pub ty: TyIdx,
+}
+
+#[derive(Debug)]
+pub struct TyDesc {
+  pub ty_vars: Vec<TyVar>,
+  pub name: Name,
+}
+
+pub type DatDesc = DatBind;
+pub type ConDesc = ConBind;
+
+#[derive(Debug)]
+pub struct ExDesc {
+  pub name: Name,
+  pub ty: Option<TyIdx>,
+}
+
+#[derive(Debug)]
+pub struct StrDesc {
+  pub name: Name,
+  pub sig_exp: SigExpIdx,
+}
+
+// core
+// ====
+
 pub type ExpIdx = Idx<Exp>;
 pub type ExpArena = Arena<Exp>;
 
