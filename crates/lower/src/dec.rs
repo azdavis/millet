@@ -149,7 +149,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
   Some(ret)
 }
 
-fn dat_binds<I>(cx: &mut Cx, iter: I) -> Vec<hir::DatBind>
+pub(crate) fn dat_binds<I>(cx: &mut Cx, iter: I) -> Vec<hir::DatBind>
 where
   I: Iterator<Item = ast::DatBind>,
 {
