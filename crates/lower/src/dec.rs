@@ -155,16 +155,16 @@ where
 {
   iter
     .filter_map(|dat_bind| {
-      let name = get_name(dat_bind.name())?;
       Some(hir::DatBind {
         ty_vars: ty::var_seq(dat_bind.ty_var_seq()),
-        name,
+        name: get_name(dat_bind.name())?,
         cons: dat_bind
           .con_binds()
           .filter_map(|con_bind| {
-            let name = get_name(con_bind.name())?;
-            let ty = con_bind.of_ty().map(|x| ty::get(cx, x.ty()));
-            Some(hir::ConBind { name, ty })
+            Some(hir::ConBind {
+              name: get_name(con_bind.name())?,
+              ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
+            })
           })
           .collect(),
       })
