@@ -67,7 +67,8 @@ SpecOne =
 ValSpec = 'val' ValDesc*
 TySpec = 'type' TyDesc*
 EqTySpec = 'eqtype' TyDesc*
-DatSpec = 'datatype' DatDesc*
+// DatDesc and ConDesc are basically the same as DatBind and ConBind in the grammar.
+DatSpec = 'datatype' DatBind*
 DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 ExSpec = 'exception' ExDesc*
 StrSpec = 'structure' StrDesc*
@@ -76,8 +77,6 @@ SharingSpec = SpecOne 'sharing' 'type' PathEq*
 
 ValDesc = 'Name' ':' Ty 'and'?
 TyDesc = TyVarSeq 'Name' 'and'?
-DatDesc = TyVarSeq 'Name' '=' ConDesc* 'and'?
-ConDesc = 'Name' OfTy? '|'?
 ExDesc = 'Name' OfTy? 'and'?
 StrDesc = 'Name' ':' SigExp 'and'?
 

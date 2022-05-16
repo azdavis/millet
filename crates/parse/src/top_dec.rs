@@ -1,4 +1,4 @@
-use crate::dec::dec_one;
+use crate::dec::{dat_binds, dec_one};
 use crate::parser::{Exited, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path};
@@ -155,15 +155,7 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
   } else if p.at(SK::DatatypeKw) {
     // TODO datatype copy spec
     p.bump();
-    many_sep(p, SK::AndKw, SK::DatDesc, |p| {
-      ty_var_seq(p);
-      p.eat(SK::Name);
-      p.eat(SK::Eq);
-      many_sep(p, SK::Bar, SK::ConDesc, |p| {
-        p.eat(SK::Name);
-        let _ = of_ty(p);
-      });
-    });
+    dat_binds(p, false);
     p.exit(ent, SK::DatSpec)
   } else if p.at(SK::ExceptionKw) {
     p.bump();

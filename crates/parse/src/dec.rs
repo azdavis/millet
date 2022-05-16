@@ -161,19 +161,23 @@ fn names<'a>(p: &mut Parser<'a>) -> Vec<&'a str> {
   ret
 }
 
-fn dat_binds_with_type(p: &mut Parser<'_>) {
+pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
   many_sep(p, SK::AndKw, SK::DatBind, |p| {
     ty_var_seq(p);
     p.eat(SK::Name);
     p.eat(SK::Eq);
     many_sep(p, SK::Bar, SK::ConBind, |p| {
-      if p.at(SK::OpKw) {
+      if allow_op && p.at(SK::OpKw) {
         p.bump();
       }
       p.eat(SK::Name);
       let _ = of_ty(p);
     });
   });
+}
+
+fn dat_binds_with_type(p: &mut Parser<'_>) {
+  dat_binds(p, true);
   if p.at(SK::WithtypeKw) {
     let ent = p.enter();
     p.bump();
