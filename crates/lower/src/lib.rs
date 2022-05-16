@@ -3,8 +3,6 @@
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
-// TODO rm
-#![allow(dead_code)]
 
 mod common;
 mod dec;

@@ -39,7 +39,7 @@ pub struct SigBind {
 
 #[derive(Debug)]
 pub struct FunctorBind {
-  pub name: Name,
+  pub functor_name: Name,
   pub param_name: Name,
   pub param_sig: SigExpIdx,
   pub body: StrExpIdx,
@@ -67,6 +67,7 @@ pub type StrExpArena = Arena<StrExp>;
 
 #[derive(Debug)]
 pub enum StrExp {
+  None,
   Struct(StrDecIdx),
   Path(Path),
   Ascription(StrExpIdx, Ascription, SigExpIdx),
@@ -85,6 +86,7 @@ pub type SigExpArena = Arena<SigExp>;
 
 #[derive(Debug)]
 pub enum SigExp {
+  None,
   Spec(SpecIdx),
   Name(Name),
   Where(SigExpIdx, Vec<TyVar>, Path, TyIdx),

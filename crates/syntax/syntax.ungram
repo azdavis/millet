@@ -11,7 +11,7 @@ SigDec = 'signature' SigBind*
 SigBind = 'Name' '=' SigExp 'and'?
 
 FunctorDec = 'functor' FunctorBind*
-FunctorBind = functor_name:'Name' '(' param:'Name' ':' SigExp ')' '=' StrExp 'and'?
+FunctorBind = functor_name:'Name' '(' param:'Name' ':' param_sig:SigExp ')' '=' body:StrExp 'and'?
 
 StrDec = StrDecInSeq*
 StrDecInSeq = StrDecOne ';'?
