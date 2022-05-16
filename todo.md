@@ -40,6 +40,10 @@ listed in approximate order they should be addressed in
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info
+- make it performant
+  - only lower the parts of the syntax tree that changed?
+  - only re-check those parts?
+  - salsa-rs?
 - impl more tools
   - auto formatter
   - style linter
