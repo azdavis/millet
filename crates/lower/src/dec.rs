@@ -3,12 +3,12 @@ use crate::util::Cx;
 use crate::{exp, pat, ty};
 use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> hir::DecIdx {
+pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
   let mut decs: Vec<_> = dec
     .into_iter()
     .flat_map(|x| x.dec_in_seqs())
     .filter_map(|x| {
-      let res = get_one(cx, x.dec()?)?;
+      let res = get_one(cx, x.dec_one()?)?;
       Some(cx.arenas.dec.alloc(res))
     })
     .collect();
@@ -19,9 +19,9 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::DecSeq>) -> hir::DecIdx {
   }
 }
 
-fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
+fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
   let ret = match dec {
-    ast::Dec::ValDec(dec) => hir::Dec::Val(
+    ast::DecOne::ValDec(dec) => hir::Dec::Val(
       ty_var_seq(dec.ty_var_seq()),
       dec
         .val_binds()
@@ -32,7 +32,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
         })
         .collect(),
     ),
-    ast::Dec::FunDec(dec) => {
+    ast::DecOne::FunDec(dec) => {
       let ty_vars = ty_var_seq(dec.ty_var_seq());
       let val_binds: Vec<_> = dec
         .fun_binds()
@@ -102,8 +102,8 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
         .collect();
       hir::Dec::Val(ty_vars, val_binds)
     }
-    ast::Dec::TyDec(dec) => ty_binds(cx, dec.ty_binds()),
-    ast::Dec::DatDec(dec) => {
+    ast::DecOne::TyDec(dec) => ty_binds(cx, dec.ty_binds()),
+    ast::DecOne::DatDec(dec) => {
       let mut ret = hir::Dec::Datatype(dat_binds(cx, dec.dat_binds()));
       if let Some(with_ty) = dec.with_type() {
         let ty_dec = ty_binds(cx, with_ty.ty_binds());
@@ -111,13 +111,13 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
       }
       ret
     }
-    ast::Dec::DatCopyDec(dec) => {
+    ast::DecOne::DatCopyDec(dec) => {
       hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
-    ast::Dec::AbstypeDec(dec) => {
+    ast::DecOne::AbstypeDec(dec) => {
       let dbs = dat_binds(cx, dec.dat_binds());
       let ty_dec = dec.with_type().map(|x| ty_binds(cx, x.ty_binds()));
-      let mut d = get(cx, dec.dec_seq());
+      let mut d = get(cx, dec.dec());
       if let Some(ty_dec) = ty_dec {
         let ty_dec = cx.arenas.dec.alloc(ty_dec);
         d = cx.arenas.dec.alloc(hir::Dec::Seq(vec![d, ty_dec]));
@@ -125,7 +125,7 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
       // TODO: "see note in text"
       hir::Dec::Abstype(dbs, d)
     }
-    ast::Dec::ExDec(dec) => hir::Dec::Exception(
+    ast::DecOne::ExDec(dec) => hir::Dec::Exception(
       dec
         .ex_binds()
         .filter_map(|ex_bind| {
@@ -140,9 +140,11 @@ fn get_one(cx: &mut Cx, dec: ast::Dec) -> Option<hir::Dec> {
         })
         .collect(),
     ),
-    ast::Dec::LocalDec(dec) => hir::Dec::Local(get(cx, dec.local_dec()), get(cx, dec.in_dec())),
-    ast::Dec::OpenDec(dec) => hir::Dec::Open(dec.paths().filter_map(get_path).collect()),
-    ast::Dec::InfixDec(_) | ast::Dec::InfixrDec(_) | ast::Dec::NonfixDec(_) => return None,
+    ast::DecOne::LocalDec(dec) => hir::Dec::Local(get(cx, dec.local_dec()), get(cx, dec.in_dec())),
+    ast::DecOne::OpenDec(dec) => hir::Dec::Open(dec.paths().filter_map(get_path).collect()),
+    ast::DecOne::InfixDec(_) | ast::DecOne::InfixrDec(_) | ast::DecOne::NonfixDec(_) => {
+      return None
+    }
   };
   Some(ret)
 }

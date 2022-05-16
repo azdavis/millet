@@ -42,7 +42,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     }
     ast::Exp::SeqExp(exp) => exps_in_seq(cx, exp.exps_in_seq()),
     ast::Exp::LetExp(exp) => {
-      let dec = dec::get(cx, exp.dec_seq());
+      let dec = dec::get(cx, exp.dec());
       let exp = exps_in_seq(cx, exp.exps_in_seq());
       hir::Exp::Let(dec, cx.arenas.exp.alloc(exp))
     }
