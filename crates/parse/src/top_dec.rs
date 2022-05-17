@@ -98,13 +98,23 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.abandon(ent);
     return None;
   };
-  while p.at(SK::Colon) || p.at(SK::ColonGt) {
+  while ascription(p) {
     let ent = p.precede(ex);
-    p.bump();
-    must(p, sig_exp);
+    ascription_tail(p);
     ex = p.exit(ent, SK::AscriptionStrExp);
   }
   Some(ex)
+}
+
+fn ascription(p: &mut Parser<'_>) -> bool {
+  p.at(SK::Colon) || p.at(SK::ColonGt)
+}
+
+fn ascription_tail(p: &mut Parser<'_>) -> Exited {
+  let ent = p.enter();
+  p.bump();
+  must(p, sig_exp);
+  p.exit(ent, SK::AscriptionTail)
 }
 
 #[must_use]
