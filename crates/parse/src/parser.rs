@@ -93,6 +93,29 @@ impl<'input> Parser<'input> {
     ret
   }
 
+  /// Save the state of the parser.
+  ///
+  /// Use it with `maybe_discard` to implement unbounded backtracking.
+  ///
+  /// Do not `exit` any `Entered` or `precede` any `Exited` that were created before the save,
+  /// between the save and the `maybe_discard`. Or do anything else that modifies any events before
+  /// the save. Otherwise the parser won't fully recover to its original state before the save.
+  ///
+  /// It's intended to be used like this:
+  ///
+  /// ```ignore
+  /// let save = p.save();
+  /// // maybe make some new `Entered` and `Exited`
+  /// // maybe eat some tokens
+  /// // maybe encounter some errors
+  /// foo(p);
+  /// if p.maybe_discard(save) {
+  ///   // foo parsed without errors
+  /// } else {
+  ///   // foo had errors, so it failed to parse.
+  ///   // the parser is reset to the state at the save
+  /// }
+  /// ```
   pub(crate) fn save(&mut self) -> Save {
     Save {
       idx: self.idx,
