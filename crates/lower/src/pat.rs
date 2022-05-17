@@ -72,6 +72,7 @@ pub(crate) fn name(s: &str) -> hir::Pat {
   hir::Pat::Con(hir::Path::one(hir::Name::new(s)), None)
 }
 
+/// TODO do not make 1-tuples
 pub(crate) fn tuple<I>(ps: I) -> hir::Pat
 where
   I: IntoIterator<Item = hir::PatIdx>,

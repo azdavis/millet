@@ -118,6 +118,7 @@ pub(crate) fn name(s: &str) -> hir::Exp {
   hir::Exp::Path(hir::Path::one(hir::Name::new(s)))
 }
 
+/// TODO do not make 1-tuples
 pub(crate) fn tuple<I>(es: I) -> hir::Exp
 where
   I: IntoIterator<Item = hir::ExpIdx>,
