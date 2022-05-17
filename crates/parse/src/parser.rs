@@ -28,7 +28,6 @@ use syntax::{SyntaxKind as SK, SyntaxNode};
 pub(crate) struct Parser<'input> {
   tokens: &'input [Token<'input, SK>],
   idx: usize,
-  expected: Vec<SK>,
   events: Vec<Option<Event>>,
   ops: FxHashMap<&'input str, OpInfo>,
 }
@@ -52,7 +51,6 @@ impl<'input> Parser<'input> {
     Self {
       tokens,
       idx: 0,
-      expected: Vec::new(),
       events: Vec::new(),
       ops,
     }
@@ -120,7 +118,6 @@ impl<'input> Parser<'input> {
     Save {
       idx: self.idx,
       events_len: self.events.len(),
-      expected: self.expected.clone(),
     }
   }
 
@@ -134,7 +131,6 @@ impl<'input> Parser<'input> {
     if error_since {
       self.idx = save.idx;
       self.events.truncate(save.events_len);
-      self.expected = save.expected;
     }
     !error_since
   }
@@ -181,22 +177,17 @@ impl<'input> Parser<'input> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
     self.idx += 1;
-    self.expected.clear();
     ret
   }
 
   pub(crate) fn error(&mut self) {
-    let expected = std::mem::take(&mut self.expected);
     if self.peek().is_some() {
       self.bump();
     }
-    self
-      .events
-      .push(Some(Event::Error(ErrorKind::Expected(expected))));
+    self.events.push(Some(Event::Error(ErrorKind::Expected)));
   }
 
   pub(crate) fn error_with(&mut self, kind: ErrorKind) {
-    self.expected.clear();
     if self.peek().is_some() {
       self.bump();
     }
@@ -266,7 +257,6 @@ impl<'input> Parser<'input> {
   }
 
   pub(crate) fn at(&mut self, kind: SK) -> bool {
-    self.expected.push(kind);
     self.peek().map_or(false, |tok| tok.kind == kind)
   }
 
@@ -299,7 +289,6 @@ pub(crate) struct Exited {
 pub(crate) struct Save {
   idx: usize,
   events_len: usize,
-  expected: Vec<SK>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -383,7 +372,7 @@ pub struct Error {
 /// A kind of error.
 #[derive(Debug)]
 pub enum ErrorKind {
-  Expected(Vec<SK>),
+  Expected,
   NotInfix,
   SameFixityDiffAssoc,
   InfixWithoutOp,
@@ -393,17 +382,7 @@ pub enum ErrorKind {
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::Expected(kinds) => {
-        let mut iter = kinds.iter();
-        write!(f, "expected any of ")?;
-        if let Some(kind) = iter.next() {
-          write!(f, "{}", kind.token_desc().unwrap_or("<non-token>"))?;
-        }
-        for kind in iter {
-          write!(f, ", {}", kind.token_desc().unwrap_or("<non-token>"))?;
-        }
-        Ok(())
-      }
+      Self::Expected => write!(f, "expected something else"),
       Self::NotInfix => write!(f, "not infix"),
       Self::SameFixityDiffAssoc => write!(
         f,
