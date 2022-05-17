@@ -29,6 +29,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let body = cx.arenas.exp.alloc(name(fresh.as_str()));
       hir::Exp::Fn(vec![(param, body)])
     }
+    ast::Exp::ParenExp(exp) => get_(cx, exp.exp()?)?,
     ast::Exp::TupleExp(exp) => tuple(exp.exp_args().map(|e| get(cx, e.exp()))),
     ast::Exp::ListExp(exp) => {
       // need to rev()
@@ -118,17 +119,17 @@ pub(crate) fn name(s: &str) -> hir::Exp {
   hir::Exp::Path(hir::Path::one(hir::Name::new(s)))
 }
 
-/// TODO do not make 1-tuples
 pub(crate) fn tuple<I>(es: I) -> hir::Exp
 where
   I: IntoIterator<Item = hir::ExpIdx>,
 {
-  hir::Exp::Record(
-    es.into_iter()
-      .enumerate()
-      .map(|(idx, e)| (hir::Lab::Num(idx + 1), e))
-      .collect(),
-  )
+  let rows: Vec<_> = es
+    .into_iter()
+    .enumerate()
+    .map(|(idx, e)| (hir::Lab::Num(idx + 1), e))
+    .collect();
+  assert_ne!(rows.len(), 1);
+  hir::Exp::Record(rows)
 }
 
 fn call_unit_fn(cx: &mut Cx, vid: &hir::Name) -> hir::ExpIdx {

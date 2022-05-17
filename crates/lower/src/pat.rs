@@ -36,6 +36,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
         .collect();
       hir::Pat::Record { rows, allows_other }
     }
+    ast::Pat::ParenPat(pat) => get_(cx, pat.pat()?)?,
     ast::Pat::TuplePat(pat) => tuple(pat.pat_args().map(|x| get(cx, x.pat()))),
     ast::Pat::ListPat(pat) => {
       // need to rev()
@@ -72,17 +73,18 @@ pub(crate) fn name(s: &str) -> hir::Pat {
   hir::Pat::Con(hir::Path::one(hir::Name::new(s)), None)
 }
 
-/// TODO do not make 1-tuples
 pub(crate) fn tuple<I>(ps: I) -> hir::Pat
 where
   I: IntoIterator<Item = hir::PatIdx>,
 {
+  let rows: Vec<_> = ps
+    .into_iter()
+    .enumerate()
+    .map(|(idx, p)| (hir::Lab::Num(idx + 1), p))
+    .collect();
+  assert_ne!(rows.len(), 1);
   hir::Pat::Record {
-    rows: ps
-      .into_iter()
-      .enumerate()
-      .map(|(idx, p)| (hir::Lab::Num(idx + 1), p))
-      .collect(),
+    rows,
     allows_other: false,
   }
 }

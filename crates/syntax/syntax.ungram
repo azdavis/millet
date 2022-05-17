@@ -86,6 +86,7 @@ Exp =
 | PathExp
 | RecordExp
 | SelectorExp
+| ParenExp
 | TupleExp
 | ListExp
 | SeqExp
@@ -106,6 +107,7 @@ SConExp = SCon
 PathExp = 'op'? Path
 RecordExp = '{' ExpRow* '}'
 SelectorExp = '#' Lab
+ParenExp = '(' Exp ')'
 TupleExp = '(' ExpArg* ')'
 ListExp = '[' ExpArg* ']'
 SeqExp = '(' exps_in_seq:ExpInSeq* ')'
@@ -181,6 +183,7 @@ Pat =
 | SConPat
 | ConPat
 | RecordPat
+| ParenPat
 | TuplePat
 | ListPat
 | InfixPat
@@ -191,6 +194,7 @@ WildcardPat = '_'
 SConPat = SCon
 ConPat = 'op'? Path Pat?
 RecordPat = '{' PatRow* '}'
+ParenPat = '(' Pat ')'
 TuplePat = '(' PatArg* ')'
 ListPat = '[' PatArg* ']'
 InfixPat = lhs:Pat 'Name' rhs:Pat

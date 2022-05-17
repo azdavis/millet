@@ -107,8 +107,8 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::RecordPat)
   } else if p.at(SK::LRound) {
     p.bump();
-    comma_sep(p, SK::RRound, SK::PatArg, |p| must(p, pat));
-    p.exit(ent, SK::TuplePat)
+    let one = comma_sep(p, SK::RRound, SK::PatArg, |p| must(p, pat));
+    p.exit(ent, if one { SK::ParenPat } else { SK::TuplePat })
   } else if p.at(SK::LSquare) {
     p.bump();
     comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat));

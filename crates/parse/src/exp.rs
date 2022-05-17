@@ -134,10 +134,10 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::SelectorExp)
   } else if p.at(SK::LRound) {
     p.bump();
-    comma_sep(p, SK::RRound, SK::ExpArg, |p| {
+    let one = comma_sep(p, SK::RRound, SK::ExpArg, |p| {
       exp(p);
     });
-    p.exit(ent, SK::TupleExp)
+    p.exit(ent, if one { SK::ParenExp } else { SK::TupleExp })
   } else if p.at(SK::LSquare) {
     p.bump();
     comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
