@@ -1,11 +1,9 @@
 Root = TopDec*
 
 TopDec =
-  StrDecTopDec
+  StrDec
 | SigDec
 | FunctorDec
-
-StrDecTopDec = StrDec
 
 SigDec = 'signature' SigBind*
 SigBind = 'Name' '=' SigExp 'and'?
