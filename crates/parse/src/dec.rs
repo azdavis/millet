@@ -33,15 +33,15 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
         let ent = p.enter();
         let save = p.save();
-        prefix_fun_bind_case_head_inner(p);
+        infix_fun_bind_case_head_inner(p);
         if p.maybe_discard(save) {
           p.exit(ent, SK::InfixFunBindCaseHead);
-          // in the case where the () are dropped, there are no other at_pats allowed.
-          // `ty_annotation` or `=` must immediately follow.
+          // this is the case where the () around the infix fun bind case head are dropped. thus,
+          // there are no other at_pats allowed. `ty_annotation` or `=` must immediately follow.
         } else {
           if p.at(SK::LRound) {
             p.bump();
-            prefix_fun_bind_case_head_inner(p);
+            infix_fun_bind_case_head_inner(p);
             p.eat(SK::RRound);
           } else {
             let saw_op = p.at(SK::OpKw);
@@ -195,7 +195,7 @@ fn ty_binds(p: &mut Parser<'_>) {
   });
 }
 
-fn prefix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
+fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
   must(p, at_pat);
   if let Some(name) = p.eat(SK::Name) {
     if !p.contains_op(name.text) {
