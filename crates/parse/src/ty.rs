@@ -95,7 +95,7 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> Exited {
     let ent = p.enter();
     p.bump();
     p.exit(ent, SK::TyVarArg);
-  } else if p.at(SK::LRound) && p.peek_n(1).map_or(false, |tok| tok.kind == SK::TyVar) {
+  } else if p.at(SK::LRound) && p.at_n(1, SK::TyVar) {
     p.bump();
     comma_sep(p, SK::RRound, SK::TyVarArg, |p| {
       p.eat(SK::TyVar);

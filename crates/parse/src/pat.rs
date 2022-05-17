@@ -23,7 +23,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     return Some(p.exit(ent, SK::AsPat));
   }
   // then try ConPat with arg
-  if p.at(SK::OpKw) && p.peek_n(1).map_or(false, |tok| tok.kind == SK::Name) {
+  if p.at(SK::OpKw) && p.at_n(1, SK::Name) {
     p.bump();
   }
   let mut ex = if path(p).is_some() {
@@ -92,7 +92,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
       if p.at(SK::DotDotDot) {
         p.bump();
         p.exit(ent, SK::RestPatRow);
-      } else if p.peek_n(1).map_or(false, |tok| tok.kind == SK::Eq) {
+      } else if p.at_n(1, SK::Eq) {
         must(p, lab);
         p.eat(SK::Eq);
         must(p, pat);

@@ -257,7 +257,11 @@ impl<'input> Parser<'input> {
   }
 
   pub(crate) fn at(&mut self, kind: SK) -> bool {
-    self.peek().map_or(false, |tok| tok.kind == kind)
+    self.at_n(0, kind)
+  }
+
+  pub(crate) fn at_n(&mut self, n: usize, kind: SK) -> bool {
+    self.peek_n(n).map_or(false, |tok| tok.kind == kind)
   }
 
   pub(crate) fn eat(&mut self, kind: SK) -> Option<Token<'input, SK>> {
