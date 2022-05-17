@@ -22,7 +22,7 @@ StrDecOne =
 DecStrDec = Dec
 StructureStrDec = 'structure' StrBind*
 LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
-StrBind = 'Name' '=' StrExp 'and'?
+StrBind = 'Name' AscriptionTail? '=' StrExp 'and'?
 
 StrExp =
   StructStrExp

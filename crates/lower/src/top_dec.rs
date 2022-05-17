@@ -57,9 +57,15 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDec {
       str_dec
         .str_binds()
         .filter_map(|str_bind| {
+          let mut str_exp = get_str_exp(cx, str_bind.str_exp());
+          if let Some(tail) = str_bind.ascription_tail() {
+            let (kind, sig_exp) = ascription_tail(cx, Some(tail));
+            let asc = hir::StrExp::Ascription(str_exp, kind, sig_exp);
+            str_exp = cx.arenas.str_exp.alloc(asc);
+          }
           Some(hir::StrBind {
             name: get_name(str_bind.name())?,
-            str_exp: get_str_exp(cx, str_bind.str_exp()),
+            str_exp,
           })
         })
         .collect(),

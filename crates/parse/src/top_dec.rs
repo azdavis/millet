@@ -49,6 +49,9 @@ fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrBind, |p| {
       p.eat(SK::Name);
+      if ascription(p) {
+        ascription_tail(p);
+      }
       p.eat(SK::Eq);
       must(p, str_exp);
     });
