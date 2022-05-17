@@ -14,16 +14,19 @@ where
 /// - always uses `;` as the separator
 /// - allows the separator to not be present
 /// - in return, `f` must say whether it parsed anything
-pub(crate) fn maybe_semi_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, mut f: F)
+/// returns whether it advanced at all.
+pub(crate) fn maybe_semi_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, mut f: F) -> bool
 where
   F: FnMut(&mut Parser<'a>) -> Option<Exited>,
 {
+  let mut advanced = false;
   loop {
     let ent = p.enter();
     if f(p).is_none() {
       p.abandon(ent);
-      break;
+      return advanced;
     }
+    advanced = true;
     if p.at(SK::Semicolon) {
       p.bump();
     }

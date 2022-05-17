@@ -4,7 +4,9 @@ use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn top_dec(p: &mut Parser<'_>) -> Exited {
+#[must_use]
+/// returns whether this advanced.
+pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
   let ent = p.enter();
   if p.at(SK::FunctorKw) {
     p.bump();
@@ -18,7 +20,8 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> Exited {
       p.eat(SK::Eq);
       must(p, str_exp);
     });
-    p.exit(ent, SK::FunctorDec)
+    p.exit(ent, SK::FunctorDec);
+    true
   } else if p.at(SK::SignatureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::SigBind, |p| {
@@ -26,20 +29,22 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> Exited {
       p.eat(SK::Eq);
       must(p, sig_exp);
     });
-    p.exit(ent, SK::SigDec)
+    p.exit(ent, SK::SigDec);
+    true
   } else {
     str_dec_(p, ent)
   }
 }
 
-fn str_dec(p: &mut Parser<'_>) -> Exited {
+fn str_dec(p: &mut Parser<'_>) -> bool {
   let ent = p.enter();
   str_dec_(p, ent)
 }
 
-fn str_dec_(p: &mut Parser<'_>, ent: Entered) -> Exited {
-  maybe_semi_sep(p, SK::StrDecInSeq, str_dec_one);
-  p.exit(ent, SK::StrDec)
+fn str_dec_(p: &mut Parser<'_>, ent: Entered) -> bool {
+  let ret = maybe_semi_sep(p, SK::StrDecInSeq, str_dec_one);
+  p.exit(ent, SK::StrDec);
+  ret
 }
 
 #[must_use]

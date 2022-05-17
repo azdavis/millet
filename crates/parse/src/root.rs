@@ -5,7 +5,10 @@ use syntax::SyntaxKind as SK;
 pub(crate) fn root(p: &mut Parser<'_>) {
   let entered = p.enter();
   while p.peek().is_some() {
-    top_dec(p);
+    if !top_dec(p) {
+      // avoid infinite loop
+      p.bump();
+    }
   }
   p.exit(entered, SK::Root);
 }
