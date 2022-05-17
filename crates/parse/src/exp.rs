@@ -185,7 +185,8 @@ fn should_break(p: &mut Parser<'_>, prec: ExpPrec, min_prec: ExpPrec) -> bool {
     (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => {
       op_info_should_break(p, prec, Some(min_prec))
     }
-    (ExpPrec::Andalso, ExpPrec::Andalso) | (ExpPrec::Orelse, _) => true,
-    (ExpPrec::Infix(_), _) | (ExpPrec::Andalso, _) | (ExpPrec::Min, _) => false,
+    (ExpPrec::Andalso, ExpPrec::Andalso) | (ExpPrec::Orelse, ExpPrec::Orelse) => true,
+    (ExpPrec::Infix(_) | ExpPrec::Andalso | ExpPrec::Orelse, _) => false,
+    (ExpPrec::Min, _) => unreachable!(),
   }
 }
