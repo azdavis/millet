@@ -16,7 +16,7 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> Exited {
       must(p, sig_exp);
       p.eat(SK::RRound);
       p.eat(SK::Eq);
-      str_exp(p);
+      must(p, str_exp);
     });
     p.exit(ent, SK::FunctorDec)
   } else if p.at(SK::SignatureKw) {
@@ -50,7 +50,7 @@ fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
     many_sep(p, SK::AndKw, SK::StrBind, |p| {
       p.eat(SK::Name);
       p.eat(SK::Eq);
-      str_exp(p);
+      must(p, str_exp);
     });
     p.exit(ent, SK::StructureStrDec)
   } else if p.at(SK::LocalKw) {
@@ -70,7 +70,8 @@ fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
   Some(ex)
 }
 
-fn str_exp(p: &mut Parser<'_>) -> Exited {
+#[must_use]
+fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
   let mut ex = if p.at(SK::StructKw) {
     p.bump();
@@ -81,18 +82,21 @@ fn str_exp(p: &mut Parser<'_>) -> Exited {
     p.bump();
     str_dec(p);
     p.eat(SK::InKw);
-    str_exp(p);
+    must(p, str_exp);
     p.eat(SK::EndKw);
     p.exit(ent, SK::LetStrExp)
   } else if p.at(SK::Name) && p.peek_n(1).map_or(false, |x| x.kind == SK::Dot) {
     must(p, path);
     p.exit(ent, SK::PathStrExp)
-  } else {
-    p.eat(SK::Name);
+  } else if p.at(SK::Name) {
+    p.bump();
     p.eat(SK::LRound);
-    str_exp(p);
+    must(p, str_exp);
     p.eat(SK::RRound);
     p.exit(ent, SK::AppStrExp)
+  } else {
+    p.abandon(ent);
+    return None;
   };
   while p.at(SK::Colon) || p.at(SK::ColonGt) {
     let ent = p.precede(ex);
@@ -100,7 +104,7 @@ fn str_exp(p: &mut Parser<'_>) -> Exited {
     must(p, sig_exp);
     ex = p.exit(ent, SK::AscriptionStrExp);
   }
-  ex
+  Some(ex)
 }
 
 #[must_use]
