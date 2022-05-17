@@ -85,6 +85,11 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         p.bump();
         must(p, |p| exp_prec(p, ExpPrec::Orelse));
         p.exit(ent, SK::OrelseExp)
+      } else if p.at(SK::HandleKw) {
+        let ent = p.precede(ex);
+        p.bump();
+        matcher(p);
+        p.exit(ent, SK::HandleExp)
       } else if at_exp_hd(p) {
         let ent = p.precede(ex);
         must(p, at_exp);
