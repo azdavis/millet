@@ -113,6 +113,7 @@ fn ascription(p: &mut Parser<'_>) -> bool {
   p.at(SK::Colon) || p.at(SK::ColonGt)
 }
 
+/// should have just gotten `true` from [`ascription`]
 fn ascription_tail(p: &mut Parser<'_>) -> Exited {
   let ent = p.enter();
   p.bump();
