@@ -1,5 +1,5 @@
 use crate::dec::{dat_binds, dec_one};
-use crate::parser::{Exited, Parser};
+use crate::parser::{Entered, Exited, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path};
 use syntax::SyntaxKind as SK;
@@ -28,12 +28,16 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> Exited {
     });
     p.exit(ent, SK::SigDec)
   } else {
-    str_dec(p)
+    str_dec_(p, ent)
   }
 }
 
 fn str_dec(p: &mut Parser<'_>) -> Exited {
   let ent = p.enter();
+  str_dec_(p, ent)
+}
+
+fn str_dec_(p: &mut Parser<'_>, ent: Entered) -> Exited {
   maybe_semi_sep(p, SK::StrDecInSeq, str_dec_one);
   p.exit(ent, SK::StrDec)
 }
