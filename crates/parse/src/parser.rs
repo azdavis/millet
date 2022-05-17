@@ -382,7 +382,10 @@ impl fmt::Display for ErrorKind {
         Ok(())
       }
       Self::NotInfix => write!(f, "not infix"),
-      Self::SameFixityDiffAssoc => write!(f, "same fixity but different associativity"),
+      Self::SameFixityDiffAssoc => write!(
+        f,
+        "consecutive infix identifiers with same fixity but different associativity"
+      ),
       Self::InfixWithoutOp => write!(f, "infix name used without `op`"),
       Self::InvalidFixity(e) => write!(f, "invalid fixity: {}", e),
     }
