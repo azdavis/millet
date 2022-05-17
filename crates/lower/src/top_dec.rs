@@ -82,16 +82,21 @@ fn get_str_exp_(cx: &mut Cx, str_exp: ast::StrExp) -> Option<hir::StrExp> {
   let ret = match str_exp {
     ast::StrExp::StructStrExp(str_exp) => hir::StrExp::Struct(get_str_dec(cx, str_exp.str_dec())),
     ast::StrExp::PathStrExp(str_exp) => hir::StrExp::Path(get_path(str_exp.path()?)?),
-    ast::StrExp::AscriptionStrExp(str_exp) => hir::StrExp::Ascription(
-      get_str_exp(cx, str_exp.str_exp()),
-      str_exp
-        .ascription()
-        .map_or(hir::Ascription::Transparent, |x| match x.kind {
+    ast::StrExp::AscriptionStrExp(str_exp) => {
+      let tail = str_exp.ascription_tail();
+      let kind = tail.as_ref().and_then(|x| x.ascription()).map_or(
+        hir::Ascription::Transparent,
+        |x| match x.kind {
           ast::AscriptionKind::Colon => hir::Ascription::Transparent,
           ast::AscriptionKind::ColonGt => hir::Ascription::Opaque,
-        }),
-      get_sig_exp(cx, str_exp.sig_exp()),
-    ),
+        },
+      );
+      hir::StrExp::Ascription(
+        get_str_exp(cx, str_exp.str_exp()),
+        kind,
+        get_sig_exp(cx, tail.and_then(|x| x.sig_exp())),
+      )
+    }
     ast::StrExp::AppStrExp(str_exp) => hir::StrExp::App(
       get_name(str_exp.name())?,
       get_str_exp(cx, str_exp.str_exp()),

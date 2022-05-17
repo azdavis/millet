@@ -35,10 +35,11 @@ StrExp =
 
 StructStrExp = 'struct' StrDec 'end'
 PathStrExp = Path
-AscriptionStrExp = StrExp Ascription SigExp
+AscriptionStrExp = StrExp AscriptionTail
 AppStrExp = 'Name' '(' StrExp ')'
 LetStrExp = 'let' StrDec 'in' StrExp 'end'
 
+AscriptionTail = Ascription SigExp
 Ascription = ':' | ':>'
 
 SigExp =
