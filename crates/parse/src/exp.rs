@@ -98,7 +98,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
   Some(ex)
 }
 
-/// duplicated in `at_exp_hd`
+/// when adding more cases to this, update [`at_exp_hd`]
 #[must_use]
 fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let ent = p.enter();
@@ -160,7 +160,7 @@ fn matcher(p: &mut Parser<'_>) {
   });
 }
 
-/// duplicated in `at_exp`
+/// need this for app expressions to know whether to precede or not.
 fn at_exp_hd(p: &mut Parser<'_>) -> bool {
   scon(p)
     || p.at(SK::OpKw)
