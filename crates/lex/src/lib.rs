@@ -232,18 +232,25 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     }
     return SK::CharLit;
   }
+  // symbolic identifiers. must come before punctuation...
+  if is_symbolic(b) {
+    cx.i += 1;
+    advance_while(cx, bs, is_symbolic);
+    let got = &bs[start..cx.i];
+    // ...but we must check if the 'symbolic identifier' was actually a punctuation token. TODO this
+    // could be a bit quicker if we divide the punctuation tokens into those that 'look like'
+    // symbolic identifiers (like `:` and `#`) and those that can't possibly be (like `{` or `,`).
+    return SK::PUNCTUATION
+      .iter()
+      .find_map(|&(sk_text, sk)| (sk_text == got).then(|| sk))
+      .unwrap_or(SK::Name);
+  }
   // punctuation
   for &(sk_text, sk) in SK::PUNCTUATION.iter() {
     if bs.get(cx.i..cx.i + sk_text.len()) == Some(sk_text) {
       cx.i += sk_text.len();
       return sk;
     }
-  }
-  // symbolic identifiers. must come after punctuation
-  if is_symbolic(b) {
-    cx.i += 1;
-    advance_while(cx, bs, is_symbolic);
-    return SK::Name;
   }
   // invalid char. go until we find a valid str. this should terminate before
   // cx.i goes past the end of bs because bs comes from a str.
