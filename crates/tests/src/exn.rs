@@ -1,6 +1,15 @@
 use crate::check::check;
 
 #[test]
+fn t_00() {
+  check(
+    r#"
+val _ = 3 handle _ => 4
+"#,
+  );
+}
+
+#[test]
 fn t_01() {
   check(
     r#"
