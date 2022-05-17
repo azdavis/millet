@@ -83,19 +83,8 @@ fn get_str_exp_(cx: &mut Cx, str_exp: ast::StrExp) -> Option<hir::StrExp> {
     ast::StrExp::StructStrExp(str_exp) => hir::StrExp::Struct(get_str_dec(cx, str_exp.str_dec())),
     ast::StrExp::PathStrExp(str_exp) => hir::StrExp::Path(get_path(str_exp.path()?)?),
     ast::StrExp::AscriptionStrExp(str_exp) => {
-      let tail = str_exp.ascription_tail();
-      let kind = tail.as_ref().and_then(|x| x.ascription()).map_or(
-        hir::Ascription::Transparent,
-        |x| match x.kind {
-          ast::AscriptionKind::Colon => hir::Ascription::Transparent,
-          ast::AscriptionKind::ColonGt => hir::Ascription::Opaque,
-        },
-      );
-      hir::StrExp::Ascription(
-        get_str_exp(cx, str_exp.str_exp()),
-        kind,
-        get_sig_exp(cx, tail.and_then(|x| x.sig_exp())),
-      )
+      let (kind, sig_exp) = ascription_tail(cx, str_exp.ascription_tail());
+      hir::StrExp::Ascription(get_str_exp(cx, str_exp.str_exp()), kind, sig_exp)
     }
     ast::StrExp::AppStrExp(str_exp) => hir::StrExp::App(
       get_name(str_exp.name())?,
@@ -201,6 +190,20 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::Spec> {
     ast::SpecOne::SharingSpec(_) => todo!(),
   };
   Some(ret)
+}
+
+fn ascription_tail(
+  cx: &mut Cx,
+  tail: Option<ast::AscriptionTail>,
+) -> (hir::Ascription, hir::SigExpIdx) {
+  let kind = tail
+    .as_ref()
+    .and_then(|x| x.ascription())
+    .map_or(hir::Ascription::Transparent, |x| match x.kind {
+      ast::AscriptionKind::Colon => hir::Ascription::Transparent,
+      ast::AscriptionKind::ColonGt => hir::Ascription::Opaque,
+    });
+  (kind, get_sig_exp(cx, tail.and_then(|x| x.sig_exp())))
 }
 
 fn ty_descs<I>(iter: I) -> Vec<hir::TyDesc>
