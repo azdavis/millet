@@ -47,7 +47,10 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
     let mut ex = at_exp(p)?;
     loop {
       let op_info = p.peek().and_then(|tok| {
-        if tok.kind == SK::Name {
+        // NOTE: `*` and `=` are special because they are 'proper' tokens (`*` in tuple types, `=`
+        // in e.g. val bindings), but they can also be regular operator names (and indeed are, in
+        // the standard basis).
+        if matches!(tok.kind, SK::Name | SK::Star | SK::Eq) {
           p.get_op(tok.text)
         } else {
           None
