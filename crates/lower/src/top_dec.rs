@@ -9,10 +9,10 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> Option<hir::TopDec> {
     ast::TopDec::SigDec(top_dec) => hir::TopDec::Sig(
       top_dec
         .sig_binds()
-        .filter_map(|x| {
+        .filter_map(|sig_bind| {
           Some(hir::SigBind {
-            name: get_name(x.name())?,
-            sig_exp: get_sig_exp(cx, x.sig_exp()),
+            name: get_name(sig_bind.name())?,
+            sig_exp: get_sig_exp(cx, sig_bind.sig_exp()),
           })
         })
         .collect(),
@@ -20,12 +20,12 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> Option<hir::TopDec> {
     ast::TopDec::FunctorDec(top_dec) => hir::TopDec::Functor(
       top_dec
         .functor_binds()
-        .filter_map(|x| {
+        .filter_map(|fun_bind| {
           Some(hir::FunctorBind {
-            functor_name: get_name(x.functor_name())?,
-            param_name: get_name(x.param())?,
-            param_sig: get_sig_exp(cx, x.param_sig()),
-            body: get_str_exp(cx, x.body()),
+            functor_name: get_name(fun_bind.functor_name())?,
+            param_name: get_name(fun_bind.param())?,
+            param_sig: get_sig_exp(cx, fun_bind.param_sig()),
+            body: get_str_exp(cx, fun_bind.body()),
           })
         })
         .collect(),
