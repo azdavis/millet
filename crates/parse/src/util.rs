@@ -1,12 +1,12 @@
-use crate::parser::{Assoc, ErrorKind, Exited, OpInfo, Parser};
+use crate::parser::{Assoc, ErrorKind, Exited, Expected, OpInfo, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F)
+pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F, e: Expected)
 where
   F: FnOnce(&mut Parser<'a>) -> Option<Exited>,
 {
   if f(p).is_none() {
-    p.error();
+    p.error(ErrorKind::Expected(e));
   }
 }
 
@@ -89,7 +89,7 @@ pub(crate) fn should_break(p: &mut Parser<'_>, op_info: OpInfo, min_prec: Option
     None => false,
     Some(min_prec) => {
       if op_info.num == min_prec.num && op_info.assoc != min_prec.assoc {
-        p.error_with(ErrorKind::SameFixityDiffAssoc)
+        p.error(ErrorKind::SameFixityDiffAssoc)
       }
       match min_prec.assoc {
         Assoc::Left => op_info.num <= min_prec.num,

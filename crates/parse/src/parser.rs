@@ -27,12 +27,13 @@ use syntax::{SyntaxKind as SK, SyntaxNode};
 #[derive(Debug)]
 pub(crate) struct Parser<'input> {
   tokens: &'input [Token<'input, SK>],
-  idx: usize,
+  tok_idx: usize,
   events: Vec<Option<Event>>,
   ops: FxHashMap<&'input str, OpInfo>,
 }
 
 impl<'input> Parser<'input> {
+  /// Returns a new parser for the given tokens.
   pub(crate) fn new(tokens: &'input [Token<'input, SK>]) -> Self {
     let mut ops = FxHashMap::default();
     ops.insert("::", OpInfo::right(5));
@@ -50,111 +51,86 @@ impl<'input> Parser<'input> {
     ops.insert(">=", OpInfo::left(4));
     Self {
       tokens,
-      idx: 0,
+      tok_idx: 0,
       events: Vec::new(),
       ops,
     }
   }
 
+  /// Starts parsing a syntax construct.
+  ///
+  /// The returned [`Entered`] must eventually be passed to [`Parser::exit`] or
+  /// [`Parser::abandon`]. If it is not, it will panic when dropped.
+  ///
+  /// `Entered`s returned from `enter` should be consumed with `exit` or
+  /// `abandon` in a FIFO manner. That is, the first most recently created
+  /// `Entered` should be the first one to be consumed. (Might be more like
+  /// first-out first-in in this case actually.)
+  ///
+  /// If this invariant isn't upheld, as in e.g.
+  ///
+  /// ```ignore
+  /// let e1 = p.enter();
+  /// let e2 = p.enter();
+  /// p.exit(k, e1);
+  /// ```
+  ///
+  /// then Weird Things might happen.
   pub(crate) fn enter(&mut self) -> Entered {
-    let idx = self.events.len();
+    let ev_idx = self.events.len();
     self.events.push(None);
     Entered {
       bomb: DropBomb::new("Entered markers must be exited"),
-      idx,
+      ev_idx,
     }
   }
 
-  pub(crate) fn abandon(&mut self, mut entered: Entered) {
-    entered.bomb.defuse();
-    assert!(self.events[entered.idx].is_none());
+  /// Abandons parsing a syntax construct.
+  ///
+  /// The events recorded since this syntax construct began, if any, will belong
+  /// to the parent.
+  pub(crate) fn abandon(&mut self, mut en: Entered) {
+    en.bomb.defuse();
+    assert!(self.events[en.ev_idx].is_none());
   }
 
-  pub(crate) fn exit(&mut self, mut entered: Entered, kind: SK) -> Exited {
-    entered.bomb.defuse();
-    let ev = &mut self.events[entered.idx];
+  /// Finishes parsing a syntax construct.
+  pub(crate) fn exit(&mut self, mut en: Entered, kind: SK) -> Exited {
+    en.bomb.defuse();
+    let ev = &mut self.events[en.ev_idx];
     assert!(ev.is_none());
     *ev = Some(Event::Enter(kind, None));
     self.events.push(Some(Event::Exit));
-    Exited { idx: entered.idx }
+    Exited { ev_idx: en.ev_idx }
   }
 
-  pub(crate) fn precede(&mut self, exited: Exited) -> Entered {
+  /// Starts parsing a syntax construct and makes it the parent of the given
+  /// completed node.
+  ///
+  /// Consider an expression grammar `<expr> ::= <int> | <expr> + <expr>`. When
+  /// we see an `<int>`, we enter and exit an `<expr>` node for it. But then
+  /// we see the `+` and realize the completed `<expr>` node for the int should
+  /// be the child of a node for the `+`. That's when this function comes in.
+  pub(crate) fn precede(&mut self, ex: Exited) -> Entered {
     let ret = self.enter();
-    match self.events[exited.idx] {
+    match self.events[ex.ev_idx] {
       Some(Event::Enter(_, ref mut parent)) => {
         assert!(parent.is_none());
-        *parent = Some(ret.idx);
+        *parent = Some(ret.ev_idx);
       }
-      _ => unreachable!("{:?} did not precede an Enter", exited),
+      ref ev => unreachable!("{:?} preceded {:?}, not Enter", ex, ev),
     }
     ret
   }
 
-  /// Save the state of the parser.
+  /// Returns the token after the "current" token, or `None` if the parser is
+  /// out of tokens.
   ///
-  /// Use it with `maybe_discard` to implement unbounded backtracking.
-  ///
-  /// Do not `exit` any `Entered` or `precede` any `Exited` that were created before the save,
-  /// between the save and the `maybe_discard`. Or do anything else that modifies any events before
-  /// the save. Otherwise the parser won't fully recover to its original state before the save.
-  ///
-  /// It's intended to be used like this:
-  ///
-  /// ```ignore
-  /// let save = p.save();
-  /// // maybe make some new `Entered` and `Exited`
-  /// // maybe eat some tokens
-  /// // maybe encounter some errors
-  /// foo(p);
-  /// if p.maybe_discard(save) {
-  ///   // foo parsed without errors
-  /// } else {
-  ///   // foo had errors, so it failed to parse.
-  ///   // the parser is reset to the state at the save
-  /// }
-  /// ```
-  pub(crate) fn save(&mut self) -> Save {
-    Save {
-      idx: self.idx,
-      events_len: self.events.len(),
-    }
-  }
-
-  /// returns whether the save was discarded (i.e. did NOT restore to that save)
-  pub(crate) fn maybe_discard(&mut self, save: Save) -> bool {
-    let error_since = self
-      .events
-      .iter()
-      .skip(save.events_len)
-      .any(|ev| matches!(*ev, Some(Event::Error(..))));
-    if error_since {
-      self.idx = save.idx;
-      self.events.truncate(save.events_len);
-    }
-    !error_since
-  }
-
-  pub(crate) fn insert_op(&mut self, k: &'input str, v: OpInfo) {
-    self.ops.insert(k, v);
-  }
-
-  pub(crate) fn get_op(&self, k: &str) -> Option<OpInfo> {
-    self.ops.get(k).copied()
-  }
-
-  pub(crate) fn contains_op(&self, k: &str) -> bool {
-    self.ops.contains_key(k)
-  }
-
-  pub(crate) fn remove_op(&mut self, k: &str) {
-    self.ops.remove(k);
-  }
-
+  /// Equivalent to `self.peek_n(0)`. See [`Parser::peek_n`].
   pub(crate) fn peek(&mut self) -> Option<Token<'input, SK>> {
-    while let Some(&tok) = self.tokens.get(self.idx) {
+    while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if tok.kind.is_trivia() {
-        self.idx += 1;
+        self.tok_idx += 1;
       } else {
         return Some(tok);
       }
@@ -162,53 +138,63 @@ impl<'input> Parser<'input> {
     None
   }
 
+  /// Returns the token `n` tokens in front of the current token, or `None` if
+  /// there is no such token.
+  ///
+  /// The current token is the first token not yet consumed for which
+  /// [`Triviable::is_trivia`] returns `true`; thus, if this returns
+  /// `Some(tok)`, then `tok.kind.is_trivia()` is `false`.
   pub(crate) fn peek_n(&mut self, n: usize) -> Option<Token<'input, SK>> {
     let mut ret = self.peek();
-    let idx = self.idx;
+    let old_tok_idx = self.tok_idx;
     for _ in 0..n {
-      self.idx += 1;
+      self.tok_idx += 1;
       ret = self.peek();
     }
-    self.idx = idx;
+    self.tok_idx = old_tok_idx;
     ret
   }
 
+  /// Consumes and returns the current token.
+  ///
+  /// Panics if there are no more tokens, i.e. if [`Parser::peek`] would return
+  /// `None` just prior to calling this.
+  ///
+  /// This is often used after calling [`Parser::at`] to verify some expected
+  /// token was present.
   pub(crate) fn bump(&mut self) -> Token<'input, SK> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
-    self.idx += 1;
+    self.tok_idx += 1;
     ret
   }
 
-  pub(crate) fn error(&mut self) {
-    if self.peek().is_some() {
-      self.bump();
-    }
-    self.events.push(Some(Event::Error(ErrorKind::Expected)));
+  /// Records an error at the current token, with an "expected `desc`" error
+  /// message.
+  pub(crate) fn error(&mut self, kind: ErrorKind) {
+    self.error_(kind)
   }
 
-  pub(crate) fn error_with(&mut self, kind: ErrorKind) {
-    if self.peek().is_some() {
-      self.bump();
-    }
-    self.events.push(Some(Event::Error(kind)))
+  fn error_(&mut self, kind: ErrorKind) {
+    self.events.push(Some(Event::Error(kind)));
   }
 
   fn eat_trivia(&mut self, sink: &mut BuilderSink) {
-    while let Some(&tok) = self.tokens.get(self.idx) {
+    while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if !tok.kind.is_trivia() {
         break;
       }
       sink.token(tok);
-      self.idx += 1;
+      self.tok_idx += 1;
     }
   }
 
+  /// Finishes parsing, and writes the parsed tree into the `sink`.
   pub(crate) fn finish(mut self) -> (SyntaxNode, Vec<Error>) {
-    self.idx = 0;
+    let mut sink = BuilderSink::default();
+    self.tok_idx = 0;
     let mut kinds = Vec::new();
     let mut levels: usize = 0;
-    let mut sink = BuilderSink::default();
     for idx in 0..self.events.len() {
       let ev = match self.events[idx].take() {
         Some(ev) => ev,
@@ -224,7 +210,9 @@ impl<'input> Parser<'input> {
                 kinds.push(kind);
                 parent = new_parent;
               }
-              _ => unreachable!("{:?} was not an Enter", parent),
+              // abandoned precede
+              None => break,
+              ev => unreachable!("{:?} was {:?}, not Enter", parent, ev),
             }
           }
           for kind in kinds.drain(..).rev() {
@@ -246,31 +234,99 @@ impl<'input> Parser<'input> {
         }
         Event::Token => {
           self.eat_trivia(&mut sink);
-          sink.token(self.tokens[self.idx]);
-          self.idx += 1;
+          sink.token(self.tokens[self.tok_idx]);
+          self.tok_idx += 1;
         }
-        Event::Error(kind) => sink.error(kind),
+        Event::Error(expected) => sink.error(expected),
       }
     }
     assert_eq!(levels, 0);
     (SyntaxNode::new_root(sink.builder.finish()), sink.errors)
   }
 
+  /// Returns whether the current token has the given `kind`.
   pub(crate) fn at(&mut self, kind: SK) -> bool {
     self.at_n(0, kind)
   }
 
+  /// Returns whether the token `n` ahead has the given `kind`.
   pub(crate) fn at_n(&mut self, n: usize, kind: SK) -> bool {
     self.peek_n(n).map_or(false, |tok| tok.kind == kind)
   }
 
+  /// If the current token's kind is `kind`, then this consumes it, else this
+  /// errors. Returns the token if it was eaten.
   pub(crate) fn eat(&mut self, kind: SK) -> Option<Token<'input, SK>> {
     if self.at(kind) {
       Some(self.bump())
     } else {
-      self.error();
+      self.error_(ErrorKind::ExpectedKind(kind));
       None
     }
+  }
+
+  // sml-specific methods
+  // ====================
+
+  pub(crate) fn insert_op(&mut self, name: &'input str, info: OpInfo) {
+    self.ops.insert(name, info);
+  }
+
+  pub(crate) fn get_op(&mut self, name: &str) -> Option<OpInfo> {
+    self.ops.get(name).copied()
+  }
+
+  pub(crate) fn contains_op(&mut self, name: &str) -> bool {
+    self.ops.contains_key(name)
+  }
+
+  pub(crate) fn remove_op(&mut self, name: &str) {
+    self.ops.remove(name);
+  }
+
+  /// Save the state of the parser.
+  ///
+  /// Use it with `maybe_discard` to implement unbounded backtracking.
+  ///
+  /// For any `Entered` or `Exited` that were created before the save, do not `exit` or `precede`
+  /// them respectively between the save and the `maybe_discard`. Or do anything else that modifies
+  /// any events before the save. Otherwise the parser won't fully recover to its original state
+  /// before the save.
+  ///
+  /// It's intended to be used like this:
+  ///
+  /// ```ignore
+  /// let save = p.save();
+  /// // maybe make some new `Entered` and `Exited`
+  /// // maybe eat some tokens
+  /// // maybe encounter some errors
+  /// foo(p);
+  /// if p.maybe_discard(save) {
+  ///   // foo parsed without errors
+  /// } else {
+  ///   // foo had errors, so it failed to parse.
+  ///   // the parser is reset to the state at the save
+  /// }
+  /// ```
+  pub(crate) fn save(&self) -> Save {
+    Save {
+      tok_idx: self.tok_idx,
+      events_len: self.events.len(),
+    }
+  }
+
+  /// returns whether the save was discarded (i.e. did NOT restore to that save)
+  pub(crate) fn maybe_discard(&mut self, save: Save) -> bool {
+    let error_since = self
+      .events
+      .iter()
+      .skip(save.events_len)
+      .any(|ev| matches!(*ev, Some(Event::Error(..))));
+    if error_since {
+      self.tok_idx = save.tok_idx;
+      self.events.truncate(save.events_len);
+    }
+    !error_since
   }
 }
 
@@ -279,26 +335,55 @@ impl<'input> Parser<'input> {
 #[derive(Debug)]
 pub(crate) struct Entered {
   bomb: DropBomb,
-  idx: usize,
+  ev_idx: usize,
 }
 
 /// A marker for a syntax construct that has been fully parsed.
-#[derive(Debug)]
+///
+/// We let this be `Copy` so we can do things like this:
+/// ```ignore
+/// let mut ex: Exited = ...;
+/// loop {
+///   let en = p.precede(ex);
+///   if ... {
+///     ...;
+///     ex = p.exit(en, ...);
+///   } else {
+///     p.abandon(en);
+///     return Some(ex);
+///   }
+/// }
+/// ```
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct Exited {
-  idx: usize,
+  ev_idx: usize,
 }
 
-/// The saved state of the parser.
-#[derive(Debug)]
-pub(crate) struct Save {
-  idx: usize,
-  events_len: usize,
+enum Event {
+  Enter(SK, Option<usize>),
+  Token,
+  Exit,
+  Error(ErrorKind),
 }
+
+impl fmt::Debug for Event {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Event::Enter(_, n) => f.debug_tuple("Enter").field(n).finish(),
+      Event::Token => f.debug_tuple("Token").finish(),
+      Event::Exit => f.debug_tuple("Exit").finish(),
+      Event::Error(k) => f.debug_tuple("Error").field(k).finish(),
+    }
+  }
+}
+
+// sml-specific types
+// ==================
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OpInfo {
-  pub num: usize,
-  pub assoc: Assoc,
+  pub(crate) num: usize,
+  pub(crate) assoc: Assoc,
 }
 
 impl OpInfo {
@@ -326,17 +411,71 @@ pub(crate) enum Assoc {
 }
 
 #[derive(Debug)]
-enum Event {
-  Enter(SK, Option<usize>),
-  Token,
-  Exit,
-  Error(ErrorKind),
+pub(crate) struct Save {
+  tok_idx: usize,
+  events_len: usize,
+}
+
+#[derive(Debug)]
+pub struct Error {
+  pub range: TextRange,
+  pub kind: ErrorKind,
+}
+
+#[derive(Debug)]
+pub enum ErrorKind {
+  NotInfix,
+  InfixWithoutOp,
+  InvalidFixity(std::num::ParseIntError),
+  SameFixityDiffAssoc,
+  Expected(Expected),
+  ExpectedKind(SK),
+}
+
+#[derive(Debug)]
+pub enum Expected {
+  Exp,
+  Lab,
+  Pat,
+  Path,
+  SigExp,
+  StrExp,
+  Ty,
+}
+
+impl fmt::Display for Expected {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let s = match self {
+      Expected::Exp => "an expression",
+      Expected::Lab => "a label",
+      Expected::Pat => "a pattern",
+      Expected::Path => "a path",
+      Expected::SigExp => "a signature expression",
+      Expected::StrExp => "a structure expression",
+      Expected::Ty => "a type",
+    };
+    f.write_str(s)
+  }
+}
+impl fmt::Display for ErrorKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ErrorKind::NotInfix => f.write_str("not declared as infix"),
+      ErrorKind::InfixWithoutOp => f.write_str("infix name used without `op`"),
+      ErrorKind::InvalidFixity(e) => write!(f, "invalid fixity: {e}"),
+      ErrorKind::SameFixityDiffAssoc => {
+        f.write_str("consecutive infix identifiers with same fixity but different associativity")
+      }
+      ErrorKind::Expected(e) => write!(f, "expected {e}"),
+      ErrorKind::ExpectedKind(k) => write!(f, "expected {k}"),
+    }
+  }
 }
 
 #[derive(Default)]
 struct BuilderSink {
   builder: GreenNodeBuilder<'static>,
-  range: Option<TextRange>,
+  range: TextRange,
   errors: Vec<Error>,
 }
 
@@ -347,9 +486,9 @@ impl BuilderSink {
 
   fn token(&mut self, token: Token<'_, SK>) {
     self.builder.token(token.kind.into(), token.text);
-    let start = self.range.as_ref().map_or(0.into(), |range| range.end());
+    let start = self.range.end();
     let end = start + TextSize::of(token.text);
-    self.range = Some(TextRange::new(start, end));
+    self.range = TextRange::new(start, end);
   }
 
   fn exit(&mut self) {
@@ -358,42 +497,8 @@ impl BuilderSink {
 
   fn error(&mut self, kind: ErrorKind) {
     self.errors.push(Error {
-      range: self.range.expect("error with no tokens"),
+      range: self.range,
       kind,
     });
-  }
-}
-
-/// A parse error.
-#[derive(Debug)]
-pub struct Error {
-  /// The range of the unexpected token.
-  pub range: TextRange,
-  /// The kind of error.
-  pub kind: ErrorKind,
-}
-
-/// A kind of error.
-#[derive(Debug)]
-pub enum ErrorKind {
-  Expected,
-  NotInfix,
-  SameFixityDiffAssoc,
-  InfixWithoutOp,
-  InvalidFixity(std::num::ParseIntError),
-}
-
-impl fmt::Display for ErrorKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::Expected => write!(f, "expected something else"),
-      Self::NotInfix => write!(f, "not infix"),
-      Self::SameFixityDiffAssoc => write!(
-        f,
-        "consecutive infix identifiers with same fixity but different associativity"
-      ),
-      Self::InfixWithoutOp => write!(f, "infix name used without `op`"),
-      Self::InvalidFixity(e) => write!(f, "invalid fixity: {}", e),
-    }
   }
 }

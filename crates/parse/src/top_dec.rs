@@ -1,5 +1,5 @@
 use crate::dec::{dat_binds, datatype_copy, dec_one};
-use crate::parser::{Entered, Exited, Parser};
+use crate::parser::{Entered, Exited, Expected, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path};
 use syntax::SyntaxKind as SK;
@@ -15,10 +15,10 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
       p.eat(SK::LRound);
       p.eat(SK::Name);
       p.eat(SK::Colon);
-      must(p, sig_exp);
+      must(p, sig_exp, Expected::SigExp);
       p.eat(SK::RRound);
       p.eat(SK::Eq);
-      must(p, str_exp);
+      must(p, str_exp, Expected::StrExp);
     });
     p.exit(ent, SK::FunctorDec);
     true
@@ -27,7 +27,7 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
     many_sep(p, SK::AndKw, SK::SigBind, |p| {
       p.eat(SK::Name);
       p.eat(SK::Eq);
-      must(p, sig_exp);
+      must(p, sig_exp, Expected::SigExp);
     });
     p.exit(ent, SK::SigDec);
     true
@@ -58,7 +58,7 @@ fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
         ascription_tail(p);
       }
       p.eat(SK::Eq);
-      must(p, str_exp);
+      must(p, str_exp, Expected::StrExp);
     });
     p.exit(ent, SK::StructureStrDec)
   } else if p.at(SK::LocalKw) {
@@ -90,16 +90,16 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     str_dec(p);
     p.eat(SK::InKw);
-    must(p, str_exp);
+    must(p, str_exp, Expected::StrExp);
     p.eat(SK::EndKw);
     p.exit(ent, SK::LetStrExp)
   } else if p.at(SK::Name) && p.at_n(1, SK::Dot) {
-    must(p, path);
+    must(p, path, Expected::Path);
     p.exit(ent, SK::PathStrExp)
   } else if p.at(SK::Name) {
     p.bump();
     p.eat(SK::LRound);
-    must(p, str_exp);
+    must(p, str_exp, Expected::StrExp);
     p.eat(SK::RRound);
     p.exit(ent, SK::AppStrExp)
   } else {
@@ -122,7 +122,7 @@ fn ascription(p: &mut Parser<'_>) -> bool {
 fn ascription_tail(p: &mut Parser<'_>) -> Exited {
   let ent = p.enter();
   p.bump();
-  must(p, sig_exp);
+  must(p, sig_exp, Expected::SigExp);
   p.exit(ent, SK::AscriptionTail)
 }
 
@@ -146,7 +146,7 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     p.eat(SK::TypeKw);
     ty_var_seq(p);
-    must(p, path);
+    must(p, path, Expected::Path);
     p.eat(SK::Eq);
     ty(p);
     ex = p.exit(ent, SK::WhereSigExp);
@@ -198,7 +198,7 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
     many_sep(p, SK::AndKw, SK::StrDesc, |p| {
       p.eat(SK::Name);
       p.eat(SK::Colon);
-      must(p, sig_exp);
+      must(p, sig_exp, Expected::SigExp);
     });
     p.exit(ent, SK::StrSpec)
   } else if p.at(SK::IncludeKw) {
@@ -216,7 +216,7 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     p.eat(SK::TypeKw);
     many_sep(p, SK::Eq, SK::PathEq, |p| {
-      must(p, path);
+      must(p, path, Expected::Path);
     });
     ex = p.exit(ent, SK::SharingSpec);
   }

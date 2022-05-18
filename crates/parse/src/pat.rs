@@ -1,4 +1,4 @@
-use crate::parser::{Entered, ErrorKind, Exited, OpInfo, Parser};
+use crate::parser::{Entered, ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{comma_sep, lab, must, path, scon, should_break};
 use syntax::SyntaxKind as SK;
@@ -35,7 +35,8 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     }
     p.eat(SK::Name);
     let _ = ty_annotation(p);
-    must(p, as_pat_tl);
+    // using unwrap, not must, since we just checked for as_pat_hd.
+    as_pat_tl(p).unwrap();
     return Some(p.exit(ent, SK::AsPat));
   }
   // con pat with arg, or infix pat
@@ -44,7 +45,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     if p.at(SK::OpKw) {
       p.bump();
     }
-    must(p, path);
+    must(p, path, Expected::Path);
     ConPatState::Entered(ent)
   } else {
     ConPatState::Exited(at_pat(p)?)
@@ -57,7 +58,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
       let op_info = match p.get_op(text) {
         Some(x) => x,
         None => {
-          p.error_with(ErrorKind::NotInfix);
+          p.error(ErrorKind::NotInfix);
           // pretend it is
           OpInfo::left(0)
         }
@@ -68,7 +69,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
       let ex = state.exit(p);
       let ent = p.precede(ex);
       p.bump();
-      must(p, |p| pat_prec(p, Some(op_info)));
+      must(p, |p| pat_prec(p, Some(op_info)), Expected::Pat);
       p.exit(ent, SK::InfixPat)
     } else if p.at(SK::Colon) {
       if min_prec.is_some() {
@@ -84,7 +85,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
         ConPatState::Entered(ent) => ent,
         ConPatState::Exited(_) => break,
       };
-      must(p, at_pat);
+      must(p, at_pat, Expected::Pat);
       p.exit(ent, SK::ConPat)
     } else {
       break;
@@ -106,10 +107,10 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::WildcardPat)
   } else if p.at(SK::OpKw) {
     p.bump();
-    must(p, path);
+    must(p, path, Expected::Path);
     p.exit(ent, SK::ConPat)
   } else if p.at(SK::Name) {
-    must(p, path);
+    must(p, path, Expected::Path);
     p.exit(ent, SK::ConPat)
   } else if p.at(SK::LCurly) {
     p.bump();
@@ -119,9 +120,9 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
         p.bump();
         p.exit(ent, SK::RestPatRow);
       } else if p.at_n(1, SK::Eq) {
-        must(p, lab);
+        must(p, lab, Expected::Lab);
         p.eat(SK::Eq);
-        must(p, pat);
+        must(p, pat, Expected::Pat);
         p.exit(ent, SK::LabAndPatPatRow);
       } else {
         p.eat(SK::Name);
@@ -133,11 +134,11 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::RecordPat)
   } else if p.at(SK::LRound) {
     p.bump();
-    let one = comma_sep(p, SK::RRound, SK::PatArg, |p| must(p, pat));
+    let one = comma_sep(p, SK::RRound, SK::PatArg, |p| must(p, pat, Expected::Pat));
     p.exit(ent, if one { SK::ParenPat } else { SK::TuplePat })
   } else if p.at(SK::LSquare) {
     p.bump();
-    comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat));
+    comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat, Expected::Pat));
     p.exit(ent, SK::ListPat)
   } else {
     p.abandon(ent);
@@ -166,7 +167,7 @@ fn as_pat_tl(p: &mut Parser<'_>) -> Option<Exited> {
   if p.at(SK::AsKw) {
     let ent = p.enter();
     p.bump();
-    must(p, pat);
+    must(p, pat, Expected::Pat);
     Some(p.exit(ent, SK::AsPatTail))
   } else {
     None

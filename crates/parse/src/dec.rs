@@ -1,5 +1,5 @@
 use crate::exp::exp;
-use crate::parser::{ErrorKind, Exited, OpInfo, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{many_sep, maybe_semi_sep, must, path};
@@ -21,7 +21,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
       if p.at(SK::RecKw) {
         p.bump();
       }
-      must(p, pat);
+      must(p, pat, Expected::Pat);
       p.eat(SK::Eq);
       exp(p);
     });
@@ -50,7 +50,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
             }
             if let Some(name) = p.eat(SK::Name) {
               if !saw_op && p.contains_op(name.text) {
-                p.error_with(ErrorKind::InfixWithoutOp);
+                p.error(ErrorKind::InfixWithoutOp);
               }
             }
           }
@@ -93,7 +93,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
       if of_ty(p).is_none() && p.at(SK::Eq) {
         let ent = p.enter();
         p.bump();
-        must(p, path);
+        must(p, path, Expected::Path);
         p.exit(ent, SK::EqPath);
       }
     });
@@ -143,7 +143,7 @@ fn fixity(p: &mut Parser<'_>) -> usize {
     match p.bump().text.parse::<usize>() {
       Ok(x) => x,
       Err(e) => {
-        p.error_with(ErrorKind::InvalidFixity(e));
+        p.error(ErrorKind::InvalidFixity(e));
         0
       }
     }
@@ -158,7 +158,7 @@ fn names<'a>(p: &mut Parser<'a>) -> Vec<&'a str> {
     ret.push(p.bump().text);
   }
   if ret.is_empty() {
-    p.error();
+    p.error(ErrorKind::ExpectedKind(SK::Name));
   }
   ret
 }
@@ -198,13 +198,13 @@ fn ty_binds(p: &mut Parser<'_>) {
 }
 
 fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
-  must(p, at_pat);
+  must(p, at_pat, Expected::Pat);
   if let Some(name) = p.eat(SK::Name) {
     if !p.contains_op(name.text) {
-      p.error_with(ErrorKind::NotInfix);
+      p.error(ErrorKind::NotInfix);
     }
   }
-  must(p, at_pat);
+  must(p, at_pat, Expected::Pat);
 }
 
 /// we just saw a `datatype` keyword starting a dec. this bumps that kw, then tries to parse a
@@ -217,6 +217,6 @@ pub(crate) fn datatype_copy(p: &mut Parser<'_>) -> bool {
   p.eat(SK::Name);
   p.eat(SK::Eq);
   p.eat(SK::DatatypeKw);
-  must(p, path);
+  must(p, path, Expected::Path);
   p.maybe_discard(save)
 }

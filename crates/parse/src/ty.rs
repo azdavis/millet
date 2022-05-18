@@ -1,11 +1,11 @@
-use crate::parser::{Exited, Parser};
+use crate::parser::{Exited, Expected, Parser};
 use crate::util::{comma_sep, lab, must, path};
 use syntax::SyntaxKind as SK;
 
 const STAR: &str = "*";
 
 pub(crate) fn ty(p: &mut Parser<'_>) {
-  must(p, |p| ty_prec(p, TyPrec::Arrow))
+  must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty)
 }
 
 #[must_use]
@@ -17,7 +17,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
   } else if p.at(SK::LCurly) {
     p.bump();
     comma_sep(p, SK::RCurly, SK::TyRow, |p| {
-      must(p, lab);
+      must(p, lab, Expected::Lab);
       p.eat(SK::Colon);
       ty(p);
     });
@@ -34,14 +34,14 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       p.bump();
       comma_sep(p, SK::RRound, SK::TyArg, ty);
       p.exit(ty_seq, SK::TySeq);
-      must(p, path);
+      must(p, path, Expected::Path);
       p.exit(ent, SK::ConTy)
     }
   } else if p
     .peek()
     .map_or(false, |tok| tok.kind == SK::Name && tok.text != STAR)
   {
-    must(p, path);
+    must(p, path, Expected::Path);
     p.exit(ent, SK::ConTy)
   } else {
     p.abandon(ent);
@@ -54,7 +54,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       }
       let ent = p.precede(ex);
       p.bump();
-      must(p, |p| ty_prec(p, TyPrec::Arrow));
+      must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty);
       p.exit(ent, SK::FnTy)
     } else if p.at(SK::Name) {
       if p.peek().unwrap().text == STAR {
@@ -67,12 +67,12 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
           .map_or(false, |tok| tok.kind == SK::Name && tok.text == STAR)
         {
           p.bump();
-          must(p, |p| ty_prec(p, TyPrec::App));
+          must(p, |p| ty_prec(p, TyPrec::App), Expected::Ty);
         }
         p.exit(ent, SK::TupleTy)
       } else {
         let ent = p.precede(ex);
-        must(p, path);
+        must(p, path, Expected::Path);
         p.exit(ent, SK::ConTy)
       }
     } else {
