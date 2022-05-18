@@ -692,6 +692,12 @@ impl Parser {
         }
         break;
       }
+      // this allows `Foo.Bar.=`, not sure if we should.
+      if let Token::Equal = tok.val {
+        self.skip();
+        structures.push(tok.loc.wrap(StrRef::EQ));
+        break;
+      }
       return if structures.is_empty() {
         Ok(None)
       } else {

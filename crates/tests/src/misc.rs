@@ -591,3 +591,37 @@ val _: (int, bool) list = []
 "#,
   );
 }
+
+#[test]
+fn curry() {
+  check(
+    r#"
+fun curry f x y = f (x, y)
+
+val eq = curry op=
+val add = curry op+
+val mul = curry op*
+
+val _: bool = eq 1 2
+val _: int = add 3 4
+val _: int = mul 5 6
+
+val f = add 7
+val g = mul 5
+val _: bool = eq (f 3) (g 5)
+"#,
+  );
+}
+
+#[test]
+fn nonfix() {
+  check(
+    r#"
+nonfix + = *
+
+val _: bool = = (1, 2)
+val _: int = + (1, 2)
+val _: int = * (3, 4)
+"#,
+  );
+}
