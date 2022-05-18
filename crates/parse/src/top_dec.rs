@@ -93,7 +93,7 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
     must(p, str_exp, Expected::StrExp);
     p.eat(SK::EndKw);
     p.exit(en, SK::LetStrExp)
-  } else if p.at(SK::Name) && p.at_n(1, SK::Dot) {
+  } else if p.at(SK::Name) && !p.at_n(1, SK::LRound) {
     must(p, path, Expected::Path);
     p.exit(en, SK::PathStrExp)
   } else if p.at(SK::Name) {
