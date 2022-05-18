@@ -1,5 +1,6 @@
 use old_loc::Located;
 use rustc_hash::FxHashMap;
+use std::fmt;
 use std::ops::Range;
 use syntax::rowan::TextRange;
 
@@ -22,44 +23,134 @@ use syntax::rowan::TextRange;
 /// ```
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  let indices: Vec<_> = s
-    .bytes()
-    .enumerate()
-    .filter_map(|(idx, b)| (b == b'\n').then(|| idx))
-    .collect();
-  let want: FxHashMap<_, _> = s
-    .lines()
-    .enumerate()
-    .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
-    .collect();
-  assert!(matches!(want.len(), 0 | 1));
+  let mut cx = Cx::new(s);
   match check_impl_old(s) {
-    Ok(()) => assert!(
-      want.is_empty(),
-      "expected errors, but no errors were emitted"
-    ),
-    Err(err) => {
-      let range = Range::from(err.loc);
-      let &want_msg = want.get(&get_region(&indices, range)).unwrap();
-      assert_eq!(want_msg, err.val);
+    Ok(()) => {
+      if !cx.want.is_empty() {
+        cx.reasons.push(Reason::NoErrorsEmitted);
+      }
     }
+    Err(err) => cx.add_err(Range::from(err.loc), err.val),
   }
   if let Err((range, msg)) = check_impl(s) {
-    let start = usize::try_from(range.start()).unwrap();
-    let end = usize::try_from(range.end()).unwrap();
-    let r = get_region(&indices, start..end);
-    let &want_msg = want.get(&r).unwrap();
-    assert_eq!(want_msg, msg);
+    cx.add_err(Range::<usize>::from(range), msg)
+  }
+  cx.finish()
+}
+
+enum Reason<'a> {
+  WantWrongNumError,
+  NoErrorsEmitted,
+  CannotGetRegion(Range<usize>),
+  GotButNotWanted(Region, String),
+  MismatchedErrors(Region, &'a str, String),
+}
+
+struct Cx<'a> {
+  indices: Vec<usize>,
+  want: FxHashMap<Region, &'a str>,
+  reasons: Vec<Reason<'a>>,
+}
+
+impl<'a> Cx<'a> {
+  fn new(s: &'a str) -> Self {
+    let want: FxHashMap<_, _> = s
+      .lines()
+      .enumerate()
+      .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
+      .collect();
+    let want_len = want.len();
+    let mut reasons = Vec::<Reason>::new();
+    if !matches!(want_len, 0 | 1) {
+      reasons.push(Reason::WantWrongNumError);
+    }
+    Self {
+      indices: s
+        .bytes()
+        .enumerate()
+        .filter_map(|(idx, b)| (b == b'\n').then(|| idx))
+        .collect(),
+      want,
+      reasons,
+    }
+  }
+
+  fn add_err(&mut self, range: Range<usize>, got: String) {
+    match get_region(&self.indices, range.clone()) {
+      None => self.reasons.push(Reason::CannotGetRegion(range)),
+      Some(region) => match self.want.get(&region) {
+        None => self.reasons.push(Reason::GotButNotWanted(region, got)),
+        Some(&want) => {
+          if want != got {
+            self
+              .reasons
+              .push(Reason::MismatchedErrors(region, want, got))
+          }
+        }
+      },
+    }
+  }
+
+  fn finish(self) {
+    if !self.reasons.is_empty() {
+      panic!("{self}")
+    }
   }
 }
 
-fn get_region(indices: &[usize], range: Range<usize>) -> Region {
-  let line = indices.iter().position(|&idx| range.start <= idx).unwrap();
-  let col = indices[line - 1] + 1;
-  Region {
-    line,
-    col: (range.start - col)..(range.end - col),
+impl fmt::Display for Cx<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str("CHECK FAILED\n\nreasons:\n")?;
+    let want_len = self.want.len();
+    for reason in self.reasons.iter() {
+      f.write_str("- ")?;
+      match reason {
+        Reason::WantWrongNumError => writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?,
+        Reason::NoErrorsEmitted => writeln!(f, "wanted {want_len} errors, but got none")?,
+        Reason::CannotGetRegion(r) => writeln!(f, "couldn't get a region from {r:?}")?,
+        Reason::GotButNotWanted(r, got) => {
+          writeln!(f, "{r}: got an error, but wanted none")?;
+          writeln!(f, "  - got:  {got}")?;
+        }
+        Reason::MismatchedErrors(r, want, got) => {
+          writeln!(f, "{r}: mismatched errors")?;
+          writeln!(f, "  - want: {want}")?;
+          writeln!(f, "  - got:  {got}")?;
+        }
+      }
+    }
+    f.write_str("\nwant:")?;
+    if self.want.is_empty() {
+      f.write_str(" <empty>")?;
+    } else {
+      f.write_str("\n")?;
+      for (region, &msg) in self.want.iter() {
+        writeln!(f, "- {region}: {msg}")?;
+      }
+    }
+    Ok(())
   }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct Region {
+  line: usize,
+  col: Range<usize>,
+}
+
+impl fmt::Display for Region {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}..{}", self.line, self.col.start, self.col.end)
+  }
+}
+
+fn get_region(indices: &[usize], range: Range<usize>) -> Option<Region> {
+  let line = indices.iter().position(|&idx| range.start <= idx)?;
+  let col = indices.get(line.checked_sub(1)?)?.checked_add(1)?;
+  Some(Region {
+    line,
+    col: range.start.checked_sub(col)?..range.end.checked_sub(col)?,
+  })
 }
 
 fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
@@ -95,12 +186,6 @@ fn check_impl_old(s: &str) -> Result<(), Located<String>> {
 
 /// see [`get_expect_comment`].
 const EXPECT_COMMENT_START: &str = "(**";
-
-#[derive(Debug, PartialEq, Eq, Hash)]
-struct Region {
-  line: usize,
-  col: Range<usize>,
-}
 
 /// parses expectation comments from a line of text. the line will be the following in order:
 ///
