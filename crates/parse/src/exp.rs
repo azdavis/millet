@@ -11,11 +11,11 @@ pub(crate) fn exp(p: &mut Parser<'_>) {
 
 #[must_use]
 fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
-  let ent = p.enter();
+  let en = p.enter();
   let ex = if p.at(SK::RaiseKw) {
     p.bump();
     exp(p);
-    p.exit(ent, SK::RaiseExp)
+    p.exit(en, SK::RaiseExp)
   } else if p.at(SK::IfKw) {
     p.bump();
     exp(p);
@@ -23,25 +23,25 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
     exp(p);
     p.eat(SK::ElseKw);
     exp(p);
-    p.exit(ent, SK::IfExp)
+    p.exit(en, SK::IfExp)
   } else if p.at(SK::WhileKw) {
     p.bump();
     exp(p);
     p.eat(SK::DoKw);
     exp(p);
-    p.exit(ent, SK::WhileExp)
+    p.exit(en, SK::WhileExp)
   } else if p.at(SK::CaseKw) {
     p.bump();
     exp(p);
     p.eat(SK::OfKw);
     matcher(p);
-    p.exit(ent, SK::CaseExp)
+    p.exit(en, SK::CaseExp)
   } else if p.at(SK::FnKw) {
     p.bump();
     matcher(p);
-    p.exit(ent, SK::FnExp)
+    p.exit(en, SK::FnExp)
   } else {
-    p.abandon(ent);
+    p.abandon(en);
     let mut ex = at_exp(p)?;
     loop {
       let op_info = p.peek().and_then(|tok| {
@@ -59,54 +59,54 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         if matches!(sb, ShouldBreak::Yes) {
           break;
         }
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         p.bump();
         if matches!(sb, ShouldBreak::Error) {
           p.error(ErrorKind::SameFixityDiffAssoc);
         }
         must(p, |p| exp_prec(p, ExpPrec::Infix(op_info)), Expected::Exp);
-        p.exit(ent, SK::InfixExp)
+        p.exit(en, SK::InfixExp)
       } else if p.at(SK::Colon) {
         if matches!(min_prec, ExpPrec::Infix(_)) {
           break;
         }
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         p.bump();
         ty(p);
-        p.exit(ent, SK::TypedExp)
+        p.exit(en, SK::TypedExp)
       } else if p.at(SK::AndalsoKw) {
         let sb = should_break_exp(ExpPrec::Andalso, min_prec);
         if matches!(sb, ShouldBreak::Yes) {
           break;
         }
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         p.bump();
         if matches!(sb, ShouldBreak::Error) {
           p.error(ErrorKind::SameFixityDiffAssoc);
         }
         must(p, |p| exp_prec(p, ExpPrec::Andalso), Expected::Exp);
-        p.exit(ent, SK::AndalsoExp)
+        p.exit(en, SK::AndalsoExp)
       } else if p.at(SK::OrelseKw) {
         let sb = should_break_exp(ExpPrec::Orelse, min_prec);
         if matches!(sb, ShouldBreak::Yes) {
           break;
         }
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         p.bump();
         if matches!(sb, ShouldBreak::Error) {
           p.error(ErrorKind::SameFixityDiffAssoc);
         }
         must(p, |p| exp_prec(p, ExpPrec::Orelse), Expected::Exp);
-        p.exit(ent, SK::OrelseExp)
+        p.exit(en, SK::OrelseExp)
       } else if p.at(SK::HandleKw) {
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         p.bump();
         matcher(p);
-        p.exit(ent, SK::HandleExp)
+        p.exit(en, SK::HandleExp)
       } else if at_exp_hd(p) {
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         must(p, at_exp, Expected::Exp);
-        p.exit(ent, SK::AppExp)
+        p.exit(en, SK::AppExp)
       } else {
         break;
       };
@@ -119,17 +119,17 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
 /// when adding more cases to this, update [`at_exp_hd`]
 #[must_use]
 fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
-  let ent = p.enter();
+  let en = p.enter();
   let ex = if scon(p) {
     p.bump();
-    p.exit(ent, SK::SConExp)
+    p.exit(en, SK::SConExp)
   } else if p.at(SK::OpKw) {
     p.bump();
     must(p, path, Expected::Path);
-    p.exit(ent, SK::PathExp)
+    p.exit(en, SK::PathExp)
   } else if p.at(SK::Name) {
     must(p, path, Expected::Path);
-    p.exit(ent, SK::PathExp)
+    p.exit(en, SK::PathExp)
   } else if p.at(SK::LCurly) {
     p.bump();
     comma_sep(p, SK::RCurly, SK::ExpRow, |p| {
@@ -137,21 +137,21 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
       p.eat(SK::Eq);
       exp(p);
     });
-    p.exit(ent, SK::RecordExp)
+    p.exit(en, SK::RecordExp)
   } else if p.at(SK::Hash) {
     p.bump();
     must(p, lab, Expected::Lab);
-    p.exit(ent, SK::SelectorExp)
+    p.exit(en, SK::SelectorExp)
   } else if p.at(SK::LRound) {
     p.bump();
     let kind = at_exp_l_round(p);
-    p.exit(ent, kind)
+    p.exit(en, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
     comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
       exp(p);
     });
-    p.exit(ent, SK::ListExp)
+    p.exit(en, SK::ListExp)
   } else if p.at(SK::LetKw) {
     p.bump();
     dec(p);
@@ -160,9 +160,9 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
       exp(p);
     });
     p.eat(SK::EndKw);
-    p.exit(ent, SK::LetExp)
+    p.exit(en, SK::LetExp)
   } else {
-    p.abandon(ent);
+    p.abandon(en);
     return None;
   };
   Some(ex)
@@ -173,11 +173,11 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
     p.bump();
     return SK::TupleExp;
   }
-  let ent = p.enter();
+  let en = p.enter();
   exp(p);
   if !p.at(SK::Semicolon) && !p.at(SK::Comma) {
     if p.at(SK::RRound) {
-      p.abandon(ent);
+      p.abandon(en);
     } else {
       p.error(ErrorKind::Expected(Expected::LRoundExpTail));
     }
@@ -189,15 +189,15 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
     SK::Comma => (SK::ExpArg, SK::TupleExp),
     _ => unreachable!(),
   };
-  p.exit(ent, wrap);
+  p.exit(en, wrap);
   loop {
-    let ent = p.enter();
+    let en = p.enter();
     exp(p);
     if p.at(kind) {
       p.bump();
-      p.exit(ent, wrap);
+      p.exit(en, wrap);
     } else {
-      p.exit(ent, wrap);
+      p.exit(en, wrap);
       p.eat(SK::RRound);
       break;
     }

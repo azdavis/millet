@@ -10,10 +10,10 @@ pub(crate) fn ty(p: &mut Parser<'_>) {
 
 #[must_use]
 fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
-  let ent = p.enter();
+  let en = p.enter();
   let mut ex = if p.at(SK::TyVar) {
     p.bump();
-    p.exit(ent, SK::TyVarTy)
+    p.exit(en, SK::TyVarTy)
   } else if p.at(SK::LCurly) {
     p.bump();
     comma_sep(p, SK::RCurly, SK::TyRow, |p| {
@@ -21,30 +21,30 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       p.eat(SK::Colon);
       ty(p);
     });
-    p.exit(ent, SK::RecordTy)
+    p.exit(en, SK::RecordTy)
   } else if p.at(SK::LRound) {
     let save = p.save();
     p.bump();
     ty(p);
     p.eat(SK::RRound);
     if p.maybe_discard(save) {
-      p.exit(ent, SK::ParenTy)
+      p.exit(en, SK::ParenTy)
     } else {
       let ty_seq = p.enter();
       p.bump();
       comma_sep(p, SK::RRound, SK::TyArg, ty);
       p.exit(ty_seq, SK::TySeq);
       must(p, path, Expected::Path);
-      p.exit(ent, SK::ConTy)
+      p.exit(en, SK::ConTy)
     }
   } else if p
     .peek()
     .map_or(false, |tok| tok.kind == SK::Name && tok.text != STAR)
   {
     must(p, path, Expected::Path);
-    p.exit(ent, SK::ConTy)
+    p.exit(en, SK::ConTy)
   } else {
-    p.abandon(ent);
+    p.abandon(en);
     return None;
   };
   loop {
@@ -52,16 +52,16 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       if TyPrec::Arrow < min_prec {
         break;
       }
-      let ent = p.precede(ex);
+      let en = p.precede(ex);
       p.bump();
       must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty);
-      p.exit(ent, SK::FnTy)
+      p.exit(en, SK::FnTy)
     } else if p.at(SK::Name) {
       if p.peek().unwrap().text == STAR {
         if TyPrec::Star < min_prec {
           break;
         }
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         while p
           .peek()
           .map_or(false, |tok| tok.kind == SK::Name && tok.text == STAR)
@@ -69,11 +69,11 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
           p.bump();
           must(p, |p| ty_prec(p, TyPrec::App), Expected::Ty);
         }
-        p.exit(ent, SK::TupleTy)
+        p.exit(en, SK::TupleTy)
       } else {
-        let ent = p.precede(ex);
+        let en = p.precede(ex);
         must(p, path, Expected::Path);
-        p.exit(ent, SK::ConTy)
+        p.exit(en, SK::ConTy)
       }
     } else {
       break;
@@ -90,18 +90,18 @@ enum TyPrec {
 }
 
 pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> Exited {
-  let ent = p.enter();
+  let en = p.enter();
   if p.at(SK::TyVar) {
-    let ent = p.enter();
+    let en = p.enter();
     p.bump();
-    p.exit(ent, SK::TyVarArg);
+    p.exit(en, SK::TyVarArg);
   } else if p.at(SK::LRound) && p.at_n(1, SK::TyVar) {
     p.bump();
     comma_sep(p, SK::RRound, SK::TyVarArg, |p| {
       p.eat(SK::TyVar);
     });
   }
-  p.exit(ent, SK::TyVarSeq)
+  p.exit(en, SK::TyVarSeq)
 }
 
 #[must_use]
@@ -117,10 +117,10 @@ pub(crate) fn ty_annotation(p: &mut Parser<'_>) -> Option<Exited> {
 #[must_use]
 fn tok_ty(p: &mut Parser<'_>, tok: SK, wrap: SK) -> Option<Exited> {
   if p.at(tok) {
-    let ent = p.enter();
+    let en = p.enter();
     p.bump();
     ty(p);
-    Some(p.exit(ent, wrap))
+    Some(p.exit(en, wrap))
   } else {
     None
   }

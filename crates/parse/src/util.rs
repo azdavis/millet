@@ -21,16 +21,16 @@ where
 {
   let mut advanced = false;
   loop {
-    let ent = p.enter();
+    let en = p.enter();
     if f(p).is_none() {
-      p.abandon(ent);
+      p.abandon(en);
       return advanced;
     }
     advanced = true;
     if p.at(SK::Semicolon) {
       p.bump();
     }
-    p.exit(ent, wrap);
+    p.exit(en, wrap);
   }
 }
 
@@ -48,13 +48,13 @@ where
     return;
   }
   loop {
-    let ent = p.enter();
+    let en = p.enter();
     f(p);
     if p.at(SK::Comma) {
       p.bump();
-      p.exit(ent, wrap);
+      p.exit(en, wrap);
     } else {
-      p.exit(ent, wrap);
+      p.exit(en, wrap);
       p.eat(end);
       break;
     }
@@ -68,13 +68,13 @@ where
   F: FnMut(&mut Parser<'a>),
 {
   loop {
-    let ent = p.enter();
+    let en = p.enter();
     f(p);
     if p.at(sep) {
       p.bump();
-      p.exit(ent, wrap);
+      p.exit(en, wrap);
     } else {
-      p.exit(ent, wrap);
+      p.exit(en, wrap);
       break;
     }
   }
@@ -136,15 +136,15 @@ pub(crate) fn scon(p: &mut Parser<'_>) -> bool {
 
 #[must_use]
 pub(crate) fn lab(p: &mut Parser<'_>) -> Option<Exited> {
-  let ent = p.enter();
+  let en = p.enter();
   let ex = if p.at(SK::Name) {
     p.bump();
-    p.exit(ent, SK::NameLab)
+    p.exit(en, SK::NameLab)
   } else if p.at(SK::IntLit) {
     p.bump();
-    p.exit(ent, SK::IntLitLab)
+    p.exit(en, SK::IntLitLab)
   } else {
-    p.abandon(ent);
+    p.abandon(en);
     return None;
   };
   Some(ex)
