@@ -35,7 +35,9 @@ pub(crate) fn check(s: &str) {
   if let Err((range, msg)) = check_impl(s) {
     cx.add_err(Range::<usize>::from(range), msg)
   }
-  cx.finish()
+  if !cx.reasons.is_empty() {
+    panic!("{cx}")
+  }
 }
 
 enum Reason<'a> {
@@ -88,12 +90,6 @@ impl<'a> Cx<'a> {
           }
         }
       },
-    }
-  }
-
-  fn finish(self) {
-    if !self.reasons.is_empty() {
-      panic!("{self}")
     }
   }
 }
