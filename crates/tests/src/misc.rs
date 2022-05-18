@@ -217,7 +217,7 @@ fn infix_without_op() {
   check(
     r#"
 val _ = + (1, 2)
-(**     ^ infix identifier used without preceding `op`: + *)
+(**     ^ infix name used as non-infix without `op` *)
 "#,
   );
 }
@@ -326,7 +326,7 @@ fn not_infix() {
     r#"
 datatype t = C of int * int
 fun f (_ C _) = 2
-(**      ^ non-infix identifier used as infix: C *)
+(**      ^ non-infix name used as infix *)
 "#,
   );
 }
@@ -446,7 +446,7 @@ fn same_fixity_diff_assoc() {
 infix <<
 infixr >>
 val _ = 1 << 2 >> 3
-(**            ^^ consecutive infix identifiers with same fixity but different associativity *)
+(**            ^^ consecutive infix names with same fixity but different associativity *)
 "#,
   );
 }

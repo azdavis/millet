@@ -171,7 +171,7 @@ fn check_impl_old(s: &str) -> Result<(), Located<String>> {
   let store = store.finish();
   let top_decs = match old_parse::get(lexer) {
     Ok(x) => x,
-    Err(e) => return Err(e.loc.wrap(e.val.message(&store))),
+    Err(e) => return Err(e.loc.wrap(e.val.message())),
   };
   let mut statics = old_statics::Statics::new();
   for top_dec in top_decs.iter() {

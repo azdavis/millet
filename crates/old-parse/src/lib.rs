@@ -9,7 +9,7 @@ use old_ast::{
   FunBind, Label, Long, Pat, Row, SigBind, SigExp, Spec, StrBind, StrDec, StrDesc, StrExp, TopDec,
   Ty, TyBind, TyDesc, TyPrec, ValBind, ValDesc,
 };
-use old_intern::{StrRef, StrStore};
+use old_intern::StrRef;
 use old_lex::Lexer;
 use old_loc::{Loc, Located};
 use old_token::{IdentType, IsNumLab, Token, TyVar};
@@ -41,8 +41,8 @@ pub fn get(lexer: Lexer) -> Result<Vec<Located<TopDec>>> {
 #[allow(missing_docs)]
 pub enum Error {
   ExpectedButFound(&'static str, &'static str),
-  InfixWithoutOp(StrRef),
-  NotInfix(StrRef),
+  InfixWithoutOp,
+  NotInfix,
   RealPat,
   NegativeFixity,
   SameFixityDiffAssoc,
@@ -50,18 +50,15 @@ pub enum Error {
 
 impl Error {
   /// A human-readable message describing this error.
-  pub fn message(&self, store: &StrStore) -> String {
+  pub fn message(&self) -> String {
     match self {
       Self::ExpectedButFound(exp, fnd) => format!("expected {}, found {}", exp, fnd),
-      Self::InfixWithoutOp(id) => format!(
-        "infix identifier used without preceding `op`: {}",
-        store.get(*id)
-      ),
-      Self::NotInfix(id) => format!("non-infix identifier used as infix: {}", store.get(*id)),
+      Self::InfixWithoutOp => "infix name used as non-infix without `op`".to_owned(),
+      Self::NotInfix => "non-infix name used as infix".to_owned(),
       Self::RealPat => "real constant used as a pattern".to_owned(),
       Self::NegativeFixity => "fixity is negative".to_owned(),
       Self::SameFixityDiffAssoc => {
-        "consecutive infix identifiers with same fixity but different associativity".to_owned()
+        "consecutive infix names with same fixity but different associativity".to_owned()
       }
     }
   }
@@ -715,7 +712,7 @@ impl Parser {
       None => return self.fail("an identifier", self.peek()),
     };
     if !allow_infix && ret.structures.is_empty() && self.ops.contains_key(&ret.last.val) {
-      Err(ret.last.loc.wrap(Error::InfixWithoutOp(ret.last.val)))
+      Err(ret.last.loc.wrap(Error::InfixWithoutOp))
     } else {
       Ok(ret)
     }
@@ -1080,7 +1077,7 @@ impl Parser {
         }
         Token::Ident(vid, _) => {
           if self.ops.contains_key(&vid) {
-            return Err(tok.loc.wrap(Error::InfixWithoutOp(vid)));
+            return Err(tok.loc.wrap(Error::InfixWithoutOp));
           }
           (tok.loc.wrap(vid), self.at_pat()?)
         }
@@ -1107,7 +1104,7 @@ impl Parser {
     let fst = self.at_pat()?;
     let vid = self.ident()?;
     if !self.ops.contains_key(&vid.val) {
-      return Err(vid.loc.wrap(Error::NotInfix(vid.val)));
+      return Err(vid.loc.wrap(Error::NotInfix));
     }
     let snd = self.at_pat()?;
     Ok((vid, fst.loc.wrap(Pat::Tuple(vec![fst, snd]))))
@@ -1417,7 +1414,7 @@ impl Parser {
         Token::Ident(id, _) => {
           let op_info = match self.ops.get(&id) {
             Some(x) => *x,
-            None => return Err(tok.loc.wrap(Error::NotInfix(id))),
+            None => return Err(tok.loc.wrap(Error::NotInfix)),
           };
           if op_info.should_break(min_prec, tok.loc)? {
             break;

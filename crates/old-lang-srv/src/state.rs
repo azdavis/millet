@@ -111,7 +111,7 @@ fn ck_one_file(bs: &[u8]) -> Option<Diagnostic> {
   let store = store.finish();
   let top_decs = match old_parse::get(lexer) {
     Ok(x) => x,
-    Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message(&store))),
+    Err(e) => return Some(mk_diagnostic(bs, e.loc, e.val.message())),
   };
   let mut s = old_statics::Statics::new();
   for top_dec in top_decs {
