@@ -442,6 +442,7 @@ pub enum Expected {
   SigExp,
   StrExp,
   Ty,
+  LRoundExpTail,
 }
 
 impl fmt::Display for Expected {
@@ -454,6 +455,7 @@ impl fmt::Display for Expected {
       Expected::SigExp => "a signature expression",
       Expected::StrExp => "a structure expression",
       Expected::Ty => "a type",
+      Expected::LRoundExpTail => "`)`, `,`, or `;`",
     };
     f.write_str(s)
   }

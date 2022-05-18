@@ -144,10 +144,8 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::SelectorExp)
   } else if p.at(SK::LRound) {
     p.bump();
-    let one = comma_sep(p, SK::RRound, SK::ExpArg, |p| {
-      exp(p);
-    });
-    p.exit(ent, if one { SK::ParenExp } else { SK::TupleExp })
+    let kind = at_exp_l_round(p);
+    p.exit(ent, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
     comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
@@ -168,6 +166,43 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     return None;
   };
   Some(ex)
+}
+
+fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
+  if p.at(SK::RRound) {
+    p.bump();
+    return SK::TupleExp;
+  }
+  let ent = p.enter();
+  exp(p);
+  if !p.at(SK::Semicolon) && !p.at(SK::Comma) {
+    if p.at(SK::RRound) {
+      p.abandon(ent);
+    } else {
+      p.error(ErrorKind::Expected(Expected::LRoundExpTail));
+    }
+    return SK::ParenExp;
+  }
+  let kind = p.bump().kind;
+  let (wrap, overall) = match kind {
+    SK::Semicolon => (SK::ExpInSeq, SK::SeqExp),
+    SK::Comma => (SK::ExpArg, SK::TupleExp),
+    _ => unreachable!(),
+  };
+  p.exit(ent, wrap);
+  loop {
+    let ent = p.enter();
+    exp(p);
+    if p.at(kind) {
+      p.bump();
+      p.exit(ent, wrap);
+    } else {
+      p.exit(ent, wrap);
+      p.eat(SK::RRound);
+      break;
+    }
+  }
+  overall
 }
 
 fn matcher(p: &mut Parser<'_>) {
