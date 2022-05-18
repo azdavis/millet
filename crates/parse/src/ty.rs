@@ -21,16 +21,30 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     });
     p.exit(en, SK::RecordTy)
   } else if p.at(SK::LRound) {
-    let save = p.save();
+    let ty_seq = p.enter();
     p.bump();
+    let ty_arg = p.enter();
     ty(p);
-    p.eat(SK::RRound);
-    if p.maybe_discard(save) {
+    if p.at(SK::RRound) {
+      p.abandon(ty_arg);
+      p.abandon(ty_seq);
+      p.bump();
       p.exit(en, SK::ParenTy)
     } else {
-      let ty_seq = p.enter();
-      p.bump();
-      comma_sep(p, SK::RRound, SK::TyArg, ty);
+      p.eat(SK::Comma);
+      p.exit(ty_arg, SK::TyArg);
+      loop {
+        let en = p.enter();
+        ty(p);
+        if p.at(SK::Comma) {
+          p.bump();
+          p.exit(en, SK::TyArg);
+        } else {
+          p.exit(en, SK::TyArg);
+          p.eat(SK::RRound);
+          break;
+        }
+      }
       p.exit(ty_seq, SK::TySeq);
       must(p, path, Expected::Path);
       p.exit(en, SK::ConTy)
