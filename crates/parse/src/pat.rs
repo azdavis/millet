@@ -24,6 +24,11 @@ impl ConPatState {
   }
 }
 
+enum AtPatHd {
+  ConPatArg(Entered),
+  Infix(ConPatState, OpInfo),
+}
+
 /// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
 #[must_use]
 fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
@@ -55,30 +60,46 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     ConPatState::Exited(at_pat(p)?)
   };
   loop {
-    let ex = if let Some(text) = p
-      .peek()
-      .and_then(|tok| (tok.kind == SK::Name).then(|| tok.text))
-    {
-      let op_info = match p.get_op(text) {
-        Some(x) => x,
-        None => {
-          p.error(ErrorKind::NotInfix);
-          // pretend it is
-          OpInfo::left(0)
+    let ex = if at_pat_hd(p) {
+      let tok = p.peek().unwrap();
+      let at_pat_hd = if tok.kind == SK::Name {
+        match p.get_op(tok.text) {
+          None => match state {
+            ConPatState::Entered(ent) => AtPatHd::ConPatArg(ent),
+            ConPatState::Exited(ex) => {
+              p.error(ErrorKind::NotInfix);
+              AtPatHd::Infix(ConPatState::Exited(ex), OpInfo::left(0))
+            }
+          },
+          Some(op_info) => AtPatHd::Infix(state, op_info),
+        }
+      } else {
+        match state {
+          ConPatState::Entered(ent) => AtPatHd::ConPatArg(ent),
+          ConPatState::Exited(_) => break,
         }
       };
-      let sb = should_break(op_info, min_prec);
-      if matches!(sb, ShouldBreak::Yes) {
-        break;
+      match at_pat_hd {
+        AtPatHd::ConPatArg(ent) => {
+          must(p, at_pat, Expected::Pat);
+          p.exit(ent, SK::ConPat)
+        }
+        AtPatHd::Infix(st, op_info) => {
+          state = st;
+          let sb = should_break(op_info, min_prec);
+          if matches!(sb, ShouldBreak::Yes) {
+            break;
+          }
+          let ex = state.exit(p);
+          let ent = p.precede(ex);
+          p.bump();
+          if matches!(sb, ShouldBreak::Error) {
+            p.error(ErrorKind::SameFixityDiffAssoc);
+          }
+          must(p, |p| pat_prec(p, Some(op_info)), Expected::Pat);
+          p.exit(ent, SK::InfixPat)
+        }
       }
-      let ex = state.exit(p);
-      let ent = p.precede(ex);
-      p.bump();
-      if matches!(sb, ShouldBreak::Error) {
-        p.error(ErrorKind::SameFixityDiffAssoc);
-      }
-      must(p, |p| pat_prec(p, Some(op_info)), Expected::Pat);
-      p.exit(ent, SK::InfixPat)
     } else if p.at(SK::Colon) {
       if min_prec.is_some() {
         break;
@@ -88,13 +109,6 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
       p.bump();
       ty(p);
       p.exit(ent, SK::TypedPat)
-    } else if at_pat_hd(p) {
-      let ent = match state {
-        ConPatState::Entered(ent) => ent,
-        ConPatState::Exited(_) => break,
-      };
-      must(p, at_pat, Expected::Pat);
-      p.exit(ent, SK::ConPat)
     } else {
       break;
     };
