@@ -66,9 +66,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
         match p.get_op(tok.text) {
           None => match state {
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
-            ConPatState::Exited(ex) => {
-              AtPatHd::Infix(ConPatState::Exited(ex), OpInfo::left(0), true)
-            }
+            ConPatState::Exited(_) => AtPatHd::Infix(state, OpInfo::left(0), true),
           },
           Some(op_info) => AtPatHd::Infix(state, op_info, false),
         }
