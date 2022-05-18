@@ -39,17 +39,14 @@ where
 /// - always uses `,` as the separator
 /// - allows 0 occurrences of `f`
 /// - returns only after eating `end`
-///
-/// returns whether there was exactly one `f` that had no commas.
-pub(crate) fn comma_sep<'a, F>(p: &mut Parser<'a>, end: SK, wrap: SK, mut f: F) -> bool
+pub(crate) fn comma_sep<'a, F>(p: &mut Parser<'a>, end: SK, wrap: SK, mut f: F)
 where
   F: FnMut(&mut Parser<'a>),
 {
   if p.at(end) {
     p.bump();
-    return false;
+    return;
   }
-  let mut ret = true;
   loop {
     let ent = p.enter();
     f(p);
@@ -59,9 +56,8 @@ where
     } else {
       p.exit(ent, wrap);
       p.eat(end);
-      return ret;
+      break;
     }
-    ret = false;
   }
 }
 
