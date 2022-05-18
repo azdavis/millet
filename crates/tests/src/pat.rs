@@ -66,3 +66,15 @@ val _: int = g A + f (2 B 3)
 "#,
   );
 }
+
+#[test]
+fn paren() {
+  check(
+    r#"
+val () = ()
+val a = 1
+val (b) = 2
+val (c, d) = (3, 4)
+"#,
+  );
+}
