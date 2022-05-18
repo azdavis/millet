@@ -171,10 +171,6 @@ impl<'input> Parser<'input> {
 
   /// Records an error at the current token.
   pub(crate) fn error(&mut self, kind: ErrorKind) {
-    self.error_(kind)
-  }
-
-  fn error_(&mut self, kind: ErrorKind) {
     self.events.push(Some(Event::Error(kind)));
   }
 
@@ -260,7 +256,7 @@ impl<'input> Parser<'input> {
     if self.at(kind) {
       Some(self.bump())
     } else {
-      self.error_(ErrorKind::ExpectedKind(kind));
+      self.error(ErrorKind::ExpectedKind(kind));
       None
     }
   }
