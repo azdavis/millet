@@ -2,8 +2,6 @@ use crate::parser::{Exited, Expected, Parser};
 use crate::util::{comma_sep, lab, must, path};
 use syntax::SyntaxKind as SK;
 
-const STAR: &str = "*";
-
 pub(crate) fn ty(p: &mut Parser<'_>) {
   must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty)
 }
@@ -37,10 +35,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       must(p, path, Expected::Path);
       p.exit(en, SK::ConTy)
     }
-  } else if p
-    .peek()
-    .map_or(false, |tok| tok.kind == SK::Name && tok.text != STAR)
-  {
+  } else if p.at(SK::Name) {
     must(p, path, Expected::Path);
     p.exit(en, SK::ConTy)
   } else {
@@ -56,25 +51,20 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       p.bump();
       must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty);
       p.exit(en, SK::FnTy)
-    } else if p.at(SK::Name) {
-      if p.peek().unwrap().text == STAR {
-        if TyPrec::Star < min_prec {
-          break;
-        }
-        let en = p.precede(ex);
-        while p
-          .peek()
-          .map_or(false, |tok| tok.kind == SK::Name && tok.text == STAR)
-        {
-          p.bump();
-          must(p, |p| ty_prec(p, TyPrec::App), Expected::Ty);
-        }
-        p.exit(en, SK::TupleTy)
-      } else {
-        let en = p.precede(ex);
-        must(p, path, Expected::Path);
-        p.exit(en, SK::ConTy)
+    } else if p.at(SK::Star) {
+      if TyPrec::Star < min_prec {
+        break;
       }
+      let en = p.precede(ex);
+      while p.at(SK::Star) {
+        p.bump();
+        must(p, |p| ty_prec(p, TyPrec::App), Expected::Ty);
+      }
+      p.exit(en, SK::TupleTy)
+    } else if p.at(SK::Name) {
+      let en = p.precede(ex);
+      must(p, path, Expected::Path);
+      p.exit(en, SK::ConTy)
     } else {
       break;
     };
