@@ -46,3 +46,23 @@ val _ =
 "#,
   );
 }
+
+#[test]
+fn infix() {
+  check(
+    r#"
+datatype d = A | B of int * int
+infix B
+val f = fn
+  A => 1
+| x B y => x + y
+nonfix B
+val g = fn
+  A => 2
+| B tup => op* tup
+val _: int = f A + g (B (1, 2))
+infix B
+val _: int = g A + f (2 B 3)
+"#,
+  );
+}
