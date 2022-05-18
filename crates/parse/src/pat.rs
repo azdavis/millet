@@ -39,7 +39,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     let kind = match (ta, ap) {
       (_, Some(_)) => SK::AsPat,
       (Some(_), None) => SK::TypedNamePat,
-      (None, None) => unreachable!("we should have just seen a name then (colon or as)"),
+      (None, None) => unreachable!("we should have just seen a name, then either colon or as"),
     };
     return Some(p.exit(ent, kind));
   }
