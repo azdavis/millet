@@ -427,6 +427,7 @@ pub enum ErrorKind {
   NotInfix,
   InfixWithoutOp,
   InvalidFixity(std::num::ParseIntError),
+  NegativeFixity,
   SameFixityDiffAssoc,
   Expected(Expected),
   ExpectedKind(SK),
@@ -463,6 +464,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::NotInfix => f.write_str("non-infix name used as infix"),
       ErrorKind::InfixWithoutOp => f.write_str("infix name used as non-infix without `op`"),
       ErrorKind::InvalidFixity(e) => write!(f, "invalid fixity: {e}"),
+      ErrorKind::NegativeFixity => f.write_str("fixity is negative"),
       ErrorKind::SameFixityDiffAssoc => {
         f.write_str("consecutive infix names with same fixity but different associativity")
       }

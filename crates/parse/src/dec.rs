@@ -140,11 +140,17 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
 
 fn fixity(p: &mut Parser<'_>) -> usize {
   if p.at(SK::IntLit) {
-    match p.bump().text.parse::<usize>() {
-      Ok(x) => x,
-      Err(e) => {
-        p.error(ErrorKind::InvalidFixity(e));
-        0
+    let text = p.bump().text;
+    if text.starts_with('~') {
+      p.error(ErrorKind::NegativeFixity);
+      0
+    } else {
+      match text.parse::<usize>() {
+        Ok(x) => x,
+        Err(e) => {
+          p.error(ErrorKind::InvalidFixity(e));
+          0
+        }
       }
     }
   } else {
