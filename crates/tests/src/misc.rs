@@ -625,3 +625,20 @@ val _: int = * (3, 4)
 "#,
   );
 }
+#[test]
+fn paren() {
+  check(
+    r#"
+structure S = struct
+  type i = (int)
+  type bl = ((bool) list)
+  val () = ()
+  val a = 1
+  val (b) = 2
+  val c = (3)
+  val (d) = (4)
+  val (e, f) = (5, 6)
+end
+"#,
+  );
+}
