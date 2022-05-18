@@ -237,7 +237,7 @@ impl<'input> Parser<'input> {
           sink.token(self.tokens[self.tok_idx]);
           self.tok_idx += 1;
         }
-        Event::Error(expected) => sink.error(expected),
+        Event::Error(kind) => sink.error(kind),
       }
     }
     assert_eq!(levels, 0);
