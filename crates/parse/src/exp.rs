@@ -172,6 +172,7 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
   if !p.at(SK::Semicolon) && !p.at(SK::Comma) {
     if p.at(SK::RRound) {
       p.abandon(en);
+      p.bump();
     } else {
       p.error(ErrorKind::Expected(Expected::LRoundExpTail));
     }
