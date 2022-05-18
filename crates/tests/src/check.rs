@@ -140,7 +140,14 @@ struct Region {
 
 impl fmt::Display for Region {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}:{}..{}", self.line, self.col.start, self.col.end)
+    // don't add 1 for the line because the check strings usually have the first line blank.
+    write!(
+      f,
+      "{}:{}..{}",
+      self.line,
+      self.col.start + 1,
+      self.col.end + 1
+    )
   }
 }
 
