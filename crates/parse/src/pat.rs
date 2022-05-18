@@ -156,8 +156,8 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(ent, SK::RecordPat)
   } else if p.at(SK::LRound) {
     p.bump();
-    let one = comma_sep(p, SK::RRound, SK::PatArg, |p| must(p, pat, Expected::Pat));
-    p.exit(ent, if one { SK::ParenPat } else { SK::TuplePat })
+    let kind = at_pat_l_round(p);
+    p.exit(ent, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
     comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat, Expected::Pat));
@@ -177,6 +177,35 @@ fn at_pat_hd(p: &mut Parser<'_>) -> bool {
     || p.at(SK::LCurly)
     || p.at(SK::LRound)
     || p.at(SK::LSquare)
+}
+
+fn at_pat_l_round(p: &mut Parser<'_>) -> SK {
+  if p.at(SK::RRound) {
+    p.bump();
+    return SK::TuplePat;
+  }
+  let ent = p.enter();
+  must(p, pat, Expected::Pat);
+  if p.at(SK::RRound) {
+    p.abandon(ent);
+    p.bump();
+    return SK::ParenPat;
+  }
+  p.eat(SK::Comma);
+  p.exit(ent, SK::PatArg);
+  loop {
+    let ent = p.enter();
+    must(p, pat, Expected::Pat);
+    if p.at(SK::Comma) {
+      p.bump();
+      p.exit(ent, SK::PatArg);
+    } else {
+      p.exit(ent, SK::PatArg);
+      p.eat(SK::RRound);
+      break;
+    }
+  }
+  SK::TuplePat
 }
 
 /// not necessarily an as pat, since it could be a typed pat.
