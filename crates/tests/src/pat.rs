@@ -59,7 +59,7 @@ val f = fn
 nonfix B
 val g = fn
   A => 2
-| B tup => op* tup
+| B tup => op- tup
 val _: int = f A + g (B (1, 2))
 infix B
 val _: int = g A + f (2 B 3)
