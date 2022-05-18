@@ -27,17 +27,21 @@ impl ConPatState {
 /// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
 #[must_use]
 fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
-  // as pat
-  if as_pat_hd(p, 0) || (p.at(SK::OpKw) && as_pat_hd(p, 1)) {
+  // as pat/typed pat
+  if name_then_colon_or_as(p, 0) || (p.at(SK::OpKw) && name_then_colon_or_as(p, 1)) {
     let ent = p.enter();
     if p.at(SK::OpKw) {
       p.bump();
     }
     p.eat(SK::Name);
-    let _ = ty_annotation(p);
-    // using unwrap, not must, since we just checked for as_pat_hd.
-    as_pat_tl(p).unwrap();
-    return Some(p.exit(ent, SK::AsPat));
+    let ta = ty_annotation(p);
+    let ap = as_pat_tl(p);
+    let kind = match (ta, ap) {
+      (_, Some(_)) => SK::AsPat,
+      (Some(_), None) => SK::TypedNamePat,
+      (None, None) => unreachable!("we should have just seen a name then (colon or as)"),
+    };
+    return Some(p.exit(ent, kind));
   }
   // con pat with arg, or infix pat
   let mut state = if p.at(SK::Name) || (p.at(SK::OpKw) && p.at_n(1, SK::Name)) {
@@ -157,8 +161,9 @@ fn at_pat_hd(p: &mut Parser<'_>) -> bool {
     || p.at(SK::LSquare)
 }
 
+/// not necessarily an as pat, since it could be a typed pat.
 #[must_use]
-fn as_pat_hd(p: &mut Parser<'_>, n: usize) -> bool {
+fn name_then_colon_or_as(p: &mut Parser<'_>, n: usize) -> bool {
   p.at_n(n, SK::Name) && (p.at_n(n + 1, SK::Colon) || p.at_n(n + 1, SK::AsKw))
 }
 

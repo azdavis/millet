@@ -188,6 +188,7 @@ Pat =
 | ListPat
 | InfixPat
 | TypedPat
+| TypedNamePat
 | AsPat
 
 WildcardPat = '_'
@@ -199,6 +200,8 @@ TuplePat = '(' PatArg* ')'
 ListPat = '[' PatArg* ']'
 InfixPat = lhs:Pat 'Name' rhs:Pat
 TypedPat = Pat TyAnnotation
+// rather annoying, but this makes the parser a bit easier to write.
+TypedNamePat = 'op'? 'Name' TyAnnotation
 AsPat = 'op'? 'Name' TyAnnotation? AsPatTail
 
 PatRow = PatRowInner ','?

@@ -59,6 +59,13 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       get(cx, pat.pat()),
       ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
     ),
+    ast::Pat::TypedNamePat(pat) => {
+      let name_pat = cx.arenas.pat.alloc(name(pat.name()?.text()));
+      hir::Pat::Typed(
+        name_pat,
+        ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
+      )
+    }
     ast::Pat::AsPat(pat) => as_(
       cx,
       get_name(pat.name())?,
