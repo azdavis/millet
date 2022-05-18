@@ -1,6 +1,6 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::ty::{ty, ty_annotation};
-use crate::util::{comma_sep, lab, must, path, scon, should_break};
+use crate::util::{comma_sep, lab, must, path, scon, should_break, ShouldBreak};
 use syntax::SyntaxKind as SK;
 
 #[must_use]
@@ -67,12 +67,16 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
           OpInfo::left(0)
         }
       };
-      if should_break(p, op_info, min_prec) {
+      let sb = should_break(op_info, min_prec);
+      if matches!(sb, ShouldBreak::Yes) {
         break;
       }
       let ex = state.exit(p);
       let ent = p.precede(ex);
       p.bump();
+      if matches!(sb, ShouldBreak::Error) {
+        p.error(ErrorKind::SameFixityDiffAssoc);
+      }
       must(p, |p| pat_prec(p, Some(op_info)), Expected::Pat);
       p.exit(ent, SK::InfixPat)
     } else if p.at(SK::Colon) {

@@ -1,8 +1,8 @@
 use crate::dec::dec;
-use crate::parser::{Exited, Expected, OpInfo, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::pat::pat;
 use crate::ty::ty;
-use crate::util::{comma_sep, lab, many_sep, must, path, scon, should_break};
+use crate::util::{comma_sep, lab, many_sep, must, path, scon, should_break, ShouldBreak};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn exp(p: &mut Parser<'_>) {
@@ -55,11 +55,15 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         }
       });
       ex = if let Some(op_info) = op_info {
-        if should_break_exp(p, ExpPrec::Infix(op_info), min_prec) {
+        let sb = should_break_exp(ExpPrec::Infix(op_info), min_prec);
+        if matches!(sb, ShouldBreak::Yes) {
           break;
         }
         let ent = p.precede(ex);
         p.bump();
+        if matches!(sb, ShouldBreak::Error) {
+          p.error(ErrorKind::SameFixityDiffAssoc);
+        }
         must(p, |p| exp_prec(p, ExpPrec::Infix(op_info)), Expected::Exp);
         p.exit(ent, SK::InfixExp)
       } else if p.at(SK::Colon) {
@@ -71,19 +75,27 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         ty(p);
         p.exit(ent, SK::TypedExp)
       } else if p.at(SK::AndalsoKw) {
-        if should_break_exp(p, ExpPrec::Andalso, min_prec) {
+        let sb = should_break_exp(ExpPrec::Andalso, min_prec);
+        if matches!(sb, ShouldBreak::Yes) {
           break;
         }
         let ent = p.precede(ex);
         p.bump();
+        if matches!(sb, ShouldBreak::Error) {
+          p.error(ErrorKind::SameFixityDiffAssoc);
+        }
         must(p, |p| exp_prec(p, ExpPrec::Andalso), Expected::Exp);
         p.exit(ent, SK::AndalsoExp)
       } else if p.at(SK::OrelseKw) {
-        if should_break_exp(p, ExpPrec::Orelse, min_prec) {
+        let sb = should_break_exp(ExpPrec::Orelse, min_prec);
+        if matches!(sb, ShouldBreak::Yes) {
           break;
         }
         let ent = p.precede(ex);
         p.bump();
+        if matches!(sb, ShouldBreak::Error) {
+          p.error(ErrorKind::SameFixityDiffAssoc);
+        }
         must(p, |p| exp_prec(p, ExpPrec::Orelse), Expected::Exp);
         p.exit(ent, SK::OrelseExp)
       } else if p.at(SK::HandleKw) {
@@ -186,11 +198,11 @@ enum ExpPrec {
   Min,
 }
 
-fn should_break_exp(p: &mut Parser<'_>, prec: ExpPrec, min_prec: ExpPrec) -> bool {
+fn should_break_exp(prec: ExpPrec, min_prec: ExpPrec) -> ShouldBreak {
   match (prec, min_prec) {
-    (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(p, prec, Some(min_prec)),
-    (ExpPrec::Andalso, ExpPrec::Andalso) | (ExpPrec::Orelse, ExpPrec::Orelse) => true,
-    (ExpPrec::Infix(_) | ExpPrec::Andalso | ExpPrec::Orelse, _) => false,
+    (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(prec, Some(min_prec)),
+    (ExpPrec::Andalso, ExpPrec::Andalso) | (ExpPrec::Orelse, ExpPrec::Orelse) => ShouldBreak::Yes,
+    (ExpPrec::Infix(_) | ExpPrec::Andalso | ExpPrec::Orelse, _) => ShouldBreak::No,
     (ExpPrec::Min, _) => unreachable!(),
   }
 }
