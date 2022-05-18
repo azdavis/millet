@@ -26,7 +26,7 @@ impl ConPatState {
 
 enum AtPatHd {
   ConPatArg(Entered),
-  Infix(ConPatState, OpInfo),
+  Infix(ConPatState, OpInfo, bool),
 }
 
 /// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
@@ -67,11 +67,10 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
           None => match state {
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
             ConPatState::Exited(ex) => {
-              p.error(ErrorKind::NotInfix);
-              AtPatHd::Infix(ConPatState::Exited(ex), OpInfo::left(0))
+              AtPatHd::Infix(ConPatState::Exited(ex), OpInfo::left(0), true)
             }
           },
-          Some(op_info) => AtPatHd::Infix(state, op_info),
+          Some(op_info) => AtPatHd::Infix(state, op_info, false),
         }
       } else {
         match state {
@@ -84,7 +83,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
           must(p, at_pat, Expected::Pat);
           p.exit(en, SK::ConPat)
         }
-        AtPatHd::Infix(st, op_info) => {
+        AtPatHd::Infix(st, op_info, not_infix_error) => {
           state = st;
           let sb = should_break(op_info, min_prec);
           if matches!(sb, ShouldBreak::Yes) {
@@ -93,7 +92,9 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
           let ex = state.exit(p);
           let en = p.precede(ex);
           p.bump();
-          if matches!(sb, ShouldBreak::Error) {
+          if not_infix_error {
+            p.error(ErrorKind::NotInfix);
+          } else if matches!(sb, ShouldBreak::Error) {
             p.error(ErrorKind::SameFixityDiffAssoc);
           }
           must(p, |p| pat_prec(p, Some(op_info)), Expected::Pat);
