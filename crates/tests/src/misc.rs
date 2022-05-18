@@ -625,6 +625,7 @@ val _: int = * (3, 4)
 "#,
   );
 }
+
 #[test]
 fn paren() {
   check(
