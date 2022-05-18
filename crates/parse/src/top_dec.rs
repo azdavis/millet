@@ -17,6 +17,9 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
       p.eat(SK::Colon);
       must(p, sig_exp, Expected::SigExp);
       p.eat(SK::RRound);
+      if ascription(p) {
+        ascription_tail(p);
+      }
       p.eat(SK::Eq);
       must(p, str_exp, Expected::StrExp);
     });

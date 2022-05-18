@@ -21,11 +21,19 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> Option<hir::TopDec> {
       top_dec
         .functor_binds()
         .filter_map(|fun_bind| {
+          let functor_name = get_name(fun_bind.functor_name())?;
+          let param_name = get_name(fun_bind.param())?;
+          let mut body = get_str_exp(cx, fun_bind.body());
+          if let Some(tail) = fun_bind.ascription_tail() {
+            let (kind, sig_exp) = ascription_tail(cx, Some(tail));
+            let asc = hir::StrExp::Ascription(body, kind, sig_exp);
+            body = cx.arenas.str_exp.alloc(asc);
+          }
           Some(hir::FunctorBind {
-            functor_name: get_name(fun_bind.functor_name())?,
-            param_name: get_name(fun_bind.param())?,
+            functor_name,
+            param_name,
             param_sig: get_sig_exp(cx, fun_bind.param_sig()),
-            body: get_str_exp(cx, fun_bind.body()),
+            body,
           })
         })
         .collect(),
