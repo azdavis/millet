@@ -98,11 +98,11 @@ val _ = if b then a + 2 else a - 4
 }
 
 #[test]
-fn expected_but_found() {
+fn expected() {
   check(
     r#"
-val _ _ _ _
-(**   ^ expected `=`, found `_` *)
+val _ 3
+(**   ^ expected `=` *)
 "#,
   );
 }

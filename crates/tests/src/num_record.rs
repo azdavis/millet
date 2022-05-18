@@ -16,7 +16,7 @@ fn t_02() {
   check(
     r#"
 type t = { 0: int, 1: bool }
-(**        ^ expected a label, found a decimal integer literal *)
+(**        ^ expected a label *)
 "#,
   );
 }
