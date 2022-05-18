@@ -169,8 +169,7 @@ impl<'input> Parser<'input> {
     ret
   }
 
-  /// Records an error at the current token, with an "expected `desc`" error
-  /// message.
+  /// Records an error at the current token.
   pub(crate) fn error(&mut self, kind: ErrorKind) {
     self.error_(kind)
   }
@@ -241,6 +240,7 @@ impl<'input> Parser<'input> {
       }
     }
     assert_eq!(levels, 0);
+    sink.extend_errors();
     (SyntaxNode::new_root(sink.builder.finish()), sink.errors)
   }
 
@@ -481,18 +481,33 @@ struct BuilderSink {
   builder: GreenNodeBuilder<'static>,
   range: TextRange,
   errors: Vec<Error>,
+  kinds: Vec<ErrorKind>,
 }
 
 impl BuilderSink {
+  fn extend_errors(&mut self) {
+    let errors = std::mem::take(&mut self.kinds)
+      .into_iter()
+      .map(|kind| Error {
+        range: self.range,
+        kind,
+      });
+    self.errors.extend(errors);
+  }
+
   fn enter(&mut self, kind: SK) {
     self.builder.start_node(kind.into());
   }
 
   fn token(&mut self, token: Token<'_, SK>) {
+    let is_trivia = token.kind.is_trivia();
     self.builder.token(token.kind.into(), token.text);
     let start = self.range.end();
     let end = start + TextSize::of(token.text);
     self.range = TextRange::new(start, end);
+    if !is_trivia {
+      self.extend_errors();
+    }
   }
 
   fn exit(&mut self) {
@@ -500,9 +515,6 @@ impl BuilderSink {
   }
 
   fn error(&mut self, kind: ErrorKind) {
-    self.errors.push(Error {
-      range: self.range,
-      kind,
-    });
+    self.kinds.push(kind);
   }
 }

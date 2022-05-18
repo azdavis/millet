@@ -55,15 +55,13 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         }
       });
       ex = if let Some(op_info) = op_info {
-        let sb = should_break_exp(ExpPrec::Infix(op_info), min_prec);
-        if matches!(sb, ShouldBreak::Yes) {
-          break;
+        match should_break_exp(ExpPrec::Infix(op_info), min_prec) {
+          ShouldBreak::Yes => break,
+          ShouldBreak::No => {}
+          ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
         }
         let en = p.precede(ex);
         p.bump();
-        if matches!(sb, ShouldBreak::Error) {
-          p.error(ErrorKind::SameFixityDiffAssoc);
-        }
         must(p, |p| exp_prec(p, ExpPrec::Infix(op_info)), Expected::Exp);
         p.exit(en, SK::InfixExp)
       } else if p.at(SK::Colon) {
@@ -75,27 +73,23 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         ty(p);
         p.exit(en, SK::TypedExp)
       } else if p.at(SK::AndalsoKw) {
-        let sb = should_break_exp(ExpPrec::Andalso, min_prec);
-        if matches!(sb, ShouldBreak::Yes) {
-          break;
+        match should_break_exp(ExpPrec::Andalso, min_prec) {
+          ShouldBreak::Yes => break,
+          ShouldBreak::No => {}
+          ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
         }
         let en = p.precede(ex);
         p.bump();
-        if matches!(sb, ShouldBreak::Error) {
-          p.error(ErrorKind::SameFixityDiffAssoc);
-        }
         must(p, |p| exp_prec(p, ExpPrec::Andalso), Expected::Exp);
         p.exit(en, SK::AndalsoExp)
       } else if p.at(SK::OrelseKw) {
-        let sb = should_break_exp(ExpPrec::Orelse, min_prec);
-        if matches!(sb, ShouldBreak::Yes) {
-          break;
+        match should_break_exp(ExpPrec::Orelse, min_prec) {
+          ShouldBreak::Yes => break,
+          ShouldBreak::No => {}
+          ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
         }
         let en = p.precede(ex);
         p.bump();
-        if matches!(sb, ShouldBreak::Error) {
-          p.error(ErrorKind::SameFixityDiffAssoc);
-        }
         must(p, |p| exp_prec(p, ExpPrec::Orelse), Expected::Exp);
         p.exit(en, SK::OrelseExp)
       } else if p.at(SK::HandleKw) {

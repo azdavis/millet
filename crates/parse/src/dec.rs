@@ -139,23 +139,20 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
 }
 
 fn fixity(p: &mut Parser<'_>) -> usize {
+  let mut ret = 0;
   if p.at(SK::IntLit) {
-    let text = p.bump().text;
+    let text = p.peek().unwrap().text;
     if text.starts_with('~') {
       p.error(ErrorKind::NegativeFixity);
-      0
     } else {
       match text.parse::<usize>() {
-        Ok(x) => x,
-        Err(e) => {
-          p.error(ErrorKind::InvalidFixity(e));
-          0
-        }
+        Ok(x) => ret = x,
+        Err(e) => p.error(ErrorKind::InvalidFixity(e)),
       }
     }
-  } else {
-    0
+    p.bump();
   }
+  ret
 }
 
 fn names<'a>(p: &mut Parser<'a>) -> Vec<&'a str> {

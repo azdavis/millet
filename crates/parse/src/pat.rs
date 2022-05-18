@@ -26,7 +26,7 @@ impl ConPatState {
 
 enum AtPatHd {
   ConPatArg(Entered),
-  Infix(ConPatState, OpInfo, bool),
+  Infix(ConPatState, OpInfo),
 }
 
 /// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
@@ -66,9 +66,12 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
         match p.get_op(tok.text) {
           None => match state {
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
-            ConPatState::Exited(_) => AtPatHd::Infix(state, OpInfo::left(0), true),
+            ConPatState::Exited(_) => {
+              p.error(ErrorKind::NotInfix);
+              AtPatHd::Infix(state, OpInfo::left(0))
+            }
           },
-          Some(op_info) => AtPatHd::Infix(state, op_info, false),
+          Some(op_info) => AtPatHd::Infix(state, op_info),
         }
       } else {
         match state {
@@ -81,20 +84,16 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
           must(p, at_pat, Expected::Pat);
           p.exit(en, SK::ConPat)
         }
-        AtPatHd::Infix(st, op_info, not_infix_error) => {
+        AtPatHd::Infix(st, op_info) => {
           state = st;
-          let sb = should_break(op_info, min_prec);
-          if matches!(sb, ShouldBreak::Yes) {
-            break;
+          match should_break(op_info, min_prec) {
+            ShouldBreak::Yes => break,
+            ShouldBreak::No => {}
+            ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
           }
           let ex = state.exit(p);
           let en = p.precede(ex);
           p.bump();
-          if not_infix_error {
-            p.error(ErrorKind::NotInfix);
-          } else if matches!(sb, ShouldBreak::Error) {
-            p.error(ErrorKind::SameFixityDiffAssoc);
-          }
           must(p, |p| pat_prec(p, Some(op_info)), Expected::Pat);
           p.exit(en, SK::InfixPat)
         }
