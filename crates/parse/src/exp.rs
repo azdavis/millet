@@ -2,7 +2,9 @@ use crate::dec::dec;
 use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::pat::pat;
 use crate::ty::ty;
-use crate::util::{comma_sep, lab, many_sep, must, path, scon, should_break, ShouldBreak};
+use crate::util::{
+  comma_sep, lab, many_sep, must, name_plus, path, scon, should_break, ShouldBreak,
+};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn exp(p: &mut Parser<'_>) {
@@ -44,16 +46,12 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
     p.abandon(en);
     let mut ex = at_exp(p)?;
     loop {
-      let op_info = p.peek().and_then(|tok| {
-        // NOTE: `*` and `=` are special because they are 'proper' tokens (`*` in tuple types, `=`
-        // in e.g. val bindings), but they can also be regular operator names (and indeed are, in
-        // the standard basis).
-        if matches!(tok.kind, SK::Name | SK::Star | SK::Eq) {
-          p.get_op(tok.text)
-        } else {
-          None
-        }
-      });
+      let op_info = if name_plus(p) {
+        let text = p.peek().unwrap().text;
+        p.get_op(text)
+      } else {
+        None
+      };
       ex = if let Some(op_info) = op_info {
         match should_break_exp(ExpPrec::Infix(op_info), min_prec) {
           ShouldBreak::Yes => break,

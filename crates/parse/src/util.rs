@@ -141,3 +141,8 @@ pub(crate) fn lab(p: &mut Parser<'_>) {
     p.error(ErrorKind::Expected(Expected::Lab));
   }
 }
+
+#[must_use]
+pub(crate) fn name_plus(p: &mut Parser<'_>) -> bool {
+  p.at(SK::Name) || p.at(SK::Star) || p.at(SK::Eq)
+}
