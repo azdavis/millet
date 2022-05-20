@@ -140,7 +140,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
         p.bump();
         p.exit(en, SK::RestPatRow);
       } else if p.at_n(1, SK::Eq) {
-        must(p, lab, Expected::Lab);
+        lab(p);
         p.eat(SK::Eq);
         must(p, pat, Expected::Pat);
         p.exit(en, SK::LabAndPatPatRow);

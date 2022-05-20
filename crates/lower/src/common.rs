@@ -21,12 +21,9 @@ pub(crate) fn get_path(p: ast::Path) -> Option<hir::Path> {
   hir::Path::try_new(p.name_dots().filter_map(|x| get_name(x.name())).collect())
 }
 
-pub(crate) fn get_lab(l: ast::Lab) -> Option<hir::Lab> {
-  match l {
-    ast::Lab::NameLab(l) => get_name(l.name()).map(hir::Lab::Name),
-    ast::Lab::IntLitLab(l) => l
-      .int_lit()
-      .and_then(|tok| tok.text().parse::<usize>().ok())
-      .map(hir::Lab::Num),
+pub(crate) fn get_lab(lab: ast::Lab) -> Option<hir::Lab> {
+  match lab.kind {
+    ast::LabKind::Name => Some(hir::Lab::Name(hir::Name::new(lab.token.text()))),
+    ast::LabKind::IntLit => lab.token.text().parse::<usize>().ok().map(hir::Lab::Num),
   }
 }

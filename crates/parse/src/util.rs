@@ -134,18 +134,10 @@ pub(crate) fn scon(p: &mut Parser<'_>) -> bool {
     || p.at(SK::StringLit)
 }
 
-#[must_use]
-pub(crate) fn lab(p: &mut Parser<'_>) -> Option<Exited> {
-  let en = p.enter();
-  let ex = if p.at(SK::Name) {
+pub(crate) fn lab(p: &mut Parser<'_>) {
+  if p.at(SK::Name) || p.at(SK::IntLit) {
     p.bump();
-    p.exit(en, SK::NameLab)
-  } else if p.at(SK::IntLit) {
-    p.bump();
-    p.exit(en, SK::IntLitLab)
   } else {
-    p.abandon(en);
-    return None;
-  };
-  Some(ex)
+    p.error(ErrorKind::Expected(Expected::Lab));
+  }
 }

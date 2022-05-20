@@ -15,7 +15,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
   } else if p.at(SK::LCurly) {
     p.bump();
     comma_sep(p, SK::RCurly, SK::TyRow, |p| {
-      must(p, lab, Expected::Lab);
+      lab(p);
       p.eat(SK::Colon);
       ty(p);
     });

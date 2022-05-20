@@ -250,9 +250,7 @@ TyArg = Ty ','?
 TyVarSeq = '('? TyVarArg* ')'?
 TyVarArg = 'TyVar' ','?
 
-Lab = NameLab | IntLitLab
-NameLab = 'Name'
-IntLitLab = 'IntLit'
+Lab = 'Name' | 'IntLit'
 
 SCon =
   'IntLit'
