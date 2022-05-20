@@ -114,22 +114,16 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
   } else if p.at(SK::InfixKw) {
     p.bump();
     let num = fixity(p);
-    for name in names(p) {
-      p.insert_op(name, OpInfo::left(num));
-    }
+    names(p, |p, name| p.insert_op(name, OpInfo::left(num)));
     p.exit(en, SK::InfixDec)
   } else if p.at(SK::InfixrKw) {
     p.bump();
     let num = fixity(p);
-    for name in names(p) {
-      p.insert_op(name, OpInfo::right(num));
-    }
+    names(p, |p, name| p.insert_op(name, OpInfo::right(num)));
     p.exit(en, SK::InfixrDec)
   } else if p.at(SK::NonfixKw) {
     p.bump();
-    for name in names(p) {
-      p.remove_op(name);
-    }
+    names(p, |p, name| p.remove_op(name));
     p.exit(en, SK::NonfixDec)
   } else {
     p.abandon(en);
@@ -155,15 +149,19 @@ fn fixity(p: &mut Parser<'_>) -> usize {
   ret
 }
 
-fn names<'a>(p: &mut Parser<'a>) -> Vec<&'a str> {
-  let mut ret = Vec::new();
+fn names<'a, F>(p: &mut Parser<'a>, mut f: F)
+where
+  F: FnMut(&mut Parser<'a>, &'a str),
+{
+  let mut got = false;
   while p.at(SK::Name) {
-    ret.push(p.bump().text);
+    got = true;
+    let text = p.bump().text;
+    f(p, text);
   }
-  if ret.is_empty() {
+  if !got {
     p.error(ErrorKind::ExpectedKind(SK::Name));
   }
-  ret
 }
 
 pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
