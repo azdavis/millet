@@ -27,6 +27,7 @@
     "prec",
     "ptrs",
     "rustc",
+    "rustfmt",
     "scon",
     "seqs",
     "sestoft",

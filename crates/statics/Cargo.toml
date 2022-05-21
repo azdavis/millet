@@ -11,3 +11,6 @@ doctest = false
 [dependencies]
 rustc-hash = "1"
 hir = { path = "../hir" }
+
+[build-dependencies]
+quote = "1"
