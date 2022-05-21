@@ -87,7 +87,7 @@ where
   let rows: Vec<_> = ps
     .into_iter()
     .enumerate()
-    .map(|(idx, p)| (hir::Lab::Num(idx + 1), p))
+    .map(|(idx, p)| (hir::Lab::tuple(idx), p))
     .collect();
   assert_ne!(rows.len(), 1);
   hir::Pat::Record {

@@ -26,7 +26,7 @@ fn get_(cx: &mut Cx, ty: ast::Ty) -> Option<hir::Ty> {
     ast::Ty::TupleTy(ty) => hir::Ty::Record(
       ty.ty_stars()
         .enumerate()
-        .map(|(idx, t)| (hir::Lab::Num(idx + 1), get(cx, t.ty())))
+        .map(|(idx, t)| (hir::Lab::tuple(idx), get(cx, t.ty())))
         .collect(),
     ),
     ast::Ty::FnTy(ty) => hir::Ty::Fn(get(cx, ty.param()), get(cx, ty.res())),

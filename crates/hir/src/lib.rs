@@ -238,10 +238,16 @@ pub enum Ty {
   Fn(TyIdx, TyIdx),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Lab {
   Name(Name),
   Num(usize),
+}
+
+impl Lab {
+  pub fn tuple(idx: usize) -> Self {
+    Self::Num(idx + 1)
+  }
 }
 
 #[derive(Debug)]
@@ -270,7 +276,7 @@ impl Path {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Name(SmolStr);
 
 impl Name {

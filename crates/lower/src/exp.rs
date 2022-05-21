@@ -126,7 +126,7 @@ where
   let rows: Vec<_> = es
     .into_iter()
     .enumerate()
-    .map(|(idx, e)| (hir::Lab::Num(idx + 1), e))
+    .map(|(idx, e)| (hir::Lab::tuple(idx), e))
     .collect();
   assert_ne!(rows.len(), 1);
   hir::Exp::Record(rows)
