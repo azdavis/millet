@@ -350,6 +350,7 @@ dependencies = [
  "hir",
  "quote",
  "rustc-hash",
+ "uniq",
 ]
 
 [[package]]
@@ -455,6 +456,11 @@ checksum = "d54590932941a9e9266f0832deed84ebe1bf2e4c9e4a3554d393d18f5e854bf9"
 dependencies = [
  "tinyvec",
 ]
+
+[[package]]
+name = "uniq"
+version = "0.1.0"
+source = "git+https://github.com/azdavis/language-util.git#9ab89b195beabe1f8e8fca5d099c085f1d504c9d"
 
 [[package]]
 name = "url"

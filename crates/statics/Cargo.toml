@@ -11,6 +11,7 @@ doctest = false
 [dependencies]
 rustc-hash = "1"
 hir = { path = "../hir" }
+uniq = { git = "https://github.com/azdavis/language-util.git" }
 
 [build-dependencies]
 quote = "1"

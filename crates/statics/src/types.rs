@@ -5,13 +5,17 @@ mod sym;
 use rustc_hash::FxHashMap;
 use std::collections::BTreeMap;
 use std::fmt;
+use uniq::{Uniq, UniqGen};
 
 pub(crate) use sym::Sym;
 
 /// Definition: Type
 pub(crate) enum Ty {
   None,
-  Var(TyVar),
+  /// Can only appear when this Ty is wrapped in a TyScheme.
+  BoundVar(BoundTyVar),
+  /// To be substituted for a real type by the inference algorithm.
+  MetaVar(MetaTyVar),
   /// Definition: RowType
   Record(BTreeMap<hir::Lab, Ty>),
   /// Definition: ConsType
@@ -47,7 +51,18 @@ impl TyScheme {
 /// Definition: TyVar
 ///
 /// Basically a de Bruijn index.
-pub(crate) struct TyVar(usize);
+pub(crate) struct BoundTyVar(usize);
+
+pub(crate) struct MetaTyVar(Uniq);
+
+#[derive(Debug, Default)]
+pub(crate) struct MetaTyVarGen(UniqGen);
+
+impl MetaTyVarGen {
+  pub(crate) fn gen(&mut self) -> MetaTyVar {
+    MetaTyVar(self.0.gen())
+  }
+}
 
 pub(crate) struct TyVars {
   /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
@@ -137,7 +152,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.ty {
       Ty::None => f.write_str("_")?,
-      Ty::Var(v) => {
+      Ty::BoundVar(v) => {
         f.write_str(if self.vars.inner[v.0] { "''" } else { "'" })?;
         let alpha = (b'z' - b'a') as usize;
         let quot = v.0 / alpha;
@@ -147,6 +162,8 @@ impl<'a> fmt::Display for TyDisplay<'a> {
           write!(f, "{ch}")?;
         }
       }
+      // not real syntax
+      Ty::MetaVar(v) => write!(f, "'{}", v.0)?,
       Ty::Record(rows) => {
         if rows.is_empty() {
           return f.write_str("unit");
