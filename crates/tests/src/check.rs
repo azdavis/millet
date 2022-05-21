@@ -161,12 +161,9 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   if let Some(err) = lexed.errors.into_iter().next() {
     return Err((err.range, err.kind.to_string()));
   }
-  // TODO rm env var check
-  if std::env::var("MILLET_NEW").is_ok() {
-    let parsed = parse::get(&lexed.tokens);
-    if let Some(err) = parsed.errors.into_iter().next() {
-      return Err((err.range, err.kind.to_string()));
-    }
+  let parsed = parse::get(&lexed.tokens);
+  if let Some(err) = parsed.errors.into_iter().next() {
+    return Err((err.range, err.kind.to_string()));
   }
   // TODO use lower, statics
   Ok(())
