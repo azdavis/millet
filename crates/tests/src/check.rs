@@ -165,6 +165,7 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   if let Some(err) = parsed.errors.into_iter().next() {
     return Err((err.range, err.kind.to_string()));
   }
+  let _ = lower::get(parsed.root);
   // TODO use lower, statics
   Ok(())
 }
