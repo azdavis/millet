@@ -1,5 +1,5 @@
 use crate::parser::{Assoc, ErrorKind, Exited, Expected, OpInfo, Parser};
-use syntax::SyntaxKind as SK;
+use syntax::{token::Token, SyntaxKind as SK};
 
 pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F, e: Expected)
 where
@@ -109,7 +109,7 @@ pub(crate) fn should_break(op_info: OpInfo, min_prec: Option<OpInfo>) -> ShouldB
 
 #[must_use]
 pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
-  if !p.at(SK::Name) {
+  if !name_plus(p) {
     return None;
   }
   let e = p.enter();
@@ -117,7 +117,7 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
   loop {
     if p.at(SK::Dot) {
       p.bump();
-      p.eat(SK::Name);
+      eat_name_plus(p);
     } else {
       break;
     }
@@ -135,14 +135,29 @@ pub(crate) fn scon(p: &mut Parser<'_>) -> bool {
 }
 
 pub(crate) fn lab(p: &mut Parser<'_>) {
-  if p.at(SK::Name) || p.at(SK::IntLit) {
+  if p.at(SK::Name) || p.at(SK::Star) || p.at(SK::IntLit) {
     p.bump();
   } else {
     p.error(ErrorKind::Expected(Expected::Lab));
   }
 }
 
+/// kind of badly named
 #[must_use]
 pub(crate) fn name_plus(p: &mut Parser<'_>) -> bool {
-  p.at(SK::Name) || p.at(SK::Star) || p.at(SK::Eq)
+  name_star(p, 0) || p.at(SK::Eq)
+}
+
+#[must_use]
+pub(crate) fn name_star(p: &mut Parser<'_>, n: usize) -> bool {
+  p.at_n(n, SK::Name) || p.at_n(n, SK::Star)
+}
+
+pub(crate) fn eat_name_plus<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
+  if name_plus(p) {
+    Some(p.bump())
+  } else {
+    p.error(ErrorKind::ExpectedKind(SK::Name));
+    None
+  }
 }

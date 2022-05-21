@@ -116,7 +116,7 @@ ListExp = '[' ExpArg* ']'
 SeqExp = '(' exps_in_seq:ExpInSeq* ')'
 LetExp = 'let' Dec 'in' exps_in_seq:ExpInSeq* 'end'
 AppExp = func:Exp arg:Exp
-InfixExp = lhs:Exp 'Name' rhs:Exp
+InfixExp = lhs:Exp NamePlus rhs:Exp
 TypedExp = Exp ':' Ty
 AndalsoExp = lhs:Exp 'andalso' rhs:Exp
 OrelseExp = lhs:Exp 'orelse' rhs:Exp
@@ -161,21 +161,21 @@ AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
 ExDec = 'exception' ExBind*
 LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
 OpenDec = 'open' Path*
-InfixDec = 'infix' 'IntLit'? 'Name'*
-InfixrDec = 'infixr' 'IntLit'? 'Name'*
-NonfixDec = 'nonfix' 'Name'*
+InfixDec = 'infix' 'IntLit'? NamePlus*
+InfixrDec = 'infixr' 'IntLit'? NamePlus*
+NonfixDec = 'nonfix' NamePlus*
 
 ValBind = 'rec'? Pat '=' Exp 'and'?
 FunBind = FunBindCase* 'and'?
 TyBind = TyVarSeq 'Name' '=' Ty 'and'?
 DatBind = TyVarSeq 'Name' '=' ConBind* 'and'?
-ConBind = 'op'? 'Name' OfTy? '|'?
-ExBind = 'op'? 'Name' ExBindInner? 'and'?
+ConBind = 'op'? NamePlus OfTy? '|'?
+ExBind = 'op'? NamePlus ExBindInner? 'and'?
 
 FunBindCase = FunBindCaseHead Pat* TyAnnotation? '=' Exp '|'?
 FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
-PrefixFunBindCaseHead = 'op'? 'Name'
-InfixFunBindCaseHead = '('? lhs:Pat 'Name' rhs:Pat ')'?
+PrefixFunBindCaseHead = 'op'? NamePlus
+InfixFunBindCaseHead = '('? lhs:Pat NamePlus rhs:Pat ')'?
 
 ExBindInner = OfTy | EqPath
 EqPath = '=' Path
@@ -201,11 +201,11 @@ RecordPat = '{' PatRow* '}'
 ParenPat = '(' Pat ')'
 TuplePat = '(' PatArg* ')'
 ListPat = '[' PatArg* ']'
-InfixPat = lhs:Pat 'Name' rhs:Pat
+InfixPat = lhs:Pat NamePlus rhs:Pat
 TypedPat = Pat TyAnnotation
 // rather annoying, but this makes the parser a bit easier to write.
-TypedNamePat = 'op'? 'Name' TyAnnotation
-AsPat = 'op'? 'Name' TyAnnotation? AsPatTail
+TypedNamePat = 'op'? NamePlus TyAnnotation
+AsPat = 'op'? NamePlus TyAnnotation? AsPatTail
 
 PatRow = PatRowInner ','?
 PatRowInner =
@@ -215,7 +215,7 @@ PatRowInner =
 
 RestPatRow = '...'
 LabAndPatPatRow = Lab '=' Pat
-LabPatRow = 'Name' TyAnnotation? AsPatTail?
+LabPatRow = NamePlus TyAnnotation? AsPatTail?
 
 AsPatTail = 'as' Pat
 PatArg = Pat ','?
@@ -241,8 +241,8 @@ TyRow = Lab ':' Ty ','?
 OfTy = 'of' Ty
 TyAnnotation = ':' Ty
 
-Path = NameDot*
-NameDot = 'Name' '.'?
+Path = NamePlusDot*
+NamePlusDot = NamePlus '.'?
 
 TySeq = '('? TyArg* ')'?
 TyArg = Ty ','?
@@ -250,7 +250,12 @@ TyArg = Ty ','?
 TyVarSeq = '('? TyVarArg* ')'?
 TyVarArg = 'TyVar' ','?
 
-Lab = 'Name' | 'IntLit'
+Lab = 'Name' | '*' | 'IntLit'
+
+// NamePlus is meant to be any Name, plus some other stuff, namely * and =, maybe. though, depending
+// on the circumstance, only * and not = may be additionally allowed (like for patterns). TODO maybe
+// we should have separate classes of Name for alphanumeric and symbolic.
+NamePlus = 'Name' | '*' | '='
 
 SCon =
   'IntLit'

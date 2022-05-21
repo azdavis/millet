@@ -119,7 +119,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     must(p, path, Expected::Path);
     p.exit(en, SK::PathExp)
-  } else if p.at(SK::Name) {
+  } else if name_plus(p) {
     must(p, path, Expected::Path);
     p.exit(en, SK::PathExp)
   } else if p.at(SK::LCurly) {
@@ -210,7 +210,7 @@ fn matcher(p: &mut Parser<'_>) {
 fn at_exp_hd(p: &mut Parser<'_>) -> bool {
   scon(p)
     || p.at(SK::OpKw)
-    || p.at(SK::Name)
+    || name_plus(p)
     || p.at(SK::LCurly)
     || p.at(SK::Hash)
     || p.at(SK::LRound)

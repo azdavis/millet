@@ -43,14 +43,17 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
             .fun_bind_cases()
             .map(|case| {
               let mut pats = Vec::<hir::PatIdx>::with_capacity(2);
-              let head_name = case.fun_bind_case_head().and_then(|head| match head {
-                ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => head.name(),
-                ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
-                  pats.push(pat::get(cx, head.lhs()));
-                  pats.push(pat::get(cx, head.rhs()));
-                  head.name()
-                }
-              });
+              let head_name = case
+                .fun_bind_case_head()
+                .and_then(|head| match head {
+                  ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => head.name_plus(),
+                  ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
+                    pats.push(pat::get(cx, head.lhs()));
+                    pats.push(pat::get(cx, head.rhs()));
+                    head.name_plus()
+                  }
+                })
+                .map(|x| x.token);
               match (name.as_ref(), head_name) {
                 (_, None) => {}
                 (None, Some(head_name)) => name = Some(head_name),
@@ -129,7 +132,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
       dec
         .ex_binds()
         .filter_map(|ex_bind| {
-          let name = get_name(ex_bind.name())?;
+          let name = hir::Name::new(ex_bind.name_plus()?.token.text());
           let ret = match ex_bind.ex_bind_inner()? {
             ast::ExBindInner::OfTy(x) => {
               hir::ExBind::New(name, x.ty().map(|x| ty::get(cx, Some(x))))
@@ -162,7 +165,7 @@ where
           .con_binds()
           .filter_map(|con_bind| {
             Some(hir::ConBind {
-              name: get_name(con_bind.name())?,
+              name: hir::Name::new(con_bind.name_plus()?.token.text()),
               ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
             })
           })

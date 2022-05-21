@@ -1,4 +1,4 @@
-use crate::common::{get_lab, get_name, get_path, get_scon};
+use crate::common::{get_lab, get_path, get_scon};
 use crate::ty;
 use crate::util::Cx;
 use syntax::ast;
@@ -28,7 +28,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
             Some((get_lab(row.lab()?)?, get(cx, row.pat())))
           }
           ast::PatRowInner::LabPatRow(row) => {
-            let name = get_name(row.name())?;
+            let name = hir::Name::new(row.name_plus()?.token.text());
             let pat = as_(cx, name.clone(), row.ty_annotation(), row.as_pat_tail()?);
             Some((hir::Lab::Name(name), cx.arenas.pat.alloc(pat)))
           }
@@ -49,7 +49,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       })
     }
     ast::Pat::InfixPat(pat) => {
-      let func = hir::Path::one(get_name(pat.name())?);
+      let func = hir::Path::one(hir::Name::new(pat.name_plus()?.token.text()));
       let lhs = get(cx, pat.lhs());
       let rhs = get(cx, pat.rhs());
       let arg = cx.arenas.pat.alloc(tuple([lhs, rhs]));
@@ -60,7 +60,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
     ),
     ast::Pat::TypedNamePat(pat) => {
-      let name_pat = cx.arenas.pat.alloc(name(pat.name()?.text()));
+      let name_pat = cx.arenas.pat.alloc(name(pat.name_plus()?.token.text()));
       hir::Pat::Typed(
         name_pat,
         ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
@@ -68,7 +68,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
     }
     ast::Pat::AsPat(pat) => as_(
       cx,
-      get_name(pat.name())?,
+      hir::Name::new(pat.name_plus()?.token.text()),
       pat.ty_annotation(),
       pat.as_pat_tail()?,
     ),

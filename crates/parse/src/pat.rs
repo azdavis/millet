@@ -1,6 +1,8 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::ty::{ty, ty_annotation};
-use crate::util::{comma_sep, lab, must, path, scon, should_break, ShouldBreak};
+use crate::util::{
+  comma_sep, eat_name_plus, lab, must, name_star, path, scon, should_break, ShouldBreak,
+};
 use syntax::SyntaxKind as SK;
 
 #[must_use]
@@ -38,7 +40,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     if p.at(SK::OpKw) {
       p.bump();
     }
-    p.eat(SK::Name);
+    eat_name_plus(p);
     let ta = ty_annotation(p);
     let ap = as_pat_tl(p);
     let kind = match (ta, ap) {
@@ -49,7 +51,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     return Some(p.exit(en, kind));
   }
   // con pat with arg, or infix pat
-  let mut state = if p.at(SK::Name) || (p.at(SK::OpKw) && p.at_n(1, SK::Name)) {
+  let mut state = if name_star(p, 0) || (p.at(SK::OpKw) && name_star(p, 1)) {
     let en = p.enter();
     if p.at(SK::OpKw) {
       p.bump();
@@ -61,8 +63,8 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
   };
   loop {
     let ex = if at_pat_hd(p) {
-      let tok = p.peek().unwrap();
-      let at_pat_hd = if tok.kind == SK::Name {
+      let at_pat_hd = if name_star(p, 0) {
+        let tok = p.peek().unwrap();
         match p.get_op(tok.text) {
           None => match state {
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
@@ -129,7 +131,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     must(p, path, Expected::Path);
     p.exit(en, SK::ConPat)
-  } else if p.at(SK::Name) {
+  } else if name_star(p, 0) {
     must(p, path, Expected::Path);
     p.exit(en, SK::ConPat)
   } else if p.at(SK::LCurly) {
@@ -145,7 +147,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
         must(p, pat, Expected::Pat);
         p.exit(en, SK::LabAndPatPatRow);
       } else {
-        p.eat(SK::Name);
+        eat_name_plus(p);
         let _ = ty_annotation(p);
         let _ = as_pat_tl(p);
         p.exit(en, SK::LabPatRow);
@@ -171,7 +173,7 @@ fn at_pat_hd(p: &mut Parser<'_>) -> bool {
   scon(p)
     || p.at(SK::Underscore)
     || p.at(SK::OpKw)
-    || p.at(SK::Name)
+    || name_star(p, 0)
     || p.at(SK::LCurly)
     || p.at(SK::LRound)
     || p.at(SK::LSquare)
@@ -209,7 +211,7 @@ fn at_pat_l_round(p: &mut Parser<'_>) -> SK {
 /// not necessarily an as pat, since it could be a typed pat.
 #[must_use]
 fn name_then_colon_or_as(p: &mut Parser<'_>, n: usize) -> bool {
-  p.at_n(n, SK::Name) && (p.at_n(n + 1, SK::Colon) || p.at_n(n + 1, SK::AsKw))
+  name_star(p, n) && (p.at_n(n + 1, SK::Colon) || p.at_n(n + 1, SK::AsKw))
 }
 
 #[must_use]

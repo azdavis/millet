@@ -50,8 +50,8 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     ast::Exp::AppExp(exp) => hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
     ast::Exp::InfixExp(exp) => {
       let func = exp
-        .name()
-        .map(|tok| name(tok.text()))
+        .name_plus()
+        .map(|x| name(x.token.text()))
         .unwrap_or(hir::Exp::None);
       let func = cx.arenas.exp.alloc(func);
       let lhs = get(cx, exp.lhs());
