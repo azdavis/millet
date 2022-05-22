@@ -4,10 +4,10 @@
 #![deny(rust_2018_idioms)]
 
 use la_arena::{Arena, Idx};
-use smol_str::SmolStr;
 use std::fmt;
 
 pub use la_arena;
+pub use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
 pub struct Arenas {
