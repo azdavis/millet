@@ -15,14 +15,17 @@ fn get_(cx: &mut Cx, ty: ast::Ty) -> Option<hir::Ty> {
         .filter_map(|row| Some((get_lab(row.lab()?)?, get(cx, row.ty()))))
         .collect(),
     ),
-    ast::Ty::ConTy(ty) => hir::Ty::Con(
-      get_path(ty.path()?)?,
-      ty.ty_seq()
-        .into_iter()
-        .flat_map(|x| x.ty_args())
-        .map(|x| get(cx, x.ty()))
-        .collect(),
-    ),
+    ast::Ty::ConTy(ty) => {
+      let path = get_path(ty.path()?)?;
+      hir::Ty::Con(
+        ty.ty_seq()
+          .into_iter()
+          .flat_map(|x| x.ty_args())
+          .map(|x| get(cx, x.ty()))
+          .collect(),
+        path,
+      )
+    }
     ast::Ty::TupleTy(ty) => hir::Ty::Record(
       ty.ty_stars()
         .enumerate()

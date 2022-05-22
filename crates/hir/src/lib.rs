@@ -234,7 +234,7 @@ pub enum Ty {
   None,
   Var(TyVar),
   Record(Vec<(Lab, TyIdx)>),
-  Con(Path, Vec<TyIdx>),
+  Con(Vec<TyIdx>, Path),
   Fn(TyIdx, TyIdx),
 }
 
