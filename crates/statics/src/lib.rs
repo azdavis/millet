@@ -11,5 +11,9 @@
 
 mod cx;
 mod error;
+mod exp;
+mod pat;
+mod ty;
 mod types;
 mod unify;
+mod util;

@@ -25,6 +25,13 @@ pub(crate) enum Ty {
   Fn(Box<Ty>, Box<Ty>),
 }
 
+impl Ty {
+  /// Returns a [`Self::Con`] with 0 arguments and the given `sym`.
+  pub(crate) fn zero(sym: Sym) -> Self {
+    Self::Con(Vec::new(), sym)
+  }
+}
+
 /// Definition: TypeScheme, TypeFcn
 pub(crate) struct TyScheme {
   pub(crate) vars: TyVars,

@@ -1,11 +1,12 @@
 use crate::error::Error;
-use crate::types::{MetaTyVar, Ty};
+use crate::types::{MetaTyVar, MetaTyVarGen, Ty};
 use rustc_hash::FxHashMap;
 
 #[derive(Debug, Default)]
 pub(crate) struct Cx {
   subst: Subst,
   errors: Vec<Error>,
+  meta_gen: MetaTyVarGen,
 }
 
 impl Cx {
@@ -15,6 +16,10 @@ impl Cx {
 
   pub(crate) fn err(&mut self, error: Error) {
     self.errors.push(error);
+  }
+
+  pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
+    self.meta_gen.gen()
   }
 }
 

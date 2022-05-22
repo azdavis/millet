@@ -90,7 +90,7 @@ fn occurs(mv: &MetaTyVar, ty: &Ty) -> bool {
   }
 }
 
-fn apply(subst: &Subst, ty: &mut Ty) {
+pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {

@@ -6,4 +6,5 @@ pub(crate) enum Error {
   MismatchedTypes(Ty, Ty),
   MissingField(hir::Lab, Ty),
   ExtraFields(Vec<hir::Lab>, Ty),
+  DuplicateLab(hir::Lab),
 }
