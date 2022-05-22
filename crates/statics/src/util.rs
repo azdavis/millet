@@ -1,4 +1,4 @@
-use crate::cx::Cx;
+use crate::cx::{Cx, Subst};
 use crate::error::Error;
 use crate::types::{Sym, Ty};
 use std::collections::BTreeMap;
@@ -28,4 +28,32 @@ where
     }
   }
   Ty::Record(ty_rows)
+}
+
+pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
+  match ty {
+    Ty::None | Ty::BoundVar(_) => {}
+    Ty::MetaVar(mv) => match subst.get(mv) {
+      None => {}
+      Some(t) => {
+        let mut t = t.clone();
+        apply(subst, &mut t);
+        *ty = t;
+      }
+    },
+    Ty::Record(rows) => {
+      for ty in rows.values_mut() {
+        apply(subst, ty);
+      }
+    }
+    Ty::Con(args, _) => {
+      for ty in args.iter_mut() {
+        apply(subst, ty);
+      }
+    }
+    Ty::Fn(param, res) => {
+      apply(subst, param);
+      apply(subst, res);
+    }
+  }
 }

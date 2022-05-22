@@ -1,6 +1,7 @@
 use crate::cx::{Cx, Subst};
 use crate::error::Error;
 use crate::types::{MetaTyVar, Ty};
+use crate::util::apply;
 
 pub(crate) fn unify(cx: &mut Cx, want: Ty, got: Ty) {
   let e = match unify_(cx.subst(), want.clone(), got.clone()) {
@@ -87,33 +88,5 @@ fn occurs(mv: &MetaTyVar, ty: &Ty) -> bool {
     Ty::Record(rows) => rows.values().any(|t| occurs(mv, t)),
     Ty::Con(args, _) => args.iter().any(|t| occurs(mv, t)),
     Ty::Fn(param, res) => occurs(mv, param) || occurs(mv, res),
-  }
-}
-
-pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
-  match ty {
-    Ty::None | Ty::BoundVar(_) => {}
-    Ty::MetaVar(mv) => match subst.get(mv) {
-      None => {}
-      Some(t) => {
-        let mut t = t.clone();
-        apply(subst, &mut t);
-        *ty = t;
-      }
-    },
-    Ty::Record(rows) => {
-      for ty in rows.values_mut() {
-        apply(subst, ty);
-      }
-    }
-    Ty::Con(args, _) => {
-      for ty in args.iter_mut() {
-        apply(subst, ty);
-      }
-    }
-    Ty::Fn(param, res) => {
-      apply(subst, param);
-      apply(subst, res);
-    }
   }
 }

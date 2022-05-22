@@ -1,8 +1,8 @@
 use crate::cx::Cx;
 use crate::ty;
 use crate::types::{Ty, ValEnv};
-use crate::unify::{apply, unify};
-use crate::util::{get_scon, record};
+use crate::unify::unify;
+use crate::util::{apply, get_scon, record};
 
 pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, ve: &mut ValEnv, pat: hir::PatIdx) -> Ty {
   match ars.pat[pat] {

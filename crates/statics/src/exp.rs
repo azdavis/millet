@@ -1,8 +1,8 @@
 use crate::cx::Cx;
 use crate::ty;
 use crate::types::{Sym, Ty};
-use crate::unify::{apply, unify};
-use crate::util::{get_scon, record};
+use crate::unify::unify;
+use crate::util::{apply, get_scon, record};
 
 pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
   match ars.exp[exp] {
