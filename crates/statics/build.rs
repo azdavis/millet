@@ -16,7 +16,7 @@ fn main() {
     #![doc = "See [`Sym`]."]
 
     #[doc = "Definition: TyName"]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub(crate) struct Sym(pub(super) usize);
 
     impl Sym {

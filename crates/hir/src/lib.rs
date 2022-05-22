@@ -238,7 +238,7 @@ pub enum Ty {
   Fn(TyIdx, TyIdx),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Lab {
   Name(Name),
   Num(usize),
