@@ -238,7 +238,7 @@ pub enum Ty {
   Fn(TyIdx, TyIdx),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Lab {
   Name(Name),
   Num(usize),
@@ -276,7 +276,7 @@ impl Path {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Name(SmolStr);
 
 impl Name {

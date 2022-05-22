@@ -10,6 +10,7 @@ use uniq::{Uniq, UniqGen};
 pub(crate) use sym::Sym;
 
 /// Definition: Type
+#[derive(Debug, Clone)]
 pub(crate) enum Ty {
   None,
   /// Can only appear when this Ty is wrapped in a TyScheme.
@@ -51,8 +52,10 @@ impl TyScheme {
 /// Definition: TyVar
 ///
 /// Basically a de Bruijn index.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BoundTyVar(usize);
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct MetaTyVar(Uniq);
 
 #[derive(Debug, Default)]
