@@ -1,4 +1,4 @@
-//! High-level Intermediate Representation for SML.
+//! High-level Intermediate Representation.
 
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
