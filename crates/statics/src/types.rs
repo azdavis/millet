@@ -79,6 +79,13 @@ impl MetaTyVarGen {
       equality,
     }
   }
+
+  pub(crate) fn gen_from_ty_vars<'a>(
+    &'a mut self,
+    ty_vars: &'a TyVars,
+  ) -> impl Iterator<Item = MetaTyVar> + 'a {
+    ty_vars.inner.iter().map(|&eq| self.gen(eq))
+  }
 }
 
 #[derive(Debug)]

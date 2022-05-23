@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::types::{MetaTyVar, MetaTyVarGen, Syms, Ty};
+use crate::types::{MetaTyVar, MetaTyVarGen, Syms, Ty, TyVars};
 use rustc_hash::FxHashMap;
 
 /// The context.
@@ -24,6 +24,13 @@ impl Cx {
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
     self.meta_gen.gen(false)
+  }
+
+  pub(crate) fn gen_from_ty_vars<'a>(
+    &'a mut self,
+    ty_vars: &'a TyVars,
+  ) -> impl Iterator<Item = MetaTyVar> + 'a {
+    self.meta_gen.gen_from_ty_vars(ty_vars)
   }
 
   pub(crate) fn take_syms(&mut self) -> Syms {
