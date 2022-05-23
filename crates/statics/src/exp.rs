@@ -29,7 +29,8 @@ pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
       Ty::MetaVar(cx.gen_meta_var())
     }
     hir::Exp::Fn(ref matcher) => {
-      let (param, res) = get_matcher(cx, ars, matcher);
+      let (pats, param, res) = get_matcher(cx, ars, matcher);
+      ck_pat_match(cx, pats, param.clone(), Some(Error::NonExhaustiveMatch));
       Ty::Fn(param.into(), res.into())
     }
     hir::Exp::Typed(exp, want) => {
@@ -42,7 +43,11 @@ pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
   }
 }
 
-fn get_matcher(cx: &mut Cx, ars: &hir::Arenas, matcher: &[(hir::PatIdx, hir::ExpIdx)]) -> (Ty, Ty) {
+fn get_matcher(
+  cx: &mut Cx,
+  ars: &hir::Arenas,
+  matcher: &[(hir::PatIdx, hir::ExpIdx)],
+) -> (Vec<Pat>, Ty, Ty) {
   let mut param_ty = Ty::MetaVar(cx.gen_meta_var());
   let mut res_ty = Ty::MetaVar(cx.gen_meta_var());
   let mut pats = Vec::<Pat>::new();
@@ -57,11 +62,15 @@ fn get_matcher(cx: &mut Cx, ars: &hir::Arenas, matcher: &[(hir::PatIdx, hir::Exp
     apply(cx.subst(), &mut res_ty);
     pats.push(pm_pat);
   }
+  (pats, param_ty, res_ty)
+}
+
+fn ck_pat_match(cx: &mut Cx, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pat>) -> Error>) {
   // TODO this could probably be done with borrows instead.
   let lang = Lang {
     syms: cx.take_syms(),
   };
-  let ck = pattern_match::check(&lang, pats, param_ty.clone());
+  let ck = pattern_match::check(&lang, pats, ty);
   cx.set_syms(lang.syms);
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().collect();
   unreachable.sort_unstable_by_key(|x| x.into_raw());
@@ -69,7 +78,8 @@ fn get_matcher(cx: &mut Cx, ars: &hir::Arenas, matcher: &[(hir::PatIdx, hir::Exp
     cx.err(Error::UnreachablePattern(un));
   }
   if !ck.missing.is_empty() {
-    cx.err(Error::NonExhaustiveMatch(ck.missing));
+    if let Some(f) = f {
+      cx.err(f(ck.missing));
+    }
   }
-  (param_ty, res_ty)
 }
