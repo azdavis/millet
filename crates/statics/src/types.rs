@@ -82,6 +82,7 @@ pub(crate) struct TyVars {
   inner: Vec<bool>,
 }
 
+/// A mapping from [`Sym`]s to [`TyInfo`]s.
 #[derive(Debug, Default)]
 pub(crate) struct Syms {
   store: Vec<TyInfo>,
@@ -92,14 +93,14 @@ impl Syms {
     self.store.is_empty()
   }
 
-  pub(crate) fn get(&self, sym: &Sym) -> &TyInfo {
-    self.store.get(sym.0).unwrap()
-  }
-
   pub(crate) fn insert(&mut self, ty_info: TyInfo) -> Sym {
     let ret = Sym(self.store.len());
     self.store.push(ty_info);
     ret
+  }
+
+  pub(crate) fn get(&self, sym: &Sym) -> &TyInfo {
+    self.store.get(sym.0).unwrap()
   }
 }
 

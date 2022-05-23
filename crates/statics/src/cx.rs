@@ -2,6 +2,9 @@ use crate::error::Error;
 use crate::types::{MetaTyVar, MetaTyVarGen, Syms, Ty};
 use rustc_hash::FxHashMap;
 
+/// The context.
+///
+/// Invariant: 'Grows' monotonically.
 #[derive(Debug, Default)]
 pub(crate) struct Cx {
   subst: Subst,
@@ -33,6 +36,9 @@ impl Cx {
   }
 }
 
+/// A mapping from [`MetaTyVar`]s to [`Ty`]s.
+///
+/// Invariant: Mappings are never removed.
 #[derive(Debug, Default)]
 pub(crate) struct Subst {
   map: FxHashMap<MetaTyVar, Ty>,
