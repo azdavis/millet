@@ -274,6 +274,12 @@ impl Path {
   pub fn last(&self) -> &Name {
     self.0.last().unwrap()
   }
+
+  pub fn structures(&self) -> impl Iterator<Item = &Name> {
+    let mut ret = self.0.iter();
+    ret.next_back().unwrap();
+    ret
+  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
