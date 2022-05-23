@@ -64,14 +64,20 @@ impl TyScheme {
 pub(crate) struct BoundTyVar(usize);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct MetaTyVar(Uniq);
+pub(crate) struct MetaTyVar {
+  id: Uniq,
+  equality: bool,
+}
 
 #[derive(Debug, Default)]
 pub(crate) struct MetaTyVarGen(UniqGen);
 
 impl MetaTyVarGen {
-  pub(crate) fn gen(&mut self) -> MetaTyVar {
-    MetaTyVar(self.0.gen())
+  pub(crate) fn gen(&mut self, equality: bool) -> MetaTyVar {
+    MetaTyVar {
+      id: self.0.gen(),
+      equality,
+    }
   }
 }
 
@@ -174,7 +180,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
     match self.ty {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(v) => {
-        f.write_str(if self.vars.inner[v.0] { "''" } else { "'" })?;
+        f.write_str(equality_str(self.vars.inner[v.0]))?;
         let alpha = (b'z' - b'a') as usize;
         let quot = v.0 / alpha;
         let rem = v.0 % alpha;
@@ -184,7 +190,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
         }
       }
       // not real syntax
-      Ty::MetaVar(v) => write!(f, "'{}", v.0)?,
+      Ty::MetaVar(v) => write!(f, "{}{}", equality_str(v.equality), v.id)?,
       Ty::Record(rows) => {
         if rows.is_empty() {
           return f.write_str("unit");
@@ -278,5 +284,13 @@ fn display_lab(f: &mut fmt::Formatter<'_>, lab: &hir::Lab) -> fmt::Result {
   match lab {
     hir::Lab::Name(name) => fmt::Display::fmt(name, f),
     hir::Lab::Num(n) => fmt::Display::fmt(n, f),
+  }
+}
+
+fn equality_str(equality: bool) -> &'static str {
+  if equality {
+    "''"
+  } else {
+    "'"
   }
 }

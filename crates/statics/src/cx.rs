@@ -23,7 +23,7 @@ impl Cx {
   }
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
-    self.meta_gen.gen()
+    self.meta_gen.gen(false)
   }
 
   pub(crate) fn take_syms(&mut self) -> Syms {
