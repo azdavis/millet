@@ -43,6 +43,9 @@ pub(crate) fn get_env<'e, 'p>(
   Ok(env)
 }
 
+/// substitute any meta type variables in `ty` with their types in `subst`.
+///
+/// meta variables not defined by the `subst` are left alone.
 pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) => {}
@@ -81,6 +84,9 @@ pub(crate) fn instantiate(cx: &mut Cx, ty_scheme: &TyScheme) -> Ty {
   ty
 }
 
+/// like [`apply`], but for bound type variables.
+///
+/// unlike `apply`, all bound variables must be defined by the subst.
 pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
   match ty {
     Ty::None | Ty::MetaVar(_) => {}
