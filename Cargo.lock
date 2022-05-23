@@ -357,7 +357,6 @@ version = "0.1.0"
 dependencies = [
  "hir",
  "pattern-match",
- "quote",
  "rustc-hash",
  "uniq",
 ]

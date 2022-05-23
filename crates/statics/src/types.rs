@@ -1,13 +1,9 @@
 //! Types.
 
-mod sym;
-
 use rustc_hash::FxHashMap;
 use std::collections::BTreeMap;
 use std::fmt;
 use uniq::{Uniq, UniqGen};
-
-pub(crate) use sym::Sym;
 
 /// Definition: Type
 #[derive(Debug, Clone)]
@@ -102,6 +98,24 @@ pub(crate) struct TyVars {
   /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
   /// variable i is equality.
   inner: Vec<bool>,
+}
+
+/// Definition: TyName
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct Sym(usize);
+
+impl Sym {
+  pub(crate) const BOOL: Self = Self(0);
+  pub(crate) const CHAR: Self = Self(1);
+  pub(crate) const INT: Self = Self(2);
+  pub(crate) const REAL: Self = Self(3);
+  pub(crate) const STRING: Self = Self(4);
+  pub(crate) const WORD: Self = Self(5);
+  pub(crate) const EXN: Self = Self(6);
+  pub(crate) const REF: Self = Self(7);
+  pub(crate) const UNIT: Self = Self(8);
+  pub(crate) const LIST: Self = Self(9);
+  pub(crate) const ORDER: Self = Self(10);
 }
 
 /// A mapping from [`Sym`]s to [`TyInfo`]s.

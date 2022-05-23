@@ -13,6 +13,3 @@ rustc-hash = "1"
 pattern-match = { git = "https://github.com/azdavis/language-util.git" }
 hir = { path = "../hir" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }
-
-[build-dependencies]
-quote = "1"

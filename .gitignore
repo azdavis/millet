@@ -1,6 +1,5 @@
 *.tmp
 *.vsix
-/crates/statics/src/types/sym.rs
 /crates/syntax/src/ast.rs
 /crates/syntax/src/kind.rs
 /crates/syntax/src/ptr.rs
