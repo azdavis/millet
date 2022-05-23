@@ -261,8 +261,7 @@ impl<'input> Parser<'input> {
     }
   }
 
-  // sml-specific methods
-  // ====================
+  // sml-specific methods //
 
   pub(crate) fn insert_op(&mut self, name: &'input str, info: OpInfo) {
     self.ops.insert(name, info);
@@ -373,8 +372,7 @@ impl fmt::Debug for Event {
   }
 }
 
-// sml-specific types
-// ==================
+// sml-specific types //
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OpInfo {

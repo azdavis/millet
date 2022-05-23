@@ -21,8 +21,7 @@ pub struct Arenas {
   pub ty: TyArena,
 }
 
-// modules
-// =======
+// modules //
 
 #[derive(Debug)]
 pub enum TopDec {
@@ -136,8 +135,7 @@ pub struct StrDesc {
   pub sig_exp: SigExpIdx,
 }
 
-// core
-// ====
+// core //
 
 pub type ExpIdx = Idx<Exp>;
 pub type ExpArena = Arena<Exp>;
