@@ -109,7 +109,10 @@ pub(crate) fn get(
       apply(st.subst(), &mut want);
       (pm_pat, want)
     }
-    hir::Pat::As(_, _) => todo!(),
+    hir::Pat::As(_, pat) => {
+      // TODO add name to val env
+      get(st, cx, ars, ve, pat)
+    }
   }
 }
 
