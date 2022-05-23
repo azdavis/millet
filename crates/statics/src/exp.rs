@@ -22,7 +22,15 @@ pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
       apply(cx.subst(), &mut res_ty);
       res_ty
     }
-    hir::Exp::Handle(_, _) => todo!(),
+    hir::Exp::Handle(exp, ref matcher) => {
+      let mut exp_ty = get(cx, ars, exp);
+      let (pats, param, res) = get_matcher(cx, ars, matcher);
+      unify(cx, Ty::zero(Sym::EXN), param.clone());
+      unify(cx, exp_ty.clone(), res);
+      apply(cx.subst(), &mut exp_ty);
+      ck_pat_match(cx, pats, param, None);
+      exp_ty
+    }
     hir::Exp::Raise(exp) => {
       let got = get(cx, ars, exp);
       unify(cx, Ty::zero(Sym::EXN), got);
