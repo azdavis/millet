@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::types::{MetaTyVar, MetaTyVarGen, Ty};
+use crate::types::{MetaTyVar, MetaTyVarGen, Syms, Ty};
 use rustc_hash::FxHashMap;
 
 #[derive(Debug, Default)]
@@ -7,6 +7,7 @@ pub(crate) struct Cx {
   subst: Subst,
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,
+  syms: Syms,
 }
 
 impl Cx {
@@ -20,6 +21,15 @@ impl Cx {
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
     self.meta_gen.gen()
+  }
+
+  pub(crate) fn take_syms(&mut self) -> Syms {
+    std::mem::take(&mut self.syms)
+  }
+
+  pub(crate) fn set_syms(&mut self, syms: Syms) {
+    assert!(self.syms.is_empty());
+    self.syms = syms;
   }
 }
 

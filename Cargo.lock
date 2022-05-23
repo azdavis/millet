@@ -23,7 +23,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#9ab89b195beabe1f8e8fca5d099c085f1d504c9d"
+source = "git+https://github.com/azdavis/language-util.git#5dfb730c38acf2881009debaf1f3f01b04fdc7e8"
 
 [[package]]
 name = "countme"
@@ -84,7 +84,7 @@ dependencies = [
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#9ab89b195beabe1f8e8fca5d099c085f1d504c9d"
+source = "git+https://github.com/azdavis/language-util.git#5dfb730c38acf2881009debaf1f3f01b04fdc7e8"
 
 [[package]]
 name = "idna"
@@ -244,6 +244,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "pattern-match"
+version = "0.1.0"
+source = "git+https://github.com/azdavis/language-util.git#5dfb730c38acf2881009debaf1f3f01b04fdc7e8"
+dependencies = [
+ "rustc-hash",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -348,6 +356,7 @@ name = "statics"
 version = "0.1.0"
 dependencies = [
  "hir",
+ "pattern-match",
  "quote",
  "rustc-hash",
  "uniq",
@@ -378,7 +387,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#9ab89b195beabe1f8e8fca5d099c085f1d504c9d"
+source = "git+https://github.com/azdavis/language-util.git#5dfb730c38acf2881009debaf1f3f01b04fdc7e8"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -428,7 +437,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#9ab89b195beabe1f8e8fca5d099c085f1d504c9d"
+source = "git+https://github.com/azdavis/language-util.git#5dfb730c38acf2881009debaf1f3f01b04fdc7e8"
 
 [[package]]
 name = "ungrammar"
@@ -460,7 +469,7 @@ dependencies = [
 [[package]]
 name = "uniq"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#9ab89b195beabe1f8e8fca5d099c085f1d504c9d"
+source = "git+https://github.com/azdavis/language-util.git#5dfb730c38acf2881009debaf1f3f01b04fdc7e8"
 
 [[package]]
 name = "url"

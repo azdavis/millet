@@ -1,15 +1,17 @@
 use crate::cx::Cx;
-use crate::ty;
-use crate::types::{Sym, Ty};
+use crate::error::Error;
+use crate::pat_match::{Lang, Pat};
+use crate::types::{Sym, Ty, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_scon, record};
+use crate::{pat, ty};
 
 pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
   match ars.exp[exp] {
     hir::Exp::None => Ty::None,
     hir::Exp::SCon(ref scon) => get_scon(scon),
     hir::Exp::Path(_) => todo!(),
-    hir::Exp::Record(ref rows) => record(cx, rows, |cx, exp| get(cx, ars, exp)),
+    hir::Exp::Record(ref rows) => record(cx, rows, |cx, _, exp| get(cx, ars, exp)),
     hir::Exp::Let(_, _) => todo!(),
     hir::Exp::App(func, arg) => {
       let want = get(cx, ars, func);
@@ -26,7 +28,10 @@ pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
       unify(cx, Ty::zero(Sym::EXN), got);
       Ty::MetaVar(cx.gen_meta_var())
     }
-    hir::Exp::Fn(_) => todo!(),
+    hir::Exp::Fn(ref matcher) => {
+      let (param, res) = get_matcher(cx, ars, matcher);
+      Ty::Fn(param.into(), res.into())
+    }
     hir::Exp::Typed(exp, want) => {
       let got = get(cx, ars, exp);
       let mut want = ty::get(cx, ars, want);
@@ -35,4 +40,36 @@ pub(crate) fn get(cx: &mut Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
       want
     }
   }
+}
+
+fn get_matcher(cx: &mut Cx, ars: &hir::Arenas, matcher: &[(hir::PatIdx, hir::ExpIdx)]) -> (Ty, Ty) {
+  let mut param_ty = Ty::MetaVar(cx.gen_meta_var());
+  let mut res_ty = Ty::MetaVar(cx.gen_meta_var());
+  let mut pats = Vec::<Pat>::new();
+  for &(pat, exp) in matcher {
+    let mut ve = ValEnv::default();
+    let (pm_pat, pat_ty) = pat::get(cx, ars, &mut ve, pat);
+    // TODO extend env for exp_ty with the ve?
+    let exp_ty = get(cx, ars, exp);
+    unify(cx, param_ty.clone(), pat_ty);
+    unify(cx, res_ty.clone(), exp_ty);
+    apply(cx.subst(), &mut param_ty);
+    apply(cx.subst(), &mut res_ty);
+    pats.push(pm_pat);
+  }
+  // TODO this could probably be done with borrows instead.
+  let lang = Lang {
+    syms: cx.take_syms(),
+  };
+  let ck = pattern_match::check(&lang, pats, param_ty.clone());
+  cx.set_syms(lang.syms);
+  let mut unreachable: Vec<_> = ck.unreachable.into_iter().collect();
+  unreachable.sort_unstable_by_key(|x| x.into_raw());
+  for un in unreachable {
+    cx.err(Error::UnreachablePattern(un));
+  }
+  if !ck.missing.is_empty() {
+    cx.err(Error::NonExhaustiveMatch(ck.missing));
+  }
+  (param_ty, res_ty)
 }

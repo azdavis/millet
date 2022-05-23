@@ -13,6 +13,7 @@ mod cx;
 mod error;
 mod exp;
 mod pat;
+mod pat_match;
 mod ty;
 mod types;
 mod unify;

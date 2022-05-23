@@ -17,11 +17,11 @@ pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
 pub(crate) fn record<T, F>(cx: &mut Cx, rows: &[(hir::Lab, T)], mut f: F) -> Ty
 where
   T: Copy,
-  F: FnMut(&mut Cx, T) -> Ty,
+  F: FnMut(&mut Cx, &hir::Lab, T) -> Ty,
 {
   let mut ty_rows = BTreeMap::<hir::Lab, Ty>::new();
   for (lab, val) in rows {
-    let ty = f(cx, *val);
+    let ty = f(cx, lab, *val);
     match ty_rows.insert(lab.clone(), ty) {
       None => {}
       Some(_) => cx.err(Error::DuplicateLab(lab.clone())),

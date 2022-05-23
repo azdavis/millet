@@ -33,6 +33,7 @@ impl Ty {
 }
 
 /// Definition: TypeScheme, TypeFcn
+#[derive(Debug)]
 pub(crate) struct TyScheme {
   pub(crate) vars: TyVars,
   pub(crate) ty: Ty,
@@ -74,17 +75,23 @@ impl MetaTyVarGen {
   }
 }
 
+#[derive(Debug)]
 pub(crate) struct TyVars {
   /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
   /// variable i is equality.
   inner: Vec<bool>,
 }
 
+#[derive(Debug, Default)]
 pub(crate) struct Syms {
   store: Vec<TyInfo>,
 }
 
 impl Syms {
+  pub(crate) fn is_empty(&self) -> bool {
+    self.store.is_empty()
+  }
+
   pub(crate) fn get(&self, sym: &Sym) -> &TyInfo {
     self.store.get(sym.0).unwrap()
   }
@@ -97,6 +104,7 @@ impl Syms {
 }
 
 /// Definition: TyStr
+#[derive(Debug)]
 pub(crate) struct TyInfo {
   pub(crate) name: hir::Name,
   pub(crate) ty_scheme: TyScheme,
@@ -112,12 +120,14 @@ pub(crate) type TyEnv = FxHashMap<hir::Name, Sym>;
 /// Definition: ValEnv
 pub(crate) type ValEnv = FxHashMap<hir::Name, ValInfo>;
 
+#[derive(Debug)]
 pub(crate) struct ValInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) id_status: IdStatus,
 }
 
 /// Definition: IdStatus
+#[derive(Debug)]
 pub(crate) enum IdStatus {
   Con,
   Exn,
