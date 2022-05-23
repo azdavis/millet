@@ -3,14 +3,26 @@ use crate::pat_match::{Lang, Pat};
 use crate::st::St;
 use crate::types::{Cx, Sym, Ty, ValEnv};
 use crate::unify::unify;
-use crate::util::{apply, get_scon, record};
+use crate::util::{apply, get_env, get_scon, instantiate, record};
 use crate::{pat, ty};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
   match ars.exp[exp] {
     hir::Exp::None => Ty::None,
     hir::Exp::SCon(ref scon) => get_scon(scon),
-    hir::Exp::Path(_) => todo!(),
+    hir::Exp::Path(ref path) => match get_env(&cx.env, path) {
+      Ok(env) => match env.val_env.get(path.last()) {
+        Some(val_info) => instantiate(st, &val_info.ty_scheme),
+        None => {
+          st.err(Error::Undefined);
+          Ty::None
+        }
+      },
+      Err(_) => {
+        st.err(Error::Undefined);
+        Ty::None
+      }
+    },
     hir::Exp::Record(ref rows) => record(st, rows, |st, _, exp| get(st, cx, ars, exp)),
     hir::Exp::Let(_, _) => todo!(),
     hir::Exp::App(func, arg) => {
