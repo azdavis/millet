@@ -15,7 +15,7 @@ pub(crate) enum Ty {
   None,
   /// Can only appear when this Ty is wrapped in a TyScheme.
   BoundVar(BoundTyVar),
-  /// To be substituted for a real type by the inference algorithm.
+  /// See [`MetaTyVar`].
   MetaVar(MetaTyVar),
   /// Definition: RowType
   Record(BTreeMap<hir::Lab, Ty>),
@@ -59,6 +59,8 @@ impl TyScheme {
 
 /// Definition: TyVar
 ///
+/// But only kind of. There's also [`MetaTyVar`] and [`hir::TyVar`].
+///
 /// Basically a de Bruijn index.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BoundTyVar(usize);
@@ -69,6 +71,7 @@ impl BoundTyVar {
   }
 }
 
+/// Generated, and to be substituted for a real type, by the inference algorithm.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct MetaTyVar {
   id: Uniq,
