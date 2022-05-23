@@ -1,5 +1,5 @@
-use crate::cx::{Cx, Subst};
 use crate::error::Error;
+use crate::st::{St, Subst};
 use crate::types::{Env, Sym, Ty, TyScheme};
 use std::collections::BTreeMap;
 
@@ -14,17 +14,17 @@ pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
   Ty::zero(sym)
 }
 
-pub(crate) fn record<T, F>(cx: &mut Cx, rows: &[(hir::Lab, T)], mut f: F) -> Ty
+pub(crate) fn record<T, F>(st: &mut St, rows: &[(hir::Lab, T)], mut f: F) -> Ty
 where
   T: Copy,
-  F: FnMut(&mut Cx, &hir::Lab, T) -> Ty,
+  F: FnMut(&mut St, &hir::Lab, T) -> Ty,
 {
   let mut ty_rows = BTreeMap::<hir::Lab, Ty>::new();
   for (lab, val) in rows {
-    let ty = f(cx, lab, *val);
+    let ty = f(st, lab, *val);
     match ty_rows.insert(lab.clone(), ty) {
       None => {}
-      Some(_) => cx.err(Error::DuplicateLab(lab.clone())),
+      Some(_) => st.err(Error::DuplicateLab(lab.clone())),
     }
   }
   Ty::Record(ty_rows)
@@ -74,8 +74,8 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   }
 }
 
-pub(crate) fn instantiate(cx: &mut Cx, ty_scheme: &TyScheme) -> Ty {
-  let meta_vars: Vec<_> = cx
+pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
+  let meta_vars: Vec<_> = st
     .gen_from_ty_vars(&ty_scheme.vars)
     .map(Ty::MetaVar)
     .collect();

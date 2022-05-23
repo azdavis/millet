@@ -9,11 +9,11 @@
 #![deny(rust_2018_idioms)]
 #![allow(dead_code)]
 
-mod cx;
 mod error;
 mod exp;
 mod pat;
 mod pat_match;
+mod st;
 mod ty;
 mod types;
 mod unify;

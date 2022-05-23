@@ -2,18 +2,20 @@ use crate::error::Error;
 use crate::types::{MetaTyVar, MetaTyVarGen, Syms, Ty, TyVars};
 use rustc_hash::FxHashMap;
 
-/// The context.
+/// The state.
+///
+/// Usually I call this `Cx` but the Definition defines a 'Context' already.
 ///
 /// Invariant: 'Grows' monotonically.
 #[derive(Debug, Default)]
-pub(crate) struct Cx {
+pub(crate) struct St {
   subst: Subst,
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,
   syms: Syms,
 }
 
-impl Cx {
+impl St {
   pub(crate) fn subst(&mut self) -> &mut Subst {
     &mut self.subst
   }
