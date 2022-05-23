@@ -2,9 +2,9 @@ use crate::error::Error;
 use crate::pat_match::{Con, Pat};
 use crate::st::St;
 use crate::ty;
-use crate::types::{Cx, Ty, ValEnv};
+use crate::types::{Cx, IdStatus, Ty, ValEnv};
 use crate::unify::unify;
-use crate::util::{apply, get_scon, record};
+use crate::util::{apply, get_env, get_scon, instantiate, record};
 
 pub(crate) fn get(
   st: &mut St,
@@ -29,7 +29,62 @@ pub(crate) fn get(
       };
       (Pat::zero(con, pat), get_scon(scon))
     }
-    hir::Pat::Con(_, _) => todo!(),
+    hir::Pat::Con(ref path, arg) => {
+      let is_var =
+        arg.is_none() && path.structures().is_empty() && !cx.env.val_env.contains_key(path.last());
+      if is_var {
+        // TODO add to val env
+        return any(st, pat);
+      }
+      let arg = arg.map(|x| get(st, cx, ars, ve, x));
+      let env = match get_env(&cx.env, path) {
+        Ok(x) => x,
+        Err(_) => {
+          st.err(Error::Undefined);
+          return any(st, pat);
+        }
+      };
+      let val_info = match env.val_env.get(path.last()) {
+        Some(x) => x,
+        None => {
+          st.err(Error::Undefined);
+          return any(st, pat);
+        }
+      };
+      if let IdStatus::Val = val_info.id_status {
+        st.err(Error::PatValIdStatus);
+      }
+      let ty = instantiate(st, &val_info.ty_scheme);
+      let (sym, args, ty) = match ty {
+        Ty::Con(_, sym) => {
+          if arg.is_some() {
+            st.err(Error::PatMustNotHaveArg)
+          }
+          (sym, Vec::new(), ty)
+        }
+        Ty::Fn(param_ty, mut res_ty) => {
+          let sym = match res_ty.as_ref() {
+            Ty::Con(_, x) => *x,
+            _ => unreachable!(),
+          };
+          let arg_pat = match arg {
+            None => {
+              st.err(Error::PatMustHaveArg);
+              Pat::zero(Con::Any, pat)
+            }
+            Some((arg_pat, arg_ty)) => {
+              unify(st, *param_ty, arg_ty);
+              apply(st.subst(), &mut res_ty);
+              arg_pat
+            }
+          };
+          (sym, vec![arg_pat], *res_ty)
+        }
+        _ => unreachable!(),
+      };
+      let pat = Pat::con(Con::Variant(sym, path.last().clone()), args, pat);
+      (pat, ty)
+    }
     hir::Pat::Record {
       ref rows,
       allows_other,

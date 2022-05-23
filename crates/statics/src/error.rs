@@ -12,4 +12,7 @@ pub(crate) enum Error {
   RealPat,
   UnreachablePattern(hir::PatIdx),
   NonExhaustiveMatch(Vec<Pat>),
+  PatValIdStatus,
+  PatMustNotHaveArg,
+  PatMustHaveArg,
 }
