@@ -10,19 +10,22 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
   match ars.exp[exp] {
     hir::Exp::None => Ty::None,
     hir::Exp::SCon(ref scon) => get_scon(scon),
-    hir::Exp::Path(ref path) => match get_env(&cx.env, path) {
-      Ok(env) => match env.val_env.get(path.last()) {
+    hir::Exp::Path(ref path) => {
+      let env = match get_env(&cx.env, path) {
+        Ok(x) => x,
+        Err(_) => {
+          st.err(Error::Undefined);
+          return Ty::None;
+        }
+      };
+      match env.val_env.get(path.last()) {
         Some(val_info) => instantiate(st, &val_info.ty_scheme),
         None => {
           st.err(Error::Undefined);
           Ty::None
         }
-      },
-      Err(_) => {
-        st.err(Error::Undefined);
-        Ty::None
       }
-    },
+    }
     hir::Exp::Record(ref rows) => record(st, rows, |st, _, exp| get(st, cx, ars, exp)),
     hir::Exp::Let(_, _) => todo!(),
     hir::Exp::App(func, arg) => {
