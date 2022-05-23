@@ -164,6 +164,13 @@ pub(crate) struct Env {
   pub(crate) val_env: ValEnv,
 }
 
+/// Definition: Context
+///
+/// TODO add ty names and ty vars
+pub(crate) struct Cx {
+  pub(crate) env: Env,
+}
+
 // formatting //
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

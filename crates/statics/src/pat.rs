@@ -2,11 +2,17 @@ use crate::error::Error;
 use crate::pat_match::{Con, Pat};
 use crate::st::St;
 use crate::ty;
-use crate::types::{Ty, ValEnv};
+use crate::types::{Cx, Ty, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_scon, record};
 
-pub(crate) fn get(st: &mut St, ars: &hir::Arenas, ve: &mut ValEnv, pat: hir::PatIdx) -> (Pat, Ty) {
+pub(crate) fn get(
+  st: &mut St,
+  cx: &Cx,
+  ars: &hir::Arenas,
+  ve: &mut ValEnv,
+  pat: hir::PatIdx,
+) -> (Pat, Ty) {
   match ars.pat[pat] {
     hir::Pat::None => (Pat::zero(Con::Any, pat), Ty::None),
     hir::Pat::Wild => (Pat::zero(Con::Any, pat), Ty::MetaVar(st.gen_meta_var())),
@@ -34,7 +40,7 @@ pub(crate) fn get(st: &mut St, ars: &hir::Arenas, ve: &mut ValEnv, pat: hir::Pat
       let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
       let ty = record(st, rows, |st, lab, pat| {
-        let (pm_pat, ty) = get(st, ars, ve, pat);
+        let (pm_pat, ty) = get(st, cx, ars, ve, pat);
         labs.push(lab.clone());
         pats.push(pm_pat);
         ty
@@ -42,8 +48,8 @@ pub(crate) fn get(st: &mut St, ars: &hir::Arenas, ve: &mut ValEnv, pat: hir::Pat
       (Pat::con(Con::Record(labs), pats, pat), ty)
     }
     hir::Pat::Typed(pat, want) => {
-      let (pm_pat, got) = get(st, ars, ve, pat);
-      let mut want = ty::get(st, ars, want);
+      let (pm_pat, got) = get(st, cx, ars, ve, pat);
+      let mut want = ty::get(st, cx, ars, want);
       unify(st, want.clone(), got);
       apply(st.subst(), &mut want);
       (pm_pat, want)
