@@ -16,7 +16,7 @@ impl Cx {
   }
 
   pub(crate) fn err(&mut self, error: Error) {
-    self.errors.push(error);
+    self.errors.push(error)
   }
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
