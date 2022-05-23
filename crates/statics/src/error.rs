@@ -3,6 +3,7 @@ use crate::types::{MetaTyVar, Ty};
 
 #[derive(Debug)]
 pub(crate) enum Error {
+  Undefined,
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
   MissingField(hir::Lab, Ty),
