@@ -15,7 +15,7 @@ pub(crate) fn get(
 ) -> (Pat, Ty) {
   match ars.pat[pat] {
     hir::Pat::None => (Pat::zero(Con::Any, pat), Ty::None),
-    hir::Pat::Wild => (Pat::zero(Con::Any, pat), Ty::MetaVar(st.gen_meta_var())),
+    hir::Pat::Wild => any(st, pat),
     hir::Pat::SCon(ref scon) => {
       let con = match *scon {
         hir::SCon::Int(i) => Con::Int(i),
@@ -56,4 +56,8 @@ pub(crate) fn get(
     }
     hir::Pat::As(_, _) => todo!(),
   }
+}
+
+fn any(st: &mut St, pat: hir::PatIdx) -> (Pat, Ty) {
+  (Pat::zero(Con::Any, pat), Ty::MetaVar(st.gen_meta_var()))
 }
