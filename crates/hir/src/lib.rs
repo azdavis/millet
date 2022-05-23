@@ -260,25 +260,33 @@ pub enum SCon {
 }
 
 #[derive(Debug)]
-pub struct Path(Vec<Name>);
+pub struct Path {
+  structures: Vec<Name>,
+  last: Name,
+}
 
 impl Path {
-  pub fn try_new(names: Vec<Name>) -> Option<Self> {
-    (!names.is_empty()).then(|| Self(names))
+  pub fn try_new(mut names: Vec<Name>) -> Option<Self> {
+    let last = names.pop()?;
+    Some(Self {
+      structures: names,
+      last,
+    })
   }
 
   pub fn one(name: Name) -> Self {
-    Self(vec![name])
+    Self {
+      structures: Vec::new(),
+      last: name,
+    }
   }
 
   pub fn last(&self) -> &Name {
-    self.0.last().unwrap()
+    &self.last
   }
 
   pub fn structures(&self) -> impl Iterator<Item = &Name> {
-    let mut ret = self.0.iter();
-    ret.next_back().unwrap();
-    ret
+    self.structures.iter()
   }
 }
 
