@@ -1,6 +1,6 @@
 use crate::cx::{Cx, Subst};
 use crate::error::Error;
-use crate::types::{Sym, Ty};
+use crate::types::{Env, Sym, Ty, TyScheme};
 use std::collections::BTreeMap;
 
 pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
@@ -30,6 +30,19 @@ where
   Ty::Record(ty_rows)
 }
 
+pub(crate) fn get_env<'e, 'p>(
+  mut env: &'e Env,
+  path: &'p hir::Path,
+) -> Result<&'e Env, &'p hir::Name> {
+  for name in path.structures() {
+    match env.str_env.get(name) {
+      None => return Err(name),
+      Some(x) => env = x,
+    }
+  }
+  Ok(env)
+}
+
 pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) => {}
@@ -54,6 +67,37 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
     Ty::Fn(param, res) => {
       apply(subst, param);
       apply(subst, res);
+    }
+  }
+}
+
+pub(crate) fn instantiate(cx: &mut Cx, ty_scheme: &TyScheme) -> Ty {
+  let meta_vars: Vec<_> = cx
+    .gen_from_ty_vars(&ty_scheme.vars)
+    .map(Ty::MetaVar)
+    .collect();
+  let mut ty = ty_scheme.ty.clone();
+  apply_bv(&meta_vars, &mut ty);
+  ty
+}
+
+pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
+  match ty {
+    Ty::None | Ty::MetaVar(_) => {}
+    Ty::BoundVar(bv) => *ty = bv.index_into(subst).clone(),
+    Ty::Record(rows) => {
+      for ty in rows.values_mut() {
+        apply_bv(subst, ty);
+      }
+    }
+    Ty::Con(args, _) => {
+      for ty in args.iter_mut() {
+        apply_bv(subst, ty);
+      }
+    }
+    Ty::Fn(param, res) => {
+      apply_bv(subst, param);
+      apply_bv(subst, res);
     }
   }
 }

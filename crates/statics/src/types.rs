@@ -63,6 +63,12 @@ impl TyScheme {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BoundTyVar(usize);
 
+impl BoundTyVar {
+  pub(crate) fn index_into<'a, T>(&self, xs: &'a [T]) -> &'a T {
+    xs.get(self.0).unwrap()
+  }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct MetaTyVar {
   id: Uniq,
