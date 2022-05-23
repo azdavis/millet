@@ -1,4 +1,5 @@
 use crate::types::{Sym, Syms, Ty};
+use crate::util::apply_bv;
 use rustc_hash::FxHashSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
@@ -64,9 +65,10 @@ impl pattern_match::Lang for Lang {
         Con::Variant(ty_name_2, con_name) => {
           assert_eq!(ty_name, ty_name_2);
           let ty_info = self.syms.get(ty_name);
-          let _ = args;
-          let _ = ty_info.val_env.get(con_name).unwrap().ty_scheme.ty;
-          todo!()
+          let val_info = ty_info.val_env.get(con_name).unwrap();
+          let mut ty = val_info.ty_scheme.ty.clone();
+          apply_bv(args, &mut ty);
+          vec![ty]
         }
         _ => unreachable!(),
       },
