@@ -285,8 +285,8 @@ impl Path {
     &self.last
   }
 
-  pub fn structures(&self) -> impl Iterator<Item = &Name> {
-    self.structures.iter()
+  pub fn structures(&self) -> &[Name] {
+    &self.structures
   }
 }
 
