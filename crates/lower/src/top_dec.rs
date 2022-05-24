@@ -3,8 +3,8 @@ use crate::util::Cx;
 use crate::{dec, ty};
 use syntax::ast;
 
-pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> Option<hir::TopDec> {
-  let ret = match top_dec {
+pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
+  match top_dec {
     ast::TopDec::StrDec(top_dec) => hir::TopDec::Str(get_str_dec(cx, Some(top_dec))),
     ast::TopDec::SigDec(top_dec) => hir::TopDec::Sig(
       top_dec
@@ -38,8 +38,7 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> Option<hir::TopDec> {
         })
         .collect(),
     ),
-  };
-  Some(ret)
+  }
 }
 
 fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
