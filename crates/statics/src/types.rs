@@ -126,29 +126,35 @@ pub(crate) struct Syms {
 
 impl Default for Syms {
   fn default() -> Self {
-    let z = |s: Sym| TyScheme::mono(Ty::zero(s));
-    let one = |s: Sym| TyScheme {
-      vars: TyVars { inner: vec![false] },
-      ty: Ty::Con(vec![], s),
-    };
     let bv = Ty::BoundVar(BoundTyVar(0));
     let store = vec![
-      datatype("bool", z(Sym::BOOL), [("true", None), ("false", None)]),
-      datatype("char", z(Sym::CHAR), []),
-      datatype("int", z(Sym::INT), []),
-      datatype("real", z(Sym::REAL), []),
-      datatype("string", z(Sym::STRING), []),
-      datatype("word", z(Sym::WORD), []),
-      datatype("exn", z(Sym::EXN), []),
+      datatype("bool", zero(Sym::BOOL), [("true", None), ("false", None)]),
+      datatype("char", zero(Sym::CHAR), []),
+      datatype("int", zero(Sym::INT), []),
+      datatype("real", zero(Sym::REAL), []),
+      datatype("string", zero(Sym::STRING), []),
+      datatype("word", zero(Sym::WORD), []),
+      datatype("exn", zero(Sym::EXN), []),
       datatype("ref", one(Sym::REF), [("ref", Some(bv.clone()))]),
       datatype("list", one(Sym::LIST), [("nil", None), ("::", Some(bv))]),
       datatype(
         "order",
-        z(Sym::ORDER),
+        zero(Sym::ORDER),
         [("LESS", None), ("EQUAL", None), ("GREATER", None)],
       ),
     ];
     Self { store }
+  }
+}
+
+fn zero(s: Sym) -> TyScheme {
+  TyScheme::mono(Ty::zero(s))
+}
+
+fn one(s: Sym) -> TyScheme {
+  TyScheme {
+    vars: TyVars { inner: vec![false] },
+    ty: Ty::Con(vec![], s),
   }
 }
 
