@@ -214,14 +214,14 @@ pub(crate) type TyEnv = FxHashMap<hir::Name, Sym>;
 /// Definition: ValEnv
 pub(crate) type ValEnv = FxHashMap<hir::Name, ValInfo>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ValInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) id_status: IdStatus,
 }
 
 /// Definition: IdStatus
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum IdStatus {
   Con,
   Exn,
@@ -229,6 +229,7 @@ pub(crate) enum IdStatus {
 }
 
 /// Definition: Env
+#[derive(Debug, Clone)]
 pub(crate) struct Env {
   pub(crate) str_env: StrEnv,
   pub(crate) ty_env: TyEnv,
@@ -238,6 +239,7 @@ pub(crate) struct Env {
 /// Definition: Context
 ///
 /// TODO add ty names and ty vars
+#[derive(Debug, Clone)]
 pub(crate) struct Cx {
   pub(crate) env: Env,
 }
