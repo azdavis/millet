@@ -5,8 +5,12 @@ use syntax::ast;
 /// Does the conversion.
 pub fn get(root: ast::Root) -> Lower {
   let mut cx = Cx::default();
-  for top_dec in root.top_decs() {
-    top_dec::get(&mut cx, top_dec);
+  let top_decs: Vec<_> = root
+    .top_decs()
+    .map(|top_dec| top_dec::get(&mut cx, top_dec))
+    .collect();
+  Lower {
+    arenas: cx.arenas,
+    top_decs,
   }
-  Lower {}
 }
