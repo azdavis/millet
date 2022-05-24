@@ -33,9 +33,12 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
     (Ty::None, _) | (_, Ty::None) => Ok(()),
     (Ty::BoundVar(want), Ty::BoundVar(got)) => head_match(want == got),
     (Ty::MetaVar(mv), ty) | (ty, Ty::MetaVar(mv)) => {
-      if let Ty::MetaVar(mv2) = ty {
-        head_match(mv == mv2)
-      } else if occurs(&mv, &ty) {
+      if let Ty::MetaVar(ref mv2) = ty {
+        if mv == *mv2 {
+          return Ok(());
+        }
+      }
+      if occurs(&mv, &ty) {
         Err(UnifyError::OccursCheck(mv, ty))
       } else {
         subst.insert(mv, ty);
