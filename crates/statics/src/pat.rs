@@ -13,10 +13,10 @@ pub(crate) fn get(
   ve: &mut ValEnv,
   pat: hir::PatIdx,
 ) -> (Pat, Ty) {
-  match ars.pat[pat] {
+  match &ars.pat[pat] {
     hir::Pat::None => (Pat::zero(Con::Any, pat), Ty::None),
     hir::Pat::Wild => any(st, pat),
-    hir::Pat::SCon(ref scon) => {
+    hir::Pat::SCon(scon) => {
       let con = match *scon {
         hir::SCon::Int(i) => Con::Int(i),
         hir::SCon::Real(_) => {
@@ -29,7 +29,7 @@ pub(crate) fn get(
       };
       (Pat::zero(con, pat), get_scon(scon))
     }
-    hir::Pat::Con(ref path, arg) => {
+    hir::Pat::Con(path, arg) => {
       let arg = arg.map(|x| get(st, cx, ars, ve, x));
       let env = match get_env(&cx.env, path) {
         Ok(x) => x,
@@ -86,11 +86,8 @@ pub(crate) fn get(
       let pat = Pat::con(Con::Variant(sym, path.last().clone()), args, pat);
       (pat, ty)
     }
-    hir::Pat::Record {
-      ref rows,
-      allows_other,
-    } => {
-      if allows_other {
+    hir::Pat::Record { rows, allows_other } => {
+      if *allows_other {
         st.err(Error::Unimplemented);
       }
       let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
@@ -104,8 +101,8 @@ pub(crate) fn get(
       (Pat::con(Con::Record(labs), pats, pat), ty)
     }
     hir::Pat::Typed(pat, want) => {
-      let (pm_pat, got) = get(st, cx, ars, ve, pat);
-      let mut want = ty::get(st, cx, ars, want);
+      let (pm_pat, got) = get(st, cx, ars, ve, *pat);
+      let mut want = ty::get(st, cx, ars, *want);
       unify(st, want.clone(), got);
       apply(st.subst(), &mut want);
       (pm_pat, want)
@@ -114,7 +111,7 @@ pub(crate) fn get(
       if !ok_val_info(cx.env.val_env.get(name)) {
         st.err(Error::InvalidAsPatName);
       }
-      let (pm_pat, ty) = get(st, cx, ars, ve, pat);
+      let (pm_pat, ty) = get(st, cx, ars, ve, *pat);
       insert_name(st, ve, name.clone(), ty.clone());
       (pm_pat, ty)
     }
