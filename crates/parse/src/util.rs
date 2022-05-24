@@ -112,17 +112,21 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
   if !name_plus(p) {
     return None;
   }
-  let e = p.enter();
+  let en = p.enter();
+  let mut np_dot = p.enter();
   p.bump();
   loop {
     if p.at(SK::Dot) {
       p.bump();
+      p.exit(np_dot, SK::NamePlusDot);
+      np_dot = p.enter();
       eat_name_plus(p);
     } else {
+      p.exit(np_dot, SK::NamePlusDot);
       break;
     }
   }
-  Some(p.exit(e, SK::Path))
+  Some(p.exit(en, SK::Path))
 }
 
 #[must_use]
