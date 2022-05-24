@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{MetaTyVar, Subst, Ty};
 use crate::util::apply;
@@ -9,10 +9,10 @@ pub(crate) fn unify(st: &mut St, want: Ty, got: Ty) {
     Err(e) => e,
   };
   let e = match e {
-    UnifyError::OccursCheck(mv, ty) => Error::Circularity(mv, ty),
-    UnifyError::HeadMismatch => Error::MismatchedTypes(want, got),
-    UnifyError::MissingField(lab) => Error::MissingField(lab, got),
-    UnifyError::ExtraFields(labs) => Error::ExtraFields(labs, got),
+    UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
+    UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
+    UnifyError::MissingField(lab) => ErrorKind::MissingField(lab, got),
+    UnifyError::ExtraFields(labs) => ErrorKind::ExtraFields(labs, got),
   };
   st.err(e);
 }

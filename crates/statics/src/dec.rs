@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::ErrorKind;
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{prepare_generalize, Cx, Env, MetaTyVar, Subst, Ty, ValEnv};
@@ -36,14 +36,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // make sure the non-recursive and recursive val envs don't clash.
       for (name, val_info) in rec_ve.iter() {
         if ve.insert(name.clone(), val_info.clone()).is_some() {
-          st.err(Error::Redefined);
+          st.err(ErrorKind::Redefined);
         }
       }
       let mut cx = cx.clone();
       cx.env.val_env.extend(rec_ve);
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
         if !matches!(ars.exp[val_bind.exp], hir::Exp::Fn(_)) {
-          st.err(Error::ValRecExpNotFn);
+          st.err(ErrorKind::ValRecExpNotFn);
         }
         get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want);
       }
@@ -87,7 +87,12 @@ fn get_val_exp(
   let got = exp::get(st, cx, ars, exp);
   unify(st, want.clone(), got);
   apply(st.subst(), &mut want);
-  pat::get_match(st, vec![pm_pat], want, Some(Error::NonExhaustiveBinding));
+  pat::get_match(
+    st,
+    vec![pm_pat],
+    want,
+    Some(ErrorKind::NonExhaustiveBinding),
+  );
 }
 
 /// calls `f` for every MetaTyVar not bound by the `subst` in `ty`.

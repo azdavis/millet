@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::ErrorKind;
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{Cx, Env, Sym, SymsMarker, Ty, ValEnv};
@@ -14,14 +14,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let env = match get_env(&cx.env, path) {
         Ok(x) => x,
         Err(_) => {
-          st.err(Error::Undefined);
+          st.err(ErrorKind::Undefined);
           return Ty::None;
         }
       };
       match env.val_env.get(path.last()) {
         Some(val_info) => instantiate(st, &val_info.ty_scheme),
         None => {
-          st.err(Error::Undefined);
+          st.err(ErrorKind::Undefined);
           Ty::None
         }
       }
@@ -35,7 +35,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       cx.env.extend(env);
       let got = get(st, &cx, ars, *exp);
       if ty_name_escape(&marker, &got) {
-        st.err(Error::TyNameEscape);
+        st.err(ErrorKind::TyNameEscape);
       }
       got
     }
@@ -64,7 +64,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     }
     hir::Exp::Fn(matcher) => {
       let (pats, param, res) = get_matcher(st, cx, ars, matcher);
-      pat::get_match(st, pats, param.clone(), Some(Error::NonExhaustiveMatch));
+      pat::get_match(st, pats, param.clone(), Some(ErrorKind::NonExhaustiveMatch));
       Ty::Fn(param.into(), res.into())
     }
     hir::Exp::Typed(exp, want) => {

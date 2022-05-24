@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{Cx, Ty};
 use crate::util::{get_env, record};
@@ -12,14 +12,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
       let env = match get_env(&cx.env, path) {
         Ok(x) => x,
         Err(_) => {
-          st.err(Error::Undefined);
+          st.err(ErrorKind::Undefined);
           return Ty::None;
         }
       };
       let sym = match env.ty_env.get(path.last()) {
         Some(x) => *x,
         None => {
-          st.err(Error::Undefined);
+          st.err(ErrorKind::Undefined);
           return Ty::None;
         }
       };

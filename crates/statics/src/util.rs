@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{Env, Subst, Sym, Ty, TyScheme};
 use std::collections::BTreeMap;
@@ -24,7 +24,7 @@ where
     let ty = f(st, lab, *val);
     match ty_rows.insert(lab.clone(), ty) {
       None => {}
-      Some(_) => st.err(Error::DuplicateLab(lab.clone())),
+      Some(_) => st.err(ErrorKind::DuplicateLab(lab.clone())),
     }
   }
   Ty::Record(ty_rows)

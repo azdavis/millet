@@ -2,7 +2,12 @@ use crate::pat_match::Pat;
 use crate::types::{MetaTyVar, Ty};
 
 #[derive(Debug)]
-pub(crate) enum Error {
+pub struct Error {
+  pub(crate) kind: ErrorKind,
+}
+
+#[derive(Debug)]
+pub(crate) enum ErrorKind {
   Unimplemented,
   Undefined,
   Redefined,

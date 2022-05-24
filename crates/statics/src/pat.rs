@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::ErrorKind;
 use crate::pat_match::{Con, Lang, Pat};
 use crate::st::St;
 use crate::ty;
@@ -20,7 +20,7 @@ pub(crate) fn get(
       let con = match *scon {
         hir::SCon::Int(i) => Con::Int(i),
         hir::SCon::Real(_) => {
-          st.err(Error::RealPat);
+          st.err(ErrorKind::RealPat);
           Con::Any
         }
         hir::SCon::Word(w) => Con::Word(w),
@@ -34,7 +34,7 @@ pub(crate) fn get(
       let env = match get_env(&cx.env, path) {
         Ok(x) => x,
         Err(_) => {
-          st.err(Error::Undefined);
+          st.err(ErrorKind::Undefined);
           return any(st, pat);
         }
       };
@@ -48,18 +48,18 @@ pub(crate) fn get(
       let val_info = match maybe_val_info {
         Some(x) => x,
         None => {
-          st.err(Error::Undefined);
+          st.err(ErrorKind::Undefined);
           return any(st, pat);
         }
       };
       if let IdStatus::Val = val_info.id_status {
-        st.err(Error::PatValIdStatus);
+        st.err(ErrorKind::PatValIdStatus);
       }
       let ty = instantiate(st, &val_info.ty_scheme);
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
           if arg.is_some() {
-            st.err(Error::PatMustNotHaveArg)
+            st.err(ErrorKind::PatMustNotHaveArg)
           }
           (sym, Vec::new(), ty)
         }
@@ -70,7 +70,7 @@ pub(crate) fn get(
           };
           let arg_pat = match arg {
             None => {
-              st.err(Error::PatMustHaveArg);
+              st.err(ErrorKind::PatMustHaveArg);
               Pat::zero(Con::Any, pat)
             }
             Some((arg_pat, arg_ty)) => {
@@ -88,7 +88,7 @@ pub(crate) fn get(
     }
     hir::Pat::Record { rows, allows_other } => {
       if *allows_other {
-        st.err(Error::Unimplemented);
+        st.err(ErrorKind::Unimplemented);
       }
       let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
@@ -109,7 +109,7 @@ pub(crate) fn get(
     }
     hir::Pat::As(ref name, pat) => {
       if !ok_val_info(cx.env.val_env.get(name)) {
-        st.err(Error::InvalidAsPatName);
+        st.err(ErrorKind::InvalidAsPatName);
       }
       let (pm_pat, ty) = get(st, cx, ars, ve, *pat);
       insert_name(st, ve, name.clone(), ty.clone());
@@ -132,11 +132,11 @@ fn insert_name(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty) {
     id_status: IdStatus::Val,
   };
   if ve.insert(name, vi).is_some() {
-    st.err(Error::Redefined);
+    st.err(ErrorKind::Redefined);
   }
 }
 
-pub(crate) fn get_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pat>) -> Error>) {
+pub(crate) fn get_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pat>) -> ErrorKind>) {
   // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
   // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
   // need one too, and then things get weird. Maybe the pattern_match API needs some work.
@@ -148,7 +148,7 @@ pub(crate) fn get_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pa
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().collect();
   unreachable.sort_unstable_by_key(|x| x.into_raw());
   for un in unreachable {
-    st.err(Error::UnreachablePattern(un));
+    st.err(ErrorKind::UnreachablePattern(un));
   }
   if !ck.missing.is_empty() {
     if let Some(f) = f {
