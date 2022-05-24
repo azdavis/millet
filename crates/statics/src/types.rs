@@ -29,7 +29,7 @@ impl Ty {
 }
 
 /// Definition: TypeScheme, TypeFcn
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct TyScheme {
   pub(crate) vars: TyVars,
   pub(crate) ty: Ty,
@@ -93,7 +93,7 @@ impl MetaTyVarGen {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct TyVars {
   /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
   /// variable i is equality.
@@ -105,6 +105,7 @@ pub(crate) struct TyVars {
 pub(crate) struct Sym(usize);
 
 impl Sym {
+  // keep this order in sync with impl Default for Syms
   pub(crate) const BOOL: Self = Self(0);
   pub(crate) const CHAR: Self = Self(1);
   pub(crate) const INT: Self = Self(2);
@@ -113,15 +114,71 @@ impl Sym {
   pub(crate) const WORD: Self = Self(5);
   pub(crate) const EXN: Self = Self(6);
   pub(crate) const REF: Self = Self(7);
-  pub(crate) const UNIT: Self = Self(8);
-  pub(crate) const LIST: Self = Self(9);
-  pub(crate) const ORDER: Self = Self(10);
+  pub(crate) const LIST: Self = Self(8);
+  pub(crate) const ORDER: Self = Self(9);
 }
 
 /// A mapping from [`Sym`]s to [`TyInfo`]s.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct Syms {
   store: Vec<TyInfo>,
+}
+
+impl Default for Syms {
+  fn default() -> Self {
+    let z = |s: Sym| TyScheme::mono(Ty::zero(s));
+    let one = |s: Sym| TyScheme {
+      vars: TyVars { inner: vec![false] },
+      ty: Ty::Con(vec![], s),
+    };
+    let bv = Ty::BoundVar(BoundTyVar(0));
+    let store = vec![
+      datatype("bool", z(Sym::BOOL), [("true", None), ("false", None)]),
+      datatype("char", z(Sym::CHAR), []),
+      datatype("int", z(Sym::INT), []),
+      datatype("real", z(Sym::REAL), []),
+      datatype("string", z(Sym::STRING), []),
+      datatype("word", z(Sym::WORD), []),
+      datatype("exn", z(Sym::EXN), []),
+      datatype("ref", one(Sym::REF), [("ref", Some(bv.clone()))]),
+      datatype("list", one(Sym::LIST), [("nil", None), ("::", Some(bv))]),
+      datatype(
+        "order",
+        z(Sym::ORDER),
+        [("LESS", None), ("EQUAL", None), ("GREATER", None)],
+      ),
+    ];
+    Self { store }
+  }
+}
+
+fn datatype<const N: usize>(
+  name: &str,
+  ty_scheme: TyScheme,
+  ctors: [(&str, Option<Ty>); N],
+) -> TyInfo {
+  let val_env: FxHashMap<_, _> = ctors
+    .into_iter()
+    .map(|(name, arg)| {
+      let ty_scheme = match arg {
+        None => ty_scheme.clone(),
+        Some(arg) => TyScheme {
+          vars: ty_scheme.vars.clone(),
+          ty: Ty::Fn(arg.into(), ty_scheme.ty.clone().into()),
+        },
+      };
+      let val_info = ValInfo {
+        ty_scheme,
+        id_status: IdStatus::Con,
+      };
+      (hir::Name::new(name), val_info)
+    })
+    .collect();
+  TyInfo {
+    name: hir::Name::new(name),
+    ty_scheme,
+    val_env,
+  }
 }
 
 impl Syms {
