@@ -273,7 +273,7 @@ impl Env {
 /// Definition: Context
 ///
 /// TODO add ty names and ty vars
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct Cx {
   pub(crate) env: Env,
 }
