@@ -33,4 +33,8 @@ impl St {
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
     self.meta_gen.gen_from_ty_vars(ty_vars)
   }
+
+  pub(crate) fn finish(self) -> Vec<Error> {
+    self.errors
+  }
 }

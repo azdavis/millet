@@ -21,11 +21,14 @@ mod types;
 mod unify;
 mod util;
 
+pub use error::Error;
+
 /// Does the checks.
-pub fn get(arenas: &hir::Arenas, top_decs: &[hir::TopDec]) {
+pub fn get(arenas: &hir::Arenas, top_decs: &[hir::TopDec]) -> Vec<Error> {
   let cx = types::Cx::default();
   let mut st = st::St::default();
   for top_dec in top_decs {
     top_dec::get(&mut st, &cx, arenas, top_dec);
   }
+  st.finish()
 }
