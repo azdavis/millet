@@ -267,7 +267,7 @@ impl Sym {
 
 /// A mapping from [`Sym`]s to [`TyInfo`]s.
 #[derive(Debug)]
-pub(crate) struct Syms {
+pub struct Syms {
   store: Vec<TyInfo>,
 }
 

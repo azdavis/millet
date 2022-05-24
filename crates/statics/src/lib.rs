@@ -23,9 +23,10 @@ mod util;
 
 pub use error::Error;
 pub use st::St;
+pub use types::Syms;
 
 /// Does the checks.
-pub fn get(arenas: &hir::Arenas, top_decs: &[hir::TopDec]) -> Vec<Error> {
+pub fn get(arenas: &hir::Arenas, top_decs: &[hir::TopDec]) -> (Syms, Vec<Error>) {
   let cx = types::Cx::default();
   let mut st = st::St::default();
   for top_dec in top_decs {

@@ -1,6 +1,5 @@
 use crate::pat_match::Pat;
-use crate::st::St;
-use crate::types::{MetaTyVar, Ty};
+use crate::types::{MetaTyVar, Syms, Ty};
 use std::fmt;
 
 /// A statics error.
@@ -11,10 +10,10 @@ pub struct Error {
 
 impl Error {
   /// Displays this error.
-  pub fn display<'a>(&'a self, st: &'a St) -> impl fmt::Display + 'a {
+  pub fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
     ErrorKindDisplay {
       kind: &self.kind,
-      st,
+      syms,
     }
   }
 }
@@ -43,7 +42,7 @@ pub(crate) enum ErrorKind {
 
 struct ErrorKindDisplay<'a> {
   kind: &'a ErrorKind,
-  st: &'a St,
+  syms: &'a Syms,
 }
 
 impl fmt::Display for ErrorKindDisplay<'_> {
@@ -57,20 +56,20 @@ impl fmt::Display for ErrorKindDisplay<'_> {
           f,
           "circularity: {} appears in {}",
           mv,
-          ty.display(&self.st.syms)
+          ty.display(self.syms)
         )
       }
       ErrorKind::MismatchedTypes(want, got) => write!(
         f,
         "mismatched types: expected {}, found {}",
-        want.display(&self.st.syms),
-        got.display(&self.st.syms)
+        want.display(self.syms),
+        got.display(self.syms)
       ),
       ErrorKind::MissingField(lab, ty) => {
-        write!(f, "missing label {} in {}", lab, ty.display(&self.st.syms))
+        write!(f, "missing label {} in {}", lab, ty.display(self.syms))
       }
       ErrorKind::ExtraFields(_, ty) => {
-        write!(f, "extra fields in {}", ty.display(&self.st.syms))
+        write!(f, "extra fields in {}", ty.display(self.syms))
       }
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label {}", lab),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),

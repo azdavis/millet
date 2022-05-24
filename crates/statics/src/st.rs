@@ -34,7 +34,7 @@ impl St {
     self.meta_gen.gen_from_ty_vars(ty_vars)
   }
 
-  pub(crate) fn finish(self) -> Vec<Error> {
-    self.errors
+  pub(crate) fn finish(self) -> (Syms, Vec<Error>) {
+    (self.syms, self.errors)
   }
 }
