@@ -1,6 +1,6 @@
 use crate::error::Error;
-use crate::st::{St, Subst};
-use crate::types::{MetaTyVar, Ty};
+use crate::st::St;
+use crate::types::{MetaTyVar, Subst, Ty};
 use crate::util::apply;
 
 pub(crate) fn unify(st: &mut St, want: Ty, got: Ty) {

@@ -1,6 +1,6 @@
 use crate::error::Error;
-use crate::st::{St, Subst};
-use crate::types::{Env, Sym, Ty, TyScheme};
+use crate::st::St;
+use crate::types::{Env, Subst, Sym, Ty, TyScheme};
 use std::collections::BTreeMap;
 
 pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {

@@ -1,6 +1,5 @@
 use crate::error::Error;
-use crate::types::{MetaTyVar, MetaTyVarGen, Syms, SymsMarker, Ty, TyVars};
-use fast_hash::FxHashMap;
+use crate::types::{MetaTyVar, MetaTyVarGen, Subst, Syms, SymsMarker, TyVars};
 
 /// The state.
 ///
@@ -46,24 +45,5 @@ impl St {
   pub(crate) fn set_syms(&mut self, syms: Syms) {
     assert!(self.syms.is_empty());
     self.syms = syms;
-  }
-}
-
-/// A mapping from [`MetaTyVar`]s to [`Ty`]s.
-///
-/// Invariant: Mappings are never removed.
-#[derive(Debug, Default)]
-pub(crate) struct Subst {
-  map: FxHashMap<MetaTyVar, Ty>,
-}
-
-impl Subst {
-  /// Panics if there was already an assignment for this [`MetaTyVar`].
-  pub(crate) fn insert(&mut self, mv: MetaTyVar, ty: Ty) {
-    assert!(self.map.insert(mv, ty).is_none())
-  }
-
-  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&Ty> {
-    self.map.get(mv)
   }
 }

@@ -272,6 +272,25 @@ pub(crate) struct Cx {
   pub(crate) env: Env,
 }
 
+/// A mapping from [`MetaTyVar`]s to [`Ty`]s.
+///
+/// Invariant: Mappings are never removed.
+#[derive(Debug, Default)]
+pub(crate) struct Subst {
+  map: FxHashMap<MetaTyVar, Ty>,
+}
+
+impl Subst {
+  /// Panics if there was already an assignment for this [`MetaTyVar`].
+  pub(crate) fn insert(&mut self, mv: MetaTyVar, ty: Ty) {
+    assert!(self.map.insert(mv, ty).is_none())
+  }
+
+  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&Ty> {
+    self.map.get(mv)
+  }
+}
+
 // formatting //
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
