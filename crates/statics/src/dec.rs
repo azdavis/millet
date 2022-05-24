@@ -9,7 +9,13 @@ use std::collections::BTreeSet;
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: hir::DecIdx) {
   match &ars.dec[dec] {
-    hir::Dec::Val(_, val_binds) => {
+    hir::Dec::Val(ty_vars, val_binds) => {
+      let mut cx = cx.clone();
+      for ty_var in ty_vars {
+        let fv = st.gen_fixed_var(ty_var.clone());
+        // TODO shadowing? scoping?
+        cx.ty_vars.insert(ty_var.clone(), fv);
+      }
       // we actually resort to indexing logic because this is a little weird:
       // - we represent the recursive nature of ValBinds (and all other things that recurse with
       //   `and`) as a sequence of non-recursive items.
@@ -23,23 +29,23 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           break;
         }
         idx += 1;
-        let (pm_pat, want) = pat::get(st, cx, ars, &mut ve, val_bind.pat);
-        get_val_exp(st, cx, ars, val_bind.exp, pm_pat, want);
+        let (pm_pat, want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
+        get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want);
       }
       // deal with the recursive ones. first do all the patterns so we can update the val env. we
       // also need a separate recursive-only val env.
       let mut rec_ve = ValEnv::default();
       let got_pats: Vec<_> = val_binds[idx..]
         .iter()
-        .map(|val_bind| pat::get(st, cx, ars, &mut rec_ve, val_bind.pat))
+        .map(|val_bind| pat::get(st, &cx, ars, &mut rec_ve, val_bind.pat))
         .collect();
-      // make sure the non-recursive and recursive val envs don't clash.
+      // merge the recursive and non-recursive val envs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
         if ve.insert(name.clone(), val_info.clone()).is_some() {
           st.err(ErrorKind::Redefined);
         }
       }
-      let mut cx = cx.clone();
+      // extend the cx with only the recursive val env.
       cx.env.val_env.extend(rec_ve);
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
         if !matches!(ars.exp[val_bind.exp], hir::Exp::Fn(_)) {
@@ -47,6 +53,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
         get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want);
       }
+      // generalize the entire merged val env.
       for val_info in ve.values_mut() {
         assert!(val_info.ty_scheme.vars.is_empty());
         let mut to_generalize = BTreeSet::<MetaTyVar>::default();
@@ -59,6 +66,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         val_info.ty_scheme.vars = ty_vars;
         apply(&subst, &mut val_info.ty_scheme.ty);
       }
+      // extend the overall env with that.
       env.val_env.extend(ve);
     }
     hir::Dec::Ty(_) => todo!(),
