@@ -109,6 +109,12 @@ pub(crate) struct MetaTyVar {
   equality: bool,
 }
 
+impl fmt::Display for MetaTyVar {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}{}", equality_str(self.equality), self.id)
+  }
+}
+
 #[derive(Debug, Default)]
 pub(crate) struct MetaTyVarGen(UniqGen);
 
@@ -368,7 +374,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
         }
       }
       // not real syntax
-      Ty::MetaVar(v) => write!(f, "{}{}", equality_str(v.equality), v.id)?,
+      Ty::MetaVar(v) => v.fmt(f)?,
       Ty::Record(rows) => {
         if rows.is_empty() {
           return f.write_str("unit");
