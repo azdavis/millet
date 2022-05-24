@@ -11,9 +11,7 @@ pub(crate) enum Ty {
   None,
   /// Can only appear when this Ty is wrapped in a TyScheme.
   BoundVar(BoundTyVar),
-  /// See [`MetaTyVar`].
   MetaVar(MetaTyVar),
-  /// See [`FixedTyVar`].
   FixedVar(FixedTyVar),
   /// Definition: RowType
   Record(BTreeMap<hir::Lab, Ty>),
@@ -63,20 +61,20 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.ty {
       Ty::None => f.write_str("_")?,
-      Ty::BoundVar(v) => {
+      Ty::BoundVar(bv) => {
         let vars = self.vars.expect("bound ty var without a TyScheme");
-        f.write_str(equality_str(vars.inner[v.0]))?;
+        f.write_str(equality_str(vars.inner[bv.0]))?;
         let alpha = (b'z' - b'a') as usize;
-        let quot = v.0 / alpha;
-        let rem = v.0 % alpha;
+        let quot = bv.0 / alpha;
+        let rem = bv.0 % alpha;
         let ch = char::from((rem as u8) + b'a');
         for _ in 0..=quot {
           write!(f, "{ch}")?;
         }
       }
       // not real syntax
-      Ty::MetaVar(v) => v.fmt(f)?,
-      Ty::FixedVar(v) => v.fmt(f)?,
+      Ty::MetaVar(mv) => mv.fmt(f)?,
+      Ty::FixedVar(fv) => fv.fmt(f)?,
       Ty::Record(rows) => {
         if rows.is_empty() {
           return f.write_str("unit");
