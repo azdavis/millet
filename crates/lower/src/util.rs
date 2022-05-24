@@ -8,7 +8,7 @@ pub struct Ptrs {
 
 /// The result of lowering.
 #[derive(Debug)]
-pub struct Lowered {
+pub struct Lower {
   // TODO
 }
 
