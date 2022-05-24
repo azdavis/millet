@@ -23,7 +23,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#2476892969da5537e7bca6ff3799144a0d1dee29"
+source = "git+https://github.com/azdavis/language-util.git#74df1b28c6282a071bef38a87ecd53d125cdfedf"
 
 [[package]]
 name = "countme"
@@ -91,7 +91,7 @@ dependencies = [
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#2476892969da5537e7bca6ff3799144a0d1dee29"
+source = "git+https://github.com/azdavis/language-util.git#74df1b28c6282a071bef38a87ecd53d125cdfedf"
 
 [[package]]
 name = "idna"
@@ -253,7 +253,7 @@ dependencies = [
 [[package]]
 name = "pattern-match"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#2476892969da5537e7bca6ff3799144a0d1dee29"
+source = "git+https://github.com/azdavis/language-util.git#74df1b28c6282a071bef38a87ecd53d125cdfedf"
 dependencies = [
  "rustc-hash",
 ]
@@ -393,7 +393,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#2476892969da5537e7bca6ff3799144a0d1dee29"
+source = "git+https://github.com/azdavis/language-util.git#74df1b28c6282a071bef38a87ecd53d125cdfedf"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -443,7 +443,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#2476892969da5537e7bca6ff3799144a0d1dee29"
+source = "git+https://github.com/azdavis/language-util.git#74df1b28c6282a071bef38a87ecd53d125cdfedf"
 
 [[package]]
 name = "ungrammar"
@@ -475,7 +475,7 @@ dependencies = [
 [[package]]
 name = "uniq"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#2476892969da5537e7bca6ff3799144a0d1dee29"
+source = "git+https://github.com/azdavis/language-util.git#74df1b28c6282a071bef38a87ecd53d125cdfedf"
 
 [[package]]
 name = "url"
