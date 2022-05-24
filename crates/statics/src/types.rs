@@ -1,7 +1,7 @@
 //! Types.
 
 use fast_hash::FxHashMap;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use uniq::{Uniq, UniqGen};
 
@@ -71,6 +71,12 @@ pub(crate) struct TyVars {
   inner: Vec<bool>,
 }
 
+impl TyVars {
+  pub(crate) fn is_empty(&self) -> bool {
+    self.inner.is_empty()
+  }
+}
+
 /// Definition: TyVar
 ///
 /// But only kind of. There's also [`MetaTyVar`] and [`hir::TyVar`].
@@ -86,7 +92,7 @@ impl BoundTyVar {
 }
 
 /// Generated, and to be substituted for a real type, by the inference algorithm.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct MetaTyVar {
   id: Uniq,
   equality: bool,
@@ -289,6 +295,22 @@ impl Subst {
   pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&Ty> {
     self.map.get(mv)
   }
+}
+
+// free helper fns //
+
+pub(crate) fn prepare_generalize(set: BTreeSet<MetaTyVar>) -> (TyVars, Subst) {
+  let ty_vars = TyVars {
+    inner: set.iter().map(|mv| mv.equality).collect(),
+  };
+  let subst = Subst {
+    map: set
+      .into_iter()
+      .enumerate()
+      .map(|(idx, mv)| (mv, Ty::BoundVar(BoundTyVar(idx))))
+      .collect(),
+  };
+  (ty_vars, subst)
 }
 
 // formatting //
