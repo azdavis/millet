@@ -2,7 +2,7 @@ use fast_hash::FxHashMap;
 use old_loc::Located;
 use std::fmt;
 use std::ops::Range;
-use syntax::rowan::TextRange;
+use syntax::rowan::{TextRange, TextSize};
 
 /// pass the string of an SML program with some expectation comments.
 ///
@@ -169,7 +169,11 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   if std::env::var_os("NEW").map_or(false, |x| x == "1") {
     let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
     if let Some(err) = errors.into_iter().next() {
-      return Err((TextRange::default(), err.display(&syms).to_string()));
+      // TODO use a real range
+      return Err((
+        TextRange::empty(TextSize::of(s.lines().nth(1).unwrap())),
+        err.display(&syms).to_string(),
+      ));
     }
   }
   Ok(())
