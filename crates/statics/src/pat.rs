@@ -41,9 +41,9 @@ pub(crate) fn get(
       let maybe_val_info = env.val_env.get(path.last());
       let is_var = arg.is_none() && path.structures().is_empty() && ok_val_info(maybe_val_info);
       if is_var {
-        let (pat, ty) = any(st, pat);
+        let (pm_pat, ty) = any(st, pat);
         insert_name(st, ve, path.last().clone(), ty.clone());
-        return (pat, ty);
+        return (pm_pat, ty);
       }
       let val_info = match maybe_val_info {
         Some(x) => x,
@@ -114,9 +114,9 @@ pub(crate) fn get(
       if !ok_val_info(cx.env.val_env.get(name)) {
         st.err(Error::InvalidAsPatName);
       }
-      let (pat, ty) = get(st, cx, ars, ve, pat);
+      let (pm_pat, ty) = get(st, cx, ars, ve, pat);
       insert_name(st, ve, name.clone(), ty.clone());
-      (pat, ty)
+      (pm_pat, ty)
     }
   }
 }
