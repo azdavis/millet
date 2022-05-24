@@ -72,7 +72,11 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
                   }
                 }
               }
-              let pat = cx.arenas.pat.alloc(pat::tuple(pats));
+              let pat = if pats.len() == 1 {
+                pats.pop().unwrap()
+              } else {
+                cx.arenas.pat.alloc(pat::tuple(pats))
+              };
               let ty = case.ty_annotation().map(|x| ty::get(cx, x.ty()));
               let mut exp = exp::get(cx, case.exp());
               if let Some(ty) = ty {
@@ -83,12 +87,15 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
             .collect();
           let pat = name.map_or(hir::Pat::None, |tok| pat::name(tok.text()));
           let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
-          let head = exp::tuple(
-            arg_names
-              .iter()
-              .map(|name| cx.arenas.exp.alloc(exp::name(name.as_str()))),
-          );
-          let head = cx.arenas.exp.alloc(head);
+          let mut arg_exprs = arg_names
+            .iter()
+            .map(|name| cx.arenas.exp.alloc(exp::name(name.as_str())));
+          let head = if arg_exprs.len() == 1 {
+            arg_exprs.next().unwrap()
+          } else {
+            let tup = exp::tuple(arg_exprs);
+            cx.arenas.exp.alloc(tup)
+          };
           let case = exp::case(cx, head, arms);
           hir::ValBind {
             rec: true,
