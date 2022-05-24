@@ -2,7 +2,7 @@ use crate::error::Error;
 use crate::pat_match::{Con, Pat};
 use crate::st::St;
 use crate::ty;
-use crate::types::{Cx, IdStatus, Ty, ValEnv};
+use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_scon, instantiate, record};
 
@@ -39,14 +39,11 @@ pub(crate) fn get(
         }
       };
       let maybe_val_info = env.val_env.get(path.last());
-      let is_var = arg.is_none()
-        && path.structures().is_empty()
-        && maybe_val_info
-          .as_ref()
-          .map_or(true, |vi| matches!(vi.id_status, IdStatus::Val));
+      let is_var = arg.is_none() && path.structures().is_empty() && ok_val_info(maybe_val_info);
       if is_var {
-        // TODO add to val env
-        return any(st, pat);
+        let (pat, ty) = any(st, pat);
+        insert_name(st, ve, path.last().clone(), ty.clone());
+        return (pat, ty);
       }
       let val_info = match maybe_val_info {
         Some(x) => x,
@@ -113,13 +110,31 @@ pub(crate) fn get(
       apply(st.subst(), &mut want);
       (pm_pat, want)
     }
-    hir::Pat::As(_, pat) => {
-      // TODO add name to val env
-      get(st, cx, ars, ve, pat)
+    hir::Pat::As(ref name, pat) => {
+      if !ok_val_info(cx.env.val_env.get(name)) {
+        st.err(Error::InvalidAsPatName);
+      }
+      let (pat, ty) = get(st, cx, ars, ve, pat);
+      insert_name(st, ve, name.clone(), ty.clone());
+      (pat, ty)
     }
   }
 }
 
 fn any(st: &mut St, pat: hir::PatIdx) -> (Pat, Ty) {
   (Pat::zero(Con::Any, pat), Ty::MetaVar(st.gen_meta_var()))
+}
+
+fn ok_val_info(vi: Option<&ValInfo>) -> bool {
+  vi.map_or(true, |vi| matches!(vi.id_status, IdStatus::Val))
+}
+
+fn insert_name(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty) {
+  let vi = ValInfo {
+    ty_scheme: TyScheme::mono(ty),
+    id_status: IdStatus::Val,
+  };
+  if ve.insert(name, vi).is_some() {
+    st.err(Error::Redefined);
+  }
 }

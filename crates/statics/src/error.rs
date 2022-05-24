@@ -4,6 +4,7 @@ use crate::types::{MetaTyVar, Ty};
 #[derive(Debug)]
 pub(crate) enum Error {
   Undefined,
+  Redefined,
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
   MissingField(hir::Lab, Ty),
@@ -15,4 +16,5 @@ pub(crate) enum Error {
   PatValIdStatus,
   PatMustNotHaveArg,
   PatMustHaveArg,
+  InvalidAsPatName,
 }
