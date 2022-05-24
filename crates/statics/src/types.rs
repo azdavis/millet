@@ -145,6 +145,39 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   }
 }
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum TyPrec {
+  Arrow,
+  Star,
+  App,
+}
+
+fn display_row<'a>(
+  f: &mut fmt::Formatter<'_>,
+  vars: Option<&'a TyVars>,
+  syms: &'a Syms,
+  lab: &hir::Lab,
+  ty: &'a Ty,
+) -> fmt::Result {
+  fmt::Display::fmt(lab, f)?;
+  f.write_str(" : ")?;
+  let td = TyDisplay {
+    ty,
+    vars,
+    syms,
+    prec: TyPrec::Arrow,
+  };
+  fmt::Display::fmt(&td, f)
+}
+
+fn equality_str(equality: bool) -> &'static str {
+  if equality {
+    "''"
+  } else {
+    "'"
+  }
+}
+
 /// Definition: TypeScheme, TypeFcn
 #[derive(Debug, Clone)]
 pub(crate) struct TyScheme {
@@ -421,8 +454,6 @@ impl Subst {
   }
 }
 
-// helpers //
-
 pub(crate) fn prepare_generalize(set: BTreeSet<MetaTyVar>) -> (TyVars, Subst) {
   let ty_vars = TyVars {
     inner: set.iter().map(|mv| mv.equality).collect(),
@@ -435,37 +466,4 @@ pub(crate) fn prepare_generalize(set: BTreeSet<MetaTyVar>) -> (TyVars, Subst) {
       .collect(),
   };
   (ty_vars, subst)
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum TyPrec {
-  Arrow,
-  Star,
-  App,
-}
-
-fn display_row<'a>(
-  f: &mut fmt::Formatter<'_>,
-  vars: Option<&'a TyVars>,
-  syms: &'a Syms,
-  lab: &hir::Lab,
-  ty: &'a Ty,
-) -> fmt::Result {
-  fmt::Display::fmt(lab, f)?;
-  f.write_str(" : ")?;
-  let td = TyDisplay {
-    ty,
-    vars,
-    syms,
-    prec: TyPrec::Arrow,
-  };
-  fmt::Display::fmt(&td, f)
-}
-
-fn equality_str(equality: bool) -> &'static str {
-  if equality {
-    "''"
-  } else {
-    "'"
-  }
 }
