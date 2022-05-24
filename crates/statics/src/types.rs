@@ -26,6 +26,16 @@ impl Ty {
   pub(crate) fn zero(sym: Sym) -> Self {
     Self::Con(Vec::new(), sym)
   }
+
+  /// TODO do we need this? have it be on TyScheme, Ty, both?
+  pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
+    TyDisplay {
+      ty: self,
+      vars: None,
+      syms,
+      prec: TyPrec::Arrow,
+    }
+  }
 }
 
 /// Definition: TypeScheme, TypeFcn
@@ -43,10 +53,11 @@ impl TyScheme {
     }
   }
 
+  /// TODO do we need this? have it be on TyScheme, Ty, both?
   pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
     TyDisplay {
       ty: &self.ty,
-      vars: &self.vars,
+      vars: Some(&self.vars),
       syms,
       prec: TyPrec::Arrow,
     }
@@ -324,7 +335,8 @@ enum TyPrec {
 
 struct TyDisplay<'a> {
   ty: &'a Ty,
-  vars: &'a TyVars,
+  /// TODO figure this out
+  vars: Option<&'a TyVars>,
   syms: &'a Syms,
   prec: TyPrec,
 }
@@ -345,7 +357,8 @@ impl<'a> fmt::Display for TyDisplay<'a> {
     match self.ty {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(v) => {
-        f.write_str(equality_str(self.vars.inner[v.0]))?;
+        let vars = self.vars.expect("bound ty var without a TyScheme");
+        f.write_str(equality_str(vars.inner[v.0]))?;
         let alpha = (b'z' - b'a') as usize;
         let quot = v.0 / alpha;
         let rem = v.0 % alpha;
@@ -429,7 +442,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
 
 fn display_row<'a>(
   f: &mut fmt::Formatter<'_>,
-  vars: &'a TyVars,
+  vars: Option<&'a TyVars>,
   syms: &'a Syms,
   lab: &hir::Lab,
   ty: &'a Ty,
