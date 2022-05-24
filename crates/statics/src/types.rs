@@ -38,6 +38,113 @@ impl Ty {
   }
 }
 
+struct TyDisplay<'a> {
+  ty: &'a Ty,
+  /// TODO figure this out
+  vars: Option<&'a TyVars>,
+  syms: &'a Syms,
+  prec: TyPrec,
+}
+
+impl<'a> TyDisplay<'a> {
+  fn with(&self, ty: &'a Ty, prec: TyPrec) -> Self {
+    Self {
+      ty,
+      vars: self.vars,
+      syms: self.syms,
+      prec,
+    }
+  }
+}
+
+impl<'a> fmt::Display for TyDisplay<'a> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.ty {
+      Ty::None => f.write_str("_")?,
+      Ty::BoundVar(v) => {
+        let vars = self.vars.expect("bound ty var without a TyScheme");
+        f.write_str(equality_str(vars.inner[v.0]))?;
+        let alpha = (b'z' - b'a') as usize;
+        let quot = v.0 / alpha;
+        let rem = v.0 % alpha;
+        let ch = char::from((rem as u8) + b'a');
+        for _ in 0..=quot {
+          write!(f, "{ch}")?;
+        }
+      }
+      // not real syntax
+      Ty::MetaVar(v) => v.fmt(f)?,
+      Ty::Record(rows) => {
+        if rows.is_empty() {
+          return f.write_str("unit");
+        }
+        let is_tuple = rows.len() > 1
+          && rows
+            .keys()
+            .enumerate()
+            .all(|(idx, lab)| hir::Lab::tuple(idx) == *lab);
+        if is_tuple {
+          let needs_parens = self.prec > TyPrec::Star;
+          if needs_parens {
+            f.write_str("(")?;
+          }
+          let mut tys = rows.values();
+          let ty = tys.next().unwrap();
+          self.with(ty, TyPrec::App).fmt(f)?;
+          for ty in tys {
+            f.write_str(" * ")?;
+            self.with(ty, TyPrec::App).fmt(f)?;
+          }
+          if needs_parens {
+            f.write_str(")")?;
+          }
+        } else {
+          f.write_str("{ ")?;
+          let mut rows = rows.iter();
+          let (lab, ty) = rows.next().unwrap();
+          display_row(f, self.vars, self.syms, lab, ty)?;
+          for (lab, ty) in rows {
+            f.write_str(", ")?;
+            display_row(f, self.vars, self.syms, lab, ty)?;
+          }
+          f.write_str(" }")?;
+        }
+      }
+      Ty::Con(args, sym) => {
+        let mut args_iter = args.iter();
+        if let Some(arg) = args_iter.next() {
+          if args.len() == 1 {
+            self.with(arg, TyPrec::App).fmt(f)?;
+          } else {
+            f.write_str("(")?;
+            self.with(arg, TyPrec::Arrow).fmt(f)?;
+            for arg in args_iter {
+              f.write_str(", ")?;
+              self.with(arg, TyPrec::Arrow).fmt(f)?;
+            }
+            f.write_str(")")?;
+          }
+          f.write_str(" ")?;
+        }
+        self.syms.get(sym).name.fmt(f)?
+      }
+      Ty::Fn(param, res) => {
+        let needs_parens = self.prec > TyPrec::Arrow;
+        if needs_parens {
+          f.write_str("(")?;
+        }
+        self.with(param, TyPrec::Star).fmt(f)?;
+        f.write_str(" -> ")?;
+        self.with(res, TyPrec::Arrow).fmt(f)?;
+        if needs_parens {
+          f.write_str(")")?;
+        }
+      }
+    }
+    Ok(())
+  }
+}
+
 /// Definition: TypeScheme, TypeFcn
 #[derive(Debug, Clone)]
 pub(crate) struct TyScheme {
@@ -314,7 +421,7 @@ impl Subst {
   }
 }
 
-// free helper fns //
+// helpers //
 
 pub(crate) fn prepare_generalize(set: BTreeSet<MetaTyVar>) -> (TyVars, Subst) {
   let ty_vars = TyVars {
@@ -330,120 +437,11 @@ pub(crate) fn prepare_generalize(set: BTreeSet<MetaTyVar>) -> (TyVars, Subst) {
   (ty_vars, subst)
 }
 
-// formatting //
-
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum TyPrec {
   Arrow,
   Star,
   App,
-}
-
-struct TyDisplay<'a> {
-  ty: &'a Ty,
-  /// TODO figure this out
-  vars: Option<&'a TyVars>,
-  syms: &'a Syms,
-  prec: TyPrec,
-}
-
-impl<'a> TyDisplay<'a> {
-  fn with(&self, ty: &'a Ty, prec: TyPrec) -> Self {
-    Self {
-      ty,
-      vars: self.vars,
-      syms: self.syms,
-      prec,
-    }
-  }
-}
-
-impl<'a> fmt::Display for TyDisplay<'a> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.ty {
-      Ty::None => f.write_str("_")?,
-      Ty::BoundVar(v) => {
-        let vars = self.vars.expect("bound ty var without a TyScheme");
-        f.write_str(equality_str(vars.inner[v.0]))?;
-        let alpha = (b'z' - b'a') as usize;
-        let quot = v.0 / alpha;
-        let rem = v.0 % alpha;
-        let ch = char::from((rem as u8) + b'a');
-        for _ in 0..=quot {
-          write!(f, "{ch}")?;
-        }
-      }
-      // not real syntax
-      Ty::MetaVar(v) => v.fmt(f)?,
-      Ty::Record(rows) => {
-        if rows.is_empty() {
-          return f.write_str("unit");
-        }
-        let is_tuple = rows.len() > 1
-          && rows
-            .keys()
-            .enumerate()
-            .all(|(idx, lab)| hir::Lab::tuple(idx) == *lab);
-        if is_tuple {
-          let needs_parens = self.prec > TyPrec::Star;
-          if needs_parens {
-            f.write_str("(")?;
-          }
-          let mut tys = rows.values();
-          let ty = tys.next().unwrap();
-          self.with(ty, TyPrec::App).fmt(f)?;
-          for ty in tys {
-            f.write_str(" * ")?;
-            self.with(ty, TyPrec::App).fmt(f)?;
-          }
-          if needs_parens {
-            f.write_str(")")?;
-          }
-        } else {
-          f.write_str("{ ")?;
-          let mut rows = rows.iter();
-          let (lab, ty) = rows.next().unwrap();
-          display_row(f, self.vars, self.syms, lab, ty)?;
-          for (lab, ty) in rows {
-            f.write_str(", ")?;
-            display_row(f, self.vars, self.syms, lab, ty)?;
-          }
-          f.write_str(" }")?;
-        }
-      }
-      Ty::Con(args, sym) => {
-        let mut args_iter = args.iter();
-        if let Some(arg) = args_iter.next() {
-          if args.len() == 1 {
-            self.with(arg, TyPrec::App).fmt(f)?;
-          } else {
-            f.write_str("(")?;
-            self.with(arg, TyPrec::Arrow).fmt(f)?;
-            for arg in args_iter {
-              f.write_str(", ")?;
-              self.with(arg, TyPrec::Arrow).fmt(f)?;
-            }
-            f.write_str(")")?;
-          }
-          f.write_str(" ")?;
-        }
-        self.syms.get(sym).name.fmt(f)?
-      }
-      Ty::Fn(param, res) => {
-        let needs_parens = self.prec > TyPrec::Arrow;
-        if needs_parens {
-          f.write_str("(")?;
-        }
-        self.with(param, TyPrec::Star).fmt(f)?;
-        f.write_str(" -> ")?;
-        self.with(res, TyPrec::Arrow).fmt(f)?;
-        if needs_parens {
-          f.write_str(")")?;
-        }
-      }
-    }
-    Ok(())
-  }
 }
 
 fn display_row<'a>(
