@@ -22,6 +22,7 @@ mod unify;
 mod util;
 
 pub use error::Error;
+pub use st::St;
 
 /// Does the checks.
 pub fn get(arenas: &hir::Arenas, top_decs: &[hir::TopDec]) -> Vec<Error> {
