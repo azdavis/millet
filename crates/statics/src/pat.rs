@@ -91,7 +91,7 @@ pub(crate) fn get(
       allows_other,
     } => {
       if allows_other {
-        todo!()
+        st.err(Error::Unimplemented);
       }
       let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
