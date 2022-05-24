@@ -78,8 +78,9 @@ fn get_matcher(
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
     let (pm_pat, pat_ty) = pat::get(st, cx, ars, &mut ve, pat);
-    // TODO extend env for exp_ty with the ve?
-    let exp_ty = get(st, cx, ars, exp);
+    let mut cx = cx.clone();
+    cx.env.val_env.extend(ve);
+    let exp_ty = get(st, &cx, ars, exp);
     unify(st, param_ty.clone(), pat_ty);
     unify(st, res_ty.clone(), exp_ty);
     apply(st.subst(), &mut param_ty);
@@ -90,7 +91,9 @@ fn get_matcher(
 }
 
 fn ck_pat_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pat>) -> Error>) {
-  // TODO this could probably be done with borrows instead.
+  // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
+  // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
+  // need one too, and then things get weird. Maybe the pattern_match API needs some work.
   let lang = Lang {
     syms: st.take_syms(),
   };

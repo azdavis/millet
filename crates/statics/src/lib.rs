@@ -1,4 +1,4 @@
-//! Static analysis. TODO.
+//! Static analysis.
 //!
 //! With help from [this article][1].
 //!
