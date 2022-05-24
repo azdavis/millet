@@ -1,5 +1,5 @@
 use crate::error::{Error, ErrorKind};
-use crate::types::{MetaTyVar, MetaTyVarGen, Subst, Syms, SymsMarker, TyVars};
+use crate::types::{MetaTyVar, MetaTyVarGen, Subst, Syms, TyVars};
 
 /// The state.
 ///
@@ -11,7 +11,7 @@ pub(crate) struct St {
   subst: Subst,
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,
-  syms: Syms,
+  pub(crate) syms: Syms,
 }
 
 impl St {
@@ -32,18 +32,5 @@ impl St {
     ty_vars: &'a TyVars,
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
     self.meta_gen.gen_from_ty_vars(ty_vars)
-  }
-
-  pub(crate) fn mark_syms(&self) -> SymsMarker {
-    self.syms.mark()
-  }
-
-  pub(crate) fn take_syms(&mut self) -> Syms {
-    std::mem::take(&mut self.syms)
-  }
-
-  pub(crate) fn set_syms(&mut self, syms: Syms) {
-    assert!(self.syms.is_empty());
-    self.syms = syms;
   }
 }

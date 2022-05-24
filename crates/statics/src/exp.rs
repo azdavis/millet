@@ -29,7 +29,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     hir::Exp::Record(rows) => record(st, rows, |st, _, exp| get(st, cx, ars, exp)),
     hir::Exp::Let(dec, exp) => {
       let mut env = Env::default();
-      let marker = st.mark_syms();
+      let marker = st.syms.mark();
       dec::get(st, cx, ars, &mut env, *dec);
       let mut cx = cx.clone();
       cx.env.extend(env);

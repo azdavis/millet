@@ -141,10 +141,10 @@ pub(crate) fn get_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pa
   // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
   // need one too, and then things get weird. Maybe the pattern_match API needs some work.
   let lang = Lang {
-    syms: st.take_syms(),
+    syms: std::mem::take(&mut st.syms),
   };
   let ck = pattern_match::check(&lang, pats, ty);
-  st.set_syms(lang.syms);
+  st.syms = lang.syms;
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().collect();
   unreachable.sort_unstable_by_key(|x| x.into_raw());
   for un in unreachable {
