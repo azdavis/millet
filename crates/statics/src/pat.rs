@@ -30,12 +30,6 @@ pub(crate) fn get(
       (Pat::zero(con, pat), get_scon(scon))
     }
     hir::Pat::Con(ref path, arg) => {
-      let is_var =
-        arg.is_none() && path.structures().is_empty() && !cx.env.val_env.contains_key(path.last());
-      if is_var {
-        // TODO add to val env
-        return any(st, pat);
-      }
       let arg = arg.map(|x| get(st, cx, ars, ve, x));
       let env = match get_env(&cx.env, path) {
         Ok(x) => x,
@@ -44,7 +38,17 @@ pub(crate) fn get(
           return any(st, pat);
         }
       };
-      let val_info = match env.val_env.get(path.last()) {
+      let maybe_val_info = env.val_env.get(path.last());
+      let is_var = arg.is_none()
+        && path.structures().is_empty()
+        && maybe_val_info
+          .as_ref()
+          .map_or(true, |vi| matches!(vi.id_status, IdStatus::Val));
+      if is_var {
+        // TODO add to val env
+        return any(st, pat);
+      }
+      let val_info = match maybe_val_info {
         Some(x) => x,
         None => {
           st.err(Error::Undefined);
