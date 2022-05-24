@@ -96,34 +96,35 @@ impl<'a> Cx<'a> {
 
 impl fmt::Display for Cx<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.write_str("CHECK FAILED\n\nreasons:\n")?;
+    f.write_str("CHECK FAILED\n\n  reasons:\n")?;
     let want_len = self.want.len();
     for reason in self.reasons.iter() {
-      f.write_str("- ")?;
+      f.write_str("  - ")?;
       match reason {
         Reason::WantWrongNumError => writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?,
         Reason::NoErrorsEmitted => writeln!(f, "wanted {want_len} errors, but got none")?,
         Reason::CannotGetRegion(r) => writeln!(f, "couldn't get a region from {r:?}")?,
         Reason::GotButNotWanted(r, got) => {
           writeln!(f, "{r}: got an error, but wanted none")?;
-          writeln!(f, "  - got:  {got}")?;
+          writeln!(f, "    - got:  {got}")?;
         }
         Reason::MismatchedErrors(r, want, got) => {
           writeln!(f, "{r}: mismatched errors")?;
-          writeln!(f, "  - want: {want}")?;
-          writeln!(f, "  - got:  {got}")?;
+          writeln!(f, "    - want: {want}")?;
+          writeln!(f, "    - got:  {got}")?;
         }
       }
     }
-    f.write_str("\nwant:")?;
+    f.write_str("\n  want:")?;
     if self.want.is_empty() {
       f.write_str(" <empty>")?;
     } else {
       f.write_str("\n")?;
       for (region, &msg) in self.want.iter() {
-        writeln!(f, "- {region}: {msg}")?;
+        writeln!(f, "  - {region}: {msg}")?;
       }
     }
+    writeln!(f)?;
     Ok(())
   }
 }
