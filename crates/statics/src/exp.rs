@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::pat_match::{Lang, Pat};
+use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{Cx, Env, Sym, SymsMarker, Ty, ValEnv};
 use crate::unify::unify;
@@ -54,7 +54,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       unify(st, Ty::zero(Sym::EXN), param.clone());
       unify(st, exp_ty.clone(), res);
       apply(st.subst(), &mut exp_ty);
-      ck_pat_match(st, pats, param, None);
+      pat::get_match(st, pats, param, None);
       exp_ty
     }
     hir::Exp::Raise(exp) => {
@@ -64,7 +64,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     }
     hir::Exp::Fn(matcher) => {
       let (pats, param, res) = get_matcher(st, cx, ars, matcher);
-      ck_pat_match(st, pats, param.clone(), Some(Error::NonExhaustiveMatch));
+      pat::get_match(st, pats, param.clone(), Some(Error::NonExhaustiveMatch));
       Ty::Fn(param.into(), res.into())
     }
     hir::Exp::Typed(exp, want) => {
@@ -99,27 +99,6 @@ fn get_matcher(
     pats.push(pm_pat);
   }
   (pats, param_ty, res_ty)
-}
-
-fn ck_pat_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pat>) -> Error>) {
-  // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
-  // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
-  // need one too, and then things get weird. Maybe the pattern_match API needs some work.
-  let lang = Lang {
-    syms: st.take_syms(),
-  };
-  let ck = pattern_match::check(&lang, pats, ty);
-  st.set_syms(lang.syms);
-  let mut unreachable: Vec<_> = ck.unreachable.into_iter().collect();
-  unreachable.sort_unstable_by_key(|x| x.into_raw());
-  for un in unreachable {
-    st.err(Error::UnreachablePattern(un));
-  }
-  if !ck.missing.is_empty() {
-    if let Some(f) = f {
-      st.err(f(ck.missing));
-    }
-  }
 }
 
 fn ty_name_escape(m: &SymsMarker, ty: &Ty) -> bool {

@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::pat_match::{Con, Pat};
+use crate::pat_match::{Con, Lang, Pat};
 use crate::st::St;
 use crate::ty;
 use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
@@ -133,5 +133,26 @@ fn insert_name(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty) {
   };
   if ve.insert(name, vi).is_some() {
     st.err(Error::Redefined);
+  }
+}
+
+pub(crate) fn get_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pat>) -> Error>) {
+  // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
+  // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
+  // need one too, and then things get weird. Maybe the pattern_match API needs some work.
+  let lang = Lang {
+    syms: st.take_syms(),
+  };
+  let ck = pattern_match::check(&lang, pats, ty);
+  st.set_syms(lang.syms);
+  let mut unreachable: Vec<_> = ck.unreachable.into_iter().collect();
+  unreachable.sort_unstable_by_key(|x| x.into_raw());
+  for un in unreachable {
+    st.err(Error::UnreachablePattern(un));
+  }
+  if !ck.missing.is_empty() {
+    if let Some(f) = f {
+      st.err(f(ck.missing));
+    }
   }
 }
