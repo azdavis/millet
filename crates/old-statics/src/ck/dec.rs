@@ -8,12 +8,11 @@ use crate::types::{
   Cx, Env, Error, Item, Pat, Result, State, StrEnv, Ty, TyEnv, TyInfo, TyScheme, TyVar, Tys,
   ValEnv, ValInfo,
 };
+use fast_hash::{map_with_capacity, FxHashMap, FxHashSet};
 use old_ast::{Cases, DatBind, Dec, ExBindInner, Exp, Label, Long, TyBind};
 use old_intern::StrRef;
 use old_loc::Located;
-use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
-use std::hash::BuildHasherDefault;
 
 fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp>) -> Result<Ty> {
   // The special constants are as per SML Definition (1). Note that SML Definition (5) is handled by
@@ -279,8 +278,7 @@ pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec>) -> Result<Env> {
         insert_ty_vars(&mut cx_cl, st, ty_vars)?;
         &cx_cl
       };
-      let mut fun_infos =
-        FxHashMap::with_capacity_and_hasher(fval_binds.len(), BuildHasherDefault::default());
+      let mut fun_infos = map_with_capacity(fval_binds.len());
       for fval_bind in fval_binds {
         let first = fval_bind.cases.first().unwrap();
         let info = FunInfo {

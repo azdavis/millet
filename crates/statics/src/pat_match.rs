@@ -1,6 +1,6 @@
 use crate::types::{Sym, Syms, Ty};
 use crate::util::apply_bv;
-use rustc_hash::FxHashSet;
+use fast_hash::FxHashSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
 

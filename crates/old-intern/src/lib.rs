@@ -20,7 +20,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use rustc_hash::FxHashMap;
+use fast_hash::{map, FxHashMap};
 use std::fmt;
 
 /// A reference to a string. To learn what string this represents, you must ask the StrStore created
@@ -101,59 +101,53 @@ pub struct StrStoreMut {
 impl StrStoreMut {
   /// Returns an new StrStoreMut containing only the special StrRefs.
   pub fn new() -> Self {
-    let mut store = FxHashMap::with_capacity_and_hasher(
-      SPECIAL_STR_REF,
-      std::hash::BuildHasherDefault::default(),
-    );
-    macro_rules! ins {
-      ($s:expr, $name:ident) => {
-        assert!(store.insert($s.to_owned(), StrRef::$name).is_none());
-      };
-    }
-    ins!("unit", UNIT);
-    ins!("char", CHAR);
-    ins!("exn", EXN);
-    ins!("bool", BOOL);
-    ins!("true", TRUE);
-    ins!("false", FALSE);
-    ins!("not", NOT);
-    ins!("string", STRING);
-    ins!("^", CARAT);
-    ins!("word", WORD);
-    ins!("int", INT);
-    ins!("~", TILDE);
-    ins!("+", PLUS);
-    ins!("-", MINUS);
-    ins!("*", STAR);
-    ins!("div", DIV);
-    ins!("mod", MOD);
-    ins!("real", REAL);
-    ins!("/", SLASH);
-    ins!("order", ORDER);
-    ins!("LESS", LESS);
-    ins!("EQUAL", EQUAL);
-    ins!("GREATER", GREATER);
-    ins!("=", EQ);
-    ins!("<>", NEQ);
-    ins!("<", LT);
-    ins!("<=", LT_EQ);
-    ins!(">", GT);
-    ins!(">=", GT_EQ);
-    ins!("option", OPTION);
-    ins!("SOME", SOME);
-    ins!("NONE", NONE);
-    ins!("list", LIST);
-    ins!("nil", NIL);
-    ins!("::", CONS);
-    ins!("@", AT);
-    ins!("ref", REF);
-    ins!(":=", ASSIGN);
-    ins!("Match", MATCH);
-    ins!("Bind", BIND);
-    ins!("abs", ABS);
+    let ops = [
+      ("unit", StrRef::UNIT),
+      ("char", StrRef::CHAR),
+      ("exn", StrRef::EXN),
+      ("bool", StrRef::BOOL),
+      ("true", StrRef::TRUE),
+      ("false", StrRef::FALSE),
+      ("not", StrRef::NOT),
+      ("string", StrRef::STRING),
+      ("^", StrRef::CARAT),
+      ("word", StrRef::WORD),
+      ("int", StrRef::INT),
+      ("~", StrRef::TILDE),
+      ("+", StrRef::PLUS),
+      ("-", StrRef::MINUS),
+      ("*", StrRef::STAR),
+      ("div", StrRef::DIV),
+      ("mod", StrRef::MOD),
+      ("real", StrRef::REAL),
+      ("/", StrRef::SLASH),
+      ("order", StrRef::ORDER),
+      ("LESS", StrRef::LESS),
+      ("EQUAL", StrRef::EQUAL),
+      ("GREATER", StrRef::GREATER),
+      ("=", StrRef::EQ),
+      ("<>", StrRef::NEQ),
+      ("<", StrRef::LT),
+      ("<=", StrRef::LT_EQ),
+      (">", StrRef::GT),
+      (">=", StrRef::GT_EQ),
+      ("option", StrRef::OPTION),
+      ("SOME", StrRef::SOME),
+      ("NONE", StrRef::NONE),
+      ("list", StrRef::LIST),
+      ("nil", StrRef::NIL),
+      ("::", StrRef::CONS),
+      ("@", StrRef::AT),
+      ("ref", StrRef::REF),
+      (":=", StrRef::ASSIGN),
+      ("Match", StrRef::MATCH),
+      ("Bind", StrRef::BIND),
+      ("abs", StrRef::ABS),
+    ];
+    let store = map(ops.map(|(a, b)| (a.to_owned(), b)));
     assert_eq!(store.len(), SPECIAL_STR_REF);
     Self {
-      next: SPECIAL_STR_REF,
+      next: store.len(),
       store,
     }
   }

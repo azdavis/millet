@@ -16,8 +16,8 @@
 //!   strings.
 
 use crate::types::{Con, Error, Pat, Result, Span};
+use fast_hash::FxHashSet;
 use old_loc::{Loc, Located};
-use rustc_hash::FxHashSet;
 
 /// Returns `Ok(())` iff the pats are exhaustive and not redundant.
 pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {

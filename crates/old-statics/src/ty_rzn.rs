@@ -6,7 +6,7 @@
 //! ascription or functor application.
 
 use crate::types::{Env, Sym, Ty, TyFcn, Tys, ValEnv};
-use rustc_hash::FxHashMap;
+use fast_hash::FxHashMap;
 
 /// A mapping from symbols to type functions.
 #[derive(Debug, Default)]

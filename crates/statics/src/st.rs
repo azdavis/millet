@@ -1,6 +1,6 @@
 use crate::error::Error;
 use crate::types::{MetaTyVar, MetaTyVarGen, Syms, Ty, TyVars};
-use rustc_hash::FxHashMap;
+use fast_hash::FxHashMap;
 
 /// The state.
 ///

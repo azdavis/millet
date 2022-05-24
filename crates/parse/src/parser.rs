@@ -17,7 +17,7 @@
 //! And the library isn't even that big, so forking is... okay.
 
 use drop_bomb::DropBomb;
-use rustc_hash::FxHashMap;
+use fast_hash::{map, FxHashMap};
 use std::fmt;
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::token::{Token, Triviable};
@@ -35,20 +35,21 @@ pub(crate) struct Parser<'input> {
 impl<'input> Parser<'input> {
   /// Returns a new parser for the given tokens.
   pub(crate) fn new(tokens: &'input [Token<'input, SK>]) -> Self {
-    let mut ops = FxHashMap::default();
-    ops.insert("::", OpInfo::right(5));
-    ops.insert("=", OpInfo::left(4));
-    ops.insert(":=", OpInfo::left(3));
-    ops.insert("div", OpInfo::left(7));
-    ops.insert("mod", OpInfo::left(7));
-    ops.insert("*", OpInfo::left(7));
-    ops.insert("/", OpInfo::left(7));
-    ops.insert("+", OpInfo::left(6));
-    ops.insert("-", OpInfo::left(6));
-    ops.insert("<", OpInfo::left(4));
-    ops.insert(">", OpInfo::left(4));
-    ops.insert("<=", OpInfo::left(4));
-    ops.insert(">=", OpInfo::left(4));
+    let ops = map([
+      ("::", OpInfo::right(5)),
+      ("=", OpInfo::left(4)),
+      (":=", OpInfo::left(3)),
+      ("div", OpInfo::left(7)),
+      ("mod", OpInfo::left(7)),
+      ("*", OpInfo::left(7)),
+      ("/", OpInfo::left(7)),
+      ("+", OpInfo::left(6)),
+      ("-", OpInfo::left(6)),
+      ("<", OpInfo::left(4)),
+      (">", OpInfo::left(4)),
+      ("<=", OpInfo::left(4)),
+      (">=", OpInfo::left(4)),
+    ]);
     Self {
       tokens,
       tok_idx: 0,

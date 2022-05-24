@@ -1,6 +1,6 @@
 //! Types.
 
-use rustc_hash::FxHashMap;
+use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 use std::fmt;
 use uniq::{Uniq, UniqGen};

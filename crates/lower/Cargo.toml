@@ -9,6 +9,6 @@ doctest = false
 test = false
 
 [dependencies]
-rustc-hash = "1"
 hir = { path = "../hir" }
 syntax = { path = "../syntax" }
+fast-hash = { path = "../fast-hash" }

@@ -8,7 +8,7 @@ publish = false
 doctest = false
 
 [dependencies]
-rustc-hash = "1"
+fast-hash = { path = "../fast-hash" }
 old-ast = { path = "../old-ast" }
 old-intern = { path = "../old-intern" }
 old-loc = { path = "../old-loc" }

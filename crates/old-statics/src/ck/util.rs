@@ -5,11 +5,11 @@
 //! `types.rs`, and doesn't make sense as a method on a type, it should live here.
 
 use crate::types::{Cx, Env, Error, Item, Result, State, Subst, Sym, Ty, TyScheme, ValInfo};
+use fast_hash::FxHashSet;
 use old_ast::Long;
 use old_intern::StrRef;
 use old_loc::{Loc, Located};
 use old_token::TyVar as AstTyVar;
-use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
 
 /// Replaces all type variables, in the type in this TyScheme, which are bound by that same

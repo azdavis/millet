@@ -9,7 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
-rustc-hash = "1"
 pattern-match = { git = "https://github.com/azdavis/language-util.git" }
 hir = { path = "../hir" }
+fast-hash = { path = "../fast-hash" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }

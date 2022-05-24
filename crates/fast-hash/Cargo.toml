@@ -1,5 +1,5 @@
 [package]
-name = "old-intern"
+name = "fast-hash"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -9,4 +9,4 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { path = "../fast-hash" }
+rustc-hash = "1"

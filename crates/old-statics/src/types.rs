@@ -7,11 +7,11 @@
 //! guarantee a stable iteration order. As an example, see enrich.rs (or don't if you just came from
 //! the comment there telling you to come here).
 
+use fast_hash::{FxHashMap, FxHashSet};
 use old_ast::{Label, TyPrec};
 use old_intern::{StrRef, StrStore};
 use old_loc::{Loc, Located};
 use old_token::TyVar as AstTyVar;
-use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use util::eq_iter;

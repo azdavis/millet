@@ -58,6 +58,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9bda8e21c04aca2ae33ffc2fd8c23134f3cac46db123ba97bd9d3f3b8a4a85e1"
 
 [[package]]
+name = "fast-hash"
+version = "0.1.0"
+dependencies = [
+ "rustc-hash",
+]
+
+[[package]]
 name = "form_urlencoded"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -126,8 +133,8 @@ dependencies = [
 name = "lower"
 version = "0.1.0"
 dependencies = [
+ "fast-hash",
  "hir",
- "rustc-hash",
  "syntax",
 ]
 
@@ -172,7 +179,7 @@ dependencies = [
 name = "old-intern"
 version = "0.1.0"
 dependencies = [
- "rustc-hash",
+ "fast-hash",
 ]
 
 [[package]]
@@ -207,23 +214,23 @@ version = "0.1.0"
 name = "old-parse"
 version = "0.1.0"
 dependencies = [
+ "fast-hash",
  "old-ast",
  "old-intern",
  "old-lex",
  "old-loc",
  "old-token",
- "rustc-hash",
 ]
 
 [[package]]
 name = "old-statics"
 version = "0.1.0"
 dependencies = [
+ "fast-hash",
  "old-ast",
  "old-intern",
  "old-loc",
  "old-token",
- "rustc-hash",
  "util",
 ]
 
@@ -239,7 +246,7 @@ name = "parse"
 version = "0.1.0"
 dependencies = [
  "drop_bomb",
- "rustc-hash",
+ "fast-hash",
  "syntax",
 ]
 
@@ -355,9 +362,9 @@ dependencies = [
 name = "statics"
 version = "0.1.0"
 dependencies = [
+ "fast-hash",
  "hir",
  "pattern-match",
- "rustc-hash",
  "uniq",
 ]
 
@@ -399,6 +406,7 @@ dependencies = [
 name = "tests"
 version = "0.1.0"
 dependencies = [
+ "fast-hash",
  "lex",
  "lower",
  "old-intern",
@@ -407,7 +415,6 @@ dependencies = [
  "old-parse",
  "old-statics",
  "parse",
- "rustc-hash",
  "statics",
  "syntax",
 ]

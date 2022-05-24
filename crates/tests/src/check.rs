@@ -1,5 +1,5 @@
+use fast_hash::FxHashMap;
 use old_loc::Located;
-use rustc_hash::FxHashMap;
 use std::fmt;
 use std::ops::Range;
 use syntax::rowan::TextRange;

@@ -10,5 +10,5 @@ test = false
 
 [dependencies]
 drop_bomb = "0.1"
-rustc-hash = "1"
+fast-hash = { path = "../fast-hash" }
 syntax = { path = "../syntax" }
