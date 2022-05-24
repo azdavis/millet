@@ -1,10 +1,10 @@
 use crate::error::Error;
 use crate::pat_match::{Lang, Pat};
 use crate::st::St;
-use crate::types::{Cx, Sym, Ty, ValEnv};
+use crate::types::{Cx, Env, Sym, SymsMarker, Ty, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_scon, instantiate, record};
-use crate::{pat, ty};
+use crate::{dec, pat, ty};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
   match ars.exp[exp] {
@@ -27,7 +27,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       }
     }
     hir::Exp::Record(ref rows) => record(st, rows, |st, _, exp| get(st, cx, ars, exp)),
-    hir::Exp::Let(_, _) => todo!(),
+    hir::Exp::Let(dec, exp) => {
+      let mut env = Env::default();
+      let marker = st.mark_syms();
+      dec::get(st, cx, ars, &mut env, dec);
+      let mut cx = cx.clone();
+      cx.env.extend(env);
+      let got = get(st, &cx, ars, exp);
+      if ty_name_escape(&marker, &got) {
+        st.err(Error::TyNameEscape);
+      }
+      got
+    }
     hir::Exp::App(func, arg) => {
       let want = get(st, cx, ars, func);
       let arg_ty = get(st, cx, ars, arg);
@@ -108,5 +119,14 @@ fn ck_pat_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pat>) -> E
     if let Some(f) = f {
       st.err(f(ck.missing));
     }
+  }
+}
+
+fn ty_name_escape(m: &SymsMarker, ty: &Ty) -> bool {
+  match ty {
+    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) => false,
+    Ty::Record(rows) => rows.values().any(|ty| ty_name_escape(m, ty)),
+    Ty::Con(args, sym) => sym.generated_after(m) || args.iter().any(|ty| ty_name_escape(m, ty)),
+    Ty::Fn(param, res) => ty_name_escape(m, param) || ty_name_escape(m, res),
   }
 }

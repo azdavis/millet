@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::types::{MetaTyVar, MetaTyVarGen, Syms, Ty, TyVars};
+use crate::types::{MetaTyVar, MetaTyVarGen, Syms, SymsMarker, Ty, TyVars};
 use fast_hash::FxHashMap;
 
 /// The state.
@@ -33,6 +33,10 @@ impl St {
     ty_vars: &'a TyVars,
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
     self.meta_gen.gen_from_ty_vars(ty_vars)
+  }
+
+  pub(crate) fn mark_syms(&self) -> SymsMarker {
+    self.syms.mark()
   }
 
   pub(crate) fn take_syms(&mut self) -> Syms {

@@ -18,4 +18,5 @@ pub(crate) enum Error {
   PatMustNotHaveArg,
   PatMustHaveArg,
   InvalidAsPatName,
+  TyNameEscape,
 }
