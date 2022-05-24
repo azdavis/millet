@@ -45,6 +45,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
         Ok(())
       }
     }
+    (Ty::FixedVar(want), Ty::FixedVar(got)) => head_match(want == got),
     (Ty::Record(want_rows), Ty::Record(mut got_rows)) => {
       for (lab, want) in want_rows {
         match got_rows.remove(&lab) {
@@ -70,7 +71,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       unify_(subst, *want_param, *got_param)?;
       unify_(subst, *want_res, *got_res)
     }
-    (Ty::BoundVar(_) | Ty::Record(_) | Ty::Con(_, _) | Ty::Fn(_, _), _) => {
+    (Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Con(_, _) | Ty::Fn(_, _), _) => {
       Err(UnifyError::HeadMismatch)
     }
   }
@@ -86,7 +87,7 @@ fn head_match(b: bool) -> Result<(), UnifyError> {
 
 fn occurs(mv: &MetaTyVar, ty: &Ty) -> bool {
   match ty {
-    Ty::None | Ty::BoundVar(_) => false,
+    Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => false,
     Ty::MetaVar(mv2) => mv == mv2,
     Ty::Record(rows) => rows.values().any(|t| occurs(mv, t)),
     Ty::Con(args, _) => args.iter().any(|t| occurs(mv, t)),

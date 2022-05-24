@@ -48,7 +48,7 @@ pub(crate) fn get_env<'e, 'p>(
 /// meta variables not defined by the `subst` are left alone.
 pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   match ty {
-    Ty::None | Ty::BoundVar(_) => {}
+    Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
       None => {}
       Some(t) => {
@@ -89,7 +89,7 @@ pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
 /// unlike `apply`, all bound variables must be defined by the subst.
 pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
   match ty {
-    Ty::None | Ty::MetaVar(_) => {}
+    Ty::None | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
     Ty::BoundVar(bv) => *ty = bv.index_into(subst).clone(),
     Ty::Record(rows) => {
       for ty in rows.values_mut() {

@@ -26,7 +26,7 @@ impl pattern_match::Lang for Lang {
   {
     match con {
       Con::Any => match ty {
-        Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::Fn(_, _) => {
+        Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => {
           vec![Con::Any]
         }
         Ty::Con(_, ty_name) => {
@@ -58,7 +58,7 @@ impl pattern_match::Lang for Lang {
 
   fn get_arg_tys(&self, ty: &Self::Ty, con: &Self::Con) -> Vec<Self::Ty> {
     match ty {
-      Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::Fn(_, _) => Vec::new(),
+      Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => Vec::new(),
       Ty::Record(rows) => rows.iter().map(|(_, t)| t.clone()).collect(),
       Ty::Con(args, ty_name) => match con {
         Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),

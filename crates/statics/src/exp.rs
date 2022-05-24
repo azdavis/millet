@@ -103,7 +103,7 @@ fn get_matcher(
 
 fn ty_name_escape(m: &SymsMarker, ty: &Ty) -> bool {
   match ty {
-    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) => false,
+    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => false,
     Ty::Record(rows) => rows.values().any(|ty| ty_name_escape(m, ty)),
     Ty::Con(args, sym) => sym.generated_after(m) || args.iter().any(|ty| ty_name_escape(m, ty)),
     Ty::Fn(param, res) => ty_name_escape(m, param) || ty_name_escape(m, res),

@@ -13,6 +13,8 @@ pub(crate) enum Ty {
   BoundVar(BoundTyVar),
   /// See [`MetaTyVar`].
   MetaVar(MetaTyVar),
+  /// See [`FixedTyVar`].
+  FixedVar(FixedTyVar),
   /// Definition: RowType
   Record(BTreeMap<hir::Lab, Ty>),
   /// Definition: ConsType
@@ -74,6 +76,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       }
       // not real syntax
       Ty::MetaVar(v) => v.fmt(f)?,
+      Ty::FixedVar(v) => v.fmt(f)?,
       Ty::Record(rows) => {
         if rows.is_empty() {
           return f.write_str("unit");
@@ -230,7 +233,11 @@ impl TyVars {
 
 /// Definition: TyVar
 ///
-/// But only kind of. There's also [`MetaTyVar`] and [`hir::TyVar`].
+/// But only kind of. There's also:
+///
+/// - [`MetaTyVar`]
+/// - [`FixedTyVar`]
+/// - [`hir::TyVar`]
 ///
 /// Basically a de Bruijn index.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -271,6 +278,31 @@ impl MetaTyVarGen {
     ty_vars: &'a TyVars,
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
     ty_vars.inner.iter().map(|&eq| self.gen(eq))
+  }
+}
+
+/// Corresponds to a user written type variable.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct FixedTyVar {
+  id: Uniq,
+  ty_var: hir::TyVar,
+}
+
+impl fmt::Display for FixedTyVar {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.ty_var.fmt(f)
+  }
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct FixedTyVarGen(UniqGen);
+
+impl FixedTyVarGen {
+  pub(crate) fn gen(&mut self, ty_var: hir::TyVar) -> FixedTyVar {
+    FixedTyVar {
+      id: self.0.gen(),
+      ty_var,
+    }
   }
 }
 

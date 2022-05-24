@@ -101,7 +101,7 @@ where
   F: FnMut(MetaTyVar),
 {
   match ty {
-    Ty::None | Ty::BoundVar(_) => {}
+    Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
       None => f(mv.clone()),
       Some(ty) => meta_vars(subst, f, ty),

@@ -321,7 +321,7 @@ impl fmt::Display for Name {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TyVar(SmolStr);
 
 impl TyVar {
