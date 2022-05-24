@@ -167,7 +167,10 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   }
   let lowered = lower::get(parsed.root);
   if std::env::var_os("NEW").map_or(false, |x| x == "1") {
-    statics::get(&lowered.arenas, &lowered.top_decs);
+    let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
+    if let Some(err) = errors.into_iter().next() {
+      return Err((TextRange::default(), err.display(&syms).to_string()));
+    }
   }
   Ok(())
 }
