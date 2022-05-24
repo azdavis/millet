@@ -453,7 +453,7 @@ fn display_row<'a>(
   lab: &hir::Lab,
   ty: &'a Ty,
 ) -> fmt::Result {
-  display_lab(f, lab)?;
+  fmt::Display::fmt(lab, f)?;
   f.write_str(" : ")?;
   let td = TyDisplay {
     ty,
@@ -462,13 +462,6 @@ fn display_row<'a>(
     prec: TyPrec::Arrow,
   };
   fmt::Display::fmt(&td, f)
-}
-
-fn display_lab(f: &mut fmt::Formatter<'_>, lab: &hir::Lab) -> fmt::Result {
-  match lab {
-    hir::Lab::Name(name) => fmt::Display::fmt(name, f),
-    hir::Lab::Num(n) => fmt::Display::fmt(n, f),
-  }
 }
 
 fn equality_str(equality: bool) -> &'static str {

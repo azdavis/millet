@@ -242,6 +242,15 @@ pub enum Lab {
   Num(usize),
 }
 
+impl fmt::Display for Lab {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::Name(name) => name.fmt(f),
+      Self::Num(n) => n.fmt(f),
+    }
+  }
+}
+
 impl Lab {
   pub fn tuple(idx: usize) -> Self {
     Self::Num(idx + 1)
