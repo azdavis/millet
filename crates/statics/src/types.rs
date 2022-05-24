@@ -51,6 +51,24 @@ impl TyScheme {
       prec: TyPrec::Arrow,
     }
   }
+
+  fn zero(s: Sym) -> Self {
+    Self::mono(Ty::zero(s))
+  }
+
+  fn one(s: Sym) -> Self {
+    Self {
+      vars: TyVars { inner: vec![false] },
+      ty: Ty::Con(vec![], s),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct TyVars {
+  /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
+  /// variable i is equality.
+  inner: Vec<bool>,
 }
 
 /// Definition: TyVar
@@ -93,13 +111,6 @@ impl MetaTyVarGen {
   }
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct TyVars {
-  /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
-  /// variable i is equality.
-  inner: Vec<bool>,
-}
-
 /// Definition: TyName
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Sym(usize);
@@ -132,6 +143,8 @@ pub(crate) struct Syms {
 
 impl Default for Syms {
   fn default() -> Self {
+    let zero = TyScheme::zero;
+    let one = TyScheme::one;
     let bv = Ty::BoundVar(BoundTyVar(0));
     let store = vec![
       datatype("bool", zero(Sym::BOOL), [("true", None), ("false", None)]),
@@ -150,17 +163,6 @@ impl Default for Syms {
       ),
     ];
     Self { store }
-  }
-}
-
-fn zero(s: Sym) -> TyScheme {
-  TyScheme::mono(Ty::zero(s))
-}
-
-fn one(s: Sym) -> TyScheme {
-  TyScheme {
-    vars: TyVars { inner: vec![false] },
-    ty: Ty::Con(vec![], s),
   }
 }
 
