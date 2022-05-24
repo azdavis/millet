@@ -1,5 +1,5 @@
 use crate::error::{Error, ErrorKind};
-use crate::types::{MetaTyVar, MetaTyVarGen, Subst, Syms, TyVars};
+use crate::types::{FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, TyVars};
 
 /// The state.
 ///
@@ -11,6 +11,7 @@ pub struct St {
   subst: Subst,
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,
+  fixed_gen: FixedTyVarGen,
   pub(crate) syms: Syms,
 }
 
@@ -32,6 +33,10 @@ impl St {
     ty_vars: &'a TyVars,
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
     self.meta_gen.gen_from_ty_vars(ty_vars)
+  }
+
+  pub(crate) fn gen_fixed_var(&mut self, ty_var: hir::TyVar) -> FixedTyVar {
+    self.fixed_gen.gen(ty_var)
   }
 
   pub(crate) fn finish(self) -> (Syms, Vec<Error>) {

@@ -463,6 +463,7 @@ impl Env {
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Cx {
   pub(crate) env: Env,
+  pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
 
 /// A mapping from [`MetaTyVar`]s to [`Ty`]s.

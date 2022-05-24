@@ -6,7 +6,13 @@ use crate::util::{get_env, record};
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty {
   match &ars.ty[ty] {
     hir::Ty::None => Ty::None,
-    hir::Ty::Var(_) => todo!(),
+    hir::Ty::Var(v) => match cx.ty_vars.get(v) {
+      None => {
+        st.err(ErrorKind::Undefined);
+        Ty::None
+      }
+      Some(fv) => Ty::FixedVar(fv.clone()),
+    },
     hir::Ty::Record(rows) => record(st, rows, |st, _, ty| get(st, cx, ars, ty)),
     hir::Ty::Con(args, path) => {
       let env = match get_env(&cx.env, path) {
