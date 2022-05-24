@@ -46,7 +46,7 @@ fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
     .into_iter()
     .flat_map(|x| x.str_dec_in_seqs())
     .filter_map(|x| {
-      let res = get_str_dec_one(cx, x.str_dec_one()?);
+      let res = get_str_dec_one(cx, x.str_dec_one()?)?;
       Some(cx.arenas.str_dec.alloc(res))
     })
     .collect();
@@ -57,9 +57,12 @@ fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
   }
 }
 
-fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDec {
-  match str_dec {
-    ast::StrDecOne::DecStrDec(str_dec) => hir::StrDec::Dec(dec::get(cx, str_dec.dec())),
+fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> Option<hir::StrDec> {
+  let res = match str_dec {
+    ast::StrDecOne::DecStrDec(str_dec) => {
+      let dec = dec::get_one(cx, str_dec.dec_one()?)?;
+      hir::StrDec::Dec(cx.arenas.dec.alloc(dec))
+    }
     ast::StrDecOne::StructureStrDec(str_dec) => hir::StrDec::Structure(
       str_dec
         .str_binds()
@@ -81,7 +84,8 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDec {
       get_str_dec(cx, str_dec.local_dec()),
       get_str_dec(cx, str_dec.in_dec()),
     ),
-  }
+  };
+  Some(res)
 }
 
 fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {

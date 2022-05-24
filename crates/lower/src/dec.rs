@@ -19,7 +19,7 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
   }
 }
 
-fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
+pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
   let ret = match dec {
     ast::DecOne::ValDec(dec) => hir::Dec::Val(
       ty::var_seq(dec.ty_var_seq()),

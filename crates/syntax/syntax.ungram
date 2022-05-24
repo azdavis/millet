@@ -22,7 +22,23 @@ StrDecOne =
 | StructureStrDec
 | LocalStrDec
 
-DecStrDec = Dec
+// don't need Dec here, because it won't be a sequence. this is because StrDec already allows
+// sequences, and we prefer to make sequences of StrDecs over Decs.
+//
+// that is, if we have
+//
+// ```sml
+// val x = 123
+// val y = "hi"`
+// ```
+//
+// we could parse that as either
+//
+// 1. one StrDec containing a Dec sequence; or
+// 2. one StrDec containing a StrDec sequence of 2 StrDecs, each of which contain 1 Dec.
+//
+// we prefer option 2.
+DecStrDec = DecOne
 StructureStrDec = 'structure' StrBind*
 LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
 StrBind = 'Name' AscriptionTail? '=' StrExp 'and'?
