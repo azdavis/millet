@@ -61,7 +61,7 @@ impl pattern_match::Lang for Lang {
       Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::Fn(_, _) => Vec::new(),
       Ty::Record(rows) => rows.iter().map(|(_, t)| t.clone()).collect(),
       Ty::Con(args, ty_name) => match con {
-        Con::Any => Vec::new(),
+        Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),
         Con::Variant(ty_name_2, con_name) => {
           assert_eq!(ty_name, ty_name_2);
           let ty_info = self.syms.get(ty_name);
@@ -70,7 +70,7 @@ impl pattern_match::Lang for Lang {
           apply_bv(args, &mut ty);
           vec![ty]
         }
-        _ => unreachable!(),
+        Con::Record(_) => unreachable!(),
       },
     }
   }
