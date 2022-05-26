@@ -313,7 +313,7 @@ impl FixedTyVarGen {
 pub(crate) struct Sym(usize);
 
 impl Sym {
-  // keep in sync with impl Default for Syms
+  // keep in sync with `Syms::standard_basis`
   pub(crate) const BOOL: Self = Self(0);
   pub(crate) const CHAR: Self = Self(1);
   pub(crate) const INT: Self = Self(2);
@@ -333,14 +333,17 @@ impl Sym {
 }
 
 /// A mapping from [`Sym`]s to [`TyInfo`]s.
-#[derive(Debug)]
+///
+/// Note the `Default` impl returns a totally empty `Syms`, which will lack even built-in types
+/// like `int`. For a `Syms` that does have these, see `standard_basis`.
+#[derive(Debug, Default)]
 pub struct Syms {
   store: Vec<TyInfo>,
   names: Vec<hir::Name>,
 }
 
-impl Default for Syms {
-  fn default() -> Self {
+impl Syms {
+  pub(crate) fn standard_basis() -> Self {
     let zero = TyScheme::zero;
     let one = TyScheme::one;
     let bv = Ty::BoundVar(BoundTyVar(0));
@@ -368,30 +371,7 @@ impl Default for Syms {
     .collect();
     Self { store, names }
   }
-}
 
-fn datatype<const N: usize>(ty_scheme: TyScheme, ctors: [(&str, Option<Ty>); N]) -> TyInfo {
-  let val_env: FxHashMap<_, _> = ctors
-    .into_iter()
-    .map(|(name, arg)| {
-      let ty_scheme = match arg {
-        None => ty_scheme.clone(),
-        Some(arg) => TyScheme {
-          vars: ty_scheme.vars.clone(),
-          ty: Ty::Fn(arg.into(), ty_scheme.ty.clone().into()),
-        },
-      };
-      let val_info = ValInfo {
-        ty_scheme,
-        id_status: IdStatus::Con,
-      };
-      (hir::Name::new(name), val_info)
-    })
-    .collect();
-  TyInfo { ty_scheme, val_env }
-}
-
-impl Syms {
   pub(crate) fn is_empty(&self) -> bool {
     self.store.is_empty()
   }
@@ -413,6 +393,27 @@ impl Syms {
   pub(crate) fn mark(&self) -> SymsMarker {
     SymsMarker(self.store.len())
   }
+}
+
+fn datatype<const N: usize>(ty_scheme: TyScheme, ctors: [(&str, Option<Ty>); N]) -> TyInfo {
+  let val_env: FxHashMap<_, _> = ctors
+    .into_iter()
+    .map(|(name, arg)| {
+      let ty_scheme = match arg {
+        None => ty_scheme.clone(),
+        Some(arg) => TyScheme {
+          vars: ty_scheme.vars.clone(),
+          ty: Ty::Fn(arg.into(), ty_scheme.ty.clone().into()),
+        },
+      };
+      let val_info = ValInfo {
+        ty_scheme,
+        id_status: IdStatus::Con,
+      };
+      (hir::Name::new(name), val_info)
+    })
+    .collect();
+  TyInfo { ty_scheme, val_env }
 }
 
 pub(crate) struct SymsMarker(usize);
