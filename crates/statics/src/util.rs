@@ -74,6 +74,8 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   }
 }
 
+/// instantiates the type scheme's type with new meta type vars, according to the bound vars of the
+/// type scheme.
 pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
   let meta_vars: Vec<_> = st
     .gen_from_ty_vars(&ty_scheme.vars)
