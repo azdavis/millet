@@ -69,13 +69,27 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // extend the overall env with that.
       env.val_env.extend(ve);
     }
-    hir::Dec::Ty(_) => todo!(),
-    hir::Dec::Datatype(_) => todo!(),
-    hir::Dec::DatatypeCopy(_, _) => todo!(),
-    hir::Dec::Abstype(_, _) => todo!(),
-    hir::Dec::Exception(_) => todo!(),
-    hir::Dec::Local(_, _) => todo!(),
-    hir::Dec::Open(_) => todo!(),
+    hir::Dec::Ty(_) => {
+      // TODO
+    }
+    hir::Dec::Datatype(_) => {
+      // TODO
+    }
+    hir::Dec::DatatypeCopy(_, _) => {
+      // TODO
+    }
+    hir::Dec::Abstype(_, _) => {
+      // TODO
+    }
+    hir::Dec::Exception(_) => {
+      // TODO
+    }
+    hir::Dec::Local(_, _) => {
+      // TODO
+    }
+    hir::Dec::Open(_) => {
+      // TODO
+    }
     hir::Dec::Seq(decs) => {
       for &dec in decs {
         get(st, cx, ars, env, dec);
