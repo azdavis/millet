@@ -38,6 +38,7 @@ pub(crate) enum ErrorKind {
   InvalidAsPatName,
   TyNameEscape,
   ValRecExpNotFn,
+  WrongNumTyArgs(usize, usize),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -82,6 +83,11 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidAsPatName => f.write_str("invalid `as` pat name"),
       ErrorKind::TyNameEscape => f.write_str("type name escapes its scope"),
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
+      ErrorKind::WrongNumTyArgs(want, got) => write!(
+        f,
+        "wrong number of type arguments: expected {}, found {}",
+        want, got
+      ),
     }
   }
 }

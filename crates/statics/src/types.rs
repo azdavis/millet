@@ -224,6 +224,10 @@ pub(crate) struct TyVars {
 }
 
 impl TyVars {
+  pub(crate) fn len(&self) -> usize {
+    self.inner.len()
+  }
+
   pub(crate) fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
@@ -414,7 +418,7 @@ impl Syms {
 pub(crate) struct SymsMarker(usize);
 
 /// Definition: TyStr
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct TyInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) val_env: ValEnv,
@@ -424,7 +428,7 @@ pub(crate) struct TyInfo {
 pub(crate) type StrEnv = FxHashMap<hir::Name, Env>;
 
 /// Definition: TyEnv
-pub(crate) type TyEnv = FxHashMap<hir::Name, Sym>;
+pub(crate) type TyEnv = FxHashMap<hir::Name, TyInfo>;
 
 /// Definition: ValEnv
 pub(crate) type ValEnv = FxHashMap<hir::Name, ValInfo>;
