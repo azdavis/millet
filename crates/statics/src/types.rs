@@ -357,7 +357,7 @@ impl Syms {
     self.store.get(sym.0).unwrap()
   }
 
-  fn get_name(&self, sym: &Sym) -> &hir::Name {
+  pub(crate) fn get_name(&self, sym: &Sym) -> &hir::Name {
     self.names.get(sym.0).unwrap()
   }
 
@@ -469,7 +469,7 @@ impl Env {
 ///
 /// No need for the set of ty names as from the Definition; it seems to only be used to ensure a
 /// type name does not escape its scope, and for that we use `Sym::generated_after`.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct Cx {
   pub(crate) env: Env,
   /// the Definition has this as a set, but we have it as a mapping.
