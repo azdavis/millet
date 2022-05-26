@@ -166,8 +166,10 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   if let Some(err) = parsed.errors.into_iter().next() {
     return Err((err.range, err.kind.to_string()));
   }
-  if std::env::var_os("NEW").map_or(false, |x| x == "1") {
+  if std::env::var_os("SHOW").map_or(false, |x| x == "1") {
     eprintln!("{:#?}", parsed.root);
+  }
+  if std::env::var_os("NEW").map_or(false, |x| x == "1") {
     let lowered = lower::get(parsed.root);
     let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
     if let Some(err) = errors.into_iter().next() {
