@@ -343,6 +343,28 @@ pub struct Syms {
 }
 
 impl Syms {
+  pub(crate) fn is_empty(&self) -> bool {
+    self.store.is_empty()
+  }
+
+  pub(crate) fn insert(&mut self, ty_info: TyInfo) -> Sym {
+    let ret = Sym(self.store.len());
+    self.store.push(ty_info);
+    ret
+  }
+
+  pub(crate) fn get(&self, sym: &Sym) -> &TyInfo {
+    self.store.get(sym.0).unwrap()
+  }
+
+  fn get_name(&self, sym: &Sym) -> &hir::Name {
+    self.names.get(sym.0).unwrap()
+  }
+
+  pub(crate) fn mark(&self) -> SymsMarker {
+    SymsMarker(self.store.len())
+  }
+
   pub(crate) fn standard_basis() -> Self {
     let zero = TyScheme::zero;
     let one = TyScheme::one;
@@ -370,28 +392,6 @@ impl Syms {
     .map(hir::Name::new)
     .collect();
     Self { store, names }
-  }
-
-  pub(crate) fn is_empty(&self) -> bool {
-    self.store.is_empty()
-  }
-
-  pub(crate) fn insert(&mut self, ty_info: TyInfo) -> Sym {
-    let ret = Sym(self.store.len());
-    self.store.push(ty_info);
-    ret
-  }
-
-  pub(crate) fn get(&self, sym: &Sym) -> &TyInfo {
-    self.store.get(sym.0).unwrap()
-  }
-
-  fn get_name(&self, sym: &Sym) -> &hir::Name {
-    self.names.get(sym.0).unwrap()
-  }
-
-  pub(crate) fn mark(&self) -> SymsMarker {
-    SymsMarker(self.store.len())
   }
 }
 
