@@ -365,6 +365,7 @@ impl Syms {
     SymsMarker(self.store.len())
   }
 
+  /// Returns a `Syms` with all the built-in types, like `int`, `bool`, and `string`.
   pub(crate) fn standard_basis() -> Self {
     let zero = TyScheme::zero;
     let one = TyScheme::one;
@@ -466,10 +467,12 @@ impl Env {
 
 /// Definition: Context
 ///
-/// TODO add ty names and ty vars
+/// No need for the set of ty names as from the Definition; it seems to only be used to ensure a
+/// type name does not escape its scope, and for that we use `Sym::generated_after`.
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Cx {
   pub(crate) env: Env,
+  /// the Definition has this as a set, but we have it as a mapping.
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
 
