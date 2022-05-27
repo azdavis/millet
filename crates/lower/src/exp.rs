@@ -138,7 +138,7 @@ where
 }
 
 /// the Definition says to do the lowering 1 -> 2 but we do the lowering 1 -> 3. all should be
-/// equivalent.
+/// equivalent. TODO maybe not because of generalizing?
 ///
 /// 1. `(e1; ...; en; e)`
 /// 2. `case e1 of _ => ... => case en of _ => e`
