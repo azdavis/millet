@@ -81,28 +81,30 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
               (pat, exp)
             })
             .collect();
-          let pat = name.and_then(|tok| cx.pat(pat::name(tok.text())));
-          let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
-          let mut arg_exprs = arg_names
-            .iter()
-            .map(|name| cx.exp(exp::name(name.as_str())));
-          let head = if arg_exprs.len() == 1 {
-            arg_exprs.next().unwrap()
-          } else {
-            let tup = exp::tuple(arg_exprs);
-            cx.exp(tup)
-          };
-          let case = exp::case(cx, head, arms);
-          hir::ValBind {
-            rec: true,
-            pat,
-            exp: arg_names
+          let exp = {
+            let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
+            let mut arg_exprs = arg_names
+              .iter()
+              .map(|name| cx.exp(exp::name(name.as_str())));
+            let head = if arg_exprs.len() == 1 {
+              arg_exprs.next().unwrap()
+            } else {
+              let tup = exp::tuple(arg_exprs);
+              cx.exp(tup)
+            };
+            let case = exp::case(cx, head, arms);
+            arg_names
               .into_iter()
               .rev()
               .fold(cx.exp(case), |body, name| {
                 let pat = cx.pat(pat::name(name.as_str()));
                 cx.exp(hir::Exp::Fn(vec![(pat, body)]))
-              }),
+              })
+          };
+          hir::ValBind {
+            rec: true,
+            pat: name.and_then(|tok| cx.pat(pat::name(tok.text()))),
+            exp,
           }
         })
         .collect();
