@@ -4,8 +4,11 @@ use crate::types::{Cx, Ty};
 use crate::util::{apply_bv, get_env, record};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty {
+  let ty = match ty {
+    Some(x) => x,
+    None => return Ty::None,
+  };
   match &ars.ty[ty] {
-    hir::Ty::None => Ty::None,
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
       None => {
         st.err(ErrorKind::Undefined);

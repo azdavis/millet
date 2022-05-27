@@ -4,12 +4,7 @@ use crate::util::Cx;
 use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
-  let pat = pat.and_then(|x| get_(cx, x)).unwrap_or(hir::Pat::None);
-  cx.pat(pat)
-}
-
-fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
-  let ret = match pat {
+  let ret = match pat? {
     ast::Pat::WildcardPat(_) => hir::Pat::Wild,
     ast::Pat::SConPat(pat) => hir::Pat::SCon(get_scon(pat.s_con()?)?),
     ast::Pat::ConPat(pat) => {
@@ -36,7 +31,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
         .collect();
       hir::Pat::Record { rows, allows_other }
     }
-    ast::Pat::ParenPat(pat) => get_(cx, pat.pat()?)?,
+    ast::Pat::ParenPat(pat) => return get(cx, pat.pat()),
     ast::Pat::TuplePat(pat) => tuple(pat.pat_args().map(|x| get(cx, x.pat()))),
     ast::Pat::ListPat(pat) => {
       // need to rev()
@@ -73,7 +68,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       pat.as_pat_tail()?,
     ),
   };
-  Some(ret)
+  cx.pat(ret)
 }
 
 pub(crate) fn name(s: &str) -> hir::Pat {

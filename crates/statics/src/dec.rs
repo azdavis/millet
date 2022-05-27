@@ -7,6 +7,10 @@ use crate::util::apply;
 use crate::{exp, pat, ty};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: hir::DecIdx) {
+  let dec = match dec {
+    Some(x) => x,
+    None => return,
+  };
   match &ars.dec[dec] {
     hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();
@@ -43,8 +47,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // extend the cx with only the recursive val env.
       cx.env.val_env.extend(rec_ve);
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
-        if !matches!(ars.exp[val_bind.exp], hir::Exp::Fn(_)) {
-          st.err(ErrorKind::ValRecExpNotFn);
+        if let Some(exp) = val_bind.exp {
+          if !matches!(ars.exp[exp], hir::Exp::Fn(_)) {
+            st.err(ErrorKind::ValRecExpNotFn);
+          }
         }
         get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want);
       }

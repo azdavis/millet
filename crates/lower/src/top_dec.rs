@@ -42,13 +42,9 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
 }
 
 fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
-  let mut str_decs: Vec<_> = str_dec
-    .into_iter()
-    .flat_map(|x| x.str_dec_in_seqs())
-    .filter_map(|x| {
-      let res = get_str_dec_one(cx, x.str_dec_one()?)?;
-      Some(cx.str_dec(res))
-    })
+  let mut str_decs: Vec<_> = str_dec?
+    .str_dec_in_seqs()
+    .map(|x| get_str_dec_one(cx, x.str_dec_one()?))
     .collect();
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
@@ -57,12 +53,9 @@ fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
   }
 }
 
-fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> Option<hir::StrDec> {
+fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
   let res = match str_dec {
-    ast::StrDecOne::DecStrDec(str_dec) => {
-      let dec = dec::get_one(cx, str_dec.dec_one()?)?;
-      hir::StrDec::Dec(cx.dec(dec))
-    }
+    ast::StrDecOne::DecStrDec(str_dec) => hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?)),
     ast::StrDecOne::StructureStrDec(str_dec) => hir::StrDec::Structure(
       str_dec
         .str_binds()
@@ -85,18 +78,11 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> Option<hir::StrDec> 
       get_str_dec(cx, str_dec.in_dec()),
     ),
   };
-  Some(res)
+  cx.str_dec(res)
 }
 
 fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
-  let str_exp = str_exp
-    .and_then(|x| get_str_exp_(cx, x))
-    .unwrap_or(hir::StrExp::None);
-  cx.str_exp(str_exp)
-}
-
-fn get_str_exp_(cx: &mut Cx, str_exp: ast::StrExp) -> Option<hir::StrExp> {
-  let ret = match str_exp {
+  let ret = match str_exp? {
     ast::StrExp::StructStrExp(str_exp) => hir::StrExp::Struct(get_str_dec(cx, str_exp.str_dec())),
     ast::StrExp::PathStrExp(str_exp) => hir::StrExp::Path(get_path(str_exp.path()?)?),
     ast::StrExp::AscriptionStrExp(str_exp) => {
@@ -112,18 +98,11 @@ fn get_str_exp_(cx: &mut Cx, str_exp: ast::StrExp) -> Option<hir::StrExp> {
       get_str_exp(cx, str_exp.str_exp()),
     ),
   };
-  Some(ret)
+  cx.str_exp(ret)
 }
 
 fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
-  let sig_exp = sig_exp
-    .and_then(|x| get_sig_exp_(cx, x))
-    .unwrap_or(hir::SigExp::None);
-  cx.sig_exp(sig_exp)
-}
-
-fn get_sig_exp_(cx: &mut Cx, sig_exp: ast::SigExp) -> Option<hir::SigExp> {
-  let ret = match sig_exp {
+  let ret = match sig_exp? {
     ast::SigExp::SigSigExp(sig_exp) => hir::SigExp::Spec(get_spec(cx, sig_exp.spec())),
     ast::SigExp::NameSigExp(sig_exp) => hir::SigExp::Name(get_name(sig_exp.name())?),
     ast::SigExp::WhereSigExp(sig_exp) => hir::SigExp::Where(
@@ -133,17 +112,13 @@ fn get_sig_exp_(cx: &mut Cx, sig_exp: ast::SigExp) -> Option<hir::SigExp> {
       ty::get(cx, sig_exp.ty()),
     ),
   };
-  Some(ret)
+  cx.sig_exp(ret)
 }
 
 fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
-  let mut specs: Vec<_> = spec
-    .into_iter()
-    .flat_map(|x| x.spec_in_seqs())
-    .filter_map(|x| {
-      let res = get_spec_one(cx, x.spec_one()?)?;
-      Some(cx.spec(res))
-    })
+  let mut specs: Vec<_> = spec?
+    .spec_in_seqs()
+    .map(|x| get_spec_one(cx, x.spec_one()?))
     .collect();
   if specs.len() == 1 {
     specs.pop().unwrap()
@@ -152,7 +127,7 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   }
 }
 
-fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::Spec> {
+fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
   let ret = match spec {
     ast::SpecOne::ValSpec(spec) => hir::Spec::Val(
       spec
@@ -206,7 +181,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::Spec> {
     }
     ast::SpecOne::SharingSpec(_) => todo!(),
   };
-  Some(ret)
+  cx.spec(ret)
 }
 
 fn ascription_tail(

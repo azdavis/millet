@@ -4,13 +4,9 @@ use crate::{exp, pat, ty};
 use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
-  let mut decs: Vec<_> = dec
-    .into_iter()
-    .flat_map(|x| x.dec_in_seqs())
-    .filter_map(|x| {
-      let res = get_one(cx, x.dec_one()?)?;
-      Some(cx.dec(res))
-    })
+  let mut decs: Vec<_> = dec?
+    .dec_in_seqs()
+    .map(|x| get_one(cx, x.dec_one()?))
     .collect();
   if decs.len() == 1 {
     decs.pop().unwrap()
@@ -19,7 +15,7 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
   }
 }
 
-pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
+pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
   let ret = match dec {
     ast::DecOne::ValDec(dec) => hir::Dec::Val(
       ty::var_seq(dec.ty_var_seq()),
@@ -85,7 +81,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
               (pat, exp)
             })
             .collect();
-          let pat = name.map_or(hir::Pat::None, |tok| pat::name(tok.text()));
+          let pat = name.and_then(|tok| cx.pat(pat::name(tok.text())));
           let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
           let mut arg_exprs = arg_names
             .iter()
@@ -99,7 +95,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
           let case = exp::case(cx, head, arms);
           hir::ValBind {
             rec: true,
-            pat: cx.pat(pat),
+            pat,
             exp: arg_names
               .into_iter()
               .rev()
@@ -156,7 +152,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
       return None
     }
   };
-  Some(ret)
+  cx.dec(ret)
 }
 
 pub(crate) fn dat_binds<I>(cx: &mut Cx, iter: I) -> Vec<hir::DatBind>

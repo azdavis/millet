@@ -37,34 +37,34 @@ impl Cx {
   // TODO require having an ast ptr?
 
   pub(crate) fn str_dec(&mut self, val: hir::StrDec) -> hir::StrDecIdx {
-    self.arenas.str_dec.alloc(val)
+    Some(self.arenas.str_dec.alloc(val))
   }
 
   pub(crate) fn str_exp(&mut self, val: hir::StrExp) -> hir::StrExpIdx {
-    self.arenas.str_exp.alloc(val)
+    Some(self.arenas.str_exp.alloc(val))
   }
 
   pub(crate) fn sig_exp(&mut self, val: hir::SigExp) -> hir::SigExpIdx {
-    self.arenas.sig_exp.alloc(val)
+    Some(self.arenas.sig_exp.alloc(val))
   }
 
   pub(crate) fn spec(&mut self, val: hir::Spec) -> hir::SpecIdx {
-    self.arenas.spec.alloc(val)
+    Some(self.arenas.spec.alloc(val))
   }
 
   pub(crate) fn exp(&mut self, val: hir::Exp) -> hir::ExpIdx {
-    self.arenas.exp.alloc(val)
+    Some(self.arenas.exp.alloc(val))
   }
 
   pub(crate) fn dec(&mut self, val: hir::Dec) -> hir::DecIdx {
-    self.arenas.dec.alloc(val)
+    Some(self.arenas.dec.alloc(val))
   }
 
   pub(crate) fn pat(&mut self, val: hir::Pat) -> hir::PatIdx {
-    self.arenas.pat.alloc(val)
+    Some(self.arenas.pat.alloc(val))
   }
 
   pub(crate) fn ty(&mut self, val: hir::Ty) -> hir::TyIdx {
-    self.arenas.ty.alloc(val)
+    Some(self.arenas.ty.alloc(val))
   }
 }

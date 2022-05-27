@@ -7,8 +7,11 @@ use crate::util::{apply, get_env, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
+  let exp = match exp {
+    Some(x) => x,
+    None => return Ty::None,
+  };
   match &ars.exp[exp] {
-    hir::Exp::None => Ty::None,
     hir::Exp::SCon(scon) => get_scon(scon),
     hir::Exp::Path(path) => {
       let env = match get_env(&cx.env, path) {

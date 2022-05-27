@@ -13,8 +13,11 @@ pub(crate) fn get(
   ve: &mut ValEnv,
   pat: hir::PatIdx,
 ) -> (Pat, Ty) {
-  match &ars.pat[pat] {
-    hir::Pat::None => (Pat::zero(Con::Any, pat), Ty::None),
+  let pat_some = match pat {
+    Some(x) => x,
+    None => return (Pat::zero(Con::Any, pat), Ty::None),
+  };
+  match &ars.pat[pat_some] {
     hir::Pat::Wild => any(st, pat),
     hir::Pat::SCon(scon) => {
       let con = match *scon {
@@ -146,7 +149,7 @@ pub(crate) fn get_match(st: &mut St, pats: Vec<Pat>, ty: Ty, f: Option<fn(Vec<Pa
   let ck = pattern_match::check(&lang, pats, ty);
   st.syms = lang.syms;
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().collect();
-  unreachable.sort_unstable_by_key(|x| x.into_raw());
+  unreachable.sort_unstable_by_key(|x| x.map(|x| x.into_raw()));
   for un in unreachable {
     st.err(ErrorKind::UnreachablePattern(un));
   }

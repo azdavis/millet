@@ -4,12 +4,7 @@ use crate::{dec, pat, ty};
 use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
-  let exp = exp.and_then(|e| get_(cx, e)).unwrap_or(hir::Exp::None);
-  cx.exp(exp)
-}
-
-fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
-  let ret = match exp {
+  let ret = match exp? {
     ast::Exp::SConExp(exp) => hir::Exp::SCon(get_scon(exp.s_con()?)?),
     ast::Exp::PathExp(exp) => hir::Exp::Path(get_path(exp.path()?)?),
     ast::Exp::RecordExp(exp) => hir::Exp::Record(
@@ -29,7 +24,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       let body = cx.exp(name(fresh.as_str()));
       hir::Exp::Fn(vec![(param, body)])
     }
-    ast::Exp::ParenExp(exp) => get_(cx, exp.exp()?)?,
+    ast::Exp::ParenExp(exp) => return get(cx, exp.exp()),
     ast::Exp::TupleExp(exp) => tuple(exp.exp_args().map(|e| get(cx, e.exp()))),
     ast::Exp::ListExp(exp) => {
       // need to rev()
@@ -49,11 +44,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     }
     ast::Exp::AppExp(exp) => hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
     ast::Exp::InfixExp(exp) => {
-      let func = exp
-        .name_plus()
-        .map(|x| name(x.token.text()))
-        .unwrap_or(hir::Exp::None);
-      let func = cx.exp(func);
+      let func = exp.name_plus().and_then(|x| cx.exp(name(x.token.text())));
       let lhs = get(cx, exp.lhs());
       let rhs = get(cx, exp.rhs());
       let arg = cx.exp(tuple([lhs, rhs]));
@@ -112,7 +103,7 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     }
     ast::Exp::FnExp(exp) => hir::Exp::Fn(matcher(cx, exp.matcher())),
   };
-  Some(ret)
+  cx.exp(ret)
 }
 
 pub(crate) fn name(s: &str) -> hir::Exp {

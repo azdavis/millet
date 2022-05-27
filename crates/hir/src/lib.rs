@@ -44,7 +44,7 @@ pub struct FunctorBind {
   pub body: StrExpIdx,
 }
 
-pub type StrDecIdx = Idx<StrDec>;
+pub type StrDecIdx = Option<Idx<StrDec>>;
 pub type StrDecArena = Arena<StrDec>;
 
 #[derive(Debug)]
@@ -61,12 +61,11 @@ pub struct StrBind {
   pub str_exp: StrExpIdx,
 }
 
-pub type StrExpIdx = Idx<StrExp>;
+pub type StrExpIdx = Option<Idx<StrExp>>;
 pub type StrExpArena = Arena<StrExp>;
 
 #[derive(Debug)]
 pub enum StrExp {
-  None,
   Struct(StrDecIdx),
   Path(Path),
   Ascription(StrExpIdx, Ascription, SigExpIdx),
@@ -80,18 +79,17 @@ pub enum Ascription {
   Opaque,
 }
 
-pub type SigExpIdx = Idx<SigExp>;
+pub type SigExpIdx = Option<Idx<SigExp>>;
 pub type SigExpArena = Arena<SigExp>;
 
 #[derive(Debug)]
 pub enum SigExp {
-  None,
   Spec(SpecIdx),
   Name(Name),
   Where(SigExpIdx, Vec<TyVar>, Path, TyIdx),
 }
 
-pub type SpecIdx = Idx<Spec>;
+pub type SpecIdx = Option<Idx<Spec>>;
 pub type SpecArena = Arena<Spec>;
 
 #[derive(Debug)]
@@ -137,12 +135,11 @@ pub struct StrDesc {
 
 // core //
 
-pub type ExpIdx = Idx<Exp>;
+pub type ExpIdx = Option<Idx<Exp>>;
 pub type ExpArena = Arena<Exp>;
 
 #[derive(Debug)]
 pub enum Exp {
-  None,
   SCon(SCon),
   Path(Path),
   Record(Vec<(Lab, ExpIdx)>),
@@ -154,7 +151,7 @@ pub enum Exp {
   Typed(ExpIdx, TyIdx),
 }
 
-pub type DecIdx = Idx<Dec>;
+pub type DecIdx = Option<Idx<Dec>>;
 pub type DecArena = Arena<Dec>;
 
 #[derive(Debug)]
@@ -203,12 +200,11 @@ pub enum ExBind {
   Copy(Name, Path),
 }
 
-pub type PatIdx = Idx<Pat>;
+pub type PatIdx = Option<Idx<Pat>>;
 pub type PatArena = Arena<Pat>;
 
 #[derive(Debug)]
 pub enum Pat {
-  None,
   Wild,
   SCon(SCon),
   Con(Path, Option<PatIdx>),
@@ -224,12 +220,11 @@ pub enum Pat {
   As(Name, PatIdx),
 }
 
-pub type TyIdx = Idx<Ty>;
+pub type TyIdx = Option<Idx<Ty>>;
 pub type TyArena = Arena<Ty>;
 
 #[derive(Debug)]
 pub enum Ty {
-  None,
   Var(TyVar),
   Record(Vec<(Lab, TyIdx)>),
   Con(Vec<TyIdx>, Path),

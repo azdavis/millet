@@ -3,12 +3,7 @@ use crate::util::Cx;
 use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
-  let ty = ty.and_then(|x| get_(cx, x)).unwrap_or(hir::Ty::None);
-  cx.ty(ty)
-}
-
-fn get_(cx: &mut Cx, ty: ast::Ty) -> Option<hir::Ty> {
-  let ret = match ty {
+  let ret = match ty? {
     ast::Ty::TyVarTy(ty) => hir::Ty::Var(hir::TyVar::new(ty.ty_var()?.text())),
     ast::Ty::RecordTy(ty) => hir::Ty::Record(
       ty.ty_rows()
@@ -33,9 +28,9 @@ fn get_(cx: &mut Cx, ty: ast::Ty) -> Option<hir::Ty> {
         .collect(),
     ),
     ast::Ty::FnTy(ty) => hir::Ty::Fn(get(cx, ty.param()), get(cx, ty.res())),
-    ast::Ty::ParenTy(ty) => get_(cx, ty.ty()?)?,
+    ast::Ty::ParenTy(ty) => return get(cx, ty.ty()),
   };
-  Some(ret)
+  cx.ty(ret)
 }
 
 pub(crate) fn var_seq(tvs: Option<ast::TyVarSeq>) -> Vec<hir::TyVar> {
