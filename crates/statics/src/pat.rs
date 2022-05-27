@@ -13,11 +13,11 @@ pub(crate) fn get(
   ve: &mut ValEnv,
   pat: hir::PatIdx,
 ) -> (Pat, Ty) {
-  let pat_some = match pat {
+  let pat_ = match pat {
     Some(x) => x,
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
-  match &ars.pat[pat_some] {
+  match &ars.pat[pat_] {
     hir::Pat::Wild => any(st, pat),
     hir::Pat::SCon(scon) => {
       let con = match *scon {
