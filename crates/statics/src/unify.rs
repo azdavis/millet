@@ -1,9 +1,12 @@
-use crate::error::ErrorKind;
+use crate::error::{ErrorKind, Idx};
 use crate::st::St;
 use crate::types::{MetaTyVar, Subst, Ty};
 use crate::util::apply;
 
-pub(crate) fn unify(st: &mut St, want: Ty, got: Ty) {
+pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
+where
+  I: Into<Idx>,
+{
   let e = match unify_(st.subst(), want.clone(), got.clone()) {
     Ok(()) => return,
     Err(e) => e,
@@ -14,7 +17,7 @@ pub(crate) fn unify(st: &mut St, want: Ty, got: Ty) {
     UnifyError::MissingField(lab) => ErrorKind::MissingField(lab, got),
     UnifyError::ExtraFields(labs) => ErrorKind::ExtraFields(labs, got),
   };
-  st.err(e);
+  st.err(idx, e);
 }
 
 #[derive(Debug)]

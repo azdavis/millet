@@ -11,24 +11,24 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
   match &ars.ty[ty] {
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
       None => {
-        st.err(ErrorKind::Undefined);
+        st.err(ty, ErrorKind::Undefined);
         Ty::None
       }
       Some(fv) => Ty::FixedVar(fv.clone()),
     },
-    hir::Ty::Record(rows) => record(st, rows, |st, _, ty| get(st, cx, ars, ty)),
+    hir::Ty::Record(rows) => record(st, rows, ty, |st, _, ty| get(st, cx, ars, ty)),
     hir::Ty::Con(args, path) => {
       let env = match get_env(&cx.env, path) {
         Ok(x) => x,
         Err(_) => {
-          st.err(ErrorKind::Undefined);
+          st.err(ty, ErrorKind::Undefined);
           return Ty::None;
         }
       };
       let ty_info = match env.ty_env.get(path.last()) {
         Some(x) => x,
         None => {
-          st.err(ErrorKind::Undefined);
+          st.err(ty, ErrorKind::Undefined);
           return Ty::None;
         }
       };
@@ -39,7 +39,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
         ret = ty_info.ty_scheme.ty.clone();
         apply_bv(&args, &mut ret)
       } else {
-        st.err(ErrorKind::WrongNumTyArgs(want_len, args.len()));
+        st.err(ty, ErrorKind::WrongNumTyArgs(want_len, args.len()));
       }
       // NOTE: just because `ty` was a `hir::Ty::Con` doesn't mean `ret` is ultimately a `Ty::Con`.
       // there could have been a type alias. e.g. `type unit = {}` (which indeed is provided by the

@@ -5,16 +5,56 @@ use std::fmt;
 /// A statics error.
 #[derive(Debug)]
 pub struct Error {
+  pub(crate) idx: Idx,
   pub(crate) kind: ErrorKind,
 }
 
 impl Error {
+  /// Returns the [`Idx`] for this error.
+  pub fn idx(&self) -> Idx {
+    self.idx
+  }
+
   /// Displays this error.
   pub fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
     ErrorKindDisplay {
       kind: &self.kind,
       syms,
     }
+  }
+}
+
+/// Something that can have a statics error.
+#[derive(Debug, Clone, Copy)]
+#[allow(missing_docs)]
+pub enum Idx {
+  Exp(hir::la_arena::Idx<hir::Exp>),
+  Pat(hir::la_arena::Idx<hir::Pat>),
+  Ty(hir::la_arena::Idx<hir::Ty>),
+  Dec(hir::la_arena::Idx<hir::Dec>),
+}
+
+impl From<hir::la_arena::Idx<hir::Exp>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::Exp>) -> Self {
+    Self::Exp(val)
+  }
+}
+
+impl From<hir::la_arena::Idx<hir::Pat>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::Pat>) -> Self {
+    Self::Pat(val)
+  }
+}
+
+impl From<hir::la_arena::Idx<hir::Ty>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::Ty>) -> Self {
+    Self::Ty(val)
+  }
+}
+
+impl From<hir::la_arena::Idx<hir::Dec>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::Dec>) -> Self {
+    Self::Dec(val)
   }
 }
 
@@ -29,7 +69,7 @@ pub(crate) enum ErrorKind {
   ExtraFields(Vec<hir::Lab>, Ty),
   DuplicateLab(hir::Lab),
   RealPat,
-  UnreachablePattern(hir::PatIdx),
+  UnreachablePattern,
   NonExhaustiveMatch(Vec<Pat>),
   NonExhaustiveBinding(Vec<Pat>),
   PatValIdStatus,
@@ -74,7 +114,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label {}", lab),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
-      ErrorKind::UnreachablePattern(_) => f.write_str("unreachable pattern"),
+      ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
       ErrorKind::NonExhaustiveMatch(_) => f.write_str("non-exhaustive match"),
       ErrorKind::NonExhaustiveBinding(_) => f.write_str("non-exhaustive binding"),
       ErrorKind::PatValIdStatus => f.write_str("value binding used as a pattern"),

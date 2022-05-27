@@ -22,7 +22,7 @@ mod types;
 mod unify;
 mod util;
 
-pub use error::Error;
+pub use error::{Error, Idx};
 pub use st::St;
 pub use types::Syms;
 

@@ -1,4 +1,4 @@
-use crate::error::ErrorKind;
+use crate::error::{ErrorKind, Idx};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{generalize, Cx, Env, FixedTyVars, Ty, TyInfo, TyScheme, ValEnv};
@@ -29,7 +29,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
         idx += 1;
         let (pm_pat, want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
-        get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want);
+        get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want, dec.into());
       }
       // deal with the recursive ones. first do all the patterns so we can update the val env. we
       // also need a separate recursive-only val env.
@@ -41,7 +41,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // merge the recursive and non-recursive val envs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
         if ve.insert(name.clone(), val_info.clone()).is_some() {
-          st.err(ErrorKind::Redefined);
+          st.err(dec, ErrorKind::Redefined);
         }
       }
       // extend the cx with only the recursive val env.
@@ -49,10 +49,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
         if let Some(exp) = val_bind.exp {
           if !matches!(ars.exp[exp], hir::Exp::Fn(_)) {
-            st.err(ErrorKind::ValRecExpNotFn);
+            st.err(dec, ErrorKind::ValRecExpNotFn);
           }
         }
-        get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want);
+        get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want, dec.into());
       }
       // generalize the entire merged val env.
       for val_info in ve.values_mut() {
@@ -72,7 +72,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           val_env: ValEnv::default(),
         };
         if env.ty_env.insert(ty_bind.name.clone(), ty_info).is_some() {
-          st.err(ErrorKind::Redefined)
+          st.err(dec, ErrorKind::Redefined)
         }
         for ty_var in ty_bind.ty_vars.iter() {
           cx.ty_vars.remove(ty_var);
@@ -123,14 +123,17 @@ fn get_val_exp(
   exp: hir::ExpIdx,
   pm_pat: Pat,
   mut want: Ty,
+  idx: Idx,
 ) {
   let got = exp::get(st, cx, ars, exp);
-  unify(st, want.clone(), got);
+  let idx = exp.map_or(idx, Into::into);
+  unify(st, want.clone(), got, idx);
   apply(st.subst(), &mut want);
   pat::get_match(
     st,
     vec![pm_pat],
     want,
     Some(ErrorKind::NonExhaustiveBinding),
+    idx,
   );
 }

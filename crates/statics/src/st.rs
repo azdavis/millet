@@ -1,4 +1,4 @@
-use crate::error::{Error, ErrorKind};
+use crate::error::{Error, ErrorKind, Idx};
 use crate::types::{FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, TyVars};
 
 /// The state.
@@ -20,8 +20,14 @@ impl St {
     &mut self.subst
   }
 
-  pub(crate) fn err(&mut self, kind: ErrorKind) {
-    self.errors.push(Error { kind })
+  pub(crate) fn err<I>(&mut self, idx: I, kind: ErrorKind)
+  where
+    I: Into<Idx>,
+  {
+    self.errors.push(Error {
+      idx: idx.into(),
+      kind,
+    })
   }
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {

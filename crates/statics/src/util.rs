@@ -1,4 +1,4 @@
-use crate::error::ErrorKind;
+use crate::error::{ErrorKind, Idx};
 use crate::st::St;
 use crate::types::{Env, Subst, Sym, Ty, TyScheme};
 use std::collections::BTreeMap;
@@ -14,17 +14,19 @@ pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
   Ty::zero(sym)
 }
 
-pub(crate) fn record<T, F>(st: &mut St, rows: &[(hir::Lab, T)], mut f: F) -> Ty
+pub(crate) fn record<T, F, I>(st: &mut St, rows: &[(hir::Lab, T)], idx: I, mut f: F) -> Ty
 where
   T: Copy,
   F: FnMut(&mut St, &hir::Lab, T) -> Ty,
+  I: Into<Idx>,
 {
   let mut ty_rows = BTreeMap::<hir::Lab, Ty>::new();
+  let idx = idx.into();
   for (lab, val) in rows {
     let ty = f(st, lab, *val);
     match ty_rows.insert(lab.clone(), ty) {
       None => {}
-      Some(_) => st.err(ErrorKind::DuplicateLab(lab.clone())),
+      Some(_) => st.err(idx, ErrorKind::DuplicateLab(lab.clone())),
     }
   }
   Ty::Record(ty_rows)
