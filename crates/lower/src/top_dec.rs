@@ -27,7 +27,7 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
           if let Some(tail) = fun_bind.ascription_tail() {
             let (kind, sig_exp) = ascription_tail(cx, Some(tail));
             let asc = hir::StrExp::Ascription(body, kind, sig_exp);
-            body = cx.arenas.str_exp.alloc(asc);
+            body = cx.str_exp(asc);
           }
           Some(hir::FunctorBind {
             functor_name,
@@ -47,13 +47,13 @@ fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
     .flat_map(|x| x.str_dec_in_seqs())
     .filter_map(|x| {
       let res = get_str_dec_one(cx, x.str_dec_one()?)?;
-      Some(cx.arenas.str_dec.alloc(res))
+      Some(cx.str_dec(res))
     })
     .collect();
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
   } else {
-    cx.arenas.str_dec.alloc(hir::StrDec::Seq(str_decs))
+    cx.str_dec(hir::StrDec::Seq(str_decs))
   }
 }
 
@@ -61,7 +61,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> Option<hir::StrDec> 
   let res = match str_dec {
     ast::StrDecOne::DecStrDec(str_dec) => {
       let dec = dec::get_one(cx, str_dec.dec_one()?)?;
-      hir::StrDec::Dec(cx.arenas.dec.alloc(dec))
+      hir::StrDec::Dec(cx.dec(dec))
     }
     ast::StrDecOne::StructureStrDec(str_dec) => hir::StrDec::Structure(
       str_dec
@@ -71,7 +71,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> Option<hir::StrDec> 
           if let Some(tail) = str_bind.ascription_tail() {
             let (kind, sig_exp) = ascription_tail(cx, Some(tail));
             let asc = hir::StrExp::Ascription(str_exp, kind, sig_exp);
-            str_exp = cx.arenas.str_exp.alloc(asc);
+            str_exp = cx.str_exp(asc);
           }
           Some(hir::StrBind {
             name: get_name(str_bind.name())?,
@@ -92,7 +92,7 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
   let str_exp = str_exp
     .and_then(|x| get_str_exp_(cx, x))
     .unwrap_or(hir::StrExp::None);
-  cx.arenas.str_exp.alloc(str_exp)
+  cx.str_exp(str_exp)
 }
 
 fn get_str_exp_(cx: &mut Cx, str_exp: ast::StrExp) -> Option<hir::StrExp> {
@@ -119,7 +119,7 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
   let sig_exp = sig_exp
     .and_then(|x| get_sig_exp_(cx, x))
     .unwrap_or(hir::SigExp::None);
-  cx.arenas.sig_exp.alloc(sig_exp)
+  cx.sig_exp(sig_exp)
 }
 
 fn get_sig_exp_(cx: &mut Cx, sig_exp: ast::SigExp) -> Option<hir::SigExp> {
@@ -142,13 +142,13 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
     .flat_map(|x| x.spec_in_seqs())
     .filter_map(|x| {
       let res = get_spec_one(cx, x.spec_one()?)?;
-      Some(cx.arenas.spec.alloc(res))
+      Some(cx.spec(res))
     })
     .collect();
   if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
-    cx.arenas.spec.alloc(hir::Spec::Seq(specs))
+    cx.spec(hir::Spec::Seq(specs))
   }
 }
 
@@ -201,7 +201,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::Spec> {
       if specs.len() == 1 {
         specs.pop().unwrap()
       } else {
-        hir::Spec::Seq(specs.into_iter().map(|x| cx.arenas.spec.alloc(x)).collect())
+        hir::Spec::Seq(specs.into_iter().map(|x| cx.spec(x)).collect())
       }
     }
     ast::SpecOne::SharingSpec(_) => todo!(),

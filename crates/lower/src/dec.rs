@@ -9,13 +9,13 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
     .flat_map(|x| x.dec_in_seqs())
     .filter_map(|x| {
       let res = get_one(cx, x.dec_one()?)?;
-      Some(cx.arenas.dec.alloc(res))
+      Some(cx.dec(res))
     })
     .collect();
   if decs.len() == 1 {
     decs.pop().unwrap()
   } else {
-    cx.arenas.dec.alloc(hir::Dec::Seq(decs))
+    cx.dec(hir::Dec::Seq(decs))
   }
 }
 
@@ -75,12 +75,12 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
               let pat = if pats.len() == 1 {
                 pats.pop().unwrap()
               } else {
-                cx.arenas.pat.alloc(pat::tuple(pats))
+                cx.pat(pat::tuple(pats))
               };
               let ty = case.ty_annotation().map(|x| ty::get(cx, x.ty()));
               let mut exp = exp::get(cx, case.exp());
               if let Some(ty) = ty {
-                exp = cx.arenas.exp.alloc(hir::Exp::Typed(exp, ty));
+                exp = cx.exp(hir::Exp::Typed(exp, ty));
               }
               (pat, exp)
             })
@@ -89,23 +89,23 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
           let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
           let mut arg_exprs = arg_names
             .iter()
-            .map(|name| cx.arenas.exp.alloc(exp::name(name.as_str())));
+            .map(|name| cx.exp(exp::name(name.as_str())));
           let head = if arg_exprs.len() == 1 {
             arg_exprs.next().unwrap()
           } else {
             let tup = exp::tuple(arg_exprs);
-            cx.arenas.exp.alloc(tup)
+            cx.exp(tup)
           };
           let case = exp::case(cx, head, arms);
           hir::ValBind {
             rec: true,
-            pat: cx.arenas.pat.alloc(pat),
+            pat: cx.pat(pat),
             exp: arg_names
               .into_iter()
               .rev()
-              .fold(cx.arenas.exp.alloc(case), |body, name| {
-                let pat = cx.arenas.pat.alloc(pat::name(name.as_str()));
-                cx.arenas.exp.alloc(hir::Exp::Fn(vec![(pat, body)]))
+              .fold(cx.exp(case), |body, name| {
+                let pat = cx.pat(pat::name(name.as_str()));
+                cx.exp(hir::Exp::Fn(vec![(pat, body)]))
               }),
           }
         })
@@ -117,7 +117,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
       let mut ret = hir::Dec::Datatype(dat_binds(cx, dec.dat_binds()));
       if let Some(with_ty) = dec.with_type() {
         let ty_dec = ty_binds(cx, with_ty.ty_binds());
-        ret = hir::Dec::Seq(vec![cx.arenas.dec.alloc(ret), cx.arenas.dec.alloc(ty_dec)]);
+        ret = hir::Dec::Seq(vec![cx.dec(ret), cx.dec(ty_dec)]);
       }
       ret
     }
@@ -129,8 +129,8 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> Option<hir::Dec> {
       let ty_dec = dec.with_type().map(|x| ty_binds(cx, x.ty_binds()));
       let mut d = get(cx, dec.dec());
       if let Some(ty_dec) = ty_dec {
-        let ty_dec = cx.arenas.dec.alloc(ty_dec);
-        d = cx.arenas.dec.alloc(hir::Dec::Seq(vec![d, ty_dec]));
+        let ty_dec = cx.dec(ty_dec);
+        d = cx.dec(hir::Dec::Seq(vec![d, ty_dec]));
       }
       // TODO: "see note in text"
       hir::Dec::Abstype(dbs, d)

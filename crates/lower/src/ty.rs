@@ -4,7 +4,7 @@ use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
   let ty = ty.and_then(|x| get_(cx, x)).unwrap_or(hir::Ty::None);
-  cx.arenas.ty.alloc(ty)
+  cx.ty(ty)
 }
 
 fn get_(cx: &mut Cx, ty: ast::Ty) -> Option<hir::Ty> {

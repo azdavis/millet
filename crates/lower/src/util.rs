@@ -15,8 +15,7 @@ pub struct Lower {
 
 #[derive(Debug, Default)]
 pub(crate) struct Cx {
-  /// TODO put this behind mutator methods that require having an ast ptr?
-  pub(crate) arenas: hir::Arenas,
+  arenas: hir::Arenas,
   fresh_idx: u32,
 }
 
@@ -29,5 +28,43 @@ impl Cx {
     let ret = hir::Name::new(self.fresh_idx.to_string());
     self.fresh_idx += 1;
     ret
+  }
+
+  pub(crate) fn finish(self) -> hir::Arenas {
+    self.arenas
+  }
+
+  // TODO require having an ast ptr?
+
+  pub(crate) fn str_dec(&mut self, val: hir::StrDec) -> hir::StrDecIdx {
+    self.arenas.str_dec.alloc(val)
+  }
+
+  pub(crate) fn str_exp(&mut self, val: hir::StrExp) -> hir::StrExpIdx {
+    self.arenas.str_exp.alloc(val)
+  }
+
+  pub(crate) fn sig_exp(&mut self, val: hir::SigExp) -> hir::SigExpIdx {
+    self.arenas.sig_exp.alloc(val)
+  }
+
+  pub(crate) fn spec(&mut self, val: hir::Spec) -> hir::SpecIdx {
+    self.arenas.spec.alloc(val)
+  }
+
+  pub(crate) fn exp(&mut self, val: hir::Exp) -> hir::ExpIdx {
+    self.arenas.exp.alloc(val)
+  }
+
+  pub(crate) fn dec(&mut self, val: hir::Dec) -> hir::DecIdx {
+    self.arenas.dec.alloc(val)
+  }
+
+  pub(crate) fn pat(&mut self, val: hir::Pat) -> hir::PatIdx {
+    self.arenas.pat.alloc(val)
+  }
+
+  pub(crate) fn ty(&mut self, val: hir::Ty) -> hir::TyIdx {
+    self.arenas.ty.alloc(val)
   }
 }

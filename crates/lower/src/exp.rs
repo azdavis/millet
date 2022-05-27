@@ -5,7 +5,7 @@ use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
   let exp = exp.and_then(|e| get_(cx, e)).unwrap_or(hir::Exp::None);
-  cx.arenas.exp.alloc(exp)
+  cx.exp(exp)
 }
 
 fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
@@ -21,12 +21,12 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
     ast::Exp::SelectorExp(exp) => {
       let lab = get_lab(exp.lab()?)?;
       let fresh = cx.fresh();
-      let pat = cx.arenas.pat.alloc(pat::name(fresh.as_str()));
-      let param = cx.arenas.pat.alloc(hir::Pat::Record {
+      let pat = cx.pat(pat::name(fresh.as_str()));
+      let param = cx.pat(hir::Pat::Record {
         rows: vec![(lab, pat)],
         allows_other: true,
       });
-      let body = cx.arenas.exp.alloc(name(fresh.as_str()));
+      let body = cx.exp(name(fresh.as_str()));
       hir::Exp::Fn(vec![(param, body)])
     }
     ast::Exp::ParenExp(exp) => get_(cx, exp.exp()?)?,
@@ -36,16 +36,16 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|x| get(cx, x.exp())).collect();
       exps.into_iter().rev().fold(name("nil"), |ac, x| {
-        let cons = cx.arenas.exp.alloc(name("::"));
-        let ac = cx.arenas.exp.alloc(ac);
-        hir::Exp::App(cons, cx.arenas.exp.alloc(tuple([x, ac])))
+        let cons = cx.exp(name("::"));
+        let ac = cx.exp(ac);
+        hir::Exp::App(cons, cx.exp(tuple([x, ac])))
       })
     }
     ast::Exp::SeqExp(exp) => exps_in_seq(cx, exp.exps_in_seq()),
     ast::Exp::LetExp(exp) => {
       let dec = dec::get(cx, exp.dec());
       let exp = exps_in_seq(cx, exp.exps_in_seq());
-      hir::Exp::Let(dec, cx.arenas.exp.alloc(exp))
+      hir::Exp::Let(dec, cx.exp(exp))
     }
     ast::Exp::AppExp(exp) => hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
     ast::Exp::InfixExp(exp) => {
@@ -53,22 +53,22 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
         .name_plus()
         .map(|x| name(x.token.text()))
         .unwrap_or(hir::Exp::None);
-      let func = cx.arenas.exp.alloc(func);
+      let func = cx.exp(func);
       let lhs = get(cx, exp.lhs());
       let rhs = get(cx, exp.rhs());
-      let arg = cx.arenas.exp.alloc(tuple([lhs, rhs]));
+      let arg = cx.exp(tuple([lhs, rhs]));
       hir::Exp::App(func, arg)
     }
     ast::Exp::TypedExp(exp) => hir::Exp::Typed(get(cx, exp.exp()), ty::get(cx, exp.ty())),
     ast::Exp::AndalsoExp(exp) => {
       let cond = get(cx, exp.lhs());
       let yes = get(cx, exp.rhs());
-      let no = cx.arenas.exp.alloc(name("false"));
+      let no = cx.exp(name("false"));
       if_(cx, cond, yes, no)
     }
     ast::Exp::OrelseExp(exp) => {
       let cond = get(cx, exp.lhs());
-      let yes = cx.arenas.exp.alloc(name("true"));
+      let yes = cx.exp(name("true"));
       let no = get(cx, exp.rhs());
       if_(cx, cond, yes, no)
     }
@@ -87,15 +87,15 @@ fn get_(cx: &mut Cx, exp: ast::Exp) -> Option<hir::Exp> {
         let body = get(cx, exp.body());
         let call = call_unit_fn(cx, &vid);
         let yes = exp_idx_in_seq(cx, vec![body, call]);
-        let yes = cx.arenas.exp.alloc(yes);
-        let no = cx.arenas.exp.alloc(tuple([]));
+        let yes = cx.exp(yes);
+        let no = cx.exp(tuple([]));
         let fn_body = if_(cx, cond, yes, no);
-        cx.arenas.exp.alloc(fn_body)
+        cx.exp(fn_body)
       };
-      let arg_pat = cx.arenas.pat.alloc(pat::tuple([]));
-      let fn_exp = cx.arenas.exp.alloc(hir::Exp::Fn(vec![(arg_pat, fn_body)]));
-      let vid_pat = cx.arenas.pat.alloc(pat::name(vid.as_str()));
-      let val = cx.arenas.dec.alloc(hir::Dec::Val(
+      let arg_pat = cx.pat(pat::tuple([]));
+      let fn_exp = cx.exp(hir::Exp::Fn(vec![(arg_pat, fn_body)]));
+      let vid_pat = cx.pat(pat::name(vid.as_str()));
+      let val = cx.dec(hir::Dec::Val(
         vec![],
         vec![hir::ValBind {
           rec: true,
@@ -133,9 +133,9 @@ where
 }
 
 fn call_unit_fn(cx: &mut Cx, vid: &hir::Name) -> hir::ExpIdx {
-  let vid_exp = cx.arenas.exp.alloc(name(vid.as_str()));
-  let arg_exp = cx.arenas.exp.alloc(hir::Exp::Record(vec![]));
-  cx.arenas.exp.alloc(hir::Exp::App(vid_exp, arg_exp))
+  let vid_exp = cx.exp(name(vid.as_str()));
+  let arg_exp = cx.exp(hir::Exp::Record(vec![]));
+  cx.exp(hir::Exp::App(vid_exp, arg_exp))
 }
 
 fn exps_in_seq<I>(cx: &mut Cx, es: I) -> hir::Exp
@@ -162,17 +162,17 @@ fn exp_idx_in_seq(cx: &mut Cx, mut exps: Vec<hir::ExpIdx>) -> hir::Exp {
       .into_iter()
       .map(|exp| hir::ValBind {
         rec: false,
-        pat: cx.arenas.pat.alloc(hir::Pat::Wild),
+        pat: cx.pat(hir::Pat::Wild),
         exp,
       })
       .collect(),
   );
-  hir::Exp::Let(cx.arenas.dec.alloc(dec), last)
+  hir::Exp::Let(cx.dec(dec), last)
 }
 
 fn if_(cx: &mut Cx, cond: hir::ExpIdx, yes: hir::ExpIdx, no: hir::ExpIdx) -> hir::Exp {
-  let yes_pat = cx.arenas.pat.alloc(pat::name("true"));
-  let no_pat = cx.arenas.pat.alloc(pat::name("false"));
+  let yes_pat = cx.pat(pat::name("true"));
+  let no_pat = cx.pat(pat::name("false"));
   case(cx, cond, vec![(yes_pat, yes), (no_pat, no)])
 }
 
@@ -181,7 +181,7 @@ pub(crate) fn case(
   head: hir::ExpIdx,
   arms: Vec<(hir::PatIdx, hir::ExpIdx)>,
 ) -> hir::Exp {
-  hir::Exp::App(cx.arenas.exp.alloc(hir::Exp::Fn(arms)), head)
+  hir::Exp::App(cx.exp(hir::Exp::Fn(arms)), head)
 }
 
 fn matcher(cx: &mut Cx, matcher: Option<ast::Matcher>) -> Vec<(hir::PatIdx, hir::ExpIdx)> {

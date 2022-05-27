@@ -10,7 +10,7 @@ pub fn get(root: ast::Root) -> Lower {
     .map(|top_dec| top_dec::get(&mut cx, top_dec))
     .collect();
   Lower {
-    arenas: cx.arenas,
+    arenas: cx.finish(),
     top_decs,
   }
 }

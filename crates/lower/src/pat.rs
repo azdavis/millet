@@ -5,7 +5,7 @@ use syntax::ast;
 
 pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
   let pat = pat.and_then(|x| get_(cx, x)).unwrap_or(hir::Pat::None);
-  cx.arenas.pat.alloc(pat)
+  cx.pat(pat)
 }
 
 fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
@@ -30,7 +30,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
           ast::PatRowInner::LabPatRow(row) => {
             let name = hir::Name::new(row.name_plus()?.token.text());
             let pat = as_(cx, name.clone(), row.ty_annotation(), row.as_pat_tail()?);
-            Some((hir::Lab::Name(name), cx.arenas.pat.alloc(pat)))
+            Some((hir::Lab::Name(name), cx.pat(pat)))
           }
         })
         .collect();
@@ -44,15 +44,15 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       let pats: Vec<_> = pat.pat_args().map(|x| get(cx, x.pat())).collect();
       pats.into_iter().rev().fold(name("nil"), |ac, x| {
         let cons = hir::Path::one(hir::Name::new("::"));
-        let ac = cx.arenas.pat.alloc(ac);
-        hir::Pat::Con(cons, Some(cx.arenas.pat.alloc(tuple([x, ac]))))
+        let ac = cx.pat(ac);
+        hir::Pat::Con(cons, Some(cx.pat(tuple([x, ac]))))
       })
     }
     ast::Pat::InfixPat(pat) => {
       let func = hir::Path::one(hir::Name::new(pat.name_plus()?.token.text()));
       let lhs = get(cx, pat.lhs());
       let rhs = get(cx, pat.rhs());
-      let arg = cx.arenas.pat.alloc(tuple([lhs, rhs]));
+      let arg = cx.pat(tuple([lhs, rhs]));
       hir::Pat::Con(func, Some(arg))
     }
     ast::Pat::TypedPat(pat) => hir::Pat::Typed(
@@ -60,7 +60,7 @@ fn get_(cx: &mut Cx, pat: ast::Pat) -> Option<hir::Pat> {
       ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
     ),
     ast::Pat::TypedNamePat(pat) => {
-      let name_pat = cx.arenas.pat.alloc(name(pat.name_plus()?.token.text()));
+      let name_pat = cx.pat(name(pat.name_plus()?.token.text()));
       hir::Pat::Typed(
         name_pat,
         ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
@@ -105,7 +105,7 @@ fn as_(
   let ty = annot.map(|x| ty::get(cx, x.ty()));
   let mut inner = get(cx, tail.pat());
   if let Some(ty) = ty {
-    inner = cx.arenas.pat.alloc(hir::Pat::Typed(inner, ty));
+    inner = cx.pat(hir::Pat::Typed(inner, ty));
   }
   hir::Pat::As(name, inner)
 }
