@@ -1,10 +1,10 @@
 use crate::error::ErrorKind;
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{generalize, Cx, Env, FixedTyVars, Ty, ValEnv};
+use crate::types::{generalize, Cx, Env, FixedTyVars, Ty, TyInfo, TyScheme, ValEnv};
 use crate::unify::unify;
 use crate::util::apply;
-use crate::{exp, pat};
+use crate::{exp, pat, ty};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: hir::DecIdx) {
   match &ars.dec[dec] {
@@ -55,8 +55,23 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // extend the overall env with that.
       env.val_env.extend(ve);
     }
-    hir::Dec::Ty(_) => {
-      // TODO
+    hir::Dec::Ty(ty_binds) => {
+      let mut cx = cx.clone();
+      for ty_bind in ty_binds {
+        let fixed_vars = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars);
+        let mut ty_scheme = TyScheme::mono(ty::get(st, &cx, ars, ty_bind.ty));
+        generalize(st.subst(), fixed_vars, &mut ty_scheme);
+        let ty_info = TyInfo {
+          ty_scheme,
+          val_env: ValEnv::default(),
+        };
+        if env.ty_env.insert(ty_bind.name.clone(), ty_info).is_some() {
+          st.err(ErrorKind::Redefined)
+        }
+        for ty_var in ty_bind.ty_vars.iter() {
+          cx.ty_vars.remove(ty_var);
+        }
+      }
     }
     hir::Dec::Datatype(_) => {
       // TODO
