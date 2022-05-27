@@ -1,7 +1,7 @@
 //! Types.
 
 use fast_hash::FxHashMap;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fmt;
 use uniq::{Uniq, UniqGen};
 
@@ -189,7 +189,7 @@ pub(crate) struct TyScheme {
 impl TyScheme {
   pub(crate) fn mono(ty: Ty) -> Self {
     Self {
-      vars: TyVars { inner: Vec::new() },
+      vars: TyVars::default(),
       ty,
     }
   }
@@ -216,7 +216,7 @@ impl TyScheme {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct TyVars {
   /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
   /// variable i is equality.
@@ -284,7 +284,7 @@ impl MetaTyVarGen {
 }
 
 /// Corresponds to a user written type variable.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct FixedTyVar {
   id: Uniq,
   ty_var: hir::TyVar,
@@ -495,16 +495,116 @@ impl Subst {
   }
 }
 
-pub(crate) fn prepare_generalize(set: BTreeSet<MetaTyVar>) -> (TyVars, Subst) {
-  let ty_vars = TyVars {
-    inner: set.iter().map(|mv| mv.equality).collect(),
+#[derive(Debug, Default, Clone)]
+pub(crate) struct FixedTyVars(FxHashMap<FixedTyVar, Option<BoundTyVar>>);
+
+impl FixedTyVars {
+  pub(crate) fn insert(&mut self, var: FixedTyVar) {
+    assert!(self.0.insert(var, None).is_none())
+  }
+}
+
+/// generalizes the type in the type scheme.
+///
+/// replaces any fixed vars from `fixed_vars`, as well as any meta vars not already solved by
+/// `subst`, in the type, with bound vars, and updates the type scheme to bind those vars.
+///
+/// panics if the type scheme already binds vars.
+///
+/// TODO remove ty_vars(cx)? what even is that?
+pub(crate) fn generalize(subst: &Subst, fixed_vars: FixedTyVars, ty_scheme: &mut TyScheme) {
+  assert!(ty_scheme.vars.is_empty());
+  let mut mv_map = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
+  meta_vars(subst, &mut mv_map, &ty_scheme.ty);
+  let mut g = Generalizer {
+    subst,
+    fv_map: fixed_vars.0,
+    mv_map,
+    ty_vars: TyVars::default(),
   };
-  let subst = Subst {
-    map: set
-      .into_iter()
-      .enumerate()
-      .map(|(idx, mv)| (mv, Ty::BoundVar(BoundTyVar(idx))))
-      .collect(),
+  g.go(&mut ty_scheme.ty);
+  ty_scheme.vars = g.ty_vars;
+}
+
+fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, ty: &Ty) {
+  match ty {
+    Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
+    Ty::MetaVar(mv) => match subst.get(mv) {
+      None => assert!(map.insert(mv.clone(), None).is_none()),
+      Some(ty) => meta_vars(subst, map, ty),
+    },
+    Ty::Record(rows) => {
+      for ty in rows.values() {
+        meta_vars(subst, map, ty);
+      }
+    }
+    Ty::Con(args, _) => {
+      for ty in args.iter() {
+        meta_vars(subst, map, ty);
+      }
+    }
+    Ty::Fn(param, res) => {
+      meta_vars(subst, map, param);
+      meta_vars(subst, map, res);
+    }
+  }
+}
+
+struct Generalizer<'a> {
+  subst: &'a Subst,
+  fv_map: FxHashMap<FixedTyVar, Option<BoundTyVar>>,
+  mv_map: FxHashMap<MetaTyVar, Option<BoundTyVar>>,
+  ty_vars: TyVars,
+}
+
+impl<'a> Generalizer<'a> {
+  fn go(&mut self, ty: &mut Ty) {
+    match ty {
+      Ty::None => {}
+      Ty::BoundVar(_) => unreachable!(),
+      Ty::MetaVar(mv) => handle_bv(self.mv_map.get_mut(mv), &mut self.ty_vars, mv.equality, ty),
+      Ty::FixedVar(fv) => handle_bv(
+        self.fv_map.get_mut(fv),
+        &mut self.ty_vars,
+        fv.ty_var.is_equality(),
+        ty,
+      ),
+      Ty::Record(rows) => {
+        for ty in rows.values_mut() {
+          self.go(ty);
+        }
+      }
+      Ty::Con(args, _) => {
+        for ty in args.iter_mut() {
+          self.go(ty);
+        }
+      }
+      Ty::Fn(param, res) => {
+        self.go(param);
+        self.go(res);
+      }
+    }
+  }
+}
+
+fn handle_bv(
+  bv: Option<&mut Option<BoundTyVar>>,
+  ty_vars: &mut TyVars,
+  equality: bool,
+  ty: &mut Ty,
+) {
+  let bv = match bv {
+    Some(bv) => bv,
+    None => return,
   };
-  (ty_vars, subst)
+  let bv = match bv {
+    Some(bv) => bv.clone(),
+    None => {
+      let ret = BoundTyVar(ty_vars.len());
+      *bv = Some(ret.clone());
+      ty_vars.inner.push(equality);
+      ret
+    }
+  };
+  *ty = Ty::BoundVar(bv);
 }
