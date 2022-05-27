@@ -1,7 +1,7 @@
 use crate::common::{get_name, get_path};
 use crate::util::Cx;
 use crate::{dec, ty};
-use syntax::ast;
+use syntax::ast::{self, AstPtr};
 
 pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
   match top_dec {
@@ -37,18 +37,20 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
 }
 
 fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
-  let mut str_decs: Vec<_> = str_dec?
+  let str_dec = str_dec?;
+  let mut str_decs: Vec<_> = str_dec
     .str_dec_in_seqs()
     .map(|x| get_str_dec_one(cx, x.str_dec_one()?))
     .collect();
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
   } else {
-    cx.str_dec(hir::StrDec::Seq(str_decs))
+    cx.str_dec_seq(str_decs, AstPtr::new(&str_dec))
   }
 }
 
 fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
+  let ptr = AstPtr::new(&str_dec);
   let res = match str_dec {
     ast::StrDecOne::DecStrDec(str_dec) => hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?)),
     ast::StrDecOne::StructureStrDec(str_dec) => hir::StrDec::Structure(
@@ -67,11 +69,13 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
       get_str_dec(cx, str_dec.in_dec()),
     ),
   };
-  cx.str_dec(res)
+  cx.str_dec_one(res, ptr)
 }
 
 fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
-  let ret = match str_exp? {
+  let str_exp = str_exp?;
+  let ptr = AstPtr::new(&str_exp);
+  let ret = match str_exp {
     ast::StrExp::StructStrExp(str_exp) => hir::StrExp::Struct(get_str_dec(cx, str_exp.str_dec())),
     ast::StrExp::PathStrExp(str_exp) => hir::StrExp::Path(get_path(str_exp.path()?)?),
     ast::StrExp::AscriptionStrExp(str_exp) => {
@@ -87,11 +91,13 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
       get_str_exp(cx, str_exp.str_exp()),
     ),
   };
-  cx.str_exp(ret)
+  cx.str_exp(ret, ptr)
 }
 
 fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
-  let ret = match sig_exp? {
+  let sig_exp = sig_exp?;
+  let ptr = AstPtr::new(&sig_exp);
+  let ret = match sig_exp {
     ast::SigExp::SigSigExp(sig_exp) => hir::SigExp::Spec(get_spec(cx, sig_exp.spec())),
     ast::SigExp::NameSigExp(sig_exp) => hir::SigExp::Name(get_name(sig_exp.name())?),
     ast::SigExp::WhereSigExp(sig_exp) => hir::SigExp::Where(
@@ -101,22 +107,24 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
       ty::get(cx, sig_exp.ty()),
     ),
   };
-  cx.sig_exp(ret)
+  cx.sig_exp(ret, ptr)
 }
 
 fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
-  let mut specs: Vec<_> = spec?
+  let spec = spec?;
+  let mut specs: Vec<_> = spec
     .spec_in_seqs()
     .map(|x| get_spec_one(cx, x.spec_one()?))
     .collect();
   if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
-    cx.spec(hir::Spec::Seq(specs))
+    cx.spec_seq(specs, AstPtr::new(&spec))
   }
 }
 
 fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
+  let ptr = AstPtr::new(&spec);
   let ret = match spec {
     ast::SpecOne::ValSpec(spec) => hir::Spec::Val(
       spec
@@ -165,12 +173,17 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
       if specs.len() == 1 {
         specs.pop().unwrap()
       } else {
-        hir::Spec::Seq(specs.into_iter().map(|x| cx.spec(x)).collect())
+        hir::Spec::Seq(
+          specs
+            .into_iter()
+            .map(|x| cx.spec_one(x, ptr.clone()))
+            .collect(),
+        )
       }
     }
     ast::SpecOne::SharingSpec(_) => todo!(),
   };
-  cx.spec(ret)
+  cx.spec_one(ret, ptr)
 }
 
 fn ascription_tail(
@@ -192,13 +205,15 @@ fn with_ascription_tail(
   str_exp: Option<ast::StrExp>,
   tail: Option<ast::AscriptionTail>,
 ) -> hir::StrExpIdx {
-  let mut str_exp = get_str_exp(cx, str_exp);
+  let str_exp = str_exp?;
+  let ptr = AstPtr::new(&str_exp);
+  let mut ret = get_str_exp(cx, Some(str_exp));
   if let Some(tail) = tail {
     let (kind, sig_exp) = ascription_tail(cx, Some(tail));
-    let asc = hir::StrExp::Ascription(str_exp, kind, sig_exp);
-    str_exp = cx.str_exp(asc);
+    let asc = hir::StrExp::Ascription(ret, kind, sig_exp);
+    ret = cx.str_exp(asc, ptr);
   }
-  str_exp
+  ret
 }
 
 fn ty_descs<I>(iter: I) -> Vec<hir::TyDesc>

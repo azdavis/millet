@@ -1,9 +1,11 @@
 use crate::common::{get_lab, get_path};
 use crate::util::Cx;
-use syntax::ast;
+use syntax::ast::{self, AstPtr};
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
-  let ret = match ty? {
+  let ty = ty?;
+  let ptr = AstPtr::new(&ty);
+  let ret = match ty {
     ast::Ty::TyVarTy(ty) => hir::Ty::Var(hir::TyVar::new(ty.ty_var()?.text())),
     ast::Ty::RecordTy(ty) => hir::Ty::Record(
       ty.ty_rows()
@@ -30,7 +32,7 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
     ast::Ty::FnTy(ty) => hir::Ty::Fn(get(cx, ty.param()), get(cx, ty.res())),
     ast::Ty::ParenTy(ty) => return get(cx, ty.ty()),
   };
-  cx.ty(ret)
+  cx.ty(ret, ptr)
 }
 
 pub(crate) fn var_seq(tvs: Option<ast::TyVarSeq>) -> Vec<hir::TyVar> {
