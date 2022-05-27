@@ -23,12 +23,7 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
         .filter_map(|fun_bind| {
           let functor_name = get_name(fun_bind.functor_name())?;
           let param_name = get_name(fun_bind.param())?;
-          let mut body = get_str_exp(cx, fun_bind.body());
-          if let Some(tail) = fun_bind.ascription_tail() {
-            let (kind, sig_exp) = ascription_tail(cx, Some(tail));
-            let asc = hir::StrExp::Ascription(body, kind, sig_exp);
-            body = cx.str_exp(asc);
-          }
+          let body = with_ascription_tail(cx, fun_bind.body(), fun_bind.ascription_tail());
           Some(hir::FunctorBind {
             functor_name,
             param_name,
@@ -60,15 +55,9 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
       str_dec
         .str_binds()
         .filter_map(|str_bind| {
-          let mut str_exp = get_str_exp(cx, str_bind.str_exp());
-          if let Some(tail) = str_bind.ascription_tail() {
-            let (kind, sig_exp) = ascription_tail(cx, Some(tail));
-            let asc = hir::StrExp::Ascription(str_exp, kind, sig_exp);
-            str_exp = cx.str_exp(asc);
-          }
           Some(hir::StrBind {
             name: get_name(str_bind.name())?,
-            str_exp,
+            str_exp: with_ascription_tail(cx, str_bind.str_exp(), str_bind.ascription_tail()),
           })
         })
         .collect(),
@@ -196,6 +185,20 @@ fn ascription_tail(
       ast::AscriptionKind::ColonGt => hir::Ascription::Opaque,
     });
   (kind, get_sig_exp(cx, tail.and_then(|x| x.sig_exp())))
+}
+
+fn with_ascription_tail(
+  cx: &mut Cx,
+  str_exp: Option<ast::StrExp>,
+  tail: Option<ast::AscriptionTail>,
+) -> hir::StrExpIdx {
+  let mut str_exp = get_str_exp(cx, str_exp);
+  if let Some(tail) = tail {
+    let (kind, sig_exp) = ascription_tail(cx, Some(tail));
+    let asc = hir::StrExp::Ascription(str_exp, kind, sig_exp);
+    str_exp = cx.str_exp(asc);
+  }
+  str_exp
 }
 
 fn ty_descs<I>(iter: I) -> Vec<hir::TyDesc>
