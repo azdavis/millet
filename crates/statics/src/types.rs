@@ -75,7 +75,10 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        f.write_str(equality_str(vars.inner[bv.0]))?;
+        match vars.inner[bv.0] {
+          BoundTyVarKind::Regular => f.write_str("'")?,
+          BoundTyVarKind::Equality => f.write_str("''")?,
+        }
         let alpha = (b'z' - b'a') as usize;
         let quot = bv.0 / alpha;
         let rem = bv.0 % alpha;
@@ -183,14 +186,6 @@ fn display_row<'a>(
   fmt::Display::fmt(&td, f)
 }
 
-fn equality_str(equality: bool) -> &'static str {
-  if equality {
-    "''"
-  } else {
-    "'"
-  }
-}
-
 /// Definition: TypeScheme, TypeFcn
 #[derive(Debug, Clone)]
 pub(crate) struct TyScheme {
@@ -222,7 +217,9 @@ impl TyScheme {
 
   fn one(s: Sym) -> Self {
     Self {
-      bound_vars: BoundTyVars { inner: vec![false] },
+      bound_vars: BoundTyVars {
+        inner: vec![BoundTyVarKind::Regular],
+      },
       ty: Ty::Con(vec![], s),
     }
   }
@@ -230,9 +227,7 @@ impl TyScheme {
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct BoundTyVars {
-  /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
-  /// variable i is equality.
-  inner: Vec<bool>,
+  inner: Vec<BoundTyVarKind>,
 }
 
 impl BoundTyVars {
@@ -243,6 +238,12 @@ impl BoundTyVars {
   pub(crate) fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
+}
+
+#[derive(Debug, Clone)]
+enum BoundTyVarKind {
+  Regular,
+  Equality,
 }
 
 /// Definition: TyVar
@@ -272,7 +273,8 @@ pub(crate) struct MetaTyVar {
 
 impl fmt::Display for MetaTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}{}", equality_str(self.equality), self.id)
+    let hd = if self.equality { "''" } else { "'" };
+    write!(f, "{}{}", hd, self.id)
   }
 }
 
@@ -291,7 +293,12 @@ impl MetaTyVarGen {
     &'a mut self,
     bound_vars: &'a BoundTyVars,
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
-    bound_vars.inner.iter().map(|&eq| self.gen(eq))
+    bound_vars.inner.iter().map(|x| {
+      self.gen(match x {
+        BoundTyVarKind::Regular => false,
+        BoundTyVarKind::Equality => true,
+      })
+    })
   }
 }
 
@@ -645,7 +652,12 @@ fn handle_bv(
     None => {
       let ret = BoundTyVar(bound_vars.len());
       *bv = Some(ret.clone());
-      bound_vars.inner.push(equality);
+      let kind = if equality {
+        BoundTyVarKind::Equality
+      } else {
+        BoundTyVarKind::Regular
+      };
+      bound_vars.inner.push(kind);
       ret
     }
   };
