@@ -2,7 +2,7 @@ use fast_hash::FxHashMap;
 use old_loc::Located;
 use std::fmt;
 use std::ops::Range;
-use syntax::rowan::{TextRange, TextSize};
+use syntax::{ast::AstNode as _, rowan::TextRange};
 
 /// pass the string of an SML program with some expectation comments.
 ///
@@ -173,11 +173,15 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     let lowered = lower::get(&parsed.root);
     let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
     if let Some(err) = errors.into_iter().next() {
-      // TODO use a real range
-      return Err((
-        TextRange::empty(TextSize::of(s.lines().nth(1).unwrap())),
-        err.display(&syms).to_string(),
-      ));
+      let ptr = match err.idx() {
+        statics::Idx::Exp(exp) => lowered.ptrs.get_exp(exp),
+        statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
+        statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
+        statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
+      };
+      let ptr = ptr.expect("couldn't get pointer");
+      let range = ptr.to_node(parsed.root.syntax()).text_range();
+      return Err((range, err.display(&syms).to_string()));
     }
   }
   Ok(())
