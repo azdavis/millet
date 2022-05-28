@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Idx};
 use crate::st::St;
-use crate::types::{Env, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind};
+use crate::types::{Env, Subst, SubstEntry, Sym, Ty, TyScheme};
 use std::collections::BTreeMap;
 
 pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
@@ -52,7 +52,7 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
-      None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
+      None | Some(SubstEntry::Kind(_)) => {}
       Some(SubstEntry::Set(t)) => {
         let mut t = t.clone();
         apply(subst, &mut t);

@@ -1,5 +1,5 @@
 use crate::pat_match::Pat;
-use crate::types::{MetaTyVar, Syms, Ty};
+use crate::types::{MetaTyVar, Overload, Syms, Ty};
 use std::fmt;
 
 /// A statics error.
@@ -65,6 +65,7 @@ pub(crate) enum ErrorKind {
   Redefined(hir::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
+  OverloadMismatch(Overload, Ty),
   MissingField(hir::Lab, Ty),
   ExtraFields(Vec<hir::Lab>, Ty),
   DuplicateLab(hir::Lab),
@@ -105,6 +106,18 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         f,
         "mismatched types: expected {}, found {}",
         want.display(self.syms),
+        got.display(self.syms)
+      ),
+      ErrorKind::OverloadMismatch(want, got) => write!(
+        f,
+        "mismatched types: expected {}, found {}",
+        // TODO make this programmatic?
+        match want {
+          Overload::WordInt => "word or int",
+          Overload::RealInt => "real or int",
+          Overload::Num => "word, real, or int",
+          Overload::NumTxt => "word, real, int, string, or char",
+        },
         got.display(self.syms)
       ),
       ErrorKind::MissingField(lab, ty) => {

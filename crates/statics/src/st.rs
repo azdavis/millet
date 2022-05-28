@@ -1,7 +1,6 @@
 use crate::error::{Error, ErrorKind, Idx};
 use crate::types::{
   BoundTyVars, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
-  TyVarKind,
 };
 
 /// The state.
@@ -43,8 +42,8 @@ impl St {
   ) -> impl Iterator<Item = Ty> + 'a {
     bound_vars.kinds().map(|&x| {
       let mv = self.meta_gen.gen();
-      if let Some(TyVarKind::Equality) = x {
-        assert!(self.subst.insert(mv.clone(), SubstEntry::Kind(TyVarKind::Equality)).is_none())
+      if let Some(k) = x {
+        assert!(self.subst.insert(mv.clone(), SubstEntry::Kind(k)).is_none())
       }
       Ty::MetaVar(mv)
     })

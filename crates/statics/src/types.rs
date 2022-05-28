@@ -76,7 +76,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         let hd = match vars.inner[bv.0] {
-          None => "'",
+          None | Some(TyVarKind::Overloaded(_)) => "'",
           Some(TyVarKind::Equality) => "''",
         };
         f.write_str(hd)?;
@@ -245,6 +245,26 @@ impl BoundTyVars {
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum TyVarKind {
   Equality,
+  Overloaded(Overload),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Overload {
+  WordInt,
+  RealInt,
+  Num,
+  NumTxt,
+}
+
+impl Overload {
+  pub(crate) fn to_syms(self) -> &'static [Sym] {
+    match self {
+      Overload::WordInt => &[Sym::WORD, Sym::INT],
+      Overload::RealInt => &[Sym::REAL, Sym::INT],
+      Overload::Num => &[Sym::WORD, Sym::REAL, Sym::INT],
+      Overload::NumTxt => &[Sym::WORD, Sym::REAL, Sym::INT, Sym::STRING, Sym::CHAR],
+    }
+  }
 }
 
 /// Definition: TyVar
@@ -552,7 +572,7 @@ fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, 
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
-      None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {
+      None | Some(SubstEntry::Kind(_)) => {
         assert!(map.insert(mv.clone(), None).is_none())
       }
       Some(SubstEntry::Set(ty)) => meta_vars(subst, map, ty),
@@ -591,9 +611,9 @@ impl<'a> Generalizer<'a> {
           let bv = self.meta.get_mut(mv);
           handle_bv(bv, &mut self.bound_vars, None, ty)
         }
-        Some(SubstEntry::Kind(TyVarKind::Equality)) => {
+        Some(SubstEntry::Kind(k)) => {
           let bv = self.meta.get_mut(mv);
-          handle_bv(bv, &mut self.bound_vars, Some(TyVarKind::Equality), ty)
+          handle_bv(bv, &mut self.bound_vars, Some(*k), ty)
         }
         Some(SubstEntry::Set(t)) => {
           *ty = t.clone();

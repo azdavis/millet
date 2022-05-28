@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Idx};
 use crate::st::St;
-use crate::types::{MetaTyVar, Subst, SubstEntry, Ty, TyVarKind};
+use crate::types::{MetaTyVar, Overload, Subst, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
@@ -14,6 +14,7 @@ where
   let e = match e {
     UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
     UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
+    UnifyError::OverloadMismatch(want) => ErrorKind::OverloadMismatch(want, got),
     UnifyError::MissingField(lab) => ErrorKind::MissingField(lab, got),
     UnifyError::ExtraFields(labs) => ErrorKind::ExtraFields(labs, got),
   };
@@ -24,6 +25,7 @@ where
 enum UnifyError {
   OccursCheck(MetaTyVar, Ty),
   HeadMismatch,
+  OverloadMismatch(Overload),
   MissingField(hir::Lab),
   ExtraFields(Vec<hir::Lab>),
 }
@@ -44,8 +46,25 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       if occurs(&mv, &ty) {
         Err(UnifyError::OccursCheck(mv, ty))
       } else {
-        match subst.insert(mv, SubstEntry::Set(ty)) {
+        match subst.insert(mv, SubstEntry::Set(ty.clone())) {
           None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
+          Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => {
+            let ok = match ty {
+              Ty::Con(args, s) => {
+                let ok = ov.to_syms().contains(&s);
+                if ok {
+                  assert!(args.is_empty())
+                }
+                ok
+              }
+              Ty::None => true,
+              Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => false,
+              Ty::MetaVar(_) => unreachable!(),
+            };
+            if !ok {
+              return Err(UnifyError::OverloadMismatch(ov));
+            }
+          }
           Some(SubstEntry::Set(t)) => panic!("meta var already set to {t:?}"),
         }
         Ok(())
