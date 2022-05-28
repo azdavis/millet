@@ -1,4 +1,7 @@
 //! Types.
+//!
+//! Probably the single most important file in this crate. Lots of types used pervasively across
+//! this crate are defined here.
 
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
