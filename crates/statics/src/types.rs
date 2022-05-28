@@ -75,7 +75,11 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        f.write_str(vars.inner[bv.0].as_head_str())?;
+        let hd = match vars.inner[bv.0] {
+          TyVarKind::Regular => "'",
+          TyVarKind::Equality => "''",
+        };
+        f.write_str(hd)?;
         let alpha = (b'z' - b'a') as usize;
         let quot = bv.0 / alpha;
         let rem = bv.0 % alpha;
@@ -244,15 +248,6 @@ impl BoundTyVars {
 pub(crate) enum TyVarKind {
   Regular,
   Equality,
-}
-
-impl TyVarKind {
-  fn as_head_str(&self) -> &'static str {
-    match self {
-      TyVarKind::Regular => "'",
-      TyVarKind::Equality => "''",
-    }
-  }
 }
 
 /// Definition: TyVar
