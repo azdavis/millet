@@ -76,8 +76,8 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         match vars.inner[bv.0] {
-          BoundTyVarKind::Regular => f.write_str("'")?,
-          BoundTyVarKind::Equality => f.write_str("''")?,
+          TyVarKind::Regular => f.write_str("'")?,
+          TyVarKind::Equality => f.write_str("''")?,
         }
         let alpha = (b'z' - b'a') as usize;
         let quot = bv.0 / alpha;
@@ -218,7 +218,7 @@ impl TyScheme {
   fn one(s: Sym) -> Self {
     Self {
       bound_vars: BoundTyVars {
-        inner: vec![BoundTyVarKind::Regular],
+        inner: vec![TyVarKind::Regular],
       },
       ty: Ty::Con(vec![], s),
     }
@@ -227,7 +227,7 @@ impl TyScheme {
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct BoundTyVars {
-  inner: Vec<BoundTyVarKind>,
+  inner: Vec<TyVarKind>,
 }
 
 impl BoundTyVars {
@@ -241,14 +241,14 @@ impl BoundTyVars {
 
   pub(crate) fn gen_with<'a>(&'a self, mv: &'a mut MetaTyVarGen) -> impl Iterator<Item = Ty> + 'a {
     self.inner.iter().map(|x| match x {
-      BoundTyVarKind::Regular => Ty::MetaVar(mv.gen(false)),
-      BoundTyVarKind::Equality => Ty::MetaVar(mv.gen(true)),
+      TyVarKind::Regular => Ty::MetaVar(mv.gen(false)),
+      TyVarKind::Equality => Ty::MetaVar(mv.gen(true)),
     })
   }
 }
 
 #[derive(Debug, Clone)]
-enum BoundTyVarKind {
+enum TyVarKind {
   Regular,
   Equality,
 }
@@ -648,9 +648,9 @@ fn handle_bv(
       let ret = BoundTyVar(bound_vars.len());
       *bv = Some(ret.clone());
       let kind = if equality {
-        BoundTyVarKind::Equality
+        TyVarKind::Equality
       } else {
-        BoundTyVarKind::Regular
+        TyVarKind::Regular
       };
       bound_vars.inner.push(kind);
       ret
