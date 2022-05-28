@@ -240,7 +240,7 @@ impl BoundTyVars {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone)]
 pub(crate) enum TyVarKind {
   Regular,
   Equality,
