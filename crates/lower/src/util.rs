@@ -2,23 +2,63 @@ use fast_hash::FxHashMap;
 use std::fmt;
 use syntax::ast::{self, AstNode, AstPtr};
 
+pub type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
+
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
 #[allow(missing_docs)]
 pub struct Ptrs {
-  pub str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,
-  pub str_dec: BiMap<ast::StrDec, hir::StrDec>,
-  pub str_exp: BiMap<ast::StrExp, hir::StrExp>,
-  pub sig_exp: BiMap<ast::SigExp, hir::SigExp>,
-  pub spec_one: BiMap<ast::SpecOne, hir::Spec>,
-  pub spec: BiMap<ast::Spec, hir::Spec>,
-  pub exp: BiMap<ast::Exp, hir::Exp>,
-  pub dec_one: BiMap<ast::DecOne, hir::Dec>,
-  pub dec_in_exp: BiMap<ast::Exp, hir::Dec>,
-  pub dec: BiMap<ast::Dec, hir::Dec>,
-  pub pat: BiMap<ast::Pat, hir::Pat>,
-  pub pat_in_exp: BiMap<ast::Exp, hir::Pat>,
-  pub ty: BiMap<ast::Ty, hir::Ty>,
+  str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,
+  str_dec: BiMap<ast::StrDec, hir::StrDec>,
+  str_exp: BiMap<ast::StrExp, hir::StrExp>,
+  sig_exp: BiMap<ast::SigExp, hir::SigExp>,
+  spec_one: BiMap<ast::SpecOne, hir::Spec>,
+  spec: BiMap<ast::Spec, hir::Spec>,
+  exp: BiMap<ast::Exp, hir::Exp>,
+  dec_one: BiMap<ast::DecOne, hir::Dec>,
+  dec_in_exp: BiMap<ast::Exp, hir::Dec>,
+  dec: BiMap<ast::Dec, hir::Dec>,
+  pat: BiMap<ast::Pat, hir::Pat>,
+  pat_in_exp: BiMap<ast::Exp, hir::Pat>,
+  ty: BiMap<ast::Ty, hir::Ty>,
+}
+
+macro_rules! try_get_hir {
+  ($idx:ident, $map:expr) => {
+    if let Some(x) = $map.hir_to_ast.get($idx) {
+      return Some(x.syntax_node_ptr());
+    }
+  };
+}
+
+impl Ptrs {
+  /// Returns the `SyntaxNodePtr` for an HIR expression.
+  pub fn get_exp(&self, idx: hir::la_arena::Idx<hir::Exp>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.exp);
+    None
+    // self.exp.hir_to_ast.get(idx).map(AstPtr::syntax_node_ptr)
+  }
+
+  /// Returns the `SyntaxNodePtr` for an HIR pattern.
+  pub fn get_pat(&self, idx: hir::la_arena::Idx<hir::Pat>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.pat);
+    try_get_hir!(idx, self.pat_in_exp);
+    None
+  }
+
+  /// Returns the `SyntaxNodePtr` for an HIR type.
+  pub fn get_ty(&self, idx: hir::la_arena::Idx<hir::Ty>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.ty);
+    None
+  }
+
+  /// Returns the `SyntaxNodePtr` for an HIR declaration.
+  pub fn get_dec(&self, idx: hir::la_arena::Idx<hir::Dec>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.dec);
+    try_get_hir!(idx, self.dec_one);
+    try_get_hir!(idx, self.dec_in_exp);
+    None
+  }
 }
 
 pub struct BiMap<A, H>
