@@ -41,16 +41,10 @@ impl St {
     &'a mut self,
     bound_vars: &'a BoundTyVars,
   ) -> impl Iterator<Item = Ty> + 'a {
-    bound_vars.kinds().map(|x| {
+    bound_vars.kinds().map(|&x| {
       let mv = self.meta_gen.gen();
-      match x {
-        None => {}
-        Some(TyVarKind::Equality) => {
-          assert!(self
-            .subst
-            .insert(mv.clone(), SubstEntry::Kind(TyVarKind::Equality))
-            .is_none())
-        }
+      if let Some(TyVarKind::Equality) = x {
+        assert!(self.subst.insert(mv.clone(), SubstEntry::Kind(TyVarKind::Equality)).is_none())
       }
       Ty::MetaVar(mv)
     })

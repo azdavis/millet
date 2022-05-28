@@ -242,7 +242,7 @@ impl BoundTyVars {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum TyVarKind {
   Equality,
 }
