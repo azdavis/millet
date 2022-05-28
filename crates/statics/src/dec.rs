@@ -124,10 +124,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       env.ty_env.extend(ty_env);
     }
-    hir::Dec::DatatypeCopy(new_name, path) => match get_env(&cx.env, path) {
+    hir::Dec::DatatypeCopy(name, path) => match get_env(&cx.env, path) {
       Ok(got_env) => match got_env.ty_env.get(path.last()) {
         Some(ty_info) => {
-          env.ty_env.insert(new_name.clone(), ty_info.clone());
+          env.ty_env.insert(name.clone(), ty_info.clone());
         }
         None => st.err(dec, ErrorKind::Undefined),
       },
