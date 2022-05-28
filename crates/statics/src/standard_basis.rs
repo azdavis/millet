@@ -19,7 +19,10 @@ pub(crate) fn get() -> (Syms, Cx) {
   let syms = Syms::standard_basis();
   let ty_env: FxHashMap<_, _> = BUILTIN
     .iter()
-    .map(|s| (syms.get_name(s).clone(), syms.get(s).clone()))
+    .map(|s| {
+      let (name, info) = syms.get(s);
+      (name.clone(), info.clone())
+    })
     .chain(std::iter::once((
       hir::Name::new("unit"),
       TyInfo {

@@ -127,7 +127,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
           }
           f.write_str(" ")?;
         }
-        self.syms.get_name(sym).fmt(f)?
+        self.syms.get(sym).0.fmt(f)?
       }
       Ty::Fn(param, res) => {
         let needs_parens = self.prec > TyPrec::Arrow;
@@ -338,8 +338,7 @@ impl Sym {
 /// like `int`. For a `Syms` that does have these, see `standard_basis`.
 #[derive(Debug, Default)]
 pub struct Syms {
-  store: Vec<TyInfo>,
-  names: Vec<hir::Name>,
+  store: Vec<(hir::Name, TyInfo)>,
 }
 
 impl Syms {
@@ -347,18 +346,15 @@ impl Syms {
     self.store.is_empty()
   }
 
-  pub(crate) fn insert(&mut self, ty_info: TyInfo) -> Sym {
+  pub(crate) fn insert(&mut self, name: hir::Name, ty_info: TyInfo) -> Sym {
     let ret = Sym(self.store.len());
-    self.store.push(ty_info);
+    self.store.push((name, ty_info));
     ret
   }
 
-  pub(crate) fn get(&self, sym: &Sym) -> &TyInfo {
-    self.store.get(sym.0).unwrap()
-  }
-
-  pub(crate) fn get_name(&self, sym: &Sym) -> &hir::Name {
-    self.names.get(sym.0).unwrap()
+  pub(crate) fn get(&self, sym: &Sym) -> (&hir::Name, &TyInfo) {
+    let &(ref name, ref info) = self.store.get(sym.0).unwrap();
+    (name, info)
   }
 
   pub(crate) fn mark(&self) -> SymsMarker {
@@ -370,33 +366,31 @@ impl Syms {
     let zero = TyScheme::zero;
     let one = TyScheme::one;
     let bv = Ty::BoundVar(BoundTyVar(0));
-    // keep in sync with names
     let store = vec![
-      datatype(zero(Sym::BOOL), [("true", None), ("false", None)]),
-      datatype(zero(Sym::CHAR), []),
-      datatype(zero(Sym::INT), []),
-      datatype(zero(Sym::REAL), []),
-      datatype(zero(Sym::STRING), []),
-      datatype(zero(Sym::WORD), []),
-      datatype(zero(Sym::EXN), []),
-      datatype(one(Sym::REF), [("ref", Some(bv.clone()))]),
-      datatype(one(Sym::LIST), [("nil", None), ("::", Some(bv))]),
+      datatype("bool", zero(Sym::BOOL), [("true", None), ("false", None)]),
+      datatype("char", zero(Sym::CHAR), []),
+      datatype("int", zero(Sym::INT), []),
+      datatype("real", zero(Sym::REAL), []),
+      datatype("string", zero(Sym::STRING), []),
+      datatype("word", zero(Sym::WORD), []),
+      datatype("exn", zero(Sym::EXN), []),
+      datatype("ref", one(Sym::REF), [("ref", Some(bv.clone()))]),
+      datatype("list", one(Sym::LIST), [("nil", None), ("::", Some(bv))]),
       datatype(
+        "order",
         zero(Sym::ORDER),
         [("LESS", None), ("EQUAL", None), ("GREATER", None)],
       ),
     ];
-    let names = [
-      "bool", "char", "int", "real", "string", "word", "exn", "ref", "list", "order",
-    ]
-    .into_iter()
-    .map(hir::Name::new)
-    .collect();
-    Self { store, names }
+    Self { store }
   }
 }
 
-fn datatype<const N: usize>(ty_scheme: TyScheme, ctors: [(&str, Option<Ty>); N]) -> TyInfo {
+fn datatype<const N: usize>(
+  name: &str,
+  ty_scheme: TyScheme,
+  ctors: [(&str, Option<Ty>); N],
+) -> (hir::Name, TyInfo) {
   let val_env: FxHashMap<_, _> = ctors
     .into_iter()
     .map(|(name, arg)| {
@@ -414,7 +408,7 @@ fn datatype<const N: usize>(ty_scheme: TyScheme, ctors: [(&str, Option<Ty>); N])
       (hir::Name::new(name), val_info)
     })
     .collect();
-  TyInfo { ty_scheme, val_env }
+  (hir::Name::new(name), TyInfo { ty_scheme, val_env })
 }
 
 pub(crate) struct SymsMarker(usize);

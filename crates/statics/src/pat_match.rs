@@ -30,8 +30,10 @@ impl pattern_match::Lang for Lang {
           vec![Con::Any]
         }
         Ty::Con(_, ty_name) => {
-          let ty_info = self.syms.get(ty_name);
-          let all: Vec<_> = ty_info
+          let all: Vec<_> = self
+            .syms
+            .get(ty_name)
+            .1
             .val_env
             .keys()
             .map(|con_name| Con::Variant(*ty_name, con_name.clone()))
@@ -64,8 +66,7 @@ impl pattern_match::Lang for Lang {
         Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),
         Con::Variant(ty_name_2, con_name) => {
           assert_eq!(ty_name, ty_name_2);
-          let ty_info = self.syms.get(ty_name);
-          let val_info = ty_info.val_env.get(con_name).unwrap();
+          let val_info = self.syms.get(ty_name).1.val_env.get(con_name).unwrap();
           let mut ty = val_info.ty_scheme.ty.clone();
           apply_bv(args, &mut ty);
           vec![ty]
