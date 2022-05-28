@@ -6,6 +6,8 @@ use crate::unify::unify;
 use crate::util::apply;
 use crate::{exp, pat, ty};
 
+/// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
+/// visibly mutate the cx between entry and exit (i.e. if we do any mutations, we'll undo them)?
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: hir::DecIdx) {
   let dec = match dec {
     Some(x) => x,
