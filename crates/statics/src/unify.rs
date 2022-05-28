@@ -44,31 +44,30 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
         }
       }
       if occurs(&mv, &ty) {
-        Err(UnifyError::OccursCheck(mv, ty))
-      } else {
-        match subst.insert(mv, SubstEntry::Set(ty.clone())) {
-          None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
-          Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => {
-            let ok = match ty {
-              Ty::Con(args, s) => {
-                let ok = ov.to_syms().contains(&s);
-                if ok {
-                  assert!(args.is_empty())
-                }
-                ok
-              }
-              Ty::None => true,
-              Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => false,
-              Ty::MetaVar(_) => unreachable!(),
-            };
-            if !ok {
-              return Err(UnifyError::OverloadMismatch(ov));
-            }
-          }
-          Some(SubstEntry::Set(t)) => panic!("meta var already set to {t:?}"),
-        }
-        Ok(())
+        return Err(UnifyError::OccursCheck(mv, ty));
       }
+      match subst.insert(mv, SubstEntry::Set(ty.clone())) {
+        None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
+        Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => {
+          let ok = match ty {
+            Ty::Con(args, s) => {
+              let ok = ov.to_syms().contains(&s);
+              if ok {
+                assert!(args.is_empty())
+              }
+              ok
+            }
+            Ty::None => true,
+            Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => false,
+            Ty::MetaVar(_) => unreachable!(),
+          };
+          if !ok {
+            return Err(UnifyError::OverloadMismatch(ov));
+          }
+        }
+        Some(SubstEntry::Set(t)) => panic!("meta var already set to {t:?}"),
+      }
+      Ok(())
     }
     (Ty::FixedVar(want), Ty::FixedVar(got)) => head_match(want == got),
     (Ty::Record(want_rows), Ty::Record(mut got_rows)) => {
