@@ -3,7 +3,7 @@ use crate::util::{Cx, Lower};
 use syntax::ast;
 
 /// Does the conversion.
-pub fn get(root: ast::Root) -> Lower {
+pub fn get(root: &ast::Root) -> Lower {
   let mut cx = Cx::default();
   let top_decs: Vec<_> = root
     .top_decs()
