@@ -67,9 +67,15 @@ impl pattern_match::Lang for Lang {
         Con::Variant(ty_name_2, con_name) => {
           assert_eq!(ty_name, ty_name_2);
           let val_info = self.syms.get(ty_name).1.val_env.get(con_name).unwrap();
-          let mut ty = val_info.ty_scheme.ty.clone();
-          apply_bv(args, &mut ty);
-          vec![ty]
+          match &val_info.ty_scheme.ty {
+            Ty::Con(_, _) => Vec::new(),
+            Ty::Fn(arg, _) => {
+              let mut arg = arg.as_ref().clone();
+              apply_bv(args, &mut arg);
+              vec![arg]
+            }
+            _ => unreachable!(),
+          }
         }
         Con::Record(_) => unreachable!(),
       },
