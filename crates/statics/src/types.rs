@@ -240,11 +240,9 @@ impl BoundTyVars {
   }
 
   pub(crate) fn gen_with<'a>(&'a self, mv: &'a mut MetaTyVarGen) -> impl Iterator<Item = Ty> + 'a {
-    self.inner.iter().map(|x| {
-      Ty::MetaVar(mv.gen(match x {
-        BoundTyVarKind::Regular => false,
-        BoundTyVarKind::Equality => true,
-      }))
+    self.inner.iter().map(|x| match x {
+      BoundTyVarKind::Regular => Ty::MetaVar(mv.gen(false)),
+      BoundTyVarKind::Equality => Ty::MetaVar(mv.gen(true)),
     })
   }
 }
