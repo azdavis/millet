@@ -411,6 +411,7 @@ fn datatype<const N: usize>(
   (hir::Name::new(name), TyInfo { ty_scheme, val_env })
 }
 
+/// A marker to determine when a `Sym` was generated.
 pub(crate) struct SymsMarker(usize);
 
 /// Definition: TyStr
