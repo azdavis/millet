@@ -3,6 +3,7 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
+use drop_bomb::DropBomb;
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -394,7 +395,7 @@ impl Syms {
       },
     );
     Datatype {
-      bomb: drop_bomb::DropBomb::new("must be passed to Syms::finish_datatype"),
+      bomb: DropBomb::new("must be passed to Syms::finish_datatype"),
       sym,
     }
   }
@@ -468,7 +469,7 @@ pub(crate) struct SymsMarker(usize);
 
 /// A helper to construct information about `datatype`s.
 pub(crate) struct Datatype {
-  bomb: drop_bomb::DropBomb,
+  bomb: DropBomb,
   sym: Sym,
 }
 
