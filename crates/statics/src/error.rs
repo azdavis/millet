@@ -79,6 +79,7 @@ pub(crate) enum ErrorKind {
   TyNameEscape,
   ValRecExpNotFn,
   WrongNumTyArgs(usize, usize),
+  ExnCopyNotExnIdStatus,
 }
 
 struct ErrorKindDisplay<'a> {
@@ -128,6 +129,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         "wrong number of type arguments: expected {}, found {}",
         want, got
       ),
+      ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
     }
   }
 }

@@ -2,7 +2,7 @@ use crate::error::{ErrorKind, Idx};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
-  generalize, Cx, Env, FixedTyVars, IdStatus, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
+  generalize, Cx, Env, FixedTyVars, IdStatus, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, get_env};
@@ -136,8 +136,40 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     hir::Dec::Abstype(_, _) => {
       // TODO
     }
-    hir::Dec::Exception(_) => {
-      // TODO
+    hir::Dec::Exception(ex_binds) => {
+      let mut val_env = ValEnv::default();
+      for ex_bind in ex_binds {
+        match ex_bind {
+          hir::ExBind::New(name, of_ty) => {
+            let mut ty = Ty::zero(Sym::EXN);
+            if let Some(of_ty) = *of_ty {
+              ty = Ty::Fn(ty::get(st, cx, ars, of_ty).into(), ty.into());
+            }
+            let vi = ValInfo {
+              ty_scheme: TyScheme::mono(ty),
+              id_status: IdStatus::Exn,
+            };
+            if val_env.insert(name.clone(), vi).is_some() {
+              st.err(dec, ErrorKind::Redefined);
+            }
+          }
+          hir::ExBind::Copy(name, path) => match get_env(&cx.env, path) {
+            Ok(got_env) => match got_env.val_env.get(path.last()) {
+              Some(val_info) => match val_info.id_status {
+                IdStatus::Exn => {
+                  if val_env.insert(name.clone(), val_info.clone()).is_some() {
+                    st.err(dec, ErrorKind::Redefined);
+                  }
+                }
+                _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus),
+              },
+              None => st.err(dec, ErrorKind::Undefined),
+            },
+            Err(_) => st.err(dec, ErrorKind::Undefined),
+          },
+        }
+      }
+      env.val_env.extend(val_env);
     }
     hir::Dec::Local(_, _) => {
       // TODO
