@@ -2,7 +2,7 @@ use crate::error::{ErrorKind, Idx};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
-  generalize, Cx, Env, FixedTyVars, IdStatus, Ty, TyInfo, TyScheme, ValEnv, ValInfo,
+  generalize, Cx, Env, FixedTyVars, IdStatus, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, get_env};
@@ -67,6 +67,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     }
     hir::Dec::Ty(ty_binds) => {
       let mut cx = cx.clone();
+      let mut ty_env = TyEnv::default();
       for ty_bind in ty_binds {
         let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars);
         let mut ty_scheme = TyScheme::mono(ty::get(st, &cx, ars, ty_bind.ty));
@@ -75,16 +76,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           ty_scheme,
           val_env: ValEnv::default(),
         };
-        if env.ty_env.insert(ty_bind.name.clone(), ty_info).is_some() {
+        if ty_env.insert(ty_bind.name.clone(), ty_info).is_some() {
           st.err(dec, ErrorKind::Redefined)
         }
         for ty_var in ty_bind.ty_vars.iter() {
           cx.ty_vars.remove(ty_var);
         }
       }
+      env.ty_env.extend(ty_env);
     }
     hir::Dec::Datatype(dat_binds) => {
       let mut cx = cx.clone();
+      let mut ty_env = TyEnv::default();
       for dat_bind in dat_binds {
         let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars);
         let dat = st.syms.start_datatype(dat_bind.name.clone());
@@ -112,13 +115,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         generalize(st.subst(), fixed, &mut ty_scheme);
         let ty_info = TyInfo { ty_scheme, val_env };
         st.syms.finish_datatype(dat, ty_info.clone());
-        if env.ty_env.insert(dat_bind.name.clone(), ty_info).is_some() {
+        if ty_env.insert(dat_bind.name.clone(), ty_info).is_some() {
           st.err(dec, ErrorKind::Redefined);
         }
         for ty_var in dat_bind.ty_vars.iter() {
           cx.ty_vars.remove(ty_var);
         }
       }
+      env.ty_env.extend(ty_env);
     }
     hir::Dec::DatatypeCopy(new_name, path) => match get_env(&cx.env, path) {
       Ok(got_env) => match got_env.ty_env.get(path.last()) {
