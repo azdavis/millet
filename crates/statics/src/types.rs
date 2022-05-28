@@ -76,8 +76,8 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         let hd = match vars.inner[bv.0] {
-          TyVarKind::Regular => "'",
-          TyVarKind::Equality => "''",
+          None => "'",
+          Some(TyVarKind::Equality) => "''",
         };
         f.write_str(hd)?;
         let alpha = (b'z' - b'a') as usize;
@@ -217,9 +217,7 @@ impl TyScheme {
 
   fn one(s: Sym) -> Self {
     Self {
-      bound_vars: BoundTyVars {
-        inner: vec![TyVarKind::Regular],
-      },
+      bound_vars: BoundTyVars { inner: vec![None] },
       ty: Ty::Con(vec![], s),
     }
   }
@@ -227,7 +225,7 @@ impl TyScheme {
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct BoundTyVars {
-  inner: Vec<TyVarKind>,
+  inner: Vec<Option<TyVarKind>>,
 }
 
 impl BoundTyVars {
@@ -239,14 +237,13 @@ impl BoundTyVars {
     self.inner.is_empty()
   }
 
-  pub(crate) fn kinds(&self) -> impl Iterator<Item = &TyVarKind> + '_ {
+  pub(crate) fn kinds(&self) -> impl Iterator<Item = &Option<TyVarKind>> + '_ {
     self.inner.iter()
   }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) enum TyVarKind {
-  Regular,
   Equality,
 }
 
@@ -590,11 +587,11 @@ impl<'a> Generalizer<'a> {
       Ty::MetaVar(mv) => match self.subst.get(mv) {
         None => {
           let bv = self.meta.get_mut(mv);
-          handle_bv(bv, &mut self.bound_vars, TyVarKind::Regular, ty)
+          handle_bv(bv, &mut self.bound_vars, None, ty)
         }
         Some(SubstEntry::Equality) => {
           let bv = self.meta.get_mut(mv);
-          handle_bv(bv, &mut self.bound_vars, TyVarKind::Equality, ty)
+          handle_bv(bv, &mut self.bound_vars, Some(TyVarKind::Equality), ty)
         }
         Some(SubstEntry::Set(t)) => {
           *ty = t.clone();
@@ -603,9 +600,9 @@ impl<'a> Generalizer<'a> {
       },
       Ty::FixedVar(fv) => {
         let kind = if fv.ty_var.is_equality() {
-          TyVarKind::Equality
+          Some(TyVarKind::Equality)
         } else {
-          TyVarKind::Regular
+          None
         };
         handle_bv(self.fixed.0.get_mut(fv), &mut self.bound_vars, kind, ty)
       }
@@ -630,7 +627,7 @@ impl<'a> Generalizer<'a> {
 fn handle_bv(
   bv: Option<&mut Option<BoundTyVar>>,
   bound_vars: &mut BoundTyVars,
-  kind: TyVarKind,
+  kind: Option<TyVarKind>,
   ty: &mut Ty,
 ) {
   let bv = match bv {

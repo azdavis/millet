@@ -44,8 +44,8 @@ impl St {
     bound_vars.kinds().map(|x| {
       let mv = self.meta_gen.gen();
       match x {
-        TyVarKind::Regular => {}
-        TyVarKind::Equality => {
+        None => {}
+        Some(TyVarKind::Equality) => {
           assert!(self
             .subst
             .insert(mv.clone(), SubstEntry::Equality)
