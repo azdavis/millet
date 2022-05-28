@@ -5,7 +5,7 @@ use crate::types::{
   generalize, Cx, Env, FixedTyVars, IdStatus, Ty, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
-use crate::util::apply;
+use crate::util::{apply, get_env};
 use crate::{exp, pat, ty};
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
@@ -124,9 +124,15 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
       }
     }
-    hir::Dec::DatatypeCopy(_, _) => {
-      // TODO
-    }
+    hir::Dec::DatatypeCopy(new_name, path) => match get_env(&cx.env, path) {
+      Ok(got_env) => match got_env.ty_env.get(path.last()) {
+        Some(ty_info) => {
+          env.ty_env.insert(new_name.clone(), ty_info.clone());
+        }
+        None => st.err(dec, ErrorKind::Undefined),
+      },
+      Err(_) => st.err(dec, ErrorKind::Undefined),
+    },
     hir::Dec::Abstype(_, _) => {
       // TODO
     }
