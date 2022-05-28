@@ -99,7 +99,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         for con_bind in dat_bind.cons.iter() {
           let mut ty = out_ty.clone();
           if let Some(of_ty) = con_bind.ty {
-            ty = Ty::Fn(ty::get(st, &cx, ars, of_ty).into(), ty.into());
+            ty = Ty::fun(ty::get(st, &cx, ars, of_ty), ty);
           };
           let mut ty_scheme = TyScheme::mono(ty);
           generalize(st.subst(), fixed.clone(), &mut ty_scheme);
@@ -143,7 +143,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           hir::ExBind::New(name, of_ty) => {
             let mut ty = Ty::zero(Sym::EXN);
             if let Some(of_ty) = *of_ty {
-              ty = Ty::Fn(ty::get(st, cx, ars, of_ty).into(), ty.into());
+              ty = Ty::fun(ty::get(st, cx, ars, of_ty), ty);
             }
             let vi = ValInfo {
               ty_scheme: TyScheme::mono(ty),

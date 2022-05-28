@@ -20,6 +20,8 @@ pub(crate) enum Ty {
   /// Use `Ty::zero` if constructing a zero-argument `Con`.
   Con(Vec<Ty>, Sym),
   /// Definition: FunType
+  ///
+  /// Use `Ty::zero` if constructing a `Fn` from unboxed types.
   Fn(Box<Ty>, Box<Ty>),
 }
 
@@ -27,6 +29,11 @@ impl Ty {
   /// Returns a [`Self::Con`] with 0 arguments and the given `sym`.
   pub(crate) fn zero(sym: Sym) -> Self {
     Self::Con(Vec::new(), sym)
+  }
+
+  /// Returns a [`Self::Fn`] from `param` to `res`.
+  pub(crate) fn fun(param: Self, res: Self) -> Self {
+    Self::Fn(param.into(), res.into())
   }
 
   /// TODO do we need this? have it be on TyScheme, Ty, both?
@@ -419,7 +426,7 @@ fn datatype<const N: usize>(
         None => ty_scheme.clone(),
         Some(arg) => TyScheme {
           vars: ty_scheme.vars.clone(),
-          ty: Ty::Fn(arg.into(), ty_scheme.ty.clone().into()),
+          ty: Ty::fun(arg, ty_scheme.ty.clone()),
         },
       };
       let val_info = ValInfo {

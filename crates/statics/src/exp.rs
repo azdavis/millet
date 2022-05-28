@@ -46,7 +46,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let want = get(st, cx, ars, *func);
       let arg_ty = get(st, cx, ars, *arg);
       let mut res_ty = Ty::MetaVar(st.gen_meta_var());
-      let got = Ty::Fn(arg_ty.into(), res_ty.clone().into());
+      let got = Ty::fun(arg_ty, res_ty.clone());
       unify(st, want, got, exp);
       apply(st.subst(), &mut res_ty);
       res_ty
@@ -75,7 +75,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
         Some(ErrorKind::NonExhaustiveMatch),
         exp,
       );
-      Ty::Fn(param.into(), res.into())
+      Ty::fun(param, res)
     }
     hir::Exp::Typed(inner, want) => {
       let got = get(st, cx, ars, *inner);

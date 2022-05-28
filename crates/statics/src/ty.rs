@@ -49,7 +49,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     hir::Ty::Fn(param, res) => {
       let param = get(st, cx, ars, *param);
       let res = get(st, cx, ars, *res);
-      Ty::Fn(param.into(), res.into())
+      Ty::fun(param, res)
     }
   }
 }
