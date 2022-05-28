@@ -616,10 +616,16 @@ impl<'a> Generalizer<'a> {
     match ty {
       Ty::None => {}
       Ty::BoundVar(_) => unreachable!(),
-      Ty::MetaVar(mv) => {
-        let bv = self.meta.get_mut(mv);
-        handle_bv(bv, &mut self.bound_vars, mv.kind.clone(), ty)
-      }
+      Ty::MetaVar(mv) => match self.subst.get(mv) {
+        None => {
+          let bv = self.meta.get_mut(mv);
+          handle_bv(bv, &mut self.bound_vars, mv.kind.clone(), ty)
+        }
+        Some(t) => {
+          *ty = t.clone();
+          self.go(ty);
+        }
+      },
       Ty::FixedVar(fv) => {
         let kind = if fv.ty_var.is_equality() {
           TyVarKind::Equality
