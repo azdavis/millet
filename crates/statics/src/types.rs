@@ -512,14 +512,14 @@ impl FixedTyVars {
 /// panics if the type scheme already binds vars.
 ///
 /// TODO remove ty_vars(cx)? what even is that?
-pub(crate) fn generalize(subst: &Subst, fixed_vars: FixedTyVars, ty_scheme: &mut TyScheme) {
+pub(crate) fn generalize(subst: &Subst, fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.vars.is_empty());
-  let mut mv_map = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
-  meta_vars(subst, &mut mv_map, &ty_scheme.ty);
+  let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
+  meta_vars(subst, &mut meta, &ty_scheme.ty);
   let mut g = Generalizer {
     subst,
-    fv_map: fixed_vars.0,
-    mv_map,
+    fixed,
+    meta,
     ty_vars: TyVars::default(),
   };
   g.go(&mut ty_scheme.ty);
@@ -552,8 +552,8 @@ fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, 
 
 struct Generalizer<'a> {
   subst: &'a Subst,
-  fv_map: FxHashMap<FixedTyVar, Option<BoundTyVar>>,
-  mv_map: FxHashMap<MetaTyVar, Option<BoundTyVar>>,
+  fixed: FixedTyVars,
+  meta: FxHashMap<MetaTyVar, Option<BoundTyVar>>,
   ty_vars: TyVars,
 }
 
@@ -562,9 +562,9 @@ impl<'a> Generalizer<'a> {
     match ty {
       Ty::None => {}
       Ty::BoundVar(_) => unreachable!(),
-      Ty::MetaVar(mv) => handle_bv(self.mv_map.get_mut(mv), &mut self.ty_vars, mv.equality, ty),
+      Ty::MetaVar(mv) => handle_bv(self.meta.get_mut(mv), &mut self.ty_vars, mv.equality, ty),
       Ty::FixedVar(fv) => handle_bv(
-        self.fv_map.get_mut(fv),
+        self.fixed.0.get_mut(fv),
         &mut self.ty_vars,
         fv.ty_var.is_equality(),
         ty,
