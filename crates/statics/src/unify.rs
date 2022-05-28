@@ -57,9 +57,8 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
               }
               ok
             }
-            Ty::None => true,
+            Ty::None | Ty::MetaVar(_) => true,
             Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => false,
-            Ty::MetaVar(_) => unreachable!(),
           };
           if !ok {
             return Err(UnifyError::OverloadMismatch(ov));
