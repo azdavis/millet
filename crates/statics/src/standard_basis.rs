@@ -4,22 +4,21 @@ use crate::types::{
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
-const BUILTIN: [Sym; 10] = [
-  Sym::BOOL,
-  Sym::CHAR,
-  Sym::INT,
-  Sym::REAL,
-  Sym::STRING,
-  Sym::WORD,
-  Sym::EXN,
-  Sym::REF,
-  Sym::LIST,
-  Sym::ORDER,
-];
-
 pub(crate) fn get() -> (Syms, Cx) {
   let syms = Syms::standard_basis();
-  let ty_env: FxHashMap<_, _> = BUILTIN
+  let builtin = [
+    Sym::BOOL,
+    Sym::CHAR,
+    Sym::INT,
+    Sym::REAL,
+    Sym::STRING,
+    Sym::WORD,
+    Sym::EXN,
+    Sym::REF,
+    Sym::LIST,
+    Sym::ORDER,
+  ];
+  let ty_env: FxHashMap<_, _> = builtin
     .iter()
     .map(|s| {
       let (name, info) = syms.get(s);
@@ -65,6 +64,12 @@ pub(crate) fn get() -> (Syms, Cx) {
       ("=", eq),
     ]
   };
+  let exns = [
+    ("Match", None),
+    ("Bind", None),
+    // not actually part of the standard basis according to the Definition
+    ("Fail", Some(Ty::zero(Sym::STRING))),
+  ];
   let val_env: FxHashMap<_, _> = ty_env
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
@@ -75,14 +80,16 @@ pub(crate) fn get() -> (Syms, Cx) {
       };
       (hir::Name::new(name), vi)
     }))
-    .chain(["Match", "Bind"].into_iter().map(|name| {
-      (
-        hir::Name::new(name),
-        ValInfo {
-          ty_scheme: TyScheme::mono(Ty::zero(Sym::EXN)),
-          id_status: IdStatus::Exn,
-        },
-      )
+    .chain(exns.into_iter().map(|(name, param)| {
+      let mut ty = Ty::zero(Sym::EXN);
+      if let Some(param) = param {
+        ty = Ty::fun(param, ty);
+      }
+      let vi = ValInfo {
+        ty_scheme: TyScheme::mono(ty),
+        id_status: IdStatus::Exn,
+      };
+      (hir::Name::new(name), vi)
     }))
     .collect();
   let cx = Cx {
