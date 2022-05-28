@@ -1,4 +1,4 @@
-use crate::error::ErrorKind;
+use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{Cx, Ty};
 use crate::util::{apply_bv, get_env, record};
@@ -11,7 +11,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
   match &ars.ty[ty] {
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
       None => {
-        st.err(ty, ErrorKind::Undefined(v.clone().into_name()));
+        st.err(ty, ErrorKind::Undefined(Item::Val, v.clone().into_name()));
         Ty::None
       }
       Some(fv) => Ty::FixedVar(fv.clone()),
@@ -21,14 +21,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
         Err(name) => {
-          st.err(ty, ErrorKind::Undefined(name.clone()));
+          st.err(ty, ErrorKind::Undefined(Item::Struct, name.clone()));
           return Ty::None;
         }
       };
       let ty_info = match env.ty_env.get(path.last()) {
         Some(x) => x,
         None => {
-          st.err(ty, ErrorKind::Undefined(path.last().clone()));
+          st.err(ty, ErrorKind::Undefined(Item::Ty, path.last().clone()));
           return Ty::None;
         }
       };

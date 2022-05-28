@@ -61,8 +61,8 @@ impl From<hir::la_arena::Idx<hir::Dec>> for Idx {
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   Unimplemented,
-  Undefined(hir::Name),
-  Redefined(hir::Name),
+  Undefined(Item, hir::Name),
+  Duplicate(Item, hir::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
   OverloadMismatch(Overload, Ty),
@@ -83,6 +83,29 @@ pub(crate) enum ErrorKind {
   ExnCopyNotExnIdStatus,
 }
 
+#[derive(Debug)]
+pub(crate) enum Item {
+  Val,
+  Ty,
+  TyVar,
+  Struct,
+  Sig,
+  Functor,
+}
+
+impl fmt::Display for Item {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Item::Val => f.write_str("value"),
+      Item::Ty => f.write_str("type"),
+      Item::TyVar => f.write_str("type variable"),
+      Item::Struct => f.write_str("structure"),
+      Item::Sig => f.write_str("signature"),
+      Item::Functor => f.write_str("functor"),
+    }
+  }
+}
+
 struct ErrorKindDisplay<'a> {
   kind: &'a ErrorKind,
   syms: &'a Syms,
@@ -92,8 +115,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
       ErrorKind::Unimplemented => f.write_str("support for this construct not implemented"),
-      ErrorKind::Undefined(name) => write!(f, "undefined: {name}"),
-      ErrorKind::Redefined(name) => write!(f, "redefined: {name}"),
+      ErrorKind::Undefined(item, name) => write!(f, "undefined {item}: {name}"),
+      ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
       ErrorKind::Circularity(mv, ty) => {
         write!(
           f,
@@ -126,7 +149,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ExtraFields(_, ty) => {
         write!(f, "extra fields in {}", ty.display(self.syms))
       }
-      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label {}", lab),
+      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {}", lab),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
       ErrorKind::NonExhaustiveMatch(_) => f.write_str("non-exhaustive match"),

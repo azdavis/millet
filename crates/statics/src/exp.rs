@@ -1,4 +1,4 @@
-use crate::error::{ErrorKind, Idx};
+use crate::error::{ErrorKind, Idx, Item};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{Cx, Env, Sym, SymsMarker, Ty, ValEnv};
@@ -17,14 +17,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
         Err(name) => {
-          st.err(exp, ErrorKind::Undefined(name.clone()));
+          st.err(exp, ErrorKind::Undefined(Item::Struct, name.clone()));
           return Ty::None;
         }
       };
       match env.val_env.get(path.last()) {
         Some(val_info) => instantiate(st, &val_info.ty_scheme),
         None => {
-          st.err(exp, ErrorKind::Undefined(path.last().clone()));
+          st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
           Ty::None
         }
       }

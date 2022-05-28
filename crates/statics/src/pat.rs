@@ -1,4 +1,4 @@
-use crate::error::{ErrorKind, Idx};
+use crate::error::{ErrorKind, Idx, Item};
 use crate::pat_match::{Con, Lang, Pat};
 use crate::st::St;
 use crate::ty;
@@ -37,7 +37,7 @@ pub(crate) fn get(
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
         Err(name) => {
-          st.err(pat_, ErrorKind::Undefined(name.clone()));
+          st.err(pat_, ErrorKind::Undefined(Item::Struct, name.clone()));
           return any(st, pat);
         }
       };
@@ -51,7 +51,7 @@ pub(crate) fn get(
       let val_info = match maybe_val_info {
         Some(x) => x,
         None => {
-          st.err(pat_, ErrorKind::Undefined(path.last().clone()));
+          st.err(pat_, ErrorKind::Undefined(Item::Val, path.last().clone()));
           return any(st, pat);
         }
       };
@@ -139,7 +139,7 @@ where
     id_status: IdStatus::Val,
   };
   if ve.insert(name.clone(), vi).is_some() {
-    st.err(idx, ErrorKind::Redefined(name));
+    st.err(idx, ErrorKind::Duplicate(Item::Val, name));
   }
 }
 
