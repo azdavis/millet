@@ -75,7 +75,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        f.write_str(vars.inner[bv.0].head())?;
+        f.write_str(vars.inner[bv.0].as_head_str())?;
         let alpha = (b'z' - b'a') as usize;
         let quot = bv.0 / alpha;
         let rem = bv.0 % alpha;
@@ -250,7 +250,7 @@ enum TyVarKind {
 }
 
 impl TyVarKind {
-  fn head(&self) -> &'static str {
+  fn as_head_str(&self) -> &'static str {
     match self {
       TyVarKind::Regular => "'",
       TyVarKind::Equality => "''",
@@ -286,7 +286,7 @@ pub(crate) struct MetaTyVar {
 impl fmt::Display for MetaTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     // not real syntax, but since it's ultimately a number it won't clash with other ty vars
-    write!(f, "{}{}", self.kind.head(), self.id)
+    write!(f, "{}{}", self.kind.as_head_str(), self.id)
   }
 }
 
