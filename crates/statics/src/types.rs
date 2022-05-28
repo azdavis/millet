@@ -16,6 +16,8 @@ pub(crate) enum Ty {
   /// Definition: RowType
   Record(BTreeMap<hir::Lab, Ty>),
   /// Definition: ConsType
+  ///
+  /// Use `Ty::zero` if constructing a zero-argument `Con`.
   Con(Vec<Ty>, Sym),
   /// Definition: FunType
   Fn(Box<Ty>, Box<Ty>),
