@@ -171,8 +171,12 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       env.val_env.extend(val_env);
     }
-    hir::Dec::Local(_, _) => {
-      // TODO
+    hir::Dec::Local(local_dec, in_dec) => {
+      let mut local_env = Env::default();
+      get(st, cx, ars, &mut local_env, *local_dec);
+      let mut cx = cx.clone();
+      cx.env.extend(local_env);
+      get(st, &cx, ars, env, *in_dec);
     }
     hir::Dec::Open(_) => {
       // TODO
