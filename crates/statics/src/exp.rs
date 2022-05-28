@@ -14,7 +14,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
   match &ars.exp[exp] {
     hir::Exp::SCon(scon) => get_scon(scon),
     hir::Exp::Path(path) => {
-      let env = match get_env(&cx.env, path) {
+      let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
         Err(_) => {
           st.err(exp, ErrorKind::Undefined);

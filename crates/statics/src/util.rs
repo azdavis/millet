@@ -32,11 +32,11 @@ where
   Ty::Record(ty_rows)
 }
 
-pub(crate) fn get_env<'e, 'p>(
-  mut env: &'e Env,
-  path: &'p hir::Path,
-) -> Result<&'e Env, &'p hir::Name> {
-  for name in path.structures() {
+pub(crate) fn get_env<'e, 'n, I>(mut env: &'e Env, names: I) -> Result<&'e Env, &'n hir::Name>
+where
+  I: IntoIterator<Item = &'n hir::Name>,
+{
+  for name in names {
     match env.str_env.get(name) {
       None => return Err(name),
       Some(x) => env = x,

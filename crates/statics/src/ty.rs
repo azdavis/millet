@@ -18,7 +18,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     },
     hir::Ty::Record(rows) => record(st, rows, ty, |st, _, ty| get(st, cx, ars, ty)),
     hir::Ty::Con(args, path) => {
-      let env = match get_env(&cx.env, path) {
+      let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
         Err(_) => {
           st.err(ty, ErrorKind::Undefined);

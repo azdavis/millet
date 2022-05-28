@@ -34,7 +34,7 @@ pub(crate) fn get(
     }
     hir::Pat::Con(path, arg) => {
       let arg = arg.map(|x| get(st, cx, ars, ve, x));
-      let env = match get_env(&cx.env, path) {
+      let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
         Err(_) => {
           st.err(pat_, ErrorKind::Undefined);

@@ -124,7 +124,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       env.ty_env.extend(ty_env);
     }
-    hir::Dec::DatatypeCopy(name, path) => match get_env(&cx.env, path) {
+    hir::Dec::DatatypeCopy(name, path) => match get_env(&cx.env, path.structures()) {
       Ok(got_env) => match got_env.ty_env.get(path.last()) {
         Some(ty_info) => {
           env.ty_env.insert(name.clone(), ty_info.clone());
@@ -153,7 +153,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
               st.err(dec, ErrorKind::Redefined);
             }
           }
-          hir::ExBind::Copy(name, path) => match get_env(&cx.env, path) {
+          hir::ExBind::Copy(name, path) => match get_env(&cx.env, path.structures()) {
             Ok(got_env) => match got_env.val_env.get(path.last()) {
               Some(val_info) => match val_info.id_status {
                 IdStatus::Exn => {
