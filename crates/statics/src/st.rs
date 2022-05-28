@@ -1,6 +1,7 @@
 use crate::error::{Error, ErrorKind, Idx};
 use crate::types::{
-  BoundTyVars, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty, TyVarKind,
+  BoundTyVars, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
+  TyVarKind,
 };
 
 /// The state.
@@ -44,7 +45,12 @@ impl St {
       let mv = self.meta_gen.gen();
       match x {
         TyVarKind::Regular => {}
-        TyVarKind::Equality => self.subst.mark_equality(mv.clone()),
+        TyVarKind::Equality => {
+          assert!(self
+            .subst
+            .insert(mv.clone(), SubstEntry::Equality)
+            .is_none())
+        }
       }
       Ty::MetaVar(mv)
     })

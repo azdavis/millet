@@ -512,28 +512,7 @@ pub(crate) struct Cx {
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
 
-#[derive(Debug, Default)]
-pub(crate) struct Subst {
-  map: FxHashMap<MetaTyVar, SubstEntry>,
-}
-
-impl Subst {
-  pub(crate) fn mark_equality(&mut self, mv: MetaTyVar) {
-    assert!(self.map.insert(mv, SubstEntry::Equality).is_none())
-  }
-
-  /// Panics if there was already an assignment for this [`MetaTyVar`].
-  pub(crate) fn insert(&mut self, mv: MetaTyVar, ty: Ty) {
-    match self.map.insert(mv, SubstEntry::Set(ty)) {
-      None | Some(SubstEntry::Equality) => {}
-      Some(SubstEntry::Set(t)) => panic!("meta var already set to {t:?}"),
-    }
-  }
-
-  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&SubstEntry> {
-    self.map.get(mv)
-  }
-}
+pub(crate) type Subst = FxHashMap<MetaTyVar, SubstEntry>;
 
 #[derive(Debug)]
 pub(crate) enum SubstEntry {
