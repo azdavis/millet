@@ -62,6 +62,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       // extend the overall env with that.
       env.val_env.extend(ve);
+      // clean up the ty vars.
+      for ty_var in ty_vars.iter() {
+        cx.ty_vars.remove(ty_var);
+      }
     }
     hir::Dec::Ty(ty_binds) => {
       let mut cx = cx.clone();
