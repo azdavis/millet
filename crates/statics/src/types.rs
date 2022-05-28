@@ -284,7 +284,7 @@ impl MetaTyVarGen {
 }
 
 /// Corresponds to a user written type variable.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct FixedTyVar {
   id: Uniq,
   ty_var: hir::TyVar,
@@ -346,7 +346,7 @@ impl Syms {
     self.store.is_empty()
   }
 
-  pub(crate) fn insert(&mut self, name: hir::Name, ty_info: TyInfo) -> Sym {
+  fn insert(&mut self, name: hir::Name, ty_info: TyInfo) -> Sym {
     let ret = Sym(self.store.len());
     self.store.push((name, ty_info));
     ret
@@ -359,6 +359,25 @@ impl Syms {
 
   pub(crate) fn mark(&self) -> SymsMarker {
     SymsMarker(self.store.len())
+  }
+
+  pub(crate) fn start_datatype(&mut self, name: hir::Name) -> Datatype {
+    let sym = self.insert(
+      name,
+      TyInfo {
+        ty_scheme: TyScheme::mono(Ty::None),
+        val_env: ValEnv::default(),
+      },
+    );
+    Datatype {
+      bomb: drop_bomb::DropBomb::new("must be passed to Syms::finish_datatype"),
+      sym,
+    }
+  }
+
+  pub(crate) fn finish_datatype(&mut self, mut datatype: Datatype, ty_info: TyInfo) {
+    datatype.bomb.defuse();
+    self.store[datatype.sym.0].1 = ty_info;
   }
 
   /// Returns a `Syms` with all the built-in types, like `int`, `bool`, and `string`.
@@ -413,6 +432,18 @@ fn datatype<const N: usize>(
 
 /// A marker to determine when a `Sym` was generated.
 pub(crate) struct SymsMarker(usize);
+
+/// A helper to construct information about `datatype`s.
+pub(crate) struct Datatype {
+  bomb: drop_bomb::DropBomb,
+  sym: Sym,
+}
+
+impl Datatype {
+  pub(crate) fn sym(&self) -> Sym {
+    self.sym
+  }
+}
 
 /// Definition: TyStr
 #[derive(Debug, Clone)]
@@ -491,11 +522,16 @@ impl Subst {
 }
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct FixedTyVars(FxHashMap<FixedTyVar, Option<BoundTyVar>>);
+pub(crate) struct FixedTyVars(BTreeMap<FixedTyVar, Option<BoundTyVar>>);
 
 impl FixedTyVars {
   pub(crate) fn insert(&mut self, var: FixedTyVar) {
     assert!(self.0.insert(var, None).is_none())
+  }
+
+  /// the ordering is always the same.
+  pub(crate) fn iter(&self) -> impl Iterator<Item = &FixedTyVar> + '_ {
+    self.0.keys()
   }
 }
 

@@ -362,6 +362,7 @@ dependencies = [
 name = "statics"
 version = "0.1.0"
 dependencies = [
+ "drop_bomb",
  "fast-hash",
  "hir",
  "pattern-match",

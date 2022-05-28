@@ -1,7 +1,9 @@
 use crate::error::{ErrorKind, Idx};
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{generalize, Cx, Env, FixedTyVars, Ty, TyInfo, TyScheme, ValEnv};
+use crate::types::{
+  generalize, Cx, Env, FixedTyVars, IdStatus, Ty, TyInfo, TyScheme, ValEnv, ValInfo,
+};
 use crate::unify::unify;
 use crate::util::apply;
 use crate::{exp, pat, ty};
@@ -85,8 +87,42 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
       }
     }
-    hir::Dec::Datatype(_) => {
-      // TODO
+    hir::Dec::Datatype(dat_binds) => {
+      let mut cx = cx.clone();
+      for dat_bind in dat_binds {
+        let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars);
+        let dat = st.syms.start_datatype(dat_bind.name.clone());
+        let out_ty = Ty::Con(
+          fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
+          dat.sym(),
+        );
+        let mut val_env = ValEnv::default();
+        for con_bind in dat_bind.cons.iter() {
+          let mut ty = out_ty.clone();
+          if let Some(of_ty) = con_bind.ty {
+            ty = Ty::Fn(ty::get(st, &cx, ars, of_ty).into(), ty.into());
+          };
+          let mut ty_scheme = TyScheme::mono(ty);
+          generalize(st.subst(), fixed.clone(), &mut ty_scheme);
+          let vi = ValInfo {
+            ty_scheme,
+            id_status: IdStatus::Con,
+          };
+          if val_env.insert(con_bind.name.clone(), vi).is_some() {
+            st.err(dec, ErrorKind::Redefined);
+          }
+        }
+        let mut ty_scheme = TyScheme::mono(out_ty);
+        generalize(st.subst(), fixed, &mut ty_scheme);
+        let ty_info = TyInfo { ty_scheme, val_env };
+        st.syms.finish_datatype(dat, ty_info.clone());
+        if env.ty_env.insert(dat_bind.name.clone(), ty_info).is_some() {
+          st.err(dec, ErrorKind::Redefined);
+        }
+        for ty_var in dat_bind.ty_vars.iter() {
+          cx.ty_vars.remove(ty_var);
+        }
+      }
     }
     hir::Dec::DatatypeCopy(_, _) => {
       // TODO

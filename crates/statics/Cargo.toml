@@ -9,6 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
+drop_bomb = "0.1"
 pattern-match = { git = "https://github.com/azdavis/language-util.git" }
 hir = { path = "../hir" }
 fast-hash = { path = "../fast-hash" }
