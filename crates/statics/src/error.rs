@@ -61,8 +61,8 @@ impl From<hir::la_arena::Idx<hir::Dec>> for Idx {
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   Unimplemented,
-  Undefined,
-  Redefined,
+  Undefined(hir::Name),
+  Redefined(hir::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
   MissingField(hir::Lab, Ty),
@@ -91,8 +91,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
       ErrorKind::Unimplemented => f.write_str("support for this construct not implemented"),
-      ErrorKind::Undefined => f.write_str("undefined"),
-      ErrorKind::Redefined => f.write_str("redefined"),
+      ErrorKind::Undefined(name) => write!(f, "undefined: {name}"),
+      ErrorKind::Redefined(name) => write!(f, "redefined: {name}"),
       ErrorKind::Circularity(mv, ty) => {
         write!(
           f,

@@ -16,15 +16,15 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     hir::Exp::Path(path) => {
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
-        Err(_) => {
-          st.err(exp, ErrorKind::Undefined);
+        Err(name) => {
+          st.err(exp, ErrorKind::Undefined(name.clone()));
           return Ty::None;
         }
       };
       match env.val_env.get(path.last()) {
         Some(val_info) => instantiate(st, &val_info.ty_scheme),
         None => {
-          st.err(exp, ErrorKind::Undefined);
+          st.err(exp, ErrorKind::Undefined(path.last().clone()));
           Ty::None
         }
       }

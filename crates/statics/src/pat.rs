@@ -36,8 +36,8 @@ pub(crate) fn get(
       let arg = arg.map(|x| get(st, cx, ars, ve, x));
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
-        Err(_) => {
-          st.err(pat_, ErrorKind::Undefined);
+        Err(name) => {
+          st.err(pat_, ErrorKind::Undefined(name.clone()));
           return any(st, pat);
         }
       };
@@ -51,7 +51,7 @@ pub(crate) fn get(
       let val_info = match maybe_val_info {
         Some(x) => x,
         None => {
-          st.err(pat_, ErrorKind::Undefined);
+          st.err(pat_, ErrorKind::Undefined(path.last().clone()));
           return any(st, pat);
         }
       };
@@ -138,8 +138,8 @@ where
     ty_scheme: TyScheme::mono(ty),
     id_status: IdStatus::Val,
   };
-  if ve.insert(name, vi).is_some() {
-    st.err(idx, ErrorKind::Redefined);
+  if ve.insert(name.clone(), vi).is_some() {
+    st.err(idx, ErrorKind::Redefined(name));
   }
 }
 

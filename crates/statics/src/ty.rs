@@ -11,7 +11,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
   match &ars.ty[ty] {
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
       None => {
-        st.err(ty, ErrorKind::Undefined);
+        st.err(ty, ErrorKind::Undefined(v.clone().into_name()));
         Ty::None
       }
       Some(fv) => Ty::FixedVar(fv.clone()),
@@ -20,15 +20,15 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     hir::Ty::Con(args, path) => {
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
-        Err(_) => {
-          st.err(ty, ErrorKind::Undefined);
+        Err(name) => {
+          st.err(ty, ErrorKind::Undefined(name.clone()));
           return Ty::None;
         }
       };
       let ty_info = match env.ty_env.get(path.last()) {
         Some(x) => x,
         None => {
-          st.err(ty, ErrorKind::Undefined);
+          st.err(ty, ErrorKind::Undefined(path.last().clone()));
           return Ty::None;
         }
       };

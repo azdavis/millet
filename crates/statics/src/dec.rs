@@ -45,7 +45,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // merge the recursive and non-recursive ValEnvs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
         if ve.insert(name.clone(), val_info.clone()).is_some() {
-          st.err(dec, ErrorKind::Redefined);
+          st.err(dec, ErrorKind::Redefined(name.clone()));
         }
       }
       // extend the cx with only the recursive ValEnv.
@@ -77,7 +77,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           val_env: ValEnv::default(),
         };
         if ty_env.insert(ty_bind.name.clone(), ty_info).is_some() {
-          st.err(dec, ErrorKind::Redefined)
+          st.err(dec, ErrorKind::Redefined(ty_bind.name.clone()))
         }
         for ty_var in ty_bind.ty_vars.iter() {
           cx.ty_vars.remove(ty_var);
@@ -108,7 +108,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             id_status: IdStatus::Con,
           };
           if val_env.insert(con_bind.name.clone(), vi).is_some() {
-            st.err(dec, ErrorKind::Redefined);
+            st.err(dec, ErrorKind::Redefined(con_bind.name.clone()));
           }
         }
         let mut ty_scheme = TyScheme::mono(out_ty);
@@ -116,7 +116,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         let ty_info = TyInfo { ty_scheme, val_env };
         st.syms.finish_datatype(dat, ty_info.clone());
         if ty_env.insert(dat_bind.name.clone(), ty_info).is_some() {
-          st.err(dec, ErrorKind::Redefined);
+          st.err(dec, ErrorKind::Redefined(dat_bind.name.clone()));
         }
         for ty_var in dat_bind.ty_vars.iter() {
           cx.ty_vars.remove(ty_var);
@@ -129,9 +129,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         Some(ty_info) => {
           env.ty_env.insert(name.clone(), ty_info.clone());
         }
-        None => st.err(dec, ErrorKind::Undefined),
+        None => st.err(dec, ErrorKind::Undefined(path.last().clone())),
       },
-      Err(_) => st.err(dec, ErrorKind::Undefined),
+      Err(name) => st.err(dec, ErrorKind::Undefined(name.clone())),
     },
     hir::Dec::Abstype(_, _) => {
       // TODO
@@ -150,7 +150,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
               id_status: IdStatus::Exn,
             };
             if val_env.insert(name.clone(), vi).is_some() {
-              st.err(dec, ErrorKind::Redefined);
+              st.err(dec, ErrorKind::Redefined(name.clone()));
             }
           }
           hir::ExBind::Copy(name, path) => match get_env(&cx.env, path.structures()) {
@@ -158,14 +158,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
               Some(val_info) => match val_info.id_status {
                 IdStatus::Exn => {
                   if val_env.insert(name.clone(), val_info.clone()).is_some() {
-                    st.err(dec, ErrorKind::Redefined);
+                    st.err(dec, ErrorKind::Redefined(name.clone()));
                   }
                 }
                 _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus),
               },
-              None => st.err(dec, ErrorKind::Undefined),
+              None => st.err(dec, ErrorKind::Undefined(path.last().clone())),
             },
-            Err(_) => st.err(dec, ErrorKind::Undefined),
+            Err(name) => st.err(dec, ErrorKind::Undefined(name.clone())),
           },
         }
       }
@@ -182,7 +182,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       for path in paths {
         match get_env(&cx.env, path.all_names()) {
           Ok(got_env) => env.extend(got_env.clone()),
-          Err(_) => st.err(dec, ErrorKind::Undefined),
+          Err(name) => st.err(dec, ErrorKind::Undefined(name.clone())),
         }
       }
     }
