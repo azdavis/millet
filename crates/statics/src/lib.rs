@@ -28,11 +28,11 @@ pub use types::Syms;
 
 /// Does the checks.
 pub fn get(arenas: &hir::Arenas, top_decs: &[hir::TopDec]) -> (Syms, Vec<Error>) {
-  let (syms, cx) = standard_basis::get();
+  let (syms, mut cx) = standard_basis::get();
   let mut st = st::St::default();
   st.syms = syms;
   for top_dec in top_decs {
-    top_dec::get(&mut st, &cx, arenas, top_dec);
+    top_dec::get(&mut st, &mut cx, arenas, top_dec);
   }
   st.finish()
 }
