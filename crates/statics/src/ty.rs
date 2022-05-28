@@ -32,7 +32,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
           return Ty::None;
         }
       };
-      let want_len = ty_info.ty_scheme.vars.len();
+      let want_len = ty_info.ty_scheme.bound_vars.len();
       let mut ret = Ty::None;
       if want_len == args.len() {
         let args: Vec<_> = args.iter().map(|&ty| get(st, cx, ars, ty)).collect();

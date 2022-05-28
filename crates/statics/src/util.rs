@@ -80,7 +80,7 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
 /// type scheme.
 pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
   let meta_vars: Vec<_> = st
-    .gen_from_ty_vars(&ty_scheme.vars)
+    .gen_from(&ty_scheme.bound_vars)
     .map(Ty::MetaVar)
     .collect();
   let mut ty = ty_scheme.ty.clone();

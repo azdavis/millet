@@ -43,7 +43,7 @@ impl Ty {
   pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
     TyDisplay {
       ty: self,
-      vars: None,
+      bound_vars: None,
       syms,
       prec: TyPrec::Arrow,
     }
@@ -53,7 +53,7 @@ impl Ty {
 struct TyDisplay<'a> {
   ty: &'a Ty,
   /// TODO figure this out
-  vars: Option<&'a TyVars>,
+  bound_vars: Option<&'a BoundTyVars>,
   syms: &'a Syms,
   prec: TyPrec,
 }
@@ -62,7 +62,7 @@ impl<'a> TyDisplay<'a> {
   fn with(&self, ty: &'a Ty, prec: TyPrec) -> Self {
     Self {
       ty,
-      vars: self.vars,
+      bound_vars: self.bound_vars,
       syms: self.syms,
       prec,
     }
@@ -74,7 +74,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
     match self.ty {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
-        let vars = self.vars.expect("bound ty var without a TyScheme");
+        let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         f.write_str(equality_str(vars.inner[bv.0]))?;
         let alpha = (b'z' - b'a') as usize;
         let quot = bv.0 / alpha;
@@ -115,10 +115,10 @@ impl<'a> fmt::Display for TyDisplay<'a> {
           f.write_str("{ ")?;
           let mut rows = rows.iter();
           let (lab, ty) = rows.next().unwrap();
-          display_row(f, self.vars, self.syms, lab, ty)?;
+          display_row(f, self.bound_vars, self.syms, lab, ty)?;
           for (lab, ty) in rows {
             f.write_str(", ")?;
-            display_row(f, self.vars, self.syms, lab, ty)?;
+            display_row(f, self.bound_vars, self.syms, lab, ty)?;
           }
           f.write_str(" }")?;
         }
@@ -167,7 +167,7 @@ enum TyPrec {
 
 fn display_row<'a>(
   f: &mut fmt::Formatter<'_>,
-  vars: Option<&'a TyVars>,
+  bound_vars: Option<&'a BoundTyVars>,
   syms: &'a Syms,
   lab: &hir::Lab,
   ty: &'a Ty,
@@ -176,7 +176,7 @@ fn display_row<'a>(
   f.write_str(" : ")?;
   let td = TyDisplay {
     ty,
-    vars,
+    bound_vars,
     syms,
     prec: TyPrec::Arrow,
   };
@@ -194,14 +194,14 @@ fn equality_str(equality: bool) -> &'static str {
 /// Definition: TypeScheme, TypeFcn
 #[derive(Debug, Clone)]
 pub(crate) struct TyScheme {
-  pub(crate) vars: TyVars,
+  pub(crate) bound_vars: BoundTyVars,
   pub(crate) ty: Ty,
 }
 
 impl TyScheme {
   pub(crate) fn mono(ty: Ty) -> Self {
     Self {
-      vars: TyVars::default(),
+      bound_vars: BoundTyVars::default(),
       ty,
     }
   }
@@ -210,7 +210,7 @@ impl TyScheme {
   pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
     TyDisplay {
       ty: &self.ty,
-      vars: Some(&self.vars),
+      bound_vars: Some(&self.bound_vars),
       syms,
       prec: TyPrec::Arrow,
     }
@@ -222,20 +222,20 @@ impl TyScheme {
 
   fn one(s: Sym) -> Self {
     Self {
-      vars: TyVars { inner: vec![false] },
+      bound_vars: BoundTyVars { inner: vec![false] },
       ty: Ty::Con(vec![], s),
     }
   }
 }
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct TyVars {
+pub(crate) struct BoundTyVars {
   /// The length gives how many ty vars are brought into scope. The ith `bool` says whether the type
   /// variable i is equality.
   inner: Vec<bool>,
 }
 
-impl TyVars {
+impl BoundTyVars {
   pub(crate) fn len(&self) -> usize {
     self.inner.len()
   }
@@ -287,11 +287,11 @@ impl MetaTyVarGen {
     }
   }
 
-  pub(crate) fn gen_from_ty_vars<'a>(
+  pub(crate) fn gen_from<'a>(
     &'a mut self,
-    ty_vars: &'a TyVars,
+    bound_vars: &'a BoundTyVars,
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
-    ty_vars.inner.iter().map(|&eq| self.gen(eq))
+    bound_vars.inner.iter().map(|&eq| self.gen(eq))
   }
 }
 
@@ -428,7 +428,7 @@ fn datatype<const N: usize>(
       let ty_scheme = match arg {
         None => ty_scheme.clone(),
         Some(arg) => TyScheme {
-          vars: ty_scheme.vars.clone(),
+          bound_vars: ty_scheme.bound_vars.clone(),
           ty: Ty::fun(arg, ty_scheme.ty.clone()),
         },
       };
@@ -556,17 +556,17 @@ impl FixedTyVars {
 ///
 /// TODO remove ty_vars(cx)? what even is that?
 pub(crate) fn generalize(subst: &Subst, fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
-  assert!(ty_scheme.vars.is_empty());
+  assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
   meta_vars(subst, &mut meta, &ty_scheme.ty);
   let mut g = Generalizer {
     subst,
     fixed,
     meta,
-    ty_vars: TyVars::default(),
+    bound_vars: BoundTyVars::default(),
   };
   g.go(&mut ty_scheme.ty);
-  ty_scheme.vars = g.ty_vars;
+  ty_scheme.bound_vars = g.bound_vars;
 }
 
 fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, ty: &Ty) {
@@ -597,7 +597,7 @@ struct Generalizer<'a> {
   subst: &'a Subst,
   fixed: FixedTyVars,
   meta: FxHashMap<MetaTyVar, Option<BoundTyVar>>,
-  ty_vars: TyVars,
+  bound_vars: BoundTyVars,
 }
 
 impl<'a> Generalizer<'a> {
@@ -605,10 +605,10 @@ impl<'a> Generalizer<'a> {
     match ty {
       Ty::None => {}
       Ty::BoundVar(_) => unreachable!(),
-      Ty::MetaVar(mv) => handle_bv(self.meta.get_mut(mv), &mut self.ty_vars, mv.equality, ty),
+      Ty::MetaVar(mv) => handle_bv(self.meta.get_mut(mv), &mut self.bound_vars, mv.equality, ty),
       Ty::FixedVar(fv) => handle_bv(
         self.fixed.0.get_mut(fv),
-        &mut self.ty_vars,
+        &mut self.bound_vars,
         fv.ty_var.is_equality(),
         ty,
       ),
@@ -632,7 +632,7 @@ impl<'a> Generalizer<'a> {
 
 fn handle_bv(
   bv: Option<&mut Option<BoundTyVar>>,
-  ty_vars: &mut TyVars,
+  bound_vars: &mut BoundTyVars,
   equality: bool,
   ty: &mut Ty,
 ) {
@@ -643,9 +643,9 @@ fn handle_bv(
   let bv = match bv {
     Some(bv) => bv.clone(),
     None => {
-      let ret = BoundTyVar(ty_vars.len());
+      let ret = BoundTyVar(bound_vars.len());
       *bv = Some(ret.clone());
-      ty_vars.inner.push(equality);
+      bound_vars.inner.push(equality);
       ret
     }
   };
