@@ -235,16 +235,13 @@ impl BoundTyVars {
     self.inner.is_empty()
   }
 
-  pub(crate) fn gen_with<'a>(&'a self, mv: &'a mut MetaTyVarGen) -> impl Iterator<Item = Ty> + 'a {
-    self
-      .inner
-      .iter()
-      .map(|k| Ty::MetaVar(mv.gen_with(k.clone())))
+  pub(crate) fn kinds(&self) -> impl Iterator<Item = &TyVarKind> + '_ {
+    self.inner.iter()
   }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum TyVarKind {
+pub(crate) enum TyVarKind {
   Regular,
   Equality,
 }
@@ -278,15 +275,12 @@ impl BoundTyVar {
 
 /// Generated, and to be substituted for a real type, by the inference algorithm.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) struct MetaTyVar {
-  id: Uniq,
-  kind: TyVarKind,
-}
+pub(crate) struct MetaTyVar(Uniq);
 
 impl fmt::Display for MetaTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    // not real syntax, but since it's ultimately a number it won't clash with other ty vars
-    write!(f, "{}{}", self.kind.as_head_str(), self.id)
+    // not real syntax
+    write!(f, "${}", self.0)
   }
 }
 
@@ -294,15 +288,8 @@ impl fmt::Display for MetaTyVar {
 pub(crate) struct MetaTyVarGen(UniqGen);
 
 impl MetaTyVarGen {
-  fn gen_with(&mut self, kind: TyVarKind) -> MetaTyVar {
-    MetaTyVar {
-      id: self.0.gen(),
-      kind,
-    }
-  }
-
   pub(crate) fn gen(&mut self) -> MetaTyVar {
-    self.gen_with(TyVarKind::Regular)
+    MetaTyVar(self.0.gen())
   }
 }
 
@@ -525,23 +512,33 @@ pub(crate) struct Cx {
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
 
-/// A mapping from [`MetaTyVar`]s to [`Ty`]s.
-///
-/// Invariant: Mappings are never removed.
 #[derive(Debug, Default)]
 pub(crate) struct Subst {
-  map: FxHashMap<MetaTyVar, Ty>,
+  map: FxHashMap<MetaTyVar, SubstEntry>,
 }
 
 impl Subst {
-  /// Panics if there was already an assignment for this [`MetaTyVar`].
-  pub(crate) fn insert(&mut self, mv: MetaTyVar, ty: Ty) {
-    assert!(self.map.insert(mv, ty).is_none())
+  pub(crate) fn mark_equality(&mut self, mv: MetaTyVar) {
+    assert!(self.map.insert(mv, SubstEntry::Equality).is_none())
   }
 
-  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&Ty> {
+  /// Panics if there was already an assignment for this [`MetaTyVar`].
+  pub(crate) fn insert(&mut self, mv: MetaTyVar, ty: Ty) {
+    match self.map.insert(mv, SubstEntry::Set(ty)) {
+      None | Some(SubstEntry::Equality) => {}
+      Some(SubstEntry::Set(t)) => panic!("meta var already set to {t:?}"),
+    }
+  }
+
+  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&SubstEntry> {
     self.map.get(mv)
   }
+}
+
+#[derive(Debug)]
+pub(crate) enum SubstEntry {
+  Equality,
+  Set(Ty),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -584,8 +581,8 @@ fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, 
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
-      None => assert!(map.insert(mv.clone(), None).is_none()),
-      Some(ty) => meta_vars(subst, map, ty),
+      None | Some(SubstEntry::Equality) => assert!(map.insert(mv.clone(), None).is_none()),
+      Some(SubstEntry::Set(ty)) => meta_vars(subst, map, ty),
     },
     Ty::Record(rows) => {
       for ty in rows.values() {
@@ -619,9 +616,13 @@ impl<'a> Generalizer<'a> {
       Ty::MetaVar(mv) => match self.subst.get(mv) {
         None => {
           let bv = self.meta.get_mut(mv);
-          handle_bv(bv, &mut self.bound_vars, mv.kind.clone(), ty)
+          handle_bv(bv, &mut self.bound_vars, TyVarKind::Regular, ty)
         }
-        Some(t) => {
+        Some(SubstEntry::Equality) => {
+          let bv = self.meta.get_mut(mv);
+          handle_bv(bv, &mut self.bound_vars, TyVarKind::Equality, ty)
+        }
+        Some(SubstEntry::Set(t)) => {
           *ty = t.clone();
           self.go(ty);
         }
