@@ -87,7 +87,6 @@ impl<'a> fmt::Display for TyDisplay<'a> {
           write!(f, "{ch}")?;
         }
       }
-      // not real syntax
       Ty::MetaVar(mv) => mv.fmt(f)?,
       Ty::FixedVar(fv) => fv.fmt(f)?,
       Ty::Record(rows) => {
@@ -281,6 +280,7 @@ pub(crate) struct MetaTyVar {
 impl fmt::Display for MetaTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let hd = if self.equality { "''" } else { "'" };
+    // not real syntax, but since it's ultimately a number it won't clash with other ty vars
     write!(f, "{}{}", hd, self.id)
   }
 }
