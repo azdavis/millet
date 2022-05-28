@@ -16,7 +16,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
   match &ars.dec[dec] {
     hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();
-      let fixed_vars = add_fixed_ty_vars(st, &mut cx, ty_vars);
+      let fixed = add_fixed_ty_vars(st, &mut cx, ty_vars);
       // we actually resort to indexing logic because this is a little weird:
       // - we represent the recursive nature of ValBinds (and all other things that recurse with
       //   `and`) as a sequence of non-recursive items.
@@ -58,7 +58,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       // generalize the entire merged val env.
       for val_info in ve.values_mut() {
-        generalize(st.subst(), fixed_vars.clone(), &mut val_info.ty_scheme);
+        generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
       }
       // extend the overall env with that.
       env.val_env.extend(ve);
@@ -70,9 +70,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     hir::Dec::Ty(ty_binds) => {
       let mut cx = cx.clone();
       for ty_bind in ty_binds {
-        let fixed_vars = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars);
+        let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars);
         let mut ty_scheme = TyScheme::mono(ty::get(st, &cx, ars, ty_bind.ty));
-        generalize(st.subst(), fixed_vars, &mut ty_scheme);
+        generalize(st.subst(), fixed, &mut ty_scheme);
         let ty_info = TyInfo {
           ty_scheme,
           val_env: ValEnv::default(),
@@ -112,14 +112,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
 }
 
 fn add_fixed_ty_vars(st: &mut St, cx: &mut Cx, ty_vars: &[hir::TyVar]) -> FixedTyVars {
-  let mut fixed_vars = FixedTyVars::default();
+  let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
     let fv = st.gen_fixed_var(ty_var.clone());
     // TODO shadowing? scoping?
     cx.ty_vars.insert(ty_var.clone(), fv.clone());
-    fixed_vars.insert(fv);
+    ret.insert(fv);
   }
-  fixed_vars
+  ret
 }
 
 fn get_val_exp(
