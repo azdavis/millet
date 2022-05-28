@@ -77,7 +77,9 @@ impl pattern_match::Lang for Lang {
             _ => unreachable!(),
           }
         }
-        Con::Record(_) => unreachable!(),
+        // NOTE: will be unreachable in a well-typed match, but we can reach this in a
+        // not-well-typed match. see `misc::match_record_non_record_ty`.
+        Con::Record(labs) => labs.iter().map(|_| Ty::None).collect(),
       },
     }
   }

@@ -168,6 +168,20 @@ fun f 1 = 2
 }
 
 #[test]
+fn match_record_non_record_ty() {
+  check(
+    r#"
+val _ =
+  case 0 of
+    1 => 1
+  | (2, 2) => 2
+(** ^^^^^^ mismatched types: expected int, found int * int *)
+  | _ => 3
+"#,
+  );
+}
+
+#[test]
 fn handle_non_exhaustive() {
   check(
     r#"
