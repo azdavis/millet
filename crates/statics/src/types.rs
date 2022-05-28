@@ -238,6 +238,18 @@ impl BoundTyVars {
   pub(crate) fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
+
+  pub(crate) fn gen_with<'a>(
+    &'a self,
+    mv: &'a mut MetaTyVarGen,
+  ) -> impl Iterator<Item = MetaTyVar> + 'a {
+    self.inner.iter().map(|x| {
+      mv.gen(match x {
+        BoundTyVarKind::Regular => false,
+        BoundTyVarKind::Equality => true,
+      })
+    })
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -287,18 +299,6 @@ impl MetaTyVarGen {
       id: self.0.gen(),
       equality,
     }
-  }
-
-  pub(crate) fn gen_from<'a>(
-    &'a mut self,
-    bound_vars: &'a BoundTyVars,
-  ) -> impl Iterator<Item = MetaTyVar> + 'a {
-    bound_vars.inner.iter().map(|x| {
-      self.gen(match x {
-        BoundTyVarKind::Regular => false,
-        BoundTyVarKind::Equality => true,
-      })
-    })
   }
 }
 

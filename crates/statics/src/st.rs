@@ -38,7 +38,7 @@ impl St {
     &'a mut self,
     bound_vars: &'a BoundTyVars,
   ) -> impl Iterator<Item = MetaTyVar> + 'a {
-    self.meta_gen.gen_from(bound_vars)
+    bound_vars.gen_with(&mut self.meta_gen)
   }
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: hir::TyVar) -> FixedTyVar {
