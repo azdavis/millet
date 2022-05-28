@@ -508,7 +508,7 @@ pub(crate) type Subst = FxHashMap<MetaTyVar, SubstEntry>;
 
 #[derive(Debug)]
 pub(crate) enum SubstEntry {
-  Equality,
+  Kind(TyVarKind),
   Set(Ty),
 }
 
@@ -552,7 +552,9 @@ fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, 
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
-      None | Some(SubstEntry::Equality) => assert!(map.insert(mv.clone(), None).is_none()),
+      None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {
+        assert!(map.insert(mv.clone(), None).is_none())
+      }
       Some(SubstEntry::Set(ty)) => meta_vars(subst, map, ty),
     },
     Ty::Record(rows) => {
@@ -589,7 +591,7 @@ impl<'a> Generalizer<'a> {
           let bv = self.meta.get_mut(mv);
           handle_bv(bv, &mut self.bound_vars, None, ty)
         }
-        Some(SubstEntry::Equality) => {
+        Some(SubstEntry::Kind(TyVarKind::Equality)) => {
           let bv = self.meta.get_mut(mv);
           handle_bv(bv, &mut self.bound_vars, Some(TyVarKind::Equality), ty)
         }

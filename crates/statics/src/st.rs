@@ -48,7 +48,7 @@ impl St {
         Some(TyVarKind::Equality) => {
           assert!(self
             .subst
-            .insert(mv.clone(), SubstEntry::Equality)
+            .insert(mv.clone(), SubstEntry::Kind(TyVarKind::Equality))
             .is_none())
         }
       }

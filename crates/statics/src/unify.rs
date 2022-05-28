@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Idx};
 use crate::st::St;
-use crate::types::{MetaTyVar, Subst, SubstEntry, Ty};
+use crate::types::{MetaTyVar, Subst, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
@@ -45,7 +45,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
         Err(UnifyError::OccursCheck(mv, ty))
       } else {
         match subst.insert(mv, SubstEntry::Set(ty)) {
-          None | Some(SubstEntry::Equality) => {}
+          None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
           Some(SubstEntry::Set(t)) => panic!("meta var already set to {t:?}"),
         }
         Ok(())
