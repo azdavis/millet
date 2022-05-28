@@ -33,7 +33,7 @@ impl St {
   }
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
-    self.meta_gen.gen(false)
+    self.meta_gen.gen()
   }
 
   pub(crate) fn gen_from<'a>(

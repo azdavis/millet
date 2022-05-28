@@ -236,14 +236,14 @@ impl BoundTyVars {
   }
 
   pub(crate) fn gen_with<'a>(&'a self, mv: &'a mut MetaTyVarGen) -> impl Iterator<Item = Ty> + 'a {
-    self.inner.iter().map(|x| match x {
-      TyVarKind::Regular => Ty::MetaVar(mv.gen(false)),
-      TyVarKind::Equality => Ty::MetaVar(mv.gen(true)),
-    })
+    self
+      .inner
+      .iter()
+      .map(|k| Ty::MetaVar(mv.gen_with(k.clone())))
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum TyVarKind {
   Regular,
   Equality,
@@ -280,14 +280,13 @@ impl BoundTyVar {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct MetaTyVar {
   id: Uniq,
-  equality: bool,
+  kind: TyVarKind,
 }
 
 impl fmt::Display for MetaTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let hd = if self.equality { "''" } else { "'" };
     // not real syntax, but since it's ultimately a number it won't clash with other ty vars
-    write!(f, "{}{}", hd, self.id)
+    write!(f, "{}{}", self.kind.head(), self.id)
   }
 }
 
@@ -295,11 +294,15 @@ impl fmt::Display for MetaTyVar {
 pub(crate) struct MetaTyVarGen(UniqGen);
 
 impl MetaTyVarGen {
-  pub(crate) fn gen(&mut self, equality: bool) -> MetaTyVar {
+  fn gen_with(&mut self, kind: TyVarKind) -> MetaTyVar {
     MetaTyVar {
       id: self.0.gen(),
-      equality,
+      kind,
     }
+  }
+
+  pub(crate) fn gen(&mut self) -> MetaTyVar {
+    self.gen_with(TyVarKind::Regular)
   }
 }
 
@@ -613,13 +616,18 @@ impl<'a> Generalizer<'a> {
     match ty {
       Ty::None => {}
       Ty::BoundVar(_) => unreachable!(),
-      Ty::MetaVar(mv) => handle_bv(self.meta.get_mut(mv), &mut self.bound_vars, mv.equality, ty),
-      Ty::FixedVar(fv) => handle_bv(
-        self.fixed.0.get_mut(fv),
-        &mut self.bound_vars,
-        fv.ty_var.is_equality(),
-        ty,
-      ),
+      Ty::MetaVar(mv) => {
+        let bv = self.meta.get_mut(mv);
+        handle_bv(bv, &mut self.bound_vars, mv.kind.clone(), ty)
+      }
+      Ty::FixedVar(fv) => {
+        let kind = if fv.ty_var.is_equality() {
+          TyVarKind::Equality
+        } else {
+          TyVarKind::Regular
+        };
+        handle_bv(self.fixed.0.get_mut(fv), &mut self.bound_vars, kind, ty)
+      }
       Ty::Record(rows) => {
         for ty in rows.values_mut() {
           self.go(ty);
@@ -641,7 +649,7 @@ impl<'a> Generalizer<'a> {
 fn handle_bv(
   bv: Option<&mut Option<BoundTyVar>>,
   bound_vars: &mut BoundTyVars,
-  equality: bool,
+  kind: TyVarKind,
   ty: &mut Ty,
 ) {
   let bv = match bv {
@@ -653,11 +661,6 @@ fn handle_bv(
     None => {
       let ret = BoundTyVar(bound_vars.len());
       *bv = Some(ret.clone());
-      let kind = if equality {
-        TyVarKind::Equality
-      } else {
-        TyVarKind::Regular
-      };
       bound_vars.inner.push(kind);
       ret
     }
