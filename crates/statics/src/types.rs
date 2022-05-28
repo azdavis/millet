@@ -584,7 +584,7 @@ fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, 
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
       None | Some(SubstEntry::Kind(_)) => {
-        assert!(map.insert(mv.clone(), None).is_none())
+        map.insert(mv.clone(), None);
       }
       Some(SubstEntry::Set(ty)) => meta_vars(subst, map, ty),
     },
