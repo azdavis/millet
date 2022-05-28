@@ -70,7 +70,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut ty_env = TyEnv::default();
       for ty_bind in ty_binds {
         let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars);
-        let mut ty_scheme = TyScheme::mono(ty::get(st, &cx, ars, ty_bind.ty));
+        let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty_bind.ty));
         generalize(st.subst(), fixed, &mut ty_scheme);
         let ty_info = TyInfo {
           ty_scheme,
@@ -101,7 +101,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           if let Some(of_ty) = con_bind.ty {
             ty = Ty::fun(ty::get(st, &cx, ars, of_ty), ty);
           };
-          let mut ty_scheme = TyScheme::mono(ty);
+          let mut ty_scheme = TyScheme::zero(ty);
           generalize(st.subst(), fixed.clone(), &mut ty_scheme);
           let vi = ValInfo {
             ty_scheme,
@@ -111,7 +111,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             st.err(dec, ErrorKind::Duplicate(Item::Val, con_bind.name.clone()));
           }
         }
-        let mut ty_scheme = TyScheme::mono(out_ty);
+        let mut ty_scheme = TyScheme::zero(out_ty);
         generalize(st.subst(), fixed, &mut ty_scheme);
         let ty_info = TyInfo { ty_scheme, val_env };
         st.syms.finish_datatype(dat, ty_info.clone());
@@ -146,7 +146,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
               ty = Ty::fun(ty::get(st, cx, ars, of_ty), ty);
             }
             let vi = ValInfo {
-              ty_scheme: TyScheme::mono(ty),
+              ty_scheme: TyScheme::zero(ty),
               id_status: IdStatus::Exn,
             };
             if val_env.insert(name.clone(), vi).is_some() {

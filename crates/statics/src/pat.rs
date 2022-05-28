@@ -135,7 +135,7 @@ where
   I: Into<Idx>,
 {
   let vi = ValInfo {
-    ty_scheme: TyScheme::mono(ty),
+    ty_scheme: TyScheme::zero(ty),
     id_status: IdStatus::Val,
   };
   if ve.insert(name.clone(), vi).is_some() {

@@ -27,7 +27,7 @@ pub(crate) fn get() -> (Syms, Cx) {
     .chain(std::iter::once((
       hir::Name::new("unit"),
       TyInfo {
-        ty_scheme: TyScheme::mono(Ty::Record(BTreeMap::new())),
+        ty_scheme: TyScheme::zero(Ty::Record(BTreeMap::new())),
         val_env: ValEnv::default(),
       },
     )))
@@ -38,7 +38,7 @@ pub(crate) fn get() -> (Syms, Cx) {
     let num_pair_to_num = TyScheme::one(|a| (dup(a.clone()), a, ov(Overload::Num)));
     let numtxt_pair_to_bool =
       TyScheme::one(|a| (dup(a), Ty::zero(Sym::BOOL), ov(Overload::NumTxt)));
-    let real_pair_to_real = TyScheme::mono(Ty::fun(dup(Ty::zero(Sym::REAL)), Ty::zero(Sym::REAL)));
+    let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::zero(Sym::REAL)), Ty::zero(Sym::REAL)));
     let assign = TyScheme::one(|a| {
       (
         pair(Ty::Con(vec![a.clone()], Sym::REF), a),
@@ -86,7 +86,7 @@ pub(crate) fn get() -> (Syms, Cx) {
         ty = Ty::fun(param, ty);
       }
       let vi = ValInfo {
-        ty_scheme: TyScheme::mono(ty),
+        ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn,
       };
       (hir::Name::new(name), vi)

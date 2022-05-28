@@ -194,8 +194,8 @@ pub(crate) struct TyScheme {
 }
 
 impl TyScheme {
-  /// mono as in a monotype. this type scheme binds zero variables.
-  pub(crate) fn mono(ty: Ty) -> Self {
+  /// zero as in this type scheme binds zero variables.
+  pub(crate) fn zero(ty: Ty) -> Self {
     Self {
       bound_vars: BoundTyVars::default(),
       ty,
@@ -389,7 +389,7 @@ impl Syms {
     let sym = self.insert(
       name,
       TyInfo {
-        ty_scheme: TyScheme::mono(Ty::None),
+        ty_scheme: TyScheme::zero(Ty::None),
         val_env: ValEnv::default(),
       },
     );
@@ -407,7 +407,7 @@ impl Syms {
   /// Returns a `Syms` with all the built-in types, like `int`, `bool`, and `string`.
   pub(crate) fn standard_basis() -> Self {
     fn zero(s: Sym) -> TyScheme {
-      TyScheme::mono(Ty::zero(s))
+      TyScheme::zero(Ty::zero(s))
     }
 
     fn one(s: Sym) -> TyScheme {
