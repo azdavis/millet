@@ -35,20 +35,20 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         let (pm_pat, want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
         get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want, dec.into());
       }
-      // deal with the recursive ones. first do all the patterns so we can update the val env. we
-      // also need a separate recursive-only val env.
+      // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
+      // also need a separate recursive-only ValEnv.
       let mut rec_ve = ValEnv::default();
       let got_pats: Vec<_> = val_binds[idx..]
         .iter()
         .map(|val_bind| pat::get(st, &cx, ars, &mut rec_ve, val_bind.pat))
         .collect();
-      // merge the recursive and non-recursive val envs, making sure they don't clash.
+      // merge the recursive and non-recursive ValEnvs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
         if ve.insert(name.clone(), val_info.clone()).is_some() {
           st.err(dec, ErrorKind::Redefined);
         }
       }
-      // extend the cx with only the recursive val env.
+      // extend the cx with only the recursive ValEnv.
       cx.env.val_env.extend(rec_ve);
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
         if let Some(exp) = val_bind.exp {
@@ -58,7 +58,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
         get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want, dec.into());
       }
-      // generalize the entire merged val env.
+      // generalize the entire merged ValEnv.
       for val_info in ve.values_mut() {
         generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
       }
