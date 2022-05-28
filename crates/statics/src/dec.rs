@@ -178,8 +178,13 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       cx.env.extend(local_env);
       get(st, &cx, ars, env, *in_dec);
     }
-    hir::Dec::Open(_) => {
-      // TODO
+    hir::Dec::Open(paths) => {
+      for path in paths {
+        match get_env(&cx.env, path.all_names()) {
+          Ok(got_env) => env.extend(got_env.clone()),
+          Err(_) => st.err(dec, ErrorKind::Undefined),
+        }
+      }
     }
     hir::Dec::Seq(decs) => {
       for &dec in decs {

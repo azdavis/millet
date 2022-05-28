@@ -290,6 +290,10 @@ impl Path {
   pub fn structures(&self) -> &[Name] {
     &self.structures
   }
+
+  pub fn all_names(&self) -> impl Iterator<Item = &Name> {
+    self.structures.iter().chain(std::iter::once(&self.last))
+  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
