@@ -26,6 +26,7 @@
     "powf",
     "prec",
     "ptrs",
+    "realint",
     "rustc",
     "rustfmt",
     "scon",
@@ -36,6 +37,7 @@
     "syms",
     "triviable",
     "ungram",
-    "withtype"
+    "withtype",
+    "wordint"
   ]
 }

@@ -194,10 +194,23 @@ pub(crate) struct TyScheme {
 }
 
 impl TyScheme {
+  /// mono as in a monotype. this type scheme binds zero variables.
   pub(crate) fn mono(ty: Ty) -> Self {
     Self {
       bound_vars: BoundTyVars::default(),
       ty,
+    }
+  }
+
+  /// one as in this type scheme binds one variable.
+  pub(crate) fn one<F>(f: F) -> Self
+  where
+    F: FnOnce(Ty) -> (Ty, Ty, Option<TyVarKind>),
+  {
+    let (param, res, kind) = f(Ty::BoundVar(BoundTyVar(0)));
+    Self {
+      bound_vars: BoundTyVars { inner: vec![kind] },
+      ty: Ty::fun(param, res),
     }
   }
 

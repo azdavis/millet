@@ -1,4 +1,6 @@
-use crate::types::{Cx, Env, StrEnv, Sym, Syms, Ty, TyInfo, TyScheme, ValEnv};
+use crate::types::{
+  Cx, Env, IdStatus, Overload, StrEnv, Sym, Syms, Ty, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
+};
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
@@ -31,10 +33,57 @@ pub(crate) fn get() -> (Syms, Cx) {
       },
     )))
     .collect();
+  let fns = {
+    let realint_to_realint = TyScheme::one(|a| (a.clone(), a, ov(Overload::RealInt)));
+    let wordint_pair_to_wordint = TyScheme::one(|a| (dup(a.clone()), a, ov(Overload::WordInt)));
+    let num_pair_to_num = TyScheme::one(|a| (dup(a.clone()), a, ov(Overload::Num)));
+    let numtxt_pair_to_bool =
+      TyScheme::one(|a| (dup(a), Ty::zero(Sym::BOOL), ov(Overload::NumTxt)));
+    let real_pair_to_real = TyScheme::mono(Ty::fun(dup(Ty::zero(Sym::REAL)), Ty::zero(Sym::REAL)));
+    let assign = TyScheme::one(|a| {
+      (
+        pair(Ty::Con(vec![a.clone()], Sym::REF), a),
+        Ty::Record(BTreeMap::new()),
+        None,
+      )
+    });
+    let eq = TyScheme::one(|a| (dup(a), Ty::zero(Sym::BOOL), Some(TyVarKind::Equality)));
+    [
+      ("abs", realint_to_realint.clone()),
+      ("~", realint_to_realint),
+      ("div", wordint_pair_to_wordint.clone()),
+      ("mod", wordint_pair_to_wordint),
+      ("*", num_pair_to_num.clone()),
+      ("/", real_pair_to_real),
+      ("+", num_pair_to_num.clone()),
+      ("-", num_pair_to_num),
+      ("<", numtxt_pair_to_bool.clone()),
+      (">", numtxt_pair_to_bool.clone()),
+      ("<=", numtxt_pair_to_bool.clone()),
+      (">=", numtxt_pair_to_bool),
+      (":=", assign),
+      ("=", eq),
+    ]
+  };
   let val_env: FxHashMap<_, _> = ty_env
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
-    .chain([])
+    .chain(fns.into_iter().map(|(name, ty_scheme)| {
+      let vi = ValInfo {
+        ty_scheme,
+        id_status: IdStatus::Val,
+      };
+      (hir::Name::new(name), vi)
+    }))
+    .chain(["Match", "Bind"].into_iter().map(|name| {
+      (
+        hir::Name::new(name),
+        ValInfo {
+          ty_scheme: TyScheme::mono(Ty::zero(Sym::EXN)),
+          id_status: IdStatus::Exn,
+        },
+      )
+    }))
     .collect();
   let cx = Cx {
     env: Env {
@@ -45,4 +94,19 @@ pub(crate) fn get() -> (Syms, Cx) {
     ty_vars: FxHashMap::default(),
   };
   (syms, cx)
+}
+
+fn ov(x: Overload) -> Option<TyVarKind> {
+  Some(TyVarKind::Overloaded(x))
+}
+
+fn dup(ty: Ty) -> Ty {
+  pair(ty.clone(), ty)
+}
+
+fn pair(t1: Ty, t2: Ty) -> Ty {
+  Ty::Record(BTreeMap::from([
+    (hir::Lab::Num(1), t1),
+    (hir::Lab::Num(2), t2),
+  ]))
 }
