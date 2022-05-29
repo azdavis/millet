@@ -154,6 +154,46 @@ fn get_region(indices: &[usize], range: Range<usize>) -> Option<Region> {
   })
 }
 
+/// see [`get_expect_comment`].
+const EXPECT_COMMENT_START: &str = "(**";
+
+/// parses expectation comments from a line of text. the line will be the following in order:
+///
+/// - zero or more of any character
+/// - the string EXPECT_COMMENT_START (the comment start)
+/// - zero or more spaces
+/// - one of `^` or `v` (the arrow character)
+/// - zero or more non-spaces (the column range for the arrow. usually these are all the same as the
+///   arrow character)
+/// - one or more spaces
+/// - one or more of any character (the message)
+/// - zero or more spaces
+/// - the string `*)` (the comment end)
+/// - zero or more of any character
+///
+/// if yes this returns Some((line, col_range, msg)), else returns None.
+///
+/// note the arrows might be a little wonky with non-ascii.
+fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
+  let (before, inner) = line_s.split_once(EXPECT_COMMENT_START)?;
+  let (inner, _) = inner.split_once("*)")?;
+  let non_space_idx = inner.find(|c| c != ' ')?;
+  let inner = &inner[non_space_idx..];
+  let (col_range, msg) = inner.split_once(' ')?;
+  let line = match col_range.chars().next()? {
+    '^' => line_n - 1,
+    'v' => line_n + 1,
+    c => panic!("invalid arrow: {c}"),
+  };
+  let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
+  let end = start + col_range.len();
+  let region = Region {
+    line,
+    col: start..end,
+  };
+  Some((region, msg.trim_end_matches(' ')))
+}
+
 fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   let show = env_var_yes("SHOW");
   let lexed = lex::get(s);
@@ -215,44 +255,4 @@ fn check_impl_old(s: &str) -> Result<(), Located<String>> {
   }
   statics.finish();
   Ok(())
-}
-
-/// see [`get_expect_comment`].
-const EXPECT_COMMENT_START: &str = "(**";
-
-/// parses expectation comments from a line of text. the line will be the following in order:
-///
-/// - zero or more of any character
-/// - the string EXPECT_COMMENT_START (the comment start)
-/// - zero or more spaces
-/// - one of `^` or `v` (the arrow character)
-/// - zero or more non-spaces (the column range for the arrow. usually these are all the same as the
-///   arrow character)
-/// - one or more spaces
-/// - one or more of any character (the message)
-/// - zero or more spaces
-/// - the string `*)` (the comment end)
-/// - zero or more of any character
-///
-/// if yes this returns Some((line, col_range, msg)), else returns None.
-///
-/// note the arrows might be a little wonky with non-ascii.
-fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
-  let (before, inner) = line_s.split_once(EXPECT_COMMENT_START)?;
-  let (inner, _) = inner.split_once("*)")?;
-  let non_space_idx = inner.find(|c| c != ' ')?;
-  let inner = &inner[non_space_idx..];
-  let (col_range, msg) = inner.split_once(' ')?;
-  let line = match col_range.chars().next()? {
-    '^' => line_n - 1,
-    'v' => line_n + 1,
-    c => panic!("invalid arrow: {c}"),
-  };
-  let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
-  let end = start + col_range.len();
-  let region = Region {
-    line,
-    col: start..end,
-  };
-  Some((region, msg.trim_end_matches(' ')))
 }
