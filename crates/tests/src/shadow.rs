@@ -46,7 +46,6 @@ val _: int = S.x
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_05() {
   check(
     r#"

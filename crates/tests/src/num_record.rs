@@ -1,7 +1,6 @@
 use crate::check::check;
 
 #[test]
-#[ignore = "todo for new"]
 fn t_01() {
   check(
     r#"
@@ -24,7 +23,6 @@ type t = { 0: int, 1: bool }
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"
@@ -36,7 +34,6 @@ type t = { 1: int }
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_04() {
   check(
     r#"

@@ -4,7 +4,6 @@ mod dec;
 mod exp;
 
 #[test]
-#[ignore = "todo for new"]
 fn pat() {
   check(
     r#"

@@ -95,35 +95,32 @@ val _: bool = #"e" >= #"e"
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_05() {
   check(
     r#"
 val _ = 1.1 + 1
-(**     ^^^^^^^ mismatched types: expected real, found int *)
+(**     ^^^^^^^ mismatched types: expected _ * _ -> _, found real * int -> _ *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_06() {
   check(
     r#"
 val add = op+
 val _ = add (false, true)
-(**     ^^^^^^^^^^^^^^^^^ mismatched types: expected one of int, word, real, found bool *)
+(**     ^^^^^^^^^^^^^^^^^ mismatched types: expected _ * _ -> _ with word, real, or int, found bool * bool -> _ *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_07() {
   check(
     r#"
 val  _ = false + true
-(**      ^^^^^^^^^^^^ mismatched types: expected one of int, word, real, found bool *)
+(**      ^^^^^^^^^^^^ mismatched types: expected _ * _ -> _ with word, real, or int, found bool * bool -> _ *)
 "#,
   );
 }

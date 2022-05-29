@@ -49,7 +49,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn wrong_id_status() {
   check(
     r#"
@@ -57,7 +56,7 @@ val C = 3
 val _ =
   case 3 of
     C _ => 1
-(** ^ mismatched identifier status: expected constructor or exception, found value *)
+(** ^^^ value binding used as a pattern *)
   | _ => 2
 "#,
   );
@@ -77,7 +76,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn infix() {
   check(
     r#"
