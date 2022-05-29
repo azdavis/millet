@@ -158,6 +158,9 @@ fn get_region(indices: &[usize], range: Range<usize>) -> Option<Region> {
 }
 
 fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
+  if s.contains("new-todo") {
+    return Ok(());
+  }
   let lexed = lex::get(s);
   if let Some(err) = lexed.errors.into_iter().next() {
     return Err((err.range, err.kind.to_string()));
