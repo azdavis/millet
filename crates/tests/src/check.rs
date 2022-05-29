@@ -41,13 +41,13 @@ enum Reason<'a> {
   WantWrongNumError,
   NoErrorsEmitted,
   CannotGetRegion(Range<usize>),
-  GotButNotWanted(Region, String),
-  MismatchedErrors(Region, &'a str, String),
+  GotButNotWanted(OneLineRegion, String),
+  MismatchedErrors(OneLineRegion, &'a str, String),
 }
 
 struct Cx<'a> {
   indices: Vec<usize>,
-  want: FxHashMap<Region, &'a str>,
+  want: FxHashMap<OneLineRegion, &'a str>,
   reasons: Vec<Reason<'a>>,
 }
 
@@ -127,12 +127,12 @@ impl fmt::Display for Cx<'_> {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-struct Region {
+struct OneLineRegion {
   line: usize,
   col: Range<usize>,
 }
 
-impl fmt::Display for Region {
+impl fmt::Display for OneLineRegion {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     // don't add 1 for the line because the check strings usually have the first line blank.
     write!(
@@ -145,18 +145,26 @@ impl fmt::Display for Region {
   }
 }
 
-fn get_line_col(indices: &[usize], idx: usize) -> Option<(usize, usize)> {
-  let line = indices.iter().position(|&i| idx <= i)?;
-  let col_start = indices.get(line.checked_sub(1)?)?.checked_add(1)?;
-  Some((line, idx.checked_sub(col_start)?))
+struct LineCol {
+  line: usize,
+  col: usize,
 }
 
-fn get_region(indices: &[usize], range: Range<usize>) -> Option<Region> {
-  let (start_line, start_col) = get_line_col(indices, range.start)?;
-  let (end_line, end_col) = get_line_col(indices, range.end)?;
-  (start_line == end_line).then(|| Region {
-    line: start_line,
-    col: start_col..end_col,
+fn get_line_col(indices: &[usize], idx: usize) -> Option<LineCol> {
+  let line = indices.iter().position(|&i| idx <= i)?;
+  let col_start = indices.get(line.checked_sub(1)?)?.checked_add(1)?;
+  Some(LineCol {
+    line,
+    col: idx.checked_sub(col_start)?,
+  })
+}
+
+fn get_region(indices: &[usize], range: Range<usize>) -> Option<OneLineRegion> {
+  let start = get_line_col(indices, range.start)?;
+  let end = get_line_col(indices, range.end)?;
+  (start.line == end.line).then(|| OneLineRegion {
+    line: start.line,
+    col: start.col..end.col,
   })
 }
 
@@ -180,7 +188,7 @@ const EXPECT_COMMENT_START: &str = "(**";
 /// if yes this returns Some((line, col_range, msg)), else returns None.
 ///
 /// note the arrows might be a little wonky with non-ascii.
-fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
+fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(OneLineRegion, &str)> {
   let (before, inner) = line_s.split_once(EXPECT_COMMENT_START)?;
   let (inner, _) = inner.split_once("*)")?;
   let non_space_idx = inner.find(|c| c != ' ')?;
@@ -193,7 +201,7 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
   };
   let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
   let end = start + col_range.len();
-  let region = Region {
+  let region = OneLineRegion {
     line,
     col: start..end,
   };
