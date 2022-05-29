@@ -18,19 +18,20 @@ pub(crate) fn get() -> (Syms, Cx) {
     Sym::LIST,
     Sym::ORDER,
   ];
+  let aliases = [("unit", Ty::Record(BTreeMap::new()))];
   let ty_env: FxHashMap<_, _> = builtin
     .iter()
     .map(|s| {
       let (name, info) = syms.get(s);
       (name.clone(), info.clone())
     })
-    .chain(std::iter::once((
-      hir::Name::new("unit"),
-      TyInfo {
-        ty_scheme: TyScheme::zero(Ty::Record(BTreeMap::new())),
+    .chain(aliases.into_iter().map(|(name, ty)| {
+      let vi = TyInfo {
+        ty_scheme: TyScheme::zero(ty),
         val_env: ValEnv::default(),
-      },
-    )))
+      };
+      (hir::Name::new(name), vi)
+    }))
     .collect();
   let fns = {
     let realint_to_realint = TyScheme::one(|a| (a.clone(), a, ov(Overload::RealInt)));
