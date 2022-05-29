@@ -108,7 +108,6 @@ fn fixity() {
     r#"
 infix hi
 fun (() hi ()) = 3
-(*
 val _: int = () hi ()
 
 infixr uh
@@ -118,7 +117,6 @@ val _: int = () uh ()
 nonfix hi uh
 val _: int = hi ((), ())
 val _: int = uh ((), ())
-*)
 "#,
   );
 }
