@@ -15,6 +15,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.57"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -129,6 +135,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d43db9f547ba2787bdeac81ef97ccc80784f385b3b39b4d50344270629a2bee3"
 
 [[package]]
+name = "lang-srv"
+version = "0.1.0"
+dependencies = [
+ "analysis",
+ "anyhow",
+ "lsp-server",
+ "lsp-types",
+ "serde",
+ "serde_json",
+ "text-pos",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -142,12 +161,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "log"
+version = "0.4.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "lower"
 version = "0.1.0"
 dependencies = [
  "fast-hash",
  "hir",
  "syntax",
+]
+
+[[package]]
+name = "lsp-server"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f70570c1c29cf6654029b8fe201a5507c153f0d85be6f234d471d756bc36775a"
+dependencies = [
+ "crossbeam-channel",
+ "log",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -430,6 +470,14 @@ dependencies = [
  "parse",
  "statics",
  "syntax",
+]
+
+[[package]]
+name = "text-pos"
+version = "0.1.0"
+source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+dependencies = [
+ "text-size",
 ]
 
 [[package]]
