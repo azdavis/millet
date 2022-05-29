@@ -4,7 +4,6 @@ use crate::check::check;
 fn t_01() {
   check(
     r#"
-(* new-todo *)
 functor F (A: sig end) = struct end
 (* ok to pass extra things in the struct *)
 structure S = F (struct
@@ -18,7 +17,6 @@ end)
 fn t_02() {
   check(
     r#"
-(* new-todo *)
 functor F (A: sig
   type t
 end) = struct end
@@ -32,7 +30,6 @@ structure S = F (struct end)
 fn t_03() {
   check(
     r#"
-(* new-todo *)
 functor F (A: sig
   exception Foo
 end) = struct end
@@ -46,7 +43,6 @@ structure S = F (struct val Foo = Match end)
 fn t_04() {
   check(
     r#"
-(* new-todo *)
 signature SIG = sig
   type t
   val foo: t
@@ -85,7 +81,6 @@ val done: string list = [guh, Impl.foo, S.what, "why"]
 fn t_05() {
   check(
     r#"
-(* new-todo *)
 functor Id (S: sig end) = S
 
 structure Guy = Id (struct
@@ -102,7 +97,6 @@ val _: int = Guy.x
 fn t_06() {
   check(
     r#"
-(* new-todo *)
 signature SIG = sig
   val x: int
 end
@@ -123,7 +117,6 @@ val _ = S.x
 fn t_07() {
   check(
     r#"
-(* new-todo *)
 functor F (A: sig end) = struct
   datatype t = C
   fun f C = ()
@@ -145,7 +138,6 @@ val _ = One.f Two.C
 fn t_08() {
   check(
     r#"
-(* new-todo *)
 signature SIG = sig
   type t
 end
@@ -169,7 +161,6 @@ val _: B.t = 3
 fn t_09() {
   check(
     r#"
-(* new-todo *)
 signature SIG = sig
   type t
   val x: t
@@ -216,7 +207,6 @@ val _ = A.f (D.f D.x)
 fn t_10() {
   check(
     r#"
-(* new-todo *)
 structure A = struct
   datatype t = B | C
 end
@@ -244,7 +234,6 @@ val _ =
 fn t_11() {
   check(
     r#"
-(* new-todo *)
 structure A = struct
   datatype t = B | C
 end

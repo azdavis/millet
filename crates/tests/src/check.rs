@@ -158,9 +158,6 @@ fn get_region(indices: &[usize], range: Range<usize>) -> Option<Region> {
 }
 
 fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
-  if s.contains("new-todo") {
-    return Ok(());
-  }
   let show = env_var_yes("SHOW");
   let new = env_var_yes("NEW");
   let lexed = lex::get(s);

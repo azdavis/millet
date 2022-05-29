@@ -93,7 +93,6 @@ val _ =
 fn open() {
   check(
     r#"
-(* new-todo *)
 structure S = struct
   val x = 3
 end
