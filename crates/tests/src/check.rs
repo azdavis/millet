@@ -248,6 +248,9 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     return Err((err.range, err.kind.to_string()));
   }
   let lowered = lower::get(&parsed.root);
+  if let Some(err) = lowered.errors.into_iter().next() {
+    return Err((err.range, err.kind.to_string()));
+  }
   let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
   if let Some(err) = errors.into_iter().next() {
     let ptr = match err.idx() {

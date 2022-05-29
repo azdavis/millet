@@ -1,7 +1,7 @@
 use crate::common::{get_name, get_path};
-use crate::util::Cx;
+use crate::util::{Cx, ErrorKind};
 use crate::{dec, ty};
-use syntax::ast::{self, AstPtr};
+use syntax::ast::{self, AstNode as _, AstPtr};
 
 pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
   match top_dec {
@@ -114,7 +114,7 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   let spec = spec?;
   let mut specs: Vec<_> = spec
     .spec_in_seqs()
-    .map(|x| get_spec_one(cx, x.spec_one()?))
+    .filter_map(|x| get_spec_one(cx, x.spec_one()?))
     .collect();
   if specs.len() == 1 {
     specs.pop().unwrap()
@@ -123,8 +123,9 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   }
 }
 
-fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
+fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
   let ptr = AstPtr::new(&spec);
+  let range = spec.syntax().text_range();
   let ret = match spec {
     ast::SpecOne::ValSpec(spec) => hir::Spec::Val(
       spec
@@ -181,9 +182,12 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
         )
       }
     }
-    ast::SpecOne::SharingSpec(_) => todo!(),
+    ast::SpecOne::SharingSpec(_) => {
+      cx.err(range, ErrorKind::Unsupported);
+      return None;
+    }
   };
-  cx.spec_one(ret, ptr)
+  Some(cx.spec_one(ret, ptr))
 }
 
 fn ascription_tail(

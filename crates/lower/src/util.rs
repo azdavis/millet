@@ -1,6 +1,7 @@
 use fast_hash::FxHashMap;
 use std::fmt;
 use syntax::ast::{self, AstNode, AstPtr};
+use syntax::rowan::TextRange;
 
 pub type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
 
@@ -103,9 +104,30 @@ where
   }
 }
 
+#[derive(Debug)]
+pub struct Error {
+  pub range: TextRange,
+  pub kind: ErrorKind,
+}
+
+#[derive(Debug)]
+pub enum ErrorKind {
+  Unsupported,
+}
+
+impl fmt::Display for ErrorKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ErrorKind::Unsupported => f.write_str("unsupported language construct"),
+    }
+  }
+}
+
 /// The result of lowering.
 #[derive(Debug)]
 pub struct Lower {
+  /// The errors.
+  pub errors: Vec<Error>,
   /// The arenas.
   pub arenas: hir::Arenas,
   /// The pointers.
@@ -117,6 +139,7 @@ pub struct Lower {
 #[derive(Debug, Default)]
 pub(crate) struct Cx {
   fresh_idx: u32,
+  errors: Vec<Error>,
   arenas: hir::Arenas,
   ptrs: Ptrs,
 }
@@ -132,8 +155,13 @@ impl Cx {
     ret
   }
 
+  pub(crate) fn err(&mut self, range: TextRange, kind: ErrorKind) {
+    self.errors.push(Error { range, kind })
+  }
+
   pub(crate) fn finish(self, top_decs: Vec<hir::TopDec>) -> Lower {
     Lower {
+      errors: self.errors,
       arenas: self.arenas,
       ptrs: self.ptrs,
       top_decs,
