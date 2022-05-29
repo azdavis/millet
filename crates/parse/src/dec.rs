@@ -2,7 +2,7 @@ use crate::exp::exp;
 use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{eat_name_plus, many_sep, maybe_semi_sep, must, name_plus, path};
+use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_plus, path};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>) -> Exited {
@@ -49,7 +49,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
             if saw_op {
               p.bump();
             }
-            if let Some(name) = eat_name_plus(p) {
+            if let Some(name) = eat_name_star(p) {
               if !saw_op && p.contains_op(name.text) {
                 p.error(ErrorKind::InfixWithoutOp);
               }
@@ -90,7 +90,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
       if p.at(SK::OpKw) {
         p.bump();
       }
-      eat_name_plus(p);
+      eat_name_star(p);
       if of_ty(p).is_none() && p.at(SK::Eq) {
         let en = p.enter();
         p.bump();
@@ -174,7 +174,7 @@ pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
       if allow_op && p.at(SK::OpKw) {
         p.bump();
       }
-      eat_name_plus(p);
+      eat_name_star(p);
       let _ = of_ty(p);
     });
   });
@@ -201,7 +201,7 @@ fn ty_binds(p: &mut Parser<'_>) {
 
 fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
   must(p, at_pat, Expected::Pat);
-  if let Some(name) = eat_name_plus(p) {
+  if let Some(name) = eat_name_star(p) {
     if !p.contains_op(name.text) {
       p.error(ErrorKind::NotInfix);
     }

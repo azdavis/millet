@@ -146,19 +146,30 @@ pub(crate) fn lab(p: &mut Parser<'_>) {
   }
 }
 
-/// kind of badly named
+/// kind of badly named. it means Name, * or =
 #[must_use]
 pub(crate) fn name_plus(p: &mut Parser<'_>) -> bool {
   name_star(p, 0) || p.at(SK::Eq)
 }
 
+/// kind of badly named. it means Name or *
 #[must_use]
 pub(crate) fn name_star(p: &mut Parser<'_>, n: usize) -> bool {
   p.at_n(n, SK::Name) || p.at_n(n, SK::Star)
 }
 
-pub(crate) fn eat_name_plus<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
+fn eat_name_plus<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
   if name_plus(p) {
+    Some(p.bump())
+  } else {
+    p.error(ErrorKind::ExpectedKind(SK::Name));
+    None
+  }
+}
+
+/// see [`name_star`].
+pub(crate) fn eat_name_star<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
+  if name_star(p, 0) {
     Some(p.bump())
   } else {
     p.error(ErrorKind::ExpectedKind(SK::Name));

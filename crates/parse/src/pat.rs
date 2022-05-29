@@ -1,7 +1,7 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::ty::ty_annotation;
 use crate::util::{
-  comma_sep, eat_name_plus, lab, must, name_star, path, scon, should_break, ShouldBreak,
+  comma_sep, eat_name_star, lab, must, name_star, path, scon, should_break, ShouldBreak,
 };
 use syntax::SyntaxKind as SK;
 
@@ -40,7 +40,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     if p.at(SK::OpKw) {
       p.bump();
     }
-    eat_name_plus(p);
+    eat_name_star(p);
     let ta = ty_annotation(p);
     let ap = as_pat_tl(p);
     let kind = match (ta, ap) {
@@ -146,7 +146,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
         must(p, pat, Expected::Pat);
         p.exit(en, SK::LabAndPatPatRow);
       } else {
-        eat_name_plus(p);
+        eat_name_star(p);
         let _ = ty_annotation(p);
         let _ = as_pat_tl(p);
         p.exit(en, SK::LabPatRow);
