@@ -37,15 +37,6 @@ pub(crate) fn check(s: &str) {
   }
 }
 
-enum Reason<'a> {
-  WantWrongNumError(usize),
-  NoErrorsEmitted(usize),
-  CannotGetLineColPair(Range<usize>),
-  NotOneLine(Range<LineCol>),
-  GotButNotWanted(OneLineRegion, String),
-  MismatchedErrors(OneLineRegion, &'a str, String),
-}
-
 struct Cx<'a> {
   indices: Vec<usize>,
   want: FxHashMap<OneLineRegion, &'a str>,
@@ -138,6 +129,15 @@ impl fmt::Display for Cx<'_> {
     writeln!(f)?;
     Ok(())
   }
+}
+
+enum Reason<'a> {
+  WantWrongNumError(usize),
+  NoErrorsEmitted(usize),
+  CannotGetLineColPair(Range<usize>),
+  NotOneLine(Range<LineCol>),
+  GotButNotWanted(OneLineRegion, String),
+  MismatchedErrors(OneLineRegion, &'a str, String),
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
