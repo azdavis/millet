@@ -13,7 +13,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_01() {
   check(
     r#"
@@ -22,8 +21,8 @@ val _ =
     datatype foo = bar
     val quz = bar
   in
-    true; false; bar; 3 + 3; quz
-(**                          ^^^ type name escapes its scope *)
+    (true; false; bar; 3 + 3; quz)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type name escapes its scope *)
   end
 "#,
   );
