@@ -169,21 +169,19 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   if std::env::var_os("SHOW").map_or(false, |x| x == "1") {
     eprintln!("{:#?}", parsed.root);
   }
+  let lowered = lower::get(&parsed.root);
+  let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
   if std::env::var_os("NEW").map_or(false, |x| x == "1") {
-    let lowered = lower::get(&parsed.root);
-    let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
-    if std::env::var_os("ERR").map_or(false, |x| x == "1") {
-      if let Some(err) = errors.into_iter().next() {
-        let ptr = match err.idx() {
-          statics::Idx::Exp(exp) => lowered.ptrs.get_exp(exp),
-          statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
-          statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
-          statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
-        };
-        let ptr = ptr.expect("couldn't get pointer");
-        let range = ptr.to_node(parsed.root.syntax()).text_range();
-        return Err((range, err.display(&syms).to_string()));
-      }
+    if let Some(err) = errors.into_iter().next() {
+      let ptr = match err.idx() {
+        statics::Idx::Exp(exp) => lowered.ptrs.get_exp(exp),
+        statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
+        statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
+        statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
+      };
+      let ptr = ptr.expect("couldn't get pointer");
+      let range = ptr.to_node(parsed.root.syntax()).text_range();
+      return Err((range, err.display(&syms).to_string()));
     }
   }
   Ok(())
