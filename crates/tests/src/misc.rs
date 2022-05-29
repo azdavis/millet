@@ -492,17 +492,6 @@ and _: int = 3 div 0
 }
 
 #[test]
-fn ty_mismatch() {
-  check(
-    r#"
-fun f x = x + 1
-val _ = f false
-(**     ^^^^^^^ mismatched types: expected int -> int, found bool -> _ *)
-"#,
-  );
-}
-
-#[test]
 fn ty_var_scope() {
   check(
     r#"
@@ -527,8 +516,8 @@ val _ = "bad
 fn undefined() {
   check(
     r#"
-val _ = x
-(**     ^ undefined value: x *)
+val _ = nope
+(**     ^^^^ undefined value: nope *)
 "#,
   );
 }

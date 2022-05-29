@@ -34,12 +34,11 @@ Most tests are in `crates/tests/` and use `check()` like this:
 
 ```rs
 #[test]
-fn ty_mismatch() {
+fn undefined() {
   check(
     r#"
-fun f x = x + 1
-val _ = f false
-(**     ^^^^^^^ mismatched types: expected int, found bool *)
+val _ = nope
+(**     ^^^^ undefined value: nope *)
 "#,
   );
 }
