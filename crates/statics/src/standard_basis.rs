@@ -17,7 +17,10 @@ pub(crate) fn get() -> (Syms, Cx) {
     Sym::LIST,
     Sym::ORDER,
   ];
-  let aliases = [("unit", Ty::Record(BTreeMap::new()))];
+  let aliases = [
+    ("unit", Ty::Record(BTreeMap::new())),
+    ("exn", Ty::zero(Sym::EXN)),
+  ];
   let ty_env: FxHashMap<_, _> = builtin
     .iter()
     .map(|s| {
