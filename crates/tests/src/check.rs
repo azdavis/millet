@@ -27,7 +27,7 @@ pub(crate) fn check(s: &str) {
   match check_impl(s) {
     Ok(()) => {
       if !cx.want.is_empty() {
-        cx.reasons.push(Reason::NoErrorsEmitted);
+        cx.reasons.push(Reason::NoErrorsEmitted(cx.want.len()));
       }
     }
     Err((range, msg)) => cx.add_err(Range::<usize>::from(range), msg),
@@ -38,8 +38,8 @@ pub(crate) fn check(s: &str) {
 }
 
 enum Reason<'a> {
-  WantWrongNumError,
-  NoErrorsEmitted,
+  WantWrongNumError(usize),
+  NoErrorsEmitted(usize),
   CannotGetLineColPair(Range<usize>),
   NotOneLine(Range<LineCol>),
   GotButNotWanted(OneLineRegion, String),
@@ -62,7 +62,7 @@ impl<'a> Cx<'a> {
     let want_len = want.len();
     let mut reasons = Vec::<Reason>::new();
     if !matches!(want_len, 0 | 1) {
-      reasons.push(Reason::WantWrongNumError);
+      reasons.push(Reason::WantWrongNumError(want_len));
     }
     Self {
       indices: s
@@ -106,12 +106,13 @@ impl<'a> Cx<'a> {
 impl fmt::Display for Cx<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("CHECK FAILED\n\n  reasons:\n")?;
-    let want_len = self.want.len();
     for reason in self.reasons.iter() {
       f.write_str("  - ")?;
       match reason {
-        Reason::WantWrongNumError => writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?,
-        Reason::NoErrorsEmitted => writeln!(f, "wanted {want_len} errors, but got none")?,
+        Reason::WantWrongNumError(want_len) => {
+          writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?
+        }
+        Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
         Reason::CannotGetLineColPair(r) => writeln!(f, "couldn't get a line-col pair from {r:?}")?,
         Reason::NotOneLine(pair) => writeln!(f, "not one line: {}..{}", pair.start, pair.end)?,
         Reason::GotButNotWanted(r, got) => {
