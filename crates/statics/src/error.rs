@@ -32,6 +32,7 @@ pub enum Idx {
   Pat(hir::la_arena::Idx<hir::Pat>),
   Ty(hir::la_arena::Idx<hir::Ty>),
   Dec(hir::la_arena::Idx<hir::Dec>),
+  StrDec(hir::la_arena::Idx<hir::StrDec>),
 }
 
 impl From<hir::la_arena::Idx<hir::Exp>> for Idx {
@@ -55,6 +56,12 @@ impl From<hir::la_arena::Idx<hir::Ty>> for Idx {
 impl From<hir::la_arena::Idx<hir::Dec>> for Idx {
   fn from(val: hir::la_arena::Idx<hir::Dec>) -> Self {
     Self::Dec(val)
+  }
+}
+
+impl From<hir::la_arena::Idx<hir::StrDec>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::StrDec>) -> Self {
+    Self::StrDec(val)
   }
 }
 

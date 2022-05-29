@@ -59,6 +59,13 @@ impl Ptrs {
     try_get_hir!(idx, self.dec_in_exp);
     None
   }
+
+  /// Returns the `SyntaxNodePtr` for an HIR structure declaration.
+  pub fn get_str_dec(&self, idx: hir::la_arena::Idx<hir::StrDec>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.str_dec);
+    try_get_hir!(idx, self.str_dec_one);
+    None
+  }
 }
 
 pub struct BiMap<A, H>

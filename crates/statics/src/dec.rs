@@ -172,9 +172,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       },
       Err(name) => st.err(dec, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
-    hir::Dec::Abstype(_, _) => {
-      // TODO
-    }
+    hir::Dec::Abstype(_, _) => st.err(dec, ErrorKind::Unsupported),
     hir::Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::default();
       for ex_bind in ex_binds {

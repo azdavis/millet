@@ -1,4 +1,5 @@
 use crate::dec;
+use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{Cx, Env};
 
@@ -31,9 +32,7 @@ pub(crate) fn get_str_dec(
   };
   match &ars.str_dec[str_dec] {
     hir::StrDec::Dec(dec) => dec::get(st, cx, ars, env, *dec),
-    hir::StrDec::Structure(_) => {
-      // TODO
-    }
+    hir::StrDec::Structure(_) => st.err(str_dec, ErrorKind::Unsupported),
     hir::StrDec::Local(local_dec, in_dec) => {
       let mut local_env = Env::default();
       get_str_dec(st, cx, ars, &mut local_env, *local_dec);
