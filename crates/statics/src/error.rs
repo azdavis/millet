@@ -81,6 +81,7 @@ pub(crate) enum ErrorKind {
   ValRecExpNotFn,
   WrongNumTyArgs(usize, usize),
   ExnCopyNotExnIdStatus,
+  InvalidRebindName(hir::Name),
 }
 
 #[derive(Debug)]
@@ -161,6 +162,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         want, got
       ),
       ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
+      ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {}", name),
     }
   }
 }

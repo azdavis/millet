@@ -5,7 +5,7 @@ use crate::types::{
   generalize, Cx, Env, FixedTyVars, IdStatus, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
-use crate::util::{apply, get_env};
+use crate::util::{apply, cannot_bind, get_env};
 use crate::{exp, pat, ty};
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
@@ -123,7 +123,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             ty_scheme,
             id_status: IdStatus::Con,
           };
-          if val_env.insert(con_bind.name.clone(), vi).is_some() {
+          if cannot_bind(con_bind.name.as_str()) {
+            st.err(dec, ErrorKind::InvalidRebindName(con_bind.name.clone()));
+          } else if val_env.insert(con_bind.name.clone(), vi).is_some() {
             st.err(dec, ErrorKind::Duplicate(Item::Val, con_bind.name.clone()));
           }
         }
@@ -168,7 +170,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
               ty_scheme: TyScheme::zero(ty),
               id_status: IdStatus::Exn(exn),
             };
-            if val_env.insert(name.clone(), vi).is_some() {
+            if cannot_bind(name.as_str()) {
+              st.err(dec, ErrorKind::InvalidRebindName(name.clone()));
+            } else if val_env.insert(name.clone(), vi).is_some() {
               st.err(dec, ErrorKind::Duplicate(Item::Val, name.clone()));
             }
           }
