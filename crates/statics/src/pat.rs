@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Idx, Item};
 use crate::pat_match::{Con, Lang, Pat, VariantName};
-use crate::st::St;
+use crate::st::{ErrorsMarker, St};
 use crate::ty;
 use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
 use crate::unify::unify;
@@ -153,10 +153,18 @@ pub(crate) fn get_match<I>(
   pats: Vec<Pat>,
   ty: Ty,
   f: Option<fn(Vec<Pat>) -> ErrorKind>,
+  marker: ErrorsMarker,
   idx: I,
 ) where
   I: Into<Idx>,
 {
+  if st.did_error_since(marker) {
+    // trying to analyze a pattern match for exhaustiveness when the patterns and types might not
+    // even match up or make sense is fraught with danger. plus, we know we already emitted some
+    // errors anyway, and emitting more might be overwhelming, especially when we're trying to
+    // analyze an ill-formed match.
+    return;
+  }
   // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
   // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
   // need one too, and then things get weird. Maybe the pattern_match API needs some work.
