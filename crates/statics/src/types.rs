@@ -399,10 +399,6 @@ pub struct Syms {
 }
 
 impl Syms {
-  pub(crate) fn is_empty(&self) -> bool {
-    self.store.is_empty()
-  }
-
   fn insert(&mut self, name: hir::Name, ty_info: TyInfo) -> Sym {
     let ret = Sym(self.store.len());
     if ret == Sym::EXN {
@@ -410,6 +406,15 @@ impl Syms {
     }
     self.store.push((name, ty_info));
     ret
+  }
+
+  /// Returns `None` iff passed `&Sym::EXN`.
+  pub(crate) fn get(&self, sym: &Sym) -> Option<(&hir::Name, &TyInfo)> {
+    if *sym == Sym::EXN {
+      return None;
+    }
+    let &(ref name, ref info) = self.store.get(sym.0).unwrap();
+    Some((name, info))
   }
 
   pub(crate) fn insert_exn(&mut self, name: hir::Name, param: Option<Ty>) -> Exn {
@@ -421,15 +426,6 @@ impl Syms {
   pub(crate) fn get_exn(&self, exn: &Exn) -> (&hir::Name, Option<&Ty>) {
     let &(ref name, ref param) = self.exns.get(exn.0).unwrap();
     (name, param.as_ref())
-  }
-
-  /// Returns `None` iff passed `&Sym::EXN`.
-  pub(crate) fn get(&self, sym: &Sym) -> Option<(&hir::Name, &TyInfo)> {
-    if *sym == Sym::EXN {
-      return None;
-    }
-    let &(ref name, ref info) = self.store.get(sym.0).unwrap();
-    Some((name, info))
   }
 
   pub(crate) fn mark(&self) -> SymsMarker {
