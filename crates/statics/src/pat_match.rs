@@ -72,12 +72,9 @@ impl pattern_match::Lang for Lang {
             (VariantName::Exn(exn), None) => {
               self.syms.get_exn(exn).1.into_iter().cloned().collect()
             }
-            (VariantName::Name(name), Some((_, ty_info))) => match ty_info.val_env.get(name) {
-              None => {
-                // NOTE: will be unreachable in a well-typed match
-                Vec::new()
-              }
-              Some(val_info) => match &val_info.ty_scheme.ty {
+            (VariantName::Name(name), Some((_, ty_info))) => {
+              let val_info = ty_info.val_env.get(name).unwrap();
+              match &val_info.ty_scheme.ty {
                 Ty::Con(_, _) => Vec::new(),
                 Ty::Fn(arg, _) => {
                   let mut arg = arg.as_ref().clone();
@@ -85,14 +82,12 @@ impl pattern_match::Lang for Lang {
                   vec![arg]
                 }
                 _ => unreachable!(),
-              },
-            },
+              }
+            }
             _ => unreachable!(),
           }
         }
-        // NOTE: will be unreachable in a well-typed match, but we can reach this in a
-        // not-well-typed match. see `misc::match_record_non_record_ty`.
-        Con::Record(labs) => labs.iter().map(|_| Ty::None).collect(),
+        Con::Record(_) => unreachable!(),
       },
     }
   }
