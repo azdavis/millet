@@ -49,6 +49,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn wrong_id_status() {
   check(
     r#"
@@ -76,6 +77,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn infix() {
   check(
     r#"

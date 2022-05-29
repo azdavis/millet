@@ -1,6 +1,7 @@
 use crate::check::check;
 
 #[test]
+#[ignore = "todo for new"]
 fn t_01() {
   check(
     r#"
@@ -15,6 +16,7 @@ val _: int = S.x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_02() {
   check(
     r#"
@@ -29,6 +31,7 @@ val _: int = S.x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"
@@ -41,6 +44,7 @@ end = struct end
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_04() {
   check(
     r#"
@@ -53,6 +57,7 @@ end = struct val E = Match end
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_05() {
   check(
     r#"
@@ -84,6 +89,7 @@ end
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_07() {
   check(
     r#"
@@ -96,6 +102,7 @@ end = struct datatype d = A end
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_08() {
   check(
     r#"
@@ -108,6 +115,7 @@ end = struct datatype d = A | B end
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_09() {
   check(
     r#"
@@ -122,6 +130,7 @@ val _: S.t = 3
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_10() {
   check(
     r#"
@@ -174,6 +183,7 @@ end
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_13() {
   check(
     r#"
@@ -223,6 +233,7 @@ val _ = Mul.add Mul.zero Add.zero
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_14() {
   check(
     r#"
@@ -257,6 +268,7 @@ val _ = Mul.add Mul.zero Add.zero
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_15() {
   check(
     r#"
@@ -289,6 +301,7 @@ val _ = A.bar B.foo
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_16() {
   check(
     r#"
@@ -320,6 +333,7 @@ val _ = A.bar 123
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_17() {
   check(
     r#"
@@ -353,6 +367,7 @@ val _ = B.bar A.foo
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_18() {
   check(
     r#"
@@ -374,6 +389,7 @@ val _: S.t = S.x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_19() {
   check(
     r#"

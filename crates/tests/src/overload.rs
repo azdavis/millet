@@ -11,6 +11,7 @@ val _ = add (1, 2)
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_02() {
   check(
     r#"
@@ -23,6 +24,7 @@ val _ = add (1, 2)
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"
@@ -93,6 +95,7 @@ val _: bool = #"e" >= #"e"
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_05() {
   check(
     r#"
@@ -103,6 +106,7 @@ val _ = 1.1 + 1
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_06() {
   check(
     r#"
@@ -114,6 +118,7 @@ val _ = add (false, true)
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_07() {
   check(
     r#"

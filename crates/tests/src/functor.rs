@@ -14,6 +14,7 @@ end)
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_02() {
   check(
     r#"
@@ -27,6 +28,7 @@ structure S = F (struct end)
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"
@@ -40,6 +42,7 @@ structure S = F (struct val Foo = Match end)
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_04() {
   check(
     r#"
@@ -78,6 +81,7 @@ val done: string list = [guh, Impl.foo, S.what, "why"]
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_05() {
   check(
     r#"
@@ -94,6 +98,7 @@ val _: int = Guy.x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_06() {
   check(
     r#"
@@ -114,6 +119,7 @@ val _ = S.x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_07() {
   check(
     r#"

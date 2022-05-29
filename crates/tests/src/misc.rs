@@ -1,6 +1,7 @@
 use crate::check::check;
 
 #[test]
+#[ignore = "todo for new"]
 fn apply() {
   check(
     r#"
@@ -12,6 +13,7 @@ val apply = fn (f, x) => f x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn arrow_ty_arg() {
   check(
     r#"
@@ -29,6 +31,7 @@ val _ = fn f => fn x => (
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn bind() {
   check(
     r#"
@@ -40,6 +43,7 @@ val One = One
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn circularity() {
   check(
     r#"
@@ -50,6 +54,7 @@ fun f _ = f
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn cps() {
   check(
     r#"
@@ -87,6 +92,7 @@ val _ = #"a" = #"b"
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn exhaustive_binding() {
   check(
     r#"
@@ -118,6 +124,7 @@ fun fact (0 : int) : int = 1
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn forbidden_binding() {
   check(
     r#"
@@ -128,6 +135,7 @@ datatype no = ref
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn list_fns() {
   check(
     r#"
@@ -146,6 +154,7 @@ and z = append [1, 2, 3] [7, 8, 9]
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn fun_dec_name_mismatch() {
   check(
     r#"
@@ -157,6 +166,7 @@ fun f 1 = 1
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn fun_dec_wrong_num_pats() {
   check(
     r#"
@@ -215,6 +225,7 @@ val _ = id "hey"
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn inc() {
   check(
     r#"
@@ -227,6 +238,7 @@ val _ = inc "nope"
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn infix_without_op() {
   check(
     r#"
@@ -237,6 +249,7 @@ val _ = + (1, 2)
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn many_vars() {
   check(
     r#"
@@ -249,6 +262,7 @@ fun go a b c d e f g =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn map() {
   check(
     r#"
@@ -291,6 +305,7 @@ val _ = ~0w1
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn non_exhaustive_binding() {
   check(
     r#"
@@ -301,6 +316,7 @@ val 3 = 1 + 2
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn non_var_in_as() {
   check(
     r#"
@@ -315,6 +331,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn not_arrow_ty() {
   check(
     r#"
@@ -325,6 +342,7 @@ val _ = 3 3
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn not_equality() {
   check(
     r#"
@@ -466,6 +484,7 @@ val _ = 1 << 2 >> 3
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn std_lib_types() {
   check(
     r#"
@@ -489,6 +508,7 @@ and _: int = 3 div 0
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn ty_mismatch() {
   check(
     r#"
@@ -500,6 +520,7 @@ val _ = f false
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn ty_var_scope() {
   check(
     r#"
@@ -575,6 +596,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn useless_ty_var() {
   check(
     r#"
@@ -597,6 +619,7 @@ fn value_restriction() {
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn wrong_num_ty_args() {
   check(
     r#"

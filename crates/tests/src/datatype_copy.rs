@@ -25,6 +25,7 @@ datatype bad = datatype exn
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"

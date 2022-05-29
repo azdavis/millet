@@ -30,6 +30,7 @@ val _ = bar 3 andalso raise Guh
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_02() {
   check(
     r#"
@@ -45,6 +46,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"
@@ -56,6 +58,7 @@ exception Bad = x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn poly() {
   check(
     r#"

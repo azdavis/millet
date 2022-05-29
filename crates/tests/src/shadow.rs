@@ -34,6 +34,7 @@ val _: t = Two
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_04() {
   check(
     r#"
@@ -45,6 +46,7 @@ val _: int = S.x
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_05() {
   check(
     r#"

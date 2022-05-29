@@ -1,6 +1,7 @@
 use crate::check::check;
 
 #[test]
+#[ignore = "todo for new"]
 fn t_00() {
   check(
     r#"
@@ -13,6 +14,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_01() {
   check(
     r#"
@@ -29,6 +31,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_02() {
   check(
     r#"
@@ -44,6 +47,7 @@ val _ =
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"

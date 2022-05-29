@@ -11,6 +11,7 @@ val _ = #"あ"
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn int() {
   check(
     r#"

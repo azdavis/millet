@@ -24,16 +24,13 @@ use syntax::{ast::AstNode as _, rowan::TextRange};
 #[track_caller]
 pub(crate) fn check(s: &str) {
   let mut cx = Cx::new(s);
-  match check_impl_old(s) {
+  match check_impl(s) {
     Ok(()) => {
       if !cx.want.is_empty() {
         cx.reasons.push(Reason::NoErrorsEmitted);
       }
     }
-    Err(err) => cx.add_err(Range::from(err.loc), err.val),
-  }
-  if let Err((range, msg)) = check_impl(s) {
-    cx.add_err(Range::<usize>::from(range), msg)
+    Err((range, msg)) => cx.add_err(Range::<usize>::from(range), msg),
   }
   if !cx.reasons.is_empty() {
     panic!("{cx}")
@@ -159,7 +156,6 @@ fn get_region(indices: &[usize], range: Range<usize>) -> Option<Region> {
 
 fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   let show = env_var_yes("SHOW");
-  let new = env_var_yes("NEW");
   let lexed = lex::get(s);
   if show {
     eprintln!("lex: {:?}", lexed.tokens);
@@ -186,9 +182,7 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     let ptr = ptr.expect("couldn't get pointer");
     let range = ptr.to_node(parsed.root.syntax()).text_range();
     let msg = err.display(&syms).to_string();
-    if new {
-      return Err((range, msg));
-    }
+    return Err((range, msg));
   }
   Ok(())
 }
@@ -197,6 +191,7 @@ fn env_var_yes(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
 }
 
+#[allow(dead_code)]
 fn check_impl_old(s: &str) -> Result<(), Located<String>> {
   if s.contains("old-todo") {
     return Ok(());
