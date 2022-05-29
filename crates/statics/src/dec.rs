@@ -18,7 +18,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
   match &ars.dec[dec] {
     hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();
-      let fixed = add_fixed_ty_vars(st, &mut cx, ty_vars);
+      let fixed = add_fixed_ty_vars(st, &mut cx, ty_vars, dec.into());
       // we actually resort to indexing logic because this is a little weird:
       // - we represent the recursive nature of ValBinds (and all other things that recurse with
       //   `and`) as a sequence of non-recursive items.
@@ -71,7 +71,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut cx = cx.clone();
       let mut ty_env = TyEnv::default();
       for ty_bind in ty_binds {
-        let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars);
+        let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars, dec.into());
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty_bind.ty));
         generalize(st.subst(), fixed, &mut ty_scheme);
         let ty_info = TyInfo {
@@ -92,7 +92,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut ty_env = TyEnv::default();
       let mut big_val_env = ValEnv::default();
       for dat_bind in dat_binds {
-        let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars);
+        let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, dec.into());
         let dat = st.syms.start_datatype(dat_bind.name.clone());
         let out_ty = Ty::Con(
           fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
@@ -221,12 +221,17 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
   }
 }
 
-fn add_fixed_ty_vars(st: &mut St, cx: &mut Cx, ty_vars: &[hir::TyVar]) -> FixedTyVars {
+fn add_fixed_ty_vars(st: &mut St, cx: &mut Cx, ty_vars: &[hir::TyVar], idx: Idx) -> FixedTyVars {
   let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
     let fv = st.gen_fixed_var(ty_var.clone());
     // TODO shadowing? scoping?
-    cx.ty_vars.insert(ty_var.clone(), fv.clone());
+    if cx.ty_vars.insert(ty_var.clone(), fv.clone()).is_some() {
+      st.err(
+        idx,
+        ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name()),
+      );
+    }
     ret.insert(fv);
   }
   ret

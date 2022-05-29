@@ -1,78 +1,71 @@
 use crate::check::check;
 
 #[test]
-#[ignore = "todo for new"]
 fn datatype() {
   check(
     r#"
-datatype t = A and t = B
-(**                ^ duplicate type: t *)
+    datatype t = A and t = B
+(** ^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type: t *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn exn() {
   check(
     r#"
-exception E and E
-(**             ^ duplicate value: E *)
+    exception E and E
+(** ^^^^^^^^^^^^^^^^^ duplicate value: E *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn ty_var_datatype() {
   check(
     r#"
-datatype ('a, 'a) t = A of 'a
-(**           ^^ duplicate type variable: 'a *)
+    datatype ('a, 'a) t = A of 'a
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn ty_var_fun() {
   check(
     r#"
-fun ('a, 'a) f (x: 'a) = 3
-(**      ^^ duplicate type variable: 'a *)
+    fun ('a, 'a) f (x: 'a) = 3
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn ty_var_type() {
   check(
     r#"
-type ('a, 'a) foo = int
-(**       ^^ duplicate type variable: 'a *)
+    type ('a, 'a) foo = int
+(** ^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn ty_var_val() {
   check(
     r#"
-val ('a, 'a) _: 'a list = []
-(**      ^^ duplicate type variable: 'a *)
+    val ('a, 'a) _: 'a list = []
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn type_() {
   check(
     r#"
-type t = int and t = string
-(**              ^ duplicate type: t *)
+    type t = int and t = string
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type: t *)
 "#,
   );
 }
@@ -118,12 +111,11 @@ val (x, x) = (1, 2)
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn label() {
   check(
     r#"
 val _ = { a = 3, a = 4 }
-(**              ^ duplicate label: a *)
+(**     ^^^^^^^^^^^^^^^^ duplicate label: a *)
 "#,
   );
 }
