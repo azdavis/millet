@@ -147,13 +147,11 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   // num lit. note e.g. `~3` is one token but `~ 3` is two
   if b.is_ascii_digit() || (b == b'~' && bs.get(cx.i + 1).map_or(false, u8::is_ascii_digit)) {
     let neg = b == b'~';
-    cx.i += 1;
-    let b = match bs.get(cx.i) {
-      Some(&b) => b,
-      None => {
-        assert!(!neg, "should only be neg if we saw an ascii digit after ~");
-        return SK::IntLit;
-      }
+    let b = if neg {
+      cx.i += 1;
+      bs[cx.i]
+    } else {
+      b
     };
     if b == b'0' {
       cx.i += 1;
