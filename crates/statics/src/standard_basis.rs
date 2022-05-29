@@ -5,7 +5,7 @@ use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
 pub(crate) fn get() -> (Syms, Cx) {
-  let syms = Syms::standard_basis();
+  let mut syms = Syms::standard_basis();
   let builtin = [
     Sym::BOOL,
     Sym::CHAR,
@@ -13,7 +13,6 @@ pub(crate) fn get() -> (Syms, Cx) {
     Sym::REAL,
     Sym::STRING,
     Sym::WORD,
-    Sym::EXN,
     Sym::REF,
     Sym::LIST,
     Sym::ORDER,
@@ -22,7 +21,7 @@ pub(crate) fn get() -> (Syms, Cx) {
   let ty_env: FxHashMap<_, _> = builtin
     .iter()
     .map(|s| {
-      let (name, info) = syms.get(s);
+      let (name, info) = syms.get(s).unwrap();
       (name.clone(), info.clone())
     })
     .chain(aliases.into_iter().map(|(name, ty)| {
@@ -83,14 +82,16 @@ pub(crate) fn get() -> (Syms, Cx) {
     }))
     .chain(exns.into_iter().map(|(name, param)| {
       let mut ty = Ty::zero(Sym::EXN);
-      if let Some(param) = param {
-        ty = Ty::fun(param, ty);
+      if let Some(ref param) = param {
+        ty = Ty::fun(param.clone(), ty);
       }
+      let name = hir::Name::new(name);
+      let exn = syms.insert_exn(name.clone(), param);
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
-        id_status: IdStatus::Exn,
+        id_status: IdStatus::Exn(exn),
       };
-      (hir::Name::new(name), vi)
+      (name, vi)
     }))
     .collect();
   let cx = Cx {

@@ -1,4 +1,4 @@
-use crate::types::{Sym, Syms, Ty};
+use crate::types::{Exn, Sym, Syms, Ty};
 use crate::util::apply_bv;
 use fast_hash::FxHashSet;
 
@@ -30,13 +30,15 @@ impl pattern_match::Lang for Lang {
           vec![Con::Any]
         }
         Ty::Con(_, ty_name) => {
-          let all: Vec<_> = self
-            .syms
-            .get(ty_name)
-            .1
+          let ty_info = match self.syms.get(ty_name) {
+            // we can't know how many variants of exn there are, since it's EXteNsible.
+            None => return vec![Con::Any],
+            Some((_, x)) => x,
+          };
+          let all: Vec<_> = ty_info
             .val_env
             .keys()
-            .map(|con_name| Con::Variant(*ty_name, con_name.clone()))
+            .map(|name| Con::Variant(*ty_name, VariantName::Name(name.clone())))
             .collect();
           let set: FxHashSet<_> = cons.collect();
           if all.iter().any(|c| set.contains(c)) {
@@ -64,15 +66,22 @@ impl pattern_match::Lang for Lang {
       Ty::Record(rows) => rows.iter().map(|(_, t)| t.clone()).collect(),
       Ty::Con(args, ty_name) => match con {
         Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),
-        Con::Variant(ty_name_2, con_name) => {
+        Con::Variant(ty_name_2, variant_name) => {
           assert_eq!(ty_name, ty_name_2);
-          let val_info = self.syms.get(ty_name).1.val_env.get(con_name).unwrap();
-          match &val_info.ty_scheme.ty {
-            Ty::Con(_, _) => Vec::new(),
-            Ty::Fn(arg, _) => {
-              let mut arg = arg.as_ref().clone();
-              apply_bv(args, &mut arg);
-              vec![arg]
+          match (variant_name, self.syms.get(ty_name)) {
+            (VariantName::Exn(exn), None) => {
+              self.syms.get_exn(exn).1.into_iter().cloned().collect()
+            }
+            (VariantName::Name(name), Some((_, ty_info))) => {
+              match &ty_info.val_env.get(name).unwrap().ty_scheme.ty {
+                Ty::Con(_, _) => Vec::new(),
+                Ty::Fn(arg, _) => {
+                  let mut arg = arg.as_ref().clone();
+                  apply_bv(args, &mut arg);
+                  vec![arg]
+                }
+                _ => unreachable!(),
+              }
             }
             _ => unreachable!(),
           }
@@ -93,5 +102,11 @@ pub(crate) enum Con {
   Char(u8),
   String(hir::SmolStr),
   Record(Vec<hir::Lab>),
-  Variant(Sym, hir::Name),
+  Variant(Sym, VariantName),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum VariantName {
+  Name(hir::Name),
+  Exn(Exn),
 }

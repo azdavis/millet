@@ -1,5 +1,5 @@
 use crate::error::{ErrorKind, Idx, Item};
-use crate::pat_match::{Con, Lang, Pat};
+use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
 use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
@@ -55,12 +55,14 @@ pub(crate) fn get(
           return any(st, pat);
         }
       };
-      match val_info.id_status {
+      let variant_name = match &val_info.id_status {
         IdStatus::Val => {
           st.err(pat_, ErrorKind::PatValIdStatus);
+          VariantName::Name(path.last().clone())
         }
-        IdStatus::Con | IdStatus::Exn => {}
-      }
+        IdStatus::Con => VariantName::Name(path.last().clone()),
+        IdStatus::Exn(exn) => VariantName::Exn(exn.clone()),
+      };
       let ty = instantiate(st, &val_info.ty_scheme);
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
@@ -89,7 +91,7 @@ pub(crate) fn get(
         }
         _ => unreachable!(),
       };
-      let pat = Pat::con(Con::Variant(sym, path.last().clone()), args, pat);
+      let pat = Pat::con(Con::Variant(sym, variant_name), args, pat);
       (pat, ty)
     }
     hir::Pat::Record { rows, allows_other } => {

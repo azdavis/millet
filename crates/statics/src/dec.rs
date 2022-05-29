@@ -142,12 +142,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         match ex_bind {
           hir::ExBind::New(name, param) => {
             let mut ty = Ty::zero(Sym::EXN);
-            if let Some(param) = *param {
-              ty = Ty::fun(ty::get(st, cx, ars, param), ty);
+            let param = param.map(|param| ty::get(st, cx, ars, param));
+            if let Some(ref param) = param {
+              ty = Ty::fun(param.clone(), ty);
             }
+            let exn = st.syms.insert_exn(name.clone(), param);
             let vi = ValInfo {
               ty_scheme: TyScheme::zero(ty),
-              id_status: IdStatus::Exn,
+              id_status: IdStatus::Exn(exn),
             };
             if val_env.insert(name.clone(), vi).is_some() {
               st.err(dec, ErrorKind::Duplicate(Item::Val, name.clone()));
@@ -156,7 +158,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           hir::ExBind::Copy(name, path) => match get_env(&cx.env, path.structures()) {
             Ok(got_env) => match got_env.val_env.get(path.last()) {
               Some(val_info) => match val_info.id_status {
-                IdStatus::Exn => {
+                IdStatus::Exn(_) => {
                   if val_env.insert(name.clone(), val_info.clone()).is_some() {
                     st.err(dec, ErrorKind::Duplicate(Item::Val, name.clone()));
                   }
