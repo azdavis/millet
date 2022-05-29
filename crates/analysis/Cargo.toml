@@ -1,0 +1,17 @@
+[package]
+name = "analysis"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+lex = { path = "../lex" }
+parse = { path = "../parse" }
+lower = { path = "../lower" }
+statics = { path = "../statics" }
+syntax = { path = "../syntax" }
+url = "2"
