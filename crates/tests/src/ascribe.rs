@@ -76,6 +76,7 @@ val _ = S.y
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_06() {
   check(
     r#"
@@ -156,6 +157,7 @@ val _ = S.add (S.add (inc S.zero) (inc S.zero))
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_11() {
   check(
     r#"
@@ -170,6 +172,7 @@ end
 }
 
 #[test]
+#[ignore = "todo for new"]
 fn t_12() {
   check(
     r#"
