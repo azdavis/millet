@@ -51,7 +51,6 @@ fn circularity() {
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn cps() {
   check(
     r#"
@@ -65,7 +64,7 @@ fun find t p ok err =
       else
         find left p ok (fn () => find right p ok err)
     val _ : unit = find
-(** ^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found '46 tree -> ('46 -> bool) -> ('46 -> '45) -> (unit -> '45) -> '45 *)
+(** ^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found _ tree -> (_ -> bool) -> (_ -> _) -> (unit -> _) -> _ *)
 "#,
   );
 }
@@ -99,7 +98,6 @@ val _ = #"a" = #"b"
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn exhaustive_binding() {
   check(
     r#"
@@ -131,18 +129,16 @@ fun fact (0 : int) : int = 1
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn forbidden_binding() {
   check(
     r#"
-datatype no = ref
-(**           ^^^ forbidden identifier in binding: ref *)
+    datatype no = ref
+(** ^^^^^^^^^^^^^^^^^ cannot re-bind name: ref *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn list_fns() {
   check(
     r#"
@@ -173,13 +169,13 @@ fun f 1 = 1
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn fun_dec_wrong_num_pats() {
+  // TODO range is a little weird
   check(
     r#"
 fun f 1 = 2
   | f 3 4 = 5
-(**   ^^^ mismatched number of patterns: expected 1, found 2 *)
+(**     ^ mismatched types: expected int, found int * int *)
 "#,
   );
 }
@@ -232,14 +228,13 @@ val _ = id "hey"
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn inc() {
   check(
     r#"
 val inc = fn x => x + 1
 val _ = inc 3
 val _ = inc "nope"
-(**     ^^^^^^^^^^ mismatched types: expected int, found string *)
+(**     ^^^^^^^^^^ mismatched types: expected int -> int, found string -> _ *)
 "#,
   );
 }
@@ -256,20 +251,6 @@ val _ = + (1, 2)
 }
 
 #[test]
-#[ignore = "todo for new"]
-fn many_vars() {
-  check(
-    r#"
-fun go a b c d e f g =
-  if a > 3 then b else go e b (b c d) d (a + 1) (g f) g
-    val _: unit = go
-(** ^^^^^^^^^^^^^^^^ mismatched types: expected unit, found int -> ('46 -> '45 -> '46) -> '46 -> '45 -> int -> '47 -> ('47 -> '47) -> '46 -> '45 -> '46 *)
-"#,
-  );
-}
-
-#[test]
-#[ignore = "todo for new"]
 fn map() {
   check(
     r#"
@@ -286,7 +267,7 @@ fun list_map f xs =
   | x :: xs => f x :: list_map f xs
 
     val _: unit = (option_map, list_map)
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found (('52 -> '53) -> '52 option -> '53 option) * (('54 -> '55) -> '54 list -> '55 list) *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found ((_ -> _) -> _ option -> _ option) * ((_ -> _) -> _ list -> _ list) *)
 "#,
   );
 }
@@ -312,7 +293,6 @@ val _ = ~0w1
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn non_exhaustive_binding() {
   check(
     r#"
@@ -323,7 +303,6 @@ val 3 = 1 + 2
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn non_var_in_as() {
   check(
     r#"
@@ -331,19 +310,18 @@ exception Bad
 val _ =
   case 3 of
     Bad as _ => 1
-(** ^^^ pattern to left of `as` is not a variable: Bad *)
+(** ^^^^^^^^ invalid `as` pat name: Bad *)
   | _ => 2
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn not_arrow_ty() {
   check(
     r#"
 val _ = 3 3
-(**     ^^^ not a function type: int *)
+(**     ^^^ mismatched types: expected int, found int -> _ *)
 "#,
   );
 }
@@ -491,7 +469,6 @@ val _ = 1 << 2 >> 3
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn std_lib_types() {
   check(
     r#"
@@ -515,25 +492,23 @@ and _: int = 3 div 0
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn ty_mismatch() {
   check(
     r#"
 fun f x = x + 1
 val _ = f false
-(**     ^^^^^^^ mismatched types: expected int, found bool *)
+(**     ^^^^^^^ mismatched types: expected int -> int, found bool -> _ *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn ty_var_scope() {
   check(
     r#"
 val _ = fn id =>
   (id 3; id "nope")
-(**      ^^^^^^^^^ mismatched types: expected int, found string *)
+(**      ^^^^^^^^^ mismatched types: expected _, found string -> _ *)
 "#,
   );
 }
@@ -603,7 +578,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn useless_ty_var() {
   check(
     r#"
@@ -626,12 +600,11 @@ fn value_restriction() {
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn wrong_num_ty_args() {
   check(
     r#"
 val _: (int, bool) list = []
-(**    ^^^^^^^^^^^^^^^^ mismatched number of type arguments: expected 1, found 2 *)
+(**    ^^^^^^^^^^^^^^^^ wrong number of type arguments: expected 1, found 2 *)
 "#,
   );
 }

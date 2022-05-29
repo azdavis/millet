@@ -116,12 +116,11 @@ pub(crate) fn get(
       (pm_pat, want)
     }
     hir::Pat::As(ref name, inner) => {
-      let idx = inner.unwrap_or(pat_);
       if !ok_val_info(cx.env.val_env.get(name)) {
-        st.err(idx, ErrorKind::InvalidAsPatName);
+        st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));
       }
       let (pm_pat, ty) = get(st, cx, ars, ve, *inner);
-      insert_name(st, ve, name.clone(), ty.clone(), idx);
+      insert_name(st, ve, name.clone(), ty.clone(), pat_);
       (pm_pat, ty)
     }
   }

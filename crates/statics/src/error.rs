@@ -74,7 +74,7 @@ pub(crate) enum ErrorKind {
   PatValIdStatus,
   ConPatMustNotHaveArg,
   ConPatMustHaveArg,
-  InvalidAsPatName,
+  InvalidAsPatName(hir::Name),
   TyNameEscape,
   ValRecExpNotFn,
   WrongNumTyArgs(usize, usize),
@@ -138,7 +138,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         },
         got.display(self.syms)
       ),
-      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {}", lab),
+      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
       ErrorKind::NonExhaustiveMatch(_) => f.write_str("non-exhaustive match"),
@@ -146,7 +146,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::PatValIdStatus => f.write_str("value binding used as a pattern"),
       ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
-      ErrorKind::InvalidAsPatName => f.write_str("invalid `as` pat name"),
+      ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
       ErrorKind::TyNameEscape => f.write_str("type name escapes its scope"),
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
       ErrorKind::WrongNumTyArgs(want, got) => write!(
@@ -155,7 +155,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         want, got
       ),
       ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
-      ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {}", name),
+      ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
     }
   }
 }
