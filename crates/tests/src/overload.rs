@@ -29,6 +29,7 @@ fn t_03() {
   check(
     r#"
 val add = op+
+(* make this a top-dec level seq *)
 signature S = sig end
 val _ = add (1.1, 2.2)
 (**     ^^^^^^^^^^^^^^ mismatched types: expected int, found real *)
