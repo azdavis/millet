@@ -36,7 +36,6 @@ impl Ptrs {
   pub fn get_exp(&self, idx: hir::la_arena::Idx<hir::Exp>) -> Option<SyntaxNodePtr> {
     try_get_hir!(idx, self.exp);
     None
-    // self.exp.hir_to_ast.get(idx).map(AstPtr::syntax_node_ptr)
   }
 
   /// Returns the `SyntaxNodePtr` for an HIR pattern.
