@@ -67,7 +67,7 @@ pub(crate) fn get(
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
           if arg.is_some() {
-            st.err(pat_, ErrorKind::PatMustNotHaveArg)
+            st.err(pat_, ErrorKind::ConPatMustNotHaveArg)
           }
           (sym, Vec::new(), ty)
         }
@@ -78,7 +78,7 @@ pub(crate) fn get(
           };
           let arg_pat = match arg {
             None => {
-              st.err(pat_, ErrorKind::PatMustHaveArg);
+              st.err(pat_, ErrorKind::ConPatMustHaveArg);
               Pat::zero(Con::Any, pat)
             }
             Some((arg_pat, arg_ty)) => {

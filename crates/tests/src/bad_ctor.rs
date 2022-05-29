@@ -8,7 +8,7 @@ datatype d = A | B of int
 val _ =
   case A of
     A _ => 1
-(** ^^^ mismatched types: expected an arrow type, found d *)
+(** ^^^ unexpected argument for constructor pattern *)
   | B _ => 2
 "#,
   );
@@ -23,7 +23,7 @@ val _ =
   case A of
     A => 1
   | B => 2
-(** ^ mismatched types: expected a constructor type, found int -> d *)
+(** ^ missing argument for constructor pattern *)
 "#,
   );
 }

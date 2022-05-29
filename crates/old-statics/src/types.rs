@@ -101,14 +101,8 @@ impl Error {
         "mismatched number of patterns: expected {}, found {}",
         want, got
       ),
-      Self::PatNotConsTy(ty) => format!(
-        "mismatched types: expected a constructor type, found {}",
-        show_ty(store, ty)
-      ),
-      Self::PatNotArrowTy(ty) => format!(
-        "mismatched types: expected an arrow type, found {}",
-        show_ty(store, ty)
-      ),
+      Self::PatNotConsTy(_) => "missing argument for constructor pattern".to_owned(),
+      Self::PatNotArrowTy(_) => "unexpected argument for constructor pattern".to_owned(),
       Self::DatatypeCopyNotDatatype => {
         "right-hand side of datatype copy is not a datatype".to_owned()
       }
