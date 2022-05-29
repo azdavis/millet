@@ -40,7 +40,8 @@ pub(crate) fn check(s: &str) {
 enum Reason<'a> {
   WantWrongNumError,
   NoErrorsEmitted,
-  CannotGetRegion(Range<usize>),
+  CannotGetLineColPair(Range<usize>),
+  NotOneLine(Range<LineCol>),
   GotButNotWanted(OneLineRegion, String),
   MismatchedErrors(OneLineRegion, &'a str, String),
 }
@@ -75,18 +76,29 @@ impl<'a> Cx<'a> {
   }
 
   fn add_err(&mut self, range: Range<usize>, got: String) {
-    match get_region(&self.indices, range.clone()) {
-      None => self.reasons.push(Reason::CannotGetRegion(range)),
-      Some(region) => match self.want.get(&region) {
-        None => self.reasons.push(Reason::GotButNotWanted(region, got)),
-        Some(&want) => {
-          if want != got {
-            self
-              .reasons
-              .push(Reason::MismatchedErrors(region, want, got))
+    match get_line_col_pair(&self.indices, range.clone()) {
+      None => self.reasons.push(Reason::CannotGetLineColPair(range)),
+      Some(pair) => {
+        let region = if pair.start.line == pair.end.line {
+          OneLineRegion {
+            line: pair.start.line,
+            col: pair.start.col..pair.end.col,
+          }
+        } else {
+          self.reasons.push(Reason::NotOneLine(pair));
+          return;
+        };
+        match self.want.get(&region) {
+          None => self.reasons.push(Reason::GotButNotWanted(region, got)),
+          Some(&want) => {
+            if want != got {
+              self
+                .reasons
+                .push(Reason::MismatchedErrors(region, want, got))
+            }
           }
         }
-      },
+      }
     }
   }
 }
@@ -100,7 +112,8 @@ impl fmt::Display for Cx<'_> {
       match reason {
         Reason::WantWrongNumError => writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?,
         Reason::NoErrorsEmitted => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::CannotGetRegion(r) => writeln!(f, "couldn't get a region from {r:?}")?,
+        Reason::CannotGetLineColPair(r) => writeln!(f, "couldn't get a line-col pair from {r:?}")?,
+        Reason::NotOneLine(pair) => writeln!(f, "not one line: {}..{}", pair.start, pair.end)?,
         Reason::GotButNotWanted(r, got) => {
           writeln!(f, "{r}: got an error, but wanted none")?;
           writeln!(f, "    - got:  {got}")?;
@@ -150,6 +163,13 @@ struct LineCol {
   col: usize,
 }
 
+impl fmt::Display for LineCol {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    // don't add 1 for the line because the check strings usually have the first line blank.
+    write!(f, "{}:{}", self.line, self.col + 1,)
+  }
+}
+
 fn get_line_col(indices: &[usize], idx: usize) -> Option<LineCol> {
   let line = indices.iter().position(|&i| idx <= i)?;
   let col_start = indices.get(line.checked_sub(1)?)?.checked_add(1)?;
@@ -159,13 +179,10 @@ fn get_line_col(indices: &[usize], idx: usize) -> Option<LineCol> {
   })
 }
 
-fn get_region(indices: &[usize], range: Range<usize>) -> Option<OneLineRegion> {
+fn get_line_col_pair(indices: &[usize], range: Range<usize>) -> Option<Range<LineCol>> {
   let start = get_line_col(indices, range.start)?;
   let end = get_line_col(indices, range.end)?;
-  (start.line == end.line).then(|| OneLineRegion {
-    line: start.line,
-    col: start.col..end.col,
-  })
+  Some(start..end)
 }
 
 /// see [`get_expect_comment`].
