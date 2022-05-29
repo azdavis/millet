@@ -14,9 +14,7 @@ where
   let e = match e {
     UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
     UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
-    UnifyError::OverloadMismatch(want) => ErrorKind::OverloadMismatch(want, got),
-    UnifyError::MissingField(lab) => ErrorKind::MissingField(lab, got),
-    UnifyError::ExtraFields(labs) => ErrorKind::ExtraFields(labs, got),
+    UnifyError::OverloadMismatch(ov) => ErrorKind::OverloadMismatch(ov, want, got),
   };
   st.err(idx, e);
 }
@@ -26,8 +24,6 @@ enum UnifyError {
   OccursCheck(MetaTyVar, Ty),
   HeadMismatch,
   OverloadMismatch(Overload),
-  MissingField(hir::Lab),
-  ExtraFields(Vec<hir::Lab>),
 }
 
 /// `want` and `got` will have `subst` applied to them upon entry to this function
@@ -72,14 +68,14 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
     (Ty::Record(want_rows), Ty::Record(mut got_rows)) => {
       for (lab, want) in want_rows {
         match got_rows.remove(&lab) {
-          None => return Err(UnifyError::MissingField(lab)),
+          None => return Err(UnifyError::HeadMismatch),
           Some(got) => unify_(subst, want, got)?,
         }
       }
       if got_rows.is_empty() {
         Ok(())
       } else {
-        Err(UnifyError::ExtraFields(got_rows.into_keys().collect()))
+        Err(UnifyError::HeadMismatch)
       }
     }
     (Ty::Con(want_args, want_sym), Ty::Con(got_args, got_sym)) => {

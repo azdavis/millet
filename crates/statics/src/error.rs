@@ -65,9 +65,7 @@ pub(crate) enum ErrorKind {
   Duplicate(Item, hir::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
-  OverloadMismatch(Overload, Ty),
-  MissingField(hir::Lab, Ty),
-  ExtraFields(Vec<hir::Lab>, Ty),
+  OverloadMismatch(Overload, Ty, Ty),
   DuplicateLab(hir::Lab),
   RealPat,
   UnreachablePattern,
@@ -127,11 +125,12 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         want.display(self.syms),
         got.display(self.syms)
       ),
-      ErrorKind::OverloadMismatch(want, got) => write!(
+      ErrorKind::OverloadMismatch(ov, want, got) => write!(
         f,
-        "mismatched types: expected {}, found {}",
+        "mismatched types: expected {} with {}, found {}",
+        want.display(self.syms),
         // TODO make this programmatic?
-        match want {
+        match ov {
           Overload::WordInt => "word or int",
           Overload::RealInt => "real or int",
           Overload::Num => "word, real, or int",
@@ -139,12 +138,6 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         },
         got.display(self.syms)
       ),
-      ErrorKind::MissingField(lab, ty) => {
-        write!(f, "missing label {} in {}", lab, ty.display(self.syms))
-      }
-      ErrorKind::ExtraFields(_, ty) => {
-        write!(f, "extra fields in {}", ty.display(self.syms))
-      }
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {}", lab),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
