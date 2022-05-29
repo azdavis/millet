@@ -1,6 +1,5 @@
 use crate::error::{ErrorKind, Idx, Item};
-use crate::pat_match::Pat;
-use crate::st::{ErrorsMarker, St};
+use crate::st::St;
 use crate::types::{
   generalize, Cx, Env, FixedTyVars, IdStatus, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
@@ -33,8 +32,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
         idx += 1;
         let marker = st.mark_errors();
-        let (pm_pat, want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
-        get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want, marker, dec.into());
+        let (pm_pat, mut want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
+        let got = exp::get(st, &cx, ars, val_bind.exp);
+        unify(st, want.clone(), got, dec);
+        apply(st.subst(), &mut want);
+        pat::get_match(
+          st,
+          vec![pm_pat],
+          want,
+          Some(ErrorKind::NonExhaustiveBinding),
+          marker,
+          dec,
+        );
       }
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
       // also need a separate recursive-only ValEnv.
@@ -51,7 +60,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       // extend the cx with only the recursive ValEnv.
       cx.env.val_env.extend(rec_ve);
-      for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
+      for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
         // TODO this marker doesn't encompass the pat
         let marker = st.mark_errors();
         if let Some(exp) = val_bind.exp {
@@ -59,7 +68,17 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             st.err(dec, ErrorKind::ValRecExpNotFn);
           }
         }
-        get_val_exp(st, &cx, ars, val_bind.exp, pm_pat, want, marker, dec.into());
+        let got = exp::get(st, &cx, ars, val_bind.exp);
+        unify(st, want.clone(), got, dec);
+        apply(st.subst(), &mut want);
+        pat::get_match(
+          st,
+          vec![pm_pat],
+          want,
+          Some(ErrorKind::NonExhaustiveBinding),
+          marker,
+          dec,
+        );
       }
       // generalize the entire merged ValEnv.
       for val_info in ve.values_mut() {
@@ -236,28 +255,4 @@ fn add_fixed_ty_vars(st: &mut St, cx: &mut Cx, ty_vars: &[hir::TyVar], idx: Idx)
     ret.insert(fv);
   }
   ret
-}
-
-#[allow(clippy::too_many_arguments)]
-fn get_val_exp(
-  st: &mut St,
-  cx: &Cx,
-  ars: &hir::Arenas,
-  exp: hir::ExpIdx,
-  pm_pat: Pat,
-  mut want: Ty,
-  marker: ErrorsMarker,
-  idx: Idx,
-) {
-  let got = exp::get(st, cx, ars, exp);
-  unify(st, want.clone(), got, idx);
-  apply(st.subst(), &mut want);
-  pat::get_match(
-    st,
-    vec![pm_pat],
-    want,
-    Some(ErrorKind::NonExhaustiveBinding),
-    marker,
-    idx,
-  );
 }
