@@ -1,11 +1,21 @@
 use crate::check::check;
 
 #[test]
-fn char() {
+fn char_big() {
   check(
     r#"
 val _ = #"あ"
 (**     ^^^^^^ character literal must have length 1 *)
+"#,
+  );
+}
+
+#[test]
+fn char_small() {
+  check(
+    r#"
+val _ = #""
+(**     ^^^ character literal must have length 1 *)
 "#,
   );
 }
