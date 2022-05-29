@@ -78,7 +78,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     } else if p.at(SK::Name) {
       let en = p.precede(ex);
       must(p, path, Expected::Path);
-      p.exit(en, SK::ConTy)
+      p.exit(en, SK::OneArgConTy)
     } else {
       break;
     };

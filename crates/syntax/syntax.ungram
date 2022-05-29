@@ -240,6 +240,7 @@ Ty =
   TyVarTy
 | RecordTy
 | ConTy
+| OneArgConTy
 | TupleTy
 | FnTy
 | ParenTy
@@ -247,6 +248,8 @@ Ty =
 TyVarTy = 'TyVar'
 RecordTy = '{' TyRow* '}'
 ConTy = TySeq? Path
+// rather annoying, but this makes the parser a bit easier to write.
+OneArgConTy = Ty Path
 TupleTy = TyStar*
 FnTy = param:Ty '->' res:Ty
 ParenTy = '(' Ty ')'
@@ -260,7 +263,7 @@ TyAnnotation = ':' Ty
 Path = NamePlusDot*
 NamePlusDot = NamePlus '.'?
 
-TySeq = '('? TyArg* ')'?
+TySeq = '(' TyArg* ')'
 TyArg = Ty ','?
 
 TyVarSeq = '('? TyVarArg* ')'?

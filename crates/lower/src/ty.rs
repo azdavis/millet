@@ -23,6 +23,10 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
         path,
       )
     }
+    ast::Ty::OneArgConTy(ty) => {
+      let path = get_path(ty.path()?)?;
+      hir::Ty::Con(vec![get(cx, ty.ty())], path)
+    }
     ast::Ty::TupleTy(ty) => hir::Ty::Record(
       ty.ty_stars()
         .enumerate()
