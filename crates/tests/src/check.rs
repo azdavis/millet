@@ -161,15 +161,17 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   if s.contains("new-todo") {
     return Ok(());
   }
+  let show = env_var_yes("SHOW");
+  let new = env_var_yes("NEW");
   let lexed = lex::get(s);
-  if std::env::var_os("SHOW").map_or(false, |x| x == "1") {
+  if show {
     eprintln!("lex: {:?}", lexed.tokens);
   }
   if let Some(err) = lexed.errors.into_iter().next() {
     return Err((err.range, err.kind.to_string()));
   }
   let parsed = parse::get(&lexed.tokens);
-  if std::env::var_os("SHOW").map_or(false, |x| x == "1") {
+  if show {
     eprintln!("parse: {:#?}", parsed.root);
   }
   if let Some(err) = parsed.errors.into_iter().next() {
@@ -187,11 +189,15 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     let ptr = ptr.expect("couldn't get pointer");
     let range = ptr.to_node(parsed.root.syntax()).text_range();
     let msg = err.display(&syms).to_string();
-    if std::env::var_os("NEW").map_or(false, |x| x == "1") {
+    if new {
       return Err((range, msg));
     }
   }
   Ok(())
+}
+
+fn env_var_yes(s: &str) -> bool {
+  std::env::var_os(s).map_or(false, |x| x == "1")
 }
 
 fn check_impl_old(s: &str) -> Result<(), Located<String>> {
