@@ -97,6 +97,19 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
           dat.sym(),
         );
+        let ty_scheme = {
+          let mut res = TyScheme::zero(out_ty.clone());
+          generalize(st.subst(), fixed.clone(), &mut res);
+          res
+        };
+        // allow recursive reference
+        cx.env.ty_env.insert(
+          dat_bind.name.clone(),
+          TyInfo {
+            ty_scheme: ty_scheme.clone(),
+            val_env: ValEnv::default(),
+          },
+        );
         let mut val_env = ValEnv::default();
         for con_bind in dat_bind.cons.iter() {
           let mut ty = out_ty.clone();
@@ -113,8 +126,6 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             st.err(dec, ErrorKind::Duplicate(Item::Val, con_bind.name.clone()));
           }
         }
-        let mut ty_scheme = TyScheme::zero(out_ty);
-        generalize(st.subst(), fixed, &mut ty_scheme);
         let ty_info = TyInfo { ty_scheme, val_env };
         st.syms.finish_datatype(dat, ty_info.clone());
         if ty_env.insert(dat_bind.name.clone(), ty_info).is_some() {
