@@ -4,6 +4,7 @@ use crate::check::check;
 fn t_01() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   val x: int
 end = struct
@@ -18,6 +19,7 @@ val _: int = S.x
 fn t_02() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
 end = struct
   val x = 3
@@ -32,6 +34,7 @@ val _: int = S.x
 fn t_03() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   val x: int
 end = struct end
@@ -44,6 +47,7 @@ end = struct end
 fn t_04() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   exception E
 end = struct val E = Match end
@@ -56,6 +60,7 @@ end = struct val E = Match end
 fn t_05() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   val x: int
   val y: bool
@@ -74,6 +79,7 @@ val _ = S.y
 fn t_06() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   datatype d = A | B
 end = struct
@@ -87,6 +93,7 @@ end
 fn t_07() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   datatype d = A | B
 end = struct datatype d = A end
@@ -99,6 +106,7 @@ end = struct datatype d = A end
 fn t_08() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   datatype d = A
 end = struct datatype d = A | B end
@@ -111,6 +119,7 @@ end = struct datatype d = A | B end
 fn t_09() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   type t
 end = struct
@@ -125,6 +134,7 @@ val _: S.t = 3
 fn t_10() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   type t
   val zero: t
@@ -150,6 +160,7 @@ val _ = S.add (S.add (inc S.zero) (inc S.zero))
 fn t_11() {
   check(
     r#"
+(* new-todo *)
 signature SIG = sig
   type t
 end
@@ -164,6 +175,7 @@ end
 fn t_12() {
   check(
     r#"
+(* new-todo *)
 structure S: sig
   type t
 end = struct
@@ -177,6 +189,7 @@ end
 fn t_13() {
   check(
     r#"
+(* new-todo *)
 signature MONOID = sig
   type t
   val zero: t
@@ -226,6 +239,7 @@ val _ = Mul.add Mul.zero Add.zero
 fn t_14() {
   check(
     r#"
+(* new-todo *)
 signature MONOID = sig
   type t
   val zero: t
@@ -260,6 +274,7 @@ val _ = Mul.add Mul.zero Add.zero
 fn t_15() {
   check(
     r#"
+(* new-todo *)
 signature SIG = sig
   type t
   val foo: t
@@ -292,6 +307,7 @@ val _ = A.bar B.foo
 fn t_16() {
   check(
     r#"
+(* new-todo *)
 signature SIG = sig
   type t
   val foo: t
@@ -323,6 +339,7 @@ val _ = A.bar 123
 fn t_17() {
   check(
     r#"
+(* new-todo *)
 signature SIG = sig
   type t
   val foo: t
@@ -356,6 +373,7 @@ val _ = B.bar A.foo
 fn t_18() {
   check(
     r#"
+(* new-todo *)
 signature SIG = sig
   type t
   val x: t
@@ -377,6 +395,7 @@ val _: S.t = S.x
 fn t_19() {
   check(
     r#"
+(* new-todo *)
 signature SIG = sig
   type t
   val x: t
