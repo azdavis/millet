@@ -399,7 +399,7 @@ pub struct Syms {
 }
 
 impl Syms {
-  fn insert(&mut self, name: hir::Name, ty_info: TyInfo) -> Sym {
+  pub(crate) fn insert(&mut self, name: hir::Name, ty_info: TyInfo) -> Sym {
     let ret = Sym(self.store.len());
     if ret == Sym::EXN {
       panic!("too many syms");
@@ -450,65 +450,6 @@ impl Syms {
     datatype.bomb.defuse();
     self.store[datatype.sym.0].1 = ty_info;
   }
-
-  /// Returns a `Syms` with all the built-in types, like `int`, `bool`, and `string`.
-  pub(crate) fn standard_basis() -> Self {
-    let bv = Ty::BoundVar(BoundTyVar(0));
-    let zero = |s: Sym| TyScheme::zero(Ty::zero(s));
-    let one = |s: Sym| TyScheme {
-      bound_vars: BoundTyVars { inner: vec![None] },
-      ty: Ty::Con(vec![bv.clone()], s),
-    };
-
-    let store = vec![
-      datatype("int", zero(Sym::INT), []),
-      datatype("word", zero(Sym::WORD), []),
-      datatype("real", zero(Sym::REAL), []),
-      datatype("char", zero(Sym::CHAR), []),
-      datatype("string", zero(Sym::STRING), []),
-      datatype("bool", zero(Sym::BOOL), [("true", None), ("false", None)]),
-      datatype(
-        "order",
-        zero(Sym::ORDER),
-        [("LESS", None), ("EQUAL", None), ("GREATER", None)],
-      ),
-      datatype(
-        "list",
-        one(Sym::LIST),
-        [("nil", None), ("::", Some(bv.clone()))],
-      ),
-      datatype("ref", one(Sym::REF), [("ref", Some(bv))]),
-    ];
-    Self {
-      store,
-      exns: Vec::new(),
-    }
-  }
-}
-
-fn datatype<const N: usize>(
-  name: &str,
-  ty_scheme: TyScheme,
-  ctors: [(&str, Option<Ty>); N],
-) -> (hir::Name, TyInfo) {
-  let val_env: FxHashMap<_, _> = ctors
-    .into_iter()
-    .map(|(name, arg)| {
-      let ty_scheme = match arg {
-        None => ty_scheme.clone(),
-        Some(arg) => TyScheme {
-          bound_vars: ty_scheme.bound_vars.clone(),
-          ty: Ty::fun(arg, ty_scheme.ty.clone()),
-        },
-      };
-      let val_info = ValInfo {
-        ty_scheme,
-        id_status: IdStatus::Con,
-      };
-      (hir::Name::new(name), val_info)
-    })
-    .collect();
-  (hir::Name::new(name), TyInfo { ty_scheme, val_env })
 }
 
 /// A marker to determine when a `Sym` was generated.
