@@ -55,8 +55,11 @@ pub(crate) fn get(
           return any(st, pat);
         }
       };
-      if let IdStatus::Val = val_info.id_status {
-        st.err(pat_, ErrorKind::PatValIdStatus);
+      match val_info.id_status {
+        IdStatus::Val => {
+          st.err(pat_, ErrorKind::PatValIdStatus);
+        }
+        IdStatus::Con | IdStatus::Exn => {}
       }
       let ty = instantiate(st, &val_info.ty_scheme);
       let (sym, args, ty) = match ty {
