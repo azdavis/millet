@@ -174,8 +174,8 @@ fn fun_dec_wrong_num_pats() {
   check(
     r#"
 fun f 1 = 2
+(**   ^ mismatched types: expected int, found int * int *)
   | f 3 4 = 5
-(**     ^ mismatched types: expected int, found int * int *)
 "#,
   );
 }

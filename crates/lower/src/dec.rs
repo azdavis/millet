@@ -1,4 +1,5 @@
 use crate::common::{get_name, get_path};
+use crate::pat::tuple;
 use crate::util::Cx;
 use crate::{exp, pat, ty};
 use syntax::ast::{self, AstPtr};
@@ -42,14 +43,21 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
           let arms: Vec<_> = fun_bind
             .fun_bind_cases()
             .map(|case| {
-              let mut pats = Vec::<ast::Pat>::with_capacity(2);
+              let mut pats = Vec::<hir::PatIdx>::with_capacity(1);
               let head_name = case
                 .fun_bind_case_head()
                 .and_then(|head| match head {
                   ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => head.name_plus(),
                   ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
-                    pats.extend(head.lhs());
-                    pats.extend(head.rhs());
+                    let lhs = head.lhs();
+                    let rhs = head.rhs();
+                    if pat_ptr.is_none() {
+                      pat_ptr = lhs.as_ref().or(rhs.as_ref()).map(AstPtr::new);
+                    }
+                    if let Some(ref ptr) = pat_ptr {
+                      let tup = tuple([pat::get(cx, lhs), pat::get(cx, rhs)]);
+                      pats.push(cx.pat(tup, ptr.clone()));
+                    }
                     head.name_plus()
                   }
                 })
@@ -63,7 +71,12 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                   }
                 }
               }
-              pats.extend(case.pats());
+              for pat in case.pats() {
+                if pat_ptr.is_none() {
+                  pat_ptr = Some(AstPtr::new(&pat));
+                }
+                pats.push(pat::get(cx, Some(pat)));
+              }
               match num_pats {
                 None => num_pats = Some(pats.len()),
                 Some(num_pats) => {
@@ -72,15 +85,11 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                   }
                 }
               }
-              let pat = pats.pop().and_then(|fst| {
-                let ptr = AstPtr::new(&fst);
-                pat_ptr = Some(ptr.clone());
-                if pats.is_empty() {
-                  pat::get(cx, Some(fst))
+              let pat = pat_ptr.clone().and_then(|ptr| {
+                if pats.len() == 1 {
+                  pats.pop().unwrap()
                 } else {
-                  pats.push(fst);
-                  let tup = pat::tuple(pats.into_iter().map(|x| pat::get(cx, Some(x))));
-                  cx.pat(tup, ptr)
+                  cx.pat(pat::tuple(pats), ptr)
                 }
               });
               let ty = case.ty_annotation().map(|x| ty::get(cx, x.ty()));
