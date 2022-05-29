@@ -48,9 +48,9 @@ val _ = (1, "hi")
 fn list() {
   check(
     r#"
-val _ = []
-val _ = [1]
-val _ = [2, 3]
+val _: int list = []
+val _: int list = [1]
+val _: int list = [2, 3]
 "#,
   );
 }
