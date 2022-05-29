@@ -5,7 +5,7 @@ fn num_constant() {
   check(
     r#"
 val _ = 0x
-(**     ^^ incomplete numeric constant *)
+(**     ^^ incomplete literal *)
 "#,
   );
 }

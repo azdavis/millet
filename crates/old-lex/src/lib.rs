@@ -49,7 +49,6 @@ pub enum Error {
   InvalidIntConstant(std::num::ParseIntError),
   IncompleteLiteral,
   NegativeWordConstant,
-  IncompleteNumConstant,
   UnclosedStringConstant,
   InvalidStringConstant,
   InvalidCharConstant,
@@ -66,7 +65,6 @@ impl Error {
       Self::InvalidIntConstant(e) => format!("invalid integer constant: {}", e),
       Self::IncompleteLiteral => "incomplete literal".to_owned(),
       Self::NegativeWordConstant => "negative word literal".to_owned(),
-      Self::IncompleteNumConstant => "incomplete numeric constant".to_owned(),
       Self::UnclosedStringConstant => "unclosed string literal".to_owned(),
       Self::InvalidStringConstant => "invalid string literal".to_owned(),
       Self::InvalidCharConstant => "character literal must have length 1".to_owned(),
@@ -230,7 +228,7 @@ impl<'s> TokenMaker<'s> {
         if b == b'w' {
           self.i += 2;
           let b = match self.bs.get(self.i) {
-            None => return Err(Error::IncompleteNumConstant),
+            None => return Err(Error::IncompleteLiteral),
             Some(x) => *x,
           };
           let ret = if b == b'x' {
@@ -441,7 +439,7 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(Error::IncompleteNumConstant);
+      return Err(Error::IncompleteLiteral);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i])
       .unwrap()
@@ -460,7 +458,7 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(Error::IncompleteNumConstant);
+      return Err(Error::IncompleteLiteral);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
     let n: f64 = n.parse().map_err(|_| Error::IncompleteLiteral)?;
@@ -476,7 +474,7 @@ impl<'s> TokenMaker<'s> {
       self.i += 1;
     }
     if start == self.i {
-      return Err(Error::IncompleteNumConstant);
+      return Err(Error::IncompleteLiteral);
     }
     let n = std::str::from_utf8(&self.bs[start..self.i]).unwrap();
     let n = i32::from_str_radix(n, 16)?;
@@ -485,7 +483,7 @@ impl<'s> TokenMaker<'s> {
 
   fn real_exp(&mut self) -> Result<i32, Error> {
     let b = match self.bs.get(self.i) {
-      None => return Err(Error::IncompleteNumConstant),
+      None => return Err(Error::IncompleteLiteral),
       Some(x) => *x,
     };
     let neg = if b == b'~' {
