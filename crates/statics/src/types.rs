@@ -337,8 +337,32 @@ impl FixedTyVarGen {
 }
 
 /// Definition: TyName
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Sym(usize);
+
+impl fmt::Debug for Sym {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let mut dt = f.debug_tuple("Sym");
+    macro_rules! standard_basis {
+      ($name:ident, $s:expr) => {
+        if *self == Sym::$name {
+          return dt.field(&$s).finish();
+        }
+      };
+    }
+    standard_basis!(EXN, "exn");
+    standard_basis!(BOOL, "bool");
+    standard_basis!(CHAR, "char");
+    standard_basis!(INT, "int");
+    standard_basis!(REAL, "real");
+    standard_basis!(STRING, "string");
+    standard_basis!(WORD, "word");
+    standard_basis!(REF, "ref");
+    standard_basis!(LIST, "list");
+    standard_basis!(ORDER, "order");
+    dt.field(&self.0).finish()
+  }
+}
 
 impl Sym {
   // keep in sync with `Syms::standard_basis`
@@ -364,8 +388,8 @@ impl Sym {
 
 /// A mapping from [`Sym`]s to [`TyInfo`]s.
 ///
-/// Note the `Default` impl returns a totally empty `Syms`, which will lack even built-in types
-/// like `int`. For a `Syms` that does have these, see `standard_basis`.
+/// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
+/// even built-in types like `int`. For a `Syms` that does have these, see `standard_basis`.
 #[derive(Debug, Default)]
 pub struct Syms {
   store: Vec<(hir::Name, TyInfo)>,
