@@ -131,9 +131,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         Some(ty_info) => {
           env.ty_env.insert(name.clone(), ty_info.clone());
         }
-        None => st.err(dec, ErrorKind::Undefined(Item::Struct, path.last().clone())),
+        None => st.err(dec, ErrorKind::Undefined(Item::Ty, path.last().clone())),
       },
-      Err(name) => st.err(dec, ErrorKind::Undefined(Item::Ty, name.clone())),
+      Err(name) => st.err(dec, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
     hir::Dec::Abstype(_, _) => {
       // TODO
