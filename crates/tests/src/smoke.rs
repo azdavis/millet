@@ -26,3 +26,12 @@ type 'a foo = 'a * {} * int list list * (int -> string) * { a: int, b: string }
   "#,
   )
 }
+
+#[test]
+fn tuple() {
+  check(
+    r#"
+val _: int * bool = (3, false)
+"#,
+  );
+}

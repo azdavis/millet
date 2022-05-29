@@ -28,9 +28,10 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
       hir::Ty::Con(vec![get(cx, ty.ty())], path)
     }
     ast::Ty::TupleTy(ty) => hir::Ty::Record(
-      ty.ty_stars()
+      std::iter::once(ty.ty())
+        .chain(ty.star_tys().map(|x| x.ty()))
         .enumerate()
-        .map(|(idx, t)| (hir::Lab::tuple(idx), get(cx, t.ty())))
+        .map(|(idx, t)| (hir::Lab::tuple(idx), get(cx, t)))
         .collect(),
     ),
     ast::Ty::FnTy(ty) => hir::Ty::Fn(get(cx, ty.param()), get(cx, ty.res())),

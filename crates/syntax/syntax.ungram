@@ -250,11 +250,11 @@ RecordTy = '{' TyRow* '}'
 ConTy = TySeq? Path
 // rather annoying, but this makes the parser a bit easier to write.
 OneArgConTy = Ty Path
-TupleTy = TyStar*
+TupleTy = Ty StarTy*
 FnTy = param:Ty '->' res:Ty
 ParenTy = '(' Ty ')'
 
-TyStar = Ty '*'?
+StarTy = '*' Ty
 TyRow = Lab ':' Ty ','?
 
 OfTy = 'of' Ty

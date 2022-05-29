@@ -71,8 +71,10 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       }
       let en = p.precede(ex);
       while p.at(SK::Star) {
+        let en = p.enter();
         p.bump();
         must(p, |p| ty_prec(p, TyPrec::App), Expected::Ty);
+        p.exit(en, SK::StarTy);
       }
       p.exit(en, SK::TupleTy)
     } else if p.at(SK::Name) {
