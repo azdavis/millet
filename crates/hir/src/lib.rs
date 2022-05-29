@@ -11,6 +11,7 @@ pub use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
 pub struct Arenas {
+  pub top_dec: TopDecArena,
   pub str_dec: StrDecArena,
   pub str_exp: StrExpArena,
   pub sig_exp: SigExpArena,
@@ -22,6 +23,9 @@ pub struct Arenas {
 }
 
 // modules //
+
+pub type TopDecIdx = Idx<TopDec>;
+pub type TopDecArena = Arena<TopDec>;
 
 #[derive(Debug)]
 pub enum TopDec {

@@ -3,8 +3,9 @@ use crate::util::{Cx, ErrorKind};
 use crate::{dec, ty};
 use syntax::ast::{self, AstNode as _, AstPtr};
 
-pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
-  match top_dec {
+pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDecIdx {
+  let ptr = AstPtr::new(&top_dec);
+  let ret = match top_dec {
     ast::TopDec::StrDec(top_dec) => hir::TopDec::Str(get_str_dec(cx, Some(top_dec))),
     ast::TopDec::SigDec(top_dec) => hir::TopDec::Sig(
       top_dec
@@ -33,7 +34,8 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDec {
         })
         .collect(),
     ),
-  }
+  };
+  cx.top_dec(ret, ptr)
 }
 
 fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {

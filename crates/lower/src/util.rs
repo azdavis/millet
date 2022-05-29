@@ -9,6 +9,7 @@ pub type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
 #[derive(Debug, Default)]
 #[allow(missing_docs)]
 pub struct Ptrs {
+  top_dec: BiMap<ast::TopDec, hir::TopDec>,
   str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,
   str_dec: BiMap<ast::StrDec, hir::StrDec>,
   str_exp: BiMap<ast::StrExp, hir::StrExp>,
@@ -64,6 +65,12 @@ impl Ptrs {
   pub fn get_str_dec(&self, idx: hir::la_arena::Idx<hir::StrDec>) -> Option<SyntaxNodePtr> {
     try_get_hir!(idx, self.str_dec);
     try_get_hir!(idx, self.str_dec_one);
+    None
+  }
+
+  /// Returns the `SyntaxNodePtr` for an HIR top-level declaration.
+  pub fn get_top_dec(&self, idx: hir::la_arena::Idx<hir::TopDec>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.top_dec);
     None
   }
 }
@@ -140,7 +147,7 @@ pub struct Lower {
   /// The pointers.
   pub ptrs: Ptrs,
   /// The top-level declarations, in order.
-  pub top_decs: Vec<hir::TopDec>,
+  pub top_decs: Vec<hir::TopDecIdx>,
 }
 
 #[derive(Debug, Default)]
@@ -166,13 +173,19 @@ impl Cx {
     self.errors.push(Error { range, kind })
   }
 
-  pub(crate) fn finish(self, top_decs: Vec<hir::TopDec>) -> Lower {
+  pub(crate) fn finish(self, top_decs: Vec<hir::TopDecIdx>) -> Lower {
     Lower {
       errors: self.errors,
       arenas: self.arenas,
       ptrs: self.ptrs,
       top_decs,
     }
+  }
+
+  pub(crate) fn top_dec(&mut self, val: hir::TopDec, ptr: AstPtr<ast::TopDec>) -> hir::TopDecIdx {
+    let idx = self.arenas.top_dec.alloc(val);
+    self.ptrs.top_dec.insert(idx, ptr);
+    idx
   }
 
   pub(crate) fn str_dec_one(

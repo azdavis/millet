@@ -3,11 +3,11 @@ use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{Cx, Env};
 
-pub(crate) fn get(st: &mut St, cx: &mut Cx, ars: &hir::Arenas, top_dec: &hir::TopDec) {
-  match top_dec {
+pub(crate) fn get(st: &mut St, cx: &mut Cx, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
+  match ars.top_dec[top_dec] {
     hir::TopDec::Str(str_dec) => {
       let mut env = Env::default();
-      get_str_dec(st, cx, ars, &mut env, *str_dec);
+      get_str_dec(st, cx, ars, &mut env, str_dec);
       cx.env.extend(env);
     }
     hir::TopDec::Sig(_) => {
