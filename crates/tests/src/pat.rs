@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn not_arrow_type() {
+fn unexpected_arg_1() {
   check(
     r#"
 val _ = fn nil _ => 1 | _ => 2
@@ -11,11 +11,39 @@ val _ = fn nil _ => 1 | _ => 2
 }
 
 #[test]
-fn not_cons_type() {
+fn unexpected_arg_2() {
+  check(
+    r#"
+datatype d = A | B of int
+val _ =
+  case A of
+    A _ => 1
+(** ^^^ unexpected argument for constructor pattern *)
+  | B _ => 2
+"#,
+  );
+}
+
+#[test]
+fn missing_arg_1() {
   check(
     r#"
 val _ = fn op:: => 3
 (**        ^^^^ missing argument for constructor pattern *)
+"#,
+  );
+}
+
+#[test]
+fn missing_arg_2() {
+  check(
+    r#"
+datatype d = A | B of int
+val _ =
+  case A of
+    A => 1
+  | B => 2
+(** ^ missing argument for constructor pattern *)
 "#,
   );
 }

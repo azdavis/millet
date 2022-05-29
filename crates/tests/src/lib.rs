@@ -6,7 +6,6 @@
 #![cfg(test)]
 
 mod ascribe;
-mod bad_ctor;
 mod check;
 mod datatype_copy;
 mod dupe;
