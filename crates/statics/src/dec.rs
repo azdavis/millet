@@ -52,6 +52,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // extend the cx with only the recursive ValEnv.
       cx.env.val_env.extend(rec_ve);
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
+        // TODO this marker doesn't encompass the pat
         let marker = st.mark_errors();
         if let Some(exp) = val_bind.exp {
           if !matches!(ars.exp[exp], hir::Exp::Fn(_)) {
