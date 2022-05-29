@@ -259,6 +259,7 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
       statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
       statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
       statics::Idx::StrDec(dec) => lowered.ptrs.get_str_dec(dec),
+      statics::Idx::TopDec(dec) => lowered.ptrs.get_top_dec(dec),
     };
     let ptr = ptr.expect("couldn't get pointer");
     let range = ptr.to_node(parsed.root.syntax()).text_range();

@@ -10,12 +10,8 @@ pub(crate) fn get(st: &mut St, cx: &mut Cx, ars: &hir::Arenas, top_dec: hir::Top
       get_str_dec(st, cx, ars, &mut env, str_dec);
       cx.env.extend(env);
     }
-    hir::TopDec::Sig(_) => {
-      // TODO
-    }
-    hir::TopDec::Functor(_) => {
-      // TODO
-    }
+    hir::TopDec::Sig(_) => st.err(top_dec, ErrorKind::Unsupported),
+    hir::TopDec::Functor(_) => st.err(top_dec, ErrorKind::Unsupported),
   }
 }
 
