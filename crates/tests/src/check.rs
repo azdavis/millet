@@ -98,24 +98,7 @@ impl fmt::Display for Cx<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("CHECK FAILED\n\n  reasons:\n")?;
     for reason in self.reasons.iter() {
-      f.write_str("  - ")?;
-      match reason {
-        Reason::WantWrongNumError(want_len) => {
-          writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?
-        }
-        Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::CannotGetLineColPair(r) => writeln!(f, "couldn't get a line-col pair from {r:?}")?,
-        Reason::NotOneLine(pair) => writeln!(f, "not one line: {}..{}", pair.start, pair.end)?,
-        Reason::GotButNotWanted(r, got) => {
-          writeln!(f, "{r}: got an error, but wanted none")?;
-          writeln!(f, "    - got:  {got}")?;
-        }
-        Reason::MismatchedErrors(r, want, got) => {
-          writeln!(f, "{r}: mismatched errors")?;
-          writeln!(f, "    - want: {want}")?;
-          writeln!(f, "    - got:  {got}")?;
-        }
-      }
+      writeln!(f, "  - {reason}")?;
     }
     f.write_str("\n  want:")?;
     if self.want.is_empty() {
@@ -138,6 +121,28 @@ enum Reason<'a> {
   NotOneLine(Range<LineCol>),
   GotButNotWanted(OneLineRegion, String),
   MismatchedErrors(OneLineRegion, &'a str, String),
+}
+
+impl<'a> fmt::Display for Reason<'a> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Reason::WantWrongNumError(want_len) => {
+        write!(f, "want 0 or 1 wanted errors, got {want_len}")
+      }
+      Reason::NoErrorsEmitted(want_len) => write!(f, "wanted {want_len} errors, but got none"),
+      Reason::CannotGetLineColPair(r) => write!(f, "couldn't get a line-col pair from {r:?}"),
+      Reason::NotOneLine(pair) => write!(f, "not one line: {}..{}", pair.start, pair.end),
+      Reason::GotButNotWanted(r, got) => {
+        writeln!(f, "{r}: got an error, but wanted none")?;
+        write!(f, "    - got:  {got}")
+      }
+      Reason::MismatchedErrors(r, want, got) => {
+        writeln!(f, "{r}: mismatched errors")?;
+        writeln!(f, "    - want: {want}")?;
+        write!(f, "    - got:  {got}")
+      }
+    }
+  }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
