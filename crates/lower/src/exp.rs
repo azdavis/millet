@@ -84,7 +84,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
         let cond = get(cx, exp.cond());
         let body = get(cx, exp.body());
         let call = call_unit_fn(cx, &vid, ptr.clone());
-        let yes = exp_idx_in_seq(cx, vec![body, call], ptr.clone());
+        let yes = exp_idx_in_seq(cx, [body, call], ptr.clone());
         let no = cx.exp(tuple([]), ptr.clone());
         let fn_body = if_(cx, cond, yes, no, ptr.clone());
         cx.exp(fn_body, ptr.clone())
@@ -143,11 +143,11 @@ fn call_unit_fn(cx: &mut Cx, vid: &hir::Name, ptr: AstPtr<ast::Exp>) -> hir::Exp
   cx.exp(hir::Exp::App(vid_exp, arg_exp), ptr)
 }
 
-fn exps_in_seq<I>(cx: &mut Cx, es: I, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx
+fn exps_in_seq<I>(cx: &mut Cx, exps: I, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx
 where
   I: Iterator<Item = ast::ExpInSeq>,
 {
-  let exps: Vec<_> = es.into_iter().map(|e| get(cx, e.exp())).collect();
+  let exps: Vec<_> = exps.into_iter().map(|e| get(cx, e.exp())).collect();
   exp_idx_in_seq(cx, exps, ptr)
 }
 
@@ -158,7 +158,11 @@ where
 /// 3. `((fn _ => ... (fn _ => (fn _ => e) en) ...) e1)`
 ///
 /// the vec must not be empty, since we need a last expression `e`.
-fn exp_idx_in_seq(cx: &mut Cx, exps: Vec<hir::ExpIdx>, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx {
+fn exp_idx_in_seq<A, B>(cx: &mut Cx, exps: A, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx
+where
+  A: IntoIterator<IntoIter = B>,
+  B: DoubleEndedIterator<Item = hir::ExpIdx>,
+{
   exps
     .into_iter()
     .rev()
