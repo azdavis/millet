@@ -555,9 +555,6 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind]) -> Result
 pub fn ck_dat_copy(cx: &Cx, tys: &Tys, ty_con: Located<StrRef>, long: &Long) -> Result<Env> {
   let sym = get_ty_sym(get_env(&cx.env, long)?, long.last)?;
   let val_env = tys.get(&sym).val_env.clone();
-  if val_env.is_empty() {
-    return Err(long.loc().wrap(Error::DatatypeCopyNotDatatype));
-  }
   Ok(Env {
     str_env: StrEnv::new(),
     ty_env: TyEnv {

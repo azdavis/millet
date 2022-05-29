@@ -39,7 +39,6 @@ pub enum Error {
   FunDecWrongNumPats(usize, usize),
   PatNotConsTy(Ty),
   PatNotArrowTy(Ty),
-  DatatypeCopyNotDatatype,
   NotEquality(Ty),
   NotArrowTy(Ty),
   IdStatusMismatch(IdStatus, IdStatus),
@@ -103,9 +102,6 @@ impl Error {
       ),
       Self::PatNotConsTy(_) => "missing argument for constructor pattern".to_owned(),
       Self::PatNotArrowTy(_) => "unexpected argument for constructor pattern".to_owned(),
-      Self::DatatypeCopyNotDatatype => {
-        "right-hand side of datatype copy is not a datatype".to_owned()
-      }
       Self::NotEquality(ty) => format!("not an equality type: {}", show_ty(store, ty)),
       Self::NotArrowTy(ty) => format!("not a function type: {}", show_ty(store, ty)),
       Self::IdStatusMismatch(want, got) => format!(

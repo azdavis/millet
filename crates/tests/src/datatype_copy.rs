@@ -20,7 +20,6 @@ fn t_02() {
   check(
     r#"
 datatype bad = datatype exn
-(**                     ^^^ right-hand side of datatype copy is not a datatype *)
 "#,
   );
 }
@@ -40,7 +39,6 @@ fn t_04() {
   check(
     r#"
 datatype no = datatype int
-(**                    ^^^ right-hand side of datatype copy is not a datatype *)
 "#,
   );
 }
