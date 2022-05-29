@@ -132,8 +132,12 @@ impl Cx {
     ret
   }
 
-  pub(crate) fn finish(self) -> (hir::Arenas, Ptrs) {
-    (self.arenas, self.ptrs)
+  pub(crate) fn finish(self, top_decs: Vec<hir::TopDec>) -> Lower {
+    Lower {
+      arenas: self.arenas,
+      ptrs: self.ptrs,
+      top_decs,
+    }
   }
 
   pub(crate) fn str_dec_one(
