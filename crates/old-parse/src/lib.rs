@@ -55,7 +55,7 @@ impl Error {
       Self::Expected(exp) => format!("expected {}", exp),
       Self::InfixWithoutOp => "infix name used as non-infix without `op`".to_owned(),
       Self::NotInfix => "non-infix name used as infix".to_owned(),
-      Self::RealPat => "real constant used as a pattern".to_owned(),
+      Self::RealPat => "real literal used as a pattern".to_owned(),
       Self::NegativeFixity => "fixity is negative".to_owned(),
       Self::SameFixityDiffAssoc => {
         "consecutive infix names with same fixity but different associativity".to_owned()

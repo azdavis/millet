@@ -41,7 +41,7 @@ fn real() {
 val _ =
   case 123.123 of
     1.2 => 1
-(** ^^^ real constant used as a pattern *)
+(** ^^^ real literal used as a pattern *)
   | _ => 2
 "#,
   );
