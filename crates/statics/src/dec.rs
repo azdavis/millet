@@ -250,7 +250,6 @@ fn get_val_exp(
   idx: Idx,
 ) {
   let got = exp::get(st, cx, ars, exp);
-  let idx = exp.map_or(idx, Into::into);
   unify(st, want.clone(), got, idx);
   apply(st.subst(), &mut want);
   pat::get_match(
