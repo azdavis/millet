@@ -438,6 +438,7 @@ pub enum Expected {
   StrExp,
   Ty,
   LRoundExpTail,
+  Item,
 }
 
 impl fmt::Display for Expected {
@@ -451,6 +452,7 @@ impl fmt::Display for Expected {
       Expected::StrExp => "a structure expression",
       Expected::Ty => "a type",
       Expected::LRoundExpTail => "`)`, `,`, or `;`",
+      Expected::Item => "a top-level item",
     };
     f.write_str(s)
   }

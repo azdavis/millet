@@ -76,6 +76,16 @@ fn empty() {
 }
 
 #[test]
+fn no_top_items() {
+  check(
+    r#"
+    and
+(** ^^^ expected a top-level item *)
+"#,
+  );
+}
+
+#[test]
 fn equality() {
   check(
     r#"

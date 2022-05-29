@@ -1,4 +1,4 @@
-use crate::parser::Parser;
+use crate::parser::{ErrorKind, Expected, Parser};
 use crate::top_dec::top_dec;
 use syntax::SyntaxKind as SK;
 
@@ -7,6 +7,7 @@ pub(crate) fn root(p: &mut Parser<'_>) {
   while p.peek().is_some() {
     if !top_dec(p) {
       // avoid infinite loop
+      p.error(ErrorKind::Expected(Expected::Item));
       p.bump();
     }
   }
