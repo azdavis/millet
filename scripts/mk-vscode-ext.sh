@@ -10,7 +10,7 @@ mkdir -p "$out"
 rm -rf "$out/lang-srv"
 
 cargo build
-cp target/debug/old-lang-srv "$out/lang-srv"
+cp target/debug/lang-srv "$out/lang-srv"
 
 cd "$vscode"
 if ! [ -e node_modules ]; then
