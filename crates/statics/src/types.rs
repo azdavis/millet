@@ -455,18 +455,13 @@ impl Syms {
 
   /// Returns a `Syms` with all the built-in types, like `int`, `bool`, and `string`.
   pub(crate) fn standard_basis() -> Self {
-    fn zero(s: Sym) -> TyScheme {
-      TyScheme::zero(Ty::zero(s))
-    }
-
-    fn one(s: Sym) -> TyScheme {
-      TyScheme {
-        bound_vars: BoundTyVars { inner: vec![None] },
-        ty: Ty::Con(vec![], s),
-      }
-    }
-
     let bv = Ty::BoundVar(BoundTyVar(0));
+    let zero = |s: Sym| TyScheme::zero(Ty::zero(s));
+    let one = |s: Sym| TyScheme {
+      bound_vars: BoundTyVars { inner: vec![None] },
+      ty: Ty::Con(vec![], s),
+    };
+
     let store = vec![
       datatype("bool", zero(Sym::BOOL), [("true", None), ("false", None)]),
       datatype("char", zero(Sym::CHAR), []),
