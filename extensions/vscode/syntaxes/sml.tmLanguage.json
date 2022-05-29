@@ -3,13 +3,13 @@
   "scopeName": "source.sml",
   "patterns": [
     { "include": "#blockComment" },
+    { "include": "#decInt" },
+    { "include": "#hexInt" },
+    { "include": "#decWord" },
+    { "include": "#hexWord" },
+    { "include": "#real" },
     { "include": "#char" },
     { "include": "#string" },
-    { "include": "#real" },
-    { "include": "#hexWord" },
-    { "include": "#decWord" },
-    { "include": "#hexInt" },
-    { "include": "#decInt" },
     { "include": "#bool" },
     { "include": "#tyVar" },
     { "include": "#symbolicIdent" },
@@ -22,21 +22,6 @@
       "begin": "\\(\\*",
       "end": "\\*\\)",
       "patterns": [{ "include": "#blockComment" }]
-    },
-    "string": {
-      "name": "string.quoted.double.sml",
-      "begin": "\"",
-      "end": "\"",
-      "patterns": [{ "include": "#escapeChar" }]
-    },
-    "char": {
-      "name": "string.quoted.double.sml",
-      "begin": "#\"",
-      "end": "\""
-    },
-    "escapeChar": {
-      "name": "constant.character.escape.sml",
-      "match": "\\\\[abtnvfr]"
     },
     "decInt": {
       "name": "constant.numeric.integer.decimal.sml",
@@ -58,6 +43,22 @@
       "name": "constant.numeric.float.decimal.sml",
       "match": "(\\b|~)[0-9]+\\.[0-9]+([Ee]~?[0-9]+)?\\b"
     },
+    "char": {
+      "name": "string.quoted.double.sml",
+      "begin": "#\"",
+      "end": "\"",
+      "patterns": [{ "include": "#escapeChar" }]
+    },
+    "string": {
+      "name": "string.quoted.double.sml",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [{ "include": "#escapeChar" }]
+    },
+    "escapeChar": {
+      "name": "constant.character.escape.sml",
+      "match": "\\\\[abtnvfr]"
+    },
     "bool": {
       "name": "constant.language.boolean.sml",
       "match": "\\b(true|false)\\b"
@@ -72,11 +73,11 @@
     },
     "controlKeyword": {
       "name": "keyword.control.sml",
-      "match": "\\b(andalso|case|do|else|end|handle|if|in|let|local|of|op|orelse|raise|sig|struct|then|while)\\b"
+      "match": "\\b(andalso|as|case|do|else|fn|handle|if|op|orelse|raise|then|while)\\b"
     },
     "otherKeyword": {
       "name": "keyword.other.sml",
-      "match": "\\b(abstype|and|as|datatype|eqtype|exception|fn|fun|functor|include|infix|infixr|nonfix|open|rec|sharing|signature|structure|type|val|where|with|withtype)\\b"
+      "match": "\\b(abstype|and|datatype|end|eqtype|exception|fun|functor|in|include|infix|infixr|let|local|nonfix|of|open|rec|sharing|sig|signature|struct|structure|type|val|where|with|withtype)\\b"
     }
   }
 }
