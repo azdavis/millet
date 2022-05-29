@@ -162,6 +162,9 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     return Ok(());
   }
   let lexed = lex::get(s);
+  if std::env::var_os("SHOW").map_or(false, |x| x == "1") {
+    eprintln!("lex: {:?}", lexed.tokens);
+  }
   if let Some(err) = lexed.errors.into_iter().next() {
     return Err((err.range, err.kind.to_string()));
   }
@@ -170,7 +173,7 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     return Err((err.range, err.kind.to_string()));
   }
   if std::env::var_os("SHOW").map_or(false, |x| x == "1") {
-    eprintln!("{:#?}", parsed.root);
+    eprintln!("parse: {:#?}", parsed.root);
   }
   let lowered = lower::get(&parsed.root);
   let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
