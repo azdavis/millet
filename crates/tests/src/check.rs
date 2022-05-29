@@ -251,8 +251,9 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
   if let Some(err) = lowered.errors.into_iter().next() {
     return Err((err.range, err.kind.to_string()));
   }
-  let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
-  if let Some(err) = errors.into_iter().next() {
+  let mut st = statics::Statics::default();
+  statics::get(&mut st, &lowered.arenas, &lowered.top_decs);
+  if let Some(err) = st.errors.into_iter().next() {
     let ptr = match err.idx() {
       statics::Idx::Exp(exp) => lowered.ptrs.get_exp(exp),
       statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
@@ -263,7 +264,7 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     };
     let ptr = ptr.expect("couldn't get pointer");
     let range = ptr.to_node(parsed.root.syntax()).text_range();
-    let msg = err.display(&syms).to_string();
+    let msg = err.display(&st.syms).to_string();
     return Err((range, msg));
   }
   Ok(())

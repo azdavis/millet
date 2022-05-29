@@ -1,6 +1,7 @@
 use crate::error::{Error, ErrorKind, Idx};
+use crate::standard_basis;
 use crate::types::{
-  BoundTyVars, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
+  BoundTyVars, Cx, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
 };
 use drop_bomb::DropBomb;
 
@@ -74,4 +75,25 @@ impl St {
 pub(crate) struct ErrorsMarker {
   bomb: DropBomb,
   errors_len: usize,
+}
+
+/// Static analysis.
+#[derive(Debug)]
+pub struct Statics {
+  /// The symbols generated.
+  pub syms: Syms,
+  /// The errors encountered.
+  pub errors: Vec<Error>,
+  pub(crate) cx: Cx,
+}
+
+impl Default for Statics {
+  fn default() -> Self {
+    let (syms, cx) = standard_basis::get();
+    Self {
+      syms,
+      cx,
+      errors: Vec::new(),
+    }
+  }
 }

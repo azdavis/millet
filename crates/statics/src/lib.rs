@@ -22,16 +22,17 @@ mod unify;
 mod util;
 
 pub use error::{Error, Idx};
-pub use st::St;
+pub use st::{St, Statics};
 pub use types::Syms;
 
 /// Does the checks.
-pub fn get(arenas: &hir::Arenas, top_decs: &[hir::TopDecIdx]) -> (Syms, Vec<Error>) {
-  let (syms, mut cx) = standard_basis::get();
+pub fn get(statics: &mut Statics, arenas: &hir::Arenas, top_decs: &[hir::TopDecIdx]) {
   let mut st = st::St::default();
-  st.syms = syms;
+  st.syms = std::mem::take(&mut statics.syms);
   for &top_dec in top_decs {
-    top_dec::get(&mut st, &mut cx, arenas, top_dec);
+    top_dec::get(&mut st, &mut statics.cx, arenas, top_dec);
   }
-  st.finish()
+  let (syms, errors) = st.finish();
+  statics.syms = syms;
+  statics.errors.extend(errors);
 }
