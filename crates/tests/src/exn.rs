@@ -30,35 +30,32 @@ val _ = bar 3 andalso raise Guh
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_02() {
   check(
     r#"
-(* we might want to raise an error here? *)
 exception No = Match
 val _ =
   3 handle
     Match => 1
   | No => 2
+(** ^^ unreachable pattern *)
   | _ => 3
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_03() {
   check(
     r#"
 val x = 3
-exception Bad = x
-(**             ^ mismatched identifier status: expected exception, found value *)
+    exception Bad = x
+(** ^^^^^^^^^^^^^^^^^ not an exception *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn poly() {
   check(
     r#"
@@ -67,7 +64,7 @@ fun 'a foo (x: 'a) =
     exception Poly of 'a
   in
     raise Poly x; raise Poly 3; ()
-(**                     ^^^^^^ mismatched types: expected '22, found int *)
+(**                     ^^^^^^ mismatched types: expected 'a -> exn, found int -> _ *)
   end
 "#,
   );
