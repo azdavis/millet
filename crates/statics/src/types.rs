@@ -210,12 +210,12 @@ impl TyScheme {
   /// one as in this type scheme binds one variable.
   pub(crate) fn one<F>(f: F) -> Self
   where
-    F: FnOnce(Ty) -> (Ty, Ty, Option<TyVarKind>),
+    F: FnOnce(Ty) -> (Ty, Option<TyVarKind>),
   {
-    let (param, res, kind) = f(Ty::BoundVar(BoundTyVar(0)));
+    let (ty, kind) = f(Ty::BoundVar(BoundTyVar(0)));
     Self {
       bound_vars: BoundTyVars { inner: vec![kind] },
-      ty: Ty::fun(param, res),
+      ty,
     }
   }
 

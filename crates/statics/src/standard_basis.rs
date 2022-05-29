@@ -36,20 +36,28 @@ pub(crate) fn get() -> (Syms, Cx) {
     }))
     .collect();
   let fns = {
-    let realint_to_realint = TyScheme::one(|a| (a.clone(), a, ov(Overload::RealInt)));
-    let wordint_pair_to_wordint = TyScheme::one(|a| (dup(a.clone()), a, ov(Overload::WordInt)));
-    let num_pair_to_num = TyScheme::one(|a| (dup(a.clone()), a, ov(Overload::Num)));
+    let realint_to_realint = TyScheme::one(|a| (Ty::fun(a.clone(), a), ov(Overload::RealInt)));
+    let wordint_pair_to_wordint =
+      TyScheme::one(|a| (Ty::fun(dup(a.clone()), a), ov(Overload::WordInt)));
+    let num_pair_to_num = TyScheme::one(|a| (Ty::fun(dup(a.clone()), a), ov(Overload::Num)));
     let numtxt_pair_to_bool =
-      TyScheme::one(|a| (dup(a), Ty::zero(Sym::BOOL), ov(Overload::NumTxt)));
+      TyScheme::one(|a| (Ty::fun(dup(a), Ty::zero(Sym::BOOL)), ov(Overload::NumTxt)));
     let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::zero(Sym::REAL)), Ty::zero(Sym::REAL)));
     let assign = TyScheme::one(|a| {
       (
-        pair(Ty::Con(vec![a.clone()], Sym::REF), a),
-        Ty::Record(BTreeMap::new()),
+        Ty::fun(
+          pair(Ty::Con(vec![a.clone()], Sym::REF), a),
+          Ty::Record(BTreeMap::new()),
+        ),
         None,
       )
     });
-    let eq = TyScheme::one(|a| (dup(a), Ty::zero(Sym::BOOL), Some(TyVarKind::Equality)));
+    let eq = TyScheme::one(|a| {
+      (
+        Ty::fun(dup(a), Ty::zero(Sym::BOOL)),
+        Some(TyVarKind::Equality),
+      )
+    });
     [
       ("abs", realint_to_realint.clone()),
       ("~", realint_to_realint),
