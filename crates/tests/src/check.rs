@@ -169,11 +169,11 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     return Err((err.range, err.kind.to_string()));
   }
   let parsed = parse::get(&lexed.tokens);
-  if let Some(err) = parsed.errors.into_iter().next() {
-    return Err((err.range, err.kind.to_string()));
-  }
   if std::env::var_os("SHOW").map_or(false, |x| x == "1") {
     eprintln!("parse: {:#?}", parsed.root);
+  }
+  if let Some(err) = parsed.errors.into_iter().next() {
+    return Err((err.range, err.kind.to_string()));
   }
   let lowered = lower::get(&parsed.root);
   let (syms, errors) = statics::get(&lowered.arenas, &lowered.top_decs);
