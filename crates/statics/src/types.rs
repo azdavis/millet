@@ -459,7 +459,7 @@ impl Syms {
     let zero = |s: Sym| TyScheme::zero(Ty::zero(s));
     let one = |s: Sym| TyScheme {
       bound_vars: BoundTyVars { inner: vec![None] },
-      ty: Ty::Con(vec![], s),
+      ty: Ty::Con(vec![bv.clone()], s),
     };
 
     let store = vec![
