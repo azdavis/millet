@@ -140,10 +140,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut val_env = ValEnv::default();
       for ex_bind in ex_binds {
         match ex_bind {
-          hir::ExBind::New(name, of_ty) => {
+          hir::ExBind::New(name, param) => {
             let mut ty = Ty::zero(Sym::EXN);
-            if let Some(of_ty) = *of_ty {
-              ty = Ty::fun(ty::get(st, cx, ars, of_ty), ty);
+            if let Some(param) = *param {
+              ty = Ty::fun(ty::get(st, cx, ars, param), ty);
             }
             let vi = ValInfo {
               ty_scheme: TyScheme::zero(ty),
