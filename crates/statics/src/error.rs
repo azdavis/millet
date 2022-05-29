@@ -97,6 +97,7 @@ pub(crate) enum ErrorKind {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) enum Item {
   Val,
   Ty,
