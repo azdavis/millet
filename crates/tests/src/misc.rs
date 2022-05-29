@@ -644,6 +644,7 @@ val _: int = * (3, 4)
 fn paren() {
   check(
     r#"
+(* new-todo *)
 structure S = struct
   type i = (int)
   type bl = ((bool) list)
