@@ -1,19 +1,17 @@
 use crate::check::check;
 
 #[test]
-#[ignore = "todo for new"]
 fn apply() {
   check(
     r#"
 val apply = fn (f, x) => f x
     val _: unit = apply
-(** ^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found ('29 -> '30) * '29 -> '30 *)
+(** ^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found (_ -> _) * _ -> _ *)
 "#,
   );
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn arrow_ty_arg() {
   check(
     r#"
@@ -23,7 +21,7 @@ val _ = fn f => fn x => (
   f x x x andalso false;
   f 3;
     f: unit;
-(** ^^^^^^^ mismatched types: expected unit, found int -> int -> int -> bool *)
+(** ^^^^^^^ mismatched types: expected unit, found _ *)
   false
 )
 "#,
@@ -31,7 +29,6 @@ val _ = fn f => fn x => (
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn bind() {
   check(
     r#"
@@ -43,12 +40,12 @@ val One = One
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn circularity() {
+  // TODO improve this error message
   check(
     r#"
-fun f _ = f
-(**       ^ circularity: '23 in '24 -> '23 *)
+    fun f _ = f
+(** ^^^^^^^^^^^ circularity: _ -> _ *)
 "#,
   );
 }

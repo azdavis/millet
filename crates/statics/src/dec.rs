@@ -42,7 +42,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           want,
           Some(ErrorKind::NonExhaustiveBinding),
           marker,
-          dec,
+          val_bind.pat.map_or(Idx::from(dec), Into::into),
         );
       }
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we

@@ -83,7 +83,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     hir::Exp::Typed(inner, want) => {
       let got = get(st, cx, ars, *inner);
       let mut want = ty::get(st, cx, ars, *want);
-      unify(st, want.clone(), got, inner.unwrap_or(exp));
+      unify(st, want.clone(), got, exp);
       apply(st.subst(), &mut want);
       want
     }
