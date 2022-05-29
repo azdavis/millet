@@ -1,7 +1,6 @@
 use crate::check::check;
 
 #[test]
-#[ignore = "todo for new"]
 fn t_00() {
   check(
     r#"
@@ -14,7 +13,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_01() {
   check(
     r#"
@@ -42,7 +40,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_02() {
   check(
     r#"
@@ -76,7 +73,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_04() {
   check(
     r#"
@@ -111,7 +107,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_06() {
   check(
     r#"
@@ -119,7 +114,7 @@ val _ =
   case (true, false) of
     (_, false) => 1
   | (_, false) => 2
-(** ^^^^^^^^^^ unreachable pattern *)
+(**  ^ unreachable pattern *)
   | _ => 3
 "#,
   );
@@ -184,7 +179,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_10() {
   check(
     r#"
@@ -195,7 +189,7 @@ val _ =
   | [_, 7] => 3
   | [_, 5] => 4
   | [7, 7] => 5
-(** ^^^^^^ unreachable pattern *)
+(**  ^ unreachable pattern *)
   | [_, _] => 6
   | x :: _ => x
 "#,
@@ -203,7 +197,6 @@ val _ =
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_11() {
   check(
     r#"
