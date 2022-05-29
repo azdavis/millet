@@ -73,7 +73,7 @@ impl<'a> TyDisplay<'a> {
 impl<'a> fmt::Display for TyDisplay<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.ty {
-      Ty::None => f.write_str("_")?,
+      Ty::None => f.write_str("<none>")?,
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         let hd = match vars.inner[bv.0] {
@@ -89,7 +89,8 @@ impl<'a> fmt::Display for TyDisplay<'a> {
           write!(f, "{ch}")?;
         }
       }
-      Ty::MetaVar(mv) => mv.fmt(f)?,
+      // TODO improve?
+      Ty::MetaVar(_) => f.write_str("_")?,
       Ty::FixedVar(fv) => fv.fmt(f)?,
       Ty::Record(rows) => {
         if rows.is_empty() {
@@ -294,13 +295,6 @@ impl BoundTyVar {
 /// Generated, and to be substituted for a real type, by the inference algorithm.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct MetaTyVar(Uniq);
-
-impl fmt::Display for MetaTyVar {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    // not real syntax
-    write!(f, "${}", self.0)
-  }
-}
 
 #[derive(Debug, Default)]
 pub(crate) struct MetaTyVarGen(UniqGen);

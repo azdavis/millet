@@ -117,13 +117,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Unimplemented => f.write_str("support for this construct not implemented"),
       ErrorKind::Undefined(item, name) => write!(f, "undefined {item}: {name}"),
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
-      ErrorKind::Circularity(mv, ty) => {
-        write!(
-          f,
-          "circularity: {} appears in {}",
-          mv,
-          ty.display(self.syms)
-        )
+      ErrorKind::Circularity(_, ty) => {
+        write!(f, "circularity: {}", ty.display(self.syms))
       }
       ErrorKind::MismatchedTypes(want, got) => write!(
         f,
