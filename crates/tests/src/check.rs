@@ -145,12 +145,18 @@ impl fmt::Display for Region {
   }
 }
 
+fn get_line_col(indices: &[usize], idx: usize) -> Option<(usize, usize)> {
+  let line = indices.iter().position(|&i| idx <= i)?;
+  let col_start = indices.get(line.checked_sub(1)?)?.checked_add(1)?;
+  Some((line, idx.checked_sub(col_start)?))
+}
+
 fn get_region(indices: &[usize], range: Range<usize>) -> Option<Region> {
-  let line = indices.iter().position(|&idx| range.start <= idx)?;
-  let col = indices.get(line.checked_sub(1)?)?.checked_add(1)?;
-  Some(Region {
-    line,
-    col: range.start.checked_sub(col)?..range.end.checked_sub(col)?,
+  let (start_line, start_col) = get_line_col(indices, range.start)?;
+  let (end_line, end_col) = get_line_col(indices, range.end)?;
+  (start_line == end_line).then(|| Region {
+    line: start_line,
+    col: start_col..end_col,
   })
 }
 
