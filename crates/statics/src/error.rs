@@ -60,7 +60,7 @@ impl From<hir::la_arena::Idx<hir::Dec>> for Idx {
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
-  Unimplemented,
+  Unsupported,
   Undefined(Item, hir::Name),
   Duplicate(Item, hir::Name),
   Circularity(MetaTyVar, Ty),
@@ -113,7 +113,7 @@ struct ErrorKindDisplay<'a> {
 impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
-      ErrorKind::Unimplemented => f.write_str("support for this construct not implemented"),
+      ErrorKind::Unsupported => f.write_str("unsupported language construct"),
       ErrorKind::Undefined(item, name) => write!(f, "undefined {item}: {name}"),
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
       ErrorKind::Circularity(_, ty) => {

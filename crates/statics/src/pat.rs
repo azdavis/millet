@@ -96,7 +96,7 @@ pub(crate) fn get(
     }
     hir::Pat::Record { rows, allows_other } => {
       if *allows_other {
-        st.err(pat_, ErrorKind::Unimplemented);
+        st.err(pat_, ErrorKind::Unsupported);
       }
       let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
