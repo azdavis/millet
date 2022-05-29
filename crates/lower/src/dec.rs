@@ -162,11 +162,10 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
         .ex_binds()
         .filter_map(|ex_bind| {
           let name = hir::Name::new(ex_bind.name_plus()?.token.text());
-          let ret = match ex_bind.ex_bind_inner()? {
-            ast::ExBindInner::OfTy(x) => {
-              hir::ExBind::New(name, x.ty().map(|x| ty::get(cx, Some(x))))
-            }
-            ast::ExBindInner::EqPath(x) => hir::ExBind::Copy(name, get_path(x.path()?)?),
+          let ret = match ex_bind.ex_bind_inner() {
+            None => hir::ExBind::New(name, None),
+            Some(ast::ExBindInner::OfTy(x)) => hir::ExBind::New(name, Some(ty::get(cx, x.ty()))),
+            Some(ast::ExBindInner::EqPath(x)) => hir::ExBind::Copy(name, get_path(x.path()?)?),
           };
           Some(ret)
         })
