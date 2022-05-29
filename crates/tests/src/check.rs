@@ -180,8 +180,9 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
     };
     let ptr = ptr.expect("couldn't get pointer");
     let range = ptr.to_node(parsed.root.syntax()).text_range();
+    let msg = err.display(&syms).to_string();
     if std::env::var_os("NEW").map_or(false, |x| x == "1") {
-      return Err((range, err.display(&syms).to_string()));
+      return Err((range, msg));
     }
   }
   Ok(())
