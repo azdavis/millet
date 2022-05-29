@@ -41,11 +41,11 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
         hir::Exp::App(cons, cx.exp(tuple([x, ac]), ptr.clone()))
       })
     }
-    ast::Exp::SeqExp(exp) => exps_in_seq(cx, exp.exps_in_seq(), ptr.clone()),
+    ast::Exp::SeqExp(exp) => return exps_in_seq(cx, exp.exps_in_seq(), ptr),
     ast::Exp::LetExp(exp) => {
       let dec = dec::get(cx, exp.dec());
       let exp = exps_in_seq(cx, exp.exps_in_seq(), ptr.clone());
-      hir::Exp::Let(dec, cx.exp(exp, ptr.clone()))
+      hir::Exp::Let(dec, exp)
     }
     ast::Exp::AppExp(exp) => hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
     ast::Exp::InfixExp(exp) => {
@@ -85,7 +85,6 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
         let body = get(cx, exp.body());
         let call = call_unit_fn(cx, &vid, ptr.clone());
         let yes = exp_idx_in_seq(cx, vec![body, call], ptr.clone());
-        let yes = cx.exp(yes, ptr.clone());
         let no = cx.exp(tuple([]), ptr.clone());
         let fn_body = if_(cx, cond, yes, no, ptr.clone());
         cx.exp(fn_body, ptr.clone())
@@ -144,7 +143,7 @@ fn call_unit_fn(cx: &mut Cx, vid: &hir::Name, ptr: AstPtr<ast::Exp>) -> hir::Exp
   cx.exp(hir::Exp::App(vid_exp, arg_exp), ptr)
 }
 
-fn exps_in_seq<I>(cx: &mut Cx, es: I, ptr: AstPtr<ast::Exp>) -> hir::Exp
+fn exps_in_seq<I>(cx: &mut Cx, es: I, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx
 where
   I: Iterator<Item = ast::ExpInSeq>,
 {
@@ -152,28 +151,23 @@ where
   exp_idx_in_seq(cx, exps, ptr)
 }
 
-/// the Definition says to do the lowering 1 -> 2 but we do the lowering 1 -> 3. all should be
-/// equivalent. TODO maybe not because of generalizing?
+/// lowers 1 into 2. (which is then lowered into 3.)
 ///
 /// 1. `(e1; ...; en; e)`
-/// 2. `case e1 of _ => ... => case en of _ => e`
-/// 3. `let val _ = e1 and ... and _ = en in e end`
+/// 2. `(case e1 of _ => ... => case en of _ => e)`
+/// 3. `((fn _ => ... (fn _ => (fn _ => e) en) ...) e1)`
 ///
-/// the iterator must not be empty, since we need a last expression `e`.
-fn exp_idx_in_seq(cx: &mut Cx, mut exps: Vec<hir::ExpIdx>, ptr: AstPtr<ast::Exp>) -> hir::Exp {
-  let last = exps.pop().unwrap();
-  let dec = hir::Dec::Val(
-    vec![],
-    exps
-      .into_iter()
-      .map(|exp| hir::ValBind {
-        rec: false,
-        pat: cx.pat_in_exp(hir::Pat::Wild, ptr.clone()),
-        exp,
-      })
-      .collect(),
-  );
-  hir::Exp::Let(cx.dec_in_exp(dec, ptr), last)
+/// the vec must not be empty, since we need a last expression `e`.
+fn exp_idx_in_seq(cx: &mut Cx, exps: Vec<hir::ExpIdx>, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx {
+  exps
+    .into_iter()
+    .rev()
+    .reduce(|ac, x| {
+      let wild = cx.pat_in_exp(hir::Pat::Wild, ptr.clone());
+      let c = case(cx, x, vec![(wild, ac)], ptr.clone());
+      cx.exp(c, ptr.clone())
+    })
+    .unwrap()
 }
 
 fn if_(

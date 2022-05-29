@@ -43,8 +43,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       got
     }
     hir::Exp::App(func, arg) => {
-      let want = get(st, cx, ars, *func);
+      // TODO do func before arg. it's in this order right now to cause error emission order for
+      // exp seq/case lowering to be slightly better
       let arg_ty = get(st, cx, ars, *arg);
+      let want = get(st, cx, ars, *func);
       let mut res_ty = Ty::MetaVar(st.gen_meta_var());
       let got = Ty::fun(arg_ty, res_ty.clone());
       unify(st, want, got, exp);
