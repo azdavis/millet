@@ -75,6 +75,8 @@ impl<'a> fmt::Display for TyDisplay<'a> {
     match self.ty {
       Ty::None => f.write_str("<none>")?,
       Ty::BoundVar(bv) => {
+        // TODO this never gets used because we don't generalize when reporting in errors. also it
+        // might have clashed with fixed vars anyway?
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         let hd = match vars.inner[bv.0] {
           None | Some(TyVarKind::Overloaded(_)) => "'",
