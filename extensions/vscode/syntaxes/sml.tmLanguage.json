@@ -30,7 +30,7 @@
       "patterns": [{ "include": "#escapeChar" }]
     },
     "char": {
-      "name": "string.quoted.single.sml",
+      "name": "string.quoted.double.sml",
       "begin": "#\"",
       "end": "\""
     },
