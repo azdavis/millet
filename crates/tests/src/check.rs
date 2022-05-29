@@ -195,6 +195,9 @@ fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
 }
 
 fn check_impl_old(s: &str) -> Result<(), Located<String>> {
+  if s.contains("old-todo") {
+    return Ok(());
+  }
   let mut store = old_intern::StrStoreMut::new();
   let lexer = match old_lex::get(&mut store, s.as_bytes()) {
     Ok(x) => x,

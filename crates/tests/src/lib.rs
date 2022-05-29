@@ -21,5 +21,6 @@ mod num_record;
 mod overload;
 mod pat;
 mod shadow;
+mod smoke;
 mod ty_name_escape;
 mod ty_var_annot;
