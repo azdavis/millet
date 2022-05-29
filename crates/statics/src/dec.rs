@@ -90,6 +90,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     hir::Dec::Datatype(dat_binds) => {
       let mut cx = cx.clone();
       let mut ty_env = TyEnv::default();
+      let mut big_val_env = ValEnv::default();
       for dat_bind in dat_binds {
         let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars);
         let dat = st.syms.start_datatype(dat_bind.name.clone());
@@ -126,6 +127,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             st.err(dec, ErrorKind::Duplicate(Item::Val, con_bind.name.clone()));
           }
         }
+        // NOTE: no checking for duplicates here
+        big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
         let ty_info = TyInfo { ty_scheme, val_env };
         st.syms.finish_datatype(dat, ty_info.clone());
         if ty_env.insert(dat_bind.name.clone(), ty_info).is_some() {
@@ -136,6 +139,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
       }
       env.ty_env.extend(ty_env);
+      env.val_env.extend(big_val_env);
     }
     hir::Dec::DatatypeCopy(name, path) => match get_env(&cx.env, path.structures()) {
       Ok(got_env) => match got_env.ty_env.get(path.last()) {
