@@ -64,8 +64,8 @@ pub struct BiMap<A, H>
 where
   A: AstNode,
 {
-  pub hir_to_ast: hir::la_arena::ArenaMap<hir::la_arena::Idx<H>, AstPtr<A>>,
-  pub ast_to_hir: FxHashMap<AstPtr<A>, hir::la_arena::Idx<H>>,
+  hir_to_ast: hir::la_arena::ArenaMap<hir::la_arena::Idx<H>, AstPtr<A>>,
+  ast_to_hir: FxHashMap<AstPtr<A>, hir::la_arena::Idx<H>>,
 }
 
 impl<A, H> BiMap<A, H>
