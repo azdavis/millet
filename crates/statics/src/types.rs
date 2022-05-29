@@ -346,7 +346,7 @@ impl fmt::Debug for Sym {
 }
 
 impl Sym {
-  // keep in sync with `Syms::standard_basis`
+  // keep these special `const`s in sync with `Syms::standard_basis` and `fn special`
 
   /// kind of hacky
   pub(crate) const EXN: Self = Self(usize::MAX);
