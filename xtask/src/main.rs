@@ -10,11 +10,11 @@ enum Cmd {
   Help,
   Test,
   CkSmlDef,
-  MkVscExt,
+  Dist,
 }
 
 impl Cmd {
-  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Test, Cmd::CkSmlDef, Cmd::MkVscExt];
+  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Test, Cmd::CkSmlDef, Cmd::Dist];
 
   fn name_desc(&self) -> (&'static str, &'static str) {
     match self {
@@ -24,7 +24,10 @@ impl Cmd {
         "ck-sml-def",
         "check whether the sml definition is properly referenced",
       ),
-      Cmd::MkVscExt => ("mk-vsc-ext", "make a vscode extension"),
+      Cmd::Dist => (
+        "dist",
+        "make artifacts for distribution (can use --release)",
+      ),
     }
   }
 }
@@ -84,18 +87,17 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
-fn mk_vsc(sh: &Shell, release: bool) -> Result<()> {
+fn dist(sh: &Shell, release: bool) -> Result<()> {
   let release_arg = release.then(|| "--release");
-  cmd!(sh, "cargo build {release_arg...} --bin lang-srv").run()?;
+  cmd!(sh, "cargo build {release_arg...} --locked --bin lang-srv").run()?;
   let out = "extensions/vscode/out";
   sh.remove_path(out)?;
   sh.create_dir(out)?;
   let dir = if release { "release" } else { "debug" };
   sh.copy_file(format!("target/{dir}/lang-srv"), out)?;
   let _d = sh.push_dir("extensions/vscode");
-  if !Path::new("node_modules").exists() {
-    cmd!(sh, "npm ci").run()?;
-  }
+  // TODO add npm ci here with check if node_modules exists? using Path::new(...).exists() doesn't
+  // work because sh.push_dir doesn't affect the actual cwd. would like a 'exists' helper on sh?
   cmd!(sh, "npm run build").run()?;
   Ok(())
 }
@@ -129,10 +131,10 @@ fn main() -> Result<()> {
       finish_args(args)?;
       ck_sml_def(&sh)?;
     }
-    Cmd::MkVscExt => {
+    Cmd::Dist => {
       let release = args.contains("--release");
       finish_args(args)?;
-      mk_vsc(&sh, release)?;
+      dist(&sh, release)?;
     }
   }
   Ok(())

@@ -5,7 +5,7 @@
       "label": "extension: build",
       "group": "build",
       "type": "shell",
-      "command": "cargo xtask mk-vsc-ext",
+      "command": "cargo xtask dist",
       "presentation": {
         "reveal": "silent"
       }
