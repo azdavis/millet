@@ -24,7 +24,7 @@ use syntax::{ast::AstNode as _, rowan::TextRange};
 #[track_caller]
 pub(crate) fn check(s: &str) {
   let mut cx = Cx::new(s);
-  match check_impl(s) {
+  match get_one_error(s) {
     Ok(()) => {
       if !cx.want.is_empty() {
         cx.reasons.push(Reason::NoErrorsEmitted(cx.want.len()));
@@ -35,6 +35,45 @@ pub(crate) fn check(s: &str) {
   if !cx.reasons.is_empty() {
     panic!("{cx}")
   }
+}
+
+fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
+  let show = env_var_yes("SHOW");
+  let lexed = lex::get(s);
+  if show {
+    eprintln!("lex: {:?}", lexed.tokens);
+  }
+  if let Some(err) = lexed.errors.into_iter().next() {
+    return Err((err.range, err.kind.to_string()));
+  }
+  let parsed = parse::get(&lexed.tokens);
+  if show {
+    eprintln!("parse: {:#?}", parsed.root);
+  }
+  if let Some(err) = parsed.errors.into_iter().next() {
+    return Err((err.range, err.kind.to_string()));
+  }
+  let lowered = lower::get(&parsed.root);
+  if let Some(err) = lowered.errors.into_iter().next() {
+    return Err((err.range, err.kind.to_string()));
+  }
+  let mut st = statics::Statics::default();
+  statics::get(&mut st, &lowered.arenas, &lowered.top_decs);
+  if let Some(err) = st.errors.into_iter().next() {
+    let ptr = match err.idx() {
+      statics::Idx::Exp(exp) => lowered.ptrs.get_exp(exp),
+      statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
+      statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
+      statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
+      statics::Idx::StrDec(dec) => lowered.ptrs.get_str_dec(dec),
+      statics::Idx::TopDec(dec) => lowered.ptrs.get_top_dec(dec),
+    };
+    let ptr = ptr.expect("couldn't get pointer");
+    let range = ptr.to_node(parsed.root.syntax()).text_range();
+    let msg = err.display(&st.syms).to_string();
+    return Err((range, msg));
+  }
+  Ok(())
 }
 
 struct Cx<'a> {
@@ -231,51 +270,12 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(OneLineRegion, &st
   Some((region, msg.trim_end_matches(' ')))
 }
 
-fn check_impl(s: &str) -> Result<(), (TextRange, String)> {
-  let show = env_var_yes("SHOW");
-  let lexed = lex::get(s);
-  if show {
-    eprintln!("lex: {:?}", lexed.tokens);
-  }
-  if let Some(err) = lexed.errors.into_iter().next() {
-    return Err((err.range, err.kind.to_string()));
-  }
-  let parsed = parse::get(&lexed.tokens);
-  if show {
-    eprintln!("parse: {:#?}", parsed.root);
-  }
-  if let Some(err) = parsed.errors.into_iter().next() {
-    return Err((err.range, err.kind.to_string()));
-  }
-  let lowered = lower::get(&parsed.root);
-  if let Some(err) = lowered.errors.into_iter().next() {
-    return Err((err.range, err.kind.to_string()));
-  }
-  let mut st = statics::Statics::default();
-  statics::get(&mut st, &lowered.arenas, &lowered.top_decs);
-  if let Some(err) = st.errors.into_iter().next() {
-    let ptr = match err.idx() {
-      statics::Idx::Exp(exp) => lowered.ptrs.get_exp(exp),
-      statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
-      statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
-      statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
-      statics::Idx::StrDec(dec) => lowered.ptrs.get_str_dec(dec),
-      statics::Idx::TopDec(dec) => lowered.ptrs.get_top_dec(dec),
-    };
-    let ptr = ptr.expect("couldn't get pointer");
-    let range = ptr.to_node(parsed.root.syntax()).text_range();
-    let msg = err.display(&st.syms).to_string();
-    return Err((range, msg));
-  }
-  Ok(())
-}
-
 fn env_var_yes(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
 }
 
 #[allow(dead_code)]
-fn check_impl_old(s: &str) -> Result<(), Located<String>> {
+fn get_one_error_old(s: &str) -> Result<(), Located<String>> {
   if s.contains("old-todo") {
     return Ok(());
   }
