@@ -5,8 +5,9 @@ fn scon() {
   check(
     r#"
 val _: int = 3
+and _: int = ~4
 and _: real = 3.2
-and _: real = 3.2e9
+and _: real = ~3.2e9
 and _: real = 3.2E9
 and _: real = 3.2E~9
 and _: word = 0w123
