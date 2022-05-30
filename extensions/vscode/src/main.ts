@@ -1,25 +1,33 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { LanguageClient } from "vscode-languageclient/node";
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+} from "vscode-languageclient/node";
 
 let client: LanguageClient | null = null;
 
+const channel = vscode.window.createOutputChannel("millet client");
+
 export async function activate(cx: vscode.ExtensionContext) {
+  channel.appendLine("startup millet lsp client");
   const config = vscode.workspace.getConfiguration("millet");
   if (!config.get("useLanguageServer") || client !== null) {
     return;
   }
-  const serverOpts = {
+  const serverOpts: ServerOptions = {
     command: cx.asAbsolutePath(path.join("out", "lang-srv")),
   };
-  const clientOpts = {
+  const clientOpts: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "sml" }],
   };
-  client = new LanguageClient("millet", serverOpts, clientOpts, true);
+  client = new LanguageClient("millet", serverOpts, clientOpts);
   client.start();
 }
 
 export async function deactivate() {
+  channel.appendLine("shutdown millet lsp client");
   if (client === null) {
     return;
   }
