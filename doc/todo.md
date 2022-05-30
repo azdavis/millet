@@ -4,17 +4,12 @@ priority is approximate. if unsure of priority, put in low.
 
 ## high
 
-- get windows ci working to build extension for windows
 - get logo
   - stick in readme
   - and 'icon' field of package.json
   - that icon needs to be 128x128 png
 - maybe use latest instead of 18.04/11 for ubuntu/macos
 - impl modules
-- write architecture.md
-  - and other 'contributing' flavored docs?
-  - talk about how statics errors should use an abstract 'Entity' (currently just 'this expression' or 'this declaration' etc) and this entity gets turned into an actual text range somewhere else (lower::Ptrs)
-  - could add more to this, like 'the name of the third con bind in the second dat bind of this datatype dec'
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info
@@ -74,3 +69,5 @@ priority is approximate. if unsure of priority, put in low.
 - rm 'old-todo'
 - use `type Seq<T> = Box<[T]>` instead of `Vec<T>` in hir, etc?
 - forbid symbolic names in some cases in parsing?
+- talk about how statics errors should use an abstract 'Entity' (currently just 'this expression' or 'this declaration' etc) and this entity gets turned into an actual text range somewhere else (lower::Ptrs)
+- could add more to this, like 'the name of the third con bind in the second dat bind of this datatype dec'
