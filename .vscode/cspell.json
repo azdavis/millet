@@ -9,6 +9,7 @@
     "autocrlf",
     "azdavis",
     "clippy",
+    "consts",
     "descs",
     "eqtype",
     "esbuild",

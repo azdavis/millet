@@ -16,8 +16,9 @@ export async function activate(cx: vscode.ExtensionContext) {
   if (!config.get("useLanguageServer") || client !== null) {
     return;
   }
+  const ext = process.platform === "win32" ? ".exe" : "";
   const serverOpts: ServerOptions = {
-    command: cx.asAbsolutePath(path.join("out", "lang-srv")),
+    command: cx.asAbsolutePath(path.join("out", `lang-srv${ext}`)),
   };
   const clientOpts: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "sml" }],

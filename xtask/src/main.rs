@@ -95,14 +95,19 @@ fn dist(sh: &Shell, release: bool) -> Result<()> {
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
   let kind = if release { "release" } else { "debug" };
-  let lang_srv: PathBuf = ["target", kind, "lang-srv"].iter().collect();
+  let lang_srv_name = format!("lang-srv{}", std::env::consts::EXE_SUFFIX);
+  let lang_srv: PathBuf = ["target", kind, lang_srv_name.as_str()].iter().collect();
   sh.copy_file(&lang_srv, &dir)?;
   assert!(dir.pop());
   sh.copy_file("license.md", &dir)?;
   let _d = sh.push_dir(&dir);
   // TODO add npm ci here with check if node_modules exists? using Path::new(...).exists() doesn't
   // work because sh.push_dir doesn't affect the actual cwd. would like a 'exists' helper on sh?
-  cmd!(sh, "npm run build-{kind}").run()?;
+  if cfg!(windows) {
+    cmd!(sh, "cmd.exe /c npm run build-{kind}").run()?;
+  } else {
+    cmd!(sh, "npm run build-{kind}").run()?;
+  }
   Ok(())
 }
 
