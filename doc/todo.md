@@ -8,7 +8,6 @@ priority is approximate. if unsure of priority, put in low.
   - stick in readme
   - and 'icon' field of package.json
   - that icon needs to be 128x128 png
-- maybe use latest instead of 18.04/11 for ubuntu/macos
 - impl modules
 - impl more LSP features
   - jump to definition
