@@ -1,9 +1,90 @@
 name: ci
 on: [push]
+env:
+  CARGO_INCREMENTAL: 0
+  CI: 1
+  RUST_BACKTRACE: short
+  RUSTFLAGS: "-D warnings"
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run CI
-        run: cargo xtask ci
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt, clippy
+      - name: Run tests
+        run: cargo xtask test
+  dist:
+    needs: test
+    if: success() && github.ref == 'refs/heads/release'
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rust: x86_64-pc-windows-msvc
+            vscode: win32-x64
+          - os: windows-latest
+            rust: aarch64-pc-windows-msvc
+            vscode: win32-arm64
+          - os: ubuntu-18.04
+            rust: x86_64-unknown-linux-gnu
+            vscode: linux-x64
+          - os: ubuntu-18.04
+            rust: aarch64-unknown-linux-gnu
+            vscode: linux-arm64
+          - os: macos-11
+            rust: x86_64-apple-darwin
+            vscode: darwin-x64
+          - os: macos-11
+            rust: aarch64-apple-darwin
+            vscode: darwin-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          target: ${{ matrix.rust }}
+          toolchain: stable
+          profile: minimal
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+      - name: Install node dependencies
+        run: npm ci
+        working-directory: extensions/vscode
+      - name: Make dist
+        run: cargo xtask dist --release
+      - name: Package vsix
+        run: npx --no-install vsce package --target ${{ matrix.vscode }} -o millet-${{ matrix.vscode }}.vsix
+        working-directory: extensions/vscode
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: extensions/vscode/millet-${{ matrix.vscode }}.vsix
+  release:
+    runs-on: ubuntu-latest
+    needs: dist
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+      - name: Install node dependencies
+        run: npm ci
+        working-directory: extensions/vscode
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: extensions/vscode/dist
+      - name: Publish artifacts
+        run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath dist/*
+        working-directory: extensions/vscode
