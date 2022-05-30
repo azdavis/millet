@@ -21,12 +21,11 @@ val _ = #""
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn int() {
   check(
     r#"
 val _ = 123123123123123123123123132131
-(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ invalid integer constant: number too large to fit in target type *)
+(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ invalid literal: number too large to fit in target type *)
 "#,
   );
 }

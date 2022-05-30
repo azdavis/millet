@@ -8,7 +8,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
   let ptr = AstPtr::new(&pat);
   let ret = match pat {
     ast::Pat::WildcardPat(_) => hir::Pat::Wild,
-    ast::Pat::SConPat(pat) => hir::Pat::SCon(get_scon(pat.s_con()?)?),
+    ast::Pat::SConPat(pat) => hir::Pat::SCon(get_scon(cx, pat.s_con()?)?),
     ast::Pat::ConPat(pat) => {
       hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(cx, Some(x))))
     }

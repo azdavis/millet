@@ -129,6 +129,8 @@ pub enum ErrorKind {
   Unsupported,
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
+  InvalidIntLit(std::num::ParseIntError),
+  InvalidRealLit(std::num::ParseFloatError),
 }
 
 impl fmt::Display for ErrorKind {
@@ -141,6 +143,8 @@ impl fmt::Display for ErrorKind {
       ErrorKind::FunBindWrongNumPats(want, got) => {
         write!(f, "wrong number of patterns: expected {want}, found {got}")
       }
+      ErrorKind::InvalidIntLit(e) => write!(f, "invalid literal: {e}"),
+      ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
     }
   }
 }
