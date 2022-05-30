@@ -24,13 +24,13 @@ If you're using VSCode, you can try out the VSCode extension:
 
 ## Repository layout
 
-- Most of the code is in `crates/`.
-- Editor extensions are in `extensions/`.
-- The "build system" is in `xtask/`. It requires rust, node, and git.
+- Most of the code is in `crates`.
+- Editor extensions are in `extensions`.
+- The "build system" is in `xtask`. It requires rust, node, and git.
 
 ## Testing
 
-Most tests are in `crates/tests/` and use `check()` like this:
+Most tests are in `crates/tests` and use `check()` like this:
 
 ```rs
 use crate::check::check;
