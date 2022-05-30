@@ -29,6 +29,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
       let body = cx.exp(name(fresh.as_str()), ptr.clone());
       hir::Exp::Fn(vec![(param, body)])
     }
+    // sml_def(5)
     ast::Exp::ParenExp(exp) => return get(cx, exp.exp()),
     ast::Exp::TupleExp(exp) => tuple(exp.exp_args().map(|e| get(cx, e.exp()))),
     ast::Exp::ListExp(exp) => {

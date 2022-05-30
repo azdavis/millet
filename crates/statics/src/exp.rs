@@ -12,7 +12,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     None => return Ty::None,
   };
   match &ars.exp[exp] {
+    // sml_def(1)
     hir::Exp::SCon(scon) => get_scon(scon),
+    // sml_def(2)
     hir::Exp::Path(path) => {
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
@@ -29,7 +31,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
         }
       }
     }
+    // sml_def(3)
     hir::Exp::Record(rows) => record(st, rows, exp, |st, _, exp| get(st, cx, ars, exp)),
+    // sml_def(4)
     hir::Exp::Let(dec, inner) => {
       let mut env = Env::default();
       let marker = st.syms.mark();
@@ -42,6 +46,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       }
       got
     }
+    // sml_def(8)
     hir::Exp::App(func, arg) => {
       // TODO do func before arg. it's in this order right now to cause error emission order for
       // exp seq/case lowering to be slightly better
@@ -53,6 +58,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       apply(st.subst(), &mut res_ty);
       res_ty
     }
+    // sml_def(10)
     hir::Exp::Handle(inner, matcher) => {
       let marker = st.mark_errors();
       let mut exp_ty = get(st, cx, ars, *inner);
@@ -64,11 +70,13 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       pat::get_match(st, pats, param, None, marker, idx);
       exp_ty
     }
+    // sml_def(11)
     hir::Exp::Raise(inner) => {
       let got = get(st, cx, ars, *inner);
       unify(st, Ty::zero(Sym::EXN), got, inner.unwrap_or(exp));
       Ty::MetaVar(st.gen_meta_var())
     }
+    // sml_def(12)
     hir::Exp::Fn(matcher) => {
       let marker = st.mark_errors();
       let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
@@ -82,6 +90,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       );
       Ty::fun(param, res)
     }
+    // sml_def(9)
     hir::Exp::Typed(inner, want) => {
       let got = get(st, cx, ars, *inner);
       let mut want = ty::get(st, cx, ars, *want);
@@ -92,6 +101,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
   }
 }
 
+/// sml_def(13)
 fn get_matcher(
   st: &mut St,
   cx: &Cx,
@@ -102,6 +112,7 @@ fn get_matcher(
   let mut param_ty = Ty::MetaVar(st.gen_meta_var());
   let mut res_ty = Ty::MetaVar(st.gen_meta_var());
   let mut pats = Vec::<Pat>::new();
+  // sml_def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
     let (pm_pat, pat_ty) = pat::get(st, cx, ars, &mut ve, pat);

@@ -15,6 +15,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     None => return,
   };
   match &ars.dec[dec] {
+    // sml_def(15)
     hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();
       let fixed = add_fixed_ty_vars(st, &mut cx, ty_vars, dec.into());
@@ -31,6 +32,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           break;
         }
         idx += 1;
+        // sml_def(25)
         let marker = st.mark_errors();
         let (pm_pat, mut want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
         let got = exp::get(st, &cx, ars, val_bind.exp);
@@ -63,6 +65,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
         // TODO this marker doesn't encompass the pat
         let marker = st.mark_errors();
+        // sml_def(26)
         if let Some(exp) = val_bind.exp {
           if !matches!(ars.exp[exp], hir::Exp::Fn(_)) {
             st.err(dec, ErrorKind::ValRecExpNotFn);
@@ -87,9 +90,11 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // extend the overall env with that.
       env.val_env.extend(ve);
     }
+    // sml_def(16)
     hir::Dec::Ty(ty_binds) => {
       let mut cx = cx.clone();
       let mut ty_env = TyEnv::default();
+      // sml_def(27)
       for ty_bind in ty_binds {
         let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars, dec.into());
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty_bind.ty));
@@ -107,10 +112,12 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       env.ty_env.extend(ty_env);
     }
+    // sml_def(17). TODO handle side conditions
     hir::Dec::Datatype(dat_binds) => {
       let mut cx = cx.clone();
       let mut ty_env = TyEnv::default();
       let mut big_val_env = ValEnv::default();
+      // sml_def(28)
       for dat_bind in dat_binds {
         let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, dec.into());
         let dat = st.syms.start_datatype(dat_bind.name.clone());
@@ -132,6 +139,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           },
         );
         let mut val_env = ValEnv::default();
+        // sml_def(29)
         for con_bind in dat_bind.cons.iter() {
           let mut ty = out_ty.clone();
           if let Some(of_ty) = con_bind.ty {
@@ -163,6 +171,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       env.ty_env.extend(ty_env);
       env.val_env.extend(big_val_env);
     }
+    // sml_def(18)
     hir::Dec::DatatypeCopy(name, path) => match get_env(&cx.env, path.structures()) {
       Ok(got_env) => match got_env.ty_env.get(path.last()) {
         Some(ty_info) => {
@@ -172,11 +181,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       },
       Err(name) => st.err(dec, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
+    // sml_def(19)
     hir::Dec::Abstype(_, _) => st.err(dec, ErrorKind::Unsupported),
+    // sml_def(20)
     hir::Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::default();
       for ex_bind in ex_binds {
         match ex_bind {
+          // sml_def(30)
           hir::ExBind::New(name, param) => {
             let mut ty = Ty::zero(Sym::EXN);
             let param = param.map(|param| ty::get(st, cx, ars, param));
@@ -194,6 +206,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
               st.err(dec, ErrorKind::Duplicate(Item::Val, name.clone()));
             }
           }
+          // sml_def(31)
           hir::ExBind::Copy(name, path) => match get_env(&cx.env, path.structures()) {
             Ok(got_env) => match got_env.val_env.get(path.last()) {
               Some(val_info) => match val_info.id_status {
@@ -212,6 +225,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       env.val_env.extend(val_env);
     }
+    // sml_def(21)
     hir::Dec::Local(local_dec, in_dec) => {
       let mut local_env = Env::default();
       get(st, cx, ars, &mut local_env, *local_dec);
@@ -219,6 +233,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       cx.env.extend(local_env);
       get(st, &cx, ars, env, *in_dec);
     }
+    // sml_def(22)
     hir::Dec::Open(paths) => {
       for path in paths {
         match get_env(&cx.env, path.all_names()) {
@@ -227,6 +242,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
       }
     }
+    // sml_def(23), sml_def(24)
     hir::Dec::Seq(decs) => {
       let mut cx = cx.clone();
       for &dec in decs {

@@ -142,6 +142,7 @@ pub struct StrDesc {
 pub type ExpIdx = Option<Idx<Exp>>;
 pub type ExpArena = Arena<Exp>;
 
+/// sml_def(7) is handled by having no distinction between atomic expressions and others here.
 #[derive(Debug)]
 pub enum Exp {
   SCon(SCon),
@@ -207,6 +208,7 @@ pub enum ExBind {
 pub type PatIdx = Option<Idx<Pat>>;
 pub type PatArena = Arena<Pat>;
 
+/// sml_def(40) is handled by having no distinction between atomic expressions and others here.
 #[derive(Debug)]
 pub enum Pat {
   Wild,

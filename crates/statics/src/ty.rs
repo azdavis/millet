@@ -9,6 +9,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     None => return Ty::None,
   };
   match &ars.ty[ty] {
+    // sml_def(44)
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
       None => {
         st.err(ty, ErrorKind::Undefined(Item::TyVar, v.clone().into_name()));
@@ -16,7 +17,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
       }
       Some(fv) => Ty::FixedVar(fv.clone()),
     },
+    // sml_def(45)
     hir::Ty::Record(rows) => record(st, rows, ty, |st, _, ty| get(st, cx, ars, ty)),
+    // sml_def(46)
     hir::Ty::Con(args, path) => {
       let env = match get_env(&cx.env, path.structures()) {
         Ok(x) => x,
@@ -46,6 +49,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
       // standard basis).
       ret
     }
+    // sml_def(47)
     hir::Ty::Fn(param, res) => {
       let param = get(st, cx, ars, *param);
       let res = get(st, cx, ars, *res);

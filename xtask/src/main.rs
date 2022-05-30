@@ -67,12 +67,9 @@ fn finish_args(args: Arguments) -> Result<()> {
 }
 
 fn ck_sml_def(sh: &Shell) -> Result<()> {
-  let dir: PathBuf = ["crates", "old-statics", "src"].iter().collect();
-  let out = cmd!(
-    sh,
-    "git grep -hoE 'SML Definition \\(([[:digit:]]+)\\)' {dir}"
-  )
-  .output()?;
+  let dirs: [PathBuf; 3] =
+    ["hir", "lower", "statics"].map(|x| ["crates", x, "src"].iter().collect());
+  let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output()?;
   let got: FxHashSet<u16> = String::from_utf8(out.stdout)?
     .lines()
     .filter_map(|line| {
@@ -81,9 +78,14 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
       num.parse().ok()
     })
     .collect();
-  let missing: Vec<_> = (1u16..=89).filter(|x| !got.contains(x)).collect();
+  let want = 1u16..=49;
+  let missing: Vec<_> = want.clone().filter(|x| !got.contains(x)).collect();
   if !missing.is_empty() {
     bail!("missing sml definition references: {missing:?}")
+  }
+  let extra: Vec<_> = got.iter().filter(|&x| !want.contains(x)).collect();
+  if !extra.is_empty() {
+    bail!("extra sml definition references: {extra:?}")
   }
   Ok(())
 }

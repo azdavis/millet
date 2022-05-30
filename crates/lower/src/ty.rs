@@ -35,6 +35,7 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
         .collect(),
     ),
     ast::Ty::FnTy(ty) => hir::Ty::Fn(get(cx, ty.param()), get(cx, ty.res())),
+    // sml_def(48)
     ast::Ty::ParenTy(ty) => return get(cx, ty.ty()),
   };
   cx.ty(ret, ptr)

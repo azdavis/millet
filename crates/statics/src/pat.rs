@@ -18,7 +18,9 @@ pub(crate) fn get(
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
   match &ars.pat[pat_] {
+    // sml_def(32)
     hir::Pat::Wild => any(st, pat),
+    // sml_def(33)
     hir::Pat::SCon(scon) => {
       let con = match *scon {
         hir::SCon::Int(i) => Con::Int(i),
@@ -43,6 +45,7 @@ pub(crate) fn get(
       };
       let maybe_val_info = env.val_env.get(path.last());
       let is_var = arg.is_none() && path.structures().is_empty() && ok_val_info(maybe_val_info);
+      // sml_def(34)
       if is_var {
         let (pm_pat, ty) = any(st, pat);
         insert_name(st, ve, path.last().clone(), ty.clone(), pat_);
@@ -64,6 +67,7 @@ pub(crate) fn get(
         IdStatus::Exn(exn) => VariantName::Exn(exn.clone()),
       };
       let ty = instantiate(st, &val_info.ty_scheme);
+      // sml_def(35), sml_def(41)
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
           if arg.is_some() {
@@ -94,8 +98,10 @@ pub(crate) fn get(
       let pat = Pat::con(Con::Variant(sym, variant_name), args, pat);
       (pat, ty)
     }
+    // sml_def(36)
     hir::Pat::Record { rows, allows_other } => {
       if *allows_other {
+        // sml_def(38)
         st.err(pat_, ErrorKind::Unsupported);
       }
       let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
@@ -108,6 +114,7 @@ pub(crate) fn get(
       });
       (Pat::con(Con::Record(labs), pats, pat), ty)
     }
+    // sml_def(42)
     hir::Pat::Typed(inner, want) => {
       let (pm_pat, got) = get(st, cx, ars, ve, *inner);
       let mut want = ty::get(st, cx, ars, *want);
@@ -115,6 +122,7 @@ pub(crate) fn get(
       apply(st.subst(), &mut want);
       (pm_pat, want)
     }
+    // sml_def(43)
     hir::Pat::As(ref name, inner) => {
       if !ok_val_info(cx.env.val_env.get(name)) {
         st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));

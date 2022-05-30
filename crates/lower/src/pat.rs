@@ -33,6 +33,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
         .collect();
       hir::Pat::Record { rows, allows_other }
     }
+    // sml_def(37)
     ast::Pat::ParenPat(pat) => return get(cx, pat.pat()),
     ast::Pat::TuplePat(pat) => tuple(pat.pat_args().map(|x| get(cx, x.pat()))),
     ast::Pat::ListPat(pat) => {

@@ -14,6 +14,7 @@ pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
   Ty::zero(sym)
 }
 
+/// sml_def(6), sml_def(39), sml_def(49)
 pub(crate) fn record<T, F, I>(st: &mut St, rows: &[(hir::Lab, T)], idx: I, mut f: F) -> Ty
 where
   T: Copy,
