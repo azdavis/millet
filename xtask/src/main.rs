@@ -94,17 +94,15 @@ fn dist(sh: &Shell, release: bool) -> Result<()> {
   let mut dir: PathBuf = ["extensions", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
-  let lang_srv: PathBuf = {
-    let d = if release { "release" } else { "debug" };
-    ["target", d, "lang-srv"].iter().collect()
-  };
+  let kind = if release { "release" } else { "debug" };
+  let lang_srv: PathBuf = ["target", kind, "lang-srv"].iter().collect();
   sh.copy_file(&lang_srv, &dir)?;
   assert!(dir.pop());
   sh.copy_file("license.md", &dir)?;
   let _d = sh.push_dir(&dir);
   // TODO add npm ci here with check if node_modules exists? using Path::new(...).exists() doesn't
   // work because sh.push_dir doesn't affect the actual cwd. would like a 'exists' helper on sh?
-  cmd!(sh, "npm run build").run()?;
+  cmd!(sh, "npm run build-{kind}").run()?;
   Ok(())
 }
 
