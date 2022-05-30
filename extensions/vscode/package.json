@@ -38,7 +38,7 @@
       "properties": {
         "millet.useLanguageServer": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Use the language server."
         }
       }
