@@ -28,7 +28,8 @@
     "vscode": "^1.67.0"
   },
   "activationEvents": [
-    "onLanguage:sml"
+    "onLanguage:sml",
+    "workspaceContains:**/*.{sml,sig,fun}"
   ],
   "contributes": {
     "configuration": {
