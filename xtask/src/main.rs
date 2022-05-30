@@ -84,12 +84,14 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
-fn mk_vsc(sh: &Shell) -> Result<()> {
-  cmd!(sh, "cargo build --bin lang-srv").run()?;
+fn mk_vsc(sh: &Shell, release: bool) -> Result<()> {
+  let release_arg = release.then(|| "--release");
+  cmd!(sh, "cargo build {release_arg...} --bin lang-srv").run()?;
   let out = "extensions/vscode/out";
   sh.remove_path(out)?;
   sh.create_dir(out)?;
-  sh.copy_file("target/debug/lang-srv", out)?;
+  let dir = if release { "release" } else { "debug" };
+  sh.copy_file(format!("target/{dir}/lang-srv"), out)?;
   let _d = sh.push_dir("extensions/vscode");
   if !Path::new("node_modules").exists() {
     cmd!(sh, "npm ci").run()?;
@@ -128,8 +130,9 @@ fn main() -> Result<()> {
       ck_sml_def(&sh)?;
     }
     Cmd::MkVscExt => {
+      let release = args.contains("--release");
       finish_args(args)?;
-      mk_vsc(&sh)?;
+      mk_vsc(&sh, release)?;
     }
   }
   Ok(())
