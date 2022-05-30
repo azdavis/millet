@@ -33,6 +33,8 @@ If you're using VSCode, you can try out the VSCode extension:
 Most tests are in `crates/tests/` and use `check()` like this:
 
 ```rs
+use crate::check::check;
+
 #[test]
 fn undefined() {
   check(
@@ -43,6 +45,8 @@ val _ = nope
   );
 }
 ```
+
+See the documentation of `check()` for how to write tests.
 
 ## Naming
 
