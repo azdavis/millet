@@ -14,4 +14,3 @@ parse = { path = "../parse" }
 lower = { path = "../lower" }
 statics = { path = "../statics" }
 syntax = { path = "../syntax" }
-url = "2"
