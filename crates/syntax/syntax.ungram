@@ -29,7 +29,7 @@ StrDecOne =
 //
 // ```sml
 // val x = 123
-// val y = "hi"`
+// val y = "hi"
 // ```
 //
 // we could parse that as either
