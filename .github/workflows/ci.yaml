@@ -45,6 +45,10 @@ jobs:
             vscode: darwin-arm64
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Fix git line endings (necessary for windows)
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
       - name: Checkout repo
         uses: actions/checkout@v3
       - name: Setup rust
