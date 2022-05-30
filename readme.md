@@ -13,7 +13,7 @@ This project is alpha-quality software.
 
 ## Development
 
-`git clone` the repo, `cd` inside, and run `cargo xtask ci`.
+`git clone` the repo, `cd` inside, and run `cargo xtask test`.
 
 If you're using VSCode, you can try out the VSCode extension:
 
