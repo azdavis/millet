@@ -5,7 +5,7 @@
       "label": "extension: build",
       "group": "build",
       "type": "shell",
-      "command": "./scripts/mk-vscode-ext.sh",
+      "command": "cargo xtask mk-vsc-ext",
       "presentation": {
         "reveal": "silent"
       }

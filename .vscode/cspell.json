@@ -23,6 +23,7 @@
     "notif",
     "numtxt",
     "orelse",
+    "pico",
     "posix",
     "powf",
     "prec",
@@ -41,6 +42,8 @@
     "ungram",
     "walkdir",
     "withtype",
-    "wordint"
+    "wordint",
+    "xshell",
+    "xtask"
   ]
 }

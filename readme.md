@@ -13,7 +13,7 @@ This project is alpha-quality software.
 
 ## Development
 
-`git clone` the repo, `cd` inside, and run `scripts/ci.sh`.
+`git clone` the repo, `cd` inside, and run `cargo xtask ci`.
 
 If you're using VSCode, you can try out the VSCode extension:
 
@@ -26,7 +26,7 @@ If you're using VSCode, you can try out the VSCode extension:
 
 - Most of the code is in `crates/`.
 - Editor extensions are in `extensions/`.
-- Various helper scripts are in `scripts/`. They require a POSIX `sh` and various other POSIX utilities.
+- The "build system" is in `xtask/`. It requires rust, node, and git.
 
 ## Testing
 
