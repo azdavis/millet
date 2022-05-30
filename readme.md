@@ -2,7 +2,7 @@
 
 A [language server][lang-server] for [Standard ML][sml-def].
 
-Also a corresponding [Visual Studio Code][vscode] extension.
+Also a corresponding [Visual Studio Code][vscode] extension, available for download on the [marketplace][].
 
 ## Warning
 
@@ -56,6 +56,7 @@ Also, birds eat millet, and a bird named Polly Morphism is the mascot for [15-15
 
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [lang-server]: https://microsoft.github.io/language-server-protocol/
+[marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [node]: https://nodejs.org/en/
 [rustup]: https://rustup.rs
 [sml-def]: https://smlfamily.github.io/sml97-defn.pdf

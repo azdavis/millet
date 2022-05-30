@@ -11,6 +11,15 @@
     "url": "https://github.com/azdavis/millet.git",
     "type": "git"
   },
+  "license": "MIT",
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "SML",
+    "Standard ML",
+    "language server"
+  ],
   "main": "./out/main.js",
   "scripts": {
     "build-base": "esbuild src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16",
