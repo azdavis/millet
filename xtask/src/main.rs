@@ -3,7 +3,7 @@
 use anyhow::{bail, Result};
 use fast_hash::FxHashSet;
 use pico_args::Arguments;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use xshell::{cmd, Shell};
 
 enum Cmd {
@@ -67,9 +67,10 @@ fn finish_args(args: Arguments) -> Result<()> {
 }
 
 fn ck_sml_def(sh: &Shell) -> Result<()> {
+  let dir: PathBuf = ["crates", "old-statics", "src"].iter().collect();
   let out = cmd!(
     sh,
-    "git grep -hoE 'SML Definition \\(([[:digit:]]+)\\)' crates/old-statics/src"
+    "git grep -hoE 'SML Definition \\(([[:digit:]]+)\\)' {dir}"
   )
   .output()?;
   let got: FxHashSet<u16> = String::from_utf8(out.stdout)?
@@ -90,13 +91,17 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
 fn dist(sh: &Shell, release: bool) -> Result<()> {
   let release_arg = release.then(|| "--release");
   cmd!(sh, "cargo build {release_arg...} --locked --bin lang-srv").run()?;
-  let out = "extensions/vscode/out";
-  sh.remove_path(out)?;
-  sh.create_dir(out)?;
-  let dir = if release { "release" } else { "debug" };
-  sh.copy_file(format!("target/{dir}/lang-srv"), out)?;
-  sh.copy_file("license.md", "extensions/vscode")?;
-  let _d = sh.push_dir("extensions/vscode");
+  let mut dir: PathBuf = ["extensions", "vscode", "out"].iter().collect();
+  sh.remove_path(&dir)?;
+  sh.create_dir(&dir)?;
+  let lang_srv: PathBuf = {
+    let d = if release { "release" } else { "debug" };
+    ["target", d, "lang-srv"].iter().collect()
+  };
+  sh.copy_file(&lang_srv, &dir)?;
+  assert!(dir.pop());
+  sh.copy_file("license.md", &dir)?;
+  let _d = sh.push_dir(&dir);
   // TODO add npm ci here with check if node_modules exists? using Path::new(...).exists() doesn't
   // work because sh.push_dir doesn't affect the actual cwd. would like a 'exists' helper on sh?
   cmd!(sh, "npm run build").run()?;
