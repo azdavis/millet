@@ -380,7 +380,7 @@ impl Sym {
   }
 }
 
-/// A mapping from [`Sym`]s to [`TyInfo`]s.
+/// Information about generated types.
 ///
 /// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
 /// even built-in types like `int`. For a `Syms` that does have these, see `standard_basis`.
