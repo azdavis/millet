@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
+    "noEmit": true,
     "target": "ES2020",
     "module": "CommonJS",
-    "outDir": "out",
     "rootDir": "src",
     "strict": true,
     "noUnusedLocals": true,
