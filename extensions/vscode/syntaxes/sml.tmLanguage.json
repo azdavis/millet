@@ -73,11 +73,11 @@
     },
     "controlKeyword": {
       "name": "keyword.control.sml",
-      "match": "\\b(andalso|as|case|do|else|fn|handle|if|op|orelse|raise|then|while)\\b"
+      "match": "\\b(andalso|as|case|do|else|fn|handle|if|of|op|orelse|raise|then|while)\\b"
     },
     "otherKeyword": {
       "name": "keyword.other.sml",
-      "match": "\\b(abstype|and|datatype|end|eqtype|exception|fun|functor|in|include|infix|infixr|let|local|nonfix|of|open|rec|sharing|sig|signature|struct|structure|type|val|where|with|withtype)\\b"
+      "match": "\\b(abstype|and|datatype|end|eqtype|exception|fun|functor|in|include|infix|infixr|let|local|nonfix|open|rec|sharing|sig|signature|struct|structure|type|val|where|with|withtype)\\b"
     }
   }
 }
