@@ -92,7 +92,7 @@ fn mk_vsc(sh: &Shell) -> Result<()> {
   sh.copy_file("target/debug/lang-srv", out)?;
   let _d = sh.push_dir("extensions/vscode");
   if !Path::new("node_modules").exists() {
-    cmd!(sh, "npm install").run()?;
+    cmd!(sh, "npm ci").run()?;
   }
   cmd!(sh, "npm run build").run()?;
   Ok(())
