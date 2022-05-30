@@ -2,6 +2,7 @@ use lsp_server::Connection;
 use lsp_types::{HoverProviderCapability, ServerCapabilities};
 
 mod main_loop;
+mod state;
 
 fn main() -> anyhow::Result<()> {
   eprintln!("startup millet lsp server");

@@ -39,6 +39,7 @@
     "syms",
     "triviable",
     "ungram",
+    "walkdir",
     "withtype",
     "wordint"
   ]

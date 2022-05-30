@@ -1,53 +1,25 @@
-use lsp_server::{Connection, ExtractError, Message, Request, RequestId, Response};
-use lsp_types::{request::GotoDefinition, GotoDefinitionResponse, InitializeParams};
+use crate::state::State;
+use lsp_server::{Connection, Message};
 
-pub(crate) fn run(connection: Connection, _params: InitializeParams) -> anyhow::Result<()> {
-  eprintln!("startup main loop");
-  for msg in &connection.receiver {
-    eprintln!("got msg: {:?}", msg);
+pub(crate) fn run(conn: Connection, init: lsp_types::InitializeParams) -> anyhow::Result<()> {
+  eprintln!("startup main loop: {init:#?}");
+  let root = match &init.root_uri {
+    Some(x) => x.clone(),
+    None => anyhow::bail!("no root uri"),
+  };
+  let mut state = State::new(root, conn.sender.clone());
+  for msg in conn.receiver.iter() {
     match msg {
       Message::Request(req) => {
-        if connection.handle_shutdown(&req)? {
+        if conn.handle_shutdown(&req)? {
+          eprintln!("shutdown main loop");
           return Ok(());
         }
-        eprintln!("got request: {:?}", req);
-        match cast::<GotoDefinition>(req) {
-          Ok((id, params)) => {
-            eprintln!("got GotoDefinition request {}: {:?}", id, params);
-            // make a fake response
-            let result = Some(GotoDefinitionResponse::Array(Vec::new()));
-            let result = serde_json::to_value(&result).unwrap();
-            let resp = Response {
-              id,
-              result: Some(result),
-              error: None,
-            };
-            connection.sender.send(Message::Response(resp))?;
-            continue;
-          }
-          Err(err @ ExtractError::JsonError { .. }) => {
-            eprintln!("{:?}", err);
-            continue;
-          }
-          // use the req for more
-          Err(ExtractError::MethodMismatch(req)) => req,
-        };
+        state.handle_request(req);
       }
-      Message::Response(resp) => {
-        eprintln!("got response: {:?}", resp);
-      }
-      Message::Notification(not) => {
-        eprintln!("got notification: {:?}", not);
-      }
+      Message::Response(res) => state.handle_response(res),
+      Message::Notification(notif) => state.handle_notification(notif),
     }
   }
   Ok(())
-}
-
-fn cast<R>(req: Request) -> Result<(RequestId, R::Params), ExtractError<Request>>
-where
-  R: lsp_types::request::Request,
-  R::Params: serde::de::DeserializeOwned,
-{
-  req.extract(R::METHOD)
 }
