@@ -127,12 +127,20 @@ pub struct Error {
 #[derive(Debug)]
 pub enum ErrorKind {
   Unsupported,
+  FunBindMismatchedName(String, String),
+  FunBindWrongNumPats(usize, usize),
 }
 
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       ErrorKind::Unsupported => f.write_str("unsupported language construct"),
+      ErrorKind::FunBindMismatchedName(want, got) => {
+        write!(f, "mismatched names: expected {want}, found {got}")
+      }
+      ErrorKind::FunBindWrongNumPats(want, got) => {
+        write!(f, "wrong number of patterns: expected {want}, found {got}")
+      }
     }
   }
 }

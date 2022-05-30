@@ -157,7 +157,6 @@ and z = append [1, 2, 3] [7, 8, 9]
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn fun_dec_name_mismatch() {
   check(
     r#"
@@ -170,12 +169,11 @@ fun f 1 = 1
 
 #[test]
 fn fun_dec_wrong_num_pats() {
-  // TODO range is a little weird
   check(
     r#"
 fun f 1 = 2
-(**   ^ mismatched types: expected int, found int * int *)
   | f 3 4 = 5
+(** ^^^^^^^^^ wrong number of patterns: expected 1, found 2 *)
 "#,
   );
 }

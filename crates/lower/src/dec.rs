@@ -1,8 +1,8 @@
 use crate::common::{get_name, get_path};
 use crate::pat::tuple;
-use crate::util::Cx;
+use crate::util::{Cx, ErrorKind};
 use crate::{exp, pat, ty};
-use syntax::ast::{self, AstPtr};
+use syntax::ast::{self, AstNode as _, AstPtr};
 
 pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
   let dec = dec?;
@@ -67,7 +67,13 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                 (None, Some(head_name)) => name = Some(head_name),
                 (Some(name), Some(head_name)) => {
                   if name.text() != head_name.text() {
-                    // TODO error
+                    cx.err(
+                      head_name.text_range(),
+                      ErrorKind::FunBindMismatchedName(
+                        name.text().to_owned(),
+                        head_name.text().to_owned(),
+                      ),
+                    );
                   }
                 }
               }
@@ -81,7 +87,10 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                 None => num_pats = Some(pats.len()),
                 Some(num_pats) => {
                   if num_pats != pats.len() {
-                    // TODO error
+                    cx.err(
+                      case.syntax().text_range(),
+                      ErrorKind::FunBindWrongNumPats(num_pats, pats.len()),
+                    );
                   }
                 }
               }
