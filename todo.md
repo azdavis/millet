@@ -6,6 +6,9 @@ priority is approximate. if unsure of priority, put in low.
 
 - get windows ci working to build extension for windows
 - get logo
+  - stick in readme
+  - and 'icon' field of package.json
+  - that icon needs to be 128x128 png
 - maybe use latest instead of 18.04/11 for ubuntu/macos
 - impl modules
 - write architecture.md
@@ -45,6 +48,8 @@ priority is approximate. if unsure of priority, put in low.
 
 ## low
 
+- make website
+  - with 'verified ownership' or whatever
 - parse more derived forms
   - functor binding input sugar
     - or skip this? seems to be confusing to students
