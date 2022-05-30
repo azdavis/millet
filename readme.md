@@ -8,7 +8,7 @@ Also a corresponding [Visual Studio Code][vscode] extension, available for downl
 
 This project is alpha-quality software.
 
-- There are [many important things](todo.md) not yet implemented.
+- There are [many important things](doc/todo.md) not yet implemented.
 - There are things that are shoddily implemented. Note the ignored tests.
 
 ## Development
