@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn apply() {
@@ -214,9 +214,8 @@ val _ = if id false then id 1 + 1 else id (2 + 2)
 }
 
 #[test]
-#[ignore = "should not error"]
 fn implicit_ty_var_scope() {
-  check(
+  fail(
     r#"
 fun id (x: 'a): 'a = x
 val _ = id 3
@@ -238,9 +237,8 @@ val _ = inc "nope"
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn infix_without_op() {
-  check(
+  fail(
     r#"
 val _ = + (1, 2)
 (**     ^ infix name used as non-infix without `op` *)
@@ -325,9 +323,8 @@ val _ = 3 3
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn not_equality() {
-  check(
+  fail(
     r#"
 val _ = 2.2 = 3.3
 (**     ^^^^^^^^^ not an equality type: real *)
@@ -576,9 +573,8 @@ fun 'a f () = 3
 }
 
 #[test]
-#[ignore = "should error"]
 fn value_restriction() {
-  check(
+  fail(
     r#"
     val id = (fn x => x) (fn x => x)
 (** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ oh no! *)
@@ -631,9 +627,8 @@ val _: int = * (3, 4)
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn paren() {
-  check(
+  fail(
     r#"
 structure S = struct
   type i = (int)

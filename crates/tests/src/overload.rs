@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn t_01() {
@@ -11,9 +11,8 @@ val _ = add (1, 2)
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_02() {
-  check(
+  fail(
     r#"
 val add = op+
 val _ = add (1.1, 2.2)
@@ -24,9 +23,8 @@ val _ = add (1, 2)
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_03() {
-  check(
+  fail(
     r#"
 val add = op+
 (* make this a top-dec level seq *)

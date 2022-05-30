@@ -1,9 +1,8 @@
-use crate::check::check;
+use crate::check::fail;
 
 #[test]
-#[ignore = "todo for new"]
 fn t_01() {
-  check(
+  fail(
     r#"
 structure S: sig
   val x: int
@@ -16,9 +15,8 @@ val _: int = S.x
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_02() {
-  check(
+  fail(
     r#"
 structure S: sig
 end = struct
@@ -31,9 +29,8 @@ val _: int = S.x
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_03() {
-  check(
+  fail(
     r#"
 structure S: sig
   val x: int
@@ -44,9 +41,8 @@ end = struct end
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_04() {
-  check(
+  fail(
     r#"
 structure S: sig
   exception E
@@ -57,9 +53,8 @@ end = struct val E = Match end
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_05() {
-  check(
+  fail(
     r#"
 structure S: sig
   val x: int
@@ -76,9 +71,8 @@ val _ = S.y
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_06() {
-  check(
+  fail(
     r#"
 structure S: sig
   datatype d = A | B
@@ -90,9 +84,8 @@ end
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_07() {
-  check(
+  fail(
     r#"
 structure S: sig
   datatype d = A | B
@@ -103,9 +96,8 @@ end = struct datatype d = A end
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_08() {
-  check(
+  fail(
     r#"
 structure S: sig
   datatype d = A
@@ -116,9 +108,8 @@ end = struct datatype d = A | B end
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_09() {
-  check(
+  fail(
     r#"
 structure S: sig
   type t
@@ -131,9 +122,8 @@ val _: S.t = 3
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_10() {
-  check(
+  fail(
     r#"
 structure S: sig
   type t
@@ -157,9 +147,8 @@ val _ = S.add (S.add (inc S.zero) (inc S.zero))
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_11() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -172,9 +161,8 @@ end
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_12() {
-  check(
+  fail(
     r#"
 structure S: sig
   type t
@@ -186,9 +174,8 @@ end
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_13() {
-  check(
+  fail(
     r#"
 signature MONOID = sig
   type t
@@ -236,9 +223,8 @@ val _ = Mul.add Mul.zero Add.zero
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_14() {
-  check(
+  fail(
     r#"
 signature MONOID = sig
   type t
@@ -271,9 +257,8 @@ val _ = Mul.add Mul.zero Add.zero
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_15() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -304,9 +289,8 @@ val _ = A.bar B.foo
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_16() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -336,9 +320,8 @@ val _ = A.bar 123
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_17() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -370,9 +353,8 @@ val _ = B.bar A.foo
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_18() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -392,9 +374,8 @@ val _: S.t = S.x
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_19() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t

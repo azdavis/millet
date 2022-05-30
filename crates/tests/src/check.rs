@@ -23,6 +23,46 @@ use syntax::{ast::AstNode as _, rowan::TextRange};
 /// ```
 #[track_caller]
 pub(crate) fn check(s: &str) {
+  let cx = get_cx(s);
+  if !cx.reasons.is_empty() {
+    panic!("{cx}")
+  }
+}
+
+/// like [`check`], but the expectation comments should be not satisfied.
+///
+/// for instance, the following program has an expectation comment that doesn't make sense, since `1
+/// + 2` should typecheck. so we pass it to fail, which means the test passes.
+///
+/// ```ignore
+/// fail(r#"
+/// val _ = 1 + 2
+/// (**     ^^^^^ mismatched types: expected bool, found int *)
+/// "#);
+/// ```
+///
+/// this is useful if support for something is not implemented, but planned for later. for instance,
+/// this is a valid SML program:
+///
+/// ```sml
+/// structure S = struct
+///   val x = 1
+/// end
+/// val _ = S.x + 2
+/// ```
+///
+/// however, support for modules is not implemented, so this test fails. so pass it to fail, and
+/// it passes. if later support for modules _is_ implemented, that test will fail, and we can update
+/// it to use [`check`] instead so it passes again.
+#[track_caller]
+pub(crate) fn fail(s: &str) {
+  let cx = get_cx(s);
+  if cx.reasons.is_empty() {
+    panic!("unexpected pass: {cx}")
+  }
+}
+
+fn get_cx(s: &str) -> Cx<'_> {
   let mut cx = Cx::new(s);
   match get_one_error(s) {
     Ok(()) => {
@@ -32,9 +72,7 @@ pub(crate) fn check(s: &str) {
     }
     Err((range, msg)) => cx.add_err(Range::<usize>::from(range), msg),
   }
-  if !cx.reasons.is_empty() {
-    panic!("{cx}")
-  }
+  cx
 }
 
 fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {

@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn val() {
@@ -89,9 +89,8 @@ val _ =
 }
 
 #[test]
-#[ignore = "should not error"]
 fn open() {
-  check(
+  fail(
     r#"
 structure S = struct
   val x = 3

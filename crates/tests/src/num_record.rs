@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn t_01() {
@@ -12,9 +12,8 @@ type t = { 1: int, 2: bool }
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_02() {
-  check(
+  fail(
     r#"
 type t = { 0: int, 1: bool }
 (**        ^ expected a label *)

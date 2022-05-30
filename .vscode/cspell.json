@@ -49,6 +49,7 @@
     "syms",
     "tokenizes",
     "triviable",
+    "typecheck",
     "ungram",
     "ungrammar",
     "vsix",

@@ -1,9 +1,8 @@
-use crate::check::check;
+use crate::check::fail;
 
 #[test]
-#[ignore = "todo for new"]
 fn t_01() {
-  check(
+  fail(
     r#"
 functor F (A: sig end) = struct end
 (* ok to pass extra things in the struct *)
@@ -15,9 +14,8 @@ end)
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_02() {
-  check(
+  fail(
     r#"
 functor F (A: sig
   type t
@@ -29,9 +27,8 @@ structure S = F (struct end)
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_03() {
-  check(
+  fail(
     r#"
 functor F (A: sig
   exception Foo
@@ -43,9 +40,8 @@ structure S = F (struct val Foo = Match end)
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_04() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -82,9 +78,8 @@ val done: string list = [guh, Impl.foo, S.what, "why"]
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_05() {
-  check(
+  fail(
     r#"
 functor Id (S: sig end) = S
 
@@ -99,9 +94,8 @@ val _: int = Guy.x
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_06() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   val x: int
@@ -120,9 +114,8 @@ val _ = S.x
 }
 
 #[test]
-#[ignore = "todo for new"]
 fn t_07() {
-  check(
+  fail(
     r#"
 functor F (A: sig end) = struct
   datatype t = C
@@ -141,9 +134,8 @@ val _ = One.f Two.C
 }
 
 #[test]
-#[ignore = "should not error"]
 fn t_08() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -164,9 +156,8 @@ val _: B.t = 3
 }
 
 #[test]
-#[ignore = "should not error"]
 fn t_09() {
-  check(
+  fail(
     r#"
 signature SIG = sig
   type t
@@ -210,9 +201,8 @@ val _ = A.f (D.f D.x)
 }
 
 #[test]
-#[ignore = "should error"]
 fn t_10() {
-  check(
+  fail(
     r#"
 structure A = struct
   datatype t = B | C
@@ -237,9 +227,8 @@ val _ =
 }
 
 #[test]
-#[ignore = "should not error"]
 fn t_11() {
-  check(
+  fail(
     r#"
 structure A = struct
   datatype t = B | C
