@@ -95,6 +95,7 @@ fn dist(sh: &Shell, release: bool) -> Result<()> {
   sh.create_dir(out)?;
   let dir = if release { "release" } else { "debug" };
   sh.copy_file(format!("target/{dir}/lang-srv"), out)?;
+  sh.copy_file("license.md", "extensions/vscode")?;
   let _d = sh.push_dir("extensions/vscode");
   // TODO add npm ci here with check if node_modules exists? using Path::new(...).exists() doesn't
   // work because sh.push_dir doesn't affect the actual cwd. would like a 'exists' helper on sh?
