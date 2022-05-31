@@ -24,74 +24,26 @@ impl Error {
   }
 }
 
-/// Something that can have a statics error. TODO make this macro-generated?
-#[derive(Debug, Clone, Copy)]
-#[allow(missing_docs)]
-pub enum Idx {
-  Exp(hir::la_arena::Idx<hir::Exp>),
-  Pat(hir::la_arena::Idx<hir::Pat>),
-  Ty(hir::la_arena::Idx<hir::Ty>),
-  Dec(hir::la_arena::Idx<hir::Dec>),
-  StrExp(hir::la_arena::Idx<hir::StrExp>),
-  StrDec(hir::la_arena::Idx<hir::StrDec>),
-  SigExp(hir::la_arena::Idx<hir::SigExp>),
-  Spec(hir::la_arena::Idx<hir::Spec>),
-  TopDec(hir::la_arena::Idx<hir::TopDec>),
+macro_rules! mk_idx {
+  ($($name:ident)*) => {
+    #[doc = "Something that can have a statics error."]
+    #[derive(Debug, Clone, Copy)]
+    #[allow(missing_docs)]
+    pub enum Idx {
+      $($name(hir::la_arena::Idx<hir::$name>),)*
+    }
+
+    $(
+      impl From<hir::la_arena::Idx<hir::$name>> for Idx {
+        fn from(val: hir::la_arena::Idx<hir::$name>) -> Self {
+          Self::$name(val)
+        }
+      }
+    )*
+  };
 }
 
-impl From<hir::la_arena::Idx<hir::Exp>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::Exp>) -> Self {
-    Self::Exp(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::Pat>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::Pat>) -> Self {
-    Self::Pat(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::Ty>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::Ty>) -> Self {
-    Self::Ty(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::Dec>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::Dec>) -> Self {
-    Self::Dec(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::StrExp>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::StrExp>) -> Self {
-    Self::StrExp(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::StrDec>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::StrDec>) -> Self {
-    Self::StrDec(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::SigExp>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::SigExp>) -> Self {
-    Self::SigExp(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::Spec>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::Spec>) -> Self {
-    Self::Spec(val)
-  }
-}
-
-impl From<hir::la_arena::Idx<hir::TopDec>> for Idx {
-  fn from(val: hir::la_arena::Idx<hir::TopDec>) -> Self {
-    Self::TopDec(val)
-  }
-}
+mk_idx! { Exp Pat Ty Dec StrExp StrDec SigExp Spec TopDec }
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
