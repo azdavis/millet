@@ -4,7 +4,7 @@
 //! this crate are defined here.
 
 use drop_bomb::DropBomb;
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::fmt;
 use uniq::{Uniq, UniqGen};
@@ -517,6 +517,47 @@ pub(crate) struct Cx {
   pub(crate) env: Env,
   /// the Definition has this as a set, but we have it as a mapping.
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
+}
+
+/// Definition: Sig
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub(crate) struct Sig {
+  /// TODO not sure
+  pub(crate) ty_names: FxHashSet<Sym>,
+  pub(crate) env: Env,
+}
+
+/// Definition: FunSig
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub(crate) struct FunSig {
+  pub(crate) param: Sig,
+  pub(crate) res: Sig,
+}
+
+pub(crate) type SigEnv = FxHashMap<hir::Name, Sig>;
+pub(crate) type FunEnv = FxHashMap<hir::Name, FunSig>;
+
+/// Definition: Basis
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub(crate) struct Bs {
+  pub(crate) fun_env: FunEnv,
+  pub(crate) sig_env: SigEnv,
+  pub(crate) env: Env,
+}
+
+impl Bs {
+  pub(crate) fn as_cx(&self) -> Cx {
+    Cx {
+      // TODO there really should be a better way to do this ('this' being create a &Cx from a &Bs
+      // without cloning the inner Env) instead of cloning the whole env, but it might require
+      // annoying restructuring.
+      env: self.env.clone(),
+      ty_vars: FxHashMap::default(),
+    }
+  }
 }
 
 pub(crate) type Subst = FxHashMap<MetaTyVar, SubstEntry>;

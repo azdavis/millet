@@ -30,7 +30,7 @@ pub fn get(statics: &mut Statics, arenas: &hir::Arenas, top_decs: &[hir::TopDecI
   let mut st = st::St::default();
   st.syms = std::mem::take(&mut statics.syms);
   for &top_dec in top_decs {
-    top_dec::get(&mut st, &mut statics.cx, arenas, top_dec);
+    top_dec::get(&mut st, &mut statics.bs, arenas, top_dec);
   }
   let (syms, errors) = st.finish();
   statics.syms = syms;

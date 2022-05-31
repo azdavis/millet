@@ -1,7 +1,7 @@
 use crate::error::{Error, ErrorKind, Idx};
 use crate::standard_basis;
 use crate::types::{
-  BoundTyVars, Cx, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
+  BoundTyVars, Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
 };
 use drop_bomb::DropBomb;
 
@@ -84,15 +84,15 @@ pub struct Statics {
   pub syms: Syms,
   /// The errors encountered.
   pub errors: Vec<Error>,
-  pub(crate) cx: Cx,
+  pub(crate) bs: Bs,
 }
 
 impl Default for Statics {
   fn default() -> Self {
-    let (syms, cx) = standard_basis::get();
+    let (syms, bs) = standard_basis::get();
     Self {
       syms,
-      cx,
+      bs,
       errors: Vec::new(),
     }
   }

@@ -1,11 +1,10 @@
 use crate::types::{
-  Cx, Env, IdStatus, Overload, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv,
-  ValInfo,
+  Bs, Env, FunEnv, IdStatus, Overload, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme,
+  TyVarKind, ValEnv, ValInfo,
 };
-use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
-pub(crate) fn get() -> (Syms, Cx) {
+pub(crate) fn get() -> (Syms, Bs) {
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
     insert_special(&mut syms, sym, basic_datatype(sym, &[]));
@@ -138,15 +137,16 @@ pub(crate) fn get() -> (Syms, Cx) {
       (name, vi)
     }))
     .collect();
-  let cx = Cx {
+  let bs = Bs {
+    fun_env: FunEnv::default(),
+    sig_env: SigEnv::default(),
     env: Env {
       str_env: StrEnv::default(),
       ty_env,
       val_env,
     },
-    ty_vars: FxHashMap::default(),
   };
-  (syms, cx)
+  (syms, bs)
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
