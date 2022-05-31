@@ -338,7 +338,7 @@ impl fmt::Debug for Sym {
 }
 
 macro_rules! mk_special_syms {
-  ($( ($name:ident, $s:expr, $idx:expr), )*) => {
+  ($( ($name:ident, $str:literal, $idx:expr), )*) => {
     impl Sym {
       $(
         pub(crate) const $name: Self = Self($idx);
@@ -346,7 +346,7 @@ macro_rules! mk_special_syms {
 
       pub(crate) fn special(&self) -> Option<&'static str> {
         let s = match *self {
-          $(Self::$name => $s,)*
+          $(Self::$name => $str,)*
           _ => return None,
         };
         Some(s)
