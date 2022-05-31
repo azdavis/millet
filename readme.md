@@ -1,6 +1,6 @@
 # Millet
 
-A [language server][lang-server] for [Standard ML][sml-def].
+A [language server][lang-srv] for [Standard ML][sml].
 
 Also a corresponding [Visual Studio Code][vscode] extension, available for download on the [marketplace][].
 
@@ -55,9 +55,9 @@ See the documentation of `check()` for how to write tests.
 Also, birds eat millet, and a bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course taught in Standard ML.
 
 [cmu150]: http://www.cs.cmu.edu/~15150/
-[lang-server]: https://microsoft.github.io/language-server-protocol/
+[lang-srv]: https://microsoft.github.io/language-server-protocol/
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [node]: https://nodejs.org/en/
 [rustup]: https://rustup.rs
-[sml-def]: https://smlfamily.github.io/sml97-defn.pdf
+[sml-def]: https://smlfamily.github.io
 [vscode]: https://code.visualstudio.com

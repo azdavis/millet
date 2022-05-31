@@ -4,7 +4,7 @@
   "displayName": "Millet",
   "version": "0.1.2",
   "preview": true,
-  "description": "Standard ML support for VS Code",
+  "description": "Standard ML support for VSCode",
   "publisher": "azdavis",
   "author": "Ariel Davis <ariel.z.davis@icloud.com>",
   "repository": {
