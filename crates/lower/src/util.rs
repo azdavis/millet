@@ -109,6 +109,8 @@ pub enum ErrorKind {
   FunBindWrongNumPats(usize, usize),
   InvalidIntLit(std::num::ParseIntError),
   InvalidRealLit(std::num::ParseFloatError),
+  InvalidNumLab(std::num::ParseIntError),
+  ZeroNumLab,
 }
 
 impl fmt::Display for ErrorKind {
@@ -123,6 +125,8 @@ impl fmt::Display for ErrorKind {
       }
       ErrorKind::InvalidIntLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
+      ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
+      ErrorKind::ZeroNumLab => write!(f, "invalid numeric label: numeric labels start at 1"),
     }
   }
 }

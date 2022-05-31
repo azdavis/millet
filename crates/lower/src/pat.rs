@@ -22,7 +22,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
             None
           }
           ast::PatRowInner::LabAndPatPatRow(row) => {
-            Some((get_lab(row.lab()?)?, get(cx, row.pat())))
+            Some((get_lab(cx, row.lab()?), get(cx, row.pat())))
           }
           ast::PatRowInner::LabPatRow(row) => {
             let name = hir::Name::new(row.name_plus()?.token.text());

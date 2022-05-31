@@ -81,11 +81,21 @@ pub(crate) fn get_path(p: ast::Path) -> Option<hir::Path> {
   )
 }
 
-pub(crate) fn get_lab(lab: ast::Lab) -> Option<hir::Lab> {
+pub(crate) fn get_lab(cx: &mut Cx, lab: ast::Lab) -> hir::Lab {
   match lab.kind {
-    ast::LabKind::Name | ast::LabKind::Star => {
-      Some(hir::Lab::Name(hir::Name::new(lab.token.text())))
+    ast::LabKind::Name | ast::LabKind::Star => hir::Lab::Name(hir::Name::new(lab.token.text())),
+    ast::LabKind::IntLit => {
+      let n = match lab.token.text().parse::<usize>() {
+        Ok(n) => n,
+        Err(e) => {
+          cx.err(lab.token.text_range(), ErrorKind::InvalidNumLab(e));
+          1
+        }
+      };
+      if n == 0 {
+        cx.err(lab.token.text_range(), ErrorKind::ZeroNumLab);
+      }
+      hir::Lab::Num(n)
     }
-    ast::LabKind::IntLit => lab.token.text().parse::<usize>().ok().map(hir::Lab::Num),
   }
 }

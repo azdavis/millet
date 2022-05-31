@@ -12,11 +12,11 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
     ast::Exp::RecordExp(exp) => hir::Exp::Record(
       exp
         .exp_rows()
-        .filter_map(|row| Some((get_lab(row.lab()?)?, get(cx, row.exp()))))
+        .filter_map(|row| Some((get_lab(cx, row.lab()?), get(cx, row.exp()))))
         .collect(),
     ),
     ast::Exp::SelectorExp(exp) => {
-      let lab = get_lab(exp.lab()?)?;
+      let lab = get_lab(cx, exp.lab()?);
       let fresh = cx.fresh();
       let pat = cx.pat_in_exp(pat::name(fresh.as_str()), ptr.clone());
       let param = cx.pat_in_exp(
