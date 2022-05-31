@@ -24,7 +24,7 @@ impl Error {
   }
 }
 
-/// Something that can have a statics error.
+/// Something that can have a statics error. TODO make this macro-generated?
 #[derive(Debug, Clone, Copy)]
 #[allow(missing_docs)]
 pub enum Idx {
@@ -32,7 +32,10 @@ pub enum Idx {
   Pat(hir::la_arena::Idx<hir::Pat>),
   Ty(hir::la_arena::Idx<hir::Ty>),
   Dec(hir::la_arena::Idx<hir::Dec>),
+  StrExp(hir::la_arena::Idx<hir::StrExp>),
   StrDec(hir::la_arena::Idx<hir::StrDec>),
+  SigExp(hir::la_arena::Idx<hir::SigExp>),
+  Spec(hir::la_arena::Idx<hir::Spec>),
   TopDec(hir::la_arena::Idx<hir::TopDec>),
 }
 
@@ -60,9 +63,27 @@ impl From<hir::la_arena::Idx<hir::Dec>> for Idx {
   }
 }
 
+impl From<hir::la_arena::Idx<hir::StrExp>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::StrExp>) -> Self {
+    Self::StrExp(val)
+  }
+}
+
 impl From<hir::la_arena::Idx<hir::StrDec>> for Idx {
   fn from(val: hir::la_arena::Idx<hir::StrDec>) -> Self {
     Self::StrDec(val)
+  }
+}
+
+impl From<hir::la_arena::Idx<hir::SigExp>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::SigExp>) -> Self {
+    Self::SigExp(val)
+  }
+}
+
+impl From<hir::la_arena::Idx<hir::Spec>> for Idx {
+  fn from(val: hir::la_arena::Idx<hir::Spec>) -> Self {
+    Self::Spec(val)
   }
 }
 

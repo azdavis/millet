@@ -62,9 +62,28 @@ impl Ptrs {
   }
 
   /// Returns the `SyntaxNodePtr` for an HIR structure declaration.
+  pub fn get_str_exp(&self, idx: hir::la_arena::Idx<hir::StrExp>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.str_exp);
+    None
+  }
+
+  /// Returns the `SyntaxNodePtr` for an HIR structure declaration.
   pub fn get_str_dec(&self, idx: hir::la_arena::Idx<hir::StrDec>) -> Option<SyntaxNodePtr> {
     try_get_hir!(idx, self.str_dec);
     try_get_hir!(idx, self.str_dec_one);
+    None
+  }
+
+  /// Returns the `SyntaxNodePtr` for an HIR structure declaration.
+  pub fn get_sig_exp(&self, idx: hir::la_arena::Idx<hir::SigExp>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.sig_exp);
+    None
+  }
+
+  /// Returns the `SyntaxNodePtr` for an HIR specification.
+  pub fn get_spec(&self, idx: hir::la_arena::Idx<hir::Spec>) -> Option<SyntaxNodePtr> {
+    try_get_hir!(idx, self.spec);
+    try_get_hir!(idx, self.spec_one);
     None
   }
 

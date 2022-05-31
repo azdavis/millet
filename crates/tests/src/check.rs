@@ -103,7 +103,10 @@ fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
       statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
       statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
       statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
+      statics::Idx::StrExp(dec) => lowered.ptrs.get_str_exp(dec),
       statics::Idx::StrDec(dec) => lowered.ptrs.get_str_dec(dec),
+      statics::Idx::SigExp(idx) => lowered.ptrs.get_sig_exp(idx),
+      statics::Idx::Spec(dec) => lowered.ptrs.get_spec(dec),
       statics::Idx::TopDec(dec) => lowered.ptrs.get_top_dec(dec),
     };
     let ptr = ptr.expect("couldn't get pointer");

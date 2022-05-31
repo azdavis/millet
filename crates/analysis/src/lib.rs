@@ -80,7 +80,10 @@ fn get_statics_ptr(ptrs: &lower::Ptrs, idx: statics::Idx) -> Option<SyntaxNodePt
     statics::Idx::Pat(idx) => ptrs.get_pat(idx),
     statics::Idx::Ty(idx) => ptrs.get_ty(idx),
     statics::Idx::Dec(idx) => ptrs.get_dec(idx),
+    statics::Idx::StrExp(idx) => ptrs.get_str_exp(idx),
     statics::Idx::StrDec(idx) => ptrs.get_str_dec(idx),
+    statics::Idx::SigExp(idx) => ptrs.get_sig_exp(idx),
+    statics::Idx::Spec(idx) => ptrs.get_spec(idx),
     statics::Idx::TopDec(idx) => ptrs.get_top_dec(idx),
   }
 }

@@ -78,7 +78,7 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
       num.parse().ok()
     })
     .collect();
-  let want = 1u16..=49;
+  let want = 1u16..=89;
   let missing: Vec<_> = want.clone().filter(|x| !got.contains(x)).collect();
   if !missing.is_empty() {
     bail!("missing sml definition references: {missing:?}")
