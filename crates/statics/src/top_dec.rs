@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 
 use crate::dec;
-use crate::error::ErrorKind;
+use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{Bs, Cx, Env, Sig, TyEnv};
+use crate::util::get_env;
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
   match &ars.top_dec[top_dec] {
@@ -39,13 +40,22 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
     // sml_def(50)
     hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, env, *str_dec),
     // sml_def(51)
-    hir::StrExp::Path(_) => st.err(str_exp, ErrorKind::Unsupported),
+    hir::StrExp::Path(path) => match get_env(&bs.env, path.all_names()) {
+      Ok(got_env) => env.extend(got_env.clone()),
+      Err(name) => st.err(str_exp, ErrorKind::Undefined(Item::Struct, name.clone())),
+    },
     // sml_def(52), sml_def(53)
     hir::StrExp::Ascription(_, _, _) => st.err(str_exp, ErrorKind::Unsupported),
     // sml_def(54)
     hir::StrExp::App(_, _) => st.err(str_exp, ErrorKind::Unsupported),
     // sml_def(55)
-    hir::StrExp::Let(_, _) => st.err(str_exp, ErrorKind::Unsupported),
+    hir::StrExp::Let(str_dec, str_exp) => {
+      let mut dec_env = Env::default();
+      get_str_dec(st, bs, ars, &mut dec_env, *str_dec);
+      let mut bs = bs.clone();
+      bs.env.extend(dec_env);
+      get_str_exp(st, &bs, ars, env, *str_exp)
+    }
   }
 }
 
