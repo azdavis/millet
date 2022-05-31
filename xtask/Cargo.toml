@@ -8,4 +8,3 @@ publish = false
 anyhow = "1"
 pico-args = "0.4"
 xshell = "0.2"
-fast-hash = { path = "../crates/fast-hash" }

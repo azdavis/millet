@@ -1,8 +1,8 @@
 //! See https://github.com/matklad/cargo-xtask.
 
 use anyhow::{bail, Result};
-use fast_hash::FxHashSet;
 use pico_args::Arguments;
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use xshell::{cmd, Shell};
 
@@ -70,7 +70,7 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
   let dirs: [PathBuf; 3] =
     ["hir", "lower", "statics"].map(|x| ["crates", x, "src"].iter().collect());
   let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output()?;
-  let got: FxHashSet<u16> = String::from_utf8(out.stdout)?
+  let got: BTreeSet<u16> = String::from_utf8(out.stdout)?
     .lines()
     .filter_map(|line| {
       let (_, inner) = line.split_once('(')?;
