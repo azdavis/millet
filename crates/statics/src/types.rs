@@ -346,7 +346,9 @@ macro_rules! mk_special_syms {
 
       pub(crate) fn special(&self) -> Option<&'static str> {
         let s = match *self {
-          $(Self::$name => $str,)*
+          $(
+            Self::$name => $str,
+          )*
           _ => return None,
         };
         Some(s)
