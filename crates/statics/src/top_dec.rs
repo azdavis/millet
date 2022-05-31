@@ -3,8 +3,11 @@
 use crate::dec;
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
-use crate::types::{Bs, Cx, Env, Sig, StrEnv, TyEnv};
-use crate::util::{get_env, get_ty_info, ins_no_dupe};
+use crate::ty;
+use crate::types::{
+  generalize, Bs, Cx, Env, FixedTyVars, IdStatus, Sig, StrEnv, TyEnv, TyScheme, ValInfo,
+};
+use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
   match &ars.top_dec[top_dec] {
@@ -130,8 +133,20 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(68)
     hir::Spec::Val(val_descs) => {
       // sml_def(79)
-      for _ in val_descs {
-        st.err(spec, ErrorKind::Unsupported)
+      let cx = bs.as_cx();
+      for val_desc in val_descs {
+        let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, val_desc.ty));
+        generalize(st.subst(), FixedTyVars::default(), &mut ty_scheme);
+        let vi = ValInfo {
+          ty_scheme,
+          id_status: IdStatus::Val,
+        };
+        let name = &val_desc.name;
+        if cannot_bind_val(name.as_str()) {
+          st.err(spec, ErrorKind::InvalidRebindName(name.clone()));
+        } else if let Some(e) = ins_no_dupe(&mut env.val_env, name.clone(), vi, Item::Val) {
+          st.err(spec, e);
+        }
       }
     }
     // sml_def(69)
