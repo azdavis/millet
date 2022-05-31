@@ -3,8 +3,9 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
-use la_arena::{Arena, Idx};
 use std::fmt;
+
+use la_arena::Arena;
 
 pub use la_arena;
 pub use smol_str::SmolStr;
@@ -22,9 +23,32 @@ pub struct Arenas {
   pub ty: TyArena,
 }
 
+macro_rules! mk_idx {
+  ($($name:ident)*) => {
+    #[doc = "An index into an arena."]
+    #[derive(Debug, Clone, Copy)]
+    #[allow(missing_docs)]
+    pub enum Idx {
+      $($name(la_arena::Idx<$name>),)*
+    }
+
+    $(
+      impl From<la_arena::Idx<$name>> for Idx {
+        fn from(val: la_arena::Idx<$name>) -> Self {
+          Self::$name(val)
+        }
+      }
+    )*
+  };
+}
+
+mk_idx! { TopDec StrDec StrExp SigExp Spec Exp Dec Pat Ty }
+
+pub type OptIdx<T> = Option<la_arena::Idx<T>>;
+
 // modules //
 
-pub type TopDecIdx = Idx<TopDec>;
+pub type TopDecIdx = la_arena::Idx<TopDec>;
 pub type TopDecArena = Arena<TopDec>;
 
 #[derive(Debug)]
@@ -48,7 +72,7 @@ pub struct FunctorBind {
   pub body: StrExpIdx,
 }
 
-pub type StrDecIdx = Option<Idx<StrDec>>;
+pub type StrDecIdx = OptIdx<StrDec>;
 pub type StrDecArena = Arena<StrDec>;
 
 #[derive(Debug)]
@@ -65,7 +89,7 @@ pub struct StrBind {
   pub str_exp: StrExpIdx,
 }
 
-pub type StrExpIdx = Option<Idx<StrExp>>;
+pub type StrExpIdx = OptIdx<StrExp>;
 pub type StrExpArena = Arena<StrExp>;
 
 #[derive(Debug)]
@@ -83,7 +107,7 @@ pub enum Ascription {
   Opaque,
 }
 
-pub type SigExpIdx = Option<Idx<SigExp>>;
+pub type SigExpIdx = OptIdx<SigExp>;
 pub type SigExpArena = Arena<SigExp>;
 
 #[derive(Debug)]
@@ -93,7 +117,7 @@ pub enum SigExp {
   Where(SigExpIdx, Vec<TyVar>, Path, TyIdx),
 }
 
-pub type SpecIdx = Option<Idx<Spec>>;
+pub type SpecIdx = OptIdx<Spec>;
 pub type SpecArena = Arena<Spec>;
 
 #[derive(Debug)]
@@ -139,7 +163,7 @@ pub struct StrDesc {
 
 // core //
 
-pub type ExpIdx = Option<Idx<Exp>>;
+pub type ExpIdx = OptIdx<Exp>;
 pub type ExpArena = Arena<Exp>;
 
 /// sml_def(7) is handled by having no distinction between atomic expressions and others here.
@@ -156,7 +180,7 @@ pub enum Exp {
   Typed(ExpIdx, TyIdx),
 }
 
-pub type DecIdx = Option<Idx<Dec>>;
+pub type DecIdx = OptIdx<Dec>;
 pub type DecArena = Arena<Dec>;
 
 #[derive(Debug)]
@@ -205,7 +229,7 @@ pub enum ExBind {
   Copy(Name, Path),
 }
 
-pub type PatIdx = Option<Idx<Pat>>;
+pub type PatIdx = OptIdx<Pat>;
 pub type PatArena = Arena<Pat>;
 
 /// sml_def(40) is handled by having no distinction between atomic expressions and others here.
@@ -226,7 +250,7 @@ pub enum Pat {
   As(Name, PatIdx),
 }
 
-pub type TyIdx = Option<Idx<Ty>>;
+pub type TyIdx = OptIdx<Ty>;
 pub type TyArena = Arena<Ty>;
 
 #[derive(Debug)]

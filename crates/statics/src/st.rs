@@ -1,4 +1,4 @@
-use crate::error::{Error, ErrorKind, Idx};
+use crate::error::{Error, ErrorKind};
 use crate::standard_basis;
 use crate::types::{
   BoundTyVars, Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
@@ -26,7 +26,7 @@ impl St {
 
   pub(crate) fn err<I>(&mut self, idx: I, kind: ErrorKind)
   where
-    I: Into<Idx>,
+    I: Into<hir::Idx>,
   {
     self.errors.push(Error {
       idx: idx.into(),

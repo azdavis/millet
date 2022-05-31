@@ -1,4 +1,4 @@
-use crate::error::{ErrorKind, Idx, Item};
+use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{
   generalize, Cx, Env, FixedTyVars, IdStatus, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
@@ -44,7 +44,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           want,
           Some(ErrorKind::NonExhaustiveBinding),
           marker,
-          val_bind.pat.map_or(Idx::from(dec), Into::into),
+          val_bind.pat.map_or(hir::Idx::from(dec), Into::into),
         );
       }
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
@@ -255,7 +255,12 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
   }
 }
 
-fn add_fixed_ty_vars(st: &mut St, cx: &mut Cx, ty_vars: &[hir::TyVar], idx: Idx) -> FixedTyVars {
+fn add_fixed_ty_vars(
+  st: &mut St,
+  cx: &mut Cx,
+  ty_vars: &[hir::TyVar],
+  idx: hir::Idx,
+) -> FixedTyVars {
   let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
     let fv = st.gen_fixed_var(ty_var.clone());

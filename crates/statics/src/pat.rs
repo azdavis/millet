@@ -1,4 +1,4 @@
-use crate::error::{ErrorKind, Idx, Item};
+use crate::error::{ErrorKind, Item};
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::{ErrorsMarker, St};
 use crate::ty;
@@ -144,7 +144,7 @@ fn ok_val_info(vi: Option<&ValInfo>) -> bool {
 
 fn insert_name<I>(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty, idx: I)
 where
-  I: Into<Idx>,
+  I: Into<hir::Idx>,
 {
   let vi = ValInfo {
     ty_scheme: TyScheme::zero(ty),
@@ -165,7 +165,7 @@ pub(crate) fn get_match<I>(
   marker: ErrorsMarker,
   idx: I,
 ) where
-  I: Into<Idx>,
+  I: Into<hir::Idx>,
 {
   if st.did_error_since(marker) {
     // trying to analyze a pattern match for exhaustiveness when the patterns and types might not

@@ -1,4 +1,4 @@
-use crate::error::{ErrorKind, Idx};
+use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{Env, Subst, SubstEntry, Sym, Ty, TyScheme};
 use std::collections::BTreeMap;
@@ -19,7 +19,7 @@ pub(crate) fn record<T, F, I>(st: &mut St, rows: &[(hir::Lab, T)], idx: I, mut f
 where
   T: Copy,
   F: FnMut(&mut St, &hir::Lab, T) -> Ty,
-  I: Into<Idx>,
+  I: Into<hir::Idx>,
 {
   let mut ty_rows = BTreeMap::<hir::Lab, Ty>::new();
   let idx = idx.into();

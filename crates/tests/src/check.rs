@@ -98,17 +98,7 @@ fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
   let mut st = statics::Statics::default();
   statics::get(&mut st, &lowered.arenas, &lowered.top_decs);
   if let Some(err) = st.errors.into_iter().next() {
-    let ptr = match err.idx() {
-      statics::Idx::Exp(exp) => lowered.ptrs.get_exp(exp),
-      statics::Idx::Pat(pat) => lowered.ptrs.get_pat(pat),
-      statics::Idx::Ty(ty) => lowered.ptrs.get_ty(ty),
-      statics::Idx::Dec(dec) => lowered.ptrs.get_dec(dec),
-      statics::Idx::StrExp(dec) => lowered.ptrs.get_str_exp(dec),
-      statics::Idx::StrDec(dec) => lowered.ptrs.get_str_dec(dec),
-      statics::Idx::SigExp(idx) => lowered.ptrs.get_sig_exp(idx),
-      statics::Idx::Spec(dec) => lowered.ptrs.get_spec(dec),
-      statics::Idx::TopDec(dec) => lowered.ptrs.get_top_dec(dec),
-    };
+    let ptr = lowered.ptrs.get(err.idx());
     let ptr = ptr.expect("couldn't get pointer");
     let range = ptr.to_node(parsed.root.syntax()).text_range();
     let msg = err.display(&st.syms).to_string();

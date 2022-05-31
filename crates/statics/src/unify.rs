@@ -1,11 +1,11 @@
-use crate::error::{ErrorKind, Idx};
+use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{MetaTyVar, Overload, Subst, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
 where
-  I: Into<Idx>,
+  I: Into<hir::Idx>,
 {
   let e = match unify_(st.subst(), want.clone(), got.clone()) {
     Ok(()) => return,

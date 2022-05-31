@@ -1,4 +1,4 @@
-use crate::error::{ErrorKind, Idx, Item};
+use crate::error::{ErrorKind, Item};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{Cx, Env, Sym, SymsMarker, Ty, ValEnv};
@@ -107,7 +107,7 @@ fn get_matcher(
   cx: &Cx,
   ars: &hir::Arenas,
   matcher: &[(hir::PatIdx, hir::ExpIdx)],
-  idx: Idx,
+  idx: hir::Idx,
 ) -> (Vec<Pat>, Ty, Ty) {
   let mut param_ty = Ty::MetaVar(st.gen_meta_var());
   let mut res_ty = Ty::MetaVar(st.gen_meta_var());

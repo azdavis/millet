@@ -34,62 +34,32 @@ macro_rules! try_get_hir {
 }
 
 impl Ptrs {
-  /// Returns the `SyntaxNodePtr` for an HIR expression.
-  pub fn get_exp(&self, idx: hir::la_arena::Idx<hir::Exp>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.exp);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR pattern.
-  pub fn get_pat(&self, idx: hir::la_arena::Idx<hir::Pat>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.pat);
-    try_get_hir!(idx, self.pat_in_exp);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR type.
-  pub fn get_ty(&self, idx: hir::la_arena::Idx<hir::Ty>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.ty);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR declaration.
-  pub fn get_dec(&self, idx: hir::la_arena::Idx<hir::Dec>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.dec);
-    try_get_hir!(idx, self.dec_one);
-    try_get_hir!(idx, self.dec_in_exp);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR structure declaration.
-  pub fn get_str_exp(&self, idx: hir::la_arena::Idx<hir::StrExp>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.str_exp);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR structure declaration.
-  pub fn get_str_dec(&self, idx: hir::la_arena::Idx<hir::StrDec>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.str_dec);
-    try_get_hir!(idx, self.str_dec_one);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR structure declaration.
-  pub fn get_sig_exp(&self, idx: hir::la_arena::Idx<hir::SigExp>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.sig_exp);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR specification.
-  pub fn get_spec(&self, idx: hir::la_arena::Idx<hir::Spec>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.spec);
-    try_get_hir!(idx, self.spec_one);
-    None
-  }
-
-  /// Returns the `SyntaxNodePtr` for an HIR top-level declaration.
-  pub fn get_top_dec(&self, idx: hir::la_arena::Idx<hir::TopDec>) -> Option<SyntaxNodePtr> {
-    try_get_hir!(idx, self.top_dec);
+  /// Returns the `SyntaxNodePtr` for an HIR index.
+  pub fn get(&self, idx: hir::Idx) -> Option<SyntaxNodePtr> {
+    match idx {
+      hir::Idx::Exp(idx) => try_get_hir!(idx, self.exp),
+      hir::Idx::Pat(idx) => {
+        try_get_hir!(idx, self.pat);
+        try_get_hir!(idx, self.pat_in_exp);
+      }
+      hir::Idx::Ty(idx) => try_get_hir!(idx, self.ty),
+      hir::Idx::Dec(idx) => {
+        try_get_hir!(idx, self.dec);
+        try_get_hir!(idx, self.dec_one);
+        try_get_hir!(idx, self.dec_in_exp);
+      }
+      hir::Idx::StrExp(idx) => try_get_hir!(idx, self.str_exp),
+      hir::Idx::StrDec(idx) => {
+        try_get_hir!(idx, self.str_dec);
+        try_get_hir!(idx, self.str_dec_one);
+      }
+      hir::Idx::SigExp(idx) => try_get_hir!(idx, self.sig_exp),
+      hir::Idx::Spec(idx) => {
+        try_get_hir!(idx, self.spec);
+        try_get_hir!(idx, self.spec_one);
+      }
+      hir::Idx::TopDec(idx) => try_get_hir!(idx, self.top_dec),
+    }
     None
   }
 }
@@ -192,7 +162,7 @@ pub(crate) struct Cx {
 impl Cx {
   /// Returns a `Name` that is both:
   /// - not writeable in user code, and will thus not collide with any identifiers in user code;
-  /// - distinct from all other `Name`s returned from this thus far, and will thus not collide
+  /// - distinct from all other `Name`s returned from self thus far, and will thus not collide
   ///   with any of those.
   pub(crate) fn fresh(&mut self) -> hir::Name {
     let ret = hir::Name::new(self.fresh_idx.to_string());

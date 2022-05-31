@@ -5,13 +5,13 @@ use std::fmt;
 /// A statics error.
 #[derive(Debug)]
 pub struct Error {
-  pub(crate) idx: Idx,
+  pub(crate) idx: hir::Idx,
   pub(crate) kind: ErrorKind,
 }
 
 impl Error {
-  /// Returns the [`Idx`] for this error.
-  pub fn idx(&self) -> Idx {
+  /// Returns the [`hir::Idx`] for this error.
+  pub fn idx(&self) -> hir::Idx {
     self.idx
   }
 
@@ -23,27 +23,6 @@ impl Error {
     }
   }
 }
-
-macro_rules! mk_idx {
-  ($($name:ident)*) => {
-    #[doc = "Something that can have a statics error."]
-    #[derive(Debug, Clone, Copy)]
-    #[allow(missing_docs)]
-    pub enum Idx {
-      $($name(hir::la_arena::Idx<hir::$name>),)*
-    }
-
-    $(
-      impl From<hir::la_arena::Idx<hir::$name>> for Idx {
-        fn from(val: hir::la_arena::Idx<hir::$name>) -> Self {
-          Self::$name(val)
-        }
-      }
-    )*
-  };
-}
-
-mk_idx! { Exp Pat Ty Dec StrExp StrDec SigExp Spec TopDec }
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
