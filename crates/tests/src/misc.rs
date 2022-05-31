@@ -628,7 +628,7 @@ val _: int = * (3, 4)
 
 #[test]
 fn paren() {
-  fail(
+  check(
     r#"
 structure S = struct
   type i = (int)

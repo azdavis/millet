@@ -3,7 +3,7 @@
 use crate::dec;
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
-use crate::types::{Bs, Cx, Env, Sig, TyEnv};
+use crate::types::{Bs, Cx, Env, Sig, StrEnv, TyEnv};
 use crate::util::get_env;
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
@@ -70,8 +70,16 @@ fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_dec: 
     // sml_def(57)
     hir::StrDec::Structure(str_binds) => {
       // sml_def(61)
-      for _ in str_binds {
-        st.err(str_dec, ErrorKind::Unsupported)
+      let mut str_env = StrEnv::default();
+      for str_bind in str_binds {
+        let mut env = Env::default();
+        get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
+        if str_env.insert(str_bind.name.clone(), env).is_some() {
+          st.err(
+            str_dec,
+            ErrorKind::Duplicate(Item::Struct, str_bind.name.clone()),
+          );
+        }
       }
     }
     // sml_def(58)
