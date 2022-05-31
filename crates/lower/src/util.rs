@@ -26,11 +26,13 @@ pub struct Ptrs {
 }
 
 macro_rules! try_get_hir {
-  ($idx:ident, $map:expr) => {
-    if let Some(x) = $map.hir_to_ast.get($idx) {
-      return Some(x.syntax_node_ptr());
-    }
-  };
+  ($idx:ident, $($map:expr),*) => {{
+    $(
+      if let Some(x) = $map.hir_to_ast.get($idx) {
+        return Some(x.syntax_node_ptr());
+      }
+    )*
+  }}
 }
 
 impl Ptrs {
@@ -38,26 +40,13 @@ impl Ptrs {
   pub fn get(&self, idx: hir::Idx) -> Option<SyntaxNodePtr> {
     match idx {
       hir::Idx::Exp(idx) => try_get_hir!(idx, self.exp),
-      hir::Idx::Pat(idx) => {
-        try_get_hir!(idx, self.pat);
-        try_get_hir!(idx, self.pat_in_exp);
-      }
+      hir::Idx::Pat(idx) => try_get_hir!(idx, self.pat, self.pat_in_exp),
       hir::Idx::Ty(idx) => try_get_hir!(idx, self.ty),
-      hir::Idx::Dec(idx) => {
-        try_get_hir!(idx, self.dec);
-        try_get_hir!(idx, self.dec_one);
-        try_get_hir!(idx, self.dec_in_exp);
-      }
+      hir::Idx::Dec(idx) => try_get_hir!(idx, self.dec, self.dec_one, self.dec_in_exp),
       hir::Idx::StrExp(idx) => try_get_hir!(idx, self.str_exp),
-      hir::Idx::StrDec(idx) => {
-        try_get_hir!(idx, self.str_dec);
-        try_get_hir!(idx, self.str_dec_one);
-      }
+      hir::Idx::StrDec(idx) => try_get_hir!(idx, self.str_dec, self.str_dec_one),
       hir::Idx::SigExp(idx) => try_get_hir!(idx, self.sig_exp),
-      hir::Idx::Spec(idx) => {
-        try_get_hir!(idx, self.spec);
-        try_get_hir!(idx, self.spec_one);
-      }
+      hir::Idx::Spec(idx) => try_get_hir!(idx, self.spec, self.spec_one),
       hir::Idx::TopDec(idx) => try_get_hir!(idx, self.top_dec),
     }
     None
