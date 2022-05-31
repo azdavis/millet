@@ -111,7 +111,7 @@ pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
   }
 }
 
-pub(crate) fn cannot_bind(s: &str) -> bool {
+pub(crate) fn cannot_bind_val(s: &str) -> bool {
   matches!(s, "true" | "false" | "nil" | "::" | "ref")
 }
 
