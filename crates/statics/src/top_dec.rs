@@ -15,13 +15,7 @@ pub(crate) fn get(st: &mut St, cx: &mut Cx, ars: &hir::Arenas, top_dec: hir::Top
   }
 }
 
-pub(crate) fn get_str_dec(
-  st: &mut St,
-  cx: &Cx,
-  ars: &hir::Arenas,
-  env: &mut Env,
-  str_dec: hir::StrDecIdx,
-) {
+fn get_str_dec(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, str_dec: hir::StrDecIdx) {
   let str_dec = match str_dec {
     Some(x) => x,
     None => return,
