@@ -35,11 +35,11 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     hir::Exp::Record(rows) => record(st, rows, exp, |st, _, exp| get(st, cx, ars, exp)),
     // sml_def(4)
     hir::Exp::Let(dec, inner) => {
-      let mut env = Env::default();
+      let mut dec_env = Env::default();
       let marker = st.syms.mark();
-      dec::get(st, cx, ars, &mut env, *dec);
+      dec::get(st, cx, ars, &mut dec_env, *dec);
       let mut cx = cx.clone();
-      cx.env.extend(env);
+      cx.env.extend(dec_env);
       let got = get(st, &cx, ars, *inner);
       if ty_name_escape(&marker, &got) {
         st.err(inner.unwrap_or(exp), ErrorKind::TyNameEscape);
