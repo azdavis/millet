@@ -10,7 +10,7 @@ use old_intern::StrRef;
 use old_loc::{Loc, Located};
 use std::collections::BTreeMap;
 
-pub fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValEnv, Ty, Pat)> {
+pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValEnv, Ty, Pat)> {
   // Wildcard is by SML Definition (32), special constants are by SML Definition (33). Additionally,
   // SML Definition (37) is handled by the parser, and SML Definition (40) is handed because atomic
   // and non-atomic Pats are both in the same enum.

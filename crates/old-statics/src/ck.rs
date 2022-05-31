@@ -21,4 +21,4 @@ mod top_dec;
 mod ty;
 mod util;
 
-pub use top_dec::ck as ck_top_dec;
+pub(crate) use top_dec::ck as ck_top_dec;

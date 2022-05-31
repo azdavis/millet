@@ -3,7 +3,7 @@ use std::fmt;
 use syntax::ast::{self, AstNode, AstPtr};
 use syntax::rowan::TextRange;
 
-pub type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
+pub(crate) type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
 
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
@@ -75,7 +75,7 @@ impl Ptrs {
   }
 }
 
-pub struct BiMap<A, H>
+pub(crate) struct BiMap<A, H>
 where
   A: AstNode,
 {

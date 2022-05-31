@@ -11,14 +11,14 @@ use lsp_types::{
 use old_intern::StrStoreMut;
 use old_loc::Loc;
 
-pub struct State {
+pub(crate) struct State {
   root_uri: Option<Url>,
   got_shutdown: bool,
 }
 
 impl State {
   /// Returns a new State.
-  pub fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self {
       root_uri: None,
       got_shutdown: false,
@@ -26,7 +26,7 @@ impl State {
   }
 
   /// Returns the Response for this Request.
-  pub fn handle_request(&mut self, req: Request<IncomingRequestParams>) -> Response {
+  pub(crate) fn handle_request(&mut self, req: Request<IncomingRequestParams>) -> Response {
     let res = match req.params {
       IncomingRequestParams::Initialize(params) => {
         // TODO do something with params.process_id
@@ -55,7 +55,7 @@ impl State {
   }
 
   /// Handle a notification by possibly taking some action.
-  pub fn handle_notification(&mut self, notif: IncomingNotification) -> Option<Action> {
+  pub(crate) fn handle_notification(&mut self, notif: IncomingNotification) -> Option<Action> {
     match notif {
       IncomingNotification::Initialized => None,
       IncomingNotification::Exit => Some(Action::Exit(self.got_shutdown)),
@@ -81,7 +81,7 @@ impl State {
 }
 
 /// An action to take in response to a notification.
-pub enum Action {
+pub(crate) enum Action {
   /// Exit the server. The bool is whether the process should exit successfully.
   Exit(bool),
   /// Respond with an outgoing message.

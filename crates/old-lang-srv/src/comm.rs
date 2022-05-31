@@ -10,14 +10,14 @@ use serde_json::{from_slice, from_value, json, to_value, to_vec, Error, Map, Val
 
 const JSON_RPC_VERSION: &str = "2.0";
 
-pub enum IncomingRequestParams {
+pub(crate) enum IncomingRequestParams {
   Initialize(Box<InitializeParams>),
   Shutdown,
 }
 
-pub struct Request<Params> {
-  pub id: NumberOrString,
-  pub params: Params,
+pub(crate) struct Request<Params> {
+  pub(crate) id: NumberOrString,
+  pub(crate) params: Params,
 }
 
 impl<Params> Request<Params> {
@@ -26,7 +26,7 @@ impl<Params> Request<Params> {
   }
 }
 
-pub enum IncomingNotification {
+pub(crate) enum IncomingNotification {
   Initialized,
   Exit,
   TextDocOpen(DidOpenTextDocumentParams),
@@ -35,7 +35,7 @@ pub enum IncomingNotification {
   TextDocClose(DidCloseTextDocumentParams),
 }
 
-pub enum Incoming {
+pub(crate) enum Incoming {
   Request(Request<IncomingRequestParams>),
   Notification(IncomingNotification),
 }
@@ -45,7 +45,7 @@ impl Incoming {
     Self::Request(Request::new(id, params))
   }
 
-  pub fn try_parse(bs: &[u8]) -> Option<Self> {
+  pub(crate) fn try_parse(bs: &[u8]) -> Option<Self> {
     let mut val: Value = from_slice(bs).ok()?;
     if val.get("jsonrpc")?.as_str()? != JSON_RPC_VERSION {
       return None;
@@ -87,13 +87,13 @@ where
   from_value(std::mem::take(val.get_mut("params")?)).ok()
 }
 
-pub enum ResponseSuccess {
+pub(crate) enum ResponseSuccess {
   Initialize(Box<InitializeResult>),
   Null,
 }
 
 #[allow(unused)]
-pub enum ErrorCode {
+pub(crate) enum ErrorCode {
   ParseError = -32700,
   InvalidRequest = -32600,
   MethodNotFound = -32601,
@@ -107,14 +107,14 @@ pub enum ErrorCode {
   ContentModified = -32801,
 }
 
-pub struct ResponseError {
-  pub code: ErrorCode,
-  pub message: String,
+pub(crate) struct ResponseError {
+  pub(crate) code: ErrorCode,
+  pub(crate) message: String,
 }
 
-pub struct Response {
-  pub id: Option<NumberOrString>,
-  pub res: Result<ResponseSuccess, ResponseError>,
+pub(crate) struct Response {
+  pub(crate) id: Option<NumberOrString>,
+  pub(crate) res: Result<ResponseSuccess, ResponseError>,
 }
 
 impl Response {
@@ -140,7 +140,7 @@ impl Response {
   }
 }
 
-pub enum OutgoingNotification {
+pub(crate) enum OutgoingNotification {
   PublishDiagnostics(PublishDiagnosticsParams),
 }
 
@@ -157,13 +157,13 @@ impl OutgoingNotification {
   }
 }
 
-pub enum Outgoing {
+pub(crate) enum Outgoing {
   Response(Response),
   Notification(OutgoingNotification),
 }
 
 impl Outgoing {
-  pub fn into_vec(self) -> Result<Vec<u8>, Error> {
+  pub(crate) fn into_vec(self) -> Result<Vec<u8>, Error> {
     match self {
       Self::Response(res) => res.into_vec(),
       Self::Notification(notif) => notif.into_vec(),

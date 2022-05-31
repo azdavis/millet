@@ -6,7 +6,7 @@ use old_ast::{Label, Ty as AstTy};
 use old_loc::Located;
 use std::collections::BTreeMap;
 
-pub fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy>) -> Result<Ty> {
+pub(crate) fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy>) -> Result<Ty> {
   // SML Definition (48) is handled by the parser
   match &ty.val {
     // SML Definition (44)

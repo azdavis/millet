@@ -7,7 +7,7 @@ use std::io::BufRead as _;
 use std::io::Read as _;
 use std::io::Write as _;
 
-pub fn read_stdin(s: Sender<Incoming>) {
+pub(crate) fn read_stdin(s: Sender<Incoming>) {
   let stdin = std::io::stdin();
   let mut stdin = stdin.lock();
   let mut buf = Vec::new();
@@ -38,7 +38,7 @@ pub fn read_stdin(s: Sender<Incoming>) {
   }
 }
 
-pub fn write_stdout(r: Receiver<Outgoing>) {
+pub(crate) fn write_stdout(r: Receiver<Outgoing>) {
   let stdout = std::io::stdout();
   let mut stdout = stdout.lock();
   for res in r {

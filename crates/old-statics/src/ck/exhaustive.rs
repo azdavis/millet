@@ -20,7 +20,7 @@ use fast_hash::FxHashSet;
 use old_loc::{Loc, Located};
 
 /// Returns `Ok(())` iff the pats are exhaustive and not redundant.
-pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
+pub(crate) fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
   match ck(pats) {
     Res::Exhaustive => Ok(()),
     Res::NonExhaustive => Err(loc.wrap(Error::NonExhaustiveMatch)),
@@ -29,7 +29,7 @@ pub fn ck_match(pats: Vec<Located<Pat>>, loc: Loc) -> Result<()> {
 }
 
 /// Returns `Ok(())` iff the singular pat is exhaustive.
-pub fn ck_bind(pat: Pat, loc: Loc) -> Result<()> {
+pub(crate) fn ck_bind(pat: Pat, loc: Loc) -> Result<()> {
   match ck(vec![loc.wrap(pat)]) {
     Res::Exhaustive => Ok(()),
     Res::NonExhaustive => Err(loc.wrap(Error::NonExhaustiveBinding)),
@@ -38,7 +38,7 @@ pub fn ck_bind(pat: Pat, loc: Loc) -> Result<()> {
 }
 
 /// Returns `Ok(())` iff the pats are not redundant.
-pub fn ck_handle(pats: Vec<Located<Pat>>) -> Result<()> {
+pub(crate) fn ck_handle(pats: Vec<Located<Pat>>) -> Result<()> {
   match ck(pats) {
     Res::Exhaustive | Res::NonExhaustive => Ok(()),
     Res::Unreachable(loc) => Err(loc.wrap(Error::UnreachablePattern)),

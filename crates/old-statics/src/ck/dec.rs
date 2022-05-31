@@ -234,7 +234,7 @@ fn fun_infos_to_ve(fun_infos: &FxHashMap<StrRef, FunInfo>) -> ValEnv {
     .collect()
 }
 
-pub fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec>) -> Result<Env> {
+pub(crate) fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec>) -> Result<Env> {
   match &dec.val {
     // SML Definition (15)
     Dec::Val(ty_vars, val_binds) => {
@@ -449,7 +449,7 @@ fn ck_ty_binds(cx: &Cx, st: &mut State, ty_binds: &[TyBind]) -> Result<Env> {
 /// SML Definition (17), SML Definition (71). The checking for {datatype, constructor} {bindings,
 /// descriptions} appear to be essentially identical, so we can unite the ASTs and static checking
 /// functions (i.e. this function).
-pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind]) -> Result<Env> {
+pub(crate) fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind]) -> Result<Env> {
   // these two are across all `DatBind`s.
   let mut ty_env = TyEnv::default();
   let mut val_env = ValEnv::new();
@@ -552,7 +552,7 @@ pub fn ck_dat_binds(mut cx: Cx, st: &mut State, dat_binds: &[DatBind]) -> Result
 }
 
 /// SML Definition (18), SML Definition (72)
-pub fn ck_dat_copy(cx: &Cx, tys: &Tys, ty_con: Located<StrRef>, long: &Long) -> Result<Env> {
+pub(crate) fn ck_dat_copy(cx: &Cx, tys: &Tys, ty_con: Located<StrRef>, long: &Long) -> Result<Env> {
   let sym = get_ty_sym(get_env(&cx.env, long)?, long.last)?;
   let val_env = tys.get(&sym).val_env.clone();
   Ok(Env {

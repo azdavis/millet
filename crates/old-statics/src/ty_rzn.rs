@@ -10,7 +10,7 @@ use fast_hash::FxHashMap;
 
 /// A mapping from symbols to type functions.
 #[derive(Debug, Default)]
-pub struct TyRealization {
+pub(crate) struct TyRealization {
   inner: FxHashMap<Sym, Out>,
 }
 
@@ -23,17 +23,17 @@ enum Out {
 
 impl TyRealization {
   /// Inserts the mapping `key => val` into this.
-  pub fn insert_ty_fcn(&mut self, key: Sym, val: TyFcn) {
+  pub(crate) fn insert_ty_fcn(&mut self, key: Sym, val: TyFcn) {
     assert!(self.inner.insert(key, Out::TyFcn(val)).is_none());
   }
 
   /// Inserts the mapping `key => val` into this.
-  pub fn insert_sym(&mut self, key: Sym, val: Sym) {
+  pub(crate) fn insert_sym(&mut self, key: Sym, val: Sym) {
     assert!(self.inner.insert(key, Out::Sym(val)).is_none());
   }
 
   /// Applies this to an `Env`.
-  pub fn get_env(&self, tys: &mut Tys, env: &mut Env) {
+  pub(crate) fn get_env(&self, tys: &mut Tys, env: &mut Env) {
     for env in env.str_env.values_mut() {
       self.get_env(tys, env);
     }
@@ -60,7 +60,7 @@ impl TyRealization {
   }
 
   /// Applies this to a `Ty`.
-  pub fn get_ty(&self, ty: &mut Ty) {
+  pub(crate) fn get_ty(&self, ty: &mut Ty) {
     match ty {
       Ty::Var(_) => {}
       Ty::Record(rows) => {

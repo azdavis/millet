@@ -10,7 +10,7 @@ use crate::types::{
 use old_ast::{SigExp, Spec, StrDec, StrExp, TopDec};
 use old_loc::Located;
 
-pub fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec>) -> Result<()> {
+pub(crate) fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec>) -> Result<()> {
   match &top_dec.val {
     // SML Definition (87)
     TopDec::StrDec(str_dec) => {

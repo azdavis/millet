@@ -3,7 +3,7 @@
 #[cfg(test)]
 mod tests;
 
-pub fn content_length(bs: &[u8]) -> Option<usize> {
+pub(crate) fn content_length(bs: &[u8]) -> Option<usize> {
   let mut i = bs.iter().position(|&b| b == b':')?;
   if &bs[0..i] != b"Content-Length" {
     return None;

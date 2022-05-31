@@ -219,7 +219,7 @@ fn show_row(buf: &mut String, store: &StrStore, lab: Label, ty: &Ty) {
 }
 
 /// A specialized Result type that many functions doing static analysis return.
-pub type Result<T> = std::result::Result<T, Located<Error>>;
+pub(crate) type Result<T> = std::result::Result<T, Located<Error>>;
 
 /// An item. Used in error messages.
 #[derive(Debug, Clone, Copy)]
@@ -654,7 +654,7 @@ impl TyScheme {
 
 /// NOTE These are defined in exactly the same way in the Definition. Is it worth even having the
 /// type alias here?
-pub type TyFcn = TyScheme;
+pub(crate) type TyFcn = TyScheme;
 
 /// Information about a type. TyStr from the Definition.
 #[derive(Debug, Clone)]
@@ -715,12 +715,12 @@ impl Tys {
 }
 
 /// A structure environment.
-pub type StrEnv = BTreeMap<StrRef, Env>;
+pub(crate) type StrEnv = BTreeMap<StrRef, Env>;
 
 /// A type environment.
 #[derive(Debug, Clone, Default)]
-pub struct TyEnv {
-  pub inner: BTreeMap<StrRef, Sym>,
+pub(crate) struct TyEnv {
+  pub(crate) inner: BTreeMap<StrRef, Sym>,
 }
 
 impl TyEnv {
@@ -734,7 +734,7 @@ impl TyEnv {
   }
 
   /// Returns the free type variables in this.
-  pub fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
+  pub(crate) fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
     self
       .inner
       .values()
@@ -822,23 +822,23 @@ impl ValInfo {
 }
 
 /// An environment of values.
-pub type ValEnv = BTreeMap<StrRef, ValInfo>;
+pub(crate) type ValEnv = BTreeMap<StrRef, ValInfo>;
 
 /// An environment. Structures (and therefore the "top-level") and signatures are essentially
 /// represented as this.
 #[derive(Debug, Clone, Default)]
-pub struct Env {
+pub(crate) struct Env {
   /// The structures defined in this structure.
-  pub str_env: StrEnv,
+  pub(crate) str_env: StrEnv,
   /// The types defined in this structure.
-  pub ty_env: TyEnv,
+  pub(crate) ty_env: TyEnv,
   /// The values defined in this structure.
-  pub val_env: ValEnv,
+  pub(crate) val_env: ValEnv,
 }
 
 impl Env {
   /// Extends an environment with another. `other` overwrites `self`.
-  pub fn extend(&mut self, other: Self) {
+  pub(crate) fn extend(&mut self, other: Self) {
     for (name, env) in other.str_env {
       self.str_env.insert(name, env);
     }
@@ -852,7 +852,7 @@ impl Env {
 
   /// Extends an environment with another, but returns `Ok(())` iff the other environment didn't
   /// overwrite anything in this.
-  pub fn maybe_extend(&mut self, other: Self, loc: Loc) -> Result<()> {
+  pub(crate) fn maybe_extend(&mut self, other: Self, loc: Loc) -> Result<()> {
     for (name, env) in other.str_env {
       if self.str_env.insert(name, env).is_some() {
         return Err(loc.wrap(Error::Duplicate(Item::Struct, name)));
@@ -883,7 +883,7 @@ impl Env {
   }
 
   /// Returns the free type variables in this.
-  pub fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
+  pub(crate) fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
     self
       .str_env
       .values()
@@ -930,67 +930,67 @@ impl From<StrEnv> for Env {
 }
 
 /// A set of type names.
-pub type TyNameSet = FxHashSet<Sym>;
+pub(crate) type TyNameSet = FxHashSet<Sym>;
 
 /// A set of type variables. NOTE this is an ordered set purely to make errors reproducible.
-pub type TyVarSet = BTreeSet<TyVar>;
+pub(crate) type TyVarSet = BTreeSet<TyVar>;
 
 /// A context. NOTE contrary to the Definition, we don't track an explicit TyNameSet here.
 #[derive(Clone)]
-pub struct Cx {
+pub(crate) struct Cx {
   /// In the Definition this is a set, but here we use it as not just a set, but a mapping from AST
   /// type variables to statics type variables. Note the mapping is injective but not surjective.
-  pub ty_vars: FxHashMap<AstTyVar, TyVar>,
+  pub(crate) ty_vars: FxHashMap<AstTyVar, TyVar>,
   /// The environment.
-  pub env: Env,
+  pub(crate) env: Env,
 }
 
 impl Cx {
   /// This is the o-plus operation defined in the Definition, which extends a context by an
   /// environment and that environment's type name set.
-  pub fn o_plus(&mut self, env: Env) {
+  pub(crate) fn o_plus(&mut self, env: Env) {
     self.env.extend(env);
   }
 }
 
 /// A signature.
 #[derive(Debug, Clone)]
-pub struct Sig {
+pub(crate) struct Sig {
   /// The set of type names that this signature binds. The "variables" that are "substituted" when
   /// this signature is matched against an environment (from a structure expression).
-  pub ty_names: TyNameSet,
+  pub(crate) ty_names: TyNameSet,
   /// The environment, which may make reference to the bound type names as well as type names from
   /// the surrounding environment.
-  pub env: Env,
+  pub(crate) env: Env,
 }
 
 /// A functor signature. Note that in the Definition this is TyNameSet x (Env x Sig) but that's
 /// isomorphic. I feel like the latter makes more sense, though there could be something I'm not
 /// understanding.
 #[derive(Debug, Clone)]
-pub struct FunSig {
-  pub input: Sig,
-  pub output: Sig,
+pub(crate) struct FunSig {
+  pub(crate) input: Sig,
+  pub(crate) output: Sig,
 }
 
 /// A signature environment.
-pub type SigEnv = FxHashMap<StrRef, Sig>;
+pub(crate) type SigEnv = FxHashMap<StrRef, Sig>;
 
 /// A functor environment.
-pub type FunEnv = FxHashMap<StrRef, FunSig>;
+pub(crate) type FunEnv = FxHashMap<StrRef, FunSig>;
 
 /// A basis. There's one of these in the whole program, since it basically represents the entire
 /// program.
 #[derive(Debug, Clone)]
-pub struct Basis {
-  pub fun_env: FunEnv,
-  pub sig_env: SigEnv,
-  pub env: Env,
+pub(crate) struct Basis {
+  pub(crate) fun_env: FunEnv,
+  pub(crate) sig_env: SigEnv,
+  pub(crate) env: Env,
 }
 
 impl Basis {
   /// Apply a substitution to this.
-  pub fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
+  pub(crate) fn apply(&mut self, subst: &Subst, tys: &mut Tys) {
     for fun_sig in self.fun_env.values_mut() {
       fun_sig.input.env.apply(subst, tys);
       fun_sig.output.env.apply(subst, tys);
@@ -1002,7 +1002,7 @@ impl Basis {
   }
 
   /// Return the free type variables in this. Should always be empty, as per the Definition.
-  pub fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
+  pub(crate) fn free_ty_vars(&self, tys: &Tys) -> TyVarSet {
     self
       .fun_env
       .values()
@@ -1025,7 +1025,7 @@ impl Basis {
   }
 
   /// Returns a context derived from the information in this.
-  pub fn to_cx(&self) -> Cx {
+  pub(crate) fn to_cx(&self) -> Cx {
     Cx {
       ty_vars: FxHashMap::default(),
       env: self.env.clone(),
@@ -1036,54 +1036,54 @@ impl Basis {
 /// The state passed around by many of the statics functions. There's only one of these, and it's
 /// constantly being mutably, additively updated as we go.
 #[derive(Debug, Default)]
-pub struct State {
+pub(crate) struct State {
   /// The next type variable ID to hand out. Invariant: Always increases.
   next_ty_var: usize,
   /// The next symbol ID to hand out. Invariant: Always increase.
   next_sym: usize,
   /// The substitution, the unifier of the entire program. Invariant: Always grows in size.
-  pub subst: Subst,
+  pub(crate) subst: Subst,
   /// The types that 'have been generated' and information about them. Invariant: Always grows in
   /// size.
-  pub tys: Tys,
+  pub(crate) tys: Tys,
 }
 
 impl State {
   /// Returns a fresh type variable.
-  pub fn new_ty_var(&mut self, equality: bool) -> TyVar {
+  pub(crate) fn new_ty_var(&mut self, equality: bool) -> TyVar {
     let id = self.next_ty_var;
     self.next_ty_var += 1;
     TyVar { id, equality }
   }
 
   /// Returns a fresh symbol.
-  pub fn new_sym(&mut self, name: Located<StrRef>) -> Sym {
+  pub(crate) fn new_sym(&mut self, name: Located<StrRef>) -> Sym {
     let id = Some(name.loc.wrap(self.next_sym));
     self.next_sym += 1;
     Sym { id, name: name.val }
   }
 
   /// Returns an opaque type that contains information about what symbols have been generated.
-  pub fn generated_syms(&self) -> GeneratedSyms {
+  pub(crate) fn generated_syms(&self) -> GeneratedSyms {
     GeneratedSyms {
       next_sym: self.next_sym,
     }
   }
 
   /// A thin wrapper over `Subst#unify`, which passes in this `State`'s `Tys`.
-  pub fn unify(&mut self, loc: Loc, want: Ty, got: Ty) -> Result<()> {
+  pub(crate) fn unify(&mut self, loc: Loc, want: Ty, got: Ty) -> Result<()> {
     self.subst.unify(loc, &self.tys, want, got)
   }
 }
 
 /// Contains information about what symbols have been generated.
-pub struct GeneratedSyms {
+pub(crate) struct GeneratedSyms {
   next_sym: usize,
 }
 
 impl GeneratedSyms {
   /// Returns whether all symbols in `ty_names` were generated before this `GeneratedSyms` was.
-  pub fn contains(&self, ty_names: &TyNameSet) -> bool {
+  pub(crate) fn contains(&self, ty_names: &TyNameSet) -> bool {
     for sym in ty_names {
       match sym.id {
         None => continue,
@@ -1100,7 +1100,7 @@ impl GeneratedSyms {
 
 /// A pattern, for the purposes of static analysis. See exhaustive.rs.
 #[derive(Debug, Clone)]
-pub enum Pat {
+pub(crate) enum Pat {
   /// Matches anything. Used for variables and wildcards.
   Anything,
   /// Matches a constructor with the given arguments.
@@ -1109,12 +1109,12 @@ pub enum Pat {
 
 impl Pat {
   /// Returns a constructor pattern with zero arguments.
-  pub fn zero(con: Con) -> Self {
+  pub(crate) fn zero(con: Con) -> Self {
     Self::Con(con, vec![])
   }
 
   /// Returns a record pattern. Requires the patterns be sorted by label.
-  pub fn record(mut pats: Vec<Pat>) -> Self {
+  pub(crate) fn record(mut pats: Vec<Pat>) -> Self {
     if pats.len() == 1 {
       // may happen in the desugaring of `Fun`.
       pats.pop().unwrap()
@@ -1128,7 +1128,7 @@ impl Pat {
 /// used 'Ctor' to mean 'constructor', and then adopted 'Con' as well from reading the paper which
 /// was the basis of the exhaustiveness checker.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Con {
+pub(crate) enum Con {
   Int(i32),
   Word(i32),
   String(StrRef),
@@ -1141,14 +1141,14 @@ pub enum Con {
 
 /// A measure of how many constructors exist for a type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Span {
+pub(crate) enum Span {
   Finite(usize),
   PosInf,
 }
 
 impl Con {
   /// Returns the span of this.
-  pub fn span(&self) -> Span {
+  pub(crate) fn span(&self) -> Span {
     match *self {
       Self::Int(_) | Self::Word(_) | Self::String(_) => Span::PosInf,
       Self::Char(_) => Span::Finite(256),

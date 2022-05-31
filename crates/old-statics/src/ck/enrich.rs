@@ -12,7 +12,7 @@ use old_loc::Loc;
 /// information about types named by a `Sym`, and `ty_rzn` is a substitution of symbols that is
 /// applied to every `t`, where `t` is a `Ty` in `want`, before trying to unify `t` with its
 /// corresponding `Ty` in `got`. TODO improve locs of errors.
-pub fn ck(loc: Loc, tys: &Tys, ty_rzn: &TyRealization, got: &Env, want: &Env) -> Result<()> {
+pub(crate) fn ck(loc: Loc, tys: &Tys, ty_rzn: &TyRealization, got: &Env, want: &Env) -> Result<()> {
   let cx = Cx { loc, tys, ty_rzn };
   ck_impl(cx, got, want)
 }

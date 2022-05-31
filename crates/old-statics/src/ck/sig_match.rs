@@ -29,7 +29,7 @@ use crate::types::{Env, Result, Sig, State, TyEnv};
 use old_loc::Loc;
 
 /// Returns `Ok((E, ty_rzn))` iff `sig >= E` (and `ty_rzn` is the witness) and `env >> E`.
-pub fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<(Env, TyRealization)> {
+pub(crate) fn ck(st: &mut State, loc: Loc, env: Env, sig: &Sig) -> Result<(Env, TyRealization)> {
   let mut ty_rzn = TyRealization::default();
   for &bound_ty_sym in sig.ty_names.iter() {
     let ty_name = loc.wrap(bound_ty_sym.name());

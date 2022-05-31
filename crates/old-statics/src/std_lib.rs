@@ -90,7 +90,7 @@ fn base_ty(ty: Ty, equality: bool) -> TyInfo {
   }
 }
 
-pub fn get() -> (Basis, State) {
+pub(crate) fn get() -> (Basis, State) {
   let real_int = || vec![Sym::INT, Sym::REAL];
   let word_int = || vec![Sym::INT, Sym::WORD];
   let num = || vec![Sym::INT, Sym::WORD, Sym::REAL];
