@@ -1,7 +1,7 @@
 use crate::error::{ErrorKind, Item};
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{Cx, Env, Sym, SymsMarker, Ty, ValEnv};
+use crate::types::{Cx, Env, SymsMarker, Ty, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
@@ -64,7 +64,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let mut exp_ty = get(st, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
       let idx = inner.unwrap_or(exp);
-      unify(st, Ty::zero(Sym::EXN), param.clone(), idx);
+      unify(st, Ty::EXN, param.clone(), idx);
       unify(st, exp_ty.clone(), res, idx);
       apply(st.subst(), &mut exp_ty);
       pat::get_match(st, pats, param, None, marker, idx);
@@ -73,7 +73,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     // sml_def(11)
     hir::Exp::Raise(inner) => {
       let got = get(st, cx, ars, *inner);
-      unify(st, Ty::zero(Sym::EXN), got, inner.unwrap_or(exp));
+      unify(st, Ty::EXN, got, inner.unwrap_or(exp));
       Ty::MetaVar(st.gen_meta_var())
     }
     // sml_def(12)

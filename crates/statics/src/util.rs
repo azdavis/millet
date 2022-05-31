@@ -1,18 +1,17 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
-use crate::types::{Env, Subst, SubstEntry, Sym, Ty, TyInfo, TyScheme};
+use crate::types::{Env, Subst, SubstEntry, Ty, TyInfo, TyScheme};
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
 pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
-  let sym = match scon {
-    hir::SCon::Int(_) => Sym::INT,
-    hir::SCon::Real(_) => Sym::REAL,
-    hir::SCon::Word(_) => Sym::WORD,
-    hir::SCon::Char(_) => Sym::CHAR,
-    hir::SCon::String(_) => Sym::STRING,
-  };
-  Ty::zero(sym)
+  match scon {
+    hir::SCon::Int(_) => Ty::INT,
+    hir::SCon::Real(_) => Ty::REAL,
+    hir::SCon::Word(_) => Ty::WORD,
+    hir::SCon::Char(_) => Ty::CHAR,
+    hir::SCon::String(_) => Ty::STRING,
+  }
 }
 
 /// sml_def(6), sml_def(39), sml_def(49)

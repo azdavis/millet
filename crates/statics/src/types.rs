@@ -31,7 +31,7 @@ pub(crate) enum Ty {
 
 impl Ty {
   /// Returns a [`Self::Con`] with 0 arguments and the given `sym`.
-  pub(crate) fn zero(sym: Sym) -> Self {
+  pub(crate) const fn zero(sym: Sym) -> Self {
     Self::Con(Vec::new(), sym)
   }
 
@@ -338,7 +338,7 @@ impl fmt::Debug for Sym {
 }
 
 macro_rules! mk_special_syms {
-  ($( ($name:ident, $str:literal, $idx:expr), )*) => {
+  ($( ($idx:expr, $mk_ty:ident, $name:ident, $str:literal), )*) => {
     impl Sym {
       $(
         pub(crate) const $name: Self = Self($idx);
@@ -352,24 +352,34 @@ macro_rules! mk_special_syms {
         Some(s)
       }
     }
+
+    impl Ty {
+      $(
+        mk_special_syms!(@mk_ty, $mk_ty, $name, $idx);
+      )*
+    }
   };
+  (@mk_ty, y, $name:ident, $idx:expr) => {
+    pub(crate) const $name: Ty = Ty::zero(Sym::$name);
+  };
+  (@mk_ty, n, $name:ident, $idx:expr) => {};
 }
 
 // keep in sync with `Syms::standard_basis`
 mk_special_syms! {
-  (EXN, "exn", usize::MAX),
+  (usize::MAX, y, EXN, "exn"),
 
-  (INT, "int", 0),
-  (WORD, "word", 1),
-  (REAL, "real", 2),
-  (CHAR, "char", 3),
-  (STRING, "string", 4),
+  (0, y, INT, "int"),
+  (1, y, WORD, "word"),
+  (2, y, REAL, "real"),
+  (3, y, CHAR, "char"),
+  (4, y, STRING, "string"),
 
-  (BOOL, "bool", 5),
-  (ORDER, "order", 6),
+  (5, y, BOOL, "bool"),
+  (6, y, ORDER, "order"),
 
-  (LIST, "list", 7),
-  (REF, "ref", 8),
+  (7, n, LIST, "list"),
+  (8, n, REF, "ref"),
 }
 
 impl Sym {

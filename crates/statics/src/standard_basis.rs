@@ -7,17 +7,17 @@ use std::collections::BTreeMap;
 pub(crate) fn get() -> (Syms, Bs) {
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
-    insert_special(&mut syms, sym, basic_datatype(sym, &[]));
+    insert_special(&mut syms, sym, basic_datatype(Ty::zero(sym), &[]));
   }
   insert_special(
     &mut syms,
     Sym::BOOL,
-    basic_datatype(Sym::BOOL, &["true", "false"]),
+    basic_datatype(Ty::BOOL, &["true", "false"]),
   );
   insert_special(
     &mut syms,
     Sym::ORDER,
-    basic_datatype(Sym::ORDER, &["LESS", "EQUAL", "GREATER"]),
+    basic_datatype(Ty::ORDER, &["LESS", "EQUAL", "GREATER"]),
   );
   let list_info = {
     let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
@@ -49,7 +49,7 @@ pub(crate) fn get() -> (Syms, Bs) {
     Sym::LIST,
     Sym::REF,
   ];
-  let aliases = [("unit", unit()), ("exn", Ty::zero(Sym::EXN))];
+  let aliases = [("unit", unit()), ("exn", Ty::EXN)];
   let ty_env: TyEnv = builtin
     .iter()
     .map(|s| {
@@ -68,15 +68,14 @@ pub(crate) fn get() -> (Syms, Bs) {
     let realint_to_realint = overloaded(Overload::RealInt, |a| Ty::fun(a.clone(), a));
     let wordint_pair_to_wordint = overloaded(Overload::WordInt, |a| Ty::fun(dup(a.clone()), a));
     let num_pair_to_num = overloaded(Overload::Num, |a| Ty::fun(dup(a.clone()), a));
-    let numtxt_pair_to_bool =
-      overloaded(Overload::NumTxt, |a| Ty::fun(dup(a), Ty::zero(Sym::BOOL)));
-    let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::zero(Sym::REAL)), Ty::zero(Sym::REAL)));
+    let numtxt_pair_to_bool = overloaded(Overload::NumTxt, |a| Ty::fun(dup(a), Ty::BOOL));
+    let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::REAL), Ty::REAL));
     let assign = TyScheme::one(|a| {
       let t = Ty::fun(pair(Ty::Con(vec![a.clone()], Sym::REF), a), unit());
       (t, None)
     });
     let eq = TyScheme::one(|a| {
-      let t = Ty::fun(dup(a), Ty::zero(Sym::BOOL));
+      let t = Ty::fun(dup(a), Ty::BOOL);
       (t, Some(TyVarKind::Equality))
     });
     [
@@ -100,7 +99,7 @@ pub(crate) fn get() -> (Syms, Bs) {
     ("Match", None),
     ("Bind", None),
     // not actually part of the standard basis according to the Definition
-    ("Fail", Some(Ty::zero(Sym::STRING))),
+    ("Fail", Some(Ty::STRING)),
   ];
   let val_env: ValEnv = ty_env
     .values()
@@ -113,7 +112,7 @@ pub(crate) fn get() -> (Syms, Bs) {
       (hir::Name::new(name), vi)
     }))
     .chain(exns.into_iter().map(|(name, param)| {
-      let mut ty = Ty::zero(Sym::EXN);
+      let mut ty = Ty::EXN;
       if let Some(ref param) = param {
         ty = Ty::fun(param.clone(), ty);
       }
@@ -143,8 +142,8 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
   assert_eq!(sym, got);
 }
 
-fn basic_datatype(sym: Sym, ctors: &[&str]) -> TyInfo {
-  let ty_scheme = TyScheme::zero(Ty::zero(sym));
+fn basic_datatype(ty: Ty, ctors: &[&str]) -> TyInfo {
+  let ty_scheme = TyScheme::zero(ty);
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
   TyInfo { ty_scheme, val_env }
 }

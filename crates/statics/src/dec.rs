@@ -1,7 +1,7 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{
-  generalize, Cx, Env, FixedTyVars, IdStatus, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
+  generalize, Cx, Env, FixedTyVars, IdStatus, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
@@ -134,7 +134,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         match ex_bind {
           // sml_def(30)
           hir::ExBind::New(name, param) => {
-            let mut ty = Ty::zero(Sym::EXN);
+            let mut ty = Ty::EXN;
             let param = param.map(|param| ty::get(st, cx, ars, param));
             if let Some(ref param) = param {
               ty = Ty::fun(param.clone(), ty);
