@@ -34,3 +34,15 @@ val _: int * bool = (3, false)
 "#,
   );
 }
+
+#[test]
+fn structure() {
+  check(
+    r#"
+structure S = struct
+  val x = 3
+end
+val _: int = S.x
+"#,
+  );
+}

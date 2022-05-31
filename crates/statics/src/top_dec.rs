@@ -78,6 +78,7 @@ fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_dec: 
           st.err(str_dec, e);
         }
       }
+      env.str_env.extend(str_env);
     }
     // sml_def(58)
     hir::StrDec::Local(local_dec, in_dec) => {

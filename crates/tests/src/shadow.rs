@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn t_01() {
@@ -35,7 +35,7 @@ val _: t = Two
 
 #[test]
 fn t_04() {
-  fail(
+  check(
     r#"
 structure S = struct val x = "hey" end
 structure S = struct val x = 3 end
