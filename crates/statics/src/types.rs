@@ -365,23 +365,20 @@ macro_rules! mk_special_syms {
   (@mk_ty, n, $name:ident, $idx:expr) => {};
 }
 
-// keep in sync with `Syms::standard_basis`
-mk_special_syms! {
-  // must come first
+// keep in sync with `Syms::standard_basis`. weird symbols (i.e. EXN) must come first. indices must
+// start at 0 and go up by 1.
+mk_special_syms![
   (0, y, EXN, "exn"),
-
   (1, y, INT, "int"),
   (2, y, WORD, "word"),
   (3, y, REAL, "real"),
   (4, y, CHAR, "char"),
   (5, y, STRING, "string"),
-
   (6, y, BOOL, "bool"),
   (7, y, ORDER, "order"),
-
   (8, n, LIST, "list"),
   (9, n, REF, "ref"),
-}
+];
 
 impl Sym {
   /// there's only 1, and it's EXN.
