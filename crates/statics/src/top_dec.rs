@@ -120,7 +120,7 @@ fn env_to_sig(_: &mut St, _: &Bs, _: Env) -> Sig {
   todo!()
 }
 
-fn get_spec(st: &mut St, _: &Bs, ars: &hir::Arenas, _: &mut Env, spec: hir::SpecIdx) {
+fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::SpecIdx) {
   let spec = match spec {
     Some(x) => x,
     None => return,
@@ -164,11 +164,15 @@ fn get_spec(st: &mut St, _: &Bs, ars: &hir::Arenas, _: &mut Env, spec: hir::Spec
       }
     }
     // sml_def(75)
-    hir::Spec::Include(_) => st.err(spec, ErrorKind::Unsupported),
+    hir::Spec::Include(sig_exp) => get_sig_exp(st, bs, ars, env, *sig_exp),
     // sml_def(78)
     hir::Spec::Sharing(_, _) => st.err(spec, ErrorKind::Unsupported),
     // sml_def(76), sml_def(77)
-    hir::Spec::Seq(_) => st.err(spec, ErrorKind::Unsupported),
+    hir::Spec::Seq(specs) => {
+      for &spec in specs {
+        get_spec(st, bs, ars, env, spec);
+      }
+    }
   }
 }
 
