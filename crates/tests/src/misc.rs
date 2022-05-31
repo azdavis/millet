@@ -643,3 +643,12 @@ end
 "#,
   );
 }
+
+#[test]
+fn prec() {
+  fail(
+    r#"
+val _ = fn x => x = 1 andalso x = 2
+"#,
+  );
+}
