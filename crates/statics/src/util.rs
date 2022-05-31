@@ -34,6 +34,8 @@ where
   Ty::Record(ty_rows)
 }
 
+/// uses the `names` to traverse through the `StrEnv`s of successive `env`s, returning either the
+/// final `env` or the first name that was unbound.
 pub(crate) fn get_env<'e, 'n, I>(mut env: &'e Env, names: I) -> Result<&'e Env, &'n hir::Name>
 where
   I: IntoIterator<Item = &'n hir::Name>,
@@ -111,10 +113,13 @@ pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
   }
 }
 
+/// returns whether this is a forbidden value name.
 pub(crate) fn cannot_bind_val(s: &str) -> bool {
   matches!(s, "true" | "false" | "nil" | "::" | "ref")
 }
 
+/// inserts (name, val) into the map, but returns Some(e) if name was already a key, where e is an
+/// error describing this transgression.
 #[must_use]
 pub(crate) fn ins_no_dupe<V>(
   map: &mut FxHashMap<hir::Name, V>,
@@ -127,8 +132,10 @@ pub(crate) fn ins_no_dupe<V>(
     .map(|_| ErrorKind::Duplicate(item, name))
 }
 
-pub(crate) fn get_ty_info<'e>(lookup: &'e Env, path: &hir::Path) -> Result<&'e TyInfo, ErrorKind> {
-  match get_env(lookup, path.structures()) {
+/// returns either the ty info in the `env` reached by the `path` or an error describing why we
+/// failed to do so.
+pub(crate) fn get_ty_info<'e>(env: &'e Env, path: &hir::Path) -> Result<&'e TyInfo, ErrorKind> {
+  match get_env(env, path.structures()) {
     Ok(got_env) => match got_env.ty_env.get(path.last()) {
       Some(ty_info) => Ok(ty_info),
       None => Err(ErrorKind::Undefined(Item::Ty, path.last().clone())),
