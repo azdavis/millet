@@ -50,10 +50,10 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
     hir::StrExp::App(_, _) => st.err(str_exp, ErrorKind::Unsupported),
     // sml_def(55)
     hir::StrExp::Let(str_dec, str_exp) => {
-      let mut dec_env = Env::default();
-      get_str_dec(st, bs, ars, &mut dec_env, *str_dec);
+      let mut let_env = Env::default();
+      get_str_dec(st, bs, ars, &mut let_env, *str_dec);
       let mut bs = bs.clone();
-      bs.env.extend(dec_env);
+      bs.env.extend(let_env);
       get_str_exp(st, &bs, ars, env, *str_exp)
     }
   }
