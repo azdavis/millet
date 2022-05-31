@@ -4,7 +4,7 @@ use crate::dec;
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{Bs, Cx, Env, Sig, StrEnv, TyEnv};
-use crate::util::{get_env, ins_no_dupe};
+use crate::util::{get_env, get_ty_info, ins_no_dupe};
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
   match &ars.top_dec[top_dec] {
@@ -140,16 +140,27 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     hir::Spec::EqTy(_) => st.err(spec, ErrorKind::Unsupported),
     // sml_def(71)
     hir::Spec::Datatype(dat_descs) => {
-      // sml_def(81). NOTE: might just be able to re-use exact same logic for DatBind
-      for dat_desc in dat_descs {
-        for _ in dat_desc.cons.iter() {
-          // sml_def(82)
-          st.err(spec, ErrorKind::Unsupported)
+      let (ty_env, big_val_env) = dec::get_dat_binds(st, bs.as_cx(), ars, dat_descs, spec.into());
+      for (name, val) in ty_env {
+        if let Some(e) = ins_no_dupe(&mut env.ty_env, name, val, Item::Ty) {
+          st.err(spec, e);
+        }
+      }
+      for (name, val) in big_val_env {
+        if let Some(e) = ins_no_dupe(&mut env.val_env, name, val, Item::Val) {
+          st.err(spec, e);
         }
       }
     }
     // sml_def(72)
-    hir::Spec::DatatypeCopy(_, _) => st.err(spec, ErrorKind::Unsupported),
+    hir::Spec::DatatypeCopy(name, path) => match get_ty_info(&bs.env, path) {
+      Ok(ty_info) => {
+        if let Some(e) = ins_no_dupe(&mut env.ty_env, name.clone(), ty_info.clone(), Item::Ty) {
+          st.err(spec, e);
+        }
+      }
+      Err(e) => st.err(spec, e),
+    },
     // sml_def(73)
     hir::Spec::Exception(ex_descs) => {
       // sml_def(83)

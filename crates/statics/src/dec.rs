@@ -231,7 +231,7 @@ pub(crate) fn get_dat_binds(
 ) -> (TyEnv, ValEnv) {
   let mut ty_env = TyEnv::default();
   let mut big_val_env = ValEnv::default();
-  // sml_def(28)
+  // sml_def(28), sml_def(81)
   for dat_bind in dat_binds {
     let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, idx);
     let dat = st.syms.start_datatype(dat_bind.name.clone());
@@ -253,7 +253,7 @@ pub(crate) fn get_dat_binds(
       },
     );
     let mut val_env = ValEnv::default();
-    // sml_def(29)
+    // sml_def(29), sml_def(82)
     for con_bind in dat_bind.cons.iter() {
       let mut ty = out_ty.clone();
       if let Some(of_ty) = con_bind.ty {
