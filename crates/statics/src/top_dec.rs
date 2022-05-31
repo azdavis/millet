@@ -5,7 +5,7 @@ use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::ty;
 use crate::types::{
-  generalize, Bs, Cx, Env, FixedTyVars, IdStatus, Sig, StrEnv, TyEnv, TyScheme, ValInfo,
+  generalize, Bs, Cx, Env, FixedTyVars, IdStatus, Sig, StrEnv, Ty, TyEnv, TyScheme, ValInfo,
 };
 use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 
@@ -179,8 +179,27 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(73)
     hir::Spec::Exception(ex_descs) => {
       // sml_def(83)
-      for _ in ex_descs {
-        st.err(spec, ErrorKind::Unsupported)
+      let cx = bs.as_cx();
+      for ex_desc in ex_descs {
+        // almost the same as the logic in dec::get, save for the check for ty vars.
+        let mut ty = Ty::EXN;
+        let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, param));
+        if let Some(ref param) = param {
+          ty = Ty::fun(param.clone(), ty);
+        }
+        let exn = st.syms.insert_exn(ex_desc.name.clone(), param);
+        if has_ty_var(&ty) {
+          st.err(spec, ErrorKind::PolymorphicExn);
+        }
+        let vi = ValInfo {
+          ty_scheme: TyScheme::zero(ty),
+          id_status: IdStatus::Exn(exn),
+        };
+        if cannot_bind_val(ex_desc.name.as_str()) {
+          st.err(spec, ErrorKind::InvalidRebindName(ex_desc.name.clone()));
+        } else if let Some(e) = ins_no_dupe(&mut env.val_env, ex_desc.name.clone(), vi, Item::Val) {
+          st.err(spec, e);
+        }
       }
     }
     // sml_def(74)
@@ -206,4 +225,15 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
 // sml_def(80)
 fn get_ty_descs(_: &mut St, _: &Cx, _: &hir::Arenas, _: &mut TyEnv, _: &[hir::TyDesc]) {
   todo!()
+}
+
+fn has_ty_var(ty: &Ty) -> bool {
+  match ty {
+    Ty::None => false,
+    Ty::BoundVar(_) | Ty::MetaVar(_) => unreachable!(),
+    Ty::FixedVar(_) => true,
+    Ty::Record(rows) => rows.values().any(has_ty_var),
+    Ty::Con(args, _) => args.iter().any(has_ty_var),
+    Ty::Fn(param, res) => has_ty_var(param) || has_ty_var(res),
+  }
 }

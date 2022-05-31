@@ -46,6 +46,7 @@ pub(crate) enum ErrorKind {
   WrongNumTyArgs(usize, usize),
   ExnCopyNotExnIdStatus,
   InvalidRebindName(hir::Name),
+  PolymorphicExn,
 }
 
 #[derive(Debug)]
@@ -123,6 +124,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ),
       ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
+      ErrorKind::PolymorphicExn => f.write_str("cannot have a polymorphic `exception`"),
     }
   }
 }
