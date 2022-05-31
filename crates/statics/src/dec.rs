@@ -4,7 +4,7 @@ use crate::types::{
   generalize, Cx, Env, FixedTyVars, IdStatus, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
-use crate::util::{apply, cannot_bind, get_env, ins_no_dupe};
+use crate::util::{apply, cannot_bind, get_env, get_ty_info, ins_no_dupe};
 use crate::{exp, pat, ty};
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
@@ -112,74 +112,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       env.ty_env.extend(ty_env);
     }
-    // sml_def(17). TODO handle side conditions
+    // sml_def(17)
     hir::Dec::Datatype(dat_binds) => {
-      let mut cx = cx.clone();
-      let mut ty_env = TyEnv::default();
-      let mut big_val_env = ValEnv::default();
-      // sml_def(28)
-      for dat_bind in dat_binds {
-        let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, dec.into());
-        let dat = st.syms.start_datatype(dat_bind.name.clone());
-        let out_ty = Ty::Con(
-          fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
-          dat.sym(),
-        );
-        let ty_scheme = {
-          let mut res = TyScheme::zero(out_ty.clone());
-          generalize(st.subst(), fixed.clone(), &mut res);
-          res
-        };
-        // allow recursive reference
-        cx.env.ty_env.insert(
-          dat_bind.name.clone(),
-          TyInfo {
-            ty_scheme: ty_scheme.clone(),
-            val_env: ValEnv::default(),
-          },
-        );
-        let mut val_env = ValEnv::default();
-        // sml_def(29)
-        for con_bind in dat_bind.cons.iter() {
-          let mut ty = out_ty.clone();
-          if let Some(of_ty) = con_bind.ty {
-            ty = Ty::fun(ty::get(st, &cx, ars, of_ty), ty);
-          };
-          let mut ty_scheme = TyScheme::zero(ty);
-          generalize(st.subst(), fixed.clone(), &mut ty_scheme);
-          let vi = ValInfo {
-            ty_scheme,
-            id_status: IdStatus::Con,
-          };
-          if cannot_bind(con_bind.name.as_str()) {
-            st.err(dec, ErrorKind::InvalidRebindName(con_bind.name.clone()));
-          } else if let Some(e) = ins_no_dupe(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
-            st.err(dec, e);
-          }
-        }
-        // NOTE: no checking for duplicates here
-        big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
-        let ty_info = TyInfo { ty_scheme, val_env };
-        st.syms.finish_datatype(dat, ty_info.clone());
-        if let Some(e) = ins_no_dupe(&mut ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
-          st.err(dec, e);
-        }
-        for ty_var in dat_bind.ty_vars.iter() {
-          cx.ty_vars.remove(ty_var);
-        }
-      }
+      let (ty_env, big_val_env) = get_dat_binds(st, cx.clone(), ars, dat_binds, dec.into());
       env.ty_env.extend(ty_env);
       env.val_env.extend(big_val_env);
     }
     // sml_def(18)
-    hir::Dec::DatatypeCopy(name, path) => match get_env(&cx.env, path.structures()) {
-      Ok(got_env) => match got_env.ty_env.get(path.last()) {
-        Some(ty_info) => {
-          env.ty_env.insert(name.clone(), ty_info.clone());
-        }
-        None => st.err(dec, ErrorKind::Undefined(Item::Ty, path.last().clone())),
-      },
-      Err(name) => st.err(dec, ErrorKind::Undefined(Item::Struct, name.clone())),
+    hir::Dec::DatatypeCopy(name, path) => match get_ty_info(&cx.env, path) {
+      Ok(ty_info) => {
+        env.ty_env.insert(name.clone(), ty_info.clone());
+      }
+      Err(e) => st.err(dec, e),
     },
     // sml_def(19)
     hir::Dec::Abstype(_, _) => st.err(dec, ErrorKind::Unsupported),
@@ -275,4 +219,68 @@ fn add_fixed_ty_vars(
     ret.insert(fv);
   }
   ret
+}
+
+/// TODO handle side conditions
+pub(crate) fn get_dat_binds(
+  st: &mut St,
+  mut cx: Cx,
+  ars: &hir::Arenas,
+  dat_binds: &[hir::DatBind],
+  idx: hir::Idx,
+) -> (TyEnv, ValEnv) {
+  let mut ty_env = TyEnv::default();
+  let mut big_val_env = ValEnv::default();
+  // sml_def(28)
+  for dat_bind in dat_binds {
+    let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, idx);
+    let dat = st.syms.start_datatype(dat_bind.name.clone());
+    let out_ty = Ty::Con(
+      fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
+      dat.sym(),
+    );
+    let ty_scheme = {
+      let mut res = TyScheme::zero(out_ty.clone());
+      generalize(st.subst(), fixed.clone(), &mut res);
+      res
+    };
+    // allow recursive reference
+    cx.env.ty_env.insert(
+      dat_bind.name.clone(),
+      TyInfo {
+        ty_scheme: ty_scheme.clone(),
+        val_env: ValEnv::default(),
+      },
+    );
+    let mut val_env = ValEnv::default();
+    // sml_def(29)
+    for con_bind in dat_bind.cons.iter() {
+      let mut ty = out_ty.clone();
+      if let Some(of_ty) = con_bind.ty {
+        ty = Ty::fun(ty::get(st, &cx, ars, of_ty), ty);
+      };
+      let mut ty_scheme = TyScheme::zero(ty);
+      generalize(st.subst(), fixed.clone(), &mut ty_scheme);
+      let vi = ValInfo {
+        ty_scheme,
+        id_status: IdStatus::Con,
+      };
+      if cannot_bind(con_bind.name.as_str()) {
+        st.err(idx, ErrorKind::InvalidRebindName(con_bind.name.clone()));
+      } else if let Some(e) = ins_no_dupe(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
+        st.err(idx, e);
+      }
+    }
+    // NOTE: no checking for duplicates here
+    big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
+    let ty_info = TyInfo { ty_scheme, val_env };
+    st.syms.finish_datatype(dat, ty_info.clone());
+    if let Some(e) = ins_no_dupe(&mut ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
+      st.err(idx, e);
+    }
+    for ty_var in dat_bind.ty_vars.iter() {
+      cx.ty_vars.remove(ty_var);
+    }
+  }
+  (ty_env, big_val_env)
 }

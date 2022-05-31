@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
-use crate::types::{Env, Subst, SubstEntry, Sym, Ty, TyScheme};
+use crate::types::{Env, Subst, SubstEntry, Sym, Ty, TyInfo, TyScheme};
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
@@ -125,4 +125,14 @@ pub(crate) fn ins_no_dupe<V>(
   map
     .insert(name.clone(), val)
     .map(|_| ErrorKind::Duplicate(item, name))
+}
+
+pub(crate) fn get_ty_info<'e>(lookup: &'e Env, path: &hir::Path) -> Result<&'e TyInfo, ErrorKind> {
+  match get_env(lookup, path.structures()) {
+    Ok(got_env) => match got_env.ty_env.get(path.last()) {
+      Some(ty_info) => Ok(ty_info),
+      None => Err(ErrorKind::Undefined(Item::Ty, path.last().clone())),
+    },
+    Err(name) => Err(ErrorKind::Undefined(Item::Struct, name.clone())),
+  }
 }

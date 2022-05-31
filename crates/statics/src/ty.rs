@@ -1,7 +1,7 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{Cx, Ty};
-use crate::util::{apply_bv, get_env, record};
+use crate::util::{apply_bv, get_ty_info, record};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty {
   let ty = match ty {
@@ -21,17 +21,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     hir::Ty::Record(rows) => record(st, rows, ty, |st, _, ty| get(st, cx, ars, ty)),
     // sml_def(46)
     hir::Ty::Con(args, path) => {
-      let env = match get_env(&cx.env, path.structures()) {
+      let ty_info = match get_ty_info(&cx.env, path) {
         Ok(x) => x,
-        Err(name) => {
-          st.err(ty, ErrorKind::Undefined(Item::Struct, name.clone()));
-          return Ty::None;
-        }
-      };
-      let ty_info = match env.ty_env.get(path.last()) {
-        Some(x) => x,
-        None => {
-          st.err(ty, ErrorKind::Undefined(Item::Ty, path.last().clone()));
+        Err(e) => {
+          st.err(ty, e);
           return Ty::None;
         }
       };
