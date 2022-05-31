@@ -12,6 +12,9 @@ priority is approximate. if unsure of priority, put in low.
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info
+- add more of the standard basis
+  - https://smlfamily.github.io/Basis/
+  - bootstrap?
 - make it performant
   - only lower the parts of the syntax tree that changed?
   - only re-check those parts?
@@ -28,6 +31,7 @@ priority is approximate. if unsure of priority, put in low.
   - handle equality types
   - note ignored tests
 - get better error messages
+  - show witnesses to non-exhaustive match
   - improve ranges of stuff
   - show fully qualified names in type errors
   - related: avoid clashes between ty vars
@@ -39,6 +43,7 @@ priority is approximate. if unsure of priority, put in low.
 - support files exporting/importing from each other
   - via CM? (guh)
   - via e.g. a `project.json` (or `.txt`? or `.toml`?) in the workspace root which would list the ordered files in this project
+  - just require files to `use` each other?
 
 ## low
 
