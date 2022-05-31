@@ -49,10 +49,7 @@ pub(crate) fn get() -> (Syms, Bs) {
     Sym::LIST,
     Sym::REF,
   ];
-  let aliases = [
-    ("unit", Ty::Record(BTreeMap::new())),
-    ("exn", Ty::zero(Sym::EXN)),
-  ];
+  let aliases = [("unit", unit()), ("exn", Ty::zero(Sym::EXN))];
   let ty_env: TyEnv = builtin
     .iter()
     .map(|s| {
@@ -68,27 +65,19 @@ pub(crate) fn get() -> (Syms, Bs) {
     }))
     .collect();
   let fns = {
-    let realint_to_realint = TyScheme::one(|a| (Ty::fun(a.clone(), a), ov(Overload::RealInt)));
-    let wordint_pair_to_wordint =
-      TyScheme::one(|a| (Ty::fun(dup(a.clone()), a), ov(Overload::WordInt)));
-    let num_pair_to_num = TyScheme::one(|a| (Ty::fun(dup(a.clone()), a), ov(Overload::Num)));
+    let realint_to_realint = overloaded(Overload::RealInt, |a| Ty::fun(a.clone(), a));
+    let wordint_pair_to_wordint = overloaded(Overload::WordInt, |a| Ty::fun(dup(a.clone()), a));
+    let num_pair_to_num = overloaded(Overload::Num, |a| Ty::fun(dup(a.clone()), a));
     let numtxt_pair_to_bool =
-      TyScheme::one(|a| (Ty::fun(dup(a), Ty::zero(Sym::BOOL)), ov(Overload::NumTxt)));
+      overloaded(Overload::NumTxt, |a| Ty::fun(dup(a), Ty::zero(Sym::BOOL)));
     let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::zero(Sym::REAL)), Ty::zero(Sym::REAL)));
     let assign = TyScheme::one(|a| {
-      (
-        Ty::fun(
-          pair(Ty::Con(vec![a.clone()], Sym::REF), a),
-          Ty::Record(BTreeMap::new()),
-        ),
-        None,
-      )
+      let t = Ty::fun(pair(Ty::Con(vec![a.clone()], Sym::REF), a), unit());
+      (t, None)
     });
     let eq = TyScheme::one(|a| {
-      (
-        Ty::fun(dup(a), Ty::zero(Sym::BOOL)),
-        Some(TyVarKind::Equality),
-      )
+      let t = Ty::fun(dup(a), Ty::zero(Sym::BOOL));
+      (t, Some(TyVarKind::Equality))
     });
     [
       ("abs", realint_to_realint.clone()),
@@ -177,8 +166,11 @@ where
     .collect()
 }
 
-fn ov(x: Overload) -> Option<TyVarKind> {
-  Some(TyVarKind::Overloaded(x))
+fn overloaded<F>(x: Overload, f: F) -> TyScheme
+where
+  F: FnOnce(Ty) -> Ty,
+{
+  TyScheme::one(|a| (f(a), Some(TyVarKind::Overloaded(x))))
 }
 
 fn dup(ty: Ty) -> Ty {
@@ -190,4 +182,8 @@ fn pair(t1: Ty, t2: Ty) -> Ty {
     (hir::Lab::Num(1), t1),
     (hir::Lab::Num(2), t2),
   ]))
+}
+
+fn unit() -> Ty {
+  Ty::Record(BTreeMap::new())
 }
