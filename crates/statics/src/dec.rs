@@ -4,7 +4,7 @@ use crate::types::{
   generalize, Cx, Env, FixedTyVars, IdStatus, Sym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
-use crate::util::{apply, cannot_bind, get_env};
+use crate::util::{apply, cannot_bind, get_env, ins_no_dupe};
 use crate::{exp, pat, ty};
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
@@ -56,8 +56,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         .collect();
       // merge the recursive and non-recursive ValEnvs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
-        if ve.insert(name.clone(), val_info.clone()).is_some() {
-          st.err(dec, ErrorKind::Duplicate(Item::Val, name.clone()));
+        if let Some(e) = ins_no_dupe(&mut ve, name.clone(), val_info.clone(), Item::Val) {
+          st.err(dec, e);
         }
       }
       // extend the cx with only the recursive ValEnv.
@@ -103,8 +103,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           ty_scheme,
           val_env: ValEnv::default(),
         };
-        if ty_env.insert(ty_bind.name.clone(), ty_info).is_some() {
-          st.err(dec, ErrorKind::Duplicate(Item::Ty, ty_bind.name.clone()))
+        if let Some(e) = ins_no_dupe(&mut ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
+          st.err(dec, e)
         }
         for ty_var in ty_bind.ty_vars.iter() {
           cx.ty_vars.remove(ty_var);
@@ -153,16 +153,16 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           };
           if cannot_bind(con_bind.name.as_str()) {
             st.err(dec, ErrorKind::InvalidRebindName(con_bind.name.clone()));
-          } else if val_env.insert(con_bind.name.clone(), vi).is_some() {
-            st.err(dec, ErrorKind::Duplicate(Item::Val, con_bind.name.clone()));
+          } else if let Some(e) = ins_no_dupe(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
+            st.err(dec, e);
           }
         }
         // NOTE: no checking for duplicates here
         big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
         let ty_info = TyInfo { ty_scheme, val_env };
         st.syms.finish_datatype(dat, ty_info.clone());
-        if ty_env.insert(dat_bind.name.clone(), ty_info).is_some() {
-          st.err(dec, ErrorKind::Duplicate(Item::Ty, dat_bind.name.clone()));
+        if let Some(e) = ins_no_dupe(&mut ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
+          st.err(dec, e);
         }
         for ty_var in dat_bind.ty_vars.iter() {
           cx.ty_vars.remove(ty_var);
@@ -202,8 +202,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             };
             if cannot_bind(name.as_str()) {
               st.err(dec, ErrorKind::InvalidRebindName(name.clone()));
-            } else if val_env.insert(name.clone(), vi).is_some() {
-              st.err(dec, ErrorKind::Duplicate(Item::Val, name.clone()));
+            } else if let Some(e) = ins_no_dupe(&mut val_env, name.clone(), vi, Item::Val) {
+              st.err(dec, e);
             }
           }
           // sml_def(31)
@@ -211,8 +211,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             Ok(got_env) => match got_env.val_env.get(path.last()) {
               Some(val_info) => match val_info.id_status {
                 IdStatus::Exn(_) => {
-                  if val_env.insert(name.clone(), val_info.clone()).is_some() {
-                    st.err(dec, ErrorKind::Duplicate(Item::Val, name.clone()));
+                  match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
+                    Some(e) => st.err(dec, e),
+                    None => {}
                   }
                 }
                 _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus),

@@ -1,6 +1,7 @@
-use crate::error::ErrorKind;
+use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{Env, Subst, SubstEntry, Sym, Ty, TyScheme};
+use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
 pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
@@ -112,4 +113,16 @@ pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
 
 pub(crate) fn cannot_bind(s: &str) -> bool {
   matches!(s, "true" | "false" | "nil" | "::" | "ref")
+}
+
+#[must_use]
+pub(crate) fn ins_no_dupe<V>(
+  map: &mut FxHashMap<hir::Name, V>,
+  name: hir::Name,
+  val: V,
+  item: Item,
+) -> Option<ErrorKind> {
+  map
+    .insert(name.clone(), val)
+    .map(|_| ErrorKind::Duplicate(item, name))
 }

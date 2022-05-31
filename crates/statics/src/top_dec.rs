@@ -4,7 +4,7 @@ use crate::dec;
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{Bs, Cx, Env, Sig, StrEnv, TyEnv};
-use crate::util::get_env;
+use crate::util::{get_env, ins_no_dupe};
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
   match &ars.top_dec[top_dec] {
@@ -74,11 +74,8 @@ fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_dec: 
       for str_bind in str_binds {
         let mut env = Env::default();
         get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
-        if str_env.insert(str_bind.name.clone(), env).is_some() {
-          st.err(
-            str_dec,
-            ErrorKind::Duplicate(Item::Struct, str_bind.name.clone()),
-          );
+        if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
+          st.err(str_dec, e);
         }
       }
     }
