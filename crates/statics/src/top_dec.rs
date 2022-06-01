@@ -119,10 +119,26 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
     // sml_def(62)
     hir::SigExp::Spec(spec) => get_spec(st, bs, ars, env, *spec),
     // sml_def(63)
-    hir::SigExp::Name(_) => st.err(
-      sig_exp,
-      ErrorKind::Unsupported("name signature expressions"),
-    ),
+    hir::SigExp::Name(name) => match bs.sig_env.get(name) {
+      Some(_) => {
+        // idea: do alpha conversion to satisfy the side condition.
+        // - get all syms in sig
+        // - look up their arity
+        // - make a type realization
+        //   { (old_sym => forall a0...an, (a0 , ..., an) new_sym)
+        //     for old_sym in syms(sig)
+        //     where n = arity(old_sym)
+        //     and new_sym = st.gen()
+        //   }
+        // - apply that to the sig env
+        // - return that env
+        st.err(
+          sig_exp,
+          ErrorKind::Unsupported("name signature expressions"),
+        )
+      }
+      None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
+    },
     // sml_def(64)
     hir::SigExp::Where(_, _, _, _) => st.err(
       sig_exp,
