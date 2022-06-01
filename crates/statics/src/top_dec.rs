@@ -6,6 +6,7 @@ use crate::types::{
 };
 use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 use crate::{dec, st::St, ty};
+use std::rc::Rc;
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
   match &ars.top_dec[top_dec] {
@@ -13,7 +14,7 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
     hir::TopDec::Str(str_dec) => {
       let mut env = Env::default();
       get_str_dec(st, bs, ars, &mut env, *str_dec);
-      bs.env.extend(env);
+      Rc::make_mut(&mut bs.env).extend(env);
     }
     // sml_def(66), sml_def(88)
     hir::TopDec::Sig(sig_binds) => {
@@ -54,7 +55,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       let mut let_env = Env::default();
       get_str_dec(st, bs, ars, &mut let_env, *str_dec);
       let mut bs = bs.clone();
-      bs.env.extend(let_env);
+      Rc::make_mut(&mut bs.env).extend(let_env);
       get_str_exp(st, &bs, ars, env, *str_exp)
     }
   }
@@ -86,7 +87,7 @@ fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_dec: 
       let mut local_env = Env::default();
       get_str_dec(st, bs, ars, &mut local_env, *local_dec);
       let mut bs = bs.clone();
-      bs.env.extend(local_env);
+      Rc::make_mut(&mut bs.env).extend(local_env);
       get_str_dec(st, &bs, ars, env, *in_dec);
     }
     // sml_def(59), sml_def(60)
@@ -95,7 +96,7 @@ fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_dec: 
       for &str_dec in str_decs {
         let mut one_env = Env::default();
         get_str_dec(st, &bs, ars, &mut one_env, str_dec);
-        bs.env.extend(one_env.clone());
+        Rc::make_mut(&mut bs.env).extend(one_env.clone());
         env.extend(one_env);
       }
     }

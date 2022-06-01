@@ -7,6 +7,7 @@ use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::fmt;
+use std::rc::Rc;
 use uniq::{Uniq, UniqGen};
 
 /// Definition: Type
@@ -530,7 +531,7 @@ impl Env {
 /// type name does not escape its scope, and for that we use `Sym::generated_after`.
 #[derive(Debug, Clone)]
 pub(crate) struct Cx {
-  pub(crate) env: Env,
+  pub(crate) env: Rc<Env>,
   /// the Definition has this as a set, but we have it as a mapping.
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
@@ -561,16 +562,13 @@ pub(crate) type FunEnv = FxHashMap<hir::Name, FunSig>;
 pub(crate) struct Bs {
   pub(crate) fun_env: FunEnv,
   pub(crate) sig_env: SigEnv,
-  pub(crate) env: Env,
+  pub(crate) env: Rc<Env>,
 }
 
 impl Bs {
   pub(crate) fn as_cx(&self) -> Cx {
     Cx {
-      // TODO there really should be a better way to do this ('this' being create a &Cx from a &Bs
-      // without cloning the inner Env) instead of cloning the whole env, but it might require
-      // annoying restructuring.
-      env: self.env.clone(),
+      env: Rc::clone(&self.env),
       ty_vars: FxHashMap::default(),
     }
   }

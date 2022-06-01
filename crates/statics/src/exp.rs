@@ -5,6 +5,7 @@ use crate::types::{Cx, Env, SymsMarker, Ty, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
+use std::rc::Rc;
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
   let exp = match exp {
@@ -39,7 +40,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let marker = st.syms.mark();
       dec::get(st, cx, ars, &mut let_env, *dec);
       let mut cx = cx.clone();
-      cx.env.extend(let_env);
+      Rc::make_mut(&mut cx.env).extend(let_env);
       let got = get(st, &cx, ars, *inner);
       if ty_name_escape(&marker, &got) {
         st.err(inner.unwrap_or(exp), ErrorKind::TyNameEscape);
@@ -117,7 +118,7 @@ fn get_matcher(
     let mut ve = ValEnv::default();
     let (pm_pat, pat_ty) = pat::get(st, cx, ars, &mut ve, pat);
     let mut cx = cx.clone();
-    cx.env.val_env.extend(ve);
+    Rc::make_mut(&mut cx.env).val_env.extend(ve);
     let exp_ty = get(st, &cx, ars, exp);
     let pi = pat.map_or(idx, Into::into);
     unify(st, param_ty.clone(), pat_ty, pi);
