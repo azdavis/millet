@@ -16,3 +16,4 @@ The language server is very experimental and might be slow, wrong, incomplete, o
 You can turn it off by setting `millet.useLanguageServer` to `false` in your vscode settings.
 
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
+[sml]: https://smlfamily.github.io
