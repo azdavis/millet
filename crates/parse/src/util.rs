@@ -120,7 +120,7 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
       p.bump();
       p.exit(np_dot, SK::NamePlusDot);
       np_dot = p.enter();
-      eat_name_plus(p);
+      eat_name_star(p);
     } else {
       p.exit(np_dot, SK::NamePlusDot);
       break;
@@ -156,15 +156,6 @@ pub(crate) fn name_plus(p: &mut Parser<'_>) -> bool {
 #[must_use]
 pub(crate) fn name_star(p: &mut Parser<'_>, n: usize) -> bool {
   p.at_n(n, SK::Name) || p.at_n(n, SK::Star)
-}
-
-fn eat_name_plus<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
-  if name_plus(p) {
-    Some(p.bump())
-  } else {
-    p.error(ErrorKind::ExpectedKind(SK::Name));
-    None
-  }
 }
 
 /// see [`name_star`].
