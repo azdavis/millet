@@ -1,13 +1,11 @@
 #![allow(dead_code)]
 
-use crate::dec;
 use crate::error::{ErrorKind, Item};
-use crate::st::St;
-use crate::ty;
 use crate::types::{
   generalize, Bs, Cx, Env, FixedTyVars, IdStatus, Sig, StrEnv, Ty, TyEnv, TyScheme, ValInfo,
 };
 use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
+use crate::{dec, st::St, ty};
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
   match &ars.top_dec[top_dec] {
