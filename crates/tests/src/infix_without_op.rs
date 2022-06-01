@@ -1,8 +1,8 @@
-use crate::check::fail;
+use crate::check::{check, fail};
 
 #[test]
 fn exp() {
-  fail(
+  check(
     r#"
 datatype d = D of int * string
 val D _ = D (3, "hi")
@@ -15,7 +15,7 @@ val _ D _ = D (3, "hi")
 
 #[test]
 fn pat() {
-  fail(
+  check(
     r#"
 datatype d = D of int * string
 val D _ = D (3, "hi")

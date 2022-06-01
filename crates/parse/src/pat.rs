@@ -1,7 +1,8 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::ty::ty_annotation;
 use crate::util::{
-  comma_sep, eat_name_star, lab, must, name_star, path, scon, should_break, ShouldBreak,
+  comma_sep, eat_name_star, lab, must, name_star, path, path_no_infix, scon, should_break,
+  ShouldBreak,
 };
 use syntax::SyntaxKind as SK;
 
@@ -55,8 +56,10 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     let en = p.enter();
     if p.at(SK::OpKw) {
       p.bump();
+      must(p, path, Expected::Path);
+    } else {
+      path_no_infix(p);
     }
-    must(p, path, Expected::Path);
     ConPatState::Entered(en)
   } else {
     ConPatState::Exited(at_pat(p)?)
@@ -131,7 +134,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     must(p, path, Expected::Path);
     p.exit(en, SK::ConPat)
   } else if name_star(p, 0) {
-    must(p, path, Expected::Path);
+    path_no_infix(p);
     p.exit(en, SK::ConPat)
   } else if p.at(SK::LCurly) {
     p.bump();

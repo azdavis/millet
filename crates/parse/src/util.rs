@@ -129,6 +129,20 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
   Some(p.exit(en, SK::Path))
 }
 
+/// requires we just got a true `name_plus(p)`. errors if this parses a path with no structures (aka
+/// just a name) and that name is infix.
+pub(crate) fn path_no_infix(p: &mut Parser<'_>) {
+  let cur = p.peek().unwrap();
+  if !p.at_n(1, SK::Dot) && p.contains_op(cur.text) {
+    p.error(ErrorKind::InfixWithoutOp);
+    let en = p.enter();
+    p.eat(SK::Name);
+    p.exit(en, SK::Path);
+  } else {
+    must(p, path, Expected::Path)
+  }
+}
+
 #[must_use]
 pub(crate) fn scon(p: &mut Parser<'_>) -> bool {
   p.at(SK::IntLit)

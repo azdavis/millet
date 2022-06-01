@@ -3,7 +3,7 @@ use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::pat::pat;
 use crate::ty::ty;
 use crate::util::{
-  comma_sep, lab, many_sep, must, name_plus, path, scon, should_break, ShouldBreak,
+  comma_sep, lab, many_sep, must, name_plus, path, path_no_infix, scon, should_break, ShouldBreak,
 };
 use syntax::SyntaxKind as SK;
 
@@ -120,7 +120,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     must(p, path, Expected::Path);
     p.exit(en, SK::PathExp)
   } else if name_plus(p) {
-    must(p, path, Expected::Path);
+    path_no_infix(p);
     p.exit(en, SK::PathExp)
   } else if p.at(SK::LCurly) {
     p.bump();
