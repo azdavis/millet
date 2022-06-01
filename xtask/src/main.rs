@@ -11,10 +11,11 @@ enum Cmd {
   Ci,
   CkSmlDef,
   Dist,
+  Tag,
 }
 
 impl Cmd {
-  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::CkSmlDef, Cmd::Dist];
+  const VALUES: [Cmd; 5] = [Cmd::Help, Cmd::Ci, Cmd::CkSmlDef, Cmd::Dist, Cmd::Tag];
 
   fn name_desc(&self) -> (&'static str, &'static str) {
     match self {
@@ -27,6 +28,10 @@ impl Cmd {
       Cmd::Dist => (
         "dist",
         "make artifacts for distribution (can use --release)",
+      ),
+      Cmd::Tag => (
+        "tag",
+        "update package files, then commit and tag a new release",
       ),
     }
   }
@@ -146,6 +151,57 @@ fn main() -> Result<()> {
       let release = args.contains("--release");
       finish_args(args)?;
       dist(&sh, release)?;
+    }
+    Cmd::Tag => {
+      let tag: String = args.free_from_str()?;
+      finish_args(args)?;
+      let version = match tag.strip_prefix('v') {
+        Some(x) => x,
+        None => bail!("tag must start with v"),
+      };
+      let version_parts: Vec<_> = version.split('.').collect();
+      let num_parts = version_parts.len();
+      if num_parts != 3 {
+        bail!("version must have 3 dot-separated parts (got {num_parts})")
+      }
+      for part in version_parts {
+        if let Err(e) = part.parse::<u16>() {
+          bail!("{part}: not a non-negative 16-bit integer: {e}")
+        }
+      }
+      let paths: Vec<PathBuf> = ["package.json", "package-lock.json"]
+        .into_iter()
+        .map(|p| ["extensions", "vscode", p].into_iter().collect())
+        .collect();
+      for path in paths.iter() {
+        let contents = std::fs::read_to_string(path)?;
+        let mut out = String::with_capacity(contents.len());
+        for (idx, line) in contents.lines().enumerate() {
+          if idx >= 15 {
+            out.push_str(line);
+          } else {
+            match line.split_once(": ") {
+              None => out.push_str(line),
+              Some((key, _)) => {
+                if key.trim() == "\"version\"" {
+                  out.push_str(key);
+                  out.push_str(": \"");
+                  out.push_str(version);
+                  out.push_str("\",");
+                } else {
+                  out.push_str(line);
+                }
+              }
+            }
+          }
+          out.push('\n');
+        }
+        std::fs::write(path, out)?;
+      }
+      cmd!(sh, "git add {paths...}").run()?;
+      let release_msg = format!("Tag {tag}");
+      cmd!(sh, "git commit -m {release_msg}").run()?;
+      cmd!(sh, "git tag {tag}").run()?;
     }
   }
   Ok(())
