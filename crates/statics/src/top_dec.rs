@@ -2,10 +2,12 @@
 
 use crate::error::{ErrorKind, Item};
 use crate::types::{
-  generalize, Bs, Cx, Env, FixedTyVars, IdStatus, Sig, StrEnv, Ty, TyEnv, TyScheme, ValInfo,
+  generalize, Bs, Env, FixedTyVars, IdStatus, Sig, StrEnv, Ty, TyEnv, TyInfo, TyScheme, ValEnv,
+  ValInfo,
 };
 use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 use crate::{dec, st::St, ty};
+use fast_hash::FxHashSet;
 use std::rc::Rc;
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
@@ -148,10 +150,10 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
         }
       }
     }
-    // sml_def(69)
-    hir::Spec::Ty(_) => st.err(spec, ErrorKind::Unsupported),
-    // sml_def(70)
-    hir::Spec::EqTy(_) => st.err(spec, ErrorKind::Unsupported),
+    // sml_def(69). TODO check does not admit equality
+    hir::Spec::Ty(ty_descs) => get_ty_descs(st, &mut env.ty_env, ty_descs, spec.into()),
+    // sml_def(70). TODO check does admit equality
+    hir::Spec::EqTy(ty_descs) => get_ty_descs(st, &mut env.ty_env, ty_descs, spec.into()),
     // sml_def(71)
     hir::Spec::Datatype(dat_descs) => {
       let (ty_env, big_val_env) = dec::get_dat_binds(st, bs.as_cx(), ars, dat_descs, spec.into());
@@ -221,9 +223,26 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
   }
 }
 
-// sml_def(80)
-fn get_ty_descs(_: &mut St, _: &Cx, _: &hir::Arenas, _: &mut TyEnv, _: &[hir::TyDesc]) {
-  todo!()
+// sml_def(80). TODO equality checks
+fn get_ty_descs(st: &mut St, ty_env: &mut TyEnv, ty_descs: &[hir::TyDesc], idx: hir::Idx) {
+  let mut ty_vars = FxHashSet::<&hir::TyVar>::default();
+  for ty_desc in ty_descs {
+    let started = st.syms.start(ty_desc.name.clone());
+    for ty_var in ty_desc.ty_vars.iter() {
+      if !ty_vars.insert(ty_var) {
+        let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
+        st.err(idx, e);
+      }
+    }
+    let ty_info = TyInfo {
+      ty_scheme: TyScheme::n_ary(ty_desc.ty_vars.len(), started.sym()),
+      val_env: ValEnv::default(),
+    };
+    st.syms.finish(started, ty_info.clone());
+    if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
+      st.err(idx, e);
+    }
+  }
 }
 
 fn has_ty_var(ty: &Ty) -> bool {

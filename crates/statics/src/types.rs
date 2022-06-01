@@ -221,6 +221,15 @@ impl TyScheme {
       ty,
     }
   }
+
+  pub(crate) fn n_ary(n: usize, sym: Sym) -> Self {
+    Self {
+      bound_vars: BoundTyVars {
+        inner: vec![None; n],
+      },
+      ty: Ty::Con((0..n).map(|i| Ty::BoundVar(BoundTyVar(i))).collect(), sym),
+    }
+  }
 }
 
 #[derive(Debug, Default, Clone)]
