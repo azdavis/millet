@@ -74,7 +74,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         match should_break_exp(ExpPrec::Andalso, min_prec) {
           ShouldBreak::Yes => break,
           ShouldBreak::No => {}
-          ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
+          ShouldBreak::Error => unreachable!(),
         }
         let en = p.precede(ex);
         p.bump();
@@ -84,7 +84,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         match should_break_exp(ExpPrec::Orelse, min_prec) {
           ShouldBreak::Yes => break,
           ShouldBreak::No => {}
-          ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
+          ShouldBreak::Error => unreachable!(),
         }
         let en = p.precede(ex);
         p.bump();
@@ -231,8 +231,12 @@ enum ExpPrec {
 fn should_break_exp(prec: ExpPrec, min_prec: ExpPrec) -> ShouldBreak {
   match (prec, min_prec) {
     (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(prec, Some(min_prec)),
-    (ExpPrec::Andalso, ExpPrec::Andalso) | (ExpPrec::Orelse, ExpPrec::Orelse) => ShouldBreak::Yes,
-    (ExpPrec::Infix(_) | ExpPrec::Andalso | ExpPrec::Orelse, _) => ShouldBreak::No,
+    (_, ExpPrec::Min) | (ExpPrec::Infix(_), _) | (ExpPrec::Andalso, ExpPrec::Orelse) => {
+      ShouldBreak::No
+    }
+    (_, ExpPrec::Infix(_))
+    | (ExpPrec::Andalso, ExpPrec::Andalso)
+    | (ExpPrec::Orelse, ExpPrec::Orelse | ExpPrec::Andalso) => ShouldBreak::Yes,
     (ExpPrec::Min, _) => unreachable!(),
   }
 }

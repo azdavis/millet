@@ -636,9 +636,9 @@ end
 
 #[test]
 fn prec() {
-  fail(
+  check(
     r#"
-val _ = fn x => x = 1 andalso x = 2
+val _ = 1 = 2 andalso 3 = 4
 "#,
   );
 }
