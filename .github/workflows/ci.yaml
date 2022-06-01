@@ -18,7 +18,7 @@ jobs:
           profile: minimal
           components: rustfmt, clippy
       - name: Run tests
-        run: cargo xtask test
+        run: cargo xtask ci
   dist:
     needs: test
     if: success() && github.ref == 'refs/heads/release'
