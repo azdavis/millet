@@ -2,8 +2,8 @@
 
 use crate::error::{ErrorKind, Item};
 use crate::types::{
-  generalize, Bs, Env, FixedTyVars, IdStatus, Sig, StrEnv, Ty, TyEnv, TyInfo, TyScheme, ValEnv,
-  ValInfo,
+  generalize, Bs, Env, FixedTyVars, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme,
+  ValEnv, ValInfo,
 };
 use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 use crate::{dec, st::St, ty};
@@ -121,8 +121,12 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
 }
 
 // sml_def(65)
-fn env_to_sig(_: &mut St, _: &Bs, _: Env) -> Sig {
-  todo!()
+fn env_to_sig(bs: &Bs, env: Env) -> Sig {
+  let mut ty_names = FxHashSet::<Sym>::default();
+  fn ignore(_: bool) {}
+  env_syms(&mut |x| ignore(ty_names.insert(x)), &env);
+  bs_syms(&mut |x| ignore(ty_names.remove(&x)), bs);
+  Sig { ty_names, env }
 }
 
 fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::SpecIdx) {
@@ -253,5 +257,63 @@ fn has_ty_var(ty: &Ty) -> bool {
     Ty::Record(rows) => rows.values().any(has_ty_var),
     Ty::Con(args, _) => args.iter().any(has_ty_var),
     Ty::Fn(param, res) => has_ty_var(param) || has_ty_var(res),
+  }
+}
+
+// uh... recursion schemes??
+
+fn bs_syms<F: FnMut(Sym)>(f: &mut F, bs: &Bs) {
+  for fun_sig in bs.fun_env.values() {
+    sig_syms(f, &fun_sig.param);
+    sig_syms(f, &fun_sig.res);
+  }
+  for sig in bs.sig_env.values() {
+    sig_syms(f, sig);
+  }
+  env_syms(f, &bs.env);
+}
+
+fn sig_syms<F: FnMut(Sym)>(f: &mut F, sig: &Sig) {
+  for &sym in sig.ty_names.iter() {
+    f(sym);
+  }
+  env_syms(f, &sig.env);
+}
+
+fn env_syms<F: FnMut(Sym)>(f: &mut F, env: &Env) {
+  for env in env.str_env.values() {
+    env_syms(f, env);
+  }
+  for ty_info in env.ty_env.values() {
+    ty_syms(f, &ty_info.ty_scheme.ty);
+    val_env_syms(f, &ty_info.val_env);
+  }
+  val_env_syms(f, &env.val_env);
+}
+
+fn val_env_syms<F: FnMut(Sym)>(f: &mut F, val_env: &ValEnv) {
+  for val_info in val_env.values() {
+    ty_syms(f, &val_info.ty_scheme.ty);
+  }
+}
+
+fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
+  match ty {
+    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
+    Ty::Record(rows) => {
+      for ty in rows.values() {
+        ty_syms(f, ty);
+      }
+    }
+    Ty::Con(args, sym) => {
+      f(*sym);
+      for ty in args {
+        ty_syms(f, ty);
+      }
+    }
+    Ty::Fn(param, res) => {
+      ty_syms(f, param);
+      ty_syms(f, res);
+    }
   }
 }
