@@ -185,7 +185,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
       }
     }
     ast::SpecOne::SharingSpec(_) => {
-      cx.err(range, ErrorKind::Unsupported);
+      cx.err(range, ErrorKind::Unsupported("`sharing` specifications"));
       return None;
     }
   };

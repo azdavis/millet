@@ -102,7 +102,7 @@ pub(crate) fn get(
     hir::Pat::Record { rows, allows_other } => {
       if *allows_other {
         // sml_def(38)
-        st.err(pat_, ErrorKind::Unsupported);
+        st.err(pat_, ErrorKind::Unsupported("`...` pattern rows"));
       }
       let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
       let mut pats = Vec::<Pat>::with_capacity(rows.len());

@@ -34,7 +34,7 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
     hir::TopDec::Functor(fun_binds) => {
       // sml_def(86)
       for _ in fun_binds {
-        st.err(top_dec, ErrorKind::Unsupported)
+        st.err(top_dec, ErrorKind::Unsupported("`functor`"))
       }
     }
   }
@@ -54,9 +54,9 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       Err(name) => st.err(str_exp, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
     // sml_def(52), sml_def(53)
-    hir::StrExp::Ascription(_, _, _) => st.err(str_exp, ErrorKind::Unsupported),
+    hir::StrExp::Ascription(_, _, _) => st.err(str_exp, ErrorKind::Unsupported("ascription")),
     // sml_def(54)
-    hir::StrExp::App(_, _) => st.err(str_exp, ErrorKind::Unsupported),
+    hir::StrExp::App(_, _) => st.err(str_exp, ErrorKind::Unsupported("`functor` application")),
     // sml_def(55)
     hir::StrExp::Let(str_dec, str_exp) => {
       let mut let_env = Env::default();
@@ -119,9 +119,15 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
     // sml_def(62)
     hir::SigExp::Spec(spec) => get_spec(st, bs, ars, env, *spec),
     // sml_def(63)
-    hir::SigExp::Name(_) => st.err(sig_exp, ErrorKind::Unsupported),
+    hir::SigExp::Name(_) => st.err(
+      sig_exp,
+      ErrorKind::Unsupported("name signature expressions"),
+    ),
     // sml_def(64)
-    hir::SigExp::Where(_, _, _, _) => st.err(sig_exp, ErrorKind::Unsupported),
+    hir::SigExp::Where(_, _, _, _) => st.err(
+      sig_exp,
+      ErrorKind::Unsupported("`where` signature expressions"),
+    ),
   }
 }
 
@@ -227,7 +233,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(75)
     hir::Spec::Include(sig_exp) => get_sig_exp(st, bs, ars, env, *sig_exp),
     // sml_def(78)
-    hir::Spec::Sharing(_, _) => st.err(spec, ErrorKind::Unsupported),
+    hir::Spec::Sharing(_, _) => st.err(spec, ErrorKind::Unsupported("`sharing` specifications")),
     // sml_def(76), sml_def(77)
     hir::Spec::Seq(specs) => {
       for &spec in specs {

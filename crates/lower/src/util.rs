@@ -104,7 +104,7 @@ pub struct Error {
 
 #[derive(Debug)]
 pub enum ErrorKind {
-  Unsupported,
+  Unsupported(&'static str),
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
   InvalidIntLit(std::num::ParseIntError),
@@ -116,7 +116,7 @@ pub enum ErrorKind {
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      ErrorKind::Unsupported => f.write_str("unsupported language construct"),
+      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
         write!(f, "mismatched names: expected {want}, found {got}")
       }

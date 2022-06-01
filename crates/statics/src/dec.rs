@@ -127,7 +127,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       Err(e) => st.err(dec, e),
     },
     // sml_def(19)
-    hir::Dec::Abstype(_, _) => st.err(dec, ErrorKind::Unsupported),
+    hir::Dec::Abstype(_, _) => st.err(dec, ErrorKind::Unsupported("`abstype` declarations")),
     // sml_def(20)
     hir::Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::default();
