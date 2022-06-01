@@ -2,8 +2,8 @@
 
 use crate::error::{ErrorKind, Item};
 use crate::types::{
-  generalize, Bs, Env, FixedTyVars, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo, TyScheme,
-  ValEnv, ValInfo,
+  generalize, Bs, Env, FixedTyVars, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo,
+  TyScheme, ValEnv, ValInfo,
 };
 use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 use crate::{dec, st::St, ty};
@@ -33,8 +33,23 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
     // sml_def(85), sml_def(89)
     hir::TopDec::Functor(fun_binds) => {
       // sml_def(86)
-      for _ in fun_binds {
-        st.err(top_dec, ErrorKind::Unsupported("`functor`"))
+      for fun_bind in fun_binds {
+        let fun_name = fun_bind.functor_name.clone();
+        let fun_sig = FunSig {
+          param: Sig {
+            ty_names: FxHashSet::default(),
+            env: Env::default(),
+          },
+          res: Sig {
+            ty_names: FxHashSet::default(),
+            env: Env::default(),
+          },
+        };
+        if let Some(e) = ins_no_dupe(&mut bs.fun_env, fun_name, fun_sig, Item::Functor) {
+          st.err(top_dec, e);
+        } else {
+          st.err(top_dec, ErrorKind::Unsupported("`functor`"))
+        }
       }
     }
   }
@@ -56,7 +71,13 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
     // sml_def(52), sml_def(53)
     hir::StrExp::Ascription(_, _, _) => st.err(str_exp, ErrorKind::Unsupported("ascription")),
     // sml_def(54)
-    hir::StrExp::App(_, _) => st.err(str_exp, ErrorKind::Unsupported("`functor` application")),
+    hir::StrExp::App(fun_name, _) => match bs.fun_env.get(fun_name) {
+      Some(_) => st.err(str_exp, ErrorKind::Unsupported("`functor` application")),
+      None => st.err(
+        str_exp,
+        ErrorKind::Undefined(Item::Functor, fun_name.clone()),
+      ),
+    },
     // sml_def(55)
     hir::StrExp::Let(str_dec, str_exp) => {
       let mut let_env = Env::default();
