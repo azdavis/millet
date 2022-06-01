@@ -411,12 +411,6 @@ pub struct Syms {
 }
 
 impl Syms {
-  pub(crate) fn insert(&mut self, name: hir::Name, ty_info: TyInfo) -> Sym {
-    self.store.push((name, ty_info));
-    // calculate len after, because we sub 1 in get, because of Sym::EXN.
-    Sym(self.store.len())
-  }
-
   /// Returns `None` iff passed `&Sym::EXN`.
   pub(crate) fn get(&self, sym: &Sym) -> Option<(&hir::Name, &TyInfo)> {
     if *sym == Sym::EXN {
@@ -442,16 +436,15 @@ impl Syms {
   }
 
   pub(crate) fn start_datatype(&mut self, name: hir::Name) -> Datatype {
-    let sym = self.insert(
-      name,
-      TyInfo {
-        ty_scheme: TyScheme::zero(Ty::None),
-        val_env: ValEnv::default(),
-      },
-    );
+    let ty_info = TyInfo {
+      ty_scheme: TyScheme::zero(Ty::None),
+      val_env: ValEnv::default(),
+    };
+    self.store.push((name, ty_info));
     Datatype {
       bomb: DropBomb::new("must be passed to Syms::finish_datatype"),
-      sym,
+      // calculate len after push, because we sub 1 in get, because of Sym::EXN.
+      sym: Sym(self.store.len()),
     }
   }
 
