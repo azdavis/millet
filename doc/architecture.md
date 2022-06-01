@@ -144,7 +144,7 @@ Documentation, like this!
 
 ### `extensions/vscode`
 
-The VSCode client extension, in TypeScript.
+The VS Code client extension, in TypeScript.
 
 [xtask]: https://github.com/matklad/cargo-xtask
 [rowan]: https://github.com/rust-analyzer/rowan

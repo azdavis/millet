@@ -15,9 +15,9 @@ This project is alpha-quality software.
 
 `git clone` the repo, `cd` inside, and run `cargo xtask ci`.
 
-If you're using VSCode, you can try out the VSCode extension:
+If you're using VS Code, you can try out the VS Code extension:
 
-1. Open the root directory of this repository in VSCode.
+1. Open the root directory of this repository in VS Code.
 2. Open the Run panel from the activity bar (the play button with bug).
 3. Select 'extension' in the drop down.
 4. Press the green play button.
