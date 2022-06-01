@@ -199,7 +199,7 @@ fn main() -> Result<()> {
         std::fs::write(path, out)?;
       }
       cmd!(sh, "git add {paths...}").run()?;
-      let release_msg = format!("Tag {tag}");
+      let release_msg = format!("Release {tag}");
       cmd!(sh, "git commit -m {release_msg}").run()?;
       cmd!(sh, "git tag {tag}").run()?;
     }
