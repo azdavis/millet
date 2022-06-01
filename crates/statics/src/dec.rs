@@ -210,12 +210,9 @@ fn add_fixed_ty_vars(
   let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
     let fv = st.gen_fixed_var(ty_var.clone());
-    // TODO shadowing? scoping?
     if cx.ty_vars.insert(ty_var.clone(), fv.clone()).is_some() {
-      st.err(
-        idx,
-        ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name()),
-      );
+      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
+      st.err(idx, e);
     }
     ret.insert(fv);
   }
