@@ -139,8 +139,9 @@ pub(crate) fn get() -> (Syms, Bs) {
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
-  let got = syms.insert(hir::Name::new(sym.special().unwrap()), ty_info);
-  assert_eq!(sym, got);
+  let dt = syms.start_datatype(hir::Name::new(sym.special().unwrap()));
+  assert_eq!(sym, dt.sym());
+  syms.finish_datatype(dt, ty_info);
 }
 
 fn basic_datatype(ty: Ty, ctors: &[&str]) -> TyInfo {
