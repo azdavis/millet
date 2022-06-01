@@ -116,7 +116,7 @@ fn ck_generalizes(cx: Cx<'_, '_>, mut want: TyScheme, mut got: TyScheme) -> Resu
   let want_free_tvs = want.free_ty_vars();
   for tv in got.ty_vars.iter() {
     if want_free_tvs.contains(tv) {
-      return Err(cx.loc.wrap(Error::Todo("bad free ty var")));
+      return Err(cx.loc.wrap(Error::Unsupported("bad free ty var")));
     }
   }
   cx.ty_rzn.get_ty(&mut want.ty);

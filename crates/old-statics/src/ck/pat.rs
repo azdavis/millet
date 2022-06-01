@@ -57,7 +57,7 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
     AstPat::Record(rows, rest_loc) => {
       // sml_def(38)
       if let Some(loc) = rest_loc {
-        return Err(loc.wrap(Error::Todo("rest patterns")));
+        return Err(loc.wrap(Error::Unsupported("rest patterns")));
       }
       let mut val_env = ValEnv::new();
       let mut ty_rows = BTreeMap::new();

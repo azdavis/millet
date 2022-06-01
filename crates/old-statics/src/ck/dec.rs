@@ -42,7 +42,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp>) -> Result<Ty> {
       }
       Ok(Ty::Record(ty_rows))
     }
-    Exp::Select(..) => Err(exp.loc.wrap(Error::Todo("record selectors"))),
+    Exp::Select(..) => Err(exp.loc.wrap(Error::Unsupported("record selectors"))),
     // sml_def(Appendix A) - tuples are sugar for records
     Exp::Tuple(exps) => {
       let mut ty_rows = BTreeMap::new();
@@ -161,7 +161,7 @@ fn ck_exp(cx: &Cx, st: &mut State, exp: &Located<Exp>) -> Result<Ty> {
       st.unify(exp.loc, then_ty.clone(), else_ty)?;
       Ok(then_ty)
     }
-    Exp::While(..) => Err(exp.loc.wrap(Error::Todo("`while`"))),
+    Exp::While(..) => Err(exp.loc.wrap(Error::Unsupported("`while`"))),
     // sml_def(Appendix A) - `case` is sugar for application to a `fn`
     Exp::Case(head, cases) => {
       let head_ty = ck_exp(cx, st, head)?;
@@ -250,7 +250,7 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec>) -> Result<Env> {
       for val_bind in val_binds {
         // sml_def(26)
         if val_bind.rec {
-          return Err(dec.loc.wrap(Error::Todo("recursive val binds")));
+          return Err(dec.loc.wrap(Error::Unsupported("recursive val binds")));
         }
         let (other, pat_ty, pat) = pat::ck(cx, st, &val_bind.pat)?;
         for &name in other.keys() {
@@ -351,7 +351,7 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, dec: &Located<Dec>) -> Result<Env> {
     // sml_def(18)
     Dec::DatatypeCopy(ty_con, long) => ck_dat_copy(cx, &st.tys, *ty_con, long),
     // sml_def(19)
-    Dec::Abstype(..) => Err(dec.loc.wrap(Error::Todo("`abstype`"))),
+    Dec::Abstype(..) => Err(dec.loc.wrap(Error::Unsupported("`abstype`"))),
     // sml_def(20)
     Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::new();

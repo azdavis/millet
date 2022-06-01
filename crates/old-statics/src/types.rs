@@ -43,7 +43,7 @@ pub enum Error {
   NotArrowTy(Ty),
   IdStatusMismatch(IdStatus, IdStatus),
   ValEnvMismatch(Vec<StrRef>, Vec<StrRef>),
-  Todo(&'static str),
+  Unsupported(&'static str),
 }
 
 impl Error {
@@ -117,7 +117,7 @@ impl Error {
           want, got
         )
       }
-      Self::Todo(msg) => format!("unsupported language construct: {}", msg),
+      Self::Unsupported(msg) => format!("unsupported language construct: {}", msg),
     }
   }
 }

@@ -165,7 +165,7 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp>) -> Result<E
       Some(sig) => Ok(sig.env.clone()),
     },
     // sml_def(64)
-    SigExp::Where(_, _, _, _) => Err(sig_exp.loc.wrap(Error::Todo("`where`"))),
+    SigExp::Where(_, _, _, _) => Err(sig_exp.loc.wrap(Error::Unsupported("`where`"))),
   }
 }
 
@@ -190,7 +190,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
       // sml_def(80)
       for ty_desc in ty_descs {
         if let Some(tv) = ty_desc.ty_vars.first() {
-          return Err(tv.loc.wrap(Error::Todo("type variables in spec")));
+          return Err(tv.loc.wrap(Error::Unsupported("type variables in spec")));
         }
         let sym = st.new_sym(ty_desc.ty_con);
         // TODO equality check
@@ -249,6 +249,6 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
       Ok(ret)
     }
     // sml_def(78)
-    Spec::Sharing(_, _) => Err(spec.loc.wrap(Error::Todo("`sharing`"))),
+    Spec::Sharing(_, _) => Err(spec.loc.wrap(Error::Unsupported("`sharing`"))),
   }
 }
