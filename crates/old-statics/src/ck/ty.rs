@@ -7,17 +7,17 @@ use old_loc::Located;
 use std::collections::BTreeMap;
 
 pub(crate) fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy>) -> Result<Ty> {
-  // SML Definition (48) is handled by the parser
+  // sml_def(48) is handled by the parser
   match &ty.val {
-    // SML Definition (44)
+    // sml_def(44)
     AstTy::TyVar(tv) => match cx.ty_vars.get(tv) {
       None => Err(ty.loc.wrap(Error::Undefined(Item::TyVar, tv.name))),
       Some(x) => Ok(Ty::Var(*x)),
     },
-    // SML Definition (45)
+    // sml_def(45)
     AstTy::Record(rows) => {
       let mut ty_rows = BTreeMap::new();
-      // SML Definition (49)
+      // sml_def(49)
       for row in rows {
         let ty = ck(cx, tys, &row.val)?;
         if ty_rows.insert(row.lab.val, ty).is_some() {
@@ -26,7 +26,7 @@ pub(crate) fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy>) -> Result<Ty> {
       }
       Ok(Ty::Record(ty_rows))
     }
-    // SML Definition Appendix A - tuples are sugar for records
+    // sml_def(Appendix A) - tuples are sugar for records
     AstTy::Tuple(ts) => {
       let mut ty_rows = BTreeMap::new();
       for (idx, ty) in ts.iter().enumerate() {
@@ -35,7 +35,7 @@ pub(crate) fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy>) -> Result<Ty> {
       }
       Ok(Ty::Record(ty_rows))
     }
-    // SML Definition (46)
+    // sml_def(46)
     AstTy::TyCon(args, name) => {
       let env = get_env(&cx.env, name)?;
       let sym = get_ty_sym(env, name.last)?;
@@ -50,7 +50,7 @@ pub(crate) fn ck(cx: &Cx, tys: &Tys, ty: &Located<AstTy>) -> Result<Ty> {
       }
       Ok(ty_fcn.apply_args(new_args))
     }
-    // SML Definition (47)
+    // sml_def(47)
     AstTy::Arrow(arg, res) => {
       let arg = ck(cx, tys, arg)?;
       let res = ck(cx, tys, res)?;

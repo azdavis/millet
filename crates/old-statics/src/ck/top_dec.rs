@@ -12,15 +12,15 @@ use old_loc::Located;
 
 pub(crate) fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec>) -> Result<()> {
   match &top_dec.val {
-    // SML Definition (87)
+    // sml_def(87)
     TopDec::StrDec(str_dec) => {
       let env = ck_str_dec(bs, st, str_dec)?;
       bs.env.extend(env);
     }
-    // SML Definition (88)
+    // sml_def(88)
     TopDec::SigDec(sig_binds) => {
       let mut sig_env = SigEnv::default();
-      // SML Definition (66), SML Definition (67)
+      // sml_def(66), sml_def(67)
       for sig_bind in sig_binds {
         let env = ck_sig_exp(bs, st, &sig_bind.exp)?;
         // allow shadowing.
@@ -28,10 +28,10 @@ pub(crate) fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec>) -> R
       }
       bs.sig_env.extend(sig_env);
     }
-    // SML Definition (85), SML Definition (89)
+    // sml_def(85), sml_def(89)
     TopDec::FunDec(fun_binds) => {
       let mut fun_env = FunEnv::default();
-      // SML Definition (86)
+      // sml_def(86)
       for fun_bind in fun_binds {
         let sig_env = ck_sig_exp(bs, st, &fun_bind.sig_exp)?;
         let mut bs = bs.clone();
@@ -52,7 +52,7 @@ pub(crate) fn ck(bs: &mut Basis, st: &mut State, top_dec: &Located<TopDec>) -> R
   Ok(())
 }
 
-/// SML Definition (65)
+/// sml_def(65)
 fn env_to_sig(env: Env) -> Sig {
   // TODO what about signature specs inside this sig?
   Sig {
@@ -63,9 +63,9 @@ fn env_to_sig(env: Env) -> Sig {
 
 fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp>) -> Result<Env> {
   match &str_exp.val {
-    // SML Definition (50)
+    // sml_def(50)
     StrExp::Struct(str_dec) => ck_str_dec(bs, st, str_dec),
-    // SML Definition (51)
+    // sml_def(51)
     StrExp::LongStrId(long) => match get_env(&bs.env, long)?.str_env.get(&long.last.val) {
       None => {
         let err = Error::Undefined(Item::Struct, long.last.val);
@@ -73,7 +73,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp>) -> Result<E
       }
       Some(env) => Ok(env.clone()),
     },
-    // SML Definition (52), SML Definition (53)
+    // sml_def(52), sml_def(53)
     StrExp::Ascription(lhs, rhs, opaque) => {
       let env = ck_str_exp(bs, st, lhs)?;
       let mut sig = env_to_sig(ck_sig_exp(bs, st, rhs)?);
@@ -90,7 +90,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp>) -> Result<E
         Ok(env)
       }
     }
-    // SML Definition (54)
+    // sml_def(54)
     StrExp::FunctorApp(fun_id, arg) => match bs.fun_env.get(&fun_id.val) {
       None => Err(fun_id.loc.wrap(Error::Undefined(Item::Functor, fun_id.val))),
       Some(fun_sig) => {
@@ -105,7 +105,7 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp>) -> Result<E
         Ok(ret)
       }
     },
-    // SML Definition (55)
+    // sml_def(55)
     StrExp::Let(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
       let mut bs = bs.clone();
@@ -117,12 +117,12 @@ fn ck_str_exp(bs: &Basis, st: &mut State, str_exp: &Located<StrExp>) -> Result<E
 
 fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec>) -> Result<Env> {
   match &str_dec.val {
-    // SML Definition (56)
+    // sml_def(56)
     StrDec::Dec(dec) => dec::ck(&bs.to_cx(), st, dec),
-    // SML Definition (57)
+    // sml_def(57)
     StrDec::Structure(str_binds) => {
       let mut str_env = StrEnv::new();
-      // SML Definition (61)
+      // sml_def(61)
       for str_bind in str_binds {
         let env = ck_str_exp(bs, st, &str_bind.exp)?;
         // allow shadowing.
@@ -130,14 +130,14 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec>) -> Result<E
       }
       Ok(str_env.into())
     }
-    // SML Definition (58)
+    // sml_def(58)
     StrDec::Local(fst, snd) => {
       let env = ck_str_dec(bs, st, fst)?;
       let mut bs = bs.clone();
       bs.env.extend(env);
       ck_str_dec(&bs, st, snd)
     }
-    // SML Definition (59), SML Definition (60)
+    // sml_def(59), sml_def(60)
     StrDec::Seq(str_decs) => {
       let mut bs = bs.clone();
       let mut ret = Env::default();
@@ -152,9 +152,9 @@ fn ck_str_dec(bs: &Basis, st: &mut State, str_dec: &Located<StrDec>) -> Result<E
 
 fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp>) -> Result<Env> {
   match &sig_exp.val {
-    // SML Definition (62)
+    // sml_def(62)
     SigExp::Sig(spec) => ck_spec(bs, st, spec),
-    // SML Definition (63)
+    // sml_def(63)
     SigExp::SigId(sig_id) => match bs.sig_env.get(&sig_id.val) {
       None => Err(sig_id.loc.wrap(Error::Undefined(Item::Sig, sig_id.val))),
       // TODO I don't understand the check to see if the type names of the sig are disjoint from the
@@ -164,18 +164,18 @@ fn ck_sig_exp(bs: &Basis, st: &mut State, sig_exp: &Located<SigExp>) -> Result<E
       // necessary by `Sym`, which is meant to be globally unique?
       Some(sig) => Ok(sig.env.clone()),
     },
-    // SML Definition (64)
+    // sml_def(64)
     SigExp::Where(_, _, _, _) => Err(sig_exp.loc.wrap(Error::Todo("`where`"))),
   }
 }
 
 fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
   match &spec.val {
-    // SML Definition (68)
+    // sml_def(68)
     Spec::Val(val_descs) => {
       let cx = bs.to_cx();
       let mut val_env = ValEnv::new();
-      // SML Definition (79)
+      // sml_def(79)
       for val_desc in val_descs {
         let ty = ty::ck(&cx, &st.tys, &val_desc.ty)?;
         // TODO generalize? closure?
@@ -184,10 +184,10 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
       }
       Ok(val_env.into())
     }
-    // SML Definition (69), SML Definition (70)
+    // sml_def(69), sml_def(70)
     Spec::Type(ty_descs, equality) => {
       let mut ty_env = TyEnv::default();
-      // SML Definition (80)
+      // sml_def(80)
       for ty_desc in ty_descs {
         if let Some(tv) = ty_desc.ty_vars.first() {
           return Err(tv.loc.wrap(Error::Todo("type variables in spec")));
@@ -206,15 +206,15 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
       }
       Ok(ty_env.into())
     }
-    // SML Definition (71)
+    // sml_def(71)
     Spec::Datatype(dat_binds) => dec::ck_dat_binds(bs.to_cx(), st, dat_binds),
-    // SML Definition (72)
+    // sml_def(72)
     Spec::DatatypeCopy(ty_con, long) => dec::ck_dat_copy(&bs.to_cx(), &st.tys, *ty_con, long),
-    // SML Definition (73)
+    // sml_def(73)
     Spec::Exception(ex_descs) => {
       let cx = bs.to_cx();
       let mut val_env = ValEnv::new();
-      // SML Definition (83)
+      // sml_def(83)
       for ex_desc in ex_descs {
         let val_info = match &ex_desc.ty {
           None => ValInfo::exn(),
@@ -224,10 +224,10 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
       }
       Ok(val_env.into())
     }
-    // SML Definition (74)
+    // sml_def(74)
     Spec::Structure(str_descs) => {
       let mut str_env = StrEnv::new();
-      // SML Definition (84)
+      // sml_def(84)
       for str_desc in str_descs {
         let env = ck_sig_exp(bs, st, &str_desc.exp)?;
         // allow shadowing.
@@ -235,9 +235,9 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
       }
       Ok(str_env.into())
     }
-    // SML Definition (75)
+    // sml_def(75)
     Spec::Include(sig_exp) => ck_sig_exp(bs, st, sig_exp),
-    // SML Definition (76), SML Definition (77)
+    // sml_def(76), sml_def(77)
     Spec::Seq(specs) => {
       let mut bs = bs.clone();
       let mut ret = Env::default();
@@ -248,7 +248,7 @@ fn ck_spec(bs: &Basis, st: &mut State, spec: &Located<Spec>) -> Result<Env> {
       }
       Ok(ret)
     }
-    // SML Definition (78)
+    // sml_def(78)
     Spec::Sharing(_, _) => Err(spec.loc.wrap(Error::Todo("`sharing`"))),
   }
 }

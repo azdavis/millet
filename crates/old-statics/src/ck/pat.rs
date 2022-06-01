@@ -11,8 +11,8 @@ use old_loc::{Loc, Located};
 use std::collections::BTreeMap;
 
 pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValEnv, Ty, Pat)> {
-  // Wildcard is by SML Definition (32), special constants are by SML Definition (33). Additionally,
-  // SML Definition (37) is handled by the parser, and SML Definition (40) is handed because atomic
+  // Wildcard is by sml_def(32), special constants are by sml_def(33). Additionally,
+  // sml_def(37) is handled by the parser, and sml_def(40) is handed because atomic
   // and non-atomic Pats are both in the same enum.
   match &pat.val {
     AstPat::Wildcard => Ok((ValEnv::new(), Ty::Var(st.new_ty_var(false)), Pat::Anything)),
@@ -34,13 +34,13 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
           }
         });
       match ty_scheme {
-        // SML Definition (34)
+        // sml_def(34)
         None => {
           let a = Ty::Var(st.new_ty_var(false));
           let val_info = ValInfo::val(TyScheme::mono(a.clone()));
           Ok((BTreeMap::from([(vid.last.val, val_info)]), a, Pat::Anything))
         }
-        // SML Definition (35)
+        // sml_def(35)
         Some(ty_scheme) => {
           let ty = instantiate(st, ty_scheme);
           let sym = match ty {
@@ -53,16 +53,16 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
         }
       }
     }
-    // SML Definition (36)
+    // sml_def(36)
     AstPat::Record(rows, rest_loc) => {
-      // SML Definition (38)
+      // sml_def(38)
       if let Some(loc) = rest_loc {
         return Err(loc.wrap(Error::Todo("rest patterns")));
       }
       let mut val_env = ValEnv::new();
       let mut ty_rows = BTreeMap::new();
       let mut new_pats = BTreeMap::new();
-      // SML Definition (39)
+      // sml_def(39)
       for row in rows {
         let (other_ve, ty, pat) = ck(cx, st, &row.val)?;
         if new_pats.insert(row.lab.val, pat).is_some() {
@@ -75,7 +75,7 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
       let pat = Pat::record(new_pats);
       Ok((val_env, Ty::Record(ty_rows), pat))
     }
-    // SML Definition Appendix A - tuple patterns are sugar for records
+    // sml_def(Appendix A) - tuple patterns are sugar for records
     AstPat::Tuple(pats) => {
       let mut val_env = ValEnv::new();
       let mut ty_rows = BTreeMap::new();
@@ -89,7 +89,7 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
       let pat = Pat::record(new_pats);
       Ok((val_env, Ty::Record(ty_rows), pat))
     }
-    // SML Definition Appendix A - list patterns are sugar for constructors
+    // sml_def(Appendix A) - list patterns are sugar for constructors
     AstPat::List(pats) => {
       let elem = Ty::Var(st.new_ty_var(false));
       let mut val_env = ValEnv::new();
@@ -111,14 +111,14 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
       );
       Ok((val_env, Ty::list(elem), pat))
     }
-    // SML Definition (41)
+    // sml_def(41)
     AstPat::Ctor(long, arg) => {
       let (val_env, arg_ty, arg_pat) = ck(cx, st, arg)?;
       let (ty, pat) = ctor(cx, st, pat.loc, long, arg_ty, arg_pat)?;
       Ok((val_env, ty, pat))
     }
-    // SML Definition (41). Infix ctors are the same as `op`ing the ctor and applying it to the
-    // tuple (lhs, rhs).
+    // sml_def(41). Infix ctors are the same as `op`ing the ctor and applying it to the tuple (lhs,
+    // rhs).
     AstPat::InfixCtor(lhs, vid, rhs) => {
       let (mut val_env, lhs_ty, lhs_pat) = ck(cx, st, lhs)?;
       let (other_ve, rhs_ty, rhs_pat) = ck(cx, st, rhs)?;
@@ -132,14 +132,14 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
       let (ty, pat) = ctor(cx, st, pat.loc, &long, arg_ty, arg_pat)?;
       Ok((val_env, ty, pat))
     }
-    // SML Definition (42)
+    // sml_def(42)
     AstPat::Typed(inner_pat, ty) => {
       let (val_env, pat_ty, inner_pat) = ck(cx, st, inner_pat)?;
       let ty = ty::ck(cx, &st.tys, ty)?;
       st.unify(pat.loc, ty, pat_ty.clone())?;
       Ok((val_env, pat_ty, inner_pat))
     }
-    // SML Definition (43)
+    // sml_def(43)
     AstPat::As(vid, ty, inner_pat) => {
       if cx
         .env
@@ -161,7 +161,7 @@ pub(crate) fn ck(cx: &Cx, st: &mut State, pat: &Located<AstPat>) -> Result<(ValE
   }
 }
 
-/// SML Definition (41)
+/// sml_def(41)
 fn ctor(
   cx: &Cx,
   st: &mut State,
