@@ -21,8 +21,13 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
     // sml_def(66), sml_def(88)
     hir::TopDec::Sig(sig_binds) => {
       // sml_def(67)
-      for _ in sig_binds {
-        st.err(top_dec, ErrorKind::Unsupported)
+      for sig_bind in sig_binds {
+        let mut env = Env::default();
+        get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
+        let sig = env_to_sig(bs, env);
+        if let Some(e) = ins_no_dupe(&mut bs.sig_env, sig_bind.name.clone(), sig, Item::Sig) {
+          st.err(top_dec, e);
+        }
       }
     }
     // sml_def(85), sml_def(89)
@@ -210,8 +215,13 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(74)
     hir::Spec::Str(str_descs) => {
       // sml_def(84)
-      for _ in str_descs {
-        st.err(spec, ErrorKind::Unsupported)
+      for str_desc in str_descs {
+        let mut one_env = Env::default();
+        get_sig_exp(st, bs, ars, &mut one_env, str_desc.sig_exp);
+        let name = str_desc.name.clone();
+        if let Some(e) = ins_no_dupe(&mut env.str_env, name, one_env, Item::Struct) {
+          st.err(spec, e);
+        }
       }
     }
     // sml_def(75)
