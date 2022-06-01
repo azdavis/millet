@@ -235,10 +235,10 @@ pub(crate) fn get_dat_binds(
   // sml_def(28), sml_def(81)
   for dat_bind in dat_binds {
     let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, idx);
-    let dat = st.syms.start_datatype(dat_bind.name.clone());
+    let started = st.syms.start(dat_bind.name.clone());
     let out_ty = Ty::Con(
       fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
-      dat.sym(),
+      started.sym(),
     );
     let ty_scheme = {
       let mut res = TyScheme::zero(out_ty.clone());
@@ -275,7 +275,7 @@ pub(crate) fn get_dat_binds(
     // NOTE: no checking for duplicates here
     big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
     let ty_info = TyInfo { ty_scheme, val_env };
-    st.syms.finish_datatype(dat, ty_info.clone());
+    st.syms.finish(started, ty_info.clone());
     if let Some(e) = ins_no_dupe(&mut ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);
     }

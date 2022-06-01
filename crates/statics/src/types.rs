@@ -411,22 +411,22 @@ pub struct Syms {
 }
 
 impl Syms {
-  pub(crate) fn start_datatype(&mut self, name: hir::Name) -> Datatype {
+  pub(crate) fn start(&mut self, name: hir::Name) -> StartedSym {
     let ty_info = TyInfo {
       ty_scheme: TyScheme::zero(Ty::None),
       val_env: ValEnv::default(),
     };
     self.store.push((name, ty_info));
-    Datatype {
-      bomb: DropBomb::new("must be passed to Syms::finish_datatype"),
+    StartedSym {
+      bomb: DropBomb::new("must be passed to Syms::finish"),
       // calculate len after push, because we sub 1 in get, because of Sym::EXN.
       sym: Sym(self.store.len()),
     }
   }
 
-  pub(crate) fn finish_datatype(&mut self, mut datatype: Datatype, ty_info: TyInfo) {
-    datatype.bomb.defuse();
-    self.store[datatype.sym.idx()].1 = ty_info;
+  pub(crate) fn finish(&mut self, mut started: StartedSym, ty_info: TyInfo) {
+    started.bomb.defuse();
+    self.store[started.sym.idx()].1 = ty_info;
   }
 
   /// Returns `None` iff passed `&Sym::EXN`.
@@ -460,13 +460,13 @@ pub(crate) struct SymsMarker(usize);
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Exn(usize);
 
-/// A helper to construct information about `datatype`s.
-pub(crate) struct Datatype {
+/// A helper to construct information about [`Syms`]s.
+pub(crate) struct StartedSym {
   bomb: DropBomb,
   sym: Sym,
 }
 
-impl Datatype {
+impl StartedSym {
   pub(crate) fn sym(&self) -> Sym {
     self.sym
   }
