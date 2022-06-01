@@ -237,16 +237,6 @@ val _ = inc "nope"
 }
 
 #[test]
-fn infix_without_op() {
-  fail(
-    r#"
-val _ = + (1, 2)
-(**     ^ infix name used as non-infix without `op` *)
-"#,
-  );
-}
-
-#[test]
 fn map() {
   check(
     r#"

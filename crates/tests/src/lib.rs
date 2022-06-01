@@ -12,6 +12,7 @@ mod dupe;
 mod exn;
 mod functor;
 mod incomplete;
+mod infix_without_op;
 mod invalid_constant;
 mod local;
 mod matching;
