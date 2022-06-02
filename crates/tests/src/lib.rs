@@ -10,6 +10,7 @@ mod check;
 mod datatype_copy;
 mod dupe;
 mod exn;
+mod fixity;
 mod functor;
 mod incomplete;
 mod infix_without_op;

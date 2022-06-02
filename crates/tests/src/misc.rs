@@ -259,16 +259,6 @@ fun list_map f xs =
 }
 
 #[test]
-fn negative_fixity() {
-  check(
-    r#"
-infix ~3 bad
-(**   ^^ fixity is negative *)
-"#,
-  );
-}
-
-#[test]
 fn negative_word_lit() {
   check(
     r#"
