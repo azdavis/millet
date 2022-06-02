@@ -34,21 +34,31 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
     hir::TopDec::Functor(fun_binds) => {
       // sml_def(86)
       for fun_bind in fun_binds {
+        let mut param_env = Env::default();
+        get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
+        let param_sig = env_to_sig(bs, param_env);
+        let mut bs_clone = bs.clone();
+        Rc::make_mut(&mut bs_clone.env)
+          .str_env
+          .insert(fun_bind.param_name.clone(), param_sig.env.clone());
+        let mut body_env = Env::default();
+        get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
+        let mut body_ty_names = TyNameSet::default();
+        env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
+        bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
+        for sym in param_sig.ty_names.iter() {
+          body_ty_names.remove(sym);
+        }
         let fun_name = fun_bind.functor_name.clone();
         let fun_sig = FunSig {
-          param: Sig {
-            ty_names: FxHashSet::default(),
-            env: Env::default(),
-          },
+          param: param_sig,
           res: Sig {
-            ty_names: FxHashSet::default(),
-            env: Env::default(),
+            ty_names: body_ty_names,
+            env: body_env,
           },
         };
         if let Some(e) = ins_no_dupe(&mut bs.fun_env, fun_name, fun_sig, Item::Functor) {
           st.err(top_dec, e);
-        } else {
-          st.err(top_dec, ErrorKind::Unsupported("`functor`"))
         }
       }
     }
