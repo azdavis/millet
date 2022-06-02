@@ -3,7 +3,7 @@
 use crate::error::{ErrorKind, Item};
 use crate::types::{
   generalize, Bs, Env, FixedTyVars, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo,
-  TyScheme, ValEnv, ValInfo,
+  TyNameSet, TyScheme, ValEnv, ValInfo,
 };
 use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 use crate::{dec, st::St, ty};
@@ -170,8 +170,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
 
 // sml_def(65)
 fn env_to_sig(bs: &Bs, env: Env) -> Sig {
-  let mut ty_names = FxHashSet::<Sym>::default();
-  fn ignore(_: bool) {}
+  let mut ty_names = TyNameSet::default();
   env_syms(&mut |x| ignore(ty_names.insert(x)), &env);
   bs_syms(&mut |x| ignore(ty_names.remove(&x)), bs);
   Sig { ty_names, env }
@@ -370,3 +369,5 @@ fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
     }
   }
 }
+
+fn ignore(_: bool) {}

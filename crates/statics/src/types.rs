@@ -538,12 +538,15 @@ pub(crate) struct Cx {
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
 
+/// Definition: TyNameSet
+pub(crate) type TyNameSet = FxHashSet<Sym>;
+
 /// Definition: Sig
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub(crate) struct Sig {
   /// TODO not sure
-  pub(crate) ty_names: FxHashSet<Sym>,
+  pub(crate) ty_names: TyNameSet,
   pub(crate) env: Env,
 }
 
