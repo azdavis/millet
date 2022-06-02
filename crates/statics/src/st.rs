@@ -1,8 +1,6 @@
 use crate::error::{Error, ErrorKind};
 use crate::standard_basis;
-use crate::types::{
-  BoundTyVars, Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, SubstEntry, Syms, Ty,
-};
+use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms};
 use drop_bomb::DropBomb;
 
 /// The state.
@@ -48,19 +46,6 @@ impl St {
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
     self.meta_gen.gen()
-  }
-
-  pub(crate) fn gen_from<'a>(
-    &'a mut self,
-    bound_vars: &'a BoundTyVars,
-  ) -> impl Iterator<Item = Ty> + 'a {
-    bound_vars.kinds().map(|&x| {
-      let mv = self.meta_gen.gen();
-      if let Some(k) = x {
-        assert!(self.subst.insert(mv.clone(), SubstEntry::Kind(k)).is_none())
-      }
-      Ty::MetaVar(mv)
-    })
   }
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: hir::TyVar) -> FixedTyVar {
