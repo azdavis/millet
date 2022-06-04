@@ -23,12 +23,28 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDecIdx {
         .functor_binds()
         .filter_map(|fun_bind| {
           let functor_name = get_name(fun_bind.functor_name())?;
-          let param_name = get_name(fun_bind.param())?;
           let body = with_ascription_tail(cx, fun_bind.body(), fun_bind.ascription_tail());
+          let (param_name, param_sig, body) = match fun_bind.functor_arg()? {
+            ast::FunctorArg::FunctorArgNameSigExp(arg) => {
+              (get_name(arg.name())?, get_sig_exp(cx, arg.sig_exp()), body)
+            }
+            ast::FunctorArg::Spec(arg) => {
+              let param_name = cx.fresh();
+              let param_sig = hir::SigExp::Spec(get_spec(cx, Some(arg)));
+              let param_sig = cx.sig_exp_in_top_dec(param_sig, ptr.clone());
+              let dec = cx.dec_in_top_dec(
+                hir::Dec::Open(vec![hir::Path::one(param_name.clone())]),
+                ptr.clone(),
+              );
+              let str_dec = cx.str_dec_in_top_dec(hir::StrDec::Dec(dec), ptr.clone());
+              let body = cx.str_exp_in_top_dec(hir::StrExp::Let(str_dec, body), ptr.clone());
+              (param_name, param_sig, body)
+            }
+          };
           Some(hir::FunctorBind {
             functor_name,
             param_name,
-            param_sig: get_sig_exp(cx, fun_bind.param_sig()),
+            param_sig,
             body,
           })
         })

@@ -12,14 +12,18 @@ pub struct Ptrs {
   top_dec: BiMap<ast::TopDec, hir::TopDec>,
   str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,
   str_dec: BiMap<ast::StrDec, hir::StrDec>,
+  str_dec_in_top_dec: BiMap<ast::TopDec, hir::StrDec>,
   str_exp: BiMap<ast::StrExp, hir::StrExp>,
+  str_exp_in_top_dec: BiMap<ast::TopDec, hir::StrExp>,
   sig_exp: BiMap<ast::SigExp, hir::SigExp>,
+  sig_exp_in_top_dec: BiMap<ast::TopDec, hir::SigExp>,
   spec_one: BiMap<ast::SpecOne, hir::Spec>,
   spec: BiMap<ast::Spec, hir::Spec>,
   exp: BiMap<ast::Exp, hir::Exp>,
   dec_one: BiMap<ast::DecOne, hir::Dec>,
   dec_in_exp: BiMap<ast::Exp, hir::Dec>,
   dec: BiMap<ast::Dec, hir::Dec>,
+  dec_in_top_dec: BiMap<ast::TopDec, hir::Dec>,
   pat: BiMap<ast::Pat, hir::Pat>,
   pat_in_exp: BiMap<ast::Exp, hir::Pat>,
   ty: BiMap<ast::Ty, hir::Ty>,
@@ -42,10 +46,18 @@ impl Ptrs {
       hir::Idx::Exp(idx) => try_get_hir!(idx, self.exp),
       hir::Idx::Pat(idx) => try_get_hir!(idx, self.pat, self.pat_in_exp),
       hir::Idx::Ty(idx) => try_get_hir!(idx, self.ty),
-      hir::Idx::Dec(idx) => try_get_hir!(idx, self.dec, self.dec_one, self.dec_in_exp),
-      hir::Idx::StrExp(idx) => try_get_hir!(idx, self.str_exp),
-      hir::Idx::StrDec(idx) => try_get_hir!(idx, self.str_dec, self.str_dec_one),
-      hir::Idx::SigExp(idx) => try_get_hir!(idx, self.sig_exp),
+      hir::Idx::Dec(idx) => try_get_hir!(
+        idx,
+        self.dec,
+        self.dec_one,
+        self.dec_in_exp,
+        self.dec_in_top_dec
+      ),
+      hir::Idx::StrExp(idx) => try_get_hir!(idx, self.str_exp, self.str_exp_in_top_dec),
+      hir::Idx::StrDec(idx) => {
+        try_get_hir!(idx, self.str_dec, self.str_dec_one, self.str_dec_in_top_dec)
+      }
+      hir::Idx::SigExp(idx) => try_get_hir!(idx, self.sig_exp, self.sig_exp_in_top_dec),
       hir::Idx::Spec(idx) => try_get_hir!(idx, self.spec, self.spec_one),
       hir::Idx::TopDec(idx) => try_get_hir!(idx, self.top_dec),
     }
@@ -202,15 +214,45 @@ impl Cx {
     Some(idx)
   }
 
+  pub(crate) fn str_dec_in_top_dec(
+    &mut self,
+    val: hir::StrDec,
+    ptr: AstPtr<ast::TopDec>,
+  ) -> hir::StrDecIdx {
+    let idx = self.arenas.str_dec.alloc(val);
+    self.ptrs.str_dec_in_top_dec.insert(idx, ptr);
+    Some(idx)
+  }
+
   pub(crate) fn str_exp(&mut self, val: hir::StrExp, ptr: AstPtr<ast::StrExp>) -> hir::StrExpIdx {
     let idx = self.arenas.str_exp.alloc(val);
     self.ptrs.str_exp.insert(idx, ptr);
     Some(idx)
   }
 
+  pub(crate) fn str_exp_in_top_dec(
+    &mut self,
+    val: hir::StrExp,
+    ptr: AstPtr<ast::TopDec>,
+  ) -> hir::StrExpIdx {
+    let idx = self.arenas.str_exp.alloc(val);
+    self.ptrs.str_exp_in_top_dec.insert(idx, ptr);
+    Some(idx)
+  }
+
   pub(crate) fn sig_exp(&mut self, val: hir::SigExp, ptr: AstPtr<ast::SigExp>) -> hir::SigExpIdx {
     let idx = self.arenas.sig_exp.alloc(val);
     self.ptrs.sig_exp.insert(idx, ptr);
+    Some(idx)
+  }
+
+  pub(crate) fn sig_exp_in_top_dec(
+    &mut self,
+    val: hir::SigExp,
+    ptr: AstPtr<ast::TopDec>,
+  ) -> hir::SigExpIdx {
+    let idx = self.arenas.sig_exp.alloc(val);
+    self.ptrs.sig_exp_in_top_dec.insert(idx, ptr);
     Some(idx)
   }
 
@@ -245,6 +287,12 @@ impl Cx {
   pub(crate) fn dec_in_exp(&mut self, val: hir::Dec, ptr: AstPtr<ast::Exp>) -> hir::DecIdx {
     let idx = self.arenas.dec.alloc(val);
     self.ptrs.dec_in_exp.insert(idx, ptr);
+    Some(idx)
+  }
+
+  pub(crate) fn dec_in_top_dec(&mut self, val: hir::Dec, ptr: AstPtr<ast::TopDec>) -> hir::DecIdx {
+    let idx = self.arenas.dec.alloc(val);
+    self.ptrs.dec_in_top_dec.insert(idx, ptr);
     Some(idx)
   }
 

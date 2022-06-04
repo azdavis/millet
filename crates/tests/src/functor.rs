@@ -260,3 +260,18 @@ structure D = F (val a = 1 val b = 2)
 "#,
   );
 }
+
+#[test]
+fn t_13() {
+  check(
+    r#"
+functor Empty () = struct end
+functor F (type t val x: t) = struct end
+structure A = F (type t = int val x = 3)
+structure B = F (type t = string val x = "hi")
+structure C = F (type t = unit val x = ())
+structure D = F (type t = bool)
+(**           ^^^^^^^^^^^^^^^^^ missing value required by signature: x *)
+"#,
+  );
+}

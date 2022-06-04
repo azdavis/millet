@@ -11,8 +11,11 @@ SigBind = 'Name' '=' SigExp 'and'?
 FunctorDec = 'functor' FunctorBind*
 FunctorBind =
   functor_name:'Name'
-  '(' param:'Name' ':' param_sig:SigExp ')' AscriptionTail?
+  '(' FunctorArg ')' AscriptionTail?
   '=' body:StrExp 'and'?
+
+FunctorArg = FunctorArgNameSigExp | Spec
+FunctorArgNameSigExp = 'Name' ':' SigExp
 
 StrDec = StrDecInSeq*
 StrDecInSeq = StrDecOne ';'?

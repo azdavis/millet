@@ -13,9 +13,15 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
     many_sep(p, SK::AndKw, SK::FunctorBind, |p| {
       p.eat(SK::Name);
       p.eat(SK::LRound);
-      p.eat(SK::Name);
-      p.eat(SK::Colon);
-      must(p, sig_exp, Expected::SigExp);
+      if p.at(SK::Name) {
+        let en = p.enter();
+        p.bump();
+        p.eat(SK::Colon);
+        must(p, sig_exp, Expected::SigExp);
+        p.exit(en, SK::FunctorArgNameSigExp);
+      } else {
+        spec(p);
+      }
       p.eat(SK::RRound);
       if ascription(p) {
         ascription_tail(p);
