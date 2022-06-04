@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn t_01() {
@@ -224,7 +224,7 @@ val _ = Mul.add Mul.zero Add.zero
 
 #[test]
 fn t_14() {
-  fail(
+  check(
     r#"
 signature MONOID = sig
   type t
@@ -251,14 +251,14 @@ val _ = Mul.add Mul.zero Mul.zero
 
 (* TODO not the best error message *)
 val _ = Mul.add Mul.zero Add.zero
-(**     ^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched types: expected t, found t *)
+(**     ^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched types: expected t -> t, found t -> _ *)
 "#,
   );
 }
 
 #[test]
 fn t_15() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -283,14 +283,14 @@ val _ = A.bar A.foo = B.bar B.foo
 
 (* ...nonetheless, this should fail *)
 val _ = A.bar B.foo
-(**     ^^^^^^^^^^^ mismatched types: expected t, found t *)
+(**     ^^^^^^^^^^^ mismatched types: expected t -> unit, found t -> _ *)
 "#,
   );
 }
 
 #[test]
 fn t_16() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -314,14 +314,14 @@ val _ = inc S.foo
 
 val _ = A.bar A.foo
 val _ = A.bar 123
-(**     ^^^^^^^^^ mismatched types: expected t, found int *)
+(**     ^^^^^^^^^ mismatched types: expected t -> unit, found int -> _ *)
 "#,
   );
 }
 
 #[test]
 fn t_17() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -347,14 +347,14 @@ val _ = inc S.foo
 val _ = A.bar A.foo
 val _ = B.bar B.foo
 val _ = B.bar A.foo
-(**     ^^^^^^^^^^^ mismatched types: expected t, found t *)
+(**     ^^^^^^^^^^^ mismatched types: expected t -> unit, found t -> _ *)
 "#,
   );
 }
 
 #[test]
 fn t_18() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -389,6 +389,34 @@ end
 
 val _: S.t = S.x
 val _: int = S.x
+"#,
+  );
+}
+
+#[test]
+fn t_20() {
+  check(
+    r#"
+signature SIG = sig
+  type t
+  val x: t
+end
+
+structure Str = struct
+  type t = int
+  val x = 3
+end
+
+structure A: SIG = Str
+structure B: SIG = Str
+
+val _: A.t = B.x
+
+structure C:> SIG = Str
+structure D:> SIG = Str
+
+    val _: C.t = D.x
+(** ^^^^^^^^^^^^^^^^ mismatched types: expected t, found t *)
 "#,
   );
 }

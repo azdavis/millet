@@ -91,7 +91,10 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       env_realize(&subst, &mut to_extend);
       env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
       if matches!(asc, hir::Ascription::Opaque) {
-        st.err(str_exp, ErrorKind::Unsupported("opaque ascription"));
+        subst.clear();
+        gen_fresh_syms(st, &mut subst, &sig.ty_names);
+        to_extend = sig.env.clone();
+        env_realize(&subst, &mut to_extend);
       }
       env.extend(to_extend);
     }
