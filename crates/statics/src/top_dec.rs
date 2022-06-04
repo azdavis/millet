@@ -163,22 +163,30 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
     hir::SigExp::Spec(spec) => get_spec(st, bs, ars, env, *spec),
     // sml_def(63)
     hir::SigExp::Name(name) => match bs.sig_env.get(name) {
-      Some(_) => {
-        // idea: do alpha conversion to satisfy the side condition.
-        // - get all syms in sig
-        // - look up their arity
-        // - make a type realization
-        //   { (old_sym => forall a0...an, (a0 , ..., an) new_sym)
-        //     for old_sym in syms(sig)
-        //     where n = arity(old_sym)
-        //     and new_sym = st.gen()
-        //   }
-        // - apply that to the sig env
-        // - return that env
-        st.err(
-          sig_exp,
-          ErrorKind::Unsupported("name signature expressions"),
-        )
+      Some(sig) => {
+        let subst: TyRealization = sig
+          .ty_names
+          .iter()
+          .map(|&sym| {
+            let (name, ty_info) = st.syms.get(&sym).unwrap();
+            let name = name.clone();
+            let ty_info = ty_info.clone();
+            let started = st.syms.start(name);
+            let new_sym = started.sym();
+            let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().copied(), new_sym);
+            st.syms.finish(
+              started,
+              TyInfo {
+                ty_scheme: ty_scheme.clone(),
+                val_env: ValEnv::default(),
+              },
+            );
+            (sym, ty_scheme)
+          })
+          .collect();
+        let mut sig_env = sig.env.clone();
+        env_realize(&subst, &mut sig_env);
+        env.extend(sig_env)
       }
       None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
     },

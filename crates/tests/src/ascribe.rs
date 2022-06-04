@@ -148,7 +148,7 @@ val _ = S.add (S.add (inc S.zero) (inc S.zero))
 
 #[test]
 fn t_11() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -175,7 +175,7 @@ end
 
 #[test]
 fn t_13() {
-  fail(
+  check(
     r#"
 signature MONOID = sig
   type t
@@ -375,7 +375,7 @@ val _: S.t = S.x
 
 #[test]
 fn t_19() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
