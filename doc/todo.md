@@ -8,7 +8,6 @@ priority is approximate. if unsure of priority, put in low.
   - stick in readme
   - and 'icon' field of package.json
   - that icon needs to be 128x128 png
-- impl modules
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info
@@ -50,11 +49,9 @@ priority is approximate. if unsure of priority, put in low.
 - make website
   - with 'verified ownership' or whatever
 - parse more derived forms
-  - functor binding input sugar
-    - or skip this? seems to be confusing to students
   - specifications
   - signature expressions
-  - programs
+  - programs?
 - implement statics for weird constructs
   - `abstype`
   - `#` selectors
