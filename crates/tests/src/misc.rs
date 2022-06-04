@@ -231,7 +231,7 @@ fn inc() {
 val inc = fn x => x + 1
 val _ = inc 3
 val _ = inc "nope"
-(**     ^^^^^^^^^^ mismatched types: expected int -> int, found string -> _ *)
+(**         ^^^^^^ mismatched types: expected int, found string *)
 "#,
   );
 }
@@ -297,7 +297,7 @@ fn not_arrow_ty() {
   check(
     r#"
 val _ = 3 3
-(**     ^^^ mismatched types: expected int, found int -> _ *)
+(**     ^ expected a function type, got int *)
 "#,
   );
 }

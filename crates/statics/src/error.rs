@@ -34,6 +34,7 @@ pub(crate) enum ErrorKind {
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
   OverloadMismatch(Overload, Ty, Ty),
+  AppLhsNotFn(Ty),
   DuplicateLab(hir::Lab),
   RealPat,
   UnreachablePattern,
@@ -109,6 +110,11 @@ impl fmt::Display for ErrorKindDisplay<'_> {
           Overload::Num => "word, real, or int",
           Overload::NumTxt => "word, real, int, string, or char",
         },
+        got.display(self.syms)
+      ),
+      ErrorKind::AppLhsNotFn(got) => write!(
+        f,
+        "expected a function type, got {}",
         got.display(self.syms)
       ),
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),

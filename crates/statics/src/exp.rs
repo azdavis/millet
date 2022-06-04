@@ -53,11 +53,29 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       // exp seq/case lowering to be slightly better
       let arg_ty = get(st, cx, ars, *arg);
       let func_ty = get(st, cx, ars, *func);
-      let mut ret = Ty::MetaVar(st.gen_meta_var());
-      let got = Ty::fun(arg_ty, ret.clone());
-      unify(st, func_ty, got, exp);
-      apply(st.subst(), &mut ret);
-      ret
+      // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
+      // would still be correct. however, matching on `func_ty` lets us emit slightly better error
+      // messages.
+      match func_ty {
+        Ty::None => Ty::None,
+        Ty::BoundVar(_) => unreachable!(),
+        Ty::MetaVar(_) => {
+          let mut ret = Ty::MetaVar(st.gen_meta_var());
+          let got = Ty::fun(arg_ty, ret.clone());
+          unify(st, func_ty, got, exp);
+          apply(st.subst(), &mut ret);
+          ret
+        }
+        Ty::FixedVar(_) | Ty::Record(_) | Ty::Con(_, _) => {
+          st.err(func.unwrap_or(exp), ErrorKind::AppLhsNotFn(func_ty));
+          Ty::None
+        }
+        Ty::Fn(want_arg, mut want_res) => {
+          unify(st, *want_arg, arg_ty, arg.unwrap_or(exp));
+          apply(st.subst(), want_res.as_mut());
+          *want_res
+        }
+      }
     }
     // sml_def(10)
     hir::Exp::Handle(inner, matcher) => {

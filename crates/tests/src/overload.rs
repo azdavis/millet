@@ -98,7 +98,7 @@ fn t_05() {
   check(
     r#"
 val _ = 1.1 + 1
-(**     ^^^^^^^ mismatched types: expected _ * _ -> _, found real * int -> _ *)
+(**     ^^^^^^^ mismatched types: expected _ * _, found real * int *)
 "#,
   );
 }
@@ -109,7 +109,7 @@ fn t_06() {
     r#"
 val add = op+
 val _ = add (false, true)
-(**     ^^^^^^^^^^^^^^^^^ mismatched types: expected _ * _ -> _ with word, real, or int, found bool * bool -> _ *)
+(**         ^^^^^^^^^^^^^ mismatched types: expected _ * _ with word, real, or int, found bool * bool *)
 "#,
   );
 }
@@ -119,7 +119,7 @@ fn t_07() {
   check(
     r#"
 val  _ = false + true
-(**      ^^^^^^^^^^^^ mismatched types: expected _ * _ -> _ with word, real, or int, found bool * bool -> _ *)
+(**      ^^^^^^^^^^^^ mismatched types: expected _ * _ with word, real, or int, found bool * bool *)
 "#,
   );
 }

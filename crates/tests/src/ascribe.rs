@@ -251,7 +251,7 @@ val _ = Mul.add Mul.zero Mul.zero
 
 (* TODO not the best error message *)
 val _ = Mul.add Mul.zero Add.zero
-(**     ^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched types: expected t -> t, found t -> _ *)
+(**                      ^^^^^^^^ mismatched types: expected t, found t *)
 "#,
   );
 }
@@ -283,7 +283,7 @@ val _ = A.bar A.foo = B.bar B.foo
 
 (* ...nonetheless, this should fail *)
 val _ = A.bar B.foo
-(**     ^^^^^^^^^^^ mismatched types: expected t -> unit, found t -> _ *)
+(**           ^^^^^ mismatched types: expected t, found t *)
 "#,
   );
 }
@@ -314,7 +314,7 @@ val _ = inc S.foo
 
 val _ = A.bar A.foo
 val _ = A.bar 123
-(**     ^^^^^^^^^ mismatched types: expected t -> unit, found int -> _ *)
+(**           ^^^ mismatched types: expected t, found int *)
 "#,
   );
 }
@@ -347,7 +347,7 @@ val _ = inc S.foo
 val _ = A.bar A.foo
 val _ = B.bar B.foo
 val _ = B.bar A.foo
-(**     ^^^^^^^^^^^ mismatched types: expected t -> unit, found t -> _ *)
+(**           ^^^^^ mismatched types: expected t, found t *)
 "#,
   );
 }

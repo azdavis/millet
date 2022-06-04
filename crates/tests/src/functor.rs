@@ -125,7 +125,7 @@ structure One = F (S)
 structure Two = F (S)
 
 val _ = One.f Two.C
-(**     ^^^^^^^^^^^ mismatched types: expected t -> unit, found t -> _ *)
+(**           ^^^^^ mismatched types: expected t, found t *)
 "#,
   );
 }
