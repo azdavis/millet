@@ -5,7 +5,10 @@ pub(crate) fn run(conn: Connection, init: lsp_types::InitializeParams) -> anyhow
   eprintln!("startup main loop: {init:#?}");
   let root = match &init.root_uri {
     Some(x) => x.clone(),
-    None => anyhow::bail!("no root uri"),
+    None => {
+      eprintln!("no root url");
+      return Ok(());
+    }
   };
   let mut state = State::new(root, conn.sender.clone());
   for msg in conn.receiver.iter() {
