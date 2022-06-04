@@ -220,81 +220,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "old-ast"
-version = "0.1.0"
-dependencies = [
- "old-intern",
- "old-loc",
- "old-token",
-]
-
-[[package]]
-name = "old-intern"
-version = "0.1.0"
-dependencies = [
- "fast-hash",
-]
-
-[[package]]
-name = "old-lang-srv"
-version = "0.1.0"
-dependencies = [
- "crossbeam-channel",
- "lsp-types",
- "old-intern",
- "old-lex",
- "old-loc",
- "old-parse",
- "old-statics",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "old-lex"
-version = "0.1.0"
-dependencies = [
- "old-intern",
- "old-loc",
- "old-token",
-]
-
-[[package]]
-name = "old-loc"
-version = "0.1.0"
-
-[[package]]
-name = "old-parse"
-version = "0.1.0"
-dependencies = [
- "fast-hash",
- "old-ast",
- "old-intern",
- "old-lex",
- "old-loc",
- "old-token",
-]
-
-[[package]]
-name = "old-statics"
-version = "0.1.0"
-dependencies = [
- "fast-hash",
- "old-ast",
- "old-intern",
- "old-loc",
- "old-token",
- "util",
-]
-
-[[package]]
-name = "old-token"
-version = "0.1.0"
-dependencies = [
- "old-intern",
-]
-
-[[package]]
 name = "parse"
 version = "0.1.0"
 dependencies = [
@@ -478,11 +403,6 @@ dependencies = [
  "fast-hash",
  "lex",
  "lower",
- "old-intern",
- "old-lex",
- "old-loc",
- "old-parse",
- "old-statics",
  "parse",
  "statics",
  "syntax",

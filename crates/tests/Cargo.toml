@@ -8,11 +8,6 @@ publish = false
 doctest = false
 
 [dependencies]
-old-intern = { path = "../old-intern" }
-old-lex = { path = "../old-lex" }
-old-parse = { path = "../old-parse" }
-old-statics = { path = "../old-statics" }
-old-loc = { path = "../old-loc" }
 lex = { path = "../lex" }
 parse = { path = "../parse" }
 lower = { path = "../lower" }

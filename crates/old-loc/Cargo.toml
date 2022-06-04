@@ -1,9 +1,0 @@
-[package]
-name = "old-loc"
-version = "0.1.0"
-edition = "2021"
-publish = false
-
-[lib]
-test = false
-doctest = false

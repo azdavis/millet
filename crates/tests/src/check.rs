@@ -1,5 +1,4 @@
 use fast_hash::FxHashMap;
-use old_loc::Located;
 use std::fmt;
 use std::ops::Range;
 use syntax::{ast::AstNode as _, rowan::TextRange};
@@ -304,27 +303,4 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(OneLineRegion, &st
 
 fn env_var_yes(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
-}
-
-#[allow(dead_code)]
-fn get_one_error_old(s: &str) -> Result<(), Located<String>> {
-  let mut store = old_intern::StrStoreMut::new();
-  let lexer = match old_lex::get(&mut store, s.as_bytes()) {
-    Ok(x) => x,
-    Err(e) => return Err(e.loc.wrap(e.val.message())),
-  };
-  let store = store.finish();
-  let top_decs = match old_parse::get(lexer) {
-    Ok(x) => x,
-    Err(e) => return Err(e.loc.wrap(e.val.message())),
-  };
-  let mut statics = old_statics::Statics::new();
-  for top_dec in top_decs.iter() {
-    match statics.get(top_dec) {
-      Ok(()) => {}
-      Err(e) => return Err(e.loc.wrap(e.val.message(&store))),
-    }
-  }
-  statics.finish();
-  Ok(())
 }
