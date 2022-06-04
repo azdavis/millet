@@ -99,8 +99,21 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       env.extend(to_extend);
     }
     // sml_def(54)
-    hir::StrExp::App(fun_name, _) => match bs.fun_env.get(fun_name) {
-      Some(_) => st.err(str_exp, ErrorKind::Unsupported("`functor` application")),
+    hir::StrExp::App(fun_name, arg_str_exp) => match bs.fun_env.get(fun_name) {
+      Some(fun_sig) => {
+        let mut arg_env = Env::default();
+        get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
+        let ty_names = &fun_sig.param.ty_names;
+        let mut subst = TyRealization::default();
+        let mut to_extend = fun_sig.res.env.clone();
+        let arg_idx = hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
+        env_instance_sig(st, &mut subst, &arg_env, ty_names, arg_idx);
+        env_realize(&subst, &mut to_extend);
+        let mut param_env = fun_sig.param.env.clone();
+        env_realize(&subst, &mut param_env);
+        env_enrich(st, &arg_env, &param_env, arg_idx);
+        env.extend(to_extend);
+      }
       None => st.err(
         str_exp,
         ErrorKind::Undefined(Item::Functor, fun_name.clone()),
@@ -366,10 +379,10 @@ fn env_instance_sig(
   st: &mut St,
   subst: &mut TyRealization,
   env: &Env,
-  ty_names: &TyNameSet,
+  sig_ty_names: &TyNameSet,
   idx: hir::Idx,
 ) {
-  for &sym in ty_names.iter() {
+  for &sym in sig_ty_names.iter() {
     let (name, _) = st.syms.get(&sym).unwrap();
     match env.ty_env.get(name) {
       Some(ty_info) => {
@@ -377,7 +390,7 @@ fn env_instance_sig(
       }
       None => {
         let name = name.clone();
-        st.err(idx, ErrorKind::Undefined(Item::Ty, name))
+        st.err(idx, ErrorKind::Undefined(Item::Ty, name));
       }
     }
   }

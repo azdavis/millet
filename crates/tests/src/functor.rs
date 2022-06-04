@@ -1,8 +1,8 @@
-use crate::check::fail;
+use crate::check::{check, fail};
 
 #[test]
 fn t_01() {
-  fail(
+  check(
     r#"
 functor F (A: sig end) = struct end
 structure S = F (struct type t = int end)
@@ -12,7 +12,7 @@ structure S = F (struct type t = int end)
 
 #[test]
 fn t_02() {
-  fail(
+  check(
     r#"
 functor F (A: sig
   type t
@@ -25,20 +25,20 @@ structure S = F (struct end)
 
 #[test]
 fn t_03() {
-  fail(
+  check(
     r#"
 functor F (A: sig
   exception Foo
 end) = struct end
 structure S = F (struct val Foo = Match end)
-(**              ^^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched identifier statuses: expected exception, found value *)
+(**              ^^^^^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: Foo *)
 "#,
   );
 }
 
 #[test]
 fn t_04() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -76,7 +76,7 @@ val done: string list = [guh, Impl.foo, S.what, "why"]
 
 #[test]
 fn t_05() {
-  fail(
+  check(
     r#"
 functor Id (S: sig end) = S
 
@@ -85,14 +85,14 @@ structure Guy = Id (struct
 end)
 
 val _: int = Guy.x
-(**              ^ undefined value: x *)
+(**          ^^^^^ undefined value: x *)
 "#,
   );
 }
 
 #[test]
 fn t_06() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   val x: int
@@ -105,7 +105,7 @@ structure S = F (struct
 end)
 
 val _ = S.x
-(**       ^ undefined value: x *)
+(**     ^^^ undefined value: x *)
 "#,
   );
 }
@@ -132,7 +132,7 @@ val _ = One.f Two.C
 
 #[test]
 fn t_08() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -154,7 +154,7 @@ val _: B.t = 3
 
 #[test]
 fn t_09() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -225,7 +225,7 @@ val _ =
 
 #[test]
 fn t_11() {
-  fail(
+  check(
     r#"
 structure A = struct
   datatype t = B | C
