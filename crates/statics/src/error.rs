@@ -95,13 +95,13 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::MismatchedTypes(want, got) => write!(
         f,
-        "mismatched types: expected {}, found {}",
+        "expected {}, found {}",
         want.display(self.syms),
         got.display(self.syms)
       ),
       ErrorKind::OverloadMismatch(ov, want, got) => write!(
         f,
-        "mismatched types: expected {} with {}, found {}",
+        "expected {} with {}, found {}",
         want.display(self.syms),
         // TODO make this programmatic?
         match ov {

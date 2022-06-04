@@ -37,7 +37,7 @@ pub(crate) fn check(s: &str) {
 /// ```ignore
 /// fail(r#"
 /// val _ = 1 + 2
-/// (**     ^^^^^ mismatched types: expected bool, found int *)
+/// (**     ^^^^^ expected bool, found int *)
 /// "#);
 /// ```
 ///

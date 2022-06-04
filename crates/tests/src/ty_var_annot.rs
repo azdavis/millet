@@ -16,7 +16,7 @@ fn t_02() {
     r#"
 fun bar (x: int): unit = ()
 fun 'a f (id: 'a -> 'a) x = bar (id x)
-(**                              ^^^^ mismatched types: expected int, found 'a *)
+(**                              ^^^^ expected int, found 'a *)
 "#,
   );
 }
@@ -26,7 +26,7 @@ fn t_03() {
   check(
     r#"
 fun 'a f (id: 'a -> 'a) x = id x + 1
-(**                         ^^^^^^^^ mismatched types: expected _ * _ with word, real, or int, found 'a * int *)
+(**                         ^^^^^^^^ expected _ * _ with word, real, or int, found 'a * int *)
 "#,
   );
 }
@@ -36,7 +36,7 @@ fn t_04() {
   check(
     r#"
     val 'a _: 'a = false
-(** ^^^^^^^^^^^^^^^^^^^^ mismatched types: expected 'a, found bool *)
+(** ^^^^^^^^^^^^^^^^^^^^ expected 'a, found bool *)
 "#,
   );
 }
@@ -49,7 +49,7 @@ type 'a heh = 'a list
 datatype 'a bad = Bad of 'a
 val _: int heh = [1]
     val _: unit = Bad
-(** ^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found _ -> _ bad *)
+(** ^^^^^^^^^^^^^^^^^ expected unit, found _ -> _ bad *)
 "#,
   );
 }
@@ -60,7 +60,7 @@ fn t_06() {
     r#"
 fun ('t, 'u) apply (f: 't -> 'u) (x: 't): 'u = f x
 val _ = apply op+ (1, false)
-(**               ^^^^^^^^^^ mismatched types: expected _ * _, found int * bool *)
+(**               ^^^^^^^^^^ expected _ * _, found int * bool *)
 "#,
   );
 }
@@ -71,7 +71,7 @@ fn t_07() {
     r#"
 fun ('a, 'b) f (xs: 'a list) (x: 'b) =
     x :: xs
-(** ^^^^^^^ mismatched types: expected _ * _ list, found _ * _ *)
+(** ^^^^^^^ expected _ * _ list, found _ * _ *)
 "#,
   );
 }

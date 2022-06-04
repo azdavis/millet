@@ -6,7 +6,7 @@ fn t_01() {
     r#"
 type t = { 1: int, 2: bool }
     val _: t = ()
-(** ^^^^^^^^^^^^^ mismatched types: expected int * bool, found unit *)
+(** ^^^^^^^^^^^^^ expected int * bool, found unit *)
 "#,
   );
 }
@@ -27,7 +27,7 @@ fn t_03() {
     r#"
 type t = { 1: int }
     val _: t = ()
-(** ^^^^^^^^^^^^^ mismatched types: expected { 1 : int }, found unit *)
+(** ^^^^^^^^^^^^^ expected { 1 : int }, found unit *)
 "#,
   );
 }
@@ -38,7 +38,7 @@ fn t_04() {
     r#"
 type t = { 1: int, 3: bool }
     val _: t = ()
-(** ^^^^^^^^^^^^^ mismatched types: expected { 1 : int, 3 : bool }, found unit *)
+(** ^^^^^^^^^^^^^ expected { 1 : int, 3 : bool }, found unit *)
 "#,
   );
 }

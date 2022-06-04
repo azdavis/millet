@@ -51,7 +51,7 @@ fn t_05() {
 exception E
 exception E of int
     val _: unit = E
-(** ^^^^^^^^^^^^^^^ mismatched types: expected unit, found int -> exn *)
+(** ^^^^^^^^^^^^^^^ expected unit, found int -> exn *)
 "#,
   );
 }

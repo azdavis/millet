@@ -17,7 +17,7 @@ fn t_02() {
 val add = op+
 val _ = add (1.1, 2.2)
 val _ = add (1, 2)
-(**     ^^^^^^^^^^ mismatched types: expected real, found int *)
+(**     ^^^^^^^^^^ expected real, found int *)
 "#,
   );
 }
@@ -30,7 +30,7 @@ val add = op+
 (* make this a top-dec level seq *)
 signature S = sig end
 val _ = add (1.1, 2.2)
-(**     ^^^^^^^^^^^^^^ mismatched types: expected int, found real *)
+(**     ^^^^^^^^^^^^^^ expected int, found real *)
 "#,
   );
 }
@@ -98,7 +98,7 @@ fn t_05() {
   check(
     r#"
 val _ = 1.1 + 1
-(**     ^^^^^^^ mismatched types: expected _ * _, found real * int *)
+(**     ^^^^^^^ expected _ * _, found real * int *)
 "#,
   );
 }
@@ -109,7 +109,7 @@ fn t_06() {
     r#"
 val add = op+
 val _ = add (false, true)
-(**         ^^^^^^^^^^^^^ mismatched types: expected _ * _ with word, real, or int, found bool * bool *)
+(**         ^^^^^^^^^^^^^ expected _ * _ with word, real, or int, found bool * bool *)
 "#,
   );
 }
@@ -119,7 +119,7 @@ fn t_07() {
   check(
     r#"
 val  _ = false + true
-(**      ^^^^^^^^^^^^ mismatched types: expected _ * _ with word, real, or int, found bool * bool *)
+(**      ^^^^^^^^^^^^ expected _ * _ with word, real, or int, found bool * bool *)
 "#,
   );
 }

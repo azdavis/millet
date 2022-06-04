@@ -6,7 +6,7 @@ fn apply() {
     r#"
 val apply = fn (f, x) => f x
     val _: unit = apply
-(** ^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found (_ -> _) * _ -> _ *)
+(** ^^^^^^^^^^^^^^^^^^^ expected unit, found (_ -> _) * _ -> _ *)
 "#,
   );
 }
@@ -21,7 +21,7 @@ val _ = fn f => fn x => (
   f x x x andalso false;
   f 3;
     f: unit;
-(** ^^^^^^^ mismatched types: expected unit, found _ *)
+(** ^^^^^^^ expected unit, found _ *)
   false
 )
 "#,
@@ -64,7 +64,7 @@ fun find t p ok err =
       else
         find left p ok (fn () => find right p ok err)
     val _ : unit = find
-(** ^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found _ tree -> (_ -> bool) -> (_ -> _) -> (unit -> _) -> _ *)
+(** ^^^^^^^^^^^^^^^^^^^ expected unit, found _ tree -> (_ -> bool) -> (_ -> _) -> (unit -> _) -> _ *)
 "#,
   );
 }
@@ -186,7 +186,7 @@ val _ =
   case 0 of
     1 => 1
   | (2, 2) => 2
-(** ^^^^^^ mismatched types: expected int, found int * int *)
+(** ^^^^^^ expected int, found int * int *)
   | _ => 3
 "#,
   );
@@ -231,7 +231,7 @@ fn inc() {
 val inc = fn x => x + 1
 val _ = inc 3
 val _ = inc "nope"
-(**         ^^^^^^ mismatched types: expected int, found string *)
+(**         ^^^^^^ expected int, found string *)
 "#,
   );
 }
@@ -253,7 +253,7 @@ fun list_map f xs =
   | x :: xs => f x :: list_map f xs
 
     val _: unit = (option_map, list_map)
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched types: expected unit, found ((_ -> _) -> _ option -> _ option) * ((_ -> _) -> _ list -> _ list) *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected unit, found ((_ -> _) -> _ option -> _ option) * ((_ -> _) -> _ list -> _ list) *)
 "#,
   );
 }
@@ -472,7 +472,7 @@ fn ty_var_scope() {
     r#"
 val _ = fn id =>
   (id 3; id "nope")
-(**      ^^^^^^^^^ mismatched types: expected _, found string -> _ *)
+(**      ^^^^^^^^^ expected _, found string -> _ *)
 "#,
   );
 }
@@ -547,7 +547,7 @@ fn useless_ty_var() {
     r#"
 fun 'a f () = 3
     val _: unit = f
-(** ^^^^^^^^^^^^^^^ mismatched types: expected unit, found unit -> int *)
+(** ^^^^^^^^^^^^^^^ expected unit, found unit -> int *)
 "#,
   );
 }
