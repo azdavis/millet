@@ -86,14 +86,14 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
       let sig = env_to_sig(bs, sig_exp_env);
       let mut subst = TyRealization::default();
-      let mut realized_sig_env = sig.env.clone();
+      let mut to_extend = sig.env.clone();
       env_instance_sig(st, &mut subst, &str_exp_env, &sig.ty_names, str_exp.into());
-      env_realize(&subst, &mut realized_sig_env);
-      env_enrich(st, &str_exp_env, &realized_sig_env, str_exp.into());
+      env_realize(&subst, &mut to_extend);
+      env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
       if matches!(asc, hir::Ascription::Opaque) {
         st.err(str_exp, ErrorKind::Unsupported("opaque ascription"));
       }
-      env.extend(realized_sig_env)
+      env.extend(to_extend);
     }
     // sml_def(54)
     hir::StrExp::App(fun_name, _) => match bs.fun_env.get(fun_name) {
