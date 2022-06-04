@@ -55,6 +55,7 @@ pub(crate) fn check(s: &str) {
 /// it passes. if later support for modules _is_ implemented, that test will fail, and we can update
 /// it to use [`check`] instead so it passes again.
 #[track_caller]
+#[allow(dead_code)]
 pub(crate) fn fail(s: &str) {
   let cx = get_cx(s);
   if cx.reasons.is_empty() {
