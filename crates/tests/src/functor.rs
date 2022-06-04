@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn t_01() {
@@ -112,7 +112,7 @@ val _ = S.x
 
 #[test]
 fn t_07() {
-  fail(
+  check(
     r#"
 functor F (A: sig end) = struct
   datatype t = C
@@ -125,7 +125,7 @@ structure One = F (S)
 structure Two = F (S)
 
 val _ = One.f Two.C
-(**     ^^^^^^^^^^^ mismatched types: expected t, found t *)
+(**     ^^^^^^^^^^^ mismatched types: expected t -> unit, found t -> _ *)
 "#,
   );
 }
@@ -199,10 +199,10 @@ val _ = A.f (D.f D.x)
 
 #[test]
 fn t_10() {
-  fail(
+  check(
     r#"
 structure A = struct
-  datatype t = B | C
+  datatype t = T
 end
 
 signature SIG = sig
@@ -215,10 +215,9 @@ end
 
 structure R = F (A)
 
-val _ =
-  case A.B of
-    R.B => 1
-  | R.C => 2
+val _ = A.T
+val _ = R.T
+(**     ^^^ undefined value: T *)
 "#,
   );
 }

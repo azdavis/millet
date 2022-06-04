@@ -108,6 +108,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
         let mut to_extend = fun_sig.res.env.clone();
         let arg_idx = hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
         env_instance_sig(st, &mut subst, &arg_env, ty_names, arg_idx);
+        gen_fresh_syms(st, &mut subst, &fun_sig.res.ty_names);
         env_realize(&subst, &mut to_extend);
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
