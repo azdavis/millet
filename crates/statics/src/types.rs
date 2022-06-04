@@ -226,13 +226,20 @@ impl TyScheme {
     }
   }
 
-  pub(crate) fn n_ary(n: usize, sym: Sym) -> Self {
-    Self {
-      bound_vars: BoundTyVars {
-        inner: vec![None; n],
-      },
-      ty: Ty::Con((0..n).map(|i| Ty::BoundVar(BoundTyVar(i))).collect(), sym),
-    }
+  pub(crate) fn n_ary<I>(iter: I, sym: Sym) -> Self
+  where
+    I: Iterator<Item = Option<TyVarKind>>,
+  {
+    let bound_vars = BoundTyVars {
+      inner: iter.collect(),
+    };
+    let ty = Ty::Con(
+      (0..bound_vars.inner.len())
+        .map(|i| Ty::BoundVar(BoundTyVar(i)))
+        .collect(),
+      sym,
+    );
+    Self { bound_vars, ty }
   }
 }
 

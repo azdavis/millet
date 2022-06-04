@@ -317,7 +317,13 @@ fn get_ty_descs(st: &mut St, ty_env: &mut TyEnv, ty_descs: &[hir::TyDesc], idx: 
       }
     }
     let ty_info = TyInfo {
-      ty_scheme: TyScheme::n_ary(ty_desc.ty_vars.len(), started.sym()),
+      ty_scheme: TyScheme::n_ary(
+        ty_desc
+          .ty_vars
+          .iter()
+          .map(|x| x.is_equality().then(|| TyVarKind::Equality)),
+        started.sym(),
+      ),
       val_env: ValEnv::default(),
     };
     st.syms.finish(started, ty_info.clone());
