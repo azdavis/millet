@@ -282,8 +282,12 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     hir::Spec::Sharing(_, _) => st.err(spec, ErrorKind::Unsupported("`sharing` specifications")),
     // sml_def(76), sml_def(77)
     hir::Spec::Seq(specs) => {
+      let mut bs = bs.clone();
       for &spec in specs {
-        get_spec(st, bs, ars, env, spec);
+        let mut one_env = Env::default();
+        get_spec(st, &bs, ars, &mut one_env, spec);
+        Rc::make_mut(&mut bs.env).extend(one_env.clone());
+        env.extend(one_env);
       }
     }
   }
