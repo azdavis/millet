@@ -85,7 +85,10 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       let mut sig_exp_env = Env::default();
       get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
       let sig = env_to_sig(bs, sig_exp_env);
-      let realized_sig_env = env_instance_sig(st, &str_exp_env, sig, str_exp.into());
+      let mut subst = TyRealization::default();
+      let mut realized_sig_env = sig.env.clone();
+      env_instance_sig(st, &mut subst, &str_exp_env, &sig.ty_names, str_exp.into());
+      env_realize(&subst, &mut realized_sig_env);
       env_enrich(st, &str_exp_env, &realized_sig_env, str_exp.into());
       if matches!(asc, hir::Ascription::Opaque) {
         st.err(str_exp, ErrorKind::Unsupported("opaque ascription"));
@@ -356,9 +359,14 @@ fn has_ty_var(ty: &Ty) -> bool {
 
 type TyRealization = FxHashMap<Sym, TyScheme>;
 
-fn env_instance_sig(st: &mut St, env: &Env, sig: Sig, idx: hir::Idx) -> Env {
-  let mut subst = TyRealization::default();
-  for &sym in sig.ty_names.iter() {
+fn env_instance_sig(
+  st: &mut St,
+  subst: &mut TyRealization,
+  env: &Env,
+  ty_names: &TyNameSet,
+  idx: hir::Idx,
+) {
+  for &sym in ty_names.iter() {
     let (name, _) = st.syms.get(&sym).unwrap();
     match env.ty_env.get(name) {
       Some(ty_info) => {
@@ -370,9 +378,6 @@ fn env_instance_sig(st: &mut St, env: &Env, sig: Sig, idx: hir::Idx) -> Env {
       }
     }
   }
-  let mut ret = sig.env;
-  env_realize(&subst, &mut ret);
-  ret
 }
 
 // TODO for the enrich family of fns, improve error messages/range. for ranges, we might need to
