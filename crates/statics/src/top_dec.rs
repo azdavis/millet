@@ -164,29 +164,11 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
     // sml_def(63)
     hir::SigExp::Name(name) => match bs.sig_env.get(name) {
       Some(sig) => {
-        let subst: TyRealization = sig
-          .ty_names
-          .iter()
-          .map(|&sym| {
-            let (name, ty_info) = st.syms.get(&sym).unwrap();
-            let name = name.clone();
-            let ty_info = ty_info.clone();
-            let started = st.syms.start(name);
-            let new_sym = started.sym();
-            let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().copied(), new_sym);
-            st.syms.finish(
-              started,
-              TyInfo {
-                ty_scheme: ty_scheme.clone(),
-                val_env: ValEnv::default(),
-              },
-            );
-            (sym, ty_scheme)
-          })
-          .collect();
+        let mut subst = TyRealization::default();
+        gen_fresh_syms(st, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
         env_realize(&subst, &mut sig_env);
-        env.extend(sig_env)
+        env.extend(sig_env);
       }
       None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
     },
@@ -196,6 +178,26 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
       ErrorKind::Unsupported("`where` signature expressions"),
     ),
   }
+}
+
+fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) {
+  let iter = ty_names.iter().map(|&sym| {
+    let (name, ty_info) = st.syms.get(&sym).unwrap();
+    let name = name.clone();
+    let ty_info = ty_info.clone();
+    let started = st.syms.start(name);
+    let new_sym = started.sym();
+    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().copied(), new_sym);
+    st.syms.finish(
+      started,
+      TyInfo {
+        ty_scheme: ty_scheme.clone(),
+        val_env: ValEnv::default(),
+      },
+    );
+    (sym, ty_scheme)
+  });
+  subst.extend(iter);
 }
 
 // sml_def(65)
