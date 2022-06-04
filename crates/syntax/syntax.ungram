@@ -53,8 +53,12 @@ StrExp =
 StructStrExp = 'struct' StrDec 'end'
 PathStrExp = Path
 AscriptionStrExp = StrExp AscriptionTail
-AppStrExp = 'Name' '(' StrExp ')'
+AppStrExp = 'Name' '(' AppStrExpArg ')'
 LetStrExp = 'let' StrDec 'in' StrExp 'end'
+
+// a bit annoying, but that's what my rudimentary syntax-gen requires.
+AppStrExpArg = AppStrExpArgStrExp | StrDec
+AppStrExpArgStrExp = StrExp
 
 AscriptionTail = Ascription SigExp
 Ascription = ':' | ':>'

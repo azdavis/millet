@@ -86,7 +86,13 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
     }
     ast::StrExp::AppStrExp(str_exp) => hir::StrExp::App(
       get_name(str_exp.name())?,
-      get_str_exp(cx, str_exp.str_exp()),
+      match str_exp.app_str_exp_arg()? {
+        ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(cx, arg.str_exp()),
+        ast::AppStrExpArg::StrDec(arg) => {
+          let sd = get_str_dec(cx, Some(arg));
+          cx.str_exp(hir::StrExp::Struct(sd), ptr.clone())
+        }
+      },
     ),
     ast::StrExp::LetStrExp(str_exp) => hir::StrExp::Let(
       get_str_dec(cx, str_exp.str_dec()),

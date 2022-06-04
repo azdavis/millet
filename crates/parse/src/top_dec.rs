@@ -102,7 +102,13 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
   } else if p.at(SK::Name) {
     p.bump();
     p.eat(SK::LRound);
-    must(p, str_exp, Expected::StrExp);
+    let arg = p.enter();
+    if str_exp(p).is_some() {
+      p.exit(arg, SK::AppStrExpArgStrExp);
+    } else {
+      p.abandon(arg);
+      str_dec(p);
+    }
     p.eat(SK::RRound);
     p.exit(en, SK::AppStrExp)
   } else {

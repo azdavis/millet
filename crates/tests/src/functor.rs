@@ -247,3 +247,16 @@ val _ =
 "#,
   );
 }
+
+#[test]
+fn t_12() {
+  check(
+    r#"
+functor F (A: sig end) = struct end
+structure A = F ()
+structure B = F (val x = 3)
+structure C = F (type t = int)
+structure D = F (val a = 1 val b = 2)
+"#,
+  );
+}
