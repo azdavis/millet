@@ -162,7 +162,6 @@ val _ = if 1 then 2 else 3
 fn while_() {
   check(
     r#"
-(* old-todo *)
 val _ = fn (a, b) => while a () do b ()
 "#,
   );

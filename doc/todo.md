@@ -70,7 +70,6 @@ priority is approximate. if unsure of priority, put in low.
   - interpreter (hard)
 - try not to clone the whole damn cx in statics?
   - especially in dec?
-- rm 'old-todo'
 - use `type Seq<T> = Box<[T]>` instead of `Vec<T>` in hir, etc?
 - forbid symbolic names in some cases in parsing?
 - talk about how statics errors should use an abstract 'Entity' (currently just 'this expression' or 'this declaration' etc) and this entity gets turned into an actual text range somewhere else (lower::Ptrs)

@@ -308,9 +308,6 @@ fn env_var_yes(s: &str) -> bool {
 
 #[allow(dead_code)]
 fn get_one_error_old(s: &str) -> Result<(), Located<String>> {
-  if s.contains("old-todo") {
-    return Ok(());
-  }
   let mut store = old_intern::StrStoreMut::new();
   let lexer = match old_lex::get(&mut store, s.as_bytes()) {
     Ok(x) => x,

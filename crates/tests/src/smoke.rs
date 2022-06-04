@@ -20,7 +20,6 @@ val _ = fn
 fn ty() {
   check(
     r#"
-(* old-todo *)
 type 'a foo = 'a * {} * int list list * (int -> string) * { a: int, b: string }
   "#,
   )
