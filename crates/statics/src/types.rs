@@ -508,7 +508,7 @@ pub(crate) struct ValInfo {
 }
 
 /// Definition: IdStatus
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum IdStatus {
   Con,
   Exn(Exn),

@@ -1,8 +1,8 @@
-use crate::check::fail;
+use crate::check::{check, fail};
 
 #[test]
 fn t_01() {
-  fail(
+  check(
     r#"
 structure S: sig
   val x: int
@@ -16,45 +16,45 @@ val _: int = S.x
 
 #[test]
 fn t_02() {
-  fail(
+  check(
     r#"
 structure S: sig
 end = struct
   val x = 3
 end
 val _: int = S.x
-(**            ^ undefined value: x *)
+(**          ^^^ undefined value: x *)
 "#,
   );
 }
 
 #[test]
 fn t_03() {
-  fail(
+  check(
     r#"
 structure S: sig
   val x: int
 end = struct end
-(**   ^^^^^^^^^^ undefined value: x *)
+(**   ^^^^^^^^^^ missing value required by signature: x *)
 "#,
   );
 }
 
 #[test]
 fn t_04() {
-  fail(
+  check(
     r#"
 structure S: sig
   exception E
 end = struct val E = Match end
-(**   ^^^^^^^^^^^^^^^^^^^^^^^^ mismatched identifier statuses: expected exception, found value *)
+(**   ^^^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: E *)
 "#,
   );
 }
 
 #[test]
 fn t_05() {
-  fail(
+  check(
     r#"
 structure S: sig
   val x: int
@@ -72,7 +72,7 @@ val _ = S.y
 
 #[test]
 fn t_06() {
-  fail(
+  check(
     r#"
 structure S: sig
   datatype d = A | B
@@ -85,31 +85,31 @@ end
 
 #[test]
 fn t_07() {
-  fail(
+  check(
     r#"
 structure S: sig
   datatype d = A | B
 end = struct datatype d = A end
-(**   ^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched value environments: expected ["A", "B"], found ["A"] *)
+(**   ^^^^^^^^^^^^^^^^^^^^^^^^^ missing value required by signature: B *)
 "#,
   );
 }
 
 #[test]
 fn t_08() {
-  fail(
+  check(
     r#"
 structure S: sig
   datatype d = A
 end = struct datatype d = A | B end
-(**   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ mismatched value environments: expected ["A"], found ["A", "B"] *)
+(**   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ extra value not present in signature: B *)
 "#,
   );
 }
 
 #[test]
 fn t_09() {
-  fail(
+  check(
     r#"
 structure S: sig
   type t
@@ -123,7 +123,7 @@ val _: S.t = 3
 
 #[test]
 fn t_10() {
-  fail(
+  check(
     r#"
 structure S: sig
   type t
@@ -162,7 +162,7 @@ end
 
 #[test]
 fn t_12() {
-  fail(
+  check(
     r#"
 structure S: sig
   type t

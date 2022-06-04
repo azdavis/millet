@@ -2,12 +2,12 @@
 
 use crate::error::{ErrorKind, Item};
 use crate::types::{
-  generalize, Bs, Env, FixedTyVars, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo,
-  TyNameSet, TyScheme, ValEnv, ValInfo,
+  generalize, ty_var_name, Bs, Env, FixedTyVars, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv,
+  TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::util::{cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
-use crate::{dec, st::St, ty};
-use fast_hash::FxHashSet;
+use crate::util::{apply_bv, cannot_bind_val, get_env, get_ty_info, ins_no_dupe, instantiate};
+use crate::{dec, st::St, ty, unify::unify};
+use fast_hash::{FxHashMap, FxHashSet};
 use std::rc::Rc;
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
@@ -79,7 +79,19 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       Err(name) => st.err(str_exp, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
     // sml_def(52), sml_def(53)
-    hir::StrExp::Ascription(_, _, _) => st.err(str_exp, ErrorKind::Unsupported("ascription")),
+    hir::StrExp::Ascription(inner_str_exp, asc, sig_exp) => {
+      let mut str_exp_env = Env::default();
+      get_str_exp(st, bs, ars, &mut str_exp_env, *inner_str_exp);
+      let mut sig_exp_env = Env::default();
+      get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
+      let sig = env_to_sig(bs, sig_exp_env);
+      let realized_sig_env = env_instance_sig(st, &str_exp_env, sig, str_exp.into());
+      env_enrich(st, &str_exp_env, &realized_sig_env, str_exp.into());
+      if matches!(asc, hir::Ascription::Opaque) {
+        st.err(str_exp, ErrorKind::Unsupported("opaque ascription"));
+      }
+      env.extend(realized_sig_env)
+    }
     // sml_def(54)
     hir::StrExp::App(fun_name, _) => match bs.fun_env.get(fun_name) {
       Some(_) => st.err(str_exp, ErrorKind::Unsupported("`functor` application")),
@@ -326,7 +338,159 @@ fn has_ty_var(ty: &Ty) -> bool {
   }
 }
 
+type TyRealization = FxHashMap<Sym, TyScheme>;
+
+fn env_instance_sig(st: &mut St, env: &Env, sig: Sig, idx: hir::Idx) -> Env {
+  let mut subst = TyRealization::default();
+  for &sym in sig.ty_names.iter() {
+    let (name, _) = st.syms.get(&sym).unwrap();
+    match env.ty_env.get(name) {
+      Some(ty_info) => {
+        subst.insert(sym, ty_info.ty_scheme.clone());
+      }
+      None => {
+        let name = name.clone();
+        st.err(idx, ErrorKind::Undefined(Item::Ty, name))
+      }
+    }
+  }
+  let mut ret = sig.env;
+  env_realize(&subst, &mut ret);
+  ret
+}
+
+// TODO for the enrich family of fns, improve error messages/range. for ranges, we might need to
+// track `hir::Idx`es either in the Env or in a separate map with exactly the same keys (names). or
+// we could add a special env only for use here that has the indices?
+
+fn env_enrich(st: &mut St, general: &Env, specific: &Env, idx: hir::Idx) {
+  for (name, specific) in specific.str_env.iter() {
+    match general.str_env.get(name) {
+      Some(general) => env_enrich(st, general, specific, idx),
+      None => st.err(idx, ErrorKind::Missing(Item::Struct, name.clone())),
+    }
+  }
+  for (name, specific) in specific.ty_env.iter() {
+    match general.ty_env.get(name) {
+      Some(general) => ty_info_enrich(st, general, specific, idx),
+      None => st.err(idx, ErrorKind::Missing(Item::Ty, name.clone())),
+    }
+  }
+  for (name, specific) in specific.val_env.iter() {
+    match general.val_env.get(name) {
+      Some(general) => val_info_enrich(st, general, specific, name, idx),
+      None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
+    }
+  }
+}
+
+fn ty_info_enrich(st: &mut St, general: &TyInfo, specific: &TyInfo, idx: hir::Idx) {
+  eq_ty_scheme(st, &general.ty_scheme, &specific.ty_scheme, idx);
+  if specific.val_env.is_empty() {
+    return;
+  }
+  let mut general_val_env = general.val_env.clone();
+  for (name, specific) in specific.val_env.iter() {
+    match general_val_env.remove(name) {
+      Some(general) => {
+        if general.id_status != specific.id_status {
+          st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
+        }
+        eq_ty_scheme(st, &general.ty_scheme, &specific.ty_scheme, idx);
+      }
+      None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
+    }
+  }
+  for name in general_val_env.keys() {
+    st.err(idx, ErrorKind::Extra(Item::Val, name.clone()));
+  }
+}
+
+fn val_info_enrich(
+  st: &mut St,
+  general: &ValInfo,
+  specific: &ValInfo,
+  name: &hir::Name,
+  idx: hir::Idx,
+) {
+  generalizes(st, &general.ty_scheme, &specific.ty_scheme, idx);
+  if general.id_status != specific.id_status && specific.id_status != IdStatus::Val {
+    st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
+  }
+}
+
+fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: &TyScheme, idx: hir::Idx) {
+  // TODO just use `==` since alpha equivalent ty schemes are already `==` for derive(PartialEq)?
+  generalizes(st, lhs, rhs, idx);
+  generalizes(st, rhs, lhs, idx);
+}
+
+fn generalizes(st: &mut St, general: &TyScheme, specific: &TyScheme, idx: hir::Idx) {
+  let general = instantiate(st, general);
+  let specific = {
+    let subst: Vec<_> = specific
+      .bound_vars
+      .kinds()
+      .enumerate()
+      .map(|(idx, kind)| {
+        let equality = matches!(kind, Some(TyVarKind::Equality));
+        let ty_var: String = ty_var_name(equality, idx).collect();
+        Ty::FixedVar(st.gen_fixed_var(hir::TyVar::new(&ty_var)))
+      })
+      .collect();
+    let mut ty = specific.ty.clone();
+    apply_bv(&subst, &mut ty);
+    ty
+  };
+  unify(st, specific, general, idx)
+}
+
 // uh... recursion schemes??
+
+fn env_realize(subst: &TyRealization, env: &mut Env) {
+  for env in env.str_env.values_mut() {
+    env_realize(subst, env);
+  }
+  for ty_info in env.ty_env.values_mut() {
+    ty_realize(subst, &mut ty_info.ty_scheme.ty);
+    val_env_realize(subst, &mut ty_info.val_env);
+  }
+  val_env_realize(subst, &mut env.val_env);
+}
+
+fn val_env_realize(subst: &TyRealization, val_env: &mut ValEnv) {
+  for val_info in val_env.values_mut() {
+    ty_realize(subst, &mut val_info.ty_scheme.ty);
+  }
+}
+
+fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
+  match ty {
+    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
+    Ty::Record(rows) => {
+      for ty in rows.values_mut() {
+        ty_realize(subst, ty);
+      }
+    }
+    Ty::Con(args, sym) => match subst.get(sym) {
+      Some(ty_scheme) => {
+        assert_eq!(ty_scheme.bound_vars.len(), args.len());
+        let mut ty_scheme_ty = ty_scheme.ty.clone();
+        apply_bv(args, &mut ty_scheme_ty);
+        *ty = ty_scheme_ty;
+      }
+      None => {
+        for ty in args {
+          ty_realize(subst, ty);
+        }
+      }
+    },
+    Ty::Fn(param, res) => {
+      ty_realize(subst, param);
+      ty_realize(subst, res);
+    }
+  }
+}
 
 fn bs_syms<F: FnMut(Sym)>(f: &mut F, bs: &Bs) {
   for fun_sig in bs.fun_env.values() {

@@ -29,6 +29,8 @@ pub(crate) enum ErrorKind {
   Unsupported(&'static str),
   Undefined(Item, hir::Name),
   Duplicate(Item, hir::Name),
+  Missing(Item, hir::Name),
+  Extra(Item, hir::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
   OverloadMismatch(Overload, Ty, Ty),
@@ -47,6 +49,7 @@ pub(crate) enum ErrorKind {
   ExnCopyNotExnIdStatus,
   InvalidRebindName(hir::Name),
   PolymorphicExn,
+  WrongIdStatus(hir::Name),
 }
 
 #[derive(Debug)]
@@ -84,6 +87,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
       ErrorKind::Undefined(item, name) => write!(f, "undefined {item}: {name}"),
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
+      ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
+      ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
       ErrorKind::Circularity(_, ty) => {
         write!(f, "circularity: {}", ty.display(self.syms))
       }
@@ -125,6 +130,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
       ErrorKind::PolymorphicExn => f.write_str("cannot have a polymorphic `exception`"),
+      ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
     }
   }
 }
