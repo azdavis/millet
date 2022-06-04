@@ -79,17 +79,9 @@ impl<'a> fmt::Display for TyDisplay<'a> {
         // TODO this never gets used because we don't generalize when reporting in errors. also it
         // might have clashed with fixed vars anyway?
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        let hd = match vars.inner[bv.0] {
-          None | Some(TyVarKind::Overloaded(_)) => "'",
-          Some(TyVarKind::Equality) => "''",
-        };
-        f.write_str(hd)?;
-        let alpha = (b'z' - b'a') as usize;
-        let quot = bv.0 / alpha;
-        let rem = bv.0 % alpha;
-        let ch = char::from((rem as u8) + b'a');
-        for _ in 0..=quot {
-          write!(f, "{ch}")?;
+        let equality = matches!(vars.inner[bv.0], Some(TyVarKind::Equality));
+        for c in ty_var_name(equality, bv.0) {
+          write!(f, "{c}")?;
         }
       }
       // TODO improve?
@@ -167,6 +159,18 @@ impl<'a> fmt::Display for TyDisplay<'a> {
     }
     Ok(())
   }
+}
+
+/// returns a char iterator that when collected could be a name for a type variable.
+pub(crate) fn ty_var_name(equality: bool, idx: usize) -> impl Iterator<Item = char> {
+  let alpha = (b'z' - b'a') as usize;
+  let quot = idx / alpha;
+  let rem = idx % alpha;
+  let ch = char::from((rem as u8) + b'a');
+  let ticks = if equality { 1 } else { 2 };
+  std::iter::repeat('\'')
+    .take(ticks)
+    .chain(std::iter::repeat(ch).take(quot))
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
