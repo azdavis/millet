@@ -4,6 +4,7 @@
   "patterns": [
     { "include": "#lineComment" },
     { "include": "#blockComment" },
+    { "include": "#preprocessorStart" },
     { "include": "#controlKeyword" },
     { "include": "#otherKeyword" }
   ],
@@ -18,6 +19,10 @@
       "begin": "\\(\\*",
       "end": "\\*\\)",
       "patterns": [{ "include": "#blockComment" }]
+    },
+    "preprocessorStart": {
+      "name": "keyword.control.directive.sml-cm",
+      "match": "^#(elif|else|endif|error|if)"
     },
     "controlKeyword": {
       "name": "keyword.control.sml-cm",

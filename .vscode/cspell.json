@@ -11,6 +11,7 @@
     "clippy",
     "consts",
     "descs",
+    "elif",
     "eqtype",
     "esbuild",
     "exns",
