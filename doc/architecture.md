@@ -134,6 +134,10 @@ Unifies all the passes into one single API.
 
 Depends on `analysis` and a bunch of third party crates to actually construct the language server. This is the only binary target, and only this may perform IO.
 
+### `crates/tests`
+
+The tests.
+
 ### `doc`
 
 Documentation, like this!
