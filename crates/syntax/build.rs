@@ -30,7 +30,7 @@ fn get_token(name: &str) -> (TokenKind, String) {
 fn main() {
   gen(
     "SML",
-    &["Whitespace", "Comment", "Invalid"],
+    &["Whitespace", "BlockComment", "Invalid"],
     include_str!("syntax.ungram").parse().unwrap(),
     get_token,
   )

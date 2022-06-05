@@ -115,7 +115,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         (None, Some(_)) => unreachable!(),
       }
     }
-    return SK::Comment;
+    return SK::BlockComment;
   }
   if b == b'*' && bs.get(cx.i + 1) == Some(&b')') {
     cx.i += 2;
