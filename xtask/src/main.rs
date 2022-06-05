@@ -67,6 +67,7 @@ fn finish_args(args: Arguments) -> Result<()> {
 }
 
 fn ck_sml_def(sh: &Shell) -> Result<()> {
+  eprintln!("checking sml definition");
   let dirs: [PathBuf; 3] =
     ["hir", "lower", "statics"].map(|x| ["crates", x, "src"].iter().collect());
   let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output()?;
@@ -88,6 +89,18 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
     bail!("extra sml definition references: {extra:?}")
   }
   Ok(())
+}
+
+fn ck_no_ignore(sh: &Shell) -> Result<()> {
+  eprintln!("checking for no ignores");
+  let has_ignore = cmd!(sh, "git grep -lFe '#[ignore'").output()?;
+  let out = String::from_utf8(has_ignore.stdout)?;
+  let set: BTreeSet<_> = out.lines().filter(|&x| x != "xtask/src/main.rs").collect();
+  if set.is_empty() {
+    Ok(())
+  } else {
+    bail!("found files with ignore: {set:?}");
+  }
 }
 
 fn dist(sh: &Shell, release: bool) -> Result<()> {
@@ -137,6 +150,7 @@ fn main() -> Result<()> {
       cmd!(sh, "cargo clippy").run()?;
       cmd!(sh, "cargo test --locked").run()?;
       ck_sml_def(&sh)?;
+      ck_no_ignore(&sh)?;
     }
     Cmd::Dist => {
       let release = args.contains("--release");
