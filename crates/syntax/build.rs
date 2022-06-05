@@ -34,5 +34,5 @@ fn main() {
     include_str!("syntax.ungram").parse().unwrap(),
     get_token,
   )
-  .unwrap();
+  .unwrap()
 }
