@@ -11,7 +11,7 @@
 
 ## Warning
 
-The language server is very experimental and might be slow, wrong, incomplete, or unstable.
+The language server is alpha-quality software. It might be slow, wrong, incomplete, or unstable.
 
 You can turn it off by setting `millet.useLanguageServer` to `false` in your VS Code settings.
 

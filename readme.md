@@ -6,10 +6,7 @@ Also a corresponding [Visual Studio Code][vscode] extension, available for downl
 
 ## Warning
 
-This project is alpha-quality software.
-
-- There are [many important things](doc/todo.md) not yet implemented.
-- There are things that are shoddily implemented. Note the ignored tests.
+The language server is alpha-quality software. It might be slow, wrong, [incomplete][], or unstable.
 
 ## Development
 
@@ -55,6 +52,7 @@ See the documentation of `check()` for how to write tests.
 Also, birds eat millet, and a bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course taught in Standard ML.
 
 [cmu150]: http://www.cs.cmu.edu/~15150/
+[incomplete]: doc/todo.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [node]: https://nodejs.org/en/
