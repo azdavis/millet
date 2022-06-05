@@ -9,22 +9,17 @@ use xshell::{cmd, Shell};
 enum Cmd {
   Help,
   Ci,
-  CkSmlDef,
   Dist,
   Tag,
 }
 
 impl Cmd {
-  const VALUES: [Cmd; 5] = [Cmd::Help, Cmd::Ci, Cmd::CkSmlDef, Cmd::Dist, Cmd::Tag];
+  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::Tag];
 
   fn name_desc(&self) -> (&'static str, &'static str) {
     match self {
       Cmd::Help => ("help", "show this help"),
       Cmd::Ci => ("ci", "run various tests"),
-      Cmd::CkSmlDef => (
-        "ck-sml-def",
-        "check whether the sml definition is properly referenced",
-      ),
       Cmd::Dist => (
         "dist",
         "make artifacts for distribution (can use --release)",
@@ -141,10 +136,6 @@ fn main() -> Result<()> {
       cmd!(sh, "cargo fmt -- --check").run()?;
       cmd!(sh, "cargo clippy").run()?;
       cmd!(sh, "cargo test --locked").run()?;
-      ck_sml_def(&sh)?;
-    }
-    Cmd::CkSmlDef => {
-      finish_args(args)?;
       ck_sml_def(&sh)?;
     }
     Cmd::Dist => {
