@@ -149,12 +149,9 @@ fn get_files(root: &lsp_types::Url) -> Vec<(lsp_types::Url, String)> {
     .into_iter()
     .filter_map(|entry| {
       let entry = entry.ok()?;
-      let is_sml_file = entry
-        .path()
-        .extension()
-        .and_then(std::ffi::OsStr::to_str)
-        .map_or(false, |x| matches!(x, "sml" | "sig" | "fun"));
-      if !is_sml_file {
+      let ext = entry.path().extension()?.to_str()?;
+      let is_sml_ext = matches!(ext, "sml" | "sig" | "fun");
+      if !is_sml_ext {
         return None;
       }
       let path = entry.path().as_os_str().to_str()?;
