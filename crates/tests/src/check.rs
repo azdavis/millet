@@ -20,6 +20,8 @@ use syntax::{ast::AstNode as _, rowan::TextRange};
 /// (**           ^^^ message about quz *)
 /// "#);
 /// ```
+///
+/// see also [`fail`] if the test is failing.
 #[track_caller]
 pub(crate) fn check(s: &str) {
   let cx = get_cx(s);
@@ -31,7 +33,8 @@ pub(crate) fn check(s: &str) {
 /// like [`check`], but the expectation comments should be not satisfied.
 ///
 /// for instance, the following program has an expectation comment that doesn't make sense, since `1
-/// + 2` should typecheck. so we pass it to fail, which means the test passes.
+/// + 2` should typecheck. but since `fail` expects the the comments to be unsatisfied, the test
+///   passes.
 ///
 /// ```ignore
 /// fail(r#"
@@ -40,19 +43,14 @@ pub(crate) fn check(s: &str) {
 /// "#);
 /// ```
 ///
-/// this is useful if support for something is not implemented, but planned for later. for instance,
-/// this is a valid SML program:
+/// this is useful if support for something is not implemented, but planned for later:
 ///
-/// ```sml
-/// structure S = struct
-///   val x = 1
-/// end
-/// val _ = S.x + 2
-/// ```
+/// 1. make a test that should eventually pass, but use `fail`
+/// 2. later, implement the feature that test is testing
+/// 3. the test starts to actually pass, so `fail` fails
+/// 4. update the test to use `check` instead so it actually passes
 ///
-/// however, support for modules is not implemented, so this test fails. so pass it to fail, and
-/// it passes. if later support for modules _is_ implemented, that test will fail, and we can update
-/// it to use [`check`] instead so it passes again.
+/// use `fail` instead of ignoring tests.
 #[track_caller]
 #[allow(dead_code)]
 pub(crate) fn fail(s: &str) {

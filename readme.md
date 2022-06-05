@@ -1,8 +1,10 @@
 # Millet
 
-A [language server][lang-srv] for [Standard ML][sml].
+Tools for [Standard ML][sml], most notably a [language server][lang-srv].
 
-Also a corresponding [Visual Studio Code][vscode] extension, available for download on the [marketplace][].
+## Installation for [VS Code][vscode]
+
+Install it from the [marketplace][].
 
 ## Warning
 
@@ -19,11 +21,7 @@ If you're using VS Code, you can try out the VS Code extension:
 3. Select 'extension' in the drop down.
 4. Press the green play button.
 
-## Repository layout
-
-- Most of the code is in `crates`.
-- Editor extensions are in `extensions`.
-- The "build system" is in `xtask`. It requires rust, node, and git.
+See also the [architecture][] documentation.
 
 ## Testing
 
@@ -51,6 +49,7 @@ See the documentation of `check()` for how to write tests.
 
 Also, birds eat millet, and a bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course taught in Standard ML.
 
+[architecture]: doc/architecture.md
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [incomplete]: doc/todo.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
