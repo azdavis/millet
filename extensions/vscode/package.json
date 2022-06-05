@@ -68,6 +68,16 @@
           "Standard ML"
         ],
         "configuration": "languages/sml/language-configuration.json"
+      },
+      {
+        "id": "sml-cm",
+        "extensions": [
+          ".cm"
+        ],
+        "aliases": [
+          "Standard ML Compilation Manager"
+        ],
+        "configuration": "languages/sml-cm/language-configuration.json"
       }
     ],
     "grammars": [
@@ -75,6 +85,11 @@
         "language": "sml",
         "scopeName": "source.sml",
         "path": "languages/sml/sml.tmLanguage.json"
+      },
+      {
+        "language": "sml-cm",
+        "scopeName": "source.sml-cm",
+        "path": "languages/sml-cm/sml-cm.tmLanguage.json"
       }
     ]
   }

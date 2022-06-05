@@ -1,0 +1,25 @@
+{
+  "name": "Standard ML Compilation Manager",
+  "scopeName": "source.sml-cm",
+  "patterns": [
+    { "include": "#blockComment" },
+    { "include": "#controlKeyword" },
+    { "include": "#otherKeyword" }
+  ],
+  "repository": {
+    "blockComment": {
+      "name": "comment.block.sml-cm",
+      "begin": "\\(\\*",
+      "end": "\\*\\)",
+      "patterns": [{ "include": "#blockComment" }]
+    },
+    "controlKeyword": {
+      "name": "keyword.control.sml-cm",
+      "match": "\\b(Alias|Group|Library|is)\\b"
+    },
+    "otherKeyword": {
+      "name": "keyword.other.sml-cm",
+      "match": "\\b(functor|funsig|signature|structure)\\b"
+    }
+  }
+}

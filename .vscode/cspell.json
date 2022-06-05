@@ -16,6 +16,7 @@
     "exns",
     "forall",
     "functors",
+    "funsig",
     "fval",
     "hasher",
     "hexdigit",
