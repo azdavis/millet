@@ -2,11 +2,17 @@
   "name": "Standard ML Compilation Manager",
   "scopeName": "source.sml-cm",
   "patterns": [
+    { "include": "#lineComment" },
     { "include": "#blockComment" },
     { "include": "#controlKeyword" },
     { "include": "#otherKeyword" }
   ],
   "repository": {
+    "lineComment": {
+      "name": "comment.line.sml-cm",
+      "begin": ";",
+      "end": "$"
+    },
     "blockComment": {
       "name": "comment.block.sml-cm",
       "begin": "\\(\\*",
