@@ -114,29 +114,33 @@ impl<'a> Check<'a> {
 
   fn add_err(&mut self, id: FileId, range: TextRange, got: String) {
     let file = &self.files[id.0];
-    match get_line_col_pair(&file.indices, range) {
-      None => self.reasons.push(Reason::CannotGetLineColPair(id, range)),
-      Some(pair) => {
-        let region = if pair.start.line == pair.end.line {
-          OneLineRegion {
-            line: pair.start.line,
-            col: pair.start.col..pair.end.col,
-          }
-        } else {
-          self.reasons.push(Reason::NotOneLine(id, pair));
-          return;
-        };
-        match file.want.get(&region) {
-          None => self.reasons.push(Reason::GotButNotWanted(id, region, got)),
-          Some(&want) => {
-            if want != got {
-              self
-                .reasons
-                .push(Reason::MismatchedErrors(id, region, want, got))
-            }
-          }
-        }
+    let pair = match get_line_col_pair(&file.indices, range) {
+      None => {
+        self.reasons.push(Reason::CannotGetLineColPair(id, range));
+        return;
       }
+      Some(x) => x,
+    };
+    let region = if pair.start.line == pair.end.line {
+      OneLineRegion {
+        line: pair.start.line,
+        col: pair.start.col..pair.end.col,
+      }
+    } else {
+      self.reasons.push(Reason::NotOneLine(id, pair));
+      return;
+    };
+    let want = match file.want.get(&region) {
+      None => {
+        self.reasons.push(Reason::GotButNotWanted(id, region, got));
+        return;
+      }
+      Some(&x) => x,
+    };
+    if want != got {
+      self
+        .reasons
+        .push(Reason::MismatchedErrors(id, region, want, got))
     }
   }
 }
