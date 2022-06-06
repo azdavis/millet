@@ -8,7 +8,7 @@ use syntax::rowan::TextRange;
 /// expectation comments are regular SML comments except they:
 /// - are always on only one line
 /// - start with `(**`
-/// - point at the things that should have errors
+/// - point at the things that should have errors with `^` or `v`
 /// - contain the expected error message for those things
 ///
 /// you might want to use raw string syntax (`r#"..."#`) to construct the string to pass.
@@ -32,9 +32,9 @@ pub(crate) fn check(s: &str) {
 
 /// like [`check`], but the expectation comments should be not satisfied.
 ///
-/// for instance, the following program has an expectation comment that doesn't make sense, since `1
-/// + 2` should typecheck. but since `fail` expects the the comments to be unsatisfied, the test
-///   passes.
+/// for instance, the following program has an expectation comment that doesn't make sense, since
+/// `1 + 2` should typecheck. but since `fail` expects the the comments to be unsatisfied, the test
+/// passes.
 ///
 /// ```ignore
 /// fail(r#"
