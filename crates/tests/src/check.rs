@@ -1,7 +1,6 @@
 use fast_hash::FxHashMap;
 use std::fmt;
 use std::ops::Range;
-use syntax::rowan::TextRange;
 
 /// pass the string of an SML program with some expectation comments.
 ///
@@ -60,23 +59,6 @@ pub(crate) fn fail(s: &str) {
   }
 }
 
-fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
-  let show = env_var_yes("SHOW");
-  let show = analysis::Show {
-    lex: show,
-    parse: show,
-  };
-  match analysis::get(std::iter::once(s), show)
-    .pop()
-    .unwrap()
-    .into_iter()
-    .next()
-  {
-    Some(x) => Err((x.range, x.message)),
-    None => Ok(()),
-  }
-}
-
 struct Check<'a> {
   files: Vec<CheckFile<'a>>,
   reasons: Vec<Reason<'a>>,
@@ -107,11 +89,21 @@ impl<'a> Check<'a> {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
     let mut had_error = false;
-    for s in ss {
-      if let Err((range, msg)) = get_one_error(s) {
+    let show = env_var_yes("SHOW");
+    let show = analysis::Show {
+      lex: show,
+      parse: show,
+    };
+    for &s in ss {
+      if let Some(e) = analysis::get(std::iter::once(s), show)
+        .pop()
+        .unwrap()
+        .into_iter()
+        .next()
+      {
         had_error = true;
-        ret.add_err(FileId(0), Range::<usize>::from(range), msg)
-      }
+        ret.add_err(FileId(0), Range::<usize>::from(e.range), e.message);
+      };
     }
     if !had_error && want_len != 0 {
       ret.reasons.push(Reason::NoErrorsEmitted(want_len));

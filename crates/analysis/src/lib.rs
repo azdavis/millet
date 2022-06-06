@@ -16,7 +16,7 @@ pub struct Error {
 }
 
 /// What to show to stderr.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Show {
   /// Show the tokens.
   pub lex: bool,
