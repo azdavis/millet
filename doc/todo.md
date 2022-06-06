@@ -8,17 +8,15 @@ priority is approximate. if unsure of priority, put in low.
   - stick in readme
   - and 'icon' field of package.json
   - that icon needs to be 128x128 png
+- support multiple files via a subset of CM file support
+- support no root (just analyze each file in isolation)
+- show witnesses to non-exhaustive match
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info
 - add more of the standard basis
   - https://smlfamily.github.io/Basis/
   - bootstrap?
-- make it performant
-  - only lower the parts of the syntax tree that changed?
-  - only re-check those parts?
-  - don't re-calculate everything every time LOL
-  - salsa-rs?
 
 ## medium
 
@@ -30,7 +28,6 @@ priority is approximate. if unsure of priority, put in low.
   - handle equality types
   - note ignored tests
 - get better error messages
-  - show witnesses to non-exhaustive match
   - improve ranges of stuff
   - show fully qualified names in type errors
   - related: avoid clashes between ty vars
@@ -39,10 +36,11 @@ priority is approximate. if unsure of priority, put in low.
     - in such a way as to not allow/reject more programs, just improve errors
   - better overload errors: maybe we should choose what that overloaded type should be sooner
   - better parser errors?
-- support files exporting/importing from each other
-  - via CM? (guh)
-  - via e.g. a `project.json` (or `.txt`? or `.toml`?) in the workspace root which would list the ordered files in this project
-  - just require files to `use` each other?
+- make it performant
+  - only lower the parts of the syntax tree that changed?
+  - only re-check those parts?
+  - don't re-calculate everything every time LOL
+  - salsa-rs?
 
 ## low
 
