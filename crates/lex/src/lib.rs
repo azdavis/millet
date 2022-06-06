@@ -106,6 +106,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   }
   // whitespace
   if is_whitespace(b) {
+    cx.i += 1;
     advance_while(cx, bs, is_whitespace);
     return SK::Whitespace;
   }
