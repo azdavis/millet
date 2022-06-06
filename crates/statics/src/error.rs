@@ -1,5 +1,7 @@
-use crate::pat_match::Pat;
+use crate::fmt_util::comma_seq;
+use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::{MetaTyVar, Overload, Syms, Ty};
+use pattern_match::RawPat;
 use std::fmt;
 
 /// A statics error.
@@ -120,8 +122,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
-      ErrorKind::NonExhaustiveMatch(pats) => non_exhaustive(f, pats, "match"),
-      ErrorKind::NonExhaustiveBinding(pats) => non_exhaustive(f, pats, "binding"),
+      ErrorKind::NonExhaustiveMatch(pats) => non_exhaustive(f, self.syms, pats, "match"),
+      ErrorKind::NonExhaustiveBinding(pats) => non_exhaustive(f, self.syms, pats, "binding"),
       ErrorKind::PatValIdStatus => f.write_str("value binding used as a pattern"),
       ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
@@ -141,6 +143,130 @@ impl fmt::Display for ErrorKindDisplay<'_> {
   }
 }
 
-fn non_exhaustive(f: &mut fmt::Formatter<'_>, _: &[Pat], kind: &str) -> fmt::Result {
-  write!(f, "non-exhaustive {kind}")
+fn non_exhaustive(
+  f: &mut fmt::Formatter<'_>,
+  syms: &Syms,
+  pats: &[Pat],
+  kind: &str,
+) -> fmt::Result {
+  write!(f, "non-exhaustive {kind}: missing ")?;
+  assert!(!pats.is_empty());
+  let max_len = 2;
+  let iter = pats.iter().take(max_len).map(|pat| PatDisplay {
+    pat,
+    syms,
+    prec: PatPrec::Min,
+  });
+  comma_seq(f, iter)?;
+  if pats.len() > max_len {
+    write!(f, ", and {} others", pats.len() - max_len)?;
+  }
+  Ok(())
+}
+
+struct PatDisplay<'a> {
+  pat: &'a Pat,
+  syms: &'a Syms,
+  prec: PatPrec,
+}
+
+impl<'a> fmt::Display for PatDisplay<'a> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let (con, args) = match &self.pat.raw {
+      RawPat::Con(a, b) => (a, b),
+      RawPat::Or(_) => unreachable!(),
+    };
+    match con {
+      Con::Any => f.write_str("_")?,
+      Con::Int(i) => write!(f, "{i}")?,
+      Con::Word(w) => write!(f, "0w{w}")?,
+      // TODO maybe not accurate
+      Con::Char(c) => write!(f, "#\"{}\"", c.escape_ascii())?,
+      Con::String(s) => f.write_str(s.as_str())?,
+      Con::Record(labs) => {
+        assert_eq!(labs.len(), args.len());
+        let is_tuple = labs
+          .iter()
+          .enumerate()
+          .all(|(idx, lab)| hir::Lab::tuple(idx) == *lab);
+        if is_tuple {
+          f.write_str("(")?;
+          comma_seq(
+            f,
+            args.iter().map(|pat| PatDisplay {
+              pat,
+              syms: self.syms,
+              prec: PatPrec::Min,
+            }),
+          )?;
+          f.write_str(")")?;
+        } else {
+          f.write_str("{")?;
+          comma_seq(
+            f,
+            labs.iter().zip(args).map(|(lab, pat)| RowDisplay {
+              lab,
+              pat,
+              syms: self.syms,
+            }),
+          )?;
+          f.write_str("}")?;
+        }
+        return Ok(());
+      }
+      Con::Variant(_, name) => {
+        let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
+        if needs_paren {
+          f.write_str("(")?;
+        }
+        match name {
+          VariantName::Name(name) => f.write_str(name.as_str())?,
+          VariantName::Exn(exn) => f.write_str(self.syms.get_exn(exn).0.as_str())?,
+        }
+        if args.is_empty() {
+          return Ok(());
+        }
+        f.write_str(" ")?;
+        comma_seq(
+          f,
+          args.iter().map(|pat| PatDisplay {
+            pat,
+            syms: self.syms,
+            prec: PatPrec::App,
+          }),
+        )?;
+        if needs_paren {
+          f.write_str(")")?;
+        }
+        return Ok(());
+      }
+    }
+    // if got here, this is scon/any
+    assert!(args.is_empty());
+    Ok(())
+  }
+}
+
+enum PatPrec {
+  Min,
+  App,
+}
+
+struct RowDisplay<'a> {
+  lab: &'a hir::Lab,
+  pat: &'a Pat,
+  syms: &'a Syms,
+}
+
+impl<'a> fmt::Display for RowDisplay<'a> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.lab.fmt(f)?;
+    f.write_str(": ")?;
+    let pd = PatDisplay {
+      pat: self.pat,
+      syms: self.syms,
+      prec: PatPrec::Min,
+    };
+    pd.fmt(f)
+  }
 }

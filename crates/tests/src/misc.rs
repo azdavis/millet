@@ -34,7 +34,7 @@ fn bind() {
     r#"
 datatype bin = Zero | One
 val One = One
-(** ^^^ non-exhaustive binding *)
+(** ^^^ non-exhaustive binding: missing Zero *)
 "#,
   );
 }
@@ -273,7 +273,7 @@ fn non_exhaustive_binding() {
   check(
     r#"
 val 3 = 1 + 2
-(** ^ non-exhaustive binding *)
+(** ^ non-exhaustive binding: missing _ *)
 "#,
   );
 }

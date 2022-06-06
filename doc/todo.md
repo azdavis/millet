@@ -10,7 +10,6 @@ priority is approximate. if unsure of priority, put in low.
   - that icon needs to be 128x128 png
 - support multiple files via a subset of CM file support
 - support no root (just analyze each file in isolation)
-- show witnesses to non-exhaustive match
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info

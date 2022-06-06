@@ -6,7 +6,7 @@ fn t_00() {
     r#"
 val _ =
   case 3 of
-(**    ^ non-exhaustive match *)
+(**    ^ non-exhaustive match: missing _ *)
     4 => 5
 "#,
   );
@@ -19,7 +19,7 @@ fn t_01() {
 datatype hmm = A | B of int | C of hmm | D of string
 val _ =
   case A of
-(**    ^ non-exhaustive match *)
+(**    ^ non-exhaustive match: missing C (C (C (C _))), C (C (C (B _))), and 6 others *)
     A => 0
   | B 1 => 1
   | B 3 => 2
@@ -45,7 +45,7 @@ fn t_02() {
     r#"
 val _ =
   case (1, 2) of
-(**    ^^^^^^ non-exhaustive match *)
+(**    ^^^^^^ non-exhaustive match: missing (_, _) *)
     (3, 4) => 0
   | (x, 6) => x
 "#,
@@ -78,7 +78,7 @@ fn t_04() {
     r#"
 val _ =
   case (true, false) of
-(**    ^^^^^^^^^^^^^ non-exhaustive match *)
+(**    ^^^^^^^^^^^^^ non-exhaustive match: missing (false, true) *)
     (true, _) => 0
   | (_, false) => 1
 "#,
@@ -204,7 +204,7 @@ datatype ab = A | B
 datatype cd = C | D
 val x =
   case (A, C, A) of
-(**    ^^^^^^^^^ non-exhaustive match *)
+(**    ^^^^^^^^^ non-exhaustive match: missing (A, D, B) *)
     (A, C, _) => 0
   | (B, _, _) => 1
   | (_, _, A) => 4
