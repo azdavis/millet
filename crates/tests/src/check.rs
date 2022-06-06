@@ -24,7 +24,7 @@ use syntax::rowan::TextRange;
 /// see also [`fail`] if the test is failing.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  let cx = Check::new(s);
+  let cx = Check::new(&[s]);
   if !cx.reasons.is_empty() {
     panic!("{cx}")
   }
@@ -51,10 +51,10 @@ pub(crate) fn check(s: &str) {
 /// 4. update the test to use `check` instead so it actually passes
 ///
 /// use `fail` instead of ignoring tests.
-#[track_caller]
 #[allow(dead_code)]
+#[track_caller]
 pub(crate) fn fail(s: &str) {
-  let cx = Check::new(s);
+  let cx = Check::new(&[s]);
   if cx.reasons.is_empty() {
     panic!("unexpected pass: {cx}")
   }
@@ -77,47 +77,57 @@ fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
   }
 }
 
-struct Check<'a> {
+struct CheckFile<'a> {
   indices: Vec<usize>,
   want: FxHashMap<OneLineRegion, &'a str>,
+}
+
+struct Check<'a> {
+  files: Vec<CheckFile<'a>>,
   reasons: Vec<Reason<'a>>,
 }
 
 impl<'a> Check<'a> {
-  fn new(s: &'a str) -> Self {
-    let want: FxHashMap<_, _> = s
-      .lines()
-      .enumerate()
-      .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
-      .collect();
-    let want_len = want.len();
-    let mut reasons = Vec::<Reason>::new();
-    if !matches!(want_len, 0 | 1) {
-      reasons.push(Reason::WantWrongNumError(want_len));
-    }
+  fn new(ss: &[&'a str]) -> Self {
     let mut ret = Self {
-      indices: s
-        .bytes()
-        .enumerate()
-        .filter_map(|(idx, b)| (b == b'\n').then(|| idx))
+      files: ss
+        .iter()
+        .map(|s| CheckFile {
+          indices: s
+            .bytes()
+            .enumerate()
+            .filter_map(|(idx, b)| (b == b'\n').then(|| idx))
+            .collect(),
+          want: s
+            .lines()
+            .enumerate()
+            .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
+            .collect(),
+        })
         .collect(),
-      want,
-      reasons,
+      reasons: Vec::new(),
     };
-    match get_one_error(s) {
-      Ok(()) => {
-        if !ret.want.is_empty() {
-          ret.reasons.push(Reason::NoErrorsEmitted(ret.want.len()));
-        }
+    let want_len: usize = ret.files.iter().map(|x| x.want.len()).sum();
+    if !matches!(want_len, 0 | 1) {
+      ret.reasons.push(Reason::WantWrongNumError(want_len));
+    }
+    let mut had_error = false;
+    for s in ss {
+      if let Err((range, msg)) = get_one_error(s) {
+        had_error = true;
+        ret.add_err(FileId(0), Range::<usize>::from(range), msg)
       }
-      Err((range, msg)) => ret.add_err(Range::<usize>::from(range), msg),
+    }
+    if !had_error && want_len != 0 {
+      ret.reasons.push(Reason::NoErrorsEmitted(want_len));
     }
     ret
   }
 
-  fn add_err(&mut self, range: Range<usize>, got: String) {
-    match get_line_col_pair(&self.indices, range.clone()) {
-      None => self.reasons.push(Reason::CannotGetLineColPair(range)),
+  fn add_err(&mut self, id: FileId, range: Range<usize>, got: String) {
+    let file = &self.files[id.0];
+    match get_line_col_pair(&file.indices, range.clone()) {
+      None => self.reasons.push(Reason::CannotGetLineColPair(id, range)),
       Some(pair) => {
         let region = if pair.start.line == pair.end.line {
           OneLineRegion {
@@ -125,16 +135,16 @@ impl<'a> Check<'a> {
             col: pair.start.col..pair.end.col,
           }
         } else {
-          self.reasons.push(Reason::NotOneLine(pair));
+          self.reasons.push(Reason::NotOneLine(id, pair));
           return;
         };
-        match self.want.get(&region) {
-          None => self.reasons.push(Reason::GotButNotWanted(region, got)),
+        match file.want.get(&region) {
+          None => self.reasons.push(Reason::GotButNotWanted(id, region, got)),
           Some(&want) => {
             if want != got {
               self
                 .reasons
-                .push(Reason::MismatchedErrors(region, want, got))
+                .push(Reason::MismatchedErrors(id, region, want, got))
             }
           }
         }
@@ -150,12 +160,14 @@ impl fmt::Display for Check<'_> {
       writeln!(f, "  - {reason}")?;
     }
     f.write_str("\n  want:")?;
-    if self.want.is_empty() {
+    if self.files.iter().all(|x| x.want.is_empty()) {
       f.write_str(" <empty>")?;
     } else {
       f.write_str("\n")?;
-      for (region, &msg) in self.want.iter() {
-        writeln!(f, "  - {region}: {msg}")?;
+      for file in self.files.iter() {
+        for (region, &msg) in file.want.iter() {
+          writeln!(f, "  - {region}: {msg}")?;
+        }
       }
     }
     writeln!(f)?;
@@ -163,13 +175,21 @@ impl fmt::Display for Check<'_> {
   }
 }
 
+struct FileId(usize);
+
+impl fmt::Display for FileId {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "file_{}.sml", self.0)
+  }
+}
+
 enum Reason<'a> {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
-  CannotGetLineColPair(Range<usize>),
-  NotOneLine(Range<LineCol>),
-  GotButNotWanted(OneLineRegion, String),
-  MismatchedErrors(OneLineRegion, &'a str, String),
+  CannotGetLineColPair(FileId, Range<usize>),
+  NotOneLine(FileId, Range<LineCol>),
+  GotButNotWanted(FileId, OneLineRegion, String),
+  MismatchedErrors(FileId, OneLineRegion, &'a str, String),
 }
 
 impl<'a> fmt::Display for Reason<'a> {
@@ -179,14 +199,18 @@ impl<'a> fmt::Display for Reason<'a> {
         write!(f, "want 0 or 1 wanted errors, got {want_len}")
       }
       Reason::NoErrorsEmitted(want_len) => write!(f, "wanted {want_len} errors, but got none"),
-      Reason::CannotGetLineColPair(r) => write!(f, "couldn't get a line-col pair from {r:?}"),
-      Reason::NotOneLine(pair) => write!(f, "not one line: {}..{}", pair.start, pair.end),
-      Reason::GotButNotWanted(r, got) => {
-        writeln!(f, "{r}: got an error, but wanted none")?;
+      Reason::CannotGetLineColPair(file, r) => {
+        write!(f, "{file}: couldn't get a line-col pair from {r:?}")
+      }
+      Reason::NotOneLine(file, pair) => {
+        write!(f, "{file}: not one line: {}..{}", pair.start, pair.end)
+      }
+      Reason::GotButNotWanted(file, r, got) => {
+        writeln!(f, "{file}:{r}: got an error, but wanted none")?;
         write!(f, "    - got:  {got}")
       }
-      Reason::MismatchedErrors(r, want, got) => {
-        writeln!(f, "{r}: mismatched errors")?;
+      Reason::MismatchedErrors(file, r, want, got) => {
+        writeln!(f, "{file}:{r}: mismatched errors")?;
         writeln!(f, "    - want: {want}")?;
         write!(f, "    - got:  {got}")
       }
