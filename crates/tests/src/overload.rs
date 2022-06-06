@@ -1,6 +1,17 @@
 use crate::check::{check, fail};
 
 #[test]
+fn t_00() {
+  fail(
+    r#"
+fun f a b = a + b
+val _ = f: unit
+(**     ^^^^^^^ expected unit, found int -> int -> int *)
+"#,
+  );
+}
+
+#[test]
 fn t_01() {
   check(
     r#"
