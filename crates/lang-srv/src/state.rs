@@ -146,6 +146,7 @@ where
 /// Ignores file IO errors, etc.
 fn get_files(root: &lsp_types::Url) -> Vec<(lsp_types::Url, String)> {
   WalkDir::new(root.path())
+    .sort_by_file_name()
     .into_iter()
     .filter_map(|entry| {
       let entry = entry.ok()?;
