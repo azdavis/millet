@@ -120,8 +120,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
-      ErrorKind::NonExhaustiveMatch(_) => f.write_str("non-exhaustive match"),
-      ErrorKind::NonExhaustiveBinding(_) => f.write_str("non-exhaustive binding"),
+      ErrorKind::NonExhaustiveMatch(pats) => non_exhaustive(f, pats, "match"),
+      ErrorKind::NonExhaustiveBinding(pats) => non_exhaustive(f, pats, "binding"),
       ErrorKind::PatValIdStatus => f.write_str("value binding used as a pattern"),
       ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
@@ -139,4 +139,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
     }
   }
+}
+
+fn non_exhaustive(f: &mut fmt::Formatter<'_>, _: &[Pat], kind: &str) -> fmt::Result {
+  write!(f, "non-exhaustive {kind}")
 }
