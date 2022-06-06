@@ -1,0 +1,13 @@
+[package]
+name = "cm"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+smol_str = "0.1"
+block-comment = { path = "../block-comment" }
