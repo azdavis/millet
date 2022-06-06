@@ -1,6 +1,7 @@
 use fast_hash::FxHashMap;
 use std::fmt;
 use std::ops::Range;
+use syntax::rowan::{TextRange, TextSize};
 
 /// pass the string of an SML program with some expectation comments.
 ///
@@ -73,7 +74,7 @@ impl<'a> Check<'a> {
           indices: s
             .bytes()
             .enumerate()
-            .filter_map(|(idx, b)| (b == b'\n').then(|| idx))
+            .filter_map(|(idx, b)| (b == b'\n').then(|| TextSize::try_from(idx).unwrap()))
             .collect(),
           want: s
             .lines()
@@ -102,7 +103,7 @@ impl<'a> Check<'a> {
         .next()
       {
         had_error = true;
-        ret.add_err(FileId(0), Range::<usize>::from(e.range), e.message);
+        ret.add_err(FileId(0), e.range, e.message);
       };
     }
     if !had_error && want_len != 0 {
@@ -111,9 +112,9 @@ impl<'a> Check<'a> {
     ret
   }
 
-  fn add_err(&mut self, id: FileId, range: Range<usize>, got: String) {
+  fn add_err(&mut self, id: FileId, range: TextRange, got: String) {
     let file = &self.files[id.0];
-    match get_line_col_pair(&file.indices, range.clone()) {
+    match get_line_col_pair(&file.indices, range) {
       None => self.reasons.push(Reason::CannotGetLineColPair(id, range)),
       Some(pair) => {
         let region = if pair.start.line == pair.end.line {
@@ -163,7 +164,7 @@ impl fmt::Display for Check<'_> {
 }
 
 struct CheckFile<'a> {
-  indices: Vec<usize>,
+  indices: Vec<TextSize>,
   want: FxHashMap<OneLineRegion, &'a str>,
 }
 
@@ -178,7 +179,7 @@ impl fmt::Display for FileId {
 enum Reason<'a> {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
-  CannotGetLineColPair(FileId, Range<usize>),
+  CannotGetLineColPair(FileId, TextRange),
   NotOneLine(FileId, Range<LineCol>),
   GotButNotWanted(FileId, OneLineRegion, String),
   MismatchedErrors(FileId, OneLineRegion, &'a str, String),
@@ -241,18 +242,20 @@ impl fmt::Display for LineCol {
   }
 }
 
-fn get_line_col(indices: &[usize], idx: usize) -> Option<LineCol> {
+fn get_line_col(indices: &[TextSize], idx: TextSize) -> Option<LineCol> {
   let line = indices.iter().position(|&i| idx <= i)?;
-  let col_start = indices.get(line.checked_sub(1)?)?.checked_add(1)?;
+  let col_start = indices
+    .get(line.checked_sub(1)?)?
+    .checked_add(TextSize::from(1))?;
   Some(LineCol {
     line,
-    col: idx.checked_sub(col_start)?,
+    col: usize::from(idx.checked_sub(col_start)?),
   })
 }
 
-fn get_line_col_pair(indices: &[usize], range: Range<usize>) -> Option<Range<LineCol>> {
-  let start = get_line_col(indices, range.start)?;
-  let end = get_line_col(indices, range.end)?;
+fn get_line_col_pair(indices: &[TextSize], range: TextRange) -> Option<Range<LineCol>> {
+  let start = get_line_col(indices, range.start())?;
+  let end = get_line_col(indices, range.end())?;
   Some(start..end)
 }
 
