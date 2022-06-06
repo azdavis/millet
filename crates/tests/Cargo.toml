@@ -8,9 +8,6 @@ publish = false
 doctest = false
 
 [dependencies]
-lex = { path = "../lex" }
-parse = { path = "../parse" }
-lower = { path = "../lower" }
-statics = { path = "../statics" }
+analysis = { path = "../analysis" }
 syntax = { path = "../syntax" }
 fast-hash = { path = "../fast-hash" }

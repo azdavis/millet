@@ -1,7 +1,7 @@
 use fast_hash::FxHashMap;
 use std::fmt;
 use std::ops::Range;
-use syntax::{ast::AstNode as _, rowan::TextRange};
+use syntax::rowan::TextRange;
 
 /// pass the string of an SML program with some expectation comments.
 ///
@@ -62,34 +62,19 @@ pub(crate) fn fail(s: &str) {
 
 fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
   let show = env_var_yes("SHOW");
-  let lexed = lex::get(s);
-  if show {
-    eprintln!("lex: {:?}", lexed.tokens);
+  let show = analysis::Show {
+    lex: show,
+    parse: show,
+  };
+  match analysis::get(std::iter::once(s), show)
+    .pop()
+    .unwrap()
+    .into_iter()
+    .next()
+  {
+    Some(x) => Err((x.range, x.message)),
+    None => Ok(()),
   }
-  if let Some(err) = lexed.errors.into_iter().next() {
-    return Err((err.range, err.kind.to_string()));
-  }
-  let parsed = parse::get(&lexed.tokens);
-  if show {
-    eprintln!("parse: {:#?}", parsed.root);
-  }
-  if let Some(err) = parsed.errors.into_iter().next() {
-    return Err((err.range, err.kind.to_string()));
-  }
-  let lowered = lower::get(&parsed.root);
-  if let Some(err) = lowered.errors.into_iter().next() {
-    return Err((err.range, err.kind.to_string()));
-  }
-  let mut st = statics::Statics::default();
-  statics::get(&mut st, &lowered.arenas, &lowered.top_decs);
-  if let Some(err) = st.errors.into_iter().next() {
-    let ptr = lowered.ptrs.get(err.idx());
-    let ptr = ptr.expect("couldn't get pointer");
-    let range = ptr.to_node(parsed.root.syntax()).text_range();
-    let msg = err.display(&st.syms).to_string();
-    return Err((range, msg));
-  }
-  Ok(())
 }
 
 struct Check<'a> {

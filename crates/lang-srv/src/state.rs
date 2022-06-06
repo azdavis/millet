@@ -45,7 +45,7 @@ impl State {
 
   fn publish_diagnostics(&self) {
     let files = get_files(&self.root);
-    let errors = analysis::get(files.iter().map(|(_, x)| x.as_str()));
+    let errors = analysis::get(files.iter().map(|(_, x)| x.as_str()), Default::default());
     for ((url, contents), errors) in files.into_iter().zip(errors) {
       let pos_db = text_pos::PositionDb::new(&contents);
       self.send_notification::<lsp_types::notification::PublishDiagnostics>(

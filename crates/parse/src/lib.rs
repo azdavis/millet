@@ -14,8 +14,10 @@ mod ty;
 mod util;
 
 use crate::parser::{Error, Parser};
-use syntax::ast::{AstNode as _, Root};
+use syntax::ast::AstNode as _;
 use syntax::{token::Token, SyntaxKind as SK};
+
+pub use syntax::ast::Root;
 
 /// The result of a parse.
 #[derive(Debug)]
