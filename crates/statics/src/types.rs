@@ -3,7 +3,7 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
-use crate::fmt_util::ty_var_name;
+use crate::fmt_util::{comma_seq, ty_var_name};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
@@ -114,13 +114,15 @@ impl<'a> fmt::Display for TyDisplay<'a> {
           }
         } else {
           f.write_str("{ ")?;
-          let mut rows = rows.iter();
-          let (lab, ty) = rows.next().unwrap();
-          display_row(f, self.bound_vars, self.syms, lab, ty)?;
-          for (lab, ty) in rows {
-            f.write_str(", ")?;
-            display_row(f, self.bound_vars, self.syms, lab, ty)?;
-          }
+          comma_seq(
+            f,
+            rows.iter().map(|(lab, ty)| RowDisplay {
+              bound_vars: self.bound_vars,
+              syms: self.syms,
+              lab,
+              ty,
+            }),
+          )?;
           f.write_str(" }")?;
         }
       }
@@ -169,22 +171,25 @@ enum TyPrec {
   App,
 }
 
-fn display_row<'a>(
-  f: &mut fmt::Formatter<'_>,
+struct RowDisplay<'a> {
   bound_vars: Option<&'a BoundTyVars>,
   syms: &'a Syms,
-  lab: &hir::Lab,
+  lab: &'a hir::Lab,
   ty: &'a Ty,
-) -> fmt::Result {
-  fmt::Display::fmt(lab, f)?;
-  f.write_str(" : ")?;
-  let td = TyDisplay {
-    ty,
-    bound_vars,
-    syms,
-    prec: TyPrec::Arrow,
-  };
-  fmt::Display::fmt(&td, f)
+}
+
+impl<'a> fmt::Display for RowDisplay<'a> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fmt::Display::fmt(self.lab, f)?;
+    f.write_str(" : ")?;
+    let td = TyDisplay {
+      ty: self.ty,
+      bound_vars: self.bound_vars,
+      syms: self.syms,
+      prec: TyPrec::Arrow,
+    };
+    fmt::Display::fmt(&td, f)
+  }
 }
 
 /// Definition: TypeScheme, TypeFcn
