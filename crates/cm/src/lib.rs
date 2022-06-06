@@ -1,4 +1,6 @@
 //! Handle a CM file.
+//!
+//! From skimming https://www.smlnj.org/doc/CM/Old/index.html
 
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
