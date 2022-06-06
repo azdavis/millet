@@ -1,0 +1,10 @@
+{
+  "group desc": {
+    "prefix": "group",
+    "body": ["Group is", "  ${1:members}"]
+  },
+  "library desc": {
+    "prefix": "library",
+    "body": ["Library", "  ${1:exports}", "is", "  ${2:members}"]
+  }
+}

@@ -92,6 +92,16 @@
         "scopeName": "source.sml-nj-cm",
         "path": "languages/sml-nj-cm/syntax.json"
       }
+    ],
+    "snippets": [
+      {
+        "language": "sml",
+        "path": "languages/sml/snippets.json"
+      },
+      {
+        "language": "sml-nj-cm",
+        "path": "languages/sml-nj-cm/snippets.json"
+      }
     ]
   }
 }
