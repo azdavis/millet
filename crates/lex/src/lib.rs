@@ -90,7 +90,7 @@ struct Cx {
 fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
-  // comments
+  // block comments
   if b == b'(' && bs.get(cx.i + 1) == Some(&b'*') {
     cx.i += 2;
     let mut level = 1_usize;
