@@ -77,11 +77,6 @@ fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
   }
 }
 
-struct CheckFile<'a> {
-  indices: Vec<usize>,
-  want: FxHashMap<OneLineRegion, &'a str>,
-}
-
 struct Check<'a> {
   files: Vec<CheckFile<'a>>,
   reasons: Vec<Reason<'a>>,
@@ -173,6 +168,11 @@ impl fmt::Display for Check<'_> {
     writeln!(f)?;
     Ok(())
   }
+}
+
+struct CheckFile<'a> {
+  indices: Vec<usize>,
+  want: FxHashMap<OneLineRegion, &'a str>,
 }
 
 struct FileId(usize);
