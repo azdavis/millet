@@ -103,7 +103,10 @@ impl<'a> Check<'a> {
         .next()
       {
         had_error = true;
-        ret.add_err(FileId(0), e.range, e.message);
+        match ret.get_reason(FileId(0), e.range, e.message) {
+          Ok(()) => {}
+          Err(r) => ret.reasons.push(r),
+        }
       };
     }
     if !had_error && want_len != 0 {
@@ -112,13 +115,10 @@ impl<'a> Check<'a> {
     ret
   }
 
-  fn add_err(&mut self, id: FileId, range: TextRange, got: String) {
+  fn get_reason(&mut self, id: FileId, range: TextRange, got: String) -> Result<(), Reason<'a>> {
     let file = &self.files[id.0];
     let pair = match get_line_col_pair(&file.indices, range) {
-      None => {
-        self.reasons.push(Reason::CannotGetLineColPair(id, range));
-        return;
-      }
+      None => return Err(Reason::CannotGetLineColPair(id, range)),
       Some(x) => x,
     };
     let region = if pair.start.line == pair.end.line {
@@ -127,20 +127,16 @@ impl<'a> Check<'a> {
         col: pair.start.col..pair.end.col,
       }
     } else {
-      self.reasons.push(Reason::NotOneLine(id, pair));
-      return;
+      return Err(Reason::NotOneLine(id, pair));
     };
     let want = match file.want.get(&region) {
-      None => {
-        self.reasons.push(Reason::GotButNotWanted(id, region, got));
-        return;
-      }
+      None => return Err(Reason::GotButNotWanted(id, region, got)),
       Some(&x) => x,
     };
-    if want != got {
-      self
-        .reasons
-        .push(Reason::MismatchedErrors(id, region, want, got))
+    if want == got {
+      Ok(())
+    } else {
+      Err(Reason::MismatchedErrors(id, region, want, got))
     }
   }
 }
