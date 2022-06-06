@@ -31,7 +31,7 @@ impl State {
         register_options: Some(
           serde_json::to_value(lsp_types::DidChangeWatchedFilesRegistrationOptions {
             watchers: vec![lsp_types::FileSystemWatcher {
-              glob_pattern: format!("{}/**/*.{{sml,sig,fun}}", ret.root.path()),
+              glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm}}", ret.root.path()),
               kind: None,
             }],
           })
@@ -141,24 +141,33 @@ where
   }
 }
 
-/// Returns all the SML files in this workspace.
+/// Returns all the SML files referenced by SMLNJ CM files in this workspace.
 ///
 /// Ignores file IO errors, etc.
+///
+/// NOTE: This uses CM files to discover SML files, but doesn't, in the slightest, implement any
+/// cm features like privacy of exports. We just parse cm files to get the sml filenames.
 fn get_files(root: &lsp_types::Url) -> Vec<(lsp_types::Url, String)> {
   WalkDir::new(root.path())
     .sort_by_file_name()
     .into_iter()
-    .filter_map(|entry| {
+    .flat_map(|entry| {
       let entry = entry.ok()?;
-      let ext = entry.path().extension()?.to_str()?;
-      let is_sml_ext = matches!(ext, "sml" | "sig" | "fun");
-      if !is_sml_ext {
+      let path = entry.path();
+      if path.extension()?.to_str()? != "cm" {
         return None;
       }
-      let path = entry.path().as_os_str().to_str()?;
+      let contents = std::fs::read_to_string(path).ok()?;
+      // TODO report cm errors
+      let (_, members) = cm::get(&contents).ok()?;
+      let parent = entry.path().parent()?.to_owned();
+      Some(members.into_iter().map(move |x| parent.join(&x)))
+    })
+    .flatten()
+    .filter_map(|path| {
+      let url = lsp_types::Url::parse(&format!("file://{}", path.display())).ok()?;
       // TODO is this right?
-      let url = lsp_types::Url::parse(&format!("file://{path}")).ok()?;
-      let contents = std::fs::read_to_string(entry.path()).ok()?;
+      let contents = std::fs::read_to_string(&path).ok()?;
       Some((url, contents))
     })
     .collect()

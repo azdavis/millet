@@ -1,3 +1,5 @@
+//! TODO prefer just a (new type) string over PathBuf?
+
 use smol_str::SmolStr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;

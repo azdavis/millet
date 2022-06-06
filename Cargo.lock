@@ -153,6 +153,7 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "anyhow",
+ "cm",
  "crossbeam-channel",
  "lsp-server",
  "lsp-types",

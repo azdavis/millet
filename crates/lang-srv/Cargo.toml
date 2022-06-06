@@ -14,3 +14,4 @@ serde_json = "1"
 walkdir = "2"
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 analysis = { path = "../analysis" }
+cm = { path = "../cm" }
