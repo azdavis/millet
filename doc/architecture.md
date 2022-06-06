@@ -136,7 +136,9 @@ Depends on `analysis` and a bunch of third party crates to actually construct th
 
 ### `crates/tests`
 
-The tests.
+The tests. Depends on `analysis`, and consumes its public API to test functionality of each of the 'passes'.
+
+Test case are usually SML programs, which contain "expectation comments" asserting that `analysis` should behave a certain way about a certain region of the program.
 
 ### `doc`
 
