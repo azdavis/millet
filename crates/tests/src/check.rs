@@ -24,7 +24,7 @@ use syntax::{ast::AstNode as _, rowan::TextRange};
 /// see also [`fail`] if the test is failing.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  let cx = get_cx(s);
+  let cx = Check::new(s);
   if !cx.reasons.is_empty() {
     panic!("{cx}")
   }
@@ -54,23 +54,10 @@ pub(crate) fn check(s: &str) {
 #[track_caller]
 #[allow(dead_code)]
 pub(crate) fn fail(s: &str) {
-  let cx = get_cx(s);
+  let cx = Check::new(s);
   if cx.reasons.is_empty() {
     panic!("unexpected pass: {cx}")
   }
-}
-
-fn get_cx(s: &str) -> Cx<'_> {
-  let mut cx = Cx::new(s);
-  match get_one_error(s) {
-    Ok(()) => {
-      if !cx.want.is_empty() {
-        cx.reasons.push(Reason::NoErrorsEmitted(cx.want.len()));
-      }
-    }
-    Err((range, msg)) => cx.add_err(Range::<usize>::from(range), msg),
-  }
-  cx
 }
 
 fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
@@ -105,13 +92,13 @@ fn get_one_error(s: &str) -> Result<(), (TextRange, String)> {
   Ok(())
 }
 
-struct Cx<'a> {
+struct Check<'a> {
   indices: Vec<usize>,
   want: FxHashMap<OneLineRegion, &'a str>,
   reasons: Vec<Reason<'a>>,
 }
 
-impl<'a> Cx<'a> {
+impl<'a> Check<'a> {
   fn new(s: &'a str) -> Self {
     let want: FxHashMap<_, _> = s
       .lines()
@@ -123,7 +110,7 @@ impl<'a> Cx<'a> {
     if !matches!(want_len, 0 | 1) {
       reasons.push(Reason::WantWrongNumError(want_len));
     }
-    Self {
+    let mut ret = Self {
       indices: s
         .bytes()
         .enumerate()
@@ -131,7 +118,16 @@ impl<'a> Cx<'a> {
         .collect(),
       want,
       reasons,
+    };
+    match get_one_error(s) {
+      Ok(()) => {
+        if !ret.want.is_empty() {
+          ret.reasons.push(Reason::NoErrorsEmitted(ret.want.len()));
+        }
+      }
+      Err((range, msg)) => ret.add_err(Range::<usize>::from(range), msg),
     }
+    ret
   }
 
   fn add_err(&mut self, range: Range<usize>, got: String) {
@@ -162,7 +158,7 @@ impl<'a> Cx<'a> {
   }
 }
 
-impl fmt::Display for Cx<'_> {
+impl fmt::Display for Check<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("CHECK FAILED\n\n  reasons:\n")?;
     for reason in self.reasons.iter() {
