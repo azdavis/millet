@@ -4,6 +4,8 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
+use std::fmt;
+
 /// A marker signifying a block comment was consumed.
 #[derive(Debug)]
 pub struct Consumed;
@@ -15,6 +17,15 @@ pub enum Unmatched {
   Open,
   /// Close comment, `*)`.
   Close,
+}
+
+impl fmt::Display for Unmatched {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Unmatched::Open => f.write_str("open"),
+      Unmatched::Close => f.write_str("close"),
+    }
+  }
 }
 
 /// Requires `bs.get(*idx) == Some(&b)`.
