@@ -359,13 +359,12 @@ impl TyVar {
     S: Into<SmolStr>,
   {
     let s: SmolStr = s.into();
-    assert!(s.len() >= 2);
-    assert_eq!(s.as_bytes()[0], b'\'');
+    assert!(!s.is_empty());
     Self(s)
   }
 
   pub fn is_equality(&self) -> bool {
-    self.0.as_bytes()[1] == b'\''
+    self.0.as_bytes().get(1) == Some(&b'\'')
   }
 
   pub fn as_str(&self) -> &str {
