@@ -4,6 +4,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
+use block_comment::{self, Consumed, Unmatched};
 use std::fmt;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::{token::Token, SyntaxKind as SK};
@@ -91,36 +92,17 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
   // block comments
-  if b == b'(' && bs.get(cx.i + 1) == Some(&b'*') {
-    cx.i += 2;
-    let mut level = 1_usize;
-    loop {
-      match (bs.get(cx.i), bs.get(cx.i + 1)) {
-        (Some(&b'('), Some(&b'*')) => {
-          cx.i += 2;
-          level += 1;
-        }
-        (Some(&b'*'), Some(&b')')) => {
-          cx.i += 2;
-          level -= 1;
-          if level == 0 {
-            break;
-          }
-        }
-        (Some(_), Some(_)) => cx.i += 1,
-        (_, None) => {
-          err(cx, start, ErrorKind::UnmatchedOpenComment);
-          break;
-        }
-        (None, Some(_)) => unreachable!(),
-      }
+  match block_comment::get(&mut cx.i, b, bs) {
+    Ok(None) => {}
+    Ok(Some(Consumed)) => return SK::BlockComment,
+    Err(Unmatched::Open) => {
+      err(cx, start, ErrorKind::UnmatchedOpenComment);
+      return SK::BlockComment;
     }
-    return SK::BlockComment;
-  }
-  if b == b'*' && bs.get(cx.i + 1) == Some(&b')') {
-    cx.i += 2;
-    err(cx, start, ErrorKind::UnmatchedCloseComment);
-    return SK::Invalid;
+    Err(Unmatched::Close) => {
+      err(cx, start, ErrorKind::UnmatchedCloseComment);
+      return SK::Invalid;
+    }
   }
   // whitespace
   if is_whitespace(b) {
