@@ -45,3 +45,15 @@ val _: int = S.x
 "#,
   );
 }
+
+#[test]
+fn multi() {
+  check([
+    r#"
+val a = 3
+"#,
+    r#"
+val b = a
+"#,
+  ]);
+}

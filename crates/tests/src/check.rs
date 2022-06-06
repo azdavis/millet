@@ -96,26 +96,26 @@ impl<'a> Check<'a> {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
-    let mut had_error = false;
     let show = env_var_yes("SHOW");
     let show = analysis::Show {
       lex: show,
       parse: show,
     };
-    for &s in ss {
-      if let Some(e) = analysis::get(std::iter::once(s), show)
-        .pop()
-        .unwrap()
-        .into_iter()
-        .next()
-      {
-        had_error = true;
-        match ret.get_reason(FileId(0), e.range, e.message) {
+    let err = analysis::get(ss.iter().copied(), show)
+      .into_iter()
+      .enumerate()
+      .flat_map(|(idx, errors)| errors.into_iter().map(move |e| (idx, e)))
+      .next();
+    let had_error = match err {
+      Some((idx, e)) => {
+        match ret.get_reason(FileId(idx), e.range, e.message) {
           Ok(()) => {}
           Err(r) => ret.reasons.push(r),
         }
-      };
-    }
+        true
+      }
+      None => false,
+    };
     if !had_error && want_len != 0 {
       ret.reasons.push(Reason::NoErrorsEmitted(want_len));
     }
