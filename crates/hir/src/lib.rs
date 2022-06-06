@@ -334,7 +334,7 @@ impl Name {
   where
     S: Into<SmolStr>,
   {
-    let s = s.into();
+    let s: SmolStr = s.into();
     assert!(!s.is_empty());
     Self(s)
   }
@@ -354,10 +354,14 @@ impl fmt::Display for Name {
 pub struct TyVar(SmolStr);
 
 impl TyVar {
-  pub fn new(s: &str) -> Self {
+  pub fn new<S>(s: S) -> Self
+  where
+    S: Into<SmolStr>,
+  {
+    let s: SmolStr = s.into();
     assert!(s.len() >= 2);
     assert_eq!(s.as_bytes()[0], b'\'');
-    Self(s.into())
+    Self(s)
   }
 
   pub fn is_equality(&self) -> bool {

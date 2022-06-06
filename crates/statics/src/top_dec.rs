@@ -473,7 +473,7 @@ fn generalizes(st: &mut St, general: &TyScheme, specific: &TyScheme, idx: hir::I
       .map(|(idx, kind)| {
         let equality = matches!(kind, Some(TyVarKind::Equality));
         let ty_var: String = ty_var_name(equality, idx).collect();
-        Ty::FixedVar(st.gen_fixed_var(hir::TyVar::new(&ty_var)))
+        Ty::FixedVar(st.gen_fixed_var(hir::TyVar::new(ty_var)))
       })
       .collect();
     let mut ty = specific.ty.clone();
