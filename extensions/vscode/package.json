@@ -70,14 +70,14 @@
         "configuration": "languages/sml/language-configuration.json"
       },
       {
-        "id": "sml-cm",
+        "id": "sml-nj-cm",
         "extensions": [
           ".cm"
         ],
         "aliases": [
-          "Standard ML Compilation Manager"
+          "SML/NJ Compilation Manager"
         ],
-        "configuration": "languages/sml-cm/language-configuration.json"
+        "configuration": "languages/sml-nj-cm/language-configuration.json"
       }
     ],
     "grammars": [
@@ -87,9 +87,9 @@
         "path": "languages/sml/syntax.json"
       },
       {
-        "language": "sml-cm",
-        "scopeName": "source.sml-cm",
-        "path": "languages/sml-cm/syntax.json"
+        "language": "sml-nj-cm",
+        "scopeName": "source.sml-nj-cm",
+        "path": "languages/sml-nj-cm/syntax.json"
       }
     ]
   }

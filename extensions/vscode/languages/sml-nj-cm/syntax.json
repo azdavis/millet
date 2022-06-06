@@ -1,6 +1,6 @@
 {
-  "name": "Standard ML Compilation Manager",
-  "scopeName": "source.sml-cm",
+  "name": "SML/NJ Compilation Manager",
+  "scopeName": "source.sml-nj-cm",
   "patterns": [
     { "include": "#lineComment" },
     { "include": "#blockComment" },
@@ -10,26 +10,26 @@
   ],
   "repository": {
     "lineComment": {
-      "name": "comment.line.sml-cm",
+      "name": "comment.line.sml-nj-cm",
       "begin": ";",
       "end": "$"
     },
     "blockComment": {
-      "name": "comment.block.sml-cm",
+      "name": "comment.block.sml-nj-cm",
       "begin": "\\(\\*",
       "end": "\\*\\)",
       "patterns": [{ "include": "#blockComment" }]
     },
     "preprocessorStart": {
-      "name": "keyword.control.directive.sml-cm",
+      "name": "keyword.control.directive.sml-nj-cm",
       "match": "^#(elif|else|endif|error|if)"
     },
     "controlKeyword": {
-      "name": "keyword.control.sml-cm",
+      "name": "keyword.control.sml-nj-cm",
       "match": "\\b(Alias|Group|Library|is)\\b"
     },
     "otherKeyword": {
-      "name": "keyword.other.sml-cm",
+      "name": "keyword.other.sml-nj-cm",
       "match": "\\b(functor|funsig|signature|structure)\\b"
     }
   }
