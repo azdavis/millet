@@ -3,7 +3,8 @@ use std::fmt;
 use std::ops::Range;
 use syntax::rowan::{TextRange, TextSize};
 
-/// pass the string of an SML program with some expectation comments.
+/// pass the string (or multiple strings, in an array) of an SML program with some expectation
+/// comments.
 ///
 /// expectation comments are regular SML comments except they:
 /// - are always on only one line
@@ -150,6 +151,18 @@ impl<'a> Check<'a> {
 impl<'a> From<&'a str> for Check<'a> {
   fn from(s: &'a str) -> Self {
     Self::new(&[s])
+  }
+}
+
+impl<'a, const N: usize> From<[&'a str; N]> for Check<'a> {
+  fn from(xs: [&'a str; N]) -> Self {
+    Self::new(&xs)
+  }
+}
+
+impl<'a, 'b> From<&'b [&'a str]> for Check<'a> {
+  fn from(xs: &'b [&'a str]) -> Self {
+    Self::new(xs)
   }
 }
 
