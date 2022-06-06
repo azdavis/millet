@@ -2,21 +2,29 @@ use smol_str::SmolStr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-pub struct Pathname(PathBuf);
-
 pub struct Name(SmolStr);
 
-pub enum Root {
-  Alias(Pathname),
-  Desc(DescKind, Vec<ExportFilter>, Vec<Member>),
+impl Name {
+  pub(crate) fn new(s: &str) -> Self {
+    Self(s.into())
+  }
+
+  pub fn as_str(&self) -> &str {
+    self.0.as_str()
+  }
 }
 
-pub enum DescKind {
+pub(crate) enum Root {
+  Alias(PathBuf),
+  Desc(DescKind, Vec<Export>, Vec<Member>),
+}
+
+pub(crate) enum DescKind {
   Group,
   Library,
 }
 
-pub struct ExportFilter {
+pub struct Export {
   pub namespace: Namespace,
   pub name: Name,
 }
@@ -28,21 +36,21 @@ pub enum Namespace {
   FunSig,
 }
 
-pub struct Member {
-  pub pathname: Pathname,
-  pub class: Option<Class>,
+pub(crate) struct Member {
+  pub(crate) pathname: PathBuf,
+  pub(crate) class: Option<Class>,
 }
 
 impl Member {
-  fn class(&self) -> Option<Class> {
+  pub(crate) fn class(&self) -> Option<Class> {
     self
       .class
-      .or_else(|| Class::from_path(self.pathname.0.as_path()))
+      .or_else(|| Class::from_path(self.pathname.as_path()))
   }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum Class {
+pub(crate) enum Class {
   Sml,
   CMFile,
   SCGroup,
