@@ -23,10 +23,13 @@ use syntax::rowan::{TextRange, TextSize};
 ///
 /// see also [`fail`] if the test is failing.
 #[track_caller]
-pub(crate) fn check(s: &str) {
-  let cx = Check::new(&[s]);
-  if !cx.reasons.is_empty() {
-    panic!("{cx}")
+pub(crate) fn check<'a, C>(c: C)
+where
+  C: Into<Check<'a>>,
+{
+  let c: Check<'a> = c.into();
+  if !c.reasons.is_empty() {
+    panic!("{c}")
   }
 }
 
@@ -53,14 +56,17 @@ pub(crate) fn check(s: &str) {
 /// use `fail` instead of ignoring tests.
 #[allow(dead_code)]
 #[track_caller]
-pub(crate) fn fail(s: &str) {
-  let cx = Check::new(&[s]);
-  if cx.reasons.is_empty() {
-    panic!("unexpected pass: {cx}")
+pub(crate) fn fail<'a, C>(c: C)
+where
+  C: Into<Check<'a>>,
+{
+  let c: Check<'a> = c.into();
+  if c.reasons.is_empty() {
+    panic!("unexpected pass: {c}")
   }
 }
 
-struct Check<'a> {
+pub(crate) struct Check<'a> {
   files: Vec<CheckFile<'a>>,
   reasons: Vec<Reason<'a>>,
 }
@@ -138,6 +144,12 @@ impl<'a> Check<'a> {
     } else {
       Err(Reason::MismatchedErrors(id, region, want, got))
     }
+  }
+}
+
+impl<'a> From<&'a str> for Check<'a> {
+  fn from(s: &'a str) -> Self {
+    Self::new(&[s])
   }
 }
 
