@@ -242,6 +242,12 @@ impl fmt::Display for LineCol {
   }
 }
 
+fn get_line_col_pair(indices: &[TextSize], range: TextRange) -> Option<Range<LineCol>> {
+  let start = get_line_col(indices, range.start())?;
+  let end = get_line_col(indices, range.end())?;
+  Some(start..end)
+}
+
 fn get_line_col(indices: &[TextSize], idx: TextSize) -> Option<LineCol> {
   let line = indices.iter().position(|&i| idx <= i)?;
   let col_start = indices
@@ -251,12 +257,6 @@ fn get_line_col(indices: &[TextSize], idx: TextSize) -> Option<LineCol> {
     line,
     col: usize::from(idx.checked_sub(col_start)?),
   })
-}
-
-fn get_line_col_pair(indices: &[TextSize], range: TextRange) -> Option<Range<LineCol>> {
-  let start = get_line_col(indices, range.start())?;
-  let end = get_line_col(indices, range.end())?;
-  Some(start..end)
 }
 
 /// see [`get_expect_comment`].
