@@ -2,6 +2,7 @@ use smol_str::SmolStr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Name(SmolStr);
 
 impl Name {
@@ -24,11 +25,13 @@ pub(crate) enum DescKind {
   Library,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Export {
   pub namespace: Namespace,
   pub name: Name,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Namespace {
   Structure,
   Signature,

@@ -2,6 +2,9 @@
 
 #![deny(rust_2018_idioms)]
 
+#[cfg(test)]
+mod tests;
+
 mod lex;
 mod lower;
 mod parse;

@@ -5,21 +5,18 @@ use std::path::PathBuf;
 pub(crate) fn get(root: types::Root) -> Result<(Vec<types::Export>, Vec<PathBuf>)> {
   match root {
     types::Root::Alias(_) => bail!("unsupported: alias"),
-    types::Root::Desc(kind, exports, members) => match kind {
-      types::DescKind::Group => {
-        let mut ms = Vec::<PathBuf>::with_capacity(members.len());
-        for member in members {
-          match member.class() {
-            Some(c) => match c {
-              types::Class::Sml => ms.push(member.pathname),
-              _ => bail!("unsupported: file with class {c:?}"),
-            },
-            None => bail!("unsupported: couldn't determine class"),
-          }
+    types::Root::Desc(_, exports, members) => {
+      let mut ms = Vec::<PathBuf>::with_capacity(members.len());
+      for member in members {
+        match member.class() {
+          Some(c) => match c {
+            types::Class::Sml => ms.push(member.pathname),
+            _ => bail!("{}: unsupported class {c:?}", member.pathname.display()),
+          },
+          None => bail!("couldn't determine class for {}", member.pathname.display()),
         }
-        Ok((exports, ms))
       }
-      types::DescKind::Library => bail!("unsupported: library"),
-    },
+      Ok((exports, ms))
+    }
   }
 }
