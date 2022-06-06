@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 
 use crate::error::{ErrorKind, Item};
+use crate::fmt_util::ty_var_name;
 use crate::types::{
-  generalize, ty_var_name, Bs, Env, FixedTyVars, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv,
-  TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
+  generalize, Bs, Env, FixedTyVars, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo,
+  TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, cannot_bind_val, get_env, get_ty_info, ins_no_dupe, instantiate};
 use crate::{dec, st::St, ty, unify::unify};

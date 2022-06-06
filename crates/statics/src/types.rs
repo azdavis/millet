@@ -3,6 +3,7 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
+use crate::fmt_util::ty_var_name;
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
@@ -159,18 +160,6 @@ impl<'a> fmt::Display for TyDisplay<'a> {
     }
     Ok(())
   }
-}
-
-/// returns a char iterator that when collected could be a name for a type variable.
-pub(crate) fn ty_var_name(equality: bool, idx: usize) -> impl Iterator<Item = char> {
-  let alpha = (b'z' - b'a') as usize;
-  let quot = idx / alpha;
-  let rem = idx % alpha;
-  let ch = char::from((rem as u8) + b'a');
-  let ticks = if equality { 1 } else { 2 };
-  std::iter::repeat('\'')
-    .take(ticks)
-    .chain(std::iter::repeat(ch).take(quot))
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

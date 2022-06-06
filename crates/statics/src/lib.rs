@@ -11,6 +11,7 @@
 mod dec;
 mod error;
 mod exp;
+mod fmt_util;
 mod pat;
 mod pat_match;
 mod st;
