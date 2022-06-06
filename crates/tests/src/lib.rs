@@ -4,6 +4,7 @@
 //! - If you have many similar tests, put them in an existing or new module.
 
 #![cfg(test)]
+#![deny(rust_2018_idioms)]
 
 mod ascribe;
 mod check;
