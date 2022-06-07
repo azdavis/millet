@@ -53,7 +53,11 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
               }
               ok
             }
-            Ty::None | Ty::MetaVar(_) => true,
+            Ty::None => true,
+            Ty::MetaVar(mv2) => {
+              subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
+              true
+            }
             Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => false,
           };
           if !ok {

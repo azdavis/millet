@@ -2,7 +2,7 @@ use crate::check::{check, fail};
 
 #[test]
 fn t_00() {
-  fail(
+  check(
     r#"
 fun add a b = a + b
 val _ = add false
