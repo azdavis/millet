@@ -625,3 +625,27 @@ val _ = 1 = 2 andalso 3 > 4 orelse 5 < 6
 "#,
   );
 }
+
+#[test]
+fn phantom_datatype() {
+  check(
+    r#"
+datatype 'a phantom = p
+type t = string phantom
+val _ = p: unit phantom
+val _ = p: real phantom
+"#,
+  );
+}
+
+#[test]
+fn phantom_type() {
+  fail(
+    r#"
+type 'a phantom = int
+type t = string phantom
+val _ = 3: unit phantom
+val _ = 3: real phantom
+"#,
+  );
+}
