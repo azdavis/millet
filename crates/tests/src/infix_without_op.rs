@@ -39,3 +39,14 @@ fun _ h _ = 3
 "#,
   );
 }
+
+#[test]
+fn cons_not_atomic() {
+  check(
+    r#"
+fun map f [] = []
+  | map f x::xs = f x :: map f xs
+(**        ^^ infix name used as non-infix without `op` *)
+"#,
+  );
+}
