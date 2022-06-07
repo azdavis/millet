@@ -4,9 +4,12 @@
 
 ## Features
 
-- Syntax highlighting
-- Language configuration (comments, brackets, etc)
-- Inline errors
+- For SML and SML/NJ CM files:
+  - Syntax highlighting
+  - Language configuration (comments, brackets, etc)
+  - Snippets
+- For SML files only:
+  - Inline errors
 
 ## Usage
 
