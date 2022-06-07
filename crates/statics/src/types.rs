@@ -708,11 +708,7 @@ impl<'a> Generalizer<'a> {
         }
       },
       Ty::FixedVar(fv) => {
-        let kind = if fv.ty_var.is_equality() {
-          Some(TyVarKind::Equality)
-        } else {
-          None
-        };
+        let kind = fv.ty_var.is_equality().then(|| TyVarKind::Equality);
         handle_bv(self.fixed.0.get_mut(fv), &mut self.bound_vars, kind, ty)
       }
       Ty::Record(rows) => {
