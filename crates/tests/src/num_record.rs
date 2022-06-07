@@ -5,8 +5,8 @@ fn t_01() {
   check(
     r#"
 type t = { 1: int, 2: bool }
-    val _: t = ()
-(** ^^^^^^^^^^^^^ expected int * bool, found unit *)
+val _ = (): t
+(**     ^^^^^ expected int * bool, found unit *)
 "#,
   );
 }
@@ -26,8 +26,8 @@ fn t_03() {
   check(
     r#"
 type t = { 1: int }
-    val _: t = ()
-(** ^^^^^^^^^^^^^ expected { 1 : int }, found unit *)
+val _ = (): t
+(**     ^^^^^ expected { 1 : int }, found unit *)
 "#,
   );
 }
@@ -37,8 +37,8 @@ fn t_04() {
   check(
     r#"
 type t = { 1: int, 3: bool }
-    val _: t = ()
-(** ^^^^^^^^^^^^^ expected { 1 : int, 3 : bool }, found unit *)
+val _ = (): t
+(**     ^^^^^ expected { 1 : int, 3 : bool }, found unit *)
 "#,
   );
 }

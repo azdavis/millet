@@ -5,8 +5,8 @@ fn apply() {
   check(
     r#"
 val apply = fn (f, x) => f x
-    val _: unit = apply
-(** ^^^^^^^^^^^^^^^^^^^ expected unit, found (_ -> _) * _ -> _ *)
+val _ = apply: unit
+(**     ^^^^^^^^^^^ expected unit, found (_ -> _) * _ -> _ *)
 "#,
   );
 }
@@ -237,23 +237,16 @@ val _ = inc "nope"
 }
 
 #[test]
-fn map() {
+fn list_map() {
   check(
     r#"
-datatype 'a option = None | Some of 'a
-
-fun option_map f opt =
-  case opt of
-    None => None
-  | Some x => Some (f x)
-
-fun list_map f xs =
+fun map f xs =
   case xs of
     [] => []
-  | x :: xs => f x :: list_map f xs
+  | x :: xs => f x :: map f xs
 
-    val _: unit = (option_map, list_map)
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected unit, found ((_ -> _) -> _ option -> _ option) * ((_ -> _) -> _ list -> _ list) *)
+val _ = map: unit
+(**     ^^^^^^^^^ expected unit, found (_ -> _) -> _ list -> _ list *)
 "#,
   );
 }
@@ -546,8 +539,8 @@ fn useless_ty_var() {
   check(
     r#"
 fun 'a f () = 3
-    val _: unit = f
-(** ^^^^^^^^^^^^^^^ expected unit, found unit -> int *)
+val _ = f: unit
+(**     ^^^^^^^ expected unit, found unit -> int *)
 "#,
   );
 }

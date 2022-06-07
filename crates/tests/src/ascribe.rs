@@ -367,8 +367,8 @@ structure S:> SIG = struct
 end
 
 val _: S.t = S.x
-    val _: int = S.x
-(** ^^^^^^^^^^^^^^^^ expected int, found t *)
+val _ = S.x: int
+(**     ^^^^^^^^ expected int, found t *)
 "#,
   );
 }
@@ -415,8 +415,8 @@ val _: A.t = B.x
 structure C:> SIG = Str
 structure D:> SIG = Str
 
-    val _: C.t = D.x
-(** ^^^^^^^^^^^^^^^^ expected t, found t *)
+val _ = D.x: C.t
+(**     ^^^^^^^^ expected t, found t *)
 "#,
   );
 }

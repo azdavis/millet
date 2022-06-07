@@ -35,8 +35,8 @@ fun 'a f (id: 'a -> 'a) x = id x + 1
 fn t_04() {
   check(
     r#"
-    val 'a _: 'a = false
-(** ^^^^^^^^^^^^^^^^^^^^ expected 'a, found bool *)
+val 'a _ = false: 'a
+(**        ^^^^^^^^^ expected 'a, found bool *)
 "#,
   );
 }
@@ -48,8 +48,8 @@ fn t_05() {
 type 'a heh = 'a list
 datatype 'a bad = Bad of 'a
 val _: int heh = [1]
-    val _: unit = Bad
-(** ^^^^^^^^^^^^^^^^^ expected unit, found _ -> _ bad *)
+val _ = Bad: unit
+(**     ^^^^^^^^^ expected unit, found _ -> _ bad *)
 "#,
   );
 }
