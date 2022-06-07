@@ -15,6 +15,10 @@
     "prefix": "if",
     "body": ["if ${1:exp} then", "  ${2:exp}", "else", "  ${3:exp}"]
   },
+  "handle exp tail": {
+    "prefix": "handle",
+    "body": ["handle", "  ${2:pat} => ${3:exp}", "| ${4:pat} => ${5:exp}"]
+  },
   "local dec": {
     "prefix": "local",
     "body": ["local", "  ${1:dec}", "in", "  ${2:dec}", "end"]
