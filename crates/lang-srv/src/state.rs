@@ -115,7 +115,7 @@ impl State {
   pub(crate) fn send_response(&mut self, res: lsp_server::Response) {
     match self.req_queue.incoming.complete(res.id.clone()) {
       Some(()) => self.send(res.into()),
-      None => log::debug!("tried to respond to a non-queued request: {res:?}"),
+      None => log::warn!("tried to respond to a non-queued request: {res:?}"),
     }
   }
 
@@ -136,7 +136,7 @@ impl State {
     log::debug!("got response: {res:?}");
     match self.req_queue.outgoing.complete(res.id.clone()) {
       Some(()) => {}
-      None => log::debug!("received response for non-queued request: {res:?}"),
+      None => log::warn!("received response for non-queued request: {res:?}"),
     }
   }
 

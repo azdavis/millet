@@ -5,7 +5,7 @@ fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyho
   let root = match &init.root_uri {
     Some(x) => x.clone(),
     None => {
-      log::info!("no root url");
+      log::warn!("no root url");
       return Ok(());
     }
   };
