@@ -155,6 +155,7 @@ dependencies = [
  "anyhow",
  "cm",
  "crossbeam-channel",
+ "fast-hash",
  "lsp-server",
  "lsp-types",
  "serde",
