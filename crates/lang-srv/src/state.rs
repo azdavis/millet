@@ -2,23 +2,26 @@
 
 #![allow(dead_code)]
 
+use anyhow::{anyhow, Error};
 use crossbeam_channel::Sender;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
-use lsp_types::notification::Notification as _;
+use lsp_types::{notification::Notification as _, Url};
 use std::ops::ControlFlow;
 use walkdir::WalkDir;
+
+const SOURCE: &str = "millet";
 
 /// The only thing that does file IO.
 ///
 /// TODO: this is horribly inefficient.
 pub(crate) struct State {
-  root: lsp_types::Url,
+  root: Url,
   sender: Sender<Message>,
   req_queue: ReqQueue<(), ()>,
 }
 
 impl State {
-  pub(crate) fn new(root: lsp_types::Url, sender: Sender<Message>) -> Self {
+  pub(crate) fn new(root: Url, sender: Sender<Message>) -> Self {
     let mut ret = Self {
       root,
       sender,
@@ -44,9 +47,23 @@ impl State {
   }
 
   fn publish_diagnostics(&self) {
-    let files = get_files(&self.root);
-    let errors = analysis::get(files.iter().map(|(_, x)| x.as_str()), Default::default());
-    for ((url, contents), errors) in files.into_iter().zip(errors) {
+    let (ok_files, err_files) = get_files(&self.root);
+    let errors = analysis::get(ok_files.iter().map(|(_, x)| x.as_str()), Default::default());
+    for (url, error) in err_files {
+      self.send_notification::<lsp_types::notification::PublishDiagnostics>(
+        lsp_types::PublishDiagnosticsParams {
+          uri: url,
+          diagnostics: vec![lsp_types::Diagnostic {
+            range: lsp_types::Range::default(),
+            message: error.to_string(),
+            source: Some(SOURCE.to_owned()),
+            ..lsp_types::Diagnostic::default()
+          }],
+          version: None,
+        },
+      );
+    }
+    for ((url, contents), errors) in ok_files.into_iter().zip(errors) {
       let pos_db = text_pos::PositionDb::new(&contents);
       self.send_notification::<lsp_types::notification::PublishDiagnostics>(
         lsp_types::PublishDiagnosticsParams {
@@ -56,7 +73,7 @@ impl State {
             .map(|x| lsp_types::Diagnostic {
               range: lsp_range(pos_db.range(x.range)),
               message: x.message,
-              source: Some("millet".to_owned()),
+              source: Some(SOURCE.to_owned()),
               ..lsp_types::Diagnostic::default()
             })
             .collect(),
@@ -141,36 +158,64 @@ where
   }
 }
 
+type Files<T> = Vec<(Url, T)>;
+
 /// Returns all the SML files referenced by SMLNJ CM files in this workspace.
 ///
 /// Ignores file IO errors, etc.
 ///
 /// NOTE: This uses CM files to discover SML files, but doesn't, in the slightest, implement any
 /// cm features like privacy of exports. We just parse cm files to get the sml filenames.
-fn get_files(root: &lsp_types::Url) -> Vec<(lsp_types::Url, String)> {
-  WalkDir::new(root.path())
-    .sort_by_file_name()
-    .into_iter()
-    .flat_map(|entry| {
-      let entry = entry.ok()?;
-      let path = entry.path();
-      if path.extension()?.to_str()? != "cm" {
-        return None;
+fn get_files(root: &Url) -> (Files<String>, Files<Error>) {
+  let mut ok = Files::<String>::new();
+  let mut err = Files::<Error>::new();
+  for entry in WalkDir::new(root.path()).sort_by_file_name() {
+    let entry = match entry {
+      Ok(x) => x,
+      Err(_) => continue,
+    };
+    let path = entry.path();
+    if path.extension().map_or(true, |x| x != "cm") {
+      continue;
+    }
+    let url = match Url::parse(&format!("file://{}", path.display())) {
+      Ok(x) => x,
+      Err(_) => continue,
+    };
+    let contents = match std::fs::read_to_string(path) {
+      Ok(x) => x,
+      Err(e) => {
+        err.push((url, e.into()));
+        continue;
       }
-      let contents = std::fs::read_to_string(path).ok()?;
-      // TODO report cm errors
-      let (_, members) = cm::get(&contents).ok()?;
-      let parent = entry.path().parent()?.to_owned();
-      Some(members.into_iter().map(move |x| parent.join(&x)))
-    })
-    .flatten()
-    .filter_map(|path| {
-      let url = lsp_types::Url::parse(&format!("file://{}", path.display())).ok()?;
-      // TODO is this right?
-      let contents = std::fs::read_to_string(&path).ok()?;
-      Some((url, contents))
-    })
-    .collect()
+    };
+    let members = match cm::get(&contents) {
+      Ok((_, x)) => x,
+      Err(e) => {
+        err.push((url, e));
+        continue;
+      }
+    };
+    let parent = match entry.path().parent() {
+      Some(x) => x,
+      None => {
+        err.push((url, anyhow!("no parent")));
+        continue;
+      }
+    };
+    for path in members.into_iter() {
+      let path = parent.join(&path);
+      let url = match Url::parse(&format!("file://{}", path.display())) {
+        Ok(x) => x,
+        Err(_) => continue,
+      };
+      match std::fs::read_to_string(&path) {
+        Ok(contents) => ok.push((url, contents)),
+        Err(e) => err.push((url, e.into())),
+      }
+    }
+  }
+  (ok, err)
 }
 
 fn lsp_range(range: text_pos::Range) -> lsp_types::Range {
