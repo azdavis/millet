@@ -1,6 +1,6 @@
 use crate::fmt_util::comma_seq;
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{MetaTyVar, Overload, Syms, Ty};
+use crate::types::{MetaTyVar, Overload, Sym, Syms, Ty};
 use pattern_match::RawPat;
 use std::fmt;
 
@@ -46,7 +46,7 @@ pub(crate) enum ErrorKind {
   ConPatMustNotHaveArg,
   ConPatMustHaveArg,
   InvalidAsPatName(hir::Name),
-  TyNameEscape,
+  TyNameEscape(Sym),
   ValRecExpNotFn,
   WrongNumTyArgs(usize, usize),
   ExnCopyNotExnIdStatus,
@@ -128,13 +128,16 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
       ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
-      ErrorKind::TyNameEscape => f.write_str("type name escapes its scope"),
-      ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
-      ErrorKind::WrongNumTyArgs(want, got) => write!(
+      ErrorKind::TyNameEscape(sym) => write!(
         f,
-        "wrong number of type arguments: expected {}, found {}",
-        want, got
+        "type name escapes its scope: {}",
+        self.syms.get(sym).unwrap().0
       ),
+      ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
+      ErrorKind::WrongNumTyArgs(want, got) => {
+        let s = if *want == 1 { "" } else { "s" };
+        write!(f, "expected {want} type argument{s}, found {got}")
+      }
       ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
       ErrorKind::PolymorphicExn => f.write_str("cannot have a polymorphic `exception`"),

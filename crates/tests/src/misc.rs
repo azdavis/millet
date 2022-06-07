@@ -162,7 +162,7 @@ fn fun_dec_name_mismatch() {
     r#"
 fun f 1 = 1
   | g _ = 2
-(** ^ mismatched names: expected f, found g *)
+(** ^ expected a function clause for f, found one for g *)
 "#,
   );
 }
@@ -173,7 +173,7 @@ fn fun_dec_wrong_num_pats() {
     r#"
 fun f 1 = 2
   | f 3 4 = 5
-(** ^^^^^^^^^ wrong number of patterns: expected 1, found 2 *)
+(** ^^^^^^^^^ expected 1 patterns, found 2 *)
 "#,
   );
 }
@@ -560,7 +560,7 @@ fn wrong_num_ty_args() {
   check(
     r#"
 val _: (int, bool) list = []
-(**    ^^^^^^^^^^^^^^^^ wrong number of type arguments: expected 1, found 2 *)
+(**    ^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
 "#,
   );
 }

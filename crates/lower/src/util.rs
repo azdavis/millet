@@ -130,10 +130,13 @@ impl fmt::Display for ErrorKind {
     match self {
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
-        write!(f, "mismatched names: expected {want}, found {got}")
+        write!(
+          f,
+          "expected a function clause for {want}, found one for {got}"
+        )
       }
       ErrorKind::FunBindWrongNumPats(want, got) => {
-        write!(f, "wrong number of patterns: expected {want}, found {got}")
+        write!(f, "expected {want} patterns, found {got}")
       }
       ErrorKind::InvalidIntLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),

@@ -7,7 +7,7 @@ fn t_00() {
 val _ =
   let datatype bad = guh
   in guh end
-(**  ^^^ type name escapes its scope *)
+(**  ^^^ type name escapes its scope: bad *)
 "#,
   );
 }
@@ -22,7 +22,7 @@ val _ =
     val quz = bar
   in
     (true; false; bar; 3 + 3; quz)
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type name escapes its scope *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type name escapes its scope: foo *)
   end
 "#,
   );
@@ -37,7 +37,7 @@ val _ =
     datatype guh = bad
   in
     if 3 < 4 then [] else [(3, bad, false, "hey")]
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type name escapes its scope *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type name escapes its scope: guh *)
   end
 "#,
   );
@@ -49,7 +49,7 @@ fn t_03() {
     r#"
 datatype t = One
 val _ = let datatype t = Two in Two end
-(**                             ^^^ type name escapes its scope *)
+(**                             ^^^ type name escapes its scope: t *)
 "#,
   );
 }
