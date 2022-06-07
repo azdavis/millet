@@ -716,14 +716,16 @@ fn handle_bv(
     Some(bv) => bv,
     None => return,
   };
-  let bv = match bv {
-    Some(bv) => bv.clone(),
-    None => {
-      let ret = BoundTyVar(bound_vars.len());
-      *bv = Some(ret.clone());
-      bound_vars.inner.push(kind);
-      ret
-    }
+  *ty = match bv {
+    Some(bv) => Ty::BoundVar(bv.clone()),
+    None => match kind {
+      Some(TyVarKind::Overloaded(_)) => Ty::INT,
+      None | Some(TyVarKind::Equality) => {
+        let new_bv = BoundTyVar(bound_vars.len());
+        *bv = Some(new_bv.clone());
+        bound_vars.inner.push(kind);
+        Ty::BoundVar(new_bv)
+      }
+    },
   };
-  *ty = Ty::BoundVar(bv);
 }

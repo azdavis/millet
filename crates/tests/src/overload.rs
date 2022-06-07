@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn t_00() {
@@ -6,7 +6,7 @@ fn t_00() {
     r#"
 fun add a b = a + b
 val _ = add false
-(**         ^^^^^ expected _ with word, real, or int, found bool *)
+(**         ^^^^^ expected int, found bool *)
 "#,
   );
 }
@@ -22,26 +22,38 @@ val _ = add (1, 2)
 }
 
 #[test]
-fn t_02() {
-  fail(
+fn t_02a() {
+  check(
     r#"
 val add = op+
 val _ = add (1.1, 2.2)
+(**         ^^^^^^^^^^ expected int * int, found real * real *)
 val _ = add (1, 2)
-(**     ^^^^^^^^^^ expected real, found int *)
+"#,
+  );
+}
+
+#[test]
+fn t_02b() {
+  check(
+    r#"
+val add = op+ : real * real -> real
+val _ = add (1.1, 2.2)
+val _ = add (1, 2)
+(**         ^^^^^^ expected real * real, found int * int *)
 "#,
   );
 }
 
 #[test]
 fn t_03() {
-  fail(
+  check(
     r#"
 val add = op+
 (* make this a top-dec level seq *)
 signature S = sig end
 val _ = add (1.1, 2.2)
-(**     ^^^^^^^^^^^^^^ expected int, found real *)
+(**         ^^^^^^^^^^ expected int * int, found real * real *)
 "#,
   );
 }
@@ -120,7 +132,7 @@ fn t_06() {
     r#"
 val add = op+
 val _ = add (false, true)
-(**         ^^^^^^^^^^^^^ expected _ * _ with word, real, or int, found bool * bool *)
+(**         ^^^^^^^^^^^^^ expected int * int, found bool * bool *)
 "#,
   );
 }
