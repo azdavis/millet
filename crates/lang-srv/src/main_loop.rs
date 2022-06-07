@@ -2,11 +2,11 @@ use crate::state::State;
 use lsp_server::{Connection, Message};
 
 pub(crate) fn run(conn: Connection, init: lsp_types::InitializeParams) -> anyhow::Result<()> {
-  eprintln!("startup main loop: {init:#?}");
+  log::info!("startup main loop: {init:#?}");
   let root = match &init.root_uri {
     Some(x) => x.clone(),
     None => {
-      eprintln!("no root url");
+      log::info!("no root url");
       return Ok(());
     }
   };
@@ -15,7 +15,7 @@ pub(crate) fn run(conn: Connection, init: lsp_types::InitializeParams) -> anyhow
     match msg {
       Message::Request(req) => {
         if conn.handle_shutdown(&req)? {
-          eprintln!("shutdown main loop");
+          log::info!("shutdown main loop");
           return Ok(());
         }
         state.handle_request(req);

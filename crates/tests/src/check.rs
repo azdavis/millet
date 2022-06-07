@@ -96,12 +96,7 @@ impl<'a> Check<'a> {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
-    let show = env_var_yes("SHOW");
-    let show = analysis::Show {
-      lex: show,
-      parse: show,
-    };
-    let err = analysis::get(ss.iter().copied(), show)
+    let err = analysis::get(ss.iter().copied())
       .into_iter()
       .enumerate()
       .flat_map(|(idx, errors)| errors.into_iter().map(move |e| (idx, e)))
@@ -322,8 +317,4 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(OneLineRegion, &st
     col: start..end,
   };
   Some((region, msg.trim_end_matches(' ')))
-}
-
-fn env_var_yes(s: &str) -> bool {
-  std::env::var_os(s).map_or(false, |x| x == "1")
 }

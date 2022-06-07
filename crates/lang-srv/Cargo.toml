@@ -7,6 +7,7 @@ publish = false
 [dependencies]
 anyhow = "1"
 crossbeam-channel = "0.5"
+log = "0.4"
 lsp-server = "0.6"
 lsp-types = "0.93"
 serde = { version = "1", features = ["derive"] }

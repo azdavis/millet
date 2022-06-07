@@ -52,7 +52,7 @@ impl State {
   fn publish_diagnostics(&mut self) {
     let mut new_had_diagnostics = FxHashSet::<Url>::default();
     let (ok_files, err_files) = get_files(&self.root);
-    let errors = analysis::get(ok_files.iter().map(|(_, x)| x.as_str()), Default::default());
+    let errors = analysis::get(ok_files.iter().map(|(_, x)| x.as_str()));
     for (url, error) in err_files {
       new_had_diagnostics.insert(url.clone());
       self.had_diagnostics.remove(&url);
@@ -115,7 +115,7 @@ impl State {
   pub(crate) fn send_response(&mut self, res: lsp_server::Response) {
     match self.req_queue.incoming.complete(res.id.clone()) {
       Some(()) => self.send(res.into()),
-      None => eprintln!("tried to respond to a non-queued request: {res:?}"),
+      None => log::debug!("tried to respond to a non-queued request: {res:?}"),
     }
   }
 
@@ -128,20 +128,20 @@ impl State {
   }
 
   pub(crate) fn handle_request(&mut self, req: lsp_server::Request) {
-    eprintln!("got request: {req:?}");
+    log::debug!("got request: {req:?}");
     self.req_queue.incoming.register(req.id, ())
   }
 
   pub(crate) fn handle_response(&mut self, res: lsp_server::Response) {
-    eprintln!("got response: {res:?}");
+    log::debug!("got response: {res:?}");
     match self.req_queue.outgoing.complete(res.id.clone()) {
       Some(()) => {}
-      None => eprintln!("received response for non-queued request: {res:?}"),
+      None => log::debug!("received response for non-queued request: {res:?}"),
     }
   }
 
   pub(crate) fn handle_notification(&mut self, notif: lsp_server::Notification) {
-    eprintln!("got notification: {notif:?}");
+    log::debug!("got notification: {notif:?}");
     match extract_notification::<lsp_types::notification::DidChangeWatchedFiles>(notif) {
       ControlFlow::Break(_) => self.publish_diagnostics(),
       ControlFlow::Continue(_) => {}
@@ -149,7 +149,7 @@ impl State {
   }
 
   fn send(&self, msg: Message) {
-    eprintln!("sending {msg:?}");
+    log::debug!("sending {msg:?}");
     self.sender.send(msg).unwrap()
   }
 }

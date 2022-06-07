@@ -9,6 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
+log = "0.4"
 lex = { path = "../lex" }
 parse = { path = "../parse" }
 lower = { path = "../lower" }

@@ -15,35 +15,22 @@ pub struct Error {
   pub message: String,
 }
 
-/// What to show to stderr.
-#[derive(Debug, Default, Clone, Copy)]
-pub struct Show {
-  /// Show the tokens.
-  pub lex: bool,
-  /// Show the parse tree.
-  pub parse: bool,
-}
-
 /// Returns a Vec of Vec of errors for each file.
 ///
 /// The length of the returned Vec will be the same as the length of files.
 ///
 /// TODO should probably have this be more like a data structure that can support adding/removing
 /// files and other queries other than errors. Then we could be more incremental.
-pub fn get<'a, I>(files: I, show: Show) -> Vec<Vec<Error>>
+pub fn get<'a, I>(files: I) -> Vec<Vec<Error>>
 where
   I: Iterator<Item = &'a str>,
 {
   let mut files: Vec<_> = files
     .map(|contents| {
       let lexed = lex::get(contents);
-      if show.lex {
-        eprintln!("lex: {:?}", lexed.tokens);
-      }
+      log::debug!("lex: {:?}", lexed.tokens);
       let parsed = parse::get(&lexed.tokens);
-      if show.parse {
-        eprintln!("parse: {:#?}", parsed.root);
-      }
+      log::debug!("parse: {:#?}", parsed.root);
       let lowered = lower::get(&parsed.root);
       AnalyzedFile {
         lex_errors: lexed.errors,

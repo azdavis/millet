@@ -7,6 +7,7 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "lex",
+ "log",
  "lower",
  "parse",
  "statics",
@@ -156,6 +157,7 @@ dependencies = [
  "cm",
  "crossbeam-channel",
  "fast-hash",
+ "log",
  "lsp-server",
  "lsp-types",
  "serde",
