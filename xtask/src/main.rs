@@ -67,7 +67,7 @@ fn finish_args(args: Arguments) -> Result<()> {
 }
 
 fn ck_sml_def(sh: &Shell) -> Result<()> {
-  eprintln!("checking sml definition");
+  println!("checking sml definition");
   let dirs: [PathBuf; 3] =
     ["hir", "lower", "statics"].map(|x| ["crates", x, "src"].iter().collect());
   let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output()?;
@@ -92,7 +92,7 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
 }
 
 fn ck_no_ignore(sh: &Shell) -> Result<()> {
-  eprintln!("checking for no ignores");
+  println!("checking for no ignores");
   let has_ignore = cmd!(sh, "git grep -lFe '#[ignore'").output()?;
   let out = String::from_utf8(has_ignore.stdout)?;
   let set: BTreeSet<_> = out.lines().filter(|&x| x != "xtask/src/main.rs").collect();
