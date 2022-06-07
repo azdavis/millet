@@ -27,6 +27,7 @@ fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyho
 }
 
 fn main() -> anyhow::Result<()> {
+  simple_logger::init_with_level(log::Level::Warn)?;
   log::info!("startup millet lsp server");
   let (connection, io_threads) = lsp_server::Connection::stdio();
   let server_capabilities = lsp_types::ServerCapabilities {
