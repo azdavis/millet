@@ -6,5 +6,5 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-pico-args = "0.4"
+pico-args = "0.5"
 xshell = "0.2"
