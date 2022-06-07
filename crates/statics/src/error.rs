@@ -1,4 +1,4 @@
-use crate::fmt_util::comma_seq;
+use crate::fmt_util::{comma_seq, sep_seq};
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::{MetaTyVar, Overload, Sym, Syms, Ty};
 use pattern_match::RawPat;
@@ -218,14 +218,52 @@ impl<'a> fmt::Display for PatDisplay<'a> {
         return Ok(());
       }
       Con::Variant(_, name) => {
+        let name = match name {
+          VariantName::Name(name) => name.as_str(),
+          VariantName::Exn(exn) => self.syms.get_exn(exn).0.as_str(),
+        };
         let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
+        if matches!(name, "nil" | "::") {
+          let mut ac = Vec::new();
+          match list_pat(&mut ac, self.pat) {
+            // does not need paren because list literal patterns are atomic
+            ListPatLen::Known => {
+              f.write_str("[")?;
+              comma_seq(
+                f,
+                ac.into_iter().map(|pat| PatDisplay {
+                  pat,
+                  syms: self.syms,
+                  prec: PatPrec::Min,
+                }),
+              )?;
+              f.write_str("]")?;
+            }
+            // TODO add another prec level?
+            ListPatLen::Unknown => {
+              if needs_paren {
+                f.write_str("(")?;
+              }
+              sep_seq(
+                f,
+                " :: ",
+                ac.into_iter().map(|pat| PatDisplay {
+                  pat,
+                  syms: self.syms,
+                  prec: PatPrec::App,
+                }),
+              )?;
+              if needs_paren {
+                f.write_str(")")?;
+              }
+            }
+          }
+          return Ok(());
+        }
         if needs_paren {
           f.write_str("(")?;
         }
-        match name {
-          VariantName::Name(name) => f.write_str(name.as_str())?,
-          VariantName::Exn(exn) => f.write_str(self.syms.get_exn(exn).0.as_str())?,
-        }
+        f.write_str(name)?;
         if args.is_empty() {
           return Ok(());
         }
@@ -247,6 +285,47 @@ impl<'a> fmt::Display for PatDisplay<'a> {
     // if got here, this is scon/any
     assert!(args.is_empty());
     Ok(())
+  }
+}
+
+enum ListPatLen {
+  Known,
+  Unknown,
+}
+
+fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
+  let (con, args) = match &pat.raw {
+    RawPat::Con(a, b) => (a, b),
+    RawPat::Or(_) => unreachable!(),
+  };
+  let name = match con {
+    Con::Any => {
+      ac.push(pat);
+      return ListPatLen::Unknown;
+    }
+    Con::Variant(_, VariantName::Name(name)) => name.as_str(),
+    _ => unreachable!(),
+  };
+  match name {
+    "nil" => {
+      assert!(args.is_empty());
+      ListPatLen::Known
+    }
+    "::" => {
+      assert_eq!(args.len(), 1);
+      let (con, args) = match &args.first().unwrap().raw {
+        RawPat::Con(a, b) => (a, b),
+        RawPat::Or(_) => unreachable!(),
+      };
+      assert!(matches!(con, Con::Record(_)));
+      let (hd, tl) = match &args[..] {
+        [a, b] => (a, b),
+        _ => unreachable!(),
+      };
+      ac.push(hd);
+      list_pat(ac, tl)
+    }
+    _ => unreachable!(),
   }
 }
 

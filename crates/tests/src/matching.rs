@@ -227,3 +227,82 @@ val x =
 "#,
   );
 }
+
+#[test]
+fn t_13() {
+  check(
+    r#"
+fun f xs =
+  case xs of
+(**    ^^ non-exhaustive match: missing [] *)
+    _ :: _ => 0
+"#,
+  );
+}
+
+#[test]
+fn t_14() {
+  check(
+    r#"
+fun f xs =
+  case xs of
+(**    ^^ non-exhaustive match: missing _ :: _ *)
+    [] => 0
+"#,
+  );
+}
+
+#[test]
+fn t_15() {
+  check(
+    r#"
+fun f xs =
+  case xs of
+(**    ^^ non-exhaustive match: missing [_] *)
+    [] => 0
+  | _ :: _ :: _ => 1
+"#,
+  );
+}
+
+#[test]
+fn t_16() {
+  check(
+    r#"
+fun f xs =
+  case xs of
+(**    ^^ non-exhaustive match: missing [_, _, _] *)
+    [] => 0
+  | [_] => 1
+  | [_, _] => 2
+  | _ :: _ :: _ :: _ :: _ => 3
+"#,
+  );
+}
+
+#[test]
+fn t_17() {
+  check(
+    r#"
+fun f xs =
+  case xs of
+(**    ^^ non-exhaustive match: missing [true] *)
+    [] => 0
+  | [false] => 1
+  | _ :: _ :: _ => 2
+"#,
+  );
+}
+
+#[test]
+fn t_18() {
+  check(
+    r#"
+fun append xs ys =
+  case xs of
+(**    ^^ non-exhaustive match: missing (_ :: _) :: _ *)
+    [] => ys
+  | [] :: ys => ys
+"#,
+  );
+}
