@@ -621,7 +621,7 @@ end
 fn prec() {
   check(
     r#"
-val _ = 1 = 2 andalso 3 = 4
+val _ = 1 = 2 andalso 3 > 4 orelse 5 < 6
 "#,
   );
 }
