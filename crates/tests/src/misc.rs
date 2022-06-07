@@ -640,7 +640,7 @@ val _ = p: real phantom
 
 #[test]
 fn phantom_type() {
-  fail(
+  check(
     r#"
 type 'a phantom = int
 type t = string phantom

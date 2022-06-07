@@ -241,6 +241,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
       let cx = bs.as_cx();
       for val_desc in val_descs {
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, val_desc.ty));
+        // `generalize` here currently does nothing, because we don't have implicit ty var scoping.
         generalize(st.subst(), FixedTyVars::default(), &mut ty_scheme);
         let vi = ValInfo {
           ty_scheme,

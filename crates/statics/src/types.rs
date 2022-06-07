@@ -628,6 +628,33 @@ pub(crate) fn generalize(subst: &Subst, fixed: FixedTyVars, ty_scheme: &mut TySc
   ty_scheme.bound_vars = g.bound_vars;
 }
 
+/// like [`generalize`], but:
+///
+/// - doesn't allow meta vars
+/// - always generalizes exactly the given fixed vars, even if they don't appear in the
+///   `ty_scheme.ty`
+pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
+  assert!(ty_scheme.bound_vars.is_empty());
+  let mut bound_vars = BoundTyVars {
+    inner: Vec::with_capacity(fixed.0.len()),
+  };
+  for (idx, (fv, bv)) in fixed.0.iter_mut().enumerate() {
+    assert!(bv.is_none());
+    bound_vars
+      .inner
+      .push(fv.ty_var.is_equality().then(|| TyVarKind::Equality));
+    *bv = Some(BoundTyVar(idx));
+  }
+  let mut g = Generalizer {
+    subst: &Subst::default(),
+    fixed,
+    meta: FxHashMap::default(),
+    bound_vars,
+  };
+  g.go(&mut ty_scheme.ty);
+  ty_scheme.bound_vars = g.bound_vars;
+}
+
 fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, ty: &Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}

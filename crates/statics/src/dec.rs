@@ -1,7 +1,8 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{
-  generalize, Cx, Env, FixedTyVars, IdStatus, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
+  generalize, generalize_fixed, Cx, Env, FixedTyVars, IdStatus, Ty, TyEnv, TyInfo, TyScheme,
+  ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
@@ -99,7 +100,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       for ty_bind in ty_binds {
         let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars, dec.into());
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty_bind.ty));
-        generalize(st.subst(), fixed, &mut ty_scheme);
+        // use `generalize_fixed`, not `generalize`, to explicitly create a ty scheme with the
+        // written arity to support phantom types.
+        generalize_fixed(fixed, &mut ty_scheme);
         let ty_info = TyInfo {
           ty_scheme,
           val_env: ValEnv::default(),
@@ -239,7 +242,8 @@ pub(crate) fn get_dat_binds(
     );
     let ty_scheme = {
       let mut res = TyScheme::zero(out_ty.clone());
-      generalize(st.subst(), fixed.clone(), &mut res);
+      // just `generalize` would also work, because `out_ty` mentions every fixed var.
+      generalize_fixed(fixed.clone(), &mut res);
       res
     };
     // allow recursive reference
@@ -258,7 +262,9 @@ pub(crate) fn get_dat_binds(
         ty = Ty::fun(ty::get(st, &cx, ars, of_ty), ty);
       };
       let mut ty_scheme = TyScheme::zero(ty);
-      generalize(st.subst(), fixed.clone(), &mut ty_scheme);
+      // just `generalize` would also work, because `ty_scheme` contains `out_ty`, which mentions
+      // every fixed var.
+      generalize_fixed(fixed.clone(), &mut ty_scheme);
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Con,
