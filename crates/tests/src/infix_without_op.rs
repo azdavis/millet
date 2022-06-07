@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn exp() {
@@ -28,11 +28,12 @@ val D _ = 3 D "hi"
 
 #[test]
 fn fun_head() {
-  fail(
+  // with some effort, this could be the actual infix without op error
+  check(
     r#"
 fun f (_, _) = 1
 fun _ g _ = 2
-(**   ^ infix name used as non-infix without `op` *)
+(** ^ expected a name *)
 infix h
 fun _ h _ = 3
 "#,
