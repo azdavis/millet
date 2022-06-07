@@ -4,9 +4,9 @@ use crate::check::{check, fail};
 fn t_00() {
   fail(
     r#"
-fun f a b = a + b
-val _ = f: unit
-(**     ^^^^^^^ expected unit, found int -> int -> int *)
+fun add a b = a + b
+val _ = add false
+(**         ^^^^^ expected _ with word, real, or int, found bool *)
 "#,
   );
 }
