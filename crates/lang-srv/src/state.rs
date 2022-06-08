@@ -19,7 +19,7 @@ pub(crate) struct State {
   root: Url,
   sender: Sender<Message>,
   req_queue: ReqQueue<(), ()>,
-  had_diagnostics: FxHashSet<Url>,
+  has_diagnostics: FxHashSet<Url>,
 }
 
 impl State {
@@ -28,7 +28,7 @@ impl State {
       root,
       sender,
       req_queue: ReqQueue::default(),
-      had_diagnostics: FxHashSet::default(),
+      has_diagnostics: FxHashSet::default(),
     };
     ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
       registrations: vec![lsp_types::Registration {
@@ -50,12 +50,12 @@ impl State {
   }
 
   fn publish_diagnostics(&mut self) {
-    let mut new_had_diagnostics = FxHashSet::<Url>::default();
+    let mut new_has_diagnostics = FxHashSet::<Url>::default();
     let (ok_files, err_files) = get_files(&self.root);
     let errors = analysis::get(ok_files.iter().map(|(_, x)| x.as_str()));
     for (url, error) in err_files {
-      new_had_diagnostics.insert(url.clone());
-      self.had_diagnostics.remove(&url);
+      new_has_diagnostics.insert(url.clone());
+      self.has_diagnostics.remove(&url);
       self.send_notification::<lsp_types::notification::PublishDiagnostics>(
         lsp_types::PublishDiagnosticsParams {
           uri: url,
@@ -71,8 +71,8 @@ impl State {
     }
     for ((url, contents), errors) in ok_files.into_iter().zip(errors) {
       let pos_db = text_pos::PositionDb::new(&contents);
-      new_had_diagnostics.insert(url.clone());
-      self.had_diagnostics.remove(&url);
+      new_has_diagnostics.insert(url.clone());
+      self.has_diagnostics.remove(&url);
       self.send_notification::<lsp_types::notification::PublishDiagnostics>(
         lsp_types::PublishDiagnosticsParams {
           uri: url,
@@ -89,8 +89,8 @@ impl State {
         },
       );
     }
-    std::mem::swap(&mut new_had_diagnostics, &mut self.had_diagnostics);
-    for url in new_had_diagnostics {
+    std::mem::swap(&mut new_has_diagnostics, &mut self.has_diagnostics);
+    for url in new_has_diagnostics {
       self.send_notification::<lsp_types::notification::PublishDiagnostics>(
         lsp_types::PublishDiagnosticsParams {
           uri: url,
