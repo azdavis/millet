@@ -401,7 +401,7 @@ end
 
 #[test]
 fn type_alias_in_sig() {
-  fail(
+  check(
     r#"
 signature THING = sig
   type 'a t

@@ -162,8 +162,29 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
         })
         .collect(),
     ),
-    ast::SpecOne::TySpec(spec) => hir::Spec::Ty(ty_descs(spec.ty_descs())),
-    ast::SpecOne::EqTySpec(spec) => hir::Spec::EqTy(ty_descs(spec.ty_descs())),
+    ast::SpecOne::TySpec(spec) => hir::Spec::Ty(
+      spec
+        .ty_descs()
+        .filter_map(|x| {
+          Some(hir::TyDesc {
+            // TODO handle EqTy
+            ty_vars: ty::var_seq(x.ty_var_seq()),
+            name: get_name(x.name())?,
+          })
+        })
+        .collect(),
+    ),
+    ast::SpecOne::EqTySpec(spec) => hir::Spec::EqTy(
+      spec
+        .eq_ty_descs()
+        .filter_map(|x| {
+          Some(hir::TyDesc {
+            ty_vars: ty::var_seq(x.ty_var_seq()),
+            name: get_name(x.name())?,
+          })
+        })
+        .collect(),
+    ),
     ast::SpecOne::DatSpec(spec) => hir::Spec::Datatype(dec::dat_binds(cx, spec.dat_binds())),
     ast::SpecOne::DatCopySpec(spec) => {
       hir::Spec::DatatypeCopy(get_name(spec.name())?, get_path(spec.path()?)?)
@@ -242,18 +263,4 @@ fn with_ascription_tail(
     ret = cx.str_exp(asc, ptr);
   }
   ret
-}
-
-fn ty_descs<I>(iter: I) -> Vec<hir::TyDesc>
-where
-  I: Iterator<Item = ast::TyDesc>,
-{
-  iter
-    .filter_map(|x| {
-      Some(hir::TyDesc {
-        ty_vars: ty::var_seq(x.ty_var_seq()),
-        name: get_name(x.name())?,
-      })
-    })
-    .collect()
 }

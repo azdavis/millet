@@ -185,11 +185,17 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
     many_sep(p, SK::AndKw, SK::TyDesc, |p| {
       ty_var_seq(p);
       p.eat(SK::Name);
+      if p.at(SK::Eq) {
+        let en = p.enter();
+        p.bump();
+        ty(p);
+        p.exit(en, SK::EqTy);
+      }
     });
     p.exit(en, SK::TySpec)
   } else if p.at(SK::EqtypeKw) {
     p.bump();
-    many_sep(p, SK::AndKw, SK::TyDesc, |p| {
+    many_sep(p, SK::AndKw, SK::EqTyDesc, |p| {
       ty_var_seq(p);
       p.eat(SK::Name);
     });
