@@ -167,13 +167,8 @@ pub(crate) fn get_match<I>(
 ) where
   I: Into<hir::Idx>,
 {
-  if st.did_error_since(marker) {
-    // trying to analyze a pattern match for exhaustiveness when the patterns and types might not
-    // even match up or make sense is fraught with danger. plus, we know we already emitted some
-    // errors anyway, and emitting more might be overwhelming, especially when we're trying to
-    // analyze an ill-formed match.
-    return;
-  }
+  // TODO remove this
+  st.did_error_since(marker);
   // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
   // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
   // need one too, and then things get weird. Maybe the pattern_match API needs some work.
@@ -182,6 +177,11 @@ pub(crate) fn get_match<I>(
   };
   let ck = pattern_match::check(&lang, pats, ty);
   st.syms = lang.syms;
+  let ck = match ck {
+    Ok(x) => x,
+    // we already should have emitted other errors in this case
+    Err(_) => return,
+  };
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().flatten().collect();
   unreachable.sort_unstable_by_key(|x| x.into_raw());
   for un in unreachable {

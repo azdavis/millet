@@ -56,7 +56,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 
 [[package]]
 name = "cm"
@@ -154,7 +154,7 @@ dependencies = [
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 
 [[package]]
 name = "idna"
@@ -303,7 +303,7 @@ checksum = "3cacbb3c4ff353b534a67fb8d7524d00229da4cb1dc8c79f4db96e375ab5b619"
 [[package]]
 name = "pattern-match"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 dependencies = [
  "rustc-hash",
 ]
@@ -472,7 +472,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -493,7 +493,7 @@ dependencies = [
 [[package]]
 name = "text-pos"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 dependencies = [
  "text-size",
 ]
@@ -540,7 +540,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 
 [[package]]
 name = "ungrammar"
@@ -572,7 +572,7 @@ dependencies = [
 [[package]]
 name = "uniq"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#78096b2620800df76a08f8b25d26d0b73c672ef8"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 
 [[package]]
 name = "url"

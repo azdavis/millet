@@ -1,6 +1,7 @@
 use crate::types::{Exn, Sym, Syms, Ty};
 use crate::util::apply_bv;
 use fast_hash::FxHashSet;
+use pattern_match::{CheckError, Result};
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
 
@@ -19,12 +20,12 @@ impl pattern_match::Lang for Lang {
     Con::Any
   }
 
-  fn split<'a, I>(&self, ty: &Self::Ty, con: &Self::Con, cons: I) -> Vec<Self::Con>
+  fn split<'a, I>(&self, ty: &Self::Ty, con: &Self::Con, cons: I) -> Result<Vec<Self::Con>>
   where
     Self::Con: 'a,
     I: Iterator<Item = &'a Self::Con>,
   {
-    match con {
+    let ret = match con {
       Con::Any => match ty {
         Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => {
           vec![Con::Any]
@@ -32,7 +33,7 @@ impl pattern_match::Lang for Lang {
         Ty::Con(_, ty_name) => {
           let ty_info = match self.syms.get(ty_name) {
             // we can't know how many variants of exn there are, since it's EXteNsible.
-            None => return vec![Con::Any],
+            None => return Ok(vec![Con::Any]),
             Some((_, x)) => x,
           };
           let all: Vec<_> = ty_info
@@ -57,23 +58,26 @@ impl pattern_match::Lang for Lang {
       | Con::Variant(_, _) => {
         vec![con.clone()]
       }
-    }
+    };
+    Ok(ret)
   }
 
-  fn get_arg_tys(&self, ty: &Self::Ty, con: &Self::Con) -> Vec<Self::Ty> {
-    match ty {
+  fn get_arg_tys(&self, ty: &Self::Ty, con: &Self::Con) -> Result<Vec<Self::Ty>> {
+    let ret = match ty {
       Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => Vec::new(),
       Ty::Record(rows) => rows.iter().map(|(_, t)| t.clone()).collect(),
       Ty::Con(args, ty_name) => match con {
         Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),
         Con::Variant(ty_name_2, variant_name) => {
-          assert_eq!(ty_name, ty_name_2);
+          if ty_name != ty_name_2 {
+            return Err(CheckError);
+          }
           match (variant_name, self.syms.get(ty_name)) {
             (VariantName::Exn(exn), None) => {
               self.syms.get_exn(exn).1.into_iter().cloned().collect()
             }
             (VariantName::Name(name), Some((_, ty_info))) => {
-              let val_info = ty_info.val_env.get(name).unwrap();
+              let val_info = ty_info.val_env.get(name).ok_or(CheckError)?;
               match &val_info.ty_scheme.ty {
                 Ty::Con(_, _) => Vec::new(),
                 Ty::Fn(arg, _) => {
@@ -81,15 +85,16 @@ impl pattern_match::Lang for Lang {
                   apply_bv(args, &mut arg);
                   vec![arg]
                 }
-                _ => unreachable!(),
+                _ => return Err(CheckError),
               }
             }
-            _ => unreachable!(),
+            _ => return Err(CheckError),
           }
         }
-        Con::Record(_) => unreachable!(),
+        Con::Record(_) => return Err(CheckError),
       },
-    }
+    };
+    Ok(ret)
   }
 }
 
