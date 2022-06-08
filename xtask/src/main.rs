@@ -116,8 +116,9 @@ fn dist(sh: &Shell, release: bool) -> Result<()> {
   assert!(dir.pop());
   sh.copy_file("license.md", &dir)?;
   let _d = sh.push_dir(&dir);
-  // TODO add npm ci here with check if node_modules exists? using Path::new(...).exists() doesn't
-  // work because sh.push_dir doesn't affect the actual cwd. would like a 'exists' helper on sh?
+  if !sh.path_exists("node_modules") {
+    cmd!(sh, "npm ci").run()?;
+  }
   if cfg!(windows) {
     cmd!(sh, "cmd.exe /c npm run build-{kind}").run()?;
   } else {
