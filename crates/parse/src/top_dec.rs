@@ -1,7 +1,7 @@
 use crate::dec::{dat_binds, datatype_copy, dec_one};
 use crate::parser::{Entered, Exited, Expected, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
-use crate::util::{many_sep, maybe_semi_sep, must, path};
+use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, path};
 use syntax::SyntaxKind as SK;
 
 #[must_use]
@@ -175,7 +175,7 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
   let mut ex = if p.at(SK::ValKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ValDesc, |p| {
-      p.eat(SK::Name);
+      eat_name_star(p);
       p.eat(SK::Colon);
       ty(p);
     });
@@ -204,7 +204,7 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
   } else if p.at(SK::ExceptionKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ExDesc, |p| {
-      p.eat(SK::Name);
+      eat_name_star(p);
       let _ = of_ty(p);
     });
     p.exit(en, SK::ExSpec)

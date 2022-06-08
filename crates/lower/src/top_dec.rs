@@ -156,7 +156,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
         .val_descs()
         .filter_map(|x| {
           Some(hir::ValDesc {
-            name: get_name(x.name())?,
+            name: hir::Name::new(x.name_star_eq()?.token.text()),
             ty: ty::get(cx, x.ty()),
           })
         })
@@ -173,7 +173,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
         .ex_descs()
         .filter_map(|x| {
           Some(hir::ExDesc {
-            name: get_name(x.name())?,
+            name: hir::Name::new(x.name_star_eq()?.token.text()),
             ty: x.of_ty().map(|x| ty::get(cx, x.ty())),
           })
         })

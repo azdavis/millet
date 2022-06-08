@@ -100,9 +100,9 @@ StrSpec = 'structure' StrDesc*
 IncludeSpec = 'include' SigExp*
 SharingSpec = SpecOne 'sharing' 'type' PathEq*
 
-ValDesc = 'Name' ':' Ty 'and'?
+ValDesc = NameStarEq ':' Ty 'and'?
 TyDesc = TyVarSeq 'Name' 'and'?
-ExDesc = 'Name' OfTy? 'and'?
+ExDesc = NameStarEq OfTy? 'and'?
 StrDesc = 'Name' ':' SigExp 'and'?
 
 PathEq = Path '='?

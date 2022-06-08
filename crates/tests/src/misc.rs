@@ -652,7 +652,7 @@ val _ = 3: real phantom
 
 #[test]
 fn symbol_ident_sig() {
-  fail(
+  check(
     r#"
 signature INT = sig
   val ~ : int -> int
