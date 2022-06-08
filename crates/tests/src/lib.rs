@@ -15,7 +15,7 @@ mod fixity;
 mod functor;
 mod incomplete;
 mod infix_without_op;
-mod invalid_constant;
+mod literal;
 mod local;
 mod matching;
 mod misc;

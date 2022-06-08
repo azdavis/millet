@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn num_constant() {
+fn num_lit() {
   check(
     r#"
 val _ = 0x

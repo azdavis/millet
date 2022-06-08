@@ -51,7 +51,7 @@ val _ = "bad \ bad \ bad"
 }
 
 #[test]
-fn negative_word_lit() {
+fn negative_word() {
   check(
     r#"
 val _ = ~0w1
@@ -61,7 +61,7 @@ val _ = ~0w1
 }
 
 #[test]
-fn unclosed_string_constant() {
+fn unclosed_string() {
   check(
     r#"
 val _ = "bad

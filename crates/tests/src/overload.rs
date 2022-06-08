@@ -76,7 +76,7 @@ fn std_lib_ops() {
 (* abs *)
 val _: int = abs 1
 val _: real = abs 1.1
-(* tilde. put a space so the ~ is a function, not part of the constant. *)
+(* tilde. put a space so the ~ is a function, not part of the literal. *)
 val _: int = ~ 1
 val _: real = ~ 1.1
 (* div *)
