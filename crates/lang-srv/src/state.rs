@@ -11,6 +11,8 @@ use std::ops::ControlFlow;
 use walkdir::WalkDir;
 
 const SOURCE: &str = "millet";
+const MAX_FILES_WITH_ERRORS: usize = 20;
+const MAX_ERRORS_PER_FILE: usize = 20;
 
 /// The only thing that does file IO.
 ///
@@ -65,10 +67,14 @@ impl State {
           let errors: Vec<_> = errors
             .into_iter()
             .map(|e| (lsp_range(pos_db.range(e.range)), e.message))
+            .take(MAX_ERRORS_PER_FILE)
             .collect();
           (url, errors)
         });
-    let errors = std::iter::empty().chain(file_errors).chain(analysis_errors);
+    let errors = std::iter::empty()
+      .chain(file_errors)
+      .chain(analysis_errors)
+      .take(MAX_FILES_WITH_ERRORS);
     for (url, errors) in errors {
       new_has_diagnostics.insert(url.clone());
       self.has_diagnostics.remove(&url);
