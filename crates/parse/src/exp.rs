@@ -141,17 +141,13 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
-    comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
-      exp(p);
-    });
+    comma_sep(p, SK::RSquare, SK::ExpArg, exp);
     p.exit(en, SK::ListExp)
   } else if p.at(SK::LetKw) {
     p.bump();
     dec(p);
     p.eat(SK::InKw);
-    many_sep(p, SK::Semicolon, SK::ExpInSeq, |p| {
-      exp(p);
-    });
+    many_sep(p, SK::Semicolon, SK::ExpInSeq, exp);
     p.eat(SK::EndKw);
     p.exit(en, SK::LetExp)
   } else {
