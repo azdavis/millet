@@ -11,6 +11,8 @@ pub(crate) enum Token<'a> {
   Alias,
   Is,
   Colon,
+  LRound,
+  RRound,
   String(&'a str),
 }
 
@@ -28,6 +30,12 @@ pub(crate) fn get(s: &str) -> Result<Vec<Token<'_>>> {
   Ok(tokens)
 }
 
+const PUNCTUATION: [(u8, Token<'_>); 3] = [
+  (b':', Token::Colon),
+  (b'(', Token::LRound),
+  (b')', Token::RRound),
+];
+
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
   match block_comment::get(idx, b, bs) {
     Ok(Some(block_comment::Consumed)) => return Ok(None),
@@ -44,9 +52,11 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     advance_while(idx, bs, is_whitespace);
     return Ok(None);
   }
-  if b == b':' {
-    *idx += 1;
-    return Ok(Some(Token::Colon));
+  for (tok_b, tok) in PUNCTUATION {
+    if b == tok_b {
+      *idx += 1;
+      return Ok(Some(tok));
+    }
   }
   let start = *idx;
   advance_while(idx, bs, |b| {
