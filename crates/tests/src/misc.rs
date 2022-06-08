@@ -649,3 +649,39 @@ val _ = 3: real phantom
 "#,
   );
 }
+
+#[test]
+fn symbol_ident_sig() {
+  fail(
+    r#"
+signature INT = sig
+  val ~ : int -> int
+  val + : int * int -> int
+  val - : int * int -> int
+  val * : int * int -> int
+  val div : int * int -> int
+  val mod : int * int -> int
+  val quot : int * int -> int
+  val rem : int * int -> int
+  val >  : int * int -> bool
+  val >= : int * int -> bool
+  val <  : int * int -> bool
+  val <= : int * int -> bool
+end
+"#,
+  );
+}
+
+#[test]
+fn type_alias_in_sig() {
+  fail(
+    r#"
+signature THING = sig
+  type 'a t
+  type 'a thing = 'a t
+  type guy = { foo: int, bar: string }
+  val hi: guy
+end
+"#,
+  );
+}
