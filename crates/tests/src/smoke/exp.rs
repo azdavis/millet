@@ -175,3 +175,13 @@ val _ = fn x => case x of 1 => 1 | _ => 2
 "#,
   );
 }
+
+#[test]
+fn l_round_exp_tail() {
+  check(
+    r#"
+val x = (3 val
+(**        ^^^ expected `)`, `,`, or `;` *)
+"#,
+  );
+}

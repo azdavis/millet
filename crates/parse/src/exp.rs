@@ -168,8 +168,8 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
   let en = p.enter();
   exp(p);
   if !p.at(SK::Semicolon) && !p.at(SK::Comma) {
+    p.abandon(en);
     if p.at(SK::RRound) {
-      p.abandon(en);
       p.bump();
     } else {
       p.error(ErrorKind::Expected(Expected::LRoundExpTail));
