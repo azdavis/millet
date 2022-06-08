@@ -1,4 +1,4 @@
-//! See https://github.com/matklad/cargo-xtask.
+//! See the [xtask spec](https://github.com/matklad/cargo-xtask).
 
 use anyhow::{bail, Result};
 use pico_args::Arguments;
