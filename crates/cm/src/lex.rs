@@ -52,6 +52,12 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     advance_while(idx, bs, is_whitespace);
     return Ok(None);
   }
+  // preprocessor (ignored)
+  if b == b'#' && idx.checked_sub(1).and_then(|i| bs.get(i)) == Some(&b'\n') {
+    *idx += 1;
+    advance_while(idx, bs, |b| b != b'\n');
+    return Ok(None);
+  }
   for (tok_b, tok) in PUNCTUATION {
     if b == tok_b {
       *idx += 1;
