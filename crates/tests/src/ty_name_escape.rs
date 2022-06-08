@@ -65,7 +65,6 @@ val _ = let datatype t = Two in One end
 }
 
 #[test]
-#[should_panic]
 fn t_05() {
   check(
     r#"
