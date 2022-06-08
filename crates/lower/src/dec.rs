@@ -47,7 +47,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
               let head_name = case
                 .fun_bind_case_head()
                 .and_then(|head| match head {
-                  ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => head.name_plus(),
+                  ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => head.name_star_eq(),
                   ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
                     let lhs = head.lhs();
                     let rhs = head.rhs();
@@ -58,7 +58,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                       let tup = tuple([pat::get(cx, lhs), pat::get(cx, rhs)]);
                       pats.push(cx.pat(tup, ptr.clone()));
                     }
-                    head.name_plus()
+                    head.name_star_eq()
                   }
                 })
                 .map(|x| x.token);
@@ -179,7 +179,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
       dec
         .ex_binds()
         .filter_map(|ex_bind| {
-          let name = hir::Name::new(ex_bind.name_plus()?.token.text());
+          let name = hir::Name::new(ex_bind.name_star_eq()?.token.text());
           let ret = match ex_bind.ex_bind_inner() {
             None => hir::ExBind::New(name, None),
             Some(ast::ExBindInner::OfTy(x)) => hir::ExBind::New(name, Some(ty::get(cx, x.ty()))),
@@ -211,7 +211,7 @@ where
           .con_binds()
           .filter_map(|con_bind| {
             Some(hir::ConBind {
-              name: hir::Name::new(con_bind.name_plus()?.token.text()),
+              name: hir::Name::new(con_bind.name_star_eq()?.token.text()),
               ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
             })
           })

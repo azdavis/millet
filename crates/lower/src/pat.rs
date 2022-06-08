@@ -25,7 +25,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
             Some((get_lab(cx, row.lab()?), get(cx, row.pat())))
           }
           ast::PatRowInner::LabPatRow(row) => {
-            let name = hir::Name::new(row.name_plus()?.token.text());
+            let name = hir::Name::new(row.name_star_eq()?.token.text());
             let pat = as_(cx, name.clone(), row.ty_annotation(), row.as_pat_tail()?);
             Some((hir::Lab::Name(name), cx.pat(pat, ptr.clone())))
           }
@@ -47,7 +47,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
       })
     }
     ast::Pat::InfixPat(pat) => {
-      let func = hir::Path::one(hir::Name::new(pat.name_plus()?.token.text()));
+      let func = hir::Path::one(hir::Name::new(pat.name_star_eq()?.token.text()));
       let lhs = get(cx, pat.lhs());
       let rhs = get(cx, pat.rhs());
       let arg = cx.pat(tuple([lhs, rhs]), ptr.clone());
@@ -58,7 +58,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
       ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
     ),
     ast::Pat::TypedNamePat(pat) => {
-      let name_pat = cx.pat(name(pat.name_plus()?.token.text()), ptr.clone());
+      let name_pat = cx.pat(name(pat.name_star_eq()?.token.text()), ptr.clone());
       hir::Pat::Typed(
         name_pat,
         ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
@@ -66,7 +66,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
     }
     ast::Pat::AsPat(pat) => as_(
       cx,
-      hir::Name::new(pat.name_plus()?.token.text()),
+      hir::Name::new(pat.name_star_eq()?.token.text()),
       pat.ty_annotation(),
       pat.as_pat_tail()?,
     ),

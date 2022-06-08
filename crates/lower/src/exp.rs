@@ -51,7 +51,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
     ast::Exp::AppExp(exp) => hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
     ast::Exp::InfixExp(exp) => {
       let func = exp
-        .name_plus()
+        .name_star_eq()
         .and_then(|x| cx.exp(name(x.token.text()), ptr.clone()));
       let lhs = get(cx, exp.lhs());
       let rhs = get(cx, exp.rhs());

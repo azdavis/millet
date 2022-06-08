@@ -3,7 +3,8 @@ use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::pat::pat;
 use crate::ty::ty;
 use crate::util::{
-  comma_sep, lab, many_sep, must, name_plus, path, path_no_infix, scon, should_break, ShouldBreak,
+  comma_sep, lab, many_sep, must, name_star_eq, path, path_no_infix, scon, should_break,
+  ShouldBreak,
 };
 use syntax::SyntaxKind as SK;
 
@@ -46,7 +47,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
     p.abandon(en);
     let mut ex = at_exp(p)?;
     loop {
-      let op_info = if name_plus(p) {
+      let op_info = if name_star_eq(p) {
         let text = p.peek().unwrap().text;
         p.get_op(text)
       } else {
@@ -119,7 +120,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     must(p, path, Expected::Path);
     p.exit(en, SK::PathExp)
-  } else if name_plus(p) {
+  } else if name_star_eq(p) {
     path_no_infix(p);
     p.exit(en, SK::PathExp)
   } else if p.at(SK::LCurly) {
@@ -212,7 +213,7 @@ fn matcher(p: &mut Parser<'_>) {
 fn at_exp_hd(p: &mut Parser<'_>) -> bool {
   scon(p)
     || p.at(SK::OpKw)
-    || name_plus(p)
+    || name_star_eq(p)
     || p.at(SK::LCurly)
     || p.at(SK::Hash)
     || p.at(SK::LRound)

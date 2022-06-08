@@ -109,7 +109,7 @@ pub(crate) fn should_break(op_info: OpInfo, min_prec: Option<OpInfo>) -> ShouldB
 
 #[must_use]
 pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
-  if !name_plus(p) {
+  if !name_star_eq(p) {
     return None;
   }
   let en = p.enter();
@@ -118,18 +118,18 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
   loop {
     if p.at(SK::Dot) {
       p.bump();
-      p.exit(np_dot, SK::NamePlusDot);
+      p.exit(np_dot, SK::NameStarEqDot);
       np_dot = p.enter();
       eat_name_star(p);
     } else {
-      p.exit(np_dot, SK::NamePlusDot);
+      p.exit(np_dot, SK::NameStarEqDot);
       break;
     }
   }
   Some(p.exit(en, SK::Path))
 }
 
-/// requires we just got a true `name_plus(p)`. errors if this parses a path with no structures (aka
+/// requires we just got a true `name_star_eq(p)`. errors if this parses a path with no structures (aka
 /// just a name) and that name is infix.
 pub(crate) fn path_no_infix(p: &mut Parser<'_>) {
   let cur = p.peek().unwrap();
@@ -162,7 +162,7 @@ pub(crate) fn lab(p: &mut Parser<'_>) {
 
 /// kind of badly named. it means Name, * or =
 #[must_use]
-pub(crate) fn name_plus(p: &mut Parser<'_>) -> bool {
+pub(crate) fn name_star_eq(p: &mut Parser<'_>) -> bool {
   name_star(p, 0) || p.at(SK::Eq)
 }
 

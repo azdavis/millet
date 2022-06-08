@@ -75,8 +75,8 @@ pub(crate) fn get_name(n: Option<syntax::SyntaxToken>) -> Option<hir::Name> {
 
 pub(crate) fn get_path(p: ast::Path) -> Option<hir::Path> {
   hir::Path::try_new(
-    p.name_plus_dots()
-      .filter_map(|x| Some(hir::Name::new(x.name_plus()?.token.text())))
+    p.name_star_eq_dots()
+      .filter_map(|x| Some(hir::Name::new(x.name_star_eq()?.token.text())))
       .collect(),
   )
 }

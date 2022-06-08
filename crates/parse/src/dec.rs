@@ -2,7 +2,7 @@ use crate::exp::exp;
 use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_plus, path};
+use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>) -> Exited {
@@ -115,16 +115,16 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> Option<Exited> {
   } else if p.at(SK::InfixKw) {
     p.bump();
     let num = fixity(p);
-    names_plus(p, |p, name| p.insert_op(name, OpInfo::left(num)));
+    names_star_eq(p, |p, name| p.insert_op(name, OpInfo::left(num)));
     p.exit(en, SK::InfixDec)
   } else if p.at(SK::InfixrKw) {
     p.bump();
     let num = fixity(p);
-    names_plus(p, |p, name| p.insert_op(name, OpInfo::right(num)));
+    names_star_eq(p, |p, name| p.insert_op(name, OpInfo::right(num)));
     p.exit(en, SK::InfixrDec)
   } else if p.at(SK::NonfixKw) {
     p.bump();
-    names_plus(p, |p, name| p.remove_op(name));
+    names_star_eq(p, |p, name| p.remove_op(name));
     p.exit(en, SK::NonfixDec)
   } else {
     p.abandon(en);
@@ -150,12 +150,12 @@ fn fixity(p: &mut Parser<'_>) -> usize {
   ret
 }
 
-fn names_plus<'a, F>(p: &mut Parser<'a>, mut f: F)
+fn names_star_eq<'a, F>(p: &mut Parser<'a>, mut f: F)
 where
   F: FnMut(&mut Parser<'a>, &'a str),
 {
   let mut got = false;
-  while name_plus(p) {
+  while name_star_eq(p) {
     got = true;
     let text = p.bump().text;
     f(p, text);
