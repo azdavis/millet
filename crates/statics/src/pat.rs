@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Item};
 use crate::pat_match::{Con, Lang, Pat, VariantName};
-use crate::st::{ErrorsMarker, St};
+use crate::st::St;
 use crate::ty;
 use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
 use crate::unify::unify;
@@ -162,13 +162,10 @@ pub(crate) fn get_match<I>(
   pats: Vec<Pat>,
   ty: Ty,
   f: Option<fn(Vec<Pat>) -> ErrorKind>,
-  marker: ErrorsMarker,
   idx: I,
 ) where
   I: Into<hir::Idx>,
 {
-  // TODO remove this
-  st.did_error_since(marker);
   // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
   // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
   // need one too, and then things get weird. Maybe the pattern_match API needs some work.

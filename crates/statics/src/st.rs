@@ -1,7 +1,6 @@
 use crate::error::{Error, ErrorKind};
 use crate::standard_basis;
 use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms};
-use drop_bomb::DropBomb;
 
 /// The state.
 ///
@@ -32,18 +31,6 @@ impl St {
     })
   }
 
-  pub(crate) fn mark_errors(&self) -> ErrorsMarker {
-    ErrorsMarker {
-      bomb: DropBomb::new("must be passed to St::did_error_since"),
-      errors_len: self.errors.len(),
-    }
-  }
-
-  pub(crate) fn did_error_since(&self, mut marker: ErrorsMarker) -> bool {
-    marker.bomb.defuse();
-    self.errors.len() > marker.errors_len
-  }
-
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
     self.meta_gen.gen()
   }
@@ -55,11 +42,6 @@ impl St {
   pub(crate) fn finish(self) -> (Syms, Vec<Error>) {
     (self.syms, self.errors)
   }
-}
-
-pub(crate) struct ErrorsMarker {
-  bomb: DropBomb,
-  errors_len: usize,
 }
 
 /// Static analysis.

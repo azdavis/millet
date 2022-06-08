@@ -35,7 +35,6 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
         idx += 1;
         // sml_def(25)
-        let marker = st.mark_errors();
         let (pm_pat, mut want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
         let got = exp::get(st, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec);
@@ -45,7 +44,6 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           vec![pm_pat],
           want,
           Some(ErrorKind::NonExhaustiveBinding),
-          marker,
           val_bind.pat.map_or(hir::Idx::from(dec), Into::into),
         );
       }
@@ -65,8 +63,6 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // extend the cx with only the recursive ValEnv.
       Rc::make_mut(&mut cx.env).val_env.extend(rec_ve);
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
-        // TODO this marker doesn't encompass the pat
-        let marker = st.mark_errors();
         // sml_def(26)
         if let Some(exp) = val_bind.exp {
           if !matches!(ars.exp[exp], hir::Exp::Fn(_)) {
@@ -81,7 +77,6 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           vec![pm_pat],
           want,
           Some(ErrorKind::NonExhaustiveBinding),
-          marker,
           dec,
         );
       }

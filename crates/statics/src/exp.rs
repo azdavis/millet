@@ -79,14 +79,13 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     }
     // sml_def(10)
     hir::Exp::Handle(inner, matcher) => {
-      let marker = st.mark_errors();
       let mut exp_ty = get(st, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
       let idx = inner.unwrap_or(exp);
       unify(st, Ty::EXN, param.clone(), idx);
       unify(st, exp_ty.clone(), res, idx);
       apply(st.subst(), &mut exp_ty);
-      pat::get_match(st, pats, param, None, marker, idx);
+      pat::get_match(st, pats, param, None, idx);
       exp_ty
     }
     // sml_def(11)
@@ -97,14 +96,12 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     }
     // sml_def(12)
     hir::Exp::Fn(matcher) => {
-      let marker = st.mark_errors();
       let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
       pat::get_match(
         st,
         pats,
         param.clone(),
         Some(ErrorKind::NonExhaustiveMatch),
-        marker,
         exp,
       );
       Ty::fun(param, res)
