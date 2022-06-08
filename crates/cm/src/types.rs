@@ -95,7 +95,7 @@ impl FromStr for Class {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let ret = match s.to_ascii_lowercase().as_str() {
       "sml" => Self::Sml,
-      "cmfile" => Self::CMFile,
+      "cm" | "cmfile" => Self::CMFile,
       "scgroup" => Self::SCGroup,
       "sclibrary" => Self::SCLibrary,
       "mllex" => Self::MLLex,
