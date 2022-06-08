@@ -52,25 +52,24 @@ impl State {
   fn publish_diagnostics(&mut self) {
     let mut new_has_diagnostics = FxHashSet::<Url>::default();
     let (ok_files, err_files) = get_files(&self.root);
-    let errors = analysis::get(ok_files.iter().map(|(_, x)| x.as_str()));
-    for (url, error) in err_files {
-      new_has_diagnostics.insert(url.clone());
-      self.has_diagnostics.remove(&url);
-      self.send_notification::<lsp_types::notification::PublishDiagnostics>(
-        lsp_types::PublishDiagnosticsParams {
-          uri: url,
-          diagnostics: vec![lsp_types::Diagnostic {
-            range: lsp_types::Range::default(),
-            message: error.to_string(),
-            source: Some(SOURCE.to_owned()),
-            ..lsp_types::Diagnostic::default()
-          }],
-          version: None,
-        },
-      );
-    }
-    for ((url, contents), errors) in ok_files.into_iter().zip(errors) {
-      let pos_db = text_pos::PositionDb::new(&contents);
+    let analysis_errors = analysis::get(ok_files.iter().map(|(_, x)| x.as_str()));
+    let file_errors = err_files
+      .into_iter()
+      .map(|(url, error)| (url, vec![(lsp_types::Range::default(), error.to_string())]));
+    let analysis_errors =
+      ok_files
+        .into_iter()
+        .zip(analysis_errors)
+        .map(|((url, contents), errors)| {
+          let pos_db = text_pos::PositionDb::new(&contents);
+          let errors: Vec<_> = errors
+            .into_iter()
+            .map(|e| (lsp_range(pos_db.range(e.range)), e.message))
+            .collect();
+          (url, errors)
+        });
+    let errors = std::iter::empty().chain(file_errors).chain(analysis_errors);
+    for (url, errors) in errors {
       new_has_diagnostics.insert(url.clone());
       self.has_diagnostics.remove(&url);
       self.send_notification::<lsp_types::notification::PublishDiagnostics>(
@@ -78,11 +77,11 @@ impl State {
           uri: url,
           diagnostics: errors
             .into_iter()
-            .map(|x| lsp_types::Diagnostic {
-              range: lsp_range(pos_db.range(x.range)),
-              message: x.message,
+            .map(|(range, message)| lsp_types::Diagnostic {
+              range,
+              message,
               source: Some(SOURCE.to_owned()),
-              ..lsp_types::Diagnostic::default()
+              ..Default::default()
             })
             .collect(),
           version: None,
