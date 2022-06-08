@@ -49,3 +49,23 @@ val _ = "bad \ bad \ bad"
 "#,
   );
 }
+
+#[test]
+fn negative_word_lit() {
+  check(
+    r#"
+val _ = ~0w1
+(**     ^^^^ negative word literal *)
+"#,
+  );
+}
+
+#[test]
+fn unclosed_string_constant() {
+  check(
+    r#"
+val _ = "bad
+(**     ^^^^ unclosed string literal *)
+"#,
+  );
+}

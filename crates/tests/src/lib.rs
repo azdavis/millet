@@ -22,6 +22,7 @@ mod misc;
 mod num_record;
 mod overload;
 mod pat;
+mod rust;
 mod shadow;
 mod smoke;
 mod ty_name_escape;

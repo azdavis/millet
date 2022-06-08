@@ -13,6 +13,27 @@ val _ =
 }
 
 #[test]
+fn non_exhaustive_binding() {
+  check(
+    r#"
+val 3 = 1 + 2
+(** ^ non-exhaustive binding: missing _ *)
+"#,
+  );
+}
+
+#[test]
+fn t_00a() {
+  check(
+    r#"
+datatype bin = Zero | One
+val One = One
+(** ^^^ non-exhaustive binding: missing Zero *)
+"#,
+  );
+}
+
+#[test]
 fn t_01() {
   check(
     r#"
@@ -115,6 +136,20 @@ val _ =
     (_, false) => 1
   | (_, false) => 2
 (**  ^ unreachable pattern *)
+  | _ => 3
+"#,
+  );
+}
+
+#[test]
+fn t_06a() {
+  check(
+    r#"
+val _ =
+  case 3 of
+    4 => 1
+  | 4 => 2
+(** ^ unreachable pattern *)
   | _ => 3
 "#,
   );

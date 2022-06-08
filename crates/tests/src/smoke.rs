@@ -4,6 +4,71 @@ mod dec;
 mod exp;
 
 #[test]
+fn empty() {
+  check("");
+}
+
+#[test]
+fn undefined() {
+  check(
+    r#"
+val _ = nope
+(**     ^^^^ undefined value: nope *)
+"#,
+  );
+}
+
+#[test]
+fn no_top_items() {
+  check(
+    r#"
+    and
+(** ^^^ expected a top-level item *)
+"#,
+  );
+}
+
+#[test]
+fn expected() {
+  check(
+    r#"
+val _ 3
+(**   ^ expected `=` *)
+"#,
+  );
+}
+
+#[test]
+fn unknown_byte() {
+  check(
+    r#"
+val 空条承太郎 = 1
+(** ^^^ invalid source character *)
+"#,
+  );
+}
+
+#[test]
+fn unmatched_close_comment() {
+  check(
+    r#"
+val x = 3 *)
+(**       ^^ unmatched close comment *)
+"#,
+  );
+}
+
+#[test]
+fn unmatched_open_comment() {
+  check(
+    r#"
+(**       vv unmatched open comment *)
+val x = 3 (*
+"#,
+  );
+}
+
+#[test]
 fn pat() {
   check(
     r#"

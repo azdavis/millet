@@ -50,3 +50,39 @@ infix 0x1 bad
 "#,
   );
 }
+
+#[test]
+fn nonfix() {
+  check(
+    r#"
+nonfix + = *
+
+val _: bool = = (1, 2)
+val _: int = + (1, 2)
+val _: int = * (3, 4)
+"#,
+  );
+}
+
+#[test]
+fn not_infix() {
+  check(
+    r#"
+datatype t = C of int * int
+fun f (_ C _) = 2
+(**      ^ non-infix name used as infix *)
+"#,
+  );
+}
+
+#[test]
+fn same_fixity_diff_assoc() {
+  check(
+    r#"
+infix <<
+infixr >>
+val _ = 1 << 2 >> 3
+(**            ^^ consecutive infix names with same fixity but different associativity *)
+"#,
+  );
+}
