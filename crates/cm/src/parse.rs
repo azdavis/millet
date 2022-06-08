@@ -94,9 +94,10 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<types::Member>> {
     let class = match p.cur() {
       Some(Token::Colon) => {
         p.bump();
-        let c = match p.string()?.parse::<types::Class>() {
+        let s = p.string()?;
+        let c = match s.parse::<types::Class>() {
           Ok(c) => c,
-          Err(()) => bail!("expected a class"),
+          Err(()) => bail!("expected a class, found {s}"),
         };
         p.bump();
         Some(c)
