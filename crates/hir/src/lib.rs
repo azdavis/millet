@@ -244,9 +244,9 @@ pub enum Pat {
   },
   Typed(PatIdx, TyIdx),
   /// the Definition defines as-pats as having a built-in optional type annotation. however, it
-  /// appears that lowering `vid : ty as pat -> vid as (pat : ty)` should be equivalent modulo
-  /// possible slight error message differences. this lets us avoid the optional type annotation in
-  /// the HIR def for as-pats and instead handle it in lowering.
+  /// appears that lowering from `vid : ty as pat` to `vid as (pat : ty)` should be equivalent
+  /// modulo possible slight error message differences. this lets us avoid the optional type
+  /// annotation in the HIR def for as-pats and instead handle it in lowering.
   As(Name, PatIdx),
 }
 

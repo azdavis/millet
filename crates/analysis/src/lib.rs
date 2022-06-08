@@ -1,4 +1,4 @@
-//! Analysis.
+//! The unification of all the passes into a single high-level API.
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
