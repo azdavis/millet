@@ -166,7 +166,7 @@ pub(crate) fn name_star_eq(p: &mut Parser<'_>) -> bool {
   name_star(p, 0) || p.at(SK::Eq)
 }
 
-/// kind of badly named. it means Name or *
+/// kind of badly named. it means Name or *. the `n` is how far to look ahead.
 #[must_use]
 pub(crate) fn name_star(p: &mut Parser<'_>, n: usize) -> bool {
   p.at_n(n, SK::Name) || p.at_n(n, SK::Star)
