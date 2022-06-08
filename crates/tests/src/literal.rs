@@ -69,3 +69,13 @@ val _ = "bad
 "#,
   );
 }
+
+#[test]
+fn basic_escape() {
+  check(
+    r#"
+val _: char   list = [#"\a", #"\b", #"\t", #"\n", #"\v", #"\f", #"\r", #"\\", #"\""]
+val _: string list = [ "\a",  "\b",  "\t",  "\n",  "\v",  "\f",  "\r",  "\\",  "\""]
+"#,
+  );
+}
