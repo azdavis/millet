@@ -46,7 +46,7 @@ pub enum ErrorKind {
 
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match *self {
+    match self {
       ErrorKind::UnmatchedOpenComment => write!(f, "unmatched open comment"),
       ErrorKind::UnmatchedCloseComment => write!(f, "unmatched close comment"),
       ErrorKind::IncompleteTyVar => write!(f, "incomplete type variable"),
