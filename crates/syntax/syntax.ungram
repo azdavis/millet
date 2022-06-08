@@ -118,6 +118,7 @@ Exp =
 | ParenExp
 | TupleExp
 | ListExp
+| VectorExp
 | SeqExp
 | LetExp
 | AppExp
@@ -139,6 +140,7 @@ SelectorExp = '#' Lab
 ParenExp = '(' Exp ')'
 TupleExp = '(' ExpArg* ')'
 ListExp = '[' ExpArg* ']'
+VectorExp = '#' ListExp
 SeqExp = '(' exps_in_seq:ExpInSeq* ')'
 LetExp = 'let' Dec 'in' exps_in_seq:ExpInSeq* 'end'
 AppExp = func:Exp arg:Exp

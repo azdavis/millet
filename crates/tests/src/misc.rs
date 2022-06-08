@@ -412,3 +412,13 @@ end
 "#,
   );
 }
+
+#[test]
+fn vector() {
+  check(
+    r#"
+val _ = #[1, 2]
+(**     ^^^^^^^ unsupported language construct: vector expressions *)
+"#,
+  );
+}

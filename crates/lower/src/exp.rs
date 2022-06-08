@@ -1,7 +1,7 @@
 use crate::common::{get_lab, get_path, get_scon};
-use crate::util::Cx;
+use crate::util::{Cx, ErrorKind};
 use crate::{dec, pat, ty};
-use syntax::ast::{self, AstPtr};
+use syntax::ast::{self, AstNode as _, AstPtr};
 
 pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
   let exp = exp?;
@@ -41,6 +41,13 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
         let ac = cx.exp(ac, ptr.clone());
         hir::Exp::App(cons, cx.exp(tuple([x, ac]), ptr.clone()))
       })
+    }
+    ast::Exp::VectorExp(exp) => {
+      cx.err(
+        exp.syntax().text_range(),
+        ErrorKind::Unsupported("vector expressions"),
+      );
+      return None;
     }
     ast::Exp::SeqExp(exp) => return exps_in_seq(cx, exp.exps_in_seq(), ptr),
     ast::Exp::LetExp(exp) => {

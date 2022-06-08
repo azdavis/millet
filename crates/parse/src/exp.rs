@@ -133,8 +133,16 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, SK::RecordExp)
   } else if p.at(SK::Hash) {
     p.bump();
-    lab(p);
-    p.exit(en, SK::SelectorExp)
+    if p.at(SK::LSquare) {
+      let list = p.enter();
+      p.bump();
+      comma_sep(p, SK::RSquare, SK::ExpArg, exp);
+      p.exit(list, SK::ListExp);
+      p.exit(en, SK::VectorExp)
+    } else {
+      lab(p);
+      p.exit(en, SK::SelectorExp)
+    }
   } else if p.at(SK::LRound) {
     p.bump();
     let kind = at_exp_l_round(p);
