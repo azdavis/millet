@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_01() {
+fn smoke() {
   check(
     r#"
 datatype guh = A | B
@@ -16,29 +16,29 @@ val _ = f A + f B
 }
 
 #[test]
-fn t_02() {
+fn exn() {
   check(
     r#"
-datatype bad = datatype exn
+datatype ok = datatype exn
 "#,
   );
 }
 
 #[test]
-fn t_03() {
+fn int() {
+  check(
+    r#"
+datatype yes = datatype int
+"#,
+  );
+}
+
+#[test]
+fn with_ty_var() {
   check(
     r#"
 datatype vec = datatype list
 val _: int vec = [1, 2]
-"#,
-  );
-}
-
-#[test]
-fn t_04() {
-  check(
-    r#"
-datatype no = datatype int
 "#,
   );
 }

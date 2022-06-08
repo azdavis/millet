@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_00() {
+fn smoke_case() {
   check(
     r#"
 val _ =
@@ -13,7 +13,7 @@ val _ =
 }
 
 #[test]
-fn non_exhaustive_binding() {
+fn smoke_binding_int() {
   check(
     r#"
 val 3 = 1 + 2
@@ -23,7 +23,7 @@ val 3 = 1 + 2
 }
 
 #[test]
-fn t_00a() {
+fn smoke_binding_datatype() {
   check(
     r#"
 datatype bin = Zero | One
@@ -34,7 +34,7 @@ val One = One
 }
 
 #[test]
-fn t_01() {
+fn big_datatype_missing() {
   check(
     r#"
 datatype hmm = A | B of int | C of hmm | D of string
@@ -61,7 +61,7 @@ val _ =
 }
 
 #[test]
-fn t_02() {
+fn int_tuple() {
   check(
     r#"
 val _ =
@@ -74,7 +74,7 @@ val _ =
 }
 
 #[test]
-fn t_03() {
+fn big_ok() {
   check(
     r#"
 val _ =
@@ -94,7 +94,7 @@ val _ =
 }
 
 #[test]
-fn t_04() {
+fn bool_tuple() {
   check(
     r#"
 val _ =
@@ -107,7 +107,7 @@ val _ =
 }
 
 #[test]
-fn t_05() {
+fn big_tuple() {
   check(
     r#"
 val _ =
@@ -128,7 +128,7 @@ val _ =
 }
 
 #[test]
-fn t_06() {
+fn unreachable_tuple() {
   check(
     r#"
 val _ =
@@ -142,7 +142,7 @@ val _ =
 }
 
 #[test]
-fn t_06a() {
+fn unreachable_int() {
   check(
     r#"
 val _ =
@@ -156,7 +156,7 @@ val _ =
 }
 
 #[test]
-fn t_07() {
+fn reachable_tuple() {
   check(
     r#"
 val _ =
@@ -169,7 +169,7 @@ val _ =
 }
 
 #[test]
-fn t_08() {
+fn big_datatype_ok() {
   check(
     r#"
 datatype hmm = A | B of int | C of hmm | D of string
@@ -197,7 +197,7 @@ val _ =
 }
 
 #[test]
-fn t_09() {
+fn list_ok() {
   check(
     r#"
 val _ =
@@ -214,7 +214,7 @@ val _ =
 }
 
 #[test]
-fn t_10() {
+fn list_unreachable() {
   check(
     r#"
 val _ =
@@ -232,7 +232,7 @@ val _ =
 }
 
 #[test]
-fn t_11() {
+fn tuple_datatype_missing() {
   check(
     r#"
 datatype ab = A | B
@@ -248,7 +248,7 @@ val x =
 }
 
 #[test]
-fn t_12() {
+fn tuple_datatype_ok() {
   check(
     r#"
 datatype ab = A | B
@@ -264,7 +264,7 @@ val x =
 }
 
 #[test]
-fn t_13() {
+fn list_missing_nil() {
   check(
     r#"
 fun f xs =
@@ -276,7 +276,7 @@ fun f xs =
 }
 
 #[test]
-fn t_14() {
+fn list_missing_cons() {
   check(
     r#"
 fun f xs =
@@ -288,7 +288,7 @@ fun f xs =
 }
 
 #[test]
-fn t_15() {
+fn list_missing_len_1() {
   check(
     r#"
 fun f xs =
@@ -301,7 +301,7 @@ fun f xs =
 }
 
 #[test]
-fn t_16() {
+fn list_missing_len_3() {
   check(
     r#"
 fun f xs =
@@ -316,7 +316,7 @@ fun f xs =
 }
 
 #[test]
-fn t_17() {
+fn list_missing_true_singleton() {
   check(
     r#"
 fun f xs =
@@ -330,7 +330,7 @@ fun f xs =
 }
 
 #[test]
-fn t_18() {
+fn list_missing_cons_prec() {
   check(
     r#"
 fun append xs ys =

@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_01() {
+fn use_later_dec() {
   check(
     r#"
 val _ =
@@ -20,7 +20,7 @@ val _ =
 }
 
 #[test]
-fn t_02() {
+fn does_not_escape_dec() {
   check(
     r#"
 val _ =
@@ -38,7 +38,7 @@ val _ =
 }
 
 #[test]
-fn t_03() {
+fn use_later_str_dec() {
   check(
     r#"
 local
@@ -53,7 +53,7 @@ val _ = y + z
 }
 
 #[test]
-fn t_04() {
+fn does_not_escape_str_dec() {
   check(
     r#"
 local

@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_00() {
+fn smoke() {
   check(
     r#"
 val _ =
@@ -13,7 +13,7 @@ val _ =
 }
 
 #[test]
-fn t_01() {
+fn seq() {
   check(
     r#"
 val _ =
@@ -29,7 +29,22 @@ val _ =
 }
 
 #[test]
-fn t_02() {
+fn does_not_escape() {
+  check(
+    r#"
+val _ =
+  let
+    datatype foo = bar
+    val quz = bar
+  in
+    (true; false; bar; 3 + 3; quz; 123)
+  end
+"#,
+  );
+}
+
+#[test]
+fn branch() {
   check(
     r#"
 val _ =
@@ -44,7 +59,7 @@ val _ =
 }
 
 #[test]
-fn t_03() {
+fn shadow() {
   check(
     r#"
 datatype t = One
@@ -55,7 +70,7 @@ val _ = let datatype t = Two in Two end
 }
 
 #[test]
-fn t_04() {
+fn ok() {
   check(
     r#"
 datatype t = One
@@ -65,7 +80,7 @@ val _ = let datatype t = Two in One end
 }
 
 #[test]
-fn t_05() {
+fn exn_ctor() {
   check(
     r#"
 val ex =

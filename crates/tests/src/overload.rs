@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_00() {
+fn curry_add() {
   check(
     r#"
 fun add a b = a + b
@@ -12,7 +12,7 @@ val _ = add false
 }
 
 #[test]
-fn t_01() {
+fn op_add_ok() {
   check(
     r#"
 val add = op+
@@ -22,7 +22,18 @@ val _ = add (1, 2)
 }
 
 #[test]
-fn t_02a() {
+fn op_add_err() {
+  check(
+    r#"
+val add = op+
+val _ = add (false, true)
+(**         ^^^^^^^^^^^^^ expected int * int, found bool * bool *)
+"#,
+  );
+}
+
+#[test]
+fn immediately_solve_to_default() {
   check(
     r#"
 val add = op+
@@ -34,7 +45,7 @@ val _ = add (1, 2)
 }
 
 #[test]
-fn t_02b() {
+fn explicit_annotate() {
   check(
     r#"
 val add = op+ : real * real -> real
@@ -46,7 +57,7 @@ val _ = add (1, 2)
 }
 
 #[test]
-fn t_03() {
+fn top_level_seq() {
   check(
     r#"
 val add = op+
@@ -59,7 +70,7 @@ val _ = add (1.1, 2.2)
 }
 
 #[test]
-fn t_04() {
+fn std_lib_ops() {
   check(
     r#"
 (* abs *)
@@ -117,7 +128,7 @@ val _: bool = #"e" >= #"e"
 }
 
 #[test]
-fn t_05() {
+fn must_solve_to_single_overloaded_type() {
   check(
     r#"
 val _ = 1.1 + 1
@@ -127,18 +138,7 @@ val _ = 1.1 + 1
 }
 
 #[test]
-fn t_06() {
-  check(
-    r#"
-val add = op+
-val _ = add (false, true)
-(**         ^^^^^^^^^^^^^ expected int * int, found bool * bool *)
-"#,
-  );
-}
-
-#[test]
-fn t_07() {
+fn overload_err() {
   check(
     r#"
 val  _ = false + true

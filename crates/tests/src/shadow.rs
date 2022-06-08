@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_01() {
+fn val() {
   check(
     r#"
 val x = "hey"
@@ -12,7 +12,7 @@ val _: int = x
 }
 
 #[test]
-fn t_02() {
+fn type_() {
   check(
     r#"
 type t = string
@@ -23,7 +23,7 @@ val _: t = 3
 }
 
 #[test]
-fn t_03() {
+fn datatype() {
   check(
     r#"
 datatype t = One
@@ -34,7 +34,7 @@ val _: t = Two
 }
 
 #[test]
-fn t_04() {
+fn structure() {
   check(
     r#"
 structure S = struct val x = "hey" end
@@ -45,13 +45,13 @@ val _: int = S.x
 }
 
 #[test]
-fn t_05() {
+fn exception() {
   check(
     r#"
 exception E
 exception E of int
-    val _: unit = E
-(** ^^^^^^^^^^^^^^^ expected unit, found int -> exn *)
+val _ = E: unit
+(**     ^^^^^^^ expected unit, found int -> exn *)
 "#,
   );
 }

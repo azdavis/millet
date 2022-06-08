@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_01() {
+fn ok_smoke() {
   check(
     r#"
 structure S: sig
@@ -15,7 +15,7 @@ val _: int = S.x
 }
 
 #[test]
-fn t_02() {
+fn not_in_sig() {
   check(
     r#"
 structure S: sig
@@ -29,7 +29,7 @@ val _: int = S.x
 }
 
 #[test]
-fn t_03() {
+fn not_in_struct() {
   check(
     r#"
 structure S: sig
@@ -41,7 +41,7 @@ end = struct end
 }
 
 #[test]
-fn t_04() {
+fn wrong_id_status() {
   check(
     r#"
 structure S: sig
@@ -53,7 +53,7 @@ end = struct val E = Match end
 }
 
 #[test]
-fn t_05() {
+fn ok_hide_some() {
   check(
     r#"
 structure S: sig
@@ -71,7 +71,7 @@ val _ = S.y
 }
 
 #[test]
-fn t_06() {
+fn datatype_ok() {
   check(
     r#"
 structure S: sig
@@ -84,7 +84,7 @@ end
 }
 
 #[test]
-fn t_07() {
+fn datatype_missing_ctor() {
   check(
     r#"
 structure S: sig
@@ -96,7 +96,7 @@ end = struct datatype d = A end
 }
 
 #[test]
-fn t_08() {
+fn datatype_extra_ctor() {
   check(
     r#"
 structure S: sig
@@ -108,7 +108,7 @@ end = struct datatype d = A | B end
 }
 
 #[test]
-fn t_09() {
+fn type_ok() {
   check(
     r#"
 structure S: sig
@@ -122,7 +122,7 @@ val _: S.t = 3
 }
 
 #[test]
-fn t_10() {
+fn monoid_transparent() {
   check(
     r#"
 structure S: sig
@@ -147,7 +147,7 @@ val _ = S.add (S.add (inc S.zero) (inc S.zero))
 }
 
 #[test]
-fn t_11() {
+fn sig_bind_smoke() {
   check(
     r#"
 signature SIG = sig
@@ -161,20 +161,7 @@ end
 }
 
 #[test]
-fn t_12() {
-  check(
-    r#"
-structure S: sig
-  type t
-end = struct
-  type t = int
-end
-"#,
-  );
-}
-
-#[test]
-fn t_13() {
+fn monoid_add_mul_transparent() {
   check(
     r#"
 signature MONOID = sig
@@ -223,7 +210,7 @@ val _ = Mul.add Mul.zero Add.zero
 }
 
 #[test]
-fn t_14() {
+fn monoid_opaque() {
   check(
     r#"
 signature MONOID = sig
@@ -257,7 +244,7 @@ val _ = Mul.add Mul.zero Add.zero
 }
 
 #[test]
-fn t_15() {
+fn textually_identical_but_not_same() {
   check(
     r#"
 signature SIG = sig
@@ -272,7 +259,6 @@ structure A:> SIG = struct
   fun bar _ = ()
 end
 
-(* note that the `struct` body is textually identical to A... *)
 structure B:> SIG = struct
   type t = int
   val foo = 3
@@ -281,7 +267,6 @@ end
 
 val _ = A.bar A.foo = B.bar B.foo
 
-(* ...nonetheless, this should fail *)
 val _ = A.bar B.foo
 (**           ^^^^^ expected t, found t *)
 "#,
@@ -289,7 +274,7 @@ val _ = A.bar B.foo
 }
 
 #[test]
-fn t_16() {
+fn same_identifier_opaque_1() {
   check(
     r#"
 signature SIG = sig
@@ -320,7 +305,7 @@ val _ = A.bar 123
 }
 
 #[test]
-fn t_17() {
+fn same_identifier_opaque_2() {
   check(
     r#"
 signature SIG = sig
@@ -353,48 +338,7 @@ val _ = B.bar A.foo
 }
 
 #[test]
-fn t_18() {
-  check(
-    r#"
-signature SIG = sig
-  type t
-  val x: t
-end
-
-structure S:> SIG = struct
-  type t = int
-  val x = 3
-end
-
-val _: S.t = S.x
-val _ = S.x: int
-(**     ^^^^^^^^ expected int, found t *)
-"#,
-  );
-}
-
-#[test]
-fn t_19() {
-  check(
-    r#"
-signature SIG = sig
-  type t
-  val x: t
-end
-
-structure S: SIG = struct
-  type t = int
-  val x = 3
-end
-
-val _: S.t = S.x
-val _: int = S.x
-"#,
-  );
-}
-
-#[test]
-fn t_20() {
+fn same_identifier_opaque_3() {
   check(
     r#"
 signature SIG = sig
@@ -417,6 +361,47 @@ structure D:> SIG = Str
 
 val _ = D.x: C.t
 (**     ^^^^^^^^ expected t, found t *)
+"#,
+  );
+}
+
+#[test]
+fn opaque_hides_type() {
+  check(
+    r#"
+signature SIG = sig
+  type t
+  val x: t
+end
+
+structure S:> SIG = struct
+  type t = int
+  val x = 3
+end
+
+val _: S.t = S.x
+val _ = S.x: int
+(**     ^^^^^^^^ expected int, found t *)
+"#,
+  );
+}
+
+#[test]
+fn transparent_shows_type() {
+  check(
+    r#"
+signature SIG = sig
+  type t
+  val x: t
+end
+
+structure S: SIG = struct
+  type t = int
+  val x = 3
+end
+
+val _: S.t = S.x
+val _: int = S.x
 "#,
   );
 }

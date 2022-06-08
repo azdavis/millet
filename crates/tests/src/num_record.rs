@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_01() {
+fn record_is_tuple() {
   check(
     r#"
 type t = { 1: int, 2: bool }
@@ -12,7 +12,7 @@ val _ = (): t
 }
 
 #[test]
-fn t_02() {
+fn zero_not_label() {
   check(
     r#"
 type t = { 0: int, 1: bool }
@@ -22,7 +22,7 @@ type t = { 0: int, 1: bool }
 }
 
 #[test]
-fn t_03() {
+fn not_tuple_if_only_one_label() {
   check(
     r#"
 type t = { 1: int }
@@ -33,7 +33,7 @@ val _ = (): t
 }
 
 #[test]
-fn t_04() {
+fn not_tuple_if_not_all_labels_in_range() {
   check(
     r#"
 type t = { 1: int, 3: bool }
@@ -44,7 +44,7 @@ val _ = (): t
 }
 
 #[test]
-fn t_05() {
+fn neg_label() {
   check(
     r#"
 type t = { ~3: int, 1: bool }
@@ -54,7 +54,7 @@ type t = { ~3: int, 1: bool }
 }
 
 #[test]
-fn t_06() {
+fn hex_label() {
   check(
     r#"
 type t = { 0x3: int, 1: bool }

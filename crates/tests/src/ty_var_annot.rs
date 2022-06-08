@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_01() {
+fn across_var() {
   check(
     r#"
 fun 'a f (x: 'a) = let val y = x in y false; y end
@@ -11,7 +11,7 @@ fun 'a f (x: 'a) = let val y = x in y false; y end
 }
 
 #[test]
-fn t_02() {
+fn bound_at_fun_1() {
   check(
     r#"
 fun bar (x: int): unit = ()
@@ -22,7 +22,7 @@ fun 'a f (id: 'a -> 'a) x = bar (id x)
 }
 
 #[test]
-fn t_03() {
+fn bound_at_fun_2() {
   check(
     r#"
 fun 'a f (id: 'a -> 'a) x = id x + 1
@@ -32,7 +32,7 @@ fun 'a f (id: 'a -> 'a) x = id x + 1
 }
 
 #[test]
-fn t_04() {
+fn annotate() {
   check(
     r#"
 val 'a _ = false: 'a
@@ -42,7 +42,7 @@ val 'a _ = false: 'a
 }
 
 #[test]
-fn t_05() {
+fn type_datatype() {
   check(
     r#"
 type 'a heh = 'a list
@@ -55,7 +55,7 @@ val _ = Bad: unit
 }
 
 #[test]
-fn t_06() {
+fn apply() {
   check(
     r#"
 fun ('t, 'u) apply (f: 't -> 'u) (x: 't): 'u = f x
@@ -66,7 +66,7 @@ val _ = apply op+ (1, false)
 }
 
 #[test]
-fn t_07() {
+fn different_vars() {
   check(
     r#"
 fun ('a, 'b) f (xs: 'a list) (x: 'b) =

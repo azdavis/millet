@@ -1,16 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_00() {
-  check(
-    r#"
-val _ = 3 handle _ => 4
-"#,
-  );
-}
-
-#[test]
-fn t_01() {
+fn many() {
   check(
     r#"
 exception Foo
@@ -30,7 +21,7 @@ val _ = bar 3 andalso raise Guh
 }
 
 #[test]
-fn t_02() {
+fn alias_same() {
   check(
     r#"
 exception No = Match
@@ -45,7 +36,7 @@ val _ =
 }
 
 #[test]
-fn t_03() {
+fn alias_not_exn() {
   check(
     r#"
 val x = 3

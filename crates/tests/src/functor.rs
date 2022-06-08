@@ -1,7 +1,7 @@
 use crate::check::check;
 
 #[test]
-fn t_01() {
+fn empty() {
   check(
     r#"
 functor F (A: sig end) = struct end
@@ -11,7 +11,7 @@ structure S = F (struct type t = int end)
 }
 
 #[test]
-fn t_02() {
+fn missing_type() {
   check(
     r#"
 functor F (A: sig
@@ -24,7 +24,7 @@ structure S = F (struct end)
 }
 
 #[test]
-fn t_03() {
+fn wrong_id_status() {
   check(
     r#"
 functor F (A: sig
@@ -37,7 +37,7 @@ structure S = F (struct val Foo = Match end)
 }
 
 #[test]
-fn t_04() {
+fn big() {
   check(
     r#"
 signature SIG = sig
@@ -75,7 +75,7 @@ val done: string list = [guh, Impl.foo, S.what, "why"]
 }
 
 #[test]
-fn t_05() {
+fn id_uses_param_sig() {
   check(
     r#"
 functor Id (S: sig end) = S
@@ -91,7 +91,7 @@ val _: int = Guy.x
 }
 
 #[test]
-fn t_06() {
+fn output_uses_output_sig() {
   check(
     r#"
 signature SIG = sig
@@ -111,7 +111,7 @@ val _ = S.x
 }
 
 #[test]
-fn t_07() {
+fn datatype_generate() {
   check(
     r#"
 functor F (A: sig end) = struct
@@ -131,7 +131,7 @@ val _ = One.f Two.C
 }
 
 #[test]
-fn t_08() {
+fn transparent_id() {
   check(
     r#"
 signature SIG = sig
@@ -153,7 +153,7 @@ val _: B.t = 3
 }
 
 #[test]
-fn t_09() {
+fn transparent_id_big() {
   check(
     r#"
 signature SIG = sig
@@ -198,7 +198,7 @@ val _ = A.f (D.f D.x)
 }
 
 #[test]
-fn t_10() {
+fn open_datatype_ctors_not_in_sig() {
   check(
     r#"
 structure A = struct
@@ -223,7 +223,7 @@ val _ = R.T
 }
 
 #[test]
-fn t_11() {
+fn open_datatype_ctors_in_sig() {
   check(
     r#"
 structure A = struct
@@ -249,7 +249,7 @@ val _ =
 }
 
 #[test]
-fn t_12() {
+fn arg_shorthand() {
   check(
     r#"
 functor F (A: sig end) = struct end
@@ -262,7 +262,7 @@ structure D = F (val a = 1 val b = 2)
 }
 
 #[test]
-fn t_13() {
+fn param_shorthand() {
   check(
     r#"
 functor Empty () = struct end
