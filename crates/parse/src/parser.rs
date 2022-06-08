@@ -17,7 +17,7 @@
 //! And the library isn't even that big, so forking is... okay.
 
 use drop_bomb::DropBomb;
-use fast_hash::{map, FxHashMap};
+use fast_hash::{map_with_capacity, FxHashMap};
 use std::fmt;
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::token::{Token, Triviable};
@@ -35,21 +35,20 @@ pub(crate) struct Parser<'input> {
 impl<'input> Parser<'input> {
   /// Returns a new parser for the given tokens.
   pub(crate) fn new(tokens: &'input [Token<'input, SK>]) -> Self {
-    let ops = map([
-      ("::", OpInfo::right(5)),
-      ("=", OpInfo::left(4)),
-      (":=", OpInfo::left(3)),
-      ("div", OpInfo::left(7)),
-      ("mod", OpInfo::left(7)),
-      ("*", OpInfo::left(7)),
-      ("/", OpInfo::left(7)),
-      ("+", OpInfo::left(6)),
-      ("-", OpInfo::left(6)),
-      ("<", OpInfo::left(4)),
-      (">", OpInfo::left(4)),
-      ("<=", OpInfo::left(4)),
-      (">=", OpInfo::left(4)),
-    ]);
+    let ops_arr: [(OpInfo, &[&str]); 6] = [
+      (OpInfo::left(7), &["*", "/", "div", "mod"]),
+      (OpInfo::left(6), &["+", "-", "^"]),
+      (OpInfo::right(5), &["::", "@"]),
+      (OpInfo::left(4), &["=", "<>", ">", ">=", "<", "<="]),
+      (OpInfo::left(3), &[":=", "o"]),
+      (OpInfo::left(0), &["before"]),
+    ];
+    let mut ops = map_with_capacity(ops_arr.iter().map(|(_, names)| names.len()).sum());
+    for (info, names) in ops_arr {
+      for &name in names {
+        ops.insert(name, info);
+      }
+    }
     Self {
       tokens,
       tok_idx: 0,
