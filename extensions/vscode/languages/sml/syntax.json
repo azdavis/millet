@@ -47,17 +47,17 @@
       "name": "string.quoted.double.sml",
       "begin": "#\"",
       "end": "\"",
-      "patterns": [{ "include": "#escapeChar" }]
+      "patterns": [{ "include": "#escape" }]
     },
     "string": {
       "name": "string.quoted.double.sml",
       "begin": "\"",
       "end": "\"",
-      "patterns": [{ "include": "#escapeChar" }]
+      "patterns": [{ "include": "#escape" }]
     },
-    "escapeChar": {
+    "escape": {
       "name": "constant.character.escape.sml",
-      "match": "\\\\[abtnvfr]"
+      "match": "\\\\[abtnvfr\\\\\"]"
     },
     "bool": {
       "name": "constant.language.boolean.sml",
