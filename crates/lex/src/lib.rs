@@ -289,6 +289,7 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
                 cx.i += 1;
                 let b = *bs.get(cx.i)?;
                 if b == b'\\' {
+                  cx.i += 1;
                   break;
                 }
                 if !is_whitespace(b) {
@@ -306,8 +307,8 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
               }
             } else {
               err(cx, start, ErrorKind::InvalidStringLit);
+              cx.i += 1;
             }
-            cx.i += 1;
           }
         }
       }

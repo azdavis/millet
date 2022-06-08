@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn char_big() {
@@ -82,7 +82,7 @@ val _: string list = [ "\a",  "\b",  "\t",  "\n",  "\v",  "\f",  "\r",  "\\",  "
 
 #[test]
 fn complex_escape() {
-  fail(
+  check(
     r#"
 val _: char   list = [#"\^A", #"\^[", #"\^_", #"\987", #"\123", #"\999", #"\u0000", #"\ubeef", #"\uf00f"]
 val _: string list = [ "\^A",  "\^[",  "\^_",  "\987",  "\123",  "\999",  "\u0000",  "\ubeef",  "\uf00f"]
