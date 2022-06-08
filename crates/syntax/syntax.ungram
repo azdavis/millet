@@ -73,7 +73,8 @@ SigExp =
 
 SigSigExp = 'sig' Spec 'end'
 NameSigExp = 'Name'
-WhereSigExp = SigExp 'where' 'type' TyVarSeq Path '=' Ty
+WhereSigExp = SigExp WhereOrAnd 'type' TyVarSeq Path '=' Ty
+WhereOrAnd = 'where' | 'and'
 
 Spec = SpecInSeq*
 SpecInSeq = SpecOne ';'?

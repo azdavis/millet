@@ -156,7 +156,11 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.abandon(en);
     return None;
   };
-  while p.at(SK::WhereKw) {
+  // the first 'where' must actually be 'where', but further ones can be 'and'.
+  if !p.at(SK::WhereKw) {
+    return Some(ex);
+  }
+  while p.at(SK::WhereKw) || p.at(SK::AndKw) {
     let en = p.precede(ex);
     p.bump();
     p.eat(SK::TypeKw);
