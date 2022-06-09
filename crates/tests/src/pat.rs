@@ -107,3 +107,25 @@ val _ =
 "#,
   );
 }
+
+#[test]
+fn assign_op_err() {
+  check(
+    r#"
+val + = 3
+(** ^ infix name used as non-infix without `op` *)
+val * = 3
+"#,
+  );
+}
+
+#[test]
+fn assign_op_ok() {
+  check(
+    r#"
+val op+ = 3
+val op* = 3
+val _ = op+ - op* : int
+"#,
+  );
+}
