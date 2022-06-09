@@ -5,25 +5,28 @@ use syntax::rowan::TextRange;
 
 pub(crate) type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
 
+/// see the ungrammar for why this is.
+type AstTopDec = ast::StrDecOne;
+
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
 #[allow(missing_docs)]
 pub struct Ptrs {
-  top_dec: BiMap<ast::TopDec, hir::TopDec>,
+  top_dec: BiMap<AstTopDec, hir::TopDec>,
   str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,
   str_dec: BiMap<ast::StrDec, hir::StrDec>,
-  str_dec_in_top_dec: BiMap<ast::TopDec, hir::StrDec>,
+  str_dec_in_top_dec: BiMap<AstTopDec, hir::StrDec>,
   str_exp: BiMap<ast::StrExp, hir::StrExp>,
-  str_exp_in_top_dec: BiMap<ast::TopDec, hir::StrExp>,
+  str_exp_in_top_dec: BiMap<AstTopDec, hir::StrExp>,
   sig_exp: BiMap<ast::SigExp, hir::SigExp>,
-  sig_exp_in_top_dec: BiMap<ast::TopDec, hir::SigExp>,
+  sig_exp_in_top_dec: BiMap<AstTopDec, hir::SigExp>,
   spec_one: BiMap<ast::SpecOne, hir::Spec>,
   spec: BiMap<ast::Spec, hir::Spec>,
   exp: BiMap<ast::Exp, hir::Exp>,
   dec_one: BiMap<ast::DecOne, hir::Dec>,
   dec_in_exp: BiMap<ast::Exp, hir::Dec>,
   dec: BiMap<ast::Dec, hir::Dec>,
-  dec_in_top_dec: BiMap<ast::TopDec, hir::Dec>,
+  dec_in_top_dec: BiMap<AstTopDec, hir::Dec>,
   pat: BiMap<ast::Pat, hir::Pat>,
   pat_in_exp: BiMap<ast::Exp, hir::Pat>,
   ty: BiMap<ast::Ty, hir::Ty>,
@@ -123,6 +126,8 @@ pub enum ErrorKind {
   InvalidRealLit(std::num::ParseFloatError),
   InvalidNumLab(std::num::ParseIntError),
   ZeroNumLab,
+  SigMustBeTopLevel,
+  FunctorMustBeTopLevel,
 }
 
 impl fmt::Display for ErrorKind {
@@ -142,8 +147,14 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
       ErrorKind::ZeroNumLab => write!(f, "invalid numeric label: numeric labels start at 1"),
+      ErrorKind::SigMustBeTopLevel => must_be_top_level(f, "`signature`"),
+      ErrorKind::FunctorMustBeTopLevel => must_be_top_level(f, "`functor`"),
     }
   }
+}
+
+fn must_be_top_level(f: &mut fmt::Formatter<'_>, s: &str) -> fmt::Result {
+  write!(f, "{s} declarations must be at the top level")
 }
 
 /// The result of lowering.
@@ -191,7 +202,7 @@ impl Cx {
     }
   }
 
-  pub(crate) fn top_dec(&mut self, val: hir::TopDec, ptr: AstPtr<ast::TopDec>) -> hir::TopDecIdx {
+  pub(crate) fn top_dec(&mut self, val: hir::TopDec, ptr: AstPtr<AstTopDec>) -> hir::TopDecIdx {
     let idx = self.arenas.top_dec.alloc(val);
     self.ptrs.top_dec.insert(idx, ptr);
     idx
@@ -220,7 +231,7 @@ impl Cx {
   pub(crate) fn str_dec_in_top_dec(
     &mut self,
     val: hir::StrDec,
-    ptr: AstPtr<ast::TopDec>,
+    ptr: AstPtr<AstTopDec>,
   ) -> hir::StrDecIdx {
     let idx = self.arenas.str_dec.alloc(val);
     self.ptrs.str_dec_in_top_dec.insert(idx, ptr);
@@ -236,7 +247,7 @@ impl Cx {
   pub(crate) fn str_exp_in_top_dec(
     &mut self,
     val: hir::StrExp,
-    ptr: AstPtr<ast::TopDec>,
+    ptr: AstPtr<AstTopDec>,
   ) -> hir::StrExpIdx {
     let idx = self.arenas.str_exp.alloc(val);
     self.ptrs.str_exp_in_top_dec.insert(idx, ptr);
@@ -252,7 +263,7 @@ impl Cx {
   pub(crate) fn sig_exp_in_top_dec(
     &mut self,
     val: hir::SigExp,
-    ptr: AstPtr<ast::TopDec>,
+    ptr: AstPtr<AstTopDec>,
   ) -> hir::SigExpIdx {
     let idx = self.arenas.sig_exp.alloc(val);
     self.ptrs.sig_exp_in_top_dec.insert(idx, ptr);
@@ -293,7 +304,7 @@ impl Cx {
     Some(idx)
   }
 
-  pub(crate) fn dec_in_top_dec(&mut self, val: hir::Dec, ptr: AstPtr<ast::TopDec>) -> hir::DecIdx {
+  pub(crate) fn dec_in_top_dec(&mut self, val: hir::Dec, ptr: AstPtr<AstTopDec>) -> hir::DecIdx {
     let idx = self.arenas.dec.alloc(val);
     self.ptrs.dec_in_top_dec.insert(idx, ptr);
     Some(idx)

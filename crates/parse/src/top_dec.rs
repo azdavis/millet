@@ -1,11 +1,18 @@
 use crate::dec::{dat_binds, datatype_copy, dec_one};
-use crate::parser::{Entered, Exited, Expected, Parser};
+use crate::parser::{Exited, Expected, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, path};
 use syntax::SyntaxKind as SK;
 
+pub(crate) fn str_dec(p: &mut Parser<'_>) -> bool {
+  let en = p.enter();
+  let ret = maybe_semi_sep(p, SK::StrDecInSeq, str_dec_one);
+  p.exit(en, SK::StrDec);
+  ret
+}
+
 #[must_use]
-pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
+fn str_dec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
   if p.at(SK::FunctorKw) {
     p.bump();
@@ -29,7 +36,6 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
       must(p, str_exp, Expected::StrExp);
     });
     p.exit(en, SK::FunctorDec);
-    true
   } else if p.at(SK::SignatureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::SigBind, |p| {
@@ -38,27 +44,7 @@ pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
       must(p, sig_exp, Expected::SigExp);
     });
     p.exit(en, SK::SigDec);
-    true
-  } else {
-    str_dec_(p, en)
-  }
-}
-
-fn str_dec(p: &mut Parser<'_>) -> bool {
-  let en = p.enter();
-  str_dec_(p, en)
-}
-
-fn str_dec_(p: &mut Parser<'_>, en: Entered) -> bool {
-  let ret = maybe_semi_sep(p, SK::StrDecInSeq, str_dec_one);
-  p.exit(en, SK::StrDec);
-  ret
-}
-
-#[must_use]
-fn str_dec_one(p: &mut Parser<'_>) -> bool {
-  let en = p.enter();
-  if p.at(SK::StructureKw) {
+  } else if p.at(SK::StructureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrBind, |p| {
       p.eat(SK::Name);

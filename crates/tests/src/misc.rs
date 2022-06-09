@@ -435,7 +435,7 @@ val _ = #[1, 2]
 
 #[test]
 fn sig_not_top_level() {
-  fail(
+  check(
     r#"
 structure A = struct
     signature B = sig end
@@ -447,7 +447,7 @@ end
 
 #[test]
 fn functor_not_top_level() {
-  fail(
+  check(
     r#"
 structure A = struct
     functor F() = struct end

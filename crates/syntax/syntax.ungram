@@ -1,10 +1,4 @@
-Root = TopDecInSeq*
-
-TopDecInSeq = TopDec ';'?
-TopDec =
-  StrDec
-| SigDec
-| FunctorDec
+Root = StrDec
 
 SigDec = 'signature' SigBind*
 SigBind = 'Name' '=' SigExp 'and'?
@@ -25,6 +19,10 @@ StrDecOne =
   DecStrDec
 | StructureStrDec
 | LocalStrDec
+// these two are actually only allowed at the top level per the Definition, but we put them here so
+// we can parse and emit a better error.
+| SigDec
+| FunctorDec
 
 // don't need Dec here, because it won't be a sequence. this is because StrDec already allows
 // sequences, and we prefer to make sequences of StrDecs over Decs.

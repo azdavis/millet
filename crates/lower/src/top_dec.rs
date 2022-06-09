@@ -3,11 +3,13 @@ use crate::util::{Cx, ErrorKind};
 use crate::{dec, ty};
 use syntax::ast::{self, AstNode as _, AstPtr};
 
-pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDecIdx {
+pub(crate) fn get(cx: &mut Cx, top_dec: ast::StrDecOne) -> hir::TopDecIdx {
   let ptr = AstPtr::new(&top_dec);
   let ret = match top_dec {
-    ast::TopDec::StrDec(top_dec) => hir::TopDec::Str(get_str_dec(cx, Some(top_dec))),
-    ast::TopDec::SigDec(top_dec) => hir::TopDec::Sig(
+    ast::StrDecOne::DecStrDec(_)
+    | ast::StrDecOne::StructureStrDec(_)
+    | ast::StrDecOne::LocalStrDec(_) => hir::TopDec::Str(get_str_dec_one(cx, top_dec)),
+    ast::StrDecOne::SigDec(top_dec) => hir::TopDec::Sig(
       top_dec
         .sig_binds()
         .filter_map(|sig_bind| {
@@ -18,7 +20,7 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::TopDec) -> hir::TopDecIdx {
         })
         .collect(),
     ),
-    ast::TopDec::FunctorDec(top_dec) => hir::TopDec::Functor(
+    ast::StrDecOne::FunctorDec(top_dec) => hir::TopDec::Functor(
       top_dec
         .functor_binds()
         .filter_map(|fun_bind| {
@@ -86,6 +88,14 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
       get_str_dec(cx, str_dec.local_dec()),
       get_str_dec(cx, str_dec.in_dec()),
     ),
+    ast::StrDecOne::SigDec(dec) => {
+      cx.err(dec.syntax().text_range(), ErrorKind::SigMustBeTopLevel);
+      return None;
+    }
+    ast::StrDecOne::FunctorDec(dec) => {
+      cx.err(dec.syntax().text_range(), ErrorKind::FunctorMustBeTopLevel);
+      return None;
+    }
   };
   cx.str_dec_one(res, ptr)
 }
