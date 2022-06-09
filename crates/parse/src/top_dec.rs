@@ -57,9 +57,9 @@ fn str_dec_(p: &mut Parser<'_>, en: Entered) -> bool {
 }
 
 #[must_use]
-fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
+fn str_dec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
-  let ex = if p.at(SK::StructureKw) {
+  if p.at(SK::StructureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrBind, |p| {
       p.eat(SK::Name);
@@ -69,7 +69,7 @@ fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
       p.eat(SK::Eq);
       must(p, str_exp, Expected::StrExp);
     });
-    p.exit(en, SK::StructureStrDec)
+    p.exit(en, SK::StructureStrDec);
   } else if p.at(SK::LocalKw) {
     // LocalStrDec is a 'superset' of LocalDec, so always use the former
     p.bump();
@@ -77,14 +77,14 @@ fn str_dec_one(p: &mut Parser<'_>) -> Option<Exited> {
     p.eat(SK::InKw);
     str_dec(p);
     p.eat(SK::EndKw);
-    p.exit(en, SK::LocalStrDec)
-  } else if dec_one(p).is_some() {
-    p.exit(en, SK::DecStrDec)
+    p.exit(en, SK::LocalStrDec);
+  } else if dec_one(p) {
+    p.exit(en, SK::DecStrDec);
   } else {
     p.abandon(en);
-    return None;
-  };
-  Some(ex)
+    return false;
+  }
+  true
 }
 
 #[must_use]
@@ -174,7 +174,7 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
 }
 
 #[must_use]
-fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
+fn spec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
   let mut ex = if p.at(SK::ValKw) {
     p.bump();
@@ -234,7 +234,7 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, SK::IncludeSpec)
   } else {
     p.abandon(en);
-    return None;
+    return false;
   };
   while p.at(SK::SharingKw) {
     let en = p.precede(ex);
@@ -245,7 +245,7 @@ fn spec_one(p: &mut Parser<'_>) -> Option<Exited> {
     });
     ex = p.exit(en, SK::SharingSpec);
   }
-  Some(ex)
+  true
 }
 
 fn spec(p: &mut Parser<'_>) -> Exited {

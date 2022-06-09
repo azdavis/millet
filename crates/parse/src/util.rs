@@ -17,12 +17,12 @@ where
 /// returns whether it advanced at all.
 pub(crate) fn maybe_semi_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, mut f: F) -> bool
 where
-  F: FnMut(&mut Parser<'a>) -> Option<Exited>,
+  F: FnMut(&mut Parser<'a>) -> bool,
 {
   let mut advanced = false;
   loop {
     let en = p.enter();
-    if f(p).is_none() {
+    if !f(p) {
       p.abandon(en);
       return advanced;
     }
