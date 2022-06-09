@@ -10,7 +10,7 @@
     { "include": "#real" },
     { "include": "#char" },
     { "include": "#string" },
-    { "include": "#bool" },
+    { "include": "#specialName" },
     { "include": "#tyVar" },
     { "include": "#symbolicIdent" },
     { "include": "#controlKeyword" },
@@ -79,9 +79,9 @@
       "name": "constant.character.escape.sml",
       "match": "\\\\u[0-9A-Fa-f]{4}"
     },
-    "bool": {
-      "name": "constant.language.boolean.sml",
-      "match": "\\b(true|false)\\b"
+    "specialName": {
+      "name": "constant.language.sml",
+      "match": "\\b(true|false|nil|ref)\\b"
     },
     "tyVar": {
       "name": "entity.name.type-variable-sml",
