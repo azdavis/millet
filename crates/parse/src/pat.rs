@@ -28,7 +28,9 @@ impl ConPatState {
 }
 
 enum AtPatHd {
+  /// corresponds to `ConPatState::Entered`.
   ConPatArg(Entered),
+  /// we're parsing an infix pat.
   Infix(ConPatState, OpInfo),
 }
 
