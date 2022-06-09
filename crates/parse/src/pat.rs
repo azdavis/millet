@@ -8,7 +8,7 @@ use syntax::SyntaxKind as SK;
 
 #[must_use]
 pub(crate) fn pat(p: &mut Parser<'_>) -> Option<Exited> {
-  pat_prec(p, None)
+  pat_prec(p, PatPrec::Min)
 }
 
 enum ConPatState {
@@ -36,7 +36,7 @@ enum AtPatHd {
 
 /// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
 #[must_use]
-fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
+fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
   // as pat/typed pat
   if name_then_colon_or_as(p, 0) || (p.at(SK::OpKw) && name_then_colon_or_as(p, 1)) {
     let en = p.enter();
@@ -93,7 +93,11 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
         }
         AtPatHd::Infix(st, op_info) => {
           state = st;
-          match should_break(op_info, min_prec) {
+          let should_break = match min_prec {
+            PatPrec::Min => ShouldBreak::No,
+            PatPrec::Op(min_prec) => should_break(op_info, min_prec),
+          };
+          match should_break {
             ShouldBreak::Yes => break,
             ShouldBreak::No => {}
             ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
@@ -101,13 +105,14 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
           let ex = state.exit(p);
           let en = p.precede(ex);
           p.bump();
-          must(p, |p| pat_prec(p, Some(op_info)), Expected::Pat);
+          must(p, |p| pat_prec(p, PatPrec::Op(op_info)), Expected::Pat);
           p.exit(en, SK::InfixPat)
         }
       }
     } else if p.at(SK::Colon) {
-      if min_prec.is_some() {
-        break;
+      match min_prec {
+        PatPrec::Min => {}
+        PatPrec::Op(_) => break,
       }
       let ex = state.exit(p);
       let en = p.precede(ex);
@@ -119,6 +124,11 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: Option<OpInfo>) -> Option<Exited> {
     state = ConPatState::Exited(ex);
   }
   Some(state.exit(p))
+}
+
+enum PatPrec {
+  Min,
+  Op(OpInfo),
 }
 
 /// when adding more cases to this, update [`at_pat_hd`]

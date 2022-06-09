@@ -235,7 +235,7 @@ enum ExpPrec {
 
 fn should_break_exp(prec: ExpPrec, min_prec: ExpPrec) -> ShouldBreak {
   match (prec, min_prec) {
-    (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(prec, Some(min_prec)),
+    (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(prec, min_prec),
     (_, ExpPrec::Min) | (ExpPrec::Infix(_), _) | (ExpPrec::Andalso, ExpPrec::Orelse) => {
       ShouldBreak::No
     }

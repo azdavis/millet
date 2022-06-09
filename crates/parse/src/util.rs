@@ -86,23 +86,18 @@ pub(crate) enum ShouldBreak {
   Error,
 }
 
-pub(crate) fn should_break(op_info: OpInfo, min_prec: Option<OpInfo>) -> ShouldBreak {
-  match min_prec {
-    None => ShouldBreak::No,
-    Some(min_prec) => {
-      if op_info.num == min_prec.num && op_info.assoc != min_prec.assoc {
-        ShouldBreak::Error
-      } else {
-        let res = match min_prec.assoc {
-          Assoc::Left => op_info.num <= min_prec.num,
-          Assoc::Right => op_info.num < min_prec.num,
-        };
-        if res {
-          ShouldBreak::Yes
-        } else {
-          ShouldBreak::No
-        }
-      }
+pub(crate) fn should_break(op_info: OpInfo, min_prec: OpInfo) -> ShouldBreak {
+  if op_info.num == min_prec.num && op_info.assoc != min_prec.assoc {
+    ShouldBreak::Error
+  } else {
+    let res = match min_prec.assoc {
+      Assoc::Left => op_info.num <= min_prec.num,
+      Assoc::Right => op_info.num < min_prec.num,
+    };
+    if res {
+      ShouldBreak::Yes
+    } else {
+      ShouldBreak::No
     }
   }
 }
