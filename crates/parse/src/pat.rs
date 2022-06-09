@@ -187,6 +187,13 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat, Expected::Pat));
     p.exit(en, SK::ListPat)
+  } else if p.at(SK::Hash) {
+    p.bump();
+    let list = p.enter();
+    p.eat(SK::LSquare);
+    comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat, Expected::Pat));
+    p.exit(list, SK::ListPat);
+    p.exit(en, SK::VectorPat)
   } else {
     p.abandon(en);
     return None;
@@ -202,6 +209,7 @@ fn at_pat_hd(p: &mut Parser<'_>) -> bool {
     || p.at(SK::LCurly)
     || p.at(SK::LRound)
     || p.at(SK::LSquare)
+    || p.at(SK::Hash)
 }
 
 fn at_pat_l_round(p: &mut Parser<'_>) -> SK {

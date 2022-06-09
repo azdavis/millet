@@ -217,6 +217,7 @@ Pat =
 | ParenPat
 | TuplePat
 | ListPat
+| VectorPat
 | InfixPat
 | TypedPat
 | TypedNamePat
@@ -230,6 +231,7 @@ RecordPat = '{' PatRow* '}'
 ParenPat = '(' Pat ')'
 TuplePat = '(' PatArg* ')'
 ListPat = '[' PatArg* ']'
+VectorPat = '#' ListPat
 InfixPat = lhs:Pat NameStarEq rhs:Pat
 TypedPat = Pat TyAnnotation
 // rather annoying, but this makes the parser a bit easier to write.

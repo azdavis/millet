@@ -46,6 +46,13 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
         hir::Pat::Con(cons, Some(cx.pat(tuple([x, ac]), ptr.clone())))
       })
     }
+    ast::Pat::VectorPat(pat) => {
+      cx.err(
+        pat.syntax().text_range(),
+        ErrorKind::Unsupported("vector patterns"),
+      );
+      return None;
+    }
     ast::Pat::InfixPat(pat) => {
       let func = hir::Path::one(hir::Name::new(pat.name_star_eq()?.token.text()));
       let lhs = get(cx, pat.lhs());
