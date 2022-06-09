@@ -1,5 +1,6 @@
-Root = TopDec*
+Root = TopDecInSeq*
 
+TopDecInSeq = TopDec ';'?
 TopDec =
   StrDec
 | SigDec

@@ -5,7 +5,6 @@ use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, path};
 use syntax::SyntaxKind as SK;
 
 #[must_use]
-/// returns whether this advanced.
 pub(crate) fn top_dec(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
   if p.at(SK::FunctorKw) {
