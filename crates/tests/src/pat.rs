@@ -94,3 +94,16 @@ val _: int = g A + f (2 B 3)
 "#,
   );
 }
+
+#[test]
+fn or() {
+  check(
+    r#"
+val _ =
+  case 123 of
+    1 | 2 => false
+(** ^^^^^ unsupported language construct: or patterns *)
+  | _ => true
+"#,
+  );
+}

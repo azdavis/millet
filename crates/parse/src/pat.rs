@@ -94,7 +94,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
         AtPatHd::Infix(st, op_info) => {
           state = st;
           let should_break = match min_prec {
-            PatPrec::Min => ShouldBreak::No,
+            PatPrec::Min | PatPrec::Or => ShouldBreak::No,
             PatPrec::Op(min_prec) => should_break(op_info, min_prec),
           };
           match should_break {
@@ -109,9 +109,19 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
           p.exit(en, SK::InfixPat)
         }
       }
-    } else if p.at(SK::Colon) {
+    } else if p.at(SK::Bar) {
       match min_prec {
         PatPrec::Min => {}
+        PatPrec::Or | PatPrec::Op(_) => break,
+      }
+      let ex = state.exit(p);
+      let en = p.precede(ex);
+      p.bump();
+      must(p, |p| pat_prec(p, PatPrec::Or), Expected::Pat);
+      p.exit(en, SK::OrPat)
+    } else if p.at(SK::Colon) {
+      match min_prec {
+        PatPrec::Min | PatPrec::Or => {}
         PatPrec::Op(_) => break,
       }
       let ex = state.exit(p);
@@ -128,6 +138,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
 
 enum PatPrec {
   Min,
+  Or,
   Op(OpInfo),
 }
 

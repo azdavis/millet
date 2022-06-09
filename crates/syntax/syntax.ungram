@@ -220,6 +220,7 @@ Pat =
 | InfixPat
 | TypedPat
 | TypedNamePat
+| OrPat
 | AsPat
 
 WildcardPat = '_'
@@ -233,6 +234,7 @@ InfixPat = lhs:Pat NameStarEq rhs:Pat
 TypedPat = Pat TyAnnotation
 // rather annoying, but this makes the parser a bit easier to write.
 TypedNamePat = 'op'? NameStarEq TyAnnotation
+OrPat = lhs:Pat '|' rhs:Pat
 AsPat = 'op'? NameStarEq TyAnnotation? AsPatTail
 
 PatRow = PatRowInner ','?

@@ -1,7 +1,7 @@
 use crate::common::{get_lab, get_path, get_scon};
 use crate::ty;
-use crate::util::Cx;
-use syntax::ast::{self, AstPtr};
+use crate::util::{Cx, ErrorKind};
+use syntax::ast::{self, AstNode as _, AstPtr};
 
 pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
   let pat = pat?;
@@ -63,6 +63,13 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
         name_pat,
         ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
       )
+    }
+    ast::Pat::OrPat(pat) => {
+      cx.err(
+        pat.syntax().text_range(),
+        ErrorKind::Unsupported("or patterns"),
+      );
+      return None;
     }
     ast::Pat::AsPat(pat) => as_(
       cx,
