@@ -1,4 +1,5 @@
 {
+  "millet.useLanguageServer": false,
   "editor.rulers": [100],
   "files.exclude": {
     "**/*.vsix": true,
