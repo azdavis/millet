@@ -130,12 +130,8 @@ pub(crate) fn path_no_infix(p: &mut Parser<'_>) {
   let cur = p.peek().unwrap();
   if !p.at_n(1, SK::Dot) && p.contains_op(cur.text) {
     p.error(ErrorKind::InfixWithoutOp);
-    let en = p.enter();
-    eat_name_star(p);
-    p.exit(en, SK::Path);
-  } else {
-    must(p, path, Expected::Path)
   }
+  must(p, path, Expected::Path)
 }
 
 #[must_use]
