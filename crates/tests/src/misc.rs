@@ -432,3 +432,27 @@ val _ = #[1, 2]
 "#,
   );
 }
+
+#[test]
+fn sig_not_top_level() {
+  fail(
+    r#"
+structure A = struct
+    signature B = sig end
+(** ^^^^^^^^^^^^^^^^^^^^^ `signature` declarations must be at the top level *)
+end
+"#,
+  );
+}
+
+#[test]
+fn functor_not_top_level() {
+  fail(
+    r#"
+structure A = struct
+    functor F() = struct end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^ `functor` declarations must be at the top level *)
+end
+"#,
+  );
+}
