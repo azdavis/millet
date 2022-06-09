@@ -119,3 +119,13 @@ val _: int = uh ((), ())
 "#,
   );
 }
+
+#[test]
+fn abstype() {
+  check(
+    r#"
+    abstype t = T with val _ = 3 end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported language construct: `abstype` declarations *)
+"#,
+  );
+}
