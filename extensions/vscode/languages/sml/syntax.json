@@ -10,9 +10,9 @@
     { "include": "#real" },
     { "include": "#char" },
     { "include": "#string" },
-    { "include": "#specialName" },
     { "include": "#tyVar" },
-    { "include": "#symbolicIdent" },
+    { "include": "#specialName" },
+    { "include": "#symbolicName" },
     { "include": "#controlKeyword" },
     { "include": "#otherKeyword" }
   ],
@@ -79,15 +79,15 @@
       "name": "constant.character.escape.sml",
       "match": "\\\\u[0-9A-Fa-f]{4}"
     },
-    "specialName": {
-      "name": "constant.language.sml",
-      "match": "\\b(true|false|nil|ref)\\b"
-    },
     "tyVar": {
       "name": "entity.name.type-variable-sml",
       "match": "'+[A-Za-z][A-Za-z0-9']*"
     },
-    "symbolicIdent": {
+    "specialName": {
+      "name": "constant.language.sml",
+      "match": "\\b(true|false|nil|ref)\\b"
+    },
+    "symbolicName": {
       "name": "keyword.operator.sml",
       "match": "[!%&\\$#\\+\\-/:<=>\\?@\\\\~`\\^\\|\\*]+"
     },
