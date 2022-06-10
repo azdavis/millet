@@ -6,10 +6,10 @@ pub(crate) fn ty_var_name(equality: bool, idx: usize) -> impl Iterator<Item = ch
   let quot = idx / alpha;
   let rem = idx % alpha;
   let ch = char::from((rem as u8) + b'a');
-  let ticks = if equality { 1 } else { 2 };
+  let ticks = if equality { 2 } else { 1 };
   std::iter::repeat('\'')
     .take(ticks)
-    .chain(std::iter::repeat(ch).take(quot))
+    .chain(std::iter::repeat(ch).take(quot + 1))
 }
 
 pub(crate) fn comma_seq<I, T>(f: &mut fmt::Formatter<'_>, iter: I) -> fmt::Result
