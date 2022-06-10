@@ -145,11 +145,6 @@ fn get_spec(cx: &mut Cx, ars: &hir::Arenas, spec: hir::SpecIdx) {
     None => return,
   };
   match &ars.spec[spec] {
-    hir::Spec::Ty(_)
-    | hir::Spec::EqTy(_)
-    | hir::Spec::Datatype(_)
-    | hir::Spec::DatatypeCopy(_, _)
-    | hir::Spec::Exception(_) => {}
     hir::Spec::Val(_, val_descs) => {
       let mut ac = TyVarSet::default();
       for val_desc in val_descs {
@@ -171,6 +166,11 @@ fn get_spec(cx: &mut Cx, ars: &hir::Arenas, spec: hir::SpecIdx) {
         get_spec(cx, ars, spec);
       }
     }
+    hir::Spec::Ty(_)
+    | hir::Spec::EqTy(_)
+    | hir::Spec::Datatype(_)
+    | hir::Spec::DatatypeCopy(_, _)
+    | hir::Spec::Exception(_) => {}
   }
 }
 
