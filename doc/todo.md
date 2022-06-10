@@ -20,7 +20,6 @@ priority is approximate. if unsure of priority, put in low.
 ## medium
 
 - improve statics for type variables
-  - implicit scoping
   - performing closure operations
   - checking whether expressions are expansive (oh no!)
   - type variables in signatures
