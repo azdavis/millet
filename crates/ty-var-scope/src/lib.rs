@@ -1,42 +1,44 @@
 //! Add implicitly-scoped type variables to explicit binding sites.
+//!
+//! ```sml
+//! type 'a guy = unit
+//! val _ =
+//! (* ^ 'a bound here *)
+//!   let
+//!     val _ = (): 'a guy
+//!   in
+//!     (): 'a guy
+//!   end
+//!
+//! val _ =
+//!   let
+//!     val _ = (): 'a guy
+//! (*    ^ 'a bound here *)
+//!   in
+//!     ()
+//!   end
+//!
+//! val _ =
+//! (* ^ 'a bound here *)
+//!   let
+//!     val _ = ()
+//!   in
+//!     (): 'a guy
+//!   end
+//! ```
 
-/*
-type 'a guy = unit
-val _ =
-(* ^ bound here *)
-  let
-    val _ = (): 'a guy
-  in
-    (): 'a guy
-  end
-
-val _ =
-  let
-    val _ = (): 'a guy
-(*    ^ bound here *)
-  in
-    ()
-  end
-
-val _ =
-(* ^ bound here *)
-  let
-    val _ = ()
-  in
-    (): 'a guy
-  end
- */
-// #![deny(missing_debug_implementations)]
-// #![deny(missing_docs)]
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 use fast_hash::{FxHashMap, FxHashSet};
 
+/// The `val` decs and the type variables they implicitly bind.
 pub type Cx = FxHashMap<hir::la_arena::Idx<hir::Dec>, Vec<hir::TyVar>>;
 
 /// Computes what type variables to add.
 ///
-/// I found it too troublesome to try to actually add the type variables as we traverse, since then
+/// It is somewhat troublesome to try to actually add the type variables as we traverse, since then
 /// the dec arena needs to be mutable, and that causes all sorts of unhappiness since we need to
 /// traverse it. Traversing and mutating a thing at the same time is not easy.
 pub fn get(ars: &hir::Arenas, top_decs: &[hir::TopDecIdx]) -> Cx {
