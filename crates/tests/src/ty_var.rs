@@ -100,6 +100,16 @@ signature FUNCTOR = sig
   type 'a f
   val map : ('a -> 'b) -> 'a f -> 'b f
 end
+signature APPLICATIVE = sig
+  type 'a f
+  val pure : 'a -> 'a f
+  val <*> : ('a -> 'b) f -> 'a f -> 'b f
+end
+signature MONAD = sig
+  type 'a m
+  val return : 'a -> 'a m
+  val >>= : ('a -> 'b m) -> 'a m -> 'b m
+end
 "#,
   );
 }
