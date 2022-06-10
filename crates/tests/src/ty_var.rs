@@ -75,3 +75,19 @@ fun ('a, 'b) f (xs: 'a list) (x: 'b) =
 "#,
   );
 }
+
+#[test]
+fn implicit_scope_val() {
+  check(
+    r#"
+fun id (x: 'a): 'a = x
+val _ = id 3
+val _ = id "hey"
+val _: 'a list = []
+fun map (f: 'a -> 'b) (xs: 'a list): 'b list =
+  case xs of
+    [] => []
+  | x :: xs => f x :: map f xs
+"#,
+  );
+}

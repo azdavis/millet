@@ -26,4 +26,4 @@ mod rust;
 mod shadow;
 mod smoke;
 mod ty_name_escape;
-mod ty_var_annot;
+mod ty_var;
