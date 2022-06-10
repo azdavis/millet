@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn across_var() {
@@ -94,11 +94,11 @@ fun map (f: 'a -> 'b) (xs: 'a list): 'b list =
 
 #[test]
 fn implicit_scope_spec() {
-  fail(
+  check(
     r#"
 signature FUNCTOR = sig
   type 'a f
-  val map: ('a -> 'b) -> 'a f -> 'b f
+  val map : ('a -> 'b) -> 'a f -> 'b f
 end
 "#,
   );

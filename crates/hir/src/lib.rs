@@ -122,7 +122,8 @@ pub type SpecArena = Arena<Spec>;
 
 #[derive(Debug)]
 pub enum Spec {
-  Val(Vec<ValDesc>),
+  /// the `Vec<TyVar>` will always be empty from the source, but may be filled in implicitly.
+  Val(Vec<TyVar>, Vec<ValDesc>),
   Ty(Vec<TyDesc>),
   EqTy(Vec<TyDesc>),
   Datatype(Vec<DatDesc>),

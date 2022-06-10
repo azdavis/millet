@@ -33,8 +33,14 @@
 
 use fast_hash::{FxHashMap, FxHashSet};
 
-/// The `val` decs and the type variables they implicitly bind.
-pub type Cx = FxHashMap<hir::la_arena::Idx<hir::Dec>, Vec<hir::TyVar>>;
+/// The `val` decs/specs and the type variables they implicitly bind.
+#[derive(Debug, Default)]
+pub struct Cx {
+  /// The decs.
+  pub val_dec: FxHashMap<hir::la_arena::Idx<hir::Dec>, Vec<hir::TyVar>>,
+  /// The specs.
+  pub val_spec: FxHashMap<hir::la_arena::Idx<hir::Spec>, Vec<hir::TyVar>>,
+}
 
 /// Computes what type variables to add.
 ///
@@ -54,10 +60,15 @@ type TyVarSet = FxHashSet<hir::TyVar>;
 fn get_top_dec(cx: &mut Cx, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
   match &ars.top_dec[top_dec] {
     hir::TopDec::Str(str_dec) => get_str_dec(cx, ars, *str_dec),
-    hir::TopDec::Sig(_) => {}
+    hir::TopDec::Sig(sig_binds) => {
+      for sig_bind in sig_binds {
+        get_sig_exp(cx, ars, sig_bind.sig_exp);
+      }
+    }
     hir::TopDec::Functor(fun_binds) => {
       for fun_bind in fun_binds {
-        get_str_exp(cx, ars, fun_bind.body)
+        get_sig_exp(cx, ars, fun_bind.param_sig);
+        get_str_exp(cx, ars, fun_bind.body);
       }
     }
   }
@@ -95,11 +106,61 @@ fn get_str_exp(cx: &mut Cx, ars: &hir::Arenas, str_exp: hir::StrExpIdx) {
   match &ars.str_exp[str_exp] {
     hir::StrExp::Struct(str_dec) => get_str_dec(cx, ars, *str_dec),
     hir::StrExp::Path(_) => {}
-    hir::StrExp::Ascription(str_exp, _, _) => get_str_exp(cx, ars, *str_exp),
+    hir::StrExp::Ascription(str_exp, _, sig_exp) => {
+      get_str_exp(cx, ars, *str_exp);
+      get_sig_exp(cx, ars, *sig_exp);
+    }
     hir::StrExp::App(_, str_exp) => get_str_exp(cx, ars, *str_exp),
     hir::StrExp::Let(str_dec, str_exp) => {
       get_str_dec(cx, ars, *str_dec);
       get_str_exp(cx, ars, *str_exp);
+    }
+  }
+}
+
+fn get_sig_exp(cx: &mut Cx, ars: &hir::Arenas, sig_exp: hir::SigExpIdx) {
+  let sig_exp = match sig_exp {
+    Some(x) => x,
+    None => return,
+  };
+  match &ars.sig_exp[sig_exp] {
+    hir::SigExp::Spec(spec) => get_spec(cx, ars, *spec),
+    hir::SigExp::Name(_) => {}
+    hir::SigExp::Where(sig_exp, _, _, _) => get_sig_exp(cx, ars, *sig_exp),
+  }
+}
+
+fn get_spec(cx: &mut Cx, ars: &hir::Arenas, spec: hir::SpecIdx) {
+  let spec = match spec {
+    Some(x) => x,
+    None => return,
+  };
+  match &ars.spec[spec] {
+    hir::Spec::Ty(_)
+    | hir::Spec::EqTy(_)
+    | hir::Spec::Datatype(_)
+    | hir::Spec::DatatypeCopy(_, _)
+    | hir::Spec::Exception(_) => {}
+    hir::Spec::Val(_, val_descs) => {
+      let mut ac = TyVarSet::default();
+      for val_desc in val_descs {
+        get_ty(cx, ars, &mut ac, val_desc.ty);
+      }
+      let mut to_bind: Vec<_> = ac.into_iter().collect();
+      to_bind.sort_unstable();
+      cx.val_spec.insert(spec, to_bind);
+    }
+    hir::Spec::Str(str_descs) => {
+      for str_desc in str_descs {
+        get_sig_exp(cx, ars, str_desc.sig_exp);
+      }
+    }
+    hir::Spec::Include(sig_exp) => get_sig_exp(cx, ars, *sig_exp),
+    hir::Spec::Sharing(spec, _) => get_spec(cx, ars, *spec),
+    hir::Spec::Seq(specs) => {
+      for &spec in specs {
+        get_spec(cx, ars, spec);
+      }
     }
   }
 }
@@ -121,7 +182,7 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
       }
       let mut to_bind: Vec<_> = ac.difference(&scope).cloned().collect();
       to_bind.sort_unstable();
-      cx.insert(dec, to_bind);
+      cx.val_dec.insert(dec, to_bind);
     }
     hir::Dec::Abstype(_, dec) => get_dec(cx, ars, scope, *dec),
     hir::Dec::Local(local_dec, in_dec) => {

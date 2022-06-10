@@ -162,6 +162,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
   let range = spec.syntax().text_range();
   let ret = match spec {
     ast::SpecOne::ValSpec(spec) => hir::Spec::Val(
+      Vec::new(),
       spec
         .val_descs()
         .filter_map(|x| {

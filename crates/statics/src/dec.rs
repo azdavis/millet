@@ -199,7 +199,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
   }
 }
 
-fn add_fixed_ty_vars(
+pub(crate) fn add_fixed_ty_vars(
   st: &mut St,
   cx: &mut Cx,
   ty_vars: &[hir::TyVar],

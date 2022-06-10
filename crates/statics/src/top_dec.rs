@@ -3,8 +3,8 @@
 use crate::error::{ErrorKind, Item};
 use crate::fmt_util::ty_var_name;
 use crate::types::{
-  generalize, Bs, Env, FixedTyVars, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo,
-  TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
+  generalize, Bs, Env, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme,
+  TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, cannot_bind_val, get_env, get_ty_info, ins_no_dupe, instantiate};
 use crate::{dec, st::St, ty, unify::unify};
@@ -236,13 +236,13 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
   };
   match &ars.spec[spec] {
     // sml_def(68)
-    hir::Spec::Val(val_descs) => {
+    hir::Spec::Val(ty_vars, val_descs) => {
       // sml_def(79)
-      let cx = bs.as_cx();
+      let mut cx = bs.as_cx();
+      let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, spec.into());
       for val_desc in val_descs {
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, val_desc.ty));
-        // `generalize` here currently does nothing, because we don't have implicit ty var scoping.
-        generalize(st.subst(), FixedTyVars::default(), &mut ty_scheme);
+        generalize(st.subst(), fixed.clone(), &mut ty_scheme);
         let vi = ValInfo {
           ty_scheme,
           id_status: IdStatus::Val,
