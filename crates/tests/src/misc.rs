@@ -170,11 +170,16 @@ val _ = if id false then id 1 + 1 else id (2 + 2)
 
 #[test]
 fn implicit_ty_var_scope() {
-  fail(
+  check(
     r#"
 fun id (x: 'a): 'a = x
 val _ = id 3
 val _ = id "hey"
+val _: 'a list = []
+fun map (f: 'a -> 'b) (xs: 'a list): 'b list =
+  case xs of
+    [] => []
+  | x :: xs => f x :: map f xs
 "#,
   );
 }

@@ -31,7 +31,14 @@ where
       log::debug!("lex: {:?}", lexed.tokens);
       let parsed = parse::get(&lexed.tokens);
       log::debug!("parse: {:#?}", parsed.root);
-      let lowered = lower::get(&parsed.root);
+      let mut lowered = lower::get(&parsed.root);
+      let val_implicit_ty_vars = ty_var_scope::get(&lowered.arenas, &lowered.top_decs);
+      for (dec, implicit_ty_vars) in val_implicit_ty_vars {
+        match &mut lowered.arenas.dec[dec] {
+          hir::Dec::Val(ty_vars, _) => ty_vars.extend(implicit_ty_vars),
+          _ => unreachable!(),
+        }
+      }
       AnalyzedFile {
         lex_errors: lexed.errors,
         parsed,

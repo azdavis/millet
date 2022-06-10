@@ -6,12 +6,14 @@ version = 3
 name = "analysis"
 version = "0.1.0"
 dependencies = [
+ "hir",
  "lex",
  "log",
  "lower",
  "parse",
  "statics",
  "syntax",
+ "ty-var-scope",
 ]
 
 [[package]]
@@ -541,6 +543,14 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 name = "token"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
+
+[[package]]
+name = "ty-var-scope"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "hir",
+]
 
 [[package]]
 name = "ungrammar"

@@ -13,5 +13,7 @@ log = "0.4"
 lex = { path = "../lex" }
 parse = { path = "../parse" }
 lower = { path = "../lower" }
+ty-var-scope = { path = "../ty-var-scope" }
 statics = { path = "../statics" }
 syntax = { path = "../syntax" }
+hir = { path = "../hir" }
