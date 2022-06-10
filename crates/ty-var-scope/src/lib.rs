@@ -33,26 +33,35 @@
 
 use fast_hash::{FxHashMap, FxHashSet};
 
-/// The `val` decs/specs and the type variables they implicitly bind.
-#[derive(Debug, Default)]
-pub struct Cx {
-  /// The decs.
-  pub val_dec: FxHashMap<hir::la_arena::Idx<hir::Dec>, Vec<hir::TyVar>>,
-  /// The specs.
-  pub val_spec: FxHashMap<hir::la_arena::Idx<hir::Spec>, Vec<hir::TyVar>>,
-}
-
 /// Computes what type variables to add.
 ///
 /// It is somewhat troublesome to try to actually add the type variables as we traverse, since then
 /// the dec arena needs to be mutable, and that causes all sorts of unhappiness since we need to
 /// traverse it. Traversing and mutating a thing at the same time is not easy.
-pub fn get(ars: &hir::Arenas, top_decs: &[hir::TopDecIdx]) -> Cx {
+pub fn get(ars: &mut hir::Arenas, top_decs: &[hir::TopDecIdx]) {
   let mut cx = Cx::default();
   for &top_dec in top_decs {
     get_top_dec(&mut cx, ars, top_dec);
   }
-  cx
+  for (dec, implicit_ty_vars) in cx.val_dec {
+    match &mut ars.dec[dec] {
+      hir::Dec::Val(ty_vars, _) => ty_vars.extend(implicit_ty_vars),
+      _ => unreachable!(),
+    }
+  }
+  for (spec, implicit_ty_vars) in cx.val_spec {
+    match &mut ars.spec[spec] {
+      hir::Spec::Val(ty_vars, _) => ty_vars.extend(implicit_ty_vars),
+      _ => unreachable!(),
+    }
+  }
+}
+
+/// The `val` decs/specs and the type variables they implicitly bind.
+#[derive(Debug, Default)]
+struct Cx {
+  val_dec: FxHashMap<hir::la_arena::Idx<hir::Dec>, Vec<hir::TyVar>>,
+  val_spec: FxHashMap<hir::la_arena::Idx<hir::Spec>, Vec<hir::TyVar>>,
 }
 
 type TyVarSet = FxHashSet<hir::TyVar>;

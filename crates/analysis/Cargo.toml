@@ -16,4 +16,3 @@ lower = { path = "../lower" }
 ty-var-scope = { path = "../ty-var-scope" }
 statics = { path = "../statics" }
 syntax = { path = "../syntax" }
-hir = { path = "../hir" }
