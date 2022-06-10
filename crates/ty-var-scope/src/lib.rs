@@ -114,12 +114,12 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
     hir::Dec::Val(ty_vars, val_binds) => {
       let mut scope = scope.clone();
       scope.extend(ty_vars.iter().cloned());
-      let mut free = TyVarSet::default();
+      let mut ac = TyVarSet::default();
       for val_bind in val_binds {
-        get_pat(cx, ars, &mut free, val_bind.pat);
-        get_exp(cx, ars, &scope, &mut free, val_bind.exp);
+        get_pat(cx, ars, &mut ac, val_bind.pat);
+        get_exp(cx, ars, &scope, &mut ac, val_bind.exp);
       }
-      let mut to_bind: Vec<_> = free.difference(&scope).cloned().collect();
+      let mut to_bind: Vec<_> = ac.difference(&scope).cloned().collect();
       to_bind.sort_unstable();
       cx.insert(dec, to_bind);
     }
@@ -141,13 +141,7 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
   }
 }
 
-fn get_exp(
-  cx: &mut Cx,
-  ars: &hir::Arenas,
-  scope: &TyVarSet,
-  free: &mut TyVarSet,
-  exp: hir::ExpIdx,
-) {
+fn get_exp(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, ac: &mut TyVarSet, exp: hir::ExpIdx) {
   let exp = match exp {
     Some(x) => x,
     None => return,
@@ -156,81 +150,81 @@ fn get_exp(
     hir::Exp::SCon(_) | hir::Exp::Path(_) => {}
     hir::Exp::Record(rows) => {
       for &(_, exp) in rows {
-        get_exp(cx, ars, scope, free, exp);
+        get_exp(cx, ars, scope, ac, exp);
       }
     }
     hir::Exp::Let(dec, exp) => {
       get_dec(cx, ars, scope, *dec);
-      get_exp(cx, ars, scope, free, *exp);
+      get_exp(cx, ars, scope, ac, *exp);
     }
     hir::Exp::App(func, arg) => {
-      get_exp(cx, ars, scope, free, *func);
-      get_exp(cx, ars, scope, free, *arg);
+      get_exp(cx, ars, scope, ac, *func);
+      get_exp(cx, ars, scope, ac, *arg);
     }
     hir::Exp::Handle(head, arms) => {
-      get_exp(cx, ars, scope, free, *head);
+      get_exp(cx, ars, scope, ac, *head);
       for &(pat, exp) in arms {
-        get_pat(cx, ars, free, pat);
-        get_exp(cx, ars, scope, free, exp);
+        get_pat(cx, ars, ac, pat);
+        get_exp(cx, ars, scope, ac, exp);
       }
     }
-    hir::Exp::Raise(exp) => get_exp(cx, ars, scope, free, *exp),
+    hir::Exp::Raise(exp) => get_exp(cx, ars, scope, ac, *exp),
     hir::Exp::Fn(arms) => {
       for &(pat, exp) in arms {
-        get_pat(cx, ars, free, pat);
-        get_exp(cx, ars, scope, free, exp);
+        get_pat(cx, ars, ac, pat);
+        get_exp(cx, ars, scope, ac, exp);
       }
     }
     hir::Exp::Typed(exp, ty) => {
-      get_exp(cx, ars, scope, free, *exp);
-      get_ty(cx, ars, free, *ty);
+      get_exp(cx, ars, scope, ac, *exp);
+      get_ty(cx, ars, ac, *ty);
     }
   }
 }
 
-fn get_pat(cx: &mut Cx, ars: &hir::Arenas, free: &mut TyVarSet, pat: hir::PatIdx) {
+fn get_pat(cx: &mut Cx, ars: &hir::Arenas, ac: &mut TyVarSet, pat: hir::PatIdx) {
   let pat = match pat {
     Some(x) => x,
     None => return,
   };
   match &ars.pat[pat] {
     hir::Pat::Wild | hir::Pat::SCon(_) => {}
-    hir::Pat::Con(_, arg) => get_pat(cx, ars, free, arg.flatten()),
+    hir::Pat::Con(_, arg) => get_pat(cx, ars, ac, arg.flatten()),
     hir::Pat::Record { rows, .. } => {
       for &(_, pat) in rows {
-        get_pat(cx, ars, free, pat)
+        get_pat(cx, ars, ac, pat)
       }
     }
     hir::Pat::Typed(pat, ty) => {
-      get_pat(cx, ars, free, *pat);
-      get_ty(cx, ars, free, *ty);
+      get_pat(cx, ars, ac, *pat);
+      get_ty(cx, ars, ac, *ty);
     }
-    hir::Pat::As(_, pat) => get_pat(cx, ars, free, *pat),
+    hir::Pat::As(_, pat) => get_pat(cx, ars, ac, *pat),
   }
 }
 
-fn get_ty(cx: &mut Cx, ars: &hir::Arenas, free: &mut TyVarSet, ty: hir::TyIdx) {
+fn get_ty(cx: &mut Cx, ars: &hir::Arenas, ac: &mut TyVarSet, ty: hir::TyIdx) {
   let ty = match ty {
     Some(x) => x,
     None => return,
   };
   match &ars.ty[ty] {
     hir::Ty::Var(tv) => {
-      free.insert(tv.clone());
+      ac.insert(tv.clone());
     }
     hir::Ty::Record(rows) => {
       for &(_, ty) in rows {
-        get_ty(cx, ars, free, ty);
+        get_ty(cx, ars, ac, ty);
       }
     }
     hir::Ty::Con(args, _) => {
       for &ty in args {
-        get_ty(cx, ars, free, ty);
+        get_ty(cx, ars, ac, ty);
       }
     }
     hir::Ty::Fn(param, res) => {
-      get_ty(cx, ars, free, *param);
-      get_ty(cx, ars, free, *res);
+      get_ty(cx, ars, ac, *param);
+      get_ty(cx, ars, ac, *res);
     }
   }
 }
