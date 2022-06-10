@@ -405,3 +405,33 @@ val _: int = S.x
 "#,
   );
 }
+
+#[test]
+fn functor_sig() {
+  check(
+    r#"
+signature FUNCTOR = sig
+  type 'a f
+  val map: ('a -> 'b) -> 'a f -> 'b f
+end
+
+structure ListFunctor: FUNCTOR = struct
+  type 'a f = 'a list
+  fun map f xs =
+    case xs of
+      [] => []
+    | x :: xs => f x :: map f xs
+end
+
+datatype 'a option = NONE | SOME of 'a
+
+structure OptionFunctor: FUNCTOR = struct
+  type 'a f = 'a option
+  fun map f x =
+    case x of
+      NONE => NONE
+    | SOME x => SOME (f x)
+end
+"#,
+  );
+}

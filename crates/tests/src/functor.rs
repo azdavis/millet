@@ -275,3 +275,27 @@ structure D = F (type t = bool)
 "#,
   );
 }
+
+#[test]
+fn functor_from_monad() {
+  check(
+    r#"
+signature MONAD = sig
+  type 'a m
+  val return : 'a -> 'a m
+  val bind : 'a m -> ('a -> 'b m) -> 'b m
+end
+
+(* slightly rearranged *)
+signature FUNCTOR = sig
+  type 'a f
+  val map : 'a f -> ('a -> 'b) -> 'b f
+end
+
+functor MonadIsFunctor (M : MONAD) : FUNCTOR = struct
+  type 'a f = 'a M.m
+  val map = fn x => fn f => M.bind x (fn y => M.return (f y))
+end
+"#,
+  );
+}
