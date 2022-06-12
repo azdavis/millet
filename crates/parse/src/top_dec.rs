@@ -170,24 +170,10 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
     });
     p.exit(en, SK::ValSpec)
   } else if p.at(SK::TypeKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::TyDesc, |p| {
-      ty_var_seq(p);
-      p.eat(SK::Name);
-      if p.at(SK::Eq) {
-        let en = p.enter();
-        p.bump();
-        ty(p);
-        p.exit(en, SK::EqTy);
-      }
-    });
+    ty_spec(p);
     p.exit(en, SK::TySpec)
   } else if p.at(SK::EqtypeKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::EqTyDesc, |p| {
-      ty_var_seq(p);
-      p.eat(SK::Name);
-    });
+    ty_spec(p);
     p.exit(en, SK::EqTySpec)
   } else if p.at(SK::DatatypeKw) {
     if datatype_copy(p) {
@@ -231,6 +217,20 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
     ex = p.exit(en, SK::SharingSpec);
   }
   true
+}
+
+fn ty_spec(p: &mut Parser<'_>) {
+  p.bump();
+  many_sep(p, SK::AndKw, SK::TyDesc, |p| {
+    ty_var_seq(p);
+    p.eat(SK::Name);
+    if p.at(SK::Eq) {
+      let en = p.enter();
+      p.bump();
+      ty(p);
+      p.exit(en, SK::EqTy);
+    }
+  });
 }
 
 fn spec(p: &mut Parser<'_>) -> Exited {
