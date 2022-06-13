@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn val() {
@@ -52,6 +52,32 @@ exception E
 exception E of int
 val _ = E: unit
 (**     ^^^^^^^ expected unit, found int -> exn *)
+"#,
+  );
+}
+
+#[test]
+fn signature() {
+  fail(
+    r#"
+signature SIG = sig end
+signature SIG = sig type t end
+
+structure S: SIG = struct type t = int end
+val _ = 3 : S.t
+"#,
+  );
+}
+
+#[test]
+fn functor() {
+  fail(
+    r#"
+functor F() = struct end
+functor F() = struct type t = int end
+
+structure S = F()
+val _ = 3 : S.t
 "#,
   );
 }
