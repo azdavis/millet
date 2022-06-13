@@ -236,20 +236,11 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
       seq(cx, ptr.clone(), specs)
     }
     ast::SpecOne::IncludeSpec(spec) => {
-      let mut specs: Vec<_> = spec
+      let specs: Vec<_> = spec
         .sig_exps()
         .map(|x| hir::Spec::Include(get_sig_exp(cx, Some(x))))
         .collect();
-      if specs.len() == 1 {
-        specs.pop().unwrap()
-      } else {
-        hir::Spec::Seq(
-          specs
-            .into_iter()
-            .map(|x| cx.spec_one(x, ptr.clone()))
-            .collect(),
-        )
-      }
+      seq(cx, ptr.clone(), specs)
     }
     ast::SpecOne::SharingSpec(_) => {
       cx.err(range, ErrorKind::Unsupported("`sharing` specifications"));
