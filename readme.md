@@ -2,17 +2,19 @@
 
 Tools for [Standard ML][sml], most notably a [language server][lang-srv].
 
-## Installation for [VS Code][vscode]
-
-Install it from the [marketplace][].
-
 ## Warning
 
 The language server is alpha-quality software. It might be slow, wrong, [incomplete][], or unstable.
 
+## Installation for [VS Code][vscode]
+
+Install it from the [marketplace][].
+
 ## Development
 
-`git clone` the repo, `cd` inside, and run `cargo xtask ci`.
+Install the dependencies: git, rust, and node.
+
+Then, `git clone` the repo, `cd` inside, and run `cargo xtask ci`.
 
 If you're using VS Code, you can try out the VS Code extension:
 
@@ -22,26 +24,6 @@ If you're using VS Code, you can try out the VS Code extension:
 4. Press the green play button.
 
 See also the [architecture][] documentation.
-
-## Testing
-
-Most tests are in `crates/tests` and use `check()` like this:
-
-```rs
-use crate::check::check;
-
-#[test]
-fn undefined() {
-  check(
-    r#"
-val _ = nope
-(**     ^^^^ undefined value: nope *)
-"#,
-  );
-}
-```
-
-See the documentation of `check()` for how to write tests.
 
 ## Naming
 

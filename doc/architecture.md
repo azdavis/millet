@@ -140,6 +140,22 @@ The tests. Depends on `analysis`, and consumes its public API to test functional
 
 Test case are usually SML programs, which contain "expectation comments" asserting that `analysis` should behave a certain way about a certain region of the program.
 
+```rs
+use crate::check::check;
+
+#[test]
+fn undefined() {
+  check(
+    r#"
+val _ = nope
+(**     ^^^^ undefined value: nope *)
+"#,
+  );
+}
+```
+
+See the documentation of `check()` for how to write tests.
+
 ### `doc`
 
 Documentation, like this!
