@@ -1,3 +1,5 @@
+//! Test infra.
+
 use fast_hash::FxHashMap;
 use std::fmt;
 use std::ops::Range;
