@@ -27,7 +27,7 @@ pub(crate) enum Ty {
   Con(Vec<Ty>, Sym),
   /// Definition: FunType
   ///
-  /// Use `Ty::zero` if constructing a `Fn` from unboxed types.
+  /// Use `Ty::fun` if constructing a `Fn` from unboxed types.
   Fn(Box<Ty>, Box<Ty>),
 }
 
