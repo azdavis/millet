@@ -34,9 +34,9 @@ pub struct Ptrs {
 }
 
 macro_rules! try_get_hir {
-  ($idx:ident, $($map:expr),*) => {{
+  ($idx:ident, $s:ident, $($map:ident),*) => {{
     $(
-      if let Some(x) = $map.hir_to_ast.get($idx) {
+      if let Some(x) = $s.$map.hir_to_ast.get($idx) {
         return Some(x.syntax_node_ptr());
       }
     )*
@@ -47,28 +47,19 @@ impl Ptrs {
   /// Returns the `SyntaxNodePtr` for an HIR index.
   pub fn get(&self, idx: hir::Idx) -> Option<SyntaxNodePtr> {
     match idx {
-      hir::Idx::Exp(idx) => try_get_hir!(idx, self.exp),
-      hir::Idx::Pat(idx) => try_get_hir!(idx, self.pat, self.pat_in_exp),
-      hir::Idx::Ty(idx) => try_get_hir!(idx, self.ty),
-      hir::Idx::Dec(idx) => try_get_hir!(
-        idx,
-        self.dec,
-        self.dec_one,
-        self.dec_in_exp,
-        self.dec_in_top_dec
-      ),
-      hir::Idx::StrExp(idx) => try_get_hir!(idx, self.str_exp, self.str_exp_in_top_dec),
+      hir::Idx::Exp(idx) => try_get_hir!(idx, self, exp),
+      hir::Idx::Pat(idx) => try_get_hir!(idx, self, pat, pat_in_exp),
+      hir::Idx::Ty(idx) => try_get_hir!(idx, self, ty),
+      hir::Idx::Dec(idx) => try_get_hir!(idx, self, dec, dec_one, dec_in_exp, dec_in_top_dec),
+      hir::Idx::StrExp(idx) => try_get_hir!(idx, self, str_exp, str_exp_in_top_dec),
       hir::Idx::StrDec(idx) => {
-        try_get_hir!(idx, self.str_dec, self.str_dec_one, self.str_dec_in_top_dec)
+        try_get_hir!(idx, self, str_dec, str_dec_one, str_dec_in_top_dec)
       }
-      hir::Idx::SigExp(idx) => try_get_hir!(
-        idx,
-        self.sig_exp,
-        self.sig_exp_in_top_dec,
-        self.sig_exp_in_spec_one
-      ),
-      hir::Idx::Spec(idx) => try_get_hir!(idx, self.spec, self.spec_one),
-      hir::Idx::TopDec(idx) => try_get_hir!(idx, self.top_dec),
+      hir::Idx::SigExp(idx) => {
+        try_get_hir!(idx, self, sig_exp, sig_exp_in_top_dec, sig_exp_in_spec_one)
+      }
+      hir::Idx::Spec(idx) => try_get_hir!(idx, self, spec, spec_one),
+      hir::Idx::TopDec(idx) => try_get_hir!(idx, self, top_dec),
     }
     None
   }
