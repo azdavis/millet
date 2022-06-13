@@ -22,9 +22,11 @@ use syntax::rowan::{TextRange, TextSize};
 /// "#);
 /// ```
 ///
-/// see also [`fail`] if the test is failing.
-///
 /// note that this also sets up logging.
+///
+/// see also
+/// - [`fail`] if the test is failing.
+/// - [`check_with_std_basis`] for using the full std basis.
 #[track_caller]
 pub(crate) fn check<'a, C>(c: C)
 where
@@ -71,6 +73,16 @@ where
   }
 }
 
+/// like [`check`], but includes the full std basis.
+#[track_caller]
+pub(crate) fn check_with_std_basis(s: &str) {
+  init_logging();
+  let c = Check::new(&[s], analysis::StdBasis::Full);
+  if !c.reasons.is_empty() {
+    panic!("{c}")
+  }
+}
+
 /// ignores the Err return if already initialized, since that's fine.
 fn init_logging() {
   let _ = simple_logger::init_with_level(log::Level::Info);
@@ -82,7 +94,7 @@ pub(crate) struct Check<'a> {
 }
 
 impl<'a> Check<'a> {
-  fn new(ss: &[&'a str]) -> Self {
+  fn new(ss: &[&'a str], std_basis: analysis::StdBasis) -> Self {
     let mut ret = Self {
       files: ss
         .iter()
@@ -105,7 +117,7 @@ impl<'a> Check<'a> {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
-    let err = analysis::Analysis::default()
+    let err = analysis::Analysis::new(std_basis)
       .get(ss.iter().copied())
       .into_iter()
       .enumerate()
@@ -155,19 +167,19 @@ impl<'a> Check<'a> {
 
 impl<'a> From<&'a str> for Check<'a> {
   fn from(s: &'a str) -> Self {
-    Self::new(&[s])
+    Self::new(&[s], analysis::StdBasis::Minimal)
   }
 }
 
 impl<'a, const N: usize> From<[&'a str; N]> for Check<'a> {
   fn from(xs: [&'a str; N]) -> Self {
-    Self::new(&xs)
+    Self::new(&xs, analysis::StdBasis::Minimal)
   }
 }
 
 impl<'a, 'b> From<&'b [&'a str]> for Check<'a> {
   fn from(xs: &'b [&'a str]) -> Self {
-    Self::new(xs)
+    Self::new(xs, analysis::StdBasis::Minimal)
   }
 }
 

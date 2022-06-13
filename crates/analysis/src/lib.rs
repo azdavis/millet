@@ -17,13 +17,33 @@ pub struct Error {
   pub message: String,
 }
 
+/// What standard basis to use.
+#[derive(Debug, Clone, Copy)]
+pub enum StdBasis {
+  /// Include most of the standard basis library.
+  Full,
+  /// Only include fundamental types like `int`, `real`, etc.
+  Minimal,
+}
+
+impl Default for StdBasis {
+  fn default() -> Self {
+    Self::Full
+  }
+}
+
 /// Performs analysis.
 #[derive(Debug, Default)]
 pub struct Analysis {
-  _priv: (),
+  std_basis: StdBasis,
 }
 
 impl Analysis {
+  /// Returns a new `Analysis`.
+  pub fn new(std_basis: StdBasis) -> Self {
+    Self { std_basis }
+  }
+
   /// Returns a Vec of Vec of errors for each file.
   ///
   /// The length of the returned Vec will be the same as the length of files.
@@ -47,11 +67,16 @@ impl Analysis {
         }
       })
       .collect();
-    let (syms, bs) = std_basis::SYMS_AND_BS.clone();
-    let mut st = statics::Statics {
-      syms,
-      bs,
-      errors: Vec::new(),
+    let mut st = match self.std_basis {
+      StdBasis::Full => {
+        let (syms, bs) = std_basis::SYMS_AND_BS.clone();
+        statics::Statics {
+          syms,
+          bs,
+          errors: Vec::new(),
+        }
+      }
+      StdBasis::Minimal => statics::Statics::default(),
     };
     let mode = statics::Mode::Regular;
     for file in files.iter_mut() {

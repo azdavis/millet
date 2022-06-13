@@ -1,8 +1,8 @@
-use crate::check::{check, fail};
+use crate::check::{check_with_std_basis, fail};
 
 #[test]
 fn option() {
-  check(
+  check_with_std_basis(
     r#"
 val _ = Option.valOf (SOME 3) : int
 val _ = Option.getOpt (SOME 3, 123) : int
@@ -16,7 +16,7 @@ val _ = Option.join (SOME (SOME "hey")) : string option
 
 #[test]
 fn list() {
-  check(
+  check_with_std_basis(
     r#"
 val _ = List.length [1, 2] : int
 val _ = List.null [] : bool
@@ -27,7 +27,7 @@ val _ = List.map (fn x => x = 3) [4, 3, 6] : bool list
 
 #[test]
 fn list_pair() {
-  check(
+  check_with_std_basis(
     r#"
 val _ = ListPair.zip ([1, 4], ["hi", "bye"]) : (int * string) list
 "#,
