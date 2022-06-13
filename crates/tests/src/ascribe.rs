@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn ok_smoke() {
@@ -452,6 +452,25 @@ fn where_with_self() {
     r#"
 signature T = sig type t end
 functor Id (X : T) :> T where type t = X.t = X
+"#,
+  );
+}
+
+#[test]
+fn where_opaque() {
+  fail(
+    r#"
+signature SIG = sig
+  type t
+  val x : t
+end
+
+structure S :> SIG where type t = int = struct
+  type t = int
+  val x = 3
+end
+
+val _ = S.x : int
 "#,
   );
 }
