@@ -2,8 +2,8 @@ use crate::error::{ErrorKind, Item};
 use crate::fmt_util::ty_var_name;
 use crate::st::{Mode, St};
 use crate::types::{
-  generalize, Bs, Env, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme,
-  TyVarKind, ValEnv, ValInfo,
+  generalize, Bs, Env, FunEnv, FunSig, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty, TyEnv, TyInfo,
+  TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, cannot_bind_val, get_env, get_ty_info, ins_no_dupe, instantiate};
 use crate::{dec, ty, unify::unify};
@@ -20,18 +20,21 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
     }
     // sml_def(66), sml_def(88)
     hir::TopDec::Sig(sig_binds) => {
+      let mut sig_env = SigEnv::default();
       // sml_def(67)
       for sig_bind in sig_binds {
         let mut env = Env::default();
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
         let sig = env_to_sig(bs, env);
-        if let Some(e) = ins_no_dupe(&mut bs.sig_env, sig_bind.name.clone(), sig, Item::Sig) {
+        if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(top_dec, e);
         }
       }
+      bs.sig_env.extend(sig_env);
     }
     // sml_def(85), sml_def(89)
     hir::TopDec::Functor(fun_binds) => {
+      let mut fun_env = FunEnv::default();
       // sml_def(86)
       for fun_bind in fun_binds {
         let mut param_env = Env::default();
@@ -57,10 +60,11 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
             env: body_env,
           },
         };
-        if let Some(e) = ins_no_dupe(&mut bs.fun_env, fun_name, fun_sig, Item::Functor) {
+        if let Some(e) = ins_no_dupe(&mut fun_env, fun_name, fun_sig, Item::Functor) {
           st.err(top_dec, e);
         }
       }
+      bs.fun_env.extend(fun_env);
     }
   }
 }

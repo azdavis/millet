@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn val() {
@@ -58,7 +58,7 @@ val _ = E: unit
 
 #[test]
 fn signature() {
-  fail(
+  check(
     r#"
 signature SIG = sig end
 signature SIG = sig type t end
@@ -71,7 +71,7 @@ val _ = 3 : S.t
 
 #[test]
 fn functor() {
-  fail(
+  check(
     r#"
 functor F() = struct end
 functor F() = struct type t = int end
