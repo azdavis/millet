@@ -1,3 +1,7 @@
+//! This is distinct from std_basis in analysis. This (mostly) just has the definitions that can't
+//! be expressed with regular SML files, like `int` and `real` and `string`. Also `bool` and `list`
+//! because rebinding their constructor names is forbidden.
+
 use crate::types::{
   Bs, Env, FunEnv, IdStatus, Overload, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme,
   TyVarKind, ValEnv, ValInfo,
