@@ -299,3 +299,23 @@ end
 "#,
   );
 }
+
+#[test]
+fn open_transparent() {
+  check(
+    r#"
+signature TO_STRING = sig
+  type t
+  val toString: t -> string
+end
+
+functor F (S : TO_STRING) : TO_STRING = struct
+  open S
+end
+
+structure S = F (type t = unit val toString = fn () => "unit")
+
+val x = S.toString ()
+"#,
+  );
+}
