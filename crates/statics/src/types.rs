@@ -382,8 +382,8 @@ macro_rules! mk_special_syms {
   (@mk_ty, n, $name:ident, $idx:expr) => {};
 }
 
-// keep in sync with `Syms::standard_basis`. weird symbols (i.e. EXN) must come first. indices must
-// start at 0 and go up by 1.
+// keep in sync with `std_basis`. weird symbols (i.e. EXN) must come first. indices must start at 0
+// and go up by 1.
 mk_special_syms![
   (0, y, EXN, "exn"),
   (1, y, INT, "int"),
@@ -416,7 +416,7 @@ impl Sym {
 /// Information about generated types.
 ///
 /// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
-/// even built-in types like `int`. For a `Syms` that does have these, see `standard_basis`.
+/// even built-in types like `int`. For a `Syms` that does have these, see `std_basis`.
 #[derive(Debug, Default)]
 pub struct Syms {
   /// remember: always use Sym::idx to index

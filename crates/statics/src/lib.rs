@@ -15,7 +15,7 @@ mod fmt_util;
 mod pat;
 mod pat_match;
 mod st;
-mod standard_basis;
+mod std_basis;
 mod top_dec;
 mod ty;
 mod types;

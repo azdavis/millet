@@ -1,5 +1,5 @@
 use crate::error::{Error, ErrorKind};
-use crate::standard_basis;
+use crate::std_basis;
 use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms};
 
 /// The state.
@@ -56,7 +56,7 @@ pub struct Statics {
 
 impl Default for Statics {
   fn default() -> Self {
-    let (syms, bs) = standard_basis::get();
+    let (syms, bs) = std_basis::get();
     Self {
       syms,
       bs,
