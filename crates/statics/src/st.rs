@@ -7,7 +7,7 @@ use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst
 /// Usually I call this `Cx` but the Definition defines a 'Context' already.
 ///
 /// Invariant: 'Grows' monotonically.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct St {
   subst: Subst,
   errors: Vec<Error>,
@@ -17,6 +17,16 @@ pub(crate) struct St {
 }
 
 impl St {
+  pub(crate) fn new(syms: Syms) -> Self {
+    Self {
+      subst: Subst::default(),
+      errors: Vec::new(),
+      meta_gen: MetaTyVarGen::default(),
+      fixed_gen: FixedTyVarGen::default(),
+      syms,
+    }
+  }
+
   pub(crate) fn subst(&mut self) -> &mut Subst {
     &mut self.subst
   }
