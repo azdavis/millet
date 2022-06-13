@@ -80,7 +80,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
         // TODO this never gets used because we don't generalize when reporting in errors. also it
         // might have clashed with fixed vars anyway?
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        let equality = matches!(vars.inner[bv.0], Some(TyVarKind::Equality));
+        let equality = matches!(vars.0[bv.0], Some(TyVarKind::Equality));
         for c in ty_var_name(equality, bv.0) {
           write!(f, "{c}")?;
         }
@@ -215,7 +215,7 @@ impl TyScheme {
   {
     let (ty, kind) = f(Ty::BoundVar(BoundTyVar(0)));
     Self {
-      bound_vars: BoundTyVars { inner: vec![kind] },
+      bound_vars: BoundTyVars(vec![kind]),
       ty,
     }
   }
@@ -224,11 +224,9 @@ impl TyScheme {
   where
     I: Iterator<Item = Option<TyVarKind>>,
   {
-    let bound_vars = BoundTyVars {
-      inner: iter.collect(),
-    };
+    let bound_vars = BoundTyVars(iter.collect());
     let ty = Ty::Con(
-      (0..bound_vars.inner.len())
+      (0..bound_vars.len())
         .map(|i| Ty::BoundVar(BoundTyVar(i)))
         .collect(),
       sym,
@@ -238,21 +236,19 @@ impl TyScheme {
 }
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct BoundTyVars {
-  inner: Vec<Option<TyVarKind>>,
-}
+pub(crate) struct BoundTyVars(Vec<Option<TyVarKind>>);
 
 impl BoundTyVars {
   pub(crate) fn len(&self) -> usize {
-    self.inner.len()
+    self.0.len()
   }
 
   pub(crate) fn is_empty(&self) -> bool {
-    self.inner.is_empty()
+    self.0.is_empty()
   }
 
   pub(crate) fn kinds(&self) -> impl Iterator<Item = &Option<TyVarKind>> + '_ {
-    self.inner.iter()
+    self.0.iter()
   }
 }
 
@@ -640,21 +636,17 @@ pub(crate) fn generalize(subst: &Subst, fixed: FixedTyVars, ty_scheme: &mut TySc
 ///   `ty_scheme.ty`
 pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.bound_vars.is_empty());
-  let mut bound_vars = BoundTyVars {
-    inner: Vec::with_capacity(fixed.0.len()),
-  };
+  let mut bound_vars = Vec::with_capacity(fixed.0.len());
   for (idx, (fv, bv)) in fixed.0.iter_mut().enumerate() {
     assert!(bv.is_none());
-    bound_vars
-      .inner
-      .push(fv.ty_var.is_equality().then(|| TyVarKind::Equality));
+    bound_vars.push(fv.ty_var.is_equality().then(|| TyVarKind::Equality));
     *bv = Some(BoundTyVar(idx));
   }
   let mut g = Generalizer {
     subst: &Subst::default(),
     fixed,
     meta: FxHashMap::default(),
-    bound_vars,
+    bound_vars: BoundTyVars(bound_vars),
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.bound_vars;
@@ -751,7 +743,7 @@ fn handle_bv(
       None | Some(TyVarKind::Equality) => {
         let new_bv = BoundTyVar(bound_vars.len());
         *bv = Some(new_bv.clone());
-        bound_vars.inner.push(kind);
+        bound_vars.0.push(kind);
         Ty::BoundVar(new_bv)
       }
     },
