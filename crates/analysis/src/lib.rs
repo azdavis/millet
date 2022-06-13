@@ -4,6 +4,8 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
+mod std_basis;
+
 use syntax::{ast::AstNode as _, rowan::TextRange};
 
 /// An error.
@@ -45,7 +47,7 @@ impl Analysis {
         }
       })
       .collect();
-    let mut st = statics::Statics::default();
+    let mut st = std_basis::get_statics();
     let mode = statics::Mode::Regular;
     for file in files.iter_mut() {
       statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
