@@ -46,6 +46,7 @@ const ORDER: &[&str] = &[
 ];
 
 pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
+  let begin = std::time::Instant::now();
   let mut st = statics::Statics::default();
   let mode = statics::Mode::Declaration;
   for &contents in ORDER {
@@ -67,5 +68,7 @@ pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(||
       panic!("std_basis error: {}", e.display(&st.syms));
     }
   }
+  let end = std::time::Instant::now();
+  log::info!("got std_basis in {:?}", end.duration_since(begin));
   (st.syms, st.bs)
 });
