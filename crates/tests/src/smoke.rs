@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, check_multi};
 
 mod dec;
 mod exp;
@@ -113,7 +113,7 @@ val _: int = S.x
 
 #[test]
 fn multi() {
-  check([
+  check_multi(&[
     r#"
 val a = 3
 "#,

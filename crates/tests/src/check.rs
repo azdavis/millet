@@ -3,8 +3,7 @@ use std::fmt;
 use std::ops::Range;
 use syntax::rowan::{TextRange, TextSize};
 
-/// pass the string (or multiple strings, in an array) of an SML program with some expectation
-/// comments.
+/// pass the string of an SML program with some expectation comments.
 ///
 /// expectation comments are regular SML comments except they:
 /// - are always on only one line
@@ -23,17 +22,10 @@ use syntax::rowan::{TextRange, TextSize};
 /// ```
 ///
 /// note that this also sets up logging.
-///
-/// see also
-/// - [`fail`] if the test is failing.
-/// - [`check_with_std_basis`] for using the full std basis.
 #[track_caller]
-pub(crate) fn check<'a, C>(c: C)
-where
-  C: Into<Check<'a>>,
-{
+pub(crate) fn check(s: &str) {
   init_logging();
-  let c: Check<'a> = c.into();
+  let c = Check::new(&[s], analysis::StdBasis::Minimal);
   if !c.reasons.is_empty() {
     panic!("{c}")
   }
@@ -62,12 +54,9 @@ where
 /// use `fail` instead of ignoring tests.
 #[allow(dead_code)]
 #[track_caller]
-pub(crate) fn fail<'a, C>(c: C)
-where
-  C: Into<Check<'a>>,
-{
+pub(crate) fn fail(s: &str) {
   init_logging();
-  let c: Check<'a> = c.into();
+  let c = Check::new(&[s], analysis::StdBasis::Minimal);
   if c.reasons.is_empty() {
     panic!("unexpected pass: {c}")
   }
@@ -83,12 +72,22 @@ pub(crate) fn check_with_std_basis(s: &str) {
   }
 }
 
+/// like [`check`], but checks multiple files in sequence with the std basis.
+#[track_caller]
+pub(crate) fn check_multi(ss: &[&str]) {
+  init_logging();
+  let c = Check::new(ss, analysis::StdBasis::Full);
+  if !c.reasons.is_empty() {
+    panic!("{c}")
+  }
+}
+
 /// ignores the Err return if already initialized, since that's fine.
 fn init_logging() {
   let _ = simple_logger::init_with_level(log::Level::Info);
 }
 
-pub(crate) struct Check<'a> {
+struct Check<'a> {
   files: Vec<CheckFile<'a>>,
   reasons: Vec<Reason<'a>>,
 }
@@ -162,24 +161,6 @@ impl<'a> Check<'a> {
     } else {
       Err(Reason::MismatchedErrors(id, region, want, got))
     }
-  }
-}
-
-impl<'a> From<&'a str> for Check<'a> {
-  fn from(s: &'a str) -> Self {
-    Self::new(&[s], analysis::StdBasis::Minimal)
-  }
-}
-
-impl<'a, const N: usize> From<[&'a str; N]> for Check<'a> {
-  fn from(xs: [&'a str; N]) -> Self {
-    Self::new(&xs, analysis::StdBasis::Minimal)
-  }
-}
-
-impl<'a, 'b> From<&'b [&'a str]> for Check<'a> {
-  fn from(xs: &'b [&'a str]) -> Self {
-    Self::new(xs, analysis::StdBasis::Minimal)
   }
 }
 
