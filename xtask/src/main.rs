@@ -117,7 +117,11 @@ fn dist(sh: &Shell, release: bool) -> Result<()> {
   sh.copy_file("license.md", &dir)?;
   let _d = sh.push_dir(&dir);
   if !sh.path_exists("node_modules") {
-    cmd!(sh, "npm ci").run()?;
+    if cfg!(windows) {
+      cmd!(sh, "cmd.exe /c npm ci").run()?;
+    } else {
+      cmd!(sh, "npm ci").run()?;
+    }
   }
   if cfg!(windows) {
     cmd!(sh, "cmd.exe /c npm run build-{kind}").run()?;
