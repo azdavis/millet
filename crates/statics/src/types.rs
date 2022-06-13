@@ -549,7 +549,6 @@ pub(crate) type TyNameSet = FxHashSet<Sym>;
 
 /// Definition: Sig
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub(crate) struct Sig {
   /// TODO not sure
   pub(crate) ty_names: TyNameSet,
@@ -558,7 +557,6 @@ pub(crate) struct Sig {
 
 /// Definition: FunSig
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub(crate) struct FunSig {
   pub(crate) param: Sig,
   pub(crate) res: Sig,
@@ -569,7 +567,6 @@ pub(crate) type FunEnv = FxHashMap<hir::Name, FunSig>;
 
 /// Definition: Basis
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub(crate) struct Bs {
   pub(crate) fun_env: FunEnv,
   pub(crate) sig_env: SigEnv,

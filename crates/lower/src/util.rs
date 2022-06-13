@@ -10,7 +10,6 @@ type AstTopDec = ast::StrDecOne;
 
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
-#[allow(missing_docs)]
 pub struct Ptrs {
   top_dec: BiMap<AstTopDec, hir::TopDec>,
   str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,

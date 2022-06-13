@@ -27,7 +27,6 @@ macro_rules! mk_idx {
   ($($name:ident)*) => {
     #[doc = "An index into an arena."]
     #[derive(Debug, Clone, Copy)]
-    #[allow(missing_docs)]
     pub enum Idx {
       $($name(la_arena::Idx<$name>),)*
     }

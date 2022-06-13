@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::error::{ErrorKind, Item};
 use crate::fmt_util::ty_var_name;
 use crate::st::{Mode, St};

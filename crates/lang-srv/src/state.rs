@@ -1,7 +1,5 @@
 //! See [`State`].
 
-#![allow(dead_code)]
-
 use anyhow::{anyhow, Error};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
@@ -119,6 +117,7 @@ impl State {
     self.send(req.into())
   }
 
+  #[allow(dead_code)]
   pub(crate) fn send_response(&mut self, res: lsp_server::Response) {
     match self.req_queue.incoming.complete(res.id.clone()) {
       Some(()) => self.send(res.into()),
@@ -161,6 +160,7 @@ impl State {
   }
 }
 
+#[allow(dead_code)]
 fn extract_request<R>(req: Request) -> ControlFlow<(RequestId, R::Params), ExtractError<Request>>
 where
   R: lsp_types::request::Request,
