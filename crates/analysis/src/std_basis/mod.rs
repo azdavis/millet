@@ -5,7 +5,7 @@ const ORDER: &[&str] = &[
 ];
 
 pub(crate) fn get_statics() -> statics::Statics {
-  let mut ret = statics::Statics::default();
+  let mut st = statics::Statics::default();
   let mode = statics::Mode::Declaration;
   for &contents in ORDER {
     let lexed = lex::get(contents);
@@ -21,10 +21,10 @@ pub(crate) fn get_statics() -> statics::Statics {
       panic!("std_basis error: {}", e.kind);
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-    statics::get(&mut ret, mode, &lowered.arenas, &lowered.top_decs);
-    if let Some(e) = ret.errors.first() {
-      panic!("std_basis error: {}", e.display(&ret.syms));
+    statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
+    if let Some(e) = st.errors.first() {
+      panic!("std_basis error: {}", e.display(&st.syms));
     }
   }
-  ret
+  st
 }
