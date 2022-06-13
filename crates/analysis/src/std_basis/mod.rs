@@ -26,6 +26,12 @@ const ORDER: &[&str] = &[
   include_str!("mono-array.sml"),
   include_str!("mono-array-slice.sml"),
   include_str!("mono-array2.sml"),
+  include_str!("int-inf.sml"),
+  include_str!("byte.sml"),
+  include_str!("stream-io.sml"),
+  include_str!("time.sml"),
+  include_str!("date.sml"),
+  include_str!("timer.sml"),
 ];
 
 pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
