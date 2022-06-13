@@ -46,7 +46,7 @@ impl Analysis {
       })
       .collect();
     let mut st = statics::Statics::default();
-    let mode = statics::Mode::default();
+    let mode = statics::Mode::Regular;
     for file in files.iter_mut() {
       statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
       file.statics_errors = std::mem::take(&mut st.errors);
