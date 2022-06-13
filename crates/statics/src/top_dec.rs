@@ -7,7 +7,7 @@ use crate::types::{
 };
 use crate::util::{apply_bv, cannot_bind_val, get_env, get_ty_info, ins_no_dupe, instantiate};
 use crate::{dec, ty, unify::unify};
-use fast_hash::{FxHashMap, FxHashSet};
+use fast_hash::{map, FxHashMap, FxHashSet};
 use std::sync::Arc;
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
@@ -198,10 +198,31 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
       None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
     },
     // sml_def(64)
-    hir::SigExp::Where(_, _, _, _) => st.err(
-      sig_exp,
-      ErrorKind::Unsupported("`where` signature expressions"),
-    ),
+    hir::SigExp::Where(inner, ty_vars, path, ty) => {
+      let mut inner_env = Env::default();
+      get_sig_exp(st, bs, ars, &mut inner_env, *inner);
+      let mut cx = bs.as_cx();
+      let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, sig_exp.into());
+      let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
+      generalize(st.subst(), fixed, &mut ty_scheme);
+      match get_ty_info(&inner_env, path) {
+        Ok(ty_info) => {
+          let want_len = ty_info.ty_scheme.bound_vars.len();
+          if want_len == ty_vars.len() {
+            match ty_scheme.ty {
+              Ty::None => {}
+              Ty::Con(_, sym) => env_realize(&map([(sym, ty_scheme)]), &mut inner_env),
+              // TODO is this reachable?
+              _ => {}
+            }
+          } else {
+            st.err(sig_exp, ErrorKind::WrongNumTyArgs(want_len, ty_vars.len()));
+          }
+        }
+        Err(e) => st.err(sig_exp, e),
+      }
+      env.extend(inner_env);
+    }
   }
 }
 

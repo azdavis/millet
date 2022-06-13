@@ -394,10 +394,18 @@ fn type_alias_in_sig() {
     r#"
 signature THING = sig
   type 'a t
-    type 'a thing = 'a t
-(** ^^^^^^^^^^^^^^^^^^^^ unsupported language construct: `where` signature expressions *)
+  type 'a thing = 'a t
+  val uh: 'a -> 'a thing
   type guy = { foo: int, bar: string }
   val hi: guy
+end
+
+structure Thing :> THING = struct
+  type 'a t = 'a list
+  type 'a thing = 'a t
+  val uh = fn x => [x]
+  type guy = { foo: int, bar: string }
+  val hi = { foo = 4, bar = "yes" }
 end
 "#,
   );
