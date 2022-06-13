@@ -8,7 +8,7 @@ use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst
 ///
 /// Invariant: 'Grows' monotonically.
 #[derive(Debug, Default)]
-pub struct St {
+pub(crate) struct St {
   subst: Subst,
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,

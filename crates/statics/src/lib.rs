@@ -23,7 +23,7 @@ mod unify;
 mod util;
 
 pub use error::Error;
-pub use st::{St, Statics};
+pub use st::Statics;
 pub use types::Syms;
 
 /// Does the checks.
