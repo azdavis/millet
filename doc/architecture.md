@@ -130,6 +130,8 @@ Basically this:
 
 Unifies all the passes into one single API.
 
+This also contains declarations for the bulk of the standard basis library, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
+
 ### `crates/lang-srv`
 
 Depends on `analysis` and a bunch of third party crates to actually construct the language server. This is the only binary target, and only this may perform IO.
