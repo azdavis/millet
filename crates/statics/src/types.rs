@@ -567,7 +567,7 @@ pub(crate) type FunEnv = FxHashMap<hir::Name, FunSig>;
 
 /// Definition: Basis
 #[derive(Debug, Clone)]
-pub(crate) struct Bs {
+pub struct Bs {
   pub(crate) fun_env: FunEnv,
   pub(crate) sig_env: SigEnv,
   pub(crate) env: Rc<Env>,

@@ -68,7 +68,7 @@ pub struct Statics {
   /// The errors encountered.
   pub errors: Vec<Error>,
   /// The basis of the whole program.
-  pub(crate) bs: Bs,
+  pub bs: Bs,
 }
 
 impl Default for Statics {

@@ -24,7 +24,7 @@ mod util;
 
 pub use error::Error;
 pub use st::{Mode, Statics};
-pub use types::Syms;
+pub use types::{Bs, Syms};
 
 /// Does the checks.
 pub fn get(statics: &mut Statics, mode: Mode, arenas: &hir::Arenas, top_decs: &[hir::TopDecIdx]) {
