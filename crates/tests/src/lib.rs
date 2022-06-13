@@ -25,5 +25,6 @@ mod pat;
 mod rust;
 mod shadow;
 mod smoke;
+mod std_basis;
 mod ty_name_escape;
 mod ty_var;
