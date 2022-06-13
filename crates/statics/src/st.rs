@@ -65,10 +65,10 @@ impl St {
 pub struct Statics {
   /// The symbols generated.
   pub syms: Syms,
-  /// The errors encountered.
-  pub errors: Vec<Error>,
   /// The basis of the whole program.
   pub bs: Bs,
+  /// The errors encountered.
+  pub errors: Vec<Error>,
 }
 
 impl Default for Statics {
