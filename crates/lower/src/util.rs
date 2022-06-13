@@ -20,6 +20,7 @@ pub struct Ptrs {
   str_exp_in_top_dec: BiMap<AstTopDec, hir::StrExp>,
   sig_exp: BiMap<ast::SigExp, hir::SigExp>,
   sig_exp_in_top_dec: BiMap<AstTopDec, hir::SigExp>,
+  sig_exp_in_spec_one: BiMap<ast::SpecOne, hir::SigExp>,
   spec_one: BiMap<ast::SpecOne, hir::Spec>,
   spec: BiMap<ast::Spec, hir::Spec>,
   exp: BiMap<ast::Exp, hir::Exp>,
@@ -60,7 +61,12 @@ impl Ptrs {
       hir::Idx::StrDec(idx) => {
         try_get_hir!(idx, self.str_dec, self.str_dec_one, self.str_dec_in_top_dec)
       }
-      hir::Idx::SigExp(idx) => try_get_hir!(idx, self.sig_exp, self.sig_exp_in_top_dec),
+      hir::Idx::SigExp(idx) => try_get_hir!(
+        idx,
+        self.sig_exp,
+        self.sig_exp_in_top_dec,
+        self.sig_exp_in_spec_one
+      ),
       hir::Idx::Spec(idx) => try_get_hir!(idx, self.spec, self.spec_one),
       hir::Idx::TopDec(idx) => try_get_hir!(idx, self.top_dec),
     }
@@ -267,6 +273,16 @@ impl Cx {
   ) -> hir::SigExpIdx {
     let idx = self.arenas.sig_exp.alloc(val);
     self.ptrs.sig_exp_in_top_dec.insert(idx, ptr);
+    Some(idx)
+  }
+
+  pub(crate) fn sig_exp_in_spec_one(
+    &mut self,
+    val: hir::SigExp,
+    ptr: AstPtr<ast::SpecOne>,
+  ) -> hir::SigExpIdx {
+    let idx = self.arenas.sig_exp.alloc(val);
+    self.ptrs.sig_exp_in_spec_one.insert(idx, ptr);
     Some(idx)
   }
 

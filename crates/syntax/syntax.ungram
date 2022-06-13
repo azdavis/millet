@@ -91,7 +91,7 @@ SpecOne =
 
 ValSpec = 'val' ValDesc*
 TySpec = 'type' TyDesc*
-EqTySpec = 'eqtype' EqTyDesc*
+EqTySpec = 'eqtype' TyDesc*
 // DatDesc and ConDesc are basically the same as DatBind and ConBind in the grammar.
 DatSpec = 'datatype' DatBind*
 DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
@@ -101,8 +101,8 @@ IncludeSpec = 'include' SigExp*
 SharingSpec = SpecOne 'sharing' 'type' PathEq*
 
 ValDesc = NameStarEq ':' Ty 'and'?
+// the Definition only gives lowering for the `= ty` case for `type` descriptions.
 TyDesc = TyVarSeq 'Name' EqTy? 'and'?
-EqTyDesc = TyVarSeq 'Name' 'and'?
 ExDesc = NameStarEq OfTy? 'and'?
 StrDesc = 'Name' ':' SigExp 'and'?
 EqTy = '=' Ty

@@ -394,7 +394,8 @@ fn type_alias_in_sig() {
     r#"
 signature THING = sig
   type 'a t
-  type 'a thing = 'a t
+    type 'a thing = 'a t
+(** ^^^^^^^^^^^^^^^^^^^^ unsupported language construct: `where` signature expressions *)
   type guy = { foo: int, bar: string }
   val hi: guy
 end

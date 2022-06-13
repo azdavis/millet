@@ -175,31 +175,8 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
         })
         .collect(),
     ),
-    ast::SpecOne::TySpec(spec) => {
-      let specs: Vec<_> = spec
-        .ty_descs()
-        .filter_map(|x| {
-          Some(hir::Spec::Ty(hir::TyDesc {
-            // TODO handle EqTy
-            ty_vars: ty::var_seq(x.ty_var_seq()),
-            name: get_name(x.name())?,
-          }))
-        })
-        .collect();
-      seq(cx, ptr.clone(), specs)
-    }
-    ast::SpecOne::EqTySpec(spec) => {
-      let specs: Vec<_> = spec
-        .eq_ty_descs()
-        .filter_map(|x| {
-          Some(hir::Spec::EqTy(hir::TyDesc {
-            ty_vars: ty::var_seq(x.ty_var_seq()),
-            name: get_name(x.name())?,
-          }))
-        })
-        .collect();
-      seq(cx, ptr.clone(), specs)
-    }
+    ast::SpecOne::TySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), hir::Spec::Ty),
+    ast::SpecOne::EqTySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), hir::Spec::EqTy),
     ast::SpecOne::DatSpec(spec) => {
       let specs: Vec<_> = dec::dat_binds(cx, spec.dat_binds())
         .map(hir::Spec::Datatype)
@@ -259,6 +236,35 @@ fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut specs: Vec<hir::Spec>) -> hir
         .collect(),
     )
   }
+}
+
+fn ty_descs<I, F>(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, iter: I, f: F) -> hir::Spec
+where
+  I: Iterator<Item = ast::TyDesc>,
+  F: Fn(hir::TyDesc) -> hir::Spec,
+{
+  let specs: Vec<_> = iter
+    .filter_map(|ty_desc| {
+      let ty_vars = ty::var_seq(ty_desc.ty_var_seq());
+      let name = get_name(ty_desc.name())?;
+      let mut ret = f(hir::TyDesc {
+        name: name.clone(),
+        ty_vars: ty_vars.clone(),
+      });
+      if let Some(ty) = ty_desc.eq_ty() {
+        let ty = ty::get(cx, ty.ty());
+        let spec_idx = cx.spec_one(ret, ptr.clone());
+        let sig_exp = cx.sig_exp_in_spec_one(hir::SigExp::Spec(spec_idx), ptr.clone());
+        let sig_exp = cx.sig_exp_in_spec_one(
+          hir::SigExp::Where(sig_exp, ty_vars, hir::Path::one(name), ty),
+          ptr.clone(),
+        );
+        ret = hir::Spec::Include(sig_exp);
+      }
+      Some(ret)
+    })
+    .collect();
+  seq(cx, ptr, specs)
 }
 
 fn ascription_tail(
