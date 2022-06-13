@@ -211,6 +211,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
           if want_len == ty_vars.len() {
             match ty_scheme.ty {
               Ty::None => {}
+              // TODO side condition for sym not in T of B?
               Ty::Con(_, sym) => env_realize(&map([(sym, ty_scheme)]), &mut inner_env),
               // TODO is this reachable?
               _ => {}
@@ -343,7 +344,41 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(75)
     hir::Spec::Include(sig_exp) => get_sig_exp(st, bs, ars, env, *sig_exp),
     // sml_def(78)
-    hir::Spec::Sharing(_, _) => st.err(spec, ErrorKind::Unsupported("`sharing` specifications")),
+    hir::Spec::Sharing(inner, paths) => {
+      let mut inner_env = Env::default();
+      get_spec(st, bs, ars, &mut inner_env, *inner);
+      let mut ty_scheme = None::<TyScheme>;
+      let mut syms = Vec::<Sym>::with_capacity(paths.len());
+      for path in paths {
+        match get_ty_info(&inner_env, path) {
+          Ok(ty_info) => {
+            // TODO assert exists a s.t. for all ty schemes, arity of ty scheme = a? and all other
+            // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
+            match ty_info.ty_scheme.ty {
+              Ty::None => {}
+              // TODO side condition for sym not in T of B?
+              Ty::Con(_, sym) => {
+                if ty_scheme.is_none() {
+                  ty_scheme = Some(ty_info.ty_scheme.clone());
+                }
+                syms.push(sym);
+              }
+              // TODO is this reachable?
+              _ => {}
+            }
+          }
+          Err(e) => st.err(spec, e),
+        }
+      }
+      if let Some(ty_scheme) = ty_scheme {
+        let subst: TyRealization = syms
+          .into_iter()
+          .map(|sym| (sym, ty_scheme.clone()))
+          .collect();
+        env_realize(&subst, &mut inner_env);
+      }
+      env.extend(inner_env);
+    }
     // sml_def(76), sml_def(77)
     hir::Spec::Seq(specs) => {
       let mut bs = bs.clone();
