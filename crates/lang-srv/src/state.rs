@@ -22,6 +22,7 @@ pub(crate) struct State {
   sender: Sender<Message>,
   req_queue: ReqQueue<(), ()>,
   has_diagnostics: FxHashSet<Url>,
+  analysis: analysis::Analysis,
 }
 
 impl State {
@@ -31,6 +32,7 @@ impl State {
       sender,
       req_queue: ReqQueue::default(),
       has_diagnostics: FxHashSet::default(),
+      analysis: analysis::Analysis::default(),
     };
     ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
       registrations: vec![lsp_types::Registration {
@@ -54,7 +56,7 @@ impl State {
   fn publish_diagnostics(&mut self) {
     let mut new_has_diagnostics = FxHashSet::<Url>::default();
     let (ok_files, err_files) = get_files(&self.root);
-    let analysis_errors = analysis::get(ok_files.iter().map(|(_, x)| x.as_str()));
+    let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
     let file_errors = err_files
       .into_iter()
       .map(|(url, error)| (url, vec![(lsp_types::Range::default(), error.to_string())]));

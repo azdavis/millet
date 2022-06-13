@@ -96,7 +96,8 @@ impl<'a> Check<'a> {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
-    let err = analysis::get(ss.iter().copied())
+    let err = analysis::Analysis::default()
+      .get(ss.iter().copied())
       .into_iter()
       .enumerate()
       .flat_map(|(idx, errors)| errors.into_iter().map(move |e| (idx, e)))

@@ -15,67 +15,72 @@ pub struct Error {
   pub message: String,
 }
 
-/// Returns a Vec of Vec of errors for each file.
-///
-/// The length of the returned Vec will be the same as the length of files.
-///
-/// TODO should probably have this be more like a data structure that can support adding/removing
-/// files and other queries other than errors. Then we could be more incremental.
-pub fn get<'a, I>(files: I) -> Vec<Vec<Error>>
-where
-  I: Iterator<Item = &'a str>,
-{
-  let mut files: Vec<_> = files
-    .map(|contents| {
-      let lexed = lex::get(contents);
-      log::debug!("lex: {:?}", lexed.tokens);
-      let parsed = parse::get(&lexed.tokens);
-      log::debug!("parse: {:#?}", parsed.root);
-      let mut lowered = lower::get(&parsed.root);
-      ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-      AnalyzedFile {
-        lex_errors: lexed.errors,
-        parsed,
-        lowered,
-        statics_errors: Vec::new(),
-      }
-    })
-    .collect();
-  let mut st = statics::Statics::default();
-  for file in files.iter_mut() {
-    statics::get(&mut st, &file.lowered.arenas, &file.lowered.top_decs);
-    file.statics_errors = std::mem::take(&mut st.errors);
+/// Performs analysis.
+#[derive(Debug, Default)]
+pub struct Analysis {
+  _priv: (),
+}
+
+impl Analysis {
+  /// Returns a Vec of Vec of errors for each file.
+  ///
+  /// The length of the returned Vec will be the same as the length of files.
+  pub fn get<'a, I>(&self, files: I) -> Vec<Vec<Error>>
+  where
+    I: Iterator<Item = &'a str>,
+  {
+    let mut files: Vec<_> = files
+      .map(|contents| {
+        let lexed = lex::get(contents);
+        log::debug!("lex: {:?}", lexed.tokens);
+        let parsed = parse::get(&lexed.tokens);
+        log::debug!("parse: {:#?}", parsed.root);
+        let mut lowered = lower::get(&parsed.root);
+        ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
+        AnalyzedFile {
+          lex_errors: lexed.errors,
+          parsed,
+          lowered,
+          statics_errors: Vec::new(),
+        }
+      })
+      .collect();
+    let mut st = statics::Statics::default();
+    for file in files.iter_mut() {
+      statics::get(&mut st, &file.lowered.arenas, &file.lowered.top_decs);
+      file.statics_errors = std::mem::take(&mut st.errors);
+    }
+    files
+      .into_iter()
+      .map(|file| {
+        std::iter::empty()
+          .chain(file.lex_errors.into_iter().map(|err| Error {
+            range: err.range,
+            message: err.kind.to_string(),
+          }))
+          .chain(file.parsed.errors.into_iter().map(|err| Error {
+            range: err.range,
+            message: err.kind.to_string(),
+          }))
+          .chain(file.lowered.errors.into_iter().map(|err| Error {
+            range: err.range,
+            message: err.kind.to_string(),
+          }))
+          .chain(file.statics_errors.into_iter().filter_map(|err| {
+            Some(Error {
+              range: file
+                .lowered
+                .ptrs
+                .get(err.idx())?
+                .to_node(file.parsed.root.syntax())
+                .text_range(),
+              message: err.display(&st.syms).to_string(),
+            })
+          }))
+          .collect()
+      })
+      .collect()
   }
-  files
-    .into_iter()
-    .map(|file| {
-      std::iter::empty()
-        .chain(file.lex_errors.into_iter().map(|err| Error {
-          range: err.range,
-          message: err.kind.to_string(),
-        }))
-        .chain(file.parsed.errors.into_iter().map(|err| Error {
-          range: err.range,
-          message: err.kind.to_string(),
-        }))
-        .chain(file.lowered.errors.into_iter().map(|err| Error {
-          range: err.range,
-          message: err.kind.to_string(),
-        }))
-        .chain(file.statics_errors.into_iter().filter_map(|err| {
-          Some(Error {
-            range: file
-              .lowered
-              .ptrs
-              .get(err.idx())?
-              .to_node(file.parsed.root.syntax())
-              .text_range(),
-            message: err.display(&st.syms).to_string(),
-          })
-        }))
-        .collect()
-    })
-    .collect()
 }
 
 struct AnalyzedFile {
