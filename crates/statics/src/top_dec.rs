@@ -209,7 +209,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
         Ok(ty_info) => {
           let want_len = ty_info.ty_scheme.bound_vars.len();
           if want_len == ty_vars.len() {
-            match ty_scheme.ty {
+            match ty_info.ty_scheme.ty {
               Ty::None => {}
               // TODO side condition for sym not in T of B?
               Ty::Con(_, sym) => env_realize(&map([(sym, ty_scheme)]), &mut inner_env),

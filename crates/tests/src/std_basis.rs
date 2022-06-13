@@ -1,4 +1,4 @@
-use crate::check::{check_with_std_basis, fail};
+use crate::check::check_with_std_basis;
 
 #[test]
 fn option() {
@@ -36,7 +36,7 @@ val _ = ListPair.zip ([1, 4], ["hi", "bye"]) : (int * string) list
 
 #[test]
 fn int() {
-  fail(
+  check_with_std_basis(
     r#"
 val _ = Int.toString 3 : string
 val _ =

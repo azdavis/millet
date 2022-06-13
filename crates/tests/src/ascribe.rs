@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -442,6 +442,7 @@ fn where_in_functor() {
     r#"
 signature T = sig type t end
 functor Id (X : T) :> T where type t = int = X
+(**                                          ^ expected int, found t *)
 "#,
   );
 }
@@ -458,7 +459,7 @@ functor Id (X : T) :> T where type t = X.t = X
 
 #[test]
 fn where_opaque() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
