@@ -32,6 +32,14 @@ const ORDER: &[&str] = &[
   include_str!("time.sml"),
   include_str!("date.sml"),
   include_str!("timer.sml"),
+  include_str!("os-file-sys.sml"),
+  include_str!("os-io.sml"),
+  include_str!("os-path.sml"),
+  include_str!("os-process.sml"),
+  include_str!("os.sml"),
+  include_str!("prim-io.sml"),
+  include_str!("imperative-io.sml"),
+  include_str!("bin-io.sml"),
 ];
 
 pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
