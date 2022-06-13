@@ -52,20 +52,20 @@ pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(||
   for &contents in ORDER {
     let lexed = lex::get(contents);
     if let Some(e) = lexed.errors.first() {
-      panic!("std_basis error: {}", e.kind);
+      panic!("std_basis error: lex: {}", e.kind);
     }
     let parsed = parse::get(&lexed.tokens);
     if let Some(e) = parsed.errors.first() {
-      panic!("std_basis error: {}", e.kind);
+      panic!("std_basis error: parse: {}", e.kind);
     }
     let mut lowered = lower::get(&parsed.root);
     if let Some(e) = lowered.errors.first() {
-      panic!("std_basis error: {}", e.kind);
+      panic!("std_basis error: lower: {}", e.kind);
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
     statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
     if let Some(e) = st.errors.first() {
-      panic!("std_basis error: {}", e.display(&st.syms));
+      panic!("std_basis error: statics: {}", e.display(&st.syms));
     }
   }
   let end = std::time::Instant::now();
