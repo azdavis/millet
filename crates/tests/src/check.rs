@@ -26,7 +26,6 @@ use syntax::rowan::{TextRange, TextSize};
 /// note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  init_logging();
   let c = Check::new(&[s], analysis::StdBasis::Minimal);
   if !c.reasons.is_empty() {
     panic!("{c}")
@@ -57,7 +56,6 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  init_logging();
   let c = Check::new(&[s], analysis::StdBasis::Minimal);
   if c.reasons.is_empty() {
     panic!("unexpected pass: {c}")
@@ -67,7 +65,6 @@ pub(crate) fn fail(s: &str) {
 /// like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  init_logging();
   let c = Check::new(&[s], analysis::StdBasis::Full);
   if !c.reasons.is_empty() {
     panic!("{c}")
@@ -77,16 +74,10 @@ pub(crate) fn check_with_std_basis(s: &str) {
 /// like [`check`], but checks multiple files in sequence with the std basis.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
-  init_logging();
   let c = Check::new(ss, analysis::StdBasis::Full);
   if !c.reasons.is_empty() {
     panic!("{c}")
   }
-}
-
-/// ignores the Err return if already initialized, since that's fine.
-fn init_logging() {
-  let _ = simple_logger::init_with_level(log::Level::Info);
 }
 
 struct Check<'a> {
@@ -96,6 +87,8 @@ struct Check<'a> {
 
 impl<'a> Check<'a> {
   fn new(ss: &[&'a str], std_basis: analysis::StdBasis) -> Self {
+    // ignores the Err return if already initialized, since that's fine.
+    let _ = simple_logger::init_with_level(log::Level::Info);
     let mut ret = Self {
       files: ss
         .iter()
