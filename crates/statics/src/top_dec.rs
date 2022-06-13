@@ -2,12 +2,13 @@
 
 use crate::error::{ErrorKind, Item};
 use crate::fmt_util::ty_var_name;
+use crate::st::{Mode, St};
 use crate::types::{
   generalize, Bs, Env, FunSig, IdStatus, Sig, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme,
   TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, cannot_bind_val, get_env, get_ty_info, ins_no_dupe, instantiate};
-use crate::{dec, st::St, ty, unify::unify};
+use crate::{dec, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
 use std::rc::Rc;
 
@@ -88,9 +89,14 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       let sig = env_to_sig(bs, sig_exp_env);
       let mut subst = TyRealization::default();
       let mut to_extend = sig.env.clone();
-      env_instance_sig(st, &mut subst, &str_exp_env, &sig.ty_names, str_exp.into());
-      env_realize(&subst, &mut to_extend);
-      env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
+      match st.mode() {
+        Mode::Regular => {
+          env_instance_sig(st, &mut subst, &str_exp_env, &sig.ty_names, str_exp.into());
+          env_realize(&subst, &mut to_extend);
+          env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
+        }
+        Mode::Declaration => {}
+      }
       if matches!(asc, hir::Ascription::Opaque) {
         subst.clear();
         gen_fresh_syms(st, &mut subst, &sig.ty_names);

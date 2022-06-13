@@ -9,6 +9,7 @@ use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst
 /// Invariant: 'Grows' monotonically.
 #[derive(Debug)]
 pub(crate) struct St {
+  mode: Mode,
   subst: Subst,
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,
@@ -17,14 +18,19 @@ pub(crate) struct St {
 }
 
 impl St {
-  pub(crate) fn new(syms: Syms) -> Self {
+  pub(crate) fn new(mode: Mode, syms: Syms) -> Self {
     Self {
+      mode,
       subst: Subst::default(),
       errors: Vec::new(),
       meta_gen: MetaTyVarGen::default(),
       fixed_gen: FixedTyVarGen::default(),
       syms,
     }
+  }
+
+  pub(crate) fn mode(&self) -> Mode {
+    self.mode
   }
 
   pub(crate) fn subst(&mut self) -> &mut Subst {
@@ -72,5 +78,22 @@ impl Default for Statics {
       bs,
       errors: Vec::new(),
     }
+  }
+}
+
+/// The mode for checking.
+#[derive(Debug, Clone, Copy)]
+pub enum Mode {
+  /// Regular checking. The default.
+  Regular,
+  /// Declaration-mode checking. Notably, ascription structure expressions will not check to see if
+  /// they actually match the signature. This should only be used for special files, like ones that
+  /// define the standard basis.
+  Declaration,
+}
+
+impl Default for Mode {
+  fn default() -> Self {
+    Self::Regular
   }
 }

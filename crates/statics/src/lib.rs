@@ -23,12 +23,12 @@ mod unify;
 mod util;
 
 pub use error::Error;
-pub use st::Statics;
+pub use st::{Mode, Statics};
 pub use types::Syms;
 
 /// Does the checks.
-pub fn get(statics: &mut Statics, arenas: &hir::Arenas, top_decs: &[hir::TopDecIdx]) {
-  let mut st = st::St::new(std::mem::take(&mut statics.syms));
+pub fn get(statics: &mut Statics, mode: Mode, arenas: &hir::Arenas, top_decs: &[hir::TopDecIdx]) {
+  let mut st = st::St::new(mode, std::mem::take(&mut statics.syms));
   for &top_dec in top_decs {
     top_dec::get(&mut st, &mut statics.bs, arenas, top_dec);
   }
