@@ -22,7 +22,7 @@ pub struct Error {
 pub enum StdBasis {
   /// Include most of the standard basis library.
   Full,
-  /// Only include fundamental types like `int`, `real`, etc.
+  /// Only include fundamental top-level definitions like `int`, `real`, `ref`, `<`, etc.
   Minimal,
 }
 
