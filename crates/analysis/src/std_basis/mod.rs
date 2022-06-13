@@ -40,6 +40,9 @@ const ORDER: &[&str] = &[
   include_str!("prim-io.sml"),
   include_str!("imperative-io.sml"),
   include_str!("bin-io.sml"),
+  include_str!("bit-flags.sml"),
+  include_str!("pack-float.sml"),
+  include_str!("pack-word.sml"),
 ];
 
 pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
