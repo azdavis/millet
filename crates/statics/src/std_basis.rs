@@ -7,7 +7,7 @@ use crate::types::{
   TyVarKind, ValEnv, ValInfo,
 };
 use std::collections::BTreeMap;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub(crate) fn get() -> (Syms, Bs) {
   let mut syms = Syms::default();
@@ -131,7 +131,7 @@ pub(crate) fn get() -> (Syms, Bs) {
   let bs = Bs {
     fun_env: FunEnv::default(),
     sig_env: SigEnv::default(),
-    env: Rc::new(Env {
+    env: Arc::new(Env {
       str_env: StrEnv::default(),
       ty_env,
       val_env,

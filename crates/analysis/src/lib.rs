@@ -47,7 +47,12 @@ impl Analysis {
         }
       })
       .collect();
-    let mut st = std_basis::get_statics();
+    let (syms, bs) = std_basis::SYMS_AND_BS.clone();
+    let mut st = statics::Statics {
+      syms,
+      bs,
+      errors: Vec::new(),
+    };
     let mode = statics::Mode::Regular;
     for file in files.iter_mut() {
       statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);

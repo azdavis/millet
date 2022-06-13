@@ -10,6 +10,7 @@ doctest = false
 
 [dependencies]
 log = "0.4"
+once_cell = "1"
 lex = { path = "../lex" }
 parse = { path = "../parse" }
 lower = { path = "../lower" }

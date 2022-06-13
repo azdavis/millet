@@ -8,7 +8,7 @@ use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::fmt;
-use std::rc::Rc;
+use std::sync::Arc;
 use uniq::{Uniq, UniqGen};
 
 /// Definition: Type
@@ -414,7 +414,7 @@ impl Sym {
 ///
 /// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
 /// even built-in types like `int`. For a `Syms` that does have these, see `std_basis`.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Syms {
   /// remember: always use Sym::idx to index
   store: Vec<(hir::Name, TyInfo)>,
@@ -539,7 +539,7 @@ impl Env {
 /// type name does not escape its scope, and for that we use `Sym::generated_after`.
 #[derive(Debug, Clone)]
 pub(crate) struct Cx {
-  pub(crate) env: Rc<Env>,
+  pub(crate) env: Arc<Env>,
   /// the Definition has this as a set, but we have it as a mapping.
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
@@ -570,13 +570,13 @@ pub(crate) type FunEnv = FxHashMap<hir::Name, FunSig>;
 pub struct Bs {
   pub(crate) fun_env: FunEnv,
   pub(crate) sig_env: SigEnv,
-  pub(crate) env: Rc<Env>,
+  pub(crate) env: Arc<Env>,
 }
 
 impl Bs {
   pub(crate) fn as_cx(&self) -> Cx {
     Cx {
-      env: Rc::clone(&self.env),
+      env: Arc::clone(&self.env),
       ty_vars: FxHashMap::default(),
     }
   }

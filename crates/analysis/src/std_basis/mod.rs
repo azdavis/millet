@@ -1,10 +1,12 @@
+use once_cell::sync::Lazy;
+
 const ORDER: &[&str] = &[
   include_str!("list-pair.sml"),
   include_str!("list.sml"),
   include_str!("option.sml"),
 ];
 
-pub(crate) fn get_statics() -> statics::Statics {
+pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
   let mut st = statics::Statics::default();
   let mode = statics::Mode::Declaration;
   for &contents in ORDER {
@@ -26,5 +28,5 @@ pub(crate) fn get_statics() -> statics::Statics {
       panic!("std_basis error: {}", e.display(&st.syms));
     }
   }
-  st
-}
+  (st.syms, st.bs)
+});

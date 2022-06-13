@@ -7,7 +7,7 @@ use crate::types::{
 use crate::unify::unify;
 use crate::util::{apply, cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
 use crate::{exp, pat, ty};
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
 /// visibly mutate the cx between entry and exit (i.e. if we do any mutations, we'll undo them)?
@@ -61,7 +61,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
       }
       // extend the cx with only the recursive ValEnv.
-      Rc::make_mut(&mut cx.env).val_env.extend(rec_ve);
+      Arc::make_mut(&mut cx.env).val_env.extend(rec_ve);
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
         // sml_def(26)
         if let Some(exp) = val_bind.exp {
@@ -174,7 +174,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut local_env = Env::default();
       get(st, cx, ars, &mut local_env, *local_dec);
       let mut cx = cx.clone();
-      Rc::make_mut(&mut cx.env).extend(local_env);
+      Arc::make_mut(&mut cx.env).extend(local_env);
       get(st, &cx, ars, env, *in_dec);
     }
     // sml_def(22)
@@ -192,7 +192,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       for &dec in decs {
         let mut one_env = Env::default();
         get(st, &cx, ars, &mut one_env, dec);
-        Rc::make_mut(&mut cx.env).extend(one_env.clone());
+        Arc::make_mut(&mut cx.env).extend(one_env.clone());
         env.extend(one_env);
       }
     }
@@ -242,7 +242,7 @@ pub(crate) fn get_dat_binds(
       res
     };
     // allow recursive reference
-    Rc::make_mut(&mut cx.env).ty_env.insert(
+    Arc::make_mut(&mut cx.env).ty_env.insert(
       dat_bind.name.clone(),
       TyInfo {
         ty_scheme: ty_scheme.clone(),
