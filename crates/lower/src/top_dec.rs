@@ -175,10 +175,8 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
         })
         .collect(),
     ),
-    ast::SpecOne::TySpec(spec) => seq(
-      cx,
-      ptr.clone(),
-      spec
+    ast::SpecOne::TySpec(spec) => {
+      let specs: Vec<_> = spec
         .ty_descs()
         .filter_map(|x| {
           Some(hir::Spec::Ty(hir::TyDesc {
@@ -187,12 +185,11 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
             name: get_name(x.name())?,
           }))
         })
-        .collect(),
-    ),
-    ast::SpecOne::EqTySpec(spec) => seq(
-      cx,
-      ptr.clone(),
-      spec
+        .collect();
+      seq(cx, ptr.clone(), specs)
+    }
+    ast::SpecOne::EqTySpec(spec) => {
+      let specs: Vec<_> = spec
         .eq_ty_descs()
         .filter_map(|x| {
           Some(hir::Spec::EqTy(hir::TyDesc {
@@ -200,8 +197,9 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
             name: get_name(x.name())?,
           }))
         })
-        .collect(),
-    ),
+        .collect();
+      seq(cx, ptr.clone(), specs)
+    }
     ast::SpecOne::DatSpec(spec) => {
       let specs: Vec<_> = dec::dat_binds(cx, spec.dat_binds())
         .map(hir::Spec::Datatype)
@@ -250,12 +248,13 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
   Some(cx.spec_one(ret, ptr))
 }
 
-fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut xs: Vec<hir::Spec>) -> hir::Spec {
-  if xs.len() == 1 {
-    xs.pop().unwrap()
+fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut specs: Vec<hir::Spec>) -> hir::Spec {
+  if specs.len() == 1 {
+    specs.pop().unwrap()
   } else {
     hir::Spec::Seq(
-      xs.into_iter()
+      specs
+        .into_iter()
         .map(|val| cx.spec_one(val, ptr.clone()))
         .collect(),
     )
