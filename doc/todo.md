@@ -23,7 +23,10 @@ priority is approximate. if unsure of priority, put in low.
   - performing closure operations
   - checking whether expressions are expansive (oh no!)
   - type variables in signatures
-  - handle equality types
+- handle equality types
+  - in type variables
+  - `eqtype` vs `type`
+  - various side conditions on modules, `datatype`, possibly others
 - get better error messages
   - improve ranges of stuff
   - show fully qualified names in type errors
