@@ -454,3 +454,23 @@ end
 "#,
   );
 }
+
+#[test]
+fn where_in_functor() {
+  check(
+    r#"
+signature T = sig type t end
+functor Id (X : T) :> T where type t = int = X
+"#,
+  );
+}
+
+#[test]
+fn where_with_self() {
+  check(
+    r#"
+signature T = sig type t end
+functor Id (X : T) :> T where type t = X.t = X
+"#,
+  );
+}

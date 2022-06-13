@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn option() {
@@ -30,6 +30,20 @@ fn list_pair() {
   check(
     r#"
 val _ = ListPair.zip ([1, 4], ["hi", "bye"]) : (int * string) list
+"#,
+  );
+}
+
+#[test]
+fn int() {
+  fail(
+    r#"
+val _ = Int.toString 3 : string
+val _ =
+  case Int.compare (1, 4) of
+    LESS => "small"
+  | EQUAL => "same"
+  | GREATER => "big"
 "#,
   );
 }
