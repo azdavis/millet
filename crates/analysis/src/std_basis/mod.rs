@@ -7,6 +7,16 @@ const ORDER: &[&str] = &[
   include_str!("string-cvt.sml"),
   include_str!("integer.sml"),
   include_str!("bool.sml"),
+  include_str!("vector.sml"),
+  include_str!("vector-slice.sml"),
+  include_str!("array.sml"),
+  include_str!("array-slice.sml"),
+  include_str!("array2.sml"),
+  include_str!("command-line.sml"),
+  include_str!("ieee-float.sml"),
+  include_str!("io.sml"),
+  include_str!("math.sml"),
+  include_str!("real.sml"),
 ];
 
 pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
