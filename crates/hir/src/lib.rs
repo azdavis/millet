@@ -124,12 +124,12 @@ pub type SpecArena = Arena<Spec>;
 pub enum Spec {
   /// the `Vec<TyVar>` will always be empty from the source, but may be filled in implicitly.
   Val(Vec<TyVar>, Vec<ValDesc>),
-  Ty(Vec<TyDesc>),
-  EqTy(Vec<TyDesc>),
-  Datatype(Vec<DatDesc>),
+  Ty(TyDesc),
+  EqTy(TyDesc),
+  Datatype(DatDesc),
   DatatypeCopy(Name, Path),
-  Exception(Vec<ExDesc>),
-  Str(Vec<StrDesc>),
+  Exception(ExDesc),
+  Str(StrDesc),
   Include(SigExpIdx),
   Sharing(SpecIdx, Vec<Path>),
   Seq(Vec<SpecIdx>),

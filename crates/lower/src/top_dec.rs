@@ -157,6 +157,8 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   }
 }
 
+/// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
+/// to for `type t = u` specifications.
 fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
   let ptr = AstPtr::new(&spec);
   let range = spec.syntax().text_range();
@@ -173,55 +175,66 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
         })
         .collect(),
     ),
-    ast::SpecOne::TySpec(spec) => hir::Spec::Ty(
+    ast::SpecOne::TySpec(spec) => seq(
+      cx,
+      ptr.clone(),
       spec
         .ty_descs()
         .filter_map(|x| {
-          Some(hir::TyDesc {
+          Some(hir::Spec::Ty(hir::TyDesc {
             // TODO handle EqTy
             ty_vars: ty::var_seq(x.ty_var_seq()),
             name: get_name(x.name())?,
-          })
+          }))
         })
         .collect(),
     ),
-    ast::SpecOne::EqTySpec(spec) => hir::Spec::EqTy(
+    ast::SpecOne::EqTySpec(spec) => seq(
+      cx,
+      ptr.clone(),
       spec
         .eq_ty_descs()
         .filter_map(|x| {
-          Some(hir::TyDesc {
+          Some(hir::Spec::EqTy(hir::TyDesc {
             ty_vars: ty::var_seq(x.ty_var_seq()),
             name: get_name(x.name())?,
-          })
+          }))
         })
         .collect(),
     ),
-    ast::SpecOne::DatSpec(spec) => hir::Spec::Datatype(dec::dat_binds(cx, spec.dat_binds())),
+    ast::SpecOne::DatSpec(spec) => {
+      let specs: Vec<_> = dec::dat_binds(cx, spec.dat_binds())
+        .map(hir::Spec::Datatype)
+        .collect();
+      seq(cx, ptr.clone(), specs)
+    }
     ast::SpecOne::DatCopySpec(spec) => {
       hir::Spec::DatatypeCopy(get_name(spec.name())?, get_path(spec.path()?)?)
     }
-    ast::SpecOne::ExSpec(spec) => hir::Spec::Exception(
-      spec
+    ast::SpecOne::ExSpec(spec) => {
+      let specs: Vec<_> = spec
         .ex_descs()
         .filter_map(|x| {
-          Some(hir::ExDesc {
+          Some(hir::Spec::Exception(hir::ExDesc {
             name: hir::Name::new(x.name_star_eq()?.token.text()),
             ty: x.of_ty().map(|x| ty::get(cx, x.ty())),
-          })
+          }))
         })
-        .collect(),
-    ),
-    ast::SpecOne::StrSpec(spec) => hir::Spec::Str(
-      spec
+        .collect();
+      seq(cx, ptr.clone(), specs)
+    }
+    ast::SpecOne::StrSpec(spec) => {
+      let specs: Vec<_> = spec
         .str_descs()
         .filter_map(|x| {
-          Some(hir::StrDesc {
+          Some(hir::Spec::Str(hir::StrDesc {
             name: get_name(x.name())?,
             sig_exp: get_sig_exp(cx, x.sig_exp()),
-          })
+          }))
         })
-        .collect(),
-    ),
+        .collect();
+      seq(cx, ptr.clone(), specs)
+    }
     ast::SpecOne::IncludeSpec(spec) => {
       let mut specs: Vec<_> = spec
         .sig_exps()
@@ -244,6 +257,18 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
     }
   };
   Some(cx.spec_one(ret, ptr))
+}
+
+fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut xs: Vec<hir::Spec>) -> hir::Spec {
+  if xs.len() == 1 {
+    xs.pop().unwrap()
+  } else {
+    hir::Spec::Seq(
+      xs.into_iter()
+        .map(|val| cx.spec_one(val, ptr.clone()))
+        .collect(),
+    )
+  }
 }
 
 fn ascription_tail(

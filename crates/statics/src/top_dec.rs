@@ -256,11 +256,12 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
       }
     }
     // sml_def(69). TODO check does not admit equality
-    hir::Spec::Ty(ty_descs) => get_ty_descs(st, &mut env.ty_env, ty_descs, spec.into()),
+    hir::Spec::Ty(ty_descs) => get_ty_desc(st, &mut env.ty_env, ty_descs, spec.into()),
     // sml_def(70). TODO check does admit equality
-    hir::Spec::EqTy(ty_descs) => get_ty_descs(st, &mut env.ty_env, ty_descs, spec.into()),
+    hir::Spec::EqTy(ty_descs) => get_ty_desc(st, &mut env.ty_env, ty_descs, spec.into()),
     // sml_def(71)
-    hir::Spec::Datatype(dat_descs) => {
+    hir::Spec::Datatype(dat_desc) => {
+      let dat_descs = std::slice::from_ref(dat_desc);
       let (ty_env, big_val_env) = dec::get_dat_binds(st, bs.as_cx(), ars, dat_descs, spec.into());
       for (name, val) in ty_env {
         if let Some(e) = ins_no_dupe(&mut env.ty_env, name, val, Item::Ty) {
@@ -282,42 +283,36 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
       }
       Err(e) => st.err(spec, e),
     },
-    // sml_def(73)
-    hir::Spec::Exception(ex_descs) => {
-      // sml_def(83)
+    // sml_def(73), sml_def(83)
+    hir::Spec::Exception(ex_desc) => {
       let cx = bs.as_cx();
-      for ex_desc in ex_descs {
-        // almost the same as the logic in dec::get, save for the check for ty vars.
-        let mut ty = Ty::EXN;
-        let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, param));
-        if let Some(ref param) = param {
-          ty = Ty::fun(param.clone(), ty);
-        }
-        let exn = st.syms.insert_exn(ex_desc.name.clone(), param);
-        if has_ty_var(&ty) {
-          st.err(spec, ErrorKind::PolymorphicExn);
-        }
-        let vi = ValInfo {
-          ty_scheme: TyScheme::zero(ty),
-          id_status: IdStatus::Exn(exn),
-        };
-        if cannot_bind_val(ex_desc.name.as_str()) {
-          st.err(spec, ErrorKind::InvalidRebindName(ex_desc.name.clone()));
-        } else if let Some(e) = ins_no_dupe(&mut env.val_env, ex_desc.name.clone(), vi, Item::Val) {
-          st.err(spec, e);
-        }
+      // almost the same as the logic in dec::get, save for the check for ty vars.
+      let mut ty = Ty::EXN;
+      let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, param));
+      if let Some(ref param) = param {
+        ty = Ty::fun(param.clone(), ty);
+      }
+      let exn = st.syms.insert_exn(ex_desc.name.clone(), param);
+      if has_ty_var(&ty) {
+        st.err(spec, ErrorKind::PolymorphicExn);
+      }
+      let vi = ValInfo {
+        ty_scheme: TyScheme::zero(ty),
+        id_status: IdStatus::Exn(exn),
+      };
+      if cannot_bind_val(ex_desc.name.as_str()) {
+        st.err(spec, ErrorKind::InvalidRebindName(ex_desc.name.clone()));
+      } else if let Some(e) = ins_no_dupe(&mut env.val_env, ex_desc.name.clone(), vi, Item::Val) {
+        st.err(spec, e);
       }
     }
-    // sml_def(74)
-    hir::Spec::Str(str_descs) => {
-      // sml_def(84)
-      for str_desc in str_descs {
-        let mut one_env = Env::default();
-        get_sig_exp(st, bs, ars, &mut one_env, str_desc.sig_exp);
-        let name = str_desc.name.clone();
-        if let Some(e) = ins_no_dupe(&mut env.str_env, name, one_env, Item::Struct) {
-          st.err(spec, e);
-        }
+    // sml_def(74), sml_def(84)
+    hir::Spec::Str(str_desc) => {
+      let mut one_env = Env::default();
+      get_sig_exp(st, bs, ars, &mut one_env, str_desc.sig_exp);
+      let name = str_desc.name.clone();
+      if let Some(e) = ins_no_dupe(&mut env.str_env, name, one_env, Item::Struct) {
+        st.err(spec, e);
       }
     }
     // sml_def(75)
@@ -338,30 +333,28 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
 }
 
 // sml_def(80). TODO equality checks
-fn get_ty_descs(st: &mut St, ty_env: &mut TyEnv, ty_descs: &[hir::TyDesc], idx: hir::Idx) {
+fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &hir::TyDesc, idx: hir::Idx) {
   let mut ty_vars = FxHashSet::<&hir::TyVar>::default();
-  for ty_desc in ty_descs {
-    let started = st.syms.start(ty_desc.name.clone());
-    for ty_var in ty_desc.ty_vars.iter() {
-      if !ty_vars.insert(ty_var) {
-        let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
-        st.err(idx, e);
-      }
-    }
-    let ty_info = TyInfo {
-      ty_scheme: TyScheme::n_ary(
-        ty_desc
-          .ty_vars
-          .iter()
-          .map(|x| x.is_equality().then(|| TyVarKind::Equality)),
-        started.sym(),
-      ),
-      val_env: ValEnv::default(),
-    };
-    st.syms.finish(started, ty_info.clone());
-    if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
+  let started = st.syms.start(ty_desc.name.clone());
+  for ty_var in ty_desc.ty_vars.iter() {
+    if !ty_vars.insert(ty_var) {
+      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
       st.err(idx, e);
     }
+  }
+  let ty_info = TyInfo {
+    ty_scheme: TyScheme::n_ary(
+      ty_desc
+        .ty_vars
+        .iter()
+        .map(|x| x.is_equality().then(|| TyVarKind::Equality)),
+      started.sym(),
+    ),
+    val_env: ValEnv::default(),
+  };
+  st.syms.finish(started, ty_info.clone());
+  if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
+    st.err(idx, e);
   }
 }
 

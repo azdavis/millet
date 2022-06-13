@@ -151,7 +151,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
     }
     ast::DecOne::TyDec(dec) => ty_binds(cx, dec.ty_binds()),
     ast::DecOne::DatDec(dec) => {
-      let mut ret = hir::Dec::Datatype(dat_binds(cx, dec.dat_binds()));
+      let mut ret = hir::Dec::Datatype(dat_binds(cx, dec.dat_binds()).collect());
       if let Some(with_ty) = dec.with_type() {
         let ty_dec = ty_binds(cx, with_ty.ty_binds());
         ret = hir::Dec::Seq(vec![
@@ -165,7 +165,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
       hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
     ast::DecOne::AbstypeDec(dec) => {
-      let dbs = dat_binds(cx, dec.dat_binds());
+      let dbs: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
       let ty_dec = dec.with_type().map(|x| ty_binds(cx, x.ty_binds()));
       let mut d = get(cx, dec.dec());
       if let Some(ty_dec) = ty_dec {
@@ -198,27 +198,25 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
   cx.dec_one(ret, ptr)
 }
 
-pub(crate) fn dat_binds<I>(cx: &mut Cx, iter: I) -> Vec<hir::DatBind>
+pub(crate) fn dat_binds<'a, I>(cx: &'a mut Cx, iter: I) -> impl Iterator<Item = hir::DatBind> + 'a
 where
-  I: Iterator<Item = ast::DatBind>,
+  I: Iterator<Item = ast::DatBind> + 'a,
 {
-  iter
-    .filter_map(|dat_bind| {
-      Some(hir::DatBind {
-        ty_vars: ty::var_seq(dat_bind.ty_var_seq()),
-        name: get_name(dat_bind.name())?,
-        cons: dat_bind
-          .con_binds()
-          .filter_map(|con_bind| {
-            Some(hir::ConBind {
-              name: hir::Name::new(con_bind.name_star_eq()?.token.text()),
-              ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
-            })
+  iter.filter_map(|dat_bind| {
+    Some(hir::DatBind {
+      ty_vars: ty::var_seq(dat_bind.ty_var_seq()),
+      name: get_name(dat_bind.name())?,
+      cons: dat_bind
+        .con_binds()
+        .filter_map(|con_bind| {
+          Some(hir::ConBind {
+            name: hir::Name::new(con_bind.name_star_eq()?.token.text()),
+            ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
           })
-          .collect(),
-      })
+        })
+        .collect(),
     })
-    .collect()
+  })
 }
 
 fn ty_binds<I>(cx: &mut Cx, iter: I) -> hir::Dec
