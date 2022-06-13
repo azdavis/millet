@@ -55,24 +55,10 @@ pub(crate) fn get() -> (Syms, Bs) {
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
-  let builtin = [
-    Sym::INT,
-    Sym::WORD,
-    Sym::REAL,
-    Sym::CHAR,
-    Sym::STRING,
-    Sym::BOOL,
-    Sym::ORDER,
-    Sym::LIST,
-    Sym::REF,
-  ];
   let aliases = [("unit", unit()), ("exn", Ty::EXN)];
-  let ty_env: TyEnv = builtin
+  let ty_env: TyEnv = syms
     .iter()
-    .map(|s| {
-      let (name, info) = syms.get(s).unwrap();
-      (name.clone(), info.clone())
-    })
+    .map(|(a, b)| (a.clone(), b.clone()))
     .chain(aliases.into_iter().map(|(name, ty)| {
       let ti = TyInfo {
         ty_scheme: TyScheme::zero(ty),

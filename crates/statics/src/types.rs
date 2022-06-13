@@ -467,6 +467,10 @@ impl Syms {
   pub(crate) fn mark(&self) -> SymsMarker {
     SymsMarker(self.store.len())
   }
+
+  pub(crate) fn iter(&self) -> impl Iterator<Item = (&hir::Name, &TyInfo)> {
+    self.store.iter().map(|&(ref a, ref b)| (a, b))
+  }
 }
 
 /// A marker to determine when a `Sym` was generated.
