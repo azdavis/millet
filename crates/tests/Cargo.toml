@@ -8,6 +8,8 @@ publish = false
 doctest = false
 
 [dependencies]
+simple_logger = { version = "2", features = ["stderr"] }
+log = "0.4"
 analysis = { path = "../analysis" }
-syntax = { path = "../syntax" }
 fast-hash = { path = "../fast-hash" }
+syntax = { path = "../syntax" }

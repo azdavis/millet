@@ -23,11 +23,14 @@ use syntax::rowan::{TextRange, TextSize};
 /// ```
 ///
 /// see also [`fail`] if the test is failing.
+///
+/// note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check<'a, C>(c: C)
 where
   C: Into<Check<'a>>,
 {
+  init_logging();
   let c: Check<'a> = c.into();
   if !c.reasons.is_empty() {
     panic!("{c}")
@@ -61,10 +64,16 @@ pub(crate) fn fail<'a, C>(c: C)
 where
   C: Into<Check<'a>>,
 {
+  init_logging();
   let c: Check<'a> = c.into();
   if c.reasons.is_empty() {
     panic!("unexpected pass: {c}")
   }
+}
+
+/// ignores the Err return if already initialized, since that's fine.
+fn init_logging() {
+  let _ = simple_logger::init_with_level(log::Level::Info);
 }
 
 pub(crate) struct Check<'a> {
