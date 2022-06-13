@@ -122,3 +122,13 @@ val b = a
 "#,
   ]);
 }
+
+#[test]
+fn option() {
+  check(
+    r#"
+val _ = SOME: unit
+(**     ^^^^^^^^^^ expected unit, found _ -> _ option *)
+"#,
+  );
+}
