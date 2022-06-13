@@ -148,7 +148,7 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   let spec = spec?;
   let mut specs: Vec<_> = spec
     .spec_in_seqs()
-    .filter_map(|x| get_spec_one(cx, x.spec_one()?))
+    .map(|x| get_spec_one(cx, x.spec_one()?))
     .collect();
   if specs.len() == 1 {
     specs.pop().unwrap()
@@ -159,9 +159,8 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
 
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
-fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
+fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
   let ptr = AstPtr::new(&spec);
-  let range = spec.syntax().text_range();
   let ret = match spec {
     ast::SpecOne::ValSpec(spec) => hir::Spec::Val(
       Vec::new(),
@@ -217,12 +216,15 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> Option<hir::SpecIdx> {
         .collect();
       seq(cx, ptr.clone(), specs)
     }
-    ast::SpecOne::SharingSpec(_) => {
-      cx.err(range, ErrorKind::Unsupported("`sharing` specifications"));
-      return None;
-    }
+    ast::SpecOne::SharingSpec(spec) => hir::Spec::Sharing(
+      get_spec_one(cx, spec.spec_one()?),
+      spec
+        .path_eqs()
+        .filter_map(|x| get_path(x.path()?))
+        .collect(),
+    ),
   };
-  Some(cx.spec_one(ret, ptr))
+  cx.spec_one(ret, ptr)
 }
 
 fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut specs: Vec<hir::Spec>) -> hir::Spec {
