@@ -326,6 +326,16 @@ impl Path {
   }
 }
 
+impl fmt::Display for Path {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    for structure in self.structures.iter() {
+      structure.fmt(f)?;
+      f.write_str(".")?;
+    }
+    self.last.fmt(f)
+  }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Name(SmolStr);
 
