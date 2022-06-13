@@ -67,6 +67,7 @@ pub struct Statics {
   pub syms: Syms,
   /// The errors encountered.
   pub errors: Vec<Error>,
+  /// The basis of the whole program.
   pub(crate) bs: Bs,
 }
 
