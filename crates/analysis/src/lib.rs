@@ -6,6 +6,8 @@
 
 mod std_basis;
 
+use fast_hash::FxHashMap;
+use paths::PathId;
 use syntax::{ast::AstNode as _, rowan::TextRange};
 
 pub use std_basis::StdBasis;
@@ -19,6 +21,17 @@ pub struct Error {
   pub message: String,
 }
 
+/// A group of source files.
+///
+/// TODO use exports
+#[derive(Debug)]
+pub struct Group<'a> {
+  /// The source file paths and contents.
+  pub files: Vec<(PathId, &'a str)>,
+  /// The dependencies of this group on other groups.
+  pub dependencies: Vec<PathId>,
+}
+
 /// Performs analysis.
 #[derive(Debug, Default)]
 pub struct Analysis {
@@ -29,6 +42,32 @@ impl Analysis {
   /// Returns a new `Analysis`.
   pub fn new(std_basis: StdBasis) -> Self {
     Self { std_basis }
+  }
+
+  /// Given a mapping from group paths to information about a group, returns a mapping from source
+  /// paths to errors.
+  ///
+  /// TODO remove `get` and rename this to `get`.
+  pub fn get_new(&self, groups: &FxHashMap<PathId, Group<'_>>) -> FxHashMap<PathId, Vec<Error>> {
+    let graph: topo_sort::Graph<_> = groups
+      .iter()
+      .map(|(&path, group)| (path, group.dependencies.iter().copied().collect()))
+      .collect();
+    // TODO error if cycle
+    let order = topo_sort::get(&graph).unwrap_or_default();
+    // TODO require explicit basis import
+    let mut st = self.std_basis.into_statics();
+    let mode = statics::Mode::Regular;
+    order
+      .into_iter()
+      .flat_map(|path| groups.get(&path).into_iter().flat_map(|x| x.files.iter()))
+      .map(|&(path, s)| {
+        let mut file = AnalyzedFile::new(s);
+        statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
+        file.statics_errors = std::mem::take(&mut st.errors);
+        (path, file.into_errors(&st.syms).collect())
+      })
+      .collect()
   }
 
   /// Returns a Vec of Vec of errors for each file.

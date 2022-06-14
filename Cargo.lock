@@ -6,13 +6,16 @@ version = 3
 name = "analysis"
 version = "0.1.0"
 dependencies = [
+ "fast-hash",
  "lex",
  "log",
  "lower",
  "once_cell",
  "parse",
+ "paths",
  "statics",
  "syntax",
+ "topo-sort",
  "ty-var-scope",
 ]
 
@@ -309,6 +312,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cacbb3c4ff353b534a67fb8d7524d00229da4cb1dc8c79f4db96e375ab5b619"
 
 [[package]]
+name = "paths"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+]
+
+[[package]]
 name = "pattern-match"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
@@ -496,6 +506,7 @@ dependencies = [
  "analysis",
  "fast-hash",
  "log",
+ "paths",
  "simple_logger",
  "syntax",
 ]
@@ -549,6 +560,11 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "token"
+version = "0.1.0"
+source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
+
+[[package]]
+name = "topo-sort"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8eac305129fc46d82f4ce"
 

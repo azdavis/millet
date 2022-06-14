@@ -1,6 +1,6 @@
 //! Test infra.
 
-use fast_hash::FxHashMap;
+use fast_hash::{map, FxHashMap};
 use std::fmt;
 use std::ops::Range;
 use syntax::rowan::{TextRange, TextSize};
@@ -114,15 +114,23 @@ impl<'a> Check<'a> {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
+    let group = analysis::Group {
+      files: ss
+        .iter()
+        .enumerate()
+        .map(|(idx, &s)| (paths::PathId::from_raw(idx), s))
+        .collect(),
+      dependencies: Vec::new(),
+    };
+    let group_id = paths::PathId::from_raw(group.files.len());
     let err = analysis::Analysis::new(std_basis)
-      .get(ss.iter().copied())
+      .get_new(&map([(group_id, group)]))
       .into_iter()
-      .enumerate()
-      .flat_map(|(idx, errors)| errors.into_iter().map(move |e| (idx, e)))
+      .flat_map(|(id, errors)| errors.into_iter().map(move |e| (id, e)))
       .next();
     let had_error = match err {
-      Some((idx, e)) => {
-        match ret.get_reason(FileId(idx), e.range, e.message) {
+      Some((id, e)) => {
+        match ret.get_reason(FileId(id.into_raw()), e.range, e.message) {
           Ok(()) => {}
           Err(r) => ret.reasons.push(r),
         }

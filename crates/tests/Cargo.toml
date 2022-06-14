@@ -13,3 +13,4 @@ log = "0.4"
 analysis = { path = "../analysis" }
 fast-hash = { path = "../fast-hash" }
 syntax = { path = "../syntax" }
+paths = { path = "../paths" }

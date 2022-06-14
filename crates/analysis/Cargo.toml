@@ -11,9 +11,12 @@ doctest = false
 [dependencies]
 log = "0.4"
 once_cell = "1"
+topo-sort =  { git = "https://github.com/azdavis/language-util.git" }
 lex = { path = "../lex" }
 parse = { path = "../parse" }
 lower = { path = "../lower" }
 ty-var-scope = { path = "../ty-var-scope" }
 statics = { path = "../statics" }
 syntax = { path = "../syntax" }
+paths = { path = "../paths" }
+fast-hash = { path = "../fast-hash" }
