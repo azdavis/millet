@@ -9,5 +9,7 @@ signature PACK_REAL (* OPTIONAL *) = sig
   val update : Word8Array.array * int * real -> unit
 end
 
-structure PackRealBig :> PACK_REAL (* OPTIONAL *) where type real = Real.real = struct end
-structure PackRealLittle :> PACK_REAL (* OPTIONAL *) where type real = Real.real = struct end
+structure PackRealBig :> PACK_REAL (* OPTIONAL *)
+  where type real = Real.real = struct end
+structure PackRealLittle :> PACK_REAL (* OPTIONAL *)
+  where type real = Real.real = struct end

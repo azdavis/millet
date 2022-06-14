@@ -36,5 +36,8 @@ signature CHAR = sig
   val fromCString : String.string -> char option
 end
 
-structure Char :> CHAR where type char = char where type string = String.string = Char
-structure WideChar :> CHAR (* OPTIONAL *) where type string = WideString.string = WideChar
+structure Char : CHAR
+  where type char = char
+  where type string = String.string = Char
+structure WideChar : CHAR (* OPTIONAL *)
+  where type string = WideString.string = WideChar

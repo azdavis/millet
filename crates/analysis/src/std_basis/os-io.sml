@@ -27,4 +27,4 @@ signature OS_IO = sig
   val infoToPollDesc : poll_info -> poll_desc
 end
 
-structure IO : OS_IO = struct end
+structure IO : OS_IO = IO

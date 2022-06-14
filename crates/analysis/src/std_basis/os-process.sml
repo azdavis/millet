@@ -11,4 +11,4 @@ signature OS_PROCESS = sig
   val sleep : Time.time -> unit
 end
 
-structure Process : OS_PROCESS = struct end
+structure Process :> OS_PROCESS = struct end

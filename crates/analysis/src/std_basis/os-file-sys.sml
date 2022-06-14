@@ -27,4 +27,4 @@ signature OS_FILE_SYS = sig
   val compare : file_id * file_id -> order
 end
 
-structure FileSys : OS_FILE_SYS = struct end
+structure FileSys :> OS_FILE_SYS = struct end

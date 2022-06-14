@@ -28,4 +28,4 @@ signature OS_PATH = sig
   val toUnixPath : string -> string
 end
 
-structure Path : OS_PATH = struct end
+structure Path :> OS_PATH = struct end

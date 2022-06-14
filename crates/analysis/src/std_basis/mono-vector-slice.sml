@@ -31,12 +31,12 @@ structure Word8VectorSlice :> MONO_VECTOR_SLICE
   where type vector = Word8Vector.vector
   where type elem = Word8.word = struct end
 
-structure CharVectorSlice :> MONO_VECTOR_SLICE
+structure CharVectorSlice : MONO_VECTOR_SLICE
   where type slice = Substring.substring
   where type vector = String.string
   where type elem = char = CharVectorSlice
 
-structure WideCharVectorSlice :> MONO_VECTOR_SLICE (* OPTIONAL *)
+structure WideCharVectorSlice : MONO_VECTOR_SLICE (* OPTIONAL *)
   where type slice = WideSubstring.substring
   where type vector = WideString.string
   where type elem = WideChar.char = WideCharVectorSlice

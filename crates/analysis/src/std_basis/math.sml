@@ -21,4 +21,5 @@ signature MATH = sig
   val tanh : real -> real
 end
 
-structure Math :> MATH where type real = Real.real = struct end
+structure Math :> MATH
+  where type real = Real.real = struct end

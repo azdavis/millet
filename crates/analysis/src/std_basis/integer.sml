@@ -34,7 +34,8 @@ signature INTEGER = sig
   val fromString : string -> int option
 end
 
-structure Int :> INTEGER where type int = int = Int
+structure Int : INTEGER
+  where type int = int = Int
 structure FixedInt :> INTEGER (* OPTIONAL *) = struct end
-structure LargeInt :> INTEGER = LargeInt
+structure LargeInt : INTEGER = LargeInt
 structure Position :> INTEGER = struct end
