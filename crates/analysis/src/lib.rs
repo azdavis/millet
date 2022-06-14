@@ -70,33 +70,7 @@ impl Analysis {
     }
     files
       .into_iter()
-      .map(|file| {
-        std::iter::empty()
-          .chain(file.lex_errors.into_iter().map(|err| Error {
-            range: err.range,
-            message: err.kind.to_string(),
-          }))
-          .chain(file.parsed.errors.into_iter().map(|err| Error {
-            range: err.range,
-            message: err.kind.to_string(),
-          }))
-          .chain(file.lowered.errors.into_iter().map(|err| Error {
-            range: err.range,
-            message: err.kind.to_string(),
-          }))
-          .chain(file.statics_errors.into_iter().filter_map(|err| {
-            Some(Error {
-              range: file
-                .lowered
-                .ptrs
-                .get(err.idx())?
-                .to_node(file.parsed.root.syntax())
-                .text_range(),
-              message: err.display(&st.syms).to_string(),
-            })
-          }))
-          .collect()
-      })
+      .map(|file| file.into_errors(&st.syms).collect())
       .collect()
   }
 }
@@ -122,5 +96,32 @@ impl AnalyzedFile {
       lowered,
       statics_errors: Vec::new(),
     }
+  }
+
+  fn into_errors(self, syms: &statics::Syms) -> impl Iterator<Item = Error> + '_ {
+    std::iter::empty()
+      .chain(self.lex_errors.into_iter().map(|err| Error {
+        range: err.range,
+        message: err.kind.to_string(),
+      }))
+      .chain(self.parsed.errors.into_iter().map(|err| Error {
+        range: err.range,
+        message: err.kind.to_string(),
+      }))
+      .chain(self.lowered.errors.into_iter().map(|err| Error {
+        range: err.range,
+        message: err.kind.to_string(),
+      }))
+      .chain(self.statics_errors.into_iter().filter_map(move |err| {
+        Some(Error {
+          range: self
+            .lowered
+            .ptrs
+            .get(err.idx())?
+            .to_node(self.parsed.root.syntax())
+            .text_range(),
+          message: err.display(syms).to_string(),
+        })
+      }))
   }
 }
