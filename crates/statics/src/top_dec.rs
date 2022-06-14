@@ -583,6 +583,7 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
         assert_eq!(ty_scheme.bound_vars.len(), args.len());
         let mut ty_scheme_ty = ty_scheme.ty.clone();
         apply_bv(args, &mut ty_scheme_ty);
+        ty_realize(subst, &mut ty_scheme_ty);
         *ty = ty_scheme_ty;
       }
       None => {

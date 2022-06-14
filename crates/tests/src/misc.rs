@@ -456,7 +456,7 @@ end
 
 #[test]
 fn subst_inside() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   datatype 'a d = D of 'a
