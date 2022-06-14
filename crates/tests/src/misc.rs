@@ -453,3 +453,20 @@ end
 "#,
   );
 }
+
+#[test]
+fn subst_inside() {
+  fail(
+    r#"
+signature SIG = sig
+  datatype 'a d = D of 'a
+  val join : 'a d d -> 'a
+end
+
+structure Str :> SIG = struct
+  datatype 'a d = D of 'a
+  fun join (D (D x)) = x
+end
+"#,
+  );
+}
