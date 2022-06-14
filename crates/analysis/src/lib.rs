@@ -51,22 +51,7 @@ impl Analysis {
   where
     I: Iterator<Item = &'a str>,
   {
-    let mut files: Vec<_> = files
-      .map(|contents| {
-        let lexed = lex::get(contents);
-        log::debug!("lex: {:?}", lexed.tokens);
-        let parsed = parse::get(&lexed.tokens);
-        log::debug!("parse: {:#?}", parsed.root);
-        let mut lowered = lower::get(&parsed.root);
-        ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-        AnalyzedFile {
-          lex_errors: lexed.errors,
-          parsed,
-          lowered,
-          statics_errors: Vec::new(),
-        }
-      })
-      .collect();
+    let mut files: Vec<_> = files.map(AnalyzedFile::new).collect();
     let mut st = match self.std_basis {
       StdBasis::Full => {
         let (syms, bs) = std_basis::SYMS_AND_BS.clone();
@@ -121,4 +106,21 @@ struct AnalyzedFile {
   parsed: parse::Parse,
   lowered: lower::Lower,
   statics_errors: Vec<statics::Error>,
+}
+
+impl AnalyzedFile {
+  fn new(s: &str) -> Self {
+    let lexed = lex::get(s);
+    log::debug!("lex: {:?}", lexed.tokens);
+    let parsed = parse::get(&lexed.tokens);
+    log::debug!("parse: {:#?}", parsed.root);
+    let mut lowered = lower::get(&parsed.root);
+    ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
+    Self {
+      lex_errors: lexed.errors,
+      parsed,
+      lowered,
+      statics_errors: Vec::new(),
+    }
+  }
 }
