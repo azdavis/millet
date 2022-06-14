@@ -578,20 +578,17 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
         ty_realize(subst, ty);
       }
     }
-    Ty::Con(args, sym) => match subst.get(sym) {
-      Some(ty_scheme) => {
+    Ty::Con(args, sym) => {
+      for ty in args.iter_mut() {
+        ty_realize(subst, ty);
+      }
+      if let Some(ty_scheme) = subst.get(sym) {
         assert_eq!(ty_scheme.bound_vars.len(), args.len());
         let mut ty_scheme_ty = ty_scheme.ty.clone();
         apply_bv(args, &mut ty_scheme_ty);
-        ty_realize(subst, &mut ty_scheme_ty);
         *ty = ty_scheme_ty;
       }
-      None => {
-        for ty in args {
-          ty_realize(subst, ty);
-        }
-      }
-    },
+    }
     Ty::Fn(param, res) => {
       ty_realize(subst, param);
       ty_realize(subst, res);
