@@ -1,6 +1,6 @@
 //! See [`State`].
 
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, Error, Result};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
@@ -155,10 +155,21 @@ impl State {
 
   pub(crate) fn handle_notification(&mut self, notif: lsp_server::Notification) {
     log::debug!("got notification: {notif:?}");
-    match extract_notification::<lsp_types::notification::DidChangeWatchedFiles>(notif) {
-      ControlFlow::Break(_) => self.publish_diagnostics(),
-      ControlFlow::Continue(_) => {}
+    match self.handle_notification_(notif) {
+      ControlFlow::Break(Ok(())) => {}
+      ControlFlow::Break(Err(e)) => log::error!("couldn't handle notification: {e}"),
+      ControlFlow::Continue(notif) => log::warn!("unhandled notification: {notif:?}"),
     }
+  }
+
+  fn handle_notification_(
+    &mut self,
+    mut n: lsp_server::Notification,
+  ) -> ControlFlow<Result<()>, Notification> {
+    n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
+      self.publish_diagnostics()
+    })?;
+    ControlFlow::Continue(n)
   }
 
   fn send(&self, msg: Message) {
@@ -168,25 +179,41 @@ impl State {
 }
 
 #[allow(dead_code)]
-fn extract_request<R>(req: Request) -> ControlFlow<(RequestId, R::Params), ExtractError<Request>>
+fn try_request<R, F>(req: Request, f: F) -> ControlFlow<Result<()>, Request>
 where
   R: lsp_types::request::Request,
+  F: FnOnce(RequestId, R::Params),
 {
-  match req.extract(R::METHOD) {
-    Ok(x) => ControlFlow::Break(x),
-    Err(e) => ControlFlow::Continue(e),
+  match req.extract::<R::Params>(R::METHOD) {
+    Ok((id, params)) => {
+      f(id, params);
+      ControlFlow::Break(Ok(()))
+    }
+    Err(e) => match e {
+      ExtractError::MethodMismatch(req) => ControlFlow::Continue(req),
+      ExtractError::JsonError { method, error } => {
+        ControlFlow::Break(Err(anyhow!("couldn't deserialize for {method}: {error}")))
+      }
+    },
   }
 }
 
-fn extract_notification<N>(
-  notif: Notification,
-) -> ControlFlow<N::Params, ExtractError<Notification>>
+fn try_notification<N, F>(notif: Notification, f: F) -> ControlFlow<Result<()>, Notification>
 where
   N: lsp_types::notification::Notification,
+  F: FnOnce(N::Params),
 {
-  match notif.extract(N::METHOD) {
-    Ok(x) => ControlFlow::Break(x),
-    Err(e) => ControlFlow::Continue(e),
+  match notif.extract::<N::Params>(N::METHOD) {
+    Ok(params) => {
+      f(params);
+      ControlFlow::Break(Ok(()))
+    }
+    Err(e) => match e {
+      ExtractError::MethodMismatch(notif) => ControlFlow::Continue(notif),
+      ExtractError::JsonError { method, error } => {
+        ControlFlow::Break(Err(anyhow!("could not deserialize for {method}: {error}")))
+      }
+    },
   }
 }
 
