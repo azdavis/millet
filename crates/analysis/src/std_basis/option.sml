@@ -1,5 +1,5 @@
 signature OPTION = sig
-  datatype option = datatype option
+  datatype 'a option = NONE | SOME of 'a
   exception Option
   val getOpt : 'a option * 'a -> 'a
   val isSome : 'a option -> bool
@@ -14,3 +14,5 @@ signature OPTION = sig
 end
 
 structure Option :> OPTION = struct end
+
+datatype option = datatype Option.option

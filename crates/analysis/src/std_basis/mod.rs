@@ -1,9 +1,10 @@
 use once_cell::sync::Lazy;
 
 const ORDER: &[&str] = &[
-  include_str!("list-pair.sml"),
-  include_str!("list.sml"),
+  include_str!("general.sml"),
   include_str!("option.sml"),
+  include_str!("list.sml"),
+  include_str!("list-pair.sml"),
   include_str!("string-cvt.sml"),
   include_str!("integer.sml"),
   include_str!("bool.sml"),

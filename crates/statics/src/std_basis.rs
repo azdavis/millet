@@ -19,23 +19,6 @@ pub(crate) fn get() -> (Syms, Bs) {
     Sym::BOOL,
     basic_datatype(Ty::BOOL, &["true", "false"]),
   );
-  // TODO order is just a regular datatype. may not need special logic here to define it.
-  insert_special(
-    &mut syms,
-    Sym::ORDER,
-    basic_datatype(Ty::ORDER, &["LESS", "EQUAL", "GREATER"]),
-  );
-  // TODO option is just a regular datatype. may not need special logic here to define it.
-  let option_info = {
-    let option = |a: Ty| Ty::Con(vec![a], Sym::OPTION);
-    let alpha_option = TyScheme::one(|a| (option(a), None));
-    let some = TyScheme::one(|a| (Ty::fun(a.clone(), option(a)), None));
-    TyInfo {
-      ty_scheme: alpha_option.clone(),
-      val_env: datatype_ve([("NONE", alpha_option), ("SOME", some)]),
-    }
-  };
-  insert_special(&mut syms, Sym::OPTION, option_info);
   let list_info = {
     let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
     let alpha_list = TyScheme::one(|a| (list(a), None));

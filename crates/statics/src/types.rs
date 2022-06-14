@@ -388,10 +388,8 @@ mk_special_syms![
   (4, y, CHAR, "char"),
   (5, y, STRING, "string"),
   (6, y, BOOL, "bool"),
-  (7, y, ORDER, "order"),
-  (8, n, OPTION, "option"),
-  (9, n, LIST, "list"),
-  (10, n, REF, "ref"),
+  (7, n, LIST, "list"),
+  (8, n, REF, "ref"),
 ];
 
 impl Sym {
