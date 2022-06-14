@@ -98,3 +98,9 @@ impl Default for Mode {
     Self::Regular
   }
 }
+
+impl Mode {
+  pub(crate) fn is_regular(self) -> bool {
+    matches!(self, Self::Regular)
+  }
+}

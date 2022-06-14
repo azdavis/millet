@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Item};
 use crate::fmt_util::ty_var_name;
-use crate::st::{Mode, St};
+use crate::st::St;
 use crate::types::{
   generalize, Bs, Env, FunEnv, FunSig, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty, TyEnv, TyInfo,
   TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
@@ -91,13 +91,10 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       let sig = env_to_sig(bs, sig_exp_env);
       let mut subst = TyRealization::default();
       let mut to_extend = sig.env.clone();
-      match st.mode() {
-        Mode::Regular => {
-          env_instance_sig(st, &mut subst, &str_exp_env, &sig.ty_names, str_exp.into());
-          env_realize(&subst, &mut to_extend);
-          env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
-        }
-        Mode::Declaration => {}
+      if st.mode().is_regular() {
+        env_instance_sig(st, &mut subst, &str_exp_env, &sig.ty_names, str_exp.into());
+        env_realize(&subst, &mut to_extend);
+        env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
       }
       if matches!(asc, hir::Ascription::Opaque) {
         subst.clear();
