@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn ok_smoke() {
@@ -472,6 +472,21 @@ structure S :> SIG where type t = int = struct
 end
 
 val _ = S.x : int
+"#,
+  );
+}
+
+#[test]
+fn exn() {
+  fail(
+    r#"
+signature SIG = sig
+  exception E
+end
+
+structure Str :> SIG = struct
+  exception E
+end
 "#,
   );
 }
