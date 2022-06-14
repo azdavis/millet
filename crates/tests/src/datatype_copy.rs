@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke() {
@@ -40,5 +40,19 @@ fn with_ty_var() {
 datatype vec = datatype list
 val _: int vec = [1, 2]
 "#,
+  );
+}
+
+#[test]
+fn structure() {
+  fail(
+    r#"
+structure S = struct datatype a = A end
+datatype b = datatype S.a
+val _ = A: b
+val _ = A: S.a
+val _ = S.A: b
+val _ = S.A: S.a
+  "#,
   );
 }
