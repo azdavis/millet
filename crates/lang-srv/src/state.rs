@@ -90,20 +90,17 @@ impl State {
       .take(MAX_FILES_WITH_ERRORS);
     for (url, errors) in errors {
       has_diagnostics.insert(url.clone());
-      self.send_notification::<lsp_types::notification::PublishDiagnostics>(
-        lsp_types::PublishDiagnosticsParams {
-          uri: url,
-          diagnostics: errors
-            .into_iter()
-            .map(|(range, message)| lsp_types::Diagnostic {
-              range,
-              message,
-              source: Some(SOURCE.to_owned()),
-              ..Default::default()
-            })
-            .collect(),
-          version: None,
-        },
+      self.send_diagnostics(
+        url,
+        errors
+          .into_iter()
+          .map(|(range, message)| lsp_types::Diagnostic {
+            range,
+            message,
+            source: Some(SOURCE.to_owned()),
+            ..Default::default()
+          })
+          .collect(),
       );
     }
     has_diagnostics
@@ -177,16 +174,20 @@ impl State {
           continue;
         }
         // had old diagnostics, but no new diagnostics. clear the old diagnostics.
-        self.send_notification::<lsp_types::notification::PublishDiagnostics>(
-          lsp_types::PublishDiagnosticsParams {
-            uri: url,
-            diagnostics: Vec::new(),
-            version: None,
-          },
-        );
+        self.send_diagnostics(url, Vec::new());
       }
     })?;
     ControlFlow::Continue(n)
+  }
+
+  fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
+    self.send_notification::<lsp_types::notification::PublishDiagnostics>(
+      lsp_types::PublishDiagnosticsParams {
+        uri: url,
+        diagnostics,
+        version: None,
+      },
+    );
   }
 
   fn send(&self, msg: Message) {
