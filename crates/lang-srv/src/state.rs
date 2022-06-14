@@ -12,7 +12,8 @@ const SOURCE: &str = "millet";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const MAX_ERRORS_PER_FILE: usize = 20;
 
-/// The only thing that does file IO.
+/// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
+/// that communicate over stdin and stdout.)
 ///
 /// TODO: this is horribly inefficient.
 pub(crate) struct State {
