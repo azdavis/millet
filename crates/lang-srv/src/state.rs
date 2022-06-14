@@ -8,6 +8,12 @@ use lsp_types::{notification::Notification as _, Url};
 use std::ops::ControlFlow;
 use walkdir::WalkDir;
 
+pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
+  lsp_types::ServerCapabilities {
+    ..Default::default()
+  }
+}
+
 const SOURCE: &str = "millet";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const MAX_ERRORS_PER_FILE: usize = 20;

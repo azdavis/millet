@@ -30,10 +30,7 @@ fn main() -> anyhow::Result<()> {
   simple_logger::init_with_level(log::Level::Warn)?;
   log::info!("startup millet lsp server");
   let (connection, io_threads) = lsp_server::Connection::stdio();
-  let server_capabilities = lsp_types::ServerCapabilities {
-    ..Default::default()
-  };
-  let params = connection.initialize(serde_json::to_value(&server_capabilities)?)?;
+  let params = connection.initialize(serde_json::to_value(&state::capabilities())?)?;
   run(connection, serde_json::from_value(params)?)?;
   io_threads.join()?;
   log::info!("shutdown millet lsp server");
