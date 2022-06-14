@@ -77,18 +77,19 @@ val _ =
 fn big_ok() {
   check(
     r#"
+datatype abc = A | B | C
 val _ =
-  case (3, "hey", false, LESS) of
+  case (3, "hey", false, A) of
     (3, "guh", _, _) => 0
-  | (_, "hey", false, GREATER) => 1
+  | (_, "hey", false, C) => 1
   | (4, _, false, _) => 2
-  | (_, _, false, EQUAL) => 3
+  | (_, _, false, B) => 3
   | (_, _, false, _) => 4
-  | (3, _, true, LESS) => 5
-  | (_, "nope", true, LESS) => 6
-  | (n, _, true, LESS) => n
-  | (_, _, true, EQUAL) => 8
-  | (_, _, true, GREATER) => 9
+  | (3, _, true, A) => 5
+  | (_, "nope", true, A) => 6
+  | (n, _, true, A) => n
+  | (_, _, true, B) => 8
+  | (_, _, true, C) => 9
 "#,
   );
 }
@@ -110,19 +111,20 @@ val _ =
 fn big_tuple() {
   check(
     r#"
+datatype abc = A | B | C
 val _ =
-  case (1, 3.3, "hey", LESS, false) of
-    (1, _, _, LESS, _) => 0
-  | (3, x, "foo", GREATER, true) => 1
-  | (_, _, "nope", EQUAL, _) => 2
-  | (_, _, "guy", EQUAL, _) => 3
-  | (_, _, "thing", EQUAL, _) => 4
-  | (_, _, _, EQUAL, true) => 5
-  | (x, _, _, EQUAL, false) => x
-  | (_, _, _, LESS, true) => 5
-  | (x, _, _, LESS, false) => x
-  | (_, _, _, GREATER, true) => 5
-  | (x, _, _, GREATER, false) => x
+  case (1, 3.3, "hey", A, false) of
+    (1, _, _, A, _) => 0
+  | (3, x, "foo", C, true) => 1
+  | (_, _, "nope", B, _) => 2
+  | (_, _, "guy", B, _) => 3
+  | (_, _, "thing", B, _) => 4
+  | (_, _, _, B, true) => 5
+  | (x, _, _, B, false) => x
+  | (_, _, _, A, true) => 5
+  | (x, _, _, A, false) => x
+  | (_, _, _, C, true) => 5
+  | (x, _, _, C, false) => x
 "#,
   );
 }

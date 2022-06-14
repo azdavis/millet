@@ -230,7 +230,7 @@ val _ = 2.2 = 3.3
 }
 
 #[test]
-fn std_lib_types() {
+fn basic_std_lib_types() {
   check(
     r#"
 val _: int = 3 + 3
@@ -242,7 +242,6 @@ and _ = "foo" > "bar"
 val (a, b: real) = (123, 2.34)
 val _ = #"e" > (#"f": char)
 val _ = 3 = 4
-val _ = if 123 < 234 then [LESS] else [GREATER, EQUAL]
 val _ = ref
 and f = op+
 val _ = f (a, 2)
