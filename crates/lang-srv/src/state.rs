@@ -18,28 +18,36 @@ const SOURCE: &str = "millet";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const MAX_ERRORS_PER_FILE: usize = 20;
 
+/// TODO no clone?
+#[derive(Debug, Clone)]
+enum Mode {
+  Root(Url, FxHashSet<Url>),
+  NoRoot,
+}
+
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
 /// that communicate over stdin and stdout.)
 ///
 /// TODO: this is horribly inefficient.
 pub(crate) struct State {
-  root: Option<Url>,
+  mode: Mode,
   sender: Sender<Message>,
   req_queue: ReqQueue<(), ()>,
-  has_diagnostics: FxHashSet<Url>,
   analysis: analysis::Analysis,
 }
 
 impl State {
   pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
     let mut ret = Self {
-      root,
+      mode: match root {
+        Some(root) => Mode::Root(root, FxHashSet::default()),
+        None => Mode::NoRoot,
+      },
       sender,
       req_queue: ReqQueue::default(),
-      has_diagnostics: FxHashSet::default(),
       analysis: analysis::Analysis::default(),
     };
-    if let Some(root) = ret.root.clone() {
+    if let Mode::Root(root, _) = ret.mode.clone() {
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
         registrations: vec![lsp_types::Registration {
           id: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
@@ -160,21 +168,23 @@ impl State {
     mut n: lsp_server::Notification,
   ) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      let root = match &self.root {
-        Some(x) => x,
-        None => return,
+      let (root, old_diagnostics) = match self.mode.clone() {
+        Mode::Root(root, old_diagnostics) => (root, old_diagnostics),
+        Mode::NoRoot => return,
       };
-      let (ok_files, err_files) = get_files(root);
-      let mut has_diagnostics = self.publish_diagnostics(ok_files, err_files);
-      std::mem::swap(&mut has_diagnostics, &mut self.has_diagnostics);
-      // this is now the _old_ has_diagnostics.
-      for url in has_diagnostics {
-        if self.has_diagnostics.contains(&url) {
+      let (ok_files, err_files) = get_files(&root);
+      let new_diagnostics = self.publish_diagnostics(ok_files, err_files);
+      for url in old_diagnostics {
+        if new_diagnostics.contains(&url) {
           // had old diagnostics, and has new diagnostics. we just sent the new ones.
           continue;
         }
         // had old diagnostics, but no new diagnostics. clear the old diagnostics.
         self.send_diagnostics(url, Vec::new());
+      }
+      match &mut self.mode {
+        Mode::Root(_, d) => *d = new_diagnostics,
+        Mode::NoRoot => unreachable!(),
       }
     })?;
     ControlFlow::Continue(n)
