@@ -10,6 +10,17 @@ use walkdir::WalkDir;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
+    text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Options(
+      lsp_types::TextDocumentSyncOptions {
+        open_close: Some(true),
+        save: Some(lsp_types::TextDocumentSyncSaveOptions::SaveOptions(
+          lsp_types::SaveOptions {
+            include_text: Some(true),
+          },
+        )),
+        ..Default::default()
+      },
+    )),
     ..Default::default()
   }
 }
@@ -186,6 +197,30 @@ impl State {
         Mode::Root(_, d) => *d = new_diagnostics,
         Mode::NoRoot => unreachable!(),
       }
+    })?;
+    n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
+      if matches!(self.mode, Mode::Root(..)) {
+        return;
+      }
+      let url = params.text_document.uri;
+      let text = params.text_document.text;
+      self.publish_diagnostics(vec![(url, text)], vec![]);
+    })?;
+    n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
+      if matches!(self.mode, Mode::Root(..)) {
+        return;
+      }
+      let url = params.text_document.uri;
+      if let Some(text) = params.text {
+        self.publish_diagnostics(vec![(url, text)], vec![]);
+      }
+    })?;
+    n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
+      if matches!(self.mode, Mode::Root(..)) {
+        return;
+      }
+      let url = params.text_document.uri;
+      self.send_diagnostics(url, Vec::new());
     })?;
     ControlFlow::Continue(n)
   }

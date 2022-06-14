@@ -11,8 +11,6 @@ priority is approximate. if unsure of priority, put in low.
 - support multiple files better
   - already have rudimentary CM
   - maybe use MLB instead
-- support no root
-  - just analyze each file in isolation
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info
