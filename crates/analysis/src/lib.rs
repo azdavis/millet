@@ -38,16 +38,15 @@ impl Analysis {
   where
     I: Iterator<Item = &'a str>,
   {
-    let mut files: Vec<_> = files.map(AnalyzedFile::new).collect();
     let mut st = self.std_basis.into_statics();
     let mode = statics::Mode::Regular;
-    for file in files.iter_mut() {
-      statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
-      file.statics_errors = std::mem::take(&mut st.errors);
-    }
     files
-      .into_iter()
-      .map(|file| file.into_errors(&st.syms).collect())
+      .map(|s| {
+        let mut file = AnalyzedFile::new(s);
+        statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
+        file.statics_errors = std::mem::take(&mut st.errors);
+        file.into_errors(&st.syms).collect()
+      })
       .collect()
   }
 }
