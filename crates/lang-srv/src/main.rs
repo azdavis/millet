@@ -4,14 +4,7 @@ mod state;
 
 fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyhow::Result<()> {
   log::info!("startup main loop: {init:#?}");
-  let root = match &init.root_uri {
-    Some(x) => x.clone(),
-    None => {
-      log::warn!("no root url");
-      return Ok(());
-    }
-  };
-  let mut state = state::State::new(root, conn.sender.clone());
+  let mut state = state::State::new(init.root_uri, conn.sender.clone());
   for msg in conn.receiver.iter() {
     match msg {
       lsp_server::Message::Request(req) => {

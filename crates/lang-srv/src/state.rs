@@ -23,7 +23,7 @@ const MAX_ERRORS_PER_FILE: usize = 20;
 ///
 /// TODO: this is horribly inefficient.
 pub(crate) struct State {
-  root: Url,
+  root: Option<Url>,
   sender: Sender<Message>,
   req_queue: ReqQueue<(), ()>,
   has_diagnostics: FxHashSet<Url>,
@@ -31,7 +31,7 @@ pub(crate) struct State {
 }
 
 impl State {
-  pub(crate) fn new(root: Url, sender: Sender<Message>) -> Self {
+  pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
     let mut ret = Self {
       root,
       sender,
@@ -39,23 +39,25 @@ impl State {
       has_diagnostics: FxHashSet::default(),
       analysis: analysis::Analysis::default(),
     };
-    ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
-      registrations: vec![lsp_types::Registration {
-        id: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
-        method: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
-        register_options: Some(
-          serde_json::to_value(lsp_types::DidChangeWatchedFilesRegistrationOptions {
-            watchers: vec![lsp_types::FileSystemWatcher {
-              glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm}}", ret.root.path()),
-              kind: None,
-            }],
-          })
-          .unwrap(),
-        ),
-      }],
-    });
-    let (ok_files, err_files) = get_files(&ret.root);
-    ret.publish_diagnostics(ok_files, err_files);
+    if let Some(root) = ret.root.clone() {
+      ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
+        registrations: vec![lsp_types::Registration {
+          id: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
+          method: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
+          register_options: Some(
+            serde_json::to_value(lsp_types::DidChangeWatchedFilesRegistrationOptions {
+              watchers: vec![lsp_types::FileSystemWatcher {
+                glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm}}", root.path()),
+                kind: None,
+              }],
+            })
+            .unwrap(),
+          ),
+        }],
+      });
+      let (ok_files, err_files) = get_files(&root);
+      ret.publish_diagnostics(ok_files, err_files);
+    }
     ret
   }
 
@@ -161,7 +163,11 @@ impl State {
     mut n: lsp_server::Notification,
   ) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      let (ok_files, err_files) = get_files(&self.root);
+      let root = match &self.root {
+        Some(x) => x,
+        None => return,
+      };
+      let (ok_files, err_files) = get_files(root);
       let mut has_diagnostics = self.publish_diagnostics(ok_files, err_files);
       std::mem::swap(&mut has_diagnostics, &mut self.has_diagnostics);
       // this is now the _old_ has_diagnostics.
