@@ -121,6 +121,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     hir::Dec::DatatypeCopy(name, path) => match get_ty_info(&cx.env, path) {
       Ok(ty_info) => {
         env.ty_env.insert(name.clone(), ty_info.clone());
+        env
+          .val_env
+          .extend(ty_info.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
       }
       Err(e) => st.err(dec, e),
     },

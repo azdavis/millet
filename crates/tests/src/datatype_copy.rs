@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke() {
@@ -45,7 +45,7 @@ val _: int vec = [1, 2]
 
 #[test]
 fn structure() {
-  fail(
+  check(
     r#"
 structure S = struct datatype a = A end
 datatype b = datatype S.a

@@ -307,8 +307,15 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(72)
     hir::Spec::DatatypeCopy(name, path) => match get_ty_info(&bs.env, path) {
       Ok(ty_info) => {
-        if let Some(e) = ins_no_dupe(&mut env.ty_env, name.clone(), ty_info.clone(), Item::Ty) {
+        let ins = ins_no_dupe(&mut env.ty_env, name.clone(), ty_info.clone(), Item::Ty);
+        if let Some(e) = ins {
           st.err(spec, e);
+        }
+        for (name, val_info) in ty_info.val_env.iter() {
+          let ins = ins_no_dupe(&mut env.val_env, name.clone(), val_info.clone(), Item::Val);
+          if let Some(e) = ins {
+            st.err(spec, e);
+          }
         }
       }
       Err(e) => st.err(spec, e),
