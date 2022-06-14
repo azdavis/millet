@@ -1,5 +1,64 @@
 use once_cell::sync::Lazy;
 
+/// What standard basis to use.
+#[derive(Debug, Clone, Copy)]
+pub enum StdBasis {
+  /// Include most of the standard basis library.
+  Full,
+  /// Only include fundamental top-level definitions like `int`, `real`, `ref`, `<`, etc.
+  Minimal,
+}
+
+impl Default for StdBasis {
+  fn default() -> Self {
+    Self::Full
+  }
+}
+
+impl StdBasis {
+  pub(crate) fn into_statics(self) -> statics::Statics {
+    match self {
+      StdBasis::Full => {
+        let (syms, bs) = FULL.clone();
+        statics::Statics {
+          syms,
+          bs,
+          errors: Vec::new(),
+        }
+      }
+      StdBasis::Minimal => statics::Statics::default(),
+    }
+  }
+}
+
+static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
+  let begin = std::time::Instant::now();
+  let mut st = statics::Statics::default();
+  let mode = statics::Mode::Declaration;
+  for &contents in ORDER {
+    let lexed = lex::get(contents);
+    if let Some(e) = lexed.errors.first() {
+      panic!("std_basis error: lex: {}", e.kind);
+    }
+    let parsed = parse::get(&lexed.tokens);
+    if let Some(e) = parsed.errors.first() {
+      panic!("std_basis error: parse: {}", e.kind);
+    }
+    let mut lowered = lower::get(&parsed.root);
+    if let Some(e) = lowered.errors.first() {
+      panic!("std_basis error: lower: {}", e.kind);
+    }
+    ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
+    statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
+    if let Some(e) = st.errors.first() {
+      panic!("std_basis error: statics: {}", e.display(&st.syms));
+    }
+  }
+  let end = std::time::Instant::now();
+  log::info!("got std_basis in {:?}", end.duration_since(begin));
+  (st.syms, st.bs)
+});
+
 const ORDER: &[&str] = &[
   include_str!("general.sml"),
   include_str!("option.sml"),
@@ -45,62 +104,3 @@ const ORDER: &[&str] = &[
   include_str!("pack-float.sml"),
   include_str!("pack-word.sml"),
 ];
-
-static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
-  let begin = std::time::Instant::now();
-  let mut st = statics::Statics::default();
-  let mode = statics::Mode::Declaration;
-  for &contents in ORDER {
-    let lexed = lex::get(contents);
-    if let Some(e) = lexed.errors.first() {
-      panic!("std_basis error: lex: {}", e.kind);
-    }
-    let parsed = parse::get(&lexed.tokens);
-    if let Some(e) = parsed.errors.first() {
-      panic!("std_basis error: parse: {}", e.kind);
-    }
-    let mut lowered = lower::get(&parsed.root);
-    if let Some(e) = lowered.errors.first() {
-      panic!("std_basis error: lower: {}", e.kind);
-    }
-    ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-    statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
-    if let Some(e) = st.errors.first() {
-      panic!("std_basis error: statics: {}", e.display(&st.syms));
-    }
-  }
-  let end = std::time::Instant::now();
-  log::info!("got std_basis in {:?}", end.duration_since(begin));
-  (st.syms, st.bs)
-});
-
-/// What standard basis to use.
-#[derive(Debug, Clone, Copy)]
-pub enum StdBasis {
-  /// Include most of the standard basis library.
-  Full,
-  /// Only include fundamental top-level definitions like `int`, `real`, `ref`, `<`, etc.
-  Minimal,
-}
-
-impl Default for StdBasis {
-  fn default() -> Self {
-    Self::Full
-  }
-}
-
-impl StdBasis {
-  pub(crate) fn into_statics(self) -> statics::Statics {
-    match self {
-      StdBasis::Full => {
-        let (syms, bs) = FULL.clone();
-        statics::Statics {
-          syms,
-          bs,
-          errors: Vec::new(),
-        }
-      }
-      StdBasis::Minimal => statics::Statics::default(),
-    }
-  }
-}
