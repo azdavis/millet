@@ -4,7 +4,7 @@ use crate::st::St;
 use crate::ty;
 use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
 use crate::unify::unify;
-use crate::util::{apply, cannot_bind_val, get_env, get_scon, ins_no_dupe, instantiate, record};
+use crate::util::{apply, get_env, get_scon, ins_check_name, instantiate, record};
 
 pub(crate) fn get(
   st: &mut St,
@@ -150,9 +150,7 @@ where
     ty_scheme: TyScheme::zero(ty),
     id_status: IdStatus::Val,
   };
-  if cannot_bind_val(name.as_str()) {
-    st.err(idx, ErrorKind::InvalidRebindName(name));
-  } else if let Some(e) = ins_no_dupe(ve, name, vi, Item::Val) {
+  if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);
   }
 }

@@ -5,7 +5,7 @@ use crate::types::{
   generalize, Bs, Env, FunEnv, FunSig, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty, TyEnv, TyInfo,
   TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::util::{apply_bv, cannot_bind_val, get_env, get_ty_info, ins_no_dupe, instantiate};
+use crate::util::{apply_bv, get_env, get_ty_info, ins_check_name, ins_no_dupe, instantiate};
 use crate::{dec, ty, unify::unify};
 use fast_hash::{map, FxHashMap, FxHashSet};
 use std::sync::Arc;
@@ -275,9 +275,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
           id_status: IdStatus::Val,
         };
         let name = &val_desc.name;
-        if cannot_bind_val(name.as_str()) {
-          st.err(spec, ErrorKind::InvalidRebindName(name.clone()));
-        } else if let Some(e) = ins_no_dupe(&mut env.val_env, name.clone(), vi, Item::Val) {
+        if let Some(e) = ins_check_name(&mut env.val_env, name.clone(), vi, Item::Val) {
           st.err(spec, e);
         }
       }
@@ -334,9 +332,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
       };
-      if cannot_bind_val(ex_desc.name.as_str()) {
-        st.err(spec, ErrorKind::InvalidRebindName(ex_desc.name.clone()));
-      } else if let Some(e) = ins_no_dupe(&mut env.val_env, ex_desc.name.clone(), vi, Item::Val) {
+      if let Some(e) = ins_check_name(&mut env.val_env, ex_desc.name.clone(), vi, Item::Val) {
         st.err(spec, e);
       }
     }

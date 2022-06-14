@@ -5,7 +5,7 @@ use crate::types::{
   ValEnv, ValInfo,
 };
 use crate::unify::unify;
-use crate::util::{apply, cannot_bind_val, get_env, get_ty_info, ins_no_dupe};
+use crate::util::{apply, get_env, get_ty_info, ins_check_name, ins_no_dupe};
 use crate::{exp, pat, ty};
 use std::sync::Arc;
 
@@ -146,9 +146,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
               ty_scheme: TyScheme::zero(ty),
               id_status: IdStatus::Exn(exn),
             };
-            if cannot_bind_val(name.as_str()) {
-              st.err(dec, ErrorKind::InvalidRebindName(name.clone()));
-            } else if let Some(e) = ins_no_dupe(&mut val_env, name.clone(), vi, Item::Val) {
+            if let Some(e) = ins_check_name(&mut val_env, name.clone(), vi, Item::Val) {
               st.err(dec, e);
             }
           }
@@ -267,9 +265,7 @@ pub(crate) fn get_dat_binds(
         ty_scheme,
         id_status: IdStatus::Con,
       };
-      if cannot_bind_val(con_bind.name.as_str()) {
-        st.err(idx, ErrorKind::InvalidRebindName(con_bind.name.clone()));
-      } else if let Some(e) = ins_no_dupe(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
+      if let Some(e) = ins_check_name(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
         st.err(idx, e);
       }
     }

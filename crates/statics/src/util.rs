@@ -122,11 +122,6 @@ pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
   }
 }
 
-/// returns whether this is a forbidden value name.
-pub(crate) fn cannot_bind_val(s: &str) -> bool {
-  matches!(s, "true" | "false" | "nil" | "::" | "ref")
-}
-
 /// inserts (name, val) into the map, but returns Some(e) if name was already a key, where e is an
 /// error describing this transgression.
 #[must_use]
@@ -139,6 +134,18 @@ pub(crate) fn ins_no_dupe<V>(
   map
     .insert(name.clone(), val)
     .map(|_| ErrorKind::Duplicate(item, name))
+}
+
+#[must_use]
+pub(crate) fn ins_check_name<V>(
+  map: &mut FxHashMap<hir::Name, V>,
+  name: hir::Name,
+  val: V,
+  item: Item,
+) -> Option<ErrorKind> {
+  matches!(name.as_str(), "true" | "false" | "nil" | "::" | "ref")
+    .then(|| ErrorKind::InvalidRebindName(name.clone()))
+    .or_else(|| ins_no_dupe(map, name, val, item))
 }
 
 /// returns either the ty info in the `env` reached by the `path` or an error describing why we
