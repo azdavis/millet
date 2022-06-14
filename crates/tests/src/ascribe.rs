@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -478,7 +478,7 @@ val _ = S.x : int
 
 #[test]
 fn exn() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   exception E

@@ -497,7 +497,7 @@ fn ty_info_enrich(st: &mut St, general: &TyInfo, specific: &TyInfo, idx: hir::Id
   for (name, specific) in specific.val_env.iter() {
     match general_val_env.remove(name) {
       Some(general) => {
-        if general.id_status != specific.id_status {
+        if !general.id_status.same_kind_as(&specific.id_status) {
           st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
         }
         eq_ty_scheme(st, &general.ty_scheme, &specific.ty_scheme, idx);
@@ -518,7 +518,9 @@ fn val_info_enrich(
   idx: hir::Idx,
 ) {
   generalizes(st, &general.ty_scheme, &specific.ty_scheme, idx);
-  if general.id_status != specific.id_status && specific.id_status != IdStatus::Val {
+  if !general.id_status.same_kind_as(&specific.id_status)
+    && !matches!(specific.id_status, IdStatus::Val)
+  {
     st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
   }
 }

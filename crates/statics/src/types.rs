@@ -510,11 +510,20 @@ pub(crate) struct ValInfo {
 }
 
 /// Definition: IdStatus
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub(crate) enum IdStatus {
   Con,
   Exn(Exn),
   Val,
+}
+
+impl IdStatus {
+  pub(crate) fn same_kind_as(&self, other: &Self) -> bool {
+    matches!(
+      (self, other),
+      (Self::Con, Self::Con) | (Self::Exn(_), Self::Exn(_)) | (Self::Val, Self::Val)
+    )
+  }
 }
 
 /// Definition: Env
