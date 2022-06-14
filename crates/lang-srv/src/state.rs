@@ -173,9 +173,10 @@ impl State {
       // this is now the _old_ has_diagnostics.
       for url in has_diagnostics {
         if self.has_diagnostics.contains(&url) {
+          // had old diagnostics, and has new diagnostics. we just sent the new ones.
           continue;
         }
-        // did used to have diagnostics, now don't. clear the diagnostics.
+        // had old diagnostics, but no new diagnostics. clear the old diagnostics.
         self.send_notification::<lsp_types::notification::PublishDiagnostics>(
           lsp_types::PublishDiagnosticsParams {
             uri: url,
