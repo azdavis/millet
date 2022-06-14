@@ -54,13 +54,17 @@ impl State {
         ),
       }],
     });
-    ret.publish_diagnostics();
+    let (ok_files, err_files) = get_files(&ret.root);
+    ret.publish_diagnostics(ok_files, err_files);
     ret
   }
 
-  fn publish_diagnostics(&mut self) {
-    let mut new_has_diagnostics = FxHashSet::<Url>::default();
-    let (ok_files, err_files) = get_files(&self.root);
+  fn publish_diagnostics(
+    &mut self,
+    ok_files: Files<String>,
+    err_files: Files<Error>,
+  ) -> FxHashSet<Url> {
+    let mut has_diagnostics = FxHashSet::<Url>::default();
     let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
     let file_errors = err_files
       .into_iter()
@@ -83,8 +87,7 @@ impl State {
       .chain(analysis_errors)
       .take(MAX_FILES_WITH_ERRORS);
     for (url, errors) in errors {
-      new_has_diagnostics.insert(url.clone());
-      self.has_diagnostics.remove(&url);
+      has_diagnostics.insert(url.clone());
       self.send_notification::<lsp_types::notification::PublishDiagnostics>(
         lsp_types::PublishDiagnosticsParams {
           uri: url,
@@ -101,16 +104,7 @@ impl State {
         },
       );
     }
-    std::mem::swap(&mut new_has_diagnostics, &mut self.has_diagnostics);
-    for url in new_has_diagnostics {
-      self.send_notification::<lsp_types::notification::PublishDiagnostics>(
-        lsp_types::PublishDiagnosticsParams {
-          uri: url,
-          diagnostics: Vec::new(),
-          version: None,
-        },
-      );
-    }
+    has_diagnostics
   }
 
   pub(crate) fn send_request<R>(&mut self, params: R::Params)
@@ -167,7 +161,23 @@ impl State {
     mut n: lsp_server::Notification,
   ) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      self.publish_diagnostics()
+      let (ok_files, err_files) = get_files(&self.root);
+      let mut has_diagnostics = self.publish_diagnostics(ok_files, err_files);
+      std::mem::swap(&mut has_diagnostics, &mut self.has_diagnostics);
+      // this is now the _old_ has_diagnostics.
+      for url in has_diagnostics {
+        if self.has_diagnostics.contains(&url) {
+          continue;
+        }
+        // did used to have diagnostics, now don't. clear the diagnostics.
+        self.send_notification::<lsp_types::notification::PublishDiagnostics>(
+          lsp_types::PublishDiagnosticsParams {
+            uri: url,
+            diagnostics: Vec::new(),
+            version: None,
+          },
+        );
+      }
     })?;
     ControlFlow::Continue(n)
   }
@@ -220,8 +230,6 @@ where
 type Files<T> = Vec<(Url, T)>;
 
 /// Returns all the SML files referenced by SMLNJ CM files in this workspace.
-///
-/// Ignores file IO errors, etc.
 ///
 /// NOTE: This uses CM files to discover SML files, but doesn't, in the slightest, implement any
 /// cm features like privacy of exports. We just parse cm files to get the sml filenames.
