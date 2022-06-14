@@ -13,12 +13,12 @@ mod lower;
 mod parse;
 mod types;
 
-pub use types::{Export, Name, Namespace};
+pub use types::{CMFile, Export, Name, Namespace};
 
 /// Turn the contents of a CM file into exports and members.
-pub fn get(s: &str) -> anyhow::Result<(Vec<Export>, Vec<std::path::PathBuf>)> {
+pub fn get(s: &str) -> anyhow::Result<CMFile> {
   let tokens = lex::get(s)?;
   let root = parse::get(&tokens)?;
-  let members = lower::get(root)?;
-  Ok(members)
+  let file = lower::get(root)?;
+  Ok(file)
 }

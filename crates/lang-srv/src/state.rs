@@ -310,7 +310,7 @@ fn get_files(root: &Url) -> (Files<String>, Files<Error>) {
       }
     };
     let members = match cm::get(&contents) {
-      Ok((_, x)) => x,
+      Ok(file) => file.sml,
       Err(e) => {
         err.push((url, e));
         continue;

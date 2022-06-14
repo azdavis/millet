@@ -4,6 +4,13 @@ use smol_str::SmolStr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+#[derive(Debug)]
+pub struct CMFile {
+  pub exports: Vec<Export>,
+  pub sml: Vec<std::path::PathBuf>,
+  pub cm: Vec<std::path::PathBuf>,
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Name(SmolStr);
 
