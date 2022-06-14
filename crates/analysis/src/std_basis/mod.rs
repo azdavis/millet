@@ -46,7 +46,7 @@ const ORDER: &[&str] = &[
   include_str!("pack-word.sml"),
 ];
 
-pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
+static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
   let begin = std::time::Instant::now();
   let mut st = statics::Statics::default();
   let mode = statics::Mode::Declaration;
@@ -73,3 +73,34 @@ pub(crate) static SYMS_AND_BS: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(||
   log::info!("got std_basis in {:?}", end.duration_since(begin));
   (st.syms, st.bs)
 });
+
+/// What standard basis to use.
+#[derive(Debug, Clone, Copy)]
+pub enum StdBasis {
+  /// Include most of the standard basis library.
+  Full,
+  /// Only include fundamental top-level definitions like `int`, `real`, `ref`, `<`, etc.
+  Minimal,
+}
+
+impl Default for StdBasis {
+  fn default() -> Self {
+    Self::Full
+  }
+}
+
+impl StdBasis {
+  pub(crate) fn into_statics(self) -> statics::Statics {
+    match self {
+      StdBasis::Full => {
+        let (syms, bs) = FULL.clone();
+        statics::Statics {
+          syms,
+          bs,
+          errors: Vec::new(),
+        }
+      }
+      StdBasis::Minimal => statics::Statics::default(),
+    }
+  }
+}

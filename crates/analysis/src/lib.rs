@@ -8,6 +8,8 @@ mod std_basis;
 
 use syntax::{ast::AstNode as _, rowan::TextRange};
 
+pub use std_basis::StdBasis;
+
 /// An error.
 #[derive(Debug)]
 pub struct Error {
@@ -15,21 +17,6 @@ pub struct Error {
   pub range: TextRange,
   /// The message of the error.
   pub message: String,
-}
-
-/// What standard basis to use.
-#[derive(Debug, Clone, Copy)]
-pub enum StdBasis {
-  /// Include most of the standard basis library.
-  Full,
-  /// Only include fundamental top-level definitions like `int`, `real`, `ref`, `<`, etc.
-  Minimal,
-}
-
-impl Default for StdBasis {
-  fn default() -> Self {
-    Self::Full
-  }
 }
 
 /// Performs analysis.
@@ -52,17 +39,7 @@ impl Analysis {
     I: Iterator<Item = &'a str>,
   {
     let mut files: Vec<_> = files.map(AnalyzedFile::new).collect();
-    let mut st = match self.std_basis {
-      StdBasis::Full => {
-        let (syms, bs) = std_basis::SYMS_AND_BS.clone();
-        statics::Statics {
-          syms,
-          bs,
-          errors: Vec::new(),
-        }
-      }
-      StdBasis::Minimal => statics::Statics::default(),
-    };
+    let mut st = self.std_basis.into_statics();
     let mode = statics::Mode::Regular;
     for file in files.iter_mut() {
       statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
