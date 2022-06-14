@@ -8,27 +8,26 @@ priority is approximate. if unsure of priority, put in low.
   - stick in readme
   - and 'icon' field of package.json
   - that icon needs to be 128x128 png
-- support multiple files via a subset of CM file support
-- support no root (just analyze each file in isolation)
+- support multiple files better
+  - already have rudimentary CM
+  - maybe use MLB instead
+- support no root
+  - just analyze each file in isolation
 - impl more LSP features
   - jump to definition
   - hover for type/documentation/info
-- add more of the standard basis
-  - https://smlfamily.github.io/Basis/
-  - bootstrap?
 
 ## medium
 
 - improve statics for type variables
   - performing closure operations
   - checking whether expressions are expansive (oh no!)
-  - type variables in signatures
 - handle equality types
   - in type variables
   - `eqtype` vs `type`
   - various side conditions on modules, `datatype`, possibly others
 - get better error messages
-  - improve ranges of stuff
+  - improve ranges of stuff (names?)
   - show fully qualified names in type errors
   - related: avoid clashes between ty vars
   - show something better than `_` for meta vars?
@@ -43,15 +42,10 @@ priority is approximate. if unsure of priority, put in low.
 
 - make website
   - with 'verified ownership' or whatever
-- parse more derived forms
-  - specifications
-  - signature expressions
-  - programs?
 - implement statics for weird constructs
   - `abstype`
   - `#` selectors
   - more generally, `...` pats
-  - `sharing` spec
 - impl more tools
   - auto formatter
   - style linter
@@ -60,9 +54,5 @@ priority is approximate. if unsure of priority, put in low.
     - unnecessary `()`
     - `if x then false else true`, etc
   - interpreter (hard)
-- try not to clone the whole damn cx in statics?
-  - especially in dec?
 - use `type Seq<T> = Box<[T]>` instead of `Vec<T>` in hir, etc?
 - forbid symbolic names in some cases in parsing?
-- talk about how statics errors should use an abstract 'Entity' (currently just 'this expression' or 'this declaration' etc) and this entity gets turned into an actual text range somewhere else (lower::Ptrs)
-- could add more to this, like 'the name of the third con bind in the second dat bind of this datatype dec'

@@ -58,15 +58,17 @@ type ExpIdx = Option<Idx<Exp>>;
 
 ### `crates/lex`
 
-Lexes ("tokenizes") a string into tokens. Basically this:
-
-```
+```rs
 String -> (Vec<syntax::Token>, Vec<LexError>)
 ```
 
-Note that it's _not_ this:
+Note that for this and all of the rest of the "passes", the "signatures" given, like the one above, are not exact.
 
-```
+Lexes ("tokenizes") a string into tokens.
+
+Note that the signature is _not_ this:
+
+```rs
 String -> Result<Vec<syntax::Token>, Vec<LexError>>
 ```
 
@@ -75,6 +77,10 @@ That is to say, we always produce _both_ whatever tokens we could _and_ as many 
 The idea is: we want to analyze as much of the code as possible as far as possible, even if the information we have is imperfect.
 
 ### `crates/parse`
+
+```rs
+Vec<syntax::Token> -> (syntax::ast::Root, Vec<ParseError>)
+```
 
 Parses a sequence of tokens into a sequence of "events". Events are like:
 
@@ -85,22 +91,20 @@ Parses a sequence of tokens into a sequence of "events". Events are like:
 
 Then processes those events to build a lossless syntax tree, wrapped in the AST API.
 
-Basically this:
-
-```
-Vec<syntax::Token> -> (syntax::ast::Root, Vec<ParseError>)
-```
-
 ### `crates/lower`
+
+```rs
+syntax::ast::Root -> (hir::Root, TwoWayPointers, Vec<LowerError>)
+```
 
 Lowers ("elaborates") AST into HIR.
 
 When lowering, we turn complex constructs into more fundamental ones. For instance:
 
-```
-    if a then b else c
-==> case a of true => b | false => c
-==> (fn true => b | false => c) a
+```sml
+(* original *) if a then b else c
+(* lowered  *) case a of true => b | false => c
+(* again    *) (fn true => b | false => c) a
 ```
 
 We also construct a two-way mapping between HIR indices and "pointers" to AST nodes. Each direction has a use:
@@ -108,23 +112,27 @@ We also construct a two-way mapping between HIR indices and "pointers" to AST no
 - HIR -> AST: for recovering the text range for which to report an error for a HIR index.
 - AST -> HIR: for knowing what HIR index is e.g. being hovered over by the client.
 
-Basically this:
+### `crates/ty-var-scope`
 
+```rs
+hir::Root -> hir::Root
 ```
-syntax::ast::Root -> (hir::Root, TwoWayPointers, Vec<LowerError>)
-```
+
+Handles adding implicitly-scoped type variables to their `val` declaration/specification binding sites.
 
 ### `crates/statics`
+
+```rs
+(statics::State, hir::Root) -> (statics::State, Vec<StaticsError>)
+```
 
 Does static analysis ("typechecking") on HIR.
 
 The other passes thus far operate on single files, but this one is meant to be run "across" many files. So we take in and give out updated state.
 
-Basically this:
+Statics errors use an abstract `Idx`, and this index gets turned into an actual text range with the `TwoWayPointers` from lower.
 
-```
-(statics::State, hir::Root) -> (statics::State, Vec<StaticsError>)
-```
+NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), like "the name of the third con bind in the second dat bind of this datatype dec".
 
 ### `crates/analysis`
 
