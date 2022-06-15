@@ -222,6 +222,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
           VariantName::Exn(exn) => self.syms.get_exn(exn).0.as_str(),
         };
         let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
+        // these names are guaranteed not to be rebound, so they always are list constructors.
         if matches!(name, "nil" | "::") {
           let mut ac = Vec::new();
           match list_pat(&mut ac, self.pat) {

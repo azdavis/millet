@@ -421,40 +421,6 @@ val _: int = #1 (3, "hi")
 }
 
 #[test]
-fn vector() {
-  check(
-    r#"
-val _ = #[1, 2]
-(**     ^^^^^^^ unsupported language construct: vector expressions *)
-"#,
-  );
-}
-
-#[test]
-fn sig_not_top_level() {
-  check(
-    r#"
-structure A = struct
-    signature B = sig end
-(** ^^^^^^^^^^^^^^^^^^^^^ `signature` declarations must be at the top level *)
-end
-"#,
-  );
-}
-
-#[test]
-fn functor_not_top_level() {
-  check(
-    r#"
-structure A = struct
-    functor F() = struct end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^ `functor` declarations must be at the top level *)
-end
-"#,
-  );
-}
-
-#[test]
 fn subst_inside() {
   check(
     r#"
