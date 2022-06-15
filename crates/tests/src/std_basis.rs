@@ -1,6 +1,11 @@
 use crate::check::check_with_std_basis;
 
 #[test]
+fn smoke() {
+  check_with_std_basis("");
+}
+
+#[test]
 fn option() {
   check_with_std_basis(
     r#"
