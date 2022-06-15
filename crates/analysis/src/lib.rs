@@ -8,6 +8,7 @@ mod std_basis;
 
 use fast_hash::{FxHashMap, FxHashSet};
 use paths::PathId;
+use statics::Mode::Regular;
 use syntax::{ast::AstNode as _, rowan::TextRange};
 
 pub use std_basis::StdBasis;
@@ -63,15 +64,14 @@ impl Analysis {
     let order = topo_sort::get(&graph).unwrap_or_default();
     // TODO require explicit basis import
     let mut st = self.std_basis.into_statics();
-    let mode = statics::Mode::Regular;
     order
       .into_iter()
       .flat_map(|path| groups.get(&path).into_iter().flat_map(|x| x.files.iter()))
       .map(|(path, s)| {
-        let mut file = AnalyzedFile::new(s);
-        statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
-        file.statics_errors = std::mem::take(&mut st.errors);
-        (*path, file.into_errors(&st.syms).collect())
+        let mut f = AnalyzedFile::new(s);
+        statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+        f.statics_errors = std::mem::take(&mut st.errors);
+        (*path, f.into_errors(&st.syms).collect())
       })
       .collect()
   }
@@ -84,13 +84,12 @@ impl Analysis {
     I: Iterator<Item = &'a str>,
   {
     let mut st = self.std_basis.into_statics();
-    let mode = statics::Mode::Regular;
     files
       .map(|s| {
-        let mut file = AnalyzedFile::new(s);
-        statics::get(&mut st, mode, &file.lowered.arenas, &file.lowered.top_decs);
-        file.statics_errors = std::mem::take(&mut st.errors);
-        file.into_errors(&st.syms).collect()
+        let mut f = AnalyzedFile::new(s);
+        statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+        f.statics_errors = std::mem::take(&mut st.errors);
+        f.into_errors(&st.syms).collect()
       })
       .collect()
   }
