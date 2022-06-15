@@ -1,12 +1,11 @@
 //! See [`State`].
 
-use anyhow::{anyhow, bail, Context, Error, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
 use lsp_types::{notification::Notification as _, Url};
 use std::ops::ControlFlow;
-use walkdir::WalkDir;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
@@ -25,7 +24,6 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   }
 }
 
-const NEW: bool = true;
 const SOURCE: &str = "millet";
 const ROOT_GROUP: &str = "sources.cm";
 const MAX_FILES_WITH_ERRORS: usize = 20;
@@ -187,77 +185,37 @@ impl State {
       None => return false,
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    if NEW {
-      let input = match get_input(&mut root.path) {
-        Ok(x) => x,
-        // TODO show this?
-        Err(e) => {
-          log::error!("could not get input: {e:#}");
-          self.show_error(format!("{e:#}"));
-          self.root = Some(root);
-          return false;
+    let input = match get_input(&mut root.path) {
+      Ok(x) => x,
+      // TODO show this?
+      Err(e) => {
+        log::error!("could not get input: {e:#}");
+        self.show_error(format!("{e:#}"));
+        self.root = Some(root);
+        return false;
+      }
+    };
+    for (path_id, errors) in self
+      .analysis
+      .get_many(&input)
+      .into_iter()
+      .take(MAX_FILES_WITH_ERRORS)
+    {
+      let pos_db = match input.sources.get(&path_id) {
+        Some(s) => text_pos::PositionDb::new(s),
+        None => {
+          log::error!("no contents for {path_id:?}");
+          continue;
         }
       };
-      for (path_id, errors) in self
-        .analysis
-        .get_many(&input)
-        .into_iter()
-        .take(MAX_FILES_WITH_ERRORS)
-      {
-        let pos_db = match input.sources.get(&path_id) {
-          Some(s) => text_pos::PositionDb::new(s),
-          None => {
-            log::error!("no contents for {path_id:?}");
-            continue;
-          }
-        };
-        let path = root.path.get_path(path_id);
-        let url = match Url::parse(&format!("file://{}", path.as_path().display())) {
-          Ok(x) => x,
-          Err(_) => continue,
-        };
-        let d = diagnostics(&pos_db, errors);
-        has_diagnostics.insert(url.clone());
-        self.send_diagnostics(url, d);
-      }
-    } else {
-      let (ok_files, err_files) = get_files(root.path.as_path());
-      let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
-      let file_errors = err_files
-        .into_iter()
-        .map(|(url, error)| (url, vec![(lsp_types::Range::default(), error.to_string())]));
-      let analysis_errors =
-        ok_files
-          .into_iter()
-          .zip(analysis_errors)
-          .map(|((url, contents), errors)| {
-            let pos_db = text_pos::PositionDb::new(&contents);
-            let errors: Vec<_> = errors
-              .into_iter()
-              .map(|e| (lsp_range(pos_db.range(e.range)), e.message))
-              .take(MAX_ERRORS_PER_FILE)
-              .collect();
-            (url, errors)
-          });
-      let errors = std::iter::empty()
-        .chain(file_errors)
-        .chain(analysis_errors)
-        .take(MAX_FILES_WITH_ERRORS);
-      for (url, errors) in errors {
-        has_diagnostics.insert(url.clone());
-        self.send_diagnostics(
-          url,
-          errors
-            .into_iter()
-            .map(|(range, message)| lsp_types::Diagnostic {
-              range,
-              message,
-              source: Some(SOURCE.to_owned()),
-              ..Default::default()
-            })
-            .collect(),
-        );
-      }
+      let path = root.path.get_path(path_id);
+      let url = match Url::parse(&format!("file://{}", path.as_path().display())) {
+        Ok(x) => x,
+        Err(_) => continue,
+      };
+      let d = diagnostics(&pos_db, errors);
+      has_diagnostics.insert(url.clone());
+      self.send_diagnostics(url, d);
     }
     // this is the old one.
     for url in root.has_diagnostics {
@@ -375,64 +333,6 @@ fn get_path_id(root: &mut paths::Root, path: &std::path::Path) -> Result<paths::
 
 fn read_file(path: &std::path::Path) -> Result<String> {
   std::fs::read_to_string(path).with_context(|| format!("couldn't read {}", path.display()))
-}
-
-type Files<T> = Vec<(Url, T)>;
-
-/// Returns all the SML files referenced by SMLNJ CM files in this workspace.
-///
-/// NOTE: This uses CM files to discover SML files, but doesn't, in the slightest, implement any
-/// cm features like privacy of exports. We just parse cm files to get the sml filenames.
-fn get_files(root: &std::path::Path) -> (Files<String>, Files<Error>) {
-  let mut ok = Files::<String>::new();
-  let mut err = Files::<Error>::new();
-  for entry in WalkDir::new(root).sort_by_file_name() {
-    let entry = match entry {
-      Ok(x) => x,
-      Err(_) => continue,
-    };
-    let path = entry.path();
-    if path.extension().map_or(true, |x| x != "cm") {
-      continue;
-    }
-    let url = match Url::parse(&format!("file://{}", path.display())) {
-      Ok(x) => x,
-      Err(_) => continue,
-    };
-    let contents = match std::fs::read_to_string(path) {
-      Ok(x) => x,
-      Err(e) => {
-        err.push((url, e.into()));
-        continue;
-      }
-    };
-    let members = match cm::get(&contents) {
-      Ok(file) => file.sml,
-      Err(e) => {
-        err.push((url, e));
-        continue;
-      }
-    };
-    let parent = match entry.path().parent() {
-      Some(x) => x,
-      None => {
-        err.push((url, anyhow!("no parent")));
-        continue;
-      }
-    };
-    for path in members.into_iter() {
-      let path = parent.join(&path);
-      let url = match Url::parse(&format!("file://{}", path.display())) {
-        Ok(x) => x,
-        Err(_) => continue,
-      };
-      match std::fs::read_to_string(&path) {
-        Ok(contents) => ok.push((url, contents)),
-        Err(e) => err.push((url, e.into())),
-      }
-    }
-  }
-  (ok, err)
 }
 
 fn canonical_path_buf(url: Url) -> Result<paths::CanonicalPathBuf> {

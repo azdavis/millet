@@ -102,26 +102,6 @@ impl Analysis {
       })
       .collect()
   }
-
-  /// Returns a Vec of Vec of errors for each file.
-  ///
-  /// The length of the returned Vec will be the same as the length of files.
-  ///
-  /// TODO remove.
-  pub fn get<'a, I>(&self, files: I) -> Vec<Vec<Error>>
-  where
-    I: Iterator<Item = &'a str>,
-  {
-    let mut st = self.std_basis.into_statics();
-    files
-      .map(|s| {
-        let mut f = AnalyzedFile::new(s);
-        statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
-        f.statics_errors = std::mem::take(&mut st.errors);
-        f.into_errors(&st.syms).collect()
-      })
-      .collect()
-  }
 }
 
 struct AnalyzedFile {
