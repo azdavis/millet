@@ -82,64 +82,6 @@ impl State {
     ret
   }
 
-  fn publish_diagnostics(&mut self) -> bool {
-    let mut root = match self.root.take() {
-      Some(x) => x,
-      None => return false,
-    };
-    let mut has_diagnostics = FxHashSet::<Url>::default();
-    let (ok_files, err_files) = get_files(root.path.as_path());
-    let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
-    let file_errors = err_files
-      .into_iter()
-      .map(|(url, error)| (url, vec![(lsp_types::Range::default(), error.to_string())]));
-    let analysis_errors =
-      ok_files
-        .into_iter()
-        .zip(analysis_errors)
-        .map(|((url, contents), errors)| {
-          let pos_db = text_pos::PositionDb::new(&contents);
-          let errors: Vec<_> = errors
-            .into_iter()
-            .map(|e| (lsp_range(pos_db.range(e.range)), e.message))
-            .take(MAX_ERRORS_PER_FILE)
-            .collect();
-          (url, errors)
-        });
-    let errors = std::iter::empty()
-      .chain(file_errors)
-      .chain(analysis_errors)
-      .take(MAX_FILES_WITH_ERRORS);
-    for (url, errors) in errors {
-      has_diagnostics.insert(url.clone());
-      self.send_diagnostics(
-        url,
-        errors
-          .into_iter()
-          .map(|(range, message)| lsp_types::Diagnostic {
-            range,
-            message,
-            source: Some(SOURCE.to_owned()),
-            ..Default::default()
-          })
-          .collect(),
-      );
-    }
-    // this is the old one.
-    for url in root.has_diagnostics {
-      // this is the new one.
-      if has_diagnostics.contains(&url) {
-        // had old diagnostics, and has new diagnostics. we just sent the new ones.
-        continue;
-      }
-      // had old diagnostics, but no new diagnostics. clear the old diagnostics.
-      self.send_diagnostics(url, Vec::new());
-    }
-    root.has_diagnostics = has_diagnostics;
-    self.root = Some(root);
-    true
-  }
-
   pub(crate) fn send_request<R>(&mut self, params: R::Params)
   where
     R: lsp_types::request::Request,
@@ -223,6 +165,71 @@ impl State {
     ControlFlow::Continue(n)
   }
 
+  fn send(&self, msg: Message) {
+    log::debug!("sending {msg:?}");
+    self.sender.send(msg).unwrap()
+  }
+
+  // diagnostics //
+
+  fn publish_diagnostics(&mut self) -> bool {
+    let mut root = match self.root.take() {
+      Some(x) => x,
+      None => return false,
+    };
+    let mut has_diagnostics = FxHashSet::<Url>::default();
+    let (ok_files, err_files) = get_files(root.path.as_path());
+    let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
+    let file_errors = err_files
+      .into_iter()
+      .map(|(url, error)| (url, vec![(lsp_types::Range::default(), error.to_string())]));
+    let analysis_errors =
+      ok_files
+        .into_iter()
+        .zip(analysis_errors)
+        .map(|((url, contents), errors)| {
+          let pos_db = text_pos::PositionDb::new(&contents);
+          let errors: Vec<_> = errors
+            .into_iter()
+            .map(|e| (lsp_range(pos_db.range(e.range)), e.message))
+            .take(MAX_ERRORS_PER_FILE)
+            .collect();
+          (url, errors)
+        });
+    let errors = std::iter::empty()
+      .chain(file_errors)
+      .chain(analysis_errors)
+      .take(MAX_FILES_WITH_ERRORS);
+    for (url, errors) in errors {
+      has_diagnostics.insert(url.clone());
+      self.send_diagnostics(
+        url,
+        errors
+          .into_iter()
+          .map(|(range, message)| lsp_types::Diagnostic {
+            range,
+            message,
+            source: Some(SOURCE.to_owned()),
+            ..Default::default()
+          })
+          .collect(),
+      );
+    }
+    // this is the old one.
+    for url in root.has_diagnostics {
+      // this is the new one.
+      if has_diagnostics.contains(&url) {
+        // had old diagnostics, and has new diagnostics. we just sent the new ones.
+        continue;
+      }
+      // had old diagnostics, but no new diagnostics. clear the old diagnostics.
+      self.send_diagnostics(url, Vec::new());
+    }
+    root.has_diagnostics = has_diagnostics;
+    self.root = Some(root);
+    true
+  }
+
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
     let pos_db = text_pos::PositionDb::new(text);
     self.send_diagnostics(url, diagnostics(&pos_db, self.analysis.get_one(text)));
@@ -236,11 +243,6 @@ impl State {
         version: None,
       },
     );
-  }
-
-  fn send(&self, msg: Message) {
-    log::debug!("sending {msg:?}");
-    self.sender.send(msg).unwrap()
   }
 }
 
