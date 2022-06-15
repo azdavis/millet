@@ -82,10 +82,10 @@ impl State {
     ret
   }
 
-  fn publish_diagnostics(&mut self) {
+  fn publish_diagnostics(&mut self) -> bool {
     let mut root = match self.root.take() {
       Some(x) => x,
-      None => return,
+      None => return false,
     };
     let (ok_files, err_files) = get_files(root.path.as_path());
     let mut has_diagnostics = FxHashSet::<Url>::default();
@@ -137,6 +137,7 @@ impl State {
     }
     root.has_diagnostics = has_diagnostics;
     self.root = Some(root);
+    true
   }
 
   pub(crate) fn send_request<R>(&mut self, params: R::Params)
