@@ -60,8 +60,6 @@ impl State {
       analysis: analysis::Analysis::default(),
     };
     if let Some(root) = &ret.root {
-      // do stuff that uses root first...
-      let (ok_files, err_files) = get_files(root.path.as_path());
       let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.path.as_path().display());
       // ... then end the borrow and mutate `ret`, to satisfy the borrow checker.
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
@@ -79,16 +77,17 @@ impl State {
           ),
         }],
       });
-      ret.publish_diagnostics(ok_files, err_files);
+      ret.publish_diagnostics();
     }
     ret
   }
 
-  fn publish_diagnostics(
-    &mut self,
-    ok_files: Files<String>,
-    err_files: Files<Error>,
-  ) -> FxHashSet<Url> {
+  fn publish_diagnostics(&mut self) {
+    let mut root = match self.root.take() {
+      Some(x) => x,
+      None => return,
+    };
+    let (ok_files, err_files) = get_files(root.path.as_path());
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
     let file_errors = err_files
@@ -126,7 +125,18 @@ impl State {
           .collect(),
       );
     }
-    has_diagnostics
+    // this is the old one.
+    for url in root.has_diagnostics {
+      // this is the new one.
+      if has_diagnostics.contains(&url) {
+        // had old diagnostics, and has new diagnostics. we just sent the new ones.
+        continue;
+      }
+      // had old diagnostics, but no new diagnostics. clear the old diagnostics.
+      self.send_diagnostics(url, Vec::new());
+    }
+    root.has_diagnostics = has_diagnostics;
+    self.root = Some(root);
   }
 
   pub(crate) fn send_request<R>(&mut self, params: R::Params)
@@ -183,23 +193,7 @@ impl State {
     mut n: lsp_server::Notification,
   ) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      let mut root = match self.root.take() {
-        Some(x) => x,
-        None => return,
-      };
-      let (ok_files, err_files) = get_files(root.path.as_path());
-      let new_diagnostics = self.publish_diagnostics(ok_files, err_files);
-      // this is the old one.
-      for url in root.has_diagnostics {
-        if new_diagnostics.contains(&url) {
-          // had old diagnostics, and has new diagnostics. we just sent the new ones.
-          continue;
-        }
-        // had old diagnostics, but no new diagnostics. clear the old diagnostics.
-        self.send_diagnostics(url, Vec::new());
-      }
-      root.has_diagnostics = new_diagnostics;
-      self.root = Some(root);
+      self.publish_diagnostics();
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
       if self.root.is_some() {
