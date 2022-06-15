@@ -52,3 +52,37 @@ val _ =
 "#,
   );
 }
+
+#[test]
+fn general() {
+  check_with_std_basis(
+    r#"
+val _ = 0 handle
+    Bind => 1
+  | Match => 2
+  | Chr => 3
+  | Div => 4
+  | Domain => 5
+  | Fail s => 6
+  | Overflow => 7
+  | Size => 8
+  | Span => 9
+  | Subscript => 10
+
+val _ = exnName Bind
+val _ = exnMessage Match
+
+val x = ref 3 : int ref
+val _ = !x : int
+val () = x := 4
+
+fun add x y = x + y
+fun mul x y = x * y
+val mul2AfterAdd3 = mul 2 o add 3
+
+val () = ignore "hi"
+val _: string = "what up" before ()
+val _: int = 3 + 4 before ignore "hey"
+  "#,
+  );
+}
