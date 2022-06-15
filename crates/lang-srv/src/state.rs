@@ -361,6 +361,7 @@ fn diagnostics(
 ) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
+    .take(MAX_ERRORS_PER_FILE)
     .map(|x| lsp_types::Diagnostic {
       range: lsp_range(pos_db.range(x.range)),
       message: x.message,
