@@ -114,18 +114,22 @@ impl<'a> Check<'a> {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
-    let group = analysis::Group {
-      files: (0..ss.len()).map(paths::PathId::from_raw).collect(),
-      dependencies: FxHashSet::default(),
+    let input = analysis::Input {
+      sources: ss
+        .iter()
+        .enumerate()
+        .map(|(idx, &s)| (paths::PathId::from_raw(idx), s.to_owned()))
+        .collect(),
+      groups: map([(
+        paths::PathId::from_raw(ss.len()),
+        analysis::Group {
+          source_files: (0..ss.len()).map(paths::PathId::from_raw).collect(),
+          dependencies: FxHashSet::default(),
+        },
+      )]),
     };
-    let contents: FxHashMap<_, _> = ss
-      .iter()
-      .enumerate()
-      .map(|(idx, &s)| (paths::PathId::from_raw(idx), s.to_owned()))
-      .collect();
-    let group_id = paths::PathId::from_raw(group.files.len());
     let err = analysis::Analysis::new(std_basis)
-      .get_new(&map([(group_id, group)]), &contents)
+      .get_new(&input)
       .into_iter()
       .flat_map(|(id, errors)| errors.into_iter().map(move |e| (id, e)))
       .next();

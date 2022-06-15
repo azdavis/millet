@@ -28,9 +28,21 @@ pub struct Error {
 #[derive(Debug)]
 pub struct Group {
   /// The source file paths, in order.
-  pub files: Vec<PathId>,
+  pub source_files: Vec<PathId>,
   /// The dependencies of this group on other groups.
   pub dependencies: FxHashSet<PathId>,
+}
+
+/// A map from paths to something.
+pub type PathMap<T> = FxHashMap<PathId, T>;
+
+/// The input to analysis.
+#[derive(Debug, Default)]
+pub struct Input {
+  /// A map from source files to their contents.
+  pub sources: PathMap<String>,
+  /// A map from group files to their (parsed) contents.
+  pub groups: PathMap<Group>,
 }
 
 /// Performs analysis.
@@ -38,9 +50,6 @@ pub struct Group {
 pub struct Analysis {
   std_basis: StdBasis,
 }
-
-/// A map from paths to something.
-pub type PathMap<T> = FxHashMap<PathId, T>;
 
 impl Analysis {
   /// Returns a new `Analysis`.
@@ -57,16 +66,13 @@ impl Analysis {
     f.into_errors(&st.syms).collect()
   }
 
-  /// Given a mapping from group paths to information about a group, returns a mapping from source
-  /// paths to errors.
+  /// Given information about many interdependent source files and their groupings, returns a
+  /// mapping from source paths to errors.
   ///
-  /// TODO remove `get` and rename this to `get`.
-  pub fn get_new(
-    &self,
-    groups: &PathMap<Group>,
-    contents: &PathMap<String>,
-  ) -> PathMap<Vec<Error>> {
-    let graph: topo_sort::Graph<_> = groups
+  /// TODO remove `get` and rename this to `get_many`.
+  pub fn get_new(&self, input: &Input) -> PathMap<Vec<Error>> {
+    let graph: topo_sort::Graph<_> = input
+      .groups
       .iter()
       .map(|(&path, group)| (path, group.dependencies.iter().copied().collect()))
       .collect();
@@ -76,10 +82,16 @@ impl Analysis {
     let mut st = self.std_basis.into_statics();
     order
       .into_iter()
-      .flat_map(|path| groups.get(&path).into_iter().flat_map(|x| x.files.iter()))
+      .flat_map(|path| {
+        input
+          .groups
+          .get(&path)
+          .into_iter()
+          .flat_map(|x| x.source_files.iter())
+      })
       .filter_map(|path| {
         // TODO panic if fail?
-        let s = contents.get(path)?;
+        let s = input.sources.get(path)?;
         let mut f = AnalyzedFile::new(s);
         statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
         f.statics_errors = std::mem::take(&mut st.errors);
