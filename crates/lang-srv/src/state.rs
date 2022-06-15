@@ -208,7 +208,7 @@ impl State {
       }
       let url = params.text_document.uri;
       let text = params.text_document.text;
-      self.publish_diagnostics(vec![(url, text)], vec![]);
+      self.publish_diagnostics_one(url, &text)
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
       if matches!(self.mode, Mode::Root(..)) {
@@ -216,7 +216,7 @@ impl State {
       }
       let url = params.text_document.uri;
       if let Some(text) = params.text {
-        self.publish_diagnostics(vec![(url, text)], vec![]);
+        self.publish_diagnostics_one(url, &text)
       }
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
@@ -227,6 +227,22 @@ impl State {
       self.send_diagnostics(url, Vec::new());
     })?;
     ControlFlow::Continue(n)
+  }
+
+  fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
+    let pos_db = text_pos::PositionDb::new(text);
+    let errors: Vec<_> = self
+      .analysis
+      .get_one(text)
+      .into_iter()
+      .map(|x| lsp_types::Diagnostic {
+        range: lsp_range(pos_db.range(x.range)),
+        message: x.message,
+        source: Some(SOURCE.to_owned()),
+        ..Default::default()
+      })
+      .collect();
+    self.send_diagnostics(url, errors);
   }
 
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {

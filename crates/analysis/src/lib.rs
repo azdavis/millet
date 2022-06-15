@@ -51,6 +51,15 @@ impl Analysis {
     Self { std_basis }
   }
 
+  /// Given the contents of one isolated file, return the errors for it.
+  pub fn get_one(&self, s: &str) -> Vec<Error> {
+    let mut f = AnalyzedFile::new(s);
+    let mut st = self.std_basis.into_statics();
+    statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+    f.statics_errors = std::mem::take(&mut st.errors);
+    f.into_errors(&st.syms).collect()
+  }
+
   /// Given a mapping from group paths to information about a group, returns a mapping from source
   /// paths to errors.
   ///
