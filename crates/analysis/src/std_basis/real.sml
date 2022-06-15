@@ -70,4 +70,4 @@ end
 
 structure Real : REAL
   where type real = real = Real
-structure LargeReal : REAL = struct end
+structure LargeReal : REAL = LargeReal
