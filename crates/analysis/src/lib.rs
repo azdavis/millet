@@ -38,6 +38,9 @@ pub struct Analysis {
   std_basis: StdBasis,
 }
 
+/// A map from paths to something.
+pub type PathMap<T> = FxHashMap<PathId, T>;
+
 impl Analysis {
   /// Returns a new `Analysis`.
   pub fn new(std_basis: StdBasis) -> Self {
@@ -48,7 +51,7 @@ impl Analysis {
   /// paths to errors.
   ///
   /// TODO remove `get` and rename this to `get`.
-  pub fn get_new(&self, groups: &FxHashMap<PathId, Group>) -> FxHashMap<PathId, Vec<Error>> {
+  pub fn get_new(&self, groups: &PathMap<Group>) -> PathMap<Vec<Error>> {
     let graph: topo_sort::Graph<_> = groups
       .iter()
       .map(|(&path, group)| (path, group.dependencies.iter().copied().collect()))
