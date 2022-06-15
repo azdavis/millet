@@ -27,7 +27,7 @@ impl Root {
   }
 
   /// Returns the path underlying this `Root`.
-  pub fn root_path(&self) -> &Path {
+  pub fn as_path(&self) -> &Path {
     self.root.as_path()
   }
 

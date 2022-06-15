@@ -5,7 +5,6 @@ use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
 use lsp_types::{notification::Notification as _, Url};
-use paths::CanonicalPathBuf;
 use std::ops::ControlFlow;
 use walkdir::WalkDir;
 
@@ -32,7 +31,7 @@ const MAX_ERRORS_PER_FILE: usize = 20;
 
 #[derive(Debug)]
 enum Mode {
-  Root(CanonicalPathBuf, FxHashSet<Url>),
+  Root(paths::Root, FxHashSet<Url>),
   NoRoot,
 }
 
@@ -52,7 +51,7 @@ impl State {
     let mut ret = Self {
       // TODO report errors for path buf failure
       mode: match root.and_then(|x| canonical_path_buf(x).ok()) {
-        Some(root) => Mode::Root(root, FxHashSet::default()),
+        Some(root) => Mode::Root(paths::Root::new(root), FxHashSet::default()),
         None => Mode::NoRoot,
       },
       sender,
@@ -61,7 +60,7 @@ impl State {
     };
     if let Mode::Root(root, _) = &ret.mode {
       // do stuff that uses root first...
-      let (ok_files, err_files) = get_files(root);
+      let (ok_files, err_files) = get_files(root.as_path());
       let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.as_path().display());
       // ... then end the borrow and mutate `ret`, to satisfy the borrow checker.
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
@@ -188,7 +187,7 @@ impl State {
         Mode::NoRoot => return,
       };
       let old_diagnostics = old_diagnostics.clone();
-      let (ok_files, err_files) = get_files(root);
+      let (ok_files, err_files) = get_files(root.as_path());
       let new_diagnostics = self.publish_diagnostics(ok_files, err_files);
       for url in old_diagnostics {
         if new_diagnostics.contains(&url) {
@@ -290,10 +289,10 @@ type Files<T> = Vec<(Url, T)>;
 ///
 /// NOTE: This uses CM files to discover SML files, but doesn't, in the slightest, implement any
 /// cm features like privacy of exports. We just parse cm files to get the sml filenames.
-fn get_files(root: &CanonicalPathBuf) -> (Files<String>, Files<Error>) {
+fn get_files(root: &std::path::Path) -> (Files<String>, Files<Error>) {
   let mut ok = Files::<String>::new();
   let mut err = Files::<Error>::new();
-  for entry in WalkDir::new(root.as_path()).sort_by_file_name() {
+  for entry in WalkDir::new(root).sort_by_file_name() {
     let entry = match entry {
       Ok(x) => x,
       Err(_) => continue,
@@ -342,7 +341,7 @@ fn get_files(root: &CanonicalPathBuf) -> (Files<String>, Files<Error>) {
   (ok, err)
 }
 
-fn canonical_path_buf(url: Url) -> Result<CanonicalPathBuf> {
+fn canonical_path_buf(url: Url) -> Result<paths::CanonicalPathBuf> {
   if url.scheme() != "file" {
     bail!("not a file url")
   }
