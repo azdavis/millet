@@ -12,8 +12,8 @@ use fast_hash::FxHashMap;
 #[derive(Debug)]
 pub struct Root {
   root: CanonicalPathBuf,
-  id_to_path: Vec<PathBuf>,
-  path_to_id: FxHashMap<PathBuf, PathId>,
+  id_to_path: Vec<CanonicalPathBuf>,
+  path_to_id: FxHashMap<CanonicalPathBuf, PathId>,
 }
 
 impl Root {
@@ -33,14 +33,14 @@ impl Root {
 
   /// Returns an ID for this path, if the path is in the root.
   pub fn get_id(&mut self, path: &CanonicalPathBuf) -> Result<PathId, StripPrefixError> {
-    let path = path.as_path().strip_prefix(self.root.as_path())?;
+    // don't store the suffix, but compute it.
+    let _ = path.as_path().strip_prefix(self.root.as_path())?;
     let id = match self.path_to_id.get(path) {
       Some(x) => *x,
       None => {
-        let path = path.to_owned();
         let id = PathId(self.id_to_path.len());
         self.id_to_path.push(path.clone());
-        assert!(self.path_to_id.insert(path, id).is_none());
+        assert!(self.path_to_id.insert(path.clone(), id).is_none());
         id
       }
     };
@@ -48,7 +48,7 @@ impl Root {
   }
 
   /// Returns the path for this ID.
-  pub fn get_path(&self, id: PathId) -> &Path {
+  pub fn get_path(&self, id: PathId) -> &CanonicalPathBuf {
     &self.id_to_path[id.0]
   }
 }
@@ -71,7 +71,7 @@ impl PathId {
 }
 
 /// A canonical (and therefore absolute) path buffer.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CanonicalPathBuf(PathBuf);
 
 impl CanonicalPathBuf {
