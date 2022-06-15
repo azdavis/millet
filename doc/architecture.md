@@ -140,6 +140,19 @@ Unifies all the passes into one single API.
 
 This also contains declarations for the bulk of the standard basis library, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
 
+### `crates/cm`
+
+Rudimentary handling (lex, parse, lower) of SML/NJ Compilation Manager (CM) files.
+
+### `crates/paths`
+
+Types for working with paths, notably:
+
+- A wrapper type for `PathBuf` that guarantees the inner `PathBuf` is canonical.
+- A type that transforms these canonical path buffers into cheap IDs, given that a path is "contained" in a "root" canonical path buf.
+
+These are ideal for the use case of language servers, in which we have a "workspace root" containing all the files.
+
 ### `crates/lang-srv`
 
 Depends on `analysis` and a bunch of third party crates to actually construct the language server. This is the only binary target, and only this may perform IO.
