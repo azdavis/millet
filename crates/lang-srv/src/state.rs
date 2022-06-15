@@ -230,18 +230,7 @@ impl State {
 
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
     let pos_db = text_pos::PositionDb::new(text);
-    let errors: Vec<_> = self
-      .analysis
-      .get_one(text)
-      .into_iter()
-      .map(|x| lsp_types::Diagnostic {
-        range: lsp_range(pos_db.range(x.range)),
-        message: x.message,
-        source: Some(SOURCE.to_owned()),
-        ..Default::default()
-      })
-      .collect();
-    self.send_diagnostics(url, errors);
+    self.send_diagnostics(url, diagnostics(&pos_db, self.analysis.get_one(text)));
   }
 
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
@@ -364,6 +353,21 @@ fn canonical_path_buf(url: Url) -> Result<paths::CanonicalPathBuf> {
     Ok(pb) => Ok(pb.as_path().try_into()?),
     Err(()) => bail!("invalid url"),
   }
+}
+
+fn diagnostics(
+  pos_db: &text_pos::PositionDb,
+  errors: Vec<analysis::Error>,
+) -> Vec<lsp_types::Diagnostic> {
+  errors
+    .into_iter()
+    .map(|x| lsp_types::Diagnostic {
+      range: lsp_range(pos_db.range(x.range)),
+      message: x.message,
+      source: Some(SOURCE.to_owned()),
+      ..Default::default()
+    })
+    .collect()
 }
 
 fn lsp_range(range: text_pos::Range) -> lsp_types::Range {
