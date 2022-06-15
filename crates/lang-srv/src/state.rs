@@ -87,8 +87,8 @@ impl State {
       Some(x) => x,
       None => return false,
     };
-    let (ok_files, err_files) = get_files(root.path.as_path());
     let mut has_diagnostics = FxHashSet::<Url>::default();
+    let (ok_files, err_files) = get_files(root.path.as_path());
     let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
     let file_errors = err_files
       .into_iter()
