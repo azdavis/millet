@@ -144,6 +144,10 @@ This also contains declarations for the bulk of the standard basis library, in t
 
 Rudimentary handling (lex, parse, lower) of SML/NJ Compilation Manager (CM) files.
 
+### `crates/block-comment`
+
+Handles `(* ... *)` style block comments with nesting. This is its own crate because both SML and SML/NJ CM files support this comment style.
+
 ### `crates/paths`
 
 Types for working with paths, notably:
