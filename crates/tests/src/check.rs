@@ -118,7 +118,7 @@ impl<'a> Check<'a> {
       files: ss
         .iter()
         .enumerate()
-        .map(|(idx, &s)| (paths::PathId::from_raw(idx), s))
+        .map(|(idx, &s)| (paths::PathId::from_raw(idx), s.to_owned()))
         .collect(),
       dependencies: Vec::new(),
     };
