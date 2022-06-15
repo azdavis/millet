@@ -68,9 +68,7 @@ impl Analysis {
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
-  ///
-  /// TODO remove `get` and rename this to `get_many`.
-  pub fn get_new(&self, input: &Input) -> PathMap<Vec<Error>> {
+  pub fn get_many(&self, input: &Input) -> PathMap<Vec<Error>> {
     let graph: topo_sort::Graph<_> = input
       .groups
       .iter()
@@ -103,6 +101,8 @@ impl Analysis {
   /// Returns a Vec of Vec of errors for each file.
   ///
   /// The length of the returned Vec will be the same as the length of files.
+  ///
+  /// TODO remove.
   pub fn get<'a, I>(&self, files: I) -> Vec<Vec<Error>>
   where
     I: Iterator<Item = &'a str>,

@@ -129,7 +129,7 @@ impl<'a> Check<'a> {
       )]),
     };
     let err = analysis::Analysis::new(std_basis)
-      .get_new(&input)
+      .get_many(&input)
       .into_iter()
       .flat_map(|(id, errors)| errors.into_iter().map(move |e| (id, e)))
       .next();
