@@ -56,10 +56,6 @@ pub(crate) fn get() -> (Syms, Bs) {
     let num_pair_to_num = overloaded(Overload::Num, |a| Ty::fun(dup(a.clone()), a));
     let numtxt_pair_to_bool = overloaded(Overload::NumTxt, |a| Ty::fun(dup(a), Ty::BOOL));
     let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::REAL), Ty::REAL));
-    let assign = TyScheme::one(|a| {
-      let t = Ty::fun(pair(Ty::Con(vec![a.clone()], Sym::REF), a), unit());
-      (t, None)
-    });
     let eq = TyScheme::one(|a| {
       let t = Ty::fun(dup(a), Ty::BOOL);
       (t, Some(TyVarKind::Equality))
@@ -77,7 +73,6 @@ pub(crate) fn get() -> (Syms, Bs) {
       (">", numtxt_pair_to_bool.clone()),
       ("<=", numtxt_pair_to_bool.clone()),
       (">=", numtxt_pair_to_bool),
-      (":=", assign),
       ("=", eq),
     ]
   };
