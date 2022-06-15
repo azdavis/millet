@@ -254,12 +254,7 @@ where
       f(id, params);
       ControlFlow::Break(Ok(()))
     }
-    Err(e) => match e {
-      ExtractError::MethodMismatch(req) => ControlFlow::Continue(req),
-      ExtractError::JsonError { method, error } => {
-        ControlFlow::Break(Err(anyhow!("couldn't deserialize for {method}: {error}")))
-      }
-    },
+    Err(e) => extract_error(e),
   }
 }
 
@@ -273,12 +268,16 @@ where
       f(params);
       ControlFlow::Break(Ok(()))
     }
-    Err(e) => match e {
-      ExtractError::MethodMismatch(notif) => ControlFlow::Continue(notif),
-      ExtractError::JsonError { method, error } => {
-        ControlFlow::Break(Err(anyhow!("could not deserialize for {method}: {error}")))
-      }
-    },
+    Err(e) => extract_error(e),
+  }
+}
+
+fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
+  match e {
+    ExtractError::MethodMismatch(x) => ControlFlow::Continue(x),
+    ExtractError::JsonError { method, error } => {
+      ControlFlow::Break(Err(anyhow!("couldn't deserialize for {method}: {error}")))
+    }
   }
 }
 
