@@ -1,6 +1,6 @@
 //! See [`State`].
 
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{anyhow, bail, Context, Error, Result};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
@@ -25,7 +25,9 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   }
 }
 
+const NEW: bool = true;
 const SOURCE: &str = "millet";
+const ROOT_GROUP: &str = "sources.cm";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const MAX_ERRORS_PER_FILE: usize = 20;
 
@@ -165,6 +167,13 @@ impl State {
     ControlFlow::Continue(n)
   }
 
+  fn show_error(&mut self, message: String) {
+    self.send_notification::<lsp_types::notification::ShowMessage>(lsp_types::ShowMessageParams {
+      typ: lsp_types::MessageType::ERROR,
+      message,
+    });
+  }
+
   fn send(&self, msg: Message) {
     log::debug!("sending {msg:?}");
     self.sender.send(msg).unwrap()
@@ -178,42 +187,77 @@ impl State {
       None => return false,
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let (ok_files, err_files) = get_files(root.path.as_path());
-    let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
-    let file_errors = err_files
-      .into_iter()
-      .map(|(url, error)| (url, vec![(lsp_types::Range::default(), error.to_string())]));
-    let analysis_errors =
-      ok_files
+    if NEW {
+      let input = match get_input(&mut root.path) {
+        Ok(x) => x,
+        // TODO show this?
+        Err(e) => {
+          log::error!("could not get input: {e:#}");
+          self.show_error(format!("{e:#}"));
+          self.root = Some(root);
+          return false;
+        }
+      };
+      for (path_id, errors) in self
+        .analysis
+        .get_many(&input)
         .into_iter()
-        .zip(analysis_errors)
-        .map(|((url, contents), errors)| {
-          let pos_db = text_pos::PositionDb::new(&contents);
-          let errors: Vec<_> = errors
-            .into_iter()
-            .map(|e| (lsp_range(pos_db.range(e.range)), e.message))
-            .take(MAX_ERRORS_PER_FILE)
-            .collect();
-          (url, errors)
-        });
-    let errors = std::iter::empty()
-      .chain(file_errors)
-      .chain(analysis_errors)
-      .take(MAX_FILES_WITH_ERRORS);
-    for (url, errors) in errors {
-      has_diagnostics.insert(url.clone());
-      self.send_diagnostics(
-        url,
-        errors
+        .take(MAX_FILES_WITH_ERRORS)
+      {
+        let pos_db = match input.sources.get(&path_id) {
+          Some(s) => text_pos::PositionDb::new(s),
+          None => {
+            log::error!("no contents for {path_id:?}");
+            continue;
+          }
+        };
+        let path = root.path.get_path(path_id);
+        let url = match Url::parse(&format!("file://{}", path.as_path().display())) {
+          Ok(x) => x,
+          Err(_) => continue,
+        };
+        let d = diagnostics(&pos_db, errors);
+        has_diagnostics.insert(url.clone());
+        self.send_diagnostics(url, d);
+      }
+    } else {
+      let (ok_files, err_files) = get_files(root.path.as_path());
+      let analysis_errors = self.analysis.get(ok_files.iter().map(|(_, x)| x.as_str()));
+      let file_errors = err_files
+        .into_iter()
+        .map(|(url, error)| (url, vec![(lsp_types::Range::default(), error.to_string())]));
+      let analysis_errors =
+        ok_files
           .into_iter()
-          .map(|(range, message)| lsp_types::Diagnostic {
-            range,
-            message,
-            source: Some(SOURCE.to_owned()),
-            ..Default::default()
-          })
-          .collect(),
-      );
+          .zip(analysis_errors)
+          .map(|((url, contents), errors)| {
+            let pos_db = text_pos::PositionDb::new(&contents);
+            let errors: Vec<_> = errors
+              .into_iter()
+              .map(|e| (lsp_range(pos_db.range(e.range)), e.message))
+              .take(MAX_ERRORS_PER_FILE)
+              .collect();
+            (url, errors)
+          });
+      let errors = std::iter::empty()
+        .chain(file_errors)
+        .chain(analysis_errors)
+        .take(MAX_FILES_WITH_ERRORS);
+      for (url, errors) in errors {
+        has_diagnostics.insert(url.clone());
+        self.send_diagnostics(
+          url,
+          errors
+            .into_iter()
+            .map(|(range, message)| lsp_types::Diagnostic {
+              range,
+              message,
+              source: Some(SOURCE.to_owned()),
+              ..Default::default()
+            })
+            .collect(),
+        );
+      }
     }
     // this is the old one.
     for url in root.has_diagnostics {
@@ -282,6 +326,55 @@ fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
       ControlFlow::Break(Err(anyhow!("couldn't deserialize for {method}: {error}")))
     }
   }
+}
+
+fn get_input(root: &mut paths::Root) -> Result<analysis::Input> {
+  let mut ret = analysis::Input::default();
+  let root_group_id = get_path_id(root, root.as_path().join(ROOT_GROUP).as_path())?;
+  let mut stack = vec![root_group_id];
+  while let Some(path_id) = stack.pop() {
+    let path = root.get_path(path_id).as_path();
+    let s = read_file(path)?;
+    let cm =
+      cm::get(&s).with_context(|| format!("could not process CM file {}", path.display()))?;
+    let mut source_files = Vec::<paths::PathId>::new();
+    let parent = match path.parent() {
+      Some(x) => x.to_owned(),
+      None => bail!("{} has no parent", path.display()),
+    };
+    for path in cm.sml {
+      let path = parent.join(path.as_path());
+      let path_id = get_path_id(root, path.as_path())?;
+      let s = read_file(path.as_path())?;
+      source_files.push(path_id);
+      ret.sources.insert(path_id, s);
+    }
+    let mut dependencies = FxHashSet::<paths::PathId>::default();
+    for path in cm.cm {
+      let path = parent.join(path.as_path());
+      let path_id = get_path_id(root, path.as_path())?;
+      stack.push(path_id);
+      dependencies.insert(path_id);
+    }
+    let group = analysis::Group {
+      source_files,
+      dependencies,
+    };
+    ret.groups.insert(path_id, group);
+  }
+  Ok(ret)
+}
+
+fn get_path_id(root: &mut paths::Root, path: &std::path::Path) -> Result<paths::PathId> {
+  let canonical = paths::CanonicalPathBuf::try_from(path)
+    .with_context(|| format!("couldn't canonicalize {}", path.display()))?;
+  root
+    .get_id(&canonical)
+    .with_context(|| format!("couldn't get path ID for {}", path.display()))
+}
+
+fn read_file(path: &std::path::Path) -> Result<String> {
+  std::fs::read_to_string(path).with_context(|| format!("couldn't read {}", path.display()))
 }
 
 type Files<T> = Vec<(Url, T)>;
