@@ -103,6 +103,31 @@ fn ck_no_ignore(sh: &Shell) -> Result<()> {
   }
 }
 
+fn ck_std_basis(sh: &Shell) -> Result<()> {
+  println!("checking std basis files");
+  let order_file = sh.read_file("crates/analysis/src/std_basis/mod.rs")?;
+  let mut order: Vec<_> = order_file
+    .lines()
+    .filter_map(|x| x.strip_prefix("  include_str!(\"")?.strip_suffix("\"),"))
+    .collect();
+  order.sort_unstable();
+  let std_basis_dir = sh.read_dir("crates/analysis/src/std_basis")?;
+  let files: Vec<_> = std_basis_dir
+    .iter()
+    .filter_map(|x| {
+      if x.extension()? == "sml" {
+        x.file_name()?.to_str()
+      } else {
+        None
+      }
+    })
+    .collect();
+  if files != order {
+    bail!("bad order of std_basis files\n  expected {files:?}\n     found {order:?}")
+  }
+  Ok(())
+}
+
 fn dist(sh: &Shell, release: bool) -> Result<()> {
   let release_arg = release.then(|| "--release");
   cmd!(sh, "cargo build {release_arg...} --locked --bin lang-srv").run()?;
@@ -156,6 +181,7 @@ fn main() -> Result<()> {
       cmd!(sh, "cargo test --locked").run()?;
       ck_sml_def(&sh)?;
       ck_no_ignore(&sh)?;
+      ck_std_basis(&sh)?;
     }
     Cmd::Dist => {
       let release = args.contains("--release");
