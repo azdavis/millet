@@ -1,6 +1,6 @@
 //! Test infra.
 
-use fast_hash::{map, FxHashMap};
+use fast_hash::{map, FxHashMap, FxHashSet};
 use std::fmt;
 use std::ops::Range;
 use syntax::rowan::{TextRange, TextSize};
@@ -120,7 +120,7 @@ impl<'a> Check<'a> {
         .enumerate()
         .map(|(idx, &s)| (paths::PathId::from_raw(idx), s.to_owned()))
         .collect(),
-      dependencies: Vec::new(),
+      dependencies: FxHashSet::default(),
     };
     let group_id = paths::PathId::from_raw(group.files.len());
     let err = analysis::Analysis::new(std_basis)

@@ -6,7 +6,7 @@
 
 mod std_basis;
 
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use paths::PathId;
 use syntax::{ast::AstNode as _, rowan::TextRange};
 
@@ -29,7 +29,7 @@ pub struct Group {
   /// The source file paths and contents.
   pub files: Vec<(PathId, String)>,
   /// The dependencies of this group on other groups.
-  pub dependencies: Vec<PathId>,
+  pub dependencies: FxHashSet<PathId>,
 }
 
 /// Performs analysis.
