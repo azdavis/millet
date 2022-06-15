@@ -1,5 +1,3 @@
-(* structure Real already declared in math *)
-
 structure LargeReal :> sig type real end = struct end
 
 signature REAL = sig
@@ -72,4 +70,4 @@ end
 
 structure Real : REAL
   where type real = real = Real
-structure LargeReal :> REAL = struct end
+structure LargeReal : REAL = struct end

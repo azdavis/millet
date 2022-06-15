@@ -25,4 +25,4 @@ signature POSIX_PROCESS = sig
   val sleep : Time.time -> Time.time
 end
 
-structure Process : POSIX_PROCESS = struct end
+structure Process : POSIX_PROCESS = Process

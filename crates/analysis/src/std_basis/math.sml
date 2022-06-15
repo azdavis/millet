@@ -1,4 +1,4 @@
-structure Real :> sig type real = real end = struct end
+structure Real :> sig type real end = struct end
 
 signature MATH = sig
   type real

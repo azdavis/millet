@@ -47,4 +47,4 @@ signature POSIX_IO = sig
   val mkTextWriter : { fd : file_desc, name : string, appendMode : bool, initBlkMode : bool, chunkSize : int } -> TextPrimIO.writer
 end
 
-structure IO : POSIX_IO = struct end
+structure IO : POSIX_IO = IO

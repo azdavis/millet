@@ -118,7 +118,6 @@ const ORDER: &[&str] = &[
   include_str!("posix.sml"),
   include_str!("prot-db.sml"),
   include_str!("serv-db.sml"),
-  include_str!("socket.sml"),
   include_str!("text-stream-io.sml"),
   include_str!("text-io.sml"),
   include_str!("text.sml"),

@@ -98,4 +98,4 @@ signature POSIX_FILE_SYS = sig
   val fpathconf : file_desc * string -> SysWord.word option
 end
 
-structure FileSys : POSIX_FILE_SYS = struct end
+structure FileSys : POSIX_FILE_SYS = FileSys
