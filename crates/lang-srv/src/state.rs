@@ -347,8 +347,7 @@ fn canonical_path_buf(url: Url) -> Result<CanonicalPathBuf> {
     bail!("not a file url")
   }
   match url.to_file_path() {
-    // TODO allow not allocating again?
-    Ok(pb) => Ok(CanonicalPathBuf::new(pb.as_path())?),
+    Ok(pb) => Ok(pb.as_path().try_into()?),
     Err(()) => bail!("invalid url"),
   }
 }

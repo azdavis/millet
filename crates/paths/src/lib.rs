@@ -26,6 +26,11 @@ impl Root {
     }
   }
 
+  /// Returns the path underlying this `Root`.
+  pub fn root_path(&self) -> &Path {
+    self.root.as_path()
+  }
+
   /// Returns an ID for this path, if the path is in the root.
   pub fn get_id(&mut self, path: CanonicalPathBuf) -> Result<PathId, StripPrefixError> {
     let path = path.as_path().strip_prefix(self.root.as_path())?;
@@ -70,13 +75,16 @@ impl PathId {
 pub struct CanonicalPathBuf(PathBuf);
 
 impl CanonicalPathBuf {
-  /// Performs IO to canonicalize the path.
-  pub fn new(path: &Path) -> std::io::Result<Self> {
-    Ok(Self(path.canonicalize()?))
-  }
-
   /// Returns the underlying [`Path`].
   pub fn as_path(&self) -> &Path {
     self.0.as_path()
+  }
+}
+
+impl<'a> TryFrom<&'a Path> for CanonicalPathBuf {
+  type Error = std::io::Error;
+
+  fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+    Ok(Self(path.canonicalize()?))
   }
 }
