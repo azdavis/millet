@@ -30,8 +30,7 @@ const SOURCE: &str = "millet";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const MAX_ERRORS_PER_FILE: usize = 20;
 
-/// TODO no clone?
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum Mode {
   Root(CanonicalPathBuf, FxHashSet<Url>),
   NoRoot,
@@ -60,7 +59,11 @@ impl State {
       req_queue: ReqQueue::default(),
       analysis: analysis::Analysis::default(),
     };
-    if let Mode::Root(root, _) = ret.mode.clone() {
+    if let Mode::Root(root, _) = &ret.mode {
+      // do stuff that uses root first...
+      let (ok_files, err_files) = get_files(root);
+      let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.as_path().display());
+      // ... then end the borrow and mutate `ret`, to satisfy the borrow checker.
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
         registrations: vec![lsp_types::Registration {
           id: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
@@ -68,7 +71,7 @@ impl State {
           register_options: Some(
             serde_json::to_value(lsp_types::DidChangeWatchedFilesRegistrationOptions {
               watchers: vec![lsp_types::FileSystemWatcher {
-                glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm}}", root.as_path().display()),
+                glob_pattern,
                 kind: None,
               }],
             })
@@ -76,7 +79,6 @@ impl State {
           ),
         }],
       });
-      let (ok_files, err_files) = get_files(&root);
       ret.publish_diagnostics(ok_files, err_files);
     }
     ret
@@ -181,11 +183,12 @@ impl State {
     mut n: lsp_server::Notification,
   ) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      let (root, old_diagnostics) = match self.mode.clone() {
+      let (root, old_diagnostics) = match &self.mode {
         Mode::Root(root, old_diagnostics) => (root, old_diagnostics),
         Mode::NoRoot => return,
       };
-      let (ok_files, err_files) = get_files(&root);
+      let old_diagnostics = old_diagnostics.clone();
+      let (ok_files, err_files) = get_files(root);
       let new_diagnostics = self.publish_diagnostics(ok_files, err_files);
       for url in old_diagnostics {
         if new_diagnostics.contains(&url) {
