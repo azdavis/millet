@@ -29,10 +29,9 @@ const SOURCE: &str = "millet";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const MAX_ERRORS_PER_FILE: usize = 20;
 
-#[derive(Debug)]
-enum Mode {
-  Root(paths::Root, FxHashSet<Url>),
-  NoRoot,
+struct Root {
+  path: paths::Root,
+  has_diagnostics: FxHashSet<Url>,
 }
 
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
@@ -40,7 +39,7 @@ enum Mode {
 ///
 /// TODO: this is horribly inefficient.
 pub(crate) struct State {
-  mode: Mode,
+  root: Option<Root>,
   sender: Sender<Message>,
   req_queue: ReqQueue<(), ()>,
   analysis: analysis::Analysis,
@@ -50,18 +49,20 @@ impl State {
   pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
     let mut ret = Self {
       // TODO report errors for path buf failure
-      mode: match root.and_then(|x| canonical_path_buf(x).ok()) {
-        Some(root) => Mode::Root(paths::Root::new(root), FxHashSet::default()),
-        None => Mode::NoRoot,
-      },
+      root: root
+        .and_then(|x| canonical_path_buf(x).ok())
+        .map(|root_path| Root {
+          path: paths::Root::new(root_path),
+          has_diagnostics: FxHashSet::default(),
+        }),
       sender,
       req_queue: ReqQueue::default(),
       analysis: analysis::Analysis::default(),
     };
-    if let Mode::Root(root, _) = &ret.mode {
+    if let Some(root) = &ret.root {
       // do stuff that uses root first...
-      let (ok_files, err_files) = get_files(root.as_path());
-      let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.as_path().display());
+      let (ok_files, err_files) = get_files(root.path.as_path());
+      let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.path.as_path().display());
       // ... then end the borrow and mutate `ret`, to satisfy the borrow checker.
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
         registrations: vec![lsp_types::Registration {
@@ -182,14 +183,14 @@ impl State {
     mut n: lsp_server::Notification,
   ) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      let (root, old_diagnostics) = match &self.mode {
-        Mode::Root(root, old_diagnostics) => (root, old_diagnostics),
-        Mode::NoRoot => return,
+      let mut root = match self.root.take() {
+        Some(x) => x,
+        None => return,
       };
-      let old_diagnostics = old_diagnostics.clone();
-      let (ok_files, err_files) = get_files(root.as_path());
+      let (ok_files, err_files) = get_files(root.path.as_path());
       let new_diagnostics = self.publish_diagnostics(ok_files, err_files);
-      for url in old_diagnostics {
+      // this is the old one.
+      for url in root.has_diagnostics {
         if new_diagnostics.contains(&url) {
           // had old diagnostics, and has new diagnostics. we just sent the new ones.
           continue;
@@ -197,13 +198,11 @@ impl State {
         // had old diagnostics, but no new diagnostics. clear the old diagnostics.
         self.send_diagnostics(url, Vec::new());
       }
-      match &mut self.mode {
-        Mode::Root(_, d) => *d = new_diagnostics,
-        Mode::NoRoot => unreachable!(),
-      }
+      root.has_diagnostics = new_diagnostics;
+      self.root = Some(root);
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
-      if matches!(self.mode, Mode::Root(..)) {
+      if self.root.is_some() {
         return;
       }
       let url = params.text_document.uri;
@@ -211,7 +210,7 @@ impl State {
       self.publish_diagnostics_one(url, &text)
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
-      if matches!(self.mode, Mode::Root(..)) {
+      if self.root.is_some() {
         return;
       }
       let url = params.text_document.uri;
@@ -220,7 +219,7 @@ impl State {
       }
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
-      if matches!(self.mode, Mode::Root(..)) {
+      if self.root.is_some() {
         return;
       }
       let url = params.text_document.uri;
