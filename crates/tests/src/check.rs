@@ -115,16 +115,17 @@ impl<'a> Check<'a> {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
     let group = analysis::Group {
-      files: ss
-        .iter()
-        .enumerate()
-        .map(|(idx, &s)| (paths::PathId::from_raw(idx), s.to_owned()))
-        .collect(),
+      files: (0..ss.len()).map(paths::PathId::from_raw).collect(),
       dependencies: FxHashSet::default(),
     };
+    let contents: FxHashMap<_, _> = ss
+      .iter()
+      .enumerate()
+      .map(|(idx, &s)| (paths::PathId::from_raw(idx), s.to_owned()))
+      .collect();
     let group_id = paths::PathId::from_raw(group.files.len());
     let err = analysis::Analysis::new(std_basis)
-      .get_new(&map([(group_id, group)]))
+      .get_new(&map([(group_id, group)]), &contents)
       .into_iter()
       .flat_map(|(id, errors)| errors.into_iter().map(move |e| (id, e)))
       .next();

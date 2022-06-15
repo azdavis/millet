@@ -27,8 +27,8 @@ pub struct Error {
 /// TODO use exports
 #[derive(Debug)]
 pub struct Group {
-  /// The source file paths and contents.
-  pub files: Vec<(PathId, String)>,
+  /// The source file paths, in order.
+  pub files: Vec<PathId>,
   /// The dependencies of this group on other groups.
   pub dependencies: FxHashSet<PathId>,
 }
@@ -41,9 +41,6 @@ pub struct Analysis {
 
 /// A map from paths to something.
 pub type PathMap<T> = FxHashMap<PathId, T>;
-
-/// A map from paths to groups.
-pub type Groups = PathMap<Group>;
 
 impl Analysis {
   /// Returns a new `Analysis`.
@@ -64,7 +61,11 @@ impl Analysis {
   /// paths to errors.
   ///
   /// TODO remove `get` and rename this to `get`.
-  pub fn get_new(&self, groups: &Groups) -> PathMap<Vec<Error>> {
+  pub fn get_new(
+    &self,
+    groups: &PathMap<Group>,
+    contents: &PathMap<String>,
+  ) -> PathMap<Vec<Error>> {
     let graph: topo_sort::Graph<_> = groups
       .iter()
       .map(|(&path, group)| (path, group.dependencies.iter().copied().collect()))
@@ -76,11 +77,13 @@ impl Analysis {
     order
       .into_iter()
       .flat_map(|path| groups.get(&path).into_iter().flat_map(|x| x.files.iter()))
-      .map(|(path, s)| {
+      .filter_map(|path| {
+        // TODO panic if fail?
+        let s = contents.get(path)?;
         let mut f = AnalyzedFile::new(s);
         statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
         f.statics_errors = std::mem::take(&mut st.errors);
-        (*path, f.into_errors(&st.syms).collect())
+        Some((*path, f.into_errors(&st.syms).collect()))
       })
       .collect()
   }
