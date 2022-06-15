@@ -87,13 +87,18 @@ impl Analysis {
           .into_iter()
           .flat_map(|x| x.source_files.iter())
       })
-      .filter_map(|path| {
-        // TODO panic if fail?
-        let s = input.sources.get(path)?;
+      .filter_map(|&path_id| {
+        let s = match input.sources.get(&path_id) {
+          Some(x) => x,
+          None => {
+            log::error!("no contents for {path_id:?}");
+            return None;
+          }
+        };
         let mut f = AnalyzedFile::new(s);
         statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
         f.statics_errors = std::mem::take(&mut st.errors);
-        Some((*path, f.into_errors(&st.syms).collect()))
+        Some((path_id, f.into_errors(&st.syms).collect()))
       })
       .collect()
   }
