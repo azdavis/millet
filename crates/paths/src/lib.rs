@@ -32,7 +32,7 @@ impl Root {
   }
 
   /// Returns an ID for this path, if the path is in the root.
-  pub fn get_id(&mut self, path: CanonicalPathBuf) -> Result<PathId, StripPrefixError> {
+  pub fn get_id(&mut self, path: &CanonicalPathBuf) -> Result<PathId, StripPrefixError> {
     let path = path.as_path().strip_prefix(self.root.as_path())?;
     let id = match self.path_to_id.get(path) {
       Some(x) => *x,
