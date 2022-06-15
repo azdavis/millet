@@ -196,6 +196,7 @@ dependencies = [
  "log",
  "lsp-server",
  "lsp-types",
+ "paths",
  "serde",
  "serde_json",
  "simple_logger",

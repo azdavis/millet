@@ -66,7 +66,7 @@ impl PathId {
 }
 
 /// A canonical (and therefore absolute) path buffer.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CanonicalPathBuf(PathBuf);
 
 impl CanonicalPathBuf {
@@ -75,7 +75,8 @@ impl CanonicalPathBuf {
     Ok(Self(path.canonicalize()?))
   }
 
-  fn as_path(&self) -> &Path {
+  /// Returns the underlying [`Path`].
+  pub fn as_path(&self) -> &Path {
     self.0.as_path()
   }
 }

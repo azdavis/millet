@@ -1,10 +1,11 @@
 //! See [`State`].
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{anyhow, bail, Error, Result};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
 use lsp_types::{notification::Notification as _, Url};
+use paths::CanonicalPathBuf;
 use std::ops::ControlFlow;
 use walkdir::WalkDir;
 
@@ -32,7 +33,7 @@ const MAX_ERRORS_PER_FILE: usize = 20;
 /// TODO no clone?
 #[derive(Debug, Clone)]
 enum Mode {
-  Root(Url, FxHashSet<Url>),
+  Root(CanonicalPathBuf, FxHashSet<Url>),
   NoRoot,
 }
 
@@ -50,7 +51,8 @@ pub(crate) struct State {
 impl State {
   pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
     let mut ret = Self {
-      mode: match root {
+      // TODO report errors for path buf failure
+      mode: match root.and_then(|x| canonical_path_buf(x).ok()) {
         Some(root) => Mode::Root(root, FxHashSet::default()),
         None => Mode::NoRoot,
       },
@@ -66,7 +68,7 @@ impl State {
           register_options: Some(
             serde_json::to_value(lsp_types::DidChangeWatchedFilesRegistrationOptions {
               watchers: vec![lsp_types::FileSystemWatcher {
-                glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm}}", root.path()),
+                glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm}}", root.as_path().display()),
                 kind: None,
               }],
             })
@@ -286,10 +288,10 @@ type Files<T> = Vec<(Url, T)>;
 ///
 /// NOTE: This uses CM files to discover SML files, but doesn't, in the slightest, implement any
 /// cm features like privacy of exports. We just parse cm files to get the sml filenames.
-fn get_files(root: &Url) -> (Files<String>, Files<Error>) {
+fn get_files(root: &CanonicalPathBuf) -> (Files<String>, Files<Error>) {
   let mut ok = Files::<String>::new();
   let mut err = Files::<Error>::new();
-  for entry in WalkDir::new(root.path()).sort_by_file_name() {
+  for entry in WalkDir::new(root.as_path()).sort_by_file_name() {
     let entry = match entry {
       Ok(x) => x,
       Err(_) => continue,
@@ -336,6 +338,17 @@ fn get_files(root: &Url) -> (Files<String>, Files<Error>) {
     }
   }
   (ok, err)
+}
+
+fn canonical_path_buf(url: Url) -> Result<CanonicalPathBuf> {
+  if url.scheme() != "file" {
+    bail!("not a file url")
+  }
+  match url.to_file_path() {
+    // TODO allow not allocating again?
+    Ok(pb) => Ok(CanonicalPathBuf::new(pb.as_path())?),
+    Err(()) => bail!("invalid url"),
+  }
 }
 
 fn lsp_range(range: text_pos::Range) -> lsp_types::Range {
