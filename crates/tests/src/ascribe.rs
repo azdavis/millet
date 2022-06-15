@@ -44,10 +44,12 @@ end = struct end
 fn wrong_id_status() {
   check(
     r#"
+exception Foo
+
 structure S: sig
   exception E
-end = struct val E = Match end
-(**   ^^^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: E *)
+end = struct val E = Foo end
+(**   ^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: E *)
 "#,
   );
 }

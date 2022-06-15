@@ -4,14 +4,15 @@ use crate::check::check;
 fn many() {
   check(
     r#"
+exception Uh
 exception Foo
 and Bar of int
-and Guh = Match
+and Guh = Uh
 val _ =
   3 handle
     Foo => 1
   | Bar x => x
-  | Match => 2
+  | Uh => 2
   | _ => 3
 fun bar x = raise Bar x
 val _ = 1 + bar 2 + (raise Foo) + 3
@@ -24,12 +25,13 @@ val _ = bar 3 andalso raise Guh
 fn alias_same() {
   check(
     r#"
-exception No = Match
+exception A
+exception B = A
 val _ =
   3 handle
-    Match => 1
-  | No => 2
-(** ^^ unreachable pattern *)
+    B => 1
+  | A => 2
+(** ^ unreachable pattern *)
   | _ => 3
 "#,
   );
@@ -65,8 +67,9 @@ fun 'a foo (x: 'a) =
 fn raise_forall_a_a() {
   check(
     r#"
+exception E
+val x = raise E
 (* NOTE this may not be desirable *)
-val x = raise Bind
 val y = x x
 "#,
   );

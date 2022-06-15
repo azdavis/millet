@@ -106,11 +106,12 @@ fn forbidden_binding() {
 fn list_fns() {
   check(
     r#"
+exception Empty
 fun append [] ys = ys
   | append (x :: xs) ys = x :: append xs ys
-and head [] = raise Match
+and head [] = raise Empty
   | head (x :: _) = x
-and tail [] = raise Bind
+and tail [] = raise Empty
   | tail [x] = x
   | tail (_ :: xs) = tail xs
 val x = head [1, 2, 3]

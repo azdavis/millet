@@ -27,11 +27,12 @@ structure S = F (struct end)
 fn wrong_id_status() {
   check(
     r#"
+exception Bar
 functor F (A: sig
   exception Foo
 end) = struct end
-structure S = F (struct val Foo = Match end)
-(**              ^^^^^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: Foo *)
+structure S = F (struct val Foo = Bar end)
+(**              ^^^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: Foo *)
 "#,
   );
 }

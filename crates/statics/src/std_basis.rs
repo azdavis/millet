@@ -81,12 +81,6 @@ pub(crate) fn get() -> (Syms, Bs) {
       ("=", eq),
     ]
   };
-  let exns = [
-    ("Match", None),
-    ("Bind", None),
-    // not actually part of the standard basis according to the Definition
-    ("Fail", Some(Ty::STRING)),
-  ];
   let val_env: ValEnv = ty_env
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
@@ -96,19 +90,6 @@ pub(crate) fn get() -> (Syms, Bs) {
         id_status: IdStatus::Val,
       };
       (hir::Name::new(name), vi)
-    }))
-    .chain(exns.into_iter().map(|(name, param)| {
-      let mut ty = Ty::EXN;
-      if let Some(ref param) = param {
-        ty = Ty::fun(param.clone(), ty);
-      }
-      let name = hir::Name::new(name);
-      let exn = syms.insert_exn(name.clone(), param);
-      let vi = ValInfo {
-        ty_scheme: TyScheme::zero(ty),
-        id_status: IdStatus::Exn(exn),
-      };
-      (name, vi)
     }))
     .collect();
   let bs = Bs {

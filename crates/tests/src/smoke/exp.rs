@@ -142,7 +142,8 @@ val _ = 3 handle Match => 4
 fn raise() {
   check(
     r#"
-val _ = fn () => raise Bind
+exception E
+val _ = fn () => raise E
 "#,
   );
 }
