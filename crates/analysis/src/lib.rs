@@ -210,11 +210,11 @@ where
     let path = root.get_path(path_id).as_path();
     let s = read_file(fs, path)?;
     let cm = cm::get(&s).map_err(|e| GetInputError::new(path, GetInputErrorKind::Cm(e)))?;
-    let mut source_files = Vec::<paths::PathId>::new();
     let parent = match path.parent() {
       Some(x) => x.to_owned(),
       None => return Err(GetInputError::new(path, GetInputErrorKind::NoParent)),
     };
+    let mut source_files = Vec::<paths::PathId>::new();
     for path in cm.sml {
       let path = parent.join(path.as_path());
       let path_id = get_path_id(fs, root, path.as_path())?;
