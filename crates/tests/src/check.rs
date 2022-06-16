@@ -80,6 +80,7 @@ pub(crate) fn check_multi(ss: &[&str]) {
   }
 }
 
+#[derive(Default)]
 struct Check<'a> {
   files: paths::PathMap<CheckFile<'a>>,
   reasons: Vec<Reason<'a>>,
@@ -89,6 +90,9 @@ impl<'a> Check<'a> {
   fn new(ss: &[&'a str], std_basis: analysis::StdBasis) -> Self {
     // ignores the Err return if already initialized, since that's fine.
     let _ = simple_logger::init_with_level(log::Level::Info);
+    if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
+      return Check::default();
+    }
     let mut ret = Self {
       files: ss
         .iter()
@@ -111,9 +115,6 @@ impl<'a> Check<'a> {
         .collect(),
       reasons: Vec::new(),
     };
-    if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
-      return ret;
-    }
     let want_len: usize = ret.files.values().map(|x| x.want.len()).sum();
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
