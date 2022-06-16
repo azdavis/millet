@@ -51,29 +51,30 @@ pub(crate) fn get() -> (Syms, Bs) {
     }))
     .collect();
   let fns = {
+    let num_pair_to_num = overloaded(Overload::Num, |a| Ty::fun(dup(a.clone()), a));
+    let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::REAL), Ty::REAL));
+    let numtxt_pair_to_bool = overloaded(Overload::NumTxt, |a| Ty::fun(dup(a), Ty::BOOL));
     let realint_to_realint = overloaded(Overload::RealInt, |a| Ty::fun(a.clone(), a));
     let wordint_pair_to_wordint = overloaded(Overload::WordInt, |a| Ty::fun(dup(a.clone()), a));
-    let num_pair_to_num = overloaded(Overload::Num, |a| Ty::fun(dup(a.clone()), a));
-    let numtxt_pair_to_bool = overloaded(Overload::NumTxt, |a| Ty::fun(dup(a), Ty::BOOL));
-    let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::REAL), Ty::REAL));
-    let eq = TyScheme::one(|a| {
+    let equality_pair_to_bool = TyScheme::one(|a| {
       let t = Ty::fun(dup(a), Ty::BOOL);
       (t, Some(TyVarKind::Equality))
     });
     [
-      ("abs", realint_to_realint.clone()),
-      ("~", realint_to_realint),
-      ("div", wordint_pair_to_wordint.clone()),
-      ("mod", wordint_pair_to_wordint),
       ("*", num_pair_to_num.clone()),
-      ("/", real_pair_to_real),
       ("+", num_pair_to_num.clone()),
       ("-", num_pair_to_num),
+      ("/", real_pair_to_real),
       ("<", numtxt_pair_to_bool.clone()),
-      (">", numtxt_pair_to_bool.clone()),
       ("<=", numtxt_pair_to_bool.clone()),
+      (">", numtxt_pair_to_bool.clone()),
       (">=", numtxt_pair_to_bool),
-      ("=", eq),
+      ("~", realint_to_realint.clone()),
+      ("abs", realint_to_realint),
+      ("div", wordint_pair_to_wordint.clone()),
+      ("mod", wordint_pair_to_wordint),
+      ("=", equality_pair_to_bool.clone()),
+      ("<>", equality_pair_to_bool),
     ]
   };
   let val_env: ValEnv = ty_env
