@@ -186,3 +186,17 @@ val x = (3 val
 "#,
   );
 }
+
+#[test]
+fn ref_() {
+  check(
+    r#"
+val x = ref 3
+val _: int =
+  case x of
+    ref y => y
+val ref z = x
+val _: int = z
+"#,
+  );
+}
