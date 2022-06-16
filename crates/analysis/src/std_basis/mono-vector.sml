@@ -26,11 +26,11 @@ end
 structure Word8Vector :> MONO_VECTOR
   where type elem = Word8.word = struct end
 
-structure CharVector : MONO_VECTOR
+structure CharVector :> MONO_VECTOR
   where type vector = String.string
   where type elem = char = CharVector
 
-structure WideCharVector : MONO_VECTOR (* OPTIONAL *)
+structure WideCharVector :> MONO_VECTOR (* OPTIONAL *)
   where type vector = WideString.string
   where type elem = WideChar.char = WideCharVector
 

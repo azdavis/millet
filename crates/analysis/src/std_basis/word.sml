@@ -42,8 +42,9 @@ signature WORD = sig
   val fromString : string -> word option
 end
 
-structure Word : WORD
+structure Word :> WORD
   where type word = word = Word
 structure Word8 :> WORD = struct end
-structure LargeWord : WORD = LargeWord
+structure LargeWord :> WORD
+  where type word = LargeWord.word = LargeWord
 structure SysWord :> WORD (* OPTIONAL *) = struct end

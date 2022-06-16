@@ -68,6 +68,7 @@ signature REAL = sig
   val fromDecimal : IEEEReal.decimal_approx -> real option
 end
 
-structure Real : REAL
+structure Real :> REAL
   where type real = real = Real
-structure LargeReal : REAL = LargeReal
+structure LargeReal :> REAL
+  where type real = LargeReal.real = LargeReal

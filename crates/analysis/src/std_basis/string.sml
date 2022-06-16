@@ -38,7 +38,7 @@ signature STRING = sig
   val fromCString : String.string -> string option
 end
 
-structure String : STRING
+structure String :> STRING
   where type string = string
   where type string = CharVector.vector
   where type char = Char.char = String
