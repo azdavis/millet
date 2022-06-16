@@ -28,7 +28,7 @@ use syntax::rowan::{TextRange, TextSize};
 /// note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  go(&[s], analysis::StdBasis::Minimal, Want::Pass)
+  go(&[s], analysis::StdBasis::Minimal, Outcome::Pass)
 }
 
 /// like [`check`], but the expectation comments should be not satisfied.
@@ -55,30 +55,22 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  go(&[s], analysis::StdBasis::Minimal, Want::Fail)
+  go(&[s], analysis::StdBasis::Minimal, Outcome::Fail)
 }
 
 /// like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  go(&[s], analysis::StdBasis::Full, Want::Pass)
+  go(&[s], analysis::StdBasis::Full, Outcome::Pass)
 }
 
 /// like [`check`], but checks multiple files in sequence.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
-  go(ss, analysis::StdBasis::Minimal, Want::Pass)
+  go(ss, analysis::StdBasis::Minimal, Outcome::Pass)
 }
 
-/// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
-/// `/` should be
-static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
-  paths::RealFileSystem::default()
-    .canonicalize(std::path::Path::new("/"))
-    .unwrap()
-});
-
-fn go(ss: &[&str], std_basis: analysis::StdBasis, want: Want) {
+fn go(ss: &[&str], std_basis: analysis::StdBasis, want: Outcome) {
   // ignores the Err return if already initialized, since that's fine.
   let _ = simple_logger::init_with_level(log::Level::Info);
   if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
@@ -86,16 +78,19 @@ fn go(ss: &[&str], std_basis: analysis::StdBasis, want: Want) {
   }
   let c = Check::new(ss, std_basis);
   match (want, c.reasons.is_empty()) {
-    (Want::Pass, true) | (Want::Fail, false) => {}
-    (Want::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
-    (Want::Fail, true) => panic!("UNEXPECTED PASS: {c}"),
+    (Outcome::Pass, true) | (Outcome::Fail, false) => {}
+    (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
+    (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {c}"),
   }
 }
 
-enum Want {
-  Pass,
-  Fail,
-}
+/// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
+/// `/` should be readable.
+static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
+  paths::RealFileSystem::default()
+    .canonicalize(std::path::Path::new("/"))
+    .unwrap()
+});
 
 struct Check {
   root: paths::Root,
@@ -237,6 +232,11 @@ impl fmt::Display for Check {
     writeln!(f)?;
     Ok(())
   }
+}
+
+enum Outcome {
+  Pass,
+  Fail,
 }
 
 struct CheckFile {
