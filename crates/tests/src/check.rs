@@ -106,7 +106,7 @@ impl Check {
       writeln!(cm_file, "  f{idx}.sml").unwrap();
       m.insert(format!("/f{idx}.sml").into(), s.to_owned());
     }
-    m.insert("/sources.cm".into(), cm_file);
+    m.insert(ROOT.as_path().join(analysis::ROOT_GROUP), cm_file);
     let fs = paths::MemoryFileSystem::new(m);
     let mut root = paths::Root::new(ROOT.to_owned());
     let input = analysis::get_input(&fs, &mut root).expect("in memory fs was not set up correctly");

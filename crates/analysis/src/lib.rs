@@ -196,7 +196,8 @@ impl fmt::Display for GetInputErrorKind {
   }
 }
 
-const ROOT_GROUP: &str = "sources.cm";
+/// The name of the root CM file we look for.
+pub const ROOT_GROUP: &str = "sources.cm";
 
 /// Get some input from the filesystem.
 pub fn get_input<F>(fs: &F, root: &mut paths::Root) -> Result<Input, GetInputError>
