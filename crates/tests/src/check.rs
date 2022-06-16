@@ -200,18 +200,18 @@ impl fmt::Display for Check {
           write!(f, "want 0 or 1 wanted errors, got {want_len}")?;
         }
         Reason::NoErrorsEmitted(want_len) => write!(f, "wanted {want_len} errors, but got none")?,
-        Reason::CannotGetLineColPair(file, r) => {
-          write!(f, "{file:?}: couldn't get a line-col pair from {r:?}")?;
+        Reason::CannotGetLineColPair(path, r) => {
+          write!(f, "{path:?}: couldn't get a line-col pair from {r:?}")?;
         }
-        Reason::NotOneLine(file, pair) => {
-          write!(f, "{file:?}: not one line: {}..{}", pair.start, pair.end)?
+        Reason::NotOneLine(path, pair) => {
+          write!(f, "{path:?}: not one line: {}..{}", pair.start, pair.end)?;
         }
-        Reason::GotButNotWanted(file, r, got) => {
-          writeln!(f, "{file:?}:{r}: got an error, but wanted none")?;
+        Reason::GotButNotWanted(path, r, got) => {
+          writeln!(f, "{path:?}:{r}: got an error, but wanted none")?;
           write!(f, "    - got:  {got}")?;
         }
-        Reason::MismatchedErrors(file, r, want, got) => {
-          writeln!(f, "{file:?}:{r}: mismatched errors")?;
+        Reason::MismatchedErrors(path, r, want, got) => {
+          writeln!(f, "{path:?}:{r}: mismatched errors")?;
           writeln!(f, "    - want: {want}")?;
           write!(f, "    - got:  {got}")?;
         }
