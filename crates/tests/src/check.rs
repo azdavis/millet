@@ -83,7 +83,7 @@ pub(crate) fn check_multi(ss: &[&str]) {
 }
 
 /// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
-/// `/` should be readable.
+/// `/` should be
 static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
   paths::RealFileSystem::default()
     .canonicalize(std::path::Path::new("/"))
@@ -193,7 +193,28 @@ impl fmt::Display for Check {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("CHECK FAILED\n\n  reasons:\n")?;
     for reason in self.reasons.iter() {
-      writeln!(f, "  - {reason}")?;
+      writeln!(f, "  - ")?;
+      match reason {
+        Reason::WantWrongNumError(want_len) => {
+          write!(f, "want 0 or 1 wanted errors, got {want_len}")?;
+        }
+        Reason::NoErrorsEmitted(want_len) => write!(f, "wanted {want_len} errors, but got none")?,
+        Reason::CannotGetLineColPair(file, r) => {
+          write!(f, "{file:?}: couldn't get a line-col pair from {r:?}")?;
+        }
+        Reason::NotOneLine(file, pair) => {
+          write!(f, "{file:?}: not one line: {}..{}", pair.start, pair.end)?
+        }
+        Reason::GotButNotWanted(file, r, got) => {
+          writeln!(f, "{file:?}:{r}: got an error, but wanted none")?;
+          write!(f, "    - got:  {got}")?;
+        }
+        Reason::MismatchedErrors(file, r, want, got) => {
+          writeln!(f, "{file:?}:{r}: mismatched errors")?;
+          writeln!(f, "    - want: {want}")?;
+          write!(f, "    - got:  {got}")?;
+        }
+      }
     }
     f.write_str("\n  want:")?;
     if self.files.values().all(|x| x.want.is_empty()) {
@@ -223,32 +244,6 @@ enum Reason {
   NotOneLine(paths::PathId, Range<LineCol>),
   GotButNotWanted(paths::PathId, OneLineRegion, String),
   MismatchedErrors(paths::PathId, OneLineRegion, String, String),
-}
-
-impl fmt::Display for Reason {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Reason::WantWrongNumError(want_len) => {
-        write!(f, "want 0 or 1 wanted errors, got {want_len}")
-      }
-      Reason::NoErrorsEmitted(want_len) => write!(f, "wanted {want_len} errors, but got none"),
-      Reason::CannotGetLineColPair(file, r) => {
-        write!(f, "{file:?}: couldn't get a line-col pair from {r:?}")
-      }
-      Reason::NotOneLine(file, pair) => {
-        write!(f, "{file:?}: not one line: {}..{}", pair.start, pair.end)
-      }
-      Reason::GotButNotWanted(file, r, got) => {
-        writeln!(f, "{file:?}:{r}: got an error, but wanted none")?;
-        write!(f, "    - got:  {got}")
-      }
-      Reason::MismatchedErrors(file, r, want, got) => {
-        writeln!(f, "{file:?}:{r}: mismatched errors")?;
-        writeln!(f, "    - want: {want}")?;
-        write!(f, "    - got:  {got}")
-      }
-    }
-  }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
