@@ -102,7 +102,7 @@ impl FileSystem for RealFileSystem {
   }
 
   fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
-    Ok(CanonicalPathBuf(path.canonicalize()?))
+    Ok(CanonicalPathBuf(std::fs::canonicalize(path)?))
   }
 }
 
