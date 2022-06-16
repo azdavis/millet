@@ -42,14 +42,16 @@ pub(crate) struct State {
   sender: Sender<Message>,
   req_queue: ReqQueue<(), ()>,
   analysis: analysis::Analysis,
+  file_system: paths::RealFileSystem,
 }
 
 impl State {
   pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
+    let file_system = paths::RealFileSystem::default();
     let mut ret = Self {
       // TODO report errors for path buf failure
       root: root
-        .and_then(|x| canonical_path_buf(x).ok())
+        .and_then(|x| canonical_path_buf(&file_system, x).ok())
         .map(|root_path| Root {
           path: paths::Root::new(root_path),
           has_diagnostics: FxHashSet::default(),
@@ -57,6 +59,7 @@ impl State {
       sender,
       req_queue: ReqQueue::default(),
       analysis: analysis::Analysis::default(),
+      file_system,
     };
     if let Some(root) = &ret.root {
       let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.path.as_path().display());
@@ -184,7 +187,7 @@ impl State {
       None => return false,
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input = match analysis::get_input(&mut root.path, &RealFileSystem) {
+    let input = match analysis::get_input(&self.file_system, &mut root.path) {
       Ok(x) => x,
       // TODO show this?
       Err(e) => {
@@ -285,12 +288,15 @@ fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
   }
 }
 
-fn canonical_path_buf(url: Url) -> Result<paths::CanonicalPathBuf> {
+fn canonical_path_buf<F>(fs: &F, url: Url) -> Result<paths::CanonicalPathBuf>
+where
+  F: paths::FileSystem,
+{
   if url.scheme() != "file" {
     bail!("not a file url")
   }
   match url.to_file_path() {
-    Ok(pb) => Ok(pb.as_path().try_into()?),
+    Ok(pb) => Ok(fs.canonicalize(pb.as_path())?),
     Err(()) => bail!("invalid url"),
   }
 }
@@ -322,13 +328,5 @@ fn lsp_position(pos: text_pos::Position) -> lsp_types::Position {
   lsp_types::Position {
     line: pos.line,
     character: pos.character,
-  }
-}
-
-struct RealFileSystem;
-
-impl analysis::FileSystem for RealFileSystem {
-  fn read_to_string(&self, path: &std::path::Path) -> std::io::Result<String> {
-    std::fs::read_to_string(path)
   }
 }

@@ -202,16 +202,16 @@ impl fmt::Display for GetInputErrorKind {
 const ROOT_GROUP: &str = "sources.cm";
 
 /// Get some input from the filesystem.
-pub fn get_input<F>(root: &mut paths::Root, fs: &F) -> Result<Input, GetInputError>
+pub fn get_input<F>(fs: &F, root: &mut paths::Root) -> Result<Input, GetInputError>
 where
-  F: FileSystem,
+  F: paths::FileSystem,
 {
   let mut ret = Input::default();
-  let root_group_id = get_path_id(root, root.as_path().join(ROOT_GROUP).as_path())?;
+  let root_group_id = get_path_id(fs, root, root.as_path().join(ROOT_GROUP).as_path())?;
   let mut stack = vec![root_group_id];
   while let Some(path_id) = stack.pop() {
     let path = root.get_path(path_id).as_path();
-    let s = read_file(path, fs)?;
+    let s = read_file(fs, path)?;
     let cm = cm::get(&s).map_err(|e| GetInputError::new(path, GetInputErrorKind::Cm(e)))?;
     let mut source_files = Vec::<paths::PathId>::new();
     let parent = match path.parent() {
@@ -220,15 +220,15 @@ where
     };
     for path in cm.sml {
       let path = parent.join(path.as_path());
-      let path_id = get_path_id(root, path.as_path())?;
-      let s = read_file(path.as_path(), fs)?;
+      let path_id = get_path_id(fs, root, path.as_path())?;
+      let s = read_file(fs, path.as_path())?;
       source_files.push(path_id);
       ret.sources.insert(path_id, s);
     }
     let mut dependencies = FxHashSet::<paths::PathId>::default();
     for path in cm.cm {
       let path = parent.join(path.as_path());
-      let path_id = get_path_id(root, path.as_path())?;
+      let path_id = get_path_id(fs, root, path.as_path())?;
       stack.push(path_id);
       dependencies.insert(path_id);
     }
@@ -241,27 +241,26 @@ where
   Ok(ret)
 }
 
-fn get_path_id(
+fn get_path_id<F>(
+  fs: &F,
   root: &mut paths::Root,
   path: &std::path::Path,
-) -> Result<paths::PathId, GetInputError> {
-  let canonical = paths::CanonicalPathBuf::try_from(path)
+) -> Result<paths::PathId, GetInputError>
+where
+  F: paths::FileSystem,
+{
+  let canonical = fs
+    .canonicalize(path)
     .map_err(|e| GetInputError::new(path, GetInputErrorKind::Canonicalize(e)))?;
   root
     .get_id(&canonical)
     .map_err(|e| GetInputError::new(path, GetInputErrorKind::NotInRoot(e)))
 }
 
-fn read_file<F>(path: &std::path::Path, fs: &F) -> Result<String, GetInputError>
+fn read_file<F>(fs: &F, path: &std::path::Path) -> Result<String, GetInputError>
 where
-  F: FileSystem,
+  F: paths::FileSystem,
 {
   fs.read_to_string(path)
     .map_err(|e| GetInputError::new(path, GetInputErrorKind::ReadFile(e)))
-}
-
-/// A file system.
-pub trait FileSystem {
-  /// Read the contents of a file.
-  fn read_to_string(&self, path: &std::path::Path) -> std::io::Result<String>;
 }

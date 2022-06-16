@@ -81,10 +81,24 @@ impl CanonicalPathBuf {
   }
 }
 
-impl<'a> TryFrom<&'a Path> for CanonicalPathBuf {
-  type Error = std::io::Error;
+/// A file system.
+pub trait FileSystem {
+  /// Read the contents of a file.
+  fn read_to_string(&self, path: &Path) -> std::io::Result<String>;
+  /// Canonicalize a path.
+  fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf>;
+}
 
-  fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
-    Ok(Self(path.canonicalize()?))
+/// The real file system. Does actual I/O.
+#[derive(Debug, Default)]
+pub struct RealFileSystem(());
+
+impl FileSystem for RealFileSystem {
+  fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
+    std::fs::read_to_string(path)
+  }
+
+  fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
+    Ok(CanonicalPathBuf(path.canonicalize()?))
   }
 }
