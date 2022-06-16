@@ -98,6 +98,7 @@ enum Want {
 }
 
 struct Check {
+  root: paths::Root,
   files: paths::PathMap<CheckFile>,
   reasons: Vec<Reason>,
 }
@@ -115,6 +116,7 @@ impl Check {
     let mut root = paths::Root::new(ROOT.to_owned());
     let input = analysis::get_input(&fs, &mut root).expect("in memory fs was not set up correctly");
     let mut ret = Self {
+      root,
       files: input
         .sources
         .iter()
@@ -201,17 +203,21 @@ impl fmt::Display for Check {
         }
         Reason::NoErrorsEmitted(want_len) => write!(f, "wanted {want_len} errors, but got none")?,
         Reason::CannotGetLineColPair(path, r) => {
-          write!(f, "{path:?}: couldn't get a line-col pair from {r:?}")?;
+          let path = self.root.get_path(*path).as_path().display();
+          write!(f, "{path}: couldn't get a line-col pair from {r:?}")?;
         }
         Reason::NotOneLine(path, pair) => {
-          write!(f, "{path:?}: not one line: {}..{}", pair.start, pair.end)?;
+          let path = self.root.get_path(*path).as_path().display();
+          write!(f, "{path}: not one line: {}..{}", pair.start, pair.end)?;
         }
         Reason::GotButNotWanted(path, r, got) => {
-          writeln!(f, "{path:?}:{r}: got an error, but wanted none")?;
+          let path = self.root.get_path(*path).as_path().display();
+          writeln!(f, "{path}:{r}: got an error, but wanted none")?;
           write!(f, "    - got:  {got}")?;
         }
         Reason::MismatchedErrors(path, r, want, got) => {
-          writeln!(f, "{path:?}:{r}: mismatched errors")?;
+          let path = self.root.get_path(*path).as_path().display();
+          writeln!(f, "{path}:{r}: mismatched errors")?;
           writeln!(f, "    - want: {want}")?;
           write!(f, "    - got:  {got}")?;
         }
