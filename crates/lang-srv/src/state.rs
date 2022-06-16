@@ -63,7 +63,6 @@ impl State {
     };
     if let Some(root) = &ret.root {
       let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.path.as_path().display());
-      // ... then end the borrow and mutate `ret`, to satisfy the borrow checker.
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
         registrations: vec![lsp_types::Registration {
           id: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
