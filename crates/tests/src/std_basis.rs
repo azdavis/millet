@@ -49,6 +49,23 @@ val _ =
     LESS => "small"
   | EQUAL => "same"
   | GREATER => "big"
+
+val x = 3 : Int.int
+val _ = Int.toInt x
+val _ = Int.fromInt x
+val _ = LargeInt.fromInt x
+
+val y = x : int
+val _ = Int.toInt y
+val _ = Int.fromInt y
+val _ = LargeInt.fromInt y
+
+val a = Int.toLarge 123
+val b = LargeInt.toLarge a
+val _ = Int.fromLarge a
+val _ = LargeInt.fromLarge a
+val _ = Int.fromLarge b
+val _ = LargeInt.fromLarge b
 "#,
   );
 }
