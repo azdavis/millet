@@ -61,13 +61,13 @@ pub(crate) fn fail(s: &str) {
 /// like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  check_multi(&[s])
+  go(&[s], analysis::StdBasis::Full, Want::Pass)
 }
 
-/// like [`check`], but checks multiple files in sequence with the std basis.
+/// like [`check`], but checks multiple files in sequence.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
-  go(ss, analysis::StdBasis::Full, Want::Pass)
+  go(ss, analysis::StdBasis::Minimal, Want::Pass)
 }
 
 /// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
