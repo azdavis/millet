@@ -6,8 +6,8 @@
 
 mod std_basis;
 
-use fast_hash::{FxHashMap, FxHashSet};
-use paths::PathId;
+use fast_hash::FxHashSet;
+use paths::{PathId, PathMap};
 use statics::Mode::Regular;
 use std::fmt;
 use syntax::{ast::AstNode as _, rowan::TextRange};
@@ -33,9 +33,6 @@ pub struct Group {
   /// The dependencies of this group on other groups.
   pub dependencies: FxHashSet<PathId>,
 }
-
-/// A map from paths to something.
-pub type PathMap<T> = FxHashMap<PathId, T>;
 
 /// The input to analysis.
 #[derive(Debug, Default)]

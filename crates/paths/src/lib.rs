@@ -57,6 +57,9 @@ impl Root {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PathId(usize);
 
+/// A map from paths to something.
+pub type PathMap<T> = FxHashMap<PathId, T>;
+
 // only used for testing
 impl PathId {
   #[doc(hidden)]
