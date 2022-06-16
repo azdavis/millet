@@ -1,20 +1,4 @@
-use anyhow::{bail, Result};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Token<'a> {
-  Structure,
-  Signature,
-  Functor,
-  FunSig,
-  Group,
-  Library,
-  Alias,
-  Is,
-  Colon,
-  LRound,
-  RRound,
-  String(&'a str),
-}
+use crate::types::{Error, Result, Token};
 
 pub(crate) fn get(s: &str) -> Result<Vec<Token<'_>>> {
   let bs = s.as_bytes();
@@ -40,7 +24,13 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
   match block_comment::get(idx, b, bs) {
     Ok(Some(block_comment::Consumed)) => return Ok(None),
     Ok(None) => {}
-    Err(u) => bail!("unmatched {u} comment"),
+    Err(u) => {
+      let kind = match u {
+        block_comment::Unmatched::Open => Error::UnmatchedOpenComment,
+        block_comment::Unmatched::Close => Error::UnmatchedCloseComment,
+      };
+      return Err(kind);
+    }
   }
   if b == b';' {
     *idx += 1;
@@ -68,7 +58,7 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
   advance_while(idx, bs, |b| {
     !is_whitespace(b) && !matches!(b, b':' | b'(' | b')' | b';')
   });
-  let ret = match std::str::from_utf8(&bs[start..*idx])? {
+  let ret = match std::str::from_utf8(&bs[start..*idx]).unwrap() {
     "structure" => Token::Structure,
     "signature" => Token::Signature,
     "functor" => Token::Functor,

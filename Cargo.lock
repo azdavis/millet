@@ -67,7 +67,6 @@ source = "git+https://github.com/azdavis/language-util.git#c94fc0ff8b1cf55d9ea8e
 name = "cm"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "block-comment",
  "path-slash",
  "smol_str",

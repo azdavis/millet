@@ -1,16 +1,95 @@
 //! TODO prefer just a (new type) string over PathBuf?
 
 use smol_str::SmolStr;
+use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// std's Result with our Error.
+pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+/// An error when processing a CM file.
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum Error {
+  UnmatchedOpenComment,
+  UnmatchedCloseComment,
+  EmptyExportList,
+  Expected(Token<'static>),
+  ExpectedString,
+  ExpectedClass,
+  ExpectedDesc,
+  UnsupportedAlias,
+  UnsupportedClass(PathBuf, Class),
+  UnknownClass(PathBuf),
+}
+
+impl fmt::Display for Error {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Error::UnmatchedOpenComment => f.write_str("unmatched open comment"),
+      Error::UnmatchedCloseComment => f.write_str("unmatched close comment"),
+      Error::EmptyExportList => f.write_str("invalid empty export list"),
+      Error::Expected(tok) => write!(f, "expected `{}`", tok),
+      Error::ExpectedString => f.write_str("expected a string"),
+      Error::ExpectedClass => f.write_str("expected a class"),
+      Error::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
+      Error::UnsupportedAlias => f.write_str("unsupported: `Alias`"),
+      Error::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
+      Error::UnknownClass(p) => write!(f, "{}: couldn't determine class", p.display()),
+    }
+  }
+}
+
+impl std::error::Error for Error {}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Token<'a> {
+  Structure,
+  Signature,
+  Functor,
+  FunSig,
+  Group,
+  Library,
+  Alias,
+  Is,
+  Colon,
+  LRound,
+  RRound,
+  String(&'a str),
+}
+
+impl<'a> fmt::Display for Token<'a> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Token::Structure => f.write_str("structure"),
+      Token::Signature => f.write_str("signature"),
+      Token::Functor => f.write_str("functor"),
+      Token::FunSig => f.write_str("funsig"),
+      Token::Group => f.write_str("Group"),
+      Token::Library => f.write_str("Library"),
+      Token::Alias => f.write_str("Alias"),
+      Token::Is => f.write_str("is"),
+      Token::Colon => f.write_str(":"),
+      Token::LRound => f.write_str("("),
+      Token::RRound => f.write_str(")"),
+      Token::String(s) => s.fmt(f),
+    }
+  }
+}
+
+/// A processed CM file.
 #[derive(Debug)]
 pub struct CMFile {
+  /// The exports.
   pub exports: Vec<Export>,
+  /// The SML files, in order.
   pub sml: Vec<std::path::PathBuf>,
+  /// The CM files, in order.
   pub cm: Vec<std::path::PathBuf>,
 }
 
+/// A name, like `S` in `structure S`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Name(SmolStr);
 
@@ -19,6 +98,7 @@ impl Name {
     Self(s.into())
   }
 
+  /// Return this as a str reference.
   pub fn as_str(&self) -> &str {
     self.0.as_str()
   }
@@ -34,13 +114,18 @@ pub(crate) enum DescKind {
   Library,
 }
 
+/// An export, like `structure S`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Export {
+  /// The namespace.
   pub namespace: Namespace,
+  /// The name.
   pub name: Name,
 }
 
+/// A namespace, like `structure` in `structure S`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum Namespace {
   Structure,
   Signature,
@@ -61,8 +146,10 @@ impl Member {
   }
 }
 
+/// A class of file that may appear in a CM file.
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum Class {
+#[allow(missing_docs)]
+pub enum Class {
   Sml,
   CMFile,
   SCGroup,
@@ -113,5 +200,21 @@ impl FromStr for Class {
       _ => return Err(()),
     };
     Ok(ret)
+  }
+}
+
+impl fmt::Display for Class {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Class::Sml => f.write_str("SML"),
+      Class::CMFile => f.write_str("CM"),
+      Class::SCGroup => f.write_str("SC group"),
+      Class::SCLibrary => f.write_str("SC library"),
+      Class::MLLex => f.write_str("MLLex"),
+      Class::MLYacc => f.write_str("MLYacc"),
+      Class::MLBurg => f.write_str("MLBurg"),
+      Class::Rcs => f.write_str("RCS"),
+      Class::Noweb => f.write_str("noweb"),
+    }
   }
 }

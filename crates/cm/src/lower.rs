@@ -1,24 +1,23 @@
-use crate::types;
-use anyhow::{bail, Result};
+use crate::types::{CMFile, Class, Error, Result, Root};
 use std::path::PathBuf;
 
-pub(crate) fn get(root: types::Root) -> Result<types::CMFile> {
+pub(crate) fn get(root: Root) -> Result<CMFile> {
   match root {
-    types::Root::Alias(_) => bail!("unsupported: alias"),
-    types::Root::Desc(_, exports, members) => {
+    Root::Alias(_) => Err(Error::UnsupportedAlias),
+    Root::Desc(_, exports, members) => {
       let mut sml = Vec::<PathBuf>::new();
       let mut cm = Vec::<PathBuf>::new();
       for member in members {
         match member.class() {
           Some(c) => match c {
-            types::Class::Sml => sml.push(member.pathname),
-            types::Class::CMFile => cm.push(member.pathname),
-            _ => bail!("{}: unsupported class {c:?}", member.pathname.display()),
+            Class::Sml => sml.push(member.pathname),
+            Class::CMFile => cm.push(member.pathname),
+            _ => return Err(Error::UnsupportedClass(member.pathname, c)),
           },
-          None => bail!("couldn't determine class for {}", member.pathname.display()),
+          None => return Err(Error::UnknownClass(member.pathname)),
         }
       }
-      Ok(types::CMFile { exports, sml, cm })
+      Ok(CMFile { exports, sml, cm })
     }
   }
 }

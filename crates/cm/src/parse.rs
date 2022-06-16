@@ -1,9 +1,8 @@
-use crate::{lex::Token, types};
-use anyhow::{bail, Result};
+use crate::types::{Class, DescKind, Error, Export, Member, Name, Namespace, Result, Root, Token};
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 
-pub(crate) fn get(tokens: &[Token<'_>]) -> Result<types::Root> {
+pub(crate) fn get(tokens: &[Token<'_>]) -> Result<Root> {
   let mut p = Parser { tokens, idx: 0 };
   root(&mut p)
 }
@@ -21,7 +20,7 @@ impl<'a> Parser<'a> {
   fn string(&self) -> Result<&'a str> {
     match self.cur() {
       Some(Token::String(s)) => Ok(s),
-      _ => bail!("expected a string"),
+      _ => Err(Error::ExpectedString),
     }
   }
 
@@ -29,65 +28,65 @@ impl<'a> Parser<'a> {
     self.idx += 1
   }
 
-  fn eat(&mut self, tok: Token<'_>) -> Result<()> {
+  fn eat(&mut self, tok: Token<'static>) -> Result<()> {
     if self.cur() == Some(tok) {
       self.bump();
       Ok(())
     } else {
-      bail!("expected `{:?}`", tok)
+      Err(Error::Expected(tok))
     }
   }
 }
 
-fn root(p: &mut Parser<'_>) -> Result<types::Root> {
+fn root(p: &mut Parser<'_>) -> Result<Root> {
   let ret = match p.cur() {
     Some(Token::Alias) => {
       p.bump();
       let path = PathBuf::from_slash(p.string()?);
       p.bump();
-      types::Root::Alias(path)
+      Root::Alias(path)
     }
     Some(Token::Group) => {
       p.bump();
       let es = exports(p)?;
       let ms = members_tail(p)?;
-      types::Root::Desc(types::DescKind::Group, es, ms)
+      Root::Desc(DescKind::Group, es, ms)
     }
     Some(Token::Library) => {
       p.bump();
       let es = exports(p)?;
       if es.is_empty() {
-        bail!("expected non-empty export list")
+        return Err(Error::EmptyExportList);
       }
       let ms = members_tail(p)?;
-      types::Root::Desc(types::DescKind::Library, es, ms)
+      Root::Desc(DescKind::Library, es, ms)
     }
-    _ => bail!("expected `Alias`, `Group`, or `Library`"),
+    _ => return Err(Error::ExpectedDesc),
   };
   Ok(ret)
 }
 
-fn exports(p: &mut Parser<'_>) -> Result<Vec<types::Export>> {
-  let mut ret = Vec::<types::Export>::new();
+fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
+  let mut ret = Vec::<Export>::new();
   loop {
     let namespace = match p.cur() {
-      Some(Token::Structure) => types::Namespace::Structure,
-      Some(Token::Signature) => types::Namespace::Signature,
-      Some(Token::Functor) => types::Namespace::Functor,
-      Some(Token::FunSig) => types::Namespace::FunSig,
+      Some(Token::Structure) => Namespace::Structure,
+      Some(Token::Signature) => Namespace::Signature,
+      Some(Token::Functor) => Namespace::Functor,
+      Some(Token::FunSig) => Namespace::FunSig,
       _ => break,
     };
     p.bump();
-    let name = types::Name::new(p.string()?);
+    let name = Name::new(p.string()?);
     p.bump();
-    ret.push(types::Export { namespace, name });
+    ret.push(Export { namespace, name });
   }
   Ok(ret)
 }
 
-fn members_tail(p: &mut Parser<'_>) -> Result<Vec<types::Member>> {
+fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
   p.eat(Token::Is)?;
-  let mut ret = Vec::<types::Member>::new();
+  let mut ret = Vec::<Member>::new();
   while let Some(Token::String(s)) = p.cur() {
     p.bump();
     let pathname = PathBuf::from_slash(s);
@@ -95,16 +94,16 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<types::Member>> {
       Some(Token::Colon) => {
         p.bump();
         let s = p.string()?;
-        let c = match s.parse::<types::Class>() {
+        let c = match s.parse::<Class>() {
           Ok(c) => c,
-          Err(()) => bail!("expected a class, found {s}"),
+          Err(()) => return Err(Error::ExpectedClass),
         };
         p.bump();
         Some(c)
       }
       _ => None,
     };
-    ret.push(types::Member { pathname, class });
+    ret.push(Member { pathname, class });
   }
   Ok(ret)
 }
