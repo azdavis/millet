@@ -62,6 +62,7 @@ pub type PathMap<T> = FxHashMap<PathId, T>;
 
 // only used for testing
 impl PathId {
+  /// TODO remove
   #[doc(hidden)]
   pub fn from_raw(n: usize) -> Self {
     Self(n)

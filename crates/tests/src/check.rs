@@ -111,7 +111,7 @@ impl<'a> Check<'a> {
         .collect(),
       reasons: Vec::new(),
     };
-    if matches!(std_basis, analysis::StdBasis::Full) && env_var_yes("TEST_MINIMAL") {
+    if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
       return ret;
     }
     let want_len: usize = ret.files.values().map(|x| x.want.len()).sum();
@@ -334,6 +334,6 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(OneLineRegion, &st
   Some((region, msg.trim_end_matches(' ')))
 }
 
-fn env_var_yes(s: &str) -> bool {
+fn env_var_eq_1(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
 }
