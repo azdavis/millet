@@ -202,7 +202,7 @@ impl State {
       .into_iter()
       .take(MAX_FILES_WITH_ERRORS)
     {
-      let pos_db = match input.sources.get(&path_id) {
+      let pos_db = match input.get_source(path_id) {
         Some(s) => text_pos::PositionDb::new(s),
         None => {
           log::error!("no contents for {path_id:?}");

@@ -27,20 +27,32 @@ pub struct Error {
 ///
 /// TODO use exports
 #[derive(Debug)]
-pub struct Group {
+struct Group {
   /// The source file paths, in order.
-  pub source_files: Vec<PathId>,
+  source_files: Vec<PathId>,
   /// The dependencies of this group on other groups.
-  pub dependencies: FxHashSet<PathId>,
+  dependencies: FxHashSet<PathId>,
 }
 
 /// The input to analysis.
 #[derive(Debug, Default)]
 pub struct Input {
   /// A map from source files to their contents.
-  pub sources: PathMap<String>,
+  sources: PathMap<String>,
   /// A map from group files to their (parsed) contents.
-  pub groups: PathMap<Group>,
+  groups: PathMap<Group>,
+}
+
+impl Input {
+  /// Return the source for a given file.
+  pub fn get_source(&self, path: paths::PathId) -> Option<&str> {
+    self.sources.get(&path).map(String::as_str)
+  }
+
+  /// Return an iterator over the source files.
+  pub fn iter_sources(&self) -> impl Iterator<Item = (paths::PathId, &str)> + '_ {
+    self.sources.iter().map(|(&path, s)| (path, s.as_str()))
+  }
 }
 
 /// Performs analysis.

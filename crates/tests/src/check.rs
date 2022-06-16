@@ -113,9 +113,8 @@ impl Check {
     let mut ret = Self {
       root,
       files: input
-        .sources
-        .iter()
-        .map(|(&path_id, s)| {
+        .iter_sources()
+        .map(|(path_id, s)| {
           let file = CheckFile {
             indices: s
               .bytes()
