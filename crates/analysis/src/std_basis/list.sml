@@ -29,3 +29,15 @@ signature LIST = sig
 end
 
 structure List :> LIST = struct end
+exception Empty = List.Empty
+val op @ = List.@
+val app = List.app
+val concat = List.concat
+val foldl = List.foldl
+val foldr = List.foldr
+val hd = List.hd
+val length = List.length
+val map = List.map
+val null = List.null
+val rev = List.rev
+val tl = List.tl

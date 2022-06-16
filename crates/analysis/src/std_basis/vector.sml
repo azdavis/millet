@@ -23,3 +23,4 @@ signature VECTOR = sig
 end
 
 structure Vector :> VECTOR = struct end
+datatype vector = datatype Vector.vector

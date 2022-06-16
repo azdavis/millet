@@ -19,3 +19,4 @@ end
 
 structure TextIO :> TEXT_IO = struct end
 structure WideTextIO :> TEXT_IO (* OPTIONAL *) = struct end
+val print = TextIO.print

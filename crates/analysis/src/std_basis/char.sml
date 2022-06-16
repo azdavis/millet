@@ -42,3 +42,6 @@ structure Char :> CHAR
 structure WideChar :> CHAR (* OPTIONAL *)
   where type char = WideChar.char
   where type string = WideString.string = WideChar
+
+val chr = Char.chr
+val ord = Char.ord

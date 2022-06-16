@@ -45,3 +45,9 @@ structure String :> STRING
 structure WideString :> STRING (* OPTIONAL *)
   where type string = WideCharVector.vector
   where type char = WideChar.char = struct end
+
+val op ^ = String.^
+val explode = String.explode
+val implode = String.implode
+val size = String.size
+val str = String.str

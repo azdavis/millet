@@ -7,3 +7,4 @@ signature BOOL = sig
 end
 
 structure Bool :> BOOL = struct end
+val not = Bool.not

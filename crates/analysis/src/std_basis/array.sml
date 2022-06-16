@@ -27,3 +27,5 @@ signature ARRAY = sig
 end
 
 structure Array :> ARRAY = struct end
+datatype array = datatype Array.array
+val vector = Array.vector

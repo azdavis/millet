@@ -26,6 +26,7 @@ fn list() {
 val _ = List.length [1, 2] : int
 val _ = List.null [] : bool
 val _ = List.map (fn x => x = 3) [4, 3, 6] : bool list
+val _: int list = [1, 2] @ [3, 4]
 "#,
   );
 }

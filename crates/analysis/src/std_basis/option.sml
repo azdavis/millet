@@ -16,3 +16,7 @@ end
 structure Option :> OPTION = struct end
 
 datatype option = datatype Option.option
+exception Option = Option.Option
+val getOpt = Option.getOpt
+val isSome = Option.isSome
+val valOf = Option.valOf

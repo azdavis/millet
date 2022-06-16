@@ -52,3 +52,6 @@ structure WideSubstring :> SUBSTRING (* OPTIONAL *)
   where type substring = WideCharVectorSlice.slice
   where type string = WideString.string
   where type char = WideChar.char = struct end
+
+datatype substring = datatype Substring.substring
+val substring = Substring.substring

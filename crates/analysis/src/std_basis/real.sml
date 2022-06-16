@@ -72,3 +72,9 @@ structure Real :> REAL
   where type real = real = Real
 structure LargeReal :> REAL
   where type real = LargeReal.real = LargeReal
+
+val ceil = Real.ceil
+val floor = Real.floor
+val real = Real.fromInt
+val round = Real.round
+val trunc = Real.trunc
