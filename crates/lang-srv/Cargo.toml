@@ -15,6 +15,5 @@ serde_json = "1"
 simple_logger = { version = "2", features = ["stderr"] }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 analysis = { path = "../analysis" }
-cm = { path = "../cm" }
 paths = { path = "../paths" }
 fast-hash = { path = "../fast-hash" }

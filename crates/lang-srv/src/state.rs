@@ -5,7 +5,7 @@ use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
 use lsp_types::{notification::Notification as _, Url};
-use std::{fmt, ops::ControlFlow};
+use std::ops::ControlFlow;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
@@ -25,7 +25,6 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 }
 
 const SOURCE: &str = "millet";
-const ROOT_GROUP: &str = "sources.cm";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const MAX_ERRORS_PER_FILE: usize = 20;
 
@@ -185,7 +184,7 @@ impl State {
       None => return false,
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input = match get_input(&mut root.path) {
+    let input = match analysis::get_input(&mut root.path) {
       Ok(x) => x,
       // TODO show this?
       Err(e) => {
@@ -284,100 +283,6 @@ fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
       ControlFlow::Break(Err(anyhow!("couldn't deserialize for {method}: {error}")))
     }
   }
-}
-
-#[derive(Debug)]
-struct GetInputError {
-  path: std::path::PathBuf,
-  kind: GetInputErrorKind,
-}
-
-impl GetInputError {
-  fn new(path: &std::path::Path, kind: GetInputErrorKind) -> Self {
-    Self {
-      path: path.to_owned(),
-      kind,
-    }
-  }
-}
-
-impl fmt::Display for GetInputError {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}: {}", self.path.display(), self.kind)
-  }
-}
-
-#[derive(Debug)]
-enum GetInputErrorKind {
-  ReadFile(std::io::Error),
-  Cm(cm::Error),
-  Canonicalize(std::io::Error),
-  NoParent,
-  NotInRoot(std::path::StripPrefixError),
-}
-
-impl fmt::Display for GetInputErrorKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      GetInputErrorKind::ReadFile(e) => write!(f, "couldn't read file: {e}"),
-      GetInputErrorKind::Cm(e) => write!(f, "couldn't process CM file: {e}"),
-      GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize: {e}"),
-      GetInputErrorKind::NoParent => f.write_str("no parent"),
-      GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
-    }
-  }
-}
-
-fn get_input(root: &mut paths::Root) -> Result<analysis::Input, GetInputError> {
-  let mut ret = analysis::Input::default();
-  let root_group_id = get_path_id(root, root.as_path().join(ROOT_GROUP).as_path())?;
-  let mut stack = vec![root_group_id];
-  while let Some(path_id) = stack.pop() {
-    let path = root.get_path(path_id).as_path();
-    let s = read_file(path)?;
-    let cm = cm::get(&s).map_err(|e| GetInputError::new(path, GetInputErrorKind::Cm(e)))?;
-    let mut source_files = Vec::<paths::PathId>::new();
-    let parent = match path.parent() {
-      Some(x) => x.to_owned(),
-      None => return Err(GetInputError::new(path, GetInputErrorKind::NoParent)),
-    };
-    for path in cm.sml {
-      let path = parent.join(path.as_path());
-      let path_id = get_path_id(root, path.as_path())?;
-      let s = read_file(path.as_path())?;
-      source_files.push(path_id);
-      ret.sources.insert(path_id, s);
-    }
-    let mut dependencies = FxHashSet::<paths::PathId>::default();
-    for path in cm.cm {
-      let path = parent.join(path.as_path());
-      let path_id = get_path_id(root, path.as_path())?;
-      stack.push(path_id);
-      dependencies.insert(path_id);
-    }
-    let group = analysis::Group {
-      source_files,
-      dependencies,
-    };
-    ret.groups.insert(path_id, group);
-  }
-  Ok(ret)
-}
-
-fn get_path_id(
-  root: &mut paths::Root,
-  path: &std::path::Path,
-) -> Result<paths::PathId, GetInputError> {
-  let canonical = paths::CanonicalPathBuf::try_from(path)
-    .map_err(|e| GetInputError::new(path, GetInputErrorKind::Canonicalize(e)))?;
-  root
-    .get_id(&canonical)
-    .map_err(|e| GetInputError::new(path, GetInputErrorKind::NotInRoot(e)))
-}
-
-fn read_file(path: &std::path::Path) -> Result<String, GetInputError> {
-  std::fs::read_to_string(path)
-    .map_err(|e| GetInputError::new(path, GetInputErrorKind::ReadFile(e)))
 }
 
 fn canonical_path_buf(url: Url) -> Result<paths::CanonicalPathBuf> {

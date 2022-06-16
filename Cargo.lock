@@ -6,6 +6,7 @@ version = 3
 name = "analysis"
 version = "0.1.0"
 dependencies = [
+ "cm",
  "fast-hash",
  "lex",
  "log",
@@ -189,7 +190,6 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "anyhow",
- "cm",
  "crossbeam-channel",
  "fast-hash",
  "log",

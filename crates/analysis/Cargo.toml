@@ -19,4 +19,5 @@ ty-var-scope = { path = "../ty-var-scope" }
 statics = { path = "../statics" }
 syntax = { path = "../syntax" }
 paths = { path = "../paths" }
+cm = { path = "../cm" }
 fast-hash = { path = "../fast-hash" }
