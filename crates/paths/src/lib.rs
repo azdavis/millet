@@ -102,3 +102,31 @@ impl FileSystem for RealFileSystem {
     Ok(CanonicalPathBuf(path.canonicalize()?))
   }
 }
+
+/// A 'file system' in memory.
+#[derive(Debug, Default)]
+pub struct MemoryFileSystem(FxHashMap<PathBuf, String>);
+
+impl MemoryFileSystem {
+  /// Returns a new `MemoryFileSystem`.
+  pub fn new(map: FxHashMap<PathBuf, String>) -> Self {
+    Self(map)
+  }
+}
+
+impl FileSystem for MemoryFileSystem {
+  fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
+    match self.0.get(path) {
+      Some(x) => Ok(x.clone()),
+      None => Err(std::io::Error::from(std::io::ErrorKind::NotFound)),
+    }
+  }
+
+  fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
+    if self.0.contains_key(path) {
+      Ok(CanonicalPathBuf(path.to_owned()))
+    } else {
+      Err(std::io::Error::from(std::io::ErrorKind::NotFound))
+    }
+  }
+}
