@@ -280,7 +280,7 @@ struct LineCol {
 impl fmt::Display for LineCol {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     // don't add 1 for the line because the check strings usually have the first line blank.
-    write!(f, "{}:{}", self.line, self.col + 1,)
+    write!(f, "{}:{}", self.line, self.col + 1)
   }
 }
 
