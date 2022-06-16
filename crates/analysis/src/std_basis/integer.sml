@@ -1,4 +1,4 @@
-structure Int :> sig type int end = struct end
+structure Int :> sig type int = int end = struct end
 structure LargeInt :> sig type int end = struct end
 
 signature INTEGER = sig

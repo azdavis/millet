@@ -1,4 +1,4 @@
-structure Word :> sig type word end = struct end
+structure Word :> sig type word = word end = struct end
 structure LargeWord :> sig type word end = struct end
 
 signature WORD = sig

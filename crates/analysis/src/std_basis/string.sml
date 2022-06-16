@@ -1,6 +1,6 @@
-structure String :> sig type string end = struct end
+structure String :> sig type string = string end = struct end
 structure CharVector :> sig type vector end = struct end
-structure Char :> sig type char end = struct end
+structure Char :> sig type char = char end = struct end
 structure WideCharVector :> sig type vector end = struct end
 structure WideChar :> sig type char end = struct end
 
