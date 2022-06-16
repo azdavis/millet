@@ -66,11 +66,6 @@ impl PathId {
   pub fn from_raw(n: usize) -> Self {
     Self(n)
   }
-
-  #[doc(hidden)]
-  pub fn into_raw(self) -> usize {
-    self.0
-  }
 }
 
 /// A canonical (and therefore absolute) path buffer.
