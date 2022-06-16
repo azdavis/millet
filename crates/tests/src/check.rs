@@ -28,10 +28,7 @@ use syntax::rowan::{TextRange, TextSize};
 /// note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  let c = Check::new(&[s], analysis::StdBasis::Minimal);
-  if !c.reasons.is_empty() {
-    panic!("{c}")
-  }
+  go(&[s], analysis::StdBasis::Minimal, Want::Pass)
 }
 
 /// like [`check`], but the expectation comments should be not satisfied.
@@ -58,28 +55,19 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  let c = Check::new(&[s], analysis::StdBasis::Minimal);
-  if c.reasons.is_empty() {
-    panic!("unexpected pass: {c}")
-  }
+  go(&[s], analysis::StdBasis::Minimal, Want::Fail)
 }
 
 /// like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  let c = Check::new(&[s], analysis::StdBasis::Full);
-  if !c.reasons.is_empty() {
-    panic!("{c}")
-  }
+  check_multi(&[s])
 }
 
 /// like [`check`], but checks multiple files in sequence with the std basis.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
-  let c = Check::new(ss, analysis::StdBasis::Full);
-  if !c.reasons.is_empty() {
-    panic!("{c}")
-  }
+  go(ss, analysis::StdBasis::Full, Want::Pass)
 }
 
 /// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
@@ -90,7 +78,25 @@ static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
     .unwrap()
 });
 
-#[derive(Default)]
+fn go(ss: &[&str], std_basis: analysis::StdBasis, want: Want) {
+  // ignores the Err return if already initialized, since that's fine.
+  let _ = simple_logger::init_with_level(log::Level::Info);
+  if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
+    return;
+  }
+  let c = Check::new(ss, std_basis);
+  match (want, c.reasons.is_empty()) {
+    (Want::Pass, true) | (Want::Fail, false) => {}
+    (Want::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
+    (Want::Fail, true) => panic!("UNEXPECTED PASS: {c}"),
+  }
+}
+
+enum Want {
+  Pass,
+  Fail,
+}
+
 struct Check {
   files: paths::PathMap<CheckFile>,
   reasons: Vec<Reason>,
@@ -98,11 +104,6 @@ struct Check {
 
 impl Check {
   fn new(ss: &[&str], std_basis: analysis::StdBasis) -> Self {
-    // ignores the Err return if already initialized, since that's fine.
-    let _ = simple_logger::init_with_level(log::Level::Info);
-    if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
-      return Check::default();
-    }
     let mut cm_file = "Group is\n".to_owned();
     let mut m = FxHashMap::<std::path::PathBuf, String>::default();
     for (idx, &s) in ss.iter().enumerate() {
@@ -191,7 +192,7 @@ impl Check {
 
 impl fmt::Display for Check {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.write_str("CHECK FAILED\n\n  reasons:\n")?;
+    f.write_str("\n\n  reasons:\n")?;
     for reason in self.reasons.iter() {
       writeln!(f, "  - ")?;
       match reason {
