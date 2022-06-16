@@ -184,7 +184,7 @@ impl State {
       None => return false,
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input = match analysis::get_input(&mut root.path) {
+    let input = match analysis::get_input(&mut root.path, &RealFileSystem) {
       Ok(x) => x,
       // TODO show this?
       Err(e) => {
@@ -322,5 +322,13 @@ fn lsp_position(pos: text_pos::Position) -> lsp_types::Position {
   lsp_types::Position {
     line: pos.line,
     character: pos.character,
+  }
+}
+
+struct RealFileSystem;
+
+impl analysis::FileSystem for RealFileSystem {
+  fn read_to_string(&self, path: &std::path::Path) -> std::io::Result<String> {
+    std::fs::read_to_string(path)
   }
 }

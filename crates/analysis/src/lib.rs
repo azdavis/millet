@@ -201,14 +201,17 @@ impl fmt::Display for GetInputErrorKind {
 
 const ROOT_GROUP: &str = "sources.cm";
 
-/// Get some input from the filesystem. TODO don't have this do IO.
-pub fn get_input(root: &mut paths::Root) -> Result<Input, GetInputError> {
+/// Get some input from the filesystem.
+pub fn get_input<F>(root: &mut paths::Root, fs: &F) -> Result<Input, GetInputError>
+where
+  F: FileSystem,
+{
   let mut ret = Input::default();
   let root_group_id = get_path_id(root, root.as_path().join(ROOT_GROUP).as_path())?;
   let mut stack = vec![root_group_id];
   while let Some(path_id) = stack.pop() {
     let path = root.get_path(path_id).as_path();
-    let s = read_file(path)?;
+    let s = read_file(path, fs)?;
     let cm = cm::get(&s).map_err(|e| GetInputError::new(path, GetInputErrorKind::Cm(e)))?;
     let mut source_files = Vec::<paths::PathId>::new();
     let parent = match path.parent() {
@@ -218,7 +221,7 @@ pub fn get_input(root: &mut paths::Root) -> Result<Input, GetInputError> {
     for path in cm.sml {
       let path = parent.join(path.as_path());
       let path_id = get_path_id(root, path.as_path())?;
-      let s = read_file(path.as_path())?;
+      let s = read_file(path.as_path(), fs)?;
       source_files.push(path_id);
       ret.sources.insert(path_id, s);
     }
@@ -249,7 +252,16 @@ fn get_path_id(
     .map_err(|e| GetInputError::new(path, GetInputErrorKind::NotInRoot(e)))
 }
 
-fn read_file(path: &std::path::Path) -> Result<String, GetInputError> {
-  std::fs::read_to_string(path)
+fn read_file<F>(path: &std::path::Path, fs: &F) -> Result<String, GetInputError>
+where
+  F: FileSystem,
+{
+  fs.read_to_string(path)
     .map_err(|e| GetInputError::new(path, GetInputErrorKind::ReadFile(e)))
+}
+
+/// A file system.
+pub trait FileSystem {
+  /// Read the contents of a file.
+  fn read_to_string(&self, path: &std::path::Path) -> std::io::Result<String>;
 }
