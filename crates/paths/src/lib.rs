@@ -60,15 +60,6 @@ pub struct PathId(usize);
 /// A map from paths to something.
 pub type PathMap<T> = FxHashMap<PathId, T>;
 
-// only used for testing
-impl PathId {
-  /// TODO remove
-  #[doc(hidden)]
-  pub fn from_raw(n: usize) -> Self {
-    Self(n)
-  }
-}
-
 /// A canonical (and therefore absolute) path buffer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CanonicalPathBuf(PathBuf);

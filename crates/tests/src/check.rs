@@ -1,7 +1,9 @@
 //! Test infra.
 
-use fast_hash::{map, FxHashMap, FxHashSet};
-use std::fmt;
+use fast_hash::FxHashMap;
+use once_cell::sync::Lazy;
+use paths::FileSystem as _;
+use std::fmt::{self, Write as _};
 use std::ops::Range;
 use syntax::rowan::{TextRange, TextSize};
 
@@ -80,24 +82,42 @@ pub(crate) fn check_multi(ss: &[&str]) {
   }
 }
 
+/// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
+/// `/` should be readable.
+static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
+  paths::RealFileSystem::default()
+    .canonicalize(std::path::Path::new("/"))
+    .unwrap()
+});
+
 #[derive(Default)]
-struct Check<'a> {
-  files: paths::PathMap<CheckFile<'a>>,
-  reasons: Vec<Reason<'a>>,
+struct Check {
+  files: paths::PathMap<CheckFile>,
+  reasons: Vec<Reason>,
 }
 
-impl<'a> Check<'a> {
-  fn new(ss: &[&'a str], std_basis: analysis::StdBasis) -> Self {
+impl Check {
+  fn new(ss: &[&str], std_basis: analysis::StdBasis) -> Self {
     // ignores the Err return if already initialized, since that's fine.
     let _ = simple_logger::init_with_level(log::Level::Info);
     if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
       return Check::default();
     }
+    let mut cm_file = "Group is\n".to_owned();
+    let mut m = FxHashMap::<std::path::PathBuf, String>::default();
+    for (idx, &s) in ss.iter().enumerate() {
+      writeln!(cm_file, "  f{idx}.sml").unwrap();
+      m.insert(format!("/f{idx}.sml").into(), s.to_owned());
+    }
+    m.insert("/sources.cm".into(), cm_file);
+    let fs = paths::MemoryFileSystem::new(m);
+    let mut root = paths::Root::new(ROOT.to_owned());
+    let input = analysis::get_input(&fs, &mut root).expect("in memory fs was not set up correctly");
     let mut ret = Self {
-      files: ss
+      files: input
+        .sources
         .iter()
-        .enumerate()
-        .map(|(idx, s)| {
+        .map(|(&path_id, s)| {
           let file = CheckFile {
             indices: s
               .bytes()
@@ -107,10 +127,13 @@ impl<'a> Check<'a> {
             want: s
               .lines()
               .enumerate()
-              .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
+              .filter_map(|(line_n, line_s)| {
+                let (a, b) = get_expect_comment(line_n, line_s)?;
+                Some((a, b.to_owned()))
+              })
               .collect(),
           };
-          (paths::PathId::from_raw(idx), file)
+          (path_id, file)
         })
         .collect(),
       reasons: Vec::new(),
@@ -119,20 +142,6 @@ impl<'a> Check<'a> {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
-    let input = analysis::Input {
-      sources: ss
-        .iter()
-        .enumerate()
-        .map(|(idx, &s)| (paths::PathId::from_raw(idx), s.to_owned()))
-        .collect(),
-      groups: map([(
-        paths::PathId::from_raw(ss.len()),
-        analysis::Group {
-          source_files: (0..ss.len()).map(paths::PathId::from_raw).collect(),
-          dependencies: FxHashSet::default(),
-        },
-      )]),
-    };
     let err = analysis::Analysis::new(std_basis)
       .get_many(&input)
       .into_iter()
@@ -154,12 +163,7 @@ impl<'a> Check<'a> {
     ret
   }
 
-  fn get_reason(
-    &mut self,
-    id: paths::PathId,
-    range: TextRange,
-    got: String,
-  ) -> Result<(), Reason<'a>> {
+  fn get_reason(&mut self, id: paths::PathId, range: TextRange, got: String) -> Result<(), Reason> {
     let file = &self.files[&id];
     let pair = match get_line_col_pair(&file.indices, range) {
       None => return Err(Reason::CannotGetLineColPair(id, range)),
@@ -175,7 +179,7 @@ impl<'a> Check<'a> {
     };
     let want = match file.want.get(&region) {
       None => return Err(Reason::GotButNotWanted(id, region, got)),
-      Some(&x) => x,
+      Some(x) => x.to_owned(),
     };
     if want == got {
       Ok(())
@@ -185,7 +189,7 @@ impl<'a> Check<'a> {
   }
 }
 
-impl fmt::Display for Check<'_> {
+impl fmt::Display for Check {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("CHECK FAILED\n\n  reasons:\n")?;
     for reason in self.reasons.iter() {
@@ -197,7 +201,7 @@ impl fmt::Display for Check<'_> {
     } else {
       f.write_str("\n")?;
       for file in self.files.values() {
-        for (region, &msg) in file.want.iter() {
+        for (region, msg) in file.want.iter() {
           writeln!(f, "  - {region}: {msg}")?;
         }
       }
@@ -207,21 +211,21 @@ impl fmt::Display for Check<'_> {
   }
 }
 
-struct CheckFile<'a> {
+struct CheckFile {
   indices: Vec<TextSize>,
-  want: FxHashMap<OneLineRegion, &'a str>,
+  want: FxHashMap<OneLineRegion, String>,
 }
 
-enum Reason<'a> {
+enum Reason {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
   CannotGetLineColPair(paths::PathId, TextRange),
   NotOneLine(paths::PathId, Range<LineCol>),
   GotButNotWanted(paths::PathId, OneLineRegion, String),
-  MismatchedErrors(paths::PathId, OneLineRegion, &'a str, String),
+  MismatchedErrors(paths::PathId, OneLineRegion, String, String),
 }
 
-impl<'a> fmt::Display for Reason<'a> {
+impl fmt::Display for Reason {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Reason::WantWrongNumError(want_len) => {

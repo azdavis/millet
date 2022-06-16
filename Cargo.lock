@@ -496,6 +496,7 @@ dependencies = [
  "analysis",
  "fast-hash",
  "log",
+ "once_cell",
  "paths",
  "simple_logger",
  "syntax",

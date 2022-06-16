@@ -10,6 +10,7 @@ doctest = false
 [dependencies]
 simple_logger = { version = "2", features = ["stderr"] }
 log = "0.4"
+once_cell = "1"
 analysis = { path = "../analysis" }
 fast-hash = { path = "../fast-hash" }
 syntax = { path = "../syntax" }
