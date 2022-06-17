@@ -33,6 +33,7 @@ pub struct Error {
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum ErrorKind {
+  InvalidSource,
   UnmatchedOpenComment,
   UnmatchedCloseComment,
   IncompleteTyVar,
@@ -41,22 +42,21 @@ pub enum ErrorKind {
   NegativeWordLit,
   WrongLenCharLit,
   InvalidStringLit,
-  InvalidSource,
 }
 
 impl ErrorKind {
   /// Return an error code for this.
   pub fn to_code(&self) -> u8 {
     match self {
-      ErrorKind::UnmatchedOpenComment => 1,
-      ErrorKind::UnmatchedCloseComment => 2,
-      ErrorKind::IncompleteTyVar => 3,
-      ErrorKind::IncompleteLit => 4,
-      ErrorKind::UnclosedStringLit => 5,
-      ErrorKind::NegativeWordLit => 6,
-      ErrorKind::WrongLenCharLit => 7,
-      ErrorKind::InvalidStringLit => 8,
-      ErrorKind::InvalidSource => 9,
+      ErrorKind::InvalidSource => 1,
+      ErrorKind::UnmatchedOpenComment => 2,
+      ErrorKind::UnmatchedCloseComment => 3,
+      ErrorKind::IncompleteTyVar => 4,
+      ErrorKind::IncompleteLit => 5,
+      ErrorKind::UnclosedStringLit => 6,
+      ErrorKind::NegativeWordLit => 7,
+      ErrorKind::WrongLenCharLit => 8,
+      ErrorKind::InvalidStringLit => 9,
     }
   }
 }
@@ -64,6 +64,7 @@ impl ErrorKind {
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      ErrorKind::InvalidSource => write!(f, "invalid source character"),
       ErrorKind::UnmatchedOpenComment => write!(f, "unmatched open comment"),
       ErrorKind::UnmatchedCloseComment => write!(f, "unmatched close comment"),
       ErrorKind::IncompleteTyVar => write!(f, "incomplete type variable"),
@@ -72,7 +73,6 @@ impl fmt::Display for ErrorKind {
       ErrorKind::NegativeWordLit => write!(f, "negative word literal"),
       ErrorKind::WrongLenCharLit => write!(f, "character literal must have length 1"),
       ErrorKind::InvalidStringLit => write!(f, "invalid string literal"),
-      ErrorKind::InvalidSource => write!(f, "invalid source character"),
     }
   }
 }
