@@ -325,9 +325,6 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
         ty = Ty::fun(param.clone(), ty);
       }
       let exn = st.syms.insert_exn(ex_desc.name.clone(), param);
-      if has_ty_var(&ty) {
-        st.err(spec, ErrorKind::PolymorphicExn);
-      }
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
@@ -419,17 +416,6 @@ fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &hir::TyDesc, idx: hir:
   st.syms.finish(started, ty_info.clone());
   if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
     st.err(idx, e);
-  }
-}
-
-fn has_ty_var(ty: &Ty) -> bool {
-  match ty {
-    Ty::None => false,
-    Ty::BoundVar(_) | Ty::MetaVar(_) => unreachable!(),
-    Ty::FixedVar(_) => true,
-    Ty::Record(rows) => rows.values().any(has_ty_var),
-    Ty::Con(args, _) => args.iter().any(has_ty_var),
-    Ty::Fn(param, res) => has_ty_var(param) || has_ty_var(res),
   }
 }
 
