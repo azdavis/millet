@@ -412,23 +412,21 @@ pub(crate) struct Save {
 
 #[derive(Debug)]
 pub struct Error {
-  pub range: TextRange,
-  pub kind: ErrorKind,
+  range: TextRange,
+  kind: ErrorKind,
 }
 
-#[derive(Debug)]
-pub enum ErrorKind {
-  NotInfix,
-  InfixWithoutOp,
-  InvalidFixity(std::num::ParseIntError),
-  NegativeFixity,
-  SameFixityDiffAssoc,
-  Expected(Expected),
-}
+impl Error {
+  pub fn range(&self) -> TextRange {
+    self.range
+  }
 
-impl ErrorKind {
+  pub fn display(&self) -> impl fmt::Display + '_ {
+    &self.kind
+  }
+
   pub fn to_code(&self) -> u8 {
-    match self {
+    match self.kind {
       ErrorKind::NotInfix => 1,
       ErrorKind::InfixWithoutOp => 2,
       ErrorKind::InvalidFixity(_) => 3,
@@ -437,6 +435,16 @@ impl ErrorKind {
       ErrorKind::Expected(_) => 6,
     }
   }
+}
+
+#[derive(Debug)]
+pub(crate) enum ErrorKind {
+  NotInfix,
+  InfixWithoutOp,
+  InvalidFixity(std::num::ParseIntError),
+  NegativeFixity,
+  SameFixityDiffAssoc,
+  Expected(Expected),
 }
 
 impl fmt::Display for ErrorKind {

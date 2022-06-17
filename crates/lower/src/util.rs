@@ -109,8 +109,31 @@ where
 
 #[derive(Debug)]
 pub struct Error {
-  pub range: TextRange,
-  pub kind: ErrorKind,
+  range: TextRange,
+  kind: ErrorKind,
+}
+
+impl Error {
+  pub fn range(&self) -> TextRange {
+    self.range
+  }
+
+  pub fn display(&self) -> impl fmt::Display + '_ {
+    &self.kind
+  }
+
+  pub fn to_code(&self) -> u8 {
+    match self.kind {
+      ErrorKind::Unsupported(_) => 1,
+      ErrorKind::FunBindMismatchedName(_, _) => 2,
+      ErrorKind::FunBindWrongNumPats(_, _) => 3,
+      ErrorKind::InvalidIntLit(_) => 4,
+      ErrorKind::InvalidRealLit(_) => 5,
+      ErrorKind::InvalidNumLab(_) => 6,
+      ErrorKind::ZeroNumLab => 7,
+      ErrorKind::MustBeTopLevel => 8,
+    }
+  }
 }
 
 #[derive(Debug)]
@@ -123,21 +146,6 @@ pub enum ErrorKind {
   InvalidNumLab(std::num::ParseIntError),
   ZeroNumLab,
   MustBeTopLevel,
-}
-
-impl ErrorKind {
-  pub fn to_code(&self) -> u8 {
-    match self {
-      ErrorKind::Unsupported(_) => 1,
-      ErrorKind::FunBindMismatchedName(_, _) => 2,
-      ErrorKind::FunBindWrongNumPats(_, _) => 3,
-      ErrorKind::InvalidIntLit(_) => 4,
-      ErrorKind::InvalidRealLit(_) => 5,
-      ErrorKind::InvalidNumLab(_) => 6,
-      ErrorKind::ZeroNumLab => 7,
-      ErrorKind::MustBeTopLevel => 8,
-    }
-  }
 }
 
 impl fmt::Display for ErrorKind {

@@ -142,19 +142,19 @@ impl AnalyzedFile {
   fn into_errors(self, syms: &statics::Syms) -> impl Iterator<Item = Error> + '_ {
     std::iter::empty()
       .chain(self.lex_errors.into_iter().map(|err| Error {
-        range: err.range,
-        message: err.kind.to_string(),
-        code: 1000 + u16::from(err.kind.to_code()),
+        range: err.range(),
+        message: err.display().to_string(),
+        code: 1000 + u16::from(err.to_code()),
       }))
       .chain(self.parsed.errors.into_iter().map(|err| Error {
-        range: err.range,
-        message: err.kind.to_string(),
-        code: 2000 + u16::from(err.kind.to_code()),
+        range: err.range(),
+        message: err.display().to_string(),
+        code: 2000 + u16::from(err.to_code()),
       }))
       .chain(self.lowered.errors.into_iter().map(|err| Error {
-        range: err.range,
-        message: err.kind.to_string(),
-        code: 3000 + u16::from(err.kind.to_code()),
+        range: err.range(),
+        message: err.display().to_string(),
+        code: 3000 + u16::from(err.to_code()),
       }))
       .chain(self.statics_errors.into_iter().filter_map(move |err| {
         Some(Error {

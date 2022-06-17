@@ -38,15 +38,15 @@ static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
   for &contents in ORDER {
     let lexed = lex::get(contents);
     if let Some(e) = lexed.errors.first() {
-      panic!("std_basis error: lex: {}", e.kind);
+      panic!("std_basis error: lex: {}", e.display());
     }
     let parsed = parse::get(&lexed.tokens);
     if let Some(e) = parsed.errors.first() {
-      panic!("std_basis error: parse: {}", e.kind);
+      panic!("std_basis error: parse: {}", e.display());
     }
     let mut lowered = lower::get(&parsed.root);
     if let Some(e) = lowered.errors.first() {
-      panic!("std_basis error: lower: {}", e.kind);
+      panic!("std_basis error: lower: {}", e.display());
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
     statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);

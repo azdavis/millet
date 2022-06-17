@@ -23,32 +23,24 @@ pub struct Lex<'input> {
 /// An error encountered when lexing.
 #[derive(Debug)]
 pub struct Error {
+  range: TextRange,
+  kind: ErrorKind,
+}
+
+impl Error {
   /// The range of the error.
-  pub range: TextRange,
-  /// The kind of error.
-  pub kind: ErrorKind,
-}
+  pub fn range(&self) -> TextRange {
+    self.range
+  }
 
-/// An error kind.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum ErrorKind {
-  InvalidSource,
-  UnmatchedOpenComment,
-  UnmatchedCloseComment,
-  IncompleteTyVar,
-  UnclosedStringLit,
-  NegativeWordLit,
-  WrongLenCharLit,
-  MissingDigitsInNumLit,
-  InvalidStringEscape,
-  NonWhitespaceInStringContinuation,
-}
+  /// Returns a value that displays the message.
+  pub fn display(&self) -> impl fmt::Display + '_ {
+    &self.kind
+  }
 
-impl ErrorKind {
-  /// Return an error code for this.
+  /// Returns an error code for this.
   pub fn to_code(&self) -> u8 {
-    match self {
+    match self.kind {
       ErrorKind::InvalidSource => 1,
       ErrorKind::UnmatchedOpenComment => 2,
       ErrorKind::UnmatchedCloseComment => 3,
@@ -61,6 +53,22 @@ impl ErrorKind {
       ErrorKind::NonWhitespaceInStringContinuation => 10,
     }
   }
+}
+
+/// An error kind.
+#[derive(Debug)]
+#[allow(missing_docs)]
+enum ErrorKind {
+  InvalidSource,
+  UnmatchedOpenComment,
+  UnmatchedCloseComment,
+  IncompleteTyVar,
+  UnclosedStringLit,
+  NegativeWordLit,
+  WrongLenCharLit,
+  MissingDigitsInNumLit,
+  InvalidStringEscape,
+  NonWhitespaceInStringContinuation,
 }
 
 impl fmt::Display for ErrorKind {
