@@ -260,8 +260,7 @@ end
 fn type_inf_context_2() {
   check(
     r#"
-structure S : sig val z : bool list end =
-struct
+structure S : sig val z : bool list end = struct
   val z = (fn x => x) []
 end
 "#,
