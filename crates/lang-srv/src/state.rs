@@ -215,9 +215,8 @@ impl State {
         Ok(x) => x,
         Err(_) => continue,
       };
-      let d = diagnostics(&pos_db, errors);
       has_diagnostics.insert(url.clone());
-      self.send_diagnostics(url, d);
+      self.send_diagnostics(url, diagnostics(&pos_db, errors));
     }
     // this is the old one.
     for url in root.has_diagnostics {
