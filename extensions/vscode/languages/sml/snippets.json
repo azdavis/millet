@@ -29,7 +29,7 @@
   },
   "function dec": {
     "prefix": "fun",
-    "body": ["fun ${1:name} (${2:pat}: ${3:ty}): ${4:ty} = ${5:exp}"]
+    "body": ["fun ${1:name} (${2:pat} : ${3:ty}) : ${4:ty} = ${5:exp}"]
   },
   "structure dec": {
     "prefix": "structure",
