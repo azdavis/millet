@@ -134,3 +134,23 @@ val uh''''what0000is______this''''' = ()
 "#,
   );
 }
+
+#[test]
+fn utf8_comment() {
+  check(
+    r#"
+val a = 1
+(* 宇宙には、始まりはあるが、終わりはない。無限。 *)
+val b = 2
+ "#,
+  )
+}
+
+#[test]
+fn utf8_string() {
+  check(
+    r#"
+val _: string = "星にもまた、始まりはあるが、自らの力を持って滅びゆく。有限。"
+"#,
+  )
+}
