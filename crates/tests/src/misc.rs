@@ -34,7 +34,7 @@ fn circularity() {
   check(
     r#"
     fun f _ = f
-(** ^^^^^^^^^^^ circularity: _ -> _ *)
+(** ^^^^^^^^^^^ attempted to a set a type variable to a type containing that variable: _ -> _ *)
 "#,
   );
 }

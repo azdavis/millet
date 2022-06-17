@@ -123,7 +123,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
       ErrorKind::Circularity(_, ty) => {
-        write!(f, "circularity: {}", ty.display(self.syms))
+        write!(f, "attempted to a set a type variable ")?;
+        write!(f, "to a type containing ")?;
+        write!(f, "that variable: {}", ty.display(self.syms))
       }
       ErrorKind::MismatchedTypes(want, got) => write!(
         f,
