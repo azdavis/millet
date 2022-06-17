@@ -11,7 +11,7 @@ There was an invalid character in the source file.
 val 空条承太郎 = 3
 ```
 
-Millet only allows certain ASCII characters to appear in identifiers and the like. String literals and comments, however, should be able to handle arbitrary UTF-8.
+Millet only allows certain ASCII characters to appear in names and the like. String literals and comments, however, should be able to handle arbitrary UTF-8.
 
 To fix, only use allowed source characters. All non-ASCII characters are invalid.
 
@@ -294,7 +294,7 @@ infix quz
 
 ## 2005
 
-Consecutive infix identifiers with the same fixity, but different associativity, were used without parentheses to disambiguate.
+Consecutive infix names with the same fixity, but different associativity, were used without parentheses to disambiguate.
 
 ```sml
 (* error *)
@@ -554,6 +554,8 @@ It may also occur when binding the same name more than once in a pattern.
 fun add (x, x) = x + x
 ```
 
+To fix, use different names, or avoid `and`. (The latter induces shadowing.)
+
 ## 4004
 
 Something was requested by a signature, but not present in the structure that is attempting to ascribe to that signature.
@@ -566,6 +568,8 @@ end
 
 structure Str : SIG = struct end
 ```
+
+To fix, provide definitions for the missing items.
 
 ## 4005
 
@@ -583,6 +587,8 @@ structure Str : SIG = struct
   datatype d = A | B
 end
 ```
+
+To fix, ensure only the requested items are defined.
 
 ## 4006
 
@@ -654,6 +660,8 @@ There was a duplicate label.
 val _ = { a = 1, a = 2 }
 ```
 
+To fix, use differently named labels, or remove one of the record rows.
+
 ## 4011
 
 A real literal was used as a pattern.
@@ -666,6 +674,8 @@ fun f (x: real): int =
   | 1.4 => 5
   | _ => 6
 ```
+
+To fix, consider checking that the given real is within some epsilon value of the desired real. Usage of `Real.==` to check for equality between reals is discouraged, due to limitations around representing floating-point (aka, real) numbers on most architectures.
 
 ## 4012
 
@@ -681,6 +691,11 @@ fun f (x: int): int =
   | 1 => 3
   | _ => 4
 ```
+
+To fix, try:
+
+- Making the higher pattern more specific, so the lower pattern may be reached.
+- Removing the lower pattern.
 
 ## 4013
 
@@ -698,6 +713,8 @@ fun f (x: t): int =
     A => 1
   | B y => y
 ```
+
+To fix, add patterns matching the missing cases. The error message reports examples of patterns not matched.
 
 ## 4014
 
@@ -739,7 +756,7 @@ fun f y =
   | _ => 6
 ```
 
-This works instead:
+To fix, try something like this:
 
 ```sml
 (* ok *)
@@ -764,6 +781,8 @@ fun f x =
   | B z => z - 1
 ```
 
+To fix, define the constructor to have an argument, or remove the argument from the pattern.
+
 ## 4017
 
 A constructor had no argument in a pattern match, but it was defined to have an argument.
@@ -778,9 +797,11 @@ fun f x =
   | B => 2
 ```
 
+To fix, define the constructor to not have an argument, or add an argument to the pattern.
+
 ## 4018
 
-An invalid identifier was used as the left hand side of an `as` pattern.
+An invalid name was used as the left hand side of an `as` pattern.
 
 As-patterns allow binding the entirety of a pattern `p` to a name `n` with the pattern `n as p`. However, the name `n` may not, for instance, already exist as a non-value:
 
@@ -792,6 +813,8 @@ fun f x =
     Bad as _ => 1
   | _ => 2
 ```
+
+To fix, use a valid name.
 
 ## 4019
 
@@ -808,6 +831,8 @@ val x =
     D
   end
 ```
+
+To fix, extend the scope of the type, or do not allow its values to escape its scope.
 
 ## 4020
 
@@ -833,6 +858,8 @@ val mkFn = fn () => fn x => x + 1
 val rec inc = mkFn ()
 ```
 
+To fix, ensure the expression is a literal `fn` expression.
+
 ## 4021
 
 The wrong number of type arguments was passed to a type-level function.
@@ -850,6 +877,8 @@ type nope = int pair
 val xs: list = []
 ```
 
+To fix, pass the correct number of type arguments.
+
 ## 4022
 
 In an exception copy declaration, the right hand side was not an exception.
@@ -859,6 +888,8 @@ In an exception copy declaration, the right hand side was not an exception.
 val x = 3
 exception Nope = x
 ```
+
+To fix, only use exceptions on the right hand side.
 
 ## 4023
 
@@ -878,9 +909,11 @@ Certain names may not be rebound. These names are:
 val false = 123
 ```
 
+To fix, do not attempt to rebind these names.
+
 ## 4024
 
-Identifiers have "statuses", which can be either "exception", "constructor", or "value". These status must be, in a certain precise sense, "compatible" for the purposes of matching a structure against a signature. It is an error if they are not.
+Names have "statuses", which can be either "exception", "constructor", or "value". These status must be, in a certain precise sense, "compatible" for the purposes of matching a structure against a signature. It is an error if they are not.
 
 ```
 (* error *)
@@ -890,5 +923,18 @@ structure S: sig
   exception E
 end = struct
   val E = Foo
+end
+```
+
+To fix, ensure the names have the correct statuses.
+
+```
+(* ok *)
+exception Foo
+
+structure S: sig
+  exception E
+end = struct
+  exception E = Foo
 end
 ```
