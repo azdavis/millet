@@ -39,10 +39,10 @@ val _ 3
 }
 
 #[test]
-fn unknown_byte() {
+fn invalid_char() {
   check(
     r#"
-val 空条承太郎 = 1
+val 空条承太郎 = 3
 (** ^^^ invalid source character *)
 "#,
   );
