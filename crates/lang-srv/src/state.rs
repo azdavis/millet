@@ -49,10 +49,14 @@ pub(crate) struct State {
 impl State {
   pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
     let file_system = paths::RealFileSystem::default();
+    let mut root = root
+      .map(|url| canonical_path_buf(&file_system, url))
+      .transpose();
     let mut ret = Self {
-      // TODO report errors for path buf failure
       root: root
-        .and_then(|x| canonical_path_buf(&file_system, x).ok())
+        .as_mut()
+        .ok()
+        .and_then(Option::take)
         .map(|root_path| Root {
           path: paths::Root::new(root_path),
           has_diagnostics: FxHashSet::default(),
@@ -62,6 +66,9 @@ impl State {
       analysis: analysis::Analysis::default(),
       file_system,
     };
+    if let Err(e) = root {
+      ret.show_error(format!("{e:#}"));
+    }
     if let Some(root) = &ret.root {
       let glob_pattern = format!("{}/**/*.{{sml,sig,fun,cm}}", root.path.as_path().display());
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
