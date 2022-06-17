@@ -437,3 +437,15 @@ end
 "#,
   );
 }
+
+#[test]
+fn poly_exn_sig() {
+  check(
+    r#"
+signature S = sig
+  exception E of 'a
+(**              ^^ undefined type variable: 'a *)
+end
+"#,
+  );
+}
