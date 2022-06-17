@@ -200,3 +200,13 @@ val _: int = z
 "#,
   );
 }
+
+#[test]
+fn string_with_comment() {
+  check(
+    r#"
+val _: string = "(* this looks like a comment! *)"
+val _: int = 4
+"#,
+  );
+}
