@@ -168,7 +168,7 @@ pub(crate) fn eat_name_star<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
   if name_star(p, 0) {
     Some(p.bump())
   } else {
-    p.error(ErrorKind::ExpectedKind(SK::Name));
+    p.error(ErrorKind::Expected(Expected::Kind(SK::Name)));
     None
   }
 }

@@ -256,7 +256,7 @@ impl<'input> Parser<'input> {
     if self.at(kind) {
       Some(self.bump())
     } else {
-      self.error(ErrorKind::ExpectedKind(kind));
+      self.error(ErrorKind::Expected(Expected::Kind(kind)));
       None
     }
   }
@@ -424,7 +424,6 @@ pub enum ErrorKind {
   NegativeFixity,
   SameFixityDiffAssoc,
   Expected(Expected),
-  ExpectedKind(SK),
 }
 
 impl ErrorKind {
@@ -436,7 +435,6 @@ impl ErrorKind {
       ErrorKind::NegativeFixity => 4,
       ErrorKind::SameFixityDiffAssoc => 5,
       ErrorKind::Expected(_) => 6,
-      ErrorKind::ExpectedKind(_) => 7,
     }
   }
 }
@@ -452,7 +450,6 @@ impl fmt::Display for ErrorKind {
         f.write_str("consecutive infix names with same fixity but different associativity")
       }
       ErrorKind::Expected(e) => write!(f, "expected {e}"),
-      ErrorKind::ExpectedKind(k) => write!(f, "expected {k}"),
     }
   }
 }
@@ -468,22 +465,23 @@ pub enum Expected {
   Ty,
   LRoundExpTail,
   Item,
+  Kind(SK),
 }
 
 impl fmt::Display for Expected {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let s = match self {
-      Expected::Exp => "an expression",
-      Expected::Lab => "a label",
-      Expected::Pat => "a pattern",
-      Expected::Path => "a path",
-      Expected::SigExp => "a signature expression",
-      Expected::StrExp => "a structure expression",
-      Expected::Ty => "a type",
-      Expected::LRoundExpTail => "`)`, `,`, or `;`",
-      Expected::Item => "a top-level item",
-    };
-    f.write_str(s)
+    match self {
+      Expected::Exp => f.write_str("an expression"),
+      Expected::Lab => f.write_str("a label"),
+      Expected::Pat => f.write_str("a pattern"),
+      Expected::Path => f.write_str("a path"),
+      Expected::SigExp => f.write_str("a signature expression"),
+      Expected::StrExp => f.write_str("a structure expression"),
+      Expected::Ty => f.write_str("a type"),
+      Expected::LRoundExpTail => f.write_str("`)`, `,`, or `;`"),
+      Expected::Item => f.write_str("a top-level item"),
+      Expected::Kind(k) => k.fmt(f),
+    }
   }
 }
 

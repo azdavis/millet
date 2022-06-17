@@ -161,7 +161,7 @@ where
     f(p, text);
   }
   if !got {
-    p.error(ErrorKind::ExpectedKind(SK::Name));
+    p.error(ErrorKind::Expected(Expected::Kind(SK::Name)));
   }
 }
 
