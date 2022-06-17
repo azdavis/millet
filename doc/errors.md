@@ -886,7 +886,7 @@ To fix, do not attempt to rebind these names.
 
 Names have "statuses", which can be either "exception", "constructor", or "value". These status must be, in a certain precise sense, "compatible" for the purposes of matching a structure against a signature. It is an error if they are not.
 
-```
+```sml
 (* error *)
 exception Foo
 
@@ -899,7 +899,7 @@ end
 
 To fix, ensure the names have the correct statuses.
 
-```
+```sml
 (* ok *)
 exception Foo
 
