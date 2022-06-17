@@ -157,13 +157,16 @@ impl AnalyzedFile {
         code: 3000 + u16::from(err.to_code()),
       }))
       .chain(self.statics_errors.into_iter().filter_map(move |err| {
+        let idx = err.idx();
+        let syntax = match self.lowered.ptrs.get(idx) {
+          Some(x) => x,
+          None => {
+            log::error!("no pointer for {idx:?}");
+            return None;
+          }
+        };
         Some(Error {
-          range: self
-            .lowered
-            .ptrs
-            .get(err.idx())?
-            .to_node(self.parsed.root.syntax())
-            .text_range(),
+          range: syntax.to_node(self.parsed.root.syntax()).text_range(),
           message: err.display(syms).to_string(),
           code: 4000 + u16::from(err.to_code()),
         })
