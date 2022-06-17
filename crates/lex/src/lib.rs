@@ -44,6 +44,23 @@ pub enum ErrorKind {
   InvalidSource,
 }
 
+impl ErrorKind {
+  /// Return an error code for this.
+  pub fn to_code(&self) -> u8 {
+    match self {
+      ErrorKind::UnmatchedOpenComment => 1,
+      ErrorKind::UnmatchedCloseComment => 2,
+      ErrorKind::IncompleteTyVar => 3,
+      ErrorKind::IncompleteLit => 4,
+      ErrorKind::UnclosedStringLit => 5,
+      ErrorKind::NegativeWordLit => 6,
+      ErrorKind::WrongLenCharLit => 7,
+      ErrorKind::InvalidStringLit => 8,
+      ErrorKind::InvalidSource => 9,
+    }
+  }
+}
+
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {

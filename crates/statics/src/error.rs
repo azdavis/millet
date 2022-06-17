@@ -24,6 +24,37 @@ impl Error {
       syms,
     }
   }
+
+  /// Return an error code for this.
+  pub fn to_code(&self) -> u8 {
+    match self.kind {
+      ErrorKind::Unsupported(_) => 1,
+      ErrorKind::Undefined(_, _) => 2,
+      ErrorKind::Duplicate(_, _) => 3,
+      ErrorKind::Missing(_, _) => 4,
+      ErrorKind::Extra(_, _) => 5,
+      ErrorKind::Circularity(_, _) => 6,
+      ErrorKind::MismatchedTypes(_, _) => 7,
+      ErrorKind::OverloadMismatch(_, _, _) => 8,
+      ErrorKind::AppLhsNotFn(_) => 9,
+      ErrorKind::DuplicateLab(_) => 10,
+      ErrorKind::RealPat => 11,
+      ErrorKind::UnreachablePattern => 12,
+      ErrorKind::NonExhaustiveMatch(_) => 13,
+      ErrorKind::NonExhaustiveBinding(_) => 14,
+      ErrorKind::PatValIdStatus => 15,
+      ErrorKind::ConPatMustNotHaveArg => 16,
+      ErrorKind::ConPatMustHaveArg => 17,
+      ErrorKind::InvalidAsPatName(_) => 18,
+      ErrorKind::TyNameEscape(_) => 19,
+      ErrorKind::ValRecExpNotFn => 20,
+      ErrorKind::WrongNumTyArgs(_, _) => 21,
+      ErrorKind::ExnCopyNotExnIdStatus => 22,
+      ErrorKind::InvalidRebindName(_) => 23,
+      ErrorKind::PolymorphicExn => 24,
+      ErrorKind::WrongIdStatus(_) => 25,
+    }
+  }
 }
 
 #[derive(Debug)]

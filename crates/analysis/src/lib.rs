@@ -21,6 +21,8 @@ pub struct Error {
   pub range: TextRange,
   /// The message of the error.
   pub message: String,
+  /// The error code.
+  pub code: u16,
 }
 
 /// A group of source files.
@@ -142,14 +144,17 @@ impl AnalyzedFile {
       .chain(self.lex_errors.into_iter().map(|err| Error {
         range: err.range,
         message: err.kind.to_string(),
+        code: 1000 + u16::from(err.kind.to_code()),
       }))
       .chain(self.parsed.errors.into_iter().map(|err| Error {
         range: err.range,
         message: err.kind.to_string(),
+        code: 2000 + u16::from(err.kind.to_code()),
       }))
       .chain(self.lowered.errors.into_iter().map(|err| Error {
         range: err.range,
         message: err.kind.to_string(),
+        code: 3000 + u16::from(err.kind.to_code()),
       }))
       .chain(self.statics_errors.into_iter().filter_map(move |err| {
         Some(Error {
@@ -160,6 +165,7 @@ impl AnalyzedFile {
             .to_node(self.parsed.root.syntax())
             .text_range(),
           message: err.display(syms).to_string(),
+          code: 4000 + u16::from(err.to_code()),
         })
       }))
   }

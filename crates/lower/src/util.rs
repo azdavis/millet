@@ -126,6 +126,22 @@ pub enum ErrorKind {
   FunctorMustBeTopLevel,
 }
 
+impl ErrorKind {
+  pub fn to_code(&self) -> u8 {
+    match self {
+      ErrorKind::Unsupported(_) => 1,
+      ErrorKind::FunBindMismatchedName(_, _) => 2,
+      ErrorKind::FunBindWrongNumPats(_, _) => 3,
+      ErrorKind::InvalidIntLit(_) => 4,
+      ErrorKind::InvalidRealLit(_) => 5,
+      ErrorKind::InvalidNumLab(_) => 6,
+      ErrorKind::ZeroNumLab => 7,
+      ErrorKind::SigMustBeTopLevel => 8,
+      ErrorKind::FunctorMustBeTopLevel => 9,
+    }
+  }
+}
+
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {

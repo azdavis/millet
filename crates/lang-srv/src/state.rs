@@ -311,6 +311,7 @@ fn diagnostics(
       range: lsp_range(pos_db.range(x.range)),
       message: x.message,
       source: Some(SOURCE.to_owned()),
+      code: Some(lsp_types::NumberOrString::Number(x.code.into())),
       ..Default::default()
     })
     .collect()

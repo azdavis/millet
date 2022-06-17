@@ -427,6 +427,20 @@ pub enum ErrorKind {
   ExpectedKind(SK),
 }
 
+impl ErrorKind {
+  pub fn to_code(&self) -> u8 {
+    match self {
+      ErrorKind::NotInfix => 1,
+      ErrorKind::InfixWithoutOp => 2,
+      ErrorKind::InvalidFixity(_) => 3,
+      ErrorKind::NegativeFixity => 4,
+      ErrorKind::SameFixityDiffAssoc => 5,
+      ErrorKind::Expected(_) => 6,
+      ErrorKind::ExpectedKind(_) => 7,
+    }
+  }
+}
+
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
