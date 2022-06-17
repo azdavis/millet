@@ -101,7 +101,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
         st,
         pats,
         param.clone(),
-        Some(ErrorKind::NonExhaustiveMatch),
+        Some(ErrorKind::NonExhaustiveCase),
         exp,
       );
       Ty::fun(param, res)
