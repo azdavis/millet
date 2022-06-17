@@ -35,7 +35,7 @@ fn real() {
   check(
     r#"
 val _ = 123.
-(**     ^^^^ incomplete literal *)
+(**     ^^^^ missing digits in number literal *)
 "#,
   );
 }
@@ -45,7 +45,7 @@ fn string() {
   check(
     r#"
 val _ = "bad \ bad \ bad"
-(**     ^^^^^^^ invalid string literal *)
+(**     ^^^^^^^ non-whitespace in string continuation *)
 "#,
   );
 }

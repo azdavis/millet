@@ -37,11 +37,12 @@ pub enum ErrorKind {
   UnmatchedOpenComment,
   UnmatchedCloseComment,
   IncompleteTyVar,
-  IncompleteLit,
   UnclosedStringLit,
   NegativeWordLit,
   WrongLenCharLit,
-  InvalidStringLit,
+  MissingDigitsInNumLit,
+  InvalidStringEscape,
+  NonWhitespaceInStringContinuation,
 }
 
 impl ErrorKind {
@@ -52,11 +53,12 @@ impl ErrorKind {
       ErrorKind::UnmatchedOpenComment => 2,
       ErrorKind::UnmatchedCloseComment => 3,
       ErrorKind::IncompleteTyVar => 4,
-      ErrorKind::IncompleteLit => 5,
-      ErrorKind::UnclosedStringLit => 6,
-      ErrorKind::NegativeWordLit => 7,
-      ErrorKind::WrongLenCharLit => 8,
-      ErrorKind::InvalidStringLit => 9,
+      ErrorKind::UnclosedStringLit => 5,
+      ErrorKind::NegativeWordLit => 6,
+      ErrorKind::WrongLenCharLit => 7,
+      ErrorKind::MissingDigitsInNumLit => 8,
+      ErrorKind::InvalidStringEscape => 9,
+      ErrorKind::NonWhitespaceInStringContinuation => 10,
     }
   }
 }
@@ -68,11 +70,14 @@ impl fmt::Display for ErrorKind {
       ErrorKind::UnmatchedOpenComment => write!(f, "unmatched open comment"),
       ErrorKind::UnmatchedCloseComment => write!(f, "unmatched close comment"),
       ErrorKind::IncompleteTyVar => write!(f, "incomplete type variable"),
-      ErrorKind::IncompleteLit => write!(f, "incomplete literal"),
       ErrorKind::UnclosedStringLit => write!(f, "unclosed string literal"),
       ErrorKind::NegativeWordLit => write!(f, "negative word literal"),
       ErrorKind::WrongLenCharLit => write!(f, "character literal must have length 1"),
-      ErrorKind::InvalidStringLit => write!(f, "invalid string literal"),
+      ErrorKind::MissingDigitsInNumLit => write!(f, "missing digits in number literal"),
+      ErrorKind::InvalidStringEscape => write!(f, "invalid string escape"),
+      ErrorKind::NonWhitespaceInStringContinuation => {
+        write!(f, "non-whitespace in string continuation")
+      }
     }
   }
 }
@@ -170,7 +175,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           let s = cx.i;
           advance_while(cx, bs, |b| f(&b));
           if s == cx.i {
-            err(cx, start, ErrorKind::IncompleteLit)
+            err(cx, start, ErrorKind::MissingDigitsInNumLit)
           }
           if neg {
             err(cx, start, ErrorKind::NegativeWordLit)
@@ -183,7 +188,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           let s = cx.i;
           advance_while(cx, bs, |b| b.is_ascii_hexdigit());
           if s == cx.i {
-            err(cx, start, ErrorKind::IncompleteLit)
+            err(cx, start, ErrorKind::MissingDigitsInNumLit)
           }
           return SK::IntLit;
         }
@@ -199,7 +204,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       let s = cx.i;
       advance_while(cx, bs, |b| b.is_ascii_digit());
       if s == cx.i {
-        err(cx, start, ErrorKind::IncompleteLit)
+        err(cx, start, ErrorKind::MissingDigitsInNumLit)
       }
     }
     if let Some(&b'e') | Some(&b'E') = bs.get(cx.i) {
@@ -211,7 +216,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       let s = cx.i;
       advance_while(cx, bs, |b| b.is_ascii_digit());
       if s == cx.i {
-        err(cx, start, ErrorKind::IncompleteLit)
+        err(cx, start, ErrorKind::MissingDigitsInNumLit)
       }
     }
     return kind;
@@ -295,7 +300,7 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
             cx.i += 1;
             for _ in 0..4 {
               if !bs.get(cx.i)?.is_ascii_hexdigit() {
-                err(cx, start, ErrorKind::InvalidStringLit);
+                err(cx, start, ErrorKind::InvalidStringEscape);
               }
               cx.i += 1;
             }
@@ -310,19 +315,19 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
                   break;
                 }
                 if !is_whitespace(b) {
-                  err(cx, start, ErrorKind::InvalidStringLit);
+                  err(cx, start, ErrorKind::NonWhitespaceInStringContinuation);
                 }
               }
             } else if b.is_ascii_digit() {
               cx.i += 1;
               for _ in 0..2 {
                 if !bs.get(cx.i)?.is_ascii_digit() {
-                  err(cx, start, ErrorKind::InvalidStringLit);
+                  err(cx, start, ErrorKind::InvalidStringEscape);
                 }
                 cx.i += 1;
               }
             } else {
-              err(cx, start, ErrorKind::InvalidStringLit);
+              err(cx, start, ErrorKind::InvalidStringEscape);
               cx.i += 1;
             }
           }

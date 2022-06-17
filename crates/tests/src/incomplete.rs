@@ -5,7 +5,7 @@ fn num_lit() {
   check(
     r#"
 val _ = 0x
-(**     ^^ incomplete literal *)
+(**     ^^ missing digits in number literal *)
 "#,
   );
 }
