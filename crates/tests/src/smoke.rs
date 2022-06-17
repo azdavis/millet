@@ -122,3 +122,15 @@ val b = a
 "#,
   ]);
 }
+
+#[test]
+fn weird_ident() {
+  check(
+    r#"
+type 'a' t = 'a' list
+type 'element_type t = 'element_type list
+val don'tStarve = ()
+val uh''''what0000is______this''''' = ()
+"#,
+  );
+}
