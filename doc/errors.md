@@ -398,19 +398,9 @@ val _ = 123456789
 
 ## 3005
 
-A real literal was invalid. This can happen when it is too large.
+A real literal was invalid.
 
-```sml
-(* error *)
-val _ = 123456789123456789123456789123456789.1234
-```
-
-To fix, use smaller literals.
-
-```sml
-(* ok *)
-val _ = 123456789.1234
-```
+NOTE: It's not known whether this is currently emitted. It may be that the lexer/parser/lowering setup means that this is handled by earlier stages. However, we should probably emit this if a real literal was too large to be accurately represented or something of that ilk.
 
 ## 3006
 
