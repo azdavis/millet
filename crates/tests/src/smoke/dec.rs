@@ -129,3 +129,15 @@ fn abstype() {
 "#,
   );
 }
+
+#[test]
+fn mutual_recursion() {
+  check(
+    r#"
+fun even 0 = true
+  | even n = odd (n - 1)
+and odd 0 = false
+  | odd n = even (n - 1)
+"#,
+  );
+}
