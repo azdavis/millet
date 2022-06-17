@@ -270,6 +270,7 @@ infix 123456789123456789 foo
 To fix, only use small-ish fixities.
 
 ```sml
+(* ok *)
 infix 9 foo
 ```
 
@@ -296,6 +297,7 @@ infix quz
 Consecutive infix identifiers with the same fixity, but different associativity, were used without parentheses to disambiguate.
 
 ```sml
+(* error *)
 infix <<
 infixr >>
 fun a << b = a + b
@@ -330,6 +332,7 @@ One bit of advice is this: Since the parser tries to continue parsing a file eve
 There was an occurrence of an unsupported SML construct.
 
 ```sml
+(* error *)
 val x = #[1, 2]
 ```
 
@@ -339,7 +342,7 @@ At time of writing, this may be emitted for certain SML/NJ extensions that Mille
 - Vector patterns.
 - Or patterns.
 
-To fix, avoid such construct.
+To fix, avoid such constructs.
 
 ## 3002
 
@@ -571,6 +574,7 @@ Something was not requested by a signature, but was present in the structure tha
 Usually, this is allowed, but it is forbidden for `datatype` declarations.
 
 ```sml
+(* error *)
 signature SIG = sig
   datatype d = A
 end
@@ -613,6 +617,7 @@ This is probably the most common typechecking error, so it's hard to give genera
 Millet tries to report which type was "expected" and which was "found". For instance, in this example, we consider `int` the "expected" type, because of the annotation. This explicit annotation implies the programmer really thought it should be that type.
 
 ```sml
+(* error *)
 val x : int = "no"
 ```
 
@@ -750,6 +755,7 @@ fun f y =
 A constructor had an argument in a pattern match, but it was defined to have no argument.
 
 ```sml
+(* error *)
 datatype d = A | B of int
 
 fun f x =
@@ -763,6 +769,7 @@ fun f x =
 A constructor had no argument in a pattern match, but it was defined to have an argument.
 
 ```sml
+(* error *)
 datatype d = A | B of int
 
 fun f x =
