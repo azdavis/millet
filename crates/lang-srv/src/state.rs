@@ -84,7 +84,7 @@ impl State {
     ret
   }
 
-  pub(crate) fn send_request<R>(&mut self, params: R::Params)
+  fn send_request<R>(&mut self, params: R::Params)
   where
     R: lsp_types::request::Request,
   {
@@ -96,14 +96,14 @@ impl State {
   }
 
   #[allow(dead_code)]
-  pub(crate) fn send_response(&mut self, res: lsp_server::Response) {
+  fn send_response(&mut self, res: lsp_server::Response) {
     match self.req_queue.incoming.complete(res.id.clone()) {
       Some(()) => self.send(res.into()),
       None => log::warn!("tried to respond to a non-queued request: {res:?}"),
     }
   }
 
-  pub(crate) fn send_notification<N>(&self, params: N::Params)
+  fn send_notification<N>(&self, params: N::Params)
   where
     N: lsp_types::notification::Notification,
   {
@@ -189,7 +189,6 @@ impl State {
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let input = match analysis::get_input(&self.file_system, &mut root.path) {
       Ok(x) => x,
-      // TODO show this?
       Err(e) => {
         log::error!("could not get input: {e}");
         self.show_error(format!("{e}"));
