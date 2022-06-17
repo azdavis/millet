@@ -431,25 +431,6 @@ To fix, do not use zero as a numeric label.
 
 ## 3008
 
-A `signature` declaration was encountered not at the top level.
-
-```sml
-(* error *)
-structure Str = struct
-  signature SIG = sig end
-end
-```
-
-To fix, declare the signature at the top level.
-
-```sml
-(* ok *)
-signature SIG = sig end
-structure Str = struct end
-```
-
-## 3008
-
 A `signature` or `functor` declaration occurred not at the top level.
 
 ```sml
