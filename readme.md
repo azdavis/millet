@@ -34,7 +34,7 @@ Also, birds eat millet, and a bird named Polly Morphism is the mascot for [15-15
 [architecture]: doc/architecture.md
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [git]: https://git-scm.com
-[incomplete]: doc/todo.md
+[incomplete]: /doc/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [node]: https://nodejs.org/en/
