@@ -10,6 +10,7 @@
     "azdavis",
     "canonicalize",
     "clippy",
+    "cmark",
     "cmfile",
     "consts",
     "descs",

@@ -10,6 +10,7 @@ mod ascribe;
 mod check;
 mod datatype_copy;
 mod dupe;
+mod error_reference;
 mod exn;
 mod fixity;
 mod functor;
