@@ -308,20 +308,20 @@ fn diagnostics(
   errors
     .into_iter()
     .take(MAX_ERRORS_PER_FILE)
-    .map(|x| {
-      let code_description = match Url::parse(&format!("{ERRORS_URL}#{}", x.code)) {
+    .map(|err| {
+      let code_description = match Url::parse(&format!("{ERRORS_URL}#{}", err.code)) {
         Ok(href) => Some(lsp_types::CodeDescription { href }),
         Err(e) => {
-          log::error!("url parse failed for {x:?}: {e}");
+          log::error!("url parse failed for {err:?}: {e}");
           None
         }
       };
       lsp_types::Diagnostic {
-        range: lsp_range(pos_db.range(x.range)),
-        message: x.message,
+        range: lsp_range(pos_db.range(err.range)),
+        message: err.message,
         source: Some(SOURCE.to_owned()),
         severity: Some(lsp_types::DiagnosticSeverity::ERROR),
-        code: Some(lsp_types::NumberOrString::Number(x.code.into())),
+        code: Some(lsp_types::NumberOrString::Number(err.code.into())),
         code_description,
         ..Default::default()
       }
