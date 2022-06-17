@@ -190,30 +190,30 @@ impl fmt::Display for Check {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("\n\n  reasons:\n")?;
     for reason in self.reasons.iter() {
-      writeln!(f, "  - ")?;
+      write!(f, "  - ")?;
       match reason {
         Reason::WantWrongNumError(want_len) => {
-          write!(f, "want 0 or 1 wanted errors, got {want_len}")?;
+          writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;
         }
-        Reason::NoErrorsEmitted(want_len) => write!(f, "wanted {want_len} errors, but got none")?,
+        Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
         Reason::CannotGetLineColPair(path, r) => {
           let path = self.root.get_path(*path).as_path().display();
-          write!(f, "{path}: couldn't get a line-col pair from {r:?}")?;
+          writeln!(f, "{path}: couldn't get a line-col pair from {r:?}")?;
         }
         Reason::NotOneLine(path, pair) => {
           let path = self.root.get_path(*path).as_path().display();
-          write!(f, "{path}: not one line: {}..{}", pair.start, pair.end)?;
+          writeln!(f, "{path}: not one line: {}..{}", pair.start, pair.end)?;
         }
         Reason::GotButNotWanted(path, r, got) => {
           let path = self.root.get_path(*path).as_path().display();
           writeln!(f, "{path}:{r}: got an error, but wanted none")?;
-          write!(f, "    - got:  {got}")?;
+          writeln!(f, "    - got:  {got}")?;
         }
         Reason::MismatchedErrors(path, r, want, got) => {
           let path = self.root.get_path(*path).as_path().display();
           writeln!(f, "{path}:{r}: mismatched errors")?;
           writeln!(f, "    - want: {want}")?;
-          write!(f, "    - got:  {got}")?;
+          writeln!(f, "    - got:  {got}")?;
         }
       }
     }
