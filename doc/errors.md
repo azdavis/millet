@@ -494,36 +494,36 @@ val _ = foo
 
 To fix, try any of the following.
 
-- Look at the error message to see what kind of thing was not defined: value, type, structure, etc. These different kinds of items have different namespaces.
+(1) Look at the error message to see what kind of thing was not defined: value, type, structure, etc. These different kinds of items have different namespaces.
 
-  In this example, there is a value named `x` defined, but then we try to use `x` as a type. There is no type `x` defined, so this is invalid.
+In this example, there is a value named `x` defined, but then we try to use `x` as a type. There is no type `x` defined, so this is invalid.
 
-  ```sml
-  (* error *)
-  val x = 4
-  val y : x = 5
-  ```
+```sml
+(* error *)
+val x = 4
+val y : x = 5
+```
 
-- Check that the name is correctly spelled.
+(2) Check that the name is correctly spelled.
 
-- Check you're accessing the right structure. For instance, `filter` is defined in `structure List`, not at the top level. Some functions like `map` are defined both in `List` and at the top level.
+(3) Check you're accessing the right structure. For instance, `filter` is defined in `structure List`, not at the top level. Some functions like `map` are defined both in `List` and at the top level.
 
-- Check that the name is not explicitly forbidden from being accessed by a signature ascription. Ascribing a structure to a more restrictive signature prohibits accessing the "extra" items inside the structure.
+(4) Check that the name is not explicitly forbidden from being accessed by a signature ascription. Ascribing a structure to a more restrictive signature prohibits accessing the "extra" items inside the structure.
 
-  ```sml
-  (* error *)
+```sml
+(* error *)
 
-  signature SIG = sig
-    val foo : int
-  end
+signature SIG = sig
+  val foo : int
+end
 
-  structure Str : SIG =
-    val foo = 3
-    val bar = "hi"
-  end
+structure Str : SIG =
+  val foo = 3
+  val bar = "hi"
+end
 
-  val _ = Str.bar
-  ```
+val _ = Str.bar
+```
 
 ## 4003
 
