@@ -8,8 +8,15 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
   let ret = match scon.kind {
     ast::SConKind::IntLit => {
       let chars = tok.text();
-      let (mul, chars) = start_int(chars, "0x");
-      let n = match i32::from_str_radix(chars.as_str(), 16) {
+      let (mul, mut chars) = start_int(chars);
+      let radix = if chars.as_str().starts_with("0x") {
+        chars.next();
+        chars.next();
+        16
+      } else {
+        10
+      };
+      let n = match i32::from_str_radix(chars.as_str(), radix) {
         Ok(x) => mul * x,
         Err(e) => {
           cx.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
@@ -37,11 +44,18 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
     }
     ast::SConKind::WordLit => {
       let chars = tok.text();
-      let (mul, mut chars) = start_int(chars, "0w");
-      if chars.as_str().starts_with('x') {
+      let (mul, mut chars) = start_int(chars);
+      // 0
+      chars.next();
+      // w
+      chars.next();
+      let radix = if chars.as_str().starts_with('x') {
         chars.next();
-      }
-      let n = match i32::from_str_radix(chars.as_str(), 16) {
+        16
+      } else {
+        10
+      };
+      let n = match i32::from_str_radix(chars.as_str(), radix) {
         Ok(x) => mul * x,
         Err(e) => {
           cx.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
@@ -56,14 +70,10 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
   Some(ret)
 }
 
-fn start_int<'a>(chars: &'a str, prefix: &str) -> (i32, std::str::Chars<'a>) {
+fn start_int(chars: &str) -> (i32, std::str::Chars<'_>) {
   let mut chars = chars.chars();
   let neg = chars.as_str().starts_with('~');
   if neg {
-    chars.next();
-  }
-  if chars.as_str().starts_with(prefix) {
-    chars.next();
     chars.next();
   }
   (if neg { -1 } else { 1 }, chars)
