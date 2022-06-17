@@ -376,13 +376,13 @@ impl fmt::Debug for Event {
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct OpInfo {
-  pub(crate) num: usize,
+  pub(crate) num: u16,
   pub(crate) assoc: Assoc,
 }
 
 impl OpInfo {
   /// Returns a new OpInfo with left associativity.
-  pub(crate) fn left(num: usize) -> Self {
+  pub(crate) fn left(num: u16) -> Self {
     Self {
       num,
       assoc: Assoc::Left,
@@ -390,7 +390,7 @@ impl OpInfo {
   }
 
   /// Returns a new OpInfo with right associativity.
-  pub(crate) fn right(num: usize) -> Self {
+  pub(crate) fn right(num: u16) -> Self {
     Self {
       num,
       assoc: Assoc::Right,
