@@ -64,7 +64,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             return Err(UnifyError::OverloadMismatch(ov));
           }
         }
-        Some(SubstEntry::Set(t)) => panic!("meta var already set to {t:?}"),
+        Some(SubstEntry::Set(t)) => unreachable!("meta var already set to {t:?}"),
       }
       Ok(())
     }

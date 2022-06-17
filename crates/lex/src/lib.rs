@@ -310,7 +310,6 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
                   break;
                 }
                 if !is_whitespace(b) {
-                  // panic!("about to err");
                   err(cx, start, ErrorKind::InvalidStringLit);
                 }
               }
