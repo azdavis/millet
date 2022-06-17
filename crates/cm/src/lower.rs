@@ -8,6 +8,10 @@ pub(crate) fn get(root: Root) -> Result<CMFile> {
       let mut sml = Vec::<PathBuf>::new();
       let mut cm = Vec::<PathBuf>::new();
       for member in members {
+        // NOTE: just ignore dollar paths, since we include the full basis
+        if member.pathname.starts_with(std::path::Path::new("$")) {
+          continue;
+        }
         match member.class() {
           Some(c) => match c {
             Class::Sml => sml.push(member.pathname),

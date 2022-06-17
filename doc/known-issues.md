@@ -7,6 +7,7 @@ See also the [TODO][].
 - Some language constructs like `abstype` and `...` pattern rows are not supported.
 - CM files are not analyzed to limit exports.
 - The standard basis is made available to all files, regardless of whether files ask for it via CM or not.
+- On a related note, `$` paths are ignored in CM files.
 - The full CM spec (preprocessor, the "set calculus" for exports) is not supported.
 - MLBasis files are not supported.
 - Every file is entirely re-analyzed upon a single file change. This can make the server slow.

@@ -61,3 +61,18 @@ is
     &["seq.cm"],
   );
 }
+
+#[test]
+fn dollar_path() {
+  check(
+    r#"
+Group is
+  $/basis.cm
+  foo.sml
+  bar.cm
+"#,
+    &[],
+    &["foo.sml"],
+    &["bar.cm"],
+  );
+}
