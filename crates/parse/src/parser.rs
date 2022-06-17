@@ -427,6 +427,22 @@ pub enum ErrorKind {
   ExpectedKind(SK),
 }
 
+impl fmt::Display for ErrorKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ErrorKind::NotInfix => f.write_str("non-infix name used as infix"),
+      ErrorKind::InfixWithoutOp => f.write_str("infix name used as non-infix without `op`"),
+      ErrorKind::InvalidFixity(e) => write!(f, "invalid fixity: {e}"),
+      ErrorKind::NegativeFixity => f.write_str("fixity is negative"),
+      ErrorKind::SameFixityDiffAssoc => {
+        f.write_str("consecutive infix names with same fixity but different associativity")
+      }
+      ErrorKind::Expected(e) => write!(f, "expected {e}"),
+      ErrorKind::ExpectedKind(k) => write!(f, "expected {k}"),
+    }
+  }
+}
+
 #[derive(Debug)]
 pub enum Expected {
   Exp,
@@ -454,21 +470,6 @@ impl fmt::Display for Expected {
       Expected::Item => "a top-level item",
     };
     f.write_str(s)
-  }
-}
-impl fmt::Display for ErrorKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      ErrorKind::NotInfix => f.write_str("non-infix name used as infix"),
-      ErrorKind::InfixWithoutOp => f.write_str("infix name used as non-infix without `op`"),
-      ErrorKind::InvalidFixity(e) => write!(f, "invalid fixity: {e}"),
-      ErrorKind::NegativeFixity => f.write_str("fixity is negative"),
-      ErrorKind::SameFixityDiffAssoc => {
-        f.write_str("consecutive infix names with same fixity but different associativity")
-      }
-      ErrorKind::Expected(e) => write!(f, "expected {e}"),
-      ErrorKind::ExpectedKind(k) => write!(f, "expected {k}"),
-    }
   }
 }
 
