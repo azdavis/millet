@@ -122,8 +122,7 @@ pub enum ErrorKind {
   InvalidRealLit(std::num::ParseFloatError),
   InvalidNumLab(std::num::ParseIntError),
   ZeroNumLab,
-  SigMustBeTopLevel,
-  FunctorMustBeTopLevel,
+  MustBeTopLevel,
 }
 
 impl ErrorKind {
@@ -136,8 +135,7 @@ impl ErrorKind {
       ErrorKind::InvalidRealLit(_) => 5,
       ErrorKind::InvalidNumLab(_) => 6,
       ErrorKind::ZeroNumLab => 7,
-      ErrorKind::SigMustBeTopLevel => 8,
-      ErrorKind::FunctorMustBeTopLevel => 9,
+      ErrorKind::MustBeTopLevel => 8,
     }
   }
 }
@@ -159,14 +157,9 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
       ErrorKind::ZeroNumLab => write!(f, "invalid numeric label: numeric labels start at 1"),
-      ErrorKind::SigMustBeTopLevel => must_be_top_level(f, "`signature`"),
-      ErrorKind::FunctorMustBeTopLevel => must_be_top_level(f, "`functor`"),
+      ErrorKind::MustBeTopLevel => write!(f, "declaration must be at the top level"),
     }
   }
-}
-
-fn must_be_top_level(f: &mut fmt::Formatter<'_>, s: &str) -> fmt::Result {
-  write!(f, "{s} declarations must be at the top level")
 }
 
 /// The result of lowering.

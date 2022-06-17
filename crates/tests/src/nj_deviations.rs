@@ -122,7 +122,7 @@ fn sig_not_top_level() {
     r#"
 structure A = struct
     signature B = sig end
-(** ^^^^^^^^^^^^^^^^^^^^^ `signature` declarations must be at the top level *)
+(** ^^^^^^^^^^^^^^^^^^^^^ declaration must be at the top level *)
 end
 "#,
   );
@@ -134,7 +134,7 @@ fn functor_not_top_level() {
     r#"
 structure A = struct
     functor F() = struct end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^ `functor` declarations must be at the top level *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^ declaration must be at the top level *)
 end
 "#,
   );

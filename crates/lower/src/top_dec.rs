@@ -89,11 +89,11 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
       get_str_dec(cx, str_dec.in_dec()),
     ),
     ast::StrDecOne::SigDec(dec) => {
-      cx.err(dec.syntax().text_range(), ErrorKind::SigMustBeTopLevel);
+      cx.err(dec.syntax().text_range(), ErrorKind::MustBeTopLevel);
       return None;
     }
     ast::StrDecOne::FunctorDec(dec) => {
-      cx.err(dec.syntax().text_range(), ErrorKind::FunctorMustBeTopLevel);
+      cx.err(dec.syntax().text_range(), ErrorKind::MustBeTopLevel);
       return None;
     }
   };
