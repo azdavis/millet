@@ -29,7 +29,11 @@ See also the [architecture][] documentation.
 
 "Millet" has M and L in it, in that order. So does "Standard ML".
 
-Also, birds eat millet, and a bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course taught in Standard ML.
+Also:
+
+- Birds eat millet.
+- A bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course.
+- 15-150 is taught in Standard ML.
 
 [architecture]: doc/architecture.md
 [cmu150]: http://www.cs.cmu.edu/~15150/
