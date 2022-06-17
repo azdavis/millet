@@ -13,7 +13,7 @@ val 空条承太郎 = 3
 
 Millet only allows certain ASCII characters to appear in names and the like. String literals and comments, however, should be able to handle arbitrary UTF-8.
 
-To fix, only use allowed source characters. All non-ASCII characters are invalid.
+To fix, only use allowed source characters. Only ASCII characters (but not all ASCII characters) are allowed.
 
 ```sml
 (* ok *)
@@ -90,7 +90,7 @@ val xs : 'a list = []
 
 ## 1005
 
-A string literal was not closed. String literals start and end with `"`.
+A `string` literal was not closed. String literals start and end with `"`.
 
 ```sml
 (* error *)
@@ -113,7 +113,7 @@ val greeting = "he jumped down and said \"hello there\" aloud."
 
 ## 1006
 
-A word literal was negative. Words cannot be negative.
+A `word` literal was negative. Words cannot be negative.
 
 ```sml
 (* error *)
@@ -122,7 +122,7 @@ val neg = ~0w123
 
 ## 1007
 
-A character literal contained more (or less) than 1 character.
+A `char` literal contained more (or less) than 1 character.
 
 ```sml
 (* error *)
@@ -141,7 +141,7 @@ val empty = ""
 
 ## 1008
 
-A number (int, word, or real) literal was incomplete. For instance, a word literal that starts with `0w`, but then with no digits following, is incomplete. Or a real literal that has no digits after the decimal point, marked with `.`, or exponent, marked with `e` or `E`.
+A number (`int`, `word`, or `real`) literal was incomplete. For instance, a word literal that starts with `0w`, but then with no digits following, is incomplete. Or a real literal that has no digits after the decimal point, marked with `.`, or exponent, marked with `e` or `E`.
 
 ```sml
 (* error *)
@@ -184,7 +184,7 @@ String escapes start with `\`. Valid simple escapes are:
 
 Valid complex escapes are:
 
-- `\^c`, where c is a character in the ASCII range 64 (`A`) to 95 (`_`). This is useful for ASCII control characters, like `\^[`.
+- `\^C`, where `C` is a character in the ASCII range 64 (`A`) to 95 (`_`). This is useful for ASCII control characters, like `\^[`.
 - `\DDD`, where each `D` is a decimal digit: `0-9`.
 - `\uXXXX`, where each `X` is a hexadecimal digit: `0-9`, `A-F`, or `a-f`.
 
@@ -456,7 +456,7 @@ There was an occurrence of an unsupported SML construct.
 
 ```sml
 (* error *)
-val _: int = #2 ("hi", 4)
+val _ : int = #2 ("hi", 4)
 ```
 
 At time of writing, the following constructs are not supported:
@@ -475,7 +475,11 @@ val _ = foo
 
 To fix, try any of the following.
 
-(1) Look at the error message to see what kind of thing was not defined: value, type, structure, etc. These different kinds of items have different namespaces.
+(1) Check that the name is correctly spelled.
+
+(2) Check the if the name is defined in the current scope unqualified, or if it is in a structure. For instance, `filter` is defined in `structure List`, not at the top level. Some functions like `map` are defined both in `List` and at the top level.
+
+(3) Check the error message to see what kind of thing was not defined: value, type, structure, etc. These different kinds of items have different namespaces.
 
 In this example, there is a value named `x` defined, but then we try to use `x` as a type. There is no type `x` defined, so this is invalid.
 
@@ -484,10 +488,6 @@ In this example, there is a value named `x` defined, but then we try to use `x` 
 val x = 4
 val y : x = 5
 ```
-
-(2) Check that the name is correctly spelled.
-
-(3) Check you're accessing the right structure. For instance, `filter` is defined in `structure List`, not at the top level. Some functions like `map` are defined both in `List` and at the top level.
 
 (4) Check that the name is not explicitly forbidden from being accessed by a signature ascription. Ascribing a structure to a more restrictive signature prohibits accessing the "extra" items inside the structure.
 
@@ -526,6 +526,12 @@ fun add (x, x) = x + x
 ```
 
 To fix, use different names, or avoid `and`. (The latter induces shadowing.)
+
+```sml
+(* ok *)
+val x = 3
+val x = 4
+```
 
 ## 4004
 
@@ -639,14 +645,16 @@ A real literal was used as a pattern.
 
 ```sml
 (* error *)
-fun f (x: real): int =
+fun f (x : real) : int =
   case x of
     1.2 => 3
   | 1.4 => 5
   | _ => 6
 ```
 
-To fix, consider checking that the given real is within some epsilon value of the desired real. Usage of `Real.==` to check for equality between reals is discouraged, due to limitations around representing floating-point (aka, real) numbers on most architectures.
+To fix, consider checking that the given real is within some epsilon value of the desired real.
+
+Usage of `Real.==` to check for equality between reals is discouraged, due to limitations around representing floating-point (aka, real) numbers on most architectures.
 
 ## 4012
 
@@ -656,7 +664,7 @@ Patterns in a `case` are tried from top to bottom. If a pattern further up the `
 
 ```sml
 (* error *)
-fun f (x: int): int =
+fun f x =
   case x of
     1 => 2
   | 1 => 3
@@ -676,13 +684,11 @@ When we `case` on a value of a given type, we must assume that value can be any 
 
 ```sml
 (* error *)
+datatype d = A | B of int
 
-datatype t = A | B of int | C of string
-
-fun f (x: t): int =
+fun f (x : d) : int =
   case x of
     A => 1
-  | B y => y
 ```
 
 To fix, add patterns matching the missing cases. The error message reports examples of patterns not matched.
@@ -693,9 +699,9 @@ This is effectively the same error as 4013, but it emitted for singular bindings
 
 ```sml
 (* error *)
-datatype t = A | B of int | C of string
+datatype d = A | B of int
 
-fun f (x: t): int =
+fun f (x : d) : int =
   let
     val B y = x
   in
@@ -727,7 +733,7 @@ fun f y =
   | _ => 6
 ```
 
-To fix, try something like this:
+To fix, use a literal pattern, or check for equality another way, for instance with `=`.
 
 ```sml
 (* ok *)
@@ -866,7 +872,7 @@ To fix, only use exceptions on the right hand side.
 
 Certain names may not be rebound. These names are:
 
-| Name    | What it already is                |
+| Name    | Definition                        |
 | ------- | --------------------------------- |
 | `true`  | logical truth                     |
 | `false` | logical falsity                   |
@@ -884,26 +890,32 @@ To fix, do not attempt to rebind these names.
 
 ## 4024
 
-Names have "statuses", which can be either "exception", "constructor", or "value". These status must be, in a certain precise sense, "compatible" for the purposes of matching a structure against a signature. It is an error if they are not.
+Names have "statuses", which can be one of:
+
+- exception
+- constructor
+- value
+
+These statuses must be compatible for the purposes of matching a structure against a signature.
 
 ```sml
 (* error *)
 exception Foo
 
-structure S: sig
+structure S : sig
   exception E
 end = struct
   val E = Foo
 end
 ```
 
-To fix, ensure the names have the correct statuses.
+To fix, ensure the names have compatible statuses.
 
 ```sml
 (* ok *)
 exception Foo
 
-structure S: sig
+structure S : sig
   exception E
 end = struct
   exception E = Foo
