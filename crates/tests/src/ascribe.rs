@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn ok_smoke() {
@@ -489,6 +489,25 @@ end
 structure Str :> SIG = struct
   exception E
 end
+"#,
+  );
+}
+
+#[test]
+fn structure_spec() {
+  fail(
+    r#"q
+signature INNER = sig
+  type t
+  val x : t
+end
+
+signature OUTER = sig
+  structure A : INNER
+  structure B : INNER
+end
+
+functor Id (X : OUTER) :> OUTER = X
 "#,
   );
 }

@@ -429,7 +429,9 @@ fn env_instance_sig(
   idx: hir::Idx,
 ) {
   for &sym in sig_ty_names.iter() {
+    // TODO have this be something that traverses the sig env to figure out the Path of the type?
     let (name, _) = st.syms.get(&sym).unwrap();
+    // then use get_ty_info with that Path here?
     match env.ty_env.get(name) {
       Some(ty_info) => {
         subst.insert(sym, ty_info.ty_scheme.clone());
