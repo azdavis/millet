@@ -49,20 +49,10 @@ val 空条承太郎 = 3
 }
 
 #[test]
-fn unmatched_close_comment() {
+fn unclosed_comment() {
   check(
     r#"
-val x = 3 *)
-(**       ^^ unmatched close comment *)
-"#,
-  );
-}
-
-#[test]
-fn unmatched_open_comment() {
-  check(
-    r#"
-(**       vv unmatched open comment *)
+(**       vv unclosed comment *)
 val x = 3 (*
 "#,
   );

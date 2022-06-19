@@ -18,9 +18,10 @@ end
 
 #[test]
 fn op_star() {
-  fail(
+  check(
     r#"
-val _ = (op *)
+val f = (op *)
+val _ : int = f (2, 3)
 "#,
   );
 }

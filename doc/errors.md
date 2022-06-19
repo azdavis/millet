@@ -22,7 +22,7 @@ val kujoJotaro = 3
 
 ## 1002
 
-There was an open comment delimiter `(*` that was not matched by a later close comment delimiter `*)`.
+There was an unclosed comment. This means an open comment delimiter `(*` was not matched by a later close comment delimiter `*)`.
 
 ```sml
 (* error *)
@@ -44,30 +44,6 @@ Note that comments may be nested.
 
 ## 1003
 
-There was a close comment delimiter `*)` that was not matched by an earlier open comment delimiter `(*`.
-
-```sml
-(* error *)
-val x = 3
-a comment that doesn't start *)
-val y = 4
-```
-
-This may get triggered if the program contains `(op *)` in an attempt to use `*` as non-infix. To fix, use `op *` or `(op * )` instead.
-
-Or, if this is supposed to be a comment, to fix, open the comment with `(*`.
-
-```sml
-(* ok *)
-val x = 3
-(* a comment that starts *)
-val y = 4
-```
-
-Note that comments may be nested.
-
-## 1004
-
 A type variable name was incomplete.
 
 ```sml
@@ -88,7 +64,7 @@ To fix, use a valid type variable name.
 val xs : 'a list = []
 ```
 
-## 1005
+## 1004
 
 A `string` literal was not closed. String literals start and end with `"`.
 
@@ -111,7 +87,7 @@ This error may occur when trying to embed `"` in a string literal. To embed `"` 
 val greeting = "he jumped down and said \"hello there\" aloud."
 ```
 
-## 1006
+## 1005
 
 A `word` literal was negative. Words cannot be negative.
 
@@ -120,7 +96,7 @@ A `word` literal was negative. Words cannot be negative.
 val neg = ~0w123
 ```
 
-## 1007
+## 1006
 
 A `char` literal contained more (or less) than 1 character.
 
@@ -139,7 +115,7 @@ val greeting = "hello there"
 val empty = ""
 ```
 
-## 1008
+## 1007
 
 A number (`int`, `word`, or `real`) literal was incomplete. For instance, a word literal that starts with `0w`, but then with no digits following, is incomplete. Or a real literal that has no digits after the decimal point, marked with `.`, or exponent, marked with `e` or `E`.
 
@@ -159,7 +135,7 @@ val y : real = 1.123
 val z : real = 1e123
 ```
 
-## 1009
+## 1008
 
 A string escape was invalid.
 
@@ -195,7 +171,7 @@ To fix, only use valid escapes.
 val _ = "this has\na newline"
 ```
 
-## 1010
+## 1009
 
 There was a non-whitespace character in a string continuation.
 

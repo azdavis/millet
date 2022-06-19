@@ -12,8 +12,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum Error {
-  UnmatchedOpenComment,
-  UnmatchedCloseComment,
+  UnclosedComment,
   EmptyExportList,
   Expected(Token<'static>),
   ExpectedString,
@@ -27,8 +26,7 @@ pub enum Error {
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Error::UnmatchedOpenComment => f.write_str("unmatched open comment"),
-      Error::UnmatchedCloseComment => f.write_str("unmatched close comment"),
+      Error::UnclosedComment => f.write_str("unclosed block comment"),
       Error::EmptyExportList => f.write_str("invalid empty export list"),
       Error::Expected(tok) => write!(f, "expected `{}`", tok),
       Error::ExpectedString => f.write_str("expected a string"),

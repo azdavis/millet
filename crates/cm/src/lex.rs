@@ -26,8 +26,7 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     Ok(None) => {}
     Err(u) => {
       let kind = match u {
-        block_comment::Unmatched::Open => Error::UnmatchedOpenComment,
-        block_comment::Unmatched::Close => Error::UnmatchedCloseComment,
+        block_comment::UnclosedError => Error::UnclosedComment,
       };
       return Err(kind);
     }

@@ -4,7 +4,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use block_comment::{self, Consumed, Unmatched};
+use block_comment::{self, Consumed, UnclosedError};
 use std::fmt;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::{token::Token, SyntaxKind as SK};
@@ -42,15 +42,14 @@ impl Error {
   pub fn to_code(&self) -> u8 {
     match self.kind {
       ErrorKind::InvalidSource => 1,
-      ErrorKind::UnmatchedOpenComment => 2,
-      ErrorKind::UnmatchedCloseComment => 3,
-      ErrorKind::IncompleteTyVar => 4,
-      ErrorKind::UnclosedStringLit => 5,
-      ErrorKind::NegativeWordLit => 6,
-      ErrorKind::WrongLenCharLit => 7,
-      ErrorKind::MissingDigitsInNumLit => 8,
-      ErrorKind::InvalidStringEscape => 9,
-      ErrorKind::NonWhitespaceInStringContinuation => 10,
+      ErrorKind::UnclosedComment => 2,
+      ErrorKind::IncompleteTyVar => 3,
+      ErrorKind::UnclosedStringLit => 4,
+      ErrorKind::NegativeWordLit => 5,
+      ErrorKind::WrongLenCharLit => 6,
+      ErrorKind::MissingDigitsInNumLit => 7,
+      ErrorKind::InvalidStringEscape => 8,
+      ErrorKind::NonWhitespaceInStringContinuation => 9,
     }
   }
 }
@@ -60,8 +59,7 @@ impl Error {
 #[allow(missing_docs)]
 enum ErrorKind {
   InvalidSource,
-  UnmatchedOpenComment,
-  UnmatchedCloseComment,
+  UnclosedComment,
   IncompleteTyVar,
   UnclosedStringLit,
   NegativeWordLit,
@@ -75,8 +73,7 @@ impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       ErrorKind::InvalidSource => f.write_str("invalid source character"),
-      ErrorKind::UnmatchedOpenComment => f.write_str("unmatched open comment"),
-      ErrorKind::UnmatchedCloseComment => f.write_str("unmatched close comment"),
+      ErrorKind::UnclosedComment => f.write_str("unclosed comment"),
       ErrorKind::IncompleteTyVar => f.write_str("incomplete type variable"),
       ErrorKind::UnclosedStringLit => f.write_str("unclosed string literal"),
       ErrorKind::NegativeWordLit => f.write_str("negative word literal"),
@@ -125,13 +122,9 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   match block_comment::get(&mut cx.i, b, bs) {
     Ok(None) => {}
     Ok(Some(Consumed)) => return SK::BlockComment,
-    Err(Unmatched::Open) => {
-      err(cx, start, ErrorKind::UnmatchedOpenComment);
+    Err(UnclosedError) => {
+      err(cx, start, ErrorKind::UnclosedComment);
       return SK::BlockComment;
-    }
-    Err(Unmatched::Close) => {
-      err(cx, start, ErrorKind::UnmatchedCloseComment);
-      return SK::Invalid;
     }
   }
   // whitespace
