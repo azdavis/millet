@@ -40,7 +40,6 @@ end
 
 structure String :> STRING
   where type string = string
-  where type string = CharVector.vector
   where type char = Char.char = String
 structure WideString :> STRING (* OPTIONAL *)
   where type string = WideCharVector.vector

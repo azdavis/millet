@@ -104,3 +104,12 @@ val _: int = 3 + 4 before ignore "hey"
   "#,
   );
 }
+
+#[test]
+fn string() {
+  check_with_std_basis(
+    r#"
+val _ = "hello " ^ "world"
+"#,
+  );
+}
