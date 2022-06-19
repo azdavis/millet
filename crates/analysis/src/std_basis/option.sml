@@ -3,6 +3,8 @@ signature OPTION = sig
   exception Option
   val getOpt : 'a option * 'a -> 'a
   val isSome : 'a option -> bool
+  (* non-standard *)
+  val isNone : 'a option -> bool
   val valOf : 'a option -> 'a
   val filter : ('a -> bool) -> 'a -> 'a option
   val join : 'a option option -> 'a option
