@@ -210,12 +210,12 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
         Ok(ty_info) => {
           let want_len = ty_info.ty_scheme.bound_vars.len();
           if want_len == ty_vars.len() {
-            match ty_info.ty_scheme.ty {
+            match &ty_info.ty_scheme.ty {
               Ty::None => {}
               // TODO side condition for sym not in T of B?
-              Ty::Con(_, sym) => env_realize(&map([(sym, ty_scheme)]), &mut inner_env),
+              Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), &mut inner_env),
               // TODO is this reachable?
-              _ => {}
+              t => log::error!("reached an unexpected case: {t:?}"),
             }
           } else {
             st.err(sig_exp, ErrorKind::WrongNumTyArgs(want_len, ty_vars.len()));
@@ -355,17 +355,17 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
           Ok(ty_info) => {
             // TODO assert exists a s.t. for all ty schemes, arity of ty scheme = a? and all other
             // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
-            match ty_info.ty_scheme.ty {
+            match &ty_info.ty_scheme.ty {
               Ty::None => {}
               // TODO side condition for sym not in T of B?
               Ty::Con(_, sym) => {
                 if ty_scheme.is_none() {
                   ty_scheme = Some(ty_info.ty_scheme.clone());
                 }
-                syms.push(sym);
+                syms.push(*sym);
               }
               // TODO is this reachable?
-              _ => {}
+              t => log::error!("reached an unexpected case: {t:?}"),
             }
           }
           Err(e) => st.err(spec, e),
