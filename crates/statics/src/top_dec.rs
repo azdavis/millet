@@ -5,7 +5,9 @@ use crate::types::{
   generalize, Bs, Env, FunEnv, FunSig, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty, TyEnv, TyInfo,
   TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::util::{apply_bv, get_env, get_ty_info, ins_check_name, ins_no_dupe, instantiate};
+use crate::util::{
+  apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe, instantiate,
+};
 use crate::{dec, ty, unify::unify};
 use fast_hash::{map, FxHashMap, FxHashSet};
 use std::sync::Arc;
@@ -92,7 +94,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       let mut subst = TyRealization::default();
       let mut to_extend = sig.env.clone();
       if st.mode().is_regular() {
-        env_instance_sig(st, &mut subst, &str_exp_env, &sig.ty_names, str_exp.into());
+        env_instance_sig(st, &mut subst, &str_exp_env, &sig, str_exp.into());
         env_realize(&subst, &mut to_extend);
         env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
       }
@@ -109,11 +111,10 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       Some(fun_sig) => {
         let mut arg_env = Env::default();
         get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
-        let ty_names = &fun_sig.param.ty_names;
         let mut subst = TyRealization::default();
         let mut to_extend = fun_sig.res.env.clone();
         let arg_idx = hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
-        env_instance_sig(st, &mut subst, &arg_env, ty_names, arg_idx);
+        env_instance_sig(st, &mut subst, &arg_env, &fun_sig.param, arg_idx);
         gen_fresh_syms(st, &mut subst, &fun_sig.res.ty_names);
         env_realize(&subst, &mut to_extend);
         let mut param_env = fun_sig.param.env.clone();
@@ -421,27 +422,40 @@ fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &hir::TyDesc, idx: hir:
 
 type TyRealization = FxHashMap<Sym, TyScheme>;
 
-fn env_instance_sig(
-  st: &mut St,
-  subst: &mut TyRealization,
-  env: &Env,
-  sig_ty_names: &TyNameSet,
-  idx: hir::Idx,
-) {
-  for &sym in sig_ty_names.iter() {
-    // TODO have this be something that traverses the sig env to figure out the Path of the type?
-    let (name, _) = st.syms.get(&sym).unwrap();
-    // then use get_ty_info with that Path here?
-    match env.ty_env.get(name) {
-      Some(ty_info) => {
+fn env_instance_sig(st: &mut St, subst: &mut TyRealization, env: &Env, sig: &Sig, idx: hir::Idx) {
+  for &sym in sig.ty_names.iter() {
+    let mut path = Vec::<&hir::Name>::new();
+    if !bound_ty_name_to_path(&mut path, &sig.env, sym) {
+      log::error!("couldn't get a path for {sym:?} in {sig:?}");
+      continue;
+    }
+    let last = path.pop().unwrap();
+    match get_ty_info_raw(env, path, last) {
+      Ok(ty_info) => {
         subst.insert(sym, ty_info.ty_scheme.clone());
       }
-      None => {
-        let name = name.clone();
-        st.err(idx, ErrorKind::Undefined(Item::Ty, name));
+      Err(e) => st.err(idx, e),
+    }
+  }
+}
+
+fn bound_ty_name_to_path<'e>(ac: &mut Vec<&'e hir::Name>, env: &'e Env, sym: Sym) -> bool {
+  for (name, ty_info) in env.ty_env.iter() {
+    if let Ty::Con(_, s) = &ty_info.ty_scheme.ty {
+      if *s == sym {
+        ac.push(name);
+        return true;
       }
     }
   }
+  for (name, env) in env.str_env.iter() {
+    ac.push(name);
+    if bound_ty_name_to_path(ac, env, sym) {
+      return true;
+    }
+    ac.pop();
+  }
+  false
 }
 
 // TODO for the enrich family of fns, improve error messages/range. for ranges, we might need to

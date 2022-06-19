@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -495,7 +495,7 @@ end
 
 #[test]
 fn structure_spec() {
-  fail(
+  check(
     r#"
 signature INNER = sig
   type t
