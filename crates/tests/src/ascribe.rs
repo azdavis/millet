@@ -496,7 +496,7 @@ end
 #[test]
 fn structure_spec() {
   fail(
-    r#"q
+    r#"
 signature INNER = sig
   type t
   val x : t
