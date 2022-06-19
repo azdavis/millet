@@ -210,7 +210,9 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
   while p.at(SK::SharingKw) {
     let en = p.precede(ex);
     p.bump();
-    p.eat(SK::TypeKw);
+    if p.at(SK::TypeKw) {
+      p.bump();
+    }
     many_sep(p, SK::Eq, SK::PathEq, |p| {
       must(p, path, Expected::Path);
     });

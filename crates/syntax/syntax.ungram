@@ -98,7 +98,7 @@ DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 ExSpec = 'exception' ExDesc*
 StrSpec = 'structure' StrDesc*
 IncludeSpec = 'include' SigExp*
-SharingSpec = SpecOne 'sharing' 'type' PathEq*
+SharingSpec = SpecOne 'sharing' 'type'? PathEq*
 
 ValDesc = NameStarEq ':' Ty 'and'?
 // the Definition only gives lowering for the `= ty` case for `type` descriptions.
