@@ -124,4 +124,6 @@ const ORDER: &[&str] = &[
   include_str!("unix-sock.sml"),
   include_str!("unix.sml"),
   include_str!("windows.sml"),
+  // non-standard
+  include_str!("fn.sml"),
 ];
