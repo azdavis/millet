@@ -130,8 +130,17 @@ pub enum Spec {
   Exception(ExDesc),
   Str(StrDesc),
   Include(SigExpIdx),
-  Sharing(SpecIdx, Vec<Path>),
+  Sharing(SpecIdx, SharingKind, Vec<Path>),
   Seq(Vec<SpecIdx>),
+}
+
+#[derive(Debug)]
+pub enum SharingKind {
+  /// The non-derived form, `sharing type`.
+  Regular,
+  /// The derived form, `sharing`. Though this is a derived form, we represent it in HIR because
+  /// lowering it requires non-trivial statics information.
+  Derived,
 }
 
 #[derive(Debug)]
@@ -291,7 +300,7 @@ pub enum SCon {
   String(SmolStr),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Path {
   structures: Vec<Name>,
   last: Name,

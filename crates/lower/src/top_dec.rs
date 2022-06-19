@@ -218,17 +218,16 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
     }
     ast::SpecOne::SharingSpec(spec) => {
       let inner = get_spec_one(cx, spec.spec_one()?);
-      if spec.type_kw().is_none() {
-        cx.err(
-          spec.syntax().text_range(),
-          ErrorKind::Unsupported("`sharing` spec derived form"),
-        );
-      }
+      let kind = if spec.type_kw().is_some() {
+        hir::SharingKind::Regular
+      } else {
+        hir::SharingKind::Derived
+      };
       let paths_eq: Vec<_> = spec
         .path_eqs()
         .filter_map(|x| get_path(x.path()?))
         .collect();
-      hir::Spec::Sharing(inner, paths_eq)
+      hir::Spec::Sharing(inner, kind, paths_eq)
     }
   };
   cx.spec_one(ret, ptr)

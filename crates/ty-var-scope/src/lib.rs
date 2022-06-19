@@ -156,7 +156,7 @@ fn get_spec(cx: &mut Cx, ars: &hir::Arenas, spec: hir::SpecIdx) {
     }
     hir::Spec::Str(str_desc) => get_sig_exp(cx, ars, str_desc.sig_exp),
     hir::Spec::Include(sig_exp) => get_sig_exp(cx, ars, *sig_exp),
-    hir::Spec::Sharing(spec, _) => get_spec(cx, ars, *spec),
+    hir::Spec::Sharing(spec, _, _) => get_spec(cx, ars, *spec),
     hir::Spec::Seq(specs) => {
       for &spec in specs {
         get_spec(cx, ars, spec);

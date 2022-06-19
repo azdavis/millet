@@ -346,12 +346,19 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(75)
     hir::Spec::Include(sig_exp) => get_sig_exp(st, bs, ars, env, *sig_exp),
     // sml_def(78)
-    hir::Spec::Sharing(inner, paths) => {
+    hir::Spec::Sharing(inner, kind, paths) => {
       let mut inner_env = Env::default();
       get_spec(st, bs, ars, &mut inner_env, *inner);
+      let paths = match kind {
+        hir::SharingKind::Regular => paths.clone(),
+        hir::SharingKind::Derived => {
+          st.err(spec, ErrorKind::Unsupported("`sharing` spec derived form"));
+          return;
+        }
+      };
       let mut ty_scheme = None::<TyScheme>;
       let mut syms = Vec::<Sym>::with_capacity(paths.len());
-      for path in paths {
+      for path in paths.iter() {
         match get_ty_info(&inner_env, path) {
           Ok(ty_info) => {
             // TODO assert exists a s.t. for all ty schemes, arity of ty scheme = a? and all other
