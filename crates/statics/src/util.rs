@@ -151,10 +151,21 @@ pub(crate) fn ins_check_name<V>(
 /// returns either the ty info in the `env` reached by the `path` or an error describing why we
 /// failed to do so.
 pub(crate) fn get_ty_info<'e>(env: &'e Env, path: &hir::Path) -> Result<&'e TyInfo, ErrorKind> {
-  match get_env(env, path.structures()) {
-    Ok(got_env) => match got_env.ty_env.get(path.last()) {
+  get_ty_info_raw(env, path.structures().iter(), path.last())
+}
+
+pub(crate) fn get_ty_info_raw<'e, 'n, S>(
+  env: &'e Env,
+  structures: S,
+  last: &'n hir::Name,
+) -> Result<&'e TyInfo, ErrorKind>
+where
+  S: IntoIterator<Item = &'n hir::Name>,
+{
+  match get_env(env, structures) {
+    Ok(got_env) => match got_env.ty_env.get(last) {
       Some(ty_info) => Ok(ty_info),
-      None => Err(ErrorKind::Undefined(Item::Ty, path.last().clone())),
+      None => Err(ErrorKind::Undefined(Item::Ty, last.clone())),
     },
     Err(name) => Err(ErrorKind::Undefined(Item::Struct, name.clone())),
   }
