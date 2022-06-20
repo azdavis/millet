@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke_case() {
@@ -364,6 +364,27 @@ fn undef_type_exn() {
 exception E of t
 (**            ^ undefined type: t *)
 val _ = 3 handle E (_, _) => 2
+"#,
+  );
+}
+
+#[test]
+fn char() {
+  fail(
+    r#"
+fun read c =
+  case c of
+    #"0" => 0
+  | #"1" => 1
+  | #"2" => 2
+  | #"3" => 3
+  | #"4" => 4
+  | #"5" => 5
+  | #"6" => 6
+  | #"7" => 7
+  | #"8" => 8
+  | #"9" => 9
+  | _ = raise Fail "not a digit"
 "#,
   );
 }
