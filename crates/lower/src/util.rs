@@ -299,12 +299,8 @@ impl Cx {
     Some(idx)
   }
 
-  pub(crate) fn spec_seq(
-    &mut self,
-    val: Vec<hir::SpecIdx>,
-    ptr: AstPtr<ast::Spec>,
-  ) -> hir::SpecIdx {
-    let idx = self.arenas.spec.alloc(hir::Spec::Seq(val));
+  pub(crate) fn spec(&mut self, val: hir::Spec, ptr: AstPtr<ast::Spec>) -> hir::SpecIdx {
+    let idx = self.arenas.spec.alloc(val);
     self.ptrs.spec.insert(idx, ptr);
     Some(idx)
   }

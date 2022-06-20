@@ -146,15 +146,28 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
 
 fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   let spec = spec?;
+  let ptr = AstPtr::new(&spec);
   let mut specs: Vec<_> = spec
     .spec_in_seqs()
     .map(|x| get_spec_one(cx, x.spec_one()?))
     .collect();
-  if specs.len() == 1 {
+  let inner = if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
-    cx.spec_seq(specs, AstPtr::new(&spec))
-  }
+    cx.spec(hir::Spec::Seq(specs), ptr.clone())
+  };
+  spec.sharing_tails().fold(inner, |ac, tail| {
+    let kind = if tail.type_kw().is_some() {
+      hir::SharingKind::Regular
+    } else {
+      hir::SharingKind::Derived
+    };
+    let paths_eq: Vec<_> = tail
+      .path_eqs()
+      .filter_map(|x| get_path(x.path()?))
+      .collect();
+    cx.spec(hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
+  })
 }
 
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
@@ -215,19 +228,6 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
         .map(|x| hir::Spec::Include(get_sig_exp(cx, Some(x))))
         .collect();
       seq(cx, ptr.clone(), specs)
-    }
-    ast::SpecOne::SharingSpec(spec) => {
-      let inner = get_spec_one(cx, spec.spec_one()?);
-      let kind = if spec.type_kw().is_some() {
-        hir::SharingKind::Regular
-      } else {
-        hir::SharingKind::Derived
-      };
-      let paths_eq: Vec<_> = spec
-        .path_eqs()
-        .filter_map(|x| get_path(x.path()?))
-        .collect();
-      hir::Spec::Sharing(inner, kind, paths_eq)
     }
   };
   cx.spec_one(ret, ptr)

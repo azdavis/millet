@@ -161,26 +161,26 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
 #[must_use]
 fn spec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
-  let mut ex = if p.at(SK::ValKw) {
+  if p.at(SK::ValKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ValDesc, |p| {
       eat_name_star(p);
       p.eat(SK::Colon);
       ty(p);
     });
-    p.exit(en, SK::ValSpec)
+    p.exit(en, SK::ValSpec);
   } else if p.at(SK::TypeKw) {
     ty_spec(p);
-    p.exit(en, SK::TySpec)
+    p.exit(en, SK::TySpec);
   } else if p.at(SK::EqtypeKw) {
     ty_spec(p);
-    p.exit(en, SK::EqTySpec)
+    p.exit(en, SK::EqTySpec);
   } else if p.at(SK::DatatypeKw) {
     if datatype_copy(p) {
-      p.exit(en, SK::DatCopySpec)
+      p.exit(en, SK::DatCopySpec);
     } else {
       dat_binds(p, false);
-      p.exit(en, SK::DatSpec)
+      p.exit(en, SK::DatSpec);
     }
   } else if p.at(SK::ExceptionKw) {
     p.bump();
@@ -188,7 +188,7 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
       eat_name_star(p);
       let _ = of_ty(p);
     });
-    p.exit(en, SK::ExSpec)
+    p.exit(en, SK::ExSpec);
   } else if p.at(SK::StructureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrDesc, |p| {
@@ -196,27 +196,16 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
       p.eat(SK::Colon);
       must(p, sig_exp, Expected::SigExp);
     });
-    p.exit(en, SK::StrSpec)
+    p.exit(en, SK::StrSpec);
   } else if p.at(SK::IncludeKw) {
     p.bump();
     while sig_exp(p).is_some() {
       // no body
     }
-    p.exit(en, SK::IncludeSpec)
+    p.exit(en, SK::IncludeSpec);
   } else {
     p.abandon(en);
     return false;
-  };
-  while p.at(SK::SharingKw) {
-    let en = p.precede(ex);
-    p.bump();
-    if p.at(SK::TypeKw) {
-      p.bump();
-    }
-    many_sep(p, SK::Eq, SK::PathEq, |p| {
-      must(p, path, Expected::Path);
-    });
-    ex = p.exit(en, SK::SharingSpec);
   }
   true
 }
@@ -238,5 +227,16 @@ fn ty_spec(p: &mut Parser<'_>) {
 fn spec(p: &mut Parser<'_>) -> Exited {
   let en = p.enter();
   maybe_semi_sep(p, SK::SpecInSeq, spec_one);
+  while p.at(SK::SharingKw) {
+    let en = p.enter();
+    p.bump();
+    if p.at(SK::TypeKw) {
+      p.bump();
+    }
+    many_sep(p, SK::Eq, SK::PathEq, |p| {
+      must(p, path, Expected::Path);
+    });
+    p.exit(en, SK::SharingTail);
+  }
   p.exit(en, SK::Spec)
 }
