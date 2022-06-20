@@ -6,7 +6,6 @@ use crate::util::{
 };
 use syntax::SyntaxKind as SK;
 
-#[must_use]
 pub(crate) fn pat(p: &mut Parser<'_>) -> Option<Exited> {
   pat_prec(p, PatPrec::Min)
 }
@@ -35,7 +34,6 @@ enum AtPatHd {
 }
 
 /// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
-#[must_use]
 fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
   // as pat/typed pat
   if name_then_colon_or_as(p, 0) || (p.at(SK::OpKw) && name_then_colon_or_as(p, 1)) {
@@ -143,7 +141,6 @@ enum PatPrec {
 }
 
 /// when adding more cases to this, update [`at_pat_hd`]
-#[must_use]
 pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
   let ex = if scon(p) {
@@ -242,12 +239,10 @@ fn at_pat_l_round(p: &mut Parser<'_>) -> SK {
 }
 
 /// not necessarily an as pat, since it could be a typed pat.
-#[must_use]
 fn name_then_colon_or_as(p: &mut Parser<'_>, n: usize) -> bool {
   name_star(p, n) && (p.at_n(n + 1, SK::Colon) || p.at_n(n + 1, SK::AsKw))
 }
 
-#[must_use]
 fn as_pat_tl(p: &mut Parser<'_>) -> Option<Exited> {
   if p.at(SK::AsKw) {
     let en = p.enter();

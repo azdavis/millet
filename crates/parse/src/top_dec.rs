@@ -11,7 +11,6 @@ pub(crate) fn str_dec(p: &mut Parser<'_>) -> bool {
   ret
 }
 
-#[must_use]
 fn str_dec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
   if p.at(SK::FunctorKw) {
@@ -72,7 +71,6 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
   true
 }
 
-#[must_use]
 fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::StructKw) {
@@ -126,7 +124,6 @@ fn ascription_tail(p: &mut Parser<'_>) -> Exited {
   p.exit(en, SK::AscriptionTail)
 }
 
-#[must_use]
 fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::SigKw) {
@@ -158,7 +155,6 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
   Some(ex)
 }
 
-#[must_use]
 fn spec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
   if p.at(SK::ValKw) {

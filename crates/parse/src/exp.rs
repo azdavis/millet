@@ -12,7 +12,6 @@ pub(crate) fn exp(p: &mut Parser<'_>) {
   must(p, |p| exp_prec(p, ExpPrec::Min), Expected::Exp)
 }
 
-#[must_use]
 fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
   let en = p.enter();
   let ex = if p.at(SK::RaiseKw) {
@@ -109,8 +108,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
   Some(ex)
 }
 
-/// when adding more cases to this, update [`at_exp_hd`]
-#[must_use]
+/// when adding more cases to this, update [`at_exp_hd`].
 fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
   let ex = if scon(p) {

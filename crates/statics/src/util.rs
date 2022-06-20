@@ -124,7 +124,6 @@ pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
 
 /// inserts (name, val) into the map, but returns Some(e) if name was already a key, where e is an
 /// error describing this transgression.
-#[must_use]
 pub(crate) fn ins_no_dupe<V>(
   map: &mut FxHashMap<hir::Name, V>,
   name: hir::Name,
@@ -136,7 +135,6 @@ pub(crate) fn ins_no_dupe<V>(
     .map(|_| ErrorKind::Duplicate(item, name))
 }
 
-#[must_use]
 pub(crate) fn ins_check_name<V>(
   map: &mut FxHashMap<hir::Name, V>,
   name: hir::Name,

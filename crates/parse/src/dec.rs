@@ -11,7 +11,6 @@ pub(crate) fn dec(p: &mut Parser<'_>) -> Exited {
   p.exit(en, SK::Dec)
 }
 
-#[must_use]
 pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
   if p.at(SK::ValKw) {
@@ -212,7 +211,6 @@ fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
 /// we just saw a `datatype` keyword starting a dec. this bumps that kw, then tries to parse a
 /// datatype copy dec. returns if it was a datatype copy. if false, the state of the parser is reset
 /// to right after the bump.
-#[must_use]
 pub(crate) fn datatype_copy(p: &mut Parser<'_>) -> bool {
   p.bump();
   let save = p.save();

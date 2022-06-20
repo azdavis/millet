@@ -6,7 +6,6 @@ pub(crate) fn ty(p: &mut Parser<'_>) {
   must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty)
 }
 
-#[must_use]
 fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::TyVar) {
@@ -110,17 +109,14 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> Exited {
   p.exit(en, SK::TyVarSeq)
 }
 
-#[must_use]
 pub(crate) fn of_ty(p: &mut Parser<'_>) -> Option<Exited> {
   tok_ty(p, SK::OfKw, SK::OfTy)
 }
 
-#[must_use]
 pub(crate) fn ty_annotation(p: &mut Parser<'_>) -> Option<Exited> {
   tok_ty(p, SK::Colon, SK::TyAnnotation)
 }
 
-#[must_use]
 fn tok_ty(p: &mut Parser<'_>, tok: SK, wrap: SK) -> Option<Exited> {
   if p.at(tok) {
     let en = p.enter();
