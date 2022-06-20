@@ -126,4 +126,5 @@ const ORDER: &[&str] = &[
   include_str!("windows.sml"),
   // non-standard
   include_str!("fn.sml"),
+  include_str!("random.sml"),
 ];
