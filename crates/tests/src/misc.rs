@@ -449,3 +449,30 @@ end
 "#,
   );
 }
+
+#[test]
+fn sharing_in_seq() {
+  fail(
+    r#"
+signature FOO = sig type t structure S: sig type t end end
+signature BAR = sig structure Foo : FOO end
+signature QUZ = sig structure Foo : FOO end
+
+signature SIG = sig
+  structure Foo : FOO
+  structure Bar : BAR
+  structure Quz : QUZ
+  sharing Foo = Bar.Foo = Quz.Foo
+  val x : Foo.S.t
+end
+
+functor F (
+  structure Foo : FOO
+  structure Bar : BAR
+  structure Quz : QUZ
+  sharing Foo = Bar.Foo = Quz.Foo
+  val x : Foo.S.t
+) = struct end
+"#,
+  );
+}
