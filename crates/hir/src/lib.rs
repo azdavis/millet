@@ -307,19 +307,17 @@ pub struct Path {
 }
 
 impl Path {
+  pub fn new(structures: Vec<Name>, last: Name) -> Self {
+    Self { structures, last }
+  }
+
   pub fn try_new(mut names: Vec<Name>) -> Option<Self> {
     let last = names.pop()?;
-    Some(Self {
-      structures: names,
-      last,
-    })
+    Some(Self::new(names, last))
   }
 
   pub fn one(name: Name) -> Self {
-    Self {
-      structures: Vec::new(),
-      last: name,
-    }
+    Self::new(Vec::new(), name)
   }
 
   pub fn last(&self) -> &Name {
