@@ -166,15 +166,21 @@ end
 }
 
 #[test]
-fn sharing_via_abbreviation() {
-  // TODO at time of writing this fails with 'undefined type t' which may actually be the right
-  // error but I don't know enough about `sharing` to say.
+fn sharing_via_abbreviation_short() {
   fail(
     r#"
-signature SIG = sig
-  type t = int * int
-  type u = int * int sharing type t = u
-end
+signature SIG = sig type t = int type u = int sharing type t = u end
+(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share between type abbreviations *)
+"#,
+  );
+}
+
+#[test]
+fn sharing_via_abbreviation_long() {
+  fail(
+    r#"
+signature SIG = sig type t = int * int type u = int * int sharing type t = u end
+(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share between type abbreviations *)
 "#,
   );
 }
