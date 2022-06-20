@@ -22,6 +22,7 @@ pub struct Ptrs {
   sig_exp_in_spec_one: BiMap<ast::SpecOne, hir::SigExp>,
   spec_one: BiMap<ast::SpecOne, hir::Spec>,
   spec: BiMap<ast::Spec, hir::Spec>,
+  spec_with_tail: BiMap<ast::SpecWithTail, hir::Spec>,
   exp: BiMap<ast::Exp, hir::Exp>,
   dec_one: BiMap<ast::DecOne, hir::Dec>,
   dec_in_exp: BiMap<ast::Exp, hir::Dec>,
@@ -57,7 +58,7 @@ impl Ptrs {
       hir::Idx::SigExp(idx) => {
         try_get_hir!(idx, self, sig_exp, sig_exp_in_top_dec, sig_exp_in_spec_one)
       }
-      hir::Idx::Spec(idx) => try_get_hir!(idx, self, spec, spec_one),
+      hir::Idx::Spec(idx) => try_get_hir!(idx, self, spec, spec_one, spec_with_tail),
       hir::Idx::TopDec(idx) => try_get_hir!(idx, self, top_dec),
     }
     None
@@ -302,6 +303,16 @@ impl Cx {
   pub(crate) fn spec(&mut self, val: hir::Spec, ptr: AstPtr<ast::Spec>) -> hir::SpecIdx {
     let idx = self.arenas.spec.alloc(val);
     self.ptrs.spec.insert(idx, ptr);
+    Some(idx)
+  }
+
+  pub(crate) fn spec_with_tail(
+    &mut self,
+    val: hir::Spec,
+    ptr: AstPtr<ast::SpecWithTail>,
+  ) -> hir::SpecIdx {
+    let idx = self.arenas.spec.alloc(val);
+    self.ptrs.spec_with_tail.insert(idx, ptr);
     Some(idx)
   }
 

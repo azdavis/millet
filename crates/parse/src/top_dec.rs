@@ -224,10 +224,11 @@ fn ty_spec(p: &mut Parser<'_>) {
   });
 }
 
-fn spec(p: &mut Parser<'_>) -> Exited {
+fn spec_with_tail(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
-  maybe_semi_sep(p, SK::SpecInSeq, spec_one);
+  let mut ret = maybe_semi_sep(p, SK::SpecInSeq, spec_one);
   while p.at(SK::SharingKw) {
+    ret = true;
     let en = p.enter();
     p.bump();
     if p.at(SK::TypeKw) {
@@ -238,5 +239,12 @@ fn spec(p: &mut Parser<'_>) -> Exited {
     });
     p.exit(en, SK::SharingTail);
   }
+  p.exit(en, SK::SpecWithTail);
+  ret
+}
+
+fn spec(p: &mut Parser<'_>) -> Exited {
+  let en = p.enter();
+  maybe_semi_sep(p, SK::SpecWithTailInSeq, spec_with_tail);
   p.exit(en, SK::Spec)
 }

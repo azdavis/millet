@@ -146,6 +146,18 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
 
 fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   let spec = spec?;
+  let mut specs: Vec<_> = spec
+    .spec_with_tail_in_seqs()
+    .map(|x| get_spec_with_tail(cx, x.spec_with_tail()?))
+    .collect();
+  if specs.len() == 1 {
+    specs.pop().unwrap()
+  } else {
+    cx.spec(hir::Spec::Seq(specs), AstPtr::new(&spec))
+  }
+}
+
+fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> hir::SpecIdx {
   let ptr = AstPtr::new(&spec);
   let mut specs: Vec<_> = spec
     .spec_in_seqs()
@@ -154,7 +166,7 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   let inner = if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
-    cx.spec(hir::Spec::Seq(specs), ptr.clone())
+    cx.spec_with_tail(hir::Spec::Seq(specs), ptr.clone())
   };
   spec.sharing_tails().fold(inner, |ac, tail| {
     let kind = if tail.type_kw().is_some() {
@@ -166,7 +178,7 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
       .path_eqs()
       .filter_map(|x| get_path(x.path()?))
       .collect();
-    cx.spec(hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
+    cx.spec_with_tail(hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
   })
 }
 

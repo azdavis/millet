@@ -452,7 +452,7 @@ end
 
 #[test]
 fn sharing_in_seq() {
-  fail(
+  check(
     r#"
 signature FOO = sig type t structure S: sig type t end end
 signature BAR = sig structure Foo : FOO end

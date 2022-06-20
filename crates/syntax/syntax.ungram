@@ -75,8 +75,11 @@ NameSigExp = 'Name'
 WhereSigExp = SigExp WhereOrAnd 'type' TyVarSeq Path '=' Ty
 WhereOrAnd = 'where' | 'and'
 
-Spec = SpecInSeq* SharingTail*
+Spec = SpecWithTailInSeq*
+SpecWithTailInSeq = SpecWithTail ';'?
+SpecWithTail = SpecInSeq* SharingTail*
 SpecInSeq = SpecOne ';'?
+SharingTail = 'sharing' 'type'? PathEq*
 
 SpecOne =
   ValSpec
@@ -97,8 +100,6 @@ DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 ExSpec = 'exception' ExDesc*
 StrSpec = 'structure' StrDesc*
 IncludeSpec = 'include' SigExp*
-
-SharingTail = 'sharing' 'type'? PathEq*
 
 ValDesc = NameStarEq ':' Ty 'and'?
 // the Definition only gives lowering for the `= ty` case for `type` descriptions.
