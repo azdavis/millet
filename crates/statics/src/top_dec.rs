@@ -350,41 +350,10 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
       let mut inner_env = Env::default();
       get_spec(st, bs, ars, &mut inner_env, *inner);
       match kind {
-        hir::SharingKind::Regular => {}
+        hir::SharingKind::Regular => get_sharing_spec(st, &mut inner_env, paths, spec.into()),
         hir::SharingKind::Derived => {
           st.err(spec, ErrorKind::Unsupported("`sharing` spec derived form"));
-          return;
         }
-      }
-      let mut ty_scheme = None::<TyScheme>;
-      let mut syms = Vec::<Sym>::with_capacity(paths.len());
-      for path in paths {
-        match get_ty_info(&inner_env, path) {
-          Ok(ty_info) => {
-            // TODO assert exists a s.t. for all ty schemes, arity of ty scheme = a? and all other
-            // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
-            match &ty_info.ty_scheme.ty {
-              Ty::None => {}
-              // TODO side condition for sym not in T of B?
-              Ty::Con(_, sym) => {
-                if ty_scheme.is_none() {
-                  ty_scheme = Some(ty_info.ty_scheme.clone());
-                }
-                syms.push(*sym);
-              }
-              // TODO is this reachable?
-              t => log::error!("reached an unexpected case: {t:?}"),
-            }
-          }
-          Err(e) => st.err(spec, e),
-        }
-      }
-      if let Some(ty_scheme) = ty_scheme {
-        let subst: TyRealization = syms
-          .into_iter()
-          .map(|sym| (sym, ty_scheme.clone()))
-          .collect();
-        env_realize(&subst, &mut inner_env);
       }
       env.extend(inner_env);
     }
@@ -398,6 +367,39 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
         env.extend(one_env);
       }
     }
+  }
+}
+
+fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: hir::Idx) {
+  let mut ty_scheme = None::<TyScheme>;
+  let mut syms = Vec::<Sym>::with_capacity(paths.len());
+  for path in paths {
+    match get_ty_info(&inner_env, path) {
+      Ok(ty_info) => {
+        // TODO assert exists a s.t. for all ty schemes, arity of ty scheme = a? and all other
+        // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
+        match &ty_info.ty_scheme.ty {
+          Ty::None => {}
+          // TODO side condition for sym not in T of B?
+          Ty::Con(_, sym) => {
+            if ty_scheme.is_none() {
+              ty_scheme = Some(ty_info.ty_scheme.clone());
+            }
+            syms.push(*sym);
+          }
+          // TODO is this reachable?
+          t => log::error!("reached an unexpected case: {t:?}"),
+        }
+      }
+      Err(e) => st.err(idx, e),
+    }
+  }
+  if let Some(ty_scheme) = ty_scheme {
+    let subst: TyRealization = syms
+      .into_iter()
+      .map(|sym| (sym, ty_scheme.clone()))
+      .collect();
+    env_realize(&subst, inner_env);
   }
 }
 
