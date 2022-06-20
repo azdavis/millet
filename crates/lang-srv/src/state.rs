@@ -203,12 +203,7 @@ impl State {
         return false;
       }
     };
-    for (path_id, errors) in self
-      .analysis
-      .get_many(&input)
-      .into_iter()
-      .take(MAX_FILES_WITH_ERRORS)
-    {
+    for (path_id, errors) in self.analysis.get_many(&input) {
       let pos_db = match input.get_source(path_id) {
         Some(s) => text_pos::PositionDb::new(s),
         None => {
@@ -221,8 +216,12 @@ impl State {
         Ok(x) => x,
         Err(_) => continue,
       };
+      let ds = diagnostics(&pos_db, errors);
+      if ds.is_empty() || has_diagnostics.len() >= MAX_FILES_WITH_ERRORS {
+        continue;
+      }
       has_diagnostics.insert(url.clone());
-      self.send_diagnostics(url, diagnostics(&pos_db, errors));
+      self.send_diagnostics(url, ds);
     }
     // this is the old one.
     for url in root.has_diagnostics {
