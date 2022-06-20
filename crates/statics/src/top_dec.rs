@@ -394,12 +394,15 @@ fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
       Err(e) => st.err(idx, e),
     }
   }
-  if let Some(ty_scheme) = ty_scheme {
-    let subst: TyRealization = syms
-      .into_iter()
-      .map(|sym| (sym, ty_scheme.clone()))
-      .collect();
-    env_realize(&subst, inner_env);
+  match ty_scheme {
+    Some(ty_scheme) => {
+      let subst: TyRealization = syms
+        .into_iter()
+        .map(|sym| (sym, ty_scheme.clone()))
+        .collect();
+      env_realize(&subst, inner_env);
+    }
+    None => log::error!("didn't get a ty scheme for sharing spec"),
   }
 }
 
