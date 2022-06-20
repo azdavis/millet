@@ -225,6 +225,30 @@ val _ = A 1.2
 }
 
 #[test]
+fn where_structure_1() {
+  check(
+    r#"
+structure S = struct type t = int end
+signature SIG = sig structure T : sig type t end end where T = S
+(**                                                        ^ expected `type` *)
+"#,
+  );
+}
+
+#[test]
+fn where_structure_2() {
+  check(
+    r#"
+signature FOO = sig type t end
+signature BAR = sig structure Foo : FOO end
+signature QUZ = sig structure Foo : FOO end
+functor F (Bar : BAR) :> QUZ where Foo = Bar.Foo = struct structure Foo = Bar.Foo end
+(**                                ^^^ expected `type` *)
+"#,
+  );
+}
+
+#[test]
 fn datatype_copy_non_datatype() {
   check(
     r#"
