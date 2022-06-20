@@ -374,7 +374,7 @@ fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
   let mut ty_scheme = None::<TyScheme>;
   let mut syms = Vec::<Sym>::with_capacity(paths.len());
   for path in paths {
-    match get_ty_info(&inner_env, path) {
+    match get_ty_info(inner_env, path) {
       Ok(ty_info) => {
         // TODO assert exists a s.t. for all ty schemes, arity of ty scheme = a? and all other
         // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
