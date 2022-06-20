@@ -846,7 +846,7 @@ To fix, only use exceptions on the right hand side.
 
 ## 4023
 
-Certain names may not be rebound. These names are:
+Certain names in certain namespaces may not be rebound. These names are:
 
 | Name    | Definition                                         |
 | ------- | -------------------------------------------------- |
