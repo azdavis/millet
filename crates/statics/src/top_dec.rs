@@ -216,7 +216,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
               // TODO side condition for sym not in T of B?
               Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), &mut inner_env),
               // TODO is this reachable?
-              t => log::error!("reached an unexpected case: {t:?}"),
+              t => log::error!("reached an unexpected case for `where`: {t:?}"),
             }
           } else {
             st.err(sig_exp, ErrorKind::WrongNumTyArgs(want_len, ty_vars.len()));
@@ -412,7 +412,7 @@ fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
             syms.push(*sym);
           }
           // TODO is this reachable?
-          t => log::error!("reached an unexpected case: {t:?}"),
+          t => log::error!("reached an unexpected case for `sharing`: {t:?}"),
         }
       }
       Err(e) => st.err(idx, e),
