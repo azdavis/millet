@@ -300,15 +300,21 @@ pub enum SCon {
   String(SmolStr),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Path {
   structures: Vec<Name>,
   last: Name,
 }
 
 impl Path {
-  pub fn new(structures: Vec<Name>, last: Name) -> Self {
-    Self { structures, last }
+  pub fn new<I>(structures: I, last: Name) -> Self
+  where
+    I: IntoIterator<Item = Name>,
+  {
+    Self {
+      structures: structures.into_iter().collect(),
+      last,
+    }
   }
 
   pub fn try_new(mut names: Vec<Name>) -> Option<Self> {

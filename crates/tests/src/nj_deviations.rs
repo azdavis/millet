@@ -230,7 +230,7 @@ datatype u = datatype t
 
 #[test]
 fn share_substructure() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   structure S: sig

@@ -352,7 +352,31 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
       match kind {
         hir::SharingKind::Regular => get_sharing_spec(st, &mut inner_env, paths, spec.into()),
         hir::SharingKind::Derived => {
-          st.err(spec, ErrorKind::Unsupported("`sharing` spec derived form"));
+          let mut all: Vec<_> = paths
+            .iter()
+            .filter_map(|path| match get_env(&inner_env, path.all_names()) {
+              Ok(got_env) => {
+                let mut ty_cons = FxHashSet::<hir::Path>::default();
+                get_ty_cons(&mut Vec::new(), &mut ty_cons, got_env);
+                Some((path, ty_cons))
+              }
+              Err(name) => {
+                st.err(spec, ErrorKind::Undefined(Item::Struct, name.clone()));
+                None
+              }
+            })
+            .collect();
+          while let Some((struct_path1, ty_cons1)) = all.pop() {
+            for ty_con1 in ty_cons1 {
+              for (struct_path2, ty_cons2) in all.iter() {
+                if let Some(ty_con2) = ty_cons2.get(&ty_con1) {
+                  let path1 = join_paths(struct_path1, &ty_con1);
+                  let path2 = join_paths(*struct_path2, ty_con2);
+                  get_sharing_spec(st, &mut inner_env, &[path1, path2], spec.into());
+                }
+              }
+            }
+          }
         }
       }
       env.extend(inner_env);
@@ -403,6 +427,27 @@ fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
       env_realize(&subst, inner_env);
     }
     None => log::error!("didn't get a ty scheme for sharing spec"),
+  }
+}
+
+fn join_paths(p1: &hir::Path, p2: &hir::Path) -> hir::Path {
+  hir::Path::new(
+    p1.all_names().chain(p2.structures()).cloned(),
+    p2.last().clone(),
+  )
+}
+
+fn get_ty_cons(structures: &mut Vec<hir::Name>, ac: &mut FxHashSet<hir::Path>, env: &Env) {
+  ac.extend(
+    env
+      .ty_env
+      .keys()
+      .map(|name| hir::Path::new(structures.clone(), name.clone())),
+  );
+  for (name, env) in env.str_env.iter() {
+    structures.push(name.clone());
+    get_ty_cons(structures, ac, env);
+    structures.pop().unwrap();
   }
 }
 
