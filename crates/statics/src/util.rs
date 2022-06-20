@@ -141,8 +141,11 @@ pub(crate) fn ins_check_name<V>(
   val: V,
   item: Item,
 ) -> Option<ErrorKind> {
-  matches!(name.as_str(), "true" | "false" | "nil" | "::" | "ref" | "=")
-    .then(|| ErrorKind::InvalidRebindName(name.clone()))
+  let no = matches!(
+    name.as_str(),
+    "true" | "false" | "nil" | "::" | "ref" | "=" | "it"
+  );
+  no.then(|| ErrorKind::InvalidRebindName(name.clone()))
     .or_else(|| ins_no_dupe(map, name, val, item))
 }
 

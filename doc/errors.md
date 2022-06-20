@@ -848,14 +848,15 @@ To fix, only use exceptions on the right hand side.
 
 Certain names may not be rebound. These names are:
 
-| Name    | Definition                        |
-| ------- | --------------------------------- |
-| `true`  | logical truth                     |
-| `false` | logical falsity                   |
-| `nil`   | the empty list constructor        |
-| `::`    | the non-empty list constructor    |
-| `ref`   | the reference type constructor    |
-| `=`     | the polymorphic equality function |
+| Name    | Definition                                         |
+| ------- | -------------------------------------------------- |
+| `true`  | logical truth                                      |
+| `false` | logical falsity                                    |
+| `nil`   | the empty list constructor                         |
+| `::`    | the non-empty list constructor                     |
+| `ref`   | the reference type constructor                     |
+| `=`     | the polymorphic equality function                  |
+| `it`    | the value of the last expression entered in a REPL |
 
 ```sml
 (* error *)
