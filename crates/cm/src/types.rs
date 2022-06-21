@@ -48,7 +48,8 @@ pub enum Token<'a> {
   Functor,
   FunSig,
   Group,
-  Library,
+  LibraryUpper,
+  LibraryLower,
   Alias,
   Is,
   Colon,
@@ -65,7 +66,8 @@ impl<'a> fmt::Display for Token<'a> {
       Token::Functor => f.write_str("functor"),
       Token::FunSig => f.write_str("funsig"),
       Token::Group => f.write_str("Group"),
-      Token::Library => f.write_str("Library"),
+      Token::LibraryUpper => f.write_str("Library"),
+      Token::LibraryLower => f.write_str("library"),
       Token::Alias => f.write_str("Alias"),
       Token::Is => f.write_str("is"),
       Token::Colon => f.write_str(":"),
@@ -114,11 +116,11 @@ pub(crate) enum DescKind {
 
 /// An export, like `structure S`.
 #[derive(Debug, PartialEq, Eq)]
-pub struct Export {
-  /// The namespace.
-  pub namespace: Namespace,
-  /// The name.
-  pub name: Name,
+pub enum Export {
+  /// A 'regular' export.
+  Regular(Namespace, Name),
+  /// A re-export of another CM library.
+  Library(PathBuf),
 }
 
 /// A namespace, like `structure` in `structure S`.

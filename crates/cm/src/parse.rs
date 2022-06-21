@@ -52,7 +52,7 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
       let ms = members_tail(p)?;
       Root::Desc(DescKind::Group, es, ms)
     }
-    Some(Token::Library) => {
+    Some(Token::LibraryUpper) => {
       p.bump();
       let es = exports(p)?;
       if es.is_empty() {
@@ -74,12 +74,21 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
       Some(Token::Signature) => Namespace::Signature,
       Some(Token::Functor) => Namespace::Functor,
       Some(Token::FunSig) => Namespace::FunSig,
+      Some(Token::LibraryLower) => {
+        p.bump();
+        p.eat(Token::LRound)?;
+        let pathname = PathBuf::from_slash(p.string()?);
+        p.bump();
+        p.eat(Token::RRound)?;
+        ret.push(Export::Library(pathname));
+        continue;
+      }
       _ => break,
     };
     p.bump();
     let name = Name::new(p.string()?);
     p.bump();
-    ret.push(Export { namespace, name });
+    ret.push(Export::Regular(namespace, name));
   }
   Ok(ret)
 }
