@@ -412,16 +412,6 @@ end
 }
 
 #[test]
-fn selector() {
-  check(
-    r#"
-val _: int = #1 (3, "hi")
-(**          ^^ unsupported language construct: `...` pattern rows *)
-"#,
-  );
-}
-
-#[test]
 fn subst_inside() {
   check(
     r#"

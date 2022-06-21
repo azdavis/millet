@@ -24,6 +24,7 @@ mod nj_deviations;
 mod num_record;
 mod overload;
 mod pat;
+mod rest_pat;
 mod rust;
 mod shadow;
 mod smoke;
