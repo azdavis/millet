@@ -296,7 +296,7 @@ pub enum SCon {
   Int(i32),
   Real(f64),
   Word(i32),
-  Char(u8),
+  Char(char),
   String(SmolStr),
 }
 

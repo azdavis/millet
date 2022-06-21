@@ -103,7 +103,7 @@ pub(crate) enum Con {
   Any,
   Int(i32),
   Word(i32),
-  Char(u8),
+  Char(char),
   String(hir::SmolStr),
   Record(Vec<hir::Lab>),
   Variant(Sym, VariantName),

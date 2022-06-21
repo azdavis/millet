@@ -212,8 +212,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
       Con::Any => f.write_str("_")?,
       Con::Int(i) => write!(f, "{i}")?,
       Con::Word(w) => write!(f, "0w{w}")?,
-      // TODO maybe not accurate
-      Con::Char(c) => write!(f, "#\"{}\"", c.escape_ascii())?,
+      Con::Char(c) => write!(f, "#\"{c}\"")?,
       Con::String(s) => f.write_str(s.as_str())?,
       Con::Record(labs) => {
         assert_eq!(labs.len(), args.len());

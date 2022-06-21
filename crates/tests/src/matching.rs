@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke_case() {
@@ -370,9 +370,10 @@ val _ = 3 handle E (_, _) => 2
 
 #[test]
 fn char() {
-  fail(
+  check(
     r#"
-val read = fn
+exception NotDigit
+val charToDigit = fn
     #"0" => 0
   | #"1" => 1
   | #"2" => 2
@@ -383,7 +384,7 @@ val read = fn
   | #"7" => 7
   | #"8" => 8
   | #"9" => 9
-  | _ => raise Fail "not a digit"
+  | _ => raise NotDigit
 "#,
   );
 }

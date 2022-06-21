@@ -64,7 +64,14 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
       };
       hir::SCon::Word(n)
     }
-    ast::SConKind::CharLit => hir::SCon::Char(tok.text().bytes().next()?),
+    ast::SConKind::CharLit => hir::SCon::Char(
+      tok
+        .text()
+        .strip_prefix("#\"")?
+        .strip_suffix('"')?
+        .chars()
+        .next()?,
+    ),
     ast::SConKind::StringLit => hir::SCon::String(tok.text().into()),
   };
   Some(ret)
