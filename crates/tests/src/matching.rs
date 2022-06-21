@@ -393,7 +393,10 @@ val charToDigit = fn
 fn record() {
   fail(
     r#"
-val _ = fn {b=_, a=_} => 3
+val f = fn {a, b} => a + b
+val g = fn {b, a} => a + b
+val h = fn {b=x, a=y} => x * y
+val _ : int = g { b = f { a = 1, b = 3 }, a = h { a = 4, b = 5 } }
 "#,
   );
 }
