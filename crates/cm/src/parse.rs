@@ -55,10 +55,10 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
     Some(Token::LibraryUpper) => {
       p.bump();
       let es = exports(p)?;
+      let ms = members_tail(p)?;
       if es.is_empty() {
         return Err(Error::EmptyExportList);
       }
-      let ms = members_tail(p)?;
       Root::Desc(DescKind::Library, es, ms)
     }
     _ => return Err(Error::ExpectedDesc),
