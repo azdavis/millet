@@ -372,8 +372,7 @@ val _ = 3 handle E (_, _) => 2
 fn char() {
   fail(
     r#"
-fun read c =
-  case c of
+val read = fn
     #"0" => 0
   | #"1" => 1
   | #"2" => 2
@@ -384,7 +383,7 @@ fun read c =
   | #"7" => 7
   | #"8" => 8
   | #"9" => 9
-  | _ = raise Fail "not a digit"
+  | _ => raise Fail "not a digit"
 "#,
   );
 }
