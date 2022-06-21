@@ -5,6 +5,7 @@ use crate::ty;
 use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_scon, ins_check_name, instantiate, record};
+use std::collections::BTreeSet;
 
 pub(crate) fn get(
   st: &mut St,
@@ -104,11 +105,11 @@ pub(crate) fn get(
         // sml_def(38)
         st.err(pat_, ErrorKind::Unsupported("`...` pattern rows"));
       }
-      let mut labs = Vec::<hir::Lab>::with_capacity(rows.len());
+      let mut labs = BTreeSet::<hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
       let ty = record(st, rows, pat_, |st, lab, pat| {
         let (pm_pat, ty) = get(st, cx, ars, ve, pat);
-        labs.push(lab.clone());
+        labs.insert(lab.clone());
         pats.push(pm_pat);
         ty
       });

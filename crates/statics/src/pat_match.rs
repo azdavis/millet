@@ -2,6 +2,7 @@ use crate::types::{Exn, Sym, Syms, Ty};
 use crate::util::apply_bv;
 use fast_hash::FxHashSet;
 use pattern_match::{CheckError, Result};
+use std::collections::BTreeSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
 
@@ -105,7 +106,7 @@ pub(crate) enum Con {
   Word(i32),
   Char(char),
   String(hir::SmolStr),
-  Record(Vec<hir::Lab>),
+  Record(BTreeSet<hir::Lab>),
   Variant(Sym, VariantName),
 }
 

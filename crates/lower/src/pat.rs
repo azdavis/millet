@@ -25,9 +25,18 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
             Some((get_lab(cx, row.lab()?), get(cx, row.pat())))
           }
           ast::PatRowInner::LabPatRow(row) => {
-            let name = hir::Name::new(row.name_star_eq()?.token.text());
-            let pat = as_(cx, name.clone(), row.ty_annotation(), row.as_pat_tail()?);
-            Some((hir::Lab::Name(name), cx.pat(pat, ptr.clone())))
+            let lab = hir::Name::new(row.name_star_eq()?.token.text());
+            let ty_ann = row.ty_annotation().map(|x| ty::get(cx, x.ty()));
+            let as_tail = row.as_pat_tail().map(|x| get(cx, x.pat()));
+            let pat = match (ty_ann, as_tail) {
+              (Some(ty), Some(pat)) => {
+                hir::Pat::As(lab.clone(), cx.pat(hir::Pat::Typed(pat, ty), ptr.clone()))
+              }
+              (Some(ty), None) => hir::Pat::Typed(cx.pat(name(lab.as_str()), ptr.clone()), ty),
+              (None, Some(pat)) => hir::Pat::As(lab.clone(), pat),
+              (None, None) => name(lab.as_str()),
+            };
+            Some((hir::Lab::Name(lab), cx.pat(pat, ptr.clone())))
           }
         })
         .collect();
@@ -78,12 +87,19 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
       );
       return None;
     }
-    ast::Pat::AsPat(pat) => as_(
-      cx,
-      hir::Name::new(pat.name_star_eq()?.token.text()),
-      pat.ty_annotation(),
-      pat.as_pat_tail()?,
-    ),
+    ast::Pat::AsPat(pat) => {
+      let name = hir::Name::new(pat.name_star_eq()?.token.text());
+      let ty = pat.ty_annotation().map(|x| ty::get(cx, x.ty()));
+      let inner = pat.as_pat_tail()?.pat().and_then(|pat| {
+        let ptr = AstPtr::new(&pat);
+        let mut p = get(cx, Some(pat));
+        if let Some(ty) = ty {
+          p = cx.pat(hir::Pat::Typed(p, ty), ptr);
+        }
+        p
+      });
+      hir::Pat::As(name, inner)
+    }
   };
   cx.pat(ret, ptr)
 }
@@ -106,22 +122,4 @@ where
     rows,
     allows_other: false,
   }
-}
-
-fn as_(
-  cx: &mut Cx,
-  name: hir::Name,
-  annot: Option<ast::TyAnnotation>,
-  tail: ast::AsPatTail,
-) -> hir::Pat {
-  let ty = annot.map(|x| ty::get(cx, x.ty()));
-  let inner = tail.pat().and_then(|pat| {
-    let ptr = AstPtr::new(&pat);
-    let mut p = get(cx, Some(pat));
-    if let Some(ty) = ty {
-      p = cx.pat(hir::Pat::Typed(p, ty), ptr);
-    }
-    p
-  });
-  hir::Pat::As(name, inner)
 }

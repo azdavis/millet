@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke_case() {
@@ -391,7 +391,7 @@ val charToDigit = fn
 
 #[test]
 fn record() {
-  fail(
+  check(
     r#"
 val f = fn {a, b} => a + b
 val g = fn {b, a} => a + b
