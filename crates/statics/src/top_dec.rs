@@ -200,7 +200,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
       None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
     },
     // sml_def(64)
-    hir::SigExp::Where(inner, ty_vars, path, ty) => {
+    hir::SigExp::WhereType(inner, ty_vars, path, ty) => {
       let mut inner_env = Env::default();
       get_sig_exp(st, bs, ars, &mut inner_env, *inner);
       let mut cx = bs.as_cx();
@@ -226,6 +226,11 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
       }
       env.extend(inner_env);
     }
+    // SML/NJ extension
+    hir::SigExp::Where(_, _, _) => st.err(
+      sig_exp,
+      ErrorKind::Unsupported("`where` with structure path"),
+    ),
   }
 }
 

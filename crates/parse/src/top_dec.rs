@@ -145,12 +145,19 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
   while p.at(SK::WhereKw) || p.at(SK::AndKw) {
     let en = p.precede(ex);
     p.bump();
-    p.eat(SK::TypeKw);
-    ty_var_seq(p);
-    must(p, path, Expected::Path);
-    p.eat(SK::Eq);
-    ty(p);
-    ex = p.exit(en, SK::WhereSigExp);
+    if p.at(SK::TypeKw) {
+      p.bump();
+      ty_var_seq(p);
+      must(p, path, Expected::Path);
+      p.eat(SK::Eq);
+      ty(p);
+      ex = p.exit(en, SK::WhereTypeSigExp);
+    } else {
+      must(p, path, Expected::Path);
+      p.eat(SK::Eq);
+      must(p, path, Expected::Path);
+      ex = p.exit(en, SK::WhereSigExp);
+    }
   }
   Some(ex)
 }

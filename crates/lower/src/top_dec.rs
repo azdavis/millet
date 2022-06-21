@@ -134,11 +134,16 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
   let ret = match sig_exp {
     ast::SigExp::SigSigExp(sig_exp) => hir::SigExp::Spec(get_spec(cx, sig_exp.spec())),
     ast::SigExp::NameSigExp(sig_exp) => hir::SigExp::Name(get_name(sig_exp.name())?),
-    ast::SigExp::WhereSigExp(sig_exp) => hir::SigExp::Where(
+    ast::SigExp::WhereTypeSigExp(sig_exp) => hir::SigExp::WhereType(
       get_sig_exp(cx, sig_exp.sig_exp()),
       ty::var_seq(sig_exp.ty_var_seq()),
       get_path(sig_exp.path()?)?,
       ty::get(cx, sig_exp.ty()),
+    ),
+    ast::SigExp::WhereSigExp(sig_exp) => hir::SigExp::Where(
+      get_sig_exp(cx, sig_exp.sig_exp()),
+      get_path(sig_exp.lhs()?)?,
+      get_path(sig_exp.rhs()?)?,
     ),
   };
   cx.sig_exp(ret, ptr)
@@ -276,7 +281,7 @@ where
         let spec_idx = cx.spec_one(ret, ptr.clone());
         let sig_exp = cx.sig_exp_in_spec_one(hir::SigExp::Spec(spec_idx), ptr.clone());
         let sig_exp = cx.sig_exp_in_spec_one(
-          hir::SigExp::Where(sig_exp, ty_vars, hir::Path::one(name), ty),
+          hir::SigExp::WhereType(sig_exp, ty_vars, hir::Path::one(name), ty),
           ptr.clone(),
         );
         ret = hir::Spec::Include(sig_exp);

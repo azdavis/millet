@@ -68,11 +68,13 @@ Ascription = ':' | ':>'
 SigExp =
   SigSigExp
 | NameSigExp
+| WhereTypeSigExp
 | WhereSigExp
 
 SigSigExp = 'sig' Spec 'end'
 NameSigExp = 'Name'
-WhereSigExp = SigExp WhereOrAnd 'type' TyVarSeq Path '=' Ty
+WhereTypeSigExp = SigExp WhereOrAnd 'type' TyVarSeq Path '=' Ty
+WhereSigExp = SigExp WhereOrAnd lhs:Path '=' rhs:Path
 WhereOrAnd = 'where' | 'and'
 
 Spec = SpecWithTailInSeq*
