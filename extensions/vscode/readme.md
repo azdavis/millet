@@ -4,7 +4,7 @@
 
 ## Features
 
-- For SML and SML/NJ CM files:
+- For SML, SML/NJ Compilation Manager, and ML Basis files:
   - Syntax highlighting
   - Language configuration (comments, brackets, etc)
   - Snippets

@@ -79,6 +79,16 @@
           "SML/NJ Compilation Manager"
         ],
         "configuration": "languages/sml-nj-cm/language-configuration.json"
+      },
+      {
+        "id": "mlb",
+        "extensions": [
+          ".mlb"
+        ],
+        "aliases": [
+          "ML Basis"
+        ],
+        "configuration": "languages/mlb/language-configuration.json"
       }
     ],
     "grammars": [
@@ -91,6 +101,11 @@
         "language": "sml-nj-cm",
         "scopeName": "source.sml-nj-cm",
         "path": "languages/sml-nj-cm/syntax.json"
+      },
+      {
+        "language": "mlb",
+        "scopeName": "source.mlb",
+        "path": "languages/mlb/syntax.json"
       }
     ],
     "snippets": [
@@ -101,6 +116,10 @@
       {
         "language": "sml-nj-cm",
         "path": "languages/sml-nj-cm/snippets.json"
+      },
+      {
+        "language": "mlb",
+        "path": "languages/mlb/snippets.json"
       }
     ]
   }

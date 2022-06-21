@@ -1,0 +1,17 @@
+{
+  "name": "ML Basis",
+  "scopeName": "source.mlb",
+  "patterns": [{ "include": "#blockComment" }, { "include": "#keyword" }],
+  "repository": {
+    "blockComment": {
+      "name": "comment.block.mlb",
+      "begin": "\\(\\*",
+      "end": "\\*\\)",
+      "patterns": [{ "include": "#blockComment" }]
+    },
+    "keyword": {
+      "name": "keyword.other.mlb",
+      "match": "\\b(and|bas|basis|end|functor|in|let|local|open|signature|structure)\\b"
+    }
+  }
+}
