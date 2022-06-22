@@ -1,8 +1,8 @@
-use crate::check::fail;
+use crate::check::{check, fail};
 
 #[test]
 fn multi_rest() {
-  fail(
+  check(
     r#"
 val _ = fn {a, ..., ...} => 3
 (**        ^^^^^^^^^^^^^ cannot have multiple `...` *)
@@ -12,7 +12,7 @@ val _ = fn {a, ..., ...} => 3
 
 #[test]
 fn rest_not_last() {
-  fail(
+  check(
     r#"
 val _ = fn {..., a} => 3
 (**        ^^^^^^^^ `...` must come last *)

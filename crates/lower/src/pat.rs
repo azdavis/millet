@@ -13,18 +13,27 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
       hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(cx, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {
-      let mut allows_other = false;
+      let mut rest_pat_row = None::<RestPatRowState>;
       let rows: Vec<_> = pat
         .pat_rows()
         .filter_map(|row| match row.pat_row_inner()? {
           ast::PatRowInner::RestPatRow(_) => {
-            allows_other = true;
+            match &mut rest_pat_row {
+              None => rest_pat_row = Some(RestPatRowState::default()),
+              Some(r) => r.multiple = true,
+            }
             None
           }
           ast::PatRowInner::LabAndPatPatRow(row) => {
+            if let Some(r) = &mut rest_pat_row {
+              r.last = false;
+            }
             Some((get_lab(cx, row.lab()?), get(cx, row.pat())))
           }
           ast::PatRowInner::LabPatRow(row) => {
+            if let Some(r) = &mut rest_pat_row {
+              r.last = false;
+            }
             let lab = hir::Name::new(row.name_star_eq()?.token.text());
             let ty_ann = row.ty_annotation().map(|x| ty::get(cx, x.ty()));
             let as_tail = row.as_pat_tail().map(|x| get(cx, x.pat()));
@@ -40,7 +49,18 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
           }
         })
         .collect();
-      hir::Pat::Record { rows, allows_other }
+      if let Some(r) = &rest_pat_row {
+        if r.multiple {
+          cx.err(pat.syntax().text_range(), ErrorKind::MultipleRestPatRows);
+        }
+        if !r.last {
+          cx.err(pat.syntax().text_range(), ErrorKind::RestPatRowNotLast);
+        }
+      }
+      hir::Pat::Record {
+        rows,
+        allows_other: rest_pat_row.is_some(),
+      }
     }
     // sml_def(37)
     ast::Pat::ParenPat(pat) => return get(cx, pat.pat()),
@@ -102,6 +122,21 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
     }
   };
   cx.pat(ret, ptr)
+}
+
+#[derive(Debug)]
+struct RestPatRowState {
+  multiple: bool,
+  last: bool,
+}
+
+impl Default for RestPatRowState {
+  fn default() -> Self {
+    Self {
+      multiple: false,
+      last: true,
+    }
+  }
 }
 
 pub(crate) fn name(s: &str) -> hir::Pat {

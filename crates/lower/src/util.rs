@@ -133,6 +133,8 @@ impl Error {
       ErrorKind::InvalidNumLab(_) => 6,
       ErrorKind::ZeroNumLab => 7,
       ErrorKind::MustBeTopLevel => 8,
+      ErrorKind::MultipleRestPatRows => 9,
+      ErrorKind::RestPatRowNotLast => 10,
     }
   }
 }
@@ -147,6 +149,8 @@ pub(crate) enum ErrorKind {
   InvalidNumLab(std::num::ParseIntError),
   ZeroNumLab,
   MustBeTopLevel,
+  MultipleRestPatRows,
+  RestPatRowNotLast,
 }
 
 impl fmt::Display for ErrorKind {
@@ -167,6 +171,8 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
       ErrorKind::ZeroNumLab => write!(f, "invalid numeric label: numeric labels start at 1"),
       ErrorKind::MustBeTopLevel => write!(f, "declaration must be at the top level"),
+      ErrorKind::MultipleRestPatRows => write!(f, "cannot have multiple `...`"),
+      ErrorKind::RestPatRowNotLast => write!(f, "`...` must come last"),
     }
   }
 }

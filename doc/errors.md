@@ -426,6 +426,40 @@ signature SIG = sig end
 functor Func() = struct end
 ```
 
+## 3009
+
+There were multiple `...` rest pattern rows.
+
+```sml
+(* error *)
+val {a, ..., ...} = {a = 1, b = "hi"}
+```
+
+To fix, only provide one such row.
+
+```sml
+(* error *)
+(* NOTE: this should be ok, but is still error because `...` is not supported *)
+val {a, ...} = {a = 1, b = "hi"}
+```
+
+## 3010
+
+There was a non-`...` pattern row after a `...` pattern row.
+
+```sml
+(* error *)
+val {..., b} = {a = 1, b = "hi"}
+```
+
+To fix, put the `...` pattern row last.
+
+```sml
+(* error *)
+(* NOTE: this should be ok, but is still error because `...` is not supported *)
+val {b, ...} = {a = 1, b = "hi"}
+```
+
 ## 4001
 
 There was an occurrence of an unsupported SML construct.
