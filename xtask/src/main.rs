@@ -108,14 +108,21 @@ fn ck_no_ignore(sh: &Shell) -> Result<()> {
 }
 
 fn ck_std_basis(sh: &Shell) -> Result<()> {
-  println!("checking std basis files");
-  let order_file = sh.read_file("crates/analysis/src/std_basis/mod.rs")?;
+  println!("checking std_basis files");
+  let std_basis_dir = ["crates", "analysis", "src", "std_basis"];
+  let std_basis_mod: PathBuf = std_basis_dir
+    .iter()
+    .copied()
+    .chain(std::iter::once("mod.rs"))
+    .collect();
+  let order_file = sh.read_file(std_basis_mod)?;
   let mut order: Vec<_> = order_file
     .lines()
     .filter_map(|x| x.strip_prefix("  include_str!(\"")?.strip_suffix("\"),"))
     .collect();
   order.sort_unstable();
-  let std_basis_dir = sh.read_dir("crates/analysis/src/std_basis")?;
+  let std_basis_dir: PathBuf = std_basis_dir.into_iter().collect();
+  let std_basis_dir = sh.read_dir(std_basis_dir)?;
   let files: Vec<_> = std_basis_dir
     .iter()
     .filter_map(|x| {
