@@ -312,11 +312,13 @@ There was an occurrence of an unsupported SML construct.
 val x = #[1, 2]
 ```
 
-At time of writing, this may be emitted for certain SML/NJ extensions that Millet does not support, such as:
+At time of writing, the following constructs are not supported:
 
 - Vector expressions.
 - Vector patterns.
 - Or patterns.
+
+Note that these constructs are not defined by the Definition, but are somewhat common extensions in implementations like SML/NJ (by default) and MLton (optionally).
 
 To fix, avoid such constructs.
 
