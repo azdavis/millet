@@ -33,7 +33,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       }
     }
     // sml_def(3)
-    hir::Exp::Record(rows) => record(st, rows, exp, |st, _, exp| get(st, cx, ars, exp)),
+    hir::Exp::Record(rows) => Ty::Record(record(st, rows, exp, |st, _, exp| get(st, cx, ars, exp))),
     // sml_def(4)
     hir::Exp::Let(dec, inner) => {
       let mut let_env = Env::default();

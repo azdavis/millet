@@ -18,7 +18,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
       Some(fv) => Ty::FixedVar(fv.clone()),
     },
     // sml_def(45)
-    hir::Ty::Record(rows) => record(st, rows, ty, |st, _, ty| get(st, cx, ars, ty)),
+    hir::Ty::Record(rows) => Ty::Record(record(st, rows, ty, |st, _, ty| get(st, cx, ars, ty))),
     // sml_def(46)
     hir::Ty::Con(args, path) => {
       let ty_info = match get_ty_info(&cx.env, path) {

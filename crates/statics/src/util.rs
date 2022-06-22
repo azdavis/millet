@@ -15,7 +15,12 @@ pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
 }
 
 /// sml_def(6), sml_def(39), sml_def(49)
-pub(crate) fn record<T, F, I>(st: &mut St, rows: &[(hir::Lab, T)], idx: I, mut f: F) -> Ty
+pub(crate) fn record<T, F, I>(
+  st: &mut St,
+  rows: &[(hir::Lab, T)],
+  idx: I,
+  mut f: F,
+) -> BTreeMap<hir::Lab, Ty>
 where
   T: Copy,
   F: FnMut(&mut St, &hir::Lab, T) -> Ty,
@@ -30,7 +35,7 @@ where
       Some(_) => st.err(idx, ErrorKind::DuplicateLab(lab.clone())),
     }
   }
-  Ty::Record(ty_rows)
+  ty_rows
 }
 
 /// uses the `names` to traverse through the `StrEnv`s of successive `env`s, returning either the

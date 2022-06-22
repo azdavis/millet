@@ -107,13 +107,13 @@ pub(crate) fn get(
       }
       let mut labs = BTreeSet::<hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
-      let ty = record(st, rows, pat_, |st, lab, pat| {
+      let rows = record(st, rows, pat_, |st, lab, pat| {
         let (pm_pat, ty) = get(st, cx, ars, ve, pat);
         labs.insert(lab.clone());
         pats.push(pm_pat);
         ty
       });
-      (Pat::con(Con::Record(labs), pats, pat), ty)
+      (Pat::con(Con::Record(labs), pats, pat), Ty::Record(rows))
     }
     // sml_def(42)
     hir::Pat::Typed(inner, want) => {
