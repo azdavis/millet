@@ -440,8 +440,7 @@ val {a, ..., ...} = {a = 1, b = "hi"}
 To fix, only provide one such row.
 
 ```sml
-(* error *)
-(* NOTE: this should be ok, but is still error because `...` is not supported *)
+(* ok *)
 val {a, ...} = {a = 1, b = "hi"}
 ```
 
@@ -457,8 +456,7 @@ val {..., b} = {a = 1, b = "hi"}
 To fix, put the `...` pattern row last.
 
 ```sml
-(* error *)
-(* NOTE: this should be ok, but is still error because `...` is not supported *)
+(* ok *)
 val {b, ...} = {a = 1, b = "hi"}
 ```
 
@@ -468,13 +466,12 @@ There was an occurrence of an unsupported SML construct.
 
 ```sml
 (* error *)
-val _ : int = #2 ("hi", 4)
+abstype t = T with val _ = 3 end
 ```
 
 At time of writing, the following constructs are not supported:
 
 - `abstype` declarations.
-- `...` pattern rows, and therefore `#` selectors.
 
 ## 4002
 

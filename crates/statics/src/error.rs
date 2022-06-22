@@ -52,6 +52,7 @@ impl Error {
       ErrorKind::ExnCopyNotExnIdStatus => 22,
       ErrorKind::InvalidRebindName(_) => 23,
       ErrorKind::WrongIdStatus(_) => 24,
+      ErrorKind::UnresolvedRecordTy => 25,
     }
   }
 }
@@ -82,6 +83,7 @@ pub(crate) enum ErrorKind {
   ExnCopyNotExnIdStatus,
   InvalidRebindName(hir::Name),
   WrongIdStatus(hir::Name),
+  UnresolvedRecordTy,
 }
 
 #[derive(Debug)]
@@ -171,6 +173,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
+      ErrorKind::UnresolvedRecordTy => f.write_str("unresolved record type"),
     }
   }
 }

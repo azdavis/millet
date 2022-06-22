@@ -2,8 +2,8 @@ use crate::error::{ErrorKind, Item};
 use crate::fmt_util::ty_var_name;
 use crate::st::St;
 use crate::types::{
-  generalize, Bs, Env, FunEnv, FunSig, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty, TyEnv, TyInfo,
-  TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
+  generalize, Bs, Env, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty,
+  TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{
   apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe, instantiate,
@@ -206,7 +206,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
       let mut cx = bs.as_cx();
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, sig_exp.into());
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
-      generalize(st.subst(), fixed, &mut ty_scheme);
+      assert_ty_has_no_record_meta_vars(generalize(st.subst(), fixed, &mut ty_scheme));
       match get_ty_info(&inner_env, path) {
         Ok(ty_info) => {
           let want_len = ty_info.ty_scheme.bound_vars.len();
@@ -275,7 +275,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, spec.into());
       for val_desc in val_descs {
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, val_desc.ty));
-        generalize(st.subst(), fixed.clone(), &mut ty_scheme);
+        assert_ty_has_no_record_meta_vars(generalize(st.subst(), fixed.clone(), &mut ty_scheme));
         let vi = ValInfo {
           ty_scheme,
           id_status: IdStatus::Val,
@@ -711,3 +711,10 @@ fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
 
 /// useful for closures that add/remove things from sets, since those methods return `bool`.
 fn ignore(_: bool) {}
+
+fn assert_ty_has_no_record_meta_vars(x: Option<HasRecordMetaVars>) {
+  assert!(
+    x.is_none(),
+    "a type cannot have record meta vars because it has no patterns"
+  )
+}

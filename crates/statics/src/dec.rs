@@ -1,8 +1,8 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, Cx, Env, FixedTyVars, IdStatus, Ty, TyEnv, TyInfo, TyScheme,
-  ValEnv, ValInfo,
+  generalize, generalize_fixed, Cx, Env, FixedTyVars, HasRecordMetaVars, IdStatus, Ty, TyEnv,
+  TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_ty_info, ins_check_name, ins_no_dupe};
@@ -82,7 +82,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
       // generalize the entire merged ValEnv.
       for val_info in ve.values_mut() {
-        generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
+        let g = generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
+        if let Some(HasRecordMetaVars) = g {
+          st.err(dec, ErrorKind::UnresolvedRecordTy);
+        }
       }
       // extend the overall env with that.
       env.val_env.extend(ve);

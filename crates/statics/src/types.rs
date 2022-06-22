@@ -256,6 +256,7 @@ impl BoundTyVars {
 pub(crate) enum TyVarKind {
   Equality,
   Overloaded(Overload),
+  Record(RecordTy),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -624,7 +625,12 @@ impl FixedTyVars {
 /// panics if the type scheme already binds vars.
 ///
 /// TODO remove ty_vars(cx)? what even is that?
-pub(crate) fn generalize(subst: &Subst, fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
+#[must_use = "must check whether there were record meta vars"]
+pub(crate) fn generalize(
+  subst: &Subst,
+  fixed: FixedTyVars,
+  ty_scheme: &mut TyScheme,
+) -> Option<HasRecordMetaVars> {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
   meta_vars(subst, &mut meta, &ty_scheme.ty);
@@ -633,10 +639,15 @@ pub(crate) fn generalize(subst: &Subst, fixed: FixedTyVars, ty_scheme: &mut TySc
     fixed,
     meta,
     bound_vars: BoundTyVars::default(),
+    has_record_meta_var: false,
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.bound_vars;
+  g.has_record_meta_var.then(|| HasRecordMetaVars)
 }
+
+/// a marker for when a type contained record meta vars.
+pub(crate) struct HasRecordMetaVars;
 
 /// like [`generalize`], but:
 ///
@@ -656,9 +667,14 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
     fixed,
     meta: FxHashMap::default(),
     bound_vars: BoundTyVars(bound_vars),
+    has_record_meta_var: false,
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.bound_vars;
+  assert!(
+    !g.has_record_meta_var,
+    "there should be no meta vars at all, much less record ones"
+  );
 }
 
 fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, ty: &Ty) {
@@ -692,6 +708,7 @@ struct Generalizer<'a> {
   fixed: FixedTyVars,
   meta: FxHashMap<MetaTyVar, Option<BoundTyVar>>,
   bound_vars: BoundTyVars,
+  has_record_meta_var: bool,
 }
 
 impl<'a> Generalizer<'a> {
@@ -700,7 +717,13 @@ impl<'a> Generalizer<'a> {
       Ty::None => {}
       Ty::BoundVar(_) => unreachable!(),
       Ty::MetaVar(mv) => match self.subst.get(mv) {
-        None => handle_bv(self.meta.get_mut(mv), &mut self.bound_vars, None, ty),
+        None => handle_bv(
+          self.meta.get_mut(mv),
+          &mut self.bound_vars,
+          &mut self.has_record_meta_var,
+          None,
+          ty,
+        ),
         Some(entry) => match entry {
           SubstEntry::Solved(t) => {
             *ty = t.clone();
@@ -709,6 +732,7 @@ impl<'a> Generalizer<'a> {
           SubstEntry::Kind(k) => handle_bv(
             self.meta.get_mut(mv),
             &mut self.bound_vars,
+            &mut self.has_record_meta_var,
             Some(k.clone()),
             ty,
           ),
@@ -717,6 +741,7 @@ impl<'a> Generalizer<'a> {
       Ty::FixedVar(fv) => handle_bv(
         self.fixed.0.get_mut(fv),
         &mut self.bound_vars,
+        &mut self.has_record_meta_var,
         fv.ty_var.is_equality().then(|| TyVarKind::Equality),
         ty,
       ),
@@ -741,6 +766,7 @@ impl<'a> Generalizer<'a> {
 fn handle_bv(
   bv: Option<&mut Option<BoundTyVar>>,
   bound_vars: &mut BoundTyVars,
+  has_record_meta_var: &mut bool,
   kind: Option<TyVarKind>,
   ty: &mut Ty,
 ) {
@@ -752,6 +778,10 @@ fn handle_bv(
     Some(bv) => Ty::BoundVar(bv.clone()),
     None => match kind {
       Some(TyVarKind::Overloaded(_)) => Ty::INT,
+      Some(TyVarKind::Record(_)) => {
+        *has_record_meta_var = true;
+        Ty::None
+      }
       None | Some(TyVarKind::Equality) => {
         let new_bv = BoundTyVar(bound_vars.len());
         *bv = Some(new_bv.clone());

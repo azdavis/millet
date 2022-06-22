@@ -82,12 +82,62 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
                     return Err(UnifyError::OverloadMismatch(ov));
                   }
                 }
+                // no overloaded type is a record.
+                TyVarKind::Record(_) => return Err(UnifyError::OverloadMismatch(ov)),
               },
             }
           }
           // none of these are overloaded types.
           Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
             return Err(UnifyError::OverloadMismatch(ov))
+          }
+        },
+        // mv was a record ty var (i.e. from a `...` pattern). ty must have the rows gotten so far.
+        Some(SubstEntry::Kind(TyVarKind::Record(mut want_rows))) => match ty {
+          // don't emit more errors for None.
+          Ty::None => {}
+          // ty was a record. it should have every label in the wanted rows, and the types should
+          // unify.
+          Ty::Record(mut got_rows) => {
+            for (lab, want) in want_rows {
+              match got_rows.remove(&lab) {
+                None => return Err(UnifyError::HeadMismatch),
+                Some(got) => unify_(subst, want, got)?,
+              }
+            }
+          }
+          // ty was a meta var, so we solved mv = mv2. check if mv2 has its own entry before setting
+          // mv2's entry to mv's old entry, which specifies the rows for this record ty var.
+          Ty::MetaVar(mv2) => {
+            match subst.get(&mv2) {
+              // there was no entry.
+              None => {}
+              // unreachable because of apply.
+              Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
+              Some(SubstEntry::Kind(kind)) => match kind {
+                // TODO check if the rows so far are equality.
+                TyVarKind::Equality => {}
+                // no overloaded type is a record type.
+                TyVarKind::Overloaded(_) => return Err(UnifyError::HeadMismatch),
+                // mv2 was another record ty var. merge the rows, and for those that appear in
+                // both, unify the types.
+                TyVarKind::Record(other_rows) => {
+                  for (lab, mut want) in other_rows.clone() {
+                    if let Some(got) = want_rows.get(&lab) {
+                      unify_(subst, want.clone(), got.clone())?;
+                      apply(subst, &mut want);
+                    }
+                    want_rows.insert(lab, want);
+                  }
+                }
+              },
+            }
+            // set the entry to make mv2 a record ty var.
+            subst.insert(mv2, SubstEntry::Kind(TyVarKind::Record(want_rows)));
+          }
+          // none of these are record types.
+          Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Con(_, _) | Ty::Fn(_, _) => {
+            return Err(UnifyError::HeadMismatch)
           }
         },
       }

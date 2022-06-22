@@ -2,7 +2,7 @@ use crate::error::{ErrorKind, Item};
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
-use crate::types::{Cx, IdStatus, Ty, TyScheme, ValEnv, ValInfo};
+use crate::types::{Cx, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo};
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_scon, ins_check_name, instantiate, record};
 use std::collections::BTreeSet;
@@ -101,10 +101,6 @@ pub(crate) fn get(
     }
     // sml_def(36)
     hir::Pat::Record { rows, allows_other } => {
-      if *allows_other {
-        // sml_def(38)
-        st.err(pat_, ErrorKind::Unsupported("`...` pattern rows"));
-      }
       let mut labs = BTreeSet::<hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
       let rows = record(st, rows, pat_, |st, lab, pat| {
@@ -113,7 +109,16 @@ pub(crate) fn get(
         pats.push(pm_pat);
         ty
       });
-      (Pat::con(Con::Record(labs), pats, pat), Ty::Record(rows))
+      let ty = if *allows_other {
+        // sml_def(38)
+        let mv = st.gen_meta_var();
+        let k = SubstEntry::Kind(TyVarKind::Record(rows));
+        assert!(st.subst().insert(mv.clone(), k).is_none(),);
+        Ty::MetaVar(mv)
+      } else {
+        Ty::Record(rows)
+      };
+      (Pat::con(Con::Record(labs), pats, pat), ty)
     }
     // sml_def(42)
     hir::Pat::Typed(inner, want) => {
