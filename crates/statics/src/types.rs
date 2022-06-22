@@ -296,7 +296,10 @@ impl BoundTyVar {
   }
 }
 
-/// Generated, and to be substituted for a real type, by the inference algorithm.
+/// Generated, and to be solved for a real type, by the inference algorithm.
+///
+/// Should eventually be solved in a [`Subst`], but before that, it may be "restricted" by the
+/// `Subst` without yet being fully solved to a type.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct MetaTyVar(Uniq);
 
