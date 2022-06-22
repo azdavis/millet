@@ -55,7 +55,17 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
               ok
             }
             Ty::MetaVar(mv2) => {
-              subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
+              match subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov))) {
+                None => {}
+                Some(entry) => match entry {
+                  SubstEntry::Solved(t) => unreachable!("meta var already solved to {t:?}"),
+                  SubstEntry::Kind(k) => match k {
+                    // all overload types are equality types
+                    TyVarKind::Equality => {}
+                    TyVarKind::Overloaded(_) => unreachable!("an overloaded ty var was in scope"),
+                  },
+                },
+              }
               true
             }
             Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => false,
