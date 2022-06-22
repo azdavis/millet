@@ -1,5 +1,4 @@
 {
-  "name": "SML/NJ Compilation Manager",
   "scopeName": "source.sml-nj-cm",
   "patterns": [
     { "include": "#lineComment" },

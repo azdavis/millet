@@ -1,5 +1,4 @@
 {
-  "name": "Standard ML",
   "scopeName": "source.sml",
   "patterns": [
     { "include": "#blockComment" },
