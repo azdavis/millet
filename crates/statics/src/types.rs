@@ -699,14 +699,16 @@ impl<'a> Generalizer<'a> {
           let bv = self.meta.get_mut(mv);
           handle_bv(bv, &mut self.bound_vars, None, ty)
         }
-        Some(SubstEntry::Kind(k)) => {
-          let bv = self.meta.get_mut(mv);
-          handle_bv(bv, &mut self.bound_vars, Some(*k), ty)
-        }
-        Some(SubstEntry::Set(t)) => {
-          *ty = t.clone();
-          self.go(ty);
-        }
+        Some(entry) => match entry {
+          SubstEntry::Kind(k) => {
+            let bv = self.meta.get_mut(mv);
+            handle_bv(bv, &mut self.bound_vars, Some(*k), ty)
+          }
+          SubstEntry::Set(t) => {
+            *ty = t.clone();
+            self.go(ty);
+          }
+        },
       },
       Ty::FixedVar(fv) => {
         let kind = fv.ty_var.is_equality().then(|| TyVarKind::Equality);
