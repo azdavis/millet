@@ -48,10 +48,10 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       match subst.insert(mv, SubstEntry::Solved(ty.clone())) {
         // do nothing if no entry.
         None => {}
-        // TODO check ty is do more for equality checks
-        Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
         // unreachable because we applied upon entry.
         Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
+        // TODO check ty is do more for equality checks
+        Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
         // mv was an overloaded ty var. ty must conform to that overload.
         Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => match ty {
           // don't emit more errors for None.
@@ -70,20 +70,18 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             match subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov))) {
               // it didn't have an entry.
               None => {}
-              Some(entry) => match entry {
-                // unreachable because of apply.
-                SubstEntry::Solved(ty) => unreachable!("meta var already solved to {ty:?}"),
-                SubstEntry::Kind(kind) => match kind {
-                  // all overload types are equality types.
-                  TyVarKind::Equality => {}
-                  // it too was an overload. the old overload should be entirely contained in this
-                  // overload.
-                  TyVarKind::Overloaded(ov2) => {
-                    if !ov2.to_syms().iter().all(|x| ov.to_syms().contains(x)) {
-                      return Err(UnifyError::OverloadMismatch(ov));
-                    }
+              // unreachable because of apply.
+              Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
+              Some(SubstEntry::Kind(kind)) => match kind {
+                // all overload types are equality types.
+                TyVarKind::Equality => {}
+                // it too was an overload. the old overload should be entirely contained in this
+                // overload.
+                TyVarKind::Overloaded(ov2) => {
+                  if !ov2.to_syms().iter().all(|x| ov.to_syms().contains(x)) {
+                    return Err(UnifyError::OverloadMismatch(ov));
                   }
-                },
+                }
               },
             }
           }
