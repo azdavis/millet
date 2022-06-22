@@ -173,7 +173,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
-      ErrorKind::UnresolvedRecordTy => f.write_str("unresolved record type"),
+      ErrorKind::UnresolvedRecordTy => {
+        f.write_str("cannot resolve record type containing `...` due to lack of context")
+      }
     }
   }
 }
