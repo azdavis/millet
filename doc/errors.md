@@ -931,3 +931,35 @@ end = struct
   exception E = Foo
 end
 ```
+
+## 4025
+
+A record type couldn't be fully resolved, due to the use of a `...` pattern row.
+
+```sml
+(* error *)
+fun getX {x, ...} = x
+```
+
+SML lacks row polymorphism, so the above example function does not typecheck.
+
+To fix, consider adding a type annotation.
+
+```sml
+(* ok *)
+fun getX ({x, ...} : {x: int, y: bool, z: string}) = x
+```
+
+This error may arise when using `#` selectors.
+
+```sml
+(* error *)
+fun addFooBar x = #foo x + #bar x
+```
+
+Again, the fix is usually to add a type annotation. Though, an alternative would be to avoid `...` pattern rows altogether.
+
+```sml
+(* ok *)
+fun addFooBar {foo, bar} = foo + bar
+```
