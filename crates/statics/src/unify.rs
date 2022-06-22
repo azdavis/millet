@@ -34,19 +34,29 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
     (Ty::None, _) | (_, Ty::None) => Ok(()),
     (Ty::BoundVar(want), Ty::BoundVar(got)) => head_match(want == got),
     (Ty::MetaVar(mv), ty) | (ty, Ty::MetaVar(mv)) => {
+      // return without doing anything if the meta vars are the same.
       if let Ty::MetaVar(mv2) = &ty {
         if mv == *mv2 {
           return Ok(());
         }
       }
+      // forbid circularity.
       if occurs(&mv, &ty) {
         return Err(UnifyError::OccursCheck(mv, ty));
       }
+      // try solving mv to ty. however, mv may already have an entry.
       match subst.insert(mv, SubstEntry::Solved(ty.clone())) {
-        None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
+        // do nothing if no entry.
+        None => {}
+        // TODO check ty is do more for equality checks
+        Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
+        // unreachable because we applied upon entry.
         Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
+        // mv was an overloaded ty var. ty must conform to that overload.
         Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => match ty {
+          // don't emit more errors for None.
           Ty::None => {}
+          // the simple case. check the sym is in the overload.
           Ty::Con(args, s) => {
             if ov.to_syms().contains(&s) {
               assert!(args.is_empty())
@@ -54,14 +64,20 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
               return Err(UnifyError::OverloadMismatch(ov));
             }
           }
+          // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
+          // but mv2 itself may also have an entry.
           Ty::MetaVar(mv2) => {
             match subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov))) {
+              // it didn't have an entry.
               None => {}
               Some(entry) => match entry {
+                // unreachable because of apply.
                 SubstEntry::Solved(ty) => unreachable!("meta var already solved to {ty:?}"),
                 SubstEntry::Kind(kind) => match kind {
-                  // all overload types are equality types
+                  // all overload types are equality types.
                   TyVarKind::Equality => {}
+                  // it too was an overload. the old overload should be entirely contained in this
+                  // overload.
                   TyVarKind::Overloaded(ov2) => {
                     if !ov2.to_syms().iter().all(|x| ov.to_syms().contains(x)) {
                       return Err(UnifyError::OverloadMismatch(ov));
@@ -71,6 +87,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
               },
             }
           }
+          // none of these are overloaded types.
           Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
             return Err(UnifyError::OverloadMismatch(ov))
           }
