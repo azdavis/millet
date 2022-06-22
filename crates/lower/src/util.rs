@@ -169,10 +169,10 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidIntLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
-      ErrorKind::ZeroNumLab => write!(f, "invalid numeric label: numeric labels start at 1"),
-      ErrorKind::MustBeTopLevel => write!(f, "declaration must be at the top level"),
-      ErrorKind::MultipleRestPatRows => write!(f, "cannot have multiple `...`"),
-      ErrorKind::RestPatRowNotLast => write!(f, "`...` must come last"),
+      ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
+      ErrorKind::MustBeTopLevel => f.write_str("declaration must be at the top level"),
+      ErrorKind::MultipleRestPatRows => f.write_str("cannot have multiple `...`"),
+      ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
     }
   }
 }

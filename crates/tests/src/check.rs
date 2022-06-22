@@ -190,7 +190,7 @@ impl fmt::Display for Check {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("\n\n  reasons:\n")?;
     for reason in self.reasons.iter() {
-      write!(f, "  - ")?;
+      f.write_str("  - ")?;
       match reason {
         Reason::WantWrongNumError(want_len) => {
           writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;

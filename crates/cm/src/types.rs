@@ -28,7 +28,7 @@ impl fmt::Display for Error {
     match self {
       Error::UnclosedComment => f.write_str("unclosed block comment"),
       Error::EmptyExportList => f.write_str("invalid empty export list"),
-      Error::Expected(tok) => write!(f, "expected `{}`", tok),
+      Error::Expected(tok) => write!(f, "expected `{tok}`"),
       Error::ExpectedString => f.write_str("expected a string"),
       Error::ExpectedClass => f.write_str("expected a class"),
       Error::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
