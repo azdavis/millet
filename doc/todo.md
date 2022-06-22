@@ -4,16 +4,17 @@ priority is approximate. if unsure of priority, put in low.
 
 ## high
 
-- get logo
-  - stick in readme
-  - and 'icon' field of package.json
-  - that icon needs to be 128x128 png
+- get art
+  - stick image in readme
+  - add 'icon' field of package.json (128x128 png)
 - support multiple files better
-  - already have rudimentary CM
-  - maybe use MLB instead
+  - improve CM, currently rudimentary
+  - and/or impl MLB support instead
 - impl more LSP features
   - jump to definition
-  - hover for type/documentation/info
+  - hover for type/documentation
+- impl perf boost low-hanging fruit
+  - don't re-IO, re-lex, re-parse, re-lower every file every time
 
 ## medium
 
@@ -30,20 +31,16 @@ priority is approximate. if unsure of priority, put in low.
   - related: avoid clashes between ty vars
   - show something better than `_` for meta vars?
   - better parser errors?
-- make it performant
+- make it more performant
   - only lower the parts of the syntax tree that changed?
-  - only re-check those parts?
-  - don't re-calculate everything every time LOL
+  - only re-statics-check those parts?
   - salsa-rs?
 
 ## low
 
 - make website
   - with 'verified ownership' or whatever
-- implement statics for weird constructs
-  - `abstype`
-  - `#` selectors
-  - more generally, `...` pats
+- implement statics for `abstype`
 - impl more tools
   - auto formatter
   - style linter
