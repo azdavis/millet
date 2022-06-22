@@ -85,10 +85,11 @@ pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
   let subst: Vec<_> = ty_scheme
     .bound_vars
     .kinds()
-    .map(|&x| {
+    .map(|x| {
       let mv = st.gen_meta_var();
       if let Some(k) = x {
-        assert!(st.subst().insert(mv.clone(), SubstEntry::Kind(k)).is_none())
+        let k = SubstEntry::Kind(k.clone());
+        assert!(st.subst().insert(mv.clone(), k).is_none())
       }
       Ty::MetaVar(mv)
     })

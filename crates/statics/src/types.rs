@@ -252,7 +252,7 @@ impl BoundTyVars {
   }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub(crate) enum TyVarKind {
   Equality,
   Overloaded(Overload),
@@ -709,7 +709,7 @@ impl<'a> Generalizer<'a> {
           }
           SubstEntry::Kind(k) => {
             let bv = self.meta.get_mut(mv);
-            handle_bv(bv, &mut self.bound_vars, Some(*k), ty)
+            handle_bv(bv, &mut self.bound_vars, Some(k.clone()), ty)
           }
         },
       },

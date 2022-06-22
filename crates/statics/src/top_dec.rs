@@ -241,7 +241,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
     let ty_info = ty_info.clone();
     let started = st.syms.start(name);
     let new_sym = started.sym();
-    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().copied(), new_sym);
+    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), new_sym);
     st.syms.finish(
       started,
       TyInfo {
