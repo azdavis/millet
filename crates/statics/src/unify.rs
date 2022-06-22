@@ -44,7 +44,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       if occurs(&mv, &ty) {
         return Err(UnifyError::OccursCheck(mv, ty));
       }
-      // try solving mv to ty. however, mv may already have an entry.
+      // solve mv to ty. however, mv may already have an entry.
       match subst.insert(mv, SubstEntry::Solved(ty.clone())) {
         // do nothing if no entry.
         None => {}
