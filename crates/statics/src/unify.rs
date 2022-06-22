@@ -46,6 +46,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
         None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
         Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => {
           let ok = match ty {
+            Ty::None => true,
             Ty::Con(args, s) => {
               let ok = ov.to_syms().contains(&s);
               if ok {
@@ -53,7 +54,6 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
               }
               ok
             }
-            Ty::None => true,
             Ty::MetaVar(mv2) => {
               subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
               true
