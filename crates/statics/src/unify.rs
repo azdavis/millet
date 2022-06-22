@@ -57,8 +57,8 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             match subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov))) {
               None => {}
               Some(entry) => match entry {
-                SubstEntry::Solved(t) => unreachable!("meta var already solved to {t:?}"),
-                SubstEntry::Kind(k) => match k {
+                SubstEntry::Solved(ty) => unreachable!("meta var already solved to {ty:?}"),
+                SubstEntry::Kind(kind) => match kind {
                   // all overload types are equality types
                   TyVarKind::Equality => {}
                   TyVarKind::Overloaded(_) => unreachable!("an overloaded ty var was in scope"),
@@ -70,7 +70,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             return Err(UnifyError::OverloadMismatch(ov))
           }
         },
-        Some(SubstEntry::Solved(t)) => unreachable!("meta var already solved to {t:?}"),
+        Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
       }
       Ok(())
     }
