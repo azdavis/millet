@@ -123,9 +123,30 @@ fn ck_std_basis(sh: &Shell) -> Result<()> {
     })
     .collect();
   if files != order {
-    bail!("bad order of std_basis files\n  expected {files:?}\n     found {order:?}")
+    bail!("bad order of std_basis files:\n  expected {files:?}\n     found {order:?}")
   }
   Ok(())
+}
+
+fn ck_crate_architecture_doc(sh: &Shell) -> Result<()> {
+  println!("checking for crate architecture doc");
+  let path = sh.current_dir().join("doc").join("architecture.md");
+  let contents = sh.read_file(path)?;
+  let mut in_doc: Vec<_> = contents
+    .lines()
+    .filter_map(|line| line.strip_prefix("### `crates/")?.strip_suffix('`'))
+    .collect();
+  in_doc.sort_unstable();
+  let in_crates: Vec<_> = sh
+    .read_dir("crates")?
+    .into_iter()
+    .filter_map(|x| Some(x.file_name()?.to_str()?.to_owned()))
+    .collect();
+  if in_crates == in_doc {
+    Ok(())
+  } else {
+    bail!("not all crates are documented:\n  expected {in_crates:?}\n     found {in_doc:?}");
+  }
 }
 
 fn dist(sh: &Shell, release: bool) -> Result<()> {
@@ -182,6 +203,7 @@ fn main() -> Result<()> {
       ck_sml_def(&sh)?;
       ck_no_ignore(&sh)?;
       ck_std_basis(&sh)?;
+      ck_crate_architecture_doc(&sh)?;
     }
     Cmd::Dist => {
       let release = args.contains("--release");
