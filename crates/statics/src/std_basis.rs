@@ -3,10 +3,9 @@
 //! because rebinding their constructor names is forbidden.
 
 use crate::types::{
-  Bs, Env, FunEnv, IdStatus, Overload, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme,
-  TyVarKind, ValEnv, ValInfo,
+  Bs, Env, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo,
+  TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use std::collections::BTreeMap;
 use std::sync::Arc;
 
 pub(crate) fn get() -> (Syms, Bs) {
@@ -141,12 +140,12 @@ fn dup(ty: Ty) -> Ty {
 }
 
 fn pair(t1: Ty, t2: Ty) -> Ty {
-  Ty::Record(BTreeMap::from([
+  Ty::Record(RecordTy::from([
     (hir::Lab::Num(1), t1),
     (hir::Lab::Num(2), t2),
   ]))
 }
 
 fn unit() -> Ty {
-  Ty::Record(BTreeMap::new())
+  Ty::Record(RecordTy::new())
 }

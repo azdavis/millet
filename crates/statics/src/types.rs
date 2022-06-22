@@ -20,7 +20,7 @@ pub(crate) enum Ty {
   MetaVar(MetaTyVar),
   FixedVar(FixedTyVar),
   /// Definition: RowType
-  Record(BTreeMap<hir::Lab, Ty>),
+  Record(RecordTy),
   /// Definition: ConsType
   ///
   /// Use `Ty::zero` if constructing a zero-argument `Con`.
@@ -332,6 +332,8 @@ impl FixedTyVarGen {
     }
   }
 }
+
+pub(crate) type RecordTy = BTreeMap<hir::Lab, Ty>;
 
 /// Definition: TyName
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]

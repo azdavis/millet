@@ -1,8 +1,7 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
-use crate::types::{Env, Subst, SubstEntry, Ty, TyInfo, TyScheme};
+use crate::types::{Env, RecordTy, Subst, SubstEntry, Ty, TyInfo, TyScheme};
 use fast_hash::FxHashMap;
-use std::collections::BTreeMap;
 
 pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
   match scon {
@@ -15,18 +14,13 @@ pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
 }
 
 /// sml_def(6), sml_def(39), sml_def(49)
-pub(crate) fn record<T, F, I>(
-  st: &mut St,
-  rows: &[(hir::Lab, T)],
-  idx: I,
-  mut f: F,
-) -> BTreeMap<hir::Lab, Ty>
+pub(crate) fn record<T, F, I>(st: &mut St, rows: &[(hir::Lab, T)], idx: I, mut f: F) -> RecordTy
 where
   T: Copy,
   F: FnMut(&mut St, &hir::Lab, T) -> Ty,
   I: Into<hir::Idx>,
 {
-  let mut ty_rows = BTreeMap::<hir::Lab, Ty>::new();
+  let mut ty_rows = RecordTy::new();
   let idx = idx.into();
   for (lab, val) in rows {
     let ty = f(st, lab, *val);
