@@ -698,25 +698,26 @@ impl<'a> Generalizer<'a> {
       Ty::None => {}
       Ty::BoundVar(_) => unreachable!(),
       Ty::MetaVar(mv) => match self.subst.get(mv) {
-        None => {
-          let bv = self.meta.get_mut(mv);
-          handle_bv(bv, &mut self.bound_vars, None, ty)
-        }
+        None => handle_bv(self.meta.get_mut(mv), &mut self.bound_vars, None, ty),
         Some(entry) => match entry {
           SubstEntry::Solved(t) => {
             *ty = t.clone();
             self.go(ty);
           }
-          SubstEntry::Kind(k) => {
-            let bv = self.meta.get_mut(mv);
-            handle_bv(bv, &mut self.bound_vars, Some(k.clone()), ty)
-          }
+          SubstEntry::Kind(k) => handle_bv(
+            self.meta.get_mut(mv),
+            &mut self.bound_vars,
+            Some(k.clone()),
+            ty,
+          ),
         },
       },
-      Ty::FixedVar(fv) => {
-        let kind = fv.ty_var.is_equality().then(|| TyVarKind::Equality);
-        handle_bv(self.fixed.0.get_mut(fv), &mut self.bound_vars, kind, ty)
-      }
+      Ty::FixedVar(fv) => handle_bv(
+        self.fixed.0.get_mut(fv),
+        &mut self.bound_vars,
+        fv.ty_var.is_equality().then(|| TyVarKind::Equality),
+        ty,
+      ),
       Ty::Record(rows) => {
         for ty in rows.values_mut() {
           self.go(ty);
