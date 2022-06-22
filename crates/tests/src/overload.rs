@@ -146,3 +146,25 @@ val  _ = false + true
 "#,
   );
 }
+
+#[test]
+fn three_int() {
+  check(
+    r#"
+fun f a b c = a + b + c
+val _ = f : unit
+(**     ^^^^^^^^ expected unit, found int -> int -> int -> int *)
+"#,
+  );
+}
+
+#[test]
+fn three_real() {
+  check(
+    r#"
+fun f a b c = a + b + c + 1.1
+val _ = f : unit
+(**     ^^^^^^^^ expected unit, found real -> real -> real -> real *)
+"#,
+  );
+}

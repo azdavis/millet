@@ -61,7 +61,11 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
                 SubstEntry::Kind(kind) => match kind {
                   // all overload types are equality types
                   TyVarKind::Equality => {}
-                  TyVarKind::Overloaded(_) => unreachable!("an overloaded ty var was in scope"),
+                  TyVarKind::Overloaded(ov2) => {
+                    if !ov2.to_syms().iter().all(|x| ov.to_syms().contains(x)) {
+                      return Err(UnifyError::OverloadMismatch(ov));
+                    }
+                  }
                 },
               },
             }
