@@ -92,14 +92,18 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
 }
 
 fn ck_no_ignore(sh: &Shell) -> Result<()> {
-  println!("checking for no ignores");
-  let has_ignore = cmd!(sh, "git grep -lFe '#[ignore'").output()?;
+  // avoid matching this file with the git grep
+  let word = "ignore";
+  println!("checking for no {word}");
+  let has_ignore = cmd!(sh, "git grep -lFe #[{word}")
+    .ignore_status()
+    .output()?;
   let out = String::from_utf8(has_ignore.stdout)?;
-  let set: BTreeSet<_> = out.lines().filter(|&x| x != "xtask/src/main.rs").collect();
+  let set: BTreeSet<_> = out.lines().collect();
   if set.is_empty() {
     Ok(())
   } else {
-    bail!("found files with ignore: {set:?}");
+    bail!("found files with {word}: {set:?}");
   }
 }
 
