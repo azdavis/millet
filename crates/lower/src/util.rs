@@ -138,7 +138,7 @@ impl Error {
 }
 
 #[derive(Debug)]
-pub enum ErrorKind {
+pub(crate) enum ErrorKind {
   Unsupported(&'static str),
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
