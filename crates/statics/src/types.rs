@@ -593,8 +593,11 @@ pub(crate) type Subst = FxHashMap<MetaTyVar, SubstEntry>;
 
 #[derive(Debug)]
 pub(crate) enum SubstEntry {
+  /// We solved this meta var to a `Ty`.
+  Solved(Ty),
+  /// This meta var is a special type variable, into which only certain kinds of types can be
+  /// substituted.
   Kind(TyVarKind),
-  Set(Ty),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -663,7 +666,7 @@ fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, 
       None | Some(SubstEntry::Kind(_)) => {
         map.insert(mv.clone(), None);
       }
-      Some(SubstEntry::Set(ty)) => meta_vars(subst, map, ty),
+      Some(SubstEntry::Solved(ty)) => meta_vars(subst, map, ty),
     },
     Ty::Record(rows) => {
       for ty in rows.values() {
@@ -700,13 +703,13 @@ impl<'a> Generalizer<'a> {
           handle_bv(bv, &mut self.bound_vars, None, ty)
         }
         Some(entry) => match entry {
+          SubstEntry::Solved(t) => {
+            *ty = t.clone();
+            self.go(ty);
+          }
           SubstEntry::Kind(k) => {
             let bv = self.meta.get_mut(mv);
             handle_bv(bv, &mut self.bound_vars, Some(*k), ty)
-          }
-          SubstEntry::Set(t) => {
-            *ty = t.clone();
-            self.go(ty);
           }
         },
       },

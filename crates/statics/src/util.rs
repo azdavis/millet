@@ -56,7 +56,7 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
       None | Some(SubstEntry::Kind(_)) => {}
-      Some(SubstEntry::Set(t)) => {
+      Some(SubstEntry::Solved(t)) => {
         let mut t = t.clone();
         apply(subst, &mut t);
         *ty = t;
