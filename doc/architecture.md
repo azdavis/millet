@@ -134,12 +134,6 @@ Statics errors use an abstract `Idx`, and this index gets turned into an actual 
 
 NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), like "the name of the third con bind in the second dat bind of this datatype dec".
 
-### `crates/analysis`
-
-Unifies all the passes into one single API.
-
-This also contains declarations for the bulk of the standard basis library, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
-
 ### `crates/cm`
 
 Rudimentary handling (lex, parse, lower) of SML/NJ Compilation Manager (CM) files.
@@ -156,6 +150,16 @@ Types for working with paths, notably:
 - A type that transforms these canonical path buffers into cheap IDs, given that a path is "contained" in a "root" canonical path buf.
 
 These are ideal for the use case of language servers, in which we have a "workspace root" containing all the files.
+
+### `crates/fast-hash`
+
+A thin wrapper over `FxHash{Map, Set}` with some extra helper functions. These types use `FxHasher`, which is a very fast, but not HashDOS-resistant, hashing algorithm used in Firefox and `rustc`.
+
+### `crates/analysis`
+
+Unifies all the passes into one single API.
+
+This also contains declarations for the bulk of the standard basis library, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
 
 ### `crates/lang-srv`
 
