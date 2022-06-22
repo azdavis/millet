@@ -44,6 +44,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       }
       match subst.insert(mv, SubstEntry::Solved(ty.clone())) {
         None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
+        Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
         Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => match ty {
           Ty::None => {}
           Ty::Con(args, s) => {
@@ -74,7 +75,6 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             return Err(UnifyError::OverloadMismatch(ov))
           }
         },
-        Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
       }
       Ok(())
     }
