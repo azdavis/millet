@@ -44,36 +44,32 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       }
       match subst.insert(mv, SubstEntry::Solved(ty.clone())) {
         None | Some(SubstEntry::Kind(TyVarKind::Equality)) => {}
-        Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => {
-          let ok = match ty {
-            Ty::None => true,
-            Ty::Con(args, s) => {
-              let ok = ov.to_syms().contains(&s);
-              if ok {
-                assert!(args.is_empty())
-              }
-              ok
+        Some(SubstEntry::Kind(TyVarKind::Overloaded(ov))) => match ty {
+          Ty::None => {}
+          Ty::Con(args, s) => {
+            if ov.to_syms().contains(&s) {
+              assert!(args.is_empty())
+            } else {
+              return Err(UnifyError::OverloadMismatch(ov));
             }
-            Ty::MetaVar(mv2) => {
-              match subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov))) {
-                None => {}
-                Some(entry) => match entry {
-                  SubstEntry::Solved(t) => unreachable!("meta var already solved to {t:?}"),
-                  SubstEntry::Kind(k) => match k {
-                    // all overload types are equality types
-                    TyVarKind::Equality => {}
-                    TyVarKind::Overloaded(_) => unreachable!("an overloaded ty var was in scope"),
-                  },
-                },
-              }
-              true
-            }
-            Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => false,
-          };
-          if !ok {
-            return Err(UnifyError::OverloadMismatch(ov));
           }
-        }
+          Ty::MetaVar(mv2) => {
+            match subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov))) {
+              None => {}
+              Some(entry) => match entry {
+                SubstEntry::Solved(t) => unreachable!("meta var already solved to {t:?}"),
+                SubstEntry::Kind(k) => match k {
+                  // all overload types are equality types
+                  TyVarKind::Equality => {}
+                  TyVarKind::Overloaded(_) => unreachable!("an overloaded ty var was in scope"),
+                },
+              },
+            }
+          }
+          Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
+            return Err(UnifyError::OverloadMismatch(ov))
+          }
+        },
         Some(SubstEntry::Solved(t)) => unreachable!("meta var already solved to {t:?}"),
       }
       Ok(())
