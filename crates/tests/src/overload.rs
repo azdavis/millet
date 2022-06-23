@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn curry_add() {
@@ -165,6 +165,15 @@ fn three_real() {
 fun f a b c = a + b + c + 1.1
 val _ = f : unit
 (**     ^^^^^^^^ expected unit, found real -> real -> real -> real *)
+"#,
+  );
+}
+
+#[test]
+fn add_div() {
+  fail(
+    r#"
+fun mid a b = (a + b) div 2
 "#,
   );
 }
