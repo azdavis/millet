@@ -76,10 +76,10 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
                 Some(SubstEntry::Kind(kind)) => match kind {
                   // all overload types are equality types.
                   TyVarKind::Equality => {}
-                  // it too was an overload. the old overload should be entirely contained in this
+                  // it too was an overload. the new overload should be a subset of the old
                   // overload.
                   TyVarKind::Overloaded(ov2) => {
-                    if !ov2.to_syms().iter().all(|x| ov.to_syms().contains(x)) {
+                    if !ov.to_syms().iter().all(|x| ov2.to_syms().contains(x)) {
                       return Err(UnifyError::OverloadMismatch(ov));
                     }
                   }

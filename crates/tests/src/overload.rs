@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn curry_add() {
@@ -171,7 +171,7 @@ val _ = f : unit
 
 #[test]
 fn add_div() {
-  fail(
+  check(
     r#"
 fun mid a b = (a + b) div 2
 "#,
