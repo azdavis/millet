@@ -20,9 +20,9 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Str
     | hir::StrDec::Structure(..)
     | hir::StrDec::Local(..)
     | hir::StrDec::Seq(..) => {
-      let mut env = Env::default();
-      get_str_dec(st, bs, ars, &mut env, Some(top_dec));
-      Arc::make_mut(&mut bs.env).extend(env);
+      let mut ac = Env::default();
+      get_str_dec(st, bs, ars, &mut ac, Some(top_dec));
+      Arc::make_mut(&mut bs.env).extend(ac);
     }
     // sml_def(66), sml_def(88)
     hir::StrDec::Sig(sig_binds) => {
