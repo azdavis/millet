@@ -1,4 +1,4 @@
-//! See [`time`].
+//! Track how long function calls take.
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
@@ -6,7 +6,7 @@
 
 use std::time::{Duration, Instant};
 
-/// Calls `f` and logs the time it took to do so at the Info level.
+/// Calls `f` and logs the message and the time it took to do so at the Info level.
 pub fn log<F, T>(msg: &str, f: F) -> T
 where
   F: FnOnce() -> T,
