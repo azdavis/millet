@@ -316,9 +316,8 @@ At time of writing, the following constructs are not supported:
 
 - Vector expressions.
 - Vector patterns.
-- Or patterns.
 
-Note that these constructs are not defined by the Definition, but are somewhat common extensions in implementations like SML/NJ (by default) and MLton (optionally).
+Note that these constructs are not defined by the Definition, but are somewhat common extensions in implementations like SML/NJ and MLton.
 
 To fix, avoid such constructs.
 
@@ -988,3 +987,5 @@ fun toInt (x : t) : int =
   case x of
     (Foo y | Bar y) => y
 ```
+
+Note that or patterns are not permitted by the Definition, though they are a common extension, implemented by SML/NJ and MLton.
