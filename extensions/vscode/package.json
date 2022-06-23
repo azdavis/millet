@@ -43,6 +43,7 @@
   "activationEvents": [
     "onLanguage:sml",
     "onLanguage:sml-nj-cm",
+    "onLanguage:mlb",
     "workspaceContains:**/*.{sml,sig,fun,cm,mlb}"
   ],
   "contributes": {
