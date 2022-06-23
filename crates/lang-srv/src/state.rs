@@ -123,7 +123,16 @@ impl State {
 
   pub(crate) fn handle_request(&mut self, req: Request) {
     log::debug!("got request: {req:?}");
-    self.req_queue.incoming.register(req.id, ())
+    self.req_queue.incoming.register(req.id.clone(), ());
+    match self.handle_request_(req) {
+      ControlFlow::Break(Ok(())) => {}
+      ControlFlow::Break(Err(e)) => log::error!("couldn't handle request: {e}"),
+      ControlFlow::Continue(req) => log::warn!("unhandled request: {req:?}"),
+    }
+  }
+
+  fn handle_request_(&mut self, r: Request) -> ControlFlow<Result<()>, Request> {
+    ControlFlow::Continue(r)
   }
 
   pub(crate) fn handle_response(&mut self, res: Response) {
