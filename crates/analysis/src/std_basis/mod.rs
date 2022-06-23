@@ -1,4 +1,3 @@
-use elapsed::time;
 use once_cell::sync::Lazy;
 use statics::Mode::Declaration;
 
@@ -58,7 +57,7 @@ fn get_full_std_basis() -> statics::Statics {
 }
 
 static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
-  let st = time("get_full_std_basis", get_full_std_basis);
+  let st = elapsed::time("get_full_std_basis", get_full_std_basis);
   (st.syms, st.bs)
 });
 
