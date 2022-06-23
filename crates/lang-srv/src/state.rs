@@ -122,7 +122,7 @@ impl State {
   }
 
   pub(crate) fn handle_request(&mut self, req: Request) {
-    log::debug!("got request: {req:?}");
+    log::info!("got request: {req:?}");
     self.req_queue.incoming.register(req.id.clone(), ());
     match self.handle_request_(req) {
       ControlFlow::Break(Ok(())) => {}
@@ -136,7 +136,7 @@ impl State {
   }
 
   pub(crate) fn handle_response(&mut self, res: Response) {
-    log::debug!("got response: {res:?}");
+    log::info!("got response: {res:?}");
     match self.req_queue.outgoing.complete(res.id.clone()) {
       Some(()) => {}
       None => log::warn!("received response for non-queued request: {res:?}"),
@@ -144,7 +144,7 @@ impl State {
   }
 
   pub(crate) fn handle_notification(&mut self, notif: Notification) {
-    log::debug!("got notification: {notif:?}");
+    log::info!("got notification: {notif:?}");
     match self.handle_notification_(notif) {
       ControlFlow::Break(Ok(())) => {}
       ControlFlow::Break(Err(e)) => log::error!("couldn't handle notification: {e}"),
@@ -191,7 +191,7 @@ impl State {
   }
 
   fn send(&self, msg: Message) {
-    log::debug!("sending {msg:?}");
+    log::info!("sending {msg:?}");
     self.sender.send(msg).unwrap()
   }
 
