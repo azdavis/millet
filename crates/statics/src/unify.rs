@@ -78,21 +78,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
                   TyVarKind::Equality => Some(ov),
                   // it too was an overload. unify the two overloads, which may result in the
                   // variable no longer being overloaded.
-                  TyVarKind::Overloaded(ov2) => match (ov, ov2) {
-                    (Overload::WordInt, Overload::WordInt | Overload::Num | Overload::NumTxt)
-                    | (Overload::Num | Overload::NumTxt, Overload::WordInt) => {
-                      Some(Overload::WordInt)
-                    }
-                    (Overload::WordInt, Overload::RealInt)
-                    | (Overload::RealInt, Overload::WordInt) => None,
-                    (Overload::RealInt, Overload::RealInt | Overload::Num | Overload::NumTxt)
-                    | (Overload::Num | Overload::NumTxt, Overload::RealInt) => {
-                      Some(Overload::RealInt)
-                    }
-                    (Overload::Num, Overload::Num | Overload::NumTxt)
-                    | (Overload::NumTxt, Overload::Num) => Some(Overload::Num),
-                    (Overload::NumTxt, Overload::NumTxt) => Some(Overload::NumTxt),
-                  },
+                  TyVarKind::Overloaded(ov2) => ov.unify(*ov2),
                   // no overloaded type is a record.
                   TyVarKind::Record(_) => return Err(UnifyError::OverloadMismatch(ov)),
                 },

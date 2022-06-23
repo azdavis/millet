@@ -270,10 +270,22 @@ pub(crate) enum Overload {
 impl Overload {
   pub(crate) fn to_syms(self) -> &'static [Sym] {
     match self {
-      Overload::WordInt => &[Sym::WORD, Sym::INT],
-      Overload::RealInt => &[Sym::REAL, Sym::INT],
-      Overload::Num => &[Sym::WORD, Sym::REAL, Sym::INT],
-      Overload::NumTxt => &[Sym::WORD, Sym::REAL, Sym::INT, Sym::STRING, Sym::CHAR],
+      Self::WordInt => &[Sym::WORD, Sym::INT],
+      Self::RealInt => &[Sym::REAL, Sym::INT],
+      Self::Num => &[Sym::WORD, Sym::REAL, Sym::INT],
+      Self::NumTxt => &[Sym::WORD, Sym::REAL, Sym::INT, Sym::STRING, Sym::CHAR],
+    }
+  }
+
+  pub(crate) fn unify(self, other: Self) -> Option<Self> {
+    match (self, other) {
+      (Self::WordInt, Self::WordInt | Self::Num | Self::NumTxt)
+      | (Self::Num | Self::NumTxt, Self::WordInt) => Some(Self::WordInt),
+      (Self::WordInt, Self::RealInt) | (Self::RealInt, Self::WordInt) => None,
+      (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
+      | (Self::Num | Self::NumTxt, Self::RealInt) => Some(Self::RealInt),
+      (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => Some(Self::Num),
+      (Self::NumTxt, Self::NumTxt) => Some(Self::NumTxt),
     }
   }
 }
