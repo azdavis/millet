@@ -947,7 +947,8 @@ To fix, consider adding a type annotation.
 
 ```sml
 (* ok *)
-fun getX ({x, ...} : {x: int, y: bool, z: string}) = x
+type t = {x : int, y : bool, z : string}
+fun getX ({x, ...} : t) = x
 ```
 
 This error may arise when using `#` selectors.
