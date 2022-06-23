@@ -1,3 +1,4 @@
+use elapsed::time;
 use once_cell::sync::Lazy;
 use statics::Mode::Declaration;
 
@@ -32,8 +33,7 @@ impl StdBasis {
   }
 }
 
-static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
-  let begin = std::time::Instant::now();
+fn get_full_std_basis() -> statics::Statics {
   let mut st = statics::Statics::default();
   for &contents in ORDER {
     let lexed = lex::get(contents);
@@ -54,8 +54,11 @@ static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
       panic!("std_basis error: statics: {}", e.display(&st.syms));
     }
   }
-  let end = std::time::Instant::now();
-  log::info!("got std_basis in {:?}", end.duration_since(begin));
+  st
+}
+
+static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
+  let st = time("get_full_std_basis", get_full_std_basis);
   (st.syms, st.bs)
 });
 
