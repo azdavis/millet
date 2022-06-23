@@ -3,7 +3,7 @@
 use anyhow::{anyhow, bail, Result};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
-use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId};
+use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
 use lsp_types::{notification::Notification as _, Url};
 use std::ops::ControlFlow;
 
@@ -106,7 +106,7 @@ impl State {
   }
 
   #[allow(dead_code)]
-  fn send_response(&mut self, res: lsp_server::Response) {
+  fn send_response(&mut self, res: Response) {
     match self.req_queue.incoming.complete(res.id.clone()) {
       Some(()) => self.send(res.into()),
       None => log::warn!("tried to respond to a non-queued request: {res:?}"),
@@ -121,12 +121,12 @@ impl State {
     self.send(notif.into())
   }
 
-  pub(crate) fn handle_request(&mut self, req: lsp_server::Request) {
+  pub(crate) fn handle_request(&mut self, req: Request) {
     log::debug!("got request: {req:?}");
     self.req_queue.incoming.register(req.id, ())
   }
 
-  pub(crate) fn handle_response(&mut self, res: lsp_server::Response) {
+  pub(crate) fn handle_response(&mut self, res: Response) {
     log::debug!("got response: {res:?}");
     match self.req_queue.outgoing.complete(res.id.clone()) {
       Some(()) => {}
@@ -134,7 +134,7 @@ impl State {
     }
   }
 
-  pub(crate) fn handle_notification(&mut self, notif: lsp_server::Notification) {
+  pub(crate) fn handle_notification(&mut self, notif: Notification) {
     log::debug!("got notification: {notif:?}");
     match self.handle_notification_(notif) {
       ControlFlow::Break(Ok(())) => {}
@@ -143,10 +143,7 @@ impl State {
     }
   }
 
-  fn handle_notification_(
-    &mut self,
-    mut n: lsp_server::Notification,
-  ) -> ControlFlow<Result<()>, Notification> {
+  fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
       self.publish_diagnostics();
     })?;
