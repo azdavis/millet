@@ -50,7 +50,7 @@ impl State {
   pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
     let file_system = paths::RealFileSystem::default();
     let mut root = root
-      .map(|url| canonical_path_buf(&file_system, url))
+      .map(|url| canonical_path_buf(&file_system, &url))
       .transpose();
     let mut ret = Self {
       root: root
@@ -305,7 +305,7 @@ fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
   }
 }
 
-fn canonical_path_buf<F>(fs: &F, url: Url) -> Result<paths::CanonicalPathBuf>
+fn canonical_path_buf<F>(fs: &F, url: &Url) -> Result<paths::CanonicalPathBuf>
 where
   F: paths::FileSystem,
 {
