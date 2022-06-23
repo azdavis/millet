@@ -75,17 +75,17 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Str
   }
 }
 
-fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: hir::StrExpIdx) {
+fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: hir::StrExpIdx) {
   let str_exp = match str_exp {
     Some(x) => x,
     None => return,
   };
   match &ars.str_exp[str_exp] {
     // sml_def(50)
-    hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, env, *str_dec),
+    hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, ac, *str_dec),
     // sml_def(51)
     hir::StrExp::Path(path) => match get_env(&bs.env, path.all_names()) {
-      Ok(got_env) => env.extend(got_env.clone()),
+      Ok(got_env) => ac.extend(got_env.clone()),
       Err(name) => st.err(str_exp, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
     // sml_def(52), sml_def(53)
@@ -108,7 +108,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
         to_extend = sig.env.clone();
         env_realize(&subst, &mut to_extend);
       }
-      env.extend(to_extend);
+      ac.extend(to_extend);
     }
     // sml_def(54)
     hir::StrExp::App(fun_name, arg_str_exp) => match bs.fun_env.get(fun_name) {
@@ -124,7 +124,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
-        env.extend(to_extend);
+        ac.extend(to_extend);
       }
       None => st.err(
         str_exp,
@@ -137,7 +137,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
       get_str_dec(st, bs, ars, &mut let_env, *str_dec);
       let mut bs = bs.clone();
       Arc::make_mut(&mut bs.env).extend(let_env);
-      get_str_exp(st, &bs, ars, env, *str_exp)
+      get_str_exp(st, &bs, ars, ac, *str_exp)
     }
   }
 }
@@ -146,7 +146,7 @@ pub(crate) fn get_str_dec(
   st: &mut St,
   bs: &Bs,
   ars: &hir::Arenas,
-  env: &mut Env,
+  ac: &mut Env,
   str_dec: hir::StrDecIdx,
 ) {
   let str_dec = match str_dec {
@@ -155,7 +155,7 @@ pub(crate) fn get_str_dec(
   };
   match &ars.str_dec[str_dec] {
     // sml_def(56)
-    hir::StrDec::Dec(dec) => dec::get(st, &bs.as_cx(), ars, env, *dec),
+    hir::StrDec::Dec(dec) => dec::get(st, &bs.as_cx(), ars, ac, *dec),
     // sml_def(57)
     hir::StrDec::Structure(str_binds) => {
       // sml_def(61)
@@ -167,7 +167,7 @@ pub(crate) fn get_str_dec(
           st.err(str_dec, e);
         }
       }
-      env.str_env.extend(str_env);
+      ac.str_env.extend(str_env);
     }
     // sml_def(58)
     hir::StrDec::Local(local_dec, in_dec) => {
@@ -175,7 +175,7 @@ pub(crate) fn get_str_dec(
       get_str_dec(st, bs, ars, &mut local_env, *local_dec);
       let mut bs = bs.clone();
       Arc::make_mut(&mut bs.env).extend(local_env);
-      get_str_dec(st, &bs, ars, env, *in_dec);
+      get_str_dec(st, &bs, ars, ac, *in_dec);
     }
     // sml_def(59), sml_def(60)
     hir::StrDec::Seq(str_decs) => {
@@ -184,21 +184,21 @@ pub(crate) fn get_str_dec(
         let mut one_env = Env::default();
         get_str_dec(st, &bs, ars, &mut one_env, str_dec);
         Arc::make_mut(&mut bs.env).extend(one_env.clone());
-        env.extend(one_env);
+        ac.extend(one_env);
       }
     }
     hir::StrDec::Sig(_) | hir::StrDec::Functor(_) => st.err(str_dec, ErrorKind::DecNotAllowedHere),
   }
 }
 
-fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: hir::SigExpIdx) {
+fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: hir::SigExpIdx) {
   let sig_exp = match sig_exp {
     Some(x) => x,
     None => return,
   };
   match &ars.sig_exp[sig_exp] {
     // sml_def(62)
-    hir::SigExp::Spec(spec) => get_spec(st, bs, ars, env, *spec),
+    hir::SigExp::Spec(spec) => get_spec(st, bs, ars, ac, *spec),
     // sml_def(63)
     hir::SigExp::Name(name) => match bs.sig_env.get(name) {
       Some(sig) => {
@@ -206,7 +206,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
         env_realize(&subst, &mut sig_env);
-        env.extend(sig_env);
+        ac.extend(sig_env);
       }
       None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
     },
@@ -235,7 +235,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, sig_exp: 
         }
         Err(e) => st.err(sig_exp, e),
       }
-      env.extend(inner_env);
+      ac.extend(inner_env);
     }
     // SML/NJ extension
     hir::SigExp::Where(_, _, _) => st.err(
@@ -273,7 +273,7 @@ fn env_to_sig(bs: &Bs, env: Env) -> Sig {
   Sig { ty_names, env }
 }
 
-fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::SpecIdx) {
+fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::SpecIdx) {
   let spec = match spec {
     Some(x) => x,
     None => return,
@@ -292,26 +292,26 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
           id_status: IdStatus::Val,
         };
         let name = &val_desc.name;
-        if let Some(e) = ins_check_name(&mut env.val_env, name.clone(), vi, Item::Val) {
+        if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
           st.err(spec, e);
         }
       }
     }
     // sml_def(69). TODO check does not admit equality
-    hir::Spec::Ty(ty_descs) => get_ty_desc(st, &mut env.ty_env, ty_descs, spec.into()),
+    hir::Spec::Ty(ty_descs) => get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into()),
     // sml_def(70). TODO check does admit equality
-    hir::Spec::EqTy(ty_descs) => get_ty_desc(st, &mut env.ty_env, ty_descs, spec.into()),
+    hir::Spec::EqTy(ty_descs) => get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into()),
     // sml_def(71)
     hir::Spec::Datatype(dat_desc) => {
       let dat_descs = std::slice::from_ref(dat_desc);
       let (ty_env, big_val_env) = dec::get_dat_binds(st, bs.as_cx(), ars, dat_descs, spec.into());
       for (name, val) in ty_env {
-        if let Some(e) = ins_no_dupe(&mut env.ty_env, name, val, Item::Ty) {
+        if let Some(e) = ins_no_dupe(&mut ac.ty_env, name, val, Item::Ty) {
           st.err(spec, e);
         }
       }
       for (name, val) in big_val_env {
-        if let Some(e) = ins_no_dupe(&mut env.val_env, name, val, Item::Val) {
+        if let Some(e) = ins_no_dupe(&mut ac.val_env, name, val, Item::Val) {
           st.err(spec, e);
         }
       }
@@ -319,12 +319,12 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
     // sml_def(72)
     hir::Spec::DatatypeCopy(name, path) => match get_ty_info(&bs.env, path) {
       Ok(ty_info) => {
-        let ins = ins_no_dupe(&mut env.ty_env, name.clone(), ty_info.clone(), Item::Ty);
+        let ins = ins_no_dupe(&mut ac.ty_env, name.clone(), ty_info.clone(), Item::Ty);
         if let Some(e) = ins {
           st.err(spec, e);
         }
         for (name, val_info) in ty_info.val_env.iter() {
-          let ins = ins_no_dupe(&mut env.val_env, name.clone(), val_info.clone(), Item::Val);
+          let ins = ins_no_dupe(&mut ac.val_env, name.clone(), val_info.clone(), Item::Val);
           if let Some(e) = ins {
             st.err(spec, e);
           }
@@ -346,7 +346,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
       };
-      if let Some(e) = ins_check_name(&mut env.val_env, ex_desc.name.clone(), vi, Item::Val) {
+      if let Some(e) = ins_check_name(&mut ac.val_env, ex_desc.name.clone(), vi, Item::Val) {
         st.err(spec, e);
       }
     }
@@ -355,12 +355,12 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
       let mut one_env = Env::default();
       get_sig_exp(st, bs, ars, &mut one_env, str_desc.sig_exp);
       let name = str_desc.name.clone();
-      if let Some(e) = ins_no_dupe(&mut env.str_env, name, one_env, Item::Struct) {
+      if let Some(e) = ins_no_dupe(&mut ac.str_env, name, one_env, Item::Struct) {
         st.err(spec, e);
       }
     }
     // sml_def(75)
-    hir::Spec::Include(sig_exp) => get_sig_exp(st, bs, ars, env, *sig_exp),
+    hir::Spec::Include(sig_exp) => get_sig_exp(st, bs, ars, ac, *sig_exp),
     // sml_def(78)
     hir::Spec::Sharing(inner, kind, paths) => {
       let mut inner_env = Env::default();
@@ -395,7 +395,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
           }
         }
       }
-      env.extend(inner_env);
+      ac.extend(inner_env);
     }
     // sml_def(76), sml_def(77)
     hir::Spec::Seq(specs) => {
@@ -404,7 +404,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, spec: hir::S
         let mut one_env = Env::default();
         get_spec(st, &bs, ars, &mut one_env, spec);
         Arc::make_mut(&mut bs.env).extend(one_env.clone());
-        env.extend(one_env);
+        ac.extend(one_env);
       }
     }
   }
