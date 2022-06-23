@@ -964,3 +964,27 @@ Again, the fix is usually to add a type annotation. Though, an alternative would
 (* ok *)
 fun addFooBar {foo, bar} = foo + bar
 ```
+
+## 4026
+
+Not all or pattern alternatives bound the same names.
+
+```sml
+(* error *)
+datatype t = Foo of int | Bar of int
+
+fun toInt (x : t) : int =
+  case x of
+    (Foo y | Bar _) => y
+```
+
+To fix, ensure all alternatives bind the same names. The types must also match.
+
+```sml
+(* ok *)
+datatype t = Foo of int | Bar of int
+
+fun toInt (x : t) : int =
+  case x of
+    (Foo y | Bar y) => y
+```

@@ -1,4 +1,5 @@
-//! We aim to not deviate from the Definition as SML/NJ sometimes [does][1].
+//! SML/NJ sometimes [deviates][1] from the Definition. In some of those cases, we deviate in the
+//! same/a similar way, and in other cases, we do not deviate.
 //!
 //! [1]: http://www.mlton.org/SMLNJDeviations
 
@@ -112,7 +113,6 @@ fn or_pat() {
     r#"
 datatype foo = Foo of int | Bar of int
 val (Foo x | Bar x) = Foo 13
-(** ^^^^^^^^^^^^^^^ unsupported language construct: or patterns *)
 "#,
   );
 }

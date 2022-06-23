@@ -53,6 +53,7 @@ impl Error {
       ErrorKind::InvalidRebindName(_) => 23,
       ErrorKind::WrongIdStatus(_) => 24,
       ErrorKind::UnresolvedRecordTy => 25,
+      ErrorKind::OrPatNotSameBindings(_) => 26,
     }
   }
 }
@@ -84,6 +85,7 @@ pub(crate) enum ErrorKind {
   InvalidRebindName(hir::Name),
   WrongIdStatus(hir::Name),
   UnresolvedRecordTy,
+  OrPatNotSameBindings(hir::Name),
 }
 
 #[derive(Debug)]
@@ -175,6 +177,12 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
       ErrorKind::UnresolvedRecordTy => {
         f.write_str("cannot resolve record type containing `...` due to lack of context")
+      }
+      ErrorKind::OrPatNotSameBindings(name) => {
+        write!(
+          f,
+          "{name} was bound in one or pattern alternative, but not in another"
+        )
       }
     }
   }
@@ -325,7 +333,19 @@ impl<'a> fmt::Display for PatDisplay<'a> {
           }
         }
       },
-      RawPat::Or(_) => unreachable!(),
+      RawPat::Or(pats) => {
+        f.write_str("(")?;
+        sep_seq(
+          f,
+          " | ",
+          pats.iter().map(|pat| PatDisplay {
+            pat,
+            syms: self.syms,
+            prec: PatPrec::Min,
+          }),
+        )?;
+        f.write_str(")")?;
+      }
     }
     Ok(())
   }
@@ -339,7 +359,10 @@ enum ListPatLen {
 fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
   let (con, args) = match &pat.raw {
     RawPat::Con(a, b) => (a, b),
-    RawPat::Or(_) => unreachable!(),
+    RawPat::Or(_) => {
+      ac.push(pat);
+      return ListPatLen::Unknown;
+    }
   };
   let name = match con {
     Con::Any => {

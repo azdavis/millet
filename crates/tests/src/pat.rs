@@ -1,3 +1,5 @@
+mod or;
+
 use crate::check::check;
 
 #[test]
@@ -91,19 +93,6 @@ val g = fn
 val _: int = f A + g (B (1, 2))
 infix B
 val _: int = g A + f (2 B 3)
-"#,
-  );
-}
-
-#[test]
-fn or() {
-  check(
-    r#"
-val _ =
-  case 123 of
-    1 | 2 => false
-(** ^^^^^ unsupported language construct: or patterns *)
-  | _ => true
 "#,
   );
 }

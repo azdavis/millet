@@ -1,4 +1,5 @@
 use crate::error::{ErrorKind, Item};
+use crate::generalizes::eq_ty_scheme;
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
@@ -137,9 +138,35 @@ pub(crate) fn get(
       insert_name(st, ve, name.clone(), ty.clone(), pat_);
       (pm_pat, ty)
     }
-    hir::Pat::Or(_) => {
-      st.err(pat_, ErrorKind::Unsupported("or patterns"));
-      any(st, pat)
+    hir::Pat::Or(or_pat) => {
+      let mut fst_ve = ValEnv::default();
+      let (fst_pm_pat, mut ty) = get(st, cx, ars, &mut fst_ve, or_pat.first);
+      let mut pm_pats = vec![fst_pm_pat];
+      for &pat in or_pat.rest.iter() {
+        let mut rest_ve = ValEnv::default();
+        let (rest_pm_pat, rest_ty) = get(st, cx, ars, &mut rest_ve, pat);
+        pm_pats.push(rest_pm_pat);
+        let idx = hir::Idx::from(pat.unwrap_or(pat_));
+        unify(st, ty.clone(), rest_ty, idx);
+        apply(st.subst(), &mut ty);
+        for (name, fst_val_info) in fst_ve.iter() {
+          let rest_val_info = match rest_ve.remove(name) {
+            Some(x) => x,
+            None => {
+              st.err(idx, ErrorKind::OrPatNotSameBindings(name.clone()));
+              continue;
+            }
+          };
+          assert!(fst_val_info.id_status.same_kind_as(&IdStatus::Val));
+          assert!(rest_val_info.id_status.same_kind_as(&IdStatus::Val));
+          eq_ty_scheme(st, &fst_val_info.ty_scheme, &rest_val_info.ty_scheme, idx);
+        }
+        if let Some(name) = rest_ve.into_keys().next() {
+          st.err(idx, ErrorKind::OrPatNotSameBindings(name));
+        }
+      }
+      ve.extend(fst_ve);
+      (Pat::or(pm_pats, pat), ty)
     }
   }
 }
