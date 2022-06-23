@@ -142,6 +142,36 @@ end
 }
 
 #[test]
+fn signature_in_local() {
+  check(
+    r#"
+local
+    signature SIG = sig val y : int end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ declaration not allowed here *)
+in
+  structure S4 : SIG = struct val y = 4 end
+  structure S7 : SIG = struct val y = 7 end
+end
+"#,
+  );
+}
+
+#[test]
+fn functor_in_local() {
+  check(
+    r#"
+local
+    functor Func(val x : int) = struct val y = x + 2 end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ declaration not allowed here *)
+in
+  structure S4 = Func(val x = 4)
+  structure S7 = Func(val x = 7)
+end
+"#,
+  );
+}
+
+#[test]
 fn dupe_via_includes() {
   // should error
   fail(
