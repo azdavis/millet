@@ -100,13 +100,6 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
         ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
       )
     }
-    ast::Pat::OrPat(pat) => {
-      cx.err(
-        pat.syntax().text_range(),
-        ErrorKind::Unsupported("or patterns"),
-      );
-      return None;
-    }
     ast::Pat::AsPat(pat) => {
       let name = hir::Name::new(pat.name_star_eq()?.token.text());
       let ty = pat.ty_annotation().map(|x| ty::get(cx, x.ty()));
@@ -119,6 +112,13 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
         p
       });
       hir::Pat::As(name, inner)
+    }
+    ast::Pat::OrPat(pat) => {
+      cx.err(
+        pat.syntax().text_range(),
+        ErrorKind::Unsupported("or patterns"),
+      );
+      return None;
     }
   };
   cx.pat(ret, ptr)
