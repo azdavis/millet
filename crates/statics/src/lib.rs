@@ -28,7 +28,7 @@ pub use st::{Mode, Statics};
 pub use types::{Bs, Syms};
 
 /// Does the checks.
-pub fn get(statics: &mut Statics, mode: Mode, arenas: &hir::Arenas, top_decs: &[hir::TopDecIdx]) {
+pub fn get(statics: &mut Statics, mode: Mode, arenas: &hir::Arenas, top_decs: &[hir::StrDecIdx]) {
   let mut st = st::St::new(mode, std::mem::take(&mut statics.syms));
   for &top_dec in top_decs {
     top_dec::get(&mut st, &mut statics.bs, arenas, top_dec);

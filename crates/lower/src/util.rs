@@ -11,7 +11,6 @@ type AstTopDec = ast::StrDecOne;
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
 pub struct Ptrs {
-  top_dec: BiMap<AstTopDec, hir::TopDec>,
   str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,
   str_dec: BiMap<ast::StrDec, hir::StrDec>,
   str_dec_in_top_dec: BiMap<AstTopDec, hir::StrDec>,
@@ -59,7 +58,6 @@ impl Ptrs {
         try_get_hir!(idx, self, sig_exp, sig_exp_in_top_dec, sig_exp_in_spec_one)
       }
       hir::Idx::Spec(idx) => try_get_hir!(idx, self, spec, spec_one, spec_with_tail),
-      hir::Idx::TopDec(idx) => try_get_hir!(idx, self, top_dec),
     }
     None
   }
@@ -132,9 +130,8 @@ impl Error {
       ErrorKind::InvalidRealLit(_) => 5,
       ErrorKind::InvalidNumLab(_) => 6,
       ErrorKind::ZeroNumLab => 7,
-      ErrorKind::MustBeTopLevel => 8,
-      ErrorKind::MultipleRestPatRows => 9,
-      ErrorKind::RestPatRowNotLast => 10,
+      ErrorKind::MultipleRestPatRows => 8,
+      ErrorKind::RestPatRowNotLast => 9,
     }
   }
 }
@@ -148,7 +145,6 @@ pub(crate) enum ErrorKind {
   InvalidRealLit(std::num::ParseFloatError),
   InvalidNumLab(std::num::ParseIntError),
   ZeroNumLab,
-  MustBeTopLevel,
   MultipleRestPatRows,
   RestPatRowNotLast,
 }
@@ -170,7 +166,6 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
-      ErrorKind::MustBeTopLevel => f.write_str("declaration must be at the top level"),
       ErrorKind::MultipleRestPatRows => f.write_str("cannot have multiple `...`"),
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
     }
@@ -187,7 +182,7 @@ pub struct Lower {
   /// The pointers.
   pub ptrs: Ptrs,
   /// The top-level declarations, in order.
-  pub top_decs: Vec<hir::TopDecIdx>,
+  pub top_decs: Vec<hir::StrDecIdx>,
 }
 
 #[derive(Debug, Default)]
@@ -213,19 +208,13 @@ impl Cx {
     self.errors.push(Error { range, kind })
   }
 
-  pub(crate) fn finish(self, top_decs: Vec<hir::TopDecIdx>) -> Lower {
+  pub(crate) fn finish(self, top_decs: Vec<hir::StrDecIdx>) -> Lower {
     Lower {
       errors: self.errors,
       arenas: self.arenas,
       ptrs: self.ptrs,
       top_decs,
     }
-  }
-
-  pub(crate) fn top_dec(&mut self, val: hir::TopDec, ptr: AstPtr<AstTopDec>) -> hir::TopDecIdx {
-    let idx = self.arenas.top_dec.alloc(val);
-    self.ptrs.top_dec.insert(idx, ptr);
-    idx
   }
 
   pub(crate) fn str_dec_one(

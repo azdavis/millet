@@ -1,16 +1,42 @@
 use crate::common::{get_name, get_path};
-use crate::util::{Cx, ErrorKind};
+use crate::util::Cx;
 use crate::{dec, ty};
-use syntax::ast::{self, AstNode as _, AstPtr};
+use syntax::ast::{self, AstPtr};
 
-pub(crate) fn get(cx: &mut Cx, top_dec: ast::StrDecOne) -> hir::TopDecIdx {
-  let ptr = AstPtr::new(&top_dec);
-  let ret = match top_dec {
-    ast::StrDecOne::DecStrDec(_)
-    | ast::StrDecOne::StructureStrDec(_)
-    | ast::StrDecOne::LocalStrDec(_) => hir::TopDec::Str(get_str_dec_one(cx, top_dec)),
-    ast::StrDecOne::SigDec(top_dec) => hir::TopDec::Sig(
-      top_dec
+fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
+  let str_dec = str_dec?;
+  let mut str_decs: Vec<_> = str_dec
+    .str_dec_in_seqs()
+    .map(|x| get(cx, x.str_dec_one()?))
+    .collect();
+  if str_decs.len() == 1 {
+    str_decs.pop().unwrap()
+  } else {
+    cx.str_dec_seq(str_decs, AstPtr::new(&str_dec))
+  }
+}
+
+pub(crate) fn get(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
+  let ptr = AstPtr::new(&str_dec);
+  let res = match str_dec {
+    ast::StrDecOne::DecStrDec(str_dec) => hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?)),
+    ast::StrDecOne::StructureStrDec(str_dec) => hir::StrDec::Structure(
+      str_dec
+        .str_binds()
+        .filter_map(|str_bind| {
+          Some(hir::StrBind {
+            name: get_name(str_bind.name())?,
+            str_exp: with_ascription_tail(cx, str_bind.str_exp(), str_bind.ascription_tail()),
+          })
+        })
+        .collect(),
+    ),
+    ast::StrDecOne::LocalStrDec(str_dec) => hir::StrDec::Local(
+      get_str_dec(cx, str_dec.local_dec()),
+      get_str_dec(cx, str_dec.in_dec()),
+    ),
+    ast::StrDecOne::SigDec(str_dec) => hir::StrDec::Sig(
+      str_dec
         .sig_binds()
         .filter_map(|sig_bind| {
           Some(hir::SigBind {
@@ -20,8 +46,8 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::StrDecOne) -> hir::TopDecIdx {
         })
         .collect(),
     ),
-    ast::StrDecOne::FunctorDec(top_dec) => hir::TopDec::Functor(
-      top_dec
+    ast::StrDecOne::FunctorDec(str_dec) => hir::StrDec::Functor(
+      str_dec
         .functor_binds()
         .filter_map(|fun_bind| {
           let functor_name = get_name(fun_bind.functor_name())?;
@@ -52,50 +78,6 @@ pub(crate) fn get(cx: &mut Cx, top_dec: ast::StrDecOne) -> hir::TopDecIdx {
         })
         .collect(),
     ),
-  };
-  cx.top_dec(ret, ptr)
-}
-
-fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
-  let str_dec = str_dec?;
-  let mut str_decs: Vec<_> = str_dec
-    .str_dec_in_seqs()
-    .map(|x| get_str_dec_one(cx, x.str_dec_one()?))
-    .collect();
-  if str_decs.len() == 1 {
-    str_decs.pop().unwrap()
-  } else {
-    cx.str_dec_seq(str_decs, AstPtr::new(&str_dec))
-  }
-}
-
-fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
-  let ptr = AstPtr::new(&str_dec);
-  let res = match str_dec {
-    ast::StrDecOne::DecStrDec(str_dec) => hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?)),
-    ast::StrDecOne::StructureStrDec(str_dec) => hir::StrDec::Structure(
-      str_dec
-        .str_binds()
-        .filter_map(|str_bind| {
-          Some(hir::StrBind {
-            name: get_name(str_bind.name())?,
-            str_exp: with_ascription_tail(cx, str_bind.str_exp(), str_bind.ascription_tail()),
-          })
-        })
-        .collect(),
-    ),
-    ast::StrDecOne::LocalStrDec(str_dec) => hir::StrDec::Local(
-      get_str_dec(cx, str_dec.local_dec()),
-      get_str_dec(cx, str_dec.in_dec()),
-    ),
-    ast::StrDecOne::SigDec(dec) => {
-      cx.err(dec.syntax().text_range(), ErrorKind::MustBeTopLevel);
-      return None;
-    }
-    ast::StrDecOne::FunctorDec(dec) => {
-      cx.err(dec.syntax().text_range(), ErrorKind::MustBeTopLevel);
-      return None;
-    }
   };
   cx.str_dec_one(res, ptr)
 }

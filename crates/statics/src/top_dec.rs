@@ -10,16 +10,22 @@ use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 use std::sync::Arc;
 
-pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
-  match &ars.top_dec[top_dec] {
-    // sml_def(87)
-    hir::TopDec::Str(str_dec) => {
+pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::StrDecIdx) {
+  let top_dec = match top_dec {
+    Some(x) => x,
+    None => return,
+  };
+  match &ars.str_dec[top_dec] {
+    hir::StrDec::Dec(..)
+    | hir::StrDec::Structure(..)
+    | hir::StrDec::Local(..)
+    | hir::StrDec::Seq(..) => {
       let mut env = Env::default();
-      get_str_dec(st, bs, ars, &mut env, *str_dec);
+      get_str_dec(st, bs, ars, &mut env, Some(top_dec));
       Arc::make_mut(&mut bs.env).extend(env);
     }
     // sml_def(66), sml_def(88)
-    hir::TopDec::Sig(sig_binds) => {
+    hir::StrDec::Sig(sig_binds) => {
       let mut sig_env = SigEnv::default();
       // sml_def(67)
       for sig_bind in sig_binds {
@@ -33,7 +39,7 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Top
       bs.sig_env.extend(sig_env);
     }
     // sml_def(85), sml_def(89)
-    hir::TopDec::Functor(fun_binds) => {
+    hir::StrDec::Functor(fun_binds) => {
       let mut fun_env = FunEnv::default();
       // sml_def(86)
       for fun_bind in fun_binds {
@@ -136,7 +142,13 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_exp: 
   }
 }
 
-fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_dec: hir::StrDecIdx) {
+pub(crate) fn get_str_dec(
+  st: &mut St,
+  bs: &Bs,
+  ars: &hir::Arenas,
+  env: &mut Env,
+  str_dec: hir::StrDecIdx,
+) {
   let str_dec = match str_dec {
     Some(x) => x,
     None => return,
@@ -175,6 +187,7 @@ fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, env: &mut Env, str_dec: 
         env.extend(one_env);
       }
     }
+    hir::StrDec::Sig(_) | hir::StrDec::Functor(_) => st.err(str_dec, ErrorKind::DecNotAllowedHere),
   }
 }
 

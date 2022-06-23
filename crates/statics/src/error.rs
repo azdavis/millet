@@ -54,6 +54,7 @@ impl Error {
       ErrorKind::WrongIdStatus(_) => 24,
       ErrorKind::UnresolvedRecordTy => 25,
       ErrorKind::OrPatNotSameBindings(_) => 26,
+      ErrorKind::DecNotAllowedHere => 27,
     }
   }
 }
@@ -86,6 +87,7 @@ pub(crate) enum ErrorKind {
   WrongIdStatus(hir::Name),
   UnresolvedRecordTy,
   OrPatNotSameBindings(hir::Name),
+  DecNotAllowedHere,
 }
 
 #[derive(Debug)]
@@ -184,6 +186,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
           "{name} was bound in one or pattern alternative, but not in another"
         )
       }
+      ErrorKind::DecNotAllowedHere => f.write_str("declaration not allowed here"),
     }
   }
 }

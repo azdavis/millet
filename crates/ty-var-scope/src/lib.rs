@@ -38,10 +38,10 @@ use fast_hash::{FxHashMap, FxHashSet};
 /// It is somewhat troublesome to try to actually add the type variables as we traverse, since then
 /// the dec arena needs to be mutable, and that causes all sorts of unhappiness since we need to
 /// traverse it. Traversing and mutating a thing at the same time is not easy.
-pub fn get(ars: &mut hir::Arenas, top_decs: &[hir::TopDecIdx]) {
+pub fn get(ars: &mut hir::Arenas, top_decs: &[hir::StrDecIdx]) {
   let mut cx = Cx::default();
   for &top_dec in top_decs {
-    get_top_dec(&mut cx, ars, top_dec);
+    get_str_dec(&mut cx, ars, top_dec);
   }
   for (dec, implicit_ty_vars) in cx.val_dec {
     match &mut ars.dec[dec] {
@@ -66,23 +66,6 @@ struct Cx {
 
 type TyVarSet = FxHashSet<hir::TyVar>;
 
-fn get_top_dec(cx: &mut Cx, ars: &hir::Arenas, top_dec: hir::TopDecIdx) {
-  match &ars.top_dec[top_dec] {
-    hir::TopDec::Str(str_dec) => get_str_dec(cx, ars, *str_dec),
-    hir::TopDec::Sig(sig_binds) => {
-      for sig_bind in sig_binds {
-        get_sig_exp(cx, ars, sig_bind.sig_exp);
-      }
-    }
-    hir::TopDec::Functor(fun_binds) => {
-      for fun_bind in fun_binds {
-        get_sig_exp(cx, ars, fun_bind.param_sig);
-        get_str_exp(cx, ars, fun_bind.body);
-      }
-    }
-  }
-}
-
 fn get_str_dec(cx: &mut Cx, ars: &hir::Arenas, str_dec: hir::StrDecIdx) {
   let str_dec = match str_dec {
     Some(x) => x,
@@ -102,6 +85,17 @@ fn get_str_dec(cx: &mut Cx, ars: &hir::Arenas, str_dec: hir::StrDecIdx) {
     hir::StrDec::Seq(str_decs) => {
       for &str_dec in str_decs {
         get_str_dec(cx, ars, str_dec);
+      }
+    }
+    hir::StrDec::Sig(sig_binds) => {
+      for sig_bind in sig_binds {
+        get_sig_exp(cx, ars, sig_bind.sig_exp);
+      }
+    }
+    hir::StrDec::Functor(fun_binds) => {
+      for fun_bind in fun_binds {
+        get_sig_exp(cx, ars, fun_bind.param_sig);
+        get_str_exp(cx, ars, fun_bind.body);
       }
     }
   }

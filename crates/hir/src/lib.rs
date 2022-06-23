@@ -12,7 +12,6 @@ pub use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
 pub struct Arenas {
-  pub top_dec: TopDecArena,
   pub str_dec: StrDecArena,
   pub str_exp: StrExpArena,
   pub sig_exp: SigExpArena,
@@ -41,21 +40,11 @@ macro_rules! mk_idx {
   };
 }
 
-mk_idx! { TopDec StrDec StrExp SigExp Spec Exp Dec Pat Ty }
+mk_idx! { StrDec StrExp SigExp Spec Exp Dec Pat Ty }
 
 pub type OptIdx<T> = Option<la_arena::Idx<T>>;
 
 // modules //
-
-pub type TopDecIdx = la_arena::Idx<TopDec>;
-pub type TopDecArena = Arena<TopDec>;
-
-#[derive(Debug)]
-pub enum TopDec {
-  Str(StrDecIdx),
-  Sig(Vec<SigBind>),
-  Functor(Vec<FunctorBind>),
-}
 
 #[derive(Debug)]
 pub struct SigBind {
@@ -74,12 +63,17 @@ pub struct FunctorBind {
 pub type StrDecIdx = OptIdx<StrDec>;
 pub type StrDecArena = Arena<StrDec>;
 
+/// sml_def(87) is handled by not distinguishing between top decs and str decs.
 #[derive(Debug)]
 pub enum StrDec {
   Dec(DecIdx),
   Structure(Vec<StrBind>),
   Local(StrDecIdx, StrDecIdx),
   Seq(Vec<StrDecIdx>),
+  /// technically a top dec in the Definition.
+  Sig(Vec<SigBind>),
+  /// technically a top dec in the Definition.
+  Functor(Vec<FunctorBind>),
 }
 
 #[derive(Debug)]

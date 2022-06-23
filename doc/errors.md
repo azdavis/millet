@@ -408,27 +408,6 @@ To fix, do not use zero as a numeric label.
 
 ## 3008
 
-A `signature` or `functor` declaration occurred not at the top level.
-
-```sml
-(* error *)
-structure Str = struct
-  signature SIG = sig end
-  functor Func() = struct end
-end
-```
-
-To fix, declare the signature or functor at the top level.
-
-```sml
-(* ok *)
-structure Str = struct end
-signature SIG = sig end
-functor Func() = struct end
-```
-
-## 3009
-
 There were multiple `...` rest pattern rows.
 
 ```sml
@@ -443,7 +422,7 @@ To fix, only provide one such row.
 val {a, ...} = {a = 1, b = "hi"}
 ```
 
-## 3010
+## 3009
 
 There was a non-`...` pattern row after a `...` pattern row.
 
@@ -989,3 +968,24 @@ fun toInt (x : t) : int =
 ```
 
 Note that or patterns are not permitted by the Definition, though they are a common extension, implemented by SML/NJ and MLton.
+
+## 4027
+
+A `signature` or `functor` declaration occurred in a disallowed position, like inside `struct ... end`.
+
+```sml
+(* error *)
+structure Str = struct
+  signature SIG = sig end
+  functor Func() = struct end
+end
+```
+
+To fix, declare the signature or functor at the top level.
+
+```sml
+(* ok *)
+structure Str = struct end
+signature SIG = sig end
+functor Func() = struct end
+```
