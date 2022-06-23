@@ -197,7 +197,10 @@ impl State {
       None => return false,
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input = match analysis::get_input(&self.file_system, &mut root.path) {
+    let input = elapsed::time("get_input", || {
+      analysis::get_input(&self.file_system, &mut root.path)
+    });
+    let input = match input {
       Ok(x) => x,
       Err(e) => {
         log::error!("could not get input: {e}");
@@ -206,7 +209,8 @@ impl State {
         return false;
       }
     };
-    for (path_id, errors) in self.analysis.get_many(&input) {
+    let got_many = elapsed::time("get_many", || self.analysis.get_many(&input));
+    for (path_id, errors) in got_many {
       let pos_db = match input.get_source(path_id) {
         Some(s) => text_pos::PositionDb::new(s),
         None => {

@@ -16,4 +16,5 @@ simple_logger = { version = "2", features = ["stderr"] }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 analysis = { path = "../analysis" }
 paths = { path = "../paths" }
+elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }

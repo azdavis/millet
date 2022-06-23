@@ -208,6 +208,7 @@ dependencies = [
  "analysis",
  "anyhow",
  "crossbeam-channel",
+ "elapsed",
  "fast-hash",
  "log",
  "lsp-server",
