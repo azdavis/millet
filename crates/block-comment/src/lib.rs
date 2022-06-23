@@ -33,7 +33,7 @@ pub fn get(idx: &mut usize, b: u8, bs: &[u8]) -> Result<Option<Consumed>, Unclos
         }
         (Some(_), Some(_)) => *idx += 1,
         (_, None) => return Err(UnclosedError),
-        (None, Some(_)) => unreachable!(),
+        (None, Some(_)) => unreachable!("cannot have a byte after EOF"),
       }
     }
   }

@@ -46,13 +46,13 @@ pub fn get(ars: &mut hir::Arenas, top_decs: &[hir::TopDecIdx]) {
   for (dec, implicit_ty_vars) in cx.val_dec {
     match &mut ars.dec[dec] {
       hir::Dec::Val(ty_vars, _) => ty_vars.extend(implicit_ty_vars),
-      _ => unreachable!(),
+      _ => unreachable!("only val may implicitly bind ty vars"),
     }
   }
   for (spec, implicit_ty_vars) in cx.val_spec {
     match &mut ars.spec[spec] {
       hir::Spec::Val(ty_vars, _) => ty_vars.extend(implicit_ty_vars),
-      _ => unreachable!(),
+      _ => unreachable!("only val may implicitly bind ty vars"),
     }
   }
 }
@@ -154,7 +154,7 @@ fn get_spec(cx: &mut Cx, ars: &hir::Arenas, spec: hir::SpecIdx) {
       }
       let mut to_bind: Vec<_> = ac.into_iter().collect();
       to_bind.sort_unstable();
-      cx.val_spec.insert(spec, to_bind);
+      assert!(cx.val_spec.insert(spec, to_bind).is_none());
     }
     hir::Spec::Str(str_desc) => get_sig_exp(cx, ars, str_desc.sig_exp),
     hir::Spec::Include(sig_exp) => get_sig_exp(cx, ars, *sig_exp),
@@ -189,7 +189,7 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
       }
       let mut to_bind: Vec<_> = ac.difference(&scope).cloned().collect();
       to_bind.sort_unstable();
-      cx.val_dec.insert(dec, to_bind);
+      assert!(cx.val_dec.insert(dec, to_bind).is_none());
     }
     hir::Dec::Abstype(_, dec) => get_dec(cx, ars, scope, *dec),
     hir::Dec::Local(local_dec, in_dec) => {

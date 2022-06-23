@@ -58,7 +58,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       // messages.
       match func_ty {
         Ty::None => Ty::None,
-        Ty::BoundVar(_) => unreachable!(),
+        Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),
         Ty::MetaVar(_) => {
           let mut ret = Ty::MetaVar(st.gen_meta_var());
           let got = Ty::fun(arg_ty, ret.clone());

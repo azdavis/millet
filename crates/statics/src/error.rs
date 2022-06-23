@@ -338,7 +338,7 @@ fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
       return ListPatLen::Unknown;
     }
     Con::Variant(_, VariantName::Name(name)) => name.as_str(),
-    _ => unreachable!(),
+    _ => unreachable!("only Any and Variant cons can have list type"),
   };
   match name {
     "nil" => {
@@ -346,20 +346,23 @@ fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
       ListPatLen::Known
     }
     "::" => {
-      assert_eq!(args.len(), 1);
+      assert_eq!(args.len(), 1, ":: has an argument");
       let (con, args) = match &args.first().unwrap().raw {
         RawPat::Con(a, b) => (a, b),
-        RawPat::Or(_) => unreachable!(),
+        RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
       };
-      assert!(matches!(con, Con::Record(_)));
+      assert!(
+        matches!(con, Con::Record(_)),
+        "the argument to :: is a tuple (aka record)"
+      );
       let (hd, tl) = match &args[..] {
         [a, b] => (a, b),
-        _ => unreachable!(),
+        _ => unreachable!("the argument to :: is a 2-tuple"),
       };
       ac.push(hd);
       list_pat(ac, tl)
     }
-    _ => unreachable!(),
+    _ => unreachable!("the list constructors are nil and ::"),
   }
 }
 

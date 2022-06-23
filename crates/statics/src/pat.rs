@@ -79,7 +79,7 @@ pub(crate) fn get(
         Ty::Fn(param_ty, mut res_ty) => {
           let sym = match res_ty.as_ref() {
             Ty::Con(_, x) => *x,
-            _ => unreachable!(),
+            _ => unreachable!("a fn ctor returns the type it constructs, which will be a Con"),
           };
           let arg_pat = match arg {
             None => {
@@ -94,7 +94,7 @@ pub(crate) fn get(
           };
           (sym, vec![arg_pat], *res_ty)
         }
-        _ => unreachable!(),
+        _ => unreachable!("a ctor is either the type it constructs or a function returning that"),
       };
       let pat = Pat::con(Con::Variant(sym, variant_name), args, pat);
       (pat, ty)

@@ -74,7 +74,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         match should_break_exp(ExpPrec::Andalso, min_prec) {
           ShouldBreak::Yes => break,
           ShouldBreak::No => {}
-          ShouldBreak::Error => unreachable!(),
+          ShouldBreak::Error => unreachable!("not an infix op"),
         }
         let en = p.precede(ex);
         p.bump();
@@ -84,7 +84,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         match should_break_exp(ExpPrec::Orelse, min_prec) {
           ShouldBreak::Yes => break,
           ShouldBreak::No => {}
-          ShouldBreak::Error => unreachable!(),
+          ShouldBreak::Error => unreachable!("not an infix op"),
         }
         let en = p.precede(ex);
         p.bump();
@@ -183,7 +183,7 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
   let (wrap, overall) = match kind {
     SK::Semicolon => (SK::ExpInSeq, SK::SeqExp),
     SK::Comma => (SK::ExpArg, SK::TupleExp),
-    _ => unreachable!(),
+    _ => unreachable!("just checked at either ; or , above"),
   };
   p.exit(en, wrap);
   loop {
@@ -240,6 +240,6 @@ fn should_break_exp(prec: ExpPrec, min_prec: ExpPrec) -> ShouldBreak {
     (_, ExpPrec::Infix(_))
     | (ExpPrec::Andalso, ExpPrec::Andalso)
     | (ExpPrec::Orelse, ExpPrec::Orelse | ExpPrec::Andalso) => ShouldBreak::Yes,
-    (ExpPrec::Min, _) => unreachable!(),
+    (ExpPrec::Min, _) => unreachable!("Min is only ever the starting prec, not a new prec"),
   }
 }

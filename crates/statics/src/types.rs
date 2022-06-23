@@ -719,7 +719,7 @@ impl<'a> Generalizer<'a> {
   fn go(&mut self, ty: &mut Ty) {
     match ty {
       Ty::None => {}
-      Ty::BoundVar(_) => unreachable!(),
+      Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),
       Ty::MetaVar(mv) => match self.subst.get(mv) {
         None => handle_bv(
           self.meta.get_mut(mv),
