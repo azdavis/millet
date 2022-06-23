@@ -118,7 +118,7 @@ val (Foo x | Bar x) = Foo 13
 }
 
 #[test]
-fn sig_not_top_level() {
+fn signature_in_struct_end() {
   check(
     r#"
 structure A = struct
@@ -130,7 +130,7 @@ end
 }
 
 #[test]
-fn functor_not_top_level() {
+fn functor_in_struct_end() {
   check(
     r#"
 structure A = struct
