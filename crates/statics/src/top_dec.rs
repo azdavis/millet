@@ -246,23 +246,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, sig_exp.into());
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
       assert_ty_has_no_record_meta_vars(generalize(st.subst(), fixed, &mut ty_scheme));
-      match get_ty_info(&inner_env, path) {
-        Ok(ty_info) => {
-          let want_len = ty_info.ty_scheme.bound_vars.len();
-          if want_len == ty_vars.len() {
-            match &ty_info.ty_scheme.ty {
-              Ty::None => {}
-              // TODO side condition for sym not in T of B?
-              Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), &mut inner_env),
-              // TODO is this reachable?
-              t => log::error!("reached an unexpected case for `where`: {t:?}"),
-            }
-          } else {
-            st.err(sig_exp, ErrorKind::WrongNumTyArgs(want_len, ty_vars.len()));
-          }
-        }
-        Err(e) => st.err(sig_exp, e),
-      }
+      get_where_type(st, &mut inner_env, ty_vars, path, ty_scheme, sig_exp.into());
       ac.extend(inner_env);
     }
     // SML/NJ extension
@@ -270,6 +254,33 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
       sig_exp,
       ErrorKind::Unsupported("`where` with structure path"),
     ),
+  }
+}
+
+fn get_where_type(
+  st: &mut St,
+  inner_env: &mut Env,
+  ty_vars: &[hir::TyVar],
+  path: &hir::Path,
+  ty_scheme: TyScheme,
+  idx: hir::Idx,
+) {
+  match get_ty_info(inner_env, path) {
+    Ok(ty_info) => {
+      let want_len = ty_info.ty_scheme.bound_vars.len();
+      if want_len == ty_vars.len() {
+        match &ty_info.ty_scheme.ty {
+          Ty::None => {}
+          // TODO side condition for sym not in T of B?
+          Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), inner_env),
+          // TODO is this reachable?
+          t => log::error!("reached an unexpected case for `where`: {t:?}"),
+        }
+      } else {
+        st.err(idx, ErrorKind::WrongNumTyArgs(want_len, ty_vars.len()));
+      }
+    }
+    Err(e) => st.err(idx, e),
   }
 }
 
