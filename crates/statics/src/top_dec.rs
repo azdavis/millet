@@ -250,10 +250,39 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
       ac.extend(inner_env);
     }
     // SML/NJ extension
-    hir::SigExp::Where(_, _, _) => st.err(
-      sig_exp,
-      ErrorKind::Unsupported("`where` with structure path"),
-    ),
+    hir::SigExp::Where(inner, lhs, rhs) => {
+      let mut inner_env = Env::default();
+      get_sig_exp(st, bs, ars, &mut inner_env, *inner);
+      let lhs_ty_cons = match get_path_ty_cons(&inner_env, lhs) {
+        Ok(x) => x,
+        Err(e) => {
+          st.err(sig_exp, e);
+          return;
+        }
+      };
+      let rhs_ty_cons = match get_path_ty_cons(&bs.env, rhs) {
+        Ok(x) => x,
+        Err(e) => {
+          st.err(sig_exp, e);
+          return;
+        }
+      };
+      for ty_con in lhs_ty_cons {
+        if !rhs_ty_cons.contains(&ty_con) {
+          continue;
+        }
+        let lhs = join_paths(lhs, &ty_con);
+        let rhs = join_paths(rhs, &ty_con);
+        match get_ty_info(&bs.env, &rhs) {
+          Ok(ty_info) => {
+            let ty_scheme = ty_info.ty_scheme.clone();
+            get_where_type(st, &mut inner_env, &[], &lhs, ty_scheme, sig_exp.into());
+          }
+          Err(e) => st.err(sig_exp, e),
+        }
+      }
+      ac.extend(inner_env);
+    }
   }
 }
 

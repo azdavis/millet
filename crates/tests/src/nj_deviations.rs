@@ -268,7 +268,6 @@ fn where_structure_1() {
     r#"
 structure S = struct type t = int end
 signature SIG = sig structure T : sig type t end end where T = S
-(**             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported language construct: `where` with structure path *)
 "#,
   );
 }
@@ -281,7 +280,6 @@ signature FOO = sig type t end
 signature BAR = sig structure Foo : FOO end
 signature QUZ = sig structure Foo : FOO end
 functor F (Bar : BAR) :> QUZ where Foo = Bar.Foo = struct structure Foo = Bar.Foo end
-(**                      ^^^^^^^^^^^^^^^^^^^^^^^ unsupported language construct: `where` with structure path *)
 "#,
   );
 }
