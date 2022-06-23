@@ -75,6 +75,69 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Str
   }
 }
 
+enum StrDecAc<'a> {
+  Env(&'a mut Env),
+  Bs(&'a mut Bs),
+}
+
+impl StrDecAc<'_> {
+  fn as_env(&mut self) -> &mut Env {
+    match self {
+      StrDecAc::Env(env) => env,
+      StrDecAc::Bs(bs) => Arc::make_mut(&mut bs.env),
+    }
+  }
+}
+
+fn get_str_dec(
+  st: &mut St,
+  bs: &Bs,
+  ars: &hir::Arenas,
+  mut ac: StrDecAc<'_>,
+  str_dec: hir::StrDecIdx,
+) {
+  let str_dec = match str_dec {
+    Some(x) => x,
+    None => return,
+  };
+  match &ars.str_dec[str_dec] {
+    // sml_def(56)
+    hir::StrDec::Dec(dec) => dec::get(st, &bs.as_cx(), ars, ac.as_env(), *dec),
+    // sml_def(57)
+    hir::StrDec::Structure(str_binds) => {
+      // sml_def(61)
+      let mut str_env = StrEnv::default();
+      for str_bind in str_binds {
+        let mut env = Env::default();
+        get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
+        if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
+          st.err(str_dec, e);
+        }
+      }
+      ac.as_env().str_env.extend(str_env);
+    }
+    // sml_def(58)
+    hir::StrDec::Local(local_dec, in_dec) => {
+      let mut local_env = Env::default();
+      get_str_dec(st, bs, ars, StrDecAc::Env(&mut local_env), *local_dec);
+      let mut bs = bs.clone();
+      Arc::make_mut(&mut bs.env).extend(local_env);
+      get_str_dec(st, &bs, ars, ac, *in_dec);
+    }
+    // sml_def(59), sml_def(60)
+    hir::StrDec::Seq(str_decs) => {
+      let mut bs = bs.clone();
+      for &str_dec in str_decs {
+        let mut one_env = Env::default();
+        get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
+        Arc::make_mut(&mut bs.env).extend(one_env.clone());
+        ac.as_env().extend(one_env);
+      }
+    }
+    hir::StrDec::Sig(_) | hir::StrDec::Functor(_) => st.err(str_dec, ErrorKind::DecNotAllowedHere),
+  }
+}
+
 fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: hir::StrExpIdx) {
   let str_exp = match str_exp {
     Some(x) => x,
@@ -139,69 +202,6 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
       Arc::make_mut(&mut bs.env).extend(let_env);
       get_str_exp(st, &bs, ars, ac, *str_exp)
     }
-  }
-}
-
-enum StrDecAc<'a> {
-  Env(&'a mut Env),
-  Bs(&'a mut Bs),
-}
-
-impl StrDecAc<'_> {
-  fn as_env(&mut self) -> &mut Env {
-    match self {
-      StrDecAc::Env(env) => env,
-      StrDecAc::Bs(bs) => Arc::make_mut(&mut bs.env),
-    }
-  }
-}
-
-fn get_str_dec(
-  st: &mut St,
-  bs: &Bs,
-  ars: &hir::Arenas,
-  mut ac: StrDecAc<'_>,
-  str_dec: hir::StrDecIdx,
-) {
-  let str_dec = match str_dec {
-    Some(x) => x,
-    None => return,
-  };
-  match &ars.str_dec[str_dec] {
-    // sml_def(56)
-    hir::StrDec::Dec(dec) => dec::get(st, &bs.as_cx(), ars, ac.as_env(), *dec),
-    // sml_def(57)
-    hir::StrDec::Structure(str_binds) => {
-      // sml_def(61)
-      let mut str_env = StrEnv::default();
-      for str_bind in str_binds {
-        let mut env = Env::default();
-        get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
-        if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
-          st.err(str_dec, e);
-        }
-      }
-      ac.as_env().str_env.extend(str_env);
-    }
-    // sml_def(58)
-    hir::StrDec::Local(local_dec, in_dec) => {
-      let mut local_env = Env::default();
-      get_str_dec(st, bs, ars, StrDecAc::Env(&mut local_env), *local_dec);
-      let mut bs = bs.clone();
-      Arc::make_mut(&mut bs.env).extend(local_env);
-      get_str_dec(st, &bs, ars, ac, *in_dec);
-    }
-    // sml_def(59), sml_def(60)
-    hir::StrDec::Seq(str_decs) => {
-      let mut bs = bs.clone();
-      for &str_dec in str_decs {
-        let mut one_env = Env::default();
-        get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-        Arc::make_mut(&mut bs.env).extend(one_env.clone());
-        ac.as_env().extend(one_env);
-      }
-    }
-    hir::StrDec::Sig(_) | hir::StrDec::Functor(_) => st.err(str_dec, ErrorKind::DecNotAllowedHere),
   }
 }
 
