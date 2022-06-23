@@ -989,3 +989,16 @@ structure Str = struct end
 signature SIG = sig end
 functor Func() = struct end
 ```
+
+Defining the signature or functor in a `local` is also accepted by Millet, though this is not strictly permitted by the Definition.
+
+```sml
+(* ok *)
+local
+  signature SIG = sig val y : int end
+  functor Func(val x : int) : SIG = struct val y = x + 2 end
+in
+  structure S4 : SIG = Func(val x = 4)
+  structure S7 : SIG = Func(val x = 7)
+end
+```

@@ -58,20 +58,32 @@ fn get_str_dec(
     }
     // sml_def(58)
     hir::StrDec::Local(local_dec, in_dec) => {
-      let mut local_env = Env::default();
-      get_str_dec(st, bs, ars, StrDecAc::Env(&mut local_env), *local_dec);
+      let mut local_bs = Bs::default();
+      get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), *local_dec);
       let mut bs = bs.clone();
-      bs.as_mut_env().extend(local_env);
+      bs.extend(local_bs);
       get_str_dec(st, &bs, ars, ac, *in_dec);
     }
     // sml_def(59), sml_def(60)
     hir::StrDec::Seq(str_decs) => {
       let mut bs = bs.clone();
-      for &str_dec in str_decs {
-        let mut one_env = Env::default();
-        get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-        bs.as_mut_env().extend(one_env.clone());
-        ac.as_mut_env().extend(one_env);
+      match ac {
+        StrDecAc::Env(ac) => {
+          for &str_dec in str_decs {
+            let mut one_env = Env::default();
+            get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
+            bs.as_mut_env().extend(one_env.clone());
+            ac.extend(one_env);
+          }
+        }
+        StrDecAc::Bs(ac) => {
+          for &str_dec in str_decs {
+            let mut one_bs = Bs::default();
+            get_str_dec(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
+            bs.extend(one_bs.clone());
+            ac.extend(one_bs);
+          }
+        }
       }
     }
     // sml_def(66), sml_def(88)

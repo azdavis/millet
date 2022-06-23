@@ -146,8 +146,7 @@ fn signature_in_local() {
   check(
     r#"
 local
-    signature SIG = sig val y : int end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ declaration not allowed here *)
+  signature SIG = sig val y : int end
 in
   structure S4 : SIG = struct val y = 4 end
   structure S7 : SIG = struct val y = 7 end
@@ -161,8 +160,7 @@ fn functor_in_local() {
   check(
     r#"
 local
-    functor Func(val x : int) = struct val y = x + 2 end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ declaration not allowed here *)
+  functor Func(val x : int) = struct val y = x + 2 end
 in
   structure S4 = Func(val x = 4)
   structure S7 = Func(val x = 7)
