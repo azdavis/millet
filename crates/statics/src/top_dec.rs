@@ -394,7 +394,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
       let mut inner_env = Env::default();
       get_spec(st, bs, ars, &mut inner_env, *inner);
       match kind {
-        hir::SharingKind::Regular => get_sharing_spec(st, &mut inner_env, paths, spec.into()),
+        hir::SharingKind::Regular => get_sharing_type(st, &mut inner_env, paths, spec.into()),
         hir::SharingKind::Derived => {
           let mut all: Vec<_> = paths
             .iter()
@@ -412,7 +412,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
                 if ty_cons_2.contains(&ty_con) {
                   let path_1 = join_paths(struct_1, &ty_con);
                   let path_2 = join_paths(*struct_2, &ty_con);
-                  get_sharing_spec(st, &mut inner_env, &[path_1, path_2], spec.into());
+                  get_sharing_type(st, &mut inner_env, &[path_1, path_2], spec.into());
                 }
               }
             }
@@ -434,7 +434,8 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
   }
 }
 
-fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: hir::Idx) {
+/// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
+fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: hir::Idx) {
   let mut ty_scheme = None::<TyScheme>;
   let mut syms = Vec::<Sym>::with_capacity(paths.len());
   for path in paths {
