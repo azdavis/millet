@@ -558,6 +558,12 @@ pub(crate) struct Cx {
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
 }
 
+impl Cx {
+  pub(crate) fn as_mut_env(&mut self) -> &mut Env {
+    Arc::make_mut(&mut self.env)
+  }
+}
+
 /// Definition: TyNameSet
 pub(crate) type TyNameSet = FxHashSet<Sym>;
 
@@ -593,6 +599,10 @@ impl Bs {
       env: Arc::clone(&self.env),
       ty_vars: FxHashMap::default(),
     }
+  }
+
+  pub(crate) fn as_mut_env(&mut self) -> &mut Env {
+    Arc::make_mut(&mut self.env)
   }
 }
 

@@ -8,7 +8,6 @@ use crate::types::{
 use crate::util::{apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe};
 use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
-use std::sync::Arc;
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::StrDecIdx) {
   let top_dec = match top_dec {
@@ -22,7 +21,7 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Str
     | hir::StrDec::Seq(..) => {
       let mut ac = Env::default();
       get_str_dec(st, bs, ars, StrDecAc::Env(&mut ac), Some(top_dec));
-      Arc::make_mut(&mut bs.env).extend(ac);
+      bs.as_mut_env().extend(ac);
     }
     // sml_def(66), sml_def(88)
     hir::StrDec::Sig(sig_binds) => {
@@ -47,7 +46,8 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Str
         get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
         let param_sig = env_to_sig(bs, param_env);
         let mut bs_clone = bs.clone();
-        Arc::make_mut(&mut bs_clone.env)
+        bs_clone
+          .as_mut_env()
           .str_env
           .insert(fun_bind.param_name.clone(), param_sig.env.clone());
         let mut body_env = Env::default();
@@ -84,7 +84,7 @@ impl StrDecAc<'_> {
   fn as_env(&mut self) -> &mut Env {
     match self {
       StrDecAc::Env(env) => env,
-      StrDecAc::Bs(bs) => Arc::make_mut(&mut bs.env),
+      StrDecAc::Bs(bs) => bs.as_mut_env(),
     }
   }
 }
@@ -121,7 +121,7 @@ fn get_str_dec(
       let mut local_env = Env::default();
       get_str_dec(st, bs, ars, StrDecAc::Env(&mut local_env), *local_dec);
       let mut bs = bs.clone();
-      Arc::make_mut(&mut bs.env).extend(local_env);
+      bs.as_mut_env().extend(local_env);
       get_str_dec(st, &bs, ars, ac, *in_dec);
     }
     // sml_def(59), sml_def(60)
@@ -130,7 +130,7 @@ fn get_str_dec(
       for &str_dec in str_decs {
         let mut one_env = Env::default();
         get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-        Arc::make_mut(&mut bs.env).extend(one_env.clone());
+        bs.as_mut_env().extend(one_env.clone());
         ac.as_env().extend(one_env);
       }
     }
@@ -199,7 +199,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
       let mut let_env = Env::default();
       get_str_dec(st, bs, ars, StrDecAc::Env(&mut let_env), *str_dec);
       let mut bs = bs.clone();
-      Arc::make_mut(&mut bs.env).extend(let_env);
+      bs.as_mut_env().extend(let_env);
       get_str_exp(st, &bs, ars, ac, *str_exp)
     }
   }
@@ -417,7 +417,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
       for &spec in specs {
         let mut one_env = Env::default();
         get_spec(st, &bs, ars, &mut one_env, spec);
-        Arc::make_mut(&mut bs.env).extend(one_env.clone());
+        bs.as_mut_env().extend(one_env.clone());
         ac.extend(one_env);
       }
     }
