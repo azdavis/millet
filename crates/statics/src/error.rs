@@ -214,11 +214,26 @@ impl<'a> fmt::Display for PatDisplay<'a> {
       RawPat::Or(_) => unreachable!(),
     };
     match con {
-      Con::Any => f.write_str("_")?,
-      Con::Int(i) => write!(f, "{i}")?,
-      Con::Word(w) => write!(f, "0w{w}")?,
-      Con::Char(c) => write!(f, "#\"{c}\"")?,
-      Con::String(s) => f.write_str(s.as_str())?,
+      Con::Any => {
+        assert!(args.is_empty());
+        f.write_str("_")?
+      }
+      Con::Int(i) => {
+        assert!(args.is_empty());
+        write!(f, "{i}")?
+      }
+      Con::Word(w) => {
+        assert!(args.is_empty());
+        write!(f, "0w{w}")?
+      }
+      Con::Char(c) => {
+        assert!(args.is_empty());
+        write!(f, "#\"{c}\"")?
+      }
+      Con::String(s) => {
+        assert!(args.is_empty());
+        f.write_str(s.as_str())?
+      }
       Con::Record(labs) => {
         assert_eq!(labs.len(), args.len());
         let is_tuple = labs
@@ -248,7 +263,6 @@ impl<'a> fmt::Display for PatDisplay<'a> {
           )?;
           f.write_str("}")?;
         }
-        return Ok(());
       }
       Con::Variant(_, name) => {
         let name = match name {
@@ -292,32 +306,28 @@ impl<'a> fmt::Display for PatDisplay<'a> {
               }
             }
           }
-          return Ok(());
+        } else {
+          if needs_paren {
+            f.write_str("(")?;
+          }
+          f.write_str(name)?;
+          if !args.is_empty() {
+            f.write_str(" ")?;
+            comma_seq(
+              f,
+              args.iter().map(|pat| PatDisplay {
+                pat,
+                syms: self.syms,
+                prec: PatPrec::App,
+              }),
+            )?;
+          }
+          if needs_paren {
+            f.write_str(")")?;
+          }
         }
-        if needs_paren {
-          f.write_str("(")?;
-        }
-        f.write_str(name)?;
-        if args.is_empty() {
-          return Ok(());
-        }
-        f.write_str(" ")?;
-        comma_seq(
-          f,
-          args.iter().map(|pat| PatDisplay {
-            pat,
-            syms: self.syms,
-            prec: PatPrec::App,
-          }),
-        )?;
-        if needs_paren {
-          f.write_str(")")?;
-        }
-        return Ok(());
       }
     }
-    // if got here, this is scon/any
-    assert!(args.is_empty());
     Ok(())
   }
 }
