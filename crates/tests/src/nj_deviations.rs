@@ -151,6 +151,11 @@ in
   structure S4 : SIG = struct val y = 4 end
   structure S7 : SIG = struct val y = 7 end
 end
+
+structure A = S4
+structure B = S7
+signature C = SIG
+(**           ^^^ undefined signature: SIG *)
 "#,
   );
 }
@@ -165,6 +170,11 @@ in
   structure S4 = Func(val x = 4)
   structure S7 = Func(val x = 7)
 end
+
+structure A = S4
+structure B = S7
+structure C = Func(val x = 8)
+(**           ^^^^^^^^^^^^^^^ undefined functor: Func *)
 "#,
   );
 }
