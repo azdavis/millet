@@ -586,7 +586,7 @@ pub(crate) type SigEnv = FxHashMap<hir::Name, Sig>;
 pub(crate) type FunEnv = FxHashMap<hir::Name, FunSig>;
 
 /// Definition: Basis
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Bs {
   pub(crate) fun_env: FunEnv,
   pub(crate) sig_env: SigEnv,
@@ -603,6 +603,21 @@ impl Bs {
 
   pub(crate) fn as_mut_env(&mut self) -> &mut Env {
     Arc::make_mut(&mut self.env)
+  }
+
+  pub(crate) fn extend(&mut self, bs: Self) {
+    self.fun_env.extend(bs.fun_env);
+    self.sig_env.extend(bs.sig_env);
+    let env = self.as_mut_env();
+    env
+      .str_env
+      .extend(bs.env.str_env.iter().map(|(a, b)| (a.clone(), b.clone())));
+    env
+      .ty_env
+      .extend(bs.env.ty_env.iter().map(|(a, b)| (a.clone(), b.clone())));
+    env
+      .val_env
+      .extend(bs.env.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
   }
 }
 

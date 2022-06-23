@@ -10,69 +10,9 @@ use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::StrDecIdx) {
-  let top_dec = match top_dec {
-    Some(x) => x,
-    None => return,
-  };
-  match &ars.str_dec[top_dec] {
-    hir::StrDec::Dec(..)
-    | hir::StrDec::Structure(..)
-    | hir::StrDec::Local(..)
-    | hir::StrDec::Seq(..) => {
-      let mut ac = Env::default();
-      get_str_dec(st, bs, ars, StrDecAc::Env(&mut ac), Some(top_dec));
-      bs.as_mut_env().extend(ac);
-    }
-    // sml_def(66), sml_def(88)
-    hir::StrDec::Sig(sig_binds) => {
-      let mut sig_env = SigEnv::default();
-      // sml_def(67)
-      for sig_bind in sig_binds {
-        let mut env = Env::default();
-        get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
-        let sig = env_to_sig(bs, env);
-        if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
-          st.err(top_dec, e);
-        }
-      }
-      bs.sig_env.extend(sig_env);
-    }
-    // sml_def(85), sml_def(89)
-    hir::StrDec::Functor(fun_binds) => {
-      let mut fun_env = FunEnv::default();
-      // sml_def(86)
-      for fun_bind in fun_binds {
-        let mut param_env = Env::default();
-        get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
-        let param_sig = env_to_sig(bs, param_env);
-        let mut bs_clone = bs.clone();
-        bs_clone
-          .as_mut_env()
-          .str_env
-          .insert(fun_bind.param_name.clone(), param_sig.env.clone());
-        let mut body_env = Env::default();
-        get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
-        let mut body_ty_names = TyNameSet::default();
-        env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
-        bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
-        for sym in param_sig.ty_names.iter() {
-          body_ty_names.remove(sym);
-        }
-        let fun_name = fun_bind.functor_name.clone();
-        let fun_sig = FunSig {
-          param: param_sig,
-          res: Sig {
-            ty_names: body_ty_names,
-            env: body_env,
-          },
-        };
-        if let Some(e) = ins_no_dupe(&mut fun_env, fun_name, fun_sig, Item::Functor) {
-          st.err(top_dec, e);
-        }
-      }
-      bs.fun_env.extend(fun_env);
-    }
-  }
+  let mut ac = Bs::default();
+  get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), top_dec);
+  bs.extend(ac);
 }
 
 enum StrDecAc<'a> {
@@ -134,7 +74,69 @@ fn get_str_dec(
         ac.as_mut_env().extend(one_env);
       }
     }
-    hir::StrDec::Sig(_) | hir::StrDec::Functor(_) => st.err(str_dec, ErrorKind::DecNotAllowedHere),
+    // sml_def(66), sml_def(88)
+    hir::StrDec::Sig(sig_binds) => {
+      let ac = match ac {
+        StrDecAc::Bs(ac) => ac,
+        StrDecAc::Env(_) => {
+          st.err(str_dec, ErrorKind::DecNotAllowedHere);
+          return;
+        }
+      };
+      let mut sig_env = SigEnv::default();
+      // sml_def(67)
+      for sig_bind in sig_binds {
+        let mut env = Env::default();
+        get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
+        let sig = env_to_sig(bs, env);
+        if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
+          st.err(str_dec, e);
+        }
+      }
+      ac.sig_env.extend(sig_env);
+    }
+    // sml_def(85), sml_def(89)
+    hir::StrDec::Functor(fun_binds) => {
+      let ac = match ac {
+        StrDecAc::Bs(ac) => ac,
+        StrDecAc::Env(_) => {
+          st.err(str_dec, ErrorKind::DecNotAllowedHere);
+          return;
+        }
+      };
+      let mut fun_env = FunEnv::default();
+      // sml_def(86)
+      for fun_bind in fun_binds {
+        let mut param_env = Env::default();
+        get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
+        let param_sig = env_to_sig(bs, param_env);
+        let mut bs_clone = bs.clone();
+        bs_clone
+          .as_mut_env()
+          .str_env
+          .insert(fun_bind.param_name.clone(), param_sig.env.clone());
+        let mut body_env = Env::default();
+        get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
+        let mut body_ty_names = TyNameSet::default();
+        env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
+        bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
+        for sym in param_sig.ty_names.iter() {
+          body_ty_names.remove(sym);
+        }
+        let fun_name = fun_bind.functor_name.clone();
+        let fun_sig = FunSig {
+          param: param_sig,
+          res: Sig {
+            ty_names: body_ty_names,
+            env: body_env,
+          },
+        };
+        if let Some(e) = ins_no_dupe(&mut fun_env, fun_name, fun_sig, Item::Functor) {
+          st.err(str_dec, e);
+        }
+      }
+      ac.fun_env.extend(fun_env);
+    }
   }
 }
 
