@@ -81,7 +81,7 @@ enum StrDecAc<'a> {
 }
 
 impl StrDecAc<'_> {
-  fn as_env(&mut self) -> &mut Env {
+  fn as_mut_env(&mut self) -> &mut Env {
     match self {
       StrDecAc::Env(env) => env,
       StrDecAc::Bs(bs) => bs.as_mut_env(),
@@ -102,7 +102,7 @@ fn get_str_dec(
   };
   match &ars.str_dec[str_dec] {
     // sml_def(56)
-    hir::StrDec::Dec(dec) => dec::get(st, &bs.as_cx(), ars, ac.as_env(), *dec),
+    hir::StrDec::Dec(dec) => dec::get(st, &bs.as_cx(), ars, ac.as_mut_env(), *dec),
     // sml_def(57)
     hir::StrDec::Structure(str_binds) => {
       // sml_def(61)
@@ -114,7 +114,7 @@ fn get_str_dec(
           st.err(str_dec, e);
         }
       }
-      ac.as_env().str_env.extend(str_env);
+      ac.as_mut_env().str_env.extend(str_env);
     }
     // sml_def(58)
     hir::StrDec::Local(local_dec, in_dec) => {
@@ -131,7 +131,7 @@ fn get_str_dec(
         let mut one_env = Env::default();
         get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
         bs.as_mut_env().extend(one_env.clone());
-        ac.as_env().extend(one_env);
+        ac.as_mut_env().extend(one_env);
       }
     }
     hir::StrDec::Sig(_) | hir::StrDec::Functor(_) => st.err(str_dec, ErrorKind::DecNotAllowedHere),
