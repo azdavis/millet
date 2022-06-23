@@ -68,25 +68,40 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
             // but mv2 itself may also have an entry.
             Ty::MetaVar(mv2) => {
-              match subst.insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov))) {
+              let ov = match subst.get(&mv2) {
                 // it didn't have an entry.
-                None => {}
+                None => Some(ov),
                 // unreachable because of apply.
                 Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
                 Some(SubstEntry::Kind(kind)) => match kind {
                   // all overload types are equality types.
-                  TyVarKind::Equality => {}
-                  // it too was an overload. the new overload should be a subset of the old
-                  // overload.
-                  TyVarKind::Overloaded(ov2) => {
-                    if !ov.to_syms().iter().all(|x| ov2.to_syms().contains(x)) {
-                      return Err(UnifyError::OverloadMismatch(ov));
+                  TyVarKind::Equality => Some(ov),
+                  // it too was an overload. unify the two overloads, which may result in the
+                  // variable no longer being overloaded.
+                  TyVarKind::Overloaded(ov2) => match (ov, ov2) {
+                    (Overload::WordInt, Overload::WordInt | Overload::Num | Overload::NumTxt)
+                    | (Overload::Num | Overload::NumTxt, Overload::WordInt) => {
+                      Some(Overload::WordInt)
                     }
-                  }
+                    (Overload::WordInt, Overload::RealInt)
+                    | (Overload::RealInt, Overload::WordInt) => None,
+                    (Overload::RealInt, Overload::RealInt | Overload::Num | Overload::NumTxt)
+                    | (Overload::Num | Overload::NumTxt, Overload::RealInt) => {
+                      Some(Overload::RealInt)
+                    }
+                    (Overload::Num, Overload::Num | Overload::NumTxt)
+                    | (Overload::NumTxt, Overload::Num) => Some(Overload::Num),
+                    (Overload::NumTxt, Overload::NumTxt) => Some(Overload::NumTxt),
+                  },
                   // no overloaded type is a record.
                   TyVarKind::Record(_) => return Err(UnifyError::OverloadMismatch(ov)),
                 },
-              }
+              };
+              let entry = match ov {
+                Some(ov) => SubstEntry::Kind(TyVarKind::Overloaded(ov)),
+                None => SubstEntry::Solved(Ty::INT),
+              };
+              subst.insert(mv2, entry);
             }
             // none of these are overloaded types.
             Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {

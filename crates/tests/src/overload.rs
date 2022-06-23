@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn curry_add() {
@@ -180,7 +180,7 @@ fun mid a b = (a + b) div 2
 
 #[test]
 fn abs_sub_add() {
-  fail(
+  check(
     r#"
 fun hm a b = (abs (a - b), a + b)
 "#,
