@@ -12,18 +12,18 @@
 //!
 //! val _ =
 //!   let
-//!     val _ = (): 'a guy
-//! (*    ^ 'a bound here *)
+//!     val _ = (): 'b guy
+//! (*    ^ 'b bound here *)
 //!   in
 //!     ()
 //!   end
 //!
 //! val _ =
-//! (* ^ 'a bound here *)
+//! (* ^ 'c bound here *)
 //!   let
 //!     val _ = ()
 //!   in
-//!     (): 'a guy
+//!     (): 'c guy
 //!   end
 //! ```
 
