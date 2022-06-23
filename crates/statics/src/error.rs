@@ -209,124 +209,123 @@ struct PatDisplay<'a> {
 
 impl<'a> fmt::Display for PatDisplay<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let (con, args) = match &self.pat.raw {
-      RawPat::Con(a, b) => (a, b),
-      RawPat::Or(_) => unreachable!(),
-    };
-    match con {
-      Con::Any => {
-        assert!(args.is_empty());
-        f.write_str("_")?
-      }
-      Con::Int(i) => {
-        assert!(args.is_empty());
-        write!(f, "{i}")?
-      }
-      Con::Word(w) => {
-        assert!(args.is_empty());
-        write!(f, "0w{w}")?
-      }
-      Con::Char(c) => {
-        assert!(args.is_empty());
-        write!(f, "#\"{c}\"")?
-      }
-      Con::String(s) => {
-        assert!(args.is_empty());
-        f.write_str(s.as_str())?
-      }
-      Con::Record(labs) => {
-        assert_eq!(labs.len(), args.len());
-        let is_tuple = labs
-          .iter()
-          .enumerate()
-          .all(|(idx, lab)| hir::Lab::tuple(idx) == *lab);
-        if is_tuple {
-          f.write_str("(")?;
-          comma_seq(
-            f,
-            args.iter().map(|pat| PatDisplay {
-              pat,
-              syms: self.syms,
-              prec: PatPrec::Min,
-            }),
-          )?;
-          f.write_str(")")?;
-        } else {
-          f.write_str("{")?;
-          comma_seq(
-            f,
-            labs.iter().zip(args).map(|(lab, pat)| RowDisplay {
-              lab,
-              pat,
-              syms: self.syms,
-            }),
-          )?;
-          f.write_str("}")?;
+    match &self.pat.raw {
+      RawPat::Con(con, args) => match con {
+        Con::Any => {
+          assert!(args.is_empty());
+          f.write_str("_")?
         }
-      }
-      Con::Variant(_, name) => {
-        let name = match name {
-          VariantName::Name(name) => name.as_str(),
-          VariantName::Exn(exn) => self.syms.get_exn(exn).0.as_str(),
-        };
-        let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
-        // these names are guaranteed not to be rebound, so they always are list constructors.
-        if matches!(name, "nil" | "::") {
-          let mut ac = Vec::new();
-          match list_pat(&mut ac, self.pat) {
-            // does not need paren because list literal patterns are atomic
-            ListPatLen::Known => {
-              f.write_str("[")?;
-              comma_seq(
-                f,
-                ac.into_iter().map(|pat| PatDisplay {
-                  pat,
-                  syms: self.syms,
-                  prec: PatPrec::Min,
-                }),
-              )?;
-              f.write_str("]")?;
-            }
-            // TODO add another prec level?
-            ListPatLen::Unknown => {
-              if needs_paren {
-                f.write_str("(")?;
-              }
-              sep_seq(
-                f,
-                " :: ",
-                ac.into_iter().map(|pat| PatDisplay {
-                  pat,
-                  syms: self.syms,
-                  prec: PatPrec::App,
-                }),
-              )?;
-              if needs_paren {
-                f.write_str(")")?;
-              }
-            }
-          }
-        } else {
-          if needs_paren {
+        Con::Int(i) => {
+          assert!(args.is_empty());
+          write!(f, "{i}")?
+        }
+        Con::Word(w) => {
+          assert!(args.is_empty());
+          write!(f, "0w{w}")?
+        }
+        Con::Char(c) => {
+          assert!(args.is_empty());
+          write!(f, "#\"{c}\"")?
+        }
+        Con::String(s) => {
+          assert!(args.is_empty());
+          f.write_str(s.as_str())?
+        }
+        Con::Record(labs) => {
+          assert_eq!(labs.len(), args.len());
+          let is_tuple = labs
+            .iter()
+            .enumerate()
+            .all(|(idx, lab)| hir::Lab::tuple(idx) == *lab);
+          if is_tuple {
             f.write_str("(")?;
-          }
-          f.write_str(name)?;
-          if !args.is_empty() {
-            f.write_str(" ")?;
             comma_seq(
               f,
               args.iter().map(|pat| PatDisplay {
                 pat,
                 syms: self.syms,
-                prec: PatPrec::App,
+                prec: PatPrec::Min,
               }),
             )?;
-          }
-          if needs_paren {
             f.write_str(")")?;
+          } else {
+            f.write_str("{")?;
+            comma_seq(
+              f,
+              labs.iter().zip(args).map(|(lab, pat)| RowDisplay {
+                lab,
+                pat,
+                syms: self.syms,
+              }),
+            )?;
+            f.write_str("}")?;
           }
         }
-      }
+        Con::Variant(_, name) => {
+          let name = match name {
+            VariantName::Name(name) => name.as_str(),
+            VariantName::Exn(exn) => self.syms.get_exn(exn).0.as_str(),
+          };
+          let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
+          // these names are guaranteed not to be rebound, so they always are list constructors.
+          if matches!(name, "nil" | "::") {
+            let mut ac = Vec::new();
+            match list_pat(&mut ac, self.pat) {
+              // does not need paren because list literal patterns are atomic
+              ListPatLen::Known => {
+                f.write_str("[")?;
+                comma_seq(
+                  f,
+                  ac.into_iter().map(|pat| PatDisplay {
+                    pat,
+                    syms: self.syms,
+                    prec: PatPrec::Min,
+                  }),
+                )?;
+                f.write_str("]")?;
+              }
+              // TODO add another prec level?
+              ListPatLen::Unknown => {
+                if needs_paren {
+                  f.write_str("(")?;
+                }
+                sep_seq(
+                  f,
+                  " :: ",
+                  ac.into_iter().map(|pat| PatDisplay {
+                    pat,
+                    syms: self.syms,
+                    prec: PatPrec::App,
+                  }),
+                )?;
+                if needs_paren {
+                  f.write_str(")")?;
+                }
+              }
+            }
+          } else {
+            if needs_paren {
+              f.write_str("(")?;
+            }
+            f.write_str(name)?;
+            if !args.is_empty() {
+              f.write_str(" ")?;
+              comma_seq(
+                f,
+                args.iter().map(|pat| PatDisplay {
+                  pat,
+                  syms: self.syms,
+                  prec: PatPrec::App,
+                }),
+              )?;
+            }
+            if needs_paren {
+              f.write_str(")")?;
+            }
+          }
+        }
+      },
+      RawPat::Or(_) => unreachable!(),
     }
     Ok(())
   }
