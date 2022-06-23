@@ -57,7 +57,7 @@ fn get_full_std_basis() -> statics::Statics {
 }
 
 static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
-  let st = elapsed::time("get_full_std_basis", get_full_std_basis);
+  let st = elapsed::log("get_full_std_basis", get_full_std_basis);
   (st.syms, st.bs)
 });
 

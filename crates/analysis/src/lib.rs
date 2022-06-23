@@ -87,10 +87,14 @@ impl Analysis {
       .map(|(&path, group)| (path, group.dependencies.iter().copied().collect()))
       .collect();
     // TODO error if cycle
-    let order = topo_sort::get(&graph).unwrap_or_default();
+    let order = elapsed::log("topo_sort::get", || {
+      topo_sort::get(&graph).unwrap_or_default()
+    });
     // TODO require explicit basis import
     let mut st = self.std_basis.into_statics();
-    order
+    let mut analyzed_file = std::time::Duration::ZERO;
+    let mut statics = std::time::Duration::ZERO;
+    let ret: PathMap<Vec<_>> = order
       .into_iter()
       .flat_map(|path| {
         input
@@ -107,12 +111,18 @@ impl Analysis {
             return None;
           }
         };
-        let mut f = AnalyzedFile::new(s);
-        statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+        let (mut f, dur) = elapsed::time(|| AnalyzedFile::new(s));
+        analyzed_file += dur;
+        let ((), dur) =
+          elapsed::time(|| statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs));
+        statics += dur;
         f.statics_errors = std::mem::take(&mut st.errors);
         Some((path_id, f.into_errors(&st.syms).collect()))
       })
-      .collect()
+      .collect();
+    log::info!("analyzed_file: {analyzed_file:?}");
+    log::info!("statics: {statics:?}");
+    ret
   }
 }
 
