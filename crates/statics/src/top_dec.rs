@@ -416,7 +416,7 @@ fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
   for path in paths {
     match get_ty_info(inner_env, path) {
       Ok(ty_info) => {
-        // TODO assert exists a s.t. for all ty schemes, arity of ty scheme = a? and all other
+        // TODO assert exists c s.t. for all ty schemes, arity of ty scheme = c? and all other
         // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
         match &ty_info.ty_scheme.ty {
           Ty::None => {}
