@@ -398,14 +398,10 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
         hir::SharingKind::Derived => {
           let mut all: Vec<_> = paths
             .iter()
-            .filter_map(|path| match get_env(&inner_env, path.all_names()) {
-              Ok(got_env) => {
-                let mut ty_cons = FxHashSet::<hir::Path>::default();
-                get_ty_cons(&mut Vec::new(), &mut ty_cons, got_env);
-                Some((path, ty_cons))
-              }
-              Err(name) => {
-                st.err(spec, ErrorKind::Undefined(Item::Struct, name.clone()));
+            .filter_map(|path| match get_path_ty_cons(&inner_env, path) {
+              Ok(ty_cons) => Some((path, ty_cons)),
+              Err(e) => {
+                st.err(spec, e);
                 None
               }
             })
@@ -471,6 +467,17 @@ fn get_sharing_spec(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
       env_realize(&subst, inner_env);
     }
     None => log::error!("didn't get a ty scheme for sharing spec"),
+  }
+}
+
+fn get_path_ty_cons(env: &Env, path: &hir::Path) -> Result<FxHashSet<hir::Path>, ErrorKind> {
+  match get_env(env, path.all_names()) {
+    Ok(got_env) => {
+      let mut ty_cons = FxHashSet::<hir::Path>::default();
+      get_ty_cons(&mut Vec::new(), &mut ty_cons, got_env);
+      Ok(ty_cons)
+    }
+    Err(name) => Err(ErrorKind::Undefined(Item::Struct, name.clone())),
   }
 }
 
