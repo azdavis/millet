@@ -1,14 +1,12 @@
 use crate::error::{ErrorKind, Item};
-use crate::fmt_util::ty_var_name;
+use crate::generalizes::{eq_ty_scheme, generalizes};
 use crate::st::St;
 use crate::types::{
   generalize, Bs, Env, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty,
   TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::util::{
-  apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe, instantiate,
-};
-use crate::{dec, ty, unify::unify};
+use crate::util::{apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe};
+use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 use std::sync::Arc;
 
@@ -580,32 +578,6 @@ fn val_info_enrich(
   {
     st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
   }
-}
-
-fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: &TyScheme, idx: hir::Idx) {
-  // TODO just use `==` since alpha equivalent ty schemes are already `==` for derive(PartialEq)?
-  generalizes(st, lhs, rhs, idx);
-  generalizes(st, rhs, lhs, idx);
-}
-
-fn generalizes(st: &mut St, general: &TyScheme, specific: &TyScheme, idx: hir::Idx) {
-  let general = instantiate(st, general);
-  let specific = {
-    let subst: Vec<_> = specific
-      .bound_vars
-      .kinds()
-      .enumerate()
-      .map(|(idx, kind)| {
-        let equality = matches!(kind, Some(TyVarKind::Equality));
-        let ty_var: String = ty_var_name(equality, idx).collect();
-        Ty::FixedVar(st.gen_fixed_var(hir::TyVar::new(ty_var)))
-      })
-      .collect();
-    let mut ty = specific.ty.clone();
-    apply_bv(&subst, &mut ty);
-    ty
-  };
-  unify(st, specific, general, idx)
 }
 
 // uh... recursion schemes??
