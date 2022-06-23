@@ -142,13 +142,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
   }
 }
 
-pub(crate) fn get_str_dec(
-  st: &mut St,
-  bs: &Bs,
-  ars: &hir::Arenas,
-  ac: &mut Env,
-  str_dec: hir::StrDecIdx,
-) {
+fn get_str_dec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_dec: hir::StrDecIdx) {
   let str_dec = match str_dec {
     Some(x) => x,
     None => return,
