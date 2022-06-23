@@ -409,9 +409,9 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
           while let Some((struct_path1, ty_cons1)) = all.pop() {
             for ty_con1 in ty_cons1 {
               for (struct_path2, ty_cons2) in all.iter() {
-                if let Some(ty_con2) = ty_cons2.get(&ty_con1) {
+                if ty_cons2.contains(&ty_con1) {
                   let path1 = join_paths(struct_path1, &ty_con1);
-                  let path2 = join_paths(*struct_path2, ty_con2);
+                  let path2 = join_paths(*struct_path2, &ty_con1);
                   get_sharing_spec(st, &mut inner_env, &[path1, path2], spec.into());
                 }
               }
