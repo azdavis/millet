@@ -6,6 +6,16 @@ use syntax::ast::{self, AstNode as _, AstPtr};
 pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
   let pat = pat?;
   let ptr = AstPtr::new(&pat);
+  let or_pat = get_or(cx, pat)?;
+  if or_pat.rest.is_empty() {
+    or_pat.first
+  } else {
+    cx.pat(hir::Pat::Or(or_pat), ptr)
+  }
+}
+
+fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<hir::OrPat> {
+  let ptr = AstPtr::new(&pat);
   let ret = match pat {
     ast::Pat::WildcardPat(_) => hir::Pat::Wild,
     ast::Pat::SConPat(pat) => hir::Pat::SCon(get_scon(cx, pat.s_con()?)?),
@@ -63,7 +73,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
       }
     }
     // sml_def(37)
-    ast::Pat::ParenPat(pat) => return get(cx, pat.pat()),
+    ast::Pat::ParenPat(pat) => return get_or(cx, pat.pat()?),
     ast::Pat::TuplePat(pat) => tuple(pat.pat_args().map(|x| get(cx, x.pat()))),
     ast::Pat::ListPat(pat) => {
       // need to rev()
@@ -114,14 +124,18 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
       hir::Pat::As(name, inner)
     }
     ast::Pat::OrPat(pat) => {
-      cx.err(
-        pat.syntax().text_range(),
-        ErrorKind::Unsupported("or patterns"),
-      );
-      return None;
+      // flatten or pats.
+      let mut lhs = get_or(cx, pat.lhs()?)?;
+      let rhs = get_or(cx, pat.rhs()?)?;
+      lhs.rest.push(rhs.first);
+      lhs.rest.extend(rhs.rest);
+      return Some(lhs);
     }
   };
-  cx.pat(ret, ptr)
+  Some(hir::OrPat {
+    first: cx.pat(ret, ptr),
+    rest: Vec::new(),
+  })
 }
 
 #[derive(Debug)]

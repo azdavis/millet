@@ -259,6 +259,13 @@ pub enum Pat {
   /// modulo possible slight error message differences. this lets us avoid the optional type
   /// annotation in the HIR def for as-pats and instead handle it in lowering.
   As(Name, PatIdx),
+  Or(OrPat),
+}
+
+#[derive(Debug)]
+pub struct OrPat {
+  pub first: PatIdx,
+  pub rest: Vec<PatIdx>,
 }
 
 pub type TyIdx = OptIdx<Ty>;

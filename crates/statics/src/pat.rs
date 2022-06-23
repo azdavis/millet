@@ -137,6 +137,10 @@ pub(crate) fn get(
       insert_name(st, ve, name.clone(), ty.clone(), pat_);
       (pm_pat, ty)
     }
+    hir::Pat::Or(_) => {
+      st.err(pat_, ErrorKind::Unsupported("or patterns"));
+      any(st, pat)
+    }
   }
 }
 

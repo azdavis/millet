@@ -268,6 +268,12 @@ fn get_pat(cx: &mut Cx, ars: &hir::Arenas, ac: &mut TyVarSet, pat: hir::PatIdx) 
       get_ty(cx, ars, ac, *ty);
     }
     hir::Pat::As(_, pat) => get_pat(cx, ars, ac, *pat),
+    hir::Pat::Or(or_pat) => {
+      get_pat(cx, ars, ac, or_pat.first);
+      for &pat in or_pat.rest.iter() {
+        get_pat(cx, ars, ac, pat);
+      }
+    }
   }
 }
 

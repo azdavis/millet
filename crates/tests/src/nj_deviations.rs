@@ -112,7 +112,7 @@ fn or_pat() {
     r#"
 datatype foo = Foo of int | Bar of int
 val (Foo x | Bar x) = Foo 13
-(**  ^^^^^^^^^^^^^ unsupported language construct: or patterns *)
+(** ^^^^^^^^^^^^^^^ unsupported language construct: or patterns *)
 "#,
   );
 }
