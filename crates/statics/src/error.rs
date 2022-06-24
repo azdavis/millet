@@ -126,10 +126,14 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
-      ErrorKind::Circularity(_, ty) => {
-        write!(f, "attempted to a set a type variable ")?;
-        write!(f, "to a type containing ")?;
+      ErrorKind::Circularity(mv, ty) => {
         let mvs = ty.meta_var_names();
+        let name = mvs.get(mv).ok_or(fmt::Error)?;
+        write!(f, "attempted to a set a type variable ")?;
+        for c in name {
+          write!(f, "{c}")?;
+        }
+        write!(f, " to a type containing ")?;
         let ty = ty.display(&mvs, self.syms);
         write!(f, "that variable: {ty}")
       }

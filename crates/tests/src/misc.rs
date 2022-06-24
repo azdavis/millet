@@ -29,12 +29,21 @@ val _ = fn f => fn x => (
 }
 
 #[test]
-fn circularity() {
-  // TODO improve this error message
+fn circularity_1() {
   check(
     r#"
     fun f _ = f
-(** ^^^^^^^^^^^ attempted to a set a type variable to a type containing that variable: ?a -> ?b *)
+(** ^^^^^^^^^^^ attempted to a set a type variable ?b to a type containing that variable: ?a -> ?b *)
+"#,
+  );
+}
+
+#[test]
+fn circularity_2() {
+  check(
+    r#"
+fun f x = x x
+(**       ^^^ attempted to a set a type variable ?a to a type containing that variable: ?a -> ?b *)
 "#,
   );
 }

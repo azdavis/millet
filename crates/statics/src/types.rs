@@ -106,9 +106,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
         }
       }
       Ty::MetaVar(mv) => {
-        let &idx = self.meta_vars.0.get(mv).ok_or(fmt::Error)?;
-        f.write_str("?")?;
-        for c in idx_to_name(idx) {
+        for c in self.meta_vars.get(mv).ok_or(fmt::Error)? {
           write!(f, "{c}")?;
         }
       }
@@ -191,6 +189,15 @@ impl<'a> fmt::Display for TyDisplay<'a> {
 }
 
 pub(crate) struct MetaVarNames(FxHashMap<MetaTyVar, usize>);
+
+impl MetaVarNames {
+  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<impl Iterator<Item = char>> {
+    self
+      .0
+      .get(mv)
+      .map(|&x| std::iter::once('?').chain(idx_to_name(x)))
+  }
+}
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum TyPrec {
