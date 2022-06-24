@@ -142,7 +142,14 @@ fn get_node(file: &AnalyzedFile, pos: Position) -> Option<SyntaxNode> {
 
 fn priority(kind: SyntaxKind) -> u8 {
   match kind {
-    SyntaxKind::Name => 2,
+    SyntaxKind::Name => 5,
+    SyntaxKind::OpKw => 4,
+    SyntaxKind::TyVar => 3,
+    SyntaxKind::CharLit
+    | SyntaxKind::IntLit
+    | SyntaxKind::RealLit
+    | SyntaxKind::StringLit
+    | SyntaxKind::WordLit => 2,
     SyntaxKind::Whitespace | SyntaxKind::BlockComment | SyntaxKind::Invalid => 0,
     _ => 1,
   }
