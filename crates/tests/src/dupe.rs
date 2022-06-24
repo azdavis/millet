@@ -1,5 +1,7 @@
 use crate::check::check;
 
+mod spec;
+
 #[test]
 fn datatype() {
   check(
