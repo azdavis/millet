@@ -1,6 +1,6 @@
 //! See [`State`].
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
@@ -138,23 +138,14 @@ impl State {
         Some(x) => x,
         None => return,
       };
-      let url = params.text_document_position_params.text_document.uri;
-      let path = canonical_path_buf(&self.file_system, &url);
-      let path = match path {
+      let params = params.text_document_position_params;
+      let (path, pos) = match text_doc_pos_params(&self.file_system, &mut root, params) {
         Ok(x) => x,
         Err(e) => {
-          log::error!("{url}: couldn't canonicalize: {e}");
+          log::error!("{e:#}");
           return;
         }
       };
-      let path = match root.path.get_id(&path) {
-        Ok(x) => x,
-        Err(e) => {
-          log::error!("{}: not in root: {e}", path.as_path().display());
-          return;
-        }
-      };
-      let pos = analysis_position(params.text_document_position_params.position);
       let res = self
         .analysis
         .get_info(path, pos)
@@ -254,9 +245,12 @@ impl State {
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
     for (path_id, errors) in got_many {
       let path = root.path.get_path(path_id);
-      let url = match Url::parse(&format!("file://{}", path.as_path().display())) {
+      let url = match file_url(path.as_path()) {
         Ok(x) => x,
-        Err(_) => continue,
+        Err(e) => {
+          log::error!("{e:#}");
+          continue;
+        }
       };
       let ds = diagnostics(errors);
       if ds.is_empty() || has_diagnostics.len() >= MAX_FILES_WITH_ERRORS {
@@ -346,6 +340,10 @@ where
   }
 }
 
+fn file_url(path: &std::path::Path) -> Result<Url> {
+  Url::parse(&format!("file://{}", path.display())).with_context(|| "couldn't parse URL")
+}
+
 fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
@@ -390,4 +388,19 @@ fn analysis_position(pos: lsp_types::Position) -> analysis::Position {
     line: pos.line,
     character: pos.character,
   }
+}
+
+fn text_doc_pos_params<F>(
+  fs: &F,
+  root: &mut Root,
+  params: lsp_types::TextDocumentPositionParams,
+) -> Result<(paths::PathId, analysis::Position)>
+where
+  F: paths::FileSystem,
+{
+  let url = params.text_document.uri;
+  let path = canonical_path_buf(fs, &url).with_context(|| "couldn't canonicalize")?;
+  let path = root.path.get_id(&path).with_context(|| "not in root")?;
+  let pos = analysis_position(params.position);
+  Ok((path, pos))
 }
