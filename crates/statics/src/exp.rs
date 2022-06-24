@@ -15,22 +15,19 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     // sml_def(1)
     hir::Exp::SCon(scon) => get_scon(scon),
     // sml_def(2)
-    hir::Exp::Path(path) => {
-      let env = match get_env(&cx.env, path.structures()) {
-        Ok(x) => x,
-        Err(name) => {
-          st.err(exp, ErrorKind::Undefined(Item::Struct, name.clone()));
-          return Ty::None;
-        }
-      };
-      match env.val_env.get(path.last()) {
+    hir::Exp::Path(path) => match get_env(&cx.env, path.structures()) {
+      Ok(env) => match env.val_env.get(path.last()) {
         Some(val_info) => instantiate(st, &val_info.ty_scheme),
         None => {
           st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
           Ty::None
         }
+      },
+      Err(name) => {
+        st.err(exp, ErrorKind::Undefined(Item::Struct, name.clone()));
+        Ty::None
       }
-    }
+    },
     // sml_def(3)
     hir::Exp::Record(rows) => Ty::Record(record(st, rows, exp, |st, _, exp| get(st, cx, ars, exp))),
     // sml_def(4)
