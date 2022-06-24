@@ -82,8 +82,7 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(exn.clone()),
       };
-      let mut ty = instantiate(st, &val_info.ty_scheme);
-      apply(st.subst(), &mut ty);
+      let ty = instantiate(st, &val_info.ty_scheme);
       // sml_def(35), sml_def(41)
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {

@@ -27,12 +27,11 @@ fun f (A x | B y) = x
 
 #[test]
 fn not_all_same_ty() {
-  // TODO message is not great
   check(
     r#"
 datatype t = A of int | B of string
 fun f (A x | B x) = x
-(**          ^^^ expected ?a, found ?a *)
+(**          ^^^ expected ?a, found int *)
 "#,
   );
 }

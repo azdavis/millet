@@ -95,6 +95,7 @@ pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
     .collect();
   let mut ty = ty_scheme.ty.clone();
   apply_bv(&subst, &mut ty);
+  apply(st.subst(), &mut ty);
   ty
 }
 
