@@ -11,98 +11,26 @@ type AstTopDec = ast::StrDecOne;
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
 pub struct Ptrs {
-  str_dec_one: BiMap<ast::StrDecOne, hir::StrDec>,
-  str_dec: BiMap<ast::StrDec, hir::StrDec>,
-  str_dec_in_top_dec: BiMap<AstTopDec, hir::StrDec>,
-  str_exp: BiMap<ast::StrExp, hir::StrExp>,
-  str_exp_in_top_dec: BiMap<AstTopDec, hir::StrExp>,
-  sig_exp: BiMap<ast::SigExp, hir::SigExp>,
-  sig_exp_in_top_dec: BiMap<AstTopDec, hir::SigExp>,
-  sig_exp_in_spec_one: BiMap<ast::SpecOne, hir::SigExp>,
-  spec_one: BiMap<ast::SpecOne, hir::Spec>,
-  spec: BiMap<ast::Spec, hir::Spec>,
-  spec_with_tail: BiMap<ast::SpecWithTail, hir::Spec>,
-  exp: BiMap<ast::Exp, hir::Exp>,
-  dec_one: BiMap<ast::DecOne, hir::Dec>,
-  dec_in_exp: BiMap<ast::Exp, hir::Dec>,
-  dec: BiMap<ast::Dec, hir::Dec>,
-  dec_in_top_dec: BiMap<AstTopDec, hir::Dec>,
-  pat: BiMap<ast::Pat, hir::Pat>,
-  pat_in_exp: BiMap<ast::Exp, hir::Pat>,
-  ty: BiMap<ast::Ty, hir::Ty>,
-}
-
-macro_rules! try_get_hir {
-  ($idx:ident, $s:ident, $($map:ident),*) => {{
-    $(
-      if let Some(x) = $s.$map.hir_to_ast.get($idx) {
-        return Some(x.syntax_node_ptr());
-      }
-    )*
-  }}
+  hir_to_ast: FxHashMap<hir::Idx, SyntaxNodePtr>,
+  ast_to_hir: FxHashMap<SyntaxNodePtr, hir::Idx>,
 }
 
 impl Ptrs {
   /// Returns the `SyntaxNodePtr` for an HIR index.
   pub fn hir_to_ast(&self, idx: hir::Idx) -> Option<SyntaxNodePtr> {
-    match idx {
-      hir::Idx::Exp(idx) => try_get_hir!(idx, self, exp),
-      hir::Idx::Pat(idx) => try_get_hir!(idx, self, pat, pat_in_exp),
-      hir::Idx::Ty(idx) => try_get_hir!(idx, self, ty),
-      hir::Idx::Dec(idx) => try_get_hir!(idx, self, dec, dec_one, dec_in_exp, dec_in_top_dec),
-      hir::Idx::StrExp(idx) => try_get_hir!(idx, self, str_exp, str_exp_in_top_dec),
-      hir::Idx::StrDec(idx) => {
-        try_get_hir!(idx, self, str_dec, str_dec_one, str_dec_in_top_dec)
-      }
-      hir::Idx::SigExp(idx) => {
-        try_get_hir!(idx, self, sig_exp, sig_exp_in_top_dec, sig_exp_in_spec_one)
-      }
-      hir::Idx::Spec(idx) => try_get_hir!(idx, self, spec, spec_one, spec_with_tail),
-    }
-    None
+    self.hir_to_ast.get(&idx).cloned()
   }
-}
 
-struct BiMap<A, H>
-where
-  A: AstNode,
-{
-  hir_to_ast: hir::la_arena::ArenaMap<hir::la_arena::Idx<H>, AstPtr<A>>,
-  ast_to_hir: FxHashMap<AstPtr<A>, hir::la_arena::Idx<H>>,
-}
-
-impl<A, H> BiMap<A, H>
-where
-  A: AstNode,
-{
-  fn insert(&mut self, idx: hir::la_arena::Idx<H>, ptr: AstPtr<A>) {
-    self.hir_to_ast.insert(idx, ptr.clone());
+  fn insert<N, I>(&mut self, idx: I, ptr: AstPtr<N>)
+  where
+    N: AstNode<Language = syntax::SML>,
+    I: Into<hir::Idx>,
+  {
+    let idx = idx.into();
+    let ptr = ptr.syntax_node_ptr();
+    assert!(self.hir_to_ast.insert(idx, ptr.clone()).is_none());
+    // cannot assert is none
     self.ast_to_hir.insert(ptr, idx);
-  }
-}
-
-impl<N, I> fmt::Debug for BiMap<N, I>
-where
-  N: AstNode,
-  I: fmt::Debug,
-{
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("BiMap")
-      .field("hir_to_ast", &self.hir_to_ast)
-      .field("ast_to_hir", &self.ast_to_hir)
-      .finish()
-  }
-}
-
-impl<N, I> Default for BiMap<N, I>
-where
-  N: AstNode,
-{
-  fn default() -> Self {
-    Self {
-      hir_to_ast: Default::default(),
-      ast_to_hir: Default::default(),
-    }
   }
 }
 
@@ -223,7 +151,7 @@ impl Cx {
     ptr: AstPtr<ast::StrDecOne>,
   ) -> hir::StrDecIdx {
     let idx = self.arenas.str_dec.alloc(val);
-    self.ptrs.str_dec_one.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
@@ -233,7 +161,7 @@ impl Cx {
     ptr: AstPtr<ast::StrDec>,
   ) -> hir::StrDecIdx {
     let idx = self.arenas.str_dec.alloc(hir::StrDec::Seq(val));
-    self.ptrs.str_dec.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
@@ -243,13 +171,13 @@ impl Cx {
     ptr: AstPtr<AstTopDec>,
   ) -> hir::StrDecIdx {
     let idx = self.arenas.str_dec.alloc(val);
-    self.ptrs.str_dec_in_top_dec.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn str_exp(&mut self, val: hir::StrExp, ptr: AstPtr<ast::StrExp>) -> hir::StrExpIdx {
     let idx = self.arenas.str_exp.alloc(val);
-    self.ptrs.str_exp.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
@@ -259,13 +187,13 @@ impl Cx {
     ptr: AstPtr<AstTopDec>,
   ) -> hir::StrExpIdx {
     let idx = self.arenas.str_exp.alloc(val);
-    self.ptrs.str_exp_in_top_dec.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn sig_exp(&mut self, val: hir::SigExp, ptr: AstPtr<ast::SigExp>) -> hir::SigExpIdx {
     let idx = self.arenas.sig_exp.alloc(val);
-    self.ptrs.sig_exp.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
@@ -275,7 +203,7 @@ impl Cx {
     ptr: AstPtr<AstTopDec>,
   ) -> hir::SigExpIdx {
     let idx = self.arenas.sig_exp.alloc(val);
-    self.ptrs.sig_exp_in_top_dec.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
@@ -285,19 +213,19 @@ impl Cx {
     ptr: AstPtr<ast::SpecOne>,
   ) -> hir::SigExpIdx {
     let idx = self.arenas.sig_exp.alloc(val);
-    self.ptrs.sig_exp_in_spec_one.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn spec_one(&mut self, val: hir::Spec, ptr: AstPtr<ast::SpecOne>) -> hir::SpecIdx {
     let idx = self.arenas.spec.alloc(val);
-    self.ptrs.spec_one.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn spec(&mut self, val: hir::Spec, ptr: AstPtr<ast::Spec>) -> hir::SpecIdx {
     let idx = self.arenas.spec.alloc(val);
-    self.ptrs.spec.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
@@ -307,55 +235,55 @@ impl Cx {
     ptr: AstPtr<ast::SpecWithTail>,
   ) -> hir::SpecIdx {
     let idx = self.arenas.spec.alloc(val);
-    self.ptrs.spec_with_tail.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn exp(&mut self, val: hir::Exp, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx {
     let idx = self.arenas.exp.alloc(val);
-    self.ptrs.exp.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn dec_one(&mut self, val: hir::Dec, ptr: AstPtr<ast::DecOne>) -> hir::DecIdx {
     let idx = self.arenas.dec.alloc(val);
-    self.ptrs.dec_one.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn dec_in_exp(&mut self, val: hir::Dec, ptr: AstPtr<ast::Exp>) -> hir::DecIdx {
     let idx = self.arenas.dec.alloc(val);
-    self.ptrs.dec_in_exp.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn dec_in_top_dec(&mut self, val: hir::Dec, ptr: AstPtr<AstTopDec>) -> hir::DecIdx {
     let idx = self.arenas.dec.alloc(val);
-    self.ptrs.dec_in_top_dec.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn dec_seq(&mut self, val: Vec<hir::DecIdx>, ptr: AstPtr<ast::Dec>) -> hir::DecIdx {
     let idx = self.arenas.dec.alloc(hir::Dec::Seq(val));
-    self.ptrs.dec.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn pat(&mut self, val: hir::Pat, ptr: AstPtr<ast::Pat>) -> hir::PatIdx {
     let idx = self.arenas.pat.alloc(val);
-    self.ptrs.pat.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn pat_in_exp(&mut self, val: hir::Pat, ptr: AstPtr<ast::Exp>) -> hir::PatIdx {
     let idx = self.arenas.pat.alloc(val);
-    self.ptrs.pat_in_exp.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
   pub(crate) fn ty(&mut self, val: hir::Ty, ptr: AstPtr<ast::Ty>) -> hir::TyIdx {
     let idx = self.arenas.ty.alloc(val);
-    self.ptrs.ty.insert(idx, ptr);
+    self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 }
