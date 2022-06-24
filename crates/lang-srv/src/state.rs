@@ -28,7 +28,6 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 const SOURCE: &str = "millet";
 const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/doc/errors.md";
 const MAX_FILES_WITH_ERRORS: usize = 20;
-const MAX_ERRORS_PER_FILE: usize = 20;
 
 struct Root {
   path: paths::Root,
@@ -381,7 +380,6 @@ fn file_url(path: &std::path::Path) -> Result<Url> {
 fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
-    .take(MAX_ERRORS_PER_FILE)
     .map(|err| {
       let code_description = match Url::parse(&format!("{ERRORS_URL}#{}", err.code)) {
         Ok(href) => Some(lsp_types::CodeDescription { href }),

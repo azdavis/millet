@@ -15,6 +15,12 @@ use syntax::ast::AstNode as _;
 pub use std_basis::StdBasis;
 pub use text_pos::{Position, Range};
 
+/// The name of the root CM file we look for.
+pub const ROOT_GROUP: &str = "sources.cm";
+
+/// The max number of errors per path.
+pub const MAX_ERRORS_PER_PATH: usize = 20;
+
 /// An error.
 #[derive(Debug)]
 pub struct Error {
@@ -193,6 +199,7 @@ impl AnalyzedFile {
           code: 4000 + u16::from(err.to_code()),
         })
       }))
+      .take(MAX_ERRORS_PER_PATH)
       .collect()
   }
 }
@@ -239,9 +246,6 @@ impl fmt::Display for GetInputErrorKind {
     }
   }
 }
-
-/// The name of the root CM file we look for.
-pub const ROOT_GROUP: &str = "sources.cm";
 
 /// Get some input from the filesystem.
 pub fn get_input<F>(fs: &F, root: &mut paths::Root) -> Result<Input, GetInputError>
