@@ -35,7 +35,7 @@ Also:
 - A bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course.
 - 15-150 is taught in Standard ML.
 
-[architecture]: doc/architecture.md
+[architecture]: /doc/architecture.md
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [git]: https://git-scm.com
 [incomplete]: /doc/known-issues.md
