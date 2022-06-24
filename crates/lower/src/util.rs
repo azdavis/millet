@@ -3,7 +3,7 @@ use std::fmt;
 use syntax::ast::{self, AstNode, AstPtr};
 use syntax::rowan::TextRange;
 
-pub(crate) type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
+type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
 
 /// see the ungrammar for why this is.
 type AstTopDec = ast::StrDecOne;
@@ -63,7 +63,7 @@ impl Ptrs {
   }
 }
 
-pub(crate) struct BiMap<A, H>
+struct BiMap<A, H>
 where
   A: AstNode,
 {
