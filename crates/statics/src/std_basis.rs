@@ -2,13 +2,14 @@
 //! be expressed with regular SML files, like `int` and `real` and `string`. Also `bool` and `list`
 //! because rebinding their constructor names is forbidden.
 
+use crate::st::Statics;
 use crate::types::{
   Bs, Env, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo,
   TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use std::sync::Arc;
 
-pub(crate) fn get() -> (Syms, Bs) {
+pub(crate) fn get() -> Statics {
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
     insert_special(&mut syms, sym, basic_datatype(Ty::zero(sym), &[]));
@@ -96,7 +97,7 @@ pub(crate) fn get() -> (Syms, Bs) {
       val_env,
     }),
   };
-  (syms, bs)
+  Statics { syms, bs }
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {

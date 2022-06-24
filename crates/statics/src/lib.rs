@@ -35,16 +35,15 @@ pub fn get(
   mode: Mode,
   arenas: &hir::Arenas,
   top_decs: &[hir::StrDecIdx],
-) -> Info {
+) -> (Info, Vec<Error>) {
   let mut st = st::St::new(mode, std::mem::take(&mut statics.syms));
   for &top_dec in top_decs {
     top_dec::get(&mut st, &mut statics.bs, arenas, top_dec);
   }
   let (syms, errors, subst, mut info) = st.finish();
   statics.syms = syms;
-  statics.errors.extend(errors);
   for ty in info.values_mut() {
     util::apply(&subst, ty);
   }
-  info
+  (info, errors)
 }

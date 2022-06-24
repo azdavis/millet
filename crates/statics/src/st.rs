@@ -68,24 +68,17 @@ impl St {
 }
 
 /// Static analysis.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Statics {
   /// The symbols generated.
   pub syms: Syms,
   /// The basis of the whole program.
   pub bs: Bs,
-  /// The errors encountered.
-  pub errors: Vec<Error>,
 }
 
 impl Default for Statics {
   fn default() -> Self {
-    let (syms, bs) = std_basis::get();
-    Self {
-      syms,
-      bs,
-      errors: Vec::new(),
-    }
+    std_basis::get()
   }
 }
 

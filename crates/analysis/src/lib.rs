@@ -44,8 +44,8 @@ impl Analysis {
   pub fn get_one(&self, s: &str) -> Vec<Error> {
     let mut f = AnalyzedFile::new(s);
     let mut st = self.std_basis.into_statics();
-    statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
-    f.statics_errors = std::mem::take(&mut st.errors);
+    let (_, es) = statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+    f.statics_errors = es;
     f.to_errors(&st.syms)
   }
 
@@ -88,8 +88,8 @@ impl Analysis {
               return None;
             }
           };
-          let info = statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
-          f.statics_errors = std::mem::take(&mut st.errors);
+          let (info, es) = statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+          f.statics_errors = es;
           f.info = info;
           Some((path_id, f.to_errors(&st.syms)))
         })

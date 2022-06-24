@@ -1,5 +1,5 @@
 use once_cell::sync::Lazy;
-use statics::Mode::Declaration;
+use statics::{Mode::Declaration, Statics};
 
 /// What standard basis to use.
 #[derive(Debug, Clone, Copy)]
@@ -17,23 +17,16 @@ impl Default for StdBasis {
 }
 
 impl StdBasis {
-  pub(crate) fn into_statics(self) -> statics::Statics {
+  pub(crate) fn into_statics(self) -> Statics {
     match self {
-      StdBasis::Full => {
-        let (syms, bs) = FULL.clone();
-        statics::Statics {
-          syms,
-          bs,
-          errors: Vec::new(),
-        }
-      }
-      StdBasis::Minimal => statics::Statics::default(),
+      StdBasis::Full => FULL.clone(),
+      StdBasis::Minimal => Statics::default(),
     }
   }
 }
 
-fn get_full_std_basis() -> statics::Statics {
-  let mut st = statics::Statics::default();
+fn get_full_std_basis() -> Statics {
+  let mut st = Statics::default();
   for &contents in ORDER {
     let lexed = lex::get(contents);
     if let Some(e) = lexed.errors.first() {
@@ -48,18 +41,15 @@ fn get_full_std_basis() -> statics::Statics {
       panic!("std_basis error: lower: {}", e.display());
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-    statics::get(&mut st, Declaration, &lowered.arenas, &lowered.top_decs);
-    if let Some(e) = st.errors.first() {
+    let (_, es) = statics::get(&mut st, Declaration, &lowered.arenas, &lowered.top_decs);
+    if let Some(e) = es.first() {
       panic!("std_basis error: statics: {}", e.display(&st.syms));
     }
   }
   st
 }
 
-static FULL: Lazy<(statics::Syms, statics::Bs)> = Lazy::new(|| {
-  let st = elapsed::log("get_full_std_basis", get_full_std_basis);
-  (st.syms, st.bs)
-});
+static FULL: Lazy<Statics> = Lazy::new(|| elapsed::log("get_full_std_basis", get_full_std_basis));
 
 const ORDER: &[&str] = &[
   include_str!("general.sml"),
