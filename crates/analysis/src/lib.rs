@@ -120,6 +120,8 @@ impl Analysis {
   /// Returns the definition range of the item at this position.
   #[allow(unused_variables)]
   pub fn get_def_location(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
+    // TODO: statics must have the notion of a file to impl this. we may also want to modify
+    // Env/ValInfo/TyInfo to track def indices.
     None
   }
 }

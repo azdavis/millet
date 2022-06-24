@@ -21,6 +21,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
       },
     )),
     hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
+    definition_provider: Some(lsp_types::OneOf::Left(true)),
     ..Default::default()
   }
 }
