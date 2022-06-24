@@ -19,18 +19,19 @@ pub(crate) fn get(
     Some(x) => x,
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
-  let (p, t) = get_(st, cx, ars, ve, pat_);
-  st.info().insert(pat_, t.clone());
-  (p, t)
+  let (pat, ty, ty_scheme) = get_(st, cx, ars, ve, pat_);
+  st.info().insert(pat_, ty.clone(), ty_scheme);
+  (pat, ty)
 }
 
+/// TODO just return a TyScheme always and instantiate to create the ty?
 fn get_(
   st: &mut St,
   cx: &Cx,
   ars: &hir::Arenas,
   ve: &mut ValEnv,
   pat_: hir::la_arena::Idx<hir::Pat>,
-) -> (Pat, Ty) {
+) -> (Pat, Ty, Option<TyScheme>) {
   let pat = Some(pat_);
   match &ars.pat[pat_] {
     // sml_def(32)
@@ -47,7 +48,7 @@ fn get_(
         hir::SCon::Char(c) => Con::Char(c),
         hir::SCon::String(ref s) => Con::String(s.clone()),
       };
-      (Pat::zero(con, pat), get_scon(scon))
+      (Pat::zero(con, pat), get_scon(scon), None)
     }
     hir::Pat::Con(path, arg) => {
       let arg = arg.map(|x| get(st, cx, ars, ve, x));
@@ -62,9 +63,9 @@ fn get_(
       let is_var = arg.is_none() && path.structures().is_empty() && ok_val_info(maybe_val_info);
       // sml_def(34)
       if is_var {
-        let (pm_pat, ty) = any(st, pat);
+        let (pm_pat, ty, ty_scheme) = any(st, pat);
         insert_name(st, ve, path.last().clone(), ty.clone(), pat_);
-        return (pm_pat, ty);
+        return (pm_pat, ty, ty_scheme);
       }
       let val_info = match maybe_val_info {
         Some(x) => x,
@@ -111,7 +112,9 @@ fn get_(
         _ => unreachable!("a ctor is either the type it constructs or a function returning that"),
       };
       let pat = Pat::con(Con::Variant(sym, variant_name), args, pat);
-      (pat, ty)
+      // TODO the ty was fiddled with in the Ty::Fn case above but the TyScheme was not. note also
+      // that this is the only Some(ty_scheme) case.
+      (pat, ty, Some(val_info.ty_scheme.clone()))
     }
     // sml_def(36)
     hir::Pat::Record { rows, allows_other } => {
@@ -132,7 +135,7 @@ fn get_(
       } else {
         Ty::Record(rows)
       };
-      (Pat::con(Con::Record(labs), pats, pat), ty)
+      (Pat::con(Con::Record(labs), pats, pat), ty, None)
     }
     // sml_def(42)
     hir::Pat::Typed(inner, want) => {
@@ -140,7 +143,7 @@ fn get_(
       let mut want = ty::get(st, cx, ars, *want);
       unify(st, want.clone(), got, inner.unwrap_or(pat_));
       apply(st.subst(), &mut want);
-      (pm_pat, want)
+      (pm_pat, want, None)
     }
     // sml_def(43)
     hir::Pat::As(ref name, inner) => {
@@ -149,7 +152,7 @@ fn get_(
       }
       let (pm_pat, ty) = get(st, cx, ars, ve, *inner);
       insert_name(st, ve, name.clone(), ty.clone(), pat_);
-      (pm_pat, ty)
+      (pm_pat, ty, None)
     }
     hir::Pat::Or(or_pat) => {
       let mut fst_ve = ValEnv::default();
@@ -179,13 +182,17 @@ fn get_(
         }
       }
       ve.extend(fst_ve);
-      (Pat::or(pm_pats, pat), ty)
+      (Pat::or(pm_pats, pat), ty, None)
     }
   }
 }
 
-fn any(st: &mut St, pat: hir::PatIdx) -> (Pat, Ty) {
-  (Pat::zero(Con::Any, pat), Ty::MetaVar(st.gen_meta_var()))
+fn any(st: &mut St, pat: hir::PatIdx) -> (Pat, Ty, Option<TyScheme>) {
+  (
+    Pat::zero(Con::Any, pat),
+    Ty::MetaVar(st.gen_meta_var()),
+    None,
+  )
 }
 
 fn ok_val_info(vi: Option<&ValInfo>) -> bool {

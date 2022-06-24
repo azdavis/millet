@@ -42,7 +42,7 @@ pub fn get(
   }
   let (syms, errors, subst, mut info) = st.finish();
   statics.syms = syms;
-  for ty in info.values_mut() {
+  for ty in info.tys_mut() {
     util::apply(&subst, ty);
   }
   (info, errors)

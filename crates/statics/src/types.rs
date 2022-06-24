@@ -233,6 +233,15 @@ impl TyScheme {
     );
     Self { bound_vars, ty }
   }
+
+  pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
+    TyDisplay {
+      ty: &self.ty,
+      bound_vars: Some(&self.bound_vars),
+      syms,
+      prec: TyPrec::Arrow,
+    }
+  }
 }
 
 #[derive(Debug, Default, Clone)]
