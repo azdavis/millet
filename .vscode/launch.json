@@ -9,7 +9,7 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}/extensions/vscode"
       ],
-      "preLaunchTask": "extension: build"
+      "preLaunchTask": "build extension"
     }
   ]
 }

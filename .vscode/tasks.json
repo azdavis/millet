@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "extension: build",
+      "label": "build extension",
       "group": "build",
       "type": "shell",
       "command": "cargo xtask dist",
