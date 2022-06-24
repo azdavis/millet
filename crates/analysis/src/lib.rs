@@ -120,6 +120,12 @@ impl Analysis {
     log::info!("statics: {statics:?}");
     ret
   }
+
+  /// Returns a Markdown string with information about this position.
+  #[allow(unused_variables)]
+  pub fn get_info(&self, path: PathId, pos: Position) -> Option<String> {
+    None
+  }
 }
 
 struct AnalyzedFile {

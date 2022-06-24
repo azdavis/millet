@@ -20,6 +20,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
         ..Default::default()
       },
     )),
+    hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
     ..Default::default()
   }
 }
@@ -131,7 +132,42 @@ impl State {
     }
   }
 
-  fn handle_request_(&mut self, r: Request) -> ControlFlow<Result<()>, Request> {
+  fn handle_request_(&mut self, mut r: Request) -> ControlFlow<Result<()>, Request> {
+    r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
+      let mut root = match self.root.take() {
+        Some(x) => x,
+        None => return,
+      };
+      let url = params.text_document_position_params.text_document.uri;
+      let path = canonical_path_buf(&self.file_system, &url);
+      let path = match path {
+        Ok(x) => x,
+        Err(e) => {
+          log::error!("{url}: couldn't canonicalize: {e}");
+          return;
+        }
+      };
+      let path = match root.path.get_id(&path) {
+        Ok(x) => x,
+        Err(e) => {
+          log::error!("{}: not in root: {e}", path.as_path().display());
+          return;
+        }
+      };
+      let pos = analysis_position(params.text_document_position_params.position);
+      let res = self
+        .analysis
+        .get_info(path, pos)
+        .map(|value| lsp_types::Hover {
+          contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
+            kind: lsp_types::MarkupKind::Markdown,
+            value,
+          }),
+          range: None,
+        });
+      self.send_response(Response::new_ok(id, res));
+      self.root = Some(root);
+    })?;
     ControlFlow::Continue(r)
   }
 
@@ -344,6 +380,13 @@ fn lsp_range(range: analysis::Range) -> lsp_types::Range {
 
 fn lsp_position(pos: analysis::Position) -> lsp_types::Position {
   lsp_types::Position {
+    line: pos.line,
+    character: pos.character,
+  }
+}
+
+fn analysis_position(pos: lsp_types::Position) -> analysis::Position {
+  analysis::Position {
     line: pos.line,
     character: pos.character,
   }
