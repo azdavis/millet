@@ -25,7 +25,7 @@ pub struct Arenas {
 macro_rules! mk_idx {
   ($($name:ident)*) => {
     #[doc = "An index into an arena."]
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum Idx {
       $($name(la_arena::Idx<$name>),)*
     }
