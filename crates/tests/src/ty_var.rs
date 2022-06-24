@@ -26,7 +26,7 @@ fn bound_at_fun_2() {
   check(
     r#"
 fun 'a f (id: 'a -> 'a) x = id x + 1
-(**                         ^^^^^^^^ expected _ * _ with word, real, or int, found 'a * int *)
+(**                         ^^^^^^^^ expected ?a * ?a with word, real, or int, found 'a * int *)
 "#,
   );
 }
@@ -49,7 +49,7 @@ type 'a heh = 'a list
 datatype 'a bad = Bad of 'a
 val _: int heh = [1]
 val _ = Bad: unit
-(**     ^^^^^^^^^ expected unit, found _ -> _ bad *)
+(**     ^^^^^^^^^ expected unit, found ?a -> ?a bad *)
 "#,
   );
 }
@@ -60,7 +60,7 @@ fn apply() {
     r#"
 fun ('t, 'u) apply (f: 't -> 'u) (x: 't): 'u = f x
 val _ = apply op+ (1, false)
-(**               ^^^^^^^^^^ expected _ * _, found int * bool *)
+(**               ^^^^^^^^^^ expected ?a * ?a, found int * bool *)
 "#,
   );
 }
@@ -71,7 +71,7 @@ fn different_vars() {
     r#"
 fun ('a, 'b) f (xs: 'a list) (x: 'b) =
     x :: xs
-(** ^^^^^^^ expected _ * _ list, found 'b * 'a list *)
+(** ^^^^^^^ expected ?a * ?a list, found 'b * 'a list *)
 "#,
   );
 }

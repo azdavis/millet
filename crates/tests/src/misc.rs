@@ -6,7 +6,7 @@ fn apply() {
     r#"
 val apply = fn (f, x) => f x
 val _ = apply: unit
-(**     ^^^^^^^^^^^ expected unit, found (_ -> _) * _ -> _ *)
+(**     ^^^^^^^^^^^ expected unit, found (?a -> ?b) * ?a -> ?b *)
 "#,
   );
 }
@@ -34,7 +34,7 @@ fn circularity() {
   check(
     r#"
     fun f _ = f
-(** ^^^^^^^^^^^ attempted to a set a type variable to a type containing that variable: _ -> _ *)
+(** ^^^^^^^^^^^ attempted to a set a type variable to a type containing that variable: ?a -> ?b *)
 "#,
   );
 }
@@ -53,7 +53,7 @@ fun find t p ok err =
       else
         find left p ok (fn () => find right p ok err)
     val _ : unit = find
-(** ^^^^^^^^^^^^^^^^^^^ expected unit, found _ tree -> (_ -> bool) -> (_ -> _) -> (unit -> _) -> _ *)
+(** ^^^^^^^^^^^^^^^^^^^ expected unit, found ?a tree -> (?a -> bool) -> (?a -> ?b) -> (unit -> ?b) -> ?b *)
 "#,
   );
 }
@@ -191,7 +191,7 @@ fun map f xs =
   | x :: xs => f x :: map f xs
 
 val _ = map: unit
-(**     ^^^^^^^^^ expected unit, found (_ -> _) -> _ list -> _ list *)
+(**     ^^^^^^^^^ expected unit, found (?a -> ?b) -> ?a list -> ?b list *)
 "#,
   );
 }

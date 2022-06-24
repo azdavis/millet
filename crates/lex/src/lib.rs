@@ -241,7 +241,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     cx.i += 1;
     advance_while(cx, bs, is_symbolic);
     let got = &bs[start..cx.i];
-    // ...but we must check if the 'symbolic identifier' was actually a punctuation token. TODO this
+    // ...but we must check if the 'symbolic identifier' was actually a punctuation token. NOTE: this
     // could be a bit quicker if we divide the punctuation tokens into those that 'look like'
     // symbolic identifiers (like `:` and `#`) and those that can't possibly be (like `{` or `,`).
     return SK::PUNCTUATION

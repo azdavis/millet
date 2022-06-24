@@ -132,7 +132,7 @@ fn must_solve_to_single_overloaded_type() {
   check(
     r#"
 val _ = 1.1 + 1
-(**     ^^^^^^^ expected _ * _, found real * int *)
+(**     ^^^^^^^ expected ?a * ?a, found real * int *)
 "#,
   );
 }
@@ -142,7 +142,7 @@ fn overload_err() {
   check(
     r#"
 val  _ = false + true
-(**      ^^^^^^^^^^^^ expected _ * _ with word, real, or int, found bool * bool *)
+(**      ^^^^^^^^^^^^ expected ?a * ?a with word, real, or int, found bool * bool *)
 "#,
   );
 }

@@ -62,7 +62,7 @@ fn rebind_nil() {
   check(
     r#"
     fun nil () = ()
-(** ^^^^^^^^^^^^^^^ expected _ list, found unit -> unit *)
+(** ^^^^^^^^^^^^^^^ expected ?a list, found unit -> unit *)
 "#,
   );
 }

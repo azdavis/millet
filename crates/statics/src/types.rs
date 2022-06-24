@@ -3,11 +3,12 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
-use crate::fmt_util::{comma_seq, ty_var_name};
+use crate::fmt_util::{comma_seq, idx_to_name, ty_var_name};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::fmt;
+use std::rc::Rc;
 use std::sync::Arc;
 use uniq::{Uniq, UniqGen};
 
@@ -42,11 +43,11 @@ impl Ty {
     Self::Fn(param.into(), res.into())
   }
 
-  /// TODO do we need this? have it be on TyScheme, Ty, both?
   pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
     TyDisplay {
       ty: self,
       bound_vars: None,
+      meta_vars: meta_var_names(self),
       syms,
       prec: TyPrec::Arrow,
     }
@@ -55,8 +56,8 @@ impl Ty {
 
 struct TyDisplay<'a> {
   ty: &'a Ty,
-  /// TODO figure this out
   bound_vars: Option<&'a BoundTyVars>,
+  meta_vars: MetaVarNames,
   syms: &'a Syms,
   prec: TyPrec,
 }
@@ -66,6 +67,7 @@ impl<'a> TyDisplay<'a> {
     Self {
       ty,
       bound_vars: self.bound_vars,
+      meta_vars: Rc::clone(&self.meta_vars),
       syms: self.syms,
       prec,
     }
@@ -77,16 +79,19 @@ impl<'a> fmt::Display for TyDisplay<'a> {
     match self.ty {
       Ty::None => f.write_str("<none>")?,
       Ty::BoundVar(bv) => {
-        // TODO this never gets used because we don't generalize when reporting in errors. also it
-        // might have clashed with fixed vars anyway?
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         let equality = matches!(vars.0[bv.0], Some(TyVarKind::Equality));
         for c in ty_var_name(equality, bv.0) {
           write!(f, "{c}")?;
         }
       }
-      // TODO improve?
-      Ty::MetaVar(_) => f.write_str("_")?,
+      Ty::MetaVar(mv) => {
+        let &idx = self.meta_vars.get(mv).ok_or(fmt::Error)?;
+        f.write_str("?")?;
+        for c in idx_to_name(idx) {
+          write!(f, "{c}")?;
+        }
+      }
       Ty::FixedVar(fv) => fv.fmt(f)?,
       Ty::Record(rows) => {
         if rows.is_empty() {
@@ -118,6 +123,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
             f,
             rows.iter().map(|(lab, ty)| RowDisplay {
               bound_vars: self.bound_vars,
+              meta_vars: Rc::clone(&self.meta_vars),
               syms: self.syms,
               lab,
               ty,
@@ -164,6 +170,25 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   }
 }
 
+type MetaVarNames = Rc<FxHashMap<MetaTyVar, usize>>;
+
+fn meta_var_names(ty: &Ty) -> MetaVarNames {
+  let mut n = 0usize;
+  let mut ret = FxHashMap::<MetaTyVar, usize>::default();
+  meta_vars(
+    &Subst::default(),
+    &mut |x| {
+      ret.entry(x).or_insert_with(|| {
+        let ret = n;
+        n += 1;
+        ret
+      });
+    },
+    ty,
+  );
+  Rc::new(ret)
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum TyPrec {
   Arrow,
@@ -173,6 +198,7 @@ enum TyPrec {
 
 struct RowDisplay<'a> {
   bound_vars: Option<&'a BoundTyVars>,
+  meta_vars: MetaVarNames,
   syms: &'a Syms,
   lab: &'a hir::Lab,
   ty: &'a Ty,
@@ -185,6 +211,7 @@ impl<'a> fmt::Display for RowDisplay<'a> {
     let td = TyDisplay {
       ty: self.ty,
       bound_vars: self.bound_vars,
+      meta_vars: Rc::clone(&self.meta_vars),
       syms: self.syms,
       prec: TyPrec::Arrow,
     };
@@ -238,6 +265,7 @@ impl TyScheme {
     TyDisplay {
       ty: &self.ty,
       bound_vars: Some(&self.bound_vars),
+      meta_vars: meta_var_names(&self.ty),
       syms,
       prec: TyPrec::Arrow,
     }
@@ -591,7 +619,6 @@ pub(crate) type TyNameSet = FxHashSet<Sym>;
 /// Definition: Sig
 #[derive(Debug, Clone)]
 pub(crate) struct Sig {
-  /// TODO not sure
   pub(crate) ty_names: TyNameSet,
   pub(crate) env: Env,
 }
