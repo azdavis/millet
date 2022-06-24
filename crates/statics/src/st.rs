@@ -1,4 +1,5 @@
 use crate::error::{Error, ErrorKind};
+use crate::info::Info;
 use crate::std_basis;
 use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms};
 
@@ -14,6 +15,7 @@ pub(crate) struct St {
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,
   fixed_gen: FixedTyVarGen,
+  info: Info,
   pub(crate) syms: Syms,
 }
 
@@ -25,6 +27,7 @@ impl St {
       errors: Vec::new(),
       meta_gen: MetaTyVarGen::default(),
       fixed_gen: FixedTyVarGen::default(),
+      info: Info::default(),
       syms,
     }
   }
@@ -55,8 +58,12 @@ impl St {
     self.fixed_gen.gen(ty_var)
   }
 
-  pub(crate) fn finish(self) -> (Syms, Vec<Error>) {
-    (self.syms, self.errors)
+  pub(crate) fn info(&mut self) -> &mut Info {
+    &mut self.info
+  }
+
+  pub(crate) fn finish(self) -> (Syms, Vec<Error>, Subst, Info) {
+    (self.syms, self.errors, self.subst, self.info)
   }
 }
 

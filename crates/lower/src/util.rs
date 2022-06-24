@@ -16,9 +16,14 @@ pub struct Ptrs {
 }
 
 impl Ptrs {
-  /// Returns the `SyntaxNodePtr` for an HIR index.
+  /// Returns the unique syntax pointer for an HIR index.
   pub fn hir_to_ast(&self, idx: hir::Idx) -> Option<SyntaxNodePtr> {
     self.hir_to_ast.get(&idx).cloned()
+  }
+
+  /// Returns one of possibly many HIR indices for the syntax pointer.
+  pub fn ast_to_hir(&self, ptr: SyntaxNodePtr) -> Option<hir::Idx> {
+    self.ast_to_hir.get(&ptr).copied()
   }
 
   fn insert<N, I>(&mut self, idx: I, ptr: AstPtr<N>)

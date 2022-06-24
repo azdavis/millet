@@ -12,7 +12,6 @@ priority is approximate. if unsure of priority, put in low.
   - and/or impl MLB support instead
 - impl more LSP features
   - jump to definition
-  - hover for type/documentation
 - impl perf boost low-hanging fruit
   - don't re-IO, re-lex, re-parse, re-lower every file every time
 
@@ -21,6 +20,10 @@ priority is approximate. if unsure of priority, put in low.
 - improve statics for type variables
   - performing closure operations
   - checking whether expressions are expansive (oh no!)
+- improve hover
+  - show types better (not `_` for ty vars)
+  - hover on structure/signature/functor/type?
+  - show documentation?
 - handle equality types
   - in type variables
   - `eqtype` vs `type`

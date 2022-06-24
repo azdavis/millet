@@ -10,7 +10,8 @@ use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use statics::Mode::Regular;
 use std::fmt;
-use syntax::ast::AstNode as _;
+use syntax::ast::{AstNode as _, SyntaxNodePtr};
+use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
 pub use std_basis::StdBasis;
 pub use text_pos::{Position, Range};
@@ -26,6 +27,7 @@ pub const MAX_ERRORS_PER_PATH: usize = 20;
 pub struct Analysis {
   std_basis: StdBasis,
   files: PathMap<AnalyzedFile>,
+  syms: statics::Syms,
 }
 
 impl Analysis {
@@ -34,6 +36,7 @@ impl Analysis {
     Self {
       std_basis,
       files: PathMap::default(),
+      syms: statics::Syms::default(),
     }
   }
 
@@ -67,7 +70,7 @@ impl Analysis {
         .map(|(&path_id, s)| (path_id, AnalyzedFile::new(s)))
         .collect()
     });
-    elapsed::log("statics", || {
+    let ret: PathMap<Vec<_>> = elapsed::log("statics", || {
       order
         .into_iter()
         .flat_map(|path| {
@@ -85,24 +88,63 @@ impl Analysis {
               return None;
             }
           };
-          statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+          let info = statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
           f.statics_errors = std::mem::take(&mut st.errors);
+          f.info = info;
           Some((path_id, f.to_errors(&st.syms)))
         })
         .collect()
-    })
+    });
+    self.syms = st.syms;
+    ret
   }
 
   /// Returns a Markdown string with information about this position.
   #[allow(unused_variables)]
-  pub fn get_info(&self, path: PathId, pos: Position) -> Option<String> {
-    None
+  pub fn get_info(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
+    let f = self.files.get(&path)?;
+    let mut node = get_node(f, pos)?;
+    loop {
+      let ptr = SyntaxNodePtr::new(&node);
+      match f.lowered.ptrs.ast_to_hir(ptr.clone()) {
+        Some(idx) => {
+          let s = f.info.get(&self.syms, idx)?;
+          let range = ptr.to_node(f.parsed.root.syntax()).text_range();
+          return Some((s, f.pos_db.range(range)));
+        }
+        None => node = node.parent()?,
+      }
+    }
   }
 
   /// Returns the definition range of the item at this position.
   #[allow(unused_variables)]
   pub fn get_def_location(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
     None
+  }
+}
+
+fn get_node(file: &AnalyzedFile, pos: Position) -> Option<SyntaxNode> {
+  let idx = file.pos_db.text_size(pos);
+  let tok = match file.parsed.root.syntax().token_at_offset(idx) {
+    TokenAtOffset::None => return None,
+    TokenAtOffset::Single(t) => t,
+    TokenAtOffset::Between(t1, t2) => {
+      if priority(t1.kind()) >= priority(t2.kind()) {
+        t1
+      } else {
+        t2
+      }
+    }
+  };
+  tok.parent()
+}
+
+fn priority(kind: SyntaxKind) -> u8 {
+  match kind {
+    SyntaxKind::Name => 2,
+    SyntaxKind::Whitespace | SyntaxKind::BlockComment | SyntaxKind::Invalid => 0,
+    _ => 1,
   }
 }
 
@@ -124,6 +166,7 @@ struct AnalyzedFile {
   parsed: parse::Parse,
   lowered: lower::Lower,
   statics_errors: Vec<statics::Error>,
+  info: statics::Info,
 }
 
 impl AnalyzedFile {
@@ -140,6 +183,7 @@ impl AnalyzedFile {
       parsed,
       lowered,
       statics_errors: Vec::new(),
+      info: statics::Info::default(),
     }
   }
 

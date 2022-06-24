@@ -148,12 +148,12 @@ impl State {
       let res = self
         .analysis
         .get_info(path, pos)
-        .map(|value| lsp_types::Hover {
+        .map(|(value, range)| lsp_types::Hover {
           contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,
             value,
           }),
-          range: None,
+          range: Some(lsp_range(range)),
         });
       self.send_response(Response::new_ok(id, res));
       self.root = Some(root);

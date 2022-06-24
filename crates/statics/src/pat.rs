@@ -19,6 +19,19 @@ pub(crate) fn get(
     Some(x) => x,
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
+  let (p, t) = get_(st, cx, ars, ve, pat_);
+  st.info().insert(pat_, t.clone());
+  (p, t)
+}
+
+fn get_(
+  st: &mut St,
+  cx: &Cx,
+  ars: &hir::Arenas,
+  ve: &mut ValEnv,
+  pat_: hir::la_arena::Idx<hir::Pat>,
+) -> (Pat, Ty) {
+  let pat = Some(pat_);
   match &ars.pat[pat_] {
     // sml_def(32)
     hir::Pat::Wild => any(st, pat),

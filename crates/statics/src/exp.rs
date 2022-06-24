@@ -11,7 +11,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     Some(x) => x,
     None => return Ty::None,
   };
-  match &ars.exp[exp] {
+  // NOTE: do not early return, since we add the ty to the Info at the bottom.
+  let ret = match &ars.exp[exp] {
     // sml_def(1)
     hir::Exp::SCon(scon) => get_scon(scon),
     // sml_def(2)
@@ -110,7 +111,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       apply(st.subst(), &mut want);
       want
     }
-  }
+  };
+  st.info().insert(exp, ret.clone());
+  ret
 }
 
 /// sml_def(13)
