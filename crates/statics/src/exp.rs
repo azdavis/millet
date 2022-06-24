@@ -11,8 +11,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     Some(x) => x,
     None => return Ty::None,
   };
-  // NOTE: do not early return, since we add the ty to the Info at the bottom. TODO have this match
-  // eval to a TyScheme and instantiate?
+  // NOTE: do not early return, since we add the ty to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
   let ret = match &ars.exp[exp] {
     // sml_def(1)

@@ -24,7 +24,6 @@ pub(crate) fn get(
   (pat, ty)
 }
 
-/// TODO just return a TyScheme always and instantiate to create the ty?
 fn get_(
   st: &mut St,
   cx: &Cx,
@@ -83,19 +82,24 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(exn.clone()),
       };
-      // TODO we fiddle with the ty in the Ty::Fn case below but the TyScheme will not have those
-      // modifications.
-      ty_scheme = Some(val_info.ty_scheme.clone());
       let ty = instantiate(st, val_info.ty_scheme.clone());
       // sml_def(35), sml_def(41)
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
+          ty_scheme = Some(val_info.ty_scheme.clone());
           if arg.is_some() {
             st.err(pat_, ErrorKind::ConPatMustNotHaveArg)
           }
           (sym, Vec::new(), ty)
         }
         Ty::Fn(param_ty, mut res_ty) => {
+          ty_scheme = Some(TyScheme {
+            bound_vars: val_info.ty_scheme.bound_vars.clone(),
+            ty: match &val_info.ty_scheme.ty {
+              Ty::Fn(_, res_ty) => res_ty.as_ref().clone(),
+              _ => unreachable!("we are in the Fn case for the ty scheme's ty"),
+            },
+          });
           let sym = match res_ty.as_ref() {
             Ty::Con(_, x) => *x,
             _ => unreachable!("a fn ctor returns the type it constructs, which will be a Con"),
