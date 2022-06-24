@@ -71,7 +71,7 @@ pub enum StrDec {
   Local(StrDecIdx, StrDecIdx),
   Seq(Vec<StrDecIdx>),
   /// technically a top dec in the Definition.
-  Sig(Vec<SigBind>),
+  Signature(Vec<SigBind>),
   /// technically a top dec in the Definition.
   Functor(Vec<FunctorBind>),
 }

@@ -87,7 +87,7 @@ fn get_str_dec(cx: &mut Cx, ars: &hir::Arenas, str_dec: hir::StrDecIdx) {
         get_str_dec(cx, ars, str_dec);
       }
     }
-    hir::StrDec::Sig(sig_binds) => {
+    hir::StrDec::Signature(sig_binds) => {
       for sig_bind in sig_binds {
         get_sig_exp(cx, ars, sig_bind.sig_exp);
       }

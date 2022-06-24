@@ -35,7 +35,7 @@ pub(crate) fn get(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
       get_str_dec(cx, str_dec.local_dec()),
       get_str_dec(cx, str_dec.in_dec()),
     ),
-    ast::StrDecOne::SigDec(str_dec) => hir::StrDec::Sig(
+    ast::StrDecOne::SigDec(str_dec) => hir::StrDec::Signature(
       str_dec
         .sig_binds()
         .filter_map(|sig_bind| {

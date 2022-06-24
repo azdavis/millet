@@ -87,7 +87,7 @@ fn get_str_dec(
       }
     }
     // sml_def(66), sml_def(88)
-    hir::StrDec::Sig(sig_binds) => {
+    hir::StrDec::Signature(sig_binds) => {
       let ac = match ac {
         StrDecAc::Bs(ac) => ac,
         StrDecAc::Env(_) => {
