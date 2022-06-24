@@ -126,6 +126,12 @@ impl Analysis {
   pub fn get_info(&self, path: PathId, pos: Position) -> Option<String> {
     None
   }
+
+  /// Returns the definition range of the item at this position.
+  #[allow(unused_variables)]
+  pub fn get_def_location(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
+    None
+  }
 }
 
 struct AnalyzedFile {

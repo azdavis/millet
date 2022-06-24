@@ -159,6 +159,40 @@ impl State {
       self.send_response(Response::new_ok(id, res));
       self.root = Some(root);
     })?;
+    r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
+      let mut root = match self.root.take() {
+        Some(x) => x,
+        None => return,
+      };
+      let params = params.text_document_position_params;
+      let (path, pos) = match text_doc_pos_params(&self.file_system, &mut root, params) {
+        Ok(x) => x,
+        Err(e) => {
+          log::error!("{e:#}");
+          return;
+        }
+      };
+      let res = self
+        .analysis
+        .get_def_location(path, pos)
+        .and_then(|(path, range)| {
+          let uri = match file_url(root.path.get_path(path).as_path()) {
+            Ok(x) => x,
+            Err(e) => {
+              log::error!("{e:#}");
+              return None;
+            }
+          };
+          Some(lsp_types::GotoDefinitionResponse::Scalar(
+            lsp_types::Location {
+              uri,
+              range: lsp_range(range),
+            },
+          ))
+        });
+      self.send_response(Response::new_ok(id, res));
+      self.root = Some(root);
+    })?;
     ControlFlow::Continue(r)
   }
 
