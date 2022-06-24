@@ -460,17 +460,36 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
           }
         }
       }
-      ac.append(&mut inner_env);
+      append_no_dupe(st, ac, &mut inner_env, spec.into());
     }
     // sml_def(76), sml_def(77)
     hir::Spec::Seq(specs) => {
       let mut bs = bs.clone();
       let mut one_env = Env::default();
-      for &spec in specs {
-        get_spec(st, &bs, ars, &mut one_env, spec);
+      for &seq_spec in specs {
+        get_spec(st, &bs, ars, &mut one_env, seq_spec);
         bs.as_mut_env().append(&mut one_env.clone());
-        ac.append(&mut one_env);
+        append_no_dupe(st, ac, &mut one_env, seq_spec.unwrap_or(spec).into());
       }
+    }
+  }
+}
+
+/// empties other into ac, while checking for dupes.
+fn append_no_dupe(st: &mut St, ac: &mut Env, other: &mut Env, idx: hir::Idx) {
+  for (name, val) in other.str_env.drain() {
+    if let Some(e) = ins_no_dupe(&mut ac.str_env, name, val, Item::Struct) {
+      st.err(idx, e);
+    }
+  }
+  for (name, val) in other.ty_env.drain() {
+    if let Some(e) = ins_no_dupe(&mut ac.ty_env, name, val, Item::Ty) {
+      st.err(idx, e);
+    }
+  }
+  for (name, val) in other.val_env.drain() {
+    if let Some(e) = ins_no_dupe(&mut ac.val_env, name, val, Item::Val) {
+      st.err(idx, e);
     }
   }
 }

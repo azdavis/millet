@@ -1,9 +1,12 @@
 signature TEXT_IO = sig
   include IMPERATIVE_IO
+  (*
+  TODO this is duplicate with IMPERATIVE_IO. maybe allow dupes in std basis files?
   structure StreamIO : TEXT_STREAM_IO
     where type reader = TextPrimIO.reader
     where type writer = TextPrimIO.writer
     where type pos = TextPrimIO.pos
+  *)
   val inputLine : instream -> string option
   val outputSubstr : outstream * Substring.substring -> unit
   val openIn : string -> instream

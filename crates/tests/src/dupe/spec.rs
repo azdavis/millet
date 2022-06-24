@@ -1,8 +1,8 @@
-use crate::check::fail;
+use crate::check::check;
 
 #[test]
 fn val() {
-  fail(
+  check(
     r#"
 signature S = sig
   val x: int val x: int
@@ -14,7 +14,7 @@ end
 
 #[test]
 fn ty() {
-  fail(
+  check(
     r#"
 signature S = sig
   type t type t
@@ -26,7 +26,7 @@ end
 
 #[test]
 fn eq_ty() {
-  fail(
+  check(
     r#"
 signature S = sig
   eqtype t eqtype t
@@ -38,7 +38,7 @@ end
 
 #[test]
 fn datatype() {
-  fail(
+  check(
     r#"
 signature S = sig
   datatype t = A datatype t = B
@@ -50,7 +50,7 @@ end
 
 #[test]
 fn exception() {
-  fail(
+  check(
     r#"
 signature S = sig
   exception E exception E
@@ -62,7 +62,7 @@ end
 
 #[test]
 fn structure() {
-  fail(
+  check(
     r#"
 signature S = sig
   structure A : sig end structure A : sig end

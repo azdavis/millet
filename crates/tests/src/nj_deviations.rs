@@ -181,8 +181,7 @@ structure C = Func(val x = 8)
 
 #[test]
 fn dupe_via_includes() {
-  // should error
-  fail(
+  check(
     r#"
 signature SIG1 = sig
   type t
