@@ -69,19 +69,21 @@ fn get_str_dec(
       let mut bs = bs.clone();
       match ac {
         StrDecAc::Env(ac) => {
+          let mut one_env = Env::default();
           for &str_dec in str_decs {
-            let mut one_env = Env::default();
+            one_env.clear();
             get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
             bs.as_mut_env().extend(one_env.clone());
-            ac.extend(one_env);
+            ac.extend(one_env.clone());
           }
         }
         StrDecAc::Bs(ac) => {
+          let mut one_bs = Bs::default();
           for &str_dec in str_decs {
-            let mut one_bs = Bs::default();
+            one_bs.clear();
             get_str_dec(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
             bs.extend(one_bs.clone());
-            ac.extend(one_bs);
+            ac.extend(one_bs.clone());
           }
         }
       }
@@ -465,11 +467,12 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
     // sml_def(76), sml_def(77)
     hir::Spec::Seq(specs) => {
       let mut bs = bs.clone();
+      let mut one_env = Env::default();
       for &spec in specs {
-        let mut one_env = Env::default();
+        one_env.clear();
         get_spec(st, &bs, ars, &mut one_env, spec);
         bs.as_mut_env().extend(one_env.clone());
-        ac.extend(one_env);
+        ac.extend(one_env.clone());
       }
     }
   }

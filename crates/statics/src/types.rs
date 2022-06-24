@@ -617,6 +617,12 @@ impl Env {
     self.ty_env.extend(env.ty_env);
     self.val_env.extend(env.val_env);
   }
+
+  pub(crate) fn clear(&mut self) {
+    self.str_env.clear();
+    self.ty_env.clear();
+    self.val_env.clear();
+  }
 }
 
 /// Definition: Context
@@ -689,6 +695,12 @@ impl Bs {
     env
       .val_env
       .extend(bs.env.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
+  }
+
+  pub(crate) fn clear(&mut self) {
+    self.fun_env.clear();
+    self.sig_env.clear();
+    self.as_mut_env().clear();
   }
 }
 
