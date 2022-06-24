@@ -162,7 +162,7 @@ impl AnalyzedFile {
       }))
       .chain(self.statics_errors.iter().filter_map(|err| {
         let idx = err.idx();
-        let syntax = match self.lowered.ptrs.get(idx) {
+        let syntax = match self.lowered.ptrs.hir_to_ast(idx) {
           Some(x) => x,
           None => {
             log::error!("no pointer for {idx:?}");

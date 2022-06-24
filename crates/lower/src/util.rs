@@ -44,7 +44,7 @@ macro_rules! try_get_hir {
 
 impl Ptrs {
   /// Returns the `SyntaxNodePtr` for an HIR index.
-  pub fn get(&self, idx: hir::Idx) -> Option<SyntaxNodePtr> {
+  pub fn hir_to_ast(&self, idx: hir::Idx) -> Option<SyntaxNodePtr> {
     match idx {
       hir::Idx::Exp(idx) => try_get_hir!(idx, self, exp),
       hir::Idx::Pat(idx) => try_get_hir!(idx, self, pat, pat_in_exp),
