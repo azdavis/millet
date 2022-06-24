@@ -565,18 +565,18 @@ Typechecking failed, because of "circularity", which means we attempted to a set
 fun f x = x x
 ```
 
-When Millet attempts to typecheck `f`, it first assigns a fresh type variable to the name `x`. Then it enters the body of `f` to see how `x` is used, updating the type variable for `x` as it goes. Let's use `$x` as the type variable for `x`.
+When Millet attempts to typecheck `f`, it first assigns a fresh type variable to the name `x`. Then it enters the body of `f` to see how `x` is used, updating the type variable for `x` as it goes. Let's use `?x` as the type variable for `x`.
 
-We see the application expression `x x`. `x` is used as a function, so it must have a type like `$1 -> $2` where `$1` and `$2` are types. So, we have the constraint `$x = $1 -> $2`.
+We see the application expression `x x`. `x` is used as a function, so it must have a type like `?a -> ?b` where `?a` and `?b` are types. So, we have the constraint `?x = ?a -> ?b`.
 
-However, `x` is used as the argument to that function, which we just said has type `$1 -> $2`. So we must have `$x = $1`, the type of the argument to the function.
+However, `x` is used as the argument to that function, which we just said has type `?a -> ?b`. So we must have `?x = ?a`, the type of the argument to the function.
 
 We now have
 
-- `$x = $1 -> $2`
-- `$x = $1`
+- `?x = ?a -> ?b`
+- `?x = ?a`
 
-Substituting, we have `$1 = $1 -> $2`. That is, we are setting a type variable, in this case `$1`, to a type, in this case `$1 -> $2`, that contains itself. This is not allowed.
+Substituting, we have `?a = ?a -> ?b`. That is, we are setting a type variable, in this case `?a`, to a type, in this case `?a -> ?b`, that contains itself. This is not allowed.
 
 ## 4007
 
