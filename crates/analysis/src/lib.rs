@@ -21,44 +21,6 @@ pub const ROOT_GROUP: &str = "sources.cm";
 /// The max number of errors per path.
 pub const MAX_ERRORS_PER_PATH: usize = 20;
 
-/// An error.
-#[derive(Debug)]
-pub struct Error {
-  /// The range of the error.
-  pub range: Range,
-  /// The message of the error.
-  pub message: String,
-  /// The error code.
-  pub code: u16,
-}
-
-/// A group of source files.
-///
-/// TODO use exports
-#[derive(Debug)]
-struct Group {
-  /// The source file paths, in order.
-  source_files: Vec<PathId>,
-  /// The dependencies of this group on other groups.
-  dependencies: FxHashSet<PathId>,
-}
-
-/// The input to analysis.
-#[derive(Debug, Default)]
-pub struct Input {
-  /// A map from source files to their contents.
-  sources: PathMap<String>,
-  /// A map from group files to their (parsed) contents.
-  groups: PathMap<Group>,
-}
-
-impl Input {
-  /// Return an iterator over the source files.
-  pub fn iter_sources(&self) -> impl Iterator<Item = (paths::PathId, &str)> + '_ {
-    self.sources.iter().map(|(&path, s)| (path, s.as_str()))
-  }
-}
-
 /// Performs analysis.
 #[derive(Debug, Default)]
 pub struct Analysis {
@@ -144,6 +106,17 @@ impl Analysis {
   }
 }
 
+/// An error.
+#[derive(Debug)]
+pub struct Error {
+  /// The range of the error.
+  pub range: Range,
+  /// The message of the error.
+  pub message: String,
+  /// The error code.
+  pub code: u16,
+}
+
 #[derive(Debug)]
 struct AnalyzedFile {
   pos_db: text_pos::PositionDb,
@@ -206,6 +179,22 @@ impl AnalyzedFile {
       }))
       .take(MAX_ERRORS_PER_PATH)
       .collect()
+  }
+}
+
+/// The input to analysis.
+#[derive(Debug, Default)]
+pub struct Input {
+  /// A map from source files to their contents.
+  sources: PathMap<String>,
+  /// A map from group files to their (parsed) contents.
+  groups: PathMap<Group>,
+}
+
+impl Input {
+  /// Return an iterator over the source files.
+  pub fn iter_sources(&self) -> impl Iterator<Item = (paths::PathId, &str)> + '_ {
+    self.sources.iter().map(|(&path, s)| (path, s.as_str()))
   }
 }
 
@@ -290,6 +279,17 @@ where
     ret.groups.insert(path_id, group);
   }
   Ok(ret)
+}
+
+/// A group of source files.
+///
+/// TODO use exports
+#[derive(Debug)]
+struct Group {
+  /// The source file paths, in order.
+  source_files: Vec<PathId>,
+  /// The dependencies of this group on other groups.
+  dependencies: FxHashSet<PathId>,
 }
 
 fn get_path_id<F>(
