@@ -71,7 +71,7 @@ impl Analysis {
     let mut st = self.std_basis.into_statics();
     statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
     f.statics_errors = std::mem::take(&mut st.errors);
-    f.into_errors(&st.syms)
+    f.to_errors(&st.syms)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -113,7 +113,7 @@ impl Analysis {
           elapsed::time(|| statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs));
         statics += dur;
         f.statics_errors = std::mem::take(&mut st.errors);
-        Some((path_id, f.into_errors(&st.syms)))
+        Some((path_id, f.to_errors(&st.syms)))
       })
       .collect();
     log::info!("analyzed_file: {analyzed_file:?}");
@@ -159,24 +159,24 @@ impl AnalyzedFile {
     }
   }
 
-  fn into_errors(self, syms: &statics::Syms) -> Vec<Error> {
+  fn to_errors(&self, syms: &statics::Syms) -> Vec<Error> {
     std::iter::empty()
-      .chain(self.lex_errors.into_iter().map(|err| Error {
+      .chain(self.lex_errors.iter().map(|err| Error {
         range: self.pos_db.range(err.range()),
         message: err.display().to_string(),
         code: 1000 + u16::from(err.to_code()),
       }))
-      .chain(self.parsed.errors.into_iter().map(|err| Error {
+      .chain(self.parsed.errors.iter().map(|err| Error {
         range: self.pos_db.range(err.range()),
         message: err.display().to_string(),
         code: 2000 + u16::from(err.to_code()),
       }))
-      .chain(self.lowered.errors.into_iter().map(|err| Error {
+      .chain(self.lowered.errors.iter().map(|err| Error {
         range: self.pos_db.range(err.range()),
         message: err.display().to_string(),
         code: 3000 + u16::from(err.to_code()),
       }))
-      .chain(self.statics_errors.into_iter().filter_map(|err| {
+      .chain(self.statics_errors.iter().filter_map(|err| {
         let idx = err.idx();
         let syntax = match self.lowered.ptrs.get(idx) {
           Some(x) => x,
