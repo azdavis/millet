@@ -683,7 +683,7 @@ pub(crate) fn generalize(
 ) -> Option<HasRecordMetaVars> {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
-  meta_vars(subst, &mut meta, &ty_scheme.ty);
+  meta_vars(subst, &mut |x| drop(meta.insert(x, None)), &ty_scheme.ty);
   let mut g = Generalizer {
     subst,
     fixed,
@@ -727,28 +727,31 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
   );
 }
 
-fn meta_vars(subst: &Subst, map: &mut FxHashMap<MetaTyVar, Option<BoundTyVar>>, ty: &Ty) {
+fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
+where
+  F: FnMut(MetaTyVar),
+{
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
       None | Some(SubstEntry::Kind(_)) => {
-        map.insert(mv.clone(), None);
+        f(mv.clone());
       }
-      Some(SubstEntry::Solved(ty)) => meta_vars(subst, map, ty),
+      Some(SubstEntry::Solved(ty)) => meta_vars(subst, f, ty),
     },
     Ty::Record(rows) => {
       for ty in rows.values() {
-        meta_vars(subst, map, ty);
+        meta_vars(subst, f, ty);
       }
     }
     Ty::Con(args, _) => {
       for ty in args.iter() {
-        meta_vars(subst, map, ty);
+        meta_vars(subst, f, ty);
       }
     }
     Ty::Fn(param, res) => {
-      meta_vars(subst, map, param);
-      meta_vars(subst, map, res);
+      meta_vars(subst, f, param);
+      meta_vars(subst, f, res);
     }
   }
 }
