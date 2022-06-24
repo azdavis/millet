@@ -63,12 +63,16 @@ impl Input {
 #[derive(Debug, Default)]
 pub struct Analysis {
   std_basis: StdBasis,
+  files: PathMap<AnalyzedFile>,
 }
 
 impl Analysis {
   /// Returns a new `Analysis`.
   pub fn new(std_basis: StdBasis) -> Self {
-    Self { std_basis }
+    Self {
+      std_basis,
+      files: PathMap::default(),
+    }
   }
 
   /// Given the contents of one isolated file, return the errors for it.
@@ -82,7 +86,7 @@ impl Analysis {
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
-  pub fn get_many(&self, input: &Input) -> PathMap<Vec<Error>> {
+  pub fn get_many(&mut self, input: &Input) -> PathMap<Vec<Error>> {
     let graph: topo_sort::Graph<_> = input
       .groups
       .iter()
@@ -94,37 +98,37 @@ impl Analysis {
     });
     // TODO require explicit basis import
     let mut st = self.std_basis.into_statics();
-    let mut analyzed_file = std::time::Duration::ZERO;
-    let mut statics = std::time::Duration::ZERO;
-    let ret: PathMap<Vec<_>> = order
-      .into_iter()
-      .flat_map(|path| {
-        input
-          .groups
-          .get(&path)
-          .into_iter()
-          .flat_map(|x| x.source_files.iter())
-      })
-      .filter_map(|&path_id| {
-        let s = match input.sources.get(&path_id) {
-          Some(x) => x,
-          None => {
-            log::error!("no contents for {path_id:?}");
-            return None;
-          }
-        };
-        let (mut f, dur) = elapsed::time(|| AnalyzedFile::new(s));
-        analyzed_file += dur;
-        let ((), dur) =
-          elapsed::time(|| statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs));
-        statics += dur;
-        f.statics_errors = std::mem::take(&mut st.errors);
-        Some((path_id, f.to_errors(&st.syms)))
-      })
-      .collect();
-    log::info!("analyzed_file: {analyzed_file:?}");
-    log::info!("statics: {statics:?}");
-    ret
+    self.files = elapsed::log("analyzed_files", || {
+      input
+        .sources
+        .iter()
+        .map(|(&path_id, s)| (path_id, AnalyzedFile::new(s)))
+        .collect()
+    });
+    elapsed::log("statics", || {
+      order
+        .into_iter()
+        .flat_map(|path| {
+          input
+            .groups
+            .get(&path)
+            .into_iter()
+            .flat_map(|x| x.source_files.iter())
+        })
+        .filter_map(|&path_id| {
+          let f = match self.files.get_mut(&path_id) {
+            Some(x) => x,
+            None => {
+              log::error!("no file for {path_id:?}");
+              return None;
+            }
+          };
+          statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
+          f.statics_errors = std::mem::take(&mut st.errors);
+          Some((path_id, f.to_errors(&st.syms)))
+        })
+        .collect()
+    })
   }
 
   /// Returns a Markdown string with information about this position.
@@ -140,6 +144,7 @@ impl Analysis {
   }
 }
 
+#[derive(Debug)]
 struct AnalyzedFile {
   pos_db: text_pos::PositionDb,
   lex_errors: Vec<lex::Error>,
