@@ -80,7 +80,7 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
 
 /// instantiates the type scheme's type with new meta type vars, according to the bound vars of the
 /// type scheme.
-pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
+pub(crate) fn instantiate(st: &mut St, ty_scheme: TyScheme) -> Ty {
   let subst: Vec<_> = ty_scheme
     .bound_vars
     .kinds()
@@ -93,7 +93,7 @@ pub(crate) fn instantiate(st: &mut St, ty_scheme: &TyScheme) -> Ty {
       Ty::MetaVar(mv)
     })
     .collect();
-  let mut ty = ty_scheme.ty.clone();
+  let mut ty = ty_scheme.ty;
   apply_bv(&subst, &mut ty);
   apply(st.subst(), &mut ty);
   ty

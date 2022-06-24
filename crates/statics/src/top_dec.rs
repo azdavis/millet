@@ -640,48 +640,47 @@ fn env_enrich(st: &mut St, general: &Env, specific: &Env, idx: hir::Idx) {
   }
   for (name, specific) in specific.ty_env.iter() {
     match general.ty_env.get(name) {
-      Some(general) => ty_info_enrich(st, general, specific, idx),
+      Some(general) => ty_info_enrich(st, general.clone(), specific.clone(), idx),
       None => st.err(idx, ErrorKind::Missing(Item::Ty, name.clone())),
     }
   }
   for (name, specific) in specific.val_env.iter() {
     match general.val_env.get(name) {
-      Some(general) => val_info_enrich(st, general, specific, name, idx),
+      Some(general) => val_info_enrich(st, general.clone(), specific, name, idx),
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
     }
   }
 }
 
-fn ty_info_enrich(st: &mut St, general: &TyInfo, specific: &TyInfo, idx: hir::Idx) {
-  eq_ty_scheme(st, &general.ty_scheme, &specific.ty_scheme, idx);
+fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: hir::Idx) {
+  eq_ty_scheme(st, general.ty_scheme, specific.ty_scheme, idx);
   if specific.val_env.is_empty() {
     return;
   }
-  let mut general_val_env = general.val_env.clone();
-  for (name, specific) in specific.val_env.iter() {
-    match general_val_env.remove(name) {
+  for (name, specific) in specific.val_env {
+    match general.val_env.remove(&name) {
       Some(general) => {
         if !general.id_status.same_kind_as(&specific.id_status) {
           st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
         }
-        eq_ty_scheme(st, &general.ty_scheme, &specific.ty_scheme, idx);
+        eq_ty_scheme(st, general.ty_scheme, specific.ty_scheme, idx);
       }
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
     }
   }
-  for name in general_val_env.keys() {
+  for name in general.val_env.keys() {
     st.err(idx, ErrorKind::Extra(Item::Val, name.clone()));
   }
 }
 
 fn val_info_enrich(
   st: &mut St,
-  general: &ValInfo,
+  general: ValInfo,
   specific: &ValInfo,
   name: &hir::Name,
   idx: hir::Idx,
 ) {
-  generalizes(st, &general.ty_scheme, &specific.ty_scheme, idx);
+  generalizes(st, general.ty_scheme, &specific.ty_scheme, idx);
   if !general.id_status.same_kind_as(&specific.id_status)
     && !matches!(specific.id_status, IdStatus::Val)
   {

@@ -5,14 +5,14 @@ use crate::unify::unify;
 use crate::util::{apply_bv, instantiate};
 
 /// emits no error iff `lhs` and `rhs` are equal ty schemes.
-pub(crate) fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: &TyScheme, idx: hir::Idx) {
+pub(crate) fn eq_ty_scheme(st: &mut St, lhs: TyScheme, rhs: TyScheme, idx: hir::Idx) {
   // TODO just use `==` since alpha equivalent ty schemes are already `==` for derive(PartialEq)?
-  generalizes(st, lhs, rhs, idx);
-  generalizes(st, rhs, lhs, idx);
+  generalizes(st, lhs.clone(), &rhs, idx);
+  generalizes(st, rhs, &lhs, idx);
 }
 
 /// emits no error iff `general` generalizes `specific`.
-pub(crate) fn generalizes(st: &mut St, general: &TyScheme, specific: &TyScheme, idx: hir::Idx) {
+pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, idx: hir::Idx) {
   let general = instantiate(st, general);
   let specific = {
     let subst: Vec<_> = specific

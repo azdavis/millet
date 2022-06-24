@@ -82,7 +82,7 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(exn.clone()),
       };
-      let ty = instantiate(st, &val_info.ty_scheme);
+      let ty = instantiate(st, val_info.ty_scheme.clone());
       // sml_def(35), sml_def(41)
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
@@ -175,7 +175,9 @@ fn get_(
           };
           assert!(fst_val_info.id_status.same_kind_as(&IdStatus::Val));
           assert!(rest_val_info.id_status.same_kind_as(&IdStatus::Val));
-          eq_ty_scheme(st, &fst_val_info.ty_scheme, &rest_val_info.ty_scheme, idx);
+          let fst_ty_scheme = fst_val_info.ty_scheme.clone();
+          let rest_ty_scheme = rest_val_info.ty_scheme.clone();
+          eq_ty_scheme(st, fst_ty_scheme, rest_ty_scheme, idx);
         }
         if let Some(name) = rest_ve.into_keys().next() {
           st.err(idx, ErrorKind::OrPatNotSameBindings(name));

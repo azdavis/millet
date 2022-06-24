@@ -22,7 +22,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       Ok(env) => match env.val_env.get(path.last()) {
         Some(val_info) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
-          instantiate(st, &val_info.ty_scheme)
+          instantiate(st, val_info.ty_scheme.clone())
         }
         None => {
           st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
