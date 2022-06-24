@@ -64,7 +64,7 @@ fn get_(
       // sml_def(34)
       if is_var {
         let (pm_pat, ty) = any(st, pat);
-        insert_name(st, ve, path.last().clone(), ty.clone(), pat_);
+        insert_name(st, ve, path.last().clone(), ty.clone(), pat_.into());
         return ((pm_pat, ty), ty_scheme);
       }
       let val_info = match maybe_val_info {
@@ -157,7 +157,7 @@ fn get_(
         st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));
       }
       let (pm_pat, ty) = get(st, cx, ars, ve, *inner);
-      insert_name(st, ve, name.clone(), ty.clone(), pat_);
+      insert_name(st, ve, name.clone(), ty.clone(), pat_.into());
       (pm_pat, ty)
     }
     hir::Pat::Or(or_pat) => {
@@ -204,10 +204,7 @@ fn ok_val_info(vi: Option<&ValInfo>) -> bool {
   vi.map_or(true, |vi| matches!(vi.id_status, IdStatus::Val))
 }
 
-fn insert_name<I>(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty, idx: I)
-where
-  I: Into<hir::Idx>,
-{
+fn insert_name(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty, idx: hir::Idx) {
   let vi = ValInfo {
     ty_scheme: TyScheme::zero(ty),
     id_status: IdStatus::Val,
