@@ -9,14 +9,6 @@
       "presentation": {
         "reveal": "silent"
       }
-    },
-    {
-      "label": "tsc: watch",
-      "group": "build",
-      "type": "typescript",
-      "tsconfig": "extensions/vscode/tsconfig.json",
-      "option": "watch",
-      "problemMatcher": ["$tsc-watch"]
     }
   ]
 }
