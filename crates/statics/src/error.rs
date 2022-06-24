@@ -129,32 +129,30 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Circularity(_, ty) => {
         write!(f, "attempted to a set a type variable ")?;
         write!(f, "to a type containing ")?;
-        write!(f, "that variable: {}", ty.display(self.syms))
+        let mvs = ty.meta_var_names();
+        let ty = ty.display(&mvs, self.syms);
+        write!(f, "that variable: {ty}")
       }
-      ErrorKind::MismatchedTypes(want, got) => write!(
-        f,
-        "expected {}, found {}",
-        want.display(self.syms),
-        got.display(self.syms)
-      ),
-      ErrorKind::OverloadMismatch(ov, want, got) => write!(
-        f,
-        "expected {} with {}, found {}",
-        want.display(self.syms),
-        // TODO make this programmatic?
-        match ov {
-          Overload::WordInt => "word or int",
-          Overload::RealInt => "real or int",
-          Overload::Num => "word, real, or int",
-          Overload::NumTxt => "word, real, int, string, or char",
-        },
-        got.display(self.syms)
-      ),
-      ErrorKind::AppLhsNotFn(got) => write!(
-        f,
-        "expected a function type, got {}",
-        got.display(self.syms)
-      ),
+      ErrorKind::MismatchedTypes(want, got) => {
+        let mvs = want.meta_var_names();
+        let want = want.display(&mvs, self.syms);
+        let mvs = got.meta_var_names();
+        let got = got.display(&mvs, self.syms);
+        write!(f, "expected {want}, found {got}")
+      }
+      ErrorKind::OverloadMismatch(ov, want, got) => {
+        let mvs = want.meta_var_names();
+        let want = want.display(&mvs, self.syms);
+        let mvs = got.meta_var_names();
+        let got = got.display(&mvs, self.syms);
+        let ov = ov.desc();
+        write!(f, "expected {want} with {ov}, found {got}")
+      }
+      ErrorKind::AppLhsNotFn(got) => {
+        let mvs = got.meta_var_names();
+        let got = got.display(&mvs, self.syms);
+        write!(f, "expected a function type, got {got}")
+      }
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),

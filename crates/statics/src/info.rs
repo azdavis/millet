@@ -25,11 +25,13 @@ impl Info {
   /// Returns a Markdown string with information associated with this index.
   pub fn get(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
     let (ty, ty_scheme) = self.store.get(&idx)?;
-    let ty = ty.display(syms);
+    let mvs = ty.meta_var_names();
+    let ty = ty.display(&mvs, syms);
     match ty_scheme {
       None => Some(format!("```sml\n{ty}\n```")),
       Some(ty_scheme) => {
-        let ty_scheme = ty_scheme.display(syms);
+        let mvs = ty_scheme.ty.meta_var_names();
+        let ty_scheme = ty_scheme.display(&mvs, syms);
         Some(format!(
           "```sml\n(* most general *)\n{ty_scheme}\n(* this usage *)\n{ty}\n```"
         ))

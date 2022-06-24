@@ -8,7 +8,6 @@ use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::fmt;
-use std::rc::Rc;
 use std::sync::Arc;
 use uniq::{Uniq, UniqGen};
 
@@ -43,21 +42,42 @@ impl Ty {
     Self::Fn(param.into(), res.into())
   }
 
-  pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
+  pub(crate) fn display<'a>(
+    &'a self,
+    meta_vars: &'a MetaVarNames,
+    syms: &'a Syms,
+  ) -> impl fmt::Display + 'a {
     TyDisplay {
       ty: self,
       bound_vars: None,
-      meta_vars: meta_var_names(self),
+      meta_vars,
       syms,
       prec: TyPrec::Arrow,
     }
+  }
+
+  pub(crate) fn meta_var_names(&self) -> MetaVarNames {
+    let mut n = 0usize;
+    let mut ret = FxHashMap::<MetaTyVar, usize>::default();
+    meta_vars(
+      &Subst::default(),
+      &mut |x| {
+        ret.entry(x).or_insert_with(|| {
+          let ret = n;
+          n += 1;
+          ret
+        });
+      },
+      self,
+    );
+    MetaVarNames(ret)
   }
 }
 
 struct TyDisplay<'a> {
   ty: &'a Ty,
   bound_vars: Option<&'a BoundTyVars>,
-  meta_vars: MetaVarNames,
+  meta_vars: &'a MetaVarNames,
   syms: &'a Syms,
   prec: TyPrec,
 }
@@ -67,7 +87,7 @@ impl<'a> TyDisplay<'a> {
     Self {
       ty,
       bound_vars: self.bound_vars,
-      meta_vars: Rc::clone(&self.meta_vars),
+      meta_vars: self.meta_vars,
       syms: self.syms,
       prec,
     }
@@ -86,7 +106,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
         }
       }
       Ty::MetaVar(mv) => {
-        let &idx = self.meta_vars.get(mv).ok_or(fmt::Error)?;
+        let &idx = self.meta_vars.0.get(mv).ok_or(fmt::Error)?;
         f.write_str("?")?;
         for c in idx_to_name(idx) {
           write!(f, "{c}")?;
@@ -123,7 +143,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
             f,
             rows.iter().map(|(lab, ty)| RowDisplay {
               bound_vars: self.bound_vars,
-              meta_vars: Rc::clone(&self.meta_vars),
+              meta_vars: self.meta_vars,
               syms: self.syms,
               lab,
               ty,
@@ -170,24 +190,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   }
 }
 
-type MetaVarNames = Rc<FxHashMap<MetaTyVar, usize>>;
-
-fn meta_var_names(ty: &Ty) -> MetaVarNames {
-  let mut n = 0usize;
-  let mut ret = FxHashMap::<MetaTyVar, usize>::default();
-  meta_vars(
-    &Subst::default(),
-    &mut |x| {
-      ret.entry(x).or_insert_with(|| {
-        let ret = n;
-        n += 1;
-        ret
-      });
-    },
-    ty,
-  );
-  Rc::new(ret)
-}
+pub(crate) struct MetaVarNames(FxHashMap<MetaTyVar, usize>);
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum TyPrec {
@@ -198,7 +201,7 @@ enum TyPrec {
 
 struct RowDisplay<'a> {
   bound_vars: Option<&'a BoundTyVars>,
-  meta_vars: MetaVarNames,
+  meta_vars: &'a MetaVarNames,
   syms: &'a Syms,
   lab: &'a hir::Lab,
   ty: &'a Ty,
@@ -211,7 +214,7 @@ impl<'a> fmt::Display for RowDisplay<'a> {
     let td = TyDisplay {
       ty: self.ty,
       bound_vars: self.bound_vars,
-      meta_vars: Rc::clone(&self.meta_vars),
+      meta_vars: self.meta_vars,
       syms: self.syms,
       prec: TyPrec::Arrow,
     };
@@ -261,11 +264,15 @@ impl TyScheme {
     Self { bound_vars, ty }
   }
 
-  pub(crate) fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
+  pub(crate) fn display<'a>(
+    &'a self,
+    meta_vars: &'a MetaVarNames,
+    syms: &'a Syms,
+  ) -> impl fmt::Display + 'a {
     TyDisplay {
       ty: &self.ty,
       bound_vars: Some(&self.bound_vars),
-      meta_vars: meta_var_names(&self.ty),
+      meta_vars,
       syms,
       prec: TyPrec::Arrow,
     }
@@ -323,6 +330,15 @@ impl Overload {
       | (Self::Num | Self::NumTxt, Self::RealInt) => Some(Self::RealInt),
       (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => Some(Self::Num),
       (Self::NumTxt, Self::NumTxt) => Some(Self::NumTxt),
+    }
+  }
+
+  pub(crate) fn desc(self) -> &'static str {
+    match self {
+      Overload::WordInt => "word or int",
+      Overload::RealInt => "real or int",
+      Overload::Num => "word, real, or int",
+      Overload::NumTxt => "word, real, int, string, or char",
     }
   }
 }
