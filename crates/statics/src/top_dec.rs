@@ -12,7 +12,7 @@ use fast_hash::{map, FxHashMap, FxHashSet};
 pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::StrDecIdx) {
   let mut ac = Bs::default();
   get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), top_dec);
-  bs.extend(ac);
+  bs.append(&mut ac);
 }
 
 enum StrDecAc<'a> {
@@ -61,7 +61,7 @@ fn get_str_dec(
       let mut local_bs = Bs::default();
       get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), *local_dec);
       let mut bs = bs.clone();
-      bs.extend(local_bs);
+      bs.append(&mut local_bs);
       get_str_dec(st, &bs, ars, ac, *in_dec);
     }
     // sml_def(59), sml_def(60)
@@ -71,19 +71,17 @@ fn get_str_dec(
         StrDecAc::Env(ac) => {
           let mut one_env = Env::default();
           for &str_dec in str_decs {
-            one_env.clear();
             get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-            bs.as_mut_env().extend(one_env.clone());
-            ac.extend(one_env.clone());
+            bs.as_mut_env().append(&mut one_env.clone());
+            ac.append(&mut one_env);
           }
         }
         StrDecAc::Bs(ac) => {
           let mut one_bs = Bs::default();
           for &str_dec in str_decs {
-            one_bs.clear();
             get_str_dec(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
-            bs.extend(one_bs.clone());
-            ac.extend(one_bs.clone());
+            bs.append(&mut one_bs.clone());
+            ac.append(&mut one_bs);
           }
         }
       }
@@ -164,7 +162,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
     hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), *str_dec),
     // sml_def(51)
     hir::StrExp::Path(path) => match get_env(&bs.env, path.all_names()) {
-      Ok(got_env) => ac.extend(got_env.clone()),
+      Ok(got_env) => ac.append(&mut got_env.clone()),
       Err(name) => st.err(str_exp, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
     // sml_def(52), sml_def(53)
@@ -187,7 +185,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         to_extend = sig.env.clone();
         env_realize(&subst, &mut to_extend);
       }
-      ac.extend(to_extend);
+      ac.append(&mut to_extend);
     }
     // sml_def(54)
     hir::StrExp::App(fun_name, arg_str_exp) => match bs.fun_env.get(fun_name) {
@@ -203,7 +201,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
-        ac.extend(to_extend);
+        ac.append(&mut to_extend);
       }
       None => st.err(
         str_exp,
@@ -215,7 +213,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
       let mut let_env = Env::default();
       get_str_dec(st, bs, ars, StrDecAc::Env(&mut let_env), *str_dec);
       let mut bs = bs.clone();
-      bs.as_mut_env().extend(let_env);
+      bs.as_mut_env().append(&mut let_env);
       get_str_exp(st, &bs, ars, ac, *str_exp)
     }
   }
@@ -236,7 +234,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
         env_realize(&subst, &mut sig_env);
-        ac.extend(sig_env);
+        ac.append(&mut sig_env);
       }
       None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
     },
@@ -249,7 +247,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
       assert_ty_has_no_record_meta_vars(generalize(st.subst(), fixed, &mut ty_scheme));
       get_where_type(st, &mut inner_env, ty_vars, path, ty_scheme, sig_exp.into());
-      ac.extend(inner_env);
+      ac.append(&mut inner_env);
     }
     // SML/NJ extension
     hir::SigExp::Where(inner, lhs, rhs) => {
@@ -283,7 +281,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
           Err(e) => st.err(sig_exp, e),
         }
       }
-      ac.extend(inner_env);
+      ac.append(&mut inner_env);
     }
   }
 }
@@ -462,17 +460,16 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
           }
         }
       }
-      ac.extend(inner_env);
+      ac.append(&mut inner_env);
     }
     // sml_def(76), sml_def(77)
     hir::Spec::Seq(specs) => {
       let mut bs = bs.clone();
       let mut one_env = Env::default();
       for &spec in specs {
-        one_env.clear();
         get_spec(st, &bs, ars, &mut one_env, spec);
-        bs.as_mut_env().extend(one_env.clone());
-        ac.extend(one_env.clone());
+        bs.as_mut_env().append(&mut one_env.clone());
+        ac.append(&mut one_env);
       }
     }
   }

@@ -42,7 +42,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let marker = st.syms.mark();
       dec::get(st, cx, ars, &mut let_env, *dec);
       let mut cx = cx.clone();
-      cx.as_mut_env().extend(let_env);
+      cx.as_mut_env().append(&mut let_env);
       let got = get(st, &cx, ars, *inner);
       if let Some(sym) = ty_name_escape(&marker, &got) {
         st.err(inner.unwrap_or(exp), ErrorKind::TyNameEscape(sym));

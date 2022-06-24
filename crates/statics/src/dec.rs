@@ -177,14 +177,14 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut local_env = Env::default();
       get(st, cx, ars, &mut local_env, *local_dec);
       let mut cx = cx.clone();
-      cx.as_mut_env().extend(local_env);
+      cx.as_mut_env().append(&mut local_env);
       get(st, &cx, ars, env, *in_dec);
     }
     // sml_def(22)
     hir::Dec::Open(paths) => {
       for path in paths {
         match get_env(&cx.env, path.all_names()) {
-          Ok(got_env) => env.extend(got_env.clone()),
+          Ok(got_env) => env.append(&mut got_env.clone()),
           Err(name) => st.err(dec, ErrorKind::Undefined(Item::Struct, name.clone())),
         }
       }
@@ -194,10 +194,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut cx = cx.clone();
       let mut one_env = Env::default();
       for &dec in decs {
-        one_env.clear();
         get(st, &cx, ars, &mut one_env, dec);
-        cx.as_mut_env().extend(one_env.clone());
-        env.extend(one_env.clone());
+        cx.as_mut_env().append(&mut one_env.clone());
+        env.append(&mut one_env);
       }
     }
   }

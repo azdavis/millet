@@ -612,16 +612,11 @@ pub(crate) struct Env {
 }
 
 impl Env {
-  pub(crate) fn extend(&mut self, env: Env) {
-    self.str_env.extend(env.str_env);
-    self.ty_env.extend(env.ty_env);
-    self.val_env.extend(env.val_env);
-  }
-
-  pub(crate) fn clear(&mut self) {
-    self.str_env.clear();
-    self.ty_env.clear();
-    self.val_env.clear();
+  /// empties the other env into self.
+  pub(crate) fn append(&mut self, other: &mut Self) {
+    self.str_env.extend(other.str_env.drain());
+    self.ty_env.extend(other.ty_env.drain());
+    self.val_env.extend(other.val_env.drain());
   }
 }
 
@@ -682,25 +677,11 @@ impl Bs {
     Arc::make_mut(&mut self.env)
   }
 
-  pub(crate) fn extend(&mut self, bs: Self) {
-    self.fun_env.extend(bs.fun_env);
-    self.sig_env.extend(bs.sig_env);
-    let env = self.as_mut_env();
-    env
-      .str_env
-      .extend(bs.env.str_env.iter().map(|(a, b)| (a.clone(), b.clone())));
-    env
-      .ty_env
-      .extend(bs.env.ty_env.iter().map(|(a, b)| (a.clone(), b.clone())));
-    env
-      .val_env
-      .extend(bs.env.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
-  }
-
-  pub(crate) fn clear(&mut self) {
-    self.fun_env.clear();
-    self.sig_env.clear();
-    self.as_mut_env().clear();
+  /// empties the other basis into self.
+  pub(crate) fn append(&mut self, other: &mut Self) {
+    self.fun_env.extend(other.fun_env.drain());
+    self.sig_env.extend(other.sig_env.drain());
+    self.as_mut_env().append(other.as_mut_env());
   }
 }
 
