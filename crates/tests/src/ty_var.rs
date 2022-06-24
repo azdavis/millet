@@ -71,7 +71,7 @@ fn different_vars() {
     r#"
 fun ('a, 'b) f (xs: 'a list) (x: 'b) =
     x :: xs
-(** ^^^^^^^ expected _ * _ list, found _ * _ *)
+(** ^^^^^^^ expected _ * _ list, found 'b * 'a list *)
 "#,
   );
 }

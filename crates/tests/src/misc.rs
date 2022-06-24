@@ -21,7 +21,7 @@ val _ = fn f => fn x => (
   f x x x andalso false;
   f 3;
     f: unit;
-(** ^^^^^^^ expected unit, found _ *)
+(** ^^^^^^^ expected unit, found int -> int -> int -> bool *)
   false
 )
 "#,
@@ -258,7 +258,7 @@ fn ty_var_scope() {
     r#"
 val _ = fn id =>
   (id 3; id "nope")
-(**      ^^^^^^^^^ expected _, found string -> _ *)
+(**         ^^^^^^ expected int, found string *)
 "#,
   );
 }
