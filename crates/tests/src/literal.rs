@@ -5,7 +5,7 @@ fn char_big() {
   check(
     r#"
 val _ = #"あ"
-(**     ^^^^^^ character literal must have length 1 *)
+(**     ^^^^ character literal must have length 1 *)
 "#,
   );
 }

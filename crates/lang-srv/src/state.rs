@@ -217,19 +217,12 @@ impl State {
     };
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
     for (path_id, errors) in got_many {
-      let pos_db = match input.get_source(path_id) {
-        Some(s) => text_pos::PositionDb::new(s),
-        None => {
-          log::error!("no contents for {path_id:?}");
-          continue;
-        }
-      };
       let path = root.path.get_path(path_id);
       let url = match Url::parse(&format!("file://{}", path.as_path().display())) {
         Ok(x) => x,
         Err(_) => continue,
       };
-      let ds = diagnostics(&pos_db, errors);
+      let ds = diagnostics(errors);
       if ds.is_empty() || has_diagnostics.len() >= MAX_FILES_WITH_ERRORS {
         continue;
       }
@@ -252,8 +245,7 @@ impl State {
   }
 
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
-    let pos_db = text_pos::PositionDb::new(text);
-    self.send_diagnostics(url, diagnostics(&pos_db, self.analysis.get_one(text)));
+    self.send_diagnostics(url, diagnostics(self.analysis.get_one(text)));
   }
 
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
@@ -318,10 +310,7 @@ where
   }
 }
 
-fn diagnostics(
-  pos_db: &text_pos::PositionDb,
-  errors: Vec<analysis::Error>,
-) -> Vec<lsp_types::Diagnostic> {
+fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
     .take(MAX_ERRORS_PER_FILE)
@@ -334,7 +323,7 @@ fn diagnostics(
         }
       };
       lsp_types::Diagnostic {
-        range: lsp_range(pos_db.range(err.range)),
+        range: lsp_range(err.range),
         message: err.message,
         source: Some(SOURCE.to_owned()),
         severity: Some(lsp_types::DiagnosticSeverity::ERROR),
@@ -346,14 +335,14 @@ fn diagnostics(
     .collect()
 }
 
-fn lsp_range(range: text_pos::Range) -> lsp_types::Range {
+fn lsp_range(range: analysis::Range) -> lsp_types::Range {
   lsp_types::Range {
     start: lsp_position(range.start),
     end: lsp_position(range.end),
   }
 }
 
-fn lsp_position(pos: text_pos::Position) -> lsp_types::Position {
+fn lsp_position(pos: analysis::Position) -> lsp_types::Position {
   lsp_types::Position {
     line: pos.line,
     character: pos.character,

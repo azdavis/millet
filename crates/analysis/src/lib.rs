@@ -10,15 +10,16 @@ use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use statics::Mode::Regular;
 use std::fmt;
-use syntax::{ast::AstNode as _, rowan::TextRange};
+use syntax::ast::AstNode as _;
 
 pub use std_basis::StdBasis;
+pub use text_pos::{Position, Range};
 
 /// An error.
 #[derive(Debug)]
 pub struct Error {
   /// The range of the error.
-  pub range: TextRange,
+  pub range: Range,
   /// The message of the error.
   pub message: String,
   /// The error code.
@@ -46,11 +47,6 @@ pub struct Input {
 }
 
 impl Input {
-  /// Return the source for a given file.
-  pub fn get_source(&self, path: paths::PathId) -> Option<&str> {
-    self.sources.get(&path).map(String::as_str)
-  }
-
   /// Return an iterator over the source files.
   pub fn iter_sources(&self) -> impl Iterator<Item = (paths::PathId, &str)> + '_ {
     self.sources.iter().map(|(&path, s)| (path, s.as_str()))
@@ -75,7 +71,7 @@ impl Analysis {
     let mut st = self.std_basis.into_statics();
     statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
     f.statics_errors = std::mem::take(&mut st.errors);
-    f.into_errors(&st.syms).collect()
+    f.into_errors(&st.syms)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -117,7 +113,7 @@ impl Analysis {
           elapsed::time(|| statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs));
         statics += dur;
         f.statics_errors = std::mem::take(&mut st.errors);
-        Some((path_id, f.into_errors(&st.syms).collect()))
+        Some((path_id, f.into_errors(&st.syms)))
       })
       .collect();
     log::info!("analyzed_file: {analyzed_file:?}");
@@ -127,6 +123,7 @@ impl Analysis {
 }
 
 struct AnalyzedFile {
+  pos_db: text_pos::PositionDb,
   lex_errors: Vec<lex::Error>,
   parsed: parse::Parse,
   lowered: lower::Lower,
@@ -142,6 +139,7 @@ impl AnalyzedFile {
     let mut lowered = lower::get(&parsed.root);
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
     Self {
+      pos_db: text_pos::PositionDb::new(s),
       lex_errors: lexed.errors,
       parsed,
       lowered,
@@ -149,24 +147,24 @@ impl AnalyzedFile {
     }
   }
 
-  fn into_errors(self, syms: &statics::Syms) -> impl Iterator<Item = Error> + '_ {
+  fn into_errors(self, syms: &statics::Syms) -> Vec<Error> {
     std::iter::empty()
       .chain(self.lex_errors.into_iter().map(|err| Error {
-        range: err.range(),
+        range: self.pos_db.range(err.range()),
         message: err.display().to_string(),
         code: 1000 + u16::from(err.to_code()),
       }))
       .chain(self.parsed.errors.into_iter().map(|err| Error {
-        range: err.range(),
+        range: self.pos_db.range(err.range()),
         message: err.display().to_string(),
         code: 2000 + u16::from(err.to_code()),
       }))
       .chain(self.lowered.errors.into_iter().map(|err| Error {
-        range: err.range(),
+        range: self.pos_db.range(err.range()),
         message: err.display().to_string(),
         code: 3000 + u16::from(err.to_code()),
       }))
-      .chain(self.statics_errors.into_iter().filter_map(move |err| {
+      .chain(self.statics_errors.into_iter().filter_map(|err| {
         let idx = err.idx();
         let syntax = match self.lowered.ptrs.get(idx) {
           Some(x) => x,
@@ -176,11 +174,14 @@ impl AnalyzedFile {
           }
         };
         Some(Error {
-          range: syntax.to_node(self.parsed.root.syntax()).text_range(),
+          range: self
+            .pos_db
+            .range(syntax.to_node(self.parsed.root.syntax()).text_range()),
           message: err.display(syms).to_string(),
           code: 4000 + u16::from(err.to_code()),
         })
       }))
+      .collect()
   }
 }
 

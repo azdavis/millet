@@ -5,7 +5,6 @@ use once_cell::sync::Lazy;
 use paths::FileSystem as _;
 use std::fmt::{self, Write as _};
 use std::ops::Range;
-use syntax::rowan::{TextRange, TextSize};
 
 /// pass the string of an SML program with some expectation comments.
 ///
@@ -116,11 +115,6 @@ impl Check {
         .iter_sources()
         .map(|(path_id, s)| {
           let file = CheckFile {
-            indices: s
-              .bytes()
-              .enumerate()
-              .filter_map(|(idx, b)| (b == b'\n').then(|| TextSize::try_from(idx).unwrap()))
-              .collect(),
             want: s
               .lines()
               .enumerate()
@@ -160,19 +154,30 @@ impl Check {
     ret
   }
 
-  fn get_reason(&mut self, id: paths::PathId, range: TextRange, got: String) -> Result<(), Reason> {
+  fn get_reason(
+    &mut self,
+    id: paths::PathId,
+    range: analysis::Range,
+    got: String,
+  ) -> Result<(), Reason> {
     let file = &self.files[&id];
-    let pair = match get_line_col_pair(&file.indices, range) {
-      None => return Err(Reason::CannotGetLineColPair(id, range)),
-      Some(x) => x,
-    };
-    let region = if pair.start.line == pair.end.line {
-      OneLineRegion {
-        line: pair.start.line,
-        col: pair.start.col..pair.end.col,
+    let region = if range.start.line == range.end.line {
+      let line = usize::try_from(range.start.line);
+      let col_start = usize::try_from(range.start.character);
+      let col_end = usize::try_from(range.end.character);
+      let olr = line
+        .ok()
+        .zip(col_start.ok().zip(col_end.ok()))
+        .map(|(line, (start, end))| OneLineRegion {
+          line,
+          col: start..end,
+        });
+      match olr {
+        Some(x) => x,
+        None => return Err(Reason::CannotGetRegion(id, range)),
       }
     } else {
-      return Err(Reason::NotOneLine(id, pair));
+      return Err(Reason::NotOneLine(id, range));
     };
     let want = match file.want.get(&region) {
       None => return Err(Reason::GotButNotWanted(id, region, got)),
@@ -196,9 +201,9 @@ impl fmt::Display for Check {
           writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;
         }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::CannotGetLineColPair(path, r) => {
+        Reason::CannotGetRegion(path, r) => {
           let path = self.root.get_path(*path).as_path().display();
-          writeln!(f, "{path}: couldn't get a line-col pair from {r:?}")?;
+          writeln!(f, "{path}: couldn't get a region from {r:?}")?;
         }
         Reason::NotOneLine(path, pair) => {
           let path = self.root.get_path(*path).as_path().display();
@@ -239,15 +244,14 @@ enum Outcome {
 }
 
 struct CheckFile {
-  indices: Vec<TextSize>,
   want: FxHashMap<OneLineRegion, String>,
 }
 
 enum Reason {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
-  CannotGetLineColPair(paths::PathId, TextRange),
-  NotOneLine(paths::PathId, Range<LineCol>),
+  CannotGetRegion(paths::PathId, analysis::Range),
+  NotOneLine(paths::PathId, analysis::Range),
   GotButNotWanted(paths::PathId, OneLineRegion, String),
   MismatchedErrors(paths::PathId, OneLineRegion, String, String),
 }
@@ -269,35 +273,6 @@ impl fmt::Display for OneLineRegion {
       self.col.end + 1
     )
   }
-}
-
-struct LineCol {
-  line: usize,
-  col: usize,
-}
-
-impl fmt::Display for LineCol {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    // don't add 1 for the line because the check strings usually have the first line blank.
-    write!(f, "{}:{}", self.line, self.col + 1)
-  }
-}
-
-fn get_line_col_pair(indices: &[TextSize], range: TextRange) -> Option<Range<LineCol>> {
-  let start = get_line_col(indices, range.start())?;
-  let end = get_line_col(indices, range.end())?;
-  Some(start..end)
-}
-
-fn get_line_col(indices: &[TextSize], idx: TextSize) -> Option<LineCol> {
-  let line = indices.iter().position(|&i| idx <= i)?;
-  let col_start = indices
-    .get(line.checked_sub(1)?)?
-    .checked_add(TextSize::from(1))?;
-  Some(LineCol {
-    line,
-    col: usize::from(idx.checked_sub(col_start)?),
-  })
 }
 
 /// see [`get_expect_comment`].

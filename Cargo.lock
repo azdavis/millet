@@ -17,6 +17,7 @@ dependencies = [
  "paths",
  "statics",
  "syntax",
+ "text-pos",
  "topo-sort",
  "ty-var-scope",
 ]
@@ -217,7 +218,6 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_logger",
- "text-pos",
 ]
 
 [[package]]
