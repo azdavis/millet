@@ -12,6 +12,6 @@ doctest = false
 log = "0.4"
 drop_bomb = "0.1"
 pattern-match = { git = "https://github.com/azdavis/language-util.git" }
+uniq = { git = "https://github.com/azdavis/language-util.git" }
 hir = { path = "../hir" }
 fast-hash = { path = "../fast-hash" }
-uniq = { git = "https://github.com/azdavis/language-util.git" }
