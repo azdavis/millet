@@ -10,6 +10,8 @@
   - Snippets
 - For SML files only:
   - Inline errors
+  - Hover for type
+  - Goto definition
 
 ## Usage
 
