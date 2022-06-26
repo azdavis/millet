@@ -611,6 +611,7 @@ pub(crate) struct Env {
   pub(crate) str_env: StrEnv,
   pub(crate) ty_env: TyEnv,
   pub(crate) val_env: ValEnv,
+  pub(crate) def: Option<Def>,
 }
 
 impl Env {

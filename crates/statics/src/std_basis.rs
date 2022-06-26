@@ -99,6 +99,7 @@ pub(crate) fn get() -> Statics {
       str_env: StrEnv::default(),
       ty_env,
       val_env,
+      def: None,
     }),
   };
   Statics { syms, bs }

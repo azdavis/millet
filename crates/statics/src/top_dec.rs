@@ -50,6 +50,7 @@ fn get_str_dec(
       for str_bind in str_binds {
         let mut env = Env::default();
         get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
+        env.def = st.def(str_dec);
         if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
           st.err(str_dec, e);
         }
@@ -100,6 +101,7 @@ fn get_str_dec(
       for sig_bind in sig_binds {
         let mut env = Env::default();
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
+        env.def = st.def(str_dec);
         let sig = env_to_sig(bs, env);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);
@@ -129,6 +131,7 @@ fn get_str_dec(
           .insert(fun_bind.param_name.clone(), param_sig.env.clone());
         let mut body_env = Env::default();
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
+        body_env.def = st.def(str_dec);
         let mut body_ty_names = TyNameSet::default();
         env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
         bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
@@ -162,7 +165,10 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
     hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), *str_dec),
     // sml_def(51)
     hir::StrExp::Path(path) => match get_env(&bs.env, path.all_names()) {
-      Ok(got_env) => ac.append(&mut got_env.clone()),
+      Ok(got_env) => {
+        st.info().insert(str_exp, None, got_env.def);
+        ac.append(&mut got_env.clone());
+      }
       Err(name) => st.err(str_exp, ErrorKind::Undefined(Item::Struct, name.clone())),
     },
     // sml_def(52), sml_def(53)
@@ -201,12 +207,17 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
+        let def = st.def(str_exp);
+        for env in to_add.str_env.values_mut() {
+          env.def = def;
+        }
         for ty_env in to_add.ty_env.values_mut() {
-          ty_env.def = st.def(str_exp);
+          ty_env.def = def;
         }
         for val_info in to_add.val_env.values_mut() {
-          val_info.def = st.def(str_exp);
+          val_info.def = def;
         }
+        st.info().insert(str_exp, None, fun_sig.res.env.def);
         ac.append(&mut to_add);
       }
       None => st.err(
@@ -240,6 +251,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
         env_realize(&subst, &mut sig_env);
+        st.info().insert(sig_exp, None, sig.env.def);
         ac.append(&mut sig_env);
       }
       None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
