@@ -78,6 +78,9 @@ impl St {
 }
 
 /// Static analysis.
+///
+/// Note that the `Default` impl will return a `Statics` with a `Syms` that contains only the most
+/// basic types and values, like `int` and `>`.
 #[derive(Debug, Clone)]
 pub struct Statics {
   /// The symbols generated.

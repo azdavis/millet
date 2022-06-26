@@ -486,11 +486,10 @@ impl Sym {
   }
 }
 
-/// Information about generated types.
+/// Information about generated types and exceptions.
 ///
 /// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
-/// even built-in types like `int`. For a `Syms` that does have these, see
-/// [`crate::std_basis::get`].
+/// even built-in items like `type int` and `exception Bind`.
 #[derive(Debug, Default, Clone)]
 pub struct Syms {
   /// remember: always use Sym::idx to index
