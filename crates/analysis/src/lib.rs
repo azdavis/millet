@@ -22,7 +22,7 @@ pub const ROOT_GROUP: &str = "sources.cm";
 pub const MAX_ERRORS_PER_PATH: usize = 20;
 
 /// Performs analysis.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Analysis {
   std_basis: StdBasis,
   files: PathMap<AnalyzedFile>,

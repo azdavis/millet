@@ -64,7 +64,7 @@ impl State {
         }),
       sender,
       req_queue: ReqQueue::default(),
-      analysis: analysis::Analysis::default(),
+      analysis: analysis::Analysis::new(analysis::StdBasis::Full),
       file_system,
     };
     if let Err(e) = root {

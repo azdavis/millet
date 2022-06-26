@@ -10,12 +10,6 @@ pub enum StdBasis {
   Minimal,
 }
 
-impl Default for StdBasis {
-  fn default() -> Self {
-    Self::Full
-  }
-}
-
 impl StdBasis {
   pub(crate) fn into_statics(self) -> Statics {
     match self {
