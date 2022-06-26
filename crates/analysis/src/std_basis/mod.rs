@@ -25,20 +25,20 @@ fn get_full_std_basis() -> Statics {
   for &contents in ORDER {
     let lexed = lex::get(contents);
     if let Some(e) = lexed.errors.first() {
-      panic!("std_basis error: lex: {}", e.display());
+      panic!("lex error: {}", e.display());
     }
     let parsed = parse::get(&lexed.tokens);
     if let Some(e) = parsed.errors.first() {
-      panic!("std_basis error: parse: {}", e.display());
+      panic!("parse error: {}", e.display());
     }
     let mut lowered = lower::get(&parsed.root);
     if let Some(e) = lowered.errors.first() {
-      panic!("std_basis error: lower: {}", e.display());
+      panic!("lower error: {}", e.display());
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
     let (_, es) = statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
     if let Some(e) = es.first() {
-      panic!("std_basis error: statics: {}", e.display(&st.syms));
+      panic!("statics error: {}", e.display(&st.syms));
     }
   }
   st
