@@ -11,7 +11,7 @@ There was an invalid character in the source file.
 val 空条承太郎 = 3
 ```
 
-Millet only allows certain ASCII characters to appear in names and the like. String literals and comments, however, should be able to handle arbitrary UTF-8.
+Only certain ASCII characters may appear in names and the like. String literals and comments, however, should be able to handle arbitrary UTF-8.
 
 To fix, only use allowed source characters. Only ASCII characters (but not all ASCII characters) are allowed.
 
@@ -565,11 +565,15 @@ Typechecking failed, because of "circularity", which means we attempted to a set
 fun f x = x x
 ```
 
-When Millet attempts to typecheck `f`, it first assigns a fresh type variable to the name `x`. Then it enters the body of `f` to see how `x` is used, updating the type variable for `x` as it goes. Let's use `?x` as the type variable for `x`.
+When typechecking `f`, Millet does the following:
 
-We see the application expression `x x`. `x` is used as a function, so it must have a type like `?a -> ?b` where `?a` and `?b` are types. So, we have the constraint `?x = ?a -> ?b`.
+1. Conjure up a fresh, unconstrained type variable for the name `x`. Let's use `?x` as the type variable for `x`.
+2. Enter the body of `f` to see how `x` is used, noting constraints on `?x` as we go.
 
-However, `x` is used as the argument to that function, which we just said has type `?a -> ?b`. So we must have `?x = ?a`, the type of the argument to the function.
+Entering the body of `f`, we see the entire body is one application expression: `x x`, the application of `x` to itself.
+
+- `x` is used as a function, so it must have a type like `?a -> ?b` where `?a` and `?b` are types. So, we have that `?x = ?a -> ?b`.
+- Further, `x` is used as the argument to a function, which we just said has type `?a -> ?b`. So we have `?x = ?a`, the type of the argument to the function.
 
 We now have
 
@@ -591,11 +595,12 @@ Millet tries to report which type was "expected" and which was "found". For inst
 val x : int = "no"
 ```
 
-This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `string`, because the top-level function `print` function takes a `string`.
+This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `speak` takes an `bool`.
 
 ```sml
 (* error *)
-val () = print 3
+fun speak x = if x then "yay" else "nah"
+val () = speak 4
 ```
 
 ## 4008
@@ -613,7 +618,9 @@ A function application expression was encountered, but the function expression d
 val _ = "foo" 3
 ```
 
-This is a special case of 4007, specialized for the common case of function application.
+In this example, we attempt to treat the string `"foo"` as a function and apply it to the argument `3`.
+
+This error is a special case of 4007, specialized for the common case of function application.
 
 ## 4010
 
@@ -990,7 +997,7 @@ signature SIG = sig end
 functor Func() = struct end
 ```
 
-Defining the signature or functor in a `local` is also accepted by Millet, though this is not strictly permitted by the Definition.
+Although not permitted by the Definition, Millet also allows defining the signature or functor in a `local`.
 
 ```sml
 (* ok *)
