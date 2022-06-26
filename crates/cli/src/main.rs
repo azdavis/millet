@@ -3,7 +3,10 @@ use paths::FileSystem as _;
 
 fn main() -> Result<()> {
   let fs = paths::RealFileSystem::default();
-  let root = fs.canonicalize(std::env::current_dir()?.as_path())?;
+  let root = match std::env::args().nth(1) {
+    None => fs.canonicalize(std::env::current_dir()?.as_path())?,
+    Some(s) => fs.canonicalize(std::path::Path::new(&s))?,
+  };
   let mut root = paths::Root::new(root);
   let inp = analysis::get_input(&fs, &mut root)?;
   let mut an = analysis::Analysis::new(analysis::StdBasis::full());
