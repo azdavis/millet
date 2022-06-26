@@ -12,7 +12,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     Some(x) => x,
     None => return Ty::None,
   };
-  // NOTE: do not early return, since we add the ty to the Info at the bottom.
+  // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
   let mut def = None::<Def>;
   let ret = match &ars.exp[exp] {
