@@ -14,19 +14,17 @@ struct InfoEntry {
   def: Option<Def>,
 }
 
-pub(crate) type Extra = (TyScheme, Option<Def>);
-
 impl Info {
-  pub(crate) fn insert<I>(&mut self, idx: I, ty: Ty, extra: Option<Extra>)
+  pub(crate) fn insert<I>(&mut self, idx: I, ty: Ty, ty_scheme: Option<TyScheme>, def: Option<Def>)
   where
     I: Into<hir::Idx>,
   {
     let idx = idx.into();
     let entry = InfoEntry {
       ty,
-      def: extra.as_ref().and_then(|&(_, d)| d),
       // ignore ty schemes that bind no vars
-      ty_scheme: extra.and_then(|(ts, _)| (!ts.bound_vars.is_empty()).then(|| ts)),
+      ty_scheme: ty_scheme.and_then(|x| (!x.bound_vars.is_empty()).then(|| x)),
+      def,
     };
     assert!(self.store.insert(idx, entry).is_none());
   }
