@@ -123,7 +123,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     ty: ret.clone(),
     ty_scheme,
   };
-  st.info().insert(exp, ty_entry, def);
+  st.info().insert(exp, Some(ty_entry), def);
   ret
 }
 

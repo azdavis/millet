@@ -25,7 +25,7 @@ pub(crate) fn get(
     ty: ty.clone(),
     ty_scheme,
   };
-  st.info().insert(pat_, ty_entry, def);
+  st.info().insert(pat_, Some(ty_entry), def);
   (pat, ty)
 }
 
