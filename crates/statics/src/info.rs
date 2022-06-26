@@ -8,37 +8,41 @@ pub struct Info {
 }
 
 #[derive(Debug)]
+pub(crate) struct TyEntry {
+  pub(crate) ty: Ty,
+  pub(crate) ty_scheme: Option<TyScheme>,
+}
+
+#[derive(Debug)]
 struct InfoEntry {
-  ty: Ty,
-  ty_scheme: Option<TyScheme>,
+  ty_entry: TyEntry,
   def: Option<Def>,
 }
 
 impl Info {
-  pub(crate) fn insert<I>(&mut self, idx: I, ty: Ty, ty_scheme: Option<TyScheme>, def: Option<Def>)
+  pub(crate) fn insert<I>(&mut self, idx: I, mut ty_entry: TyEntry, def: Option<Def>)
   where
     I: Into<hir::Idx>,
   {
     let idx = idx.into();
-    let entry = InfoEntry {
-      ty,
-      // ignore ty schemes that bind no vars
-      ty_scheme: ty_scheme.and_then(|x| (!x.bound_vars.is_empty()).then(|| x)),
-      def,
-    };
+    // ignore ty schemes that bind no vars
+    ty_entry.ty_scheme = ty_entry
+      .ty_scheme
+      .and_then(|x| (!x.bound_vars.is_empty()).then(|| x));
+    let entry = InfoEntry { ty_entry, def };
     assert!(self.store.insert(idx, entry).is_none());
   }
 
   pub(crate) fn tys_mut(&mut self) -> impl Iterator<Item = &mut Ty> {
-    self.store.values_mut().map(|entry| &mut entry.ty)
+    self.store.values_mut().map(|entry| &mut entry.ty_entry.ty)
   }
 
   /// Returns a Markdown string with information associated with this index.
   pub fn get_md_info(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
     let entry = self.store.get(&idx)?;
-    let mvs = entry.ty.meta_var_names();
-    let ty = entry.ty.display(&mvs, syms);
-    match &entry.ty_scheme {
+    let mvs = entry.ty_entry.ty.meta_var_names();
+    let ty = entry.ty_entry.ty.display(&mvs, syms);
+    match &entry.ty_entry.ty_scheme {
       None => Some(format!("```sml\n{ty}\n```")),
       Some(ty_scheme) => {
         let mvs = ty_scheme.ty.meta_var_names();

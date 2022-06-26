@@ -1,4 +1,5 @@
 use crate::error::{ErrorKind, Item};
+use crate::info::TyEntry;
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{Cx, Def, Env, Sym, SymsMarker, Ty, TyScheme, ValEnv};
@@ -118,7 +119,11 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       want
     }
   };
-  st.info().insert(exp, ret.clone(), ty_scheme, def);
+  let ty_entry = TyEntry {
+    ty: ret.clone(),
+    ty_scheme,
+  };
+  st.info().insert(exp, ty_entry, def);
   ret
 }
 

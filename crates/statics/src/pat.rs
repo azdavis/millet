@@ -1,5 +1,6 @@
 use crate::error::{ErrorKind, Item};
 use crate::generalizes::eq_ty_scheme;
+use crate::info::TyEntry;
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
@@ -20,7 +21,11 @@ pub(crate) fn get(
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
   let ((pat, ty), ty_scheme, def) = get_(st, cx, ars, ve, pat_);
-  st.info().insert(pat_, ty.clone(), ty_scheme, def);
+  let ty_entry = TyEntry {
+    ty: ty.clone(),
+    ty_scheme,
+  };
+  st.info().insert(pat_, ty_entry, def);
   (pat, ty)
 }
 
