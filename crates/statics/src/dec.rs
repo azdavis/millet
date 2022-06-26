@@ -103,6 +103,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         let ty_info = TyInfo {
           ty_scheme,
           val_env: ValEnv::default(),
+          def: st.def(dec),
         };
         if let Some(e) = ins_no_dupe(&mut ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
           st.err(dec, e)
@@ -251,6 +252,7 @@ pub(crate) fn get_dat_binds(
       TyInfo {
         ty_scheme: ty_scheme.clone(),
         val_env: ValEnv::default(),
+        def: st.def(idx),
       },
     );
     let mut val_env = ValEnv::default();
@@ -275,7 +277,11 @@ pub(crate) fn get_dat_binds(
     }
     // NOTE: no checking for duplicates here
     big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
-    let ty_info = TyInfo { ty_scheme, val_env };
+    let ty_info = TyInfo {
+      ty_scheme,
+      val_env,
+      def: st.def(idx),
+    };
     st.syms.finish(started, ty_info.clone());
     if let Some(e) = ins_no_dupe(&mut ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);

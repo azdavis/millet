@@ -26,6 +26,7 @@ pub(crate) fn get() -> Statics {
     TyInfo {
       ty_scheme: alpha_list.clone(),
       val_env: datatype_ve([("nil", alpha_list), ("::", cons)]),
+      def: None,
     }
   };
   insert_special(&mut syms, Sym::LIST, list_info);
@@ -35,6 +36,7 @@ pub(crate) fn get() -> Statics {
     TyInfo {
       ty_scheme: TyScheme::one(|a| (ref_(a), None)),
       val_env: datatype_ve([("ref", con)]),
+      def: None,
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
@@ -46,6 +48,7 @@ pub(crate) fn get() -> Statics {
       let ti = TyInfo {
         ty_scheme: TyScheme::zero(ty),
         val_env: ValEnv::default(),
+        def: None,
       };
       (hir::Name::new(name), ti)
     }))
@@ -110,7 +113,11 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
 fn basic_datatype(ty: Ty, ctors: &[&str]) -> TyInfo {
   let ty_scheme = TyScheme::zero(ty);
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
-  TyInfo { ty_scheme, val_env }
+  TyInfo {
+    ty_scheme,
+    val_env,
+    def: None,
+  }
 }
 
 fn datatype_ve<'a, I>(xs: I) -> ValEnv

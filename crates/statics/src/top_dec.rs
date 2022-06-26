@@ -201,6 +201,9 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
+        for ty_env in to_add.ty_env.values_mut() {
+          ty_env.def = st.def(str_exp);
+        }
         for val_info in to_add.val_env.values_mut() {
           val_info.def = st.def(str_exp);
         }
@@ -329,6 +332,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
       TyInfo {
         ty_scheme: ty_scheme.clone(),
         val_env: ValEnv::default(),
+        def: ty_info.def,
       },
     );
     (sym, ty_scheme)
@@ -587,6 +591,7 @@ fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &hir::TyDesc, idx: hir:
       started.sym(),
     ),
     val_env: ValEnv::default(),
+    def: st.def(idx),
   };
   st.syms.finish(started, ty_info.clone());
   if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {

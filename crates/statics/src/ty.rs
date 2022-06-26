@@ -1,7 +1,7 @@
 use crate::error::{ErrorKind, Item};
 use crate::info::TyEntry;
 use crate::st::St;
-use crate::types::{Cx, Ty, TyScheme};
+use crate::types::{Cx, Def, Ty, TyScheme};
 use crate::util::{apply_bv, get_ty_info, record};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty {
@@ -11,6 +11,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
+  let mut def = None::<Def>;
   let ret = match &ars.ty[ty] {
     // sml_def(44)
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
@@ -26,6 +27,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     hir::Ty::Con(args, path) => match get_ty_info(&cx.env, path) {
       Ok(ty_info) => {
         ty_scheme = Some(ty_info.ty_scheme.clone());
+        def = ty_info.def;
         let want_len = ty_info.ty_scheme.bound_vars.len();
         let mut ret = Ty::None;
         if want_len == args.len() {
@@ -56,6 +58,6 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     ty: ret.clone(),
     ty_scheme,
   };
-  st.info().insert(ty, Some(ty_entry), None);
+  st.info().insert(ty, Some(ty_entry), def);
   ret
 }

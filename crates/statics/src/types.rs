@@ -502,6 +502,7 @@ impl Syms {
     let ty_info = TyInfo {
       ty_scheme: TyScheme::zero(Ty::None),
       val_env: ValEnv::default(),
+      def: None,
     };
     self.store.push((name, ty_info));
     StartedSym {
@@ -568,6 +569,7 @@ impl StartedSym {
 pub(crate) struct TyInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) val_env: ValEnv,
+  pub(crate) def: Option<Def>,
 }
 
 /// Definition: StrEnv
