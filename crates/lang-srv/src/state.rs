@@ -148,7 +148,7 @@ impl State {
       };
       let res = self
         .analysis
-        .get_info(path, pos)
+        .get_md_info(path, pos)
         .map(|(value, range)| lsp_types::Hover {
           contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,

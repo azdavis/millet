@@ -23,7 +23,7 @@ impl Info {
   }
 
   /// Returns a Markdown string with information associated with this index.
-  pub fn get(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
+  pub fn get_md_info(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
     let (ty, ty_scheme) = self.store.get(&idx)?;
     let mvs = ty.meta_var_names();
     let ty = ty.display(&mvs, syms);

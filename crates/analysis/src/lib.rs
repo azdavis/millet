@@ -104,14 +104,14 @@ impl Analysis {
 
   /// Returns a Markdown string with information about this position.
   #[allow(unused_variables)]
-  pub fn get_info(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
+  pub fn get_md_info(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
     let file = self.files.get(&path)?;
     let mut node = get_node(file, pos)?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
       match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
         Some(idx) => {
-          let s = file.info.get(&self.syms, idx)?;
+          let s = file.info.get_md_info(&self.syms, idx)?;
           let range = ptr.to_node(file.parsed.root.syntax()).text_range();
           return Some((s, file.pos_db.range(range)));
         }
