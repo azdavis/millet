@@ -292,6 +292,18 @@ impl fmt::Display for GetInputError {
   }
 }
 
+impl std::error::Error for GetInputError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match &self.kind {
+      GetInputErrorKind::ReadFile(e) => Some(e),
+      GetInputErrorKind::Cm(e) => Some(e),
+      GetInputErrorKind::Canonicalize(e) => Some(e),
+      GetInputErrorKind::NoParent => None,
+      GetInputErrorKind::NotInRoot(e) => Some(e),
+    }
+  }
+}
+
 #[derive(Debug)]
 enum GetInputErrorKind {
   ReadFile(std::io::Error),
