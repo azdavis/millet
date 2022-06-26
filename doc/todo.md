@@ -10,10 +10,9 @@ priority is approximate. if unsure of priority, put in low.
 - support multiple files better
   - improve CM, currently rudimentary
   - and/or impl MLB support instead
-- impl more LSP features
-  - jump to definition
 - impl perf boost low-hanging fruit
   - don't re-IO, re-lex, re-parse, re-lower every file every time
+  - actually, this is negligible. the bulk of time is spent re-statics'ing
 
 ## medium
 
@@ -21,8 +20,7 @@ priority is approximate. if unsure of priority, put in low.
   - performing closure operations
   - checking whether expressions are expansive (oh no!)
 - improve hover
-  - show types better (not `_` for ty vars)
-  - hover on structure/signature/functor/type?
+  - hover on structure/signature/functor?
   - show documentation?
 - handle equality types
   - in type variables
@@ -32,7 +30,6 @@ priority is approximate. if unsure of priority, put in low.
   - improve ranges of stuff (names?)
   - show fully qualified names in type errors
   - related: avoid clashes between ty vars
-  - show something better than `_` for meta vars?
   - better parser errors?
 - make it more performant
   - only lower the parts of the syntax tree that changed?
@@ -52,5 +49,4 @@ priority is approximate. if unsure of priority, put in low.
     - unnecessary `()`
     - `if x then false else true`, etc
   - interpreter (hard)
-- use `type Seq<T> = Box<[T]>` instead of `Vec<T>` in hir, etc?
 - forbid symbolic names in some cases in parsing?
