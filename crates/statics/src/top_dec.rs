@@ -173,19 +173,19 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
       get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
       let sig = env_to_sig(bs, sig_exp_env);
       let mut subst = TyRealization::default();
-      let mut to_extend = sig.env.clone();
+      let mut to_add = sig.env.clone();
       if st.mode().is_regular() {
         env_instance_sig(st, &mut subst, &str_exp_env, &sig, str_exp.into());
-        env_realize(&subst, &mut to_extend);
-        env_enrich(st, &str_exp_env, &to_extend, str_exp.into());
+        env_realize(&subst, &mut to_add);
+        env_enrich(st, &str_exp_env, &to_add, str_exp.into());
       }
       if matches!(asc, hir::Ascription::Opaque) {
         subst.clear();
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
-        to_extend = sig.env.clone();
-        env_realize(&subst, &mut to_extend);
+        to_add = sig.env.clone();
+        env_realize(&subst, &mut to_add);
       }
-      ac.append(&mut to_extend);
+      ac.append(&mut to_add);
     }
     // sml_def(54)
     hir::StrExp::App(fun_name, arg_str_exp) => match bs.fun_env.get(fun_name) {
@@ -193,15 +193,15 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         let mut arg_env = Env::default();
         get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
         let mut subst = TyRealization::default();
-        let mut to_extend = fun_sig.res.env.clone();
+        let mut to_add = fun_sig.res.env.clone();
         let arg_idx = hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
         env_instance_sig(st, &mut subst, &arg_env, &fun_sig.param, arg_idx);
         gen_fresh_syms(st, &mut subst, &fun_sig.res.ty_names);
-        env_realize(&subst, &mut to_extend);
+        env_realize(&subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
-        ac.append(&mut to_extend);
+        ac.append(&mut to_add);
       }
       None => st.err(
         str_exp,
