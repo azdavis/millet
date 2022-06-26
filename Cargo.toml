@@ -6,3 +6,8 @@ resolver = "2"
 codegen-units = 1
 lto = "fat"
 strip = "symbols"
+
+[profile.release-debug]
+inherits = "release"
+strip = "none"
+debug = true

@@ -167,7 +167,11 @@ This also contains declarations for the bulk of the standard basis library, in t
 
 ### `crates/lang-srv`
 
-Depends on `analysis` and a bunch of third party crates to actually construct the language server. This is the only binary target, and only this may perform IO.
+Depends on `analysis` and a bunch of third party crates to implement a language server. This is one of two binary targets. Note that only binary targets may perform IO.
+
+### `crates/cli`
+
+A CLI wrapper around `analysis`. It basically does one full analysis of the input, prints any errors to stdout, and exits, much like a conventional compiler or linter.
 
 ### `crates/tests`
 

@@ -51,6 +51,14 @@ impl Root {
   pub fn get_path(&self, id: PathId) -> &CanonicalPathBuf {
     &self.id_to_path[id.0]
   }
+
+  /// Returns the path relative to the root for this ID.
+  pub fn get_rel_path(&self, id: PathId) -> &Path {
+    self.id_to_path[id.0]
+      .as_path()
+      .strip_prefix(self.root.as_path())
+      .expect("we should not give an id unless the path is in the root")
+  }
 }
 
 /// A path identifier. Cheap to copy and compare.

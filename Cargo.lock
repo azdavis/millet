@@ -67,6 +67,15 @@ version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#8ec2dc509c88951102ad3e751820443059a363af"
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "analysis",
+ "anyhow",
+ "paths",
+]
+
+[[package]]
 name = "cm"
 version = "0.1.0"
 dependencies = [

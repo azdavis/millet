@@ -1,0 +1,10 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "1"
+analysis = { path = "../analysis"}
+paths = { path = "../paths"}
