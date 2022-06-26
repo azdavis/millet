@@ -1,5 +1,5 @@
 use once_cell::sync::Lazy;
-use statics::{Mode::Declaration, Statics};
+use statics::Statics;
 
 /// What standard basis to use.
 #[derive(Debug, Clone, Copy)]
@@ -27,6 +27,7 @@ impl StdBasis {
 
 fn get_full_std_basis() -> Statics {
   let mut st = Statics::default();
+  let mode = statics::Mode::Declaration;
   for &contents in ORDER {
     let lexed = lex::get(contents);
     if let Some(e) = lexed.errors.first() {
@@ -41,7 +42,7 @@ fn get_full_std_basis() -> Statics {
       panic!("std_basis error: lower: {}", e.display());
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-    let (_, es) = statics::get(&mut st, Declaration, &lowered.arenas, &lowered.top_decs);
+    let (_, es) = statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
     if let Some(e) = es.first() {
       panic!("std_basis error: statics: {}", e.display(&st.syms));
     }

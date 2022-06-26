@@ -8,7 +8,6 @@ mod std_basis;
 
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
-use statics::Mode::Regular;
 use std::fmt;
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
@@ -42,11 +41,13 @@ impl Analysis {
 
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, s: &str) -> Vec<Error> {
-    let mut f = AnalyzedFile::new(s);
+    let mut file = AnalyzedFile::new(s);
     let mut st = self.std_basis.into_statics();
-    let (_, es) = statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
-    f.statics_errors = es;
-    f.to_errors(&st.syms)
+    let low = &file.lowered;
+    let mode = statics::Mode::Regular;
+    let (_, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
+    file.statics_errors = es;
+    file.to_errors(&st.syms)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -81,17 +82,19 @@ impl Analysis {
             .flat_map(|x| x.source_files.iter())
         })
         .filter_map(|&path_id| {
-          let f = match self.files.get_mut(&path_id) {
+          let file = match self.files.get_mut(&path_id) {
             Some(x) => x,
             None => {
               log::error!("no file for {path_id:?}");
               return None;
             }
           };
-          let (info, es) = statics::get(&mut st, Regular, &f.lowered.arenas, &f.lowered.top_decs);
-          f.statics_errors = es;
-          f.info = info;
-          Some((path_id, f.to_errors(&st.syms)))
+          let low = &file.lowered;
+          let mode = statics::Mode::Regular;
+          let (info, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
+          file.statics_errors = es;
+          file.info = info;
+          Some((path_id, file.to_errors(&st.syms)))
         })
         .collect()
     });
@@ -102,15 +105,15 @@ impl Analysis {
   /// Returns a Markdown string with information about this position.
   #[allow(unused_variables)]
   pub fn get_info(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
-    let f = self.files.get(&path)?;
-    let mut node = get_node(f, pos)?;
+    let file = self.files.get(&path)?;
+    let mut node = get_node(file, pos)?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
-      match f.lowered.ptrs.ast_to_hir(ptr.clone()) {
+      match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
         Some(idx) => {
-          let s = f.info.get(&self.syms, idx)?;
-          let range = ptr.to_node(f.parsed.root.syntax()).text_range();
-          return Some((s, f.pos_db.range(range)));
+          let s = file.info.get(&self.syms, idx)?;
+          let range = ptr.to_node(file.parsed.root.syntax()).text_range();
+          return Some((s, file.pos_db.range(range)));
         }
         None => node = node.parent()?,
       }

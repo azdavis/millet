@@ -166,7 +166,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         // word
         Some(&b'w') => {
           cx.i += 1;
-          let f = match bs.get(cx.i) {
+          let valid_digit = match bs.get(cx.i) {
             Some(&b'x') => {
               cx.i += 1;
               u8::is_ascii_hexdigit
@@ -174,7 +174,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
             _ => u8::is_ascii_digit,
           };
           let s = cx.i;
-          advance_while(cx, bs, |b| f(&b));
+          advance_while(cx, bs, |b| valid_digit(&b));
           if s == cx.i {
             err(cx, start, ErrorKind::MissingDigitsInNumLit)
           }
