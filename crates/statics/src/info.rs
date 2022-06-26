@@ -1,4 +1,4 @@
-use crate::types::{Syms, Ty, TyScheme};
+use crate::types::{Def, Syms, Ty, TyScheme};
 use fast_hash::FxHashMap;
 
 /// Information about HIR indices.
@@ -11,6 +11,7 @@ pub struct Info {
 struct InfoEntry {
   ty: Ty,
   ty_scheme: Option<TyScheme>,
+  def: Option<Def>,
 }
 
 impl Info {
@@ -21,6 +22,7 @@ impl Info {
     let idx = idx.into();
     let entry = InfoEntry {
       ty,
+      def: None,
       // ignore ty schemes that bind no vars
       ty_scheme: ty_scheme.and_then(|ts| (!ts.bound_vars.is_empty()).then(|| ts)),
     };
@@ -46,5 +48,10 @@ impl Info {
         ))
       }
     }
+  }
+
+  /// Returns the definition site of the idx.
+  pub fn get_def_location(&self, idx: hir::Idx) -> Option<Def> {
+    self.store.get(&idx)?.def
   }
 }

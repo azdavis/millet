@@ -123,9 +123,25 @@ impl Analysis {
   /// Returns the definition range of the item at this position.
   #[allow(unused_variables)]
   pub fn get_def_location(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
-    // TODO: statics must have the notion of a file to impl this. we may also want to modify
-    // Env/ValInfo/TyInfo to track def indices.
-    None
+    let file = self.files.get(&path)?;
+    let mut node = get_node(file, pos)?;
+    loop {
+      let ptr = SyntaxNodePtr::new(&node);
+      match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
+        Some(idx) => {
+          let def = file.info.get_def_location(idx)?;
+          let def_file = self.files.get(&def.path)?;
+          let def_range = def_file
+            .lowered
+            .ptrs
+            .hir_to_ast(def.idx)?
+            .to_node(def_file.parsed.root.syntax())
+            .text_range();
+          return Some((def.path, def_file.pos_db.range(def_range)));
+        }
+        None => node = node.parent()?,
+      }
+    }
   }
 }
 

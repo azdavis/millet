@@ -887,3 +887,12 @@ fn handle_bv(
     },
   };
 }
+
+/// A definition site.
+#[derive(Debug, Clone, Copy)]
+pub struct Def {
+  /// The path.
+  pub path: paths::PathId,
+  /// The HIR index.
+  pub idx: hir::Idx,
+}

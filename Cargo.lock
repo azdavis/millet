@@ -488,6 +488,7 @@ dependencies = [
  "fast-hash",
  "hir",
  "log",
+ "paths",
  "pattern-match",
  "uniq",
 ]
