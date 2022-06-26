@@ -12,7 +12,6 @@ dependencies = [
  "lex",
  "log",
  "lower",
- "once_cell",
  "parse",
  "paths",
  "statics",

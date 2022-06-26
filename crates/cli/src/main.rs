@@ -6,7 +6,7 @@ fn main() -> Result<()> {
   let root = fs.canonicalize(std::env::current_dir()?.as_path())?;
   let mut root = paths::Root::new(root);
   let inp = analysis::get_input(&fs, &mut root)?;
-  let mut an = analysis::Analysis::new(analysis::StdBasis::Full);
+  let mut an = analysis::Analysis::new(analysis::StdBasis::full());
   let got = an.get_many(&inp);
   let num_errors: usize = got.iter().map(|(_, errors)| errors.len()).sum();
   for (path, errors) in got {

@@ -10,7 +10,6 @@ doctest = false
 
 [dependencies]
 log = "0.4"
-once_cell = "1"
 topo-sort =  { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 lex = { path = "../lex" }

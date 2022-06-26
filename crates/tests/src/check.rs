@@ -27,7 +27,7 @@ use std::ops::Range;
 /// note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  go(&[s], analysis::StdBasis::Minimal, Outcome::Pass)
+  go(&[s], StdBasis::Minimal, Outcome::Pass)
 }
 
 /// like [`check`], but the expectation comments should be not satisfied.
@@ -54,34 +54,51 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  go(&[s], analysis::StdBasis::Minimal, Outcome::Fail)
+  go(&[s], StdBasis::Minimal, Outcome::Fail)
 }
 
 /// like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  go(&[s], analysis::StdBasis::Full, Outcome::Pass)
+  go(&[s], StdBasis::Full, Outcome::Pass)
 }
 
 /// like [`check`], but checks multiple files in sequence.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
-  go(ss, analysis::StdBasis::Minimal, Outcome::Pass)
+  go(ss, StdBasis::Minimal, Outcome::Pass)
 }
 
-fn go(ss: &[&str], std_basis: analysis::StdBasis, want: Outcome) {
+fn go(ss: &[&str], std_basis: StdBasis, want: Outcome) {
   // ignores the Err return if already initialized, since that's fine.
   let _ = simple_logger::init_with_level(log::Level::Info);
-  if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
+  if matches!(std_basis, StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
     return;
   }
-  let c = Check::new(ss, std_basis);
+  let c = Check::new(ss, std_basis.to_analysis());
   match (want, c.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
     (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
     (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {c}"),
   }
 }
+
+enum StdBasis {
+  Minimal,
+  Full,
+}
+
+impl StdBasis {
+  fn to_analysis(&self) -> analysis::StdBasis {
+    match self {
+      StdBasis::Minimal => MINIMAL.clone(),
+      StdBasis::Full => FULL.clone(),
+    }
+  }
+}
+
+static MINIMAL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::minimal);
+static FULL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::full);
 
 /// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
 /// `/` should be readable.

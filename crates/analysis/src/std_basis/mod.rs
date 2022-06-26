@@ -1,21 +1,23 @@
-use once_cell::sync::Lazy;
 use statics::Statics;
 
-/// What standard basis to use.
-#[derive(Debug, Clone, Copy)]
-pub enum StdBasis {
-  /// Include most of the standard basis library.
-  Full,
-  /// Only include fundamental top-level definitions like `int`, `real`, `ref`, `<`, etc.
-  Minimal,
-}
+/// A standard basis.
+#[derive(Debug, Clone)]
+pub struct StdBasis(Statics);
 
 impl StdBasis {
   pub(crate) fn into_statics(self) -> Statics {
-    match self {
-      StdBasis::Full => FULL.clone(),
-      StdBasis::Minimal => Statics::default(),
-    }
+    self.0
+  }
+
+  /// The minimal standard basis. Only includes fundamental top-level definitions like `int`,
+  /// `real`, `ref`, `<`, etc.
+  pub fn minimal() -> Self {
+    Self(Statics::default())
+  }
+
+  /// The full standard basis, as documented in the public SML basis library docs.
+  pub fn full() -> Self {
+    Self(elapsed::log("get_full_std_basis", get_full_std_basis))
   }
 }
 
@@ -43,8 +45,6 @@ fn get_full_std_basis() -> Statics {
   }
   st
 }
-
-static FULL: Lazy<Statics> = Lazy::new(|| elapsed::log("get_full_std_basis", get_full_std_basis));
 
 const ORDER: &[&str] = &[
   include_str!("general.sml"),
