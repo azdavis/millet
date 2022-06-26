@@ -48,9 +48,8 @@ fn get_str_dec(
       // sml_def(61)
       let mut str_env = StrEnv::default();
       for str_bind in str_binds {
-        let mut env = Env::default();
+        let mut env = Env::with_def(st.def(str_dec));
         get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
-        env.def = st.def(str_dec);
         if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
           st.err(str_dec, e);
         }
@@ -99,9 +98,8 @@ fn get_str_dec(
       let mut sig_env = SigEnv::default();
       // sml_def(67)
       for sig_bind in sig_binds {
-        let mut env = Env::default();
+        let mut env = Env::with_def(st.def(str_dec));
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
-        env.def = st.def(str_dec);
         let sig = env_to_sig(bs, env);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);
@@ -129,9 +127,8 @@ fn get_str_dec(
           .as_mut_env()
           .str_env
           .insert(fun_bind.param_name.clone(), param_sig.env.clone());
-        let mut body_env = Env::default();
+        let mut body_env = Env::with_def(st.def(str_dec));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
-        body_env.def = st.def(str_dec);
         let mut body_ty_names = TyNameSet::default();
         env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
         bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);

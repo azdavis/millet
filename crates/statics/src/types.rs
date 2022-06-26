@@ -615,6 +615,13 @@ pub(crate) struct Env {
 }
 
 impl Env {
+  pub(crate) fn with_def(def: Option<Def>) -> Self {
+    Self {
+      def,
+      ..Default::default()
+    }
+  }
+
   /// empties the other env into self.
   pub(crate) fn append(&mut self, other: &mut Self) {
     self.str_env.extend(other.str_env.drain());
