@@ -201,6 +201,9 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
+        for val_info in to_add.val_env.values_mut() {
+          val_info.def = st.def(str_exp);
+        }
         ac.append(&mut to_add);
       }
       None => st.err(
