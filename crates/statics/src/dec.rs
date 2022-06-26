@@ -147,6 +147,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             let vi = ValInfo {
               ty_scheme: TyScheme::zero(ty),
               id_status: IdStatus::Exn(exn),
+              def: st.def(dec),
             };
             if let Some(e) = ins_check_name(&mut val_env, name.clone(), vi, Item::Val) {
               st.err(dec, e);
@@ -266,6 +267,7 @@ pub(crate) fn get_dat_binds(
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Con,
+        def: st.def(idx),
       };
       if let Some(e) = ins_check_name(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
         st.err(idx, e);

@@ -1,7 +1,7 @@
 use crate::error::{Error, ErrorKind};
 use crate::info::Info;
 use crate::std_basis;
-use crate::types::{Bs, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms};
+use crate::types::{Bs, Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms};
 
 /// The state.
 ///
@@ -34,6 +34,16 @@ impl St {
 
   pub(crate) fn mode(&self) -> Mode {
     self.mode
+  }
+
+  pub(crate) fn def<I>(&self, idx: I) -> Option<Def>
+  where
+    I: Into<hir::Idx>,
+  {
+    self.mode().path().map(|path| Def {
+      path,
+      idx: idx.into(),
+    })
   }
 
   pub(crate) fn subst(&mut self) -> &mut Subst {
@@ -86,7 +96,7 @@ impl Default for Statics {
 #[derive(Debug, Clone, Copy)]
 pub enum Mode {
   /// Regular checking. The default.
-  Regular,
+  Regular(Option<paths::PathId>),
   /// Declaration-mode checking. Notably, ascription structure expressions will not check to see if
   /// they actually match the signature. This should only be used for special files, like ones that
   /// define the standard basis.
@@ -95,6 +105,13 @@ pub enum Mode {
 
 impl Mode {
   pub(crate) fn is_regular(self) -> bool {
-    matches!(self, Self::Regular)
+    matches!(self, Self::Regular(_))
+  }
+
+  fn path(self) -> Option<paths::PathId> {
+    match self {
+      Self::Regular(p) => p,
+      Self::Declaration => None,
+    }
   }
 }

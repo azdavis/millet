@@ -1,5 +1,6 @@
 use crate::error::{ErrorKind, Item};
 use crate::generalizes::eq_ty_scheme;
+use crate::info::Extra;
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
@@ -19,8 +20,8 @@ pub(crate) fn get(
     Some(x) => x,
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
-  let ((pat, ty), ty_scheme) = get_(st, cx, ars, ve, pat_);
-  st.info().insert(pat_, ty.clone(), ty_scheme);
+  let ((pat, ty), extra) = get_(st, cx, ars, ve, pat_);
+  st.info().insert(pat_, ty.clone(), extra);
   (pat, ty)
 }
 
@@ -30,9 +31,9 @@ fn get_(
   ars: &hir::Arenas,
   ve: &mut ValEnv,
   pat_: hir::la_arena::Idx<hir::Pat>,
-) -> ((Pat, Ty), Option<TyScheme>) {
+) -> ((Pat, Ty), Option<Extra>) {
   let pat = Some(pat_);
-  let mut ty_scheme = None::<TyScheme>;
+  let mut extra = None::<Extra>;
   let pat_ty = match &ars.pat[pat_] {
     // sml_def(32)
     hir::Pat::Wild => any(st, pat),
@@ -56,7 +57,7 @@ fn get_(
         Ok(x) => x,
         Err(name) => {
           st.err(pat_, ErrorKind::Undefined(Item::Struct, name.clone()));
-          return (any(st, pat), ty_scheme);
+          return (any(st, pat), extra);
         }
       };
       let maybe_val_info = env.val_env.get(path.last());
@@ -65,13 +66,13 @@ fn get_(
       if is_var {
         let (pm_pat, ty) = any(st, pat);
         insert_name(st, ve, path.last().clone(), ty.clone(), pat_.into());
-        return ((pm_pat, ty), ty_scheme);
+        return ((pm_pat, ty), extra);
       }
       let val_info = match maybe_val_info {
         Some(x) => x,
         None => {
           st.err(pat_, ErrorKind::Undefined(Item::Val, path.last().clone()));
-          return (any(st, pat), ty_scheme);
+          return (any(st, pat), extra);
         }
       };
       let variant_name = match &val_info.id_status {
@@ -86,20 +87,23 @@ fn get_(
       // sml_def(35), sml_def(41)
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
-          ty_scheme = Some(val_info.ty_scheme.clone());
+          extra = Some((val_info.ty_scheme.clone(), val_info.def));
           if arg.is_some() {
             st.err(pat_, ErrorKind::ConPatMustNotHaveArg)
           }
           (sym, Vec::new(), ty)
         }
         Ty::Fn(param_ty, mut res_ty) => {
-          ty_scheme = Some(TyScheme {
-            bound_vars: val_info.ty_scheme.bound_vars.clone(),
-            ty: match &val_info.ty_scheme.ty {
-              Ty::Fn(_, res_ty) => res_ty.as_ref().clone(),
-              _ => unreachable!("we are in the Fn case for the ty scheme's ty"),
+          extra = Some((
+            TyScheme {
+              bound_vars: val_info.ty_scheme.bound_vars.clone(),
+              ty: match &val_info.ty_scheme.ty {
+                Ty::Fn(_, res_ty) => res_ty.as_ref().clone(),
+                _ => unreachable!("we are in the Fn case for the ty scheme's ty"),
+              },
             },
-          });
+            val_info.def,
+          ));
           let sym = match res_ty.as_ref() {
             Ty::Con(_, x) => *x,
             _ => unreachable!("a fn ctor returns the type it constructs, which will be a Con"),
@@ -193,7 +197,7 @@ fn get_(
       (Pat::or(pm_pats, pat), ty)
     }
   };
-  (pat_ty, ty_scheme)
+  (pat_ty, extra)
 }
 
 fn any(st: &mut St, pat: hir::PatIdx) -> (Pat, Ty) {
@@ -208,6 +212,7 @@ fn insert_name(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty, idx: hir::
   let vi = ValInfo {
     ty_scheme: TyScheme::zero(ty),
     id_status: IdStatus::Val,
+    def: st.def(idx),
   };
   if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);

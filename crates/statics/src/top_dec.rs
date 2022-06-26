@@ -358,6 +358,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
         let vi = ValInfo {
           ty_scheme,
           id_status: IdStatus::Val,
+          def: st.def(spec),
         };
         let name = &val_desc.name;
         if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
@@ -413,6 +414,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
+        def: st.def(spec),
       };
       if let Some(e) = ins_check_name(&mut ac.val_env, ex_desc.name.clone(), vi, Item::Val) {
         st.err(spec, e);

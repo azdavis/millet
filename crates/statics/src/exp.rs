@@ -1,7 +1,8 @@
 use crate::error::{ErrorKind, Item};
+use crate::info::Extra;
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{Cx, Env, Sym, SymsMarker, Ty, TyScheme, ValEnv};
+use crate::types::{Cx, Env, Sym, SymsMarker, Ty, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_env, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
@@ -12,7 +13,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     None => return Ty::None,
   };
   // NOTE: do not early return, since we add the ty to the Info at the bottom.
-  let mut ty_scheme = None::<TyScheme>;
+  let mut extra = None::<Extra>;
   let ret = match &ars.exp[exp] {
     // sml_def(1)
     hir::Exp::SCon(scon) => get_scon(scon),
@@ -20,7 +21,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     hir::Exp::Path(path) => match get_env(&cx.env, path.structures()) {
       Ok(env) => match env.val_env.get(path.last()) {
         Some(val_info) => {
-          ty_scheme = Some(val_info.ty_scheme.clone());
+          extra = Some((val_info.ty_scheme.clone(), val_info.def));
           instantiate(st, val_info.ty_scheme.clone())
         }
         None => {
@@ -116,7 +117,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       want
     }
   };
-  st.info().insert(exp, ret.clone(), ty_scheme);
+  st.info().insert(exp, ret.clone(), extra);
   ret
 }
 

@@ -584,6 +584,7 @@ pub(crate) type ValEnv = FxHashMap<hir::Name, ValInfo>;
 pub(crate) struct ValInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) id_status: IdStatus,
+  pub(crate) def: Option<Def>,
 }
 
 /// Definition: IdStatus

@@ -84,6 +84,7 @@ pub(crate) fn get() -> Statics {
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Val,
+        def: None,
       };
       (hir::Name::new(name), vi)
     }))
@@ -123,6 +124,7 @@ where
         ValInfo {
           ty_scheme,
           id_status: IdStatus::Con,
+          def: None,
         },
       )
     })

@@ -44,7 +44,7 @@ impl Analysis {
     let mut file = AnalyzedFile::new(s);
     let mut st = self.std_basis.into_statics();
     let low = &file.lowered;
-    let mode = statics::Mode::Regular;
+    let mode = statics::Mode::Regular(None);
     let (_, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
     file.statics_errors = es;
     file.to_errors(&st.syms)
@@ -90,7 +90,7 @@ impl Analysis {
             }
           };
           let low = &file.lowered;
-          let mode = statics::Mode::Regular;
+          let mode = statics::Mode::Regular(Some(path_id));
           let (info, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
           file.statics_errors = es;
           file.info = info;
