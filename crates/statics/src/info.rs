@@ -4,7 +4,13 @@ use fast_hash::FxHashMap;
 /// Information about HIR indices.
 #[derive(Debug, Default)]
 pub struct Info {
-  store: FxHashMap<hir::Idx, (Ty, Option<TyScheme>)>,
+  store: FxHashMap<hir::Idx, InfoEntry>,
+}
+
+#[derive(Debug)]
+struct InfoEntry {
+  ty: Ty,
+  ty_scheme: Option<TyScheme>,
 }
 
 impl Info {
@@ -13,21 +19,24 @@ impl Info {
     I: Into<hir::Idx>,
   {
     let idx = idx.into();
-    // ignore ty schemes that bind no vars
-    let ty_scheme = ty_scheme.and_then(|x| (!x.bound_vars.is_empty()).then(|| x));
-    assert!(self.store.insert(idx, (ty, ty_scheme)).is_none());
+    let entry = InfoEntry {
+      ty,
+      // ignore ty schemes that bind no vars
+      ty_scheme: ty_scheme.and_then(|ts| (!ts.bound_vars.is_empty()).then(|| ts)),
+    };
+    assert!(self.store.insert(idx, entry).is_none());
   }
 
   pub(crate) fn tys_mut(&mut self) -> impl Iterator<Item = &mut Ty> {
-    self.store.values_mut().map(|(ty, _)| ty)
+    self.store.values_mut().map(|entry| &mut entry.ty)
   }
 
   /// Returns a Markdown string with information associated with this index.
   pub fn get_md_info(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
-    let (ty, ty_scheme) = self.store.get(&idx)?;
-    let mvs = ty.meta_var_names();
-    let ty = ty.display(&mvs, syms);
-    match ty_scheme {
+    let entry = self.store.get(&idx)?;
+    let mvs = entry.ty.meta_var_names();
+    let ty = entry.ty.display(&mvs, syms);
+    match &entry.ty_scheme {
       None => Some(format!("```sml\n{ty}\n```")),
       Some(ty_scheme) => {
         let mvs = ty_scheme.ty.meta_var_names();
