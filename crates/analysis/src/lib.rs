@@ -103,7 +103,6 @@ impl Analysis {
   }
 
   /// Returns a Markdown string with information about this position.
-  #[allow(unused_variables)]
   pub fn get_md_info(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
     let file = self.files.get(&path)?;
     let mut node = get_node(file, pos)?;
@@ -121,7 +120,6 @@ impl Analysis {
   }
 
   /// Returns the definition range of the item at this position.
-  #[allow(unused_variables)]
   pub fn get_def_location(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
     let file = self.files.get(&path)?;
     let mut node = get_node(file, pos)?;

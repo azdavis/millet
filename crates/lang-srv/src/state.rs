@@ -106,7 +106,6 @@ impl State {
     self.send(req.into())
   }
 
-  #[allow(dead_code)]
   fn send_response(&mut self, res: Response) {
     match self.req_queue.incoming.complete(res.id.clone()) {
       Some(()) => self.send(res.into()),
@@ -323,7 +322,6 @@ impl State {
   }
 }
 
-#[allow(dead_code)]
 fn try_request<R, F>(req: Request, f: F) -> ControlFlow<Result<()>, Request>
 where
   R: lsp_types::request::Request,

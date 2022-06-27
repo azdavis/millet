@@ -56,7 +56,6 @@ impl Error {
 
 /// An error kind.
 #[derive(Debug)]
-#[allow(missing_docs)]
 enum ErrorKind {
   InvalidSource,
   UnclosedComment,
