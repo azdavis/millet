@@ -119,7 +119,7 @@ impl Analysis {
     }
   }
 
-  /// Returns the definition range of the item at this position.
+  /// Returns the range of the definition of the item at this position.
   pub fn get_def_location(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
     let file = self.files.get(&path)?;
     let mut node = get_node(file, pos)?;
