@@ -147,7 +147,7 @@ impl State {
       };
       let res = self
         .analysis
-        .get_md_info(path, pos)
+        .get_md(path, pos)
         .map(|(value, range)| lsp_types::Hover {
           contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,
@@ -171,24 +171,9 @@ impl State {
           return;
         }
       };
-      let res = self
-        .analysis
-        .get_def_location(path, pos)
-        .and_then(|(path, range)| {
-          let uri = match file_url(root.path.get_path(path).as_path()) {
-            Ok(x) => x,
-            Err(e) => {
-              log::error!("{e:#}");
-              return None;
-            }
-          };
-          Some(lsp_types::GotoDefinitionResponse::Scalar(
-            lsp_types::Location {
-              uri,
-              range: lsp_range(range),
-            },
-          ))
-        });
+      let res = self.analysis.get_def(path, pos).and_then(|(path, range)| {
+        lsp_location(&root, path, range).map(lsp_types::GotoDefinitionResponse::Scalar)
+      });
       self.send_response(Response::new_ok(id, res));
       self.root = Some(root);
     })?;
@@ -412,6 +397,24 @@ fn lsp_position(pos: analysis::Position) -> lsp_types::Position {
     line: pos.line,
     character: pos.character,
   }
+}
+
+fn lsp_location(
+  root: &Root,
+  path: paths::PathId,
+  range: analysis::Range,
+) -> Option<lsp_types::Location> {
+  let uri = match file_url(root.path.get_path(path).as_path()) {
+    Ok(x) => x,
+    Err(e) => {
+      log::error!("{e:#}");
+      return None;
+    }
+  };
+  Some(lsp_types::Location {
+    uri,
+    range: lsp_range(range),
+  })
 }
 
 fn analysis_position(pos: lsp_types::Position) -> analysis::Position {

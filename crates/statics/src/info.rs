@@ -46,7 +46,7 @@ impl Info {
   }
 
   /// Returns a Markdown string with information associated with this index.
-  pub fn get_md_info(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
+  pub fn get_md(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
     let mvs = ty_entry.ty.meta_var_names();
     let ty = ty_entry.ty.display(&mvs, syms);
@@ -63,7 +63,7 @@ impl Info {
   }
 
   /// Returns the definition site of the idx.
-  pub fn get_def_location(&self, idx: hir::Idx) -> Option<Def> {
+  pub fn get_def(&self, idx: hir::Idx) -> Option<Def> {
     self.store.get(&idx)?.def
   }
 }
