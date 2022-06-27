@@ -104,39 +104,38 @@ impl Analysis {
 
   /// Returns a Markdown string with information about this position.
   pub fn get_md_info(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
-    let file = self.files.get(&path)?;
-    let mut node = get_node(file, pos)?;
-    loop {
-      let ptr = SyntaxNodePtr::new(&node);
-      match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
-        Some(idx) => {
-          let s = file.info.get_md_info(&self.syms, idx)?;
-          let range = ptr.to_node(file.parsed.root.syntax()).text_range();
-          return Some((s, file.pos_db.range(range)));
-        }
-        None => node = node.parent()?,
-      }
-    }
+    self.go_up_ast(path, pos, |file, ptr, idx| {
+      let s = file.info.get_md_info(&self.syms, idx)?;
+      let range = ptr.to_node(file.parsed.root.syntax()).text_range();
+      Some((s, file.pos_db.range(range)))
+    })
   }
 
   /// Returns the range of the definition of the item at this position.
   pub fn get_def_location(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
+    self.go_up_ast(path, pos, |file, _, idx| {
+      let def = file.info.get_def_location(idx)?;
+      let def_file = self.files.get(&def.path)?;
+      let def_range = def_file
+        .lowered
+        .ptrs
+        .hir_to_ast(def.idx)?
+        .to_node(def_file.parsed.root.syntax())
+        .text_range();
+      Some((def.path, def_file.pos_db.range(def_range)))
+    })
+  }
+
+  fn go_up_ast<F, T>(&self, path: PathId, pos: Position, f: F) -> Option<T>
+  where
+    F: FnOnce(&AnalyzedFile, SyntaxNodePtr, hir::Idx) -> Option<T>,
+  {
     let file = self.files.get(&path)?;
     let mut node = get_node(file, pos)?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
       match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
-        Some(idx) => {
-          let def = file.info.get_def_location(idx)?;
-          let def_file = self.files.get(&def.path)?;
-          let def_range = def_file
-            .lowered
-            .ptrs
-            .hir_to_ast(def.idx)?
-            .to_node(def_file.parsed.root.syntax())
-            .text_range();
-          return Some((def.path, def_file.pos_db.range(def_range)));
-        }
+        Some(idx) => return f(file, ptr, idx),
         None => node = node.parent()?,
       }
     }

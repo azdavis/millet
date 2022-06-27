@@ -9,6 +9,7 @@ dependencies = [
  "cm",
  "elapsed",
  "fast-hash",
+ "hir",
  "lex",
  "log",
  "lower",
