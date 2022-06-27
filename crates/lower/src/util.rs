@@ -1,9 +1,7 @@
 use fast_hash::FxHashMap;
 use std::fmt;
-use syntax::ast::{self, AstNode, AstPtr};
+use syntax::ast::{self, AstNode, AstPtr, SyntaxNodePtr};
 use syntax::rowan::TextRange;
-
-type SyntaxNodePtr = ast::SyntaxNodePtr<syntax::SML>;
 
 /// see the ungrammar for why this is.
 type AstTopDec = ast::StrDecOne;
