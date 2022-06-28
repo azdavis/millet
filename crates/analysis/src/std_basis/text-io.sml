@@ -8,7 +8,7 @@ signature TEXT_IO = sig
     where type pos = TextPrimIO.pos
   *)
   val inputLine : instream -> string option
-  val outputSubstr : outstream * Substring.substring -> unit
+  val outputSubstr : outstream * substring -> unit
   val openIn : string -> instream
   val openOut : string -> outstream
   val openAppend : string -> outstream

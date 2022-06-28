@@ -5,7 +5,7 @@ signature BYTE = sig
   val stringToBytes : string -> Word8Vector.vector
   val unpackStringVec : Word8VectorSlice.slice -> string
   val unpackString : Word8ArraySlice.slice -> string
-  val packString : Word8Array.array * int * Substring.substring -> unit
+  val packString : Word8Array.array * int * substring -> unit
 end
 
 structure Byte :> BYTE = struct end
