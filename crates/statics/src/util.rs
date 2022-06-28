@@ -182,10 +182,10 @@ pub(crate) fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
       }
     }
     Ty::Con(args, sym) => {
-      f(*sym);
       for ty in args {
         ty_syms(f, ty);
       }
+      f(*sym);
     }
     Ty::Fn(param, res) => {
       ty_syms(f, param);
