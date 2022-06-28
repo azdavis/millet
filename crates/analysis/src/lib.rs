@@ -93,7 +93,7 @@ impl Analysis {
           let mode = statics::Mode::Regular(Some(path_id));
           let (info, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
           file.statics_errors = es;
-          file.info = info;
+          file.info = Some(info);
           Some((path_id, file.to_errors(st.syms())))
         })
         .collect()
@@ -105,7 +105,8 @@ impl Analysis {
   /// Returns a Markdown string with information about this position.
   pub fn get_md(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
     self.go_up_ast(path, pos, |file, ptr, idx| {
-      let s = file.info.get_md(&self.syms, idx)?;
+      let info = file.info.as_ref()?;
+      let s = info.get_md(&self.syms, idx)?;
       let range = ptr.to_node(file.parsed.root.syntax()).text_range();
       Some((s, file.pos_db.range(range)))
     })
@@ -114,7 +115,7 @@ impl Analysis {
   /// Returns the range of the definition of the item at this position.
   pub fn get_def(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
     self.go_up_ast(path, pos, |file, _, idx| {
-      self.def_to_path_and_range(file.info.get_def(idx)?)
+      self.def_to_path_and_range(file.info.as_ref()?.get_def(idx)?)
     })
   }
 
@@ -125,6 +126,7 @@ impl Analysis {
       Some(
         file
           .info
+          .as_ref()?
           .get_ty_defs(&self.syms, idx)?
           .into_iter()
           .filter_map(|def| self.def_to_path_and_range(def))
@@ -209,7 +211,7 @@ struct AnalyzedFile {
   parsed: parse::Parse,
   lowered: lower::Lower,
   statics_errors: Vec<statics::Error>,
-  info: statics::Info,
+  info: Option<statics::Info>,
 }
 
 impl AnalyzedFile {
@@ -226,7 +228,7 @@ impl AnalyzedFile {
       parsed,
       lowered,
       statics_errors: Vec::new(),
-      info: statics::Info::default(),
+      info: None,
     }
   }
 
