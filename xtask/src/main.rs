@@ -176,7 +176,7 @@ fn ck_changelog(sh: &Shell) -> Result<()> {
 fn dist(sh: &Shell, release: bool) -> Result<()> {
   let release_arg = release.then(|| "--release");
   cmd!(sh, "cargo build {release_arg...} --locked --bin lang-srv").run()?;
-  let mut dir: PathBuf = ["extensions", "vscode", "out"].iter().collect();
+  let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
   let kind = if release { "release" } else { "debug" };
@@ -254,7 +254,7 @@ fn main() -> Result<()> {
       }
       let paths: Vec<PathBuf> = ["package.json", "package-lock.json"]
         .into_iter()
-        .map(|p| ["extensions", "vscode", p].into_iter().collect())
+        .map(|p| ["editors", "vscode", p].into_iter().collect())
         .collect();
       for path in paths.iter() {
         let contents = std::fs::read_to_string(path)?;

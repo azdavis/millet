@@ -3,8 +3,8 @@
   "editor.rulers": [100],
   "files.exclude": {
     "**/*.vsix": true,
-    "extensions/vscode/node_modules": true,
-    "extensions/vscode/out": true,
+    "editors/vscode/node_modules": true,
+    "editors/vscode/out": true,
     "target": true
   },
   "rust-analyzer.checkOnSave.command": "clippy"

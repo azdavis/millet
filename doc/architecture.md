@@ -199,7 +199,11 @@ See the documentation of `check()` for how to write tests.
 
 Documentation, like this!
 
-### `extensions/vscode`
+### `editors`
+
+Support for specific text editors. Right now there is only one.
+
+### `editors/vscode`
 
 The VS Code client extension, in TypeScript.
 

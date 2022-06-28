@@ -65,12 +65,12 @@ jobs:
         run: cargo xtask dist --release
       - name: Package vsix
         run: npx --no-install vsce package --target ${{ matrix.vscode }} -o millet-${{ matrix.vscode }}.vsix
-        working-directory: extensions/vscode
+        working-directory: editors/vscode
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dist
-          path: extensions/vscode/millet-${{ matrix.vscode }}.vsix
+          path: editors/vscode/millet-${{ matrix.vscode }}.vsix
   release:
     runs-on: ubuntu-latest
     needs: dist
@@ -83,12 +83,12 @@ jobs:
           node-version: 16.x
       - name: Install node dependencies
         run: npm ci
-        working-directory: extensions/vscode
+        working-directory: editors/vscode
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           name: dist
-          path: extensions/vscode/dist
+          path: editors/vscode/dist
       - name: Publish artifacts
         run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath dist/*
-        working-directory: extensions/vscode
+        working-directory: editors/vscode
