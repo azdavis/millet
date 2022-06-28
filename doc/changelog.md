@@ -2,6 +2,12 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.1.13
+
+- Add initial goto type def support.
+- Greatly improve performance of statics with faster cloning.
+- Add initial support of std basis documentation shown on hover (`Option`, `List`).
+
 ## v0.1.12
 
 - Add initial goto def support for values, types, structures, signatures, and functors.
