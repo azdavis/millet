@@ -1,6 +1,7 @@
 use crate::types::{Def, Syms, Ty, TyScheme};
 use crate::util::ty_syms;
 use fast_hash::FxHashMap;
+use std::fmt::Write as _;
 
 /// Information about HIR indices.
 #[derive(Debug, Default)]
@@ -48,19 +49,26 @@ impl Info {
 
   /// Returns a Markdown string with information associated with this index.
   pub fn get_md(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
+    let mut ret = String::new();
+    self.get_ty_md(&mut ret, syms, idx)?;
+    Some(ret)
+  }
+
+  fn get_ty_md(&self, s: &mut String, syms: &Syms, idx: hir::Idx) -> Option<()> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
     let mvs = ty_entry.ty.meta_var_names();
     let ty = ty_entry.ty.display(&mvs, syms);
-    match &ty_entry.ty_scheme {
-      None => Some(format!("```sml\n{ty}\n```")),
-      Some(ty_scheme) => {
-        let mvs = ty_scheme.ty.meta_var_names();
-        let ty_scheme = ty_scheme.display(&mvs, syms);
-        Some(format!(
-          "```sml\n(* most general *)\n{ty_scheme}\n(* this usage *)\n{ty}\n```"
-        ))
-      }
+    writeln!(s, "```sml").unwrap();
+    if let Some(ty_scheme) = &ty_entry.ty_scheme {
+      let mvs = ty_scheme.ty.meta_var_names();
+      let ty_scheme = ty_scheme.display(&mvs, syms);
+      writeln!(s, "(* most general *)").unwrap();
+      writeln!(s, "{ty_scheme}").unwrap();
+      writeln!(s, "(* this usage *)").unwrap();
     }
+    writeln!(s, "{ty}").unwrap();
+    writeln!(s, "```").unwrap();
+    Some(())
   }
 
   /// Returns the definition site of the idx.
