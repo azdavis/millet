@@ -10,9 +10,8 @@
   - Snippets
 - For SML files only:
   - Inline errors
-  - Hover for type
-  - Go to definition
-  - Go to type definition
+  - Hover for type/documentation
+  - Go to definition/type definition
 
 ## Usage
 
