@@ -2,6 +2,7 @@
 //!
 //! ```sml
 //! type 'a guy = unit
+//!
 //! val _ =
 //! (* ^ 'a bound here *)
 //!   let
