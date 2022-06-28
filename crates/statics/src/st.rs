@@ -97,6 +97,11 @@ impl Statics {
   pub fn into_syms(self) -> Syms {
     self.syms
   }
+
+  /// Rearrange internal data structures to (maybe) use less memory.
+  pub fn condense(&mut self) {
+    self.bs.env.condense();
+  }
 }
 
 impl Default for Statics {

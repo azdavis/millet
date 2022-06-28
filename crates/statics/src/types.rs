@@ -666,12 +666,25 @@ impl EnvLike for Env {
   }
 }
 
+/// A wrapper around a stack of [`Env`]s. Is meant to act like an `Env` in most respects, but is
+/// faster to `Clone`.
 #[derive(Debug, Default, Clone)]
 pub(crate) struct EnvStack(Vec<Arc<Env>>);
 
 impl EnvStack {
   pub(crate) fn push(&mut self, other: Env) {
     self.0.push(Arc::new(other));
+  }
+
+  pub(crate) fn condense(&mut self) {
+    if self.0.is_empty() {
+      return;
+    }
+    let mut env = Env::default();
+    for mut other in self.0.drain(..) {
+      env.append(Arc::make_mut(&mut other));
+    }
+    self.0 = vec![Arc::new(env)];
   }
 }
 

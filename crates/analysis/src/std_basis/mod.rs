@@ -43,6 +43,7 @@ fn get_full_std_basis() -> Statics {
       panic!("statics error: {}", e.display(st.syms()));
     }
   }
+  st.condense();
   st
 }
 
