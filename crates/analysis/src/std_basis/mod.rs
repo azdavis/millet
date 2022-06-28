@@ -23,7 +23,6 @@ impl StdBasis {
 
 fn get_full_std_basis() -> StdBasis {
   let mut statics = Statics::default();
-  let mode = statics::Mode::Declaration;
   for &contents in ORDER {
     let lexed = lex::get(contents);
     if let Some(e) = lexed.errors.first() {
@@ -38,6 +37,7 @@ fn get_full_std_basis() -> StdBasis {
       panic!("lower error: {}", e.display());
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
+    let mode = statics::Mode::StdBasis;
     let (_, es) = statics::get(&mut statics, mode, &lowered.arenas, &lowered.top_decs);
     if let Some(e) = es.first() {
       panic!("statics error: {}", e.display(statics.syms()));

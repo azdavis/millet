@@ -1,5 +1,5 @@
 use crate::error::{Error, ErrorKind};
-use crate::info::Info;
+use crate::info::{Info, Mode};
 use crate::std_basis;
 use crate::types::{Bs, Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms};
 
@@ -10,7 +10,6 @@ use crate::types::{Bs, Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, 
 /// Invariant: 'Grows' monotonically.
 #[derive(Debug)]
 pub(crate) struct St {
-  mode: Mode,
   subst: Subst,
   errors: Vec<Error>,
   meta_gen: MetaTyVarGen,
@@ -22,18 +21,17 @@ pub(crate) struct St {
 impl St {
   pub(crate) fn new(mode: Mode, syms: Syms) -> Self {
     Self {
-      mode,
       subst: Subst::default(),
       errors: Vec::new(),
       meta_gen: MetaTyVarGen::default(),
       fixed_gen: FixedTyVarGen::default(),
-      info: Info::default(),
+      info: Info::new(mode),
       syms,
     }
   }
 
-  pub(crate) fn mode(&self) -> Mode {
-    self.mode
+  pub(crate) fn mode(&self) -> &Mode {
+    self.info.mode()
   }
 
   pub(crate) fn def<I>(&self, idx: I) -> Option<Def>
@@ -107,29 +105,5 @@ impl Statics {
 impl Default for Statics {
   fn default() -> Self {
     std_basis::get()
-  }
-}
-
-/// The mode for checking.
-#[derive(Debug, Clone, Copy)]
-pub enum Mode {
-  /// Regular checking. The default.
-  Regular(Option<paths::PathId>),
-  /// Declaration-mode checking. Notably, ascription structure expressions will not check to see if
-  /// they actually match the signature. This should only be used for special files, like ones that
-  /// define the standard basis.
-  Declaration,
-}
-
-impl Mode {
-  pub(crate) fn is_regular(self) -> bool {
-    matches!(self, Self::Regular(_))
-  }
-
-  fn path(self) -> Option<paths::PathId> {
-    match self {
-      Self::Regular(p) => p,
-      Self::Declaration => None,
-    }
   }
 }

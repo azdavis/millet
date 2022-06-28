@@ -4,8 +4,9 @@ use fast_hash::FxHashMap;
 use std::fmt::Write as _;
 
 /// Information about HIR indices.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Info {
+  mode: Mode,
   store: FxHashMap<hir::Idx, InfoEntry>,
 }
 
@@ -22,6 +23,13 @@ struct InfoEntry {
 }
 
 impl Info {
+  pub(crate) fn new(mode: Mode) -> Self {
+    Self {
+      mode,
+      store: FxHashMap::default(),
+    }
+  }
+
   pub(crate) fn insert<I>(&mut self, idx: I, ty_entry: Option<TyEntry>, def: Option<Def>)
   where
     I: Into<hir::Idx>,
@@ -45,6 +53,10 @@ impl Info {
       .store
       .values_mut()
       .filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
+  }
+
+  pub(crate) fn mode(&self) -> &Mode {
+    &self.mode
   }
 
   /// Returns a Markdown string with type information associated with this index.
@@ -91,5 +103,28 @@ impl Info {
       &ty_entry.ty,
     );
     Some(ret)
+  }
+}
+
+/// The mode for checking.
+#[derive(Debug, Clone)]
+pub enum Mode {
+  /// Regular checking. The default.
+  Regular(Option<paths::PathId>),
+  /// Standard basis checking. Notably, ascription structure expressions will not check to see if
+  /// they actually match the signature.
+  StdBasis,
+}
+
+impl Mode {
+  pub(crate) fn is_regular(&self) -> bool {
+    matches!(self, Self::Regular(_))
+  }
+
+  pub(crate) fn path(&self) -> Option<paths::PathId> {
+    match self {
+      Self::Regular(p) => *p,
+      Self::StdBasis => None,
+    }
   }
 }

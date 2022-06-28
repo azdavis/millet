@@ -26,8 +26,8 @@ mod unify;
 mod util;
 
 pub use error::Error;
-pub use info::Info;
-pub use st::{Mode, Statics};
+pub use info::{Info, Mode};
+pub use st::Statics;
 pub use types::{Def, Syms};
 
 /// Does the checks.
