@@ -118,21 +118,22 @@ fn ck_std_basis(sh: &Shell) -> Result<()> {
   let order_file = sh.read_file(std_basis_mod)?;
   let mut order: Vec<_> = order_file
     .lines()
-    .filter_map(|x| x.strip_prefix("  include_str!(\"")?.strip_suffix("\"),"))
+    .filter_map(|x| x.strip_prefix("  \"")?.strip_suffix(".sml\","))
     .collect();
   order.sort_unstable();
   let std_basis_dir: PathBuf = std_basis_dir.into_iter().collect();
   let std_basis_dir = sh.read_dir(std_basis_dir)?;
-  let files: Vec<_> = std_basis_dir
+  let mut files: Vec<_> = std_basis_dir
     .iter()
     .filter_map(|x| {
       if x.extension()? == "sml" {
-        x.file_name()?.to_str()
+        x.file_name()?.to_str()?.strip_suffix(".sml")
       } else {
         None
       }
     })
     .collect();
+  files.sort_unstable();
   if files != order {
     bail!("bad order of std_basis files:\n  expected {files:?}\n     found {order:?}")
   }
