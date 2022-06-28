@@ -27,7 +27,7 @@ mod util;
 pub use error::Error;
 pub use info::Info;
 pub use st::{Mode, Statics};
-pub use types::{Bs, Def, Syms};
+pub use types::{Def, Syms};
 
 /// Does the checks.
 pub fn get(

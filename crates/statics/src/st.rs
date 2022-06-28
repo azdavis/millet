@@ -83,10 +83,20 @@ impl St {
 /// basic types and values, like `int` and `>`.
 #[derive(Debug, Clone)]
 pub struct Statics {
-  /// The symbols generated.
-  pub syms: Syms,
-  /// The basis of the whole program.
-  pub bs: Bs,
+  pub(crate) syms: Syms,
+  pub(crate) bs: Bs,
+}
+
+impl Statics {
+  /// Returns the symbols generated.
+  pub fn syms(&self) -> &Syms {
+    &self.syms
+  }
+
+  /// Turns this into a `Syms`.
+  pub fn into_syms(self) -> Syms {
+    self.syms
+  }
 }
 
 impl Default for Statics {

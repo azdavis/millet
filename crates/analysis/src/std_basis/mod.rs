@@ -40,7 +40,7 @@ fn get_full_std_basis() -> Statics {
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
     let (_, es) = statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
     if let Some(e) = es.first() {
-      panic!("statics error: {}", e.display(&st.syms));
+      panic!("statics error: {}", e.display(st.syms()));
     }
   }
   st

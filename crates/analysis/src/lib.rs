@@ -47,7 +47,7 @@ impl Analysis {
     let mode = statics::Mode::Regular(None);
     let (_, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
     file.statics_errors = es;
-    file.to_errors(&st.syms)
+    file.to_errors(st.syms())
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -94,11 +94,11 @@ impl Analysis {
           let (info, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
           file.statics_errors = es;
           file.info = info;
-          Some((path_id, file.to_errors(&st.syms)))
+          Some((path_id, file.to_errors(st.syms())))
         })
         .collect()
     });
-    self.syms = st.syms;
+    self.syms = st.into_syms();
     ret
   }
 
