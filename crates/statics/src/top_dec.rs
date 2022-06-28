@@ -5,7 +5,9 @@ use crate::types::{
   generalize, Bs, Env, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty,
   TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::util::{apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe};
+use crate::util::{
+  apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe, ty_syms,
+};
 use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
@@ -784,27 +786,6 @@ fn env_syms<F: FnMut(Sym)>(f: &mut F, env: &Env) {
 fn val_env_syms<F: FnMut(Sym)>(f: &mut F, val_env: &ValEnv) {
   for val_info in val_env.values() {
     ty_syms(f, &val_info.ty_scheme.ty);
-  }
-}
-
-fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
-  match ty {
-    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
-    Ty::Record(rows) => {
-      for ty in rows.values() {
-        ty_syms(f, ty);
-      }
-    }
-    Ty::Con(args, sym) => {
-      f(*sym);
-      for ty in args {
-        ty_syms(f, ty);
-      }
-    }
-    Ty::Fn(param, res) => {
-      ty_syms(f, param);
-      ty_syms(f, res);
-    }
   }
 }
 

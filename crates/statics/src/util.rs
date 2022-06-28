@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
-use crate::types::{Env, RecordTy, Subst, SubstEntry, Ty, TyInfo, TyScheme};
+use crate::types::{Env, RecordTy, Subst, SubstEntry, Sym, Ty, TyInfo, TyScheme};
 use fast_hash::FxHashMap;
 
 pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
@@ -170,5 +170,26 @@ where
       None => Err(ErrorKind::Undefined(Item::Ty, last.clone())),
     },
     Err(name) => Err(ErrorKind::Undefined(Item::Struct, name.clone())),
+  }
+}
+
+pub(crate) fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
+  match ty {
+    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
+    Ty::Record(rows) => {
+      for ty in rows.values() {
+        ty_syms(f, ty);
+      }
+    }
+    Ty::Con(args, sym) => {
+      f(*sym);
+      for ty in args {
+        ty_syms(f, ty);
+      }
+    }
+    Ty::Fn(param, res) => {
+      ty_syms(f, param);
+      ty_syms(f, res);
+    }
   }
 }
