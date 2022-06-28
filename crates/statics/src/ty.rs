@@ -1,8 +1,9 @@
 use crate::error::{ErrorKind, Item};
+use crate::get_env::get_ty_info;
 use crate::info::TyEntry;
 use crate::st::St;
 use crate::types::{Cx, Def, Ty, TyScheme};
-use crate::util::{apply_bv, get_ty_info, record};
+use crate::util::{apply_bv, record};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty {
   let ty = match ty {

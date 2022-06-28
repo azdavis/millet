@@ -1,10 +1,11 @@
 use crate::error::{ErrorKind, Item};
+use crate::get_env::get_val_info;
 use crate::info::TyEntry;
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{Cx, Def, Env, Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::unify::unify;
-use crate::util::{apply, get_env, get_scon, instantiate, record};
+use crate::util::{apply, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> Ty {
@@ -19,20 +20,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     // sml_def(1)
     hir::Exp::SCon(scon) => get_scon(scon),
     // sml_def(2)
-    hir::Exp::Path(path) => match get_env(&cx.env, path.structures()) {
-      Ok(env) => match env.val_env.get(path.last()) {
-        Some(val_info) => {
-          ty_scheme = Some(val_info.ty_scheme.clone());
-          def = val_info.def;
-          instantiate(st, val_info.ty_scheme.clone())
-        }
-        None => {
-          st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
-          Ty::None
-        }
-      },
-      Err(name) => {
-        st.err(exp, ErrorKind::Undefined(Item::Struct, name.clone()));
+    hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
+      Ok(Some(val_info)) => {
+        ty_scheme = Some(val_info.ty_scheme.clone());
+        def = val_info.def;
+        instantiate(st, val_info.ty_scheme.clone())
+      }
+      Ok(None) => {
+        st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
+        Ty::None
+      }
+      Err(e) => {
+        st.err(exp, e);
         Ty::None
       }
     },

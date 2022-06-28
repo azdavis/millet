@@ -1,13 +1,12 @@
 use crate::error::{ErrorKind, Item};
 use crate::generalizes::{eq_ty_scheme, generalizes};
+use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{
   generalize, Bs, Env, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty,
   TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::util::{
-  apply_bv, get_env, get_ty_info, get_ty_info_raw, ignore, ins_check_name, ins_no_dupe, ty_syms,
-};
+use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
@@ -163,12 +162,12 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
     // sml_def(50)
     hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), *str_dec),
     // sml_def(51)
-    hir::StrExp::Path(path) => match get_env(&bs.env, path.all_names()) {
+    hir::StrExp::Path(path) => match get_env_from_str_path(&bs.env, path) {
       Ok(got_env) => {
         st.info().insert(str_exp, None, got_env.def);
         ac.append(&mut got_env.clone());
       }
-      Err(name) => st.err(str_exp, ErrorKind::Undefined(Item::Struct, name.clone())),
+      Err(e) => st.err(str_exp, e),
     },
     // sml_def(52), sml_def(53)
     hir::StrExp::Ascription(inner_str_exp, asc, sig_exp) => {
@@ -552,14 +551,10 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
 }
 
 fn get_path_ty_cons(env: &Env, path: &hir::Path) -> Result<FxHashSet<hir::Path>, ErrorKind> {
-  match get_env(env, path.all_names()) {
-    Ok(got_env) => {
-      let mut ty_cons = FxHashSet::<hir::Path>::default();
-      get_ty_cons(&mut Vec::new(), &mut ty_cons, got_env);
-      Ok(ty_cons)
-    }
-    Err(name) => Err(ErrorKind::Undefined(Item::Struct, name.clone())),
-  }
+  let got_env = get_env_from_str_path(env, path)?;
+  let mut ty_cons = FxHashSet::<hir::Path>::default();
+  get_ty_cons(&mut Vec::new(), &mut ty_cons, got_env);
+  Ok(ty_cons)
 }
 
 fn join_paths(p1: &hir::Path, p2: &hir::Path) -> hir::Path {

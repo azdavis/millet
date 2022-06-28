@@ -13,6 +13,7 @@ mod error;
 mod exp;
 mod fmt_util;
 mod generalizes;
+mod get_env;
 mod info;
 mod pat;
 mod pat_match;

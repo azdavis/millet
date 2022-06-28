@@ -1,11 +1,12 @@
 use crate::error::{ErrorKind, Item};
+use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::st::St;
 use crate::types::{
   generalize, generalize_fixed, Cx, Env, FixedTyVars, HasRecordMetaVars, IdStatus, Ty, TyEnv,
   TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
-use crate::util::{apply, get_env, get_ty_info, ins_check_name, ins_no_dupe};
+use crate::util::{apply, ins_check_name, ins_no_dupe};
 use crate::{exp, pat, ty};
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
@@ -155,20 +156,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             }
           }
           // sml_def(31)
-          hir::ExBind::Copy(name, path) => match get_env(&cx.env, path.structures()) {
-            Ok(got_env) => match got_env.val_env.get(path.last()) {
-              Some(val_info) => match val_info.id_status {
-                IdStatus::Exn(_) => {
-                  match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
-                    Some(e) => st.err(dec, e),
-                    None => {}
-                  }
+          hir::ExBind::Copy(name, path) => match get_val_info(&cx.env, path) {
+            Ok(Some(val_info)) => match val_info.id_status {
+              IdStatus::Exn(_) => {
+                match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
+                  Some(e) => st.err(dec, e),
+                  None => {}
                 }
-                _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus),
-              },
-              None => st.err(dec, ErrorKind::Undefined(Item::Val, path.last().clone())),
+              }
+              _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus),
             },
-            Err(name) => st.err(dec, ErrorKind::Undefined(Item::Struct, name.clone())),
+            Ok(None) => st.err(dec, ErrorKind::Undefined(Item::Val, path.last().clone())),
+            Err(e) => st.err(dec, e),
           },
         }
       }
@@ -185,9 +184,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     // sml_def(22)
     hir::Dec::Open(paths) => {
       for path in paths {
-        match get_env(&cx.env, path.all_names()) {
+        match get_env_from_str_path(&cx.env, path) {
           Ok(got_env) => env.append(&mut got_env.clone()),
-          Err(name) => st.err(dec, ErrorKind::Undefined(Item::Struct, name.clone())),
+          Err(e) => st.err(dec, e),
         }
       }
     }

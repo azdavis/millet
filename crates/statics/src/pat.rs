@@ -1,12 +1,13 @@
 use crate::error::{ErrorKind, Item};
 use crate::generalizes::eq_ty_scheme;
+use crate::get_env::get_val_info;
 use crate::info::TyEntry;
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
 use crate::types::{Cx, Def, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo};
 use crate::unify::unify;
-use crate::util::{apply, get_env, get_scon, ins_check_name, instantiate, record};
+use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
 use std::collections::BTreeSet;
 
 pub(crate) fn get(
@@ -58,14 +59,13 @@ fn get_(
     }
     hir::Pat::Con(path, arg) => {
       let arg = arg.map(|x| get(st, cx, ars, ve, x));
-      let env = match get_env(&cx.env, path.structures()) {
+      let maybe_val_info = match get_val_info(&cx.env, path) {
         Ok(x) => x,
-        Err(name) => {
-          st.err(pat_, ErrorKind::Undefined(Item::Struct, name.clone()));
+        Err(e) => {
+          st.err(pat_, e);
           return (any(st, pat), ty_scheme, def);
         }
       };
-      let maybe_val_info = env.val_env.get(path.last());
       let is_var = arg.is_none() && path.structures().is_empty() && ok_val_info(maybe_val_info);
       // sml_def(34)
       if is_var {
