@@ -66,4 +66,9 @@ impl Info {
   pub fn get_def(&self, idx: hir::Idx) -> Option<Def> {
     self.store.get(&idx)?.def
   }
+
+  /// Returns the definition site of the type for the idx.
+  pub fn get_ty_defs(&self, _: hir::Idx) -> Option<Vec<Def>> {
+    None
+  }
 }
