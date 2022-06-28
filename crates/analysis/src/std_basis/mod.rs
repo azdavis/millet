@@ -2,22 +2,24 @@ use statics::Statics;
 
 /// A standard basis.
 #[derive(Debug, Clone)]
-pub struct StdBasis(Statics);
+pub struct StdBasis {
+  pub(crate) statics: Statics,
+}
 
 impl StdBasis {
-  pub(crate) fn into_statics(self) -> Statics {
-    self.0
-  }
-
   /// The minimal standard basis. Only includes fundamental top-level definitions like `int`,
   /// `real`, `ref`, `<`, etc.
   pub fn minimal() -> Self {
-    Self(Statics::default())
+    Self {
+      statics: Statics::default(),
+    }
   }
 
   /// The full standard basis, as documented in the public SML basis library docs.
   pub fn full() -> Self {
-    Self(elapsed::log("get_full_std_basis", get_full_std_basis))
+    Self {
+      statics: elapsed::log("get_full_std_basis", get_full_std_basis),
+    }
   }
 }
 

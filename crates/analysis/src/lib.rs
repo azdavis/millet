@@ -42,7 +42,7 @@ impl Analysis {
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, s: &str) -> Vec<Error> {
     let mut file = AnalyzedFile::new(s);
-    let mut st = self.std_basis.clone().into_statics();
+    let mut st = self.std_basis.statics.clone();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
     let (_, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
@@ -63,7 +63,7 @@ impl Analysis {
       topo_sort::get(&graph).unwrap_or_default()
     });
     // TODO require explicit basis import
-    let mut st = self.std_basis.clone().into_statics();
+    let mut st = self.std_basis.statics.clone();
     self.files = elapsed::log("analyzed_files", || {
       input
         .sources
