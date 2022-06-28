@@ -17,14 +17,12 @@ impl StdBasis {
 
   /// The full standard basis, as documented in the public SML basis library docs.
   pub fn full() -> Self {
-    Self {
-      statics: elapsed::log("get_full_std_basis", get_full_std_basis),
-    }
+    elapsed::log("get_full_std_basis", get_full_std_basis)
   }
 }
 
-fn get_full_std_basis() -> Statics {
-  let mut st = Statics::default();
+fn get_full_std_basis() -> StdBasis {
+  let mut statics = Statics::default();
   let mode = statics::Mode::Declaration;
   for &contents in ORDER {
     let lexed = lex::get(contents);
@@ -40,13 +38,13 @@ fn get_full_std_basis() -> Statics {
       panic!("lower error: {}", e.display());
     }
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-    let (_, es) = statics::get(&mut st, mode, &lowered.arenas, &lowered.top_decs);
+    let (_, es) = statics::get(&mut statics, mode, &lowered.arenas, &lowered.top_decs);
     if let Some(e) = es.first() {
-      panic!("statics error: {}", e.display(st.syms()));
+      panic!("statics error: {}", e.display(statics.syms()));
     }
   }
-  st.condense();
-  st
+  statics.condense();
+  StdBasis { statics }
 }
 
 macro_rules! order {
