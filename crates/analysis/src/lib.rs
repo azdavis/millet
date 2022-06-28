@@ -114,15 +114,7 @@ impl Analysis {
   /// Returns the range of the definition of the item at this position.
   pub fn get_def(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
     self.go_up_ast(path, pos, |file, _, idx| {
-      let def = file.info.get_def(idx)?;
-      let def_file = self.files.get(&def.path)?;
-      let def_range = def_file
-        .lowered
-        .ptrs
-        .hir_to_ast(def.idx)?
-        .to_node(def_file.parsed.root.syntax())
-        .text_range();
-      Some((def.path, def_file.pos_db.range(def_range)))
+      self.def_to_path_and_range(file.info.get_def(idx)?)
     })
   }
 
@@ -139,6 +131,17 @@ impl Analysis {
         None => node = node.parent()?,
       }
     }
+  }
+
+  fn def_to_path_and_range(&self, def: statics::Def) -> Option<(PathId, Range)> {
+    let def_file = self.files.get(&def.path)?;
+    let def_range = def_file
+      .lowered
+      .ptrs
+      .hir_to_ast(def.idx)?
+      .to_node(def_file.parsed.root.syntax())
+      .text_range();
+    Some((def.path, def_file.pos_db.range(def_range)))
   }
 }
 
