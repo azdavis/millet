@@ -120,19 +120,17 @@ impl Analysis {
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
-  pub fn get_ty_defs(&self, path: PathId, pos: Position) -> Vec<(PathId, Range)> {
-    self
-      .go_up_ast(path, pos, |file, _, idx| {
-        Some(
-          file
-            .info
-            .get_ty_defs(idx)?
-            .into_iter()
-            .filter_map(|def| self.def_to_path_and_range(def))
-            .collect(),
-        )
-      })
-      .unwrap_or_default()
+  pub fn get_ty_defs(&self, path: PathId, pos: Position) -> Option<Vec<(PathId, Range)>> {
+    self.go_up_ast(path, pos, |file, _, idx| {
+      Some(
+        file
+          .info
+          .get_ty_defs(&self.syms, idx)?
+          .into_iter()
+          .filter_map(|def| self.def_to_path_and_range(def))
+          .collect(),
+      )
+    })
   }
 
   fn go_up_ast<F, T>(&self, path: PathId, pos: Position, f: F) -> Option<T>

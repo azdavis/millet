@@ -198,6 +198,7 @@ impl State {
         .analysis
         .get_ty_defs(path, pos)
         .into_iter()
+        .flatten()
         .filter_map(|(path, range)| lsp_location(&root, path, range))
         .collect();
       let res = (!locs.is_empty()).then(|| lsp_types::GotoDefinitionResponse::Array(locs));
