@@ -1,22 +1,22 @@
-use crate::types::{Def, Syms, Ty, TyScheme};
+use crate::types::{Def, DefPath, Syms, Ty, TyScheme};
 use crate::util::ty_syms;
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
 
 /// Information about HIR indices.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Info {
   mode: Mode,
   store: FxHashMap<hir::Idx, InfoEntry>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct TyEntry {
   pub(crate) ty: Ty,
   pub(crate) ty_scheme: Option<TyScheme>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct InfoEntry {
   ty_entry: Option<TyEntry>,
   def: Option<Def>,
@@ -83,6 +83,14 @@ impl Info {
     Some(())
   }
 
+  /// Returns documentation for this index.
+  pub fn get_doc(&self, idx: hir::Idx) -> Option<&str> {
+    match &self.mode {
+      Mode::Regular(_) => None,
+      Mode::StdBasis(_, comments) => comments.get(&idx).map(String::as_str),
+    }
+  }
+
   /// Returns the definition site of the idx.
   pub fn get_def(&self, idx: hir::Idx) -> Option<Def> {
     self.store.get(&idx)?.def
@@ -113,7 +121,9 @@ pub enum Mode {
   Regular(Option<paths::PathId>),
   /// Standard basis checking. Notably, ascription structure expressions will not check to see if
   /// they actually match the signature.
-  StdBasis,
+  ///
+  /// Pass a map from hir indices to comments to have this be included in the [`Info`] returned.
+  StdBasis(&'static str, FxHashMap<hir::Idx, String>),
 }
 
 impl Mode {
@@ -121,10 +131,10 @@ impl Mode {
     matches!(self, Self::Regular(_))
   }
 
-  pub(crate) fn path(&self) -> Option<paths::PathId> {
+  pub(crate) fn path(&self) -> Option<DefPath> {
     match self {
-      Self::Regular(p) => *p,
-      Self::StdBasis => None,
+      Self::Regular(p) => p.map(DefPath::Regular),
+      Self::StdBasis(name, _) => Some(DefPath::StdBasis(name)),
     }
   }
 }

@@ -106,7 +106,18 @@ impl Analysis {
   pub fn get_md(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
     self.go_up_ast(path, pos, |file, ptr, idx| {
       let info = file.info.as_ref()?;
-      let s = info.get_ty_md(&self.syms, idx)?;
+      let mut s = info.get_ty_md(&self.syms, idx)?;
+      let def_doc = info.get_def(idx).and_then(|def| {
+        let info = match def.path {
+          statics::DefPath::Regular(path) => self.files.get(&path)?.info.as_ref()?,
+          statics::DefPath::StdBasis(name) => self.std_basis.info.get(name).as_ref()?,
+        };
+        info.get_doc(def.idx)
+      });
+      if let Some(def_doc) = def_doc {
+        s.push('\n');
+        s.push_str(def_doc);
+      }
       let range = ptr.to_node(file.parsed.root.syntax()).text_range();
       Some((s, file.pos_db.range(range)))
     })
@@ -151,14 +162,18 @@ impl Analysis {
   }
 
   fn def_to_path_and_range(&self, def: statics::Def) -> Option<(PathId, Range)> {
-    let def_file = self.files.get(&def.path)?;
+    let path = match def.path {
+      statics::DefPath::Regular(p) => p,
+      statics::DefPath::StdBasis(_) => return None,
+    };
+    let def_file = self.files.get(&path)?;
     let def_range = def_file
       .lowered
       .ptrs
       .hir_to_ast(def.idx)?
       .to_node(def_file.parsed.root.syntax())
       .text_range();
-    Some((def.path, def_file.pos_db.range(def_range)))
+    Some((path, def_file.pos_db.range(def_range)))
   }
 }
 

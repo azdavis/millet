@@ -1013,7 +1013,16 @@ fn handle_bv(
 #[derive(Debug, Clone, Copy)]
 pub struct Def {
   /// The path.
-  pub path: paths::PathId,
+  pub path: DefPath,
   /// The HIR index.
   pub idx: hir::Idx,
+}
+
+/// A definition path.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DefPath {
+  /// A regular path.
+  Regular(paths::PathId),
+  /// A std basis path.
+  StdBasis(&'static str),
 }
