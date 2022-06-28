@@ -142,6 +142,7 @@ impl State {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
+          self.root = Some(root);
           return;
         }
       };
@@ -168,6 +169,7 @@ impl State {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
+          self.root = Some(root);
           return;
         }
       };
