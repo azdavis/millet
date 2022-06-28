@@ -99,8 +99,8 @@ pub(crate) fn get() -> Statics {
     def: None,
   });
   let bs = Bs {
-    fun_env: FunEnv::default(),
-    sig_env: SigEnv::default(),
+    fun_env: FunEnv::default().into(),
+    sig_env: SigEnv::default().into(),
     env,
   };
   Statics { syms, bs }

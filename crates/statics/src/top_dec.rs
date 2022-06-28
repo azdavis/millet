@@ -106,7 +106,7 @@ fn get_str_dec(
           st.err(str_dec, e);
         }
       }
-      ac.sig_env.extend(sig_env);
+      ac.as_mut_sig_env().extend(sig_env);
     }
     // sml_def(85), sml_def(89)
     hir::StrDec::Functor(fun_binds) => {
@@ -148,7 +148,7 @@ fn get_str_dec(
           st.err(str_dec, e);
         }
       }
-      ac.fun_env.extend(fun_env);
+      ac.as_mut_fun_env().extend(fun_env);
     }
   }
 }
