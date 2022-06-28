@@ -47,14 +47,14 @@ impl Info {
       .filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
   }
 
-  /// Returns a Markdown string with information associated with this index.
-  pub fn get_md(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
+  /// Returns a Markdown string with type information associated with this index.
+  pub fn get_ty_md(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
     let mut ret = String::new();
-    self.get_ty_md(&mut ret, syms, idx)?;
+    self.get_ty_md_(&mut ret, syms, idx)?;
     Some(ret)
   }
 
-  fn get_ty_md(&self, s: &mut String, syms: &Syms, idx: hir::Idx) -> Option<()> {
+  fn get_ty_md_(&self, s: &mut String, syms: &Syms, idx: hir::Idx) -> Option<()> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
     let mvs = ty_entry.ty.meta_var_names();
     let ty = ty_entry.ty.display(&mvs, syms);

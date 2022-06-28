@@ -106,7 +106,7 @@ impl Analysis {
   pub fn get_md(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
     self.go_up_ast(path, pos, |file, ptr, idx| {
       let info = file.info.as_ref()?;
-      let s = info.get_md(&self.syms, idx)?;
+      let s = info.get_ty_md(&self.syms, idx)?;
       let range = ptr.to_node(file.parsed.root.syntax()).text_range();
       Some((s, file.pos_db.range(range)))
     })
