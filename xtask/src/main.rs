@@ -228,7 +228,9 @@ fn main() -> Result<()> {
       ck_no_ignore(&sh)?;
       ck_std_basis(&sh)?;
       ck_crate_architecture_doc(&sh)?;
-      ck_changelog(&sh)?;
+      if option_env!("CI") != Some("1") {
+        ck_changelog(&sh)?;
+      }
     }
     Cmd::Dist => {
       let release = args.contains("--release");
