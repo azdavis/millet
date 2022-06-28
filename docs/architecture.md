@@ -195,7 +195,7 @@ val _ = nope
 
 See the documentation of `check()` for how to write tests.
 
-### `doc`
+### `docs`
 
 Documentation, like this!
 

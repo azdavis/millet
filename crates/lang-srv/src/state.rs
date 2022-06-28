@@ -28,7 +28,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 }
 
 const SOURCE: &str = "millet";
-const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/doc/errors.md";
+const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 
 struct Root {

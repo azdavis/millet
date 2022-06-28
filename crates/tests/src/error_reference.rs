@@ -10,7 +10,7 @@ fn all() {
     .unwrap()
     .parent()
     .unwrap()
-    .join("doc")
+    .join("docs")
     .join("errors.md");
   let errors = std::fs::read_to_string(&errors).unwrap();
   let mut options = Options::empty();

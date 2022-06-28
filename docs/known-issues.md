@@ -14,4 +14,4 @@ See also the [TODO][].
 - MLBasis files are not supported.
 - Every file is entirely re-analyzed upon a single file change. This can make the server slow.
 
-[todo]: /doc/todo.md
+[todo]: /docs/todo.md
