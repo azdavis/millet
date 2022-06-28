@@ -6,7 +6,7 @@ use crate::types::{
   TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{
-  apply_bv, get_env, get_ty_info, get_ty_info_raw, ins_check_name, ins_no_dupe, ty_syms,
+  apply_bv, get_env, get_ty_info, get_ty_info_raw, ignore, ins_check_name, ins_no_dupe, ty_syms,
 };
 use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
@@ -788,9 +788,6 @@ fn val_env_syms<F: FnMut(Sym)>(f: &mut F, val_env: &ValEnv) {
     ty_syms(f, &val_info.ty_scheme.ty);
   }
 }
-
-/// useful for closures that add/remove things from sets, since those methods return `bool`.
-fn ignore(_: bool) {}
 
 fn assert_ty_has_no_record_meta_vars(x: Option<HasRecordMetaVars>) {
   assert!(
