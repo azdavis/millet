@@ -10,11 +10,11 @@ enum Cmd {
   Help,
   Ci,
   Dist,
-  Tag,
+  PreTag,
 }
 
 impl Cmd {
-  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::Tag];
+  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::PreTag];
 
   fn name_desc(&self) -> (&'static str, &'static str) {
     match self {
@@ -24,10 +24,7 @@ impl Cmd {
         "dist",
         "make artifacts for distribution (can use --release)",
       ),
-      Cmd::Tag => (
-        "tag",
-        "update package files, then commit and tag a new release",
-      ),
+      Cmd::PreTag => ("pre-tag", "update package files with a new version"),
     }
   }
 }
@@ -161,6 +158,21 @@ fn ck_crate_architecture_doc(sh: &Shell) -> Result<()> {
   }
 }
 
+fn ck_changelog(sh: &Shell) -> Result<()> {
+  println!("checking for changelog entries");
+  let tag_out = String::from_utf8(cmd!(sh, "git tag").output()?.stdout)?;
+  let tags: Vec<_> = tag_out.lines().collect();
+  let path = sh.current_dir().join("doc").join("changelog.md");
+  let contents = sh.read_file(path)?;
+  let mut entries: Vec<_> = contents
+    .lines()
+    .filter_map(|line| line.strip_prefix("## "))
+    .collect();
+  entries.sort_unstable();
+  assert_eq!(tags, entries);
+  Ok(())
+}
+
 fn dist(sh: &Shell, release: bool) -> Result<()> {
   let release_arg = release.then(|| "--release");
   cmd!(sh, "cargo build {release_arg...} --locked --bin lang-srv").run()?;
@@ -216,13 +228,14 @@ fn main() -> Result<()> {
       ck_no_ignore(&sh)?;
       ck_std_basis(&sh)?;
       ck_crate_architecture_doc(&sh)?;
+      ck_changelog(&sh)?;
     }
     Cmd::Dist => {
       let release = args.contains("--release");
       finish_args(args)?;
       dist(&sh, release)?;
     }
-    Cmd::Tag => {
+    Cmd::PreTag => {
       let tag: String = args.free_from_str()?;
       finish_args(args)?;
       let version = match tag.strip_prefix('v') {
@@ -269,9 +282,6 @@ fn main() -> Result<()> {
         std::fs::write(path, out)?;
       }
       cmd!(sh, "git add {paths...}").run()?;
-      let release_msg = format!("Release {tag}");
-      cmd!(sh, "git commit -m {release_msg}").run()?;
-      cmd!(sh, "git tag {tag}").run()?;
     }
   }
   Ok(())
