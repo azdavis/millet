@@ -5,7 +5,9 @@ use crate::info::TyEntry;
 use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
-use crate::types::{Cx, Def, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo};
+use crate::types::{
+  Cx, Def, EnvLike as _, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo,
+};
 use crate::unify::unify;
 use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
 use std::collections::BTreeSet;
@@ -161,7 +163,7 @@ fn get_(
     }
     // sml_def(43)
     hir::Pat::As(ref name, inner) => {
-      if !ok_val_info(cx.env.val_env.get(name)) {
+      if !ok_val_info(cx.env.get_val(name)) {
         st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));
       }
       let (pm_pat, ty) = get(st, cx, ars, ve, *inner);

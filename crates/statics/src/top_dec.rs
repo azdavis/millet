@@ -3,8 +3,8 @@ use crate::generalizes::{eq_ty_scheme, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{
-  generalize, Bs, Env, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv, StrEnv, Sym, Ty,
-  TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
+  generalize, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv, StrEnv,
+  Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -18,14 +18,14 @@ pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::Str
 
 enum StrDecAc<'a> {
   Env(&'a mut Env),
-  Bs(&'a mut Bs),
+  Bs(&'a mut Bs<Env>),
 }
 
 impl StrDecAc<'_> {
   fn as_mut_env(&mut self) -> &mut Env {
     match self {
       StrDecAc::Env(env) => env,
-      StrDecAc::Bs(bs) => bs.as_mut_env(),
+      StrDecAc::Bs(bs) => &mut bs.env,
     }
   }
 }
@@ -73,7 +73,7 @@ fn get_str_dec(
           let mut one_env = Env::default();
           for &str_dec in str_decs {
             get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-            bs.as_mut_env().append(&mut one_env.clone());
+            bs.env.push(one_env.clone());
             ac.append(&mut one_env);
           }
         }
@@ -124,10 +124,10 @@ fn get_str_dec(
         get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
         let param_sig = env_to_sig(bs, param_env);
         let mut bs_clone = bs.clone();
-        bs_clone
-          .as_mut_env()
-          .str_env
-          .insert(fun_bind.param_name.clone(), param_sig.env.clone());
+        bs_clone.env.push(Env {
+          str_env: map([(fun_bind.param_name.clone(), param_sig.env.clone())]),
+          ..Default::default()
+        });
         let mut body_env = Env::with_def(st.def(str_dec));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
         let mut body_ty_names = TyNameSet::default();
@@ -228,7 +228,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
       let mut let_env = Env::default();
       get_str_dec(st, bs, ars, StrDecAc::Env(&mut let_env), *str_dec);
       let mut bs = bs.clone();
-      bs.as_mut_env().append(&mut let_env);
+      bs.env.append(&mut let_env);
       get_str_exp(st, &bs, ars, ac, *str_exp)
     }
   }
@@ -487,7 +487,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
       let mut one_env = Env::default();
       for &seq_spec in specs {
         get_spec(st, &bs, ars, &mut one_env, seq_spec);
-        bs.as_mut_env().append(&mut one_env.clone());
+        bs.env.append(&mut one_env.clone());
         append_no_dupe(st, ac, &mut one_env, seq_spec.unwrap_or(spec).into());
       }
     }
@@ -550,7 +550,10 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
   }
 }
 
-fn get_path_ty_cons(env: &Env, path: &hir::Path) -> Result<FxHashSet<hir::Path>, ErrorKind> {
+fn get_path_ty_cons<E: EnvLike>(
+  env: &E,
+  path: &hir::Path,
+) -> Result<FxHashSet<hir::Path>, ErrorKind> {
   let got_env = get_env_from_str_path(env, path)?;
   let mut ty_cons = FxHashSet::<hir::Path>::default();
   get_ty_cons(&mut Vec::new(), &mut ty_cons, got_env);
@@ -767,15 +770,21 @@ fn sig_syms<F: FnMut(Sym)>(f: &mut F, sig: &Sig) {
   env_syms(f, &sig.env);
 }
 
-fn env_syms<F: FnMut(Sym)>(f: &mut F, env: &Env) {
-  for env in env.str_env.values() {
+fn env_syms<F, E>(f: &mut F, env: &E)
+where
+  F: FnMut(Sym),
+  E: EnvLike,
+{
+  for env in env.all_str() {
     env_syms(f, env);
   }
-  for ty_info in env.ty_env.values() {
+  for ty_info in env.all_ty() {
     ty_syms(f, &ty_info.ty_scheme.ty);
     val_env_syms(f, &ty_info.val_env);
   }
-  val_env_syms(f, &env.val_env);
+  for val_info in env.all_val() {
+    ty_syms(f, &val_info.ty_scheme.ty);
+  }
 }
 
 fn val_env_syms<F: FnMut(Sym)>(f: &mut F, val_env: &ValEnv) {

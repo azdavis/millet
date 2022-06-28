@@ -605,6 +605,17 @@ impl IdStatus {
   }
 }
 
+pub(crate) trait EnvLike {
+  fn get_str(&self, name: &hir::Name) -> Option<&Env>;
+  fn get_ty(&self, name: &hir::Name) -> Option<&TyInfo>;
+  fn get_val(&self, name: &hir::Name) -> Option<&ValInfo>;
+  /// empties other into self.
+  fn append(&mut self, other: &mut Env);
+  fn all_str(&self) -> Vec<&Env>;
+  fn all_ty(&self) -> Vec<&TyInfo>;
+  fn all_val(&self) -> Vec<&ValInfo>;
+}
+
 /// Definition: Env
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Env {
@@ -621,12 +632,99 @@ impl Env {
       ..Default::default()
     }
   }
+}
 
-  /// empties the other env into self.
-  pub(crate) fn append(&mut self, other: &mut Self) {
+impl EnvLike for Env {
+  fn get_str(&self, name: &hir::Name) -> Option<&Env> {
+    self.str_env.get(name)
+  }
+
+  fn get_ty(&self, name: &hir::Name) -> Option<&TyInfo> {
+    self.ty_env.get(name)
+  }
+
+  fn get_val(&self, name: &hir::Name) -> Option<&ValInfo> {
+    self.val_env.get(name)
+  }
+
+  fn append(&mut self, other: &mut Self) {
     self.str_env.extend(other.str_env.drain());
     self.ty_env.extend(other.ty_env.drain());
     self.val_env.extend(other.val_env.drain());
+  }
+
+  fn all_str(&self) -> Vec<&Env> {
+    self.str_env.values().collect()
+  }
+
+  fn all_ty(&self) -> Vec<&TyInfo> {
+    self.ty_env.values().collect()
+  }
+
+  fn all_val(&self) -> Vec<&ValInfo> {
+    self.val_env.values().collect()
+  }
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct EnvStack(Vec<Arc<Env>>);
+
+impl EnvStack {
+  pub(crate) fn push(&mut self, other: Env) {
+    self.0.push(Arc::new(other));
+  }
+}
+
+impl EnvLike for EnvStack {
+  fn get_str(&self, name: &hir::Name) -> Option<&Env> {
+    self.0.iter().rev().find_map(|env| env.str_env.get(name))
+  }
+
+  fn get_ty(&self, name: &hir::Name) -> Option<&TyInfo> {
+    self.0.iter().rev().find_map(|env| env.ty_env.get(name))
+  }
+
+  fn get_val(&self, name: &hir::Name) -> Option<&ValInfo> {
+    self.0.iter().rev().find_map(|env| env.val_env.get(name))
+  }
+
+  fn append(&mut self, other: &mut Env) {
+    let mut env = Env::default();
+    env.append(other);
+    self.push(env);
+  }
+
+  fn all_str(&self) -> Vec<&Env> {
+    let mut names = FxHashSet::<&hir::Name>::default();
+    self
+      .0
+      .iter()
+      .rev()
+      .flat_map(|env| env.str_env.iter())
+      .filter_map(|(name, val)| names.insert(name).then(|| val))
+      .collect()
+  }
+
+  fn all_ty(&self) -> Vec<&TyInfo> {
+    let mut names = FxHashSet::<&hir::Name>::default();
+    self
+      .0
+      .iter()
+      .rev()
+      .flat_map(|env| env.ty_env.iter())
+      .filter_map(|(name, val)| names.insert(name).then(|| val))
+      .collect()
+  }
+
+  fn all_val(&self) -> Vec<&ValInfo> {
+    let mut names = FxHashSet::<&hir::Name>::default();
+    self
+      .0
+      .iter()
+      .rev()
+      .flat_map(|env| env.val_env.iter())
+      .filter_map(|(name, val)| names.insert(name).then(|| val))
+      .collect()
   }
 }
 
@@ -636,15 +734,9 @@ impl Env {
 /// type name does not escape its scope, and for that we use `Sym::generated_after`.
 #[derive(Debug, Clone)]
 pub(crate) struct Cx {
-  pub(crate) env: Arc<Env>,
+  pub(crate) env: EnvStack,
   /// the Definition has this as a set, but we have it as a mapping.
   pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
-}
-
-impl Cx {
-  pub(crate) fn as_mut_env(&mut self) -> &mut Env {
-    Arc::make_mut(&mut self.env)
-  }
 }
 
 /// Definition: TyNameSet
@@ -668,30 +760,28 @@ pub(crate) type SigEnv = FxHashMap<hir::Name, Sig>;
 pub(crate) type FunEnv = FxHashMap<hir::Name, FunSig>;
 
 /// Definition: Basis
-#[derive(Debug, Clone, Default)]
-pub struct Bs {
+#[derive(Debug, Default, Clone)]
+pub(crate) struct Bs<E = EnvStack> {
   pub(crate) fun_env: FunEnv,
   pub(crate) sig_env: SigEnv,
-  pub(crate) env: Arc<Env>,
+  pub(crate) env: E,
 }
 
 impl Bs {
   pub(crate) fn as_cx(&self) -> Cx {
     Cx {
-      env: Arc::clone(&self.env),
+      env: self.env.clone(),
       ty_vars: FxHashMap::default(),
     }
   }
+}
 
-  pub(crate) fn as_mut_env(&mut self) -> &mut Env {
-    Arc::make_mut(&mut self.env)
-  }
-
+impl<E: EnvLike> Bs<E> {
   /// empties the other basis into self.
-  pub(crate) fn append(&mut self, other: &mut Self) {
+  pub(crate) fn append(&mut self, other: &mut Bs<Env>) {
     self.fun_env.extend(other.fun_env.drain());
     self.sig_env.extend(other.sig_env.drain());
-    self.as_mut_env().append(other.as_mut_env());
+    self.env.append(&mut other.env);
   }
 }
 

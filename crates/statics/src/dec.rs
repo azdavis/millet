@@ -2,12 +2,13 @@ use crate::error::{ErrorKind, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, Cx, Env, FixedTyVars, HasRecordMetaVars, IdStatus, Ty, TyEnv,
-  TyInfo, TyScheme, ValEnv, ValInfo,
+  generalize, generalize_fixed, Cx, Env, EnvLike as _, FixedTyVars, HasRecordMetaVars, IdStatus,
+  Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
 use crate::{exp, pat, ty};
+use fast_hash::map;
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
 /// visibly mutate the cx between entry and exit (i.e. if we do any mutations, we'll undo them)?
@@ -61,7 +62,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
       }
       // extend the cx with only the recursive ValEnv.
-      cx.as_mut_env().val_env.extend(rec_ve);
+      cx.env.push(Env {
+        val_env: rec_ve,
+        ..Default::default()
+      });
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
         // sml_def(26)
         if let Some(exp) = val_bind.exp {
@@ -178,7 +182,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut local_env = Env::default();
       get(st, cx, ars, &mut local_env, *local_dec);
       let mut cx = cx.clone();
-      cx.as_mut_env().append(&mut local_env);
+      cx.env.append(&mut local_env);
       get(st, &cx, ars, env, *in_dec);
     }
     // sml_def(22)
@@ -196,7 +200,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut one_env = Env::default();
       for &dec in decs {
         get(st, &cx, ars, &mut one_env, dec);
-        cx.as_mut_env().append(&mut one_env.clone());
+        cx.env.push(one_env.clone());
         env.append(&mut one_env);
       }
     }
@@ -246,14 +250,17 @@ pub(crate) fn get_dat_binds(
       res
     };
     // allow recursive reference
-    cx.as_mut_env().ty_env.insert(
-      dat_bind.name.clone(),
-      TyInfo {
-        ty_scheme: ty_scheme.clone(),
-        val_env: ValEnv::default(),
-        def: st.def(idx),
-      },
-    );
+    cx.env.push(Env {
+      ty_env: map([(
+        dat_bind.name.clone(),
+        TyInfo {
+          ty_scheme: ty_scheme.clone(),
+          val_env: ValEnv::default(),
+          def: st.def(idx),
+        },
+      )]),
+      ..Default::default()
+    });
     let mut val_env = ValEnv::default();
     // sml_def(29), sml_def(82)
     for con_bind in dat_bind.cons.iter() {

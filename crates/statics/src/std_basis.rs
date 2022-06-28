@@ -4,10 +4,9 @@
 
 use crate::st::Statics;
 use crate::types::{
-  Bs, Env, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo,
-  TyScheme, TyVarKind, ValEnv, ValInfo,
+  Bs, Env, EnvStack, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv,
+  TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use std::sync::Arc;
 
 pub(crate) fn get() -> Statics {
   let mut syms = Syms::default();
@@ -92,15 +91,17 @@ pub(crate) fn get() -> Statics {
       (hir::Name::new(name), vi)
     }))
     .collect();
+  let mut env = EnvStack::default();
+  env.push(Env {
+    str_env: StrEnv::default(),
+    ty_env,
+    val_env,
+    def: None,
+  });
   let bs = Bs {
     fun_env: FunEnv::default(),
     sig_env: SigEnv::default(),
-    env: Arc::new(Env {
-      str_env: StrEnv::default(),
-      ty_env,
-      val_env,
-      def: None,
-    }),
+    env,
   };
   Statics { syms, bs }
 }
