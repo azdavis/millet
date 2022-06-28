@@ -11,7 +11,8 @@
 - For SML files only:
   - Inline errors
   - Hover for type
-  - Goto definition
+  - Go to definition
+  - Go to type definition
 
 ## Usage
 
