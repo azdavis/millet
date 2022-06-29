@@ -4,14 +4,12 @@
 
 ## Features
 
-- For SML, SML/NJ Compilation Manager, and ML Basis files:
-  - Syntax highlighting
-  - Language configuration (comments, brackets, etc)
-  - Snippets
-- For SML files only:
-  - Inline errors
-  - Hover for type/documentation
-  - Go to definition/type definition
+- Syntax highlighting
+- Language configuration (comments, brackets, etc)
+- Snippets
+- Inline errors
+- Hover for type/documentation
+- Go to definition/type definition
 
 ## Usage
 
