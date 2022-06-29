@@ -676,7 +676,12 @@ A `case` expression (or similar) was not exhaustive.
 
 When we `case` on a value of a given type, we must assume that value can be any possible value of that type.
 
-Thus, if there exists a value of the type being matched, such that there does _not_ exist a pattern in the `case` that matches that value, then the `case` is not exhaustive.
+Thus, if
+
+- there exists a value of the type being matched, such that
+- there does _not_ exist a pattern in the `case` that matches that value,
+
+then the `case` is not exhaustive.
 
 ```sml
 (* error *)
