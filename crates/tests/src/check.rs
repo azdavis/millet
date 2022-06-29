@@ -303,7 +303,7 @@ const EXPECT_COMMENT_START: &str = "(**";
 /// - one of `^` or `v` (the arrow character)
 /// - zero or more non-spaces (the column range for the arrow. usually these are all the same as the
 ///   arrow character)
-/// - one or more spaces
+/// - one space
 /// - one or more of any character (the message)
 /// - zero or more spaces
 /// - the string `*)` (the comment end)
