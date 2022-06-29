@@ -4,7 +4,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-mod std_basis;
+mod sml;
 
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
@@ -12,7 +12,7 @@ use std::fmt;
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
-pub use std_basis::StdBasis;
+pub use sml::StdBasis;
 pub use text_pos::{Position, Range};
 
 /// The name of the root CM file we look for.
