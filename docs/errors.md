@@ -832,8 +832,8 @@ It is also an error even if the expression has function type.
 
 ```sml
 (* error *)
-val mkFn = fn () => fn x => x + 1
-val rec inc = mkFn ()
+val mkAdd3 = fn () => fn x => x + 3
+val rec add3 = mkAdd3 ()
 ```
 
 To fix, ensure the expression is a literal `fn` expression.
