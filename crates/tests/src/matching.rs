@@ -400,3 +400,37 @@ val _ : int = g { b = f { a = 1, b = 3 }, a = h { a = 4, b = 5 } }
 "#,
   );
 }
+
+#[test]
+fn structure() {
+  check(
+    r#"
+structure Str = struct
+  datatype d = A | B
+end
+
+fun f (x : Str.d): int =
+  case x of Str.A => 1
+(**    ^ non-exhaustive case: missing B *)
+"#,
+  );
+}
+
+#[test]
+fn signature() {
+  check(
+    r#"
+signature SIG = sig
+  datatype d = A | B
+end
+
+structure Str :> SIG = struct
+  datatype d = A | B
+end
+
+fun f (x : Str.d): int =
+  case x of Str.A => 1
+(**    ^ non-exhaustive case: missing B *)
+"#,
+  );
+}

@@ -3,8 +3,8 @@ use crate::generalizes::{eq_ty_scheme, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{
-  generalize, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv, StrEnv,
-  Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
+  generalize, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv,
+  StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -330,24 +330,21 @@ fn get_where_type(
 }
 
 fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) {
-  let iter = ty_names.iter().map(|&sym| {
+  let mut ac = Vec::<(StartedSym, TyInfo)>::new();
+  for &sym in ty_names.iter() {
     let (name, ty_info) = st.syms.get(&sym).unwrap();
     let name = name.clone();
-    let ty_info = ty_info.clone();
+    let mut ty_info = ty_info.clone();
     let started = st.syms.start(name);
-    let new_sym = started.sym();
-    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), new_sym);
-    st.syms.finish(
-      started,
-      TyInfo {
-        ty_scheme: ty_scheme.clone(),
-        val_env: ValEnv::default(),
-        def: ty_info.def,
-      },
-    );
-    (sym, ty_scheme)
-  });
-  subst.extend(iter);
+    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), started.sym());
+    ty_info.ty_scheme = ty_scheme.clone();
+    ac.push((started, ty_info));
+    assert!(subst.insert(sym, ty_scheme).is_none());
+  }
+  for (started, mut ty_info) in ac {
+    val_env_realize(subst, &mut ty_info.val_env);
+    st.syms.finish(started, ty_info);
+  }
 }
 
 // sml_def(65)
