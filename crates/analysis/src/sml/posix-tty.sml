@@ -1,5 +1,15 @@
+(*!
+The structure Posix.TTY specifies a model of a general terminal interface, as described in Section 7
+of the POSIX standard 1003.1,1996[CITE].
+!*)
 signature POSIX_TTY = sig
+  (*!
+  A process identifier.
+  !*)
   eqtype pid
+  (*!
+  An open file descriptor.
+  !*)
   eqtype file_desc
   structure V : sig
     val eof : int
@@ -33,6 +43,10 @@ signature POSIX_TTY = sig
     val ixon : flags
     val parmrk : flags
   end
+  (*!
+  The O substructure contains flags for specifying output control. val opost : flags Perform output
+  processing.
+  !*)
   structure O : sig
     include BIT_FLAGS
     val opost : flags
@@ -63,8 +77,20 @@ signature POSIX_TTY = sig
     val noflsh : flags
     val tostop : flags
   end
+  (*!
+  Terminal input and output baud rates.
+  !*)
   eqtype speed
+  (*!
+  compareSpeed (sp, sp') returns LESS, EQUAL, or GREATER when the baud rate sp is less than, equal
+  to, or greater than that of sp', respectively.
+  !*)
   val compareSpeed : speed * speed -> order
+  (*!
+  These converts between a speed value and its underlying word representation. No checking is
+  performed by wordToSpeed to ensure the resulting value corresponds to an allowed speed in the
+  given system.
+  !*)
   val speedToWord : speed -> SysWord.word
   val wordToSpeed : SysWord.word -> speed
   val b0 : speed
@@ -83,9 +109,21 @@ signature POSIX_TTY = sig
   val b9600 : speed
   val b19200 : speed
   val b38400 : speed
+  (*!
+  This creates a termios value using the given flags, special characters, and speeds.
+  !*)
   type termios
+  (*!
+  This creates a termios value using the given flags, special characters, and speeds.
+  !*)
   val termios : { iflag : I.flags, oflag : O.flags, cflag : C.flags, lflag : L.flags, cc : V.cc, ispeed : speed, ospeed : speed } -> termios
+  (*!
+  This returns a concrete representation of a termios value.
+  !*)
   val fieldsOf : termios -> { iflag : I.flags, oflag : O.flags, cflag : C.flags, lflag : L.flags, cc : V.cc, ispeed : speed, ospeed : speed }
+  (*!
+  These are the obvious projection functions from a termios value to its constituent fields.
+  !*)
   val getiflag : termios -> I.flags
   val getoflag : termios -> O.flags
   val getcflag : termios -> C.flags
