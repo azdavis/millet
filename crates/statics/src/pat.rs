@@ -134,11 +134,11 @@ fn get_(
     }
     // sml_def(36)
     hir::Pat::Record { rows, allows_other } => {
-      let mut labs = BTreeSet::<hir::Lab>::new();
+      let mut labels = BTreeSet::<hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
       let rows = record(st, rows, pat_, |st, lab, pat| {
         let (pm_pat, ty) = get(st, cx, ars, ve, pat);
-        labs.insert(lab.clone());
+        labels.insert(lab.clone());
         pats.push(pm_pat);
         ty
       });
@@ -151,7 +151,11 @@ fn get_(
       } else {
         Ty::Record(rows)
       };
-      (Pat::con(Con::Record(labs), pats, pat), ty)
+      let con = Con::Record {
+        labels,
+        allows_other: *allows_other,
+      };
+      (Pat::con(con, pats, pat), ty)
     }
     // sml_def(42)
     hir::Pat::Typed(inner, want) => {

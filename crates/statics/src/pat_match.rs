@@ -49,13 +49,16 @@ impl pattern_match::Lang for Lang {
             vec![Con::Any]
           }
         }
-        Ty::Record(fs) => vec![Con::Record(fs.keys().cloned().collect())],
+        Ty::Record(fs) => vec![Con::Record {
+          labels: fs.keys().cloned().collect(),
+          allows_other: false,
+        }],
       },
       Con::Int(_)
       | Con::Word(_)
       | Con::Char(_)
       | Con::String(_)
-      | Con::Record(_)
+      | Con::Record { .. }
       | Con::Variant(_, _) => {
         vec![con.clone()]
       }
@@ -92,7 +95,7 @@ impl pattern_match::Lang for Lang {
             _ => return Err(CheckError),
           }
         }
-        Con::Record(_) => return Err(CheckError),
+        Con::Record { .. } => return Err(CheckError),
       },
     };
     Ok(ret)
@@ -106,7 +109,10 @@ pub(crate) enum Con {
   Word(i32),
   Char(char),
   String(hir::SmolStr),
-  Record(BTreeSet<hir::Lab>),
+  Record {
+    labels: BTreeSet<hir::Lab>,
+    allows_other: bool,
+  },
   Variant(Sym, VariantName),
 }
 

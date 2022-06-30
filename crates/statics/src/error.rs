@@ -244,12 +244,16 @@ impl<'a> fmt::Display for PatDisplay<'a> {
           assert!(args.is_empty());
           f.write_str(s.as_str())?
         }
-        Con::Record(labs) => {
-          assert_eq!(labs.len(), args.len());
-          let is_tuple = labs
-            .iter()
-            .enumerate()
-            .all(|(idx, lab)| hir::Lab::tuple(idx) == *lab);
+        Con::Record {
+          labels,
+          allows_other,
+        } => {
+          assert_eq!(labels.len(), args.len());
+          let is_tuple = !*allows_other
+            && labels
+              .iter()
+              .enumerate()
+              .all(|(idx, lab)| hir::Lab::tuple(idx) == *lab);
           if is_tuple {
             f.write_str("(")?;
             comma_seq(
@@ -265,11 +269,15 @@ impl<'a> fmt::Display for PatDisplay<'a> {
             f.write_str("{")?;
             comma_seq(
               f,
-              labs.iter().zip(args).map(|(lab, pat)| RowDisplay {
-                lab,
-                pat,
-                syms: self.syms,
-              }),
+              labels
+                .iter()
+                .zip(args)
+                .map(|(lab, pat)| RowDisplay::Row {
+                  lab,
+                  pat,
+                  syms: self.syms,
+                })
+                .chain(allows_other.then(|| RowDisplay::Rest)),
             )?;
             f.write_str("}")?;
           }
@@ -388,9 +396,16 @@ fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
         RawPat::Con(a, b) => (a, b),
         RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
       };
+      let labels = match con {
+        Con::Record {
+          allows_other: false,
+          labels,
+        } => labels,
+        _ => unreachable!("the argument to :: is a record that does not allow others"),
+      };
       assert!(
-        matches!(con, Con::Record(_)),
-        "the argument to :: is a tuple (aka record)"
+        labels.len() == 2 && (0..2).all(|x| labels.contains(&hir::Lab::tuple(x))),
+        "the argument to :: is a 2-tuple"
       );
       let (hd, tl) = match &args[..] {
         [a, b] => (a, b),
@@ -408,21 +423,29 @@ enum PatPrec {
   App,
 }
 
-struct RowDisplay<'a> {
-  lab: &'a hir::Lab,
-  pat: &'a Pat,
-  syms: &'a Syms,
+enum RowDisplay<'a> {
+  Row {
+    lab: &'a hir::Lab,
+    pat: &'a Pat,
+    syms: &'a Syms,
+  },
+  Rest,
 }
 
 impl<'a> fmt::Display for RowDisplay<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    self.lab.fmt(f)?;
-    f.write_str(": ")?;
-    let pd = PatDisplay {
-      pat: self.pat,
-      syms: self.syms,
-      prec: PatPrec::Min,
-    };
-    pd.fmt(f)
+    match self {
+      RowDisplay::Row { lab, pat, syms } => {
+        lab.fmt(f)?;
+        f.write_str(": ")?;
+        let pd = PatDisplay {
+          pat,
+          syms,
+          prec: PatPrec::Min,
+        };
+        pd.fmt(f)
+      }
+      RowDisplay::Rest => f.write_str("..."),
+    }
   }
 }
