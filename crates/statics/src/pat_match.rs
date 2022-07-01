@@ -100,6 +100,19 @@ impl pattern_match::Lang for Lang {
     };
     Ok(ret)
   }
+
+  fn covers(&self, lhs: &Self::Con, rhs: &Self::Con) -> bool {
+    matches!(
+      (lhs, rhs),
+      (
+        Con::Record {
+          allows_other: true,
+          ..
+        },
+        Con::Record { .. },
+      )
+    ) || (lhs == rhs)
+  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

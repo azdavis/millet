@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke_case() {
@@ -437,7 +437,7 @@ fun f (x : Str.d): int =
 
 #[test]
 fn rest_non_exhaustive() {
-  fail(
+  check(
     r#"
 fun f x =
   case x of

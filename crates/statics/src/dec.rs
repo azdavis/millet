@@ -40,11 +40,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         let got = exp::get(st, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec);
         apply(st.subst(), &mut want);
-        pat::get_match(
-          st,
-          vec![pm_pat],
+        st.insert_bind(
+          pm_pat,
           want,
-          Some(ErrorKind::NonExhaustiveBinding),
           val_bind.pat.map_or(hir::Idx::from(dec), Into::into),
         );
       }
@@ -76,13 +74,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         let got = exp::get(st, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec);
         apply(st.subst(), &mut want);
-        pat::get_match(
-          st,
-          vec![pm_pat],
-          want,
-          Some(ErrorKind::NonExhaustiveBinding),
-          dec,
-        );
+        st.insert_bind(pm_pat, want, dec.into());
       }
       // generalize the entire merged ValEnv.
       for val_info in ve.values_mut() {

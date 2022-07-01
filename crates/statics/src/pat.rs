@@ -2,7 +2,7 @@ use crate::error::{ErrorKind, Item};
 use crate::generalizes::eq_ty_scheme;
 use crate::get_env::get_val_info;
 use crate::info::TyEntry;
-use crate::pat_match::{Con, Lang, Pat, VariantName};
+use crate::pat_match::{Con, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
 use crate::types::{
@@ -226,39 +226,5 @@ fn insert_name(st: &mut St, ve: &mut ValEnv, name: hir::Name, ty: Ty, idx: hir::
   };
   if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);
-  }
-}
-
-pub(crate) fn get_match<I>(
-  st: &mut St,
-  pats: Vec<Pat>,
-  ty: Ty,
-  f: Option<fn(Vec<Pat>) -> ErrorKind>,
-  idx: I,
-) where
-  I: Into<hir::Idx>,
-{
-  // NOTE: instead of take/set, this could probably be done with borrows instead. It's a little
-  // annoying though because I'd need to make Lang have a lifetime parameter, which means Pat would
-  // need one too, and then things get weird. Maybe the pattern_match API needs some work.
-  let lang = Lang {
-    syms: std::mem::take(&mut st.syms),
-  };
-  let ck = pattern_match::check(&lang, pats, ty);
-  st.syms = lang.syms;
-  let ck = match ck {
-    Ok(x) => x,
-    // we already should have emitted other errors in this case
-    Err(_) => return,
-  };
-  let mut unreachable: Vec<_> = ck.unreachable.into_iter().flatten().collect();
-  unreachable.sort_unstable_by_key(|x| x.into_raw());
-  for un in unreachable {
-    st.err(un, ErrorKind::UnreachablePattern);
-  }
-  if !ck.missing.is_empty() {
-    if let Some(f) = f {
-      st.err(idx, f(ck.missing));
-    }
   }
 }

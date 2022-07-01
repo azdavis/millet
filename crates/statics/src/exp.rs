@@ -88,7 +88,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       unify(st, Ty::EXN, param.clone(), idx);
       unify(st, exp_ty.clone(), res, idx);
       apply(st.subst(), &mut exp_ty);
-      pat::get_match(st, pats, param, None, idx);
+      st.insert_handle(pats, param, idx.into());
       exp_ty
     }
     // sml_def(11)
@@ -100,13 +100,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     // sml_def(12)
     hir::Exp::Fn(matcher) => {
       let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
-      pat::get_match(
-        st,
-        pats,
-        param.clone(),
-        Some(ErrorKind::NonExhaustiveCase),
-        exp,
-      );
+      st.insert_case(pats, param.clone(), exp.into());
       Ty::fun(param, res)
     }
     // sml_def(9)
