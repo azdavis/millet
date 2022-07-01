@@ -847,7 +847,13 @@ pub(crate) fn generalize(
 ) -> Option<HasRecordMetaVars> {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
-  meta_vars(subst, &mut |x| drop(meta.insert(x, None)), &ty_scheme.ty);
+  meta_vars(
+    subst,
+    &mut |x| {
+      meta.insert(x, None);
+    },
+    &ty_scheme.ty,
+  );
   let mut g = Generalizer {
     subst,
     fixed,
