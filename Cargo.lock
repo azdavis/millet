@@ -64,7 +64,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 
 [[package]]
 name = "cli"
@@ -186,7 +186,7 @@ dependencies = [
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 
 [[package]]
 name = "idna"
@@ -353,7 +353,7 @@ dependencies = [
 [[package]]
 name = "pattern-match"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 dependencies = [
  "rustc-hash",
 ]
@@ -527,7 +527,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -553,7 +553,7 @@ dependencies = [
 [[package]]
 name = "text-pos"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 dependencies = [
  "text-size",
 ]
@@ -600,12 +600,12 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 
 [[package]]
 name = "topo-sort"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 
 [[package]]
 name = "ty-var-scope"
@@ -660,7 +660,7 @@ checksum = "3ed742d4ea2bd1176e236172c8429aaf54486e7ac098db29ffe6529e0ce50973"
 [[package]]
 name = "uniq"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#911a494867b551c9f425a5f0f641be6a422cfe13"
+source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
 
 [[package]]
 name = "url"
