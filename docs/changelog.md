@@ -2,6 +2,13 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.1.14
+
+- Add initial standard basis library documentation.
+- Improve matching on `datatype`s from signatures that were opaquely ascribed.
+- Improve matching on records with `...` rest pattern rows.
+- Improve display of record patterns in error messages.
+
 ## v0.1.13
 
 - Add initial goto type def support.
