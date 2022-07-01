@@ -441,7 +441,7 @@ fn rest_non_exhaustive() {
     r#"
 fun f x =
   case x of
-(**    ^ non-exhaustive case: missing {a: _, b: _} *)
+(**    ^ non-exhaustive case: missing {a = _, b = _} *)
     {a = 3, ...} => 1
   | {b = 5, ...} => 2
   | {a = 1, b = 2} => 3

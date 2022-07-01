@@ -437,7 +437,7 @@ impl<'a> fmt::Display for RowDisplay<'a> {
     match self {
       RowDisplay::Row { lab, pat, syms } => {
         lab.fmt(f)?;
-        f.write_str(": ")?;
+        f.write_str(" = ")?;
         let pd = PatDisplay {
           pat,
           syms,
