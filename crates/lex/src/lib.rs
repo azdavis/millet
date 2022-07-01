@@ -245,7 +245,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     // symbolic identifiers (like `:` and `#`) and those that can't possibly be (like `{` or `,`).
     return SK::PUNCTUATION
       .iter()
-      .find_map(|&(sk_text, sk)| (sk_text == got).then(|| sk))
+      .find_map(|&(sk_text, sk)| (sk_text == got).then_some(sk))
       .unwrap_or(SK::Name);
   }
   // punctuation

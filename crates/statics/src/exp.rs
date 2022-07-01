@@ -158,7 +158,7 @@ fn ty_name_escape(m: &SymsMarker, ty: &Ty) -> Option<Sym> {
     Ty::Record(rows) => rows.values().find_map(|ty| ty_name_escape(m, ty)),
     Ty::Con(args, sym) => sym
       .generated_after(m)
-      .then(|| *sym)
+      .then_some(*sym)
       .or_else(|| args.iter().find_map(|ty| ty_name_escape(m, ty))),
     Ty::Fn(param, res) => ty_name_escape(m, param).or_else(|| ty_name_escape(m, res)),
   }

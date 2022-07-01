@@ -714,7 +714,7 @@ impl EnvLike for EnvStack {
       .iter()
       .rev()
       .flat_map(|env| env.str_env.iter())
-      .filter_map(|(name, val)| names.insert(name).then(|| val))
+      .filter_map(|(name, val)| names.insert(name).then_some(val))
       .collect()
   }
 
@@ -725,7 +725,7 @@ impl EnvLike for EnvStack {
       .iter()
       .rev()
       .flat_map(|env| env.ty_env.iter())
-      .filter_map(|(name, val)| names.insert(name).then(|| val))
+      .filter_map(|(name, val)| names.insert(name).then_some(val))
       .collect()
   }
 
@@ -736,7 +736,7 @@ impl EnvLike for EnvStack {
       .iter()
       .rev()
       .flat_map(|env| env.val_env.iter())
-      .filter_map(|(name, val)| names.insert(name).then(|| val))
+      .filter_map(|(name, val)| names.insert(name).then_some(val))
       .collect()
   }
 }
@@ -863,7 +863,7 @@ pub(crate) fn generalize(
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.bound_vars;
-  g.has_record_meta_var.then(|| HasRecordMetaVars)
+  g.has_record_meta_var.then_some(HasRecordMetaVars)
 }
 
 /// a marker for when a type contained record meta vars.
@@ -879,7 +879,7 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
   let mut bound_vars = Vec::with_capacity(fixed.0.len());
   for (idx, (fv, bv)) in fixed.0.iter_mut().enumerate() {
     assert!(bv.is_none());
-    bound_vars.push(fv.ty_var.is_equality().then(|| TyVarKind::Equality));
+    bound_vars.push(fv.ty_var.is_equality().then_some(TyVarKind::Equality));
     *bv = Some(BoundTyVar(idx));
   }
   let mut g = Generalizer {
@@ -965,7 +965,7 @@ impl<'a> Generalizer<'a> {
         self.fixed.0.get_mut(fv),
         &mut self.bound_vars,
         &mut self.has_record_meta_var,
-        fv.ty_var.is_equality().then(|| TyVarKind::Equality),
+        fv.ty_var.is_equality().then_some(TyVarKind::Equality),
         ty,
       ),
       Ty::Record(rows) => {

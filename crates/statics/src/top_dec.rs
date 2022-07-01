@@ -593,7 +593,7 @@ fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &hir::TyDesc, idx: hir:
       ty_desc
         .ty_vars
         .iter()
-        .map(|x| x.is_equality().then(|| TyVarKind::Equality)),
+        .map(|x| x.is_equality().then_some(TyVarKind::Equality)),
       started.sym(),
     ),
     val_env: ValEnv::default(),

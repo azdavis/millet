@@ -12,7 +12,7 @@ const SPECIAL: [(&str, &str); 7] = [
 ];
 
 fn get_token(name: &str) -> (TokenKind, String) {
-  if let Some(desc) = SPECIAL.iter().find_map(|&(n, d)| (name == n).then(|| d)) {
+  if let Some(desc) = SPECIAL.iter().find_map(|&(n, d)| (name == n).then_some(d)) {
     (TokenKind::Special(desc), name.to_owned())
   } else if name.chars().any(|x| x.is_ascii_alphabetic()) {
     let mut ret = snake_to_pascal(name);

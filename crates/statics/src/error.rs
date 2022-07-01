@@ -277,7 +277,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
                   pat,
                   syms: self.syms,
                 })
-                .chain(allows_other.then(|| RowDisplay::Rest)),
+                .chain(allows_other.then_some(RowDisplay::Rest)),
             )?;
             f.write_str("}")?;
           }

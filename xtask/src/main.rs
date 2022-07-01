@@ -174,7 +174,7 @@ fn ck_changelog(sh: &Shell) -> Result<()> {
 }
 
 fn dist(sh: &Shell, release: bool) -> Result<()> {
-  let release_arg = release.then(|| "--release");
+  let release_arg = release.then_some("--release");
   cmd!(sh, "cargo build {release_arg...} --locked --bin lang-srv").run()?;
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;

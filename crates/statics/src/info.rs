@@ -40,7 +40,7 @@ impl Info {
       ty_entry: ty_entry.map(|mut ty_entry| {
         ty_entry.ty_scheme = ty_entry
           .ty_scheme
-          .and_then(|x| (!x.bound_vars.is_empty()).then(|| x));
+          .and_then(|x| (!x.bound_vars.is_empty()).then_some(x));
         ty_entry
       }),
       def,

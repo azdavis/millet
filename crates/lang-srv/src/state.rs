@@ -201,7 +201,7 @@ impl State {
         .flatten()
         .filter_map(|(path, range)| lsp_location(&root, path, range))
         .collect();
-      let res = (!locs.is_empty()).then(|| lsp_types::GotoDefinitionResponse::Array(locs));
+      let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
       self.send_response(Response::new_ok(id, res));
       self.root = Some(root);
     })?;
