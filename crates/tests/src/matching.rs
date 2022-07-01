@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke_case() {
@@ -431,6 +431,20 @@ end
 fun f (x : Str.d): int =
   case x of Str.A => 1
 (**    ^ non-exhaustive case: missing B *)
+"#,
+  );
+}
+
+#[test]
+fn rest_non_exhaustive() {
+  fail(
+    r#"
+fun f x =
+  case x of
+(**    ^ non-exhaustive case: missing {a: _, b: _} *)
+    {a = 3, ...} => 1
+  | {b = 5, ...} => 2
+  | {a = 1, b = 2} => 3
 "#,
   );
 }
