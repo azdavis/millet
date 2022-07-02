@@ -2,6 +2,13 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.2.0
+
+- First [publicly announced](https://azdavis.net/posts/millet/) release.
+- Show some CM, etc errors on the files themselves instead of in notifications if possible.
+- Add 15-150 specific docs, update other docs.
+- Improve logic for ignoring `$` paths in CM.
+
 ## v0.1.14
 
 - Add initial standard basis library documentation.
