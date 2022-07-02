@@ -283,7 +283,7 @@ impl State {
       Ok(x) => x,
       Err(e) => {
         log::error!("could not get input: {e}");
-        self.show_error(format!("{e}"));
+        self.show_error(format!("{e:#}"));
         self.root = Some(root);
         return false;
       }
