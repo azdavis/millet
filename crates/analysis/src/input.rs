@@ -24,16 +24,27 @@ impl Input {
 /// An error when getting input.
 #[derive(Debug)]
 pub struct GetInputError {
+  source: Option<std::path::PathBuf>,
   path: std::path::PathBuf,
   kind: GetInputErrorKind,
 }
 
 impl GetInputError {
-  fn new(path: &std::path::Path, kind: GetInputErrorKind) -> Self {
+  fn new(
+    source: Option<&std::path::Path>,
+    path: &std::path::Path,
+    kind: GetInputErrorKind,
+  ) -> Self {
     Self {
+      source: source.map(ToOwned::to_owned),
       path: path.to_owned(),
       kind,
     }
+  }
+
+  /// Returns a path associated with this error, which may or may not exist.
+  pub fn path(&self) -> &std::path::Path {
+    self.source.as_ref().unwrap_or(&self.path).as_path()
   }
 }
 
@@ -82,36 +93,45 @@ where
   F: paths::FileSystem,
 {
   let mut ret = Input::default();
-  let root_group_id = get_path_id(fs, root, root.as_path().join(ROOT_GROUP).as_path())?;
-  let mut stack = vec![root_group_id];
-  while let Some(path_id) = stack.pop() {
-    let path = root.get_path(path_id).as_path();
-    let s = read_file(fs, path)?;
-    let cm = cm::get(&s).map_err(|e| GetInputError::new(path, GetInputErrorKind::Cm(e)))?;
-    let parent = match path.parent() {
+  let root_group_id = get_path_id(fs, root, None, root.as_path().join(ROOT_GROUP).as_path())?;
+  let mut stack = vec![(root_group_id, root_group_id)];
+  while let Some((containing_path_id, group_path_id)) = stack.pop() {
+    let group_path = root.get_path(group_path_id).clone();
+    let group_path = group_path.as_path();
+    let containing_path = root.get_path(containing_path_id).as_path();
+    let s = read_file(fs, Some(containing_path), group_path)?;
+    let cm =
+      cm::get(&s).map_err(|e| GetInputError::new(None, group_path, GetInputErrorKind::Cm(e)))?;
+    let group_parent = match group_path.parent() {
       Some(x) => x.to_owned(),
-      None => return Err(GetInputError::new(path, GetInputErrorKind::NoParent)),
+      None => {
+        return Err(GetInputError::new(
+          None,
+          group_path,
+          GetInputErrorKind::NoParent,
+        ))
+      }
     };
     let mut source_files = Vec::<paths::PathId>::new();
     for path in cm.sml {
-      let path = parent.join(path.as_path());
-      let path_id = get_path_id(fs, root, path.as_path())?;
-      let s = read_file(fs, path.as_path())?;
+      let path = group_parent.join(path.as_path());
+      let path_id = get_path_id(fs, root, Some(group_path), path.as_path())?;
+      let s = read_file(fs, Some(group_path), path.as_path())?;
       source_files.push(path_id);
       ret.sources.insert(path_id, s);
     }
     let mut dependencies = FxHashSet::<paths::PathId>::default();
     for path in cm.cm {
-      let path = parent.join(path.as_path());
-      let path_id = get_path_id(fs, root, path.as_path())?;
-      stack.push(path_id);
+      let path = group_parent.join(path.as_path());
+      let path_id = get_path_id(fs, root, Some(group_path), path.as_path())?;
+      stack.push((group_path_id, path_id));
       dependencies.insert(path_id);
     }
     let group = Group {
       source_files,
       dependencies,
     };
-    ret.groups.insert(path_id, group);
+    ret.groups.insert(group_path_id, group);
   }
   Ok(ret)
 }
@@ -130,6 +150,7 @@ pub(crate) struct Group {
 fn get_path_id<F>(
   fs: &F,
   root: &mut paths::Root,
+  source: Option<&std::path::Path>,
   path: &std::path::Path,
 ) -> Result<paths::PathId, GetInputError>
 where
@@ -137,16 +158,20 @@ where
 {
   let canonical = fs
     .canonicalize(path)
-    .map_err(|e| GetInputError::new(path, GetInputErrorKind::Canonicalize(e)))?;
+    .map_err(|e| GetInputError::new(source, path, GetInputErrorKind::Canonicalize(e)))?;
   root
     .get_id(&canonical)
-    .map_err(|e| GetInputError::new(path, GetInputErrorKind::NotInRoot(e)))
+    .map_err(|e| GetInputError::new(source, path, GetInputErrorKind::NotInRoot(e)))
 }
 
-fn read_file<F>(fs: &F, path: &std::path::Path) -> Result<String, GetInputError>
+fn read_file<F>(
+  fs: &F,
+  source: Option<&std::path::Path>,
+  path: &std::path::Path,
+) -> Result<String, GetInputError>
 where
   F: paths::FileSystem,
 {
   fs.read_to_string(path)
-    .map_err(|e| GetInputError::new(path, GetInputErrorKind::ReadFile(e)))
+    .map_err(|e| GetInputError::new(source, path, GetInputErrorKind::ReadFile(e)))
 }
