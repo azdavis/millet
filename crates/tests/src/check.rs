@@ -181,19 +181,9 @@ impl Check {
   ) -> Result<(), Reason> {
     let file = &self.files[&id];
     let region = if range.start.line == range.end.line {
-      let line = usize::try_from(range.start.line);
-      let col_start = usize::try_from(range.start.character);
-      let col_end = usize::try_from(range.end.character);
-      let olr = line
-        .ok()
-        .zip(col_start.ok().zip(col_end.ok()))
-        .map(|(line, (start, end))| Region {
-          line,
-          col: start..end,
-        });
-      match olr {
-        Some(x) => x,
-        None => return Err(Reason::CannotGetRegion(id, range)),
+      Region {
+        line: range.start.line,
+        col: range.start.character..range.end.character,
       }
     } else {
       return Err(Reason::NotOneLine(id, range));
@@ -220,10 +210,6 @@ impl fmt::Display for Check {
           writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;
         }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::CannotGetRegion(path, r) => {
-          let path = self.root.get_path(*path).as_path().display();
-          writeln!(f, "{path}: couldn't get a region from {r:?}")?;
-        }
         Reason::NotOneLine(path, pair) => {
           let path = self.root.get_path(*path).as_path().display();
           writeln!(f, "{path}: not one line: {}..{}", pair.start, pair.end)?;
@@ -269,7 +255,6 @@ struct CheckFile {
 enum Reason {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
-  CannotGetRegion(paths::PathId, analysis::Range),
   NotOneLine(paths::PathId, analysis::Range),
   GotButNotWanted(paths::PathId, Region, String),
   MismatchedErrors(paths::PathId, Region, String, String),
@@ -277,8 +262,8 @@ enum Reason {
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 struct Region {
-  line: usize,
-  col: Range<usize>,
+  line: u32,
+  col: Range<u32>,
 }
 
 impl fmt::Display for Region {
@@ -328,8 +313,8 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
   let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
   let end = start + col_range.len();
   let region = Region {
-    line,
-    col: start..end,
+    line: u32::try_from(line).ok()?,
+    col: u32::try_from(start).ok()?..u32::try_from(end).ok()?,
   };
   Some((region, msg.trim_end_matches(' ')))
 }
