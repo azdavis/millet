@@ -84,7 +84,7 @@
     },
     "specialName": {
       "name": "constant.language.sml",
-      "match": "\\b(true|false|nil|ref)\\b"
+      "match": "\\b(true|false|nil|ref|it)\\b"
     },
     "symbolicName": {
       "name": "keyword.operator.sml",
