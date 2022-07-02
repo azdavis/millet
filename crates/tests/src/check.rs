@@ -4,7 +4,6 @@ use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
 use paths::FileSystem as _;
 use std::fmt::{self, Write as _};
-use std::ops::Range;
 
 /// given the string of an SML program with some expectation comments, panic iff the expectation
 /// comments are not satisfied.
@@ -183,7 +182,8 @@ impl Check {
     let region = if range.start.line == range.end.line {
       Region {
         line: range.start.line,
-        col: range.start.character..range.end.character,
+        col_start: range.start.character,
+        col_end: range.end.character,
       }
     } else {
       return Err(Reason::NotOneLine(id, range));
@@ -260,10 +260,11 @@ enum Reason {
   Mismatched(paths::PathId, Region, String, String),
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Region {
   line: u32,
-  col: Range<u32>,
+  col_start: u32,
+  col_end: u32,
 }
 
 impl fmt::Display for Region {
@@ -273,8 +274,8 @@ impl fmt::Display for Region {
       f,
       "{}:{}..{}",
       self.line,
-      self.col.start + 1,
-      self.col.end + 1
+      self.col_start + 1,
+      self.col_end + 1
     )
   }
 }
@@ -314,7 +315,8 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
   let end = start + col_range.len();
   let region = Region {
     line: u32::try_from(line).ok()?,
-    col: u32::try_from(start).ok()?..u32::try_from(end).ok()?,
+    col_start: u32::try_from(start).ok()?,
+    col_end: u32::try_from(end).ok()?,
   };
   Some((region, msg.trim_end_matches(' ')))
 }
