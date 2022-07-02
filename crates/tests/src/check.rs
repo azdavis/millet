@@ -195,7 +195,7 @@ impl Check {
     if want == got {
       Ok(())
     } else {
-      Err(Reason::MismatchedErrors(id, region, want, got))
+      Err(Reason::Mismatched(id, region, want, got))
     }
   }
 }
@@ -219,9 +219,9 @@ impl fmt::Display for Check {
           writeln!(f, "{path}:{r}: got an error, but wanted none")?;
           writeln!(f, "    - got:  {got}")?;
         }
-        Reason::MismatchedErrors(path, r, want, got) => {
+        Reason::Mismatched(path, r, want, got) => {
           let path = self.root.get_path(*path).as_path().display();
-          writeln!(f, "{path}:{r}: mismatched errors")?;
+          writeln!(f, "{path}:{r}: mismatched")?;
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
@@ -257,7 +257,7 @@ enum Reason {
   NoErrorsEmitted(usize),
   NotOneLine(paths::PathId, analysis::Range),
   GotButNotWanted(paths::PathId, Region, String),
-  MismatchedErrors(paths::PathId, Region, String, String),
+  Mismatched(paths::PathId, Region, String, String),
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
