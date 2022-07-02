@@ -9,7 +9,12 @@ pub(crate) fn get(root: Root) -> Result<CMFile> {
       let mut cm = Vec::<PathBuf>::new();
       for member in members {
         // NOTE: just ignore dollar paths, since we include the full basis
-        if member.pathname.starts_with(std::path::Path::new("$")) {
+        if member
+          .pathname
+          .as_os_str()
+          .to_string_lossy()
+          .starts_with('$')
+        {
           continue;
         }
         match member.class() {
