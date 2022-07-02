@@ -6,7 +6,8 @@ use paths::FileSystem as _;
 use std::fmt::{self, Write as _};
 use std::ops::Range;
 
-/// pass the string of an SML program with some expectation comments.
+/// given the string of an SML program with some expectation comments, panic iff the expectation
+/// comments are not satisfied.
 ///
 /// expectation comments are regular SML comments except they:
 /// - are always on only one line
