@@ -1,10 +1,10 @@
 # Millet
 
-Tools for [Standard ML][sml], most notably a [language server][lang-srv].
+A language server for [Standard ML][sml].
 
 ## Warning
 
-The language server is alpha-quality software. It might be slow, wrong, [incomplete][], or unstable.
+The [language server][lang-srv] is [alpha-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
 
 ## Installation for [VS Code][vscode]
 
@@ -38,7 +38,7 @@ Also:
 [architecture]: /docs/architecture.md
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [git]: https://git-scm.com
-[incomplete]: /docs/known-issues.md
+[known-issues]: /docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [node]: https://nodejs.org/en/

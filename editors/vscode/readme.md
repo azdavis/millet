@@ -2,6 +2,12 @@
 
 [Standard ML][sml] (SML) support for VS Code.
 
+## Warning
+
+The [language server][lang-srv] is [alpha-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
+
+You can turn it off by setting `millet.useLanguageServer` to `false` in your VS Code settings.
+
 ## Features
 
 - Syntax highlighting
@@ -42,11 +48,6 @@ end
 val _ = Foo.fact 3
 ```
 
-## Warning
-
-The [language server][lang-srv] is alpha-quality software. It might be slow, wrong, incomplete, or unstable.
-
-You can turn it off by setting `millet.useLanguageServer` to `false` in your VS Code settings.
-
+[known-issues]: https://github.com/azdavis/millet/blob/main/docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [sml]: https://smlfamily.github.io
