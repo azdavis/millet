@@ -135,10 +135,7 @@ impl Check {
             want: s
               .lines()
               .enumerate()
-              .filter_map(|(line_n, line_s)| {
-                let (a, b) = get_expect_comment(line_n, line_s)?;
-                Some((a, b.to_owned()))
-              })
+              .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
               .collect(),
           };
           (path_id, file)
@@ -146,9 +143,18 @@ impl Check {
         .collect(),
       reasons: Vec::new(),
     };
-    let want_len: usize = ret.files.values().map(|x| x.want.len()).sum();
-    if !matches!(want_len, 0 | 1) {
-      ret.reasons.push(Reason::WantWrongNumError(want_len));
+    let want_err_len: usize = ret
+      .files
+      .values()
+      .map(|x| {
+        x.want
+          .iter()
+          .filter(|(_, e)| matches!(e.kind, ExpectKind::Error))
+          .count()
+      })
+      .sum();
+    if !matches!(want_err_len, 0 | 1) {
+      ret.reasons.push(Reason::WantWrongNumError(want_err_len));
     }
     let mut an = analysis::Analysis::new(std_basis);
     let err = an
@@ -156,9 +162,31 @@ impl Check {
       .into_iter()
       .flat_map(|(id, errors)| errors.into_iter().map(move |e| (id, e)))
       .next();
+    for (&path, file) in ret.files.iter() {
+      for (&region, expect) in file.want.iter() {
+        if matches!(expect.kind, ExpectKind::Hover) {
+          let want = format!("```sml\n{}\n```\n", expect.msg);
+          let pos = analysis::Position {
+            line: region.line,
+            character: region.col_start,
+          };
+          let r = match an.get_md(path, pos) {
+            None => Reason::NoHover(path, region),
+            Some((got, _)) => {
+              if want == got {
+                continue;
+              } else {
+                Reason::Mismatched(path, region, want, got)
+              }
+            }
+          };
+          ret.reasons.push(r);
+        }
+      }
+    }
     let had_error = match err {
       Some((id, e)) => {
-        match ret.get_reason(id, e.range, e.message) {
+        match ret.get_err_reason(id, e.range, e.message) {
           Ok(()) => {}
           Err(r) => ret.reasons.push(r),
         }
@@ -166,13 +194,13 @@ impl Check {
       }
       None => false,
     };
-    if !had_error && want_len != 0 {
-      ret.reasons.push(Reason::NoErrorsEmitted(want_len));
+    if !had_error && want_err_len != 0 {
+      ret.reasons.push(Reason::NoErrorsEmitted(want_err_len));
     }
     ret
   }
 
-  fn get_reason(
+  fn get_err_reason(
     &mut self,
     id: paths::PathId,
     range: analysis::Range,
@@ -190,7 +218,10 @@ impl Check {
     };
     let want = match file.want.get(&region) {
       None => return Err(Reason::GotButNotWanted(id, region, got)),
-      Some(x) => x.to_owned(),
+      Some(exp) => match exp.kind {
+        ExpectKind::Error => exp.msg.to_owned(),
+        ExpectKind::Hover => return Err(Reason::GotButNotWanted(id, region, got)),
+      },
     };
     if want == got {
       Ok(())
@@ -225,6 +256,10 @@ impl fmt::Display for Check {
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
+        Reason::NoHover(path, r) => {
+          let path = self.root.get_path(*path).as_path().display();
+          writeln!(f, "{path}:{r}: wanted a hover, but got none")?;
+        }
       }
     }
     f.write_str("\n  want:")?;
@@ -233,8 +268,8 @@ impl fmt::Display for Check {
     } else {
       f.write_str("\n")?;
       for file in self.files.values() {
-        for (region, msg) in file.want.iter() {
-          writeln!(f, "  - {region}: {msg}")?;
+        for (region, expect) in file.want.iter() {
+          writeln!(f, "  - {region}: {expect}")?;
         }
       }
     }
@@ -249,7 +284,32 @@ enum Outcome {
 }
 
 struct CheckFile {
-  want: FxHashMap<Region, String>,
+  want: FxHashMap<Region, Expect>,
+}
+
+struct Expect {
+  msg: String,
+  kind: ExpectKind,
+}
+
+impl fmt::Display for Expect {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}: {}", self.kind, self.msg)
+  }
+}
+
+enum ExpectKind {
+  Error,
+  Hover,
+}
+
+impl fmt::Display for ExpectKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ExpectKind::Error => f.write_str("error"),
+      ExpectKind::Hover => f.write_str("hover"),
+    }
+  }
 }
 
 enum Reason {
@@ -258,6 +318,7 @@ enum Reason {
   NotOneLine(paths::PathId, analysis::Range),
   GotButNotWanted(paths::PathId, Region, String),
   Mismatched(paths::PathId, Region, String, String),
+  NoHover(paths::PathId, Region),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -300,7 +361,7 @@ const EXPECT_COMMENT_START: &str = "(**";
 /// if yes this returns Some((line, col_range, msg)), else returns None.
 ///
 /// note the arrows might be a little wonky with non-ascii.
-fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
+fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   let (before, inner) = line_s.split_once(EXPECT_COMMENT_START)?;
   let (inner, _) = inner.split_once("*)")?;
   let non_space_idx = inner.find(|c| c != ' ')?;
@@ -318,7 +379,18 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
     col_start: u32::try_from(start).ok()?,
     col_end: u32::try_from(end).ok()?,
   };
-  Some((region, msg.trim_end_matches(' ')))
+  let msg = msg.trim_end_matches(' ');
+  let expect = match msg.strip_prefix("hover: ") {
+    Some(msg) => Expect {
+      msg: msg.to_owned(),
+      kind: ExpectKind::Hover,
+    },
+    None => Expect {
+      msg: msg.to_owned(),
+      kind: ExpectKind::Error,
+    },
+  };
+  Some((region, expect))
 }
 
 fn env_var_eq_1(s: &str) -> bool {

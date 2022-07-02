@@ -14,6 +14,7 @@ mod error_reference;
 mod exn;
 mod fixity;
 mod functor;
+mod hover;
 mod incomplete;
 mod infix_without_op;
 mod literal;
