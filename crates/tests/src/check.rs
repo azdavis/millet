@@ -151,7 +151,8 @@ impl Check {
     if !matches!(want_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_len));
     }
-    let err = analysis::Analysis::new(std_basis)
+    let mut an = analysis::Analysis::new(std_basis);
+    let err = an
       .get_many(&input)
       .into_iter()
       .flat_map(|(id, errors)| errors.into_iter().map(move |e| (id, e)))
@@ -186,7 +187,7 @@ impl Check {
       let olr = line
         .ok()
         .zip(col_start.ok().zip(col_end.ok()))
-        .map(|(line, (start, end))| OneLineRegion {
+        .map(|(line, (start, end))| Region {
           line,
           col: start..end,
         });
@@ -262,7 +263,7 @@ enum Outcome {
 }
 
 struct CheckFile {
-  want: FxHashMap<OneLineRegion, String>,
+  want: FxHashMap<Region, String>,
 }
 
 enum Reason {
@@ -270,17 +271,17 @@ enum Reason {
   NoErrorsEmitted(usize),
   CannotGetRegion(paths::PathId, analysis::Range),
   NotOneLine(paths::PathId, analysis::Range),
-  GotButNotWanted(paths::PathId, OneLineRegion, String),
-  MismatchedErrors(paths::PathId, OneLineRegion, String, String),
+  GotButNotWanted(paths::PathId, Region, String),
+  MismatchedErrors(paths::PathId, Region, String, String),
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-struct OneLineRegion {
+struct Region {
   line: usize,
   col: Range<usize>,
 }
 
-impl fmt::Display for OneLineRegion {
+impl fmt::Display for Region {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     // don't add 1 for the line because the check strings usually have the first line blank.
     write!(
@@ -313,7 +314,7 @@ const EXPECT_COMMENT_START: &str = "(**";
 /// if yes this returns Some((line, col_range, msg)), else returns None.
 ///
 /// note the arrows might be a little wonky with non-ascii.
-fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(OneLineRegion, &str)> {
+fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, &str)> {
   let (before, inner) = line_s.split_once(EXPECT_COMMENT_START)?;
   let (inner, _) = inner.split_once("*)")?;
   let non_space_idx = inner.find(|c| c != ' ')?;
@@ -326,7 +327,7 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(OneLineRegion, &st
   };
   let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
   let end = start + col_range.len();
-  let region = OneLineRegion {
+  let region = Region {
     line,
     col: start..end,
   };
