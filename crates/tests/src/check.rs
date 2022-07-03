@@ -5,16 +5,18 @@ use once_cell::sync::Lazy;
 use paths::FileSystem as _;
 use std::fmt::{self, Write as _};
 
-/// given the string of an SML program with some expectation comments, panic iff the expectation
+/// Given the string of an SML program with some expectation comments, panics iff the expectation
 /// comments are not satisfied.
 ///
-/// expectation comments are regular SML comments except they:
+/// Expectation comments are regular SML comments except they:
+///
 /// - are always on only one line
 /// - start with `(**`
 /// - point at the things that should have errors with `^` or `v`
 /// - contain the expected error message for those things
 ///
-/// you might want to use raw string syntax (`r#"..."#`) to construct the string to pass.
+/// To construct the string to pass without worrying about Rust string escape sequences, use the raw
+/// string syntax: `r#"..."#`.
 ///
 /// ```ignore
 /// check(r#"
@@ -24,15 +26,15 @@ use std::fmt::{self, Write as _};
 /// "#);
 /// ```
 ///
-/// note that this also sets up logging.
+/// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
   go(&[s], StdBasis::Minimal, Outcome::Pass)
 }
 
-/// like [`check`], but the expectation comments should be not satisfied.
+/// Like [`check`], but the expectation comments should be not satisfied.
 ///
-/// for instance, the following program has an expectation comment that doesn't make sense, since
+/// For instance, the following program has an expectation comment that doesn't make sense, since
 /// `1 + 2` should typecheck. but since `fail` expects the the comments to be unsatisfied, the test
 /// passes.
 ///
@@ -43,34 +45,34 @@ pub(crate) fn check(s: &str) {
 /// "#);
 /// ```
 ///
-/// this is useful if support for something is not implemented, but planned for later:
+/// This is useful if support for something is not implemented, but planned for later:
 ///
-/// 1. make a test that should eventually pass, but use `fail`
-/// 2. later, implement the feature that test is testing
-/// 3. the test starts to actually pass, so `fail` fails
-/// 4. update the test to use `check` instead so it actually passes
+/// 1. Make a test that should eventually pass, but use `fail`.
+/// 2. Later, implement the feature that test is testing.
+/// 3. The test starts to actually pass, so `fail` fails.
+/// 4. Update the test to use `check` instead so it actually passes.
 ///
-/// use `fail` instead of ignoring tests.
+/// Use `fail` instead of ignoring tests.
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
   go(&[s], StdBasis::Minimal, Outcome::Fail)
 }
 
-/// like [`check`], but includes the full std basis.
+/// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
   go(&[s], StdBasis::Full, Outcome::Pass)
 }
 
-/// like [`check`], but checks multiple files in sequence.
+/// Like [`check`], but checks multiple files in sequence.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
   go(ss, StdBasis::Minimal, Outcome::Pass)
 }
 
+/// ignores the Err if we already initialized logging, since that's fine.
 fn go(ss: &[&str], std_basis: StdBasis, want: Outcome) {
-  // ignores the Err return if already initialized, since that's fine.
   let _ = simple_logger::init_with_level(log::Level::Info);
   if matches!(std_basis, StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
     return;
