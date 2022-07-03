@@ -448,3 +448,29 @@ fun f x =
 "#,
   );
 }
+
+#[test]
+fn rest_exhaustive() {
+  check(
+    r#"
+fun f x =
+  case x of
+    {a = 3, ...} => 1
+  | {b = 5, ...} => 2
+  | {a = _, b = _, c} => c
+"#,
+  );
+}
+
+#[test]
+fn rest_exhaustive_more_rows() {
+  check(
+    r#"
+fun f x =
+  case x of
+    {a = 3, ...} => 1
+  | {b = 5, ...} => 2
+  | {a = _, b = _, c, d = _, e = _} => c
+"#,
+  );
+}
