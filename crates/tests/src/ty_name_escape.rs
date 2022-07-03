@@ -92,3 +92,19 @@ val ex =
 "#,
   );
 }
+
+#[test]
+fn raise_datatype() {
+  check(
+    r#"
+val _ =
+  let
+    datatype d = D
+    exception E of d
+  in
+    (* cannot be specifically matched against *)
+    fn () => raise E D
+  end
+"#,
+  );
+}
