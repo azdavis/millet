@@ -2,8 +2,8 @@ import * as path from "path";
 import * as vscode from "vscode";
 import {
   LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
+  type LanguageClientOptions,
+  type ServerOptions,
 } from "vscode-languageclient/node";
 
 let client: LanguageClient | null = null;
