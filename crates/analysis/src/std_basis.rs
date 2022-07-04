@@ -26,11 +26,50 @@ impl StdBasis {
   }
 }
 
+const STREAM_IO_REGULAR: &str = "  structure StreamIO : STREAM_IO";
+const STREAM_IO_TEXT: &str = r#"  structure StreamIO : TEXT_STREAM_IO
+    where type reader = TextPrimIO.reader
+    where type writer = TextPrimIO.writer
+    where type pos = TextPrimIO.pos
+"#;
+const INCLUDE_IMPERATIVE_IO_HACK: &str = "  include IMPERATIVE_IO_HACK";
+
 fn get_full_std_basis() -> StdBasis {
   let mut statics = Statics::default();
+  let mut imperative_io_hack = None::<String>;
   let info: FxHashMap<_, _> = sml::FILES
     .iter()
-    .map(|&(name, contents)| {
+    .map(|&(name, mut contents)| {
+      if name == "imperative-io.sml" {
+        let mut lines: Vec<_> = contents
+          .lines()
+          .skip(5)
+          .map(|line| {
+            if line == STREAM_IO_REGULAR {
+              STREAM_IO_TEXT
+            } else {
+              line
+            }
+          })
+          .collect();
+        assert_eq!(lines.pop().unwrap(), "end");
+        imperative_io_hack = Some(lines.join("\n"));
+      }
+      let owned_contents: String;
+      if name == "text-io.sml" {
+        let lines: Vec<_> = contents
+          .lines()
+          .map(|line| {
+            if line == INCLUDE_IMPERATIVE_IO_HACK {
+              imperative_io_hack.as_deref().unwrap()
+            } else {
+              line
+            }
+          })
+          .collect();
+        owned_contents = lines.join("\n");
+        contents = &owned_contents;
+      }
       let lexed = lex::get(contents);
       if let Some(e) = lexed.errors.first() {
         panic!("lex error: {}", e.display());

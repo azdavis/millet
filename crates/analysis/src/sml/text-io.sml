@@ -14,14 +14,7 @@ matches TEXT_STREAM_IO) while avoiding a textual inclusion of the whole signatur
 except its StreamIO substructure.
 !*)
 signature TEXT_IO = sig
-  include IMPERATIVE_IO
-  (*
-  TODO this is duplicate with IMPERATIVE_IO. maybe allow dupes in std basis files?
-  structure StreamIO : TEXT_STREAM_IO
-    where type reader = TextPrimIO.reader
-    where type writer = TextPrimIO.writer
-    where type pos = TextPrimIO.pos
-  *)
+  include IMPERATIVE_IO_HACK
   (*!
   inputLine strm returns SOME(ln), where ln is the next line of input in the stream strm.
   Specifically, ln returns all characters from the current position up to and including the next
