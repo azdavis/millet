@@ -1,4 +1,4 @@
-use crate::check::check_with_std_basis;
+use crate::check::{check_with_std_basis, fail_with_std_basis};
 
 #[test]
 fn smoke() {
@@ -110,6 +110,15 @@ fn string() {
   check_with_std_basis(
     r#"
 val _ = "hello " ^ "world"
+"#,
+  );
+}
+
+#[test]
+fn text_io_stream_io_string() {
+  fail_with_std_basis(
+    r#"
+val () = TextIO.output (TextIO.stdErr, "oh no")
 "#,
   );
 }
