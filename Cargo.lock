@@ -75,6 +75,7 @@ dependencies = [
  "analysis",
  "anyhow",
  "paths",
+ "pico-args",
 ]
 
 [[package]]

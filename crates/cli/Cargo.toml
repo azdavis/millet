@@ -6,5 +6,6 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+pico-args = "0.5"
 analysis = { path = "../analysis"}
 paths = { path = "../paths"}
