@@ -65,6 +65,13 @@ pub(crate) fn check_with_std_basis(s: &str) {
   go(&[s], StdBasis::Full, Outcome::Pass)
 }
 
+/// Like [`fail`], but includes the full std basis.
+#[allow(dead_code)]
+#[track_caller]
+pub(crate) fn fail_with_std_basis(s: &str) {
+  go(&[s], StdBasis::Full, Outcome::Fail)
+}
+
 /// Like [`check`], but checks multiple files in sequence.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
