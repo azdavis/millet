@@ -159,6 +159,10 @@ A thin wrapper over `FxHash{Map, Set}` with some extra helper functions. These t
 
 A small utility crate for timing function calls.
 
+### `crates/config`
+
+The format for the optional Millet configuration file.
+
 ### `crates/analysis`
 
 Unifies all the passes into one single API.

@@ -62,6 +62,8 @@ impl std::error::Error for GetInputError {
       GetInputErrorKind::NotInRoot(e) => Some(e),
       GetInputErrorKind::MultipleRootGroups(_, _) => None,
       GetInputErrorKind::NoRootGroup => None,
+      GetInputErrorKind::CouldNotParseConfig(e) => Some(e),
+      GetInputErrorKind::InvalidConfigVersion(_) => None,
     }
   }
 }
@@ -76,6 +78,8 @@ enum GetInputErrorKind {
   NotInRoot(std::path::StripPrefixError),
   MultipleRootGroups(std::path::PathBuf, std::path::PathBuf),
   NoRootGroup,
+  CouldNotParseConfig(toml::de::Error),
+  InvalidConfigVersion(u16),
 }
 
 impl fmt::Display for GetInputErrorKind {
@@ -94,6 +98,10 @@ impl fmt::Display for GetInputErrorKind {
         b.display()
       ),
       GetInputErrorKind::NoRootGroup => f.write_str("no root group"),
+      GetInputErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
+      GetInputErrorKind::InvalidConfigVersion(n) => {
+        write!(f, "invalid config version: expected 1, found {n}")
+      }
     }
   }
 }
@@ -104,27 +112,59 @@ where
   F: paths::FileSystem,
 {
   let mut ret = Input::default();
-  let dir_entries = fs
-    .read_dir(root.as_path())
-    .map_err(|e| GetInputError::new(None, root.as_path(), GetInputErrorKind::ReadDir(e)))?;
   let mut root_group_path = None::<std::path::PathBuf>;
-  for entry in dir_entries {
-    if entry.extension().map_or(false, |x| x == "cm") {
-      match &root_group_path {
-        Some(x) => {
-          return Err(GetInputError {
-            kind: GetInputErrorKind::MultipleRootGroups(x.clone(), entry.clone()),
-            source: root_group_path,
-            path: entry,
-          })
+  let mut root_group_source = None::<std::path::PathBuf>;
+  let config_file_name = root.as_path().join(config::FILE_NAME);
+  if let Ok(contents) = fs.read_to_string(&config_file_name) {
+    let config: config::Root = match toml::from_str(&contents) {
+      Ok(x) => x,
+      Err(e) => {
+        return Err(GetInputError {
+          source: None,
+          path: config_file_name,
+          kind: GetInputErrorKind::CouldNotParseConfig(e),
+        })
+      }
+    };
+    if config.version != 1 {
+      return Err(GetInputError {
+        source: None,
+        path: config_file_name,
+        kind: GetInputErrorKind::InvalidConfigVersion(config.version),
+      });
+    }
+    if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
+      root_group_source = Some(config_file_name);
+      root_group_path = Some(root.as_path().join(path));
+    }
+  }
+  if root_group_path.is_none() {
+    let dir_entries = fs
+      .read_dir(root.as_path())
+      .map_err(|e| GetInputError::new(None, root.as_path(), GetInputErrorKind::ReadDir(e)))?;
+    for entry in dir_entries {
+      if entry.extension().map_or(false, |x| x == "cm") {
+        match &root_group_path {
+          Some(x) => {
+            return Err(GetInputError {
+              kind: GetInputErrorKind::MultipleRootGroups(x.clone(), entry.clone()),
+              source: root_group_path,
+              path: entry,
+            })
+          }
+          None => root_group_path = Some(entry),
         }
-        None => root_group_path = Some(entry),
       }
     }
   }
   let root_group_path = root_group_path
     .ok_or_else(|| GetInputError::new(None, root.as_path(), GetInputErrorKind::NoRootGroup))?;
-  let root_group_id = get_path_id(fs, root, None, root_group_path.as_path())?;
+  let root_group_id = get_path_id(
+    fs,
+    root,
+    root_group_source.as_deref(),
+    root_group_path.as_path(),
+  )?;
   let mut stack = vec![(root_group_id, root_group_id)];
   while let Some((containing_path_id, group_path_id)) = stack.pop() {
     let group_path = root.get_path(group_path_id).clone();

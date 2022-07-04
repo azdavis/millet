@@ -7,6 +7,7 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "cm",
+ "config",
  "elapsed",
  "fast-hash",
  "hir",
@@ -18,6 +19,7 @@ dependencies = [
  "statics",
  "syntax",
  "text-pos",
+ "toml",
  "topo-sort",
  "ty-var-scope",
 ]
@@ -93,6 +95,13 @@ dependencies = [
  "atty",
  "lazy_static",
  "winapi",
+]
+
+[[package]]
+name = "config"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -541,6 +550,7 @@ name = "tests"
 version = "0.1.0"
 dependencies = [
  "analysis",
+ "config",
  "fast-hash",
  "log",
  "once_cell",
@@ -601,6 +611,15 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 name = "token"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#8bc999385bb5842bd14a7ea89c0a0f186cc47b44"
+
+[[package]]
+name = "toml"
+version = "0.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d82e1a7758622a465f8cee077614c73484dac5b836c02ff6a40d5d1010324d7"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "topo-sort"

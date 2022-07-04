@@ -72,8 +72,10 @@ impl State {
       ret.show_error(format!("{e:#}"));
     }
     if let Some(root) = &ret.root {
+      // not sure if possible to only listen to millet.toml. "nested alternate groups are not
+      // allowed" at time of writing
       let glob_pattern = format!(
-        "{}/**/*.{{sml,sig,fun,cm,mlb}}",
+        "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
         root.path.as_path().display()
       );
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {

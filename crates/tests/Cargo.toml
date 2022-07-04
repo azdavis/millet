@@ -12,6 +12,7 @@ simple_logger = { version = "2", features = ["stderr"] }
 log = "0.4"
 once_cell = "1"
 pulldown-cmark = "0.9"
+config = { path = "../config" }
 analysis = { path = "../analysis" }
 fast-hash = { path = "../fast-hash" }
 syntax = { path = "../syntax" }

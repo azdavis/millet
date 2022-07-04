@@ -10,8 +10,10 @@ doctest = false
 
 [dependencies]
 log = "0.4"
+toml = "0.5"
 topo-sort =  { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
+config = { path = "../config" }
 lex = { path = "../lex" }
 parse = { path = "../parse" }
 lower = { path = "../lower" }
