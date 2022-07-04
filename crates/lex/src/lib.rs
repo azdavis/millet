@@ -372,7 +372,7 @@ fn alpha_num(b: u8) -> Option<AlphaNum> {
 }
 
 fn is_whitespace(b: u8) -> bool {
-  matches!(b, b' ' | b'\t' | b'\n' | 12)
+  b.is_ascii_whitespace() || b == 0xb
 }
 
 fn is_symbolic(b: u8) -> bool {

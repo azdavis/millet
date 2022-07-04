@@ -184,7 +184,7 @@ val _ =
   \ in the continuations."
 ```
 
-String literals permit the sequence `\...\`, where `...` represents 1 or more whitespace characters. Whitespace is space, tab, newline, and vertical tab. The sequence is ignored. We dub such sequences "string continuations", since they are often used to "continue" strings across lines.
+String literals permit the sequence `\...\`, where `...` represents 1 or more whitespace characters. The sequence is ignored. We dub such sequences "string continuations", since they are often used to "continue" strings across lines.
 
 ```sml
 (* ok *)
