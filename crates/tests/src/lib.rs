@@ -17,6 +17,7 @@ mod functor;
 mod hover;
 mod incomplete;
 mod infix_without_op;
+mod input;
 mod literal;
 mod local;
 mod matching;

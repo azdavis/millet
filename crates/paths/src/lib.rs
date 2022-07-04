@@ -85,6 +85,8 @@ pub trait FileSystem {
   fn read_to_string(&self, path: &Path) -> std::io::Result<String>;
   /// Canonicalize a path.
   fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf>;
+  /// Read the entries of a directory. The vec is in arbitrary order.
+  fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
 }
 
 /// The real file system. Does actual I/O.
@@ -98,6 +100,10 @@ impl FileSystem for RealFileSystem {
 
   fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
     Ok(CanonicalPathBuf(std::fs::canonicalize(path)?))
+  }
+
+  fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
+    std::fs::read_dir(path)?.map(|x| Ok(x?.path())).collect()
   }
 }
 
@@ -135,5 +141,15 @@ impl FileSystem for MemoryFileSystem {
     } else {
       Err(std::io::Error::from(std::io::ErrorKind::NotFound))
     }
+  }
+
+  fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
+    Ok(
+      self
+        .0
+        .keys()
+        .filter_map(|p| (p.starts_with(path) && p != path).then(|| p.to_owned()))
+        .collect(),
+    )
   }
 }

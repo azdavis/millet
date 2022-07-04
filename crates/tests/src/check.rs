@@ -105,7 +105,7 @@ static FULL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::full);
 /// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
 /// run?)
-static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
+pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
   paths::RealFileSystem::default()
     .canonicalize(std::path::Path::new("/"))
     .unwrap()
@@ -127,7 +127,7 @@ impl Check {
       let file_name = std::path::PathBuf::from(file_name);
       m.insert(ROOT.as_path().join(file_name), s.to_owned());
     }
-    m.insert(ROOT.as_path().join(analysis::ROOT_GROUP), cm_file);
+    m.insert(ROOT.as_path().join("sources.cm"), cm_file);
     let fs = paths::MemoryFileSystem::new(m);
     let mut root = paths::Root::new(ROOT.to_owned());
     let input = analysis::get_input(&fs, &mut root).expect("in memory fs was not set up correctly");

@@ -20,8 +20,8 @@ You can turn it off by setting `millet.useLanguageServer` to `false` in your VS 
 ## Usage
 
 1. Install the extension.
-2. Open VS Code to a folder containing a SML/NJ CM file called `sources.cm`.
-3. Ensure that `sources.cm` file lists all the SML/other CM files in the folder, in the order you wish for them to be analyzed. **If a file is not transitively reachable from the root `sources.cm`, it will not be analyzed.**
+2. Open VS Code to a folder containing a single SML/NJ CM file (with extension `.cm`).
+3. Ensure that CM file lists all the SML/other CM files in the folder, in the order you wish for them to be analyzed. **If a file is not transitively reachable from the root `sources.cm`, it will not be analyzed.**
 
 ### Example
 

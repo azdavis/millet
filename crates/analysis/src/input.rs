@@ -2,9 +2,6 @@ use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use std::fmt;
 
-/// The name of the root CM file we look for.
-pub const ROOT_GROUP: &str = "sources.cm";
-
 /// The input to analysis.
 #[derive(Debug, Default)]
 pub struct Input {
@@ -57,32 +54,46 @@ impl fmt::Display for GetInputError {
 impl std::error::Error for GetInputError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match &self.kind {
+      GetInputErrorKind::ReadDir(e) => Some(e),
       GetInputErrorKind::ReadFile(e) => Some(e),
       GetInputErrorKind::Cm(e) => Some(e),
       GetInputErrorKind::Canonicalize(e) => Some(e),
       GetInputErrorKind::NoParent => None,
       GetInputErrorKind::NotInRoot(e) => Some(e),
+      GetInputErrorKind::MultipleRootGroups(_, _) => None,
+      GetInputErrorKind::NoRootGroup => None,
     }
   }
 }
 
 #[derive(Debug)]
 enum GetInputErrorKind {
+  ReadDir(std::io::Error),
   ReadFile(std::io::Error),
   Cm(cm::Error),
   Canonicalize(std::io::Error),
   NoParent,
   NotInRoot(std::path::StripPrefixError),
+  MultipleRootGroups(std::path::PathBuf, std::path::PathBuf),
+  NoRootGroup,
 }
 
 impl fmt::Display for GetInputErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      GetInputErrorKind::ReadDir(e) => write!(f, "couldn't read directory: {e}"),
       GetInputErrorKind::ReadFile(e) => write!(f, "couldn't read file: {e}"),
       GetInputErrorKind::Cm(e) => write!(f, "couldn't process CM file: {e}"),
       GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize: {e}"),
       GetInputErrorKind::NoParent => f.write_str("no parent"),
       GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
+      GetInputErrorKind::MultipleRootGroups(a, b) => write!(
+        f,
+        "multiple root groups: {} and {}",
+        a.display(),
+        b.display()
+      ),
+      GetInputErrorKind::NoRootGroup => f.write_str("no root group"),
     }
   }
 }
@@ -93,7 +104,27 @@ where
   F: paths::FileSystem,
 {
   let mut ret = Input::default();
-  let root_group_id = get_path_id(fs, root, None, root.as_path().join(ROOT_GROUP).as_path())?;
+  let dir_entries = fs
+    .read_dir(root.as_path())
+    .map_err(|e| GetInputError::new(None, root.as_path(), GetInputErrorKind::ReadDir(e)))?;
+  let mut root_group_path = None::<std::path::PathBuf>;
+  for entry in dir_entries {
+    if entry.extension().map_or(false, |x| x == "cm") {
+      match &root_group_path {
+        Some(x) => {
+          return Err(GetInputError {
+            kind: GetInputErrorKind::MultipleRootGroups(x.clone(), entry.clone()),
+            source: root_group_path,
+            path: entry,
+          })
+        }
+        None => root_group_path = Some(entry),
+      }
+    }
+  }
+  let root_group_path = root_group_path
+    .ok_or_else(|| GetInputError::new(None, root.as_path(), GetInputErrorKind::NoRootGroup))?;
+  let root_group_id = get_path_id(fs, root, None, root_group_path.as_path())?;
   let mut stack = vec![(root_group_id, root_group_id)];
   while let Some((containing_path_id, group_path_id)) = stack.pop() {
     let group_path = root.get_path(group_path_id).clone();
