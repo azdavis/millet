@@ -121,8 +121,10 @@ impl Check {
     let mut cm_file = "Group is\n".to_owned();
     let mut m = FxHashMap::<std::path::PathBuf, String>::default();
     for (idx, &s) in ss.iter().enumerate() {
-      writeln!(cm_file, "  f{idx}.sml").unwrap();
-      m.insert(format!("/f{idx}.sml").into(), s.to_owned());
+      let file_name = format!("f{idx}.sml");
+      writeln!(cm_file, "  {file_name}").unwrap();
+      let file_name = std::path::PathBuf::from(file_name);
+      m.insert(ROOT.as_path().join(file_name), s.to_owned());
     }
     m.insert(ROOT.as_path().join(analysis::ROOT_GROUP), cm_file);
     let fs = paths::MemoryFileSystem::new(m);
