@@ -99,9 +99,9 @@ where
     let group_path = root.get_path(group_path_id).clone();
     let group_path = group_path.as_path();
     let containing_path = root.get_path(containing_path_id).as_path();
-    let s = read_file(fs, Some(containing_path), group_path)?;
-    let cm =
-      cm::get(&s).map_err(|e| GetInputError::new(None, group_path, GetInputErrorKind::Cm(e)))?;
+    let contents = read_file(fs, Some(containing_path), group_path)?;
+    let cm = cm::get(&contents)
+      .map_err(|e| GetInputError::new(None, group_path, GetInputErrorKind::Cm(e)))?;
     let group_parent = match group_path.parent() {
       Some(x) => x.to_owned(),
       None => {
@@ -116,9 +116,9 @@ where
     for path in cm.sml {
       let path = group_parent.join(path.as_path());
       let path_id = get_path_id(fs, root, Some(group_path), path.as_path())?;
-      let s = read_file(fs, Some(group_path), path.as_path())?;
+      let contents = read_file(fs, Some(group_path), path.as_path())?;
       source_files.push(path_id);
-      ret.sources.insert(path_id, s);
+      ret.sources.insert(path_id, contents);
     }
     let mut dependencies = FxHashSet::<paths::PathId>::default();
     for path in cm.cm {
