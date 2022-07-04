@@ -16,11 +16,10 @@ pub enum Error {
   EmptyExportList,
   Expected(Token<'static>),
   ExpectedString,
-  ExpectedClass,
   ExpectedDesc,
   UnsupportedAlias,
   UnsupportedClass(PathBuf, Class),
-  UnknownClass(PathBuf),
+  CouldNotDetermineClass(PathBuf),
 }
 
 impl fmt::Display for Error {
@@ -30,11 +29,10 @@ impl fmt::Display for Error {
       Error::EmptyExportList => f.write_str("invalid empty export list"),
       Error::Expected(tok) => write!(f, "expected `{tok}`"),
       Error::ExpectedString => f.write_str("expected a string"),
-      Error::ExpectedClass => f.write_str("expected a class"),
       Error::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
       Error::UnsupportedAlias => f.write_str("unsupported: `Alias`"),
       Error::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
-      Error::UnknownClass(p) => write!(f, "{}: couldn't determine class", p.display()),
+      Error::CouldNotDetermineClass(p) => write!(f, "{}: couldn't determine class", p.display()),
     }
   }
 }
@@ -142,62 +140,39 @@ impl Member {
   pub(crate) fn class(&self) -> Option<Class> {
     self
       .class
+      .clone()
       .or_else(|| Class::from_path(self.pathname.as_path()))
   }
 }
 
 /// A class of file that may appear in a CM file.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum Class {
   Sml,
-  CMFile,
-  SCGroup,
-  SCLibrary,
-  MLLex,
-  MLYacc,
-  MLBurg,
-  Rcs,
-  Noweb,
+  Cm,
+  Other(String),
 }
 
 impl Class {
   fn from_path(path: &Path) -> Option<Self> {
     let ret = match path.extension()?.to_str()? {
       "sig" | "sml" | "fun" => Self::Sml,
-      "grm" | "y" => Self::MLYacc,
-      "lex" | "l" => Self::MLLex,
-      "burg" => Self::MLBurg,
-      "cm" => Self::CMFile,
-      "sc" => Self::SCGroup,
-      "nw" => Self::Noweb,
-      _ => {
-        if path.as_os_str().to_str()?.ends_with(",v") {
-          Self::Rcs
-        } else {
-          return None;
-        }
-      }
+      "cm" => Self::Cm,
+      _ => return None,
     };
     Some(ret)
   }
 }
 
 impl FromStr for Class {
-  type Err = ();
+  type Err = std::convert::Infallible;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let ret = match s.to_ascii_lowercase().as_str() {
       "sml" => Self::Sml,
-      "cm" | "cmfile" => Self::CMFile,
-      "scgroup" => Self::SCGroup,
-      "sclibrary" => Self::SCLibrary,
-      "mllex" => Self::MLLex,
-      "mlyacc" => Self::MLYacc,
-      "mlburg" => Self::MLBurg,
-      "rcs" => Self::Rcs,
-      "noweb" => Self::Noweb,
-      _ => return Err(()),
+      "cm" | "cmfile" => Self::Cm,
+      s => Self::Other(s.to_owned()),
     };
     Ok(ret)
   }
@@ -206,15 +181,9 @@ impl FromStr for Class {
 impl fmt::Display for Class {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Class::Sml => f.write_str("SML"),
-      Class::CMFile => f.write_str("CM"),
-      Class::SCGroup => f.write_str("SC group"),
-      Class::SCLibrary => f.write_str("SC library"),
-      Class::MLLex => f.write_str("MLLex"),
-      Class::MLYacc => f.write_str("MLYacc"),
-      Class::MLBurg => f.write_str("MLBurg"),
-      Class::Rcs => f.write_str("RCS"),
-      Class::Noweb => f.write_str("noweb"),
+      Class::Sml => f.write_str("sml"),
+      Class::Cm => f.write_str("cm"),
+      Class::Other(s) => f.write_str(s),
     }
   }
 }

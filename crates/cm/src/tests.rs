@@ -1,4 +1,4 @@
-use crate::types::{Export, Name, Namespace};
+use crate::types::{Class, Error, Export, Name, Namespace};
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 
@@ -99,4 +99,13 @@ is
     &["Foo.sml"],
     &["Bar/sources.cm", "quz/baz.cm"],
   );
+}
+
+#[test]
+fn unknown_class() {
+  let s = match crate::get(r#"Group is foo.sml : succ-ml"#).unwrap_err() {
+    Error::UnsupportedClass(_, Class::Other(s)) => s,
+    _ => panic!(),
+  };
+  assert_eq!(s, "succ-ml");
 }

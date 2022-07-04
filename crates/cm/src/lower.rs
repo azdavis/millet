@@ -20,10 +20,10 @@ pub(crate) fn get(root: Root) -> Result<CMFile> {
         match member.class() {
           Some(c) => match c {
             Class::Sml => sml.push(member.pathname),
-            Class::CMFile => cm.push(member.pathname),
+            Class::Cm => cm.push(member.pathname),
             _ => return Err(Error::UnsupportedClass(member.pathname, c)),
           },
-          None => return Err(Error::UnknownClass(member.pathname)),
+          None => return Err(Error::CouldNotDetermineClass(member.pathname)),
         }
       }
       Ok(CMFile { exports, sml, cm })

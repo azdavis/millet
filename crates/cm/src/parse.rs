@@ -105,7 +105,7 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
         let s = p.string()?;
         let c = match s.parse::<Class>() {
           Ok(c) => c,
-          Err(()) => return Err(Error::ExpectedClass),
+          Err(e) => match e {},
         };
         p.bump();
         Some(c)
