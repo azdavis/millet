@@ -10,11 +10,11 @@ enum Cmd {
   Help,
   Ci,
   Dist,
-  PreTag,
+  Tag,
 }
 
 impl Cmd {
-  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::PreTag];
+  const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::Tag];
 
   fn name_desc(&self) -> (&'static str, &'static str) {
     match self {
@@ -24,7 +24,10 @@ impl Cmd {
         "dist",
         "make artifacts for distribution (can use --release)",
       ),
-      Cmd::PreTag => ("pre-tag", "update package files with a new version"),
+      Cmd::Tag => (
+        "tag",
+        "update package files with a new version, then commit a new tag",
+      ),
     }
   }
 }
@@ -201,6 +204,21 @@ fn dist(sh: &Shell, release: bool) -> Result<()> {
   Ok(())
 }
 
+fn run_ci(sh: &Shell) -> Result<()> {
+  cmd!(sh, "cargo build --locked").run()?;
+  cmd!(sh, "cargo fmt -- --check").run()?;
+  cmd!(sh, "cargo clippy").run()?;
+  cmd!(sh, "cargo test --locked").run()?;
+  ck_sml_def(sh)?;
+  ck_no_ignore(sh)?;
+  ck_sml(sh)?;
+  ck_crate_architecture_doc(sh)?;
+  if option_env!("CI") != Some("1") {
+    ck_changelog(sh)?;
+  }
+  Ok(())
+}
+
 fn main() -> Result<()> {
   let mut args = Arguments::from_env();
   let sh = Shell::new()?;
@@ -220,24 +238,14 @@ fn main() -> Result<()> {
     Cmd::Help => show_help(),
     Cmd::Ci => {
       finish_args(args)?;
-      cmd!(sh, "cargo build --locked").run()?;
-      cmd!(sh, "cargo fmt -- --check").run()?;
-      cmd!(sh, "cargo clippy").run()?;
-      cmd!(sh, "cargo test --locked").run()?;
-      ck_sml_def(&sh)?;
-      ck_no_ignore(&sh)?;
-      ck_sml(&sh)?;
-      ck_crate_architecture_doc(&sh)?;
-      if option_env!("CI") != Some("1") {
-        ck_changelog(&sh)?;
-      }
+      run_ci(&sh)?;
     }
     Cmd::Dist => {
       let release = args.contains("--release");
       finish_args(args)?;
       dist(&sh, release)?;
     }
-    Cmd::PreTag => {
+    Cmd::Tag => {
       let tag: String = args.free_from_str()?;
       finish_args(args)?;
       let version = match tag.strip_prefix('v') {
@@ -284,6 +292,10 @@ fn main() -> Result<()> {
         std::fs::write(path, out)?;
       }
       cmd!(sh, "git add {paths...}").run()?;
+      let msg = format!("Release {tag}");
+      cmd!(sh, "git commit -m {msg} --no-verify").run()?;
+      cmd!(sh, "git tag {tag}").run()?;
+      run_ci(&sh)?;
     }
   }
   Ok(())
