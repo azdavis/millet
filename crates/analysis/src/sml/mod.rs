@@ -73,6 +73,9 @@ pub(crate) const FILES: &[(&str, &str)] = files!(
   "unix-sock.sml",
   "unix.sml",
   "windows.sml",
+  "imperative-io-fn.sml",
+  "prim-io-fn.sml",
+  "stream-io-fn.sml",
   // non-standard
   "fn.sml",
   "random.sml",
