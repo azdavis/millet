@@ -102,6 +102,15 @@ impl FileSystem for RealFileSystem {
 }
 
 /// A 'file system' in memory.
+///
+/// Doesn't totally handle all `Path`s. For instance, it probably gives unexpected results for paths
+/// that:
+/// - Have trailing `/`
+/// - Have `.`
+/// - Have `..`
+/// - Do not start with `/`
+///
+/// But this is mainly intended for basic testing purposes, so it's fine.
 #[derive(Debug, Default)]
 pub struct MemoryFileSystem(FxHashMap<PathBuf, String>);
 
