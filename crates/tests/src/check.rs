@@ -102,8 +102,9 @@ impl StdBasis {
 static MINIMAL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::minimal);
 static FULL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::full);
 
-/// the real, canonical root FS path. performs IO on first access. but this shouldn't fail because
-/// `/` should be readable.
+/// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
+/// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
+/// run?)
 static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
   paths::RealFileSystem::default()
     .canonicalize(std::path::Path::new("/"))
@@ -345,10 +346,10 @@ impl fmt::Display for Region {
   }
 }
 
-/// see [`get_expect_comment`].
+/// See [`get_expect_comment`].
 const EXPECT_COMMENT_START: &str = "(**";
 
-/// parses expectation comments from a line of text. the line will be the following in order:
+/// Parses expectation comments from a line of text. The line will be the following in order:
 ///
 /// - zero or more of any character
 /// - the string EXPECT_COMMENT_START (the comment start)
@@ -362,9 +363,9 @@ const EXPECT_COMMENT_START: &str = "(**";
 /// - the string `*)` (the comment end)
 /// - zero or more of any character
 ///
-/// if yes this returns Some((line, col_range, msg)), else returns None.
+/// If so, this returns Some((line, col_range, msg)), else returns None.
 ///
-/// note the arrows might be a little wonky with non-ascii.
+/// Note the arrows might be a little wonky with non-ascii.
 fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   let (before, inner) = line_s.split_once(EXPECT_COMMENT_START)?;
   let (inner, _) = inner.split_once("*)")?;
