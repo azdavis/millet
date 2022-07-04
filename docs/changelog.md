@@ -2,6 +2,14 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.2.1
+
+- Mark `it` as a special name in the syntax highlighting.
+- Allow more whitespace, like carriage return.
+- Improve error for unknown file class in CM files.
+- Allow any single CM file to be the root CM file, not just `sources.cm`.
+- Allow a config file for setting the single root CM file if more than one CM file exists in the root.
+
 ## v0.2.0
 
 - First [publicly announced](https://azdavis.net/posts/millet/) release.
