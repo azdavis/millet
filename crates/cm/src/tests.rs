@@ -1,22 +1,38 @@
-use crate::types::{Class, Error, Export, Name, Namespace};
+use crate::types::{Export, Name, Namespace};
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 
-fn check(s: &str, want_exports: Vec<Export>, sml: &[&str], cm: &[&str]) {
+fn check(s: &str, want_exports: Vec<RawExport>, sml: &[&str], cm: &[&str]) {
   let file = crate::get(s).unwrap();
   let want_sml: Vec<_> = sml.iter().map(|&s| PathBuf::from_slash(s)).collect();
   let want_cm: Vec<_> = cm.iter().map(|&s| PathBuf::from_slash(s)).collect();
-  assert_eq!(want_exports, file.exports);
-  assert_eq!(want_sml, file.sml);
-  assert_eq!(want_cm, file.cm);
+  let got_exports: Vec<_> = file
+    .exports
+    .into_iter()
+    .map(|x| match x {
+      Export::Regular(ns, n) => RawExport::Regular(ns.val, n.val),
+      Export::Library(p) => RawExport::Library(p.val),
+    })
+    .collect();
+  let got_sml: Vec<_> = file.sml.into_iter().map(|x| x.val).collect();
+  let got_cm: Vec<_> = file.cm.into_iter().map(|x| x.val).collect();
+  assert_eq!(want_exports, got_exports);
+  assert_eq!(want_sml, got_sml);
+  assert_eq!(want_cm, got_cm);
 }
 
-fn mk_regular(ns: Namespace, name: &str) -> Export {
-  Export::Regular(ns, Name::new(name))
+#[derive(Debug, PartialEq, Eq)]
+enum RawExport {
+  Regular(Namespace, Name),
+  Library(PathBuf),
 }
 
-fn mk_library(name: &str) -> Export {
-  Export::Library(PathBuf::from_slash(name))
+fn mk_regular(ns: Namespace, name: &str) -> RawExport {
+  RawExport::Regular(ns, Name::new(name))
+}
+
+fn mk_library(name: &str) -> RawExport {
+  RawExport::Library(PathBuf::from_slash(name))
 }
 
 #[test]
@@ -103,9 +119,6 @@ is
 
 #[test]
 fn unknown_class() {
-  let s = match crate::get(r#"Group is foo.sml : succ-ml"#).unwrap_err() {
-    Error::UnsupportedClass(_, Class::Other(s)) => s,
-    _ => panic!(),
-  };
-  assert_eq!(s, "succ-ml");
+  let e = crate::get(r#"Group is foo.sml : succ-ml"#).unwrap_err();
+  assert!(e.to_string().contains("unsupported class: succ-ml"));
 }

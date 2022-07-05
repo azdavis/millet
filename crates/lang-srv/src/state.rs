@@ -295,8 +295,9 @@ impl State {
               self.send_diagnostics(
                 url,
                 vec![lsp_types::Diagnostic {
-                  severity: Some(lsp_types::DiagnosticSeverity::ERROR),
+                  range: e.range().map(lsp_range).unwrap_or_default(),
                   message: e.to_string(),
+                  severity: Some(lsp_types::DiagnosticSeverity::ERROR),
                   ..Default::default()
                 }],
               )

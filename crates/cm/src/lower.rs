@@ -1,16 +1,17 @@
-use crate::types::{CMFile, Class, Error, Result, Root};
+use crate::types::{CMFile, Class, Error, ErrorKind, Located, Result, Root};
 use std::path::PathBuf;
 
 pub(crate) fn get(root: Root) -> Result<CMFile> {
   match root {
-    Root::Alias(_) => Err(Error::UnsupportedAlias),
+    Root::Alias(path) => Err(Error::new(ErrorKind::UnsupportedAlias, path.range)),
     Root::Desc(_, exports, members) => {
-      let mut sml = Vec::<PathBuf>::new();
-      let mut cm = Vec::<PathBuf>::new();
+      let mut sml = Vec::<Located<PathBuf>>::new();
+      let mut cm = Vec::<Located<PathBuf>>::new();
       for member in members {
         // NOTE: just ignore dollar paths, since we include the full basis
         if member
           .pathname
+          .val
           .as_os_str()
           .to_string_lossy()
           .starts_with('$')
@@ -18,12 +19,22 @@ pub(crate) fn get(root: Root) -> Result<CMFile> {
           continue;
         }
         match member.class() {
-          Some(c) => match c {
+          Some(class) => match class.val {
             Class::Sml => sml.push(member.pathname),
             Class::Cm => cm.push(member.pathname),
-            _ => return Err(Error::UnsupportedClass(member.pathname, c)),
+            c => {
+              return Err(Error::new(
+                ErrorKind::UnsupportedClass(member.pathname.val, c),
+                class.range,
+              ))
+            }
           },
-          None => return Err(Error::CouldNotDetermineClass(member.pathname)),
+          None => {
+            return Err(Error::new(
+              ErrorKind::CouldNotDetermineClass(member.pathname.val),
+              member.pathname.range,
+            ))
+          }
         }
       }
       Ok(CMFile { exports, sml, cm })

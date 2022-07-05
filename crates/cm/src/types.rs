@@ -4,14 +4,28 @@ use smol_str::SmolStr;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use text_size::TextRange;
 
 /// std's Result with our Error.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-/// An error when processing a CM file.
+#[derive(Debug, Clone, Copy)]
+pub struct Located<T> {
+  pub val: T,
+  pub range: TextRange,
+}
+
+impl<T> Located<T> {
+  pub(crate) fn wrap<U>(&self, val: U) -> Located<U> {
+    Located {
+      val,
+      range: self.range,
+    }
+  }
+}
+
 #[derive(Debug)]
-#[allow(missing_docs)]
-pub enum Error {
+pub(crate) enum ErrorKind {
   UnclosedComment,
   EmptyExportList,
   Expected(Token<'static>),
@@ -22,17 +36,34 @@ pub enum Error {
   CouldNotDetermineClass(PathBuf),
 }
 
+/// An error when processing a CM file.
+#[derive(Debug)]
+pub struct Error(Located<ErrorKind>);
+
+impl Error {
+  /// Returns a text range for this error.
+  pub fn text_range(&self) -> TextRange {
+    self.0.range
+  }
+
+  pub(crate) fn new(kind: ErrorKind, range: TextRange) -> Self {
+    Self(Located { val: kind, range })
+  }
+}
+
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Error::UnclosedComment => f.write_str("unclosed block comment"),
-      Error::EmptyExportList => f.write_str("invalid empty export list"),
-      Error::Expected(tok) => write!(f, "expected `{tok}`"),
-      Error::ExpectedString => f.write_str("expected a string"),
-      Error::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
-      Error::UnsupportedAlias => f.write_str("unsupported: `Alias`"),
-      Error::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
-      Error::CouldNotDetermineClass(p) => write!(f, "{}: couldn't determine class", p.display()),
+    match &self.0.val {
+      ErrorKind::UnclosedComment => f.write_str("unclosed block comment"),
+      ErrorKind::EmptyExportList => f.write_str("invalid empty export list"),
+      ErrorKind::Expected(tok) => write!(f, "expected `{tok}`"),
+      ErrorKind::ExpectedString => f.write_str("expected a string"),
+      ErrorKind::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
+      ErrorKind::UnsupportedAlias => f.write_str("unsupported: `Alias`"),
+      ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
+      ErrorKind::CouldNotDetermineClass(p) => {
+        write!(f, "{}: couldn't determine class", p.display())
+      }
     }
   }
 }
@@ -82,9 +113,9 @@ pub struct CMFile {
   /// The exports.
   pub exports: Vec<Export>,
   /// The SML files, in order.
-  pub sml: Vec<std::path::PathBuf>,
+  pub sml: Vec<Located<std::path::PathBuf>>,
   /// The CM files, in order.
-  pub cm: Vec<std::path::PathBuf>,
+  pub cm: Vec<Located<std::path::PathBuf>>,
 }
 
 /// A name, like `S` in `structure S`.
@@ -103,7 +134,7 @@ impl Name {
 }
 
 pub(crate) enum Root {
-  Alias(PathBuf),
+  Alias(Located<PathBuf>),
   Desc(DescKind, Vec<Export>, Vec<Member>),
 }
 
@@ -113,12 +144,12 @@ pub(crate) enum DescKind {
 }
 
 /// An export, like `structure S`.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum Export {
   /// A 'regular' export.
-  Regular(Namespace, Name),
+  Regular(Located<Namespace>, Located<Name>),
   /// A re-export of another CM library.
-  Library(PathBuf),
+  Library(Located<PathBuf>),
 }
 
 /// A namespace, like `structure` in `structure S`.
@@ -132,16 +163,16 @@ pub enum Namespace {
 }
 
 pub(crate) struct Member {
-  pub(crate) pathname: PathBuf,
-  pub(crate) class: Option<Class>,
+  pub(crate) pathname: Located<PathBuf>,
+  pub(crate) class: Option<Located<Class>>,
 }
 
 impl Member {
-  pub(crate) fn class(&self) -> Option<Class> {
+  pub(crate) fn class(&self) -> Option<Located<Class>> {
     self
       .class
       .clone()
-      .or_else(|| Class::from_path(self.pathname.as_path()))
+      .or_else(|| Class::from_path(self.pathname.val.as_path()).map(|x| self.pathname.wrap(x)))
   }
 }
 

@@ -1,17 +1,23 @@
-use crate::types::{Error, Result, Token};
+use crate::types::{Error, ErrorKind, Located, Result, Token};
+use text_size::{TextRange, TextSize};
 
-pub(crate) fn get(s: &str) -> Result<Vec<Token<'_>>> {
+pub(crate) fn get(s: &str) -> Result<Vec<Located<Token<'_>>>> {
   let bs = s.as_bytes();
   let mut idx = 0usize;
-  let mut tokens = Vec::<Token<'_>>::new();
+  let mut tokens = Vec::<Located<Token<'_>>>::new();
   while let Some(&b) = bs.get(idx) {
     let old = idx;
-    if let Some(tok) = token(&mut idx, b, bs)? {
-      tokens.push(tok);
+    if let Some(val) = token(&mut idx, b, bs)? {
+      let range = TextRange::new(mk_text_size(old), mk_text_size(idx));
+      tokens.push(Located { val, range });
     }
     assert!(old < idx, "lexer failed to advance");
   }
   Ok(tokens)
+}
+
+fn mk_text_size(n: usize) -> TextSize {
+  TextSize::try_from(n).expect("could not make text size")
 }
 
 const PUNCTUATION: [(u8, Token<'_>); 3] = [
@@ -21,14 +27,15 @@ const PUNCTUATION: [(u8, Token<'_>); 3] = [
 ];
 
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
+  let old = *idx;
   match block_comment::get(idx, b, bs) {
     Ok(Some(block_comment::Consumed)) => return Ok(None),
     Ok(None) => {}
-    Err(u) => {
-      let kind = match u {
-        block_comment::UnclosedError => Error::UnclosedComment,
-      };
-      return Err(kind);
+    Err(block_comment::UnclosedError) => {
+      return Err(Error::new(
+        ErrorKind::UnclosedComment,
+        TextRange::new(mk_text_size(old), mk_text_size(*idx)),
+      ));
     }
   }
   if b == b';' {

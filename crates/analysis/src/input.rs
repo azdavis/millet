@@ -1,6 +1,7 @@
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use std::fmt;
+use text_pos::Range;
 
 /// The input to analysis.
 #[derive(Debug, Default)]
@@ -24,6 +25,7 @@ pub struct GetInputError {
   source: Option<std::path::PathBuf>,
   path: std::path::PathBuf,
   kind: GetInputErrorKind,
+  range: Option<Range>,
 }
 
 impl GetInputError {
@@ -36,12 +38,18 @@ impl GetInputError {
       source: source.map(ToOwned::to_owned),
       path: path.to_owned(),
       kind,
+      range: None,
     }
   }
 
   /// Returns a path associated with this error, which may or may not exist.
   pub fn path(&self) -> &std::path::Path {
     self.source.as_ref().unwrap_or(&self.path).as_path()
+  }
+
+  /// Returns a range for this error in `path`.
+  pub fn range(&self) -> Option<Range> {
+    self.range
   }
 }
 
@@ -123,6 +131,7 @@ where
           source: None,
           path: config_file_name,
           kind: GetInputErrorKind::CouldNotParseConfig(e),
+          range: None,
         })
       }
     };
@@ -131,6 +140,7 @@ where
         source: None,
         path: config_file_name,
         kind: GetInputErrorKind::InvalidConfigVersion(config.version),
+        range: None,
       });
     }
     if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
@@ -150,6 +160,7 @@ where
               kind: GetInputErrorKind::MultipleRootGroups(x.clone(), entry.clone()),
               source: root_group_path,
               path: entry,
+              range: None,
             })
           }
           None => root_group_path = Some(entry),
@@ -171,8 +182,13 @@ where
     let group_path = group_path.as_path();
     let containing_path = root.get_path(containing_path_id).as_path();
     let contents = read_file(fs, Some(containing_path), group_path)?;
-    let cm = cm::get(&contents)
-      .map_err(|e| GetInputError::new(None, group_path, GetInputErrorKind::Cm(e)))?;
+    let pos_db = text_pos::PositionDb::new(&contents);
+    let cm = cm::get(&contents).map_err(|e| GetInputError {
+      source: None,
+      path: group_path.to_owned(),
+      range: Some(pos_db.range(e.text_range())),
+      kind: GetInputErrorKind::Cm(e),
+    })?;
     let group_parent = match group_path.parent() {
       Some(x) => x.to_owned(),
       None => {
@@ -185,7 +201,7 @@ where
     };
     let mut source_files = Vec::<paths::PathId>::new();
     for path in cm.sml {
-      let path = group_parent.join(path.as_path());
+      let path = group_parent.join(path.val.as_path());
       let path_id = get_path_id(fs, root, Some(group_path), path.as_path())?;
       let contents = read_file(fs, Some(group_path), path.as_path())?;
       source_files.push(path_id);
@@ -193,7 +209,7 @@ where
     }
     let mut dependencies = FxHashSet::<paths::PathId>::default();
     for path in cm.cm {
-      let path = group_parent.join(path.as_path());
+      let path = group_parent.join(path.val.as_path());
       let path_id = get_path_id(fs, root, Some(group_path), path.as_path())?;
       stack.push((group_path_id, path_id));
       dependencies.insert(path_id);
