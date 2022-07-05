@@ -29,19 +29,6 @@ pub struct GetInputError {
 }
 
 impl GetInputError {
-  fn new(
-    source: Option<&std::path::Path>,
-    path: &std::path::Path,
-    kind: GetInputErrorKind,
-  ) -> Self {
-    Self {
-      source: source.map(ToOwned::to_owned),
-      path: path.to_owned(),
-      kind,
-      range: None,
-    }
-  }
-
   /// Returns a path associated with this error, which may or may not exist.
   pub fn path(&self) -> &std::path::Path {
     self.source.as_ref().unwrap_or(&self.path).as_path()
@@ -149,9 +136,12 @@ where
     }
   }
   if root_group_path.is_none() {
-    let dir_entries = fs
-      .read_dir(root.as_path())
-      .map_err(|e| GetInputError::new(None, root.as_path(), GetInputErrorKind::ReadDir(e)))?;
+    let dir_entries = fs.read_dir(root.as_path()).map_err(|e| GetInputError {
+      source: None,
+      range: None,
+      path: root.as_path().to_owned(),
+      kind: GetInputErrorKind::ReadDir(e),
+    })?;
     for entry in dir_entries {
       if entry.extension().map_or(false, |x| x == "cm") {
         match &root_group_path {
@@ -168,20 +158,31 @@ where
       }
     }
   }
-  let root_group_path = root_group_path
-    .ok_or_else(|| GetInputError::new(None, root.as_path(), GetInputErrorKind::NoRootGroup))?;
+  let root_group_path = root_group_path.ok_or_else(|| GetInputError {
+    source: None,
+    range: None,
+    path: root.as_path().to_owned(),
+    kind: GetInputErrorKind::NoRootGroup,
+  })?;
   let root_group_id = get_path_id(
     fs,
     root,
-    root_group_source.as_deref(),
+    match &root_group_source {
+      Some(p) => Source::Path(p.clone()),
+      None => Source::None,
+    },
     root_group_path.as_path(),
   )?;
-  let mut stack = vec![(root_group_id, root_group_id)];
-  while let Some((containing_path_id, group_path_id)) = stack.pop() {
+  let mut stack = vec![((root_group_id, None), root_group_id)];
+  while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
     let group_path = root.get_path(group_path_id).clone();
     let group_path = group_path.as_path();
-    let containing_path = root.get_path(containing_path_id).as_path();
-    let contents = read_file(fs, Some(containing_path), group_path)?;
+    let containing_path = root.get_path(containing_path_id).as_path().to_owned();
+    let source = match containing_path_range {
+      None => Source::Path(containing_path),
+      Some(r) => Source::PathAndRange(containing_path, r),
+    };
+    let contents = read_file(fs, source, group_path)?;
     let pos_db = text_pos::PositionDb::new(&contents);
     let cm = cm::get(&contents).map_err(|e| GetInputError {
       source: None,
@@ -192,26 +193,31 @@ where
     let group_parent = match group_path.parent() {
       Some(x) => x.to_owned(),
       None => {
-        return Err(GetInputError::new(
-          None,
-          group_path,
-          GetInputErrorKind::NoParent,
-        ))
+        return Err(GetInputError {
+          range: None,
+          source: None,
+          path: group_path.to_owned(),
+          kind: GetInputErrorKind::NoParent,
+        })
       }
     };
     let mut source_files = Vec::<paths::PathId>::new();
     for path in cm.sml {
+      let range = pos_db.range(path.range);
+      let source = Source::PathAndRange(group_path.to_owned(), range);
       let path = group_parent.join(path.val.as_path());
-      let path_id = get_path_id(fs, root, Some(group_path), path.as_path())?;
-      let contents = read_file(fs, Some(group_path), path.as_path())?;
+      let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
+      let contents = read_file(fs, source, path.as_path())?;
       source_files.push(path_id);
       ret.sources.insert(path_id, contents);
     }
     let mut dependencies = FxHashSet::<paths::PathId>::default();
     for path in cm.cm {
+      let range = pos_db.range(path.range);
+      let source = Source::PathAndRange(group_path.to_owned(), range);
       let path = group_parent.join(path.val.as_path());
-      let path_id = get_path_id(fs, root, Some(group_path), path.as_path())?;
-      stack.push((group_path_id, path_id));
+      let path_id = get_path_id(fs, root, source, path.as_path())?;
+      stack.push(((group_path_id, Some(range)), path_id));
       dependencies.insert(path_id);
     }
     let group = Group {
@@ -221,6 +227,23 @@ where
     ret.groups.insert(group_path_id, group);
   }
   Ok(ret)
+}
+
+#[derive(Debug, Clone)]
+enum Source {
+  None,
+  Path(std::path::PathBuf),
+  PathAndRange(std::path::PathBuf, Range),
+}
+
+impl Source {
+  fn into_parts(self) -> (Option<std::path::PathBuf>, Option<Range>) {
+    match self {
+      Source::None => (None, None),
+      Source::Path(p) => (Some(p), None),
+      Source::PathAndRange(p, r) => (Some(p), Some(r)),
+    }
+  }
 }
 
 /// A group of source files.
@@ -237,28 +260,36 @@ pub(crate) struct Group {
 fn get_path_id<F>(
   fs: &F,
   root: &mut paths::Root,
-  source: Option<&std::path::Path>,
+  source: Source,
   path: &std::path::Path,
 ) -> Result<paths::PathId, GetInputError>
 where
   F: paths::FileSystem,
 {
-  let canonical = fs
-    .canonicalize(path)
-    .map_err(|e| GetInputError::new(source, path, GetInputErrorKind::Canonicalize(e)))?;
-  root
-    .get_id(&canonical)
-    .map_err(|e| GetInputError::new(source, path, GetInputErrorKind::NotInRoot(e)))
+  let (source, range) = source.into_parts();
+  let canonical = fs.canonicalize(path).map_err(|e| GetInputError {
+    source: source.clone(),
+    range,
+    path: path.to_owned(),
+    kind: GetInputErrorKind::Canonicalize(e),
+  })?;
+  root.get_id(&canonical).map_err(|e| GetInputError {
+    source,
+    range,
+    path: path.to_owned(),
+    kind: GetInputErrorKind::NotInRoot(e),
+  })
 }
 
-fn read_file<F>(
-  fs: &F,
-  source: Option<&std::path::Path>,
-  path: &std::path::Path,
-) -> Result<String, GetInputError>
+fn read_file<F>(fs: &F, source: Source, path: &std::path::Path) -> Result<String, GetInputError>
 where
   F: paths::FileSystem,
 {
-  fs.read_to_string(path)
-    .map_err(|e| GetInputError::new(source, path, GetInputErrorKind::ReadFile(e)))
+  let (source, range) = source.into_parts();
+  fs.read_to_string(path).map_err(|e| GetInputError {
+    source,
+    range,
+    path: path.to_owned(),
+    kind: GetInputErrorKind::ReadFile(e),
+  })
 }
