@@ -38,6 +38,11 @@ impl GetInputError {
   pub fn range(&self) -> Option<Range> {
     self.range
   }
+
+  /// Returns a value that displays the error message without the path.
+  pub fn message(&self) -> impl fmt::Display + '_ {
+    &self.kind
+  }
 }
 
 impl fmt::Display for GetInputError {

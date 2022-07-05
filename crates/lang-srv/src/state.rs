@@ -296,7 +296,7 @@ impl State {
                 url,
                 vec![lsp_types::Diagnostic {
                   range: e.range().map(lsp_range).unwrap_or_default(),
-                  message: e.to_string(),
+                  message: e.message().to_string(),
                   severity: Some(lsp_types::DiagnosticSeverity::ERROR),
                   ..Default::default()
                 }],
