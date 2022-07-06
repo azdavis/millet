@@ -82,15 +82,15 @@ where
       }
       let lexed = lex::get(contents);
       if let Some(e) = lexed.errors.first() {
-        panic!("lex error: {}", e.display());
+        panic!("{name}: lex error: {}", e.display());
       }
       let parsed = parse::get(&lexed.tokens);
       if let Some(e) = parsed.errors.first() {
-        panic!("parse error: {}", e.display());
+        panic!("{name}: parse error: {}", e.display());
       }
       let mut lowered = lower::get(&parsed.root);
       if let Some(e) = lowered.errors.first() {
-        panic!("lower error: {}", e.display());
+        panic!("{name}: lower error: {}", e.display());
       }
       ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
       let comment_map: FxHashMap<hir::Idx, _> = lowered
@@ -110,7 +110,7 @@ where
       let mode = statics::Mode::StdBasis(name, comment_map);
       let (info, es) = statics::get(&mut statics, mode, &lowered.arenas, &lowered.top_decs);
       if let Some(e) = es.first() {
-        panic!("statics error: {}", e.display(statics.syms()));
+        panic!("{name}: statics error: {}", e.display(statics.syms()));
       }
       (name, info)
     })
