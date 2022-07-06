@@ -1,12 +1,4 @@
-macro_rules! files {
-  ( $( $x:literal , )* ) => {{
-    &[
-      $(
-        ($x, include_str!($x)),
-      )*
-    ]
-  }};
-}
+use crate::sml::files;
 
 pub(crate) const FILES: &[(&str, &str)] = files!(
   "general.sml",
