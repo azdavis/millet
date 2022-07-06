@@ -109,20 +109,17 @@ fn ck_no_ignore(sh: &Shell) -> Result<()> {
 
 fn ck_sml(sh: &Shell) -> Result<()> {
   println!("checking sml files");
-  let sml_dir = ["crates", "analysis", "src", "sml", "std_basis"];
-  let sml_mod: PathBuf = sml_dir
-    .iter()
-    .copied()
-    .chain(std::iter::once("mod.rs"))
+  let mut sml: PathBuf = ["crates", "analysis", "src", "sml", "std_basis", "mod.rs"]
+    .into_iter()
     .collect();
-  let order_file = sh.read_file(sml_mod)?;
+  let order_file = sh.read_file(&sml)?;
   let mut order: Vec<_> = order_file
     .lines()
     .filter_map(|x| x.strip_prefix("  \"")?.strip_suffix(".sml\","))
     .collect();
   order.sort_unstable();
-  let sml_dir: PathBuf = sml_dir.into_iter().collect();
-  let sml_dir = sh.read_dir(sml_dir)?;
+  assert!(sml.pop());
+  let sml_dir = sh.read_dir(&sml)?;
   let mut files: Vec<_> = sml_dir
     .iter()
     .filter_map(|x| {
