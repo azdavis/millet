@@ -1,4 +1,4 @@
-structure Random :> sig
+structure Random : sig
   type rand
   val rand : (int * int) -> rand
   val toString : rand -> string
