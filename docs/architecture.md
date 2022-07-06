@@ -138,6 +138,10 @@ NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), li
 
 Processes SML/NJ Compilation Manager (`.cm`) files.
 
+### `crates/ml-basis`
+
+Processes ML Basis (`.mlb`) files.
+
 ### `crates/block-comment`
 
 Handles `(* ... *)` style block comments with nesting. This is its own crate because both SML and SML/NJ CM files support this comment style.
