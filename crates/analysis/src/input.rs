@@ -1,6 +1,7 @@
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use std::fmt;
+use std::path::{Path, PathBuf};
 use text_pos::Range;
 
 /// The input to analysis.
@@ -22,15 +23,15 @@ impl Input {
 /// An error when getting input.
 #[derive(Debug)]
 pub struct GetInputError {
-  source: Option<std::path::PathBuf>,
-  path: std::path::PathBuf,
+  source: Option<PathBuf>,
+  path: PathBuf,
   kind: GetInputErrorKind,
   range: Option<Range>,
 }
 
 impl GetInputError {
   /// Returns a path associated with this error, which may or may not exist.
-  pub fn path(&self) -> &std::path::Path {
+  pub fn path(&self) -> &Path {
     self.source.as_ref().unwrap_or(&self.path).as_path()
   }
 
@@ -76,7 +77,7 @@ enum GetInputErrorKind {
   Canonicalize(std::io::Error),
   NoParent,
   NotInRoot(std::path::StripPrefixError),
-  MultipleRootGroups(std::path::PathBuf, std::path::PathBuf),
+  MultipleRootGroups(PathBuf, PathBuf),
   NoRootGroup,
   CouldNotParseConfig(toml::de::Error),
   InvalidConfigVersion(u16),
@@ -111,13 +112,13 @@ impl fmt::Display for GetInputErrorKind {
 pub fn get_input<F>(
   fs: &F,
   root: &mut paths::Root,
-  mut root_group_path: Option<std::path::PathBuf>,
+  mut root_group_path: Option<PathBuf>,
 ) -> Result<Input, GetInputError>
 where
   F: paths::FileSystem,
 {
   let mut ret = Input::default();
-  let mut root_group_source = None::<std::path::PathBuf>;
+  let mut root_group_source = None::<PathBuf>;
   let config_file_name = root.as_path().join(config::FILE_NAME);
   if let Ok(contents) = fs.read_to_string(&config_file_name) {
     let config: config::Root = match toml::from_str(&contents) {
@@ -241,12 +242,12 @@ where
 #[derive(Debug, Clone)]
 enum Source {
   None,
-  Path(std::path::PathBuf),
-  PathAndRange(std::path::PathBuf, Range),
+  Path(PathBuf),
+  PathAndRange(PathBuf, Range),
 }
 
 impl Source {
-  fn into_parts(self) -> (Option<std::path::PathBuf>, Option<Range>) {
+  fn into_parts(self) -> (Option<PathBuf>, Option<Range>) {
     match self {
       Source::None => (None, None),
       Source::Path(p) => (Some(p), None),
@@ -270,7 +271,7 @@ fn get_path_id<F>(
   fs: &F,
   root: &mut paths::Root,
   source: Source,
-  path: &std::path::Path,
+  path: &Path,
 ) -> Result<paths::PathId, GetInputError>
 where
   F: paths::FileSystem,
@@ -290,7 +291,7 @@ where
   })
 }
 
-fn read_file<F>(fs: &F, source: Source, path: &std::path::Path) -> Result<String, GetInputError>
+fn read_file<F>(fs: &F, source: Source, path: &Path) -> Result<String, GetInputError>
 where
   F: paths::FileSystem,
 {
