@@ -1,4 +1,3 @@
-(* https://www.smlnj.org/doc/smlnj-lib/Util/str-Random.html *)
 signature RANDOM = sig
   type rand
   val rand : (int * int) -> rand
