@@ -1,4 +1,4 @@
-*.tmp
+/*.tmp
 /crates/syntax/src/ast.rs
 /crates/syntax/src/kind.rs
 /crates/syntax/src/ptr.rs
