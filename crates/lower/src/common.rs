@@ -43,8 +43,7 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
       hir::SCon::Real(n)
     }
     ast::SConKind::WordLit => {
-      let chars = tok.text();
-      let (mul, mut chars) = start_int(chars);
+      let mut chars = tok.text().chars();
       // 0
       chars.next();
       // w
@@ -55,8 +54,8 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
       } else {
         10
       };
-      let n = match i32::from_str_radix(chars.as_str(), radix) {
-        Ok(x) => mul * x,
+      let n = match u32::from_str_radix(chars.as_str(), radix) {
+        Ok(x) => x,
         Err(e) => {
           cx.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
           0

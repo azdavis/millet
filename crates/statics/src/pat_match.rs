@@ -119,7 +119,7 @@ impl pattern_match::Lang for Lang {
 pub(crate) enum Con {
   Any,
   Int(i32),
-  Word(i32),
+  Word(u32),
   Char(char),
   String(hir::SmolStr),
   Record {

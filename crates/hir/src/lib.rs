@@ -298,7 +298,7 @@ impl Lab {
 pub enum SCon {
   Int(i32),
   Real(f64),
-  Word(i32),
+  Word(u32),
   Char(char),
   String(SmolStr),
 }
