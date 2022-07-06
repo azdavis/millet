@@ -136,7 +136,7 @@ NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), li
 
 ### `crates/cm`
 
-Rudimentary handling (lex, parse, lower) of SML/NJ Compilation Manager (CM) files.
+Processes SML/NJ Compilation Manager (`.cm`) files.
 
 ### `crates/block-comment`
 

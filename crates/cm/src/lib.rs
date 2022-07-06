@@ -1,6 +1,9 @@
-//! Handle a CM file.
+//! Process SML/NJ Compilation Manager files.
 //!
-//! From skimming [the old spec](https://www.smlnj.org/doc/CM/Old/index.html).
+//! Note that **many** features are not supported.
+//!
+//! - [The old spec](https://www.smlnj.org/doc/CM/Old/index.html)
+//! - [The new spec](https://www.smlnj.org/doc/CM/new.pdf)
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
