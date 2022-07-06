@@ -477,12 +477,24 @@ functor F (
 }
 
 #[test]
-#[should_panic]
-fn sig_ty_eq_poly_undef() {
+fn sig_ty_eq_undef() {
   check(
     r#"
 signature S = sig
-  type 'a t = 'a bad
+  type 'a t = 'a uh
+(**           ^^^^^ undefined type: uh *)
+end"#,
+  );
+}
+
+#[test]
+fn sig_ty_eq_wrong_num_ty_args() {
+  check(
+    r#"
+signature S = sig
+  datatype uh = Uh
+  type 'a t = 'a uh
+(**           ^^^^^ expected 0 type arguments, found 1 *)
 end"#,
   );
 }

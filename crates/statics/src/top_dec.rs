@@ -736,10 +736,12 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
         ty_realize(subst, ty);
       }
       if let Some(ty_scheme) = subst.get(sym) {
-        assert_eq!(ty_scheme.bound_vars.len(), args.len());
-        let mut ty_scheme_ty = ty_scheme.ty.clone();
-        apply_bv(args, &mut ty_scheme_ty);
-        *ty = ty_scheme_ty;
+        // if this `if` does not hold, the sml is malformed, so let's just not proceed further.
+        if ty_scheme.bound_vars.len() == args.len() {
+          let mut ty_scheme_ty = ty_scheme.ty.clone();
+          apply_bv(args, &mut ty_scheme_ty);
+          *ty = ty_scheme_ty;
+        }
       }
     }
     Ty::Fn(param, res) => {
