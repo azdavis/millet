@@ -1,4 +1,4 @@
-signature RANDOM = sig
+structure Random :> sig
   type rand
   val rand : (int * int) -> rand
   val toString : rand -> string
@@ -7,6 +7,4 @@ signature RANDOM = sig
   val randNat : rand -> int
   val randReal : rand -> real
   val randRange : (int * int) -> rand -> int
-end
-
-structure Random :> RANDOM = struct end
+end = struct end
