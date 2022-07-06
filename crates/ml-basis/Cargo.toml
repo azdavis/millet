@@ -10,5 +10,5 @@ doctest = false
 [dependencies]
 smol_str = "0.1"
 path-slash = "0.1"
-text-size = "1"
 util = { path = "../util" }
+located = { path = "../located" }

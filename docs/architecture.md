@@ -147,6 +147,11 @@ Processes ML Basis (`.mlb`) files.
 Some common utilities used in multiple crates, like:
 
 - Handling `(* ... *)` style block comments with nesting.
+- Handling whitespace.
+
+### `crates/located`
+
+A wrapper around the `text-size` crate to add some helpers, primarily `Located`, a pair of a value and a text range.
 
 ### `crates/paths`
 

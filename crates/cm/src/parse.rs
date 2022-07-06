@@ -1,6 +1,7 @@
 use crate::types::{
-  Class, DescKind, Error, ErrorKind, Export, Located, Member, Name, Namespace, Result, Root, Token,
+  Class, DescKind, Error, ErrorKind, Export, Member, Name, Namespace, Result, Root, Token,
 };
+use located::Located;
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 use text_size::TextRange;

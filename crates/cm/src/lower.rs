@@ -1,4 +1,5 @@
-use crate::types::{CMFile, Class, Error, ErrorKind, Located, Result, Root};
+use crate::types::{CMFile, Class, Error, ErrorKind, Result, Root};
+use located::Located;
 use std::path::PathBuf;
 
 pub(crate) fn get(root: Root) -> Result<CMFile> {

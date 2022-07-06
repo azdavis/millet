@@ -1,5 +1,5 @@
-use crate::types::{Error, ErrorKind, Located, Result, Token};
-use text_size::{TextRange, TextSize};
+use crate::types::{Error, ErrorKind, Result, Token};
+use located::{mk_text_size, Located, TextRange};
 use util::{advance_while, block_comment, is_whitespace};
 
 pub(crate) fn get(s: &str) -> Result<Vec<Located<Token<'_>>>> {
@@ -15,10 +15,6 @@ pub(crate) fn get(s: &str) -> Result<Vec<Located<Token<'_>>>> {
     assert!(old < idx, "lexer failed to advance");
   }
   Ok(tokens)
-}
-
-fn mk_text_size(n: usize) -> TextSize {
-  TextSize::try_from(n).expect("could not make text size")
 }
 
 const PUNCTUATION: [(u8, Token<'_>); 2] = [(b';', Token::Semicolon), (b'=', Token::Eq)];

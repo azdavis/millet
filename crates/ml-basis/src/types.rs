@@ -1,25 +1,10 @@
+use located::{Located, TextRange};
 use smol_str::SmolStr;
 use std::fmt;
 use std::path::PathBuf;
-use text_size::TextRange;
 
 /// std's Result with our Error.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-
-#[derive(Debug, Clone, Copy)]
-pub struct Located<T> {
-  pub val: T,
-  pub range: TextRange,
-}
-
-impl<T> Located<T> {
-  pub(crate) fn wrap<U>(&self, val: U) -> Located<U> {
-    Located {
-      val,
-      range: self.range,
-    }
-  }
-}
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {

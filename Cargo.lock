@@ -78,6 +78,7 @@ dependencies = [
 name = "cm"
 version = "0.1.0"
 dependencies = [
+ "located",
  "path-slash",
  "smol_str",
  "text-size",
@@ -257,6 +258,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 
 [[package]]
+name = "located"
+version = "0.1.0"
+dependencies = [
+ "text-size",
+]
+
+[[package]]
 name = "log"
 version = "0.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -324,9 +332,9 @@ dependencies = [
 name = "ml-basis"
 version = "0.1.0"
 dependencies = [
+ "located",
  "path-slash",
  "smol_str",
- "text-size",
  "util",
 ]
 

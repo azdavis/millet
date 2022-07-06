@@ -1,7 +1,7 @@
-use crate::types::{BasDec, BasExp, Error, ErrorKind, Located, Name, NamesSeq, Result, Token};
+use crate::types::{BasDec, BasExp, Error, ErrorKind, Name, NamesSeq, Result, Token};
+use located::{Located, TextRange};
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
-use text_size::TextRange;
 
 pub(crate) fn get(tokens: &[Located<Token<'_>>]) -> Result<BasDec> {
   let mut p = Parser {
