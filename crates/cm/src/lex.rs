@@ -1,6 +1,6 @@
 use crate::types::{Error, ErrorKind, Located, Result, Token};
 use text_size::{TextRange, TextSize};
-use util::block_comment;
+use util::{advance_while, block_comment, is_whitespace};
 
 pub(crate) fn get(s: &str) -> Result<Vec<Located<Token<'_>>>> {
   let bs = s.as_bytes();
@@ -76,21 +76,4 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     s => Token::String(s),
   };
   Ok(Some(ret))
-}
-
-fn is_whitespace(b: u8) -> bool {
-  matches!(b, b' ' | b'\t' | b'\n' | 12)
-}
-
-fn advance_while<P>(idx: &mut usize, bs: &[u8], p: P)
-where
-  P: Fn(u8) -> bool,
-{
-  while let Some(&b) = bs.get(*idx) {
-    if p(b) {
-      *idx += 1;
-    } else {
-      break;
-    }
-  }
 }

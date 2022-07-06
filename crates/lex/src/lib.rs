@@ -7,7 +7,7 @@
 use std::fmt;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::{token::Token, SyntaxKind as SK};
-use util::block_comment;
+use util::{advance_while, block_comment, is_whitespace};
 
 /// A lexed input.
 #[derive(Debug)]
@@ -129,14 +129,14 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   // whitespace
   if is_whitespace(b) {
     cx.i += 1;
-    advance_while(cx, bs, is_whitespace);
+    advance_while(&mut cx.i, bs, is_whitespace);
     return SK::Whitespace;
   }
   // alphanumeric identifiers (include type variables) and keywords
   match alpha_num(b) {
     Some(AlphaNum::Prime) => {
       cx.i += 1;
-      advance_while(cx, bs, |b| alpha_num(b).is_some());
+      advance_while(&mut cx.i, bs, |b| alpha_num(b).is_some());
       if start + 1 == cx.i {
         err(cx, start, ErrorKind::IncompleteTyVar);
       }
@@ -144,7 +144,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     }
     Some(AlphaNum::Alpha) => {
       cx.i += 1;
-      advance_while(cx, bs, |b| alpha_num(b).is_some());
+      advance_while(&mut cx.i, bs, |b| alpha_num(b).is_some());
       return SK::keyword(&bs[start..cx.i]).unwrap_or(SK::Name);
     }
     Some(AlphaNum::NumOrUnderscore) | None => {}
@@ -173,7 +173,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
             _ => u8::is_ascii_digit,
           };
           let s = cx.i;
-          advance_while(cx, bs, |b| valid_digit(&b));
+          advance_while(&mut cx.i, bs, |b| valid_digit(&b));
           if s == cx.i {
             err(cx, start, ErrorKind::MissingDigitsInNumLit)
           }
@@ -186,7 +186,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         Some(&b'x') => {
           cx.i += 1;
           let s = cx.i;
-          advance_while(cx, bs, |b| b.is_ascii_hexdigit());
+          advance_while(&mut cx.i, bs, |b| b.is_ascii_hexdigit());
           if s == cx.i {
             err(cx, start, ErrorKind::MissingDigitsInNumLit)
           }
@@ -196,13 +196,13 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         Some(_) => {}
       }
     }
-    advance_while(cx, bs, |b| b.is_ascii_digit());
+    advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
     let mut kind = SK::IntLit;
     if let Some(&b'.') = bs.get(cx.i) {
       kind = SK::RealLit;
       cx.i += 1;
       let s = cx.i;
-      advance_while(cx, bs, |b| b.is_ascii_digit());
+      advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
       if s == cx.i {
         err(cx, start, ErrorKind::MissingDigitsInNumLit)
       }
@@ -214,7 +214,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         cx.i += 1
       }
       let s = cx.i;
-      advance_while(cx, bs, |b| b.is_ascii_digit());
+      advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
       if s == cx.i {
         err(cx, start, ErrorKind::MissingDigitsInNumLit)
       }
@@ -238,7 +238,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   // symbolic identifiers. must come before punctuation...
   if is_symbolic(b) {
     cx.i += 1;
-    advance_while(cx, bs, is_symbolic);
+    advance_while(&mut cx.i, bs, is_symbolic);
     let got = &bs[start..cx.i];
     // ...but we must check if the 'symbolic identifier' was actually a punctuation token. NOTE: this
     // could be a bit quicker if we divide the punctuation tokens into those that 'look like'
@@ -340,19 +340,6 @@ fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
   Some(())
 }
 
-fn advance_while<P>(cx: &mut Cx, bs: &[u8], p: P)
-where
-  P: Fn(u8) -> bool,
-{
-  while let Some(&b) = bs.get(cx.i) {
-    if p(b) {
-      cx.i += 1;
-    } else {
-      break;
-    }
-  }
-}
-
 enum AlphaNum {
   Prime,
   Alpha,
@@ -369,10 +356,6 @@ fn alpha_num(b: u8) -> Option<AlphaNum> {
   } else {
     None
   }
-}
-
-fn is_whitespace(b: u8) -> bool {
-  b.is_ascii_whitespace() || b == 0xb
 }
 
 fn is_symbolic(b: u8) -> bool {
