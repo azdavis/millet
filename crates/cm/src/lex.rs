@@ -69,11 +69,10 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     "signature" => Token::Signature,
     "functor" => Token::Functor,
     "funsig" => Token::FunSig,
-    "Group" => Token::Group,
-    "Library" => Token::LibraryUpper,
-    "library" => Token::LibraryLower,
-    "Alias" => Token::Alias,
-    "is" => Token::Is,
+    "Group" | "group" => Token::Group,
+    "Library" | "library" => Token::Library,
+    "Alias" | "alias" => Token::Alias,
+    "Is" | "is" => Token::Is,
     s => Token::String(s),
   };
   Ok(Some(ret))

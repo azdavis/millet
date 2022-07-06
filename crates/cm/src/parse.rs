@@ -75,7 +75,7 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
       let ms = members_tail(p)?;
       Root::Desc(DescKind::Group, es, ms)
     }
-    Some(Token::LibraryUpper) => {
+    Some(Token::Library) => {
       p.bump();
       let es = exports(p)?;
       let ms = members_tail(p)?;
@@ -102,7 +102,7 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
       Token::Signature => Namespace::Signature,
       Token::Functor => Namespace::Functor,
       Token::FunSig => Namespace::FunSig,
-      Token::LibraryLower => {
+      Token::Library => {
         p.bump();
         p.eat(Token::LRound)?;
         let s = p.string()?;
