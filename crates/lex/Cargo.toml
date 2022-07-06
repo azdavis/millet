@@ -9,5 +9,5 @@ doctest = false
 test = false
 
 [dependencies]
-block-comment = { path = "../block-comment" }
+util = { path = "../util" }
 syntax = { path = "../syntax" }

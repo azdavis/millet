@@ -1,9 +1,5 @@
 //! Nested block comments delimited with `(*` and `*)`.
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
-
 /// A marker signifying a block comment was consumed.
 #[derive(Debug)]
 pub struct Consumed;

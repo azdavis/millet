@@ -4,10 +4,10 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use block_comment::{self, Consumed, UnclosedError};
 use std::fmt;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::{token::Token, SyntaxKind as SK};
+use util::block_comment;
 
 /// A lexed input.
 #[derive(Debug)]
@@ -120,8 +120,8 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   // block comments
   match block_comment::get(&mut cx.i, b, bs) {
     Ok(None) => {}
-    Ok(Some(Consumed)) => return SK::BlockComment,
-    Err(UnclosedError) => {
+    Ok(Some(block_comment::Consumed)) => return SK::BlockComment,
+    Err(block_comment::UnclosedError) => {
       err(cx, start, ErrorKind::UnclosedComment);
       return SK::BlockComment;
     }

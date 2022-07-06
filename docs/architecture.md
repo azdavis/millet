@@ -142,9 +142,11 @@ Processes SML/NJ Compilation Manager (`.cm`) files.
 
 Processes ML Basis (`.mlb`) files.
 
-### `crates/block-comment`
+### `crates/util`
 
-Handles `(* ... *)` style block comments with nesting. This is its own crate because both SML and SML/NJ CM files support this comment style.
+Some common utilities used in multiple crates, like:
+
+- Handling `(* ... *)` style block comments with nesting.
 
 ### `crates/paths`
 

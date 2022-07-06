@@ -1,5 +1,6 @@
 use crate::types::{Error, ErrorKind, Located, Result, Token};
 use text_size::{TextRange, TextSize};
+use util::block_comment;
 
 pub(crate) fn get(s: &str) -> Result<Vec<Located<Token<'_>>>> {
   let bs = s.as_bytes();
