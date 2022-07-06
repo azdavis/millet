@@ -475,3 +475,14 @@ functor F (
 "#,
   );
 }
+
+#[test]
+#[should_panic]
+fn sig_ty_eq_poly_undef() {
+  check(
+    r#"
+signature S = sig
+  type 'a t = 'a bad
+end"#,
+  );
+}
