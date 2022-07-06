@@ -107,20 +107,33 @@ fn ck_no_ignore(sh: &Shell) -> Result<()> {
   }
 }
 
+fn eq_sets<T>(lhs: &BTreeSet<T>, rhs: &BTreeSet<T>, only_lhs: &str, only_rhs: &str) -> Result<()>
+where
+  T: Ord + std::fmt::Debug,
+{
+  let only_lhs_set: Vec<_> = lhs.difference(rhs).collect();
+  if !only_lhs_set.is_empty() {
+    bail!("{only_lhs}: {only_lhs_set:?}");
+  }
+  let only_rhs_set: Vec<_> = rhs.difference(lhs).collect();
+  if !only_rhs_set.is_empty() {
+    bail!("{only_rhs}: {only_rhs_set:?}");
+  }
+  Ok(())
+}
 fn ck_sml(sh: &Shell) -> Result<()> {
   println!("checking sml files");
   let mut sml: PathBuf = ["crates", "analysis", "src", "sml", "std_basis", "mod.rs"]
     .into_iter()
     .collect();
   let order_file = sh.read_file(&sml)?;
-  let mut order: Vec<_> = order_file
+  let in_order: BTreeSet<_> = order_file
     .lines()
     .filter_map(|x| x.strip_prefix("  \"")?.strip_suffix(".sml\","))
     .collect();
-  order.sort_unstable();
   assert!(sml.pop());
   let sml_dir = sh.read_dir(&sml)?;
-  let mut files: Vec<_> = sml_dir
+  let in_files: BTreeSet<_> = sml_dir
     .iter()
     .filter_map(|x| {
       if x.extension()? == "sml" {
@@ -130,10 +143,12 @@ fn ck_sml(sh: &Shell) -> Result<()> {
       }
     })
     .collect();
-  files.sort_unstable();
-  if files != order {
-    bail!("bad order of sml files:\n  expected {files:?}\n     found {order:?}")
-  }
+  eq_sets(
+    &in_order,
+    &in_files,
+    "referenced files that don't exist",
+    "existing files not referenced",
+  )?;
   Ok(())
 }
 
@@ -141,35 +156,41 @@ fn ck_crate_architecture_doc(sh: &Shell) -> Result<()> {
   println!("checking for crate architecture doc");
   let path = sh.current_dir().join("docs").join("architecture.md");
   let contents = sh.read_file(path)?;
-  let mut in_doc: Vec<_> = contents
+  let in_doc: BTreeSet<_> = contents
     .lines()
     .filter_map(|line| line.strip_prefix("### `crates/")?.strip_suffix('`'))
+    .map(ToOwned::to_owned)
     .collect();
-  in_doc.sort_unstable();
-  let in_crates: Vec<_> = sh
+  let in_crates: BTreeSet<_> = sh
     .read_dir("crates")?
     .into_iter()
     .filter_map(|x| Some(x.file_name()?.to_str()?.to_owned()))
     .collect();
-  if in_crates == in_doc {
-    Ok(())
-  } else {
-    bail!("not all crates are documented:\n  expected {in_crates:?}\n     found {in_doc:?}");
-  }
+  eq_sets(
+    &in_doc,
+    &in_crates,
+    "documented crates that don't exist",
+    "crates without documentation",
+  )?;
+  Ok(())
 }
 
 fn ck_changelog(sh: &Shell) -> Result<()> {
   println!("checking for changelog entries");
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output()?.stdout)?;
-  let tags: Vec<_> = tag_out.lines().collect();
+  let tags: BTreeSet<_> = tag_out.lines().collect();
   let path = sh.current_dir().join("docs").join("changelog.md");
   let contents = sh.read_file(path)?;
-  let mut entries: Vec<_> = contents
+  let entries: BTreeSet<_> = contents
     .lines()
     .filter_map(|line| line.strip_prefix("## "))
     .collect();
-  entries.sort_unstable();
-  assert_eq!(tags, entries);
+  eq_sets(
+    &tags,
+    &entries,
+    "tags that have no changelog entry",
+    "changelog entries without a tag",
+  )?;
   Ok(())
 }
 
