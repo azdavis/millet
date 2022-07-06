@@ -323,6 +323,12 @@ dependencies = [
 [[package]]
 name = "ml-basis"
 version = "0.1.0"
+dependencies = [
+ "path-slash",
+ "smol_str",
+ "text-size",
+ "util",
+]
 
 [[package]]
 name = "num_threads"
