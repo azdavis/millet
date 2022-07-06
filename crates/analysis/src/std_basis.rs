@@ -22,7 +22,15 @@ impl StdBasis {
 
   /// The full standard basis, as documented in the public SML basis library docs.
   pub fn full() -> Self {
-    elapsed::log("get_full_std_basis", get_full_std_basis)
+    elapsed::log("StdBasis::full", || {
+      get_std_basis(
+        std::iter::empty()
+          .chain(sml::std_basis::FILES)
+          .chain(sml::std_basis_extra::FILES)
+          .chain(sml::sml_nj::FILES)
+          .copied(),
+      )
+    })
   }
 }
 
@@ -34,12 +42,14 @@ const STREAM_IO_TEXT: &str = r#"  structure StreamIO : TEXT_STREAM_IO
 "#;
 const INCLUDE_IMPERATIVE_IO_HACK: &str = "  include IMPERATIVE_IO_HACK";
 
-fn get_full_std_basis() -> StdBasis {
+fn get_std_basis<I>(files: I) -> StdBasis
+where
+  I: Iterator<Item = (&'static str, &'static str)>,
+{
   let mut statics = Statics::default();
   let mut imperative_io_hack = None::<String>;
-  let info: FxHashMap<_, _> = sml::std_basis::FILES
-    .iter()
-    .map(|&(name, mut contents)| {
+  let info: FxHashMap<_, _> = files
+    .map(|(name, mut contents)| {
       if name == "imperative-io.sml" {
         let mut lines: Vec<_> = contents
           .lines()
