@@ -93,10 +93,16 @@ impl<'a> fmt::Display for Token<'a> {
 pub struct CMFile {
   /// The exports.
   pub exports: Vec<Export>,
-  /// The SML files, in order.
-  pub sml: Vec<Located<std::path::PathBuf>>,
-  /// The CM files, in order.
-  pub cm: Vec<Located<std::path::PathBuf>>,
+  /// The files, in order.
+  pub files: Vec<(Located<std::path::PathBuf>, FileKind)>,
+}
+
+/// A kind of file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(missing_docs)]
+pub enum FileKind {
+  Sml,
+  Cm,
 }
 
 /// A name, like `S` in `structure S`.

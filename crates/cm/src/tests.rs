@@ -1,11 +1,13 @@
-use crate::types::{Export, Name, Namespace};
+use crate::types::{Export, FileKind, Name, Namespace};
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 
-fn check(s: &str, want_exports: Vec<RawExport>, sml: &[&str], cm: &[&str]) {
+fn check(s: &str, want_exports: Vec<RawExport>, want_files: &[(&str, FileKind)]) {
   let file = crate::get(s).unwrap();
-  let want_sml: Vec<_> = sml.iter().map(|&s| PathBuf::from_slash(s)).collect();
-  let want_cm: Vec<_> = cm.iter().map(|&s| PathBuf::from_slash(s)).collect();
+  let want_files: Vec<_> = want_files
+    .iter()
+    .map(|&(s, k)| (PathBuf::from_slash(s), k))
+    .collect();
   let got_exports: Vec<_> = file
     .exports
     .into_iter()
@@ -14,11 +16,9 @@ fn check(s: &str, want_exports: Vec<RawExport>, sml: &[&str], cm: &[&str]) {
       Export::Library(p) => RawExport::Library(p.val),
     })
     .collect();
-  let got_sml: Vec<_> = file.sml.into_iter().map(|x| x.val).collect();
-  let got_cm: Vec<_> = file.cm.into_iter().map(|x| x.val).collect();
+  let got_files: Vec<_> = file.files.into_iter().map(|(x, k)| (x.val, k)).collect();
   assert_eq!(want_exports, got_exports);
-  assert_eq!(want_sml, got_sml);
-  assert_eq!(want_cm, got_cm);
+  assert_eq!(want_files, got_files);
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -48,8 +48,7 @@ Group is
   support.sml
 "#,
     vec![],
-    &["hi.sml", "support.sml"],
-    &[],
+    &[("hi.sml", FileKind::Sml), ("support.sml", FileKind::Sml)],
   );
 }
 
@@ -74,8 +73,14 @@ is
       mk_regular(Namespace::Functor, "B"),
       mk_regular(Namespace::Signature, "C"),
     ],
-    &["a.sml", "b/c/d.sml", "e.fun", "f.sig", "uh"],
-    &["seq.cm"],
+    &[
+      ("a.sml", FileKind::Sml),
+      ("b/c/d.sml", FileKind::Sml),
+      ("e.fun", FileKind::Sml),
+      ("seq.cm", FileKind::Cm),
+      ("f.sig", FileKind::Sml),
+      ("uh", FileKind::Sml),
+    ],
   );
 }
 
@@ -89,8 +94,7 @@ Group is
   bar.cm
 "#,
     vec![],
-    &["foo.sml"],
-    &["bar.cm"],
+    &[("foo.sml", FileKind::Sml), ("bar.cm", FileKind::Cm)],
   );
 }
 
@@ -112,8 +116,11 @@ is
       mk_library("quz/baz.cm"),
       mk_regular(Namespace::Signature, "BAR"),
     ],
-    &["Foo.sml"],
-    &["Bar/sources.cm", "quz/baz.cm"],
+    &[
+      ("Foo.sml", FileKind::Sml),
+      ("Bar/sources.cm", FileKind::Cm),
+      ("quz/baz.cm", FileKind::Cm),
+    ],
   );
 }
 

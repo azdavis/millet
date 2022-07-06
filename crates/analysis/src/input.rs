@@ -212,23 +212,23 @@ where
       }
     };
     let mut source_files = Vec::<paths::PathId>::new();
-    for path in cm.sml {
+    let mut dependencies = FxHashSet::<paths::PathId>::default();
+    for (path, kind) in cm.files {
       let range = pos_db.range(path.range);
       let source = Source::PathAndRange(group_path.to_owned(), range);
       let path = group_parent.join(path.val.as_path());
       let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
-      let contents = read_file(fs, source, path.as_path())?;
-      source_files.push(path_id);
-      ret.sources.insert(path_id, contents);
-    }
-    let mut dependencies = FxHashSet::<paths::PathId>::default();
-    for path in cm.cm {
-      let range = pos_db.range(path.range);
-      let source = Source::PathAndRange(group_path.to_owned(), range);
-      let path = group_parent.join(path.val.as_path());
-      let path_id = get_path_id(fs, root, source, path.as_path())?;
-      stack.push(((group_path_id, Some(range)), path_id));
-      dependencies.insert(path_id);
+      match kind {
+        cm::FileKind::Sml => {
+          let contents = read_file(fs, source, path.as_path())?;
+          source_files.push(path_id);
+          ret.sources.insert(path_id, contents);
+        }
+        cm::FileKind::Cm => {
+          stack.push(((group_path_id, Some(range)), path_id));
+          dependencies.insert(path_id);
+        }
+      }
     }
     let group = Group {
       source_files,
