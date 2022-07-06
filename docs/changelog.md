@@ -2,6 +2,14 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.2.2
+
+- Improve types for `TextIO` with a hack (since the std basis docs use invalid SML).
+- Add optional functors from the std basis libs.
+- Improve error locations and messages for CM errors.
+- Do not panic if a type in a signature has the wrong number of type arguments.
+- Add SML/NJ libraries from the [website](https://www.smlnj.org/doc/smlnj-lib/index.html).
+
 ## v0.2.1
 
 - Mark `it` as a special name in the syntax highlighting.
