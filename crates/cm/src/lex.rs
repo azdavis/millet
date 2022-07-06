@@ -27,14 +27,14 @@ const PUNCTUATION: [(u8, Token<'_>); 3] = [
 ];
 
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
-  let old = *idx;
+  let start = *idx;
   match block_comment::get(idx, b, bs) {
     Ok(Some(block_comment::Consumed)) => return Ok(None),
     Ok(None) => {}
     Err(block_comment::UnclosedError) => {
       return Err(Error::new(
         ErrorKind::UnclosedComment,
-        TextRange::new(mk_text_size(old), mk_text_size(*idx)),
+        TextRange::new(mk_text_size(start), mk_text_size(*idx)),
       ));
     }
   }
@@ -60,7 +60,6 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
       return Ok(Some(tok));
     }
   }
-  let start = *idx;
   advance_while(idx, bs, |b| {
     !is_whitespace(b) && !matches!(b, b':' | b'(' | b')' | b';')
   });
