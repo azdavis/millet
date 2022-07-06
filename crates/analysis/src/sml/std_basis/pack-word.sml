@@ -46,3 +46,6 @@ signature PACK_WORD (* OPTIONAL *) = sig
   !*)
   val update : Word8Array.array * int * LargeWord.word -> unit
 end
+
+structure PackWord32Big : PACK_WORD = struct end
+structure PackWord32Little : PACK_WORD = struct end
