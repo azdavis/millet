@@ -93,7 +93,7 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
       GetInputErrorKind::MultipleRootGroups(a, b) => write!(
         f,
-        "multiple root groups: {} and {}",
+        "multiple root groups: {} and {}, disambiguate with config file",
         a.display(),
         b.display()
       ),
