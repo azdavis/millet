@@ -37,7 +37,7 @@ const INCLUDE_IMPERATIVE_IO_HACK: &str = "  include IMPERATIVE_IO_HACK";
 fn get_full_std_basis() -> StdBasis {
   let mut statics = Statics::default();
   let mut imperative_io_hack = None::<String>;
-  let info: FxHashMap<_, _> = sml::FILES
+  let info: FxHashMap<_, _> = sml::std_basis::FILES
     .iter()
     .map(|&(name, mut contents)| {
       if name == "imperative-io.sml" {

@@ -109,7 +109,7 @@ fn ck_no_ignore(sh: &Shell) -> Result<()> {
 
 fn ck_sml(sh: &Shell) -> Result<()> {
   println!("checking sml files");
-  let sml_dir = ["crates", "analysis", "src", "sml"];
+  let sml_dir = ["crates", "analysis", "src", "sml", "std_basis"];
   let sml_mod: PathBuf = sml_dir
     .iter()
     .copied()
