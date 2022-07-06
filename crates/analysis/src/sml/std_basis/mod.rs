@@ -1,6 +1,6 @@
 use crate::sml::files;
 
-pub(crate) const FILES: &[(&str, &str)] = files!(
+pub(crate) const FILES: &[(&str, &str)] = files![
   "general.sml",
   "option.sml",
   "list.sml",
@@ -68,4 +68,4 @@ pub(crate) const FILES: &[(&str, &str)] = files!(
   "imperative-io-fn.sml",
   "prim-io-fn.sml",
   "stream-io-fn.sml",
-);
+];
