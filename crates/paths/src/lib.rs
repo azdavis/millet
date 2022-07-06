@@ -77,6 +77,11 @@ impl CanonicalPathBuf {
   pub fn as_path(&self) -> &Path {
     self.0.as_path()
   }
+
+  /// Turns this into a [`PathBuf`].
+  pub fn into_path_buf(self) -> PathBuf {
+    self.0
+  }
 }
 
 /// A file system.

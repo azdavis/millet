@@ -68,5 +68,5 @@ fn check_input(
       .collect(),
   );
   let mut root = paths::Root::new(ROOT.to_owned());
-  analysis::get_input(&fs, &mut root)
+  analysis::get_input(&fs, &mut root, None)
 }

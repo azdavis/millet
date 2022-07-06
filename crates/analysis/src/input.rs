@@ -106,13 +106,17 @@ impl fmt::Display for GetInputErrorKind {
   }
 }
 
-/// Get some input from the filesystem.
-pub fn get_input<F>(fs: &F, root: &mut paths::Root) -> Result<Input, GetInputError>
+/// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
+/// `root`.
+pub fn get_input<F>(
+  fs: &F,
+  root: &mut paths::Root,
+  mut root_group_path: Option<std::path::PathBuf>,
+) -> Result<Input, GetInputError>
 where
   F: paths::FileSystem,
 {
   let mut ret = Input::default();
-  let mut root_group_path = None::<std::path::PathBuf>;
   let mut root_group_source = None::<std::path::PathBuf>;
   let config_file_name = root.as_path().join(config::FILE_NAME);
   if let Ok(contents) = fs.read_to_string(&config_file_name) {

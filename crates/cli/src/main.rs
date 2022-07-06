@@ -16,8 +16,11 @@ fn usage() {
   println!();
   println!("arguments:");
   println!("  <path>");
-  println!("    directory path of the project to analyze. the directory should contain either a");
-  println!("    single .cm file or a millet.toml config file.");
+  println!("    path of the project to analyze. the path should either be:");
+  println!("    - a directory containing either:");
+  println!("      - a single .cm file");
+  println!("      - a millet.toml config file specifying a single .cm file");
+  println!("    - a .cm file");
 }
 
 fn main() -> Result<()> {
@@ -26,10 +29,18 @@ fn main() -> Result<()> {
     usage();
     return Ok(());
   }
-  let root: String = args.free_from_str()?;
+  let path: String = args.free_from_str()?;
   let fs = paths::RealFileSystem::default();
-  let mut root = paths::Root::new(fs.canonicalize(std::path::Path::new(&root))?);
-  let inp = analysis::get_input(&fs, &mut root)?;
+  let path = fs.canonicalize(std::path::Path::new(&path))?;
+  let (root_path, root_group) =
+    if path.as_path().is_file() && path.as_path().extension().map_or(false, |x| x == "cm") {
+      let parent = path.as_path().parent().unwrap();
+      (fs.canonicalize(parent)?, Some(path.into_path_buf()))
+    } else {
+      (path, None)
+    };
+  let mut root = paths::Root::new(root_path);
+  let inp = analysis::get_input(&fs, &mut root, root_group)?;
   let mut an = analysis::Analysis::new(analysis::StdBasis::full());
   let got = an.get_many(&inp);
   let num_errors: usize = got.iter().map(|(_, errors)| errors.len()).sum();
