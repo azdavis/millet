@@ -113,7 +113,7 @@ impl fmt::Display for GetInputErrorKind {
 pub type Result<T, E = GetInputError> = std::result::Result<T, E>;
 
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
-/// `root`. TODO this loops infinitely if given cyclic files
+/// `root`.
 pub fn get_input<F>(
   fs: &F,
   root: &mut paths::Root,
@@ -191,6 +191,9 @@ where
   let mut groups = PathMap::<Group>::default();
   let mut stack = vec![((root_group_id, None), root_group_id)];
   while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
+    if groups.contains_key(&group_path_id) {
+      continue;
+    }
     let group_path = root.get_path(group_path_id).clone();
     let group_path = group_path.as_path();
     let containing_path = root.get_path(containing_path_id).as_path().to_owned();
