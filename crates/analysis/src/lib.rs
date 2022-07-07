@@ -8,6 +8,7 @@ mod input;
 mod sml;
 mod std_basis;
 
+use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
@@ -51,25 +52,6 @@ impl Analysis {
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &Input) -> PathMap<Vec<Error>> {
-    let graph: topo_sort::Graph<_> = input
-      .groups
-      .iter()
-      .map(|(&path, group)| {
-        (
-          path,
-          group
-            .files
-            .iter()
-            .copied()
-            .filter(|x| input.groups.contains_key(x))
-            .collect(),
-        )
-      })
-      .collect();
-    // TODO error if cycle
-    let order = elapsed::log("topo_sort::get", || {
-      topo_sort::get(&graph).unwrap_or_default()
-    });
     // TODO require explicit basis import
     let mut st = self.std_basis.statics.clone();
     self.files = elapsed::log("analyzed_files", || {
@@ -79,32 +61,29 @@ impl Analysis {
         .map(|(&path_id, s)| (path_id, AnalyzedFile::new(s)))
         .collect()
     });
-    let ret: PathMap<Vec<_>> = elapsed::log("statics", || {
-      order
-        .into_iter()
-        .flat_map(|path| {
-          input
-            .groups
-            .get(&path)
-            .into_iter()
-            .flat_map(|x| x.files.iter().filter(|&x| !input.groups.contains_key(x)))
-        })
-        .filter_map(|&path_id| {
-          let file = match self.files.get_mut(&path_id) {
-            Some(x) => x,
-            None => {
-              log::error!("no file for {path_id:?}");
-              return None;
-            }
-          };
+    let mut ac = vec![input.root_group_id];
+    let mut ret = PathMap::<Vec<_>>::default();
+    let mut done = FxHashSet::<PathId>::default();
+    elapsed::log("statics", || {
+      while let Some(path) = ac.pop() {
+        if let Some(group) = input.groups.get(&path) {
+          ac.extend(group.files.iter().rev().copied());
+          continue;
+        }
+        if let Some(file) = self.files.get_mut(&path) {
+          if !done.insert(path) {
+            continue;
+          }
           let low = &file.lowered;
-          let mode = statics::Mode::Regular(Some(path_id));
+          let mode = statics::Mode::Regular(Some(path));
           let (info, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
           file.statics_errors = es;
           file.info = Some(info);
-          Some((path_id, file.to_errors(st.syms())))
-        })
-        .collect()
+          ret.insert(path, file.to_errors(st.syms()));
+          continue;
+        }
+        log::error!("no file for {path:?}");
+      }
     });
     self.syms = st.into_syms();
     ret

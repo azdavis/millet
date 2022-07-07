@@ -53,17 +53,46 @@ root = "nope.cm"
 
 #[test]
 fn config_parse_err() {
-  check_input(&["foo.cm"], Some("岡部倫太郎")).unwrap_err();
+  let e = check_input(&["foo.cm"], Some("岡部倫太郎")).unwrap_err();
+  assert!(e.to_string().contains("couldn't parse config"));
+}
+
+#[test]
+fn cycle_1() {
+  let e = check_input_with_contents([("foo.cm", "Group is foo.cm")], None).unwrap_err();
+  assert!(e.to_string().contains("there is a cycle"));
+}
+
+#[test]
+fn cycle_2() {
+  let inp = [("foo.cm", "Group is bar.cm"), ("bar.cm", "Group is foo.cm")];
+  let config = r#"
+version = 1
+[workspace]
+root = "foo.cm"
+  "#;
+  let e = check_input_with_contents(inp, Some(config)).unwrap_err();
+  assert!(e.to_string().contains("there is a cycle"));
 }
 
 fn check_input(
   names: &[&str],
   config: Option<&str>,
 ) -> Result<analysis::Input, analysis::GetInputError> {
+  check_input_with_contents(names.iter().map(|&x| (x, "Group is")), config)
+}
+
+fn check_input_with_contents<'a, I>(
+  groups: I,
+  config: Option<&str>,
+) -> Result<analysis::Input, analysis::GetInputError>
+where
+  I: IntoIterator<Item = (&'a str, &'a str)>,
+{
   let fs = paths::MemoryFileSystem::new(
-    names
-      .iter()
-      .map(|&name| (ROOT.as_path().join(name), "Group is".to_owned()))
+    groups
+      .into_iter()
+      .map(|(name, contents)| (ROOT.as_path().join(name), contents.to_owned()))
       .chain(config.map(|x| (ROOT.as_path().join(config::FILE_NAME), x.to_owned())))
       .collect(),
   );

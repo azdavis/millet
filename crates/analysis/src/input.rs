@@ -11,7 +11,6 @@ pub struct Input {
   /// A map from group files to their (parsed) contents.
   pub(crate) groups: PathMap<Group>,
   /// The root group id.
-  #[allow(unused)]
   pub(crate) root_group_id: PathId,
 }
 
@@ -67,6 +66,7 @@ impl std::error::Error for GetInputError {
       GetInputErrorKind::NoRootGroup => None,
       GetInputErrorKind::CouldNotParseConfig(e) => Some(e),
       GetInputErrorKind::InvalidConfigVersion(_) => None,
+      GetInputErrorKind::Cycle => None,
     }
   }
 }
@@ -83,6 +83,7 @@ enum GetInputErrorKind {
   NoRootGroup,
   CouldNotParseConfig(toml::de::Error),
   InvalidConfigVersion(u16),
+  Cycle,
 }
 
 impl fmt::Display for GetInputErrorKind {
@@ -105,6 +106,7 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::InvalidConfigVersion(n) => {
         write!(f, "invalid config version: expected 1, found {n}")
       }
+      GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
     }
   }
 }
@@ -241,6 +243,19 @@ where
       })
       .collect::<Result<Vec<_>>>()?;
     groups.insert(group_path_id, Group { files });
+  }
+  let graph: topo_sort::Graph<_> = groups
+    .iter()
+    .map(|(&path, group)| (path, group.files.iter().copied().collect()))
+    .collect();
+  if let Err(e) = topo_sort::get(&graph) {
+    let w = e.witness();
+    return Err(GetInputError {
+      range: None,
+      source: None,
+      path: root.get_path(w).as_path().to_owned(),
+      kind: GetInputErrorKind::Cycle,
+    });
   }
   Ok(Input {
     sources,
