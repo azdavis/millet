@@ -46,10 +46,12 @@ impl StdBasis {
     })
   }
 
-  /// Prepare to analyze some files by returning fresh copies of the mutable data to pass to
-  /// [`statics::get`].
-  pub(crate) fn prepare_for_statics(&self) -> (Syms, basis::Basis) {
-    (self.syms.clone(), self.basis.clone())
+  pub(crate) fn syms(&self) -> &Syms {
+    &self.syms
+  }
+
+  pub(crate) fn basis(&self) -> &basis::Basis {
+    &self.basis
   }
 
   /// Look up a std basis file's info.

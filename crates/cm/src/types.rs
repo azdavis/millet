@@ -93,8 +93,8 @@ impl<'a> fmt::Display for Token<'a> {
 pub struct CMFile {
   /// The exports.
   pub exports: Vec<Export>,
-  /// The files, in order.
-  pub files: Vec<(Located<std::path::PathBuf>, FileKind)>,
+  /// The paths, in order.
+  pub paths: Vec<(Located<std::path::PathBuf>, FileKind)>,
 }
 
 /// A kind of file.

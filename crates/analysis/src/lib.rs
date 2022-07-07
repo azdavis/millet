@@ -23,7 +23,7 @@ pub const MAX_ERRORS_PER_PATH: usize = 20;
 #[derive(Debug)]
 pub struct Analysis {
   std_basis: StdBasis,
-  files: PathMap<AnalyzedFile>,
+  source_files: PathMap<SourceFile>,
   syms: statics::Syms,
 }
 
@@ -32,15 +32,16 @@ impl Analysis {
   pub fn new(std_basis: StdBasis) -> Self {
     Self {
       std_basis,
-      files: PathMap::default(),
+      source_files: PathMap::default(),
       syms: statics::Syms::default(),
     }
   }
 
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, s: &str) -> Vec<Error> {
-    let mut file = AnalyzedFile::new(s);
-    let (mut syms, mut basis) = self.std_basis.prepare_for_statics();
+    let mut file = SourceFile::new(s);
+    let mut syms = self.std_basis.syms().clone();
+    let mut basis = self.std_basis.basis().clone();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
     let (_, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
@@ -52,12 +53,13 @@ impl Analysis {
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &Input) -> PathMap<Vec<Error>> {
     // TODO require explicit basis import
-    let (mut syms, mut basis) = self.std_basis.prepare_for_statics();
-    self.files = elapsed::log("analyzed_files", || {
+    let mut syms = self.std_basis.syms().clone();
+    let mut basis = self.std_basis.basis().clone();
+    self.source_files = elapsed::log("analyzed_files", || {
       input
         .sources
         .iter()
-        .map(|(&path_id, s)| (path_id, AnalyzedFile::new(s)))
+        .map(|(&path_id, s)| (path_id, SourceFile::new(s)))
         .collect()
     });
     let mut ac = vec![input.root_group_id];
@@ -66,10 +68,10 @@ impl Analysis {
     elapsed::log("statics", || {
       while let Some(path) = ac.pop() {
         if let Some(group) = input.groups.get(&path) {
-          ac.extend(group.files.iter().rev().copied());
+          ac.extend(group.paths.iter().rev().copied());
           continue;
         }
-        if let Some(file) = self.files.get_mut(&path) {
+        if let Some(file) = self.source_files.get_mut(&path) {
           if !done.insert(path) {
             continue;
           }
@@ -95,7 +97,7 @@ impl Analysis {
       let mut s = info.get_ty_md(&self.syms, idx)?;
       let def_doc = info.get_def(idx).and_then(|def| {
         let info = match def.path {
-          statics::DefPath::Regular(path) => self.files.get(&path)?.info.as_ref()?,
+          statics::DefPath::Regular(path) => self.source_files.get(&path)?.info.as_ref()?,
           statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
         };
         info.get_doc(def.idx)
@@ -134,9 +136,9 @@ impl Analysis {
 
   fn go_up_ast<F, T>(&self, path: PathId, pos: Position, f: F) -> Option<T>
   where
-    F: FnOnce(&AnalyzedFile, SyntaxNodePtr, hir::Idx) -> Option<T>,
+    F: FnOnce(&SourceFile, SyntaxNodePtr, hir::Idx) -> Option<T>,
   {
-    let file = self.files.get(&path)?;
+    let file = self.source_files.get(&path)?;
     let mut node = get_node(file, pos)?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
@@ -152,7 +154,7 @@ impl Analysis {
       statics::DefPath::Regular(p) => p,
       statics::DefPath::StdBasis(_) => return None,
     };
-    let def_file = self.files.get(&path)?;
+    let def_file = self.source_files.get(&path)?;
     let def_range = def_file
       .lowered
       .ptrs
@@ -163,7 +165,7 @@ impl Analysis {
   }
 }
 
-fn get_node(file: &AnalyzedFile, pos: Position) -> Option<SyntaxNode> {
+fn get_node(file: &SourceFile, pos: Position) -> Option<SyntaxNode> {
   let idx = file.pos_db.text_size(pos);
   let tok = match file.parsed.root.syntax().token_at_offset(idx) {
     TokenAtOffset::None => return None,
@@ -206,7 +208,7 @@ pub struct Error {
 }
 
 #[derive(Debug)]
-struct AnalyzedFile {
+struct SourceFile {
   pos_db: text_pos::PositionDb,
   lex_errors: Vec<lex::Error>,
   parsed: parse::Parse,
@@ -215,7 +217,7 @@ struct AnalyzedFile {
   info: Option<statics::Info>,
 }
 
-impl AnalyzedFile {
+impl SourceFile {
   fn new(s: &str) -> Self {
     let lexed = lex::get(s);
     log::debug!("lex: {:?}", lexed.tokens);

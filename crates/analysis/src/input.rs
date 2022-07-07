@@ -6,16 +6,16 @@ use text_pos::Range;
 /// The input to analysis.
 #[derive(Debug)]
 pub struct Input {
-  /// A map from source files to their contents.
+  /// A map from source paths to their contents.
   pub(crate) sources: PathMap<String>,
-  /// A map from group files to their (parsed) contents.
+  /// A map from group paths to their (parsed) contents.
   pub(crate) groups: PathMap<Group>,
   /// The root group id.
   pub(crate) root_group_id: PathId,
 }
 
 impl Input {
-  /// Return an iterator over the source files.
+  /// Return an iterator over the source paths.
   pub fn iter_sources(&self) -> impl Iterator<Item = (paths::PathId, &str)> + '_ {
     self.sources.iter().map(|(&path, s)| (path, s.as_str()))
   }
@@ -222,8 +222,8 @@ where
         })
       }
     };
-    let files = cm
-      .files
+    let paths = cm
+      .paths
       .into_iter()
       .map(|(path, kind)| {
         let range = pos_db.range(path.range);
@@ -242,11 +242,11 @@ where
         Ok(path_id)
       })
       .collect::<Result<Vec<_>>>()?;
-    groups.insert(group_path_id, Group { files });
+    groups.insert(group_path_id, Group { paths });
   }
   let graph: topo_sort::Graph<_> = groups
     .iter()
-    .map(|(&path, group)| (path, group.files.iter().copied().collect()))
+    .map(|(&path, group)| (path, group.paths.iter().copied().collect()))
     .collect();
   if let Err(e) = topo_sort::get(&graph) {
     let w = e.witness();
@@ -281,10 +281,10 @@ impl Source {
   }
 }
 
-/// A group of files.
+/// A group of paths.
 #[derive(Debug)]
 pub(crate) struct Group {
-  pub(crate) files: Vec<PathId>,
+  pub(crate) paths: Vec<PathId>,
 }
 
 fn get_path_id<F>(

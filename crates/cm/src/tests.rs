@@ -2,9 +2,9 @@ use crate::types::{Export, FileKind, Name, Namespace};
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 
-fn check(s: &str, want_exports: Vec<RawExport>, want_files: &[(&str, FileKind)]) {
+fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, FileKind)]) {
   let file = crate::get(s).unwrap();
-  let want_files: Vec<_> = want_files
+  let want_paths: Vec<_> = want_paths
     .iter()
     .map(|&(s, k)| (PathBuf::from_slash(s), k))
     .collect();
@@ -16,9 +16,9 @@ fn check(s: &str, want_exports: Vec<RawExport>, want_files: &[(&str, FileKind)])
       Export::Library(p) => RawExport::Library(p.val),
     })
     .collect();
-  let got_files: Vec<_> = file.files.into_iter().map(|(x, k)| (x.val, k)).collect();
+  let got_paths: Vec<_> = file.paths.into_iter().map(|(x, k)| (x.val, k)).collect();
   assert_eq!(want_exports, got_exports);
-  assert_eq!(want_files, got_files);
+  assert_eq!(want_paths, got_paths);
 }
 
 #[derive(Debug, PartialEq, Eq)]
