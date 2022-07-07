@@ -54,7 +54,17 @@ impl Analysis {
     let graph: topo_sort::Graph<_> = input
       .groups
       .iter()
-      .map(|(&path, group)| (path, group.dependencies.iter().copied().collect()))
+      .map(|(&path, group)| {
+        (
+          path,
+          group
+            .files
+            .iter()
+            .copied()
+            .filter(|x| input.groups.contains_key(x))
+            .collect(),
+        )
+      })
       .collect();
     // TODO error if cycle
     let order = elapsed::log("topo_sort::get", || {
@@ -77,7 +87,7 @@ impl Analysis {
             .groups
             .get(&path)
             .into_iter()
-            .flat_map(|x| x.source_files.iter())
+            .flat_map(|x| x.files.iter().filter(|&x| !input.groups.contains_key(x)))
         })
         .filter_map(|&path_id| {
           let file = match self.files.get_mut(&path_id) {

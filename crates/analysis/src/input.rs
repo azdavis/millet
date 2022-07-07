@@ -1,16 +1,18 @@
-use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use text_pos::Range;
 
 /// The input to analysis.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Input {
   /// A map from source files to their contents.
   pub(crate) sources: PathMap<String>,
   /// A map from group files to their (parsed) contents.
   pub(crate) groups: PathMap<Group>,
+  /// The root group id.
+  #[allow(unused)]
+  pub(crate) root_group_id: PathId,
 }
 
 impl Input {
@@ -108,7 +110,7 @@ impl fmt::Display for GetInputErrorKind {
 }
 
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
-/// `root`.
+/// `root`. TODO this loops infinitely if given cyclic files
 pub fn get_input<F>(
   fs: &F,
   root: &mut paths::Root,
@@ -117,7 +119,6 @@ pub fn get_input<F>(
 where
   F: paths::FileSystem,
 {
-  let mut ret = Input::default();
   let mut root_group_source = None::<PathBuf>;
   let config_file_name = root.as_path().join(config::FILE_NAME);
   if let Ok(contents) = fs.read_to_string(&config_file_name) {
@@ -183,6 +184,8 @@ where
     },
     root_group_path.as_path(),
   )?;
+  let mut sources = PathMap::<String>::default();
+  let mut groups = PathMap::<Group>::default();
   let mut stack = vec![((root_group_id, None), root_group_id)];
   while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
     let group_path = root.get_path(group_path_id).clone();
@@ -211,8 +214,7 @@ where
         })
       }
     };
-    let mut source_files = Vec::<paths::PathId>::new();
-    let mut dependencies = FxHashSet::<paths::PathId>::default();
+    let mut files = Vec::<paths::PathId>::new();
     for (path, kind) in cm.files {
       let range = pos_db.range(path.range);
       let source = Source::PathAndRange(group_path.to_owned(), range);
@@ -221,22 +223,21 @@ where
       match kind {
         cm::FileKind::Sml => {
           let contents = read_file(fs, source, path.as_path())?;
-          source_files.push(path_id);
-          ret.sources.insert(path_id, contents);
+          sources.insert(path_id, contents);
         }
         cm::FileKind::Cm => {
           stack.push(((group_path_id, Some(range)), path_id));
-          dependencies.insert(path_id);
         }
       }
+      files.push(path_id);
     }
-    let group = Group {
-      source_files,
-      dependencies,
-    };
-    ret.groups.insert(group_path_id, group);
+    groups.insert(group_path_id, Group { files });
   }
-  Ok(ret)
+  Ok(Input {
+    sources,
+    groups,
+    root_group_id,
+  })
 }
 
 #[derive(Debug, Clone)]
@@ -256,15 +257,10 @@ impl Source {
   }
 }
 
-/// A group of source files.
-///
-/// TODO use exports
+/// A group of files.
 #[derive(Debug)]
 pub(crate) struct Group {
-  /// The source file paths, in order.
-  pub(crate) source_files: Vec<PathId>,
-  /// The dependencies of this group on other groups.
-  pub(crate) dependencies: FxHashSet<PathId>,
+  pub(crate) files: Vec<PathId>,
 }
 
 fn get_path_id<F>(
