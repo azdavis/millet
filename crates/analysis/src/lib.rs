@@ -6,7 +6,6 @@
 
 mod input;
 mod sml;
-mod std_basis;
 
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
@@ -14,7 +13,7 @@ use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
 pub use input::{get_input, GetInputError, Input, Result};
-pub use std_basis::StdBasis;
+pub use sml::StdBasis;
 pub use text_pos::{Position, Range};
 
 /// The max number of errors per path.
