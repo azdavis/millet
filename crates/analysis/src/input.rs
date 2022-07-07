@@ -109,13 +109,16 @@ impl fmt::Display for GetInputErrorKind {
   }
 }
 
+/// std's Result with GetInputError as the default error.
+pub type Result<T, E = GetInputError> = std::result::Result<T, E>;
+
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
 /// `root`. TODO this loops infinitely if given cyclic files
 pub fn get_input<F>(
   fs: &F,
   root: &mut paths::Root,
   mut root_group_path: Option<PathBuf>,
-) -> Result<Input, GetInputError>
+) -> Result<Input>
 where
   F: paths::FileSystem,
 {
@@ -268,7 +271,7 @@ fn get_path_id<F>(
   root: &mut paths::Root,
   source: Source,
   path: &Path,
-) -> Result<paths::PathId, GetInputError>
+) -> Result<paths::PathId>
 where
   F: paths::FileSystem,
 {
@@ -287,7 +290,7 @@ where
   })
 }
 
-fn read_file<F>(fs: &F, source: Source, path: &Path) -> Result<String, GetInputError>
+fn read_file<F>(fs: &F, source: Source, path: &Path) -> Result<String>
 where
   F: paths::FileSystem,
 {

@@ -12,7 +12,7 @@ use paths::{PathId, PathMap};
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
-pub use input::{get_input, GetInputError, Input};
+pub use input::{get_input, GetInputError, Input, Result};
 pub use std_basis::StdBasis;
 pub use text_pos::{Position, Range};
 
