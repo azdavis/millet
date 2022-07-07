@@ -220,23 +220,26 @@ where
         })
       }
     };
-    let mut files = Vec::<paths::PathId>::new();
-    for (path, kind) in cm.files {
-      let range = pos_db.range(path.range);
-      let source = Source::PathAndRange(group_path.to_owned(), range);
-      let path = group_parent.join(path.val.as_path());
-      let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
-      match kind {
-        cm::FileKind::Sml => {
-          let contents = read_file(fs, source, path.as_path())?;
-          sources.insert(path_id, contents);
+    let files = cm
+      .files
+      .into_iter()
+      .map(|(path, kind)| {
+        let range = pos_db.range(path.range);
+        let source = Source::PathAndRange(group_path.to_owned(), range);
+        let path = group_parent.join(path.val.as_path());
+        let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
+        match kind {
+          cm::FileKind::Sml => {
+            let contents = read_file(fs, source, path.as_path())?;
+            sources.insert(path_id, contents);
+          }
+          cm::FileKind::Cm => {
+            stack.push(((group_path_id, Some(range)), path_id));
+          }
         }
-        cm::FileKind::Cm => {
-          stack.push(((group_path_id, Some(range)), path_id));
-        }
-      }
-      files.push(path_id);
-    }
+        Ok(path_id)
+      })
+      .collect::<Result<Vec<_>>>()?;
     groups.insert(group_path_id, Group { files });
   }
   Ok(Input {
