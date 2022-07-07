@@ -1,8 +1,7 @@
 use crate::error::{Error, ErrorKind};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
-use crate::std_basis;
-use crate::types::{Bs, Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
+use crate::types::{Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
 use crate::util::apply;
 
 /// The state.
@@ -162,37 +161,4 @@ enum MatchKind {
   Bind(Pat),
   Case(Vec<Pat>),
   Handle(Vec<Pat>),
-}
-
-/// Static analysis.
-///
-/// Note that the `Default` impl will return a `Statics` with a `Syms` that contains only the most
-/// basic types and values, like `int` and `>`.
-#[derive(Debug, Clone)]
-pub struct Statics {
-  pub(crate) syms: Syms,
-  pub(crate) bs: Bs,
-}
-
-impl Statics {
-  /// Returns the symbols generated.
-  pub fn syms(&self) -> &Syms {
-    &self.syms
-  }
-
-  /// Turns this into a `Syms`.
-  pub fn into_syms(self) -> Syms {
-    self.syms
-  }
-
-  /// Rearrange internal data structures to (maybe) use less memory.
-  pub fn condense(&mut self) {
-    self.bs.env.condense();
-  }
-}
-
-impl Default for Statics {
-  fn default() -> Self {
-    std_basis::get()
-  }
 }

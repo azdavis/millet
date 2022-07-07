@@ -3,7 +3,7 @@ mod std_basis;
 mod std_basis_extra;
 
 use fast_hash::FxHashMap;
-use statics::{Info, Statics};
+use statics::{basis, Info, Syms};
 use syntax::{ast::AstNode as _, SyntaxKind, SyntaxNode};
 
 macro_rules! files {
@@ -21,7 +21,8 @@ pub(crate) use files;
 /// A standard basis.
 #[derive(Debug, Clone)]
 pub struct StdBasis {
-  pub(crate) statics: Statics,
+  pub(crate) syms: Syms,
+  pub(crate) basis: basis::Basis,
   pub(crate) info: FxHashMap<&'static str, Info>,
 }
 
@@ -29,10 +30,7 @@ impl StdBasis {
   /// The minimal standard basis. Only includes fundamental top-level definitions like `int`,
   /// `real`, `ref`, `<`, etc.
   pub fn minimal() -> Self {
-    Self {
-      statics: Statics::default(),
-      info: FxHashMap::default(),
-    }
+    get_std_basis(std::iter::empty())
   }
 
   /// The full standard basis, as documented in the public SML basis library docs.
@@ -61,7 +59,7 @@ fn get_std_basis<I>(files: I) -> StdBasis
 where
   I: Iterator<Item = (&'static str, &'static str)>,
 {
-  let mut statics = Statics::default();
+  let (mut syms, mut basis) = basis::minimal();
   let mut imperative_io_hack = None::<String>;
   let info: FxHashMap<_, _> = files
     .map(|(name, mut contents)| {
@@ -103,17 +101,17 @@ where
       if let Some(e) = parsed.errors.first() {
         panic!("{name}: parse error: {}", e.display());
       }
-      let mut lowered = lower::get(&parsed.root);
-      if let Some(e) = lowered.errors.first() {
+      let mut low = lower::get(&parsed.root);
+      if let Some(e) = low.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
-      ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
-      let comment_map: FxHashMap<hir::Idx, _> = lowered
+      ty_var_scope::get(&mut low.arenas, &low.top_decs);
+      let comment_map: FxHashMap<hir::Idx, _> = low
         .arenas
         .spec
         .iter()
         .filter_map(|(idx, _)| {
-          let ptr = lowered
+          let ptr = low
             .ptrs
             .hir_to_ast(idx.into())
             .expect("no syntax ptr for spec");
@@ -123,15 +121,15 @@ where
         })
         .collect();
       let mode = statics::Mode::StdBasis(name, comment_map);
-      let (info, es) = statics::get(&mut statics, mode, &lowered.arenas, &lowered.top_decs);
+      let (info, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
       if let Some(e) = es.first() {
-        panic!("{name}: statics error: {}", e.display(statics.syms()));
+        panic!("{name}: statics error: {}", e.display(&syms));
       }
       (name, info)
     })
     .collect();
-  statics.condense();
-  StdBasis { statics, info }
+  basis.condense();
+  StdBasis { syms, basis, info }
 }
 
 /// NOTE: this is hard-coded for specs in a declaration file. maybe we could make `(*! ... !*)`

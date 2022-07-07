@@ -40,19 +40,21 @@ impl Analysis {
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, s: &str) -> Vec<Error> {
     let mut file = AnalyzedFile::new(s);
-    let mut st = self.std_basis.statics.clone();
+    let mut syms = self.std_basis.syms.clone();
+    let mut basis = self.std_basis.basis.clone();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
-    let (_, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
+    let (_, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
     file.statics_errors = es;
-    file.to_errors(st.syms())
+    file.to_errors(&syms)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &Input) -> PathMap<Vec<Error>> {
     // TODO require explicit basis import
-    let mut st = self.std_basis.statics.clone();
+    let mut syms = self.std_basis.syms.clone();
+    let mut basis = self.std_basis.basis.clone();
     self.files = elapsed::log("analyzed_files", || {
       input
         .sources
@@ -75,16 +77,16 @@ impl Analysis {
           }
           let low = &file.lowered;
           let mode = statics::Mode::Regular(Some(path));
-          let (info, es) = statics::get(&mut st, mode, &low.arenas, &low.top_decs);
+          let (info, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
           file.statics_errors = es;
           file.info = Some(info);
-          ret.insert(path, file.to_errors(st.syms()));
+          ret.insert(path, file.to_errors(&syms));
           continue;
         }
         log::error!("no file for {path:?}");
       }
     });
-    self.syms = st.into_syms();
+    self.syms = syms;
     ret
   }
 

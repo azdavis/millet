@@ -18,31 +18,32 @@ mod info;
 mod pat;
 mod pat_match;
 mod st;
-mod std_basis;
 mod top_dec;
 mod ty;
 mod types;
 mod unify;
 mod util;
 
+pub mod basis;
+
 pub use error::Error;
 pub use info::{Info, Mode};
-pub use st::Statics;
 pub use types::{Def, DefPath, Syms};
 
 /// Does the checks.
 pub fn get(
-  statics: &mut Statics,
+  syms: &mut Syms,
+  basis: &mut basis::Basis,
   mode: Mode,
   arenas: &hir::Arenas,
   top_decs: &[hir::StrDecIdx],
 ) -> (Info, Vec<Error>) {
-  let mut st = st::St::new(mode, std::mem::take(&mut statics.syms));
+  let mut st = st::St::new(mode, std::mem::take(syms));
   for &top_dec in top_decs {
-    top_dec::get(&mut st, &mut statics.bs, arenas, top_dec);
+    top_dec::get(&mut st, &mut basis.inner, arenas, top_dec);
   }
-  let (syms, errors, subst, mut info) = st.finish();
-  statics.syms = syms;
+  let (new_syms, errors, subst, mut info) = st.finish();
+  *syms = new_syms;
   for ty in info.tys_mut() {
     util::apply(&subst, ty);
   }

@@ -1,14 +1,29 @@
-//! This is distinct from std_basis in analysis. This (mostly) just has the definitions that can't
-//! be expressed with regular SML files, like `int` and `real` and `string`. Also `bool` and `list`
-//! because rebinding their constructor names is forbidden.
+//! Bases.
 
-use crate::st::Statics;
 use crate::types::{
   Bs, Env, EnvStack, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv,
   TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 
-pub(crate) fn get() -> Statics {
+/// A basis.
+#[derive(Debug, Clone)]
+pub struct Basis {
+  pub(crate) inner: Bs,
+}
+
+impl Basis {
+  /// Rearrange internal data structures to (maybe) use less memory.
+  pub fn condense(&mut self) {
+    self.inner.env.condense();
+  }
+}
+
+/// Returns the minimal basis and symbols.
+///
+/// This is distinct from std_basis in analysis. This (mostly) just has the definitions that can't
+/// be expressed with regular SML files, like `int` and `real` and `string`. Also `bool` and `list`
+/// because rebinding their constructor names is forbidden.
+pub fn minimal() -> (Syms, Basis) {
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
     insert_special(&mut syms, sym, basic_datatype(Ty::zero(sym), &[]));
@@ -98,12 +113,14 @@ pub(crate) fn get() -> Statics {
     val_env,
     def: None,
   });
-  let bs = Bs {
-    fun_env: FunEnv::default().into(),
-    sig_env: SigEnv::default().into(),
-    env,
+  let basis = Basis {
+    inner: Bs {
+      fun_env: FunEnv::default().into(),
+      sig_env: SigEnv::default().into(),
+      env,
+    },
   };
-  Statics { syms, bs }
+  (syms, basis)
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
