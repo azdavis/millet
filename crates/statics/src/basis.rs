@@ -1,21 +1,14 @@
 //! Bases.
 
 use crate::types::{
-  Bs, Env, EnvStack, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv,
-  TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
+  Bs, Env, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo,
+  TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 
 /// A basis.
 #[derive(Debug, Clone)]
 pub struct Basis {
-  pub(crate) inner: Bs,
-}
-
-impl Basis {
-  /// Rearrange internal data structures to (maybe) use less memory.
-  pub fn condense(&mut self) {
-    self.inner.env.condense();
-  }
+  pub(crate) inner: Bs<Env>,
 }
 
 /// Returns the minimal basis and symbols.
@@ -106,18 +99,16 @@ pub fn minimal() -> (Syms, Basis) {
       (hir::Name::new(name), vi)
     }))
     .collect();
-  let mut env = EnvStack::default();
-  env.push(Env {
-    str_env: StrEnv::default(),
-    ty_env,
-    val_env,
-    def: None,
-  });
   let basis = Basis {
     inner: Bs {
       fun_env: FunEnv::default().into(),
       sig_env: SigEnv::default().into(),
-      env,
+      env: Env {
+        str_env: StrEnv::default(),
+        ty_env,
+        val_env,
+        def: None,
+      },
     },
   };
   (syms, basis)

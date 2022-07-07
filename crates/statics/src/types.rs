@@ -672,19 +672,20 @@ impl EnvLike for Env {
 pub(crate) struct EnvStack(Vec<Arc<Env>>);
 
 impl EnvStack {
+  pub(crate) fn one(env: Env) -> Self {
+    Self(vec![Arc::new(env)])
+  }
+
   pub(crate) fn push(&mut self, other: Env) {
     self.0.push(Arc::new(other));
   }
 
-  pub(crate) fn condense(&mut self) {
-    if self.0.is_empty() {
-      return;
-    }
+  pub(crate) fn condense(mut self) -> Env {
     let mut env = Env::default();
     for mut other in self.0.drain(..) {
       env.append(Arc::make_mut(&mut other));
     }
-    self.0 = vec![Arc::new(env)];
+    env
   }
 }
 

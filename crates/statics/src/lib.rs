@@ -39,10 +39,18 @@ pub fn get(
   top_decs: &[hir::StrDecIdx],
 ) -> (Info, Vec<Error>) {
   let mut st = st::St::new(mode, std::mem::take(syms));
+  let mut bs = types::Bs {
+    fun_env: std::mem::take(&mut basis.inner.fun_env),
+    sig_env: std::mem::take(&mut basis.inner.sig_env),
+    env: types::EnvStack::one(std::mem::take(&mut basis.inner.env)),
+  };
   for &top_dec in top_decs {
-    top_dec::get(&mut st, &mut basis.inner, arenas, top_dec);
+    top_dec::get(&mut st, &mut bs, arenas, top_dec);
   }
   let (new_syms, errors, subst, mut info) = st.finish();
+  basis.inner.fun_env = bs.fun_env;
+  basis.inner.sig_env = bs.sig_env;
+  basis.inner.env = bs.env.condense();
   *syms = new_syms;
   for ty in info.tys_mut() {
     util::apply(&subst, ty);

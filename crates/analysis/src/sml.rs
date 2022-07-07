@@ -141,7 +141,6 @@ where
       (name, info)
     })
     .collect();
-  basis.condense();
   StdBasis { syms, basis, info }
 }
 
