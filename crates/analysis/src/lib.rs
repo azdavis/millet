@@ -40,8 +40,7 @@ impl Analysis {
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, s: &str) -> Vec<Error> {
     let mut file = AnalyzedFile::new(s);
-    let mut syms = self.std_basis.syms.clone();
-    let mut basis = self.std_basis.basis.clone();
+    let (mut syms, mut basis) = self.std_basis.prepare_for_statics();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
     let (_, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
@@ -53,8 +52,7 @@ impl Analysis {
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &Input) -> PathMap<Vec<Error>> {
     // TODO require explicit basis import
-    let mut syms = self.std_basis.syms.clone();
-    let mut basis = self.std_basis.basis.clone();
+    let (mut syms, mut basis) = self.std_basis.prepare_for_statics();
     self.files = elapsed::log("analyzed_files", || {
       input
         .sources
@@ -98,7 +96,7 @@ impl Analysis {
       let def_doc = info.get_def(idx).and_then(|def| {
         let info = match def.path {
           statics::DefPath::Regular(path) => self.files.get(&path)?.info.as_ref()?,
-          statics::DefPath::StdBasis(name) => self.std_basis.info.get(name).as_ref()?,
+          statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
         };
         info.get_doc(def.idx)
       });

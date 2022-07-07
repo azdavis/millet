@@ -21,9 +21,9 @@ pub(crate) use files;
 /// A standard basis.
 #[derive(Debug, Clone)]
 pub struct StdBasis {
-  pub(crate) syms: Syms,
-  pub(crate) basis: basis::Basis,
-  pub(crate) info: FxHashMap<&'static str, Info>,
+  syms: Syms,
+  basis: basis::Basis,
+  info: FxHashMap<&'static str, Info>,
 }
 
 impl StdBasis {
@@ -44,6 +44,17 @@ impl StdBasis {
           .copied(),
       )
     })
+  }
+
+  /// Prepare to analyze some files by returning fresh copies of the mutable data to pass to
+  /// [`statics::get`].
+  pub(crate) fn prepare_for_statics(&self) -> (Syms, basis::Basis) {
+    (self.syms.clone(), self.basis.clone())
+  }
+
+  /// Look up a std basis file's info.
+  pub(crate) fn get_info(&self, s: &str) -> Option<&Info> {
+    self.info.get(s)
   }
 }
 
