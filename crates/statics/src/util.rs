@@ -1,16 +1,27 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
-use crate::types::{RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme};
+use crate::types::{
+  BasicOverload, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
+};
 use fast_hash::FxHashMap;
 
-pub(crate) fn get_scon(scon: &hir::SCon) -> Ty {
+pub(crate) fn get_scon(st: &mut St, scon: &hir::SCon) -> Ty {
+  // we could have all of these return the basic overloads, but some of them will all only allow the
+  // default types anyway.
   match scon {
     hir::SCon::Int(_) => Ty::INT,
     hir::SCon::Real(_) => Ty::REAL,
-    hir::SCon::Word(_) => Ty::WORD,
+    hir::SCon::Word(_) => basic_overload(st, BasicOverload::Word),
     hir::SCon::Char(_) => Ty::CHAR,
     hir::SCon::String(_) => Ty::STRING,
   }
+}
+
+fn basic_overload(st: &mut St, b: BasicOverload) -> Ty {
+  let mv = st.gen_meta_var();
+  let entry = SubstEntry::Kind(TyVarKind::Overloaded(Overload::Basic(b)));
+  st.subst().insert(mv, entry);
+  Ty::MetaVar(mv)
 }
 
 /// sml_def(6), sml_def(39), sml_def(49)

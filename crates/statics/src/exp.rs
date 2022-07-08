@@ -18,7 +18,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
   let mut def = None::<Def>;
   let ret = match &ars.exp[exp] {
     // sml_def(1)
-    hir::Exp::SCon(scon) => get_scon(scon),
+    hir::Exp::SCon(scon) => get_scon(st, scon),
     // sml_def(2)
     hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
       Ok(Some(val_info)) => {

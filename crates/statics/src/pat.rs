@@ -57,7 +57,7 @@ fn get_(
         hir::SCon::Char(c) => Con::Char(c),
         hir::SCon::String(ref s) => Con::String(s.clone()),
       };
-      (Pat::zero(con, pat), get_scon(scon))
+      (Pat::zero(con, pat), get_scon(st, scon))
     }
     hir::Pat::Con(path, arg) => {
       let arg = arg.map(|x| get(st, cx, ars, ve, x));
