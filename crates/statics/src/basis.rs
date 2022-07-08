@@ -1,14 +1,80 @@
 //! Bases.
 
 use crate::types::{
-  Bs, Env, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo,
-  TyScheme, TyVarKind, ValEnv, ValInfo,
+  Bs, Env, EnvLike as _, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty,
+  TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 
 /// A basis.
 #[derive(Debug, Clone)]
 pub struct Basis {
   pub(crate) inner: Bs<Env>,
+}
+
+impl Basis {
+  /// Append other onto self, emptying other.
+  pub fn append(&mut self, other: &mut Self) {
+    self.inner.append(&mut other.inner);
+  }
+
+  /// Limits `self` with the `exports`. Mutates `exports` to be exactly those exports which were not
+  /// found in `self`.
+  pub fn limit_with(&mut self, exports: &mut Exports) {
+    let mut str_env = StrEnv::default();
+    let mut sig_env = SigEnv::default();
+    let mut fun_env = FunEnv::default();
+    exports
+      .structure
+      .retain(|name| match self.inner.env.get_str(name) {
+        Some(val) => {
+          str_env.insert(name.clone(), val.clone());
+          false
+        }
+        None => true,
+      });
+    exports
+      .signature
+      .retain(|name| match self.inner.sig_env.get(name) {
+        Some(val) => {
+          sig_env.insert(name.clone(), val.clone());
+          false
+        }
+        None => true,
+      });
+    exports
+      .functor
+      .retain(|name| match self.inner.fun_env.get(name) {
+        Some(val) => {
+          fun_env.insert(name.clone(), val.clone());
+          false
+        }
+        None => true,
+      });
+    self.inner.env = Env {
+      str_env,
+      ..Default::default()
+    };
+    self.inner.sig_env = sig_env.into();
+    self.inner.fun_env = fun_env.into();
+  }
+}
+
+/// A basis' exports.
+#[derive(Debug, Default, Clone)]
+pub struct Exports {
+  /// The structure exports.
+  pub structure: Vec<hir::Name>,
+  /// The signature exports.
+  pub signature: Vec<hir::Name>,
+  /// The functor exports.
+  pub functor: Vec<hir::Name>,
+}
+
+impl Exports {
+  /// Returns whether this is empty.
+  pub fn is_empty(&self) -> bool {
+    self.structure.is_empty() && self.signature.is_empty() && self.functor.is_empty()
+  }
 }
 
 /// Returns the minimal basis and symbols.

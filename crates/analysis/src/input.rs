@@ -242,7 +242,8 @@ where
         Ok(path_id)
       })
       .collect::<Result<Vec<_>>>()?;
-    groups.insert(group_path_id, Group { paths });
+    let exports = statics::basis::Exports::default();
+    groups.insert(group_path_id, Group { paths, exports });
   }
   let graph: topo_sort::Graph<_> = groups
     .iter()
@@ -280,10 +281,11 @@ impl Source {
   }
 }
 
-/// A group of paths.
+/// A group of paths and their exports.
 #[derive(Debug)]
 pub(crate) struct Group {
   pub(crate) paths: Vec<PathId>,
+  pub(crate) exports: statics::basis::Exports,
 }
 
 fn get_path_id<F>(

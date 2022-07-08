@@ -7,7 +7,6 @@
 mod input;
 mod sml;
 
-use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
@@ -18,6 +17,9 @@ pub use text_pos::{Position, Range};
 
 /// The max number of errors per path.
 pub const MAX_ERRORS_PER_PATH: usize = 20;
+
+/// TODO set to true/rm
+const PROCESS_EXPORTS: bool = false;
 
 /// Performs analysis.
 #[derive(Debug)]
@@ -52,9 +54,6 @@ impl Analysis {
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &Input) -> PathMap<Vec<Error>> {
-    // TODO require explicit basis import
-    let mut syms = self.std_basis.syms().clone();
-    let mut basis = self.std_basis.basis().clone();
     self.source_files = elapsed::log("analyzed_files", || {
       input
         .sources
@@ -62,32 +61,72 @@ impl Analysis {
         .map(|(&path_id, s)| (path_id, SourceFile::new(s)))
         .collect()
     });
-    let mut ac = vec![input.root_group_id];
-    let mut ret = PathMap::<Vec<_>>::default();
-    let mut done = FxHashSet::<PathId>::default();
-    elapsed::log("statics", || {
-      while let Some(path) = ac.pop() {
-        if let Some(group) = input.groups.get(&path) {
-          ac.extend(group.paths.iter().rev().copied());
-          continue;
-        }
-        if let Some(file) = self.source_files.get_mut(&path) {
-          if !done.insert(path) {
-            continue;
-          }
-          let low = &file.lowered;
-          let mode = statics::Mode::Regular(Some(path));
-          let (info, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
-          file.statics_errors = es;
-          file.info = Some(info);
-          ret.insert(path, file.to_errors(&syms));
-          continue;
-        }
-        log::error!("no file for {path:?}");
-      }
+    let mut group_bases = PathMap::<statics::basis::Basis>::default();
+    let mut source_errors = PathMap::<Vec<Error>>::default();
+    self.syms = self.std_basis.syms().clone();
+    let res = elapsed::log("statics", || {
+      self.group_basis(
+        &mut group_bases,
+        &mut source_errors,
+        &input.groups,
+        input.root_group_id,
+      )
     });
-    self.syms = syms;
-    ret
+    match res {
+      Ok(()) => {}
+      Err(e) => match e {
+        GroupBasisError::NoFile(path) => log::error!("no file for {path:?}"),
+        GroupBasisError::NoExports(_) => unreachable!(),
+      },
+    };
+    source_errors
+  }
+
+  fn group_basis(
+    &mut self,
+    group_bases: &mut PathMap<statics::basis::Basis>,
+    source_errors: &mut PathMap<Vec<Error>>,
+    groups: &PathMap<input::Group>,
+    path: paths::PathId,
+  ) -> Result<(), GroupBasisError> {
+    if group_bases.contains_key(&path) {
+      return Ok(());
+    }
+    // TODO require explicit basis import
+    let mut basis = self.std_basis.basis().clone();
+    let group = match groups.get(&path) {
+      Some(x) => x,
+      None => return Err(GroupBasisError::NoFile(path)),
+    };
+    for &path in group.paths.iter() {
+      match self.source_files.get_mut(&path) {
+        Some(source_file) => {
+          let low = &source_file.lowered;
+          let mode = statics::Mode::Regular(Some(path));
+          let (info, es) =
+            statics::get(&mut self.syms, &mut basis, mode, &low.arenas, &low.top_decs);
+          source_file.statics_errors = es;
+          source_file.info = Some(info);
+          source_errors.insert(path, source_file.to_errors(&self.syms));
+        }
+        None => {
+          // if not a source file, must be a group file
+          self.group_basis(group_bases, source_errors, groups, path)?;
+          let mut other = group_bases
+            .get(&path)
+            .expect("path should have a basis after successful call")
+            .clone();
+          basis.append(&mut other);
+        }
+      }
+    }
+    let mut exports = group.exports.clone();
+    basis.limit_with(&mut exports);
+    if !exports.is_empty() && PROCESS_EXPORTS {
+      return Err(GroupBasisError::NoExports(exports));
+    }
+    group_bases.insert(path, basis);
+    Ok(())
   }
 
   /// Returns a Markdown string with information about this position.
@@ -194,6 +233,11 @@ fn priority(kind: SyntaxKind) -> u8 {
     SyntaxKind::Whitespace | SyntaxKind::BlockComment | SyntaxKind::Invalid => 0,
     _ => 1,
   }
+}
+
+enum GroupBasisError {
+  NoFile(paths::PathId),
+  NoExports(statics::basis::Exports),
 }
 
 /// An error.
