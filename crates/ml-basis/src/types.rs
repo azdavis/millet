@@ -1,7 +1,7 @@
 use located::{Located, TextRange};
 use smol_str::SmolStr;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// std's Result with our Error.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -13,9 +13,10 @@ pub(crate) enum ErrorKind {
   Expected(Token<'static>),
   ExpectedBasExp,
   ExpectedName,
+  InvalidPath,
 }
 
-/// An error when processing a CM file.
+/// An error when processing a ML Basis file.
 #[derive(Debug)]
 pub struct Error(Located<ErrorKind>);
 
@@ -38,6 +39,7 @@ impl fmt::Display for Error {
       ErrorKind::Expected(tok) => write!(f, "expected `{tok}`"),
       ErrorKind::ExpectedBasExp => f.write_str("expected a basis expression"),
       ErrorKind::ExpectedName => f.write_str("expected a name"),
+      ErrorKind::InvalidPath => f.write_str("invalid path"),
     }
   }
 }
@@ -116,7 +118,7 @@ pub enum BasDec {
   Structure(NamesSeq),
   Signature(NamesSeq),
   Functor(NamesSeq),
-  Path(Located<PathBuf>),
+  Path(Located<ParsedPath>),
   Ann(Located<String>, Box<BasDec>),
   Seq(Vec<BasDec>),
 }
@@ -128,4 +130,32 @@ pub enum BasExp {
   Bas(BasDec),
   Name(Located<Name>),
   Let(BasDec, Box<BasExp>),
+}
+
+/// A kind of path ML Basis knows about.
+#[derive(Debug, Clone, Copy)]
+pub enum PathKind {
+  /// SML paths.
+  Sml,
+  /// ML Basis paths.
+  Mlb,
+}
+
+/// A parsed path.
+#[derive(Debug)]
+pub struct ParsedPath {
+  pub(crate) kind: PathKind,
+  pub(crate) path: PathBuf,
+}
+
+impl ParsedPath {
+  /// Returns the kind of path this is.
+  pub fn kind(&self) -> PathKind {
+    self.kind
+  }
+
+  /// Returns this as a `Path`.
+  pub fn as_path(&self) -> &Path {
+    self.path.as_path()
+  }
 }

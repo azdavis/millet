@@ -1,7 +1,9 @@
-use crate::types::{BasDec, BasExp, Error, ErrorKind, Name, NamesSeq, Result, Token};
+use crate::types::{
+  BasDec, BasExp, Error, ErrorKind, Name, NamesSeq, ParsedPath, PathKind, Result, Token,
+};
 use located::{Located, TextRange};
 use path_slash::PathBufExt as _;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub(crate) fn get(tokens: &[Located<Token<'_>>]) -> Result<BasDec> {
   let mut p = Parser {
@@ -133,7 +135,12 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
     // TODO allow string as well
     Token::BarePath(path) => {
       p.bump();
-      BasDec::Path(tok.wrap(PathBuf::from_slash(path)))
+      let path = PathBuf::from_slash(path);
+      let kind = match path_kind(path.as_path()) {
+        Some(x) => x,
+        None => return Err(Error::new(ErrorKind::InvalidPath, tok.range)),
+      };
+      BasDec::Path(tok.wrap(ParsedPath { path, kind }))
     }
     Token::Ann => {
       p.bump();
@@ -148,6 +155,15 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
     _ => return Ok(None),
   };
   Ok(Some(ret))
+}
+
+fn path_kind(path: &Path) -> Option<PathKind> {
+  let ret = match path.extension()?.to_str()? {
+    "sml" | "sig" | "fun" => PathKind::Sml,
+    "mlb" => PathKind::Mlb,
+    _ => return None,
+  };
+  Some(ret)
 }
 
 fn bas_exp(p: &mut Parser<'_>) -> Result<BasExp> {
