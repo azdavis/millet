@@ -33,6 +33,8 @@ enum UnifyError {
   OverloadMismatch(Overload, MetaTyVar),
 }
 
+type Result<T, E = UnifyError> = std::result::Result<T, E>;
+
 /// use this to avoid taking the whole [`St`] in [`unify_`].
 struct UnifySt {
   overloads: Overloads,
@@ -40,7 +42,7 @@ struct UnifySt {
 }
 
 /// `want` and `got` will have `subst` applied to them upon entry to this function.
-fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<(), UnifyError> {
+fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<()> {
   apply(&st.subst, &mut want);
   apply(&st.subst, &mut got);
   match (want, got) {
@@ -79,7 +81,7 @@ fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<(), UnifyError>
   }
 }
 
-fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result<(), UnifyError> {
+fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result<()> {
   // return without doing anything if the meta vars are the same.
   if let Ty::MetaVar(mv2) = &ty {
     if mv == *mv2 {
@@ -199,7 +201,7 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result<(), UnifyError> {
   Ok(())
 }
 
-fn head_match(b: bool) -> Result<(), UnifyError> {
+fn head_match(b: bool) -> Result<()> {
   if b {
     Ok(())
   } else {
