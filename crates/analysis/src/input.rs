@@ -162,7 +162,7 @@ where
       kind: GetInputErrorKind::ReadDir(e),
     })?;
     for entry in dir_entries {
-      if entry.extension().map_or(false, |x| x == "cm") {
+      if fs.is_file(entry.as_path()) && entry.extension().map_or(false, |x| x == "cm") {
         match &root_group_path {
           Some(x) => {
             return Err(GetInputError {

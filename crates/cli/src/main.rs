@@ -33,7 +33,7 @@ fn main() -> Result<()> {
   let fs = paths::RealFileSystem::default();
   let path = fs.canonicalize(std::path::Path::new(&path))?;
   let (root_path, root_group) =
-    if path.as_path().is_file() && path.as_path().extension().map_or(false, |x| x == "cm") {
+    if fs.is_file(path.as_path()) && path.as_path().extension().map_or(false, |x| x == "cm") {
       let parent = path.as_path().parent().unwrap();
       (fs.canonicalize(parent)?, Some(path.into_path_buf()))
     } else {
