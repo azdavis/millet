@@ -140,10 +140,8 @@ fn get_str_dec(
         let fun_name = fun_bind.functor_name.clone();
         let fun_sig = FunSig {
           param: param_sig,
-          res: Sig {
-            ty_names: body_ty_names,
-            env: body_env,
-          },
+          body_ty_names,
+          body_env,
         };
         if let Some(e) = ins_no_dupe(&mut fun_env, fun_name, fun_sig, Item::Functor) {
           st.err(str_dec, e);
@@ -208,10 +206,10 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         let mut arg_env = Env::default();
         get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
         let mut subst = TyRealization::default();
-        let mut to_add = fun_sig.res.env.clone();
+        let mut to_add = fun_sig.body_env.clone();
         let arg_idx = hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
         env_instance_sig(st, &mut subst, &arg_env, &fun_sig.param, arg_idx);
-        gen_fresh_syms(st, &mut subst, &fun_sig.res.ty_names);
+        gen_fresh_syms(st, &mut subst, &fun_sig.body_ty_names);
         env_realize(&subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
@@ -226,7 +224,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         for val_info in to_add.val_env.values_mut() {
           val_info.def = def;
         }
-        st.info().insert(str_exp, None, fun_sig.res.env.def);
+        st.info().insert(str_exp, None, fun_sig.body_env.def);
         ac.append(&mut to_add);
       }
       None => st.err(
@@ -789,7 +787,10 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
 fn bs_syms<F: FnMut(Sym)>(f: &mut F, bs: &Bs) {
   for fun_sig in bs.fun_env.values() {
     sig_syms(f, &fun_sig.param);
-    sig_syms(f, &fun_sig.res);
+    for &sym in fun_sig.body_ty_names.iter() {
+      f(sym);
+    }
+    env_syms(f, &fun_sig.body_env);
   }
   for sig in bs.sig_env.values() {
     sig_syms(f, sig);

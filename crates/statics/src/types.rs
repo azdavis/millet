@@ -912,7 +912,8 @@ pub(crate) struct Sig {
 #[derive(Debug, Clone)]
 pub(crate) struct FunSig {
   pub(crate) param: Sig,
-  pub(crate) res: Sig,
+  pub(crate) body_ty_names: TyNameSet,
+  pub(crate) body_env: Env,
 }
 
 pub(crate) type SigEnv = FxHashMap<hir::Name, Sig>;
