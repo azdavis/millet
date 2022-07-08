@@ -94,13 +94,13 @@ pub struct CMFile {
   /// The exports.
   pub exports: Vec<Export>,
   /// The paths, in order.
-  pub paths: Vec<(Located<std::path::PathBuf>, FileKind)>,
+  pub paths: Vec<(Located<std::path::PathBuf>, PathKind)>,
 }
 
-/// A kind of file.
+/// A kind of path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(missing_docs)]
-pub enum FileKind {
+pub enum PathKind {
   Sml,
   Cm,
 }

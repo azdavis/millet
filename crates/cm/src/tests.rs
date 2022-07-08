@@ -1,8 +1,8 @@
-use crate::types::{Export, FileKind, Name, Namespace};
+use crate::types::{Export, Name, Namespace, PathKind};
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 
-fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, FileKind)]) {
+fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)]) {
   let file = crate::get(s).unwrap();
   let want_paths: Vec<_> = want_paths
     .iter()
@@ -48,7 +48,7 @@ Group is
   support.sml
 "#,
     vec![],
-    &[("hi.sml", FileKind::Sml), ("support.sml", FileKind::Sml)],
+    &[("hi.sml", PathKind::Sml), ("support.sml", PathKind::Sml)],
   );
 }
 
@@ -74,12 +74,12 @@ is
       mk_regular(Namespace::Signature, "C"),
     ],
     &[
-      ("a.sml", FileKind::Sml),
-      ("b/c/d.sml", FileKind::Sml),
-      ("e.fun", FileKind::Sml),
-      ("seq.cm", FileKind::Cm),
-      ("f.sig", FileKind::Sml),
-      ("uh", FileKind::Sml),
+      ("a.sml", PathKind::Sml),
+      ("b/c/d.sml", PathKind::Sml),
+      ("e.fun", PathKind::Sml),
+      ("seq.cm", PathKind::Cm),
+      ("f.sig", PathKind::Sml),
+      ("uh", PathKind::Sml),
     ],
   );
 }
@@ -94,7 +94,7 @@ Group is
   bar.cm
 "#,
     vec![],
-    &[("foo.sml", FileKind::Sml), ("bar.cm", FileKind::Cm)],
+    &[("foo.sml", PathKind::Sml), ("bar.cm", PathKind::Cm)],
   );
 }
 
@@ -117,9 +117,9 @@ is
       mk_regular(Namespace::Signature, "BAR"),
     ],
     &[
-      ("Foo.sml", FileKind::Sml),
-      ("Bar/sources.cm", FileKind::Cm),
-      ("quz/baz.cm", FileKind::Cm),
+      ("Foo.sml", PathKind::Sml),
+      ("Bar/sources.cm", PathKind::Cm),
+      ("quz/baz.cm", PathKind::Cm),
     ],
   );
 }

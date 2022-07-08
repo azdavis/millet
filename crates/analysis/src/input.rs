@@ -290,11 +290,11 @@ where
             let path = group_parent.join(path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
             match kind {
-              cm::FileKind::Sml => {
+              cm::PathKind::Sml => {
                 let contents = read_file(fs, source, path.as_path())?;
                 sources.insert(path_id, contents);
               }
-              cm::FileKind::Cm => {
+              cm::PathKind::Cm => {
                 stack.push(((group_path_id, Some(range)), path_id));
               }
             }
