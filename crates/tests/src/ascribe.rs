@@ -513,7 +513,7 @@ functor Id (X : OUTER) :> OUTER = X
 }
 
 #[test]
-fn sig_ty_alias_t_u() {
+fn sig_ty_alias_1() {
   fail(
     r#"
 signature SIG = sig
@@ -530,10 +530,10 @@ end
   );
 }
 
-/// the same as [`sig_ty_alias_t_u`] but with the t and u swapped. these 2 tests check for
+/// the same as [`sig_ty_alias_1`] but with the t and u swapped. these 2 tests check for
 /// questionable things involving iteration order.
 #[test]
-fn sig_ty_alias_u_t() {
+fn sig_ty_alias_2() {
   check(
     r#"
 signature SIG = sig
