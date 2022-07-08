@@ -1,4 +1,4 @@
-//! Low-level tests for [`analysis::get_input`].
+//! Low-level tests for [`analysis::input::get`].
 
 use crate::check::ROOT;
 
@@ -73,6 +73,17 @@ root = "foo.cm"
   "#;
   let e = check_input_with_contents(inp, Some(config)).unwrap_err();
   assert!(e.to_string().contains("there is a cycle"));
+}
+
+#[test]
+fn not_group() {
+  let config = r#"
+version = 1
+[workspace]
+root = "nope.txt"
+"#;
+  let e = check_input(&["foo.cm"], Some(config)).unwrap_err();
+  assert!(e.to_string().contains("not a group path"));
 }
 
 fn check_input(

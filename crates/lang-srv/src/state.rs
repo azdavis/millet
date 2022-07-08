@@ -278,7 +278,7 @@ impl State {
       None => return false,
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input = elapsed::log("get_input", || {
+    let input = elapsed::log("input::get", || {
       analysis::input::get(&self.file_system, &mut root.path, None)
     });
     let input = match input {
