@@ -3,6 +3,15 @@ use crate::st::St;
 use crate::types::{MetaTyVar, Overload, Overloads, Subst, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
+#[derive(Debug)]
+enum UnifyError {
+  OccursCheck(MetaTyVar, Ty),
+  HeadMismatch,
+  OverloadMismatch(Overload, MetaTyVar),
+}
+
+type Result<T, E = UnifyError> = std::result::Result<T, E>;
+
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
 where
   I: Into<hir::Idx>,
@@ -25,15 +34,6 @@ where
   *st.syms.overloads() = unify_st.overloads;
   *st.subst() = unify_st.subst;
 }
-
-#[derive(Debug)]
-enum UnifyError {
-  OccursCheck(MetaTyVar, Ty),
-  HeadMismatch,
-  OverloadMismatch(Overload, MetaTyVar),
-}
-
-type Result<T, E = UnifyError> = std::result::Result<T, E>;
 
 /// use this to avoid taking the whole [`St`] in [`unify_`].
 struct UnifySt {
