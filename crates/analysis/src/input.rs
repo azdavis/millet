@@ -117,6 +117,27 @@ impl fmt::Display for GetInputErrorKind {
 /// std's Result with GetInputError as the default error.
 pub type Result<T, E = GetInputError> = std::result::Result<T, E>;
 
+/// A kind of group file.
+#[derive(Debug)]
+pub enum GroupFileKind {
+  /// SML/NJ Compilation Manager files.
+  Cm,
+}
+
+/// Returns what kind of group file this is.
+pub fn group_file_kind<F>(fs: &F, path: &Path) -> Option<GroupFileKind>
+where
+  F: paths::FileSystem,
+{
+  if !fs.is_file(path) {
+    return None;
+  }
+  path.extension().and_then(|x| match x.to_str()? {
+    "cm" => Some(GroupFileKind::Cm),
+    _ => None,
+  })
+}
+
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
 /// `root`.
 pub fn get_input<F>(
@@ -162,7 +183,7 @@ where
       kind: GetInputErrorKind::ReadDir(e),
     })?;
     for entry in dir_entries {
-      if fs.is_file(entry.as_path()) && entry.extension().map_or(false, |x| x == "cm") {
+      if group_file_kind(fs, entry.as_path()).is_some() {
         match &root_group_path {
           Some(x) => {
             return Err(GetInputError {

@@ -32,13 +32,12 @@ fn main() -> Result<()> {
   let path: String = args.free_from_str()?;
   let fs = paths::RealFileSystem::default();
   let path = fs.canonicalize(std::path::Path::new(&path))?;
-  let (root_path, root_group) =
-    if fs.is_file(path.as_path()) && path.as_path().extension().map_or(false, |x| x == "cm") {
-      let parent = path.as_path().parent().unwrap();
-      (fs.canonicalize(parent)?, Some(path.into_path_buf()))
-    } else {
-      (path, None)
-    };
+  let (root_path, root_group) = if analysis::group_file_kind(&fs, path.as_path()).is_some() {
+    let parent = path.as_path().parent().unwrap();
+    (fs.canonicalize(parent)?, Some(path.into_path_buf()))
+  } else {
+    (path, None)
+  };
   let mut root = paths::Root::new(root_path);
   let inp = analysis::get_input(&fs, &mut root, root_group)?;
   let mut an = analysis::Analysis::new(analysis::StdBasis::full());
