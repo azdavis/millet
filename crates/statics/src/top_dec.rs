@@ -270,7 +270,14 @@ fn get_sig_exp(
         env_realize(&subst, &mut sig_env);
         st.info().insert(sig_exp, None, sig.env.def);
         ac.append(&mut sig_env);
-        (st.mode().is_std_basis() && name.as_str() == "WORD").then_some(BasicOverload::Word)
+        if st.mode().is_std_basis() {
+          match name.as_str() {
+            "WORD" => Some(BasicOverload::Word),
+            _ => None,
+          }
+        } else {
+          None
+        }
       }
       None => {
         st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone()));
