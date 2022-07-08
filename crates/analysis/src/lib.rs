@@ -118,9 +118,11 @@ impl Analysis {
       }
     }
     let mut exports = group.exports.clone();
-    basis.limit_with(&mut exports);
-    if !exports.is_empty() && input::STRICT_EXPORTS {
-      return Err(GroupBasisError::NoExports(exports));
+    if input::STRICT_EXPORTS {
+      basis.limit_with(&mut exports);
+      if !exports.is_empty() {
+        return Err(GroupBasisError::NoExports(exports));
+      }
     }
     group_bases.insert(path, basis);
     Ok(())
