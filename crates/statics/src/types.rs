@@ -440,15 +440,27 @@ pub(crate) struct Overloads {
 }
 
 impl std::ops::Index<BasicOverload> for Overloads {
-  type Output = [Sym];
+  type Output = Vec<Sym>;
 
   fn index(&self, index: BasicOverload) -> &Self::Output {
     match index {
-      BasicOverload::Int => self.int.as_slice(),
-      BasicOverload::Real => self.real.as_slice(),
-      BasicOverload::Word => self.word.as_slice(),
-      BasicOverload::String => self.string.as_slice(),
-      BasicOverload::Char => self.char.as_slice(),
+      BasicOverload::Int => &self.int,
+      BasicOverload::Real => &self.real,
+      BasicOverload::Word => &self.word,
+      BasicOverload::String => &self.string,
+      BasicOverload::Char => &self.char,
+    }
+  }
+}
+
+impl std::ops::IndexMut<BasicOverload> for Overloads {
+  fn index_mut(&mut self, index: BasicOverload) -> &mut Self::Output {
+    match index {
+      BasicOverload::Int => &mut self.int,
+      BasicOverload::Real => &mut self.real,
+      BasicOverload::Word => &mut self.word,
+      BasicOverload::String => &mut self.string,
+      BasicOverload::Char => &mut self.char,
     }
   }
 }
