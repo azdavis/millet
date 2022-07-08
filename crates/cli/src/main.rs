@@ -55,7 +55,7 @@ fn main() -> Result<()> {
     }
   }
   if num_errors == 0 {
-    println!("no errors");
+    println!("no errors!");
     Ok(())
   } else {
     bail!("{num_errors} errors");
