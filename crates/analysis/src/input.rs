@@ -248,12 +248,11 @@ where
     .iter()
     .map(|(&path, group)| (path, group.paths.iter().copied().collect()))
     .collect();
-  if let Err(e) = topo_sort::get(&graph) {
-    let w = e.witness();
+  if let Err(err) = topo_sort::get(&graph) {
     return Err(GetInputError {
       range: None,
       source: None,
-      path: root.get_path(w).as_path().to_owned(),
+      path: root.get_path(err.witness()).as_path().to_owned(),
       kind: GetInputErrorKind::Cycle,
     });
   }
