@@ -1,4 +1,4 @@
-use crate::check::{check, check_multi};
+use crate::check::{check, check_multi, fail};
 
 mod dec;
 mod exp;
@@ -143,4 +143,16 @@ fn utf8_string() {
 val _: string = "星にもまた、始まりはあるが、自らの力を持って滅びゆく。有限。"
 "#,
   )
+}
+
+#[test]
+fn withtype() {
+  fail(
+    r#"
+datatype foo = Foo of bar
+withtype bar = int
+val _ = 3 : bar
+val _ = Foo 4
+"#,
+  );
 }

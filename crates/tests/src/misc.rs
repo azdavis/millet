@@ -498,3 +498,25 @@ signature S = sig
 end"#,
   );
 }
+
+#[test]
+fn semicolon() {
+  check(
+    r#"
+val a = 3;
+datatype foo = Bar;
+fun inc x = let val y = x + 1; in "ignored"; y end;
+val _ = inc a : int;
+"#,
+  );
+}
+
+#[test]
+fn circular_datatype() {
+  fail(
+    r#"
+datatype foo = Foo of bar
+and bar = Bar of foo | Quz
+"#,
+  );
+}
