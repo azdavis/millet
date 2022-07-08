@@ -191,7 +191,8 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         env_realize(&subst, &mut to_add);
       }
       if let Some(ov) = ov {
-        match &to_add.ty_env.get(ov.as_str()).unwrap().ty_scheme.ty {
+        let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
+        match &ty_info.ty_scheme.ty {
           Ty::Con(args, sym) => {
             assert!(args.is_empty());
             st.syms.overloads()[ov].push(*sym);
