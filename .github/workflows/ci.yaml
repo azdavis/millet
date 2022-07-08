@@ -17,6 +17,8 @@ jobs:
           toolchain: stable
           profile: minimal
           components: rustfmt, clippy
+      - name: Cache rust
+        uses: Swatinem/rust-cache@v1
       - name: Run tests
         run: cargo xtask ci
   dist:
@@ -57,6 +59,8 @@ jobs:
           target: ${{ matrix.rust }}
           toolchain: stable
           profile: minimal
+      - name: Cache rust
+        uses: Swatinem/rust-cache@v1
       - name: Set up node
         uses: actions/setup-node@v2
         with:
