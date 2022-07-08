@@ -2,6 +2,15 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.2.3
+
+- Allow upper and lower case `Group`, `Library`, etc in CM files.
+- Add more std basis structures, like `Word32` and `PackWord32Big`.
+- Add initial ML Basis support. It is very rudimentary, and basically only works for ML Basis files that are just lists of files.
+- Improve syntax highlighting for ML Basis files.
+- Improve reporting of overloads in errors.
+- Allow word literals to have overloaded type.
+
 ## v0.2.2
 
 - Improve types for `TextIO` with a hack (since the std basis docs use invalid SML).
