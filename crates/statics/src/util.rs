@@ -73,7 +73,7 @@ pub(crate) fn instantiate(st: &mut St, ty_scheme: TyScheme) -> Ty {
       let mv = st.gen_meta_var();
       if let Some(k) = x {
         let k = SubstEntry::Kind(k.clone());
-        assert!(st.subst().insert(mv.clone(), k).is_none())
+        assert!(st.subst().insert(mv, k).is_none())
       }
       Ty::MetaVar(mv)
     })

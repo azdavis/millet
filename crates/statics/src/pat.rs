@@ -146,7 +146,7 @@ fn get_(
         // sml_def(38)
         let mv = st.gen_meta_var();
         let k = SubstEntry::Kind(TyVarKind::Record(rows));
-        assert!(st.subst().insert(mv.clone(), k).is_none(),);
+        assert!(st.subst().insert(mv, k).is_none(),);
         Ty::MetaVar(mv)
       } else {
         Ty::Record(rows)

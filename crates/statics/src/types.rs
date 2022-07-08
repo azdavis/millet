@@ -460,7 +460,7 @@ impl BoundTyVar {
 ///
 /// Should eventually be solved in a [`Subst`], but before that, it may be "restricted" by the
 /// `Subst` without yet being fully solved to a type.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct MetaTyVar(Uniq);
 
 #[derive(Debug, Default)]
@@ -999,7 +999,7 @@ where
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
       None | Some(SubstEntry::Kind(_)) => {
-        f(mv.clone());
+        f(*mv);
       }
       Some(SubstEntry::Solved(ty)) => meta_vars(subst, f, ty),
     },
