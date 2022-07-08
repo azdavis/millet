@@ -5,6 +5,9 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use text_pos::Range;
 
+/// TODO rm/set to true
+pub(crate) const STRICT_EXPORTS: bool = false;
+
 /// The input to analysis.
 #[derive(Debug)]
 pub struct Input {
@@ -324,12 +327,14 @@ where
               }
             },
             cm::Export::Library(lib) => {
-              return Err(GetInputError {
-                range: Some(pos_db.range(lib.range)),
-                source: None,
-                path: group_path.to_owned(),
-                kind: GetInputErrorKind::UnsupportedExport,
-              })
+              if STRICT_EXPORTS {
+                return Err(GetInputError {
+                  range: Some(pos_db.range(lib.range)),
+                  source: None,
+                  path: group_path.to_owned(),
+                  kind: GetInputErrorKind::UnsupportedExport,
+                });
+              }
             }
           }
         }

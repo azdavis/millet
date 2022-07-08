@@ -18,9 +18,6 @@ pub use text_pos::{Position, Range};
 /// The max number of errors per path.
 pub const MAX_ERRORS_PER_PATH: usize = 20;
 
-/// TODO set to true/rm
-const PROCESS_EXPORTS: bool = false;
-
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
@@ -122,7 +119,7 @@ impl Analysis {
     }
     let mut exports = group.exports.clone();
     basis.limit_with(&mut exports);
-    if !exports.is_empty() && PROCESS_EXPORTS {
+    if !exports.is_empty() && input::STRICT_EXPORTS {
       return Err(GroupBasisError::NoExports(exports));
     }
     group_bases.insert(path, basis);
