@@ -10,7 +10,7 @@
     },
     "keyword": {
       "name": "keyword.other.mlb",
-      "match": "\\b(and|bas|basis|end|functor|in|let|local|open|signature|structure)\\b"
+      "match": "\\b(and|ann|bas|basis|end|functor|in|let|local|open|signature|structure)\\b"
     }
   }
 }
