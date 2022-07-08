@@ -123,7 +123,7 @@ impl fmt::Display for GetInputErrorKind {
 pub type Result<T, E = GetInputError> = std::result::Result<T, E>;
 
 /// A kind of group path.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum GroupPathKind {
   /// SML/NJ Compilation Manager files.
   Cm,
@@ -262,12 +262,6 @@ where
     };
     let contents = read_file(fs, source, group_path)?;
     let pos_db = text_pos::PositionDb::new(&contents);
-    let cm = cm::get(&contents).map_err(|e| GetInputError {
-      source: None,
-      path: group_path.to_owned(),
-      range: Some(pos_db.range(e.text_range())),
-      kind: GetInputErrorKind::Cm(e),
-    })?;
     let group_parent = match group_path.parent() {
       Some(x) => x.to_owned(),
       None => {
@@ -279,53 +273,64 @@ where
         })
       }
     };
-    let paths = cm
-      .paths
-      .into_iter()
-      .map(|(path, kind)| {
-        let range = pos_db.range(path.range);
-        let source = Source::PathAndRange(group_path.to_owned(), range);
-        let path = group_parent.join(path.val.as_path());
-        let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
-        match kind {
-          cm::FileKind::Sml => {
-            let contents = read_file(fs, source, path.as_path())?;
-            sources.insert(path_id, contents);
-          }
-          cm::FileKind::Cm => {
-            stack.push(((group_path_id, Some(range)), path_id));
-          }
-        }
-        Ok(path_id)
-      })
-      .collect::<Result<Vec<_>>>()?;
-    let mut exports = statics::basis::Exports::default();
-    for export in cm.exports {
-      match export {
-        cm::Export::Regular(ns, name) => match ns.val {
-          cm::Namespace::Structure => exports.structure.push(hir::Name::new(name.val.as_str())),
-          cm::Namespace::Signature => exports.signature.push(hir::Name::new(name.val.as_str())),
-          cm::Namespace::Functor => exports.functor.push(hir::Name::new(name.val.as_str())),
-          cm::Namespace::FunSig => {
-            return Err(GetInputError {
-              range: Some(pos_db.range(ns.range)),
-              source: None,
-              path: group_path.to_owned(),
-              kind: GetInputErrorKind::UnsupportedExport,
-            })
-          }
-        },
-        cm::Export::Library(lib) => {
-          return Err(GetInputError {
-            range: Some(pos_db.range(lib.range)),
-            source: None,
-            path: group_path.to_owned(),
-            kind: GetInputErrorKind::UnsupportedExport,
+    let group = match root_group_path.kind {
+      GroupPathKind::Cm => {
+        let cm = cm::get(&contents).map_err(|e| GetInputError {
+          source: None,
+          path: group_path.to_owned(),
+          range: Some(pos_db.range(e.text_range())),
+          kind: GetInputErrorKind::Cm(e),
+        })?;
+        let paths = cm
+          .paths
+          .into_iter()
+          .map(|(path, kind)| {
+            let range = pos_db.range(path.range);
+            let source = Source::PathAndRange(group_path.to_owned(), range);
+            let path = group_parent.join(path.val.as_path());
+            let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
+            match kind {
+              cm::FileKind::Sml => {
+                let contents = read_file(fs, source, path.as_path())?;
+                sources.insert(path_id, contents);
+              }
+              cm::FileKind::Cm => {
+                stack.push(((group_path_id, Some(range)), path_id));
+              }
+            }
+            Ok(path_id)
           })
+          .collect::<Result<Vec<_>>>()?;
+        let mut exports = statics::basis::Exports::default();
+        for export in cm.exports {
+          match export {
+            cm::Export::Regular(ns, name) => match ns.val {
+              cm::Namespace::Structure => exports.structure.push(hir::Name::new(name.val.as_str())),
+              cm::Namespace::Signature => exports.signature.push(hir::Name::new(name.val.as_str())),
+              cm::Namespace::Functor => exports.functor.push(hir::Name::new(name.val.as_str())),
+              cm::Namespace::FunSig => {
+                return Err(GetInputError {
+                  range: Some(pos_db.range(ns.range)),
+                  source: None,
+                  path: group_path.to_owned(),
+                  kind: GetInputErrorKind::UnsupportedExport,
+                })
+              }
+            },
+            cm::Export::Library(lib) => {
+              return Err(GetInputError {
+                range: Some(pos_db.range(lib.range)),
+                source: None,
+                path: group_path.to_owned(),
+                kind: GetInputErrorKind::UnsupportedExport,
+              })
+            }
+          }
         }
+        Group { paths, exports }
       }
-    }
-    groups.insert(group_path_id, Group { paths, exports });
+    };
+    groups.insert(group_path_id, group);
   }
   let graph: topo_sort::Graph<_> = groups
     .iter()
