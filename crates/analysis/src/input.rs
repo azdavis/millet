@@ -97,7 +97,7 @@ impl fmt::Display for GetInputErrorKind {
     match self {
       GetInputErrorKind::ReadDir(e) => write!(f, "couldn't read directory: {e}"),
       GetInputErrorKind::ReadFile(e) => write!(f, "couldn't read file: {e}"),
-      GetInputErrorKind::Cm(e) => write!(f, "couldn't process CM file: {e}"),
+      GetInputErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
       GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize: {e}"),
       GetInputErrorKind::NoParent => f.write_str("no parent"),
       GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
