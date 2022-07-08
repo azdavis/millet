@@ -1,5 +1,5 @@
 use crate::error::{ErrorKind, Item};
-use crate::generalizes::{eq_ty_scheme, generalizes};
+use crate::generalizes::{eq_ty_scheme, eq_ty_scheme_no_emit, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{
@@ -643,7 +643,9 @@ type TyRealization = FxHashMap<Sym, TyScheme>;
 fn env_instance_sig(st: &mut St, subst: &mut TyRealization, env: &Env, sig: &Sig, idx: hir::Idx) {
   for &sym in sig.ty_names.iter() {
     let mut path = Vec::<&hir::Name>::new();
-    if !bound_ty_name_to_path(&mut path, &sig.env, sym) {
+    let (_, ty_info) = st.syms.get(&sym).unwrap();
+    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
+    if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
       log::error!("couldn't get a path for {sym:?} in {sig:?}");
       continue;
     }
@@ -657,18 +659,36 @@ fn env_instance_sig(st: &mut St, subst: &mut TyRealization, env: &Env, sig: &Sig
   }
 }
 
-fn bound_ty_name_to_path<'e>(ac: &mut Vec<&'e hir::Name>, env: &'e Env, sym: Sym) -> bool {
+/// note that given an environment for the signature:
+///
+/// ```sml
+/// signature SIG = sig
+///   type t
+///   type u = t
+/// end
+/// ```
+///
+/// and a request to find the path to the single ty name bound by this signature's env (there is
+/// only one), this function will report _either_ `t` or `u` based on which one comes up first in
+/// the `iter()` order.
+///
+/// this seems slightly questionable, but I'm not actually sure if it's an issue. I mean, it says
+/// right there that they should be equal anyway.
+fn bound_ty_name_to_path<'e>(
+  st: &mut St,
+  ac: &mut Vec<&'e hir::Name>,
+  env: &'e Env,
+  ty_scheme: &TyScheme,
+) -> bool {
   for (name, ty_info) in env.ty_env.iter() {
-    if let Ty::Con(_, s) = &ty_info.ty_scheme.ty {
-      if *s == sym {
-        ac.push(name);
-        return true;
-      }
+    if eq_ty_scheme_no_emit(st, ty_info.ty_scheme.clone(), ty_scheme.clone()).is_ok() {
+      ac.push(name);
+      return true;
     }
   }
   for (name, env) in env.str_env.iter() {
     ac.push(name);
-    if bound_ty_name_to_path(ac, env, sym) {
+    if bound_ty_name_to_path(st, ac, env, ty_scheme) {
       return true;
     }
     ac.pop();

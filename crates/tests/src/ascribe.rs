@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -514,7 +514,7 @@ functor Id (X : OUTER) :> OUTER = X
 
 #[test]
 fn sig_ty_alias_1() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type 'a t

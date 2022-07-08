@@ -4,13 +4,13 @@ use crate::types::{MetaTyVar, Overload, Overloads, Subst, SubstEntry, Ty, TyVarK
 use crate::util::apply;
 
 #[derive(Debug)]
-enum UnifyError {
+pub(crate) enum UnifyError {
   OccursCheck(MetaTyVar, Ty),
   HeadMismatch,
   OverloadMismatch(Overload, MetaTyVar),
 }
 
-type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
+pub(crate) type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
 where
@@ -28,7 +28,7 @@ where
 }
 
 /// does not emit any errors to the `st`, instead returns an error (if any).
-fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result {
+pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result {
   let mut unify_st = UnifySt {
     overloads: std::mem::take(st.syms.overloads()),
     subst: std::mem::take(st.subst()),

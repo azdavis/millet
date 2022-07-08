@@ -1,18 +1,30 @@
 use crate::fmt_util::ty_var_name;
 use crate::st::St;
 use crate::types::{Ty, TyScheme, TyVarKind};
-use crate::unify::unify;
+use crate::unify::{unify, unify_no_emit, Result};
 use crate::util::{apply_bv, instantiate};
 
 /// emits no error iff `lhs` and `rhs` are equal ty schemes.
 pub(crate) fn eq_ty_scheme(st: &mut St, lhs: TyScheme, rhs: TyScheme, idx: hir::Idx) {
-  // TODO just use `==` since alpha equivalent ty schemes are already `==` for derive(PartialEq)?
   generalizes(st, lhs.clone(), &rhs, idx);
   generalizes(st, rhs, &lhs, idx);
 }
 
-/// emits no error iff `general` generalizes `specific`.
-pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, idx: hir::Idx) {
+/// we _maybe_ could use `#[derive(PartialEq, Eq)]` for [`Ty`] and [`crate::types::BoundTyVars`],
+/// and then just call those here instead of using [`unify_no_emit`] (and then return a bool instead
+/// of a [`Result`]), since equivalent [`TyScheme`]s _should_ be alpha-equivalent (and thus `==`).
+///
+/// but... something about that makes me uneasy. maybe it's because we have [`Ty::MetaVar`] and
+/// [`Ty::FixedVar`] to deal with? but those should probably not come up in ty schemes too often,
+/// right? _shrug_ for now I'm going to just read off the Definition, which says they're eq if they
+/// generalize each other.
+pub(crate) fn eq_ty_scheme_no_emit(st: &mut St, lhs: TyScheme, rhs: TyScheme) -> Result {
+  generalizes_no_emit(st, lhs.clone(), &rhs)?;
+  generalizes_no_emit(st, rhs, &lhs)?;
+  Ok(())
+}
+
+fn prepare_generalize(st: &mut St, general: TyScheme, specific: &TyScheme) -> (Ty, Ty) {
   let general = instantiate(st, general);
   let specific = {
     let subst: Vec<_> = specific
@@ -29,5 +41,16 @@ pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, i
     apply_bv(&subst, &mut ty);
     ty
   };
+  (general, specific)
+}
+
+/// emits no error iff `general` generalizes `specific`.
+pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, idx: hir::Idx) {
+  let (general, specific) = prepare_generalize(st, general, specific);
   unify(st, specific, general, idx)
+}
+
+fn generalizes_no_emit(st: &mut St, general: TyScheme, specific: &TyScheme) -> Result {
+  let (general, specific) = prepare_generalize(st, general, specific);
+  unify_no_emit(st, specific, general)
 }
