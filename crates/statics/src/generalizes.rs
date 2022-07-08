@@ -21,7 +21,7 @@ pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, i
       .enumerate()
       .map(|(idx, kind)| {
         let equality = matches!(kind, Some(TyVarKind::Equality));
-        let ty_var: String = ty_var_name(equality, idx).collect();
+        let ty_var = ty_var_name(equality, idx).to_string();
         Ty::FixedVar(st.gen_fixed_var(hir::TyVar::new(ty_var)))
       })
       .collect();

@@ -129,13 +129,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Circularity(mv, ty) => {
         let mvs = ty.meta_var_names();
         let name = mvs.get(mv).ok_or(fmt::Error)?;
-        write!(f, "attempted to a set a type variable ")?;
-        for c in name {
-          write!(f, "{c}")?;
-        }
-        write!(f, " to a type containing ")?;
         let ty = ty.display(&mvs, self.syms);
-        write!(f, "that variable: {ty}")
+        write!(f, "attempted to a set a type variable {name} ")?;
+        write!(f, "to a type containing that variable: {ty}")
       }
       ErrorKind::MismatchedTypes(want, got) => {
         let mvs = want.meta_var_names();

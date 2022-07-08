@@ -101,14 +101,12 @@ impl<'a> fmt::Display for TyDisplay<'a> {
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         let equality = matches!(vars.0[bv.0], Some(TyVarKind::Equality));
-        for c in ty_var_name(equality, bv.0) {
-          write!(f, "{c}")?;
-        }
+        let name = ty_var_name(equality, bv.0);
+        write!(f, "{name}")?;
       }
       Ty::MetaVar(mv) => {
-        for c in self.meta_vars.get(mv).ok_or(fmt::Error)? {
-          write!(f, "{c}")?;
-        }
+        let name = self.meta_vars.get(mv).ok_or(fmt::Error)?;
+        write!(f, "{name}")?;
       }
       Ty::FixedVar(fv) => fv.fmt(f)?,
       Ty::Record(rows) => {
@@ -191,11 +189,22 @@ impl<'a> fmt::Display for TyDisplay<'a> {
 pub(crate) struct MetaVarNames(FxHashMap<MetaTyVar, usize>);
 
 impl MetaVarNames {
-  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<impl Iterator<Item = char>> {
-    self
-      .0
-      .get(mv)
-      .map(|&x| std::iter::once('?').chain(idx_to_name(x)))
+  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<MetaVarName> {
+    self.0.get(mv).map(|&idx| MetaVarName { idx })
+  }
+}
+
+pub(crate) struct MetaVarName {
+  idx: usize,
+}
+
+impl fmt::Display for MetaVarName {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "?")?;
+    for c in idx_to_name(self.idx) {
+      write!(f, "{c}")?;
+    }
+    Ok(())
   }
 }
 
