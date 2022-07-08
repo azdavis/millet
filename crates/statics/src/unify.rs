@@ -10,29 +10,39 @@ enum UnifyError {
   OverloadMismatch(Overload, MetaTyVar),
 }
 
+impl UnifyError {
+  fn into_error_kind(self, want: Ty, got: Ty) -> ErrorKind {
+    match self {
+      UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
+      UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
+      UnifyError::OverloadMismatch(ov, mv) => ErrorKind::OverloadMismatch(ov, mv, want, got),
+    }
+  }
+}
+
 type Result<T, E = UnifyError> = std::result::Result<T, E>;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
 where
   I: Into<hir::Idx>,
 {
+  let e = match unify_no_emit(st, want.clone(), got.clone()) {
+    Ok(()) => return,
+    Err(e) => e.into_error_kind(want, got),
+  };
+  st.err(idx, e);
+}
+
+/// does not emit any errors to the `st`, instead returns an error (if any).
+fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<()> {
   let mut unify_st = UnifySt {
     overloads: std::mem::take(st.syms.overloads()),
     subst: std::mem::take(st.subst()),
   };
-  match unify_(&mut unify_st, want.clone(), got.clone()) {
-    Ok(()) => {}
-    Err(e) => {
-      let e = match e {
-        UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
-        UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
-        UnifyError::OverloadMismatch(ov, mv) => ErrorKind::OverloadMismatch(ov, mv, want, got),
-      };
-      st.err(idx, e);
-    }
-  };
+  let ret = unify_(&mut unify_st, want, got);
   *st.syms.overloads() = unify_st.overloads;
   *st.subst() = unify_st.subst;
+  ret
 }
 
 /// use this to avoid taking the whole [`St`] in [`unify_`].
