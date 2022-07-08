@@ -55,23 +55,6 @@ impl Ty {
       prec: TyPrec::Arrow,
     }
   }
-
-  pub(crate) fn meta_var_names(&self) -> MetaVarNames {
-    let mut n = 0usize;
-    let mut ret = FxHashMap::<MetaTyVar, usize>::default();
-    meta_vars(
-      &Subst::default(),
-      &mut |x| {
-        ret.entry(x).or_insert_with(|| {
-          let ret = n;
-          n += 1;
-          ret
-        });
-      },
-      self,
-    );
-    MetaVarNames(ret)
-  }
 }
 
 struct TyDisplay<'a> {
@@ -186,12 +169,29 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   }
 }
 
-#[derive(Debug)]
-pub(crate) struct MetaVarNames(FxHashMap<MetaTyVar, usize>);
+#[derive(Debug, Default)]
+pub(crate) struct MetaVarNames {
+  next: usize,
+  map: FxHashMap<MetaTyVar, usize>,
+}
 
 impl MetaVarNames {
+  pub(crate) fn extend_for(&mut self, ty: &Ty) {
+    meta_vars(
+      &Subst::default(),
+      &mut |x| {
+        self.map.entry(x).or_insert_with(|| {
+          let ret = self.next;
+          self.next += 1;
+          ret
+        });
+      },
+      ty,
+    );
+  }
+
   pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<MetaVarName> {
-    self.0.get(mv).map(|&idx| MetaVarName { idx })
+    self.map.get(mv).map(|&idx| MetaVarName { idx })
   }
 }
 

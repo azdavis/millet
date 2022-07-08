@@ -1,4 +1,4 @@
-use crate::types::{Def, DefPath, Syms, Ty, TyScheme};
+use crate::types::{Def, DefPath, MetaVarNames, Syms, Ty, TyScheme};
 use crate::util::ty_syms;
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
@@ -68,16 +68,17 @@ impl Info {
 
   fn get_ty_md_(&self, s: &mut String, syms: &Syms, idx: hir::Idx) -> Option<()> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
-    let mvs = ty_entry.ty.meta_var_names();
-    let ty = ty_entry.ty.display(&mvs, syms);
+    let mut mvs = MetaVarNames::default();
+    mvs.extend_for(&ty_entry.ty);
     writeln!(s, "```sml").unwrap();
     if let Some(ty_scheme) = &ty_entry.ty_scheme {
-      let mvs = ty_scheme.ty.meta_var_names();
+      mvs.extend_for(&ty_scheme.ty);
       let ty_scheme = ty_scheme.display(&mvs, syms);
       writeln!(s, "(* most general *)").unwrap();
       writeln!(s, "{ty_scheme}").unwrap();
       writeln!(s, "(* this usage *)").unwrap();
     }
+    let ty = ty_entry.ty.display(&mvs, syms);
     writeln!(s, "{ty}").unwrap();
     writeln!(s, "```").unwrap();
     Some(())
