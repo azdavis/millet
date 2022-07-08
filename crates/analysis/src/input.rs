@@ -1,3 +1,5 @@
+//! Input to analysis.
+
 use paths::{PathId, PathMap};
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -140,11 +142,7 @@ where
 
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
 /// `root`.
-pub fn get_input<F>(
-  fs: &F,
-  root: &mut paths::Root,
-  mut root_group_path: Option<PathBuf>,
-) -> Result<Input>
+pub fn get<F>(fs: &F, root: &mut paths::Root, mut root_group_path: Option<PathBuf>) -> Result<Input>
 where
   F: paths::FileSystem,
 {

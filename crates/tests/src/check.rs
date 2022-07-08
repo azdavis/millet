@@ -138,7 +138,7 @@ impl Check {
     let fs = paths::MemoryFileSystem::new(m);
     let mut root = paths::Root::new(ROOT.to_owned());
     let input =
-      analysis::get_input(&fs, &mut root, None).expect("in memory fs was not set up correctly");
+      analysis::input::get(&fs, &mut root, None).expect("in memory fs was not set up correctly");
     let mut ret = Self {
       root,
       files: input

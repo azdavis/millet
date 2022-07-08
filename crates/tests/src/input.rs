@@ -78,14 +78,14 @@ root = "foo.cm"
 fn check_input(
   names: &[&str],
   config: Option<&str>,
-) -> Result<analysis::Input, analysis::GetInputError> {
+) -> Result<analysis::input::Input, analysis::input::GetInputError> {
   check_input_with_contents(names.iter().map(|&x| (x, "Group is")), config)
 }
 
 fn check_input_with_contents<'a, I>(
   groups: I,
   config: Option<&str>,
-) -> Result<analysis::Input, analysis::GetInputError>
+) -> Result<analysis::input::Input, analysis::input::GetInputError>
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
@@ -97,5 +97,5 @@ where
       .collect(),
   );
   let mut root = paths::Root::new(ROOT.to_owned());
-  analysis::get_input(&fs, &mut root, None)
+  analysis::input::get(&fs, &mut root, None)
 }

@@ -279,7 +279,7 @@ impl State {
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let input = elapsed::log("get_input", || {
-      analysis::get_input(&self.file_system, &mut root.path, None)
+      analysis::input::get(&self.file_system, &mut root.path, None)
     });
     let input = match input {
       Ok(x) => x,

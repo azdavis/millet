@@ -4,14 +4,14 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-mod input;
 mod sml;
+
+pub mod input;
 
 use paths::{PathId, PathMap};
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
-pub use input::{get_input, group_file_kind, GetInputError, GroupFileKind, Input, Result};
 pub use sml::StdBasis;
 pub use text_pos::{Position, Range};
 
@@ -53,7 +53,7 @@ impl Analysis {
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
-  pub fn get_many(&mut self, input: &Input) -> PathMap<Vec<Error>> {
+  pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Error>> {
     self.source_files = elapsed::log("analyzed_files", || {
       input
         .sources
