@@ -1,12 +1,46 @@
 {
   "scopeName": "source.mlb",
-  "patterns": [{ "include": "#blockComment" }, { "include": "#keyword" }],
+  "patterns": [
+    { "include": "#blockComment" },
+    { "include": "#string" },
+    { "include": "#keyword" }
+  ],
   "repository": {
     "blockComment": {
       "name": "comment.block.mlb",
       "begin": "\\(\\*",
       "end": "\\*\\)",
       "patterns": [{ "include": "#blockComment" }]
+    },
+    "string": {
+      "name": "string.quoted.double.mlb",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [{ "include": "#escape" }]
+    },
+    "escape": {
+      "patterns": [
+        { "include": "#simpleEscape" },
+        { "include": "#upCaratEscape" },
+        { "include": "#threeDigitEscape" },
+        { "include": "#uEscape" }
+      ]
+    },
+    "simpleEscape": {
+      "name": "constant.character.escape.mlb",
+      "match": "\\\\[abtnvfr\\\\\"]"
+    },
+    "upCaratEscape": {
+      "name": "constant.character.escape.mlb",
+      "match": "\\\\\\^[A-_]"
+    },
+    "threeDigitEscape": {
+      "name": "constant.character.escape.mlb",
+      "match": "\\\\[0-9]{3}"
+    },
+    "uEscape": {
+      "name": "constant.character.escape.mlb",
+      "match": "\\\\u[0-9A-Fa-f]{4}"
     },
     "keyword": {
       "name": "keyword.other.mlb",
