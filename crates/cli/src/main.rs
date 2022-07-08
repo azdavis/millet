@@ -18,9 +18,9 @@ fn usage() {
   println!("  <path>");
   println!("    path of the project to analyze. the path should either be:");
   println!("    - a directory containing either:");
-  println!("      - a single .cm file");
-  println!("      - a millet.toml config file specifying a single .cm file");
-  println!("    - a .cm file");
+  println!("      - a single .cm or .mlb file");
+  println!("      - a millet.toml config file specifying a single .cm or .mlb file");
+  println!("    - a .cm or .mlb file");
 }
 
 fn main() -> Result<()> {
