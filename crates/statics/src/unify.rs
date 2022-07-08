@@ -10,16 +10,6 @@ enum UnifyError {
   OverloadMismatch(Overload, MetaTyVar),
 }
 
-impl UnifyError {
-  fn into_error_kind(self, want: Ty, got: Ty) -> ErrorKind {
-    match self {
-      UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
-      UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
-      UnifyError::OverloadMismatch(ov, mv) => ErrorKind::OverloadMismatch(ov, mv, want, got),
-    }
-  }
-}
-
 type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
@@ -28,7 +18,11 @@ where
 {
   let e = match unify_no_emit(st, want.clone(), got.clone()) {
     Ok(()) => return,
-    Err(e) => e.into_error_kind(want, got),
+    Err(e) => match e {
+      UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
+      UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
+      UnifyError::OverloadMismatch(ov, mv) => ErrorKind::OverloadMismatch(ov, mv, want, got),
+    },
   };
   st.err(idx, e);
 }
