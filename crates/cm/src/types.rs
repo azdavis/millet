@@ -94,7 +94,7 @@ pub struct CMFile {
   /// The exports.
   pub exports: Vec<Export>,
   /// The paths, in order.
-  pub paths: Vec<(Located<std::path::PathBuf>, PathKind)>,
+  pub paths: Vec<Located<ParsedPath>>,
 }
 
 /// A kind of path.
@@ -103,6 +103,25 @@ pub struct CMFile {
 pub enum PathKind {
   Sml,
   Cm,
+}
+
+/// A parsed path.
+#[derive(Debug)]
+pub struct ParsedPath {
+  pub(crate) kind: PathKind,
+  pub(crate) path: PathBuf,
+}
+
+impl ParsedPath {
+  /// Returns the kind of path this is.
+  pub fn kind(&self) -> PathKind {
+    self.kind
+  }
+
+  /// Returns this as a `Path`.
+  pub fn as_path(&self) -> &Path {
+    self.path.as_path()
+  }
 }
 
 /// A name, like `S` in `structure S`.

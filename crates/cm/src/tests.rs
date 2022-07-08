@@ -16,7 +16,11 @@ fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)])
       Export::Library(p) => RawExport::Library(p.val),
     })
     .collect();
-  let got_paths: Vec<_> = file.paths.into_iter().map(|(x, k)| (x.val, k)).collect();
+  let got_paths: Vec<_> = file
+    .paths
+    .into_iter()
+    .map(|path| (path.val.path, path.val.kind))
+    .collect();
   assert_eq!(want_exports, got_exports);
   assert_eq!(want_paths, got_paths);
 }

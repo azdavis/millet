@@ -284,12 +284,12 @@ where
         let paths = cm
           .paths
           .into_iter()
-          .map(|(path, kind)| {
-            let range = pos_db.range(path.range);
+          .map(|parsed_path| {
+            let range = pos_db.range(parsed_path.range);
             let source = Source::PathAndRange(group_path.to_owned(), range);
-            let path = group_parent.join(path.val.as_path());
+            let path = group_parent.join(parsed_path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
-            match kind {
+            match parsed_path.val.kind() {
               cm::PathKind::Sml => {
                 let contents = read_file(fs, source, path.as_path())?;
                 sources.insert(path_id, contents);
