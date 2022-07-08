@@ -195,5 +195,3 @@ signature POSIX_IO = sig
   val mkBinWriter : { fd : file_desc, name : string, appendMode : bool, initBlkMode : bool, chunkSize : int } -> BinPrimIO.writer
   val mkTextWriter : { fd : file_desc, name : string, appendMode : bool, initBlkMode : bool, chunkSize : int } -> TextPrimIO.writer
 end
-
-structure IO : POSIX_IO = IO
