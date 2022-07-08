@@ -49,3 +49,5 @@ end
 
 structure PackWord32Big : PACK_WORD = struct end
 structure PackWord32Little : PACK_WORD = struct end
+structure PackWord64Big : PACK_WORD = struct end
+structure PackWord64Little : PACK_WORD = struct end
