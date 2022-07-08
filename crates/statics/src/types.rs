@@ -186,6 +186,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   }
 }
 
+#[derive(Debug)]
 pub(crate) struct MetaVarNames(FxHashMap<MetaTyVar, usize>);
 
 impl MetaVarNames {

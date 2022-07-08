@@ -17,7 +17,7 @@ where
       let e = match e {
         UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
         UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
-        UnifyError::OverloadMismatch(ov) => ErrorKind::OverloadMismatch(ov, want, got),
+        UnifyError::OverloadMismatch(mv, ov) => ErrorKind::OverloadMismatch(ov, mv, want, got),
       };
       st.err(idx, e);
     }
@@ -30,7 +30,7 @@ where
 enum UnifyError {
   OccursCheck(MetaTyVar, Ty),
   HeadMismatch,
-  OverloadMismatch(Overload),
+  OverloadMismatch(MetaTyVar, Overload),
 }
 
 /// use this to avoid taking the whole [`St`] in [`unify_`].
@@ -79,7 +79,7 @@ fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<(), UnifyError>
               {
                 assert!(args.is_empty())
               } else {
-                return Err(UnifyError::OverloadMismatch(ov));
+                return Err(UnifyError::OverloadMismatch(mv, ov));
               }
             }
             // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
@@ -96,10 +96,10 @@ fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<(), UnifyError>
                   // it too was an overload. attempt to unify the two overloads.
                   TyVarKind::Overloaded(ov2) => match ov.unify(*ov2) {
                     Some(ov) => ov,
-                    None => return Err(UnifyError::OverloadMismatch(ov)),
+                    None => return Err(UnifyError::OverloadMismatch(mv, ov)),
                   },
                   // no overloaded type is a record.
-                  TyVarKind::Record(_) => return Err(UnifyError::OverloadMismatch(ov)),
+                  TyVarKind::Record(_) => return Err(UnifyError::OverloadMismatch(mv, ov)),
                 },
               };
               st.subst
@@ -107,7 +107,7 @@ fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<(), UnifyError>
             }
             // none of these are overloaded types.
             Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
-              return Err(UnifyError::OverloadMismatch(ov))
+              return Err(UnifyError::OverloadMismatch(mv, ov))
             }
           },
           // mv was a record ty var (i.e. from a `...` pattern). ty must have the rows gotten so

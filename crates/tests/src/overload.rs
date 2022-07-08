@@ -142,7 +142,7 @@ fn overload_err() {
   check(
     r#"
 val  _ = false + true
-(**      ^^^^^^^^^^^^ expected ?a * ?a with one of {word, real, int}, found bool * bool *)
+(**      ^^^^^^^^^^^^ expected ?a * ?a (where ?a in {word, real, int}), found bool * bool *)
 "#,
   );
 }

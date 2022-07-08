@@ -35,7 +35,7 @@ impl Error {
       ErrorKind::Extra(_, _) => 5,
       ErrorKind::Circularity(_, _) => 6,
       ErrorKind::MismatchedTypes(_, _) => 7,
-      ErrorKind::OverloadMismatch(_, _, _) => 8,
+      ErrorKind::OverloadMismatch(_, _, _, _) => 8,
       ErrorKind::AppLhsNotFn(_) => 9,
       ErrorKind::DuplicateLab(_) => 10,
       ErrorKind::RealPat => 11,
@@ -68,7 +68,7 @@ pub(crate) enum ErrorKind {
   Extra(Item, hir::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
-  OverloadMismatch(Overload, Ty, Ty),
+  OverloadMismatch(Overload, MetaTyVar, Ty, Ty),
   AppLhsNotFn(Ty),
   DuplicateLab(hir::Lab),
   RealPat,
@@ -140,12 +140,13 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let got = got.display(&mvs, self.syms);
         write!(f, "expected {want}, found {got}")
       }
-      ErrorKind::OverloadMismatch(ov, want, got) => {
+      ErrorKind::OverloadMismatch(ov, mv, want, got) => {
         let mvs = want.meta_var_names();
         let want = want.display(&mvs, self.syms);
+        let name = mvs.get(mv).ok_or(fmt::Error)?;
         let mvs = got.meta_var_names();
         let got = got.display(&mvs, self.syms);
-        write!(f, "expected {want} with one of {{{ov}}}, found {got}")
+        write!(f, "expected {want} (where {name} in {{{ov}}}), found {got}")
       }
       ErrorKind::AppLhsNotFn(got) => {
         let mvs = got.meta_var_names();
