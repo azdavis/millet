@@ -62,6 +62,7 @@ impl std::error::Error for GetInputError {
       | GetInputErrorKind::ReadFile(e)
       | GetInputErrorKind::Canonicalize(e) => Some(e),
       GetInputErrorKind::Cm(e) => Some(e),
+      GetInputErrorKind::Mlb(e) => Some(e),
       GetInputErrorKind::NotInRoot(e) => Some(e),
       GetInputErrorKind::CouldNotParseConfig(e) => Some(e),
       GetInputErrorKind::NoParent
@@ -80,6 +81,7 @@ enum GetInputErrorKind {
   ReadDir(std::io::Error),
   ReadFile(std::io::Error),
   Cm(cm::Error),
+  Mlb(ml_basis::Error),
   Canonicalize(std::io::Error),
   NoParent,
   NotInRoot(std::path::StripPrefixError),
@@ -98,6 +100,7 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::ReadDir(e) => write!(f, "couldn't read directory: {e}"),
       GetInputErrorKind::ReadFile(e) => write!(f, "couldn't read file: {e}"),
       GetInputErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
+      GetInputErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
       GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize: {e}"),
       GetInputErrorKind::NoParent => f.write_str("no parent"),
       GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
@@ -127,6 +130,8 @@ pub type Result<T, E = GetInputError> = std::result::Result<T, E>;
 enum GroupPathKind {
   /// SML/NJ Compilation Manager files.
   Cm,
+  /// ML Basis files.
+  Mlb,
 }
 
 /// A group path.
@@ -147,6 +152,7 @@ impl GroupPath {
     }
     let kind = match path.extension()?.to_str()? {
       "cm" => GroupPathKind::Cm,
+      "mlb" => GroupPathKind::Mlb,
       _ => return None,
     };
     Some(GroupPath { path, kind })
@@ -329,6 +335,50 @@ where
         }
         Group { paths, exports }
       }
+      GroupPathKind::Mlb => {
+        let mlb = ml_basis::get(&contents).map_err(|e| GetInputError {
+          source: None,
+          path: group_path.to_owned(),
+          range: Some(pos_db.range(e.text_range())),
+          kind: GetInputErrorKind::Mlb(e),
+        })?;
+        let mut paths = Vec::<&located::Located<ml_basis::ParsedPath>>::new();
+        // TODO this discards most of the semantics of ML Basis files. It just gets the files in the
+        // right order. It totally ignores `local`, renaming exports, etc etc. So, it basically only
+        // works correctly for ML Basis files that are nothing but a list of files.
+        bas_dec_paths(&mut paths, &mlb);
+        let paths = paths
+          .into_iter()
+          .filter(|p| {
+            !p.val
+              .as_path()
+              .as_os_str()
+              .to_string_lossy()
+              .starts_with('$')
+          })
+          .map(|parsed_path| {
+            let range = pos_db.range(parsed_path.range);
+            let source = Source::PathAndRange(group_path.to_owned(), range);
+            let path = group_parent.join(parsed_path.val.as_path());
+            let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
+            match parsed_path.val.kind() {
+              ml_basis::PathKind::Sml => {
+                let contents = read_file(fs, source, path.as_path())?;
+                sources.insert(path_id, contents);
+              }
+              ml_basis::PathKind::Mlb => {
+                stack.push(((group_path_id, Some(range)), path_id));
+              }
+            }
+            Ok(path_id)
+          })
+          .collect::<Result<Vec<_>>>()?;
+
+        Group {
+          paths,
+          exports: statics::basis::Exports::default(),
+        }
+      }
     };
     groups.insert(group_path_id, group);
   }
@@ -349,6 +399,30 @@ where
     groups,
     root_group_id,
   })
+}
+
+fn bas_dec_paths<'b>(
+  paths: &mut Vec<&'b located::Located<ml_basis::ParsedPath>>,
+  bas_dec: &'b ml_basis::BasDec,
+) {
+  match bas_dec {
+    ml_basis::BasDec::Local(local_dec, in_dec) => {
+      bas_dec_paths(paths, local_dec);
+      bas_dec_paths(paths, in_dec);
+    }
+    ml_basis::BasDec::Basis(_)
+    | ml_basis::BasDec::Open(_)
+    | ml_basis::BasDec::Structure(_)
+    | ml_basis::BasDec::Signature(_)
+    | ml_basis::BasDec::Functor(_) => {}
+    ml_basis::BasDec::Path(path) => paths.push(path),
+    ml_basis::BasDec::Ann(_, inner) => bas_dec_paths(paths, inner),
+    ml_basis::BasDec::Seq(bas_decs) => {
+      for bas_dec in bas_decs {
+        bas_dec_paths(paths, bas_dec);
+      }
+    }
+  }
 }
 
 #[derive(Debug, Clone)]

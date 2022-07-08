@@ -22,6 +22,8 @@ statics = { path = "../statics" }
 syntax = { path = "../syntax" }
 hir = { path = "../hir" }
 paths = { path = "../paths" }
+located = { path = "../located" }
 cm = { path = "../cm" }
+ml-basis = { path = "../ml-basis" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }

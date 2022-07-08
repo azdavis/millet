@@ -86,6 +86,37 @@ root = "nope.txt"
   assert!(e.to_string().contains("not a group path"));
 }
 
+#[test]
+fn mlb() {
+  check_input(&["foo.mlb"], None).unwrap();
+}
+
+#[test]
+fn mlb_cm_err() {
+  let e = check_input(&["foo.mlb", "foo.cm"], None).unwrap_err();
+  assert!(e.to_string().contains("multiple root groups"));
+}
+
+#[test]
+fn mlb_cm_config_cm_ok() {
+  let config = r#"
+version = 1
+[workspace]
+root = "foo.cm"
+"#;
+  check_input(&["foo.mlb", "foo.cm"], Some(config)).unwrap();
+}
+
+#[test]
+fn mlb_cm_config_mlb_ok() {
+  let config = r#"
+version = 1
+[workspace]
+root = "foo.mlb"
+"#;
+  check_input(&["foo.mlb", "foo.cm"], Some(config)).unwrap();
+}
+
 fn check_input(
   names: &[&str],
   config: Option<&str>,
