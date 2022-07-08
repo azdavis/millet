@@ -20,7 +20,7 @@ impl UnifyError {
   }
 }
 
-type Result<T, E = UnifyError> = std::result::Result<T, E>;
+type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
 where
@@ -34,7 +34,7 @@ where
 }
 
 /// does not emit any errors to the `st`, instead returns an error (if any).
-fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<()> {
+fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result {
   let mut unify_st = UnifySt {
     overloads: std::mem::take(st.syms.overloads()),
     subst: std::mem::take(st.subst()),
@@ -52,7 +52,7 @@ struct UnifySt {
 }
 
 /// `want` and `got` will have `subst` applied to them upon entry to this function.
-fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<()> {
+fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result {
   apply(&st.subst, &mut want);
   apply(&st.subst, &mut got);
   match (want, got) {
@@ -91,7 +91,7 @@ fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<()> {
   }
 }
 
-fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result<()> {
+fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
   // return without doing anything if the meta vars are the same.
   if let Ty::MetaVar(mv2) = &ty {
     if mv == *mv2 {
@@ -211,7 +211,7 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result<()> {
   Ok(())
 }
 
-fn head_match(b: bool) -> Result<()> {
+fn head_match(b: bool) -> Result {
   if b {
     Ok(())
   } else {
