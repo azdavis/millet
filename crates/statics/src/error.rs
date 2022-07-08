@@ -149,8 +149,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let want = want.display(&mvs, self.syms);
         let mvs = got.meta_var_names();
         let got = got.display(&mvs, self.syms);
-        let ov = ov.desc();
-        write!(f, "expected {want} with {ov}, found {got}")
+        write!(f, "expected {want} with one of {{{ov}}}, found {got}")
       }
       ErrorKind::AppLhsNotFn(got) => {
         let mvs = got.meta_var_names();

@@ -1,22 +1,29 @@
 use crate::error::ErrorKind;
 use crate::st::St;
-use crate::types::{MetaTyVar, Overload, Subst, SubstEntry, Ty, TyVarKind};
+use crate::types::{MetaTyVar, Overload, Overloads, Subst, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
 pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
 where
   I: Into<hir::Idx>,
 {
-  let e = match unify_(st.subst(), want.clone(), got.clone()) {
-    Ok(()) => return,
-    Err(e) => e,
+  let mut unify_st = UnifySt {
+    overloads: std::mem::take(st.syms.overloads()),
+    subst: std::mem::take(st.subst()),
   };
-  let e = match e {
-    UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
-    UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
-    UnifyError::OverloadMismatch(ov) => ErrorKind::OverloadMismatch(ov, want, got),
+  match unify_(&mut unify_st, want.clone(), got.clone()) {
+    Ok(()) => {}
+    Err(e) => {
+      let e = match e {
+        UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
+        UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
+        UnifyError::OverloadMismatch(ov) => ErrorKind::OverloadMismatch(ov, want, got),
+      };
+      st.err(idx, e);
+    }
   };
-  st.err(idx, e);
+  *st.syms.overloads() = unify_st.overloads;
+  *st.subst() = unify_st.subst;
 }
 
 #[derive(Debug)]
@@ -26,10 +33,16 @@ enum UnifyError {
   OverloadMismatch(Overload),
 }
 
-/// `want` and `got` will have `subst` applied to them upon entry to this function
-fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError> {
-  apply(subst, &mut want);
-  apply(subst, &mut got);
+/// use this to avoid taking the whole [`St`] in [`unify_`].
+struct UnifySt {
+  overloads: Overloads,
+  subst: Subst,
+}
+
+/// `want` and `got` will have `subst` applied to them upon entry to this function.
+fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result<(), UnifyError> {
+  apply(&st.subst, &mut want);
+  apply(&st.subst, &mut got);
   match (want, got) {
     (Ty::None, _) | (_, Ty::None) => Ok(()),
     (Ty::BoundVar(want), Ty::BoundVar(got)) => head_match(want == got),
@@ -45,7 +58,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
         return Err(UnifyError::OccursCheck(mv, ty));
       }
       // solve mv to ty. however, mv may already have an entry.
-      match subst.insert(mv, SubstEntry::Solved(ty.clone())) {
+      match st.subst.insert(mv, SubstEntry::Solved(ty.clone())) {
         // do nothing if no entry.
         None => {}
         // unreachable because we applied upon entry.
@@ -59,7 +72,11 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             Ty::None => {}
             // the simple case. check the sym is in the overload.
             Ty::Con(args, s) => {
-              if ov.to_syms().contains(&s) {
+              if ov
+                .as_basics()
+                .iter()
+                .any(|&ov| st.overloads[ov].contains(&s))
+              {
                 assert!(args.is_empty())
               } else {
                 return Err(UnifyError::OverloadMismatch(ov));
@@ -68,26 +85,25 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
             // but mv2 itself may also have an entry.
             Ty::MetaVar(mv2) => {
-              let ov = match subst.get(&mv2) {
+              let ov = match st.subst.get(&mv2) {
                 // it didn't have an entry.
-                None => Some(ov),
+                None => ov,
                 // unreachable because of apply.
                 Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
                 Some(SubstEntry::Kind(kind)) => match kind {
                   // all overload types are equality types.
-                  TyVarKind::Equality => Some(ov),
-                  // it too was an overload. unify the two overloads, which may result in the
-                  // variable no longer being overloaded.
-                  TyVarKind::Overloaded(ov2) => ov.unify(*ov2),
+                  TyVarKind::Equality => ov,
+                  // it too was an overload. attempt to unify the two overloads.
+                  TyVarKind::Overloaded(ov2) => match ov.unify(*ov2) {
+                    Some(ov) => ov,
+                    None => return Err(UnifyError::OverloadMismatch(ov)),
+                  },
                   // no overloaded type is a record.
                   TyVarKind::Record(_) => return Err(UnifyError::OverloadMismatch(ov)),
                 },
               };
-              let entry = match ov {
-                Some(ov) => SubstEntry::Kind(TyVarKind::Overloaded(ov)),
-                None => SubstEntry::Solved(Ty::INT),
-              };
-              subst.insert(mv2, entry);
+              st.subst
+                .insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
             }
             // none of these are overloaded types.
             Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
@@ -105,7 +121,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
               for (lab, want) in want_rows {
                 match got_rows.remove(&lab) {
                   None => return Err(UnifyError::HeadMismatch),
-                  Some(got) => unify_(subst, want, got)?,
+                  Some(got) => unify_(st, want, got)?,
                 }
               }
             }
@@ -113,7 +129,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
             // setting mv2's entry to mv's old entry, which specifies the rows for this record ty
             // var.
             Ty::MetaVar(mv2) => {
-              match subst.get(&mv2) {
+              match st.subst.get(&mv2) {
                 // there was no entry.
                 None => {}
                 // unreachable because of apply.
@@ -128,8 +144,8 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
                   TyVarKind::Record(other_rows) => {
                     for (lab, mut want) in other_rows.clone() {
                       if let Some(got) = want_rows.get(&lab) {
-                        unify_(subst, want.clone(), got.clone())?;
-                        apply(subst, &mut want);
+                        unify_(st, want.clone(), got.clone())?;
+                        apply(&st.subst, &mut want);
                       }
                       want_rows.insert(lab, want);
                     }
@@ -137,7 +153,8 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
                 },
               }
               // set the entry to make mv2 a record ty var.
-              subst.insert(mv2, SubstEntry::Kind(TyVarKind::Record(want_rows)));
+              st.subst
+                .insert(mv2, SubstEntry::Kind(TyVarKind::Record(want_rows)));
             }
             // none of these are record types.
             Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Con(_, _) | Ty::Fn(_, _) => {
@@ -153,7 +170,7 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       for (lab, want) in want_rows {
         match got_rows.remove(&lab) {
           None => return Err(UnifyError::HeadMismatch),
-          Some(got) => unify_(subst, want, got)?,
+          Some(got) => unify_(st, want, got)?,
         }
       }
       if got_rows.is_empty() {
@@ -166,13 +183,13 @@ fn unify_(subst: &mut Subst, mut want: Ty, mut got: Ty) -> Result<(), UnifyError
       head_match(want_sym == got_sym)?;
       assert_eq!(want_args.len(), got_args.len());
       for (want, got) in want_args.into_iter().zip(got_args) {
-        unify_(subst, want, got)?;
+        unify_(st, want, got)?;
       }
       Ok(())
     }
     (Ty::Fn(want_param, want_res), Ty::Fn(got_param, got_res)) => {
-      unify_(subst, *want_param, *got_param)?;
-      unify_(subst, *want_res, *got_res)
+      unify_(st, *want_param, *got_param)?;
+      unify_(st, *want_res, *got_res)
     }
     (Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Con(_, _) | Ty::Fn(_, _), _) => {
       Err(UnifyError::HeadMismatch)

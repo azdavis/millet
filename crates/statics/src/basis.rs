@@ -1,8 +1,8 @@
 //! Bases.
 
 use crate::types::{
-  Bs, Env, EnvLike as _, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty,
-  TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
+  Bs, CompositeOverload, Env, EnvLike as _, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv,
+  Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 
 /// A basis.
@@ -87,6 +87,11 @@ pub fn minimal() -> (Syms, Basis) {
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
     insert_special(&mut syms, sym, basic_datatype(Ty::zero(sym), &[]));
   }
+  syms.overloads().int.push(Sym::INT);
+  syms.overloads().word.push(Sym::WORD);
+  syms.overloads().real.push(Sym::REAL);
+  syms.overloads().char.push(Sym::CHAR);
+  syms.overloads().string.push(Sym::STRING);
   insert_special(
     &mut syms,
     Sym::BOOL,
@@ -127,11 +132,12 @@ pub fn minimal() -> (Syms, Basis) {
     }))
     .collect();
   let fns = {
-    let num_pair_to_num = overloaded(Overload::Num, |a| Ty::fun(dup(a.clone()), a));
+    let num_pair_to_num = overloaded(CompositeOverload::Num, |a| Ty::fun(dup(a.clone()), a));
     let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::REAL), Ty::REAL));
-    let numtxt_pair_to_bool = overloaded(Overload::NumTxt, |a| Ty::fun(dup(a), Ty::BOOL));
-    let realint_to_realint = overloaded(Overload::RealInt, |a| Ty::fun(a.clone(), a));
-    let wordint_pair_to_wordint = overloaded(Overload::WordInt, |a| Ty::fun(dup(a.clone()), a));
+    let numtxt_pair_to_bool = overloaded(CompositeOverload::NumTxt, |a| Ty::fun(dup(a), Ty::BOOL));
+    let realint_to_realint = overloaded(CompositeOverload::RealInt, |a| Ty::fun(a.clone(), a));
+    let wordint_pair_to_wordint =
+      overloaded(CompositeOverload::WordInt, |a| Ty::fun(dup(a.clone()), a));
     let equality_pair_to_bool = TyScheme::one(|a| {
       let t = Ty::fun(dup(a), Ty::BOOL);
       (t, Some(TyVarKind::Equality))
@@ -214,11 +220,11 @@ where
     .collect()
 }
 
-fn overloaded<F>(x: Overload, f: F) -> TyScheme
+fn overloaded<F>(x: CompositeOverload, f: F) -> TyScheme
 where
   F: FnOnce(Ty) -> Ty,
 {
-  TyScheme::one(|a| (f(a), Some(TyVarKind::Overloaded(x))))
+  TyScheme::one(|a| (f(a), Some(TyVarKind::Overloaded(Overload::Composite(x)))))
 }
 
 fn dup(ty: Ty) -> Ty {

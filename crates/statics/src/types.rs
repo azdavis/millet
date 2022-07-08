@@ -310,42 +310,130 @@ pub(crate) enum TyVarKind {
   Record(RecordTy),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum BasicOverload {
+  Int,
+  Real,
+  Word,
+  String,
+  Char,
+}
+
+impl fmt::Display for BasicOverload {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let s = match self {
+      BasicOverload::Int => "int",
+      BasicOverload::Real => "real",
+      BasicOverload::Word => "word",
+      BasicOverload::String => "string",
+      BasicOverload::Char => "char",
+    };
+    f.write_str(s)
+  }
+}
+
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum Overload {
+pub(crate) enum CompositeOverload {
   WordInt,
   RealInt,
   Num,
   NumTxt,
 }
 
-impl Overload {
-  pub(crate) fn to_syms(self) -> &'static [Sym] {
+impl CompositeOverload {
+  pub(crate) fn as_basics(&self) -> &'static [BasicOverload] {
     match self {
-      Self::WordInt => &[Sym::WORD, Sym::INT],
-      Self::RealInt => &[Sym::REAL, Sym::INT],
-      Self::Num => &[Sym::WORD, Sym::REAL, Sym::INT],
-      Self::NumTxt => &[Sym::WORD, Sym::REAL, Sym::INT, Sym::STRING, Sym::CHAR],
+      Self::WordInt => &[BasicOverload::Word, BasicOverload::Int],
+      Self::RealInt => &[BasicOverload::Real, BasicOverload::Int],
+      Self::Num => &[BasicOverload::Word, BasicOverload::Real, BasicOverload::Int],
+      Self::NumTxt => &[
+        BasicOverload::Word,
+        BasicOverload::Real,
+        BasicOverload::Int,
+        BasicOverload::String,
+        BasicOverload::Char,
+      ],
     }
   }
 
-  pub(crate) fn unify(self, other: Self) -> Option<Self> {
+  pub(crate) fn unify(self, other: Self) -> Overload {
     match (self, other) {
       (Self::WordInt, Self::WordInt | Self::Num | Self::NumTxt)
-      | (Self::Num | Self::NumTxt, Self::WordInt) => Some(Self::WordInt),
-      (Self::WordInt, Self::RealInt) | (Self::RealInt, Self::WordInt) => None,
+      | (Self::Num | Self::NumTxt, Self::WordInt) => Overload::Composite(Self::WordInt),
+      (Self::WordInt, Self::RealInt) | (Self::RealInt, Self::WordInt) => {
+        Overload::Basic(BasicOverload::Int)
+      }
       (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
-      | (Self::Num | Self::NumTxt, Self::RealInt) => Some(Self::RealInt),
-      (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => Some(Self::Num),
-      (Self::NumTxt, Self::NumTxt) => Some(Self::NumTxt),
+      | (Self::Num | Self::NumTxt, Self::RealInt) => Overload::Composite(Self::RealInt),
+      (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => {
+        Overload::Composite(Self::Num)
+      }
+      (Self::NumTxt, Self::NumTxt) => Overload::Composite(Self::NumTxt),
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Overload {
+  Basic(BasicOverload),
+  Composite(CompositeOverload),
+}
+
+impl Overload {
+  pub(crate) fn as_basics(&self) -> &[BasicOverload] {
+    match self {
+      Overload::Basic(b) => std::slice::from_ref(b),
+      Overload::Composite(c) => c.as_basics(),
     }
   }
 
-  pub(crate) fn desc(self) -> &'static str {
-    match self {
-      Overload::WordInt => "word or int",
-      Overload::RealInt => "real or int",
-      Overload::Num => "word, real, or int",
-      Overload::NumTxt => "word, real, int, string, or char",
+  /// returns `None` iff the overloads could not be unified.
+  pub(crate) fn unify(self, other: Self) -> Option<Self> {
+    match (self, other) {
+      (Self::Basic(b1), Self::Basic(b2)) => {
+        if b1 == b2 {
+          Some(Self::Basic(b1))
+        } else {
+          None
+        }
+      }
+      (Self::Basic(b), Self::Composite(c)) | (Self::Composite(c), Self::Basic(b)) => c
+        .as_basics()
+        .iter()
+        .find(|&&x| x == b)
+        .copied()
+        .map(Self::Basic),
+      (Self::Composite(c1), Self::Composite(c2)) => Some(c1.unify(c2)),
+    }
+  }
+}
+
+impl fmt::Display for Overload {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    comma_seq(f, self.as_basics().iter())
+  }
+}
+
+/// Information about overloads.
+#[derive(Debug, Default, Clone)]
+pub(crate) struct Overloads {
+  pub(crate) int: Vec<Sym>,
+  pub(crate) real: Vec<Sym>,
+  pub(crate) word: Vec<Sym>,
+  pub(crate) string: Vec<Sym>,
+  pub(crate) char: Vec<Sym>,
+}
+
+impl std::ops::Index<BasicOverload> for Overloads {
+  type Output = [Sym];
+
+  fn index(&self, index: BasicOverload) -> &Self::Output {
+    match index {
+      BasicOverload::Int => self.int.as_slice(),
+      BasicOverload::Real => self.real.as_slice(),
+      BasicOverload::Word => self.word.as_slice(),
+      BasicOverload::String => self.string.as_slice(),
+      BasicOverload::Char => self.char.as_slice(),
     }
   }
 }
@@ -486,7 +574,7 @@ impl Sym {
   }
 }
 
-/// Information about generated types and exceptions.
+/// Information about generated types, generated exceptions, and overload types.
 ///
 /// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
 /// even built-in items like `type int` and `exception Bind`.
@@ -495,6 +583,7 @@ pub struct Syms {
   /// remember: always use Sym::idx to index
   store: Vec<(hir::Name, TyInfo)>,
   exns: Vec<(hir::Name, Option<Ty>)>,
+  overloads: Overloads,
 }
 
 impl Syms {
@@ -543,6 +632,10 @@ impl Syms {
 
   pub(crate) fn iter(&self) -> impl Iterator<Item = (&hir::Name, &TyInfo)> {
     self.store.iter().map(|&(ref a, ref b)| (a, b))
+  }
+
+  pub(crate) fn overloads(&mut self) -> &mut Overloads {
+    &mut self.overloads
   }
 }
 
