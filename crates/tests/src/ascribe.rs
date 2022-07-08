@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn ok_smoke() {
@@ -508,6 +508,44 @@ signature OUTER = sig
 end
 
 functor Id (X : OUTER) :> OUTER = X
+"#,
+  );
+}
+
+#[test]
+fn sig_ty_alias_t_u() {
+  fail(
+    r#"
+signature SIG = sig
+  type 'a t
+  type 'a u = (unit * 'a) t
+  val no : 'a u
+end
+structure Str :> SIG = struct
+  type 'a t = 'a -> unit
+  type 'a u = (unit * 'a) t
+  val no = fn ((), _) => ()
+end
+"#,
+  );
+}
+
+/// the same as [`sig_ty_alias_t_u`] but with the t and u swapped. these 2 tests check for
+/// questionable things involving iteration order.
+#[test]
+fn sig_ty_alias_u_t() {
+  check(
+    r#"
+signature SIG = sig
+  type 'a u
+  type 'a t = (unit * 'a) u
+  val no : 'a t
+end
+structure Str :> SIG = struct
+  type 'a u = 'a -> unit
+  type 'a t = (unit * 'a) u
+  val no = fn ((), _) => ()
+end
 "#,
   );
 }
