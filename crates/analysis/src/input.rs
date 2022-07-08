@@ -66,7 +66,8 @@ impl std::error::Error for GetInputError {
       | GetInputErrorKind::MultipleRootGroups(_, _)
       | GetInputErrorKind::NoRootGroup
       | GetInputErrorKind::InvalidConfigVersion(_)
-      | GetInputErrorKind::Cycle => None,
+      | GetInputErrorKind::Cycle
+      | GetInputErrorKind::UnsupportedExport => None,
     }
   }
 }
@@ -84,6 +85,7 @@ enum GetInputErrorKind {
   CouldNotParseConfig(toml::de::Error),
   InvalidConfigVersion(u16),
   Cycle,
+  UnsupportedExport,
 }
 
 impl fmt::Display for GetInputErrorKind {
@@ -107,6 +109,7 @@ impl fmt::Display for GetInputErrorKind {
         write!(f, "invalid config version: expected 1, found {n}")
       }
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
+      GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
     }
   }
 }
@@ -242,7 +245,32 @@ where
         Ok(path_id)
       })
       .collect::<Result<Vec<_>>>()?;
-    let exports = statics::basis::Exports::default();
+    let mut exports = statics::basis::Exports::default();
+    for export in cm.exports {
+      match export {
+        cm::Export::Regular(ns, name) => match ns.val {
+          cm::Namespace::Structure => exports.structure.push(hir::Name::new(name.val.as_str())),
+          cm::Namespace::Signature => exports.signature.push(hir::Name::new(name.val.as_str())),
+          cm::Namespace::Functor => exports.functor.push(hir::Name::new(name.val.as_str())),
+          cm::Namespace::FunSig => {
+            return Err(GetInputError {
+              range: Some(pos_db.range(ns.range)),
+              source: None,
+              path: group_path.to_owned(),
+              kind: GetInputErrorKind::UnsupportedExport,
+            })
+          }
+        },
+        cm::Export::Library(lib) => {
+          return Err(GetInputError {
+            range: Some(pos_db.range(lib.range)),
+            source: None,
+            path: group_path.to_owned(),
+            kind: GetInputErrorKind::UnsupportedExport,
+          })
+        }
+      }
+    }
     groups.insert(group_path_id, Group { paths, exports });
   }
   let graph: topo_sort::Graph<_> = groups
