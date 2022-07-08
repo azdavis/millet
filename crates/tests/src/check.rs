@@ -80,7 +80,7 @@ pub(crate) fn check_multi(ss: &[&str]) {
 
 /// ignores the Err if we already initialized logging, since that's fine.
 fn go(ss: &[&str], std_basis: StdBasis, want: Outcome) {
-  let _ = simple_logger::init_with_level(log::Level::Info);
+  let _ = simple_logger::init_with_level(log::Level::Warn);
   if matches!(std_basis, StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
     return;
   }
