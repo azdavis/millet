@@ -181,7 +181,7 @@ impl MetaVarNames {
       &Subst::default(),
       &mut |x| {
         self.map.entry(x).or_insert_with(|| {
-          let ret = MetaVarName { idx: self.next_idx };
+          let ret = MetaVarName::Idx(self.next_idx);
           self.next_idx += 1;
           ret
         });
@@ -190,23 +190,33 @@ impl MetaVarNames {
     );
   }
 
+  pub(crate) fn insert_overloaded(&mut self, mv: MetaTyVar, ov: Overload) {
+    self.map.insert(mv, MetaVarName::Overload(ov));
+  }
+
   pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<MetaVarName> {
     self.map.get(mv).copied()
   }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct MetaVarName {
-  idx: usize,
+pub(crate) enum MetaVarName {
+  Idx(usize),
+  Overload(Overload),
 }
 
 impl fmt::Display for MetaVarName {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "?")?;
-    for c in idx_to_name(self.idx) {
-      write!(f, "{c}")?;
+    match *self {
+      MetaVarName::Idx(idx) => {
+        write!(f, "?")?;
+        for c in idx_to_name(idx) {
+          write!(f, "{c}")?;
+        }
+        Ok(())
+      }
+      MetaVarName::Overload(ov) => ov.fmt(f),
     }
-    Ok(())
   }
 }
 
@@ -389,6 +399,17 @@ impl CompositeOverload {
   }
 }
 
+impl fmt::Display for CompositeOverload {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      CompositeOverload::WordInt => f.write_str("<wordint>"),
+      CompositeOverload::RealInt => f.write_str("<realint>"),
+      CompositeOverload::Num => f.write_str("<num>"),
+      CompositeOverload::NumTxt => f.write_str("<numtxt>"),
+    }
+  }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Overload {
   Basic(BasicOverload),
@@ -426,7 +447,10 @@ impl Overload {
 
 impl fmt::Display for Overload {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    comma_seq(f, self.as_basics().iter())
+    match self {
+      Overload::Basic(b) => b.fmt(f),
+      Overload::Composite(c) => c.fmt(f),
+    }
   }
 }
 

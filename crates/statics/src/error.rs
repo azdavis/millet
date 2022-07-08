@@ -146,10 +146,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let mut mvs = MetaVarNames::default();
         mvs.extend_for(want);
         mvs.extend_for(got);
+        mvs.insert_overloaded(*mv, *ov);
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
-        let name = mvs.get(mv).ok_or(fmt::Error)?;
-        write!(f, "expected {want}, found {got} (where {name} in {{{ov}}})")
+        write!(f, "expected {want}, found {got}")
       }
       ErrorKind::AppLhsNotFn(got) => {
         let mut mvs = MetaVarNames::default();

@@ -26,7 +26,7 @@ fn bound_at_fun_2() {
   check(
     r#"
 fun 'a f (id: 'a -> 'a) x = id x + 1
-(**                         ^^^^^^^^ expected ?a * ?a, found 'a * int (where ?a in {word, real, int}) *)
+(**                         ^^^^^^^^ expected <num> * <num>, found 'a * int *)
 "#,
   );
 }

@@ -609,6 +609,15 @@ This is similar to 4007, but it was with an overloaded function type.
 
 Certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
 
+Millet reports overloaded types with intentionally invalid SML syntax. Here is what they mean:
+
+| Overload    | Meaning                                 |
+| ----------- | --------------------------------------- |
+| `<wordint>` | `word`, `int`                           |
+| `<realint>` | `real`, `int`                           |
+| `<num>`     | `word`, `real`, `int`                   |
+| `<numtxt>`  | `word`, `real`, `int`, `string`, `char` |
+
 ## 4009
 
 A function application expression was encountered, but the function expression did not have a function ("arrow") type.
