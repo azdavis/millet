@@ -14,9 +14,9 @@ Install it from the [marketplace][].
 
 Install the dependencies:
 
-- [git][], to clone the repository and git dependencies
-- [rust][], to compile Rust code
-- [node][], to build to VS Code extension in TypeScript
+- [git][], to clone the repository.
+- [rust][], to build Rust code.
+- [node][], to build to VS Code extension in TypeScript.
 
 Then, `git clone` the repo, `cd` inside, and run `cargo xtask ci`.
 
