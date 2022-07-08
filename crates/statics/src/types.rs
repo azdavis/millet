@@ -1104,7 +1104,17 @@ fn handle_bv(
   *ty = match bv {
     Some(bv) => Ty::BoundVar(bv.clone()),
     None => match kind {
-      Some(TyVarKind::Overloaded(_)) => Ty::INT,
+      Some(TyVarKind::Overloaded(ov)) => match ov {
+        Overload::Basic(b) => match b {
+          BasicOverload::Int => Ty::INT,
+          BasicOverload::Real => Ty::REAL,
+          BasicOverload::Word => Ty::WORD,
+          BasicOverload::String => Ty::STRING,
+          BasicOverload::Char => Ty::CHAR,
+        },
+        // all composite overloads contain, and default to, int.
+        Overload::Composite(_) => Ty::INT,
+      },
       Some(TyVarKind::Record(_)) => {
         *has_record_meta_var = true;
         Ty::None
