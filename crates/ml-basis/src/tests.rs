@@ -21,6 +21,7 @@ in
   functor H and I = J
 end
 ann "huh" in huh.sml end
+signature ARRAY_UTIL
 "#,
   );
 }

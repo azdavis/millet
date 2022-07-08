@@ -74,7 +74,7 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     "let" => Token::Let,
     "in" => Token::In,
     s => {
-      if s.bytes().all(|b| b.is_ascii_alphanumeric()) {
+      if s.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_') {
         // this classifies a string like `3` as a name, but that'll be an error later anyway.
         Token::Name(s)
       } else {
