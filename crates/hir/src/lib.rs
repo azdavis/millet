@@ -3,6 +3,7 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
+use std::borrow::Borrow;
 use std::fmt;
 
 use la_arena::Arena;
@@ -373,6 +374,12 @@ impl Name {
 impl fmt::Display for Name {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.0)
+  }
+}
+
+impl Borrow<str> for Name {
+  fn borrow(&self) -> &str {
+    self.as_str()
   }
 }
 
