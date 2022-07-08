@@ -171,8 +171,8 @@ impl<'a> fmt::Display for TyDisplay<'a> {
 
 #[derive(Debug, Default)]
 pub(crate) struct MetaVarNames {
-  next: usize,
-  map: FxHashMap<MetaTyVar, usize>,
+  next_idx: usize,
+  map: FxHashMap<MetaTyVar, MetaVarName>,
 }
 
 impl MetaVarNames {
@@ -181,8 +181,8 @@ impl MetaVarNames {
       &Subst::default(),
       &mut |x| {
         self.map.entry(x).or_insert_with(|| {
-          let ret = self.next;
-          self.next += 1;
+          let ret = MetaVarName { idx: self.next_idx };
+          self.next_idx += 1;
           ret
         });
       },
@@ -191,10 +191,11 @@ impl MetaVarNames {
   }
 
   pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<MetaVarName> {
-    self.map.get(mv).map(|&idx| MetaVarName { idx })
+    self.map.get(mv).copied()
   }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct MetaVarName {
   idx: usize,
 }
