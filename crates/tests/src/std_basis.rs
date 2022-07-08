@@ -1,4 +1,4 @@
-use crate::check::{check_with_std_basis, fail_with_std_basis};
+use crate::check::check_with_std_basis;
 
 #[test]
 fn smoke() {
@@ -125,7 +125,7 @@ val () = TextIO.output (TextIO.stdErr, "oh no")
 
 #[test]
 fn word_overload() {
-  fail_with_std_basis(
+  check_with_std_basis(
     r#"
 val _ = 0w0: Word.word
 val _ = 0w0: Word8.word

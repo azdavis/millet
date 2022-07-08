@@ -3,8 +3,9 @@ use crate::generalizes::{eq_ty_scheme, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{
-  generalize, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig, SigEnv,
-  StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv, ValInfo,
+  generalize, BasicOverload, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig,
+  SigEnv, StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv,
+  ValInfo,
 };
 use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -174,7 +175,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
       let mut str_exp_env = Env::default();
       get_str_exp(st, bs, ars, &mut str_exp_env, *inner_str_exp);
       let mut sig_exp_env = Env::default();
-      get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
+      let ov = get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
       let sig = env_to_sig(bs, sig_exp_env);
       let mut subst = TyRealization::default();
       let mut to_add = sig.env.clone();
@@ -188,6 +189,15 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
         to_add = sig.env.clone();
         env_realize(&subst, &mut to_add);
+      }
+      if let Some(ov) = ov {
+        match &to_add.ty_env.get(ov.as_str()).unwrap().ty_scheme.ty {
+          Ty::Con(args, sym) => {
+            assert!(args.is_empty());
+            st.syms.overloads()[ov].push(*sym);
+          }
+          _ => unreachable!(),
+        }
       }
       ac.append(&mut to_add);
     }
@@ -234,14 +244,23 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
   }
 }
 
-fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: hir::SigExpIdx) {
+fn get_sig_exp(
+  st: &mut St,
+  bs: &Bs,
+  ars: &hir::Arenas,
+  ac: &mut Env,
+  sig_exp: hir::SigExpIdx,
+) -> Option<BasicOverload> {
   let sig_exp = match sig_exp {
     Some(x) => x,
-    None => return,
+    None => return None,
   };
   match &ars.sig_exp[sig_exp] {
     // sml_def(62)
-    hir::SigExp::Spec(spec) => get_spec(st, bs, ars, ac, *spec),
+    hir::SigExp::Spec(spec) => {
+      get_spec(st, bs, ars, ac, *spec);
+      None
+    }
     // sml_def(63)
     hir::SigExp::Name(name) => match bs.sig_env.get(name) {
       Some(sig) => {
@@ -251,36 +270,41 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
         env_realize(&subst, &mut sig_env);
         st.info().insert(sig_exp, None, sig.env.def);
         ac.append(&mut sig_env);
+        (st.mode().is_std_basis() && name.as_str() == "WORD").then_some(BasicOverload::Word)
       }
-      None => st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone())),
+      None => {
+        st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone()));
+        None
+      }
     },
     // sml_def(64)
     hir::SigExp::WhereType(inner, ty_vars, path, ty) => {
       let mut inner_env = Env::default();
-      get_sig_exp(st, bs, ars, &mut inner_env, *inner);
+      let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
       let mut cx = bs.as_cx();
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, sig_exp.into());
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
       assert_ty_has_no_record_meta_vars(generalize(st.subst(), fixed, &mut ty_scheme));
       get_where_type(st, &mut inner_env, ty_vars, path, ty_scheme, sig_exp.into());
       ac.append(&mut inner_env);
+      ov
     }
     // SML/NJ extension
     hir::SigExp::Where(inner, lhs, rhs) => {
       let mut inner_env = Env::default();
-      get_sig_exp(st, bs, ars, &mut inner_env, *inner);
+      let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
       let lhs_ty_cons = match get_path_ty_cons(&inner_env, lhs) {
         Ok(x) => x,
         Err(e) => {
           st.err(sig_exp, e);
-          return;
+          return ov;
         }
       };
       let rhs_ty_cons = match get_path_ty_cons(&bs.env, rhs) {
         Ok(x) => x,
         Err(e) => {
           st.err(sig_exp, e);
-          return;
+          return ov;
         }
       };
       for ty_con in lhs_ty_cons {
@@ -298,6 +322,7 @@ fn get_sig_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, sig_exp: h
         }
       }
       ac.append(&mut inner_env);
+      ov
     }
   }
 }
@@ -444,7 +469,9 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
       }
     }
     // sml_def(75)
-    hir::Spec::Include(sig_exp) => get_sig_exp(st, bs, ars, ac, *sig_exp),
+    hir::Spec::Include(sig_exp) => {
+      get_sig_exp(st, bs, ars, ac, *sig_exp);
+    }
     // sml_def(78)
     hir::Spec::Sharing(inner, kind, paths) => {
       let mut inner_env = Env::default();

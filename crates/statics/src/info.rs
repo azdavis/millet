@@ -132,6 +132,10 @@ impl Mode {
     matches!(self, Self::Regular(_))
   }
 
+  pub(crate) fn is_std_basis(&self) -> bool {
+    matches!(self, Self::StdBasis(_, _))
+  }
+
   pub(crate) fn path(&self) -> Option<DefPath> {
     match self {
       Self::Regular(p) => p.map(DefPath::Regular),
