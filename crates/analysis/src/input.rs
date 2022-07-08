@@ -56,17 +56,17 @@ impl fmt::Display for GetInputError {
 impl std::error::Error for GetInputError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match &self.kind {
-      GetInputErrorKind::ReadDir(e) => Some(e),
-      GetInputErrorKind::ReadFile(e) => Some(e),
+      GetInputErrorKind::ReadDir(e)
+      | GetInputErrorKind::ReadFile(e)
+      | GetInputErrorKind::Canonicalize(e) => Some(e),
       GetInputErrorKind::Cm(e) => Some(e),
-      GetInputErrorKind::Canonicalize(e) => Some(e),
-      GetInputErrorKind::NoParent => None,
       GetInputErrorKind::NotInRoot(e) => Some(e),
-      GetInputErrorKind::MultipleRootGroups(_, _) => None,
-      GetInputErrorKind::NoRootGroup => None,
       GetInputErrorKind::CouldNotParseConfig(e) => Some(e),
-      GetInputErrorKind::InvalidConfigVersion(_) => None,
-      GetInputErrorKind::Cycle => None,
+      GetInputErrorKind::NoParent
+      | GetInputErrorKind::MultipleRootGroups(_, _)
+      | GetInputErrorKind::NoRootGroup
+      | GetInputErrorKind::InvalidConfigVersion(_)
+      | GetInputErrorKind::Cycle => None,
     }
   }
 }
