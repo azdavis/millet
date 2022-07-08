@@ -69,7 +69,8 @@ impl std::error::Error for GetInputError {
       | GetInputErrorKind::NoRootGroup
       | GetInputErrorKind::InvalidConfigVersion(_)
       | GetInputErrorKind::Cycle
-      | GetInputErrorKind::UnsupportedExport => None,
+      | GetInputErrorKind::UnsupportedExport
+      | GetInputErrorKind::NotGroup => None,
     }
   }
 }
@@ -88,6 +89,7 @@ enum GetInputErrorKind {
   InvalidConfigVersion(u16),
   Cycle,
   UnsupportedExport,
+  NotGroup,
 }
 
 impl fmt::Display for GetInputErrorKind {
@@ -112,6 +114,7 @@ impl fmt::Display for GetInputErrorKind {
       }
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
+      GetInputErrorKind::NotGroup => f.write_str("not a group path"),
     }
   }
 }
@@ -119,42 +122,61 @@ impl fmt::Display for GetInputErrorKind {
 /// std's Result with GetInputError as the default error.
 pub type Result<T, E = GetInputError> = std::result::Result<T, E>;
 
-/// A kind of group file.
+/// A kind of group path.
 #[derive(Debug)]
-pub enum GroupFileKind {
+enum GroupPathKind {
   /// SML/NJ Compilation Manager files.
   Cm,
 }
 
-/// Returns what kind of group file this is.
-pub fn group_file_kind<F>(fs: &F, path: &Path) -> Option<GroupFileKind>
-where
-  F: paths::FileSystem,
-{
-  if !fs.is_file(path) {
-    return None;
+/// A group path.
+#[derive(Debug)]
+pub struct GroupPath {
+  kind: GroupPathKind,
+  path: PathBuf,
+}
+
+impl GroupPath {
+  /// Returns a new `GroupPath`.
+  pub fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
+  where
+    F: paths::FileSystem,
+  {
+    if !fs.is_file(path.as_path()) {
+      return None;
+    }
+    let kind = match path.extension()?.to_str()? {
+      "cm" => GroupPathKind::Cm,
+      _ => return None,
+    };
+    Some(GroupPath { path, kind })
   }
-  path.extension().and_then(|x| match x.to_str()? {
-    "cm" => Some(GroupFileKind::Cm),
-    _ => None,
-  })
+
+  /// Return this as a `Path`.
+  pub fn as_path(&self) -> &Path {
+    self.path.as_path()
+  }
 }
 
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
 /// `root`.
-pub fn get<F>(fs: &F, root: &mut paths::Root, mut root_group_path: Option<PathBuf>) -> Result<Input>
+pub fn get<F>(
+  fs: &F,
+  root: &mut paths::Root,
+  mut root_group_path: Option<GroupPath>,
+) -> Result<Input>
 where
   F: paths::FileSystem,
 {
   let mut root_group_source = None::<PathBuf>;
-  let config_file_name = root.as_path().join(config::FILE_NAME);
-  if let Ok(contents) = fs.read_to_string(&config_file_name) {
+  let config_path = root.as_path().join(config::FILE_NAME);
+  if let Ok(contents) = fs.read_to_string(&config_path) {
     let config: config::Root = match toml::from_str(&contents) {
       Ok(x) => x,
       Err(e) => {
         return Err(GetInputError {
           source: None,
-          path: config_file_name,
+          path: config_path,
           kind: GetInputErrorKind::CouldNotParseConfig(e),
           range: None,
         })
@@ -163,14 +185,27 @@ where
     if config.version != 1 {
       return Err(GetInputError {
         source: None,
-        path: config_file_name,
+        path: config_path,
         kind: GetInputErrorKind::InvalidConfigVersion(config.version),
         range: None,
       });
     }
     if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
-      root_group_source = Some(config_file_name);
-      root_group_path = Some(root.as_path().join(path));
+      let path = root.as_path().join(path);
+      match GroupPath::new(fs, path.clone()) {
+        Some(path) => {
+          root_group_source = Some(config_path);
+          root_group_path = Some(path);
+        }
+        None => {
+          return Err(GetInputError {
+            source: Some(config_path),
+            range: None,
+            path,
+            kind: GetInputErrorKind::NotGroup,
+          })
+        }
+      }
     }
   }
   if root_group_path.is_none() {
@@ -181,17 +216,17 @@ where
       kind: GetInputErrorKind::ReadDir(e),
     })?;
     for entry in dir_entries {
-      if group_file_kind(fs, entry.as_path()).is_some() {
-        match &root_group_path {
-          Some(x) => {
+      if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
+        match root_group_path {
+          Some(rgp) => {
             return Err(GetInputError {
-              kind: GetInputErrorKind::MultipleRootGroups(x.clone(), entry.clone()),
-              source: root_group_path,
+              kind: GetInputErrorKind::MultipleRootGroups(rgp.path.clone(), entry.clone()),
+              source: Some(rgp.path),
               path: entry,
               range: None,
             })
           }
-          None => root_group_path = Some(entry),
+          None => root_group_path = Some(group_path),
         }
       }
     }
@@ -209,7 +244,7 @@ where
       Some(p) => Source::Path(p.clone()),
       None => Source::None,
     },
-    root_group_path.as_path(),
+    root_group_path.path.as_path(),
   )?;
   let mut sources = PathMap::<String>::default();
   let mut groups = PathMap::<Group>::default();
