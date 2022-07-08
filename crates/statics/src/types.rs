@@ -329,16 +329,21 @@ pub(crate) enum BasicOverload {
   Char,
 }
 
-impl fmt::Display for BasicOverload {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let s = match self {
+impl BasicOverload {
+  pub(crate) fn as_str(&self) -> &'static str {
+    match self {
       BasicOverload::Int => "int",
       BasicOverload::Real => "real",
       BasicOverload::Word => "word",
       BasicOverload::String => "string",
       BasicOverload::Char => "char",
-    };
-    f.write_str(s)
+    }
+  }
+}
+
+impl fmt::Display for BasicOverload {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str(self.as_str())
   }
 }
 
