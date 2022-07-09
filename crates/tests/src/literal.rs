@@ -25,7 +25,6 @@ fn int() {
   check(
     r#"
 val _ = 123123123123123123123123132131
-(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ invalid literal: number too large to fit in target type *)
 "#,
   );
 }

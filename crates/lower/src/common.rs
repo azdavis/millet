@@ -1,4 +1,5 @@
 use crate::util::{Cx, ErrorKind};
+use num_traits::Num as _;
 use syntax::ast;
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
@@ -22,11 +23,14 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
         10
       };
       let n = match i32::from_str_radix(chars.as_str(), radix) {
-        Ok(x) => mul * x,
-        Err(e) => {
-          cx.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
-          0
-        }
+        Ok(x) => hir::Int::Finite(mul * x),
+        Err(_) => match hir::BigInt::from_str_radix(chars.as_str(), radix) {
+          Ok(x) => hir::Int::Big(x),
+          Err(e) => {
+            cx.err(tok.text_range(), ErrorKind::InvalidBigIntLit(e));
+            hir::Int::Finite(0)
+          }
+        },
       };
       hir::SCon::Int(n)
     }

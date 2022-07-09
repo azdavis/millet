@@ -11,3 +11,4 @@ test = false
 [dependencies]
 la-arena = "0.2"
 smol_str = "0.1"
+num-bigint = "0.4"

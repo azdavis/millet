@@ -57,7 +57,7 @@ impl Error {
       ErrorKind::Unsupported(_) => 1,
       ErrorKind::FunBindMismatchedName(_, _) => 2,
       ErrorKind::FunBindWrongNumPats(_, _) => 3,
-      ErrorKind::InvalidIntLit(_) => 4,
+      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 4,
       ErrorKind::InvalidRealLit(_) => 5,
       ErrorKind::InvalidNumLab(_) => 6,
       ErrorKind::ZeroNumLab => 7,
@@ -73,6 +73,7 @@ pub(crate) enum ErrorKind {
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
   InvalidIntLit(std::num::ParseIntError),
+  InvalidBigIntLit(hir::ParseBigIntError),
   InvalidRealLit(std::num::ParseFloatError),
   InvalidNumLab(std::num::ParseIntError),
   ZeroNumLab,
@@ -94,6 +95,7 @@ impl fmt::Display for ErrorKind {
         write!(f, "expected {want} patterns, found {got}")
       }
       ErrorKind::InvalidIntLit(e) => write!(f, "invalid literal: {e}"),
+      ErrorKind::InvalidBigIntLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),

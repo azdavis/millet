@@ -47,15 +47,15 @@ fn get_(
     hir::Pat::Wild => any(st, pat),
     // sml_def(33)
     hir::Pat::SCon(scon) => {
-      let con = match *scon {
-        hir::SCon::Int(i) => Con::Int(i),
+      let con = match scon {
+        hir::SCon::Int(i) => Con::Int(i.clone()),
         hir::SCon::Real(_) => {
           st.err(pat_, ErrorKind::RealPat);
           Con::Any
         }
-        hir::SCon::Word(w) => Con::Word(w),
-        hir::SCon::Char(c) => Con::Char(c),
-        hir::SCon::String(ref s) => Con::String(s.clone()),
+        hir::SCon::Word(w) => Con::Word(*w),
+        hir::SCon::Char(c) => Con::Char(*c),
+        hir::SCon::String(s) => Con::String(s.clone()),
       };
       (Pat::zero(con, pat), get_scon(st, scon))
     }

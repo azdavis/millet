@@ -118,7 +118,7 @@ impl pattern_match::Lang for Lang {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Con {
   Any,
-  Int(i32),
+  Int(hir::Int),
   Word(u32),
   Char(char),
   String(hir::SmolStr),

@@ -359,18 +359,18 @@ fun f 1 = 2
 
 ## 3004
 
-An integer literal was invalid. This can happen when it is too large.
+An integer (`int` or `word`) literal was invalid. This can happen when it is too large.
 
 ```sml
 (* error *)
-val _ = 123456789123456789123456789123456789
+val _ = 0w123456789123456789123456789123456789
 ```
 
 To fix, use smaller literals.
 
 ```sml
 (* ok *)
-val _ = 123456789
+val _ = 0w123456789
 ```
 
 ## 3005

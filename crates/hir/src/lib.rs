@@ -9,6 +9,7 @@ use std::fmt;
 use la_arena::Arena;
 
 pub use la_arena;
+pub use num_bigint::{BigInt, ParseBigIntError};
 pub use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
@@ -299,11 +300,26 @@ impl Lab {
 
 #[derive(Debug)]
 pub enum SCon {
-  Int(i32),
+  Int(Int),
   Real(f64),
   Word(u32),
   Char(char),
   String(SmolStr),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Int {
+  Finite(i32),
+  Big(num_bigint::BigInt),
+}
+
+impl fmt::Display for Int {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Int::Finite(x) => x.fmt(f),
+      Int::Big(x) => x.fmt(f),
+    }
+  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
