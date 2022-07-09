@@ -8,7 +8,12 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
   let ret = match scon.kind {
     ast::SConKind::IntLit => {
       let chars = tok.text();
-      let (mul, mut chars) = start_int(chars);
+      let mut chars = chars.chars();
+      let neg = chars.as_str().starts_with('~');
+      if neg {
+        chars.next();
+      }
+      let mul = if neg { -1 } else { 1 };
       let radix = if chars.as_str().starts_with("0x") {
         chars.next();
         chars.next();
@@ -76,15 +81,6 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
     }
   };
   Some(ret)
-}
-
-fn start_int(chars: &str) -> (i32, std::str::Chars<'_>) {
-  let mut chars = chars.chars();
-  let neg = chars.as_str().starts_with('~');
-  if neg {
-    chars.next();
-  }
-  (if neg { -1 } else { 1 }, chars)
 }
 
 pub(crate) fn get_name(n: Option<syntax::SyntaxToken>) -> Option<hir::Name> {
