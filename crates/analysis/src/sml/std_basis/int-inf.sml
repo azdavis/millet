@@ -53,4 +53,7 @@ signature INT_INF (* OPTIONAL *) = sig
   val ~>> : int * Word.word -> int
 end
 
-structure IntInf :> INT_INF (* OPTIONAL *) = struct end
+structure LargeInt :> INT_INF
+  where type int = LargeInt.int = LargeInt
+
+structure IntInf (* OPTIONAL *) = LargeInt

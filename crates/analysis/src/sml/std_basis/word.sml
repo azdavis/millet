@@ -182,8 +182,8 @@ structure Word :> WORD
   where type word = word = Word
 structure Word8 :> WORD = struct end
 structure Word31 :> WORD (* OPTIONAL *) = struct end
-structure Word32 :> WORD (* OPTIONAL *) = struct end
-structure Word64 :> WORD (* OPTIONAL *) = struct end
 structure LargeWord :> WORD
   where type word = LargeWord.word = LargeWord
+structure Word32 (* OPTIONAL *) = Word
+structure Word64 (* OPTIONAL *) = LargeWord
 structure SysWord :> WORD (* OPTIONAL *) = struct end

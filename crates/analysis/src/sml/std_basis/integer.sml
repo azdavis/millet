@@ -138,6 +138,4 @@ end
 structure Int :> INTEGER
   where type int = int = Int
 structure FixedInt :> INTEGER (* OPTIONAL *) = struct end
-structure LargeInt :> INTEGER
-  where type int = LargeInt.int = LargeInt
 structure Position :> INTEGER = struct end
