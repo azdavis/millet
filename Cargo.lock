@@ -72,6 +72,7 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "anyhow",
+ "config",
  "paths",
  "pico-args",
 ]
@@ -227,6 +228,7 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "anyhow",
+ "config",
  "crossbeam-channel",
  "elapsed",
  "fast-hash",
@@ -520,6 +522,7 @@ dependencies = [
 name = "statics"
 version = "0.1.0"
 dependencies = [
+ "config",
  "drop_bomb",
  "fast-hash",
  "hir",

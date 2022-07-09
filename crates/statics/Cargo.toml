@@ -15,4 +15,5 @@ pattern-match = { git = "https://github.com/azdavis/language-util.git" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }
 hir = { path = "../hir" }
 paths = { path = "../paths" }
+config = { path = "../config" }
 fast-hash = { path = "../fast-hash" }

@@ -136,7 +136,10 @@ where
       let mode = statics::Mode::StdBasis(name, comment_map);
       let (info, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
       if let Some(e) = es.first() {
-        panic!("{name}: statics error: {}", e.display(&syms));
+        panic!(
+          "{name}: statics error: {}",
+          e.display(&syms, config::ErrorLines::One)
+        );
       }
       (name, info)
     })

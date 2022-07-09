@@ -22,15 +22,17 @@ pub const MAX_ERRORS_PER_PATH: usize = 20;
 #[derive(Debug)]
 pub struct Analysis {
   std_basis: StdBasis,
+  error_lines: config::ErrorLines,
   source_files: PathMap<SourceFile>,
   syms: statics::Syms,
 }
 
 impl Analysis {
   /// Returns a new `Analysis`.
-  pub fn new(std_basis: StdBasis) -> Self {
+  pub fn new(std_basis: StdBasis, error_lines: config::ErrorLines) -> Self {
     Self {
       std_basis,
+      error_lines,
       source_files: PathMap::default(),
       syms: statics::Syms::default(),
     }
@@ -45,7 +47,7 @@ impl Analysis {
     let mode = statics::Mode::Regular(None);
     let (_, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
     file.statics_errors = es;
-    file.to_errors(&syms)
+    file.to_errors(&syms, self.error_lines)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -104,7 +106,7 @@ impl Analysis {
             statics::get(&mut self.syms, &mut basis, mode, &low.arenas, &low.top_decs);
           source_file.statics_errors = es;
           source_file.info = Some(info);
-          source_errors.insert(path, source_file.to_errors(&self.syms));
+          source_errors.insert(path, source_file.to_errors(&self.syms, self.error_lines));
         }
         None => {
           // if not a source file, must be a group file
@@ -278,7 +280,7 @@ impl SourceFile {
     }
   }
 
-  fn to_errors(&self, syms: &statics::Syms) -> Vec<Error> {
+  fn to_errors(&self, syms: &statics::Syms, lines: config::ErrorLines) -> Vec<Error> {
     std::iter::empty()
       .chain(self.lex_errors.iter().map(|err| Error {
         range: self.pos_db.range(err.range()),
@@ -308,7 +310,7 @@ impl SourceFile {
           range: self
             .pos_db
             .range(syntax.to_node(self.parsed.root.syntax()).text_range()),
-          message: err.display(syms).to_string(),
+          message: err.display(syms, lines).to_string(),
           code: 4000 + u16::from(err.to_code()),
         })
       }))

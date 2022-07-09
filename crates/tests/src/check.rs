@@ -169,7 +169,7 @@ impl Check {
     if !matches!(want_err_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_err_len));
     }
-    let mut an = analysis::Analysis::new(std_basis);
+    let mut an = analysis::Analysis::new(std_basis, config::ErrorLines::One);
     let err = an
       .get_many(&input)
       .into_iter()

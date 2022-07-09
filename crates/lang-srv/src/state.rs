@@ -65,7 +65,7 @@ impl State {
         }),
       sender,
       req_queue: ReqQueue::default(),
-      analysis: analysis::Analysis::new(analysis::StdBasis::full()),
+      analysis: analysis::Analysis::new(analysis::StdBasis::full(), config::ErrorLines::Many),
       file_system,
     };
     if let Err(e) = root {

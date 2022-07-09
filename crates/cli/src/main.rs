@@ -42,7 +42,7 @@ fn main() -> Result<()> {
     };
   let mut root = paths::Root::new(root_path);
   let inp = analysis::input::get(&fs, &mut root, root_group)?;
-  let mut an = analysis::Analysis::new(analysis::StdBasis::full());
+  let mut an = analysis::Analysis::new(analysis::StdBasis::full(), config::ErrorLines::Many);
   let got = an.get_many(&inp);
   let num_errors: usize = got.iter().map(|(_, errors)| errors.len()).sum();
   for (path, errors) in got {

@@ -18,10 +18,15 @@ impl Error {
   }
 
   /// Displays this error.
-  pub fn display<'a>(&'a self, syms: &'a Syms) -> impl fmt::Display + 'a {
+  pub fn display<'a>(
+    &'a self,
+    syms: &'a Syms,
+    lines: config::ErrorLines,
+  ) -> impl fmt::Display + 'a {
     ErrorKindDisplay {
       kind: &self.kind,
       syms,
+      lines,
     }
   }
 
@@ -116,6 +121,7 @@ impl fmt::Display for Item {
 struct ErrorKindDisplay<'a> {
   kind: &'a ErrorKind,
   syms: &'a Syms,
+  lines: config::ErrorLines,
 }
 
 impl fmt::Display for ErrorKindDisplay<'_> {
@@ -140,7 +146,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mvs.extend_for(got);
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
-        write!(f, "expected {want}, found {got}")
+        mismatched_types(f, self.lines, want, got)
       }
       ErrorKind::OverloadMismatch(ov, mv, want, got) => {
         let mut mvs = MetaVarNames::default();
@@ -149,7 +155,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mvs.insert_overloaded(*mv, *ov);
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
-        write!(f, "expected {want}, found {got}")
+        mismatched_types(f, self.lines, want, got)
       }
       ErrorKind::AppLhsNotFn(got) => {
         let mut mvs = MetaVarNames::default();
@@ -212,6 +218,25 @@ fn non_exhaustive(
     write!(f, ", and {} others", pats.len() - max_len)?;
   }
   Ok(())
+}
+
+fn mismatched_types<T>(
+  f: &mut fmt::Formatter<'_>,
+  lines: config::ErrorLines,
+  want: T,
+  got: T,
+) -> fmt::Result
+where
+  T: fmt::Display,
+{
+  match lines {
+    config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
+    config::ErrorLines::Many => {
+      writeln!(f, "mismatched types:")?;
+      writeln!(f, "  expected {want}")?;
+      write!(f, "     found {got}")
+    }
+  }
 }
 
 struct PatDisplay<'a> {

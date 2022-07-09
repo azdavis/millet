@@ -24,3 +24,12 @@ pub struct Workspace {
   /// The root group filename.
   pub root: Option<String>,
 }
+
+/// How many lines an error message may have.
+#[derive(Debug, Clone, Copy)]
+pub enum ErrorLines {
+  /// Error messages may not have newlines.
+  One,
+  /// Error messages may (or may not) have newlines.
+  Many,
+}
