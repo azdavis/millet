@@ -13,6 +13,7 @@
     "cmark",
     "cmfile",
     "consts",
+    "datatypes",
     "descs",
     "elif",
     "eqtype",

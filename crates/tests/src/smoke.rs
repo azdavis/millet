@@ -150,9 +150,9 @@ fn withtype() {
   check(
     r#"
 datatype foo = Foo of bar
-withtype bar = int
+withtype bar = int and quz = foo
 val _ = 3 : bar
-val _ = Foo 4
+val _ = Foo 4 : quz
 "#,
   );
 }

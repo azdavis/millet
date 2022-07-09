@@ -248,7 +248,8 @@ pub(crate) fn get_dat_binds(
   // with the constructors.
   let mut fake_ty_env = TyEnv::default();
   let mut data_types = Vec::<Datatype>::new();
-  // do a first pass through everything to allow for recursive reference.
+  // do a first pass through the datatypes to allow for recursive reference, and to put them in
+  // scope for the types.
   for dat_bind in dat_binds.iter() {
     let started = st.syms.start(dat_bind.name.clone());
     let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, idx);
@@ -270,6 +271,9 @@ pub(crate) fn get_dat_binds(
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);
     }
+    // TODO every datatype has its fixed ty vars in scope with everyone elses', that's probably
+    // wrong. do we need to take them out of scope in this first pass-through, and then put them
+    // back into scope for the cons?
     data_types.push(Datatype {
       started,
       fixed,
@@ -277,24 +281,33 @@ pub(crate) fn get_dat_binds(
       ty_scheme,
     });
   }
+  // bring all the datatypes into scope.
+  cx.env.push(Env {
+    ty_env: fake_ty_env.clone(),
+    ..Default::default()
+  });
+  // now get the types. this `ty_env` will be the ultimate one we return.
   let mut ty_env = TyEnv::default();
   get_ty_binds(st, &mut cx, ars, &mut ty_env, ty_binds, idx);
+  // make sure the types did not conflict with the datatypes.
   for (name, val) in ty_env.iter() {
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, name.clone(), val.clone(), Item::Ty) {
       st.err(idx, e);
     }
   }
+  // bring all the types into scope.
   cx.env.push(Env {
-    ty_env: fake_ty_env,
+    ty_env: ty_env.clone(),
     ..Default::default()
   });
+  // everything is in scope now (datatypes and types). now get the datatype constructors.
   let mut big_val_env = ValEnv::default();
-  // sml_def(28), sml_def(81)
   assert_eq!(
     dat_binds.len(),
     data_types.len(),
     "we created data_types from a for loop over dat_binds"
   );
+  // sml_def(28), sml_def(81)
   for (dat_bind, datatype) in dat_binds.iter().zip(data_types) {
     let mut val_env = ValEnv::default();
     // sml_def(29), sml_def(82)
