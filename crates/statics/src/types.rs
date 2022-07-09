@@ -992,12 +992,11 @@ impl FixedTyVars {
 /// panics if the type scheme already binds vars.
 ///
 /// TODO remove ty_vars(cx)? what even is that?
-#[must_use = "must check whether there were record meta vars"]
 pub(crate) fn generalize(
   subst: &Subst,
   fixed: FixedTyVars,
   ty_scheme: &mut TyScheme,
-) -> Option<HasRecordMetaVars> {
+) -> Result<(), HasRecordMetaVars> {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
   meta_vars(
@@ -1016,10 +1015,15 @@ pub(crate) fn generalize(
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.bound_vars;
-  g.has_record_meta_var.then_some(HasRecordMetaVars)
+  if g.has_record_meta_var {
+    Err(HasRecordMetaVars)
+  } else {
+    Ok(())
+  }
 }
 
 /// a marker for when a type contained record meta vars.
+#[derive(Debug)]
 pub(crate) struct HasRecordMetaVars;
 
 /// like [`generalize`], but:

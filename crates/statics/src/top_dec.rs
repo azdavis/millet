@@ -849,9 +849,6 @@ fn val_env_syms<F: FnMut(Sym)>(f: &mut F, val_env: &ValEnv) {
   }
 }
 
-fn assert_ty_has_no_record_meta_vars(x: Option<HasRecordMetaVars>) {
-  assert!(
-    x.is_none(),
-    "a type cannot have record meta vars because it has no patterns"
-  )
+fn assert_ty_has_no_record_meta_vars(x: Result<(), HasRecordMetaVars>) {
+  x.expect("a type cannot have record meta vars because it has no patterns")
 }

@@ -78,7 +78,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // generalize the entire merged ValEnv.
       for val_info in ve.values_mut() {
         let g = generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
-        if let Some(HasRecordMetaVars) = g {
+        if let Err(HasRecordMetaVars) = g {
           st.err(dec, ErrorKind::UnresolvedRecordTy);
         }
       }
