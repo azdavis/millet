@@ -209,7 +209,7 @@ impl fmt::Display for MetaVarName {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match *self {
       MetaVarName::Idx(idx) => {
-        write!(f, "?")?;
+        f.write_str("?")?;
         for c in idx_to_name(idx) {
           write!(f, "{c}")?;
         }
