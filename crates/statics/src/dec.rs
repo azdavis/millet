@@ -3,12 +3,11 @@ use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::st::St;
 use crate::types::{
   generalize, generalize_fixed, Cx, Env, EnvLike as _, FixedTyVars, HasRecordMetaVars, IdStatus,
-  Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
+  StartedSym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
 use crate::{exp, pat, ty};
-use fast_hash::map;
 
 /// TODO avoid clones and have this take a &mut Cx instead, but promise that we won't actually
 /// visibly mutate the cx between entry and exit (i.e. if we do any mutations, we'll undo them)?
@@ -91,29 +90,13 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut cx = cx.clone();
       let mut ty_env = TyEnv::default();
       // sml_def(27)
-      for ty_bind in ty_binds {
-        let fixed = add_fixed_ty_vars(st, &mut cx, &ty_bind.ty_vars, dec.into());
-        let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty_bind.ty));
-        // use `generalize_fixed`, not `generalize`, to explicitly create a ty scheme with the
-        // written arity to support phantom types.
-        generalize_fixed(fixed, &mut ty_scheme);
-        let ty_info = TyInfo {
-          ty_scheme,
-          val_env: ValEnv::default(),
-          def: st.def(dec),
-        };
-        if let Some(e) = ins_no_dupe(&mut ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
-          st.err(dec, e)
-        }
-        for ty_var in ty_bind.ty_vars.iter() {
-          cx.ty_vars.remove(ty_var);
-        }
-      }
+      get_ty_binds(st, &mut cx, ars, &mut ty_env, ty_binds, dec.into());
       env.ty_env.extend(ty_env);
     }
     // sml_def(17)
-    hir::Dec::Datatype(dat_binds) => {
-      let (ty_env, big_val_env) = get_dat_binds(st, cx.clone(), ars, dat_binds, dec.into());
+    hir::Dec::Datatype(dat_binds, ty_binds) => {
+      let (ty_env, big_val_env) =
+        get_dat_binds(st, cx.clone(), ars, dat_binds, ty_binds, dec.into());
       env.ty_env.extend(ty_env);
       env.val_env.extend(big_val_env);
     }
@@ -128,7 +111,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       Err(e) => st.err(dec, e),
     },
     // sml_def(19)
-    hir::Dec::Abstype(_, _) => st.err(dec, ErrorKind::Unsupported("`abstype` declarations")),
+    hir::Dec::Abstype(_, _, _) => st.err(dec, ErrorKind::Unsupported("`abstype` declarations")),
     // sml_def(20)
     hir::Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::default();
@@ -217,18 +200,56 @@ pub(crate) fn add_fixed_ty_vars(
   ret
 }
 
+fn get_ty_binds(
+  st: &mut St,
+  cx: &mut Cx,
+  ars: &hir::Arenas,
+  ty_env: &mut TyEnv,
+  ty_binds: &[hir::TyBind],
+  idx: hir::Idx,
+) {
+  for ty_bind in ty_binds {
+    let fixed = add_fixed_ty_vars(st, cx, &ty_bind.ty_vars, idx);
+    let mut ty_scheme = TyScheme::zero(ty::get(st, cx, ars, ty_bind.ty));
+    // use `generalize_fixed`, not `generalize`, to explicitly create a ty scheme with the
+    // written arity to support phantom types.
+    generalize_fixed(fixed, &mut ty_scheme);
+    let ty_info = TyInfo {
+      ty_scheme,
+      val_env: ValEnv::default(),
+      def: st.def(idx),
+    };
+    if let Some(e) = ins_no_dupe(ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
+      st.err(idx, e)
+    }
+    for ty_var in ty_bind.ty_vars.iter() {
+      cx.ty_vars.remove(ty_var);
+    }
+  }
+}
+
+struct Datatype {
+  started: StartedSym,
+  fixed: FixedTyVars,
+  out_ty: Ty,
+  ty_scheme: TyScheme,
+}
+
 /// TODO handle side conditions
 pub(crate) fn get_dat_binds(
   st: &mut St,
   mut cx: Cx,
   ars: &hir::Arenas,
   dat_binds: &[hir::DatBind],
+  ty_binds: &[hir::TyBind],
   idx: hir::Idx,
 ) -> (TyEnv, ValEnv) {
-  let mut ty_env = TyEnv::default();
-  let mut big_val_env = ValEnv::default();
-  // sml_def(28), sml_def(81)
-  for dat_bind in dat_binds {
+  // 'fake' because it's just to allow recursive reference, it doesn't have the val env filled in
+  // with the constructors.
+  let mut fake_ty_env = TyEnv::default();
+  let mut data_types = Vec::<Datatype>::new();
+  // do a first pass through everything to allow for recursive reference.
+  for dat_bind in dat_binds.iter() {
     let started = st.syms.start(dat_bind.name.clone());
     let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, idx);
     let out_ty = Ty::Con(
@@ -241,29 +262,51 @@ pub(crate) fn get_dat_binds(
       generalize_fixed(fixed.clone(), &mut res);
       res
     };
-    // allow recursive reference
-    cx.env.push(Env {
-      ty_env: map([(
-        dat_bind.name.clone(),
-        TyInfo {
-          ty_scheme: ty_scheme.clone(),
-          val_env: ValEnv::default(),
-          def: st.def(idx),
-        },
-      )]),
-      ..Default::default()
+    let ty_info = TyInfo {
+      ty_scheme: ty_scheme.clone(),
+      val_env: ValEnv::default(),
+      def: st.def(idx),
+    };
+    if let Some(e) = ins_no_dupe(&mut fake_ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
+      st.err(idx, e);
+    }
+    data_types.push(Datatype {
+      started,
+      fixed,
+      out_ty,
+      ty_scheme,
     });
+  }
+  let mut ty_env = TyEnv::default();
+  get_ty_binds(st, &mut cx, ars, &mut ty_env, ty_binds, idx);
+  for (name, val) in ty_env.iter() {
+    if let Some(e) = ins_no_dupe(&mut fake_ty_env, name.clone(), val.clone(), Item::Ty) {
+      st.err(idx, e);
+    }
+  }
+  cx.env.push(Env {
+    ty_env: fake_ty_env,
+    ..Default::default()
+  });
+  let mut big_val_env = ValEnv::default();
+  // sml_def(28), sml_def(81)
+  assert_eq!(
+    dat_binds.len(),
+    data_types.len(),
+    "we created data_types from a for loop over dat_binds"
+  );
+  for (dat_bind, datatype) in dat_binds.iter().zip(data_types) {
     let mut val_env = ValEnv::default();
     // sml_def(29), sml_def(82)
     for con_bind in dat_bind.cons.iter() {
-      let mut ty = out_ty.clone();
+      let mut ty = datatype.out_ty.clone();
       if let Some(of_ty) = con_bind.ty {
         ty = Ty::fun(ty::get(st, &cx, ars, of_ty), ty);
       };
       let mut ty_scheme = TyScheme::zero(ty);
       // just `generalize` would also work, because `ty_scheme` contains `out_ty`, which mentions
       // every fixed var.
-      generalize_fixed(fixed.clone(), &mut ty_scheme);
+      generalize_fixed(datatype.fixed.clone(), &mut ty_scheme);
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Con,
@@ -276,14 +319,12 @@ pub(crate) fn get_dat_binds(
     // NOTE: no checking for duplicates here
     big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
     let ty_info = TyInfo {
-      ty_scheme,
+      ty_scheme: datatype.ty_scheme,
       val_env,
       def: st.def(idx),
     };
-    st.syms.finish(started, ty_info.clone());
-    if let Some(e) = ins_no_dupe(&mut ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
-      st.err(idx, e);
-    }
+    st.syms.finish(datatype.started, ty_info.clone());
+    ty_env.insert(dat_bind.name.clone(), ty_info);
     for ty_var in dat_bind.ty_vars.iter() {
       cx.ty_vars.remove(ty_var);
     }

@@ -251,7 +251,7 @@ end
 
 #[test]
 fn with_type_expand() {
-  fail(
+  check(
     r#"
 type u = real
 datatype a = A of t | B of u

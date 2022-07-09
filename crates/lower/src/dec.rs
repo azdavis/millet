@@ -149,31 +149,20 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
         .collect();
       hir::Dec::Val(ty_vars, val_binds)
     }
-    ast::DecOne::TyDec(dec) => ty_binds(cx, dec.ty_binds()),
+    ast::DecOne::TyDec(dec) => hir::Dec::Ty(ty_binds(cx, dec.ty_binds())),
     ast::DecOne::DatDec(dec) => {
-      let mut ret = hir::Dec::Datatype(dat_binds(cx, dec.dat_binds()).collect());
-      if let Some(with_ty) = dec.with_type() {
-        let ty_dec = ty_binds(cx, with_ty.ty_binds());
-        ret = hir::Dec::Seq(vec![
-          cx.dec_one(ret, ptr.clone()),
-          cx.dec_one(ty_dec, ptr.clone()),
-        ]);
-      }
-      ret
+      let dbs: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
+      let tbs = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
+      hir::Dec::Datatype(dbs, tbs)
     }
     ast::DecOne::DatCopyDec(dec) => {
       hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
     ast::DecOne::AbstypeDec(dec) => {
       let dbs: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
-      let ty_dec = dec.with_type().map(|x| ty_binds(cx, x.ty_binds()));
-      let mut d = get(cx, dec.dec());
-      if let Some(ty_dec) = ty_dec {
-        let ty_dec = cx.dec_one(ty_dec, ptr.clone());
-        d = cx.dec_one(hir::Dec::Seq(vec![d, ty_dec]), ptr.clone());
-      }
-      // TODO: "see note in text"
-      hir::Dec::Abstype(dbs, d)
+      let tbs = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
+      let inner = get(cx, dec.dec());
+      hir::Dec::Abstype(dbs, tbs, inner)
     }
     ast::DecOne::ExDec(dec) => hir::Dec::Exception(
       dec
@@ -219,20 +208,18 @@ where
   })
 }
 
-fn ty_binds<I>(cx: &mut Cx, iter: I) -> hir::Dec
+fn ty_binds<I>(cx: &mut Cx, iter: I) -> Vec<hir::TyBind>
 where
   I: Iterator<Item = ast::TyBind>,
 {
-  hir::Dec::Ty(
-    iter
-      .filter_map(|ty_bind| {
-        let name = get_name(ty_bind.name())?;
-        Some(hir::TyBind {
-          ty_vars: ty::var_seq(ty_bind.ty_var_seq()),
-          name,
-          ty: ty::get(cx, ty_bind.ty()),
-        })
+  iter
+    .filter_map(|ty_bind| {
+      let name = get_name(ty_bind.name())?;
+      Some(hir::TyBind {
+        ty_vars: ty::var_seq(ty_bind.ty_var_seq()),
+        name,
+        ty: ty::get(cx, ty_bind.ty()),
       })
-      .collect(),
-  )
+    })
+    .collect()
 }

@@ -186,7 +186,7 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
       to_bind.sort_unstable();
       assert!(cx.val_dec.insert(dec, to_bind).is_none());
     }
-    hir::Dec::Abstype(_, dec) => get_dec(cx, ars, scope, *dec),
+    hir::Dec::Abstype(_, _, dec) => get_dec(cx, ars, scope, *dec),
     hir::Dec::Local(local_dec, in_dec) => {
       get_dec(cx, ars, scope, *local_dec);
       get_dec(cx, ars, scope, *in_dec);
@@ -197,7 +197,7 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
       }
     }
     hir::Dec::Ty(_)
-    | hir::Dec::Datatype(_)
+    | hir::Dec::Datatype(_, _)
     | hir::Dec::DatatypeCopy(_, _)
     | hir::Dec::Exception(_)
     | hir::Dec::Open(_) => {}

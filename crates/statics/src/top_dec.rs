@@ -418,7 +418,8 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
     // sml_def(71)
     hir::Spec::Datatype(dat_desc) => {
       let dat_descs = std::slice::from_ref(dat_desc);
-      let (ty_env, big_val_env) = dec::get_dat_binds(st, bs.as_cx(), ars, dat_descs, spec.into());
+      let (ty_env, big_val_env) =
+        dec::get_dat_binds(st, bs.as_cx(), ars, dat_descs, &[], spec.into());
       for (name, val) in ty_env {
         if let Some(e) = ins_no_dupe(&mut ac.ty_env, name, val, Item::Ty) {
           st.err(spec, e);

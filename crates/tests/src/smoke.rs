@@ -1,4 +1,4 @@
-use crate::check::{check, check_multi, fail};
+use crate::check::{check, check_multi};
 
 mod dec;
 mod exp;
@@ -147,7 +147,7 @@ val _: string = "星にもまた、始まりはあるが、自らの力を持っ
 
 #[test]
 fn withtype() {
-  fail(
+  check(
     r#"
 datatype foo = Foo of bar
 withtype bar = int

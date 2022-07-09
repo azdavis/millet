@@ -193,9 +193,11 @@ pub type DecArena = Arena<Dec>;
 pub enum Dec {
   Val(Vec<TyVar>, Vec<ValBind>),
   Ty(Vec<TyBind>),
-  Datatype(Vec<DatBind>),
+  /// The TyBinds are from `withtype`, since it's easier to process in statics than lower.
+  Datatype(Vec<DatBind>, Vec<TyBind>),
   DatatypeCopy(Name, Path),
-  Abstype(Vec<DatBind>, DecIdx),
+  /// The TyBinds are from `withtype`, since it's easier to process in statics than lower.
+  Abstype(Vec<DatBind>, Vec<TyBind>, DecIdx),
   Exception(Vec<ExBind>),
   Local(DecIdx, DecIdx),
   Open(Vec<Path>),

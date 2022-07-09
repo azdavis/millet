@@ -513,7 +513,7 @@ val _ = inc a : int;
 
 #[test]
 fn circular_datatype() {
-  fail(
+  check(
     r#"
 datatype foo = Foo of bar
 and bar = Bar of foo | Quz
