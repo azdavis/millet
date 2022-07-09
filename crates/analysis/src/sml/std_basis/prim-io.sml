@@ -223,12 +223,19 @@ structure BinPrimIO :> PRIM_IO
   where type array = Word8Array.array
   where type vector = Word8Vector.vector
   where type elem = Word8.word
-  where type pos = Position.int = struct end
+  where type pos = Position.int
+  (* NOTE: non-standard, but in cmlib, and it appears to make some amount of sense. *)
+  where type array_slice = Word8ArraySlice.slice
+  where type vector_slice = Word8VectorSlice.slice = struct end
 
 structure TextPrimIO :> PRIM_IO
   where type array = CharArray.array
   where type vector = CharVector.vector
-  where type elem = Char.char = struct end
+  where type elem = Char.char
+  (* NOTE: non-standard, but in cmlib, and it appears to make some amount of sense. *)
+  where type pos = Position.int
+  where type array_slice = CharArraySlice.slice
+  where type vector_slice = CharVectorSlice.slice = struct end
 
 structure WideTextPrimIO :> PRIM_IO (* OPTIONAL *)
   where type array = WideCharArray.array
