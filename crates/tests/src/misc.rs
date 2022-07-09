@@ -262,7 +262,7 @@ and _: int = 3 div 0
 }
 
 #[test]
-fn ty_var_scope() {
+fn ty_var_fixed() {
   check(
     r#"
 val _ = fn id =>
@@ -592,6 +592,20 @@ fn either() {
 datatype ('a, 'b) either = INL of 'a | INR of 'b
 val _ = INL 3 : (int, unit) either
 val _ = INR 3 : (unit, int) either
+"#,
+  );
+}
+
+#[test]
+fn ty_var_scope() {
+  fail(
+    r#"
+fun f (_ : 'a list) =
+  let
+    val _ : 'a list = []
+  in
+    ()
+  end
 "#,
   );
 }
