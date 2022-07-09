@@ -252,7 +252,11 @@ pub(crate) fn get_dat_binds(
   // scope for the types.
   for dat_bind in dat_binds.iter() {
     let started = st.syms.start(dat_bind.name.clone());
-    let fixed = add_fixed_ty_vars(st, &mut cx, &dat_bind.ty_vars, idx);
+    // just create the fixed ty vars, do not bring them into the scope of the cx yet.
+    let mut fixed = FixedTyVars::default();
+    for ty_var in dat_bind.ty_vars.iter() {
+      fixed.insert(st.gen_fixed_var(ty_var.clone()));
+    }
     let out_ty = Ty::Con(
       fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
       started.sym(),
@@ -271,9 +275,6 @@ pub(crate) fn get_dat_binds(
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);
     }
-    // TODO every datatype has its fixed ty vars in scope with everyone elses', that's probably
-    // wrong. do we need to take them out of scope in this first pass-through, and then put them
-    // back into scope for the cons?
     datatypes.push(Datatype {
       started,
       fixed,
@@ -300,7 +301,7 @@ pub(crate) fn get_dat_binds(
     ty_env: ty_env.clone(),
     ..Default::default()
   });
-  // everything is in scope now (datatypes and types). now get the datatype constructors.
+  // datatypes and types are now in scope. now get the datatype constructors.
   let mut big_val_env = ValEnv::default();
   assert_eq!(
     dat_binds.len(),
@@ -309,6 +310,13 @@ pub(crate) fn get_dat_binds(
   );
   // sml_def(28), sml_def(81)
   for (dat_bind, datatype) in dat_binds.iter().zip(datatypes) {
+    // bring the type variables for this datatype into scope.
+    for fv in datatype.fixed.iter() {
+      if cx.ty_vars.insert(fv.ty_var().clone(), fv.clone()).is_some() {
+        let e = ErrorKind::Duplicate(Item::TyVar, fv.ty_var().clone().into_name());
+        st.err(idx, e);
+      }
+    }
     let mut val_env = ValEnv::default();
     // sml_def(29), sml_def(82)
     for con_bind in dat_bind.cons.iter() {

@@ -531,6 +531,12 @@ pub(crate) struct FixedTyVar {
   ty_var: hir::TyVar,
 }
 
+impl FixedTyVar {
+  pub(crate) fn ty_var(&self) -> &hir::TyVar {
+    &self.ty_var
+  }
+}
+
 impl fmt::Display for FixedTyVar {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.ty_var.fmt(f)

@@ -520,3 +520,14 @@ and bar = Bar of foo | Quz
 "#,
   );
 }
+
+#[test]
+fn datatype_ty_vars_scope() {
+  check(
+    r#"
+datatype 'a foo = Foo of 'a
+and 'a bar = Bar of 'a
+val _ = Bar (Foo 3) : int foo bar
+"#,
+  );
+}
