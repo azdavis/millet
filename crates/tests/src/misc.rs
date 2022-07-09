@@ -584,3 +584,14 @@ val _ = Str.f 3 : int
 "#,
   );
 }
+
+#[test]
+fn either() {
+  check(
+    r#"
+datatype ('a, 'b) either = INL of 'a | INR of 'b
+val _ = INL 3 : (int, unit) either
+val _ = INR 3 : (unit, int) either
+"#,
+  );
+}
