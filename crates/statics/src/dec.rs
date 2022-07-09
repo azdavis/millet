@@ -247,7 +247,7 @@ pub(crate) fn get_dat_binds(
   // 'fake' because it's just to allow recursive reference, it doesn't have the val env filled in
   // with the constructors.
   let mut fake_ty_env = TyEnv::default();
-  let mut data_types = Vec::<Datatype>::new();
+  let mut datatypes = Vec::<Datatype>::new();
   // do a first pass through the datatypes to allow for recursive reference, and to put them in
   // scope for the types.
   for dat_bind in dat_binds.iter() {
@@ -274,7 +274,7 @@ pub(crate) fn get_dat_binds(
     // TODO every datatype has its fixed ty vars in scope with everyone elses', that's probably
     // wrong. do we need to take them out of scope in this first pass-through, and then put them
     // back into scope for the cons?
-    data_types.push(Datatype {
+    datatypes.push(Datatype {
       started,
       fixed,
       out_ty,
@@ -304,11 +304,11 @@ pub(crate) fn get_dat_binds(
   let mut big_val_env = ValEnv::default();
   assert_eq!(
     dat_binds.len(),
-    data_types.len(),
-    "we created data_types from a for loop over dat_binds"
+    datatypes.len(),
+    "we created datatypes from a for loop over dat_binds"
   );
   // sml_def(28), sml_def(81)
-  for (dat_bind, datatype) in dat_binds.iter().zip(data_types) {
+  for (dat_bind, datatype) in dat_binds.iter().zip(datatypes) {
     let mut val_env = ValEnv::default();
     // sml_def(29), sml_def(82)
     for con_bind in dat_bind.cons.iter() {
