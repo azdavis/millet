@@ -3,9 +3,9 @@ use crate::generalizes::{eq_ty_scheme, eq_ty_scheme_no_emit, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{
-  generalize, BasicOverload, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars, IdStatus, Sig,
-  SigEnv, StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme, TyVarKind, ValEnv,
-  ValInfo,
+  generalize, generalize_fixed, BasicOverload, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars,
+  IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme,
+  TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -290,7 +290,7 @@ fn get_sig_exp(
       let mut cx = bs.as_cx();
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, sig_exp.into());
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
-      assert_ty_has_no_record_meta_vars(generalize(st.subst(), fixed, &mut ty_scheme));
+      generalize_fixed(fixed, &mut ty_scheme);
       get_where_type(st, &mut inner_env, ty_vars, path, ty_scheme, sig_exp.into());
       ac.append(&mut inner_env);
       ov

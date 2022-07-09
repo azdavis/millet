@@ -534,7 +534,7 @@ val _ = Bar (Foo 3) : int foo bar
 
 #[test]
 fn ty_var_order_1() {
-  fail(
+  check(
     r#"
 type ('a, 'b, 'c) foo = 'b * 'a * 'c
 
@@ -568,7 +568,7 @@ val _ = pair 1 "hi" : string * int
 
 #[test]
 fn where_not_all_ty_vars() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type 'a t

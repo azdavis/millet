@@ -1027,6 +1027,11 @@ pub(crate) struct HasRecordMetaVars;
 /// - doesn't allow meta vars
 /// - always generalizes exactly the given fixed vars, even if they don't appear in the
 ///   `ty_scheme.ty`
+///
+/// use this to:
+///
+/// - explicitly create a ty scheme with the written arity, e.g. to support phantom types.
+/// - preserve the order of fixed type vars for the bound ty var binders.
 pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut bound_vars = Vec::with_capacity(fixed.0.len());

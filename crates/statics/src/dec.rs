@@ -211,8 +211,6 @@ fn get_ty_binds(
   for ty_bind in ty_binds {
     let fixed = add_fixed_ty_vars(st, cx, &ty_bind.ty_vars, idx);
     let mut ty_scheme = TyScheme::zero(ty::get(st, cx, ars, ty_bind.ty));
-    // use `generalize_fixed`, not `generalize`, to explicitly create a ty scheme with the
-    // written arity to support phantom types.
     generalize_fixed(fixed, &mut ty_scheme);
     let ty_info = TyInfo {
       ty_scheme,
