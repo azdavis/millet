@@ -533,7 +533,7 @@ val _ = Bar (Foo 3) : int foo bar
 }
 
 #[test]
-fn ty_var_order() {
+fn ty_var_order_1() {
   fail(
     r#"
 type ('a, 'b, 'c) foo = 'b * 'a * 'c
@@ -552,6 +552,35 @@ val x = ("hi", 1, 1.1)
 val _ = x : (int, string, real) foo
 val _ = x : (int, string, real) NoSig.foo
 val _ = x : (int, string, real) YesSig.foo
+"#,
+  );
+}
+
+#[test]
+fn ty_var_order_2() {
+  check(
+    r#"
+fun ('a, 'b) pair (x: 'a) (y: 'b) = (y, x)
+val _ = pair 1 "hi" : string * int
+"#,
+  );
+}
+
+#[test]
+fn where_not_all_ty_vars() {
+  fail(
+    r#"
+signature SIG = sig
+  type 'a t
+  val f : 'a t -> 'a t
+end
+
+structure Str :> SIG where type 'a t = int = struct
+  type 'a t = int
+  fun f x = x
+end
+
+val _ = Str.f 3 : int
 "#,
   );
 }
