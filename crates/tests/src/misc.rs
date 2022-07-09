@@ -531,3 +531,27 @@ val _ = Bar (Foo 3) : int foo bar
 "#,
   );
 }
+
+#[test]
+fn ty_var_order() {
+  fail(
+    r#"
+type ('a, 'b, 'c) foo = 'b * 'a * 'c
+
+structure NoSig = struct
+  type ('a, 'b, 'c) foo = 'b * 'a * 'c
+end
+
+structure YesSig : sig
+  type ('a, 'b, 'c) foo = 'b * 'a * 'c
+end = struct
+  type ('a, 'b, 'c) foo = 'b * 'a * 'c
+end
+
+val x = ("hi", 1, 1.1)
+val _ = x : (int, string, real) foo
+val _ = x : (int, string, real) NoSig.foo
+val _ = x : (int, string, real) YesSig.foo
+"#,
+  );
+}
