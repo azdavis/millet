@@ -178,45 +178,49 @@ where
   F: paths::FileSystem,
 {
   let mut root_group_source = None::<PathBuf>;
-  let config_path = root.as_path().join(config::FILE_NAME);
-  if let Ok(contents) = fs.read_to_string(&config_path) {
-    let config: config::Root = match toml::from_str(&contents) {
-      Ok(x) => x,
-      Err(e) => {
+  // try to get from the config.
+  if root_group_path.is_none() {
+    let config_path = root.as_path().join(config::FILE_NAME);
+    if let Ok(contents) = fs.read_to_string(&config_path) {
+      let config: config::Root = match toml::from_str(&contents) {
+        Ok(x) => x,
+        Err(e) => {
+          return Err(GetInputError {
+            source: None,
+            path: config_path,
+            kind: GetInputErrorKind::CouldNotParseConfig(e),
+            range: None,
+          })
+        }
+      };
+      if config.version != 1 {
         return Err(GetInputError {
           source: None,
           path: config_path,
-          kind: GetInputErrorKind::CouldNotParseConfig(e),
+          kind: GetInputErrorKind::InvalidConfigVersion(config.version),
           range: None,
-        })
+        });
       }
-    };
-    if config.version != 1 {
-      return Err(GetInputError {
-        source: None,
-        path: config_path,
-        kind: GetInputErrorKind::InvalidConfigVersion(config.version),
-        range: None,
-      });
-    }
-    if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
-      let path = root.as_path().join(path);
-      match GroupPath::new(fs, path.clone()) {
-        Some(path) => {
-          root_group_source = Some(config_path);
-          root_group_path = Some(path);
-        }
-        None => {
-          return Err(GetInputError {
-            source: Some(config_path),
-            range: None,
-            path,
-            kind: GetInputErrorKind::NotGroup,
-          })
+      if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
+        let path = root.as_path().join(path);
+        match GroupPath::new(fs, path.clone()) {
+          Some(path) => {
+            root_group_source = Some(config_path);
+            root_group_path = Some(path);
+          }
+          None => {
+            return Err(GetInputError {
+              source: Some(config_path),
+              range: None,
+              path,
+              kind: GetInputErrorKind::NotGroup,
+            })
+          }
         }
       }
     }
   }
+  // if not, try to get one from the root dir.
   if root_group_path.is_none() {
     let dir_entries = fs.read_dir(root.as_path()).map_err(|e| GetInputError {
       source: None,
