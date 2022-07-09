@@ -14,7 +14,7 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
         chars.next();
       }
       let mul = if neg { -1 } else { 1 };
-      let radix = if chars.as_str().starts_with("0x") {
+      let radix: u32 = if chars.as_str().starts_with("0x") {
         chars.next();
         chars.next();
         16
@@ -53,7 +53,7 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<hir::SCon> {
       chars.next();
       // w
       chars.next();
-      let radix = if chars.as_str().starts_with('x') {
+      let radix: u32 = if chars.as_str().starts_with('x') {
         chars.next();
         16
       } else {
