@@ -186,6 +186,8 @@ val _ =
 
 String literals permit the sequence `\...\`, where `...` represents 1 or more whitespace characters. The sequence is ignored. We dub such sequences "string continuations", since they are often used to "continue" strings across lines.
 
+To fix, ensure the string continuations contain only whitespace. Millet recognizes all characters defined in the Definition as whitespace, as well as some others, like carriage return (common on Windows).
+
 ```sml
 (* ok *)
 val _ =
