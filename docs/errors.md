@@ -595,12 +595,12 @@ Millet tries to report which type was "expected" and which was "found". For inst
 val x : int = "no"
 ```
 
-This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `speak` takes an `bool`.
+This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `speak` takes a `bool`.
 
 ```sml
 (* error *)
 fun speak x = if x then "yay" else "nah"
-val () = speak 4
+val _ = speak 4
 ```
 
 Note that certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
