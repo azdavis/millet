@@ -959,7 +959,20 @@ impl<E: EnvLike> Bs<E> {
   }
 }
 
-pub(crate) type Subst = FxHashMap<MetaTyVar, SubstEntry>;
+#[derive(Debug, Default)]
+pub(crate) struct Subst {
+  entries: FxHashMap<MetaTyVar, SubstEntry>,
+}
+
+impl Subst {
+  pub(crate) fn insert(&mut self, mv: MetaTyVar, entry: SubstEntry) -> Option<SubstEntry> {
+    self.entries.insert(mv, entry)
+  }
+
+  pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&SubstEntry> {
+    self.entries.get(mv)
+  }
+}
 
 #[derive(Debug)]
 pub(crate) enum SubstEntry {
