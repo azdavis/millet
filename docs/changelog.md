@@ -2,6 +2,17 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.2.4
+
+- Fix definition of `structure IO` in the std basis libraries.
+- Improve handling of type aliases in signatures.
+- Improve handling of `datatype` to allow the value constructors to reference all other datatypes being defined (as with `and`), as well as any `withtype` types.
+- Improve handling of `where type` when the path does not use all of the type variables, as in `where type 'a t = int`.
+- Improve handling of `where type` with type variables to not incorrectly swap the order of the variables in some cases.
+- Add more optional standard basis library definitions, and set some equal to each other (like `Word32` = `Word`). This is technically an implementation detail, but it is depended on in e.g. [cmlib](https://github.com/standardml/cmlib).
+- Further improve reporting of overload errors.
+- Add overloads for `int`, like `IntInf`.
+
 ## v0.2.3
 
 - Allow upper and lower case `Group`, `Library`, etc in CM files.
