@@ -9,7 +9,7 @@ pub(crate) fn get_scon(st: &mut St, scon: &hir::SCon) -> Ty {
   // we could have all of these return the basic overloads, but some of them will all only allow the
   // default types anyway.
   match scon {
-    hir::SCon::Int(_) => Ty::INT,
+    hir::SCon::Int(_) => basic_overload(st, BasicOverload::Int),
     hir::SCon::Real(_) => Ty::REAL,
     hir::SCon::Word(_) => basic_overload(st, BasicOverload::Word),
     hir::SCon::Char(_) => Ty::CHAR,

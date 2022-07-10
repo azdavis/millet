@@ -272,6 +272,7 @@ fn get_sig_exp(
         if st.mode().is_std_basis() {
           match name.as_str() {
             "WORD" => Some(BasicOverload::Word),
+            "INTEGER" | "INT_INF" => Some(BasicOverload::Int),
             _ => None,
           }
         } else {
