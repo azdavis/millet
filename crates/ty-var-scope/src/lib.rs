@@ -73,7 +73,12 @@ fn get_str_dec(cx: &mut Cx, ars: &hir::Arenas, str_dec: hir::StrDecIdx) {
     None => return,
   };
   match &ars.str_dec[str_dec] {
-    hir::StrDec::Dec(dec) => get_dec(cx, ars, &TyVarSet::default(), *dec),
+    hir::StrDec::Dec(dec) => {
+      let mut mode = Mode::Get(TyVarSet::default());
+      get_dec(cx, ars, &TyVarSet::default(), &mut mode, *dec);
+      mode = Mode::Set;
+      get_dec(cx, ars, &TyVarSet::default(), &mut mode, *dec);
+    }
     hir::StrDec::Structure(str_binds) => {
       for str_bind in str_binds {
         get_str_exp(cx, ars, str_bind.str_exp);
@@ -165,8 +170,30 @@ fn get_spec(cx: &mut Cx, ars: &hir::Arenas, spec: hir::SpecIdx) {
   }
 }
 
+/// What mode we're in for scoping the type variables at `val` declarations.
+///
+/// Consider:
+///
+/// ```sml
+/// val x = let val y : 'a list = [] in ... end
+/// ```
+///
+/// We can't know whether `'a` should be bound at `val y` or `val x` without inspecting all of
+/// `...`. So, we have to do a first pass to collect all the unguarded ty vars, then a second to
+/// scope them and set them.
+///
+/// Reifying the mode not is probably not the most efficient way to do this, since then we have to
+/// do a lot of runtime branching on the mode.
+enum Mode {
+  /// We're getting the type variables. The set is the set of all type variables in this `val` dec.
+  /// (We'll filter out the ones already explicitly in scope later.)
+  Get(TyVarSet),
+  /// We finished getting the type variables, and now we're setting them to binding sites.
+  Set,
+}
+
 /// `scope` is already bound variables.
-fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
+fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, mode: &mut Mode, dec: hir::DecIdx) {
   let dec = match dec {
     Some(x) => x,
     None => return,
@@ -174,23 +201,42 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
   match &ars.dec[dec] {
     hir::Dec::Val(ty_vars, val_binds) => {
       let mut scope = scope.clone();
-      scope.extend(ty_vars.iter().cloned());
-      let mut ac = TyVarSet::default();
-      for val_bind in val_binds {
-        get_pat(cx, ars, &mut ac, val_bind.pat);
-        get_exp(cx, ars, &scope, &mut ac, val_bind.exp);
+      match mode {
+        Mode::Get(_) => {
+          scope.extend(ty_vars.iter().cloned());
+          let mut mode = Mode::Get(TyVarSet::default());
+          for val_bind in val_binds {
+            match &mut mode {
+              Mode::Get(ac) => get_pat(cx, ars, ac, val_bind.pat),
+              Mode::Set => unreachable!(),
+            }
+            get_exp(cx, ars, &scope, &mut mode, val_bind.exp);
+          }
+          let ac = match mode {
+            Mode::Get(ac) => ac,
+            Mode::Set => unreachable!(),
+          };
+          let unguarded: FxHashSet<_> = ac.difference(&scope).cloned().collect();
+          assert!(cx.val_dec.insert(dec, unguarded).is_none());
+        }
+        Mode::Set => {
+          let unguarded = cx.val_dec.get_mut(&dec).unwrap();
+          *unguarded = unguarded.difference(&scope).cloned().collect();
+          scope.extend(unguarded.iter().cloned());
+          for val_bind in val_binds {
+            get_exp(cx, ars, &scope, mode, val_bind.exp);
+          }
+        }
       }
-      ac = ac.difference(&scope).cloned().collect();
-      assert!(cx.val_dec.insert(dec, ac).is_none());
     }
-    hir::Dec::Abstype(_, _, dec) => get_dec(cx, ars, scope, *dec),
+    hir::Dec::Abstype(_, _, dec) => get_dec(cx, ars, scope, mode, *dec),
     hir::Dec::Local(local_dec, in_dec) => {
-      get_dec(cx, ars, scope, *local_dec);
-      get_dec(cx, ars, scope, *in_dec);
+      get_dec(cx, ars, scope, mode, *local_dec);
+      get_dec(cx, ars, scope, mode, *in_dec);
     }
     hir::Dec::Seq(decs) => {
       for &dec in decs {
-        get_dec(cx, ars, scope, dec);
+        get_dec(cx, ars, scope, mode, dec);
       }
     }
     hir::Dec::Ty(_)
@@ -201,7 +247,7 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
   }
 }
 
-fn get_exp(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, ac: &mut TyVarSet, exp: hir::ExpIdx) {
+fn get_exp(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, mode: &mut Mode, exp: hir::ExpIdx) {
   let exp = match exp {
     Some(x) => x,
     None => return,
@@ -210,34 +256,43 @@ fn get_exp(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, ac: &mut TyVarSet, 
     hir::Exp::SCon(_) | hir::Exp::Path(_) => {}
     hir::Exp::Record(rows) => {
       for &(_, exp) in rows {
-        get_exp(cx, ars, scope, ac, exp);
+        get_exp(cx, ars, scope, mode, exp);
       }
     }
     hir::Exp::Let(dec, exp) => {
-      get_dec(cx, ars, scope, *dec);
-      get_exp(cx, ars, scope, ac, *exp);
+      get_dec(cx, ars, scope, mode, *dec);
+      get_exp(cx, ars, scope, mode, *exp);
     }
     hir::Exp::App(func, arg) => {
-      get_exp(cx, ars, scope, ac, *func);
-      get_exp(cx, ars, scope, ac, *arg);
+      get_exp(cx, ars, scope, mode, *func);
+      get_exp(cx, ars, scope, mode, *arg);
     }
     hir::Exp::Handle(head, arms) => {
-      get_exp(cx, ars, scope, ac, *head);
+      get_exp(cx, ars, scope, mode, *head);
       for &(pat, exp) in arms {
-        get_pat(cx, ars, ac, pat);
-        get_exp(cx, ars, scope, ac, exp);
+        match mode {
+          Mode::Get(ac) => get_pat(cx, ars, ac, pat),
+          Mode::Set => {}
+        }
+        get_exp(cx, ars, scope, mode, exp);
       }
     }
-    hir::Exp::Raise(exp) => get_exp(cx, ars, scope, ac, *exp),
+    hir::Exp::Raise(exp) => get_exp(cx, ars, scope, mode, *exp),
     hir::Exp::Fn(arms) => {
       for &(pat, exp) in arms {
-        get_pat(cx, ars, ac, pat);
-        get_exp(cx, ars, scope, ac, exp);
+        match mode {
+          Mode::Get(ac) => get_pat(cx, ars, ac, pat),
+          Mode::Set => {}
+        }
+        get_exp(cx, ars, scope, mode, exp);
       }
     }
     hir::Exp::Typed(exp, ty) => {
-      get_exp(cx, ars, scope, ac, *exp);
-      get_ty(cx, ars, ac, *ty);
+      get_exp(cx, ars, scope, mode, *exp);
+      match mode {
+        Mode::Get(ac) => get_ty(cx, ars, ac, *ty),
+        Mode::Set => {}
+      }
     }
   }
 }

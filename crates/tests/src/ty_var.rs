@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn across_var() {
@@ -116,7 +116,7 @@ end
 
 #[test]
 fn implicit_scope_1() {
-  fail(
+  check(
     r#"
 fun f (_ : 'a list) =
   let
@@ -130,7 +130,7 @@ fun f (_ : 'a list) =
 
 #[test]
 fn implicit_scope_2() {
-  fail(
+  check(
     r#"
 val _ =
   let
