@@ -597,7 +597,7 @@ val _ = INR 3 : (unit, int) either
 }
 
 #[test]
-fn ty_var_scope() {
+fn ty_var_scope_1() {
   fail(
     r#"
 fun f (_ : 'a list) =
@@ -605,6 +605,34 @@ fun f (_ : 'a list) =
     val _ : 'a list = []
   in
     ()
+  end
+"#,
+  );
+}
+
+#[test]
+fn ty_var_scope_2() {
+  fail(
+    r#"
+val _ =
+  let
+    val _ : 'a list = []
+  in
+    []: 'a list
+  end
+"#,
+  );
+}
+
+#[test]
+fn ty_var_scope_3() {
+  check(
+    r#"
+val _ =
+  let
+    val _ : 'a list = []
+  in
+    []
   end
 "#,
   );
