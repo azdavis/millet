@@ -616,10 +616,6 @@ Millet reports these overloaded types with intentionally invalid SML syntax. Her
 
 ## 4008
 
-This used to be a distinct error, similar to 4007, for overloaded types, but these two errors were merged into one error.
-
-## 4009
-
 A function application expression was encountered, but the function expression did not have a function ("arrow") type.
 
 ```sml
@@ -631,7 +627,7 @@ In this example, we attempt to treat the string `"foo"` as a function and apply 
 
 This error is a special case of 4007, specialized for the common case of function application.
 
-## 4010
+## 4009
 
 There was a duplicate label.
 
@@ -642,7 +638,7 @@ val _ = { a = 1, a = 2 }
 
 To fix, use differently named labels, or remove one of the record rows.
 
-## 4011
+## 4010
 
 A real literal was used as a pattern.
 
@@ -659,7 +655,7 @@ To fix, consider checking that the given real is within some epsilon value of th
 
 Usage of `Real.==` to check for equality between reals is discouraged, due to limitations around representing floating-point (aka, real) numbers on most architectures.
 
-## 4012
+## 4011
 
 A pattern in a `case` expression or similar (like `handle`) was not reachable.
 
@@ -679,7 +675,7 @@ To fix, try:
 - Making the higher pattern more specific, so the lower pattern may be reached.
 - Removing the lower pattern.
 
-## 4013
+## 4012
 
 A `case` expression (or similar) was not exhaustive.
 
@@ -703,7 +699,7 @@ fun f (x : d) : int =
 
 To fix, add patterns matching the missing cases. The error message reports examples of patterns not matched.
 
-## 4014
+## 4013
 
 This is effectively the same error as 4013, but it emitted for singular bindings, like with `val`.
 
@@ -726,7 +722,7 @@ The pattern in a `val` binding ought to be "irrefutable", to wit, it alone ought
 - Tuple patterns composed of irrefutable patterns are irrefutable.
 - More generally, if a `datatype` has only one constructor, a pattern with that one constructor, and an irrefutable pattern argument (if one is needed) is irrefutable.
 
-## 4015
+## 4014
 
 A pattern match treated a value as if it were a pattern.
 
@@ -754,7 +750,7 @@ fun f y =
   | _ => 6
 ```
 
-## 4016
+## 4015
 
 A constructor had an argument in a pattern match, but it was defined to have no argument.
 
@@ -770,7 +766,7 @@ fun f x =
 
 To fix, define the constructor to have an argument, or remove the argument from the pattern.
 
-## 4017
+## 4016
 
 A constructor had no argument in a pattern match, but it was defined to have an argument.
 
@@ -786,7 +782,7 @@ fun f x =
 
 To fix, define the constructor to not have an argument, or add an argument to the pattern.
 
-## 4018
+## 4017
 
 An invalid name was used as the left hand side of an `as` pattern.
 
@@ -803,7 +799,7 @@ fun f x =
 
 To fix, use a valid name.
 
-## 4019
+## 4018
 
 A type name escapes the scope in which it is valid.
 
@@ -821,7 +817,7 @@ val x =
 
 To fix, extend the scope of the type, or do not allow its values to escape its scope.
 
-## 4020
+## 4019
 
 In a `val rec` binding, the expression must be a literal `fn` expression.
 
@@ -847,7 +843,7 @@ val rec add3 = mkAdd3 ()
 
 To fix, ensure the expression is a literal `fn` expression.
 
-## 4021
+## 4020
 
 The wrong number of type arguments was passed to a type-level function.
 
@@ -866,7 +862,7 @@ val xs: list = []
 
 To fix, pass the correct number of type arguments.
 
-## 4022
+## 4021
 
 In an exception copy declaration, the right hand side was not an exception.
 
@@ -878,7 +874,7 @@ exception Nope = x
 
 To fix, only use exceptions on the right hand side.
 
-## 4023
+## 4022
 
 Certain names in certain namespaces may not be rebound. These names are:
 
@@ -899,7 +895,7 @@ val false = 123
 
 To fix, do not attempt to rebind these names.
 
-## 4024
+## 4023
 
 Names have "statuses", which can be one of:
 
@@ -933,7 +929,7 @@ end = struct
 end
 ```
 
-## 4025
+## 4024
 
 A record type couldn't be fully resolved, due to the use of a `...` pattern row.
 
@@ -966,7 +962,7 @@ Again, the fix is usually to add a type annotation. Though, an alternative would
 fun addFooBar {foo, bar} = foo + bar
 ```
 
-## 4026
+## 4025
 
 Not all or pattern alternatives bound the same names.
 
@@ -992,7 +988,7 @@ fun toInt (x : t) : int =
 
 Note that or patterns are not permitted by the Definition, though they are a common extension, implemented by SML/NJ and MLton.
 
-## 4027
+## 4026
 
 A `signature` or `functor` declaration occurred in a disallowed position, like inside `struct ... end`.
 
