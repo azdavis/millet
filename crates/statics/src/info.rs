@@ -1,4 +1,4 @@
-use crate::types::{Def, DefPath, MetaVarNames, Syms, Ty, TyScheme};
+use crate::types::{Def, DefPath, MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
 use crate::util::ty_syms;
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
@@ -8,6 +8,7 @@ use std::fmt::Write as _;
 pub struct Info {
   mode: Mode,
   store: FxHashMap<hir::Idx, InfoEntry>,
+  pub(crate) meta_vars: MetaVarInfo,
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +28,7 @@ impl Info {
     Self {
       mode,
       store: FxHashMap::default(),
+      meta_vars: MetaVarInfo::default(),
     }
   }
 
@@ -59,6 +61,11 @@ impl Info {
     &self.mode
   }
 
+  /// Returns information about meta type variables.
+  pub fn meta_vars(&self) -> &MetaVarInfo {
+    &self.meta_vars
+  }
+
   /// Returns a Markdown string with type information associated with this index.
   pub fn get_ty_md(&self, syms: &Syms, idx: hir::Idx) -> Option<String> {
     let mut ret = String::new();
@@ -68,7 +75,7 @@ impl Info {
 
   fn get_ty_md_(&self, s: &mut String, syms: &Syms, idx: hir::Idx) -> Option<()> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
-    let mut mvs = MetaVarNames::default();
+    let mut mvs = MetaVarNames::new(&self.meta_vars);
     mvs.extend_for(&ty_entry.ty);
     writeln!(s, "```sml").unwrap();
     if let Some(ty_scheme) = &ty_entry.ty_scheme {

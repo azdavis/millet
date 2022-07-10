@@ -44,7 +44,7 @@ impl Ty {
 
   pub(crate) fn display<'a>(
     &'a self,
-    meta_vars: &'a MetaVarNames,
+    meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
   ) -> impl fmt::Display + 'a {
     TyDisplay {
@@ -60,7 +60,7 @@ impl Ty {
 struct TyDisplay<'a> {
   ty: &'a Ty,
   bound_vars: Option<&'a BoundTyVars>,
-  meta_vars: &'a MetaVarNames,
+  meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
   prec: TyPrec,
 }
@@ -169,13 +169,22 @@ impl<'a> fmt::Display for TyDisplay<'a> {
   }
 }
 
-#[derive(Debug, Default)]
-pub(crate) struct MetaVarNames {
+#[derive(Debug)]
+pub(crate) struct MetaVarNames<'a> {
   next_idx: usize,
   map: FxHashMap<MetaTyVar, MetaVarName>,
+  info: &'a MetaVarInfo,
 }
 
-impl MetaVarNames {
+impl<'a> MetaVarNames<'a> {
+  pub(crate) fn new(info: &'a MetaVarInfo) -> Self {
+    Self {
+      next_idx: 0,
+      map: FxHashMap::default(),
+      info,
+    }
+  }
+
   pub(crate) fn extend_for(&mut self, ty: &Ty) {
     meta_vars(
       &Subst::default(),
@@ -194,8 +203,17 @@ impl MetaVarNames {
     self.map.insert(mv, MetaVarName::Overload(ov));
   }
 
+  /// tries the [`MetaVarInfo`] first, then fall back to a generated name like `?a`, `?b`, etc.
   pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<MetaVarName> {
-    self.map.get(mv).copied()
+    self
+      .info
+      .0
+      .get(mv)
+      .and_then(|kind| match kind {
+        TyVarKind::Overloaded(ov) => Some(MetaVarName::Overload(*ov)),
+        TyVarKind::Equality | TyVarKind::Record(_) => None,
+      })
+      .or_else(|| self.map.get(mv).copied())
   }
 }
 
@@ -229,7 +247,7 @@ enum TyPrec {
 
 struct RowDisplay<'a> {
   bound_vars: Option<&'a BoundTyVars>,
-  meta_vars: &'a MetaVarNames,
+  meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
   lab: &'a hir::Lab,
   ty: &'a Ty,
@@ -294,7 +312,7 @@ impl TyScheme {
 
   pub(crate) fn display<'a>(
     &'a self,
-    meta_vars: &'a MetaVarNames,
+    meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
   ) -> impl fmt::Display + 'a {
     TyDisplay {
@@ -959,18 +977,33 @@ impl<E: EnvLike> Bs<E> {
   }
 }
 
+/// Information about meta type variables.
+#[derive(Debug, Default, Clone)]
+pub struct MetaVarInfo(FxHashMap<MetaTyVar, TyVarKind>);
+
 #[derive(Debug, Default)]
 pub(crate) struct Subst {
+  mv_info: MetaVarInfo,
   entries: FxHashMap<MetaTyVar, SubstEntry>,
 }
 
 impl Subst {
   pub(crate) fn insert(&mut self, mv: MetaTyVar, entry: SubstEntry) -> Option<SubstEntry> {
+    match &entry {
+      SubstEntry::Solved(_) => {}
+      SubstEntry::Kind(kind) => {
+        self.mv_info.0.insert(mv, kind.clone());
+      }
+    }
     self.entries.insert(mv, entry)
   }
 
   pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<&SubstEntry> {
     self.entries.get(mv)
+  }
+
+  pub(crate) fn into_meta_var_info(self) -> MetaVarInfo {
+    self.mv_info
   }
 }
 

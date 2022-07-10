@@ -45,9 +45,9 @@ impl Analysis {
     let mut basis = self.std_basis.basis().clone();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
-    let (_, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
+    let (info, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
     file.statics_errors = es;
-    file.to_errors(&syms, self.error_lines)
+    file.to_errors(&syms, info.meta_vars(), self.error_lines)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -104,9 +104,12 @@ impl Analysis {
           let mode = statics::Mode::Regular(Some(path));
           let (info, es) =
             statics::get(&mut self.syms, &mut basis, mode, &low.arenas, &low.top_decs);
+          // careful with the order here. first assign the statics errors, then get all the
+          // errors, then put the info on the source file.
           source_file.statics_errors = es;
+          let errors = source_file.to_errors(&self.syms, info.meta_vars(), self.error_lines);
           source_file.info = Some(info);
-          source_errors.insert(path, source_file.to_errors(&self.syms, self.error_lines));
+          source_errors.insert(path, errors);
         }
         None => {
           // if not a source file, must be a group file
@@ -280,7 +283,12 @@ impl SourceFile {
     }
   }
 
-  fn to_errors(&self, syms: &statics::Syms, lines: config::ErrorLines) -> Vec<Error> {
+  fn to_errors(
+    &self,
+    syms: &statics::Syms,
+    mv_info: &statics::MetaVarInfo,
+    lines: config::ErrorLines,
+  ) -> Vec<Error> {
     std::iter::empty()
       .chain(self.lex_errors.iter().map(|err| Error {
         range: self.pos_db.range(err.range()),
@@ -310,7 +318,7 @@ impl SourceFile {
           range: self
             .pos_db
             .range(syntax.to_node(self.parsed.root.syntax()).text_range()),
-          message: err.display(syms, lines).to_string(),
+          message: err.display(syms, mv_info, lines).to_string(),
           code: 4000 + u16::from(err.to_code()),
         })
       }))

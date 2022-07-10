@@ -138,7 +138,7 @@ where
       if let Some(e) = es.first() {
         panic!(
           "{name}: statics error: {}",
-          e.display(&syms, config::ErrorLines::One)
+          e.display(&syms, info.meta_vars(), config::ErrorLines::One)
         );
       }
       (name, info)

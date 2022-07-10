@@ -28,7 +28,7 @@ pub mod basis;
 
 pub use error::Error;
 pub use info::{Info, Mode};
-pub use types::{Def, DefPath, Syms};
+pub use types::{Def, DefPath, MetaVarInfo, Syms};
 
 /// Does the checks.
 pub fn get(
@@ -55,5 +55,6 @@ pub fn get(
   for ty in info.tys_mut() {
     util::apply(&subst, ty);
   }
+  info.meta_vars = subst.into_meta_var_info();
   (info, errors)
 }

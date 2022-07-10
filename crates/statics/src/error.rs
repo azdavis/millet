@@ -1,6 +1,6 @@
 use crate::fmt_util::{comma_seq, sep_seq};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{MetaTyVar, MetaVarNames, Overload, Sym, Syms, Ty};
+use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Overload, Sym, Syms, Ty};
 use pattern_match::RawPat;
 use std::fmt;
 
@@ -21,11 +21,13 @@ impl Error {
   pub fn display<'a>(
     &'a self,
     syms: &'a Syms,
+    mv_info: &'a MetaVarInfo,
     lines: config::ErrorLines,
   ) -> impl fmt::Display + 'a {
     ErrorKindDisplay {
       kind: &self.kind,
       syms,
+      mv_info,
       lines,
     }
   }
@@ -121,6 +123,7 @@ impl fmt::Display for Item {
 struct ErrorKindDisplay<'a> {
   kind: &'a ErrorKind,
   syms: &'a Syms,
+  mv_info: &'a MetaVarInfo,
   lines: config::ErrorLines,
 }
 
@@ -133,7 +136,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
       ErrorKind::Circularity(mv, ty) => {
-        let mut mvs = MetaVarNames::default();
+        let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);
         let name = mvs.get(mv).ok_or(fmt::Error)?;
         let ty = ty.display(&mvs, self.syms);
@@ -141,7 +144,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "to a type containing that variable: {ty}")
       }
       ErrorKind::MismatchedTypes(want, got) => {
-        let mut mvs = MetaVarNames::default();
+        let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
         let want = want.display(&mvs, self.syms);
@@ -149,7 +152,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mismatched_types(f, self.lines, want, got)
       }
       ErrorKind::OverloadMismatch(ov, mv, want, got) => {
-        let mut mvs = MetaVarNames::default();
+        let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
         mvs.insert_overloaded(*mv, *ov);
@@ -158,7 +161,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mismatched_types(f, self.lines, want, got)
       }
       ErrorKind::AppLhsNotFn(got) => {
-        let mut mvs = MetaVarNames::default();
+        let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(got);
         let got = got.display(&mvs, self.syms);
         write!(f, "expected a function type, got {got}")
