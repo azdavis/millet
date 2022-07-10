@@ -58,7 +58,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let func_ty = get(st, cx, ars, *func);
       // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
       // would still be correct. however, matching on `func_ty` lets us emit slightly better error
-      // messages.
+      // messages sometimes.
       match func_ty {
         Ty::None => Ty::None,
         Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),

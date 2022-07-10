@@ -5,7 +5,7 @@ fn across_var() {
   check(
     r#"
 fun 'a f (x: 'a) = let val y = x in y false; y end
-(**                                 ^ expected a function type, got 'a *)
+(**                                 ^ expected a function type, found 'a *)
 "#,
   );
 }

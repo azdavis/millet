@@ -153,7 +153,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(got);
         let got = got.display(&mvs, self.syms);
-        write!(f, "expected a function type, got {got}")
+        write!(f, "expected a function type, found {got}")
       }
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),

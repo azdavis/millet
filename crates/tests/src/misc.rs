@@ -223,8 +223,8 @@ val _ =
 fn not_arrow_ty() {
   check(
     r#"
-val _ = 3 3
-(**     ^ expected a function type, got int *)
+val _ = "foo" 3
+(**     ^^^^^ expected a function type, found string *)
 "#,
   );
 }
