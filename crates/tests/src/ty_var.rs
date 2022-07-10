@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn across_var() {
@@ -110,6 +110,48 @@ signature MONAD = sig
   val return : 'a -> 'a m
   val >>= : ('a -> 'b m) -> 'a m -> 'b m
 end
+"#,
+  );
+}
+
+#[test]
+fn implicit_scope_1() {
+  fail(
+    r#"
+fun f (_ : 'a list) =
+  let
+    val _ : 'a list = []
+  in
+    ()
+  end
+"#,
+  );
+}
+
+#[test]
+fn implicit_scope_2() {
+  fail(
+    r#"
+val _ =
+  let
+    val _ : 'a list = []
+  in
+    [] : 'a list
+  end
+"#,
+  );
+}
+
+#[test]
+fn implicit_scope_3() {
+  check(
+    r#"
+val _ =
+  let
+    val _ : 'a list = []
+  in
+    []
+  end
 "#,
   );
 }
