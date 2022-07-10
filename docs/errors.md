@@ -603,13 +603,9 @@ fun speak x = if x then "yay" else "nah"
 val () = speak 4
 ```
 
-## 4008
+Note that certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
 
-This is similar to 4007, but it was with an overloaded function type.
-
-Certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
-
-Millet reports overloaded types with intentionally invalid SML syntax. Here is what they mean:
+Millet reports these overloaded types with intentionally invalid SML syntax. Here is what they mean:
 
 | Overload    | Meaning                                 |
 | ----------- | --------------------------------------- |
@@ -617,6 +613,10 @@ Millet reports overloaded types with intentionally invalid SML syntax. Here is w
 | `<realint>` | `real`, `int`                           |
 | `<num>`     | `word`, `real`, `int`                   |
 | `<numtxt>`  | `word`, `real`, `int`, `string`, `char` |
+
+## 4008
+
+This used to be a distinct error, similar to 4007, for overloaded types, but these two errors were merged into one error.
 
 ## 4009
 

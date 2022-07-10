@@ -199,10 +199,6 @@ impl<'a> MetaVarNames<'a> {
     );
   }
 
-  pub(crate) fn insert_overloaded(&mut self, mv: MetaTyVar, ov: Overload) {
-    self.map.insert(mv, MetaVarName::Overload(ov));
-  }
-
   /// tries the [`MetaVarInfo`] first, then fall back to a generated name like `?a`, `?b`, etc.
   pub(crate) fn get(&self, mv: &MetaTyVar) -> Option<MetaVarName> {
     self

@@ -1,6 +1,6 @@
 use crate::fmt_util::{comma_seq, sep_seq};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Overload, Sym, Syms, Ty};
+use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Sym, Syms, Ty};
 use pattern_match::RawPat;
 use std::fmt;
 
@@ -42,7 +42,6 @@ impl Error {
       ErrorKind::Extra(_, _) => 5,
       ErrorKind::Circularity(_, _) => 6,
       ErrorKind::MismatchedTypes(_, _) => 7,
-      ErrorKind::OverloadMismatch(_, _, _, _) => 8,
       ErrorKind::AppLhsNotFn(_) => 9,
       ErrorKind::DuplicateLab(_) => 10,
       ErrorKind::RealPat => 11,
@@ -75,7 +74,6 @@ pub(crate) enum ErrorKind {
   Extra(Item, hir::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(Ty, Ty),
-  OverloadMismatch(Overload, MetaTyVar, Ty, Ty),
   AppLhsNotFn(Ty),
   DuplicateLab(hir::Lab),
   RealPat,
@@ -147,15 +145,6 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
-        let want = want.display(&mvs, self.syms);
-        let got = got.display(&mvs, self.syms);
-        mismatched_types(f, self.lines, want, got)
-      }
-      ErrorKind::OverloadMismatch(ov, mv, want, got) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(want);
-        mvs.extend_for(got);
-        mvs.insert_overloaded(*mv, *ov);
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
         mismatched_types(f, self.lines, want, got)
