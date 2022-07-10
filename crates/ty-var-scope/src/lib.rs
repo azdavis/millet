@@ -61,8 +61,8 @@ pub fn get(ars: &mut hir::Arenas, top_decs: &[hir::StrDecIdx]) {
 /// The `val` decs/specs and the type variables they implicitly bind.
 #[derive(Debug, Default)]
 struct Cx {
-  val_dec: FxHashMap<hir::la_arena::Idx<hir::Dec>, Vec<hir::TyVar>>,
-  val_spec: FxHashMap<hir::la_arena::Idx<hir::Spec>, Vec<hir::TyVar>>,
+  val_dec: FxHashMap<hir::la_arena::Idx<hir::Dec>, TyVarSet>,
+  val_spec: FxHashMap<hir::la_arena::Idx<hir::Spec>, TyVarSet>,
 }
 
 type TyVarSet = FxHashSet<hir::TyVar>;
@@ -147,9 +147,7 @@ fn get_spec(cx: &mut Cx, ars: &hir::Arenas, spec: hir::SpecIdx) {
       for val_desc in val_descs {
         get_ty(cx, ars, &mut ac, val_desc.ty);
       }
-      let mut to_bind: Vec<_> = ac.into_iter().collect();
-      to_bind.sort_unstable();
-      assert!(cx.val_spec.insert(spec, to_bind).is_none());
+      assert!(cx.val_spec.insert(spec, ac).is_none());
     }
     hir::Spec::Str(str_desc) => get_sig_exp(cx, ars, str_desc.sig_exp),
     hir::Spec::Include(sig_exp) => get_sig_exp(cx, ars, *sig_exp),
@@ -182,9 +180,8 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, dec: hir::DecIdx) {
         get_pat(cx, ars, &mut ac, val_bind.pat);
         get_exp(cx, ars, &scope, &mut ac, val_bind.exp);
       }
-      let mut to_bind: Vec<_> = ac.difference(&scope).cloned().collect();
-      to_bind.sort_unstable();
-      assert!(cx.val_dec.insert(dec, to_bind).is_none());
+      ac = ac.difference(&scope).cloned().collect();
+      assert!(cx.val_dec.insert(dec, ac).is_none());
     }
     hir::Dec::Abstype(_, _, dec) => get_dec(cx, ars, scope, *dec),
     hir::Dec::Local(local_dec, in_dec) => {
