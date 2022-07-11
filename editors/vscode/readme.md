@@ -2,6 +2,8 @@
 
 [Standard ML][sml] (SML) support for VS Code.
 
+See the [blog post][blog] introducing the project.
+
 ## Warning
 
 The [language server][lang-srv] is [alpha-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
@@ -48,6 +50,7 @@ end
 val _ = Foo.fact 3
 ```
 
+[blog]: https://azdavis.net/posts/millet/
 [known-issues]: https://github.com/azdavis/millet/blob/main/docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [sml]: https://smlfamily.github.io
