@@ -2,6 +2,12 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.2.5
+
+- Add syntax highlighting for uppercase/lowercase CM keywords.
+- Mention the config file name in the "multiple root groups" error.
+- Update the vscode readme to link to the [blog post][blog] and mention ML Basis.
+
 ## v0.2.4
 
 - Fix definition of `structure IO` in the std basis libraries.
