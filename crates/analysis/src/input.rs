@@ -109,7 +109,7 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
       GetInputErrorKind::MultipleRootGroups(a, b) => write!(
         f,
-        "multiple root groups: {} and {}, disambiguate with config file",
+        "multiple root groups: {} and {}, disambiguate with `millet.toml` config file",
         a.display(),
         b.display()
       ),
