@@ -9,7 +9,7 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 - Improve handling of `datatype` to allow the value constructors to reference all other datatypes being defined (as with `and`), as well as any `withtype` types.
 - Improve handling of `where type` when the path does not use all of the type variables, as in `where type 'a t = int`.
 - Improve handling of `where type` with type variables to not incorrectly swap the order of the variables in some cases.
-- Add more optional standard basis library definitions, and set some equal to each other (like `Word32` = `Word`). This is technically an implementation detail, but it is depended on in e.g. [cmlib](https://github.com/standardml/cmlib).
+- Add more optional standard basis library definitions, and set some equal to each other, like `Word32` = `Word`. This is technically an implementation detail, but it is depended on in e.g. [cmlib][].
 - Further improve reporting of overload errors.
 - Add overloads for `int`, like `IntInf`.
 
@@ -24,11 +24,11 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 ## v0.2.2
 
-- Improve types for `TextIO` with a hack (since the std basis docs use invalid SML).
+- Improve types for `TextIO` with a hack, to paper over the invalid SML used in the std basis docs.
 - Add optional functors from the std basis libs.
 - Improve error locations and messages for CM errors.
 - Do not panic if a type in a signature has the wrong number of type arguments.
-- Add SML/NJ libraries from the [website](https://www.smlnj.org/doc/smlnj-lib/index.html).
+- Add SML/NJ libraries from the [website][sml-nj-doc].
 
 ## v0.2.1
 
@@ -40,7 +40,7 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 ## v0.2.0
 
-- First [publicly announced](https://azdavis.net/posts/millet/) release.
+- First [publicly announced][blog] release.
 - Show some CM, etc errors on the files themselves instead of in notifications if possible.
 - Add 15-150 specific docs, update other docs.
 - Improve logic for ignoring `$` paths in CM.
@@ -67,7 +67,7 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 ## v0.1.11
 
 - Add initial ML Basis support.
-- Support `...` pattern rows (and thus `#` selectors).
+- Support `...` pattern rows, and thus `#` selectors.
 - Improve overload support.
 - Support some deviations from the Definition:
   - `signature` and `functor` in `local`.
@@ -132,3 +132,7 @@ Initial working release, now using `esbuild`.
 Initial release, with some support for Core, none for Modules.
 
 Although this is the first release with working CI to build and release the extension, the extension itself doesn't work at all because the `node_modules` were not packaged with the extension.
+
+[blog]: https://azdavis.net/posts/millet/
+[cmlib]: https://github.com/standardml/cmlib
+[sml-nj-doc]: https://www.smlnj.org/doc/smlnj-lib/index.html

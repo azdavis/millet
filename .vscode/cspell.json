@@ -12,6 +12,7 @@
     "clippy",
     "cmark",
     "cmfile",
+    "cmlib",
     "consts",
     "datatypes",
     "descs",
