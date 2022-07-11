@@ -22,8 +22,10 @@ You can turn it off by setting `millet.useLanguageServer` to `false` in your VS 
 ## Usage
 
 1. Install the extension.
-2. Open VS Code to a folder containing a single SML/NJ CM file (with extension `.cm`).
-3. Ensure that CM file lists all the SML/other CM files in the folder, in the order you wish for them to be analyzed. **If a file is not transitively reachable from the root `sources.cm`, it will not be analyzed.**
+2. Open VS Code to a folder containing a single "group file", i.e. one of
+   - a SML/NJ CM file, with extension `.cm`
+   - a ML Basis file, with extension `.mlb`
+3. Ensure that group file lists all the SML/other group files in the folder, in the order you wish for them to be analyzed. **If a file is not transitively reachable from the root group file, it will not be analyzed.**
 
 ### Example
 
