@@ -84,7 +84,6 @@ dependencies = [
  "located",
  "path-slash",
  "smol_str",
- "text-size",
  "util",
 ]
 
