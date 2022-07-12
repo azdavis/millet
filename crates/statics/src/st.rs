@@ -17,6 +17,7 @@ pub(crate) struct St {
   fixed_gen: FixedTyVarGen,
   info: Info,
   matches: Vec<Match>,
+  holes: Vec<(MetaTyVar, hir::Idx)>,
   pub(crate) syms: Syms,
 }
 
@@ -29,6 +30,7 @@ impl St {
       fixed_gen: FixedTyVarGen::default(),
       info: Info::new(mode),
       matches: Vec::new(),
+      holes: Vec::new(),
       syms,
     }
   }
@@ -97,9 +99,21 @@ impl St {
     })
   }
 
+  pub(crate) fn insert_hole(&mut self, mv: MetaTyVar, idx: hir::Idx) {
+    self.holes.push((mv, idx));
+  }
+
   pub(crate) fn finish(self) -> (Syms, Vec<Error>, Subst, Info) {
     let lang = Lang { syms: self.syms };
     let mut errors = self.errors;
+    for (mv, idx) in self.holes {
+      let mut ty = Ty::MetaVar(mv);
+      apply(&self.subst, &mut ty);
+      errors.push(Error {
+        idx,
+        kind: ErrorKind::ExpHole(ty),
+      });
+    }
     for mut m in self.matches {
       apply(&self.subst, &mut m.want);
       match m.kind {

@@ -14,6 +14,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
   let mut ty_scheme = None::<TyScheme>;
   let mut def = None::<Def>;
   let ret = match &ars.ty[ty] {
+    hir::Ty::Hole => {
+      st.err(ty, ErrorKind::TyHole);
+      Ty::None
+    }
     // sml_def(44)
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
       None => {

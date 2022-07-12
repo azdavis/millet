@@ -253,7 +253,7 @@ fn get_exp(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, mode: &mut Mode, ex
     None => return,
   };
   match &ars.exp[exp] {
-    hir::Exp::SCon(_) | hir::Exp::Path(_) => {}
+    hir::Exp::Hole | hir::Exp::SCon(_) | hir::Exp::Path(_) => {}
     hir::Exp::Record(rows) => {
       for &(_, exp) in rows {
         get_exp(cx, ars, scope, mode, exp);
@@ -330,6 +330,7 @@ fn get_ty(cx: &mut Cx, ars: &hir::Arenas, ac: &mut TyVarSet, ty: hir::TyIdx) {
     None => return,
   };
   match &ars.ty[ty] {
+    hir::Ty::Hole => {}
     hir::Ty::Var(tv) => {
       ac.insert(tv.clone());
     }

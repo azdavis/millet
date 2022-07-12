@@ -17,6 +17,11 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
   let mut ty_scheme = None::<TyScheme>;
   let mut def = None::<Def>;
   let ret = match &ars.exp[exp] {
+    hir::Exp::Hole => {
+      let mv = st.gen_meta_var();
+      st.insert_hole(mv, exp.into());
+      Ty::MetaVar(mv)
+    }
     // sml_def(1)
     hir::Exp::SCon(scon) => get_scon(st, scon),
     // sml_def(2)

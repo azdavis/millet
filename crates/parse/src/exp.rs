@@ -111,7 +111,10 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
 /// when adding more cases to this, update [`at_exp_hd`].
 fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
-  let ex = if scon(p) {
+  let ex = if p.at(SK::Underscore) {
+    p.bump();
+    p.exit(en, SK::HoleExp)
+  } else if scon(p) {
     p.bump();
     p.exit(en, SK::SConExp)
   } else if p.at(SK::OpKw) {

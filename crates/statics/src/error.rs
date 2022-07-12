@@ -61,6 +61,8 @@ impl Error {
       ErrorKind::UnresolvedRecordTy => 24,
       ErrorKind::OrPatNotSameBindings(_) => 25,
       ErrorKind::DecNotAllowedHere => 26,
+      ErrorKind::ExpHole(_) => 27,
+      ErrorKind::TyHole => 28,
     }
   }
 }
@@ -93,6 +95,8 @@ pub(crate) enum ErrorKind {
   UnresolvedRecordTy,
   OrPatNotSameBindings(hir::Name),
   DecNotAllowedHere,
+  ExpHole(Ty),
+  TyHole,
 }
 
 #[derive(Debug)]
@@ -187,6 +191,13 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         )
       }
       ErrorKind::DecNotAllowedHere => f.write_str("declaration not allowed here"),
+      ErrorKind::ExpHole(ty) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(ty);
+        let ty = ty.display(&mvs, self.syms);
+        write!(f, "expression hole with type {ty}")
+      }
+      ErrorKind::TyHole => f.write_str("type hole"),
     }
   }
 }

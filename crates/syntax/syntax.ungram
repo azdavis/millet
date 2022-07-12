@@ -113,7 +113,8 @@ EqTy = '=' Ty
 PathEq = Path '='?
 
 Exp =
-  SConExp
+  HoleExp
+| SConExp
 | PathExp
 | RecordExp
 | SelectorExp
@@ -135,6 +136,7 @@ Exp =
 | CaseExp
 | FnExp
 
+HoleExp = '_'
 SConExp = SCon
 PathExp = 'op'? Path
 RecordExp = '{' ExpRow* '}'
@@ -255,7 +257,8 @@ AsPatTail = 'as' Pat
 PatArg = Pat ','?
 
 Ty =
-  TyVarTy
+  HoleTy
+| TyVarTy
 | RecordTy
 | ConTy
 | OneArgConTy
@@ -263,6 +266,7 @@ Ty =
 | FnTy
 | ParenTy
 
+HoleTy = '_'
 TyVarTy = 'TyVar'
 RecordTy = '{' TyRow* '}'
 ConTy = TySeq? Path

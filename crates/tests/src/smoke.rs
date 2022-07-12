@@ -156,3 +156,13 @@ val _ = Foo 4 : quz
 "#,
   );
 }
+
+#[test]
+fn ty_hole() {
+  check(
+    r#"
+type uh = _ * int
+(**       ^ type hole *)
+"#,
+  );
+}

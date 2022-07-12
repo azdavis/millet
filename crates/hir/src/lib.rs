@@ -176,6 +176,7 @@ pub type ExpArena = Arena<Exp>;
 /// sml_def(7) is handled by having no distinction between atomic expressions and others here.
 #[derive(Debug)]
 pub enum Exp {
+  Hole,
   SCon(SCon),
   Path(Path),
   Record(Vec<(Lab, ExpIdx)>),
@@ -271,6 +272,7 @@ pub type TyArena = Arena<Ty>;
 
 #[derive(Debug)]
 pub enum Ty {
+  Hole,
   Var(TyVar),
   Record(Vec<(Lab, TyIdx)>),
   Con(Vec<TyIdx>, Path),

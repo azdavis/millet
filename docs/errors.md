@@ -1023,3 +1023,27 @@ in
   structure S7 : SIG = Func(val x = 7)
 end
 ```
+
+## 4027
+
+There was an expression hole, `_`.
+
+`_` is a valid pattern, but not a valid expression.
+
+```sml
+(* error *)
+val _ = if _ then "yes" else "no"
+```
+
+The error message contains information about the type of the hole given the surrounding context. For instance, in the above example, the hole is reported to have type `bool` because it is being used as the condition to an `if` expression.
+
+## 4028
+
+There was a type hole, `_`.
+
+`_` is not a valid type.
+
+```sml
+(* error *)
+type thing = string * _ list * int
+```
