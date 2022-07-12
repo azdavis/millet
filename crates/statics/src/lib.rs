@@ -47,14 +47,10 @@ pub fn get(
   for &top_dec in top_decs {
     top_dec::get(&mut st, &mut bs, arenas, top_dec);
   }
-  let (new_syms, errors, subst, mut info) = st.finish();
+  let (new_syms, errors, info) = st.finish();
   basis.inner.fun_env = bs.fun_env;
   basis.inner.sig_env = bs.sig_env;
   basis.inner.env = bs.env.condense();
   *syms = new_syms;
-  for ty in info.tys_mut() {
-    util::apply(&subst, ty);
-  }
-  info.meta_vars = subst.into_meta_var_info();
   (info, errors)
 }

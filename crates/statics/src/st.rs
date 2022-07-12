@@ -103,7 +103,7 @@ impl St {
     self.holes.push((mv, idx));
   }
 
-  pub(crate) fn finish(self) -> (Syms, Vec<Error>, Subst, Info) {
+  pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {
     let lang = Lang { syms: self.syms };
     let mut errors = self.errors;
     for (mv, idx) in self.holes {
@@ -140,7 +140,11 @@ impl St {
         }
       }
     }
-    (lang.syms, errors, self.subst, self.info)
+    for ty in self.info.tys_mut() {
+      apply(&self.subst, ty);
+    }
+    self.info.meta_vars = self.subst.into_meta_var_info();
+    (lang.syms, errors, self.info)
   }
 }
 
