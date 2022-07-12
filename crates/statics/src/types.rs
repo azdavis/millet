@@ -845,7 +845,7 @@ impl EnvStack {
     self.0.push(Arc::new(other));
   }
 
-  pub(crate) fn condense(mut self) -> Env {
+  pub(crate) fn into_env(mut self) -> Env {
     let mut env = Env::default();
     for mut other in self.0.drain(..) {
       env.append(Arc::make_mut(&mut other));

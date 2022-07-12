@@ -50,7 +50,7 @@ pub fn get(
   let (new_syms, errors, info) = st.finish();
   basis.inner.fun_env = bs.fun_env;
   basis.inner.sig_env = bs.sig_env;
-  basis.inner.env = bs.env.condense();
+  basis.inner.env = bs.env.into_env();
   *syms = new_syms;
   (info, errors)
 }
