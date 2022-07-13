@@ -281,7 +281,7 @@ where
         let cm = cm::get(&contents).map_err(|e| GetInputError {
           source: Source {
             path: None,
-            range: Some(pos_db.range(e.text_range())),
+            range: pos_db.range(e.text_range()),
           },
           path: group_path.to_owned(),
           kind: GetInputErrorKind::Cm(e),
@@ -293,7 +293,7 @@ where
             let range = pos_db.range(parsed_path.range);
             let source = Source {
               path: Some(group_path.to_owned()),
-              range: Some(range),
+              range,
             };
             let path = group_parent.join(parsed_path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
@@ -303,7 +303,7 @@ where
                 sources.insert(path_id, contents);
               }
               cm::PathKind::Cm => {
-                stack.push(((group_path_id, Some(range)), path_id));
+                stack.push(((group_path_id, range), path_id));
               }
             }
             Ok(path_id)
@@ -320,7 +320,7 @@ where
                 return Err(GetInputError {
                   source: Source {
                     path: None,
-                    range: Some(pos_db.range(ns.range)),
+                    range: pos_db.range(ns.range),
                   },
                   path: group_path.to_owned(),
                   kind: GetInputErrorKind::UnsupportedExport,
@@ -332,7 +332,7 @@ where
                 return Err(GetInputError {
                   source: Source {
                     path: None,
-                    range: Some(pos_db.range(lib.range)),
+                    range: pos_db.range(lib.range),
                   },
                   path: group_path.to_owned(),
                   kind: GetInputErrorKind::UnsupportedExport,
@@ -347,7 +347,7 @@ where
         let mlb = ml_basis::get(&contents).map_err(|e| GetInputError {
           source: Source {
             path: None,
-            range: Some(pos_db.range(e.text_range())),
+            range: pos_db.range(e.text_range()),
           },
           path: group_path.to_owned(),
           kind: GetInputErrorKind::Mlb(e),
@@ -370,7 +370,7 @@ where
             let range = pos_db.range(parsed_path.range);
             let source = Source {
               path: Some(group_path.to_owned()),
-              range: Some(range),
+              range,
             };
             let path = group_parent.join(parsed_path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
@@ -380,7 +380,7 @@ where
                 sources.insert(path_id, contents);
               }
               ml_basis::PathKind::Mlb => {
-                stack.push(((group_path_id, Some(range)), path_id));
+                stack.push(((group_path_id, range), path_id));
               }
             }
             Ok(path_id)

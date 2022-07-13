@@ -150,7 +150,7 @@ impl Analysis {
         s.push_str(def_doc);
       }
       let range = ptr.to_node(file.parsed.root.syntax()).text_range();
-      Some((s, file.pos_db.range(range)))
+      Some((s, file.pos_db.range(range)?))
     })
   }
 
@@ -204,12 +204,12 @@ impl Analysis {
       .hir_to_ast(def.idx)?
       .to_node(def_file.parsed.root.syntax())
       .text_range();
-    Some((path, def_file.pos_db.range(def_range)))
+    Some((path, def_file.pos_db.range(def_range)?))
   }
 }
 
 fn get_node(file: &SourceFile, pos: Position) -> Option<SyntaxNode> {
-  let idx = file.pos_db.text_size(pos);
+  let idx = file.pos_db.text_size(pos)?;
   let tok = match file.parsed.root.syntax().token_at_offset(idx) {
     TokenAtOffset::None => return None,
     TokenAtOffset::Single(t) => t,
@@ -290,20 +290,26 @@ impl SourceFile {
     lines: config::ErrorLines,
   ) -> Vec<Error> {
     std::iter::empty()
-      .chain(self.lex_errors.iter().map(|err| Error {
-        range: self.pos_db.range(err.range()),
-        message: err.display().to_string(),
-        code: 1000 + u16::from(err.to_code()),
+      .chain(self.lex_errors.iter().filter_map(|err| {
+        Some(Error {
+          range: self.pos_db.range(err.range())?,
+          message: err.display().to_string(),
+          code: 1000 + u16::from(err.to_code()),
+        })
       }))
-      .chain(self.parsed.errors.iter().map(|err| Error {
-        range: self.pos_db.range(err.range()),
-        message: err.display().to_string(),
-        code: 2000 + u16::from(err.to_code()),
+      .chain(self.parsed.errors.iter().filter_map(|err| {
+        Some(Error {
+          range: self.pos_db.range(err.range())?,
+          message: err.display().to_string(),
+          code: 2000 + u16::from(err.to_code()),
+        })
       }))
-      .chain(self.lowered.errors.iter().map(|err| Error {
-        range: self.pos_db.range(err.range()),
-        message: err.display().to_string(),
-        code: 3000 + u16::from(err.to_code()),
+      .chain(self.lowered.errors.iter().filter_map(|err| {
+        Some(Error {
+          range: self.pos_db.range(err.range())?,
+          message: err.display().to_string(),
+          code: 3000 + u16::from(err.to_code()),
+        })
       }))
       .chain(self.statics_errors.iter().filter_map(|err| {
         let idx = err.idx();
@@ -317,7 +323,7 @@ impl SourceFile {
         Some(Error {
           range: self
             .pos_db
-            .range(syntax.to_node(self.parsed.root.syntax()).text_range()),
+            .range(syntax.to_node(self.parsed.root.syntax()).text_range())?,
           message: err.display(syms, mv_info, lines).to_string(),
           code: 4000 + u16::from(err.to_code()),
         })
