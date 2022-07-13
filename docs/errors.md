@@ -886,7 +886,7 @@ Certain names in certain namespaces may not be rebound. These names are:
 | `false` | logical falsity                                    |
 | `nil`   | the empty list constructor                         |
 | `::`    | the non-empty list constructor                     |
-| `ref`   | the reference type constructor                     |
+| `ref`   | the reference constructor                          |
 | `=`     | the polymorphic equality function                  |
 | `it`    | the value of the last expression entered in a REPL |
 
