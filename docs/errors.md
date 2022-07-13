@@ -692,26 +692,26 @@ then the `case` is not exhaustive.
 
 ```sml
 (* error *)
-datatype d = A | B of int
+datatype d = A of string | B of int
 
 fun f (x : d) : int =
   case x of
-    A => 1
+    B y => y
 ```
 
 To fix, add patterns matching the missing cases. The error message reports examples of patterns not matched.
 
 ## 4013
 
-This is effectively the same error as 4013, but it emitted for singular bindings, like with `val`.
+This is effectively the same error as 4012, but it emitted for singular bindings, like with `val`.
 
 ```sml
 (* error *)
-datatype d = A | B of int
+datatype d = A of string | B of int
 
-fun f (x : d) : int =
+fun f (x : d) : string =
   let
-    val B y = x
+    val A y = x
   in
     y
   end
