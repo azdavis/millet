@@ -178,7 +178,7 @@ fn ck_crate_architecture_doc(sh: &Shell) -> Result<()> {
 fn ck_changelog(sh: &Shell) -> Result<()> {
   println!("checking for changelog entries");
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output()?.stdout)?;
-  let tags: BTreeSet<_> = tag_out.lines().collect();
+  let tags: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
   let path = sh.current_dir().join("docs").join("changelog.md");
   let contents = sh.read_file(path)?;
   let entries: BTreeSet<_> = contents
