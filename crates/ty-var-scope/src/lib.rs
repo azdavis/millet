@@ -44,15 +44,15 @@ pub fn get(ars: &mut hir::Arenas, top_decs: &[hir::StrDecIdx]) {
   for &top_dec in top_decs {
     get_str_dec(&mut cx, ars, top_dec);
   }
-  for (dec, implicit_ty_vars) in cx.val_dec {
+  for (dec, implicit) in cx.val_dec {
     match &mut ars.dec[dec] {
-      hir::Dec::Val(ty_vars, _) => ty_vars.extend(implicit_ty_vars),
+      hir::Dec::Val(ty_vars, _) => ty_vars.extend(implicit),
       _ => unreachable!("only val may implicitly bind ty vars"),
     }
   }
-  for (spec, implicit_ty_vars) in cx.val_spec {
+  for (spec, implicit) in cx.val_spec {
     match &mut ars.spec[spec] {
-      hir::Spec::Val(ty_vars, _) => ty_vars.extend(implicit_ty_vars),
+      hir::Spec::Val(ty_vars, _) => ty_vars.extend(implicit),
       _ => unreachable!("only val may implicitly bind ty vars"),
     }
   }
@@ -212,16 +212,23 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, mode: &mut Mode, de
             }
             get_exp(cx, ars, &scope, &mut mode, val_bind.exp);
           }
-          let ac = match mode {
+          let mut ac = match mode {
             Mode::Get(ac) => ac,
             Mode::Set => unreachable!(),
           };
-          let unguarded: FxHashSet<_> = ac.difference(&scope).cloned().collect();
-          assert!(cx.val_dec.insert(dec, unguarded).is_none());
+          for x in scope.iter() {
+            ac.remove(x);
+          }
+          assert!(cx.val_dec.insert(dec, ac).is_none());
         }
         Mode::Set => {
-          let unguarded = cx.val_dec.get_mut(&dec).unwrap();
-          *unguarded = unguarded.difference(&scope).cloned().collect();
+          let unguarded = cx
+            .val_dec
+            .get_mut(&dec)
+            .expect("should have been set in the Get pass");
+          for x in scope.iter() {
+            unguarded.remove(x);
+          }
           scope.extend(unguarded.iter().cloned());
           for val_bind in val_binds {
             get_exp(cx, ars, &scope, mode, val_bind.exp);
