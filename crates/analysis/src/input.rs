@@ -29,21 +29,20 @@ impl Input {
 /// An error when getting input.
 #[derive(Debug)]
 pub struct GetInputError {
-  source: Option<PathBuf>,
+  source: Source,
   path: PathBuf,
   kind: GetInputErrorKind,
-  range: Option<Range>,
 }
 
 impl GetInputError {
   /// Returns a path associated with this error, which may or may not exist.
   pub fn path(&self) -> &Path {
-    self.source.as_ref().unwrap_or(&self.path).as_path()
+    self.source.path.as_ref().unwrap_or(&self.path).as_path()
   }
 
   /// Returns a range for this error in `path`.
   pub fn range(&self) -> Option<Range> {
-    self.range
+    self.source.range
   }
 
   /// Returns a value that displays the error message without the path.
@@ -177,7 +176,7 @@ pub fn get<F>(
 where
   F: paths::FileSystem,
 {
-  let mut root_group_source = None::<PathBuf>;
+  let mut root_group_source = Source::default();
   // try to get from the config.
   if root_group_path.is_none() {
     let config_path = root.as_path().join(config::FILE_NAME);
@@ -186,32 +185,32 @@ where
         Ok(x) => x,
         Err(e) => {
           return Err(GetInputError {
-            source: None,
+            source: Source::default(),
             path: config_path,
             kind: GetInputErrorKind::CouldNotParseConfig(e),
-            range: None,
           })
         }
       };
       if config.version != 1 {
         return Err(GetInputError {
-          source: None,
+          source: Source::default(),
           path: config_path,
           kind: GetInputErrorKind::InvalidConfigVersion(config.version),
-          range: None,
         });
       }
       if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
         let path = root.as_path().join(path);
         match GroupPath::new(fs, path.clone()) {
           Some(path) => {
-            root_group_source = Some(config_path);
+            root_group_source.path = Some(config_path);
             root_group_path = Some(path);
           }
           None => {
             return Err(GetInputError {
-              source: Some(config_path),
-              range: None,
+              source: Source {
+                path: Some(config_path),
+                range: None,
+              },
               path,
               kind: GetInputErrorKind::NotGroup,
             })
@@ -223,8 +222,7 @@ where
   // if not, try to get one from the root dir.
   if root_group_path.is_none() {
     let dir_entries = fs.read_dir(root.as_path()).map_err(|e| GetInputError {
-      source: None,
-      range: None,
+      source: Source::default(),
       path: root.as_path().to_owned(),
       kind: GetInputErrorKind::ReadDir(e),
     })?;
@@ -234,9 +232,11 @@ where
           Some(rgp) => {
             return Err(GetInputError {
               kind: GetInputErrorKind::MultipleRootGroups(rgp.path.clone(), entry.clone()),
-              source: Some(rgp.path),
+              source: Source {
+                path: Some(rgp.path),
+                range: None,
+              },
               path: entry,
-              range: None,
             })
           }
           None => root_group_path = Some(group_path),
@@ -245,20 +245,11 @@ where
     }
   }
   let root_group_path = root_group_path.ok_or_else(|| GetInputError {
-    source: None,
-    range: None,
+    source: Source::default(),
     path: root.as_path().to_owned(),
     kind: GetInputErrorKind::NoRootGroup,
   })?;
-  let root_group_id = get_path_id(
-    fs,
-    root,
-    match &root_group_source {
-      Some(p) => Source::Path(p.clone()),
-      None => Source::None,
-    },
-    root_group_path.path.as_path(),
-  )?;
+  let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
   let mut sources = PathMap::<String>::default();
   let mut groups = PathMap::<Group>::default();
   let mut stack = vec![((root_group_id, None), root_group_id)];
@@ -269,9 +260,9 @@ where
     let group_path = root.get_path(group_path_id).clone();
     let group_path = group_path.as_path();
     let containing_path = root.get_path(containing_path_id).as_path().to_owned();
-    let source = match containing_path_range {
-      None => Source::Path(containing_path),
-      Some(r) => Source::PathAndRange(containing_path, r),
+    let source = Source {
+      path: Some(containing_path),
+      range: containing_path_range,
     };
     let contents = read_file(fs, source, group_path)?;
     let pos_db = text_pos::PositionDb::new(&contents);
@@ -279,8 +270,7 @@ where
       Some(x) => x.to_owned(),
       None => {
         return Err(GetInputError {
-          range: None,
-          source: None,
+          source: Source::default(),
           path: group_path.to_owned(),
           kind: GetInputErrorKind::NoParent,
         })
@@ -289,9 +279,11 @@ where
     let group = match root_group_path.kind {
       GroupPathKind::Cm => {
         let cm = cm::get(&contents).map_err(|e| GetInputError {
-          source: None,
+          source: Source {
+            path: None,
+            range: Some(pos_db.range(e.text_range())),
+          },
           path: group_path.to_owned(),
-          range: Some(pos_db.range(e.text_range())),
           kind: GetInputErrorKind::Cm(e),
         })?;
         let paths = cm
@@ -299,7 +291,10 @@ where
           .into_iter()
           .map(|parsed_path| {
             let range = pos_db.range(parsed_path.range);
-            let source = Source::PathAndRange(group_path.to_owned(), range);
+            let source = Source {
+              path: Some(group_path.to_owned()),
+              range: Some(range),
+            };
             let path = group_parent.join(parsed_path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
             match parsed_path.val.kind() {
@@ -323,8 +318,10 @@ where
               cm::Namespace::Functor => exports.functor.push(hir::Name::new(name.val.as_str())),
               cm::Namespace::FunSig => {
                 return Err(GetInputError {
-                  range: Some(pos_db.range(ns.range)),
-                  source: None,
+                  source: Source {
+                    path: None,
+                    range: Some(pos_db.range(ns.range)),
+                  },
                   path: group_path.to_owned(),
                   kind: GetInputErrorKind::UnsupportedExport,
                 })
@@ -333,8 +330,10 @@ where
             cm::Export::Library(lib) => {
               if STRICT_EXPORTS {
                 return Err(GetInputError {
-                  range: Some(pos_db.range(lib.range)),
-                  source: None,
+                  source: Source {
+                    path: None,
+                    range: Some(pos_db.range(lib.range)),
+                  },
                   path: group_path.to_owned(),
                   kind: GetInputErrorKind::UnsupportedExport,
                 });
@@ -346,9 +345,11 @@ where
       }
       GroupPathKind::Mlb => {
         let mlb = ml_basis::get(&contents).map_err(|e| GetInputError {
-          source: None,
+          source: Source {
+            path: None,
+            range: Some(pos_db.range(e.text_range())),
+          },
           path: group_path.to_owned(),
-          range: Some(pos_db.range(e.text_range())),
           kind: GetInputErrorKind::Mlb(e),
         })?;
         let mut paths = Vec::<&located::Located<ml_basis::ParsedPath>>::new();
@@ -367,7 +368,10 @@ where
           })
           .map(|parsed_path| {
             let range = pos_db.range(parsed_path.range);
-            let source = Source::PathAndRange(group_path.to_owned(), range);
+            let source = Source {
+              path: Some(group_path.to_owned()),
+              range: Some(range),
+            };
             let path = group_parent.join(parsed_path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
             match parsed_path.val.kind() {
@@ -397,8 +401,7 @@ where
     .collect();
   if let Err(err) = topo_sort::get(&graph) {
     return Err(GetInputError {
-      range: None,
-      source: None,
+      source: Source::default(),
       path: root.get_path(err.witness()).as_path().to_owned(),
       kind: GetInputErrorKind::Cycle,
     });
@@ -434,21 +437,10 @@ fn bas_dec_paths<'b>(
   }
 }
 
-#[derive(Debug, Clone)]
-enum Source {
-  None,
-  Path(PathBuf),
-  PathAndRange(PathBuf, Range),
-}
-
-impl Source {
-  fn into_parts(self) -> (Option<PathBuf>, Option<Range>) {
-    match self {
-      Source::None => (None, None),
-      Source::Path(p) => (Some(p), None),
-      Source::PathAndRange(p, r) => (Some(p), Some(r)),
-    }
-  }
+#[derive(Debug, Default, Clone)]
+struct Source {
+  path: Option<PathBuf>,
+  range: Option<Range>,
 }
 
 /// A group of paths and their exports.
@@ -467,16 +459,13 @@ fn get_path_id<F>(
 where
   F: paths::FileSystem,
 {
-  let (source, range) = source.into_parts();
   let canonical = fs.canonicalize(path).map_err(|e| GetInputError {
     source: source.clone(),
-    range,
     path: path.to_owned(),
     kind: GetInputErrorKind::Canonicalize(e),
   })?;
   root.get_id(&canonical).map_err(|e| GetInputError {
     source,
-    range,
     path: path.to_owned(),
     kind: GetInputErrorKind::NotInRoot(e),
   })
@@ -486,10 +475,8 @@ fn read_file<F>(fs: &F, source: Source, path: &Path) -> Result<String>
 where
   F: paths::FileSystem,
 {
-  let (source, range) = source.into_parts();
   fs.read_to_string(path).map_err(|e| GetInputError {
     source,
-    range,
     path: path.to_owned(),
     kind: GetInputErrorKind::ReadFile(e),
   })
