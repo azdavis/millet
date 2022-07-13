@@ -422,11 +422,7 @@ fn bas_dec_paths<'b>(
       bas_dec_paths(paths, local_dec);
       bas_dec_paths(paths, in_dec);
     }
-    ml_basis::BasDec::Basis(_)
-    | ml_basis::BasDec::Open(_)
-    | ml_basis::BasDec::Structure(_)
-    | ml_basis::BasDec::Signature(_)
-    | ml_basis::BasDec::Functor(_) => {}
+    ml_basis::BasDec::Basis(_) | ml_basis::BasDec::Open(_) | ml_basis::BasDec::Export(_, _) => {}
     ml_basis::BasDec::Path(path) => paths.push(path),
     ml_basis::BasDec::Ann(_, inner) => bas_dec_paths(paths, inner),
     ml_basis::BasDec::Seq(bas_decs) => {

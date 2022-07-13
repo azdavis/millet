@@ -1,5 +1,5 @@
 use crate::types::{
-  BasDec, BasExp, Error, ErrorKind, Name, NamesSeq, ParsedPath, PathKind, Result, Token,
+  BasDec, BasExp, Error, ErrorKind, Name, NamesSeq, Namespace, ParsedPath, PathKind, Result, Token,
 };
 use located::{Located, TextRange};
 use path_slash::PathBufExt as _;
@@ -122,15 +122,15 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
     }
     Token::Structure => {
       p.bump();
-      BasDec::Structure(names_seq(p)?)
+      BasDec::Export(Namespace::Structure, names_seq(p)?)
     }
     Token::Signature => {
       p.bump();
-      BasDec::Signature(names_seq(p)?)
+      BasDec::Export(Namespace::Signature, names_seq(p)?)
     }
     Token::Functor => {
       p.bump();
-      BasDec::Functor(names_seq(p)?)
+      BasDec::Export(Namespace::Functor, names_seq(p)?)
     }
     // TODO allow string as well
     Token::BarePath(path) => {

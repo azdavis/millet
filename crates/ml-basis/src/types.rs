@@ -106,6 +106,7 @@ impl Name {
   }
 }
 
+/// A sequence of binding names.
 pub type NamesSeq = Vec<(Located<Name>, Option<Located<Name>>)>;
 
 /// A basis declaration.
@@ -115,12 +116,29 @@ pub enum BasDec {
   Basis(Vec<(Located<Name>, BasExp)>),
   Open(Vec<Located<Name>>),
   Local(Box<BasDec>, Box<BasDec>),
-  Structure(NamesSeq),
-  Signature(NamesSeq),
-  Functor(NamesSeq),
+  Export(Namespace, NamesSeq),
   Path(Located<ParsedPath>),
   Ann(Located<String>, Box<BasDec>),
   Seq(Vec<BasDec>),
+}
+
+/// A kind of export.
+#[derive(Debug, Clone, Copy)]
+#[allow(missing_docs)]
+pub enum Namespace {
+  Structure,
+  Signature,
+  Functor,
+}
+
+impl fmt::Display for Namespace {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Namespace::Structure => f.write_str("structure"),
+      Namespace::Signature => f.write_str("signature"),
+      Namespace::Functor => f.write_str("functor"),
+    }
+  }
 }
 
 /// A basis expression.

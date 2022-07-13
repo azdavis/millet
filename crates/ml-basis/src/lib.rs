@@ -13,7 +13,7 @@ mod lex;
 mod parse;
 mod types;
 
-pub use types::{BasDec, BasExp, Error, ParsedPath, PathKind, Result};
+pub use types::{BasDec, BasExp, Error, Name, Namespace, ParsedPath, PathKind, Result};
 
 /// Process the contents of a ML Basis file.
 pub fn get(s: &str) -> Result<BasDec> {
