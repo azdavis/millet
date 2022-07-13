@@ -96,6 +96,8 @@ A `word` literal was negative. Words cannot be negative.
 val neg = ~0w123
 ```
 
+To fix, use a different type, like `int`, or remove the negative sign.
+
 ## 1006
 
 A `char` literal contained more (or less) than 1 character.
@@ -285,12 +287,12 @@ val _ = 1 << 2 >> 3
 
 It's not clear if this should be parsed as `(1 << 2) >> 3` or `1 << (2 >> 3)`.
 
-To fix:
+To fix, do one of the following:
 
 - Add parentheses to disambiguate.
-- Or use different fixities.
-- Or use the same associativity.
-- Or use `op`.
+- Use `op` to disambiguate.
+- Use different fixities.
+- Use the same associativity.
 
 ## 2006
 
@@ -618,7 +620,7 @@ Millet reports these overloaded types with intentionally invalid SML syntax. Her
 
 ## 4008
 
-A function application expression was encountered, but the function expression did not have a function ("arrow") type.
+A function application expression was encountered, but the function expression did not have a function type.
 
 ```sml
 (* error *)
@@ -628,6 +630,8 @@ val _ = "foo" 3
 In this example, we attempt to treat the string `"foo"` as a function and apply it to the argument `3`.
 
 This error is a special case of 4007, specialized for the common case of function application.
+
+To fix, only apply functions to arguments.
 
 ## 4009
 
@@ -722,7 +726,9 @@ The pattern in a `val` binding ought to be "irrefutable", to wit, it alone ought
 - The wildcard pattern `_` is irrefutable.
 - Variable patterns like `x` and `y` are irrefutable.
 - Tuple patterns composed of irrefutable patterns are irrefutable.
-- More generally, if a `datatype` has only one constructor, a pattern with that one constructor, and an irrefutable pattern argument (if one is needed) is irrefutable.
+- If a `datatype` has only one constructor, then a pattern of that constructor, additionally with an irrefutable pattern argument if one is needed, is irrefutable.
+
+To fix, use a `case` or similar instead.
 
 ## 4014
 
@@ -1037,6 +1043,8 @@ val _ = if _ then "yes" else "no"
 
 The error message contains information about the type of the hole given the surrounding context. For instance, in the above example, the hole is reported to have type `bool` because it is being used as the condition to an `if` expression.
 
+To fix, replace the hole with an real expression of the correct type.
+
 ## 4028
 
 There was a type hole, `_`.
@@ -1047,3 +1055,5 @@ There was a type hole, `_`.
 (* error *)
 type thing = string * _ list * int
 ```
+
+To fix, replace the hole with a real type.
