@@ -1,0 +1,14 @@
+[package]
+name = "mlb-hir"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+located = { path = "../located" }
+hir = { path = "../hir" }
+paths = { path = "../paths" }

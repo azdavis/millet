@@ -142,6 +142,10 @@ Processes SML/NJ Compilation Manager (`.cm`) files.
 
 Processes ML Basis (`.mlb`) files into AST.
 
+### `crates/mlb-hir`
+
+HIR for ML Basis files.
+
 ### `crates/util`
 
 Some common utilities used in multiple crates, like:
