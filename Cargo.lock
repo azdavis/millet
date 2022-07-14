@@ -15,7 +15,7 @@ dependencies = [
  "located",
  "log",
  "lower",
- "ml-basis",
+ "mlb-ast",
  "parse",
  "paths",
  "statics",
@@ -334,7 +334,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ml-basis"
+name = "mlb-ast"
 version = "0.1.0"
 dependencies = [
  "located",

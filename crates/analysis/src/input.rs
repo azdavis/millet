@@ -83,7 +83,7 @@ enum GetInputErrorKind {
   ReadDir(std::io::Error),
   ReadFile(std::io::Error),
   Cm(cm::Error),
-  Mlb(ml_basis::Error),
+  Mlb(mlb_ast::Error),
   Canonicalize(std::io::Error),
   NoParent,
   NotInRoot(std::path::StripPrefixError),
@@ -344,7 +344,7 @@ where
         Group { paths, exports }
       }
       GroupPathKind::Mlb => {
-        let mlb = ml_basis::get(&contents).map_err(|e| GetInputError {
+        let mlb_ast = mlb_ast::get(&contents).map_err(|e| GetInputError {
           source: Source {
             path: None,
             range: pos_db.range(e.text_range()),
@@ -352,11 +352,11 @@ where
           path: group_path.to_owned(),
           kind: GetInputErrorKind::Mlb(e),
         })?;
-        let mut paths = Vec::<&located::Located<ml_basis::ParsedPath>>::new();
+        let mut paths = Vec::<&located::Located<mlb_ast::ParsedPath>>::new();
         // TODO this discards most of the semantics of ML Basis files. It just gets the files in the
         // right order. It totally ignores `local`, renaming exports, etc etc. So, it basically only
         // works correctly for ML Basis files that are nothing but a list of files.
-        bas_dec_paths(&mut paths, &mlb);
+        bas_dec_paths(&mut paths, &mlb_ast);
         let paths = paths
           .into_iter()
           .filter(|p| {
@@ -375,11 +375,11 @@ where
             let path = group_parent.join(parsed_path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
             match parsed_path.val.kind() {
-              ml_basis::PathKind::Sml => {
+              mlb_ast::PathKind::Sml => {
                 let contents = read_file(fs, source, path.as_path())?;
                 sources.insert(path_id, contents);
               }
-              ml_basis::PathKind::Mlb => {
+              mlb_ast::PathKind::Mlb => {
                 stack.push(((group_path_id, range), path_id));
               }
             }
@@ -414,18 +414,18 @@ where
 }
 
 fn bas_dec_paths<'b>(
-  paths: &mut Vec<&'b located::Located<ml_basis::ParsedPath>>,
-  bas_dec: &'b ml_basis::BasDec,
+  paths: &mut Vec<&'b located::Located<mlb_ast::ParsedPath>>,
+  bas_dec: &'b mlb_ast::BasDec,
 ) {
   match bas_dec {
-    ml_basis::BasDec::Local(local_dec, in_dec) => {
+    mlb_ast::BasDec::Local(local_dec, in_dec) => {
       bas_dec_paths(paths, local_dec);
       bas_dec_paths(paths, in_dec);
     }
-    ml_basis::BasDec::Basis(_) | ml_basis::BasDec::Open(_) | ml_basis::BasDec::Export(_, _) => {}
-    ml_basis::BasDec::Path(path) => paths.push(path),
-    ml_basis::BasDec::Ann(_, inner) => bas_dec_paths(paths, inner),
-    ml_basis::BasDec::Seq(bas_decs) => {
+    mlb_ast::BasDec::Basis(_) | mlb_ast::BasDec::Open(_) | mlb_ast::BasDec::Export(_, _) => {}
+    mlb_ast::BasDec::Path(path) => paths.push(path),
+    mlb_ast::BasDec::Ann(_, inner) => bas_dec_paths(paths, inner),
+    mlb_ast::BasDec::Seq(bas_decs) => {
       for bas_dec in bas_decs {
         bas_dec_paths(paths, bas_dec);
       }

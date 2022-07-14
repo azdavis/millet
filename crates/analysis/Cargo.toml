@@ -24,6 +24,6 @@ hir = { path = "../hir" }
 paths = { path = "../paths" }
 located = { path = "../located" }
 cm = { path = "../cm" }
-ml-basis = { path = "../ml-basis" }
+mlb-ast = { path = "../mlb-ast" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }
