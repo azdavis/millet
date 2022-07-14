@@ -1,4 +1,5 @@
-use crate::types::{Export, Name, Namespace, PathKind};
+use crate::types::{Export, Namespace, PathKind};
+use hir_util::Name;
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 

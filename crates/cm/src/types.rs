@@ -1,5 +1,5 @@
+use hir_util::Name;
 use located::{Located, TextRange};
-use smol_str::SmolStr;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -121,21 +121,6 @@ impl ParsedPath {
   /// Returns this as a `Path`.
   pub fn as_path(&self) -> &Path {
     self.path.as_path()
-  }
-}
-
-/// A name, like `S` in `structure S`.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Name(SmolStr);
-
-impl Name {
-  pub(crate) fn new(s: &str) -> Self {
-    Self(s.into())
-  }
-
-  /// Return this as a str reference.
-  pub fn as_str(&self) -> &str {
-    self.0.as_str()
   }
 }
 

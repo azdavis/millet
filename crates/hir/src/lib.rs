@@ -3,14 +3,13 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
-use std::borrow::Borrow;
 use std::fmt;
 
 use la_arena::Arena;
 
+pub use hir_util::{Name, SmolStr};
 pub use la_arena;
 pub use num_bigint::{BigInt, ParseBigIntError};
-pub use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
 pub struct Arenas {
@@ -374,58 +373,26 @@ impl fmt::Display for Path {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Name(SmolStr);
-
-impl Name {
-  pub fn new<S>(s: S) -> Self
-  where
-    S: Into<SmolStr>,
-  {
-    let s: SmolStr = s.into();
-    assert!(!s.is_empty());
-    Self(s)
-  }
-
-  pub fn as_str(&self) -> &str {
-    self.0.as_str()
-  }
-}
-
-impl fmt::Display for Name {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
-
-impl Borrow<str> for Name {
-  fn borrow(&self) -> &str {
-    self.as_str()
-  }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TyVar(SmolStr);
+pub struct TyVar(Name);
 
 impl TyVar {
   pub fn new<S>(s: S) -> Self
   where
     S: Into<SmolStr>,
   {
-    let s: SmolStr = s.into();
-    assert!(!s.is_empty());
-    Self(s)
+    Self(Name::new(s))
   }
 
   pub fn is_equality(&self) -> bool {
-    self.0.as_bytes().get(1) == Some(&b'\'')
+    self.0.as_str().as_bytes().get(1) == Some(&b'\'')
   }
 
   pub fn as_str(&self) -> &str {
     self.0.as_str()
   }
 
-  pub fn into_name(self) -> Name {
-    Name(self.0)
+  pub fn as_name(&self) -> &Name {
+    &self.0
   }
 }
 

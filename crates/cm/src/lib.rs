@@ -17,7 +17,7 @@ mod lower;
 mod parse;
 mod types;
 
-pub use types::{CMFile, Class, Error, Export, Name, Namespace, PathKind, Result};
+pub use types::{CMFile, Class, Error, Export, Namespace, PathKind, Result};
 
 /// Turn the contents of a CM file into exports and members.
 pub fn get(s: &str) -> Result<CMFile> {

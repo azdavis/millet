@@ -313,9 +313,9 @@ where
         for export in cm.exports {
           match export {
             cm::Export::Regular(ns, name) => match ns.val {
-              cm::Namespace::Structure => exports.structure.push(hir::Name::new(name.val.as_str())),
-              cm::Namespace::Signature => exports.signature.push(hir::Name::new(name.val.as_str())),
-              cm::Namespace::Functor => exports.functor.push(hir::Name::new(name.val.as_str())),
+              cm::Namespace::Structure => exports.structure.push(name.val.clone()),
+              cm::Namespace::Signature => exports.signature.push(name.val.clone()),
+              cm::Namespace::Functor => exports.functor.push(name.val.clone()),
               cm::Namespace::FunSig => {
                 return Err(GetInputError {
                   source: Source {

@@ -1,6 +1,7 @@
 use crate::types::{
-  BasDec, BasExp, Error, ErrorKind, Name, NamesSeq, Namespace, ParsedPath, PathKind, Result, Token,
+  BasDec, BasExp, Error, ErrorKind, NamesSeq, Namespace, ParsedPath, PathKind, Result, Token,
 };
+use hir_util::Name;
 use located::{Located, TextRange};
 use path_slash::PathBufExt as _;
 use std::path::{Path, PathBuf};

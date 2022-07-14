@@ -21,7 +21,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, ty: hir::TyIdx) -> Ty
     // sml_def(44)
     hir::Ty::Var(v) => match cx.ty_vars.get(v) {
       None => {
-        st.err(ty, ErrorKind::Undefined(Item::TyVar, v.clone().into_name()));
+        st.err(ty, ErrorKind::Undefined(Item::TyVar, v.as_name().clone()));
         Ty::None
       }
       Some(fv) => Ty::FixedVar(fv.clone()),

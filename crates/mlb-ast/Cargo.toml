@@ -8,7 +8,7 @@ publish = false
 doctest = false
 
 [dependencies]
-smol_str = "0.1"
 path-slash = "0.1"
 lex-util = { path = "../lex-util" }
+hir-util = { path = "../hir-util" }
 located = { path = "../located" }

@@ -81,10 +81,10 @@ dependencies = [
 name = "cm"
 version = "0.1.0"
 dependencies = [
+ "hir-util",
  "lex-util",
  "located",
  "path-slash",
- "smol_str",
 ]
 
 [[package]]
@@ -189,8 +189,15 @@ dependencies = [
 name = "hir"
 version = "0.1.0"
 dependencies = [
+ "hir-util",
  "la-arena",
  "num-bigint",
+]
+
+[[package]]
+name = "hir-util"
+version = "0.1.0"
+dependencies = [
  "smol_str",
 ]
 
@@ -341,10 +348,10 @@ dependencies = [
 name = "mlb-ast"
 version = "0.1.0"
 dependencies = [
+ "hir-util",
  "lex-util",
  "located",
  "path-slash",
- "smol_str",
 ]
 
 [[package]]

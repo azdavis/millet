@@ -619,7 +619,7 @@ fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &hir::TyDesc, idx: hir:
   let started = st.syms.start(ty_desc.name.clone());
   for ty_var in ty_desc.ty_vars.iter() {
     if !ty_vars.insert(ty_var) {
-      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
+      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
       st.err(idx, e);
     }
   }

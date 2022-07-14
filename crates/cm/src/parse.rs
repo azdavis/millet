@@ -1,5 +1,5 @@
 use crate::types::{
-  Class, DescKind, Error, ErrorKind, Export, Member, Name, Namespace, Result, Root, Token,
+  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, Result, Root, Token,
 };
 use located::{Located, TextRange};
 use path_slash::PathBufExt as _;
@@ -116,7 +116,7 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
     };
     p.bump();
     let s = p.string()?;
-    let name = Name::new(s.val);
+    let name = hir_util::Name::new(s.val);
     p.bump();
     ret.push(Export::Regular(tok.wrap(namespace), s.wrap(name)));
   }

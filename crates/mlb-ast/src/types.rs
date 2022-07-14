@@ -1,5 +1,5 @@
+use hir_util::Name;
 use located::{Located, TextRange};
-use smol_str::SmolStr;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
@@ -88,21 +88,6 @@ impl<'a> fmt::Display for Token<'a> {
       Token::Name(s) => f.write_str(s),
       Token::BarePath(s) => f.write_str(s),
     }
-  }
-}
-
-/// A name, like `S` in `structure S`.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Name(SmolStr);
-
-impl Name {
-  pub(crate) fn new(s: &str) -> Self {
-    Self(s.into())
-  }
-
-  /// Return this as a str reference.
-  pub fn as_str(&self) -> &str {
-    self.0.as_str()
   }
 }
 

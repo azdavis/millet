@@ -192,7 +192,7 @@ pub(crate) fn add_fixed_ty_vars(
   for ty_var in ty_vars.iter() {
     let fv = st.gen_fixed_var(ty_var.clone());
     if cx.ty_vars.insert(ty_var.clone(), fv.clone()).is_some() {
-      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.clone().into_name());
+      let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
       st.err(idx, e);
     }
     ret.insert(fv);
@@ -311,7 +311,7 @@ pub(crate) fn get_dat_binds(
     // bring the type variables for this datatype into scope.
     for fv in datatype.fixed.iter() {
       if cx.ty_vars.insert(fv.ty_var().clone(), fv.clone()).is_some() {
-        let e = ErrorKind::Duplicate(Item::TyVar, fv.ty_var().clone().into_name());
+        let e = ErrorKind::Duplicate(Item::TyVar, fv.ty_var().as_name().clone());
         st.err(idx, e);
       }
     }
