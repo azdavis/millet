@@ -4,10 +4,10 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
+use lex_util::{advance_while, block_comment, is_whitespace};
 use std::fmt;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::{token::Token, SyntaxKind as SK};
-use util::{advance_while, block_comment, is_whitespace};
 
 /// A lexed input.
 #[derive(Debug)]

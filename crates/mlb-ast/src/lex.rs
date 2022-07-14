@@ -1,6 +1,6 @@
 use crate::types::{Error, ErrorKind, Result, Token};
+use lex_util::{advance_while, block_comment, is_whitespace};
 use located::{mk_text_size, Located, TextRange};
-use util::{advance_while, block_comment, is_whitespace};
 
 pub(crate) fn get(s: &str) -> Result<Vec<Located<Token<'_>>>> {
   let bs = s.as_bytes();

@@ -9,5 +9,5 @@ doctest = false
 test = false
 
 [dependencies]
-util = { path = "../util" }
+lex-util = { path = "../lex-util" }
 syntax = { path = "../syntax" }

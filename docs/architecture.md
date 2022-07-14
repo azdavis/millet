@@ -146,9 +146,9 @@ Processes ML Basis (`.mlb`) files into AST.
 
 HIR for ML Basis files.
 
-### `crates/util`
+### `crates/lex-util`
 
-Some common utilities used in multiple crates, like:
+Some common lex utilities used in multiple lexing crates, like:
 
 - Handling `(* ... *)` style block comments with nesting.
 - Handling whitespace.

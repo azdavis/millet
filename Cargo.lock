@@ -81,10 +81,10 @@ dependencies = [
 name = "cm"
 version = "0.1.0"
 dependencies = [
+ "lex-util",
  "located",
  "path-slash",
  "smol_str",
- "util",
 ]
 
 [[package]]
@@ -251,9 +251,13 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 name = "lex"
 version = "0.1.0"
 dependencies = [
+ "lex-util",
  "syntax",
- "util",
 ]
+
+[[package]]
+name = "lex-util"
+version = "0.1.0"
 
 [[package]]
 name = "libc"
@@ -337,10 +341,10 @@ dependencies = [
 name = "mlb-ast"
 version = "0.1.0"
 dependencies = [
+ "lex-util",
  "located",
  "path-slash",
  "smol_str",
- "util",
 ]
 
 [[package]]
@@ -754,10 +758,6 @@ dependencies = [
  "percent-encoding",
  "serde",
 ]
-
-[[package]]
-name = "util"
-version = "0.1.0"
 
 [[package]]
 name = "version_check"
