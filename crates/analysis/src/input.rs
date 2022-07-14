@@ -21,7 +21,7 @@ pub struct Input {
 
 impl Input {
   /// Return an iterator over the source paths.
-  pub fn iter_sources(&self) -> impl Iterator<Item = (paths::PathId, &str)> + '_ {
+  pub fn iter_sources(&self) -> impl Iterator<Item = (PathId, &str)> + '_ {
     self.sources.iter().map(|(&path, s)| (path, s.as_str()))
   }
 }
