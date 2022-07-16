@@ -138,9 +138,9 @@ NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), li
 
 Processes SML/NJ Compilation Manager (`.cm`) files.
 
-### `crates/mlb-ast`
+### `crates/mlb-syntax`
 
-Processes ML Basis (`.mlb`) files into AST.
+Processes the syntax of ML Basis (`.mlb`) files into AST values.
 
 ### `crates/mlb-hir`
 

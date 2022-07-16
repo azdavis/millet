@@ -15,7 +15,7 @@ dependencies = [
  "located",
  "log",
  "lower",
- "mlb-ast",
+ "mlb-syntax",
  "parse",
  "paths",
  "statics",
@@ -345,22 +345,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "mlb-ast"
-version = "0.1.0"
-dependencies = [
- "hir-util",
- "lex-util",
- "located",
- "path-slash",
-]
-
-[[package]]
 name = "mlb-hir"
 version = "0.1.0"
 dependencies = [
  "hir",
  "located",
  "paths",
+]
+
+[[package]]
+name = "mlb-syntax"
+version = "0.1.0"
+dependencies = [
+ "hir-util",
+ "lex-util",
+ "located",
+ "path-slash",
 ]
 
 [[package]]
