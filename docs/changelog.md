@@ -4,7 +4,7 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 ## v0.2.6
 
-- Add type and expression holes (`_`) as valid syntax (but reject them in analysis.)
+- Add type and expression holes (`_`) as valid syntax, but reject them in later stages.
 - Tweak error codes.
 
 ## v0.2.5
