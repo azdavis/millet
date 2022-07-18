@@ -116,7 +116,7 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
     };
     p.bump();
     let s = p.string()?;
-    let name = hir_util::Name::new(s.val);
+    let name = str_util::Name::new(s.val);
     p.bump();
     ret.push(Export::Regular(tok.wrap(namespace), s.wrap(name)));
   }

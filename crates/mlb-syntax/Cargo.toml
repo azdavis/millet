@@ -10,5 +10,5 @@ doctest = false
 [dependencies]
 path-slash = "0.1"
 lex-util = { path = "../lex-util" }
-hir-util = { path = "../hir-util" }
+str-util = { path = "../str-util" }
 located = { path = "../located" }

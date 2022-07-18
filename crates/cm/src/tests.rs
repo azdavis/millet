@@ -1,7 +1,7 @@
 use crate::types::{Export, Namespace, PathKind};
-use hir_util::Name;
 use path_slash::PathBufExt as _;
 use std::path::PathBuf;
+use str_util::Name;
 
 fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)]) {
   let file = crate::get(s).unwrap();

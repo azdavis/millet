@@ -1,4 +1,4 @@
-//! Utilities for high-level intermediate representations.
+//! Utilities for strings.
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]

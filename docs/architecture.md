@@ -153,11 +153,12 @@ Some common lex utilities used in multiple lexing crates, like:
 - Handling `(* ... *)` style block comments with nesting.
 - Handling whitespace.
 
-### `crates/hir-util`
+### `crates/str-util`
 
-Some common HIR utilities used in multiple HIR crates, like
+Some common string utilities, like:
 
-- Names, aka immutable, non-empty, somewhat cheaply clone-able strings.
+- Small strings, just a re-export of `smol_str`
+- Names, aka non-empty `SmolStr`s.
 
 ### `crates/located`
 

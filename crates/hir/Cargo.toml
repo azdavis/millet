@@ -11,4 +11,4 @@ test = false
 [dependencies]
 la-arena = "0.2"
 num-bigint = "0.4"
-hir-util = { path = "../hir-util" }
+str-util = { path = "../str-util" }
