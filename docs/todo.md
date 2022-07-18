@@ -34,6 +34,7 @@ priority is approximate. if unsure of priority, put in low.
   - show fully qualified names in type errors
   - related: avoid clashes between ty vars
   - better parser errors?
+  - parse successor ml (`do`, etc) but reject later
 - make it more performant
   - don't re-IO, re-lex, re-parse, re-lower every file every time
   - only lower the parts of the syntax tree that changed?
