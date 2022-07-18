@@ -2,6 +2,11 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+## v0.2.6
+
+- Add type and expression holes (`_`) as valid syntax (but reject them in analysis.)
+- Tweak error codes.
+
 ## v0.2.5
 
 - Add syntax highlighting for uppercase/lowercase CM keywords.
