@@ -618,6 +618,8 @@ Millet reports these overloaded types with intentionally invalid SML syntax. Her
 | `<num>`     | `word`, `real`, `int`                   |
 | `<numtxt>`  | `word`, `real`, `int`, `string`, `char` |
 
+When using overloaded functions, there must exist a single actual type being used. For instance, `+` is overloaded as `<num>`, which means it works with `word`, `real`, and `int`. However, `+` cannot add a `real` to a `word`, or an `int` to a `real`, or any such similar combination. It can only add two `word`s, or two `real`s, or two `int`s.
+
 Note also that Millet will report a type of `<none>` for invalid expressions, like variables that aren't defined.
 
 ## 5008
