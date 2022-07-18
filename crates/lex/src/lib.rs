@@ -11,11 +11,11 @@ use syntax::{token::Token, SyntaxKind as SK};
 
 /// A lexed input.
 #[derive(Debug)]
-pub struct Lex<'input> {
+pub struct Lex<'a> {
   /// The tokens of the input.
   ///
   /// Concatenated in sequence, they form the original input.
-  pub tokens: Vec<Token<'input, SK>>,
+  pub tokens: Vec<Token<'a, SK>>,
   /// The errors encountered.
   pub errors: Vec<Error>,
 }

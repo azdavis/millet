@@ -48,19 +48,16 @@ pub static STD_BASIS: Lazy<FixEnv<'_>> = Lazy::new(|| {
 
 /// A event-based parser for SML.
 #[derive(Debug)]
-pub(crate) struct Parser<'input> {
-  tokens: &'input [Token<'input, SK>],
+pub(crate) struct Parser<'a> {
+  tokens: &'a [Token<'a, SK>],
   tok_idx: usize,
   events: Vec<Option<Event>>,
-  infix: &'input mut FixEnv<'input>,
+  infix: &'a mut FixEnv<'a>,
 }
 
-impl<'input> Parser<'input> {
+impl<'a> Parser<'a> {
   /// Returns a new parser for the given tokens.
-  pub(crate) fn new(
-    tokens: &'input [Token<'input, SK>],
-    infix: &'input mut FixEnv<'input>,
-  ) -> Self {
+  pub(crate) fn new(tokens: &'a [Token<'a, SK>], infix: &'a mut FixEnv<'a>) -> Self {
     Self {
       tokens,
       tok_idx: 0,
@@ -139,7 +136,7 @@ impl<'input> Parser<'input> {
   /// out of tokens.
   ///
   /// Equivalent to `self.peek_n(0)`. See [`Parser::peek_n`].
-  pub(crate) fn peek(&mut self) -> Option<Token<'input, SK>> {
+  pub(crate) fn peek(&mut self) -> Option<Token<'a, SK>> {
     while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if tok.kind.is_trivia() {
         self.tok_idx += 1;
@@ -156,7 +153,7 @@ impl<'input> Parser<'input> {
   /// The current token is the first token not yet consumed for which
   /// [`Triviable::is_trivia`] returns `true`; thus, if this returns
   /// `Some(tok)`, then `tok.kind.is_trivia()` is `false`.
-  pub(crate) fn peek_n(&mut self, n: usize) -> Option<Token<'input, SK>> {
+  pub(crate) fn peek_n(&mut self, n: usize) -> Option<Token<'a, SK>> {
     let mut ret = self.peek();
     let old_tok_idx = self.tok_idx;
     for _ in 0..n {
@@ -174,7 +171,7 @@ impl<'input> Parser<'input> {
   ///
   /// This is often used after calling [`Parser::at`] to verify some expected
   /// token was present.
-  pub(crate) fn bump(&mut self) -> Token<'input, SK> {
+  pub(crate) fn bump(&mut self) -> Token<'a, SK> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
     self.tok_idx += 1;
@@ -264,7 +261,7 @@ impl<'input> Parser<'input> {
 
   /// If the current token's kind is `kind`, then this consumes it, else this
   /// errors. Returns the token if it was eaten.
-  pub(crate) fn eat(&mut self, kind: SK) -> Option<Token<'input, SK>> {
+  pub(crate) fn eat(&mut self, kind: SK) -> Option<Token<'a, SK>> {
     if self.at(kind) {
       Some(self.bump())
     } else {
@@ -275,7 +272,7 @@ impl<'input> Parser<'input> {
 
   // sml-specific methods //
 
-  pub(crate) fn insert_infix(&mut self, name: &'input str, info: Infix) {
+  pub(crate) fn insert_infix(&mut self, name: &'a str, info: Infix) {
     self.infix.insert(name, info);
   }
 
