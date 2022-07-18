@@ -110,7 +110,7 @@ where
       if let Some(e) = lexed.errors.first() {
         panic!("{name}: lex error: {}", e.display());
       }
-      let parsed = parse::get(&lexed.tokens);
+      let parsed = parse::get(&lexed.tokens, &mut parse::parser::STD_BASIS.clone());
       if let Some(e) = parsed.errors.first() {
         panic!("{name}: parse error: {}", e.display());
       }

@@ -18,10 +18,33 @@
 
 use drop_bomb::DropBomb;
 use fast_hash::{map_with_capacity, FxHashMap};
+use once_cell::sync::Lazy;
 use std::fmt;
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::token::{Token, Triviable};
 use syntax::{SyntaxKind as SK, SyntaxNode};
+
+/// A mapping from names to (in)fixities.
+pub type FixEnv<'a> = FxHashMap<&'a str, Infix>;
+
+/// The default infix operators in the std basis.
+pub static STD_BASIS: Lazy<FixEnv<'_>> = Lazy::new(|| {
+  let ops_arr: [(Infix, &[&str]); 6] = [
+    (Infix::left(7), &["*", "/", "div", "mod"]),
+    (Infix::left(6), &["+", "-", "^"]),
+    (Infix::right(5), &["::", "@"]),
+    (Infix::left(4), &["=", "<>", ">", ">=", "<", "<="]),
+    (Infix::left(3), &[":=", "o"]),
+    (Infix::left(0), &["before"]),
+  ];
+  let mut ret = map_with_capacity(ops_arr.iter().map(|(_, names)| names.len()).sum());
+  for (info, names) in ops_arr {
+    for &name in names {
+      ret.insert(name, info);
+    }
+  }
+  ret
+});
 
 /// A event-based parser for SML.
 #[derive(Debug)]
@@ -29,26 +52,15 @@ pub(crate) struct Parser<'input> {
   tokens: &'input [Token<'input, SK>],
   tok_idx: usize,
   events: Vec<Option<Event>>,
-  infix: FxHashMap<&'input str, Infix>,
+  infix: &'input mut FixEnv<'input>,
 }
 
 impl<'input> Parser<'input> {
   /// Returns a new parser for the given tokens.
-  pub(crate) fn new(tokens: &'input [Token<'input, SK>]) -> Self {
-    let ops_arr: [(Infix, &[&str]); 6] = [
-      (Infix::left(7), &["*", "/", "div", "mod"]),
-      (Infix::left(6), &["+", "-", "^"]),
-      (Infix::right(5), &["::", "@"]),
-      (Infix::left(4), &["=", "<>", ">", ">=", "<", "<="]),
-      (Infix::left(3), &[":=", "o"]),
-      (Infix::left(0), &["before"]),
-    ];
-    let mut infix = map_with_capacity(ops_arr.iter().map(|(_, names)| names.len()).sum());
-    for (info, names) in ops_arr {
-      for &name in names {
-        infix.insert(name, info);
-      }
-    }
+  pub(crate) fn new(
+    tokens: &'input [Token<'input, SK>],
+    infix: &'input mut FixEnv<'input>,
+  ) -> Self {
     Self {
       tokens,
       tok_idx: 0,
@@ -374,10 +386,13 @@ impl fmt::Debug for Event {
 
 // sml-specific types //
 
+/// Information about an infix name.
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct Infix {
-  pub(crate) prec: u16,
-  pub(crate) assoc: Assoc,
+pub struct Infix {
+  /// The precedence.
+  pub prec: u16,
+  /// The associativity.
+  pub assoc: Assoc,
 }
 
 impl Infix {
@@ -398,8 +413,10 @@ impl Infix {
   }
 }
 
+/// Associativity for infix operators.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Assoc {
+#[allow(missing_docs)]
+pub enum Assoc {
   Left,
   Right,
 }

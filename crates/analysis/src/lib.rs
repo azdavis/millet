@@ -269,7 +269,7 @@ impl SourceFile {
   fn new(s: &str) -> Self {
     let lexed = lex::get(s);
     log::debug!("lex: {:?}", lexed.tokens);
-    let parsed = parse::get(&lexed.tokens);
+    let parsed = parse::get(&lexed.tokens, &mut parse::parser::STD_BASIS.clone());
     log::debug!("parse: {:#?}", parsed.root);
     let mut lowered = lower::get(&parsed.root);
     ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);

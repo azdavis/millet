@@ -414,6 +414,7 @@ version = "0.1.0"
 dependencies = [
  "drop_bomb",
  "fast-hash",
+ "once_cell",
  "syntax",
 ]
 
