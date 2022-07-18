@@ -14,4 +14,4 @@ mod ty;
 mod util;
 
 pub use root::get;
-pub use util::{Lower, Ptrs};
+pub use util::{Error, Lower, Ptrs};

@@ -37,6 +37,7 @@ impl Ptrs {
   }
 }
 
+/// An error when lowering.
 #[derive(Debug)]
 pub struct Error {
   range: TextRange,
@@ -44,14 +45,17 @@ pub struct Error {
 }
 
 impl Error {
+  /// Returns the range for this.
   pub fn range(&self) -> TextRange {
     self.range
   }
 
+  /// Returns a value that displays the message.
   pub fn display(&self) -> impl fmt::Display + '_ {
     &self.kind
   }
 
+  /// Returns the code for this.
   pub fn to_code(&self) -> u8 {
     match self.kind {
       ErrorKind::Unsupported(_) => 1,

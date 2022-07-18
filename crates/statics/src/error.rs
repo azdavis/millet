@@ -12,12 +12,12 @@ pub struct Error {
 }
 
 impl Error {
-  /// Returns the [`hir::Idx`] for this error.
+  /// Returns the [`hir::Idx`] for this.
   pub fn idx(&self) -> hir::Idx {
     self.idx
   }
 
-  /// Displays this error.
+  /// Returns a value that displays the message.
   pub fn display<'a>(
     &'a self,
     syms: &'a Syms,
@@ -32,7 +32,7 @@ impl Error {
     }
   }
 
-  /// Return an error code for this.
+  /// Return the code for this.
   pub fn to_code(&self) -> u8 {
     match self.kind {
       ErrorKind::Unsupported(_) => 1,

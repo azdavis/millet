@@ -28,7 +28,7 @@ pub struct Error {
 }
 
 impl Error {
-  /// The range of the error.
+  /// Returns the range for this.
   pub fn range(&self) -> TextRange {
     self.range
   }
@@ -38,7 +38,7 @@ impl Error {
     &self.kind
   }
 
-  /// Returns an error code for this.
+  /// Returns the code for this.
   pub fn to_code(&self) -> u8 {
     match self.kind {
       ErrorKind::InvalidSource => 1,

@@ -410,6 +410,7 @@ pub(crate) struct Save {
   events_len: usize,
 }
 
+/// A parse error.
 #[derive(Debug)]
 pub struct Error {
   range: TextRange,
@@ -417,14 +418,17 @@ pub struct Error {
 }
 
 impl Error {
+  /// Returns the range for this.
   pub fn range(&self) -> TextRange {
     self.range
   }
 
+  /// Returns a value that displays the message.
   pub fn display(&self) -> impl fmt::Display + '_ {
     &self.kind
   }
 
+  /// Returns the code for this.
   pub fn to_code(&self) -> u8 {
     match self.kind {
       ErrorKind::NotInfix => 1,
@@ -463,7 +467,7 @@ impl fmt::Display for ErrorKind {
 }
 
 #[derive(Debug)]
-pub enum Expected {
+pub(crate) enum Expected {
   Exp,
   Lab,
   Pat,

@@ -6,14 +6,14 @@
 
 mod dec;
 mod exp;
-mod parser;
 mod pat;
 mod root;
 mod top_dec;
 mod ty;
 mod util;
 
-use crate::parser::{Error, Parser};
+pub mod parser;
+
 use syntax::ast::AstNode as _;
 use syntax::{token::Token, SyntaxKind as SK};
 
@@ -25,12 +25,12 @@ pub struct Parse {
   /// The root.
   pub root: Root,
   /// The errors encountered when parsing.
-  pub errors: Vec<Error>,
+  pub errors: Vec<parser::Error>,
 }
 
 /// Returns a parse of the tokens.
 pub fn get(tokens: &[Token<'_, SK>]) -> Parse {
-  let mut p = Parser::new(tokens);
+  let mut p = parser::Parser::new(tokens);
   root::root(&mut p);
   let (node, errors) = p.finish();
   Parse {
