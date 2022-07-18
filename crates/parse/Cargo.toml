@@ -12,4 +12,5 @@ test = false
 once_cell = "1"
 drop_bomb = "0.1"
 fast-hash = { path = "../fast-hash" }
+str-util = { path = "../str-util" }
 syntax = { path = "../syntax" }

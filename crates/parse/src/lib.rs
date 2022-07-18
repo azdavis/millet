@@ -29,7 +29,7 @@ pub struct Parse {
 }
 
 /// Returns a parse of the tokens.
-pub fn get<'a>(tokens: &'a [Token<'a, SK>], infix: &'a mut parser::FixEnv<'a>) -> Parse {
+pub fn get<'a>(tokens: &'a [Token<'a, SK>], infix: &'a mut parser::FixEnv) -> Parse {
   let mut p = parser::Parser::new(tokens, infix);
   root::root(&mut p);
   let (node, errors) = p.finish();

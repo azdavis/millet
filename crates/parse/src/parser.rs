@@ -25,10 +25,10 @@ use syntax::token::{Token, Triviable};
 use syntax::{SyntaxKind as SK, SyntaxNode};
 
 /// A mapping from names to (in)fixities.
-pub type FixEnv<'a> = FxHashMap<&'a str, Infix>;
+pub type FixEnv = FxHashMap<str_util::Name, Infix>;
 
 /// The default infix operators in the std basis.
-pub static STD_BASIS: Lazy<FixEnv<'_>> = Lazy::new(|| {
+pub static STD_BASIS: Lazy<FixEnv> = Lazy::new(|| {
   let ops_arr: [(Infix, &[&str]); 6] = [
     (Infix::left(7), &["*", "/", "div", "mod"]),
     (Infix::left(6), &["+", "-", "^"]),
@@ -40,7 +40,7 @@ pub static STD_BASIS: Lazy<FixEnv<'_>> = Lazy::new(|| {
   let mut ret = map_with_capacity(ops_arr.iter().map(|(_, names)| names.len()).sum());
   for (info, names) in ops_arr {
     for &name in names {
-      ret.insert(name, info);
+      ret.insert(str_util::Name::new(name), info);
     }
   }
   ret
@@ -52,12 +52,12 @@ pub(crate) struct Parser<'a> {
   tokens: &'a [Token<'a, SK>],
   tok_idx: usize,
   events: Vec<Option<Event>>,
-  infix: &'a mut FixEnv<'a>,
+  infix: &'a mut FixEnv,
 }
 
 impl<'a> Parser<'a> {
   /// Returns a new parser for the given tokens.
-  pub(crate) fn new(tokens: &'a [Token<'a, SK>], infix: &'a mut FixEnv<'a>) -> Self {
+  pub(crate) fn new(tokens: &'a [Token<'a, SK>], infix: &'a mut FixEnv) -> Self {
     Self {
       tokens,
       tok_idx: 0,
@@ -272,8 +272,8 @@ impl<'a> Parser<'a> {
 
   // sml-specific methods //
 
-  pub(crate) fn insert_infix(&mut self, name: &'a str, info: Infix) {
-    self.infix.insert(name, info);
+  pub(crate) fn insert_infix(&mut self, name: &str, info: Infix) {
+    self.infix.insert(str_util::Name::new(name), info);
   }
 
   pub(crate) fn get_infix(&mut self, name: &str) -> Option<Infix> {

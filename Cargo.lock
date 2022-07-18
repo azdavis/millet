@@ -408,6 +408,7 @@ dependencies = [
  "drop_bomb",
  "fast-hash",
  "once_cell",
+ "str-util",
  "syntax",
 ]
 
