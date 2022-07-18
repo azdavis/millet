@@ -618,6 +618,8 @@ Millet reports these overloaded types with intentionally invalid SML syntax. Her
 | `<num>`     | `word`, `real`, `int`                   |
 | `<numtxt>`  | `word`, `real`, `int`, `string`, `char` |
 
+Note also that Millet will report a type of `<none>` for invalid expressions, like variables that aren't defined.
+
 ## 5008
 
 A function application expression was encountered, but the function expression did not have a function type.
