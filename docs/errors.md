@@ -629,7 +629,7 @@ val _ = "foo" 3
 
 In this example, we attempt to treat the string `"foo"` as a function and apply it to the argument `3`.
 
-This error is a special case of 4007, specialized for the common case of function application.
+This error is a special case of 5007, specialized for the common case of function application.
 
 To fix, only apply functions to arguments.
 
@@ -707,7 +707,7 @@ To fix, add patterns matching the missing cases. The error message reports examp
 
 ## 5013
 
-This is effectively the same error as 4012, but it emitted for singular bindings, like with `val`.
+This is effectively the same error as 5012, but it emitted for singular bindings, like with `val`.
 
 ```sml
 (* error *)
