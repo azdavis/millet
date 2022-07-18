@@ -289,26 +289,28 @@ impl SourceFile {
     mv_info: &statics::MetaVarInfo,
     lines: config::ErrorLines,
   ) -> Vec<Error> {
+    // TODO: 1000 error codes will be for stuff even before lexing, aka basically the
+    // `analysis::input` stage.
     std::iter::empty()
       .chain(self.lex_errors.iter().filter_map(|err| {
-        Some(Error {
-          range: self.pos_db.range(err.range())?,
-          message: err.display().to_string(),
-          code: 1000 + u16::from(err.to_code()),
-        })
-      }))
-      .chain(self.parsed.errors.iter().filter_map(|err| {
         Some(Error {
           range: self.pos_db.range(err.range())?,
           message: err.display().to_string(),
           code: 2000 + u16::from(err.to_code()),
         })
       }))
-      .chain(self.lowered.errors.iter().filter_map(|err| {
+      .chain(self.parsed.errors.iter().filter_map(|err| {
         Some(Error {
           range: self.pos_db.range(err.range())?,
           message: err.display().to_string(),
           code: 3000 + u16::from(err.to_code()),
+        })
+      }))
+      .chain(self.lowered.errors.iter().filter_map(|err| {
+        Some(Error {
+          range: self.pos_db.range(err.range())?,
+          message: err.display().to_string(),
+          code: 4000 + u16::from(err.to_code()),
         })
       }))
       .chain(self.statics_errors.iter().filter_map(|err| {
@@ -325,7 +327,7 @@ impl SourceFile {
             .pos_db
             .range(syntax.to_node(self.parsed.root.syntax()).text_range())?,
           message: err.display(syms, mv_info, lines).to_string(),
-          code: 4000 + u16::from(err.to_code()),
+          code: 5000 + u16::from(err.to_code()),
         })
       }))
       .take(MAX_ERRORS_PER_PATH)
