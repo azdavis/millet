@@ -1,4 +1,4 @@
-use crate::parser::{Assoc, ErrorKind, Exited, Expected, OpInfo, Parser};
+use crate::parser::{Assoc, ErrorKind, Exited, Expected, Infix, Parser};
 use syntax::{token::Token, SyntaxKind as SK};
 
 pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F, e: Expected)
@@ -86,13 +86,13 @@ pub(crate) enum ShouldBreak {
   Error,
 }
 
-pub(crate) fn should_break(op_info: OpInfo, min_prec: OpInfo) -> ShouldBreak {
-  if op_info.num == min_prec.num && op_info.assoc != min_prec.assoc {
+pub(crate) fn should_break(op_info: Infix, min_prec: Infix) -> ShouldBreak {
+  if op_info.prec == min_prec.prec && op_info.assoc != min_prec.assoc {
     ShouldBreak::Error
   } else {
     let res = match min_prec.assoc {
-      Assoc::Left => op_info.num <= min_prec.num,
-      Assoc::Right => op_info.num < min_prec.num,
+      Assoc::Left => op_info.prec <= min_prec.prec,
+      Assoc::Right => op_info.prec < min_prec.prec,
     };
     if res {
       ShouldBreak::Yes
@@ -127,7 +127,7 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
 /// (aka just a name) and that name is infix.
 pub(crate) fn path_no_infix(p: &mut Parser<'_>) {
   let cur = p.peek().unwrap();
-  if !p.at_n(1, SK::Dot) && p.contains_op(cur.text) {
+  if !p.at_n(1, SK::Dot) && p.is_infix(cur.text) {
     p.error(ErrorKind::InfixWithoutOp);
   }
   must(p, path, Expected::Path)

@@ -1,5 +1,5 @@
 use crate::dec::dec;
-use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::pat;
 use crate::ty::ty;
 use crate::util::{
@@ -48,7 +48,7 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
     loop {
       let op_info = if name_star_eq(p) {
         let text = p.peek().unwrap().text;
-        p.get_op(text)
+        p.get_infix(text)
       } else {
         None
       };
@@ -228,7 +228,7 @@ fn at_exp_hd(p: &mut Parser<'_>) -> bool {
 
 #[derive(Debug, Clone, Copy)]
 enum ExpPrec {
-  Infix(OpInfo),
+  Infix(Infix),
   Andalso,
   Orelse,
   Min,

@@ -29,31 +29,31 @@ pub(crate) struct Parser<'input> {
   tokens: &'input [Token<'input, SK>],
   tok_idx: usize,
   events: Vec<Option<Event>>,
-  ops: FxHashMap<&'input str, OpInfo>,
+  infix: FxHashMap<&'input str, Infix>,
 }
 
 impl<'input> Parser<'input> {
   /// Returns a new parser for the given tokens.
   pub(crate) fn new(tokens: &'input [Token<'input, SK>]) -> Self {
-    let ops_arr: [(OpInfo, &[&str]); 6] = [
-      (OpInfo::left(7), &["*", "/", "div", "mod"]),
-      (OpInfo::left(6), &["+", "-", "^"]),
-      (OpInfo::right(5), &["::", "@"]),
-      (OpInfo::left(4), &["=", "<>", ">", ">=", "<", "<="]),
-      (OpInfo::left(3), &[":=", "o"]),
-      (OpInfo::left(0), &["before"]),
+    let ops_arr: [(Infix, &[&str]); 6] = [
+      (Infix::left(7), &["*", "/", "div", "mod"]),
+      (Infix::left(6), &["+", "-", "^"]),
+      (Infix::right(5), &["::", "@"]),
+      (Infix::left(4), &["=", "<>", ">", ">=", "<", "<="]),
+      (Infix::left(3), &[":=", "o"]),
+      (Infix::left(0), &["before"]),
     ];
-    let mut ops = map_with_capacity(ops_arr.iter().map(|(_, names)| names.len()).sum());
+    let mut infix = map_with_capacity(ops_arr.iter().map(|(_, names)| names.len()).sum());
     for (info, names) in ops_arr {
       for &name in names {
-        ops.insert(name, info);
+        infix.insert(name, info);
       }
     }
     Self {
       tokens,
       tok_idx: 0,
       events: Vec::new(),
-      ops,
+      infix,
     }
   }
 
@@ -263,20 +263,20 @@ impl<'input> Parser<'input> {
 
   // sml-specific methods //
 
-  pub(crate) fn insert_op(&mut self, name: &'input str, info: OpInfo) {
-    self.ops.insert(name, info);
+  pub(crate) fn insert_infix(&mut self, name: &'input str, info: Infix) {
+    self.infix.insert(name, info);
   }
 
-  pub(crate) fn get_op(&mut self, name: &str) -> Option<OpInfo> {
-    self.ops.get(name).copied()
+  pub(crate) fn get_infix(&mut self, name: &str) -> Option<Infix> {
+    self.infix.get(name).copied()
   }
 
-  pub(crate) fn contains_op(&mut self, name: &str) -> bool {
-    self.ops.contains_key(name)
+  pub(crate) fn is_infix(&mut self, name: &str) -> bool {
+    self.infix.contains_key(name)
   }
 
-  pub(crate) fn remove_op(&mut self, name: &str) {
-    self.ops.remove(name);
+  pub(crate) fn remove_infix(&mut self, name: &str) {
+    self.infix.remove(name);
   }
 
   /// Save the state of the parser.
@@ -375,24 +375,24 @@ impl fmt::Debug for Event {
 // sml-specific types //
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct OpInfo {
-  pub(crate) num: u16,
+pub(crate) struct Infix {
+  pub(crate) prec: u16,
   pub(crate) assoc: Assoc,
 }
 
-impl OpInfo {
-  /// Returns a new OpInfo with left associativity.
-  pub(crate) fn left(num: u16) -> Self {
+impl Infix {
+  /// Returns a new Infix with left associativity.
+  pub(crate) fn left(prec: u16) -> Self {
     Self {
-      num,
+      prec,
       assoc: Assoc::Left,
     }
   }
 
-  /// Returns a new OpInfo with right associativity.
-  pub(crate) fn right(num: u16) -> Self {
+  /// Returns a new Infix with right associativity.
+  pub(crate) fn right(prec: u16) -> Self {
     Self {
-      num,
+      prec,
       assoc: Assoc::Right,
     }
   }

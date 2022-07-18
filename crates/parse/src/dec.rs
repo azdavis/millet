@@ -1,5 +1,5 @@
 use crate::exp::exp;
-use crate::parser::{ErrorKind, Exited, Expected, OpInfo, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path};
@@ -49,7 +49,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
               p.bump();
             }
             if let Some(name) = eat_name_star(p) {
-              if !saw_op && p.contains_op(name.text) {
+              if !saw_op && p.is_infix(name.text) {
                 p.error(ErrorKind::InfixWithoutOp);
               }
             }
@@ -114,16 +114,16 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::InfixKw) {
     p.bump();
     let num = fixity(p);
-    names_star_eq(p, |p, name| p.insert_op(name, OpInfo::left(num)));
+    names_star_eq(p, |p, name| p.insert_infix(name, Infix::left(num)));
     p.exit(en, SK::InfixDec);
   } else if p.at(SK::InfixrKw) {
     p.bump();
     let num = fixity(p);
-    names_star_eq(p, |p, name| p.insert_op(name, OpInfo::right(num)));
+    names_star_eq(p, |p, name| p.insert_infix(name, Infix::right(num)));
     p.exit(en, SK::InfixrDec);
   } else if p.at(SK::NonfixKw) {
     p.bump();
-    names_star_eq(p, |p, name| p.remove_op(name));
+    names_star_eq(p, |p, name| p.remove_infix(name));
     p.exit(en, SK::NonfixDec);
   } else {
     p.abandon(en);
@@ -201,7 +201,7 @@ fn ty_binds(p: &mut Parser<'_>) {
 fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
   must(p, at_pat, Expected::Pat);
   if let Some(name) = eat_name_star(p) {
-    if !p.contains_op(name.text) {
+    if !p.is_infix(name.text) {
       p.error(ErrorKind::NotInfix);
     }
   }

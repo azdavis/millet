@@ -1,4 +1,4 @@
-use crate::parser::{Entered, ErrorKind, Exited, Expected, OpInfo, Parser};
+use crate::parser::{Entered, ErrorKind, Exited, Expected, Infix, Parser};
 use crate::ty::ty_annotation;
 use crate::util::{
   comma_sep, eat_name_star, lab, must, name_star, path, path_no_infix, scon, should_break,
@@ -30,7 +30,7 @@ enum AtPatHd {
   /// corresponds to `ConPatState::Entered`.
   ConPatArg(Entered),
   /// we're parsing an infix pat.
-  Infix(ConPatState, OpInfo),
+  Infix(ConPatState, Infix),
 }
 
 /// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
@@ -68,12 +68,12 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
     let ex = if at_pat_hd(p) {
       let at_pat_hd = if name_star(p, 0) {
         let tok = p.peek().unwrap();
-        match p.get_op(tok.text) {
+        match p.get_infix(tok.text) {
           None => match state {
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
             ConPatState::Exited(_) => {
               p.error(ErrorKind::NotInfix);
-              AtPatHd::Infix(state, OpInfo::left(0))
+              AtPatHd::Infix(state, Infix::left(0))
             }
           },
           Some(op_info) => AtPatHd::Infix(state, op_info),
@@ -93,7 +93,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
           state = st;
           let should_break = match min_prec {
             PatPrec::Min | PatPrec::Or => ShouldBreak::No,
-            PatPrec::Op(min_prec) => should_break(op_info, min_prec),
+            PatPrec::Infix(min_prec) => should_break(op_info, min_prec),
           };
           match should_break {
             ShouldBreak::Yes => break,
@@ -103,14 +103,14 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
           let ex = state.exit(p);
           let en = p.precede(ex);
           p.bump();
-          must(p, |p| pat_prec(p, PatPrec::Op(op_info)), Expected::Pat);
+          must(p, |p| pat_prec(p, PatPrec::Infix(op_info)), Expected::Pat);
           p.exit(en, SK::InfixPat)
         }
       }
     } else if p.at(SK::Bar) {
       match min_prec {
         PatPrec::Min => {}
-        PatPrec::Or | PatPrec::Op(_) => break,
+        PatPrec::Or | PatPrec::Infix(_) => break,
       }
       let ex = state.exit(p);
       let en = p.precede(ex);
@@ -120,7 +120,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
     } else if p.at(SK::Colon) {
       match min_prec {
         PatPrec::Min | PatPrec::Or => {}
-        PatPrec::Op(_) => break,
+        PatPrec::Infix(_) => break,
       }
       let ex = state.exit(p);
       let en = p.precede(ex);
@@ -137,7 +137,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
 enum PatPrec {
   Min,
   Or,
-  Op(OpInfo),
+  Infix(Infix),
 }
 
 /// when adding more cases to this, update [`at_pat_hd`]
