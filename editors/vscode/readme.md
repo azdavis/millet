@@ -6,7 +6,7 @@ See the [blog post][blog] introducing the project.
 
 ## Warning
 
-The [language server][lang-srv] is [alpha-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
+The [language server][lang-srv] is [beta-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
 
 You can turn it off by setting `millet.useLanguageServer` to `false` in your VS Code settings.
 

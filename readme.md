@@ -4,7 +4,7 @@ A language server for [Standard ML][sml].
 
 ## Warning
 
-The [language server][lang-srv] is [alpha-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
+The [language server][lang-srv] is [beta-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
 
 ## Install
 
