@@ -2,6 +2,8 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
+See also the [versioning scheme][versioning].
+
 ## v0.2.6
 
 - Add type and expression holes (`_`) as valid syntax, but reject them in later stages.
@@ -147,3 +149,4 @@ Although this is the first release with working CI to build and release the exte
 [blog]: https://azdavis.net/posts/millet/
 [cmlib]: https://github.com/standardml/cmlib
 [sml-nj-doc]: https://www.smlnj.org/doc/smlnj-lib/index.html
+[versioning]: /docs/versioning.md
