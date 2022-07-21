@@ -134,14 +134,14 @@ where
         })
         .collect();
       let mode = statics::Mode::StdBasis(name, comment_map);
-      let (info, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
-      if let Some(e) = es.first() {
+      let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
+      if let Some(e) = checked.errors.first() {
         panic!(
           "{name}: statics error: {}",
-          e.display(&syms, info.meta_vars(), config::ErrorLines::One)
+          e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One)
         );
       }
-      (name, info)
+      (name, checked.info)
     })
     .collect();
   StdBasis { syms, basis, info }

@@ -30,14 +30,23 @@ pub use error::Error;
 pub use info::{Info, Mode};
 pub use types::{Def, DefPath, MetaVarInfo, Syms};
 
-/// Does the checks.
+/// The result of statics.
+#[derive(Debug)]
+pub struct Statics {
+  /// The information about the top decs.
+  pub info: Info,
+  /// The errors from the top decs.
+  pub errors: Vec<Error>,
+}
+
+/// Does the checks on the top decs.
 pub fn get(
   syms: &mut Syms,
   basis: &mut basis::Basis,
   mode: Mode,
   arenas: &hir::Arenas,
   top_decs: &[hir::StrDecIdx],
-) -> (Info, Vec<Error>) {
+) -> Statics {
   let mut st = st::St::new(mode, std::mem::take(syms));
   let mut bs = types::Bs {
     fun_env: std::mem::take(&mut basis.inner.fun_env),
@@ -52,5 +61,5 @@ pub fn get(
   basis.inner.sig_env = bs.sig_env;
   basis.inner.env = bs.env.into_env();
   *syms = new_syms;
-  (info, errors)
+  Statics { info, errors }
 }

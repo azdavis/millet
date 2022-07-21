@@ -45,9 +45,9 @@ impl Analysis {
     let mut basis = self.std_basis.basis().clone();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
-    let (info, es) = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
-    file.statics_errors = es;
-    file.to_errors(&syms, info.meta_vars(), self.error_lines)
+    let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
+    file.statics_errors = checked.errors;
+    file.to_errors(&syms, checked.info.meta_vars(), self.error_lines)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -102,13 +102,13 @@ impl Analysis {
         Some(source_file) => {
           let low = &source_file.lowered;
           let mode = statics::Mode::Regular(Some(path));
-          let (info, es) =
-            statics::get(&mut self.syms, &mut basis, mode, &low.arenas, &low.top_decs);
+          let checked = statics::get(&mut self.syms, &mut basis, mode, &low.arenas, &low.top_decs);
           // careful with the order here. first assign the statics errors, then get all the
           // errors, then put the info on the source file.
-          source_file.statics_errors = es;
-          let errors = source_file.to_errors(&self.syms, info.meta_vars(), self.error_lines);
-          source_file.info = Some(info);
+          source_file.statics_errors = checked.errors;
+          let errors =
+            source_file.to_errors(&self.syms, checked.info.meta_vars(), self.error_lines);
+          source_file.info = Some(checked.info);
           source_errors.insert(path, errors);
         }
         None => {
