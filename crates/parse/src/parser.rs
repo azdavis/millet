@@ -52,17 +52,17 @@ pub(crate) struct Parser<'a> {
   tokens: &'a [Token<'a, SK>],
   tok_idx: usize,
   events: Vec<Option<Event>>,
-  infix: &'a mut FixEnv,
+  fix_env: &'a mut FixEnv,
 }
 
 impl<'a> Parser<'a> {
   /// Returns a new parser for the given tokens.
-  pub(crate) fn new(tokens: &'a [Token<'a, SK>], infix: &'a mut FixEnv) -> Self {
+  pub(crate) fn new(tokens: &'a [Token<'a, SK>], fix_env: &'a mut FixEnv) -> Self {
     Self {
       tokens,
       tok_idx: 0,
       events: Vec::new(),
-      infix,
+      fix_env,
     }
   }
 
@@ -273,19 +273,19 @@ impl<'a> Parser<'a> {
   // sml-specific methods //
 
   pub(crate) fn insert_infix(&mut self, name: &str, info: Infix) {
-    self.infix.insert(str_util::Name::new(name), info);
+    self.fix_env.insert(str_util::Name::new(name), info);
   }
 
   pub(crate) fn get_infix(&mut self, name: &str) -> Option<Infix> {
-    self.infix.get(name).copied()
+    self.fix_env.get(name).copied()
   }
 
   pub(crate) fn is_infix(&mut self, name: &str) -> bool {
-    self.infix.contains_key(name)
+    self.fix_env.contains_key(name)
   }
 
   pub(crate) fn remove_infix(&mut self, name: &str) {
-    self.infix.remove(name);
+    self.fix_env.remove(name);
   }
 
   /// Save the state of the parser.
