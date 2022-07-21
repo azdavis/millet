@@ -163,7 +163,7 @@ Some common lex utilities used in multiple lexing crates, like:
 
 Some common string utilities, like:
 
-- Small strings, just a re-export of `smol_str`
+- Small strings, just a re-export of `smol_str::SmolStr`.
 - Names, aka non-empty `SmolStr`s.
 
 ### `crates/located`
