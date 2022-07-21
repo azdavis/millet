@@ -3,18 +3,22 @@ use crate::generalizes::{eq_ty_scheme, eq_ty_scheme_no_emit, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, BasicOverload, Bs, Env, EnvLike, FunEnv, FunSig, HasRecordMetaVars,
-  IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet, TyScheme,
-  TyVarKind, ValEnv, ValInfo,
+  generalize, generalize_fixed, BasicOverload, Bs, Env, EnvLike, EnvStack, FunEnv, FunSig,
+  HasRecordMetaVars, IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet,
+  TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
-pub(crate) fn get(st: &mut St, bs: &mut Bs, ars: &hir::Arenas, top_dec: hir::StrDecIdx) {
-  let mut ac = Bs::default();
+pub(crate) fn get(st: &mut St, bs: &Bs, ars: &hir::Arenas, top_dec: hir::StrDecIdx) -> Bs {
+  let mut ac = Bs::<Env>::default();
   get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), top_dec);
-  bs.append(&mut ac);
+  Bs {
+    fun_env: ac.fun_env,
+    sig_env: ac.sig_env,
+    env: EnvStack::one(ac.env),
+  }
 }
 
 enum StrDecAc<'a> {
@@ -63,7 +67,7 @@ fn get_str_dec(
       let mut local_bs = Bs::default();
       get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), *local_dec);
       let mut bs = bs.clone();
-      bs.append(&mut local_bs);
+      bs.append(local_bs);
       get_str_dec(st, &bs, ars, ac, *in_dec);
     }
     // sml_def(59), sml_def(60)
@@ -79,11 +83,11 @@ fn get_str_dec(
           }
         }
         StrDecAc::Bs(ac) => {
-          let mut one_bs = Bs::default();
           for &str_dec in str_decs {
+            let mut one_bs = Bs::default();
             get_str_dec(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
-            bs.append(&mut one_bs.clone());
-            ac.append(&mut one_bs);
+            bs.append(one_bs.clone());
+            ac.append(one_bs);
           }
         }
       }

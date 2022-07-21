@@ -1,20 +1,20 @@
 //! Bases.
 
 use crate::types::{
-  Bs, CompositeOverload, Env, EnvLike as _, FunEnv, IdStatus, Overload, RecordTy, SigEnv, StrEnv,
-  Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
+  Bs, CompositeOverload, Env, EnvLike as _, EnvStack, FunEnv, IdStatus, Overload, RecordTy, SigEnv,
+  StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 
 /// A basis.
 #[derive(Debug, Default, Clone)]
 pub struct Basis {
-  pub(crate) inner: Bs<Env>,
+  pub(crate) inner: Bs,
 }
 
 impl Basis {
-  /// Append other onto self, emptying other.
-  pub fn append(&mut self, other: &mut Self) {
-    self.inner.append(&mut other.inner);
+  /// Append other onto self.
+  pub fn append(&mut self, other: Self) {
+    self.inner.append(other.inner);
   }
 
   /// Limits `self` with the `exports`. Mutates `exports` to be exactly those exports which were not
@@ -50,10 +50,10 @@ impl Basis {
         }
         None => true,
       });
-    self.inner.env = Env {
+    self.inner.env = EnvStack::one(Env {
       str_env,
       ..Default::default()
-    };
+    });
     self.inner.sig_env = sig_env.into();
     self.inner.fun_env = fun_env.into();
   }
@@ -175,12 +175,12 @@ pub fn minimal() -> (Syms, Basis) {
     inner: Bs {
       fun_env: FunEnv::default().into(),
       sig_env: SigEnv::default().into(),
-      env: Env {
+      env: EnvStack::one(Env {
         str_env: StrEnv::default(),
         ty_env,
         val_env,
         def: None,
-      },
+      }),
     },
   };
   (syms, basis)

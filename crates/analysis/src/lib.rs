@@ -45,7 +45,8 @@ impl Analysis {
     let mut basis = self.std_basis.basis().clone();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
-    let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, low.root);
+    let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
+    basis.append(checked.basis);
     file.statics_errors = checked.errors;
     file.to_errors(&syms, checked.info.meta_vars(), self.error_lines)
   }
@@ -102,7 +103,8 @@ impl Analysis {
         Some(source_file) => {
           let low = &source_file.lowered;
           let mode = statics::Mode::Regular(Some(path));
-          let checked = statics::get(&mut self.syms, &mut basis, mode, &low.arenas, low.root);
+          let checked = statics::get(&mut self.syms, &basis, mode, &low.arenas, low.root);
+          basis.append(checked.basis);
           // careful with the order here. first assign the statics errors, then get all the
           // errors, then put the info on the source file.
           source_file.statics_errors = checked.errors;
@@ -114,11 +116,11 @@ impl Analysis {
         None => {
           // if not a source file, must be a group file
           self.group_basis(group_bases, source_errors, groups, path)?;
-          let mut other = group_bases
+          let other = group_bases
             .get(&path)
             .expect("path should have a basis after successful call")
             .clone();
-          basis.append(&mut other);
+          basis.append(other);
         }
       }
     }

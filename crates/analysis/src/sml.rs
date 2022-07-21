@@ -134,7 +134,8 @@ where
         })
         .collect();
       let mode = statics::Mode::StdBasis(name, comment_map);
-      let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, low.root);
+      let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
+      basis.append(checked.basis);
       if let Some(e) = checked.errors.first() {
         panic!(
           "{name}: statics error: {}",

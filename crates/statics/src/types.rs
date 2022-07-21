@@ -779,6 +779,7 @@ pub(crate) trait EnvLike {
   fn all_str(&self) -> Vec<&Env>;
   fn all_ty(&self) -> Vec<&TyInfo>;
   fn all_val(&self) -> Vec<&ValInfo>;
+  fn into_env(self) -> Env;
 }
 
 /// Definition: Env
@@ -829,11 +830,15 @@ impl EnvLike for Env {
   fn all_val(&self) -> Vec<&ValInfo> {
     self.val_env.values().collect()
   }
+
+  fn into_env(self) -> Env {
+    self
+  }
 }
 
 /// A wrapper around a stack of [`Env`]s. Is meant to act like an `Env` in most respects, but is
 /// faster to `Clone`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct EnvStack(Vec<Arc<Env>>);
 
 impl EnvStack {
@@ -843,14 +848,6 @@ impl EnvStack {
 
   pub(crate) fn push(&mut self, other: Env) {
     self.0.push(Arc::new(other));
-  }
-
-  pub(crate) fn into_env(mut self) -> Env {
-    let mut env = Env::default();
-    for mut other in self.0.drain(..) {
-      env.append(Arc::make_mut(&mut other));
-    }
-    env
   }
 }
 
@@ -904,6 +901,14 @@ impl EnvLike for EnvStack {
       .flat_map(|env| env.val_env.iter())
       .filter_map(|(name, val)| names.insert(name).then_some(val))
       .collect()
+  }
+
+  fn into_env(mut self) -> Env {
+    let mut env = Env::default();
+    for mut other in self.0.drain(..) {
+      env.append(Arc::make_mut(&mut other));
+    }
+    env
   }
 }
 
@@ -965,11 +970,10 @@ impl<E: EnvLike> Bs<E> {
     Arc::make_mut(&mut self.sig_env)
   }
 
-  /// empties the other basis into self.
-  pub(crate) fn append(&mut self, other: &mut Bs<Env>) {
+  pub(crate) fn append<E2: EnvLike>(&mut self, mut other: Bs<E2>) {
     self.as_mut_fun_env().extend(other.as_mut_fun_env().drain());
     self.as_mut_sig_env().extend(other.as_mut_sig_env().drain());
-    self.env.append(&mut other.env);
+    self.env.append(&mut other.env.into_env());
   }
 }
 
