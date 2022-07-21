@@ -347,6 +347,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlb-statics"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "hir",
+ "lex",
+ "located",
+ "lower",
+ "mlb-hir",
+ "parse",
+ "paths",
+ "statics",
+ "syntax",
+ "ty-var-scope",
+]
+
+[[package]]
 name = "mlb-syntax"
 version = "0.1.0"
 dependencies = [

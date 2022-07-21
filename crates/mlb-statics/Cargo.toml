@@ -1,0 +1,22 @@
+[package]
+name = "mlb-statics"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+lex = { path = "../lex" }
+parse = { path = "../parse" }
+lower = { path = "../lower" }
+ty-var-scope = { path = "../ty-var-scope" }
+statics = { path = "../statics" }
+syntax = { path = "../syntax" }
+hir = { path = "../hir" }
+mlb-hir = { path = "../mlb-hir" }
+paths = { path = "../paths" }
+located = { path = "../located" }
+fast-hash = { path = "../fast-hash" }

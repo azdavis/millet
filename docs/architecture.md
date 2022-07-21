@@ -146,6 +146,12 @@ Processes the syntax of ML Basis (`.mlb`) files into AST values.
 
 HIR for ML Basis files.
 
+### `crates/mlb-statics`
+
+Static semantics for MLB files.
+
+Because the semantics for MLB files determines when source (SML) files get parsed and statically analyzed, this depends on most of the crates that analyze SML.
+
 ### `crates/lex-util`
 
 Some common lex utilities used in multiple lexing crates, like:
