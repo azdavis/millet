@@ -45,7 +45,7 @@ impl Analysis {
     let mut basis = self.std_basis.basis().clone();
     let low = &file.lowered;
     let mode = statics::Mode::Regular(None);
-    let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
+    let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, low.root);
     file.statics_errors = checked.errors;
     file.to_errors(&syms, checked.info.meta_vars(), self.error_lines)
   }
@@ -102,7 +102,7 @@ impl Analysis {
         Some(source_file) => {
           let low = &source_file.lowered;
           let mode = statics::Mode::Regular(Some(path));
-          let checked = statics::get(&mut self.syms, &mut basis, mode, &low.arenas, &low.top_decs);
+          let checked = statics::get(&mut self.syms, &mut basis, mode, &low.arenas, low.root);
           // careful with the order here. first assign the statics errors, then get all the
           // errors, then put the info on the source file.
           source_file.statics_errors = checked.errors;
@@ -272,7 +272,7 @@ impl SourceFile {
     let parsed = parse::get(&lexed.tokens, &mut parse::parser::STD_BASIS.clone());
     log::debug!("parse: {:#?}", parsed.root);
     let mut lowered = lower::get(&parsed.root);
-    ty_var_scope::get(&mut lowered.arenas, &lowered.top_decs);
+    ty_var_scope::get(&mut lowered.arenas, lowered.root);
     Self {
       pos_db: text_pos::PositionDb::new(s),
       lex_errors: lexed.errors,

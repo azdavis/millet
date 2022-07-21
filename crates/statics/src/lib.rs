@@ -39,13 +39,13 @@ pub struct Statics {
   pub errors: Vec<Error>,
 }
 
-/// Does the checks on the top decs.
+/// Does the checks on the root.
 pub fn get(
   syms: &mut Syms,
   basis: &mut basis::Basis,
   mode: Mode,
   arenas: &hir::Arenas,
-  top_decs: &[hir::StrDecIdx],
+  root: hir::StrDecIdx,
 ) -> Statics {
   let mut st = st::St::new(mode, std::mem::take(syms));
   let mut bs = types::Bs {
@@ -53,9 +53,7 @@ pub fn get(
     sig_env: std::mem::take(&mut basis.inner.sig_env),
     env: types::EnvStack::one(std::mem::take(&mut basis.inner.env)),
   };
-  for &top_dec in top_decs {
-    top_dec::get(&mut st, &mut bs, arenas, top_dec);
-  }
+  top_dec::get(&mut st, &mut bs, arenas, root);
   let (new_syms, errors, info) = st.finish();
   basis.inner.fun_env = bs.fun_env;
   basis.inner.sig_env = bs.sig_env;

@@ -118,7 +118,7 @@ where
       if let Some(e) = low.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
-      ty_var_scope::get(&mut low.arenas, &low.top_decs);
+      ty_var_scope::get(&mut low.arenas, low.root);
       let comment_map: FxHashMap<hir::Idx, _> = low
         .arenas
         .spec
@@ -134,7 +134,7 @@ where
         })
         .collect();
       let mode = statics::Mode::StdBasis(name, comment_map);
-      let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, &low.top_decs);
+      let checked = statics::get(&mut syms, &mut basis, mode, &low.arenas, low.root);
       if let Some(e) = checked.errors.first() {
         panic!(
           "{name}: statics error: {}",

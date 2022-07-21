@@ -118,8 +118,8 @@ pub struct Lower {
   pub arenas: hir::Arenas,
   /// The pointers.
   pub ptrs: Ptrs,
-  /// The top-level declarations, in order.
-  pub top_decs: Vec<hir::StrDecIdx>,
+  /// The single top declaration. Often a sequence of decs.
+  pub root: hir::StrDecIdx,
 }
 
 #[derive(Debug, Default)]
@@ -145,12 +145,12 @@ impl Cx {
     self.errors.push(Error { range, kind })
   }
 
-  pub(crate) fn finish(self, top_decs: Vec<hir::StrDecIdx>) -> Lower {
+  pub(crate) fn finish(self, root: hir::StrDecIdx) -> Lower {
     Lower {
       errors: self.errors,
       arenas: self.arenas,
       ptrs: self.ptrs,
-      top_decs,
+      root,
     }
   }
 

@@ -3,11 +3,11 @@ use crate::util::Cx;
 use crate::{dec, ty};
 use syntax::ast::{self, AstPtr};
 
-fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
+pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
   let str_dec = str_dec?;
   let mut str_decs: Vec<_> = str_dec
     .str_dec_in_seqs()
-    .map(|x| get(cx, x.str_dec_one()?))
+    .map(|x| get_str_dec_one(cx, x.str_dec_one()?))
     .collect();
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
@@ -16,7 +16,7 @@ fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
   }
 }
 
-pub(crate) fn get(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
+fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
   let ptr = AstPtr::new(&str_dec);
   let res = match str_dec {
     ast::StrDecOne::DecStrDec(str_dec) => hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?)),
