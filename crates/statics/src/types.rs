@@ -833,7 +833,7 @@ impl EnvLike for Env {
 
 /// A wrapper around a stack of [`Env`]s. Is meant to act like an `Env` in most respects, but is
 /// faster to `Clone`.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct EnvStack(Vec<Arc<Env>>);
 
 impl EnvStack {
