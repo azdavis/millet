@@ -20,3 +20,4 @@ mlb-hir = { path = "../mlb-hir" }
 paths = { path = "../paths" }
 located = { path = "../located" }
 fast-hash = { path = "../fast-hash" }
+text-pos = { git = "https://github.com/azdavis/language-util.git" }

@@ -360,6 +360,7 @@ dependencies = [
  "paths",
  "statics",
  "syntax",
+ "text-pos",
  "ty-var-scope",
 ]
 

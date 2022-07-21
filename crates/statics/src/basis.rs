@@ -4,6 +4,7 @@ use crate::types::{
   Bs, CompositeOverload, Env, EnvLike as _, EnvStack, FunEnv, IdStatus, Overload, RecordTy, SigEnv,
   StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
+use fast_hash::map;
 
 /// A basis.
 #[derive(Debug, Default, Clone)]
@@ -15,6 +16,42 @@ impl Basis {
   /// Append other onto self.
   pub fn append(&mut self, other: Self) {
     self.inner.append(other.inner);
+  }
+
+  /// Adds the structure named `other_name` from `other` into `self` with the name `name`, or
+  /// returns `false` if this was not possible.
+  pub fn add_str(&mut self, name: hir::Name, other: &Self, other_name: &hir::Name) -> bool {
+    let env = match other.inner.env.get_str(other_name) {
+      Some(x) => x.clone(),
+      None => return false,
+    };
+    self.inner.env.push(Env {
+      str_env: map([(name, env)]),
+      ..Default::default()
+    });
+    true
+  }
+
+  /// Adds the signature named `other_name` from `other` into `self` with the name `name`, or
+  /// returns `false` if this was not possible.
+  pub fn add_sig(&mut self, name: hir::Name, other: &Self, other_name: &hir::Name) -> bool {
+    let env = match other.inner.sig_env.get(other_name) {
+      Some(x) => x.clone(),
+      None => return false,
+    };
+    self.inner.as_mut_sig_env().insert(name, env);
+    true
+  }
+
+  /// Adds the functor named `other_name` from `other` into `self` with the name `name`, or
+  /// returns `false` if this was not possible.
+  pub fn add_fun(&mut self, name: hir::Name, other: &Self, other_name: &hir::Name) -> bool {
+    let env = match other.inner.fun_env.get(other_name) {
+      Some(x) => x.clone(),
+      None => return false,
+    };
+    self.inner.as_mut_fun_env().insert(name, env);
+    true
   }
 
   /// Limits `self` with the `exports`. Mutates `exports` to be exactly those exports which were not
