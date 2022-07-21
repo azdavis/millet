@@ -6,7 +6,7 @@ use crate::types::{
 };
 
 /// A basis.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Basis {
   pub(crate) inner: Bs<Env>,
 }

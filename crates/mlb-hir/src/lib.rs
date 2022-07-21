@@ -12,7 +12,7 @@ pub enum BasDec {
   Local(Box<BasDec>, Box<BasDec>),
   Export(Namespace, Located<hir::Name>, Located<hir::Name>),
   Seq(Vec<BasDec>),
-  Path(paths::PathId),
+  Path(paths::PathId, PathKind),
 }
 
 impl BasDec {
@@ -37,4 +37,10 @@ pub enum Namespace {
   Structure,
   Signature,
   Functor,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum PathKind {
+  Sml,
+  Mlb,
 }
