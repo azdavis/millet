@@ -226,13 +226,21 @@ fn get_bas_dec(
       mlb_hir::PathKind::Sml => {
         let contents = files.sml.get(path).expect("no sml file for path id");
         let mut fix_env = scope.fix_env.clone();
+        let (lex_errors, parsed, low) = start_source_file(contents, &mut fix_env);
         let mode = statics::Mode::Regular(Some(*path));
-        let (file, basis) =
-          get_source_file(contents, &mut fix_env, mode, &mut cx.syms, &scope.basis);
+        let checked = statics::get(&mut cx.syms, &scope.basis, mode, &low.arenas, low.root);
+        let file = SourceFile {
+          pos_db: text_pos::PositionDb::new(contents),
+          lex_errors,
+          parsed,
+          lowered: low,
+          statics_errors: checked.errors,
+          info: checked.info,
+        };
         ac.append(MBasis {
           fix_env,
           bas_env: FxHashMap::default(),
-          basis,
+          basis: checked.basis,
         });
         // NOTE: we would like to assert that the insert returns None, but actually it may not
         // always.
@@ -254,27 +262,15 @@ fn get_bas_dec(
 }
 
 /// Processes a single source file.
-pub fn get_source_file(
+pub(crate) fn start_source_file(
   contents: &str,
   fix_env: &mut parse::parser::FixEnv,
-  mode: statics::Mode,
-  syms: &mut statics::Syms,
-  basis: &statics::basis::Basis,
-) -> (SourceFile, statics::basis::Basis) {
+) -> (Vec<lex::Error>, parse::Parse, lower::Lower) {
   let lexed = lex::get(contents);
   let parsed = parse::get(&lexed.tokens, fix_env);
-  let mut low = lower::get(&parsed.root);
-  ty_var_scope::get(&mut low.arenas, low.root);
-  let checked = statics::get(syms, basis, mode, &low.arenas, low.root);
-  let file = SourceFile {
-    pos_db: text_pos::PositionDb::new(contents),
-    lex_errors: lexed.errors,
-    parsed,
-    lowered: low,
-    statics_errors: checked.errors,
-    info: checked.info,
-  };
-  (file, checked.basis)
+  let mut lowered = lower::get(&parsed.root);
+  ty_var_scope::get(&mut lowered.arenas, lowered.root);
+  (lexed.errors, parsed, lowered)
 }
 
 /// Processes a single group file.
