@@ -1,6 +1,6 @@
-use crate::sml::files;
+use crate::files;
 
-pub(crate) const FILES: &[(&str, &str)] = files![
+pub const FILES: &[(&str, &str)] = files![
   "Atom.sml",
   "HASH_KEY.sml",
   "INTERVAL_DOMAIN.sml",

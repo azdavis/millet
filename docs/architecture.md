@@ -195,7 +195,9 @@ The format for the optional Millet configuration file.
 
 Unifies all the passes into one single API.
 
-This also contains declarations for the bulk of the standard basis library, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
+### `crates/sml-libs`
+
+Declarations for various SML libraries, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
 
 ### `crates/lang-srv`
 

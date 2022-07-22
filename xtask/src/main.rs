@@ -121,9 +121,10 @@ where
   }
   Ok(())
 }
-fn ck_sml(sh: &Shell) -> Result<()> {
-  println!("checking sml files");
-  let mut sml: PathBuf = ["crates", "analysis", "src", "sml", "std_basis", "mod.rs"]
+
+fn ck_sml_libs(sh: &Shell) -> Result<()> {
+  println!("checking sml libraries");
+  let mut sml: PathBuf = ["crates", "sml-libs", "src", "std_basis", "mod.rs"]
     .into_iter()
     .collect();
   let order_file = sh.read_file(&sml)?;
@@ -229,7 +230,7 @@ fn run_ci(sh: &Shell) -> Result<()> {
   cmd!(sh, "cargo test --locked").run()?;
   ck_sml_def(sh)?;
   ck_no_ignore(sh)?;
-  ck_sml(sh)?;
+  ck_sml_libs(sh)?;
   ck_crate_architecture_doc(sh)?;
   if option_env!("CI") != Some("1") {
     ck_changelog(sh)?;

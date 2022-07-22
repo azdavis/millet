@@ -25,5 +25,6 @@ paths = { path = "../paths" }
 located = { path = "../located" }
 cm = { path = "../cm" }
 mlb-syntax = { path = "../mlb-syntax" }
+sml-libs = { path = "../sml-libs" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }

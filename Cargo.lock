@@ -18,6 +18,7 @@ dependencies = [
  "mlb-syntax",
  "parse",
  "paths",
+ "sml-libs",
  "statics",
  "syntax",
  "text-pos",
@@ -572,6 +573,10 @@ dependencies = [
  "time",
  "winapi",
 ]
+
+[[package]]
+name = "sml-libs"
+version = "0.1.0"
 
 [[package]]
 name = "smol_str"

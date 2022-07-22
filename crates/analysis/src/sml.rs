@@ -1,22 +1,6 @@
-mod sml_nj;
-mod std_basis;
-mod std_basis_extra;
-
 use fast_hash::FxHashMap;
 use statics::{basis, Info, Syms};
 use syntax::{ast::AstNode as _, SyntaxKind, SyntaxNode};
-
-macro_rules! files {
-  ( $( $x:literal ),* $(,)? ) => {{
-    &[
-      $(
-        ($x, include_str!($x)),
-      )*
-    ]
-  }};
-}
-
-pub(crate) use files;
 
 /// A standard basis.
 #[derive(Debug, Clone)]
@@ -38,9 +22,9 @@ impl StdBasis {
     elapsed::log("StdBasis::full", || {
       get_std_basis(
         std::iter::empty()
-          .chain(std_basis::FILES)
-          .chain(std_basis_extra::FILES)
-          .chain(sml_nj::FILES)
+          .chain(sml_libs::std_basis::FILES)
+          .chain(sml_libs::std_basis_extra::FILES)
+          .chain(sml_libs::sml_nj::FILES)
           .copied(),
       )
     })
