@@ -16,6 +16,7 @@
     "consts",
     "datatypes",
     "descs",
+    "dtolnay",
     "elif",
     "eqtype",
     "esbuild",

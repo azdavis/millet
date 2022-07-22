@@ -12,10 +12,8 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v3
       - name: Set up rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          profile: minimal
           components: rustfmt, clippy
       - name: Cache rust
         uses: Swatinem/rust-cache@v1
@@ -54,11 +52,9 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v3
       - name: Set up rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ matrix.rust }}
-          toolchain: stable
-          profile: minimal
       - name: Cache rust
         uses: Swatinem/rust-cache@v1
       - name: Set up node
@@ -66,7 +62,7 @@ jobs:
         with:
           node-version: 16.x
       - name: Make dist
-        run: cargo xtask dist --release
+        run: cargo xtask dist --release --target ${{ matrix.rust }}
       - name: Package vsix
         run: npx --no-install vsce package --target ${{ matrix.vscode }} -o millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode

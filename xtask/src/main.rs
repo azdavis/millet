@@ -195,15 +195,26 @@ fn ck_changelog(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
-fn dist(sh: &Shell, release: bool) -> Result<()> {
+fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
   let release_arg = release.then_some("--release");
-  cmd!(sh, "cargo build {release_arg...} --locked --bin lang-srv").run()?;
+  let target_arg = match target {
+    Some(x) => vec!["--target", x],
+    None => vec![],
+  };
+  cmd!(
+    sh,
+    "cargo build {release_arg...} {target_arg...} --locked --bin lang-srv"
+  )
+  .run()?;
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
   let kind = if release { "release" } else { "debug" };
   let lang_srv_name = format!("lang-srv{}", std::env::consts::EXE_SUFFIX);
-  let lang_srv: PathBuf = ["target", kind, lang_srv_name.as_str()].iter().collect();
+  let lang_srv: PathBuf = std::iter::once("target")
+    .chain(target)
+    .chain([kind, lang_srv_name.as_str()])
+    .collect();
   sh.copy_file(&lang_srv, &dir)?;
   assert!(dir.pop());
   sh.copy_file("license.md", &dir)?;
@@ -261,8 +272,9 @@ fn main() -> Result<()> {
     }
     Cmd::Dist => {
       let release = args.contains("--release");
+      let target: Option<String> = args.opt_value_from_str("--target")?;
       finish_args(args)?;
-      dist(&sh, release)?;
+      dist(&sh, release, target.as_deref())?;
     }
     Cmd::Tag => {
       let tag: String = args.free_from_str()?;
