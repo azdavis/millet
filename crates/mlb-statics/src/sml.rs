@@ -1,6 +1,7 @@
 // TODO rm this allow and the place this was copied from (analysis)
 #![allow(unused)]
 
+use crate::start_source_file;
 use fast_hash::FxHashMap;
 use statics::{basis, Info, Syms};
 use syntax::{ast::AstNode as _, SyntaxKind, SyntaxNode};
@@ -91,19 +92,17 @@ where
         owned_contents = lines.join("\n");
         contents = &owned_contents;
       }
-      let lexed = lex::get(contents);
-      if let Some(e) = lexed.errors.first() {
+      let mut fix_env = parse::parser::STD_BASIS.clone();
+      let (lex_errors, parsed, low) = start_source_file(contents, &mut fix_env);
+      if let Some(e) = lex_errors.first() {
         panic!("{name}: lex error: {}", e.display());
       }
-      let parsed = parse::get(&lexed.tokens, &mut parse::parser::STD_BASIS.clone());
       if let Some(e) = parsed.errors.first() {
         panic!("{name}: parse error: {}", e.display());
       }
-      let mut low = lower::get(&parsed.root);
       if let Some(e) = low.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
-      ty_var_scope::get(&mut low.arenas, low.root);
       let comment_map: FxHashMap<hir::Idx, _> = low
         .arenas
         .spec
