@@ -4,6 +4,14 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.2.7
+
+- Improve docs for errors.
+- (internal) Simplify handling of the "root" sequence of top declarations.
+- (internal) Update to a language-util that makes rustfmt no longer a hard dependency to build Millet.
+- (internal) Move SML library files to their own crate.
+- Stop making distributions for ARM. (They weren't working anyway; they were just x64 builds that we were calling ARM builds.)
+
 ## v0.2.6
 
 - Add type and expression holes (`_`) as valid syntax, but reject them in later stages.
