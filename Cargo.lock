@@ -351,6 +351,7 @@ dependencies = [
 name = "mlb-statics"
 version = "0.1.0"
 dependencies = [
+ "config",
  "fast-hash",
  "hir",
  "lex",
@@ -359,6 +360,7 @@ dependencies = [
  "mlb-hir",
  "parse",
  "paths",
+ "sml-libs",
  "statics",
  "syntax",
  "text-pos",
