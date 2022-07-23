@@ -4,10 +4,12 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-mod sml;
+mod std_basis;
 
 use fast_hash::FxHashMap;
 use std::fmt;
+
+pub use std_basis::StdBasis;
 
 /// The result of analyzing MLB and source files.
 #[derive(Debug)]
@@ -118,13 +120,13 @@ impl MBasis {
 
 /// Runs analysis.
 pub fn get(
+  std_basis: &StdBasis,
   sml: &paths::PathMap<String>,
   mlb: &paths::PathMap<mlb_hir::BasDec>,
   root_mlb: paths::PathId,
 ) -> MlbStatics {
-  let (syms, basis) = statics::basis::minimal();
   let mut cx = Cx {
-    syms,
+    syms: std_basis.syms().clone(),
     cache: paths::PathMap::default(),
     sml: paths::PathMap::default(),
     errors: Vec::new(),
@@ -132,7 +134,7 @@ pub fn get(
   let std_basis = MBasis {
     fix_env: parse::parser::STD_BASIS.clone(),
     bas_env: FxHashMap::default(),
-    basis,
+    basis: std_basis.basis().clone(),
   };
   let files = Files {
     sml,

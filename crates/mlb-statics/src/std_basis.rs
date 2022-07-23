@@ -1,6 +1,3 @@
-// TODO rm this allow and the place this was copied from (analysis)
-#![allow(unused)]
-
 use crate::start_source_file;
 use fast_hash::FxHashMap;
 use statics::{basis, Info, Syms};
@@ -41,7 +38,7 @@ impl StdBasis {
   }
 
   /// Look up a std basis file's info.
-  pub(crate) fn get_info(&self, s: &str) -> Option<&Info> {
+  pub fn get_info(&self, s: &str) -> Option<&Info> {
     self.info.get(s)
   }
 }
