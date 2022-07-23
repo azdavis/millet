@@ -4,15 +4,13 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-mod sml;
-
 pub mod input;
 
 use paths::{PathId, PathMap};
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
-pub use sml::StdBasis;
+pub use mlb_statics::StdBasis;
 pub use text_pos::{Position, Range};
 
 /// The max number of errors per path.
@@ -21,15 +19,15 @@ pub const MAX_ERRORS_PER_PATH: usize = 20;
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
-  std_basis: StdBasis,
+  std_basis: mlb_statics::StdBasis,
   error_lines: config::ErrorLines,
-  source_files: PathMap<SourceFile>,
+  source_files: PathMap<mlb_statics::SourceFile>,
   syms: statics::Syms,
 }
 
 impl Analysis {
   /// Returns a new `Analysis`.
-  pub fn new(std_basis: StdBasis, error_lines: config::ErrorLines) -> Self {
+  pub fn new(std_basis: mlb_statics::StdBasis, error_lines: config::ErrorLines) -> Self {
     Self {
       std_basis,
       error_lines,
@@ -39,110 +37,56 @@ impl Analysis {
   }
 
   /// Given the contents of one isolated file, return the errors for it.
-  pub fn get_one(&self, s: &str) -> Vec<Error> {
-    let mut file = SourceFile::new(s);
+  pub fn get_one(&self, contents: &str) -> Vec<Error> {
+    let mut fix_env = parse::parser::STD_BASIS.clone();
+    let (lex_errors, parsed, low) = mlb_statics::start_source_file(contents, &mut fix_env);
     let mut syms = self.std_basis.syms().clone();
-    let mut basis = self.std_basis.basis().clone();
-    let low = &file.lowered;
+    let basis = self.std_basis.basis().clone();
     let mode = statics::Mode::Regular(None);
     let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
-    basis.append(checked.basis);
-    file.statics_errors = checked.errors;
-    file.to_errors(&syms, checked.info.meta_vars(), self.error_lines)
+    let file = mlb_statics::SourceFile {
+      pos_db: text_pos::PositionDb::new(contents),
+      lex_errors,
+      parsed,
+      lowered: low,
+      statics_errors: checked.errors,
+      info: checked.info,
+    };
+    source_file_errors(&file, &syms, self.error_lines)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Error>> {
-    self.source_files = elapsed::log("analyzed_files", || {
-      input
-        .sources
-        .iter()
-        .map(|(&path_id, s)| (path_id, SourceFile::new(s)))
-        .collect()
-    });
-    let mut group_bases = PathMap::<statics::basis::Basis>::default();
-    let mut source_errors = PathMap::<Vec<Error>>::default();
-    self.syms = self.std_basis.syms().clone();
-    let res = elapsed::log("statics", || {
-      self.group_basis(
-        &mut group_bases,
-        &mut source_errors,
+    let res = elapsed::log("mlb_statics::get", || {
+      mlb_statics::get(
+        &self.std_basis,
+        &input.sources,
         &input.groups,
         input.root_group_id,
       )
     });
-    match res {
-      Ok(()) => {}
-      Err(e) => match e {
-        GroupBasisError::NoFile(path) => log::error!("no file for {path:?}"),
-        GroupBasisError::NoExports(_) => unreachable!(),
-      },
-    };
-    source_errors
-  }
-
-  fn group_basis(
-    &mut self,
-    group_bases: &mut PathMap<statics::basis::Basis>,
-    source_errors: &mut PathMap<Vec<Error>>,
-    groups: &PathMap<input::Group>,
-    path: paths::PathId,
-  ) -> Result<(), GroupBasisError> {
-    if group_bases.contains_key(&path) {
-      return Ok(());
-    }
-    // TODO require explicit basis import
-    let mut basis = self.std_basis.basis().clone();
-    let group = match groups.get(&path) {
-      Some(x) => x,
-      None => return Err(GroupBasisError::NoFile(path)),
-    };
-    for &path in group.paths.iter() {
-      match self.source_files.get_mut(&path) {
-        Some(source_file) => {
-          let low = &source_file.lowered;
-          let mode = statics::Mode::Regular(Some(path));
-          let checked = statics::get(&mut self.syms, &basis, mode, &low.arenas, low.root);
-          basis.append(checked.basis);
-          // careful with the order here. first assign the statics errors, then get all the
-          // errors, then put the info on the source file.
-          source_file.statics_errors = checked.errors;
-          let errors =
-            source_file.to_errors(&self.syms, checked.info.meta_vars(), self.error_lines);
-          source_file.info = Some(checked.info);
-          source_errors.insert(path, errors);
-        }
-        None => {
-          // if not a source file, must be a group file
-          self.group_basis(group_bases, source_errors, groups, path)?;
-          let other = group_bases
-            .get(&path)
-            .expect("path should have a basis after successful call")
-            .clone();
-          basis.append(other);
-        }
-      }
-    }
-    let mut exports = group.exports.clone();
-    if input::STRICT_EXPORTS {
-      basis.limit_with(&mut exports);
-      if !exports.is_empty() {
-        return Err(GroupBasisError::NoExports(exports));
-      }
-    }
-    group_bases.insert(path, basis);
-    Ok(())
+    self.source_files = res.sml;
+    self.syms = res.syms;
+    // TODO mlb errors
+    let _ = res.mlb_errors;
+    std::iter::empty()
+      .chain(
+        self
+          .source_files
+          .iter()
+          .map(|(&path, file)| (path, source_file_errors(file, &self.syms, self.error_lines))),
+      )
+      .collect()
   }
 
   /// Returns a Markdown string with information about this position.
   pub fn get_md(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
     self.go_up_ast(path, pos, |file, ptr, idx| {
-      let info = file.info.as_ref()?;
-      let mut s = info.get_ty_md(&self.syms, idx)?;
-      let def_doc = info.get_def(idx).and_then(|def| {
+      let mut s = file.info.get_ty_md(&self.syms, idx)?;
+      let def_doc = file.info.get_def(idx).and_then(|def| {
         let info = match def.path {
-          statics::DefPath::Regular(path) => self.source_files.get(&path)?.info.as_ref()?,
+          statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
           statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
         };
         info.get_doc(def.idx)
@@ -159,7 +103,7 @@ impl Analysis {
   /// Returns the range of the definition of the item at this position.
   pub fn get_def(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
     self.go_up_ast(path, pos, |file, _, idx| {
-      self.def_to_path_and_range(file.info.as_ref()?.get_def(idx)?)
+      self.def_to_path_and_range(file.info.get_def(idx)?)
     })
   }
 
@@ -170,7 +114,6 @@ impl Analysis {
       Some(
         file
           .info
-          .as_ref()?
           .get_ty_defs(&self.syms, idx)?
           .into_iter()
           .filter_map(|def| self.def_to_path_and_range(def))
@@ -181,7 +124,7 @@ impl Analysis {
 
   fn go_up_ast<F, T>(&self, path: PathId, pos: Position, f: F) -> Option<T>
   where
-    F: FnOnce(&SourceFile, SyntaxNodePtr, hir::Idx) -> Option<T>,
+    F: FnOnce(&mlb_statics::SourceFile, SyntaxNodePtr, hir::Idx) -> Option<T>,
   {
     let file = self.source_files.get(&path)?;
     let mut node = get_node(file, pos)?;
@@ -210,7 +153,7 @@ impl Analysis {
   }
 }
 
-fn get_node(file: &SourceFile, pos: Position) -> Option<SyntaxNode> {
+fn get_node(file: &mlb_statics::SourceFile, pos: Position) -> Option<SyntaxNode> {
   let idx = file.pos_db.text_size(pos)?;
   let tok = match file.parsed.root.syntax().token_at_offset(idx) {
     TokenAtOffset::None => return None,
@@ -241,11 +184,6 @@ fn priority(kind: SyntaxKind) -> u8 {
   }
 }
 
-enum GroupBasisError {
-  NoFile(paths::PathId),
-  NoExports(statics::basis::Exports),
-}
-
 /// An error.
 #[derive(Debug)]
 pub struct Error {
@@ -257,82 +195,52 @@ pub struct Error {
   pub code: u16,
 }
 
-#[derive(Debug)]
-struct SourceFile {
-  pos_db: text_pos::PositionDb,
-  lex_errors: Vec<lex::Error>,
-  parsed: parse::Parse,
-  lowered: lower::Lower,
-  statics_errors: Vec<statics::Error>,
-  info: Option<statics::Info>,
-}
-
-impl SourceFile {
-  fn new(s: &str) -> Self {
-    let lexed = lex::get(s);
-    log::debug!("lex: {:?}", lexed.tokens);
-    let parsed = parse::get(&lexed.tokens, &mut parse::parser::STD_BASIS.clone());
-    log::debug!("parse: {:#?}", parsed.root);
-    let mut lowered = lower::get(&parsed.root);
-    ty_var_scope::get(&mut lowered.arenas, lowered.root);
-    Self {
-      pos_db: text_pos::PositionDb::new(s),
-      lex_errors: lexed.errors,
-      parsed,
-      lowered,
-      statics_errors: Vec::new(),
-      info: None,
-    }
-  }
-
-  fn to_errors(
-    &self,
-    syms: &statics::Syms,
-    mv_info: &statics::MetaVarInfo,
-    lines: config::ErrorLines,
-  ) -> Vec<Error> {
-    // TODO: 1000 error codes will be for stuff even before lexing, aka basically the
-    // `analysis::input` stage.
-    std::iter::empty()
-      .chain(self.lex_errors.iter().filter_map(|err| {
-        Some(Error {
-          range: self.pos_db.range(err.range())?,
-          message: err.display().to_string(),
-          code: 2000 + u16::from(err.to_code()),
-        })
-      }))
-      .chain(self.parsed.errors.iter().filter_map(|err| {
-        Some(Error {
-          range: self.pos_db.range(err.range())?,
-          message: err.display().to_string(),
-          code: 3000 + u16::from(err.to_code()),
-        })
-      }))
-      .chain(self.lowered.errors.iter().filter_map(|err| {
-        Some(Error {
-          range: self.pos_db.range(err.range())?,
-          message: err.display().to_string(),
-          code: 4000 + u16::from(err.to_code()),
-        })
-      }))
-      .chain(self.statics_errors.iter().filter_map(|err| {
-        let idx = err.idx();
-        let syntax = match self.lowered.ptrs.hir_to_ast(idx) {
-          Some(x) => x,
-          None => {
-            log::error!("no pointer for {idx:?}");
-            return None;
-          }
-        };
-        Some(Error {
-          range: self
-            .pos_db
-            .range(syntax.to_node(self.parsed.root.syntax()).text_range())?,
-          message: err.display(syms, mv_info, lines).to_string(),
-          code: 5000 + u16::from(err.to_code()),
-        })
-      }))
-      .take(MAX_ERRORS_PER_PATH)
-      .collect()
-  }
+fn source_file_errors(
+  file: &mlb_statics::SourceFile,
+  syms: &statics::Syms,
+  lines: config::ErrorLines,
+) -> Vec<Error> {
+  // TODO: 1000 error codes will be for stuff even before lexing, aka basically the
+  // `analysis::input` stage.
+  std::iter::empty()
+    .chain(file.lex_errors.iter().filter_map(|err| {
+      Some(Error {
+        range: file.pos_db.range(err.range())?,
+        message: err.display().to_string(),
+        code: 2000 + u16::from(err.to_code()),
+      })
+    }))
+    .chain(file.parsed.errors.iter().filter_map(|err| {
+      Some(Error {
+        range: file.pos_db.range(err.range())?,
+        message: err.display().to_string(),
+        code: 3000 + u16::from(err.to_code()),
+      })
+    }))
+    .chain(file.lowered.errors.iter().filter_map(|err| {
+      Some(Error {
+        range: file.pos_db.range(err.range())?,
+        message: err.display().to_string(),
+        code: 4000 + u16::from(err.to_code()),
+      })
+    }))
+    .chain(file.statics_errors.iter().filter_map(|err| {
+      let idx = err.idx();
+      let syntax = match file.lowered.ptrs.hir_to_ast(idx) {
+        Some(x) => x,
+        None => {
+          log::error!("no pointer for {idx:?}");
+          return None;
+        }
+      };
+      Some(Error {
+        range: file
+          .pos_db
+          .range(syntax.to_node(file.parsed.root.syntax()).text_range())?,
+        message: err.display(syms, file.info.meta_vars(), lines).to_string(),
+        code: 5000 + u16::from(err.to_code()),
+      })
+    }))
+    .take(MAX_ERRORS_PER_PATH)
+    .collect()
 }

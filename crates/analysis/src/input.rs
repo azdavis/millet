@@ -1,6 +1,8 @@
 //! Input to analysis.
 
+use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
+use std::collections::BTreeSet;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use text_pos::Range;
@@ -14,7 +16,7 @@ pub struct Input {
   /// A map from source paths to their contents.
   pub(crate) sources: PathMap<String>,
   /// A map from group paths to their (parsed) contents.
-  pub(crate) groups: PathMap<Group>,
+  pub(crate) groups: PathMap<mlb_hir::BasDec>,
   /// The root group id.
   pub(crate) root_group_id: PathId,
 }
@@ -73,7 +75,8 @@ impl std::error::Error for GetInputError {
       | GetInputErrorKind::InvalidConfigVersion(_)
       | GetInputErrorKind::Cycle
       | GetInputErrorKind::UnsupportedExport
-      | GetInputErrorKind::NotGroup => None,
+      | GetInputErrorKind::NotGroup
+      | GetInputErrorKind::Duplicate(_) => None,
     }
   }
 }
@@ -94,6 +97,7 @@ enum GetInputErrorKind {
   Cycle,
   UnsupportedExport,
   NotGroup,
+  Duplicate(hir::Name),
 }
 
 impl fmt::Display for GetInputErrorKind {
@@ -120,6 +124,7 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
       GetInputErrorKind::NotGroup => f.write_str("not a group path"),
+      GetInputErrorKind::Duplicate(name) => write!(f, "duplicate: {name}"),
     }
   }
 }
@@ -251,7 +256,7 @@ where
   })?;
   let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
   let mut sources = PathMap::<String>::default();
-  let mut groups = PathMap::<Group>::default();
+  let mut groups = PathMap::<mlb_hir::BasDec>::default();
   let mut stack = vec![((root_group_id, None), root_group_id)];
   while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
     if groups.contains_key(&group_path_id) {
@@ -297,54 +302,62 @@ where
             };
             let path = group_parent.join(parsed_path.val.as_path());
             let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
-            match parsed_path.val.kind() {
+            let kind = match parsed_path.val.kind() {
               cm::PathKind::Sml => {
                 let contents = read_file(fs, source, path.as_path())?;
                 sources.insert(path_id, contents);
+                mlb_hir::PathKind::Sml
               }
               cm::PathKind::Cm => {
                 stack.push(((group_path_id, range), path_id));
+                // NOTE this is a lie.
+                mlb_hir::PathKind::Mlb
               }
-            }
-            Ok(path_id)
+            };
+            Ok(mlb_hir::BasDec::Path(path_id, kind))
           })
           .collect::<Result<Vec<_>>>()?;
-        let mut exports = statics::basis::Exports::default();
-        for export in cm.exports {
-          match export {
-            cm::Export::Regular(ns, name) => match ns.val {
-              cm::Namespace::Structure => exports.structure.push(name.val.clone()),
-              cm::Namespace::Signature => exports.signature.push(name.val.clone()),
-              cm::Namespace::Functor => exports.functor.push(name.val.clone()),
-              cm::Namespace::FunSig => {
-                return Err(GetInputError {
-                  source: Source {
-                    path: None,
-                    range: pos_db.range(ns.range),
-                  },
-                  path: group_path.to_owned(),
-                  kind: GetInputErrorKind::UnsupportedExport,
-                })
-              }
-            },
-            cm::Export::Library(lib) => {
-              if STRICT_EXPORTS {
-                return Err(GetInputError {
-                  source: Source {
-                    path: None,
-                    range: pos_db.range(lib.range),
-                  },
-                  path: group_path.to_owned(),
-                  kind: GetInputErrorKind::UnsupportedExport,
-                });
-              }
+        let exports = cm
+          .exports
+          .into_iter()
+          .filter_map(|export| match export {
+            cm::Export::Regular(ns, name) => {
+              let ns = match ns.val {
+                cm::Namespace::Structure => mlb_hir::Namespace::Structure,
+                cm::Namespace::Signature => mlb_hir::Namespace::Signature,
+                cm::Namespace::Functor => mlb_hir::Namespace::Functor,
+                cm::Namespace::FunSig => {
+                  return Some(Err(GetInputError {
+                    source: Source {
+                      path: None,
+                      range: pos_db.range(ns.range),
+                    },
+                    path: group_path.to_owned(),
+                    kind: GetInputErrorKind::UnsupportedExport,
+                  }))
+                }
+              };
+              Some(Ok(mlb_hir::BasDec::Export(ns, name.clone(), name)))
             }
-          }
-        }
-        Group { paths, exports }
+            cm::Export::Library(lib) => STRICT_EXPORTS.then(|| {
+              Err(GetInputError {
+                source: Source {
+                  path: None,
+                  range: pos_db.range(lib.range),
+                },
+                path: group_path.to_owned(),
+                kind: GetInputErrorKind::UnsupportedExport,
+              })
+            }),
+          })
+          .collect::<Result<Vec<_>>>()?;
+        mlb_hir::BasDec::Local(
+          mlb_hir::BasDec::seq(paths).into(),
+          mlb_hir::BasDec::seq(exports).into(),
+        )
       }
       GroupPathKind::Mlb => {
-        let mlb_syntax = mlb_syntax::get(&contents).map_err(|e| GetInputError {
+        let syntax_dec = mlb_syntax::get(&contents).map_err(|e| GetInputError {
           source: Source {
             path: None,
             range: pos_db.range(e.text_range()),
@@ -352,52 +365,28 @@ where
           path: group_path.to_owned(),
           kind: GetInputErrorKind::Mlb(e),
         })?;
-        let mut paths = Vec::<&located::Located<mlb_syntax::ParsedPath>>::new();
-        // TODO this discards most of the semantics of ML Basis files. It just gets the files in the
-        // right order. It totally ignores `local`, renaming exports, etc etc. So, it basically only
-        // works correctly for ML Basis files that are nothing but a list of files.
-        bas_dec_paths(&mut paths, &mlb_syntax);
-        let paths = paths
-          .into_iter()
-          .filter(|p| {
-            !p.val
-              .as_path()
-              .as_os_str()
-              .to_string_lossy()
-              .starts_with('$')
-          })
-          .map(|parsed_path| {
-            let range = pos_db.range(parsed_path.range);
-            let source = Source {
-              path: Some(group_path.to_owned()),
-              range,
-            };
-            let path = group_parent.join(parsed_path.val.as_path());
-            let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
-            match parsed_path.val.kind() {
-              mlb_syntax::PathKind::Sml => {
-                let contents = read_file(fs, source, path.as_path())?;
-                sources.insert(path_id, contents);
-              }
-              mlb_syntax::PathKind::Mlb => {
-                stack.push(((group_path_id, range), path_id));
-              }
-            }
-            Ok(path_id)
-          })
-          .collect::<Result<Vec<_>>>()?;
-
-        Group {
-          paths,
-          exports: statics::basis::Exports::default(),
-        }
+        let mut cx = LowerCx {
+          path: group_path,
+          parent: group_parent.as_path(),
+          pos_db: &pos_db,
+          fs,
+          root,
+          sources: &mut sources,
+          stack: &mut stack,
+          path_id: group_path_id,
+        };
+        get_bas_dec(&mut cx, syntax_dec)?
       }
     };
     groups.insert(group_path_id, group);
   }
   let graph: topo_sort::Graph<_> = groups
     .iter()
-    .map(|(&path, group)| (path, group.paths.iter().copied().collect()))
+    .map(|(&path, group)| {
+      let mut ac = BTreeSet::<PathId>::new();
+      bas_dec_paths(&mut ac, group);
+      (path, ac)
+    })
     .collect();
   if let Err(err) = topo_sort::get(&graph) {
     return Err(GetInputError {
@@ -413,39 +402,10 @@ where
   })
 }
 
-fn bas_dec_paths<'b>(
-  paths: &mut Vec<&'b located::Located<mlb_syntax::ParsedPath>>,
-  bas_dec: &'b mlb_syntax::BasDec,
-) {
-  match bas_dec {
-    mlb_syntax::BasDec::Local(local_dec, in_dec) => {
-      bas_dec_paths(paths, local_dec);
-      bas_dec_paths(paths, in_dec);
-    }
-    mlb_syntax::BasDec::Basis(_)
-    | mlb_syntax::BasDec::Open(_)
-    | mlb_syntax::BasDec::Export(_, _) => {}
-    mlb_syntax::BasDec::Path(path) => paths.push(path),
-    mlb_syntax::BasDec::Ann(_, inner) => bas_dec_paths(paths, inner),
-    mlb_syntax::BasDec::Seq(bas_decs) => {
-      for bas_dec in bas_decs {
-        bas_dec_paths(paths, bas_dec);
-      }
-    }
-  }
-}
-
 #[derive(Debug, Default, Clone)]
 struct Source {
   path: Option<PathBuf>,
   range: Option<Range>,
-}
-
-/// A group of paths and their exports.
-#[derive(Debug)]
-pub(crate) struct Group {
-  pub(crate) paths: Vec<PathId>,
-  pub(crate) exports: statics::basis::Exports,
 }
 
 fn get_path_id<F>(
@@ -478,4 +438,150 @@ where
     path: path.to_owned(),
     kind: GetInputErrorKind::ReadFile(e),
   })
+}
+
+struct LowerCx<'a, F> {
+  path: &'a Path,
+  parent: &'a Path,
+  pos_db: &'a text_pos::PositionDb,
+  fs: &'a F,
+  root: &'a mut paths::Root,
+  sources: &'a mut PathMap<String>,
+  stack: &'a mut Vec<((PathId, Option<Range>), PathId)>,
+  path_id: PathId,
+}
+
+fn get_bas_dec<F>(cx: &mut LowerCx<'_, F>, dec: mlb_syntax::BasDec) -> Result<mlb_hir::BasDec>
+where
+  F: paths::FileSystem,
+{
+  let ret = match dec {
+    mlb_syntax::BasDec::Basis(binds) => {
+      let mut names = FxHashSet::<hir::Name>::default();
+      let binds = binds
+        .into_iter()
+        .map(|(name, exp)| {
+          if !names.insert(name.val.clone()) {
+            return Err(GetInputError {
+              source: Source {
+                path: None,
+                range: cx.pos_db.range(name.range),
+              },
+              path: cx.path.to_owned(),
+              kind: GetInputErrorKind::Duplicate(name.val),
+            });
+          }
+          let exp = get_bas_exp(cx, exp)?;
+          Ok(mlb_hir::BasDec::Basis(name, exp.into()))
+        })
+        .collect::<Result<Vec<_>>>()?;
+      mlb_hir::BasDec::seq(binds)
+    }
+    mlb_syntax::BasDec::Open(names) => {
+      mlb_hir::BasDec::seq(names.into_iter().map(mlb_hir::BasDec::Open).collect())
+    }
+    mlb_syntax::BasDec::Local(local_dec, in_dec) => mlb_hir::BasDec::Local(
+      get_bas_dec(cx, *local_dec)?.into(),
+      get_bas_dec(cx, *in_dec)?.into(),
+    ),
+    mlb_syntax::BasDec::Export(ns, binds) => {
+      let mut names = FxHashSet::<hir::Name>::default();
+      let binds = binds
+        .into_iter()
+        .map(|(lhs, rhs)| {
+          if !names.insert(lhs.val.clone()) {
+            return Err(GetInputError {
+              source: Source {
+                path: None,
+                range: cx.pos_db.range(lhs.range),
+              },
+              path: cx.path.to_owned(),
+              kind: GetInputErrorKind::Duplicate(lhs.val),
+            });
+          }
+          let rhs = rhs.unwrap_or_else(|| lhs.clone());
+          let ns = match ns {
+            mlb_syntax::Namespace::Structure => mlb_hir::Namespace::Structure,
+            mlb_syntax::Namespace::Signature => mlb_hir::Namespace::Signature,
+            mlb_syntax::Namespace::Functor => mlb_hir::Namespace::Functor,
+          };
+          Ok(mlb_hir::BasDec::Export(ns, lhs, rhs))
+        })
+        .collect::<Result<Vec<_>>>()?;
+      mlb_hir::BasDec::seq(binds)
+    }
+    mlb_syntax::BasDec::Path(parsed_path) => {
+      let range = cx.pos_db.range(parsed_path.range);
+      let source = Source {
+        path: Some(cx.path.to_owned()),
+        range,
+      };
+      let path = cx.parent.join(parsed_path.val.as_path());
+      let path_id = get_path_id(cx.fs, cx.root, source.clone(), path.as_path())?;
+      let kind = match parsed_path.val.kind() {
+        mlb_syntax::PathKind::Sml => {
+          let contents = read_file(cx.fs, source, path.as_path())?;
+          cx.sources.insert(path_id, contents);
+          mlb_hir::PathKind::Sml
+        }
+        mlb_syntax::PathKind::Mlb => {
+          cx.stack.push(((cx.path_id, range), path_id));
+          mlb_hir::PathKind::Mlb
+        }
+      };
+      mlb_hir::BasDec::Path(path_id, kind)
+    }
+    mlb_syntax::BasDec::Ann(_, dec) => get_bas_dec(cx, *dec)?,
+    mlb_syntax::BasDec::Seq(decs) => mlb_hir::BasDec::seq(
+      decs
+        .into_iter()
+        .map(|dec| get_bas_dec(cx, dec))
+        .collect::<Result<Vec<_>>>()?,
+    ),
+  };
+  Ok(ret)
+}
+
+fn get_bas_exp<F>(cx: &mut LowerCx<'_, F>, exp: mlb_syntax::BasExp) -> Result<mlb_hir::BasExp>
+where
+  F: paths::FileSystem,
+{
+  let ret = match exp {
+    mlb_syntax::BasExp::Bas(dec) => mlb_hir::BasExp::Bas(get_bas_dec(cx, dec)?),
+    mlb_syntax::BasExp::Name(name) => mlb_hir::BasExp::Name(name),
+    mlb_syntax::BasExp::Let(dec, exp) => {
+      mlb_hir::BasExp::Let(get_bas_dec(cx, dec)?, get_bas_exp(cx, *exp)?.into())
+    }
+  };
+  Ok(ret)
+}
+
+fn bas_dec_paths(ac: &mut BTreeSet<PathId>, dec: &mlb_hir::BasDec) {
+  match dec {
+    mlb_hir::BasDec::Open(_) | mlb_hir::BasDec::Export(_, _, _) => {}
+    mlb_hir::BasDec::Path(p, _) => {
+      ac.insert(*p);
+    }
+    mlb_hir::BasDec::Basis(_, exp) => bas_exp_paths(ac, exp),
+    mlb_hir::BasDec::Local(local_dec, in_dec) => {
+      bas_dec_paths(ac, local_dec);
+      bas_dec_paths(ac, in_dec);
+    }
+    mlb_hir::BasDec::Seq(decs) => {
+      for dec in decs {
+        bas_dec_paths(ac, dec);
+      }
+    }
+  }
+}
+
+fn bas_exp_paths(ac: &mut BTreeSet<PathId>, exp: &mlb_hir::BasExp) {
+  match exp {
+    mlb_hir::BasExp::Bas(dec) => bas_dec_paths(ac, dec),
+    mlb_hir::BasExp::Name(_) => {}
+    mlb_hir::BasExp::Let(dec, exp) => {
+      bas_dec_paths(ac, dec);
+      bas_exp_paths(ac, exp);
+    }
+  }
 }
