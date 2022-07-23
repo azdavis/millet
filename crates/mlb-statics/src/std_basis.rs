@@ -29,11 +29,13 @@ impl StdBasis {
     )
   }
 
-  pub(crate) fn syms(&self) -> &Syms {
+  /// Returns the symbols for this.
+  pub fn syms(&self) -> &Syms {
     &self.syms
   }
 
-  pub(crate) fn basis(&self) -> &basis::Basis {
+  /// Returns the basis for this.
+  pub fn basis(&self) -> &basis::Basis {
     &self.basis
   }
 

@@ -15,7 +15,7 @@ pub use std_basis::StdBasis;
 #[derive(Debug)]
 pub struct MlbStatics {
   /// The errors found in MLB files.
-  pub errors: Vec<Error>,
+  pub mlb_errors: Vec<Error>,
   /// The generated symbols (types and exceptions and such).
   pub syms: statics::Syms,
   /// A mapping from source file paths to information about them, including errors.
@@ -86,12 +86,12 @@ struct Cx {
   syms: statics::Syms,
   cache: paths::PathMap<MBasis>,
   sml: paths::PathMap<SourceFile>,
-  errors: Vec<Error>,
+  mlb_errors: Vec<Error>,
 }
 
 impl Cx {
   fn undef(&mut self, path: paths::PathId, item: Item, name: located::Located<hir::Name>) {
-    self.errors.push(Error { path, item, name });
+    self.mlb_errors.push(Error { path, item, name });
   }
 }
 
@@ -129,7 +129,7 @@ pub fn get(
     syms: std_basis.syms().clone(),
     cache: paths::PathMap::default(),
     sml: paths::PathMap::default(),
-    errors: Vec::new(),
+    mlb_errors: Vec::new(),
   };
   let std_basis = MBasis {
     fix_env: parse::parser::STD_BASIS.clone(),
@@ -143,7 +143,7 @@ pub fn get(
   };
   get_group_file(&mut cx, files, &mut MBasis::default(), root_mlb);
   MlbStatics {
-    errors: cx.errors,
+    mlb_errors: cx.mlb_errors,
     syms: cx.syms,
     sml: cx.sml,
   }
@@ -266,7 +266,7 @@ fn get_bas_dec(
 }
 
 /// Processes a single source file.
-pub(crate) fn start_source_file(
+pub fn start_source_file(
   contents: &str,
   fix_env: &mut parse::parser::FixEnv,
 ) -> (Vec<lex::Error>, parse::Parse, lower::Lower) {
