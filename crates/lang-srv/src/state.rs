@@ -27,8 +27,6 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   }
 }
 
-const SOURCE: &str = "millet";
-const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
 const MAX_FILES_WITH_ERRORS: usize = 20;
 
 struct Root {
@@ -292,12 +290,7 @@ impl State {
               root.has_diagnostics.insert(url.clone());
               self.send_diagnostics(
                 url,
-                vec![lsp_types::Diagnostic {
-                  range: e.range().map(lsp_range).unwrap_or_default(),
-                  message: e.message().to_string(),
-                  severity: Some(lsp_types::DiagnosticSeverity::ERROR),
-                  ..Default::default()
-                }],
+                vec![diagnostic(e.message().to_string(), e.range(), None)],
               )
             }
             Err(_) => self.show_error(format!("{e:#}")),
@@ -413,25 +406,36 @@ fn file_url(path: &std::path::Path) -> Result<Url> {
 fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
-    .map(|err| {
-      let code_description = match Url::parse(&format!("{ERRORS_URL}#{}", err.code)) {
-        Ok(href) => Some(lsp_types::CodeDescription { href }),
-        Err(e) => {
-          log::error!("url parse failed for {err:?}: {e}");
-          None
-        }
-      };
-      lsp_types::Diagnostic {
-        range: lsp_range(err.range),
-        message: err.message,
-        source: Some(SOURCE.to_owned()),
-        severity: Some(lsp_types::DiagnosticSeverity::ERROR),
-        code: Some(lsp_types::NumberOrString::Number(err.code.into())),
-        code_description,
-        ..Default::default()
-      }
-    })
+    .map(|err| diagnostic(err.message, Some(err.range), Some(err.code)))
     .collect()
+}
+
+const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
+
+fn diagnostic(
+  message: String,
+  range: Option<analysis::Range>,
+  code: Option<u16>,
+) -> lsp_types::Diagnostic {
+  let code_description =
+    code.and_then(|code| match Url::parse(&format!("{ERRORS_URL}#{}", code)) {
+      Ok(href) => Some(lsp_types::CodeDescription { href }),
+      Err(e) => {
+        log::error!("url parse failed for {message} with code {code}: {e}");
+        None
+      }
+    });
+  lsp_types::Diagnostic {
+    range: range.map(lsp_range).unwrap_or_default(),
+    severity: Some(lsp_types::DiagnosticSeverity::ERROR),
+    code: code.map(|x| lsp_types::NumberOrString::Number(x.into())),
+    code_description,
+    source: Some("millet".to_owned()),
+    message,
+    related_information: None,
+    tags: None,
+    data: None,
+  }
 }
 
 fn lsp_range(range: analysis::Range) -> lsp_types::Range {
