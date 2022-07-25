@@ -6,7 +6,7 @@ This is (or rather, should be) a list of all the errors that Millet can emit, an
 
 Millet couldn't read a file or directory. It may not exist, or there may be insufficient permissions.
 
-To fix, check the path mentioned by Millet to see it exists and Millet may access it.
+To fix, check the path mentioned by Millet to confirm that it exists and that Millet may access it.
 
 ## 1002
 
@@ -14,13 +14,13 @@ Millet couldn't canonicalize a path. To "canonicalize" means to fully resolve al
 
 Similar to 1001, the item at the path may not exist, or there may be insufficient permissions.
 
-To fix, check the path mentioned by Millet to see it exists and Millet may access it.
+To fix, check the path mentioned by Millet to confirm that it exists and that Millet may access it.
 
 ## 1003
 
 A path wasn't contained in the root directory.
 
-Millet requires that all the files to be analyzed be ultimately contained within a single, "root" directory. Millet thus refuses to analyze files outside this root.
+Millet requires all the files to be analyzed be ultimately contained within a single, "root" directory. Millet thus refuses to analyze files outside this root.
 
 To fix, move the file into the root, or do not reference it.
 
