@@ -32,6 +32,9 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
         .collect(),
     ),
     ast::DecOne::FunDec(dec) => {
+      if let Some(bar) = dec.bar() {
+        cx.err(bar.text_range(), ErrorKind::PrecedingBar);
+      }
       let ty_vars = ty::var_seq(dec.ty_var_seq());
       let val_binds: Vec<_> = dec
         .fun_binds()
@@ -207,6 +210,9 @@ where
   I: Iterator<Item = ast::DatBind> + 'a,
 {
   iter.filter_map(|dat_bind| {
+    if let Some(bar) = dat_bind.bar() {
+      cx.err(bar.text_range(), ErrorKind::PrecedingBar);
+    }
     Some(hir::DatBind {
       ty_vars: ty::var_seq(dat_bind.ty_var_seq()),
       name: get_name(dat_bind.name())?,

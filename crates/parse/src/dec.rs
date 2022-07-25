@@ -28,6 +28,9 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::FunKw) {
     p.bump();
     ty_var_seq(p);
+    if p.at(SK::Bar) {
+      p.bump();
+    }
     many_sep(p, SK::AndKw, SK::FunBind, |p| {
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
         let en = p.enter();
@@ -173,6 +176,9 @@ pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
     ty_var_seq(p);
     p.eat(SK::Name);
     p.eat(SK::Eq);
+    if p.at(SK::Bar) {
+      p.bump();
+    }
     many_sep(p, SK::Bar, SK::ConBind, |p| {
       if allow_op && p.at(SK::OpKw) {
         p.bump();

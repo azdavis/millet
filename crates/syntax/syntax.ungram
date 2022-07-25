@@ -164,7 +164,7 @@ ExpArg = Exp ','?
 ExpInSeq = Exp ';'?
 
 // call it this instead of Match to avoid clash with rust kw
-Matcher = MatchRule*
+Matcher = '|'? MatchRule*
 MatchRule = Pat '=>' Exp '|'?
 
 Dec = DecInSeq*
@@ -186,7 +186,7 @@ DecOne =
 | DoDec
 
 ValDec = 'val' TyVarSeq ValBind*
-FunDec = 'fun' TyVarSeq FunBind*
+FunDec = 'fun' TyVarSeq '|'? FunBind*
 TyDec = 'type' TyBind*
 DatDec = 'datatype' DatBind* WithType?
 DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
@@ -202,7 +202,7 @@ DoDec = 'do' Exp
 ValBind = 'rec'? Pat '=' Exp 'and'?
 FunBind = FunBindCase* 'and'?
 TyBind = TyVarSeq 'Name' '=' Ty 'and'?
-DatBind = TyVarSeq 'Name' '=' ConBind* 'and'?
+DatBind = TyVarSeq 'Name' '=' '|'? ConBind* 'and'?
 ConBind = 'op'? NameStarEq OfTy? '|'?
 ExBind = 'op'? NameStarEq ExBindInner? 'and'?
 

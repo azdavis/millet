@@ -205,6 +205,9 @@ pub(crate) fn case(
 }
 
 fn matcher(cx: &mut Cx, matcher: Option<ast::Matcher>) -> Vec<(hir::PatIdx, hir::ExpIdx)> {
+  if let Some(bar) = matcher.as_ref().and_then(|m| m.bar()) {
+    cx.err(bar.text_range(), ErrorKind::PrecedingBar);
+  }
   matcher
     .into_iter()
     .flat_map(|x| x.match_rules())

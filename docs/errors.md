@@ -536,6 +536,30 @@ To fix, put the `...` pattern row last.
 val {b, ...} = {a = 1, b = "hi"}
 ```
 
+## 4009
+
+There was a bar (aka `|`) before the first:
+
+- Case in a `fun` declaration.
+- Case in a `fn`, `case`, or `handle` expression.
+- Constructor in a `datatype` declaration or case.
+
+```sml
+(* error *)
+datatype t =
+| A
+| B
+```
+
+To fix, remove the bar.
+
+```sml
+(* ok *)
+datatype t =
+  A
+| B
+```
+
 ## 4099
 
 There was an occurrence of an unsupported SML construct.

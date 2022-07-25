@@ -66,6 +66,7 @@ impl Error {
       ErrorKind::ZeroNumLab => 6,
       ErrorKind::MultipleRestPatRows => 7,
       ErrorKind::RestPatRowNotLast => 8,
+      ErrorKind::PrecedingBar => 9,
       ErrorKind::Unsupported(_) => 99,
     }
   }
@@ -82,6 +83,7 @@ pub(crate) enum ErrorKind {
   ZeroNumLab,
   MultipleRestPatRows,
   RestPatRowNotLast,
+  PrecedingBar,
   /// must be last
   Unsupported(&'static str),
 }
@@ -105,6 +107,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
       ErrorKind::MultipleRestPatRows => f.write_str("cannot have multiple `...`"),
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
+      ErrorKind::PrecedingBar => f.write_str("a preceding `|` is not allowed"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

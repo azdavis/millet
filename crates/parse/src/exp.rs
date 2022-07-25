@@ -206,6 +206,9 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
 
 fn matcher(p: &mut Parser<'_>) {
   let en = p.enter();
+  if p.at(SK::Bar) {
+    p.bump();
+  }
   many_sep(p, SK::Bar, SK::MatchRule, |p| {
     must(p, pat, Expected::Pat);
     p.eat(SK::EqGt);
