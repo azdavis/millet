@@ -72,9 +72,7 @@ impl fmt::Display for GetInputError {
 impl std::error::Error for GetInputError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match &self.kind {
-      GetInputErrorKind::ReadDir(e)
-      | GetInputErrorKind::ReadFile(e)
-      | GetInputErrorKind::Canonicalize(e) => Some(e),
+      GetInputErrorKind::Read(e) | GetInputErrorKind::Canonicalize(e) => Some(e),
       GetInputErrorKind::Cm(e) => Some(e),
       GetInputErrorKind::Mlb(e) => Some(e),
       GetInputErrorKind::NotInRoot(e) => Some(e),
@@ -92,8 +90,7 @@ impl std::error::Error for GetInputError {
 
 #[derive(Debug)]
 enum GetInputErrorKind {
-  ReadDir(std::io::Error),
-  ReadFile(std::io::Error),
+  Read(std::io::Error),
   Canonicalize(std::io::Error),
   NotInRoot(std::path::StripPrefixError),
   MultipleRoots(PathBuf, PathBuf),
@@ -111,8 +108,7 @@ enum GetInputErrorKind {
 impl fmt::Display for GetInputErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      GetInputErrorKind::ReadDir(_) => write!(f, "couldn't read directory"),
-      GetInputErrorKind::ReadFile(_) => write!(f, "couldn't read file"),
+      GetInputErrorKind::Read(_) => write!(f, "couldn't read contents at path"),
       GetInputErrorKind::Canonicalize(_) => write!(f, "couldn't canonicalize path"),
       GetInputErrorKind::NotInRoot(_) => write!(f, "not in root"),
       GetInputErrorKind::MultipleRoots(a, b) => write!(
@@ -236,7 +232,7 @@ where
     let dir_entries = fs.read_dir(root.as_path()).map_err(|e| GetInputError {
       source: Source::default(),
       path: root.as_path().to_owned(),
-      kind: GetInputErrorKind::ReadDir(e),
+      kind: GetInputErrorKind::Read(e),
     })?;
     for entry in dir_entries {
       if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
@@ -443,7 +439,7 @@ where
   fs.read_to_string(path).map_err(|e| GetInputError {
     source,
     path: path.to_owned(),
-    kind: GetInputErrorKind::ReadFile(e),
+    kind: GetInputErrorKind::Read(e),
   })
 }
 
