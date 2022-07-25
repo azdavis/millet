@@ -101,8 +101,9 @@ enum GetInputErrorKind {
   Cm(cm::Error),
   Mlb(mlb_syntax::Error),
   Cycle,
-  UnsupportedExport,
   Duplicate(hir::Name),
+  /// must be last
+  UnsupportedExport,
 }
 
 impl fmt::Display for GetInputErrorKind {
@@ -126,8 +127,8 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::Cm(_) => write!(f, "couldn't process SML/NJ CM file"),
       GetInputErrorKind::Mlb(_) => write!(f, "couldn't process ML Basis file"),
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
-      GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
       GetInputErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
+      GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
     }
   }
 }
