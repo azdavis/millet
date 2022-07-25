@@ -128,8 +128,12 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     comma_sep(p, SK::RCurly, SK::ExpRow, |p| {
       lab(p);
-      p.eat(SK::Eq);
-      exp(p);
+      if p.at(SK::Eq) {
+        let en = p.enter();
+        p.bump();
+        exp(p);
+        p.exit(en, SK::EqExp);
+      }
     });
     p.exit(en, SK::RecordExp)
   } else if p.at(SK::Hash) {

@@ -13,7 +13,28 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
     ast::Exp::RecordExp(exp) => hir::Exp::Record(
       exp
         .exp_rows()
-        .filter_map(|row| Some((get_lab(cx, row.lab()?), get(cx, row.exp()))))
+        .filter_map(|row| {
+          let lab_ast = row.lab()?;
+          let lab_tr = lab_ast.token.text_range();
+          let lab = get_lab(cx, lab_ast);
+          let exp = match row.eq_exp() {
+            Some(eq_exp) => get(cx, eq_exp.exp()),
+            None => match &lab {
+              hir::Lab::Name(name) => {
+                cx.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
+                cx.exp(hir::Exp::Path(hir::Path::one(name.clone())), ptr.clone())
+              }
+              hir::Lab::Num(_) => {
+                // NOTE: we explicitly duplicate the `err` call in both branches, to remind us that
+                // if we ever actually accepted expression row punning, we should add a separate
+                // error here rejecting the attempt to pun with a int label.
+                cx.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
+                None
+              }
+            },
+          };
+          Some((lab, exp))
+        })
         .collect(),
     ),
     ast::Exp::SelectorExp(exp) => {

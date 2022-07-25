@@ -80,3 +80,14 @@ fn preceding_bar_datatype() {
 "#,
   );
 }
+
+#[test]
+fn exp_row_pun() {
+  check(
+    r#"
+fun incB r =
+  case r of {a, b, c} => {a, b = b + 1, c}
+(**                       ^ unsupported language construct: expression row punning *)
+"#,
+  )
+}

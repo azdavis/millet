@@ -159,7 +159,8 @@ WhileExp = 'while' cond:Exp 'do' body:Exp
 CaseExp = 'case' Exp 'of' Matcher
 FnExp = 'fn' Matcher
 
-ExpRow = Lab '=' Exp ','?
+ExpRow = Lab EqExp? ','?
+EqExp = '=' Exp
 ExpArg = Exp ','?
 ExpInSeq = Exp ';'?
 
