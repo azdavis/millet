@@ -97,7 +97,7 @@ ValSpec = 'val' ValDesc*
 TySpec = 'type' TyDesc*
 EqTySpec = 'eqtype' TyDesc*
 // DatDesc and ConDesc are basically the same as DatBind and ConBind in the grammar.
-DatSpec = 'datatype' DatBind*
+DatSpec = 'datatype' DatBind* WithType?
 DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 ExSpec = 'exception' ExDesc*
 StrSpec = 'structure' StrDesc*

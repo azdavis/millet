@@ -91,3 +91,17 @@ fun incB r =
 "#,
   )
 }
+
+#[test]
+fn withtype_sig() {
+  check(
+    r#"
+signature STREAM =
+  sig
+    datatype 'a u = Nil | Cons of 'a * 'a t
+    withtype 'a t = unit -> 'a u
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported language construct: `withtype` in specifications *)
+  end
+"#,
+  );
+}

@@ -76,12 +76,12 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
     if datatype_copy(p) {
       p.exit(en, SK::DatCopyDec);
     } else {
-      dat_binds_with_type(p);
+      dat_binds(p, true);
       p.exit(en, SK::DatDec);
     }
   } else if p.at(SK::AbstypeKw) {
     p.bump();
-    dat_binds_with_type(p);
+    dat_binds(p, true);
     p.eat(SK::WithKw);
     dec(p);
     p.eat(SK::EndKw);
@@ -187,10 +187,6 @@ pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
       let _ = of_ty(p);
     });
   });
-}
-
-fn dat_binds_with_type(p: &mut Parser<'_>) {
-  dat_binds(p, true);
   if p.at(SK::WithtypeKw) {
     let en = p.enter();
     p.bump();

@@ -1,7 +1,7 @@
 use crate::common::{get_name, get_path};
-use crate::util::Cx;
+use crate::util::{Cx, ErrorKind};
 use crate::{dec, ty};
-use syntax::ast::{self, AstPtr};
+use syntax::ast::{self, AstNode as _, AstPtr};
 
 pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
   let str_dec = str_dec?;
@@ -189,6 +189,12 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
     ast::SpecOne::TySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), hir::Spec::Ty),
     ast::SpecOne::EqTySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), hir::Spec::EqTy),
     ast::SpecOne::DatSpec(spec) => {
+      if let Some(with_type) = spec.with_type() {
+        cx.err(
+          with_type.syntax().text_range(),
+          ErrorKind::Unsupported("`withtype` in specifications"),
+        );
+      }
       let specs: Vec<_> = dec::dat_binds(cx, spec.dat_binds())
         .map(hir::Spec::Datatype)
         .collect();
