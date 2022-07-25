@@ -68,9 +68,24 @@ impl Analysis {
     });
     self.source_files = res.sml;
     self.syms = res.syms;
-    // TODO report mlb errors
-    let _ = res.mlb_errors;
     std::iter::empty()
+      .chain(res.mlb_errors.into_iter().filter_map(|err| {
+        let pos_db = match input.groups_pos_dbs.get(&err.path()) {
+          Some(x) => x,
+          None => {
+            log::error!("no group pos db");
+            return None;
+          }
+        };
+        Some((
+          err.path(),
+          vec![Error {
+            range: pos_db.range(err.range())?,
+            message: err.to_string(),
+            code: 1000 + u16::from(err.to_code()),
+          }],
+        ))
+      }))
       .chain(
         self
           .source_files
@@ -195,12 +210,13 @@ pub struct Error {
   pub code: u16,
 }
 
+/// note that 1000-level error codes are for "everything before lexing", aka pretty much all non-SML
+/// file errors.
 fn source_file_errors(
   file: &mlb_statics::SourceFile,
   syms: &statics::Syms,
   lines: config::ErrorLines,
 ) -> Vec<Error> {
-  // TODO use 1000 error codes for stuff before lexing
   std::iter::empty()
     .chain(file.lex_errors.iter().filter_map(|err| {
       Some(Error {

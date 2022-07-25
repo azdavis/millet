@@ -14,6 +14,10 @@ pub struct Input {
   pub(crate) sources: PathMap<String>,
   /// A map from group paths to their (parsed) contents.
   pub(crate) groups: PathMap<mlb_hir::BasDec>,
+  /// A map from group paths to their position databases.
+  ///
+  /// Invariant: keys(groups) == keys(groups_pos_dbs)
+  pub(crate) groups_pos_dbs: PathMap<text_pos::PositionDb>,
   /// The root group id.
   pub(crate) root_group_id: PathId,
 }
@@ -251,6 +255,7 @@ where
   let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
   let mut sources = PathMap::<String>::default();
   let mut groups = PathMap::<mlb_hir::BasDec>::default();
+  let mut groups_pos_dbs = PathMap::<text_pos::PositionDb>::default();
   let mut stack = vec![((root_group_id, None), root_group_id)];
   while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
     if groups.contains_key(&group_path_id) {
@@ -365,6 +370,7 @@ where
       }
     };
     groups.insert(group_path_id, group);
+    groups_pos_dbs.insert(group_path_id, pos_db);
   }
   let graph: topo_sort::Graph<_> = groups
     .iter()
@@ -384,6 +390,7 @@ where
   Ok(Input {
     sources,
     groups,
+    groups_pos_dbs,
     root_group_id,
   })
 }

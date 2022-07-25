@@ -55,6 +55,13 @@ impl Error {
   pub fn range(&self) -> located::TextRange {
     self.name.range
   }
+
+  /// Returns the error code for this.
+  ///
+  /// NOTE, HACK: this must not conflict with other 1000-level error codes. See `analysis::input`.
+  pub fn to_code(&self) -> u8 {
+    99
+  }
 }
 
 impl fmt::Display for Error {

@@ -2,6 +2,14 @@
 
 This is (or rather, should be) a list of all the errors that Millet can emit, and what they mean. If Millet emitted an error not detailed here, that's a bug, and we would appreciate if you file an issue.
 
+## 1099
+
+An export was undefined.
+
+Millet uses either SML/NJ CM files or ML Basis files to know what SML source files to analyze, and in what order. Both of these "group" file types allow for listing "exports", which are generally the names of structures, signatures, or functors.
+
+This error will be emitted when a group file lists an export not defined by the source files.
+
 ## 2001
 
 There was an invalid character in the source file.
