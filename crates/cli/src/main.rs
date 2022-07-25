@@ -36,7 +36,7 @@ fn main() -> Result<()> {
     match analysis::input::GroupPath::new(&fs, path.clone().into_path_buf()) {
       None => (path, None),
       Some(path) => {
-        let parent = path.as_path().parent().unwrap();
+        let parent = path.as_path().parent().expect("no parent");
         (fs.canonicalize(parent)?, Some(path))
       }
     };
