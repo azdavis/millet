@@ -6,9 +6,11 @@ This is (or rather, should be) a list of all the errors that Millet can emit, an
 
 An export was undefined.
 
-Millet uses either SML/NJ CM files or ML Basis files to know what SML source files to analyze, and in what order. Both of these "group" file types allow for listing "exports", which are generally the names of structures, signatures, or functors.
+Millet uses either SML/NJ CM files or ML Basis files (aka "group" files) to know what SML source files to analyze, and in what order. Both of these group file types allow for listing "exports", which are generally the names of structures, signatures, or functors.
 
 This error will be emitted when a group file lists an export not defined by the source files.
+
+To fix, define the export in source files, or remove the export in the group file.
 
 ## 2001
 
