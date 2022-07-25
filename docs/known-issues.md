@@ -14,8 +14,8 @@ See also the [TODO][].
   - CM files are not analyzed to limit exports.
   - `$` paths are ignored.
   - The standard basis is made available to all files, regardless of whether files ask for it via CM or not.
-- ML Basis support is rudimentary.
-  - Everything except lists of files are ignored. This means `local`, `basis`, export renames, annotations, etc are all ignored.
+- ML Basis support is limited.
+  - Annotations are ignored.
   - `$` paths are ignored.
 - Every file is entirely re-analyzed upon a single file change. This can make the server slow.
 

@@ -7,9 +7,6 @@ priority is approximate. if unsure of priority, put in low.
 - get art
   - stick image in readme
   - add 'icon' field of package.json (128x128 png)
-- support multiple files better
-  - improve CM, currently rudimentary
-  - and/or impl MLB support instead
 
 ## medium
 
