@@ -66,8 +66,7 @@ impl std::error::Error for GetInputError {
       GetInputErrorKind::Mlb(e) => Some(e),
       GetInputErrorKind::NotInRoot(e) => Some(e),
       GetInputErrorKind::CouldNotParseConfig(e) => Some(e),
-      GetInputErrorKind::NoParent
-      | GetInputErrorKind::MultipleRootGroups(_, _)
+      GetInputErrorKind::MultipleRootGroups(_, _)
       | GetInputErrorKind::NoRootGroup
       | GetInputErrorKind::InvalidConfigVersion(_)
       | GetInputErrorKind::Cycle
@@ -85,7 +84,6 @@ enum GetInputErrorKind {
   Cm(cm::Error),
   Mlb(mlb_syntax::Error),
   Canonicalize(std::io::Error),
-  NoParent,
   NotInRoot(std::path::StripPrefixError),
   MultipleRootGroups(PathBuf, PathBuf),
   NoRootGroup,
@@ -105,7 +103,6 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
       GetInputErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
       GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize: {e}"),
-      GetInputErrorKind::NoParent => f.write_str("no parent"),
       GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
       GetInputErrorKind::MultipleRootGroups(a, b) => write!(
         f,
@@ -268,16 +265,9 @@ where
     };
     let contents = read_file(fs, source, group_path)?;
     let pos_db = text_pos::PositionDb::new(&contents);
-    let group_parent = match group_path.parent() {
-      Some(x) => x.to_owned(),
-      None => {
-        return Err(GetInputError {
-          source: Source::default(),
-          path: group_path.to_owned(),
-          kind: GetInputErrorKind::NoParent,
-        })
-      }
-    };
+    let group_parent = group_path
+      .parent()
+      .expect("path from get_path has no parent");
     let group = match root_group_path.kind {
       GroupPathKind::Cm => {
         let cm = cm::get(&contents).map_err(|e| GetInputError {
@@ -363,7 +353,7 @@ where
         })?;
         let mut cx = LowerCx {
           path: group_path,
-          parent: group_parent.as_path(),
+          parent: group_parent,
           pos_db: &pos_db,
           fs,
           root,
