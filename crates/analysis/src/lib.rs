@@ -4,12 +4,15 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
+mod error;
+
 pub mod input;
 
 use paths::{PathId, PathMap};
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
+pub use error::Error;
 pub use mlb_statics::StdBasis;
 pub use text_pos::{Position, Range};
 
@@ -194,17 +197,6 @@ fn priority(kind: SyntaxKind) -> u8 {
     SyntaxKind::Whitespace | SyntaxKind::BlockComment | SyntaxKind::Invalid => 0,
     _ => 1,
   }
-}
-
-/// An error.
-#[derive(Debug)]
-pub struct Error {
-  /// The range of the error.
-  pub range: Range,
-  /// The message of the error.
-  pub message: String,
-  /// The error code.
-  pub code: u16,
 }
 
 /// The max number of errors per path.
