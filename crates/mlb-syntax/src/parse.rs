@@ -137,7 +137,7 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
       p.bump();
       BasDec::Export(Namespace::Functor, names_seq(p)?)
     }
-    // TODO allow string as well
+    // TODO allow string paths as well
     Token::BarePath(path) => {
       p.bump();
       let path = PathBuf::from_slash(path);

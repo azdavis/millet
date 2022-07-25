@@ -333,7 +333,6 @@ impl<'a> fmt::Display for PatDisplay<'a> {
                 )?;
                 f.write_str("]")?;
               }
-              // TODO add another prec level?
               ListPatLen::Unknown => {
                 if needs_paren {
                   f.write_str("(")?;

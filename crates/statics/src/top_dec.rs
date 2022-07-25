@@ -354,7 +354,6 @@ fn get_where_type(
           Ty::None => {}
           // TODO side condition for sym not in T of B?
           Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), inner_env),
-          // TODO is this reachable?
           t => log::error!("reached an unexpected case for `where`: {t:?}"),
         }
       } else {
@@ -416,9 +415,13 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
         }
       }
     }
-    // sml_def(69). TODO check does not admit equality
+    // sml_def(69)
+    //
+    // TODO check does not admit equality
     hir::Spec::Ty(ty_descs) => get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into()),
-    // sml_def(70). TODO check does admit equality
+    // sml_def(70)
+    //
+    // TODO check does admit equality
     hir::Spec::EqTy(ty_descs) => get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into()),
     // sml_def(71)
     hir::Spec::Datatype(dat_desc) => {
@@ -567,7 +570,6 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
             }
             syms.push(*sym);
           }
-          // TODO is this reachable?
           t => log::error!("reached an unexpected case for `sharing`: {t:?}"),
         }
       }
@@ -702,9 +704,11 @@ fn bound_ty_name_to_path<'e>(
   false
 }
 
-// TODO for the enrich family of fns, improve error messages/range. for ranges, we might need to
-// track `hir::Idx`es either in the Env or in a separate map with exactly the same keys (names). or
-// we could add a special env only for use here that has the indices?
+// TODO improve error messages/range for the enrich family of fns.
+//
+// for ranges, we might need to track `hir::Idx`es either in the Env or in a separate map with
+// exactly the same keys (names). or we could add a special env only for use here that has the
+// indices?
 
 fn env_enrich(st: &mut St, general: &Env, specific: &Env, idx: hir::Idx) {
   for (name, specific) in specific.str_env.iter() {

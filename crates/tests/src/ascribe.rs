@@ -238,7 +238,7 @@ end
 val _ = Add.add Add.zero Add.zero
 val _ = Mul.add Mul.zero Mul.zero
 
-(* TODO not the best error message *)
+(* TODO improve error message with FQN *)
 val _ = Mul.add Mul.zero Add.zero
 (**                      ^^^^^^^^ expected t, found t *)
 "#,

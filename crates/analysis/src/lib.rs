@@ -68,7 +68,7 @@ impl Analysis {
     });
     self.source_files = res.sml;
     self.syms = res.syms;
-    // TODO mlb errors
+    // TODO report mlb errors
     let _ = res.mlb_errors;
     std::iter::empty()
       .chain(
@@ -200,8 +200,7 @@ fn source_file_errors(
   syms: &statics::Syms,
   lines: config::ErrorLines,
 ) -> Vec<Error> {
-  // TODO: 1000 error codes will be for stuff even before lexing, aka basically the
-  // `analysis::input` stage.
+  // TODO use 1000 error codes for stuff before lexing
   std::iter::empty()
     .chain(file.lex_errors.iter().filter_map(|err| {
       Some(Error {

@@ -24,9 +24,11 @@ jobs:
     if: success() && startsWith(github.ref, 'refs/tags/v')
     strategy:
       matrix:
-        # TODO: we thought arm builds were working but they weren't, they were just x86-64 builds
-        # renamed to ARM builds. so (for now) we don't claim to support ARM anymore. github runners
-        # are not ARM, so to support ARM we'd probably need to use cross.
+        # TODO get arm builds working again
+        #
+        # we thought arm builds were working but they weren't, they were just x86-64 builds renamed
+        # to ARM builds. so (for now) we don't claim to support ARM anymore. github runners are not
+        # ARM, so to support ARM we'd probably need to use cross.
         include:
           - os: windows-latest
             vscode: win32-x64

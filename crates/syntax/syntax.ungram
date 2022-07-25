@@ -294,8 +294,9 @@ TyVarArg = 'TyVar' ','?
 Lab = 'Name' | '*' | 'IntLit'
 
 // NameStarEq can be a Name, *, or =, maybe. though, depending on the circumstance, only * and not =
-// may be additionally allowed (like for patterns). TODO maybe we should have separate classes of
-// Name for alphanumeric and symbolic.
+// may be additionally allowed (like for patterns).
+//
+// TODO maybe we should have separate classes of Name for alphanumeric and symbolic.
 NameStarEq = 'Name' | '*' | '='
 
 SCon =

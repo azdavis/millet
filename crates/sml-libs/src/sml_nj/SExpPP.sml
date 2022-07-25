@@ -1,4 +1,4 @@
 structure SExpPP : sig
-  (* TODO what is TextIOPP? can't find it in the libs. *)
+  (* TODO figure out what TextIOPP is *)
   (* val output : TextIOPP.stream * SExp.value -> unit *)
 end = struct end
