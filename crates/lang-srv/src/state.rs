@@ -280,23 +280,26 @@ impl State {
     let input = match input {
       Ok(x) => x,
       Err(e) => {
-        log::error!("could not get input: {e:#}");
         for url in root.has_diagnostics.drain() {
           self.send_diagnostics(url, Vec::new());
         }
-        if e.path().is_file() {
+        let did_send_as_diagnostic = if e.path().is_file() {
           match file_url(e.path()) {
             Ok(url) => {
               root.has_diagnostics.insert(url.clone());
               self.send_diagnostics(
                 url,
                 vec![diagnostic(e.message().to_string(), e.range(), None)],
-              )
+              );
+              true
             }
-            Err(_) => self.show_error(format!("{e:#}")),
+            Err(_) => false,
           }
         } else {
-          self.show_error(format!("{e:#}"));
+          false
+        };
+        if !did_send_as_diagnostic {
+          self.show_error(format!("{}: {}", e.path().display(), e.message()));
         }
         self.root = Some(root);
         return false;
