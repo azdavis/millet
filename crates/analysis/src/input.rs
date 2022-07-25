@@ -98,9 +98,9 @@ enum GetInputErrorKind {
 impl fmt::Display for GetInputErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      GetInputErrorKind::Read(_) => write!(f, "couldn't read contents at path"),
-      GetInputErrorKind::Canonicalize(_) => write!(f, "couldn't canonicalize path"),
-      GetInputErrorKind::NotInRoot(_) => write!(f, "not in root"),
+      GetInputErrorKind::Read(e) => write!(f, "couldn't read contents at path: {e}"),
+      GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize path: {e}"),
+      GetInputErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
       GetInputErrorKind::MultipleRoots(a, b) => write!(
         f,
         "multiple root groups: {} and {}",
@@ -109,12 +109,12 @@ impl fmt::Display for GetInputErrorKind {
       ),
       GetInputErrorKind::NoRoot => f.write_str("no root group"),
       GetInputErrorKind::NotGroup => f.write_str("not a group path"),
-      GetInputErrorKind::CouldNotParseConfig(_) => write!(f, "couldn't parse config"),
+      GetInputErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
       GetInputErrorKind::InvalidConfigVersion(n) => {
         write!(f, "invalid config version: expected 1, found {n}")
       }
-      GetInputErrorKind::Cm(_) => write!(f, "couldn't process SML/NJ CM file"),
-      GetInputErrorKind::Mlb(_) => write!(f, "couldn't process ML Basis file"),
+      GetInputErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
+      GetInputErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       GetInputErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
       GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
