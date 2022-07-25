@@ -4,6 +4,13 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.2.8
+
+- Greatly improve analysis of ML Basis files.
+- Ignore all paths containing `$`, not just starting with it.
+- Add `Word16` as another word structure and overloaded type.
+- Add error codes and descriptions for more errors.
+
 ## v0.2.7
 
 - Improve docs for errors.
