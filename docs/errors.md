@@ -2,6 +2,108 @@
 
 This is (or rather, should be) a list of all the errors that Millet can emit, and what they mean. If Millet emitted an error not detailed here, that's a bug, and we would appreciate if you file an issue.
 
+## 1001
+
+Millet couldn't read a file or directory. It may not exist, or there may be insufficient permissions.
+
+To fix, check the path mentioned by Millet to see it exists and Millet may access it.
+
+## 1002
+
+Millet couldn't canonicalize a path. To "canonicalize" means to fully resolve all symlinks, `.`, `..`, etc to get the single, absolute path name.
+
+Similar to 1001, the item at the path may not exist, or there may be insufficient permissions.
+
+To fix, check the path mentioned by Millet to see it exists and Millet may access it.
+
+## 1003
+
+A path wasn't contained in the root directory.
+
+Millet requires that all the files to be analyzed be ultimately contained within a single, "root" directory. Millet thus refuses to analyze files outside this root.
+
+To fix, move the file into the root, or do not reference it.
+
+## 1004
+
+There were multiple root group files (aka SML/NJ CM or ML Basis files).
+
+Given a directory to serve as the root, Millet will look for a **single** `.cm` or `.mlb` file directly in that directory. (By "directly", we mean that Millet will not recurse into subdirectories to do this.)
+
+If exactly one such file is found, it is treated as the root group file. But if more than one was found, Millet requires that you disambiguate with a config file.
+
+To fix, either remove all but one of the root group files, or select which one you want to be the root group file with a `millet.toml` [config file][config], like this:
+
+```toml
+version = 1
+[workspace]
+root = "foo.cm"
+```
+
+## 1005
+
+Similar to 1004, but this time there was no root group file.
+
+To fix, create one.
+
+## 1006
+
+A group file manually specified was not either a `.mlb` or `.cm` file.
+
+To fix, only specify those such paths as group paths.
+
+## 1007
+
+Millet could not parse the config file as valid TOML.
+
+To fix, ensure the TOML syntax is valid, and that the config file is of the [expected format][config].
+
+## 1008
+
+The config file had an invalid version.
+
+To fix, only use version 1.
+
+## 1009
+
+There was an error when parsing a SML/NJ CM file.
+
+To fix, use only the subset of CM syntax Millet understands (which is, at time of writing, very limited).
+
+## 1010
+
+There was an error when parsing a ML Basis file.
+
+To fix, use only the subset of MLB syntax Millet understands. Some features, like string paths, are not supported.
+
+## 1011
+
+There was a cycle between files.
+
+For instance, a cycle occurs if a group file attempts to include itself. As another example, a cycle also occurs if:
+
+- A group file A attempts to include a group file B, and
+- that file B also attempts to include A.
+
+To fix, break the cycle.
+
+## 1012
+
+There was a duplicate name in a ML Basis file. For instance, `structure A and structure A` will trigger this error.
+
+To fix, use different names, or remove the `and`. See also error 5002.
+
+## 1098
+
+There was an unsupported export kind in a SML/NJ CM file.
+
+At time of writing, Millet does not support:
+
+- `funsig` exports.
+- `library(...)` exports.
+
+To fix, avoid these.
+
 ## 1099
 
 An export was undefined.
@@ -1071,3 +1173,5 @@ abstype t = T with val _ = 3 end
 At time of writing, the following constructs are not supported:
 
 - `abstype` declarations.
+
+[config]: /docs/config.md
