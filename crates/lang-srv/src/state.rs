@@ -289,7 +289,11 @@ impl State {
               root.has_diagnostics.insert(url.clone());
               self.send_diagnostics(
                 url,
-                vec![diagnostic(e.message().to_string(), e.range(), None)],
+                vec![diagnostic(
+                  e.message().to_string(),
+                  e.range(),
+                  analysis::OTHER_ERRORS + u16::from(e.to_code()),
+                )],
               );
               true
             }
@@ -409,29 +413,24 @@ fn file_url(path: &std::path::Path) -> Result<Url> {
 fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
-    .map(|err| diagnostic(err.message, Some(err.range), Some(err.code)))
+    .map(|err| diagnostic(err.message, Some(err.range), err.code))
     .collect()
 }
 
 const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
 
-fn diagnostic(
-  message: String,
-  range: Option<analysis::Range>,
-  code: Option<u16>,
-) -> lsp_types::Diagnostic {
-  let code_description =
-    code.and_then(|code| match Url::parse(&format!("{ERRORS_URL}#{}", code)) {
-      Ok(href) => Some(lsp_types::CodeDescription { href }),
-      Err(e) => {
-        log::error!("url parse failed for {message} with code {code}: {e}");
-        None
-      }
-    });
+fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp_types::Diagnostic {
+  let code_description = match Url::parse(&format!("{ERRORS_URL}#{}", code)) {
+    Ok(href) => Some(lsp_types::CodeDescription { href }),
+    Err(e) => {
+      log::error!("url parse failed for {message} with code {code}: {e}");
+      None
+    }
+  };
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(lsp_types::DiagnosticSeverity::ERROR),
-    code: code.map(|x| lsp_types::NumberOrString::Number(x.into())),
+    code: Some(lsp_types::NumberOrString::Number(code.into())),
     code_description,
     source: Some("millet".to_owned()),
     message,

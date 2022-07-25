@@ -62,7 +62,8 @@ fn run() -> bool {
       if let Some(r) = e.range() {
         print!(":{}", r.start);
       }
-      print!(": error: {}", e.message());
+      let code = analysis::OTHER_ERRORS + u16::from(e.to_code());
+      println!(": error[{}]: {}", code, e.message());
       return false;
     }
   };
