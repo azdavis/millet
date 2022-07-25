@@ -90,20 +90,6 @@ is
 }
 
 #[test]
-fn dollar_path() {
-  check(
-    r#"
-Group is
-  $/basis.cm
-  foo.sml
-  bar.cm
-"#,
-    vec![],
-    &[("foo.sml", PathKind::Sml), ("bar.cm", PathKind::Cm)],
-  );
-}
-
-#[test]
 fn library_export() {
   check(
     r#"

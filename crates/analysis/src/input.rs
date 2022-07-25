@@ -294,6 +294,7 @@ where
         let paths = cm
           .paths
           .into_iter()
+          .filter(|x| !path_is_dollar(x.val.as_path()))
           .map(|parsed_path| {
             let range = pos_db.range(parsed_path.range);
             let source = Source {
@@ -400,6 +401,11 @@ where
     groups,
     root_group_id,
   })
+}
+
+/// NOTE: for now we just ignore dollar paths, since we include the full std basis
+fn path_is_dollar(path: &Path) -> bool {
+  path.as_os_str().to_string_lossy().contains('$')
 }
 
 #[derive(Debug, Default, Clone)]
@@ -511,6 +517,11 @@ where
       mlb_hir::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(parsed_path) => {
+      if path_is_dollar(parsed_path.val.as_path()) {
+        // HACK: use this as an empty dec instead of returning Result<Option<BasDec> and having this
+        // be the only None case.
+        return Ok(mlb_hir::BasDec::seq(vec![]));
+      }
       let range = cx.pos_db.range(parsed_path.range);
       let source = Source {
         path: Some(cx.path.to_owned()),
