@@ -129,6 +129,7 @@ fn word_overload() {
     r#"
 val _ = 0w0: Word.word
 val _ = 0w0: Word8.word
+val _ = 0w0: Word16.word
 val _ = 0w0: Word31.word
 val _ = 0w0: Word32.word
 val _ = 0w0: Word64.word
