@@ -22,15 +22,11 @@ fn all() {
       Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(s))) => {
         if s.as_ref() == SML {
           inside = true;
-        } else {
-          panic!("non-{SML} code block: {s}");
         }
       }
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(s))) => {
         if s.as_ref() == SML {
           inside = false;
-        } else {
-          panic!("non-{SML} code block: {s}");
         }
       }
       Event::Text(s) => {
