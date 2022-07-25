@@ -16,6 +16,9 @@ pub use error::Error;
 pub use mlb_statics::StdBasis;
 pub use text_pos::{Position, Range};
 
+/// The error number series for "other" errors (i.e. errors NOT from actually analyzing SML files.)
+pub const OTHER_ERRORS: u16 = 1000;
+
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
@@ -82,7 +85,7 @@ impl Analysis {
           vec![Error {
             range: pos_db.range(err.range())?,
             message: err.to_string(),
-            code: 1000 + u16::from(err.to_code()),
+            code: OTHER_ERRORS + u16::from(err.to_code()),
           }],
         ))
       }))
@@ -202,8 +205,8 @@ fn priority(kind: SyntaxKind) -> u8 {
 /// The max number of errors per path.
 const MAX_ERRORS_PER_PATH: usize = 20;
 
-/// note that 1000-level error codes are for "everything before lexing", aka pretty much all non-SML
-/// file errors.
+/// note that this emits no [`OTHER_ERRORS`] errors, since those are for "everything before lexing",
+/// aka pretty much all non-SML file errors.
 fn source_file_errors(
   file: &mlb_statics::SourceFile,
   syms: &statics::Syms,
