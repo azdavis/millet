@@ -77,31 +77,6 @@ impl GetInputError {
   }
 }
 
-impl fmt::Display for GetInputError {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}: {}", self.path.display(), self.kind)
-  }
-}
-
-impl std::error::Error for GetInputError {
-  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-    match &self.kind {
-      GetInputErrorKind::Read(e) | GetInputErrorKind::Canonicalize(e) => Some(e),
-      GetInputErrorKind::Cm(e) => Some(e),
-      GetInputErrorKind::Mlb(e) => Some(e),
-      GetInputErrorKind::NotInRoot(e) => Some(e),
-      GetInputErrorKind::CouldNotParseConfig(e) => Some(e),
-      GetInputErrorKind::MultipleRoots(_, _)
-      | GetInputErrorKind::NoRoot
-      | GetInputErrorKind::InvalidConfigVersion(_)
-      | GetInputErrorKind::Cycle
-      | GetInputErrorKind::UnsupportedExport
-      | GetInputErrorKind::NotGroup
-      | GetInputErrorKind::Duplicate(_) => None,
-    }
-  }
-}
-
 #[derive(Debug)]
 enum GetInputErrorKind {
   Read(std::io::Error),

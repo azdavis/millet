@@ -51,8 +51,6 @@ impl fmt::Display for Error {
   }
 }
 
-impl std::error::Error for Error {}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Token<'a> {
   Structure,
