@@ -571,9 +571,13 @@ val x = #[1, 2]
 
 At time of writing, the following constructs are not supported:
 
-- Vector expressions.
-- Vector patterns.
-- Do declarations.
+| Name                         | Example                   |
+| ---------------------------- | ------------------------- |
+| Vector expressions           | `val _ = #[1, 2]`         |
+| Vector patterns              | `fn #[1, 2] => 3`         |
+| Do declarations              | `do print "hello"`        |
+| Expression row punning       | `val _ = {a, b}`          |
+| `withtype` in specifications | (same as in declarations) |
 
 Note that these constructs are not defined by the Definition, but are somewhat common extensions in implementations like SML/NJ and MLton.
 
