@@ -288,7 +288,7 @@ impl State {
         for url in root.has_diagnostics.drain() {
           self.send_diagnostics(url, Vec::new());
         }
-        if e.path().exists() {
+        if e.path().is_file() {
           match file_url(e.path()) {
             Ok(url) => {
               root.has_diagnostics.insert(url.clone());
