@@ -291,6 +291,12 @@ impl Cx {
     Some(idx)
   }
 
+  pub(crate) fn pat_in_dec(&mut self, val: hir::Pat, ptr: AstPtr<ast::DecOne>) -> hir::PatIdx {
+    let idx = self.arenas.pat.alloc(val);
+    self.ptrs.insert(idx, ptr);
+    Some(idx)
+  }
+
   pub(crate) fn ty(&mut self, val: hir::Ty, ptr: AstPtr<ast::Ty>) -> hir::TyIdx {
     let idx = self.arenas.ty.alloc(val);
     self.ptrs.insert(idx, ptr);

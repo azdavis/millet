@@ -125,6 +125,10 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
     p.bump();
     names_star_eq(p, |p, name| p.remove_infix(name));
     p.exit(en, SK::NonfixDec);
+  } else if p.at(SK::DoKw) {
+    p.bump();
+    exp(p);
+    p.exit(en, SK::DoDec);
   } else {
     p.abandon(en);
     return false;

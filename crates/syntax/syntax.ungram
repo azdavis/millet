@@ -183,6 +183,7 @@ DecOne =
 | InfixDec
 | InfixrDec
 | NonfixDec
+| DoDec
 
 ValDec = 'val' TyVarSeq ValBind*
 FunDec = 'fun' TyVarSeq FunBind*
@@ -196,6 +197,7 @@ OpenDec = 'open' Path*
 InfixDec = 'infix' 'IntLit'? NameStarEq*
 InfixrDec = 'infixr' 'IntLit'? NameStarEq*
 NonfixDec = 'nonfix' NameStarEq*
+DoDec = 'do' Exp
 
 ValBind = 'rec'? Pat '=' Exp 'and'?
 FunBind = FunBindCase* 'and'?

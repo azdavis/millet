@@ -549,6 +549,7 @@ At time of writing, the following constructs are not supported:
 
 - Vector expressions.
 - Vector patterns.
+- Do declarations.
 
 Note that these constructs are not defined by the Definition, but are somewhat common extensions in implementations like SML/NJ and MLton.
 

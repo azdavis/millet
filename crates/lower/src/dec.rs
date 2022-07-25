@@ -183,6 +183,21 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
     ast::DecOne::InfixDec(_) | ast::DecOne::InfixrDec(_) | ast::DecOne::NonfixDec(_) => {
       return None
     }
+    ast::DecOne::DoDec(ref inner) => {
+      // emit an error, but lower anyway.
+      cx.err(
+        dec.syntax().text_range(),
+        ErrorKind::Unsupported("`do` declarations"),
+      );
+      hir::Dec::Val(
+        Vec::new(),
+        vec![hir::ValBind {
+          rec: false,
+          pat: cx.pat_in_dec(pat::tuple([]), ptr.clone()),
+          exp: exp::get(cx, inner.exp()),
+        }],
+      )
+    }
   };
   cx.dec_one(ret, ptr)
 }
