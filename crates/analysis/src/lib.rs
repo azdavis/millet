@@ -13,9 +13,6 @@ use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 pub use mlb_statics::StdBasis;
 pub use text_pos::{Position, Range};
 
-/// The max number of errors per path.
-pub const MAX_ERRORS_PER_PATH: usize = 20;
-
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
@@ -209,6 +206,9 @@ pub struct Error {
   /// The error code.
   pub code: u16,
 }
+
+/// The max number of errors per path.
+const MAX_ERRORS_PER_PATH: usize = 20;
 
 /// note that 1000-level error codes are for "everything before lexing", aka pretty much all non-SML
 /// file errors.
