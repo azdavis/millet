@@ -58,22 +58,21 @@ impl Error {
   /// Returns the code for this.
   pub fn to_code(&self) -> u8 {
     match self.kind {
-      ErrorKind::Unsupported(_) => 1,
-      ErrorKind::FunBindMismatchedName(_, _) => 2,
-      ErrorKind::FunBindWrongNumPats(_, _) => 3,
-      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 4,
-      ErrorKind::InvalidRealLit(_) => 5,
-      ErrorKind::InvalidNumLab(_) => 6,
-      ErrorKind::ZeroNumLab => 7,
-      ErrorKind::MultipleRestPatRows => 8,
-      ErrorKind::RestPatRowNotLast => 9,
+      ErrorKind::FunBindMismatchedName(_, _) => 1,
+      ErrorKind::FunBindWrongNumPats(_, _) => 2,
+      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 3,
+      ErrorKind::InvalidRealLit(_) => 4,
+      ErrorKind::InvalidNumLab(_) => 5,
+      ErrorKind::ZeroNumLab => 6,
+      ErrorKind::MultipleRestPatRows => 7,
+      ErrorKind::RestPatRowNotLast => 8,
+      ErrorKind::Unsupported(_) => 99,
     }
   }
 }
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
-  Unsupported(&'static str),
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
   InvalidIntLit(std::num::ParseIntError),
@@ -83,12 +82,13 @@ pub(crate) enum ErrorKind {
   ZeroNumLab,
   MultipleRestPatRows,
   RestPatRowNotLast,
+  /// must be last
+  Unsupported(&'static str),
 }
 
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
         write!(
           f,
@@ -105,6 +105,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
       ErrorKind::MultipleRestPatRows => f.write_str("cannot have multiple `...`"),
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
+      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
 }

@@ -35,41 +35,40 @@ impl Error {
   /// Return the code for this.
   pub fn to_code(&self) -> u8 {
     match self.kind {
-      ErrorKind::Unsupported(_) => 1,
-      ErrorKind::Undefined(_, _) => 2,
-      ErrorKind::Duplicate(_, _) => 3,
-      ErrorKind::Missing(_, _) => 4,
-      ErrorKind::Extra(_, _) => 5,
-      ErrorKind::Circularity(_, _) => 6,
-      ErrorKind::MismatchedTypes(_, _) => 7,
-      ErrorKind::AppLhsNotFn(_) => 8,
-      ErrorKind::DuplicateLab(_) => 9,
-      ErrorKind::RealPat => 10,
-      ErrorKind::UnreachablePattern => 11,
-      ErrorKind::NonExhaustiveCase(_) => 12,
-      ErrorKind::NonExhaustiveBinding(_) => 13,
-      ErrorKind::PatValIdStatus => 14,
-      ErrorKind::ConPatMustNotHaveArg => 15,
-      ErrorKind::ConPatMustHaveArg => 16,
-      ErrorKind::InvalidAsPatName(_) => 17,
-      ErrorKind::TyNameEscape(_) => 18,
-      ErrorKind::ValRecExpNotFn => 19,
-      ErrorKind::WrongNumTyArgs(_, _) => 20,
-      ErrorKind::ExnCopyNotExnIdStatus => 21,
-      ErrorKind::InvalidRebindName(_) => 22,
-      ErrorKind::WrongIdStatus(_) => 23,
-      ErrorKind::UnresolvedRecordTy => 24,
-      ErrorKind::OrPatNotSameBindings(_) => 25,
-      ErrorKind::DecNotAllowedHere => 26,
-      ErrorKind::ExpHole(_) => 27,
-      ErrorKind::TyHole => 28,
+      ErrorKind::Undefined(_, _) => 1,
+      ErrorKind::Duplicate(_, _) => 2,
+      ErrorKind::Missing(_, _) => 3,
+      ErrorKind::Extra(_, _) => 4,
+      ErrorKind::Circularity(_, _) => 5,
+      ErrorKind::MismatchedTypes(_, _) => 6,
+      ErrorKind::AppLhsNotFn(_) => 7,
+      ErrorKind::DuplicateLab(_) => 8,
+      ErrorKind::RealPat => 9,
+      ErrorKind::UnreachablePattern => 10,
+      ErrorKind::NonExhaustiveCase(_) => 11,
+      ErrorKind::NonExhaustiveBinding(_) => 12,
+      ErrorKind::PatValIdStatus => 13,
+      ErrorKind::ConPatMustNotHaveArg => 14,
+      ErrorKind::ConPatMustHaveArg => 15,
+      ErrorKind::InvalidAsPatName(_) => 16,
+      ErrorKind::TyNameEscape(_) => 17,
+      ErrorKind::ValRecExpNotFn => 18,
+      ErrorKind::WrongNumTyArgs(_, _) => 19,
+      ErrorKind::ExnCopyNotExnIdStatus => 20,
+      ErrorKind::InvalidRebindName(_) => 21,
+      ErrorKind::WrongIdStatus(_) => 22,
+      ErrorKind::UnresolvedRecordTy => 23,
+      ErrorKind::OrPatNotSameBindings(_) => 24,
+      ErrorKind::DecNotAllowedHere => 25,
+      ErrorKind::ExpHole(_) => 26,
+      ErrorKind::TyHole => 27,
+      ErrorKind::Unsupported(_) => 99,
     }
   }
 }
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
-  Unsupported(&'static str),
   Undefined(Item, hir::Name),
   Duplicate(Item, hir::Name),
   Missing(Item, hir::Name),
@@ -97,6 +96,8 @@ pub(crate) enum ErrorKind {
   DecNotAllowedHere,
   ExpHole(Ty),
   TyHole,
+  /// must be last
+  Unsupported(&'static str),
 }
 
 #[derive(Debug)]

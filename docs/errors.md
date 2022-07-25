@@ -309,24 +309,6 @@ One bit of advice is this: Since the parser tries to continue parsing a file eve
 
 ## 4001
 
-There was an occurrence of an unsupported SML construct.
-
-```sml
-(* error *)
-val x = #[1, 2]
-```
-
-At time of writing, the following constructs are not supported:
-
-- Vector expressions.
-- Vector patterns.
-
-Note that these constructs are not defined by the Definition, but are somewhat common extensions in implementations like SML/NJ and MLton.
-
-To fix, avoid such constructs.
-
-## 4002
-
 In a `fun` binding with multiple cases, the cases did not all name the same function.
 
 ```sml
@@ -343,7 +325,7 @@ fun f 1 = 2
   | f _ = 3
 ```
 
-## 4003
+## 4002
 
 In a `fun` binding with multiple cases, the cases did not all have the same number of patterns.
 
@@ -361,7 +343,7 @@ fun f 1 = 2
   | f _ = 3
 ```
 
-## 4004
+## 4003
 
 An integer (`int` or `word`) literal was invalid. This can happen when it is too large.
 
@@ -377,13 +359,13 @@ To fix, use smaller literals.
 val _ = 0w123456789
 ```
 
-## 4005
+## 4004
 
 A real literal was invalid.
 
 NOTE: It's not known whether this is currently emitted. It may be that the lexer/parser/lowering setup means that this is handled by earlier stages. However, we should probably emit this if a real literal was too large to be accurately represented or something of that ilk.
 
-## 4006
+## 4005
 
 A numeric label (as for a record) was invalid. This can happen when it was negative, or too large.
 
@@ -399,7 +381,7 @@ To fix, use small positive numbers for labels.
 val _ = { 3 = "hi" }
 ```
 
-## 4007
+## 4006
 
 A numeric label (as for a record) was zero. Numeric labels must not be zero.
 
@@ -410,7 +392,7 @@ val _ = { 0 = "hi" }
 
 To fix, do not use zero as a numeric label.
 
-## 4008
+## 4007
 
 There were multiple `...` rest pattern rows.
 
@@ -426,7 +408,7 @@ To fix, only provide one such row.
 val {a, ...} = {a = 1, b = "hi"}
 ```
 
-## 4009
+## 4008
 
 There was a non-`...` pattern row after a `...` pattern row.
 
@@ -442,20 +424,25 @@ To fix, put the `...` pattern row last.
 val {b, ...} = {a = 1, b = "hi"}
 ```
 
-## 5001
+## 4099
 
 There was an occurrence of an unsupported SML construct.
 
 ```sml
 (* error *)
-abstype t = T with val _ = 3 end
+val x = #[1, 2]
 ```
 
 At time of writing, the following constructs are not supported:
 
-- `abstype` declarations.
+- Vector expressions.
+- Vector patterns.
 
-## 5002
+Note that these constructs are not defined by the Definition, but are somewhat common extensions in implementations like SML/NJ and MLton.
+
+To fix, avoid such constructs.
+
+## 5001
 
 A name was referenced, but it was not defined in that scope.
 
@@ -497,7 +484,7 @@ end
 val _ = Str.bar
 ```
 
-## 5003
+## 5002
 
 There was a duplicate of something.
 
@@ -524,7 +511,7 @@ val x = 3
 val x = 4
 ```
 
-## 5004
+## 5003
 
 Something was requested by a signature, but not present in the structure that is attempting to ascribe to that signature.
 
@@ -539,7 +526,7 @@ structure Str : SIG = struct end
 
 To fix, provide definitions for the missing items.
 
-## 5005
+## 5004
 
 Something was not requested by a signature, but was present in the structure that is attempting to ascribe to that signature.
 
@@ -558,7 +545,7 @@ end
 
 To fix, ensure only the requested items are defined.
 
-## 5006
+## 5005
 
 Typechecking failed, because of "circularity", which means we attempted to a set a type variable to be equal to a type containing that type variable itself.
 
@@ -586,7 +573,7 @@ We now have
 
 Substituting, we have `?a = ?a -> ?b`. That is, we are setting a type variable, in this case `?a`, to a type, in this case `?a -> ?b`, that contains itself. This is not allowed.
 
-## 5007
+## 5006
 
 Two types that were supposed to be "the same" were not.
 
@@ -622,7 +609,7 @@ When using overloaded functions, there must exist a single actual type being use
 
 Note also that Millet will report a type of `<none>` for invalid expressions, like variables that aren't defined.
 
-## 5008
+## 5007
 
 A function application expression was encountered, but the function expression did not have a function type.
 
@@ -637,7 +624,7 @@ This error is a special case of 5007, specialized for the common case of functio
 
 To fix, only apply functions to arguments.
 
-## 5009
+## 5008
 
 There was a duplicate label.
 
@@ -648,7 +635,7 @@ val _ = { a = 1, a = 2 }
 
 To fix, use differently named labels, or remove one of the record rows.
 
-## 5010
+## 5009
 
 A real literal was used as a pattern.
 
@@ -665,7 +652,7 @@ To fix, consider checking that the given real is within some epsilon value of th
 
 Usage of `Real.==` to check for equality between reals is discouraged, due to limitations around representing floating-point (aka, real) numbers on most architectures.
 
-## 5011
+## 5010
 
 A pattern in a `case` expression or similar (like `handle`) was not reachable.
 
@@ -685,7 +672,7 @@ To fix, try:
 - Making the higher pattern more specific, so the lower pattern may be reached.
 - Removing the lower pattern.
 
-## 5012
+## 5011
 
 A `case` expression (or similar) was not exhaustive.
 
@@ -709,7 +696,7 @@ fun f (x : d) : int =
 
 To fix, add patterns matching the missing cases. The error message reports examples of patterns not matched.
 
-## 5013
+## 5012
 
 This is effectively the same error as 5012, but it emitted for singular bindings, like with `val`.
 
@@ -734,7 +721,7 @@ The pattern in a `val` binding ought to be "irrefutable", to wit, it alone ought
 
 To fix, use a `case` or similar instead.
 
-## 5014
+## 5013
 
 A pattern match treated a value as if it were a pattern.
 
@@ -762,7 +749,7 @@ fun f y =
   | _ => 6
 ```
 
-## 5015
+## 5014
 
 A constructor had an argument in a pattern match, but it was defined to have no argument.
 
@@ -778,7 +765,7 @@ fun f x =
 
 To fix, define the constructor to have an argument, or remove the argument from the pattern.
 
-## 5016
+## 5015
 
 A constructor had no argument in a pattern match, but it was defined to have an argument.
 
@@ -794,7 +781,7 @@ fun f x =
 
 To fix, define the constructor to not have an argument, or add an argument to the pattern.
 
-## 5017
+## 5016
 
 An invalid name was used as the left hand side of an `as` pattern.
 
@@ -811,7 +798,7 @@ fun f x =
 
 To fix, use a valid name.
 
-## 5018
+## 5017
 
 A type name escapes the scope in which it is valid.
 
@@ -829,7 +816,7 @@ val x =
 
 To fix, extend the scope of the type, or do not allow its values to escape its scope.
 
-## 5019
+## 5018
 
 In a `val rec` binding, the expression must be a literal `fn` expression.
 
@@ -855,7 +842,7 @@ val rec add3 = mkAdd3 ()
 
 To fix, ensure the expression is a literal `fn` expression.
 
-## 5020
+## 5019
 
 The wrong number of type arguments was passed to a type-level function.
 
@@ -874,7 +861,7 @@ val xs: list = []
 
 To fix, pass the correct number of type arguments.
 
-## 5021
+## 5020
 
 In an exception copy declaration, the right hand side was not an exception.
 
@@ -886,7 +873,7 @@ exception Nope = x
 
 To fix, only use exceptions on the right hand side.
 
-## 5022
+## 5021
 
 Certain names in certain namespaces may not be rebound. These names are:
 
@@ -907,7 +894,7 @@ val false = 123
 
 To fix, do not attempt to rebind these names.
 
-## 5023
+## 5022
 
 Names have "statuses", which can be one of:
 
@@ -941,7 +928,7 @@ end = struct
 end
 ```
 
-## 5024
+## 5023
 
 A record type couldn't be fully resolved, due to the use of a `...` pattern row.
 
@@ -974,7 +961,7 @@ Again, the fix is usually to add a type annotation. Though, an alternative would
 fun addFooBar {foo, bar} = foo + bar
 ```
 
-## 5025
+## 5024
 
 Not all or pattern alternatives bound the same names.
 
@@ -1000,7 +987,7 @@ fun toInt (x : t) : int =
 
 Note that or patterns are not permitted by the Definition, though they are a common extension, implemented by SML/NJ and MLton.
 
-## 5026
+## 5025
 
 A `signature` or `functor` declaration occurred in a disallowed position, like inside `struct ... end`.
 
@@ -1034,7 +1021,7 @@ in
 end
 ```
 
-## 5027
+## 5026
 
 There was an expression hole, `_`.
 
@@ -1049,7 +1036,7 @@ The error message contains information about the type of the hole given the surr
 
 To fix, replace the hole with a real expression of the correct type.
 
-## 5028
+## 5027
 
 There was a type hole, `_`.
 
@@ -1061,3 +1048,16 @@ type thing = string * _ list * int
 ```
 
 To fix, replace the hole with a real type.
+
+## 5099
+
+There was an occurrence of an unsupported SML construct.
+
+```sml
+(* error *)
+abstype t = T with val _ = 3 end
+```
+
+At time of writing, the following constructs are not supported:
+
+- `abstype` declarations.
