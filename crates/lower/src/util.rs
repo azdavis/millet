@@ -105,9 +105,9 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidRealLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidNumLab(e) => write!(f, "invalid numeric label: {e}"),
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
-      ErrorKind::MultipleRestPatRows => f.write_str("cannot have multiple `...`"),
+      ErrorKind::MultipleRestPatRows => f.write_str("multiple `...`"),
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
-      ErrorKind::PrecedingBar => f.write_str("a preceding `|` is not allowed"),
+      ErrorKind::PrecedingBar => f.write_str("preceding `|`"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

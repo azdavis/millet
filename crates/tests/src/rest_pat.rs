@@ -5,7 +5,7 @@ fn multi_rest() {
   check(
     r#"
 val _ = fn {a, ..., ...} => 3
-(**        ^^^^^^^^^^^^^ cannot have multiple `...` *)
+(**        ^^^^^^^^^^^^^ multiple `...` *)
 "#,
   );
 }
