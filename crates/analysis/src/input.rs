@@ -7,9 +7,6 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use text_pos::Range;
 
-/// TODO rm/set to true
-pub(crate) const STRICT_EXPORTS: bool = false;
-
 /// The input to analysis.
 #[derive(Debug)]
 pub struct Input {
@@ -321,34 +318,32 @@ where
         let exports = cm
           .exports
           .into_iter()
-          .filter_map(|export| match export {
+          .map(|export| match export {
             cm::Export::Regular(ns, name) => {
               let ns = match ns.val {
                 cm::Namespace::Structure => mlb_hir::Namespace::Structure,
                 cm::Namespace::Signature => mlb_hir::Namespace::Signature,
                 cm::Namespace::Functor => mlb_hir::Namespace::Functor,
                 cm::Namespace::FunSig => {
-                  return Some(Err(GetInputError {
+                  return Err(GetInputError {
                     source: Source {
                       path: None,
                       range: pos_db.range(ns.range),
                     },
                     path: group_path.to_owned(),
                     kind: GetInputErrorKind::UnsupportedExport,
-                  }))
+                  })
                 }
               };
-              Some(Ok(mlb_hir::BasDec::Export(ns, name.clone(), name)))
+              Ok(mlb_hir::BasDec::Export(ns, name.clone(), name))
             }
-            cm::Export::Library(lib) => STRICT_EXPORTS.then(|| {
-              Err(GetInputError {
-                source: Source {
-                  path: None,
-                  range: pos_db.range(lib.range),
-                },
-                path: group_path.to_owned(),
-                kind: GetInputErrorKind::UnsupportedExport,
-              })
+            cm::Export::Library(lib) => Err(GetInputError {
+              source: Source {
+                path: None,
+                range: pos_db.range(lib.range),
+              },
+              path: group_path.to_owned(),
+              kind: GetInputErrorKind::UnsupportedExport,
             }),
           })
           .collect::<Result<Vec<_>>>()?;
