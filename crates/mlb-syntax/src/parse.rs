@@ -12,7 +12,11 @@ pub(crate) fn get(tokens: &[Located<Token<'_>>]) -> Result<BasDec> {
     idx: 0,
     last_range: TextRange::default(),
   };
-  bas_dec(&mut p)
+  let ret = bas_dec(&mut p)?;
+  match p.cur_tok() {
+    None => Ok(ret),
+    Some(tok) => Err(Error::new(ErrorKind::ExpectedBasDec, tok.range)),
+  }
 }
 
 struct Parser<'a> {

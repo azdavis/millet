@@ -4,18 +4,18 @@ use crate::check::ROOT;
 
 #[test]
 fn arbitrary_root_group() {
-  check_input(&["foo.cm"], None).unwrap();
+  check_empty_cm(&["foo.cm"], None).unwrap();
 }
 
 #[test]
 fn no_root_group() {
-  let e = check_input(&[], None).unwrap_err();
+  let e = check_empty_cm(&[], None).unwrap_err();
   assert!(e.to_string().contains("no root group"));
 }
 
 #[test]
 fn multiple_root_groups_err() {
-  let e = check_input(&["foo.cm", "bar.cm"], None).unwrap_err();
+  let e = check_empty_cm(&["foo.cm", "bar.cm"], None).unwrap_err();
   assert!(e.to_string().contains("multiple root groups"));
 }
 
@@ -27,17 +27,17 @@ version = 1
 # prefer foo over bar
 root = "foo.cm"
 "#;
-  check_input(&["foo.cm", "bar.cm"], Some(config)).unwrap();
+  check_empty_cm(&["foo.cm", "bar.cm"], Some(config)).unwrap();
 }
 
 #[test]
 fn no_root_group_in_config_ok() {
-  check_input(&["sources.cm"], Some("version = 1")).unwrap();
+  check_empty_cm(&["sources.cm"], Some("version = 1")).unwrap();
 }
 
 #[test]
 fn config_invalid_version() {
-  let e = check_input(&["sources.cm"], Some("version = 123")).unwrap_err();
+  let e = check_empty_cm(&["sources.cm"], Some("version = 123")).unwrap_err();
   assert!(e.to_string().contains("invalid config version"));
 }
 
@@ -48,18 +48,18 @@ version = 1
 [workspace]
 root = "nope.cm"
 "#;
-  check_input(&["foo.cm"], Some(config)).unwrap_err();
+  check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
 }
 
 #[test]
 fn config_parse_err() {
-  let e = check_input(&["foo.cm"], Some("岡部倫太郎")).unwrap_err();
+  let e = check_empty_cm(&["foo.cm"], Some("岡部倫太郎")).unwrap_err();
   assert!(e.to_string().contains("couldn't parse config"));
 }
 
 #[test]
 fn cycle_1() {
-  let e = check_input_with_contents([("foo.cm", "Group is foo.cm")], None).unwrap_err();
+  let e = check_input([("foo.cm", "Group is foo.cm")], None).unwrap_err();
   assert!(e.to_string().contains("there is a cycle"));
 }
 
@@ -71,7 +71,7 @@ version = 1
 [workspace]
 root = "foo.cm"
   "#;
-  let e = check_input_with_contents(inp, Some(config)).unwrap_err();
+  let e = check_input(inp, Some(config)).unwrap_err();
   assert!(e.to_string().contains("there is a cycle"));
 }
 
@@ -82,18 +82,18 @@ version = 1
 [workspace]
 root = "nope.txt"
 "#;
-  let e = check_input(&["foo.cm"], Some(config)).unwrap_err();
+  let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
   assert!(e.to_string().contains("not a group path"));
 }
 
 #[test]
 fn mlb() {
-  check_input(&["foo.mlb"], None).unwrap();
+  check_input([("foo.mlb", "")], None).unwrap();
 }
 
 #[test]
 fn mlb_cm_err() {
-  let e = check_input(&["foo.mlb", "foo.cm"], None).unwrap_err();
+  let e = check_empty_cm(&["foo.mlb", "foo.cm"], None).unwrap_err();
   assert!(e.to_string().contains("multiple root groups"));
 }
 
@@ -104,7 +104,7 @@ version = 1
 [workspace]
 root = "foo.cm"
 "#;
-  check_input(&["foo.mlb", "foo.cm"], Some(config)).unwrap();
+  check_input([("foo.mlb", ""), ("foo.cm", "Group is")], Some(config)).unwrap();
 }
 
 #[test]
@@ -114,17 +114,17 @@ version = 1
 [workspace]
 root = "foo.mlb"
 "#;
-  check_input(&["foo.mlb", "foo.cm"], Some(config)).unwrap();
+  check_input([("foo.mlb", ""), ("foo.cm", "Group is")], Some(config)).unwrap();
 }
 
-fn check_input(
+fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,
 ) -> Result<analysis::input::Input, analysis::input::GetInputError> {
-  check_input_with_contents(names.iter().map(|&x| (x, "Group is")), config)
+  check_input(names.iter().map(|&x| (x, "Group is")), config)
 }
 
-fn check_input_with_contents<'a, I>(
+fn check_input<'a, I>(
   groups: I,
   config: Option<&str>,
 ) -> Result<analysis::input::Input, analysis::input::GetInputError>

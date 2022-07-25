@@ -12,6 +12,7 @@ pub(crate) enum ErrorKind {
   UnclosedComment,
   Expected(Token<'static>),
   ExpectedBasExp,
+  ExpectedBasDec,
   ExpectedName,
   InvalidPath,
 }
@@ -38,6 +39,7 @@ impl fmt::Display for Error {
       ErrorKind::UnclosedComment => f.write_str("unclosed block comment"),
       ErrorKind::Expected(tok) => write!(f, "expected `{tok}`"),
       ErrorKind::ExpectedBasExp => f.write_str("expected a basis expression"),
+      ErrorKind::ExpectedBasDec => f.write_str("expected a basis declaration"),
       ErrorKind::ExpectedName => f.write_str("expected a name"),
       ErrorKind::InvalidPath => f.write_str("invalid path"),
     }
