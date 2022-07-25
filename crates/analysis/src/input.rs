@@ -30,6 +30,10 @@ impl Input {
 }
 
 /// An error when getting input.
+///
+/// TODO make this un-pub and turn into [`crate::error::Error`]? the problem is that _sometimes_, a
+/// `GetInputError` is for a file which doesn't exist (or a non-file), so we can't always show these
+/// in the editor inline.
 #[derive(Debug)]
 pub struct GetInputError {
   source: Source,
