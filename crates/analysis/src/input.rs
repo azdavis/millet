@@ -52,6 +52,11 @@ impl GetInputError {
   pub fn message(&self) -> impl fmt::Display + '_ {
     &self.kind
   }
+
+  /// Returns the error code for this.
+  pub fn to_code(&self) -> u8 {
+    todo!()
+  }
 }
 
 impl fmt::Display for GetInputError {
@@ -70,8 +75,8 @@ impl std::error::Error for GetInputError {
       GetInputErrorKind::Mlb(e) => Some(e),
       GetInputErrorKind::NotInRoot(e) => Some(e),
       GetInputErrorKind::CouldNotParseConfig(e) => Some(e),
-      GetInputErrorKind::MultipleRootGroups(_, _)
-      | GetInputErrorKind::NoRootGroup
+      GetInputErrorKind::MultipleRoots(_, _)
+      | GetInputErrorKind::NoRoot
       | GetInputErrorKind::InvalidConfigVersion(_)
       | GetInputErrorKind::Cycle
       | GetInputErrorKind::UnsupportedExport
@@ -85,17 +90,17 @@ impl std::error::Error for GetInputError {
 enum GetInputErrorKind {
   ReadDir(std::io::Error),
   ReadFile(std::io::Error),
-  Cm(cm::Error),
-  Mlb(mlb_syntax::Error),
   Canonicalize(std::io::Error),
   NotInRoot(std::path::StripPrefixError),
-  MultipleRootGroups(PathBuf, PathBuf),
-  NoRootGroup,
+  MultipleRoots(PathBuf, PathBuf),
+  NoRoot,
+  NotGroup,
   CouldNotParseConfig(toml::de::Error),
   InvalidConfigVersion(u16),
+  Cm(cm::Error),
+  Mlb(mlb_syntax::Error),
   Cycle,
   UnsupportedExport,
-  NotGroup,
   Duplicate(hir::Name),
 }
 
@@ -104,24 +109,24 @@ impl fmt::Display for GetInputErrorKind {
     match self {
       GetInputErrorKind::ReadDir(_) => write!(f, "couldn't read directory"),
       GetInputErrorKind::ReadFile(_) => write!(f, "couldn't read file"),
-      GetInputErrorKind::Cm(_) => write!(f, "couldn't process SML/NJ CM file"),
-      GetInputErrorKind::Mlb(_) => write!(f, "couldn't process ML Basis file"),
       GetInputErrorKind::Canonicalize(_) => write!(f, "couldn't canonicalize path"),
       GetInputErrorKind::NotInRoot(_) => write!(f, "not in root"),
-      GetInputErrorKind::MultipleRootGroups(a, b) => write!(
+      GetInputErrorKind::MultipleRoots(a, b) => write!(
         f,
         "multiple root groups: {} and {}",
         a.display(),
         b.display()
       ),
-      GetInputErrorKind::NoRootGroup => f.write_str("no root group"),
+      GetInputErrorKind::NoRoot => f.write_str("no root group"),
+      GetInputErrorKind::NotGroup => f.write_str("not a group path"),
       GetInputErrorKind::CouldNotParseConfig(_) => write!(f, "couldn't parse config"),
       GetInputErrorKind::InvalidConfigVersion(n) => {
         write!(f, "invalid config version: expected 1, found {n}")
       }
+      GetInputErrorKind::Cm(_) => write!(f, "couldn't process SML/NJ CM file"),
+      GetInputErrorKind::Mlb(_) => write!(f, "couldn't process ML Basis file"),
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
-      GetInputErrorKind::NotGroup => f.write_str("not a group path"),
       GetInputErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
     }
   }
@@ -234,7 +239,7 @@ where
         match root_group_path {
           Some(rgp) => {
             return Err(GetInputError {
-              kind: GetInputErrorKind::MultipleRootGroups(rgp.path.clone(), entry.clone()),
+              kind: GetInputErrorKind::MultipleRoots(rgp.path.clone(), entry.clone()),
               source: Source {
                 path: Some(rgp.path),
                 range: None,
@@ -250,7 +255,7 @@ where
   let root_group_path = root_group_path.ok_or_else(|| GetInputError {
     source: Source::default(),
     path: root.as_path().to_owned(),
-    kind: GetInputErrorKind::NoRootGroup,
+    kind: GetInputErrorKind::NoRoot,
   })?;
   let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
   let mut sources = PathMap::<String>::default();
