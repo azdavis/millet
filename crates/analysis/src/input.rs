@@ -98,12 +98,12 @@ enum GetInputErrorKind {
 impl fmt::Display for GetInputErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      GetInputErrorKind::ReadDir(e) => write!(f, "couldn't read directory: {e}"),
-      GetInputErrorKind::ReadFile(e) => write!(f, "couldn't read file: {e}"),
-      GetInputErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
-      GetInputErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
-      GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize: {e}"),
-      GetInputErrorKind::NotInRoot(e) => write!(f, "not in root: {e}"),
+      GetInputErrorKind::ReadDir(_) => write!(f, "couldn't read directory"),
+      GetInputErrorKind::ReadFile(_) => write!(f, "couldn't read file"),
+      GetInputErrorKind::Cm(_) => write!(f, "couldn't process SML/NJ CM file"),
+      GetInputErrorKind::Mlb(_) => write!(f, "couldn't process ML Basis file"),
+      GetInputErrorKind::Canonicalize(_) => write!(f, "couldn't canonicalize"),
+      GetInputErrorKind::NotInRoot(_) => write!(f, "not in root"),
       GetInputErrorKind::MultipleRootGroups(a, b) => write!(
         f,
         "multiple root groups: {} and {}, disambiguate with `millet.toml` config file",
@@ -111,7 +111,7 @@ impl fmt::Display for GetInputErrorKind {
         b.display()
       ),
       GetInputErrorKind::NoRootGroup => f.write_str("no root group"),
-      GetInputErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
+      GetInputErrorKind::CouldNotParseConfig(_) => write!(f, "couldn't parse config"),
       GetInputErrorKind::InvalidConfigVersion(n) => {
         write!(f, "invalid config version: expected 1, found {n}")
       }
