@@ -102,11 +102,11 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::ReadFile(_) => write!(f, "couldn't read file"),
       GetInputErrorKind::Cm(_) => write!(f, "couldn't process SML/NJ CM file"),
       GetInputErrorKind::Mlb(_) => write!(f, "couldn't process ML Basis file"),
-      GetInputErrorKind::Canonicalize(_) => write!(f, "couldn't canonicalize"),
+      GetInputErrorKind::Canonicalize(_) => write!(f, "couldn't canonicalize path"),
       GetInputErrorKind::NotInRoot(_) => write!(f, "not in root"),
       GetInputErrorKind::MultipleRootGroups(a, b) => write!(
         f,
-        "multiple root groups: {} and {}, disambiguate with `millet.toml` config file",
+        "multiple root groups: {} and {}",
         a.display(),
         b.display()
       ),
@@ -118,7 +118,7 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
       GetInputErrorKind::NotGroup => f.write_str("not a group path"),
-      GetInputErrorKind::Duplicate(name) => write!(f, "duplicate: {name}"),
+      GetInputErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
     }
   }
 }
