@@ -31,5 +31,6 @@ mod rust;
 mod shadow;
 mod smoke;
 mod std_basis;
+mod successor_ml;
 mod ty_name_escape;
 mod ty_var;
