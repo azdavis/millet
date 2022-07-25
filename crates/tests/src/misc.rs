@@ -15,15 +15,16 @@ val _ = apply: unit
 fn arrow_ty_arg() {
   check(
     r#"
-val _ = fn f => fn x => (
-  f x x;
-  f x;
-  f x x x andalso false;
-  f 3;
+val _ = fn f => fn x =>
+  (
+    f x x;
+    f x;
+    f x x x andalso false;
+    f 3;
+(** ^ expected a function type, found unit *)
     f: unit;
-(** ^^^^^^^ expected unit, found int -> int -> int -> bool *)
-  false
-)
+    false
+  )
 "#,
   );
 }
@@ -265,9 +266,8 @@ and _: int = 3 div 0
 fn ty_var_fixed() {
   check(
     r#"
-val _ = fn id =>
-  (id 3; id "nope")
-(**         ^^^^^^ expected int, found string *)
+val _ = fn id => (id 3; id "nope")
+(**                  ^ expected string, found int *)
 "#,
   );
 }

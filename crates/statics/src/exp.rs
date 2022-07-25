@@ -57,10 +57,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     }
     // sml_def(8)
     hir::Exp::App(func, arg) => {
-      // TODO do func before arg. it's in this order right now to cause error emission order for
-      // exp seq/case lowering to be slightly better
-      let arg_ty = get(st, cx, ars, *arg);
       let func_ty = get(st, cx, ars, *func);
+      let arg_ty = get(st, cx, ars, *arg);
       // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
       // would still be correct. however, matching on `func_ty` lets us emit slightly better error
       // messages sometimes.
