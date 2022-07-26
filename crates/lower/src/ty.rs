@@ -1,10 +1,10 @@
 use crate::common::{get_lab, get_path};
 use crate::util::Cx;
-use syntax::ast::{self, AstPtr};
+use syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
   let ty = ty?;
-  let ptr = AstPtr::new(&ty);
+  let ptr = SyntaxNodePtr::new(ty.syntax());
   let ret = match ty {
     ast::Ty::HoleTy(_) => hir::Ty::Hole,
     ast::Ty::TyVarTy(ty) => hir::Ty::Var(hir::TyVar::new(ty.ty_var()?.text())),

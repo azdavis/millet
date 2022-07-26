@@ -1,11 +1,11 @@
 use crate::common::{get_lab, get_path, get_scon};
 use crate::util::{Cx, ErrorKind};
 use crate::{dec, pat, ty};
-use syntax::ast::{self, AstNode as _, AstPtr};
+use syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
   let exp = exp?;
-  let ptr = AstPtr::new(&exp);
+  let ptr = SyntaxNodePtr::new(exp.syntax());
   let ret = match exp {
     ast::Exp::HoleExp(_) => hir::Exp::Hole,
     ast::Exp::SConExp(exp) => hir::Exp::SCon(get_scon(cx, exp.s_con()?)?),
@@ -141,7 +141,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
       // case expressions are usually huge. let's use the head expr for errors instead.
       let ptr = exp
         .exp()
-        .map(|x| AstPtr::new(&x))
+        .map(|x| SyntaxNodePtr::new(x.syntax()))
         .unwrap_or_else(|| ptr.clone());
       case(cx, head, arms, ptr)
     }
@@ -167,13 +167,13 @@ where
   hir::Exp::Record(rows)
 }
 
-fn call_unit_fn(cx: &mut Cx, vid: &hir::Name, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx {
+fn call_unit_fn(cx: &mut Cx, vid: &hir::Name, ptr: SyntaxNodePtr) -> hir::ExpIdx {
   let vid_exp = cx.exp(name(vid.as_str()), ptr.clone());
   let arg_exp = cx.exp(hir::Exp::Record(vec![]), ptr.clone());
   cx.exp(hir::Exp::App(vid_exp, arg_exp), ptr)
 }
 
-fn exps_in_seq<I>(cx: &mut Cx, exps: I, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx
+fn exps_in_seq<I>(cx: &mut Cx, exps: I, ptr: SyntaxNodePtr) -> hir::ExpIdx
 where
   I: Iterator<Item = ast::ExpInSeq>,
 {
@@ -188,7 +188,7 @@ where
 /// 3. `((fn _ => ... (fn _ => (fn _ => e) en) ...) e1)`
 ///
 /// the vec must not be empty, since we need a last expression `e`.
-fn exp_idx_in_seq<A, B>(cx: &mut Cx, exps: A, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx
+fn exp_idx_in_seq<A, B>(cx: &mut Cx, exps: A, ptr: SyntaxNodePtr) -> hir::ExpIdx
 where
   A: IntoIterator<IntoIter = B>,
   B: DoubleEndedIterator<Item = hir::ExpIdx>,
@@ -209,7 +209,7 @@ fn if_(
   cond: hir::ExpIdx,
   yes: hir::ExpIdx,
   no: hir::ExpIdx,
-  ptr: AstPtr<ast::Exp>,
+  ptr: SyntaxNodePtr,
 ) -> hir::Exp {
   let yes_pat = cx.pat(pat::name("true"), ptr.clone());
   let no_pat = cx.pat(pat::name("false"), ptr.clone());
@@ -220,7 +220,7 @@ pub(crate) fn case(
   cx: &mut Cx,
   head: hir::ExpIdx,
   arms: Vec<(hir::PatIdx, hir::ExpIdx)>,
-  ptr: AstPtr<ast::Exp>,
+  ptr: SyntaxNodePtr,
 ) -> hir::Exp {
   hir::Exp::App(cx.exp(hir::Exp::Fn(arms), ptr), head)
 }

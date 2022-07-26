@@ -1,11 +1,11 @@
 use crate::common::{get_lab, get_path, get_scon};
 use crate::ty;
 use crate::util::{Cx, ErrorKind};
-use syntax::ast::{self, AstNode as _, AstPtr};
+use syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
   let pat = pat?;
-  let ptr = AstPtr::new(&pat);
+  let ptr = SyntaxNodePtr::new(pat.syntax());
   let or_pat = get_or(cx, pat)?;
   if or_pat.rest.is_empty() {
     or_pat.first
@@ -15,7 +15,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> hir::PatIdx {
 }
 
 fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<hir::OrPat> {
-  let ptr = AstPtr::new(&pat);
+  let ptr = SyntaxNodePtr::new(pat.syntax());
   let ret = match pat {
     ast::Pat::WildcardPat(_) => hir::Pat::Wild,
     ast::Pat::SConPat(pat) => hir::Pat::SCon(get_scon(cx, pat.s_con()?)?),
@@ -114,7 +114,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<hir::OrPat> {
       let name = hir::Name::new(pat.name_star_eq()?.token.text());
       let ty = pat.ty_annotation().map(|x| ty::get(cx, x.ty()));
       let inner = pat.as_pat_tail()?.pat().and_then(|pat| {
-        let ptr = AstPtr::new(&pat);
+        let ptr = SyntaxNodePtr::new(pat.syntax());
         let mut p = get(cx, Some(pat));
         if let Some(ty) = ty {
           p = cx.pat(hir::Pat::Typed(p, ty), ptr);

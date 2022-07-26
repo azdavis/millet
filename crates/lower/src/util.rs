@@ -1,6 +1,6 @@
 use fast_hash::FxHashMap;
 use std::fmt;
-use syntax::ast::{self, AstNode, AstPtr, SyntaxNodePtr};
+use syntax::ast::SyntaxNodePtr;
 use syntax::rowan::TextRange;
 
 /// Pointers between the AST and the HIR.
@@ -21,13 +21,7 @@ impl Ptrs {
     self.ast_to_hir.get(&ptr).copied()
   }
 
-  fn insert<N, I>(&mut self, idx: I, ptr: AstPtr<N>)
-  where
-    N: AstNode<Language = syntax::SML>,
-    I: Into<hir::Idx>,
-  {
-    let idx = idx.into();
-    let ptr = ptr.syntax_node_ptr();
+  fn insert(&mut self, idx: hir::Idx, ptr: SyntaxNodePtr) {
     assert!(self.hir_to_ast.insert(idx, ptr.clone()).is_none());
     // cannot assert is none
     self.ast_to_hir.insert(ptr, idx);
@@ -155,72 +149,51 @@ impl Cx {
     }
   }
 
-  pub(crate) fn str_dec<N>(&mut self, val: hir::StrDec, ptr: AstPtr<N>) -> hir::StrDecIdx
-  where
-    N: AstNode<Language = syntax::SML>,
-  {
+  pub(crate) fn str_dec(&mut self, val: hir::StrDec, ptr: SyntaxNodePtr) -> hir::StrDecIdx {
     let idx = self.arenas.str_dec.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 
-  pub(crate) fn str_exp<N>(&mut self, val: hir::StrExp, ptr: AstPtr<N>) -> hir::StrExpIdx
-  where
-    N: AstNode<Language = syntax::SML>,
-  {
+  pub(crate) fn str_exp(&mut self, val: hir::StrExp, ptr: SyntaxNodePtr) -> hir::StrExpIdx {
     let idx = self.arenas.str_exp.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 
-  pub(crate) fn sig_exp<N>(&mut self, val: hir::SigExp, ptr: AstPtr<N>) -> hir::SigExpIdx
-  where
-    N: AstNode<Language = syntax::SML>,
-  {
+  pub(crate) fn sig_exp(&mut self, val: hir::SigExp, ptr: SyntaxNodePtr) -> hir::SigExpIdx {
     let idx = self.arenas.sig_exp.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 
-  pub(crate) fn spec<N>(&mut self, val: hir::Spec, ptr: AstPtr<N>) -> hir::SpecIdx
-  where
-    N: AstNode<Language = syntax::SML>,
-  {
+  pub(crate) fn spec(&mut self, val: hir::Spec, ptr: SyntaxNodePtr) -> hir::SpecIdx {
     let idx = self.arenas.spec.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 
-  pub(crate) fn exp(&mut self, val: hir::Exp, ptr: AstPtr<ast::Exp>) -> hir::ExpIdx {
+  pub(crate) fn exp(&mut self, val: hir::Exp, ptr: SyntaxNodePtr) -> hir::ExpIdx {
     let idx = self.arenas.exp.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 
-  pub(crate) fn dec<N>(&mut self, val: hir::Dec, ptr: AstPtr<N>) -> hir::DecIdx
-  where
-    N: AstNode<Language = syntax::SML>,
-  {
+  pub(crate) fn dec(&mut self, val: hir::Dec, ptr: SyntaxNodePtr) -> hir::DecIdx {
     let idx = self.arenas.dec.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 
-  pub(crate) fn pat<N>(&mut self, val: hir::Pat, ptr: AstPtr<N>) -> hir::PatIdx
-  where
-    N: AstNode<Language = syntax::SML>,
-  {
+  pub(crate) fn pat(&mut self, val: hir::Pat, ptr: SyntaxNodePtr) -> hir::PatIdx {
     let idx = self.arenas.pat.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 
-  pub(crate) fn ty<N>(&mut self, val: hir::Ty, ptr: AstPtr<N>) -> hir::TyIdx
-  where
-    N: AstNode<Language = syntax::SML>,
-  {
+  pub(crate) fn ty(&mut self, val: hir::Ty, ptr: SyntaxNodePtr) -> hir::TyIdx {
     let idx = self.arenas.ty.alloc(val);
-    self.ptrs.insert(idx, ptr);
+    self.ptrs.insert(idx.into(), ptr);
     Some(idx)
   }
 }

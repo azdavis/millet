@@ -1,7 +1,7 @@
 use crate::common::{get_name, get_path};
 use crate::util::{Cx, ErrorKind};
 use crate::{dec, ty};
-use syntax::ast::{self, AstNode as _, AstPtr};
+use syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::StrDecIdx {
   let str_dec = str_dec?;
@@ -12,12 +12,15 @@ pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::Str
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
   } else {
-    cx.str_dec(hir::StrDec::Seq(str_decs), AstPtr::new(&str_dec))
+    cx.str_dec(
+      hir::StrDec::Seq(str_decs),
+      SyntaxNodePtr::new(str_dec.syntax()),
+    )
   }
 }
 
 fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
-  let ptr = AstPtr::new(&str_dec);
+  let ptr = SyntaxNodePtr::new(str_dec.syntax());
   let res = match str_dec {
     ast::StrDecOne::DecStrDec(str_dec) => hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?)),
     ast::StrDecOne::StructureStrDec(str_dec) => hir::StrDec::Structure(
@@ -84,7 +87,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
 
 fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
   let str_exp = str_exp?;
-  let ptr = AstPtr::new(&str_exp);
+  let ptr = SyntaxNodePtr::new(str_exp.syntax());
   let ret = match str_exp {
     ast::StrExp::StructStrExp(str_exp) => hir::StrExp::Struct(get_str_dec(cx, str_exp.str_dec())),
     ast::StrExp::PathStrExp(str_exp) => hir::StrExp::Path(get_path(str_exp.path()?)?),
@@ -112,7 +115,7 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
 
 fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> hir::SigExpIdx {
   let sig_exp = sig_exp?;
-  let ptr = AstPtr::new(&sig_exp);
+  let ptr = SyntaxNodePtr::new(sig_exp.syntax());
   let ret = match sig_exp {
     ast::SigExp::SigSigExp(sig_exp) => hir::SigExp::Spec(get_spec(cx, sig_exp.spec())),
     ast::SigExp::NameSigExp(sig_exp) => hir::SigExp::Name(get_name(sig_exp.name())?),
@@ -140,12 +143,12 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> hir::SpecIdx {
   if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
-    cx.spec(hir::Spec::Seq(specs), AstPtr::new(&spec))
+    cx.spec(hir::Spec::Seq(specs), SyntaxNodePtr::new(spec.syntax()))
   }
 }
 
 fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> hir::SpecIdx {
-  let ptr = AstPtr::new(&spec);
+  let ptr = SyntaxNodePtr::new(spec.syntax());
   let mut specs: Vec<_> = spec
     .spec_in_seqs()
     .map(|x| get_spec_one(cx, x.spec_one()?))
@@ -172,7 +175,7 @@ fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> hir::SpecIdx {
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
 fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
-  let ptr = AstPtr::new(&spec);
+  let ptr = SyntaxNodePtr::new(spec.syntax());
   let ret = match spec {
     ast::SpecOne::ValSpec(spec) => hir::Spec::Val(
       Vec::new(),
@@ -238,7 +241,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
   cx.spec(ret, ptr)
 }
 
-fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut specs: Vec<hir::Spec>) -> hir::Spec {
+fn seq(cx: &mut Cx, ptr: SyntaxNodePtr, mut specs: Vec<hir::Spec>) -> hir::Spec {
   if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
@@ -251,7 +254,7 @@ fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut specs: Vec<hir::Spec>) -> hir
   }
 }
 
-fn ty_descs<I, F>(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, iter: I, f: F) -> hir::Spec
+fn ty_descs<I, F>(cx: &mut Cx, ptr: SyntaxNodePtr, iter: I, f: F) -> hir::Spec
 where
   I: Iterator<Item = ast::TyDesc>,
   F: Fn(hir::TyDesc) -> hir::Spec,
@@ -300,7 +303,7 @@ fn with_ascription_tail(
   tail: Option<ast::AscriptionTail>,
 ) -> hir::StrExpIdx {
   let str_exp = str_exp?;
-  let ptr = AstPtr::new(&str_exp);
+  let ptr = SyntaxNodePtr::new(str_exp.syntax());
   let mut ret = get_str_exp(cx, Some(str_exp));
   if let Some(tail) = tail {
     let (kind, sig_exp) = ascription_tail(cx, Some(tail));

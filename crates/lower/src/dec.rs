@@ -2,7 +2,7 @@ use crate::common::{get_name, get_path};
 use crate::pat::tuple;
 use crate::util::{Cx, ErrorKind};
 use crate::{exp, pat, ty};
-use syntax::ast::{self, AstNode as _, AstPtr};
+use syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
   let dec = dec?;
@@ -13,12 +13,12 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
   if decs.len() == 1 {
     decs.pop().unwrap()
   } else {
-    cx.dec(hir::Dec::Seq(decs), AstPtr::new(&dec))
+    cx.dec(hir::Dec::Seq(decs), SyntaxNodePtr::new(dec.syntax()))
   }
 }
 
 pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
-  let ptr = AstPtr::new(&dec);
+  let ptr = SyntaxNodePtr::new(dec.syntax());
   let ret = match dec {
     ast::DecOne::ValDec(dec) => hir::Dec::Val(
       ty::var_seq(dec.ty_var_seq()),
@@ -39,10 +39,9 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
       let val_binds: Vec<_> = dec
         .fun_binds()
         .map(|fun_bind| {
+          let ptr = SyntaxNodePtr::new(fun_bind.syntax());
           let mut name = None::<syntax::SyntaxToken>;
           let mut num_pats = None::<usize>;
-          let mut exp_ptr = None::<AstPtr<ast::Exp>>;
-          let mut pat_ptr = None::<AstPtr<ast::Pat>>;
           let arms: Vec<_> = fun_bind
             .fun_bind_cases()
             .map(|case| {
@@ -54,13 +53,8 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                   ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
                     let lhs = head.lhs();
                     let rhs = head.rhs();
-                    if pat_ptr.is_none() {
-                      pat_ptr = lhs.as_ref().or(rhs.as_ref()).map(AstPtr::new);
-                    }
-                    if let Some(ref ptr) = pat_ptr {
-                      let tup = tuple([pat::get(cx, lhs), pat::get(cx, rhs)]);
-                      pats.push(cx.pat(tup, ptr.clone()));
-                    }
+                    let tup = tuple([pat::get(cx, lhs), pat::get(cx, rhs)]);
+                    pats.push(cx.pat(tup, ptr.clone()));
                     head.name_star_eq()
                   }
                 })
@@ -81,9 +75,6 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                 }
               }
               for pat in case.pats() {
-                if pat_ptr.is_none() {
-                  pat_ptr = Some(AstPtr::new(&pat));
-                }
                 pats.push(pat::get(cx, Some(pat)));
               }
               match num_pats {
@@ -97,19 +88,14 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                   }
                 }
               }
-              let pat = pat_ptr.clone().and_then(|ptr| {
-                if pats.len() == 1 {
-                  pats.pop().unwrap()
-                } else {
-                  cx.pat(pat::tuple(pats), ptr)
-                }
-              });
+              let pat = if pats.len() == 1 {
+                pats.pop().unwrap()
+              } else {
+                cx.pat(pat::tuple(pats), ptr.clone())
+              };
               let ty = case.ty_annotation().map(|x| ty::get(cx, x.ty()));
               let exp = case.exp().and_then(|exp| {
-                let ptr = AstPtr::new(&exp);
-                if exp_ptr.is_none() {
-                  exp_ptr = Some(ptr.clone());
-                }
+                let ptr = SyntaxNodePtr::new(exp.syntax());
                 let mut exp = exp::get(cx, Some(exp));
                 if let Some(ty) = ty {
                   exp = cx.exp(hir::Exp::Typed(exp, ty), ptr);
@@ -121,31 +107,29 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
             .collect();
           // not the greatest, since we have no body at all if the ptrs are None. but if they were
           // both None, then something's very strange about the fun_bind_cases anyway.
-          let exp = exp_ptr.zip(pat_ptr.clone()).and_then(|(exp_ptr, pat_ptr)| {
+          let exp = {
             let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
             let mut arg_exprs = arg_names
               .iter()
-              .map(|name| cx.exp(exp::name(name.as_str()), exp_ptr.clone()));
+              .map(|name| cx.exp(exp::name(name.as_str()), ptr.clone()));
             let head = if arg_exprs.len() == 1 {
               arg_exprs.next().unwrap()
             } else {
               let tup = exp::tuple(arg_exprs);
-              cx.exp(tup, exp_ptr.clone())
+              cx.exp(tup, ptr.clone())
             };
-            let case = exp::case(cx, head, arms, exp_ptr.clone());
+            let case = exp::case(cx, head, arms, ptr.clone());
             arg_names
               .into_iter()
               .rev()
-              .fold(cx.exp(case, exp_ptr.clone()), |body, name| {
-                let pat = cx.pat(pat::name(name.as_str()), pat_ptr.clone());
-                cx.exp(hir::Exp::Fn(vec![(pat, body)]), exp_ptr.clone())
+              .fold(cx.exp(case, ptr.clone()), |body, name| {
+                let pat = cx.pat(pat::name(name.as_str()), ptr.clone());
+                cx.exp(hir::Exp::Fn(vec![(pat, body)]), ptr.clone())
               })
-          });
+          };
           hir::ValBind {
             rec: true,
-            pat: name
-              .zip(pat_ptr)
-              .and_then(|(tok, pat_ptr)| cx.pat(pat::name(tok.text()), pat_ptr)),
+            pat: name.and_then(|name| cx.pat(pat::name(name.text()), ptr)),
             exp,
           }
         })

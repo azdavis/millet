@@ -72,7 +72,7 @@ fn rebind_cons() {
   check(
     r#"
 fun op :: () = ()
-(**       ^^ missing argument for constructor pattern *)
+(** ^^^^^^^^^^^^^ missing argument for constructor pattern *)
 "#,
   );
 }
@@ -82,7 +82,7 @@ fn rebind_ref() {
   check(
     r#"
 fun ref () = ()
-(**     ^^ missing argument for constructor pattern *)
+(** ^^^^^^^^^^^ missing argument for constructor pattern *)
 "#,
   );
 }
