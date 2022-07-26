@@ -83,7 +83,8 @@ fn run() -> bool {
     println!("no errors!");
     true
   } else {
-    println!("{num_errors} errors");
+    let suffix = if num_errors == 1 { "" } else { "s" };
+    println!("{num_errors} error{suffix}");
     false
   }
 }
