@@ -608,7 +608,7 @@ fn empty_fun() {
 
 #[test]
 fn empty_include() {
-  fail(
+  check(
     r#"
 signature S = sig
     include
@@ -620,7 +620,7 @@ end
 
 #[test]
 fn empty_open() {
-  fail(
+  check(
     r#"
     open
 (** ^^^^ requires at least 1 operand *)

@@ -560,6 +560,26 @@ datatype t =
 | B
 ```
 
+## 4010
+
+There was an `open` or `include` without operands.
+
+```sml
+(* error *)
+open
+```
+
+To fix, give them some operands, or delete the empty `open` or `include`.
+
+```sml
+(* ok *)
+structure S = struct
+  val x = 3
+end
+
+open S
+```
+
 ## 4099
 
 There was an occurrence of an unsupported SML construct.

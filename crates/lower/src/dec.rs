@@ -164,7 +164,13 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
         .collect(),
     ),
     ast::DecOne::LocalDec(dec) => hir::Dec::Local(get(cx, dec.local_dec()), get(cx, dec.in_dec())),
-    ast::DecOne::OpenDec(dec) => hir::Dec::Open(dec.paths().filter_map(get_path).collect()),
+    ast::DecOne::OpenDec(dec) => {
+      let paths: Vec<_> = dec.paths().filter_map(get_path).collect();
+      if paths.is_empty() {
+        cx.err(dec.syntax().text_range(), ErrorKind::RequiresOperand);
+      }
+      hir::Dec::Open(paths)
+    }
     ast::DecOne::InfixDec(_) | ast::DecOne::InfixrDec(_) | ast::DecOne::NonfixDec(_) => {
       return None
     }

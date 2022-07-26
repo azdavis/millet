@@ -58,6 +58,7 @@ impl Error {
       ErrorKind::MultipleRestPatRows => 7,
       ErrorKind::RestPatRowNotLast => 8,
       ErrorKind::PrecedingBar => 9,
+      ErrorKind::RequiresOperand => 10,
       ErrorKind::Unsupported(_) => 99,
     }
   }
@@ -75,6 +76,7 @@ pub(crate) enum ErrorKind {
   MultipleRestPatRows,
   RestPatRowNotLast,
   PrecedingBar,
+  RequiresOperand,
   /// must be last
   Unsupported(&'static str),
 }
@@ -99,6 +101,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::MultipleRestPatRows => f.write_str("multiple `...`"),
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
       ErrorKind::PrecedingBar => f.write_str("preceding `|`"),
+      ErrorKind::RequiresOperand => f.write_str("requires at least 1 operand"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

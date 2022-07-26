@@ -235,6 +235,9 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
         .sig_exps()
         .map(|x| hir::Spec::Include(get_sig_exp(cx, Some(x))))
         .collect();
+      if specs.is_empty() {
+        cx.err(spec.syntax().text_range(), ErrorKind::RequiresOperand);
+      }
       seq(cx, ptr.clone(), specs)
     }
   };
