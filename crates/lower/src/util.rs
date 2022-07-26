@@ -3,9 +3,6 @@ use std::fmt;
 use syntax::ast::{self, AstNode, AstPtr, SyntaxNodePtr};
 use syntax::rowan::TextRange;
 
-/// see the ungrammar for why this is.
-type AstTopDec = ast::StrDecOne;
-
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
 pub struct Ptrs {
@@ -158,95 +155,37 @@ impl Cx {
     }
   }
 
-  pub(crate) fn str_dec_one(
-    &mut self,
-    val: hir::StrDec,
-    ptr: AstPtr<ast::StrDecOne>,
-  ) -> hir::StrDecIdx {
+  pub(crate) fn str_dec<N>(&mut self, val: hir::StrDec, ptr: AstPtr<N>) -> hir::StrDecIdx
+  where
+    N: AstNode<Language = syntax::SML>,
+  {
     let idx = self.arenas.str_dec.alloc(val);
     self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
-  pub(crate) fn str_dec_seq(
-    &mut self,
-    val: Vec<hir::StrDecIdx>,
-    ptr: AstPtr<ast::StrDec>,
-  ) -> hir::StrDecIdx {
-    let idx = self.arenas.str_dec.alloc(hir::StrDec::Seq(val));
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn str_dec_in_top_dec(
-    &mut self,
-    val: hir::StrDec,
-    ptr: AstPtr<AstTopDec>,
-  ) -> hir::StrDecIdx {
-    let idx = self.arenas.str_dec.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn str_exp(&mut self, val: hir::StrExp, ptr: AstPtr<ast::StrExp>) -> hir::StrExpIdx {
+  pub(crate) fn str_exp<N>(&mut self, val: hir::StrExp, ptr: AstPtr<N>) -> hir::StrExpIdx
+  where
+    N: AstNode<Language = syntax::SML>,
+  {
     let idx = self.arenas.str_exp.alloc(val);
     self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
-  pub(crate) fn str_exp_in_top_dec(
-    &mut self,
-    val: hir::StrExp,
-    ptr: AstPtr<AstTopDec>,
-  ) -> hir::StrExpIdx {
-    let idx = self.arenas.str_exp.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn sig_exp(&mut self, val: hir::SigExp, ptr: AstPtr<ast::SigExp>) -> hir::SigExpIdx {
+  pub(crate) fn sig_exp<N>(&mut self, val: hir::SigExp, ptr: AstPtr<N>) -> hir::SigExpIdx
+  where
+    N: AstNode<Language = syntax::SML>,
+  {
     let idx = self.arenas.sig_exp.alloc(val);
     self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
-  pub(crate) fn sig_exp_in_top_dec(
-    &mut self,
-    val: hir::SigExp,
-    ptr: AstPtr<AstTopDec>,
-  ) -> hir::SigExpIdx {
-    let idx = self.arenas.sig_exp.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn sig_exp_in_spec_one(
-    &mut self,
-    val: hir::SigExp,
-    ptr: AstPtr<ast::SpecOne>,
-  ) -> hir::SigExpIdx {
-    let idx = self.arenas.sig_exp.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn spec_one(&mut self, val: hir::Spec, ptr: AstPtr<ast::SpecOne>) -> hir::SpecIdx {
-    let idx = self.arenas.spec.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn spec(&mut self, val: hir::Spec, ptr: AstPtr<ast::Spec>) -> hir::SpecIdx {
-    let idx = self.arenas.spec.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn spec_with_tail(
-    &mut self,
-    val: hir::Spec,
-    ptr: AstPtr<ast::SpecWithTail>,
-  ) -> hir::SpecIdx {
+  pub(crate) fn spec<N>(&mut self, val: hir::Spec, ptr: AstPtr<N>) -> hir::SpecIdx
+  where
+    N: AstNode<Language = syntax::SML>,
+  {
     let idx = self.arenas.spec.alloc(val);
     self.ptrs.insert(idx, ptr);
     Some(idx)
@@ -258,49 +197,28 @@ impl Cx {
     Some(idx)
   }
 
-  pub(crate) fn dec_one(&mut self, val: hir::Dec, ptr: AstPtr<ast::DecOne>) -> hir::DecIdx {
+  pub(crate) fn dec<N>(&mut self, val: hir::Dec, ptr: AstPtr<N>) -> hir::DecIdx
+  where
+    N: AstNode<Language = syntax::SML>,
+  {
     let idx = self.arenas.dec.alloc(val);
     self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
-  pub(crate) fn dec_in_exp(&mut self, val: hir::Dec, ptr: AstPtr<ast::Exp>) -> hir::DecIdx {
-    let idx = self.arenas.dec.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn dec_in_top_dec(&mut self, val: hir::Dec, ptr: AstPtr<AstTopDec>) -> hir::DecIdx {
-    let idx = self.arenas.dec.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn dec_seq(&mut self, val: Vec<hir::DecIdx>, ptr: AstPtr<ast::Dec>) -> hir::DecIdx {
-    let idx = self.arenas.dec.alloc(hir::Dec::Seq(val));
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn pat(&mut self, val: hir::Pat, ptr: AstPtr<ast::Pat>) -> hir::PatIdx {
+  pub(crate) fn pat<N>(&mut self, val: hir::Pat, ptr: AstPtr<N>) -> hir::PatIdx
+  where
+    N: AstNode<Language = syntax::SML>,
+  {
     let idx = self.arenas.pat.alloc(val);
     self.ptrs.insert(idx, ptr);
     Some(idx)
   }
 
-  pub(crate) fn pat_in_exp(&mut self, val: hir::Pat, ptr: AstPtr<ast::Exp>) -> hir::PatIdx {
-    let idx = self.arenas.pat.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn pat_in_dec(&mut self, val: hir::Pat, ptr: AstPtr<ast::DecOne>) -> hir::PatIdx {
-    let idx = self.arenas.pat.alloc(val);
-    self.ptrs.insert(idx, ptr);
-    Some(idx)
-  }
-
-  pub(crate) fn ty(&mut self, val: hir::Ty, ptr: AstPtr<ast::Ty>) -> hir::TyIdx {
+  pub(crate) fn ty<N>(&mut self, val: hir::Ty, ptr: AstPtr<N>) -> hir::TyIdx
+  where
+    N: AstNode<Language = syntax::SML>,
+  {
     let idx = self.arenas.ty.alloc(val);
     self.ptrs.insert(idx, ptr);
     Some(idx)

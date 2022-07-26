@@ -13,7 +13,7 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
   if decs.len() == 1 {
     decs.pop().unwrap()
   } else {
-    cx.dec_seq(decs, AstPtr::new(&dec))
+    cx.dec(hir::Dec::Seq(decs), AstPtr::new(&dec))
   }
 }
 
@@ -196,13 +196,13 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
         Vec::new(),
         vec![hir::ValBind {
           rec: false,
-          pat: cx.pat_in_dec(pat::tuple([]), ptr.clone()),
+          pat: cx.pat(pat::tuple([]), ptr.clone()),
           exp: exp::get(cx, inner.exp()),
         }],
       )
     }
   };
-  cx.dec_one(ret, ptr)
+  cx.dec(ret, ptr)
 }
 
 pub(crate) fn dat_binds<'a, I>(cx: &'a mut Cx, iter: I) -> impl Iterator<Item = hir::DatBind> + 'a

@@ -40,8 +40,8 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
     ast::Exp::SelectorExp(exp) => {
       let lab = get_lab(cx, exp.lab()?);
       let fresh = cx.fresh();
-      let pat = cx.pat_in_exp(pat::name(fresh.as_str()), ptr.clone());
-      let param = cx.pat_in_exp(
+      let pat = cx.pat(pat::name(fresh.as_str()), ptr.clone());
+      let param = cx.pat(
         hir::Pat::Record {
           rows: vec![(lab, pat)],
           allows_other: true,
@@ -119,10 +119,10 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
         let fn_body = if_(cx, cond, yes, no, ptr.clone());
         cx.exp(fn_body, ptr.clone())
       };
-      let arg_pat = cx.pat_in_exp(pat::tuple([]), ptr.clone());
+      let arg_pat = cx.pat(pat::tuple([]), ptr.clone());
       let fn_exp = cx.exp(hir::Exp::Fn(vec![(arg_pat, fn_body)]), ptr.clone());
-      let vid_pat = cx.pat_in_exp(pat::name(vid.as_str()), ptr.clone());
-      let val = cx.dec_in_exp(
+      let vid_pat = cx.pat(pat::name(vid.as_str()), ptr.clone());
+      let val = cx.dec(
         hir::Dec::Val(
           vec![],
           vec![hir::ValBind {
@@ -197,7 +197,7 @@ where
     .into_iter()
     .rev()
     .reduce(|ac, x| {
-      let wild = cx.pat_in_exp(hir::Pat::Wild, ptr.clone());
+      let wild = cx.pat(hir::Pat::Wild, ptr.clone());
       let c = case(cx, x, vec![(wild, ac)], ptr.clone());
       cx.exp(c, ptr.clone())
     })
@@ -211,8 +211,8 @@ fn if_(
   no: hir::ExpIdx,
   ptr: AstPtr<ast::Exp>,
 ) -> hir::Exp {
-  let yes_pat = cx.pat_in_exp(pat::name("true"), ptr.clone());
-  let no_pat = cx.pat_in_exp(pat::name("false"), ptr.clone());
+  let yes_pat = cx.pat(pat::name("true"), ptr.clone());
+  let no_pat = cx.pat(pat::name("false"), ptr.clone());
   case(cx, cond, vec![(yes_pat, yes), (no_pat, no)], ptr)
 }
 

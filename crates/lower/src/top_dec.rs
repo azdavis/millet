@@ -12,7 +12,7 @@ pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> hir::Str
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
   } else {
-    cx.str_dec_seq(str_decs, AstPtr::new(&str_dec))
+    cx.str_dec(hir::StrDec::Seq(str_decs), AstPtr::new(&str_dec))
   }
 }
 
@@ -59,13 +59,13 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
             ast::FunctorArg::Spec(arg) => {
               let param_name = cx.fresh();
               let param_sig = hir::SigExp::Spec(get_spec(cx, Some(arg)));
-              let param_sig = cx.sig_exp_in_top_dec(param_sig, ptr.clone());
-              let dec = cx.dec_in_top_dec(
+              let param_sig = cx.sig_exp(param_sig, ptr.clone());
+              let dec = cx.dec(
                 hir::Dec::Open(vec![hir::Path::one(param_name.clone())]),
                 ptr.clone(),
               );
-              let str_dec = cx.str_dec_in_top_dec(hir::StrDec::Dec(dec), ptr.clone());
-              let body = cx.str_exp_in_top_dec(hir::StrExp::Let(str_dec, body), ptr.clone());
+              let str_dec = cx.str_dec(hir::StrDec::Dec(dec), ptr.clone());
+              let body = cx.str_exp(hir::StrExp::Let(str_dec, body), ptr.clone());
               (param_name, param_sig, body)
             }
           };
@@ -79,7 +79,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> hir::StrDecIdx {
         .collect(),
     ),
   };
-  cx.str_dec_one(res, ptr)
+  cx.str_dec(res, ptr)
 }
 
 fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> hir::StrExpIdx {
@@ -153,7 +153,7 @@ fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> hir::SpecIdx {
   let inner = if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
-    cx.spec_with_tail(hir::Spec::Seq(specs), ptr.clone())
+    cx.spec(hir::Spec::Seq(specs), ptr.clone())
   };
   spec.sharing_tails().fold(inner, |ac, tail| {
     let kind = if tail.type_kw().is_some() {
@@ -165,7 +165,7 @@ fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> hir::SpecIdx {
       .path_eqs()
       .filter_map(|x| get_path(x.path()?))
       .collect();
-    cx.spec_with_tail(hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
+    cx.spec(hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
   })
 }
 
@@ -235,7 +235,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> hir::SpecIdx {
       seq(cx, ptr.clone(), specs)
     }
   };
-  cx.spec_one(ret, ptr)
+  cx.spec(ret, ptr)
 }
 
 fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut specs: Vec<hir::Spec>) -> hir::Spec {
@@ -245,7 +245,7 @@ fn seq(cx: &mut Cx, ptr: AstPtr<ast::SpecOne>, mut specs: Vec<hir::Spec>) -> hir
     hir::Spec::Seq(
       specs
         .into_iter()
-        .map(|val| cx.spec_one(val, ptr.clone()))
+        .map(|val| cx.spec(val, ptr.clone()))
         .collect(),
     )
   }
@@ -266,9 +266,9 @@ where
       });
       if let Some(ty) = ty_desc.eq_ty() {
         let ty = ty::get(cx, ty.ty());
-        let spec_idx = cx.spec_one(ret, ptr.clone());
-        let sig_exp = cx.sig_exp_in_spec_one(hir::SigExp::Spec(spec_idx), ptr.clone());
-        let sig_exp = cx.sig_exp_in_spec_one(
+        let spec_idx = cx.spec(ret, ptr.clone());
+        let sig_exp = cx.sig_exp(hir::SigExp::Spec(spec_idx), ptr.clone());
+        let sig_exp = cx.sig_exp(
           hir::SigExp::WhereType(sig_exp, ty_vars, hir::Path::one(name), ty),
           ptr.clone(),
         );
