@@ -74,9 +74,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
                   }
                 }
               }
-              for pat in case.pats() {
-                pats.push(pat::get(cx, Some(pat)));
-              }
+              pats.extend(case.pats().map(|pat| pat::get(cx, Some(pat))));
               match num_pats {
                 None => num_pats = Some(pats.len()),
                 Some(num_pats) => {
