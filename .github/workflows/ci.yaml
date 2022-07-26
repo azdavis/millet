@@ -38,7 +38,8 @@ jobs:
             vscode: darwin-x64
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Fix git line endings (necessary for windows)
+      - name: Fix git line endings
+        if: matrix.os == 'windows-latest'
         run: |
           git config --global core.autocrlf false
           git config --global core.eol lf
