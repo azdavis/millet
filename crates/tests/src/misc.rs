@@ -595,3 +595,35 @@ val _ = INR 3 : (unit, int) either
 "#,
   );
 }
+
+#[test]
+fn empty_fun() {
+  check(
+    r#"
+    fun f = 3
+(** ^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
+"#,
+  )
+}
+
+#[test]
+fn empty_include() {
+  fail(
+    r#"
+signature S = sig
+    include
+(** ^^^^^^^ requires at least 1 operand *)
+end
+"#,
+  )
+}
+
+#[test]
+fn empty_open() {
+  fail(
+    r#"
+    open
+(** ^^^^ requires at least 1 operand *)
+"#,
+  )
+}
