@@ -4,6 +4,15 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.2.9
+
+- Get ARM builds working again.
+- Parse, but reject in later stages, some Successor ML features, like:
+  - `do` declarations.
+  - Leading `|` before cases for `fun`, `fn`, `case`, and `handle`.
+  - `withtype` in specifications.
+  - Expression row punning for records (like `val _ = {a, b}`).
+
 ## v0.2.8
 
 - Greatly improve analysis of ML Basis files.
