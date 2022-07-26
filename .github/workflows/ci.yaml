@@ -25,12 +25,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: windows-latest
-            rust: x86_64-pc-windows-msvc
-            vscode: win32-x64
-          - os: windows-latest
-            rust: aarch64-pc-windows-msvc
-            vscode: win32-arm64
           - os: ubuntu-latest
             rust: x86_64-unknown-linux-gnu
             vscode: linux-x64
@@ -43,6 +37,12 @@ jobs:
           - os: macos-latest
             rust: aarch64-apple-darwin
             vscode: darwin-arm64
+          - os: windows-latest
+            rust: x86_64-pc-windows-msvc
+            vscode: win32-x64
+          - os: windows-latest
+            rust: aarch64-pc-windows-msvc
+            vscode: win32-arm64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Fix git line endings
