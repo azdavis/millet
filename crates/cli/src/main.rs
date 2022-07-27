@@ -84,7 +84,10 @@ fn run() -> bool {
     true
   } else {
     let suffix = if num_errors == 1 { "" } else { "s" };
-    println!("{num_errors} error{suffix}");
+    println!(
+      "{num_errors} error{suffix}. see {} for more information",
+      analysis::ERRORS_URL
+    );
     false
   }
 }

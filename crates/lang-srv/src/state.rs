@@ -417,10 +417,8 @@ fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
     .collect()
 }
 
-const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
-
 fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp_types::Diagnostic {
-  let code_description = match Url::parse(&format!("{ERRORS_URL}#{}", code)) {
+  let code_description = match Url::parse(&format!("{}#{}", analysis::ERRORS_URL, code)) {
     Ok(href) => Some(lsp_types::CodeDescription { href }),
     Err(e) => {
       log::error!("url parse failed for {message} with code {code}: {e}");

@@ -19,6 +19,9 @@ pub use text_pos::{Position, Range};
 /// The error number series for "other" errors (i.e. errors NOT from actually analyzing SML files.)
 pub const OTHER_ERRORS: u16 = 1000;
 
+/// The url to go to for information about errors.
+pub const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
+
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
