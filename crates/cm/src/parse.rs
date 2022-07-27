@@ -2,14 +2,14 @@ use crate::types::{
   Class, DescKind, Error, ErrorKind, Export, Member, Namespace, Result, Root, Token,
 };
 use located::{Located, TextRange};
-use path_slash::PathBufExt as _;
 use std::path::PathBuf;
 
-pub(crate) fn get(tokens: &[Located<Token<'_>>]) -> Result<Root> {
+pub(crate) fn get(tokens: &[Located<Token<'_>>], env: &paths::slash_var_path::Env) -> Result<Root> {
   let mut p = Parser {
     tokens,
     idx: 0,
     last_range: TextRange::default(),
+    env,
   };
   root(&mut p)
 }
@@ -18,6 +18,7 @@ struct Parser<'a> {
   tokens: &'a [Located<Token<'a>>],
   idx: usize,
   last_range: TextRange,
+  env: &'a paths::slash_var_path::Env,
 }
 
 impl<'a> Parser<'a> {
@@ -65,8 +66,8 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
     Some(Token::Alias) => {
       p.bump();
       let s = p.string()?;
-      let path = PathBuf::from_slash(s.val);
       p.bump();
+      let path = path(p, s.val)?;
       Root::Alias(s.wrap(path))
     }
     Some(Token::Group) => {
@@ -106,8 +107,8 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
         p.bump();
         p.eat(Token::LRound)?;
         let s = p.string()?;
-        let pathname = PathBuf::from_slash(s.val);
         p.bump();
+        let pathname = path(p, s.val)?;
         p.eat(Token::RRound)?;
         ret.push(Export::Library(s.wrap(pathname)));
         continue;
@@ -137,7 +138,7 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
       _ => break,
     };
     p.bump();
-    let pathname = tok.wrap(PathBuf::from_slash(s));
+    let pathname = tok.wrap(path(p, s)?);
     let class = match p.cur() {
       Some(Token::Colon) => {
         p.bump();
@@ -154,4 +155,11 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
     ret.push(Member { pathname, class });
   }
   Ok(ret)
+}
+
+fn path(p: &Parser<'_>, s: &str) -> Result<PathBuf> {
+  match paths::slash_var_path::get(s, p.env) {
+    Ok(x) => Ok(x),
+    Err(e) => p.err(ErrorKind::SlashVarPathError(e)),
+  }
 }

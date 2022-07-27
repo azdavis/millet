@@ -47,6 +47,7 @@
     "orelse",
     "outfile",
     "PATHCONFIG",
+    "peekable",
     "pico",
     "posix",
     "powf",

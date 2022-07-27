@@ -176,6 +176,7 @@ where
 {
   let mut root_group_source = Source::default();
   let config_path = root.as_path().join(config::FILE_NAME);
+  let mut path_var_env = paths::slash_var_path::Env::default();
   if let Ok(contents) = fs.read_to_string(&config_path) {
     let config: config::Root = match toml::from_str(&contents) {
       Ok(x) => x,
@@ -195,6 +196,7 @@ where
       });
     }
     if let Some(ws) = config.workspace {
+      path_var_env = ws.path_vars.unwrap_or_default();
       // try to get from the config.
       if let (None, Some(path)) = (&root_group_path, ws.root) {
         let path = root.as_path().join(path.as_str());
@@ -270,7 +272,7 @@ where
       .expect("path from get_path has no parent");
     let group = match root_group_path.kind {
       GroupPathKind::Cm => {
-        let cm = cm::get(&contents).map_err(|e| GetInputError {
+        let cm = cm::get(&contents, &path_var_env).map_err(|e| GetInputError {
           source: Source {
             path: None,
             range: pos_db.range(e.text_range()),
@@ -281,7 +283,6 @@ where
         let paths = cm
           .paths
           .into_iter()
-          .filter(|x| !path_is_dollar(x.val.as_path()))
           .map(|parsed_path| {
             let range = pos_db.range(parsed_path.range);
             let source = Source {
@@ -343,7 +344,7 @@ where
         )
       }
       GroupPathKind::Mlb => {
-        let syntax_dec = mlb_syntax::get(&contents).map_err(|e| GetInputError {
+        let syntax_dec = mlb_syntax::get(&contents, &path_var_env).map_err(|e| GetInputError {
           source: Source {
             path: None,
             range: pos_db.range(e.text_range()),
@@ -388,11 +389,6 @@ where
     groups_pos_dbs,
     root_group_id,
   })
-}
-
-/// NOTE: for now we just ignore dollar paths, since we include the full std basis
-fn path_is_dollar(path: &Path) -> bool {
-  path.as_os_str().to_string_lossy().contains('$')
 }
 
 #[derive(Debug, Default, Clone)]
@@ -504,11 +500,6 @@ where
       mlb_hir::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(parsed_path) => {
-      if path_is_dollar(parsed_path.val.as_path()) {
-        // HACK: use this as an empty dec instead of returning Result<Option<BasDec> and having this
-        // be the only None case.
-        return Ok(mlb_hir::BasDec::seq(vec![]));
-      }
       let range = cx.pos_db.range(parsed_path.range);
       let source = Source {
         path: Some(cx.path.to_owned()),

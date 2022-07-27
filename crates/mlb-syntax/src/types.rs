@@ -15,6 +15,7 @@ pub(crate) enum ErrorKind {
   ExpectedBasDec,
   ExpectedName,
   PathNotSmlOrMlb,
+  SlashVarPathError(paths::slash_var_path::Error),
 }
 
 /// An error when processing a ML Basis file.
@@ -42,6 +43,7 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedBasDec => f.write_str("expected a basis declaration"),
       ErrorKind::ExpectedName => f.write_str("expected a name"),
       ErrorKind::PathNotSmlOrMlb => f.write_str("path is not SML or MLB"),
+      ErrorKind::SlashVarPathError(e) => write!(f, "cannot construct path: {e}"),
     }
   }
 }

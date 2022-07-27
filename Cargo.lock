@@ -79,7 +79,7 @@ version = "0.1.0"
 dependencies = [
  "lex-util",
  "located",
- "path-slash",
+ "paths",
  "str-util",
 ]
 
@@ -98,6 +98,7 @@ dependencies = [
 name = "config"
 version = "0.1.0"
 dependencies = [
+ "paths",
  "serde",
  "str-util",
 ]
@@ -369,7 +370,7 @@ version = "0.1.0"
 dependencies = [
  "lex-util",
  "located",
- "path-slash",
+ "paths",
  "str-util",
 ]
 
@@ -430,16 +431,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "path-slash"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "498a099351efa4becc6a19c72aa9270598e8fd274ca47052e37455241c88b696"
-
-[[package]]
 name = "paths"
 version = "0.1.0"
 dependencies = [
  "fast-hash",
+ "str-util",
 ]
 
 [[package]]

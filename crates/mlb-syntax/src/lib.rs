@@ -16,7 +16,7 @@ mod types;
 pub use types::{BasDec, BasExp, Error, Namespace, ParsedPath, PathKind, Result};
 
 /// Process the contents of a ML Basis file.
-pub fn get(s: &str) -> Result<BasDec> {
+pub fn get(s: &str, env: &paths::slash_var_path::Env) -> Result<BasDec> {
   let tokens = lex::get(s)?;
-  parse::get(&tokens)
+  parse::get(&tokens, env)
 }

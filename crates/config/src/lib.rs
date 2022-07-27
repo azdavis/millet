@@ -24,6 +24,9 @@ pub struct Root {
 pub struct Workspace {
   /// The root group filename.
   pub root: Option<SmolStr>,
+  /// Path vars, for expansion in MLB/CM paths.
+  #[serde(rename = "path-vars")]
+  pub path_vars: Option<paths::slash_var_path::Env>,
 }
 
 /// How many lines an error message may have.

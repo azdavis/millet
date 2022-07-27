@@ -20,9 +20,9 @@ mod types;
 pub use types::{CMFile, Class, Error, Export, Namespace, PathKind, Result};
 
 /// Turn the contents of a CM file into exports and members.
-pub fn get(s: &str) -> Result<CMFile> {
+pub fn get(s: &str, env: &paths::slash_var_path::Env) -> Result<CMFile> {
   let tokens = lex::get(s)?;
-  let root = parse::get(&tokens)?;
+  let root = parse::get(&tokens, env)?;
   let file = lower::get(root)?;
   Ok(file)
 }

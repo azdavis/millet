@@ -17,6 +17,7 @@ pub(crate) enum ErrorKind {
   UnsupportedAlias,
   UnsupportedClass(PathBuf, Class),
   CouldNotDetermineClass(PathBuf),
+  SlashVarPathError(paths::slash_var_path::Error),
 }
 
 /// An error when processing a CM file.
@@ -47,6 +48,7 @@ impl fmt::Display for Error {
       ErrorKind::CouldNotDetermineClass(p) => {
         write!(f, "{}: couldn't determine class", p.display())
       }
+      ErrorKind::SlashVarPathError(e) => write!(f, "cannot construct path: {e}"),
     }
   }
 }

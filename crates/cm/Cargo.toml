@@ -8,7 +8,7 @@ publish = false
 doctest = false
 
 [dependencies]
-path-slash = "0.1"
 lex-util = { path = "../lex-util" }
 str-util = { path = "../str-util" }
 located = { path = "../located" }
+paths = { path = "../paths" }

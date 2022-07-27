@@ -1,5 +1,5 @@
 fn check(s: &str) {
-  crate::get(s).unwrap();
+  crate::get(s, &paths::slash_var_path::Env::default()).unwrap();
 }
 
 #[test]
