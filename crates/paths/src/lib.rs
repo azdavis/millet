@@ -4,9 +4,8 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use std::path::{Path, PathBuf, StripPrefixError};
-
 use fast_hash::FxHashMap;
+use std::path::{Path, PathBuf, StripPrefixError};
 
 /// A root, in which all files are contained.
 #[derive(Debug)]
