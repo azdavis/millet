@@ -14,7 +14,7 @@ pub(crate) enum ErrorKind {
   ExpectedBasExp,
   ExpectedBasDec,
   ExpectedName,
-  InvalidPath,
+  PathNotSmlOrMlb,
 }
 
 /// An error when processing a ML Basis file.
@@ -41,7 +41,7 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedBasExp => f.write_str("expected a basis expression"),
       ErrorKind::ExpectedBasDec => f.write_str("expected a basis declaration"),
       ErrorKind::ExpectedName => f.write_str("expected a name"),
-      ErrorKind::InvalidPath => f.write_str("invalid path"),
+      ErrorKind::PathNotSmlOrMlb => f.write_str("path is not SML or MLB"),
     }
   }
 }

@@ -143,7 +143,7 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
       let path = PathBuf::from_slash(path);
       let kind = match path_kind(path.as_path()) {
         Some(x) => x,
-        None => return Err(Error::new(ErrorKind::InvalidPath, tok.range)),
+        None => return p.err(ErrorKind::PathNotSmlOrMlb),
       };
       BasDec::Path(tok.wrap(ParsedPath { path, kind }))
     }
