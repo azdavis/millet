@@ -175,28 +175,28 @@ where
   F: paths::FileSystem,
 {
   let mut root_group_source = Source::default();
-  // try to get from the config.
-  if root_group_path.is_none() {
-    let config_path = root.as_path().join(config::FILE_NAME);
-    if let Ok(contents) = fs.read_to_string(&config_path) {
-      let config: config::Root = match toml::from_str(&contents) {
-        Ok(x) => x,
-        Err(e) => {
-          return Err(GetInputError {
-            source: Source::default(),
-            path: config_path,
-            kind: GetInputErrorKind::CouldNotParseConfig(e),
-          })
-        }
-      };
-      if config.version != 1 {
+  let config_path = root.as_path().join(config::FILE_NAME);
+  if let Ok(contents) = fs.read_to_string(&config_path) {
+    let config: config::Root = match toml::from_str(&contents) {
+      Ok(x) => x,
+      Err(e) => {
         return Err(GetInputError {
           source: Source::default(),
           path: config_path,
-          kind: GetInputErrorKind::InvalidConfigVersion(config.version),
-        });
+          kind: GetInputErrorKind::CouldNotParseConfig(e),
+        })
       }
-      if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
+    };
+    if config.version != 1 {
+      return Err(GetInputError {
+        source: Source::default(),
+        path: config_path,
+        kind: GetInputErrorKind::InvalidConfigVersion(config.version),
+      });
+    }
+    if let Some(ws) = config.workspace {
+      // try to get from the config.
+      if let (None, Some(path)) = (&root_group_path, ws.root) {
         let path = root.as_path().join(path.as_str());
         match GroupPath::new(fs, path.clone()) {
           Some(path) => {
