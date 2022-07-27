@@ -5,6 +5,7 @@
 #![deny(rust_2018_idioms)]
 
 use serde::Deserialize;
+use str_util::SmolStr;
 
 /// The name of the config file.
 pub const FILE_NAME: &str = "millet.toml";
@@ -22,7 +23,7 @@ pub struct Root {
 #[derive(Debug, Deserialize)]
 pub struct Workspace {
   /// The root group filename.
-  pub root: Option<String>,
+  pub root: Option<SmolStr>,
 }
 
 /// How many lines an error message may have.

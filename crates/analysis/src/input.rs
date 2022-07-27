@@ -197,7 +197,7 @@ where
         });
       }
       if let Some(path) = config.workspace.and_then(|workspace| workspace.root) {
-        let path = root.as_path().join(path);
+        let path = root.as_path().join(path.as_str());
         match GroupPath::new(fs, path.clone()) {
           Some(path) => {
             root_group_source.path = Some(config_path);
