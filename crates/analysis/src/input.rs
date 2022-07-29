@@ -170,19 +170,23 @@ pub(crate) struct Group {
   pub(crate) pos_db: text_pos::PositionDb,
 }
 
-/// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
-/// `root`.
-pub fn get<F>(
+struct RootGroup {
+  path: PathId,
+  kind: GroupPathKind,
+  path_vars: paths::slash_var_path::Env,
+}
+
+fn get_root_group<F>(
   fs: &F,
   root: &mut paths::Root,
   mut root_group_path: Option<GroupPath>,
-) -> Result<Input>
+) -> Result<RootGroup>
 where
   F: paths::FileSystem,
 {
   let mut root_group_source = Source::default();
   let config_path = root.as_path().join(config::FILE_NAME);
-  let mut path_var_env = paths::slash_var_path::Env::default();
+  let mut path_vars = paths::slash_var_path::Env::default();
   if let Ok(contents) = fs.read_to_string(&config_path) {
     let config: config::Root = match toml::from_str(&contents) {
       Ok(x) => x,
@@ -202,7 +206,7 @@ where
       });
     }
     if let Some(ws) = config.workspace {
-      path_var_env = ws.path_vars.unwrap_or_default();
+      path_vars = ws.path_vars.unwrap_or_default();
       // try to get from the config.
       if let (None, Some(path)) = (&root_group_path, ws.root) {
         let path = root.as_path().join(path.as_str());
@@ -255,21 +259,42 @@ where
     path: root.as_path().to_owned(),
     kind: GetInputErrorKind::NoRoot,
   })?;
-  let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
-  let mut sources = PathMap::<String>::default();
-  let mut stack = vec![GroupToProcess {
-    containing_path: root_group_id,
+  Ok(RootGroup {
+    path: get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?,
+    kind: root_group_path.kind,
+    path_vars,
+  })
+}
+
+/// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
+/// `root`.
+pub fn get<F>(fs: &F, root: &mut paths::Root, root_group_path: Option<GroupPath>) -> Result<Input>
+where
+  F: paths::FileSystem,
+{
+  let root_group = get_root_group(fs, root, root_group_path)?;
+  let init = GroupToProcess {
+    containing_path: root_group.path,
     containing_range: None,
-    group_path: root_group_id,
-  }];
-  let groups = match root_group_path.kind {
+    group_path: root_group.path,
+  };
+  let mut sources = PathMap::<String>::default();
+  let mut stack = vec![init];
+  let groups = match root_group.kind {
     GroupPathKind::Cm => {
       let mut cm_files = PathMap::<CmFile>::default();
       while let Some(cur) = stack.pop() {
         if cm_files.contains_key(&cur.group_path) {
           continue;
         }
-        let cm_file = get_cm_file(root, cur, fs, &path_var_env, &mut sources, &mut stack)?;
+        let cm_file = get_cm_file(
+          root,
+          cur,
+          fs,
+          &root_group.path_vars,
+          &mut sources,
+          &mut stack,
+        )?;
         cm_files.insert(cur.group_path, cm_file);
       }
       cm_files
@@ -298,14 +323,15 @@ where
         let group_parent = group_path
           .parent()
           .expect("path from get_path has no parent");
-        let syntax_dec = mlb_syntax::get(&contents, &path_var_env).map_err(|e| GetInputError {
-          source: Source {
-            path: None,
-            range: pos_db.range(e.text_range()),
-          },
-          path: group_path.to_owned(),
-          kind: GetInputErrorKind::Mlb(e),
-        })?;
+        let syntax_dec =
+          mlb_syntax::get(&contents, &root_group.path_vars).map_err(|e| GetInputError {
+            source: Source {
+              path: None,
+              range: pos_db.range(e.text_range()),
+            },
+            path: group_path.to_owned(),
+            kind: GetInputErrorKind::Mlb(e),
+          })?;
         let mut cx = LowerCx {
           path: group_path,
           parent: group_parent,
@@ -340,7 +366,7 @@ where
   Ok(Input {
     sources,
     groups,
-    root_group_id,
+    root_group_id: root_group.path,
   })
 }
 
@@ -354,7 +380,7 @@ fn get_cm_file<F>(
   root: &mut paths::Root,
   cur: GroupToProcess,
   fs: &F,
-  path_var_env: &paths::slash_var_path::Env,
+  path_vars: &paths::slash_var_path::Env,
   sources: &mut paths::PathMap<String>,
   stack: &mut Vec<GroupToProcess>,
 ) -> Result<CmFile, GetInputError>
@@ -366,7 +392,7 @@ where
   let group_parent = group_path
     .parent()
     .expect("path from get_path has no parent");
-  let cm = cm::get(&contents, path_var_env).map_err(|e| GetInputError {
+  let cm = cm::get(&contents, path_vars).map_err(|e| GetInputError {
     source: Source {
       path: None,
       range: pos_db.range(e.text_range()),
