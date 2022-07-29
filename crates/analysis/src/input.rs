@@ -441,10 +441,9 @@ where
     .paths
     .into_iter()
     .map(|parsed_path| {
-      let range = pos_db.range(parsed_path.range);
       let source = Source {
         path: Some(group_path.to_owned()),
-        range,
+        range: pos_db.range(parsed_path.range),
       };
       let path = group_parent.join(parsed_path.val.as_path());
       let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
@@ -457,7 +456,7 @@ where
         cm::PathKind::Cm => {
           let cur = GroupToProcess {
             containing_path: cur.group_path,
-            containing_range: range,
+            containing_range: source.range,
             group_path: path_id,
           };
           get_cm_file(root, fs, path_vars, sources, cm_files, cur)?;
@@ -612,10 +611,9 @@ where
       mlb_hir::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(parsed_path) => {
-      let range = cx.pos_db.range(parsed_path.range);
       let source = Source {
         path: Some(cx.path.to_owned()),
-        range,
+        range: cx.pos_db.range(parsed_path.range),
       };
       let path = cx.parent.join(parsed_path.val.as_path());
       let path_id = get_path_id(cx.fs, cx.root, source.clone(), path.as_path())?;
@@ -628,7 +626,7 @@ where
         mlb_syntax::PathKind::Mlb => {
           cx.stack.push(GroupToProcess {
             containing_path: cx.path_id,
-            containing_range: range,
+            containing_range: source.range,
             group_path: path_id,
           });
           mlb_hir::PathKind::Mlb
