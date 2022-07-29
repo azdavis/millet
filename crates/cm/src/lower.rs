@@ -1,7 +1,7 @@
-use crate::types::{CMFile, Class, Error, ErrorKind, ParsedPath, PathKind, Result, Root};
+use crate::types::{Class, CmFile, Error, ErrorKind, ParsedPath, PathKind, Result, Root};
 use located::Located;
 
-pub(crate) fn get(root: Root) -> Result<CMFile> {
+pub(crate) fn get(root: Root) -> Result<CmFile> {
   match root {
     Root::Alias(path) => Err(Error::new(ErrorKind::UnsupportedAlias, path.range)),
     Root::Desc(_, exports, members) => {
@@ -33,7 +33,7 @@ pub(crate) fn get(root: Root) -> Result<CMFile> {
           range: member.pathname.range,
         });
       }
-      Ok(CMFile { exports, paths })
+      Ok(CmFile { exports, paths })
     }
   }
 }

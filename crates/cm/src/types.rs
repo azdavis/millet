@@ -90,7 +90,7 @@ impl<'a> fmt::Display for Token<'a> {
 
 /// A processed CM file.
 #[derive(Debug)]
-pub struct CMFile {
+pub struct CmFile {
   /// The exports.
   pub exports: Vec<Export>,
   /// The paths, in order.

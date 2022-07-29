@@ -15,10 +15,10 @@ mod lower;
 mod parse;
 mod types;
 
-pub use types::{CMFile, Class, Error, Export, Namespace, PathKind, Result};
+pub use types::{Class, CmFile, Error, Export, Namespace, PathKind, Result};
 
 /// Turn the contents of a CM file into exports and members.
-pub fn get(s: &str, env: &paths::slash_var_path::Env) -> Result<CMFile> {
+pub fn get(s: &str, env: &paths::slash_var_path::Env) -> Result<CmFile> {
   let tokens = lex::get(s)?;
   let root = parse::get(&tokens, env)?;
   let file = lower::get(root)?;
