@@ -10,13 +10,13 @@ fn arbitrary_root_group() {
 #[test]
 fn no_root_group() {
   let e = check_empty_cm(&[], None).unwrap_err();
-  assert!(e.message().to_string().contains("no root group"));
+  assert!(e.to_string().contains("no root group"));
 }
 
 #[test]
 fn multiple_root_groups_err() {
   let e = check_empty_cm(&["foo.cm", "bar.cm"], None).unwrap_err();
-  assert!(e.message().to_string().contains("multiple root groups"));
+  assert!(e.to_string().contains("multiple root groups"));
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn no_root_group_in_config_ok() {
 #[test]
 fn config_invalid_version() {
   let e = check_empty_cm(&["sources.cm"], Some("version = 123")).unwrap_err();
-  assert!(e.message().to_string().contains("invalid config version"));
+  assert!(e.to_string().contains("invalid config version"));
 }
 
 #[test]
@@ -54,13 +54,13 @@ root = "nope.cm"
 #[test]
 fn config_parse_err() {
   let e = check_empty_cm(&["foo.cm"], Some("岡部倫太郎")).unwrap_err();
-  assert!(e.message().to_string().contains("couldn't parse config"));
+  assert!(e.to_string().contains("couldn't parse config"));
 }
 
 #[test]
 fn cycle_1() {
   let e = check_input([("foo.cm", "Group is foo.cm")], None).unwrap_err();
-  assert!(e.message().to_string().contains("there is a cycle"));
+  assert!(e.to_string().contains("there is a cycle"));
 }
 
 #[test]
@@ -72,7 +72,7 @@ version = 1
 root = "foo.cm"
   "#;
   let e = check_input(inp, Some(config)).unwrap_err();
-  assert!(e.message().to_string().contains("there is a cycle"));
+  assert!(e.to_string().contains("there is a cycle"));
 }
 
 #[test]
@@ -83,7 +83,7 @@ version = 1
 root = "nope.txt"
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
-  assert!(e.message().to_string().contains("not a group path"));
+  assert!(e.to_string().contains("not a group path"));
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn mlb() {
 #[test]
 fn mlb_cm_err() {
   let e = check_empty_cm(&["foo.mlb", "foo.cm"], None).unwrap_err();
-  assert!(e.message().to_string().contains("multiple root groups"));
+  assert!(e.to_string().contains("multiple root groups"));
 }
 
 #[test]

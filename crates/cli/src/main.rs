@@ -63,7 +63,7 @@ fn run() -> bool {
         print!(":{}", r.start);
       }
       let code = analysis::OTHER_ERRORS + u16::from(e.to_code());
-      println!(": error[{}]: {}", code, e.message());
+      println!(": error[{code}]: {e}");
       return false;
     }
   };

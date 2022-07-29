@@ -290,7 +290,7 @@ impl State {
               self.send_diagnostics(
                 url,
                 vec![diagnostic(
-                  e.message().to_string(),
+                  e.to_string(),
                   e.range(),
                   analysis::OTHER_ERRORS + u16::from(e.to_code()),
                 )],
@@ -303,7 +303,7 @@ impl State {
           false
         };
         if !did_send_as_diagnostic {
-          self.show_error(format!("{}: {}", e.path().display(), e.message()));
+          self.show_error(format!("{}: {}", e.path().display(), e));
         }
         self.root = Some(root);
         return false;

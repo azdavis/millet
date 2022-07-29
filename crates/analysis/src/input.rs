@@ -52,11 +52,6 @@ impl GetInputError {
     self.source.range
   }
 
-  /// Returns a value that displays the error message without the path.
-  pub fn message(&self) -> impl fmt::Display + '_ {
-    &self.kind
-  }
-
   /// Returns the error code for this.
   pub fn to_code(&self) -> u8 {
     match self.kind {
@@ -74,6 +69,15 @@ impl GetInputError {
       GetInputErrorKind::Duplicate(_) => 12,
       GetInputErrorKind::UnsupportedExport => 98,
     }
+  }
+}
+
+impl fmt::Display for GetInputError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    if self.source.path.is_some() {
+      write!(f, "{}: ", self.path.display())?;
+    }
+    self.kind.fmt(f)
   }
 }
 
