@@ -263,15 +263,14 @@ where
     if groups.contains_key(&group_path_id) {
       continue;
     }
-    let group_path = root.get_path(group_path_id).clone();
+    let (group_path, contents, pos_db) = start_group_file(
+      root,
+      group_path_id,
+      containing_path_id,
+      containing_path_range,
+      fs,
+    )?;
     let group_path = group_path.as_path();
-    let containing_path = root.get_path(containing_path_id).as_path().to_owned();
-    let source = Source {
-      path: Some(containing_path),
-      range: containing_path_range,
-    };
-    let contents = read_file(fs, source, group_path)?;
-    let pos_db = text_pos::PositionDb::new(&contents);
     let group_parent = group_path
       .parent()
       .expect("path from get_path has no parent");
@@ -392,6 +391,27 @@ where
     groups,
     root_group_id,
   })
+}
+
+fn start_group_file<F>(
+  root: &mut paths::Root,
+  group_path_id: PathId,
+  containing_path_id: PathId,
+  containing_path_range: Option<Range>,
+  fs: &F,
+) -> Result<(paths::CanonicalPathBuf, String, text_pos::PositionDb), GetInputError>
+where
+  F: paths::FileSystem,
+{
+  let group_path = root.get_path(group_path_id).clone();
+  let containing_path = root.get_path(containing_path_id).as_path().to_owned();
+  let source = Source {
+    path: Some(containing_path),
+    range: containing_path_range,
+  };
+  let contents = read_file(fs, source, group_path.as_path())?;
+  let pos_db = text_pos::PositionDb::new(&contents);
+  Ok((group_path, contents, pos_db))
 }
 
 #[derive(Debug, Default, Clone)]
