@@ -122,6 +122,12 @@ impl fmt::Display for GetInputErrorKind {
   }
 }
 
+#[derive(Debug, Default, Clone)]
+struct Source {
+  path: Option<PathBuf>,
+  range: Option<Range>,
+}
+
 /// std's Result with GetInputError as the default error.
 pub type Result<T, E = GetInputError> = std::result::Result<T, E>;
 
@@ -266,6 +272,35 @@ where
   })
 }
 
+#[derive(Debug, Clone, Copy)]
+struct GroupToProcess {
+  /// the path that led us to `group_path`.
+  containing_path: PathId,
+  /// the range in the file at `containing_path` that led us to `group_path`, if any.
+  containing_range: Option<Range>,
+  /// the path to process.
+  group_path: PathId,
+}
+
+fn start_group_file<F>(
+  root: &mut paths::Root,
+  cur: GroupToProcess,
+  fs: &F,
+) -> Result<(paths::CanonicalPathBuf, String, text_pos::PositionDb), GetInputError>
+where
+  F: paths::FileSystem,
+{
+  let group_path = root.get_path(cur.group_path).clone();
+  let containing_path = root.get_path(cur.containing_path).as_path().to_owned();
+  let source = Source {
+    path: Some(containing_path),
+    range: cur.containing_range,
+  };
+  let contents = read_file(fs, source, group_path.as_path())?;
+  let pos_db = text_pos::PositionDb::new(&contents);
+  Ok((group_path, contents, pos_db))
+}
+
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
 /// `root`.
 pub fn get<F>(fs: &F, root: &mut paths::Root, root_group_path: Option<GroupPath>) -> Result<Input>
@@ -332,7 +367,7 @@ where
             path: group_path.to_owned(),
             kind: GetInputErrorKind::Mlb(e),
           })?;
-        let mut cx = LowerCx {
+        let mut cx = MlbCx {
           path: group_path,
           parent: group_parent,
           pos_db: &pos_db,
@@ -469,41 +504,6 @@ where
   })
 }
 
-#[derive(Debug, Clone, Copy)]
-struct GroupToProcess {
-  /// the path that led us to `group_path`.
-  containing_path: PathId,
-  /// the range in the file at `containing_path` that led us to `group_path`, if any.
-  containing_range: Option<Range>,
-  /// the path to process.
-  group_path: PathId,
-}
-
-fn start_group_file<F>(
-  root: &mut paths::Root,
-  cur: GroupToProcess,
-  fs: &F,
-) -> Result<(paths::CanonicalPathBuf, String, text_pos::PositionDb), GetInputError>
-where
-  F: paths::FileSystem,
-{
-  let group_path = root.get_path(cur.group_path).clone();
-  let containing_path = root.get_path(cur.containing_path).as_path().to_owned();
-  let source = Source {
-    path: Some(containing_path),
-    range: cur.containing_range,
-  };
-  let contents = read_file(fs, source, group_path.as_path())?;
-  let pos_db = text_pos::PositionDb::new(&contents);
-  Ok((group_path, contents, pos_db))
-}
-
-#[derive(Debug, Default, Clone)]
-struct Source {
-  path: Option<PathBuf>,
-  range: Option<Range>,
-}
-
 fn get_path_id<F>(
   fs: &F,
   root: &mut paths::Root,
@@ -536,7 +536,7 @@ where
   })
 }
 
-struct LowerCx<'a, F> {
+struct MlbCx<'a, F> {
   path: &'a Path,
   parent: &'a Path,
   pos_db: &'a text_pos::PositionDb,
@@ -547,7 +547,7 @@ struct LowerCx<'a, F> {
   path_id: PathId,
 }
 
-fn get_bas_dec<F>(cx: &mut LowerCx<'_, F>, dec: mlb_syntax::BasDec) -> Result<mlb_hir::BasDec>
+fn get_bas_dec<F>(cx: &mut MlbCx<'_, F>, dec: mlb_syntax::BasDec) -> Result<mlb_hir::BasDec>
 where
   F: paths::FileSystem,
 {
@@ -642,7 +642,7 @@ where
   Ok(ret)
 }
 
-fn get_bas_exp<F>(cx: &mut LowerCx<'_, F>, exp: mlb_syntax::BasExp) -> Result<mlb_hir::BasExp>
+fn get_bas_exp<F>(cx: &mut MlbCx<'_, F>, exp: mlb_syntax::BasExp) -> Result<mlb_hir::BasExp>
 where
   F: paths::FileSystem,
 {
