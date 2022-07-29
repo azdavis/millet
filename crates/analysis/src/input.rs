@@ -269,86 +269,16 @@ where
         if groups.contains_key(&cur.group_path) {
           continue;
         }
-        let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
-        let group_path = group_path.as_path();
-        let group_parent = group_path
-          .parent()
-          .expect("path from get_path has no parent");
-        let cm = cm::get(&contents, &path_var_env).map_err(|e| GetInputError {
-          source: Source {
-            path: None,
-            range: pos_db.range(e.text_range()),
-          },
-          path: group_path.to_owned(),
-          kind: GetInputErrorKind::Cm(e),
-        })?;
-        let paths = cm
-          .paths
-          .into_iter()
-          .map(|parsed_path| {
-            let range = pos_db.range(parsed_path.range);
-            let source = Source {
-              path: Some(group_path.to_owned()),
-              range,
-            };
-            let path = group_parent.join(parsed_path.val.as_path());
-            let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
-            let kind = match parsed_path.val.kind() {
-              cm::PathKind::Sml => {
-                let contents = read_file(fs, source, path.as_path())?;
-                sources.insert(path_id, contents);
-                mlb_hir::PathKind::Sml
-              }
-              cm::PathKind::Cm => {
-                stack.push(GroupToProcess {
-                  containing_path: cur.group_path,
-                  containing_range: range,
-                  group_path: path_id,
-                });
-                // NOTE this is a lie.
-                mlb_hir::PathKind::Mlb
-              }
-            };
-            Ok(mlb_hir::BasDec::Path(path_id, kind))
-          })
-          .collect::<Result<Vec<_>>>()?;
-        let exports = cm
-          .exports
-          .into_iter()
-          .map(|export| match export {
-            cm::Export::Regular(ns, name) => {
-              let ns = match ns.val {
-                cm::Namespace::Structure => mlb_hir::Namespace::Structure,
-                cm::Namespace::Signature => mlb_hir::Namespace::Signature,
-                cm::Namespace::Functor => mlb_hir::Namespace::Functor,
-                cm::Namespace::FunSig => {
-                  return Err(GetInputError {
-                    source: Source {
-                      path: None,
-                      range: pos_db.range(ns.range),
-                    },
-                    path: group_path.to_owned(),
-                    kind: GetInputErrorKind::UnsupportedExport,
-                  })
-                }
-              };
-              Ok(mlb_hir::BasDec::Export(ns, name.clone(), name))
-            }
-            cm::Export::Library(lib) => Err(GetInputError {
-              source: Source {
-                path: None,
-                range: pos_db.range(lib.range),
-              },
-              path: group_path.to_owned(),
-              kind: GetInputErrorKind::UnsupportedExport,
-            }),
-          })
-          .collect::<Result<Vec<_>>>()?;
+        let cm_file = get_cm_file(root, cur, fs, &path_var_env, &mut sources, &mut stack)?;
         let bas_dec = mlb_hir::BasDec::Local(
-          mlb_hir::BasDec::seq(paths).into(),
-          mlb_hir::BasDec::seq(exports).into(),
+          mlb_hir::BasDec::seq(cm_file.paths).into(),
+          mlb_hir::BasDec::seq(cm_file.exports).into(),
         );
-        groups.insert(cur.group_path, Group { bas_dec, pos_db });
+        let group = Group {
+          bas_dec,
+          pos_db: cm_file.pos_db,
+        };
+        groups.insert(cur.group_path, group);
       }
     }
     GroupPathKind::Mlb => {
@@ -403,6 +333,105 @@ where
     sources,
     groups,
     root_group_id,
+  })
+}
+
+struct CmFile {
+  pos_db: text_pos::PositionDb,
+  paths: Vec<mlb_hir::BasDec>,
+  exports: Vec<mlb_hir::BasDec>,
+}
+
+fn get_cm_file<F>(
+  root: &mut paths::Root,
+  cur: GroupToProcess,
+  fs: &F,
+  path_var_env: &paths::slash_var_path::Env,
+  sources: &mut paths::PathMap<String>,
+  stack: &mut Vec<GroupToProcess>,
+) -> Result<CmFile, GetInputError>
+where
+  F: paths::FileSystem,
+{
+  let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
+  let group_path = group_path.as_path();
+  let group_parent = group_path
+    .parent()
+    .expect("path from get_path has no parent");
+  let cm = cm::get(&contents, path_var_env).map_err(|e| GetInputError {
+    source: Source {
+      path: None,
+      range: pos_db.range(e.text_range()),
+    },
+    path: group_path.to_owned(),
+    kind: GetInputErrorKind::Cm(e),
+  })?;
+  let paths = cm
+    .paths
+    .into_iter()
+    .map(|parsed_path| {
+      let range = pos_db.range(parsed_path.range);
+      let source = Source {
+        path: Some(group_path.to_owned()),
+        range,
+      };
+      let path = group_parent.join(parsed_path.val.as_path());
+      let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
+      let kind = match parsed_path.val.kind() {
+        cm::PathKind::Sml => {
+          let contents = read_file(fs, source, path.as_path())?;
+          sources.insert(path_id, contents);
+          mlb_hir::PathKind::Sml
+        }
+        cm::PathKind::Cm => {
+          stack.push(GroupToProcess {
+            containing_path: cur.group_path,
+            containing_range: range,
+            group_path: path_id,
+          });
+          // NOTE this is a lie.
+          mlb_hir::PathKind::Mlb
+        }
+      };
+      Ok(mlb_hir::BasDec::Path(path_id, kind))
+    })
+    .collect::<Result<Vec<_>>>()?;
+  let exports = cm
+    .exports
+    .into_iter()
+    .map(|export| match export {
+      cm::Export::Regular(ns, name) => {
+        let ns = match ns.val {
+          cm::Namespace::Structure => mlb_hir::Namespace::Structure,
+          cm::Namespace::Signature => mlb_hir::Namespace::Signature,
+          cm::Namespace::Functor => mlb_hir::Namespace::Functor,
+          cm::Namespace::FunSig => {
+            return Err(GetInputError {
+              source: Source {
+                path: None,
+                range: pos_db.range(ns.range),
+              },
+              path: group_path.to_owned(),
+              kind: GetInputErrorKind::UnsupportedExport,
+            })
+          }
+        };
+        Ok(mlb_hir::BasDec::Export(ns, name.clone(), name))
+      }
+      cm::Export::Library(lib) => Err(GetInputError {
+        source: Source {
+          path: None,
+          range: pos_db.range(lib.range),
+        },
+        path: group_path.to_owned(),
+        kind: GetInputErrorKind::UnsupportedExport,
+      }),
+    })
+    .collect::<Result<Vec<_>>>()?;
+  Ok(CmFile {
+    pos_db,
+    paths,
+    exports,
   })
 }
 
