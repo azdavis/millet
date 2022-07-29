@@ -819,6 +819,8 @@ Millet tries to report which type was "expected" and which was "found". For inst
 val x : int = "no"
 ```
 
+This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
+
 This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `speak` takes a `bool`.
 
 ```sml
