@@ -11,6 +11,8 @@
     { "include": "#string" },
     { "include": "#specialName" },
     { "include": "#symbolicName" },
+    { "include": "#upperName" },
+    { "include": "#commonBuiltinType" },
     { "include": "#controlKeyword" },
     { "include": "#otherKeyword" }
   ],
@@ -84,6 +86,14 @@
     "symbolicName": {
       "name": "keyword.operator.sml",
       "match": "[!%&\\$#\\+\\-/:<=>\\?@\\\\~`\\^\\|\\*]+"
+    },
+    "upperName": {
+      "name": "entity.name.type.sml",
+      "match": "\\b[A-Z][A-Za-z0-9_']*\\b"
+    },
+    "commonBuiltinType": {
+      "name": "entity.name.type.sml",
+      "match": "\\b(int|word|real|char|string|bool|unit|exn|list|option)\\b"
     },
     "controlKeyword": {
       "name": "keyword.control.sml",
