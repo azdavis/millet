@@ -418,18 +418,13 @@ fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
 }
 
 fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp_types::Diagnostic {
-  let code_description = match Url::parse(&format!("{}#{}", analysis::ERRORS_URL, code)) {
-    Ok(href) => Some(lsp_types::CodeDescription { href }),
-    Err(e) => {
-      log::error!("url parse failed for {message} with code {code}: {e}");
-      None
-    }
-  };
+  let href =
+    Url::parse(&format!("{}#{}", analysis::ERRORS_URL, code)).expect("couldn't parse error URL");
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(lsp_types::DiagnosticSeverity::ERROR),
     code: Some(lsp_types::NumberOrString::Number(code.into())),
-    code_description,
+    code_description: Some(lsp_types::CodeDescription { href }),
     source: Some("millet".to_owned()),
     message,
     related_information: None,

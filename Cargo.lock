@@ -589,7 +589,6 @@ dependencies = [
  "drop_bomb",
  "fast-hash",
  "hir",
- "log",
  "paths",
  "pattern-match",
  "uniq",

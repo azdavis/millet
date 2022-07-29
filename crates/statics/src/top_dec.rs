@@ -354,7 +354,7 @@ fn get_where_type(
           Ty::None => {}
           // TODO side condition for sym not in T of B?
           Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), inner_env),
-          t => log::error!("reached an unexpected case for `where`: {t:?}"),
+          t => unreachable!("bad `where`: {t:?}"),
         }
       } else {
         st.err(idx, ErrorKind::WrongNumTyArgs(want_len, ty_vars.len()));
@@ -570,7 +570,8 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
             }
             syms.push(*sym);
           }
-          t => log::error!("reached an unexpected case for `sharing`: {t:?}"),
+          // TODO this is reachable, but doesn't make sense.
+          _ => {}
         }
       }
       Err(e) => st.err(idx, e),
@@ -584,7 +585,8 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[hir::Path], idx: 
         .collect();
       env_realize(&subst, inner_env);
     }
-    None => log::error!("didn't get a ty scheme for sharing spec"),
+    // TODO this is reachable (because of the above), but bad.
+    None => {}
   }
 }
 
@@ -654,8 +656,7 @@ fn env_instance_sig(st: &mut St, subst: &mut TyRealization, env: &Env, sig: &Sig
     let (_, ty_info) = st.syms.get(&sym).unwrap();
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
-      log::error!("couldn't get a path for {sym:?} in {sig:?}");
-      continue;
+      unreachable!("couldn't get a path for {sym:?} in {sig:?}");
     }
     let last = path.pop().unwrap();
     match get_ty_info_raw(env, path, last) {

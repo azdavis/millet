@@ -79,13 +79,7 @@ impl Analysis {
     self.syms = res.syms;
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
-        let group = match input.groups.get(&err.path()) {
-          Some(x) => x,
-          None => {
-            log::error!("no such group");
-            return None;
-          }
-        };
+        let group = input.groups.get(&err.path()).expect("no such group");
         Some((
           err.path(),
           vec![Error {
@@ -242,13 +236,11 @@ fn source_file_errors(
     }))
     .chain(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
-      let syntax = match file.lowered.ptrs.hir_to_ast(idx) {
-        Some(x) => x,
-        None => {
-          log::error!("no pointer for {idx:?}");
-          return None;
-        }
-      };
+      let syntax = file
+        .lowered
+        .ptrs
+        .hir_to_ast(idx)
+        .expect("no pointer for idx");
       Some(Error {
         range: file
           .pos_db
