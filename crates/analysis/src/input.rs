@@ -258,20 +258,18 @@ where
   let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
   let mut sources = PathMap::<String>::default();
   let mut groups = PathMap::<Group>::default();
-  let mut stack = vec![((root_group_id, None), root_group_id)];
+  let mut stack = vec![GroupToProcess {
+    containing_path: root_group_id,
+    containing_range: None,
+    group_path: root_group_id,
+  }];
   match root_group_path.kind {
     GroupPathKind::Cm => {
-      while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
-        if groups.contains_key(&group_path_id) {
+      while let Some(cur) = stack.pop() {
+        if groups.contains_key(&cur.group_path) {
           continue;
         }
-        let (group_path, contents, pos_db) = start_group_file(
-          root,
-          group_path_id,
-          containing_path_id,
-          containing_path_range,
-          fs,
-        )?;
+        let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
         let group_path = group_path.as_path();
         let group_parent = group_path
           .parent()
@@ -302,7 +300,11 @@ where
                 mlb_hir::PathKind::Sml
               }
               cm::PathKind::Cm => {
-                stack.push(((group_path_id, range), path_id));
+                stack.push(GroupToProcess {
+                  containing_path: cur.group_path,
+                  containing_range: range,
+                  group_path: path_id,
+                });
                 // NOTE this is a lie.
                 mlb_hir::PathKind::Mlb
               }
@@ -346,21 +348,15 @@ where
           mlb_hir::BasDec::seq(paths).into(),
           mlb_hir::BasDec::seq(exports).into(),
         );
-        groups.insert(group_path_id, Group { bas_dec, pos_db });
+        groups.insert(cur.group_path, Group { bas_dec, pos_db });
       }
     }
     GroupPathKind::Mlb => {
-      while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
-        if groups.contains_key(&group_path_id) {
+      while let Some(cur) = stack.pop() {
+        if groups.contains_key(&cur.group_path) {
           continue;
         }
-        let (group_path, contents, pos_db) = start_group_file(
-          root,
-          group_path_id,
-          containing_path_id,
-          containing_path_range,
-          fs,
-        )?;
+        let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
         let group_path = group_path.as_path();
         let group_parent = group_path
           .parent()
@@ -381,10 +377,10 @@ where
           root,
           sources: &mut sources,
           stack: &mut stack,
-          path_id: group_path_id,
+          path_id: cur.group_path,
         };
         let bas_dec = get_bas_dec(&mut cx, syntax_dec)?;
-        groups.insert(group_path_id, Group { bas_dec, pos_db });
+        groups.insert(cur.group_path, Group { bas_dec, pos_db });
       }
     }
   }
@@ -410,21 +406,29 @@ where
   })
 }
 
+#[derive(Debug, Clone, Copy)]
+struct GroupToProcess {
+  /// the path that led us to `group_path`.
+  containing_path: PathId,
+  /// the range in the file at `containing_path` that led us to `group_path`, if any.
+  containing_range: Option<Range>,
+  /// the path to process.
+  group_path: PathId,
+}
+
 fn start_group_file<F>(
   root: &mut paths::Root,
-  group_path_id: PathId,
-  containing_path_id: PathId,
-  containing_path_range: Option<Range>,
+  cur: GroupToProcess,
   fs: &F,
 ) -> Result<(paths::CanonicalPathBuf, String, text_pos::PositionDb), GetInputError>
 where
   F: paths::FileSystem,
 {
-  let group_path = root.get_path(group_path_id).clone();
-  let containing_path = root.get_path(containing_path_id).as_path().to_owned();
+  let group_path = root.get_path(cur.group_path).clone();
+  let containing_path = root.get_path(cur.containing_path).as_path().to_owned();
   let source = Source {
     path: Some(containing_path),
-    range: containing_path_range,
+    range: cur.containing_range,
   };
   let contents = read_file(fs, source, group_path.as_path())?;
   let pos_db = text_pos::PositionDb::new(&contents);
@@ -476,7 +480,7 @@ struct LowerCx<'a, F> {
   fs: &'a F,
   root: &'a mut paths::Root,
   sources: &'a mut PathMap<String>,
-  stack: &'a mut Vec<((PathId, Option<Range>), PathId)>,
+  stack: &'a mut Vec<GroupToProcess>,
   path_id: PathId,
 }
 
@@ -554,7 +558,11 @@ where
           mlb_hir::PathKind::Sml
         }
         mlb_syntax::PathKind::Mlb => {
-          cx.stack.push(((cx.path_id, range), path_id));
+          cx.stack.push(GroupToProcess {
+            containing_path: cx.path_id,
+            containing_range: range,
+            group_path: path_id,
+          });
           mlb_hir::PathKind::Mlb
         }
       };
