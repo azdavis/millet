@@ -22,5 +22,6 @@ cm = { path = "../cm" }
 mlb-syntax = { path = "../mlb-syntax" }
 mlb-hir = { path = "../mlb-hir" }
 mlb-statics = { path = "../mlb-statics" }
+located = { path = "../located" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }

@@ -328,9 +328,14 @@ where
       cm_files
         .into_iter()
         .map(|(path, cm_file)| {
+          let exports: Vec<_> = cm_file
+            .exports
+            .into_iter()
+            .map(|ex| mlb_hir::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
+            .collect();
           let bas_dec = mlb_hir::BasDec::Local(
             mlb_hir::BasDec::seq(cm_file.paths).into(),
-            mlb_hir::BasDec::seq(cm_file.exports).into(),
+            mlb_hir::BasDec::seq(exports).into(),
           );
           let group = Group {
             bas_dec,
@@ -406,7 +411,13 @@ struct CmFile {
   /// only optional so this can derive default.
   pos_db: Option<text_pos::PositionDb>,
   paths: Vec<mlb_hir::BasDec>,
-  exports: Vec<mlb_hir::BasDec>,
+  exports: Vec<Export>,
+}
+
+#[derive(Debug)]
+struct Export {
+  namespace: mlb_hir::Namespace,
+  name: located::Located<hir::Name>,
 }
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
@@ -470,11 +481,11 @@ where
       Ok(mlb_hir::BasDec::Path(path_id, kind))
     })
     .collect::<Result<Vec<_>>>()?;
-  let mut exports = Vec::<mlb_hir::BasDec>::new();
+  let mut exports = Vec::<Export>::new();
   for export in cm.exports {
     match export {
       cm::Export::Regular(ns, name) => {
-        let ns = match ns.val {
+        let namespace = match ns.val {
           cm::Namespace::Structure => mlb_hir::Namespace::Structure,
           cm::Namespace::Signature => mlb_hir::Namespace::Signature,
           cm::Namespace::Functor => mlb_hir::Namespace::Functor,
@@ -489,7 +500,7 @@ where
             })
           }
         };
-        exports.push(mlb_hir::BasDec::Export(ns, name.clone(), name));
+        exports.push(Export { namespace, name });
       }
       cm::Export::Library(lib) => {
         let source = Source {
@@ -507,7 +518,10 @@ where
         let cm_file = cm_files
           .get(&cur.group_path)
           .expect("cm file should be set after get_cm_file");
-        exports.extend(cm_file.exports.iter().cloned());
+        exports.extend(cm_file.exports.iter().map(|ex| Export {
+          namespace: ex.namespace,
+          name: lib.wrap(ex.name.val.clone()),
+        }));
       }
     }
   }
