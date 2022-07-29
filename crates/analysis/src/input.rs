@@ -259,23 +259,23 @@ where
   let mut sources = PathMap::<String>::default();
   let mut groups = PathMap::<Group>::default();
   let mut stack = vec![((root_group_id, None), root_group_id)];
-  while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
-    if groups.contains_key(&group_path_id) {
-      continue;
-    }
-    let (group_path, contents, pos_db) = start_group_file(
-      root,
-      group_path_id,
-      containing_path_id,
-      containing_path_range,
-      fs,
-    )?;
-    let group_path = group_path.as_path();
-    let group_parent = group_path
-      .parent()
-      .expect("path from get_path has no parent");
-    let bas_dec = match root_group_path.kind {
-      GroupPathKind::Cm => {
+  match root_group_path.kind {
+    GroupPathKind::Cm => {
+      while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
+        if groups.contains_key(&group_path_id) {
+          continue;
+        }
+        let (group_path, contents, pos_db) = start_group_file(
+          root,
+          group_path_id,
+          containing_path_id,
+          containing_path_range,
+          fs,
+        )?;
+        let group_path = group_path.as_path();
+        let group_parent = group_path
+          .parent()
+          .expect("path from get_path has no parent");
         let cm = cm::get(&contents, &path_var_env).map_err(|e| GetInputError {
           source: Source {
             path: None,
@@ -342,12 +342,29 @@ where
             }),
           })
           .collect::<Result<Vec<_>>>()?;
-        mlb_hir::BasDec::Local(
+        let bas_dec = mlb_hir::BasDec::Local(
           mlb_hir::BasDec::seq(paths).into(),
           mlb_hir::BasDec::seq(exports).into(),
-        )
+        );
+        groups.insert(group_path_id, Group { bas_dec, pos_db });
       }
-      GroupPathKind::Mlb => {
+    }
+    GroupPathKind::Mlb => {
+      while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
+        if groups.contains_key(&group_path_id) {
+          continue;
+        }
+        let (group_path, contents, pos_db) = start_group_file(
+          root,
+          group_path_id,
+          containing_path_id,
+          containing_path_range,
+          fs,
+        )?;
+        let group_path = group_path.as_path();
+        let group_parent = group_path
+          .parent()
+          .expect("path from get_path has no parent");
         let syntax_dec = mlb_syntax::get(&contents, &path_var_env).map_err(|e| GetInputError {
           source: Source {
             path: None,
@@ -366,10 +383,10 @@ where
           stack: &mut stack,
           path_id: group_path_id,
         };
-        get_bas_dec(&mut cx, syntax_dec)?
+        let bas_dec = get_bas_dec(&mut cx, syntax_dec)?;
+        groups.insert(group_path_id, Group { bas_dec, pos_db });
       }
-    };
-    groups.insert(group_path_id, Group { bas_dec, pos_db });
+    }
   }
   let graph: topo_sort::Graph<_> = groups
     .iter()
