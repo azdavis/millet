@@ -727,7 +727,7 @@ functor Func (structure Param : SIG) = struct (* ... *) end
 
 (* desugared *)
 functor Func (<<AnonymousStruct>> : sig
-  structure Param: SIG
+  structure Param : SIG
 end) = let
   open <<AnonymousStruct>>
 in
@@ -748,7 +748,7 @@ structure S = Func (struct structure Param = Arg end)
 A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
 
 ```sml
-functor Func (Param: SIG) = struct (* ... *) end
+functor Func (Param : SIG) = struct (* ... *) end
 structure S = Func (structure Param = Arg)
 ```
 
