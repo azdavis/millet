@@ -1,8 +1,6 @@
 //! Lexes a string into tokens.
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
+#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use lex_util::{advance_while, block_comment, is_whitespace};
 use std::fmt;

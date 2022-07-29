@@ -1,8 +1,6 @@
 //! A thin wrapper over [`rustc_hash`] with some extra helper functions.
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
+#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use std::hash::{BuildHasherDefault, Hash};
 

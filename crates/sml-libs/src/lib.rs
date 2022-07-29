@@ -1,7 +1,6 @@
 //! Text of various SML libraries.
 
-#![deny(missing_debug_implementations)]
-#![deny(rust_2018_idioms)]
+#![deny(missing_debug_implementations, rust_2018_idioms)]
 
 pub mod sml_nj;
 pub mod std_basis;

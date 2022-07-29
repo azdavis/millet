@@ -1,7 +1,6 @@
 //! HIR for ML Basis.
 
-#![deny(missing_debug_implementations)]
-#![deny(rust_2018_idioms)]
+#![deny(missing_debug_implementations, rust_2018_idioms)]
 
 use located::Located;
 
