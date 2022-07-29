@@ -91,7 +91,7 @@ To fix, break the cycle.
 
 There was a duplicate name in a ML Basis file. For instance, `structure A and structure A` will trigger this error.
 
-To fix, use different names, or remove the `and`. See also error 5002.
+To fix, use different names, or remove the `and`. See also 5002.
 
 ## 1098
 
@@ -781,7 +781,7 @@ val _ = "foo" 3
 
 In this example, we attempt to treat the string `"foo"` as a function and apply it to the argument `3`.
 
-This error is a special case of 5007, specialized for the common case of function application.
+This error is a special case of 5006, specialized for the common case of function application.
 
 To fix, only apply functions to arguments.
 
@@ -859,7 +859,7 @@ To fix, add patterns matching the missing cases. The error message reports examp
 
 ## 5012
 
-This is effectively the same error as 5012, but it emitted for singular bindings, like with `val`.
+This is effectively the same error as 5011, but it emitted for singular bindings, like with `val`.
 
 ```sml
 (* error *)
