@@ -25,6 +25,7 @@ priority is approximate. if unsure of priority, put in low.
   - allow in non-std-basis?
 - add assists
   - fill case
+  - fill struct ascribing to signature with "empty" stuff
   - rewrite constructs that wouldn't pass style check to ones that would
 - get better error messages
   - improve ranges of stuff (names?)
