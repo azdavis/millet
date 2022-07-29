@@ -257,31 +257,38 @@ where
   })?;
   let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
   let mut sources = PathMap::<String>::default();
-  let mut groups = PathMap::<Group>::default();
   let mut stack = vec![GroupToProcess {
     containing_path: root_group_id,
     containing_range: None,
     group_path: root_group_id,
   }];
-  match root_group_path.kind {
+  let groups = match root_group_path.kind {
     GroupPathKind::Cm => {
+      let mut cm_files = PathMap::<CmFile>::default();
       while let Some(cur) = stack.pop() {
-        if groups.contains_key(&cur.group_path) {
+        if cm_files.contains_key(&cur.group_path) {
           continue;
         }
         let cm_file = get_cm_file(root, cur, fs, &path_var_env, &mut sources, &mut stack)?;
-        let bas_dec = mlb_hir::BasDec::Local(
-          mlb_hir::BasDec::seq(cm_file.paths).into(),
-          mlb_hir::BasDec::seq(cm_file.exports).into(),
-        );
-        let group = Group {
-          bas_dec,
-          pos_db: cm_file.pos_db,
-        };
-        groups.insert(cur.group_path, group);
+        cm_files.insert(cur.group_path, cm_file);
       }
+      cm_files
+        .into_iter()
+        .map(|(path, cm_file)| {
+          let bas_dec = mlb_hir::BasDec::Local(
+            mlb_hir::BasDec::seq(cm_file.paths).into(),
+            mlb_hir::BasDec::seq(cm_file.exports).into(),
+          );
+          let group = Group {
+            bas_dec,
+            pos_db: cm_file.pos_db,
+          };
+          (path, group)
+        })
+        .collect()
     }
     GroupPathKind::Mlb => {
+      let mut groups = PathMap::<Group>::default();
       while let Some(cur) = stack.pop() {
         if groups.contains_key(&cur.group_path) {
           continue;
@@ -312,8 +319,9 @@ where
         let bas_dec = get_bas_dec(&mut cx, syntax_dec)?;
         groups.insert(cur.group_path, Group { bas_dec, pos_db });
       }
+      groups
     }
-  }
+  };
   let graph: topo_sort::Graph<_> = groups
     .iter()
     .map(|(&path, group)| {
