@@ -105,7 +105,7 @@ impl Cx {
 #[derive(Debug, Clone, Copy)]
 struct Files<'a> {
   sml: &'a paths::PathMap<String>,
-  mlb: &'a paths::PathMap<mlb_hir::BasDec>,
+  mlb: &'a paths::PathMap<&'a mlb_hir::BasDec>,
   std_basis: &'a MBasis,
 }
 
@@ -129,7 +129,7 @@ impl MBasis {
 pub fn get(
   std_basis: &StdBasis,
   sml: &paths::PathMap<String>,
-  mlb: &paths::PathMap<mlb_hir::BasDec>,
+  mlb: &paths::PathMap<&mlb_hir::BasDec>,
   root_mlb: paths::PathId,
 ) -> MlbStatics {
   let mut cx = Cx {

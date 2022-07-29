@@ -13,11 +13,7 @@ pub struct Input {
   /// A map from source paths to their contents.
   pub(crate) sources: PathMap<String>,
   /// A map from group paths to their (parsed) contents.
-  pub(crate) groups: PathMap<mlb_hir::BasDec>,
-  /// A map from group paths to their position databases.
-  ///
-  /// Invariant: keys(groups) == keys(groups_pos_dbs)
-  pub(crate) groups_pos_dbs: PathMap<text_pos::PositionDb>,
+  pub(crate) groups: PathMap<Group>,
   /// The root group id.
   pub(crate) root_group_id: PathId,
 }
@@ -168,6 +164,12 @@ impl GroupPath {
   }
 }
 
+#[derive(Debug)]
+pub(crate) struct Group {
+  pub(crate) bas_dec: mlb_hir::BasDec,
+  pub(crate) pos_db: text_pos::PositionDb,
+}
+
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
 /// `root`.
 pub fn get<F>(
@@ -255,8 +257,7 @@ where
   })?;
   let root_group_id = get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?;
   let mut sources = PathMap::<String>::default();
-  let mut groups = PathMap::<mlb_hir::BasDec>::default();
-  let mut groups_pos_dbs = PathMap::<text_pos::PositionDb>::default();
+  let mut groups = PathMap::<Group>::default();
   let mut stack = vec![((root_group_id, None), root_group_id)];
   while let Some(((containing_path_id, containing_path_range), group_path_id)) = stack.pop() {
     if groups.contains_key(&group_path_id) {
@@ -274,7 +275,7 @@ where
     let group_parent = group_path
       .parent()
       .expect("path from get_path has no parent");
-    let group = match root_group_path.kind {
+    let bas_dec = match root_group_path.kind {
       GroupPathKind::Cm => {
         let cm = cm::get(&contents, &path_var_env).map_err(|e| GetInputError {
           source: Source {
@@ -369,14 +370,13 @@ where
         get_bas_dec(&mut cx, syntax_dec)?
       }
     };
-    groups.insert(group_path_id, group);
-    groups_pos_dbs.insert(group_path_id, pos_db);
+    groups.insert(group_path_id, Group { bas_dec, pos_db });
   }
   let graph: topo_sort::Graph<_> = groups
     .iter()
     .map(|(&path, group)| {
       let mut ac = BTreeSet::<PathId>::new();
-      bas_dec_paths(&mut ac, group);
+      bas_dec_paths(&mut ac, &group.bas_dec);
       (path, ac)
     })
     .collect();
@@ -390,7 +390,6 @@ where
   Ok(Input {
     sources,
     groups,
-    groups_pos_dbs,
     root_group_id,
   })
 }

@@ -63,10 +63,15 @@ impl Analysis {
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Error>> {
     let res = elapsed::log("mlb_statics::get", || {
+      let groups: paths::PathMap<_> = input
+        .groups
+        .iter()
+        .map(|(&path, group)| (path, &group.bas_dec))
+        .collect();
       mlb_statics::get(
         &self.std_basis,
         &input.sources,
-        &input.groups,
+        &groups,
         input.root_group_id,
       )
     });
@@ -74,17 +79,17 @@ impl Analysis {
     self.syms = res.syms;
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
-        let pos_db = match input.groups_pos_dbs.get(&err.path()) {
+        let group = match input.groups.get(&err.path()) {
           Some(x) => x,
           None => {
-            log::error!("no group pos db");
+            log::error!("no such group");
             return None;
           }
         };
         Some((
           err.path(),
           vec![Error {
-            range: pos_db.range(err.range())?,
+            range: group.pos_db.range(err.range())?,
             message: err.to_string(),
             code: OTHER_ERRORS + u16::from(err.to_code()),
           }],
