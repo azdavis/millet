@@ -16,6 +16,7 @@
     "consts",
     "datatypes",
     "descs",
+    "desugared",
     "dtolnay",
     "elif",
     "eqtype",

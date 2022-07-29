@@ -687,6 +687,78 @@ structure Str : SIG = struct end
 
 To fix, provide definitions for the missing items.
 
+One type of situation in which this error may confusingly appear involves "syntax sugar" around functor definition and application. Here's an example:
+
+```sml
+(* error *)
+
+signature SIG = sig type t end
+
+functor Func (structure Param : SIG) = struct (* ... *) end
+
+structure Arg : SIG = struct type t = unit end
+
+structure S = Func (Arg)
+```
+
+This is invalid, but the reason why is subtle. Before we explain the reason, note that the bottom line is that the call site of `Func` must be changed:
+
+```diff
+-structure S = Func (Arg)
++structure S = Func (structure Param = Arg)
+```
+
+The fact that both the definition site and the corrected call site for `Func` have an extra `structure` keyword is a clue.
+
+The key is in the definition of `Func`, which illustrates the difference between the two forms
+
+1. `Param : SIG`
+2. `structure Param : SIG`
+
+The latter syntax is a form of syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of the former, more fundamental syntax.
+
+As an aside, another example of syntax sugar is how list literals like `[2, 4, 6]` "desugar" to usages of the list constructors `::` and `nil`, namely `2 :: 4 :: 6 :: nil`.
+
+In the example, the sugar is expanded in the following manner:
+
+```sml
+(* original *)
+functor Func (structure Param : SIG) = struct (* ... *) end
+
+(* desugared *)
+functor Func (<<AnonymousStruct>> : sig
+  structure Param: SIG
+end) = let
+  open <<AnonymousStruct>>
+in
+  struct (* ... *) end
+end
+```
+
+And similarly, once we modify the call site, we are using more syntax sugar, which also expands:
+
+```sml
+(* original *)
+structure S = Func (structure Param = Arg)
+
+(* desugared *)
+structure S = Func (struct structure Param = Arg end)
+```
+
+A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
+
+```sml
+functor Func (Param: SIG) = struct (* ... *) end
+structure S = Func (structure Param = Arg)
+```
+
+This will error. To fix, do not use the syntax sugar at the call site.
+
+```diff
+-structure S = Func (structure Param = Arg)
++structure S = Func (Arg)
+```
+
 ## 5004
 
 Something was not requested by a signature, but was present in the structure that is attempting to ascribe to that signature.

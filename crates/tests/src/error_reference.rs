@@ -37,9 +37,8 @@ fn all() {
           check(s.as_ref());
         } else if s.starts_with("(* error *)") {
           fail(s.as_ref());
-        } else {
-          panic!("code block didn't start with ok or error comment: {s}");
         }
+        // else, ignore.
       }
       _ => {}
     }
