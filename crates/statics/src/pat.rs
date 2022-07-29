@@ -127,7 +127,8 @@ fn get_(
           };
           (sym, vec![arg_pat], *res_ty)
         }
-        _ => unreachable!("a ctor is either the type it constructs or a function returning that"),
+        // should have already errored
+        _ => return (any(st, pat), ty_scheme, def),
       };
       let pat = Pat::con(Con::Variant(sym, variant_name), args, pat);
       (pat, ty)
