@@ -694,9 +694,9 @@ One type of situation in which this error may confusingly appear involves "synta
 
 signature SIG = sig type t end
 
-functor Func (structure Param : SIG) = struct (* ... *) end
-
 structure Arg : SIG = struct type t = unit end
+
+functor Func (structure Param : SIG) = struct (* ... *) end
 
 structure S = Func (Arg)
 ```
