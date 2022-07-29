@@ -314,21 +314,17 @@ where
     group_path: root_group.path,
   };
   let mut sources = PathMap::<String>::default();
-  let mut stack = vec![init];
   let groups = match root_group.kind {
     GroupPathKind::Cm => {
       let mut cm_files = PathMap::<CmFile>::default();
-      while let Some(cur) = stack.pop() {
-        get_cm_file(
-          root,
-          cur,
-          fs,
-          &root_group.path_vars,
-          &mut sources,
-          &mut stack,
-          &mut cm_files,
-        )?;
-      }
+      get_cm_file(
+        root,
+        fs,
+        &root_group.path_vars,
+        &mut sources,
+        &mut cm_files,
+        init,
+      )?;
       cm_files
         .into_iter()
         .map(|(path, cm_file)| {
@@ -338,7 +334,7 @@ where
           );
           let group = Group {
             bas_dec,
-            pos_db: cm_file.pos_db,
+            pos_db: cm_file.pos_db.expect("no pos db"),
           };
           (path, group)
         })
@@ -346,6 +342,7 @@ where
     }
     GroupPathKind::Mlb => {
       let mut groups = PathMap::<Group>::default();
+      let mut stack = vec![init];
       while let Some(cur) = stack.pop() {
         if groups.contains_key(&cur.group_path) {
           continue;
@@ -402,20 +399,23 @@ where
   })
 }
 
+/// only derives default because we need to mark in-progress files as visited to prevent infinite
+/// recursing.
+#[derive(Debug, Default)]
 struct CmFile {
-  pos_db: text_pos::PositionDb,
+  /// only optional so this can derive default.
+  pos_db: Option<text_pos::PositionDb>,
   paths: Vec<mlb_hir::BasDec>,
   exports: Vec<mlb_hir::BasDec>,
 }
 
 fn get_cm_file<F>(
   root: &mut paths::Root,
-  cur: GroupToProcess,
   fs: &F,
   path_vars: &paths::slash_var_path::Env,
   sources: &mut paths::PathMap<String>,
-  stack: &mut Vec<GroupToProcess>,
   cm_files: &mut paths::PathMap<CmFile>,
+  cur: GroupToProcess,
 ) -> Result<()>
 where
   F: paths::FileSystem,
@@ -423,6 +423,7 @@ where
   if cm_files.contains_key(&cur.group_path) {
     return Ok(());
   }
+  cm_files.insert(cur.group_path, CmFile::default());
   let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
   let group_path = group_path.as_path();
   let group_parent = group_path
@@ -454,11 +455,12 @@ where
           mlb_hir::PathKind::Sml
         }
         cm::PathKind::Cm => {
-          stack.push(GroupToProcess {
+          let cur = GroupToProcess {
             containing_path: cur.group_path,
             containing_range: range,
             group_path: path_id,
-          });
+          };
+          get_cm_file(root, fs, path_vars, sources, cm_files, cur)?;
           // NOTE this is a lie.
           mlb_hir::PathKind::Mlb
         }
@@ -499,7 +501,7 @@ where
     })
     .collect::<Result<Vec<_>>>()?;
   let cm_file = CmFile {
-    pos_db,
+    pos_db: Some(pos_db),
     paths,
     exports,
   };
