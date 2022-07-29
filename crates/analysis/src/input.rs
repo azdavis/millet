@@ -286,7 +286,7 @@ fn start_group_file<F>(
   root: &mut paths::Root,
   cur: GroupToProcess,
   fs: &F,
-) -> Result<(paths::CanonicalPathBuf, String, text_pos::PositionDb), GetInputError>
+) -> Result<(paths::CanonicalPathBuf, String, text_pos::PositionDb)>
 where
   F: paths::FileSystem,
 {
@@ -319,18 +319,15 @@ where
     GroupPathKind::Cm => {
       let mut cm_files = PathMap::<CmFile>::default();
       while let Some(cur) = stack.pop() {
-        if cm_files.contains_key(&cur.group_path) {
-          continue;
-        }
-        let cm_file = get_cm_file(
+        get_cm_file(
           root,
           cur,
           fs,
           &root_group.path_vars,
           &mut sources,
           &mut stack,
+          &mut cm_files,
         )?;
-        cm_files.insert(cur.group_path, cm_file);
       }
       cm_files
         .into_iter()
@@ -418,10 +415,14 @@ fn get_cm_file<F>(
   path_vars: &paths::slash_var_path::Env,
   sources: &mut paths::PathMap<String>,
   stack: &mut Vec<GroupToProcess>,
-) -> Result<CmFile, GetInputError>
+  cm_files: &mut paths::PathMap<CmFile>,
+) -> Result<()>
 where
   F: paths::FileSystem,
 {
+  if cm_files.contains_key(&cur.group_path) {
+    return Ok(());
+  }
   let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
   let group_path = group_path.as_path();
   let group_parent = group_path
@@ -497,11 +498,13 @@ where
       }),
     })
     .collect::<Result<Vec<_>>>()?;
-  Ok(CmFile {
+  let cm_file = CmFile {
     pos_db,
     paths,
     exports,
-  })
+  };
+  cm_files.insert(cur.group_path, cm_file);
+  Ok(())
 }
 
 fn get_path_id<F>(
