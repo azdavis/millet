@@ -9,7 +9,6 @@
     { "include": "#real" },
     { "include": "#char" },
     { "include": "#string" },
-    { "include": "#tyVar" },
     { "include": "#specialName" },
     { "include": "#symbolicName" },
     { "include": "#controlKeyword" },
@@ -77,10 +76,6 @@
     "uEscape": {
       "name": "constant.character.escape.sml",
       "match": "\\\\u[0-9A-Fa-f]{4}"
-    },
-    "tyVar": {
-      "name": "entity.name.type-variable-sml",
-      "match": "'+[A-Za-z][A-Za-z0-9']*"
     },
     "specialName": {
       "name": "constant.language.sml",
