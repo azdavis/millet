@@ -409,6 +409,8 @@ struct CmFile {
   exports: Vec<mlb_hir::BasDec>,
 }
 
+/// only recursive to support library exports, which ~necessitates the ability to know the exports
+/// of a given library path on demand.
 fn get_cm_file<F>(
   root: &mut paths::Root,
   fs: &F,
@@ -423,6 +425,7 @@ where
   if cm_files.contains_key(&cur.group_path) {
     return Ok(());
   }
+  // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
   cm_files.insert(cur.group_path, CmFile::default());
   let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
   let group_path = group_path.as_path();
@@ -467,10 +470,9 @@ where
       Ok(mlb_hir::BasDec::Path(path_id, kind))
     })
     .collect::<Result<Vec<_>>>()?;
-  let exports = cm
-    .exports
-    .into_iter()
-    .map(|export| match export {
+  let mut exports = Vec::<mlb_hir::BasDec>::new();
+  for export in cm.exports {
+    match export {
       cm::Export::Regular(ns, name) => {
         let ns = match ns.val {
           cm::Namespace::Structure => mlb_hir::Namespace::Structure,
@@ -487,18 +489,28 @@ where
             })
           }
         };
-        Ok(mlb_hir::BasDec::Export(ns, name.clone(), name))
+        exports.push(mlb_hir::BasDec::Export(ns, name.clone(), name));
       }
-      cm::Export::Library(lib) => Err(GetInputError {
-        source: Source {
-          path: None,
+      cm::Export::Library(lib) => {
+        let source = Source {
+          path: Some(group_path.to_owned()),
           range: pos_db.range(lib.range),
-        },
-        path: group_path.to_owned(),
-        kind: GetInputErrorKind::UnsupportedExport,
-      }),
-    })
-    .collect::<Result<Vec<_>>>()?;
+        };
+        let path = group_parent.join(lib.val.as_path());
+        let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
+        let cur = GroupToProcess {
+          containing_path: cur.group_path,
+          containing_range: source.range,
+          group_path: path_id,
+        };
+        get_cm_file(root, fs, path_vars, sources, cm_files, cur)?;
+        let cm_file = cm_files
+          .get(&cur.group_path)
+          .expect("cm file should be set after get_cm_file");
+        exports.extend(cm_file.exports.iter().cloned());
+      }
+    }
+  }
   let cm_file = CmFile {
     pos_db: Some(pos_db),
     paths,

@@ -4,7 +4,7 @@
 
 use located::Located;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BasDec {
   Basis(Located<hir::Name>, Box<BasExp>),
   Open(Located<hir::Name>),
@@ -24,7 +24,7 @@ impl BasDec {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BasExp {
   Bas(BasDec),
   Name(Located<hir::Name>),
