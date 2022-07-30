@@ -227,8 +227,10 @@ fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
     }
   }
   if cfg!(windows) {
+    cmd!(sh, "cmd.exe /c npm run check").run()?;
     cmd!(sh, "cmd.exe /c npm run build-{kind}").run()?;
   } else {
+    cmd!(sh, "npm run check").run()?;
     cmd!(sh, "npm run build-{kind}").run()?;
   }
   Ok(())
