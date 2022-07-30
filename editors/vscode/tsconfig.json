@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "noEmit": true,
-    "target": "ES2020",
-    "module": "CommonJS",
     "rootDir": "src",
+    "noEmit": true,
+    "module": "CommonJS",
+    "esModuleInterop": true,
     "strict": true,
     "noUnusedLocals": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
   }
 }
