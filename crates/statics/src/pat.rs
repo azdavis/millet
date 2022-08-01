@@ -88,7 +88,7 @@ fn get_(
           VariantName::Name(path.last().clone())
         }
         IdStatus::Con => VariantName::Name(path.last().clone()),
-        IdStatus::Exn(exn) => VariantName::Exn(exn.clone()),
+        IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
       let ty = instantiate(st, val_info.ty_scheme.clone());
       // sml_def(35), sml_def(41)

@@ -714,7 +714,7 @@ impl Syms {
 /// A marker to determine when a `Sym` was generated.
 pub(crate) struct SymsMarker(usize);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Exn(usize);
 
 /// A helper to construct information about [`Syms`]s.
@@ -754,7 +754,7 @@ pub(crate) struct ValInfo {
 }
 
 /// Definition: IdStatus
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum IdStatus {
   Con,
   Exn(Exn),
