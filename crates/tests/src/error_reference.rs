@@ -17,6 +17,7 @@ fn all() {
   options.insert(Options::ENABLE_TABLES);
   let parser = Parser::new_ext(&errors, options);
   let mut inside = false;
+  let mut buf = String::new();
   for ev in parser {
     match ev {
       Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(s))) => {
@@ -26,19 +27,19 @@ fn all() {
       }
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(s))) => {
         if s.as_ref() == SML {
+          if s.starts_with("(* ok *)") {
+            check(s.as_ref());
+          } else if s.starts_with("(* error *)") {
+            fail(s.as_ref());
+          }
+          buf.clear();
           inside = false;
         }
       }
       Event::Text(s) => {
-        if !inside {
-          continue;
+        if inside {
+          buf.push_str(s.as_ref());
         }
-        if s.starts_with("(* ok *)") {
-          check(s.as_ref());
-        } else if s.starts_with("(* error *)") {
-          fail(s.as_ref());
-        }
-        // else, ignore.
       }
       _ => {}
     }
