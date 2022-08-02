@@ -100,7 +100,6 @@ There was an unsupported export kind in a SML/NJ CM file.
 At time of writing, Millet does not support:
 
 - `funsig` exports.
-- `library(...)` exports.
 
 To fix, avoid these.
 

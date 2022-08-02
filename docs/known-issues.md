@@ -11,10 +11,9 @@ See also the [TODO][].
   - Files are analyzed in the order listed in the CM files.
   - The preprocessor is ignored.
   - String paths (wrapped in quotes) in CM files are not supported.
-  - CM files are not analyzed to limit exports.
-  - The standard basis is made available to all files, regardless of whether files ask for it via CM or not.
 - ML Basis support is limited.
   - Annotations are ignored.
+- The standard basis is made available to all files, regardless of whether files ask for it.
 - Every file is entirely re-analyzed upon a single file change. This can make the server slow.
 
 [todo]: /docs/todo.md

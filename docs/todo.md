@@ -10,15 +10,13 @@ priority is approximate. if unsure of priority, put in low.
 
 ## medium
 
-- improve statics for type variables
-  - performing closure operations
 - handle equality types
   - in type variables
   - `eqtype` vs `type`
   - various side conditions on modules, `datatype`, possibly others
-- improve hover
+- improve hover for type
   - hover on structure/signature/functor?
-- improve docs
+- improve hover for doc
   - add more
   - use md features
   - allow in non-std-basis?
@@ -31,7 +29,6 @@ priority is approximate. if unsure of priority, put in low.
   - show fully qualified names in type errors
   - related: avoid clashes between ty vars
   - better parser errors?
-  - parse successor ml (`do`, etc) but reject later
 - make it more performant
   - don't re-IO, re-lex, re-parse, re-lower every file every time
   - only lower the parts of the syntax tree that changed?
@@ -41,7 +38,6 @@ priority is approximate. if unsure of priority, put in low.
 ## low
 
 - make website
-  - with 'verified ownership' or whatever
 - implement statics for `abstype`
 - impl more tools
   - auto formatter
