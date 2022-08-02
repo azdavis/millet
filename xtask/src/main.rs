@@ -1,11 +1,12 @@
 //! See the [xtask spec](https://github.com/matklad/cargo-xtask).
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use pico_args::Arguments;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use xshell::{cmd, Shell};
 
+#[derive(Debug, Clone, Copy)]
 enum Cmd {
   Help,
   Ci,
@@ -13,21 +14,45 @@ enum Cmd {
   Tag,
 }
 
+struct CmdSpec {
+  name: &'static str,
+  desc: &'static str,
+  options: &'static [(&'static str, &'static str)],
+  args: &'static [(&'static str, &'static str)],
+}
+
 impl Cmd {
   const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::Tag];
 
-  fn name_desc(&self) -> (&'static str, &'static str) {
+  fn spec(&self) -> CmdSpec {
     match self {
-      Cmd::Help => ("help", "show this help"),
-      Cmd::Ci => ("ci", "run various tests"),
-      Cmd::Dist => (
-        "dist",
-        "make artifacts for distribution (can use --release)",
-      ),
-      Cmd::Tag => (
-        "tag",
-        "update package files with a new version, then commit a new tag",
-      ),
+      Cmd::Help => CmdSpec {
+        name: "help",
+        desc: "show this help",
+        options: &[],
+        args: &[],
+      },
+      Cmd::Ci => CmdSpec {
+        name: "ci",
+        desc: "run various tests",
+        options: &[],
+        args: &[],
+      },
+      Cmd::Dist => CmdSpec {
+        name: "dist",
+        desc: "make artifacts for distribution",
+        options: &[
+          ("--release", "build for release"),
+          ("--target <target>", "build for the <target> triple"),
+        ],
+        args: &[],
+      },
+      Cmd::Tag => CmdSpec {
+        name: "tag",
+        desc: "update package files with a new version, then commit a new tag",
+        options: &[],
+        args: &[("<tag>", "the name of the tag")],
+      },
     }
   }
 }
@@ -36,25 +61,39 @@ impl std::str::FromStr for Cmd {
   type Err = anyhow::Error;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    for c in Cmd::VALUES {
-      let (name, _) = c.name_desc();
-      if name == s {
-        return Ok(c);
-      }
-    }
-    bail!("couldn't parse {s} into a command")
+    Cmd::VALUES
+      .iter()
+      .find(|c| c.spec().name == s)
+      .copied()
+      .ok_or_else(|| anyhow!("couldn't parse {s} into a command"))
   }
 }
 
 fn show_help() {
   println!("usage:");
-  println!("  cargo xtask <command>");
+  println!("  cargo xtask <command> [<options>] [<args>]");
   println!();
   println!("commands:");
   for c in Cmd::VALUES {
-    let (name, desc) = c.name_desc();
-    println!("  {name}");
-    println!("    {desc}");
+    let spec = c.spec();
+    println!("  {}", spec.name);
+    println!("    {}", spec.desc);
+    if !spec.options.is_empty() {
+      println!();
+      println!("    options:");
+      for (name, desc) in spec.options {
+        println!("      {name}");
+        println!("        {desc}");
+      }
+    }
+    if !spec.args.is_empty() {
+      println!();
+      println!("    args:");
+      for (name, desc) in spec.args {
+        println!("      {name}");
+        println!("        {desc}");
+      }
+    }
   }
 }
 
