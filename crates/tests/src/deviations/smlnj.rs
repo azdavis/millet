@@ -316,6 +316,7 @@ fn type_inf_context_1() {
     r#"
 structure S = struct
   val z = (fn x => x) []
+(**       ^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
   val y = z :: [true] :: nil
 end
 "#,
@@ -328,6 +329,7 @@ fn type_inf_context_2() {
     r#"
 structure S : sig val z : bool list end = struct
   val z = (fn x => x) []
+(**       ^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
 end
 "#,
   );

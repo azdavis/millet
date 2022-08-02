@@ -28,8 +28,6 @@ val rec Uh = fn () => ()
   );
 }
 
-// pretty sure these two only "work" because of the lack of checking for the value restriction.
-
 #[test]
 fn functor_re_typecheck_or_not_1() {
   check(
@@ -37,6 +35,7 @@ fn functor_re_typecheck_or_not_1() {
 fun id x = x
 functor F (X: sig type t end) = struct
   val f = id id
+(**       ^^^^^ cannot bind expansive polymorphic expression *)
 end
 structure A = F (struct type t = int end)
 structure B = F (struct type t = bool end)
@@ -53,6 +52,7 @@ fn functor_re_typecheck_or_not_2() {
 fun id x = x
 functor F (X: sig type t end) = struct
   val f = id id
+(**       ^^^^^ cannot bind expansive polymorphic expression *)
 end
 structure A = F (struct type t = int end)
 structure B = F (struct type t = bool end)

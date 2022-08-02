@@ -69,7 +69,7 @@ fn raise_forall_a_a() {
     r#"
 exception E
 val x = raise E
-(* NOTE this may not be desirable *)
+(**     ^^^^^^^ cannot bind expansive polymorphic expression *)
 val y = x x
 "#,
   );

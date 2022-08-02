@@ -285,10 +285,10 @@ val _ = f: unit
 
 #[test]
 fn value_restriction() {
-  fail(
+  check(
     r#"
-    val id = (fn x => x) (fn x => x)
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ oh no! *)
+val id = (fn x => x) (fn x => x)
+(**      ^^^^^^^^^^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
 "#,
   );
 }
@@ -309,7 +309,7 @@ fn curry() {
     r#"
 fun curry f x y = f (x, y)
 
-val eq = curry op=
+val eq : int -> int -> bool = curry op=
 val add = curry op+
 val mul = curry op*
 

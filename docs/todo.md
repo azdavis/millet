@@ -12,7 +12,6 @@ priority is approximate. if unsure of priority, put in low.
 
 - improve statics for type variables
   - performing closure operations
-  - checking whether expressions are expansive (oh no!)
 - handle equality types
   - in type variables
   - `eqtype` vs `type`

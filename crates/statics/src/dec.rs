@@ -1,5 +1,6 @@
 use crate::error::{ErrorKind, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
+use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
   generalize, generalize_fixed, Cx, Env, EnvLike as _, FixedTyVars, HasRecordMetaVars, IdStatus,
@@ -8,6 +9,7 @@ use crate::types::{
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
 use crate::{exp, pat, ty};
+use fast_hash::FxHashMap;
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: hir::DecIdx) {
   let dec = match dec {
@@ -26,6 +28,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       // - we need to go over the recursive ValBinds twice.
       let mut idx = 0usize;
       let mut ve = ValEnv::default();
+      let mut src_exp = FxHashMap::<hir::Name, hir::ExpIdx>::default();
       while let Some(val_bind) = val_binds.get(idx) {
         if val_bind.rec {
           // this and all other remaining ones are recursive.
@@ -33,7 +36,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         }
         idx += 1;
         // sml_def(25)
-        let (pm_pat, mut want) = pat::get(st, &cx, ars, &mut ve, val_bind.pat);
+        let (pm_pat, mut want) = get_pat_and_src_exp(st, &cx, ars, &mut ve, val_bind, &mut src_exp);
         let got = exp::get(st, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec);
         apply(st.subst(), &mut want);
@@ -48,7 +51,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       let mut rec_ve = ValEnv::default();
       let got_pats: Vec<_> = val_binds[idx..]
         .iter()
-        .map(|val_bind| pat::get(st, &cx, ars, &mut rec_ve, val_bind.pat))
+        .map(|val_bind| get_pat_and_src_exp(st, &cx, ars, &mut rec_ve, val_bind, &mut src_exp))
         .collect();
       // merge the recursive and non-recursive ValEnvs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
@@ -74,8 +77,17 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         st.insert_bind(pm_pat, want, dec.into());
       }
       // generalize the entire merged ValEnv.
-      for val_info in ve.values_mut() {
+      for (name, val_info) in ve.iter_mut() {
+        let &exp = src_exp
+          .get(name)
+          .expect("should have an exp for every bound name");
         let g = generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
+        if expansive(&cx, ars, exp) && !val_info.ty_scheme.bound_vars.is_empty() {
+          st.err(
+            exp.map_or(hir::Idx::Dec(dec), hir::Idx::Exp),
+            ErrorKind::BindPolymorphicExpansiveExp,
+          );
+        }
         if let Err(HasRecordMetaVars) = g {
           st.err(dec, ErrorKind::UnresolvedRecordTy);
         }
@@ -178,6 +190,23 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
       }
     }
   }
+}
+
+fn get_pat_and_src_exp(
+  st: &mut St,
+  cx: &Cx,
+  ars: &hir::Arenas,
+  ve: &mut ValEnv,
+  val_bind: &hir::ValBind,
+  src_exp: &mut FxHashMap<hir::Name, hir::ExpIdx>,
+) -> (Pat, Ty) {
+  let ret = pat::get(st, cx, ars, ve, val_bind.pat);
+  for name in ve.keys() {
+    if !src_exp.contains_key(name) {
+      src_exp.insert(name.clone(), val_bind.exp);
+    }
+  }
+  ret
 }
 
 pub(crate) fn add_fixed_ty_vars(
@@ -347,4 +376,47 @@ pub(crate) fn get_dat_binds(
     }
   }
   (ty_env, big_val_env)
+}
+
+fn expansive(cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> bool {
+  let exp = match exp {
+    Some(x) => x,
+    None => return false,
+  };
+  match &ars.exp[exp] {
+    hir::Exp::Hole | hir::Exp::SCon(_) | hir::Exp::Path(_) | hir::Exp::Fn(_) => false,
+    hir::Exp::Let(_, _) | hir::Exp::Raise(_) | hir::Exp::Handle(_, _) => true,
+    hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| expansive(cx, ars, exp)),
+    hir::Exp::App(func, arg) => !constructor(cx, ars, *func) || expansive(cx, ars, *arg),
+    hir::Exp::Typed(exp, _) => expansive(cx, ars, *exp),
+  }
+}
+
+/// this will sometimes return true for expressions that could not possibly be a "constructor" in
+/// the sense of section 4.7 of the definition, like records. but there would have been a type error
+/// emitted for the application already anyway.
+fn constructor(cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> bool {
+  let exp = match exp {
+    Some(x) => x,
+    None => return true,
+  };
+  match &ars.exp[exp] {
+    hir::Exp::Hole | hir::Exp::SCon(_) => true,
+    hir::Exp::Let(_, _)
+    | hir::Exp::App(_, _)
+    | hir::Exp::Handle(_, _)
+    | hir::Exp::Raise(_)
+    | hir::Exp::Fn(_) => false,
+    hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| constructor(cx, ars, exp)),
+    hir::Exp::Typed(exp, _) => constructor(cx, ars, *exp),
+    hir::Exp::Path(path) => {
+      if path.structures().is_empty() && path.last().as_str() == "ref" {
+        return false;
+      }
+      match get_val_info(&cx.env, path) {
+        Ok(Some(x)) => matches!(x.id_status, IdStatus::Con | IdStatus::Exn(_)),
+        Ok(None) | Err(_) => true,
+      }
+    }
+  }
 }

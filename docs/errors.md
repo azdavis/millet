@@ -1282,6 +1282,70 @@ type thing = string * _ list * int
 
 To fix, replace the hole with a real type.
 
+## 5028
+
+An attempt was made to bind an expansive expression to a variable, where that variable would then have polymorphic type.
+
+This error is also called the "value restriction".
+
+An expansive expression is one that may raise an exception or allocate memory during evaluation. Some examples of expansive expressions:
+
+| Name                   | Example                       |
+| ---------------------- | ----------------------------- |
+| Application (see note) | `f x`                         |
+| Raise                  | `raise Bad`                   |
+| Handle                 | `e handle Bad => e'`          |
+| Let                    | `let val x = e in x + e' end` |
+
+Note that applications are not considered expansive if the function is a constructor that is not `ref`.
+
+A polymorphic type is one which contains type variables, like `'a`.
+
+If Millet did not emit an error for cases like this, we could break type safety:
+
+```sml
+(* error *)
+val r : 'a option ref = ref NONE
+val () = r := SOME "foo"
+val v : int = Option.valOf (!r)
+```
+
+The first line is forbidden by this error. If it were not, then after the execution of the above program, `v` would have type `int`, but the value `"foo"`, which actually has type `string`.
+
+To fix, try any of the following:
+
+- If the expression has function type, add an extra variable to both the binding site and the expression. This is called eta-expansion, the opposite of eta-reduction.
+
+  Before:
+
+  ```sml
+  (* error *)
+  val allFst = List.map (fn (x, _) => x)
+  ```
+
+  After:
+
+  ```sml
+  (* ok *)
+  fun allFst xs = List.map (fn (x, _) => x) xs
+  ```
+
+- Annotate the expression (or pattern) with explicit types.
+
+  Before:
+
+  ```sml
+  (* error *)
+  val r = ref []
+  ```
+
+  After:
+
+  ```sml
+  (* ok *)
+  val r : int list ref = ref []
+  ```
+
 ## 5099
 
 There was an occurrence of an unsupported SML construct.
