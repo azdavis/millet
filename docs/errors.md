@@ -612,38 +612,36 @@ A name was referenced, but it was not defined in that scope.
 val _ = foo
 ```
 
-To fix, try any of the following.
+To fix, try any of the following:
 
-(1) Check that the name is correctly spelled.
+- Check that the name is correctly spelled.
+- Check the if the name is defined in the current scope unqualified, or if it is in a structure. For instance, `filter` is defined in `structure List`, not at the top level. Some functions like `map` are defined both in `List` and at the top level.
+- Check the error message to see what kind of thing was not defined: value, type, structure, etc. These different kinds of items have different namespaces.
 
-(2) Check the if the name is defined in the current scope unqualified, or if it is in a structure. For instance, `filter` is defined in `structure List`, not at the top level. Some functions like `map` are defined both in `List` and at the top level.
+  In this example, there is a value named `x` defined, but then we try to use `x` as a type. There is no type `x` defined, so this is invalid.
 
-(3) Check the error message to see what kind of thing was not defined: value, type, structure, etc. These different kinds of items have different namespaces.
+  ```sml
+  (* error *)
+  val x = 4
+  val y : x = 5
+  ```
 
-In this example, there is a value named `x` defined, but then we try to use `x` as a type. There is no type `x` defined, so this is invalid.
+- Check that the name is not explicitly forbidden from being accessed by a signature ascription. Ascribing a structure to a more restrictive signature prohibits accessing the "extra" items inside the structure.
 
-```sml
-(* error *)
-val x = 4
-val y : x = 5
-```
+  ```sml
+  (* error *)
 
-(4) Check that the name is not explicitly forbidden from being accessed by a signature ascription. Ascribing a structure to a more restrictive signature prohibits accessing the "extra" items inside the structure.
+  signature SIG = sig
+    val foo : int
+  end
 
-```sml
-(* error *)
+  structure Str : SIG =
+    val foo = 3
+    val bar = "hi"
+  end
 
-signature SIG = sig
-  val foo : int
-end
-
-structure Str : SIG =
-  val foo = 3
-  val bar = "hi"
-end
-
-val _ = Str.bar
-```
+  val _ = Str.bar
+  ```
 
 ## 5002
 
