@@ -138,6 +138,6 @@ where
       .chain(config.map(|x| (ROOT.as_path().join(config::FILE_NAME), x.to_owned())))
       .collect(),
   );
-  let mut root = paths::Root::new(ROOT.to_owned());
-  analysis::input::get(&fs, &mut root, None)
+  let mut root = analysis::input::get_root_dir(ROOT.to_owned());
+  analysis::input::get(&fs, &mut root)
 }

@@ -142,14 +142,14 @@ enum GroupPathKind {
 
 /// A group path.
 #[derive(Debug)]
-pub struct GroupPath {
+struct GroupPath {
   kind: GroupPathKind,
   path: PathBuf,
 }
 
 impl GroupPath {
   /// Returns a new `GroupPath`.
-  pub fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
+  fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
   where
     F: paths::FileSystem,
   {
@@ -165,7 +165,7 @@ impl GroupPath {
   }
 
   /// Return this as a `Path`.
-  pub fn as_path(&self) -> &Path {
+  fn as_path(&self) -> &Path {
     self.path.as_path()
   }
 }
@@ -182,16 +182,12 @@ struct RootGroup {
   path_vars: paths::slash_var_path::Env,
 }
 
-fn get_root_group<F>(
-  fs: &F,
-  root: &mut paths::Root,
-  mut root_group_path: Option<GroupPath>,
-) -> Result<RootGroup>
+fn get_root_group<F>(fs: &F, root: &mut Root) -> Result<RootGroup>
 where
   F: paths::FileSystem,
 {
   let mut root_group_source = Source::default();
-  let config_path = root.as_path().join(config::FILE_NAME);
+  let config_path = root.paths.as_path().join(config::FILE_NAME);
   let mut path_vars = paths::slash_var_path::Env::default();
   if let Ok(contents) = fs.read_to_string(&config_path) {
     let config: config::Root = match toml::from_str(&contents) {
@@ -214,12 +210,12 @@ where
     if let Some(ws) = config.workspace {
       path_vars = ws.path_vars.unwrap_or_default();
       // try to get from the config.
-      if let (None, Some(path)) = (&root_group_path, ws.root) {
-        let path = root.as_path().join(path.as_str());
+      if let (None, Some(path)) = (&root.group_path, ws.root) {
+        let path = root.paths.as_path().join(path.as_str());
         match GroupPath::new(fs, path.clone()) {
           Some(path) => {
             root_group_source.path = Some(config_path);
-            root_group_path = Some(path);
+            root.group_path = Some(path);
           }
           None => {
             return Err(GetInputError {
@@ -236,37 +232,44 @@ where
     }
   }
   // if not, try to get one from the root dir.
-  if root_group_path.is_none() {
-    let dir_entries = fs.read_dir(root.as_path()).map_err(|e| GetInputError {
-      source: Source::default(),
-      path: root.as_path().to_owned(),
-      kind: GetInputErrorKind::Read(e),
-    })?;
+  if root.group_path.is_none() {
+    let dir_entries = fs
+      .read_dir(root.paths.as_path())
+      .map_err(|e| GetInputError {
+        source: Source::default(),
+        path: root.paths.as_path().to_owned(),
+        kind: GetInputErrorKind::Read(e),
+      })?;
     for entry in dir_entries {
       if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
-        match root_group_path {
+        match &root.group_path {
           Some(rgp) => {
             return Err(GetInputError {
               kind: GetInputErrorKind::MultipleRoots(rgp.path.clone(), entry.clone()),
               source: Source {
-                path: Some(rgp.path),
+                path: Some(rgp.path.clone()),
                 range: None,
               },
               path: entry,
             })
           }
-          None => root_group_path = Some(group_path),
+          None => root.group_path = Some(group_path),
         }
       }
     }
   }
-  let root_group_path = root_group_path.ok_or_else(|| GetInputError {
+  let root_group_path = root.group_path.as_ref().ok_or_else(|| GetInputError {
     source: Source::default(),
-    path: root.as_path().to_owned(),
+    path: root.paths.as_path().to_owned(),
     kind: GetInputErrorKind::NoRoot,
   })?;
   Ok(RootGroup {
-    path: get_path_id(fs, root, root_group_source, root_group_path.path.as_path())?,
+    path: get_path_id(
+      fs,
+      &mut root.paths,
+      root_group_source,
+      root_group_path.path.as_path(),
+    )?,
     kind: root_group_path.kind,
     path_vars,
   })
@@ -301,13 +304,62 @@ where
   Ok((group_path, contents, pos_db))
 }
 
-/// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
-/// `root`.
-pub fn get<F>(fs: &F, root: &mut paths::Root, root_group_path: Option<GroupPath>) -> Result<Input>
+/// The root, in which everything is contained.
+#[derive(Debug)]
+pub struct Root {
+  paths: paths::Root,
+  group_path: Option<GroupPath>,
+}
+
+impl Root {
+  /// Returns this as a paths root.
+  pub fn as_paths(&self) -> &paths::Root {
+    &self.paths
+  }
+
+  /// Returns this as a mutable paths root.
+  pub fn as_mut_paths(&mut self) -> &mut paths::Root {
+    &mut self.paths
+  }
+}
+
+/// Get a `Root` from a canonical root dir.
+pub fn get_root_dir(path: paths::CanonicalPathBuf) -> Root {
+  Root {
+    paths: paths::Root::new(path),
+    group_path: None,
+  }
+}
+
+/// Given a path to either a group path or a directory, return the root for it.
+pub fn get_root<F>(fs: &F, path: &Path) -> Result<Root>
 where
   F: paths::FileSystem,
 {
-  let root_group = get_root_group(fs, root, root_group_path)?;
+  let path = canonicalize(fs, path, &Source::default())?;
+  let (root_path, group_path) = match GroupPath::new(fs, path.clone().into_path_buf()) {
+    None => (path, None),
+    Some(path) => {
+      let parent = path.as_path().parent().expect("no parent");
+      let rp = fs
+        .canonicalize(parent)
+        .expect("canonicalize parent of canonical path");
+      (rp, Some(path))
+    }
+  };
+  Ok(Root {
+    paths: paths::Root::new(root_path),
+    group_path,
+  })
+}
+
+/// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
+/// `root`.
+pub fn get<F>(fs: &F, root: &mut Root) -> Result<Input>
+where
+  F: paths::FileSystem,
+{
+  let root_group = get_root_group(fs, root)?;
   let init = GroupToProcess {
     containing_path: root_group.path,
     containing_range: None,
@@ -318,7 +370,7 @@ where
     GroupPathKind::Cm => {
       let mut cm_files = PathMap::<CmFile>::default();
       get_cm_file(
-        root,
+        &mut root.paths,
         fs,
         &root_group.path_vars,
         &mut sources,
@@ -352,7 +404,7 @@ where
         if groups.contains_key(&cur.group_path) {
           continue;
         }
-        let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
+        let (group_path, contents, pos_db) = start_group_file(&mut root.paths, cur, fs)?;
         let group_path = group_path.as_path();
         let group_parent = group_path
           .parent()
@@ -371,7 +423,7 @@ where
           parent: group_parent,
           pos_db: &pos_db,
           fs,
-          root,
+          root: &mut root.paths,
           sources: &mut sources,
           stack: &mut stack,
           path_id: cur.group_path,
@@ -393,7 +445,7 @@ where
   if let Err(err) = topo_sort::get(&graph) {
     return Err(GetInputError {
       source: Source::default(),
-      path: root.get_path(err.witness()).as_path().to_owned(),
+      path: root.paths.get_path(err.witness()).as_path().to_owned(),
       kind: GetInputErrorKind::Cycle,
     });
   }
@@ -543,15 +595,22 @@ fn get_path_id<F>(
 where
   F: paths::FileSystem,
 {
-  let canonical = fs.canonicalize(path).map_err(|e| GetInputError {
-    source: source.clone(),
-    path: path.to_owned(),
-    kind: GetInputErrorKind::Canonicalize(e),
-  })?;
+  let canonical = canonicalize(fs, path, &source)?;
   root.get_id(&canonical).map_err(|e| GetInputError {
     source,
     path: path.to_owned(),
     kind: GetInputErrorKind::NotInRoot(e),
+  })
+}
+
+fn canonicalize<F>(fs: &F, path: &Path, source: &Source) -> Result<paths::CanonicalPathBuf>
+where
+  F: paths::FileSystem,
+{
+  fs.canonicalize(path).map_err(|e| GetInputError {
+    source: source.clone(),
+    path: path.to_owned(),
+    kind: GetInputErrorKind::Canonicalize(e),
   })
 }
 

@@ -1,4 +1,3 @@
-use paths::FileSystem as _;
 use pico_args::Arguments;
 
 fn usage() {
@@ -36,34 +35,17 @@ fn run() -> bool {
     }
   };
   let fs = paths::RealFileSystem::default();
-  let path = match fs.canonicalize(std::path::Path::new(&path)) {
+  let mut root = match analysis::input::get_root(&fs, std::path::Path::new(path.as_str())) {
     Ok(x) => x,
     Err(e) => {
-      println!("{path}: error: {e}");
+      handle_get_input_error(e);
       return false;
     }
   };
-  let (root_path, root_group) =
-    match analysis::input::GroupPath::new(&fs, path.clone().into_path_buf()) {
-      None => (path, None),
-      Some(path) => {
-        let parent = path.as_path().parent().expect("no parent");
-        let rp = fs
-          .canonicalize(parent)
-          .expect("canonicalize parent of canonical path");
-        (rp, Some(path))
-      }
-    };
-  let mut root = paths::Root::new(root_path);
-  let inp = match analysis::input::get(&fs, &mut root, root_group) {
+  let inp = match analysis::input::get(&fs, &mut root) {
     Ok(x) => x,
     Err(e) => {
-      print!("{}", e.path().display());
-      if let Some(r) = e.range() {
-        print!(":{}", r.start);
-      }
-      let code = analysis::OTHER_ERRORS + u16::from(e.to_code());
-      println!(": error[{code}]: {e}");
+      handle_get_input_error(e);
       return false;
     }
   };
@@ -72,7 +54,7 @@ fn run() -> bool {
   let num_errors: usize = got.iter().map(|(_, errors)| errors.len()).sum();
   for (path, errors) in got {
     for e in errors {
-      let path = root.get_rel_path(path).display();
+      let path = root.as_paths().get_rel_path(path).display();
       println!(
         "{}:{}: error[{}]: {}",
         path, e.range.start, e.code, e.message
@@ -90,6 +72,15 @@ fn run() -> bool {
     );
     false
   }
+}
+
+fn handle_get_input_error(e: analysis::input::GetInputError) {
+  print!("{}", e.path().display());
+  if let Some(r) = e.range() {
+    print!(":{}", r.start);
+  }
+  let code = analysis::OTHER_ERRORS + u16::from(e.to_code());
+  println!(": error[{code}]: {e}");
 }
 
 fn main() {

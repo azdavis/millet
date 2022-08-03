@@ -119,7 +119,7 @@ pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
 });
 
 struct Check {
-  root: paths::Root,
+  root: analysis::input::Root,
   files: paths::PathMap<CheckFile>,
   reasons: Vec<Reason>,
 }
@@ -136,9 +136,9 @@ impl Check {
     }
     m.insert(ROOT.as_path().join("sources.cm"), cm_file);
     let fs = paths::MemoryFileSystem::new(m);
-    let mut root = paths::Root::new(ROOT.to_owned());
+    let mut root = analysis::input::get_root_dir(ROOT.to_owned());
     let input =
-      analysis::input::get(&fs, &mut root, None).expect("in memory fs was not set up correctly");
+      analysis::input::get(&fs, &mut root).expect("in memory fs was not set up correctly");
     let mut ret = Self {
       root,
       files: input
@@ -255,22 +255,22 @@ impl fmt::Display for Check {
         }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
         Reason::NotOneLine(path, pair) => {
-          let path = self.root.get_path(*path).as_path().display();
+          let path = self.root.as_paths().get_path(*path).as_path().display();
           writeln!(f, "{path}: not one line: {}..{}", pair.start, pair.end)?;
         }
         Reason::GotButNotWanted(path, r, got) => {
-          let path = self.root.get_path(*path).as_path().display();
+          let path = self.root.as_paths().get_path(*path).as_path().display();
           writeln!(f, "{path}:{r}: got an error, but wanted none")?;
           writeln!(f, "    - got:  {got}")?;
         }
         Reason::Mismatched(path, r, want, got) => {
-          let path = self.root.get_path(*path).as_path().display();
+          let path = self.root.as_paths().get_path(*path).as_path().display();
           writeln!(f, "{path}:{r}: mismatched")?;
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
         Reason::NoHover(path, r) => {
-          let path = self.root.get_path(*path).as_path().display();
+          let path = self.root.as_paths().get_path(*path).as_path().display();
           writeln!(f, "{path}:{r}: wanted a hover, but got none")?;
         }
       }

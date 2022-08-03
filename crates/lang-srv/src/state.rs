@@ -30,7 +30,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 const MAX_FILES_WITH_ERRORS: usize = 20;
 
 struct Root {
-  path: paths::Root,
+  input: analysis::input::Root,
   has_diagnostics: FxHashSet<Url>,
 }
 
@@ -56,7 +56,7 @@ impl State {
         .ok()
         .and_then(Option::take)
         .map(|root_path| Root {
-          path: paths::Root::new(root_path),
+          input: analysis::input::get_root_dir(root_path),
           has_diagnostics: FxHashSet::default(),
         }),
       sender,
@@ -72,7 +72,7 @@ impl State {
       // allowed" at time of writing
       let glob_pattern = format!(
         "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
-        root.path.as_path().display()
+        root.input.as_paths().as_path().display()
       );
       ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
         registrations: vec![lsp_types::Registration {
@@ -275,7 +275,7 @@ impl State {
     };
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let input = elapsed::log("input::get", || {
-      analysis::input::get(&self.file_system, &mut root.path, None)
+      analysis::input::get(&self.file_system, &mut root.input)
     });
     let input = match input {
       Ok(x) => x,
@@ -311,7 +311,7 @@ impl State {
     };
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
     for (path_id, errors) in got_many {
-      let path = root.path.get_path(path_id);
+      let path = root.input.as_paths().get_path(path_id);
       let url = match file_url(path.as_path()) {
         Ok(x) => x,
         Err(e) => {
@@ -452,7 +452,7 @@ fn lsp_location(
   path: paths::PathId,
   range: analysis::Range,
 ) -> Option<lsp_types::Location> {
-  let uri = match file_url(root.path.get_path(path).as_path()) {
+  let uri = match file_url(root.input.as_paths().get_path(path).as_path()) {
     Ok(x) => x,
     Err(e) => {
       log::error!("{e:#}");
@@ -482,7 +482,11 @@ where
 {
   let url = params.text_document.uri;
   let path = canonical_path_buf(fs, &url).with_context(|| "couldn't canonicalize")?;
-  let path = root.path.get_id(&path).with_context(|| "not in root")?;
+  let path = root
+    .input
+    .as_mut_paths()
+    .get_id(&path)
+    .with_context(|| "not in root")?;
   let pos = analysis_position(params.position);
   Ok((path, pos))
 }
