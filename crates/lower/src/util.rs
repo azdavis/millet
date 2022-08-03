@@ -47,19 +47,19 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn to_code(&self) -> u8 {
+  pub fn to_code(&self) -> u16 {
     match self.kind {
-      ErrorKind::FunBindMismatchedName(_, _) => 1,
-      ErrorKind::FunBindWrongNumPats(_, _) => 2,
-      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 3,
-      ErrorKind::InvalidRealLit(_) => 4,
-      ErrorKind::InvalidNumLab(_) => 5,
-      ErrorKind::ZeroNumLab => 6,
-      ErrorKind::MultipleRestPatRows => 7,
-      ErrorKind::RestPatRowNotLast => 8,
-      ErrorKind::PrecedingBar => 9,
-      ErrorKind::RequiresOperand => 10,
-      ErrorKind::Unsupported(_) => 99,
+      ErrorKind::FunBindMismatchedName(_, _) => 4001,
+      ErrorKind::FunBindWrongNumPats(_, _) => 4002,
+      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 4003,
+      ErrorKind::InvalidRealLit(_) => 4004,
+      ErrorKind::InvalidNumLab(_) => 4005,
+      ErrorKind::ZeroNumLab => 4006,
+      ErrorKind::MultipleRestPatRows => 4007,
+      ErrorKind::RestPatRowNotLast => 4008,
+      ErrorKind::PrecedingBar => 4009,
+      ErrorKind::RequiresOperand => 4010,
+      ErrorKind::Unsupported(_) => 4099,
     }
   }
 }

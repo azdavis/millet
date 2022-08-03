@@ -14,9 +14,6 @@ pub use error::Error;
 pub use mlb_statics::StdBasis;
 pub use text_pos::{Position, Range};
 
-/// The error number series for "other" errors (i.e. errors NOT from actually analyzing SML files.)
-pub const OTHER_ERRORS: u16 = 1000;
-
 /// The url to go to for information about errors.
 pub const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
 
@@ -85,7 +82,7 @@ impl Analysis {
           vec![Error {
             range: group.pos_db.range(err.range())?,
             message: err.to_string(),
-            code: OTHER_ERRORS + u16::from(err.to_code()),
+            code: err.to_code(),
           }],
         ))
       }))
@@ -205,8 +202,6 @@ fn priority(kind: SyntaxKind) -> u8 {
 /// The max number of errors per path.
 const MAX_ERRORS_PER_PATH: usize = 20;
 
-/// note that this emits no [`OTHER_ERRORS`] errors, since those are for "everything before lexing",
-/// aka pretty much all non-SML file errors.
 fn source_file_errors(
   file: &mlb_statics::SourceFile,
   syms: &statics::Syms,
@@ -217,21 +212,21 @@ fn source_file_errors(
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
-        code: 2000 + u16::from(err.to_code()),
+        code: err.to_code(),
       })
     }))
     .chain(file.parsed.errors.iter().filter_map(|err| {
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
-        code: 3000 + u16::from(err.to_code()),
+        code: err.to_code(),
       })
     }))
     .chain(file.lowered.errors.iter().filter_map(|err| {
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
-        code: 4000 + u16::from(err.to_code()),
+        code: err.to_code(),
       })
     }))
     .chain(file.statics_errors.iter().filter_map(|err| {
@@ -246,7 +241,7 @@ fn source_file_errors(
           .pos_db
           .range(syntax.to_node(file.parsed.root.syntax()).text_range())?,
         message: err.display(syms, file.info.meta_vars(), lines).to_string(),
-        code: 5000 + u16::from(err.to_code()),
+        code: err.to_code(),
       })
     }))
     .take(MAX_ERRORS_PER_PATH)

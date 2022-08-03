@@ -55,11 +55,8 @@ impl Error {
   }
 
   /// Returns the error code for this.
-  ///
-  /// NOTE, HACK: this must not conflict with other OTHER_ERRORS-level error codes. See
-  /// `analysis::input`.
-  pub fn to_code(&self) -> u8 {
-    99
+  pub fn to_code(&self) -> u16 {
+    1099
   }
 }
 

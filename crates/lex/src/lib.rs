@@ -37,17 +37,17 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn to_code(&self) -> u8 {
+  pub fn to_code(&self) -> u16 {
     match self.kind {
-      ErrorKind::InvalidSource => 1,
-      ErrorKind::UnclosedComment => 2,
-      ErrorKind::IncompleteTyVar => 3,
-      ErrorKind::UnclosedStringLit => 4,
-      ErrorKind::NegativeWordLit => 5,
-      ErrorKind::WrongLenCharLit => 6,
-      ErrorKind::MissingDigitsInNumLit => 7,
-      ErrorKind::InvalidStringEscape => 8,
-      ErrorKind::NonWhitespaceInStringContinuation => 9,
+      ErrorKind::InvalidSource => 2001,
+      ErrorKind::UnclosedComment => 2002,
+      ErrorKind::IncompleteTyVar => 2003,
+      ErrorKind::UnclosedStringLit => 2004,
+      ErrorKind::NegativeWordLit => 2005,
+      ErrorKind::WrongLenCharLit => 2006,
+      ErrorKind::MissingDigitsInNumLit => 2007,
+      ErrorKind::InvalidStringEscape => 2008,
+      ErrorKind::NonWhitespaceInStringContinuation => 2009,
     }
   }
 }

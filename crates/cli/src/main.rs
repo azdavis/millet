@@ -79,7 +79,7 @@ fn handle_get_input_error(e: analysis::input::GetInputError) {
   if let Some(r) = e.range() {
     print!(":{}", r.start);
   }
-  let code = analysis::OTHER_ERRORS + u16::from(e.to_code());
+  let code = e.to_code();
   println!(": error[{code}]: {e}");
 }
 

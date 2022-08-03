@@ -49,21 +49,21 @@ impl GetInputError {
   }
 
   /// Returns the error code for this.
-  pub fn to_code(&self) -> u8 {
+  pub fn to_code(&self) -> u16 {
     match self.kind {
-      GetInputErrorKind::Read(_) => 1,
-      GetInputErrorKind::Canonicalize(_) => 2,
-      GetInputErrorKind::NotInRoot(_) => 3,
-      GetInputErrorKind::MultipleRoots(_, _) => 4,
-      GetInputErrorKind::NoRoot => 5,
-      GetInputErrorKind::NotGroup => 6,
-      GetInputErrorKind::CouldNotParseConfig(_) => 7,
-      GetInputErrorKind::InvalidConfigVersion(_) => 8,
-      GetInputErrorKind::Cm(_) => 9,
-      GetInputErrorKind::Mlb(_) => 10,
-      GetInputErrorKind::Cycle => 11,
-      GetInputErrorKind::Duplicate(_) => 12,
-      GetInputErrorKind::UnsupportedExport => 98,
+      GetInputErrorKind::Read(_) => 1001,
+      GetInputErrorKind::Canonicalize(_) => 1002,
+      GetInputErrorKind::NotInRoot(_) => 1003,
+      GetInputErrorKind::MultipleRoots(_, _) => 1004,
+      GetInputErrorKind::NoRoot => 1005,
+      GetInputErrorKind::NotGroup => 1006,
+      GetInputErrorKind::CouldNotParseConfig(_) => 1007,
+      GetInputErrorKind::InvalidConfigVersion(_) => 1008,
+      GetInputErrorKind::Cm(_) => 1009,
+      GetInputErrorKind::Mlb(_) => 1010,
+      GetInputErrorKind::Cycle => 1011,
+      GetInputErrorKind::Duplicate(_) => 1012,
+      GetInputErrorKind::UnsupportedExport => 1098,
     }
   }
 }

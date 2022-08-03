@@ -443,14 +443,14 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn to_code(&self) -> u8 {
+  pub fn to_code(&self) -> u16 {
     match self.kind {
-      ErrorKind::NotInfix => 1,
-      ErrorKind::InfixWithoutOp => 2,
-      ErrorKind::InvalidFixity(_) => 3,
-      ErrorKind::NegativeFixity => 4,
-      ErrorKind::SameFixityDiffAssoc => 5,
-      ErrorKind::Expected(_) => 6,
+      ErrorKind::NotInfix => 3001,
+      ErrorKind::InfixWithoutOp => 3002,
+      ErrorKind::InvalidFixity(_) => 3003,
+      ErrorKind::NegativeFixity => 3004,
+      ErrorKind::SameFixityDiffAssoc => 3005,
+      ErrorKind::Expected(_) => 3006,
     }
   }
 }
