@@ -53,12 +53,11 @@ impl Error {
       ErrorKind::FunBindWrongNumPats(_, _) => 4002,
       ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 4003,
       ErrorKind::InvalidRealLit(_) => 4004,
-      ErrorKind::InvalidNumLab(_) => 4005,
-      ErrorKind::ZeroNumLab => 4006,
-      ErrorKind::MultipleRestPatRows => 4007,
-      ErrorKind::RestPatRowNotLast => 4008,
-      ErrorKind::PrecedingBar => 4009,
-      ErrorKind::RequiresOperand => 4010,
+      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab => 4005,
+      ErrorKind::MultipleRestPatRows => 4006,
+      ErrorKind::RestPatRowNotLast => 4007,
+      ErrorKind::PrecedingBar => 4008,
+      ErrorKind::RequiresOperand => 4009,
       ErrorKind::Unsupported(_) => 4099,
     }
   }

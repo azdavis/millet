@@ -478,7 +478,7 @@ NOTE: It's not known whether this is currently emitted. It may be that the lexer
 
 ## 4005
 
-A numeric label (as for a record) was invalid. This can happen when it was negative, or too large.
+A numeric label (as for a record) was invalid. This can happen when it was non-positive (i.e. negative or zero), or too large.
 
 ```sml
 (* error *)
@@ -494,17 +494,6 @@ val _ = { 3 = "hi" }
 
 ## 4006
 
-A numeric label (as for a record) was zero. Numeric labels must not be zero.
-
-```sml
-(* error *)
-val _ = { 0 = "hi" }
-```
-
-To fix, do not use zero as a numeric label.
-
-## 4007
-
 There were multiple `...` rest pattern rows.
 
 ```sml
@@ -519,7 +508,7 @@ To fix, only provide one such row.
 val {a, ...} = {a = 1, b = "hi"}
 ```
 
-## 4008
+## 4007
 
 There was a non-`...` pattern row after a `...` pattern row.
 
@@ -535,7 +524,7 @@ To fix, put the `...` pattern row last.
 val {b, ...} = {a = 1, b = "hi"}
 ```
 
-## 4009
+## 4008
 
 There was a bar (aka `|`) before the first:
 
@@ -559,7 +548,7 @@ datatype t =
 | B
 ```
 
-## 4010
+## 4009
 
 There was an `open` or `include` without operands.
 
