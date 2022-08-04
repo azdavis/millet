@@ -36,7 +36,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
         let en = p.enter();
         let save = p.save();
         infix_fun_bind_case_head_inner(p);
-        if p.maybe_discard(save) {
+        if p.ok_since(save) {
           p.exit(en, SK::InfixFunBindCaseHead);
           // this is the case where the () around the infix fun bind case head are dropped. thus,
           // there are no other at_pats allowed. `ty_annotation` or `=` must immediately follow.
@@ -224,5 +224,5 @@ pub(crate) fn datatype_copy(p: &mut Parser<'_>) -> bool {
   p.eat(SK::Eq);
   p.eat(SK::DatatypeKw);
   must(p, path, Expected::Path);
-  p.maybe_discard(save)
+  p.ok_since(save)
 }

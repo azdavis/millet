@@ -290,10 +290,10 @@ impl<'a> Parser<'a> {
 
   /// Save the state of the parser.
   ///
-  /// Use it with `maybe_discard` to implement unbounded backtracking.
+  /// Use it with `ok_since` to implement unbounded backtracking.
   ///
   /// For any `Entered` or `Exited` that were created before the save, do not `exit` or `precede`
-  /// them respectively between the save and the `maybe_discard`. Or do anything else that modifies
+  /// them respectively between the save and the `ok_since`. Or do anything else that modifies
   /// any events before the save. Otherwise the parser won't fully recover to its original state
   /// before the save.
   ///
@@ -305,7 +305,7 @@ impl<'a> Parser<'a> {
   /// // maybe eat some tokens
   /// // maybe encounter some errors
   /// foo(p);
-  /// if p.maybe_discard(save) {
+  /// if p.ok_since(save) {
   ///   // foo parsed without errors
   /// } else {
   ///   // foo had errors, so it failed to parse.
@@ -320,7 +320,7 @@ impl<'a> Parser<'a> {
   }
 
   /// returns whether the save was discarded (i.e. did NOT restore to that save)
-  pub(crate) fn maybe_discard(&mut self, save: Save) -> bool {
+  pub(crate) fn ok_since(&mut self, save: Save) -> bool {
     let error_since = self
       .events
       .iter()
