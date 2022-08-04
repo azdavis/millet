@@ -472,12 +472,10 @@ fn text_doc_pos_params<F>(
 where
   F: paths::FileSystem,
 {
-  let url = params.text_document.uri;
-  let path = canonical_path_buf(fs, &url)?;
   let path = root
     .input
     .as_mut_paths()
-    .get_id(&path)
+    .get_id(&canonical_path_buf(fs, &params.text_document.uri)?)
     .with_context(|| "not in root")?;
   let pos = analysis_position(params.position);
   Ok(path.wrap(pos))
