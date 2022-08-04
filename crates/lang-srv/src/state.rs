@@ -123,25 +123,32 @@ impl State {
   pub(crate) fn handle_request(&mut self, req: Request) {
     log::info!("got request: {req:?}");
     self.req_queue.incoming.register(req.id.clone(), ());
-    match self.handle_request_(req) {
+    let mut root = match self.root.take() {
+      Some(x) => x,
+      None => {
+        log::warn!("can't handle request with no root");
+        return;
+      }
+    };
+    match self.handle_request_(&mut root, req) {
       ControlFlow::Break(Ok(())) => {}
       ControlFlow::Break(Err(e)) => log::error!("couldn't handle request: {e}"),
       ControlFlow::Continue(req) => log::warn!("unhandled request: {req:?}"),
     }
+    self.root = Some(root);
   }
 
-  fn handle_request_(&mut self, mut r: Request) -> ControlFlow<Result<()>, Request> {
+  fn handle_request_(
+    &mut self,
+    root: &mut Root,
+    mut r: Request,
+  ) -> ControlFlow<Result<()>, Request> {
     r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
-      let mut root = match self.root.take() {
-        Some(x) => x,
-        None => return,
-      };
       let params = params.text_document_position_params;
-      let pos = match text_doc_pos_params(&self.file_system, &mut root, params) {
+      let pos = match text_doc_pos_params(&self.file_system, root, params) {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
-          self.root = Some(root);
           return;
         }
       };
@@ -156,39 +163,28 @@ impl State {
           range: Some(lsp_range(range)),
         });
       self.send_response(Response::new_ok(id, res));
-      self.root = Some(root);
     })?;
     r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
-      let mut root = match self.root.take() {
-        Some(x) => x,
-        None => return,
-      };
       let params = params.text_document_position_params;
-      let pos = match text_doc_pos_params(&self.file_system, &mut root, params) {
+      let pos = match text_doc_pos_params(&self.file_system, root, params) {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
-          self.root = Some(root);
           return;
         }
       };
-      let res = self.analysis.get_def(pos).and_then(|range| {
-        lsp_location(&root, range).map(lsp_types::GotoDefinitionResponse::Scalar)
-      });
+      let res = self
+        .analysis
+        .get_def(pos)
+        .and_then(|range| lsp_location(root, range).map(lsp_types::GotoDefinitionResponse::Scalar));
       self.send_response(Response::new_ok(id, res));
-      self.root = Some(root);
     })?;
     r = try_request::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
-      let mut root = match self.root.take() {
-        Some(x) => x,
-        None => return,
-      };
       let params = params.text_document_position_params;
-      let pos = match text_doc_pos_params(&self.file_system, &mut root, params) {
+      let pos = match text_doc_pos_params(&self.file_system, root, params) {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
-          self.root = Some(root);
           return;
         }
       };
@@ -197,11 +193,10 @@ impl State {
         .get_ty_defs(pos)
         .into_iter()
         .flatten()
-        .filter_map(|range| lsp_location(&root, range))
+        .filter_map(|range| lsp_location(root, range))
         .collect();
       let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
       self.send_response(Response::new_ok(id, res));
-      self.root = Some(root);
     })?;
     ControlFlow::Continue(r)
   }
