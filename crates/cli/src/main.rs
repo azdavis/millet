@@ -1,5 +1,3 @@
-use pico_args::Arguments;
-
 fn usage() {
   let current_exe_name = std::env::current_exe()
     .ok()
@@ -23,17 +21,17 @@ arguments:
   print!("{rest_of_usage}");
 }
 
-fn run() -> bool {
-  let mut args = Arguments::from_env();
+fn run() -> usize {
+  let mut args = pico_args::Arguments::from_env();
   if args.contains(["-h", "--help"]) {
     usage();
-    return true;
+    return 0;
   }
   let path: String = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
       println!("error[1097]: {e}");
-      return false;
+      return 1;
     }
   };
   let fs = paths::RealFileSystem::default();
@@ -41,14 +39,14 @@ fn run() -> bool {
     Ok(x) => x,
     Err(e) => {
       handle_get_input_error(e);
-      return false;
+      return 1;
     }
   };
   let inp = match analysis::input::get(&fs, &mut root) {
     Ok(x) => x,
     Err(e) => {
       handle_get_input_error(e);
-      return false;
+      return 1;
     }
   };
   let mut an = analysis::Analysis::new(analysis::StdBasis::full(), config::ErrorLines::One);
@@ -63,17 +61,7 @@ fn run() -> bool {
       );
     }
   }
-  if num_errors == 0 {
-    println!("no errors!");
-    true
-  } else {
-    let suffix = if num_errors == 1 { "" } else { "s" };
-    println!(
-      "{num_errors} error{suffix}. see {} for more information",
-      analysis::ERRORS_URL
-    );
-    false
-  }
+  num_errors
 }
 
 fn handle_get_input_error(e: analysis::input::GetInputError) {
@@ -86,7 +74,15 @@ fn handle_get_input_error(e: analysis::input::GetInputError) {
 }
 
 fn main() {
-  if !run() {
-    std::process::exit(1)
+  match run() {
+    0 => {}
+    n => {
+      let suffix = if n == 1 { "" } else { "s" };
+      println!(
+        "{n} error{suffix}. see {} for more information",
+        analysis::ERRORS_URL
+      );
+      std::process::exit(1)
+    }
   }
 }
