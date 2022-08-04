@@ -170,6 +170,9 @@ impl Analysis {
 
 fn get_node(file: &mlb_statics::SourceFile, pos: Position) -> Option<SyntaxNode> {
   let idx = file.pos_db.text_size(pos)?;
+  if !file.parsed.root.syntax().text_range().contains(idx) {
+    return None;
+  }
   let tok = match file.parsed.root.syntax().token_at_offset(idx) {
     TokenAtOffset::None => return None,
     TokenAtOffset::Single(t) => t,
