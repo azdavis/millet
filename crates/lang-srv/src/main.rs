@@ -22,7 +22,7 @@ fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyho
 }
 
 fn main() -> anyhow::Result<()> {
-  simple_logger::init_with_level(log::Level::Warn)?;
+  env_logger::try_init()?;
   log::info!("startup millet lsp server");
   let (connection, io_threads) = lsp_server::Connection::stdio();
   let params = connection.initialize(serde_json::to_value(&state::capabilities())?)?;
