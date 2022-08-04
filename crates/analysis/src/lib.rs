@@ -97,56 +97,53 @@ impl Analysis {
 
   /// Returns a Markdown string with information about this position.
   pub fn get_md(&self, pos: WithPath<Position>) -> Option<(String, Range)> {
-    self.go_up_ast(pos, |file, ptr, idx| {
-      let mut s = file.info.get_ty_md(&self.syms, idx)?;
-      let def_doc = file.info.get_def(idx).and_then(|def| {
-        let info = match def.path {
-          statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
-          statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
-        };
-        info.get_doc(def.idx)
-      });
-      if let Some(def_doc) = def_doc {
-        s.push('\n');
-        s.push_str(def_doc);
-      }
-      let range = ptr.to_node(file.parsed.root.syntax()).text_range();
-      Some((s, file.pos_db.range(range)?))
-    })
+    let (file, ptr, idx) = self.go_up_ast(pos)?;
+    let mut s = file.info.get_ty_md(&self.syms, idx)?;
+    let def_doc = file.info.get_def(idx).and_then(|def| {
+      let info = match def.path {
+        statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
+        statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
+      };
+      info.get_doc(def.idx)
+    });
+    if let Some(def_doc) = def_doc {
+      s.push('\n');
+      s.push_str(def_doc);
+    }
+    let range = ptr.to_node(file.parsed.root.syntax()).text_range();
+    Some((s, file.pos_db.range(range)?))
   }
 
   /// Returns the range of the definition of the item at this position.
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
-    self.go_up_ast(pos, |file, _, idx| {
-      self.def_to_path_and_range(file.info.get_def(idx)?)
-    })
+    let (file, _, idx) = self.go_up_ast(pos)?;
+    self.def_to_path_and_range(file.info.get_def(idx)?)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
   pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
-    self.go_up_ast(pos, |file, _, idx| {
-      Some(
-        file
-          .info
-          .get_ty_defs(&self.syms, idx)?
-          .into_iter()
-          .filter_map(|def| self.def_to_path_and_range(def))
-          .collect(),
-      )
-    })
+    let (file, _, idx) = self.go_up_ast(pos)?;
+    Some(
+      file
+        .info
+        .get_ty_defs(&self.syms, idx)?
+        .into_iter()
+        .filter_map(|def| self.def_to_path_and_range(def))
+        .collect(),
+    )
   }
 
-  fn go_up_ast<F, T>(&self, pos: WithPath<Position>, f: F) -> Option<T>
-  where
-    F: FnOnce(&mlb_statics::SourceFile, SyntaxNodePtr, hir::Idx) -> Option<T>,
-  {
+  fn go_up_ast(
+    &self,
+    pos: WithPath<Position>,
+  ) -> Option<(&mlb_statics::SourceFile, SyntaxNodePtr, hir::Idx)> {
     let file = self.source_files.get(&pos.path)?;
     let mut node = get_node(file, pos.val)?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
       match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
-        Some(idx) => return f(file, ptr, idx),
+        Some(idx) => return Some((file, ptr, idx)),
         None => node = node.parent()?,
       }
     }
