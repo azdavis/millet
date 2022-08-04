@@ -93,6 +93,12 @@ There was a duplicate name in a ML Basis file. For instance, `structure A and st
 
 To fix, use different names, or remove the `and`. See also 5002.
 
+## 1097
+
+When run as a CLI, there was an invalid or missing argument or option.
+
+To fix, run `--help` to see permitted options and arguments.
+
 ## 1098
 
 There was an unsupported export kind in a SML/NJ CM file.
