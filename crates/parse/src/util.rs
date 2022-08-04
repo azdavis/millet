@@ -72,20 +72,23 @@ pub(crate) fn many_sep<'a, F>(p: &mut Parser<'a>, sep: SK, wrap: SK, mut f: F) -
 where
   F: FnMut(&mut Parser<'a>) -> bool,
 {
+  let mut ret = false;
   loop {
     let en = p.enter();
     if !f(p) {
       p.abandon(en);
-      return false;
+      break;
     }
+    ret = true;
     if p.at(sep) {
       p.bump();
       p.exit(en, wrap);
     } else {
       p.exit(en, wrap);
-      return true;
+      break;
     }
   }
+  ret
 }
 
 pub(crate) enum ShouldBreak {
