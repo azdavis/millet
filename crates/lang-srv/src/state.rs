@@ -1,4 +1,6 @@
 //! See [`State`].
+//!
+//! TODO progress indicator?
 
 use anyhow::{anyhow, bail, Context, Result};
 use crossbeam_channel::Sender;
