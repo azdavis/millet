@@ -217,7 +217,9 @@ fn matcher(p: &mut Parser<'_>) {
     p.bump();
   }
   many_sep(p, SK::Bar, SK::MatchRule, |p| {
-    must(p, pat, Expected::Pat);
+    if !must(p, pat, Expected::Pat) {
+      return false;
+    }
     p.eat(SK::EqGt);
     exp(p);
     true
