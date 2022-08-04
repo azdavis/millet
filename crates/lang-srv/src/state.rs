@@ -145,13 +145,7 @@ impl State {
   ) -> ControlFlow<Result<()>, Request> {
     r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = match text_doc_pos_params(&self.file_system, root, params) {
-        Ok(x) => x,
-        Err(e) => {
-          log::error!("{e:#}");
-          return;
-        }
-      };
+      let pos = text_doc_pos_params(&self.file_system, root, params)?;
       let res = self
         .analysis
         .get_md(pos)
@@ -163,31 +157,21 @@ impl State {
           range: Some(lsp_range(range)),
         });
       self.send_response(Response::new_ok(id, res));
+      Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = match text_doc_pos_params(&self.file_system, root, params) {
-        Ok(x) => x,
-        Err(e) => {
-          log::error!("{e:#}");
-          return;
-        }
-      };
+      let pos = text_doc_pos_params(&self.file_system, root, params)?;
       let res = self
         .analysis
         .get_def(pos)
         .and_then(|range| lsp_location(root, range).map(lsp_types::GotoDefinitionResponse::Scalar));
       self.send_response(Response::new_ok(id, res));
+      Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = match text_doc_pos_params(&self.file_system, root, params) {
-        Ok(x) => x,
-        Err(e) => {
-          log::error!("{e:#}");
-          return;
-        }
-      };
+      let pos = text_doc_pos_params(&self.file_system, root, params)?;
       let locs: Vec<_> = self
         .analysis
         .get_ty_defs(pos)
@@ -197,6 +181,7 @@ impl State {
         .collect();
       let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
       self.send_response(Response::new_ok(id, res));
+      Ok(())
     })?;
     ControlFlow::Continue(r)
   }
@@ -228,7 +213,7 @@ impl State {
       }
       let url = params.text_document.uri;
       let text = params.text_document.text;
-      self.publish_diagnostics_one(url, &text)
+      self.publish_diagnostics_one(url, &text);
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
       if self.root.is_some() {
@@ -236,7 +221,7 @@ impl State {
       }
       let url = params.text_document.uri;
       if let Some(text) = params.text {
-        self.publish_diagnostics_one(url, &text)
+        self.publish_diagnostics_one(url, &text);
       }
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
@@ -347,13 +332,10 @@ impl State {
 fn try_request<R, F>(req: Request, f: F) -> ControlFlow<Result<()>, Request>
 where
   R: lsp_types::request::Request,
-  F: FnOnce(RequestId, R::Params),
+  F: FnOnce(RequestId, R::Params) -> Result<()>,
 {
   match req.extract::<R::Params>(R::METHOD) {
-    Ok((id, params)) => {
-      f(id, params);
-      ControlFlow::Break(Ok(()))
-    }
+    Ok((id, params)) => ControlFlow::Break(f(id, params)),
     Err(e) => extract_error(e),
   }
 }
