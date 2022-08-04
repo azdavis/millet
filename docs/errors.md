@@ -1297,7 +1297,7 @@ If Millet did not emit an error for cases like this, we could break type safety:
 (* error *)
 val r : 'a option ref = ref NONE
 val () = r := SOME "foo"
-val v : int = Option.valOf (!r)
+val v : int = valOf (!r)
 ```
 
 The first line is forbidden by this error. If it were not, then after the execution of the above program, `v` would have type `int`, but the value `"foo"`, which actually has type `string`.
