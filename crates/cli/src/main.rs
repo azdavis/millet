@@ -7,18 +7,20 @@ fn usage() {
     .unwrap_or_else(|| "<unknown>".to_owned());
   println!("usage:");
   println!("  {current_exe_name} [options] <path>");
-  println!();
-  println!("options:");
-  println!("  -h, --help");
-  println!("    show this help");
-  println!();
-  println!("arguments:");
-  println!("  <path>");
-  println!("    path of the project to analyze. the path should either be:");
-  println!("    - a directory containing either:");
-  println!("      - a single .cm or .mlb file");
-  println!("      - a millet.toml config file specifying a single .cm or .mlb file");
-  println!("    - a .cm or .mlb file");
+  let rest_of_usage = r#"
+options:
+  -h, --help
+    show this help
+
+arguments:
+  <path>
+    path of the project to analyze. the path should either be:
+    - a directory containing either:
+      - a single .cm or .mlb file
+      - a millet.toml config file specifying a single .cm or .mlb file
+    - a .cm or .mlb file
+"#;
+  print!("{rest_of_usage}");
 }
 
 fn run() -> bool {
