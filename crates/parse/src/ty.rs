@@ -3,7 +3,7 @@ use crate::util::{comma_sep, lab, must, path};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn ty(p: &mut Parser<'_>) {
-  must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty)
+  must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty);
 }
 
 fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {

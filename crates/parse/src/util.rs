@@ -1,13 +1,16 @@
 use crate::parser::{Assoc, ErrorKind, Exited, Expected, Infix, Parser};
 use syntax::{token::Token, SyntaxKind as SK};
 
-pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F, e: Expected)
+/// emits an error and returns false if `f` failed. otherwise returns `true`.
+pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F, e: Expected) -> bool
 where
   F: FnOnce(&mut Parser<'a>) -> Option<Exited>,
 {
-  if f(p).is_none() {
+  let ret = f(p).is_some();
+  if !ret {
     p.error(ErrorKind::Expected(e));
   }
+  ret
 }
 
 /// similar to `many_sep`, but:
@@ -135,7 +138,7 @@ pub(crate) fn path_no_infix(p: &mut Parser<'_>) {
   if !p.at_n(1, SK::Dot) && p.is_infix(cur.text) {
     p.error(ErrorKind::InfixWithoutOp);
   }
-  must(p, path, Expected::Path)
+  must(p, path, Expected::Path);
 }
 
 pub(crate) fn scon(p: &mut Parser<'_>) -> bool {

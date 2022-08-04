@@ -182,13 +182,17 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
-    comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat, Expected::Pat));
+    comma_sep(p, SK::RSquare, SK::PatArg, |p| {
+      must(p, pat, Expected::Pat);
+    });
     p.exit(en, SK::ListPat)
   } else if p.at(SK::Hash) {
     p.bump();
     let list = p.enter();
     p.eat(SK::LSquare);
-    comma_sep(p, SK::RSquare, SK::PatArg, |p| must(p, pat, Expected::Pat));
+    comma_sep(p, SK::RSquare, SK::PatArg, |p| {
+      must(p, pat, Expected::Pat);
+    });
     p.exit(list, SK::ListPat);
     p.exit(en, SK::VectorPat)
   } else {

@@ -9,7 +9,7 @@ use crate::util::{
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn exp(p: &mut Parser<'_>) {
-  must(p, |p| exp_prec(p, ExpPrec::Min), Expected::Exp)
+  must(p, |p| exp_prec(p, ExpPrec::Min), Expected::Exp);
 }
 
 fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
