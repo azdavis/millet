@@ -33,6 +33,7 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
       }
       p.eat(SK::Eq);
       must(p, str_exp, Expected::StrExp);
+      true
     });
     p.exit(en, SK::FunctorDec);
   } else if p.at(SK::SignatureKw) {
@@ -41,6 +42,7 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
       p.eat(SK::Name);
       p.eat(SK::Eq);
       must(p, sig_exp, Expected::SigExp);
+      true
     });
     p.exit(en, SK::SigDec);
   } else if p.at(SK::StructureKw) {
@@ -52,6 +54,7 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
       }
       p.eat(SK::Eq);
       must(p, str_exp, Expected::StrExp);
+      true
     });
     p.exit(en, SK::StructureStrDec);
   } else if p.at(SK::LocalKw) {
@@ -170,6 +173,7 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
       eat_name_star(p);
       p.eat(SK::Colon);
       ty(p);
+      true
     });
     p.exit(en, SK::ValSpec);
   } else if p.at(SK::TypeKw) {
@@ -190,6 +194,7 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
     many_sep(p, SK::AndKw, SK::ExDesc, |p| {
       eat_name_star(p);
       let _ = of_ty(p);
+      true
     });
     p.exit(en, SK::ExSpec);
   } else if p.at(SK::StructureKw) {
@@ -198,6 +203,7 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
       p.eat(SK::Name);
       p.eat(SK::Colon);
       must(p, sig_exp, Expected::SigExp);
+      true
     });
     p.exit(en, SK::StrSpec);
   } else if p.at(SK::IncludeKw) {
@@ -224,6 +230,7 @@ fn ty_spec(p: &mut Parser<'_>) {
       ty(p);
       p.exit(en, SK::EqTy);
     }
+    true
   });
 }
 
@@ -239,6 +246,7 @@ fn spec_with_tail(p: &mut Parser<'_>) -> bool {
     }
     many_sep(p, SK::Eq, SK::PathEq, |p| {
       must(p, path, Expected::Path);
+      true
     });
     p.exit(en, SK::SharingTail);
   }

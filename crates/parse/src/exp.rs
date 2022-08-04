@@ -160,7 +160,10 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     dec(p);
     p.eat(SK::InKw);
-    many_sep(p, SK::Semicolon, SK::ExpInSeq, exp);
+    many_sep(p, SK::Semicolon, SK::ExpInSeq, |p| {
+      exp(p);
+      true
+    });
     p.eat(SK::EndKw);
     p.exit(en, SK::LetExp)
   } else {
@@ -217,6 +220,7 @@ fn matcher(p: &mut Parser<'_>) {
     must(p, pat, Expected::Pat);
     p.eat(SK::EqGt);
     exp(p);
+    true
   });
   p.exit(en, SK::Matcher);
 }

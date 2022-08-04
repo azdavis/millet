@@ -23,6 +23,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
       must(p, pat, Expected::Pat);
       p.eat(SK::Eq);
       exp(p);
+      true
     });
     p.exit(en, SK::ValDec);
   } else if p.at(SK::FunKw) {
@@ -65,6 +66,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
         let _ = ty_annotation(p);
         p.eat(SK::Eq);
         exp(p);
+        true
       })
     });
     p.exit(en, SK::FunDec);
@@ -99,6 +101,7 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
         must(p, path, Expected::Path);
         p.exit(en, SK::EqPath);
       }
+      true
     });
     p.exit(en, SK::ExDec);
   } else if p.at(SK::LocalKw) {
@@ -185,7 +188,9 @@ pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
       }
       eat_name_star(p);
       let _ = of_ty(p);
+      true
     });
+    true
   });
   if p.at(SK::WithtypeKw) {
     let en = p.enter();
@@ -201,6 +206,7 @@ fn ty_binds(p: &mut Parser<'_>) {
     p.eat(SK::Name);
     p.eat(SK::Eq);
     ty(p);
+    true
   });
 }
 

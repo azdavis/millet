@@ -61,21 +61,26 @@ where
   }
 }
 
-/// tries `f` at least once. stops if `sep` is not found. `wrap` will wrap both `f` and `sep` if
-/// present.
-pub(crate) fn many_sep<'a, F>(p: &mut Parser<'a>, sep: SK, wrap: SK, mut f: F)
+/// if `f` returns false, it consumed nothing. (but it may consume nothing and return `true`.) stops
+/// if `sep` is not found. `wrap` will wrap both `f` and `sep` if present.
+///
+/// returns a bool similar to as `f` does.
+pub(crate) fn many_sep<'a, F>(p: &mut Parser<'a>, sep: SK, wrap: SK, mut f: F) -> bool
 where
-  F: FnMut(&mut Parser<'a>),
+  F: FnMut(&mut Parser<'a>) -> bool,
 {
   loop {
     let en = p.enter();
-    f(p);
+    if !f(p) {
+      p.abandon(en);
+      return false;
+    }
     if p.at(sep) {
       p.bump();
       p.exit(en, wrap);
     } else {
       p.exit(en, wrap);
-      break;
+      return true;
     }
   }
 }
