@@ -3,10 +3,10 @@ use crate::types::{
 };
 use std::path::Path;
 use str_util::Name;
-use text_size_util::{Located, TextRange};
+use text_size_util::{TextRange, WithRange};
 
 pub(crate) fn get(
-  tokens: &[Located<Token<'_>>],
+  tokens: &[WithRange<Token<'_>>],
   env: &paths::slash_var_path::Env,
 ) -> Result<BasDec> {
   let mut p = Parser {
@@ -23,14 +23,14 @@ pub(crate) fn get(
 }
 
 struct Parser<'a> {
-  tokens: &'a [Located<Token<'a>>],
+  tokens: &'a [WithRange<Token<'a>>],
   idx: usize,
   last_range: TextRange,
   env: &'a paths::slash_var_path::Env,
 }
 
 impl<'a> Parser<'a> {
-  fn cur_tok(&self) -> Option<Located<Token<'a>>> {
+  fn cur_tok(&self) -> Option<WithRange<Token<'a>>> {
     self.tokens.get(self.idx).copied()
   }
 
@@ -58,7 +58,7 @@ impl<'a> Parser<'a> {
     }
   }
 
-  fn name(&self) -> Result<Located<Name>> {
+  fn name(&self) -> Result<WithRange<Name>> {
     match self.cur_tok() {
       Some(tok) => match tok.val {
         Token::Name(s) => Ok(tok.wrap(Name::new(s))),
@@ -68,7 +68,7 @@ impl<'a> Parser<'a> {
     }
   }
 
-  fn string(&self) -> Result<Located<&'a str>> {
+  fn string(&self) -> Result<WithRange<&'a str>> {
     match self.cur_tok() {
       Some(tok) => match tok.val {
         Token::String(s) => Ok(tok.wrap(s)),
@@ -114,7 +114,7 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
     }
     Token::Open => {
       p.bump();
-      let mut names = Vec::<Located<Name>>::new();
+      let mut names = Vec::<WithRange<Name>>::new();
       while let Ok(name) = p.name() {
         p.bump();
         names.push(name);
@@ -227,7 +227,7 @@ fn names_seq(p: &mut Parser<'_>) -> Result<NamesSeq> {
   and_sep(p, &mut |p| {
     let name = p.name()?;
     p.bump();
-    let mut other = None::<Located<Name>>;
+    let mut other = None::<WithRange<Name>>;
     if p.cur() == Some(Token::Eq) {
       p.bump();
       other = Some(p.name()?);

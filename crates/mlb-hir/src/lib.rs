@@ -2,14 +2,14 @@
 
 #![deny(missing_debug_implementations, rust_2018_idioms)]
 
-use text_size_util::Located;
+use text_size_util::WithRange;
 
 #[derive(Debug, Clone)]
 pub enum BasDec {
-  Basis(Located<hir::Name>, Box<BasExp>),
-  Open(Located<hir::Name>),
+  Basis(WithRange<hir::Name>, Box<BasExp>),
+  Open(WithRange<hir::Name>),
   Local(Box<BasDec>, Box<BasDec>),
-  Export(Namespace, Located<hir::Name>, Located<hir::Name>),
+  Export(Namespace, WithRange<hir::Name>, WithRange<hir::Name>),
   Seq(Vec<BasDec>),
   Path(paths::PathId, PathKind),
 }
@@ -27,7 +27,7 @@ impl BasDec {
 #[derive(Debug, Clone)]
 pub enum BasExp {
   Bas(BasDec),
-  Name(Located<hir::Name>),
+  Name(WithRange<hir::Name>),
   Let(BasDec, Box<BasExp>),
 }
 

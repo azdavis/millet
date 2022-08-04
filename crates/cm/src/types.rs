@@ -2,7 +2,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use str_util::Name;
-use text_size_util::{Located, TextRange};
+use text_size_util::{TextRange, WithRange};
 
 /// std's Result with our Error.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -22,7 +22,7 @@ pub(crate) enum ErrorKind {
 
 /// An error when processing a CM file.
 #[derive(Debug)]
-pub struct Error(Located<ErrorKind>);
+pub struct Error(WithRange<ErrorKind>);
 
 impl Error {
   /// Returns a text range for this error.
@@ -31,7 +31,7 @@ impl Error {
   }
 
   pub(crate) fn new(kind: ErrorKind, range: TextRange) -> Self {
-    Self(Located { val: kind, range })
+    Self(WithRange { val: kind, range })
   }
 }
 
@@ -94,7 +94,7 @@ pub struct CmFile {
   /// The exports.
   pub exports: Vec<Export>,
   /// The paths, in order.
-  pub paths: Vec<Located<ParsedPath>>,
+  pub paths: Vec<WithRange<ParsedPath>>,
 }
 
 /// A kind of path.
@@ -125,7 +125,7 @@ impl ParsedPath {
 }
 
 pub(crate) enum Root {
-  Alias(Located<PathBuf>),
+  Alias(WithRange<PathBuf>),
   Desc(DescKind, Vec<Export>, Vec<Member>),
 }
 
@@ -138,9 +138,9 @@ pub(crate) enum DescKind {
 #[derive(Debug)]
 pub enum Export {
   /// A 'regular' export.
-  Regular(Located<Namespace>, Located<Name>),
+  Regular(WithRange<Namespace>, WithRange<Name>),
   /// A re-export of another CM library.
-  Library(Located<PathBuf>),
+  Library(WithRange<PathBuf>),
 }
 
 /// A namespace, like `structure` in `structure S`.
@@ -154,12 +154,12 @@ pub enum Namespace {
 }
 
 pub(crate) struct Member {
-  pub(crate) pathname: Located<PathBuf>,
-  pub(crate) class: Option<Located<Class>>,
+  pub(crate) pathname: WithRange<PathBuf>,
+  pub(crate) class: Option<WithRange<Class>>,
 }
 
 impl Member {
-  pub(crate) fn class(&self) -> Option<Located<Class>> {
+  pub(crate) fn class(&self) -> Option<WithRange<Class>> {
     self
       .class
       .clone()

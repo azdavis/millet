@@ -1,16 +1,16 @@
 use crate::types::{Error, ErrorKind, Result, Token};
 use lex_util::{advance_while, block_comment, is_whitespace};
-use text_size_util::{mk_text_size, Located, TextRange};
+use text_size_util::{mk_text_size, TextRange, WithRange};
 
-pub(crate) fn get(s: &str) -> Result<Vec<Located<Token<'_>>>> {
+pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   let bs = s.as_bytes();
   let mut idx = 0usize;
-  let mut tokens = Vec::<Located<Token<'_>>>::new();
+  let mut tokens = Vec::<WithRange<Token<'_>>>::new();
   while let Some(&b) = bs.get(idx) {
     let old = idx;
     if let Some(val) = token(&mut idx, b, bs)? {
       let range = TextRange::new(mk_text_size(old), mk_text_size(idx));
-      tokens.push(Located { val, range });
+      tokens.push(WithRange { val, range });
     }
     assert!(old < idx, "lexer failed to advance");
   }

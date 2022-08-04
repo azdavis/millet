@@ -1,7 +1,7 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 use str_util::Name;
-use text_size_util::{Located, TextRange};
+use text_size_util::{TextRange, WithRange};
 
 /// std's Result with our Error.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -20,7 +20,7 @@ pub(crate) enum ErrorKind {
 
 /// An error when processing a ML Basis file.
 #[derive(Debug)]
-pub struct Error(Located<ErrorKind>);
+pub struct Error(WithRange<ErrorKind>);
 
 impl Error {
   /// Returns a text range for this error.
@@ -29,7 +29,7 @@ impl Error {
   }
 
   pub(crate) fn new(kind: ErrorKind, range: TextRange) -> Self {
-    Self(Located { val: kind, range })
+    Self(WithRange { val: kind, range })
   }
 }
 
@@ -94,18 +94,18 @@ impl<'a> fmt::Display for Token<'a> {
 }
 
 /// A sequence of binding names.
-pub type NamesSeq = Vec<(Located<Name>, Option<Located<Name>>)>;
+pub type NamesSeq = Vec<(WithRange<Name>, Option<WithRange<Name>>)>;
 
 /// A basis declaration.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum BasDec {
-  Basis(Vec<(Located<Name>, BasExp)>),
-  Open(Vec<Located<Name>>),
+  Basis(Vec<(WithRange<Name>, BasExp)>),
+  Open(Vec<WithRange<Name>>),
   Local(Box<BasDec>, Box<BasDec>),
   Export(Namespace, NamesSeq),
-  Path(Located<ParsedPath>),
-  Ann(Located<String>, Box<BasDec>),
+  Path(WithRange<ParsedPath>),
+  Ann(WithRange<String>, Box<BasDec>),
   Seq(Vec<BasDec>),
 }
 
@@ -133,7 +133,7 @@ impl fmt::Display for Namespace {
 #[allow(missing_docs)]
 pub enum BasExp {
   Bas(BasDec),
-  Name(Located<Name>),
+  Name(WithRange<Name>),
   Let(BasDec, Box<BasExp>),
 }
 

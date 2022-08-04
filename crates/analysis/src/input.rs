@@ -469,7 +469,7 @@ struct CmFile {
 #[derive(Debug)]
 struct Export {
   namespace: mlb_hir::Namespace,
-  name: text_size_util::Located<hir::Name>,
+  name: text_size_util::WithRange<hir::Name>,
 }
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports

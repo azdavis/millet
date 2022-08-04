@@ -1,11 +1,11 @@
 use crate::types::{Class, CmFile, Error, ErrorKind, ParsedPath, PathKind, Result, Root};
-use text_size_util::Located;
+use text_size_util::WithRange;
 
 pub(crate) fn get(root: Root) -> Result<CmFile> {
   match root {
     Root::Alias(path) => Err(Error::new(ErrorKind::UnsupportedAlias, path.range)),
     Root::Desc(_, exports, members) => {
-      let mut paths = Vec::<Located<ParsedPath>>::new();
+      let mut paths = Vec::<WithRange<ParsedPath>>::new();
       for member in members {
         let kind = match member.class() {
           Some(class) => match class.val {
@@ -25,7 +25,7 @@ pub(crate) fn get(root: Root) -> Result<CmFile> {
             ))
           }
         };
-        paths.push(Located {
+        paths.push(WithRange {
           val: ParsedPath {
             path: member.pathname.val,
             kind,

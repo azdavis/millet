@@ -168,7 +168,7 @@ Some common string utilities, like:
 
 ### `crates/text-size-util`
 
-A wrapper around the `text-size` crate to add some helpers, primarily `Located`, a pair of a value and a text range.
+A wrapper around the `text-size` crate to add some helpers, primarily `WithRange`, a pair of a value and a text range.
 
 ### `crates/paths`
 
