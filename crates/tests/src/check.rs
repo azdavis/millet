@@ -143,15 +143,16 @@ impl Check {
       root,
       files: input
         .iter_sources()
-        .map(|(path_id, s)| {
+        .map(|s| {
           let file = CheckFile {
             want: s
+              .val
               .lines()
               .enumerate()
               .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
               .collect(),
           };
-          (path_id, file)
+          (s.path, file)
         })
         .collect(),
       reasons: Vec::new(),
@@ -183,13 +184,13 @@ impl Check {
             line: region.line,
             character: region.col_start,
           };
-          let r = match an.get_md(path, pos) {
-            None => Reason::NoHover(path, region),
+          let r = match an.get_md(path.wrap(pos)) {
+            None => Reason::NoHover(path.wrap(region)),
             Some((got, _)) => {
               if want == got {
                 continue;
               } else {
-                Reason::Mismatched(path, region, want, got)
+                Reason::Mismatched(path.wrap(region), want, got)
               }
             }
           };
@@ -215,11 +216,11 @@ impl Check {
 
   fn get_err_reason(
     &mut self,
-    id: paths::PathId,
+    path: paths::PathId,
     range: analysis::Range,
     got: String,
   ) -> Result<(), Reason> {
-    let file = &self.files[&id];
+    let file = &self.files[&path];
     let region = if range.start.line == range.end.line {
       Region {
         line: range.start.line,
@@ -227,19 +228,20 @@ impl Check {
         col_end: range.end.character,
       }
     } else {
-      return Err(Reason::NotOneLine(id, range));
+      return Err(Reason::NotOneLine(path.wrap(range)));
     };
+    let path_region = path.wrap(region);
     let want = match file.want.get(&region) {
-      None => return Err(Reason::GotButNotWanted(id, region, got)),
+      None => return Err(Reason::GotButNotWanted(path_region, got)),
       Some(exp) => match exp.kind {
         ExpectKind::Error => exp.msg.to_owned(),
-        ExpectKind::Hover => return Err(Reason::GotButNotWanted(id, region, got)),
+        ExpectKind::Hover => return Err(Reason::GotButNotWanted(path_region, got)),
       },
     };
     if want == got {
       Ok(())
     } else {
-      Err(Reason::Mismatched(id, region, want, got))
+      Err(Reason::Mismatched(path_region, want, got))
     }
   }
 }
@@ -254,24 +256,27 @@ impl fmt::Display for Check {
           writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;
         }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::NotOneLine(path, pair) => {
-          let path = self.root.as_paths().get_path(*path).as_path().display();
-          writeln!(f, "{path}: not one line: {}..{}", pair.start, pair.end)?;
+        Reason::NotOneLine(r) => {
+          let path = self.root.as_paths().get_path(r.path).as_path().display();
+          writeln!(f, "{path}: not one line: {}..{}", r.val.start, r.val.end)?;
         }
-        Reason::GotButNotWanted(path, r, got) => {
-          let path = self.root.as_paths().get_path(*path).as_path().display();
-          writeln!(f, "{path}:{r}: got an error, but wanted none")?;
+        Reason::GotButNotWanted(r, got) => {
+          let path = self.root.as_paths().get_path(r.path).as_path().display();
+          let range = r.val;
+          writeln!(f, "{path}:{range}: got an error, but wanted none")?;
           writeln!(f, "    - got:  {got}")?;
         }
-        Reason::Mismatched(path, r, want, got) => {
-          let path = self.root.as_paths().get_path(*path).as_path().display();
-          writeln!(f, "{path}:{r}: mismatched")?;
+        Reason::Mismatched(r, want, got) => {
+          let path = self.root.as_paths().get_path(r.path).as_path().display();
+          let range = r.val;
+          writeln!(f, "{path}:{range}: mismatched")?;
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
-        Reason::NoHover(path, r) => {
-          let path = self.root.as_paths().get_path(*path).as_path().display();
-          writeln!(f, "{path}:{r}: wanted a hover, but got none")?;
+        Reason::NoHover(r) => {
+          let path = self.root.as_paths().get_path(r.path).as_path().display();
+          let range = r.val;
+          writeln!(f, "{path}:{range}: wanted a hover, but got none")?;
         }
       }
     }
@@ -328,10 +333,10 @@ impl fmt::Display for ExpectKind {
 enum Reason {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
-  NotOneLine(paths::PathId, analysis::Range),
-  GotButNotWanted(paths::PathId, Region, String),
-  Mismatched(paths::PathId, Region, String, String),
-  NoHover(paths::PathId, Region),
+  NotOneLine(paths::WithPath<analysis::Range>),
+  GotButNotWanted(paths::WithPath<Region>, String),
+  Mismatched(paths::WithPath<Region>, String, String),
+  NoHover(paths::WithPath<Region>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

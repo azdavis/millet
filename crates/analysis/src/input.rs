@@ -1,7 +1,7 @@
 //! Input to analysis.
 
 use fast_hash::FxHashSet;
-use paths::{PathId, PathMap};
+use paths::{PathId, PathMap, WithPath};
 use std::collections::BTreeSet;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -20,8 +20,8 @@ pub struct Input {
 
 impl Input {
   /// Return an iterator over the source paths.
-  pub fn iter_sources(&self) -> impl Iterator<Item = (PathId, &str)> + '_ {
-    self.sources.iter().map(|(&path, s)| (path, s.as_str()))
+  pub fn iter_sources(&self) -> impl Iterator<Item = WithPath<&str>> + '_ {
+    self.sources.iter().map(|(&path, s)| path.wrap(s.as_str()))
   }
 }
 

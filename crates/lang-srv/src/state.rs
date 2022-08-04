@@ -137,7 +137,7 @@ impl State {
         None => return,
       };
       let params = params.text_document_position_params;
-      let (path, pos) = match text_doc_pos_params(&self.file_system, &mut root, params) {
+      let pos = match text_doc_pos_params(&self.file_system, &mut root, params) {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
@@ -147,7 +147,7 @@ impl State {
       };
       let res = self
         .analysis
-        .get_md(path, pos)
+        .get_md(pos)
         .map(|(value, range)| lsp_types::Hover {
           contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,
@@ -164,7 +164,7 @@ impl State {
         None => return,
       };
       let params = params.text_document_position_params;
-      let (path, pos) = match text_doc_pos_params(&self.file_system, &mut root, params) {
+      let pos = match text_doc_pos_params(&self.file_system, &mut root, params) {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
@@ -172,8 +172,8 @@ impl State {
           return;
         }
       };
-      let res = self.analysis.get_def(path, pos).and_then(|(path, range)| {
-        lsp_location(&root, path, range).map(lsp_types::GotoDefinitionResponse::Scalar)
+      let res = self.analysis.get_def(pos).and_then(|range| {
+        lsp_location(&root, range).map(lsp_types::GotoDefinitionResponse::Scalar)
       });
       self.send_response(Response::new_ok(id, res));
       self.root = Some(root);
@@ -184,7 +184,7 @@ impl State {
         None => return,
       };
       let params = params.text_document_position_params;
-      let (path, pos) = match text_doc_pos_params(&self.file_system, &mut root, params) {
+      let pos = match text_doc_pos_params(&self.file_system, &mut root, params) {
         Ok(x) => x,
         Err(e) => {
           log::error!("{e:#}");
@@ -194,10 +194,10 @@ impl State {
       };
       let locs: Vec<_> = self
         .analysis
-        .get_ty_defs(path, pos)
+        .get_ty_defs(pos)
         .into_iter()
         .flatten()
-        .filter_map(|(path, range)| lsp_location(&root, path, range))
+        .filter_map(|range| lsp_location(&root, range))
         .collect();
       let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
       self.send_response(Response::new_ok(id, res));
@@ -442,10 +442,9 @@ fn lsp_position(pos: analysis::Position) -> lsp_types::Position {
 
 fn lsp_location(
   root: &Root,
-  path: paths::PathId,
-  range: analysis::Range,
+  range: paths::WithPath<analysis::Range>,
 ) -> Option<lsp_types::Location> {
-  let uri = match file_url(root.input.as_paths().get_path(path).as_path()) {
+  let uri = match file_url(root.input.as_paths().get_path(range.path).as_path()) {
     Ok(x) => x,
     Err(e) => {
       log::error!("{e:#}");
@@ -454,7 +453,7 @@ fn lsp_location(
   };
   Some(lsp_types::Location {
     uri,
-    range: lsp_range(range),
+    range: lsp_range(range.val),
   })
 }
 
@@ -469,7 +468,7 @@ fn text_doc_pos_params<F>(
   fs: &F,
   root: &mut Root,
   params: lsp_types::TextDocumentPositionParams,
-) -> Result<(paths::PathId, analysis::Position)>
+) -> Result<paths::WithPath<analysis::Position>>
 where
   F: paths::FileSystem,
 {
@@ -481,5 +480,5 @@ where
     .get_id(&path)
     .with_context(|| "not in root")?;
   let pos = analysis_position(params.position);
-  Ok((path, pos))
+  Ok(path.wrap(pos))
 }

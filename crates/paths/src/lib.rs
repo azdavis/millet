@@ -64,6 +64,22 @@ impl Root {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PathId(usize);
 
+impl PathId {
+  /// Wrap a value with the path id.
+  pub fn wrap<T>(self, val: T) -> WithPath<T> {
+    WithPath { path: self, val }
+  }
+}
+
+/// A pair of path id and value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WithPath<T> {
+  /// The path id.
+  pub path: PathId,
+  /// The value.
+  pub val: T,
+}
+
 /// A map from paths to something.
 pub type PathMap<T> = FxHashMap<PathId, T>;
 

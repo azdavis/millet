@@ -6,7 +6,7 @@ mod error;
 
 pub mod input;
 
-use paths::{PathId, PathMap};
+use paths::{PathMap, WithPath};
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
@@ -96,8 +96,8 @@ impl Analysis {
   }
 
   /// Returns a Markdown string with information about this position.
-  pub fn get_md(&self, path: PathId, pos: Position) -> Option<(String, Range)> {
-    self.go_up_ast(path, pos, |file, ptr, idx| {
+  pub fn get_md(&self, pos: WithPath<Position>) -> Option<(String, Range)> {
+    self.go_up_ast(pos, |file, ptr, idx| {
       let mut s = file.info.get_ty_md(&self.syms, idx)?;
       let def_doc = file.info.get_def(idx).and_then(|def| {
         let info = match def.path {
@@ -116,16 +116,16 @@ impl Analysis {
   }
 
   /// Returns the range of the definition of the item at this position.
-  pub fn get_def(&self, path: PathId, pos: Position) -> Option<(PathId, Range)> {
-    self.go_up_ast(path, pos, |file, _, idx| {
+  pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
+    self.go_up_ast(pos, |file, _, idx| {
       self.def_to_path_and_range(file.info.get_def(idx)?)
     })
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
-  pub fn get_ty_defs(&self, path: PathId, pos: Position) -> Option<Vec<(PathId, Range)>> {
-    self.go_up_ast(path, pos, |file, _, idx| {
+  pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
+    self.go_up_ast(pos, |file, _, idx| {
       Some(
         file
           .info
@@ -137,12 +137,12 @@ impl Analysis {
     })
   }
 
-  fn go_up_ast<F, T>(&self, path: PathId, pos: Position, f: F) -> Option<T>
+  fn go_up_ast<F, T>(&self, pos: WithPath<Position>, f: F) -> Option<T>
   where
     F: FnOnce(&mlb_statics::SourceFile, SyntaxNodePtr, hir::Idx) -> Option<T>,
   {
-    let file = self.source_files.get(&path)?;
-    let mut node = get_node(file, pos)?;
+    let file = self.source_files.get(&pos.path)?;
+    let mut node = get_node(file, pos.val)?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
       match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
@@ -152,7 +152,7 @@ impl Analysis {
     }
   }
 
-  fn def_to_path_and_range(&self, def: statics::Def) -> Option<(PathId, Range)> {
+  fn def_to_path_and_range(&self, def: statics::Def) -> Option<WithPath<Range>> {
     let path = match def.path {
       statics::DefPath::Regular(p) => p,
       statics::DefPath::StdBasis(_) => return None,
@@ -164,7 +164,7 @@ impl Analysis {
       .hir_to_ast(def.idx)?
       .to_node(def_file.parsed.root.syntax())
       .text_range();
-    Some((path, def_file.pos_db.range(def_range)?))
+    Some(path.wrap(def_file.pos_db.range(def_range)?))
   }
 }
 
