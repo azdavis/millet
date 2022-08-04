@@ -473,7 +473,7 @@ where
   F: paths::FileSystem,
 {
   let url = params.text_document.uri;
-  let path = canonical_path_buf(fs, &url).with_context(|| "couldn't canonicalize")?;
+  let path = canonical_path_buf(fs, &url)?;
   let path = root
     .input
     .as_mut_paths()
