@@ -464,6 +464,17 @@ fn analysis_position(pos: lsp_types::Position) -> analysis::Position {
   }
 }
 
+fn url_to_path_id<F>(fs: &F, root: &mut Root, url: &Url) -> Result<paths::PathId>
+where
+  F: paths::FileSystem,
+{
+  root
+    .input
+    .as_mut_paths()
+    .get_id(&canonical_path_buf(fs, url)?)
+    .with_context(|| "not in root")
+}
+
 fn text_doc_pos_params<F>(
   fs: &F,
   root: &mut Root,
@@ -472,11 +483,7 @@ fn text_doc_pos_params<F>(
 where
   F: paths::FileSystem,
 {
-  let path = root
-    .input
-    .as_mut_paths()
-    .get_id(&canonical_path_buf(fs, &params.text_document.uri)?)
-    .with_context(|| "not in root")?;
+  let path = url_to_path_id(fs, root, &params.text_document.uri)?;
   let pos = analysis_position(params.position);
   Ok(path.wrap(pos))
 }
