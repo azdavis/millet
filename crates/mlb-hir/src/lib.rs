@@ -2,7 +2,7 @@
 
 #![deny(missing_debug_implementations, rust_2018_idioms)]
 
-use located::Located;
+use text_size_util::Located;
 
 #[derive(Debug, Clone)]
 pub enum BasDec {

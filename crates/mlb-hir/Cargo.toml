@@ -9,6 +9,6 @@ test = false
 doctest = false
 
 [dependencies]
-located = { path = "../located" }
+text-size-util = { path = "../text-size-util" }
 hir = { path = "../hir" }
 paths = { path = "../paths" }

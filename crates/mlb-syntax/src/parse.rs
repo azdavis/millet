@@ -1,9 +1,9 @@
 use crate::types::{
   BasDec, BasExp, Error, ErrorKind, NamesSeq, Namespace, ParsedPath, PathKind, Result, Token,
 };
-use located::{Located, TextRange};
 use std::path::Path;
 use str_util::Name;
+use text_size_util::{Located, TextRange};
 
 pub(crate) fn get(
   tokens: &[Located<Token<'_>>],

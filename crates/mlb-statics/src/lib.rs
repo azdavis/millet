@@ -40,7 +40,7 @@ pub struct SourceFile {
 pub struct Error {
   path: paths::PathId,
   item: Item,
-  name: located::Located<hir::Name>,
+  name: text_size_util::Located<hir::Name>,
 }
 
 impl Error {
@@ -50,7 +50,7 @@ impl Error {
   }
 
   /// Returns the range for this.
-  pub fn range(&self) -> located::TextRange {
+  pub fn range(&self) -> text_size_util::TextRange {
     self.name.range
   }
 
@@ -94,7 +94,7 @@ struct Cx {
 }
 
 impl Cx {
-  fn undef(&mut self, path: paths::PathId, item: Item, name: located::Located<hir::Name>) {
+  fn undef(&mut self, path: paths::PathId, item: Item, name: text_size_util::Located<hir::Name>) {
     self.mlb_errors.push(Error { path, item, name });
   }
 }

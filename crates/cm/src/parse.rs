@@ -1,8 +1,8 @@
 use crate::types::{
   Class, DescKind, Error, ErrorKind, Export, Member, Namespace, Result, Root, Token,
 };
-use located::{Located, TextRange};
 use std::path::PathBuf;
+use text_size_util::{Located, TextRange};
 
 pub(crate) fn get(tokens: &[Located<Token<'_>>], env: &paths::slash_var_path::Env) -> Result<Root> {
   let mut p = Parser {

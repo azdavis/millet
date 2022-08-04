@@ -1,5 +1,5 @@
 use crate::types::{Class, CmFile, Error, ErrorKind, ParsedPath, PathKind, Result, Root};
-use located::Located;
+use text_size_util::Located;
 
 pub(crate) fn get(root: Root) -> Result<CmFile> {
   match root {

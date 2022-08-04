@@ -11,7 +11,6 @@ dependencies = [
  "elapsed",
  "fast-hash",
  "hir",
- "located",
  "log",
  "mlb-hir",
  "mlb-statics",
@@ -20,6 +19,7 @@ dependencies = [
  "statics",
  "syntax",
  "text-pos",
+ "text-size-util",
  "toml",
  "topo-sort",
 ]
@@ -79,9 +79,9 @@ name = "cm"
 version = "0.1.0"
 dependencies = [
  "lex-util",
- "located",
  "paths",
  "str-util",
+ "text-size-util",
 ]
 
 [[package]]
@@ -265,13 +265,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 
 [[package]]
-name = "located"
-version = "0.1.0"
-dependencies = [
- "text-size",
-]
-
-[[package]]
 name = "log"
 version = "0.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -341,8 +334,8 @@ name = "mlb-hir"
 version = "0.1.0"
 dependencies = [
  "hir",
- "located",
  "paths",
+ "text-size-util",
 ]
 
 [[package]]
@@ -353,7 +346,6 @@ dependencies = [
  "fast-hash",
  "hir",
  "lex",
- "located",
  "lower",
  "mlb-hir",
  "parse",
@@ -362,6 +354,7 @@ dependencies = [
  "statics",
  "syntax",
  "text-pos",
+ "text-size-util",
  "ty-var-scope",
 ]
 
@@ -370,9 +363,9 @@ name = "mlb-syntax"
 version = "0.1.0"
 dependencies = [
  "lex-util",
- "located",
  "paths",
  "str-util",
+ "text-size-util",
 ]
 
 [[package]]
@@ -664,6 +657,13 @@ name = "text-size"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "288cb548dbe72b652243ea797201f3d481a0609a967980fcc5b2315ea811560a"
+
+[[package]]
+name = "text-size-util"
+version = "0.1.0"
+dependencies = [
+ "text-size",
+]
 
 [[package]]
 name = "time"

@@ -1,8 +1,8 @@
-use located::{Located, TextRange};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use str_util::Name;
+use text_size_util::{Located, TextRange};
 
 /// std's Result with our Error.
 pub type Result<T, E = Error> = std::result::Result<T, E>;

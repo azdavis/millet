@@ -166,7 +166,7 @@ Some common string utilities, like:
 - Small strings, just a re-export of `smol_str::SmolStr`.
 - Names, aka non-empty `SmolStr`s.
 
-### `crates/located`
+### `crates/text-size-util`
 
 A wrapper around the `text-size` crate to add some helpers, primarily `Located`, a pair of a value and a text range.
 

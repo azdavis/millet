@@ -10,5 +10,5 @@ doctest = false
 [dependencies]
 lex-util = { path = "../lex-util" }
 str-util = { path = "../str-util" }
-located = { path = "../located" }
+text-size-util = { path = "../text-size-util" }
 paths = { path = "../paths" }
