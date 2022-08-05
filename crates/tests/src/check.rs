@@ -264,11 +264,6 @@ impl fmt::Display for Check {
           writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;
         }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::InexactHover(line) => {
-          let path = self.root.as_paths().get_path(line.path).as_path().display();
-          let line = line.val;
-          writeln!(f, "{path}:{line}: inexact arrows for hover")?;
-        }
         Reason::GotButNotWanted(r, got) => {
           let path = self.root.as_paths().get_path(r.path).as_path().display();
           let range = r.val;
@@ -286,6 +281,11 @@ impl fmt::Display for Check {
           let path = self.root.as_paths().get_path(r.path).as_path().display();
           let range = r.val;
           writeln!(f, "{path}:{range}: wanted a hover, but got none")?;
+        }
+        Reason::InexactHover(line) => {
+          let path = self.root.as_paths().get_path(line.path).as_path().display();
+          let line = line.val;
+          writeln!(f, "{path}:{line}: inexact arrows for hover")?;
         }
       }
     }
@@ -342,10 +342,10 @@ impl fmt::Display for ExpectKind {
 enum Reason {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
-  InexactHover(paths::WithPath<u32>),
   GotButNotWanted(paths::WithPath<Region>, String),
   Mismatched(paths::WithPath<Region>, String, String),
   NoHover(paths::WithPath<Region>),
+  InexactHover(paths::WithPath<u32>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
