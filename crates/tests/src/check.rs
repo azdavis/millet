@@ -120,7 +120,7 @@ pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
 
 struct Check {
   root: analysis::input::Root,
-  files: paths::PathMap<CheckFile>,
+  files: paths::PathMap<ExpectFile>,
   reasons: Vec<Reason>,
 }
 
@@ -144,7 +144,7 @@ impl Check {
       files: input
         .iter_sources()
         .map(|s| {
-          let file = CheckFile {
+          let file = ExpectFile {
             want: s
               .val
               .lines()
@@ -301,7 +301,7 @@ enum Outcome {
   Fail,
 }
 
-struct CheckFile {
+struct ExpectFile {
   want: FxHashMap<Region, Expect>,
 }
 
