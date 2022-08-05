@@ -138,12 +138,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
     ast::Exp::CaseExp(exp) => {
       let head = get(cx, exp.exp());
       let arms = matcher(cx, exp.matcher());
-      // case expressions are usually huge. let's use the head expr for errors instead.
-      let ptr = exp
-        .exp()
-        .map(|x| SyntaxNodePtr::new(x.syntax()))
-        .unwrap_or_else(|| ptr.clone());
-      case(cx, head, arms, ptr)
+      case(cx, head, arms, ptr.clone())
     }
     ast::Exp::FnExp(exp) => hir::Exp::Fn(matcher(cx, exp.matcher())),
   };
