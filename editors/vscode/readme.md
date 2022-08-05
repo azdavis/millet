@@ -18,6 +18,7 @@ You can turn it off by setting `millet.useLanguageServer` to `false` in your VS 
 - Inline errors
 - Hover for type/documentation
 - Go to definition/type definition
+- Code actions, like "fill case"
 
 ## Usage
 
