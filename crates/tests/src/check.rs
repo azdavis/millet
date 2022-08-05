@@ -385,6 +385,17 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   let non_space_idx = inner.find(|c| c != ' ')?;
   let inner = &inner[non_space_idx..];
   let (col_range, msg) = inner.split_once(' ')?;
+  let msg = msg.trim_end_matches(' ');
+  let expect = match msg.strip_prefix("hover: ") {
+    Some(msg) => Expect {
+      msg: msg.to_owned(),
+      kind: ExpectKind::Hover,
+    },
+    None => Expect {
+      msg: msg.to_owned(),
+      kind: ExpectKind::Error,
+    },
+  };
   let line = match col_range.chars().next()? {
     '^' => line_n - 1,
     'v' => line_n + 1,
@@ -396,17 +407,6 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
     line: u32::try_from(line).ok()?,
     col_start: u32::try_from(start).ok()?,
     col_end: u32::try_from(end).ok()?,
-  };
-  let msg = msg.trim_end_matches(' ');
-  let expect = match msg.strip_prefix("hover: ") {
-    Some(msg) => Expect {
-      msg: msg.to_owned(),
-      kind: ExpectKind::Hover,
-    },
-    None => Expect {
-      msg: msg.to_owned(),
-      kind: ExpectKind::Error,
-    },
   };
   Some((region, expect))
 }
