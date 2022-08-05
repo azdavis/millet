@@ -30,26 +30,3 @@ pub(crate) fn idx_to_name(idx: usize) -> impl Iterator<Item = char> {
   let ch = char::from((rem as u8) + b'a');
   std::iter::repeat(ch).take(quot + 1)
 }
-
-pub(crate) fn comma_seq<I, T>(f: &mut fmt::Formatter<'_>, iter: I) -> fmt::Result
-where
-  I: Iterator<Item = T>,
-  T: fmt::Display,
-{
-  sep_seq(f, ", ", iter)
-}
-
-pub(crate) fn sep_seq<I, T>(f: &mut fmt::Formatter<'_>, sep: &str, mut iter: I) -> fmt::Result
-where
-  I: Iterator<Item = T>,
-  T: fmt::Display,
-{
-  if let Some(x) = iter.next() {
-    x.fmt(f)?;
-  }
-  for x in iter {
-    f.write_str(sep)?;
-    x.fmt(f)?;
-  }
-  Ok(())
-}

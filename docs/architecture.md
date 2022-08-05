@@ -183,6 +183,10 @@ These are ideal for the use case of language servers, in which we have a "worksp
 
 A thin wrapper over `FxHash{Map, Set}` with some extra helper functions. These types use `FxHasher`, which is a very fast, but not HashDOS-resistant, hashing algorithm used in Firefox and `rustc`.
 
+### `crates/fmt-util`
+
+A small utility crate for formatting.
+
 ### `crates/elapsed`
 
 A small utility crate for timing function calls.

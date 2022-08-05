@@ -3,9 +3,10 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
-use crate::fmt_util::{comma_seq, idx_to_name, ty_var_name};
+use crate::fmt_util::{idx_to_name, ty_var_name};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
+use fmt_util::comma_seq;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::sync::Arc;

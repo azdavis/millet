@@ -162,6 +162,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "fmt-util"
+version = "0.1.0"
+
+[[package]]
 name = "form_urlencoded"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -588,6 +592,7 @@ dependencies = [
  "config",
  "drop_bomb",
  "fast-hash",
+ "fmt-util",
  "hir",
  "paths",
  "pattern-match",

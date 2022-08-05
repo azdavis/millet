@@ -16,3 +16,4 @@ hir = { path = "../hir" }
 paths = { path = "../paths" }
 config = { path = "../config" }
 fast-hash = { path = "../fast-hash" }
+fmt-util = { path = "../fmt-util" }

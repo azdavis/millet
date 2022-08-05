@@ -1,6 +1,6 @@
-use crate::fmt_util::{comma_seq, sep_seq};
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Sym, Syms, Ty};
+use fmt_util::{comma_seq, sep_seq};
 use pattern_match::RawPat;
 use std::fmt;
 
