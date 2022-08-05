@@ -4,6 +4,15 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.2.11
+
+- Emit an error for the value restriction.
+- Add more error codes for errors.
+- Display errors more consistently in the CLI.
+- Fix crashes when interacting with unsaved additions at the end of the file.
+- Reposition error ranges for `case` expressions.
+- Add "fill case" quick fix for `case` expressions.
+
 ## v0.2.10
 
 - Reject empty `open` and `include`, and `fun`s with no arguments.
