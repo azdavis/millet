@@ -55,6 +55,7 @@
     "powf",
     "prec",
     "ptrs",
+    "quickfix",
     "realint",
     "rustc",
     "rustflags",

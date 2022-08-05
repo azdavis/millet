@@ -120,6 +120,26 @@ impl Info {
     );
     Some(ret)
   }
+
+  /// Gets the variants for the type of the index. The bool is whether the name has an argument.
+  pub fn get_variants(&self, syms: &Syms, idx: hir::Idx) -> Option<Vec<(hir::Name, bool)>> {
+    let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
+    let sym = match ty_entry.ty {
+      Ty::Con(_, x) => x,
+      _ => return None,
+    };
+    let (_, ty_info) = syms.get(&sym)?;
+    let mut ret: Vec<_> = ty_info
+      .val_env
+      .iter()
+      .map(|(name, val_info)| {
+        let has_arg = matches!(val_info.ty_scheme.ty, Ty::Fn(_, _));
+        (name.clone(), has_arg)
+      })
+      .collect();
+    ret.sort_unstable();
+    Some(ret)
+  }
 }
 
 /// The mode for checking.

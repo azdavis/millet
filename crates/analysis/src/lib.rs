@@ -6,7 +6,9 @@ mod error;
 
 pub mod input;
 
+use fmt_util::sep_seq;
 use paths::{PathMap, WithPath};
+use std::fmt;
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
 use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
 
@@ -134,6 +136,27 @@ impl Analysis {
     )
   }
 
+  /// Given a position on a `case` expression, return the code and its range to fill the case with
+  /// all of the variants of the head's type.
+  pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
+    let (file, ptr, _) = self.go_up_ast(pos)?;
+    let ptr = ptr.cast::<syntax::ast::CaseExp>()?;
+    let case = ptr.to_node(file.parsed.root.syntax());
+    let range = text_size_util::TextRange::empty(case.syntax().text_range().end());
+    let range = file.pos_db.range(range)?;
+    let head_ast = case.exp()?;
+    let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
+    let head = file.lowered.ptrs.ast_to_hir(head_ptr)?;
+    let variants = file.info.get_variants(&self.syms, head)?;
+    let case = CaseDisplay {
+      needs_starting_bar: case
+        .matcher()
+        .map_or(false, |x| dbg!(x.match_rules().count()) > 0),
+      variants: &variants,
+    };
+    Some((range, case.to_string()))
+  }
+
   fn go_up_ast(
     &self,
     pos: WithPath<Position>,
@@ -246,4 +269,40 @@ fn source_file_errors(
     }))
     .take(MAX_ERRORS_PER_PATH)
     .collect()
+}
+
+struct CaseDisplay<'a> {
+  needs_starting_bar: bool,
+  variants: &'a [(hir::Name, bool)],
+}
+
+impl fmt::Display for CaseDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "  ")?;
+    if self.needs_starting_bar {
+      write!(f, "| ")?;
+    } else {
+      write!(f, "  ")?;
+    }
+    let iter = self
+      .variants
+      .iter()
+      .map(|&(ref name, has_arg)| ArmDisplay { name, has_arg });
+    sep_seq(f, "\n  | ", iter)
+  }
+}
+
+struct ArmDisplay<'a> {
+  name: &'a hir::Name,
+  has_arg: bool,
+}
+
+impl fmt::Display for ArmDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.name)?;
+    if self.has_arg {
+      write!(f, " _")?;
+    }
+    write!(f, " => _")
+  }
 }

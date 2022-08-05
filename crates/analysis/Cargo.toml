@@ -25,3 +25,4 @@ mlb-statics = { path = "../mlb-statics" }
 text-size-util = { path = "../text-size-util" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }
+fmt-util = { path = "../fmt-util" }

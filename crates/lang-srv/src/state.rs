@@ -25,6 +25,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
     hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
     definition_provider: Some(lsp_types::OneOf::Left(true)),
     type_definition_provider: Some(lsp_types::TypeDefinitionProviderCapability::Simple(true)),
+    code_action_provider: Some(lsp_types::CodeActionProviderCapability::Simple(true)),
     ..Default::default()
   }
 }
@@ -185,6 +186,39 @@ impl State {
       self.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
+    r = try_request::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
+      let url = params.text_document.uri;
+      let path = url_to_path_id(&self.file_system, root, &url)?;
+      let range = analysis_range(params.range);
+      let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
+      if let Some((range, new_text)) = self.analysis.fill_case(path.wrap(range.start)) {
+        actions.push(lsp_types::CodeActionOrCommand::CodeAction(
+          lsp_types::CodeAction {
+            title: "Fill case".to_owned(),
+            kind: Some(lsp_types::CodeActionKind::QUICKFIX),
+            edit: Some(lsp_types::WorkspaceEdit {
+              document_changes: Some(lsp_types::DocumentChanges::Edits(vec![
+                lsp_types::TextDocumentEdit {
+                  text_document: lsp_types::OptionalVersionedTextDocumentIdentifier {
+                    uri: url,
+                    version: None,
+                  },
+                  edits: vec![lsp_types::OneOf::Left(lsp_types::TextEdit {
+                    range: lsp_range(range),
+                    new_text,
+                  })],
+                },
+              ])),
+              ..Default::default()
+            }),
+            ..Default::default()
+          },
+        ));
+      }
+      self.send_response(Response::new_ok(id, actions));
+      Ok(())
+    })?;
+    // TODO do CodeActionResolveRequest and lazily compute the edit
     ControlFlow::Continue(r)
   }
 
@@ -440,6 +474,13 @@ fn analysis_position(pos: lsp_types::Position) -> analysis::Position {
   analysis::Position {
     line: pos.line,
     character: pos.character,
+  }
+}
+
+fn analysis_range(range: lsp_types::Range) -> analysis::Range {
+  analysis::Range {
+    start: analysis_position(range.start),
+    end: analysis_position(range.end),
   }
 }
 

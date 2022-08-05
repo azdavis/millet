@@ -19,6 +19,7 @@ dependencies = [
  "config",
  "elapsed",
  "fast-hash",
+ "fmt-util",
  "hir",
  "log",
  "mlb-hir",
