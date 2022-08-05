@@ -154,7 +154,14 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mvs.extend_for(got);
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
-        mismatched_types(f, self.lines, want, got)
+        match self.lines {
+          config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
+          config::ErrorLines::Many => {
+            writeln!(f, "mismatched types:")?;
+            writeln!(f, "  expected {want}")?;
+            write!(f, "     found {got}")
+          }
+        }
       }
       ErrorKind::AppLhsNotFn(got) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
@@ -227,25 +234,6 @@ fn non_exhaustive(
     write!(f, ", and {} others", pats.len() - max_len)?;
   }
   Ok(())
-}
-
-fn mismatched_types<T>(
-  f: &mut fmt::Formatter<'_>,
-  lines: config::ErrorLines,
-  want: T,
-  got: T,
-) -> fmt::Result
-where
-  T: fmt::Display,
-{
-  match lines {
-    config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
-    config::ErrorLines::Many => {
-      writeln!(f, "mismatched types:")?;
-      writeln!(f, "  expected {want}")?;
-      write!(f, "     found {got}")
-    }
-  }
 }
 
 struct PatDisplay<'a> {
