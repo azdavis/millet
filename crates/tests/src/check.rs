@@ -180,9 +180,17 @@ impl Check {
       for (&region, expect) in file.want.iter() {
         if matches!(expect.kind, ExpectKind::Hover) {
           let want = format!("```sml\n{}\n```\n", expect.msg);
-          let pos = analysis::Position {
-            line: region.line,
-            character: region.col_start,
+          let pos = match region {
+            Region::Exact {
+              line, col_start, ..
+            } => analysis::Position {
+              line,
+              character: col_start,
+            },
+            Region::Line(n) => {
+              ret.reasons.push(Reason::InexactHover(path.wrap(n)));
+              continue;
+            }
           };
           let r = match an.get_md(path.wrap(pos)) {
             None => Reason::NoHover(path.wrap(region)),
@@ -222,13 +230,13 @@ impl Check {
   ) -> Result<(), Reason> {
     let file = &self.files[&path];
     let region = if range.start.line == range.end.line {
-      Region {
+      Region::Exact {
         line: range.start.line,
         col_start: range.start.character,
         col_end: range.end.character,
       }
     } else {
-      return Err(Reason::NotOneLine(path.wrap(range)));
+      Region::Line(range.start.line)
     };
     let path_region = path.wrap(region);
     let want = match file.want.get(&region) {
@@ -256,9 +264,10 @@ impl fmt::Display for Check {
           writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;
         }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::NotOneLine(r) => {
-          let path = self.root.as_paths().get_path(r.path).as_path().display();
-          writeln!(f, "{path}: not one line: {}..{}", r.val.start, r.val.end)?;
+        Reason::InexactHover(line) => {
+          let path = self.root.as_paths().get_path(line.path).as_path().display();
+          let line = line.val;
+          writeln!(f, "{path}:{line}: inexact arrows for hover")?;
         }
         Reason::GotButNotWanted(r, got) => {
           let path = self.root.as_paths().get_path(r.path).as_path().display();
@@ -333,29 +342,33 @@ impl fmt::Display for ExpectKind {
 enum Reason {
   WantWrongNumError(usize),
   NoErrorsEmitted(usize),
-  NotOneLine(paths::WithPath<analysis::Range>),
+  InexactHover(paths::WithPath<u32>),
   GotButNotWanted(paths::WithPath<Region>, String),
   Mismatched(paths::WithPath<Region>, String, String),
   NoHover(paths::WithPath<Region>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct Region {
-  line: u32,
-  col_start: u32,
-  col_end: u32,
+enum Region {
+  Exact {
+    line: u32,
+    col_start: u32,
+    col_end: u32,
+  },
+  Line(u32),
 }
 
 impl fmt::Display for Region {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     // don't add 1 for the line because the check strings usually have the first line blank.
-    write!(
-      f,
-      "{}:{}..{}",
-      self.line,
-      self.col_start + 1,
-      self.col_end + 1
-    )
+    match self {
+      Region::Exact {
+        line,
+        col_start,
+        col_end,
+      } => write!(f, "{}:{}..{}", line, col_start + 1, col_end + 1),
+      Region::Line(line) => write!(f, "{line}"),
+    }
   }
 }
 
@@ -396,17 +409,23 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
       kind: ExpectKind::Error,
     },
   };
-  let line = match col_range.chars().next()? {
-    '^' => line_n - 1,
-    'v' => line_n + 1,
+  let (line, exact) = match col_range.chars().next()? {
+    '^' => (line_n - 1, true),
+    '+' => (line_n - 1, false),
+    'v' => (line_n + 1, true),
     c => panic!("invalid arrow: {c}"),
   };
-  let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
-  let end = start + col_range.len();
-  let region = Region {
-    line: u32::try_from(line).ok()?,
-    col_start: u32::try_from(start).ok()?,
-    col_end: u32::try_from(end).ok()?,
+  let line = u32::try_from(line).ok()?;
+  let region = if exact {
+    let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
+    let end = start + col_range.len();
+    Region::Exact {
+      line,
+      col_start: u32::try_from(start).ok()?,
+      col_end: u32::try_from(end).ok()?,
+    }
+  } else {
+    Region::Line(line)
   };
   Some((region, expect))
 }
