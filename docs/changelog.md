@@ -7,8 +7,7 @@ See also the [versioning scheme][versioning].
 ## v0.2.10
 
 - Reject empty `open` and `include`, and `fun`s with no arguments.
-- Process paths with `$(VARIABLES)` in them.
-  - Note that default variables like `$(SML_LIB)` are not set.
+- Process paths with `$(VARIABLES)` in them. (Note that default variables like `$(SML_LIB)` are not set.)
 - Add more std basis extra, like `Ref` and `Either`.
 - Add syntax highlighting for upper-case identifiers (conventionally the names of structures, signatures, and functors).
 - Add syntax highlighting for common types (like `int`).
