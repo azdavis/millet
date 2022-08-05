@@ -1,6 +1,8 @@
-# Error reference
+# Errors
 
-This is (or rather, should be) a list of all the errors that Millet can emit, and what they mean. If Millet emitted an error not detailed here, that's a bug, and we would appreciate if you file an issue.
+This is documentation for all the errors Millet can emit, and what they mean.
+
+If Millet emitted an error not documented here, please file an issue.
 
 ## 1001
 
