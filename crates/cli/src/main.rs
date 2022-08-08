@@ -30,7 +30,7 @@ fn run() -> usize {
   let path: String = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
-      println!("error[1097]: {e}");
+      println!("error[1997]: {e}");
       return 1;
     }
   };

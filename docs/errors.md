@@ -6,19 +6,11 @@ If Millet emitted an error not documented here, please file an issue.
 
 ## 1001
 
-Millet couldn't read a file or directory. It may not exist, or there may be insufficient permissions.
+Millet failed to perform file or directory I/O with the filesystem. It could be that the file or directory in question does not exist, or there may be insufficient permissions.
 
 To fix, check the path mentioned by Millet to confirm that it exists and that Millet may access it.
 
 ## 1002
-
-Millet couldn't canonicalize a path. To "canonicalize" means to fully resolve all symlinks, `.`, `..`, etc to get the single, absolute path name.
-
-Similar to 1001, the item at the path may not exist, or there may be insufficient permissions.
-
-To fix, check the path mentioned by Millet to confirm that it exists and that Millet may access it.
-
-## 1003
 
 A path wasn't contained in the root directory.
 
@@ -26,7 +18,7 @@ Millet requires all the files to be analyzed be ultimately contained within a si
 
 To fix, move the file into the root, or do not reference it.
 
-## 1004
+## 1003
 
 There were multiple root group files (aka SML/NJ CM or ML Basis files).
 
@@ -42,43 +34,43 @@ version = 1
 root = "foo.cm"
 ```
 
-## 1005
+## 1004
 
-Similar to 1004, but this time there was no root group file.
+Similar to 1003, but this time there was no root group file.
 
 To fix, create one.
 
-## 1006
+## 1005
 
 A group file manually specified was not either a `.mlb` or `.cm` file.
 
 To fix, only specify those such paths as group paths.
 
-## 1007
+## 1006
 
 Millet could not parse the config file as valid TOML.
 
 To fix, ensure the TOML syntax is valid, and that the config file is of the [expected format][config].
 
-## 1008
+## 1007
 
 The config file had an invalid version.
 
 To fix, only use version 1.
 
-## 1009
+## 1008
 
 There was an error when parsing a SML/NJ CM file.
 
 To fix, use only the subset of CM syntax Millet understands (which is, at time of writing, very limited).
 
-## 1010
+## 1009
 
 There was an error when parsing a ML Basis file.
 
 To fix, use only the subset of MLB syntax Millet understands. Some features, like string paths, are not supported.
 
-## 1011
+## 1010
 
 There was a cycle between files.
 
@@ -89,29 +81,19 @@ For instance, a cycle occurs if a group file attempts to include itself. As anot
 
 To fix, break the cycle.
 
-## 1012
+## 1011
 
 There was a duplicate name in a ML Basis file. For instance, `structure A and structure A` will trigger this error.
 
 To fix, use different names, or remove the `and`. See also 5002.
 
-## 1097
+## 1997
 
 When run as a CLI, there was an invalid or missing argument or option.
 
 To fix, run `--help` to see permitted options and arguments.
 
-## 1098
-
-There was an unsupported export kind in a SML/NJ CM file.
-
-At time of writing, Millet does not support:
-
-- `funsig` exports.
-
-To fix, avoid these.
-
-## 1099
+## 1998
 
 An export was undefined.
 
@@ -120,6 +102,16 @@ Millet uses either SML/NJ CM files or ML Basis files (aka "group" files) to know
 This error will be emitted when a group file lists an export not defined by the source files.
 
 To fix, define the export in source files, or remove the export in the group file.
+
+## 1999
+
+There was an unsupported export kind in a SML/NJ CM file.
+
+At time of writing, Millet does not support:
+
+- `funsig` exports.
+
+To fix, avoid these.
 
 ## 2001
 
@@ -576,7 +568,7 @@ end
 open S
 ```
 
-## 4099
+## 4999
 
 There was an occurrence of an unsupported SML construct.
 
@@ -1351,7 +1343,7 @@ To fix, try any of the following:
   val r : int list ref = ref []
   ```
 
-## 5099
+## 5999
 
 There was an occurrence of an unsupported SML construct.
 

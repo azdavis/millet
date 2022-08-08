@@ -51,19 +51,18 @@ impl GetInputError {
   /// Returns the error code for this.
   pub fn to_code(&self) -> u16 {
     match self.kind {
-      GetInputErrorKind::Read(_) => 1001,
-      GetInputErrorKind::Canonicalize(_) => 1002,
-      GetInputErrorKind::NotInRoot(_) => 1003,
-      GetInputErrorKind::MultipleRoots(_, _) => 1004,
-      GetInputErrorKind::NoRoot => 1005,
-      GetInputErrorKind::NotGroup => 1006,
-      GetInputErrorKind::CouldNotParseConfig(_) => 1007,
-      GetInputErrorKind::InvalidConfigVersion(_) => 1008,
-      GetInputErrorKind::Cm(_) => 1009,
-      GetInputErrorKind::Mlb(_) => 1010,
-      GetInputErrorKind::Cycle => 1011,
-      GetInputErrorKind::Duplicate(_) => 1012,
-      GetInputErrorKind::UnsupportedExport => 1098,
+      GetInputErrorKind::Io(_) => 1001,
+      GetInputErrorKind::NotInRoot(_) => 1002,
+      GetInputErrorKind::MultipleRoots(_, _) => 1003,
+      GetInputErrorKind::NoRoot => 1004,
+      GetInputErrorKind::NotGroup => 1005,
+      GetInputErrorKind::CouldNotParseConfig(_) => 1006,
+      GetInputErrorKind::InvalidConfigVersion(_) => 1007,
+      GetInputErrorKind::Cm(_) => 1008,
+      GetInputErrorKind::Mlb(_) => 1009,
+      GetInputErrorKind::Cycle => 1010,
+      GetInputErrorKind::Duplicate(_) => 1011,
+      GetInputErrorKind::UnsupportedExport => 1999,
     }
   }
 }
@@ -79,8 +78,7 @@ impl fmt::Display for GetInputError {
 
 #[derive(Debug)]
 enum GetInputErrorKind {
-  Read(std::io::Error),
-  Canonicalize(std::io::Error),
+  Io(std::io::Error),
   NotInRoot(std::path::StripPrefixError),
   MultipleRoots(PathBuf, PathBuf),
   NoRoot,
@@ -98,8 +96,7 @@ enum GetInputErrorKind {
 impl fmt::Display for GetInputErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      GetInputErrorKind::Read(e) => write!(f, "couldn't read contents at path: {e}"),
-      GetInputErrorKind::Canonicalize(e) => write!(f, "couldn't canonicalize path: {e}"),
+      GetInputErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
       GetInputErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
       GetInputErrorKind::MultipleRoots(a, b) => write!(
         f,
@@ -238,7 +235,7 @@ where
       .map_err(|e| GetInputError {
         source: Source::default(),
         path: root.paths.as_path().to_owned(),
-        kind: GetInputErrorKind::Read(e),
+        kind: GetInputErrorKind::Io(e),
       })?;
     for entry in dir_entries {
       if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
@@ -610,7 +607,7 @@ where
   fs.canonicalize(path).map_err(|e| GetInputError {
     source: source.clone(),
     path: path.to_owned(),
-    kind: GetInputErrorKind::Canonicalize(e),
+    kind: GetInputErrorKind::Io(e),
   })
 }
 
@@ -621,7 +618,7 @@ where
   fs.read_to_string(path).map_err(|e| GetInputError {
     source,
     path: path.to_owned(),
-    kind: GetInputErrorKind::Read(e),
+    kind: GetInputErrorKind::Io(e),
   })
 }
 

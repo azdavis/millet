@@ -63,7 +63,7 @@ impl Error {
       ErrorKind::ExpHole(_) => 5026,
       ErrorKind::TyHole => 5027,
       ErrorKind::BindPolymorphicExpansiveExp => 5028,
-      ErrorKind::Unsupported(_) => 5099,
+      ErrorKind::Unsupported(_) => 5999,
     }
   }
 }
@@ -135,7 +135,6 @@ struct ErrorKindDisplay<'a> {
 impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
-      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
       ErrorKind::Undefined(item, name) => write!(f, "undefined {item}: {name}"),
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
@@ -211,6 +210,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         f.write_str("cannot bind expansive polymorphic expression")
       }
       ErrorKind::TyHole => f.write_str("type hole"),
+      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
 }

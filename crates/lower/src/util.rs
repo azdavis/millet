@@ -58,7 +58,7 @@ impl Error {
       ErrorKind::RestPatRowNotLast => 4007,
       ErrorKind::PrecedingBar => 4008,
       ErrorKind::RequiresOperand => 4009,
-      ErrorKind::Unsupported(_) => 4099,
+      ErrorKind::Unsupported(_) => 4999,
     }
   }
 }
