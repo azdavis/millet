@@ -81,7 +81,7 @@ impl<'a> TyDisplay<'a> {
 impl<'a> fmt::Display for TyDisplay<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.ty {
-      Ty::None => f.write_str("<none>")?,
+      Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
         let equality = matches!(vars.0[bv.0], Some(TyVarKind::Equality));
