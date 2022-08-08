@@ -1289,9 +1289,12 @@ An expansive expression is one that may raise an exception or allocate memory du
 | Handle                 | `e handle Bad => e'`          |
 | Let                    | `let val x = e in x + e' end` |
 
-Note that applications are not considered expansive if the function is a constructor that is not `ref`.
+Note that:
 
-A polymorphic type is one which contains type variables, like `'a`.
+- An application expression is not considered expansive if the function is a constructor, e.g. `SOME`, and the argument is non-expansive.
+- However, any expression containing the `ref` constructor is expansive.
+
+A polymorphic type is one which contains type variables, like `'a` or `'b`.
 
 If Millet did not emit an error for cases like this, we could break type safety:
 
@@ -1304,6 +1307,11 @@ val v : int = valOf (!r)
 
 The first line is forbidden by this error. If it were not, then after the execution of the above program, `v` would have type `int`, but the value `"foo"`, which actually has type `string`.
 
+This is a violation of type safety, namely the highly desirable property of "soundness". In the context of type checkers and type systems, soundness means that:
+
+- If the type checker determines that an expression $e$ has a type $\tau$,
+- Then at runtime, the expression $e$ will actually have that type $\tau$.
+
 To fix, try any of the following:
 
 - If the expression has function type, add an extra variable to both the binding site and the expression. This is called eta-expansion, the opposite of eta-reduction.
@@ -1312,17 +1320,19 @@ To fix, try any of the following:
 
   ```sml
   (* error *)
-  val allFst = List.map (fn (x, _) => x)
+  val mapFst =
+    List.map (fn (x, _) => x)
   ```
 
   After:
 
   ```sml
   (* ok *)
-  fun allFst xs = List.map (fn (x, _) => x) xs
+  fun mapFst xs =
+    List.map (fn (x, _) => x) xs
   ```
 
-- Annotate the expression (or pattern) with explicit types.
+- Annotate the expression (or pattern) with a non-polymorphic type.
 
   Before:
 
