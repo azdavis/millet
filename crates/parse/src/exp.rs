@@ -8,8 +8,8 @@ use crate::util::{
 };
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn exp(p: &mut Parser<'_>) {
-  must(p, |p| exp_prec(p, ExpPrec::Min), Expected::Exp);
+pub(crate) fn exp(p: &mut Parser<'_>) -> bool {
+  must(p, |p| exp_prec(p, ExpPrec::Min), Expected::Exp)
 }
 
 fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
@@ -141,7 +141,9 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     if p.at(SK::LSquare) {
       let list = p.enter();
       p.bump();
-      comma_sep(p, SK::RSquare, SK::ExpArg, exp);
+      comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
+        exp(p);
+      });
       p.exit(list, SK::ListExp);
       p.exit(en, SK::VectorExp)
     } else {
@@ -154,16 +156,15 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
-    comma_sep(p, SK::RSquare, SK::ExpArg, exp);
+    comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
+      exp(p);
+    });
     p.exit(en, SK::ListExp)
   } else if p.at(SK::LetKw) {
     p.bump();
     dec(p);
     p.eat(SK::InKw);
-    many_sep(p, SK::Semicolon, SK::ExpInSeq, |p| {
-      exp(p);
-      true
-    });
+    many_sep(p, SK::Semicolon, SK::ExpInSeq, exp);
     p.eat(SK::EndKw);
     p.exit(en, SK::LetExp)
   } else {

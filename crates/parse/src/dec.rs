@@ -17,10 +17,15 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
     p.bump();
     ty_var_seq(p);
     many_sep(p, SK::AndKw, SK::ValBind, |p| {
+      let mut got = false;
       if p.at(SK::RecKw) {
         p.bump();
+        got = true;
       }
-      must(p, pat, Expected::Pat);
+      got |= must(p, pat, Expected::Pat);
+      if !got {
+        return false;
+      }
       p.eat(SK::Eq);
       exp(p);
       true
@@ -91,10 +96,15 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::ExceptionKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ExBind, |p| {
+      let mut got = false;
       if p.at(SK::OpKw) {
         p.bump();
+        got = true;
       }
-      eat_name_star(p);
+      got |= eat_name_star(p).is_some();
+      if !got {
+        return false;
+      }
       if of_ty(p).is_none() && p.at(SK::Eq) {
         let en = p.enter();
         p.bump();
@@ -176,17 +186,24 @@ where
 
 pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
   many_sep(p, SK::AndKw, SK::DatBind, |p| {
-    ty_var_seq(p);
-    p.eat(SK::Name);
+    // use `&` not `&&` to prevent short circuit
+    if !ty_var_seq(p) & p.eat(SK::Name).is_none() {
+      return false;
+    }
     p.eat(SK::Eq);
     if p.at(SK::Bar) {
       p.bump();
     }
     many_sep(p, SK::Bar, SK::ConBind, |p| {
+      let mut got = false;
       if allow_op && p.at(SK::OpKw) {
         p.bump();
+        got = true
       }
-      eat_name_star(p);
+      got |= eat_name_star(p).is_some();
+      if !got {
+        return false;
+      }
       let _ = of_ty(p);
       true
     });
@@ -202,8 +219,10 @@ pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
 
 fn ty_binds(p: &mut Parser<'_>) {
   many_sep(p, SK::AndKw, SK::TyBind, |p| {
-    ty_var_seq(p);
-    p.eat(SK::Name);
+    // use `&` not `&&` to prevent short circuit
+    if !ty_var_seq(p) & p.eat(SK::Name).is_none() {
+      return false;
+    }
     p.eat(SK::Eq);
     ty(p);
     true

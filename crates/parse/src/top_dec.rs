@@ -16,7 +16,9 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
   if p.at(SK::FunctorKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::FunctorBind, |p| {
-      p.eat(SK::Name);
+      if p.eat(SK::Name).is_none() {
+        return false;
+      }
       p.eat(SK::LRound);
       if p.at(SK::Name) {
         let en = p.enter();
@@ -39,7 +41,9 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::SignatureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::SigBind, |p| {
-      p.eat(SK::Name);
+      if p.eat(SK::Name).is_none() {
+        return false;
+      }
       p.eat(SK::Eq);
       must(p, sig_exp, Expected::SigExp);
       true
@@ -48,7 +52,9 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::StructureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrBind, |p| {
-      p.eat(SK::Name);
+      if p.eat(SK::Name).is_none() {
+        return false;
+      }
       if ascription(p) {
         ascription_tail(p);
       }
@@ -170,7 +176,9 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
   if p.at(SK::ValKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ValDesc, |p| {
-      eat_name_star(p);
+      if eat_name_star(p).is_none() {
+        return false;
+      }
       p.eat(SK::Colon);
       ty(p);
       true
@@ -192,7 +200,9 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::ExceptionKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ExDesc, |p| {
-      eat_name_star(p);
+      if eat_name_star(p).is_none() {
+        return false;
+      }
       let _ = of_ty(p);
       true
     });
@@ -200,7 +210,9 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::StructureKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::StrDesc, |p| {
-      p.eat(SK::Name);
+      if p.eat(SK::Name).is_none() {
+        return false;
+      }
       p.eat(SK::Colon);
       must(p, sig_exp, Expected::SigExp);
       true
@@ -222,8 +234,10 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
 fn ty_spec(p: &mut Parser<'_>) {
   p.bump();
   many_sep(p, SK::AndKw, SK::TyDesc, |p| {
-    ty_var_seq(p);
-    p.eat(SK::Name);
+    // use `&` not `&&` to prevent short circuit
+    if !ty_var_seq(p) & p.eat(SK::Name).is_none() {
+      return false;
+    }
     if p.at(SK::Eq) {
       let en = p.enter();
       p.bump();
@@ -244,10 +258,7 @@ fn spec_with_tail(p: &mut Parser<'_>) -> bool {
     if p.at(SK::TypeKw) {
       p.bump();
     }
-    many_sep(p, SK::Eq, SK::PathEq, |p| {
-      must(p, path, Expected::Path);
-      true
-    });
+    many_sep(p, SK::Eq, SK::PathEq, |p| must(p, path, Expected::Path));
     p.exit(en, SK::SharingTail);
   }
   p.exit(en, SK::SpecWithTail);

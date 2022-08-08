@@ -97,19 +97,24 @@ enum TyPrec {
   App,
 }
 
-pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> Exited {
+/// returns if this consumed anything.
+pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> bool {
+  let mut ret = false;
   let en = p.enter();
   if p.at(SK::TyVar) {
+    ret = true;
     let en = p.enter();
     p.bump();
     p.exit(en, SK::TyVarArg);
   } else if p.at(SK::LRound) && p.at_n(1, SK::TyVar) {
+    ret = true;
     p.bump();
     comma_sep(p, SK::RRound, SK::TyVarArg, |p| {
       p.eat(SK::TyVar);
     });
   }
-  p.exit(en, SK::TyVarSeq)
+  p.exit(en, SK::TyVarSeq);
+  ret
 }
 
 pub(crate) fn of_ty(p: &mut Parser<'_>) -> Option<Exited> {
