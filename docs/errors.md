@@ -1254,7 +1254,7 @@ There was an expression hole, `_`.
 
 ```sml
 (* error *)
-val _ = if _ then "yes" else "no"
+val answer = if _ then "yes" else "no"
 ```
 
 The error message contains information about the type of the hole given the surrounding context. For instance, in the above example, the hole is reported to have type `bool` because it is being used as the condition to an `if` expression.
