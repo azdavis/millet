@@ -206,10 +206,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ty = ty.display(&mvs, self.syms);
         write!(f, "expression hole with type {ty}")
       }
+      ErrorKind::TyHole => f.write_str("type hole"),
       ErrorKind::BindPolymorphicExpansiveExp => {
         f.write_str("cannot bind expansive polymorphic expression")
       }
-      ErrorKind::TyHole => f.write_str("type hole"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
