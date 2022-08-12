@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::{check_with_std_basis, fail_with_std_basis};
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
 const SML: &str = "sml";
@@ -17,28 +17,28 @@ fn all() {
   options.insert(Options::ENABLE_TABLES);
   let parser = Parser::new_ext(&errors, options);
   let mut inside = false;
-  let mut buf = String::new();
+  let mut ac = String::new();
   for ev in parser {
     match ev {
-      Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(s))) => {
-        if s.as_ref() == SML {
+      Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
+        if lang.as_ref() == SML {
           inside = true;
         }
       }
-      Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(s))) => {
-        if s.as_ref() == SML {
-          if s.starts_with("(* ok *)") {
-            check(s.as_ref());
-          } else if s.starts_with("(* error *)") {
-            fail(s.as_ref());
+      Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
+        if lang.as_ref() == SML {
+          if ac.starts_with("(* ok *)") {
+            check_with_std_basis(ac.as_ref());
+          } else if ac.starts_with("(* error *)") {
+            fail_with_std_basis(ac.as_ref());
           }
-          buf.clear();
+          ac.clear();
           inside = false;
         }
       }
       Event::Text(s) => {
         if inside {
-          buf.push_str(s.as_ref());
+          ac.push_str(s.as_ref());
         }
       }
       _ => {}
