@@ -1,5 +1,5 @@
 use identifier_case::snake_to_pascal;
-use syntax_gen::{gen, TokenKind};
+use syntax_gen::{gen, Token, TokenKind};
 
 const SPECIAL: [(&str, &str); 7] = [
   ("Name", "a name"),
@@ -11,20 +11,27 @@ const SPECIAL: [(&str, &str); 7] = [
   ("StringLit", "a string literal"),
 ];
 
-fn get_token(name: &str) -> (TokenKind, String) {
-  if let Some(desc) = SPECIAL.iter().find_map(|&(n, d)| (name == n).then_some(d)) {
-    (TokenKind::Special(desc), name.to_owned())
-  } else if name.chars().any(|x| x.is_ascii_alphabetic()) {
-    let mut ret = snake_to_pascal(name);
-    ret.push_str("Kw");
-    (TokenKind::Keyword, ret)
+fn get_token(s: &str) -> (TokenKind, Token) {
+  let kind: TokenKind;
+  let mut name: String;
+  let mut desc = None::<String>;
+  let doc = None::<String>;
+  if let Some(d) = SPECIAL.iter().find_map(|&(n, d)| (s == n).then_some(d)) {
+    kind = TokenKind::Special;
+    name = s.to_owned();
+    desc = Some(d.to_owned());
+  } else if s.chars().any(|c| c.is_ascii_alphabetic()) {
+    kind = TokenKind::Keyword;
+    name = snake_to_pascal(s);
+    name.push_str("Kw");
   } else {
-    let mut ret = String::new();
-    for c in name.chars() {
-      ret.push_str(char_name::get(c));
+    kind = TokenKind::Punctuation;
+    name = String::new();
+    for c in s.chars() {
+      name.push_str(char_name::get(c));
     }
-    (TokenKind::Punctuation, ret)
   }
+  (kind, Token { name, desc, doc })
 }
 
 fn main() -> std::io::Result<()> {
