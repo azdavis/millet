@@ -151,7 +151,7 @@ impl Analysis {
     let case = CaseDisplay {
       needs_starting_bar: case
         .matcher()
-        .map_or(false, |x| dbg!(x.match_rules().count()) > 0),
+        .map_or(false, |x| x.match_rules().count() > 0),
       variants: &variants,
     };
     Some((range, case.to_string()))
