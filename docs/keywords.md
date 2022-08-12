@@ -135,6 +135,13 @@ This is a fairly advanced SML feature.
 
 Like `type`, but can only be used in signature specifications. It indicates the type must be an equality type.
 
+```sml
+signature SIG = sig
+  eqtype t
+  val x : t
+end
+```
+
 ## `handle`
 
 Handle a set of exceptions.
@@ -183,6 +190,12 @@ Because of this special short-circuiting behavior, it is not a regular infix ope
 ## `struct`
 
 Begins a structure expression.
+
+```sml
+structure S = struct
+  val x = 5
+end
+```
 
 Structure expressions are often used as
 
@@ -241,6 +254,15 @@ This is a fairly advanced SML feature.
 
 Execute a loop body while a condition is upheld.
 
+```sml
+fun go () =
+  let
+    val r = ref 0
+  in
+    while !r < 5 do (r := !r + 1; print "hi")
+  end
+```
+
 This is an "imperative" SML feature that requires the use of `ref` or other side effects to be useful.
 
 ## `case`
@@ -268,6 +290,16 @@ fun choose x = if x then "yes" else "no"
 ## `open`
 
 Brings a structure's members into scope.
+
+```sml
+structure S = struct
+  val x = 5
+end
+
+val a = S.x
+open S
+val b = x
+```
 
 ## `then`
 
@@ -357,9 +389,21 @@ val rec fact = fn
 
 Usually, `fun` is preferred.
 
+```sml
+fun fact 0 = 1
+  | fact n = n * fact (n - 1)
+```
+
 ## `sig`
 
 Begins a signature expression.
+
+```sml
+signature SIG = sig
+  type t
+  val x : t
+end
+```
 
 Signature expressions are often used as
 
@@ -380,11 +424,20 @@ A value declaration evaluates the expression on the right, then matches it with 
 
 Used with patterns to match the entire value to a variable.
 
+```sml
+fun f [] = []
+  | f (xs as (_ :: xs')) = xs @ f xs'
+```
+
 The syntax is `<name> as <pat>`.
 
 ## `do`
 
 Separates a `while` loop condition from the body.
+
+```sml
+val _ = while true do print "y\n"
+```
 
 ## `fn`
 
@@ -409,6 +462,21 @@ An if expression cases on a condition of type `bool`, and selects either the `th
 ## `in`
 
 Separates the first and second parts of a `local` declaration or `let` expression.
+
+```sml
+local
+  val x = 4
+in
+  val y = x + 6
+end
+
+val _ =
+  let
+    val z = 5
+  in
+    z + 8
+  end
+```
 
 ## `of`
 
