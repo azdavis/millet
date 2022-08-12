@@ -197,7 +197,7 @@ structure S = struct
 end
 ```
 
-Structure expressions are often used as
+Structure expressions are often used as:
 
 - The right-hand side to structure declarations.
 - The arguments to functors.
@@ -405,7 +405,7 @@ signature SIG = sig
 end
 ```
 
-Signature expressions are often used as
+Signature expressions are often used as:
 
 - The right-hand side to signature declarations.
 - The interfaces to functors.
