@@ -1,4 +1,4 @@
-# Errors
+# Keywords
 
 This is documentation for all the keywords in SML, and what they mean.
 
