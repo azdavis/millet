@@ -99,8 +99,8 @@ impl Analysis {
 
   /// Returns a Markdown string with information about this position.
   pub fn get_md(&self, pos: WithPath<Position>) -> Option<(String, Range)> {
-    let (file, _, ptr, idx) = self.get_file_with_idx(pos)?;
-    let mut s = file.info.get_ty_md(&self.syms, idx)?;
+    let (file, tok, ptr, idx) = self.get_file_with_idx(pos)?;
+    let ty_md = file.info.get_ty_md(&self.syms, idx);
     let def_doc = file.info.get_def(idx).and_then(|def| {
       let info = match def.path {
         statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
@@ -108,12 +108,13 @@ impl Analysis {
       };
       info.get_doc(def.idx)
     });
-    if let Some(def_doc) = def_doc {
-      s.push('\n');
-      s.push_str(def_doc);
-    }
+    let parts: Vec<_> = [ty_md.as_deref(), def_doc, tok.kind().token_doc()]
+      .into_iter()
+      .flatten()
+      .collect();
     let range = ptr.to_node(file.parsed.root.syntax()).text_range();
-    Some((s, file.pos_db.range(range)?))
+    let range = file.pos_db.range(range)?;
+    Some((parts.join("\n"), range))
   }
 
   /// Returns the range of the definition of the item at this position.
