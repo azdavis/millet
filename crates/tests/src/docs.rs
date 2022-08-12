@@ -1,21 +1,18 @@
+use std::path::{Path, PathBuf};
+
 use crate::check::{check_with_std_basis, fail_with_std_basis};
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
 const SML: &str = "sml";
 
-#[test]
-fn all() {
-  let errors = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .join("docs")
-    .join("errors.md");
-  let errors = std::fs::read_to_string(&errors).unwrap();
+fn check_all<F>(path: &Path, mut f: F)
+where
+  F: FnMut(&str),
+{
+  let contents = std::fs::read_to_string(&path).unwrap();
   let mut options = Options::empty();
   options.insert(Options::ENABLE_TABLES);
-  let parser = Parser::new_ext(&errors, options);
+  let parser = Parser::new_ext(&contents, options);
   let mut inside = false;
   let mut ac = String::new();
   for ev in parser {
@@ -27,11 +24,7 @@ fn all() {
       }
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
         if lang.as_ref() == SML {
-          if ac.starts_with("(* ok *)") {
-            check_with_std_basis(ac.as_ref());
-          } else if ac.starts_with("(* error *)") {
-            fail_with_std_basis(ac.as_ref());
-          }
+          f(ac.as_str());
           ac.clear();
           inside = false;
         }
@@ -44,4 +37,25 @@ fn all() {
       _ => {}
     }
   }
+}
+
+fn docs_dir() -> Option<PathBuf> {
+  Some(
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+      .parent()?
+      .parent()?
+      .join("docs"),
+  )
+}
+
+#[test]
+fn errors() {
+  let path = docs_dir().unwrap().join("errors.md");
+  check_all(path.as_path(), |s| {
+    if s.starts_with("(* ok *)") {
+      check_with_std_basis(s);
+    } else if s.starts_with("(* error *)") {
+      fail_with_std_basis(s);
+    }
+  });
 }
