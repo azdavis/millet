@@ -93,7 +93,7 @@ Begins a functor declaration.
 ```sml
 functor F (A : sig
   val x : int
-) = struct
+end) = struct
   val y = A.x + 123
 end
 ```

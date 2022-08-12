@@ -59,3 +59,9 @@ fn errors() {
     }
   });
 }
+
+#[test]
+fn keywords() {
+  let path = docs_dir().unwrap().join("keywords.md");
+  check_all(path.as_path(), check_with_std_basis);
+}
