@@ -36,9 +36,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.59"
+version = "1.0.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c91f1f46651137be86f3a2b9a8359f9ab421d04d941c62b5982e1ca21113adf9"
+checksum = "508b352bb5c066aac251f6daf6b36eccd03e8a88e8081cd44959ea277a3af9a8"
 
 [[package]]
 name = "atty"
@@ -72,7 +72,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 
 [[package]]
 name = "cli"
@@ -218,7 +218,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 
 [[package]]
 name = "idna"
@@ -276,9 +276,9 @@ version = "0.1.0"
 
 [[package]]
 name = "libc"
-version = "0.2.127"
+version = "0.2.131"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "505e71a4706fa491e9b1b55f51b95d4037d0821ee40131190475f692b35b009b"
+checksum = "04c3b4822ccebfa39c02fc03d1534441b22ead323fa0f48bb7ddd8e6ba076a40"
 
 [[package]]
 name = "log"
@@ -442,7 +442,7 @@ dependencies = [
 [[package]]
 name = "pattern-match"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 dependencies = [
  "rustc-hash",
 ]
@@ -533,18 +533,18 @@ checksum = "4501abdff3ae82a1c1b477a17252eb69cee9e66eb915c1abaa4f44d873df9f09"
 
 [[package]]
 name = "serde"
-version = "1.0.142"
+version = "1.0.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e590c437916fb6b221e1d00df6e3294f3fccd70ca7e92541c475d6ed6ef5fee2"
+checksum = "53e8e5d5b70924f74ff5c6d64d9a5acd91422117c60f48c4e07855238a254553"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.142"
+version = "1.0.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34b5b8d809babe02f538c2cfec6f2c1ed10804c0e5a6a041a049a4f5588ccc2e"
+checksum = "d3d8e8de557aee63c26b85b947f5e59b690d0454c753f3adeb5cd7835ab88391"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -632,7 +632,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -668,7 +668,7 @@ dependencies = [
 [[package]]
 name = "text-pos"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 dependencies = [
  "text-size",
 ]
@@ -704,7 +704,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 
 [[package]]
 name = "toml"
@@ -718,7 +718,7 @@ dependencies = [
 [[package]]
 name = "topo-sort"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 
 [[package]]
 name = "ty-var-scope"
@@ -773,7 +773,7 @@ checksum = "3ed742d4ea2bd1176e236172c8429aaf54486e7ac098db29ffe6529e0ce50973"
 [[package]]
 name = "uniq"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#ebb768103a70ce817ced48d96696d5d4a30ec253"
+source = "git+https://github.com/azdavis/language-util.git#9f5b9d3808bc3d3e0441882fafc9aae3cb4b51e5"
 
 [[package]]
 name = "url"

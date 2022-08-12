@@ -1,7 +1,4 @@
 /*.tmp
-/crates/syntax/src/ast.rs
-/crates/syntax/src/kind.rs
-/crates/syntax/src/ptr.rs
 /editors/vscode/license.md
 /editors/vscode/node_modules
 /editors/vscode/out

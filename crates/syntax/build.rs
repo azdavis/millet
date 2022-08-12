@@ -27,12 +27,13 @@ fn get_token(name: &str) -> (TokenKind, String) {
   }
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
+  let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR should be set");
   gen(
+    std::path::Path::new(out_dir.as_str()),
     "SML",
     &["Whitespace", "BlockComment", "Invalid"],
-    include_str!("syntax.ungram").parse().unwrap(),
+    include_str!("syntax.ungram").parse().expect("ungram parse"),
     get_token,
   )
-  .unwrap()
 }
