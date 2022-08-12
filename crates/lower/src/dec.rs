@@ -20,6 +20,7 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> hir::DecIdx {
 pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> hir::DecIdx {
   let ptr = SyntaxNodePtr::new(dec.syntax());
   let ret = match dec {
+    ast::DecOne::HoleDec(_) => hir::Dec::Hole,
     ast::DecOne::ValDec(dec) => hir::Dec::Val(
       ty::var_seq(dec.ty_var_seq()),
       dec

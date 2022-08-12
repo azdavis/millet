@@ -62,7 +62,8 @@ impl Error {
       ErrorKind::DecNotAllowedHere => 5025,
       ErrorKind::ExpHole(_) => 5026,
       ErrorKind::TyHole => 5027,
-      ErrorKind::BindPolymorphicExpansiveExp => 5028,
+      ErrorKind::DecHole => 5028,
+      ErrorKind::BindPolymorphicExpansiveExp => 5029,
       ErrorKind::Unsupported(_) => 5999,
     }
   }
@@ -97,6 +98,7 @@ pub(crate) enum ErrorKind {
   DecNotAllowedHere,
   ExpHole(Ty),
   TyHole,
+  DecHole,
   BindPolymorphicExpansiveExp,
   /// must be last
   Unsupported(&'static str),
@@ -207,6 +209,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "expression hole with type {ty}")
       }
       ErrorKind::TyHole => f.write_str("type hole"),
+      ErrorKind::DecHole => f.write_str("declaration hole"),
       ErrorKind::BindPolymorphicExpansiveExp => {
         f.write_str("cannot bind expansive polymorphic expression")
       }

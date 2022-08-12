@@ -242,7 +242,8 @@ fn get_dec(cx: &mut Cx, ars: &hir::Arenas, scope: &TyVarSet, mode: &mut Mode, de
         get_dec(cx, ars, scope, mode, dec);
       }
     }
-    hir::Dec::Ty(_)
+    hir::Dec::Hole
+    | hir::Dec::Ty(_)
     | hir::Dec::Datatype(_, _)
     | hir::Dec::DatatypeCopy(_, _)
     | hir::Dec::Exception(_)

@@ -685,7 +685,7 @@ One type of situation in which this error may confusingly appear involves "synta
 (* error *)
 signature SIG = sig type t end
 structure Arg : SIG = struct type t = unit end
-functor Func (structure Param : SIG) = struct (* ... *) end
+functor Func (structure Param : SIG) = struct ... end
 structure S = Func (Arg)
 ```
 
@@ -718,7 +718,7 @@ In the example, the sugar is expanded in the following manner:
 
 ```sml
 (* original *)
-functor Func (structure Param : SIG) = struct (* ... *) end
+functor Func (structure Param : SIG) = struct ... end
 
 (* desugared *)
 functor Func (<<FuncArg>> : sig
@@ -726,7 +726,7 @@ functor Func (<<FuncArg>> : sig
 end) = let
   open <<FuncArg>>
 in
-  struct (* ... *) end
+  struct ... end
 end
 ```
 
@@ -745,7 +745,7 @@ structure S = Func (struct structure Param = Arg end)
 A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
 
 ```sml
-functor Func (Param : SIG) = struct (* ... *) end
+functor Func (Param : SIG) = struct ... end
 structure S = Func (structure Param = Arg)
 ```
 
@@ -1267,12 +1267,12 @@ end
 
 There was an expression hole, `_`.
 
-`_` is a valid pattern, but not a valid expression.
-
 ```sml
 (* error *)
 val answer = if _ then "yes" else "no"
 ```
+
+`_` is a valid pattern, but not a valid expression.
 
 The error message contains information about the type of the hole given the surrounding context. For instance, in the above example, the hole is reported to have type `bool` because it is being used as the condition to an `if` expression.
 
@@ -1282,8 +1282,6 @@ To fix, replace the hole with a real expression of the correct type.
 
 There was a type hole, `_`.
 
-`_` is not a valid type.
-
 ```sml
 (* error *)
 type thing = string * _ list * int
@@ -1292,6 +1290,23 @@ type thing = string * _ list * int
 To fix, replace the hole with a real type.
 
 ## 5028
+
+There was a declaration hole, `...`.
+
+```sml
+(* error *)
+structure S = struct
+  ...
+end
+```
+
+`...` is a valid pattern row (as in `val {x, ...}`), but not a valid declaration.
+
+We parse `...` as a declaration because sometimes `...` is used in declaration position as a placeholder or filler in examples, for example in the discussion of functor argument interface syntax sugar in the description of 5003.
+
+To fix, replace or remove the hole.
+
+## 5029
 
 An attempt was made to bind an expansive expression to a variable, where that variable would then have polymorphic type.
 

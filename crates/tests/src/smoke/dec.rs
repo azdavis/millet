@@ -141,3 +141,13 @@ and odd 0 = false
 "#,
   );
 }
+
+#[test]
+fn hole() {
+  check(
+    r#"
+functor F() = struct ... end
+(**                  ^^^ declaration hole *)
+"#,
+  );
+}

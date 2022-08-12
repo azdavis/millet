@@ -172,7 +172,8 @@ Dec = DecInSeq*
 DecInSeq = DecOne ';'?
 
 DecOne =
-  ValDec
+  HoleDec
+| ValDec
 | FunDec
 | TyDec
 | DatDec
@@ -186,6 +187,7 @@ DecOne =
 | NonfixDec
 | DoDec
 
+HoleDec = '...'
 ValDec = 'val' TyVarSeq ValBind*
 FunDec = 'fun' TyVarSeq '|'? FunBind*
 TyDec = 'type' TyBind*
