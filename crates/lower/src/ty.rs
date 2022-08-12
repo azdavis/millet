@@ -6,7 +6,7 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> hir::TyIdx {
   let ty = ty?;
   let ptr = SyntaxNodePtr::new(ty.syntax());
   let ret = match ty {
-    ast::Ty::HoleTy(_) => hir::Ty::Hole,
+    ast::Ty::HoleTy(_) | ast::Ty::WildcardTy(_) => hir::Ty::Hole,
     ast::Ty::TyVarTy(ty) => hir::Ty::Var(hir::TyVar::new(ty.ty_var()?.text())),
     ast::Ty::RecordTy(ty) => hir::Ty::Record(
       ty.ty_rows()

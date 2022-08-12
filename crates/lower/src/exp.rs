@@ -7,7 +7,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> hir::ExpIdx {
   let exp = exp?;
   let ptr = SyntaxNodePtr::new(exp.syntax());
   let ret = match exp {
-    ast::Exp::HoleExp(_) => hir::Exp::Hole,
+    ast::Exp::HoleExp(_) | ast::Exp::WildcardExp(_) => hir::Exp::Hole,
     ast::Exp::SConExp(exp) => hir::Exp::SCon(get_scon(cx, exp.s_con()?)?),
     ast::Exp::PathExp(exp) => hir::Exp::Path(get_path(exp.path()?)?),
     ast::Exp::RecordExp(exp) => hir::Exp::Record(

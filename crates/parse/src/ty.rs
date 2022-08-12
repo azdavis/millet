@@ -8,9 +8,12 @@ pub(crate) fn ty(p: &mut Parser<'_>) {
 
 fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
   let en = p.enter();
-  let mut ex = if p.at(SK::Underscore) {
+  let mut ex = if p.at(SK::DotDotDot) {
     p.bump();
     p.exit(en, SK::HoleTy)
+  } else if p.at(SK::Underscore) {
+    p.bump();
+    p.exit(en, SK::WildcardTy)
   } else if p.at(SK::TyVar) {
     p.bump();
     p.exit(en, SK::TyVarTy)

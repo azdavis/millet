@@ -1265,33 +1265,45 @@ end
 
 ## 5026
 
-There was an expression hole, `_`.
+There was an expression hole.
 
 ```sml
 (* error *)
 val answer = if _ then "yes" else "no"
 ```
 
-`_` is a valid pattern, but not a valid expression.
-
 The error message contains information about the type of the hole given the surrounding context. For instance, in the above example, the hole is reported to have type `bool` because it is being used as the condition to an `if` expression.
+
+Expression holes can either be `_` or `...`.
+
+```sml
+(* error *)
+fun f x = ...
+val _ = f 5
+```
 
 To fix, replace the hole with a real expression of the correct type.
 
 ## 5027
 
-There was a type hole, `_`.
+There was a type hole.
 
 ```sml
 (* error *)
 type thing = string * _ list * int
 ```
 
+Type holes can be either `_` or `...`.
+
+```sml
+type func = ... -> ....
+```
+
 To fix, replace the hole with a real type.
 
 ## 5028
 
-There was a declaration hole, `...`.
+There was a declaration hole.
 
 ```sml
 (* error *)
@@ -1300,9 +1312,9 @@ structure S = struct
 end
 ```
 
-`...` is a valid pattern row (as in `val {x, ...}`), but not a valid declaration.
+Declaration holes are written `...`.
 
-We parse `...` as a declaration because sometimes `...` is used in declaration position as a placeholder or filler in examples, for example in the discussion of functor argument interface syntax sugar in the description of 5003.
+Sometimes `...` is used in declaration position as a placeholder or filler in examples, for example in the discussion of functor argument interface syntax sugar in the description of 5003.
 
 To fix, replace or remove the hole.
 

@@ -111,9 +111,12 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
 /// when adding more cases to this, update [`at_exp_hd`].
 fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
-  let ex = if p.at(SK::Underscore) {
+  let ex = if p.at(SK::DotDotDot) {
     p.bump();
     p.exit(en, SK::HoleExp)
+  } else if p.at(SK::Underscore) {
+    p.bump();
+    p.exit(en, SK::WildcardExp)
   } else if scon(p) {
     p.bump();
     p.exit(en, SK::SConExp)
@@ -230,7 +233,9 @@ fn matcher(p: &mut Parser<'_>) {
 
 /// need this for app expressions to know whether to precede or not.
 fn at_exp_hd(p: &mut Parser<'_>) -> bool {
-  scon(p)
+  p.at(SK::DotDotDot)
+    || p.at(SK::Underscore)
+    || scon(p)
     || p.at(SK::OpKw)
     || name_star_eq(p)
     || p.at(SK::LCurly)
