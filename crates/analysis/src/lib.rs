@@ -99,7 +99,7 @@ impl Analysis {
 
   /// Returns a Markdown string with information about this position.
   pub fn get_md(&self, pos: WithPath<Position>) -> Option<(String, Range)> {
-    let (file, ptr, idx) = self.get_file_with_idx(pos)?;
+    let (file, _, ptr, idx) = self.get_file_with_idx(pos)?;
     let mut s = file.info.get_ty_md(&self.syms, idx)?;
     let def_doc = file.info.get_def(idx).and_then(|def| {
       let info = match def.path {
@@ -118,14 +118,14 @@ impl Analysis {
 
   /// Returns the range of the definition of the item at this position.
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
-    let (file, _, idx) = self.get_file_with_idx(pos)?;
+    let (file, _, _, idx) = self.get_file_with_idx(pos)?;
     self.def_to_path_and_range(file.info.get_def(idx)?)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
   pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
-    let (file, _, idx) = self.get_file_with_idx(pos)?;
+    let (file, _, _, idx) = self.get_file_with_idx(pos)?;
     Some(
       file
         .info
@@ -139,7 +139,7 @@ impl Analysis {
   /// Given a position on a `case` expression, return the code and its range to fill the case with
   /// all of the variants of the head's type.
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
-    let (file, ptr, _) = self.get_file_with_idx(pos)?;
+    let (file, _, ptr, _) = self.get_file_with_idx(pos)?;
     let ptr = ptr.cast::<syntax::ast::CaseExp>()?;
     let case = ptr.to_node(file.parsed.root.syntax());
     let range = text_size_util::TextRange::empty(case.syntax().text_range().end());
@@ -160,13 +160,19 @@ impl Analysis {
   fn get_file_with_idx(
     &self,
     pos: WithPath<Position>,
-  ) -> Option<(&mlb_statics::SourceFile, SyntaxNodePtr, hir::Idx)> {
+  ) -> Option<(
+    &mlb_statics::SourceFile,
+    SyntaxToken,
+    SyntaxNodePtr,
+    hir::Idx,
+  )> {
     let file = self.source_files.get(&pos.path)?;
-    let mut node = get_token(file, pos.val)?.parent()?;
+    let tok = get_token(file, pos.val)?;
+    let mut node = tok.parent()?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
       match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
-        Some(idx) => return Some((file, ptr, idx)),
+        Some(idx) => return Some((file, tok, ptr, idx)),
         None => node = node.parent()?,
       }
     }
