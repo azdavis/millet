@@ -10,7 +10,7 @@ use fmt_util::sep_seq;
 use paths::{PathMap, WithPath};
 use std::fmt;
 use syntax::ast::{AstNode as _, SyntaxNodePtr};
-use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode};
+use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
 
 pub use error::Error;
 pub use mlb_statics::StdBasis;
@@ -162,7 +162,7 @@ impl Analysis {
     pos: WithPath<Position>,
   ) -> Option<(&mlb_statics::SourceFile, SyntaxNodePtr, hir::Idx)> {
     let file = self.source_files.get(&pos.path)?;
-    let mut node = get_node(file, pos.val)?;
+    let mut node = get_token(file, pos.val)?.parent()?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
       match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
@@ -188,7 +188,7 @@ impl Analysis {
   }
 }
 
-fn get_node(file: &mlb_statics::SourceFile, pos: Position) -> Option<SyntaxNode> {
+fn get_token(file: &mlb_statics::SourceFile, pos: Position) -> Option<SyntaxToken> {
   let idx = file.pos_db.text_size(pos)?;
   if !file.parsed.root.syntax().text_range().contains(idx) {
     return None;
@@ -204,7 +204,7 @@ fn get_node(file: &mlb_statics::SourceFile, pos: Position) -> Option<SyntaxNode>
       }
     }
   };
-  tok.parent()
+  Some(tok)
 }
 
 fn priority(kind: SyntaxKind) -> u8 {
