@@ -6,9 +6,13 @@ If Millet emitted an error not documented here, please file an issue.
 
 ## 1001
 
-Millet failed to perform file or directory I/O with the filesystem. It could be that the file or directory in question does not exist, or there may be insufficient permissions.
+Millet failed to perform file or directory I/O with the filesystem. It could be that the path in question:
 
-To fix, check the path mentioned by Millet to confirm that it exists and that Millet may access it.
+- does not exist.
+- has insufficient permissions.
+- is a directory when a file was expected, or vice versa.
+
+To fix, inspect the error for the underlying cause.
 
 ## 1002
 
@@ -137,18 +141,18 @@ There was an unclosed comment. This means an open comment delimiter `(*` was not
 
 ```sml
 (* error *)
-val x = 3
+val kujo = 3
 (* a comment that doesn't end
-val y = 4
+val josuke = 4
 ```
 
 To fix, close the comment with `*)`.
 
 ```sml
 (* ok *)
-val x = 3
+val kujo = 3
 (* a comment that ends *)
-val y = 4
+val josuke = 4
 ```
 
 Note that comments may be nested.
@@ -195,7 +199,7 @@ This error may occur when trying to embed `"` in a string literal. To embed `"` 
 
 ```sml
 (* ok *)
-val greeting = "he jumped down and said \"hello there\" aloud."
+val greeting = "he jumped down and said \"hello there\" to the general."
 ```
 
 ## 2005
@@ -294,7 +298,7 @@ val _ =
   "this string is\  not
   \ valid because there\ are
   \ non-whitespace\ characters
-  \ in the continuations."
+  \ in the continuations"
 ```
 
 String literals permit the sequence `\...\`, where `...` represents 1 or more whitespace characters. The sequence is ignored. We dub such sequences "string continuations", since they are often used to "continue" strings across lines.
@@ -307,7 +311,7 @@ val _ =
   "this string is\
   \ valid because there are only\
   \ whitespace characters\
-  \ in the continuations."
+  \ in the continuations"
 ```
 
 ## 3001
@@ -344,7 +348,7 @@ To fix, use the name infix, or add `op`.
 ```sml
 (* ok *)
 val _ = 2 + 3
-val _ = op + (2, 3)
+val _ = op+ (2, 3)
 ```
 
 ## 3003
@@ -407,11 +411,13 @@ To fix, do one of the following:
 
 ## 3006
 
-The parser expected something, but it didn't find it. For example, in this case, the parser expected a `=` after the name `S`.
+The parser expected something, but it didn't find it. For example, in this case, the parser expected a name after the `structure` keyword, but found the `val` keyword instead.
 
 ```sml
 (* error *)
-structure S struct end
+structure
+
+val platinum = 3
 ```
 
 This is the most common kind of parse error. It's not easy to give general advice for how to fix it.
@@ -424,16 +430,16 @@ In a `fun` binding with multiple cases, the cases did not all name the same func
 
 ```sml
 (* error *)
-fun f 1 = 2
-  | g _ = 3
+fun jonathan 1 = 2
+  | dio _ = 3
 ```
 
 To fix, use a consistent name for the function.
 
 ```sml
 (* ok *)
-fun f 1 = 2
-  | f _ = 3
+fun jonathan 1 = 2
+  | jonathan _ = 3
 ```
 
 ## 4002
@@ -442,16 +448,16 @@ In a `fun` binding with multiple cases, the cases did not all have the same numb
 
 ```sml
 (* error *)
-fun f 1 = 2
-  | f _ _ = 3
+fun muska 1 = 2
+  | muska _ _ _ = 3
 ```
 
 To fix, use a consistent number of patterns across all cases.
 
 ```sml
 (* ok *)
-fun f 1 = 2
-  | f _ = 3
+fun muska 1 = 2
+  | muska _ = 3
 ```
 
 ## 4003
@@ -534,18 +540,18 @@ There was a bar (aka `|`) before the first:
 
 ```sml
 (* error *)
-datatype t =
-| A
-| B
+datatype d =
+| Chihiro
+| Sheeta
 ```
 
 To fix, remove the bar.
 
 ```sml
 (* ok *)
-datatype t =
-  A
-| B
+datatype d =
+  Chihiro
+| Sheeta
 ```
 
 ## 4009
@@ -692,12 +698,19 @@ This is invalid, but the reason why is subtle. Before we explain the reason, not
 
 The fact that both the definition site and the corrected call site for `Func` have an extra `structure` keyword is a clue.
 
-The key is in the definition of `Func`, which illustrates the difference between the two forms
+The key is in the definition of `Func`. We use the syntax
 
-1. `Param : SIG`
-2. `structure Param : SIG`
+```sml
+functor Func (structure Param : SIG)
+```
 
-The latter syntax is a form of syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of the former, more fundamental syntax.
+which has a distinct meaning from:
+
+```sml
+functor Func (Param : SIG)
+```
+
+Both forms are legal SML. The first form is syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of more "fundamental" syntax.
 
 As an aside, another example of syntax sugar is how list literals like `[2, 4, 6]` "desugar" to usages of the list constructors `::` and `nil`, namely `2 :: 4 :: 6 :: nil`.
 
@@ -708,16 +721,18 @@ In the example, the sugar is expanded in the following manner:
 functor Func (structure Param : SIG) = struct (* ... *) end
 
 (* desugared *)
-functor Func (<<AnonymousStruct>> : sig
+functor Func (<<FuncArg>> : sig
   structure Param : SIG
 end) = let
-  open <<AnonymousStruct>>
+  open <<FuncArg>>
 in
   struct (* ... *) end
 end
 ```
 
-And similarly, once we modify the call site, we are using more syntax sugar, which also expands:
+Note the invalid SML syntax for the name of the functor argument `<<FuncArg>>`. This is to emphasize that when expanding the syntax sugar, an SML implementation will generate an unnameable, unique structure name. This name is then used exclusively in the `open`.
+
+Similarly, once we modify the call site, we are using more syntax sugar, which also expands:
 
 ```sml
 (* original *)
@@ -750,11 +765,11 @@ Usually, this is allowed, but it is forbidden for `datatype` declarations.
 ```sml
 (* error *)
 signature SIG = sig
-  datatype d = A
+  datatype d = Pazu
 end
 
 structure Str : SIG = struct
-  datatype d = A | B
+  datatype d = Pazu | Sosuke
 end
 ```
 
@@ -764,7 +779,7 @@ To fix, ensure only the requested items are defined.
 
 Typechecking failed, because of "circularity", which means we attempted to a set a type variable to be equal to a type containing that type variable itself.
 
-"Huh?", you may say. Consider this example:
+Consider this example:
 
 ```sml
 (* error *)
@@ -803,12 +818,12 @@ val x : int = "no"
 
 This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
 
-This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `speak` takes a `bool`.
+This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `choose` takes a `bool`.
 
 ```sml
 (* error *)
-fun speak x = if x then "yay" else "nah"
-val _ = speak 4
+fun choose x = if x then "sosuke" else "pazu"
+val _ = choose 4
 ```
 
 Note that certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
@@ -1076,10 +1091,17 @@ type nope = int pair
 
 ```sml
 (* error *)
-val xs: list = []
+val xs : list = []
 ```
 
 To fix, pass the correct number of type arguments.
+
+```sml
+(* ok *)
+type ('a, 'b) pair = 'a * 'b
+type yep = (int, string) pair
+val xs : yep list = []
+```
 
 ## 5020
 
