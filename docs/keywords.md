@@ -134,7 +134,7 @@ end
 
 ## `sharing`
 
-Indicate type sharing in a signature.
+Share types in a signature.
 
 ```sml
 signature TXT = sig
@@ -157,7 +157,7 @@ end
 
 ## `handle`
 
-Handle a set of exceptions.
+Handle exceptions.
 
 ```sml
 val _ = 3 + 4 handle Overflow => 0
@@ -258,7 +258,7 @@ A raised exception may be handled with `handle`.
 
 ## `where`
 
-Indicate type realization in signatures.
+Realize a type in a signature.
 
 This allows a type to "break through" opaque ascription and be known to users of a structure that ascribes to a signature.
 
@@ -358,7 +358,7 @@ Used in abstype declarations, which is to say, not much.
 
 ## `and`
 
-Declare many things simultaneously.
+Define many things simultaneously.
 
 Most useful for mutually recursive functions.
 
@@ -482,7 +482,7 @@ Define a function ("lambda") expression.
 val _ = List.map (fn x => x + 1) [1, 3, 8]
 ```
 
-Often used as the argument to higher-order functions, to avoid having to declare and name small "helper" functions.
+Often used to define arguments to higher-order functions, to avoid having to declare and name small helper functions.
 
 ## `if`
 
@@ -514,8 +514,6 @@ val _ =
 ```
 
 ## `of`
-
-This keyword fulfills two distinct functions:
 
 1. Separate the head expression of a `case` from the arms.
 
@@ -605,7 +603,7 @@ val describe = fn
 
 ## `#`
 
-Denote a record selector.
+Select a field from a record.
 
 Tuples are record whose labels are numbers starting at 1, so these work with tuples too.
 
@@ -627,13 +625,17 @@ The companion of `(`.
 
 ## `*`
 
-- Separate types in a tuple type.
-- Multiply numbers.
+1. Separate types in a tuple type.
 
-```sml
-type pair = int * string
-val _ = 3 * 6
-```
+   ```sml
+   type pair = int * string
+   ```
+
+2. Multiply numbers.
+
+   ```sml
+   val _ = 3 * 6
+   ```
 
 ## `,`
 
@@ -655,12 +657,26 @@ val _ = Int.max (1, 5)
 
 ## `:`
 
-Annotate something with a type.
+1. Annotate an expression or pattern with a type.
 
-```sml
-val a : int = 1 + 4
-val b = "hi" : string
-```
+   ```sml
+   val a : int = 1 + 4
+   val b = "hi" : string
+   ```
+
+2. Transparently ascribe a structure to a signature.
+
+   ```sml
+   structure S : sig
+     type t
+     val x : t
+   end = struct
+     type t = int
+     val x = 5
+   end
+
+   val n : int = S.x + 3
+   ```
 
 ## `;`
 
@@ -671,6 +687,8 @@ val n : int = ("string"; false; 5)
 ```
 
 Can also be used to separate declarations, but this is unnecessary.
+
+Also indicates the end of input when in a REPL.
 
 ## `=`
 
