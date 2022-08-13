@@ -29,7 +29,7 @@ fn main() -> std::io::Result<()> {
           assert!(doc_map.insert(kw, s).is_none());
         }
         kw = Some(new_kw);
-        s = format!("```sml\n{new_kw}\n```\n---");
+        s = format!("```sml\n{new_kw}\n```");
       }
       None => {
         s.push('\n');

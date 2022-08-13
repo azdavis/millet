@@ -114,7 +114,7 @@ impl Analysis {
       .collect();
     let range = ptr.to_node(file.parsed.root.syntax()).text_range();
     let range = file.pos_db.range(range)?;
-    Some((parts.join("\n"), range))
+    Some((parts.join("\n\n---\n\n"), range))
   }
 
   /// Returns the range of the definition of the item at this position.
