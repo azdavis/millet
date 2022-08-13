@@ -37,9 +37,7 @@ fn main() -> std::io::Result<()> {
       }
     }
   }
-  if let Some(kw) = kw {
-    assert!(doc_map.insert(kw, s).is_none());
-  }
+  assert!(doc_map.insert(kw.unwrap(), s).is_none());
   let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR should be set");
   gen(
     std::path::Path::new(out_dir.as_str()),
