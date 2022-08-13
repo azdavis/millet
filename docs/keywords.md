@@ -2,22 +2,29 @@
 
 This is documentation for all the keywords in SML, and what they mean.
 
-If a SML keywords is not documented here, please file an issue.
+If an SML keyword is not documented here, please file an issue.
 
 ## `exception`
 
-Begins an exception declaration.
+Define an exception.
+
+Exception declarations define new exception constructors.
 
 ```sml
 exception Foo
 exception Bar of string
 ```
 
-Exception declarations define new exceptions.
+In this example:
+
+- `Foo` has type `exn`
+- `Bar` has type `string -> exn`
 
 ## `signature`
 
-Begins a signature declaration.
+Define a signature.
+
+Signatures describe the interface to structures.
 
 ```sml
 signature SIG = sig
@@ -26,11 +33,11 @@ signature SIG = sig
 end
 ```
 
-Signatures describe the interface to structures.
-
 ## `structure`
 
-Begins a structure declaration.
+Define a structure.
+
+Structures are collections of declarations.
 
 ```sml
 structure Str = struct
@@ -39,18 +46,20 @@ structure Str = struct
 end
 ```
 
-Structures are collections of declarations.
-
 ## `datatype`
 
-Begins a datatype declaration.
-
-```sml
-datatype answer = Yes | No | Maybe
-datatype debug = Bool of bool | Level of int
-```
+Define a new datatype.
 
 Datatype declarations define new types and their constructors.
+
+```sml
+datatype debug = On | Off | Level of int
+```
+
+In this example:
+
+- `On` and `Off` have type `debug`.
+- `Level` has type `int -> debug`.
 
 ## `withtype`
 
@@ -63,7 +72,7 @@ withtype 'a front = unit -> 'a stream
 
 ## `abstype`
 
-Begins an abstype declaration.
+Define an abstract type.
 
 This is not really used in modern SML. Prefer a mix of:
 
@@ -73,7 +82,7 @@ This is not really used in modern SML. Prefer a mix of:
 
 ## `andalso`
 
-An infix keyword that computes logical "and" with two `bool` expressions.
+Compute logical "and" with two `bool` expressions.
 
 ```sml
 fun canRide height age =
@@ -88,7 +97,9 @@ Not to be confused with `and`, which permits declaring multiple things at once.
 
 ## `functor`
 
-Begins a functor declaration.
+Define a functor.
+
+Functors are structure-level functions.
 
 ```sml
 functor F (A : sig
@@ -98,14 +109,12 @@ end) = struct
 end
 ```
 
-Functors are structure-level functions. To wit:
-
-- Regular functions take in values and return values.
+- Regular functions (with `fun` or `fn`) take in values and return values.
 - Functors take in structures and return structures.
 
 ## `include`
 
-Begins an include specification, for use in signatures.
+Include a signature in another signature, to merge the two signatures together.
 
 ```sml
 signature A = sig
@@ -123,13 +132,17 @@ structure S : B = struct
 end
 ```
 
-Including a signature in another signature "merges" the two signatures together.
-
 ## `sharing`
 
-Used in signature specifications to indicate type sharing.
+Indicate type sharing in a signature.
 
-This is a fairly advanced SML feature.
+```sml
+signature TXT = sig
+  structure Char : CHAR
+  structure String : STRING
+  sharing type Char.char = String.char
+end
+```
 
 ## `eqtype`
 
@@ -150,15 +163,13 @@ Handle a set of exceptions.
 val _ = 3 + 4 handle Overflow => 0
 ```
 
-The "`handle` clause", which is the `handle` keywords plus the matcher listing the handled exceptions, is added to the end of an expression (the "head" expression).
-
 - If the head expression **does not** raise, the whole expression (i.e. the head expression plus the `handle` clause) evaluates to whatever the head expression did.
 - If the head expression **does** raise, and the exception raised **is** matched by the matcher, the whole expression evaluates to the expression in that corresponding matcher arm.
 - If the head expression **does** raise, and the exception raised **is not** matched, the whole expression raises.
 
 ## `infixr`
 
-Begins a fixity declaration, that causes the given names to be infix operators with the given precedence (or 0 if none is provided), and right associativity. Similar to `infix`.
+Cause the given names to be infix operators with the given precedence (or 0 if none is provided), and right associativity. Similar to `infix`.
 
 ```sml
 infixr foo
@@ -167,7 +178,7 @@ infixr 3 bar quz
 
 ## `nonfix`
 
-Begins a fixity declaration, that causes the given names to not be infix.
+Cause the given names to not be infix.
 
 ```sml
 nonfix foo
@@ -176,7 +187,7 @@ nonfix bar quz
 
 ## `orelse`
 
-An infix keyword that computes logical "or" with two `bool` expressions.
+Compute logical "or" with two `bool` expressions.
 
 ```sml
 fun canAfford price persuasiveness =
@@ -189,7 +200,12 @@ Because of this special short-circuiting behavior, it is not a regular infix ope
 
 ## `struct`
 
-Begins a structure expression.
+Define a structure expression.
+
+Structure expressions are often used as:
+
+- The right-hand side to structure declarations.
+- The arguments to functors.
 
 ```sml
 structure S = struct
@@ -197,16 +213,9 @@ structure S = struct
 end
 ```
 
-Structure expressions are often used as:
-
-- The right-hand side to structure declarations.
-- The arguments to functors.
-
-See `structure` and `functor`.
-
 ## `infix`
 
-Begins a fixity declaration, that causes the given names to be infix operators with the given precedence (or 0 if none is provided), and left associativity. Similar to `infixr`.
+Cause the given names to be infix operators with the given precedence (or 0 if none is provided), and left associativity. Similar to `infixr`.
 
 ```sml
 infix foo
@@ -215,22 +224,25 @@ infix 3 bar quz
 
 ## `local`
 
-Begins a local declaration.
+Limit the scope of declarations.
 
 ```sml
 local
-  val x = 5
+  val inner = 5
 in
-  val y = x + 4
-  val z = x + 9
+  val outerA = inner + 4
+  val outerB = inner + 9
 end
+
+val _ = outerA + outerB
 ```
 
-Declarations in the `local ... in` may be used by declarations in the `in ... end`, but only the latter declarations are in scope outside of the local.
+- Declarations in the `local ... in` may be used by declarations in the `in ... end`.
+- However, only the declarations in the `in ... end` are in scope outside of the local.
 
 ## `raise`
 
-Begins a raise expression.
+Raise an exception.
 
 ```sml
 fun fact n =
@@ -242,28 +254,47 @@ fun fact n =
     n * fact (n - 1)
 ```
 
-`raise` takes an exception expression (one of type `exn`), evaluates it, and raises that exception. A raised exception may be handled with `handle`.
+A raised exception may be handled with `handle`.
 
 ## `where`
 
-Used in signature expressions to indicate type sharing.
+Indicate type realization in signatures.
 
-This is a fairly advanced SML feature.
+This allows a type to "break through" opaque ascription and be known to users of a structure that ascribes to a signature.
+
+```sml
+signature SIG = sig
+  type t
+  val x : t
+end
+
+structure S :> SIG
+  where type t = int =
+struct
+  type t = int
+  val x = 3
+end
+
+val _ = S.x : int
+```
 
 ## `while`
 
-Execute a loop body while a condition is upheld.
+Repeatedly evaluate an expression while a condition is upheld.
 
 ```sml
-fun go () =
+fun sayHi n =
   let
     val r = ref 0
   in
-    while !r < 5 do (r := !r + 1; print "hi")
+    while !r < n do (
+      r := !r + 1;
+      print "hi"
+    )
   end
 ```
 
-This is an "imperative" SML feature that requires the use of `ref` or other side effects to be useful.
+This feature is "imperative", i.e. it essentially requires the use of `ref` or other side effects to be useful.
 
 ## `case`
 
@@ -284,12 +315,13 @@ fun describe n =
 Used in conjunction with `if` and `then` to mark the expression that the `if` expression evaluates to if the condition was `false`. Comes after `then`.
 
 ```sml
-fun choose x = if x then "yes" else "no"
+fun choose x =
+  if x then "yes" else "no"
 ```
 
 ## `open`
 
-Brings a structure's members into scope.
+Bring a structure's members into scope.
 
 ```sml
 structure S = struct
@@ -306,12 +338,13 @@ val b = x
 Used in conjunction with `if` and `else` to mark the expression that the `if` expression evaluates to if the condition was `true`. Comes between `if` and `else`.
 
 ```sml
-fun choose x = if x then "yes" else "no"
+fun choose x =
+  if x then "yes" else "no"
 ```
 
 ## `type`
 
-Begins a type declaration.
+Define a type alias.
 
 ```sml
 type point = int * int
@@ -325,7 +358,9 @@ Used in abstype declarations, which is to say, not much.
 
 ## `and`
 
-Used to declare many things simultaneously. Most useful for mutually recursive functions.
+Declare many things simultaneously.
+
+Most useful for mutually recursive functions.
 
 ```sml
 fun even 0 = true
@@ -338,7 +373,7 @@ Not to be confused with `andalso`, which is for logical "and" of `bool` expressi
 
 ## `end`
 
-Marks the end of various constructs, like:
+Mark the end of various constructs, like:
 
 - `let ... in ... end`
 - `local ... in ... end`
@@ -347,7 +382,7 @@ Marks the end of various constructs, like:
 
 ## `fun`
 
-Begins a function declaration.
+Define a function.
 
 ```sml
 fun inc x = x + 1
@@ -359,7 +394,7 @@ Not to be confused with `fn`, which begins a function (aka lambda) expression.
 
 ## `let`
 
-Begins a let expression.
+Define a let expression.
 
 ```sml
 val _ =
@@ -371,15 +406,15 @@ val _ =
   end
 ```
 
-- In the `let ... in`, there are declarations.
-- In the `in ... end`, there is an expression (or a sequence).
-- The `let` first defines the declarations in the `let ... in`, then evaluates the expressions in the `in ... end` in sequence.
+- In the `let ... in`, there is a sequence of declarations.
+- In the `in ... end`, there is an sequence of expressions (at least 1), separated by `;`.
+- The `let` first defines the declarations in the `let ... in`, then evaluates the expressions in the `in ... end`.
 - The expressions may use bindings from the declarations.
 - The value of the whole `let` is the value of the last expression in the `in ... end`.
 
 ## `rec`
 
-Denotes a recursive lambda.
+Allow a `fn` to be recursive.
 
 ```sml
 val rec fact = fn
@@ -396,7 +431,12 @@ fun fact 0 = 1
 
 ## `sig`
 
-Begins a signature expression.
+Define a signature expression.
+
+Signature expressions are often used as:
+
+- The right-hand side to signature declarations.
+- The interfaces to functors.
 
 ```sml
 signature SIG = sig
@@ -405,20 +445,15 @@ signature SIG = sig
 end
 ```
 
-Signature expressions are often used as:
-
-- The right-hand side to signature declarations.
-- The interfaces to functors.
-
 ## `val`
 
-Begins a value declaration.
+Define value bindings from an expression.
+
+A value declaration evaluates the expression on the right, then matches it with the pattern on the left, and introduces new bindings produced by the pattern.
 
 ```sml
 val y = 6
 ```
-
-A value declaration evaluates the expression on the right, then matches it with the pattern on the left, and introduces new bindings produced by the pattern.
 
 ## `as`
 
@@ -433,7 +468,7 @@ The syntax is `<name> as <pat>`.
 
 ## `do`
 
-Separates a `while` loop condition from the body.
+Separate a `while` loop condition from the loop body.
 
 ```sml
 val _ = while true do print "y\n"
@@ -441,7 +476,7 @@ val _ = while true do print "y\n"
 
 ## `fn`
 
-Begins a function ("lambda") expression.
+Define a function ("lambda") expression.
 
 ```sml
 val _ = List.map (fn x => x + 1) [1, 3, 8]
@@ -451,7 +486,7 @@ Often used as the argument to higher-order functions, to avoid having to declare
 
 ## `if`
 
-Begins an if expression.
+Case on a `bool`.
 
 ```sml
 val _ = if 3 > 4 then "math is broken" else "okay good"
@@ -461,7 +496,7 @@ An if expression cases on a condition of type `bool`, and selects either the `th
 
 ## `in`
 
-Separates the first and second parts of a `local` declaration or `let` expression.
+Separate the first and second parts of a `local` declaration or `let` expression.
 
 ```sml
 local
@@ -482,7 +517,7 @@ val _ =
 
 This keyword fulfills two distinct functions:
 
-1. Separates the head expression of a `case` from the arms.
+1. Separate the head expression of a `case` from the arms.
 
    ```sml
    fun hm x =
@@ -491,7 +526,7 @@ This keyword fulfills two distinct functions:
      | _ => 3
    ```
 
-2. Denotes that a value or exception constructor takes an argument.
+2. Denote that a value or exception constructor takes an argument.
 
    ```sml
    datatype ans = No | Yes | Custom of string
@@ -499,7 +534,7 @@ This keyword fulfills two distinct functions:
 
 ## `op`
 
-Causes an infix identifier to temporarily act as though it is not.
+Cause an infix identifier to temporarily act as though it is not.
 
 ```sml
 val x : int = op + (1, 2)
