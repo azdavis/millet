@@ -48,7 +48,6 @@ fn main() -> std::io::Result<()> {
       let kind: TokenKind;
       let mut name: String;
       let mut desc = None::<String>;
-      let mut doc = None::<String>;
       if let Some(d) = SPECIAL.iter().find_map(|&(n, d)| (s == n).then_some(d)) {
         kind = TokenKind::Special;
         name = s.to_owned();
@@ -56,7 +55,6 @@ fn main() -> std::io::Result<()> {
       } else if s.chars().any(|c| c.is_ascii_alphabetic()) {
         kind = TokenKind::Keyword;
         name = snake_to_pascal(s);
-        doc = doc_map.get(s).cloned();
         name.push_str("Kw");
       } else {
         kind = TokenKind::Punctuation;
@@ -65,6 +63,7 @@ fn main() -> std::io::Result<()> {
           name.push_str(char_name::get(c));
         }
       }
+      let doc = doc_map.get(s).cloned();
       (kind, Token { name, desc, doc })
     },
   )

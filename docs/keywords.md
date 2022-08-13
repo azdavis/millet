@@ -551,3 +551,191 @@ Often used to pass infix operators to higher-order functions.
 ```sml
 val xs : int list = List.map op* [(1, 4), (6, 8), (2, 3)]
 ```
+
+## `...`
+
+Ignore the rest of the rows in a record pattern.
+
+```sml
+val {b, ...} = {a = 1, b = 4}
+```
+
+Also used as a expression/type/declaration "hole", though this is not legal SML.
+
+## `->`
+
+Denote a function type.
+
+```sml
+type intMaker = unit -> int
+```
+
+## `:>`
+
+Opaquely ascribe a structure to a signature.
+
+```sml
+structure Stack :> sig
+  type 'a t
+  val empty : 'a t
+  val push : 'a t -> 'a -> 'a t
+  val pop : 'a t -> 'a option * 'a t
+end = struct
+  type 'a t = 'a list
+  val empty = []
+  fun push xs x = x :: xs
+  fun pop xs =
+    case xs of
+      [] => (NONE, xs)
+    | x :: xs' => (SOME x, xs')
+end
+```
+
+## `=>`
+
+Separate a pattern from its expression in a matcher arm.
+
+```sml
+val describe = fn
+  0 => "nothing"
+| 1 => "single"
+| 2 => "dual"
+| _ => "other"
+```
+
+## `#`
+
+Denote a record selector.
+
+Tuples are record whose labels are numbers starting at 1, so these work with tuples too.
+
+```sml
+val x : int = #2 (false, 5)
+```
+
+## `(`
+
+Group things together. Can be used to override precedence.
+
+```sml
+fun doMath a b c = a * (b + c)
+```
+
+## `)`
+
+The companion of `(`.
+
+## `*`
+
+- Separate types in a tuple type.
+- Multiply numbers.
+
+```sml
+type pair = int * string
+val _ = 3 * 6
+```
+
+## `,`
+
+Separate things, like tuple elements, list elements, and type arguments.
+
+```sml
+val _ = (false, 5)
+val _ = [1, 4, 3]
+type ('a, 'b) parser = 'a -> ('a * 'b) option
+```
+
+## `.`
+
+Separate components in a path.
+
+```sml
+val _ = Int.max (1, 5)
+```
+
+## `:`
+
+Annotate something with a type.
+
+```sml
+val a : int = 1 + 4
+val b = "hi" : string
+```
+
+## `;`
+
+Separate elements in a sequence, like expressions.
+
+```sml
+val n : int = ("string"; false; 5)
+```
+
+Can also be used to separate declarations, but this is unnecessary.
+
+## `=`
+
+Assign things.
+
+```sml
+val a = 5
+fun f x = x + 4
+```
+
+Also is defined as the polymorphic equality function.
+
+```sml
+fun f n =
+  if n = 5 then "yay" else "nah"
+
+fun g s =
+  if s = "yay" then 5 else 0
+```
+
+## `[`
+
+Begins a list expression or pattern.
+
+```sml
+val xs = [1, 4, 9]
+```
+
+## `]`
+
+The companion of `[`.
+
+## `_`
+
+Discard whatever matches the pattern.
+
+```sml
+val (_, a) = (4, "hi")
+```
+
+Also used as a expression/type "hole", though this is not legal SML.
+
+## `{`
+
+Begin a record expression or type.
+
+```sml
+val r = {a = 5, b = 9}
+val {a, b} = r
+```
+
+## `|`
+
+Separate cases in a matcher.
+
+Note that a leading `|` for the first case is not allowed.
+
+```sml
+val describe = fn
+  0 => "nothing"
+| 1 => "single"
+| 2 => "dual"
+| _ => "other"
+```
+
+## `}`
+
+The companion of `{`.

@@ -15,8 +15,8 @@ fn tuple() {
   check(
     r#"
 datatype 'a uh = Uh of 'a
-val _ = (3, "hi", Uh false)
-(**        ^ hover: int * string * bool uh *)
+val _ = (   3, "hi", Uh false)
+(**       ^ hover: int * string * bool uh *)
 "#,
   );
 }
