@@ -21,6 +21,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
     // sml_def(15)
     hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();
+      let mv_mark = st.mark_meta_vars();
       let fixed = add_fixed_ty_vars(st, &mut cx, ty_vars, dec.into());
       // we actually resort to indexing logic because this is a little weird:
       // - we represent the recursive nature of ValBinds (and all other things that recurse with
@@ -82,7 +83,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         let &exp = src_exp
           .get(name)
           .expect("should have an exp for every bound name");
-        let g = generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
+        let g = generalize(&mv_mark, st.subst(), fixed.clone(), &mut val_info.ty_scheme);
         if expansive(&cx, ars, exp) && !val_info.ty_scheme.bound_vars.is_empty() {
           st.err(
             exp.map_or(hir::Idx::Dec(dec), hir::Idx::Exp),

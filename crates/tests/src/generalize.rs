@@ -1,8 +1,8 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn no_over_generalize_infer() {
-  fail(
+  check(
     r#"
 fun id x =
   let fun get () = x
