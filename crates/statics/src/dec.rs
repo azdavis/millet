@@ -9,7 +9,7 @@ use crate::types::{
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
 use crate::{exp, pat, ty};
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 
 pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: hir::DecIdx) {
   let dec = match dec {
@@ -78,11 +78,15 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, dec.into());
       }
+      let mut generalized = FxHashSet::<hir::ExpIdx>::default();
       // generalize the entire merged ValEnv.
       for (name, val_info) in ve.iter_mut() {
         let &exp = src_exp
           .get(name)
           .expect("should have an exp for every bound name");
+        if !generalized.insert(exp) {
+          continue;
+        }
         let g = generalize(&mv_mark, st.subst(), fixed.clone(), &mut val_info.ty_scheme);
         if expansive(&cx, ars, exp) && !val_info.ty_scheme.bound_vars.is_empty() {
           st.err(
