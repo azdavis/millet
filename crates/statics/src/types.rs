@@ -921,7 +921,9 @@ impl EnvLike for EnvStack {
 pub(crate) struct Cx {
   pub(crate) env: EnvStack,
   /// the Definition has this as a set, but we have it as a mapping.
-  pub(crate) ty_vars: FxHashMap<hir::TyVar, FixedTyVar>,
+  ///
+  /// this isn't really `ty_vars(C)` as in the definition, since it's just fixed ty vars.
+  pub(crate) fixed: FxHashMap<hir::TyVar, FixedTyVar>,
 }
 
 /// Definition: TyNameSet
@@ -957,7 +959,7 @@ impl Bs {
   pub(crate) fn as_cx(&self) -> Cx {
     Cx {
       env: self.env.clone(),
-      ty_vars: FxHashMap::default(),
+      fixed: FxHashMap::default(),
     }
   }
 }

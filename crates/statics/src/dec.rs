@@ -219,7 +219,7 @@ pub(crate) fn add_fixed_ty_vars(
   let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
     let fv = st.gen_fixed_var(ty_var.clone());
-    if cx.ty_vars.insert(ty_var.clone(), fv.clone()).is_some() {
+    if cx.fixed.insert(ty_var.clone(), fv.clone()).is_some() {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
       st.err(idx, e);
     }
@@ -249,7 +249,7 @@ fn get_ty_binds(
       st.err(idx, e)
     }
     for ty_var in ty_bind.ty_vars.iter() {
-      cx.ty_vars.remove(ty_var);
+      cx.fixed.remove(ty_var);
     }
   }
 }
@@ -338,7 +338,7 @@ pub(crate) fn get_dat_binds(
   for (dat_bind, datatype) in dat_binds.iter().zip(datatypes) {
     // bring the type variables for this datatype into scope.
     for fv in datatype.fixed.iter() {
-      if cx.ty_vars.insert(fv.ty_var().clone(), fv.clone()).is_some() {
+      if cx.fixed.insert(fv.ty_var().clone(), fv.clone()).is_some() {
         let e = ErrorKind::Duplicate(Item::TyVar, fv.ty_var().as_name().clone());
         st.err(idx, e);
       }
@@ -373,7 +373,7 @@ pub(crate) fn get_dat_binds(
     st.syms.finish(datatype.started, ty_info.clone());
     ty_env.insert(dat_bind.name.clone(), ty_info);
     for ty_var in dat_bind.ty_vars.iter() {
-      cx.ty_vars.remove(ty_var);
+      cx.fixed.remove(ty_var);
     }
   }
   (ty_env, big_val_env)
