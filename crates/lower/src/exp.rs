@@ -196,7 +196,7 @@ where
       let c = case(cx, x, vec![(wild, ac)], ptr.clone());
       cx.exp(c, ptr.clone())
     })
-    .unwrap()
+    .flatten()
 }
 
 fn if_(

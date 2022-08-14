@@ -627,3 +627,13 @@ fn empty_open() {
 "#,
   )
 }
+
+#[test]
+fn empty_let() {
+  check(
+    r#"
+val _ = let in end
+(**            ^^^ expected an expression *)
+"#,
+  );
+}
