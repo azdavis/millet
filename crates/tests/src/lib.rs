@@ -15,6 +15,7 @@ mod dupe;
 mod exn;
 mod fixity;
 mod functor;
+mod generalize;
 mod hover;
 mod incomplete;
 mod infix_without_op;
