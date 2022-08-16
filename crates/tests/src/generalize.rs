@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn no_over_generalize_infer() {
@@ -32,6 +32,22 @@ val _ = y
 val z = id 3
 val _ = z
 (**     ^ hover: int *)
+"#,
+  );
+}
+
+#[test]
+fn through_list() {
+  fail(
+    r#"
+exception E
+
+fun guh x =
+  let
+    val y = (fn [a] => a | _ => raise E) [x]
+  in
+    y
+  end
 "#,
   );
 }
