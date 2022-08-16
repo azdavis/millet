@@ -528,15 +528,19 @@ impl BoundTyVar {
 /// Should eventually be solved in a [`Subst`], but before that, it may be "restricted" by the
 /// `Subst` without yet being fully solved to a type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) struct MetaTyVar(u32);
+pub(crate) struct MetaTyVar {
+  id: u32,
+}
 
 #[derive(Debug, Default)]
-pub(crate) struct MetaTyVarGen(u32);
+pub(crate) struct MetaTyVarGen {
+  id: u32,
+}
 
 impl MetaTyVarGen {
   pub(crate) fn gen(&mut self) -> MetaTyVar {
-    let ret = MetaTyVar(self.0);
-    self.0 += 1;
+    let ret = MetaTyVar { id: self.id };
+    self.id += 1;
     ret
   }
 }
