@@ -2,7 +2,7 @@ use crate::check::{check, fail};
 
 #[test]
 fn no_over_generalize_infer() {
-  check(
+  fail(
     r#"
 fun id x =
   let fun get () = x

@@ -400,11 +400,10 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
     hir::Spec::Val(ty_vars, val_descs) => {
       // sml_def(79)
       let mut cx = bs.as_cx();
-      let mv_mark = st.mark_meta_vars();
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, spec.into());
       for val_desc in val_descs {
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, val_desc.ty));
-        let g = generalize(&mv_mark, st.subst(), fixed.clone(), &mut ty_scheme);
+        let g = generalize(st.subst(), fixed.clone(), &mut ty_scheme);
         assert_ty_has_no_record_meta_vars(g);
         let vi = ValInfo {
           ty_scheme,

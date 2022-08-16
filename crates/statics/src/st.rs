@@ -1,9 +1,7 @@
 use crate::error::{Error, ErrorKind};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
-use crate::types::{
-  Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, MetaTyVarMarker, Subst, Syms, Ty,
-};
+use crate::types::{Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
 use crate::util::apply;
 
 /// The state.
@@ -67,10 +65,6 @@ impl St {
 
   pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
     self.meta_gen.gen()
-  }
-
-  pub(crate) fn mark_meta_vars(&mut self) -> MetaTyVarMarker {
-    self.meta_gen.mark()
   }
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: hir::TyVar) -> FixedTyVar {
