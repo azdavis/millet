@@ -137,10 +137,20 @@ end
 Share types in a signature.
 
 ```sml
+signature A = sig
+  type t
+  val a : t
+end
+
+signature B = sig
+  type t
+  val b : t
+end
+
 signature TXT = sig
-  structure Char : CHAR
-  structure String : STRING
-  sharing type Char.char = String.char
+  structure A : A
+  structure B : B
+  sharing type A.t = B.t
 end
 ```
 
@@ -245,9 +255,11 @@ val _ = outerA + outerB
 Raise an exception.
 
 ```sml
+exception Neg
+
 fun fact n =
   if n < 0 then
-    raise Fail "can't do factorial of a negative"
+    raise Neg
   else if n = 0 then
     1
   else
