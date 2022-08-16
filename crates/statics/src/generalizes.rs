@@ -1,7 +1,7 @@
 use crate::fmt_util::ty_var_name;
 use crate::st::St;
 use crate::types::{Ty, TyScheme, TyVarKind};
-use crate::unify::{unify, unify_no_emit, Result};
+use crate::unify::{unify, unify_, Result};
 use crate::util::{apply_bv, instantiate};
 
 /// emits no error iff `lhs` and `rhs` are equal ty schemes.
@@ -11,8 +11,8 @@ pub(crate) fn eq_ty_scheme(st: &mut St, lhs: TyScheme, rhs: TyScheme, idx: hir::
 }
 
 /// we _maybe_ could use `#[derive(PartialEq, Eq)]` for [`Ty`] and [`crate::types::BoundTyVars`],
-/// and then just call those here instead of using [`unify_no_emit`] (and then return a bool instead
-/// of a [`Result`]), since equivalent [`TyScheme`]s _should_ be alpha-equivalent (and thus `==`).
+/// and then just call those here instead of using [`unify_`] (and then return a bool instead of a
+/// [`Result`]), since equivalent [`TyScheme`]s _should_ be alpha-equivalent (and thus `==`).
 ///
 /// but... something about that makes me uneasy. maybe it's because we have [`Ty::MetaVar`] and
 /// [`Ty::FixedVar`] to deal with? but those should probably not come up in ty schemes too often,
@@ -52,5 +52,5 @@ pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, i
 
 fn generalizes_no_emit(st: &mut St, general: TyScheme, specific: &TyScheme) -> Result {
   let (general, specific) = prepare_generalize(st, general, specific);
-  unify_no_emit(st, specific, general)
+  unify_(st, specific, general)
 }

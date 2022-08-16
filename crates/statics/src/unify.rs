@@ -1,6 +1,6 @@
 use crate::error::ErrorKind;
 use crate::st::St;
-use crate::types::{MetaTyVar, Overloads, Subst, SubstEntry, Ty, TyVarKind};
+use crate::types::{MetaTyVar, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
 where
   I: Into<hir::Idx>,
 {
-  let e = match unify_no_emit(st, want.clone(), got.clone()) {
+  let e = match unify_(st, want.clone(), got.clone()) {
     Ok(()) => return,
     Err(e) => match e {
       UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
@@ -26,27 +26,11 @@ where
 }
 
 /// does not emit any errors to the `st`, instead returns an error (if any).
-pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result {
-  let mut unify_st = UnifySt {
-    overloads: std::mem::take(st.syms.overloads()),
-    subst: std::mem::take(st.subst()),
-  };
-  let ret = unify_(&mut unify_st, want, got);
-  *st.syms.overloads() = unify_st.overloads;
-  *st.subst() = unify_st.subst;
-  ret
-}
-
-/// use this to avoid taking the whole [`St`] in [`unify_`].
-struct UnifySt {
-  overloads: Overloads,
-  subst: Subst,
-}
-
+///
 /// `want` and `got` will have `subst` applied to them upon entry to this function.
-fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result {
-  apply(&st.subst, &mut want);
-  apply(&st.subst, &mut got);
+pub(crate) fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
+  apply(st.subst(), &mut want);
+  apply(st.subst(), &mut got);
   match (want, got) {
     (Ty::None, _) | (_, Ty::None) => Ok(()),
     (Ty::BoundVar(want), Ty::BoundVar(got)) => head_match(want == got),
@@ -83,7 +67,7 @@ fn unify_(st: &mut UnifySt, mut want: Ty, mut got: Ty) -> Result {
   }
 }
 
-fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
+fn unify_mv(st: &mut St, mv: MetaTyVar, ty: Ty) -> Result {
   // return without doing anything if the meta vars are the same.
   if let Ty::MetaVar(mv2) = &ty {
     if mv == *mv2 {
@@ -95,7 +79,7 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
     return Err(UnifyError::OccursCheck(mv, ty));
   }
   // solve mv to ty. however, mv may already have an entry.
-  match st.subst.insert(mv, SubstEntry::Solved(ty.clone())) {
+  match st.subst().insert(mv, SubstEntry::Solved(ty.clone())) {
     // do nothing if no entry.
     None => {}
     // unreachable because we applied upon entry.
@@ -112,7 +96,7 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
           if ov
             .as_basics()
             .iter()
-            .any(|&ov| st.overloads[ov].contains(&s))
+            .any(|&ov| st.syms.overloads()[ov].contains(&s))
           {
             assert!(args.is_empty())
           } else {
@@ -122,7 +106,7 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
         // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
         // but mv2 itself may also have an entry.
         Ty::MetaVar(mv2) => {
-          let ov = match st.subst.get(&mv2) {
+          let ov = match st.subst().get(&mv2) {
             // it didn't have an entry.
             None => ov,
             // unreachable because of apply.
@@ -139,8 +123,8 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
               TyVarKind::Record(_) => return Err(UnifyError::HeadMismatch),
             },
           };
-          st.subst
-            .insert(mv2, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
+          let k = SubstEntry::Kind(TyVarKind::Overloaded(ov));
+          st.subst().insert(mv2, k);
         }
         // none of these are overloaded types.
         Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
@@ -166,7 +150,7 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
         // setting mv2's entry to mv's old entry, which specifies the rows for this record ty
         // var.
         Ty::MetaVar(mv2) => {
-          match st.subst.get(&mv2) {
+          match st.subst().get(&mv2) {
             // there was no entry.
             None => {}
             // unreachable because of apply.
@@ -182,7 +166,7 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
                 for (lab, mut want) in other_rows.clone() {
                   if let Some(got) = want_rows.get(&lab) {
                     unify_(st, want.clone(), got.clone())?;
-                    apply(&st.subst, &mut want);
+                    apply(st.subst(), &mut want);
                   }
                   want_rows.insert(lab, want);
                 }
@@ -190,8 +174,8 @@ fn unify_mv(st: &mut UnifySt, mv: MetaTyVar, ty: Ty) -> Result {
             },
           }
           // set the entry to make mv2 a record ty var.
-          st.subst
-            .insert(mv2, SubstEntry::Kind(TyVarKind::Record(want_rows)));
+          let k = SubstEntry::Kind(TyVarKind::Record(want_rows));
+          st.subst().insert(mv2, k);
         }
         // none of these are record types.
         Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Con(_, _) | Ty::Fn(_, _) => {
