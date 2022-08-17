@@ -81,11 +81,18 @@ impl<'a> Parser<'a> {
 
 fn bas_dec(p: &mut Parser<'_>) -> Result<BasDec> {
   let mut ac = Vec::<BasDec>::new();
-  while let Some(bd) = bas_dec_one(p)? {
+  loop {
+    let bd = match bas_dec_one(p)? {
+      BasDecOne::NoStartTok => break,
+      BasDecOne::Ignore => None,
+      BasDecOne::Ok(bd) => Some(bd),
+    };
     if p.cur() == Some(Token::Semicolon) {
       p.bump();
     }
-    ac.push(bd);
+    if let Some(bd) = bd {
+      ac.push(bd);
+    }
   }
   let ret = if ac.len() == 1 {
     ac.pop().unwrap()
@@ -95,10 +102,16 @@ fn bas_dec(p: &mut Parser<'_>) -> Result<BasDec> {
   Ok(ret)
 }
 
-fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
+enum BasDecOne {
+  NoStartTok,
+  Ignore,
+  Ok(BasDec),
+}
+
+fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
   let tok = match p.cur_tok() {
     Some(x) => x,
-    None => return Ok(None),
+    None => return Ok(BasDecOne::NoStartTok),
   };
   let ret = match tok.val {
     Token::Basis => {
@@ -146,7 +159,15 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
       p.bump();
       let path = match paths::slash_var_path::get(path, p.env) {
         Ok(x) => x,
-        Err(e) => return p.err(ErrorKind::SlashVarPathError(e)),
+        Err(e) => {
+          if let paths::slash_var_path::Error::Undefined(var) = &e {
+            // ignore the sml lib paths (http://mlton.org/MLBasisPathMap) since they're baked in.
+            if var == "SML_LIB" {
+              return Ok(BasDecOne::Ignore);
+            }
+          }
+          return p.err(ErrorKind::SlashVarPathError(e));
+        }
       };
       let kind = match path_kind(path.as_path()) {
         Some(x) => x,
@@ -164,9 +185,9 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<Option<BasDec>> {
       p.eat(Token::End)?;
       BasDec::Ann(s, bd.into())
     }
-    _ => return Ok(None),
+    _ => return Ok(BasDecOne::NoStartTok),
   };
-  Ok(Some(ret))
+  Ok(BasDecOne::Ok(ret))
 }
 
 fn path_kind(path: &Path) -> Option<PathKind> {

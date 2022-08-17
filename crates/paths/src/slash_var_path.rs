@@ -13,23 +13,23 @@ use std::fmt;
 use std::path::PathBuf;
 use str_util::SmolStr;
 
+/// An error when parsing a slash var path.
 #[derive(Debug)]
-enum ErrorKind {
+pub enum Error {
+  /// A `$` was the last char.
   ExpectedCharAfterDollar,
+  /// There was a `$(` with no matching `)`.
   ExpectedRRound,
+  /// A path variable was undefined.
   Undefined(SmolStr),
 }
 
-/// An error when parsing a slash var path.
-#[derive(Debug)]
-pub struct Error(ErrorKind);
-
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &self.0 {
-      ErrorKind::ExpectedCharAfterDollar => f.write_str("expected a character after `$`"),
-      ErrorKind::ExpectedRRound => f.write_str("expected `)`"),
-      ErrorKind::Undefined(s) => write!(f, "undefined path variable: {s}"),
+    match self {
+      Error::ExpectedCharAfterDollar => f.write_str("expected a character after `$`"),
+      Error::ExpectedRRound => f.write_str("expected `)`"),
+      Error::Undefined(s) => write!(f, "undefined path variable: {s}"),
     }
   }
 }
@@ -47,10 +47,6 @@ enum Component {
 /// Using `/` as the path separator, this parses a path from `s`, substituting path variables (like
 /// `$FOO` or `$(BAR)`) with their values in `env`.
 pub fn get(s: &str, env: &Env) -> Result<PathBuf, Error> {
-  get_(s, env).map_err(Error)
-}
-
-fn get_(s: &str, env: &Env) -> Result<PathBuf, ErrorKind> {
   let mut ret = PathBuf::new();
   let mut cur = String::new();
   for component in components(s)? {
@@ -68,7 +64,7 @@ fn get_(s: &str, env: &Env) -> Result<PathBuf, ErrorKind> {
       Component::Var(v) => cur.push_str(
         env
           .get(v.as_str())
-          .ok_or_else(|| ErrorKind::Undefined(v.clone()))?,
+          .ok_or_else(|| Error::Undefined(v.clone()))?,
       ),
     }
   }
@@ -78,7 +74,7 @@ fn get_(s: &str, env: &Env) -> Result<PathBuf, ErrorKind> {
   Ok(ret)
 }
 
-fn components(s: &str) -> Result<Vec<Component>, ErrorKind> {
+fn components(s: &str) -> Result<Vec<Component>, Error> {
   let mut ret = Vec::<Component>::new();
   let mut cur = String::new();
   let mut chars = s.chars().peekable();
@@ -90,7 +86,7 @@ fn components(s: &str) -> Result<Vec<Component>, ErrorKind> {
           cur.clear();
         }
         // although `$` alone is a valid var (in CM), it cannot terminate the path.
-        let &fst = chars.peek().ok_or(ErrorKind::ExpectedCharAfterDollar)?;
+        let &fst = chars.peek().ok_or(Error::ExpectedCharAfterDollar)?;
         let mut var = String::new();
         if fst.is_ascii_alphabetic() {
           get_var_chars(&mut var, &mut chars);
@@ -98,7 +94,7 @@ fn components(s: &str) -> Result<Vec<Component>, ErrorKind> {
           chars.next();
           get_var_chars(&mut var, &mut chars);
           if chars.next() != Some(')') {
-            return Err(ErrorKind::ExpectedRRound);
+            return Err(Error::ExpectedRRound);
           }
         }
         // fall through, e.g. for `$/basis.cm`
