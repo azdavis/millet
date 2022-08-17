@@ -6,6 +6,7 @@
   "preview": true,
   "description": "Standard ML support for VS Code",
   "publisher": "azdavis",
+  "icon": "icon.png",
   "author": "Ariel Davis <ariel.z.davis@icloud.com>",
   "repository": {
     "url": "https://github.com/azdavis/millet.git",
