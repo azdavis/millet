@@ -134,18 +134,13 @@ where
 /// NOTE: this is hard-coded for specs in a declaration file. maybe we could make `(*! ... !*)`
 /// comments "doc comments" more generally?
 fn maybe_get_spec_comment(node: &SyntaxNode) -> Option<String> {
-  let com = node
-    .parent()?
-    .prev_sibling_or_token()?
-    .as_token()?
-    .prev_sibling_or_token()?;
-  let com = com.as_token()?;
-  if com.kind() != SyntaxKind::BlockComment {
-    return None;
+  let mut tok = node.first_token()?;
+  while tok.kind() != SyntaxKind::BlockComment {
+    tok = tok.prev_token()?;
   }
-  let mut lines: Vec<_> = com.text().lines().map(str::trim).collect();
+  let mut lines: Vec<_> = tok.text().lines().map(str::trim).collect();
   if lines.remove(0) != "(*!" || lines.pop()? != "!*)" {
     return None;
   }
-  Some(lines.join(" "))
+  Some(lines.join("\n"))
 }
