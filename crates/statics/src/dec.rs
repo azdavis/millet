@@ -206,7 +206,12 @@ fn get_pat_and_src_exp(
   val_bind: &hir::ValBind,
   src_exp: &mut FxHashMap<hir::Name, hir::ExpIdx>,
 ) -> (Pat, Ty) {
-  let ret = pat::get(st, cx, ars, ve, val_bind.pat, Generalizable::Always);
+  // this makes the rank of the bindings from the pat in a `val` the same as the variables bound by
+  // any fns on the exp, so we don't generalize a recursive call inside the exp, but we can
+  // generalize outside.
+  st.meta_gen.inc_rank();
+  let ret = pat::get(st, cx, ars, ve, val_bind.pat, Generalizable::Sometimes);
+  st.meta_gen.dec_rank();
   for name in ve.keys() {
     if !src_exp.contains_key(name) {
       src_exp.insert(name.clone(), val_bind.exp);

@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn no_over_generalize_infer_val() {
@@ -69,7 +69,7 @@ fun go x =
 
 #[test]
 fn recurse() {
-  fail(
+  check(
     r#"
 fun go n =
   if n <= 0 then ()
