@@ -70,7 +70,10 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
       p.bump();
       let s = p.string()?;
       p.bump();
-      let path = path(p, s.val)?;
+      let path = match path(p, s.val)? {
+        Some(x) => x,
+        None => return p.err(ErrorKind::AliasWithIgnoredPathVar),
+      };
       Root::Alias(s.wrap(path))
     }
     Some(Token::Group) => {
@@ -113,7 +116,9 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
         p.bump();
         let pathname = path(p, s.val)?;
         p.eat(Token::RRound)?;
-        ret.push(Export::Library(s.wrap(pathname)));
+        if let Some(pathname) = pathname {
+          ret.push(Export::Library(s.wrap(pathname)));
+        }
         continue;
       }
       _ => break,
@@ -141,7 +146,7 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
       _ => break,
     };
     p.bump();
-    let pathname = tok.wrap(path(p, s)?);
+    let pathname = path(p, s)?;
     let class = match p.cur() {
       Some(Token::Colon) => {
         p.bump();
@@ -155,14 +160,26 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
       }
       _ => None,
     };
-    ret.push(Member { pathname, class });
+    if let Some(pathname) = pathname {
+      ret.push(Member {
+        pathname: tok.wrap(pathname),
+        class,
+      });
+    }
   }
   Ok(ret)
 }
 
-fn path(p: &Parser<'_>, s: &str) -> Result<PathBuf> {
+fn path(p: &Parser<'_>, s: &str) -> Result<Option<PathBuf>> {
   match paths::slash_var_path::get(s, p.env) {
-    Ok(x) => Ok(x),
-    Err(e) => p.err(ErrorKind::SlashVarPathError(e)),
+    Ok(x) => Ok(Some(x)),
+    Err(e) => {
+      if let paths::slash_var_path::Error::Undefined(var) = &e {
+        if matches!(var.as_str(), "" | "SMLNJ-LIB") {
+          return Ok(None);
+        }
+      }
+      p.err(ErrorKind::SlashVarPathError(e))
+    }
   }
 }
