@@ -754,7 +754,7 @@ val {a, b} = r
 
 ## `|`
 
-Separate cases in a matcher.
+Separate arms in a matcher, constructors in a datatype, or cases in a `fun`.
 
 Note that a leading `|` for the first case is not allowed.
 
@@ -764,6 +764,11 @@ val describe = fn
 | 1 => "single"
 | 2 => "dual"
 | _ => "other"
+
+datatype ans = Yes | No
+
+fun toBool Yes = true
+  | toBool No = false
 ```
 
 ## `}`
