@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn no_over_generalize_infer_val() {
@@ -63,6 +63,17 @@ exception E
 fun go x =
   let val y = (fn [a] => a | _ => raise E) [x]
   in y end
+"#,
+  );
+}
+
+#[test]
+fn recurse() {
+  fail(
+    r#"
+fun go n =
+  if n <= 0 then ()
+  else let val ret = go (n - 1) in ret end
 "#,
   );
 }
