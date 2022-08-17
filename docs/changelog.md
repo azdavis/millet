@@ -4,6 +4,17 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.0
+
+- Stop parsing sooner if an error is encountered in some cases, leading to less error spam.
+- Report unknown types as `_`.
+- Tweak error codes.
+- Parse `...` as a declaration, expression, and type hole.
+- Add docs for keywords (including punctuation) on hover.
+- Fix a panic with `let` expressions with nothing between `in` and `end`.
+- Improve generalization of type variables by adapting the approach in "Efficient ML Type Inference Using Ranked Type Variables" (doi:10.1145/1292535.1292538).
+- Add icon, by [Yixin He][yixin].
+
 ## v0.2.11
 
 - Emit an error for the value restriction.
@@ -191,3 +202,4 @@ Although this is the first release with working CI to build and release the exte
 [cmlib]: https://github.com/standardml/cmlib
 [sml-nj-doc]: https://www.smlnj.org/doc/smlnj-lib/index.html
 [versioning]: /docs/versioning.md
+[yixin]: https://yixinhe.me
