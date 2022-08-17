@@ -6,7 +6,8 @@ use crate::pat_match::{Con, Pat, VariantName};
 use crate::st::St;
 use crate::ty;
 use crate::types::{
-  Cx, Def, EnvLike as _, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo,
+  Cx, Def, EnvLike as _, Generalizable, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv,
+  ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
@@ -18,12 +19,13 @@ pub(crate) fn get(
   ars: &hir::Arenas,
   ve: &mut ValEnv,
   pat: hir::PatIdx,
+  g: Generalizable,
 ) -> (Pat, Ty) {
   let pat_ = match pat {
     Some(x) => x,
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
-  let ((pat, ty), ty_scheme, def) = get_(st, cx, ars, ve, pat_);
+  let ((pat, ty), ty_scheme, def) = get_(st, cx, ars, ve, pat_, g);
   let ty_entry = TyEntry {
     ty: ty.clone(),
     ty_scheme,
@@ -38,13 +40,14 @@ fn get_(
   ars: &hir::Arenas,
   ve: &mut ValEnv,
   pat_: hir::la_arena::Idx<hir::Pat>,
+  g: Generalizable,
 ) -> ((Pat, Ty), Option<TyScheme>, Option<Def>) {
   let pat = Some(pat_);
   let mut ty_scheme = None::<TyScheme>;
   let mut def = None::<Def>;
   let pat_ty = match &ars.pat[pat_] {
     // sml_def(32)
-    hir::Pat::Wild => any(st, pat),
+    hir::Pat::Wild => any(st, pat, g),
     // sml_def(33)
     hir::Pat::SCon(scon) => {
       let con = match scon {
@@ -57,21 +60,22 @@ fn get_(
         hir::SCon::Char(c) => Con::Char(*c),
         hir::SCon::String(s) => Con::String(s.clone()),
       };
-      (Pat::zero(con, pat), get_scon(st, scon))
+      let t = get_scon(st, scon, g);
+      (Pat::zero(con, pat), t)
     }
     hir::Pat::Con(path, arg) => {
-      let arg = arg.map(|x| get(st, cx, ars, ve, x));
+      let arg = arg.map(|x| get(st, cx, ars, ve, x, g));
       let maybe_val_info = match get_val_info(&cx.env, path) {
         Ok(x) => x,
         Err(e) => {
           st.err(pat_, e);
-          return (any(st, pat), ty_scheme, def);
+          return (any(st, pat, g), ty_scheme, def);
         }
       };
       let is_var = arg.is_none() && path.structures().is_empty() && ok_val_info(maybe_val_info);
       // sml_def(34)
       if is_var {
-        let (pm_pat, ty) = any(st, pat);
+        let (pm_pat, ty) = any(st, pat, g);
         insert_name(st, ve, path.last().clone(), ty.clone(), pat_.into());
         return ((pm_pat, ty), ty_scheme, def);
       }
@@ -79,7 +83,7 @@ fn get_(
         Some(x) => x,
         None => {
           st.err(pat_, ErrorKind::Undefined(Item::Val, path.last().clone()));
-          return (any(st, pat), ty_scheme, def);
+          return (any(st, pat, g), ty_scheme, def);
         }
       };
       let variant_name = match &val_info.id_status {
@@ -90,7 +94,7 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
-      let ty = instantiate(st, val_info.ty_scheme.clone());
+      let ty = instantiate(st, val_info.ty_scheme.clone(), g);
       // sml_def(35), sml_def(41)
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
@@ -128,7 +132,7 @@ fn get_(
           (sym, vec![arg_pat], *res_ty)
         }
         // should have already errored
-        _ => return (any(st, pat), ty_scheme, def),
+        _ => return (any(st, pat, g), ty_scheme, def),
       };
       let pat = Pat::con(Con::Variant(sym, variant_name), args, pat);
       (pat, ty)
@@ -138,14 +142,14 @@ fn get_(
       let mut labels = BTreeSet::<hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
       let rows = record(st, rows, pat_, |st, lab, pat| {
-        let (pm_pat, ty) = get(st, cx, ars, ve, pat);
+        let (pm_pat, ty) = get(st, cx, ars, ve, pat, g);
         labels.insert(lab.clone());
         pats.push(pm_pat);
         ty
       });
       let ty = if *allows_other {
         // sml_def(38)
-        let mv = st.gen_meta_var();
+        let mv = st.meta_gen.gen(g);
         let k = SubstEntry::Kind(TyVarKind::Record(rows));
         assert!(st.subst().insert(mv, k).is_none(),);
         Ty::MetaVar(mv)
@@ -160,7 +164,7 @@ fn get_(
     }
     // sml_def(42)
     hir::Pat::Typed(inner, want) => {
-      let (pm_pat, got) = get(st, cx, ars, ve, *inner);
+      let (pm_pat, got) = get(st, cx, ars, ve, *inner, g);
       let mut want = ty::get(st, cx, ars, *want);
       unify(st, want.clone(), got, inner.unwrap_or(pat_));
       apply(st.subst(), &mut want);
@@ -171,17 +175,17 @@ fn get_(
       if !ok_val_info(cx.env.get_val(name)) {
         st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));
       }
-      let (pm_pat, ty) = get(st, cx, ars, ve, *inner);
+      let (pm_pat, ty) = get(st, cx, ars, ve, *inner, g);
       insert_name(st, ve, name.clone(), ty.clone(), pat_.into());
       (pm_pat, ty)
     }
     hir::Pat::Or(or_pat) => {
       let mut fst_ve = ValEnv::default();
-      let (fst_pm_pat, mut ty) = get(st, cx, ars, &mut fst_ve, or_pat.first);
+      let (fst_pm_pat, mut ty) = get(st, cx, ars, &mut fst_ve, or_pat.first, g);
       let mut pm_pats = vec![fst_pm_pat];
       for &pat in or_pat.rest.iter() {
         let mut rest_ve = ValEnv::default();
-        let (rest_pm_pat, rest_ty) = get(st, cx, ars, &mut rest_ve, pat);
+        let (rest_pm_pat, rest_ty) = get(st, cx, ars, &mut rest_ve, pat, g);
         pm_pats.push(rest_pm_pat);
         let idx = hir::Idx::from(pat.unwrap_or(pat_));
         unify(st, ty.clone(), rest_ty, idx);
@@ -211,8 +215,10 @@ fn get_(
   (pat_ty, ty_scheme, def)
 }
 
-fn any(st: &mut St, pat: hir::PatIdx) -> (Pat, Ty) {
-  (Pat::zero(Con::Any, pat), Ty::MetaVar(st.gen_meta_var()))
+fn any(st: &mut St, pat: hir::PatIdx, g: Generalizable) -> (Pat, Ty) {
+  let p = Pat::zero(Con::Any, pat);
+  let t = Ty::MetaVar(st.meta_gen.gen(g));
+  (p, t)
 }
 
 fn ok_val_info(vi: Option<&ValInfo>) -> bool {

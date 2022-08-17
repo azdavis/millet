@@ -3,8 +3,8 @@ use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, Cx, Env, EnvLike as _, FixedTyVars, HasRecordMetaVars, IdStatus,
-  StartedSym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
+  generalize, generalize_fixed, Cx, Env, EnvLike as _, FixedTyVars, Generalizable,
+  HasRecordMetaVars, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
@@ -86,7 +86,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         if !generalized.insert(exp) {
           continue;
         }
-        let g = generalize(st.subst(), fixed.clone(), &mut val_info.ty_scheme);
+        let mv_g = st.meta_gen.generalizer();
+        let g = generalize(mv_g, st.subst(), fixed.clone(), &mut val_info.ty_scheme);
         if expansive(&cx, ars, exp) && !val_info.ty_scheme.bound_vars.is_empty() {
           st.err(
             exp.map_or(hir::Idx::Dec(dec), hir::Idx::Exp),
@@ -205,7 +206,7 @@ fn get_pat_and_src_exp(
   val_bind: &hir::ValBind,
   src_exp: &mut FxHashMap<hir::Name, hir::ExpIdx>,
 ) -> (Pat, Ty) {
-  let ret = pat::get(st, cx, ars, ve, val_bind.pat);
+  let ret = pat::get(st, cx, ars, ve, val_bind.pat, Generalizable::Always);
   for name in ve.keys() {
     if !src_exp.contains_key(name) {
       src_exp.insert(name.clone(), val_bind.exp);

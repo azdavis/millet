@@ -1,8 +1,8 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn no_over_generalize_infer_val() {
-  fail(
+  check(
     r#"
 fun id x =
   let val ret = x
@@ -20,7 +20,7 @@ val _ = z
 
 #[test]
 fn no_over_generalize_infer_fun() {
-  fail(
+  check(
     r#"
 fun id x =
   let fun get () = x
@@ -56,7 +56,7 @@ val _ = z
 
 #[test]
 fn through_list() {
-  fail(
+  check(
     r#"
 exception E
 

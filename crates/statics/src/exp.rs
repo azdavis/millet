@@ -3,7 +3,9 @@ use crate::get_env::get_val_info;
 use crate::info::TyEntry;
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{Cx, Def, Env, EnvLike as _, Sym, SymsMarker, Ty, TyScheme, ValEnv};
+use crate::types::{
+  Cx, Def, Env, EnvLike as _, Generalizable, Sym, SymsMarker, Ty, TyScheme, ValEnv,
+};
 use crate::unify::unify;
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
@@ -18,18 +20,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
   let mut def = None::<Def>;
   let ret = match &ars.exp[exp] {
     hir::Exp::Hole => {
-      let mv = st.gen_meta_var();
+      let mv = st.meta_gen.gen(Generalizable::Always);
       st.insert_hole(mv, exp.into());
       Ty::MetaVar(mv)
     }
     // sml_def(1)
-    hir::Exp::SCon(scon) => get_scon(st, scon),
+    hir::Exp::SCon(scon) => get_scon(st, scon, Generalizable::Always),
     // sml_def(2)
     hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
         def = val_info.def;
-        instantiate(st, val_info.ty_scheme.clone())
+        instantiate(st, val_info.ty_scheme.clone(), Generalizable::Always)
       }
       Ok(None) => {
         st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
@@ -66,7 +68,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
         Ty::None => Ty::None,
         Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),
         Ty::MetaVar(_) => {
-          let mut ret = Ty::MetaVar(st.gen_meta_var());
+          let mut ret = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
           let got = Ty::fun(arg_ty, ret.clone());
           unify(st, func_ty, got, exp);
           apply(st.subst(), &mut ret);
@@ -98,7 +100,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     hir::Exp::Raise(inner) => {
       let got = get(st, cx, ars, *inner);
       unify(st, Ty::EXN, got, inner.unwrap_or(exp));
-      Ty::MetaVar(st.gen_meta_var())
+      Ty::MetaVar(st.meta_gen.gen(Generalizable::Always))
     }
     // sml_def(12)
     hir::Exp::Fn(matcher) => {
@@ -131,13 +133,14 @@ fn get_matcher(
   matcher: &[(hir::PatIdx, hir::ExpIdx)],
   idx: hir::Idx,
 ) -> (Vec<Pat>, Ty, Ty) {
-  let mut param_ty = Ty::MetaVar(st.gen_meta_var());
-  let mut res_ty = Ty::MetaVar(st.gen_meta_var());
+  let mut param_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
+  let mut res_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
   let mut pats = Vec::<Pat>::new();
+  st.meta_gen.inc_rank();
   // sml_def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
-    let (pm_pat, pat_ty) = pat::get(st, cx, ars, &mut ve, pat);
+    let (pm_pat, pat_ty) = pat::get(st, cx, ars, &mut ve, pat, Generalizable::Sometimes);
     let mut cx = cx.clone();
     cx.env.push(Env {
       val_env: ve,
@@ -152,6 +155,7 @@ fn get_matcher(
     apply(st.subst(), &mut res_ty);
     pats.push(pm_pat);
   }
+  st.meta_gen.dec_rank();
   (pats, param_ty, res_ty)
 }
 

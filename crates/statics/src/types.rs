@@ -189,7 +189,7 @@ impl<'a> MetaVarNames<'a> {
   pub(crate) fn extend_for(&mut self, ty: &Ty) {
     meta_vars(
       &Subst::default(),
-      &mut |x| {
+      &mut |x, _| {
         self.map.entry(x).or_insert_with(|| {
           let ret = MetaVarName::Idx(self.next_idx);
           self.next_idx += 1;
@@ -527,21 +527,85 @@ impl BoundTyVar {
 ///
 /// Should eventually be solved in a [`Subst`], but before that, it may be "restricted" by the
 /// `Subst` without yet being fully solved to a type.
+///
+/// Internally contains a "rank" to know when it should be generalizable; see "Efficient ML Type
+/// Inference Using Ranked Type Variables" (doi:10.1145/1292535.1292538)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct MetaTyVar {
   id: u32,
+  rank: MetaTyVarRank,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub(crate) enum MetaTyVarRank {
+  Finite(u16),
+  Infinite,
+}
+
+impl MetaTyVar {
+  pub(crate) fn rank(&self) -> MetaTyVarRank {
+    self.rank
+  }
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct MetaTyVarGen {
   id: u32,
+  rank: u16,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Generalizable {
+  Sometimes,
+  Always,
 }
 
 impl MetaTyVarGen {
-  pub(crate) fn gen(&mut self) -> MetaTyVar {
-    let ret = MetaTyVar { id: self.id };
+  pub(crate) fn gen(&mut self, g: Generalizable) -> MetaTyVar {
+    let ret = MetaTyVar {
+      id: self.id,
+      rank: match g {
+        Generalizable::Sometimes => MetaTyVarRank::Finite(self.rank),
+        Generalizable::Always => MetaTyVarRank::Infinite,
+      },
+    };
     self.id += 1;
     ret
+  }
+
+  pub(crate) fn inc_rank(&mut self) {
+    self.rank += 1;
+  }
+
+  pub(crate) fn dec_rank(&mut self) {
+    self.rank -= 1;
+  }
+
+  pub(crate) fn generalizer(&self) -> MetaTyVarGeneralizer {
+    MetaTyVarGeneralizer { rank: self.rank }
+  }
+
+  pub(crate) fn gen_same_rank(&mut self, mv: MetaTyVar) -> MetaTyVar {
+    let ret = MetaTyVar {
+      id: self.id,
+      rank: mv.rank,
+    };
+    self.id += 1;
+    ret
+  }
+}
+
+#[derive(Debug)]
+pub(crate) struct MetaTyVarGeneralizer {
+  rank: u16,
+}
+
+impl MetaTyVarGeneralizer {
+  fn is_generalizable(&self, mv: &MetaTyVar) -> bool {
+    match mv.rank {
+      MetaTyVarRank::Finite(r) => r > self.rank,
+      MetaTyVarRank::Infinite => true,
+    }
   }
 }
 
@@ -1049,6 +1113,7 @@ impl FixedTyVars {
 ///
 /// panics if the type scheme already binds vars.
 pub(crate) fn generalize(
+  mv_generalizer: MetaTyVarGeneralizer,
   subst: &Subst,
   fixed: FixedTyVars,
   ty_scheme: &mut TyScheme,
@@ -1057,8 +1122,10 @@ pub(crate) fn generalize(
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
   meta_vars(
     subst,
-    &mut |x| {
-      meta.insert(x, None);
+    &mut |x, _| {
+      if mv_generalizer.is_generalizable(&x) {
+        meta.insert(x, None);
+      }
     },
     &ty_scheme.ty,
   );
@@ -1115,16 +1182,15 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
   );
 }
 
-fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
+pub(crate) fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
 where
-  F: FnMut(MetaTyVar),
+  F: FnMut(MetaTyVar, Option<&TyVarKind>),
 {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
     Ty::MetaVar(mv) => match subst.get(mv) {
-      None | Some(SubstEntry::Kind(_)) => {
-        f(*mv);
-      }
+      None => f(*mv, None),
+      Some(SubstEntry::Kind(k)) => f(*mv, Some(k)),
       Some(SubstEntry::Solved(ty)) => meta_vars(subst, f, ty),
     },
     Ty::Record(rows) => {

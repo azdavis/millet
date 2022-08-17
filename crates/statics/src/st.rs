@@ -13,7 +13,7 @@ use crate::util::apply;
 pub(crate) struct St {
   subst: Subst,
   errors: Vec<Error>,
-  meta_gen: MetaTyVarGen,
+  pub(crate) meta_gen: MetaTyVarGen,
   fixed_gen: FixedTyVarGen,
   info: Info,
   matches: Vec<Match>,
@@ -61,10 +61,6 @@ impl St {
       idx: idx.into(),
       kind,
     })
-  }
-
-  pub(crate) fn gen_meta_var(&mut self) -> MetaTyVar {
-    self.meta_gen.gen()
   }
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: hir::TyVar) -> FixedTyVar {

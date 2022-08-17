@@ -1,6 +1,8 @@
+use fast_hash::FxHashMap;
+
 use crate::error::ErrorKind;
 use crate::st::St;
-use crate::types::{MetaTyVar, SubstEntry, Ty, TyVarKind};
+use crate::types::{meta_vars, MetaTyVar, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
 #[derive(Debug)]
@@ -67,7 +69,7 @@ pub(crate) fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
   }
 }
 
-fn unify_mv(st: &mut St, mv: MetaTyVar, ty: Ty) -> Result {
+fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
   // return without doing anything if the meta vars are the same.
   if let Ty::MetaVar(mv2) = &ty {
     if mv == *mv2 {
@@ -78,6 +80,26 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, ty: Ty) -> Result {
   if occurs(&mv, &ty) {
     return Err(UnifyError::OccursCheck(mv, ty));
   }
+  // tweak down the rank of all other meta vars in the ty.
+  let mut map = FxHashMap::<MetaTyVar, (MetaTyVar, Option<TyVarKind>)>::default();
+  let mut meta_gen = std::mem::take(&mut st.meta_gen);
+  meta_vars(
+    st.subst(),
+    &mut |x, k| {
+      if x.rank() > mv.rank() {
+        map.insert(x, (meta_gen.gen_same_rank(mv), k.cloned()));
+      }
+    },
+    &ty,
+  );
+  st.meta_gen = meta_gen;
+  for (k, (v, kind)) in map {
+    st.subst().insert(k, SubstEntry::Solved(Ty::MetaVar(v)));
+    if let Some(kind) = kind {
+      st.subst().insert(v, SubstEntry::Kind(kind));
+    }
+  }
+  apply(st.subst(), &mut ty);
   // solve mv to ty. however, mv may already have an entry.
   match st.subst().insert(mv, SubstEntry::Solved(ty.clone())) {
     // do nothing if no entry.

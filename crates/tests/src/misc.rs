@@ -172,8 +172,8 @@ fn id() {
   check(
     r#"
 val id = fn x => x
-val _ = id 3
-val _ = id "hey"
+val a = id 3
+val b = id "hey"
 val _ = if id false then id 1 + 1 else id (2 + 2)
 "#,
   );
@@ -634,6 +634,17 @@ fn empty_let() {
     r#"
 val _ = let in end
 (**            ^^^ expected an expression *)
+"#,
+  );
+}
+
+#[test]
+fn uh() {
+  check(
+    r#"
+val id = fn x => x
+val a = if id true then id "1" else id "2"
+val b = id 1 + 1
 "#,
   );
 }

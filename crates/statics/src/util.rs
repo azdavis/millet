@@ -1,24 +1,24 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{
-  BasicOverload, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
+  BasicOverload, Generalizable, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
 };
 use fast_hash::FxHashMap;
 
-pub(crate) fn get_scon(st: &mut St, scon: &hir::SCon) -> Ty {
+pub(crate) fn get_scon(st: &mut St, scon: &hir::SCon, g: Generalizable) -> Ty {
   // we could have all of these return the basic overloads, but some of them will all only allow the
   // default types anyway.
   match scon {
-    hir::SCon::Int(_) => basic_overload(st, BasicOverload::Int),
+    hir::SCon::Int(_) => basic_overload(st, BasicOverload::Int, g),
     hir::SCon::Real(_) => Ty::REAL,
-    hir::SCon::Word(_) => basic_overload(st, BasicOverload::Word),
+    hir::SCon::Word(_) => basic_overload(st, BasicOverload::Word, g),
     hir::SCon::Char(_) => Ty::CHAR,
     hir::SCon::String(_) => Ty::STRING,
   }
 }
 
-fn basic_overload(st: &mut St, b: BasicOverload) -> Ty {
-  let mv = st.gen_meta_var();
+fn basic_overload(st: &mut St, b: BasicOverload, g: Generalizable) -> Ty {
+  let mv = st.meta_gen.gen(g);
   let entry = SubstEntry::Kind(TyVarKind::Overloaded(Overload::Basic(b)));
   st.subst().insert(mv, entry);
   Ty::MetaVar(mv)
@@ -76,12 +76,12 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
 
 /// instantiates the type scheme's type with new meta type vars, according to the bound vars of the
 /// type scheme.
-pub(crate) fn instantiate(st: &mut St, ty_scheme: TyScheme) -> Ty {
+pub(crate) fn instantiate(st: &mut St, ty_scheme: TyScheme, g: Generalizable) -> Ty {
   let subst: Vec<_> = ty_scheme
     .bound_vars
     .kinds()
     .map(|x| {
-      let mv = st.gen_meta_var();
+      let mv = st.meta_gen.gen(g);
       if let Some(k) = x {
         let k = SubstEntry::Kind(k.clone());
         assert!(st.subst().insert(mv, k).is_none())
