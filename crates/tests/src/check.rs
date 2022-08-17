@@ -13,16 +13,21 @@ use std::fmt::{self, Write as _};
 /// - are always on only one line
 /// - start with `(**`
 /// - point at the things that should have errors with `^` or `v`
-/// - contain the expected error message for those things
+/// - contain the expected error message/hover for those things
+///
+/// The expectation messages have a certain format:
+///
+/// - Error expects have no special prefix, and must match exactly.
+/// - Hover expects begin with `hover: `, and the actual hover must merely contain the message.
 ///
 /// To construct the string to pass without worrying about Rust string escape sequences, use the raw
 /// string syntax: `r#"..."#`.
 ///
 /// ```ignore
 /// check(r#"
-/// (**       vvv message about bar *)
+/// (**       vvv error about bar *)
 /// val foo = bar quz
-/// (**           ^^^ message about quz *)
+/// (**           ^^^ hover: info about quz *)
 /// "#);
 /// ```
 ///
@@ -179,7 +184,6 @@ impl Check {
     for (&path, file) in ret.files.iter() {
       for (&region, expect) in file.want.iter() {
         if matches!(expect.kind, ExpectKind::Hover) {
-          let want = format!("```sml\n{}\n```\n", expect.msg);
           let pos = match region {
             Region::Exact {
               line, col_start, ..
@@ -195,10 +199,10 @@ impl Check {
           let r = match an.get_md(path.wrap(pos)) {
             None => Reason::NoHover(path.wrap(region)),
             Some((got, _)) => {
-              if want == got {
+              if got.contains(&expect.msg) {
                 continue;
               } else {
-                Reason::Mismatched(path.wrap(region), want, got)
+                Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
               }
             }
           };
