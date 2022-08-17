@@ -80,8 +80,8 @@ There was a cycle between files.
 
 For instance, a cycle occurs if a group file attempts to include itself. As another example, a cycle also occurs if:
 
-- A group file A attempts to include a group file B, and
-- that file B also attempts to include A.
+- A group file `X` attempts to include a group file `Y`, and
+- that file `Y` also attempts to include `X`.
 
 To fix, break the cycle.
 
@@ -698,7 +698,7 @@ This is invalid, but the reason why is subtle. Before we explain the reason, not
 
 The fact that both the definition site and the corrected call site for `Func` have an extra `structure` keyword is a clue.
 
-The key is in the definition of `Func`. We use the syntax
+The key is in the definition of `Func`. We use the syntax:
 
 ```sml
 functor Func (structure Param : SIG)
@@ -839,10 +839,9 @@ Millet reports these overloaded types with intentionally invalid SML syntax. Her
 
 When using overloaded functions, there must exist a single actual type being used. For instance, `+` is overloaded as `<num>`, which means it works with `word`, `real`, and `int`. However, `+` cannot add a `real` to a `word`, or an `int` to a `real`, or any such similar combination. It can only add two `word`s, or two `real`s, or two `int`s.
 
-Note also that:
+Further, Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax.
 
-- Millet will report a type of `_` for invalid expressions, like variables that aren't defined.
-- Although `_` is not actually valid syntax for types, Millet will parse it and then emit 5027 if it encounters the type `_` written in code.
+Finally, if Millet encounters an invalid expression, like a variable that was undefined, it will report the type `_`. Although Millet is able to parse `_` as a type "hole" if written in code, this again is not valid SML syntax.
 
 ## 5007
 
@@ -1296,7 +1295,8 @@ type thing = string * _ list * int
 Type holes can be either `_` or `...`.
 
 ```sml
-type func = ... -> ....
+(* error *)
+type func = ... -> ...
 ```
 
 To fix, replace the hole with a real type.
