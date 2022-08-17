@@ -465,6 +465,7 @@ A value declaration evaluates the expression on the right, then matches it with 
 
 ```sml
 val y = 6
+val (_, x) = ("ignored", "bound to x")
 ```
 
 ## `as`
@@ -704,26 +705,23 @@ Also indicates the end of input when in a REPL.
 
 ## `=`
 
-Assign things.
+1. Assign things.
 
-```sml
-val a = 5
-fun f x = x + 4
-```
+   ```sml
+   val a = 5
+   fun f x = x + 4
+   ```
 
-Also is defined as the polymorphic equality function.
+2. Check for equality.
 
-```sml
-fun f n =
-  if n = 5 then "yay" else "nah"
-
-fun g s =
-  if s = "yay" then 5 else 0
-```
+   ```sml
+   fun isZero n = n = 0
+   fun f s = if "foo" = s then 1 else 2
+   ```
 
 ## `[`
 
-Begins a list expression or pattern.
+Begin a list expression or pattern.
 
 ```sml
 val xs = [1, 4, 9]
