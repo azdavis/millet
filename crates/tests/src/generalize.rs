@@ -60,12 +60,9 @@ fn through_list() {
     r#"
 exception E
 
-fun guh x =
-  let
-    val y = (fn [a] => a | _ => raise E) [x]
-  in
-    y
-  end
+fun go x =
+  let val y = (fn [a] => a | _ => raise E) [x]
+  in y end
 "#,
   );
 }
