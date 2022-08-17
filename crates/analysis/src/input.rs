@@ -205,7 +205,24 @@ where
       });
     }
     if let Some(ws) = config.workspace {
-      path_vars = ws.path_vars.unwrap_or_default();
+      if let Some(ws_path_vars) = ws.path_vars {
+        for (key, val) in ws_path_vars {
+          match val {
+            config::PathVar::Value(val) => {
+              path_vars.insert(key, val);
+            }
+            config::PathVar::Path(p) => {
+              let val: str_util::SmolStr = root
+                .paths
+                .as_path()
+                .join(p.as_str())
+                .to_string_lossy()
+                .into();
+              path_vars.insert(key, val);
+            }
+          }
+        }
+      }
       // try to get from the config.
       if let (None, Some(path)) = (&root.group_path, ws.root) {
         let path = root.paths.as_path().join(path.as_str());

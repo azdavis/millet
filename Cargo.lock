@@ -27,6 +27,7 @@ dependencies = [
  "mlb-syntax",
  "paths",
  "statics",
+ "str-util",
  "syntax",
  "text-pos",
  "text-size-util",
@@ -98,7 +99,7 @@ dependencies = [
 name = "config"
 version = "0.1.0"
 dependencies = [
- "paths",
+ "fast-hash",
  "serde",
  "str-util",
 ]

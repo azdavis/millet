@@ -26,3 +26,4 @@ text-size-util = { path = "../text-size-util" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }
+str-util = { path = "../str-util" }

@@ -11,4 +11,4 @@ doctest = false
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 str-util = { path = "../str-util" }
-paths = { path = "../paths" }
+fast-hash = { path = "../fast-hash" }
