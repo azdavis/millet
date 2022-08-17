@@ -138,3 +138,13 @@ val _ = 0w0: SysWord.word
 "#,
   );
 }
+
+#[test]
+fn fn_doc() {
+  check_with_std_basis(
+    r#"
+val _ = Fn.id
+(**        ^^ hover: `id x` returns `x`. *)
+"#,
+  );
+}
