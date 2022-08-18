@@ -2,12 +2,6 @@
 
 priority is approximate. if unsure of priority, put in low.
 
-## high
-
-- get art
-  - stick image in readme
-  - add 'icon' field of package.json (128x128 png)
-
 ## medium
 
 - handle equality types
@@ -17,18 +11,15 @@ priority is approximate. if unsure of priority, put in low.
 - improve hover for type
   - hover on structure/signature/functor?
 - improve hover for doc
-  - add more
   - use md features
   - allow in non-std-basis?
 - add assists
-  - fill case
   - fill struct ascribing to signature with "empty" stuff
   - rewrite constructs that wouldn't pass style check to ones that would
 - get better error messages
   - improve ranges of stuff (names?)
   - show fully qualified names in type errors
   - related: avoid clashes between ty vars
-  - better parser errors?
 - make it more performant
   - don't re-IO, re-lex, re-parse, re-lower every file every time
   - only lower the parts of the syntax tree that changed?
@@ -37,7 +28,6 @@ priority is approximate. if unsure of priority, put in low.
 
 ## low
 
-- make website
 - implement statics for `abstype`
 - impl more tools
   - auto formatter
