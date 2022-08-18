@@ -4,6 +4,14 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.1
+
+- Add docs for std lib extras.
+- Ignore `$(SML_LIB)` paths in MLB.
+- Ignore `$` and `$SMLNJ-LIB` paths in CM.
+- Allow using `{ path = ... }` and `{ value = ... }` for `workspace.path-vars` in the config.
+- Improve logo quality.
+
 ## v0.3.0
 
 - Stop parsing sooner if an error is encountered in some cases, leading to less error spam.
