@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.2
+
+- Allow for doc comments written `(*! ... *!)`. The delimiters must be on their own line, and the content is parsed as Markdown.
+
 ## v0.3.1
 
 - Add docs for std lib extras.
