@@ -601,6 +601,7 @@ pub(crate) struct MetaTyVarGeneralizer {
 }
 
 impl MetaTyVarGeneralizer {
+  // returns in O(1) time.
   fn is_generalizable(&self, mv: &MetaTyVar) -> bool {
     match mv.rank {
       MetaTyVarRank::Finite(r) => r > self.rank,
@@ -1120,6 +1121,9 @@ pub(crate) fn generalize(
 ) -> Result<(), HasRecordMetaVars> {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
+  // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
+  // if we did not, we would have to traverse the whole `Env` to know what ty vars are present in
+  // it, and subtract those vars from the vars in `ty_scheme.ty`.
   meta_vars(
     subst,
     &mut |x, _| {

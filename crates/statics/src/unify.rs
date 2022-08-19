@@ -86,6 +86,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
   meta_vars(
     st.subst(),
     &mut |x, k| {
+      // this is crucial!
       if x.rank() > mv.rank() {
         map.insert(x, (meta_gen.gen_same_rank(mv), k.cloned()));
       }

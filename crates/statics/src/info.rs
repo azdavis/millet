@@ -150,6 +150,8 @@ pub enum Mode {
   /// Standard basis checking. Notably, ascription structure expressions will not check to see if
   /// they actually match the signature.
   ///
+  /// The string is the name of the std basis file.
+  ///
   /// Pass a map from hir indices to comments to have this be included in the [`Info`] returned.
   StdBasis(&'static str, FxHashMap<hir::Idx, String>),
 }
