@@ -639,17 +639,6 @@ val _ = let in end
 }
 
 #[test]
-fn uh() {
-  check(
-    r#"
-val id = fn x => x
-val a = if id true then id "1" else id "2"
-val b = id 1 + 1
-"#,
-  );
-}
-
-#[test]
 fn doc_comment() {
   check(
     r#"
