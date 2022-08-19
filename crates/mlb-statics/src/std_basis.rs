@@ -110,20 +110,22 @@ where
         panic!("{name}: statics error: {e}");
       }
       let mut info = checked.info;
-      for (idx, _) in low.arenas.spec.iter() {
-        let ptr = low
-          .ptrs
-          .hir_to_ast(idx.into())
-          .expect("no syntax ptr for spec");
-        let node = ptr.to_node(parsed.root.syntax());
-        if let Some(doc) = try_get_doc_comment(&node) {
-          info.add_doc(idx.into(), doc);
-        }
-      }
+      try_add_doc(parsed.root.syntax(), &low, &mut info);
       (name, info)
     })
     .collect();
   StdBasis { syms, basis, info }
+}
+
+fn try_add_doc(root: &SyntaxNode, low: &lower::Lower, info: &mut statics::Info) {
+  let indices = low.arenas.spec.iter().map(|(x, _)| hir::Idx::Spec(x));
+  for idx in indices {
+    let ptr = low.ptrs.hir_to_ast(idx).expect("no syntax ptr");
+    let node = ptr.to_node(root);
+    if let Some(doc) = try_get_doc_comment(&node) {
+      info.add_doc(idx, doc);
+    }
+  }
 }
 
 fn try_get_doc_comment(node: &SyntaxNode) -> Option<String> {
