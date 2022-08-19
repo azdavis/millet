@@ -8,7 +8,7 @@ The [language server][lang-srv] is [beta-quality software][known-issues]. It mig
 
 ## Install
 
-There is a [VS Code][vscode] extension on the the [marketplace][].
+There is a [VS Code][vscode] extension on the [marketplace][].
 
 VS Code is the only editor for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
 
