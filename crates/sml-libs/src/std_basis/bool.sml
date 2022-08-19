@@ -27,4 +27,7 @@ signature BOOL = sig
 end
 
 structure Bool :> BOOL = struct end
+(*!
+Alias for `Bool.not`.
+!*)
 val not = Bool.not

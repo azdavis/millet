@@ -148,3 +148,13 @@ val _ = Fn.id
 "#,
   );
 }
+
+#[test]
+fn alias() {
+  check_with_std_basis(
+    r#"
+val _ = not
+(**     ^^^ hover: Alias for `Bool.not`. *)
+"#,
+  );
+}
