@@ -8,6 +8,7 @@ mod std_basis;
 
 use fast_hash::FxHashMap;
 use std::fmt;
+use syntax::ast::AstNode;
 
 pub use parse::parser::STD_BASIS as STD_BASIS_FIX_ENV;
 pub use std_basis::StdBasis;
@@ -239,13 +240,15 @@ fn get_bas_dec(
         let (lex_errors, parsed, low) = start_source_file(contents, &mut fix_env);
         let mode = statics::Mode::Regular(Some(*path));
         let checked = statics::get(&mut cx.syms, &scope.basis, mode, &low.arenas, low.root);
+        let mut info = checked.info;
+        doc_comment::get(parsed.root.syntax(), &low, &mut info);
         let file = SourceFile {
           pos_db: text_pos::PositionDb::new(contents),
           lex_errors,
           parsed,
           lowered: low,
           statics_errors: checked.errors,
-          info: checked.info,
+          info,
         };
         ac.append(MBasis {
           fix_env,

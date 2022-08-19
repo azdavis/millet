@@ -648,3 +648,18 @@ val b = id 1 + 1
 "#,
   );
 }
+
+#[test]
+fn doc_comment() {
+  check(
+    r#"
+(*!
+Returns the number incremented.
+!*)
+fun inc x = x + 1
+
+val _ = inc
+(**     ^^^ hover: Returns the number incremented. *)
+"#,
+  );
+}

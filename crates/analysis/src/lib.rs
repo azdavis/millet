@@ -47,13 +47,15 @@ impl Analysis {
     let basis = self.std_basis.basis().clone();
     let mode = statics::Mode::Regular(None);
     let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
+    let mut info = checked.info;
+    mlb_statics::doc_comment::get(parsed.root.syntax(), &low, &mut info);
     let file = mlb_statics::SourceFile {
       pos_db: text_pos::PositionDb::new(contents),
       lex_errors,
       parsed,
       lowered: low,
       statics_errors: checked.errors,
-      info: checked.info,
+      info,
     };
     source_file_errors(&file, &syms, self.error_lines)
   }
