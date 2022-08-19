@@ -102,21 +102,7 @@ where
       if let Some(e) = low.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
-      let comment_map: FxHashMap<hir::Idx, _> = low
-        .arenas
-        .spec
-        .iter()
-        .filter_map(|(idx, _)| {
-          let ptr = low
-            .ptrs
-            .hir_to_ast(idx.into())
-            .expect("no syntax ptr for spec");
-          let node = ptr.to_node(parsed.root.syntax());
-          let com = maybe_get_spec_comment(&node)?;
-          Some((idx.into(), com))
-        })
-        .collect();
-      let mode = statics::Mode::StdBasis(name, comment_map);
+      let mode = statics::Mode::StdBasis(name);
       let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
       basis.append(checked.basis);
       if let Some(e) = checked.errors.first() {
@@ -125,7 +111,18 @@ where
           e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One)
         );
       }
-      (name, checked.info)
+      let mut info = checked.info;
+      for (idx, _) in low.arenas.spec.iter() {
+        let ptr = low
+          .ptrs
+          .hir_to_ast(idx.into())
+          .expect("no syntax ptr for spec");
+        let node = ptr.to_node(parsed.root.syntax());
+        if let Some(doc) = maybe_get_spec_comment(&node) {
+          info.add_doc(idx.into(), doc);
+        }
+      }
+      (name, info)
     })
     .collect();
   StdBasis { syms, basis, info }

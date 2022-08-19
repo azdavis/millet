@@ -17,10 +17,11 @@ pub(crate) struct TyEntry {
   pub(crate) ty_scheme: Option<TyScheme>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 struct InfoEntry {
   ty_entry: Option<TyEntry>,
   def: Option<Def>,
+  doc: Option<String>,
 }
 
 impl Info {
@@ -46,8 +47,14 @@ impl Info {
         ty_entry
       }),
       def,
+      doc: None,
     };
     assert!(self.store.insert(idx, entry).is_none());
+  }
+
+  /// Add documentation to an index. Returns the old doc.
+  pub fn add_doc(&mut self, idx: hir::Idx, doc: String) -> Option<String> {
+    self.store.entry(idx).or_default().doc.replace(doc)
   }
 
   pub(crate) fn tys_mut(&mut self) -> impl Iterator<Item = &mut Ty> {
@@ -93,10 +100,7 @@ impl Info {
 
   /// Returns documentation for this index.
   pub fn get_doc(&self, idx: hir::Idx) -> Option<&str> {
-    match &self.mode {
-      Mode::Regular(_) => None,
-      Mode::StdBasis(_, comments) => comments.get(&idx).map(String::as_str),
-    }
+    self.store.get(&idx)?.doc.as_deref()
   }
 
   /// Returns the definition site of the idx.
@@ -151,9 +155,7 @@ pub enum Mode {
   /// they actually match the signature.
   ///
   /// The string is the name of the std basis file.
-  ///
-  /// Pass a map from hir indices to comments to have this be included in the [`Info`] returned.
-  StdBasis(&'static str, FxHashMap<hir::Idx, String>),
+  StdBasis(&'static str),
 }
 
 impl Mode {
@@ -162,13 +164,13 @@ impl Mode {
   }
 
   pub(crate) fn is_std_basis(&self) -> bool {
-    matches!(self, Self::StdBasis(_, _))
+    matches!(self, Self::StdBasis(_))
   }
 
   pub(crate) fn path(&self) -> Option<DefPath> {
     match self {
       Self::Regular(p) => p.map(DefPath::Regular),
-      Self::StdBasis(name, _) => Some(DefPath::StdBasis(name)),
+      Self::StdBasis(name) => Some(DefPath::StdBasis(name)),
     }
   }
 }
