@@ -25,14 +25,12 @@ fn basic_overload(st: &mut St, b: BasicOverload, g: Generalizable) -> Ty {
 }
 
 /// sml_def(6), sml_def(39), sml_def(49)
-pub(crate) fn record<T, F, I>(st: &mut St, rows: &[(hir::Lab, T)], idx: I, mut f: F) -> RecordTy
+pub(crate) fn record<T, F>(st: &mut St, rows: &[(hir::Lab, T)], idx: hir::Idx, mut f: F) -> RecordTy
 where
   T: Copy,
   F: FnMut(&mut St, &hir::Lab, T) -> Ty,
-  I: Into<hir::Idx>,
 {
   let mut ty_rows = RecordTy::new();
-  let idx = idx.into();
   for (lab, val) in rows {
     let ty = f(st, lab, *val);
     match ty_rows.insert(lab.clone(), ty) {

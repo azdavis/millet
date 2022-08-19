@@ -13,10 +13,7 @@ pub(crate) enum UnifyError {
 
 pub(crate) type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
 
-pub(crate) fn unify<I>(st: &mut St, want: Ty, got: Ty, idx: I)
-where
-  I: Into<hir::Idx>,
-{
+pub(crate) fn unify(st: &mut St, want: Ty, got: Ty, idx: hir::Idx) {
   let e = match unify_(st, want.clone(), got.clone()) {
     Ok(()) => return,
     Err(e) => match e {

@@ -43,7 +43,10 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       }
     },
     // sml_def(3)
-    hir::Exp::Record(rows) => Ty::Record(record(st, rows, exp, |st, _, exp| get(st, cx, ars, exp))),
+    hir::Exp::Record(rows) => {
+      let rows = record(st, rows, exp.into(), |st, _, exp| get(st, cx, ars, exp));
+      Ty::Record(rows)
+    }
     // sml_def(4)
     hir::Exp::Let(dec, inner) => {
       let mut let_env = Env::default();
@@ -70,7 +73,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
         Ty::MetaVar(_) => {
           let mut ret = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
           let got = Ty::fun(arg_ty, ret.clone());
-          unify(st, func_ty, got, exp);
+          unify(st, func_ty, got, exp.into());
           apply(st.subst(), &mut ret);
           ret
         }
@@ -79,7 +82,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
           Ty::None
         }
         Ty::Fn(want_arg, mut want_res) => {
-          unify(st, *want_arg, arg_ty, arg.unwrap_or(exp));
+          unify(st, *want_arg, arg_ty, arg.unwrap_or(exp).into());
           apply(st.subst(), want_res.as_mut());
           *want_res
         }
@@ -90,8 +93,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
       let mut exp_ty = get(st, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
       let idx = inner.unwrap_or(exp);
-      unify(st, Ty::EXN, param.clone(), idx);
-      unify(st, exp_ty.clone(), res, idx);
+      unify(st, Ty::EXN, param.clone(), idx.into());
+      unify(st, exp_ty.clone(), res, idx.into());
       apply(st.subst(), &mut exp_ty);
       st.insert_handle(pats, param, idx.into());
       exp_ty
@@ -99,7 +102,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     // sml_def(11)
     hir::Exp::Raise(inner) => {
       let got = get(st, cx, ars, *inner);
-      unify(st, Ty::EXN, got, inner.unwrap_or(exp));
+      unify(st, Ty::EXN, got, inner.unwrap_or(exp).into());
       Ty::MetaVar(st.meta_gen.gen(Generalizable::Always))
     }
     // sml_def(12)
@@ -112,7 +115,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     hir::Exp::Typed(inner, want) => {
       let got = get(st, cx, ars, *inner);
       let mut want = ty::get(st, cx, ars, *want);
-      unify(st, want.clone(), got, exp);
+      unify(st, want.clone(), got, exp.into());
       apply(st.subst(), &mut want);
       want
     }
@@ -121,7 +124,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, exp: hir::ExpIdx) -> 
     ty: ret.clone(),
     ty_scheme,
   };
-  st.info().insert(exp, Some(ty_entry), def);
+  st.info().insert(exp.into(), Some(ty_entry), def);
   ret
 }
 

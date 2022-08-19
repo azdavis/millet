@@ -33,11 +33,7 @@ impl Info {
     }
   }
 
-  pub(crate) fn insert<I>(&mut self, idx: I, ty_entry: Option<TyEntry>, def: Option<Def>)
-  where
-    I: Into<hir::Idx>,
-  {
-    let idx = idx.into();
+  pub(crate) fn insert(&mut self, idx: hir::Idx, ty_entry: Option<TyEntry>, def: Option<Def>) {
     // ignore ty schemes that bind no vars
     let entry = InfoEntry {
       ty_entry: ty_entry.map(|mut ty_entry| {

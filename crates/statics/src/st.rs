@@ -39,14 +39,8 @@ impl St {
     self.info.mode()
   }
 
-  pub(crate) fn def<I>(&self, idx: I) -> Option<Def>
-  where
-    I: Into<hir::Idx>,
-  {
-    self.mode().path().map(|path| Def {
-      path,
-      idx: idx.into(),
-    })
+  pub(crate) fn def(&self, idx: hir::Idx) -> Option<Def> {
+    self.mode().path().map(|path| Def { path, idx })
   }
 
   pub(crate) fn subst(&mut self) -> &mut Subst {

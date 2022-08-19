@@ -54,7 +54,7 @@ fn get_str_dec(
       // sml_def(61)
       let mut str_env = StrEnv::default();
       for str_bind in str_binds {
-        let mut env = Env::with_def(st.def(str_dec));
+        let mut env = Env::with_def(st.def(str_dec.into()));
         get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
         if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
           st.err(str_dec, e);
@@ -104,7 +104,7 @@ fn get_str_dec(
       let mut sig_env = SigEnv::default();
       // sml_def(67)
       for sig_bind in sig_binds {
-        let mut env = Env::with_def(st.def(str_dec));
+        let mut env = Env::with_def(st.def(str_dec.into()));
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
         let sig = env_to_sig(bs, env);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
@@ -133,7 +133,7 @@ fn get_str_dec(
           str_env: map([(fun_bind.param_name.clone(), param_sig.env.clone())]),
           ..Default::default()
         });
-        let mut body_env = Env::with_def(st.def(str_dec));
+        let mut body_env = Env::with_def(st.def(str_dec.into()));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
         let mut body_ty_names = TyNameSet::default();
         env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
@@ -167,7 +167,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
     // sml_def(51)
     hir::StrExp::Path(path) => match get_env_from_str_path(&bs.env, path) {
       Ok(got_env) => {
-        st.info().insert(str_exp, None, got_env.def);
+        st.info().insert(str_exp.into(), None, got_env.def);
         ac.append(&mut got_env.clone());
       }
       Err(e) => st.err(str_exp, e),
@@ -218,7 +218,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         let mut param_env = fun_sig.param.env.clone();
         env_realize(&subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
-        let def = st.def(str_exp);
+        let def = st.def(str_exp.into());
         for env in to_add.str_env.values_mut() {
           env.def = def;
         }
@@ -228,7 +228,7 @@ fn get_str_exp(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, str_exp: h
         for val_info in to_add.val_env.values_mut() {
           val_info.def = def;
         }
-        st.info().insert(str_exp, None, fun_sig.body_env.def);
+        st.info().insert(str_exp.into(), None, fun_sig.body_env.def);
         ac.append(&mut to_add);
       }
       None => st.err(
@@ -271,7 +271,7 @@ fn get_sig_exp(
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
         env_realize(&subst, &mut sig_env);
-        st.info().insert(sig_exp, None, sig.env.def);
+        st.info().insert(sig_exp.into(), None, sig.env.def);
         ac.append(&mut sig_env);
         if st.mode().is_std_basis() {
           match name.as_str() {
@@ -409,7 +409,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
         let vi = ValInfo {
           ty_scheme,
           id_status: IdStatus::Val,
-          def: st.def(spec),
+          def: st.def(spec.into()),
         };
         let name = &val_desc.name;
         if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
@@ -470,7 +470,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &hir::Arenas, ac: &mut Env, spec: hir::Sp
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
-        def: st.def(spec),
+        def: st.def(spec.into()),
       };
       if let Some(e) = ins_check_name(&mut ac.val_env, ex_desc.name.clone(), vi, Item::Val) {
         st.err(spec, e);

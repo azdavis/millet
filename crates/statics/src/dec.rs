@@ -39,7 +39,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
         // sml_def(25)
         let (pm_pat, mut want) = get_pat_and_src_exp(st, &cx, ars, &mut ve, val_bind, &mut src_exp);
         let got = exp::get(st, &cx, ars, val_bind.exp);
-        unify(st, want.clone(), got, dec);
+        unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(
           pm_pat,
@@ -73,7 +73,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
           }
         }
         let got = exp::get(st, &cx, ars, val_bind.exp);
-        unify(st, want.clone(), got, dec);
+        unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, dec.into());
       }
@@ -144,7 +144,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &hir::Arenas, env: &mut Env, dec: h
             let vi = ValInfo {
               ty_scheme: TyScheme::zero(ty),
               id_status: IdStatus::Exn(exn),
-              def: st.def(dec),
+              def: st.def(dec.into()),
             };
             if let Some(e) = ins_check_name(&mut val_env, name.clone(), vi, Item::Val) {
               st.err(dec, e);

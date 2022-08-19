@@ -30,7 +30,7 @@ pub(crate) fn get(
     ty: ty.clone(),
     ty_scheme,
   };
-  st.info().insert(pat_, Some(ty_entry), def);
+  st.info().insert(pat_.into(), Some(ty_entry), def);
   (pat, ty)
 }
 
@@ -124,7 +124,7 @@ fn get_(
               Pat::zero(Con::Any, pat)
             }
             Some((arg_pat, arg_ty)) => {
-              unify(st, *param_ty, arg_ty, pat_);
+              unify(st, *param_ty, arg_ty, pat_.into());
               apply(st.subst(), &mut res_ty);
               arg_pat
             }
@@ -141,7 +141,7 @@ fn get_(
     hir::Pat::Record { rows, allows_other } => {
       let mut labels = BTreeSet::<hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
-      let rows = record(st, rows, pat_, |st, lab, pat| {
+      let rows = record(st, rows, pat_.into(), |st, lab, pat| {
         let (pm_pat, ty) = get(st, cx, ars, ve, pat, g);
         labels.insert(lab.clone());
         pats.push(pm_pat);
@@ -166,7 +166,7 @@ fn get_(
     hir::Pat::Typed(inner, want) => {
       let (pm_pat, got) = get(st, cx, ars, ve, *inner, g);
       let mut want = ty::get(st, cx, ars, *want);
-      unify(st, want.clone(), got, inner.unwrap_or(pat_));
+      unify(st, want.clone(), got, inner.unwrap_or(pat_).into());
       apply(st.subst(), &mut want);
       (pm_pat, want)
     }
