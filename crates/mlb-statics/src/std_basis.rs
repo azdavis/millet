@@ -106,10 +106,8 @@ where
       let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
       basis.append(checked.basis);
       if let Some(e) = checked.errors.first() {
-        panic!(
-          "{name}: statics error: {}",
-          e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One)
-        );
+        let e = e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One);
+        panic!("{name}: statics error: {e}");
       }
       let mut info = checked.info;
       for (idx, _) in low.arenas.spec.iter() {
