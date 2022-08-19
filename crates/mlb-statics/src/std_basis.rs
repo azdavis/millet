@@ -116,7 +116,7 @@ where
           .hir_to_ast(idx.into())
           .expect("no syntax ptr for spec");
         let node = ptr.to_node(parsed.root.syntax());
-        if let Some(doc) = maybe_get_spec_comment(&node) {
+        if let Some(doc) = try_get_doc_comment(&node) {
           info.add_doc(idx.into(), doc);
         }
       }
@@ -126,16 +126,12 @@ where
   StdBasis { syms, basis, info }
 }
 
-/// NOTE: this is hard-coded for specs in a declaration file. maybe we could make `(*! ... !*)`
-/// comments "doc comments" more generally?
-fn maybe_get_spec_comment(node: &SyntaxNode) -> Option<String> {
+fn try_get_doc_comment(node: &SyntaxNode) -> Option<String> {
   let mut tok = node.first_token()?;
   while tok.kind() != SyntaxKind::BlockComment {
     tok = tok.prev_token()?;
   }
   let mut lines: Vec<_> = tok.text().lines().map(str::trim).collect();
-  if lines.remove(0) != "(*!" || lines.pop()? != "!*)" {
-    return None;
-  }
-  Some(lines.join("\n"))
+  let is_doc_comment = !lines.is_empty() && lines.remove(0) == "(*!" && lines.pop()? == "!*)";
+  is_doc_comment.then(|| lines.join("\n"))
 }
