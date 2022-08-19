@@ -18,7 +18,7 @@ Install the dependencies:
 
 - [git][], to clone the repository.
 - [rust][] (i.e. `rustc` and `cargo`), to build Rust code.
-- [node][] (and `npm`), to build to VS Code extension in TypeScript.
+- [nodejs][] (i.e. `node` and `npm`), to build to VS Code extension in TypeScript.
 
 Then, `git clone` the repo, `cd` inside, and run `cargo xtask ci`.
 
@@ -47,7 +47,7 @@ Also:
 [known-issues]: /docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
-[node]: https://nodejs.org/en/
+[nodejs]: https://nodejs.org/en/
 [rust]: https://rustup.rs
 [sml]: https://smlfamily.github.io
 [vscode]: https://code.visualstudio.com
