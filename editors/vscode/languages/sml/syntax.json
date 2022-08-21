@@ -2,11 +2,11 @@
   "scopeName": "source.sml",
   "patterns": [
     { "include": "#blockComment" },
+    { "include": "#real" },
     { "include": "#decInt" },
     { "include": "#hexInt" },
     { "include": "#decWord" },
     { "include": "#hexWord" },
-    { "include": "#real" },
     { "include": "#char" },
     { "include": "#string" },
     { "include": "#specialName" },
@@ -23,6 +23,10 @@
       "end": "\\*\\)",
       "patterns": [{ "include": "#blockComment" }]
     },
+    "real": {
+      "name": "constant.numeric.float.decimal.sml",
+      "match": "(\\b|~)[0-9]+\\.[0-9]+([Ee]~?[0-9]+)?\\b"
+    },
     "decInt": {
       "name": "constant.numeric.integer.decimal.sml",
       "match": "(\\b|~)[0-9]+\\b"
@@ -38,10 +42,6 @@
     "hexWord": {
       "name": "constant.numeric.word.hexadecimal.sml",
       "match": "\\b0wx[0-9A-Fa-f]+\\b"
-    },
-    "real": {
-      "name": "constant.numeric.float.decimal.sml",
-      "match": "(\\b|~)[0-9]+\\.[0-9]+([Ee]~?[0-9]+)?\\b"
     },
     "char": {
       "name": "string.quoted.double.sml",
