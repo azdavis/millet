@@ -96,7 +96,7 @@ pub fn minimal() -> (Syms, Basis) {
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
-  let aliases = [("unit", unit()), ("exn", Ty::EXN)];
+  let aliases = [("unit", Ty::Record(RecordTy::new())), ("exn", Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter()
     .map(|(a, b)| (a.clone(), b.clone()))
@@ -214,8 +214,4 @@ fn pair(t1: Ty, t2: Ty) -> Ty {
     (hir::Lab::Num(1), t1),
     (hir::Lab::Num(2), t2),
   ]))
-}
-
-fn unit() -> Ty {
-  Ty::Record(RecordTy::new())
 }
