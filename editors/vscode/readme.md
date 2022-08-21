@@ -16,7 +16,7 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 
 The [language server][lang-srv] is [beta-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
 
-You can turn it off by setting `millet.useLanguageServer` to `false` in your VS Code settings.
+You can turn it off by setting `millet.server.enabled` to `false` in your VS Code settings.
 
 ## Features
 

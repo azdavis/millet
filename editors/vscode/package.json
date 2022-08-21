@@ -52,10 +52,10 @@
       "type": "object",
       "title": "Millet",
       "properties": {
-        "millet.useLanguageServer": {
+        "millet.server.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Use the language server."
+          "description": "Enable the language server."
         }
       }
     },
