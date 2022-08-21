@@ -126,7 +126,7 @@ There was an invalid character in the source file.
 val 空条承太郎 = 3
 ```
 
-Only certain ASCII characters may appear in names and the like. String literals and comments, however, should be able to handle arbitrary UTF-8.
+Only certain ASCII characters may appear in names and the like.
 
 To fix, only use allowed source characters. Only ASCII characters (but not all ASCII characters) are allowed.
 
