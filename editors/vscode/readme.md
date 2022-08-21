@@ -51,6 +51,9 @@ Bar.sml
 
 ```sml
 structure Foo = struct
+  (*!
+  `fact n` returns the factorial of `n`, given that `n` is non-negative.
+  !*)
   fun fact 0 = 1
     | fact n = n * fact (n - 1)
 end
