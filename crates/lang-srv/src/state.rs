@@ -129,7 +129,9 @@ impl State {
     let mut root = match self.root.take() {
       Some(x) => x,
       None => {
+        // TODO could improve support for no-root mode.
         log::warn!("can't handle request with no root");
+        self.send_response(Response::new_ok(req.id, None::<()>));
         return;
       }
     };
@@ -241,6 +243,9 @@ impl State {
 
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
+      if self.root.is_none() {
+        return;
+      }
       self.publish_diagnostics();
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
