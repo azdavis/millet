@@ -106,9 +106,11 @@ fn multi() {
   check_multi(&[
     r#"
 val a = 3
+exception Bad
 "#,
     r#"
-val b = a
+val b = a + 4
+fun err s = if s = "bad" then raise Bad else ()
 "#,
   ]);
 }
