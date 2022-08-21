@@ -1,6 +1,16 @@
 # Millet
 
-A language server for [Standard ML][sml].
+A language server for [Standard ML][sml] (SML).
+
+See the [blog post][blog] introducing the project.
+
+Millet analyzes SML code without running it, and provides information like:
+
+- Inline errors
+- Hover for type/documentation
+- Jump to definition
+
+Note that Millet does not actually run SML code. To do that, you'll need an installation of SML, like [SML/NJ][smlnj] or [MLton][mlton].
 
 ## Warning
 
@@ -42,12 +52,15 @@ Also:
 - 15-150 is taught in Standard ML.
 
 [architecture]: /docs/architecture.md
+[blog]: https://azdavis.net/posts/millet/
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [git]: https://git-scm.com
 [known-issues]: /docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
+[mlton]: http://mlton.org
 [nodejs]: https://nodejs.org/en/
 [rust]: https://rustup.rs
 [sml]: https://smlfamily.github.io
+[smlnj]: https://www.smlnj.org
 [vscode]: https://code.visualstudio.com

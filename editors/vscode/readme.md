@@ -4,6 +4,14 @@
 
 See the [blog post][blog] introducing the project.
 
+Millet analyzes SML code without running it, and provides information like:
+
+- Inline errors
+- Hover for type/documentation
+- Jump to definition
+
+Note that Millet does not actually run SML code. To do that, you'll need an installation of SML, like [SML/NJ][smlnj] or [MLton][mlton].
+
 ## Warning
 
 The [language server][lang-srv] is [beta-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
@@ -57,4 +65,6 @@ val _ = Foo.fact 3
 [blog]: https://azdavis.net/posts/millet/
 [known-issues]: https://github.com/azdavis/millet/blob/main/docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
+[mlton]: http://mlton.org
 [sml]: https://smlfamily.github.io
+[smlnj]: https://www.smlnj.org
