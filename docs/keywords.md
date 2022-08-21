@@ -578,8 +578,25 @@ Also used as a expression/type/declaration "hole", though this is not legal SML.
 Denote a function type.
 
 ```sml
-type intMaker = unit -> int
+type realToInt = real -> int
 ```
+
+The arrow is right associative. This means `t1` and `t2` are the same type, and both are distinct from `t3`:
+
+```sml
+type t1 = int -> string -> bool
+type t2 = int -> (string -> bool)
+type t3 = (int -> string) -> bool
+```
+
+- `t1` and `t2` can be read as: take an `int`, then return a function. That function takes an `string` and returns a `bool`.
+- `t3` can be read as: take a function (which takes an `int` and returns an `string`), and return a `bool`.
+
+This matches up with the fact that function application is left associative. This means that expressions 1 and 2 are equivalent, which are both distinct from expression 3:
+
+1. `f x y`
+2. `(f x) y`
+3. `f (x y)`
 
 ## `:>`
 
