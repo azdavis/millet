@@ -22,6 +22,12 @@ There is a [VS Code][vscode] extension on the [marketplace][].
 
 VS Code is the only editor for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
 
+## Community
+
+Millet is affiliated with Project Savanna, a project whose goal is to improve tooling for Standard ML.
+
+There is a [Discord server][discord] for Project Savanna, and Millet has its own channel there. You can get support and discuss the project there.
+
 ## Development
 
 Install the dependencies:
@@ -54,6 +60,7 @@ Also:
 [architecture]: /docs/architecture.md
 [blog]: https://azdavis.net/posts/millet/
 [cmu150]: http://www.cs.cmu.edu/~15150/
+[discord]: https://discord.gg/hgPSUby2Ny
 [git]: https://git-scm.com
 [known-issues]: /docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
