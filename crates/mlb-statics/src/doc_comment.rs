@@ -5,8 +5,9 @@ use syntax::{SyntaxKind, SyntaxNode};
 /// Adds doc comments in the `root` to the `info`.
 pub fn get(root: &SyntaxNode, low: &lower::Lower, info: &mut statics::Info) {
   let indices = std::iter::empty()
-    .chain(low.arenas.spec.iter().map(|(x, _)| hir::Idx::Spec(x)))
-    .chain(low.arenas.pat.iter().map(|(x, _)| hir::Idx::Pat(x)));
+    .chain(low.arenas.pat.iter().map(|(x, _)| hir::Idx::Pat(x)))
+    .chain(low.arenas.dec.iter().map(|(x, _)| hir::Idx::Dec(x)))
+    .chain(low.arenas.spec.iter().map(|(x, _)| hir::Idx::Spec(x)));
   for idx in indices {
     let ptr = low.ptrs.hir_to_ast(idx).expect("no syntax ptr");
     let node = ptr.to_node(root);
