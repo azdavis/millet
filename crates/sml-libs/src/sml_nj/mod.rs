@@ -1,5 +1,10 @@
+//! These are [libraries from SML/NJ][1].
+//!
+//! [1]: https://www.smlnj.org/doc/smlnj-lib/index.html
+
 use crate::files;
 
+/// The files.
 pub const FILES: &[(&str, &str)] = files![
   "Atom.sml",
   "HASH_KEY.sml",
