@@ -22,6 +22,19 @@ fn get_comment(node: &SyntaxNode) -> Option<String> {
   while tok.kind() != SyntaxKind::BlockComment {
     // does this have to be so complicated? i'm just trying to, given a token, walk backwards up the
     // tree and visit every token.
+    //
+    // TODO stop walking up if we hit another dec or something? currently given this:
+    //
+    // ```sml
+    // (*!
+    // Foo the bar.
+    // !*)
+    // fun foo () = ()
+    //
+    // fun quz () = ()
+    // ```
+    //
+    // not only `foo` but also `quz` will have the "Foo the bar." doc.
     tok = match tok.prev_token() {
       Some(t) => t,
       None => {
