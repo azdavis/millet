@@ -38,7 +38,7 @@ They can also be written in hex with the prefix `0wx`.
 val hex = 0wx123beef
 ```
 
-The `Word` structure provides operations on integers.
+The `Word` structure provides operations on words.
 
 ```sml
 val nine = Word.max (0w4, 0w9)
@@ -62,7 +62,7 @@ Literals can have an exponent with an `e` or `E` following the base.
 val withExp = 1.4e5
 ```
 
-The `Real` structure provides operations on integers.
+The `Real` structure provides operations on reals.
 
 ```sml
 val four = Real.sqrt 16.0
