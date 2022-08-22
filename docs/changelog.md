@@ -4,6 +4,15 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.3
+
+- Add doc for primitive types, like `int` and `bool`.
+- Improve doc for `->`.
+- Fix syntax highlighting for real literals.
+- Rename and doc VS Code config.
+- Add VS Code config to set the server path.
+- Mention the [community Discord][discord], for discussion and support.
+
 ## v0.3.2
 
 - Allow for doc comments written `(*! ... *!)`. The delimiters must be on their own line, and the content is parsed as Markdown.
@@ -212,6 +221,7 @@ Although this is the first release with working CI to build and release the exte
 
 [blog]: https://azdavis.net/posts/millet/
 [cmlib]: https://github.com/standardml/cmlib
+[discord]: https://discord.gg/hgPSUby2Ny
 [sml-nj-doc]: https://www.smlnj.org/doc/smlnj-lib/index.html
 [versioning]: /docs/versioning.md
 [yixin]: https://yixinhe.me
