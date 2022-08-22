@@ -1,5 +1,12 @@
 # Configuration
 
+There are two places where Millet can be configured:
+
+- `millet.toml`. This is for project-wide settings.
+- VS Code extension settings. This is for user-specific settings.
+
+## `millet.toml`
+
 Millet can be configured with a `millet.toml` in the workspace root. It has the following format:
 
 ```toml
@@ -17,3 +24,14 @@ QUZ = { path = "lib" }
   - `path-vars` is a table for expanding path variables in group files.
     - If the value is a `value`, the value is used unchanged.
     - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
+
+## VS Code settings
+
+Millet offers the following configuration options via VS Code settings:
+
+### `millet.server.enabled`
+
+- Type: boolean
+- Default: true
+
+Enable the language server.
