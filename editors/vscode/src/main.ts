@@ -17,8 +17,12 @@ export async function activate(cx: vscode.ExtensionContext) {
     return;
   }
   const ext = process.platform === "win32" ? ".exe" : "";
+  const configPath = config.get("server.path");
   const serverOpts: ServerOptions = {
-    command: cx.asAbsolutePath(path.join("out", `lang-srv${ext}`)),
+    command:
+      typeof configPath === "string"
+        ? configPath
+        : cx.asAbsolutePath(path.join("out", `lang-srv${ext}`)),
   };
   const clientOpts: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "sml" }],
