@@ -1,11 +1,11 @@
 (*!
-The TEXT signature collects together various text related structures based on the representation of
-the shared character type.
-
-The TEXT signature is matched by two structures, the required Text and the optional WideText. The
-former implements strings based on the extended ASCII 8-bit characters. The latter provides strings
-of characters of some size greater than or equal to 8 bits.
-!*)
+ * The TEXT signature collects together various text related structures based on the representation
+ * of the shared character type.
+ *
+ * The TEXT signature is matched by two structures, the required Text and the optional WideText. The
+ * former implements strings based on the extended ASCII 8-bit characters. The latter provides
+ * strings of characters of some size greater than or equal to 8 bits.
+ *)
 signature TEXT = sig
   structure Char : CHAR
   structure String : STRING

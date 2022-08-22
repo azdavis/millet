@@ -1,8 +1,8 @@
 (*!
-The optional StreamIO functor provides a way to build a Stream I/O layer on top of an arbitrary
-Primitive I/O implementation. For example, given an implementation of readers and writers for pairs
-of integers, one can define streams of pairs of integers.
-!*)
+ * The optional StreamIO functor provides a way to build a Stream I/O layer on top of an arbitrary
+ * Primitive I/O implementation. For example, given an implementation of readers and writers for
+ * pairs of integers, one can define streams of pairs of integers.
+ *)
 functor StreamIO (
   structure PrimIO : PRIM_IO
   structure Vector : MONO_VECTOR

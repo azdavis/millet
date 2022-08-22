@@ -27,8 +27,8 @@ fn get_comment(node: &SyntaxNode) -> Option<String> {
     //
     // ```sml
     // (*!
-    // Foo the bar.
-    // !*)
+    //  * Foo the bar.
+    //  *)
     // fun foo () = ()
     //
     // fun quz () = ()
@@ -54,7 +54,14 @@ fn get_comment(node: &SyntaxNode) -> Option<String> {
       }
     };
   }
-  let mut lines: Vec<_> = tok.text().lines().map(str::trim).collect();
-  let is_doc_comment = !lines.is_empty() && lines.remove(0) == "(*!" && lines.pop()? == "!*)";
+  let mut lines: Vec<_> = tok
+    .text()
+    .lines()
+    .filter_map(|line| {
+      let (_, s) = line.split_once('*')?;
+      Some(s.strip_prefix(' ').unwrap_or(s))
+    })
+    .collect();
+  let is_doc_comment = !lines.is_empty() && lines.remove(0) == "!" && lines.pop()? == ")";
   is_doc_comment.then(|| lines.join("\n"))
 }

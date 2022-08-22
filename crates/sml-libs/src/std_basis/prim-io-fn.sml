@@ -1,6 +1,6 @@
 (*!
-The optional functor PrimIO builds an instance of the primitive I/O signature PRIM_IO.
-!*)
+ * The optional functor PrimIO builds an instance of the primitive I/O signature PRIM_IO.
+ *)
 functor PrimIO (
   structure Vector : MONO_VECTOR
   structure VectorSlice : MONO_VECTOR_SLICE
