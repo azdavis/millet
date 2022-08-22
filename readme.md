@@ -1,4 +1,4 @@
-# Millet
+# Millet 💻🦜
 
 A language server for [Standard ML][sml] (SML).
 
