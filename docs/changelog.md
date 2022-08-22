@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.4
+
+- Change doc comment syntax.
+
 ## v0.3.3
 
 - Add doc for primitive types, like `int` and `bool`.
