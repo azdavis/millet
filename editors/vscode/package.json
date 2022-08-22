@@ -55,7 +55,7 @@
         "millet.server.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the language server."
+          "markdownDescription": "Enable the language server."
         }
       }
     },
