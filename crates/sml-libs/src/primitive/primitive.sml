@@ -75,7 +75,10 @@ type real = real
 (*!
 The built-in character type.
 
-Characters are string literals with length 1 and a leading `#`.
+Literals are written like string literals (delimited with `"`), except they must:
+
+- Have length 1.
+- Have a leading `#`.
 
 ```sml
 val percent = #"%"
@@ -95,7 +98,7 @@ type char = char
 (*!
 The built-in string type.
 
-Strings are delimited with double quotes, `"`.
+Literals are delimited with double quotes, `"`.
 
 ```sml
 val message = "hello, world!"
