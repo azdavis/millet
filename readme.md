@@ -49,7 +49,7 @@ See also the [architecture][] documentation.
 
 ## Naming
 
-"Millet" has M and L in it, in that order. So does "Standard ML".
+"Millet" has the letters M and L in it, in that order. So does "Standard ML".
 
 Also:
 
