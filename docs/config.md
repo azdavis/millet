@@ -31,14 +31,14 @@ Millet offers the following configuration options via VS Code settings:
 
 ### `millet.server.enable`
 
-- Type: boolean
-- Default: true
+- Type: `boolean`
+- Default: `true`
 
 Enable the language server.
 
 ### `millet.server.path`
 
-- Type: string or null
-- Default: null
+- Type: `string | null`
+- Default: `null`
 
 Path to the `lang-srv` executable. When `null` (the default), use the path to the pre-built and bundled binary.
