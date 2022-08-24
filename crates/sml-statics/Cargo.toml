@@ -1,0 +1,19 @@
+[package]
+name = "sml-statics"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+drop_bomb = "0.1"
+pattern-match = { git = "https://github.com/azdavis/language-util.git" }
+uniq = { git = "https://github.com/azdavis/language-util.git" }
+sml-hir = { path = "../sml-hir" }
+paths = { path = "../paths" }
+config = { path = "../config" }
+fast-hash = { path = "../fast-hash" }
+fmt-util = { path = "../fmt-util" }

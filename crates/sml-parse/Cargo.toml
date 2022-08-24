@@ -1,19 +1,16 @@
 [package]
-name = "tests"
+name = "sml-parse"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
 doctest = false
+test = false
 
 [dependencies]
-env_logger = { version = "0.9" }
-log = "0.4"
 once_cell = "1"
-pulldown-cmark = "0.9"
-config = { path = "../config" }
-analysis = { path = "../analysis" }
+drop_bomb = "0.1"
 fast-hash = { path = "../fast-hash" }
+str-util = { path = "../str-util" }
 sml-syntax = { path = "../sml-syntax" }
-paths = { path = "../paths" }

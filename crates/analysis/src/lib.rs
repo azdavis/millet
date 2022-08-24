@@ -8,9 +8,9 @@ pub mod input;
 
 use fmt_util::sep_seq;
 use paths::{PathMap, WithPath};
+use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
+use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
 use std::fmt;
-use syntax::ast::{AstNode as _, SyntaxNodePtr};
-use syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
 
 pub use error::Error;
 pub use mlb_statics::StdBasis;
@@ -25,7 +25,7 @@ pub struct Analysis {
   std_basis: mlb_statics::StdBasis,
   error_lines: config::ErrorLines,
   source_files: PathMap<mlb_statics::SourceFile>,
-  syms: statics::Syms,
+  syms: sml_statics::Syms,
 }
 
 impl Analysis {
@@ -35,7 +35,7 @@ impl Analysis {
       std_basis,
       error_lines,
       source_files: PathMap::default(),
-      syms: statics::Syms::default(),
+      syms: sml_statics::Syms::default(),
     }
   }
 
@@ -45,8 +45,8 @@ impl Analysis {
     let (lex_errors, parsed, low) = mlb_statics::start_source_file(contents, &mut fix_env);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
-    let mode = statics::Mode::Regular(None);
-    let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
+    let mode = sml_statics::Mode::Regular(None);
+    let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
     let mut info = checked.info;
     mlb_statics::doc_comment::get(parsed.root.syntax(), &low, &mut info);
     let file = mlb_statics::SourceFile {
@@ -105,8 +105,8 @@ impl Analysis {
     let ty_md = file.info.get_ty_md(&self.syms, idx);
     let def_doc = file.info.get_def(idx).and_then(|def| {
       let info = match def.path {
-        statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
-        statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
+        sml_statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
+        sml_statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
       };
       info.get_doc(def.idx)
     });
@@ -143,7 +143,7 @@ impl Analysis {
   /// all of the variants of the head's type.
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
     let (file, _, ptr, _) = self.get_file_with_idx(pos)?;
-    let ptr = ptr.cast::<syntax::ast::CaseExp>()?;
+    let ptr = ptr.cast::<sml_syntax::ast::CaseExp>()?;
     let case = ptr.to_node(file.parsed.root.syntax());
     let range = text_size_util::TextRange::empty(case.syntax().text_range().end());
     let range = file.pos_db.range(range)?;
@@ -167,7 +167,7 @@ impl Analysis {
     &mlb_statics::SourceFile,
     SyntaxToken,
     SyntaxNodePtr,
-    hir::Idx,
+    sml_hir::Idx,
   )> {
     let file = self.source_files.get(&pos.path)?;
     let tok = get_token(file, pos.val)?;
@@ -181,10 +181,10 @@ impl Analysis {
     }
   }
 
-  fn def_to_path_and_range(&self, def: statics::Def) -> Option<WithPath<Range>> {
+  fn def_to_path_and_range(&self, def: sml_statics::Def) -> Option<WithPath<Range>> {
     let path = match def.path {
-      statics::DefPath::Regular(p) => p,
-      statics::DefPath::StdBasis(_) => return None,
+      sml_statics::DefPath::Regular(p) => p,
+      sml_statics::DefPath::StdBasis(_) => return None,
     };
     let def_file = self.source_files.get(&path)?;
     let def_range = def_file
@@ -236,7 +236,7 @@ const MAX_ERRORS_PER_PATH: usize = 20;
 
 fn source_file_errors(
   file: &mlb_statics::SourceFile,
-  syms: &statics::Syms,
+  syms: &sml_statics::Syms,
   lines: config::ErrorLines,
 ) -> Vec<Error> {
   std::iter::empty()
@@ -282,7 +282,7 @@ fn source_file_errors(
 
 struct CaseDisplay<'a> {
   needs_starting_bar: bool,
-  variants: &'a [(hir::Name, bool)],
+  variants: &'a [(sml_hir::Name, bool)],
 }
 
 impl fmt::Display for CaseDisplay<'_> {
@@ -302,7 +302,7 @@ impl fmt::Display for CaseDisplay<'_> {
 }
 
 struct ArmDisplay<'a> {
-  name: &'a hir::Name,
+  name: &'a sml_hir::Name,
   has_arg: bool,
 }
 

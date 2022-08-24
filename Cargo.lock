@@ -20,15 +20,15 @@ dependencies = [
  "elapsed",
  "fast-hash",
  "fmt-util",
- "hir",
  "log",
  "mlb-hir",
  "mlb-statics",
  "mlb-syntax",
  "paths",
- "statics",
+ "sml-hir",
+ "sml-statics",
+ "sml-syntax",
  "str-util",
- "syntax",
  "text-pos",
  "text-size-util",
  "toml",
@@ -202,15 +202,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hir"
-version = "0.1.0"
-dependencies = [
- "la-arena",
- "num-bigint",
- "str-util",
-]
-
-[[package]]
 name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -264,14 +255,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lex"
-version = "0.1.0"
-dependencies = [
- "lex-util",
- "syntax",
-]
-
-[[package]]
 name = "lex-util"
 version = "0.1.0"
 
@@ -288,16 +271,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "lower"
-version = "0.1.0"
-dependencies = [
- "fast-hash",
- "hir",
- "num-traits",
- "syntax",
 ]
 
 [[package]]
@@ -350,8 +323,8 @@ dependencies = [
 name = "mlb-hir"
 version = "0.1.0"
 dependencies = [
- "hir",
  "paths",
+ "sml-hir",
  "text-size-util",
 ]
 
@@ -361,18 +334,18 @@ version = "0.1.0"
 dependencies = [
  "config",
  "fast-hash",
- "hir",
- "lex",
- "lower",
  "mlb-hir",
- "parse",
  "paths",
+ "sml-hir",
+ "sml-lex",
  "sml-libs",
- "statics",
- "syntax",
+ "sml-lower",
+ "sml-parse",
+ "sml-statics",
+ "sml-syntax",
+ "sml-ty-var-scope",
  "text-pos",
  "text-size-util",
- "ty-var-scope",
 ]
 
 [[package]]
@@ -420,17 +393,6 @@ name = "once_cell"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
-
-[[package]]
-name = "parse"
-version = "0.1.0"
-dependencies = [
- "drop_bomb",
- "fast-hash",
- "once_cell",
- "str-util",
- "syntax",
-]
 
 [[package]]
 name = "paths"
@@ -575,8 +537,80 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-hir"
+version = "0.1.0"
+dependencies = [
+ "la-arena",
+ "num-bigint",
+ "str-util",
+]
+
+[[package]]
+name = "sml-lex"
+version = "0.1.0"
+dependencies = [
+ "lex-util",
+ "sml-syntax",
+]
+
+[[package]]
 name = "sml-libs"
 version = "0.1.0"
+
+[[package]]
+name = "sml-lower"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "num-traits",
+ "sml-hir",
+ "sml-syntax",
+]
+
+[[package]]
+name = "sml-parse"
+version = "0.1.0"
+dependencies = [
+ "drop_bomb",
+ "fast-hash",
+ "once_cell",
+ "sml-syntax",
+ "str-util",
+]
+
+[[package]]
+name = "sml-statics"
+version = "0.1.0"
+dependencies = [
+ "config",
+ "drop_bomb",
+ "fast-hash",
+ "fmt-util",
+ "paths",
+ "pattern-match",
+ "sml-hir",
+ "uniq",
+]
+
+[[package]]
+name = "sml-syntax"
+version = "0.1.0"
+dependencies = [
+ "char-name",
+ "fast-hash",
+ "identifier-case",
+ "rowan",
+ "syntax-gen",
+ "token",
+]
+
+[[package]]
+name = "sml-ty-var-scope"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "sml-hir",
+]
 
 [[package]]
 name = "smol_str"
@@ -585,20 +619,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7475118a28b7e3a2e157ce0131ba8c5526ea96e90ee601d9f6bb2e286a35ab44"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "statics"
-version = "0.1.0"
-dependencies = [
- "config",
- "drop_bomb",
- "fast-hash",
- "fmt-util",
- "hir",
- "paths",
- "pattern-match",
- "uniq",
 ]
 
 [[package]]
@@ -617,18 +637,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "syntax"
-version = "0.1.0"
-dependencies = [
- "char-name",
- "fast-hash",
- "identifier-case",
- "rowan",
- "syntax-gen",
- "token",
 ]
 
 [[package]]
@@ -664,7 +672,7 @@ dependencies = [
  "once_cell",
  "paths",
  "pulldown-cmark",
- "syntax",
+ "sml-syntax",
 ]
 
 [[package]]
@@ -721,14 +729,6 @@ dependencies = [
 name = "topo-sort"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
-
-[[package]]
-name = "ty-var-scope"
-version = "0.1.0"
-dependencies = [
- "fast-hash",
- "hir",
-]
 
 [[package]]
 name = "ungrammar"

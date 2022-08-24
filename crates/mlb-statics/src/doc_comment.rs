@@ -1,13 +1,13 @@
 //! Handle doc comments.
 
-use syntax::{SyntaxKind, SyntaxNode};
+use sml_syntax::{SyntaxKind, SyntaxNode};
 
 /// Adds doc comments in the `root` to the `info`.
-pub fn get(root: &SyntaxNode, low: &lower::Lower, info: &mut statics::Info) {
+pub fn get(root: &SyntaxNode, low: &sml_lower::Lower, info: &mut sml_statics::Info) {
   let indices = std::iter::empty()
-    .chain(low.arenas.pat.iter().map(|(x, _)| hir::Idx::Pat(x)))
-    .chain(low.arenas.dec.iter().map(|(x, _)| hir::Idx::Dec(x)))
-    .chain(low.arenas.spec.iter().map(|(x, _)| hir::Idx::Spec(x)));
+    .chain(low.arenas.pat.iter().map(|(x, _)| sml_hir::Idx::Pat(x)))
+    .chain(low.arenas.dec.iter().map(|(x, _)| sml_hir::Idx::Dec(x)))
+    .chain(low.arenas.spec.iter().map(|(x, _)| sml_hir::Idx::Spec(x)));
   for idx in indices {
     let ptr = low.ptrs.hir_to_ast(idx).expect("no syntax ptr");
     let node = ptr.to_node(root);
@@ -42,11 +42,11 @@ fn get_comment(node: &SyntaxNode) -> Option<String> {
         loop {
           match node.prev_sibling_or_token() {
             Some(x) => match x {
-              syntax::rowan::NodeOrToken::Node(n) => match n.last_token() {
+              sml_syntax::rowan::NodeOrToken::Node(n) => match n.last_token() {
                 Some(t) => break t,
                 None => node = n,
               },
-              syntax::rowan::NodeOrToken::Token(t) => break t,
+              sml_syntax::rowan::NodeOrToken::Token(t) => break t,
             },
             None => node = node.parent()?,
           }

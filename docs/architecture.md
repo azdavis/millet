@@ -8,7 +8,7 @@ Millet is a language server for SML. A language server is a long-running, statef
 
 A [task runner/"build system"][xtask] written in Rust.
 
-### `crates/syntax`
+### `crates/sml-syntax`
 
 SML concrete syntax (like tokens), and AST wrapper API.
 
@@ -18,7 +18,7 @@ Thus, since the AST wrapper API provides a "view" into a concrete syntax tree, a
 
 Mostly generated from its [ungrammar][].
 
-### `crates/hir`
+### `crates/sml-hir`
 
 High-level intermediate representation. Uses arenas, and indices into those arenas, to represent recursive structure.
 
@@ -56,10 +56,10 @@ The "almost" is because: since we need to represent partial nodes (from a partia
 type ExpIdx = Option<Idx<Exp>>;
 ```
 
-### `crates/lex`
+### `crates/sml-lex`
 
 ```rs
-String -> (Vec<syntax::Token>, Vec<LexError>)
+String -> (Vec<sml_syntax::Token>, Vec<LexError>)
 ```
 
 Note that for this and all of the rest of the "passes", the "signatures" given, like the one above, are not exact.
@@ -69,17 +69,17 @@ Lexes ("tokenizes") a string into tokens.
 Note that the signature is _not_ this:
 
 ```rs
-String -> Result<Vec<syntax::Token>, Vec<LexError>>
+String -> Result<Vec<sml_syntax::Token>, Vec<LexError>>
 ```
 
 That is to say, we always produce _both_ whatever tokens we could _and_ as many errors as we could find. This pattern is common across the rest of the "passes".
 
 The idea is: we want to analyze as much of the code as possible as far as possible, even if the information we have is imperfect.
 
-### `crates/parse`
+### `crates/sml-parse`
 
 ```rs
-Vec<syntax::Token> -> (syntax::ast::Root, Vec<ParseError>)
+Vec<sml_syntax::Token> -> (sml_syntax::ast::Root, Vec<ParseError>)
 ```
 
 Parses a sequence of tokens into a sequence of "events". Events are like:
@@ -91,10 +91,10 @@ Parses a sequence of tokens into a sequence of "events". Events are like:
 
 Then processes those events to build a lossless syntax tree, wrapped in the AST API.
 
-### `crates/lower`
+### `crates/sml-lower`
 
 ```rs
-syntax::ast::Root -> (hir::Root, TwoWayPointers, Vec<LowerError>)
+sml_syntax::ast::Root -> (sml_hir::Root, TwoWayPointers, Vec<LowerError>)
 ```
 
 Lowers ("elaborates") AST into HIR.
@@ -112,18 +112,18 @@ We also construct a two-way mapping between HIR indices and "pointers" to AST no
 - HIR -> AST: for recovering the text range for which to report an error for a HIR index.
 - AST -> HIR: for knowing what HIR index is e.g. being hovered over by the client.
 
-### `crates/ty-var-scope`
+### `crates/sml-ty-var-scope`
 
 ```rs
-hir::Root -> hir::Root
+sml_hir::Root -> sml_hir::Root
 ```
 
 Handles adding implicitly-scoped type variables to their `val` declaration/specification binding sites.
 
-### `crates/statics`
+### `crates/sml-statics`
 
 ```rs
-(statics::State, hir::Root) -> (statics::State, Vec<StaticsError>)
+(sml_statics::State, sml_hir::Root) -> (sml_statics::State, Vec<StaticsError>)
 ```
 
 Does static analysis ("typechecking") on HIR.

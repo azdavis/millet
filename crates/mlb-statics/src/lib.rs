@@ -7,10 +7,10 @@ pub mod doc_comment;
 mod std_basis;
 
 use fast_hash::FxHashMap;
+use sml_syntax::ast::AstNode;
 use std::fmt;
-use syntax::ast::AstNode;
 
-pub use parse::parser::STD_BASIS as STD_BASIS_FIX_ENV;
+pub use sml_parse::parser::STD_BASIS as STD_BASIS_FIX_ENV;
 pub use std_basis::StdBasis;
 
 /// The result of analyzing MLB and source files.
@@ -19,7 +19,7 @@ pub struct MlbStatics {
   /// The errors found in MLB files.
   pub mlb_errors: Vec<Error>,
   /// The generated symbols (types and exceptions and such).
-  pub syms: statics::Syms,
+  pub syms: sml_statics::Syms,
   /// A mapping from source file paths to information about them, including errors.
   ///
   /// NOTE see comment in impl about having files analyzed more than once.
@@ -31,11 +31,11 @@ pub struct MlbStatics {
 #[allow(missing_docs)]
 pub struct SourceFile {
   pub pos_db: text_pos::PositionDb,
-  pub lex_errors: Vec<lex::Error>,
-  pub parsed: parse::Parse,
-  pub lowered: lower::Lower,
-  pub statics_errors: Vec<statics::Error>,
-  pub info: statics::Info,
+  pub lex_errors: Vec<sml_lex::Error>,
+  pub parsed: sml_parse::Parse,
+  pub lowered: sml_lower::Lower,
+  pub statics_errors: Vec<sml_statics::Error>,
+  pub info: sml_statics::Info,
 }
 
 /// An error.
@@ -43,7 +43,7 @@ pub struct SourceFile {
 pub struct Error {
   path: paths::PathId,
   item: Item,
-  name: text_size_util::WithRange<hir::Name>,
+  name: text_size_util::WithRange<sml_hir::Name>,
 }
 
 impl Error {
@@ -90,14 +90,19 @@ impl fmt::Display for Item {
 }
 
 struct Cx {
-  syms: statics::Syms,
+  syms: sml_statics::Syms,
   cache: paths::PathMap<MBasis>,
   sml: paths::PathMap<SourceFile>,
   mlb_errors: Vec<Error>,
 }
 
 impl Cx {
-  fn undef(&mut self, path: paths::PathId, item: Item, name: text_size_util::WithRange<hir::Name>) {
+  fn undef(
+    &mut self,
+    path: paths::PathId,
+    item: Item,
+    name: text_size_util::WithRange<sml_hir::Name>,
+  ) {
     self.mlb_errors.push(Error { path, item, name });
   }
 }
@@ -111,9 +116,9 @@ struct Files<'a> {
 
 #[derive(Debug, Default, Clone)]
 struct MBasis {
-  fix_env: parse::parser::FixEnv,
-  bas_env: FxHashMap<hir::Name, MBasis>,
-  basis: statics::basis::Basis,
+  fix_env: sml_parse::parser::FixEnv,
+  bas_env: FxHashMap<sml_hir::Name, MBasis>,
+  basis: sml_statics::basis::Basis,
 }
 
 impl MBasis {
@@ -238,8 +243,8 @@ fn get_bas_dec(
         let contents = files.sml.get(path).expect("no sml file for path id");
         let mut fix_env = scope.fix_env.clone();
         let (lex_errors, parsed, low) = start_source_file(contents, &mut fix_env);
-        let mode = statics::Mode::Regular(Some(*path));
-        let checked = statics::get(&mut cx.syms, &scope.basis, mode, &low.arenas, low.root);
+        let mode = sml_statics::Mode::Regular(Some(*path));
+        let checked = sml_statics::get(&mut cx.syms, &scope.basis, mode, &low.arenas, low.root);
         let mut info = checked.info;
         doc_comment::get(parsed.root.syntax(), &low, &mut info);
         let file = SourceFile {
@@ -277,12 +282,12 @@ fn get_bas_dec(
 /// Processes a single source file.
 pub fn start_source_file(
   contents: &str,
-  fix_env: &mut parse::parser::FixEnv,
-) -> (Vec<lex::Error>, parse::Parse, lower::Lower) {
-  let lexed = lex::get(contents);
-  let parsed = parse::get(&lexed.tokens, fix_env);
-  let mut lowered = lower::get(&parsed.root);
-  ty_var_scope::get(&mut lowered.arenas, lowered.root);
+  fix_env: &mut sml_parse::parser::FixEnv,
+) -> (Vec<sml_lex::Error>, sml_parse::Parse, sml_lower::Lower) {
+  let lexed = sml_lex::get(contents);
+  let parsed = sml_parse::get(&lexed.tokens, fix_env);
+  let mut lowered = sml_lower::get(&parsed.root);
+  sml_ty_var_scope::get(&mut lowered.arenas, lowered.root);
   (lexed.errors, parsed, lowered)
 }
 

@@ -88,7 +88,7 @@ enum GetInputErrorKind {
   Cm(cm::Error),
   Mlb(mlb_syntax::Error),
   Cycle,
-  Duplicate(hir::Name),
+  Duplicate(sml_hir::Name),
   /// must be last
   UnsupportedExport,
 }
@@ -483,7 +483,7 @@ struct CmFile {
 #[derive(Debug)]
 struct Export {
   namespace: mlb_hir::Namespace,
-  name: text_size_util::WithRange<hir::Name>,
+  name: text_size_util::WithRange<sml_hir::Name>,
 }
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
@@ -656,7 +656,7 @@ where
 {
   let ret = match dec {
     mlb_syntax::BasDec::Basis(binds) => {
-      let mut names = FxHashSet::<hir::Name>::default();
+      let mut names = FxHashSet::<sml_hir::Name>::default();
       let binds = binds
         .into_iter()
         .map(|(name, exp)| {
@@ -684,7 +684,7 @@ where
       get_bas_dec(cx, *in_dec)?.into(),
     ),
     mlb_syntax::BasDec::Export(ns, binds) => {
-      let mut names = FxHashSet::<hir::Name>::default();
+      let mut names = FxHashSet::<sml_hir::Name>::default();
       let binds = binds
         .into_iter()
         .map(|(lhs, rhs)| {

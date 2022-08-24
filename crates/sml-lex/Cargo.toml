@@ -1,0 +1,13 @@
+[package]
+name = "sml-lex"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+lex-util = { path = "../lex-util" }
+sml-syntax = { path = "../sml-syntax" }

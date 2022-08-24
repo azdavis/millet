@@ -108,7 +108,7 @@ fn finish_args(args: Arguments) -> Result<()> {
 fn ck_sml_def(sh: &Shell) -> Result<()> {
   println!("checking sml definition");
   let dirs: [PathBuf; 3] =
-    ["hir", "lower", "statics"].map(|x| ["crates", x, "src"].iter().collect());
+    ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
   let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output()?;
   let got: BTreeSet<u16> = String::from_utf8(out.stdout)?
     .lines()

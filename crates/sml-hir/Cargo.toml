@@ -1,0 +1,14 @@
+[package]
+name = "sml-hir"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+la-arena = "0.2"
+num-bigint = "0.4"
+str-util = { path = "../str-util" }

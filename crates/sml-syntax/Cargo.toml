@@ -1,0 +1,19 @@
+[package]
+name = "sml-syntax"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+rowan = "0.15"
+token = { git = "https://github.com/azdavis/language-util.git" }
+
+[build-dependencies]
+char-name = { git = "https://github.com/azdavis/language-util.git" }
+identifier-case = { git = "https://github.com/azdavis/language-util.git" }
+syntax-gen = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash = { path = "../fast-hash" }

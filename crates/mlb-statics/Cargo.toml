@@ -9,13 +9,13 @@ test = false
 doctest = false
 
 [dependencies]
-lex = { path = "../lex" }
-parse = { path = "../parse" }
-lower = { path = "../lower" }
-ty-var-scope = { path = "../ty-var-scope" }
-statics = { path = "../statics" }
-syntax = { path = "../syntax" }
-hir = { path = "../hir" }
+sml-lex = { path = "../sml-lex" }
+sml-parse = { path = "../sml-parse" }
+sml-lower = { path = "../sml-lower" }
+sml-ty-var-scope = { path = "../sml-ty-var-scope" }
+sml-statics = { path = "../sml-statics" }
+sml-syntax = { path = "../sml-syntax" }
+sml-hir = { path = "../sml-hir" }
 mlb-hir = { path = "../mlb-hir" }
 paths = { path = "../paths" }
 text-size-util = { path = "../text-size-util" }

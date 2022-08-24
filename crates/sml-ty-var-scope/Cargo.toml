@@ -1,5 +1,5 @@
 [package]
-name = "mlb-hir"
+name = "sml-ty-var-scope"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -9,6 +9,5 @@ test = false
 doctest = false
 
 [dependencies]
-text-size-util = { path = "../text-size-util" }
 sml-hir = { path = "../sml-hir" }
-paths = { path = "../paths" }
+fast-hash = { path = "../fast-hash" }

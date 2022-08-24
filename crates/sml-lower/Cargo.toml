@@ -1,14 +1,15 @@
 [package]
-name = "mlb-hir"
+name = "sml-lower"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-test = false
 doctest = false
+test = false
 
 [dependencies]
-text-size-util = { path = "../text-size-util" }
+num-traits = "0.2"
 sml-hir = { path = "../sml-hir" }
-paths = { path = "../paths" }
+sml-syntax = { path = "../sml-syntax" }
+fast-hash = { path = "../fast-hash" }

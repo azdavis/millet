@@ -1,7 +1,7 @@
 use crate::{doc_comment, start_source_file};
 use fast_hash::FxHashMap;
-use statics::{basis, Info, Syms};
-use syntax::ast::AstNode as _;
+use sml_statics::{basis, Info, Syms};
+use sml_syntax::ast::AstNode as _;
 
 /// A standard basis.
 #[derive(Debug, Clone)]
@@ -103,8 +103,8 @@ where
       if let Some(e) = low.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
-      let mode = statics::Mode::StdBasis(name);
-      let checked = statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
+      let mode = sml_statics::Mode::StdBasis(name);
+      let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
       basis.append(checked.basis);
       if let Some(e) = checked.errors.first() {
         let e = e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One);
