@@ -223,7 +223,11 @@ fn ck_changelog(sh: &Shell) -> Result<()> {
   let contents = sh.read_file(path)?;
   let entries: BTreeSet<_> = contents
     .lines()
-    .filter_map(|line| line.strip_prefix("## "))
+    .filter_map(|line| {
+      let title = line.strip_prefix("## ")?;
+      // allow a title of 'main' for unreleased changes.
+      (title != "main").then_some(title)
+    })
     .collect();
   eq_sets(
     &tags,
