@@ -29,7 +29,7 @@ QUZ = { path = "lib" }
 
 Millet offers the following configuration options via VS Code settings:
 
-### `millet.server.enabled`
+### `millet.server.enable`
 
 - Type: boolean
 - Default: true

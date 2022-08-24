@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## main
+
+- Rename the setting to enable the language server to 'enable'.
+
 ## v0.3.4
 
 - Change doc comment syntax.

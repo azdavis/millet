@@ -1,5 +1,5 @@
 {
-  "millet.server.enabled": false,
+  "millet.server.enable": false,
   "editor.rulers": [100],
   "files.exclude": {
     "**/*.vsix": true,

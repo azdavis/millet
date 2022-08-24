@@ -13,7 +13,7 @@ const channel = vscode.window.createOutputChannel("millet client");
 export async function activate(cx: vscode.ExtensionContext) {
   channel.appendLine("startup millet lsp client");
   const config = vscode.workspace.getConfiguration("millet");
-  if (!config.get("server.enabled") || client !== null) {
+  if (!config.get("server.enable") || client !== null) {
     return;
   }
   const ext = process.platform === "win32" ? ".exe" : "";

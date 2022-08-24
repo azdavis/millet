@@ -52,7 +52,7 @@
       "type": "object",
       "title": "Millet",
       "properties": {
-        "millet.server.enabled": {
+        "millet.server.enable": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Enable the language server."
