@@ -4,7 +4,7 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
-## main
+## v0.3.5
 
 - Change the setting for the language server path to have type string, default `""`. This means it's editable from the VS Code UI more easily.
 - Rename the setting to enable the language server to 'enable'.
