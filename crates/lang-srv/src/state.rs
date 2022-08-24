@@ -436,7 +436,7 @@ fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp
     severity: Some(lsp_types::DiagnosticSeverity::ERROR),
     code: Some(lsp_types::NumberOrString::Number(code.into())),
     code_description: Some(lsp_types::CodeDescription { href }),
-    source: Some("millet".to_owned()),
+    source: Some("Millet".to_owned()),
     message,
     related_information: None,
     tags: None,
