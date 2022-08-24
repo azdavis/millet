@@ -134,6 +134,10 @@ Statics errors use an abstract `Idx`, and this index gets turned into an actual 
 
 NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), like "the name of the third con bind in the second dat bind of this datatype dec".
 
+### `crates/sml-libs`
+
+Declarations for various SML libraries, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
+
 ### `crates/cm`
 
 Processes SML/NJ Compilation Manager (`.cm`) files.
@@ -151,6 +155,19 @@ HIR for ML Basis files.
 Static semantics for MLB files.
 
 Because the semantics for MLB files determines when source (SML) files get parsed and statically analyzed, this depends on most of the crates that analyze SML.
+
+### `crates/config`
+
+The format for the optional Millet configuration file.
+
+### `crates/paths`
+
+Types for working with paths, notably:
+
+- A wrapper type for `PathBuf` that guarantees the inner `PathBuf` is canonical.
+- A type that transforms these canonical path buffers into cheap IDs, given that a path is "contained" in a "root" canonical path buf.
+
+These are ideal for the use case of language servers, in which we have a "workspace root" containing all the files.
 
 ### `crates/lex-util`
 
@@ -170,38 +187,21 @@ Some common string utilities, like:
 
 A wrapper around the `text-size` crate to add some helpers, primarily `WithRange`, a pair of a value and a text range.
 
-### `crates/paths`
+### `crates/fmt-util`
 
-Types for working with paths, notably:
-
-- A wrapper type for `PathBuf` that guarantees the inner `PathBuf` is canonical.
-- A type that transforms these canonical path buffers into cheap IDs, given that a path is "contained" in a "root" canonical path buf.
-
-These are ideal for the use case of language servers, in which we have a "workspace root" containing all the files.
+A small utility crate for formatting.
 
 ### `crates/fast-hash`
 
 A thin wrapper over `FxHash{Map, Set}` with some extra helper functions. These types use `FxHasher`, which is a very fast, but not HashDOS-resistant, hashing algorithm used in Firefox and `rustc`.
 
-### `crates/fmt-util`
-
-A small utility crate for formatting.
-
 ### `crates/elapsed`
 
 A small utility crate for timing function calls.
 
-### `crates/config`
-
-The format for the optional Millet configuration file.
-
 ### `crates/analysis`
 
 Unifies all the passes into one single API.
-
-### `crates/sml-libs`
-
-Declarations for various SML libraries, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
 
 ### `crates/lang-srv`
 
