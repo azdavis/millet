@@ -9,21 +9,21 @@ test = false
 doctest = false
 
 [dependencies]
-log = "0.4"
-toml = "0.5"
-topo-sort =  { git = "https://github.com/azdavis/language-util.git" }
-text-pos = { git = "https://github.com/azdavis/language-util.git" }
-config = { path = "../config" }
-sml-statics = { path = "../sml-statics" }
-sml-syntax = { path = "../sml-syntax" }
-sml-hir = { path = "../sml-hir" }
-paths = { path = "../paths" }
 cm = { path = "../cm" }
-mlb-syntax = { path = "../mlb-syntax" }
-mlb-hir = { path = "../mlb-hir" }
-mlb-statics = { path = "../mlb-statics" }
-text-size-util = { path = "../text-size-util" }
+config = { path = "../config" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }
+log = "0.4"
+mlb-hir = { path = "../mlb-hir" }
+mlb-statics = { path = "../mlb-statics" }
+mlb-syntax = { path = "../mlb-syntax" }
+paths = { path = "../paths" }
+sml-hir = { path = "../sml-hir" }
+sml-statics = { path = "../sml-statics" }
+sml-syntax = { path = "../sml-syntax" }
 str-util = { path = "../str-util" }
+text-pos = { git = "https://github.com/azdavis/language-util.git" }
+text-size-util = { path = "../text-size-util" }
+toml = "0.5"
+topo-sort =  { git = "https://github.com/azdavis/language-util.git" }

@@ -9,7 +9,7 @@ doctest = false
 test = false
 
 [dependencies]
+fast-hash = { path = "../fast-hash" }
 num-traits = "0.2"
 sml-hir = { path = "../sml-hir" }
 sml-syntax = { path = "../sml-syntax" }
-fast-hash = { path = "../fast-hash" }

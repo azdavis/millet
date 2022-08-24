@@ -9,6 +9,6 @@ test = false
 doctest = false
 
 [dependencies]
-text-size-util = { path = "../text-size-util" }
-sml-hir = { path = "../sml-hir" }
 paths = { path = "../paths" }
+sml-hir = { path = "../sml-hir" }
+text-size-util = { path = "../text-size-util" }

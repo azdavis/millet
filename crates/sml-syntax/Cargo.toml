@@ -14,6 +14,6 @@ token = { git = "https://github.com/azdavis/language-util.git" }
 
 [build-dependencies]
 char-name = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash = { path = "../fast-hash" }
 identifier-case = { git = "https://github.com/azdavis/language-util.git" }
 syntax-gen = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { path = "../fast-hash" }

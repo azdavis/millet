@@ -9,6 +9,6 @@ test = false
 doctest = false
 
 [dependencies]
+fast-hash = { path = "../fast-hash" }
 serde = { version = "1", features = ["derive"] }
 str-util = { path = "../str-util" }
-fast-hash = { path = "../fast-hash" }

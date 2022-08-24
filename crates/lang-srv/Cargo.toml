@@ -5,16 +5,16 @@ edition = "2021"
 publish = false
 
 [dependencies]
+analysis = { path = "../analysis" }
 anyhow = "1"
+config = { path = "../config" }
 crossbeam-channel = "0.5"
+elapsed = { path = "../elapsed" }
+env_logger = { version = "0.9" }
+fast-hash = { path = "../fast-hash" }
 log = "0.4"
 lsp-server = "0.6"
 lsp-types = "0.93"
+paths = { path = "../paths" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-env_logger = { version = "0.9" }
-analysis = { path = "../analysis" }
-config = { path = "../config" }
-paths = { path = "../paths" }
-elapsed = { path = "../elapsed" }
-fast-hash = { path = "../fast-hash" }

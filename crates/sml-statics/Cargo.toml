@@ -9,11 +9,11 @@ test = false
 doctest = false
 
 [dependencies]
-drop_bomb = "0.1"
-pattern-match = { git = "https://github.com/azdavis/language-util.git" }
-uniq = { git = "https://github.com/azdavis/language-util.git" }
-sml-hir = { path = "../sml-hir" }
-paths = { path = "../paths" }
 config = { path = "../config" }
+drop_bomb = "0.1"
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }
+paths = { path = "../paths" }
+pattern-match = { git = "https://github.com/azdavis/language-util.git" }
+sml-hir = { path = "../sml-hir" }
+uniq = { git = "https://github.com/azdavis/language-util.git" }

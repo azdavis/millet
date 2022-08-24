@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-pico-args = "0.5"
 analysis = { path = "../analysis"}
 config = { path = "../config"}
 paths = { path = "../paths"}
+pico-args = "0.5"

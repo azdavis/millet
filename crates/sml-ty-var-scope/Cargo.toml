@@ -9,5 +9,5 @@ test = false
 doctest = false
 
 [dependencies]
-sml-hir = { path = "../sml-hir" }
 fast-hash = { path = "../fast-hash" }
+sml-hir = { path = "../sml-hir" }
