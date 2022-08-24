@@ -38,7 +38,7 @@ Enable the language server.
 
 ### `millet.server.path`
 
-- Type: `string | null`
-- Default: `null`
+- Type: `string`
+- Default: `""`
 
-Path to the `lang-srv` executable. When `null` (the default), use the path to the pre-built and bundled binary.
+Path to the `lang-srv` executable. When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.

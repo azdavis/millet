@@ -58,12 +58,9 @@
           "markdownDescription": "Enable the language server."
         },
         "millet.server.path": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "markdownDescription": "Path to the `lang-srv` executable. When `null` (the default), use the path to the pre-built and bundled binary."
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the `lang-srv` executable. When set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
         }
       }
     },

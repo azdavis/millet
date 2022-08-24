@@ -20,7 +20,7 @@ export async function activate(cx: vscode.ExtensionContext) {
   const configPath = config.get("server.path");
   const serverOpts: ServerOptions = {
     command:
-      typeof configPath === "string"
+      typeof configPath === "string" && configPath.length !== 0
         ? configPath
         : cx.asAbsolutePath(path.join("out", `lang-srv${ext}`)),
   };

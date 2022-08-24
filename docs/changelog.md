@@ -6,6 +6,7 @@ See also the [versioning scheme][versioning].
 
 ## main
 
+- Change the setting for the language server path to have type string, default `""`. This means it's editable from the VS Code UI more easily.
 - Rename the setting to enable the language server to 'enable'.
 
 ## v0.3.4
