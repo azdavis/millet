@@ -11,7 +11,7 @@ let client: LanguageClient | null = null;
 const channel = vscode.window.createOutputChannel("millet client");
 
 export async function activate(cx: vscode.ExtensionContext) {
-  channel.appendLine("startup millet lsp client");
+  channel.appendLine("start up millet client");
   const config = vscode.workspace.getConfiguration("millet");
   if (!config.get("server.enable") || client !== null) {
     return;
@@ -32,7 +32,7 @@ export async function activate(cx: vscode.ExtensionContext) {
 }
 
 export async function deactivate() {
-  channel.appendLine("shutdown millet lsp client");
+  channel.appendLine("shut down millet client");
   if (client === null) {
     return;
   }
