@@ -4,7 +4,7 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
-## main
+## v0.3.6
 
 - Change license from MIT to MIT OR Apache-2.0.
 
