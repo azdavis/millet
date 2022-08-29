@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## main
+
+- Change license from MIT to MIT OR Apache-2.0.
+
 ## v0.3.5
 
 - Change the setting for the language server path to have type string, default `""`. This means it's editable from the VS Code UI more easily.

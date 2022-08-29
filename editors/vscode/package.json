@@ -12,7 +12,7 @@
     "url": "https://github.com/azdavis/millet.git",
     "type": "git"
   },
-  "license": "MIT",
+  "license": "MIT OR Apache-2.0",
   "categories": [
     "Programming Languages"
   ],

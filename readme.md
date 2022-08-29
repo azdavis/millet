@@ -57,6 +57,10 @@ Also:
 - A bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course.
 - 15-150 is taught in Standard ML.
 
+## License
+
+Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.
+
 [architecture]: /docs/architecture.md
 [blog]: https://azdavis.net/posts/millet/
 [cmu150]: http://www.cs.cmu.edu/~15150/

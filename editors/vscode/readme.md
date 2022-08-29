@@ -72,6 +72,10 @@ Millet is affiliated with Project Savanna, a project whose goal is to improve to
 
 There is a [Discord server][discord] for Project Savanna, and Millet has its own channel there. You can get support and discuss the project there.
 
+## License
+
+Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.
+
 [blog]: https://azdavis.net/posts/millet/
 [discord]: https://discord.gg/hgPSUby2Ny
 [known-issues]: https://github.com/azdavis/millet/blob/main/docs/known-issues.md

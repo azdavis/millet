@@ -260,7 +260,14 @@ fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
     .collect();
   sh.copy_file(&lang_srv, &dir)?;
   assert!(dir.pop());
-  sh.copy_file("license.md", &dir)?;
+  let license_header =
+    "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";
+  let license_apache = sh.read_file("license-apache.md")?;
+  let license_mit = sh.read_file("license-mit.md")?;
+  let license_text = format!("{license_header}\n\n{license_apache}\n{license_mit}");
+  dir.push("license.md");
+  sh.write_file(&dir, license_text)?;
+  assert!(dir.pop());
   let _d = sh.push_dir(&dir);
   if !sh.path_exists("node_modules") {
     if cfg!(windows) {
