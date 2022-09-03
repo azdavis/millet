@@ -248,6 +248,12 @@ impl State {
       }
       self.publish_diagnostics();
     })?;
+    n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |_| {
+      if self.root.is_none() {
+        return;
+      }
+      self.publish_diagnostics();
+    })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
       if self.root.is_some() {
         return;
