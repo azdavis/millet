@@ -61,6 +61,11 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Path to the `lang-srv` executable. When set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
+        },
+        "millet.server.hover.token.enable": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Whether to show information about tokens on hover."
         }
       }
     },

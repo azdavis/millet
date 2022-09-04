@@ -155,7 +155,7 @@ impl State {
       let pos = text_doc_pos_params(&self.file_system, root, params)?;
       let res = self
         .analysis
-        .get_md(pos)
+        .get_md(pos, self.options.show_token_hover)
         .map(|(value, range)| lsp_types::Hover {
           contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,

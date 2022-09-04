@@ -42,3 +42,10 @@ Enable the language server.
 - Default: `""`
 
 Path to the `lang-srv` executable. When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.
+
+### `millet.server.hover.token.enable`
+
+- Type: `boolean`
+- Default: `true`
+
+Whether to show information about tokens on hover.

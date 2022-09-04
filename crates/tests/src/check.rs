@@ -196,7 +196,7 @@ impl Check {
               continue;
             }
           };
-          let r = match an.get_md(path.wrap(pos)) {
+          let r = match an.get_md(path.wrap(pos), true) {
             None => Reason::NoHover(path.wrap(region)),
             Some((got, _)) => {
               if got.contains(&expect.msg) {

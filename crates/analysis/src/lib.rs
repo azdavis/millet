@@ -100,7 +100,7 @@ impl Analysis {
   }
 
   /// Returns a Markdown string with information about this position.
-  pub fn get_md(&self, pos: WithPath<Position>) -> Option<(String, Range)> {
+  pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
     let (file, tok, ptr, idx) = self.get_file_with_idx(pos)?;
     let ty_md = file.info.get_ty_md(&self.syms, idx);
     let def_doc = file.info.get_def(idx).and_then(|def| {
@@ -110,7 +110,8 @@ impl Analysis {
       };
       info.get_doc(def.idx)
     });
-    let parts: Vec<_> = [ty_md.as_deref(), def_doc, tok.kind().token_doc()]
+    let token_doc = if token { tok.kind().token_doc() } else { None };
+    let parts: Vec<_> = [ty_md.as_deref(), def_doc, token_doc]
       .into_iter()
       .flatten()
       .collect();
