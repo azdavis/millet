@@ -72,7 +72,7 @@ impl State {
     if let Err(e) = root {
       ret.show_error(format!("{e:#}"));
     }
-    if let Some(root) = &ret.root {
+    if let Some(root) = ret.root.take() {
       // not sure if possible to only listen to millet.toml. "nested alternate groups are not
       // allowed" at time of writing
       let glob_pattern = format!(
@@ -94,7 +94,7 @@ impl State {
           ),
         }],
       });
-      ret.publish_diagnostics();
+      ret.publish_diagnostics(root);
     }
     ret
   }
@@ -245,9 +245,9 @@ impl State {
 
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      match self.root {
-        Some(_) => {
-          self.publish_diagnostics();
+      match self.root.take() {
+        Some(root) => {
+          self.publish_diagnostics(root);
         }
         None => log::error!("no root"),
       }
@@ -291,11 +291,7 @@ impl State {
 
   // diagnostics //
 
-  fn publish_diagnostics(&mut self) -> bool {
-    let mut root = match self.root.take() {
-      Some(x) => x,
-      None => return false,
-    };
+  fn publish_diagnostics(&mut self, mut root: Root) -> bool {
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let input = elapsed::log("input::get", || {
       analysis::input::get(&self.file_system, &mut root.input)
