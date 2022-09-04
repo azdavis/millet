@@ -11,17 +11,6 @@ use std::ops::ControlFlow;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
-    text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Options(
-      lsp_types::TextDocumentSyncOptions {
-        open_close: Some(true),
-        save: Some(lsp_types::TextDocumentSyncSaveOptions::SaveOptions(
-          lsp_types::SaveOptions {
-            include_text: Some(true),
-          },
-        )),
-        ..Default::default()
-      },
-    )),
     hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
     definition_provider: Some(lsp_types::OneOf::Left(true)),
     type_definition_provider: Some(lsp_types::TypeDefinitionProviderCapability::Simple(true)),
@@ -73,15 +62,16 @@ impl State {
     if let Err(e) = root {
       ret.show_error(format!("{e:#}"));
     }
-    if let Some(root) = ret.root.take() {
-      // not sure if possible to only listen to millet.toml. "nested alternate groups are not
-      // allowed" at time of writing
-      let glob_pattern = format!(
-        "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
-        root.input.as_paths().as_path().display()
-      );
-      ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
-        registrations: vec![lsp_types::Registration {
+    let registrations = match ret.root.take() {
+      Some(root) => {
+        // not sure if possible to only listen to millet.toml. "nested alternate groups are not
+        // allowed" at time of writing
+        let glob_pattern = format!(
+          "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
+          root.input.as_paths().as_path().display()
+        );
+        ret.publish_diagnostics(root);
+        vec![lsp_types::Registration {
           id: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
           method: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
           register_options: Some(
@@ -93,10 +83,40 @@ impl State {
             })
             .unwrap(),
           ),
-        }],
-      });
-      ret.publish_diagnostics(root);
-    }
+        }]
+      }
+      None => vec![
+        lsp_types::Registration {
+          id: lsp_types::notification::DidOpenTextDocument::METHOD.to_owned(),
+          method: lsp_types::notification::DidOpenTextDocument::METHOD.to_owned(),
+          register_options: Some(
+            serde_json::to_value(lsp_types::TextDocumentRegistrationOptions::default()).unwrap(),
+          ),
+        },
+        lsp_types::Registration {
+          id: lsp_types::notification::DidCloseTextDocument::METHOD.to_owned(),
+          method: lsp_types::notification::DidCloseTextDocument::METHOD.to_owned(),
+          register_options: Some(
+            serde_json::to_value(lsp_types::TextDocumentRegistrationOptions::default()).unwrap(),
+          ),
+        },
+        lsp_types::Registration {
+          id: lsp_types::notification::DidSaveTextDocument::METHOD.to_owned(),
+          method: lsp_types::notification::DidSaveTextDocument::METHOD.to_owned(),
+          register_options: Some(
+            serde_json::to_value(lsp_types::TextDocumentSaveRegistrationOptions {
+              include_text: Some(true),
+              text_document_registration_options:
+                lsp_types::TextDocumentRegistrationOptions::default(),
+            })
+            .unwrap(),
+          ),
+        },
+      ],
+    };
+    ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
+      registrations,
+    });
     ret
   }
 
