@@ -248,31 +248,40 @@ impl State {
       match self.root.take() {
         Some(root) => {
           self.publish_diagnostics(root);
+          Ok(())
         }
-        None => log::error!("no root"),
+        None => bail!("no root"),
       }
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
-      if self.root.is_none() {
-        let url = params.text_document.uri;
-        let text = params.text_document.text;
-        self.publish_diagnostics_one(url, &text);
+      if self.root.is_some() {
+        bail!("has root");
       }
+      let url = params.text_document.uri;
+      let text = params.text_document.text;
+      self.publish_diagnostics_one(url, &text);
+      Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
-      if self.root.is_none() {
-        let url = params.text_document.uri;
-        match params.text {
-          Some(text) => self.publish_diagnostics_one(url, &text),
-          None => log::error!("no text in did save"),
+      if self.root.is_some() {
+        bail!("has root");
+      }
+      let url = params.text_document.uri;
+      match params.text {
+        Some(text) => {
+          self.publish_diagnostics_one(url, &text);
+          Ok(())
         }
+        None => bail!("no text in did save"),
       }
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
-      if self.root.is_none() {
-        let url = params.text_document.uri;
-        self.send_diagnostics(url, Vec::new());
+      if self.root.is_some() {
+        bail!("has root");
       }
+      let url = params.text_document.uri;
+      self.send_diagnostics(url, Vec::new());
+      Ok(())
     })?;
     ControlFlow::Continue(n)
   }
@@ -382,13 +391,10 @@ where
 fn try_notification<N, F>(notif: Notification, f: F) -> ControlFlow<Result<()>, Notification>
 where
   N: lsp_types::notification::Notification,
-  F: FnOnce(N::Params),
+  F: FnOnce(N::Params) -> Result<()>,
 {
   match notif.extract::<N::Params>(N::METHOD) {
-    Ok(params) => {
-      f(params);
-      ControlFlow::Break(Ok(()))
-    }
+    Ok(params) => ControlFlow::Break(f(params)),
     Err(e) => extract_error(e),
   }
 }
