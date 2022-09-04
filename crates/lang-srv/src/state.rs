@@ -55,6 +55,7 @@ impl State {
       .map(|url| canonical_path_buf(&file_system, &url))
       .transpose();
     let mut ret = Self {
+      // do this convoluted incantation because we need `ret` to `show_error` in the `Err` case.
       root: root
         .as_mut()
         .ok()
