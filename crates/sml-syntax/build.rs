@@ -12,7 +12,7 @@ const SPECIAL: [(&str, &str); 7] = [
   ("StringLit", "a string literal"),
 ];
 
-const KEYWORDS: &str = include_str!("../../docs/keywords.md");
+const TOKENS: &str = include_str!("../../docs/tokens.md");
 
 fn code_h2(s: &str) -> Option<&str> {
   s.strip_prefix("## `")?.strip_suffix('`')
@@ -21,15 +21,15 @@ fn code_h2(s: &str) -> Option<&str> {
 fn main() -> std::io::Result<()> {
   let mut doc_map = FxHashMap::<&str, String>::default();
   let mut s = String::new();
-  let mut kw = None::<&str>;
-  for line in KEYWORDS.lines() {
+  let mut tok = None::<&str>;
+  for line in TOKENS.lines() {
     match code_h2(line) {
-      Some(new_kw) => {
-        if let Some(kw) = kw {
-          assert!(doc_map.insert(kw, s).is_none());
+      Some(new_tok) => {
+        if let Some(tok) = tok {
+          assert!(doc_map.insert(tok, s).is_none());
         }
-        kw = Some(new_kw);
-        s = format!("```sml\n{new_kw}\n```");
+        tok = Some(new_tok);
+        s = format!("```sml\n{new_tok}\n```");
       }
       None => {
         s.push('\n');
@@ -37,7 +37,7 @@ fn main() -> std::io::Result<()> {
       }
     }
   }
-  assert!(doc_map.insert(kw.unwrap(), s).is_none());
+  assert!(doc_map.insert(tok.unwrap(), s).is_none());
   let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR should be set");
   gen(
     std::path::Path::new(out_dir.as_str()),

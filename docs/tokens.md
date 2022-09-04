@@ -1,8 +1,8 @@
-# Keywords
+# Tokens
 
-This is documentation for all the keywords in SML, and what they mean.
+This is documentation for all the tokens in SML, and what they mean.
 
-If an SML keyword is not documented here, please file an issue.
+If an SML token is not documented here, please file an issue.
 
 ## `exception`
 
