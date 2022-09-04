@@ -51,6 +51,6 @@ pub enum ErrorLines {
 /// Optional settings for the server.
 #[derive(Debug, Default, Deserialize)]
 pub struct Options {
-  /// Whether to show information about tokens on hover.
+  /// Show information about tokens on hover.
   pub show_token_hover: bool,
 }

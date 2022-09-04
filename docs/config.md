@@ -48,4 +48,4 @@ Path to the `lang-srv` executable. When set to the empty string `""` (the defaul
 - Type: `boolean`
 - Default: `true`
 
-Whether to show information about tokens on hover.
+Show information about tokens on hover.

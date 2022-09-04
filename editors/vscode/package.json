@@ -65,7 +65,7 @@
         "millet.server.hover.token.enable": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Whether to show information about tokens on hover."
+          "markdownDescription": "Show information about tokens on hover."
         }
       }
     },
