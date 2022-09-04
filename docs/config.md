@@ -49,3 +49,10 @@ Path to the `lang-srv` executable. When set to the empty string `""` (the defaul
 - Default: `true`
 
 Show information about tokens on hover.
+
+### `millet.server.diagnostics.onChange.enable`
+
+- Type: `boolean`
+- Default: `false`
+
+Send diagnostics when file contents change before saving.

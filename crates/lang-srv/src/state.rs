@@ -62,7 +62,7 @@ impl State {
     if let Err(e) = root {
       ret.show_error(format!("{e:#}"));
     }
-    let registrations = match ret.root.take() {
+    let mut registrations = match ret.root.take() {
       Some(root) => {
         let watchers = vec![lsp_types::FileSystemWatcher {
           // not sure if possible to only listen to millet.toml. "nested alternate groups are not
@@ -73,7 +73,7 @@ impl State {
           ),
           kind: None,
         }];
-        ret.publish_diagnostics(root);
+        ret.publish_diagnostics(root, None);
         let did_change_watched = registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
           lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
         );
@@ -93,6 +93,17 @@ impl State {
         ]
       }
     };
+    if ret.options.diagnostics_on_change {
+      let did_change = registration::<lsp_types::notification::DidChangeTextDocument, _>(
+        lsp_types::TextDocumentChangeRegistrationOptions {
+          document_selector: None,
+          // TODO lsp_types::TextDocumentSyncKind::FULL.into() doesn't work, and this field is
+          // i32 for some reason.
+          sync_kind: 1,
+        },
+      );
+      registrations.push(did_change);
+    }
     ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
       registrations,
     });
@@ -247,11 +258,36 @@ impl State {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
       match self.root.take() {
         Some(root) => {
-          self.publish_diagnostics(root);
+          self.publish_diagnostics(root, None);
           Ok(())
         }
         None => bail!("no root"),
       }
+    })?;
+    n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
+      let url = params.text_document.uri;
+      let mut changes = params.content_changes;
+      let change = match changes.pop() {
+        Some(x) => x,
+        None => bail!("no changes"),
+      };
+      if !changes.is_empty() {
+        bail!("not exactly 1 change");
+      }
+      if change.range.is_some() {
+        bail!("not a full document change");
+      }
+      let contents = change.text;
+      match self.root.take() {
+        Some(mut root) => {
+          let path = url_to_path_id(&self.file_system, &mut root, &url)?;
+          self.publish_diagnostics(root, Some((path, contents)));
+        }
+        None => {
+          self.publish_diagnostics_one(url, &contents);
+        }
+      }
+      Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
       if self.root.is_some() {
@@ -300,12 +336,16 @@ impl State {
 
   // diagnostics //
 
-  fn publish_diagnostics(&mut self, mut root: Root) -> bool {
+  fn publish_diagnostics(
+    &mut self,
+    mut root: Root,
+    extra: Option<(paths::PathId, String)>,
+  ) -> bool {
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let input = elapsed::log("input::get", || {
       analysis::input::get(&self.file_system, &mut root.input)
     });
-    let input = match input {
+    let mut input = match input {
       Ok(x) => x,
       Err(e) => {
         for url in root.has_diagnostics.drain() {
@@ -330,6 +370,9 @@ impl State {
         return false;
       }
     };
+    if let Some((path, contents)) = extra {
+      input.override_source(path, contents);
+    }
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
     for (path_id, errors) in got_many {
       let path = root.input.as_paths().get_path(path_id);

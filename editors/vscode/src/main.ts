@@ -28,6 +28,8 @@ export async function activate(cx: vscode.ExtensionContext) {
     documentSelector: [{ scheme: "file", language: "sml" }],
     initializationOptions: {
       show_token_hover: config.get("server.hover.token.enable") ?? false,
+      diagnostics_on_change:
+        config.get("server.diagnostics.onChange.enable") ?? false,
     },
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);

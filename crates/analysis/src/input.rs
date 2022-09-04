@@ -23,6 +23,16 @@ impl Input {
   pub fn iter_sources(&self) -> impl Iterator<Item = WithPath<&str>> + '_ {
     self.sources.iter().map(|(&path, s)| path.wrap(s.as_str()))
   }
+
+  /// Override a source file to have the given contents.
+  ///
+  /// Returns whether the source was overridden. That is:
+  ///
+  /// - This returns `true` if there _was_ an existing source with this `path`.
+  /// - This returns `false` otherwise.
+  pub fn override_source(&mut self, path: PathId, contents: String) -> bool {
+    self.sources.insert(path, contents).is_some()
+  }
 }
 
 /// An error when getting input.

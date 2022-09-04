@@ -53,4 +53,6 @@ pub enum ErrorLines {
 pub struct Options {
   /// Show information about tokens on hover.
   pub show_token_hover: bool,
+  /// Send diagnostics when file contents change before saving.
+  pub diagnostics_on_change: bool,
 }

@@ -66,6 +66,11 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Show information about tokens on hover."
+        },
+        "millet.server.diagnostics.onChange.enable": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Send diagnostics when file contents change before saving."
         }
       }
     },
