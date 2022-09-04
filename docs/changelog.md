@@ -4,6 +4,11 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## main
+
+- Add option for showing information about tokens on hover (default true).
+- Add option for re-calculating diagnostics when files change without saving (default false).
+
 ## v0.3.6
 
 - Change license from MIT to MIT OR Apache-2.0.
