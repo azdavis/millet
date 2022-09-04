@@ -4,7 +4,17 @@ mod state;
 
 fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyhow::Result<()> {
   log::info!("startup main loop: {init:#?}");
-  let mut state = state::State::new(init.root_uri, conn.sender.clone());
+  let options: config::Options = init
+    .initialization_options
+    .and_then(|v| match serde_json::from_value(v) {
+      Ok(x) => Some(x),
+      Err(e) => {
+        log::error!("invalid initialization_options: {e}");
+        None
+      }
+    })
+    .unwrap_or_default();
+  let mut state = state::State::new(init.root_uri, options, conn.sender.clone());
   for msg in conn.receiver.iter() {
     match msg {
       lsp_server::Message::Request(req) => {

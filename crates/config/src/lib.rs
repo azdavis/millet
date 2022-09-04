@@ -47,3 +47,7 @@ pub enum ErrorLines {
   /// Error messages may (or may not) have newlines.
   Many,
 }
+
+/// Optional settings for the server.
+#[derive(Debug, Default, Deserialize)]
+pub struct Options {}

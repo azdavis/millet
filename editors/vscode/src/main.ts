@@ -26,6 +26,7 @@ export async function activate(cx: vscode.ExtensionContext) {
   };
   const clientOpts: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "sml" }],
+    initializationOptions: {},
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);
   client.start();

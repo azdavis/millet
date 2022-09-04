@@ -45,10 +45,11 @@ pub(crate) struct State {
   req_queue: ReqQueue<(), ()>,
   analysis: analysis::Analysis,
   file_system: paths::RealFileSystem,
+  options: config::Options,
 }
 
 impl State {
-  pub(crate) fn new(root: Option<Url>, sender: Sender<Message>) -> Self {
+  pub(crate) fn new(root: Option<Url>, options: config::Options, sender: Sender<Message>) -> Self {
     let file_system = paths::RealFileSystem::default();
     let mut root = root
       .map(|url| canonical_path_buf(&file_system, &url))
@@ -66,6 +67,7 @@ impl State {
       req_queue: ReqQueue::default(),
       analysis: analysis::Analysis::new(analysis::StdBasis::full(), config::ErrorLines::Many),
       file_system,
+      options,
     };
     if let Err(e) = root {
       ret.show_error(format!("{e:#}"));
