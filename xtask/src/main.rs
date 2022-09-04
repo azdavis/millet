@@ -215,6 +215,27 @@ fn ck_crate_architecture_doc(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
+fn ck_no_debugging(sh: &Shell) -> Result<()> {
+  // the uppercase + to_ascii_lowercase is to prevent git grep from triggering on this file.
+  let fst = "DBG".to_ascii_lowercase();
+  let snd = "EPRINT".to_ascii_lowercase();
+  let thd = "CONSOLE.LOG".to_ascii_lowercase();
+  // ignore status because if no results (which is desired), git grep returns non-zero.
+  let got = cmd!(sh, "git grep -F -n -e {fst} -e {snd} -e {thd}")
+    .ignore_status()
+    .output()?
+    .stdout;
+  let got = String::from_utf8(got)?;
+  let got: BTreeSet<_> = got.lines().collect();
+  eq_sets(
+    &BTreeSet::new(),
+    &got,
+    "expected to have debugging",
+    "not allowed to have debugging",
+  )?;
+  Ok(())
+}
+
 fn ck_changelog(sh: &Shell) -> Result<()> {
   println!("checking for changelog entries");
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output()?.stdout)?;
@@ -295,6 +316,7 @@ fn run_ci(sh: &Shell) -> Result<()> {
   ck_no_ignore(sh)?;
   ck_sml_libs(sh)?;
   ck_crate_architecture_doc(sh)?;
+  ck_no_debugging(sh)?;
   // skip on CI because CI may not have tags.
   if option_env!("CI") != Some("1") {
     ck_changelog(sh)?;
