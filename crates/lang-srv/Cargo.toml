@@ -16,4 +16,5 @@ log = "0.4"
 lsp-server = "0.6"
 lsp-types = "0.93"
 paths = { path = "../paths" }
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"

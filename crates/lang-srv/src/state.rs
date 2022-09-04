@@ -6,7 +6,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use crossbeam_channel::Sender;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
-use lsp_types::{notification::Notification as _, Url};
+use lsp_types::Url;
 use std::ops::ControlFlow;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
@@ -64,55 +64,34 @@ impl State {
     }
     let registrations = match ret.root.take() {
       Some(root) => {
-        // not sure if possible to only listen to millet.toml. "nested alternate groups are not
-        // allowed" at time of writing
-        let glob_pattern = format!(
-          "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
-          root.input.as_paths().as_path().display()
-        );
+        let watchers = vec![lsp_types::FileSystemWatcher {
+          // not sure if possible to only listen to millet.toml. "nested alternate groups are not
+          // allowed" at time of writing
+          glob_pattern: format!(
+            "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
+            root.input.as_paths().as_path().display()
+          ),
+          kind: None,
+        }];
         ret.publish_diagnostics(root);
-        vec![lsp_types::Registration {
-          id: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
-          method: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_owned(),
-          register_options: Some(
-            serde_json::to_value(lsp_types::DidChangeWatchedFilesRegistrationOptions {
-              watchers: vec![lsp_types::FileSystemWatcher {
-                glob_pattern,
-                kind: None,
-              }],
-            })
-            .unwrap(),
-          ),
-        }]
+        let did_change_watched = registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
+          lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
+        );
+        vec![did_change_watched]
       }
-      None => vec![
-        lsp_types::Registration {
-          id: lsp_types::notification::DidOpenTextDocument::METHOD.to_owned(),
-          method: lsp_types::notification::DidOpenTextDocument::METHOD.to_owned(),
-          register_options: Some(
-            serde_json::to_value(lsp_types::TextDocumentRegistrationOptions::default()).unwrap(),
-          ),
-        },
-        lsp_types::Registration {
-          id: lsp_types::notification::DidCloseTextDocument::METHOD.to_owned(),
-          method: lsp_types::notification::DidCloseTextDocument::METHOD.to_owned(),
-          register_options: Some(
-            serde_json::to_value(lsp_types::TextDocumentRegistrationOptions::default()).unwrap(),
-          ),
-        },
-        lsp_types::Registration {
-          id: lsp_types::notification::DidSaveTextDocument::METHOD.to_owned(),
-          method: lsp_types::notification::DidSaveTextDocument::METHOD.to_owned(),
-          register_options: Some(
-            serde_json::to_value(lsp_types::TextDocumentSaveRegistrationOptions {
+      None => {
+        let tdr = lsp_types::TextDocumentRegistrationOptions::default();
+        vec![
+          registration::<lsp_types::notification::DidOpenTextDocument, _>(tdr.clone()),
+          registration::<lsp_types::notification::DidCloseTextDocument, _>(tdr.clone()),
+          registration::<lsp_types::notification::DidSaveTextDocument, _>(
+            lsp_types::TextDocumentSaveRegistrationOptions {
               include_text: Some(true),
-              text_document_registration_options:
-                lsp_types::TextDocumentRegistrationOptions::default(),
-            })
-            .unwrap(),
+              text_document_registration_options: tdr,
+            },
           ),
-        },
-      ],
+        ]
+      }
     };
     ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
       registrations,
@@ -530,4 +509,16 @@ where
   let path = url_to_path_id(fs, root, &params.text_document.uri)?;
   let pos = analysis_position(params.position);
   Ok(path.wrap(pos))
+}
+
+fn registration<N, T>(options: T) -> lsp_types::Registration
+where
+  N: lsp_types::notification::Notification,
+  T: serde::Serialize,
+{
+  lsp_types::Registration {
+    id: N::METHOD.to_owned(),
+    method: N::METHOD.to_owned(),
+    register_options: Some(serde_json::to_value(options).unwrap()),
+  }
 }

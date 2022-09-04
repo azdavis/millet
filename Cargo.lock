@@ -250,6 +250,7 @@ dependencies = [
  "lsp-server",
  "lsp-types",
  "paths",
+ "serde",
  "serde_json",
 ]
 
