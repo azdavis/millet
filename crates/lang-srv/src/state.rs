@@ -245,34 +245,34 @@ impl State {
 
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      if self.root.is_none() {
-        return;
+      match self.root {
+        Some(_) => {
+          self.publish_diagnostics();
+        }
+        None => log::error!("no root"),
       }
-      self.publish_diagnostics();
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
-      if self.root.is_some() {
-        return;
-      }
-      let url = params.text_document.uri;
-      let text = params.text_document.text;
-      self.publish_diagnostics_one(url, &text);
-    })?;
-    n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
-      if self.root.is_some() {
-        return;
-      }
-      let url = params.text_document.uri;
-      if let Some(text) = params.text {
+      if self.root.is_none() {
+        let url = params.text_document.uri;
+        let text = params.text_document.text;
         self.publish_diagnostics_one(url, &text);
       }
     })?;
-    n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
-      if self.root.is_some() {
-        return;
+    n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
+      if self.root.is_none() {
+        let url = params.text_document.uri;
+        match params.text {
+          Some(text) => self.publish_diagnostics_one(url, &text),
+          None => log::error!("no text in did save"),
+        }
       }
-      let url = params.text_document.uri;
-      self.send_diagnostics(url, Vec::new());
+    })?;
+    n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
+      if self.root.is_none() {
+        let url = params.text_document.uri;
+        self.send_diagnostics(url, Vec::new());
+      }
     })?;
     ControlFlow::Continue(n)
   }
