@@ -295,6 +295,7 @@ fn run_ci(sh: &Shell) -> Result<()> {
   ck_no_ignore(sh)?;
   ck_sml_libs(sh)?;
   ck_crate_architecture_doc(sh)?;
+  // skip on CI because CI may not have tags.
   if option_env!("CI") != Some("1") {
     ck_changelog(sh)?;
   }
