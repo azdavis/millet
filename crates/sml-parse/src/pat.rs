@@ -140,7 +140,7 @@ enum PatPrec {
   Infix(Infix),
 }
 
-/// when adding more cases to this, update [`at_pat_hd`]
+/// when adding more cases to this, update [`at_pat_hd`].
 pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
   let ex = if scon(p) {
@@ -202,6 +202,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>) -> Option<Exited> {
   Some(ex)
 }
 
+/// see [`at_pat`].
 fn at_pat_hd(p: &mut Parser<'_>) -> bool {
   scon(p)
     || p.at(SK::Underscore)

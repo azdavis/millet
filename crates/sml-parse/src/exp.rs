@@ -231,7 +231,7 @@ fn matcher(p: &mut Parser<'_>) {
   p.exit(en, SK::Matcher);
 }
 
-/// need this for app expressions to know whether to precede or not.
+/// see [`at_exp`]. need this for app expressions to know whether to precede or not.
 fn at_exp_hd(p: &mut Parser<'_>) -> bool {
   p.at(SK::DotDotDot)
     || p.at(SK::Underscore)
