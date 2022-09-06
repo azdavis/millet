@@ -64,6 +64,7 @@ impl Error {
       ErrorKind::TyHole => 5027,
       ErrorKind::DecHole => 5028,
       ErrorKind::BindPolymorphicExpansiveExp => 5029,
+      ErrorKind::AsPatLhsNotName => 5030,
       ErrorKind::Unsupported(_) => 5999,
     }
   }
@@ -100,6 +101,7 @@ pub(crate) enum ErrorKind {
   TyHole,
   DecHole,
   BindPolymorphicExpansiveExp,
+  AsPatLhsNotName,
   /// must be last
   Unsupported(&'static str),
 }
@@ -213,6 +215,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::BindPolymorphicExpansiveExp => {
         f.write_str("cannot bind expansive polymorphic expression")
       }
+      ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

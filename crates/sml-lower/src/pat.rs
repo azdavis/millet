@@ -45,16 +45,17 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
               r.last = false;
             }
             let lab = sml_hir::Name::new(row.name_star_eq()?.token.text());
+            let lab_pat = name(lab.as_str());
             let ty_ann = row.ty_annotation().map(|x| ty::get(cx, x.ty()));
             let as_tail = row.as_pat_tail().map(|x| get(cx, x.pat()));
             let pat = match (ty_ann, as_tail) {
               (Some(ty), Some(pat)) => sml_hir::Pat::As(
-                lab.clone(),
+                cx.pat(lab_pat, ptr.clone()),
                 cx.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()),
               ),
-              (Some(ty), None) => sml_hir::Pat::Typed(cx.pat(name(lab.as_str()), ptr.clone()), ty),
-              (None, Some(pat)) => sml_hir::Pat::As(lab.clone(), pat),
-              (None, None) => name(lab.as_str()),
+              (Some(ty), None) => sml_hir::Pat::Typed(cx.pat(lab_pat, ptr.clone()), ty),
+              (None, Some(pat)) => sml_hir::Pat::As(cx.pat(lab_pat, ptr.clone()), pat),
+              (None, None) => lab_pat,
             };
             Some((sml_hir::Lab::Name(lab), cx.pat(pat, ptr.clone())))
           }
@@ -112,9 +113,9 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       )
     }
     ast::Pat::AsPat(pat) => {
-      let name = sml_hir::Name::new(pat.name_star_eq()?.token.text());
+      let lhs = cx.pat(name(pat.name_star_eq()?.token.text()), ptr.clone());
       let ty = pat.ty_annotation().map(|x| ty::get(cx, x.ty()));
-      let inner = pat.as_pat_tail()?.pat().and_then(|pat| {
+      let rhs = pat.as_pat_tail()?.pat().and_then(|pat| {
         let ptr = SyntaxNodePtr::new(pat.syntax());
         let mut p = get(cx, Some(pat));
         if let Some(ty) = ty {
@@ -122,7 +123,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
         }
         p
       });
-      sml_hir::Pat::As(name, inner)
+      sml_hir::Pat::As(lhs, rhs)
     }
     ast::Pat::OrPat(pat) => {
       // flatten or pats.

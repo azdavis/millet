@@ -1392,6 +1392,30 @@ To fix, try any of the following:
   val r : int list ref = ref []
   ```
 
+## 5030
+
+The left-hand side of an `as` patterns was neither a name nor a typed name.
+
+```sml
+(* error *)
+fun f x =
+  case x of
+    3 as y => 8
+  | _ => x
+```
+
+The syntax for `as` patterns is `<name> (: <ty>)? as <pat>`.
+
+To fix, ensure the left hand side of the `as` is either a name or a typed name.
+
+```sml
+(* ok *)
+fun f x =
+  case x of
+    y as 3 => 8
+  | _ => x
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.

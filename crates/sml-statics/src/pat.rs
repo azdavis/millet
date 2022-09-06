@@ -171,12 +171,17 @@ fn get_(
       (pm_pat, want)
     }
     // sml_def(43)
-    sml_hir::Pat::As(ref name, inner) => {
-      if !ok_val_info(cx.env.get_val(name)) {
-        st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));
+    sml_hir::Pat::As(lhs, rhs) => {
+      let (pm_pat, ty) = get(st, cx, ars, ve, *rhs, g);
+      match get_as_pat_name(ars, *lhs) {
+        None => st.err(lhs.unwrap_or(pat_), ErrorKind::AsPatLhsNotName),
+        Some(name) => {
+          if !ok_val_info(cx.env.get_val(name)) {
+            st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));
+          }
+          insert_name(st, ve, name.clone(), ty.clone(), pat_.into());
+        }
       }
-      let (pm_pat, ty) = get(st, cx, ars, ve, *inner, g);
-      insert_name(st, ve, name.clone(), ty.clone(), pat_.into());
       (pm_pat, ty)
     }
     sml_hir::Pat::Or(or_pat) => {
@@ -233,5 +238,19 @@ fn insert_name(st: &mut St, ve: &mut ValEnv, name: sml_hir::Name, ty: Ty, idx: s
   };
   if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);
+  }
+}
+
+fn get_as_pat_name(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> Option<&sml_hir::Name> {
+  match &ars.pat[pat?] {
+    sml_hir::Pat::Typed(pat, _) => get_as_pat_name_inner(&ars.pat[(*pat)?]),
+    pat => get_as_pat_name_inner(pat),
+  }
+}
+
+fn get_as_pat_name_inner(pat: &sml_hir::Pat) -> Option<&sml_hir::Name> {
+  match pat {
+    sml_hir::Pat::Con(name, None) => name.structures().is_empty().then_some(name.last()),
+    _ => None,
   }
 }
