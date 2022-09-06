@@ -1,6 +1,6 @@
 mod or;
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn unexpected_arg_1() {
@@ -127,6 +127,19 @@ fun f x =
   case x of
     1 as _ => 2
 (** ^ left-hand side of `as` pattern must be a name *)
+  | _ => 3
+"#,
+  );
+}
+
+#[test]
+fn as_pat_non_name_lhs_paren() {
+  fail(
+    r#"
+fun f x =
+  case x of
+    (x) as _ => 2
+(** ^^^ left-hand side of `as` pattern must be a name *)
   | _ => 3
 "#,
   );
