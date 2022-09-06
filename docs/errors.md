@@ -1408,7 +1408,7 @@ To fix, try any of the following:
 
 ## 5030
 
-The left-hand side of an `as` patterns was neither a name nor a typed name.
+The left-hand side of an `as` pattern was neither a name nor a typed name.
 
 ```sml
 (* error *)
