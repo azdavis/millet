@@ -120,7 +120,7 @@ val _ = op+ - op* : int
 }
 
 #[test]
-fn as_pat_non_name_lhs() {
+fn as_pat_lhs_not_name() {
   check(
     r#"
 fun f x =
@@ -133,7 +133,7 @@ fun f x =
 }
 
 #[test]
-fn as_pat_non_name_lhs_paren() {
+fn as_pat_lhs_not_name_paren() {
   fail(
     r#"
 fun f x =
