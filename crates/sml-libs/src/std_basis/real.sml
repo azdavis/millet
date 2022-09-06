@@ -353,8 +353,23 @@ structure Real :> REAL
 structure LargeReal :> REAL
   where type real = LargeReal.real = LargeReal
 
+(*
+ * Alias for `Real.ceil`.
+ *)
 val ceil = Real.ceil
+(*
+ * Alias for `Real.floor`.
+ *)
 val floor = Real.floor
+(*
+ * Alias for `Real.fromInt`.
+ *)
 val real = Real.fromInt
+(*
+ * Alias for `Real.round`.
+ *)
 val round = Real.round
+(*
+ * Alias for `Real.trunc`.
+ *)
 val trunc = Real.trunc

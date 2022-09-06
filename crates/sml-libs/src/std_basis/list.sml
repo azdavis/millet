@@ -140,15 +140,51 @@ signature LIST = sig
 end
 
 structure List :> LIST = struct end
+(*!
+ * Alias for `List.Empty`.
+ *)
 exception Empty = List.Empty
+(*!
+ * Alias for `List.@`.
+ *)
 val op @ = List.@
+(*!
+ * Alias for `List.app`.
+ *)
 val app = List.app
+(*!
+ * Alias for `List.concat`.
+ *)
 val concat = List.concat
+(*!
+ * Alias for `List.foldl`.
+ *)
 val foldl = List.foldl
+(*!
+ * Alias for `List.foldr`.
+ *)
 val foldr = List.foldr
+(*!
+ * Alias for `List.hd`.
+ *)
 val hd = List.hd
+(*!
+ * Alias for `List.length`.
+ *)
 val length = List.length
+(*!
+ * Alias for `List.map`.
+ *)
 val map = List.map
+(*!
+ * Alias for `List.null`.
+ *)
 val null = List.null
+(*!
+ * Alias for `List.rev`.
+ *)
 val rev = List.rev
+(*!
+ * Alias for `List.tl`.
+ *)
 val tl = List.tl

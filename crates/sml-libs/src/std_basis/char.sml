@@ -286,5 +286,11 @@ structure WideChar :> CHAR (* OPTIONAL *)
   where type char = WideChar.char
   where type string = WideString.string = WideChar
 
+(*!
+ * Alias for `Char.chr`.
+ *)
 val chr = Char.chr
+(*!
+ * Alias for `Char.ord`.
+ *)
 val ord = Char.ord
