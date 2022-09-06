@@ -364,7 +364,12 @@ impl State {
           false
         };
         if !did_send_as_diagnostic {
-          self.show_error(format!("{}: {}", e.path().display(), e));
+          self.show_error(format!(
+            "{}: {} (see {})",
+            e.path().display(),
+            e,
+            error_url(e.to_code())
+          ));
         }
         self.root = Some(root);
         return false;
@@ -475,14 +480,18 @@ fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
     .collect()
 }
 
+fn error_url(code: u16) -> Url {
+  Url::parse(&format!("{}#{}", analysis::ERRORS_URL, code)).expect("couldn't parse error URL")
+}
+
 fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp_types::Diagnostic {
-  let href =
-    Url::parse(&format!("{}#{}", analysis::ERRORS_URL, code)).expect("couldn't parse error URL");
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(lsp_types::DiagnosticSeverity::ERROR),
     code: Some(lsp_types::NumberOrString::Number(code.into())),
-    code_description: Some(lsp_types::CodeDescription { href }),
+    code_description: Some(lsp_types::CodeDescription {
+      href: error_url(code),
+    }),
     source: Some("Millet".to_owned()),
     message,
     related_information: None,
