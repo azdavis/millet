@@ -33,24 +33,8 @@ enum AtPatHd {
   Infix(ConPatState, Infix),
 }
 
-/// kind of gross for the tricky ones (as pat, con pat with arg, infix pat).
+/// kind of gross for the tricky ones.
 fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
-  // as pat/typed pat
-  if name_then_colon_or_as(p, 0) || (p.at(SK::OpKw) && name_then_colon_or_as(p, 1)) {
-    let en = p.enter();
-    if p.at(SK::OpKw) {
-      p.bump();
-    }
-    eat_name_star(p);
-    let ta = ty_annotation(p);
-    let ap = as_pat_tl(p);
-    let kind = match (ta, ap) {
-      (_, Some(_)) => SK::AsPat,
-      (Some(_), None) => SK::TypedNamePat,
-      (None, None) => unreachable!("we should have just seen a name, then either colon or as"),
-    };
-    return Some(p.exit(en, kind));
-  }
   // con pat with arg, or infix pat
   let mut state = if name_star(p, 0) || (p.at(SK::OpKw) && name_star(p, 1)) {
     let en = p.enter();
@@ -126,6 +110,15 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
       let en = p.precede(ex);
       must(p, ty_annotation, Expected::Ty);
       p.exit(en, SK::TypedPat)
+    } else if p.at(SK::AsKw) {
+      match min_prec {
+        PatPrec::Min | PatPrec::Or => {}
+        PatPrec::Infix(_) => break,
+      }
+      let ex = state.exit(p);
+      let en = p.precede(ex);
+      must(p, as_pat_tl, Expected::Pat);
+      p.exit(en, SK::AsPat)
     } else {
       break;
     };
@@ -241,11 +234,6 @@ fn at_pat_l_round(p: &mut Parser<'_>) -> SK {
     }
   }
   SK::TuplePat
-}
-
-/// not necessarily an as pat, since it could be a typed pat.
-fn name_then_colon_or_as(p: &mut Parser<'_>, n: usize) -> bool {
-  name_star(p, n) && (p.at_n(n + 1, SK::Colon) || p.at_n(n + 1, SK::AsKw))
 }
 
 fn as_pat_tl(p: &mut Parser<'_>) -> Option<Exited> {

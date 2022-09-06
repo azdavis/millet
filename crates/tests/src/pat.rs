@@ -118,3 +118,16 @@ val _ = op+ - op* : int
 "#,
   );
 }
+
+#[test]
+fn as_pat_non_name_lhs() {
+  check(
+    r#"
+fun f x =
+  case x of
+    1 as _ => 2
+(** ^ left-hand side of `as` pattern must be a name *)
+  | _ => 3
+"#,
+  );
+}

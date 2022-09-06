@@ -105,24 +105,9 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       get(cx, pat.pat()),
       ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
     ),
-    ast::Pat::TypedNamePat(pat) => {
-      let name_pat = cx.pat(name(pat.name_star_eq()?.token.text()), ptr.clone());
-      sml_hir::Pat::Typed(
-        name_pat,
-        ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
-      )
-    }
     ast::Pat::AsPat(pat) => {
-      let lhs = cx.pat(name(pat.name_star_eq()?.token.text()), ptr.clone());
-      let ty = pat.ty_annotation().map(|x| ty::get(cx, x.ty()));
-      let rhs = pat.as_pat_tail()?.pat().and_then(|pat| {
-        let ptr = SyntaxNodePtr::new(pat.syntax());
-        let mut p = get(cx, Some(pat));
-        if let Some(ty) = ty {
-          p = cx.pat(sml_hir::Pat::Typed(p, ty), ptr);
-        }
-        p
-      });
+      let lhs = get(cx, pat.pat());
+      let rhs = pat.as_pat_tail()?.pat().and_then(|pat| get(cx, Some(pat)));
       sml_hir::Pat::As(lhs, rhs)
     }
     ast::Pat::OrPat(pat) => {
