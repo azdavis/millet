@@ -40,9 +40,23 @@ root = "foo.cm"
 
 ## 1004
 
-Similar to 1003, but this time there was no root group file.
+There was no group file (aka `.mlb` or `.cm` file) in the top-level (aka "root") directory.
 
-To fix, create one.
+See error 1003, which is the error when there was more than one root group file.
+
+To fix, try any of the following:
+
+- Create a group file in the top-level directory.
+- Change the top-level directory, by opening your editor onto a different directory.
+- Create a `millet.toml` file in the top-level directory pointing at a root group file.
+
+  For instance, if you have opened your editor to `~/foo`, and you have a group file at `~/foo/bar/quz.mlb`, you can create `~/foo/millet.toml` with the contents:
+
+  ```toml
+  version = 1
+  [workspace]
+  root = "bar/quz.mlb"
+  ```
 
 ## 1005
 

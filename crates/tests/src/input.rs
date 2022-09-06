@@ -10,13 +10,13 @@ fn arbitrary_root_group() {
 #[test]
 fn no_root_group() {
   let e = check_empty_cm(&[], None).unwrap_err();
-  assert!(e.to_string().contains("no root group"));
+  assert!(e.to_string().contains("no root group file"));
 }
 
 #[test]
 fn multiple_root_groups_err() {
   let e = check_empty_cm(&["foo.cm", "bar.cm"], None).unwrap_err();
-  assert!(e.to_string().contains("multiple root groups"));
+  assert!(e.to_string().contains("multiple root group files"));
 }
 
 #[test]
@@ -83,7 +83,7 @@ version = 1
 root = "nope.txt"
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
-  assert!(e.to_string().contains("not a group path"));
+  assert!(e.to_string().contains("not a group file path"));
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn mlb() {
 #[test]
 fn mlb_cm_err() {
   let e = check_empty_cm(&["foo.mlb", "foo.cm"], None).unwrap_err();
-  assert!(e.to_string().contains("multiple root groups"));
+  assert!(e.to_string().contains("multiple root group files"));
 }
 
 #[test]

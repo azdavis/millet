@@ -110,12 +110,12 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
       GetInputErrorKind::MultipleRoots(a, b) => write!(
         f,
-        "multiple root groups: {} and {}",
+        "multiple root group files: {} and {}",
         a.display(),
         b.display()
       ),
-      GetInputErrorKind::NoRoot => f.write_str("no root group"),
-      GetInputErrorKind::NotGroup => f.write_str("not a group path"),
+      GetInputErrorKind::NoRoot => f.write_str("no root group file"),
+      GetInputErrorKind::NotGroup => f.write_str("not a group file path"),
       GetInputErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
       GetInputErrorKind::InvalidConfigVersion(n) => {
         write!(f, "invalid config version: expected 1, found {n}")
