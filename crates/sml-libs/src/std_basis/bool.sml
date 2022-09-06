@@ -2,7 +2,7 @@
  * The Bool structure provides some basic operations on boolean values.
  *)
 signature BOOL = sig
-  datatype bool = datatype bool
+  type bool = bool
   (*!
    * not b returns the logical negation of the boolean value b.
    *)

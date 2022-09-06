@@ -252,7 +252,7 @@ structure WideSubstring :> SUBSTRING (* OPTIONAL *)
 (*
  * Alias for `Substring.substring`.
  *)
-datatype substring = datatype Substring.substring
+type substring = Substring.substring
 (*
  * Alias for `Substring.substring`.
  *)
