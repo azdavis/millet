@@ -4,10 +4,12 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
-## main
+## v0.3.7
 
 - Add option for showing information about tokens on hover (default true).
 - Add option for re-calculating diagnostics when files change without saving (default false).
+- Add docs for std basis top-level aliases (e.g. `map` is an alias for `List.map`).
+- Parse (but reject later) `<pat1> as <pat2>`.
 
 ## v0.3.6
 
