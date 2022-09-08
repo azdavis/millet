@@ -20,6 +20,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 }
 
 const MAX_FILES_WITH_ERRORS: usize = 20;
+const LEARN_MORE: &str = "Learn more";
 
 struct Root {
   input: analysis::input::Root,
@@ -31,7 +32,7 @@ struct Root {
 pub(crate) struct State {
   root: Option<Root>,
   sender: Sender<Message>,
-  req_queue: ReqQueue<(), ()>,
+  req_queue: ReqQueue<(), Option<u16>>,
   analysis: analysis::Analysis,
   file_system: paths::RealFileSystem,
   options: config::Options,
@@ -44,7 +45,7 @@ impl State {
       .map(|url| canonical_path_buf(&file_system, &url))
       .transpose();
     let mut ret = Self {
-      // do this convoluted incantation because we need `ret` to `show_error` in the `Err` case.
+      // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
       root: root
         .as_mut()
         .ok()
@@ -60,7 +61,10 @@ impl State {
       options,
     };
     if let Err(e) = root {
-      ret.show_error(format!("{e:#}"));
+      ret.send_notification::<lsp_types::notification::ShowMessage>(lsp_types::ShowMessageParams {
+        typ: lsp_types::MessageType::ERROR,
+        message: format!("{e:#}"),
+      });
     }
     let mut registrations = match ret.root.take() {
       Some(root) => {
@@ -104,20 +108,21 @@ impl State {
       );
       registrations.push(did_change);
     }
-    ret.send_request::<lsp_types::request::RegisterCapability>(lsp_types::RegistrationParams {
-      registrations,
-    });
+    ret.send_request::<lsp_types::request::RegisterCapability>(
+      lsp_types::RegistrationParams { registrations },
+      None,
+    );
     ret
   }
 
-  fn send_request<R>(&mut self, params: R::Params)
+  fn send_request<R>(&mut self, params: R::Params, data: Option<u16>)
   where
     R: lsp_types::request::Request,
   {
     let req = self
       .req_queue
       .outgoing
-      .register(R::METHOD.to_owned(), params, ());
+      .register(R::METHOD.to_owned(), params, data);
     self.send(req.into())
   }
 
@@ -239,8 +244,31 @@ impl State {
 
   pub(crate) fn handle_response(&mut self, res: Response) {
     log::info!("got response: {res:?}");
+    // no need to look at `res.result` since we register Some(code) to display iff we showed a
+    // button the user could press, and there is only ever that one button.
     match self.req_queue.outgoing.complete(res.id.clone()) {
-      Some(()) => {}
+      Some(data) => match data {
+        Some(code) => match res.result {
+          Some(val) => match serde_json::from_value::<lsp_types::MessageActionItem>(val) {
+            Ok(item) => {
+              if item.title == LEARN_MORE {
+                self.send_request::<lsp_types::request::ShowDocument>(
+                  lsp_types::ShowDocumentParams {
+                    uri: error_url(code),
+                    external: Some(true),
+                    take_focus: Some(true),
+                    selection: None,
+                  },
+                  None,
+                );
+              }
+            }
+            Err(e) => log::error!("registered an error code, but got no message action item: {e}"),
+          },
+          None => {}
+        },
+        None => {}
+      },
       None => log::warn!("received response for non-queued request: {res:?}"),
     }
   }
@@ -322,13 +350,6 @@ impl State {
     ControlFlow::Continue(n)
   }
 
-  fn show_error(&mut self, message: String) {
-    self.send_notification::<lsp_types::notification::ShowMessage>(lsp_types::ShowMessageParams {
-      typ: lsp_types::MessageType::ERROR,
-      message,
-    });
-  }
-
   fn send(&self, msg: Message) {
     log::info!("sending {msg:?}");
     self.sender.send(msg).unwrap()
@@ -364,12 +385,17 @@ impl State {
           false
         };
         if !did_send_as_diagnostic {
-          self.show_error(format!(
-            "{}: {} (see {})",
-            e.path().display(),
-            e,
-            error_url(e.to_code())
-          ));
+          self.send_request::<lsp_types::request::ShowMessageRequest>(
+            lsp_types::ShowMessageRequestParams {
+              typ: lsp_types::MessageType::ERROR,
+              message: format!("{}: {}", e.path().display(), e),
+              actions: Some(vec![lsp_types::MessageActionItem {
+                title: LEARN_MORE.to_owned(),
+                properties: Default::default(),
+              }]),
+            },
+            Some(e.to_code()),
+          );
         }
         self.root = Some(root);
         return false;
