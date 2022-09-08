@@ -244,31 +244,47 @@ impl State {
 
   pub(crate) fn handle_response(&mut self, res: Response) {
     log::info!("got response: {res:?}");
-    match self.req_queue.outgoing.complete(res.id.clone()) {
-      Some(data) => match data {
-        Some(code) => match res.result {
-          Some(val) => match serde_json::from_value::<lsp_types::MessageActionItem>(val) {
-            Ok(item) => {
-              if item.title == LEARN_MORE {
-                self.send_request::<lsp_types::request::ShowDocument>(
-                  lsp_types::ShowDocumentParams {
-                    uri: error_url(code),
-                    external: Some(true),
-                    take_focus: Some(true),
-                    selection: None,
-                  },
-                  None,
-                );
-              }
-            }
-            Err(e) => log::error!("registered an error code, but got no message action item: {e}"),
-          },
-          None => log::info!("user did not click to look at the error URL"),
-        },
-        None => log::info!("no data associated with this request"),
-      },
-      None => log::warn!("received response for non-queued request: {res:?}"),
+    let data = match self.req_queue.outgoing.complete(res.id.clone()) {
+      Some(x) => x,
+      None => {
+        log::warn!("received response for non-queued request: {res:?}");
+        return;
+      }
+    };
+    let code = match data {
+      Some(x) => x,
+      None => {
+        log::info!("no error code associated with this request");
+        return;
+      }
+    };
+    let val = match res.result {
+      Some(x) => x,
+      None => {
+        log::info!("user did not click to look at the error URL");
+        return;
+      }
+    };
+    let item = match serde_json::from_value::<lsp_types::MessageActionItem>(val) {
+      Ok(x) => x,
+      Err(e) => {
+        log::error!("registered an error code, but got no message action item: {e}");
+        return;
+      }
+    };
+    if item.title != LEARN_MORE {
+      log::warn!("unknown item.title: {}", item.title);
+      return;
     }
+    self.send_request::<lsp_types::request::ShowDocument>(
+      lsp_types::ShowDocumentParams {
+        uri: error_url(code),
+        external: Some(true),
+        take_focus: Some(true),
+        selection: None,
+      },
+      None,
+    );
   }
 
   pub(crate) fn handle_notification(&mut self, notif: Notification) {
