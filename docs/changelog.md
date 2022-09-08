@@ -4,6 +4,10 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.8
+
+- Add a button to errors displayed as a notification, to view more information about the error.
+
 ## v0.3.7
 
 - Add option for showing information about tokens on hover (default true).
