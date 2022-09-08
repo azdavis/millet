@@ -244,8 +244,6 @@ impl State {
 
   pub(crate) fn handle_response(&mut self, res: Response) {
     log::info!("got response: {res:?}");
-    // no need to look at `res.result` since we register Some(code) to display iff we showed a
-    // button the user could press, and there is only ever that one button.
     match self.req_queue.outgoing.complete(res.id.clone()) {
       Some(data) => match data {
         Some(code) => match res.result {
@@ -265,9 +263,9 @@ impl State {
             }
             Err(e) => log::error!("registered an error code, but got no message action item: {e}"),
           },
-          None => {}
+          None => log::info!("user did not click to look at the error URL"),
         },
-        None => {}
+        None => log::info!("no data associated with this request"),
       },
       None => log::warn!("received response for non-queued request: {res:?}"),
     }
