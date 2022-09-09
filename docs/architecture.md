@@ -4,10 +4,6 @@ Millet is a language server for SML. A language server is a long-running, statef
 
 ## Code map
 
-### `xtask`
-
-A [task runner/"build system"][xtask] written in Rust.
-
 ### `crates/sml-syntax`
 
 SML concrete syntax (like tokens), and AST wrapper API.
@@ -244,6 +240,12 @@ Support for specific text editors. Right now there is only one.
 ### `editors/vscode`
 
 The VS Code client extension, in TypeScript.
+
+### `xtask`
+
+A [task runner/"build system"][xtask] written in Rust.
+
+Allows you to invoke `cargo xtask <task>` to run the `<task>`.
 
 [xtask]: https://github.com/matklad/cargo-xtask
 [rowan]: https://github.com/rust-analyzer/rowan
