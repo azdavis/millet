@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing to Millet!
+Thank you for your interest in contributing to Millet!
 
 Note that this project has a [Code of Conduct][coc], to which we expect all members of the community (including community leaders) will adhere.
 

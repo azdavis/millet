@@ -10,9 +10,6 @@ priority is approximate. if unsure of priority, put in low.
   - various side conditions on modules, `datatype`, possibly others
 - improve hover for type
   - hover on structure/signature/functor?
-- improve hover for doc
-  - use md features
-  - allow in non-std-basis?
 - add assists
   - fill struct ascribing to signature with "empty" stuff
   - rewrite constructs that wouldn't pass style check to ones that would
