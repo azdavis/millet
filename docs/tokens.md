@@ -477,7 +477,11 @@ fun f [] = []
   | f (xs as (_ :: xs')) = xs @ f xs'
 ```
 
-The syntax is `<name> as <pat>`.
+The basic syntax is `<name> as <pat>`, though the `<name>` may also have an optional type annotation, `: <ty>`.
+
+```sml
+val a : int as b = 3
+```
 
 ## `do`
 
