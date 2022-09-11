@@ -120,10 +120,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::Exp
       want
     }
   };
-  let ty_entry = TyEntry {
-    ty: ret.clone(),
-    ty_scheme,
-  };
+  let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
   st.info().insert(exp.into(), Some(ty_entry), def);
   ret
 }
@@ -145,10 +142,7 @@ fn get_matcher(
     let mut ve = ValEnv::default();
     let (pm_pat, pat_ty) = pat::get(st, cx, ars, &mut ve, pat, Generalizable::Sometimes);
     let mut cx = cx.clone();
-    cx.env.push(Env {
-      val_env: ve,
-      ..Default::default()
-    });
+    cx.env.push(Env { val_env: ve, ..Default::default() });
     let exp_ty = get(st, &cx, ars, exp);
     let pi = pat.map_or(idx, Into::into);
     unify(st, param_ty.clone(), pat_ty, pi);

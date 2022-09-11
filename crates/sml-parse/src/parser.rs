@@ -58,12 +58,7 @@ pub(crate) struct Parser<'a> {
 impl<'a> Parser<'a> {
   /// Returns a new parser for the given tokens.
   pub(crate) fn new(tokens: &'a [Token<'a, SK>], fix_env: &'a mut FixEnv) -> Self {
-    Self {
-      tokens,
-      tok_idx: 0,
-      events: Vec::new(),
-      fix_env,
-    }
+    Self { tokens, tok_idx: 0, events: Vec::new(), fix_env }
   }
 
   /// Starts parsing a syntax construct.
@@ -88,10 +83,7 @@ impl<'a> Parser<'a> {
   pub(crate) fn enter(&mut self) -> Entered {
     let ev_idx = self.events.len();
     self.events.push(None);
-    Entered {
-      bomb: DropBomb::new("Entered markers must be exited"),
-      ev_idx,
-    }
+    Entered { bomb: DropBomb::new("Entered markers must be exited"), ev_idx }
   }
 
   /// Abandons parsing a syntax construct.
@@ -313,19 +305,13 @@ impl<'a> Parser<'a> {
   /// }
   /// ```
   pub(crate) fn save(&self) -> Save {
-    Save {
-      tok_idx: self.tok_idx,
-      events_len: self.events.len(),
-    }
+    Save { tok_idx: self.tok_idx, events_len: self.events.len() }
   }
 
   /// returns whether the save was discarded (i.e. did NOT restore to that save)
   pub(crate) fn ok_since(&mut self, save: Save) -> bool {
-    let error_since = self
-      .events
-      .iter()
-      .skip(save.events_len)
-      .any(|ev| matches!(*ev, Some(Event::Error(..))));
+    let error_since =
+      self.events.iter().skip(save.events_len).any(|ev| matches!(*ev, Some(Event::Error(..))));
     if error_since {
       self.tok_idx = save.tok_idx;
       self.events.truncate(save.events_len);
@@ -395,18 +381,12 @@ pub struct Infix {
 impl Infix {
   /// Returns a new Infix with left associativity.
   pub(crate) fn left(prec: u16) -> Self {
-    Self {
-      prec,
-      assoc: Assoc::Left,
-    }
+    Self { prec, assoc: Assoc::Left }
   }
 
   /// Returns a new Infix with right associativity.
   pub(crate) fn right(prec: u16) -> Self {
-    Self {
-      prec,
-      assoc: Assoc::Right,
-    }
+    Self { prec, assoc: Assoc::Right }
   }
 }
 
@@ -521,12 +501,8 @@ struct BuilderSink {
 
 impl BuilderSink {
   fn extend_errors(&mut self) {
-    let errors = std::mem::take(&mut self.kinds)
-      .into_iter()
-      .map(|kind| Error {
-        range: self.range,
-        kind,
-      });
+    let errors =
+      std::mem::take(&mut self.kinds).into_iter().map(|kind| Error { range: self.range, kind });
     self.errors.extend(errors);
   }
 

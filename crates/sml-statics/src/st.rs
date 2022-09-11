@@ -51,10 +51,7 @@ impl St {
   where
     I: Into<sml_hir::Idx>,
   {
-    self.errors.push(Error {
-      idx: idx.into(),
-      kind,
-    })
+    self.errors.push(Error { idx: idx.into(), kind })
   }
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: sml_hir::TyVar) -> FixedTyVar {
@@ -66,27 +63,15 @@ impl St {
   }
 
   pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {
-    self.matches.push(Match {
-      kind: MatchKind::Bind(pat),
-      want,
-      idx,
-    })
+    self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx })
   }
 
   pub(crate) fn insert_handle(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    self.matches.push(Match {
-      kind: MatchKind::Handle(pats),
-      want,
-      idx,
-    })
+    self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx })
   }
 
   pub(crate) fn insert_case(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    self.matches.push(Match {
-      kind: MatchKind::Case(pats),
-      want,
-      idx,
-    })
+    self.matches.push(Match { kind: MatchKind::Case(pats), want, idx })
   }
 
   pub(crate) fn insert_hole(&mut self, mv: MetaTyVar, idx: sml_hir::Idx) {
@@ -99,10 +84,7 @@ impl St {
     for (mv, idx) in self.holes {
       let mut ty = Ty::MetaVar(mv);
       apply(&self.subst, &mut ty);
-      errors.push(Error {
-        idx,
-        kind: ErrorKind::ExpHole(ty),
-      });
+      errors.push(Error { idx, kind: ErrorKind::ExpHole(ty) });
     }
     for mut m in self.matches {
       apply(&self.subst, &mut m.want);
@@ -110,19 +92,13 @@ impl St {
         MatchKind::Bind(pat) => {
           let missing = get_match(&mut errors, &lang, vec![pat], m.want);
           if !missing.is_empty() {
-            errors.push(Error {
-              idx: m.idx,
-              kind: ErrorKind::NonExhaustiveBinding(missing),
-            });
+            errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveBinding(missing) });
           }
         }
         MatchKind::Case(pats) => {
           let missing = get_match(&mut errors, &lang, pats, m.want);
           if !missing.is_empty() {
-            errors.push(Error {
-              idx: m.idx,
-              kind: ErrorKind::NonExhaustiveCase(missing),
-            });
+            errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveCase(missing) });
           }
         }
         MatchKind::Handle(pats) => {
@@ -149,10 +125,7 @@ fn get_match(errors: &mut Vec<Error>, lang: &Lang, pats: Vec<Pat>, ty: Ty) -> Ve
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().flatten().collect();
   unreachable.sort_unstable_by_key(|x| x.into_raw());
   for idx in unreachable {
-    errors.push(Error {
-      idx: idx.into(),
-      kind: ErrorKind::UnreachablePattern,
-    });
+    errors.push(Error { idx: idx.into(), kind: ErrorKind::UnreachablePattern });
   }
   ck.missing
 }

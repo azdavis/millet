@@ -26,20 +26,12 @@ fn simple() {
 
 #[test]
 fn var_parens() {
-  check(
-    "foo/$(BAR)/quz.sml",
-    &[("BAR", "fella")],
-    &["foo", "fella", "quz.sml"],
-  );
+  check("foo/$(BAR)/quz.sml", &[("BAR", "fella")], &["foo", "fella", "quz.sml"]);
 }
 
 #[test]
 fn var_no_parens() {
-  check(
-    "foo/$BAR/quz.sml",
-    &[("BAR", "fella")],
-    &["foo", "fella", "quz.sml"],
-  );
+  check("foo/$BAR/quz.sml", &[("BAR", "fella")], &["foo", "fella", "quz.sml"]);
 }
 
 #[test]
@@ -64,9 +56,5 @@ fn empty_var() {
 
 #[test]
 fn absolute() {
-  check(
-    "/foo/$BAR/quz.sml",
-    &[("BAR", "hi")],
-    &["/", "foo", "hi", "quz.sml"],
-  );
+  check("/foo/$BAR/quz.sml", &[("BAR", "hi")], &["/", "foo", "hi", "quz.sml"]);
 }

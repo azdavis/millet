@@ -24,12 +24,7 @@ impl Error {
     mv_info: &'a MetaVarInfo,
     lines: config::ErrorLines,
   ) -> impl fmt::Display + 'a {
-    ErrorKindDisplay {
-      kind: &self.kind,
-      syms,
-      mv_info,
-      lines,
-    }
+    ErrorKindDisplay { kind: &self.kind, syms, mv_info, lines }
   }
 
   /// Return the code for this.
@@ -181,11 +176,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
       ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
-      ErrorKind::TyNameEscape(sym) => write!(
-        f,
-        "type name escapes its scope: {}",
-        self.syms.get(sym).unwrap().0
-      ),
+      ErrorKind::TyNameEscape(sym) => {
+        write!(f, "type name escapes its scope: {}", self.syms.get(sym).unwrap().0)
+      }
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
       ErrorKind::WrongNumTyArgs(want, got) => {
         let s = if *want == 1 { "" } else { "s" };
@@ -198,10 +191,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         f.write_str("cannot resolve record type containing `...` due to lack of context")
       }
       ErrorKind::OrPatNotSameBindings(name) => {
-        write!(
-          f,
-          "{name} was bound in one or pattern alternative, but not in another"
-        )
+        write!(f, "{name} was bound in one or pattern alternative, but not in another")
       }
       ErrorKind::DecNotAllowedHere => f.write_str("declaration not allowed here"),
       ErrorKind::ExpHole(ty) => {
@@ -230,11 +220,7 @@ fn non_exhaustive(
   write!(f, "non-exhaustive {kind}: missing ")?;
   assert!(!pats.is_empty());
   let max_len = 2;
-  let iter = pats.iter().take(max_len).map(|pat| PatDisplay {
-    pat,
-    syms,
-    prec: PatPrec::Min,
-  });
+  let iter = pats.iter().take(max_len).map(|pat| PatDisplay { pat, syms, prec: PatPrec::Min });
   comma_seq(f, iter)?;
   if pats.len() > max_len {
     write!(f, ", and {} others", pats.len() - max_len)?;
@@ -272,25 +258,15 @@ impl<'a> fmt::Display for PatDisplay<'a> {
           assert!(args.is_empty());
           f.write_str(s.as_str())?
         }
-        Con::Record {
-          labels,
-          allows_other,
-        } => {
+        Con::Record { labels, allows_other } => {
           assert_eq!(labels.len(), args.len());
           let is_tuple = !*allows_other
-            && labels
-              .iter()
-              .enumerate()
-              .all(|(idx, lab)| sml_hir::Lab::tuple(idx) == *lab);
+            && labels.iter().enumerate().all(|(idx, lab)| sml_hir::Lab::tuple(idx) == *lab);
           if is_tuple {
             f.write_str("(")?;
             comma_seq(
               f,
-              args.iter().map(|pat| PatDisplay {
-                pat,
-                syms: self.syms,
-                prec: PatPrec::Min,
-              }),
+              args.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min }),
             )?;
             f.write_str(")")?;
           } else {
@@ -300,11 +276,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
               labels
                 .iter()
                 .zip(args)
-                .map(|(lab, pat)| RowDisplay::Row {
-                  lab,
-                  pat,
-                  syms: self.syms,
-                })
+                .map(|(lab, pat)| RowDisplay::Row { lab, pat, syms: self.syms })
                 .chain(allows_other.then_some(RowDisplay::Rest)),
             )?;
             f.write_str("}")?;
@@ -325,11 +297,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
                 f.write_str("[")?;
                 comma_seq(
                   f,
-                  ac.into_iter().map(|pat| PatDisplay {
-                    pat,
-                    syms: self.syms,
-                    prec: PatPrec::Min,
-                  }),
+                  ac.into_iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min }),
                 )?;
                 f.write_str("]")?;
               }
@@ -340,11 +308,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
                 sep_seq(
                   f,
                   " :: ",
-                  ac.into_iter().map(|pat| PatDisplay {
-                    pat,
-                    syms: self.syms,
-                    prec: PatPrec::App,
-                  }),
+                  ac.into_iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::App }),
                 )?;
                 if needs_paren {
                   f.write_str(")")?;
@@ -360,11 +324,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
               f.write_str(" ")?;
               comma_seq(
                 f,
-                args.iter().map(|pat| PatDisplay {
-                  pat,
-                  syms: self.syms,
-                  prec: PatPrec::App,
-                }),
+                args.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::App }),
               )?;
             }
             if needs_paren {
@@ -378,11 +338,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
         sep_seq(
           f,
           " | ",
-          pats.iter().map(|pat| PatDisplay {
-            pat,
-            syms: self.syms,
-            prec: PatPrec::Min,
-          }),
+          pats.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min }),
         )?;
         f.write_str(")")?;
       }
@@ -424,10 +380,7 @@ fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
         RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
       };
       let labels = match con {
-        Con::Record {
-          allows_other: false,
-          labels,
-        } => labels,
+        Con::Record { allows_other: false, labels } => labels,
         _ => unreachable!("the argument to :: is a record that does not allow others"),
       };
       assert!(
@@ -451,11 +404,7 @@ enum PatPrec {
 }
 
 enum RowDisplay<'a> {
-  Row {
-    lab: &'a sml_hir::Lab,
-    pat: &'a Pat,
-    syms: &'a Syms,
-  },
+  Row { lab: &'a sml_hir::Lab, pat: &'a Pat, syms: &'a Syms },
   Rest,
 }
 
@@ -465,11 +414,7 @@ impl<'a> fmt::Display for RowDisplay<'a> {
       RowDisplay::Row { lab, pat, syms } => {
         lab.fmt(f)?;
         f.write_str(" = ")?;
-        let pd = PatDisplay {
-          pat,
-          syms,
-          prec: PatPrec::Min,
-        };
+        let pd = PatDisplay { pat, syms, prec: PatPrec::Min };
         pd.fmt(f)
       }
       RowDisplay::Rest => f.write_str("..."),

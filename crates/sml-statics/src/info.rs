@@ -26,20 +26,15 @@ struct InfoEntry {
 
 impl Info {
   pub(crate) fn new(mode: Mode) -> Self {
-    Self {
-      mode,
-      store: FxHashMap::default(),
-      meta_vars: MetaVarInfo::default(),
-    }
+    Self { mode, store: FxHashMap::default(), meta_vars: MetaVarInfo::default() }
   }
 
   pub(crate) fn insert(&mut self, idx: sml_hir::Idx, ty_entry: Option<TyEntry>, def: Option<Def>) {
     // ignore ty schemes that bind no vars
     let entry = InfoEntry {
       ty_entry: ty_entry.map(|mut ty_entry| {
-        ty_entry.ty_scheme = ty_entry
-          .ty_scheme
-          .and_then(|x| (!x.bound_vars.is_empty()).then_some(x));
+        ty_entry.ty_scheme =
+          ty_entry.ty_scheme.and_then(|x| (!x.bound_vars.is_empty()).then_some(x));
         ty_entry
       }),
       def,
@@ -54,10 +49,7 @@ impl Info {
   }
 
   pub(crate) fn tys_mut(&mut self) -> impl Iterator<Item = &mut Ty> {
-    self
-      .store
-      .values_mut()
-      .filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
+    self.store.values_mut().filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
   }
 
   pub(crate) fn mode(&self) -> &Mode {

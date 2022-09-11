@@ -108,12 +108,9 @@ impl fmt::Display for GetInputErrorKind {
     match self {
       GetInputErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
       GetInputErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
-      GetInputErrorKind::MultipleRoots(a, b) => write!(
-        f,
-        "multiple root group files: {} and {}",
-        a.display(),
-        b.display()
-      ),
+      GetInputErrorKind::MultipleRoots(a, b) => {
+        write!(f, "multiple root group files: {} and {}", a.display(), b.display())
+      }
       GetInputErrorKind::NoRoot => f.write_str("no root group file"),
       GetInputErrorKind::NotGroup => f.write_str("not a group file path"),
       GetInputErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
@@ -222,12 +219,8 @@ where
               path_vars.insert(key, val);
             }
             config::PathVar::Path(p) => {
-              let val: str_util::SmolStr = root
-                .paths
-                .as_path()
-                .join(p.as_str())
-                .to_string_lossy()
-                .into();
+              let val: str_util::SmolStr =
+                root.paths.as_path().join(p.as_str()).to_string_lossy().into();
               path_vars.insert(key, val);
             }
           }
@@ -243,10 +236,7 @@ where
           }
           None => {
             return Err(GetInputError {
-              source: Source {
-                path: Some(config_path),
-                range: None,
-              },
+              source: Source { path: Some(config_path), range: None },
               path,
               kind: GetInputErrorKind::NotGroup,
             })
@@ -257,23 +247,18 @@ where
   }
   // if not, try to get one from the root dir.
   if root.group_path.is_none() {
-    let dir_entries = fs
-      .read_dir(root.paths.as_path())
-      .map_err(|e| GetInputError {
-        source: Source::default(),
-        path: root.paths.as_path().to_owned(),
-        kind: GetInputErrorKind::Io(e),
-      })?;
+    let dir_entries = fs.read_dir(root.paths.as_path()).map_err(|e| GetInputError {
+      source: Source::default(),
+      path: root.paths.as_path().to_owned(),
+      kind: GetInputErrorKind::Io(e),
+    })?;
     for entry in dir_entries {
       if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
         match &root.group_path {
           Some(rgp) => {
             return Err(GetInputError {
               kind: GetInputErrorKind::MultipleRoots(rgp.path.clone(), entry.clone()),
-              source: Source {
-                path: Some(rgp.path.clone()),
-                range: None,
-              },
+              source: Source { path: Some(rgp.path.clone()), range: None },
               path: entry,
             })
           }
@@ -288,12 +273,7 @@ where
     kind: GetInputErrorKind::NoRoot,
   })?;
   Ok(RootGroup {
-    path: get_path_id(
-      fs,
-      &mut root.paths,
-      root_group_source,
-      root_group_path.path.as_path(),
-    )?,
+    path: get_path_id(fs, &mut root.paths, root_group_source, root_group_path.path.as_path())?,
     kind: root_group_path.kind,
     path_vars,
   })
@@ -319,10 +299,7 @@ where
 {
   let group_path = root.get_path(cur.group_path).clone();
   let containing_path = root.get_path(cur.containing_path).as_path().to_owned();
-  let source = Source {
-    path: Some(containing_path),
-    range: cur.containing_range,
-  };
+  let source = Source { path: Some(containing_path), range: cur.containing_range };
   let contents = read_file(fs, source, group_path.as_path())?;
   let pos_db = text_pos::PositionDb::new(&contents);
   Ok((group_path, contents, pos_db))
@@ -349,10 +326,7 @@ impl Root {
 
 /// Get a `Root` from a canonical root dir.
 pub fn get_root_dir(path: paths::CanonicalPathBuf) -> Root {
-  Root {
-    paths: paths::Root::new(path),
-    group_path: None,
-  }
+  Root { paths: paths::Root::new(path), group_path: None }
 }
 
 /// Given a path to either a group path or a directory, return the root for it.
@@ -365,16 +339,11 @@ where
     None => (path, None),
     Some(path) => {
       let parent = path.as_path().parent().expect("no parent");
-      let rp = fs
-        .canonicalize(parent)
-        .expect("canonicalize parent of canonical path");
+      let rp = fs.canonicalize(parent).expect("canonicalize parent of canonical path");
       (rp, Some(path))
     }
   };
-  Ok(Root {
-    paths: paths::Root::new(root_path),
-    group_path,
-  })
+  Ok(Root { paths: paths::Root::new(root_path), group_path })
 }
 
 /// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
@@ -393,14 +362,7 @@ where
   let groups = match root_group.kind {
     GroupPathKind::Cm => {
       let mut cm_files = PathMap::<CmFile>::default();
-      get_cm_file(
-        &mut root.paths,
-        fs,
-        &root_group.path_vars,
-        &mut sources,
-        &mut cm_files,
-        init,
-      )?;
+      get_cm_file(&mut root.paths, fs, &root_group.path_vars, &mut sources, &mut cm_files, init)?;
       cm_files
         .into_iter()
         .map(|(path, cm_file)| {
@@ -413,10 +375,7 @@ where
             mlb_hir::BasDec::seq(cm_file.paths).into(),
             mlb_hir::BasDec::seq(exports).into(),
           );
-          let group = Group {
-            bas_dec,
-            pos_db: cm_file.pos_db.expect("no pos db"),
-          };
+          let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
           (path, group)
         })
         .collect()
@@ -430,15 +389,10 @@ where
         }
         let (group_path, contents, pos_db) = start_group_file(&mut root.paths, cur, fs)?;
         let group_path = group_path.as_path();
-        let group_parent = group_path
-          .parent()
-          .expect("path from get_path has no parent");
+        let group_parent = group_path.parent().expect("path from get_path has no parent");
         let syntax_dec =
           mlb_syntax::get(&contents, &root_group.path_vars).map_err(|e| GetInputError {
-            source: Source {
-              path: None,
-              range: pos_db.range(e.text_range()),
-            },
+            source: Source { path: None, range: pos_db.range(e.text_range()) },
             path: group_path.to_owned(),
             kind: GetInputErrorKind::Mlb(e),
           })?;
@@ -473,11 +427,7 @@ where
       kind: GetInputErrorKind::Cycle,
     });
   }
-  Ok(Input {
-    sources,
-    groups,
-    root_group_id: root_group.path,
-  })
+  Ok(Input { sources, groups, root_group_id: root_group.path })
 }
 
 /// only derives default because we need to mark in-progress files as visited to prevent infinite
@@ -516,14 +466,9 @@ where
   cm_files.insert(cur.group_path, CmFile::default());
   let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
   let group_path = group_path.as_path();
-  let group_parent = group_path
-    .parent()
-    .expect("path from get_path has no parent");
+  let group_parent = group_path.parent().expect("path from get_path has no parent");
   let cm = cm::get(&contents, path_vars).map_err(|e| GetInputError {
-    source: Source {
-      path: None,
-      range: pos_db.range(e.text_range()),
-    },
+    source: Source { path: None, range: pos_db.range(e.text_range()) },
     path: group_path.to_owned(),
     kind: GetInputErrorKind::Cm(e),
   })?;
@@ -531,10 +476,8 @@ where
     .paths
     .into_iter()
     .map(|parsed_path| {
-      let source = Source {
-        path: Some(group_path.to_owned()),
-        range: pos_db.range(parsed_path.range),
-      };
+      let source =
+        Source { path: Some(group_path.to_owned()), range: pos_db.range(parsed_path.range) };
       let path = group_parent.join(parsed_path.val.as_path());
       let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
       let kind = match parsed_path.val.kind() {
@@ -567,10 +510,7 @@ where
           cm::Namespace::Functor => mlb_hir::Namespace::Functor,
           cm::Namespace::FunSig => {
             return Err(GetInputError {
-              source: Source {
-                path: None,
-                range: pos_db.range(ns.range),
-              },
+              source: Source { path: None, range: pos_db.range(ns.range) },
               path: group_path.to_owned(),
               kind: GetInputErrorKind::UnsupportedExport,
             })
@@ -579,10 +519,7 @@ where
         exports.push(Export { namespace, name });
       }
       cm::Export::Library(lib) => {
-        let source = Source {
-          path: Some(group_path.to_owned()),
-          range: pos_db.range(lib.range),
-        };
+        let source = Source { path: Some(group_path.to_owned()), range: pos_db.range(lib.range) };
         let path = group_parent.join(lib.val.as_path());
         let path_id = get_path_id(fs, root, source.clone(), path.as_path())?;
         let cur = GroupToProcess {
@@ -591,21 +528,18 @@ where
           group_path: path_id,
         };
         get_cm_file(root, fs, path_vars, sources, cm_files, cur)?;
-        let cm_file = cm_files
-          .get(&cur.group_path)
-          .expect("cm file should be set after get_cm_file");
-        exports.extend(cm_file.exports.iter().map(|ex| Export {
-          namespace: ex.namespace,
-          name: lib.wrap(ex.name.val.clone()),
-        }));
+        let cm_file =
+          cm_files.get(&cur.group_path).expect("cm file should be set after get_cm_file");
+        exports.extend(
+          cm_file
+            .exports
+            .iter()
+            .map(|ex| Export { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
+        );
       }
     }
   }
-  let cm_file = CmFile {
-    pos_db: Some(pos_db),
-    paths,
-    exports,
-  };
+  let cm_file = CmFile { pos_db: Some(pos_db), paths, exports };
   cm_files.insert(cur.group_path, cm_file);
   Ok(())
 }
@@ -672,10 +606,7 @@ where
         .map(|(name, exp)| {
           if !names.insert(name.val.clone()) {
             return Err(GetInputError {
-              source: Source {
-                path: None,
-                range: cx.pos_db.range(name.range),
-              },
+              source: Source { path: None, range: cx.pos_db.range(name.range) },
               path: cx.path.to_owned(),
               kind: GetInputErrorKind::Duplicate(name.val),
             });
@@ -689,10 +620,9 @@ where
     mlb_syntax::BasDec::Open(names) => {
       mlb_hir::BasDec::seq(names.into_iter().map(mlb_hir::BasDec::Open).collect())
     }
-    mlb_syntax::BasDec::Local(local_dec, in_dec) => mlb_hir::BasDec::Local(
-      get_bas_dec(cx, *local_dec)?.into(),
-      get_bas_dec(cx, *in_dec)?.into(),
-    ),
+    mlb_syntax::BasDec::Local(local_dec, in_dec) => {
+      mlb_hir::BasDec::Local(get_bas_dec(cx, *local_dec)?.into(), get_bas_dec(cx, *in_dec)?.into())
+    }
     mlb_syntax::BasDec::Export(ns, binds) => {
       let mut names = FxHashSet::<sml_hir::Name>::default();
       let binds = binds
@@ -700,10 +630,7 @@ where
         .map(|(lhs, rhs)| {
           if !names.insert(lhs.val.clone()) {
             return Err(GetInputError {
-              source: Source {
-                path: None,
-                range: cx.pos_db.range(lhs.range),
-              },
+              source: Source { path: None, range: cx.pos_db.range(lhs.range) },
               path: cx.path.to_owned(),
               kind: GetInputErrorKind::Duplicate(lhs.val),
             });
@@ -720,10 +647,8 @@ where
       mlb_hir::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(parsed_path) => {
-      let source = Source {
-        path: Some(cx.path.to_owned()),
-        range: cx.pos_db.range(parsed_path.range),
-      };
+      let source =
+        Source { path: Some(cx.path.to_owned()), range: cx.pos_db.range(parsed_path.range) };
       let path = cx.parent.join(parsed_path.val.as_path());
       let path_id = get_path_id(cx.fs, cx.root, source.clone(), path.as_path())?;
       let kind = match parsed_path.val.kind() {
@@ -745,10 +670,7 @@ where
     }
     mlb_syntax::BasDec::Ann(_, dec) => get_bas_dec(cx, *dec)?,
     mlb_syntax::BasDec::Seq(decs) => mlb_hir::BasDec::seq(
-      decs
-        .into_iter()
-        .map(|dec| get_bas_dec(cx, dec))
-        .collect::<Result<Vec<_>>>()?,
+      decs.into_iter().map(|dec| get_bas_dec(cx, dec)).collect::<Result<Vec<_>>>()?,
     ),
   };
   Ok(ret)

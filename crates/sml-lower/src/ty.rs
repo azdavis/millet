@@ -9,18 +9,12 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
     ast::Ty::HoleTy(_) | ast::Ty::WildcardTy(_) => sml_hir::Ty::Hole,
     ast::Ty::TyVarTy(ty) => sml_hir::Ty::Var(sml_hir::TyVar::new(ty.ty_var()?.text())),
     ast::Ty::RecordTy(ty) => sml_hir::Ty::Record(
-      ty.ty_rows()
-        .filter_map(|row| Some((get_lab(cx, row.lab()?), get(cx, row.ty()))))
-        .collect(),
+      ty.ty_rows().filter_map(|row| Some((get_lab(cx, row.lab()?), get(cx, row.ty())))).collect(),
     ),
     ast::Ty::ConTy(ty) => {
       let path = get_path(ty.path()?)?;
       sml_hir::Ty::Con(
-        ty.ty_seq()
-          .into_iter()
-          .flat_map(|x| x.ty_args())
-          .map(|x| get(cx, x.ty()))
-          .collect(),
+        ty.ty_seq().into_iter().flat_map(|x| x.ty_args()).map(|x| get(cx, x.ty())).collect(),
         path,
       )
     }

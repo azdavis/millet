@@ -26,10 +26,7 @@ pub(crate) fn get(root: Root) -> Result<CmFile> {
           }
         };
         paths.push(WithRange {
-          val: ParsedPath {
-            path: member.pathname.val,
-            kind,
-          },
+          val: ParsedPath { path: member.pathname.val, kind },
           range: member.pathname.range,
         });
       }

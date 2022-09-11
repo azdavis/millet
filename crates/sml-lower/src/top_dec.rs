@@ -5,17 +5,12 @@ use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> sml_hir::StrDecIdx {
   let str_dec = str_dec?;
-  let mut str_decs: Vec<_> = str_dec
-    .str_dec_in_seqs()
-    .map(|x| get_str_dec_one(cx, x.str_dec_one()?))
-    .collect();
+  let mut str_decs: Vec<_> =
+    str_dec.str_dec_in_seqs().map(|x| get_str_dec_one(cx, x.str_dec_one()?)).collect();
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
   } else {
-    cx.str_dec(
-      sml_hir::StrDec::Seq(str_decs),
-      SyntaxNodePtr::new(str_dec.syntax()),
-    )
+    cx.str_dec(sml_hir::StrDec::Seq(str_decs), SyntaxNodePtr::new(str_dec.syntax()))
   }
 }
 
@@ -65,21 +60,14 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
               let param_name = cx.fresh();
               let param_sig = sml_hir::SigExp::Spec(get_spec(cx, Some(arg)));
               let param_sig = cx.sig_exp(param_sig, ptr.clone());
-              let dec = cx.dec(
-                sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]),
-                ptr.clone(),
-              );
+              let dec = cx
+                .dec(sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]), ptr.clone());
               let str_dec = cx.str_dec(sml_hir::StrDec::Dec(dec), ptr.clone());
               let body = cx.str_exp(sml_hir::StrExp::Let(str_dec, body), ptr.clone());
               (param_name, param_sig, body)
             }
           };
-          Some(sml_hir::FunctorBind {
-            functor_name,
-            param_name,
-            param_sig,
-            body,
-          })
+          Some(sml_hir::FunctorBind { functor_name, param_name, param_sig, body })
         })
         .collect(),
     ),
@@ -109,10 +97,9 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> sml_hir::StrExpIdx 
         }
       },
     ),
-    ast::StrExp::LetStrExp(str_exp) => sml_hir::StrExp::Let(
-      get_str_dec(cx, str_exp.str_dec()),
-      get_str_exp(cx, str_exp.str_exp()),
-    ),
+    ast::StrExp::LetStrExp(str_exp) => {
+      sml_hir::StrExp::Let(get_str_dec(cx, str_exp.str_dec()), get_str_exp(cx, str_exp.str_exp()))
+    }
   };
   cx.str_exp(ret, ptr)
 }
@@ -140,10 +127,8 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
 
 fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> sml_hir::SpecIdx {
   let spec = spec?;
-  let mut specs: Vec<_> = spec
-    .spec_with_tail_in_seqs()
-    .map(|x| get_spec_with_tail(cx, x.spec_with_tail()?))
-    .collect();
+  let mut specs: Vec<_> =
+    spec.spec_with_tail_in_seqs().map(|x| get_spec_with_tail(cx, x.spec_with_tail()?)).collect();
   if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
@@ -153,10 +138,7 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> sml_hir::SpecIdx {
 
 fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> sml_hir::SpecIdx {
   let ptr = SyntaxNodePtr::new(spec.syntax());
-  let mut specs: Vec<_> = spec
-    .spec_in_seqs()
-    .map(|x| get_spec_one(cx, x.spec_one()?))
-    .collect();
+  let mut specs: Vec<_> = spec.spec_in_seqs().map(|x| get_spec_one(cx, x.spec_one()?)).collect();
   let inner = if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
@@ -168,10 +150,7 @@ fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> sml_hir::SpecIdx 
     } else {
       sml_hir::SharingKind::Derived
     };
-    let paths_eq: Vec<_> = tail
-      .path_eqs()
-      .filter_map(|x| get_path(x.path()?))
-      .collect();
+    let paths_eq: Vec<_> = tail.path_eqs().filter_map(|x| get_path(x.path()?)).collect();
     cx.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
   })
 }
@@ -202,9 +181,8 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> sml_hir::SpecIdx {
           ErrorKind::Unsupported("`withtype` in specifications"),
         );
       }
-      let specs: Vec<_> = dec::dat_binds(cx, spec.dat_binds())
-        .map(sml_hir::Spec::Datatype)
-        .collect();
+      let specs: Vec<_> =
+        dec::dat_binds(cx, spec.dat_binds()).map(sml_hir::Spec::Datatype).collect();
       seq(cx, ptr.clone(), specs)
     }
     ast::SpecOne::DatCopySpec(spec) => {
@@ -235,10 +213,8 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> sml_hir::SpecIdx {
       seq(cx, ptr.clone(), specs)
     }
     ast::SpecOne::IncludeSpec(spec) => {
-      let specs: Vec<_> = spec
-        .sig_exps()
-        .map(|x| sml_hir::Spec::Include(get_sig_exp(cx, Some(x))))
-        .collect();
+      let specs: Vec<_> =
+        spec.sig_exps().map(|x| sml_hir::Spec::Include(get_sig_exp(cx, Some(x)))).collect();
       if specs.is_empty() {
         cx.err(spec.syntax().text_range(), ErrorKind::RequiresOperand);
       }
@@ -252,12 +228,7 @@ fn seq(cx: &mut Cx, ptr: SyntaxNodePtr, mut specs: Vec<sml_hir::Spec>) -> sml_hi
   if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
-    sml_hir::Spec::Seq(
-      specs
-        .into_iter()
-        .map(|val| cx.spec(val, ptr.clone()))
-        .collect(),
-    )
+    sml_hir::Spec::Seq(specs.into_iter().map(|val| cx.spec(val, ptr.clone())).collect())
   }
 }
 
@@ -270,10 +241,7 @@ where
     .filter_map(|ty_desc| {
       let ty_vars = ty::var_seq(ty_desc.ty_var_seq());
       let name = get_name(ty_desc.name())?;
-      let mut ret = f(sml_hir::TyDesc {
-        name: name.clone(),
-        ty_vars: ty_vars.clone(),
-      });
+      let mut ret = f(sml_hir::TyDesc { name: name.clone(), ty_vars: ty_vars.clone() });
       if let Some(ty) = ty_desc.eq_ty() {
         let ty = ty::get(cx, ty.ty());
         let spec_idx = cx.spec(ret, ptr.clone());

@@ -26,10 +26,7 @@ pub(crate) fn get(
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
   let ((pat, ty), ty_scheme, def) = get_(st, cx, ars, ve, pat_, g);
-  let ty_entry = TyEntry {
-    ty: ty.clone(),
-    ty_scheme,
-  };
+  let ty_entry = TyEntry { ty: ty.clone(), ty_scheme };
   st.info().insert(pat_.into(), Some(ty_entry), def);
   (pat, ty)
 }
@@ -156,10 +153,7 @@ fn get_(
       } else {
         Ty::Record(rows)
       };
-      let con = Con::Record {
-        labels,
-        allows_other: *allows_other,
-      };
+      let con = Con::Record { labels, allows_other: *allows_other };
       (Pat::con(con, pats, pat), ty)
     }
     // sml_def(42)
@@ -231,11 +225,7 @@ fn ok_val_info(vi: Option<&ValInfo>) -> bool {
 }
 
 fn insert_name(st: &mut St, ve: &mut ValEnv, name: sml_hir::Name, ty: Ty, idx: sml_hir::Idx) {
-  let vi = ValInfo {
-    ty_scheme: TyScheme::zero(ty),
-    id_status: IdStatus::Val,
-    def: st.def(idx),
-  };
+  let vi = ValInfo { ty_scheme: TyScheme::zero(ty), id_status: IdStatus::Val, def: st.def(idx) };
   if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);
   }

@@ -9,11 +9,7 @@ pub enum BasDec {
   Basis(WithRange<sml_hir::Name>, Box<BasExp>),
   Open(WithRange<sml_hir::Name>),
   Local(Box<BasDec>, Box<BasDec>),
-  Export(
-    Namespace,
-    WithRange<sml_hir::Name>,
-    WithRange<sml_hir::Name>,
-  ),
+  Export(Namespace, WithRange<sml_hir::Name>, WithRange<sml_hir::Name>),
   Seq(Vec<BasDec>),
   Path(paths::PathId, PathKind),
 }

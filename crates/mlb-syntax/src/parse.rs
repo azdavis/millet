@@ -9,12 +9,7 @@ pub(crate) fn get(
   tokens: &[WithRange<Token<'_>>],
   env: &paths::slash_var_path::Env,
 ) -> Result<BasDec> {
-  let mut p = Parser {
-    tokens,
-    idx: 0,
-    last_range: TextRange::default(),
-    env,
-  };
+  let mut p = Parser { tokens, idx: 0, last_range: TextRange::default(), env };
   let ret = bas_dec(&mut p)?;
   match p.cur_tok() {
     None => Ok(ret),
@@ -94,11 +89,7 @@ fn bas_dec(p: &mut Parser<'_>) -> Result<BasDec> {
       ac.push(bd);
     }
   }
-  let ret = if ac.len() == 1 {
-    ac.pop().unwrap()
-  } else {
-    BasDec::Seq(ac)
-  };
+  let ret = if ac.len() == 1 { ac.pop().unwrap() } else { BasDec::Seq(ac) };
   Ok(ret)
 }
 

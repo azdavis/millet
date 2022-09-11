@@ -61,11 +61,9 @@ pub fn get(s: &str, env: &Env) -> Result<PathBuf, Error> {
           cur.clear();
         }
       }
-      Component::Var(v) => cur.push_str(
-        env
-          .get(v.as_str())
-          .ok_or_else(|| Error::Undefined(v.clone()))?,
-      ),
+      Component::Var(v) => {
+        cur.push_str(env.get(v.as_str()).ok_or_else(|| Error::Undefined(v.clone()))?)
+      }
     }
   }
   if !cur.is_empty() {

@@ -41,19 +41,13 @@ pub(crate) struct State {
 impl State {
   pub(crate) fn new(root: Option<Url>, options: config::Options, sender: Sender<Message>) -> Self {
     let file_system = paths::RealFileSystem::default();
-    let mut root = root
-      .map(|url| canonical_path_buf(&file_system, &url))
-      .transpose();
+    let mut root = root.map(|url| canonical_path_buf(&file_system, &url)).transpose();
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
-      root: root
-        .as_mut()
-        .ok()
-        .and_then(Option::take)
-        .map(|root_path| Root {
-          input: analysis::input::get_root_dir(root_path),
-          has_diagnostics: FxHashSet::default(),
-        }),
+      root: root.as_mut().ok().and_then(Option::take).map(|root_path| Root {
+        input: analysis::input::get_root_dir(root_path),
+        has_diagnostics: FxHashSet::default(),
+      }),
       sender,
       req_queue: ReqQueue::default(),
       analysis: analysis::Analysis::new(analysis::StdBasis::full(), config::ErrorLines::Many),
@@ -119,10 +113,7 @@ impl State {
   where
     R: lsp_types::request::Request,
   {
-    let req = self
-      .req_queue
-      .outgoing
-      .register(R::METHOD.to_owned(), params, data);
+    let req = self.req_queue.outgoing.register(R::METHOD.to_owned(), params, data);
     self.send(req.into())
   }
 
@@ -169,16 +160,15 @@ impl State {
     r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
       let params = params.text_document_position_params;
       let pos = text_doc_pos_params(&self.file_system, root, params)?;
-      let res = self
-        .analysis
-        .get_md(pos, self.options.show_token_hover)
-        .map(|(value, range)| lsp_types::Hover {
+      let res = self.analysis.get_md(pos, self.options.show_token_hover).map(|(value, range)| {
+        lsp_types::Hover {
           contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,
             value,
           }),
           range: Some(lsp_range(range)),
-        });
+        }
+      });
       self.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
@@ -212,28 +202,26 @@ impl State {
       let range = analysis_range(params.range);
       let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
       if let Some((range, new_text)) = self.analysis.fill_case(path.wrap(range.start)) {
-        actions.push(lsp_types::CodeActionOrCommand::CodeAction(
-          lsp_types::CodeAction {
-            title: "Fill case".to_owned(),
-            kind: Some(lsp_types::CodeActionKind::QUICKFIX),
-            edit: Some(lsp_types::WorkspaceEdit {
-              document_changes: Some(lsp_types::DocumentChanges::Edits(vec![
-                lsp_types::TextDocumentEdit {
-                  text_document: lsp_types::OptionalVersionedTextDocumentIdentifier {
-                    uri: url,
-                    version: None,
-                  },
-                  edits: vec![lsp_types::OneOf::Left(lsp_types::TextEdit {
-                    range: lsp_range(range),
-                    new_text,
-                  })],
+        actions.push(lsp_types::CodeActionOrCommand::CodeAction(lsp_types::CodeAction {
+          title: "Fill case".to_owned(),
+          kind: Some(lsp_types::CodeActionKind::QUICKFIX),
+          edit: Some(lsp_types::WorkspaceEdit {
+            document_changes: Some(lsp_types::DocumentChanges::Edits(vec![
+              lsp_types::TextDocumentEdit {
+                text_document: lsp_types::OptionalVersionedTextDocumentIdentifier {
+                  uri: url,
+                  version: None,
                 },
-              ])),
-              ..Default::default()
-            }),
+                edits: vec![lsp_types::OneOf::Left(lsp_types::TextEdit {
+                  range: lsp_range(range),
+                  new_text,
+                })],
+              },
+            ])),
             ..Default::default()
-          },
-        ));
+          }),
+          ..Default::default()
+        }));
       }
       self.send_response(Response::new_ok(id, actions));
       Ok(())
@@ -377,9 +365,8 @@ impl State {
     extra: Option<(paths::PathId, String)>,
   ) -> bool {
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input = elapsed::log("input::get", || {
-      analysis::input::get(&self.file_system, &mut root.input)
-    });
+    let input =
+      elapsed::log("input::get", || analysis::input::get(&self.file_system, &mut root.input));
     let mut input = match input {
       Ok(x) => x,
       Err(e) => {
@@ -456,11 +443,7 @@ impl State {
 
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
     self.send_notification::<lsp_types::notification::PublishDiagnostics>(
-      lsp_types::PublishDiagnosticsParams {
-        uri: url,
-        diagnostics,
-        version: None,
-      },
+      lsp_types::PublishDiagnosticsParams { uri: url, diagnostics, version: None },
     );
   }
 }
@@ -514,10 +497,7 @@ fn file_url(path: &std::path::Path) -> Result<Url> {
 }
 
 fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
-  errors
-    .into_iter()
-    .map(|err| diagnostic(err.message, Some(err.range), err.code))
-    .collect()
+  errors.into_iter().map(|err| diagnostic(err.message, Some(err.range), err.code)).collect()
 }
 
 fn error_url(code: u16) -> Url {
@@ -529,9 +509,7 @@ fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(lsp_types::DiagnosticSeverity::ERROR),
     code: Some(lsp_types::NumberOrString::Number(code.into())),
-    code_description: Some(lsp_types::CodeDescription {
-      href: error_url(code),
-    }),
+    code_description: Some(lsp_types::CodeDescription { href: error_url(code) }),
     source: Some("Millet".to_owned()),
     message,
     related_information: None,
@@ -541,17 +519,11 @@ fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp
 }
 
 fn lsp_range(range: analysis::Range) -> lsp_types::Range {
-  lsp_types::Range {
-    start: lsp_position(range.start),
-    end: lsp_position(range.end),
-  }
+  lsp_types::Range { start: lsp_position(range.start), end: lsp_position(range.end) }
 }
 
 fn lsp_position(pos: analysis::Position) -> lsp_types::Position {
-  lsp_types::Position {
-    line: pos.line,
-    character: pos.character,
-  }
+  lsp_types::Position { line: pos.line, character: pos.character }
 }
 
 fn lsp_location(
@@ -565,35 +537,22 @@ fn lsp_location(
       return None;
     }
   };
-  Some(lsp_types::Location {
-    uri,
-    range: lsp_range(range.val),
-  })
+  Some(lsp_types::Location { uri, range: lsp_range(range.val) })
 }
 
 fn analysis_position(pos: lsp_types::Position) -> analysis::Position {
-  analysis::Position {
-    line: pos.line,
-    character: pos.character,
-  }
+  analysis::Position { line: pos.line, character: pos.character }
 }
 
 fn analysis_range(range: lsp_types::Range) -> analysis::Range {
-  analysis::Range {
-    start: analysis_position(range.start),
-    end: analysis_position(range.end),
-  }
+  analysis::Range { start: analysis_position(range.start), end: analysis_position(range.end) }
 }
 
 fn url_to_path_id<F>(fs: &F, root: &mut Root, url: &Url) -> Result<paths::PathId>
 where
   F: paths::FileSystem,
 {
-  root
-    .input
-    .as_mut_paths()
-    .get_id(&canonical_path_buf(fs, url)?)
-    .with_context(|| "not in root")
+  root.input.as_mut_paths().get_id(&canonical_path_buf(fs, url)?).with_context(|| "not in root")
 }
 
 fn text_doc_pos_params<F>(

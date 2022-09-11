@@ -49,10 +49,9 @@ impl pattern_match::Lang for Lang {
             vec![Con::Any]
           }
         }
-        Ty::Record(fs) => vec![Con::Record {
-          labels: fs.keys().cloned().collect(),
-          allows_other: false,
-        }],
+        Ty::Record(fs) => {
+          vec![Con::Record { labels: fs.keys().cloned().collect(), allows_other: false }]
+        }
       },
       Con::Int(_)
       | Con::Word(_)
@@ -102,16 +101,8 @@ impl pattern_match::Lang for Lang {
   }
 
   fn covers(&self, lhs: &Self::Con, rhs: &Self::Con) -> bool {
-    matches!(
-      (lhs, rhs),
-      (
-        Con::Record {
-          allows_other: true,
-          ..
-        },
-        Con::Record { .. },
-      )
-    ) || (lhs == rhs)
+    matches!((lhs, rhs), (Con::Record { allows_other: true, .. }, Con::Record { .. },))
+      || (lhs == rhs)
   }
 }
 
@@ -122,10 +113,7 @@ pub(crate) enum Con {
   Word(u32),
   Char(char),
   String(sml_hir::SmolStr),
-  Record {
-    labels: BTreeSet<sml_hir::Lab>,
-    allows_other: bool,
-  },
+  Record { labels: BTreeSet<sml_hir::Lab>, allows_other: bool },
   Variant(Sym, VariantName),
 }
 

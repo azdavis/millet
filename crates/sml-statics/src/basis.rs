@@ -25,10 +25,7 @@ impl Basis {
       Some(x) => x.clone(),
       None => return false,
     };
-    self.inner.env.push(Env {
-      str_env: map([(name, env)]),
-      ..Default::default()
-    });
+    self.inner.env.push(Env { str_env: map([(name, env)]), ..Default::default() });
     true
   }
 
@@ -70,11 +67,7 @@ pub fn minimal() -> (Syms, Basis) {
   syms.overloads().real.push(Sym::REAL);
   syms.overloads().char.push(Sym::CHAR);
   syms.overloads().string.push(Sym::STRING);
-  insert_special(
-    &mut syms,
-    Sym::BOOL,
-    basic_datatype(Ty::BOOL, &["true", "false"]),
-  );
+  insert_special(&mut syms, Sym::BOOL, basic_datatype(Ty::BOOL, &["true", "false"]));
   let list_info = {
     let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
     let alpha_list = TyScheme::one(|a| (list(a), None));
@@ -101,11 +94,7 @@ pub fn minimal() -> (Syms, Basis) {
     .iter()
     .map(|(a, b)| (a.clone(), b.clone()))
     .chain(aliases.into_iter().map(|(name, ty)| {
-      let ti = TyInfo {
-        ty_scheme: TyScheme::zero(ty),
-        val_env: ValEnv::default(),
-        def: None,
-      };
+      let ti = TyInfo { ty_scheme: TyScheme::zero(ty), val_env: ValEnv::default(), def: None };
       (sml_hir::Name::new(name), ti)
     }))
     .collect();
@@ -141,11 +130,7 @@ pub fn minimal() -> (Syms, Basis) {
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
     .chain(fns.into_iter().map(|(name, ty_scheme)| {
-      let vi = ValInfo {
-        ty_scheme,
-        id_status: IdStatus::Val,
-        def: None,
-      };
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: None };
       (sml_hir::Name::new(name), vi)
     }))
     .collect();
@@ -153,12 +138,7 @@ pub fn minimal() -> (Syms, Basis) {
     inner: Bs {
       fun_env: FunEnv::default().into(),
       sig_env: SigEnv::default().into(),
-      env: EnvStack::one(Env {
-        str_env: StrEnv::default(),
-        ty_env,
-        val_env,
-        def: None,
-      }),
+      env: EnvStack::one(Env { str_env: StrEnv::default(), ty_env, val_env, def: None }),
     },
   };
   (syms, basis)
@@ -173,11 +153,7 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
 fn basic_datatype(ty: Ty, ctors: &[&str]) -> TyInfo {
   let ty_scheme = TyScheme::zero(ty);
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
-  TyInfo {
-    ty_scheme,
-    val_env,
-    def: None,
-  }
+  TyInfo { ty_scheme, val_env, def: None }
 }
 
 fn datatype_ve<'a, I>(xs: I) -> ValEnv
@@ -186,14 +162,7 @@ where
 {
   xs.into_iter()
     .map(|(name, ty_scheme)| {
-      (
-        sml_hir::Name::new(name),
-        ValInfo {
-          ty_scheme,
-          id_status: IdStatus::Con,
-          def: None,
-        },
-      )
+      (sml_hir::Name::new(name), ValInfo { ty_scheme, id_status: IdStatus::Con, def: None })
     })
     .collect()
 }
@@ -210,8 +179,5 @@ fn dup(ty: Ty) -> Ty {
 }
 
 fn pair(t1: Ty, t2: Ty) -> Ty {
-  Ty::Record(RecordTy::from([
-    (sml_hir::Lab::Num(1), t1),
-    (sml_hir::Lab::Num(2), t2),
-  ]))
+  Ty::Record(RecordTy::from([(sml_hir::Lab::Num(1), t1), (sml_hir::Lab::Num(2), t2)]))
 }

@@ -84,10 +84,7 @@ impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       ErrorKind::FunBindMismatchedName(want, got) => {
-        write!(
-          f,
-          "expected a function clause for {want}, found one for {got}"
-        )
+        write!(f, "expected a function clause for {want}, found one for {got}")
       }
       ErrorKind::FunBindWrongNumPats(want, got) => {
         write!(f, "expected {want} patterns, found {got}")
@@ -143,12 +140,7 @@ impl Cx {
   }
 
   pub(crate) fn finish(self, root: sml_hir::StrDecIdx) -> Lower {
-    Lower {
-      errors: self.errors,
-      arenas: self.arenas,
-      ptrs: self.ptrs,
-      root,
-    }
+    Lower { errors: self.errors, arenas: self.arenas, ptrs: self.ptrs, root }
   }
 
   pub(crate) fn str_dec(&mut self, val: sml_hir::StrDec, ptr: SyntaxNodePtr) -> sml_hir::StrDecIdx {

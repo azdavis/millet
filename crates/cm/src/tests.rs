@@ -4,10 +4,7 @@ use str_util::Name;
 
 fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)]) {
   let file = crate::get(s, &paths::slash_var_path::Env::default()).unwrap();
-  let want_paths: Vec<_> = want_paths
-    .iter()
-    .map(|&(s, kind)| (mk_path_buf(s), kind))
-    .collect();
+  let want_paths: Vec<_> = want_paths.iter().map(|&(s, kind)| (mk_path_buf(s), kind)).collect();
   let got_exports: Vec<_> = file
     .exports
     .into_iter()
@@ -16,11 +13,8 @@ fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)])
       Export::Library(p) => RawExport::Library(p.val),
     })
     .collect();
-  let got_paths: Vec<_> = file
-    .paths
-    .into_iter()
-    .map(|path| (path.val.path, path.val.kind))
-    .collect();
+  let got_paths: Vec<_> =
+    file.paths.into_iter().map(|path| (path.val.path, path.val.kind)).collect();
   assert_eq!(want_exports, got_exports);
   assert_eq!(want_paths, got_paths);
 }
@@ -110,20 +104,13 @@ is
       mk_library("quz/baz.cm"),
       mk_regular(Namespace::Signature, "BAR"),
     ],
-    &[
-      ("Foo.sml", PathKind::Sml),
-      ("Bar/sources.cm", PathKind::Cm),
-      ("quz/baz.cm", PathKind::Cm),
-    ],
+    &[("Foo.sml", PathKind::Sml), ("Bar/sources.cm", PathKind::Cm), ("quz/baz.cm", PathKind::Cm)],
   );
 }
 
 #[test]
 fn unknown_class() {
-  let e = crate::get(
-    r#"Group is foo.sml : succ-ml"#,
-    &paths::slash_var_path::Env::default(),
-  )
-  .unwrap_err();
+  let e = crate::get(r#"Group is foo.sml : succ-ml"#, &paths::slash_var_path::Env::default())
+    .unwrap_err();
   assert!(e.to_string().contains("unsupported class: succ-ml"));
 }

@@ -64,17 +64,9 @@ impl Analysis {
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Error>> {
     let res = elapsed::log("mlb_statics::get", || {
-      let groups: paths::PathMap<_> = input
-        .groups
-        .iter()
-        .map(|(&path, group)| (path, &group.bas_dec))
-        .collect();
-      mlb_statics::get(
-        &self.std_basis,
-        &input.sources,
-        &groups,
-        input.root_group_id,
-      )
+      let groups: paths::PathMap<_> =
+        input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
+      mlb_statics::get(&self.std_basis, &input.sources, &groups, input.root_group_id)
     });
     self.source_files = res.sml;
     self.syms = res.syms;
@@ -111,10 +103,7 @@ impl Analysis {
       info.get_doc(def.idx)
     });
     let token_doc = if token { tok.kind().token_doc() } else { None };
-    let parts: Vec<_> = [ty_md.as_deref(), def_doc, token_doc]
-      .into_iter()
-      .flatten()
-      .collect();
+    let parts: Vec<_> = [ty_md.as_deref(), def_doc, token_doc].into_iter().flatten().collect();
     let range = ptr.to_node(file.parsed.root.syntax()).text_range();
     let range = file.pos_db.range(range)?;
     Some((parts.join("\n\n---\n\n"), range))
@@ -153,9 +142,7 @@ impl Analysis {
     let head = file.lowered.ptrs.ast_to_hir(head_ptr)?;
     let variants = file.info.get_variants(&self.syms, head)?;
     let case = CaseDisplay {
-      needs_starting_bar: case
-        .matcher()
-        .map_or(false, |x| x.match_rules().count() > 0),
+      needs_starting_bar: case.matcher().map_or(false, |x| x.match_rules().count() > 0),
       variants: &variants,
     };
     Some((range, case.to_string()))
@@ -164,12 +151,7 @@ impl Analysis {
   fn get_file_with_idx(
     &self,
     pos: WithPath<Position>,
-  ) -> Option<(
-    &mlb_statics::SourceFile,
-    SyntaxToken,
-    SyntaxNodePtr,
-    sml_hir::Idx,
-  )> {
+  ) -> Option<(&mlb_statics::SourceFile, SyntaxToken, SyntaxNodePtr, sml_hir::Idx)> {
     let file = self.source_files.get(&pos.path)?;
     let tok = get_token(file, pos.val)?;
     let mut node = tok.parent()?;
@@ -264,15 +246,9 @@ fn source_file_errors(
     }))
     .chain(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
-      let syntax = file
-        .lowered
-        .ptrs
-        .hir_to_ast(idx)
-        .expect("no pointer for idx");
+      let syntax = file.lowered.ptrs.hir_to_ast(idx).expect("no pointer for idx");
       Some(Error {
-        range: file
-          .pos_db
-          .range(syntax.to_node(file.parsed.root.syntax()).text_range())?,
+        range: file.pos_db.range(syntax.to_node(file.parsed.root.syntax()).text_range())?,
         message: err.display(syms, file.info.meta_vars(), lines).to_string(),
         code: err.to_code(),
       })
@@ -294,10 +270,7 @@ impl fmt::Display for CaseDisplay<'_> {
     } else {
       write!(f, "  ")?;
     }
-    let iter = self
-      .variants
-      .iter()
-      .map(|&(ref name, has_arg)| ArmDisplay { name, has_arg });
+    let iter = self.variants.iter().map(|&(ref name, has_arg)| ArmDisplay { name, has_arg });
     sep_seq(f, "\n  | ", iter)
   }
 }

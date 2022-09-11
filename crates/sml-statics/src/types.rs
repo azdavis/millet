@@ -48,13 +48,7 @@ impl Ty {
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
   ) -> impl fmt::Display + 'a {
-    TyDisplay {
-      ty: self,
-      bound_vars: None,
-      meta_vars,
-      syms,
-      prec: TyPrec::Arrow,
-    }
+    TyDisplay { ty: self, bound_vars: None, meta_vars, syms, prec: TyPrec::Arrow }
   }
 }
 
@@ -68,13 +62,7 @@ struct TyDisplay<'a> {
 
 impl<'a> TyDisplay<'a> {
   fn with(&self, ty: &'a Ty, prec: TyPrec) -> Self {
-    Self {
-      ty,
-      bound_vars: self.bound_vars,
-      meta_vars: self.meta_vars,
-      syms: self.syms,
-      prec,
-    }
+    Self { ty, bound_vars: self.bound_vars, meta_vars: self.meta_vars, syms: self.syms, prec }
   }
 }
 
@@ -98,10 +86,7 @@ impl<'a> fmt::Display for TyDisplay<'a> {
           return f.write_str("unit");
         }
         let is_tuple = rows.len() > 1
-          && rows
-            .keys()
-            .enumerate()
-            .all(|(idx, lab)| sml_hir::Lab::tuple(idx) == *lab);
+          && rows.keys().enumerate().all(|(idx, lab)| sml_hir::Lab::tuple(idx) == *lab);
         if is_tuple {
           let needs_parens = self.prec > TyPrec::Star;
           if needs_parens {
@@ -179,11 +164,7 @@ pub(crate) struct MetaVarNames<'a> {
 
 impl<'a> MetaVarNames<'a> {
   pub(crate) fn new(info: &'a MetaVarInfo) -> Self {
-    Self {
-      next_idx: 0,
-      map: FxHashMap::default(),
-      info,
-    }
+    Self { next_idx: 0, map: FxHashMap::default(), info }
   }
 
   pub(crate) fn extend_for(&mut self, ty: &Ty) {
@@ -275,10 +256,7 @@ pub(crate) struct TyScheme {
 impl TyScheme {
   /// zero as in this type scheme binds zero variables.
   pub(crate) fn zero(ty: Ty) -> Self {
-    Self {
-      bound_vars: BoundTyVars::default(),
-      ty,
-    }
+    Self { bound_vars: BoundTyVars::default(), ty }
   }
 
   /// one as in this type scheme binds one variable.
@@ -287,10 +265,7 @@ impl TyScheme {
     F: FnOnce(Ty) -> (Ty, Option<TyVarKind>),
   {
     let (ty, kind) = f(Ty::BoundVar(BoundTyVar(0)));
-    Self {
-      bound_vars: BoundTyVars(vec![kind]),
-      ty,
-    }
+    Self { bound_vars: BoundTyVars(vec![kind]), ty }
   }
 
   pub(crate) fn n_ary<I>(iter: I, sym: Sym) -> Self
@@ -298,12 +273,7 @@ impl TyScheme {
     I: Iterator<Item = Option<TyVarKind>>,
   {
     let bound_vars = BoundTyVars(iter.collect());
-    let ty = Ty::Con(
-      (0..bound_vars.len())
-        .map(|i| Ty::BoundVar(BoundTyVar(i)))
-        .collect(),
-      sym,
-    );
+    let ty = Ty::Con((0..bound_vars.len()).map(|i| Ty::BoundVar(BoundTyVar(i))).collect(), sym);
     Self { bound_vars, ty }
   }
 
@@ -449,12 +419,9 @@ impl Overload {
           None
         }
       }
-      (Self::Basic(b), Self::Composite(c)) | (Self::Composite(c), Self::Basic(b)) => c
-        .as_basics()
-        .iter()
-        .find(|&&x| x == b)
-        .copied()
-        .map(Self::Basic),
+      (Self::Basic(b), Self::Composite(c)) | (Self::Composite(c), Self::Basic(b)) => {
+        c.as_basics().iter().find(|&&x| x == b).copied().map(Self::Basic)
+      }
       (Self::Composite(c1), Self::Composite(c2)) => Some(c1.unify(c2)),
     }
   }
@@ -586,10 +553,7 @@ impl MetaTyVarGen {
   }
 
   pub(crate) fn gen_same_rank(&mut self, mv: MetaTyVar) -> MetaTyVar {
-    let ret = MetaTyVar {
-      id: self.id,
-      rank: mv.rank,
-    };
+    let ret = MetaTyVar { id: self.id, rank: mv.rank };
     self.id += 1;
     ret
   }
@@ -634,10 +598,7 @@ pub(crate) struct FixedTyVarGen(UniqGen);
 
 impl FixedTyVarGen {
   pub(crate) fn gen(&mut self, ty_var: sml_hir::TyVar) -> FixedTyVar {
-    FixedTyVar {
-      id: self.0.gen(),
-      ty_var,
-    }
+    FixedTyVar { id: self.0.gen(), ty_var }
   }
 }
 
@@ -732,11 +693,8 @@ pub struct Syms {
 
 impl Syms {
   pub(crate) fn start(&mut self, name: sml_hir::Name) -> StartedSym {
-    let ty_info = TyInfo {
-      ty_scheme: TyScheme::zero(Ty::None),
-      val_env: ValEnv::default(),
-      def: None,
-    };
+    let ty_info =
+      TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
     self.store.push((name, ty_info));
     StartedSym {
       bomb: DropBomb::new("must be passed to Syms::finish"),
@@ -865,10 +823,7 @@ pub(crate) struct Env {
 
 impl Env {
   pub(crate) fn with_def(def: Option<Def>) -> Self {
-    Self {
-      def,
-      ..Default::default()
-    }
+    Self { def, ..Default::default() }
   }
 }
 
@@ -1028,10 +983,7 @@ pub(crate) struct Bs<E = EnvStack> {
 
 impl Bs {
   pub(crate) fn as_cx(&self) -> Cx {
-    Cx {
-      env: self.env.clone(),
-      fixed: FxHashMap::default(),
-    }
+    Cx { env: self.env.clone(), fixed: FxHashMap::default() }
   }
 }
 
@@ -1180,10 +1132,7 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.bound_vars;
-  assert!(
-    !g.has_record_meta_var,
-    "there should be no meta vars at all, much less record ones"
-  );
+  assert!(!g.has_record_meta_var, "there should be no meta vars at all, much less record ones");
 }
 
 pub(crate) fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)

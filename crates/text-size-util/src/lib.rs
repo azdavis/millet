@@ -16,10 +16,7 @@ pub struct WithRange<T> {
 impl<T> WithRange<T> {
   /// Wrap a new value with the location from `self`.
   pub fn wrap<U>(&self, val: U) -> WithRange<U> {
-    WithRange {
-      val,
-      range: self.range,
-    }
+    WithRange { val, range: self.range }
   }
 }
 

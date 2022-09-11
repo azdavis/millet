@@ -8,12 +8,7 @@ pub(crate) fn get(
   tokens: &[WithRange<Token<'_>>],
   env: &paths::slash_var_path::Env,
 ) -> Result<Root> {
-  let mut p = Parser {
-    tokens,
-    idx: 0,
-    last_range: TextRange::default(),
-    env,
-  };
+  let mut p = Parser { tokens, idx: 0, last_range: TextRange::default(), env };
   root(&mut p)
 }
 
@@ -161,10 +156,7 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
       _ => None,
     };
     if let Some(pathname) = pathname {
-      ret.push(Member {
-        pathname: tok.wrap(pathname),
-        class,
-      });
+      ret.push(Member { pathname: tok.wrap(pathname), class });
     }
   }
   Ok(ret)

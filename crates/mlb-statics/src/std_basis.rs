@@ -66,13 +66,7 @@ where
         let mut lines: Vec<_> = contents
           .lines()
           .skip(5)
-          .map(|line| {
-            if line == STREAM_IO_REGULAR {
-              STREAM_IO_TEXT
-            } else {
-              line
-            }
-          })
+          .map(|line| if line == STREAM_IO_REGULAR { STREAM_IO_TEXT } else { line })
           .collect();
         assert_eq!(lines.pop().unwrap(), "end");
         imperative_io_hack = Some(lines.join("\n"));

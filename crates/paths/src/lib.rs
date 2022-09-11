@@ -18,11 +18,7 @@ pub struct Root {
 impl Root {
   /// Returns a new `Root` rooted at `root`.
   pub fn new(root: CanonicalPathBuf) -> Self {
-    Self {
-      root,
-      id_to_path: Vec::new(),
-      path_to_id: FxHashMap::default(),
-    }
+    Self { root, id_to_path: Vec::new(), path_to_id: FxHashMap::default() }
   }
 
   /// Returns the path underlying this `Root`.

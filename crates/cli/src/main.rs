@@ -55,10 +55,7 @@ fn run() -> usize {
   for (path, errors) in got {
     for e in errors {
       let path = root.as_paths().get_rel_path(path).display();
-      println!(
-        "{}:{}: error[{}]: {}",
-        path, e.range.start, e.code, e.message
-      );
+      println!("{}:{}: error[{}]: {}", path, e.range.start, e.code, e.message);
     }
   }
   num_errors
@@ -78,10 +75,7 @@ fn main() {
     0 => {}
     n => {
       let suffix = if n == 1 { "" } else { "s" };
-      println!(
-        "{n} error{suffix}. see {} for more information",
-        analysis::ERRORS_URL
-      );
+      println!("{n} error{suffix}. see {} for more information", analysis::ERRORS_URL);
       std::process::exit(1)
     }
   }

@@ -17,11 +17,8 @@ pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   Ok(tokens)
 }
 
-const PUNCTUATION: [(u8, Token<'_>); 3] = [
-  (b':', Token::Colon),
-  (b'(', Token::LRound),
-  (b')', Token::RRound),
-];
+const PUNCTUATION: [(u8, Token<'_>); 3] =
+  [(b':', Token::Colon), (b'(', Token::LRound), (b')', Token::RRound)];
 
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
   let start = *idx;
@@ -57,9 +54,7 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
       return Ok(Some(tok));
     }
   }
-  advance_while(idx, bs, |b| {
-    !is_whitespace(b) && !matches!(b, b':' | b'(' | b')' | b';')
-  });
+  advance_while(idx, bs, |b| !is_whitespace(b) && !matches!(b, b':' | b'(' | b')' | b';'));
   let ret = match std::str::from_utf8(&bs[start..*idx]).unwrap() {
     "structure" => Token::Structure,
     "signature" => Token::Signature,

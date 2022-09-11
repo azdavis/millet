@@ -40,12 +40,7 @@ where
 }
 
 fn docs_dir() -> Option<PathBuf> {
-  Some(
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-      .parent()?
-      .parent()?
-      .join("docs"),
-  )
+  Some(Path::new(env!("CARGO_MANIFEST_DIR")).parent()?.parent()?.join("docs"))
 }
 
 #[test]

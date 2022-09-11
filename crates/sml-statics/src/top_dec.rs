@@ -14,11 +14,7 @@ use fast_hash::{map, FxHashMap, FxHashSet};
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
   let mut ac = Bs::<Env>::default();
   get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), top_dec);
-  Bs {
-    fun_env: ac.fun_env,
-    sig_env: ac.sig_env,
-    env: EnvStack::one(ac.env),
-  }
+  Bs { fun_env: ac.fun_env, sig_env: ac.sig_env, env: EnvStack::one(ac.env) }
 }
 
 enum StrDecAc<'a> {
@@ -142,11 +138,7 @@ fn get_str_dec(
           body_ty_names.remove(sym);
         }
         let fun_name = fun_bind.functor_name.clone();
-        let fun_sig = FunSig {
-          param: param_sig,
-          body_ty_names,
-          body_env,
-        };
+        let fun_sig = FunSig { param: param_sig, body_ty_names, body_env };
         if let Some(e) = ins_no_dupe(&mut fun_env, fun_name, fun_sig, Item::Functor) {
           st.err(str_dec, e);
         }
@@ -237,10 +229,7 @@ fn get_str_exp(
         st.info().insert(str_exp.into(), None, fun_sig.body_env.def);
         ac.append(&mut to_add);
       }
-      None => st.err(
-        str_exp,
-        ErrorKind::Undefined(Item::Functor, fun_name.clone()),
-      ),
+      None => st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone())),
     },
     // sml_def(55)
     sml_hir::StrExp::Let(str_dec, str_exp) => {
@@ -412,11 +401,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         let mv_g = st.meta_gen.generalizer();
         let g = generalize(mv_g, st.subst(), fixed.clone(), &mut ty_scheme);
         assert_ty_has_no_record_meta_vars(g);
-        let vi = ValInfo {
-          ty_scheme,
-          id_status: IdStatus::Val,
-          def: st.def(spec.into()),
-        };
+        let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: st.def(spec.into()) };
         let name = &val_desc.name;
         if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
           st.err(spec, e);
@@ -587,10 +572,7 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[sml_hir::Path], i
   }
   match ty_scheme {
     Some(ty_scheme) => {
-      let subst: TyRealization = syms
-        .into_iter()
-        .map(|sym| (sym, ty_scheme.clone()))
-        .collect();
+      let subst: TyRealization = syms.into_iter().map(|sym| (sym, ty_scheme.clone())).collect();
       env_realize(&subst, inner_env);
     }
     // TODO this is reachable (because of the above), but bad.
@@ -609,19 +591,11 @@ fn get_path_ty_cons<E: EnvLike>(
 }
 
 fn join_paths(p1: &sml_hir::Path, p2: &sml_hir::Path) -> sml_hir::Path {
-  sml_hir::Path::new(
-    p1.all_names().chain(p2.structures()).cloned(),
-    p2.last().clone(),
-  )
+  sml_hir::Path::new(p1.all_names().chain(p2.structures()).cloned(), p2.last().clone())
 }
 
 fn get_ty_cons(structures: &mut Vec<sml_hir::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
-  ac.extend(
-    env
-      .ty_env
-      .keys()
-      .map(|name| sml_hir::Path::new(structures.clone(), name.clone())),
-  );
+  ac.extend(env.ty_env.keys().map(|name| sml_hir::Path::new(structures.clone(), name.clone())));
   for (name, env) in env.str_env.iter() {
     structures.push(name.clone());
     get_ty_cons(structures, ac, env);
@@ -641,10 +615,7 @@ fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &sml_hir::TyDesc, idx: 
   }
   let ty_info = TyInfo {
     ty_scheme: TyScheme::n_ary(
-      ty_desc
-        .ty_vars
-        .iter()
-        .map(|x| x.is_equality().then_some(TyVarKind::Equality)),
+      ty_desc.ty_vars.iter().map(|x| x.is_equality().then_some(TyVarKind::Equality)),
       started.sym(),
     ),
     val_env: ValEnv::default(),

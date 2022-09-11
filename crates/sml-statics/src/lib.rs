@@ -51,9 +51,5 @@ pub fn get(
   let inner = top_dec::get(&mut st, &basis.inner, arenas, root);
   let (new_syms, errors, info) = st.finish();
   *syms = new_syms;
-  Statics {
-    info,
-    errors,
-    basis: basis::Basis { inner },
-  }
+  Statics { info, errors, basis: basis::Basis { inner } }
 }

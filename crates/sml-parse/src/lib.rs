@@ -31,8 +31,5 @@ pub fn get<'a>(tokens: &'a [Token<'a, SK>], fix_env: &'a mut parser::FixEnv) -> 
   let mut p = parser::Parser::new(tokens, fix_env);
   root::root(&mut p);
   let (node, errors) = p.finish();
-  Parse {
-    root: Root::cast(node).unwrap(),
-    errors,
-  }
+  Parse { root: Root::cast(node).unwrap(), errors }
 }

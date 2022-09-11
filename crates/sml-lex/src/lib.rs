@@ -96,10 +96,7 @@ pub fn get(s: &str) -> Lex<'_> {
     let text = std::str::from_utf8(&bs[start..cx.i]).unwrap();
     tokens.push(Token { kind, text });
   }
-  Lex {
-    tokens,
-    errors: cx.errors,
-  }
+  Lex { tokens, errors: cx.errors }
 }
 
 /// The context.
@@ -383,10 +380,7 @@ fn is_symbolic(b: u8) -> bool {
 }
 
 fn err(cx: &mut Cx, start: usize, kind: ErrorKind) {
-  cx.errors.push(Error {
-    range: range(start, cx.i),
-    kind,
-  });
+  cx.errors.push(Error { range: range(start, cx.i), kind });
 }
 
 fn range(start: usize, end: usize) -> TextRange {

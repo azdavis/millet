@@ -113,11 +113,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
         Ty::None => {}
         // the simple case. check the sym is in the overload.
         Ty::Con(args, s) => {
-          if ov
-            .as_basics()
-            .iter()
-            .any(|&ov| st.syms.overloads()[ov].contains(&s))
-          {
+          if ov.as_basics().iter().any(|&ov| st.syms.overloads()[ov].contains(&s)) {
             assert!(args.is_empty())
           } else {
             return Err(UnifyError::HeadMismatch);

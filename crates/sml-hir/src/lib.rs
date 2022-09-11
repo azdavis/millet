@@ -333,10 +333,7 @@ impl Path {
   where
     I: IntoIterator<Item = Name>,
   {
-    Self {
-      structures: structures.into_iter().collect(),
-      last,
-    }
+    Self { structures: structures.into_iter().collect(), last }
   }
 
   pub fn try_new(mut names: Vec<Name>) -> Option<Self> {

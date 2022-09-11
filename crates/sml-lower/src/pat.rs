@@ -69,10 +69,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
           cx.err(pat.syntax().text_range(), ErrorKind::RestPatRowNotLast);
         }
       }
-      sml_hir::Pat::Record {
-        rows,
-        allows_other: rest_pat_row.is_some(),
-      }
+      sml_hir::Pat::Record { rows, allows_other: rest_pat_row.is_some() }
     }
     // sml_def(37)
     ast::Pat::ParenPat(pat) => return get_or(cx, pat.pat()?),
@@ -88,10 +85,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       })
     }
     ast::Pat::VectorPat(pat) => {
-      cx.err(
-        pat.syntax().text_range(),
-        ErrorKind::Unsupported("vector patterns"),
-      );
+      cx.err(pat.syntax().text_range(), ErrorKind::Unsupported("vector patterns"));
       return None;
     }
     ast::Pat::InfixPat(pat) => {
@@ -101,10 +95,9 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       let arg = cx.pat(tuple([lhs, rhs]), ptr.clone());
       sml_hir::Pat::Con(func, Some(arg))
     }
-    ast::Pat::TypedPat(pat) => sml_hir::Pat::Typed(
-      get(cx, pat.pat()),
-      ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())),
-    ),
+    ast::Pat::TypedPat(pat) => {
+      sml_hir::Pat::Typed(get(cx, pat.pat()), ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())))
+    }
     ast::Pat::AsPat(pat) => {
       let lhs = get(cx, pat.pat());
       let rhs = pat.as_pat_tail()?.pat().and_then(|pat| get(cx, Some(pat)));
@@ -119,10 +112,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       return Some(lhs);
     }
   };
-  Some(sml_hir::OrPat {
-    first: cx.pat(ret, ptr),
-    rest: Vec::new(),
-  })
+  Some(sml_hir::OrPat { first: cx.pat(ret, ptr), rest: Vec::new() })
 }
 
 #[derive(Debug)]
@@ -133,10 +123,7 @@ struct RestPatRowState {
 
 impl Default for RestPatRowState {
   fn default() -> Self {
-    Self {
-      multiple: false,
-      last: true,
-    }
+    Self { multiple: false, last: true }
   }
 }
 
@@ -148,14 +135,8 @@ pub(crate) fn tuple<I>(ps: I) -> sml_hir::Pat
 where
   I: IntoIterator<Item = sml_hir::PatIdx>,
 {
-  let rows: Vec<_> = ps
-    .into_iter()
-    .enumerate()
-    .map(|(idx, p)| (sml_hir::Lab::tuple(idx), p))
-    .collect();
+  let rows: Vec<_> =
+    ps.into_iter().enumerate().map(|(idx, p)| (sml_hir::Lab::tuple(idx), p)).collect();
   assert_ne!(rows.len(), 1);
-  sml_hir::Pat::Record {
-    rows,
-    allows_other: false,
-  }
+  sml_hir::Pat::Record { rows, allows_other: false }
 }

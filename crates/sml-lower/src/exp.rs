@@ -22,10 +22,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
             None => match &lab {
               sml_hir::Lab::Name(name) => {
                 cx.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
-                cx.exp(
-                  sml_hir::Exp::Path(sml_hir::Path::one(name.clone())),
-                  ptr.clone(),
-                )
+                cx.exp(sml_hir::Exp::Path(sml_hir::Path::one(name.clone())), ptr.clone())
               }
               sml_hir::Lab::Num(_) => {
                 // NOTE: we explicitly duplicate the `err` call in both branches, to remind us that
@@ -44,13 +41,8 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let lab = get_lab(cx, exp.lab()?);
       let fresh = cx.fresh();
       let pat = cx.pat(pat::name(fresh.as_str()), ptr.clone());
-      let param = cx.pat(
-        sml_hir::Pat::Record {
-          rows: vec![(lab, pat)],
-          allows_other: true,
-        },
-        ptr.clone(),
-      );
+      let param =
+        cx.pat(sml_hir::Pat::Record { rows: vec![(lab, pat)], allows_other: true }, ptr.clone());
       let body = cx.exp(name(fresh.as_str()), ptr.clone());
       sml_hir::Exp::Fn(vec![(param, body)])
     }
@@ -68,10 +60,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       })
     }
     ast::Exp::VectorExp(exp) => {
-      cx.err(
-        exp.syntax().text_range(),
-        ErrorKind::Unsupported("vector expressions"),
-      );
+      cx.err(exp.syntax().text_range(), ErrorKind::Unsupported("vector expressions"));
       return None;
     }
     ast::Exp::SeqExp(exp) => return exps_in_seq(cx, exp.exps_in_seq(), ptr),
@@ -82,9 +71,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::AppExp(exp) => sml_hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
     ast::Exp::InfixExp(exp) => {
-      let func = exp
-        .name_star_eq()
-        .and_then(|x| cx.exp(name(x.token.text()), ptr.clone()));
+      let func = exp.name_star_eq().and_then(|x| cx.exp(name(x.token.text()), ptr.clone()));
       let lhs = get(cx, exp.lhs());
       let rhs = get(cx, exp.rhs());
       let arg = cx.exp(tuple([lhs, rhs]), ptr.clone());
@@ -128,14 +115,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let fn_exp = cx.exp(sml_hir::Exp::Fn(vec![(arg_pat, fn_body)]), ptr.clone());
       let vid_pat = cx.pat(pat::name(vid.as_str()), ptr.clone());
       let val = cx.dec(
-        sml_hir::Dec::Val(
-          vec![],
-          vec![sml_hir::ValBind {
-            rec: true,
-            pat: vid_pat,
-            exp: fn_exp,
-          }],
-        ),
+        sml_hir::Dec::Val(vec![], vec![sml_hir::ValBind { rec: true, pat: vid_pat, exp: fn_exp }]),
         ptr.clone(),
       );
       sml_hir::Exp::Let(val, call_unit_fn(cx, &vid, ptr.clone()))
@@ -158,11 +138,8 @@ pub(crate) fn tuple<I>(es: I) -> sml_hir::Exp
 where
   I: IntoIterator<Item = sml_hir::ExpIdx>,
 {
-  let rows: Vec<_> = es
-    .into_iter()
-    .enumerate()
-    .map(|(idx, e)| (sml_hir::Lab::tuple(idx), e))
-    .collect();
+  let rows: Vec<_> =
+    es.into_iter().enumerate().map(|(idx, e)| (sml_hir::Lab::tuple(idx), e)).collect();
   assert_ne!(rows.len(), 1);
   sml_hir::Exp::Record(rows)
 }

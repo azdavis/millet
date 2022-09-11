@@ -26,18 +26,8 @@ impl Cmd {
 
   fn spec(&self) -> CmdSpec {
     match self {
-      Cmd::Help => CmdSpec {
-        name: "help",
-        desc: "show this help",
-        options: &[],
-        args: &[],
-      },
-      Cmd::Ci => CmdSpec {
-        name: "ci",
-        desc: "run various tests",
-        options: &[],
-        args: &[],
-      },
+      Cmd::Help => CmdSpec { name: "help", desc: "show this help", options: &[], args: &[] },
+      Cmd::Ci => CmdSpec { name: "ci", desc: "run various tests", options: &[], args: &[] },
       Cmd::Dist => CmdSpec {
         name: "dist",
         desc: "make artifacts for distribution",
@@ -134,9 +124,7 @@ fn ck_no_ignore(sh: &Shell) -> Result<()> {
   // avoid matching this file with the git grep
   let word = "ignore";
   println!("checking for no {word}");
-  let has_ignore = cmd!(sh, "git grep -lFe #[{word}")
-    .ignore_status()
-    .output()?;
+  let has_ignore = cmd!(sh, "git grep -lFe #[{word}").ignore_status().output()?;
   let out = String::from_utf8(has_ignore.stdout)?;
   let set: BTreeSet<_> = out.lines().collect();
   if set.is_empty() {
@@ -163,14 +151,10 @@ where
 
 fn ck_sml_libs(sh: &Shell) -> Result<()> {
   println!("checking sml libraries");
-  let mut sml: PathBuf = ["crates", "sml-libs", "src", "std_basis", "mod.rs"]
-    .into_iter()
-    .collect();
+  let mut sml: PathBuf = ["crates", "sml-libs", "src", "std_basis", "mod.rs"].into_iter().collect();
   let order_file = sh.read_file(&sml)?;
-  let in_order: BTreeSet<_> = order_file
-    .lines()
-    .filter_map(|x| x.strip_prefix("  \"")?.strip_suffix(".sml\","))
-    .collect();
+  let in_order: BTreeSet<_> =
+    order_file.lines().filter_map(|x| x.strip_prefix("  \"")?.strip_suffix(".sml\",")).collect();
   assert!(sml.pop());
   let sml_dir = sh.read_dir(&sml)?;
   let in_files: BTreeSet<_> = sml_dir
@@ -221,18 +205,10 @@ fn ck_no_debugging(sh: &Shell) -> Result<()> {
   let snd = "EPRINT".to_ascii_lowercase();
   let thd = "CONSOLE.LOG".to_ascii_lowercase();
   // ignore status because if no results (which is desired), git grep returns non-zero.
-  let got = cmd!(sh, "git grep -F -n -e {fst} -e {snd} -e {thd}")
-    .ignore_status()
-    .output()?
-    .stdout;
+  let got = cmd!(sh, "git grep -F -n -e {fst} -e {snd} -e {thd}").ignore_status().output()?.stdout;
   let got = String::from_utf8(got)?;
   let got: BTreeSet<_> = got.lines().collect();
-  eq_sets(
-    &BTreeSet::new(),
-    &got,
-    "expected to have debugging",
-    "not allowed to have debugging",
-  )?;
+  eq_sets(&BTreeSet::new(), &got, "expected to have debugging", "not allowed to have debugging")?;
   Ok(())
 }
 
@@ -250,12 +226,7 @@ fn ck_changelog(sh: &Shell) -> Result<()> {
       (title != "main").then_some(title)
     })
     .collect();
-  eq_sets(
-    &tags,
-    &entries,
-    "tags that have no changelog entry",
-    "changelog entries without a tag",
-  )?;
+  eq_sets(&tags, &entries, "tags that have no changelog entry", "changelog entries without a tag")?;
   Ok(())
 }
 
@@ -265,20 +236,14 @@ fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
     Some(x) => vec!["--target", x],
     None => vec![],
   };
-  cmd!(
-    sh,
-    "cargo build {release_arg...} {target_arg...} --locked --bin lang-srv"
-  )
-  .run()?;
+  cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin lang-srv").run()?;
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
   let kind = if release { "release" } else { "debug" };
   let lang_srv_name = format!("lang-srv{}", std::env::consts::EXE_SUFFIX);
-  let lang_srv: PathBuf = std::iter::once("target")
-    .chain(target)
-    .chain([kind, lang_srv_name.as_str()])
-    .collect();
+  let lang_srv: PathBuf =
+    std::iter::once("target").chain(target).chain([kind, lang_srv_name.as_str()]).collect();
   sh.copy_file(&lang_srv, &dir)?;
   assert!(dir.pop());
   let license_header =

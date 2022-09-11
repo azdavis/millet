@@ -6,10 +6,7 @@ use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::DecIdx {
   let dec = dec?;
-  let mut decs: Vec<_> = dec
-    .dec_in_seqs()
-    .map(|x| get_one(cx, x.dec_one()?))
-    .collect();
+  let mut decs: Vec<_> = dec.dec_in_seqs().map(|x| get_one(cx, x.dec_one()?)).collect();
   if decs.len() == 1 {
     decs.pop().unwrap()
   } else {
@@ -108,9 +105,8 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
           // both None, then something's very strange about the fun_bind_cases anyway.
           let exp = {
             let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| cx.fresh()).collect();
-            let mut arg_exprs = arg_names
-              .iter()
-              .map(|name| cx.exp(exp::name(name.as_str()), ptr.clone()));
+            let mut arg_exprs =
+              arg_names.iter().map(|name| cx.exp(exp::name(name.as_str()), ptr.clone()));
             let head = if arg_exprs.len() == 1 {
               arg_exprs.next().unwrap()
             } else {
@@ -118,13 +114,10 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
               cx.exp(tup, ptr.clone())
             };
             let case = exp::case(cx, head, arms, ptr.clone());
-            arg_names
-              .into_iter()
-              .rev()
-              .fold(cx.exp(case, ptr.clone()), |body, name| {
-                let pat = cx.pat(pat::name(name.as_str()), ptr.clone());
-                cx.exp(sml_hir::Exp::Fn(vec![(pat, body)]), ptr.clone())
-              })
+            arg_names.into_iter().rev().fold(cx.exp(case, ptr.clone()), |body, name| {
+              let pat = cx.pat(pat::name(name.as_str()), ptr.clone());
+              cx.exp(sml_hir::Exp::Fn(vec![(pat, body)]), ptr.clone())
+            })
           };
           sml_hir::ValBind {
             rec: true,
@@ -181,10 +174,7 @@ pub(crate) fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
     }
     ast::DecOne::DoDec(ref inner) => {
       // emit an error, but lower anyway.
-      cx.err(
-        dec.syntax().text_range(),
-        ErrorKind::Unsupported("`do` declarations"),
-      );
+      cx.err(dec.syntax().text_range(), ErrorKind::Unsupported("`do` declarations"));
       sml_hir::Dec::Val(
         Vec::new(),
         vec![sml_hir::ValBind {

@@ -47,18 +47,13 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     *idx += 1;
     advance_while(idx, bs, |b| b != b'"');
     *idx += 1;
-    return Ok(Some(Token::String(
-      std::str::from_utf8(&bs[start..*idx]).unwrap(),
-    )));
+    return Ok(Some(Token::String(std::str::from_utf8(&bs[start..*idx]).unwrap())));
   }
   advance_while(idx, bs, |b| {
     b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'/' | b'.' | b'$' | b'(' | b')' | b'\'')
   });
   if start == *idx {
-    return Err(Error::new(
-      ErrorKind::InvalidSource,
-      TextRange::empty(mk_text_size(start)),
-    ));
+    return Err(Error::new(ErrorKind::InvalidSource, TextRange::empty(mk_text_size(start))));
   }
   let ret = match std::str::from_utf8(&bs[start..*idx]).unwrap() {
     "signature" => Token::Signature,
@@ -74,13 +69,8 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     "let" => Token::Let,
     "in" => Token::In,
     s => {
-      let all = s
-        .bytes()
-        .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'\''));
-      let fst = s
-        .as_bytes()
-        .first()
-        .map_or(false, |b| b.is_ascii_alphabetic());
+      let all = s.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'\''));
+      let fst = s.as_bytes().first().map_or(false, |b| b.is_ascii_alphabetic());
       if all && fst {
         Token::Name(s)
       } else {

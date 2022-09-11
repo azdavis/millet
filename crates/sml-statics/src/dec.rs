@@ -47,11 +47,7 @@ pub(crate) fn get(
         let got = exp::get(st, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
-        st.insert_bind(
-          pm_pat,
-          want,
-          val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into),
-        );
+        st.insert_bind(pm_pat, want, val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into));
       }
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
       // also need a separate recursive-only ValEnv.
@@ -67,10 +63,7 @@ pub(crate) fn get(
         }
       }
       // extend the cx with only the recursive ValEnv.
-      cx.env.push(Env {
-        val_env: rec_ve,
-        ..Default::default()
-      });
+      cx.env.push(Env { val_env: rec_ve, ..Default::default() });
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
         // sml_def(26)
         if let Some(exp) = val_bind.exp {
@@ -86,9 +79,7 @@ pub(crate) fn get(
       let mut generalized = FxHashSet::<sml_hir::ExpIdx>::default();
       // generalize the entire merged ValEnv.
       for (name, val_info) in ve.iter_mut() {
-        let &exp = src_exp
-          .get(name)
-          .expect("should have an exp for every bound name");
+        let &exp = src_exp.get(name).expect("should have an exp for every bound name");
         if !generalized.insert(exp) {
           continue;
         }
@@ -126,9 +117,7 @@ pub(crate) fn get(
     sml_hir::Dec::DatatypeCopy(name, path) => match get_ty_info(&cx.env, path) {
       Ok(ty_info) => {
         env.ty_env.insert(name.clone(), ty_info.clone());
-        env
-          .val_env
-          .extend(ty_info.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
+        env.val_env.extend(ty_info.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
       }
       Err(e) => st.err(dec, e),
     },
@@ -256,11 +245,7 @@ fn get_ty_binds(
     let fixed = add_fixed_ty_vars(st, cx, &ty_bind.ty_vars, idx);
     let mut ty_scheme = TyScheme::zero(ty::get(st, cx, ars, ty_bind.ty));
     generalize_fixed(fixed, &mut ty_scheme);
-    let ty_info = TyInfo {
-      ty_scheme,
-      val_env: ValEnv::default(),
-      def: st.def(idx),
-    };
+    let ty_info = TyInfo { ty_scheme, val_env: ValEnv::default(), def: st.def(idx) };
     if let Some(e) = ins_no_dupe(ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e)
     }
@@ -299,36 +284,22 @@ pub(crate) fn get_dat_binds(
     for ty_var in dat_bind.ty_vars.iter() {
       fixed.insert(st.gen_fixed_var(ty_var.clone()));
     }
-    let out_ty = Ty::Con(
-      fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(),
-      started.sym(),
-    );
+    let out_ty = Ty::Con(fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(), started.sym());
     let ty_scheme = {
       let mut res = TyScheme::zero(out_ty.clone());
       // just `generalize` would also work, because `out_ty` mentions every fixed var.
       generalize_fixed(fixed.clone(), &mut res);
       res
     };
-    let ty_info = TyInfo {
-      ty_scheme: ty_scheme.clone(),
-      val_env: ValEnv::default(),
-      def: st.def(idx),
-    };
+    let ty_info =
+      TyInfo { ty_scheme: ty_scheme.clone(), val_env: ValEnv::default(), def: st.def(idx) };
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);
     }
-    datatypes.push(Datatype {
-      started,
-      fixed,
-      out_ty,
-      ty_scheme,
-    });
+    datatypes.push(Datatype { started, fixed, out_ty, ty_scheme });
   }
   // bring all the datatypes into scope.
-  cx.env.push(Env {
-    ty_env: fake_ty_env.clone(),
-    ..Default::default()
-  });
+  cx.env.push(Env { ty_env: fake_ty_env.clone(), ..Default::default() });
   // now get the types. this `ty_env` will be the ultimate one we return.
   let mut ty_env = TyEnv::default();
   get_ty_binds(st, &mut cx, ars, &mut ty_env, ty_binds, idx);
@@ -339,10 +310,7 @@ pub(crate) fn get_dat_binds(
     }
   }
   // bring all the types into scope.
-  cx.env.push(Env {
-    ty_env: ty_env.clone(),
-    ..Default::default()
-  });
+  cx.env.push(Env { ty_env: ty_env.clone(), ..Default::default() });
   // datatypes and types are now in scope. now get the datatype constructors.
   let mut big_val_env = ValEnv::default();
   assert_eq!(
@@ -370,22 +338,14 @@ pub(crate) fn get_dat_binds(
       // just `generalize` would also work, because `ty_scheme` contains `out_ty`, which mentions
       // every fixed var.
       generalize_fixed(datatype.fixed.clone(), &mut ty_scheme);
-      let vi = ValInfo {
-        ty_scheme,
-        id_status: IdStatus::Con,
-        def: st.def(idx),
-      };
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, def: st.def(idx) };
       if let Some(e) = ins_check_name(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
         st.err(idx, e);
       }
     }
     // NOTE: no checking for duplicates here
     big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
-    let ty_info = TyInfo {
-      ty_scheme: datatype.ty_scheme,
-      val_env,
-      def: st.def(idx),
-    };
+    let ty_info = TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx) };
     st.syms.finish(datatype.started, ty_info.clone());
     ty_env.insert(dat_bind.name.clone(), ty_info);
     for ty_var in dat_bind.ty_vars.iter() {

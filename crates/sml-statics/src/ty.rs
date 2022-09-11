@@ -62,10 +62,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, ty: sml_hir::TyId
       Ty::fun(param, res)
     }
   };
-  let ty_entry = TyEntry {
-    ty: ret.clone(),
-    ty_scheme,
-  };
+  let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
   st.info().insert(ty.into(), Some(ty_entry), def);
   ret
 }

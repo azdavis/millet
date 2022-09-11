@@ -148,17 +148,9 @@ pub fn get(
     bas_env: FxHashMap::default(),
     basis: std_basis.basis().clone(),
   };
-  let files = Files {
-    sml,
-    mlb,
-    std_basis: &std_basis,
-  };
+  let files = Files { sml, mlb, std_basis: &std_basis };
   get_group_file(&mut cx, files, &mut MBasis::default(), root_mlb);
-  MlbStatics {
-    mlb_errors: cx.mlb_errors,
-    syms: cx.syms,
-    sml: cx.sml,
-  }
+  MlbStatics { mlb_errors: cx.mlb_errors, syms: cx.syms, sml: cx.sml }
 }
 
 fn get_bas_exp(
@@ -255,11 +247,7 @@ fn get_bas_dec(
           statics_errors: checked.errors,
           info,
         };
-        ac.append(MBasis {
-          fix_env,
-          bas_env: FxHashMap::default(),
-          basis: checked.basis,
-        });
+        ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
         // NOTE: we would like to assert that the insert returns None, but actually it may not
         // always.
         //

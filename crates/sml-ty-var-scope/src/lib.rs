@@ -224,10 +224,7 @@ fn get_dec(
           assert!(cx.val_dec.insert(dec, ac).is_none());
         }
         Mode::Set => {
-          let unguarded = cx
-            .val_dec
-            .get_mut(&dec)
-            .expect("should have been set in the Get pass");
+          let unguarded = cx.val_dec.get_mut(&dec).expect("should have been set in the Get pass");
           for x in scope.iter() {
             unguarded.remove(x);
           }

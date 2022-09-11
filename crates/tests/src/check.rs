@@ -117,11 +117,8 @@ static FULL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::full);
 /// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
 /// run?)
-pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> = Lazy::new(|| {
-  paths::RealFileSystem::default()
-    .canonicalize(std::path::Path::new("/"))
-    .unwrap()
-});
+pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> =
+  Lazy::new(|| paths::RealFileSystem::default().canonicalize(std::path::Path::new("/")).unwrap());
 
 struct Check {
   root: analysis::input::Root,
@@ -165,12 +162,7 @@ impl Check {
     let want_err_len: usize = ret
       .files
       .values()
-      .map(|x| {
-        x.want
-          .iter()
-          .filter(|(_, e)| matches!(e.kind, ExpectKind::Error))
-          .count()
-      })
+      .map(|x| x.want.iter().filter(|(_, e)| matches!(e.kind, ExpectKind::Error)).count())
       .sum();
     if !matches!(want_err_len, 0 | 1) {
       ret.reasons.push(Reason::WantWrongNumError(want_err_len));
@@ -185,12 +177,9 @@ impl Check {
       for (&region, expect) in file.want.iter() {
         if matches!(expect.kind, ExpectKind::Hover) {
           let pos = match region {
-            Region::Exact {
-              line, col_start, ..
-            } => analysis::Position {
-              line,
-              character: col_start,
-            },
+            Region::Exact { line, col_start, .. } => {
+              analysis::Position { line, character: col_start }
+            }
             Region::Line(n) => {
               ret.reasons.push(Reason::InexactHover(path.wrap(n)));
               continue;
@@ -354,11 +343,7 @@ enum Reason {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Region {
-  Exact {
-    line: u32,
-    col_start: u32,
-    col_end: u32,
-  },
+  Exact { line: u32, col_start: u32, col_end: u32 },
   Line(u32),
 }
 
@@ -366,11 +351,9 @@ impl fmt::Display for Region {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     // don't add 1 for the line because the check strings usually have the first line blank.
     match self {
-      Region::Exact {
-        line,
-        col_start,
-        col_end,
-      } => write!(f, "{}:{}..{}", line, col_start + 1, col_end + 1),
+      Region::Exact { line, col_start, col_end } => {
+        write!(f, "{}:{}..{}", line, col_start + 1, col_end + 1)
+      }
       Region::Line(line) => write!(f, "{line}"),
     }
   }
@@ -404,14 +387,8 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   let (col_range, msg) = inner.split_once(' ')?;
   let msg = msg.trim_end_matches(' ');
   let expect = match msg.strip_prefix("hover: ") {
-    Some(msg) => Expect {
-      msg: msg.to_owned(),
-      kind: ExpectKind::Hover,
-    },
-    None => Expect {
-      msg: msg.to_owned(),
-      kind: ExpectKind::Error,
-    },
+    Some(msg) => Expect { msg: msg.to_owned(), kind: ExpectKind::Hover },
+    None => Expect { msg: msg.to_owned(), kind: ExpectKind::Error },
   };
   let (line, exact) = match col_range.chars().next()? {
     '^' => (line_n - 1, true),
@@ -423,11 +400,7 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   let region = if exact {
     let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
     let end = start + col_range.len();
-    Region::Exact {
-      line,
-      col_start: u32::try_from(start).ok()?,
-      col_end: u32::try_from(end).ok()?,
-    }
+    Region::Exact { line, col_start: u32::try_from(start).ok()?, col_end: u32::try_from(end).ok()? }
   } else {
     Region::Line(line)
   };
