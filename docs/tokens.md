@@ -717,7 +717,7 @@ val _ = Int.max (1, 5)
 Separate elements in a sequence, like expressions.
 
 ```sml
-val n : int = ("string"; false; 5)
+val n : int = (print "hi"; 5)
 ```
 
 Can also be used to separate declarations, but this is unnecessary.
