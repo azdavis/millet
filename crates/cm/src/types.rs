@@ -14,6 +14,7 @@ pub(crate) enum ErrorKind {
   Expected(Token<'static>),
   ExpectedString,
   ExpectedDesc,
+  ExpectedExport,
   UnsupportedAlias,
   UnsupportedClass(PathBuf, Class),
   CouldNotDetermineClass(PathBuf),
@@ -44,6 +45,7 @@ impl fmt::Display for Error {
       ErrorKind::Expected(tok) => write!(f, "expected `{tok}`"),
       ErrorKind::ExpectedString => f.write_str("expected a string"),
       ErrorKind::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
+      ErrorKind::ExpectedExport => f.write_str("expected an export"),
       ErrorKind::UnsupportedAlias => f.write_str("unsupported: `Alias`"),
       ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
       ErrorKind::CouldNotDetermineClass(p) => {

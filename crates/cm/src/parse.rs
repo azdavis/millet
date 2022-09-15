@@ -127,7 +127,11 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
         p.eat(Token::RRound)?;
         Some(Export::Group(tok.range))
       }
-      _ => break,
+      Token::Is => break,
+      _ => {
+        p.bump();
+        return p.err(ErrorKind::ExpectedExport);
+      }
     };
     if let Some(export) = export {
       exports.push(export);
