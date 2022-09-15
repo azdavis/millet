@@ -128,8 +128,8 @@ There was an unsupported export kind in a SML/NJ CM file.
 At time of writing, Millet does not support:
 
 - `funsig` exports.
-
-To fix, avoid these.
+- `source(-)` exports.
+- `group(-)` exports.
 
 ## 2001
 
