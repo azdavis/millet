@@ -25,7 +25,7 @@
     },
     "controlKeyword": {
       "name": "keyword.control.sml-nj-cm",
-      "match": "\\b(Alias|alias|Group|group|Library|library|Is|is)\\b"
+      "match": "\\b(Alias|alias|Group|group|Library|library|Is|is|source)\\b"
     },
     "otherKeyword": {
       "name": "keyword.other.sml-nj-cm",
