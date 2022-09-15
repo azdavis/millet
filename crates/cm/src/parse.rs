@@ -99,11 +99,11 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
       Some(x) => x,
       None => break,
     };
-    let namespace = match tok.val {
-      Token::Structure => Namespace::Structure,
-      Token::Signature => Namespace::Signature,
-      Token::Functor => Namespace::Functor,
-      Token::FunSig => Namespace::FunSig,
+    let export = match tok.val {
+      Token::Structure => Some(regular(p, tok, Namespace::Structure)?),
+      Token::Signature => Some(regular(p, tok, Namespace::Signature)?),
+      Token::Functor => Some(regular(p, tok, Namespace::Functor)?),
+      Token::FunSig => Some(regular(p, tok, Namespace::FunSig)?),
       Token::Library => {
         p.bump();
         p.eat(Token::LRound)?;
@@ -111,20 +111,23 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
         p.bump();
         let pathname = path(p, s.val)?;
         p.eat(Token::RRound)?;
-        if let Some(pathname) = pathname {
-          ret.push(Export::Library(s.wrap(pathname)));
-        }
-        continue;
+        pathname.map(|pn| Export::Library(s.wrap(pn)))
       }
       _ => break,
     };
-    p.bump();
-    let s = p.string()?;
-    let name = str_util::Name::new(s.val);
-    p.bump();
-    ret.push(Export::Regular(tok.wrap(namespace), s.wrap(name)));
+    if let Some(export) = export {
+      ret.push(export);
+    }
   }
   Ok(ret)
+}
+
+fn regular(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> Result<Export> {
+  p.bump();
+  let s = p.string()?;
+  let name = str_util::Name::new(s.val);
+  p.bump();
+  Ok(Export::Regular(tok.wrap(ns), s.wrap(name)))
 }
 
 fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
