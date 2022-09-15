@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "aho-corasick"
-version = "0.7.18"
+version = "0.7.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e37cfd5e7657ada45f742d6e99ca5788580b5c529dc78faf11ece6dc702656f"
+checksum = "b4f55bd91a0978cbfd91c457a164bab8b4001c833b7f323132c0a4e1922dd44e"
 dependencies = [
  "memchr",
 ]
@@ -37,9 +37,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.62"
+version = "1.0.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1485d4d2cc45e7b201ee3767015c96faa5904387c9d87c6efdd0fb511f12d305"
+checksum = "98161a4e3e2184da77bb14f02184cdd111e83bbbcc9979dfee3c44b9a85f5602"
 
 [[package]]
 name = "atty"
@@ -73,7 +73,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 
 [[package]]
 name = "cli"
@@ -157,6 +157,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "event-parse"
+version = "0.1.0"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
+dependencies = [
+ "drop_bomb",
+ "rowan",
+ "token",
+]
+
+[[package]]
 name = "fast-hash"
 version = "0.1.0"
 dependencies = [
@@ -169,11 +179,10 @@ version = "0.1.0"
 
 [[package]]
 name = "form_urlencoded"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fc25a87fa4fd2094bffb06925852034d90a17f0d1e05197d4956d3555752191"
+checksum = "a9c384f161156f5260c24a097c56119f9be8c798586aecc13afbcbe7b7e26bf8"
 dependencies = [
- "matches",
  "percent-encoding",
 ]
 
@@ -210,15 +219,14 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 
 [[package]]
 name = "idna"
-version = "0.2.3"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "418a0a6fab821475f634efe3ccc45c013f742efe03d853e8d3355d5cb850ecf8"
+checksum = "e14ddfc70884202db2244c223200c204c2bda1bc6e0998d11b5e024d657209e6"
 dependencies = [
- "matches",
  "unicode-bidi",
  "unicode-normalization",
 ]
@@ -297,12 +305,6 @@ dependencies = [
  "serde_repr",
  "url",
 ]
-
-[[package]]
-name = "matches"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "memchr"
@@ -390,9 +392,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.13.1"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "074864da206b4973b84eb91683020dbefd6a8c3f0f38e054d93954e891935e4e"
+checksum = "2f7254b99e31cad77da24b08ebf628882739a608578bb1bcdfc1f9c21260d7c0"
 
 [[package]]
 name = "paths"
@@ -405,16 +407,16 @@ dependencies = [
 [[package]]
 name = "pattern-match"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 dependencies = [
  "rustc-hash",
 ]
 
 [[package]]
 name = "percent-encoding"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
+checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 
 [[package]]
 name = "pico-args"
@@ -571,7 +573,7 @@ dependencies = [
 name = "sml-parse"
 version = "0.1.0"
 dependencies = [
- "drop_bomb",
+ "event-parse",
  "fast-hash",
  "once_cell",
  "sml-syntax",
@@ -642,7 +644,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -678,7 +680,7 @@ dependencies = [
 [[package]]
 name = "text-pos"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 dependencies = [
  "text-size",
 ]
@@ -714,7 +716,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 
 [[package]]
 name = "toml"
@@ -728,7 +730,7 @@ dependencies = [
 [[package]]
 name = "topo-sort"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 
 [[package]]
 name = "ungrammar"
@@ -753,9 +755,9 @@ checksum = "099b7128301d285f79ddd55b9a83d5e6b9e97c92e0ea0daebee7263e932de992"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4f5b37a154999a8f3f98cc23a628d850e154479cd94decf3414696e12e31aaf"
+checksum = "dcc811dc4066ac62f84f11307873c4850cb653bfa9b1719cee2bd2204a4bc5dd"
 
 [[package]]
 name = "unicode-normalization"
@@ -768,24 +770,23 @@ dependencies = [
 
 [[package]]
 name = "unicode-width"
-version = "0.1.9"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ed742d4ea2bd1176e236172c8429aaf54486e7ac098db29ffe6529e0ce50973"
+checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
 
 [[package]]
 name = "uniq"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#0ae4bfc61a132df1a84f3ca4e68b51b0b380f8a9"
+source = "git+https://github.com/azdavis/language-util.git#0afdfb3812382e5271b1cc522eb758f43b8aceed"
 
 [[package]]
 name = "url"
-version = "2.2.2"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a507c383b2d33b5fc35d1861e77e6b383d158b2da5e14fe51b83dfedf6fd578c"
+checksum = "0d68c799ae75762b8c3fe375feb6600ef5602c883c5d21eb51c09f22b83c4643"
 dependencies = [
  "form_urlencoded",
  "idna",
- "matches",
  "percent-encoding",
  "serde",
 ]
