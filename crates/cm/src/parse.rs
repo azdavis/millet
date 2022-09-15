@@ -73,14 +73,12 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
     }
     Some(Token::Group) => {
       p.bump();
-      let es = exports(p)?;
-      let ms = members_tail(p)?;
+      let (es, ms) = exports_and_members(p)?;
       Root::Desc(DescKind::Group, es, ms)
     }
     Some(Token::Library) => {
       p.bump();
-      let es = exports(p)?;
-      let ms = members_tail(p)?;
+      let (es, ms) = exports_and_members(p)?;
       if es.is_empty() {
         return p.err(ErrorKind::EmptyExportList);
       }
@@ -91,8 +89,8 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
   Ok(ret)
 }
 
-fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
-  let mut ret = Vec::<Export>::new();
+fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)> {
+  let mut exports = Vec::<Export>::new();
   loop {
     let tok = p.cur_tok();
     let tok = match tok {
@@ -132,23 +130,11 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
       _ => break,
     };
     if let Some(export) = export {
-      ret.push(export);
+      exports.push(export);
     }
   }
-  Ok(ret)
-}
-
-fn regular(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> Result<Export> {
-  p.bump();
-  let s = p.string()?;
-  let name = str_util::Name::new(s.val);
-  p.bump();
-  Ok(Export::Regular(tok.wrap(ns), s.wrap(name)))
-}
-
-fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
   p.eat(Token::Is)?;
-  let mut ret = Vec::<Member>::new();
+  let mut members = Vec::<Member>::new();
   loop {
     let tok = p.cur_tok();
     let tok = match tok {
@@ -175,10 +161,18 @@ fn members_tail(p: &mut Parser<'_>) -> Result<Vec<Member>> {
       _ => None,
     };
     if let Some(pathname) = pathname {
-      ret.push(Member { pathname: tok.wrap(pathname), class });
+      members.push(Member { pathname: tok.wrap(pathname), class });
     }
   }
-  Ok(ret)
+  Ok((exports, members))
+}
+
+fn regular(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> Result<Export> {
+  p.bump();
+  let s = p.string()?;
+  let name = str_util::Name::new(s.val);
+  p.bump();
+  Ok(Export::Regular(tok.wrap(ns), s.wrap(name)))
 }
 
 fn path(p: &Parser<'_>, s: &str) -> Result<Option<PathBuf>> {
