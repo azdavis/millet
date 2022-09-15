@@ -17,8 +17,8 @@ pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   Ok(tokens)
 }
 
-const PUNCTUATION: [(u8, Token<'_>); 3] =
-  [(b':', Token::Colon), (b'(', Token::LRound), (b')', Token::RRound)];
+const PUNCTUATION: [(u8, Token<'_>); 4] =
+  [(b':', Token::Colon), (b'(', Token::LRound), (b')', Token::RRound), (b'-', Token::Minus)];
 
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
   let start = *idx;
@@ -64,6 +64,7 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     "Library" | "library" => Token::Library,
     "Alias" | "alias" => Token::Alias,
     "Is" | "is" => Token::Is,
+    "source" => Token::Source,
     s => Token::String(s),
   };
   Ok(Some(ret))

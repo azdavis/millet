@@ -67,9 +67,11 @@ pub enum Token<'a> {
   Library,
   Alias,
   Is,
+  Source,
   Colon,
   LRound,
   RRound,
+  Minus,
   String(&'a str),
 }
 
@@ -84,9 +86,11 @@ impl<'a> fmt::Display for Token<'a> {
       Token::Library => f.write_str("Library"),
       Token::Alias => f.write_str("Alias"),
       Token::Is => f.write_str("is"),
+      Token::Source => f.write_str("source"),
       Token::Colon => f.write_str(":"),
       Token::LRound => f.write_str("("),
       Token::RRound => f.write_str(")"),
+      Token::Minus => f.write_str("-"),
       Token::String(s) => s.fmt(f),
     }
   }
@@ -145,6 +149,10 @@ pub enum Export {
   Regular(WithRange<Namespace>, WithRange<Name>),
   /// A re-export of another CM library.
   Library(WithRange<PathBuf>),
+  /// A source export.
+  Source(TextRange),
+  /// A group export.
+  Group(TextRange),
 }
 
 /// A namespace, like `structure` in `structure S`.

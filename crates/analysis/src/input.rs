@@ -537,6 +537,13 @@ where
             .map(|ex| Export { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
         );
       }
+      cm::Export::Source(range) | cm::Export::Group(range) => {
+        return Err(GetInputError {
+          source: Source { path: None, range: pos_db.range(range) },
+          path: group_path.to_owned(),
+          kind: GetInputErrorKind::UnsupportedExport,
+        })
+      }
     }
   }
   let cm_file = CmFile { pos_db: Some(pos_db), paths, exports };

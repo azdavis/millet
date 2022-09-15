@@ -113,6 +113,22 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
         p.eat(Token::RRound)?;
         pathname.map(|pn| Export::Library(s.wrap(pn)))
       }
+      Token::Source => {
+        p.bump();
+        p.eat(Token::LRound)?;
+        // TODO also accept one or more filenames?
+        p.eat(Token::Minus)?;
+        p.eat(Token::RRound)?;
+        Some(Export::Source(tok.range))
+      }
+      Token::Group => {
+        p.bump();
+        p.eat(Token::LRound)?;
+        // TODO also accept one or more filenames?
+        p.eat(Token::Minus)?;
+        p.eat(Token::RRound)?;
+        Some(Export::Group(tok.range))
+      }
       _ => break,
     };
     if let Some(export) = export {

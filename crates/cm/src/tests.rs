@@ -11,6 +11,8 @@ fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)])
     .map(|x| match x {
       Export::Regular(ns, n) => RawExport::Regular(ns.val, n.val),
       Export::Library(p) => RawExport::Library(p.val),
+      Export::Source(_) => RawExport::Source,
+      Export::Group(_) => RawExport::Group,
     })
     .collect();
   let got_paths: Vec<_> =
@@ -23,6 +25,8 @@ fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)])
 enum RawExport {
   Regular(Namespace, Name),
   Library(PathBuf),
+  Source,
+  Group,
 }
 
 fn mk_regular(ns: Namespace, name: &str) -> RawExport {
