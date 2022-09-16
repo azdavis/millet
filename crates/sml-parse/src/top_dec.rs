@@ -1,4 +1,4 @@
-use crate::dec::{dat_binds, datatype_copy, dec_one};
+use crate::dec::{datatype, dec_one, Datatype};
 use crate::parser::{Exited, Expected, Parser};
 use crate::ty::{of_ty, ty, ty_var_seq};
 use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, path};
@@ -191,14 +191,10 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
     ty_spec(p);
     p.exit(en, SK::EqTySpec);
   } else if p.at(SK::DatatypeKw) {
-    p.bump();
-    if p.at_n(2, SK::DatatypeKw) {
-      datatype_copy(p);
-      p.exit(en, SK::DatCopySpec);
-    } else {
-      dat_binds(p, false);
-      p.exit(en, SK::DatSpec);
-    }
+    match datatype(p, false) {
+      Datatype::Regular => p.exit(en, SK::DatSpec),
+      Datatype::Copy => p.exit(en, SK::DatCopySpec),
+    };
   } else if p.at(SK::ExceptionKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::ExDesc, |p| {

@@ -83,14 +83,10 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
     ty_binds(p);
     p.exit(en, SK::TyDec);
   } else if p.at(SK::DatatypeKw) {
-    p.bump();
-    if p.at_n(2, SK::DatatypeKw) {
-      datatype_copy(p);
-      p.exit(en, SK::DatCopyDec);
-    } else {
-      dat_binds(p, true);
-      p.exit(en, SK::DatDec);
-    }
+    match datatype(p, true) {
+      Datatype::Regular => p.exit(en, SK::DatDec),
+      Datatype::Copy => p.exit(en, SK::DatCopyDec),
+    };
   } else if p.at(SK::AbstypeKw) {
     p.bump();
     dat_binds(p, true);
@@ -186,6 +182,22 @@ where
   }
   if !got {
     p.error(ErrorKind::Expected(Expected::Kind(SK::Name)));
+  }
+}
+
+pub(crate) enum Datatype {
+  Regular,
+  Copy,
+}
+
+pub(crate) fn datatype(p: &mut Parser<'_>, allow_op: bool) -> Datatype {
+  p.bump();
+  if p.at_n(2, SK::DatatypeKw) {
+    datatype_copy(p);
+    Datatype::Copy
+  } else {
+    dat_binds(p, allow_op);
+    Datatype::Regular
   }
 }
 
