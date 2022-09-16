@@ -191,7 +191,9 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
     ty_spec(p);
     p.exit(en, SK::EqTySpec);
   } else if p.at(SK::DatatypeKw) {
-    if datatype_copy(p) {
+    p.bump();
+    if p.at_n(2, SK::DatatypeKw) {
+      datatype_copy(p);
       p.exit(en, SK::DatCopySpec);
     } else {
       dat_binds(p, false);

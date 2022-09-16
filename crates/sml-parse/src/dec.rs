@@ -83,7 +83,9 @@ pub(crate) fn dec_one(p: &mut Parser<'_>) -> bool {
     ty_binds(p);
     p.exit(en, SK::TyDec);
   } else if p.at(SK::DatatypeKw) {
-    if datatype_copy(p) {
+    p.bump();
+    if p.at_n(2, SK::DatatypeKw) {
+      datatype_copy(p);
       p.exit(en, SK::DatCopyDec);
     } else {
       dat_binds(p, true);
@@ -242,15 +244,10 @@ fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
   must(p, at_pat, Expected::Pat);
 }
 
-/// we just saw a `datatype` keyword starting a dec. this bumps that kw, then tries to parse a
-/// datatype copy dec. returns if it was a datatype copy. if false, the state of the parser is reset
-/// to right after the bump.
-pub(crate) fn datatype_copy(p: &mut Parser<'_>) -> bool {
-  p.bump();
-  let save = p.save();
+/// we just bumped a `datatype` keyword starting a dec.
+pub(crate) fn datatype_copy(p: &mut Parser<'_>) {
   p.eat(SK::Name);
   p.eat(SK::Eq);
   p.eat(SK::DatatypeKw);
   must(p, path, Expected::Path);
-  p.ok_since(save)
 }
