@@ -94,7 +94,7 @@ impl<'a> Parser<'a> {
     self.inner.save()
   }
 
-  pub fn ok_since(&mut self, save: Save) -> bool {
+  pub(crate) fn ok_since(&mut self, save: Save) -> bool {
     self.inner.ok_since(save)
   }
 
