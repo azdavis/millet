@@ -190,10 +190,14 @@ pub(crate) enum Datatype {
   Copy,
 }
 
+/// we just saw a `datatype` keyword.
 pub(crate) fn datatype(p: &mut Parser<'_>, allow_op: bool) -> Datatype {
   p.bump();
   if p.at_n(2, SK::DatatypeKw) {
-    datatype_copy(p);
+    p.eat(SK::Name);
+    p.eat(SK::Eq);
+    p.eat(SK::DatatypeKw);
+    must(p, path, Expected::Path);
     Datatype::Copy
   } else {
     dat_binds(p, allow_op);
@@ -201,7 +205,7 @@ pub(crate) fn datatype(p: &mut Parser<'_>, allow_op: bool) -> Datatype {
   }
 }
 
-pub(crate) fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
+fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
   many_sep(p, SK::AndKw, SK::DatBind, |p| {
     // use `&` not `&&` to prevent short circuit
     if !ty_var_seq(p) & p.eat(SK::Name).is_none() {
@@ -254,12 +258,4 @@ fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
     }
   }
   must(p, at_pat, Expected::Pat);
-}
-
-/// we just bumped a `datatype` keyword starting a dec.
-pub(crate) fn datatype_copy(p: &mut Parser<'_>) {
-  p.eat(SK::Name);
-  p.eat(SK::Eq);
-  p.eat(SK::DatatypeKw);
-  must(p, path, Expected::Path);
 }
