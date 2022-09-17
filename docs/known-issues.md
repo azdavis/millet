@@ -11,6 +11,7 @@ See also the [TODO][].
   - Files are analyzed in the order listed in the CM files.
   - The preprocessor is ignored.
   - String paths (wrapped in quotes) are not supported.
+  - Some export types like `source(...)` and `group(...)` are not supported.
 - ML Basis support is limited.
   - Annotations are ignored.
   - String paths (wrapped in quotes) are not supported.

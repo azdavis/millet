@@ -2,8 +2,6 @@
 
 A language server for [Standard ML][sml] (SML).
 
-See the [blog post][blog] introducing the project.
-
 Millet analyzes SML code without running it, and provides information like:
 
 - Inline errors
@@ -11,6 +9,9 @@ Millet analyzes SML code without running it, and provides information like:
 - Jump to definition
 
 Note that Millet does not actually run SML code. To do that, you'll need an installation of SML, like [SML/NJ][smlnj] or [MLton][mlton].
+
+- Check out the [blog post][blog] introducing the project.
+- Refer to the [manual][] for information about setup, usage, and features.
 
 ## Warning
 
@@ -68,6 +69,7 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [git]: https://git-scm.com
 [known-issues]: /docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
+[manual]: /docs/manual.md
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [mlton]: http://mlton.org
 [nodejs]: https://nodejs.org/en/
