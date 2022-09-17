@@ -291,7 +291,7 @@ impl State {
           self.publish_diagnostics(root, None);
           Ok(())
         }
-        None => bail!("no root"),
+        None => bail!("can't handle DidChangeWatchedFiles with no root"),
       }
     })?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
@@ -299,10 +299,10 @@ impl State {
       let mut changes = params.content_changes;
       let change = match changes.pop() {
         Some(x) => x,
-        None => bail!("no changes"),
+        None => bail!("no content changes"),
       };
       if !changes.is_empty() {
-        bail!("not exactly 1 change");
+        bail!("not exactly 1 content change");
       }
       if change.range.is_some() {
         bail!("not a full document change");
@@ -321,7 +321,7 @@ impl State {
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
       if self.root.is_some() {
-        bail!("has root");
+        bail!("can't handle DidOpenTextDocument with root");
       }
       let url = params.text_document.uri;
       let text = params.text_document.text;
@@ -330,7 +330,7 @@ impl State {
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
       if self.root.is_some() {
-        bail!("has root");
+        bail!("can't handle DidSaveTextDocument with root");
       }
       let url = params.text_document.uri;
       match params.text {
@@ -338,12 +338,12 @@ impl State {
           self.publish_diagnostics_one(url, &text);
           Ok(())
         }
-        None => bail!("no text in did save"),
+        None => bail!("no text for DidSaveTextDocument"),
       }
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
       if self.root.is_some() {
-        bail!("has root");
+        bail!("can't handle DidCloseTextDocument with root");
       }
       let url = params.text_document.uri;
       self.send_diagnostics(url, Vec::new());
@@ -411,7 +411,7 @@ impl State {
       let url = match file_url(path.as_path()) {
         Ok(x) => x,
         Err(e) => {
-          log::error!("{e:#}");
+          log::error!("couldn't get path as a file url: {e:#}");
           continue;
         }
       };
@@ -488,7 +488,7 @@ where
   }
   match url.to_file_path() {
     Ok(pb) => Ok(fs.canonicalize(pb.as_path())?),
-    Err(()) => bail!("invalid url"),
+    Err(()) => bail!("couldn't make a URL into a file path"),
   }
 }
 
@@ -533,7 +533,7 @@ fn lsp_location(
   let uri = match file_url(root.input.as_paths().get_path(range.path).as_path()) {
     Ok(x) => x,
     Err(e) => {
-      log::error!("{e:#}");
+      log::error!("couldn't get path as a file url: {e:#}");
       return None;
     }
   };

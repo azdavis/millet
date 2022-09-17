@@ -9,7 +9,7 @@ fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyho
     .and_then(|v| match serde_json::from_value(v) {
       Ok(x) => Some(x),
       Err(e) => {
-        log::error!("invalid initialization_options: {e}");
+        log::warn!("invalid initialization_options: {e}");
         None
       }
     })
