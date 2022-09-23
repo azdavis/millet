@@ -570,14 +570,11 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[sml_hir::Path], i
       Err(e) => st.err(idx, e),
     }
   }
-  match ty_scheme {
-    Some(ty_scheme) => {
-      let subst: TyRealization = syms.into_iter().map(|sym| (sym, ty_scheme.clone())).collect();
-      env_realize(&subst, inner_env);
-    }
-    // TODO this is reachable (because of the above), but bad.
-    None => {}
+  if let Some(ty_scheme) = ty_scheme {
+    let subst: TyRealization = syms.into_iter().map(|sym| (sym, ty_scheme.clone())).collect();
+    env_realize(&subst, inner_env);
   }
+  // TODO the None case is reachable (because of the above), but bad.
 }
 
 fn get_path_ty_cons<E: EnvLike>(
