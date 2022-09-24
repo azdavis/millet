@@ -67,7 +67,7 @@ impl State {
     if let Err(e) = root {
       ret.send_notification::<lsp_types::notification::ShowMessage>(lsp_types::ShowMessageParams {
         typ: lsp_types::MessageType::ERROR,
-        message: format!("{e:#}"),
+        message: format!("no workspace root: {e:#}"),
       });
     }
     let dynamic_registration = init
@@ -88,10 +88,9 @@ impl State {
             kind: None,
           }];
           ret.publish_diagnostics(root, None);
-          let did_change_watched = registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
+          vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
-          );
-          vec![did_change_watched]
+          )]
         }
         None => {
           let tdr = lsp_types::TextDocumentRegistrationOptions::default();
@@ -108,15 +107,14 @@ impl State {
         }
       };
       if ret.options.diagnostics_on_change {
-        let did_change = registration::<lsp_types::notification::DidChangeTextDocument, _>(
+        registrations.push(registration::<lsp_types::notification::DidChangeTextDocument, _>(
           lsp_types::TextDocumentChangeRegistrationOptions {
             document_selector: None,
             // TODO lsp_types::TextDocumentSyncKind::FULL.into() doesn't work, and this field is
             // i32 for some reason.
             sync_kind: 1,
           },
-        );
-        registrations.push(did_change);
+        ));
       }
       ret.send_request::<lsp_types::request::RegisterCapability>(
         lsp_types::RegistrationParams { registrations },
