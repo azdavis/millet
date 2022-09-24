@@ -4,10 +4,10 @@ use crate::util::{Cx, ErrorKind};
 use crate::{exp, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> sml_hir::StrDecIdx {
+pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
   let str_dec = str_dec?;
   let mut str_decs: Vec<_> =
-    str_dec.str_dec_in_seqs().map(|x| get_str_dec_one(cx, x.str_dec_one()?)).collect();
+    str_dec.dec_in_seqs().map(|x| get_str_dec_one(cx, x.dec_one()?)).collect();
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
   } else {
@@ -15,14 +15,14 @@ pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> sml_hir:
   }
 }
 
-fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
+fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
   let ptr = SyntaxNodePtr::new(str_dec.syntax());
   let res = match str_dec {
-    ast::StrDecOne::LocalStrDec(str_dec) => sml_hir::StrDec::Local(
+    ast::DecOne::LocalDec(str_dec) => sml_hir::StrDec::Local(
       get_str_dec(cx, str_dec.local_dec()),
       get_str_dec(cx, str_dec.in_dec()),
     ),
-    ast::StrDecOne::StructureStrDec(str_dec) => sml_hir::StrDec::Structure(
+    ast::DecOne::StructureDec(str_dec) => sml_hir::StrDec::Structure(
       str_dec
         .str_binds()
         .filter_map(|str_bind| {
@@ -33,7 +33,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
         })
         .collect(),
     ),
-    ast::StrDecOne::SigDec(str_dec) => sml_hir::StrDec::Signature(
+    ast::DecOne::SigDec(str_dec) => sml_hir::StrDec::Signature(
       str_dec
         .sig_binds()
         .filter_map(|sig_bind| {
@@ -44,7 +44,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
         })
         .collect(),
     ),
-    ast::StrDecOne::FunctorDec(str_dec) => sml_hir::StrDec::Functor(
+    ast::DecOne::FunctorDec(str_dec) => sml_hir::StrDec::Functor(
       str_dec
         .functor_binds()
         .filter_map(|fun_bind| {
@@ -69,7 +69,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
         })
         .collect(),
     ),
-    ast::StrDecOne::DecStrDec(str_dec) => sml_hir::StrDec::Dec(get_one(cx, str_dec.dec_one()?)),
+    _ => sml_hir::StrDec::Dec(get_one(cx, str_dec)),
   };
   cx.str_dec(res, ptr)
 }
@@ -78,9 +78,7 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> sml_hir::StrExpIdx 
   let str_exp = str_exp?;
   let ptr = SyntaxNodePtr::new(str_exp.syntax());
   let ret = match str_exp {
-    ast::StrExp::StructStrExp(str_exp) => {
-      sml_hir::StrExp::Struct(get_str_dec(cx, str_exp.str_dec()))
-    }
+    ast::StrExp::StructStrExp(str_exp) => sml_hir::StrExp::Struct(get_str_dec(cx, str_exp.dec())),
     ast::StrExp::PathStrExp(str_exp) => sml_hir::StrExp::Path(get_path(str_exp.path()?)?),
     ast::StrExp::AscriptionStrExp(str_exp) => {
       let (kind, sig_exp) = ascription_tail(cx, str_exp.ascription_tail());
@@ -90,14 +88,14 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> sml_hir::StrExpIdx 
       get_name(str_exp.name())?,
       match str_exp.app_str_exp_arg()? {
         ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(cx, arg.str_exp()),
-        ast::AppStrExpArg::StrDec(arg) => {
+        ast::AppStrExpArg::Dec(arg) => {
           let sd = get_str_dec(cx, Some(arg));
           cx.str_exp(sml_hir::StrExp::Struct(sd), ptr.clone())
         }
       },
     ),
     ast::StrExp::LetStrExp(str_exp) => {
-      sml_hir::StrExp::Let(get_str_dec(cx, str_exp.str_dec()), get_str_exp(cx, str_exp.str_exp()))
+      sml_hir::StrExp::Let(get_str_dec(cx, str_exp.dec()), get_str_exp(cx, str_exp.str_exp()))
     }
   };
   cx.str_exp(ret, ptr)
@@ -465,6 +463,10 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
           exp: exp::get(cx, inner.exp()),
         }],
       )
+    }
+    ast::DecOne::StructureDec(_) | ast::DecOne::SigDec(_) | ast::DecOne::FunctorDec(_) => {
+      cx.err(dec.syntax().text_range(), ErrorKind::DecNotAllowedHere);
+      return None;
     }
   };
   cx.dec(ret, ptr)

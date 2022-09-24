@@ -58,6 +58,7 @@ impl Error {
       ErrorKind::RestPatRowNotLast => 4007,
       ErrorKind::PrecedingBar => 4008,
       ErrorKind::RequiresOperand => 4009,
+      ErrorKind::DecNotAllowedHere => 4010,
       ErrorKind::Unsupported(_) => 4999,
     }
   }
@@ -76,6 +77,7 @@ pub(crate) enum ErrorKind {
   RestPatRowNotLast,
   PrecedingBar,
   RequiresOperand,
+  DecNotAllowedHere,
   /// must be last
   Unsupported(&'static str),
 }
@@ -98,6 +100,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
       ErrorKind::PrecedingBar => f.write_str("preceding `|`"),
       ErrorKind::RequiresOperand => f.write_str("requires at least 1 operand"),
+      ErrorKind::DecNotAllowedHere => f.write_str("declaration not allowed here"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

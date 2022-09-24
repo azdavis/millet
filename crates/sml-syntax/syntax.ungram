@@ -1,46 +1,68 @@
-Root = StrDec
+Root = Dec
 
-StrDec = StrDecInSeq*
-StrDecInSeq = StrDecOne ';'?
+Dec = DecInSeq*
+DecInSeq = DecOne ';'?
 
-StrDecOne =
-  LocalStrDec
-| StructureStrDec
-// these two are actually only allowed at the top level per the Definition, but we put them here so
-// we can parse and emit a better error.
+// we merge many kinds of decs that are separate when parsing (top-level, structure-level, and
+// regular) so that we may parse them and reject them later if necessary.
+DecOne =
+  HoleDec
+| ValDec
+| FunDec
+| TyDec
+| DatDec
+| DatCopyDec
+| AbstypeDec
+| ExDec
+| OpenDec
+| InfixDec
+| InfixrDec
+| NonfixDec
+| DoDec
+| LocalDec
+| StructureDec
 | SigDec
 | FunctorDec
-| DecStrDec
 
-LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
-StructureStrDec = 'structure' StrBind*
-StrBind = 'Name' AscriptionTail? '=' StrExp 'and'?
-// don't need Dec here, because it won't be a sequence. this is because StrDec already allows
-// sequences, and we prefer to make sequences of StrDecs over Decs.
-//
-// that is, if we have
-//
-// ```sml
-// val x = 123
-// val y = "hi"
-// ```
-//
-// we could parse that as either
-//
-// 1. one StrDec containing a Dec sequence; or
-// 2. one StrDec containing a StrDec sequence of 2 StrDecs, each of which contain 1 Dec.
-//
-// we prefer option 2.
-DecStrDec = DecOne
-
+HoleDec = '...'
+ValDec = 'val' TyVarSeq ValBind*
+FunDec = 'fun' TyVarSeq '|'? FunBind*
+TyDec = 'type' TyBind*
+DatDec = 'datatype' DatBind* WithType?
+DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
+AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
+ExDec = 'exception' ExBind*
+OpenDec = 'open' Path*
+InfixDec = 'infix' 'IntLit'? NameStarEq*
+InfixrDec = 'infixr' 'IntLit'? NameStarEq*
+NonfixDec = 'nonfix' NameStarEq*
+DoDec = 'do' Exp
+LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
+StructureDec = 'structure' StrBind*
 SigDec = 'signature' SigBind*
-SigBind = 'Name' '=' SigExp 'and'?
-
 FunctorDec = 'functor' FunctorBind*
+
+ValBind = 'rec'? Pat '=' Exp 'and'?
+FunBind = FunBindCase* 'and'?
+TyBind = TyVarSeq 'Name' '=' Ty 'and'?
+DatBind = TyVarSeq 'Name' '=' '|'? ConBind* 'and'?
+ConBind = 'op'? NameStarEq OfTy? '|'?
+ExBind = 'op'? NameStarEq ExBindInner? 'and'?
+StrBind = 'Name' AscriptionTail? '=' StrExp 'and'?
+SigBind = 'Name' '=' SigExp 'and'?
 FunctorBind =
   functor_name:'Name'
   '(' FunctorArg ')' AscriptionTail?
   '=' body:StrExp 'and'?
+
+FunBindCase = FunBindCaseHead Pat* TyAnnotation? '=' Exp '|'?
+FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
+PrefixFunBindCaseHead = 'op'? NameStarEq
+InfixFunBindCaseHead = '('? lhs:Pat NameStarEq rhs:Pat ')'?
+
+ExBindInner = OfTy | EqPath
+EqPath = '=' Path
+WithType = 'withtype' TyBind*
 
 FunctorArg = FunctorArgNameSigExp | Spec
 FunctorArgNameSigExp = 'Name' ':' SigExp
@@ -52,14 +74,14 @@ StrExp =
 | AppStrExp
 | LetStrExp
 
-StructStrExp = 'struct' StrDec 'end'
+StructStrExp = 'struct' Dec 'end'
 PathStrExp = Path
 AscriptionStrExp = StrExp AscriptionTail
 AppStrExp = 'Name' '(' AppStrExpArg ')'
-LetStrExp = 'let' StrDec 'in' StrExp 'end'
+LetStrExp = 'let' Dec 'in' StrExp 'end'
 
 // a bit annoying, but that's what my rudimentary syntax-gen requires.
-AppStrExpArg = AppStrExpArgStrExp | StrDec
+AppStrExpArg = AppStrExpArgStrExp | Dec
 AppStrExpArgStrExp = StrExp
 
 AscriptionTail = Ascription SigExp
@@ -170,55 +192,7 @@ ExpInSeq = Exp ';'?
 Matcher = '|'? MatchRule*
 MatchRule = Pat '=>' Exp '|'?
 
-Dec = DecInSeq*
-DecInSeq = DecOne ';'?
 
-DecOne =
-  HoleDec
-| ValDec
-| FunDec
-| TyDec
-| DatDec
-| DatCopyDec
-| AbstypeDec
-| ExDec
-| LocalDec
-| OpenDec
-| InfixDec
-| InfixrDec
-| NonfixDec
-| DoDec
-
-HoleDec = '...'
-ValDec = 'val' TyVarSeq ValBind*
-FunDec = 'fun' TyVarSeq '|'? FunBind*
-TyDec = 'type' TyBind*
-DatDec = 'datatype' DatBind* WithType?
-DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
-AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
-ExDec = 'exception' ExBind*
-LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
-OpenDec = 'open' Path*
-InfixDec = 'infix' 'IntLit'? NameStarEq*
-InfixrDec = 'infixr' 'IntLit'? NameStarEq*
-NonfixDec = 'nonfix' NameStarEq*
-DoDec = 'do' Exp
-
-ValBind = 'rec'? Pat '=' Exp 'and'?
-FunBind = FunBindCase* 'and'?
-TyBind = TyVarSeq 'Name' '=' Ty 'and'?
-DatBind = TyVarSeq 'Name' '=' '|'? ConBind* 'and'?
-ConBind = 'op'? NameStarEq OfTy? '|'?
-ExBind = 'op'? NameStarEq ExBindInner? 'and'?
-
-FunBindCase = FunBindCaseHead Pat* TyAnnotation? '=' Exp '|'?
-FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
-PrefixFunBindCaseHead = 'op'? NameStarEq
-InfixFunBindCaseHead = '('? lhs:Pat NameStarEq rhs:Pat ')'?
-
-ExBindInner = OfTy | EqPath
-EqPath = '=' Path
-WithType = 'withtype' TyBind*
 
 Pat =
   WildcardPat

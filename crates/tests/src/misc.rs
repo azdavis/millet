@@ -655,7 +655,7 @@ val _ = inc
 
 #[test]
 fn str_dec_in_regular_dec() {
-  fail(
+  check(
     r#"
 val () =
   let

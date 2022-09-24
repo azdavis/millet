@@ -588,6 +588,40 @@ end
 open S
 ```
 
+## 4010
+
+A structure-level declaration, i.e. one that starts with one of:
+
+- `structure`
+- `signature`
+- `functor`
+
+occurred in a disallowed position, like inside a regular declaration.
+
+```sml
+(* error *)
+val s =
+  let
+    structure Integer = Int
+    val x = 3
+  in
+    Integer.toString x
+  end
+```
+
+To fix, move the declaration to an allowed position.
+
+```sml
+(* ok *)
+structure Integer = Int
+val s =
+  let
+    val x = 3
+  in
+    Integer.toString x
+  end
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
