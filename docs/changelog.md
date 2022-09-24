@@ -4,6 +4,17 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.9
+
+- Emit better errors for unsupported CM exports like `source(-)` and `group(-)`.
+- Syntax highlight the `source` keyword in CM files.
+- Emit a better error for structure-level declarations in invalid positions.
+- Suggest possible keywords when encountering an undefined identifier whose name is similar to a keyword.
+- Improve token docs to add more "contrast with" (e.g. contrast `datatype` with `type`).
+- Only dynamically register capabilities if the client supports it.
+- Show token docs even when the token is part of a parse error.
+- Emit a better error for `op andalso` and `op orelse`.
+
 ## v0.3.8
 
 - Add a button to errors displayed as a notification, to view more information about the error.
