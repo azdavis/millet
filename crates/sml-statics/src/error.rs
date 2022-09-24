@@ -199,7 +199,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::OrPatNotSameBindings(name) => {
         write!(f, "{name} was bound in one or pattern alternative, but not in another")
       }
-      ErrorKind::DecNotAllowedHere => f.write_str("declaration not allowed here"),
+      ErrorKind::DecNotAllowedHere => {
+        f.write_str("`signature` or `functor` declaration not allowed here")
+      }
       ErrorKind::ExpHole(ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);

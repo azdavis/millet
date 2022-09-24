@@ -100,7 +100,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
       ErrorKind::PrecedingBar => f.write_str("preceding `|`"),
       ErrorKind::RequiresOperand => f.write_str("requires at least 1 operand"),
-      ErrorKind::DecNotAllowedHere => f.write_str("declaration not allowed here"),
+      ErrorKind::DecNotAllowedHere => f.write_str("structure-level declaration not allowed here"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

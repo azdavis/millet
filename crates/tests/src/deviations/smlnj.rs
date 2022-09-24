@@ -123,7 +123,7 @@ fn signature_in_struct_end() {
     r#"
 structure A = struct
     signature B = sig end
-(** ^^^^^^^^^^^^^^^^^^^^^ declaration not allowed here *)
+(** ^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` declaration not allowed here *)
 end
 "#,
   );
@@ -135,7 +135,7 @@ fn functor_in_struct_end() {
     r#"
 structure A = struct
     functor F() = struct end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^ declaration not allowed here *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` declaration not allowed here *)
 end
 "#,
   );

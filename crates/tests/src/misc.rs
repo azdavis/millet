@@ -660,7 +660,7 @@ fn str_dec_in_regular_dec() {
 val () =
   let
     structure S = struct end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^ declaration not allowed here *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^ structure-level declaration not allowed here *)
   in
     ()
   end
