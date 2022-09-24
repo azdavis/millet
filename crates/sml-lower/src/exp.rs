@@ -8,6 +8,10 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
   let ptr = SyntaxNodePtr::new(exp.syntax());
   let ret = match exp {
     ast::Exp::HoleExp(_) | ast::Exp::WildcardExp(_) => sml_hir::Exp::Hole,
+    ast::Exp::OpAndalsoExp(_) | ast::Exp::OpOrelseExp(_) => {
+      cx.err(exp.syntax().text_range(), ErrorKind::OpBoolBinOp);
+      return None;
+    }
     ast::Exp::SConExp(exp) => sml_hir::Exp::SCon(get_scon(cx, exp.s_con()?)?),
     ast::Exp::PathExp(exp) => sml_hir::Exp::Path(get_path(exp.path()?)?),
     ast::Exp::RecordExp(exp) => sml_hir::Exp::Record(

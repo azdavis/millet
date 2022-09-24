@@ -677,3 +677,13 @@ val lam = lambda x: x + 1
 "#,
   );
 }
+
+#[test]
+fn op_bool_op() {
+  check(
+    r#"
+val _ = op andalso
+(**     ^^^^^^^^^^ `andalso` and `orelse` not allowed with `op` *)
+"#,
+  );
+}

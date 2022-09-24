@@ -59,6 +59,7 @@ impl Error {
       ErrorKind::PrecedingBar => 4008,
       ErrorKind::RequiresOperand => 4009,
       ErrorKind::DecNotAllowedHere => 4010,
+      ErrorKind::OpBoolBinOp => 4011,
       ErrorKind::Unsupported(_) => 4999,
     }
   }
@@ -78,6 +79,7 @@ pub(crate) enum ErrorKind {
   PrecedingBar,
   RequiresOperand,
   DecNotAllowedHere,
+  OpBoolBinOp,
   /// must be last
   Unsupported(&'static str),
 }
@@ -101,6 +103,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::PrecedingBar => f.write_str("preceding `|`"),
       ErrorKind::RequiresOperand => f.write_str("requires at least 1 operand"),
       ErrorKind::DecNotAllowedHere => f.write_str("structure-level declaration not allowed here"),
+      ErrorKind::OpBoolBinOp => f.write_str("`andalso` and `orelse` not allowed with `op`"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

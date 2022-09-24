@@ -622,6 +622,29 @@ val s =
   end
 ```
 
+## 4011
+
+`op` does not work with `andalso` or `orelse`.
+
+```sml
+(* error *)
+fun bigAnd bs = List.foldl (op andalso) true bs
+fun bigOr bs = List.foldl (op orelse) false bs
+```
+
+`andalso` and `orelse` are SML keywords, and short-circuit. They are not infix identifiers. Because of this, they do not work with `op`.
+
+To fix, use a lambda or helper function.
+
+```sml
+(* ok *)
+infix && ||
+fun (a && b) = a andalso b
+fun (a || b) = a orelse b
+fun bigAnd bs = List.foldl (op &&) true bs
+fun bigOr bs = List.foldl (op ||) false bs
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

@@ -137,6 +137,8 @@ PathEq = Path '='?
 Exp =
   HoleExp
 | WildcardExp
+| OpAndalsoExp
+| OpOrelseExp
 | SConExp
 | PathExp
 | RecordExp
@@ -161,6 +163,8 @@ Exp =
 
 HoleExp = '...'
 WildcardExp = '_'
+OpAndalsoExp = 'op' 'andalso'
+OpOrelseExp = 'op' 'orelse'
 SConExp = SCon
 PathExp = 'op'? Path
 RecordExp = '{' ExpRow* '}'

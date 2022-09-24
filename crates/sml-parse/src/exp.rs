@@ -122,8 +122,16 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, SK::SConExp)
   } else if p.at(SK::OpKw) {
     p.bump();
-    must(p, path, Expected::Path);
-    p.exit(en, SK::PathExp)
+    if p.at(SK::AndalsoKw) {
+      p.bump();
+      p.exit(en, SK::OpAndalsoExp)
+    } else if p.at(SK::OrelseKw) {
+      p.bump();
+      p.exit(en, SK::OpOrelseExp)
+    } else {
+      must(p, path, Expected::Path);
+      p.exit(en, SK::PathExp)
+    }
   } else if name_star_eq(p) {
     path_no_infix(p);
     p.exit(en, SK::PathExp)
