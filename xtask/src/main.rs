@@ -96,7 +96,7 @@ fn finish_args(args: Arguments) -> Result<()> {
 }
 
 fn ck_sml_def(sh: &Shell) -> Result<()> {
-  println!("checking sml definition");
+  println!("checking sml definition comments");
   let dirs: [PathBuf; 3] =
     ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
   let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output()?;
