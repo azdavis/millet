@@ -33,6 +33,8 @@ signature SIG = sig
 end
 ```
 
+Contrast with `sig`, which starts a signature expression.
+
 ## `structure`
 
 Define a structure.
@@ -45,6 +47,8 @@ structure Str = struct
   val y = "hi"
 end
 ```
+
+Contrast with `struct`, which starts a structure expression.
 
 ## `datatype`
 
@@ -60,6 +64,8 @@ In this example:
 
 - `On` and `Off` have type `debug`.
 - `Level` has type `int -> debug`.
+
+Contrast with `type`, which defines a type alias.
 
 ## `withtype`
 
@@ -112,6 +118,8 @@ end
 - Regular functions (with `fun` or `fn`) take in values and return values.
 - Functors take in structures and return structures.
 
+Contrast with `fun`, which is for value-level functions.
+
 ## `include`
 
 Include a signature in another signature, to merge the two signatures together.
@@ -131,6 +139,8 @@ structure S : B = struct
   val y = "hi"
 end
 ```
+
+Contrast with `open`, which is like `include` but for structures.
 
 ## `sharing`
 
@@ -223,6 +233,8 @@ structure S = struct
 end
 ```
 
+Contrast with `structure`, which begins a structure declaration.
+
 ## `infix`
 
 Cause the given names to be infix operators with the given precedence (or 0 if none is provided), and left associativity. Similar to `infixr`.
@@ -249,6 +261,8 @@ val _ = outerA + outerB
 
 - Declarations in the `local ... in` may be used by declarations in the `in ... end`.
 - However, only the declarations in the `in ... end` are in scope outside of the local.
+
+Contrast with `let`, which is an expression.
 
 ## `raise`
 
@@ -345,6 +359,8 @@ open S
 val b = x
 ```
 
+Contrast with `include`, which is kind of like `open` but for signatures.
+
 ## `then`
 
 Used in conjunction with `if` and `else` to mark the expression that the `if` expression evaluates to if the condition was `true`. Comes between `if` and `else`.
@@ -363,6 +379,8 @@ type point = int * int
 ```
 
 Types defined with `type` are aliases, meaning no "new" types are defined. Rather, the new name is just an alternative name for the right-hand-side type, and aside from name, they are equivalent.
+
+Contrast with `datatype`, which defines a new type and its constructors.
 
 ## `with`
 
@@ -427,6 +445,8 @@ val _ =
 - The expressions may use bindings from the declarations.
 - The value of the whole `let` is the value of the last expression in the `in ... end`.
 
+Contrast with `local`, which is a declaration.
+
 ## `rec`
 
 Allow a `fn` to be recursive.
@@ -459,6 +479,8 @@ signature SIG = sig
   val x : t
 end
 ```
+
+Contrast with `signature`, which starts a signature declaration.
 
 ## `val`
 
@@ -503,6 +525,8 @@ val _ = List.map (fn x => x + 1) [1, 3, 8]
 ```
 
 Often used to define arguments to higher-order functions, to avoid having to declare and name small helper functions.
+
+Contrast with `fun`, which is used in function declarations.
 
 ## `if`
 
@@ -605,6 +629,8 @@ This matches up with the fact that function application is left associative. Thi
 2. `(f x) y`
 3. `f (x y)`
 
+Contrast with `=>`, which separates a pattern from an expression in a matcher.
+
 ## `:>`
 
 Opaquely ascribe a structure to a signature.
@@ -626,6 +652,8 @@ end = struct
 end
 ```
 
+Contrast with `:`, which performs transparent ascription in the context of signatures.
+
 ## `=>`
 
 Separate a pattern from its expression in a matcher arm.
@@ -637,6 +665,8 @@ val describe = fn
 | 2 => "dual"
 | _ => "other"
 ```
+
+Contrast with `->`, which denotes a function type.
 
 ## `#`
 
@@ -684,6 +714,8 @@ val _ = [1, 4, 3]
 type ('a, 'b) parser = 'a -> ('a * 'b) option
 ```
 
+Contrast with `;`, which can also separate expressions, but ignores all but the last one.
+
 ## `.`
 
 Separate components in a path.
@@ -715,6 +747,8 @@ val _ = Int.max (1, 5)
    val n : int = S.x + 3
    ```
 
+   Contrast with `:>`, which opaquely ascribes.
+
 ## `;`
 
 Separate elements in a sequence, like expressions.
@@ -726,6 +760,8 @@ val n : int = (print "hi"; 5)
 Can also be used to separate declarations, but this is unnecessary.
 
 Also indicates the end of input when in a REPL.
+
+Contrast with `,`, which can also separate expression, but constructs tuples or lists (when used with `()` and `[]` respectively).
 
 ## `=`
 
