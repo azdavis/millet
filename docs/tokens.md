@@ -518,7 +518,7 @@ val _ = while true do print "y\n"
 
 ## `fn`
 
-Define a function ("lambda") expression.
+Define a function (aka "lambda") expression.
 
 ```sml
 val _ = List.map (fn x => x + 1) [1, 3, 8]
