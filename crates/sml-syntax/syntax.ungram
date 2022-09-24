@@ -1,29 +1,20 @@
 Root = StrDec
 
-SigDec = 'signature' SigBind*
-SigBind = 'Name' '=' SigExp 'and'?
-
-FunctorDec = 'functor' FunctorBind*
-FunctorBind =
-  functor_name:'Name'
-  '(' FunctorArg ')' AscriptionTail?
-  '=' body:StrExp 'and'?
-
-FunctorArg = FunctorArgNameSigExp | Spec
-FunctorArgNameSigExp = 'Name' ':' SigExp
-
 StrDec = StrDecInSeq*
 StrDecInSeq = StrDecOne ';'?
 
 StrDecOne =
-  DecStrDec
+  LocalStrDec
 | StructureStrDec
-| LocalStrDec
 // these two are actually only allowed at the top level per the Definition, but we put them here so
 // we can parse and emit a better error.
 | SigDec
 | FunctorDec
+| DecStrDec
 
+LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
+StructureStrDec = 'structure' StrBind*
+StrBind = 'Name' AscriptionTail? '=' StrExp 'and'?
 // don't need Dec here, because it won't be a sequence. this is because StrDec already allows
 // sequences, and we prefer to make sequences of StrDecs over Decs.
 //
@@ -41,9 +32,18 @@ StrDecOne =
 //
 // we prefer option 2.
 DecStrDec = DecOne
-StructureStrDec = 'structure' StrBind*
-LocalStrDec = 'local' local_dec:StrDec 'in' in_dec:StrDec 'end'
-StrBind = 'Name' AscriptionTail? '=' StrExp 'and'?
+
+SigDec = 'signature' SigBind*
+SigBind = 'Name' '=' SigExp 'and'?
+
+FunctorDec = 'functor' FunctorBind*
+FunctorBind =
+  functor_name:'Name'
+  '(' FunctorArg ')' AscriptionTail?
+  '=' body:StrExp 'and'?
+
+FunctorArg = FunctorArgNameSigExp | Spec
+FunctorArgNameSigExp = 'Name' ':' SigExp
 
 StrExp =
   StructStrExp

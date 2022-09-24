@@ -17,9 +17,10 @@ pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::StrDec>) -> sml_hir:
 fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
   let ptr = SyntaxNodePtr::new(str_dec.syntax());
   let res = match str_dec {
-    ast::StrDecOne::DecStrDec(str_dec) => {
-      sml_hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?))
-    }
+    ast::StrDecOne::LocalStrDec(str_dec) => sml_hir::StrDec::Local(
+      get_str_dec(cx, str_dec.local_dec()),
+      get_str_dec(cx, str_dec.in_dec()),
+    ),
     ast::StrDecOne::StructureStrDec(str_dec) => sml_hir::StrDec::Structure(
       str_dec
         .str_binds()
@@ -30,10 +31,6 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
           })
         })
         .collect(),
-    ),
-    ast::StrDecOne::LocalStrDec(str_dec) => sml_hir::StrDec::Local(
-      get_str_dec(cx, str_dec.local_dec()),
-      get_str_dec(cx, str_dec.in_dec()),
     ),
     ast::StrDecOne::SigDec(str_dec) => sml_hir::StrDec::Signature(
       str_dec
@@ -71,6 +68,9 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::StrDecOne) -> sml_hir::StrDecIdx {
         })
         .collect(),
     ),
+    ast::StrDecOne::DecStrDec(str_dec) => {
+      sml_hir::StrDec::Dec(dec::get_one(cx, str_dec.dec_one()?))
+    }
   };
   cx.str_dec(res, ptr)
 }

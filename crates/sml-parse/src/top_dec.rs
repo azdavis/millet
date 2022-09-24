@@ -13,7 +13,40 @@ pub(crate) fn str_dec(p: &mut Parser<'_>) -> bool {
 
 fn str_dec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
-  if p.at(SK::FunctorKw) {
+  if p.at(SK::LocalKw) {
+    // LocalStrDec is a 'superset' of LocalDec, so always use the former
+    p.bump();
+    str_dec(p);
+    p.eat(SK::InKw);
+    str_dec(p);
+    p.eat(SK::EndKw);
+    p.exit(en, SK::LocalStrDec);
+  } else if p.at(SK::StructureKw) {
+    p.bump();
+    many_sep(p, SK::AndKw, SK::StrBind, |p| {
+      if p.eat(SK::Name).is_none() {
+        return false;
+      }
+      if ascription(p) {
+        ascription_tail(p);
+      }
+      p.eat(SK::Eq);
+      must(p, str_exp, Expected::StrExp);
+      true
+    });
+    p.exit(en, SK::StructureStrDec);
+  } else if p.at(SK::SignatureKw) {
+    p.bump();
+    many_sep(p, SK::AndKw, SK::SigBind, |p| {
+      if p.eat(SK::Name).is_none() {
+        return false;
+      }
+      p.eat(SK::Eq);
+      must(p, sig_exp, Expected::SigExp);
+      true
+    });
+    p.exit(en, SK::SigDec);
+  } else if p.at(SK::FunctorKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::FunctorBind, |p| {
       if p.eat(SK::Name).is_none() {
@@ -38,39 +71,6 @@ fn str_dec_one(p: &mut Parser<'_>) -> bool {
       true
     });
     p.exit(en, SK::FunctorDec);
-  } else if p.at(SK::SignatureKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::SigBind, |p| {
-      if p.eat(SK::Name).is_none() {
-        return false;
-      }
-      p.eat(SK::Eq);
-      must(p, sig_exp, Expected::SigExp);
-      true
-    });
-    p.exit(en, SK::SigDec);
-  } else if p.at(SK::StructureKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::StrBind, |p| {
-      if p.eat(SK::Name).is_none() {
-        return false;
-      }
-      if ascription(p) {
-        ascription_tail(p);
-      }
-      p.eat(SK::Eq);
-      must(p, str_exp, Expected::StrExp);
-      true
-    });
-    p.exit(en, SK::StructureStrDec);
-  } else if p.at(SK::LocalKw) {
-    // LocalStrDec is a 'superset' of LocalDec, so always use the former
-    p.bump();
-    str_dec(p);
-    p.eat(SK::InKw);
-    str_dec(p);
-    p.eat(SK::EndKw);
-    p.exit(en, SK::LocalStrDec);
   } else if dec_one(p) {
     p.exit(en, SK::DecStrDec);
   } else {
