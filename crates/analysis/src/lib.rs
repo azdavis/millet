@@ -93,34 +93,37 @@ impl Analysis {
 
   /// Returns a Markdown string with information about this position.
   pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
-    let (file, tok, ptr, idx) = self.get_file_with_idx(pos)?;
-    let ty_md = file.info.get_ty_md(&self.syms, idx);
-    let def_doc = file.info.get_def(idx).and_then(|def| {
+    let ft = self.get_file_and_token(pos)?;
+    let (ptr, idx) = ft.get_ptr_and_idx()?;
+    let ty_md = ft.file.info.get_ty_md(&self.syms, idx);
+    let def_doc = ft.file.info.get_def(idx).and_then(|def| {
       let info = match def.path {
         sml_statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
         sml_statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
       };
       info.get_doc(def.idx)
     });
-    let token_doc = if token { tok.kind().token_doc() } else { None };
+    let token_doc = if token { ft.token.kind().token_doc() } else { None };
     let parts: Vec<_> = [ty_md.as_deref(), def_doc, token_doc].into_iter().flatten().collect();
-    let range = ptr.to_node(file.parsed.root.syntax()).text_range();
-    let range = file.pos_db.range(range)?;
+    let range = ptr.to_node(ft.file.parsed.root.syntax()).text_range();
+    let range = ft.file.pos_db.range(range)?;
     Some((parts.join("\n\n---\n\n"), range))
   }
 
   /// Returns the range of the definition of the item at this position.
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
-    let (file, _, _, idx) = self.get_file_with_idx(pos)?;
-    self.def_to_path_and_range(file.info.get_def(idx)?)
+    let ft = self.get_file_and_token(pos)?;
+    let (_, idx) = ft.get_ptr_and_idx()?;
+    self.def_to_path_and_range(ft.file.info.get_def(idx)?)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
   pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
-    let (file, _, _, idx) = self.get_file_with_idx(pos)?;
+    let ft = self.get_file_and_token(pos)?;
+    let (_, idx) = ft.get_ptr_and_idx()?;
     Some(
-      file
+      ft.file
         .info
         .get_ty_defs(&self.syms, idx)?
         .into_iter()
@@ -132,15 +135,16 @@ impl Analysis {
   /// Given a position on a `case` expression, return the code and its range to fill the case with
   /// all of the variants of the head's type.
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
-    let (file, _, ptr, _) = self.get_file_with_idx(pos)?;
+    let ft = self.get_file_and_token(pos)?;
+    let (ptr, _) = ft.get_ptr_and_idx()?;
     let ptr = ptr.cast::<sml_syntax::ast::CaseExp>()?;
-    let case = ptr.to_node(file.parsed.root.syntax());
+    let case = ptr.to_node(ft.file.parsed.root.syntax());
     let range = text_size_util::TextRange::empty(case.syntax().text_range().end());
-    let range = file.pos_db.range(range)?;
+    let range = ft.file.pos_db.range(range)?;
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
-    let head = file.lowered.ptrs.ast_to_hir(head_ptr)?;
-    let variants = file.info.get_variants(&self.syms, head)?;
+    let head = ft.file.lowered.ptrs.ast_to_hir(head_ptr)?;
+    let variants = ft.file.info.get_variants(&self.syms, head)?;
     let case = CaseDisplay {
       needs_starting_bar: case.matcher().map_or(false, |x| x.match_rules().count() > 0),
       variants: &variants,
@@ -148,20 +152,24 @@ impl Analysis {
     Some((range, case.to_string()))
   }
 
-  fn get_file_with_idx(
-    &self,
-    pos: WithPath<Position>,
-  ) -> Option<(&mlb_statics::SourceFile, SyntaxToken, SyntaxNodePtr, sml_hir::Idx)> {
+  fn get_file_and_token(&self, pos: WithPath<Position>) -> Option<FileAndToken<'_>> {
     let file = self.source_files.get(&pos.path)?;
-    let tok = get_token(file, pos.val)?;
-    let mut node = tok.parent()?;
-    loop {
-      let ptr = SyntaxNodePtr::new(&node);
-      match file.lowered.ptrs.ast_to_hir(ptr.clone()) {
-        Some(idx) => return Some((file, tok, ptr, idx)),
-        None => node = node.parent()?,
-      }
+    let idx = file.pos_db.text_size(pos.val)?;
+    if !file.parsed.root.syntax().text_range().contains(idx) {
+      return None;
     }
+    let token = match file.parsed.root.syntax().token_at_offset(idx) {
+      TokenAtOffset::None => return None,
+      TokenAtOffset::Single(t) => t,
+      TokenAtOffset::Between(t1, t2) => {
+        if priority(t1.kind()) >= priority(t2.kind()) {
+          t1
+        } else {
+          t2
+        }
+      }
+    };
+    Some(FileAndToken { file, token })
   }
 
   fn def_to_path_and_range(&self, def: sml_statics::Def) -> Option<WithPath<Range>> {
@@ -178,25 +186,6 @@ impl Analysis {
       .text_range();
     Some(path.wrap(def_file.pos_db.range(def_range)?))
   }
-}
-
-fn get_token(file: &mlb_statics::SourceFile, pos: Position) -> Option<SyntaxToken> {
-  let idx = file.pos_db.text_size(pos)?;
-  if !file.parsed.root.syntax().text_range().contains(idx) {
-    return None;
-  }
-  let tok = match file.parsed.root.syntax().token_at_offset(idx) {
-    TokenAtOffset::None => return None,
-    TokenAtOffset::Single(t) => t,
-    TokenAtOffset::Between(t1, t2) => {
-      if priority(t1.kind()) >= priority(t2.kind()) {
-        t1
-      } else {
-        t2
-      }
-    }
-  };
-  Some(tok)
 }
 
 fn priority(kind: SyntaxKind) -> u8 {
@@ -287,5 +276,23 @@ impl fmt::Display for ArmDisplay<'_> {
       write!(f, " _")?;
     }
     write!(f, " => _")
+  }
+}
+
+struct FileAndToken<'a> {
+  file: &'a mlb_statics::SourceFile,
+  token: SyntaxToken,
+}
+
+impl FileAndToken<'_> {
+  fn get_ptr_and_idx(&self) -> Option<(SyntaxNodePtr, sml_hir::Idx)> {
+    let mut node = self.token.parent()?;
+    loop {
+      let ptr = SyntaxNodePtr::new(&node);
+      match self.file.lowered.ptrs.ast_to_hir(ptr.clone()) {
+        Some(idx) => return Some((ptr, idx)),
+        None => node = node.parent()?,
+      }
+    }
   }
 }
