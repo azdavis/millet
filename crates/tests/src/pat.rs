@@ -149,7 +149,7 @@ fun f x =
 fn weird_pat_fn_1() {
   check(
     r#"
-val () = fn (f : unit -> unit) =>
+val _ = fn (f : unit -> unit) =>
   case () of f () => ()
 (**          ^^^^ value binding used as a pattern *)
 "#,
@@ -161,7 +161,7 @@ fn weird_pat_fn_2() {
   check(
     r#"
 val f = fn () => ()
-val () =
+val _ =
   case () of f () => ()
 (**          ^^^^ value binding used as a pattern *)
 "#,
