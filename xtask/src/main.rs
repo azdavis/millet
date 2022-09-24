@@ -120,6 +120,30 @@ fn ck_sml_def(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
+fn ck_test_refs(sh: &Shell) -> Result<()> {
+  println!("checking test reference comments");
+  let dir: PathBuf = ["crates", "sml-statics", "src"].into_iter().collect();
+  let out = cmd!(sh, "git grep -hoE 'test\\(([a-z0-9_:]+)\\)' {dir}").output()?;
+  let out = String::from_utf8(out.stdout)?;
+  let referenced: BTreeSet<_> = out
+    .lines()
+    .filter_map(|line| {
+      let (_, inner) = line.split_once("test(")?;
+      let (name, _) = inner.split_once(')')?;
+      Some(name)
+    })
+    .collect();
+  let out = cmd!(sh, "cargo test -p tests -- --list").output()?;
+  let out = String::from_utf8(out.stdout)?;
+  let defined: BTreeSet<_> = out.lines().filter_map(|line| line.strip_suffix(": test")).collect();
+  let ref_not_defined: BTreeSet<_> = referenced.difference(&defined).copied().collect();
+  if ref_not_defined.is_empty() {
+    Ok(())
+  } else {
+    bail!("tests referenced but not defined: {ref_not_defined:?}")
+  }
+}
+
 fn ck_no_ignore(sh: &Shell) -> Result<()> {
   // avoid matching this file with the git grep
   let word = "ignore";
@@ -278,6 +302,7 @@ fn run_ci(sh: &Shell) -> Result<()> {
   cmd!(sh, "cargo clippy").run()?;
   cmd!(sh, "cargo test --locked").run()?;
   ck_sml_def(sh)?;
+  ck_test_refs(sh)?;
   ck_no_ignore(sh)?;
   ck_sml_libs(sh)?;
   ck_crate_architecture_doc(sh)?;

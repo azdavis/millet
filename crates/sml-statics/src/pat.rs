@@ -107,14 +107,14 @@ fn get_(
             bound_vars: val_info.ty_scheme.bound_vars.clone(),
             ty: match &val_info.ty_scheme.ty {
               Ty::Fn(_, res_ty) => res_ty.as_ref().clone(),
-              // see `pat::weird_pat_fn_1`
+              // test(pat::weird_pat_fn_1)
               _ => return (any(st, pat, g), ty_scheme, def),
             },
           });
           def = val_info.def;
           let sym = match res_ty.as_ref() {
             Ty::Con(_, x) => *x,
-            // see `pat::weird_pat_fn_2`
+            // test(pat::weird_pat_fn_2)
             _ => return (any(st, pat, g), ty_scheme, def),
           };
           let arg_pat = match arg {
