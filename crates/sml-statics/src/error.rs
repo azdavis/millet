@@ -134,7 +134,13 @@ struct ErrorKindDisplay<'a> {
 impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
-      ErrorKind::Undefined(item, name) => write!(f, "undefined {item}: {name}"),
+      ErrorKind::Undefined(item, name) => {
+        write!(f, "undefined {item}: {name}")?;
+        if let Some(kw) = kw_suggestion(name.as_str()) {
+          write!(f, " (did you mean `{kw}`?)")?;
+        }
+        Ok(())
+      }
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
@@ -209,6 +215,20 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
+}
+
+fn kw_suggestion(s: &str) -> Option<&'static str> {
+  let ret = match s {
+    "func" | "function" | "def" => "fun",
+    "lambda" => "fn",
+    "const" => "val",
+    "enum" => "datatype",
+    "begin" => "local",
+    "var" => "val",
+    "module" => "structure",
+    _ => return None,
+  };
+  Some(ret)
 }
 
 fn non_exhaustive(
