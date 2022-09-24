@@ -4,6 +4,11 @@ The changelog is not an exhaustive list of changes between versions. For that, c
 
 See also the [versioning scheme][versioning].
 
+## v0.3.10
+
+- Add more suggestions, not just restricted to keywords, e.g. suggest `Int` for `Integer`.
+- Fix panics when checking invalid patterns that appear to be constructors but are not.
+
 ## v0.3.9
 
 - Emit better errors for unsupported CM exports like `source(-)` and `group(-)`.

@@ -2,7 +2,7 @@
   "private": true,
   "name": "millet",
   "displayName": "Millet",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "preview": true,
   "description": "Standard ML support for VS Code",
   "publisher": "azdavis",
