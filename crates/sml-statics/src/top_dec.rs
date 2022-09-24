@@ -197,7 +197,7 @@ fn get_str_exp(
             assert!(args.is_empty());
             st.syms.overloads()[ov].push(*sym);
           }
-          _ => unreachable!(),
+          t => unreachable!("overload not a Con: {t:?}"),
         }
       }
       ac.append(&mut to_add);

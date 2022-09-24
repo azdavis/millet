@@ -210,13 +210,13 @@ fn get_dec(
           for val_bind in val_binds {
             match &mut mode {
               Mode::Get(ac) => get_pat(cx, ars, ac, val_bind.pat),
-              Mode::Set => unreachable!(),
+              Mode::Set => unreachable!("mode changed to Set"),
             }
             get_exp(cx, ars, &scope, &mut mode, val_bind.exp);
           }
           let mut ac = match mode {
             Mode::Get(ac) => ac,
-            Mode::Set => unreachable!(),
+            Mode::Set => unreachable!("mode changed to Set"),
           };
           for x in scope.iter() {
             ac.remove(x);
