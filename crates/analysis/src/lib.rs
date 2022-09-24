@@ -94,18 +94,29 @@ impl Analysis {
   /// Returns a Markdown string with information about this position.
   pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
     let ft = self.get_file_and_token(pos)?;
-    let (ptr, idx) = ft.get_ptr_and_idx()?;
-    let ty_md = ft.file.info.get_ty_md(&self.syms, idx);
-    let def_doc = ft.file.info.get_def(idx).and_then(|def| {
-      let info = match def.path {
-        sml_statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
-        sml_statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
-      };
-      info.get_doc(def.idx)
-    });
-    let token_doc = if token { ft.token.kind().token_doc() } else { None };
-    let parts: Vec<_> = [ty_md.as_deref(), def_doc, token_doc].into_iter().flatten().collect();
-    let range = ptr.to_node(ft.file.parsed.root.syntax()).text_range();
+    let mut parts = Vec::<&str>::new();
+    let ty_md: Option<String>;
+    let range = match ft.get_ptr_and_idx() {
+      Some((ptr, idx)) => {
+        ty_md = ft.file.info.get_ty_md(&self.syms, idx);
+        parts.extend(ty_md.as_deref());
+        parts.extend(ft.file.info.get_def(idx).and_then(|def| {
+          let info = match def.path {
+            sml_statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
+            sml_statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
+          };
+          info.get_doc(def.idx)
+        }));
+        ptr.to_node(ft.file.parsed.root.syntax()).text_range()
+      }
+      None => ft.token.text_range(),
+    };
+    if token {
+      parts.extend(ft.token.kind().token_doc());
+    }
+    if parts.is_empty() {
+      return None;
+    }
     let range = ft.file.pos_db.range(range)?;
     Some((parts.join("\n\n---\n\n"), range))
   }
