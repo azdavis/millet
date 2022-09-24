@@ -39,9 +39,19 @@ pub(crate) struct State {
 }
 
 impl State {
-  pub(crate) fn new(root: Option<Url>, options: config::Options, sender: Sender<Message>) -> Self {
+  pub(crate) fn new(init: lsp_types::InitializeParams, sender: Sender<Message>) -> Self {
     let file_system = paths::RealFileSystem::default();
-    let mut root = root.map(|url| canonical_path_buf(&file_system, &url)).transpose();
+    let options: config::Options = init
+      .initialization_options
+      .and_then(|v| match serde_json::from_value(v) {
+        Ok(x) => Some(x),
+        Err(e) => {
+          log::warn!("invalid initialization_options: {e}");
+          None
+        }
+      })
+      .unwrap_or_default();
+    let mut root = init.root_uri.map(|url| canonical_path_buf(&file_system, &url)).transpose();
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
       root: root.as_mut().ok().and_then(Option::take).map(|root_path| Root {
