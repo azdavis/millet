@@ -136,8 +136,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
     match self.kind {
       ErrorKind::Undefined(item, name) => {
         write!(f, "undefined {item}: {name}")?;
-        if let Some(kw) = kw_suggestion(name.as_str()) {
-          write!(f, " (did you mean `{kw}`?)")?;
+        if let Some(sug) = suggestion(name.as_str()) {
+          write!(f, " (did you mean `{sug}`?)")?;
         }
         Ok(())
       }
@@ -219,7 +219,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
   }
 }
 
-fn kw_suggestion(s: &str) -> Option<&'static str> {
+fn suggestion(s: &str) -> Option<&'static str> {
   let ret = match s {
     "func" | "function" | "def" => "fun",
     "lambda" => "fn",
@@ -228,6 +228,24 @@ fn kw_suggestion(s: &str) -> Option<&'static str> {
     "begin" => "local",
     "var" => "val",
     "module" => "structure",
+    "match" | "switch" => "case",
+    "elsif" | "elif" => "else if",
+    "namespace" => "structure",
+    "integer" => "int",
+    "Integer" => "Int",
+    "boolean" => "bool",
+    "Boolean" => "Bool",
+    "character" | "rune" => "char",
+    "Character" | "Rune" => "Char",
+    "uint" | "unsigned" => "word",
+    "Uint" | "UInt" | "Unsigned" => "Word",
+    "void" => "unit",
+    "float" | "double" => "real",
+    "Float" | "Double" => "Real",
+    "str" => "string",
+    "Str" => "String",
+    "vec" => "vector",
+    "Vec" => "Vector",
     _ => return None,
   };
   Some(ret)
