@@ -107,13 +107,15 @@ fn get_(
             bound_vars: val_info.ty_scheme.bound_vars.clone(),
             ty: match &val_info.ty_scheme.ty {
               Ty::Fn(_, res_ty) => res_ty.as_ref().clone(),
-              _ => unreachable!("we are in the Fn case for the ty scheme's ty"),
+              // see `pat::weird_pat_fn_1`
+              _ => return (any(st, pat, g), ty_scheme, def),
             },
           });
           def = val_info.def;
           let sym = match res_ty.as_ref() {
             Ty::Con(_, x) => *x,
-            _ => unreachable!("a fn ctor returns the type it constructs, which will be a Con"),
+            // see `pat::weird_pat_fn_2`
+            _ => return (any(st, pat, g), ty_scheme, def),
           };
           let arg_pat = match arg {
             None => {
