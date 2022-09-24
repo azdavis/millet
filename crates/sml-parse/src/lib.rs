@@ -6,7 +6,6 @@ mod dec;
 mod exp;
 mod pat;
 mod root;
-mod top_dec;
 mod ty;
 mod util;
 
