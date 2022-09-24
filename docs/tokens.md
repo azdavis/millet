@@ -93,7 +93,7 @@ It short-circuits, so if the first expression evaluates to `false`, the second i
 
 Because of this special short-circuiting behavior, it is not a regular infix operator, and thus does not work with `op`.
 
-Not to be confused with `and`, which permits declaring multiple things at once.
+Contrast with `and`, which permits declaring multiple things at once.
 
 ## `functor`
 
@@ -381,7 +381,7 @@ and odd 0 = false
   | odd n = even (n - 1)
 ```
 
-Not to be confused with `andalso`, which is for logical "and" of `bool` expressions.
+Contrast with `andalso`, which is for logical "and" of `bool` expressions.
 
 ## `end`
 
@@ -402,7 +402,10 @@ fun inc x = x + 1
 
 Functions are the unit of abstraction.
 
-Not to be confused with `fn`, which begins a function (aka lambda) expression.
+Contrast with:
+
+- `fn`, which begins a function (aka lambda) expression.
+- `functor`, which defines a functor (structure-level function).
 
 ## `let`
 
