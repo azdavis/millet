@@ -70,52 +70,59 @@ impl State {
         message: format!("{e:#}"),
       });
     }
-    let mut registrations = match ret.root.take() {
-      Some(root) => {
-        let watchers = vec![lsp_types::FileSystemWatcher {
-          // not sure if possible to only listen to millet.toml. "nested alternate groups are not
-          // allowed" at time of writing
-          glob_pattern: format!(
-            "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
-            root.input.as_paths().as_path().display()
-          ),
-          kind: None,
-        }];
-        ret.publish_diagnostics(root, None);
-        let did_change_watched = registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
-          lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
+    let dynamic_registration = init
+      .capabilities
+      .workspace
+      .and_then(|x| x.file_operations?.dynamic_registration)
+      .unwrap_or_default();
+    if dynamic_registration {
+      let mut registrations = match ret.root.take() {
+        Some(root) => {
+          let watchers = vec![lsp_types::FileSystemWatcher {
+            // not sure if possible to only listen to millet.toml. "nested alternate groups are not
+            // allowed" at time of writing
+            glob_pattern: format!(
+              "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
+              root.input.as_paths().as_path().display()
+            ),
+            kind: None,
+          }];
+          ret.publish_diagnostics(root, None);
+          let did_change_watched = registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
+            lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
+          );
+          vec![did_change_watched]
+        }
+        None => {
+          let tdr = lsp_types::TextDocumentRegistrationOptions::default();
+          vec![
+            registration::<lsp_types::notification::DidOpenTextDocument, _>(tdr.clone()),
+            registration::<lsp_types::notification::DidCloseTextDocument, _>(tdr.clone()),
+            registration::<lsp_types::notification::DidSaveTextDocument, _>(
+              lsp_types::TextDocumentSaveRegistrationOptions {
+                include_text: Some(true),
+                text_document_registration_options: tdr,
+              },
+            ),
+          ]
+        }
+      };
+      if ret.options.diagnostics_on_change {
+        let did_change = registration::<lsp_types::notification::DidChangeTextDocument, _>(
+          lsp_types::TextDocumentChangeRegistrationOptions {
+            document_selector: None,
+            // TODO lsp_types::TextDocumentSyncKind::FULL.into() doesn't work, and this field is
+            // i32 for some reason.
+            sync_kind: 1,
+          },
         );
-        vec![did_change_watched]
+        registrations.push(did_change);
       }
-      None => {
-        let tdr = lsp_types::TextDocumentRegistrationOptions::default();
-        vec![
-          registration::<lsp_types::notification::DidOpenTextDocument, _>(tdr.clone()),
-          registration::<lsp_types::notification::DidCloseTextDocument, _>(tdr.clone()),
-          registration::<lsp_types::notification::DidSaveTextDocument, _>(
-            lsp_types::TextDocumentSaveRegistrationOptions {
-              include_text: Some(true),
-              text_document_registration_options: tdr,
-            },
-          ),
-        ]
-      }
-    };
-    if ret.options.diagnostics_on_change {
-      let did_change = registration::<lsp_types::notification::DidChangeTextDocument, _>(
-        lsp_types::TextDocumentChangeRegistrationOptions {
-          document_selector: None,
-          // TODO lsp_types::TextDocumentSyncKind::FULL.into() doesn't work, and this field is
-          // i32 for some reason.
-          sync_kind: 1,
-        },
+      ret.send_request::<lsp_types::request::RegisterCapability>(
+        lsp_types::RegistrationParams { registrations },
+        None,
       );
-      registrations.push(did_change);
     }
-    ret.send_request::<lsp_types::request::RegisterCapability>(
-      lsp_types::RegistrationParams { registrations },
-      None,
-    );
     ret
   }
 
