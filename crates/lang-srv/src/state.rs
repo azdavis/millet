@@ -401,17 +401,7 @@ impl State {
           false
         };
         if !did_send_as_diagnostic {
-          self.send_request::<lsp_types::request::ShowMessageRequest>(
-            lsp_types::ShowMessageRequestParams {
-              typ: lsp_types::MessageType::ERROR,
-              message: format!("{}: {}", e.path().display(), e),
-              actions: Some(vec![lsp_types::MessageActionItem {
-                title: LEARN_MORE.to_owned(),
-                properties: Default::default(),
-              }]),
-            },
-            Some(e.to_code()),
-          );
+          self.show_error(format!("{}: {}", e.path().display(), e), e.to_code());
         }
         self.root = Some(root);
         return false;
@@ -459,6 +449,20 @@ impl State {
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
     self.send_notification::<lsp_types::notification::PublishDiagnostics>(
       lsp_types::PublishDiagnosticsParams { uri: url, diagnostics, version: None },
+    );
+  }
+
+  fn show_error(&mut self, message: String, code: u16) {
+    self.send_request::<lsp_types::request::ShowMessageRequest>(
+      lsp_types::ShowMessageRequestParams {
+        typ: lsp_types::MessageType::ERROR,
+        message,
+        actions: Some(vec![lsp_types::MessageActionItem {
+          title: LEARN_MORE.to_owned(),
+          properties: Default::default(),
+        }]),
+      },
+      Some(code),
     );
   }
 }
