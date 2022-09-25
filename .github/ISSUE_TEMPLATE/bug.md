@@ -1,19 +1,20 @@
 ---
 name: Bug
-about: Minimal, reproducible bugs
-title: ''
-labels: ''
-assignees: ''
-
+about: Report a bug
+title: ""
+labels: ""
+assignees: ""
 ---
 
 ## Environment
 
-- VS Code version: TODO
 - Millet version: TODO
+- VS Code version: TODO
 - OS version: TODO
 
 ## Steps to reproduce
+
+<!-- Please minimize the bug as much as possible. -->
 
 1. TODO
 2. TODO
