@@ -63,7 +63,7 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<sml_hir::SCon> {
       } else {
         10
       };
-      let n = match u32::from_str_radix(chars.as_str(), radix) {
+      let n = match u64::from_str_radix(chars.as_str(), radix) {
         Ok(x) => x,
         Err(e) => {
           cx.err(tok.text_range(), ErrorKind::InvalidIntLit(e));

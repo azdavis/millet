@@ -110,7 +110,7 @@ impl pattern_match::Lang for Lang {
 pub(crate) enum Con {
   Any,
   Int(sml_hir::Int),
-  Word(u32),
+  Word(u64),
   Char(char),
   String(sml_hir::SmolStr),
   Record { labels: BTreeSet<sml_hir::Lab>, allows_other: bool },
