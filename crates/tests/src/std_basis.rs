@@ -1,4 +1,4 @@
-use crate::check::check_with_std_basis;
+use crate::check::{check_with_std_basis, fail_with_std_basis};
 
 #[test]
 fn smoke() {
@@ -155,6 +155,18 @@ fn alias() {
     r#"
 val _ = not
 (**     ^^^ hover: Alias for `Bool.not`. *)
+"#,
+  );
+}
+
+#[test]
+fn real() {
+  fail_with_std_basis(
+    r#"
+val start = Time.toReal (Time.now ())
+val _ = List.tabulate (1000, Int.toString)
+val finish = Time.toReal (Time.now ())
+val _ = 100.0 * start / finish
 "#,
   );
 }
