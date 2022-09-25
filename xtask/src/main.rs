@@ -206,8 +206,7 @@ fn ck_crate_architecture_doc(sh: &Shell) -> Result<()> {
   let contents = sh.read_file(path)?;
   let in_doc: BTreeSet<_> = contents
     .lines()
-    .filter_map(|line| line.strip_prefix("### `crates/")?.strip_suffix('`'))
-    .map(ToOwned::to_owned)
+    .filter_map(|line| Some(line.strip_prefix("### `crates/")?.strip_suffix('`')?.to_owned()))
     .collect();
   let in_crates: BTreeSet<_> = sh
     .read_dir("crates")?
@@ -233,9 +232,8 @@ fn ck_docs_readme(sh: &Shell) -> Result<()> {
       let x = x.strip_prefix("- [")?;
       let (_, x) = x.split_once("](./")?;
       let (x, _) = x.split_once("):")?;
-      Some(x)
+      Some(x.to_owned())
     })
-    .map(ToOwned::to_owned)
     .collect();
   let in_dir: BTreeSet<_> = sh
     .read_dir("docs")?
