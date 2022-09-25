@@ -23,6 +23,8 @@
     "eqtype",
     "esbuild",
     "exns",
+    "foldl",
+    "foldr",
     "forall",
     "functors",
     "funsig",
