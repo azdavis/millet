@@ -352,6 +352,7 @@ structure Real :> REAL
   where type real = real = Real
 structure LargeReal :> REAL
   where type real = LargeReal.real = LargeReal
+structure Real64 (* OPTIONAL *) = LargeReal
 
 (*
  * Alias for `Real.ceil`.
