@@ -1,6 +1,10 @@
-//! These are [libraries from SML/NJ][1].
+//! These are libraries from SML/NJ.
+//!
+//! Most are from [here][1], but some are from [here][2]. The first one seems more modern, but the
+//! second one seems more comprehensive. Not sure whether we should just use the second one entirely.
 //!
 //! [1]: https://www.smlnj.org/doc/smlnj-lib/index.html
+//! [2]: https://www.smlnj.org/doc/SMLofNJ/pages/index-all.html
 
 use crate::files;
 
@@ -97,4 +101,6 @@ pub const FILES: &[(&str, &str)] = files![
   "SplaySetFn.sml",
   "XMLParserFn.sml",
   "XMLTreeFn.sml",
+  // from the second one
+  "Unsafe.sml",
 ];
