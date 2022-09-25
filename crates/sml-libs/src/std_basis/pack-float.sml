@@ -51,3 +51,7 @@ structure PackRealBig :> PACK_REAL (* OPTIONAL *)
   where type real = Real.real = struct end
 structure PackRealLittle :> PACK_REAL (* OPTIONAL *)
   where type real = Real.real = struct end
+structure PackReal64Big :> PACK_REAL (* OPTIONAL *)
+  where type real = Real64.real = struct end
+structure PackReal64Little :> PACK_REAL (* OPTIONAL *)
+  where type real = Real64.real = struct end
