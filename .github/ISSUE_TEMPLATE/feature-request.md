@@ -1,9 +1,7 @@
 ---
 name: Feature request
 about: Propose a new feature
-title: ""
-labels: ""
-assignees: ""
+labels: enhancement
 ---
 
 ## Problem
