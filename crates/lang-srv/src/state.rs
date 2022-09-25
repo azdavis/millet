@@ -51,7 +51,10 @@ impl State {
         }
       })
       .unwrap_or_default();
-    let mut root = init.root_uri.map(|url| canonical_path_buf(&file_system, &url)).transpose();
+    let mut root = init
+      .root_uri
+      .map(|url| canonical_path_buf(&file_system, &url).map_err(|e| (e, url)))
+      .transpose();
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
       root: root.as_mut().ok().and_then(Option::take).map(|root_path| Root {
@@ -64,11 +67,8 @@ impl State {
       file_system,
       options,
     };
-    if let Err(e) = root {
-      ret.send_notification::<lsp_types::notification::ShowMessage>(lsp_types::ShowMessageParams {
-        typ: lsp_types::MessageType::ERROR,
-        message: format!("no workspace root: {e:#}"),
-      });
+    if let Err((e, url)) = root {
+      ret.show_error(format!("cannot initialize workspace root {url}: {e:#}"), 1996);
     }
     let dynamic_registration = init
       .capabilities
