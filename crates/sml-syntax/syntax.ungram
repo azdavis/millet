@@ -3,7 +3,7 @@ Root = Dec
 Dec = DecInSeq*
 DecInSeq = DecOne ';'?
 
-// we merge many kinds of decs that are separate when parsing (top-level, structure-level, and
+// we merge many kinds of decs that are separate in the grammar (top-level, structure-level, and
 // regular) so that we may parse them and reject them later if necessary.
 DecOne =
   HoleDec
@@ -195,8 +195,6 @@ ExpInSeq = Exp ';'?
 // call it this instead of Match to avoid clash with rust kw
 Matcher = '|'? MatchRule*
 MatchRule = Pat '=>' Exp '|'?
-
-
 
 Pat =
   WildcardPat
