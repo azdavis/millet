@@ -2,7 +2,16 @@
 
 The changelog is not an exhaustive list of changes between versions. For that, check the git log.
 
-See also the [versioning scheme][versioning].
+Millet technically follows [SemVer][sem-ver], but the major version is zero, and it probably will be [for a while][zero-ver]. This means Millet makes **absolutely no** stability guarantees between versions.
+
+The versioning system is basically the following:
+
+- The version is split into three numbers, `major.minor.patch`.
+- Usually, we increment the "patch" version.
+- We increment the "minor" version either:
+  - After many "patch" versions.
+  - If there's a really "big" change.
+- As mentioned, the "major" version is 0.
 
 ## v0.3.10
 
@@ -262,6 +271,7 @@ Although this is the first release with working CI to build and release the exte
 [blog]: https://azdavis.net/posts/millet/
 [cmlib]: https://github.com/standardml/cmlib
 [discord]: https://discord.gg/hgPSUby2Ny
+[sem-ver]: https://semver.org
 [sml-nj-doc]: https://www.smlnj.org/doc/smlnj-lib/index.html
-[versioning]: /docs/versioning.md
 [yixin]: https://yixinhe.me
+[zero-ver]: https://0ver.org
