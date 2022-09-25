@@ -346,8 +346,7 @@ where
   Ok(Root { paths: paths::Root::new(root_path), group_path })
 }
 
-/// Get some input from the filesystem. If `root_group_path` is provided, it should be in the
-/// `root`.
+/// Get some input from the filesystem.
 pub fn get<F>(fs: &F, root: &mut Root) -> Result<Input>
 where
   F: paths::FileSystem,
