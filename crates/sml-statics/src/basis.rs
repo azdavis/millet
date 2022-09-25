@@ -99,12 +99,15 @@ pub fn minimal() -> (Syms, Basis) {
     }))
     .collect();
   let fns = {
-    let num_pair_to_num = overloaded(CompositeOverload::Num, |a| Ty::fun(dup(a.clone()), a));
+    let num_pair_to_num =
+      overloaded(Overload::Composite(CompositeOverload::Num), |a| Ty::fun(dup(a.clone()), a));
     let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::REAL), Ty::REAL));
-    let numtxt_pair_to_bool = overloaded(CompositeOverload::NumTxt, |a| Ty::fun(dup(a), Ty::BOOL));
-    let realint_to_realint = overloaded(CompositeOverload::RealInt, |a| Ty::fun(a.clone(), a));
+    let numtxt_pair_to_bool =
+      overloaded(Overload::Composite(CompositeOverload::NumTxt), |a| Ty::fun(dup(a), Ty::BOOL));
+    let realint_to_realint =
+      overloaded(Overload::Composite(CompositeOverload::RealInt), |a| Ty::fun(a.clone(), a));
     let wordint_pair_to_wordint =
-      overloaded(CompositeOverload::WordInt, |a| Ty::fun(dup(a.clone()), a));
+      overloaded(Overload::Composite(CompositeOverload::WordInt), |a| Ty::fun(dup(a.clone()), a));
     let equality_pair_to_bool = TyScheme::one(|a| {
       let t = Ty::fun(dup(a), Ty::BOOL);
       (t, Some(TyVarKind::Equality))
@@ -167,11 +170,11 @@ where
     .collect()
 }
 
-fn overloaded<F>(x: CompositeOverload, f: F) -> TyScheme
+fn overloaded<F>(ov: Overload, f: F) -> TyScheme
 where
   F: FnOnce(Ty) -> Ty,
 {
-  TyScheme::one(|a| (f(a), Some(TyVarKind::Overloaded(Overload::Composite(x)))))
+  TyScheme::one(|a| (f(a), Some(TyVarKind::Overloaded(ov))))
 }
 
 fn dup(ty: Ty) -> Ty {
