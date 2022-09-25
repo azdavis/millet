@@ -247,6 +247,25 @@ A [task runner/"build system"][xtask] written in Rust.
 
 Allows you to invoke `cargo xtask <task>` to run the `<task>`.
 
+### `.cargo`
+
+Configuration for Cargo, Rust's package manager and build tool. Allows `cargo xtask` to work.
+
+### `.github`
+
+Configuration for GitHub, like:
+
+- PR templates
+- Issue templates
+- The CI job run, run o GitHub Actions.
+
+### `.vscode`
+
+Configuration for VS Code, like:
+
+- How to launch an instance of VS Code with a local version of the extension for testing
+- What files to ignore in the sidebar (e.g. `/target`)
+
 [xtask]: https://github.com/matklad/cargo-xtask
 [rowan]: https://github.com/rust-analyzer/rowan
 [ungrammar]: https://github.com/rust-analyzer/ungrammar
