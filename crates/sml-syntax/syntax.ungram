@@ -21,7 +21,7 @@ DecOne =
 | DoDec
 | LocalDec
 | StructureDec
-| SigDec
+| SignatureDec
 | FunctorDec
 
 HoleDec = '...'
@@ -39,7 +39,7 @@ NonfixDec = 'nonfix' NameStarEq*
 DoDec = 'do' Exp
 LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
 StructureDec = 'structure' StrBind*
-SigDec = 'signature' SigBind*
+SignatureDec = 'signature' SigBind*
 FunctorDec = 'functor' FunctorBind*
 
 ValBind = 'rec'? Pat '=' Exp 'and'?

@@ -171,7 +171,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
       must(p, sig_exp, Expected::SigExp);
       true
     });
-    p.exit(en, SK::SigDec);
+    p.exit(en, SK::SignatureDec);
   } else if p.at(SK::FunctorKw) {
     p.bump();
     many_sep(p, SK::AndKw, SK::FunctorBind, |p| {

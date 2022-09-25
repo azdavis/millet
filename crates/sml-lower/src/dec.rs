@@ -33,7 +33,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
         })
         .collect(),
     ),
-    ast::DecOne::SigDec(str_dec) => sml_hir::StrDec::Signature(
+    ast::DecOne::SignatureDec(str_dec) => sml_hir::StrDec::Signature(
       str_dec
         .sig_binds()
         .filter_map(|sig_bind| {
@@ -464,7 +464,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
         }],
       )
     }
-    ast::DecOne::StructureDec(_) | ast::DecOne::SigDec(_) | ast::DecOne::FunctorDec(_) => {
+    ast::DecOne::StructureDec(_) | ast::DecOne::SignatureDec(_) | ast::DecOne::FunctorDec(_) => {
       cx.err(dec.syntax().text_range(), ErrorKind::DecNotAllowedHere);
       return None;
     }
