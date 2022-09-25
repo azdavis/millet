@@ -439,7 +439,7 @@ struct CmFile {
   exports: Vec<Export>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Export {
   namespace: mlb_hir::Namespace,
   name: text_size_util::WithRange<sml_hir::Name>,
@@ -496,7 +496,7 @@ where
           mlb_hir::PathKind::Mlb
         }
       };
-      Ok(mlb_hir::BasDec::Path(path_id, kind))
+      Ok((path_id, kind))
     })
     .collect::<Result<Vec<_>>>()?;
   let mut exports = Vec::<Export>::new();
@@ -536,16 +536,28 @@ where
             .map(|ex| Export { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
         );
       }
-      cm::Export::Source(range) | cm::Export::Group(range) => {
+      cm::Export::Source(range) => {
         return Err(GetInputError {
           source: Source { path: None, range: pos_db.range(range) },
           path: group_path.to_owned(),
           kind: GetInputErrorKind::UnsupportedExport,
         })
       }
+      cm::Export::Group(_) => {
+        for (path, kind) in paths.iter() {
+          if matches!(kind, mlb_hir::PathKind::Mlb) {
+            let cm_file = cm_files.get(path).expect("child cm file should be set");
+            exports.extend(cm_file.exports.iter().cloned());
+          }
+        }
+      }
     }
   }
-  let cm_file = CmFile { pos_db: Some(pos_db), paths, exports };
+  let cm_file = CmFile {
+    pos_db: Some(pos_db),
+    paths: paths.into_iter().map(|(p, k)| mlb_hir::BasDec::Path(p, k)).collect(),
+    exports,
+  };
   cm_files.insert(cur.group_path, cm_file);
   Ok(())
 }
