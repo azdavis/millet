@@ -1,4 +1,4 @@
-use crate::check::{check_with_std_basis, fail_with_std_basis};
+use crate::check::check_with_std_basis;
 
 #[test]
 fn smoke() {
@@ -161,7 +161,7 @@ val _ = not
 
 #[test]
 fn real() {
-  fail_with_std_basis(
+  check_with_std_basis(
     r#"
 val start = Time.toReal (Time.now ())
 val _ = List.tabulate (1000, Int.toString)

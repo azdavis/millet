@@ -1,8 +1,8 @@
 //! Bases.
 
 use crate::types::{
-  Bs, CompositeOverload, Env, EnvLike as _, EnvStack, FunEnv, IdStatus, Overload, RecordTy, SigEnv,
-  StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
+  BasicOverload, Bs, CompositeOverload, Env, EnvLike as _, EnvStack, FunEnv, IdStatus, Overload,
+  RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use fast_hash::map;
 
@@ -101,7 +101,8 @@ pub fn minimal() -> (Syms, Basis) {
   let fns = {
     let num_pair_to_num =
       overloaded(Overload::Composite(CompositeOverload::Num), |a| Ty::fun(dup(a.clone()), a));
-    let real_pair_to_real = TyScheme::zero(Ty::fun(dup(Ty::REAL), Ty::REAL));
+    let real_pair_to_real =
+      overloaded(Overload::Basic(BasicOverload::Real), |a| Ty::fun(dup(a.clone()), a));
     let numtxt_pair_to_bool =
       overloaded(Overload::Composite(CompositeOverload::NumTxt), |a| Ty::fun(dup(a), Ty::BOOL));
     let realint_to_realint =

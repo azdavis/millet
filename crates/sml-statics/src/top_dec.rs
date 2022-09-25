@@ -272,6 +272,7 @@ fn get_sig_exp(
           match name.as_str() {
             "WORD" => Some(BasicOverload::Word),
             "INTEGER" | "INT_INF" => Some(BasicOverload::Int),
+            "REAL" => Some(BasicOverload::Real),
             _ => None,
           }
         } else {

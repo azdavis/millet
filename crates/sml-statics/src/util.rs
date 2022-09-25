@@ -10,7 +10,7 @@ pub(crate) fn get_scon(st: &mut St, scon: &sml_hir::SCon, g: Generalizable) -> T
   // default types anyway.
   match scon {
     sml_hir::SCon::Int(_) => basic_overload(st, BasicOverload::Int, g),
-    sml_hir::SCon::Real(_) => Ty::REAL,
+    sml_hir::SCon::Real(_) => basic_overload(st, BasicOverload::Real, g),
     sml_hir::SCon::Word(_) => basic_overload(st, BasicOverload::Word, g),
     sml_hir::SCon::Char(_) => Ty::CHAR,
     sml_hir::SCon::String(_) => Ty::STRING,
