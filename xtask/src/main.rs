@@ -223,6 +223,32 @@ fn ck_crate_architecture_doc(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
+fn ck_docs_readme(sh: &Shell) -> Result<()> {
+  println!("checking docs readme");
+  let path = sh.current_dir().join("docs").join("readme.md");
+  let contents = sh.read_file(path)?;
+  let in_readme: BTreeSet<_> = contents
+    .lines()
+    .filter_map(|x| {
+      let x = x.strip_prefix("- [")?;
+      let (_, x) = x.split_once("](./")?;
+      let (x, _) = x.split_once("):")?;
+      Some(x)
+    })
+    .map(ToOwned::to_owned)
+    .collect();
+  let in_dir: BTreeSet<_> = sh
+    .read_dir("docs")?
+    .into_iter()
+    .filter_map(|x| {
+      let x = x.file_name()?.to_str()?;
+      (x != "readme.md").then(|| x.to_owned())
+    })
+    .collect();
+  eq_sets(&in_readme, &in_dir, "in readme, but doesn't exist", "not in readme, but exists")?;
+  Ok(())
+}
+
 fn ck_no_debugging(sh: &Shell) -> Result<()> {
   // the uppercase + to_ascii_lowercase is to prevent git grep from triggering on this file.
   let fst = "DBG".to_ascii_lowercase();
@@ -306,6 +332,7 @@ fn run_ci(sh: &Shell) -> Result<()> {
   ck_no_ignore(sh)?;
   ck_sml_libs(sh)?;
   ck_crate_architecture_doc(sh)?;
+  ck_docs_readme(sh)?;
   ck_no_debugging(sh)?;
   // skip on CI because CI may not have tags.
   if option_env!("CI") != Some("1") {
