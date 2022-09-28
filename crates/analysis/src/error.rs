@@ -1,3 +1,5 @@
+//! The common error type.
+
 use text_pos::Range;
 
 /// An error.
