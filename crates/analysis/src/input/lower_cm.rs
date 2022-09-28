@@ -1,8 +1,8 @@
 //! Lower a CM file into paths and exports.
 
 use crate::input::util::{
-  get_path_id, read_file, start_group_file, ErrorSource, GetInputError, GetInputErrorKind,
-  GroupPathToProcess, Result,
+  get_path_id, read_file, start_group_file, ErrorSource, GetInputErrorKind, GroupPathToProcess,
+  InputError, Result,
 };
 
 /// only derives default because we need to mark in-progress files as visited to prevent infinite
@@ -42,7 +42,7 @@ where
   let (group_path, contents, pos_db) = start_group_file(root, cur, fs)?;
   let group_path = group_path.as_path();
   let group_parent = group_path.parent().expect("path from get_path has no parent");
-  let cm = cm::get(&contents, path_vars).map_err(|e| GetInputError {
+  let cm = cm::get(&contents, path_vars).map_err(|e| InputError {
     source: ErrorSource { path: None, range: pos_db.range(e.text_range()) },
     path: group_path.to_owned(),
     kind: GetInputErrorKind::Cm(e),
@@ -80,7 +80,7 @@ where
           cm::Namespace::Signature => mlb_hir::Namespace::Signature,
           cm::Namespace::Functor => mlb_hir::Namespace::Functor,
           cm::Namespace::FunSig => {
-            return Err(GetInputError {
+            return Err(InputError {
               source: ErrorSource { path: None, range: pos_db.range(ns.range) },
               path: group_path.to_owned(),
               kind: GetInputErrorKind::UnsupportedExport,
@@ -105,7 +105,7 @@ where
         );
       }
       cm::Export::Source(range) => {
-        return Err(GetInputError {
+        return Err(InputError {
           source: ErrorSource { path: None, range: pos_db.range(range) },
           path: group_path.to_owned(),
           kind: GetInputErrorKind::UnsupportedExport,

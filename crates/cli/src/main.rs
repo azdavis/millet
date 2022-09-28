@@ -38,14 +38,14 @@ fn run() -> usize {
   let mut root = match analysis::input::Root::from_path(&fs, std::path::Path::new(path.as_str())) {
     Ok(x) => x,
     Err(e) => {
-      handle_get_input_error(e);
+      handle_input_error(e);
       return 1;
     }
   };
-  let inp = match analysis::input::get(&fs, &mut root) {
+  let inp = match analysis::input::Input::new(&fs, &mut root) {
     Ok(x) => x,
     Err(e) => {
-      handle_get_input_error(e);
+      handle_input_error(e);
       return 1;
     }
   };
@@ -61,7 +61,7 @@ fn run() -> usize {
   num_errors
 }
 
-fn handle_get_input_error(e: analysis::input::GetInputError) {
+fn handle_input_error(e: analysis::input::InputError) {
   print!("{}", e.path().display());
   if let Some(r) = e.range() {
     print!(":{}", r.start);

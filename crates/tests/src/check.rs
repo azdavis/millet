@@ -140,8 +140,7 @@ impl Check {
     m.insert(ROOT.as_path().join("sources.mlb"), mlb_file);
     let fs = paths::MemoryFileSystem::new(m);
     let mut root = analysis::input::Root::from_canonical_dir(ROOT.to_owned());
-    let input =
-      analysis::input::get(&fs, &mut root).expect("in memory fs was not set up correctly");
+    let input = analysis::input::Input::new(&fs, &mut root).expect("invalid MemoryFileSystem");
     let mut ret = Self {
       root,
       files: input

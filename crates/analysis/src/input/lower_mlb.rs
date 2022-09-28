@@ -1,7 +1,7 @@
 //! Lower a MLB syntax BasDec into the HIR equivalent.
 
 use crate::input::util::{
-  get_path_id, read_file, ErrorSource, GetInputError, GetInputErrorKind, GroupPathToProcess, Result,
+  get_path_id, read_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, InputError, Result,
 };
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
@@ -32,7 +32,7 @@ where
         .into_iter()
         .map(|(name, exp)| {
           if !names.insert(name.val.clone()) {
-            return Err(GetInputError {
+            return Err(InputError {
               source: ErrorSource { path: None, range: cx.pos_db.range(name.range) },
               path: cx.path.to_owned(),
               kind: GetInputErrorKind::Duplicate(name.val),
@@ -56,7 +56,7 @@ where
         .into_iter()
         .map(|(lhs, rhs)| {
           if !names.insert(lhs.val.clone()) {
-            return Err(GetInputError {
+            return Err(InputError {
               source: ErrorSource { path: None, range: cx.pos_db.range(lhs.range) },
               path: cx.path.to_owned(),
               kind: GetInputErrorKind::Duplicate(lhs.val),

@@ -163,14 +163,14 @@ workspace.root = "foo.mlb"
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,
-) -> Result<analysis::input::Input, analysis::input::GetInputError> {
+) -> Result<analysis::input::Input, analysis::input::InputError> {
   check_input(names.iter().map(|&x| (x, "Group is")), config)
 }
 
 fn check_input<'a, I>(
   groups: I,
   config: Option<&str>,
-) -> Result<analysis::input::Input, analysis::input::GetInputError>
+) -> Result<analysis::input::Input, analysis::input::InputError>
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
@@ -182,5 +182,5 @@ where
       .collect(),
   );
   let mut root = analysis::input::Root::from_canonical_dir(ROOT.to_owned());
-  analysis::input::get(&fs, &mut root)
+  analysis::input::Input::new(&fs, &mut root)
 }

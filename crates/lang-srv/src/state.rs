@@ -380,8 +380,9 @@ impl State {
     extra: Option<(paths::PathId, String)>,
   ) -> bool {
     let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input =
-      elapsed::log("input::get", || analysis::input::get(&self.file_system, &mut root.input));
+    let input = elapsed::log("Input::new", || {
+      analysis::input::Input::new(&self.file_system, &mut root.input)
+    });
     let mut input = match input {
       Ok(x) => x,
       Err(e) => {

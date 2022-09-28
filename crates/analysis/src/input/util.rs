@@ -11,13 +11,13 @@ use text_pos::Range;
 /// that _sometimes_, a `GetInputError` is for a file which doesn't exist (or a non-file), so we
 /// can't always show these in the editor inline.
 #[derive(Debug)]
-pub struct GetInputError {
+pub struct InputError {
   pub(crate) source: ErrorSource,
   pub(crate) path: PathBuf,
   pub(crate) kind: GetInputErrorKind,
 }
 
-impl GetInputError {
+impl InputError {
   /// Returns a path associated with this error, which may or may not exist.
   pub fn path(&self) -> &Path {
     self.source.path.as_ref().unwrap_or(&self.path).as_path()
@@ -48,7 +48,7 @@ impl GetInputError {
   }
 }
 
-impl fmt::Display for GetInputError {
+impl fmt::Display for InputError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     if self.source.path.is_some() {
       write!(f, "{}: ", self.path.display())?;
@@ -108,7 +108,7 @@ pub(crate) struct ErrorSource {
 }
 
 /// std's Result with GetInputError as the default error.
-pub(crate) type Result<T, E = GetInputError> = std::result::Result<T, E>;
+pub(crate) type Result<T, E = InputError> = std::result::Result<T, E>;
 
 pub(crate) fn get_path_id<F>(
   fs: &F,
@@ -120,7 +120,7 @@ where
   F: paths::FileSystem,
 {
   let canonical = canonicalize(fs, path, &source)?;
-  root.get_id(&canonical).map_err(|e| GetInputError {
+  root.get_id(&canonical).map_err(|e| InputError {
     source,
     path: path.to_owned(),
     kind: GetInputErrorKind::NotInRoot(e),
@@ -135,7 +135,7 @@ pub(crate) fn canonicalize<F>(
 where
   F: paths::FileSystem,
 {
-  fs.canonicalize(path).map_err(|e| GetInputError {
+  fs.canonicalize(path).map_err(|e| InputError {
     source: source.clone(),
     path: path.to_owned(),
     kind: GetInputErrorKind::Io(e),
@@ -146,7 +146,7 @@ pub(crate) fn read_file<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<S
 where
   F: paths::FileSystem,
 {
-  fs.read_to_string(path).map_err(|e| GetInputError {
+  fs.read_to_string(path).map_err(|e| InputError {
     source,
     path: path.to_owned(),
     kind: GetInputErrorKind::Io(e),

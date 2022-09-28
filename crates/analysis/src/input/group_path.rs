@@ -1,7 +1,7 @@
 //! Deal with group paths.
 
 use crate::input::util::{
-  canonicalize, get_path_id, ErrorSource, GetInputError, GetInputErrorKind, Result,
+  canonicalize, get_path_id, ErrorSource, GetInputErrorKind, InputError, Result,
 };
 use paths::PathId;
 use std::path::{Path, PathBuf};
@@ -106,7 +106,7 @@ where
     let config: config::Root = match toml::from_str(&contents) {
       Ok(x) => x,
       Err(e) => {
-        return Err(GetInputError {
+        return Err(InputError {
           source: ErrorSource::default(),
           path: config_path,
           kind: GetInputErrorKind::CouldNotParseConfig(e),
@@ -114,7 +114,7 @@ where
       }
     };
     if config.version != 1 {
-      return Err(GetInputError {
+      return Err(InputError {
         source: ErrorSource::default(),
         path: config_path,
         kind: GetInputErrorKind::InvalidConfigVersion(config.version),
@@ -124,7 +124,7 @@ where
       let has_members = ws.members.is_some();
       let is_leaf = ws.root.is_some() || ws.path_vars.is_some();
       if has_members && is_leaf {
-        return Err(GetInputError {
+        return Err(InputError {
           source: ErrorSource::default(),
           path: config_path,
           kind: GetInputErrorKind::HasMembersButAlsoRootOrPathVars,
@@ -153,7 +153,7 @@ where
             root.group_path = Some(path);
           }
           None => {
-            return Err(GetInputError {
+            return Err(InputError {
               source: ErrorSource { path: Some(config_path), range: None },
               path,
               kind: GetInputErrorKind::NotGroup,
@@ -165,7 +165,7 @@ where
   }
   // if not, try to get one from the root dir.
   if root.group_path.is_none() {
-    let dir_entries = fs.read_dir(root.paths.as_path()).map_err(|e| GetInputError {
+    let dir_entries = fs.read_dir(root.paths.as_path()).map_err(|e| InputError {
       source: ErrorSource::default(),
       path: root.paths.as_path().to_owned(),
       kind: GetInputErrorKind::Io(e),
@@ -174,7 +174,7 @@ where
       if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
         match &root.group_path {
           Some(rgp) => {
-            return Err(GetInputError {
+            return Err(InputError {
               kind: GetInputErrorKind::MultipleRoots(rgp.path.clone(), entry.clone()),
               source: ErrorSource { path: Some(rgp.path.clone()), range: None },
               path: entry,
@@ -185,7 +185,7 @@ where
       }
     }
   }
-  let root_group_path = root.group_path.as_ref().ok_or_else(|| GetInputError {
+  let root_group_path = root.group_path.as_ref().ok_or_else(|| InputError {
     source: ErrorSource::default(),
     path: root.paths.as_path().to_owned(),
     kind: GetInputErrorKind::NoRoot,
