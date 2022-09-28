@@ -682,11 +682,18 @@ val x : int = #2 (false, 5)
 
 ## `(`
 
-Group things together. Can be used to override precedence.
+1. Group things together. Can be used to override precedence.
 
-```sml
-fun doMath a b c = a * (b + c)
-```
+   ```sml
+   fun doMath a b c = a * (b + c)
+   ```
+
+2. Begin a tuple expression or pattern.
+
+   ```sml
+   val tup = (123, "hi")
+   val (n, s) = tup
+   ```
 
 ## `)`
 
