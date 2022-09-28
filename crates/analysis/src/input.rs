@@ -24,7 +24,7 @@ pub struct Input {
 }
 
 impl Input {
-  /// Get some input from the filesystem.
+  /// Get input anchored at the root.
   pub fn new<F>(fs: &F, root: &mut Root) -> Result<Self>
   where
     F: paths::FileSystem,
@@ -114,8 +114,11 @@ impl Input {
   }
 }
 
+/// A description of how to check a group of source files.
 #[derive(Debug)]
 pub(crate) struct Group {
+  /// A lowered BasDec, describing the group.
   pub(crate) bas_dec: mlb_hir::BasDec,
+  /// A position DB for the group file that yielded the dec.
   pub(crate) pos_db: text_pos::PositionDb,
 }
