@@ -13,6 +13,14 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Add an error code for no workspace root.
+- Support `group(-)` CM exports.
+- Add `Real64` and `PackReal64{Big, Little}`.
+- Allow real literal overloads for e.g. `LargeReal.real`.
+- Reword and improve some token docs.
+
 ## v0.3.10
 
 - Add more suggestions, not just restricted to keywords, e.g. suggest `Int` for `Integer`.
