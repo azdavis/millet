@@ -812,11 +812,12 @@ Also used as a expression/type "hole", though this is not legal SML.
 
 ## `{`
 
-Begin a record expression or type.
+Begin a record expression, pattern, or type.
 
 ```sml
-val r = {a = 5, b = 9}
+val r = {a = 5, b = "yep"}
 val {a, b} = r
+type user = { name: string, age: int }
 ```
 
 ## `|`
