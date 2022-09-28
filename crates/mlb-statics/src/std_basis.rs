@@ -86,7 +86,7 @@ where
         owned_contents = lines.join("\n");
         contents = &owned_contents;
       }
-      let mut fix_env = crate::STD_BASIS_FIX_ENV.clone();
+      let mut fix_env = sml_parse::parser::STD_BASIS.clone();
       let (lex_errors, parsed, low) = start_source_file(contents, &mut fix_env);
       if let Some(e) = lex_errors.first() {
         panic!("{name}: lex error: {}", e.display());

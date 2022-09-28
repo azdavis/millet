@@ -10,7 +10,6 @@ use fast_hash::FxHashMap;
 use sml_syntax::ast::AstNode;
 use std::fmt;
 
-pub use sml_parse::parser::STD_BASIS as STD_BASIS_FIX_ENV;
 pub use std_basis::StdBasis;
 
 /// The result of analyzing MLB and source files.
@@ -144,7 +143,7 @@ pub fn get(
     mlb_errors: Vec::new(),
   };
   let std_basis = MBasis {
-    fix_env: STD_BASIS_FIX_ENV.clone(),
+    fix_env: sml_parse::parser::STD_BASIS.clone(),
     bas_env: FxHashMap::default(),
     basis: std_basis.basis().clone(),
   };

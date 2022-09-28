@@ -26,6 +26,7 @@ dependencies = [
  "mlb-syntax",
  "paths",
  "sml-hir",
+ "sml-parse",
  "sml-statics",
  "sml-syntax",
  "str-util",

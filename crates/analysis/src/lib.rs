@@ -14,7 +14,6 @@ use std::fmt;
 use text_pos::{Position, Range};
 
 pub use error::Error;
-// pub use mlb_statics::StdBasis;
 
 /// The url to go to for information about errors.
 pub const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
@@ -41,7 +40,7 @@ impl Analysis {
 
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, contents: &str) -> Vec<Error> {
-    let mut fix_env = mlb_statics::STD_BASIS_FIX_ENV.clone();
+    let mut fix_env = sml_parse::parser::STD_BASIS.clone();
     let (lex_errors, parsed, low) = mlb_statics::start_source_file(contents, &mut fix_env);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
