@@ -187,12 +187,14 @@ val _ = 15 + 150 handle Overflow => 0
 
 ## `infixr`
 
-Cause the given names to be infix operators with the given precedence (or 0 if none is provided), and right associativity. Similar to `infix`.
+Cause the given names to be infix operators with the given precedence (or 0 if none is provided), and right associativity.
 
 ```sml
 infixr foo
 infixr 3 bar quz
 ```
+
+Compare with `infix`, which has left associativity.
 
 ## `nonfix`
 
@@ -241,6 +243,8 @@ Cause the given names to be infix operators with the given precedence (or 0 if n
 infix foo
 infix 3 bar quz
 ```
+
+Compare with `infixr`, which has right associativity.
 
 ## `local`
 
