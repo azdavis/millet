@@ -7,7 +7,9 @@ mod topo;
 mod util;
 
 use paths::{PathId, PathMap, WithPath};
-use util::{start_group_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, Result};
+use util::{
+  start_group_file, ErrorSource, GetInputErrorKind, GroupPathKind, GroupPathToProcess, Result,
+};
 
 pub use root::Root;
 pub use util::InputError;
@@ -33,7 +35,7 @@ impl Input {
     let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
     let mut sources = PathMap::<String>::default();
     let groups = match root_group.kind {
-      root::GroupPathKind::Cm => {
+      GroupPathKind::Cm => {
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
         lower_cm::get(
           root.as_mut_paths(),
@@ -60,7 +62,7 @@ impl Input {
           })
           .collect()
       }
-      root::GroupPathKind::Mlb => {
+      GroupPathKind::Mlb => {
         let mut groups = PathMap::<Group>::default();
         let mut stack = vec![init];
         while let Some(cur) = stack.pop() {

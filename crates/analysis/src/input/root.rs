@@ -1,10 +1,13 @@
 //! Deal with roots.
 
+mod group_path;
+
 use crate::input::util::{
-  canonicalize, get_path_id, ErrorSource, GetInputErrorKind, InputError, Result,
+  canonicalize, get_path_id, ErrorSource, GetInputErrorKind, GroupPathKind, InputError, Result,
 };
+use group_path::GroupPath;
 use paths::PathId;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// The root, in which every path is contained.
 #[derive(Debug)]
@@ -44,45 +47,6 @@ impl Root {
   /// Returns this as a mutable paths root.
   pub fn as_mut_paths(&mut self) -> &mut paths::Root {
     &mut self.paths
-  }
-}
-
-/// A kind of group path.
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum GroupPathKind {
-  /// SML/NJ Compilation Manager files.
-  Cm,
-  /// ML Basis files.
-  Mlb,
-}
-
-/// A group path.
-#[derive(Debug)]
-struct GroupPath {
-  kind: GroupPathKind,
-  path: PathBuf,
-}
-
-impl GroupPath {
-  /// Returns a new `GroupPath`.
-  fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
-  where
-    F: paths::FileSystem,
-  {
-    if !fs.is_file(path.as_path()) {
-      return None;
-    }
-    let kind = match path.extension()?.to_str()? {
-      "cm" => GroupPathKind::Cm,
-      "mlb" => GroupPathKind::Mlb,
-      _ => return None,
-    };
-    Some(GroupPath { path, kind })
-  }
-
-  /// Return this as a `Path`.
-  fn as_path(&self) -> &Path {
-    self.path.as_path()
   }
 }
 
@@ -172,8 +136,8 @@ where
         match &root.group_path {
           Some(rgp) => {
             return Err(InputError {
-              kind: GetInputErrorKind::MultipleRoots(rgp.path.clone(), entry.clone()),
-              source: ErrorSource { path: Some(rgp.path.clone()), range: None },
+              kind: GetInputErrorKind::MultipleRoots(rgp.as_path().to_owned(), entry.clone()),
+              source: ErrorSource { path: Some(rgp.as_path().to_owned()), range: None },
               path: entry,
             })
           }
@@ -188,8 +152,8 @@ where
     kind: GetInputErrorKind::NoRoot,
   })?;
   Ok(RootGroupPath {
-    path: get_path_id(fs, &mut root.paths, root_group_source, root_group_path.path.as_path())?,
-    kind: root_group_path.kind,
+    path: get_path_id(fs, &mut root.paths, root_group_source, root_group_path.as_path())?,
+    kind: root_group_path.kind(),
     path_vars,
   })
 }

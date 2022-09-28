@@ -178,3 +178,12 @@ where
   let pos_db = text_pos::PositionDb::new(&contents);
   Ok((group_path, contents, pos_db))
 }
+
+/// A kind of group path.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum GroupPathKind {
+  /// SML/NJ Compilation Manager files.
+  Cm,
+  /// ML Basis files.
+  Mlb,
+}
