@@ -112,13 +112,13 @@ pub(crate) enum Con {
   Int(sml_hir::Int),
   Word(u64),
   Char(char),
-  String(sml_hir::SmolStr),
+  String(str_util::SmolStr),
   Record { labels: BTreeSet<sml_hir::Lab>, allows_other: bool },
   Variant(Sym, VariantName),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum VariantName {
-  Name(sml_hir::Name),
+  Name(str_util::Name),
   Exn(Exn),
 }

@@ -592,7 +592,7 @@ fn join_paths(p1: &sml_hir::Path, p2: &sml_hir::Path) -> sml_hir::Path {
   sml_hir::Path::new(p1.all_names().chain(p2.structures()).cloned(), p2.last().clone())
 }
 
-fn get_ty_cons(structures: &mut Vec<sml_hir::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
+fn get_ty_cons(structures: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
   ac.extend(env.ty_env.keys().map(|name| sml_hir::Path::new(structures.clone(), name.clone())));
   for (name, env) in env.str_env.iter() {
     structures.push(name.clone());
@@ -635,7 +635,7 @@ fn env_instance_sig(
   idx: sml_hir::Idx,
 ) {
   for &sym in sig.ty_names.iter() {
-    let mut path = Vec::<&sml_hir::Name>::new();
+    let mut path = Vec::<&str_util::Name>::new();
     let (_, ty_info) = st.syms.get(&sym).unwrap();
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
@@ -668,7 +668,7 @@ fn env_instance_sig(
 /// right there that they should be equal anyway.
 fn bound_ty_name_to_path<'e>(
   st: &mut St,
-  ac: &mut Vec<&'e sml_hir::Name>,
+  ac: &mut Vec<&'e str_util::Name>,
   env: &'e Env,
   ty_scheme: &TyScheme,
 ) -> bool {
@@ -740,7 +740,7 @@ fn val_info_enrich(
   st: &mut St,
   general: ValInfo,
   specific: &ValInfo,
-  name: &sml_hir::Name,
+  name: &str_util::Name,
   idx: sml_hir::Idx,
 ) {
   generalizes(st, general.ty_scheme, &specific.ty_scheme, idx);

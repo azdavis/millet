@@ -42,7 +42,7 @@ pub struct SourceFile {
 pub struct Error {
   path: paths::PathId,
   item: Item,
-  name: text_size_util::WithRange<sml_hir::Name>,
+  name: text_size_util::WithRange<str_util::Name>,
 }
 
 impl Error {
@@ -100,7 +100,7 @@ impl Cx {
     &mut self,
     path: paths::PathId,
     item: Item,
-    name: text_size_util::WithRange<sml_hir::Name>,
+    name: text_size_util::WithRange<str_util::Name>,
   ) {
     self.mlb_errors.push(Error { path, item, name });
   }
@@ -116,7 +116,7 @@ struct Files<'a> {
 #[derive(Debug, Default, Clone)]
 struct MBasis {
   fix_env: sml_parse::parser::FixEnv,
-  bas_env: FxHashMap<sml_hir::Name, MBasis>,
+  bas_env: FxHashMap<str_util::Name, MBasis>,
   basis: sml_statics::basis::Basis,
 }
 

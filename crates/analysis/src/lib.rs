@@ -258,7 +258,7 @@ fn source_file_errors(
 
 struct CaseDisplay<'a> {
   needs_starting_bar: bool,
-  variants: &'a [(sml_hir::Name, bool)],
+  variants: &'a [(str_util::Name, bool)],
 }
 
 impl fmt::Display for CaseDisplay<'_> {
@@ -275,7 +275,7 @@ impl fmt::Display for CaseDisplay<'_> {
 }
 
 struct ArmDisplay<'a> {
-  name: &'a sml_hir::Name,
+  name: &'a str_util::Name,
   has_arg: bool,
 }
 

@@ -35,7 +35,7 @@ pub(crate) fn get(
       // - we need to go over the recursive ValBinds twice.
       let mut idx = 0usize;
       let mut ve = ValEnv::default();
-      let mut src_exp = FxHashMap::<sml_hir::Name, sml_hir::ExpIdx>::default();
+      let mut src_exp = FxHashMap::<str_util::Name, sml_hir::ExpIdx>::default();
       while let Some(val_bind) = val_binds.get(idx) {
         if val_bind.rec {
           // this and all other remaining ones are recursive.
@@ -200,7 +200,7 @@ fn get_pat_and_src_exp(
   ars: &sml_hir::Arenas,
   ve: &mut ValEnv,
   val_bind: &sml_hir::ValBind,
-  src_exp: &mut FxHashMap<sml_hir::Name, sml_hir::ExpIdx>,
+  src_exp: &mut FxHashMap<str_util::Name, sml_hir::ExpIdx>,
 ) -> (Pat, Ty) {
   // this makes the rank of the bindings from the pat in a `val` the same as the variables bound by
   // any fns on the exp, so we don't generalize a recursive call inside the exp, but we can

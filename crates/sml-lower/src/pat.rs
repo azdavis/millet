@@ -44,7 +44,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
             if let Some(r) = &mut rest_pat_row {
               r.last = false;
             }
-            let lab = sml_hir::Name::new(row.name_star_eq()?.token.text());
+            let lab = str_util::Name::new(row.name_star_eq()?.token.text());
             let lab_pat = name(lab.as_str());
             let ty_ann = row.ty_annotation().map(|x| ty::get(cx, x.ty()));
             let as_tail = row.as_pat_tail().map(|x| get(cx, x.pat()));
@@ -79,7 +79,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       #[allow(clippy::needless_collect)]
       let pats: Vec<_> = pat.pat_args().map(|x| get(cx, x.pat())).collect();
       pats.into_iter().rev().fold(name("nil"), |ac, x| {
-        let cons = sml_hir::Path::one(sml_hir::Name::new("::"));
+        let cons = sml_hir::Path::one(str_util::Name::new("::"));
         let ac = cx.pat(ac, ptr.clone());
         sml_hir::Pat::Con(cons, Some(cx.pat(tuple([x, ac]), ptr.clone())))
       })
@@ -89,7 +89,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       return None;
     }
     ast::Pat::InfixPat(pat) => {
-      let func = sml_hir::Path::one(sml_hir::Name::new(pat.name_star_eq()?.token.text()));
+      let func = sml_hir::Path::one(str_util::Name::new(pat.name_star_eq()?.token.text()));
       let lhs = get(cx, pat.lhs());
       let rhs = get(cx, pat.rhs());
       let arg = cx.pat(tuple([lhs, rhs]), ptr.clone());
@@ -128,7 +128,7 @@ impl Default for RestPatRowState {
 }
 
 pub(crate) fn name(s: &str) -> sml_hir::Pat {
-  sml_hir::Pat::Con(sml_hir::Path::one(sml_hir::Name::new(s)), None)
+  sml_hir::Pat::Con(sml_hir::Path::one(str_util::Name::new(s)), None)
 }
 
 pub(crate) fn tuple<I>(ps: I) -> sml_hir::Pat

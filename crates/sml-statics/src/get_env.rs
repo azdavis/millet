@@ -7,7 +7,7 @@ use crate::types::{Env, EnvLike, TyInfo, ValInfo};
 /// returns `Ok(None)` iff `names` was empty.
 fn get_env<'e, 'n, I, E>(env: &'e E, names: I) -> Result<Option<&'e Env>, ErrorKind>
 where
-  I: IntoIterator<Item = &'n sml_hir::Name>,
+  I: IntoIterator<Item = &'n str_util::Name>,
   E: EnvLike,
 {
   let mut names = names.into_iter();
@@ -50,10 +50,10 @@ where
 pub(crate) fn get_ty_info_raw<'e, 'n, S, E>(
   env: &'e E,
   structures: S,
-  last: &'n sml_hir::Name,
+  last: &'n str_util::Name,
 ) -> Result<&'e TyInfo, ErrorKind>
 where
-  S: IntoIterator<Item = &'n sml_hir::Name>,
+  S: IntoIterator<Item = &'n str_util::Name>,
   E: EnvLike,
 {
   let got_env = get_env(env, structures)?;

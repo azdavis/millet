@@ -686,13 +686,13 @@ impl Sym {
 #[derive(Debug, Default, Clone)]
 pub struct Syms {
   /// remember: always use Sym::idx to index
-  store: Vec<(sml_hir::Name, TyInfo)>,
-  exns: Vec<(sml_hir::Name, Option<Ty>)>,
+  store: Vec<(str_util::Name, TyInfo)>,
+  exns: Vec<(str_util::Name, Option<Ty>)>,
   overloads: Overloads,
 }
 
 impl Syms {
-  pub(crate) fn start(&mut self, name: sml_hir::Name) -> StartedSym {
+  pub(crate) fn start(&mut self, name: str_util::Name) -> StartedSym {
     let ty_info =
       TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
     self.store.push((name, ty_info));
@@ -709,7 +709,7 @@ impl Syms {
   }
 
   /// Returns `None` iff passed `&Sym::EXN`.
-  pub(crate) fn get(&self, sym: &Sym) -> Option<(&sml_hir::Name, &TyInfo)> {
+  pub(crate) fn get(&self, sym: &Sym) -> Option<(&str_util::Name, &TyInfo)> {
     if *sym == Sym::EXN {
       return None;
     }
@@ -717,13 +717,13 @@ impl Syms {
     Some((name, info))
   }
 
-  pub(crate) fn insert_exn(&mut self, name: sml_hir::Name, param: Option<Ty>) -> Exn {
+  pub(crate) fn insert_exn(&mut self, name: str_util::Name, param: Option<Ty>) -> Exn {
     let ret = Exn(self.exns.len());
     self.exns.push((name, param));
     ret
   }
 
-  pub(crate) fn get_exn(&self, exn: &Exn) -> (&sml_hir::Name, Option<&Ty>) {
+  pub(crate) fn get_exn(&self, exn: &Exn) -> (&str_util::Name, Option<&Ty>) {
     let &(ref name, ref param) = self.exns.get(exn.0).unwrap();
     (name, param.as_ref())
   }
@@ -732,7 +732,7 @@ impl Syms {
     SymsMarker(self.store.len())
   }
 
-  pub(crate) fn iter(&self) -> impl Iterator<Item = (&sml_hir::Name, &TyInfo)> {
+  pub(crate) fn iter(&self) -> impl Iterator<Item = (&str_util::Name, &TyInfo)> {
     self.store.iter().map(|&(ref a, ref b)| (a, b))
   }
 
@@ -768,13 +768,13 @@ pub(crate) struct TyInfo {
 }
 
 /// Definition: StrEnv
-pub(crate) type StrEnv = FxHashMap<sml_hir::Name, Env>;
+pub(crate) type StrEnv = FxHashMap<str_util::Name, Env>;
 
 /// Definition: TyEnv
-pub(crate) type TyEnv = FxHashMap<sml_hir::Name, TyInfo>;
+pub(crate) type TyEnv = FxHashMap<str_util::Name, TyInfo>;
 
 /// Definition: ValEnv
-pub(crate) type ValEnv = FxHashMap<sml_hir::Name, ValInfo>;
+pub(crate) type ValEnv = FxHashMap<str_util::Name, ValInfo>;
 
 #[derive(Debug, Clone)]
 pub(crate) struct ValInfo {
@@ -801,9 +801,9 @@ impl IdStatus {
 }
 
 pub(crate) trait EnvLike {
-  fn get_str(&self, name: &sml_hir::Name) -> Option<&Env>;
-  fn get_ty(&self, name: &sml_hir::Name) -> Option<&TyInfo>;
-  fn get_val(&self, name: &sml_hir::Name) -> Option<&ValInfo>;
+  fn get_str(&self, name: &str_util::Name) -> Option<&Env>;
+  fn get_ty(&self, name: &str_util::Name) -> Option<&TyInfo>;
+  fn get_val(&self, name: &str_util::Name) -> Option<&ValInfo>;
   /// empties other into self.
   fn append(&mut self, other: &mut Env);
   fn all_str(&self) -> Vec<&Env>;
@@ -828,15 +828,15 @@ impl Env {
 }
 
 impl EnvLike for Env {
-  fn get_str(&self, name: &sml_hir::Name) -> Option<&Env> {
+  fn get_str(&self, name: &str_util::Name) -> Option<&Env> {
     self.str_env.get(name)
   }
 
-  fn get_ty(&self, name: &sml_hir::Name) -> Option<&TyInfo> {
+  fn get_ty(&self, name: &str_util::Name) -> Option<&TyInfo> {
     self.ty_env.get(name)
   }
 
-  fn get_val(&self, name: &sml_hir::Name) -> Option<&ValInfo> {
+  fn get_val(&self, name: &str_util::Name) -> Option<&ValInfo> {
     self.val_env.get(name)
   }
 
@@ -879,15 +879,15 @@ impl EnvStack {
 }
 
 impl EnvLike for EnvStack {
-  fn get_str(&self, name: &sml_hir::Name) -> Option<&Env> {
+  fn get_str(&self, name: &str_util::Name) -> Option<&Env> {
     self.0.iter().rev().find_map(|env| env.str_env.get(name))
   }
 
-  fn get_ty(&self, name: &sml_hir::Name) -> Option<&TyInfo> {
+  fn get_ty(&self, name: &str_util::Name) -> Option<&TyInfo> {
     self.0.iter().rev().find_map(|env| env.ty_env.get(name))
   }
 
-  fn get_val(&self, name: &sml_hir::Name) -> Option<&ValInfo> {
+  fn get_val(&self, name: &str_util::Name) -> Option<&ValInfo> {
     self.0.iter().rev().find_map(|env| env.val_env.get(name))
   }
 
@@ -898,7 +898,7 @@ impl EnvLike for EnvStack {
   }
 
   fn all_str(&self) -> Vec<&Env> {
-    let mut names = FxHashSet::<&sml_hir::Name>::default();
+    let mut names = FxHashSet::<&str_util::Name>::default();
     self
       .0
       .iter()
@@ -909,7 +909,7 @@ impl EnvLike for EnvStack {
   }
 
   fn all_ty(&self) -> Vec<&TyInfo> {
-    let mut names = FxHashSet::<&sml_hir::Name>::default();
+    let mut names = FxHashSet::<&str_util::Name>::default();
     self
       .0
       .iter()
@@ -920,7 +920,7 @@ impl EnvLike for EnvStack {
   }
 
   fn all_val(&self) -> Vec<&ValInfo> {
-    let mut names = FxHashSet::<&sml_hir::Name>::default();
+    let mut names = FxHashSet::<&str_util::Name>::default();
     self
       .0
       .iter()
@@ -970,8 +970,8 @@ pub(crate) struct FunSig {
   pub(crate) body_env: Env,
 }
 
-pub(crate) type SigEnv = FxHashMap<sml_hir::Name, Sig>;
-pub(crate) type FunEnv = FxHashMap<sml_hir::Name, FunSig>;
+pub(crate) type SigEnv = FxHashMap<str_util::Name, Sig>;
+pub(crate) type FunEnv = FxHashMap<str_util::Name, FunSig>;
 
 /// Definition: Basis
 #[derive(Debug, Default, Clone)]

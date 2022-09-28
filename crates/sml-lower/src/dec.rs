@@ -163,7 +163,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> sml_hir::SpecIdx {
         .val_descs()
         .filter_map(|x| {
           Some(sml_hir::ValDesc {
-            name: sml_hir::Name::new(x.name_star_eq()?.token.text()),
+            name: str_util::Name::new(x.name_star_eq()?.token.text()),
             ty: ty::get(cx, x.ty()),
           })
         })
@@ -189,7 +189,7 @@ fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> sml_hir::SpecIdx {
         .ex_descs()
         .filter_map(|x| {
           Some(sml_hir::Spec::Exception(sml_hir::ExDesc {
-            name: sml_hir::Name::new(x.name_star_eq()?.token.text()),
+            name: str_util::Name::new(x.name_star_eq()?.token.text()),
             ty: x.of_ty().map(|x| ty::get(cx, x.ty())),
           }))
         })
@@ -427,7 +427,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
       dec
         .ex_binds()
         .filter_map(|ex_bind| {
-          let name = sml_hir::Name::new(ex_bind.name_star_eq()?.token.text());
+          let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
           let ret = match ex_bind.ex_bind_inner() {
             None => sml_hir::ExBind::New(name, None),
             Some(ast::ExBindInner::OfTy(x)) => {
@@ -487,7 +487,7 @@ where
         .con_binds()
         .filter_map(|con_bind| {
           Some(sml_hir::ConBind {
-            name: sml_hir::Name::new(con_bind.name_star_eq()?.token.text()),
+            name: str_util::Name::new(con_bind.name_star_eq()?.token.text()),
             ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
           })
         })

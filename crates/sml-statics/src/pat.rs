@@ -226,21 +226,21 @@ fn ok_val_info(vi: Option<&ValInfo>) -> bool {
   vi.map_or(true, |vi| matches!(vi.id_status, IdStatus::Val))
 }
 
-fn insert_name(st: &mut St, ve: &mut ValEnv, name: sml_hir::Name, ty: Ty, idx: sml_hir::Idx) {
+fn insert_name(st: &mut St, ve: &mut ValEnv, name: str_util::Name, ty: Ty, idx: sml_hir::Idx) {
   let vi = ValInfo { ty_scheme: TyScheme::zero(ty), id_status: IdStatus::Val, def: st.def(idx) };
   if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);
   }
 }
 
-fn get_as_pat_name(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> Option<&sml_hir::Name> {
+fn get_as_pat_name(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> Option<&str_util::Name> {
   match &ars.pat[pat?] {
     sml_hir::Pat::Typed(pat, _) => get_as_pat_name_inner(&ars.pat[(*pat)?]),
     pat => get_as_pat_name_inner(pat),
   }
 }
 
-fn get_as_pat_name_inner(pat: &sml_hir::Pat) -> Option<&sml_hir::Name> {
+fn get_as_pat_name_inner(pat: &sml_hir::Pat) -> Option<&str_util::Name> {
   match pat {
     sml_hir::Pat::Con(name, None) => name.structures().is_empty().then_some(name.last()),
     _ => None,

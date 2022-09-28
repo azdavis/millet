@@ -330,7 +330,7 @@ name = "mlb-hir"
 version = "0.1.0"
 dependencies = [
  "paths",
- "sml-hir",
+ "str-util",
  "text-size-util",
 ]
 
@@ -350,6 +350,7 @@ dependencies = [
  "sml-statics",
  "sml-syntax",
  "sml-ty-var-scope",
+ "str-util",
  "text-pos",
  "text-size-util",
 ]
@@ -571,6 +572,7 @@ dependencies = [
  "num-traits",
  "sml-hir",
  "sml-syntax",
+ "str-util",
 ]
 
 [[package]]
@@ -595,6 +597,7 @@ dependencies = [
  "paths",
  "pattern-match",
  "sml-hir",
+ "str-util",
  "uniq",
 ]
 

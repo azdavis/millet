@@ -20,6 +20,7 @@ sml-lower = { path = "../sml-lower" }
 sml-parse = { path = "../sml-parse" }
 sml-statics = { path = "../sml-statics" }
 sml-syntax = { path = "../sml-syntax" }
+str-util = { path = "../str-util" }
 sml-ty-var-scope = { path = "../sml-ty-var-scope" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 text-size-util = { path = "../text-size-util" }

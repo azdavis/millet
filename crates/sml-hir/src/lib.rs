@@ -5,10 +5,10 @@
 use std::fmt;
 
 use la_arena::Arena;
+use str_util::{Name, SmolStr};
 
 pub use la_arena;
 pub use num_bigint::{BigInt, ParseBigIntError};
-pub use str_util::{Name, SmolStr};
 
 #[derive(Debug, Default)]
 pub struct Arenas {

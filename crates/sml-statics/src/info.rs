@@ -114,7 +114,11 @@ impl Info {
   }
 
   /// Gets the variants for the type of the index. The bool is whether the name has an argument.
-  pub fn get_variants(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<Vec<(sml_hir::Name, bool)>> {
+  pub fn get_variants(
+    &self,
+    syms: &Syms,
+    idx: sml_hir::Idx,
+  ) -> Option<Vec<(str_util::Name, bool)>> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
     let sym = match ty_entry.ty {
       Ty::Con(_, x) => x,

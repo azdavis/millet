@@ -135,7 +135,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
 }
 
 pub(crate) fn name(s: &str) -> sml_hir::Exp {
-  sml_hir::Exp::Path(sml_hir::Path::one(sml_hir::Name::new(s)))
+  sml_hir::Exp::Path(sml_hir::Path::one(str_util::Name::new(s)))
 }
 
 pub(crate) fn tuple<I>(es: I) -> sml_hir::Exp
@@ -148,7 +148,7 @@ where
   sml_hir::Exp::Record(rows)
 }
 
-fn call_unit_fn(cx: &mut Cx, vid: &sml_hir::Name, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx {
+fn call_unit_fn(cx: &mut Cx, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx {
   let vid_exp = cx.exp(name(vid.as_str()), ptr.clone());
   let arg_exp = cx.exp(sml_hir::Exp::Record(vec![]), ptr.clone());
   cx.exp(sml_hir::Exp::App(vid_exp, arg_exp), ptr)

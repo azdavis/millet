@@ -6,10 +6,10 @@ use text_size_util::WithRange;
 
 #[derive(Debug, Clone)]
 pub enum BasDec {
-  Basis(WithRange<sml_hir::Name>, Box<BasExp>),
-  Open(WithRange<sml_hir::Name>),
+  Basis(WithRange<str_util::Name>, Box<BasExp>),
+  Open(WithRange<str_util::Name>),
   Local(Box<BasDec>, Box<BasDec>),
-  Export(Namespace, WithRange<sml_hir::Name>, WithRange<sml_hir::Name>),
+  Export(Namespace, WithRange<str_util::Name>, WithRange<str_util::Name>),
   Seq(Vec<BasDec>),
   Path(paths::PathId, PathKind),
 }
@@ -27,7 +27,7 @@ impl BasDec {
 #[derive(Debug, Clone)]
 pub enum BasExp {
   Bas(BasDec),
-  Name(WithRange<sml_hir::Name>),
+  Name(WithRange<str_util::Name>),
   Let(BasDec, Box<BasExp>),
 }
 

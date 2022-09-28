@@ -82,14 +82,14 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<sml_hir::SCon> {
   Some(ret)
 }
 
-pub(crate) fn get_name(n: Option<sml_syntax::SyntaxToken>) -> Option<sml_hir::Name> {
-  n.map(|tok| sml_hir::Name::new(tok.text()))
+pub(crate) fn get_name(n: Option<sml_syntax::SyntaxToken>) -> Option<str_util::Name> {
+  n.map(|tok| str_util::Name::new(tok.text()))
 }
 
 pub(crate) fn get_path(p: ast::Path) -> Option<sml_hir::Path> {
   sml_hir::Path::try_new(
     p.name_star_eq_dots()
-      .filter_map(|x| Some(sml_hir::Name::new(x.name_star_eq()?.token.text())))
+      .filter_map(|x| Some(str_util::Name::new(x.name_star_eq()?.token.text())))
       .collect(),
   )
 }
@@ -97,7 +97,7 @@ pub(crate) fn get_path(p: ast::Path) -> Option<sml_hir::Path> {
 pub(crate) fn get_lab(cx: &mut Cx, lab: ast::Lab) -> sml_hir::Lab {
   match lab.kind {
     ast::LabKind::Name | ast::LabKind::Star => {
-      sml_hir::Lab::Name(sml_hir::Name::new(lab.token.text()))
+      sml_hir::Lab::Name(str_util::Name::new(lab.token.text()))
     }
     ast::LabKind::IntLit => {
       let n = match lab.token.text().parse::<usize>() {

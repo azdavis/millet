@@ -20,7 +20,12 @@ impl Basis {
 
   /// Adds the structure named `other_name` from `other` into `self` with the name `name`, or
   /// returns `false` if this was not possible.
-  pub fn add_str(&mut self, name: sml_hir::Name, other: &Self, other_name: &sml_hir::Name) -> bool {
+  pub fn add_str(
+    &mut self,
+    name: str_util::Name,
+    other: &Self,
+    other_name: &str_util::Name,
+  ) -> bool {
     let env = match other.inner.env.get_str(other_name) {
       Some(x) => x.clone(),
       None => return false,
@@ -31,7 +36,12 @@ impl Basis {
 
   /// Adds the signature named `other_name` from `other` into `self` with the name `name`, or
   /// returns `false` if this was not possible.
-  pub fn add_sig(&mut self, name: sml_hir::Name, other: &Self, other_name: &sml_hir::Name) -> bool {
+  pub fn add_sig(
+    &mut self,
+    name: str_util::Name,
+    other: &Self,
+    other_name: &str_util::Name,
+  ) -> bool {
     let env = match other.inner.sig_env.get(other_name) {
       Some(x) => x.clone(),
       None => return false,
@@ -42,7 +52,12 @@ impl Basis {
 
   /// Adds the functor named `other_name` from `other` into `self` with the name `name`, or
   /// returns `false` if this was not possible.
-  pub fn add_fun(&mut self, name: sml_hir::Name, other: &Self, other_name: &sml_hir::Name) -> bool {
+  pub fn add_fun(
+    &mut self,
+    name: str_util::Name,
+    other: &Self,
+    other_name: &str_util::Name,
+  ) -> bool {
     let env = match other.inner.fun_env.get(other_name) {
       Some(x) => x.clone(),
       None => return false,
@@ -95,7 +110,7 @@ pub fn minimal() -> (Syms, Basis) {
     .map(|(a, b)| (a.clone(), b.clone()))
     .chain(aliases.into_iter().map(|(name, ty)| {
       let ti = TyInfo { ty_scheme: TyScheme::zero(ty), val_env: ValEnv::default(), def: None };
-      (sml_hir::Name::new(name), ti)
+      (str_util::Name::new(name), ti)
     }))
     .collect();
   let fns = {
@@ -135,7 +150,7 @@ pub fn minimal() -> (Syms, Basis) {
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
     .chain(fns.into_iter().map(|(name, ty_scheme)| {
       let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: None };
-      (sml_hir::Name::new(name), vi)
+      (str_util::Name::new(name), vi)
     }))
     .collect();
   let basis = Basis {
@@ -149,7 +164,7 @@ pub fn minimal() -> (Syms, Basis) {
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
-  let started = syms.start(sml_hir::Name::new(sym.special().unwrap()));
+  let started = syms.start(str_util::Name::new(sym.special().unwrap()));
   assert_eq!(sym, started.sym());
   syms.finish(started, ty_info);
 }
@@ -166,7 +181,7 @@ where
 {
   xs.into_iter()
     .map(|(name, ty_scheme)| {
-      (sml_hir::Name::new(name), ValInfo { ty_scheme, id_status: IdStatus::Con, def: None })
+      (str_util::Name::new(name), ValInfo { ty_scheme, id_status: IdStatus::Con, def: None })
     })
     .collect()
 }

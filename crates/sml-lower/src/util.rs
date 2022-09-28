@@ -135,8 +135,8 @@ impl Cx {
   /// - not writeable in user code, and will thus not collide with any identifiers in user code;
   /// - distinct from all other `Name`s returned from self thus far, and will thus not collide
   ///   with any of those.
-  pub(crate) fn fresh(&mut self) -> sml_hir::Name {
-    let ret = sml_hir::Name::new(self.fresh_idx.to_string());
+  pub(crate) fn fresh(&mut self) -> str_util::Name {
+    let ret = str_util::Name::new(self.fresh_idx.to_string());
     self.fresh_idx += 1;
     ret
   }

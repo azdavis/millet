@@ -69,7 +69,7 @@ pub(crate) enum GetInputErrorKind {
   Cm(cm::Error),
   Mlb(mlb_syntax::Error),
   Cycle,
-  Duplicate(sml_hir::Name),
+  Duplicate(str_util::Name),
   HasMembersButAlsoRootOrPathVars,
   /// must be last
   UnsupportedExport,

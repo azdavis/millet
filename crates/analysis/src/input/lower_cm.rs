@@ -18,7 +18,7 @@ pub(crate) struct CmFile {
 #[derive(Debug, Clone)]
 pub(crate) struct Export {
   pub(crate) namespace: mlb_hir::Namespace,
-  pub(crate) name: text_size_util::WithRange<sml_hir::Name>,
+  pub(crate) name: text_size_util::WithRange<str_util::Name>,
 }
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports

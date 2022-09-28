@@ -27,7 +27,7 @@ where
 {
   let ret = match dec {
     mlb_syntax::BasDec::Basis(binds) => {
-      let mut names = FxHashSet::<sml_hir::Name>::default();
+      let mut names = FxHashSet::<str_util::Name>::default();
       let binds = binds
         .into_iter()
         .map(|(name, exp)| {
@@ -51,7 +51,7 @@ where
       mlb_hir::BasDec::Local(get_bas_dec(cx, *local_dec)?.into(), get_bas_dec(cx, *in_dec)?.into())
     }
     mlb_syntax::BasDec::Export(ns, binds) => {
-      let mut names = FxHashSet::<sml_hir::Name>::default();
+      let mut names = FxHashSet::<str_util::Name>::default();
       let binds = binds
         .into_iter()
         .map(|(lhs, rhs)| {
