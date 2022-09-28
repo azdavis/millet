@@ -14,7 +14,7 @@ pub struct Root {
 }
 
 impl Root {
-  pub(crate) fn new(paths: paths::Root, group_path: Option<GroupPath>) -> Self {
+  fn new(paths: paths::Root, group_path: Option<GroupPath>) -> Self {
     Self { paths, group_path }
   }
 
@@ -61,14 +61,14 @@ pub(crate) enum GroupPathKind {
 
 /// A group path.
 #[derive(Debug)]
-pub(crate) struct GroupPath {
+struct GroupPath {
   kind: GroupPathKind,
   path: PathBuf,
 }
 
 impl GroupPath {
   /// Returns a new `GroupPath`.
-  pub(crate) fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
+  fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
   where
     F: paths::FileSystem,
   {
@@ -84,7 +84,7 @@ impl GroupPath {
   }
 
   /// Return this as a `Path`.
-  pub(crate) fn as_path(&self) -> &Path {
+  fn as_path(&self) -> &Path {
     self.path.as_path()
   }
 }
