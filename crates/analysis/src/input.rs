@@ -109,13 +109,8 @@ impl Input {
   }
 
   /// Override a source file to have the given contents.
-  ///
-  /// Returns whether the source was overridden. That is:
-  ///
-  /// - This returns `true` if there _was_ an existing source with this `path`.
-  /// - This returns `false` otherwise.
-  pub fn override_source(&mut self, path: PathId, contents: String) -> bool {
-    self.sources.insert(path, contents).is_some()
+  pub fn override_source(&mut self, path: PathId, contents: String) {
+    self.sources.insert(path, contents);
   }
 }
 
