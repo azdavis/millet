@@ -45,8 +45,7 @@ fn config_invalid_version() {
 fn config_path_not_exist() {
   let config = r#"
 version = 1
-[workspace]
-root = "nope.cm"
+workspace.root = "nope.cm"
 "#;
   check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
 }
@@ -79,8 +78,7 @@ root = "foo.cm"
 fn not_group() {
   let config = r#"
 version = 1
-[workspace]
-root = "nope.txt"
+workspace.root = "nope.txt"
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
   assert!(e.to_string().contains("not a group file path"));
@@ -111,8 +109,7 @@ root = "foo.cm"
 fn mlb_cm_config_mlb_ok() {
   let config = r#"
 version = 1
-[workspace]
-root = "foo.mlb"
+workspace.root = "foo.mlb"
 "#;
   check_input([("foo.mlb", ""), ("foo.cm", "Group is")], Some(config)).unwrap();
 }
