@@ -1,15 +1,15 @@
 //! Input to analysis.
 
-mod group_path;
 mod lower_cm;
 mod lower_mlb;
+mod root;
 mod topo;
 mod util;
 
 use paths::{PathId, PathMap, WithPath};
 use util::{start_group_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, Result};
 
-pub use group_path::Root;
+pub use root::Root;
 pub use util::InputError;
 
 /// The input to analysis.
@@ -29,11 +29,11 @@ impl Input {
   where
     F: paths::FileSystem,
   {
-    let root_group = group_path::get_root_group_path(fs, root)?;
+    let root_group = root::get_root_group_path(fs, root)?;
     let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
     let mut sources = PathMap::<String>::default();
     let groups = match root_group.kind {
-      group_path::GroupPathKind::Cm => {
+      root::GroupPathKind::Cm => {
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
         lower_cm::get(
           root.as_mut_paths(),
@@ -60,7 +60,7 @@ impl Input {
           })
           .collect()
       }
-      group_path::GroupPathKind::Mlb => {
+      root::GroupPathKind::Mlb => {
         let mut groups = PathMap::<Group>::default();
         let mut stack = vec![init];
         while let Some(cur) = stack.pop() {

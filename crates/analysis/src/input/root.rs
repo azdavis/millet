@@ -1,4 +1,4 @@
-//! Deal with group paths.
+//! Deal with roots.
 
 use crate::input::util::{
   canonicalize, get_path_id, ErrorSource, GetInputErrorKind, InputError, Result,
@@ -35,6 +35,7 @@ impl Root {
   pub fn from_canonical_dir(path: paths::CanonicalPathBuf) -> Self {
     Self { paths: paths::Root::new(path), group_path: None }
   }
+
   /// Returns this as a paths root.
   pub fn as_paths(&self) -> &paths::Root {
     &self.paths
