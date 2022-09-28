@@ -104,7 +104,7 @@ enum StdBasis {
 }
 
 impl StdBasis {
-  fn to_analysis(&self) -> analysis::StdBasis {
+  fn to_analysis(&self) -> mlb_statics::StdBasis {
     match self {
       StdBasis::Minimal => MINIMAL.clone(),
       StdBasis::Full => FULL.clone(),
@@ -112,8 +112,8 @@ impl StdBasis {
   }
 }
 
-static MINIMAL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::minimal);
-static FULL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::full);
+static MINIMAL: Lazy<mlb_statics::StdBasis> = Lazy::new(mlb_statics::StdBasis::minimal);
+static FULL: Lazy<mlb_statics::StdBasis> = Lazy::new(mlb_statics::StdBasis::full);
 
 /// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
@@ -128,7 +128,7 @@ struct Check {
 }
 
 impl Check {
-  fn new(ss: &[&str], std_basis: analysis::StdBasis) -> Self {
+  fn new(ss: &[&str], std_basis: mlb_statics::StdBasis) -> Self {
     let mut m = FxHashMap::<std::path::PathBuf, String>::default();
     let mut mlb_file = String::new();
     for (idx, &s) in ss.iter().enumerate() {

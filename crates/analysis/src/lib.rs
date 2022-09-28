@@ -14,7 +14,7 @@ use std::fmt;
 use text_pos::{Position, Range};
 
 pub use error::Error;
-pub use mlb_statics::StdBasis;
+// pub use mlb_statics::StdBasis;
 
 /// The url to go to for information about errors.
 pub const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";

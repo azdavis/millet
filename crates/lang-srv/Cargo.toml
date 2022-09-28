@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 analysis = { path = "../analysis" }
+mlb-statics = { path = "../mlb-statics" }
 anyhow = "1"
 config = { path = "../config" }
 crossbeam-channel = "0.5"

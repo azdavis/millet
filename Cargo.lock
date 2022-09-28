@@ -81,6 +81,7 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "config",
+ "mlb-statics",
  "paths",
  "pico-args",
 ]
@@ -257,6 +258,7 @@ dependencies = [
  "log",
  "lsp-server",
  "lsp-types",
+ "mlb-statics",
  "paths",
  "serde",
  "serde_json",
@@ -672,6 +674,7 @@ dependencies = [
  "env_logger",
  "fast-hash",
  "log",
+ "mlb-statics",
  "once_cell",
  "paths",
  "pulldown-cmark",

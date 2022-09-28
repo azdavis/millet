@@ -63,7 +63,7 @@ impl State {
       }),
       sender,
       req_queue: ReqQueue::default(),
-      analysis: analysis::Analysis::new(analysis::StdBasis::full(), config::ErrorLines::Many),
+      analysis: analysis::Analysis::new(mlb_statics::StdBasis::full(), config::ErrorLines::Many),
       file_system,
       options,
     };

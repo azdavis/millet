@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 analysis = { path = "../analysis" }
+mlb-statics = { path = "../mlb-statics" }
 config = { path = "../config" }
 env_logger = { version = "0.9" }
 fast-hash = { path = "../fast-hash" }
