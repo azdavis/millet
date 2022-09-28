@@ -12,5 +12,5 @@ test = false
 fast-hash = { path = "../fast-hash" }
 num-traits = "0.2"
 sml-hir = { path = "../sml-hir" }
-str-util = { path = "../str-util" }
 sml-syntax = { path = "../sml-syntax" }
+str-util = { path = "../str-util" }

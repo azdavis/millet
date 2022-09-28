@@ -9,8 +9,8 @@ doctest = false
 test = false
 
 [dependencies]
+event-parse = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { path = "../fast-hash" }
 once_cell = "1"
 sml-syntax = { path = "../sml-syntax" }
 str-util = { path = "../str-util" }
-event-parse = { git = "https://github.com/azdavis/language-util.git" }

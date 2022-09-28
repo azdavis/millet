@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 analysis = { path = "../analysis" }
-mlb-statics = { path = "../mlb-statics" }
 config = { path = "../config" }
+mlb-statics = { path = "../mlb-statics" }
 paths = { path = "../paths" }
 pico-args = "0.5"

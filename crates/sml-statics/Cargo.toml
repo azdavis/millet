@@ -13,8 +13,8 @@ config = { path = "../config" }
 drop_bomb = "0.1"
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }
-str-util = { path = "../str-util" }
 paths = { path = "../paths" }
 pattern-match = { git = "https://github.com/azdavis/language-util.git" }
 sml-hir = { path = "../sml-hir" }
+str-util = { path = "../str-util" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }

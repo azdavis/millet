@@ -9,11 +9,11 @@ doctest = false
 
 [dependencies]
 analysis = { path = "../analysis" }
-mlb-statics = { path = "../mlb-statics" }
 config = { path = "../config" }
 env_logger = { version = "0.9" }
 fast-hash = { path = "../fast-hash" }
 log = "0.4"
+mlb-statics = { path = "../mlb-statics" }
 once_cell = "1"
 paths = { path = "../paths" }
 pulldown-cmark = "0.9"
