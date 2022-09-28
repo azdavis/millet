@@ -257,7 +257,7 @@ fn non_exhaustive(
 ) -> fmt::Result {
   write!(f, "non-exhaustive {kind}: missing ")?;
   assert!(!pats.is_empty());
-  let max_len = 2usize;
+  let max_len = 3usize;
   let iter = pats.iter().take(max_len).map(|pat| PatDisplay { pat, syms, prec: PatPrec::Min });
   comma_seq(f, iter)?;
   if let Some(n) = pats.len().checked_sub(max_len) {
