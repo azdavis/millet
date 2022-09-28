@@ -9,7 +9,7 @@ mod util;
 use paths::{PathId, PathMap, WithPath};
 use util::{start_group_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, Result};
 
-pub use group_path::{get_root, get_root_dir, Root};
+pub use group_path::Root;
 pub use util::GetInputError;
 
 /// The input to analysis.

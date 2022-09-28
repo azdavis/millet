@@ -18,6 +18,27 @@ impl Root {
     Self { paths, group_path }
   }
 
+  /// Given a path to either a group path or a directory, return the root for it.
+  pub fn from_path<F>(fs: &F, path: &Path) -> Result<Root>
+  where
+    F: paths::FileSystem,
+  {
+    let path = canonicalize(fs, path, &ErrorSource::default())?;
+    let (root_path, group_path) = match GroupPath::new(fs, path.clone().into_path_buf()) {
+      None => (path, None),
+      Some(path) => {
+        let parent = path.as_path().parent().expect("no parent");
+        let rp = fs.canonicalize(parent).expect("canonicalize parent of canonical path");
+        (rp, Some(path))
+      }
+    };
+    Ok(Root::new(paths::Root::new(root_path), group_path))
+  }
+
+  /// Get a `Root` from a canonical root dir.
+  pub fn from_canonical_dir(path: paths::CanonicalPathBuf) -> Root {
+    Root { paths: paths::Root::new(path), group_path: None }
+  }
   /// Returns this as a paths root.
   pub fn as_paths(&self) -> &paths::Root {
     &self.paths
@@ -27,27 +48,6 @@ impl Root {
   pub fn as_mut_paths(&mut self) -> &mut paths::Root {
     &mut self.paths
   }
-}
-
-/// Given a path to either a group path or a directory, return the root for it.
-pub fn get_root<F>(fs: &F, path: &Path) -> Result<Root>
-where
-  F: paths::FileSystem,
-{
-  let path = canonicalize(fs, path, &ErrorSource::default())?;
-  let (root_path, group_path) = match GroupPath::new(fs, path.clone().into_path_buf()) {
-    None => (path, None),
-    Some(path) => {
-      let parent = path.as_path().parent().expect("no parent");
-      let rp = fs.canonicalize(parent).expect("canonicalize parent of canonical path");
-      (rp, Some(path))
-    }
-  };
-  Ok(Root::new(paths::Root::new(root_path), group_path))
-}
-/// Get a `Root` from a canonical root dir.
-pub fn get_root_dir(path: paths::CanonicalPathBuf) -> Root {
-  Root { paths: paths::Root::new(path), group_path: None }
 }
 
 /// A kind of group path.

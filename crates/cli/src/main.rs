@@ -35,7 +35,7 @@ fn run() -> usize {
     }
   };
   let fs = paths::RealFileSystem::default();
-  let mut root = match analysis::input::get_root(&fs, std::path::Path::new(path.as_str())) {
+  let mut root = match analysis::input::Root::from_path(&fs, std::path::Path::new(path.as_str())) {
     Ok(x) => x,
     Err(e) => {
       handle_get_input_error(e);

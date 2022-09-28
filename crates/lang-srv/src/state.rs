@@ -58,7 +58,7 @@ impl State {
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
       root: root.as_mut().ok().and_then(Option::take).map(|root_path| Root {
-        input: analysis::input::get_root_dir(root_path),
+        input: analysis::input::Root::from_canonical_dir(root_path),
         has_diagnostics: FxHashSet::default(),
       }),
       sender,
