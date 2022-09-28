@@ -107,11 +107,11 @@ To fix, use different names, or remove the `and`. See also 5002.
 
 Millet couldn't initialize the workspace root.
 
-When the Millet language server starts up, if the client (i.e. the editor, e.g. VS Code) sends the server an initialization message containing a file URL of the currently open folder (if there is one). This is the workspace root URL.
+When the Millet language server starts up, the client. i.e. the editor, e.g. VS Code, sends the server an initialization message containing a file URL of the currently open folder, if there is one. This is the workspace root URL.
 
-Millet will attempt to parse this URL into a real directory and process the SML files inside it. If that fails, Millet may emit this error.
+Millet will attempt to parse this URL into a real directory and process the files inside it. If parsing the URL or opening the directory fails, Millet may emit this error.
 
-To fix, inspect the error message/workspace root URL for more details.
+To fix, inspect the workspace root URL/underlying error message for more details.
 
 ## 1997
 
