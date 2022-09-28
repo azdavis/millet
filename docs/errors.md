@@ -155,8 +155,8 @@ There was an unsupported export kind in a SML/NJ CM file.
 At time of writing, Millet does not support:
 
 - `funsig` exports.
-- `source(-)` exports.
-- `group(-)` exports.
+- `source(s)` and `source(-)` exports.
+- `group(g)` exports.
 
 ## 2001
 
