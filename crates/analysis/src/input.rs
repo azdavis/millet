@@ -7,12 +7,9 @@ mod topo;
 mod util;
 
 use paths::{PathId, PathMap, WithPath};
-use std::path::Path;
-use util::{
-  canonicalize, start_group_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, Result,
-};
+use util::{start_group_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, Result};
 
-pub use group_path::{get_root_dir, Root};
+pub use group_path::{get_root, get_root_dir, Root};
 pub use util::GetInputError;
 
 /// The input to analysis.
@@ -47,23 +44,6 @@ impl Input {
 pub(crate) struct Group {
   pub(crate) bas_dec: mlb_hir::BasDec,
   pub(crate) pos_db: text_pos::PositionDb,
-}
-
-/// Given a path to either a group path or a directory, return the root for it.
-pub fn get_root<F>(fs: &F, path: &Path) -> Result<Root>
-where
-  F: paths::FileSystem,
-{
-  let path = canonicalize(fs, path, &ErrorSource::default())?;
-  let (root_path, group_path) = match group_path::GroupPath::new(fs, path.clone().into_path_buf()) {
-    None => (path, None),
-    Some(path) => {
-      let parent = path.as_path().parent().expect("no parent");
-      let rp = fs.canonicalize(parent).expect("canonicalize parent of canonical path");
-      (rp, Some(path))
-    }
-  };
-  Ok(Root::new(paths::Root::new(root_path), group_path))
 }
 
 /// Get some input from the filesystem.
