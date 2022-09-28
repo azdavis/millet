@@ -52,9 +52,7 @@ Compare with `struct`, which starts a structure expression.
 
 ## `datatype`
 
-Define a new datatype.
-
-Datatype declarations define new types and their constructors.
+Define a new type and its constructors.
 
 ```sml
 datatype debug = On | Off | Level of int
