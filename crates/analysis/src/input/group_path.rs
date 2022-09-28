@@ -14,12 +14,8 @@ pub struct Root {
 }
 
 impl Root {
-  fn new(paths: paths::Root, group_path: Option<GroupPath>) -> Self {
-    Self { paths, group_path }
-  }
-
   /// Given a path to either a group path or a directory, return the root for it.
-  pub fn from_path<F>(fs: &F, path: &Path) -> Result<Root>
+  pub fn from_path<F>(fs: &F, path: &Path) -> Result<Self>
   where
     F: paths::FileSystem,
   {
@@ -32,12 +28,12 @@ impl Root {
         (rp, Some(path))
       }
     };
-    Ok(Root::new(paths::Root::new(root_path), group_path))
+    Ok(Self { paths: paths::Root::new(root_path), group_path })
   }
 
-  /// Get a `Root` from a canonical root dir.
-  pub fn from_canonical_dir(path: paths::CanonicalPathBuf) -> Root {
-    Root { paths: paths::Root::new(path), group_path: None }
+  /// Get this from a canonical root dir.
+  pub fn from_canonical_dir(path: paths::CanonicalPathBuf) -> Self {
+    Self { paths: paths::Root::new(path), group_path: None }
   }
   /// Returns this as a paths root.
   pub fn as_paths(&self) -> &paths::Root {
