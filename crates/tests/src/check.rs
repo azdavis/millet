@@ -12,8 +12,9 @@ use std::fmt::{self, Write as _};
 ///
 /// - are always on only one line
 /// - start with `(**`
-/// - point at the things that should have errors with `^` or `v`
-/// - contain the expected error message/hover for those things
+/// - point at either:
+///   - the specific things that should have errors with `^` or `v`
+///   - lines on which an error should begin (but not necessarily end) with `+`
 ///
 /// The expectation messages have a certain format:
 ///
