@@ -97,6 +97,40 @@ chihiro = true
 }
 
 #[test]
+fn members_and_root() {
+  let config = r#"
+version = 1
+[workspace]
+members = ["*"]
+root = "foo.cm"
+"#;
+  let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
+  assert!(e.to_string().contains("cannot set `workspace.members` but also set"));
+}
+
+#[test]
+fn members_and_path_vars() {
+  let config = r#"
+version = 1
+[workspace]
+members = ["*"]
+path-vars.FOO = { value = "BAR" }
+"#;
+  let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
+  assert!(e.to_string().contains("cannot set `workspace.members` but also set"));
+}
+
+#[test]
+fn members() {
+  let config = r#"
+version = 1
+[workspace]
+members = ["*"]
+"#;
+  check_empty_cm(&["foo.cm"], Some(config)).unwrap();
+}
+
+#[test]
 fn mlb() {
   check_input([("foo.mlb", "")], None).unwrap();
 }

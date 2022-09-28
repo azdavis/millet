@@ -103,6 +103,25 @@ There was a duplicate name in a ML Basis file. For instance, `structure A and st
 
 To fix, use different names, or remove the `and`. See also 5002.
 
+## 1012
+
+In a `millet.toml` config file, both `workspace.members` and one of:
+
+- `workspace.root`
+- `workspace.path-vars`
+
+were set.
+
+<!--
+
+When a `millet.toml` file has `workspace.members` set, the `members` are subdirectories that themselves have `millet.toml` files in them. This allows for a single project to have many different sub-projects.
+
+But, when a `millet.toml` has the other workspace properties set, it may not contain sub-projects.
+
+ -->
+
+To fix, do not set both of these kinds of `workspace` properties in a single `millet.toml` file.
+
 ## 1996
 
 Millet couldn't initialize the workspace root.

@@ -72,6 +72,7 @@ impl GetInputError {
       GetInputErrorKind::Mlb(_) => 1009,
       GetInputErrorKind::Cycle => 1010,
       GetInputErrorKind::Duplicate(_) => 1011,
+      GetInputErrorKind::HasMembersButAlsoRootOrPathVars => 1012,
       GetInputErrorKind::UnsupportedExport => 1999,
     }
   }
@@ -99,6 +100,7 @@ enum GetInputErrorKind {
   Mlb(mlb_syntax::Error),
   Cycle,
   Duplicate(sml_hir::Name),
+  HasMembersButAlsoRootOrPathVars,
   /// must be last
   UnsupportedExport,
 }
@@ -121,6 +123,9 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       GetInputErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
+      GetInputErrorKind::HasMembersButAlsoRootOrPathVars => f.write_str(
+        "cannot set `workspace.members` but also set `workspace.root` or `workspace.path-vars`",
+      ),
       GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
     }
   }
@@ -212,6 +217,15 @@ where
       });
     }
     if let Some(ws) = config.workspace {
+      let has_members = ws.members.is_some();
+      let is_leaf = ws.root.is_some() || ws.path_vars.is_some();
+      if has_members && is_leaf {
+        return Err(GetInputError {
+          source: Source::default(),
+          path: config_path,
+          kind: GetInputErrorKind::HasMembersButAlsoRootOrPathVars,
+        });
+      }
       if let Some(ws_path_vars) = ws.path_vars {
         for (key, val) in ws_path_vars {
           match val {
