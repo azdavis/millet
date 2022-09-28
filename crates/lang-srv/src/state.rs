@@ -523,7 +523,7 @@ fn error_url(code: u16) -> Url {
   Url::parse(&format!("{}#{}", analysis::ERRORS_URL, code)).expect("couldn't parse error URL")
 }
 
-fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp_types::Diagnostic {
+fn diagnostic(message: String, range: Option<text_pos::Range>, code: u16) -> lsp_types::Diagnostic {
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(lsp_types::DiagnosticSeverity::ERROR),
@@ -537,17 +537,17 @@ fn diagnostic(message: String, range: Option<analysis::Range>, code: u16) -> lsp
   }
 }
 
-fn lsp_range(range: analysis::Range) -> lsp_types::Range {
+fn lsp_range(range: text_pos::Range) -> lsp_types::Range {
   lsp_types::Range { start: lsp_position(range.start), end: lsp_position(range.end) }
 }
 
-fn lsp_position(pos: analysis::Position) -> lsp_types::Position {
+fn lsp_position(pos: text_pos::Position) -> lsp_types::Position {
   lsp_types::Position { line: pos.line, character: pos.character }
 }
 
 fn lsp_location(
   root: &Root,
-  range: paths::WithPath<analysis::Range>,
+  range: paths::WithPath<text_pos::Range>,
 ) -> Option<lsp_types::Location> {
   let uri = match file_url(root.input.as_paths().get_path(range.path).as_path()) {
     Ok(x) => x,
@@ -559,12 +559,12 @@ fn lsp_location(
   Some(lsp_types::Location { uri, range: lsp_range(range.val) })
 }
 
-fn analysis_position(pos: lsp_types::Position) -> analysis::Position {
-  analysis::Position { line: pos.line, character: pos.character }
+fn analysis_position(pos: lsp_types::Position) -> text_pos::Position {
+  text_pos::Position { line: pos.line, character: pos.character }
 }
 
-fn analysis_range(range: lsp_types::Range) -> analysis::Range {
-  analysis::Range { start: analysis_position(range.start), end: analysis_position(range.end) }
+fn analysis_range(range: lsp_types::Range) -> text_pos::Range {
+  text_pos::Range { start: analysis_position(range.start), end: analysis_position(range.end) }
 }
 
 fn url_to_path_id<F>(fs: &F, root: &mut Root, url: &Url) -> Result<paths::PathId>
@@ -578,7 +578,7 @@ fn text_doc_pos_params<F>(
   fs: &F,
   root: &mut Root,
   params: lsp_types::TextDocumentPositionParams,
-) -> Result<paths::WithPath<analysis::Position>>
+) -> Result<paths::WithPath<text_pos::Position>>
 where
   F: paths::FileSystem,
 {

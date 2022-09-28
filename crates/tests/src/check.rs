@@ -179,7 +179,7 @@ impl Check {
         if matches!(expect.kind, ExpectKind::Hover) {
           let pos = match region {
             Region::Exact { line, col_start, .. } => {
-              analysis::Position { line, character: col_start }
+              text_pos::Position { line, character: col_start }
             }
             Region::Line(n) => {
               ret.reasons.push(Reason::InexactHover(path.wrap(n)));
@@ -219,7 +219,7 @@ impl Check {
   fn get_err_reason(
     &mut self,
     path: paths::PathId,
-    range: analysis::Range,
+    range: text_pos::Range,
     got: String,
   ) -> Result<(), Reason> {
     let file = &self.files[&path];

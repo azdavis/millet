@@ -260,6 +260,7 @@ dependencies = [
  "paths",
  "serde",
  "serde_json",
+ "text-pos",
 ]
 
 [[package]]
@@ -675,6 +676,7 @@ dependencies = [
  "paths",
  "pulldown-cmark",
  "sml-syntax",
+ "text-pos",
 ]
 
 [[package]]
