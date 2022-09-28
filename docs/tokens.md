@@ -824,7 +824,7 @@ type user = { name: string, age: int }
 
 Separate arms in a matcher, constructors in a datatype, or cases in a `fun`.
 
-Note that a leading `|` for the first case is not allowed.
+Note that a leading `|` before the first item is not allowed.
 
 ```sml
 val describe = fn
