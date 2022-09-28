@@ -53,7 +53,7 @@ impl fmt::Display for Error {
       }
       ErrorKind::SlashVarPathError(e) => write!(f, "cannot construct path: {e}"),
       ErrorKind::AliasWithIgnoredPathVar => {
-        f.write_str("cannot use `alias` with a path containing an ignored variable")
+        f.write_str("cannot use `Alias` with a path containing an ignored variable")
       }
     }
   }
