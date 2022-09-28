@@ -85,6 +85,18 @@ workspace.root = "nope.txt"
 }
 
 #[test]
+fn unknown_property() {
+  let config = r#"
+version = 1
+foo = "bar"
+workspace.woofer = "bark.txt"
+[quz]
+chihiro = true
+"#;
+  check_empty_cm(&["foo.cm"], Some(config)).unwrap();
+}
+
+#[test]
 fn mlb() {
   check_input([("foo.mlb", "")], None).unwrap();
 }
