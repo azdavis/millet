@@ -34,8 +34,7 @@ To fix, either remove all but one of the root group files, or select which one y
 
 ```toml
 version = 1
-[workspace]
-root = "foo.cm"
+workspace.root = "foo.cm"
 ```
 
 ## 1004
@@ -54,8 +53,7 @@ To fix, try any of the following:
 
   ```toml
   version = 1
-  [workspace]
-  root = "bar/quz.mlb"
+  workspace.root = "bar/quz.mlb"
   ```
 
 ## 1005
