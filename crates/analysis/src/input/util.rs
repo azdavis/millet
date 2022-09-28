@@ -163,20 +163,24 @@ pub(crate) struct GroupPathToProcess {
   pub(crate) path: PathId,
 }
 
-pub(crate) fn start_group_file<F>(
-  root: &mut paths::Root,
-  cur: GroupPathToProcess,
-  fs: &F,
-) -> Result<(paths::CanonicalPathBuf, String, text_pos::PositionDb)>
-where
-  F: paths::FileSystem,
-{
-  let group_path = root.get_path(cur.path).clone();
-  let containing_path = root.get_path(cur.parent).as_path().to_owned();
-  let source = ErrorSource { path: Some(containing_path), range: cur.range };
-  let contents = read_file(fs, source, group_path.as_path())?;
-  let pos_db = text_pos::PositionDb::new(&contents);
-  Ok((group_path, contents, pos_db))
+pub(crate) struct StartedGroupFile {
+  pub(crate) path: paths::CanonicalPathBuf,
+  pub(crate) contents: String,
+  pub(crate) pos_db: text_pos::PositionDb,
+}
+
+impl StartedGroupFile {
+  pub(crate) fn new<F>(root: &mut paths::Root, cur: GroupPathToProcess, fs: &F) -> Result<Self>
+  where
+    F: paths::FileSystem,
+  {
+    let path = root.get_path(cur.path).clone();
+    let containing_path = root.get_path(cur.parent).as_path().to_owned();
+    let source = ErrorSource { path: Some(containing_path), range: cur.range };
+    let contents = read_file(fs, source, path.as_path())?;
+    let pos_db = text_pos::PositionDb::new(&contents);
+    Ok(Self { path, contents, pos_db })
+  }
 }
 
 /// A kind of group path.

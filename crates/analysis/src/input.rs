@@ -8,7 +8,7 @@ mod util;
 
 use paths::{PathId, PathMap, WithPath};
 use util::{
-  start_group_file, ErrorSource, GetInputErrorKind, GroupPathKind, GroupPathToProcess, Result,
+  ErrorSource, GetInputErrorKind, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile,
 };
 
 pub use root::Root;
@@ -69,19 +69,19 @@ impl Input {
           if groups.contains_key(&cur.path) {
             continue;
           }
-          let (group_path, contents, pos_db) = start_group_file(root.as_mut_paths(), cur, fs)?;
-          let group_path = group_path.as_path();
+          let group_file = StartedGroupFile::new(root.as_mut_paths(), cur, fs)?;
+          let group_path = group_file.path.as_path();
           let group_parent = group_path.parent().expect("path from get_path has no parent");
-          let syntax_dec =
-            mlb_syntax::get(&contents, &root_group.path_vars).map_err(|e| InputError {
-              source: ErrorSource { path: None, range: pos_db.range(e.text_range()) },
+          let syntax_dec = mlb_syntax::get(group_file.contents.as_str(), &root_group.path_vars)
+            .map_err(|e| InputError {
+              source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
               path: group_path.to_owned(),
               kind: GetInputErrorKind::Mlb(e),
             })?;
           let mut cx = lower_mlb::MlbCx {
             path: group_path,
             parent: group_parent,
-            pos_db: &pos_db,
+            pos_db: &group_file.pos_db,
             fs,
             root: root.as_mut_paths(),
             sources: &mut sources,
@@ -89,7 +89,7 @@ impl Input {
             path_id: cur.path,
           };
           let bas_dec = lower_mlb::get_bas_dec(&mut cx, syntax_dec)?;
-          groups.insert(cur.path, Group { bas_dec, pos_db });
+          groups.insert(cur.path, Group { bas_dec, pos_db: group_file.pos_db });
         }
         groups
       }
