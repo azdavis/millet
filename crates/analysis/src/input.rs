@@ -1,8 +1,9 @@
 //! Input to analysis.
 
+mod topo;
+
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap, WithPath};
-use std::collections::BTreeSet;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use text_pos::Range;
@@ -421,15 +422,8 @@ where
       groups
     }
   };
-  let graph: topo_sort::Graph<_> = groups
-    .iter()
-    .map(|(&path, group)| {
-      let mut ac = BTreeSet::<PathId>::new();
-      bas_dec_paths(&mut ac, &group.bas_dec);
-      (path, ac)
-    })
-    .collect();
-  if let Err(err) = topo_sort::get(&graph) {
+  let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
+  if let Err(err) = topo::check(bas_decs) {
     return Err(GetInputError {
       source: ErrorSource::default(),
       path: root.paths.get_path(err.witness()).as_path().to_owned(),
@@ -708,34 +702,4 @@ where
     }
   };
   Ok(ret)
-}
-
-fn bas_dec_paths(ac: &mut BTreeSet<PathId>, dec: &mlb_hir::BasDec) {
-  match dec {
-    mlb_hir::BasDec::Open(_) | mlb_hir::BasDec::Export(_, _, _) => {}
-    mlb_hir::BasDec::Path(p, _) => {
-      ac.insert(*p);
-    }
-    mlb_hir::BasDec::Basis(_, exp) => bas_exp_paths(ac, exp),
-    mlb_hir::BasDec::Local(local_dec, in_dec) => {
-      bas_dec_paths(ac, local_dec);
-      bas_dec_paths(ac, in_dec);
-    }
-    mlb_hir::BasDec::Seq(decs) => {
-      for dec in decs {
-        bas_dec_paths(ac, dec);
-      }
-    }
-  }
-}
-
-fn bas_exp_paths(ac: &mut BTreeSet<PathId>, exp: &mlb_hir::BasExp) {
-  match exp {
-    mlb_hir::BasExp::Bas(dec) => bas_dec_paths(ac, dec),
-    mlb_hir::BasExp::Name(_) => {}
-    mlb_hir::BasExp::Let(dec, exp) => {
-      bas_dec_paths(ac, dec);
-      bas_exp_paths(ac, exp);
-    }
-  }
 }
