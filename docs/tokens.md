@@ -33,7 +33,7 @@ signature SIG = sig
 end
 ```
 
-Contrast with `sig`, which starts a signature expression.
+Compare with `sig`, which starts a signature expression.
 
 ## `structure`
 
@@ -48,7 +48,7 @@ structure Str = struct
 end
 ```
 
-Contrast with `struct`, which starts a structure expression.
+Compare with `struct`, which starts a structure expression.
 
 ## `datatype`
 
@@ -65,7 +65,7 @@ In this example:
 - `On` and `Off` have type `debug`.
 - `Level` has type `int -> debug`.
 
-Contrast with `type`, which defines a type alias.
+Compare with `type`, which defines a type alias.
 
 ## `withtype`
 
@@ -99,7 +99,7 @@ It short-circuits, so if the first expression evaluates to `false`, the second i
 
 Because of this special short-circuiting behavior, it is not a regular infix operator, and thus does not work with `op`.
 
-Contrast with `and`, which permits declaring multiple things at once.
+Compare with `and`, which permits declaring multiple things at once.
 
 ## `functor`
 
@@ -118,7 +118,7 @@ end
 - Regular functions (with `fun` or `fn`) take in values and return values.
 - Functors take in structures and return structures.
 
-Contrast with `fun`, which is for value-level functions.
+Compare with `fun`, which is for value-level functions.
 
 ## `include`
 
@@ -140,7 +140,7 @@ structure S : B = struct
 end
 ```
 
-Contrast with `open`, which is like `include` but for structures.
+Compare with `open`, which is like `include` but for structures.
 
 ## `sharing`
 
@@ -233,7 +233,7 @@ structure S = struct
 end
 ```
 
-Contrast with `structure`, which begins a structure declaration.
+Compare with `structure`, which begins a structure declaration.
 
 ## `infix`
 
@@ -262,7 +262,7 @@ val _ = outerA + outerB
 - Declarations in the `local ... in` may be used by declarations in the `in ... end`.
 - However, only the declarations in the `in ... end` are in scope outside of the local.
 
-Contrast with `let`, which is an expression.
+Compare with `let`, which is an expression.
 
 ## `raise`
 
@@ -359,7 +359,7 @@ open S
 val b = x
 ```
 
-Contrast with `include`, which is kind of like `open` but for signatures.
+Compare with `include`, which is kind of like `open` but for signatures.
 
 ## `then`
 
@@ -380,7 +380,7 @@ type point = int * int
 
 Types defined with `type` are aliases, meaning no "new" types are defined. Rather, the new name is just an alternative name for the right-hand-side type, and aside from name, they are equivalent.
 
-Contrast with `datatype`, which defines a new type and its constructors.
+Compare with `datatype`, which defines a new type and its constructors.
 
 ## `with`
 
@@ -399,7 +399,7 @@ and odd 0 = false
   | odd n = even (n - 1)
 ```
 
-Contrast with `andalso`, which is for logical "and" of `bool` expressions.
+Compare with `andalso`, which is for logical "and" of `bool` expressions.
 
 ## `end`
 
@@ -420,7 +420,7 @@ fun inc x = x + 1
 
 Functions are the unit of abstraction.
 
-Contrast with:
+Compare with:
 
 - `fn`, which begins a function (aka lambda) expression.
 - `functor`, which defines a functor (structure-level function).
@@ -445,7 +445,7 @@ val _ =
 - The expressions may use bindings from the declarations.
 - The value of the whole `let` is the value of the last expression in the `in ... end`.
 
-Contrast with `local`, which is a declaration.
+Compare with `local`, which is a declaration.
 
 ## `rec`
 
@@ -480,7 +480,7 @@ signature SIG = sig
 end
 ```
 
-Contrast with `signature`, which starts a signature declaration.
+Compare with `signature`, which starts a signature declaration.
 
 ## `val`
 
@@ -526,7 +526,7 @@ val _ = List.map (fn x => x + 1) [1, 3, 8]
 
 Often used to define arguments to higher-order functions, to avoid having to declare and name small helper functions.
 
-Contrast with `fun`, which is used in function declarations.
+Compare with `fun`, which is used in function declarations.
 
 ## `if`
 
@@ -629,7 +629,7 @@ This matches up with the fact that function application is left associative. Thi
 2. `(f x) y`
 3. `f (x y)`
 
-Contrast with `=>`, which separates a pattern from an expression in a matcher.
+Compare with `=>`, which separates a pattern from an expression in a matcher.
 
 ## `:>`
 
@@ -652,7 +652,7 @@ end = struct
 end
 ```
 
-Contrast with `:`, which performs transparent ascription in the context of signatures.
+Compare with `:`, which performs transparent ascription in the context of signatures.
 
 ## `=>`
 
@@ -666,7 +666,7 @@ val describe = fn
 | _ => "other"
 ```
 
-Contrast with `->`, which denotes a function type.
+Compare with `->`, which denotes a function type.
 
 ## `#`
 
@@ -714,7 +714,7 @@ val _ = [1, 4, 3]
 type ('a, 'b) parser = 'a -> ('a * 'b) option
 ```
 
-Contrast with `;`, which can also separate expressions, but ignores all but the last one.
+Compare with `;`, which can also separate expressions, but ignores all but the last one.
 
 ## `.`
 
@@ -747,7 +747,7 @@ val _ = Int.max (1, 5)
    val n : int = S.x + 3
    ```
 
-   Contrast with `:>`, which opaquely ascribes.
+   Compare with `:>`, which opaquely ascribes.
 
 ## `;`
 
@@ -761,7 +761,7 @@ Can also be used to separate declarations, but this is unnecessary.
 
 Also indicates the end of input when in a REPL.
 
-Contrast with `,`, which can also separate expression, but constructs tuples or lists (when used with `()` and `[]` respectively).
+Compare with `,`, which can also separate expression, but constructs tuples or lists (when used with `()` and `[]` respectively).
 
 ## `=`
 
