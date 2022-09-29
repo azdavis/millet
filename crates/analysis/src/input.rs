@@ -30,7 +30,7 @@ impl Input {
   where
     F: paths::FileSystem,
   {
-    let root_group = root::RootGroupPath::new(fs, root)?;
+    let root_group = root::Root::new(fs, root)?;
     let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
     let mut sources = PathMap::<String>::default();
     let groups = match root_group.kind {

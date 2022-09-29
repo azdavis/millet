@@ -1,21 +1,18 @@
 //! Deal with roots.
 
-mod group_path;
-
 use crate::input::util::{
   get_path_id, read_dir, ErrorSource, GetInputErrorKind, GroupPathKind, InputError, Result,
 };
-use group_path::GroupPath;
 use paths::PathId;
 use std::path::PathBuf;
 
-pub(crate) struct RootGroupPath {
+pub(crate) struct Root {
   pub(crate) path: PathId,
   pub(crate) kind: GroupPathKind,
   pub(crate) path_vars: paths::slash_var_path::Env,
 }
 
-impl RootGroupPath {
+impl Root {
   pub(crate) fn new<F>(fs: &F, root: &mut paths::Root) -> Result<Self>
   where
     F: paths::FileSystem,
@@ -41,8 +38,8 @@ impl RootGroupPath {
           match &root_group_path {
             Some(rgp) => {
               return Err(InputError {
-                kind: GetInputErrorKind::MultipleRoots(rgp.as_path().to_owned(), entry.clone()),
-                source: ErrorSource { path: Some(rgp.as_path().to_owned()), range: None },
+                kind: GetInputErrorKind::MultipleRoots(rgp.path.to_owned(), entry.clone()),
+                source: ErrorSource { path: Some(rgp.path.to_owned()), range: None },
                 path: entry,
               })
             }
@@ -57,8 +54,8 @@ impl RootGroupPath {
       kind: GetInputErrorKind::NoRoot,
     })?;
     Ok(Self {
-      path: get_path_id(fs, root, root_group_source, root_group_path.as_path())?,
-      kind: root_group_path.kind(),
+      path: get_path_id(fs, root, root_group_source, &root_group_path.path)?,
+      kind: root_group_path.kind,
       path_vars,
     })
   }
@@ -139,5 +136,28 @@ impl Config {
       }
     }
     Ok(ret)
+  }
+}
+
+#[derive(Debug)]
+struct GroupPath {
+  kind: GroupPathKind,
+  path: PathBuf,
+}
+
+impl GroupPath {
+  fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
+  where
+    F: paths::FileSystem,
+  {
+    if !fs.is_file(path.as_path()) {
+      return None;
+    }
+    let kind = match path.extension()?.to_str()? {
+      "cm" => GroupPathKind::Cm,
+      "mlb" => GroupPathKind::Mlb,
+      _ => return None,
+    };
+    Some(GroupPath { path, kind })
   }
 }
