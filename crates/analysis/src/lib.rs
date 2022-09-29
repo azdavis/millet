@@ -62,10 +62,12 @@ impl Analysis {
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to errors.
   pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Error>> {
+    let syms = self.std_basis.syms().clone();
+    let basis = self.std_basis.basis().clone();
+    let groups: paths::PathMap<_> =
+      input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {
-      let groups: paths::PathMap<_> =
-        input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
-      mlb_statics::get(&self.std_basis, &input.sources, &groups, input.root_group_id)
+      mlb_statics::get(syms, basis, &input.sources, &groups, input.root_group_id)
     });
     self.source_files = res.sml;
     self.syms = res.syms;

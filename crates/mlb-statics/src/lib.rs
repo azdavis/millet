@@ -131,22 +131,20 @@ impl MBasis {
 
 /// Runs analysis.
 pub fn get(
-  std_basis: &StdBasis,
+  syms: sml_statics::Syms,
+  basis: sml_statics::basis::Basis,
   sml: &paths::PathMap<String>,
   mlb: &paths::PathMap<&mlb_hir::BasDec>,
   root_mlb: paths::PathId,
 ) -> MlbStatics {
   let mut cx = Cx {
-    syms: std_basis.syms().clone(),
+    syms,
     cache: paths::PathMap::default(),
     sml: paths::PathMap::default(),
     mlb_errors: Vec::new(),
   };
-  let std_basis = MBasis {
-    fix_env: sml_parse::parser::STD_BASIS.clone(),
-    bas_env: FxHashMap::default(),
-    basis: std_basis.basis().clone(),
-  };
+  let std_basis =
+    MBasis { fix_env: sml_parse::parser::STD_BASIS.clone(), bas_env: FxHashMap::default(), basis };
   let files = Files { sml, mlb, std_basis: &std_basis };
   get_group_file(&mut cx, files, &mut MBasis::default(), root_mlb);
   MlbStatics { mlb_errors: cx.mlb_errors, syms: cx.syms, sml: cx.sml }
