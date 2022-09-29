@@ -153,6 +153,17 @@ where
   })
 }
 
+pub(crate) fn read_dir<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<Vec<PathBuf>>
+where
+  F: paths::FileSystem,
+{
+  fs.read_dir(path).map_err(|e| InputError {
+    source,
+    path: path.to_owned(),
+    kind: GetInputErrorKind::Io(e),
+  })
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct GroupPathToProcess {
   /// the path that led us to `path`.

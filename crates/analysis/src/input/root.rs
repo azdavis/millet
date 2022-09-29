@@ -3,7 +3,8 @@
 mod group_path;
 
 use crate::input::util::{
-  canonicalize, get_path_id, ErrorSource, GetInputErrorKind, GroupPathKind, InputError, Result,
+  canonicalize, get_path_id, read_dir, ErrorSource, GetInputErrorKind, GroupPathKind, InputError,
+  Result,
 };
 use group_path::GroupPath;
 use paths::PathId;
@@ -76,11 +77,7 @@ impl RootGroupPath {
     };
     // if not, try to get one from the root dir.
     if root.group_path.is_none() {
-      let dir_entries = fs.read_dir(root.paths.as_path()).map_err(|e| InputError {
-        source: ErrorSource::default(),
-        path: root.paths.as_path().to_owned(),
-        kind: GetInputErrorKind::Io(e),
-      })?;
+      let dir_entries = read_dir(fs, ErrorSource::default(), root.paths.as_path())?;
       for entry in dir_entries {
         if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
           match &root.group_path {
