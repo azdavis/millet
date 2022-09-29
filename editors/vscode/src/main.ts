@@ -41,5 +41,6 @@ export async function deactivate() {
   if (client === null) {
     return;
   }
-  return client.stop();
+  await client.stop();
+  client = null;
 }
