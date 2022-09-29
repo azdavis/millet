@@ -28,6 +28,11 @@ impl InputError {
     self.source.range
   }
 
+  /// Return this as an I/O error.
+  pub fn from_io(path: PathBuf, e: std::io::Error) -> Self {
+    Self { source: ErrorSource::default(), path, kind: GetInputErrorKind::Io(e) }
+  }
+
   /// Returns the error code for this.
   pub fn to_code(&self) -> u16 {
     match self.kind {

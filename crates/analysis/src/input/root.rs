@@ -3,12 +3,11 @@
 mod group_path;
 
 use crate::input::util::{
-  canonicalize, get_path_id, read_dir, ErrorSource, GetInputErrorKind, GroupPathKind, InputError,
-  Result,
+  get_path_id, read_dir, ErrorSource, GetInputErrorKind, GroupPathKind, InputError, Result,
 };
 use group_path::GroupPath;
 use paths::PathId;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// The root, in which every path is contained.
 #[derive(Debug)]
@@ -18,24 +17,6 @@ pub struct Root {
 }
 
 impl Root {
-  /// Given a path to either a group path or a directory, return the root for it.
-  pub fn from_path<F>(fs: &F, path: &Path) -> Result<Self>
-  where
-    F: paths::FileSystem,
-  {
-    let path = canonicalize(fs, path, &ErrorSource::default())?;
-    let (root_path, group_path) = match GroupPath::new(fs, path.clone().into_path_buf()) {
-      None => (path, None),
-      Some(group_path) => {
-        let parent = group_path.as_path().parent().expect("group path has no parent");
-        let rp =
-          canonicalize(fs, parent, &ErrorSource { path: Some(path.into_path_buf()), range: None })?;
-        (rp, Some(group_path))
-      }
-    };
-    Ok(Self { paths: paths::Root::new(root_path), group_path })
-  }
-
   /// Get this from a canonical root dir.
   pub fn from_canonical_dir(path: paths::CanonicalPathBuf) -> Self {
     Self { paths: paths::Root::new(path), group_path: None }

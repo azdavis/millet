@@ -1,3 +1,5 @@
+use paths::FileSystem;
+
 fn usage() {
   let current_exe_name = std::env::current_exe()
     .ok()
@@ -12,11 +14,9 @@ options:
 
 arguments:
   <path>
-    path of the project to analyze. the path should either be:
-    - a directory containing either:
-      - a single .cm or .mlb file
-      - a millet.toml config file specifying a single .cm or .mlb file
-    - a .cm or .mlb file
+    path of the project to analyze. the path is a directory containing either:
+    - a single .cm or .mlb file
+    - a millet.toml config file specifying a single .cm or .mlb file
 "#;
   print!("{rest_of_usage}");
 }
@@ -27,7 +27,7 @@ fn run() -> usize {
     usage();
     return 0;
   }
-  let path: String = match args.free_from_str() {
+  let root_dir: String = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
       println!("error[1997]: {e}");
@@ -35,13 +35,15 @@ fn run() -> usize {
     }
   };
   let fs = paths::RealFileSystem::default();
-  let mut root = match analysis::input::Root::from_path(&fs, std::path::Path::new(path.as_str())) {
+  let root_path = std::path::Path::new(root_dir.as_str());
+  let root_path = match fs.canonicalize(root_path) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(e);
+      handle_input_error(analysis::input::InputError::from_io(root_path.to_owned(), e));
       return 1;
     }
   };
+  let mut root = analysis::input::Root::from_canonical_dir(root_path);
   let inp = match analysis::input::Input::new(&fs, &mut root) {
     Ok(x) => x,
     Err(e) => {
