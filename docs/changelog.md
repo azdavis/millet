@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.3.11
 
 - Add an error code for no workspace root.
 - Support `group(-)` CM exports.
