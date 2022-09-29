@@ -11,7 +11,6 @@ use util::{
   ErrorSource, GetInputErrorKind, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile,
 };
 
-pub use root::Root;
 pub use util::InputError;
 
 /// The input to analysis.
@@ -27,7 +26,7 @@ pub struct Input {
 
 impl Input {
   /// Get input anchored at the root.
-  pub fn new<F>(fs: &F, root: &mut Root) -> Result<Self>
+  pub fn new<F>(fs: &F, root: &mut paths::Root) -> Result<Self>
   where
     F: paths::FileSystem,
   {
@@ -37,14 +36,7 @@ impl Input {
     let groups = match root_group.kind {
       GroupPathKind::Cm => {
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
-        lower_cm::get(
-          root.as_mut_paths(),
-          fs,
-          &root_group.path_vars,
-          &mut sources,
-          &mut cm_files,
-          init,
-        )?;
+        lower_cm::get(root, fs, &root_group.path_vars, &mut sources, &mut cm_files, init)?;
         cm_files
           .into_iter()
           .map(|(path, cm_file)| {
@@ -69,7 +61,7 @@ impl Input {
           if groups.contains_key(&cur.path) {
             continue;
           }
-          let group_file = StartedGroupFile::new(root.as_mut_paths(), cur, fs)?;
+          let group_file = StartedGroupFile::new(root, cur, fs)?;
           let group_path = group_file.path.as_path();
           let group_parent = group_path.parent().expect("path from get_path has no parent");
           let syntax_dec = mlb_syntax::get(group_file.contents.as_str(), &root_group.path_vars)
@@ -83,7 +75,7 @@ impl Input {
             parent: group_parent,
             pos_db: &group_file.pos_db,
             fs,
-            root: root.as_mut_paths(),
+            root,
             sources: &mut sources,
             stack: &mut stack,
             path_id: cur.path,
@@ -98,7 +90,7 @@ impl Input {
     if let Err(err) = topo::check(bas_decs) {
       return Err(InputError {
         source: ErrorSource::default(),
-        path: root.as_paths().get_path(err.witness()).as_path().to_owned(),
+        path: root.get_path(err.witness()).as_path().to_owned(),
         kind: GetInputErrorKind::Cycle,
       });
     }

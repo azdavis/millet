@@ -43,7 +43,7 @@ fn run() -> usize {
       return 1;
     }
   };
-  let mut root = analysis::input::Root::from_canonical_dir(root_path);
+  let mut root = paths::Root::new(root_path);
   let inp = match analysis::input::Input::new(&fs, &mut root) {
     Ok(x) => x,
     Err(e) => {
@@ -56,7 +56,7 @@ fn run() -> usize {
   let num_errors: usize = got.iter().map(|(_, errors)| errors.len()).sum();
   for (path, errors) in got {
     for e in errors {
-      let path = root.as_paths().get_rel_path(path).display();
+      let path = root.get_rel_path(path).display();
       println!("{}:{}: error[{}]: {}", path, e.range.start, e.code, e.message);
     }
   }

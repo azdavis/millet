@@ -23,7 +23,7 @@ const MAX_FILES_WITH_ERRORS: usize = 20;
 const LEARN_MORE: &str = "Learn more";
 
 struct Root {
-  input: analysis::input::Root,
+  paths_root: paths::Root,
   has_diagnostics: FxHashSet<Url>,
 }
 
@@ -58,7 +58,7 @@ impl State {
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
       root: root.as_mut().ok().and_then(Option::take).map(|root_path| Root {
-        input: analysis::input::Root::from_canonical_dir(root_path),
+        paths_root: paths::Root::new(root_path),
         has_diagnostics: FxHashSet::default(),
       }),
       sender,
@@ -83,7 +83,7 @@ impl State {
             // allowed" at time of writing
             glob_pattern: format!(
               "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
-              root.input.as_paths().as_path().display()
+              root.paths_root.as_path().display()
             ),
             kind: None,
           }];
@@ -381,7 +381,7 @@ impl State {
   ) -> bool {
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let input = elapsed::log("Input::new", || {
-      analysis::input::Input::new(&self.file_system, &mut root.input)
+      analysis::input::Input::new(&self.file_system, &mut root.paths_root)
     });
     let mut input = match input {
       Ok(x) => x,
@@ -413,7 +413,7 @@ impl State {
     }
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
     for (path_id, errors) in got_many {
-      let path = root.input.as_paths().get_path(path_id);
+      let path = root.paths_root.get_path(path_id);
       let url = match file_url(path.as_path()) {
         Ok(x) => x,
         Err(e) => {
@@ -550,7 +550,7 @@ fn lsp_location(
   root: &Root,
   range: paths::WithPath<text_pos::Range>,
 ) -> Option<lsp_types::Location> {
-  let uri = match file_url(root.input.as_paths().get_path(range.path).as_path()) {
+  let uri = match file_url(root.paths_root.get_path(range.path).as_path()) {
     Ok(x) => x,
     Err(e) => {
       log::error!("couldn't get path as a file url: {e:#}");
@@ -572,7 +572,7 @@ fn url_to_path_id<F>(fs: &F, root: &mut Root, url: &Url) -> Result<paths::PathId
 where
   F: paths::FileSystem,
 {
-  root.input.as_mut_paths().get_id(&canonical_path_buf(fs, url)?).with_context(|| "not in root")
+  root.paths_root.get_id(&canonical_path_buf(fs, url)?).with_context(|| "not in root")
 }
 
 fn text_doc_pos_params<F>(
