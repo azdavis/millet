@@ -58,3 +58,17 @@ fn empty_var() {
 fn absolute() {
   check("/foo/$BAR/quz.sml", &[("BAR", "hi")], &["/", "foo", "hi", "quz.sml"]);
 }
+
+#[test]
+fn var_contains_slashes() {
+  check("foo/$bar/quz.cm", &[("bar", "a/b/c")], &["foo", "a", "b", "c", "quz.cm"]);
+}
+
+#[test]
+fn absolute_var_start() {
+  check(
+    "$SMLNJ-LIB/basis.cm",
+    &[("SMLNJ-LIB", "/usr/local/smlnj")],
+    &["/", "usr", "local", "smlnj", "basis.cm"],
+  );
+}
