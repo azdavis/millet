@@ -7,7 +7,7 @@ use crate::input::util::{
 };
 use group_path::GroupPath;
 use paths::PathId;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// The root, in which every path is contained.
 #[derive(Debug)]
@@ -63,68 +63,17 @@ impl RootGroupPath {
   {
     let mut root_group_source = ErrorSource::default();
     let config_path = root.paths.as_path().join(config::FILE_NAME);
-    let mut path_vars = paths::slash_var_path::Env::default();
-    if let Ok(contents) = fs.read_to_string(&config_path) {
-      let config: config::Root = match toml::from_str(&contents) {
-        Ok(x) => x,
-        Err(e) => {
-          return Err(InputError {
-            source: ErrorSource::default(),
-            path: config_path,
-            kind: GetInputErrorKind::CouldNotParseConfig(e),
-          })
+    let path_vars = match fs.read_to_string(&config_path) {
+      Ok(contents) => {
+        let config = Config::new(fs, root, config_path, contents.as_str())?;
+        if let Some(path) = config.root_group {
+          root.group_path = Some(path);
+          root_group_source.path = Some(config.path);
         }
-      };
-      if config.version != 1 {
-        return Err(InputError {
-          source: ErrorSource::default(),
-          path: config_path,
-          kind: GetInputErrorKind::InvalidConfigVersion(config.version),
-        });
+        config.path_vars
       }
-      if let Some(ws) = config.workspace {
-        let has_members = ws.members.is_some();
-        let is_leaf = ws.root.is_some() || ws.path_vars.is_some();
-        if has_members && is_leaf {
-          return Err(InputError {
-            source: ErrorSource::default(),
-            path: config_path,
-            kind: GetInputErrorKind::HasMembersButAlsoRootOrPathVars,
-          });
-        }
-        if let Some(ws_path_vars) = ws.path_vars {
-          for (key, val) in ws_path_vars {
-            match val {
-              config::PathVar::Value(val) => {
-                path_vars.insert(key, val);
-              }
-              config::PathVar::Path(p) => {
-                let val: str_util::SmolStr =
-                  root.paths.as_path().join(p.as_str()).to_string_lossy().into();
-                path_vars.insert(key, val);
-              }
-            }
-          }
-        }
-        // try to get from the config.
-        if let (None, Some(path)) = (&root.group_path, ws.root) {
-          let path = root.paths.as_path().join(path.as_str());
-          match GroupPath::new(fs, path.clone()) {
-            Some(path) => {
-              root_group_source.path = Some(config_path);
-              root.group_path = Some(path);
-            }
-            None => {
-              return Err(InputError {
-                source: ErrorSource { path: Some(config_path), range: None },
-                path,
-                kind: GetInputErrorKind::NotGroup,
-              })
-            }
-          }
-        }
-      }
-    }
+      Err(_) => paths::slash_var_path::Env::default(),
+    };
     // if not, try to get one from the root dir.
     if root.group_path.is_none() {
       let dir_entries = fs.read_dir(root.paths.as_path()).map_err(|e| InputError {
@@ -157,5 +106,85 @@ impl RootGroupPath {
       kind: root_group_path.kind(),
       path_vars,
     })
+  }
+}
+
+struct Config {
+  path: PathBuf,
+  path_vars: paths::slash_var_path::Env,
+  root_group: Option<GroupPath>,
+}
+
+impl Config {
+  fn new<F>(fs: &F, root: &Root, config_path: PathBuf, contents: &str) -> Result<Self>
+  where
+    F: paths::FileSystem,
+  {
+    let mut ret = Self {
+      path: config_path,
+      path_vars: paths::slash_var_path::Env::default(),
+      root_group: None,
+    };
+    let parsed: config::Root = match toml::from_str(contents) {
+      Ok(x) => x,
+      Err(e) => {
+        return Err(InputError {
+          source: ErrorSource::default(),
+          path: ret.path,
+          kind: GetInputErrorKind::CouldNotParseConfig(e),
+        })
+      }
+    };
+    if parsed.version != 1 {
+      return Err(InputError {
+        source: ErrorSource::default(),
+        path: ret.path,
+        kind: GetInputErrorKind::InvalidConfigVersion(parsed.version),
+      });
+    }
+    let ws = match parsed.workspace {
+      Some(x) => x,
+      None => return Ok(ret),
+    };
+    if let Some(members) = ws.members {
+      if ws.root.is_some() || ws.path_vars.is_some() {
+        return Err(InputError {
+          source: ErrorSource::default(),
+          path: ret.path,
+          kind: GetInputErrorKind::HasMembersButAlsoRootOrPathVars,
+        });
+      }
+      // TODO
+      log::error!("unsupported use of members: {members:?}");
+    }
+    if let Some(ws_path_vars) = ws.path_vars {
+      for (key, val) in ws_path_vars {
+        match val {
+          config::PathVar::Value(val) => {
+            ret.path_vars.insert(key, val);
+          }
+          config::PathVar::Path(p) => {
+            let val: str_util::SmolStr =
+              root.paths.as_path().join(p.as_str()).to_string_lossy().into();
+            ret.path_vars.insert(key, val);
+          }
+        }
+      }
+    }
+    // try to get from the config.
+    if let (None, Some(path)) = (&root.group_path, ws.root) {
+      let path = root.paths.as_path().join(path.as_str());
+      match GroupPath::new(fs, path.clone()) {
+        Some(path) => ret.root_group = Some(path),
+        None => {
+          return Err(InputError {
+            source: ErrorSource { path: Some(ret.path), range: None },
+            path,
+            kind: GetInputErrorKind::NotGroup,
+          })
+        }
+      }
+    }
+    Ok(ret)
   }
 }
