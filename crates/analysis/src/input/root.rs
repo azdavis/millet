@@ -13,13 +13,12 @@ use std::path::PathBuf;
 #[derive(Debug)]
 pub struct Root {
   paths: paths::Root,
-  group_path: Option<GroupPath>,
 }
 
 impl Root {
   /// Get this from a canonical root dir.
   pub fn from_canonical_dir(path: paths::CanonicalPathBuf) -> Self {
-    Self { paths: paths::Root::new(path), group_path: None }
+    Self { paths: paths::Root::new(path) }
   }
 
   /// Returns this as a paths root.
@@ -45,23 +44,24 @@ impl RootGroupPath {
     F: paths::FileSystem,
   {
     let mut root_group_source = ErrorSource::default();
+    let mut root_group_path = None::<GroupPath>;
     let config_path = root.paths.as_path().join(config::FILE_NAME);
     let path_vars = match fs.read_to_string(&config_path) {
       Ok(contents) => {
         let config = Config::new(fs, root, config_path, contents.as_str())?;
         if let Some(path) = config.root_group {
-          root.group_path = Some(path);
+          root_group_path = Some(path);
           root_group_source.path = Some(config.path);
         }
         config.path_vars
       }
       Err(_) => paths::slash_var_path::Env::default(),
     };
-    if root.group_path.is_none() {
+    if root_group_path.is_none() {
       let dir_entries = read_dir(fs, ErrorSource::default(), root.paths.as_path())?;
       for entry in dir_entries {
         if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
-          match &root.group_path {
+          match &root_group_path {
             Some(rgp) => {
               return Err(InputError {
                 kind: GetInputErrorKind::MultipleRoots(rgp.as_path().to_owned(), entry.clone()),
@@ -69,12 +69,12 @@ impl RootGroupPath {
                 path: entry,
               })
             }
-            None => root.group_path = Some(group_path),
+            None => root_group_path = Some(group_path),
           }
         }
       }
     }
-    let root_group_path = root.group_path.as_ref().ok_or_else(|| InputError {
+    let root_group_path = root_group_path.as_ref().ok_or_else(|| InputError {
       source: ErrorSource::default(),
       path: root.paths.as_path().to_owned(),
       kind: GetInputErrorKind::NoRoot,
@@ -149,7 +149,7 @@ impl Config {
         }
       }
     }
-    if let (None, Some(path)) = (&root.group_path, ws.root) {
+    if let Some(path) = ws.root {
       let path = root.paths.as_path().join(path.as_str());
       match GroupPath::new(fs, path.clone()) {
         Some(path) => ret.root_group = Some(path),
