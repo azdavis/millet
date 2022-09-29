@@ -76,7 +76,6 @@ impl RootGroupPath {
       }
       Err(_) => paths::slash_var_path::Env::default(),
     };
-    // if not, try to get one from the root dir.
     if root.group_path.is_none() {
       let dir_entries = read_dir(fs, ErrorSource::default(), root.paths.as_path())?;
       for entry in dir_entries {
@@ -169,7 +168,6 @@ impl Config {
         }
       }
     }
-    // try to get from the config.
     if let (None, Some(path)) = (&root.group_path, ws.root) {
       let path = root.paths.as_path().join(path.as_str());
       match GroupPath::new(fs, path.clone()) {
