@@ -1,4 +1,4 @@
-//! Deal with roots.
+//! Get the root group.
 
 use crate::input::util::{
   get_path_id, read_dir, ErrorSource, GetInputErrorKind, GroupPathKind, InputError, Result,
@@ -6,13 +6,13 @@ use crate::input::util::{
 use paths::PathId;
 use std::path::PathBuf;
 
-pub(crate) struct Root {
+pub(crate) struct RootGroup {
   pub(crate) path: PathId,
   pub(crate) kind: GroupPathKind,
   pub(crate) path_vars: paths::slash_var_path::Env,
 }
 
-impl Root {
+impl RootGroup {
   pub(crate) fn new<F>(fs: &F, root: &mut paths::Root) -> Result<Self>
   where
     F: paths::FileSystem,

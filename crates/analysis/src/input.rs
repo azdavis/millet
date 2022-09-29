@@ -2,7 +2,7 @@
 
 mod lower_cm;
 mod lower_mlb;
-mod root;
+mod root_group;
 mod topo;
 mod util;
 
@@ -30,7 +30,7 @@ impl Input {
   where
     F: paths::FileSystem,
   {
-    let root_group = root::Root::new(fs, root)?;
+    let root_group = root_group::RootGroup::new(fs, root)?;
     let mut sources = PathMap::<String>::default();
     let mut groups = PathMap::<Group>::default();
     let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
