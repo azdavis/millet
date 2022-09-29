@@ -73,15 +73,14 @@ impl Analysis {
     self.syms = res.syms;
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
-        let group = input.groups.get(&err.path()).expect("no such group");
-        Some((
-          err.path(),
-          vec![Error {
-            range: group.pos_db.range(err.range())?,
-            message: err.to_string(),
-            code: err.to_code(),
-          }],
-        ))
+        let path = err.path();
+        let group = input.groups.get(&path).expect("no such group");
+        let err = Error {
+          range: group.pos_db.range(err.range())?,
+          message: err.to_string(),
+          code: err.to_code(),
+        };
+        Some((path, vec![err]))
       }))
       .chain(
         self
