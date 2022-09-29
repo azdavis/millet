@@ -26,10 +26,11 @@ impl Root {
     let path = canonicalize(fs, path, &ErrorSource::default())?;
     let (root_path, group_path) = match GroupPath::new(fs, path.clone().into_path_buf()) {
       None => (path, None),
-      Some(path) => {
-        let parent = path.as_path().parent().expect("no parent");
-        let rp = fs.canonicalize(parent).expect("canonicalize parent of canonical path");
-        (rp, Some(path))
+      Some(group_path) => {
+        let parent = group_path.as_path().parent().expect("group path has no parent");
+        let rp =
+          canonicalize(fs, parent, &ErrorSource { path: Some(path.into_path_buf()), range: None })?;
+        (rp, Some(group_path))
       }
     };
     Ok(Self { paths: paths::Root::new(root_path), group_path })
