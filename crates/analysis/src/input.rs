@@ -31,31 +31,28 @@ impl Input {
     F: paths::FileSystem,
   {
     let root_group = root::Root::new(fs, root)?;
-    let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
     let mut sources = PathMap::<String>::default();
-    let groups = match root_group.kind {
+    let mut groups = PathMap::<Group>::default();
+    let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
+    match root_group.kind {
       GroupPathKind::Cm => {
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
         lower_cm::get(root, fs, &root_group.path_vars, &mut sources, &mut cm_files, init)?;
-        cm_files
-          .into_iter()
-          .map(|(path, cm_file)| {
-            let exports: Vec<_> = cm_file
-              .exports
-              .into_iter()
-              .map(|ex| mlb_hir::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
-              .collect();
-            let bas_dec = mlb_hir::BasDec::Local(
-              mlb_hir::BasDec::seq(cm_file.paths).into(),
-              mlb_hir::BasDec::seq(exports).into(),
-            );
-            let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
-            (path, group)
-          })
-          .collect()
+        groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
+          let exports: Vec<_> = cm_file
+            .exports
+            .into_iter()
+            .map(|ex| mlb_hir::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
+            .collect();
+          let bas_dec = mlb_hir::BasDec::Local(
+            mlb_hir::BasDec::seq(cm_file.paths).into(),
+            mlb_hir::BasDec::seq(exports).into(),
+          );
+          let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
+          (path, group)
+        }));
       }
       GroupPathKind::Mlb => {
-        let mut groups = PathMap::<Group>::default();
         let mut stack = vec![init];
         while let Some(cur) = stack.pop() {
           if groups.contains_key(&cur.path) {
@@ -83,7 +80,6 @@ impl Input {
           let bas_dec = lower_mlb::get_bas_dec(&mut cx, syntax_dec)?;
           groups.insert(cur.path, Group { bas_dec, pos_db: group_file.pos_db });
         }
-        groups
       }
     };
     let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
