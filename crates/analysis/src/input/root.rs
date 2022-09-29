@@ -18,7 +18,7 @@ impl Root {
     F: paths::FileSystem,
   {
     let mut root_group_source = ErrorSource::default();
-    let mut root_group_path = None::<GroupPath>;
+    let mut root_group_path = None::<GroupPathBuf>;
     let config_path = root.as_path().join(config::FILE_NAME);
     let path_vars = match fs.read_to_string(&config_path) {
       Ok(contents) => {
@@ -34,7 +34,7 @@ impl Root {
     if root_group_path.is_none() {
       let dir_entries = read_dir(fs, ErrorSource::default(), root.as_path())?;
       for entry in dir_entries {
-        if let Some(group_path) = GroupPath::new(fs, entry.clone()) {
+        if let Some(group_path) = GroupPathBuf::new(fs, entry.clone()) {
           match &root_group_path {
             Some(rgp) => {
               return Err(InputError {
@@ -64,7 +64,7 @@ impl Root {
 struct Config {
   path: PathBuf,
   path_vars: paths::slash_var_path::Env,
-  root_group: Option<GroupPath>,
+  root_group: Option<GroupPathBuf>,
 }
 
 impl Config {
@@ -124,7 +124,7 @@ impl Config {
     }
     if let Some(path) = ws.root {
       let path = root.as_path().join(path.as_str());
-      match GroupPath::new(fs, path.clone()) {
+      match GroupPathBuf::new(fs, path.clone()) {
         Some(path) => ret.root_group = Some(path),
         None => {
           return Err(InputError {
@@ -140,13 +140,13 @@ impl Config {
 }
 
 #[derive(Debug)]
-struct GroupPath {
+struct GroupPathBuf {
   kind: GroupPathKind,
   path: PathBuf,
 }
 
-impl GroupPath {
-  fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPath>
+impl GroupPathBuf {
+  fn new<F>(fs: &F, path: PathBuf) -> Option<GroupPathBuf>
   where
     F: paths::FileSystem,
   {
@@ -158,6 +158,6 @@ impl GroupPath {
       "mlb" => GroupPathKind::Mlb,
       _ => return None,
     };
-    Some(GroupPath { path, kind })
+    Some(GroupPathBuf { path, kind })
   }
 }
