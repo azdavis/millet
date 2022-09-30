@@ -1,4 +1,4 @@
-use crate::exp::exp;
+use crate::exp::{exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
@@ -197,6 +197,8 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
       true
     });
     p.exit(en, SK::FunctorDec);
+  } else if exp_opt(p) {
+    p.exit(en, SK::ExpDec);
   } else {
     p.abandon(en);
     return false;

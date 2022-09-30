@@ -8,8 +8,14 @@ use crate::util::{
 };
 use sml_syntax::SyntaxKind as SK;
 
+/// if no parse, emit error
 pub(crate) fn exp(p: &mut Parser<'_>) -> bool {
   must(p, |p| exp_prec(p, ExpPrec::Min), Expected::Exp)
+}
+
+/// if no parse, do nothing
+pub(crate) fn exp_opt(p: &mut Parser<'_>) -> bool {
+  exp_prec(p, ExpPrec::Min).is_some()
 }
 
 fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {

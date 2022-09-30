@@ -4,7 +4,51 @@ use crate::util::{Cx, ErrorKind};
 use crate::{exp, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-pub(crate) fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
+pub(crate) fn get_top_dec(cx: &mut Cx, top_dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
+  let top_dec = top_dec?;
+  let mut top_decs: Vec<_> =
+    top_dec.dec_in_seqs().map(|x| get_top_dec_one(cx, x.dec_one()?)).collect();
+  if top_decs.len() == 1 {
+    top_decs.pop().unwrap()
+  } else {
+    cx.str_dec(sml_hir::StrDec::Seq(top_decs), SyntaxNodePtr::new(top_dec.syntax()))
+  }
+}
+
+fn get_top_dec_one(cx: &mut Cx, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
+  match top_dec {
+    ast::DecOne::ExpDec(top_dec) => {
+      let ptr = SyntaxNodePtr::new(top_dec.syntax());
+      let dec = sml_hir::Dec::Val(
+        Vec::new(),
+        vec![sml_hir::ValBind {
+          rec: false,
+          // the pat should technically be the variable pattern `it`, but allowing that would
+          // require threading through the state of "are we actually allowed to re-bind the special
+          // `it` variable", which is possible but annoying.
+          //
+          // I also don't really want to encourage actually using `it` in source files. like, it's
+          // technically allowed to do
+          //
+          // ```sml
+          // 2;
+          // val x = it + it
+          // ```
+          //
+          // to have `4` be bound to `x`, but that's weird to do _in a source file_. at a REPL it's
+          // fine, but millet doesn't check a REPL, it checks source files.
+          pat: cx.pat(sml_hir::Pat::Wild, ptr.clone()),
+          exp: exp::get(cx, top_dec.exp()),
+        }],
+      );
+      let dec = cx.dec(dec, ptr.clone());
+      cx.str_dec(sml_hir::StrDec::Dec(dec), ptr)
+    }
+    _ => get_str_dec_one(cx, top_dec),
+  }
+}
+
+fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
   let str_dec = str_dec?;
   let mut str_decs: Vec<_> =
     str_dec.dec_in_seqs().map(|x| get_str_dec_one(cx, x.dec_one()?)).collect();
@@ -466,6 +510,10 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
     }
     ast::DecOne::StructureDec(_) | ast::DecOne::SignatureDec(_) | ast::DecOne::FunctorDec(_) => {
       cx.err(dec.syntax().text_range(), ErrorKind::DecNotAllowedHere);
+      return None;
+    }
+    ast::DecOne::ExpDec(_) => {
+      cx.err(dec.syntax().text_range(), ErrorKind::ExpNotAllowedHere);
       return None;
     }
   };

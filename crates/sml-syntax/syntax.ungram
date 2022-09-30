@@ -23,6 +23,9 @@ DecOne =
 | StructureDec
 | SignatureDec
 | FunctorDec
+// expressions are not actually decs, but we can parse them, accept them at only the top level, and
+// reject them everywhere else with a good error mesage.
+| ExpDec
 
 HoleDec = '...'
 ValDec = 'val' TyVarSeq ValBind*
@@ -41,6 +44,7 @@ LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
 StructureDec = 'structure' StrBind*
 SignatureDec = 'signature' SigBind*
 FunctorDec = 'functor' FunctorBind*
+ExpDec = Exp
 
 ValBind = 'rec'? Pat '=' Exp 'and'?
 FunBind = FunBindCase* 'and'?

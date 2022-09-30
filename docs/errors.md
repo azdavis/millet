@@ -672,6 +672,112 @@ fun bigAnd bs = List.foldl (op &&) true bs
 fun bigOr bs = List.foldl (op ||) false bs
 ```
 
+## 4012
+
+An expression was found where a declaration was expected.
+
+In many other programming languages, constructs like `if` and `case` (often called `switch`) are statements. SML does not have statements, and `if` and `case` are instead expressions.
+
+In e.g. Python, you might write something like this:
+
+```py
+def foo(x):
+    y = 3
+    if x == 4:
+        y = 5
+    return y + x
+```
+
+An attempt to translate this literally into SML will emit an error:
+
+```sml
+(* error *)
+fun foo x =
+  let
+    val y = 3
+    if x = 4 then
+      y = 5
+    else
+      ()
+  in
+    y + x
+  end
+```
+
+Instead, we can define `y` as the result of evaluating an `if` expression.
+
+```sml
+(* ok *)
+fun foo x =
+  let
+    val y =
+      if x = 4 then
+        5
+      else
+        3
+  in
+    y + x
+  end
+```
+
+In fact, you can do this in Python as well.
+
+```py
+def foo(x):
+    y = 3 if x == 4 else 5
+    return y + x
+```
+
+This error may also arise when the intent is to generate a side-effect. For instance, in Python, you can write:
+
+```py
+def bar(x):
+    y = x + 1
+    print(y)
+    return y
+```
+
+Again, in SML, an attempt to translate this literally may result in an invalid program, even when adding the necessary type conversion and newline for SML's `print`:
+
+```sml
+(* error *)
+fun bar x =
+  let
+    val y = x + 1
+    print (Int.toString y ^ "\n")
+  in
+    y
+  end
+```
+
+Here, the solution could either be to:
+
+- Use a val binding in the `let ... in`:
+
+  ```sml
+  (* ok *)
+  fun bar x =
+    let
+      val y = x + 1
+      val () = print (Int.toString y ^ "\n")
+    in
+      y
+    end
+  ```
+
+- Use an expression sequence with `;` in the `in ... end`:
+
+  ```sml
+  (* ok *)
+  fun bar x =
+    let
+      val y = x + 1
+    in
+      print (Int.toString y ^ "\n");
+      y
+    end
+  ```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

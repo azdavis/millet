@@ -690,7 +690,7 @@ val _ = op andalso
 
 #[test]
 fn top_exp() {
-  fail(
+  check(
     r#"
 fun foo () = ();
 foo ();
@@ -705,7 +705,7 @@ val z = 3 + 4
 
 #[test]
 fn invalid_exp_expected_dec() {
-  fail(
+  check(
     r#"
 fun foo x =
   let
