@@ -48,11 +48,16 @@ impl RootGroup {
         }
       }
     }
-    let root_group_path = root_group_path.as_ref().ok_or_else(|| InputError {
-      source: ErrorSource::default(),
-      path: root.as_path().to_owned(),
-      kind: GetInputErrorKind::NoRoot,
-    })?;
+    let root_group_path = match &root_group_path {
+      Some(x) => x,
+      None => {
+        return Err(InputError {
+          source: ErrorSource::default(),
+          path: root.as_path().to_owned(),
+          kind: GetInputErrorKind::NoRoot,
+        })
+      }
+    };
     Ok(Self {
       path: get_path_id(fs, root, root_group_source, &root_group_path.path)?,
       kind: root_group_path.kind,
