@@ -676,7 +676,7 @@ fun bigOr bs = List.foldl (op ||) false bs
 
 An expression was found where a declaration was expected.
 
-In many other programming languages, constructs like `if` and `case` (often called `switch`) are statements. SML does not have statements, and `if` and `case` are instead expressions.
+In many other programming languages, constructs similar to `if` and `case` (like `switch`) are statements. SML does not have statements, and `if` and `case` are instead expressions.
 
 In e.g. Python, you might write something like this:
 
