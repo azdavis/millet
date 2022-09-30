@@ -25,6 +25,7 @@ const LEARN_MORE: &str = "Learn more";
 struct Root {
   paths_root: paths::Root,
   has_diagnostics: FxHashSet<Url>,
+  registered_for_watched_files: bool,
 }
 
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
@@ -60,6 +61,7 @@ impl State {
       root: root.as_mut().ok().and_then(Option::take).map(|root_path| Root {
         paths_root: paths::Root::new(root_path),
         has_diagnostics: FxHashSet::default(),
+        registered_for_watched_files: false,
       }),
       sender,
       req_queue: ReqQueue::default(),
@@ -77,7 +79,7 @@ impl State {
       .unwrap_or_default();
     if dynamic_registration {
       let mut registrations = match ret.root.take() {
-        Some(root) => {
+        Some(mut root) => {
           let watchers = vec![lsp_types::FileSystemWatcher {
             // not sure if possible to only listen to millet.toml. "nested alternate groups are not
             // allowed" at time of writing
@@ -87,6 +89,7 @@ impl State {
             ),
             kind: None,
           }];
+          root.registered_for_watched_files = true;
           ret.publish_diagnostics(root, None);
           vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
@@ -120,6 +123,12 @@ impl State {
         lsp_types::RegistrationParams { registrations },
         None,
       );
+    }
+    if ret.root.as_ref().map_or(true, |r| !r.registered_for_watched_files) {
+      log::warn!("millet will not necessarily receive notifications when files change on-disk.");
+      log::warn!("this means the internal state of millet can get out of sync with what is");
+      log::warn!("actually on disk, e.g. when using `git checkout` or other means of modifying");
+      log::warn!("files not via the language client (i.e. the editor millet is attached to).");
     }
     ret
   }
@@ -335,33 +344,37 @@ impl State {
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
-      if self.root.is_some() {
-        bail!("can't handle DidOpenTextDocument with root");
+      if self.root.is_none() {
+        let url = params.text_document.uri;
+        let text = params.text_document.text;
+        self.publish_diagnostics_one(url, &text);
       }
-      let url = params.text_document.uri;
-      let text = params.text_document.text;
-      self.publish_diagnostics_one(url, &text);
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
-      if self.root.is_some() {
-        bail!("can't handle DidSaveTextDocument with root");
-      }
-      let url = params.text_document.uri;
-      match params.text {
-        Some(text) => {
-          self.publish_diagnostics_one(url, &text);
-          Ok(())
+      match self.root.take() {
+        None => match params.text {
+          Some(text) => {
+            let url = params.text_document.uri;
+            self.publish_diagnostics_one(url, &text);
+          }
+          None => bail!("no text for DidSaveTextDocument"),
+        },
+        Some(root) => {
+          if root.registered_for_watched_files {
+            log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
+          } else {
+            self.publish_diagnostics(root, None);
+          }
         }
-        None => bail!("no text for DidSaveTextDocument"),
       }
+      Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
-      if self.root.is_some() {
-        bail!("can't handle DidCloseTextDocument with root");
+      if self.root.is_none() {
+        let url = params.text_document.uri;
+        self.send_diagnostics(url, Vec::new());
       }
-      let url = params.text_document.uri;
-      self.send_diagnostics(url, Vec::new());
       Ok(())
     })?;
     ControlFlow::Continue(n)
@@ -374,6 +387,7 @@ impl State {
 
   // diagnostics //
 
+  /// also gets input from the filesystem and puts the root back onto self
   fn publish_diagnostics(
     &mut self,
     mut root: Root,
