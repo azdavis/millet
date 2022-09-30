@@ -218,6 +218,7 @@ pub(crate) enum Expected {
   Ty,
   LRoundExpTail,
   Item,
+  NameOrInt,
   Kind(SK),
 }
 
@@ -233,6 +234,7 @@ impl fmt::Display for Expected {
       Expected::Ty => f.write_str("a type"),
       Expected::LRoundExpTail => f.write_str("`)`, `,`, or `;`"),
       Expected::Item => f.write_str("a top-level item"),
+      Expected::NameOrInt => f.write_str("a name or integer literal"),
       Expected::Kind(k) => k.fmt(f),
     }
   }

@@ -408,6 +408,8 @@ fn fixity(p: &mut Parser<'_>) -> u16 {
       }
     }
     p.bump();
+  } else if !name_star_eq(p) {
+    p.error(ErrorKind::Expected(Expected::NameOrInt));
   }
   ret
 }
@@ -416,14 +418,9 @@ fn names_star_eq<'a, F>(p: &mut Parser<'a>, mut f: F)
 where
   F: FnMut(&mut Parser<'a>, &'a str),
 {
-  let mut got = false;
   while name_star_eq(p) {
-    got = true;
     let text = p.bump().text;
     f(p, text);
-  }
-  if !got {
-    p.error(ErrorKind::Expected(Expected::Kind(SK::Name)));
   }
 }
 

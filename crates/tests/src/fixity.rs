@@ -26,7 +26,7 @@ fn real() {
   check(
     r#"
 infix 1.1 bad
-(**   ^^^ expected a name *)
+(**   ^^^ expected a name or integer literal *)
 "#,
   );
 }
@@ -36,7 +36,7 @@ fn word() {
   check(
     r#"
 infix 0w1 bad
-(**   ^^^ expected a name *)
+(**   ^^^ expected a name or integer literal *)
 "#,
   );
 }
