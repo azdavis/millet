@@ -504,16 +504,17 @@ where
   F: paths::FileSystem,
 {
   if url.scheme() != "file" {
-    bail!("not a file url")
+    bail!("not a file url: {url}")
   }
   match url.to_file_path() {
     Ok(pb) => Ok(fs.canonicalize(pb.as_path())?),
-    Err(()) => bail!("couldn't make a URL into a file path"),
+    Err(()) => bail!("couldn't make a URL into a file path: {url}"),
   }
 }
 
 fn file_url(path: &std::path::Path) -> Result<Url> {
-  Url::parse(&format!("file://{}", path.display())).with_context(|| "couldn't parse URL")
+  Url::parse(&format!("file://{}", path.display()))
+    .with_context(|| format!("couldn't parse path into a URL: {path:?}"))
 }
 
 fn diagnostics(errors: Vec<analysis::Error>) -> Vec<lsp_types::Diagnostic> {
