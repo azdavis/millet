@@ -743,8 +743,8 @@ Again, in SML, an attempt to translate this literally may result in an invalid p
 (* error *)
 fun bar x =
   let
-    val y = x + 1
-    print (Int.toString y ^ "\n")
+    val y = x + 1;
+    print (Int.toString y ^ "\n");
   in
     y
   end
