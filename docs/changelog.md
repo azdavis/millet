@@ -13,11 +13,12 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.3.12
 
 - Allow top-level expressions.
 - Emit a better error when an expression is in an invalid position, like in `let ... in`.
 - Improve handling for language clients that do not support dynamic capability registration, by publishing diagnostics when open files are changed/saved.
+- Improve error for invalid fixity declarations.
 
 ## v0.3.11
 
