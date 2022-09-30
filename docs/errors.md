@@ -914,7 +914,7 @@ which has a distinct meaning from:
 functor Func (Param : SIG)
 ```
 
-Both forms are legal SML. The first form is syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of more "fundamental" syntax.
+Both forms are legal SML. The first form is syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of the second, more "fundamental" syntax.
 
 As an aside, another example of syntax sugar is how list literals like `[2, 4, 6]` "desugar" to usages of the list constructors `::` and `nil`, namely `2 :: 4 :: 6 :: nil`.
 
