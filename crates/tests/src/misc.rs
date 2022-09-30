@@ -687,3 +687,34 @@ val _ = op andalso
 "#,
   );
 }
+
+#[test]
+fn top_exp() {
+  fail(
+    r#"
+fun foo () = ();
+foo ();
+foo ();
+val x = foo ()
+val y = 1 + 2;
+foo ()
+val z = 3 + 4
+"#,
+  );
+}
+
+#[test]
+fn invalid_exp_expected_dec() {
+  fail(
+    r#"
+fun foo x =
+  let
+    val y = 3
+    if x = 4 then y = 5 else ()
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ expression not allowed here *)
+  in
+    y + x
+  end
+"#,
+  );
+}
