@@ -677,7 +677,10 @@ Select a field from a record.
 Tuples are record whose labels are numbers starting at 1, so these work with tuples too.
 
 ```sml
-val x : int = #2 (false, 5)
+val movie = { name = "Castle in the Sky", year = 1986 }
+val s : string = #name movie
+val tup = (false, 5)
+val n : int = #2 tup
 ```
 
 ## `(`
