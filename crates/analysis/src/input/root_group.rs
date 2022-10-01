@@ -68,8 +68,8 @@ impl RootGroup {
 
 struct Config {
   path: PathBuf,
-  path_vars: paths::slash_var_path::Env,
   root_group: Option<GroupPathBuf>,
+  path_vars: paths::slash_var_path::Env,
 }
 
 impl Config {
@@ -79,8 +79,8 @@ impl Config {
   {
     let mut ret = Self {
       path: config_path,
-      path_vars: paths::slash_var_path::Env::default(),
       root_group: None,
+      path_vars: paths::slash_var_path::Env::default(),
     };
     let parsed: config::Root = match toml::from_str(contents) {
       Ok(x) => x,
