@@ -42,11 +42,16 @@ where
   let group_file = StartedGroupFile::new(root, cur, fs)?;
   let group_path = group_file.path.as_path();
   let group_parent = group_path.parent().expect("path from get_path has no parent");
-  let cm = cm::get(group_file.contents.as_str(), path_vars).map_err(|e| InputError {
-    source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
-    path: group_path.to_owned(),
-    kind: GetInputErrorKind::Cm(e),
-  })?;
+  let cm = match cm::get(group_file.contents.as_str(), path_vars) {
+    Ok(x) => x,
+    Err(e) => {
+      return Err(InputError {
+        source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
+        path: group_path.to_owned(),
+        kind: GetInputErrorKind::Cm(e),
+      })
+    }
+  };
   let paths = cm
     .paths
     .into_iter()

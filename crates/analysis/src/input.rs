@@ -62,13 +62,19 @@ impl Input {
           let group_path = group_file.path.as_path();
           let group_parent = group_path.parent().expect("path from get_path has no parent");
           let syntax_dec =
-            mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars).map_err(
-              |e| InputError {
-                source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
-                path: group_path.to_owned(),
-                kind: GetInputErrorKind::Mlb(e),
-              },
-            )?;
+            match mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars) {
+              Ok(x) => x,
+              Err(e) => {
+                return Err(InputError {
+                  source: ErrorSource {
+                    path: None,
+                    range: group_file.pos_db.range(e.text_range()),
+                  },
+                  path: group_path.to_owned(),
+                  kind: GetInputErrorKind::Mlb(e),
+                });
+              }
+            };
           let mut cx = lower_mlb::MlbCx {
             path: group_path,
             parent: group_parent,
