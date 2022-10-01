@@ -37,7 +37,7 @@ impl Input {
     match root_group.kind {
       GroupPathKind::Cm => {
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
-        lower_cm::get(root, fs, &root_group.path_vars, &mut sources, &mut cm_files, init)?;
+        lower_cm::get(root, fs, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
         groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
           let exports: Vec<_> = cm_file
             .exports
@@ -61,12 +61,14 @@ impl Input {
           let group_file = StartedGroupFile::new(root, cur, fs)?;
           let group_path = group_file.path.as_path();
           let group_parent = group_path.parent().expect("path from get_path has no parent");
-          let syntax_dec = mlb_syntax::get(group_file.contents.as_str(), &root_group.path_vars)
-            .map_err(|e| InputError {
-              source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
-              path: group_path.to_owned(),
-              kind: GetInputErrorKind::Mlb(e),
-            })?;
+          let syntax_dec =
+            mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars).map_err(
+              |e| InputError {
+                source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
+                path: group_path.to_owned(),
+                kind: GetInputErrorKind::Mlb(e),
+              },
+            )?;
           let mut cx = lower_mlb::MlbCx {
             path: group_path,
             parent: group_parent,

@@ -9,7 +9,7 @@ use std::path::PathBuf;
 pub(crate) struct RootGroup {
   pub(crate) path: PathId,
   pub(crate) kind: GroupPathKind,
-  pub(crate) path_vars: paths::slash_var_path::Env,
+  pub(crate) config: Config,
 }
 
 impl RootGroup {
@@ -20,16 +20,16 @@ impl RootGroup {
     let mut root_group_source = ErrorSource::default();
     let mut root_group_path = None::<GroupPathBuf>;
     let config_path = root.as_path().join(config::FILE_NAME);
-    let path_vars = match fs.read_to_string(&config_path) {
+    let config = match fs.read_to_string(&config_path) {
       Ok(contents) => {
-        let config = Config::new(fs, root, config_path, contents.as_str())?;
-        if let Some(path) = config.root_group {
+        let cff = ConfigFromFile::new(fs, root, config_path, contents.as_str())?;
+        if let Some(path) = cff.root_group {
           root_group_path = Some(path);
-          root_group_source.path = Some(config.path);
+          root_group_source.path = Some(cff.path);
         }
-        config.path_vars
+        cff.config
       }
-      Err(_) => paths::slash_var_path::Env::default(),
+      Err(_) => Config::default(),
     };
     if root_group_path.is_none() {
       let dir_entries = read_dir(fs, ErrorSource::default(), root.as_path())?;
@@ -61,27 +61,28 @@ impl RootGroup {
     Ok(Self {
       path: get_path_id(fs, root, root_group_source, &root_group_path.path)?,
       kind: root_group_path.kind,
-      path_vars,
+      config,
     })
   }
 }
 
-struct Config {
-  path: PathBuf,
-  root_group: Option<GroupPathBuf>,
-  path_vars: paths::slash_var_path::Env,
+#[derive(Default)]
+pub(crate) struct Config {
+  pub(crate) path_vars: paths::slash_var_path::Env,
 }
 
-impl Config {
+struct ConfigFromFile {
+  path: PathBuf,
+  root_group: Option<GroupPathBuf>,
+  config: Config,
+}
+
+impl ConfigFromFile {
   fn new<F>(fs: &F, root: &paths::Root, config_path: PathBuf, contents: &str) -> Result<Self>
   where
     F: paths::FileSystem,
   {
-    let mut ret = Self {
-      path: config_path,
-      root_group: None,
-      path_vars: paths::slash_var_path::Env::default(),
-    };
+    let mut ret = Self { path: config_path, root_group: None, config: Config::default() };
     let parsed: config::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
@@ -118,11 +119,11 @@ impl Config {
       for (key, val) in ws_path_vars {
         match val {
           config::PathVar::Value(val) => {
-            ret.path_vars.insert(key, val);
+            ret.config.path_vars.insert(key, val);
           }
           config::PathVar::Path(p) => {
             let val: str_util::SmolStr = root.as_path().join(p.as_str()).to_string_lossy().into();
-            ret.path_vars.insert(key, val);
+            ret.config.path_vars.insert(key, val);
           }
         }
       }
