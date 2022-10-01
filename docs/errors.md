@@ -904,11 +904,15 @@ The fact that both the definition site and the corrected call site for `Func` ha
 
 The key is in the definition of `Func`. We use the syntax:
 
+<!-- @ignore -->
+
 ```sml
 functor Func (structure Param : SIG)
 ```
 
 which has a distinct meaning from:
+
+<!-- @ignore -->
 
 ```sml
 functor Func (Param : SIG)
@@ -919,6 +923,8 @@ Both forms are legal SML. The first form is syntax sugar. This means it is extra
 As an aside, another example of syntax sugar is how list literals like `[2, 4, 6]` "desugar" to usages of the list constructors `::` and `nil`, namely `2 :: 4 :: 6 :: nil`.
 
 In the example, the sugar is expanded in the following manner:
+
+<!-- @ignore -->
 
 ```sml
 (* original *)
@@ -938,6 +944,8 @@ Note the invalid SML syntax for the name of the functor argument `<<FuncArg>>`. 
 
 Similarly, once we modify the call site, we are using more syntax sugar, which also expands:
 
+<!-- @ignore -->
+
 ```sml
 (* original *)
 structure S = Func (structure Param = Arg)
@@ -947,6 +955,8 @@ structure S = Func (struct structure Param = Arg end)
 ```
 
 A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
+
+<!-- @ignore -->
 
 ```sml
 functor Func (Param : SIG) = struct ... end

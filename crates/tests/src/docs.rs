@@ -14,6 +14,7 @@ where
   options.insert(Options::ENABLE_TABLES);
   let parser = Parser::new_ext(&contents, options);
   let mut inside = false;
+  let mut ignore_next = false;
   let mut ac = String::new();
   for ev in parser {
     match ev {
@@ -24,14 +25,22 @@ where
       }
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
         if lang.as_ref() == SML {
-          f(ac.as_str());
+          if !ignore_next {
+            f(ac.as_str());
+          }
           ac.clear();
           inside = false;
+          ignore_next = false;
         }
       }
       Event::Text(s) => {
         if inside {
           ac.push_str(s.as_ref());
+        }
+      }
+      Event::Html(s) => {
+        if s.trim() == "<!-- @ignore -->" {
+          ignore_next = true;
         }
       }
       _ => {}
@@ -51,6 +60,8 @@ fn errors() {
       check_with_std_basis(s);
     } else if s.starts_with("(* error *)") {
       fail_with_std_basis(s);
+    } else {
+      panic!("unsure how to handle a code block (not marked as ok, error, or ignore): {s}");
     }
   });
 }
