@@ -21,6 +21,10 @@ pub struct Root {
 /// The workspace config.
 #[derive(Debug, Deserialize)]
 pub struct Workspace {
+  /// The members, for containing other workspaces.
+  ///
+  /// Cannot be set when any other workspace setting is set.
+  pub members: Option<Vec<SmolStr>>,
   /// The root group filename.
   ///
   /// Cannot be set when `members` is set.
@@ -30,10 +34,6 @@ pub struct Workspace {
   /// Cannot be set when `members` is set.
   #[serde(rename = "path-vars")]
   pub path_vars: Option<FxHashMap<SmolStr, PathVar>>,
-  /// The members, for containing other workspaces.
-  ///
-  /// Cannot be set when any other workspace setting is set.
-  pub members: Option<Vec<SmolStr>>,
 }
 
 /// A path var setting.

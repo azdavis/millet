@@ -115,19 +115,6 @@ impl ConfigFromFile {
       // TODO
       log::error!("unsupported use of members: {members:?}");
     }
-    if let Some(ws_path_vars) = ws.path_vars {
-      for (key, val) in ws_path_vars {
-        match val {
-          config::PathVar::Value(val) => {
-            ret.config.path_vars.insert(key, val);
-          }
-          config::PathVar::Path(p) => {
-            let val: str_util::SmolStr = root.as_path().join(p.as_str()).to_string_lossy().into();
-            ret.config.path_vars.insert(key, val);
-          }
-        }
-      }
-    }
     if let Some(path) = ws.root {
       let path = root.as_path().join(path.as_str());
       match GroupPathBuf::new(fs, path.clone()) {
@@ -138,6 +125,19 @@ impl ConfigFromFile {
             path,
             kind: GetInputErrorKind::NotGroup,
           })
+        }
+      }
+    }
+    if let Some(ws_path_vars) = ws.path_vars {
+      for (key, val) in ws_path_vars {
+        match val {
+          config::PathVar::Value(val) => {
+            ret.config.path_vars.insert(key, val);
+          }
+          config::PathVar::Path(p) => {
+            let val: str_util::SmolStr = root.as_path().join(p.as_str()).to_string_lossy().into();
+            ret.config.path_vars.insert(key, val);
+          }
         }
       }
     }
