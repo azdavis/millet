@@ -19,16 +19,6 @@ The [language server][lang-srv] is [beta-quality software][known-issues]. It mig
 
 You can turn it off by setting `millet.server.enable` to `false` in your VS Code settings.
 
-## Features
-
-- Syntax highlighting
-- Language configuration (comments, brackets, etc)
-- Snippets
-- Inline errors
-- Hover for type/documentation
-- Go to definition/type definition
-- Code actions, like "fill case"
-
 ## Usage
 
 1. Install the extension.
@@ -44,27 +34,23 @@ You can turn it off by setting `millet.server.enable` to `false` in your VS Code
 #### `sources.mlb`
 
 ```mlb
-Foo.sml
-Bar.sml
+a.sml
+b.sml
 ```
 
-#### `Foo.sml`
+#### `a.sml`
 
 ```sml
-structure Foo = struct
-  (*!
-   * - Requires: `n >= 0`.
-   * - Ensures: `fact n` returns the factorial of `n`.
-   *)
-  fun fact 0 = 1
-    | fact n = n * fact (n - 1)
-end
+(*!
+ * `increment x` returns one more than `x`.
+ *)
+fun increment x = x + 1
 ```
 
-#### `Bar.sml`
+#### `b.sml`
 
 ```sml
-val _ = Foo.fact 3
+val _ = increment 3
 ```
 
 ## Community
