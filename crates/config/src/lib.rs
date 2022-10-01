@@ -21,11 +21,17 @@ pub struct Root {
 /// The workspace config.
 #[derive(Debug, Deserialize)]
 pub struct Workspace {
-  /// The root group filename. Cannot be set when `members` is set.
+  /// The root group filename.
+  ///
+  /// Cannot be set when `members` is set.
   pub root: Option<SmolStr>,
-  /// The members, for containing other workspaces. Cannot be set when `root` or `path-vars` is set.
+  /// The members, for containing other workspaces.
+  ///
+  /// Cannot be set when `root` or `path-vars` is set.
   pub members: Option<Vec<SmolStr>>,
-  /// Path vars, for expansion in MLB/CM paths. Cannot be set when `members` is set.
+  /// Path vars, for expansion in MLB/CM paths.
+  ///
+  /// Cannot be set when `members` is set.
   #[serde(rename = "path-vars")]
   pub path_vars: Option<FxHashMap<SmolStr, PathVar>>,
 }
