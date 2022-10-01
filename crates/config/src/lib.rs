@@ -32,7 +32,7 @@ pub struct Workspace {
   pub path_vars: Option<FxHashMap<SmolStr, PathVar>>,
   /// The members, for containing other workspaces.
   ///
-  /// Cannot be set when `root` or `path-vars` is set.
+  /// Cannot be set when any other workspace setting is set.
   pub members: Option<Vec<SmolStr>>,
 }
 
