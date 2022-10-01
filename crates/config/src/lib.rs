@@ -25,15 +25,15 @@ pub struct Workspace {
   ///
   /// Cannot be set when `members` is set.
   pub root: Option<SmolStr>,
-  /// The members, for containing other workspaces.
-  ///
-  /// Cannot be set when `root` or `path-vars` is set.
-  pub members: Option<Vec<SmolStr>>,
   /// Path vars, for expansion in MLB/CM paths.
   ///
   /// Cannot be set when `members` is set.
   #[serde(rename = "path-vars")]
   pub path_vars: Option<FxHashMap<SmolStr, PathVar>>,
+  /// The members, for containing other workspaces.
+  ///
+  /// Cannot be set when `root` or `path-vars` is set.
+  pub members: Option<Vec<SmolStr>>,
 }
 
 /// A path var setting.
