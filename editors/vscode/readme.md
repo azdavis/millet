@@ -22,7 +22,7 @@ You can turn it off by setting `millet.server.enable` to `false` in your VS Code
 ## Usage
 
 1. Install the extension.
-2. Open VS Code to a folder containing a single "group file", i.e. one of
+2. Open VS Code to a folder directly containing a single "group file", i.e. one of
    - a [ML Basis][mlb] file, with extension `.mlb`
    - a [SML/NJ Compilation Manager][cm] file, with extension `.cm`
 3. Ensure that group file lists all the SML/other group files in the folder, in the order you wish for them to be analyzed.
