@@ -109,7 +109,7 @@ impl ConfigFromFile {
         return Err(InputError {
           source: ErrorSource::default(),
           path: ret.path,
-          kind: GetInputErrorKind::HasMembersButAlsoRootOrPathVars,
+          kind: GetInputErrorKind::HasMembersButAlsoOtherSettings,
         });
       }
       // TODO

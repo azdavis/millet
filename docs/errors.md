@@ -105,12 +105,7 @@ To fix, use different names, or remove the `and`. See also 5002.
 
 ## 1012
 
-In a `millet.toml` config file, both `workspace.members` and one of:
-
-- `workspace.root`
-- `workspace.path-vars`
-
-were set.
+In a `millet.toml` config file, both `workspace.members` and another configuration setting were set.
 
 <!--
 
@@ -120,7 +115,7 @@ But, when a `millet.toml` has the other workspace properties set, it may not con
 
  -->
 
-To fix, do not set both of these kinds of `workspace` properties in a single `millet.toml` file.
+To fix, do not set any other configuration (other than the required `version` when setting `workspace.members` in a `millet.toml` file.
 
 ## 1996
 

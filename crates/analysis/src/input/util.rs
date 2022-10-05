@@ -48,7 +48,7 @@ impl InputError {
       GetInputErrorKind::Mlb(_) => 1009,
       GetInputErrorKind::Cycle => 1010,
       GetInputErrorKind::Duplicate(_) => 1011,
-      GetInputErrorKind::HasMembersButAlsoRootOrPathVars => 1012,
+      GetInputErrorKind::HasMembersButAlsoOtherSettings => 1012,
       GetInputErrorKind::UnsupportedExport => 1999,
     }
   }
@@ -81,7 +81,7 @@ pub(crate) enum GetInputErrorKind {
   Mlb(mlb_syntax::Error),
   Cycle,
   Duplicate(str_util::Name),
-  HasMembersButAlsoRootOrPathVars,
+  HasMembersButAlsoOtherSettings,
   /// must be last
   UnsupportedExport,
 }
@@ -104,9 +104,9 @@ impl fmt::Display for GetInputErrorKind {
       GetInputErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
       GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       GetInputErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
-      GetInputErrorKind::HasMembersButAlsoRootOrPathVars => f.write_str(
-        "cannot set `workspace.members` but also set `workspace.root` or `workspace.path-vars`",
-      ),
+      GetInputErrorKind::HasMembersButAlsoOtherSettings => {
+        f.write_str("cannot set `workspace.members` but also set other configuration settings")
+      }
       GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
     }
   }
