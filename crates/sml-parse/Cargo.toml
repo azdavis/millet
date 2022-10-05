@@ -9,6 +9,7 @@ doctest = false
 test = false
 
 [dependencies]
+diagnostic-util = { path = "../diagnostic-util" }
 event-parse = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { path = "../fast-hash" }
 once_cell = "1"

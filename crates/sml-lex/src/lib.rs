@@ -2,6 +2,7 @@
 
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
+use diagnostic_util::Severity;
 use lex_util::{advance_while, block_comment, is_whitespace};
 use sml_syntax::rowan::{TextRange, TextSize};
 use sml_syntax::{token::Token, SyntaxKind as SK};
@@ -81,6 +82,11 @@ impl Error {
       ErrorKind::InvalidStringEscape => 2008,
       ErrorKind::NonWhitespaceInStringContinuation => 2009,
     }
+  }
+
+  /// Returns the severity for this.
+  pub fn severity(&self) -> Severity {
+    Severity::Error
   }
 }
 

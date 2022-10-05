@@ -6,6 +6,7 @@ pub mod doc_comment;
 
 mod std_basis;
 
+use diagnostic_util::Severity;
 use fast_hash::FxHashMap;
 use sml_syntax::ast::AstNode;
 use std::fmt;
@@ -56,9 +57,14 @@ impl Error {
     self.name.range
   }
 
-  /// Returns the error code for this.
+  /// Returns the code for this.
   pub fn code(&self) -> u16 {
     1998
+  }
+
+  /// Returns the severity for this.
+  pub fn severity(&self) -> Severity {
+    Severity::Error
   }
 }
 

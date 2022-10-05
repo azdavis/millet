@@ -4,6 +4,7 @@
 
 use anyhow::{anyhow, bail, Context, Result};
 use crossbeam_channel::Sender;
+use diagnostic_util::Severity;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
 use lsp_types::Url;
@@ -407,7 +408,10 @@ impl State {
           match file_url(e.path()) {
             Ok(url) => {
               root.has_diagnostics.insert(url.clone());
-              self.send_diagnostics(url, vec![diagnostic(e.to_string(), e.range(), e.code())]);
+              self.send_diagnostics(
+                url,
+                vec![diagnostic(e.to_string(), e.range(), e.code(), e.severity())],
+              );
               true
             }
             Err(_) => false,
@@ -532,7 +536,10 @@ fn file_url(path: &std::path::Path) -> Result<Url> {
 }
 
 fn diagnostics(errors: Vec<diagnostic_util::Error>) -> Vec<lsp_types::Diagnostic> {
-  errors.into_iter().map(|err| diagnostic(err.message, Some(err.range), err.code)).collect()
+  errors
+    .into_iter()
+    .map(|err| diagnostic(err.message, Some(err.range), err.code, err.severity))
+    .collect()
 }
 
 fn error_url(code: u16) -> Url {
@@ -540,10 +547,17 @@ fn error_url(code: u16) -> Url {
     .expect("couldn't parse error URL")
 }
 
-fn diagnostic(message: String, range: Option<text_pos::Range>, code: u16) -> lsp_types::Diagnostic {
+fn diagnostic(
+  message: String,
+  range: Option<text_pos::Range>,
+  code: u16,
+  severity: Severity,
+) -> lsp_types::Diagnostic {
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
-    severity: Some(lsp_types::DiagnosticSeverity::ERROR),
+    severity: Some(match severity {
+      Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
+    }),
     code: Some(lsp_types::NumberOrString::Number(code.into())),
     code_description: Some(lsp_types::CodeDescription { href: error_url(code) }),
     source: Some("Millet".to_owned()),

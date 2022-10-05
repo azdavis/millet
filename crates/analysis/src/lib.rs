@@ -73,6 +73,7 @@ impl Analysis {
           range: group.pos_db.range(err.range())?,
           message: err.to_string(),
           code: err.code(),
+          severity: err.severity(),
         };
         Some((path, vec![err]))
       }))
@@ -222,6 +223,7 @@ fn source_file_errors(
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
+        severity: err.severity(),
       })
     }))
     .chain(file.parsed.errors.iter().filter_map(|err| {
@@ -229,6 +231,7 @@ fn source_file_errors(
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
+        severity: err.severity(),
       })
     }))
     .chain(file.lowered.errors.iter().filter_map(|err| {
@@ -236,6 +239,7 @@ fn source_file_errors(
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
+        severity: err.severity(),
       })
     }))
     .chain(file.statics_errors.iter().filter_map(|err| {
@@ -245,6 +249,7 @@ fn source_file_errors(
         range: file.pos_db.range(syntax.to_node(file.parsed.root.syntax()).text_range())?,
         message: err.display(syms, file.info.meta_vars(), lines).to_string(),
         code: err.code(),
+        severity: err.severity(),
       })
     }))
     .take(MAX_ERRORS_PER_PATH)

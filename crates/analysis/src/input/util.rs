@@ -1,5 +1,6 @@
 //! Pervasive utilities.
 
+use diagnostic_util::Severity;
 use paths::PathId;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -33,7 +34,7 @@ impl InputError {
     Self { source: ErrorSource::default(), path, kind: GetInputErrorKind::Io(e) }
   }
 
-  /// Returns the error code for this.
+  /// Returns the code for this.
   pub fn code(&self) -> u16 {
     match self.kind {
       GetInputErrorKind::Io(_) => 1001,
@@ -50,6 +51,11 @@ impl InputError {
       GetInputErrorKind::HasMembersButAlsoRootOrPathVars => 1012,
       GetInputErrorKind::UnsupportedExport => 1999,
     }
+  }
+
+  /// Returns the severity for this.
+  pub fn severity(&self) -> Severity {
+    Severity::Error
   }
 }
 

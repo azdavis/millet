@@ -1,5 +1,6 @@
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Sym, Syms, Ty};
+use diagnostic_util::Severity;
 use fmt_util::{comma_seq, sep_seq};
 use pattern_match::RawPat;
 use std::fmt;
@@ -98,6 +99,11 @@ impl Error {
       ErrorKind::AsPatLhsNotName => 5030,
       ErrorKind::Unsupported(_) => 5999,
     }
+  }
+
+  /// Returns the severity for this.
+  pub fn severity(&self) -> Severity {
+    Severity::Error
   }
 }
 

@@ -349,6 +349,7 @@ name = "mlb-statics"
 version = "0.1.0"
 dependencies = [
  "config",
+ "diagnostic-util",
  "fast-hash",
  "mlb-hir",
  "paths",
@@ -566,6 +567,7 @@ dependencies = [
 name = "sml-lex"
 version = "0.1.0"
 dependencies = [
+ "diagnostic-util",
  "lex-util",
  "sml-syntax",
 ]
@@ -578,6 +580,7 @@ version = "0.1.0"
 name = "sml-lower"
 version = "0.1.0"
 dependencies = [
+ "diagnostic-util",
  "fast-hash",
  "num-traits",
  "sml-hir",
@@ -589,6 +592,7 @@ dependencies = [
 name = "sml-parse"
 version = "0.1.0"
 dependencies = [
+ "diagnostic-util",
  "event-parse",
  "fast-hash",
  "once_cell",
@@ -601,6 +605,7 @@ name = "sml-statics"
 version = "0.1.0"
 dependencies = [
  "config",
+ "diagnostic-util",
  "drop_bomb",
  "fast-hash",
  "fmt-util",

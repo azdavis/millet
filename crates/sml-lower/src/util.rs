@@ -1,3 +1,4 @@
+use diagnostic_util::Severity;
 use fast_hash::FxHashMap;
 use sml_syntax::ast::SyntaxNodePtr;
 use sml_syntax::rowan::TextRange;
@@ -109,6 +110,11 @@ impl Error {
       ErrorKind::ExpNotAllowedHere => 4012,
       ErrorKind::Unsupported(_) => 4999,
     }
+  }
+
+  /// Returns the severity for this.
+  pub fn severity(&self) -> Severity {
+    Severity::Error
   }
 }
 

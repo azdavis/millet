@@ -14,4 +14,13 @@ pub struct Error {
   pub message: String,
   /// The error code.
   pub code: u16,
+  /// The severity.
+  pub severity: Severity,
+}
+
+/// The severity of this error.
+#[derive(Debug, Clone, Copy)]
+pub enum Severity {
+  /// Error-level severity. The maximum.
+  Error,
 }

@@ -1,5 +1,6 @@
 //! The parser. A thin wrapper around event-parse, with operator precedence.
 
+use diagnostic_util::Severity;
 use fast_hash::{map_with_capacity, FxHashMap};
 use once_cell::sync::Lazy;
 use sml_syntax::rowan::TextRange;
@@ -204,6 +205,11 @@ impl Error {
       ErrorKind::SameFixityDiffAssoc => 3005,
       ErrorKind::Expected(_) => 3006,
     }
+  }
+
+  /// Returns the severity for this.
+  pub fn severity(&self) -> Severity {
+    Severity::Error
   }
 }
 

@@ -10,6 +10,7 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
+diagnostic-util = { path = "../diagnostic-util" }
 drop_bomb = "0.1"
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }

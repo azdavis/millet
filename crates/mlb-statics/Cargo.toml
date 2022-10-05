@@ -10,6 +10,7 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
+diagnostic-util = { path = "../diagnostic-util" }
 fast-hash = { path = "../fast-hash" }
 mlb-hir = { path = "../mlb-hir" }
 paths = { path = "../paths" }

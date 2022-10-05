@@ -9,5 +9,6 @@ doctest = false
 test = false
 
 [dependencies]
+diagnostic-util = { path = "../diagnostic-util" }
 lex-util = { path = "../lex-util" }
 sml-syntax = { path = "../sml-syntax" }
