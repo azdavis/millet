@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::check::{check_with_std_basis, fail_with_std_basis};
+use crate::check::{check_with_std_basis, fail_with_std_basis, fail_with_warnings};
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
 const SML: &str = "sml";
@@ -60,6 +60,8 @@ fn errors() {
       check_with_std_basis(s);
     } else if s.starts_with("(* error *)") {
       fail_with_std_basis(s);
+    } else if s.starts_with("(* warning *)") {
+      fail_with_warnings(s);
     } else {
       panic!("unsure how to handle a code block (not marked as ok, error, or ignore): {s}");
     }

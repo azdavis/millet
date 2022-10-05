@@ -36,7 +36,7 @@ use std::fmt::{self, Write as _};
 /// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Pass)
+  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Error)
 }
 
 /// Like [`check`], but the expectation comments should be not satisfied.
@@ -63,35 +63,47 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Fail)
+  go(&[s], StdBasis::Minimal, Outcome::Fail, Severity::Error)
 }
 
 /// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  go(&[s], StdBasis::Full, Outcome::Pass)
+  go(&[s], StdBasis::Full, Outcome::Pass, Severity::Error)
 }
 
 /// Like [`fail`], but includes the full std basis.
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail_with_std_basis(s: &str) {
-  go(&[s], StdBasis::Full, Outcome::Fail)
+  go(&[s], StdBasis::Full, Outcome::Fail, Severity::Error)
 }
 
 /// Like [`check`], but checks multiple files in sequence.
 #[track_caller]
 pub(crate) fn check_multi(ss: &[&str]) {
-  go(ss, StdBasis::Minimal, Outcome::Pass)
+  go(ss, StdBasis::Minimal, Outcome::Pass, Severity::Error)
+}
+
+/// Like [`check`], but with warnings as well as errors.
+#[track_caller]
+pub(crate) fn check_with_warnings(s: &str) {
+  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Warning)
+}
+
+/// Like [`fail`], but with warnings as well as errors.
+#[track_caller]
+pub(crate) fn fail_with_warnings(s: &str) {
+  go(&[s], StdBasis::Minimal, Outcome::Fail, Severity::Warning)
 }
 
 /// ignores the Err if we already initialized logging, since that's fine.
-fn go(ss: &[&str], std_basis: StdBasis, want: Outcome) {
+fn go(ss: &[&str], std_basis: StdBasis, want: Outcome, min_severity: Severity) {
   let _ = env_logger::builder().is_test(true).try_init();
   if matches!(std_basis, StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
     return;
   }
-  let c = Check::new(ss, std_basis.to_analysis());
+  let c = Check::new(ss, std_basis.to_analysis(), min_severity);
   match (want, c.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
     (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
@@ -129,7 +141,7 @@ struct Check {
 }
 
 impl Check {
-  fn new(ss: &[&str], std_basis: mlb_statics::StdBasis) -> Self {
+  fn new(ss: &[&str], std_basis: mlb_statics::StdBasis, min_severity: Severity) -> Self {
     let mut m = FxHashMap::<std::path::PathBuf, String>::default();
     let mut mlb_file = String::new();
     for (idx, &s) in ss.iter().enumerate() {
@@ -173,10 +185,7 @@ impl Check {
       .get_many(&input)
       .into_iter()
       .flat_map(|(id, errors)| {
-        errors.into_iter().filter_map(move |e| match e.severity {
-          Severity::Warning => None,
-          Severity::Error => Some((id, e)),
-        })
+        errors.into_iter().filter_map(move |e| (e.severity >= min_severity).then_some((id, e)))
       })
       .next();
     for (&path, file) in ret.files.iter() {

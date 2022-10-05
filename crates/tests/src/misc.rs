@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::{check, check_with_warnings, fail};
 
 #[test]
 fn apply() {
@@ -715,6 +715,16 @@ fun foo x =
   in
     y + x
   end
+"#,
+  );
+}
+
+#[test]
+fn unused_var() {
+  check_with_warnings(
+    r#"
+fun f x = ()
+(**   ^ unused value: x *)
 "#,
   );
 }

@@ -1633,6 +1633,22 @@ fun f x =
   | _ => x
 ```
 
+## 5031
+
+There was an unused variable.
+
+```sml
+(* warning *)
+fun foo x = 3
+```
+
+To fix, use the variable.
+
+```sml
+(* ok *)
+fun foo x = x + 3
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.
