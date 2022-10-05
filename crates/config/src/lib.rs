@@ -16,6 +16,10 @@ pub struct Root {
   pub version: u16,
   /// The workspace config.
   pub workspace: Option<Workspace>,
+  /// The errors config.
+  ///
+  /// Cannot be set when `workspace.members` is set.
+  pub errors: Option<FxHashMap<SmolStr, ErrorConfig>>,
 }
 
 /// The workspace config.
@@ -45,6 +49,22 @@ pub enum PathVar {
   /// A path, interpreted relative to the config file.
   #[serde(rename = "path")]
   Path(SmolStr),
+}
+
+/// Configuration for an error code.
+#[derive(Debug, Deserialize)]
+pub struct ErrorConfig {
+  /// The severity to display this error code at.
+  pub severity: Option<Severity>,
+}
+
+/// A severity for an error.
+#[derive(Debug, Deserialize)]
+pub enum Severity {
+  /// Warning.
+  Warning,
+  /// Error. The maximum.
+  Error,
 }
 
 /// How many lines an error message may have.

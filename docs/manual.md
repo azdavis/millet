@@ -62,6 +62,9 @@ root = "foo.cm"
 [workspace.path-vars]
 FOO = { value = "bar" }
 QUZ = { path = "lib" }
+[errors]
+5011.severity = "Warning"
+5012.severity = "Warning"
 ```
 
 - `version` is the version of the config file. At time of writing, it must be exactly `1`.
@@ -70,6 +73,12 @@ QUZ = { path = "lib" }
   - `path-vars` is a table for expanding variables in paths in group files.
     - If the value is a `value`, the value is used unchanged.
     - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
+  - `errors` is a table for configuring error codes.
+    - Each key is an error code.
+    - For each key, the value is a table.
+      - The `severity` key overrides the default severity for this error. The acceptable values are:
+        - `"Warning"`
+        - `"Error"`
 
 <!--
 

@@ -105,6 +105,14 @@ To fix, use different names, or remove the `and`. See also 5002.
 
 ## 1012
 
+In a `millet.toml` config file, a key of the `errors` table was not a valid error code.
+
+A valid error code will be a positive integer with 4 digits.
+
+To fix, make the key of the `errors` table an error code.
+
+## 1013
+
 In a `millet.toml` config file, both `workspace.members` and another configuration setting were set.
 
 <!--

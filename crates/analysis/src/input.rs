@@ -6,6 +6,7 @@ mod root_group;
 mod topo;
 mod util;
 
+use fast_hash::FxHashMap;
 use paths::{PathId, PathMap, WithPath};
 use util::{
   ErrorSource, GetInputErrorKind, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile,
@@ -22,6 +23,8 @@ pub struct Input {
   pub(crate) groups: PathMap<Group>,
   /// The root group id.
   pub(crate) root_group_id: PathId,
+  /// Severities to override.
+  pub(crate) severities: FxHashMap<u16, diagnostic_util::Severity>,
 }
 
 impl Input {
@@ -98,7 +101,12 @@ impl Input {
         kind: GetInputErrorKind::Cycle,
       });
     }
-    Ok(Self { sources, groups, root_group_id: root_group.path })
+    Ok(Self {
+      sources,
+      groups,
+      root_group_id: root_group.path,
+      severities: root_group.config.severities,
+    })
   }
 
   /// Return an iterator over the source paths.

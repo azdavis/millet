@@ -3,6 +3,7 @@
 use crate::input::util::{
   get_path_id, read_dir, ErrorSource, GetInputErrorKind, GroupPathKind, InputError, Result,
 };
+use fast_hash::FxHashMap;
 use paths::PathId;
 use std::path::PathBuf;
 
@@ -69,6 +70,7 @@ impl RootGroup {
 #[derive(Default)]
 pub(crate) struct Config {
   pub(crate) path_vars: paths::slash_var_path::Env,
+  pub(crate) severities: FxHashMap<u16, diagnostic_util::Severity>,
 }
 
 struct ConfigFromFile {
@@ -137,6 +139,25 @@ impl ConfigFromFile {
             }
           }
         }
+      }
+    }
+    for (code, config) in parsed.errors.into_iter().flatten() {
+      let code = match code.parse::<u16>() {
+        Ok(x) => x,
+        Err(e) => {
+          return Err(InputError {
+            source: ErrorSource::default(),
+            path: ret.path,
+            kind: GetInputErrorKind::InvalidErrorCode(code, e),
+          });
+        }
+      };
+      if let Some(sev) = config.severity {
+        let sev = match sev {
+          config::Severity::Warning => diagnostic_util::Severity::Warning,
+          config::Severity::Error => diagnostic_util::Severity::Error,
+        };
+        ret.config.severities.insert(code, sev);
       }
     }
     Ok(ret)
