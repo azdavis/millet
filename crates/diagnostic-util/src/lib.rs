@@ -21,6 +21,6 @@ pub struct Error {
 /// The severity of this error.
 #[derive(Debug, Clone, Copy)]
 pub enum Severity {
-  /// Error-level severity. The maximum.
+  /// Error. The maximum. Pretty much means code cannot be run.
   Error,
 }
