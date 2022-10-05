@@ -77,7 +77,7 @@ fn main() {
     0 => {}
     n => {
       let suffix = if n == 1 { "" } else { "s" };
-      println!("{n} error{suffix}. see {} for more information", analysis::ERRORS_URL);
+      println!("{n} error{suffix}. see {} for more information", diagnostic_util::ERRORS_URL);
       std::process::exit(1)
     }
   }

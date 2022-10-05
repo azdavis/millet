@@ -11,6 +11,7 @@ doctest = false
 [dependencies]
 cm = { path = "../cm" }
 config = { path = "../config" }
+diagnostic-util = { path = "../diagnostic-util" }
 elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }

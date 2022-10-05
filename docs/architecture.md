@@ -187,6 +187,10 @@ A wrapper around the `text-size` crate to add some helpers, primarily `WithRange
 
 A small utility crate for formatting.
 
+### `crates/diagnostic-util`
+
+A small crate defining primarily the overall `Error` type, which Millet reports to a language client.
+
 ### `crates/fast-hash`
 
 A thin wrapper over `FxHash{Map, Set}` with some extra helper functions. These types use `FxHasher`, which is a very fast, but not HashDOS-resistant, hashing algorithm used in Firefox and `rustc`.

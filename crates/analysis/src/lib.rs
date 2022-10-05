@@ -2,21 +2,15 @@
 
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
-mod error;
-
 pub mod input;
 
+use diagnostic_util::Error;
 use fmt_util::sep_seq;
 use paths::{PathMap, WithPath};
 use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
 use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
 use std::fmt;
 use text_pos::{Position, Range};
-
-pub use error::Error;
-
-/// The url to go to for information about errors.
-pub const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
 
 /// Performs analysis.
 #[derive(Debug)]

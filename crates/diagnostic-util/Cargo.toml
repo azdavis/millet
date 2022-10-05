@@ -1,0 +1,12 @@
+[package]
+name = "diagnostic-util"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+text-pos = { git = "https://github.com/azdavis/language-util.git" }

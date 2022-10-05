@@ -9,6 +9,7 @@ analysis = { path = "../analysis" }
 anyhow = "1"
 config = { path = "../config" }
 crossbeam-channel = "0.5"
+diagnostic-util = { path = "../diagnostic-util" }
 elapsed = { path = "../elapsed" }
 env_logger = { version = "0.9" }
 fast-hash = { path = "../fast-hash" }
