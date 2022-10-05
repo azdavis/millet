@@ -1639,14 +1639,15 @@ There was an unused variable.
 
 ```sml
 (* warning *)
-fun foo x = 3
+fun ignoreArg x = 3
 ```
 
-To fix, use the variable.
+To fix, use the variable, or do not define it.
 
 ```sml
 (* ok *)
-fun foo x = x + 3
+fun useArg x = x + 3
+fun doNotBindArg _ = 3
 ```
 
 ## 5999
