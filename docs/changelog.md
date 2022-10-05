@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.3.13
 
 - Emit warning on some unused variables.
 - Allow overriding severity for errors.
