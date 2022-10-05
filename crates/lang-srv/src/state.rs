@@ -407,7 +407,7 @@ impl State {
           match file_url(e.path()) {
             Ok(url) => {
               root.has_diagnostics.insert(url.clone());
-              self.send_diagnostics(url, vec![diagnostic(e.to_string(), e.range(), e.to_code())]);
+              self.send_diagnostics(url, vec![diagnostic(e.to_string(), e.range(), e.code())]);
               true
             }
             Err(_) => false,
@@ -416,7 +416,7 @@ impl State {
           false
         };
         if !did_send_as_diagnostic {
-          self.show_error(format!("{}: {}", e.path().display(), e), e.to_code());
+          self.show_error(format!("{}: {}", e.path().display(), e), e.code());
         }
         self.root = Some(root);
         return false;

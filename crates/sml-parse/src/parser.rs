@@ -195,7 +195,7 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn to_code(&self) -> u16 {
+  pub fn code(&self) -> u16 {
     match self.0.kind {
       ErrorKind::NotInfix => 3001,
       ErrorKind::InfixWithoutOp => 3002,

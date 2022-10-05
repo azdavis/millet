@@ -72,7 +72,7 @@ impl Analysis {
         let err = Error {
           range: group.pos_db.range(err.range())?,
           message: err.to_string(),
-          code: err.to_code(),
+          code: err.code(),
         };
         Some((path, vec![err]))
       }))
@@ -221,21 +221,21 @@ fn source_file_errors(
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
-        code: err.to_code(),
+        code: err.code(),
       })
     }))
     .chain(file.parsed.errors.iter().filter_map(|err| {
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
-        code: err.to_code(),
+        code: err.code(),
       })
     }))
     .chain(file.lowered.errors.iter().filter_map(|err| {
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
-        code: err.to_code(),
+        code: err.code(),
       })
     }))
     .chain(file.statics_errors.iter().filter_map(|err| {
@@ -244,7 +244,7 @@ fn source_file_errors(
       Some(Error {
         range: file.pos_db.range(syntax.to_node(file.parsed.root.syntax()).text_range())?,
         message: err.display(syms, file.info.meta_vars(), lines).to_string(),
-        code: err.to_code(),
+        code: err.code(),
       })
     }))
     .take(MAX_ERRORS_PER_PATH)

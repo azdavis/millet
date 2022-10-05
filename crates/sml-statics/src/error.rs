@@ -64,7 +64,7 @@ impl Error {
   }
 
   /// Return the code for this.
-  pub fn to_code(&self) -> u16 {
+  pub fn code(&self) -> u16 {
     match self.kind {
       ErrorKind::Undefined(_, _) => 5001,
       ErrorKind::Duplicate(_, _) => 5002,

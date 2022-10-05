@@ -93,7 +93,7 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn to_code(&self) -> u16 {
+  pub fn code(&self) -> u16 {
     match self.kind {
       ErrorKind::FunBindMismatchedName(_, _) => 4001,
       ErrorKind::FunBindWrongNumPats(_, _) => 4002,

@@ -68,7 +68,7 @@ fn handle_input_error(e: analysis::input::InputError) {
   if let Some(r) = e.range() {
     print!(":{}", r.start);
   }
-  let code = e.to_code();
+  let code = e.code();
   println!(": error[{code}]: {e}");
 }
 

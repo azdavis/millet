@@ -34,7 +34,7 @@ impl InputError {
   }
 
   /// Returns the error code for this.
-  pub fn to_code(&self) -> u16 {
+  pub fn code(&self) -> u16 {
     match self.kind {
       GetInputErrorKind::Io(_) => 1001,
       GetInputErrorKind::NotInRoot(_) => 1002,

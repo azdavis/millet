@@ -57,7 +57,7 @@ impl Error {
   }
 
   /// Returns the error code for this.
-  pub fn to_code(&self) -> u16 {
+  pub fn code(&self) -> u16 {
     1998
   }
 }

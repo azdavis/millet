@@ -69,7 +69,7 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn to_code(&self) -> u16 {
+  pub fn code(&self) -> u16 {
     match self.kind {
       ErrorKind::InvalidSource => 2001,
       ErrorKind::UnclosedComment => 2002,
