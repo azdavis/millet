@@ -46,5 +46,9 @@
       "  ${4:dec}",
       "end"
     ]
+  },
+  "print with newline": {
+    "prefix": "println",
+    "body": ["val () = print (${1:exp} ^ \"\\n\")"]
   }
 }

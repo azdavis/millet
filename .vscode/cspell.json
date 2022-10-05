@@ -60,6 +60,7 @@
     "posix",
     "powf",
     "prec",
+    "println",
     "ptrs",
     "quickfix",
     "realint",
