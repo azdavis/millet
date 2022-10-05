@@ -8,8 +8,6 @@ use fast_hash::FxHashSet;
 /// The state.
 ///
 /// Usually I call this `Cx` but the Definition defines a 'Context' already.
-///
-/// Invariant: 'Grows' monotonically.
 #[derive(Debug)]
 pub(crate) struct St {
   subst: Subst,
