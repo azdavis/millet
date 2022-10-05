@@ -100,43 +100,41 @@ impl ConfigFromFile {
         kind: GetInputErrorKind::InvalidConfigVersion(parsed.version),
       });
     }
-    let ws = match parsed.workspace {
-      Some(x) => x,
-      None => return Ok(ret),
-    };
-    if let Some(members) = ws.members {
-      if ws.root.is_some() || ws.path_vars.is_some() {
-        return Err(InputError {
-          source: ErrorSource::default(),
-          path: ret.path,
-          kind: GetInputErrorKind::HasMembersButAlsoOtherSettings,
-        });
-      }
-      // TODO
-      log::error!("unsupported use of members: {members:?}");
-    }
-    if let Some(path) = ws.root {
-      let path = root.as_path().join(path.as_str());
-      match GroupPathBuf::new(fs, path.clone()) {
-        Some(path) => ret.root_group = Some(path),
-        None => {
+    if let Some(ws) = parsed.workspace {
+      if let Some(members) = ws.members {
+        if ws.root.is_some() || ws.path_vars.is_some() || parsed.errors.is_some() {
           return Err(InputError {
-            source: ErrorSource { path: Some(ret.path), range: None },
-            path,
-            kind: GetInputErrorKind::NotGroup,
-          })
+            source: ErrorSource::default(),
+            path: ret.path,
+            kind: GetInputErrorKind::HasMembersButAlsoOtherSettings,
+          });
+        }
+        // TODO
+        log::error!("unsupported use of members: {members:?}");
+      }
+      if let Some(path) = ws.root {
+        let path = root.as_path().join(path.as_str());
+        match GroupPathBuf::new(fs, path.clone()) {
+          Some(path) => ret.root_group = Some(path),
+          None => {
+            return Err(InputError {
+              source: ErrorSource { path: Some(ret.path), range: None },
+              path,
+              kind: GetInputErrorKind::NotGroup,
+            })
+          }
         }
       }
-    }
-    if let Some(ws_path_vars) = ws.path_vars {
-      for (key, val) in ws_path_vars {
-        match val {
-          config::PathVar::Value(val) => {
-            ret.config.path_vars.insert(key, val);
-          }
-          config::PathVar::Path(p) => {
-            let val: str_util::SmolStr = root.as_path().join(p.as_str()).to_string_lossy().into();
-            ret.config.path_vars.insert(key, val);
+      if let Some(ws_path_vars) = ws.path_vars {
+        for (key, val) in ws_path_vars {
+          match val {
+            config::PathVar::Value(val) => {
+              ret.config.path_vars.insert(key, val);
+            }
+            config::PathVar::Path(p) => {
+              let val: str_util::SmolStr = root.as_path().join(p.as_str()).to_string_lossy().into();
+              ret.config.path_vars.insert(key, val);
+            }
           }
         }
       }
