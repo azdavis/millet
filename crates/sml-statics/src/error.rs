@@ -4,6 +4,42 @@ use fmt_util::{comma_seq, sep_seq};
 use pattern_match::RawPat;
 use std::fmt;
 
+#[derive(Debug)]
+pub(crate) enum ErrorKind {
+  Undefined(Item, str_util::Name),
+  Duplicate(Item, str_util::Name),
+  Missing(Item, str_util::Name),
+  Extra(Item, str_util::Name),
+  Circularity(MetaTyVar, Ty),
+  MismatchedTypes(Ty, Ty),
+  AppLhsNotFn(Ty),
+  DuplicateLab(sml_hir::Lab),
+  RealPat,
+  UnreachablePattern,
+  NonExhaustiveCase(Vec<Pat>),
+  NonExhaustiveBinding(Vec<Pat>),
+  PatValIdStatus,
+  ConPatMustNotHaveArg,
+  ConPatMustHaveArg,
+  InvalidAsPatName(str_util::Name),
+  TyNameEscape(Sym),
+  ValRecExpNotFn,
+  WrongNumTyArgs(usize, usize),
+  ExnCopyNotExnIdStatus,
+  InvalidRebindName(str_util::Name),
+  WrongIdStatus(str_util::Name),
+  UnresolvedRecordTy,
+  OrPatNotSameBindings(str_util::Name),
+  DecNotAllowedHere,
+  ExpHole(Ty),
+  TyHole,
+  DecHole,
+  BindPolymorphicExpansiveExp,
+  AsPatLhsNotName,
+  /// must be last
+  Unsupported(&'static str),
+}
+
 /// A statics error.
 #[derive(Debug)]
 pub struct Error {
@@ -63,42 +99,6 @@ impl Error {
       ErrorKind::Unsupported(_) => 5999,
     }
   }
-}
-
-#[derive(Debug)]
-pub(crate) enum ErrorKind {
-  Undefined(Item, str_util::Name),
-  Duplicate(Item, str_util::Name),
-  Missing(Item, str_util::Name),
-  Extra(Item, str_util::Name),
-  Circularity(MetaTyVar, Ty),
-  MismatchedTypes(Ty, Ty),
-  AppLhsNotFn(Ty),
-  DuplicateLab(sml_hir::Lab),
-  RealPat,
-  UnreachablePattern,
-  NonExhaustiveCase(Vec<Pat>),
-  NonExhaustiveBinding(Vec<Pat>),
-  PatValIdStatus,
-  ConPatMustNotHaveArg,
-  ConPatMustHaveArg,
-  InvalidAsPatName(str_util::Name),
-  TyNameEscape(Sym),
-  ValRecExpNotFn,
-  WrongNumTyArgs(usize, usize),
-  ExnCopyNotExnIdStatus,
-  InvalidRebindName(str_util::Name),
-  WrongIdStatus(str_util::Name),
-  UnresolvedRecordTy,
-  OrPatNotSameBindings(str_util::Name),
-  DecNotAllowedHere,
-  ExpHole(Ty),
-  TyHole,
-  DecHole,
-  BindPolymorphicExpansiveExp,
-  AsPatLhsNotName,
-  /// must be last
-  Unsupported(&'static str),
 }
 
 #[derive(Debug)]

@@ -18,6 +18,38 @@ pub struct Lex<'a> {
   pub errors: Vec<Error>,
 }
 
+/// An error kind.
+#[derive(Debug)]
+enum ErrorKind {
+  InvalidSource,
+  UnclosedComment,
+  IncompleteTyVar,
+  UnclosedStringLit,
+  NegativeWordLit,
+  WrongLenCharLit,
+  MissingDigitsInNumLit,
+  InvalidStringEscape,
+  NonWhitespaceInStringContinuation,
+}
+
+impl fmt::Display for ErrorKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ErrorKind::InvalidSource => f.write_str("invalid source character"),
+      ErrorKind::UnclosedComment => f.write_str("unclosed comment"),
+      ErrorKind::IncompleteTyVar => f.write_str("incomplete type variable"),
+      ErrorKind::UnclosedStringLit => f.write_str("unclosed string literal"),
+      ErrorKind::NegativeWordLit => f.write_str("negative word literal"),
+      ErrorKind::WrongLenCharLit => f.write_str("character literal must have length 1"),
+      ErrorKind::MissingDigitsInNumLit => f.write_str("missing digits in number literal"),
+      ErrorKind::InvalidStringEscape => f.write_str("invalid string escape"),
+      ErrorKind::NonWhitespaceInStringContinuation => {
+        f.write_str("non-whitespace in string continuation")
+      }
+    }
+  }
+}
+
 /// An error encountered when lexing.
 #[derive(Debug)]
 pub struct Error {
@@ -48,38 +80,6 @@ impl Error {
       ErrorKind::MissingDigitsInNumLit => 2007,
       ErrorKind::InvalidStringEscape => 2008,
       ErrorKind::NonWhitespaceInStringContinuation => 2009,
-    }
-  }
-}
-
-/// An error kind.
-#[derive(Debug)]
-enum ErrorKind {
-  InvalidSource,
-  UnclosedComment,
-  IncompleteTyVar,
-  UnclosedStringLit,
-  NegativeWordLit,
-  WrongLenCharLit,
-  MissingDigitsInNumLit,
-  InvalidStringEscape,
-  NonWhitespaceInStringContinuation,
-}
-
-impl fmt::Display for ErrorKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      ErrorKind::InvalidSource => f.write_str("invalid source character"),
-      ErrorKind::UnclosedComment => f.write_str("unclosed comment"),
-      ErrorKind::IncompleteTyVar => f.write_str("incomplete type variable"),
-      ErrorKind::UnclosedStringLit => f.write_str("unclosed string literal"),
-      ErrorKind::NegativeWordLit => f.write_str("negative word literal"),
-      ErrorKind::WrongLenCharLit => f.write_str("character literal must have length 1"),
-      ErrorKind::MissingDigitsInNumLit => f.write_str("missing digits in number literal"),
-      ErrorKind::InvalidStringEscape => f.write_str("invalid string escape"),
-      ErrorKind::NonWhitespaceInStringContinuation => {
-        f.write_str("non-whitespace in string continuation")
-      }
     }
   }
 }

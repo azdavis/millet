@@ -148,34 +148,6 @@ pub enum Assoc {
   Right,
 }
 
-/// A parse error.
-#[derive(Debug)]
-pub struct Error(event_parse::rowan_sink::Error<ErrorKind>);
-
-impl Error {
-  /// Returns the range for this.
-  pub fn range(&self) -> TextRange {
-    self.0.range
-  }
-
-  /// Returns a value that displays the message.
-  pub fn display(&self) -> impl fmt::Display + '_ {
-    &self.0.kind
-  }
-
-  /// Returns the code for this.
-  pub fn to_code(&self) -> u16 {
-    match self.0.kind {
-      ErrorKind::NotInfix => 3001,
-      ErrorKind::InfixWithoutOp => 3002,
-      ErrorKind::InvalidFixity(_) => 3003,
-      ErrorKind::NegativeFixity => 3004,
-      ErrorKind::SameFixityDiffAssoc => 3005,
-      ErrorKind::Expected(_) => 3006,
-    }
-  }
-}
-
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   NotInfix,
@@ -204,6 +176,34 @@ impl fmt::Display for ErrorKind {
 impl event_parse::Expected<SK> for ErrorKind {
   fn expected(kind: SK) -> Self {
     Self::Expected(Expected::Kind(kind))
+  }
+}
+
+/// A parse error.
+#[derive(Debug)]
+pub struct Error(event_parse::rowan_sink::Error<ErrorKind>);
+
+impl Error {
+  /// Returns the range for this.
+  pub fn range(&self) -> TextRange {
+    self.0.range
+  }
+
+  /// Returns a value that displays the message.
+  pub fn display(&self) -> impl fmt::Display + '_ {
+    &self.0.kind
+  }
+
+  /// Returns the code for this.
+  pub fn to_code(&self) -> u16 {
+    match self.0.kind {
+      ErrorKind::NotInfix => 3001,
+      ErrorKind::InfixWithoutOp => 3002,
+      ErrorKind::InvalidFixity(_) => 3003,
+      ErrorKind::NegativeFixity => 3004,
+      ErrorKind::SameFixityDiffAssoc => 3005,
+      ErrorKind::Expected(_) => 3006,
+    }
   }
 }
 

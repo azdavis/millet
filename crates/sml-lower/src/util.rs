@@ -28,44 +28,6 @@ impl Ptrs {
   }
 }
 
-/// An error when lowering.
-#[derive(Debug)]
-pub struct Error {
-  range: TextRange,
-  kind: ErrorKind,
-}
-
-impl Error {
-  /// Returns the range for this.
-  pub fn range(&self) -> TextRange {
-    self.range
-  }
-
-  /// Returns a value that displays the message.
-  pub fn display(&self) -> impl fmt::Display + '_ {
-    &self.kind
-  }
-
-  /// Returns the code for this.
-  pub fn to_code(&self) -> u16 {
-    match self.kind {
-      ErrorKind::FunBindMismatchedName(_, _) => 4001,
-      ErrorKind::FunBindWrongNumPats(_, _) => 4002,
-      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 4003,
-      ErrorKind::InvalidRealLit(_) => 4004,
-      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab => 4005,
-      ErrorKind::MultipleRestPatRows => 4006,
-      ErrorKind::RestPatRowNotLast => 4007,
-      ErrorKind::PrecedingBar => 4008,
-      ErrorKind::RequiresOperand => 4009,
-      ErrorKind::DecNotAllowedHere => 4010,
-      ErrorKind::OpBoolBinOp => 4011,
-      ErrorKind::ExpNotAllowedHere => 4012,
-      ErrorKind::Unsupported(_) => 4999,
-    }
-  }
-}
-
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   FunBindMismatchedName(String, String),
@@ -108,6 +70,44 @@ impl fmt::Display for ErrorKind {
       ErrorKind::OpBoolBinOp => f.write_str("`andalso` and `orelse` not allowed with `op`"),
       ErrorKind::ExpNotAllowedHere => f.write_str("expression not allowed here"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
+    }
+  }
+}
+
+/// An error when lowering.
+#[derive(Debug)]
+pub struct Error {
+  range: TextRange,
+  kind: ErrorKind,
+}
+
+impl Error {
+  /// Returns the range for this.
+  pub fn range(&self) -> TextRange {
+    self.range
+  }
+
+  /// Returns a value that displays the message.
+  pub fn display(&self) -> impl fmt::Display + '_ {
+    &self.kind
+  }
+
+  /// Returns the code for this.
+  pub fn to_code(&self) -> u16 {
+    match self.kind {
+      ErrorKind::FunBindMismatchedName(_, _) => 4001,
+      ErrorKind::FunBindWrongNumPats(_, _) => 4002,
+      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 4003,
+      ErrorKind::InvalidRealLit(_) => 4004,
+      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab => 4005,
+      ErrorKind::MultipleRestPatRows => 4006,
+      ErrorKind::RestPatRowNotLast => 4007,
+      ErrorKind::PrecedingBar => 4008,
+      ErrorKind::RequiresOperand => 4009,
+      ErrorKind::DecNotAllowedHere => 4010,
+      ErrorKind::OpBoolBinOp => 4011,
+      ErrorKind::ExpNotAllowedHere => 4012,
+      ErrorKind::Unsupported(_) => 4999,
     }
   }
 }
