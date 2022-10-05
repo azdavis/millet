@@ -37,6 +37,7 @@ pub(crate) enum ErrorKind {
   DecHole,
   BindPolymorphicExpansiveExp,
   AsPatLhsNotName,
+  Unused(str_util::Name),
   /// must be last
   Unsupported(&'static str),
 }
@@ -97,13 +98,17 @@ impl Error {
       ErrorKind::DecHole => 5028,
       ErrorKind::BindPolymorphicExpansiveExp => 5029,
       ErrorKind::AsPatLhsNotName => 5030,
+      ErrorKind::Unused(_) => 5031,
       ErrorKind::Unsupported(_) => 5999,
     }
   }
 
   /// Returns the severity for this.
   pub fn severity(&self) -> Severity {
-    Severity::Error
+    match self.kind {
+      ErrorKind::Unused(_) => Severity::Warning,
+      _ => Severity::Error,
+    }
   }
 }
 
@@ -220,6 +225,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         f.write_str("cannot bind expansive polymorphic expression")
       }
       ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
+      ErrorKind::Unused(name) => {
+        let item = Item::Val;
+        write!(f, "unused {item}: {name}")
+      }
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

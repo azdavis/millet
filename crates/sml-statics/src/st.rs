@@ -3,6 +3,7 @@ use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
 use crate::types::{Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
 use crate::util::apply;
+use fast_hash::FxHashSet;
 
 /// The state.
 ///
@@ -19,6 +20,10 @@ pub(crate) struct St {
   matches: Vec<Match>,
   holes: Vec<(MetaTyVar, sml_hir::Idx)>,
   pub(crate) syms: Syms,
+  /// a subset of all things that have definition sites. currently, only local value variables to a
+  /// function.
+  defined: Vec<(sml_hir::Idx, str_util::Name)>,
+  used: FxHashSet<sml_hir::Idx>,
 }
 
 impl St {
@@ -32,6 +37,8 @@ impl St {
       matches: Vec::new(),
       holes: Vec::new(),
       syms,
+      defined: Vec::new(),
+      used: FxHashSet::default(),
     }
   }
 
@@ -78,6 +85,14 @@ impl St {
     self.holes.push((mv, idx));
   }
 
+  pub(crate) fn mark_defined(&mut self, idx: sml_hir::Idx, name: str_util::Name) {
+    self.defined.push((idx, name));
+  }
+
+  pub(crate) fn mark_used(&mut self, idx: sml_hir::Idx) {
+    self.used.insert(idx);
+  }
+
   pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {
     let lang = Lang { syms: self.syms };
     let mut errors = self.errors;
@@ -104,6 +119,11 @@ impl St {
         MatchKind::Handle(pats) => {
           get_match(&mut errors, &lang, pats, m.want);
         }
+      }
+    }
+    for (idx, name) in self.defined {
+      if !self.used.contains(&idx) {
+        errors.push(Error { idx, kind: ErrorKind::Unused(name) });
       }
     }
     for ty in self.info.tys_mut() {

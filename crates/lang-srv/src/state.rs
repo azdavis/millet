@@ -556,6 +556,7 @@ fn diagnostic(
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(match severity {
+      Severity::Warning => lsp_types::DiagnosticSeverity::WARNING,
       Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
     }),
     code: Some(lsp_types::NumberOrString::Number(code.into())),

@@ -690,6 +690,7 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "config",
+ "diagnostic-util",
  "env_logger",
  "fast-hash",
  "log",

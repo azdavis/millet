@@ -1,3 +1,4 @@
+use crate::config::Cfg;
 use crate::error::{ErrorKind, Item};
 use crate::generalizes::{eq_ty_scheme, eq_ty_scheme_no_emit, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
@@ -44,7 +45,9 @@ fn get_str_dec(
   };
   match &ars.str_dec[str_dec] {
     // sml_def(56)
-    sml_hir::StrDec::Dec(dec) => dec::get(st, &bs.as_cx(), ars, ac.as_mut_env(), *dec),
+    sml_hir::StrDec::Dec(dec) => {
+      dec::get(st, Cfg::default(), &bs.as_cx(), ars, ac.as_mut_env(), *dec)
+    }
     // sml_def(57)
     sml_hir::StrDec::Structure(str_binds) => {
       // sml_def(61)

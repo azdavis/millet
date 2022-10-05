@@ -1,3 +1,4 @@
+use crate::config::Cfg;
 use crate::error::{ErrorKind, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::pat_match::Pat;
@@ -13,6 +14,7 @@ use fast_hash::{FxHashMap, FxHashSet};
 
 pub(crate) fn get(
   st: &mut St,
+  cfg: Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
   env: &mut Env,
@@ -36,6 +38,8 @@ pub(crate) fn get(
       let mut idx = 0usize;
       let mut ve = ValEnv::default();
       let mut src_exp = FxHashMap::<str_util::Name, sml_hir::ExpIdx>::default();
+      let mut exp_cfg = cfg;
+      exp_cfg.mark_defined = true;
       while let Some(val_bind) = val_binds.get(idx) {
         if val_bind.rec {
           // this and all other remaining ones are recursive.
@@ -43,8 +47,9 @@ pub(crate) fn get(
         }
         idx += 1;
         // sml_def(25)
-        let (pm_pat, mut want) = get_pat_and_src_exp(st, &cx, ars, &mut ve, val_bind, &mut src_exp);
-        let got = exp::get(st, &cx, ars, val_bind.exp);
+        let (pm_pat, mut want) =
+          get_pat_and_src_exp(st, cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
+        let got = exp::get(st, exp_cfg, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into));
@@ -54,7 +59,7 @@ pub(crate) fn get(
       let mut rec_ve = ValEnv::default();
       let got_pats: Vec<_> = val_binds[idx..]
         .iter()
-        .map(|val_bind| get_pat_and_src_exp(st, &cx, ars, &mut rec_ve, val_bind, &mut src_exp))
+        .map(|val_bind| get_pat_and_src_exp(st, cfg, &cx, ars, &mut rec_ve, val_bind, &mut src_exp))
         .collect();
       // merge the recursive and non-recursive ValEnvs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
@@ -71,7 +76,7 @@ pub(crate) fn get(
             st.err(dec, ErrorKind::ValRecExpNotFn);
           }
         }
-        let got = exp::get(st, &cx, ars, val_bind.exp);
+        let got = exp::get(st, exp_cfg, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, dec.into());
@@ -167,10 +172,10 @@ pub(crate) fn get(
     // sml_def(21)
     sml_hir::Dec::Local(local_dec, in_dec) => {
       let mut local_env = Env::default();
-      get(st, cx, ars, &mut local_env, *local_dec);
+      get(st, cfg, cx, ars, &mut local_env, *local_dec);
       let mut cx = cx.clone();
       cx.env.append(&mut local_env);
-      get(st, &cx, ars, env, *in_dec);
+      get(st, cfg, &cx, ars, env, *in_dec);
     }
     // sml_def(22)
     sml_hir::Dec::Open(paths) => {
@@ -186,7 +191,7 @@ pub(crate) fn get(
       let mut cx = cx.clone();
       let mut one_env = Env::default();
       for &dec in decs {
-        get(st, &cx, ars, &mut one_env, dec);
+        get(st, cfg, &cx, ars, &mut one_env, dec);
         cx.env.push(one_env.clone());
         env.append(&mut one_env);
       }
@@ -196,6 +201,7 @@ pub(crate) fn get(
 
 fn get_pat_and_src_exp(
   st: &mut St,
+  cfg: Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
   ve: &mut ValEnv,
@@ -206,7 +212,7 @@ fn get_pat_and_src_exp(
   // any fns on the exp, so we don't generalize a recursive call inside the exp, but we can
   // generalize outside.
   st.meta_gen.inc_rank();
-  let ret = pat::get(st, cx, ars, ve, val_bind.pat, Generalizable::Sometimes);
+  let ret = pat::get(st, cfg, cx, ars, ve, val_bind.pat, Generalizable::Sometimes);
   st.meta_gen.dec_rank();
   for name in ve.keys() {
     if !src_exp.contains_key(name) {

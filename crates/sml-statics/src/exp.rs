@@ -1,3 +1,4 @@
+use crate::config::Cfg;
 use crate::error::{ErrorKind, Item};
 use crate::get_env::get_val_info;
 use crate::info::TyEntry;
@@ -10,7 +11,13 @@ use crate::unify::unify;
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
 
-pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> Ty {
+pub(crate) fn get(
+  st: &mut St,
+  cfg: Cfg,
+  cx: &Cx,
+  ars: &sml_hir::Arenas,
+  exp: sml_hir::ExpIdx,
+) -> Ty {
   let exp = match exp {
     Some(x) => x,
     None => return Ty::None,
@@ -31,6 +38,9 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::Exp
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
         def = val_info.def;
+        if let Some(def) = val_info.def {
+          st.mark_used(def.idx);
+        }
         instantiate(st, val_info.ty_scheme.clone(), Generalizable::Always)
       }
       Ok(None) => {
@@ -44,17 +54,17 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::Exp
     },
     // sml_def(3)
     sml_hir::Exp::Record(rows) => {
-      let rows = record(st, rows, exp.into(), |st, _, exp| get(st, cx, ars, exp));
+      let rows = record(st, rows, exp.into(), |st, _, exp| get(st, cfg, cx, ars, exp));
       Ty::Record(rows)
     }
     // sml_def(4)
     sml_hir::Exp::Let(dec, inner) => {
       let mut let_env = Env::default();
       let marker = st.syms.mark();
-      dec::get(st, cx, ars, &mut let_env, *dec);
+      dec::get(st, cfg, cx, ars, &mut let_env, *dec);
       let mut cx = cx.clone();
       cx.env.append(&mut let_env);
-      let got = get(st, &cx, ars, *inner);
+      let got = get(st, cfg, &cx, ars, *inner);
       if let Some(sym) = ty_name_escape(&marker, &got) {
         st.err(inner.unwrap_or(exp), ErrorKind::TyNameEscape(sym));
       }
@@ -62,8 +72,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::Exp
     }
     // sml_def(8)
     sml_hir::Exp::App(func, arg) => {
-      let func_ty = get(st, cx, ars, *func);
-      let arg_ty = get(st, cx, ars, *arg);
+      let func_ty = get(st, cfg, cx, ars, *func);
+      let arg_ty = get(st, cfg, cx, ars, *arg);
       // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
       // would still be correct. however, matching on `func_ty` lets us emit slightly better error
       // messages sometimes.
@@ -90,8 +100,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::Exp
     }
     // sml_def(10)
     sml_hir::Exp::Handle(inner, matcher) => {
-      let mut exp_ty = get(st, cx, ars, *inner);
-      let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
+      let mut exp_ty = get(st, cfg, cx, ars, *inner);
+      let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
       let idx = inner.unwrap_or(exp);
       unify(st, Ty::EXN, param.clone(), idx.into());
       unify(st, exp_ty.clone(), res, idx.into());
@@ -101,19 +111,19 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::Exp
     }
     // sml_def(11)
     sml_hir::Exp::Raise(inner) => {
-      let got = get(st, cx, ars, *inner);
+      let got = get(st, cfg, cx, ars, *inner);
       unify(st, Ty::EXN, got, inner.unwrap_or(exp).into());
       Ty::MetaVar(st.meta_gen.gen(Generalizable::Always))
     }
     // sml_def(12)
     sml_hir::Exp::Fn(matcher) => {
-      let (pats, param, res) = get_matcher(st, cx, ars, matcher, exp.into());
+      let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
       st.insert_case(pats, param.clone(), exp.into());
       Ty::fun(param, res)
     }
     // sml_def(9)
     sml_hir::Exp::Typed(inner, want) => {
-      let got = get(st, cx, ars, *inner);
+      let got = get(st, cfg, cx, ars, *inner);
       let mut want = ty::get(st, cx, ars, *want);
       unify(st, want.clone(), got, exp.into());
       apply(st.subst(), &mut want);
@@ -128,6 +138,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::Exp
 /// sml_def(13)
 fn get_matcher(
   st: &mut St,
+  cfg: Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
   matcher: &[(sml_hir::PatIdx, sml_hir::ExpIdx)],
@@ -140,10 +151,10 @@ fn get_matcher(
   // sml_def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
-    let (pm_pat, pat_ty) = pat::get(st, cx, ars, &mut ve, pat, Generalizable::Sometimes);
+    let (pm_pat, pat_ty) = pat::get(st, cfg, cx, ars, &mut ve, pat, Generalizable::Sometimes);
     let mut cx = cx.clone();
     cx.env.push(Env { val_env: ve, ..Default::default() });
-    let exp_ty = get(st, &cx, ars, exp);
+    let exp_ty = get(st, cfg, &cx, ars, exp);
     let pi = pat.map_or(idx, Into::into);
     unify(st, param_ty.clone(), pat_ty, pi);
     let ei = exp.map_or(idx, Into::into);

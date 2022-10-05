@@ -1,5 +1,6 @@
 //! Test infra.
 
+use diagnostic_util::Severity;
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
 use paths::FileSystem as _;
@@ -171,7 +172,12 @@ impl Check {
     let err = an
       .get_many(&input)
       .into_iter()
-      .flat_map(|(id, errors)| errors.into_iter().map(move |e| (id, e)))
+      .flat_map(|(id, errors)| {
+        errors.into_iter().filter_map(move |e| match e.severity {
+          Severity::Warning => None,
+          Severity::Error => Some((id, e)),
+        })
+      })
       .next();
     for (&path, file) in ret.files.iter() {
       for (&region, expect) in file.want.iter() {
