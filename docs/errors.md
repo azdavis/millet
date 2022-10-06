@@ -781,6 +781,30 @@ Here, the solution could either be to:
     end
   ```
 
+## 4013
+
+A `val` specification had an explicit type variable sequence.
+
+```sml
+(* error *)
+signature MAPPABLE = sig
+  type 'a t
+  val ('a, 'b) map : ('a -> 'b) -> ('a t -> 'b t)
+end
+```
+
+Explicit type variables sequences are permitted for `val` declarations, but not `val` specifications.
+
+To fix, remove the type variable sequence.
+
+```sml
+(* ok *)
+signature MAPPABLE = sig
+  type 'a t
+  val map : ('a -> 'b) -> ('a t -> 'b t)
+end
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

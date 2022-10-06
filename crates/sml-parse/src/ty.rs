@@ -116,7 +116,11 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> bool {
       p.eat(SK::TyVar);
     });
   }
-  p.exit(en, SK::TyVarSeq);
+  if ret {
+    p.exit(en, SK::TyVarSeq);
+  } else {
+    p.abandon(en);
+  }
   ret
 }
 

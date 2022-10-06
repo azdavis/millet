@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Emit a better error for type variable sequences on `val` specifications.
+
 ## v0.3.14
 
 - Add a `println` snippet.

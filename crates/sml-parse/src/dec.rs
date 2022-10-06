@@ -301,6 +301,7 @@ fn spec_one(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
   if p.at(SK::ValKw) {
     p.bump();
+    ty_var_seq(p);
     many_sep(p, SK::AndKw, SK::ValDesc, |p| {
       if eat_name_star(p).is_none() {
         return false;

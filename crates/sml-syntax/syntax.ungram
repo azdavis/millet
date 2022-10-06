@@ -119,7 +119,7 @@ SpecOne =
 | StrSpec
 | IncludeSpec
 
-ValSpec = 'val' ValDesc*
+ValSpec = 'val' TyVarSeq ValDesc*
 TySpec = 'type' TyDesc*
 EqTySpec = 'eqtype' TyDesc*
 // DatDesc and ConDesc are basically the same as DatBind and ConBind in the grammar.

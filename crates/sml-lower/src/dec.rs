@@ -201,18 +201,23 @@ fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> sml_hir::SpecIdx 
 fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> sml_hir::SpecIdx {
   let ptr = SyntaxNodePtr::new(spec.syntax());
   let ret = match spec {
-    ast::SpecOne::ValSpec(spec) => sml_hir::Spec::Val(
-      Vec::new(),
-      spec
-        .val_descs()
-        .filter_map(|x| {
-          Some(sml_hir::ValDesc {
-            name: str_util::Name::new(x.name_star_eq()?.token.text()),
-            ty: ty::get(cx, x.ty()),
+    ast::SpecOne::ValSpec(spec) => {
+      if let Some(tvs) = spec.ty_var_seq() {
+        cx.err(tvs.syntax().text_range(), ErrorKind::ValSpecTyVarSeq);
+      }
+      sml_hir::Spec::Val(
+        Vec::new(),
+        spec
+          .val_descs()
+          .filter_map(|x| {
+            Some(sml_hir::ValDesc {
+              name: str_util::Name::new(x.name_star_eq()?.token.text()),
+              ty: ty::get(cx, x.ty()),
+            })
           })
-        })
-        .collect(),
-    ),
+          .collect(),
+      )
+    }
     ast::SpecOne::TySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), sml_hir::Spec::Ty),
     ast::SpecOne::EqTySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), sml_hir::Spec::EqTy),
     ast::SpecOne::DatSpec(spec) => {

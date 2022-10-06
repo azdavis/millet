@@ -45,6 +45,7 @@ pub(crate) enum ErrorKind {
   DecNotAllowedHere,
   OpBoolBinOp,
   ExpNotAllowedHere,
+  ValSpecTyVarSeq,
   /// must be last
   Unsupported(&'static str),
 }
@@ -70,6 +71,9 @@ impl fmt::Display for ErrorKind {
       ErrorKind::DecNotAllowedHere => f.write_str("structure-level declaration not allowed here"),
       ErrorKind::OpBoolBinOp => f.write_str("`andalso` and `orelse` not allowed with `op`"),
       ErrorKind::ExpNotAllowedHere => f.write_str("expression not allowed here"),
+      ErrorKind::ValSpecTyVarSeq => {
+        f.write_str("`val` specifications may not have explicit type variables")
+      }
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -108,6 +112,7 @@ impl Error {
       ErrorKind::DecNotAllowedHere => 4010,
       ErrorKind::OpBoolBinOp => 4011,
       ErrorKind::ExpNotAllowedHere => 4012,
+      ErrorKind::ValSpecTyVarSeq => 4013,
       ErrorKind::Unsupported(_) => 4999,
     }
   }
