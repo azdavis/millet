@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Add a `println` snippet.
+- Add SML of NJ libraries.
+
 ## v0.3.13
 
 - Emit warning on some unused variables.
