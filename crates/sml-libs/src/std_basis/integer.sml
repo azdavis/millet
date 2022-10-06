@@ -141,5 +141,6 @@ end
 
 structure Int :> INTEGER
   where type int = int = Int
+structure Int32 :> INTEGER (* OPTIONAL *) = struct end
 structure FixedInt :> INTEGER (* OPTIONAL *) = struct end
 structure Position :> INTEGER = struct end

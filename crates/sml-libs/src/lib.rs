@@ -3,7 +3,8 @@
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub mod primitive;
-pub mod sml_nj;
+pub mod sml_of_nj;
+pub mod smlnj_lib;
 pub mod std_basis;
 pub mod std_basis_extra;
 

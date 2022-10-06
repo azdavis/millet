@@ -25,7 +25,8 @@ impl StdBasis {
         .chain(sml_libs::primitive::FILES)
         .chain(sml_libs::std_basis::FILES)
         .chain(sml_libs::std_basis_extra::FILES)
-        .chain(sml_libs::sml_nj::FILES)
+        .chain(sml_libs::smlnj_lib::FILES)
+        .chain(sml_libs::sml_of_nj::FILES)
         .copied(),
     )
   }
