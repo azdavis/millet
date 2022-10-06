@@ -388,7 +388,7 @@ fn main() -> Result<()> {
         .map(|p| ["editors", "vscode", p].into_iter().collect())
         .collect();
       for path in paths.iter() {
-        let contents = std::fs::read_to_string(path)?;
+        let contents = sh.read_file(path)?;
         let mut out = String::with_capacity(contents.len());
         for (idx, line) in contents.lines().enumerate() {
           if idx >= 15 {
@@ -410,7 +410,7 @@ fn main() -> Result<()> {
           }
           out.push('\n');
         }
-        std::fs::write(path, out)?;
+        sh.write_file(path, out)?;
       }
       cmd!(sh, "git add {paths...}").run()?;
       let msg = format!("Release {tag}");
