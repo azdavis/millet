@@ -1,3 +1,7 @@
+(*!
+The ProfControl structure is for internal use by the compiler. Programmers who want execution
+profiles of their programs should use the Compiler.Profile structure.
+!*)
 signature PROF_CONTROL = sig
   val getTimeArray : unit -> int array
   val profMode : bool ref

@@ -1,3 +1,7 @@
+(*!
+This structure defines several common Unix signal values, so that you need not suffer the indignity
+and insecurity of using Signals.fromString to look them up.
+!*)
 signature UNIX_SIGNALS = sig
   include SIGNALS
     where type signal = Signals.signal
