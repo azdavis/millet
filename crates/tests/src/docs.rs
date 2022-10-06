@@ -1,18 +1,15 @@
-use std::path::{Path, PathBuf};
-
 use crate::check::{check_with_std_basis, fail_with_std_basis, fail_with_warnings};
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
 const SML: &str = "sml";
 
-fn check_all<F>(path: &Path, mut f: F)
+fn check_all<F>(contents: &str, mut f: F)
 where
   F: FnMut(&str),
 {
-  let contents = std::fs::read_to_string(&path).unwrap();
   let mut options = Options::empty();
   options.insert(Options::ENABLE_TABLES);
-  let parser = Parser::new_ext(&contents, options);
+  let parser = Parser::new_ext(contents, options);
   let mut inside = false;
   let mut ignore_next = false;
   let mut ac = String::new();
@@ -48,14 +45,9 @@ where
   }
 }
 
-fn docs_dir() -> Option<PathBuf> {
-  Some(Path::new(env!("CARGO_MANIFEST_DIR")).parent()?.parent()?.join("docs"))
-}
-
 #[test]
 fn errors() {
-  let path = docs_dir().unwrap().join("errors.md");
-  check_all(path.as_path(), |s| {
+  check_all(include_str!("../../../docs/errors.md"), |s| {
     if s.starts_with("(* ok *)") {
       check_with_std_basis(s);
     } else if s.starts_with("(* error *)") {
@@ -70,6 +62,5 @@ fn errors() {
 
 #[test]
 fn tokens() {
-  let path = docs_dir().unwrap().join("tokens.md");
-  check_all(path.as_path(), check_with_std_basis);
+  check_all(include_str!("../../../docs/tokens.md"), check_with_std_basis);
 }
