@@ -364,6 +364,7 @@ impl State {
         Some(root) => {
           if root.registered_for_watched_files {
             log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
+            self.root = Some(root);
           } else {
             self.publish_diagnostics(root, None);
           }
