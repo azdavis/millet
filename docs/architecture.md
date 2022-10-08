@@ -98,9 +98,10 @@ Lowers ("elaborates") AST into HIR.
 When lowering, we turn complex constructs into more fundamental ones. For instance:
 
 ```sml
-(* original *) if a then b else c
-(* lowered  *) case a of true => b | false => c
-(* again    *) (fn true => b | false => c) a
+  a andalso b
+= if a then b else false
+= case a of true => b | false => false
+= (fn true => b | false => false) a
 ```
 
 We also construct a two-way mapping between HIR indices and "pointers" to AST nodes. Each direction has a use:
