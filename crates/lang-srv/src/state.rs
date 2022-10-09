@@ -12,6 +12,19 @@ use std::ops::ControlFlow;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
+    text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Options(
+      lsp_types::TextDocumentSyncOptions {
+        open_close: Some(true),
+        // TODO make INCREMENTAL
+        change: Some(lsp_types::TextDocumentSyncKind::FULL),
+        will_save: None,
+        will_save_wait_until: None,
+        save: Some(lsp_types::TextDocumentSyncSaveOptions::SaveOptions(lsp_types::SaveOptions {
+          // TODO make None
+          include_text: Some(true),
+        })),
+      },
+    )),
     hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
     definition_provider: Some(lsp_types::OneOf::Left(true)),
     type_definition_provider: Some(lsp_types::TypeDefinitionProviderCapability::Simple(true)),
@@ -79,8 +92,10 @@ impl State {
       .and_then(|x| x.file_operations?.dynamic_registration)
       .unwrap_or_default();
     if dynamic_registration {
-      let mut registrations = match ret.root.take() {
-        Some(mut root) => {
+      let registrations = ret
+        .root
+        .take()
+        .map(|mut root| {
           let watchers = vec![lsp_types::FileSystemWatcher {
             // not sure if possible to only listen to millet.toml. "nested alternate groups are not
             // allowed" at time of writing
@@ -95,31 +110,8 @@ impl State {
           vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
           )]
-        }
-        None => {
-          let tdr = lsp_types::TextDocumentRegistrationOptions::default();
-          vec![
-            registration::<lsp_types::notification::DidOpenTextDocument, _>(tdr.clone()),
-            registration::<lsp_types::notification::DidCloseTextDocument, _>(tdr.clone()),
-            registration::<lsp_types::notification::DidSaveTextDocument, _>(
-              lsp_types::TextDocumentSaveRegistrationOptions {
-                include_text: Some(true),
-                text_document_registration_options: tdr,
-              },
-            ),
-          ]
-        }
-      };
-      if ret.options.diagnostics_on_change {
-        registrations.push(registration::<lsp_types::notification::DidChangeTextDocument, _>(
-          lsp_types::TextDocumentChangeRegistrationOptions {
-            document_selector: None,
-            // TODO lsp_types::TextDocumentSyncKind::FULL.into() doesn't work, and this field is
-            // i32 for some reason.
-            sync_kind: 1,
-          },
-        ));
-      }
+        })
+        .unwrap_or_default();
       ret.send_request::<lsp_types::request::RegisterCapability>(
         lsp_types::RegistrationParams { registrations },
         None,
@@ -335,8 +327,10 @@ impl State {
       let contents = change.text;
       match self.root.take() {
         Some(mut root) => {
-          let path = url_to_path_id(&self.file_system, &mut root, &url)?;
-          self.publish_diagnostics(root, Some((path, contents)));
+          if self.options.diagnostics_on_change {
+            let path = url_to_path_id(&self.file_system, &mut root, &url)?;
+            self.publish_diagnostics(root, Some((path, contents)));
+          }
         }
         None => {
           self.publish_diagnostics_one(url, &contents);
