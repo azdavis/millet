@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 analysis = { path = "../analysis" }
+anyhow = "1"
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 env_logger = { version = "0.9" }
@@ -20,3 +21,4 @@ paths = { path = "../paths" }
 pulldown-cmark = "0.9"
 sml-syntax = { path = "../sml-syntax" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
+xshell = "0.2"

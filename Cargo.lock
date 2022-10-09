@@ -688,6 +688,7 @@ name = "tests"
 version = "0.1.0"
 dependencies = [
  "analysis",
+ "anyhow",
  "config",
  "diagnostic-util",
  "env_logger",
@@ -699,6 +700,7 @@ dependencies = [
  "pulldown-cmark",
  "sml-syntax",
  "text-pos",
+ "xshell",
 ]
 
 [[package]]

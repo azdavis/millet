@@ -27,6 +27,7 @@ mod misc;
 mod num_record;
 mod overload;
 mod pat;
+mod repo;
 mod rest_pat;
 mod rust;
 mod shadow;
