@@ -1,6 +1,6 @@
 //! See the [xtask spec](https://github.com/matklad/cargo-xtask).
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, Context as _, Result};
 use pico_args::Arguments;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -175,31 +175,42 @@ where
 
 fn ck_sml_libs(sh: &Shell) -> Result<()> {
   println!("checking sml libraries");
-  let mut sml: PathBuf = ["crates", "sml-libs", "src", "std_basis.rs"].into_iter().collect();
-  let order_file = sh.read_file(&sml)?;
-  let in_order: BTreeSet<_> = order_file
-    .lines()
-    .filter_map(|x| x.strip_prefix("  \"std_basis/")?.strip_suffix(".sml\","))
-    .collect();
-  assert!(sml.pop());
-  sml.push("std_basis");
-  let sml_dir = sh.read_dir(&sml)?;
-  let in_files: BTreeSet<_> = sml_dir
-    .iter()
-    .filter_map(|x| {
-      if x.extension()? == "sml" {
-        x.file_name()?.to_str()?.strip_suffix(".sml")
-      } else {
-        None
-      }
-    })
-    .collect();
-  eq_sets(
-    &in_order,
-    &in_files,
-    "referenced files that don't exist",
-    "existing files not referenced",
-  )?;
+  let mut path: PathBuf = ["crates", "sml-libs", "src"].into_iter().collect();
+  let mut entries = sh.read_dir(&path)?;
+  entries.retain(|x| x.extension().is_none());
+  for dir in entries {
+    let dir_name = dir
+      .file_name()
+      .context("no file name for dir")?
+      .to_str()
+      .context("cannot convert dirname to str")?;
+    println!("- checking {dir_name}");
+    let mod_path = dir.as_path().with_extension("rs");
+    path.push(mod_path);
+    let mod_file = sh.read_file(&path)?;
+    let prefix = format!("  \"{dir_name}/");
+    let in_order: BTreeSet<_> =
+      mod_file.lines().filter_map(|x| x.strip_prefix(&prefix)?.strip_suffix(".sml\",")).collect();
+    assert!(path.pop());
+    path.push(&dir);
+    let sml_dir = sh.read_dir(&path)?;
+    let in_files: BTreeSet<_> = sml_dir
+      .iter()
+      .filter_map(|x| {
+        if x.extension()? == "sml" {
+          x.file_name()?.to_str()?.strip_suffix(".sml")
+        } else {
+          None
+        }
+      })
+      .collect();
+    eq_sets(
+      &in_order,
+      &in_files,
+      "referenced files that don't exist",
+      "existing files not referenced",
+    )?;
+  }
   Ok(())
 }
 
