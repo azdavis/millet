@@ -503,6 +503,33 @@ where
   }
 }
 
+/// adapted from rust-analyzer. TODO use
+#[allow(dead_code)]
+fn apply_changes(text: &mut String, changes: Vec<lsp_types::TextDocumentContentChangeEvent>) {
+  let mut pos_db = text_pos::PositionDb::new(text);
+  let mut up_to_line = None::<u32>;
+  for change in changes {
+    match change.range {
+      Some(range) => {
+        if up_to_line.map_or(false, |utl| utl <= range.end.line) {
+          pos_db = text_pos::PositionDb::new(text);
+        }
+        match pos_db.text_range(analysis_range(range)) {
+          Some(text_range) => {
+            text.replace_range(std::ops::Range::<usize>::from(text_range), &change.text);
+            up_to_line = Some(range.start.line);
+          }
+          None => log::error!("unable to apply text document change {change:?}"),
+        }
+      }
+      None => {
+        *text = change.text;
+        up_to_line = Some(0);
+      }
+    }
+  }
+}
+
 fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
   match e {
     ExtractError::MethodMismatch(x) => ControlFlow::Continue(x),
