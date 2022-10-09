@@ -5,4 +5,4 @@
 use crate::files;
 
 /// The files.
-pub const FILES: &[(&str, &str)] = files!["primitive.sml"];
+pub const FILES: &[(&str, &str)] = files!["primitive/primitive.sml"];

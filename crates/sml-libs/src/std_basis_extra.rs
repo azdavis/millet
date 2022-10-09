@@ -5,4 +5,5 @@
 use crate::files;
 
 /// The files.
-pub const FILES: &[(&str, &str)] = files!["fn.sml", "ref.sml", "either.sml"];
+pub const FILES: &[(&str, &str)] =
+  files!["std_basis_extra/fn.sml", "std_basis_extra/ref.sml", "std_basis_extra/either.sml"];

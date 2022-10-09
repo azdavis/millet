@@ -175,11 +175,14 @@ where
 
 fn ck_sml_libs(sh: &Shell) -> Result<()> {
   println!("checking sml libraries");
-  let mut sml: PathBuf = ["crates", "sml-libs", "src", "std_basis", "mod.rs"].into_iter().collect();
+  let mut sml: PathBuf = ["crates", "sml-libs", "src", "std_basis.rs"].into_iter().collect();
   let order_file = sh.read_file(&sml)?;
-  let in_order: BTreeSet<_> =
-    order_file.lines().filter_map(|x| x.strip_prefix("  \"")?.strip_suffix(".sml\",")).collect();
+  let in_order: BTreeSet<_> = order_file
+    .lines()
+    .filter_map(|x| x.strip_prefix("  \"std_basis/")?.strip_suffix(".sml\","))
+    .collect();
   assert!(sml.pop());
+  sml.push("std_basis");
   let sml_dir = sh.read_dir(&sml)?;
   let in_files: BTreeSet<_> = sml_dir
     .iter()
