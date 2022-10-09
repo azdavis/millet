@@ -63,7 +63,7 @@ where
   let mut imperative_io_hack = None::<String>;
   let info: FxHashMap<_, _> = files
     .map(|(name, mut contents)| {
-      if name == "imperative-io.sml" {
+      if name == "std_basis/imperative-io.sml" {
         let mut lines: Vec<_> = contents
           .lines()
           .skip(5)
@@ -73,7 +73,7 @@ where
         imperative_io_hack = Some(lines.join("\n"));
       }
       let owned_contents: String;
-      if name == "text-io.sml" {
+      if name == "std_basis/text-io.sml" {
         let lines: Vec<_> = contents
           .lines()
           .map(|line| {
