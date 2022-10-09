@@ -110,13 +110,7 @@ fn sml_libs() {
     let sml_dir = sh.read_dir(&path).unwrap();
     let in_files: BTreeSet<_> = sml_dir
       .iter()
-      .filter_map(|x| {
-        if x.extension()? == "sml" {
-          x.file_name()?.to_str()?.strip_suffix(".sml")
-        } else {
-          None
-        }
-      })
+      .map(|x| x.file_name().unwrap().to_str().unwrap().strip_suffix(".sml").unwrap())
       .collect();
     eq_sets(
       &in_order,
