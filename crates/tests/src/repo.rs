@@ -78,7 +78,6 @@ fn no_ignore() {
   let sh = Shell::new().unwrap();
   let _d = sh.push_dir(root_dir());
   let word = "ignore";
-  println!("checking for no {word}");
   let has_ignore = cmd!(sh, "git grep -lFe #[{word}").ignore_status().output().unwrap();
   let out = String::from_utf8(has_ignore.stdout).unwrap();
   let set: BTreeSet<_> = out.lines().collect();
@@ -100,7 +99,6 @@ fn sml_libs() {
       .expect("no file name for dir")
       .to_str()
       .expect("cannot convert dirname to str");
-    println!("- checking {dir_name}");
     let mod_path = dir.as_path().with_extension("rs");
     path.push(mod_path);
     let mod_file = sh.read_file(&path).unwrap();
