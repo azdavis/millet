@@ -9,7 +9,6 @@ doctest = false
 
 [dependencies]
 analysis = { path = "../analysis" }
-anyhow = "1"
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 env_logger = { version = "0.9" }
