@@ -36,17 +36,13 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 const MAX_FILES_WITH_ERRORS: usize = 20;
 const LEARN_MORE: &str = "Learn more";
 
-struct Root {
-  path: paths::CanonicalPathBuf,
-  store: paths::Store,
-  has_diagnostics: FxHashSet<Url>,
-  registered_for_watched_files: bool,
-}
-
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
 /// that communicate over stdin and stdout.)
 pub(crate) struct State {
-  root: Option<Root>,
+  root: Option<paths::CanonicalPathBuf>,
+  store: paths::Store,
+  has_diagnostics: FxHashSet<Url>,
+  registered_for_watched_files: bool,
   sender: Sender<Message>,
   req_queue: ReqQueue<(), Option<u16>>,
   analysis: analysis::Analysis,
@@ -73,12 +69,10 @@ impl State {
       .transpose();
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
-      root: root.as_mut().ok().and_then(Option::take).map(|path| Root {
-        path,
-        store: paths::Store::new(),
-        has_diagnostics: FxHashSet::default(),
-        registered_for_watched_files: false,
-      }),
+      root: root.as_mut().ok().and_then(Option::take),
+      store: paths::Store::new(),
+      has_diagnostics: FxHashSet::default(),
+      registered_for_watched_files: false,
       sender,
       req_queue: ReqQueue::default(),
       analysis: analysis::Analysis::new(mlb_statics::StdBasis::full(), config::ErrorLines::Many),
@@ -96,19 +90,15 @@ impl State {
     if dynamic_registration {
       let registrations = ret
         .root
-        .take()
-        .map(|mut root| {
+        .as_ref()
+        .map(|root| {
           let watchers = vec![lsp_types::FileSystemWatcher {
             // not sure if possible to only listen to millet.toml. "nested alternate groups are not
             // allowed" at time of writing
-            glob_pattern: format!(
-              "{}/**/*.{{sml,sig,fun,cm,mlb,toml}}",
-              root.path.as_path().display()
-            ),
+            glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.as_path().display()),
             kind: None,
           }];
-          root.registered_for_watched_files = true;
-          ret.publish_diagnostics(root, None);
+          ret.registered_for_watched_files = true;
           vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
           )]
@@ -119,7 +109,8 @@ impl State {
         None,
       );
     }
-    if ret.root.as_ref().map_or(true, |r| !r.registered_for_watched_files) {
+    ret.try_publish_diagnostics(None);
+    if !ret.registered_for_watched_files {
       log::warn!("millet will not necessarily receive notifications when files change on-disk.");
       log::warn!("this means the internal state of millet can get out of sync with what is");
       log::warn!("actually on disk, e.g. when using `git checkout` or other means of modifying");
@@ -154,31 +145,17 @@ impl State {
   pub(crate) fn handle_request(&mut self, req: Request) {
     log::info!("got request: {req:?}");
     self.req_queue.incoming.register(req.id.clone(), ());
-    let mut root = match self.root.take() {
-      Some(x) => x,
-      None => {
-        // TODO could improve support for no-root mode.
-        log::warn!("can't handle request with no root");
-        self.send_response(Response::new_ok(req.id, None::<()>));
-        return;
-      }
-    };
-    match self.handle_request_(&mut root, req) {
+    match self.handle_request_(req) {
       ControlFlow::Break(Ok(())) => {}
       ControlFlow::Break(Err(e)) => log::error!("couldn't handle request: {e}"),
       ControlFlow::Continue(req) => log::warn!("unhandled request: {req:?}"),
     }
-    self.root = Some(root);
   }
 
-  fn handle_request_(
-    &mut self,
-    root: &mut Root,
-    mut r: Request,
-  ) -> ControlFlow<Result<()>, Request> {
+  fn handle_request_(&mut self, mut r: Request) -> ControlFlow<Result<()>, Request> {
     r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.file_system, root, params)?;
+      let pos = text_doc_pos_params(&self.file_system, &mut self.store, params)?;
       let res = self.analysis.get_md(pos, self.options.show_token_hover).map(|(value, range)| {
         lsp_types::Hover {
           contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
@@ -193,23 +170,22 @@ impl State {
     })?;
     r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.file_system, root, params)?;
-      let res = self
-        .analysis
-        .get_def(pos)
-        .and_then(|range| lsp_location(root, range).map(lsp_types::GotoDefinitionResponse::Scalar));
+      let pos = text_doc_pos_params(&self.file_system, &mut self.store, params)?;
+      let res = self.analysis.get_def(pos).and_then(|range| {
+        lsp_location(&self.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
+      });
       self.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.file_system, root, params)?;
+      let pos = text_doc_pos_params(&self.file_system, &mut self.store, params)?;
       let locs: Vec<_> = self
         .analysis
         .get_ty_defs(pos)
         .into_iter()
         .flatten()
-        .filter_map(|range| lsp_location(root, range))
+        .filter_map(|range| lsp_location(&self.store, range))
         .collect();
       let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
       self.send_response(Response::new_ok(id, res));
@@ -217,7 +193,7 @@ impl State {
     })?;
     r = try_request::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
       let url = params.text_document.uri;
-      let path = url_to_path_id(&self.file_system, root, &url)?;
+      let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
       let range = analysis_range(params.range);
       let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
       if let Some((range, new_text)) = self.analysis.fill_case(path.wrap(range.start)) {
@@ -305,9 +281,9 @@ impl State {
 
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      match self.root.take() {
-        Some(root) => {
-          self.publish_diagnostics(root, None);
+      match self.root {
+        Some(_) => {
+          self.try_publish_diagnostics(None);
           Ok(())
         }
         None => bail!("can't handle DidChangeWatchedFiles with no root"),
@@ -327,13 +303,11 @@ impl State {
         bail!("not a full document change");
       }
       let contents = change.text;
-      match self.root.take() {
-        Some(mut root) => {
+      match self.root {
+        Some(_) => {
           if self.options.diagnostics_on_change {
-            let path = url_to_path_id(&self.file_system, &mut root, &url)?;
-            self.publish_diagnostics(root, Some((path, contents)));
-          } else {
-            self.root = Some(root);
+            let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
+            self.try_publish_diagnostics(Some((path, contents)));
           }
         }
         None => {
@@ -351,7 +325,7 @@ impl State {
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
-      match self.root.take() {
+      match &self.root {
         None => match params.text {
           Some(text) => {
             let url = params.text_document.uri;
@@ -359,12 +333,11 @@ impl State {
           }
           None => bail!("no text for DidSaveTextDocument"),
         },
-        Some(root) => {
-          if root.registered_for_watched_files {
+        Some(_) => {
+          if self.registered_for_watched_files {
             log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
-            self.root = Some(root);
           } else {
-            self.publish_diagnostics(root, None);
+            self.try_publish_diagnostics(None);
           }
         }
       }
@@ -387,26 +360,26 @@ impl State {
 
   // diagnostics //
 
-  /// also gets input from the filesystem and puts the root back onto self
-  fn publish_diagnostics(
-    &mut self,
-    mut root: Root,
-    extra: Option<(paths::PathId, String)>,
-  ) -> bool {
+  /// also gets input from the filesystem.
+  fn try_publish_diagnostics(&mut self, extra: Option<(paths::PathId, String)>) -> bool {
+    let root = match &self.root {
+      None => return false,
+      Some(x) => x,
+    };
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let input = elapsed::log("Input::new", || {
-      analysis::input::Input::new(&self.file_system, &mut root.store, &root.path)
+      analysis::input::Input::new(&self.file_system, &mut self.store, root)
     });
     let mut input = match input {
       Ok(x) => x,
       Err(e) => {
-        for url in root.has_diagnostics.drain() {
+        for url in std::mem::take(&mut self.has_diagnostics) {
           self.send_diagnostics(url, Vec::new());
         }
         let did_send_as_diagnostic = if e.path().is_file() {
           match file_url(e.path()) {
             Ok(url) => {
-              root.has_diagnostics.insert(url.clone());
+              self.has_diagnostics.insert(url.clone());
               self.send_diagnostics(
                 url,
                 vec![diagnostic(e.to_string(), e.range(), e.code(), e.severity())],
@@ -421,7 +394,6 @@ impl State {
         if !did_send_as_diagnostic {
           self.show_error(format!("{}: {}", e.path().display(), e), e.code());
         }
-        self.root = Some(root);
         return false;
       }
     };
@@ -430,7 +402,7 @@ impl State {
     }
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
     for (path_id, errors) in got_many {
-      let path = root.store.get_path(path_id);
+      let path = self.store.get_path(path_id);
       let url = match file_url(path.as_path()) {
         Ok(x) => x,
         Err(e) => {
@@ -446,7 +418,8 @@ impl State {
       self.send_diagnostics(url, ds);
     }
     // this is the old one.
-    for url in root.has_diagnostics {
+    let old_has_diagnostics = std::mem::take(&mut self.has_diagnostics);
+    for url in old_has_diagnostics {
       // this is the new one.
       if has_diagnostics.contains(&url) {
         // had old diagnostics, and has new diagnostics. we just sent the new ones.
@@ -455,8 +428,7 @@ impl State {
       // had old diagnostics, but no new diagnostics. clear the old diagnostics.
       self.send_diagnostics(url, Vec::new());
     }
-    root.has_diagnostics = has_diagnostics;
-    self.root = Some(root);
+    self.has_diagnostics = has_diagnostics;
     true
   }
 
@@ -604,10 +576,10 @@ fn lsp_position(pos: text_pos::Position) -> lsp_types::Position {
 }
 
 fn lsp_location(
-  root: &Root,
+  store: &paths::Store,
   range: paths::WithPath<text_pos::Range>,
 ) -> Option<lsp_types::Location> {
-  let uri = match file_url(root.store.get_path(range.path).as_path()) {
+  let uri = match file_url(store.get_path(range.path).as_path()) {
     Ok(x) => x,
     Err(e) => {
       log::error!("couldn't get path as a file url: {e:#}");
@@ -625,22 +597,22 @@ fn analysis_range(range: lsp_types::Range) -> text_pos::Range {
   text_pos::Range { start: analysis_position(range.start), end: analysis_position(range.end) }
 }
 
-fn url_to_path_id<F>(fs: &F, root: &mut Root, url: &Url) -> Result<paths::PathId>
+fn url_to_path_id<F>(fs: &F, store: &mut paths::Store, url: &Url) -> Result<paths::PathId>
 where
   F: paths::FileSystem,
 {
-  Ok(root.store.get_id(&canonical_path_buf(fs, url)?))
+  Ok(store.get_id(&canonical_path_buf(fs, url)?))
 }
 
 fn text_doc_pos_params<F>(
   fs: &F,
-  root: &mut Root,
+  store: &mut paths::Store,
   params: lsp_types::TextDocumentPositionParams,
 ) -> Result<paths::WithPath<text_pos::Position>>
 where
   F: paths::FileSystem,
 {
-  let path = url_to_path_id(fs, root, &params.text_document.uri)?;
+  let path = url_to_path_id(fs, store, &params.text_document.uri)?;
   let pos = analysis_position(params.position);
   Ok(path.wrap(pos))
 }
