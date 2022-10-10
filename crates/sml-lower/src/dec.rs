@@ -6,8 +6,15 @@ use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get_top_dec(cx: &mut Cx, top_dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
   let top_dec = top_dec?;
-  let mut top_decs: Vec<_> =
-    top_dec.dec_in_seqs().map(|x| get_top_dec_one(cx, x.dec_one()?)).collect();
+  let mut top_decs: Vec<_> = top_dec
+    .dec_in_seqs()
+    .map(|x| {
+      if let Some(semi) = x.semicolon() {
+        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+      }
+      get_top_dec_one(cx, x.dec_one()?)
+    })
+    .collect();
   if top_decs.len() == 1 {
     top_decs.pop().unwrap()
   } else {
@@ -50,8 +57,15 @@ fn get_top_dec_one(cx: &mut Cx, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
 
 fn get_str_dec(cx: &mut Cx, str_dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
   let str_dec = str_dec?;
-  let mut str_decs: Vec<_> =
-    str_dec.dec_in_seqs().map(|x| get_str_dec_one(cx, x.dec_one()?)).collect();
+  let mut str_decs: Vec<_> = str_dec
+    .dec_in_seqs()
+    .map(|x| {
+      if let Some(semi) = x.semicolon() {
+        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+      }
+      get_str_dec_one(cx, x.dec_one()?)
+    })
+    .collect();
   if str_decs.len() == 1 {
     str_decs.pop().unwrap()
   } else {
@@ -168,8 +182,15 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
 
 fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> sml_hir::SpecIdx {
   let spec = spec?;
-  let mut specs: Vec<_> =
-    spec.spec_with_tail_in_seqs().map(|x| get_spec_with_tail(cx, x.spec_with_tail()?)).collect();
+  let mut specs: Vec<_> = spec
+    .spec_with_tail_in_seqs()
+    .map(|x| {
+      if let Some(semi) = x.semicolon() {
+        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+      }
+      get_spec_with_tail(cx, x.spec_with_tail()?)
+    })
+    .collect();
   if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
@@ -179,7 +200,15 @@ fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> sml_hir::SpecIdx {
 
 fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> sml_hir::SpecIdx {
   let ptr = SyntaxNodePtr::new(spec.syntax());
-  let mut specs: Vec<_> = spec.spec_in_seqs().map(|x| get_spec_one(cx, x.spec_one()?)).collect();
+  let mut specs: Vec<_> = spec
+    .spec_in_seqs()
+    .map(|x| {
+      if let Some(semi) = x.semicolon() {
+        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+      }
+      get_spec_one(cx, x.spec_one()?)
+    })
+    .collect();
   let inner = if specs.len() == 1 {
     specs.pop().unwrap()
   } else {
@@ -335,7 +364,15 @@ fn with_ascription_tail(
 
 pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::DecIdx {
   let dec = dec?;
-  let mut decs: Vec<_> = dec.dec_in_seqs().map(|x| get_one(cx, x.dec_one()?)).collect();
+  let mut decs: Vec<_> = dec
+    .dec_in_seqs()
+    .map(|x| {
+      if let Some(semi) = x.semicolon() {
+        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+      }
+      get_one(cx, x.dec_one()?)
+    })
+    .collect();
   if decs.len() == 1 {
     decs.pop().unwrap()
   } else {

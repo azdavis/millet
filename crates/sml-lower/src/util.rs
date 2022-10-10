@@ -49,6 +49,7 @@ pub(crate) enum ErrorKind {
   UnnecessaryParens,
   ComplexBoolExp,
   OneArmedCase,
+  UnnecessarySemicolon,
   /// must be last
   Unsupported(&'static str),
 }
@@ -80,6 +81,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::UnnecessaryParens => f.write_str("unnecessary parentheses"),
       ErrorKind::ComplexBoolExp => f.write_str("overly complex `bool` expression"),
       ErrorKind::OneArmedCase => f.write_str("`case` with only one arm"),
+      ErrorKind::UnnecessarySemicolon => f.write_str("unnecessary `;`"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -122,6 +124,7 @@ impl Error {
       ErrorKind::UnnecessaryParens => 4014,
       ErrorKind::ComplexBoolExp => 4015,
       ErrorKind::OneArmedCase => 4016,
+      ErrorKind::UnnecessarySemicolon => 4017,
       ErrorKind::Unsupported(_) => 4999,
     }
   }
@@ -129,9 +132,10 @@ impl Error {
   /// Returns the severity for this.
   pub fn severity(&self) -> Severity {
     match self.kind {
-      ErrorKind::UnnecessaryParens | ErrorKind::ComplexBoolExp | ErrorKind::OneArmedCase => {
-        Severity::Warning
-      }
+      ErrorKind::UnnecessaryParens
+      | ErrorKind::ComplexBoolExp
+      | ErrorKind::OneArmedCase
+      | ErrorKind::UnnecessarySemicolon => Severity::Warning,
       _ => Severity::Error,
     }
   }

@@ -892,6 +892,20 @@ datatype d = D of int
 fun toInt (D y) = y
 ```
 
+## 4017
+
+There was an unnecessary semicolon.
+
+```sml
+(* warning *)
+val x = 3;
+val y = "hi";
+```
+
+Semicolons are used in a REPL setting to indicate the end of input, but are unnecessary in most cases in source files.
+
+To fix, remove the semicolon.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
