@@ -47,6 +47,7 @@ pub(crate) enum ErrorKind {
   ExpNotAllowedHere,
   ValSpecTyVarSeq,
   UnnecessaryParens,
+  ComplexBoolExp,
   /// must be last
   Unsupported(&'static str),
 }
@@ -76,6 +77,7 @@ impl fmt::Display for ErrorKind {
         f.write_str("`val` specifications may not have explicit type variables")
       }
       ErrorKind::UnnecessaryParens => f.write_str("unnecessary parentheses"),
+      ErrorKind::ComplexBoolExp => f.write_str("overly complex `bool` expression"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -116,6 +118,7 @@ impl Error {
       ErrorKind::ExpNotAllowedHere => 4012,
       ErrorKind::ValSpecTyVarSeq => 4013,
       ErrorKind::UnnecessaryParens => 4014,
+      ErrorKind::ComplexBoolExp => 4015,
       ErrorKind::Unsupported(_) => 4999,
     }
   }
@@ -123,7 +126,7 @@ impl Error {
   /// Returns the severity for this.
   pub fn severity(&self) -> Severity {
     match self.kind {
-      ErrorKind::UnnecessaryParens => Severity::Warning,
+      ErrorKind::UnnecessaryParens | ErrorKind::ComplexBoolExp => Severity::Warning,
       _ => Severity::Error,
     }
   }

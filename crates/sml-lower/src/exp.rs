@@ -89,15 +89,25 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::TypedExp(exp) => sml_hir::Exp::Typed(get(cx, exp.exp()), ty::get(cx, exp.ty())),
     ast::Exp::AndalsoExp(exp) => {
-      let cond = get(cx, exp.lhs());
-      let yes = get(cx, exp.rhs());
+      let lhs = exp.lhs();
+      let rhs = exp.rhs();
+      if is_bool_lit(&lhs) || is_bool_lit(&rhs) {
+        cx.err(exp.syntax().text_range(), ErrorKind::ComplexBoolExp);
+      }
+      let cond = get(cx, lhs);
+      let yes = get(cx, rhs);
       let no = cx.exp(name("false"), ptr.clone());
       if_(cx, cond, yes, no, ptr.clone())
     }
     ast::Exp::OrelseExp(exp) => {
-      let cond = get(cx, exp.lhs());
+      let lhs = exp.lhs();
+      let rhs = exp.rhs();
+      if is_bool_lit(&lhs) || is_bool_lit(&rhs) {
+        cx.err(exp.syntax().text_range(), ErrorKind::ComplexBoolExp);
+      }
+      let cond = get(cx, lhs);
       let yes = cx.exp(name("true"), ptr.clone());
-      let no = get(cx, exp.rhs());
+      let no = get(cx, rhs);
       if_(cx, cond, yes, no, ptr.clone())
     }
     ast::Exp::HandleExp(exp) => {
@@ -105,9 +115,15 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::RaiseExp(exp) => sml_hir::Exp::Raise(get(cx, exp.exp())),
     ast::Exp::IfExp(exp) => {
-      let cond = get(cx, exp.cond());
-      let yes = get(cx, exp.yes());
-      let no = get(cx, exp.no());
+      let cond = exp.cond();
+      let yes = exp.yes();
+      let no = exp.no();
+      if is_bool_lit(&cond) || is_bool_lit(&yes) || is_bool_lit(&no) {
+        cx.err(exp.syntax().text_range(), ErrorKind::ComplexBoolExp);
+      }
+      let cond = get(cx, cond);
+      let yes = get(cx, yes);
+      let no = get(cx, no);
       if_(cx, cond, yes, no, ptr.clone())
     }
     ast::Exp::WhileExp(exp) => {
@@ -138,6 +154,25 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     ast::Exp::FnExp(exp) => sml_hir::Exp::Fn(matcher(cx, exp.matcher())),
   };
   cx.exp(ret, ptr)
+}
+
+fn is_bool_lit(exp: &Option<ast::Exp>) -> bool {
+  let exp = match exp {
+    Some(x) => x,
+    None => return false,
+  };
+  match exp {
+    ast::Exp::PathExp(exp) => exp.path().map_or(false, |p| {
+      let mut iter = p.name_star_eq_dots();
+      let is_true_or_false = iter
+        .next()
+        .and_then(|x| x.name_star_eq())
+        .map_or(false, |x| matches!(x.token.text(), "true" | "false"));
+      is_true_or_false && iter.next().is_none()
+    }),
+    ast::Exp::ParenExp(exp) => is_bool_lit(&exp.exp()),
+    _ => false,
+  }
 }
 
 /// not strictly "is atomic".

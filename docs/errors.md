@@ -843,6 +843,30 @@ Note that e.g. `op +` is technically atomic, but this error is not issued for pa
 
 To fix, remove the parentheses.
 
+## 4015
+
+There was an overly complex expression involving `bool`s.
+
+```sml
+(* warning *)
+fun booleanIdentity x = if x then true else false
+```
+
+An expression is "overly complex" if it involves `if`, `andalso`, or `orelse`, and contains a `bool` literal `true` or `false`. Such expressions can always be simplified. For example:
+
+| Complex                     | Simple        |
+| --------------------------- | ------------- |
+| `if x then true else false` | `x`           |
+| `if x then false else true` | `not x`       |
+| `if x then y else false`    | `x andalso y` |
+| `if x then true else y`     | `x orelse y`  |
+| `x orelse true`             | `true`        |
+| `x orelse false`            | `x`           |
+| `x andalso true`            | `x`           |
+| `x andalso false`           | `false`       |
+
+To fix, simplify the expression.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
