@@ -2,7 +2,7 @@ use crate::exp::{exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path};
+use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star, name_star_eq, path};
 use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>) -> bool {
@@ -61,10 +61,14 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
             if saw_op {
               p.bump();
             }
-            if let Some(name) = eat_name_star(p) {
+            if name_star(p, 0) {
+              let name = p.peek().unwrap();
               if !saw_op && p.is_infix(name.text) {
                 p.error(ErrorKind::InfixWithoutOp);
               }
+              p.bump();
+            } else {
+              p.error(ErrorKind::Expected(Expected::Kind(SK::Name)));
             }
             p.exit(en, SK::PrefixFunBindCaseHead);
           }
