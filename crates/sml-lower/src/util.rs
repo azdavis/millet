@@ -83,7 +83,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::ComplexBoolExp => f.write_str("overly complex `bool` expression"),
       ErrorKind::OneArmedCase => f.write_str("`case` with only one arm"),
       ErrorKind::UnnecessarySemicolon => f.write_str("unnecessary `;`"),
-      ErrorKind::MultipleTypedPat => f.write_str("multiple typed patterns"),
+      ErrorKind::MultipleTypedPat => f.write_str("multiple types on one pattern"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
