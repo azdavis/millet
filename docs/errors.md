@@ -862,6 +862,8 @@ An expression is "overly complex" if it involves `if`, `andalso`, or `orelse`, a
 | `if x then false else true` | `not x`       |
 | `if x then y else false`    | `x andalso y` |
 | `if x then true else y`     | `x orelse y`  |
+| `if true then x else y`     | `x`           |
+| `if false then x else y`    | `y`           |
 | `x orelse true`             | `true`        |
 | `x orelse false`            | `x`           |
 | `x andalso true`            | `x`           |
