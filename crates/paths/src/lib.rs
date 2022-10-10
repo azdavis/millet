@@ -7,7 +7,7 @@ pub mod slash_var_path;
 use fast_hash::FxHashMap;
 use std::path::{Path, PathBuf};
 
-/// A root, in which all files are contained.
+/// A store of paths.
 #[derive(Debug, Default)]
 pub struct Store {
   id_to_path: Vec<CanonicalPathBuf>,
