@@ -2,7 +2,6 @@
   "millet.server.enable": false,
   "editor.rulers": [100],
   "files.exclude": {
-    "**/*.vsix": true,
     "editors/vscode/node_modules": true,
     "editors/vscode/out": true,
     "target": true
