@@ -109,7 +109,7 @@ To fix, use different names, or remove the `and`. See also 5002.
 
 In a `millet.toml` config file, a key of the `errors` table was not a valid error code.
 
-A valid error code will be a positive integer with 4 digits.
+A valid error code will be a positive integer.
 
 To fix, make the key of the `errors` table an error code.
 
