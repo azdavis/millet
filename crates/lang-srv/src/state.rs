@@ -330,6 +330,8 @@ impl State {
           if self.options.diagnostics_on_change {
             let path = url_to_path_id(&self.file_system, &mut root, &url)?;
             self.publish_diagnostics(root, Some((path, contents)));
+          } else {
+            self.root = Some(root);
           }
         }
         None => {
