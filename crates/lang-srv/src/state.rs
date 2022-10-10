@@ -303,15 +303,15 @@ impl State {
         bail!("not a full document change");
       }
       let contents = change.text;
-      match self.root {
-        Some(_) => {
-          if self.options.diagnostics_on_change {
+      if self.options.diagnostics_on_change {
+        match self.root {
+          Some(_) => {
             let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
             self.try_publish_diagnostics(Some((path, contents)));
           }
-        }
-        None => {
-          self.publish_diagnostics_one(url, &contents);
+          None => {
+            self.publish_diagnostics_one(url, &contents);
+          }
         }
       }
       Ok(())
