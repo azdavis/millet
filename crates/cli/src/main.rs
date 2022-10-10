@@ -75,7 +75,7 @@ fn handle_input_error(e: analysis::input::InputError) {
 
 fn main() {
   match run() {
-    0 => {}
+    0 => println!("no errors"),
     n => {
       let suffix = if n == 1 { "" } else { "s" };
       println!("{n} error{suffix}. see {} for more information", diagnostic_util::ERRORS_URL);
