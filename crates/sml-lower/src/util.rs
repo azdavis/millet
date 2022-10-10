@@ -50,6 +50,7 @@ pub(crate) enum ErrorKind {
   ComplexBoolExp,
   OneArmedCase,
   UnnecessarySemicolon,
+  MultipleTypedPat,
   /// must be last
   Unsupported(&'static str),
 }
@@ -82,6 +83,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::ComplexBoolExp => f.write_str("overly complex `bool` expression"),
       ErrorKind::OneArmedCase => f.write_str("`case` with only one arm"),
       ErrorKind::UnnecessarySemicolon => f.write_str("unnecessary `;`"),
+      ErrorKind::MultipleTypedPat => f.write_str("multiple typed patterns"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -125,6 +127,7 @@ impl Error {
       ErrorKind::ComplexBoolExp => 4015,
       ErrorKind::OneArmedCase => 4016,
       ErrorKind::UnnecessarySemicolon => 4017,
+      ErrorKind::MultipleTypedPat => 4018,
       ErrorKind::Unsupported(_) => 4999,
     }
   }
@@ -135,7 +138,8 @@ impl Error {
       ErrorKind::UnnecessaryParens
       | ErrorKind::ComplexBoolExp
       | ErrorKind::OneArmedCase
-      | ErrorKind::UnnecessarySemicolon => Severity::Warning,
+      | ErrorKind::UnnecessarySemicolon
+      | ErrorKind::MultipleTypedPat => Severity::Warning,
       _ => Severity::Error,
     }
   }

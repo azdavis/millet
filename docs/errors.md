@@ -906,6 +906,62 @@ Semicolons are used in a REPL setting to indicate the end of input, but are unne
 
 To fix, remove the semicolon.
 
+## 4018
+
+There were multiple type annotations on a single overall pattern.
+
+```sml
+(* warning *)
+fun add ((x : int, y : int) : int * int) = x + y
+```
+
+This error will occur in situations like this:
+
+```sml
+(* warning *)
+val inc = fn (x : int) : int => x + 1
+```
+
+This may look like it is annotating both the input and output types of this `fn` as `int`, but actually it is annotating the input as `int` twice, redundantly.
+
+Indeed, the below similar code triggers this error, as well as another error that `bool` and `int` are mismatched types. This gives a clue as to what is happening: we are actually trying to annotate `x` as both `bool` and `int`.
+
+```sml
+(* error *)
+val greaterThanFive = fn (x : int) : bool => x > 5
+```
+
+To fix, use only one type annotation. In the first example, either of the following would work:
+
+```sml
+(* ok *)
+fun addAnnotateEach (x : int, y : int) = x + y
+fun addAnnotatePair ((x, y) : int * int) = x + y
+```
+
+For the `fn` examples, it may work to:
+
+- Annotate the type elsewhere, e.g. with a `val` annotation:
+
+  ```sml
+  (* ok *)
+  val inc : int -> int = fn x => x + 1
+  ```
+
+- Annotate the body of the function:
+
+  ```sml
+  (* ok *)
+  val inc = fn (x : int) => (x + 1) : int
+  ```
+
+- Skip annotating the return type:
+
+  ```sml
+  (* ok *)
+  val inc = fn (x : int) => x + 1
+  ```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

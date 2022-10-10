@@ -102,6 +102,9 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       sml_hir::Pat::Con(func, Some(arg))
     }
     ast::Pat::TypedPat(pat) => {
+      if pat.pat().map_or(false, has_types) {
+        cx.err(pat.syntax().text_range(), ErrorKind::MultipleTypedPat);
+      }
       sml_hir::Pat::Typed(get(cx, pat.pat()), ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())))
     }
     ast::Pat::AsPat(pat) => {
@@ -119,6 +122,34 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
     }
   };
   Some(sml_hir::OrPat { first: cx.pat(ret, ptr), rest: Vec::new() })
+}
+
+fn has_types(pat: ast::Pat) -> bool {
+  match pat {
+    ast::Pat::WildcardPat(_) | ast::Pat::SConPat(_) => false,
+    ast::Pat::ConPat(pat) => pat.pat().map_or(false, has_types),
+    ast::Pat::RecordPat(pat) => pat.pat_rows().any(|pat_row| {
+      pat_row.pat_row_inner().map_or(false, |inner| match inner {
+        ast::PatRowInner::RestPatRow(_) => false,
+        ast::PatRowInner::LabAndPatPatRow(row) => row.pat().map_or(false, has_types),
+        ast::PatRowInner::LabPatRow(lab) => lab.ty_annotation().is_some(),
+      })
+    }),
+    ast::Pat::ParenPat(pat) => pat.pat().map_or(false, has_types),
+    ast::Pat::TuplePat(pat) => pat.pat_args().filter_map(|x| x.pat()).any(has_types),
+    ast::Pat::ListPat(pat) => pat.pat_args().filter_map(|x| x.pat()).any(has_types),
+    ast::Pat::VectorPat(pat) => {
+      pat.list_pat().into_iter().flat_map(|x| x.pat_args()).filter_map(|x| x.pat()).any(has_types)
+    }
+    ast::Pat::InfixPat(pat) => {
+      pat.lhs().map_or(false, has_types) || pat.rhs().map_or(false, has_types)
+    }
+    ast::Pat::TypedPat(_) => true,
+    ast::Pat::AsPat(pat) => pat.as_pat_tail().and_then(|x| x.pat()).map_or(false, has_types),
+    ast::Pat::OrPat(pat) => {
+      pat.lhs().map_or(false, has_types) || pat.rhs().map_or(false, has_types)
+    }
+  }
 }
 
 /// not necessarily "is atomic".

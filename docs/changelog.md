@@ -21,6 +21,7 @@ The versioning system is basically the following:
 - Warn on some overly complex expressions involving `bool`s.
 - Warn on `case` expressions with only one arm.
 - Warn on unnecessary usage of `;`.
+- Warn on multiple typed patterns.
 
 ## v0.3.14
 
