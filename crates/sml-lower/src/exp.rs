@@ -51,7 +51,13 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       sml_hir::Exp::Fn(vec![(param, body)])
     }
     // sml_def(5)
-    ast::Exp::ParenExp(exp) => return get(cx, exp.exp()),
+    ast::Exp::ParenExp(exp) => {
+      let inner = exp.exp();
+      if inner.as_ref().map_or(false, warn_unnecessary_parens) {
+        cx.err(exp.syntax().text_range(), ErrorKind::UnnecessaryParens);
+      }
+      return get(cx, inner);
+    }
     ast::Exp::TupleExp(exp) => tuple(exp.exp_args().map(|e| get(cx, e.exp()))),
     ast::Exp::ListExp(exp) => {
       // need to rev()
@@ -132,6 +138,37 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     ast::Exp::FnExp(exp) => sml_hir::Exp::Fn(matcher(cx, exp.matcher())),
   };
   cx.exp(ret, ptr)
+}
+
+/// not strictly "is atomic".
+fn warn_unnecessary_parens(exp: &ast::Exp) -> bool {
+  match exp {
+    ast::Exp::SConExp(_)
+    | ast::Exp::RecordExp(_)
+    | ast::Exp::SelectorExp(_)
+    | ast::Exp::ParenExp(_)
+    | ast::Exp::TupleExp(_)
+    | ast::Exp::ListExp(_)
+    | ast::Exp::VectorExp(_)
+    | ast::Exp::SeqExp(_)
+    | ast::Exp::LetExp(_) => true,
+    ast::Exp::PathExp(exp) => exp.op_kw().is_none(),
+    ast::Exp::HoleExp(_)
+    | ast::Exp::WildcardExp(_)
+    | ast::Exp::OpAndalsoExp(_)
+    | ast::Exp::OpOrelseExp(_)
+    | ast::Exp::AppExp(_)
+    | ast::Exp::InfixExp(_)
+    | ast::Exp::TypedExp(_)
+    | ast::Exp::AndalsoExp(_)
+    | ast::Exp::OrelseExp(_)
+    | ast::Exp::HandleExp(_)
+    | ast::Exp::RaiseExp(_)
+    | ast::Exp::IfExp(_)
+    | ast::Exp::WhileExp(_)
+    | ast::Exp::CaseExp(_)
+    | ast::Exp::FnExp(_) => false,
+  }
 }
 
 pub(crate) fn name(s: &str) -> sml_hir::Exp {

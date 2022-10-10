@@ -805,6 +805,32 @@ signature MAPPABLE = sig
 end
 ```
 
+## 4014
+
+There were unnecessary parentheses around something.
+
+```sml
+(* warning *)
+val _ = (3)
+fun inc (x) = x + 1
+type t = (int)
+```
+
+Many things are "atomic", meaning they do not need parentheses around them to override precedence.
+
+| Example         | Atomic? |
+| --------------- | ------- |
+| `false`         | Yes     |
+| `(1, "hi")`     | Yes     |
+| `[1, 3]`        | Yes     |
+| `1 + 2`         | No      |
+| `print "hi"`    | No      |
+| `fn x => x + 1` | No      |
+
+Note that e.g. `op +` is technically atomic, but this error is not issued for parentheses around it, because using parentheses around usages of `op` is somewhat idiomatic.
+
+To fix, remove the parentheses.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

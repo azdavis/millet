@@ -72,7 +72,13 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       sml_hir::Pat::Record { rows, allows_other: rest_pat_row.is_some() }
     }
     // sml_def(37)
-    ast::Pat::ParenPat(pat) => return get_or(cx, pat.pat()?),
+    ast::Pat::ParenPat(pat) => {
+      let inner = pat.pat()?;
+      if warn_unnecessary_parens(&inner) {
+        cx.err(pat.syntax().text_range(), ErrorKind::UnnecessaryParens);
+      }
+      return get_or(cx, inner);
+    }
     ast::Pat::TuplePat(pat) => tuple(pat.pat_args().map(|x| get(cx, x.pat()))),
     ast::Pat::ListPat(pat) => {
       // need to rev()
@@ -113,6 +119,23 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
     }
   };
   Some(sml_hir::OrPat { first: cx.pat(ret, ptr), rest: Vec::new() })
+}
+
+/// not necessarily "is atomic".
+fn warn_unnecessary_parens(pat: &ast::Pat) -> bool {
+  match pat {
+    ast::Pat::WildcardPat(_)
+    | ast::Pat::SConPat(_)
+    | ast::Pat::RecordPat(_)
+    | ast::Pat::ParenPat(_)
+    | ast::Pat::TuplePat(_)
+    | ast::Pat::ListPat(_)
+    | ast::Pat::VectorPat(_) => true,
+    ast::Pat::ConPat(pat) => pat.pat().is_none(),
+    ast::Pat::InfixPat(_) | ast::Pat::TypedPat(_) | ast::Pat::AsPat(_) | ast::Pat::OrPat(_) => {
+      false
+    }
+  }
 }
 
 #[derive(Debug)]

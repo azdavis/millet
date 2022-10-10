@@ -1,5 +1,6 @@
 use crate::common::{get_lab, get_path};
 use crate::util::Cx;
+use crate::util::ErrorKind;
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
@@ -31,9 +32,28 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
     ),
     ast::Ty::FnTy(ty) => sml_hir::Ty::Fn(get(cx, ty.param()), get(cx, ty.res())),
     // sml_def(48)
-    ast::Ty::ParenTy(ty) => return get(cx, ty.ty()),
+    ast::Ty::ParenTy(ty) => {
+      let inner = ty.ty();
+      if inner.as_ref().map_or(false, warn_unnecessary_parens) {
+        cx.err(ty.syntax().text_range(), ErrorKind::UnnecessaryParens);
+      }
+      return get(cx, inner);
+    }
   };
   cx.ty(ret, ptr)
+}
+
+/// not necessarily "is atomic".
+fn warn_unnecessary_parens(ty: &ast::Ty) -> bool {
+  match ty {
+    ast::Ty::TyVarTy(_) | ast::Ty::RecordTy(_) | ast::Ty::ParenTy(_) => true,
+    ast::Ty::ConTy(ty) => ty.ty_seq().is_none(),
+    ast::Ty::HoleTy(_)
+    | ast::Ty::WildcardTy(_)
+    | ast::Ty::OneArgConTy(_)
+    | ast::Ty::TupleTy(_)
+    | ast::Ty::FnTy(_) => false,
+  }
 }
 
 pub(crate) fn var_seq(tvs: Option<ast::TyVarSeq>) -> Vec<sml_hir::TyVar> {

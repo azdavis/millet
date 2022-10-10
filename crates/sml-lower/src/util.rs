@@ -46,6 +46,7 @@ pub(crate) enum ErrorKind {
   OpBoolBinOp,
   ExpNotAllowedHere,
   ValSpecTyVarSeq,
+  UnnecessaryParens,
   /// must be last
   Unsupported(&'static str),
 }
@@ -74,6 +75,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::ValSpecTyVarSeq => {
         f.write_str("`val` specifications may not have explicit type variables")
       }
+      ErrorKind::UnnecessaryParens => f.write_str("unnecessary parentheses"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -113,13 +115,17 @@ impl Error {
       ErrorKind::OpBoolBinOp => 4011,
       ErrorKind::ExpNotAllowedHere => 4012,
       ErrorKind::ValSpecTyVarSeq => 4013,
+      ErrorKind::UnnecessaryParens => 4014,
       ErrorKind::Unsupported(_) => 4999,
     }
   }
 
   /// Returns the severity for this.
   pub fn severity(&self) -> Severity {
-    Severity::Error
+    match self.kind {
+      ErrorKind::UnnecessaryParens => Severity::Warning,
+      _ => Severity::Error,
+    }
   }
 }
 
