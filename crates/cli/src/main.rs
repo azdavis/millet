@@ -27,7 +27,7 @@ fn run() -> usize {
     usage();
     return 0;
   }
-  let root_dir: String = match args.free_from_str() {
+  let root: String = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
       println!("error[1997]: {e}");
@@ -35,16 +35,16 @@ fn run() -> usize {
     }
   };
   let fs = paths::RealFileSystem::default();
-  let root_path = std::path::Path::new(root_dir.as_str());
-  let root_path = match fs.canonicalize(root_path) {
+  let root = std::path::Path::new(root.as_str());
+  let root = match fs.canonicalize(root) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(analysis::input::InputError::from_io(root_path.to_owned(), e));
+      handle_input_error(analysis::input::InputError::from_io(root.to_owned(), e));
       return 1;
     }
   };
-  let mut root = paths::Root::new(root_path);
-  let inp = match analysis::input::Input::new(&fs, &mut root) {
+  let mut store = paths::Store::new();
+  let inp = match analysis::input::Input::new(&fs, &mut store, &root) {
     Ok(x) => x,
     Err(e) => {
       handle_input_error(e);
@@ -56,8 +56,9 @@ fn run() -> usize {
   let num_errors: usize = got.iter().map(|(_, errors)| errors.len()).sum();
   for (path, errors) in got {
     for e in errors {
-      let path = root.get_rel_path(path).display();
-      println!("{}:{}: error[{}]: {}", path, e.range.start, e.code, e.message);
+      let path = store.get_path(path);
+      let path = path.as_path().strip_prefix(root.as_path()).unwrap_or(path.as_path());
+      println!("{}:{}: error[{}]: {}", path.display(), e.range.start, e.code, e.message);
     }
   }
   num_errors

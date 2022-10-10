@@ -181,6 +181,6 @@ where
       .chain(config.map(|x| (ROOT.as_path().join(config::FILE_NAME), x.to_owned())))
       .collect(),
   );
-  let mut root = paths::Root::new(ROOT.to_owned());
-  analysis::input::Input::new(&fs, &mut root)
+  let mut store = paths::Store::new();
+  analysis::input::Input::new(&fs, &mut store, &ROOT)
 }

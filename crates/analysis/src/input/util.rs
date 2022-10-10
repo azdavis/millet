@@ -72,6 +72,8 @@ impl fmt::Display for InputError {
 #[derive(Debug)]
 pub(crate) enum GetInputErrorKind {
   Io(std::io::Error),
+  /// TODO use or rm
+  #[allow(dead_code)]
   NotInRoot(std::path::StripPrefixError),
   MultipleRoots(PathBuf, PathBuf),
   NoRoot,
@@ -126,7 +128,7 @@ pub(crate) type Result<T, E = InputError> = std::result::Result<T, E>;
 
 pub(crate) fn get_path_id<F>(
   fs: &F,
-  root: &mut paths::Root,
+  store: &mut paths::Store,
   source: ErrorSource,
   path: &Path,
 ) -> Result<paths::PathId>
@@ -134,11 +136,7 @@ where
   F: paths::FileSystem,
 {
   let canonical = canonicalize(fs, path, &source)?;
-  root.get_id(&canonical).map_err(|e| InputError {
-    source,
-    path: path.to_owned(),
-    kind: GetInputErrorKind::NotInRoot(e),
-  })
+  Ok(store.get_id(&canonical))
 }
 
 pub(crate) fn canonicalize<F>(
@@ -195,12 +193,12 @@ pub(crate) struct StartedGroupFile {
 }
 
 impl StartedGroupFile {
-  pub(crate) fn new<F>(root: &mut paths::Root, cur: GroupPathToProcess, fs: &F) -> Result<Self>
+  pub(crate) fn new<F>(store: &mut paths::Store, cur: GroupPathToProcess, fs: &F) -> Result<Self>
   where
     F: paths::FileSystem,
   {
-    let path = root.get_path(cur.path).clone();
-    let containing_path = root.get_path(cur.parent).as_path().to_owned();
+    let path = store.get_path(cur.path).clone();
+    let containing_path = store.get_path(cur.parent).as_path().to_owned();
     let source = ErrorSource { path: Some(containing_path), range: cur.range };
     let contents = read_file(fs, source, path.as_path())?;
     let pos_db = text_pos::PositionDb::new(&contents);

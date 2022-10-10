@@ -29,18 +29,18 @@ pub struct Input {
 
 impl Input {
   /// Get input anchored at the root.
-  pub fn new<F>(fs: &F, root: &mut paths::Root) -> Result<Self>
+  pub fn new<F>(fs: &F, store: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Result<Self>
   where
     F: paths::FileSystem,
   {
-    let root_group = root_group::RootGroup::new(fs, root)?;
+    let root_group = root_group::RootGroup::new(fs, store, root)?;
     let mut sources = PathMap::<String>::default();
     let mut groups = PathMap::<Group>::default();
     let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
     match root_group.kind {
       GroupPathKind::Cm => {
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
-        lower_cm::get(root, fs, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
+        lower_cm::get(store, fs, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
         groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
           let exports: Vec<_> = cm_file
             .exports
@@ -61,7 +61,7 @@ impl Input {
           if groups.contains_key(&cur.path) {
             continue;
           }
-          let group_file = StartedGroupFile::new(root, cur, fs)?;
+          let group_file = StartedGroupFile::new(store, cur, fs)?;
           let group_path = group_file.path.as_path();
           let group_parent = group_path.parent().expect("path from get_path has no parent");
           let syntax_dec =
@@ -83,7 +83,7 @@ impl Input {
             parent: group_parent,
             pos_db: &group_file.pos_db,
             fs,
-            root,
+            store,
             sources: &mut sources,
             stack: &mut stack,
             path_id: cur.path,
@@ -97,7 +97,7 @@ impl Input {
     if let Err(err) = topo::check(bas_decs) {
       return Err(InputError {
         source: ErrorSource::default(),
-        path: root.get_path(err.witness()).as_path().to_owned(),
+        path: store.get_path(err.witness()).as_path().to_owned(),
         kind: GetInputErrorKind::Cycle,
       });
     }

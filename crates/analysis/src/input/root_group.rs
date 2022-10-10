@@ -14,7 +14,11 @@ pub(crate) struct RootGroup {
 }
 
 impl RootGroup {
-  pub(crate) fn new<F>(fs: &F, root: &mut paths::Root) -> Result<Self>
+  pub(crate) fn new<F>(
+    fs: &F,
+    store: &mut paths::Store,
+    root: &paths::CanonicalPathBuf,
+  ) -> Result<Self>
   where
     F: paths::FileSystem,
   {
@@ -60,7 +64,7 @@ impl RootGroup {
       }
     };
     Ok(Self {
-      path: get_path_id(fs, root, root_group_source, &root_group_path.path)?,
+      path: get_path_id(fs, store, root_group_source, &root_group_path.path)?,
       kind: root_group_path.kind,
       config,
     })
@@ -80,7 +84,12 @@ struct ConfigFromFile {
 }
 
 impl ConfigFromFile {
-  fn new<F>(fs: &F, root: &paths::Root, config_path: PathBuf, contents: &str) -> Result<Self>
+  fn new<F>(
+    fs: &F,
+    root: &paths::CanonicalPathBuf,
+    config_path: PathBuf,
+    contents: &str,
+  ) -> Result<Self>
   where
     F: paths::FileSystem,
   {

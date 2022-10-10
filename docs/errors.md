@@ -16,6 +16,8 @@ To fix, inspect the error for the underlying cause.
 
 ## 1002
 
+**NOTE:** This error is not currently emitted. It may be in the future.
+
 A path wasn't contained in the root directory.
 
 Millet requires all the files to be analyzed be ultimately contained within a single, "root" directory. Millet thus refuses to analyze files outside this root.

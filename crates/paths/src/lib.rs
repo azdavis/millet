@@ -5,32 +5,24 @@
 pub mod slash_var_path;
 
 use fast_hash::FxHashMap;
-use std::path::{Path, PathBuf, StripPrefixError};
+use std::path::{Path, PathBuf};
 
 /// A root, in which all files are contained.
-#[derive(Debug)]
-pub struct Root {
-  root: CanonicalPathBuf,
+#[derive(Debug, Default)]
+pub struct Store {
   id_to_path: Vec<CanonicalPathBuf>,
   path_to_id: FxHashMap<CanonicalPathBuf, PathId>,
 }
 
-impl Root {
-  /// Returns a new `Root` rooted at `root`.
-  pub fn new(root: CanonicalPathBuf) -> Self {
-    Self { root, id_to_path: Vec::new(), path_to_id: FxHashMap::default() }
+impl Store {
+  /// Returns a new `Store`.
+  pub fn new() -> Self {
+    Default::default()
   }
 
-  /// Returns the path underlying this `Root`.
-  pub fn as_path(&self) -> &Path {
-    self.root.as_path()
-  }
-
-  /// Returns an ID for this path, if the path is in the root.
-  pub fn get_id(&mut self, path: &CanonicalPathBuf) -> Result<PathId, StripPrefixError> {
-    // don't store the suffix, but compute it.
-    let _ = path.as_path().strip_prefix(self.root.as_path())?;
-    let id = match self.path_to_id.get(path) {
+  /// Returns an ID for this path.
+  pub fn get_id(&mut self, path: &CanonicalPathBuf) -> PathId {
+    match self.path_to_id.get(path) {
       Some(x) => *x,
       None => {
         let id = PathId(self.id_to_path.len());
@@ -38,21 +30,12 @@ impl Root {
         assert!(self.path_to_id.insert(path.clone(), id).is_none());
         id
       }
-    };
-    Ok(id)
+    }
   }
 
   /// Returns the path for this ID.
   pub fn get_path(&self, id: PathId) -> &CanonicalPathBuf {
     &self.id_to_path[id.0]
-  }
-
-  /// Returns the path relative to the root for this ID.
-  pub fn get_rel_path(&self, id: PathId) -> &Path {
-    self.id_to_path[id.0]
-      .as_path()
-      .strip_prefix(self.root.as_path())
-      .expect("we should not give an id unless the path is in the root")
   }
 }
 

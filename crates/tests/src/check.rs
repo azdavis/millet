@@ -134,7 +134,7 @@ pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> =
   Lazy::new(|| paths::RealFileSystem::default().canonicalize(std::path::Path::new("/")).unwrap());
 
 struct Check {
-  root: paths::Root,
+  store: paths::Store,
   files: paths::PathMap<ExpectFile>,
   reasons: Vec<Reason>,
 }
@@ -151,10 +151,11 @@ impl Check {
     }
     m.insert(ROOT.as_path().join("sources.mlb"), mlb_file);
     let fs = paths::MemoryFileSystem::new(m);
-    let mut root = paths::Root::new(ROOT.to_owned());
-    let input = analysis::input::Input::new(&fs, &mut root).expect("invalid MemoryFileSystem");
+    let mut root = paths::Store::new();
+    let input =
+      analysis::input::Input::new(&fs, &mut root, &ROOT).expect("invalid MemoryFileSystem");
     let mut ret = Self {
-      root,
+      store: root,
       files: input
         .iter_sources()
         .map(|s| {
@@ -272,25 +273,25 @@ impl fmt::Display for Check {
         }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
         Reason::GotButNotWanted(r, got) => {
-          let path = self.root.get_path(r.path).as_path().display();
+          let path = self.store.get_path(r.path).as_path().display();
           let range = r.val;
           writeln!(f, "{path}:{range}: got an error, but wanted none")?;
           writeln!(f, "    - got:  {got}")?;
         }
         Reason::Mismatched(r, want, got) => {
-          let path = self.root.get_path(r.path).as_path().display();
+          let path = self.store.get_path(r.path).as_path().display();
           let range = r.val;
           writeln!(f, "{path}:{range}: mismatched")?;
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
         Reason::NoHover(r) => {
-          let path = self.root.get_path(r.path).as_path().display();
+          let path = self.store.get_path(r.path).as_path().display();
           let range = r.val;
           writeln!(f, "{path}:{range}: wanted a hover, but got none")?;
         }
         Reason::InexactHover(line) => {
-          let path = self.root.get_path(line.path).as_path().display();
+          let path = self.store.get_path(line.path).as_path().display();
           let line = line.val;
           writeln!(f, "{path}:{line}: inexact arrows for hover")?;
         }

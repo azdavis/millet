@@ -12,7 +12,7 @@ pub(crate) struct MlbCx<'a, F> {
   pub(crate) parent: &'a Path,
   pub(crate) pos_db: &'a text_pos::PositionDb,
   pub(crate) fs: &'a F,
-  pub(crate) root: &'a mut paths::Root,
+  pub(crate) store: &'a mut paths::Store,
   pub(crate) sources: &'a mut PathMap<String>,
   pub(crate) stack: &'a mut Vec<GroupPathToProcess>,
   pub(crate) path_id: PathId,
@@ -77,7 +77,7 @@ where
       let source =
         ErrorSource { path: Some(cx.path.to_owned()), range: cx.pos_db.range(parsed_path.range) };
       let path = cx.parent.join(parsed_path.val.as_path());
-      let path_id = get_path_id(cx.fs, cx.root, source.clone(), path.as_path())?;
+      let path_id = get_path_id(cx.fs, cx.store, source.clone(), path.as_path())?;
       let kind = match parsed_path.val.kind() {
         mlb_syntax::PathKind::Sml => {
           let contents = read_file(cx.fs, source, path.as_path())?;
