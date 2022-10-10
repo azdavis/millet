@@ -468,6 +468,18 @@ This is the most common kind of parse error. It's not easy to give general advic
 
 One bit of advice is this: Since the parser tries to continue parsing a file even in the face of errors, it may find further errors after the first one. But these errors may be all ultimately because of that first error. So, try looking at the first error in the file first.
 
+## 3007
+
+There was an unnecessary usage of `op`.
+
+```sml
+(* warning *)
+exception op E
+val op x = 3
+```
+
+To fix, remove the `op`.
+
 ## 4001
 
 In a `fun` binding with multiple cases, the cases did not all name the same function.

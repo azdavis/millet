@@ -64,6 +64,10 @@ impl<'a> Parser<'a> {
     self.inner.peek()
   }
 
+  pub(crate) fn peek_n(&mut self, n: usize) -> Option<Token<'a, SK>> {
+    self.inner.peek_n(n)
+  }
+
   pub(crate) fn bump(&mut self) -> Token<'a, SK> {
     self.inner.bump()
   }
@@ -157,6 +161,7 @@ pub(crate) enum ErrorKind {
   NegativeFixity,
   SameFixityDiffAssoc,
   Expected(Expected),
+  UnnecessaryOp,
 }
 
 impl fmt::Display for ErrorKind {
@@ -170,6 +175,7 @@ impl fmt::Display for ErrorKind {
         f.write_str("consecutive infix names with same fixity but different associativity")
       }
       ErrorKind::Expected(e) => write!(f, "expected {e}"),
+      ErrorKind::UnnecessaryOp => f.write_str("unnecessary `op`"),
     }
   }
 }
@@ -204,12 +210,16 @@ impl Error {
       ErrorKind::NegativeFixity => 3004,
       ErrorKind::SameFixityDiffAssoc => 3005,
       ErrorKind::Expected(_) => 3006,
+      ErrorKind::UnnecessaryOp => 3007,
     }
   }
 
   /// Returns the severity for this.
   pub fn severity(&self) -> Severity {
-    Severity::Error
+    match self.0.kind {
+      ErrorKind::UnnecessaryOp => Severity::Warning,
+      _ => Severity::Error,
+    }
   }
 }
 

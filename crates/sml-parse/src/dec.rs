@@ -100,6 +100,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
     many_sep(p, SK::AndKw, SK::ExBind, |p| {
       let mut got = false;
       if p.at(SK::OpKw) {
+        p.error(ErrorKind::UnnecessaryOp);
         p.bump();
         got = true;
       }
@@ -458,6 +459,7 @@ fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
     many_sep(p, SK::Bar, SK::ConBind, |p| {
       let mut got = false;
       if allow_op && p.at(SK::OpKw) {
+        p.error(ErrorKind::UnnecessaryOp);
         p.bump();
         got = true;
       }
