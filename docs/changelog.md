@@ -16,6 +16,9 @@ The versioning system is basically the following:
 ## main
 
 - Emit a better error for type variable sequences on `val` specifications.
+- Warn on some cases of unnecessary parentheses.
+- Warn on unnecessary usage of `op`.
+- Warn on some overly complex expressions involving `bool`s.
 
 ## v0.3.14
 
