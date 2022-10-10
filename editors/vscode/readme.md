@@ -50,7 +50,7 @@ fun increment x = x + 1
 #### `b.sml`
 
 ```sml
-val _ = increment 3
+val four = increment 3
 ```
 
 ## Community
