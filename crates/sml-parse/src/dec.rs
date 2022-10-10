@@ -2,7 +2,7 @@ use crate::exp::{exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star, name_star_eq, path};
+use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path};
 use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>) -> bool {
@@ -58,12 +58,17 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
             p.exit(en, SK::InfixFunBindCaseHead);
           } else {
             let saw_op = p.at(SK::OpKw);
+            let name = p.peek_n(if saw_op { 1 } else { 0 });
+            let is_name_star = name.map_or(false, |tok| matches!(tok.kind, SK::Name | SK::Star));
+            let is_infix = name.map_or(false, |tok| p.is_infix(tok.text));
             if saw_op {
+              if is_name_star && !is_infix {
+                p.error(ErrorKind::UnnecessaryOp);
+              }
               p.bump();
             }
-            if name_star(p, 0) {
-              let name = p.peek().unwrap();
-              if !saw_op && p.is_infix(name.text) {
+            if is_name_star {
+              if !saw_op && is_infix {
                 p.error(ErrorKind::InfixWithoutOp);
               }
               p.bump();
