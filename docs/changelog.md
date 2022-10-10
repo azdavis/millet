@@ -19,6 +19,7 @@ The versioning system is basically the following:
 - Warn on some cases of unnecessary parentheses.
 - Warn on unnecessary usage of `op`.
 - Warn on some overly complex expressions involving `bool`s.
+- Warn on `case` expressions with only one arm.
 
 ## v0.3.14
 

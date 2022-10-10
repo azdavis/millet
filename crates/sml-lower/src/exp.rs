@@ -149,6 +149,9 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     ast::Exp::CaseExp(exp) => {
       let head = get(cx, exp.exp());
       let arms = matcher(cx, exp.matcher());
+      if arms.len() == 1 {
+        cx.err(exp.syntax().text_range(), ErrorKind::OneArmedCase);
+      }
       case(cx, head, arms, ptr.clone())
     }
     ast::Exp::FnExp(exp) => sml_hir::Exp::Fn(matcher(cx, exp.matcher())),

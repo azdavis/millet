@@ -867,6 +867,27 @@ An expression is "overly complex" if it involves `if`, `andalso`, or `orelse`, a
 
 To fix, simplify the expression.
 
+## 4016
+
+There was a `case` expression with only one arm.
+
+```sml
+(* warning *)
+datatype d = D of int
+fun toInt x = case x of D y => y
+```
+
+- An exhaustive case with only one arm is better expressed as an irrefutable binding, e.g. with `val`.
+- A non-exhaustive case with only one arm should be made exhaustive.
+
+To fix, rewrite the `case` as something else, or add more arms.
+
+```sml
+(* ok *)
+datatype d = D of int
+fun toInt (D y) = y
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
