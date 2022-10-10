@@ -459,7 +459,7 @@ fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
       let mut got = false;
       if allow_op && p.at(SK::OpKw) {
         p.bump();
-        got = true
+        got = true;
       }
       got |= eat_name_star(p).is_some();
       if !got {

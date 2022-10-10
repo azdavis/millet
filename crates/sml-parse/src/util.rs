@@ -134,11 +134,12 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
   Some(p.exit(en, SK::Path))
 }
 
-/// requires we just got a true `name_star_eq(p)`. errors if this parses a path with no structures
-/// (aka just a name) and that name is infix.
+/// requires we just got a true `name_star_eq(p)`. parses a path. errors if the path is infix.
 pub(crate) fn path_no_infix(p: &mut Parser<'_>) {
   let cur = p.peek().unwrap();
-  if !p.at_n(1, SK::Dot) && p.is_infix(cur.text) {
+  let bad =
+    !p.at_n(1, SK::Dot) && matches!(cur.kind, SK::Name | SK::Eq | SK::Star) && p.is_infix(cur.text);
+  if bad {
     p.error(ErrorKind::InfixWithoutOp);
   }
   must(p, path, Expected::Path);
@@ -165,7 +166,7 @@ pub(crate) fn name_star_eq(p: &mut Parser<'_>) -> bool {
   name_star(p, 0) || p.at(SK::Eq)
 }
 
-/// kind of badly named. it means Name or *. the `n` is how far to look ahead.
+/// kind of badly named. it means `Name` or `*`. the `n` is how far to look ahead.
 pub(crate) fn name_star(p: &mut Parser<'_>, n: usize) -> bool {
   p.at_n(n, SK::Name) || p.at_n(n, SK::Star)
 }
