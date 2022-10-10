@@ -326,13 +326,6 @@ impl State {
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
       match &self.root {
-        None => match params.text {
-          Some(text) => {
-            let url = params.text_document.uri;
-            self.publish_diagnostics_one(url, &text);
-          }
-          None => bail!("no text for DidSaveTextDocument"),
-        },
         Some(_) => {
           if self.registered_for_watched_files {
             log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
@@ -340,6 +333,13 @@ impl State {
             self.try_publish_diagnostics(None);
           }
         }
+        None => match params.text {
+          Some(text) => {
+            let url = params.text_document.uri;
+            self.publish_diagnostics_one(url, &text);
+          }
+          None => bail!("no text for DidSaveTextDocument"),
+        },
       }
       Ok(())
     })?;
