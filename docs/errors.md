@@ -125,7 +125,7 @@ But, when a `millet.toml` has the other workspace properties set, it may not con
 
  -->
 
-To fix, do not set any other configuration (other than the required `version` when setting `workspace.members` in a `millet.toml` file.
+To fix, do not set any other configuration (other than the required `version`) when setting `workspace.members` in a `millet.toml` file.
 
 ## 1996
 
