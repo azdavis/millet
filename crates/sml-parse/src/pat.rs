@@ -1,5 +1,5 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, Infix, Parser};
-use crate::ty::ty_annotation;
+use crate::ty::{ty, ty_annotation};
 use crate::util::{
   comma_sep, eat_name_star, lab, must, name_star, path_infix, path_no_infix, scon, should_break,
   ShouldBreak,
@@ -107,7 +107,8 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec) -> Option<Exited> {
       }
       let ex = state.exit(p);
       let en = p.precede(ex);
-      must(p, ty_annotation, Expected::Ty);
+      p.bump();
+      ty(p);
       p.exit(en, SK::TypedPat)
     } else if p.at(SK::AsKw) {
       match min_prec {

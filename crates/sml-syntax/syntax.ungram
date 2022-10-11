@@ -223,7 +223,7 @@ TuplePat = '(' PatArg* ')'
 ListPat = '[' PatArg* ']'
 VectorPat = '#' ListPat
 InfixPat = lhs:Pat NameStarEq rhs:Pat
-TypedPat = Pat TyAnnotation
+TypedPat = Pat ':' Ty
 AsPat = Pat AsPatTail
 OrPat = lhs:Pat '|' rhs:Pat
 

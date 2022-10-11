@@ -105,7 +105,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       if pat.pat().map_or(false, has_types) {
         cx.err(pat.syntax().text_range(), ErrorKind::MultipleTypedPat);
       }
-      sml_hir::Pat::Typed(get(cx, pat.pat()), ty::get(cx, pat.ty_annotation().and_then(|x| x.ty())))
+      sml_hir::Pat::Typed(get(cx, pat.pat()), ty::get(cx, pat.ty()))
     }
     ast::Pat::AsPat(pat) => {
       let lhs = get(cx, pat.pat());
