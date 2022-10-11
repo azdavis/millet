@@ -191,6 +191,8 @@ impl State {
       self.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
+    // TODO do CodeActionResolveRequest and lazily compute the edit, instead of doing everything in
+    // CodeActionRequest
     r = try_request::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
       let url = params.text_document.uri;
       let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
@@ -221,7 +223,6 @@ impl State {
       self.send_response(Response::new_ok(id, actions));
       Ok(())
     })?;
-    // TODO do CodeActionResolveRequest and lazily compute the edit
     ControlFlow::Continue(r)
   }
 
