@@ -1,4 +1,4 @@
-//! Low-level tests for [`analysis::input::get`].
+//! Low-level tests for analysis input.
 
 use crate::check::ROOT;
 
