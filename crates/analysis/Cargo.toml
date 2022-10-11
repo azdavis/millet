@@ -20,6 +20,7 @@ mlb-hir = { path = "../mlb-hir" }
 mlb-statics = { path = "../mlb-statics" }
 mlb-syntax = { path = "../mlb-syntax" }
 paths = { path = "../paths" }
+sml-fmt = { path = "../sml-fmt" }
 sml-hir = { path = "../sml-hir" }
 sml-parse = { path = "../sml-parse" }
 sml-statics = { path = "../sml-statics" }

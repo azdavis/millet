@@ -6,10 +6,10 @@ pub mod input;
 
 use diagnostic_util::Error;
 use fmt_util::sep_seq;
-use paths::{PathMap, WithPath};
+use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
 use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
-use std::fmt;
+use std::fmt::{self, Write as _};
 use text_pos::{Position, Range};
 
 /// Performs analysis.
@@ -159,6 +159,14 @@ impl Analysis {
       variants: &variants,
     };
     Some((range, case.to_string()))
+  }
+
+  /// Format the given file, and return the end position of the file.
+  pub fn format(&self, path: PathId) -> Option<(String, Position)> {
+    let file = self.source_files.get(&path)?;
+    let mut buf = String::new();
+    write!(buf, "{}", sml_fmt::display_root(&file.parsed.root)).ok()?;
+    Some((buf, file.pos_db.end_position()))
   }
 
   fn get_file_and_token(&self, pos: WithPath<Position>) -> Option<FileAndToken<'_>> {

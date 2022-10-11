@@ -10,6 +10,12 @@ use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, Request
 use lsp_types::Url;
 use std::ops::ControlFlow;
 
+/// TODO remove when formatting is implemented.
+///
+/// Because the formatter is no fully implemented or tested, only set this to true if you're
+/// prepared for the formatter to permanently and entirely wipe away all of your SML code.
+const FORMAT: bool = false;
+
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
     text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Options(
@@ -29,6 +35,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
     definition_provider: Some(lsp_types::OneOf::Left(true)),
     type_definition_provider: Some(lsp_types::TypeDefinitionProviderCapability::Simple(true)),
     code_action_provider: Some(lsp_types::CodeActionProviderCapability::Simple(true)),
+    document_formatting_provider: Some(lsp_types::OneOf::Left(FORMAT)),
     ..Default::default()
   }
 }
@@ -221,6 +228,27 @@ impl State {
         }));
       }
       self.send_response(Response::new_ok(id, actions));
+      Ok(())
+    })?;
+    r = try_request::<lsp_types::request::Formatting, _>(r, |id, params| {
+      if !FORMAT {
+        self.send_response(Response::new_ok(id, None::<()>));
+        return Ok(());
+      }
+      let url = params.text_document.uri;
+      let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
+      self.send_response(Response::new_ok(
+        id,
+        self.analysis.format(path).map(|(new_text, end)| {
+          vec![lsp_types::TextEdit {
+            range: lsp_types::Range {
+              start: lsp_types::Position { line: 0, character: 0 },
+              end: lsp_position(end),
+            },
+            new_text,
+          }]
+        }),
+      ));
       Ok(())
     })?;
     ControlFlow::Continue(r)
@@ -628,4 +656,14 @@ where
     method: N::METHOD.to_owned(),
     register_options: Some(serde_json::to_value(options).unwrap()),
   }
+}
+
+/// this makes sure it's a CI failure to turn on formatting.
+#[test]
+fn no_formatting() {
+  let can_fmt = capabilities().document_formatting_provider.map_or(false, |x| match x {
+    lsp_types::OneOf::Left(x) => x,
+    lsp_types::OneOf::Right(_) => true,
+  });
+  assert!(!can_fmt);
 }

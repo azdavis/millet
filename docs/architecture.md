@@ -135,6 +135,10 @@ NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), li
 
 Declarations for various SML libraries, in the form of SML files that get read and processed at runtime. Some "primitive" types like `int` are not declared here, but rather in statics.
 
+### `crates/sml-fmt`
+
+Naively format SML files.
+
 ### `crates/cm`
 
 Processes SML/NJ Compilation Manager (`.cm`) files.
