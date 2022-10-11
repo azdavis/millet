@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.4.0
 
 - Emit a better error for type variable sequences on `val` specifications.
 - Warn on some cases of unnecessary parentheses.
