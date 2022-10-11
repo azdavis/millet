@@ -192,7 +192,7 @@ val kujo = 3
 val josuke = 4
 ```
 
-To fix, close the comment with `*)`.
+To fix, close the comment with `*)`. Note that comments may be nested.
 
 ```sml
 (* ok *)
@@ -200,8 +200,6 @@ val kujo = 3
 (* a comment that ends *)
 val josuke = 4
 ```
-
-Note that comments may be nested.
 
 ## 2003
 
@@ -258,6 +256,12 @@ val neg = ~0w123
 ```
 
 To fix, use a different type, like `int`, or remove the negative sign.
+
+```sml
+(* ok *)
+val negInt = ~123
+val posWord = 0w123
+```
 
 ## 2006
 
@@ -482,6 +486,12 @@ val op x = 3
 
 To fix, remove the `op`.
 
+```sml
+(* ok *)
+exception E
+val x = 3
+```
+
 ## 4001
 
 In a `fun` binding with multiple cases, the cases did not all name the same function.
@@ -507,7 +517,7 @@ In a `fun` binding with multiple cases, the cases did not all have the same numb
 ```sml
 (* error *)
 fun muska 1 = 2
-  | muska _ _ _ = 3
+  | muska x y z = x + y + z
 ```
 
 To fix, use a consistent number of patterns across all cases.
@@ -515,7 +525,7 @@ To fix, use a consistent number of patterns across all cases.
 ```sml
 (* ok *)
 fun muska 1 = 2
-  | muska _ = 3
+  | muska x = x + 3
 ```
 
 ## 4003
@@ -538,7 +548,7 @@ val _ = 0w123456789
 
 A real literal was invalid.
 
-NOTE: It's not known whether this is currently emitted. It may be that the lexer/parser/lowering setup means that this is handled by earlier stages. However, we should probably emit this if a real literal was too large to be accurately represented or something of that ilk.
+**NOTE:** This error is probably never emitted.
 
 ## 4005
 
@@ -906,6 +916,12 @@ Semicolons are used in a REPL setting to indicate the end of input, but are unne
 
 To fix, remove the semicolon.
 
+```sml
+(* ok *)
+val x = 3
+val y = "hi"
+```
+
 ## 4018
 
 There were multiple type annotations on a single overall pattern.
@@ -1173,6 +1189,17 @@ end
 
 To fix, ensure only the requested items are defined.
 
+```sml
+(* ok *)
+signature SIG = sig
+  datatype d = Pazu
+end
+
+structure Str : SIG = struct
+  datatype d = Pazu
+end
+```
+
 ## 5005
 
 Typechecking failed, because of "circularity", which means we attempted to a set a type variable to be equal to a type containing that type variable itself.
@@ -1267,6 +1294,12 @@ val _ = { a = 1, a = 2 }
 
 To fix, use differently named labels, or remove one of the record rows.
 
+```sml
+(* ok *)
+val _ = { a = 1, b = 2 }
+val _ = { a = 1 }
+```
+
 ## 5009
 
 A real literal was used as a pattern.
@@ -1282,7 +1315,19 @@ fun f (x : real) : int =
 
 To fix, consider checking that the given real is within some epsilon value of the desired real.
 
-Usage of `Real.==` to check for equality between reals is discouraged, due to limitations around representing floating-point (aka, real) numbers on most architectures.
+```sml
+(* ok *)
+val eps = 0.01
+fun f (x : real) : int =
+  if Real.abs (x - 1.2) <= eps then
+    3
+  else if Real.abs (x - 1.4) <= eps then
+    5
+  else
+    6
+```
+
+Usage of `Real.==` to check for equality between reals is discouraged, due to [limitations](https://0.30000000000000004.com) around representing floating-point (aka, `real`) numbers on most architectures.
 
 ## 5010
 
@@ -1330,7 +1375,9 @@ To fix, add patterns matching the missing cases. The error message reports examp
 
 ## 5012
 
-This is effectively the same error as 5011, but it emitted for singular bindings, like with `val`.
+A binding, like with `val`, was not exhaustive.
+
+This is effectively the same error as 5011, but for singular bindings.
 
 ```sml
 (* error *)
@@ -1370,15 +1417,21 @@ fun f y =
   | _ => 6
 ```
 
-To fix, use a literal pattern, or check for equality another way, for instance with `=`.
+To fix check for equality another way, for instance with `=`.
 
 ```sml
 (* ok *)
+structure S = struct
+  val x = 3
+end
+
 fun f y =
-  case y of
-    3 => 1
-  | 4 => 5
-  | _ => 6
+  if y = S.x then
+    1
+  else if y = 4 then
+    5
+  else
+    6
 ```
 
 ## 5014
@@ -1395,7 +1448,31 @@ fun f x =
   | B z => z - 1
 ```
 
-To fix, define the constructor to have an argument, or remove the argument from the pattern.
+To fix, try one of the following:
+
+- Remove the argument from the pattern:
+
+  ```sml
+  (* ok *)
+  datatype d = A | B of int
+
+  fun f x =
+    case x of
+      A => 1
+    | B z => z - 1
+  ```
+
+- Define the constructor to have an argument:
+
+  ```sml
+  (* ok *)
+  datatype d = A of int | B of int
+
+  fun f x =
+    case x of
+      A y => y + 1
+    | B z => z - 1
+  ```
 
 ## 5015
 
@@ -1411,7 +1488,31 @@ fun f x =
   | B => 2
 ```
 
-To fix, define the constructor to not have an argument, or add an argument to the pattern.
+To fix, try one of the following:
+
+- Add an argument to the pattern:
+
+  ```sml
+  (* ok *)
+  datatype d = A | B of int
+
+  fun f x =
+    case x of
+      A => 1
+    | B _ => 2
+  ```
+
+- Define the constructor to not have an argument:
+
+  ```sml
+  (* ok *)
+  datatype d = A | B
+
+  fun f x =
+    case x of
+      A => 1
+    | B => 2
+  ```
 
 ## 5016
 
@@ -1421,14 +1522,23 @@ As-patterns allow binding the entirety of a pattern `p` to a name `n` with the p
 
 ```sml
 (* error *)
-exception Bad
+exception e
 fun f x =
   case x of
-    Bad as _ => 1
-  | _ => 2
+    e as [_] => 1 :: e
+  | _ => []
 ```
 
 To fix, use a valid name.
+
+```sml
+(* ok *)
+exception e
+fun f x =
+  case x of
+    y as [_] => 1 :: y
+  | _ => []
+```
 
 ## 5017
 
@@ -1446,7 +1556,27 @@ val x =
   end
 ```
 
-To fix, extend the scope of the type, or do not allow its values to escape its scope.
+To fix, try one of the following:
+
+- Extend the scope of the type:
+
+  ```sml
+  (* ok *)
+  datatype d = D
+  val x = D
+  ```
+
+- Do not allow its values to escape its scope:
+
+  ```sml
+  (* ok *)
+  val x =
+    let
+      datatype d = D
+    in
+      4
+    end
+  ```
 
 ## 5018
 
@@ -1473,6 +1603,12 @@ val rec add3 = mkAdd3 ()
 ```
 
 To fix, ensure the expression is a literal `fn` expression.
+
+```sml
+(* ok *)
+val rec add3 = fn n => n + 3
+val rec fact = fn n => if n = 0 then 1 else n * fact (n - 1)
+```
 
 ## 5019
 
@@ -1511,6 +1647,12 @@ exception Nope = x
 ```
 
 To fix, only use exceptions on the right hand side.
+
+```sml
+(* ok *)
+exception Bad
+exception Nope = Bad
+```
 
 ## 5021
 
