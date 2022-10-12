@@ -59,7 +59,7 @@ fn test_refs() {
   let referenced: BTreeSet<_> = out
     .lines()
     .filter_map(|line| {
-      let (_, inner) = line.split_once("test(")?;
+      let (_, inner) = line.split_once("// test(")?;
       let (name, _) = inner.split_once(')')?;
       Some(name)
     })
