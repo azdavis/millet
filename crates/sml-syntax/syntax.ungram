@@ -28,6 +28,8 @@ DecOne =
 // expressions are not actually decs, but we can parse them, accept them at only the top level, and
 // reject them everywhere else with a good error mesage.
 | ExpDec
+// not actually a dec.
+| IncludeDec
 
 HoleDec = '...'
 ValDec = 'val' TyVarSeq ValBind*
@@ -47,6 +49,7 @@ StructureDec = 'structure' StrBind*
 SignatureDec = 'signature' SigBind*
 FunctorDec = 'functor' FunctorBind*
 ExpDec = Exp
+IncludeDec = 'include' SigExp*
 
 ValBind = 'rec'? Pat '=' Exp 'and'?
 FunBind = FunBindCase* 'and'?

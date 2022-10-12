@@ -554,7 +554,10 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
         }],
       )
     }
-    ast::DecOne::StructureDec(_) | ast::DecOne::SignatureDec(_) | ast::DecOne::FunctorDec(_) => {
+    ast::DecOne::StructureDec(_)
+    | ast::DecOne::SignatureDec(_)
+    | ast::DecOne::FunctorDec(_)
+    | ast::DecOne::IncludeDec(_) => {
       cx.err(dec.syntax().text_range(), ErrorKind::DecNotAllowedHere);
       return None;
     }

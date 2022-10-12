@@ -215,6 +215,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
     }
     ast::DecOne::FunctorDec(_) => nothing(),
     ast::DecOne::ExpDec(dec) => get_exp(f, cfg, dec.exp()?),
+    ast::DecOne::IncludeDec(_) => nothing(),
   }
 }
 

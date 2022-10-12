@@ -213,6 +213,12 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
     p.exit(en, SK::FunctorDec);
   } else if exp_opt(p) {
     p.exit(en, SK::ExpDec);
+  } else if p.at(SK::IncludeKw) {
+    p.bump();
+    while sig_exp(p).is_some() {
+      // no body
+    }
+    p.exit(en, SK::IncludeDec);
   } else {
     p.abandon(en);
     return false;
