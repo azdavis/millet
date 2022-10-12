@@ -118,7 +118,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
           sep(f, " ", fun_bind_case.pats(), get_pat)?;
           ty_annotation(f, fun_bind_case.ty_annotation())?;
           output(f, " =")?;
-          get_body_exp(f, cfg, fun_bind_case.exp()?)
+          get_body_exp(f, cfg, fun_bind_case.eq_exp().and_then(|x| x.exp())?)
         })
       })
     }

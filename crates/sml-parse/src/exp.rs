@@ -18,6 +18,16 @@ pub(crate) fn exp_opt(p: &mut Parser<'_>) -> bool {
   exp_prec(p, ExpPrec::Min).is_some()
 }
 
+/// if no parse, do nothing
+pub(crate) fn eq_exp(p: &mut Parser<'_>) {
+  if p.at(SK::Eq) {
+    let en = p.enter();
+    p.bump();
+    exp(p);
+    p.exit(en, SK::EqExp);
+  }
+}
+
 fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
   let en = p.enter();
   let ex = if p.at(SK::RaiseKw) {
@@ -146,12 +156,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     comma_sep(p, SK::RCurly, SK::ExpRow, |p| {
       lab(p);
-      if p.at(SK::Eq) {
-        let en = p.enter();
-        p.bump();
-        exp(p);
-        p.exit(en, SK::EqExp);
-      }
+      eq_exp(p);
     });
     p.exit(en, SK::RecordExp)
   } else if p.at(SK::Hash) {

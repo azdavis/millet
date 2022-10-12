@@ -1,4 +1,4 @@
-use crate::exp::{exp, exp_opt};
+use crate::exp::{eq_exp, exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
@@ -30,12 +30,7 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
       if !got {
         return false;
       }
-      if p.at(SK::Eq) {
-        let en = p.enter();
-        p.bump();
-        exp(p);
-        p.exit(en, SK::EqExp);
-      }
+      eq_exp(p);
       true
     });
     p.exit(en, SK::ValDec);
@@ -86,8 +81,7 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
           }
         }
         let _ = ty_annotation(p);
-        p.eat(SK::Eq);
-        exp(p);
+        eq_exp(p);
         true
       })
     });

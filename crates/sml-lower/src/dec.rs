@@ -527,15 +527,19 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
                 cx.pat(pat::tuple(pats), ptr.clone())
               };
               let ty = case.ty_annotation().map(|x| ty::get(cx, x.ty()));
-              let exp = case.exp().and_then(|exp| {
-                let ptr = SyntaxNodePtr::new(exp.syntax());
-                let mut exp = exp::get(cx, Some(exp));
+              let body = case.eq_exp().and_then(|x| x.exp());
+              if body.is_none() {
+                cx.err(dec.syntax().text_range(), ErrorKind::MissingRhs);
+              }
+              let body = body.and_then(|body| {
+                let ptr = SyntaxNodePtr::new(body.syntax());
+                let mut body = exp::get(cx, Some(body));
                 if let Some(ty) = ty {
-                  exp = cx.exp(sml_hir::Exp::Typed(exp, ty), ptr);
+                  body = cx.exp(sml_hir::Exp::Typed(body, ty), ptr);
                 }
-                exp
+                body
               });
-              (pat, exp)
+              (pat, body)
             })
             .collect();
           // not the greatest, since we have no body at all if the ptrs are None. but if they were

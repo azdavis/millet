@@ -68,7 +68,7 @@ FunctorBind =
 EqExp = '=' Exp
 EqStrExp = '=' StrExp
 
-FunBindCase = FunBindCaseHead Pat* TyAnnotation? '=' Exp '|'?
+FunBindCase = FunBindCaseHead Pat* TyAnnotation? EqExp? '|'?
 FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
 PrefixFunBindCaseHead = 'op'? NameStarEq
 InfixFunBindCaseHead = '('? lhs:Pat NameStarEq rhs:Pat ')'?
