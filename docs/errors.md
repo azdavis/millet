@@ -978,6 +978,24 @@ For the `fn` examples, it may work to:
   val inc = fn (x : int) => x + 1
   ```
 
+## 4019
+
+There was a declaration missing its right-hand side.
+
+```sml
+(* error *)
+val x : int
+```
+
+The above example is valid specification syntax for signatures, but is not a valid declaration.
+
+To fix, provide a right-hand side.
+
+```sml
+(* ok *)
+val x : int = 3
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

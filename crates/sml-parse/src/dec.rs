@@ -30,8 +30,10 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
       if !got {
         return false;
       }
-      p.eat(SK::Eq);
-      exp(p);
+      if p.at(SK::Eq) {
+        p.bump();
+        exp(p);
+      }
       true
     });
     p.exit(en, SK::ValDec);
@@ -166,8 +168,10 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
       if ascription(p) {
         ascription_tail(p);
       }
-      p.eat(SK::Eq);
-      must(p, str_exp, Expected::StrExp);
+      if p.at(SK::Eq) {
+        p.bump();
+        must(p, str_exp, Expected::StrExp);
+      }
       true
     });
     p.exit(en, SK::StructureDec);

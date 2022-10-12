@@ -51,6 +51,7 @@ pub(crate) enum ErrorKind {
   OneArmedCase,
   UnnecessarySemicolon,
   MultipleTypedPat,
+  MissingRhs,
   /// must be last
   Unsupported(&'static str),
 }
@@ -84,6 +85,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::OneArmedCase => f.write_str("`case` with only one arm"),
       ErrorKind::UnnecessarySemicolon => f.write_str("unnecessary `;`"),
       ErrorKind::MultipleTypedPat => f.write_str("multiple types on one pattern"),
+      ErrorKind::MissingRhs => f.write_str("missing right-hand side of declaration"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -128,6 +130,7 @@ impl Error {
       ErrorKind::OneArmedCase => 4016,
       ErrorKind::UnnecessarySemicolon => 4017,
       ErrorKind::MultipleTypedPat => 4018,
+      ErrorKind::MissingRhs => 4019,
       ErrorKind::Unsupported(_) => 4999,
     }
   }

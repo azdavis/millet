@@ -32,8 +32,18 @@ fn no_top_items() {
 fn expected() {
   check(
     r#"
-val _ 3
-(**   ^ expected `=` *)
+structure val
+(**       ^^^ expected a name *)
+"#,
+  );
+}
+
+#[test]
+fn missing_rhs() {
+  check(
+    r#"
+    val x
+(** ^^^^^ missing right-hand side of declaration *)
 "#,
   );
 }
