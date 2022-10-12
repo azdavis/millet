@@ -28,14 +28,25 @@ impl fmt::Display for DisplayRoot<'_> {
 
 type Res = Option<()>;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 struct Cfg {
   indent: usize,
+  extra_blank: bool,
+}
+
+impl Default for Cfg {
+  fn default() -> Self {
+    Self { indent: 0, extra_blank: true }
+  }
 }
 
 impl Cfg {
   fn indented(self) -> Self {
-    Self { indent: self.indent + 1 }
+    Self { indent: self.indent + 1, extra_blank: self.extra_blank }
+  }
+
+  fn extra_blank(self, extra_blank: bool) -> Self {
+    Self { indent: self.indent, extra_blank }
   }
 
   fn output_indent(&self, f: &mut fmt::Formatter<'_>) -> Res {
@@ -54,7 +65,7 @@ fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
   sep_with_lines(f, cfg, "", dec.dec_with_tail_in_seqs(), |f, dwt_in_seq| {
     let dwt = dwt_in_seq.dec_with_tail()?;
     sep_with_lines(f, cfg, "", dwt.dec_in_seqs(), |f, dec_in_seq| {
-      get_dec_one(f, cfg, dec_in_seq.dec_one()?)?;
+      get_dec_one(f, cfg.extra_blank(false), dec_in_seq.dec_one()?)?;
       if dec_in_seq.semicolon().is_some() {
         output(f, ";")?;
       }
@@ -238,17 +249,24 @@ where
   sep_with_lines(f, cfg, "and ", iter, |f, dat_bind| {
     ty_var_seq(f, dat_bind.ty_var_seq())?;
     output(f, dat_bind.name()?.text())?;
-    output(f, " =\n")?;
-    cfg.indented().output_indent(f)?;
-    sep_with_lines(f, cfg, "| ", dat_bind.con_binds(), |f, con_bind| {
-      output(f, con_bind.name_star_eq()?.token.text())?;
-      if let Some(of_ty) = con_bind.of_ty() {
-        output(f, " of ")?;
-        get_ty(f, of_ty.ty()?)?;
-      }
-      Some(())
-    })
+    if dat_bind.con_binds().count() > 1 {
+      output(f, " =\n")?;
+      cfg.indented().output_indent(f)?;
+      sep_with_lines(f, cfg, "| ", dat_bind.con_binds(), con_bind)
+    } else {
+      output(f, " = ")?;
+      sep(f, " | ", dat_bind.con_binds(), con_bind)
+    }
   })
+}
+
+fn con_bind(f: &mut fmt::Formatter<'_>, con_bind: ast::ConBind) -> Res {
+  output(f, con_bind.name_star_eq()?.token.text())?;
+  if let Some(of_ty) = con_bind.of_ty() {
+    output(f, " of ")?;
+    get_ty(f, of_ty.ty()?)?;
+  }
+  Some(())
 }
 
 fn ascription_tail(f: &mut fmt::Formatter<'_>, cfg: Cfg, tail: ast::AscriptionTail) -> Res {
@@ -262,7 +280,7 @@ fn get_str_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, str_exp: ast::StrExp) -> Re
   match str_exp {
     ast::StrExp::StructStrExp(exp) => {
       output(f, "struct\n")?;
-      let new_cfg = cfg.indented();
+      let new_cfg = cfg.indented().extra_blank(true);
       new_cfg.output_indent(f)?;
       get_dec(f, new_cfg, exp.dec()?)?;
       output(f, "\n")?;
@@ -753,6 +771,9 @@ where
   }
   for arg in iter {
     output(f, "\n")?;
+    if cfg.extra_blank {
+      output(f, "\n")?;
+    }
     cfg.output_indent(f)?;
     output(f, s)?;
     get_t(f, arg)?;
