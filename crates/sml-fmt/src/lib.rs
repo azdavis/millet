@@ -51,8 +51,7 @@ fn output(f: &mut fmt::Formatter<'_>, s: &str) -> Res {
 }
 
 fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
-  sep(f, "\n\n", dec.dec_in_seqs(), |f, dec_in_seq| {
-    cfg.output_indent(f)?;
+  sep_with_lines(f, cfg, "", dec.dec_in_seqs(), |f, dec_in_seq| {
     get_dec_one(f, cfg, dec_in_seq.dec_one()?)?;
     if dec_in_seq.semicolon().is_some() {
       output(f, ";")?;
@@ -232,7 +231,7 @@ fn get_str_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, str_exp: ast::StrExp) -> Re
     ast::StrExp::StructStrExp(exp) => {
       output(f, "struct\n")?;
       let new_cfg = cfg.indented();
-      cfg.output_indent(f)?;
+      new_cfg.output_indent(f)?;
       get_dec(f, new_cfg, exp.dec()?)?;
       output(f, "\n")?;
       cfg.output_indent(f)?;
@@ -636,6 +635,7 @@ where
   output(f, kw)?;
   output(f, "\n")?;
   let new_cfg = cfg.indented();
+  new_cfg.output_indent(f)?;
   f1(f, new_cfg)?;
   output(f, "\n")?;
   cfg.output_indent(f)?;
