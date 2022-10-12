@@ -126,7 +126,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
             }
             ast::FunctorArg::Dec(arg) => {
               let param_name = cx.fresh();
-              let param_sig = sml_hir::SigExp::Spec(get_spec_of_dec(cx, Some(arg)));
+              let param_sig = sml_hir::SigExp::Spec(get_spec(cx, Some(arg)));
               let param_sig = cx.sig_exp(param_sig, ptr.clone());
               let dec = cx
                 .dec(sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]), ptr.clone());
@@ -175,7 +175,7 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
   let sig_exp = sig_exp?;
   let ptr = SyntaxNodePtr::new(sig_exp.syntax());
   let ret = match sig_exp {
-    ast::SigExp::SigSigExp(sig_exp) => sml_hir::SigExp::Spec(get_spec_of_dec(cx, sig_exp.dec())),
+    ast::SigExp::SigSigExp(sig_exp) => sml_hir::SigExp::Spec(get_spec(cx, sig_exp.dec())),
     ast::SigExp::NameSigExp(sig_exp) => sml_hir::SigExp::Name(get_name(sig_exp.name())?),
     ast::SigExp::WhereTypeSigExp(sig_exp) => sml_hir::SigExp::WhereType(
       get_sig_exp(cx, sig_exp.sig_exp()),
@@ -192,7 +192,7 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
   cx.sig_exp(ret, ptr)
 }
 
-fn get_spec_of_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
+fn get_spec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
   let dec = dec?;
   let mut specs = Vec::<sml_hir::SpecIdx>::new();
   for dwt_in_seq in dec.dec_with_tail_in_seqs() {
@@ -209,7 +209,7 @@ fn get_spec_of_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
       if let Some(semi) = dec.semicolon() {
         cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
       }
-      inner_specs.extend(get_spec_one_of_dec(cx, dec.dec_one()?));
+      inner_specs.extend(get_spec_one(cx, dec.dec_one()?));
     }
     let inner = if inner_specs.len() == 1 {
       inner_specs.pop().unwrap()
@@ -235,7 +235,7 @@ fn get_spec_of_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
 
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
-fn get_spec_one_of_dec(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
+fn get_spec_one(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
   let ptr = SyntaxNodePtr::new(dec.syntax());
   match dec {
     ast::DecOne::HoleDec(_) => {
