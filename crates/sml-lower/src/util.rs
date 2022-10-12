@@ -55,6 +55,7 @@ pub(crate) enum ErrorKind {
   InvalidSharingType,
   InvalidEqtype,
   DecHole,
+  NotSpec,
   /// must be last
   Unsupported(&'static str),
 }
@@ -92,6 +93,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidSharingType => f.write_str("`sharing type` not allowed here"),
       ErrorKind::InvalidEqtype => f.write_str("`eqtype` not allowed here"),
       ErrorKind::DecHole => f.write_str("declaration hole"),
+      ErrorKind::NotSpec => f.write_str("non-specification declaration syntax not allowed here"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -140,6 +142,7 @@ impl Error {
       ErrorKind::InvalidSharingType => 4020,
       ErrorKind::InvalidEqtype => 4021,
       ErrorKind::DecHole => 4022,
+      ErrorKind::NotSpec => 4023,
       ErrorKind::Unsupported(_) => 4999,
     }
   }

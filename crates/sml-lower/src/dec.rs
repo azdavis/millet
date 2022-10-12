@@ -192,6 +192,48 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
   cx.sig_exp(ret, ptr)
 }
 
+#[allow(dead_code)]
+fn get_spec_of_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
+  let dec = dec?;
+  let mut specs = Vec::<sml_hir::SpecIdx>::new();
+  for dwt_in_seq in dec.dec_with_tail_in_seqs() {
+    if let Some(semi) = dwt_in_seq.semicolon() {
+      cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+    }
+    let dwt = match dwt_in_seq.dec_with_tail() {
+      Some(x) => x,
+      None => continue,
+    };
+    let ptr = SyntaxNodePtr::new(dwt.syntax());
+    let mut inner_specs = Vec::<sml_hir::SpecIdx>::new();
+    for dec in dwt.dec_in_seqs() {
+      if let Some(semi) = dec.semicolon() {
+        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+      }
+      inner_specs.extend(get_spec_one_of_dec(cx, dec.dec_one()?));
+    }
+    let inner = if inner_specs.len() == 1 {
+      inner_specs.pop().unwrap()
+    } else {
+      cx.spec(sml_hir::Spec::Seq(inner_specs), ptr.clone())
+    };
+    specs.push(dwt.sharing_tails().fold(inner, |ac, tail| {
+      let kind = if tail.type_kw().is_some() {
+        sml_hir::SharingKind::Regular
+      } else {
+        sml_hir::SharingKind::Derived
+      };
+      let paths_eq: Vec<_> = tail.path_eqs().filter_map(|x| get_path(x.path()?)).collect();
+      cx.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
+    }));
+  }
+  if specs.len() == 1 {
+    specs.pop().unwrap()
+  } else {
+    cx.spec(sml_hir::Spec::Seq(specs), SyntaxNodePtr::new(dec.syntax()))
+  }
+}
+
 fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> sml_hir::SpecIdx {
   let spec = spec?;
   let mut specs: Vec<_> = spec
@@ -239,6 +281,176 @@ fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> sml_hir::SpecIdx 
 
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
+#[allow(dead_code)]
+fn get_spec_one_of_dec(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
+  let ptr = SyntaxNodePtr::new(dec.syntax());
+  match dec {
+    ast::DecOne::HoleDec(_) => {
+      cx.err(dec.syntax().text_range(), ErrorKind::DecHole);
+      vec![]
+    }
+    ast::DecOne::ValDec(dec) => {
+      if let Some(tvs) = dec.ty_var_seq() {
+        cx.err(tvs.syntax().text_range(), ErrorKind::ValSpecTyVarSeq);
+      }
+      let descs: Vec<_> = dec
+        .val_binds()
+        .filter_map(|val_bind| {
+          if let Some(x) = val_bind.eq_exp() {
+            cx.err(x.syntax().text_range(), ErrorKind::NotSpec);
+          }
+          if let Some(x) = val_bind.rec_kw() {
+            cx.err(x.text_range(), ErrorKind::NotSpec);
+          }
+          match val_bind.pat()? {
+            ast::Pat::TypedPat(ty_pat) => match ty_pat.pat()? {
+              ast::Pat::ConPat(con_pat) => {
+                if let Some(x) = con_pat.op_kw() {
+                  cx.err(x.text_range(), ErrorKind::NotSpec);
+                }
+                if let Some(x) = con_pat.pat() {
+                  cx.err(x.syntax().text_range(), ErrorKind::NotSpec);
+                }
+                let path = con_pat.path()?;
+                let mut iter = path.name_star_eq_dots();
+                let fst = iter.next()?;
+                if iter.next().is_some() {
+                  cx.err(path.syntax().text_range(), ErrorKind::NotSpec);
+                }
+                let name = str_util::Name::new(fst.name_star_eq()?.token.text());
+                let ty = ty::get(cx, ty_pat.ty());
+                Some(sml_hir::ValDesc { name, ty })
+              }
+              pat => {
+                cx.err(pat.syntax().text_range(), ErrorKind::NotSpec);
+                None
+              }
+            },
+            pat => {
+              cx.err(pat.syntax().text_range(), ErrorKind::NotSpec);
+              None
+            }
+          }
+        })
+        .collect();
+      vec![cx.spec(sml_hir::Spec::Val(vec![], descs), ptr)]
+    }
+    ast::DecOne::TyDec(dec) => {
+      let f = match dec.ty_head() {
+        None => return vec![],
+        Some(head) => match head.kind {
+          ast::TyHeadKind::TypeKw => sml_hir::Spec::Ty,
+          ast::TyHeadKind::EqtypeKw => sml_hir::Spec::EqTy,
+        },
+      };
+      dec
+        .ty_binds()
+        .filter_map(|ty_desc| {
+          let ty_vars = ty::var_seq(ty_desc.ty_var_seq());
+          let name = get_name(ty_desc.name())?;
+          let mut ret = f(sml_hir::TyDesc { name: name.clone(), ty_vars: ty_vars.clone() });
+          if let Some(ty) = ty_desc.eq_ty() {
+            let ty = ty::get(cx, ty.ty());
+            let spec_idx = cx.spec(ret, ptr.clone());
+            let sig_exp = cx.sig_exp(sml_hir::SigExp::Spec(spec_idx), ptr.clone());
+            let sig_exp = cx.sig_exp(
+              sml_hir::SigExp::WhereType(sig_exp, ty_vars, sml_hir::Path::one(name), ty),
+              ptr.clone(),
+            );
+            ret = sml_hir::Spec::Include(sig_exp);
+          }
+          Some(cx.spec(ret, ptr.clone()))
+        })
+        .collect()
+    }
+    ast::DecOne::DatDec(dec) => {
+      if let Some(with_type) = dec.with_type() {
+        cx.err(
+          with_type.syntax().text_range(),
+          ErrorKind::Unsupported("`withtype` in specifications"),
+        );
+      }
+      // need to collect to end the exclusive borrow on `cx`
+      #[allow(clippy::needless_collect)]
+      let binds: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
+      binds.into_iter().map(|x| cx.spec(sml_hir::Spec::Datatype(x), ptr.clone())).collect()
+    }
+    ast::DecOne::DatCopyDec(dec) => get_name(dec.name())
+      .zip(dec.path().and_then(get_path))
+      .map(|(name, path)| vec![cx.spec(sml_hir::Spec::DatatypeCopy(name, path), ptr)])
+      .unwrap_or_default(),
+    ast::DecOne::ExDec(dec) => dec
+      .ex_binds()
+      .filter_map(|ex_bind| {
+        let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
+        let ty = ex_bind.ex_bind_inner().map(|inner| match inner {
+          ast::ExBindInner::OfTy(of_ty) => ty::get(cx, of_ty.ty()),
+          ast::ExBindInner::EqPath(eq_path) => {
+            cx.err(eq_path.syntax().text_range(), ErrorKind::NotSpec);
+            None
+          }
+        });
+        Some(cx.spec(sml_hir::Spec::Exception(sml_hir::ExDesc { name, ty }), ptr.clone()))
+      })
+      .collect(),
+    ast::DecOne::StructureDec(dec) => dec
+      .str_binds()
+      .filter_map(|str_bind| {
+        if let Some(x) = str_bind.eq_str_exp() {
+          cx.err(x.syntax().text_range(), ErrorKind::NotSpec);
+        }
+        let name = get_name(str_bind.name())?;
+        let sig_exp = match str_bind.ascription_tail() {
+          Some(tail) => match tail.ascription() {
+            Some(asc) => match asc.kind {
+              ast::AscriptionKind::Colon => Ok(get_sig_exp(cx, tail.sig_exp())),
+              ast::AscriptionKind::ColonGt => Err(asc.token.text_range()),
+            },
+            None => Err(tail.syntax().text_range()),
+          },
+          None => Err(str_bind.syntax().text_range()),
+        };
+        let sig_exp = match sig_exp {
+          Ok(x) => x,
+          Err(range) => {
+            cx.err(range, ErrorKind::NotSpec);
+            None
+          }
+        };
+        let spec = sml_hir::Spec::Str(sml_hir::StrDesc { name, sig_exp });
+        Some(cx.spec(spec, ptr.clone()))
+      })
+      .collect(),
+    ast::DecOne::IncludeDec(dec) => {
+      let specs: Vec<_> = dec
+        .sig_exps()
+        .map(|x| {
+          let spec = sml_hir::Spec::Include(get_sig_exp(cx, Some(x)));
+          cx.spec(spec, ptr.clone())
+        })
+        .collect();
+      if specs.is_empty() {
+        cx.err(dec.syntax().text_range(), ErrorKind::RequiresOperand);
+      }
+      specs
+    }
+    ast::DecOne::FunDec(_)
+    | ast::DecOne::AbstypeDec(_)
+    | ast::DecOne::OpenDec(_)
+    | ast::DecOne::InfixDec(_)
+    | ast::DecOne::InfixrDec(_)
+    | ast::DecOne::NonfixDec(_)
+    | ast::DecOne::DoDec(_)
+    | ast::DecOne::LocalDec(_)
+    | ast::DecOne::SignatureDec(_)
+    | ast::DecOne::FunctorDec(_)
+    | ast::DecOne::ExpDec(_) => {
+      cx.err(dec.syntax().text_range(), ErrorKind::NotSpec);
+      vec![]
+    }
+  }
+}
+
 fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> sml_hir::SpecIdx {
   let ptr = SyntaxNodePtr::new(spec.syntax());
   let ret = match spec {

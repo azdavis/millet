@@ -1041,6 +1041,32 @@ Sometimes `...` is used in declaration position as a placeholder or filler in ex
 
 To fix, replace or remove the hole.
 
+## 4023
+
+There was a non-specification declaration in a specification context.
+
+```sml
+(* error *)
+signature S = sig
+  fun inc x = x + 1
+end
+```
+
+This error also occurs if there is a declaration which is allowed in specifications, but it uses syntax that is not a part of specification syntax.
+
+```sml
+(* error *)
+signature S = sig
+  val x : int = 3
+end
+```
+
+To fix:
+
+- Modify the declaration to use only specification syntax.
+- Move it out of the signature.
+- Remove it.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
