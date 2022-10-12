@@ -84,7 +84,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       sep_with_lines(f, cfg, "and ", dec.val_binds(), |f, val_bind| {
         get_pat(f, val_bind.pat()?)?;
         output(f, " = ")?;
-        get_exp(f, cfg, val_bind.exp()?)
+        get_exp(f, cfg, val_bind.eq_exp()?.exp()?)
       })
     }
     ast::DecOne::FunDec(dec) => {
@@ -202,7 +202,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
           ascription_tail(f, cfg, tail)?;
         }
         output(f, " = ")?;
-        get_str_exp(f, cfg, str_bind.str_exp()?)
+        get_str_exp(f, cfg, str_bind.eq_str_exp()?.str_exp()?)
       })
     }
     ast::DecOne::SignatureDec(dec) => {
@@ -362,7 +362,7 @@ where
     ty_var_seq(f, ty_bind.ty_var_seq())?;
     output(f, ty_bind.name()?.text())?;
     output(f, " = ")?;
-    get_ty(f, ty_bind.ty()?)
+    get_ty(f, ty_bind.eq_ty()?.ty()?)
   })
 }
 

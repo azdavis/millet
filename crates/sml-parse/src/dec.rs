@@ -31,8 +31,10 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
         return false;
       }
       if p.at(SK::Eq) {
+        let en = p.enter();
         p.bump();
         exp(p);
+        p.exit(en, SK::EqExp);
       }
       true
     });
@@ -169,8 +171,10 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
         ascription_tail(p);
       }
       if p.at(SK::Eq) {
+        let en = p.enter();
         p.bump();
         must(p, str_exp, Expected::StrExp);
+        p.exit(en, SK::EqStrExp);
       }
       true
     });
@@ -523,8 +527,10 @@ fn ty_binds(p: &mut Parser<'_>) {
       return false;
     }
     if p.at(SK::Eq) {
+      let en = p.enter();
       p.bump();
       ty(p);
+      p.exit(en, SK::EqTy);
     }
     true
   });

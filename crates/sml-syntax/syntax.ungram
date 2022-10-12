@@ -52,18 +52,21 @@ ExpDec = Exp
 IncludeDec = 'include' SigExp*
 
 TyHead = 'type' | 'eqtype'
-ValBind = 'rec'? Pat '=' Exp 'and'?
+ValBind = 'rec'? Pat EqExp? 'and'?
 FunBind = FunBindCase* 'and'?
-TyBind = TyVarSeq 'Name' '=' Ty 'and'?
+TyBind = TyVarSeq 'Name' EqTy? 'and'?
 DatBind = TyVarSeq 'Name' '=' '|'? ConBind* 'and'?
 ConBind = 'op'? NameStarEq OfTy? '|'?
 ExBind = 'op'? NameStarEq ExBindInner? 'and'?
-StrBind = 'Name' AscriptionTail? '=' StrExp 'and'?
+StrBind = 'Name' AscriptionTail? EqStrExp? 'and'?
 SigBind = 'Name' '=' SigExp 'and'?
 FunctorBind =
   functor_name:'Name'
   '(' FunctorArg ')' AscriptionTail?
   '=' body:StrExp 'and'?
+
+EqExp = '=' Exp
+EqStrExp = '=' StrExp
 
 FunBindCase = FunBindCaseHead Pat* TyAnnotation? '=' Exp '|'?
 FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
@@ -198,7 +201,6 @@ CaseExp = 'case' Exp 'of' Matcher
 FnExp = 'fn' Matcher
 
 ExpRow = Lab EqExp? ','?
-EqExp = '=' Exp
 ExpArg = Exp ','?
 ExpInSeq = Exp ';'?
 

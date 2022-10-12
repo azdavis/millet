@@ -92,7 +92,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
       str_dec
         .str_binds()
         .filter_map(|str_bind| {
-          let str_exp = str_bind.str_exp();
+          let str_exp = str_bind.eq_str_exp().and_then(|x| x.str_exp());
           if str_exp.is_none() {
             cx.err(str_bind.syntax().text_range(), ErrorKind::MissingRhs);
           }
@@ -390,7 +390,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
       dec
         .val_binds()
         .map(|val_bind| {
-          let exp = val_bind.exp();
+          let exp = val_bind.eq_exp().and_then(|x| x.exp());
           if exp.is_none() {
             cx.err(val_bind.syntax().text_range(), ErrorKind::MissingRhs);
           }
@@ -610,7 +610,7 @@ where
   iter
     .filter_map(|ty_bind| {
       let name = get_name(ty_bind.name())?;
-      let ty = ty_bind.ty();
+      let ty = ty_bind.eq_ty().and_then(|x| x.ty());
       if ty.is_none() {
         cx.err(ty_bind.syntax().text_range(), ErrorKind::MissingRhs);
       }
