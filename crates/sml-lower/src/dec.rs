@@ -94,7 +94,7 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
         .filter_map(|str_bind| {
           let str_exp = str_bind.str_exp();
           if str_exp.is_none() {
-            cx.err(str_dec.syntax().text_range(), ErrorKind::MissingRhs);
+            cx.err(str_bind.syntax().text_range(), ErrorKind::MissingRhs);
           }
           Some(sml_hir::StrBind {
             name: get_name(str_bind.name())?,
@@ -389,7 +389,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
         .map(|val_bind| {
           let exp = val_bind.exp();
           if exp.is_none() {
-            cx.err(dec.syntax().text_range(), ErrorKind::MissingRhs);
+            cx.err(val_bind.syntax().text_range(), ErrorKind::MissingRhs);
           }
           sml_hir::ValBind {
             rec: val_bind.rec_kw().is_some(),
@@ -597,10 +597,14 @@ where
   iter
     .filter_map(|ty_bind| {
       let name = get_name(ty_bind.name())?;
+      let ty = ty_bind.ty();
+      if ty.is_none() {
+        cx.err(ty_bind.syntax().text_range(), ErrorKind::MissingRhs);
+      }
       Some(sml_hir::TyBind {
         ty_vars: ty::var_seq(ty_bind.ty_var_seq()),
         name,
-        ty: ty::get(cx, ty_bind.ty()),
+        ty: ty::get(cx, ty),
       })
     })
     .collect()

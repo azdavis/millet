@@ -516,8 +516,10 @@ fn ty_binds(p: &mut Parser<'_>) {
     if !ty_var_seq(p) & p.eat(SK::Name).is_none() {
       return false;
     }
-    p.eat(SK::Eq);
-    ty(p);
+    if p.at(SK::Eq) {
+      p.bump();
+      ty(p);
+    }
     true
   });
 }

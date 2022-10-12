@@ -43,7 +43,7 @@ fn missing_rhs() {
   check(
     r#"
     val x
-(** ^^^^^ missing right-hand side of declaration *)
+(**     ^ missing right-hand side of declaration *)
 "#,
   );
 }
