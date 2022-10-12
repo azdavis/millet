@@ -13,6 +13,12 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Emit an error for numeric literals with trailing alphabetic characters.
+- Parse specifications as declarations and reject invalid ones later.
+- Emit more specific errors for some parse failures.
+
 ## v0.4.0
 
 - Emit a better error for type variable sequences on `val` specifications.
