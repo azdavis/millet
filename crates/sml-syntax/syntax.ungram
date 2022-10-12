@@ -3,8 +3,6 @@ Root = Dec
 Dec = DecInSeq*
 DecInSeq = DecOne ';'?
 
-// we merge many kinds of decs that are separate in the grammar (top-level, structure-level, and
-// regular) so that we may parse them and reject them later if necessary.
 DecOne =
   HoleDec
 | ValDec
@@ -19,7 +17,9 @@ DecOne =
 | InfixrDec
 | NonfixDec
 | DoDec
+// this covers both the regular one and the structure-level one.
 | LocalDec
+// these are structure-level/top-level decs but we put them here so we can emit better errors.
 | StructureDec
 | SignatureDec
 | FunctorDec
