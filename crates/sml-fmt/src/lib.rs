@@ -83,8 +83,11 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       output(f, "val ")?;
       sep_with_lines(f, cfg, "and ", dec.val_binds(), |f, val_bind| {
         get_pat(f, val_bind.pat()?)?;
-        output(f, " = ")?;
-        get_exp(f, cfg, val_bind.eq_exp()?.exp()?)
+        if let Some(eq_exp) = val_bind.eq_exp() {
+          output(f, " = ")?;
+          get_exp(f, cfg, eq_exp.exp()?)?;
+        }
+        Some(())
       })
     }
     ast::DecOne::FunDec(dec) => {
@@ -117,8 +120,11 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
           output(f, " ")?;
           sep(f, " ", fun_bind_case.pats(), get_pat)?;
           ty_annotation(f, fun_bind_case.ty_annotation())?;
-          output(f, " =")?;
-          get_body_exp(f, cfg, fun_bind_case.eq_exp().and_then(|x| x.exp())?)
+          if let Some(eq_exp) = fun_bind_case.eq_exp() {
+            output(f, " =")?;
+            get_body_exp(f, cfg, eq_exp.exp()?)?;
+          }
+          Some(())
         })
       })
     }
@@ -201,8 +207,11 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
         if let Some(tail) = str_bind.ascription_tail() {
           ascription_tail(f, cfg, tail)?;
         }
-        output(f, " = ")?;
-        get_str_exp(f, cfg, str_bind.eq_str_exp()?.str_exp()?)
+        if let Some(eq_str_exp) = str_bind.eq_str_exp() {
+          output(f, " = ")?;
+          get_str_exp(f, cfg, eq_str_exp.str_exp()?)?;
+        }
+        Some(())
       })
     }
     ast::DecOne::SignatureDec(dec) => {
@@ -245,6 +254,7 @@ where
 fn ascription_tail(f: &mut fmt::Formatter<'_>, cfg: Cfg, tail: ast::AscriptionTail) -> Res {
   output(f, " ")?;
   output(f, tail.ascription()?.token.text())?;
+  output(f, " ")?;
   get_sig_exp(f, cfg, tail.sig_exp()?)
 }
 
@@ -288,7 +298,7 @@ fn get_sig_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, sig_exp: ast::SigExp) -> Re
     ast::SigExp::SigSigExp(exp) => {
       output(f, "sig\n")?;
       let new_cfg = cfg.indented();
-      cfg.output_indent(f)?;
+      new_cfg.output_indent(f)?;
       get_dec(f, new_cfg, exp.dec()?)?;
       output(f, "\n")?;
       cfg.output_indent(f)?;
@@ -330,8 +340,11 @@ where
   sep_with_lines(f, cfg, "and ", iter, |f, ty_bind| {
     ty_var_seq(f, ty_bind.ty_var_seq())?;
     output(f, ty_bind.name()?.text())?;
-    output(f, " = ")?;
-    get_ty(f, ty_bind.eq_ty()?.ty()?)
+    if let Some(eq_ty) = ty_bind.eq_ty() {
+      output(f, " = ")?;
+      get_ty(f, eq_ty.ty()?)?;
+    }
+    Some(())
   })
 }
 
