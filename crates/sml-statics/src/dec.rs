@@ -25,7 +25,6 @@ pub(crate) fn get(
     None => return,
   };
   match &ars.dec[dec] {
-    sml_hir::Dec::Hole => st.err(dec, ErrorKind::DecHole),
     // sml_def(15)
     sml_hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();

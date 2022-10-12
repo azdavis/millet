@@ -1022,6 +1022,23 @@ eqtype num = int
 
 To fix, change `eqtype` to `type`.
 
+## 4022
+
+There was a declaration hole.
+
+```sml
+(* error *)
+structure S = struct
+  ...
+end
+```
+
+Declaration holes are written `...`.
+
+Sometimes `...` is used in declaration position as a placeholder or filler in examples, for example in the discussion of functor argument interface syntax sugar in the description of 5003.
+
+To fix, replace or remove the hole.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
@@ -1887,23 +1904,6 @@ To fix, replace the hole with a real type.
 
 ## 5028
 
-There was a declaration hole.
-
-```sml
-(* error *)
-structure S = struct
-  ...
-end
-```
-
-Declaration holes are written `...`.
-
-Sometimes `...` is used in declaration position as a placeholder or filler in examples, for example in the discussion of functor argument interface syntax sugar in the description of 5003.
-
-To fix, replace or remove the hole.
-
-## 5029
-
 An attempt was made to bind an expansive expression to a variable, where that variable would then have polymorphic type.
 
 This error is also called the "value restriction".
@@ -1976,7 +1976,7 @@ To fix, try any of the following:
   val r : int list ref = ref []
   ```
 
-## 5030
+## 5029
 
 The left-hand side of an `as` pattern was neither a name nor a typed name.
 
@@ -2000,7 +2000,7 @@ fun f x =
   | _ => x
 ```
 
-## 5031
+## 5030
 
 There was an unused variable.
 

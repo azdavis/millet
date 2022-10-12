@@ -245,8 +245,7 @@ fn get_dec(
         get_dec(cx, ars, scope, mode, dec);
       }
     }
-    sml_hir::Dec::Hole
-    | sml_hir::Dec::Ty(_)
+    sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
     | sml_hir::Dec::DatatypeCopy(_, _)
     | sml_hir::Dec::Exception(_)

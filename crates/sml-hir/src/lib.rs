@@ -191,7 +191,6 @@ pub type DecArena = Arena<Dec>;
 
 #[derive(Debug)]
 pub enum Dec {
-  Hole,
   Val(Vec<TyVar>, Vec<ValBind>),
   Ty(Vec<TyBind>),
   /// The TyBinds are from `withtype`, since it's easier to process in statics than lower.

@@ -381,7 +381,10 @@ pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::DecIdx {
 fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
   let ptr = SyntaxNodePtr::new(dec.syntax());
   let ret = match dec {
-    ast::DecOne::HoleDec(_) => sml_hir::Dec::Hole,
+    ast::DecOne::HoleDec(_) => {
+      cx.err(dec.syntax().text_range(), ErrorKind::DecHole);
+      return None;
+    }
     ast::DecOne::ValDec(dec) => sml_hir::Dec::Val(
       ty::var_seq(dec.ty_var_seq()),
       dec
