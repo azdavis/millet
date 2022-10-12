@@ -53,6 +53,7 @@ fn nothing() -> Res {
   Some(())
 }
 
+/// TODO be more careful with `;`?
 fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
   match dec {
     ast::DecOne::HoleDec(_) => output(f, "..."),
@@ -65,22 +66,117 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       })
     }
     ast::DecOne::FunDec(_) => nothing(),
-    ast::DecOne::TyDec(_) => nothing(),
-    ast::DecOne::DatDec(_) => nothing(),
-    ast::DecOne::DatCopyDec(_) => nothing(),
+    ast::DecOne::TyDec(dec) => {
+      output(f, "type ")?;
+      ty_binds(f, dec.ty_binds())
+    }
+    ast::DecOne::DatDec(dec) => {
+      output(f, "datatype ")?;
+      sep(f, " and ", dec.dat_binds(), |f, dat_bind| {
+        ty_var_seq(f, dat_bind.ty_var_seq())?;
+        output(f, dat_bind.name()?.text())?;
+        output(f, " = ")?;
+        sep(f, " | ", dat_bind.con_binds(), |f, con_bind| {
+          output(f, con_bind.name_star_eq()?.token.text())?;
+          if let Some(of_ty) = con_bind.of_ty() {
+            output(f, " of ")?;
+            get_ty(f, of_ty.ty()?)?;
+          }
+          Some(())
+        })
+      })?;
+      if let Some(withtype) = dec.with_type() {
+        output(f, " withtype ")?;
+        ty_binds(f, withtype.ty_binds())?;
+      }
+      Some(())
+    }
+    ast::DecOne::DatCopyDec(dec) => {
+      output(f, "datatype ")?;
+      output(f, dec.name()?.text())?;
+      output(f, " = datatype ")?;
+      path(f, dec.path()?)
+    }
     ast::DecOne::AbstypeDec(_) => nothing(),
-    ast::DecOne::ExDec(_) => nothing(),
-    ast::DecOne::OpenDec(_) => nothing(),
-    ast::DecOne::InfixDec(_) => nothing(),
-    ast::DecOne::InfixrDec(_) => nothing(),
-    ast::DecOne::NonfixDec(_) => nothing(),
-    ast::DecOne::DoDec(_) => nothing(),
+    ast::DecOne::ExDec(dec) => {
+      output(f, "exception ")?;
+      sep(f, " and ", dec.ex_binds(), |f, ex_bind| {
+        output(f, ex_bind.name_star_eq()?.token.text())?;
+        match ex_bind.ex_bind_inner() {
+          Some(inner) => match inner {
+            ast::ExBindInner::OfTy(of_ty) => {
+              output(f, " of ")?;
+              get_ty(f, of_ty.ty()?)
+            }
+            ast::ExBindInner::EqPath(eq_path) => {
+              output(f, " = ")?;
+              path(f, eq_path.path()?)
+            }
+          },
+          None => Some(()),
+        }
+      })
+    }
+    ast::DecOne::OpenDec(dec) => {
+      output(f, "open ")?;
+      sep(f, " ", dec.paths(), path)
+    }
+    ast::DecOne::InfixDec(dec) => {
+      output(f, "infix ")?;
+      if let Some(int_lit) = dec.int_lit() {
+        output(f, int_lit.text())?;
+      }
+      sep(f, " ", dec.name_star_eqs(), |f, n| output(f, n.token.text()))
+    }
+    ast::DecOne::InfixrDec(dec) => {
+      output(f, "infixr ")?;
+      if let Some(int_lit) = dec.int_lit() {
+        output(f, int_lit.text())?;
+      }
+      sep(f, " ", dec.name_star_eqs(), |f, n| output(f, n.token.text()))
+    }
+    ast::DecOne::NonfixDec(dec) => {
+      output(f, "nonfix ")?;
+      sep(f, " ", dec.name_star_eqs(), |f, n| output(f, n.token.text()))
+    }
+    ast::DecOne::DoDec(dec) => {
+      output(f, "do ")?;
+      get_exp(f, cfg, dec.exp()?)
+    }
     ast::DecOne::LocalDec(_) => nothing(),
     ast::DecOne::StructureDec(_) => nothing(),
     ast::DecOne::SignatureDec(_) => nothing(),
     ast::DecOne::FunctorDec(_) => nothing(),
-    ast::DecOne::ExpDec(_) => nothing(),
+    ast::DecOne::ExpDec(dec) => get_exp(f, cfg, dec.exp()?),
   }
+}
+
+fn ty_binds<I>(f: &mut fmt::Formatter<'_>, iter: I) -> Option<()>
+where
+  I: Iterator<Item = ast::TyBind>,
+{
+  sep(f, " and ", iter, |f, ty_bind| {
+    ty_var_seq(f, ty_bind.ty_var_seq())?;
+    output(f, ty_bind.name()?.text())?;
+    output(f, " = ")?;
+    get_ty(f, ty_bind.ty()?)
+  })
+}
+
+fn ty_var_seq(f: &mut fmt::Formatter<'_>, tvs: Option<ast::TyVarSeq>) -> Res {
+  let tvs = match tvs {
+    Some(x) => x,
+    None => return Some(()),
+  };
+  let parens = tvs.l_round().is_some();
+  if parens {
+    output(f, "(")?;
+  }
+  sep(f, ", ", tvs.ty_var_args(), |f, tv| output(f, tv.ty_var()?.text()))?;
+  if parens {
+    output(f, ")")?;
+  }
+  Some(())
 }
 
 fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
