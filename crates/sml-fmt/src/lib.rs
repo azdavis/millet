@@ -261,12 +261,67 @@ fn get_str_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, str_exp: ast::StrExp) -> Re
   }
 }
 
-fn get_sig_exp(_: &mut fmt::Formatter<'_>, _: Cfg, sig_exp: ast::SigExp) -> Res {
+fn get_sig_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, sig_exp: ast::SigExp) -> Res {
   match sig_exp {
-    ast::SigExp::SigSigExp(_) => nothing(),
-    ast::SigExp::NameSigExp(_) => nothing(),
-    ast::SigExp::WhereTypeSigExp(_) => nothing(),
-    ast::SigExp::WhereSigExp(_) => nothing(),
+    ast::SigExp::SigSigExp(exp) => {
+      output(f, "sig\n")?;
+      let new_cfg = cfg.indented();
+      cfg.output_indent(f)?;
+      get_spec(f, new_cfg, exp.spec()?)?;
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
+      output(f, "end")
+    }
+    ast::SigExp::NameSigExp(exp) => output(f, exp.name()?.text()),
+    ast::SigExp::WhereTypeSigExp(exp) => {
+      get_sig_exp(f, cfg, exp.sig_exp()?)?;
+      output(f, " where type ")?;
+      ty_var_seq(f, exp.ty_var_seq())?;
+      path(f, exp.path()?)?;
+      output(f, " = ")?;
+      get_ty(f, exp.ty()?)
+    }
+    ast::SigExp::WhereSigExp(exp) => {
+      get_sig_exp(f, cfg, exp.sig_exp()?)?;
+      output(f, " where ")?;
+      path(f, exp.lhs()?)?;
+      output(f, " = ")?;
+      path(f, exp.rhs()?)
+    }
+  }
+}
+
+fn get_spec(f: &mut fmt::Formatter<'_>, cfg: Cfg, spec: ast::Spec) -> Res {
+  sep_with_lines(f, cfg, "", spec.spec_with_tail_in_seqs(), |f, spec| {
+    let spec_with_tail = spec.spec_with_tail()?;
+    sep_with_lines(f, cfg, "", spec_with_tail.spec_in_seqs(), |f, spec| {
+      get_spec_one(f, cfg, spec.spec_one()?)?;
+      if spec.semicolon().is_some() {
+        output(f, ";")?;
+      }
+      Some(())
+    })?;
+    sep_with_lines(f, cfg, "", spec_with_tail.sharing_tails(), |f, sharing| {
+      output(f, "sharing type ")?;
+      sep(f, " = ", sharing.path_eqs(), |f, p| path(f, p.path()?))
+    })?;
+    if spec.semicolon().is_some() {
+      output(f, ";")?;
+    }
+    Some(())
+  })
+}
+
+fn get_spec_one(_: &mut fmt::Formatter<'_>, _: Cfg, spec: ast::SpecOne) -> Res {
+  match spec {
+    ast::SpecOne::ValSpec(_) => nothing(),
+    ast::SpecOne::TySpec(_) => nothing(),
+    ast::SpecOne::EqTySpec(_) => nothing(),
+    ast::SpecOne::DatSpec(_) => nothing(),
+    ast::SpecOne::DatCopySpec(_) => nothing(),
+    ast::SpecOne::ExSpec(_) => nothing(),
+    ast::SpecOne::StrSpec(_) => nothing(),
+    ast::SpecOne::IncludeSpec(_) => nothing(),
   }
 }
 
