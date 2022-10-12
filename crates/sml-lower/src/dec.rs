@@ -244,7 +244,7 @@ fn get_spec_one(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
     }
     ast::DecOne::ValDec(dec) => {
       if let Some(tvs) = dec.ty_var_seq() {
-        cx.err(tvs.syntax().text_range(), ErrorKind::ValSpecTyVarSeq);
+        cx.err(tvs.syntax().text_range(), ErrorKind::NotSpec);
       }
       let descs: Vec<_> = dec
         .val_binds()

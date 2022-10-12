@@ -45,7 +45,6 @@ pub(crate) enum ErrorKind {
   DecNotAllowedHere,
   OpBoolBinOp,
   ExpNotAllowedHere,
-  ValSpecTyVarSeq,
   UnnecessaryParens,
   ComplexBoolExp,
   OneArmedCase,
@@ -81,9 +80,6 @@ impl fmt::Display for ErrorKind {
       ErrorKind::DecNotAllowedHere => f.write_str("structure-level declaration not allowed here"),
       ErrorKind::OpBoolBinOp => f.write_str("`andalso` and `orelse` not allowed with `op`"),
       ErrorKind::ExpNotAllowedHere => f.write_str("expression not allowed here"),
-      ErrorKind::ValSpecTyVarSeq => {
-        f.write_str("`val` specifications may not have explicit type variables")
-      }
       ErrorKind::UnnecessaryParens => f.write_str("unnecessary parentheses"),
       ErrorKind::ComplexBoolExp => f.write_str("overly complex `bool` expression"),
       ErrorKind::OneArmedCase => f.write_str("`case` with only one arm"),
@@ -119,6 +115,7 @@ impl Error {
 
   /// Returns the code for this.
   pub fn code(&self) -> u16 {
+    // TODO shift down one for 4013
     match self.kind {
       ErrorKind::FunBindMismatchedName(_, _) => 4001,
       ErrorKind::FunBindWrongNumPats(_, _) => 4002,
@@ -132,7 +129,6 @@ impl Error {
       ErrorKind::DecNotAllowedHere => 4010,
       ErrorKind::OpBoolBinOp => 4011,
       ErrorKind::ExpNotAllowedHere => 4012,
-      ErrorKind::ValSpecTyVarSeq => 4013,
       ErrorKind::UnnecessaryParens => 4014,
       ErrorKind::ComplexBoolExp => 4015,
       ErrorKind::OneArmedCase => 4016,

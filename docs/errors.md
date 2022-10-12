@@ -809,6 +809,8 @@ Here, the solution could either be to:
 
 ## 4013
 
+**NOTE:** this error has been superseded by 4023.
+
 A `val` specification had an explicit type variable sequence.
 
 ```sml
