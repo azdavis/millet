@@ -209,7 +209,7 @@ fn get_spec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
       if let Some(semi) = dec.semicolon() {
         cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
       }
-      inner_specs.extend(get_spec_one(cx, dec.dec_one()?));
+      inner_specs.extend(get_spec_one(cx, dec.dec_one()));
     }
     let inner = if inner_specs.len() == 1 {
       inner_specs.pop().unwrap()
@@ -235,7 +235,11 @@ fn get_spec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
 
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
-fn get_spec_one(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
+fn get_spec_one(cx: &mut Cx, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> {
+  let dec = match dec {
+    Some(x) => x,
+    None => return vec![],
+  };
   let ptr = SyntaxNodePtr::new(dec.syntax());
   match dec {
     ast::DecOne::HoleDec(_) => {
