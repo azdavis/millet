@@ -244,43 +244,43 @@ fn get_spec_one(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
     }
     ast::DecOne::ValDec(dec) => {
       if let Some(tvs) = dec.ty_var_seq() {
-        cx.err(tvs.syntax().text_range(), ErrorKind::NotSpec);
+        cx.err(tvs.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
       }
       let descs: Vec<_> = dec
         .val_binds()
         .filter_map(|val_bind| {
           if let Some(x) = val_bind.eq_exp() {
-            cx.err(x.syntax().text_range(), ErrorKind::NotSpec);
+            cx.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
           }
           if let Some(x) = val_bind.rec_kw() {
-            cx.err(x.text_range(), ErrorKind::NotSpec);
+            cx.err(x.text_range(), ErrorKind::NonSpecDecSyntax);
           }
           match val_bind.pat()? {
             ast::Pat::TypedPat(ty_pat) => match ty_pat.pat()? {
               ast::Pat::ConPat(con_pat) => {
                 if let Some(x) = con_pat.op_kw() {
-                  cx.err(x.text_range(), ErrorKind::NotSpec);
+                  cx.err(x.text_range(), ErrorKind::NonSpecDecSyntax);
                 }
                 if let Some(x) = con_pat.pat() {
-                  cx.err(x.syntax().text_range(), ErrorKind::NotSpec);
+                  cx.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
                 }
                 let path = con_pat.path()?;
                 let mut iter = path.name_star_eq_dots();
                 let fst = iter.next()?;
                 if iter.next().is_some() {
-                  cx.err(path.syntax().text_range(), ErrorKind::NotSpec);
+                  cx.err(path.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
                 }
                 let name = str_util::Name::new(fst.name_star_eq()?.token.text());
                 let ty = ty::get(cx, ty_pat.ty());
                 Some(sml_hir::ValDesc { name, ty })
               }
               pat => {
-                cx.err(pat.syntax().text_range(), ErrorKind::NotSpec);
+                cx.err(pat.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
                 None
               }
             },
             pat => {
-              cx.err(pat.syntax().text_range(), ErrorKind::NotSpec);
+              cx.err(pat.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
               None
             }
           }
@@ -339,7 +339,7 @@ fn get_spec_one(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
         let ty = ex_bind.ex_bind_inner().map(|inner| match inner {
           ast::ExBindInner::OfTy(of_ty) => ty::get(cx, of_ty.ty()),
           ast::ExBindInner::EqPath(eq_path) => {
-            cx.err(eq_path.syntax().text_range(), ErrorKind::NotSpec);
+            cx.err(eq_path.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
             None
           }
         });
@@ -350,7 +350,7 @@ fn get_spec_one(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
       .str_binds()
       .filter_map(|str_bind| {
         if let Some(x) = str_bind.eq_str_exp() {
-          cx.err(x.syntax().text_range(), ErrorKind::NotSpec);
+          cx.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
         }
         let name = get_name(str_bind.name())?;
         let sig_exp = match str_bind.ascription_tail() {
@@ -366,7 +366,7 @@ fn get_spec_one(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
         let sig_exp = match sig_exp {
           Ok(x) => x,
           Err(range) => {
-            cx.err(range, ErrorKind::NotSpec);
+            cx.err(range, ErrorKind::NonSpecDecSyntax);
             None
           }
         };

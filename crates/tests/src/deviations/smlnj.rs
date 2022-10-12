@@ -11,7 +11,7 @@ fn op_in_val() {
     r#"
 signature FOO = sig
   val op + : int * int -> int
-(**   ^^ non-specification declaration syntax not allowed here *)
+(**   ^^ specification uses declaration syntax not allowed here *)
 end
 "#,
   );

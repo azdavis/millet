@@ -809,9 +809,7 @@ Here, the solution could either be to:
 
 ## 4013
 
-**NOTE:** this error has been superseded by 4023.
-
-A `val` specification had an explicit type variable sequence.
+A specification used syntax only available in declarations.
 
 ```sml
 (* error *)
@@ -821,9 +819,13 @@ signature MAPPABLE = sig
 end
 ```
 
-Explicit type variables sequences are permitted for `val` declarations, but not `val` specifications.
+Some examples of declaration-only syntax:
 
-To fix, remove the type variable sequence.
+- Explicit type variable sequences, as above.
+- `op` and `rec`.
+- Patterns other than `name : ty`.
+
+To fix, remove the disallowed syntax.
 
 ```sml
 (* ok *)
@@ -1054,20 +1056,7 @@ signature S = sig
 end
 ```
 
-This error also occurs if there is a declaration which is allowed in specifications, but it uses syntax that is not a part of specification syntax.
-
-```sml
-(* error *)
-signature S = sig
-  val x : int = 3
-end
-```
-
-To fix:
-
-- Modify the declaration to use only specification syntax.
-- Move it out of the signature.
-- Remove it.
+To fix, move the declaration out of the signature, or remove it.
 
 ## 4999
 
