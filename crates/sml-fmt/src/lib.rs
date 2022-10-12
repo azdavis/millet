@@ -74,7 +74,40 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
         get_exp(f, cfg, val_bind.exp()?)
       })
     }
-    ast::DecOne::FunDec(_) => nothing(),
+    ast::DecOne::FunDec(dec) => {
+      output(f, "fun ")?;
+      ty_var_seq(f, dec.ty_var_seq())?;
+      sep(f, " and ", dec.fun_binds(), |f, fun_bind| {
+        sep(f, " | ", fun_bind.fun_bind_cases(), |f, fun_bind_case| {
+          match fun_bind_case.fun_bind_case_head()? {
+            ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => {
+              if head.op_kw().is_some() {
+                output(f, "op ")?;
+              }
+              output(f, head.name_star_eq()?.token.text())?;
+            }
+            ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
+              let parens = head.l_round().is_some();
+              if parens {
+                output(f, "(")?;
+              }
+              get_pat(f, head.lhs()?)?;
+              output(f, " ")?;
+              output(f, head.name_star_eq()?.token.text())?;
+              output(f, " ")?;
+              get_pat(f, head.lhs()?)?;
+              if parens {
+                output(f, ")")?;
+              }
+            }
+          }
+          output(f, " ")?;
+          sep(f, " ", fun_bind_case.pats(), get_pat)?;
+          output(f, " = ")?;
+          get_exp(f, cfg, fun_bind_case.exp()?)
+        })
+      })
+    }
     ast::DecOne::TyDec(dec) => {
       output(f, "type ")?;
       ty_binds(f, dec.ty_binds())
@@ -152,7 +185,19 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       output(f, "do ")?;
       get_exp(f, cfg, dec.exp()?)
     }
-    ast::DecOne::LocalDec(_) => nothing(),
+    ast::DecOne::LocalDec(dec) => {
+      output(f, "local\n")?;
+      let new_cfg = cfg.indented();
+      get_dec(f, new_cfg, dec.local_dec()?)?;
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
+      output(f, "in\n")?;
+      new_cfg.output_indent(f)?;
+      get_dec(f, new_cfg, dec.in_dec()?)?;
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
+      output(f, "end")
+    }
     ast::DecOne::StructureDec(_) => nothing(),
     ast::DecOne::SignatureDec(_) => nothing(),
     ast::DecOne::FunctorDec(_) => nothing(),
@@ -374,8 +419,16 @@ fn get_pat(f: &mut fmt::Formatter<'_>, pat: ast::Pat) -> Res {
       output(f, " : ")?;
       get_ty(f, pat.ty()?)
     }
-    ast::Pat::AsPat(_) => nothing(),
-    ast::Pat::OrPat(_) => nothing(),
+    ast::Pat::AsPat(pat) => {
+      get_pat(f, pat.pat()?)?;
+      output(f, " as ")?;
+      get_pat(f, pat.as_pat_tail()?.pat()?)
+    }
+    ast::Pat::OrPat(pat) => {
+      get_pat(f, pat.lhs()?)?;
+      output(f, " | ")?;
+      get_pat(f, pat.rhs()?)
+    }
   }
 }
 
