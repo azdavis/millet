@@ -124,9 +124,9 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
             ast::FunctorArg::FunctorArgNameSigExp(arg) => {
               (get_name(arg.name())?, get_sig_exp(cx, arg.sig_exp()), body)
             }
-            ast::FunctorArg::Spec(arg) => {
+            ast::FunctorArg::Dec(arg) => {
               let param_name = cx.fresh();
-              let param_sig = sml_hir::SigExp::Spec(get_spec(cx, Some(arg)));
+              let param_sig = sml_hir::SigExp::Spec(get_spec_of_dec(cx, Some(arg)));
               let param_sig = cx.sig_exp(param_sig, ptr.clone());
               let dec = cx
                 .dec(sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]), ptr.clone());
@@ -175,7 +175,7 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
   let sig_exp = sig_exp?;
   let ptr = SyntaxNodePtr::new(sig_exp.syntax());
   let ret = match sig_exp {
-    ast::SigExp::SigSigExp(sig_exp) => sml_hir::SigExp::Spec(get_spec(cx, sig_exp.spec())),
+    ast::SigExp::SigSigExp(sig_exp) => sml_hir::SigExp::Spec(get_spec_of_dec(cx, sig_exp.dec())),
     ast::SigExp::NameSigExp(sig_exp) => sml_hir::SigExp::Name(get_name(sig_exp.name())?),
     ast::SigExp::WhereTypeSigExp(sig_exp) => sml_hir::SigExp::WhereType(
       get_sig_exp(cx, sig_exp.sig_exp()),

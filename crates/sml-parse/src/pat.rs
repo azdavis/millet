@@ -1,8 +1,8 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, Infix, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{
-  comma_sep, eat_name_star, lab, must, name_star, path_infix, path_no_infix, scon, should_break,
-  InfixErr, ShouldBreak,
+  comma_sep, eat_name_star, lab, must, name_star, path, path_infix, path_no_infix, scon,
+  should_break, InfixErr, ShouldBreak,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -42,6 +42,9 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec, infix: InfixErr) -> Option<Ex
       path_infix(p);
     } else {
       match infix {
+        InfixErr::No => {
+          path(p);
+        }
         InfixErr::Yes => path_no_infix(p),
       }
     }
@@ -149,6 +152,9 @@ pub(crate) fn at_pat(p: &mut Parser<'_>, infix: InfixErr) -> Option<Exited> {
     p.exit(en, SK::ConPat)
   } else if name_star(p, 0) {
     match infix {
+      InfixErr::No => {
+        path(p);
+      }
       InfixErr::Yes => path_no_infix(p),
     }
     p.exit(en, SK::ConPat)

@@ -286,7 +286,7 @@ fn get_sig_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, sig_exp: ast::SigExp) -> Re
       output(f, "sig\n")?;
       let new_cfg = cfg.indented();
       cfg.output_indent(f)?;
-      get_spec(f, new_cfg, exp.spec()?)?;
+      get_dec(f, new_cfg, exp.dec()?)?;
       output(f, "\n")?;
       cfg.output_indent(f)?;
       output(f, "end")

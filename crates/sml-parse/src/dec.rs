@@ -204,7 +204,7 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
         must(p, sig_exp, Expected::SigExp);
         p.exit(en, SK::FunctorArgNameSigExp);
       } else {
-        spec(p);
+        dec(p, InfixErr::No);
       }
       p.eat(SK::RRound);
       if ascription(p) {
@@ -287,7 +287,7 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::SigKw) {
     p.bump();
-    spec(p);
+    dec(p, InfixErr::No);
     p.eat(SK::EndKw);
     p.exit(en, SK::SigSigExp)
   } else if p.at(SK::Name) {

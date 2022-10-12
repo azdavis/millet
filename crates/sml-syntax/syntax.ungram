@@ -77,7 +77,7 @@ ExBindInner = OfTy | EqPath
 EqPath = '=' Path
 WithType = 'withtype' TyBind*
 
-FunctorArg = FunctorArgNameSigExp | Spec
+FunctorArg = FunctorArgNameSigExp | Dec
 FunctorArgNameSigExp = 'Name' ':' SigExp
 
 StrExp =
@@ -106,7 +106,7 @@ SigExp =
 | WhereTypeSigExp
 | WhereSigExp
 
-SigSigExp = 'sig' Spec 'end'
+SigSigExp = 'sig' Dec 'end'
 NameSigExp = 'Name'
 WhereTypeSigExp = SigExp WhereOrAnd 'type' TyVarSeq Path '=' Ty
 WhereSigExp = SigExp WhereOrAnd lhs:Path '=' rhs:Path

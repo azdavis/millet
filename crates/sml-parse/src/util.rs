@@ -4,6 +4,7 @@ use sml_syntax::{token::Token, SyntaxKind as SK};
 /// whether to emit errors for infix violations
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum InfixErr {
+  No,
   Yes,
 }
 
