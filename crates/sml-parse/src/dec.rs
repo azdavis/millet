@@ -7,7 +7,7 @@ use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>) -> bool {
   let en = p.enter();
-  let ret = maybe_semi_sep(p, SK::DecInSeq, dec_one);
+  let ret = maybe_semi_sep(p, SK::DecWithTailInSeq, dec_with_tail);
   p.exit(en, SK::Dec);
   ret
 }
@@ -385,6 +385,23 @@ fn ty_spec(p: &mut Parser<'_>) {
     }
     true
   });
+}
+
+fn dec_with_tail(p: &mut Parser<'_>) -> bool {
+  let en = p.enter();
+  let mut ret = maybe_semi_sep(p, SK::DecInSeq, dec_one);
+  while p.at(SK::SharingKw) {
+    ret = true;
+    let en = p.enter();
+    p.bump();
+    if p.at(SK::TypeKw) {
+      p.bump();
+    }
+    many_sep(p, SK::Eq, SK::PathEq, |p| must(p, path, Expected::Path));
+    p.exit(en, SK::SharingTail);
+  }
+  p.exit(en, SK::DecWithTail);
+  ret
 }
 
 fn spec_with_tail(p: &mut Parser<'_>) -> bool {

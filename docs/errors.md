@@ -996,6 +996,19 @@ To fix, provide a right-hand side.
 val x : int = 3
 ```
 
+## 4020
+
+There was a declaration with a `sharing type`.
+
+```sml
+(* error *)
+val x = 3 sharing type t = u
+```
+
+`sharing type` is allowed on specifications, not declarations.
+
+To fix, remove the `sharing type`.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

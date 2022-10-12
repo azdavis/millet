@@ -1,6 +1,8 @@
 Root = Dec
 
-Dec = DecInSeq*
+Dec = DecWithTailInSeq*
+DecWithTailInSeq = DecWithTail ';'?
+DecWithTail = DecInSeq* SharingTail*
 DecInSeq = DecOne ';'?
 
 DecOne =

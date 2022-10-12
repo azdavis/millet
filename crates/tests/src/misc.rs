@@ -738,3 +738,13 @@ val _ = 3and _ = 4
 "#,
   );
 }
+
+#[test]
+fn sharing_type_tail() {
+  check(
+    r#"
+val _ = () sharing type a = b
+(**        ^^^^^^^^^^^^^^^^^^ cannot have a `sharing type` here *)
+"#,
+  );
+}

@@ -51,9 +51,20 @@ fn output(f: &mut fmt::Formatter<'_>, s: &str) -> Res {
 }
 
 fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
-  sep_with_lines(f, cfg, "", dec.dec_in_seqs(), |f, dec_in_seq| {
-    get_dec_one(f, cfg, dec_in_seq.dec_one()?)?;
-    if dec_in_seq.semicolon().is_some() {
+  sep_with_lines(f, cfg, "", dec.dec_with_tail_in_seqs(), |f, dwt_in_seq| {
+    let dwt = dwt_in_seq.dec_with_tail()?;
+    sep_with_lines(f, cfg, "", dwt.dec_in_seqs(), |f, dec_in_seq| {
+      get_dec_one(f, cfg, dec_in_seq.dec_one()?)?;
+      if dec_in_seq.semicolon().is_some() {
+        output(f, ";")?;
+      }
+      Some(())
+    })?;
+    sep_with_lines(f, cfg, "", dwt.sharing_tails(), |f, sharing| {
+      output(f, "sharing type ")?;
+      sep(f, " = ", sharing.path_eqs(), |f, p| path(f, p.path()?))
+    })?;
+    if dwt_in_seq.semicolon().is_some() {
       output(f, ";")?;
     }
     Some(())

@@ -52,6 +52,7 @@ pub(crate) enum ErrorKind {
   UnnecessarySemicolon,
   MultipleTypedPat,
   MissingRhs,
+  InvalidSharingType,
   /// must be last
   Unsupported(&'static str),
 }
@@ -86,6 +87,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::UnnecessarySemicolon => f.write_str("unnecessary `;`"),
       ErrorKind::MultipleTypedPat => f.write_str("multiple types on one pattern"),
       ErrorKind::MissingRhs => f.write_str("missing right-hand side of declaration"),
+      ErrorKind::InvalidSharingType => f.write_str("cannot have a `sharing type` here"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -131,6 +133,7 @@ impl Error {
       ErrorKind::UnnecessarySemicolon => 4017,
       ErrorKind::MultipleTypedPat => 4018,
       ErrorKind::MissingRhs => 4019,
+      ErrorKind::InvalidSharingType => 4020,
       ErrorKind::Unsupported(_) => 4999,
     }
   }

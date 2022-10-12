@@ -10,15 +10,25 @@ where
   S: FnOnce(&mut Cx, Vec<Option<T>>, SyntaxNodePtr) -> Option<T>,
 {
   let dec = dec?;
-  let mut decs: Vec<_> = dec
-    .dec_in_seqs()
-    .map(|x| {
-      if let Some(semi) = x.semicolon() {
+  let mut decs = Vec::<Option<T>>::new();
+  for dwt_in_seq in dec.dec_with_tail_in_seqs() {
+    if let Some(semi) = dwt_in_seq.semicolon() {
+      cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
+    }
+    let dwt = match dwt_in_seq.dec_with_tail() {
+      Some(x) => x,
+      None => continue,
+    };
+    if let Some(tail) = dwt.sharing_tails().next() {
+      cx.err(tail.syntax().text_range(), ErrorKind::InvalidSharingType);
+    }
+    for dec in dwt.dec_in_seqs() {
+      if let Some(semi) = dec.semicolon() {
         cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
       }
-      g(cx, x.dec_one()?)
-    })
-    .collect();
+      decs.push(g(cx, dec.dec_one()?));
+    }
+  }
   if decs.len() == 1 {
     decs.pop().unwrap()
   } else {
