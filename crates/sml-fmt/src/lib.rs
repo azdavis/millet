@@ -53,7 +53,11 @@ fn output(f: &mut fmt::Formatter<'_>, s: &str) -> Res {
 fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
   sep(f, "\n\n", dec.dec_in_seqs(), |f, dec_in_seq| {
     cfg.output_indent(f)?;
-    get_dec_one(f, cfg, dec_in_seq.dec_one()?)
+    get_dec_one(f, cfg, dec_in_seq.dec_one()?)?;
+    if dec_in_seq.semicolon().is_some() {
+      output(f, ";")?;
+    }
+    Some(())
   })
 }
 
@@ -62,7 +66,6 @@ fn nothing() -> Res {
   Some(())
 }
 
-/// TODO be more careful with `;`?
 fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
   match dec {
     ast::DecOne::HoleDec(_) => output(f, "..."),
@@ -208,10 +211,48 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       cfg.output_indent(f)?;
       output(f, "end")
     }
-    ast::DecOne::StructureDec(_) => nothing(),
-    ast::DecOne::SignatureDec(_) => nothing(),
+    ast::DecOne::StructureDec(dec) => {
+      output(f, "structure ")?;
+      sep_with_lines(f, cfg, "and ", dec.str_binds(), |f, str_bind| {
+        output(f, str_bind.name()?.text())?;
+        if let Some(tail) = str_bind.ascription_tail() {
+          output(f, " ")?;
+          output(f, tail.ascription()?.token.text())?;
+          get_sig_exp(f, cfg, tail.sig_exp()?)?;
+        }
+        output(f, " = ")?;
+        get_str_exp(f, cfg, str_bind.str_exp()?)
+      })
+    }
+    ast::DecOne::SignatureDec(dec) => {
+      output(f, "signature ")?;
+      sep_with_lines(f, cfg, "and ", dec.sig_binds(), |f, sig_bind| {
+        output(f, sig_bind.name()?.text())?;
+        output(f, " = ")?;
+        get_sig_exp(f, cfg, sig_bind.sig_exp()?)
+      })
+    }
     ast::DecOne::FunctorDec(_) => nothing(),
     ast::DecOne::ExpDec(dec) => get_exp(f, cfg, dec.exp()?),
+  }
+}
+
+fn get_str_exp(_: &mut fmt::Formatter<'_>, _: Cfg, str_exp: ast::StrExp) -> Res {
+  match str_exp {
+    ast::StrExp::StructStrExp(_) => nothing(),
+    ast::StrExp::PathStrExp(_) => nothing(),
+    ast::StrExp::AscriptionStrExp(_) => nothing(),
+    ast::StrExp::AppStrExp(_) => nothing(),
+    ast::StrExp::LetStrExp(_) => nothing(),
+  }
+}
+
+fn get_sig_exp(_: &mut fmt::Formatter<'_>, _: Cfg, sig_exp: ast::SigExp) -> Res {
+  match sig_exp {
+    ast::SigExp::SigSigExp(_) => nothing(),
+    ast::SigExp::NameSigExp(_) => nothing(),
+    ast::SigExp::WhereTypeSigExp(_) => nothing(),
+    ast::SigExp::WhereSigExp(_) => nothing(),
   }
 }
 
@@ -431,7 +472,27 @@ fn get_pat(f: &mut fmt::Formatter<'_>, pat: ast::Pat) -> Res {
       }
       Some(())
     }
-    ast::Pat::RecordPat(_) => nothing(),
+    ast::Pat::RecordPat(pat) => {
+      output(f, "{")?;
+      sep(f, ", ", pat.pat_rows(), |f, row| match row.pat_row_inner()? {
+        ast::PatRowInner::RestPatRow(_) => output(f, "..."),
+        ast::PatRowInner::LabAndPatPatRow(row) => {
+          output(f, row.lab()?.token.text())?;
+          output(f, " = ")?;
+          get_pat(f, row.pat()?)
+        }
+        ast::PatRowInner::LabPatRow(row) => {
+          output(f, row.name_star_eq()?.token.text())?;
+          ty_annotation(f, row.ty_annotation())?;
+          if let Some(tail) = row.as_pat_tail() {
+            output(f, " as ")?;
+            get_pat(f, tail.pat()?)?;
+          }
+          Some(())
+        }
+      })?;
+      output(f, "}")
+    }
     ast::Pat::ParenPat(pat) => {
       output(f, "(")?;
       get_pat(f, pat.pat()?)?;
