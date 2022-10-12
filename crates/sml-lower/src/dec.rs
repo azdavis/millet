@@ -4,7 +4,11 @@ use crate::util::{Cx, ErrorKind};
 use crate::{exp, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-pub(crate) fn get_top_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
+fn get_dec_flavor<T, G, S>(cx: &mut Cx, dec: Option<ast::Dec>, g: G, s: S) -> Option<T>
+where
+  G: Fn(&mut Cx, ast::DecOne) -> Option<T>,
+  S: FnOnce(&mut Cx, Vec<Option<T>>, SyntaxNodePtr) -> Option<T>,
+{
   let dec = dec?;
   let mut decs: Vec<_> = dec
     .dec_in_seqs()
@@ -12,14 +16,20 @@ pub(crate) fn get_top_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::StrDec
       if let Some(semi) = x.semicolon() {
         cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
       }
-      get_top_dec_one(cx, x.dec_one()?)
+      g(cx, x.dec_one()?)
     })
     .collect();
   if decs.len() == 1 {
     decs.pop().unwrap()
   } else {
-    cx.str_dec(sml_hir::StrDec::Seq(decs), SyntaxNodePtr::new(dec.syntax()))
+    s(cx, decs, SyntaxNodePtr::new(dec.syntax()))
   }
+}
+
+pub(crate) fn get_top_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
+  get_dec_flavor(cx, dec, get_top_dec_one, |cx, decs, ptr| {
+    cx.str_dec(sml_hir::StrDec::Seq(decs), ptr)
+  })
 }
 
 fn get_top_dec_one(cx: &mut Cx, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
@@ -56,21 +66,9 @@ fn get_top_dec_one(cx: &mut Cx, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
 }
 
 fn get_str_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
-  let dec = dec?;
-  let mut decs: Vec<_> = dec
-    .dec_in_seqs()
-    .map(|x| {
-      if let Some(semi) = x.semicolon() {
-        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
-      }
-      get_str_dec_one(cx, x.dec_one()?)
-    })
-    .collect();
-  if decs.len() == 1 {
-    decs.pop().unwrap()
-  } else {
-    cx.str_dec(sml_hir::StrDec::Seq(decs), SyntaxNodePtr::new(dec.syntax()))
-  }
+  get_dec_flavor(cx, dec, get_str_dec_one, |cx, decs, ptr| {
+    cx.str_dec(sml_hir::StrDec::Seq(decs), ptr)
+  })
 }
 
 fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
@@ -367,21 +365,7 @@ fn with_ascription_tail(
 }
 
 pub(crate) fn get(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::DecIdx {
-  let dec = dec?;
-  let mut decs: Vec<_> = dec
-    .dec_in_seqs()
-    .map(|x| {
-      if let Some(semi) = x.semicolon() {
-        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
-      }
-      get_one(cx, x.dec_one()?)
-    })
-    .collect();
-  if decs.len() == 1 {
-    decs.pop().unwrap()
-  } else {
-    cx.dec(sml_hir::Dec::Seq(decs), SyntaxNodePtr::new(dec.syntax()))
-  }
+  get_dec_flavor(cx, dec, get_one, |cx, decs, ptr| cx.dec(sml_hir::Dec::Seq(decs), ptr))
 }
 
 fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
