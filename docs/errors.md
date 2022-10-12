@@ -676,6 +676,8 @@ val s =
   end
 ```
 
+This error is also emitted for `include` specifications occurring in declaration position. To fix, move or remove the `include`.
+
 ## 4011
 
 `op` does not work with `andalso` or `orelse`.
