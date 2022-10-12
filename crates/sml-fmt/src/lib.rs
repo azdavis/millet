@@ -108,16 +108,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
           sep(f, " ", fun_bind_case.pats(), get_pat)?;
           ty_annotation(f, fun_bind_case.ty_annotation())?;
           output(f, " =")?;
-          let body = fun_bind_case.exp()?;
-          if complex(&body) {
-            output(f, "\n");
-            let new_cfg = cfg.indented();
-            new_cfg.output_indent(f)?;
-            get_exp(f, new_cfg, body)
-          } else {
-            output(f, " ")?;
-            get_exp(f, cfg, body)
-          }
+          get_body_exp(f, cfg, fun_bind_case.exp()?)
         })
       })
     }
@@ -199,26 +190,19 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       output(f, "do ")?;
       get_exp(f, cfg, dec.exp()?)
     }
-    ast::DecOne::LocalDec(dec) => {
-      output(f, "local\n")?;
-      let new_cfg = cfg.indented();
-      get_dec(f, new_cfg, dec.local_dec()?)?;
-      output(f, "\n")?;
-      cfg.output_indent(f)?;
-      output(f, "in\n")?;
-      get_dec(f, new_cfg, dec.in_dec()?)?;
-      output(f, "\n")?;
-      cfg.output_indent(f)?;
-      output(f, "end")
-    }
+    ast::DecOne::LocalDec(dec) => in_end(
+      f,
+      cfg,
+      "local",
+      |f, cfg| get_dec(f, cfg, dec.local_dec()?),
+      |f, cfg| get_dec(f, cfg, dec.in_dec()?),
+    ),
     ast::DecOne::StructureDec(dec) => {
       output(f, "structure ")?;
       sep_with_lines(f, cfg, "and ", dec.str_binds(), |f, str_bind| {
         output(f, str_bind.name()?.text())?;
         if let Some(tail) = str_bind.ascription_tail() {
-          output(f, " ")?;
-          output(f, tail.ascription()?.token.text())?;
-          get_sig_exp(f, cfg, tail.sig_exp()?)?;
+          ascription_tail(f, cfg, tail)?;
         }
         output(f, " = ")?;
         get_str_exp(f, cfg, str_bind.str_exp()?)
@@ -237,13 +221,44 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
   }
 }
 
-fn get_str_exp(_: &mut fmt::Formatter<'_>, _: Cfg, str_exp: ast::StrExp) -> Res {
+fn ascription_tail(f: &mut fmt::Formatter<'_>, cfg: Cfg, tail: ast::AscriptionTail) -> Res {
+  output(f, " ")?;
+  output(f, tail.ascription()?.token.text())?;
+  get_sig_exp(f, cfg, tail.sig_exp()?)
+}
+
+fn get_str_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, str_exp: ast::StrExp) -> Res {
   match str_exp {
-    ast::StrExp::StructStrExp(_) => nothing(),
-    ast::StrExp::PathStrExp(_) => nothing(),
-    ast::StrExp::AscriptionStrExp(_) => nothing(),
-    ast::StrExp::AppStrExp(_) => nothing(),
-    ast::StrExp::LetStrExp(_) => nothing(),
+    ast::StrExp::StructStrExp(exp) => {
+      output(f, "struct\n")?;
+      let new_cfg = cfg.indented();
+      cfg.output_indent(f)?;
+      get_dec(f, new_cfg, exp.dec()?)?;
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
+      output(f, "end")
+    }
+    ast::StrExp::PathStrExp(exp) => path(f, exp.path()?),
+    ast::StrExp::AscriptionStrExp(exp) => {
+      get_str_exp(f, cfg, exp.str_exp()?)?;
+      ascription_tail(f, cfg, exp.ascription_tail()?)
+    }
+    ast::StrExp::AppStrExp(exp) => {
+      output(f, exp.name()?.text())?;
+      output(f, "(")?;
+      match exp.app_str_exp_arg()? {
+        ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(f, cfg, arg.str_exp()?)?,
+        ast::AppStrExpArg::Dec(arg) => get_dec(f, cfg, arg)?,
+      }
+      output(f, ")")
+    }
+    ast::StrExp::LetStrExp(exp) => in_end(
+      f,
+      cfg,
+      "let",
+      |f, cfg| get_str_exp(f, cfg, exp.str_exp()?),
+      |f, cfg| get_dec(f, cfg, exp.dec()?),
+    ),
   }
 }
 
@@ -254,17 +269,6 @@ fn get_sig_exp(_: &mut fmt::Formatter<'_>, _: Cfg, sig_exp: ast::SigExp) -> Res 
     ast::SigExp::WhereTypeSigExp(_) => nothing(),
     ast::SigExp::WhereSigExp(_) => nothing(),
   }
-}
-
-fn complex(exp: &ast::Exp) -> bool {
-  matches!(
-    exp,
-    ast::Exp::LetExp(_)
-      | ast::Exp::HandleExp(_)
-      | ast::Exp::IfExp(_)
-      | ast::Exp::WhileExp(_)
-      | ast::Exp::CaseExp(_)
-  )
 }
 
 fn ty_annotation(f: &mut fmt::Formatter<'_>, ty_ann: Option<ast::TyAnnotation>) -> Res {
@@ -304,6 +308,27 @@ fn ty_var_seq(f: &mut fmt::Formatter<'_>, tvs: Option<ast::TyVarSeq>) -> Res {
   }
   output(f, " ")?;
   Some(())
+}
+
+fn get_body_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
+  let needs_newline = matches!(
+    exp,
+    ast::Exp::SeqExp(_)
+      | ast::Exp::LetExp(_)
+      | ast::Exp::HandleExp(_)
+      | ast::Exp::IfExp(_)
+      | ast::Exp::WhileExp(_)
+      | ast::Exp::CaseExp(_)
+  );
+  if needs_newline {
+    output(f, "\n");
+    let new_cfg = cfg.indented();
+    new_cfg.output_indent(f)?;
+    get_exp(f, new_cfg, exp)
+  } else {
+    output(f, " ")?;
+    get_exp(f, cfg, exp)
+  }
 }
 
 fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
@@ -356,27 +381,44 @@ fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
       output(f, "]")
     }
     ast::Exp::SeqExp(exp) => {
-      output(f, "(")?;
-      sep(f, "; ", exp.exps_in_seq().map(|x| x.exp()), |f, e| get_exp(f, cfg, e?))?;
+      output(f, "(\n")?;
+      let new_cfg = cfg.indented();
+      new_cfg.output_indent(f)?;
+      exp_semi_seq(f, new_cfg, exp.exps_in_seq())?;
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
       output(f, ")")
     }
-    ast::Exp::LetExp(exp) => {
-      output(f, "let\n")?;
-      let new_cfg = cfg.indented();
-      get_dec(f, new_cfg, exp.dec()?)?;
-      output(f, "\n")?;
-      cfg.output_indent(f)?;
-      output(f, "in\n")?;
-      new_cfg.output_indent(f)?;
-      sep(f, "; ", exp.exps_in_seq().map(|x| x.exp()), |f, e| get_exp(f, cfg, e?))?;
-      output(f, "\n")?;
-      cfg.output_indent(f)?;
-      output(f, "end")
-    }
+    ast::Exp::LetExp(exp) => in_end(
+      f,
+      cfg,
+      "let",
+      |f, cfg| get_dec(f, cfg, exp.dec()?),
+      |f, cfg| exp_semi_seq(f, cfg, exp.exps_in_seq()),
+    ),
     ast::Exp::AppExp(exp) => {
-      get_exp(f, cfg, exp.func()?)?;
-      output(f, " ")?;
-      get_exp(f, cfg, exp.arg()?)
+      let func = exp.func()?;
+      let arg = exp.arg()?;
+      let func_is_bang = match &func {
+        ast::Exp::PathExp(path) => {
+          let mut iter = path.path()?.name_star_eq_dots();
+          let fst_is_bang = iter.next()?.name_star_eq()?.token.text() == "!";
+          fst_is_bang && iter.next().is_none()
+        }
+        _ => false,
+      };
+      let arg_is_symbolic = match &arg {
+        ast::Exp::PathExp(path) => {
+          let fst = path.path()?.name_star_eq_dots().next()?.name_star_eq()?;
+          !fst.token.text().bytes().next()?.is_ascii_alphabetic()
+        }
+        _ => false,
+      };
+      get_exp(f, cfg, func)?;
+      if !func_is_bang || arg_is_symbolic {
+        output(f, " ")?;
+      }
+      get_exp(f, cfg, arg)
     }
     ast::Exp::InfixExp(exp) => {
       get_exp(f, cfg, exp.lhs()?)?;
@@ -402,7 +444,7 @@ fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
     }
     ast::Exp::HandleExp(exp) => {
       get_exp(f, cfg, exp.exp()?)?;
-      output(f, " handle ")?;
+      output(f, " handle\n")?;
       get_matcher(f, cfg, exp.matcher()?)
     }
     ast::Exp::RaiseExp(exp) => {
@@ -452,8 +494,8 @@ fn get_matcher(f: &mut fmt::Formatter<'_>, cfg: Cfg, matcher: ast::Matcher) -> R
   cfg.indented().output_indent(f)?;
   sep_with_lines(f, cfg, "| ", matcher.match_rules(), |f, arm| {
     get_pat(f, arm.pat()?)?;
-    output(f, " => ")?;
-    get_exp(f, cfg, arm.exp()?)
+    output(f, " =>")?;
+    get_body_exp(f, cfg, arm.exp()?)
   })
 }
 
@@ -586,6 +628,25 @@ fn get_ty(f: &mut fmt::Formatter<'_>, ty: ast::Ty) -> Res {
   }
 }
 
+fn in_end<F1, F2>(f: &mut fmt::Formatter<'_>, cfg: Cfg, kw: &str, f1: F1, f2: F2) -> Res
+where
+  F1: FnOnce(&mut fmt::Formatter<'_>, Cfg) -> Res,
+  F2: FnOnce(&mut fmt::Formatter<'_>, Cfg) -> Res,
+{
+  output(f, kw)?;
+  output(f, "\n")?;
+  let new_cfg = cfg.indented();
+  f1(f, new_cfg)?;
+  output(f, "\n")?;
+  cfg.output_indent(f)?;
+  output(f, "in\n")?;
+  new_cfg.output_indent(f)?;
+  f2(f, new_cfg)?;
+  output(f, "\n")?;
+  cfg.output_indent(f)?;
+  output(f, "end")
+}
+
 fn path(f: &mut fmt::Formatter<'_>, p: ast::Path) -> Res {
   sep(f, ".", p.name_star_eq_dots(), |f, x| output(f, x.name_star_eq()?.token.text()))
 }
@@ -638,6 +699,21 @@ where
     cfg.output_indent(f)?;
     output(f, s)?;
     get_t(f, arg)?;
+  }
+  Some(())
+}
+
+fn exp_semi_seq<I>(f: &mut fmt::Formatter<'_>, cfg: Cfg, mut iter: I) -> Res
+where
+  I: Iterator<Item = ast::ExpInSeq>,
+{
+  if let Some(e) = iter.next() {
+    get_exp(f, cfg, e.exp()?)?;
+  }
+  for e in iter {
+    output(f, ";\n")?;
+    cfg.output_indent(f)?;
+    get_exp(f, cfg, e.exp()?)?;
   }
   Some(())
 }
