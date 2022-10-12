@@ -90,7 +90,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
       })
     });
     p.exit(en, SK::FunDec);
-  } else if p.at(SK::TypeKw) {
+  } else if p.at(SK::TypeKw) || p.at(SK::EqtypeKw) {
     p.bump();
     ty_binds(p);
     p.exit(en, SK::TyDec);

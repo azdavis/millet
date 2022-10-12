@@ -498,7 +498,14 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
         .collect();
       sml_hir::Dec::Val(ty_vars, val_binds)
     }
-    ast::DecOne::TyDec(dec) => sml_hir::Dec::Ty(ty_binds(cx, dec.ty_binds())),
+    ast::DecOne::TyDec(dec) => {
+      let hd = dec.ty_head()?;
+      match hd.kind {
+        ast::TyHeadKind::TypeKw => {}
+        ast::TyHeadKind::EqtypeKw => cx.err(hd.token.text_range(), ErrorKind::InvalidEqtype),
+      }
+      sml_hir::Dec::Ty(ty_binds(cx, dec.ty_binds()))
+    }
     ast::DecOne::DatDec(dec) => {
       let dbs: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
       let tbs = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));

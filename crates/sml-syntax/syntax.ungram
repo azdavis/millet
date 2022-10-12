@@ -34,7 +34,7 @@ DecOne =
 HoleDec = '...'
 ValDec = 'val' TyVarSeq ValBind*
 FunDec = 'fun' TyVarSeq '|'? FunBind*
-TyDec = 'type' TyBind*
+TyDec = TyHead TyBind*
 DatDec = 'datatype' DatBind* WithType?
 DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
 AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
@@ -51,6 +51,7 @@ FunctorDec = 'functor' FunctorBind*
 ExpDec = Exp
 IncludeDec = 'include' SigExp*
 
+TyHead = 'type' | 'eqtype'
 ValBind = 'rec'? Pat '=' Exp 'and'?
 FunBind = FunBindCase* 'and'?
 TyBind = TyVarSeq 'Name' '=' Ty 'and'?

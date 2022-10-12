@@ -1009,6 +1009,19 @@ val x = 3 sharing type t = u
 
 To fix, remove the `sharing type`.
 
+## 4021
+
+There was a declaration with `eqtype`.
+
+```sml
+(* error *)
+eqtype num = int
+```
+
+`eqtype` is allowed on specifications, not declarations.
+
+To fix, change `eqtype` to `type`.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

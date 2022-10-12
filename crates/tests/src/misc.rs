@@ -744,7 +744,17 @@ fn sharing_type_tail() {
   check(
     r#"
 val _ = () sharing type a = b
-(**        ^^^^^^^^^^^^^^^^^^ cannot have a `sharing type` here *)
+(**        ^^^^^^^^^^^^^^^^^^ `sharing type` not allowed here *)
+"#,
+  );
+}
+
+#[test]
+fn eqtype_dec() {
+  check(
+    r#"
+    eqtype n = int
+(** ^^^^^^ `eqtype` not allowed here *)
 "#,
   );
 }
