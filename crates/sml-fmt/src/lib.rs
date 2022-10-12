@@ -117,20 +117,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
     }
     ast::DecOne::DatDec(dec) => {
       output(f, "datatype ")?;
-      sep_with_lines(f, cfg, "and ", dec.dat_binds(), |f, dat_bind| {
-        ty_var_seq(f, dat_bind.ty_var_seq())?;
-        output(f, dat_bind.name()?.text())?;
-        output(f, " =\n")?;
-        cfg.indented().output_indent(f)?;
-        sep_with_lines(f, cfg, "| ", dat_bind.con_binds(), |f, con_bind| {
-          output(f, con_bind.name_star_eq()?.token.text())?;
-          if let Some(of_ty) = con_bind.of_ty() {
-            output(f, " of ")?;
-            get_ty(f, of_ty.ty()?)?;
-          }
-          Some(())
-        })
-      })?;
+      dat_binds(f, cfg, dec.dat_binds())?;
       if let Some(withtype) = dec.with_type() {
         output(f, " withtype ")?;
         ty_binds(f, cfg, withtype.ty_binds())?;
@@ -218,6 +205,26 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
     ast::DecOne::FunctorDec(_) => nothing(),
     ast::DecOne::ExpDec(dec) => get_exp(f, cfg, dec.exp()?),
   }
+}
+
+fn dat_binds<I>(f: &mut fmt::Formatter<'_>, cfg: Cfg, iter: I) -> Res
+where
+  I: Iterator<Item = ast::DatBind>,
+{
+  sep_with_lines(f, cfg, "and ", iter, |f, dat_bind| {
+    ty_var_seq(f, dat_bind.ty_var_seq())?;
+    output(f, dat_bind.name()?.text())?;
+    output(f, " =\n")?;
+    cfg.indented().output_indent(f)?;
+    sep_with_lines(f, cfg, "| ", dat_bind.con_binds(), |f, con_bind| {
+      output(f, con_bind.name_star_eq()?.token.text())?;
+      if let Some(of_ty) = con_bind.of_ty() {
+        output(f, " of ")?;
+        get_ty(f, of_ty.ty()?)?;
+      }
+      Some(())
+    })
+  })
 }
 
 fn ascription_tail(f: &mut fmt::Formatter<'_>, cfg: Cfg, tail: ast::AscriptionTail) -> Res {
@@ -347,6 +354,7 @@ where
   })
 }
 
+/// if there was a ty var seq, this'll also add a space after it.
 fn ty_var_seq(f: &mut fmt::Formatter<'_>, tvs: Option<ast::TyVarSeq>) -> Res {
   let tvs = match tvs {
     Some(x) => x,
