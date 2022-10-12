@@ -112,39 +112,8 @@ WhereTypeSigExp = SigExp WhereOrAnd 'type' TyVarSeq Path '=' Ty
 WhereSigExp = SigExp WhereOrAnd lhs:Path '=' rhs:Path
 WhereOrAnd = 'where' | 'and'
 
-Spec = SpecWithTailInSeq*
-SpecWithTailInSeq = SpecWithTail ';'?
-SpecWithTail = SpecInSeq* SharingTail*
-SpecInSeq = SpecOne ';'?
 SharingTail = 'sharing' 'type'? PathEq*
-
-SpecOne =
-  ValSpec
-| TySpec
-| EqTySpec
-| DatSpec
-| DatCopySpec
-| ExSpec
-| StrSpec
-| IncludeSpec
-
-ValSpec = 'val' TyVarSeq ValDesc*
-TySpec = 'type' TyDesc*
-EqTySpec = 'eqtype' TyDesc*
-// DatDesc and ConDesc are basically the same as DatBind and ConBind in the grammar.
-DatSpec = 'datatype' DatBind* WithType?
-DatCopySpec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
-ExSpec = 'exception' ExDesc*
-StrSpec = 'structure' StrDesc*
-IncludeSpec = 'include' SigExp*
-
-ValDesc = NameStarEq ':' Ty 'and'?
-// the Definition only gives lowering for the `= ty` case for `type` descriptions.
-TyDesc = TyVarSeq 'Name' EqTy? 'and'?
-ExDesc = NameStarEq OfTy? 'and'?
-StrDesc = 'Name' ':' SigExp 'and'?
 EqTy = '=' Ty
-
 PathEq = Path '='?
 
 Exp =

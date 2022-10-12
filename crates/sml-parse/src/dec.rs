@@ -321,82 +321,6 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
   Some(ex)
 }
 
-fn spec_one(p: &mut Parser<'_>) -> bool {
-  let en = p.enter();
-  if p.at(SK::ValKw) {
-    p.bump();
-    ty_var_seq(p);
-    many_sep(p, SK::AndKw, SK::ValDesc, |p| {
-      if eat_name_star(p).is_none() {
-        return false;
-      }
-      p.eat(SK::Colon);
-      ty(p);
-      true
-    });
-    p.exit(en, SK::ValSpec);
-  } else if p.at(SK::TypeKw) {
-    ty_spec(p);
-    p.exit(en, SK::TySpec);
-  } else if p.at(SK::EqtypeKw) {
-    ty_spec(p);
-    p.exit(en, SK::EqTySpec);
-  } else if p.at(SK::DatatypeKw) {
-    match datatype(p, false) {
-      Datatype::Regular => p.exit(en, SK::DatSpec),
-      Datatype::Copy => p.exit(en, SK::DatCopySpec),
-    };
-  } else if p.at(SK::ExceptionKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::ExDesc, |p| {
-      if eat_name_star(p).is_none() {
-        return false;
-      }
-      let _ = of_ty(p);
-      true
-    });
-    p.exit(en, SK::ExSpec);
-  } else if p.at(SK::StructureKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::StrDesc, |p| {
-      if p.eat(SK::Name).is_none() {
-        return false;
-      }
-      p.eat(SK::Colon);
-      must(p, sig_exp, Expected::SigExp);
-      true
-    });
-    p.exit(en, SK::StrSpec);
-  } else if p.at(SK::IncludeKw) {
-    p.bump();
-    while sig_exp(p).is_some() {
-      // no body
-    }
-    p.exit(en, SK::IncludeSpec);
-  } else {
-    p.abandon(en);
-    return false;
-  }
-  true
-}
-
-fn ty_spec(p: &mut Parser<'_>) {
-  p.bump();
-  many_sep(p, SK::AndKw, SK::TyDesc, |p| {
-    // use `&` not `&&` to prevent short circuit
-    if !ty_var_seq(p) & p.eat(SK::Name).is_none() {
-      return false;
-    }
-    if p.at(SK::Eq) {
-      let en = p.enter();
-      p.bump();
-      ty(p);
-      p.exit(en, SK::EqTy);
-    }
-    true
-  });
-}
-
 fn dec_with_tail(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   let en = p.enter();
   let mut ret = maybe_semi_sep(p, SK::DecInSeq, |p| dec_one(p, infix));
@@ -412,29 +336,6 @@ fn dec_with_tail(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   }
   p.exit(en, SK::DecWithTail);
   ret
-}
-
-fn spec_with_tail(p: &mut Parser<'_>) -> bool {
-  let en = p.enter();
-  let mut ret = maybe_semi_sep(p, SK::SpecInSeq, spec_one);
-  while p.at(SK::SharingKw) {
-    ret = true;
-    let en = p.enter();
-    p.bump();
-    if p.at(SK::TypeKw) {
-      p.bump();
-    }
-    many_sep(p, SK::Eq, SK::PathEq, |p| must(p, path, Expected::Path));
-    p.exit(en, SK::SharingTail);
-  }
-  p.exit(en, SK::SpecWithTail);
-  ret
-}
-
-fn spec(p: &mut Parser<'_>) -> Exited {
-  let en = p.enter();
-  maybe_semi_sep(p, SK::SpecWithTailInSeq, spec_with_tail);
-  p.exit(en, SK::Spec)
 }
 
 fn fixity(p: &mut Parser<'_>) -> u16 {

@@ -310,40 +310,6 @@ fn get_sig_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, sig_exp: ast::SigExp) -> Re
   }
 }
 
-fn get_spec(f: &mut fmt::Formatter<'_>, cfg: Cfg, spec: ast::Spec) -> Res {
-  sep_with_lines(f, cfg, "", spec.spec_with_tail_in_seqs(), |f, spec| {
-    let spec_with_tail = spec.spec_with_tail()?;
-    sep_with_lines(f, cfg, "", spec_with_tail.spec_in_seqs(), |f, spec| {
-      get_spec_one(f, cfg, spec.spec_one()?)?;
-      if spec.semicolon().is_some() {
-        output(f, ";")?;
-      }
-      Some(())
-    })?;
-    sep_with_lines(f, cfg, "", spec_with_tail.sharing_tails(), |f, sharing| {
-      output(f, "sharing type ")?;
-      sep(f, " = ", sharing.path_eqs(), |f, p| path(f, p.path()?))
-    })?;
-    if spec.semicolon().is_some() {
-      output(f, ";")?;
-    }
-    Some(())
-  })
-}
-
-fn get_spec_one(_: &mut fmt::Formatter<'_>, _: Cfg, spec: ast::SpecOne) -> Res {
-  match spec {
-    ast::SpecOne::ValSpec(_) => nothing(),
-    ast::SpecOne::TySpec(_) => nothing(),
-    ast::SpecOne::EqTySpec(_) => nothing(),
-    ast::SpecOne::DatSpec(_) => nothing(),
-    ast::SpecOne::DatCopySpec(_) => nothing(),
-    ast::SpecOne::ExSpec(_) => nothing(),
-    ast::SpecOne::StrSpec(_) => nothing(),
-    ast::SpecOne::IncludeSpec(_) => nothing(),
-  }
-}
-
 fn ty_annotation(f: &mut fmt::Formatter<'_>, ty_ann: Option<ast::TyAnnotation>) -> Res {
   match ty_ann {
     Some(ty_ann) => {

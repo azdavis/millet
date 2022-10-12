@@ -192,7 +192,6 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
   cx.sig_exp(ret, ptr)
 }
 
-#[allow(dead_code)]
 fn get_spec_of_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
   let dec = dec?;
   let mut specs = Vec::<sml_hir::SpecIdx>::new();
@@ -234,54 +233,8 @@ fn get_spec_of_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
   }
 }
 
-fn get_spec(cx: &mut Cx, spec: Option<ast::Spec>) -> sml_hir::SpecIdx {
-  let spec = spec?;
-  let mut specs: Vec<_> = spec
-    .spec_with_tail_in_seqs()
-    .map(|x| {
-      if let Some(semi) = x.semicolon() {
-        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
-      }
-      get_spec_with_tail(cx, x.spec_with_tail()?)
-    })
-    .collect();
-  if specs.len() == 1 {
-    specs.pop().unwrap()
-  } else {
-    cx.spec(sml_hir::Spec::Seq(specs), SyntaxNodePtr::new(spec.syntax()))
-  }
-}
-
-fn get_spec_with_tail(cx: &mut Cx, spec: ast::SpecWithTail) -> sml_hir::SpecIdx {
-  let ptr = SyntaxNodePtr::new(spec.syntax());
-  let mut specs: Vec<_> = spec
-    .spec_in_seqs()
-    .map(|x| {
-      if let Some(semi) = x.semicolon() {
-        cx.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
-      }
-      get_spec_one(cx, x.spec_one()?)
-    })
-    .collect();
-  let inner = if specs.len() == 1 {
-    specs.pop().unwrap()
-  } else {
-    cx.spec(sml_hir::Spec::Seq(specs), ptr.clone())
-  };
-  spec.sharing_tails().fold(inner, |ac, tail| {
-    let kind = if tail.type_kw().is_some() {
-      sml_hir::SharingKind::Regular
-    } else {
-      sml_hir::SharingKind::Derived
-    };
-    let paths_eq: Vec<_> = tail.path_eqs().filter_map(|x| get_path(x.path()?)).collect();
-    cx.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
-  })
-}
-
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
-#[allow(dead_code)]
 fn get_spec_one_of_dec(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
   let ptr = SyntaxNodePtr::new(dec.syntax());
   match dec {
@@ -449,111 +402,6 @@ fn get_spec_one_of_dec(cx: &mut Cx, dec: ast::DecOne) -> Vec<sml_hir::SpecIdx> {
       vec![]
     }
   }
-}
-
-fn get_spec_one(cx: &mut Cx, spec: ast::SpecOne) -> sml_hir::SpecIdx {
-  let ptr = SyntaxNodePtr::new(spec.syntax());
-  let ret = match spec {
-    ast::SpecOne::ValSpec(spec) => {
-      if let Some(tvs) = spec.ty_var_seq() {
-        cx.err(tvs.syntax().text_range(), ErrorKind::ValSpecTyVarSeq);
-      }
-      sml_hir::Spec::Val(
-        Vec::new(),
-        spec
-          .val_descs()
-          .filter_map(|x| {
-            Some(sml_hir::ValDesc {
-              name: str_util::Name::new(x.name_star_eq()?.token.text()),
-              ty: ty::get(cx, x.ty()),
-            })
-          })
-          .collect(),
-      )
-    }
-    ast::SpecOne::TySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), sml_hir::Spec::Ty),
-    ast::SpecOne::EqTySpec(spec) => ty_descs(cx, ptr.clone(), spec.ty_descs(), sml_hir::Spec::EqTy),
-    ast::SpecOne::DatSpec(spec) => {
-      if let Some(with_type) = spec.with_type() {
-        cx.err(
-          with_type.syntax().text_range(),
-          ErrorKind::Unsupported("`withtype` in specifications"),
-        );
-      }
-      let specs: Vec<_> = dat_binds(cx, spec.dat_binds()).map(sml_hir::Spec::Datatype).collect();
-      seq(cx, ptr.clone(), specs)
-    }
-    ast::SpecOne::DatCopySpec(spec) => {
-      sml_hir::Spec::DatatypeCopy(get_name(spec.name())?, get_path(spec.path()?)?)
-    }
-    ast::SpecOne::ExSpec(spec) => {
-      let specs: Vec<_> = spec
-        .ex_descs()
-        .filter_map(|x| {
-          Some(sml_hir::Spec::Exception(sml_hir::ExDesc {
-            name: str_util::Name::new(x.name_star_eq()?.token.text()),
-            ty: x.of_ty().map(|x| ty::get(cx, x.ty())),
-          }))
-        })
-        .collect();
-      seq(cx, ptr.clone(), specs)
-    }
-    ast::SpecOne::StrSpec(spec) => {
-      let specs: Vec<_> = spec
-        .str_descs()
-        .filter_map(|x| {
-          Some(sml_hir::Spec::Str(sml_hir::StrDesc {
-            name: get_name(x.name())?,
-            sig_exp: get_sig_exp(cx, x.sig_exp()),
-          }))
-        })
-        .collect();
-      seq(cx, ptr.clone(), specs)
-    }
-    ast::SpecOne::IncludeSpec(spec) => {
-      let specs: Vec<_> =
-        spec.sig_exps().map(|x| sml_hir::Spec::Include(get_sig_exp(cx, Some(x)))).collect();
-      if specs.is_empty() {
-        cx.err(spec.syntax().text_range(), ErrorKind::RequiresOperand);
-      }
-      seq(cx, ptr.clone(), specs)
-    }
-  };
-  cx.spec(ret, ptr)
-}
-
-fn seq(cx: &mut Cx, ptr: SyntaxNodePtr, mut specs: Vec<sml_hir::Spec>) -> sml_hir::Spec {
-  if specs.len() == 1 {
-    specs.pop().unwrap()
-  } else {
-    sml_hir::Spec::Seq(specs.into_iter().map(|val| cx.spec(val, ptr.clone())).collect())
-  }
-}
-
-fn ty_descs<I, F>(cx: &mut Cx, ptr: SyntaxNodePtr, iter: I, f: F) -> sml_hir::Spec
-where
-  I: Iterator<Item = ast::TyDesc>,
-  F: Fn(sml_hir::TyDesc) -> sml_hir::Spec,
-{
-  let specs: Vec<_> = iter
-    .filter_map(|ty_desc| {
-      let ty_vars = ty::var_seq(ty_desc.ty_var_seq());
-      let name = get_name(ty_desc.name())?;
-      let mut ret = f(sml_hir::TyDesc { name: name.clone(), ty_vars: ty_vars.clone() });
-      if let Some(ty) = ty_desc.eq_ty() {
-        let ty = ty::get(cx, ty.ty());
-        let spec_idx = cx.spec(ret, ptr.clone());
-        let sig_exp = cx.sig_exp(sml_hir::SigExp::Spec(spec_idx), ptr.clone());
-        let sig_exp = cx.sig_exp(
-          sml_hir::SigExp::WhereType(sig_exp, ty_vars, sml_hir::Path::one(name), ty),
-          ptr.clone(),
-        );
-        ret = sml_hir::Spec::Include(sig_exp);
-      }
-      Some(ret)
-    })
-    .collect();
-  seq(cx, ptr, specs)
 }
 
 fn ascription_tail(
