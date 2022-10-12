@@ -220,6 +220,8 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         err(cx, start, ErrorKind::MissingDigitsInNumLit)
       }
     }
+    // test(misc::num_suffix)
+    advance_while(&mut cx.i, bs, |b| b.is_ascii_alphanumeric());
     return kind;
   }
   // string lit

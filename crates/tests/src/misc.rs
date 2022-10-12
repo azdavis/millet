@@ -731,7 +731,7 @@ fun f x = ()
 
 #[test]
 fn num_suffix() {
-  fail(
+  check(
     r#"
 val _ = 3and _ = 4
 (**     ^^^^ invalid literal: invalid digit found in string *)
