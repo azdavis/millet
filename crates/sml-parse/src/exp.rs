@@ -4,7 +4,7 @@ use crate::pat::pat;
 use crate::ty::ty;
 use crate::util::{
   comma_sep, lab, many_sep, must, name_star_eq, path_infix, path_no_infix, scon, should_break,
-  ShouldBreak,
+  InfixErr, ShouldBreak,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -180,7 +180,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, SK::ListExp)
   } else if p.at(SK::LetKw) {
     p.bump();
-    dec(p);
+    dec(p, InfixErr::Yes);
     p.eat(SK::InKw);
     many_sep(p, SK::Semicolon, SK::ExpInSeq, exp);
     p.eat(SK::EndKw);
@@ -236,7 +236,7 @@ fn matcher(p: &mut Parser<'_>) {
     p.bump();
   }
   many_sep(p, SK::Bar, SK::MatchRule, |p| {
-    if !must(p, pat, Expected::Pat) {
+    if !must(p, |p| pat(p, InfixErr::Yes), Expected::Pat) {
       return false;
     }
     p.eat(SK::EqGt);

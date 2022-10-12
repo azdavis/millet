@@ -2,17 +2,17 @@ use crate::exp::{exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path};
+use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path, InfixErr};
 use sml_syntax::SyntaxKind as SK;
 
-pub(crate) fn dec(p: &mut Parser<'_>) -> bool {
+pub(crate) fn dec(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   let en = p.enter();
-  let ret = maybe_semi_sep(p, SK::DecWithTailInSeq, dec_with_tail);
+  let ret = maybe_semi_sep(p, SK::DecWithTailInSeq, |p| dec_with_tail(p, infix));
   p.exit(en, SK::Dec);
   ret
 }
 
-fn dec_one(p: &mut Parser<'_>) -> bool {
+fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   let en = p.enter();
   if p.at(SK::DotDotDot) {
     p.bump();
@@ -26,7 +26,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
         p.bump();
         got = true;
       }
-      got |= must(p, pat, Expected::Pat);
+      got |= must(p, |p| pat(p, infix), Expected::Pat);
       if !got {
         return false;
       }
@@ -49,7 +49,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
         let en = p.enter();
         let save = p.save();
-        infix_fun_bind_case_head_inner(p);
+        infix_fun_bind_case_head_inner(p, infix);
         if p.ok_since(save) {
           p.exit(en, SK::InfixFunBindCaseHead);
           // this is the case where the () around the infix fun bind case head are dropped. thus,
@@ -57,7 +57,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
         } else {
           if p.at(SK::LRound) {
             p.bump();
-            infix_fun_bind_case_head_inner(p);
+            infix_fun_bind_case_head_inner(p, infix);
             p.eat(SK::RRound);
             p.exit(en, SK::InfixFunBindCaseHead);
           } else {
@@ -81,7 +81,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
             }
             p.exit(en, SK::PrefixFunBindCaseHead);
           }
-          while at_pat(p).is_some() {
+          while at_pat(p, infix).is_some() {
             // no body
           }
         }
@@ -105,7 +105,7 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
     p.bump();
     dat_binds(p, true);
     p.eat(SK::WithKw);
-    dec(p);
+    dec(p, infix);
     p.eat(SK::EndKw);
     p.exit(en, SK::AbstypeDec);
   } else if p.at(SK::ExceptionKw) {
@@ -156,9 +156,9 @@ fn dec_one(p: &mut Parser<'_>) -> bool {
     p.exit(en, SK::DoDec);
   } else if p.at(SK::LocalKw) {
     p.bump();
-    dec(p);
+    dec(p, infix);
     p.eat(SK::InKw);
-    dec(p);
+    dec(p, infix);
     p.eat(SK::EndKw);
     p.exit(en, SK::LocalDec);
   } else if p.at(SK::StructureKw) {
@@ -234,12 +234,12 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::StructKw) {
     p.bump();
-    dec(p);
+    dec(p, InfixErr::Yes);
     p.eat(SK::EndKw);
     p.exit(en, SK::StructStrExp)
   } else if p.at(SK::LetKw) {
     p.bump();
-    dec(p);
+    dec(p, InfixErr::Yes);
     p.eat(SK::InKw);
     must(p, str_exp, Expected::StrExp);
     p.eat(SK::EndKw);
@@ -255,7 +255,7 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
       p.exit(arg, SK::AppStrExpArgStrExp);
     } else {
       p.abandon(arg);
-      dec(p);
+      dec(p, InfixErr::Yes);
     }
     p.eat(SK::RRound);
     p.exit(en, SK::AppStrExp)
@@ -397,9 +397,9 @@ fn ty_spec(p: &mut Parser<'_>) {
   });
 }
 
-fn dec_with_tail(p: &mut Parser<'_>) -> bool {
+fn dec_with_tail(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   let en = p.enter();
-  let mut ret = maybe_semi_sep(p, SK::DecInSeq, dec_one);
+  let mut ret = maybe_semi_sep(p, SK::DecInSeq, |p| dec_one(p, infix));
   while p.at(SK::SharingKw) {
     ret = true;
     let en = p.enter();
@@ -536,12 +536,12 @@ fn ty_binds(p: &mut Parser<'_>) {
   });
 }
 
-fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>) {
-  must(p, at_pat, Expected::Pat);
+fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>, infix: InfixErr) {
+  must(p, |p| at_pat(p, infix), Expected::Pat);
   if let Some(name) = eat_name_star(p) {
     if !p.is_infix(name.text) {
       p.error(ErrorKind::NotInfix);
     }
   }
-  must(p, at_pat, Expected::Pat);
+  must(p, |p| at_pat(p, infix), Expected::Pat);
 }

@@ -1,6 +1,12 @@
 use crate::parser::{Assoc, ErrorKind, Exited, Expected, Infix, Parser};
 use sml_syntax::{token::Token, SyntaxKind as SK};
 
+/// whether to emit errors for infix violations
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum InfixErr {
+  Yes,
+}
+
 /// emits an error and returns false if `f` failed. otherwise returns `true`.
 pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F, e: Expected) -> bool
 where
