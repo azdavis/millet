@@ -12,7 +12,7 @@ use std::ops::ControlFlow;
 
 /// TODO remove when formatting is implemented.
 ///
-/// Because the formatter is no fully implemented or tested, only set this to true if you're
+/// Because the formatter is not fully implemented or tested, only set this to true if you're
 /// prepared for the formatter to permanently and entirely wipe away all of your SML code.
 const FORMAT: bool = false;
 
