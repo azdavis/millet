@@ -51,7 +51,7 @@ fn output(f: &mut fmt::Formatter<'_>, s: &str) -> Res {
 }
 
 fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
-  sep(f, "\n", dec.dec_in_seqs(), |f, dec_in_seq| {
+  sep(f, "\n\n", dec.dec_in_seqs(), |f, dec_in_seq| {
     cfg.output_indent(f)?;
     get_dec_one(f, cfg, dec_in_seq.dec_one()?)
   })
@@ -68,7 +68,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
     ast::DecOne::HoleDec(_) => output(f, "..."),
     ast::DecOne::ValDec(dec) => {
       output(f, "val ")?;
-      sep(f, " and ", dec.val_binds(), |f, val_bind| {
+      sep_with_lines(f, cfg, "and ", dec.val_binds(), |f, val_bind| {
         get_pat(f, val_bind.pat()?)?;
         output(f, " = ")?;
         get_exp(f, cfg, val_bind.exp()?)
@@ -77,8 +77,8 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
     ast::DecOne::FunDec(dec) => {
       output(f, "fun ")?;
       ty_var_seq(f, dec.ty_var_seq())?;
-      sep(f, " and ", dec.fun_binds(), |f, fun_bind| {
-        sep(f, " | ", fun_bind.fun_bind_cases(), |f, fun_bind_case| {
+      sep_with_lines(f, cfg, "and ", dec.fun_binds(), |f, fun_bind| {
+        sep_with_lines(f, cfg.indented(), "| ", fun_bind.fun_bind_cases(), |f, fun_bind_case| {
           match fun_bind_case.fun_bind_case_head()? {
             ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => {
               if head.op_kw().is_some() {
@@ -103,22 +103,33 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
           }
           output(f, " ")?;
           sep(f, " ", fun_bind_case.pats(), get_pat)?;
-          output(f, " = ")?;
-          get_exp(f, cfg, fun_bind_case.exp()?)
+          ty_annotation(f, fun_bind_case.ty_annotation())?;
+          output(f, " =")?;
+          let body = fun_bind_case.exp()?;
+          if complex(&body) {
+            output(f, "\n");
+            let new_cfg = cfg.indented();
+            new_cfg.output_indent(f)?;
+            get_exp(f, new_cfg, body)
+          } else {
+            output(f, " ")?;
+            get_exp(f, cfg, body)
+          }
         })
       })
     }
     ast::DecOne::TyDec(dec) => {
       output(f, "type ")?;
-      ty_binds(f, dec.ty_binds())
+      ty_binds(f, cfg, dec.ty_binds())
     }
     ast::DecOne::DatDec(dec) => {
       output(f, "datatype ")?;
-      sep(f, " and ", dec.dat_binds(), |f, dat_bind| {
+      sep_with_lines(f, cfg, "and ", dec.dat_binds(), |f, dat_bind| {
         ty_var_seq(f, dat_bind.ty_var_seq())?;
         output(f, dat_bind.name()?.text())?;
-        output(f, " = ")?;
-        sep(f, " | ", dat_bind.con_binds(), |f, con_bind| {
+        output(f, " =\n")?;
+        cfg.indented().output_indent(f)?;
+        sep_with_lines(f, cfg, "| ", dat_bind.con_binds(), |f, con_bind| {
           output(f, con_bind.name_star_eq()?.token.text())?;
           if let Some(of_ty) = con_bind.of_ty() {
             output(f, " of ")?;
@@ -129,7 +140,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       })?;
       if let Some(withtype) = dec.with_type() {
         output(f, " withtype ")?;
-        ty_binds(f, withtype.ty_binds())?;
+        ty_binds(f, cfg, withtype.ty_binds())?;
       }
       Some(())
     }
@@ -142,7 +153,7 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
     ast::DecOne::AbstypeDec(_) => nothing(),
     ast::DecOne::ExDec(dec) => {
       output(f, "exception ")?;
-      sep(f, " and ", dec.ex_binds(), |f, ex_bind| {
+      sep_with_lines(f, cfg, "and ", dec.ex_binds(), |f, ex_bind| {
         output(f, ex_bind.name_star_eq()?.token.text())?;
         match ex_bind.ex_bind_inner() {
           Some(inner) => match inner {
@@ -192,7 +203,6 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       output(f, "\n")?;
       cfg.output_indent(f)?;
       output(f, "in\n")?;
-      new_cfg.output_indent(f)?;
       get_dec(f, new_cfg, dec.in_dec()?)?;
       output(f, "\n")?;
       cfg.output_indent(f)?;
@@ -205,11 +215,32 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
   }
 }
 
-fn ty_binds<I>(f: &mut fmt::Formatter<'_>, iter: I) -> Option<()>
+fn complex(exp: &ast::Exp) -> bool {
+  matches!(
+    exp,
+    ast::Exp::LetExp(_)
+      | ast::Exp::HandleExp(_)
+      | ast::Exp::IfExp(_)
+      | ast::Exp::WhileExp(_)
+      | ast::Exp::CaseExp(_)
+  )
+}
+
+fn ty_annotation(f: &mut fmt::Formatter<'_>, ty_ann: Option<ast::TyAnnotation>) -> Res {
+  match ty_ann {
+    Some(ty_ann) => {
+      output(f, " : ")?;
+      get_ty(f, ty_ann.ty()?)
+    }
+    None => Some(()),
+  }
+}
+
+fn ty_binds<I>(f: &mut fmt::Formatter<'_>, cfg: Cfg, iter: I) -> Res
 where
   I: Iterator<Item = ast::TyBind>,
 {
-  sep(f, " and ", iter, |f, ty_bind| {
+  sep_with_lines(f, cfg, "and ", iter, |f, ty_bind| {
     ty_var_seq(f, ty_bind.ty_var_seq())?;
     output(f, ty_bind.name()?.text())?;
     output(f, " = ")?;
@@ -230,6 +261,7 @@ fn ty_var_seq(f: &mut fmt::Formatter<'_>, tvs: Option<ast::TyVarSeq>) -> Res {
   if parens {
     output(f, ")")?;
   }
+  output(f, " ")?;
   Some(())
 }
 
@@ -339,10 +371,22 @@ fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
     ast::Exp::IfExp(exp) => {
       output(f, "if ")?;
       get_exp(f, cfg, exp.cond()?)?;
-      output(f, " then ")?;
-      get_exp(f, cfg, exp.yes()?)?;
-      output(f, " else ")?;
-      get_exp(f, cfg, exp.no()?)
+      output(f, " then\n")?;
+      let new_cfg = cfg.indented();
+      new_cfg.output_indent(f)?;
+      get_exp(f, new_cfg, exp.yes()?)?;
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
+      output(f, "else")?;
+      let no = exp.no()?;
+      if matches!(no, ast::Exp::IfExp(_)) {
+        output(f, " ")?;
+        get_exp(f, cfg, no)
+      } else {
+        output(f, "\n")?;
+        new_cfg.output_indent(f)?;
+        get_exp(f, new_cfg, no)
+      }
     }
     ast::Exp::WhileExp(exp) => {
       output(f, "while")?;
@@ -353,7 +397,7 @@ fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
     ast::Exp::CaseExp(exp) => {
       output(f, "case ")?;
       get_exp(f, cfg, exp.exp()?)?;
-      output(f, " of ")?;
+      output(f, " of\n")?;
       get_matcher(f, cfg, exp.matcher()?)
     }
     ast::Exp::FnExp(exp) => {
@@ -364,7 +408,8 @@ fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
 }
 
 fn get_matcher(f: &mut fmt::Formatter<'_>, cfg: Cfg, matcher: ast::Matcher) -> Res {
-  sep(f, " | ", matcher.match_rules(), |f, arm| {
+  cfg.indented().output_indent(f)?;
+  sep_with_lines(f, cfg, "| ", matcher.match_rules(), |f, arm| {
     get_pat(f, arm.pat()?)?;
     output(f, " => ")?;
     get_exp(f, cfg, arm.exp()?)
@@ -460,9 +505,12 @@ fn get_ty(f: &mut fmt::Formatter<'_>, ty: ast::Ty) -> Res {
       path(f, ty.path()?)
     }
     ast::Ty::TupleTy(ty) => {
-      output(f, "(")?;
-      sep(f, " * ", ty.star_tys().map(|x| x.ty()), |f, t| get_ty(f, t?));
-      output(f, ")")
+      get_ty(f, ty.ty()?);
+      for ty in ty.star_tys() {
+        output(f, " * ")?;
+        get_ty(f, ty.ty()?)?;
+      }
+      Some(())
     }
     ast::Ty::FnTy(ty) => {
       get_ty(f, ty.param()?)?;
@@ -504,6 +552,29 @@ where
     get_t(f, arg)?;
   }
   for arg in iter {
+    output(f, s)?;
+    get_t(f, arg)?;
+  }
+  Some(())
+}
+
+fn sep_with_lines<F, I, T>(
+  f: &mut fmt::Formatter<'_>,
+  cfg: Cfg,
+  s: &str,
+  mut iter: I,
+  mut get_t: F,
+) -> Res
+where
+  F: FnMut(&mut fmt::Formatter<'_>, T) -> Res,
+  I: Iterator<Item = T>,
+{
+  if let Some(arg) = iter.next() {
+    get_t(f, arg)?;
+  }
+  for arg in iter {
+    output(f, "\n")?;
+    cfg.output_indent(f)?;
     output(f, s)?;
     get_t(f, arg)?;
   }
