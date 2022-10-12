@@ -33,19 +33,28 @@ struct Cfg {
   indent: usize,
 }
 
+impl Cfg {
+  fn indented(self) -> Self {
+    Self { indent: self.indent + 1 }
+  }
+
+  fn output_indent(&self, f: &mut fmt::Formatter<'_>) -> Res {
+    for _ in 0..self.indent {
+      output(f, "  ")?;
+    }
+    Some(())
+  }
+}
+
 fn output(f: &mut fmt::Formatter<'_>, s: &str) -> Res {
   f.write_str(s).ok()
 }
 
 fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
-  for d in dec.dec_in_seqs() {
-    get_dec_one(f, cfg, d.dec_one()?)?;
-    output(f, "\n")?;
-    for _ in 0..cfg.indent {
-      output(f, "  ")?;
-    }
-  }
-  Some(())
+  sep(f, "\n", dec.dec_in_seqs(), |f, dec_in_seq| {
+    cfg.output_indent(f)?;
+    get_dec_one(f, cfg, dec_in_seq.dec_one()?)
+  })
 }
 
 /// TODO rm
@@ -234,11 +243,17 @@ fn get_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, exp: ast::Exp) -> Res {
       output(f, ")")
     }
     ast::Exp::LetExp(exp) => {
-      output(f, "let ")?;
-      get_dec(f, cfg, exp.dec()?)?;
-      output(f, " in ")?;
+      output(f, "let\n")?;
+      let new_cfg = cfg.indented();
+      get_dec(f, new_cfg, exp.dec()?)?;
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
+      output(f, "in\n")?;
+      new_cfg.output_indent(f)?;
       sep(f, "; ", exp.exps_in_seq().map(|x| x.exp()), |f, e| get_exp(f, cfg, e?))?;
-      output(f, " end")
+      output(f, "\n")?;
+      cfg.output_indent(f)?;
+      output(f, "end")
     }
     ast::Exp::AppExp(exp) => {
       get_exp(f, cfg, exp.func()?)?;
