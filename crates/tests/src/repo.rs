@@ -1,5 +1,6 @@
 //! Tests about the repository itself.
 
+use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use xshell::{cmd, Shell};
@@ -208,4 +209,41 @@ fn changelog() {
     })
     .collect();
   eq_sets(&tags, &entries, "tags that have no changelog entry", "changelog entries without a tag");
+}
+
+#[test]
+fn licenses() {
+  let allowed = fast_hash::set([
+    "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+    "Apache-2.0 OR BSL-1.0",
+    "Apache-2.0 OR MIT",
+    "Apache-2.0/MIT",
+    "MIT",
+    "MIT OR Apache-2.0",
+    "MIT OR Apache-2.0 OR Zlib",
+    "MIT/Apache-2.0",
+    "Unlicense OR MIT",
+    "Unlicense/MIT",
+    "Zlib OR Apache-2.0 OR MIT",
+  ]);
+  let sh = Shell::new().unwrap();
+  let output = cmd!(sh, "cargo metadata --format-version 1").read().unwrap();
+  let json: serde_json::Value = serde_json::from_str(&output).unwrap();
+  let packages = json.as_object().unwrap().get("packages").unwrap().as_array().unwrap();
+  let mut new_licenses = FxHashMap::<&str, FxHashSet<&str>>::default();
+  for package in packages {
+    let package = package.as_object().unwrap();
+    let license = package.get("license").unwrap().as_str().unwrap();
+    if allowed.contains(&license) {
+      continue;
+    }
+    let name = package.get("name").unwrap().as_str().unwrap();
+    new_licenses.entry(license).or_default().insert(name);
+  }
+  for (license, names) in new_licenses.iter() {
+    println!("{license}: {names:?}");
+  }
+  if !new_licenses.is_empty() {
+    panic!("found {} new licenses", new_licenses.len());
+  }
 }
