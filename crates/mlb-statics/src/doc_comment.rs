@@ -1,6 +1,6 @@
 //! Handle doc comments.
 
-use sml_syntax::{SyntaxKind, SyntaxNode};
+use sml_syntax::{SyntaxKind as SK, SyntaxNode};
 
 /// Adds doc comments in the `root` to the `info`.
 pub fn get(root: &SyntaxNode, low: &sml_lower::Lower, info: &mut sml_statics::Info) {
@@ -19,40 +19,37 @@ pub fn get(root: &SyntaxNode, low: &sml_lower::Lower, info: &mut sml_statics::In
 
 fn get_comment(node: &SyntaxNode) -> Option<String> {
   let mut tok = node.first_token()?;
-  while tok.kind() != SyntaxKind::BlockComment {
-    // does this have to be so complicated? i'm just trying to, given a token, walk backwards up the
-    // tree and visit every token.
-    //
-    // TODO stop walking up if we hit another dec or something? currently given this:
-    //
-    // ```sml
-    // (*!
-    //  * Foo the bar.
-    //  *)
-    // fun foo () = ()
-    //
-    // fun quz () = ()
-    // ```
-    //
-    // not only `foo` but also `quz` will have the "Foo the bar." doc.
-    tok = match tok.prev_token() {
-      Some(t) => t,
-      None => {
-        let mut node = tok.parent()?;
-        loop {
-          match node.prev_sibling_or_token() {
-            Some(x) => match x {
-              sml_syntax::rowan::NodeOrToken::Node(n) => match n.last_token() {
-                Some(t) => break t,
-                None => node = n,
-              },
-              sml_syntax::rowan::NodeOrToken::Token(t) => break t,
-            },
-            None => node = node.parent()?,
-          }
+  let mut saw_one = false;
+  loop {
+    match tok.kind() {
+      SK::BlockComment => break,
+      SK::DotDotDot
+      | SK::AndKw
+      | SK::ValKw
+      | SK::FunKw
+      | SK::TypeKw
+      | SK::EqtypeKw
+      | SK::DatatypeKw
+      | SK::AbstypeKw
+      | SK::ExceptionKw
+      | SK::OpenKw
+      | SK::InfixKw
+      | SK::InfixrKw
+      | SK::NonfixKw
+      | SK::DoKw
+      | SK::LocalKw
+      | SK::StructureKw
+      | SK::SignatureKw
+      | SK::FunctorKw
+      | SK::IncludeKw => {
+        if saw_one {
+          return None;
         }
+        saw_one = true;
       }
-    };
+      _ => {}
+    }
+    tok = tok.prev_token()?;
   }
   let mut lines: Vec<_> = tok
     .text()
