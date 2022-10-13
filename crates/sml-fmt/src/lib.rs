@@ -249,7 +249,13 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
             output(f, " : ")?;
             get_sig_exp(f, cfg, arg.sig_exp()?)?;
           }
-          ast::FunctorArg::Dec(dec) => get_dec(f, cfg, dec)?,
+          ast::FunctorArg::Dec(dec) => {
+            output(f, "\n")?;
+            let new_cfg = cfg.indented();
+            new_cfg.output_indent(f)?;
+            get_dec(f, new_cfg, dec)?;
+            output(f, "\n")?;
+          }
         }
         output(f, ")")?;
         if let Some(tail) = functor_bind.ascription_tail() {
