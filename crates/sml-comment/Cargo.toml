@@ -1,0 +1,12 @@
+[package]
+name = "sml-comment"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+sml-syntax = { path = "../sml-syntax" }

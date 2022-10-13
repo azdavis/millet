@@ -2,8 +2,6 @@
 
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
-pub mod doc_comment;
-
 mod std_basis;
 
 use diagnostic_util::Severity;
@@ -241,7 +239,7 @@ fn get_bas_dec(
         let mode = sml_statics::Mode::Regular(Some(*path));
         let checked = sml_statics::get(&mut cx.syms, &scope.basis, mode, &low.arenas, low.root);
         let mut info = checked.info;
-        doc_comment::get(parsed.root.syntax(), &low, &mut info);
+        add_all_doc_comments(parsed.root.syntax(), &low, &mut info);
         let file = SourceFile {
           pos_db: text_pos::PositionDb::new(contents),
           lex_errors,
@@ -289,4 +287,23 @@ fn get_group_file(cx: &mut Cx, files: Files<'_>, ac: &mut MBasis, path: paths::P
   get_bas_dec(cx, files, path, files.std_basis, &mut path_ac, dec);
   cx.cache.insert(path, path_ac.clone());
   ac.append(path_ac);
+}
+
+/// Adds doc comments in the `root` to the `info`.
+pub fn add_all_doc_comments(
+  root: &sml_syntax::SyntaxNode,
+  low: &sml_lower::Lower,
+  info: &mut sml_statics::Info,
+) {
+  let indices = std::iter::empty()
+    .chain(low.arenas.pat.iter().map(|(x, _)| sml_hir::Idx::Pat(x)))
+    .chain(low.arenas.dec.iter().map(|(x, _)| sml_hir::Idx::Dec(x)))
+    .chain(low.arenas.spec.iter().map(|(x, _)| sml_hir::Idx::Spec(x)));
+  for idx in indices {
+    let ptr = low.ptrs.hir_to_ast(idx).expect("no syntax ptr");
+    let node = ptr.to_node(root);
+    if let Some(doc) = sml_comment::doc_comment_above(&node) {
+      info.add_doc(idx, doc);
+    }
+  }
 }

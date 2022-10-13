@@ -139,6 +139,10 @@ Declarations for various SML libraries, in the form of SML files that get read a
 
 Naively format SML files.
 
+### `crates/sml-comment`
+
+Extract interesting comments from above SML syntax nodes, like doc comments.
+
 ### `crates/cm`
 
 Processes SML/NJ Compilation Manager (`.cm`) files.

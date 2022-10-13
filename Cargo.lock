@@ -353,6 +353,7 @@ dependencies = [
  "fast-hash",
  "mlb-hir",
  "paths",
+ "sml-comment",
  "sml-hir",
  "sml-lex",
  "sml-libs",
@@ -552,6 +553,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "sml-comment"
+version = "0.1.0"
+dependencies = [
+ "sml-syntax",
 ]
 
 [[package]]

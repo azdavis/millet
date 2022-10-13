@@ -1,4 +1,4 @@
-use crate::{doc_comment, start_source_file};
+use crate::{add_all_doc_comments, start_source_file};
 use fast_hash::FxHashMap;
 use sml_statics::{basis, Info, Syms};
 use sml_syntax::ast::AstNode as _;
@@ -106,7 +106,7 @@ where
         panic!("{name}: statics error: {e}");
       }
       let mut info = checked.info;
-      doc_comment::get(parsed.root.syntax(), &low, &mut info);
+      add_all_doc_comments(parsed.root.syntax(), &low, &mut info);
       (name, info)
     })
     .collect();

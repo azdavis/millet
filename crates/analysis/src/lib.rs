@@ -41,7 +41,7 @@ impl Analysis {
     let mode = sml_statics::Mode::Regular(None);
     let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
     let mut info = checked.info;
-    mlb_statics::doc_comment::get(parsed.root.syntax(), &low, &mut info);
+    mlb_statics::add_all_doc_comments(parsed.root.syntax(), &low, &mut info);
     let file = mlb_statics::SourceFile {
       pos_db: text_pos::PositionDb::new(contents),
       lex_errors,

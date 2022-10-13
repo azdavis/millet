@@ -14,6 +14,7 @@ diagnostic-util = { path = "../diagnostic-util" }
 fast-hash = { path = "../fast-hash" }
 mlb-hir = { path = "../mlb-hir" }
 paths = { path = "../paths" }
+sml-comment = { path = "../sml-comment" }
 sml-hir = { path = "../sml-hir" }
 sml-lex = { path = "../sml-lex" }
 sml-libs = { path = "../sml-libs" }
