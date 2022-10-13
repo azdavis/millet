@@ -42,11 +42,11 @@ impl Default for Cfg {
 
 impl Cfg {
   fn indented(self) -> Self {
-    Self { indent: self.indent + 1, extra_blank: self.extra_blank }
+    Self { indent: self.indent + 1, ..self }
   }
 
   fn extra_blank(self, extra_blank: bool) -> Self {
-    Self { indent: self.indent, extra_blank }
+    Self { extra_blank, ..self }
   }
 
   fn output_indent(&self, f: &mut fmt::Formatter<'_>) -> Res {
