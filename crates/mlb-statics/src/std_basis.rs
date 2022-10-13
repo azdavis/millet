@@ -15,7 +15,7 @@ impl StdBasis {
   /// The minimal standard basis. Only includes fundamental top-level definitions like `int`,
   /// `real`, `ref`, `<`, etc.
   pub fn minimal() -> Self {
-    get_std_basis(sml_libs::primitive::FILES.iter().copied())
+    get_std_basis(std::iter::empty())
   }
 
   /// The full standard basis, as documented in the public SML basis library docs.
