@@ -82,11 +82,6 @@ fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
   })
 }
 
-/// TODO rm
-fn nothing() -> Res {
-  Some(())
-}
-
 fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
   match dec {
     ast::DecOne::HoleDec(_) => output(f, "..."),
@@ -158,7 +153,17 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
       output(f, " = datatype ")?;
       path(f, dec.path()?)
     }
-    ast::DecOne::AbstypeDec(_) => nothing(),
+    ast::DecOne::AbstypeDec(dec) => {
+      output(f, "abstype ")?;
+      dat_binds(f, cfg, dec.dat_binds())?;
+      if let Some(withtype) = dec.with_type() {
+        output(f, " withtype ")?;
+        ty_binds(f, cfg, withtype.ty_binds())?;
+      }
+      output(f, " with ")?;
+      get_dec(f, cfg, dec.dec()?)?;
+      output(f, " end")
+    }
     ast::DecOne::ExDec(dec) => {
       output(f, "exception ")?;
       sep_with_lines(f, cfg, "and ", dec.ex_binds(), |f, ex_bind| {
@@ -233,7 +238,27 @@ fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
         get_sig_exp(f, cfg, sig_bind.sig_exp()?)
       })
     }
-    ast::DecOne::FunctorDec(_) => nothing(),
+    ast::DecOne::FunctorDec(dec) => {
+      output(f, "functor ")?;
+      sep_with_lines(f, cfg, "and ", dec.functor_binds(), |f, functor_bind| {
+        output(f, functor_bind.functor_name()?.text())?;
+        output(f, " (")?;
+        match functor_bind.functor_arg()? {
+          ast::FunctorArg::FunctorArgNameSigExp(arg) => {
+            output(f, arg.name()?.text())?;
+            output(f, " : ")?;
+            get_sig_exp(f, cfg, arg.sig_exp()?)?;
+          }
+          ast::FunctorArg::Dec(dec) => get_dec(f, cfg, dec)?,
+        }
+        output(f, ")")?;
+        if let Some(tail) = functor_bind.ascription_tail() {
+          ascription_tail(f, cfg, tail)?;
+        }
+        output(f, " = ")?;
+        get_str_exp(f, cfg, functor_bind.body()?)
+      })
+    }
     ast::DecOne::ExpDec(dec) => get_exp(f, cfg, dec.exp()?),
     ast::DecOne::IncludeDec(dec) => {
       output(f, "include ")?;
@@ -294,7 +319,7 @@ fn get_str_exp(f: &mut fmt::Formatter<'_>, cfg: Cfg, str_exp: ast::StrExp) -> Re
     }
     ast::StrExp::AppStrExp(exp) => {
       output(f, exp.name()?.text())?;
-      output(f, "(")?;
+      output(f, " (")?;
       match exp.app_str_exp_arg()? {
         ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(f, cfg, arg.str_exp()?)?,
         ast::AppStrExpArg::Dec(arg) => get_dec(f, cfg, arg)?,
