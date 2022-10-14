@@ -241,3 +241,33 @@ fn licenses() {
     panic!("found {} new licenses", new_licenses.len());
   }
 }
+
+fn no_dupes<I, T>(iter: I) -> BTreeSet<T>
+where
+  I: Iterator<Item = T>,
+  T: Ord + Copy + std::fmt::Display,
+{
+  let mut ret = BTreeSet::<T>::default();
+  for x in iter {
+    if !ret.insert(x) {
+      panic!("duplicate: {x}")
+    }
+  }
+  ret
+}
+
+#[test]
+fn error_codes() {
+  let sh = Shell::new().unwrap();
+  sh.change_dir(root_dir());
+  let output = cmd!(sh, "git grep -hoE 'Code::n\\([[:digit:]]+\\)'").read().unwrap();
+  let in_doc = no_dupes(
+    include_str!("../../../docs/errors.md")
+      .lines()
+      .filter_map(|line| Some(line.strip_prefix("## ")?.parse::<u16>().unwrap())),
+  );
+  let in_code = no_dupes(output.lines().map(|line| {
+    line.strip_prefix("Code::n(").unwrap().strip_suffix(')').unwrap().parse::<u16>().unwrap()
+  }));
+  eq_sets(&in_doc, &in_code, "errors documented but not used", "errors not documented");
+}
