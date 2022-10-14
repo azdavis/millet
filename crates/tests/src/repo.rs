@@ -126,9 +126,7 @@ fn sml_libs() {
 fn crate_architecture_doc() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
-  let path = sh.current_dir().join("docs").join("architecture.md");
-  let contents = sh.read_file(path).unwrap();
-  let in_doc: BTreeSet<_> = contents
+  let in_doc: BTreeSet<_> = include_str!("../../../docs/architecture.md")
     .lines()
     .filter_map(|line| Some(line.strip_prefix("### `crates/")?.strip_suffix('`')?.to_owned()))
     .collect();
@@ -150,9 +148,7 @@ fn crate_architecture_doc() {
 fn docs_readme() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
-  let path = sh.current_dir().join("docs").join("readme.md");
-  let contents = sh.read_file(path).unwrap();
-  let in_readme: BTreeSet<_> = contents
+  let in_readme: BTreeSet<_> = include_str!("../../../docs/readme.md")
     .lines()
     .filter_map(|x| {
       let x = x.strip_prefix("- [")?;
@@ -198,9 +194,7 @@ fn changelog() {
   sh.change_dir(root_dir());
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output().unwrap().stdout).unwrap();
   let tags: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
-  let path = sh.current_dir().join("docs").join("changelog.md");
-  let contents = sh.read_file(path).unwrap();
-  let entries: BTreeSet<_> = contents
+  let entries: BTreeSet<_> = include_str!("../../../docs/changelog.md")
     .lines()
     .filter_map(|line| {
       let title = line.strip_prefix("## ")?;
