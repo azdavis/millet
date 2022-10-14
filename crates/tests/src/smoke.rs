@@ -1,4 +1,5 @@
-use crate::check::{check, check_multi};
+use crate::check::{check, go, Outcome, StdBasis};
+use diagnostic_util::Severity;
 
 mod dec;
 mod exp;
@@ -113,7 +114,7 @@ val _: int = S.x
 
 #[test]
 fn multi() {
-  check_multi(&[
+  let ss = &[
     r#"
 val a = 3
 exception Bad
@@ -122,7 +123,8 @@ exception Bad
 val b = a + 4
 fun err s = if s = "bad" then raise Bad else ()
 "#,
-  ]);
+  ];
+  go(ss, StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }
 
 #[test]

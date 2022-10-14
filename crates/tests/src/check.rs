@@ -72,32 +72,9 @@ pub(crate) fn check_with_std_basis(s: &str) {
   go(&[s], StdBasis::Full, Outcome::Pass, Severity::Error)
 }
 
-/// Like [`fail`], but includes the full std basis.
-#[track_caller]
-pub(crate) fn fail_with_std_basis(s: &str) {
-  go(&[s], StdBasis::Full, Outcome::Fail, Severity::Error)
-}
-
-/// Like [`check`], but checks multiple files in sequence.
-#[track_caller]
-pub(crate) fn check_multi(ss: &[&str]) {
-  go(ss, StdBasis::Minimal, Outcome::Pass, Severity::Error)
-}
-
-/// Like [`check`], but with warnings as well as errors.
-#[track_caller]
-pub(crate) fn check_with_warnings(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Warning)
-}
-
-/// Like [`fail`], but with warnings as well as errors.
-#[track_caller]
-pub(crate) fn fail_with_warnings(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Fail, Severity::Warning)
-}
-
-/// ignores the Err if we already initialized logging, since that's fine.
-fn go(ss: &[&str], std_basis: StdBasis, want: Outcome, min_severity: Severity) {
+/// The low-level impl that all top-level functions delegate to.
+pub(crate) fn go(ss: &[&str], std_basis: StdBasis, want: Outcome, min_severity: Severity) {
+  // ignore the Err if we already initialized logging, since that's fine.
   let _ = env_logger::builder().is_test(true).try_init();
   if matches!(std_basis, StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
     return;
@@ -110,7 +87,7 @@ fn go(ss: &[&str], std_basis: StdBasis, want: Outcome, min_severity: Severity) {
   }
 }
 
-enum StdBasis {
+pub(crate) enum StdBasis {
   Minimal,
   Full,
 }
@@ -313,7 +290,7 @@ impl fmt::Display for Check {
   }
 }
 
-enum Outcome {
+pub(crate) enum Outcome {
   Pass,
   Fail,
 }

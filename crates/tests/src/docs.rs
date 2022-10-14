@@ -1,7 +1,9 @@
-use crate::check::{check_with_std_basis, fail_with_std_basis, fail_with_warnings};
+use crate::check::{go, Outcome, StdBasis};
+use diagnostic_util::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
 const SML: &str = "sml";
+const MINI_STD_BASIS: &str = include_str!("mini-std-basis.sml");
 
 fn check_all<F>(contents: &str, mut f: F)
 where
@@ -48,19 +50,22 @@ where
 #[test]
 fn errors() {
   check_all(include_str!("../../../docs/errors.md"), |s| {
-    if s.starts_with("(* ok *)") {
-      check_with_std_basis(s);
+    let (outcome, severity) = if s.starts_with("(* ok *)") {
+      (Outcome::Pass, Severity::Error)
     } else if s.starts_with("(* error *)") {
-      fail_with_std_basis(s);
+      (Outcome::Fail, Severity::Error)
     } else if s.starts_with("(* warning *)") {
-      fail_with_warnings(s);
+      (Outcome::Fail, Severity::Warning)
     } else {
       panic!("unsure how to handle a code block (not marked as ok, error, or ignore): {s}");
-    }
+    };
+    go(&[MINI_STD_BASIS, s], StdBasis::Minimal, outcome, severity);
   });
 }
 
 #[test]
 fn tokens() {
-  check_all(include_str!("../../../docs/tokens.md"), check_with_std_basis);
+  check_all(include_str!("../../../docs/tokens.md"), |s| {
+    go(&[MINI_STD_BASIS, s], StdBasis::Minimal, Outcome::Pass, Severity::Error);
+  });
 }

@@ -1,4 +1,5 @@
-use crate::check::{check, check_with_warnings, fail};
+use crate::check::{check, fail, go, Outcome, StdBasis};
+use diagnostic_util::Severity;
 
 #[test]
 fn apply() {
@@ -721,12 +722,11 @@ fun foo x =
 
 #[test]
 fn unused_var() {
-  check_with_warnings(
-    r#"
+  let s = r#"
 fun f x = ()
 (**   ^ unused value: x *)
-"#,
-  );
+"#;
+  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Warning);
 }
 
 #[test]
