@@ -1,7 +1,9 @@
 use crate::error::{Error, ErrorKind};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
-use crate::types::{Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
+use crate::types::{
+  Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty, TyVarSrc,
+};
 use crate::util::apply;
 use fast_hash::FxHashSet;
 
@@ -59,8 +61,8 @@ impl St {
     self.errors.push(Error { idx: idx.into(), kind })
   }
 
-  pub(crate) fn gen_fixed_var(&mut self, ty_var: sml_hir::TyVar) -> FixedTyVar {
-    self.fixed_gen.gen(ty_var)
+  pub(crate) fn gen_fixed_var(&mut self, ty_var: sml_hir::TyVar, src: TyVarSrc) -> FixedTyVar {
+    self.fixed_gen.gen(ty_var, src)
   }
 
   pub(crate) fn info(&mut self) -> &mut Info {

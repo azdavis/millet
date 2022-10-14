@@ -124,7 +124,7 @@ pub(crate) fn get(
     // sml_def(9)
     sml_hir::Exp::Typed(inner, want) => {
       let got = get(st, cfg, cx, ars, *inner);
-      let mut want = ty::get(st, cx, ars, *want);
+      let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
       unify(st, want.clone(), got, exp.into());
       apply(st.subst(), &mut want);
       want

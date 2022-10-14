@@ -36,6 +36,7 @@ pub(crate) enum ErrorKind {
   TyHole,
   BindPolymorphicExpansiveExp,
   Unused(str_util::Name),
+  TyVarNotAllowedForTyRhs,
   /// must be last
   Unsupported(&'static str),
 }
@@ -95,6 +96,7 @@ impl Error {
       ErrorKind::TyHole => 5027,
       ErrorKind::BindPolymorphicExpansiveExp => 5028,
       ErrorKind::Unused(_) => 5029,
+      ErrorKind::TyVarNotAllowedForTyRhs => 5030,
       ErrorKind::Unsupported(_) => 5999,
     }
   }
@@ -222,6 +224,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Unused(name) => {
         let item = Item::Val;
         write!(f, "unused {item}: {name}")
+      }
+      ErrorKind::TyVarNotAllowedForTyRhs => {
+        f.write_str("type variable bound at `val` or `fun` not allowed here")
       }
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }

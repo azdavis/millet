@@ -6,7 +6,7 @@ use crate::st::St;
 use crate::types::{
   generalize, generalize_fixed, BasicOverload, Bs, Env, EnvLike, EnvStack, FunEnv, FunSig,
   HasRecordMetaVars, IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet,
-  TyScheme, TyVarKind, ValEnv, ValInfo,
+  TyScheme, TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -292,8 +292,8 @@ fn get_sig_exp(
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
       let mut cx = bs.as_cx();
-      let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, sig_exp.into());
-      let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
+      let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Ty, ty_vars, sig_exp.into());
+      let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
       generalize_fixed(fixed, &mut ty_scheme);
       get_where_type(st, &mut inner_env, path, ty_scheme, sig_exp.into());
       ac.append(&mut inner_env);
@@ -400,9 +400,9 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     sml_hir::Spec::Val(ty_vars, val_descs) => {
       // sml_def(79)
       let mut cx = bs.as_cx();
-      let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, spec.into());
+      let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Val, ty_vars, spec.into());
       for val_desc in val_descs {
-        let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, val_desc.ty));
+        let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::Regular, val_desc.ty));
         let mv_g = st.meta_gen.generalizer();
         let g = generalize(mv_g, st.subst(), fixed.clone(), &mut ty_scheme);
         assert_ty_has_no_record_meta_vars(g);
@@ -458,7 +458,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       let cx = bs.as_cx();
       // almost the same as the logic in dec::get, save for the check for ty vars.
       let mut ty = Ty::EXN;
-      let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, param));
+      let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, ty::Mode::Regular, param));
       if let Some(ref param) = param {
         ty = Ty::fun(param.clone(), ty);
       }

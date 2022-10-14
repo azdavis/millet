@@ -186,7 +186,7 @@ fn get_(
     // sml_def(42)
     sml_hir::Pat::Typed(inner, want) => {
       let (pm_pat, got) = get(st, cfg, ars, cx, ve, *inner);
-      let mut want = ty::get(st, cx, ars, *want);
+      let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
       unify(st, want.clone(), got, inner.unwrap_or(pat_).into());
       apply(st.subst(), &mut want);
       (pm_pat, want)

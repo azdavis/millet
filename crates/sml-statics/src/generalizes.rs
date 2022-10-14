@@ -1,6 +1,6 @@
 use crate::fmt_util::ty_var_name;
 use crate::st::St;
-use crate::types::{Generalizable, Ty, TyScheme, TyVarKind};
+use crate::types::{Generalizable, Ty, TyScheme, TyVarKind, TyVarSrc};
 use crate::unify::{unify, unify_, Result};
 use crate::util::{apply_bv, instantiate};
 
@@ -34,7 +34,7 @@ fn prepare_generalize(st: &mut St, general: TyScheme, specific: &TyScheme) -> (T
       .map(|(idx, kind)| {
         let equality = matches!(kind, Some(TyVarKind::Equality));
         let ty_var = ty_var_name(equality, idx).to_string();
-        Ty::FixedVar(st.gen_fixed_var(sml_hir::TyVar::new(ty_var)))
+        Ty::FixedVar(st.gen_fixed_var(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty))
       })
       .collect();
     let mut ty = specific.ty.clone();

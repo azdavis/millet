@@ -2,10 +2,25 @@ use crate::error::{ErrorKind, Item};
 use crate::get_env::get_ty_info;
 use crate::info::TyEntry;
 use crate::st::St;
-use crate::types::{Cx, Def, Ty, TyScheme};
+use crate::types::{Cx, Def, Ty, TyScheme, TyVarSrc};
 use crate::util::{apply_bv, record};
 
-pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, ty: sml_hir::TyIdx) -> Ty {
+/// The mode for how we're checking this type.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Mode {
+  /// The normal checking mode.
+  Regular,
+  /// We're checking the RHS of a `type` or `datatype` declaration.
+  TyRhs,
+}
+
+pub(crate) fn get(
+  st: &mut St,
+  cx: &Cx,
+  ars: &sml_hir::Arenas,
+  mode: Mode,
+  ty: sml_hir::TyIdx,
+) -> Ty {
   let ty = match ty {
     Some(x) => x,
     None => return Ty::None,
@@ -24,11 +39,18 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, ty: sml_hir::TyId
         st.err(ty, ErrorKind::Undefined(Item::TyVar, v.as_name().clone()));
         Ty::None
       }
-      Some(fv) => Ty::FixedVar(fv.clone()),
+      Some(fv) => match (mode, fv.src()) {
+        // regular mode allows all ty var types, and ty vars bound at types are always valid.
+        (Mode::Regular, _) | (_, TyVarSrc::Ty) => Ty::FixedVar(fv.clone()),
+        (Mode::TyRhs, TyVarSrc::Val) => {
+          st.err(ty, ErrorKind::TyVarNotAllowedForTyRhs);
+          Ty::None
+        }
+      },
     },
     // sml_def(45)
     sml_hir::Ty::Record(rows) => {
-      let rows = record(st, rows, ty.into(), |st, _, ty| get(st, cx, ars, ty));
+      let rows = record(st, rows, ty.into(), |st, _, ty| get(st, cx, ars, mode, ty));
       Ty::Record(rows)
     }
     // sml_def(46)
@@ -39,7 +61,7 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, ty: sml_hir::TyId
         let want_len = ty_info.ty_scheme.bound_vars.len();
         let mut ret = Ty::None;
         if want_len == args.len() {
-          let args: Vec<_> = args.iter().map(|&ty| get(st, cx, ars, ty)).collect();
+          let args: Vec<_> = args.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
           ret = ty_info.ty_scheme.ty.clone();
           apply_bv(&args, &mut ret)
         } else {
@@ -57,8 +79,8 @@ pub(crate) fn get(st: &mut St, cx: &Cx, ars: &sml_hir::Arenas, ty: sml_hir::TyId
     },
     // sml_def(47)
     sml_hir::Ty::Fn(param, res) => {
-      let param = get(st, cx, ars, *param);
-      let res = get(st, cx, ars, *res);
+      let param = get(st, cx, ars, mode, *param);
+      let res = get(st, cx, ars, mode, *res);
       Ty::fun(param, res)
     }
   };
