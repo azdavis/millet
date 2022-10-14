@@ -40,7 +40,6 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   }
 }
 
-const MAX_FILES_WITH_ERRORS: usize = 20;
 const LEARN_MORE: &str = "Learn more";
 
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
@@ -440,7 +439,7 @@ impl State {
         }
       };
       let ds = diagnostics(errors);
-      if ds.is_empty() || has_diagnostics.len() >= MAX_FILES_WITH_ERRORS {
+      if ds.is_empty() {
         continue;
       }
       has_diagnostics.insert(url.clone());

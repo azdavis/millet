@@ -220,9 +220,9 @@ fn priority(kind: SyntaxKind) -> u8 {
   }
 }
 
-/// The max number of errors per path.
-const MAX_ERRORS_PER_PATH: usize = 20;
-
+/// TODO: we used to limit the max number of errors per file, but now it's trickier because not all
+/// errors are "errors", but it would be bad to hit the max number of errors on entirely warnings
+/// and then not emit the actual errors. We'd need to come up with a way to order the errors.
 fn source_file_errors(
   file: &mlb_statics::SourceFile,
   syms: &sml_statics::Syms,
@@ -263,7 +263,6 @@ fn source_file_errors(
         severity: err.severity(),
       })
     }))
-    .take(MAX_ERRORS_PER_PATH)
     .collect()
 }
 
