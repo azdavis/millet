@@ -24,7 +24,7 @@ pub struct Input {
   /// The root group id.
   pub(crate) root_group_id: PathId,
   /// Severities to override.
-  pub(crate) severities: FxHashMap<u16, diagnostic_util::Severity>,
+  pub(crate) severities: FxHashMap<diagnostic_util::Code, diagnostic_util::Severity>,
 }
 
 impl Input {

@@ -4,7 +4,7 @@
 
 use anyhow::{anyhow, bail, Context, Result};
 use crossbeam_channel::Sender;
-use diagnostic_util::Severity;
+use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
 use lsp_types::Url;
@@ -50,7 +50,7 @@ pub(crate) struct State {
   has_diagnostics: FxHashSet<Url>,
   registered_for_watched_files: bool,
   sender: Sender<Message>,
-  req_queue: ReqQueue<(), Option<u16>>,
+  req_queue: ReqQueue<(), Option<Code>>,
   analysis: analysis::Analysis,
   file_system: paths::RealFileSystem,
   options: config::Options,
@@ -86,7 +86,7 @@ impl State {
       options,
     };
     if let Err((e, url)) = root {
-      ret.show_error(format!("cannot initialize workspace root {url}: {e:#}"), 1996);
+      ret.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1996));
     }
     let dynamic_registration = init
       .capabilities
@@ -125,7 +125,7 @@ impl State {
     ret
   }
 
-  fn send_request<R>(&mut self, params: R::Params, data: Option<u16>)
+  fn send_request<R>(&mut self, params: R::Params, data: Option<Code>)
   where
     R: lsp_types::request::Request,
   {
@@ -470,7 +470,7 @@ impl State {
     );
   }
 
-  fn show_error(&mut self, message: String, code: u16) {
+  fn show_error(&mut self, message: String, code: Code) {
     self.send_request::<lsp_types::request::ShowMessageRequest>(
       lsp_types::ShowMessageRequestParams {
         typ: lsp_types::MessageType::ERROR,
@@ -568,7 +568,7 @@ fn diagnostics(errors: Vec<diagnostic_util::Error>) -> Vec<lsp_types::Diagnostic
     .collect()
 }
 
-fn error_url(code: u16) -> Url {
+fn error_url(code: Code) -> Url {
   Url::parse(&format!("{}#{}", diagnostic_util::ERRORS_URL, code))
     .expect("couldn't parse error URL")
 }
@@ -576,7 +576,7 @@ fn error_url(code: u16) -> Url {
 fn diagnostic(
   message: String,
   range: Option<text_pos::Range>,
-  code: u16,
+  code: Code,
   severity: Severity,
 ) -> lsp_types::Diagnostic {
   lsp_types::Diagnostic {
@@ -585,7 +585,7 @@ fn diagnostic(
       Severity::Warning => lsp_types::DiagnosticSeverity::WARNING,
       Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
     }),
-    code: Some(lsp_types::NumberOrString::Number(code.into())),
+    code: Some(lsp_types::NumberOrString::Number(code.as_i32())),
     code_description: Some(lsp_types::CodeDescription { href: error_url(code) }),
     source: Some("Millet".to_owned()),
     message,

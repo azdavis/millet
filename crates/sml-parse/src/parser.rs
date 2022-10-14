@@ -1,6 +1,6 @@
 //! The parser. A thin wrapper around event-parse, with operator precedence.
 
-use diagnostic_util::Severity;
+use diagnostic_util::{Code, Severity};
 use fast_hash::{map_with_capacity, FxHashMap};
 use once_cell::sync::Lazy;
 use sml_syntax::rowan::TextRange;
@@ -202,15 +202,15 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn code(&self) -> u16 {
+  pub fn code(&self) -> Code {
     match self.0.kind {
-      ErrorKind::NotInfix => 3001,
-      ErrorKind::InfixWithoutOp => 3002,
-      ErrorKind::InvalidFixity(_) => 3003,
-      ErrorKind::NegativeFixity => 3004,
-      ErrorKind::SameFixityDiffAssoc => 3005,
-      ErrorKind::Expected(_) => 3006,
-      ErrorKind::UnnecessaryOp => 3007,
+      ErrorKind::NotInfix => Code::n(3001),
+      ErrorKind::InfixWithoutOp => Code::n(3002),
+      ErrorKind::InvalidFixity(_) => Code::n(3003),
+      ErrorKind::NegativeFixity => Code::n(3004),
+      ErrorKind::SameFixityDiffAssoc => Code::n(3005),
+      ErrorKind::Expected(_) => Code::n(3006),
+      ErrorKind::UnnecessaryOp => Code::n(3007),
     }
   }
 

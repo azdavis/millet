@@ -1,3 +1,4 @@
+use diagnostic_util::Code;
 use paths::FileSystem;
 
 fn usage() {
@@ -30,7 +31,7 @@ fn run() -> usize {
   let root: String = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
-      println!("error[1997]: {e}");
+      println!("error[{}]: {}", Code::n(1997), e);
       return 1;
     }
   };

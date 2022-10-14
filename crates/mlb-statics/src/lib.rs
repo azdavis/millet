@@ -4,7 +4,7 @@
 
 mod std_basis;
 
-use diagnostic_util::Severity;
+use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::ast::AstNode;
 use std::fmt;
@@ -56,8 +56,8 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn code(&self) -> u16 {
-    1998
+  pub fn code(&self) -> Code {
+    Code::n(1998)
   }
 
   /// Returns the severity for this.

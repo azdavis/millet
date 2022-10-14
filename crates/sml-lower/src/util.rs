@@ -1,4 +1,4 @@
-use diagnostic_util::Severity;
+use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::ast::SyntaxNodePtr;
 use sml_syntax::rowan::TextRange;
@@ -120,33 +120,33 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn code(&self) -> u16 {
+  pub fn code(&self) -> Code {
     match self.kind {
-      ErrorKind::FunBindMismatchedName(_, _) => 4001,
-      ErrorKind::FunBindWrongNumPats(_, _) => 4002,
-      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => 4003,
-      ErrorKind::InvalidRealLit(_) => 4004,
-      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab => 4005,
-      ErrorKind::MultipleRestPatRows => 4006,
-      ErrorKind::RestPatRowNotLast => 4007,
-      ErrorKind::PrecedingBar => 4008,
-      ErrorKind::RequiresOperand => 4009,
-      ErrorKind::DecNotAllowedHere => 4010,
-      ErrorKind::OpBoolBinOp => 4011,
-      ErrorKind::ExpNotAllowedHere => 4012,
-      ErrorKind::NonSpecDecSyntax => 4013,
-      ErrorKind::UnnecessaryParens => 4014,
-      ErrorKind::ComplexBoolExp => 4015,
-      ErrorKind::OneArmedCase => 4016,
-      ErrorKind::UnnecessarySemicolon => 4017,
-      ErrorKind::MultipleTypedPat => 4018,
-      ErrorKind::MissingRhs => 4019,
-      ErrorKind::InvalidSharingType => 4020,
-      ErrorKind::InvalidEqtype => 4021,
-      ErrorKind::DecHole => 4022,
-      ErrorKind::NotSpec => 4023,
-      ErrorKind::AsPatLhsNotName => 4024,
-      ErrorKind::Unsupported(_) => 4999,
+      ErrorKind::FunBindMismatchedName(_, _) => Code::n(4001),
+      ErrorKind::FunBindWrongNumPats(_, _) => Code::n(4002),
+      ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => Code::n(4003),
+      ErrorKind::InvalidRealLit(_) => Code::n(4004),
+      ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab => Code::n(4005),
+      ErrorKind::MultipleRestPatRows => Code::n(4006),
+      ErrorKind::RestPatRowNotLast => Code::n(4007),
+      ErrorKind::PrecedingBar => Code::n(4008),
+      ErrorKind::RequiresOperand => Code::n(4009),
+      ErrorKind::DecNotAllowedHere => Code::n(4010),
+      ErrorKind::OpBoolBinOp => Code::n(4011),
+      ErrorKind::ExpNotAllowedHere => Code::n(4012),
+      ErrorKind::NonSpecDecSyntax => Code::n(4013),
+      ErrorKind::UnnecessaryParens => Code::n(4014),
+      ErrorKind::ComplexBoolExp => Code::n(4015),
+      ErrorKind::OneArmedCase => Code::n(4016),
+      ErrorKind::UnnecessarySemicolon => Code::n(4017),
+      ErrorKind::MultipleTypedPat => Code::n(4018),
+      ErrorKind::MissingRhs => Code::n(4019),
+      ErrorKind::InvalidSharingType => Code::n(4020),
+      ErrorKind::InvalidEqtype => Code::n(4021),
+      ErrorKind::DecHole => Code::n(4022),
+      ErrorKind::NotSpec => Code::n(4023),
+      ErrorKind::AsPatLhsNotName => Code::n(4024),
+      ErrorKind::Unsupported(_) => Code::n(4999),
     }
   }
 

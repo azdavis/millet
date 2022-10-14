@@ -2,7 +2,7 @@
 
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
-use diagnostic_util::Severity;
+use diagnostic_util::{Code, Severity};
 use lex_util::{advance_while, block_comment, is_whitespace};
 use sml_syntax::rowan::{TextRange, TextSize};
 use sml_syntax::{token::Token, SyntaxKind as SK};
@@ -70,17 +70,17 @@ impl Error {
   }
 
   /// Returns the code for this.
-  pub fn code(&self) -> u16 {
+  pub fn code(&self) -> Code {
     match self.kind {
-      ErrorKind::InvalidSource => 2001,
-      ErrorKind::UnclosedComment => 2002,
-      ErrorKind::IncompleteTyVar => 2003,
-      ErrorKind::UnclosedStringLit => 2004,
-      ErrorKind::NegativeWordLit => 2005,
-      ErrorKind::WrongLenCharLit => 2006,
-      ErrorKind::MissingDigitsInNumLit => 2007,
-      ErrorKind::InvalidStringEscape => 2008,
-      ErrorKind::NonWhitespaceInStringContinuation => 2009,
+      ErrorKind::InvalidSource => Code::n(2001),
+      ErrorKind::UnclosedComment => Code::n(2002),
+      ErrorKind::IncompleteTyVar => Code::n(2003),
+      ErrorKind::UnclosedStringLit => Code::n(2004),
+      ErrorKind::NegativeWordLit => Code::n(2005),
+      ErrorKind::WrongLenCharLit => Code::n(2006),
+      ErrorKind::MissingDigitsInNumLit => Code::n(2007),
+      ErrorKind::InvalidStringEscape => Code::n(2008),
+      ErrorKind::NonWhitespaceInStringContinuation => Code::n(2009),
     }
   }
 

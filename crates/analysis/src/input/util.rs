@@ -1,6 +1,6 @@
 //! Pervasive utilities.
 
-use diagnostic_util::Severity;
+use diagnostic_util::{Code, Severity};
 use paths::PathId;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -35,22 +35,22 @@ impl InputError {
   }
 
   /// Returns the code for this.
-  pub fn code(&self) -> u16 {
+  pub fn code(&self) -> Code {
     match self.kind {
-      GetInputErrorKind::Io(_) => 1001,
-      GetInputErrorKind::NotInRoot(_) => 1002,
-      GetInputErrorKind::MultipleRoots(_, _) => 1003,
-      GetInputErrorKind::NoRoot => 1004,
-      GetInputErrorKind::NotGroup => 1005,
-      GetInputErrorKind::CouldNotParseConfig(_) => 1006,
-      GetInputErrorKind::InvalidConfigVersion(_) => 1007,
-      GetInputErrorKind::Cm(_) => 1008,
-      GetInputErrorKind::Mlb(_) => 1009,
-      GetInputErrorKind::Cycle => 1010,
-      GetInputErrorKind::Duplicate(_) => 1011,
-      GetInputErrorKind::InvalidErrorCode(_, _) => 1012,
-      GetInputErrorKind::HasMembersButAlsoOtherSettings => 1013,
-      GetInputErrorKind::UnsupportedExport => 1999,
+      GetInputErrorKind::Io(_) => Code::n(1001),
+      GetInputErrorKind::NotInRoot(_) => Code::n(1002),
+      GetInputErrorKind::MultipleRoots(_, _) => Code::n(1003),
+      GetInputErrorKind::NoRoot => Code::n(1004),
+      GetInputErrorKind::NotGroup => Code::n(1005),
+      GetInputErrorKind::CouldNotParseConfig(_) => Code::n(1006),
+      GetInputErrorKind::InvalidConfigVersion(_) => Code::n(1007),
+      GetInputErrorKind::Cm(_) => Code::n(1008),
+      GetInputErrorKind::Mlb(_) => Code::n(1009),
+      GetInputErrorKind::Cycle => Code::n(1010),
+      GetInputErrorKind::Duplicate(_) => Code::n(1011),
+      GetInputErrorKind::InvalidErrorCode(_, _) => Code::n(1012),
+      GetInputErrorKind::HasMembersButAlsoOtherSettings => Code::n(1013),
+      GetInputErrorKind::UnsupportedExport => Code::n(1999),
     }
   }
 
@@ -84,7 +84,7 @@ pub(crate) enum GetInputErrorKind {
   Mlb(mlb_syntax::Error),
   Cycle,
   Duplicate(str_util::Name),
-  InvalidErrorCode(str_util::SmolStr, std::num::ParseIntError),
+  InvalidErrorCode(str_util::SmolStr, diagnostic_util::ParseCodeError),
   HasMembersButAlsoOtherSettings,
   /// must be last
   UnsupportedExport,

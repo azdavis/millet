@@ -1,6 +1,6 @@
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Sym, Syms, Ty};
-use diagnostic_util::Severity;
+use diagnostic_util::{Code, Severity};
 use fmt_util::{comma_seq, sep_seq};
 use pattern_match::RawPat;
 use std::fmt;
@@ -65,39 +65,39 @@ impl Error {
   }
 
   /// Return the code for this.
-  pub fn code(&self) -> u16 {
+  pub fn code(&self) -> Code {
     match self.kind {
-      ErrorKind::Undefined(_, _) => 5001,
-      ErrorKind::Duplicate(_, _) => 5002,
-      ErrorKind::Missing(_, _) => 5003,
-      ErrorKind::Extra(_, _) => 5004,
-      ErrorKind::Circularity(_, _) => 5005,
-      ErrorKind::MismatchedTypes(_, _) => 5006,
-      ErrorKind::AppLhsNotFn(_) => 5007,
-      ErrorKind::DuplicateLab(_) => 5008,
-      ErrorKind::RealPat => 5009,
-      ErrorKind::UnreachablePattern => 5010,
-      ErrorKind::NonExhaustiveCase(_) => 5011,
-      ErrorKind::NonExhaustiveBinding(_) => 5012,
-      ErrorKind::PatValIdStatus => 5013,
-      ErrorKind::ConPatMustNotHaveArg => 5014,
-      ErrorKind::ConPatMustHaveArg => 5015,
-      ErrorKind::InvalidAsPatName(_) => 5016,
-      ErrorKind::TyNameEscape(_) => 5017,
-      ErrorKind::ValRecExpNotFn => 5018,
-      ErrorKind::WrongNumTyArgs(_, _) => 5019,
-      ErrorKind::ExnCopyNotExnIdStatus => 5020,
-      ErrorKind::InvalidRebindName(_) => 5021,
-      ErrorKind::WrongIdStatus(_) => 5022,
-      ErrorKind::UnresolvedRecordTy => 5023,
-      ErrorKind::OrPatNotSameBindings(_) => 5024,
-      ErrorKind::DecNotAllowedHere => 5025,
-      ErrorKind::ExpHole(_) => 5026,
-      ErrorKind::TyHole => 5027,
-      ErrorKind::BindPolymorphicExpansiveExp => 5028,
-      ErrorKind::Unused(_) => 5029,
-      ErrorKind::TyVarNotAllowedForTyRhs => 5030,
-      ErrorKind::Unsupported(_) => 5999,
+      ErrorKind::Undefined(_, _) => Code::n(5001),
+      ErrorKind::Duplicate(_, _) => Code::n(5002),
+      ErrorKind::Missing(_, _) => Code::n(5003),
+      ErrorKind::Extra(_, _) => Code::n(5004),
+      ErrorKind::Circularity(_, _) => Code::n(5005),
+      ErrorKind::MismatchedTypes(_, _) => Code::n(5006),
+      ErrorKind::AppLhsNotFn(_) => Code::n(5007),
+      ErrorKind::DuplicateLab(_) => Code::n(5008),
+      ErrorKind::RealPat => Code::n(5009),
+      ErrorKind::UnreachablePattern => Code::n(5010),
+      ErrorKind::NonExhaustiveCase(_) => Code::n(5011),
+      ErrorKind::NonExhaustiveBinding(_) => Code::n(5012),
+      ErrorKind::PatValIdStatus => Code::n(5013),
+      ErrorKind::ConPatMustNotHaveArg => Code::n(5014),
+      ErrorKind::ConPatMustHaveArg => Code::n(5015),
+      ErrorKind::InvalidAsPatName(_) => Code::n(5016),
+      ErrorKind::TyNameEscape(_) => Code::n(5017),
+      ErrorKind::ValRecExpNotFn => Code::n(5018),
+      ErrorKind::WrongNumTyArgs(_, _) => Code::n(5019),
+      ErrorKind::ExnCopyNotExnIdStatus => Code::n(5020),
+      ErrorKind::InvalidRebindName(_) => Code::n(5021),
+      ErrorKind::WrongIdStatus(_) => Code::n(5022),
+      ErrorKind::UnresolvedRecordTy => Code::n(5023),
+      ErrorKind::OrPatNotSameBindings(_) => Code::n(5024),
+      ErrorKind::DecNotAllowedHere => Code::n(5025),
+      ErrorKind::ExpHole(_) => Code::n(5026),
+      ErrorKind::TyHole => Code::n(5027),
+      ErrorKind::BindPolymorphicExpansiveExp => Code::n(5028),
+      ErrorKind::Unused(_) => Code::n(5029),
+      ErrorKind::TyVarNotAllowedForTyRhs => Code::n(5030),
+      ErrorKind::Unsupported(_) => Code::n(5999),
     }
   }
 

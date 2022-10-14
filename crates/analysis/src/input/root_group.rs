@@ -74,7 +74,7 @@ impl RootGroup {
 #[derive(Default)]
 pub(crate) struct Config {
   pub(crate) path_vars: paths::slash_var_path::Env,
-  pub(crate) severities: FxHashMap<u16, diagnostic_util::Severity>,
+  pub(crate) severities: FxHashMap<diagnostic_util::Code, diagnostic_util::Severity>,
 }
 
 struct ConfigFromFile {
@@ -151,7 +151,7 @@ impl ConfigFromFile {
       }
     }
     for (code, config) in parsed.errors.into_iter().flatten() {
-      let code = match code.parse::<u16>() {
+      let code = match code.parse::<diagnostic_util::Code>() {
         Ok(x) => x,
         Err(e) => {
           return Err(InputError {
