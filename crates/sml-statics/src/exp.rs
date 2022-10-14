@@ -32,7 +32,7 @@ pub(crate) fn get(
       Ty::MetaVar(mv)
     }
     // sml_def(1)
-    sml_hir::Exp::SCon(scon) => get_scon(st, scon, Generalizable::Always),
+    sml_hir::Exp::SCon(scon) => get_scon(st, Generalizable::Always, scon),
     // sml_def(2)
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
       Ok(Some(val_info)) => {
@@ -41,7 +41,7 @@ pub(crate) fn get(
         if let Some(def) = val_info.def {
           st.mark_used(def.idx);
         }
-        instantiate(st, val_info.ty_scheme.clone(), Generalizable::Always)
+        instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
       }
       Ok(None) => {
         st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
@@ -151,7 +151,7 @@ fn get_matcher(
   // sml_def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
-    let (pm_pat, pat_ty) = pat::get(st, cfg, cx, ars, &mut ve, pat, Generalizable::Sometimes);
+    let (pm_pat, pat_ty) = pat::get(st, cfg, ars, Generalizable::Sometimes, cx, &mut ve, pat);
     let mut cx = cx.clone();
     cx.env.push(Env { val_env: ve, ..Default::default() });
     let exp_ty = get(st, cfg, &cx, ars, exp);

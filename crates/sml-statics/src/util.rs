@@ -5,19 +5,19 @@ use crate::types::{
 };
 use fast_hash::FxHashMap;
 
-pub(crate) fn get_scon(st: &mut St, scon: &sml_hir::SCon, g: Generalizable) -> Ty {
+pub(crate) fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
   // we could have all of these return the basic overloads, but some of them will all only allow the
   // default types anyway.
   match scon {
-    sml_hir::SCon::Int(_) => basic_overload(st, BasicOverload::Int, g),
-    sml_hir::SCon::Real(_) => basic_overload(st, BasicOverload::Real, g),
-    sml_hir::SCon::Word(_) => basic_overload(st, BasicOverload::Word, g),
+    sml_hir::SCon::Int(_) => basic_overload(st, g, BasicOverload::Int),
+    sml_hir::SCon::Real(_) => basic_overload(st, g, BasicOverload::Real),
+    sml_hir::SCon::Word(_) => basic_overload(st, g, BasicOverload::Word),
     sml_hir::SCon::Char(_) => Ty::CHAR,
     sml_hir::SCon::String(_) => Ty::STRING,
   }
 }
 
-fn basic_overload(st: &mut St, b: BasicOverload, g: Generalizable) -> Ty {
+fn basic_overload(st: &mut St, g: Generalizable, b: BasicOverload) -> Ty {
   let mv = st.meta_gen.gen(g);
   let entry = SubstEntry::Kind(TyVarKind::Overloaded(Overload::Basic(b)));
   st.subst().insert(mv, entry);
@@ -79,7 +79,7 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
 
 /// instantiates the type scheme's type with new meta type vars, according to the bound vars of the
 /// type scheme.
-pub(crate) fn instantiate(st: &mut St, ty_scheme: TyScheme, g: Generalizable) -> Ty {
+pub(crate) fn instantiate(st: &mut St, g: Generalizable, ty_scheme: TyScheme) -> Ty {
   let subst: Vec<_> = ty_scheme
     .bound_vars
     .kinds()

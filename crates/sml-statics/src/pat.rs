@@ -17,17 +17,17 @@ use std::collections::BTreeSet;
 pub(crate) fn get(
   st: &mut St,
   cfg: Cfg,
-  cx: &Cx,
   ars: &sml_hir::Arenas,
+  g: Generalizable,
+  cx: &Cx,
   ve: &mut ValEnv,
   pat: sml_hir::PatIdx,
-  g: Generalizable,
 ) -> (Pat, Ty) {
   let pat_ = match pat {
     Some(x) => x,
     None => return (Pat::zero(Con::Any, pat), Ty::None),
   };
-  let ret = match get_(st, cfg, cx, ars, ve, pat_, g) {
+  let ret = match get_(st, cfg, ars, g, cx, ve, pat_) {
     Some(x) => x,
     None => PatRet {
       pm_pat: Pat::zero(Con::Any, pat),
@@ -51,11 +51,11 @@ struct PatRet {
 fn get_(
   st: &mut St,
   cfg: Cfg,
-  cx: &Cx,
   ars: &sml_hir::Arenas,
+  g: Generalizable,
+  cx: &Cx,
   ve: &mut ValEnv,
   pat_: sml_hir::la_arena::Idx<sml_hir::Pat>,
-  g: Generalizable,
 ) -> Option<PatRet> {
   let pat = Some(pat_);
   let mut ty_scheme = None::<TyScheme>;
@@ -75,11 +75,11 @@ fn get_(
         sml_hir::SCon::Char(c) => Con::Char(*c),
         sml_hir::SCon::String(s) => Con::String(s.clone()),
       };
-      let t = get_scon(st, scon, g);
+      let t = get_scon(st, g, scon);
       (Pat::zero(con, pat), t)
     }
     sml_hir::Pat::Con(path, arg) => {
-      let arg = arg.map(|x| get(st, cfg, cx, ars, ve, x, g));
+      let arg = arg.map(|x| get(st, cfg, ars, g, cx, ve, x));
       let maybe_val_info = match get_val_info(&cx.env, path) {
         Ok(x) => x,
         Err(e) => {
@@ -109,7 +109,7 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
-      let ty = instantiate(st, val_info.ty_scheme.clone(), g);
+      let ty = instantiate(st, g, val_info.ty_scheme.clone());
       // sml_def(35), sml_def(41)
       let (sym, args, ty) = match ty {
         Ty::Con(_, sym) => {
@@ -159,7 +159,7 @@ fn get_(
       let mut labels = BTreeSet::<sml_hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
       let rows = record(st, rows, pat_.into(), |st, lab, pat| {
-        let (pm_pat, ty) = get(st, cfg, cx, ars, ve, pat, g);
+        let (pm_pat, ty) = get(st, cfg, ars, g, cx, ve, pat);
         labels.insert(lab.clone());
         pats.push(pm_pat);
         ty
@@ -178,7 +178,7 @@ fn get_(
     }
     // sml_def(42)
     sml_hir::Pat::Typed(inner, want) => {
-      let (pm_pat, got) = get(st, cfg, cx, ars, ve, *inner, g);
+      let (pm_pat, got) = get(st, cfg, ars, g, cx, ve, *inner);
       let mut want = ty::get(st, cx, ars, *want);
       unify(st, want.clone(), got, inner.unwrap_or(pat_).into());
       apply(st.subst(), &mut want);
@@ -186,7 +186,7 @@ fn get_(
     }
     // sml_def(43)
     sml_hir::Pat::As(lhs, rhs) => {
-      let (pm_pat, ty) = get(st, cfg, cx, ars, ve, *rhs, g);
+      let (pm_pat, ty) = get(st, cfg, ars, g, cx, ve, *rhs);
       match get_as_pat_name(ars, *lhs) {
         None => st.err(lhs.unwrap_or(pat_), ErrorKind::AsPatLhsNotName),
         Some(name) => {
@@ -200,11 +200,11 @@ fn get_(
     }
     sml_hir::Pat::Or(or_pat) => {
       let mut fst_ve = ValEnv::default();
-      let (fst_pm_pat, mut ty) = get(st, cfg, cx, ars, &mut fst_ve, or_pat.first, g);
+      let (fst_pm_pat, mut ty) = get(st, cfg, ars, g, cx, &mut fst_ve, or_pat.first);
       let mut pm_pats = vec![fst_pm_pat];
       for &pat in or_pat.rest.iter() {
         let mut rest_ve = ValEnv::default();
-        let (rest_pm_pat, rest_ty) = get(st, cfg, cx, ars, &mut rest_ve, pat, g);
+        let (rest_pm_pat, rest_ty) = get(st, cfg, ars, g, cx, &mut rest_ve, pat);
         pm_pats.push(rest_pm_pat);
         let idx = sml_hir::Idx::from(pat.unwrap_or(pat_));
         unify(st, ty.clone(), rest_ty, idx);

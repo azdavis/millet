@@ -25,7 +25,7 @@ pub(crate) fn eq_ty_scheme_no_emit(st: &mut St, lhs: TyScheme, rhs: TyScheme) ->
 }
 
 fn prepare_generalize(st: &mut St, general: TyScheme, specific: &TyScheme) -> (Ty, Ty) {
-  let general = instantiate(st, general, Generalizable::Always);
+  let general = instantiate(st, Generalizable::Always, general);
   let specific = {
     let subst: Vec<_> = specific
       .bound_vars

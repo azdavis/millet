@@ -211,7 +211,7 @@ fn get_pat_and_src_exp(
   // any fns on the exp, so we don't generalize a recursive call inside the exp, but we can
   // generalize outside.
   st.meta_gen.inc_rank();
-  let ret = pat::get(st, cfg, cx, ars, ve, val_bind.pat, Generalizable::Sometimes);
+  let ret = pat::get(st, cfg, ars, Generalizable::Sometimes, cx, ve, val_bind.pat);
   st.meta_gen.dec_rank();
   for name in ve.keys() {
     if !src_exp.contains_key(name) {
