@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn across_var() {
@@ -152,6 +152,64 @@ val _ =
   in
     []
   end
+"#,
+  );
+}
+
+#[test]
+fn on_val_in_type() {
+  fail(
+    r#"
+val 'a foo = let type t = 'a in () end
+(**                       ^^ undefined type variable: 'a *)
+"#,
+  );
+}
+
+#[test]
+fn on_val_in_datatype() {
+  fail(
+    r#"
+val 'a foo = let datatype d = D of 'a in () end
+(**                                ^^ undefined type variable: 'a *)
+"#,
+  );
+}
+
+#[test]
+fn on_val_in_exn() {
+  check(
+    r#"
+val 'a foo = let exception E of 'a in () end
+"#,
+  );
+}
+
+#[test]
+fn on_fun_in_type() {
+  fail(
+    r#"
+fun 'a foo () = let type t = 'a in () end
+(**                          ^^ undefined type variable: 'a *)
+"#,
+  );
+}
+
+#[test]
+fn on_fun_in_datatype() {
+  fail(
+    r#"
+fun 'a foo () = let datatype d = D of 'a in () end
+(**                                   ^^ undefined type variable: 'a *)
+"#,
+  );
+}
+
+#[test]
+fn on_fun_in_exn() {
+  check(
+    r#"
+fun 'a foo () = let exception E of 'a in () end
 "#,
   );
 }
