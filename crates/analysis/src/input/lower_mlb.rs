@@ -1,7 +1,7 @@
 //! Lower a MLB syntax BasDec into the HIR equivalent.
 
 use crate::input::util::{
-  get_path_id, read_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, InputError, Result,
+  get_path_id, read_file, ErrorKind, ErrorSource, GroupPathToProcess, InputError, Result,
 };
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
@@ -35,7 +35,7 @@ where
             return Err(InputError {
               source: ErrorSource { path: None, range: cx.pos_db.range(name.range) },
               path: cx.path.to_owned(),
-              kind: GetInputErrorKind::Duplicate(name.val),
+              kind: ErrorKind::Duplicate(name.val),
             });
           }
           let exp = get_bas_exp(cx, exp)?;
@@ -59,7 +59,7 @@ where
             return Err(InputError {
               source: ErrorSource { path: None, range: cx.pos_db.range(lhs.range) },
               path: cx.path.to_owned(),
-              kind: GetInputErrorKind::Duplicate(lhs.val),
+              kind: ErrorKind::Duplicate(lhs.val),
             });
           }
           let rhs = rhs.unwrap_or_else(|| lhs.clone());

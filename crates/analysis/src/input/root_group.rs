@@ -1,7 +1,7 @@
 //! Get the root group.
 
 use crate::input::util::{
-  get_path_id, read_dir, ErrorSource, GetInputErrorKind, GroupPathKind, InputError, Result,
+  get_path_id, read_dir, ErrorKind, ErrorSource, GroupPathKind, InputError, Result,
 };
 use fast_hash::FxHashMap;
 use paths::PathId;
@@ -43,7 +43,7 @@ impl RootGroup {
           match &root_group_path {
             Some(rgp) => {
               return Err(InputError {
-                kind: GetInputErrorKind::MultipleRoots(rgp.path.to_owned(), entry.clone()),
+                kind: ErrorKind::MultipleRoots(rgp.path.to_owned(), entry.clone()),
                 source: ErrorSource { path: Some(rgp.path.to_owned()), range: None },
                 path: entry,
               })
@@ -59,7 +59,7 @@ impl RootGroup {
         return Err(InputError {
           source: ErrorSource::default(),
           path: root.as_path().to_owned(),
-          kind: GetInputErrorKind::NoRoot,
+          kind: ErrorKind::NoRoot,
         })
       }
     };
@@ -100,7 +100,7 @@ impl ConfigFromFile {
         return Err(InputError {
           source: ErrorSource::default(),
           path: ret.path,
-          kind: GetInputErrorKind::CouldNotParseConfig(e),
+          kind: ErrorKind::CouldNotParseConfig(e),
         })
       }
     };
@@ -108,7 +108,7 @@ impl ConfigFromFile {
       return Err(InputError {
         source: ErrorSource::default(),
         path: ret.path,
-        kind: GetInputErrorKind::InvalidConfigVersion(parsed.version),
+        kind: ErrorKind::InvalidConfigVersion(parsed.version),
       });
     }
     if let Some(ws) = parsed.workspace {
@@ -117,7 +117,7 @@ impl ConfigFromFile {
           return Err(InputError {
             source: ErrorSource::default(),
             path: ret.path,
-            kind: GetInputErrorKind::HasMembersButAlsoOtherSettings,
+            kind: ErrorKind::HasMembersButAlsoOtherSettings,
           });
         }
         // TODO
@@ -131,7 +131,7 @@ impl ConfigFromFile {
             return Err(InputError {
               source: ErrorSource { path: Some(ret.path), range: None },
               path,
-              kind: GetInputErrorKind::NotGroup,
+              kind: ErrorKind::NotGroup,
             })
           }
         }
@@ -157,7 +157,7 @@ impl ConfigFromFile {
           return Err(InputError {
             source: ErrorSource::default(),
             path: ret.path,
-            kind: GetInputErrorKind::InvalidErrorCode(code, e),
+            kind: ErrorKind::InvalidErrorCode(code, e),
           });
         }
       };

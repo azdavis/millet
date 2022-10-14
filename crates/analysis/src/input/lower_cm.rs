@@ -1,7 +1,7 @@
 //! Lower a CM file into paths and exports.
 
 use crate::input::util::{
-  get_path_id, read_file, ErrorSource, GetInputErrorKind, GroupPathToProcess, InputError, Result,
+  get_path_id, read_file, ErrorKind, ErrorSource, GroupPathToProcess, InputError, Result,
   StartedGroupFile,
 };
 
@@ -48,7 +48,7 @@ where
       return Err(InputError {
         source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
         path: group_path.to_owned(),
-        kind: GetInputErrorKind::Cm(e),
+        kind: ErrorKind::Cm(e),
       })
     }
   };
@@ -90,7 +90,7 @@ where
             return Err(InputError {
               source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },
               path: group_path.to_owned(),
-              kind: GetInputErrorKind::UnsupportedExport,
+              kind: ErrorKind::UnsupportedExport,
             })
           }
         };
@@ -117,7 +117,7 @@ where
         return Err(InputError {
           source: ErrorSource { path: None, range: group_file.pos_db.range(range) },
           path: group_path.to_owned(),
-          kind: GetInputErrorKind::UnsupportedExport,
+          kind: ErrorKind::UnsupportedExport,
         })
       }
       cm::Export::Group(_) => {

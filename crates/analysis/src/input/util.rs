@@ -15,7 +15,7 @@ use text_pos::Range;
 pub struct InputError {
   pub(crate) source: ErrorSource,
   pub(crate) path: PathBuf,
-  pub(crate) kind: GetInputErrorKind,
+  pub(crate) kind: ErrorKind,
 }
 
 impl InputError {
@@ -31,26 +31,26 @@ impl InputError {
 
   /// Return this as an I/O error.
   pub fn from_io(path: PathBuf, e: std::io::Error) -> Self {
-    Self { source: ErrorSource::default(), path, kind: GetInputErrorKind::Io(e) }
+    Self { source: ErrorSource::default(), path, kind: ErrorKind::Io(e) }
   }
 
   /// Returns the code for this.
   pub fn code(&self) -> Code {
     match self.kind {
-      GetInputErrorKind::Io(_) => Code::n(1001),
-      GetInputErrorKind::NotInRoot(_) => Code::n(1002),
-      GetInputErrorKind::MultipleRoots(_, _) => Code::n(1003),
-      GetInputErrorKind::NoRoot => Code::n(1004),
-      GetInputErrorKind::NotGroup => Code::n(1005),
-      GetInputErrorKind::CouldNotParseConfig(_) => Code::n(1006),
-      GetInputErrorKind::InvalidConfigVersion(_) => Code::n(1007),
-      GetInputErrorKind::Cm(_) => Code::n(1008),
-      GetInputErrorKind::Mlb(_) => Code::n(1009),
-      GetInputErrorKind::Cycle => Code::n(1010),
-      GetInputErrorKind::Duplicate(_) => Code::n(1011),
-      GetInputErrorKind::InvalidErrorCode(_, _) => Code::n(1012),
-      GetInputErrorKind::HasMembersButAlsoOtherSettings => Code::n(1013),
-      GetInputErrorKind::UnsupportedExport => Code::n(1999),
+      ErrorKind::Io(_) => Code::n(1001),
+      ErrorKind::NotInRoot(_) => Code::n(1002),
+      ErrorKind::MultipleRoots(_, _) => Code::n(1003),
+      ErrorKind::NoRoot => Code::n(1004),
+      ErrorKind::NotGroup => Code::n(1005),
+      ErrorKind::CouldNotParseConfig(_) => Code::n(1006),
+      ErrorKind::InvalidConfigVersion(_) => Code::n(1007),
+      ErrorKind::Cm(_) => Code::n(1008),
+      ErrorKind::Mlb(_) => Code::n(1009),
+      ErrorKind::Cycle => Code::n(1010),
+      ErrorKind::Duplicate(_) => Code::n(1011),
+      ErrorKind::InvalidErrorCode(_, _) => Code::n(1012),
+      ErrorKind::HasMembersButAlsoOtherSettings => Code::n(1013),
+      ErrorKind::UnsupportedExport => Code::n(1999),
     }
   }
 
@@ -70,7 +70,7 @@ impl fmt::Display for InputError {
 }
 
 #[derive(Debug)]
-pub(crate) enum GetInputErrorKind {
+pub(crate) enum ErrorKind {
   Io(std::io::Error),
   /// TODO use or rm
   #[allow(dead_code)]
@@ -90,29 +90,29 @@ pub(crate) enum GetInputErrorKind {
   UnsupportedExport,
 }
 
-impl fmt::Display for GetInputErrorKind {
+impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      GetInputErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
-      GetInputErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
-      GetInputErrorKind::MultipleRoots(a, b) => {
+      ErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
+      ErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
+      ErrorKind::MultipleRoots(a, b) => {
         write!(f, "multiple root group files: {} and {}", a.display(), b.display())
       }
-      GetInputErrorKind::NoRoot => f.write_str("no root group file"),
-      GetInputErrorKind::NotGroup => f.write_str("not a group file path"),
-      GetInputErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
-      GetInputErrorKind::InvalidConfigVersion(n) => {
+      ErrorKind::NoRoot => f.write_str("no root group file"),
+      ErrorKind::NotGroup => f.write_str("not a group file path"),
+      ErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
+      ErrorKind::InvalidConfigVersion(n) => {
         write!(f, "invalid config version: expected 1, found {n}")
       }
-      GetInputErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
-      GetInputErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
-      GetInputErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
-      GetInputErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
-      GetInputErrorKind::InvalidErrorCode(ec, e) => write!(f, "invalid error code: {ec}: {e}"),
-      GetInputErrorKind::HasMembersButAlsoOtherSettings => {
+      ErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
+      ErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
+      ErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
+      ErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
+      ErrorKind::InvalidErrorCode(ec, e) => write!(f, "invalid error code: {ec}: {e}"),
+      ErrorKind::HasMembersButAlsoOtherSettings => {
         f.write_str("cannot set `workspace.members` but also set other configuration settings")
       }
-      GetInputErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
+      ErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
     }
   }
 }
@@ -150,7 +150,7 @@ where
   fs.canonicalize(path).map_err(|e| InputError {
     source: source.clone(),
     path: path.to_owned(),
-    kind: GetInputErrorKind::Io(e),
+    kind: ErrorKind::Io(e),
   })
 }
 
@@ -161,7 +161,7 @@ where
   fs.read_to_string(path).map_err(|e| InputError {
     source,
     path: path.to_owned(),
-    kind: GetInputErrorKind::Io(e),
+    kind: ErrorKind::Io(e),
   })
 }
 
@@ -172,7 +172,7 @@ where
   fs.read_dir(path).map_err(|e| InputError {
     source,
     path: path.to_owned(),
-    kind: GetInputErrorKind::Io(e),
+    kind: ErrorKind::Io(e),
   })
 }
 

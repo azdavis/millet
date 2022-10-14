@@ -8,9 +8,7 @@ mod util;
 
 use fast_hash::FxHashMap;
 use paths::{PathId, PathMap, WithPath};
-use util::{
-  ErrorSource, GetInputErrorKind, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile,
-};
+use util::{ErrorKind, ErrorSource, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile};
 
 pub use util::InputError;
 
@@ -74,7 +72,7 @@ impl Input {
                     range: group_file.pos_db.range(e.text_range()),
                   },
                   path: group_path.to_owned(),
-                  kind: GetInputErrorKind::Mlb(e),
+                  kind: ErrorKind::Mlb(e),
                 });
               }
             };
@@ -98,7 +96,7 @@ impl Input {
       return Err(InputError {
         source: ErrorSource::default(),
         path: store.get_path(err.witness()).as_path().to_owned(),
-        kind: GetInputErrorKind::Cycle,
+        kind: ErrorKind::Cycle,
       });
     }
     Ok(Self {
