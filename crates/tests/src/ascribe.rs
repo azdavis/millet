@@ -660,3 +660,32 @@ structure Str :> SIG = struct type ('a, 'b) t = unit end
 "#,
   );
 }
+
+#[test]
+fn ty_eq_ty_var_wrong_order() {
+  fail(
+    r#"
+signature SIG = sig
+  type ('a, 'b) t = 'a * 'b
+end
+
+structure Str :> SIG = struct
+  type ('a, 'b) t = 'b * 'a
+(**                 ^^^^^^^ bad *)
+end
+"#,
+  );
+}
+
+#[test]
+fn datatype_ty_var_wrong_order() {
+  check(
+    r#"
+signature SIG =
+    sig    datatype ('a, 'b) t = T of 'a * 'b end
+structure Str :> SIG =
+    struct datatype ('a, 'b) t = T of 'b * 'a end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b -> ('a, 'b) t, found ?a * ?b -> (?b, ?a) t *)
+"#,
+  );
+}
