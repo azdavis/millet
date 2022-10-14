@@ -334,3 +334,22 @@ end
 "#,
   );
 }
+
+#[test]
+fn where_structure_poly() {
+  fail(
+    r#"
+signature FOO = sig
+  type 'a foo
+end
+
+signature BAR = sig
+  structure Foo : FOO
+end
+
+functor Func (Arg : FOO) :> BAR where Foo = Arg = struct
+  structure Foo = Arg
+end
+"#,
+  );
+}
