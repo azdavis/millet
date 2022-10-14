@@ -13,6 +13,13 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.4.2
+
+- Improve `where S = T` involving polymorphic types.
+- Allow shadowing constructors with `val rec`.
+- Treat type variables bound at `val` or `fun` as out of scope in the right-hand side of `datatype` and `type` declarations.
+- Remove a cap on the number of errors the server may report.
+
 ## v0.4.1
 
 - Emit an error for numeric literals with trailing alphabetic characters.
