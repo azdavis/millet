@@ -26,7 +26,7 @@ where
 #[test]
 fn sml_def() {
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   let dirs: [PathBuf; 3] =
     ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
   let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
@@ -53,7 +53,7 @@ fn sml_def() {
 #[test]
 fn test_refs() {
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   let dir: PathBuf = ["crates", "sml-statics", "src"].into_iter().collect();
   let out = cmd!(sh, "git grep -hoE 'test\\(([a-z0-9_:]+)\\)' {dir}").output().unwrap();
   let out = String::from_utf8(out.stdout).unwrap();
@@ -77,7 +77,7 @@ fn test_refs() {
 #[test]
 fn no_ignore() {
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   let word = "ignore";
   let has_ignore = cmd!(sh, "git grep -lFe #[{word}").ignore_status().output().unwrap();
   let out = String::from_utf8(has_ignore.stdout).unwrap();
@@ -90,7 +90,7 @@ fn no_ignore() {
 #[test]
 fn sml_libs() {
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   let mut path: PathBuf = ["crates", "sml-libs", "src"].into_iter().collect();
   let mut entries = sh.read_dir(&path).unwrap();
   entries.retain(|x| x.extension().is_none());
@@ -125,7 +125,7 @@ fn sml_libs() {
 #[test]
 fn crate_architecture_doc() {
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   let path = sh.current_dir().join("docs").join("architecture.md");
   let contents = sh.read_file(path).unwrap();
   let in_doc: BTreeSet<_> = contents
@@ -149,7 +149,7 @@ fn crate_architecture_doc() {
 #[test]
 fn docs_readme() {
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   let path = sh.current_dir().join("docs").join("readme.md");
   let contents = sh.read_file(path).unwrap();
   let in_readme: BTreeSet<_> = contents
@@ -176,7 +176,7 @@ fn docs_readme() {
 #[test]
 fn no_debugging() {
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   // the uppercase + to_ascii_lowercase is to prevent git grep from triggering on this file.
   let fst = "DBG".to_ascii_lowercase();
   let snd = "EPRINT".to_ascii_lowercase();
@@ -195,7 +195,7 @@ fn changelog() {
     return;
   }
   let sh = Shell::new().unwrap();
-  let _d = sh.push_dir(root_dir());
+  sh.change_dir(root_dir());
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output().unwrap().stdout).unwrap();
   let tags: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
   let path = sh.current_dir().join("docs").join("changelog.md");
