@@ -18,6 +18,7 @@ use std::collections::BTreeSet;
 pub(crate) struct Cfg {
   pub(crate) cfg: config::Cfg,
   pub(crate) gen: Generalizable,
+  pub(crate) rec: bool,
 }
 
 pub(crate) fn get(
@@ -91,7 +92,9 @@ fn get_(
           return None;
         }
       };
-      let is_var = arg.is_none() && path.structures().is_empty() && ok_val_info(maybe_val_info);
+      // test(deviations::mlton::rebind_ctor)
+      let is_var =
+        arg.is_none() && path.structures().is_empty() && (ok_val_info(maybe_val_info) || cfg.rec);
       // sml_def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));

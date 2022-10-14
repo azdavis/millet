@@ -41,8 +41,8 @@ val op = = 13
 fn rebind_true() {
   check(
     r#"
-    fun true () = ()
-(** ^^^^^^^^^^^^^^^^ expected bool, found unit -> unit *)
+fun true () = ()
+(** ^^^^^^^^^^^^ cannot re-bind name: true *)
 "#,
   );
 }
@@ -51,8 +51,8 @@ fn rebind_true() {
 fn rebind_false() {
   check(
     r#"
-    fun false () = ()
-(** ^^^^^^^^^^^^^^^^^ expected bool, found unit -> unit *)
+fun false () = ()
+(** ^^^^^^^^^^^^^ cannot re-bind name: false *)
 "#,
   );
 }
@@ -61,8 +61,8 @@ fn rebind_false() {
 fn rebind_nil() {
   check(
     r#"
-    fun nil () = ()
-(** ^^^^^^^^^^^^^^^ expected ?a list, found unit -> unit *)
+fun nil () = ()
+(** ^^^^^^^^^^^ cannot re-bind name: nil *)
 "#,
   );
 }
@@ -72,7 +72,7 @@ fn rebind_cons() {
   check(
     r#"
 fun op :: () = ()
-(** ^^^^^^^^^^^^^ missing argument for constructor pattern *)
+(** ^^^^^^^^^^^^^ cannot re-bind name: :: *)
 "#,
   );
 }
@@ -82,7 +82,7 @@ fn rebind_ref() {
   check(
     r#"
 fun ref () = ()
-(** ^^^^^^^^^^^ missing argument for constructor pattern *)
+(** ^^^^^^^^^^^ cannot re-bind name: ref *)
 "#,
   );
 }

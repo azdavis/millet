@@ -39,6 +39,7 @@ pub(crate) fn get(
       let mut src_exp = FxHashMap::<str_util::Name, sml_hir::ExpIdx>::default();
       let mut exp_cfg = cfg;
       exp_cfg.mark_defined = true;
+      let mut pat_cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
       while let Some(val_bind) = val_binds.get(idx) {
         if val_bind.rec {
           // this and all other remaining ones are recursive.
@@ -47,7 +48,7 @@ pub(crate) fn get(
         idx += 1;
         // sml_def(25)
         let (pm_pat, mut want) =
-          get_pat_and_src_exp(st, cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
+          get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
         let got = exp::get(st, exp_cfg, &cx, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
@@ -56,9 +57,12 @@ pub(crate) fn get(
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
       // also need a separate recursive-only ValEnv.
       let mut rec_ve = ValEnv::default();
+      pat_cfg.rec = true;
       let got_pats: Vec<_> = val_binds[idx..]
         .iter()
-        .map(|val_bind| get_pat_and_src_exp(st, cfg, &cx, ars, &mut rec_ve, val_bind, &mut src_exp))
+        .map(|val_bind| {
+          get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut rec_ve, val_bind, &mut src_exp)
+        })
         .collect();
       // merge the recursive and non-recursive ValEnvs, making sure they don't clash.
       for (name, val_info) in rec_ve.iter() {
@@ -200,7 +204,7 @@ pub(crate) fn get(
 
 fn get_pat_and_src_exp(
   st: &mut St,
-  cfg: Cfg,
+  cfg: pat::Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
   ve: &mut ValEnv,
@@ -211,7 +215,6 @@ fn get_pat_and_src_exp(
   // any fns on the exp, so we don't generalize a recursive call inside the exp, but we can
   // generalize outside.
   st.meta_gen.inc_rank();
-  let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes };
   let ret = pat::get(st, cfg, ars, cx, ve, val_bind.pat);
   st.meta_gen.dec_rank();
   for name in ve.keys() {

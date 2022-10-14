@@ -151,7 +151,7 @@ fn get_matcher(
   // sml_def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
-    let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes };
+    let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
     let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, pat);
     let mut cx = cx.clone();
     cx.env.push(Env { val_env: ve, ..Default::default() });

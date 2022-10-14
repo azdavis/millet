@@ -1,6 +1,6 @@
 //! http://mlton.org/UnresolvedBugs
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn fun_bar_case() {
@@ -20,7 +20,7 @@ fun f 0 y =
 
 #[test]
 fn rebind_ctor() {
-  fail(
+  check(
     r#"
 datatype uh = Uh
 val rec Uh = fn () => ()
