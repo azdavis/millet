@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn ok_smoke() {
@@ -546,6 +546,117 @@ structure Str :> SIG = struct
   type 'a t = (unit * 'a) u
   val no = fn ((), _) => ()
 end
+"#,
+  );
+}
+
+#[test]
+fn where_poly_multi_diff_order_ok() {
+  check(
+    r#"
+datatype ('a, 'b) either = A of 'a | B of 'b
+
+signature SIG = sig
+  type ('a, 'b) t
+end
+
+structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either = struct
+  type ('a, 'b) t = ('b, 'a) either
+end
+"#,
+  );
+}
+
+#[test]
+fn where_poly_multi_where_diff_order_err() {
+  fail(
+    r#"
+datatype ('a, 'b) either = A of 'a | B of 'b
+
+signature SIG = sig
+  type ('a, 'b) t
+end
+
+structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either = struct
+  type ('a, 'b) t = ('a, 'b) either
+(**                 ^^^^^^^^^^^^^^^ expected ('b, 'a) either, found ('a, 'b) either *)
+end
+"#,
+  );
+}
+
+#[test]
+fn where_poly_multi_str_diff_order_err() {
+  fail(
+    r#"
+datatype ('a, 'b) either = A of 'a | B of 'b
+
+signature SIG = sig
+  type ('a, 'b) t
+end
+
+structure Str :> SIG where type ('a, 'b) t = ('a, 'b) either = struct
+  type ('a, 'b) t = ('b, 'a) either
+(**                 ^^^^^^^^^^^^^^^ expected ('a, 'b) either, found ('b, 'a) either *)
+end
+"#,
+  );
+}
+
+#[test]
+fn sig_where_str_more_poly() {
+  fail(
+    r#"
+signature SIG = sig type 'a t end
+structure Str :> SIG where type 'a t = unit =
+    struct type ('a, 'b) t = unit end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
+"#,
+  );
+}
+
+#[test]
+fn sig_where_sig_more_poly() {
+  check(
+    r#"
+signature SIG = sig type ('a, 'b) t end
+structure Str :> SIG where type 'a t = unit = struct type 'a t = unit end
+(**              ^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 2 type arguments, found 1 *)
+"#,
+  );
+}
+
+#[test]
+fn sig_where_where_more_poly() {
+  check(
+    r#"
+signature SIG = sig type 'a t end
+structure Str :> SIG where type ('a, 'b) t = unit = struct type 'a t = unit end
+(**              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
+"#,
+  );
+}
+
+#[test]
+fn sig_more_poly() {
+  // TODO error could be better
+  check(
+    r#"
+signature SIG = sig type 'a t end
+structure Str :> SIG = struct type t = unit end
+(**                    ^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a t, found unit *)
+"#,
+  );
+}
+
+#[test]
+fn str_less_poly() {
+  // TODO error could be better
+  check(
+    r#"
+signature SIG = sig type 'a t end
+structure Str :> SIG = struct type ('a, 'b) t = unit end
+(**                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a t, found unit *)
 "#,
   );
 }
