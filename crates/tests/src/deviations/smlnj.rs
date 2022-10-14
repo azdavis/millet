@@ -337,7 +337,7 @@ end
 
 #[test]
 fn where_structure_poly() {
-  fail(
+  check(
     r#"
 signature FOO = sig
   type 'a foo

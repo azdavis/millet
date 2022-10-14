@@ -295,7 +295,7 @@ fn get_sig_exp(
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, ty_vars, sig_exp.into());
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, *ty));
       generalize_fixed(fixed, &mut ty_scheme);
-      get_where_type(st, &mut inner_env, ty_vars, path, ty_scheme, sig_exp.into());
+      get_where_type(st, &mut inner_env, path, ty_scheme, sig_exp.into());
       ac.append(&mut inner_env);
       ov
     }
@@ -326,7 +326,7 @@ fn get_sig_exp(
         match get_ty_info(&bs.env, &rhs) {
           Ok(ty_info) => {
             let ty_scheme = ty_info.ty_scheme.clone();
-            get_where_type(st, &mut inner_env, &[], &lhs, ty_scheme, sig_exp.into());
+            get_where_type(st, &mut inner_env, &lhs, ty_scheme, sig_exp.into());
           }
           Err(e) => st.err(sig_exp, e),
         }
@@ -340,23 +340,24 @@ fn get_sig_exp(
 fn get_where_type(
   st: &mut St,
   inner_env: &mut Env,
-  ty_vars: &[sml_hir::TyVar],
   path: &sml_hir::Path,
   ty_scheme: TyScheme,
   idx: sml_hir::Idx,
 ) {
+  let got_len = ty_scheme.bound_vars.len();
   match get_ty_info(inner_env, path) {
     Ok(ty_info) => {
       let want_len = ty_info.ty_scheme.bound_vars.len();
-      if want_len == ty_vars.len() {
+      if want_len == got_len {
         match &ty_info.ty_scheme.ty {
           Ty::None => {}
           // TODO side condition for sym not in T of B?
+          // TODO side condition for well-formed?
           Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), inner_env),
           t => unreachable!("bad `where`: {t:?}"),
         }
       } else {
-        st.err(idx, ErrorKind::WrongNumTyArgs(want_len, ty_vars.len()));
+        st.err(idx, ErrorKind::WrongNumTyArgs(want_len, got_len));
       }
     }
     Err(e) => st.err(idx, e),
