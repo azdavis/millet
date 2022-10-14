@@ -2036,6 +2036,22 @@ fun useArg x = x + 3
 fun doNotBindArg _ = 3
 ```
 
+## 5030
+
+A type variable bound at a `val` or `fun` declaration was used in the right-hand side of a `type` or `datatype` declaration.
+
+```sml
+(* error *)
+fun 'a foo (x : 'a) = let type t = 'a * 'a in (x, x) : t end
+```
+
+To fix, bind the type variable at the `type` or `datatype`, or remove it from the right-hand side.
+
+```sml
+(* ok *)
+fun 'a foo (x : 'a) = let type 'b t = 'b * 'b in (x, x) : 'a t end
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.
