@@ -151,10 +151,11 @@ fn get_matcher(
   // sml_def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
-    let (pm_pat, pat_ty) = pat::get(st, cfg, ars, Generalizable::Sometimes, cx, &mut ve, pat);
+    let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes };
+    let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, pat);
     let mut cx = cx.clone();
     cx.env.push(Env { val_env: ve, ..Default::default() });
-    let exp_ty = get(st, cfg, &cx, ars, exp);
+    let exp_ty = get(st, cfg.cfg, &cx, ars, exp);
     let pi = pat.map_or(idx, Into::into);
     unify(st, param_ty.clone(), pat_ty, pi);
     let ei = exp.map_or(idx, Into::into);
