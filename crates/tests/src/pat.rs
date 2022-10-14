@@ -1,6 +1,6 @@
 mod or;
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn unexpected_arg_1() {
@@ -134,7 +134,7 @@ fun f x =
 
 #[test]
 fn as_pat_lhs_not_name_paren() {
-  fail(
+  check(
     r#"
 fun f x =
   case x of

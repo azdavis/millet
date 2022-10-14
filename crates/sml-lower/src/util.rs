@@ -56,6 +56,7 @@ pub(crate) enum ErrorKind {
   InvalidEqtype,
   DecHole,
   NotSpec,
+  AsPatLhsNotName,
   /// must be last
   Unsupported(&'static str),
 }
@@ -94,6 +95,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidEqtype => f.write_str("`eqtype` not allowed here"),
       ErrorKind::DecHole => f.write_str("declaration hole"),
       ErrorKind::NotSpec => f.write_str("non-specification not allowed here"),
+      ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
@@ -143,6 +145,7 @@ impl Error {
       ErrorKind::InvalidEqtype => 4021,
       ErrorKind::DecHole => 4022,
       ErrorKind::NotSpec => 4023,
+      ErrorKind::AsPatLhsNotName => 4024,
       ErrorKind::Unsupported(_) => 4999,
     }
   }

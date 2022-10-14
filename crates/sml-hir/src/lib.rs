@@ -251,10 +251,11 @@ pub enum Pat {
     allows_other: bool,
   },
   Typed(PatIdx, TyIdx),
-  /// the Definition defines as-pats as being a name, then an optional type annotation, then `as
-  /// <pat>`. however, we allow the more general `<pat1> as <pat2>` and later reject `<pat1>` that
-  /// is neither simply a name nor a typed name.
-  As(PatIdx, PatIdx),
+  /// the Definition defines as-pats as being a name, then an optional type annotation, then `as`,
+  /// then a pat. however, we put the type annotation on the rhs pat.
+  ///
+  /// also note that we parse `<pat> as <pat>` but reject when lowering.
+  As(Name, PatIdx),
   Or(OrPat),
 }
 

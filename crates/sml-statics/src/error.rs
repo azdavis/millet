@@ -35,7 +35,6 @@ pub(crate) enum ErrorKind {
   ExpHole(Ty),
   TyHole,
   BindPolymorphicExpansiveExp,
-  AsPatLhsNotName,
   Unused(str_util::Name),
   /// must be last
   Unsupported(&'static str),
@@ -95,8 +94,7 @@ impl Error {
       ErrorKind::ExpHole(_) => 5026,
       ErrorKind::TyHole => 5027,
       ErrorKind::BindPolymorphicExpansiveExp => 5028,
-      ErrorKind::AsPatLhsNotName => 5029,
-      ErrorKind::Unused(_) => 5030,
+      ErrorKind::Unused(_) => 5029,
       ErrorKind::Unsupported(_) => 5999,
     }
   }
@@ -221,7 +219,6 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::BindPolymorphicExpansiveExp => {
         f.write_str("cannot bind expansive polymorphic expression")
       }
-      ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
       ErrorKind::Unused(name) => {
         let item = Item::Val;
         write!(f, "unused {item}: {name}")

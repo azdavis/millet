@@ -45,17 +45,15 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
               r.last = false;
             }
             let lab = str_util::Name::new(row.name_star_eq()?.token.text());
-            let lab_pat = name(lab.as_str());
             let ty_ann = row.ty_annotation().map(|x| ty::get(cx, x.ty()));
             let as_tail = row.as_pat_tail().map(|x| get(cx, x.pat()));
             let pat = match (ty_ann, as_tail) {
-              (Some(ty), Some(pat)) => sml_hir::Pat::As(
-                cx.pat(lab_pat, ptr.clone()),
-                cx.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()),
-              ),
-              (Some(ty), None) => sml_hir::Pat::Typed(cx.pat(lab_pat, ptr.clone()), ty),
-              (None, Some(pat)) => sml_hir::Pat::As(cx.pat(lab_pat, ptr.clone()), pat),
-              (None, None) => lab_pat,
+              (Some(ty), Some(pat)) => {
+                sml_hir::Pat::As(lab.clone(), cx.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()))
+              }
+              (Some(ty), None) => sml_hir::Pat::Typed(cx.pat(name(lab.as_str()), ptr.clone()), ty),
+              (None, Some(pat)) => sml_hir::Pat::As(lab.clone(), pat),
+              (None, None) => name(lab.as_str()),
             };
             Some((sml_hir::Lab::Name(lab), cx.pat(pat, ptr.clone())))
           }
@@ -108,9 +106,17 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       sml_hir::Pat::Typed(get(cx, pat.pat()), ty::get(cx, pat.ty()))
     }
     ast::Pat::AsPat(pat) => {
-      let lhs = get(cx, pat.pat());
-      let rhs = pat.as_pat_tail()?.pat().and_then(|pat| get(cx, Some(pat)));
-      sml_hir::Pat::As(lhs, rhs)
+      let mut rhs = pat.as_pat_tail()?.pat().and_then(|pat| get(cx, Some(pat)));
+      let lhs = pat.pat()?;
+      let name = match lhs {
+        ast::Pat::TypedPat(pat) => {
+          let ty = ty::get(cx, pat.ty());
+          rhs = cx.pat(sml_hir::Pat::Typed(rhs, ty), ptr.clone());
+          get_pat_name(cx, pat.pat()?)?
+        }
+        pat => get_pat_name(cx, pat)?,
+      };
+      sml_hir::Pat::As(name, rhs)
     }
     ast::Pat::OrPat(pat) => {
       // flatten or pats.
@@ -122,6 +128,27 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
     }
   };
   Some(sml_hir::OrPat { first: cx.pat(ret, ptr), rest: Vec::new() })
+}
+
+fn get_pat_name(cx: &mut Cx, pat: ast::Pat) -> Option<str_util::Name> {
+  let pat = match pat {
+    ast::Pat::ConPat(pat) => pat,
+    _ => {
+      cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+      return None;
+    }
+  };
+  if pat.pat().is_some() {
+    cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    return None;
+  }
+  let mut iter = pat.path()?.name_star_eq_dots();
+  let name = str_util::Name::new(iter.next()?.name_star_eq()?.token.text());
+  if iter.next().is_some() {
+    cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    return None;
+  }
+  Some(name)
 }
 
 fn has_types(pat: ast::Pat) -> bool {
