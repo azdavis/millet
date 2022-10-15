@@ -235,7 +235,7 @@ fn get_bas_dec(
       }
     }
     BasDec::Path(path, kind) => match kind {
-      PathKind::Sml => {
+      PathKind::Source => {
         let contents = files.sml.get(path).expect("no sml file for path id");
         let mut fix_env = scope.fix_env.clone();
         let syntax = SourceFileSyntax::new(contents, &mut fix_env);
@@ -262,7 +262,7 @@ fn get_bas_dec(
         // this drops the errors from any previous analyses of this file on the floor.
         cx.sml.insert(*path, file);
       }
-      PathKind::Mlb => match cx.cache.get(path) {
+      PathKind::Group => match cx.cache.get(path) {
         Some(mb) => ac.append(mb.clone()),
         None => get_group_file(cx, files, ac, *path),
       },
@@ -372,6 +372,6 @@ pub enum Namespace {
 #[derive(Debug, Clone, Copy)]
 #[allow(missing_docs)]
 pub enum PathKind {
-  Sml,
-  Mlb,
+  Source,
+  Group,
 }

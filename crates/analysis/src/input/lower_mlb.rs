@@ -83,7 +83,7 @@ where
         mlb_syntax::PathKind::Sml => {
           let contents = read_file(cx.fs, source, path.as_path())?;
           cx.sources.insert(path_id, contents);
-          mlb_statics::PathKind::Sml
+          mlb_statics::PathKind::Source
         }
         mlb_syntax::PathKind::Mlb => {
           cx.stack.push(GroupPathToProcess {
@@ -91,7 +91,7 @@ where
             range: source.range,
             path: path_id,
           });
-          mlb_statics::PathKind::Mlb
+          mlb_statics::PathKind::Group
         }
       };
       mlb_statics::BasDec::Path(path_id, kind)

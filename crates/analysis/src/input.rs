@@ -54,13 +54,13 @@ impl Input {
               cm_file
                 .cm_paths
                 .iter()
-                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Mlb)),
+                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group)),
             )
             .chain(
               cm_file
                 .sml_paths
                 .iter()
-                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Sml)),
+                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Source)),
             )
             .collect();
           let bas_dec = mlb_statics::BasDec::Local(
