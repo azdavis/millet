@@ -4,7 +4,7 @@
 
 use text_size_util::WithRange;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum BasDec {
   Basis(WithRange<str_util::Name>, Box<BasExp>),
   Open(WithRange<str_util::Name>),
@@ -30,7 +30,7 @@ impl BasDec {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum BasExp {
   Bas(BasDec),
   Name(WithRange<str_util::Name>),
