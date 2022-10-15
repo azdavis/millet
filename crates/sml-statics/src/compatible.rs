@@ -7,7 +7,26 @@ use crate::util::{apply_bv, instantiate};
 
 type Result = std::result::Result<(), ErrorKind>;
 
-pub(crate) fn eq_ty_scheme_no_emit(st: &mut St, lhs: &TyScheme, rhs: TyScheme) -> Result {
+pub(crate) fn eq_ty_fn_no_emit(st: &mut St, mut lhs: TyScheme, mut rhs: TyScheme) -> Result {
+  if lhs.bound_vars.len() != rhs.bound_vars.len() {
+    return Err(ErrorKind::WrongNumTyArgs(lhs.bound_vars.len(), rhs.bound_vars.len()));
+  }
+  let subst = fixed_var_subst(st, &lhs.bound_vars);
+  apply_bv(&subst, &mut lhs.ty);
+  apply_bv(&subst, &mut rhs.ty);
+  unify_no_emit(st, lhs.ty, rhs.ty)
+}
+
+/// emits no error iff `lhs` and `rhs` are equal ty functions. (this is distinct from equal ty
+/// schemes because the order of bound variables is significant.)
+pub(crate) fn eq_ty_fn(st: &mut St, lhs: TyScheme, rhs: TyScheme, idx: sml_hir::Idx) {
+  match eq_ty_fn_no_emit(st, lhs, rhs) {
+    Ok(()) => {}
+    Err(e) => st.err(idx, e),
+  }
+}
+
+fn eq_ty_scheme_no_emit(st: &mut St, lhs: &TyScheme, rhs: TyScheme) -> Result {
   generalizes_no_emit(st, lhs.clone(), &rhs)?;
   generalizes_no_emit(st, rhs, lhs)?;
   Ok(())

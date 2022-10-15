@@ -1,4 +1,4 @@
-use crate::compatible::{eq_ty_scheme, eq_ty_scheme_no_emit, generalizes};
+use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::config::Cfg;
 use crate::error::{ErrorKind, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
@@ -672,7 +672,7 @@ fn bound_ty_name_to_path<'e>(
   ty_scheme: &TyScheme,
 ) -> bool {
   for (name, ty_info) in &env.ty_env {
-    if eq_ty_scheme_no_emit(st, &ty_info.ty_scheme, ty_scheme.clone()).is_ok() {
+    if eq_ty_fn_no_emit(st, ty_info.ty_scheme.clone(), ty_scheme.clone()).is_ok() {
       ac.push(name);
       return true;
     }
@@ -715,7 +715,7 @@ fn env_enrich(st: &mut St, general: &Env, specific: &Env, idx: sml_hir::Idx) {
 }
 
 fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_hir::Idx) {
-  eq_ty_scheme(st, &general.ty_scheme, specific.ty_scheme, idx);
+  eq_ty_fn(st, specific.ty_scheme, general.ty_scheme.clone(), idx);
   if specific.val_env.is_empty() {
     return;
   }
@@ -725,7 +725,7 @@ fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_h
         if !general.id_status.same_kind_as(&specific.id_status) {
           st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
         }
-        eq_ty_scheme(st, &general.ty_scheme, specific.ty_scheme, idx);
+        eq_ty_fn(st, specific.ty_scheme, general.ty_scheme.clone(), idx);
       }
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
     }

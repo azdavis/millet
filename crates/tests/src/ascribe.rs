@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -569,7 +569,7 @@ end
 
 #[test]
 fn where_poly_multi_where_diff_order_err() {
-  fail(
+  check(
     r#"
 datatype ('a, 'b) either = A of 'a | B of 'b
 
@@ -577,17 +577,16 @@ signature SIG = sig
   type ('a, 'b) t
 end
 
-structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either = struct
-  type ('a, 'b) t = ('a, 'b) either
-(**                 ^^^^^^^^^^^^^^^ expected ('b, 'a) either, found ('a, 'b) either *)
-end
+structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either =
+    struct type ('a, 'b) t = ('a, 'b) either end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected ('b, 'a) either, found ('a, 'b) either *)
 "#,
   );
 }
 
 #[test]
 fn where_poly_multi_str_diff_order_err() {
-  fail(
+  check(
     r#"
 datatype ('a, 'b) either = A of 'a | B of 'b
 
@@ -595,17 +594,16 @@ signature SIG = sig
   type ('a, 'b) t
 end
 
-structure Str :> SIG where type ('a, 'b) t = ('a, 'b) either = struct
-  type ('a, 'b) t = ('b, 'a) either
-(**                 ^^^^^^^^^^^^^^^ expected ('a, 'b) either, found ('b, 'a) either *)
-end
+structure Str :> SIG where type ('a, 'b) t = ('a, 'b) either =
+    struct type ('a, 'b) t = ('b, 'a) either end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected ('a, 'b) either, found ('b, 'a) either *)
 "#,
   );
 }
 
 #[test]
 fn sig_where_str_more_poly() {
-  fail(
+  check(
     r#"
 signature SIG = sig type 'a t end
 structure Str :> SIG where type 'a t = unit =
@@ -639,40 +637,37 @@ structure Str :> SIG where type ('a, 'b) t = unit = struct type 'a t = unit end
 
 #[test]
 fn sig_more_poly() {
-  // TODO error could be better
   check(
     r#"
 signature SIG = sig type 'a t end
 structure Str :> SIG = struct type t = unit end
-(**                    ^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a t, found unit *)
+(**                    ^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 0 *)
 "#,
   );
 }
 
 #[test]
 fn str_less_poly() {
-  // TODO error could be better
   check(
     r#"
 signature SIG = sig type 'a t end
 structure Str :> SIG = struct type ('a, 'b) t = unit end
-(**                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a t, found unit *)
+(**                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
 "#,
   );
 }
 
 #[test]
 fn ty_eq_ty_var_wrong_order() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type ('a, 'b) t = 'a * 'b
 end
 
-structure Str :> SIG = struct
-  type ('a, 'b) t = 'b * 'a
-(**                 ^^^^^^^ bad *)
-end
+structure Str :> SIG =
+    struct type ('a, 'b) t = 'b * 'a end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b, found 'b * 'a *)
 "#,
   );
 }
@@ -685,7 +680,7 @@ signature SIG =
     sig    datatype ('a, 'b) t = T of 'a * 'b end
 structure Str :> SIG =
     struct datatype ('a, 'b) t = T of 'b * 'a end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b -> ('a, 'b) t, found ?a * ?b -> (?b, ?a) t *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b -> ('a, 'b) t, found 'b * 'a -> ('a, 'b) t *)
 "#,
   );
 }
