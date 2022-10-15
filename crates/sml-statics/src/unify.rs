@@ -5,29 +5,32 @@ use crate::st::St;
 use crate::types::{meta_vars, MetaTyVar, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
 
+pub(crate) fn unify(st: &mut St, want: Ty, got: Ty, idx: sml_hir::Idx) {
+  match unify_no_emit(st, want, got) {
+    Ok(()) => {}
+    Err(e) => st.err(idx, e),
+  }
+}
+
+pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorKind> {
+  unify_(st, want.clone(), got.clone()).map_err(|e| match e {
+    UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
+    UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
+  })
+}
+
 #[derive(Debug)]
-pub(crate) enum UnifyError {
+enum UnifyError {
   OccursCheck(MetaTyVar, Ty),
   HeadMismatch,
 }
 
-pub(crate) type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
-
-pub(crate) fn unify(st: &mut St, want: Ty, got: Ty, idx: sml_hir::Idx) {
-  let e = match unify_(st, want.clone(), got.clone()) {
-    Ok(()) => return,
-    Err(e) => match e {
-      UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
-      UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
-    },
-  };
-  st.err(idx, e);
-}
+type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
 
 /// does not emit any errors to the `st`, instead returns an error (if any).
 ///
 /// `want` and `got` will have `subst` applied to them upon entry to this function.
-pub(crate) fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
+fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
   apply(st.subst(), &mut want);
   apply(st.subst(), &mut got);
   match (want, got) {
