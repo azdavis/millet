@@ -17,7 +17,6 @@ elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }
 log = "0.4"
-mlb-hir = { path = "../mlb-hir" }
 mlb-statics = { path = "../mlb-statics" }
 mlb-syntax = { path = "../mlb-syntax" }
 paths = { path = "../paths" }

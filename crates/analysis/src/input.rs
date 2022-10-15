@@ -47,19 +47,25 @@ impl Input {
           let exports: Vec<_> = cm_file
             .exports
             .into_iter()
-            .map(|ex| mlb_hir::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
+            .map(|ex| mlb_statics::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
             .collect();
           let paths: Vec<_> = std::iter::empty()
             .chain(
-              cm_file.cm_paths.iter().map(|&p| mlb_hir::BasDec::Path(p, mlb_hir::PathKind::Mlb)),
+              cm_file
+                .cm_paths
+                .iter()
+                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Mlb)),
             )
             .chain(
-              cm_file.sml_paths.iter().map(|&p| mlb_hir::BasDec::Path(p, mlb_hir::PathKind::Sml)),
+              cm_file
+                .sml_paths
+                .iter()
+                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Sml)),
             )
             .collect();
-          let bas_dec = mlb_hir::BasDec::Local(
-            mlb_hir::BasDec::seq(paths).into(),
-            mlb_hir::BasDec::seq(exports).into(),
+          let bas_dec = mlb_statics::BasDec::Local(
+            mlb_statics::BasDec::seq(paths).into(),
+            mlb_statics::BasDec::seq(exports).into(),
           );
           let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
           (path, group)
@@ -134,7 +140,7 @@ impl Input {
 #[derive(Debug)]
 pub(crate) struct Group {
   /// A lowered BasDec, describing the group.
-  pub(crate) bas_dec: mlb_hir::BasDec,
+  pub(crate) bas_dec: mlb_statics::BasDec,
   /// A position DB for the group file that yielded the dec.
   pub(crate) pos_db: text_pos::PositionDb,
 }

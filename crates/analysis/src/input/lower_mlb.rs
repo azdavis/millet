@@ -21,7 +21,7 @@ pub(crate) struct MlbCx<'a, F> {
 pub(crate) fn get_bas_dec<F>(
   cx: &mut MlbCx<'_, F>,
   dec: mlb_syntax::BasDec,
-) -> Result<mlb_hir::BasDec>
+) -> Result<mlb_statics::BasDec>
 where
   F: paths::FileSystem,
 {
@@ -39,17 +39,18 @@ where
             });
           }
           let exp = get_bas_exp(cx, exp)?;
-          Ok(mlb_hir::BasDec::Basis(name, exp.into()))
+          Ok(mlb_statics::BasDec::Basis(name, exp.into()))
         })
         .collect::<Result<Vec<_>>>()?;
-      mlb_hir::BasDec::seq(binds)
+      mlb_statics::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Open(names) => {
-      mlb_hir::BasDec::seq(names.into_iter().map(mlb_hir::BasDec::Open).collect())
+      mlb_statics::BasDec::seq(names.into_iter().map(mlb_statics::BasDec::Open).collect())
     }
-    mlb_syntax::BasDec::Local(local_dec, in_dec) => {
-      mlb_hir::BasDec::Local(get_bas_dec(cx, *local_dec)?.into(), get_bas_dec(cx, *in_dec)?.into())
-    }
+    mlb_syntax::BasDec::Local(local_dec, in_dec) => mlb_statics::BasDec::Local(
+      get_bas_dec(cx, *local_dec)?.into(),
+      get_bas_dec(cx, *in_dec)?.into(),
+    ),
     mlb_syntax::BasDec::Export(ns, binds) => {
       let mut names = FxHashSet::<str_util::Name>::default();
       let binds = binds
@@ -64,14 +65,14 @@ where
           }
           let rhs = rhs.unwrap_or_else(|| lhs.clone());
           let ns = match ns {
-            mlb_syntax::Namespace::Structure => mlb_hir::Namespace::Structure,
-            mlb_syntax::Namespace::Signature => mlb_hir::Namespace::Signature,
-            mlb_syntax::Namespace::Functor => mlb_hir::Namespace::Functor,
+            mlb_syntax::Namespace::Structure => mlb_statics::Namespace::Structure,
+            mlb_syntax::Namespace::Signature => mlb_statics::Namespace::Signature,
+            mlb_syntax::Namespace::Functor => mlb_statics::Namespace::Functor,
           };
-          Ok(mlb_hir::BasDec::Export(ns, lhs, rhs))
+          Ok(mlb_statics::BasDec::Export(ns, lhs, rhs))
         })
         .collect::<Result<Vec<_>>>()?;
-      mlb_hir::BasDec::seq(binds)
+      mlb_statics::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(parsed_path) => {
       let source =
@@ -82,7 +83,7 @@ where
         mlb_syntax::PathKind::Sml => {
           let contents = read_file(cx.fs, source, path.as_path())?;
           cx.sources.insert(path_id, contents);
-          mlb_hir::PathKind::Sml
+          mlb_statics::PathKind::Sml
         }
         mlb_syntax::PathKind::Mlb => {
           cx.stack.push(GroupPathToProcess {
@@ -90,28 +91,28 @@ where
             range: source.range,
             path: path_id,
           });
-          mlb_hir::PathKind::Mlb
+          mlb_statics::PathKind::Mlb
         }
       };
-      mlb_hir::BasDec::Path(path_id, kind)
+      mlb_statics::BasDec::Path(path_id, kind)
     }
     mlb_syntax::BasDec::Ann(_, dec) => get_bas_dec(cx, *dec)?,
-    mlb_syntax::BasDec::Seq(decs) => mlb_hir::BasDec::seq(
+    mlb_syntax::BasDec::Seq(decs) => mlb_statics::BasDec::seq(
       decs.into_iter().map(|dec| get_bas_dec(cx, dec)).collect::<Result<Vec<_>>>()?,
     ),
   };
   Ok(ret)
 }
 
-fn get_bas_exp<F>(cx: &mut MlbCx<'_, F>, exp: mlb_syntax::BasExp) -> Result<mlb_hir::BasExp>
+fn get_bas_exp<F>(cx: &mut MlbCx<'_, F>, exp: mlb_syntax::BasExp) -> Result<mlb_statics::BasExp>
 where
   F: paths::FileSystem,
 {
   let ret = match exp {
-    mlb_syntax::BasExp::Bas(dec) => mlb_hir::BasExp::Bas(get_bas_dec(cx, dec)?),
-    mlb_syntax::BasExp::Name(name) => mlb_hir::BasExp::Name(name),
+    mlb_syntax::BasExp::Bas(dec) => mlb_statics::BasExp::Bas(get_bas_dec(cx, dec)?),
+    mlb_syntax::BasExp::Name(name) => mlb_statics::BasExp::Name(name),
     mlb_syntax::BasExp::Let(dec, exp) => {
-      mlb_hir::BasExp::Let(get_bas_dec(cx, dec)?, get_bas_exp(cx, *exp)?.into())
+      mlb_statics::BasExp::Let(get_bas_dec(cx, dec)?, get_bas_exp(cx, *exp)?.into())
     }
   };
   Ok(ret)

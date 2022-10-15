@@ -22,7 +22,6 @@ dependencies = [
  "fast-hash",
  "fmt-util",
  "log",
- "mlb-hir",
  "mlb-statics",
  "mlb-syntax",
  "paths",
@@ -336,22 +335,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "mlb-hir"
-version = "0.1.0"
-dependencies = [
- "paths",
- "str-util",
- "text-size-util",
-]
-
-[[package]]
 name = "mlb-statics"
 version = "0.1.0"
 dependencies = [
  "config",
  "diagnostic-util",
  "fast-hash",
- "mlb-hir",
  "paths",
  "sml-comment",
  "sml-hir",

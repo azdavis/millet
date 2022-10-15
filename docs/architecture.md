@@ -151,10 +151,6 @@ Processes SML/NJ Compilation Manager (`.cm`) files.
 
 Processes the syntax of ML Basis (`.mlb`) files into AST values.
 
-### `crates/mlb-hir`
-
-HIR for ML Basis files.
-
 ### `crates/mlb-statics`
 
 Static semantics for MLB files.
