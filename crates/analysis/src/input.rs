@@ -56,12 +56,9 @@ impl Input {
                 .iter()
                 .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group)),
             )
-            .chain(
-              cm_file
-                .sml_paths
-                .iter()
-                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Source(None))),
-            )
+            .chain(cm_file.sml_paths.into_iter().map(|(p, s)| {
+              mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Source(Some(Box::new(s))))
+            }))
             .collect();
           let bas_dec = mlb_statics::BasDec::Local(
             mlb_statics::BasDec::seq(paths).into(),
