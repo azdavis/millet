@@ -71,7 +71,7 @@ impl RootGroup {
   }
 }
 
-pub(crate) type Severities = FxHashMap<diagnostic_util::Code, diagnostic_util::Severity>;
+pub(crate) type Severities = FxHashMap<diagnostic_util::Code, Option<diagnostic_util::Severity>>;
 
 #[derive(Default)]
 pub(crate) struct Config {
@@ -165,8 +165,9 @@ impl ConfigFromFile {
       };
       if let Some(sev) = config.severity {
         let sev = match sev {
-          config::Severity::Warning => diagnostic_util::Severity::Warning,
-          config::Severity::Error => diagnostic_util::Severity::Error,
+          config::Severity::Ignore => None,
+          config::Severity::Warning => Some(diagnostic_util::Severity::Warning),
+          config::Severity::Error => Some(diagnostic_util::Severity::Error),
         };
         ret.config.severities.insert(code, sev);
       }

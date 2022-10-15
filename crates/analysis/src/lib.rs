@@ -73,12 +73,17 @@ impl Analysis {
         Some((path, vec![err]))
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
-        let mut es = source_file_errors(file, &self.syms, self.error_lines);
-        for e in &mut es {
-          if let Some(&sev) = input.severities.get(&e.code) {
-            e.severity = sev;
-          }
-        }
+        let es: Vec<_> = source_file_errors(file, &self.syms, self.error_lines)
+          .into_iter()
+          .filter_map(|mut e| match input.severities.get(&e.code) {
+            Some(&Some(sev)) => {
+              e.severity = sev;
+              Some(e)
+            }
+            Some(None) => None,
+            None => Some(e),
+          })
+          .collect();
         (path, es)
       }))
       .collect()

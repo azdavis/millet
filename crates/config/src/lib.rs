@@ -61,6 +61,8 @@ pub struct ErrorConfig {
 /// A severity for an error.
 #[derive(Debug, Deserialize)]
 pub enum Severity {
+  /// Ignore this error.
+  Ignore,
   /// Warning.
   Warning,
   /// Error. The maximum.
