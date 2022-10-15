@@ -13,6 +13,15 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Correctly check for equality of type functions. This means we now correctly reject the following example program:
+  ```sml
+  structure S :
+    sig    type ('a, 'b) t = 'a * 'b end =
+    struct type ('a, 'b) t = 'b * 'a end
+  ```
+
 ## v0.4.2
 
 - Improve `where S = T` involving polymorphic types.
