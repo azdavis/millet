@@ -153,7 +153,7 @@ pub enum Assoc {
   Right,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum ErrorKind {
   NotInfix,
   InfixWithoutOp,
@@ -187,7 +187,7 @@ impl event_parse::Expected<SK> for ErrorKind {
 }
 
 /// A parse error.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error(event_parse::rowan_sink::Error<ErrorKind>);
 
 impl Error {
@@ -227,7 +227,7 @@ impl Error {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Expected {
   Exp,
   Lab,

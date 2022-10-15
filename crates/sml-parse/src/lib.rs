@@ -15,7 +15,7 @@ use sml_syntax::ast::{AstNode as _, Root};
 use sml_syntax::{token::Token, SyntaxKind as SK};
 
 /// The result of a parse.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Parse {
   /// The root.
   pub root: Root,

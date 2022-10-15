@@ -5,7 +5,7 @@ use sml_syntax::rowan::TextRange;
 use std::fmt;
 
 /// Pointers between the AST and the HIR.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Ptrs {
   hir_to_ast: FxHashMap<sml_hir::Idx, SyntaxNodePtr>,
   ast_to_hir: FxHashMap<SyntaxNodePtr, sml_hir::Idx>,
@@ -31,7 +31,7 @@ impl Ptrs {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum ErrorKind {
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
@@ -104,7 +104,7 @@ impl fmt::Display for ErrorKind {
 }
 
 /// An error when lowering.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error {
   range: TextRange,
   kind: ErrorKind,
@@ -170,7 +170,7 @@ impl Error {
 }
 
 /// The result of lowering.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Lower {
   /// The errors.
   pub errors: Vec<Error>,

@@ -20,7 +20,7 @@ pub struct Lex<'a> {
 }
 
 /// An error kind.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum ErrorKind {
   InvalidSource,
   UnclosedComment,
@@ -52,7 +52,7 @@ impl fmt::Display for ErrorKind {
 }
 
 /// An error encountered when lexing.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error {
   range: TextRange,
   kind: ErrorKind,

@@ -10,7 +10,7 @@ use str_util::{Name, SmolStr};
 pub use la_arena;
 pub use num_bigint::{BigInt, ParseBigIntError};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Arenas {
   pub str_dec: StrDecArena,
   pub str_exp: StrExpArena,
@@ -46,13 +46,13 @@ pub type OptIdx<T> = Option<la_arena::Idx<T>>;
 
 // modules //
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SigBind {
   pub name: Name,
   pub sig_exp: SigExpIdx,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FunctorBind {
   pub functor_name: Name,
   pub param_name: Name,
@@ -64,7 +64,7 @@ pub type StrDecIdx = OptIdx<StrDec>;
 pub type StrDecArena = Arena<StrDec>;
 
 /// Def(87) is handled by not distinguishing between top decs and str decs.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StrDec {
   Dec(DecIdx),
   Structure(Vec<StrBind>),
@@ -76,7 +76,7 @@ pub enum StrDec {
   Functor(Vec<FunctorBind>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StrBind {
   pub name: Name,
   pub str_exp: StrExpIdx,
@@ -85,7 +85,7 @@ pub struct StrBind {
 pub type StrExpIdx = OptIdx<StrExp>;
 pub type StrExpArena = Arena<StrExp>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StrExp {
   Struct(StrDecIdx),
   Path(Path),
@@ -94,7 +94,7 @@ pub enum StrExp {
   Let(StrDecIdx, StrExpIdx),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Ascription {
   Transparent,
   Opaque,
@@ -103,7 +103,7 @@ pub enum Ascription {
 pub type SigExpIdx = OptIdx<SigExp>;
 pub type SigExpArena = Arena<SigExp>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SigExp {
   Spec(SpecIdx),
   Name(Name),
@@ -115,7 +115,7 @@ pub enum SigExp {
 pub type SpecIdx = OptIdx<Spec>;
 pub type SpecArena = Arena<Spec>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Spec {
   /// the `Vec<TyVar>` will always be empty from the source, but may be filled in implicitly.
   Val(Vec<TyVar>, Vec<ValDesc>),
@@ -130,7 +130,7 @@ pub enum Spec {
   Seq(Vec<SpecIdx>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SharingKind {
   /// The non-derived form, `sharing type`.
   Regular,
@@ -139,13 +139,13 @@ pub enum SharingKind {
   Derived,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ValDesc {
   pub name: Name,
   pub ty: TyIdx,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TyDesc {
   pub ty_vars: Vec<TyVar>,
   pub name: Name,
@@ -154,13 +154,13 @@ pub struct TyDesc {
 pub type DatDesc = DatBind;
 pub type ConDesc = ConBind;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExDesc {
   pub name: Name,
   pub ty: Option<TyIdx>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StrDesc {
   pub name: Name,
   pub sig_exp: SigExpIdx,
@@ -172,7 +172,7 @@ pub type ExpIdx = OptIdx<Exp>;
 pub type ExpArena = Arena<Exp>;
 
 /// Def(7) is handled by having no distinction between atomic expressions and others here.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Exp {
   Hole,
   SCon(SCon),
@@ -189,7 +189,7 @@ pub enum Exp {
 pub type DecIdx = OptIdx<Dec>;
 pub type DecArena = Arena<Dec>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Dec {
   Val(Vec<TyVar>, Vec<ValBind>),
   Ty(Vec<TyBind>),
@@ -204,34 +204,34 @@ pub enum Dec {
   Seq(Vec<DecIdx>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ValBind {
   pub rec: bool,
   pub pat: PatIdx,
   pub exp: ExpIdx,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TyBind {
   pub ty_vars: Vec<TyVar>,
   pub name: Name,
   pub ty: TyIdx,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DatBind {
   pub ty_vars: Vec<TyVar>,
   pub name: Name,
   pub cons: Vec<ConBind>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ConBind {
   pub name: Name,
   pub ty: Option<TyIdx>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ExBind {
   New(Name, Option<TyIdx>),
   Copy(Name, Path),
@@ -241,7 +241,7 @@ pub type PatIdx = OptIdx<Pat>;
 pub type PatArena = Arena<Pat>;
 
 /// Def(40) is handled by having no distinction between atomic expressions and others here.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Pat {
   Wild,
   SCon(SCon),
@@ -259,7 +259,7 @@ pub enum Pat {
   Or(OrPat),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OrPat {
   pub first: PatIdx,
   pub rest: Vec<PatIdx>,
@@ -268,7 +268,7 @@ pub struct OrPat {
 pub type TyIdx = OptIdx<Ty>;
 pub type TyArena = Arena<Ty>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Ty {
   Hole,
   Var(TyVar),
@@ -299,7 +299,7 @@ impl Lab {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SCon {
   Int(Int),
   Real(f64),
