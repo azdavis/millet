@@ -28,7 +28,7 @@ pub fn comment_above(node: &SyntaxNode) -> Option<SyntaxToken> {
   let mut saw_one = false;
   loop {
     match tok.kind() {
-      SK::BlockComment => break,
+      SK::BlockComment => return Some(tok),
       SK::DotDotDot
       | SK::AndKw
       | SK::ValKw
@@ -57,5 +57,4 @@ pub fn comment_above(node: &SyntaxNode) -> Option<SyntaxToken> {
     }
     tok = tok.prev_token()?;
   }
-  Some(tok)
 }
