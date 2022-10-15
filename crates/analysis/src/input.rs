@@ -6,7 +6,6 @@ mod root_group;
 mod topo;
 mod util;
 
-use fast_hash::FxHashMap;
 use paths::{PathId, PathMap, WithPath};
 use util::{ErrorKind, ErrorSource, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile};
 
@@ -22,7 +21,7 @@ pub struct Input {
   /// The root group id.
   pub(crate) root_group_id: PathId,
   /// Severities to override.
-  pub(crate) severities: FxHashMap<diagnostic_util::Code, diagnostic_util::Severity>,
+  pub(crate) severities: root_group::Severities,
 }
 
 impl Input {

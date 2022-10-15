@@ -71,10 +71,12 @@ impl RootGroup {
   }
 }
 
+pub(crate) type Severities = FxHashMap<diagnostic_util::Code, diagnostic_util::Severity>;
+
 #[derive(Default)]
 pub(crate) struct Config {
   pub(crate) path_vars: paths::slash_var_path::Env,
-  pub(crate) severities: FxHashMap<diagnostic_util::Code, diagnostic_util::Severity>,
+  pub(crate) severities: Severities,
 }
 
 struct ConfigFromFile {
