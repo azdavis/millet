@@ -29,9 +29,7 @@ pub struct MlbStatics {
 #[allow(missing_docs)]
 pub struct SourceFile {
   pub pos_db: text_pos::PositionDb,
-  pub lex_errors: Vec<sml_lex::Error>,
-  pub parsed: sml_parse::Parse,
-  pub lowered: sml_lower::Lower,
+  pub syntax: SourceFileSyntax,
   pub statics_errors: Vec<sml_statics::Error>,
   pub info: sml_statics::Info,
 }
@@ -240,16 +238,20 @@ fn get_bas_dec(
       mlb_hir::PathKind::Sml => {
         let contents = files.sml.get(path).expect("no sml file for path id");
         let mut fix_env = scope.fix_env.clone();
-        let (lex_errors, parsed, low) = start_source_file(contents, &mut fix_env);
+        let syntax = SourceFileSyntax::new(contents, &mut fix_env);
         let mode = sml_statics::Mode::Regular(Some(*path));
-        let checked = sml_statics::get(&mut cx.syms, &scope.basis, mode, &low.arenas, low.root);
+        let checked = sml_statics::get(
+          &mut cx.syms,
+          &scope.basis,
+          mode,
+          &syntax.lower.arenas,
+          syntax.lower.root,
+        );
         let mut info = checked.info;
-        add_all_doc_comments(parsed.root.syntax(), &low, &mut info);
+        add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
         let file = SourceFile {
+          syntax,
           pos_db: text_pos::PositionDb::new(contents),
-          lex_errors,
-          parsed,
-          lowered: low,
           statics_errors: checked.errors,
           info,
         };
@@ -273,16 +275,26 @@ fn get_bas_dec(
   }
 }
 
-/// Processes a single source file.
-pub fn start_source_file(
-  contents: &str,
-  fix_env: &mut sml_parse::parser::FixEnv,
-) -> (Vec<sml_lex::Error>, sml_parse::Parse, sml_lower::Lower) {
-  let lexed = sml_lex::get(contents);
-  let parsed = sml_parse::get(&lexed.tokens, fix_env);
-  let mut lowered = sml_lower::get(&parsed.root);
-  sml_ty_var_scope::get(&mut lowered.arenas, lowered.root);
-  (lexed.errors, parsed, lowered)
+/// A source file analyzed at the purely syntactic level.
+#[derive(Debug)]
+pub struct SourceFileSyntax {
+  /// Lex errors from the file.
+  pub lex_errors: Vec<sml_lex::Error>,
+  /// The lossless concrete syntax tree.
+  pub parse: sml_parse::Parse,
+  /// The lowered HIR.
+  pub lower: sml_lower::Lower,
+}
+
+impl SourceFileSyntax {
+  /// Starts processing a single source file.
+  pub fn new(contents: &str, fix_env: &mut sml_parse::parser::FixEnv) -> Self {
+    let lexed = sml_lex::get(contents);
+    let parse = sml_parse::get(&lexed.tokens, fix_env);
+    let mut lower = sml_lower::get(&parse.root);
+    sml_ty_var_scope::get(&mut lower.arenas, lower.root);
+    Self { lex_errors: lexed.errors, parse, lower }
+  }
 }
 
 /// Processes a single group file.

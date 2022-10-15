@@ -36,18 +36,17 @@ impl Analysis {
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, contents: &str) -> Vec<Error> {
     let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-    let (lex_errors, parsed, low) = mlb_statics::start_source_file(contents, &mut fix_env);
+    let syntax = mlb_statics::SourceFileSyntax::new(contents, &mut fix_env);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
     let mode = sml_statics::Mode::Regular(None);
-    let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
+    let checked =
+      sml_statics::get(&mut syms, &basis, mode, &syntax.lower.arenas, syntax.lower.root);
     let mut info = checked.info;
-    mlb_statics::add_all_doc_comments(parsed.root.syntax(), &low, &mut info);
+    mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile {
       pos_db: text_pos::PositionDb::new(contents),
-      lex_errors,
-      parsed,
-      lowered: low,
+      syntax,
       statics_errors: checked.errors,
       info,
     };
@@ -107,7 +106,7 @@ impl Analysis {
           };
           info.get_doc(def.idx)
         }));
-        ptr.to_node(ft.file.parsed.root.syntax()).text_range()
+        ptr.to_node(ft.file.syntax.parse.root.syntax()).text_range()
       }
       None => ft.token.text_range(),
     };
@@ -152,12 +151,12 @@ impl Analysis {
     let ft = self.get_file_and_token(pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
     let ptr = ptr.cast::<sml_syntax::ast::CaseExp>()?;
-    let case = ptr.to_node(ft.file.parsed.root.syntax());
+    let case = ptr.to_node(ft.file.syntax.parse.root.syntax());
     let range = text_size_util::TextRange::empty(case.syntax().text_range().end());
     let range = ft.file.pos_db.range(range)?;
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
-    let head = ft.file.lowered.ptrs.ast_to_hir(&head_ptr)?;
+    let head = ft.file.syntax.lower.ptrs.ast_to_hir(&head_ptr)?;
     let variants = ft.file.info.get_variants(&self.syms, head)?;
     let case = CaseDisplay {
       needs_starting_bar: case.matcher().map_or(false, |x| x.match_rules().count() > 0),
@@ -171,17 +170,17 @@ impl Analysis {
   pub fn format(&self, path: PathId) -> Option<(String, Position)> {
     let file = self.source_files.get(&path)?;
     let mut buf = String::new();
-    write!(buf, "{}", sml_fmt::display_root(&file.parsed.root)).ok()?;
+    write!(buf, "{}", sml_fmt::display_root(&file.syntax.parse.root)).ok()?;
     Some((buf, file.pos_db.end_position()))
   }
 
   fn get_file_and_token(&self, pos: WithPath<Position>) -> Option<FileAndToken<'_>> {
     let file = self.source_files.get(&pos.path)?;
     let idx = file.pos_db.text_size(pos.val)?;
-    if !file.parsed.root.syntax().text_range().contains(idx) {
+    if !file.syntax.parse.root.syntax().text_range().contains(idx) {
       return None;
     }
-    let token = match file.parsed.root.syntax().token_at_offset(idx) {
+    let token = match file.syntax.parse.root.syntax().token_at_offset(idx) {
       TokenAtOffset::None => return None,
       TokenAtOffset::Single(t) => t,
       TokenAtOffset::Between(t1, t2) => {
@@ -201,12 +200,8 @@ impl Analysis {
       sml_statics::DefPath::StdBasis(_) => return None,
     };
     let def_file = self.source_files.get(&path)?;
-    let def_range = def_file
-      .lowered
-      .ptrs
-      .hir_to_ast(def.idx)?
-      .to_node(def_file.parsed.root.syntax())
-      .text_range();
+    let ptr = def_file.syntax.lower.ptrs.hir_to_ast(def.idx)?;
+    let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
     Some(path.wrap(def_file.pos_db.range(def_range)?))
   }
 }
@@ -235,7 +230,7 @@ fn source_file_errors(
   lines: config::ErrorLines,
 ) -> Vec<Error> {
   std::iter::empty()
-    .chain(file.lex_errors.iter().filter_map(|err| {
+    .chain(file.syntax.lex_errors.iter().filter_map(|err| {
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
@@ -243,7 +238,7 @@ fn source_file_errors(
         severity: err.severity(),
       })
     }))
-    .chain(file.parsed.errors.iter().filter_map(|err| {
+    .chain(file.syntax.parse.errors.iter().filter_map(|err| {
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
@@ -251,7 +246,7 @@ fn source_file_errors(
         severity: err.severity(),
       })
     }))
-    .chain(file.lowered.errors.iter().filter_map(|err| {
+    .chain(file.syntax.lower.errors.iter().filter_map(|err| {
       Some(Error {
         range: file.pos_db.range(err.range())?,
         message: err.display().to_string(),
@@ -261,9 +256,9 @@ fn source_file_errors(
     }))
     .chain(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
-      let syntax = file.lowered.ptrs.hir_to_ast(idx).expect("no pointer for idx");
+      let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
       Some(Error {
-        range: file.pos_db.range(syntax.to_node(file.parsed.root.syntax()).text_range())?,
+        range: file.pos_db.range(syntax.to_node(file.syntax.parse.root.syntax()).text_range())?,
         message: err.display(syms, file.info.meta_vars(), lines).to_string(),
         code: err.code(),
         severity: err.severity(),
@@ -315,7 +310,7 @@ impl FileAndToken<'_> {
     let mut node = self.token.parent()?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
-      match self.file.lowered.ptrs.ast_to_hir(&ptr) {
+      match self.file.syntax.lower.ptrs.ast_to_hir(&ptr) {
         Some(idx) => return Some((ptr, idx)),
         None => node = node.parent()?,
       }

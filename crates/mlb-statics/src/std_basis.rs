@@ -1,4 +1,4 @@
-use crate::{add_all_doc_comments, start_source_file};
+use crate::{add_all_doc_comments, SourceFileSyntax};
 use fast_hash::FxHashMap;
 use sml_statics::{basis, Info, Syms};
 use sml_syntax::ast::AstNode as _;
@@ -93,17 +93,18 @@ where
         contents = &owned_contents;
       }
       let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-      let (lex_errors, parsed, low) = start_source_file(contents, &mut fix_env);
-      if let Some(e) = lex_errors.first() {
+      let started = SourceFileSyntax::new(contents, &mut fix_env);
+      if let Some(e) = started.lex_errors.first() {
         panic!("{name}: lex error: {}", e.display());
       }
-      if let Some(e) = parsed.errors.first() {
+      if let Some(e) = started.parse.errors.first() {
         panic!("{name}: parse error: {}", e.display());
       }
-      if let Some(e) = low.errors.first() {
+      if let Some(e) = started.lower.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
       let mode = sml_statics::Mode::StdBasis(name);
+      let low = started.lower;
       let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
       basis.append(checked.basis);
       if let Some(e) = checked.errors.first() {
@@ -111,7 +112,7 @@ where
         panic!("{name}: statics error: {e}");
       }
       let mut info = checked.info;
-      add_all_doc_comments(parsed.root.syntax(), &low, &mut info);
+      add_all_doc_comments(started.parse.root.syntax(), &low, &mut info);
       (name, info)
     })
     .collect();
