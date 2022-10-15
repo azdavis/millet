@@ -25,8 +25,8 @@ pub(crate) struct Export {
 /// of a given library path on demand.
 #[allow(clippy::too_many_lines)]
 pub(crate) fn get<F>(
-  store: &mut paths::Store,
   fs: &F,
+  store: &mut paths::Store,
   path_vars: &paths::slash_var_path::Env,
   sources: &mut paths::PathMap<String>,
   cm_files: &mut paths::PathMap<CmFile>,
@@ -71,7 +71,7 @@ where
         }
         cm::PathKind::Cm => {
           let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-          get(store, fs, path_vars, sources, cm_files, cur)?;
+          get(fs, store, path_vars, sources, cm_files, cur)?;
           // NOTE this is a lie.
           mlb_hir::PathKind::Mlb
         }
@@ -105,7 +105,7 @@ where
         let path = group_parent.join(lib.val.as_path());
         let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-        get(store, fs, path_vars, sources, cm_files, cur)?;
+        get(fs, store, path_vars, sources, cm_files, cur)?;
         let cm_file = cm_files.get(&cur.path).expect("cm file should be set after get_cm_file");
         exports.extend(
           cm_file

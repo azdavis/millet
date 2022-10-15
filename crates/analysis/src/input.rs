@@ -42,7 +42,7 @@ impl Input {
     match root_group.kind {
       GroupPathKind::Cm => {
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
-        lower_cm::get(store, fs, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
+        lower_cm::get(fs, store, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
         groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
           let exports: Vec<_> = cm_file
             .exports
