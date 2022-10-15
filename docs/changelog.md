@@ -21,6 +21,8 @@ The versioning system is basically the following:
     sig    type ('a, 'b) t = 'a * 'b end =
     struct type ('a, 'b) t = 'b * 'a end
   ```
+- Change error severity to kebab case (e.g. `warning` instead of `Warning`).
+- Allow ignoring errors with a severity of `ignore`.
 
 ## v0.4.2
 
