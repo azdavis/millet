@@ -160,6 +160,29 @@ workspace.root = "foo.mlb"
   check_input([("foo.mlb", ""), ("foo.cm", "Group is")], Some(config)).unwrap();
 }
 
+#[test]
+fn errors_severity() {
+  let config = r#"
+version = 1
+[errors]
+1001.severity = "error"
+1002.severity = "warning"
+1003.severity = "ignore"
+"#;
+  check_empty_cm(&["foo.cm"], Some(config)).unwrap();
+}
+
+#[test]
+fn errors_severity_unknown() {
+  let config = r#"
+version = 1
+[errors]
+1001.severity = "Warning"
+"#;
+  let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
+  assert!(e.to_string().contains("unknown variant `Warning`"));
+}
+
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,

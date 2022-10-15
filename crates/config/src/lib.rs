@@ -24,6 +24,7 @@ pub struct Root {
 
 /// The workspace config.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Workspace {
   /// The members, for containing other workspaces.
   ///
@@ -36,18 +37,16 @@ pub struct Workspace {
   /// Path vars, for expansion in MLB/CM paths.
   ///
   /// Cannot be set when `members` is set.
-  #[serde(rename = "path-vars")]
   pub path_vars: Option<FxHashMap<SmolStr, PathVar>>,
 }
 
 /// A path var setting.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum PathVar {
   /// A literal value.
-  #[serde(rename = "value")]
   Value(SmolStr),
   /// A path, interpreted relative to the config file.
-  #[serde(rename = "path")]
   Path(SmolStr),
 }
 
@@ -60,6 +59,7 @@ pub struct ErrorConfig {
 
 /// A severity for an error.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum Severity {
   /// Ignore this error.
   Ignore,

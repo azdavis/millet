@@ -63,8 +63,8 @@ root = "foo.cm"
 FOO = { value = "bar" }
 QUZ = { path = "lib" }
 [errors]
-5011.severity = "Warning"
-5012.severity = "Warning"
+5011.severity = "warning"
+5012.severity = "warning"
 ```
 
 - `version` is the version of the config file. At time of writing, it must be exactly `1`.
