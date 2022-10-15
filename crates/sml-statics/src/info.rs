@@ -57,11 +57,13 @@ impl Info {
   }
 
   /// Returns information about meta type variables.
+  #[must_use]
   pub fn meta_vars(&self) -> &MetaVarInfo {
     &self.meta_vars
   }
 
   /// Returns a Markdown string with type information associated with this index.
+  #[must_use]
   pub fn get_ty_md(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<String> {
     let mut ret = String::new();
     self.get_ty_md_(&mut ret, syms, idx)?;
@@ -87,21 +89,24 @@ impl Info {
   }
 
   /// Returns documentation for this index.
+  #[must_use]
   pub fn get_doc(&self, idx: sml_hir::Idx) -> Option<&str> {
     self.store.get(&idx)?.doc.as_deref()
   }
 
   /// Returns the definition site of the idx.
+  #[must_use]
   pub fn get_def(&self, idx: sml_hir::Idx) -> Option<Def> {
     self.store.get(&idx)?.def
   }
 
   /// Returns the definition site of the type for the idx.
+  #[must_use]
   pub fn get_ty_defs(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<Vec<Def>> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
     let mut ret = Vec::<Def>::new();
     ty_syms(
-      &mut |sym| match syms.get(&sym) {
+      &mut |sym| match syms.get(sym) {
         None => {}
         Some((_, ty_info)) => match ty_info.def {
           None => {}
@@ -114,6 +119,7 @@ impl Info {
   }
 
   /// Gets the variants for the type of the index. The bool is whether the name has an argument.
+  #[must_use]
   pub fn get_variants(
     &self,
     syms: &Syms,
@@ -124,7 +130,7 @@ impl Info {
       Ty::Con(_, x) => x,
       _ => return None,
     };
-    let (_, ty_info) = syms.get(&sym)?;
+    let (_, ty_info) = syms.get(sym)?;
     let mut ret: Vec<_> = ty_info
       .val_env
       .iter()

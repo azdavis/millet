@@ -50,11 +50,13 @@ pub struct Error {
 
 impl Error {
   /// Returns the [`sml_hir::Idx`] for this.
+  #[must_use]
   pub fn idx(&self) -> sml_hir::Idx {
     self.idx
   }
 
   /// Returns a value that displays the message.
+  #[must_use]
   pub fn display<'a>(
     &'a self,
     syms: &'a Syms,
@@ -65,6 +67,7 @@ impl Error {
   }
 
   /// Return the code for this.
+  #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
       ErrorKind::Undefined(_, _) => Code::n(5001),
@@ -102,6 +105,7 @@ impl Error {
   }
 
   /// Returns the severity for this.
+  #[must_use]
   pub fn severity(&self) -> Severity {
     match self.kind {
       ErrorKind::Unused(_) => Severity::Warning,
@@ -156,7 +160,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Circularity(mv, ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);
-        let name = mvs.get(mv).ok_or(fmt::Error)?;
+        let name = mvs.get(*mv).ok_or(fmt::Error)?;
         let ty = ty.display(&mvs, self.syms);
         write!(f, "attempted to a set a type variable {name} ")?;
         write!(f, "to a type containing that variable: {ty}")
@@ -192,7 +196,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
       ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
       ErrorKind::TyNameEscape(sym) => {
-        write!(f, "type name escapes its scope: {}", self.syms.get(sym).unwrap().0)
+        write!(f, "type name escapes its scope: {}", self.syms.get(*sym).unwrap().0)
       }
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
       ErrorKind::WrongNumTyArgs(want, got) => {
@@ -294,23 +298,23 @@ impl<'a> fmt::Display for PatDisplay<'a> {
       RawPat::Con(con, args) => match con {
         Con::Any => {
           assert!(args.is_empty());
-          f.write_str("_")?
+          f.write_str("_")?;
         }
         Con::Int(i) => {
           assert!(args.is_empty());
-          write!(f, "{i}")?
+          write!(f, "{i}")?;
         }
         Con::Word(w) => {
           assert!(args.is_empty());
-          write!(f, "0w{w}")?
+          write!(f, "0w{w}")?;
         }
         Con::Char(c) => {
           assert!(args.is_empty());
-          write!(f, "#\"{c}\"")?
+          write!(f, "#\"{c}\"")?;
         }
         Con::String(s) => {
           assert!(args.is_empty());
-          f.write_str(s.as_str())?
+          f.write_str(s.as_str())?;
         }
         Con::Record { labels, allows_other } => {
           assert_eq!(labels.len(), args.len());
@@ -339,7 +343,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
         Con::Variant(_, name) => {
           let name = match name {
             VariantName::Name(name) => name.as_str(),
-            VariantName::Exn(exn) => self.syms.get_exn(exn).0.as_str(),
+            VariantName::Exn(exn) => self.syms.get_exn(*exn).0.as_str(),
           };
           let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
           // these names are guaranteed not to be rebound, so they always are list constructors.

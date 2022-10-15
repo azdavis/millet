@@ -12,6 +12,7 @@ pub(crate) fn dec(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   ret
 }
 
+#[allow(clippy::too_many_lines)]
 fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   let en = p.enter();
   if p.at(SK::DotDotDot) {
@@ -142,7 +143,7 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
     p.exit(en, SK::InfixrDec);
   } else if p.at(SK::NonfixKw) {
     p.bump();
-    names_star_eq(p, |p, name| p.remove_infix(name));
+    names_star_eq(p, Parser::remove_infix);
     p.exit(en, SK::NonfixDec);
   } else if p.at(SK::DoKw) {
     p.bump();

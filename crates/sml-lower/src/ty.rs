@@ -31,7 +31,7 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
         .collect(),
     ),
     ast::Ty::FnTy(ty) => sml_hir::Ty::Fn(get(cx, ty.param()), get(cx, ty.res())),
-    // sml_def(48)
+    // Def(48)
     ast::Ty::ParenTy(ty) => {
       let inner = ty.ty();
       if inner.as_ref().map_or(false, warn_unnecessary_parens) {

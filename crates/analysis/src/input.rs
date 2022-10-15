@@ -10,7 +10,7 @@ use fast_hash::FxHashMap;
 use paths::{PathId, PathMap, WithPath};
 use util::{ErrorKind, ErrorSource, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile};
 
-pub use util::InputError;
+pub use util::Error;
 
 /// The input to analysis.
 #[derive(Debug)]
@@ -27,6 +27,10 @@ pub struct Input {
 
 impl Input {
   /// Get input anchored at the root.
+  ///
+  /// # Errors
+  ///
+  /// When getting input failed.
   pub fn new<F>(fs: &F, store: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Result<Self>
   where
     F: paths::FileSystem,
@@ -66,7 +70,7 @@ impl Input {
             match mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars) {
               Ok(x) => x,
               Err(e) => {
-                return Err(InputError {
+                return Err(Error {
                   source: ErrorSource {
                     path: None,
                     range: group_file.pos_db.range(e.text_range()),
@@ -93,7 +97,7 @@ impl Input {
     };
     let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
-      return Err(InputError {
+      return Err(Error {
         source: ErrorSource::default(),
         path: store.get_path(err.witness()).as_path().to_owned(),
         kind: ErrorKind::Cycle,

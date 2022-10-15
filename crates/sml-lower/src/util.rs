@@ -13,13 +13,15 @@ pub struct Ptrs {
 
 impl Ptrs {
   /// Returns the unique syntax pointer for an HIR index.
+  #[must_use]
   pub fn hir_to_ast(&self, idx: sml_hir::Idx) -> Option<SyntaxNodePtr> {
     self.hir_to_ast.get(&idx).cloned()
   }
 
   /// Returns one of possibly many HIR indices for the syntax pointer.
-  pub fn ast_to_hir(&self, ptr: SyntaxNodePtr) -> Option<sml_hir::Idx> {
-    self.ast_to_hir.get(&ptr).copied()
+  #[must_use]
+  pub fn ast_to_hir(&self, ptr: &SyntaxNodePtr) -> Option<sml_hir::Idx> {
+    self.ast_to_hir.get(ptr).copied()
   }
 
   fn insert(&mut self, idx: sml_hir::Idx, ptr: SyntaxNodePtr) {
@@ -110,16 +112,19 @@ pub struct Error {
 
 impl Error {
   /// Returns the range for this.
+  #[must_use]
   pub fn range(&self) -> TextRange {
     self.range
   }
 
   /// Returns a value that displays the message.
+  #[must_use]
   pub fn display(&self) -> impl fmt::Display + '_ {
     &self.kind
   }
 
   /// Returns the code for this.
+  #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
       ErrorKind::FunBindMismatchedName(_, _) => Code::n(4001),
@@ -151,6 +156,7 @@ impl Error {
   }
 
   /// Returns the severity for this.
+  #[must_use]
   pub fn severity(&self) -> Severity {
     match self.kind {
       ErrorKind::UnnecessaryParens
@@ -184,6 +190,7 @@ pub(crate) struct Cx {
   ptrs: Ptrs,
 }
 
+#[allow(clippy::unnecessary_wraps)]
 impl Cx {
   /// Returns a `Name` that is both:
   /// - not writeable in user code, and will thus not collide with any identifiers in user code;
@@ -196,7 +203,7 @@ impl Cx {
   }
 
   pub(crate) fn err(&mut self, range: TextRange, kind: ErrorKind) {
-    self.errors.push(Error { range, kind })
+    self.errors.push(Error { range, kind });
   }
 
   pub(crate) fn finish(self, root: sml_hir::StrDecIdx) -> Lower {

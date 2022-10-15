@@ -1,10 +1,11 @@
 //! Utilities.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub mod block_comment;
 
 /// Returns whether `b` is a whitespace character for our purposes.
+#[must_use]
 pub fn is_whitespace(b: u8) -> bool {
   b.is_ascii_whitespace() || b == 0xb
 }

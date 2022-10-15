@@ -1,6 +1,6 @@
 //! Text of various SML libraries.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub mod primitive;
 pub mod sml_of_nj;

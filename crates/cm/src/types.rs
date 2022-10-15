@@ -16,7 +16,7 @@ pub(crate) enum ErrorKind {
   ExpectedDesc,
   ExpectedExport,
   UnsupportedAlias,
-  UnsupportedClass(PathBuf, Class),
+  UnsupportedClass(PathBuf, String),
   CouldNotDetermineClass(PathBuf),
   SlashVarPathError(paths::slash_var_path::Error),
   AliasWithIgnoredPathVar,
@@ -28,6 +28,7 @@ pub struct Error(WithRange<ErrorKind>);
 
 impl Error {
   /// Returns a text range for this error.
+  #[must_use]
   pub fn text_range(&self) -> TextRange {
     self.0.range
   }

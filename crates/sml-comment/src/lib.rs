@@ -1,10 +1,11 @@
 //! Extract interesting comments from SML files.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use sml_syntax::{SyntaxKind as SK, SyntaxNode, SyntaxToken};
 
 /// Gets the comment above this node, then parses the doc string out of it.
+#[must_use]
 pub fn doc_comment_above(node: &SyntaxNode) -> Option<String> {
   let tok = comment_above(node)?;
   let mut lines: Vec<_> = tok
@@ -21,6 +22,7 @@ pub fn doc_comment_above(node: &SyntaxNode) -> Option<String> {
 
 /// Returns the comment "above" this node. The node must be one that comments may be "above", like
 /// `val` or `fun` or `and`.
+#[must_use]
 pub fn comment_above(node: &SyntaxNode) -> Option<SyntaxToken> {
   let mut tok = node.first_token()?;
   let mut saw_one = false;

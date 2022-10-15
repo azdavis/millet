@@ -43,7 +43,7 @@ fn exhaustive() {
 datatype t = A of int | B of int
 fun f (A x | B x) = x
 "#,
-  )
+  );
 }
 
 #[test]
@@ -58,7 +58,7 @@ fun f x =
   | B (7 | 8 | 9 | 10) => 3
   | _ => 4
 "#,
-  )
+  );
 }
 
 #[test]
@@ -71,7 +71,7 @@ fun f x =
 (**     ^ unreachable pattern *)
   | _ => 2
 "#,
-  )
+  );
 }
 
 #[test]
@@ -86,5 +86,5 @@ fun f x =
 (**         ^ unreachable pattern *)
   | _ => 2
 "#,
-  )
+  );
 }

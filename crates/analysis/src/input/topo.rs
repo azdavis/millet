@@ -1,4 +1,4 @@
-//! Run a topo sort on a sequence of BasDecs at paths.
+//! Run a topo sort on a sequence of `BasDec`s at paths.
 
 use paths::PathId;
 use std::collections::BTreeSet;

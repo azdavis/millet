@@ -1,6 +1,6 @@
 //! Utilities for diagnostics (colloquially, "errors") reported by Millet.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use std::fmt;
 
@@ -35,11 +35,13 @@ pub struct Code(u16);
 
 impl Code {
   /// Returns a Code for this.
+  #[must_use]
   pub fn n(n: u16) -> Self {
     Self(n)
   }
 
   /// Return this as an [`i32`].
+  #[must_use]
   pub fn as_i32(&self) -> i32 {
     self.0.into()
   }

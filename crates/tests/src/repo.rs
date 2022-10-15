@@ -14,13 +14,9 @@ where
   T: Ord + std::fmt::Debug,
 {
   let only_lhs_set: Vec<_> = lhs.difference(rhs).collect();
-  if !only_lhs_set.is_empty() {
-    panic!("{only_lhs}: {only_lhs_set:?}");
-  }
+  assert!(only_lhs_set.is_empty(), "{only_lhs}: {only_lhs_set:?}");
   let only_rhs_set: Vec<_> = rhs.difference(lhs).collect();
-  if !only_rhs_set.is_empty() {
-    panic!("{only_rhs}: {only_rhs_set:?}");
-  }
+  assert!(only_rhs_set.is_empty(), "{only_rhs}: {only_rhs_set:?}");
 }
 
 #[test]
@@ -29,7 +25,7 @@ fn sml_def() {
   sh.change_dir(root_dir());
   let dirs: [PathBuf; 3] =
     ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
-  let out = cmd!(sh, "git grep -hoE 'sml_def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
+  let out = cmd!(sh, "git grep -hoE 'Def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
   let got: BTreeSet<u16> = String::from_utf8(out.stdout)
     .unwrap()
     .lines()
@@ -41,13 +37,9 @@ fn sml_def() {
     .collect();
   let want = 1u16..=89;
   let missing: Vec<_> = want.clone().filter(|x| !got.contains(x)).collect();
-  if !missing.is_empty() {
-    panic!("missing sml definition references: {missing:?}")
-  }
+  assert!(missing.is_empty(), "missing sml definition references: {missing:?}");
   let extra: Vec<_> = got.iter().filter(|&x| !want.contains(x)).collect();
-  if !extra.is_empty() {
-    panic!("extra sml definition references: {extra:?}")
-  }
+  assert!(extra.is_empty(), "extra sml definition references: {extra:?}");
 }
 
 #[test]
@@ -69,9 +61,7 @@ fn test_refs() {
   let out = String::from_utf8(out.stdout).unwrap();
   let defined: BTreeSet<_> = out.lines().filter_map(|line| line.strip_suffix(": test")).collect();
   let ref_not_defined: BTreeSet<_> = referenced.difference(&defined).copied().collect();
-  if !ref_not_defined.is_empty() {
-    panic!("tests referenced but not defined: {ref_not_defined:?}")
-  }
+  assert!(ref_not_defined.is_empty(), "tests referenced but not defined: {ref_not_defined:?}");
 }
 
 #[test]
@@ -82,9 +72,7 @@ fn no_ignore() {
   let has_ignore = cmd!(sh, "git grep -lFe #[{word}").ignore_status().output().unwrap();
   let out = String::from_utf8(has_ignore.stdout).unwrap();
   let set: BTreeSet<_> = out.lines().collect();
-  if !set.is_empty() {
-    panic!("found files with {word}: {set:?}");
-  }
+  assert!(set.is_empty(), "found files with {word}: {set:?}");
 }
 
 #[test]
@@ -234,12 +222,10 @@ fn licenses() {
     let name = package.get("name").unwrap().as_str().unwrap();
     new_licenses.entry(license).or_default().insert(name);
   }
-  for (license, names) in new_licenses.iter() {
+  for (license, names) in &new_licenses {
     println!("{license}: {names:?}");
   }
-  if !new_licenses.is_empty() {
-    panic!("found {} new licenses", new_licenses.len());
-  }
+  assert!(new_licenses.is_empty(), "found {} new licenses", new_licenses.len());
 }
 
 fn no_dupes<I, T>(iter: I) -> BTreeSet<T>
@@ -249,9 +235,7 @@ where
 {
   let mut ret = BTreeSet::<T>::default();
   for x in iter {
-    if !ret.insert(x) {
-      panic!("duplicate: {x}")
-    }
+    assert!(ret.insert(x), "duplicate: {x}");
   }
   ret
 }

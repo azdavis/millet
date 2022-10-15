@@ -24,6 +24,7 @@ pub struct Error(WithRange<ErrorKind>);
 
 impl Error {
   /// Returns a text range for this error.
+  #[must_use]
   pub fn text_range(&self) -> TextRange {
     self.0.range
   }
@@ -86,9 +87,7 @@ impl<'a> fmt::Display for Token<'a> {
       Token::In => f.write_str("in"),
       Token::Semicolon => f.write_str(";"),
       Token::Eq => f.write_str("="),
-      Token::String(s) => f.write_str(s),
-      Token::Name(s) => f.write_str(s),
-      Token::BarePath(s) => f.write_str(s),
+      Token::String(s) | Token::Name(s) | Token::BarePath(s) => f.write_str(s),
     }
   }
 }
@@ -155,11 +154,13 @@ pub struct ParsedPath {
 
 impl ParsedPath {
   /// Returns the kind of path this is.
+  #[must_use]
   pub fn kind(&self) -> PathKind {
     self.kind
   }
 
   /// Returns this as a `Path`.
+  #[must_use]
   pub fn as_path(&self) -> &Path {
     self.path.as_path()
   }

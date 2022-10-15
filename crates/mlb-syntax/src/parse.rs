@@ -164,7 +164,7 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
         Some(x) => x,
         None => return p.err(ErrorKind::PathNotSmlOrMlb),
       };
-      BasDec::Path(tok.wrap(ParsedPath { path, kind }))
+      BasDec::Path(tok.wrap(ParsedPath { kind, path }))
     }
     Token::Ann => {
       p.bump();

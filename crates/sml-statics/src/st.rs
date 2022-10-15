@@ -58,7 +58,7 @@ impl St {
   where
     I: Into<sml_hir::Idx>,
   {
-    self.errors.push(Error { idx: idx.into(), kind })
+    self.errors.push(Error { idx: idx.into(), kind });
   }
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: sml_hir::TyVar, src: TyVarSrc) -> FixedTyVar {
@@ -70,15 +70,15 @@ impl St {
   }
 
   pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {
-    self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx })
+    self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx });
   }
 
   pub(crate) fn insert_handle(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx })
+    self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx });
   }
 
   pub(crate) fn insert_case(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    self.matches.push(Match { kind: MatchKind::Case(pats), want, idx })
+    self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
   pub(crate) fn insert_hole(&mut self, mv: MetaTyVar, idx: sml_hir::Idx) {

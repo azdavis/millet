@@ -1,4 +1,4 @@
-//! http://mlton.org/UnresolvedBugs
+//! See [`MLton` docs](http://mlton.org/UnresolvedBugs) about unresolved bugs.
 
 use crate::check::check;
 

@@ -1,6 +1,6 @@
 //! HIR for ML Basis.
 
-#![deny(missing_debug_implementations, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, rust_2018_idioms)]
 
 use text_size_util::WithRange;
 
@@ -15,6 +15,12 @@ pub enum BasDec {
 }
 
 impl BasDec {
+  /// Returns a sequence of decs.
+  ///
+  /// # Panics
+  ///
+  /// If there was an internal error.
+  #[must_use]
   pub fn seq(mut decs: Vec<Self>) -> Self {
     if decs.len() == 1 {
       decs.pop().unwrap()

@@ -132,6 +132,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec, infix: InfixErr) -> Option<Ex
   Some(state.exit(p))
 }
 
+#[derive(Debug, Clone, Copy)]
 enum PatPrec {
   Min,
   Or,

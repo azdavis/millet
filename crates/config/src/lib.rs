@@ -1,6 +1,6 @@
 //! Configuration.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use fast_hash::FxHashMap;
 use serde::Deserialize;

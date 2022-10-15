@@ -14,6 +14,7 @@ pub(crate) fn get(cx: &mut Cx, pat: Option<ast::Pat>) -> sml_hir::PatIdx {
   }
 }
 
+#[allow(clippy::too_many_lines)]
 fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
   let ptr = SyntaxNodePtr::new(pat.syntax());
   let ret = match pat {
@@ -69,7 +70,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       }
       sml_hir::Pat::Record { rows, allows_other: rest_pat_row.is_some() }
     }
-    // sml_def(37)
+    // Def(37)
     ast::Pat::ParenPat(pat) => {
       let inner = pat.pat()?;
       if warn_unnecessary_parens(&inner) {

@@ -49,7 +49,7 @@ impl<'a> Parser<'a> {
   }
 
   pub(crate) fn abandon(&mut self, en: Entered) {
-    self.inner.abandon(en)
+    self.inner.abandon(en);
   }
 
   pub(crate) fn exit(&mut self, en: Entered, kind: SK) -> Exited {
@@ -73,7 +73,7 @@ impl<'a> Parser<'a> {
   }
 
   pub(crate) fn error(&mut self, kind: ErrorKind) {
-    self.inner.error(kind)
+    self.inner.error(kind);
   }
 
   pub(crate) fn finish(self) -> (SyntaxNode, Vec<Error>) {
@@ -192,16 +192,19 @@ pub struct Error(event_parse::rowan_sink::Error<ErrorKind>);
 
 impl Error {
   /// Returns the range for this.
+  #[must_use]
   pub fn range(&self) -> TextRange {
     self.0.range
   }
 
   /// Returns a value that displays the message.
+  #[must_use]
   pub fn display(&self) -> impl fmt::Display + '_ {
     &self.0.kind
   }
 
   /// Returns the code for this.
+  #[must_use]
   pub fn code(&self) -> Code {
     match self.0.kind {
       ErrorKind::NotInfix => Code::n(3001),
@@ -215,6 +218,7 @@ impl Error {
   }
 
   /// Returns the severity for this.
+  #[must_use]
   pub fn severity(&self) -> Severity {
     match self.0.kind {
       ErrorKind::UnnecessaryOp => Severity::Warning,

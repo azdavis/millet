@@ -1,4 +1,4 @@
-//! We parse (but reject in later stages of analysis) some [SuccessorML][1] features.
+//! We parse (but reject in later stages of analysis) some [Successor ML][1] features.
 //!
 //! [1]: http://mlton.org/SuccessorML
 
@@ -89,7 +89,7 @@ fun incB r =
   case r of {a, b, c} => {a, b = b + 1, c}
 (**                       ^ unsupported language construct: expression row punning *)
 "#,
-  )
+  );
 }
 
 #[test]

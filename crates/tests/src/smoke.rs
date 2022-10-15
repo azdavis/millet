@@ -79,7 +79,7 @@ val _ = fn
   tup as (1, x: d, false, "hi", _, 0w123, 3 D 4, 0xbeef, 0wx123beef, [a, 3, c], #"b")  => 1
 | _ => 2
   "#,
-  )
+  );
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn ty() {
     r#"
 type 'a foo = 'a * {} * int list list * (int -> string) * { a: int, b: string }
   "#,
-  )
+  );
 }
 
 #[test]
@@ -147,7 +147,7 @@ val a = 1
 (* 宇宙には、始まりはあるが、終わりはない。無限。 *)
 val b = 2
  "#,
-  )
+  );
 }
 
 #[test]
@@ -156,7 +156,7 @@ fn utf8_string() {
     r#"
 val _: string = "星にもまた、始まりはあるが、自らの力を持って滅びゆく。有限。"
 "#,
-  )
+  );
 }
 
 #[test]

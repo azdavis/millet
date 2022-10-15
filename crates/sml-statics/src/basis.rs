@@ -69,9 +69,10 @@ impl Basis {
 
 /// Returns the minimal basis and symbols.
 ///
-/// This is distinct from std_basis in analysis. This (mostly) just has the definitions that can't
+/// This is distinct from `std_basis` in analysis. This (mostly) just has the definitions that can't
 /// be expressed with regular SML files, like `int` and `real` and `string`. Also `bool` and `list`
 /// because rebinding their constructor names is forbidden.
+#[must_use]
 pub fn minimal() -> (Syms, Basis) {
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {

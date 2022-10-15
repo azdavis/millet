@@ -8,12 +8,14 @@
 //!
 //! Basically: don't use this.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
 
 use sml_syntax::ast;
 use std::fmt;
 
 /// Returns a value that displays the root.
+#[must_use]
 pub fn display_root(root: &ast::Root) -> impl fmt::Display + '_ {
   DisplayRoot(root)
 }

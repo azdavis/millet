@@ -21,9 +21,9 @@ impl fmt::Display for TyVarName {
 }
 
 pub(crate) fn idx_to_name(idx: usize) -> impl Iterator<Item = char> {
-  let alpha = (b'z' - b'a') as usize;
+  let alpha = 26usize;
   let quot = idx / alpha;
-  let rem = idx % alpha;
-  let ch = char::from((rem as u8) + b'a');
+  let rem = u8::try_from(idx % alpha).unwrap();
+  let ch = char::from(b'a' + rem);
   std::iter::repeat(ch).take(quot + 1)
 }

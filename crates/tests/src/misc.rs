@@ -604,7 +604,7 @@ fn empty_fun() {
     fun f = 3
 (** ^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
 "#,
-  )
+  );
 }
 
 #[test]
@@ -616,7 +616,7 @@ signature S = sig
 (** ^^^^^^^ requires at least 1 operand *)
 end
 "#,
-  )
+  );
 }
 
 #[test]
@@ -626,7 +626,7 @@ fn empty_open() {
     open
 (** ^^^^ requires at least 1 operand *)
 "#,
-  )
+  );
 }
 
 #[test]

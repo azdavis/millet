@@ -1,7 +1,7 @@
 //! Get the root group.
 
 use crate::input::util::{
-  get_path_id, read_dir, ErrorKind, ErrorSource, GroupPathKind, InputError, Result,
+  get_path_id, read_dir, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
 };
 use fast_hash::FxHashMap;
 use paths::PathId;
@@ -42,9 +42,9 @@ impl RootGroup {
         if let Some(group_path) = GroupPathBuf::new(fs, entry.clone()) {
           match &root_group_path {
             Some(rgp) => {
-              return Err(InputError {
-                kind: ErrorKind::MultipleRoots(rgp.path.to_owned(), entry.clone()),
-                source: ErrorSource { path: Some(rgp.path.to_owned()), range: None },
+              return Err(Error {
+                kind: ErrorKind::MultipleRoots(rgp.path.clone(), entry.clone()),
+                source: ErrorSource { path: Some(rgp.path.clone()), range: None },
                 path: entry,
               })
             }
@@ -56,7 +56,7 @@ impl RootGroup {
     let root_group_path = match &root_group_path {
       Some(x) => x,
       None => {
-        return Err(InputError {
+        return Err(Error {
           source: ErrorSource::default(),
           path: root.as_path().to_owned(),
           kind: ErrorKind::NoRoot,
@@ -97,7 +97,7 @@ impl ConfigFromFile {
     let parsed: config::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
-        return Err(InputError {
+        return Err(Error {
           source: ErrorSource::default(),
           path: ret.path,
           kind: ErrorKind::CouldNotParseConfig(e),
@@ -105,7 +105,7 @@ impl ConfigFromFile {
       }
     };
     if parsed.version != 1 {
-      return Err(InputError {
+      return Err(Error {
         source: ErrorSource::default(),
         path: ret.path,
         kind: ErrorKind::InvalidConfigVersion(parsed.version),
@@ -114,7 +114,7 @@ impl ConfigFromFile {
     if let Some(ws) = parsed.workspace {
       if let Some(members) = ws.members {
         if ws.root.is_some() || ws.path_vars.is_some() || parsed.errors.is_some() {
-          return Err(InputError {
+          return Err(Error {
             source: ErrorSource::default(),
             path: ret.path,
             kind: ErrorKind::HasMembersButAlsoOtherSettings,
@@ -128,7 +128,7 @@ impl ConfigFromFile {
         match GroupPathBuf::new(fs, path.clone()) {
           Some(path) => ret.root_group = Some(path),
           None => {
-            return Err(InputError {
+            return Err(Error {
               source: ErrorSource { path: Some(ret.path), range: None },
               path,
               kind: ErrorKind::NotGroup,
@@ -154,7 +154,7 @@ impl ConfigFromFile {
       let code = match code.parse::<diagnostic_util::Code>() {
         Ok(x) => x,
         Err(e) => {
-          return Err(InputError {
+          return Err(Error {
             source: ErrorSource::default(),
             path: ret.path,
             kind: ErrorKind::InvalidErrorCode(code, e),
@@ -192,6 +192,6 @@ impl GroupPathBuf {
       "mlb" => GroupPathKind::Mlb,
       _ => return None,
     };
-    Some(GroupPathBuf { path, kind })
+    Some(GroupPathBuf { kind, path })
   }
 }

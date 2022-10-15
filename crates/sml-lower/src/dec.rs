@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_lines)]
+
 use crate::common::{get_name, get_path};
 use crate::pat::tuple;
 use crate::util::{Cx, ErrorKind};
@@ -412,7 +414,7 @@ fn ascription_tail(
   cx: &mut Cx,
   tail: Option<ast::AscriptionTail>,
 ) -> (sml_hir::Ascription, sml_hir::SigExpIdx) {
-  let kind = tail.as_ref().and_then(|x| x.ascription()).map_or(
+  let kind = tail.as_ref().and_then(sml_syntax::ast::AscriptionTail::ascription).map_or(
     sml_hir::Ascription::Transparent,
     |x| match x.kind {
       ast::AscriptionKind::Colon => sml_hir::Ascription::Transparent,
@@ -578,18 +580,18 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Ty(ty_binds(cx, dec.ty_binds()))
     }
     ast::DecOne::DatDec(dec) => {
-      let dbs: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
-      let tbs = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
-      sml_hir::Dec::Datatype(dbs, tbs)
+      let d_binds: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
+      let t_binds = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
+      sml_hir::Dec::Datatype(d_binds, t_binds)
     }
     ast::DecOne::DatCopyDec(dec) => {
       sml_hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
     ast::DecOne::AbstypeDec(dec) => {
-      let dbs: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
-      let tbs = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
+      let d_binds: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
+      let t_binds = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
       let inner = get(cx, dec.dec());
-      sml_hir::Dec::Abstype(dbs, tbs, inner)
+      sml_hir::Dec::Abstype(d_binds, t_binds, inner)
     }
     ast::DecOne::ExDec(dec) => sml_hir::Dec::Exception(
       dec

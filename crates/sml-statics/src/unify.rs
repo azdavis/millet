@@ -74,7 +74,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
     }
   }
   // forbid circularity.
-  if occurs(&mv, &ty) {
+  if occurs(mv, &ty) {
     return Err(UnifyError::OccursCheck(mv, ty));
   }
   // tweak down the rank of all other meta vars in the ty.
@@ -114,7 +114,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
         // the simple case. check the sym is in the overload.
         Ty::Con(args, s) => {
           if ov.as_basics().iter().any(|&ov| st.syms.overloads()[ov].contains(&s)) {
-            assert!(args.is_empty())
+            assert!(args.is_empty());
           } else {
             return Err(UnifyError::HeadMismatch);
           }
@@ -122,7 +122,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
         // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
         // but mv2 itself may also have an entry.
         Ty::MetaVar(mv2) => {
-          let ov = match st.subst().get(&mv2) {
+          let ov = match st.subst().get(mv2) {
             // it didn't have an entry.
             None => ov,
             // unreachable because of apply.
@@ -131,7 +131,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
               // all overload types are equality types.
               TyVarKind::Equality => ov,
               // it too was an overload. attempt to unify the two overloads.
-              TyVarKind::Overloaded(ov2) => match ov.unify(*ov2) {
+              TyVarKind::Overloaded(ov_other) => match ov.unify(*ov_other) {
                 Some(ov) => ov,
                 None => return Err(UnifyError::HeadMismatch),
               },
@@ -166,7 +166,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
         // setting mv2's entry to mv's old entry, which specifies the rows for this record ty
         // var.
         Ty::MetaVar(mv2) => {
-          match st.subst().get(&mv2) {
+          match st.subst().get(mv2) {
             // there was no entry.
             None => {}
             // unreachable because of apply.
@@ -211,10 +211,10 @@ fn head_match(b: bool) -> Result {
   }
 }
 
-fn occurs(mv: &MetaTyVar, ty: &Ty) -> bool {
+fn occurs(mv: MetaTyVar, ty: &Ty) -> bool {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => false,
-    Ty::MetaVar(mv2) => mv == mv2,
+    Ty::MetaVar(mv2) => mv == *mv2,
     Ty::Record(rows) => rows.values().any(|t| occurs(mv, t)),
     Ty::Con(args, _) => args.iter().any(|t| occurs(mv, t)),
     Ty::Fn(param, res) => occurs(mv, param) || occurs(mv, res),

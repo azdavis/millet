@@ -1,7 +1,7 @@
 //! Lower a CM file into paths and exports.
 
 use crate::input::util::{
-  get_path_id, read_file, ErrorKind, ErrorSource, GroupPathToProcess, InputError, Result,
+  get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
   StartedGroupFile,
 };
 
@@ -23,6 +23,7 @@ pub(crate) struct Export {
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
 /// of a given library path on demand.
+#[allow(clippy::too_many_lines)]
 pub(crate) fn get<F>(
   store: &mut paths::Store,
   fs: &F,
@@ -45,7 +46,7 @@ where
   let cm = match cm::get(group_file.contents.as_str(), path_vars) {
     Ok(x) => x,
     Err(e) => {
-      return Err(InputError {
+      return Err(Error {
         source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
         path: group_path.to_owned(),
         kind: ErrorKind::Cm(e),
@@ -87,7 +88,7 @@ where
           cm::Namespace::Signature => mlb_hir::Namespace::Signature,
           cm::Namespace::Functor => mlb_hir::Namespace::Functor,
           cm::Namespace::FunSig => {
-            return Err(InputError {
+            return Err(Error {
               source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },
               path: group_path.to_owned(),
               kind: ErrorKind::UnsupportedExport,
@@ -114,14 +115,14 @@ where
         );
       }
       cm::Export::Source(range) => {
-        return Err(InputError {
+        return Err(Error {
           source: ErrorSource { path: None, range: group_file.pos_db.range(range) },
           path: group_path.to_owned(),
           kind: ErrorKind::UnsupportedExport,
         })
       }
       cm::Export::Group(_) => {
-        for (path, kind) in paths.iter() {
+        for (path, kind) in &paths {
           if matches!(kind, mlb_hir::PathKind::Mlb) {
             let cm_file = cm_files.get(path).expect("child cm file should be set");
             exports.extend(cm_file.exports.iter().cloned());

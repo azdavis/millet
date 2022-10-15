@@ -1,6 +1,6 @@
 //! High-level Intermediate Representation.
 
-#![deny(missing_debug_implementations, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, rust_2018_idioms)]
 
 use std::fmt;
 
@@ -63,7 +63,7 @@ pub struct FunctorBind {
 pub type StrDecIdx = OptIdx<StrDec>;
 pub type StrDecArena = Arena<StrDec>;
 
-/// sml_def(87) is handled by not distinguishing between top decs and str decs.
+/// Def(87) is handled by not distinguishing between top decs and str decs.
 #[derive(Debug)]
 pub enum StrDec {
   Dec(DecIdx),
@@ -171,7 +171,7 @@ pub struct StrDesc {
 pub type ExpIdx = OptIdx<Exp>;
 pub type ExpArena = Arena<Exp>;
 
-/// sml_def(7) is handled by having no distinction between atomic expressions and others here.
+/// Def(7) is handled by having no distinction between atomic expressions and others here.
 #[derive(Debug)]
 pub enum Exp {
   Hole,
@@ -240,7 +240,7 @@ pub enum ExBind {
 pub type PatIdx = OptIdx<Pat>;
 pub type PatArena = Arena<Pat>;
 
-/// sml_def(40) is handled by having no distinction between atomic expressions and others here.
+/// Def(40) is handled by having no distinction between atomic expressions and others here.
 #[derive(Debug)]
 pub enum Pat {
   Wild,
@@ -293,6 +293,7 @@ impl fmt::Display for Lab {
 }
 
 impl Lab {
+  #[must_use]
   pub fn tuple(idx: usize) -> Self {
     Self::Num(idx + 1)
   }
@@ -336,19 +337,23 @@ impl Path {
     Self { structures: structures.into_iter().collect(), last }
   }
 
+  #[must_use]
   pub fn try_new(mut names: Vec<Name>) -> Option<Self> {
     let last = names.pop()?;
     Some(Self::new(names, last))
   }
 
+  #[must_use]
   pub fn one(name: Name) -> Self {
     Self::new(Vec::new(), name)
   }
 
+  #[must_use]
   pub fn last(&self) -> &Name {
     &self.last
   }
 
+  #[must_use]
   pub fn structures(&self) -> &[Name] {
     &self.structures
   }
@@ -360,7 +365,7 @@ impl Path {
 
 impl fmt::Display for Path {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    for structure in self.structures.iter() {
+    for structure in &self.structures {
       structure.fmt(f)?;
       f.write_str(".")?;
     }
@@ -379,14 +384,17 @@ impl TyVar {
     Self(Name::new(s))
   }
 
+  #[must_use]
   pub fn is_equality(&self) -> bool {
     self.0.as_str().as_bytes().get(1) == Some(&b'\'')
   }
 
+  #[must_use]
   pub fn as_str(&self) -> &str {
     self.0.as_str()
   }
 
+  #[must_use]
   pub fn as_name(&self) -> &Name {
     &self.0
   }

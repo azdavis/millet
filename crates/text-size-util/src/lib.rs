@@ -1,6 +1,6 @@
 //! A thin wrapper around [`text_size`] to add some helper functions and types.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub use text_size::{TextLen, TextRange, TextSize};
 
@@ -21,6 +21,7 @@ impl<T> WithRange<T> {
 }
 
 /// Make a text size or panic. Panics if the usize overflows a u32.
+#[must_use]
 pub fn mk_text_size(n: usize) -> TextSize {
   TextSize::try_from(n).expect("could not make text size")
 }

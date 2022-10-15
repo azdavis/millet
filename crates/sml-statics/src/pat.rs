@@ -60,70 +60,71 @@ fn get_(
   ars: &sml_hir::Arenas,
   cx: &Cx,
   ve: &mut ValEnv,
-  pat_: sml_hir::la_arena::Idx<sml_hir::Pat>,
+  pat_idx: sml_hir::la_arena::Idx<sml_hir::Pat>,
 ) -> Option<PatRet> {
-  let pat = Some(pat_);
+  let pat = Some(pat_idx);
   let mut ty_scheme = None::<TyScheme>;
   let mut def = None::<Def>;
-  let (pm_pat, ty) = match &ars.pat[pat_] {
-    // sml_def(32)
+  let (pm_pat, ty) = match &ars.pat[pat_idx] {
+    // Def(32)
     sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), Ty::MetaVar(st.meta_gen.gen(cfg.gen))),
-    // sml_def(33)
-    sml_hir::Pat::SCon(scon) => {
-      let con = match scon {
+    // Def(33)
+    sml_hir::Pat::SCon(special_con) => {
+      let con = match special_con {
         sml_hir::SCon::Int(i) => Con::Int(i.clone()),
         sml_hir::SCon::Real(_) => {
-          st.err(pat_, ErrorKind::RealPat);
+          st.err(pat_idx, ErrorKind::RealPat);
           Con::Any
         }
         sml_hir::SCon::Word(w) => Con::Word(*w),
         sml_hir::SCon::Char(c) => Con::Char(*c),
         sml_hir::SCon::String(s) => Con::String(s.clone()),
       };
-      let t = get_scon(st, cfg.gen, scon);
+      let t = get_scon(st, cfg.gen, special_con);
       (Pat::zero(con, pat), t)
     }
-    sml_hir::Pat::Con(path, arg) => {
-      let arg = arg.map(|x| get(st, cfg, ars, cx, ve, x));
+    sml_hir::Pat::Con(path, argument) => {
+      let argument = argument.map(|x| get(st, cfg, ars, cx, ve, x));
       let maybe_val_info = match get_val_info(&cx.env, path) {
         Ok(x) => x,
         Err(e) => {
-          st.err(pat_, e);
+          st.err(pat_idx, e);
           return None;
         }
       };
       // test(deviations::mlton::rebind_ctor)
-      let is_var =
-        arg.is_none() && path.structures().is_empty() && (ok_val_info(maybe_val_info) || cfg.rec);
-      // sml_def(34)
+      let is_var = argument.is_none()
+        && path.structures().is_empty()
+        && (ok_val_info(maybe_val_info) || cfg.rec);
+      // Def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
-        insert_name(st, cfg.cfg, ve, path.last().clone(), ty.clone(), pat_.into());
+        insert_name(st, cfg.cfg, ve, path.last().clone(), ty.clone(), pat_idx.into());
         return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, def });
       }
       let val_info = match maybe_val_info {
         Some(x) => x,
         None => {
-          st.err(pat_, ErrorKind::Undefined(Item::Val, path.last().clone()));
+          st.err(pat_idx, ErrorKind::Undefined(Item::Val, path.last().clone()));
           return None;
         }
       };
       let variant_name = match &val_info.id_status {
         IdStatus::Val => {
-          st.err(pat_, ErrorKind::PatValIdStatus);
+          st.err(pat_idx, ErrorKind::PatValIdStatus);
           VariantName::Name(path.last().clone())
         }
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
       let ty = instantiate(st, cfg.gen, val_info.ty_scheme.clone());
-      // sml_def(35), sml_def(41)
-      let (sym, args, ty) = match ty {
+      // Def(35), Def(41)
+      let (sym, arguments, ty) = match ty {
         Ty::Con(_, sym) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
           def = val_info.def;
-          if arg.is_some() {
-            st.err(pat_, ErrorKind::ConPatMustNotHaveArg)
+          if argument.is_some() {
+            st.err(pat_idx, ErrorKind::ConPatMustNotHaveArg);
           }
           (sym, Vec::new(), ty)
         }
@@ -142,13 +143,13 @@ fn get_(
             // test(pat::weird_pat_fn_2)
             _ => return None,
           };
-          let arg_pat = match arg {
+          let arg_pat = match argument {
             None => {
-              st.err(pat_, ErrorKind::ConPatMustHaveArg);
+              st.err(pat_idx, ErrorKind::ConPatMustHaveArg);
               Pat::zero(Con::Any, pat)
             }
             Some((arg_pat, arg_ty)) => {
-              unify(st, *param_ty, arg_ty, pat_.into());
+              unify(st, *param_ty, arg_ty, pat_idx.into());
               apply(st.subst(), &mut res_ty);
               arg_pat
             }
@@ -158,21 +159,21 @@ fn get_(
         // should have already errored
         _ => return None,
       };
-      let pat = Pat::con(Con::Variant(sym, variant_name), args, pat);
+      let pat = Pat::con(Con::Variant(sym, variant_name), arguments, pat);
       (pat, ty)
     }
-    // sml_def(36)
+    // Def(36)
     sml_hir::Pat::Record { rows, allows_other } => {
       let mut labels = BTreeSet::<sml_hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
-      let rows = record(st, rows, pat_.into(), |st, lab, pat| {
+      let rows = record(st, rows, pat_idx.into(), |st, lab, pat| {
         let (pm_pat, ty) = get(st, cfg, ars, cx, ve, pat);
         labels.insert(lab.clone());
         pats.push(pm_pat);
         ty
       });
       let ty = if *allows_other {
-        // sml_def(38)
+        // Def(38)
         let mv = st.meta_gen.gen(cfg.gen);
         let k = SubstEntry::Kind(TyVarKind::Record(rows));
         assert!(st.subst().insert(mv, k).is_none(),);
@@ -183,35 +184,35 @@ fn get_(
       let con = Con::Record { labels, allows_other: *allows_other };
       (Pat::con(con, pats, pat), ty)
     }
-    // sml_def(42)
+    // Def(42)
     sml_hir::Pat::Typed(inner, want) => {
       let (pm_pat, got) = get(st, cfg, ars, cx, ve, *inner);
       let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
-      unify(st, want.clone(), got, inner.unwrap_or(pat_).into());
+      unify(st, want.clone(), got, inner.unwrap_or(pat_idx).into());
       apply(st.subst(), &mut want);
       (pm_pat, want)
     }
-    // sml_def(43)
+    // Def(43)
     sml_hir::Pat::As(name, pat) => {
       let (pm_pat, ty) = get(st, cfg, ars, cx, ve, *pat);
       if !ok_val_info(cx.env.get_val(name)) {
-        st.err(pat_, ErrorKind::InvalidAsPatName(name.clone()));
+        st.err(pat_idx, ErrorKind::InvalidAsPatName(name.clone()));
       }
-      insert_name(st, cfg.cfg, ve, name.clone(), ty.clone(), pat_.into());
+      insert_name(st, cfg.cfg, ve, name.clone(), ty.clone(), pat_idx.into());
       (pm_pat, ty)
     }
     sml_hir::Pat::Or(or_pat) => {
       let mut fst_ve = ValEnv::default();
       let (fst_pm_pat, mut ty) = get(st, cfg, ars, cx, &mut fst_ve, or_pat.first);
       let mut pm_pats = vec![fst_pm_pat];
-      for &pat in or_pat.rest.iter() {
+      for &pat in &or_pat.rest {
         let mut rest_ve = ValEnv::default();
         let (rest_pm_pat, rest_ty) = get(st, cfg, ars, cx, &mut rest_ve, pat);
         pm_pats.push(rest_pm_pat);
-        let idx = sml_hir::Idx::from(pat.unwrap_or(pat_));
+        let idx = sml_hir::Idx::from(pat.unwrap_or(pat_idx));
         unify(st, ty.clone(), rest_ty, idx);
         apply(st.subst(), &mut ty);
-        for (name, fst_val_info) in fst_ve.iter() {
+        for (name, fst_val_info) in &fst_ve {
           let rest_val_info = match rest_ve.remove(name) {
             Some(x) => x,
             None => {
@@ -221,9 +222,8 @@ fn get_(
           };
           assert!(fst_val_info.id_status.same_kind_as(&IdStatus::Val));
           assert!(rest_val_info.id_status.same_kind_as(&IdStatus::Val));
-          let fst_ty_scheme = fst_val_info.ty_scheme.clone();
           let rest_ty_scheme = rest_val_info.ty_scheme.clone();
-          eq_ty_scheme(st, fst_ty_scheme, rest_ty_scheme, idx);
+          eq_ty_scheme(st, &fst_val_info.ty_scheme, rest_ty_scheme, idx);
         }
         if let Some(name) = rest_ve.into_keys().next() {
           st.err(idx, ErrorKind::OrPatNotSameBindings(name));
@@ -253,7 +253,7 @@ fn insert_name(
   match st.mode() {
     Mode::Regular(Some(_)) => {
       if cfg.mark_defined {
-        st.mark_defined(idx, name.clone())
+        st.mark_defined(idx, name.clone());
       }
     }
     Mode::Regular(None) | Mode::StdBasis(_) => {}

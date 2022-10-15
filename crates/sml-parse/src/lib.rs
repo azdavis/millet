@@ -1,6 +1,6 @@
 //! Parses tokens into a concrete syntax tree.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 mod dec;
 mod exp;
@@ -24,6 +24,10 @@ pub struct Parse {
 }
 
 /// Returns a parse of the tokens.
+///
+/// # Panics
+///
+/// If casting the root node to a Root failed (an internal error).
 pub fn get<'a>(tokens: &'a [Token<'a, SK>], fix_env: &'a mut parser::FixEnv) -> Parse {
   let mut p = parser::Parser::new(tokens, fix_env);
   root::root(&mut p);

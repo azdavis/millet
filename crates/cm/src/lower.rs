@@ -11,9 +11,9 @@ pub(crate) fn get(root: Root) -> Result<CmFile> {
           Some(class) => match class.val {
             Class::Sml => PathKind::Sml,
             Class::Cm => PathKind::Cm,
-            c => {
+            Class::Other(s) => {
               return Err(Error::new(
-                ErrorKind::UnsupportedClass(member.pathname.val, c),
+                ErrorKind::UnsupportedClass(member.pathname.val, s),
                 class.range,
               ))
             }

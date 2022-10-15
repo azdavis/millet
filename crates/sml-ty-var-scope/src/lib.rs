@@ -28,7 +28,7 @@
 //!   end
 //! ```
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use fast_hash::{FxHashMap, FxHashSet};
 
@@ -132,7 +132,7 @@ fn get_sig_exp(cx: &mut Cx, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) 
     sml_hir::SigExp::Spec(spec) => get_spec(cx, ars, *spec),
     sml_hir::SigExp::Name(_) => {}
     sml_hir::SigExp::WhereType(sig_exp, _, _, _) | sml_hir::SigExp::Where(sig_exp, _, _) => {
-      get_sig_exp(cx, ars, *sig_exp)
+      get_sig_exp(cx, ars, *sig_exp);
     }
   }
 }
@@ -218,14 +218,14 @@ fn get_dec(
             Mode::Get(ac) => ac,
             Mode::Set => unreachable!("mode changed to Set"),
           };
-          for x in scope.iter() {
+          for x in &scope {
             ac.remove(x);
           }
           assert!(cx.val_dec.insert(dec, ac).is_none());
         }
         Mode::Set => {
           let unguarded = cx.val_dec.get_mut(&dec).expect("should have been set in the Get pass");
-          for x in scope.iter() {
+          for x in &scope {
             unguarded.remove(x);
           }
           scope.extend(unguarded.iter().cloned());
@@ -275,13 +275,13 @@ fn get_exp(
       get_dec(cx, ars, scope, mode, *dec);
       get_exp(cx, ars, scope, mode, *exp);
     }
-    sml_hir::Exp::App(func, arg) => {
+    sml_hir::Exp::App(func, argument) => {
       get_exp(cx, ars, scope, mode, *func);
-      get_exp(cx, ars, scope, mode, *arg);
+      get_exp(cx, ars, scope, mode, *argument);
     }
-    sml_hir::Exp::Handle(head, arms) => {
+    sml_hir::Exp::Handle(head, matcher_arms) => {
       get_exp(cx, ars, scope, mode, *head);
-      for &(pat, exp) in arms {
+      for &(pat, exp) in matcher_arms {
         match mode {
           Mode::Get(ac) => get_pat(cx, ars, ac, pat),
           Mode::Set => {}
@@ -290,8 +290,8 @@ fn get_exp(
       }
     }
     sml_hir::Exp::Raise(exp) => get_exp(cx, ars, scope, mode, *exp),
-    sml_hir::Exp::Fn(arms) => {
-      for &(pat, exp) in arms {
+    sml_hir::Exp::Fn(matcher_arms) => {
+      for &(pat, exp) in matcher_arms {
         match mode {
           Mode::Get(ac) => get_pat(cx, ars, ac, pat),
           Mode::Set => {}
@@ -316,10 +316,10 @@ fn get_pat(cx: &mut Cx, ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::
   };
   match &ars.pat[pat] {
     sml_hir::Pat::Wild | sml_hir::Pat::SCon(_) => {}
-    sml_hir::Pat::Con(_, arg) => get_pat(cx, ars, ac, arg.flatten()),
+    sml_hir::Pat::Con(_, argument) => get_pat(cx, ars, ac, argument.flatten()),
     sml_hir::Pat::Record { rows, .. } => {
       for &(_, pat) in rows {
-        get_pat(cx, ars, ac, pat)
+        get_pat(cx, ars, ac, pat);
       }
     }
     sml_hir::Pat::Typed(pat, ty) => {
@@ -329,7 +329,7 @@ fn get_pat(cx: &mut Cx, ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::
     sml_hir::Pat::As(_, pat) => get_pat(cx, ars, ac, *pat),
     sml_hir::Pat::Or(or_pat) => {
       get_pat(cx, ars, ac, or_pat.first);
-      for &pat in or_pat.rest.iter() {
+      for &pat in &or_pat.rest {
         get_pat(cx, ars, ac, pat);
       }
     }
@@ -351,8 +351,8 @@ fn get_ty(cx: &mut Cx, ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::Ty
         get_ty(cx, ars, ac, ty);
       }
     }
-    sml_hir::Ty::Con(args, _) => {
-      for &ty in args {
+    sml_hir::Ty::Con(arguments, _) => {
+      for &ty in arguments {
         get_ty(cx, ars, ac, ty);
       }
     }

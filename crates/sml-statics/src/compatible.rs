@@ -5,9 +5,9 @@ use crate::unify::{unify, unify_, Result};
 use crate::util::{apply_bv, instantiate};
 
 /// emits no error iff `lhs` and `rhs` are equal ty schemes.
-pub(crate) fn eq_ty_scheme(st: &mut St, lhs: TyScheme, rhs: TyScheme, idx: sml_hir::Idx) {
+pub(crate) fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: TyScheme, idx: sml_hir::Idx) {
   generalizes(st, lhs.clone(), &rhs, idx);
-  generalizes(st, rhs, &lhs, idx);
+  generalizes(st, rhs, lhs, idx);
 }
 
 /// we _maybe_ could use `#[derive(PartialEq, Eq)]` for [`Ty`] and [`crate::types::BoundTyVars`],
@@ -18,9 +18,9 @@ pub(crate) fn eq_ty_scheme(st: &mut St, lhs: TyScheme, rhs: TyScheme, idx: sml_h
 /// [`Ty::FixedVar`] to deal with? but those should probably not come up in ty schemes too often,
 /// right? _shrug_ for now I'm going to just read off the Definition, which says they're eq if they
 /// generalize each other.
-pub(crate) fn eq_ty_scheme_no_emit(st: &mut St, lhs: TyScheme, rhs: TyScheme) -> Result {
+pub(crate) fn eq_ty_scheme_no_emit(st: &mut St, lhs: &TyScheme, rhs: TyScheme) -> Result {
   generalizes_no_emit(st, lhs.clone(), &rhs)?;
-  generalizes_no_emit(st, rhs, &lhs)?;
+  generalizes_no_emit(st, rhs, lhs)?;
   Ok(())
 }
 
@@ -47,7 +47,7 @@ fn prepare_generalize(st: &mut St, general: TyScheme, specific: &TyScheme) -> (T
 /// emits no error iff `general` generalizes `specific`.
 pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, idx: sml_hir::Idx) {
   let (general, specific) = prepare_generalize(st, general, specific);
-  unify(st, specific, general, idx)
+  unify(st, specific, general, idx);
 }
 
 fn generalizes_no_emit(st: &mut St, general: TyScheme, specific: &TyScheme) -> Result {

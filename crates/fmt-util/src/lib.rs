@@ -1,10 +1,14 @@
 //! Utilities for formatting.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use std::fmt;
 
 /// Format the iter, interspersed with `sep`.
+///
+/// # Errors
+///
+/// If the formatter errors.
 pub fn sep_seq<I, T>(f: &mut fmt::Formatter<'_>, sep: &str, mut iter: I) -> fmt::Result
 where
   I: Iterator<Item = T>,
@@ -21,6 +25,10 @@ where
 }
 
 /// `seq_seq` with `", "` as the separator.
+///
+/// # Errors
+///
+/// If the formatter errors.
 pub fn comma_seq<I, T>(f: &mut fmt::Formatter<'_>, iter: I) -> fmt::Result
 where
   I: Iterator<Item = T>,

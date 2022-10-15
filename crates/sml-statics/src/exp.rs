@@ -24,20 +24,20 @@ pub(crate) fn get(
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut def = None::<Def>;
+  let mut definition = None::<Def>;
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.meta_gen.gen(Generalizable::Always);
       st.insert_hole(mv, exp.into());
       Ty::MetaVar(mv)
     }
-    // sml_def(1)
+    // Def(1)
     sml_hir::Exp::SCon(scon) => get_scon(st, Generalizable::Always, scon),
-    // sml_def(2)
+    // Def(2)
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
-        def = val_info.def;
+        definition = val_info.def;
         if let Some(def) = val_info.def {
           st.mark_used(def.idx);
         }
@@ -52,12 +52,12 @@ pub(crate) fn get(
         Ty::None
       }
     },
-    // sml_def(3)
+    // Def(3)
     sml_hir::Exp::Record(rows) => {
       let rows = record(st, rows, exp.into(), |st, _, exp| get(st, cfg, cx, ars, exp));
       Ty::Record(rows)
     }
-    // sml_def(4)
+    // Def(4)
     sml_hir::Exp::Let(dec, inner) => {
       let mut let_env = Env::default();
       let marker = st.syms.mark();
@@ -70,10 +70,10 @@ pub(crate) fn get(
       }
       got
     }
-    // sml_def(8)
-    sml_hir::Exp::App(func, arg) => {
+    // Def(8)
+    sml_hir::Exp::App(func, argument) => {
       let func_ty = get(st, cfg, cx, ars, *func);
-      let arg_ty = get(st, cfg, cx, ars, *arg);
+      let arg_ty = get(st, cfg, cx, ars, *argument);
       // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
       // would still be correct. however, matching on `func_ty` lets us emit slightly better error
       // messages sometimes.
@@ -92,13 +92,13 @@ pub(crate) fn get(
           Ty::None
         }
         Ty::Fn(want_arg, mut want_res) => {
-          unify(st, *want_arg, arg_ty, arg.unwrap_or(exp).into());
+          unify(st, *want_arg, arg_ty, argument.unwrap_or(exp).into());
           apply(st.subst(), want_res.as_mut());
           *want_res
         }
       }
     }
-    // sml_def(10)
+    // Def(10)
     sml_hir::Exp::Handle(inner, matcher) => {
       let mut exp_ty = get(st, cfg, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
@@ -109,19 +109,19 @@ pub(crate) fn get(
       st.insert_handle(pats, param, idx.into());
       exp_ty
     }
-    // sml_def(11)
+    // Def(11)
     sml_hir::Exp::Raise(inner) => {
       let got = get(st, cfg, cx, ars, *inner);
       unify(st, Ty::EXN, got, inner.unwrap_or(exp).into());
       Ty::MetaVar(st.meta_gen.gen(Generalizable::Always))
     }
-    // sml_def(12)
+    // Def(12)
     sml_hir::Exp::Fn(matcher) => {
       let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
       st.insert_case(pats, param.clone(), exp.into());
       Ty::fun(param, res)
     }
-    // sml_def(9)
+    // Def(9)
     sml_hir::Exp::Typed(inner, want) => {
       let got = get(st, cfg, cx, ars, *inner);
       let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
@@ -131,11 +131,11 @@ pub(crate) fn get(
     }
   };
   let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
-  st.info().insert(exp.into(), Some(ty_entry), def);
+  st.info().insert(exp.into(), Some(ty_entry), definition);
   ret
 }
 
-/// sml_def(13)
+/// Def(13)
 fn get_matcher(
   st: &mut St,
   cfg: Cfg,
@@ -148,7 +148,7 @@ fn get_matcher(
   let mut res_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
   let mut pats = Vec::<Pat>::new();
   st.meta_gen.inc_rank();
-  // sml_def(14)
+  // Def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
     let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };

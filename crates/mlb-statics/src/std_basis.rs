@@ -14,11 +14,13 @@ pub struct StdBasis {
 impl StdBasis {
   /// The minimal standard basis. Only includes fundamental top-level definitions like `int`,
   /// `real`, `ref`, `<`, etc.
+  #[must_use]
   pub fn minimal() -> Self {
     get_std_basis(std::iter::empty())
   }
 
   /// The full standard basis, as documented in the public SML basis library docs.
+  #[must_use]
   pub fn full() -> Self {
     get_std_basis(
       std::iter::empty()
@@ -32,16 +34,19 @@ impl StdBasis {
   }
 
   /// Returns the symbols for this.
+  #[must_use]
   pub fn syms(&self) -> &Syms {
     &self.syms
   }
 
   /// Returns the basis for this.
+  #[must_use]
   pub fn basis(&self) -> &basis::Basis {
     &self.basis
   }
 
   /// Look up a std basis file's info.
+  #[must_use]
   pub fn get_info(&self, s: &str) -> Option<&Info> {
     self.info.get(s)
   }

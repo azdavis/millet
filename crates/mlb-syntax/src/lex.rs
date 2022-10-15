@@ -70,7 +70,7 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     "in" => Token::In,
     s => {
       let all = s.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'\''));
-      let fst = s.as_bytes().first().map_or(false, |b| b.is_ascii_alphabetic());
+      let fst = s.as_bytes().first().map_or(false, u8::is_ascii_alphabetic);
       if all && fst {
         Token::Name(s)
       } else {

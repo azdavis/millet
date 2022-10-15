@@ -44,13 +44,13 @@ fn get_str_dec(
     None => return,
   };
   match &ars.str_dec[str_dec] {
-    // sml_def(56)
+    // Def(56)
     sml_hir::StrDec::Dec(dec) => {
-      dec::get(st, Cfg::default(), &bs.as_cx(), ars, ac.as_mut_env(), *dec)
+      dec::get(st, Cfg::default(), &bs.as_cx(), ars, ac.as_mut_env(), *dec);
     }
-    // sml_def(57)
+    // Def(57)
     sml_hir::StrDec::Structure(str_binds) => {
-      // sml_def(61)
+      // Def(61)
       let mut str_env = StrEnv::default();
       for str_bind in str_binds {
         let mut env = Env::with_def(st.def(str_dec.into()));
@@ -61,7 +61,7 @@ fn get_str_dec(
       }
       ac.as_mut_env().str_env.extend(str_env);
     }
-    // sml_def(58)
+    // Def(58)
     sml_hir::StrDec::Local(local_dec, in_dec) => {
       let mut local_bs = Bs::default();
       get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), *local_dec);
@@ -69,7 +69,7 @@ fn get_str_dec(
       bs.append(local_bs);
       get_str_dec(st, &bs, ars, ac, *in_dec);
     }
-    // sml_def(59), sml_def(60)
+    // Def(59), Def(60)
     sml_hir::StrDec::Seq(str_decs) => {
       let mut bs = bs.clone();
       match ac {
@@ -91,7 +91,7 @@ fn get_str_dec(
         }
       }
     }
-    // sml_def(66), sml_def(88)
+    // Def(66), Def(88)
     sml_hir::StrDec::Signature(sig_binds) => {
       let ac = match ac {
         StrDecAc::Bs(ac) => ac,
@@ -101,7 +101,7 @@ fn get_str_dec(
         }
       };
       let mut sig_env = SigEnv::default();
-      // sml_def(67)
+      // Def(67)
       for sig_bind in sig_binds {
         let mut env = Env::with_def(st.def(str_dec.into()));
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
@@ -112,7 +112,7 @@ fn get_str_dec(
       }
       ac.as_mut_sig_env().extend(sig_env);
     }
-    // sml_def(85), sml_def(89)
+    // Def(85), Def(89)
     sml_hir::StrDec::Functor(fun_binds) => {
       let ac = match ac {
         StrDecAc::Bs(ac) => ac,
@@ -122,7 +122,7 @@ fn get_str_dec(
         }
       };
       let mut fun_env = FunEnv::default();
-      // sml_def(86)
+      // Def(86)
       for fun_bind in fun_binds {
         let mut param_env = Env::default();
         get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
@@ -137,7 +137,7 @@ fn get_str_dec(
         let mut body_ty_names = TyNameSet::default();
         env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
         bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
-        for sym in param_sig.ty_names.iter() {
+        for sym in &param_sig.ty_names {
           body_ty_names.remove(sym);
         }
         let fun_name = fun_bind.functor_name.clone();
@@ -163,9 +163,9 @@ fn get_str_exp(
     None => return,
   };
   match &ars.str_exp[str_exp] {
-    // sml_def(50)
+    // Def(50)
     sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), *str_dec),
-    // sml_def(51)
+    // Def(51)
     sml_hir::StrExp::Path(path) => match get_env_from_str_path(&bs.env, path) {
       Ok(got_env) => {
         st.info().insert(str_exp.into(), None, got_env.def);
@@ -173,7 +173,7 @@ fn get_str_exp(
       }
       Err(e) => st.err(str_exp, e),
     },
-    // sml_def(52), sml_def(53)
+    // Def(52), Def(53)
     sml_hir::StrExp::Ascription(inner_str_exp, asc, sig_exp) => {
       let mut str_exp_env = Env::default();
       get_str_exp(st, bs, ars, &mut str_exp_env, *inner_str_exp);
@@ -196,8 +196,8 @@ fn get_str_exp(
       if let Some(ov) = ov {
         let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
         match &ty_info.ty_scheme.ty {
-          Ty::Con(args, sym) => {
-            assert!(args.is_empty());
+          Ty::Con(arguments, sym) => {
+            assert!(arguments.is_empty());
             st.syms.overloads()[ov].push(*sym);
           }
           t => unreachable!("overload not a Con: {t:?}"),
@@ -205,7 +205,7 @@ fn get_str_exp(
       }
       ac.append(&mut to_add);
     }
-    // sml_def(54)
+    // Def(54)
     sml_hir::StrExp::App(fun_name, arg_str_exp) => match bs.fun_env.get(fun_name) {
       Some(fun_sig) => {
         let mut arg_env = Env::default();
@@ -234,13 +234,13 @@ fn get_str_exp(
       }
       None => st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone())),
     },
-    // sml_def(55)
+    // Def(55)
     sml_hir::StrExp::Let(str_dec, str_exp) => {
       let mut let_env = Env::default();
       get_str_dec(st, bs, ars, StrDecAc::Env(&mut let_env), *str_dec);
       let mut bs = bs.clone();
       bs.env.append(&mut let_env);
-      get_str_exp(st, &bs, ars, ac, *str_exp)
+      get_str_exp(st, &bs, ars, ac, *str_exp);
     }
   }
 }
@@ -257,12 +257,12 @@ fn get_sig_exp(
     None => return None,
   };
   match &ars.sig_exp[sig_exp] {
-    // sml_def(62)
+    // Def(62)
     sml_hir::SigExp::Spec(spec) => {
       get_spec(st, bs, ars, ac, *spec);
       None
     }
-    // sml_def(63)
+    // Def(63)
     sml_hir::SigExp::Name(name) => match bs.sig_env.get(name) {
       Some(sig) => {
         let mut subst = TyRealization::default();
@@ -287,7 +287,7 @@ fn get_sig_exp(
         None
       }
     },
-    // sml_def(64)
+    // Def(64)
     sml_hir::SigExp::WhereType(inner, ty_vars, path, ty) => {
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
@@ -367,7 +367,7 @@ fn get_where_type(
 fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) {
   let mut ac = Vec::<(StartedSym, TyInfo)>::new();
   for &sym in ty_names.iter() {
-    let (name, ty_info) = st.syms.get(&sym).unwrap();
+    let (name, ty_info) = st.syms.get(sym).unwrap();
     let name = name.clone();
     let mut ty_info = ty_info.clone();
     let started = st.syms.start(name);
@@ -382,7 +382,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
   }
 }
 
-// sml_def(65)
+// Def(65)
 fn env_to_sig(bs: &Bs, env: Env) -> Sig {
   let mut ty_names = TyNameSet::default();
   env_syms(&mut |x| ignore(ty_names.insert(x)), &env);
@@ -396,9 +396,9 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     None => return,
   };
   match &ars.spec[spec] {
-    // sml_def(68)
+    // Def(68)
     sml_hir::Spec::Val(ty_vars, val_descs) => {
-      // sml_def(79)
+      // Def(79)
       let mut cx = bs.as_cx();
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Val, ty_vars, spec.into());
       for val_desc in val_descs {
@@ -413,15 +413,15 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         }
       }
     }
-    // sml_def(69)
+    // Def(69)
     //
-    // TODO check does not admit equality
-    sml_hir::Spec::Ty(ty_descs) => get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into()),
-    // sml_def(70)
+    // Def(70)
     //
-    // TODO check does admit equality
-    sml_hir::Spec::EqTy(ty_descs) => get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into()),
-    // sml_def(71)
+    // TODO equality checks
+    sml_hir::Spec::Ty(ty_descs) | sml_hir::Spec::EqTy(ty_descs) => {
+      get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into());
+    }
+    // Def(71)
     sml_hir::Spec::Datatype(dat_desc) => {
       let dat_descs = std::slice::from_ref(dat_desc);
       let (ty_env, big_val_env) =
@@ -437,14 +437,14 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         }
       }
     }
-    // sml_def(72)
+    // Def(72)
     sml_hir::Spec::DatatypeCopy(name, path) => match get_ty_info(&bs.env, path) {
       Ok(ty_info) => {
         let ins = ins_no_dupe(&mut ac.ty_env, name.clone(), ty_info.clone(), Item::Ty);
         if let Some(e) = ins {
           st.err(spec, e);
         }
-        for (name, val_info) in ty_info.val_env.iter() {
+        for (name, val_info) in &ty_info.val_env {
           let ins = ins_no_dupe(&mut ac.val_env, name.clone(), val_info.clone(), Item::Val);
           if let Some(e) = ins {
             st.err(spec, e);
@@ -453,7 +453,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       }
       Err(e) => st.err(spec, e),
     },
-    // sml_def(73), sml_def(83)
+    // Def(73), Def(83)
     sml_hir::Spec::Exception(ex_desc) => {
       let cx = bs.as_cx();
       // almost the same as the logic in dec::get, save for the check for ty vars.
@@ -472,7 +472,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         st.err(spec, e);
       }
     }
-    // sml_def(74), sml_def(84)
+    // Def(74), Def(84)
     sml_hir::Spec::Str(str_desc) => {
       let mut one_env = Env::default();
       get_sig_exp(st, bs, ars, &mut one_env, str_desc.sig_exp);
@@ -481,11 +481,11 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         st.err(spec, e);
       }
     }
-    // sml_def(75)
+    // Def(75)
     sml_hir::Spec::Include(sig_exp) => {
       get_sig_exp(st, bs, ars, ac, *sig_exp);
     }
-    // sml_def(78)
+    // Def(78)
     sml_hir::Spec::Sharing(inner, kind, paths) => {
       let mut inner_env = Env::default();
       get_spec(st, bs, ars, &mut inner_env, *inner);
@@ -504,7 +504,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
             .collect();
           while let Some((struct_1, ty_cons_1)) = all.pop() {
             for ty_con in ty_cons_1 {
-              for (struct_2, ty_cons_2) in all.iter() {
+              for (struct_2, ty_cons_2) in &all {
                 if !ty_cons_2.contains(&ty_con) {
                   continue;
                 }
@@ -518,7 +518,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       }
       append_no_dupe(st, ac, &mut inner_env, spec.into());
     }
-    // sml_def(76), sml_def(77)
+    // Def(76), Def(77)
     sml_hir::Spec::Seq(specs) => {
       let mut bs = bs.clone();
       let mut one_env = Env::default();
@@ -559,18 +559,13 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[sml_hir::Path], i
       Ok(ty_info) => {
         // TODO assert exists c s.t. for all ty schemes, arity of ty scheme = c? and all other
         // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
-        match &ty_info.ty_scheme.ty {
-          Ty::None => {}
-          // TODO side condition for sym not in T of B?
-          Ty::Con(_, sym) => {
-            if ty_scheme.is_none() {
-              ty_scheme = Some(ty_info.ty_scheme.clone());
-            }
-            syms.push(*sym);
+        if let Ty::Con(_, sym) = &ty_info.ty_scheme.ty {
+          if ty_scheme.is_none() {
+            ty_scheme = Some(ty_info.ty_scheme.clone());
           }
-          // TODO this is reachable, but doesn't make sense.
-          _ => {}
+          syms.push(*sym);
         }
+        // TODO the else is reachable, but doesn't make a lot of sense.
       }
       Err(e) => st.err(idx, e),
     }
@@ -598,18 +593,18 @@ fn join_paths(p1: &sml_hir::Path, p2: &sml_hir::Path) -> sml_hir::Path {
 
 fn get_ty_cons(structures: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
   ac.extend(env.ty_env.keys().map(|name| sml_hir::Path::new(structures.clone(), name.clone())));
-  for (name, env) in env.str_env.iter() {
+  for (name, env) in &env.str_env {
     structures.push(name.clone());
     get_ty_cons(structures, ac, env);
     structures.pop().unwrap();
   }
 }
 
-// sml_def(80). TODO equality checks
+// Def(80). TODO equality checks
 fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &sml_hir::TyDesc, idx: sml_hir::Idx) {
   let mut ty_vars = FxHashSet::<&sml_hir::TyVar>::default();
   let started = st.syms.start(ty_desc.name.clone());
-  for ty_var in ty_desc.ty_vars.iter() {
+  for ty_var in &ty_desc.ty_vars {
     if !ty_vars.insert(ty_var) {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
       st.err(idx, e);
@@ -638,9 +633,9 @@ fn env_instance_sig(
   sig: &Sig,
   idx: sml_hir::Idx,
 ) {
-  for &sym in sig.ty_names.iter() {
+  for &sym in &sig.ty_names {
     let mut path = Vec::<&str_util::Name>::new();
-    let (_, ty_info) = st.syms.get(&sym).unwrap();
+    let (_, ty_info) = st.syms.get(sym).unwrap();
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
       unreachable!("couldn't get a path for {sym:?} in {sig:?}");
@@ -676,13 +671,13 @@ fn bound_ty_name_to_path<'e>(
   env: &'e Env,
   ty_scheme: &TyScheme,
 ) -> bool {
-  for (name, ty_info) in env.ty_env.iter() {
-    if eq_ty_scheme_no_emit(st, ty_info.ty_scheme.clone(), ty_scheme.clone()).is_ok() {
+  for (name, ty_info) in &env.ty_env {
+    if eq_ty_scheme_no_emit(st, &ty_info.ty_scheme, ty_scheme.clone()).is_ok() {
       ac.push(name);
       return true;
     }
   }
-  for (name, env) in env.str_env.iter() {
+  for (name, env) in &env.str_env {
     ac.push(name);
     if bound_ty_name_to_path(st, ac, env, ty_scheme) {
       return true;
@@ -699,19 +694,19 @@ fn bound_ty_name_to_path<'e>(
 // indices?
 
 fn env_enrich(st: &mut St, general: &Env, specific: &Env, idx: sml_hir::Idx) {
-  for (name, specific) in specific.str_env.iter() {
+  for (name, specific) in &specific.str_env {
     match general.str_env.get(name) {
       Some(general) => env_enrich(st, general, specific, idx),
       None => st.err(idx, ErrorKind::Missing(Item::Struct, name.clone())),
     }
   }
-  for (name, specific) in specific.ty_env.iter() {
+  for (name, specific) in &specific.ty_env {
     match general.ty_env.get(name) {
       Some(general) => ty_info_enrich(st, general.clone(), specific.clone(), idx),
       None => st.err(idx, ErrorKind::Missing(Item::Ty, name.clone())),
     }
   }
-  for (name, specific) in specific.val_env.iter() {
+  for (name, specific) in &specific.val_env {
     match general.val_env.get(name) {
       Some(general) => val_info_enrich(st, general.clone(), specific, name, idx),
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
@@ -720,7 +715,7 @@ fn env_enrich(st: &mut St, general: &Env, specific: &Env, idx: sml_hir::Idx) {
 }
 
 fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_hir::Idx) {
-  eq_ty_scheme(st, general.ty_scheme, specific.ty_scheme, idx);
+  eq_ty_scheme(st, &general.ty_scheme, specific.ty_scheme, idx);
   if specific.val_env.is_empty() {
     return;
   }
@@ -730,7 +725,7 @@ fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_h
         if !general.id_status.same_kind_as(&specific.id_status) {
           st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
         }
-        eq_ty_scheme(st, general.ty_scheme, specific.ty_scheme, idx);
+        eq_ty_scheme(st, &general.ty_scheme, specific.ty_scheme, idx);
       }
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
     }
@@ -805,7 +800,7 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
 fn bs_syms<F: FnMut(Sym)>(f: &mut F, bs: &Bs) {
   for fun_sig in bs.fun_env.values() {
     sig_syms(f, &fun_sig.param);
-    for &sym in fun_sig.body_ty_names.iter() {
+    for &sym in &fun_sig.body_ty_names {
       f(sym);
     }
     env_syms(f, &fun_sig.body_env);
@@ -817,7 +812,7 @@ fn bs_syms<F: FnMut(Sym)>(f: &mut F, bs: &Bs) {
 }
 
 fn sig_syms<F: FnMut(Sym)>(f: &mut F, sig: &Sig) {
-  for &sym in sig.ty_names.iter() {
+  for &sym in &sig.ty_names {
     f(sym);
   }
   env_syms(f, &sig.env);
@@ -847,5 +842,5 @@ fn val_env_syms<F: FnMut(Sym)>(f: &mut F, val_env: &ValEnv) {
 }
 
 fn assert_ty_has_no_record_meta_vars(x: Result<(), HasRecordMetaVars>) {
-  x.expect("a type cannot have record meta vars because it has no patterns")
+  x.expect("a type cannot have record meta vars because it has no patterns");
 }

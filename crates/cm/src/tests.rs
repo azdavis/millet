@@ -2,7 +2,7 @@ use crate::types::{Export, Namespace, PathKind};
 use std::path::PathBuf;
 use str_util::Name;
 
-fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)]) {
+fn check(s: &str, want_exports: &[RawExport], want_paths: &[(&str, PathKind)]) {
   let file = crate::get(s, &paths::slash_var_path::Env::default()).unwrap();
   let want_paths: Vec<_> = want_paths.iter().map(|&(s, kind)| (mk_path_buf(s), kind)).collect();
   let got_exports: Vec<_> = file
@@ -53,7 +53,7 @@ Group is
   *)
   support.sml
 "#,
-    vec![],
+    &[],
     &[("hi.sml", PathKind::Sml), ("support.sml", PathKind::Sml)],
   );
 }
@@ -74,7 +74,7 @@ is
   f.sig
   uh:sml
 "#,
-    vec![
+    &[
       mk_regular(Namespace::Structure, "A"),
       mk_regular(Namespace::Functor, "B"),
       mk_regular(Namespace::Signature, "C"),
@@ -103,7 +103,7 @@ is
   Bar/sources.cm
   quz/baz.cm
 "#,
-    vec![
+    &[
       mk_regular(Namespace::Structure, "Foo"),
       mk_library("quz/baz.cm"),
       mk_regular(Namespace::Signature, "BAR"),

@@ -1,3 +1,5 @@
+#![allow(clippy::needless_pass_by_value)]
+
 use crate::util::{Cx, ErrorKind};
 use num_traits::Num as _;
 use sml_syntax::ast;

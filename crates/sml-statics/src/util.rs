@@ -24,7 +24,7 @@ fn basic_overload(st: &mut St, g: Generalizable, b: BasicOverload) -> Ty {
   Ty::MetaVar(mv)
 }
 
-/// sml_def(6), sml_def(39), sml_def(49)
+/// Def(6), Def(39), Def(49)
 pub(crate) fn record<T, F>(
   st: &mut St,
   rows: &[(sml_hir::Lab, T)],
@@ -52,7 +52,7 @@ where
 pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
-    Ty::MetaVar(mv) => match subst.get(mv) {
+    Ty::MetaVar(mv) => match subst.get(*mv) {
       None | Some(SubstEntry::Kind(_)) => {}
       Some(SubstEntry::Solved(t)) => {
         let mut t = t.clone();
@@ -87,7 +87,7 @@ pub(crate) fn instantiate(st: &mut St, g: Generalizable, ty_scheme: TyScheme) ->
       let mv = st.meta_gen.gen(g);
       if let Some(k) = x {
         let k = SubstEntry::Kind(k.clone());
-        assert!(st.subst().insert(mv, k).is_none())
+        assert!(st.subst().insert(mv, k).is_none());
       }
       Ty::MetaVar(mv)
     })

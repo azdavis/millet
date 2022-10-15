@@ -1,6 +1,6 @@
 //! Static semantics for ML Basis files.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 mod std_basis;
 
@@ -46,21 +46,25 @@ pub struct Error {
 
 impl Error {
   /// Returns the path for this.
+  #[must_use]
   pub fn path(&self) -> paths::PathId {
     self.path
   }
 
   /// Returns the range for this.
+  #[must_use]
   pub fn range(&self) -> text_size_util::TextRange {
     self.name.range
   }
 
   /// Returns the code for this.
+  #[must_use]
   pub fn code(&self) -> Code {
     Code::n(1998)
   }
 
   /// Returns the severity for this.
+  #[must_use]
   pub fn severity(&self) -> Severity {
     Severity::Error
   }
@@ -134,6 +138,7 @@ impl MBasis {
 }
 
 /// Runs analysis.
+#[must_use]
 pub fn get(
   syms: sml_statics::Syms,
   basis: sml_statics::basis::Basis,

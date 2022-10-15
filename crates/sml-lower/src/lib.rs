@@ -1,6 +1,7 @@
 //! Lowers AST into HIR.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![allow(clippy::single_match_else)]
 
 mod common;
 mod dec;

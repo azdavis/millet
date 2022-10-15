@@ -3,6 +3,7 @@ use crate::util::{Cx, ErrorKind};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
+#[allow(clippy::too_many_lines)]
 pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
   let exp = exp?;
   let ptr = SyntaxNodePtr::new(exp.syntax());
@@ -50,7 +51,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let body = cx.exp(name(fresh.as_str()), ptr.clone());
       sml_hir::Exp::Fn(vec![(param, body)])
     }
-    // sml_def(5)
+    // Def(5)
     ast::Exp::ParenExp(exp) => {
       let inner = exp.exp();
       if inner.as_ref().map_or(false, warn_unnecessary_parens) {
@@ -73,10 +74,10 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       cx.err(exp.syntax().text_range(), ErrorKind::Unsupported("vector expressions"));
       return None;
     }
-    ast::Exp::SeqExp(exp) => return exps_in_seq(cx, exp.exps_in_seq(), ptr),
+    ast::Exp::SeqExp(exp) => return exps_in_seq(cx, exp.exps_in_seq(), &ptr),
     ast::Exp::LetExp(exp) => {
       let dec = dec::get(cx, exp.dec());
-      let exp = exps_in_seq(cx, exp.exps_in_seq(), ptr.clone());
+      let exp = exps_in_seq(cx, exp.exps_in_seq(), &ptr);
       sml_hir::Exp::Let(dec, exp)
     }
     ast::Exp::AppExp(exp) => sml_hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
@@ -132,7 +133,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         let cond = get(cx, exp.cond());
         let body = get(cx, exp.body());
         let call = call_unit_fn(cx, &vid, ptr.clone());
-        let yes = exp_idx_in_seq(cx, [body, call], ptr.clone());
+        let yes = exp_idx_in_seq(cx, [body, call], &ptr);
         let no = cx.exp(tuple([]), ptr.clone());
         let fn_body = if_(cx, cond, yes, no, ptr.clone());
         cx.exp(fn_body, ptr.clone())
@@ -229,7 +230,7 @@ fn call_unit_fn(cx: &mut Cx, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hi
   cx.exp(sml_hir::Exp::App(vid_exp, arg_exp), ptr)
 }
 
-fn exps_in_seq<I>(cx: &mut Cx, exps: I, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx
+fn exps_in_seq<I>(cx: &mut Cx, exps: I, ptr: &SyntaxNodePtr) -> sml_hir::ExpIdx
 where
   I: Iterator<Item = ast::ExpInSeq>,
 {
@@ -244,7 +245,7 @@ where
 /// 3. `((fn _ => ... (fn _ => (fn _ => e) en) ...) e1)`
 ///
 /// the vec must not be empty, since we need a last expression `e`.
-fn exp_idx_in_seq<A, B>(cx: &mut Cx, exps: A, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx
+fn exp_idx_in_seq<A, B>(cx: &mut Cx, exps: A, ptr: &SyntaxNodePtr) -> sml_hir::ExpIdx
 where
   A: IntoIterator<IntoIter = B>,
   B: DoubleEndedIterator<Item = sml_hir::ExpIdx>,
@@ -282,7 +283,7 @@ pub(crate) fn case(
 }
 
 fn matcher(cx: &mut Cx, matcher: Option<ast::Matcher>) -> Vec<(sml_hir::PatIdx, sml_hir::ExpIdx)> {
-  if let Some(bar) = matcher.as_ref().and_then(|m| m.bar()) {
+  if let Some(bar) = matcher.as_ref().and_then(sml_syntax::ast::Matcher::bar) {
     cx.err(bar.text_range(), ErrorKind::PrecedingBar);
   }
   matcher

@@ -1,6 +1,7 @@
 //! Types for working with paths.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![allow(clippy::single_match_else)]
 
 pub mod slash_var_path;
 
@@ -16,8 +17,9 @@ pub struct Store {
 
 impl Store {
   /// Returns a new `Store`.
+  #[must_use]
   pub fn new() -> Self {
-    Default::default()
+    Store::default()
   }
 
   /// Returns an ID for this path.
@@ -27,13 +29,14 @@ impl Store {
       None => {
         let id = PathId(self.id_to_path.len());
         self.id_to_path.push(path.clone());
-        assert!(self.path_to_id.insert(path.clone(), id).is_none());
+        self.path_to_id.insert(path.clone(), id);
         id
       }
     }
   }
 
   /// Returns the path for this ID.
+  #[must_use]
   pub fn get_path(&self, id: PathId) -> &CanonicalPathBuf {
     &self.id_to_path[id.0]
   }
@@ -68,11 +71,13 @@ pub struct CanonicalPathBuf(PathBuf);
 
 impl CanonicalPathBuf {
   /// Returns the underlying [`Path`].
+  #[must_use]
   pub fn as_path(&self) -> &Path {
     self.0.as_path()
   }
 
   /// Turns this into a [`PathBuf`].
+  #[must_use]
   pub fn into_path_buf(self) -> PathBuf {
     self.0
   }
@@ -81,10 +86,22 @@ impl CanonicalPathBuf {
 /// A file system.
 pub trait FileSystem {
   /// Read the contents of a file.
+  ///
+  /// # Errors
+  ///
+  /// If the filesystem failed us.
   fn read_to_string(&self, path: &Path) -> std::io::Result<String>;
   /// Canonicalize a path.
+  ///
+  /// # Errors
+  ///
+  /// If the filesystem failed us.
   fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf>;
   /// Read the entries of a directory. The vec is in arbitrary order.
+  ///
+  /// # Errors
+  ///
+  /// If the filesystem failed us.
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
   /// Returns whether this is a file. If unknown, returns false.
   fn is_file(&self, path: &Path) -> bool;
@@ -127,6 +144,7 @@ pub struct MemoryFileSystem(FxHashMap<PathBuf, String>);
 
 impl MemoryFileSystem {
   /// Returns a new `MemoryFileSystem`.
+  #[must_use]
   pub fn new(map: FxHashMap<PathBuf, String>) -> Self {
     Self(map)
   }
@@ -150,11 +168,7 @@ impl FileSystem for MemoryFileSystem {
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
     Ok(
-      self
-        .0
-        .keys()
-        .filter_map(|p| (p.starts_with(path) && p != path).then(|| p.to_owned()))
-        .collect(),
+      self.0.keys().filter_map(|p| (p.starts_with(path) && p != path).then(|| p.clone())).collect(),
     )
   }
 

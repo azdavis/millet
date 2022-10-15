@@ -163,14 +163,14 @@ workspace.root = "foo.mlb"
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,
-) -> Result<analysis::input::Input, analysis::input::InputError> {
+) -> Result<analysis::input::Input, analysis::input::Error> {
   check_input(names.iter().map(|&x| (x, "Group is")), config)
 }
 
 fn check_input<'a, I>(
   groups: I,
   config: Option<&str>,
-) -> Result<analysis::input::Input, analysis::input::InputError>
+) -> Result<analysis::input::Input, analysis::input::Error>
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {

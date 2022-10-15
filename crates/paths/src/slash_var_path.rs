@@ -46,6 +46,10 @@ enum Component {
 
 /// Using `/` as the path separator, this parses a path from `s`, substituting path variables (like
 /// `$FOO` or `$(BAR)`) with their values in `env`.
+///
+/// # Errors
+///
+/// If there was a path variable not defined in the env.
 pub fn get(s: &str, env: &Env) -> Result<PathBuf, Error> {
   let mut ret = PathBuf::new();
   let mut cur = String::new();
@@ -62,7 +66,7 @@ pub fn get(s: &str, env: &Env) -> Result<PathBuf, Error> {
         }
       }
       Component::Var(v) => {
-        cur.push_str(env.get(v.as_str()).ok_or_else(|| Error::Undefined(v.clone()))?)
+        cur.push_str(env.get(v.as_str()).ok_or_else(|| Error::Undefined(v.clone()))?);
       }
     }
   }

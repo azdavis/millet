@@ -40,7 +40,7 @@ fn run() -> usize {
   let root = match fs.canonicalize(root) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(analysis::input::InputError::from_io(root.to_owned(), e));
+      handle_input_error(analysis::input::Error::from_io(root.to_owned(), e));
       return 1;
     }
   };
@@ -65,7 +65,7 @@ fn run() -> usize {
   num_errors
 }
 
-fn handle_input_error(e: analysis::input::InputError) {
+fn handle_input_error(e: analysis::input::Error) {
   print!("{}", e.path().display());
   if let Some(r) = e.range() {
     print!(":{}", r.start);

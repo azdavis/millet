@@ -1,6 +1,6 @@
 //! Lexes a string into tokens.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use diagnostic_util::{Code, Severity};
 use lex_util::{advance_while, block_comment, is_whitespace};
@@ -60,16 +60,19 @@ pub struct Error {
 
 impl Error {
   /// Returns the range for this.
+  #[must_use]
   pub fn range(&self) -> TextRange {
     self.range
   }
 
   /// Returns a value that displays the message.
+  #[must_use]
   pub fn display(&self) -> impl fmt::Display + '_ {
     &self.kind
   }
 
   /// Returns the code for this.
+  #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
       ErrorKind::InvalidSource => Code::n(2001),
@@ -85,12 +88,18 @@ impl Error {
   }
 
   /// Returns the severity for this.
+  #[must_use]
   pub fn severity(&self) -> Severity {
     Severity::Error
   }
 }
 
 /// Returns a [`Lex`] of the input.
+///
+/// # Panics
+///
+/// If the lexer failed to advance (an internal error).
+#[must_use]
 pub fn get(s: &str) -> Lex<'_> {
   let bs = s.as_bytes();
   let mut tokens = Vec::new();
@@ -115,6 +124,7 @@ struct Cx {
 /// requires `bs` is a valid `&str`. if `start` is the value of `cx.i` on entry to this function,
 /// this returns `sk` and updates `cx.i` to `end` such that `bs[start..end]` is a `str` and `sk` is
 /// the kind for that `str`.
+#[allow(clippy::too_many_lines)]
 fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
@@ -176,10 +186,10 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           let s = cx.i;
           advance_while(&mut cx.i, bs, |b| valid_digit(&b));
           if s == cx.i {
-            err(cx, start, ErrorKind::MissingDigitsInNumLit)
+            err(cx, start, ErrorKind::MissingDigitsInNumLit);
           }
           if neg {
-            err(cx, start, ErrorKind::NegativeWordLit)
+            err(cx, start, ErrorKind::NegativeWordLit);
           }
           return SK::WordLit;
         }
@@ -189,7 +199,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           let s = cx.i;
           advance_while(&mut cx.i, bs, |b| b.is_ascii_hexdigit());
           if s == cx.i {
-            err(cx, start, ErrorKind::MissingDigitsInNumLit)
+            err(cx, start, ErrorKind::MissingDigitsInNumLit);
           }
           return SK::IntLit;
         }
@@ -205,19 +215,19 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       let s = cx.i;
       advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
       if s == cx.i {
-        err(cx, start, ErrorKind::MissingDigitsInNumLit)
+        err(cx, start, ErrorKind::MissingDigitsInNumLit);
       }
     }
-    if let Some(&b'e') | Some(&b'E') = bs.get(cx.i) {
+    if let Some(&b'e' | &b'E') = bs.get(cx.i) {
       kind = SK::RealLit;
       cx.i += 1;
       if bs.get(cx.i) == Some(&b'~') {
-        cx.i += 1
+        cx.i += 1;
       }
       let s = cx.i;
       advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
       if s == cx.i {
-        err(cx, start, ErrorKind::MissingDigitsInNumLit)
+        err(cx, start, ErrorKind::MissingDigitsInNumLit);
       }
     }
     // test(misc::num_suffix)
@@ -234,7 +244,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   if b == b'#' && bs.get(cx.i + 1) == Some(&b'"') {
     cx.i += 2;
     if string(start, cx, bs) != 1 {
-      err(cx, start, ErrorKind::WrongLenCharLit)
+      err(cx, start, ErrorKind::WrongLenCharLit);
     }
     return SK::CharLit;
   }
@@ -252,7 +262,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       .unwrap_or(SK::Name);
   }
   // punctuation
-  for &(sk_text, sk) in SK::PUNCTUATION.iter() {
+  for &(sk_text, sk) in &SK::PUNCTUATION {
     if bs.get(cx.i..cx.i + sk_text.len()) == Some(sk_text) {
       cx.i += sk_text.len();
       return sk;
@@ -275,7 +285,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
 fn string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
   let mut ret = 0;
   if string_(&mut ret, cx, bs).is_none() {
-    err(cx, start, ErrorKind::UnclosedStringLit)
+    err(cx, start, ErrorKind::UnclosedStringLit);
   }
   ret
 }

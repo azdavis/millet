@@ -9,6 +9,10 @@ pub struct Consumed;
 pub struct UnclosedError;
 
 /// Requires `bs.get(*idx) == Some(&b)`.
+///
+/// # Errors
+///
+/// If the comment was not closed.
 pub fn get(idx: &mut usize, b: u8, bs: &[u8]) -> Result<Option<Consumed>, UnclosedError> {
   debug_assert_eq!(bs.get(*idx), Some(&b));
   if b == b'(' && bs.get(*idx + 1) == Some(&b'*') {

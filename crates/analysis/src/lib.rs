@@ -1,6 +1,6 @@
 //! The unification of all the passes into a single high-level API.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub mod input;
 
@@ -23,6 +23,7 @@ pub struct Analysis {
 
 impl Analysis {
   /// Returns a new `Analysis`.
+  #[must_use]
   pub fn new(std_basis: mlb_statics::StdBasis, error_lines: config::ErrorLines) -> Self {
     Self {
       std_basis,
@@ -79,7 +80,7 @@ impl Analysis {
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
         let mut es = source_file_errors(file, &self.syms, self.error_lines);
-        for e in es.iter_mut() {
+        for e in &mut es {
           if let Some(&sev) = input.severities.get(&e.code) {
             e.severity = sev;
           }
@@ -90,6 +91,7 @@ impl Analysis {
   }
 
   /// Returns a Markdown string with information about this position.
+  #[must_use]
   pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
     let ft = self.get_file_and_token(pos)?;
     let mut parts = Vec::<&str>::new();
@@ -120,6 +122,7 @@ impl Analysis {
   }
 
   /// Returns the range of the definition of the item at this position.
+  #[must_use]
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
     let ft = self.get_file_and_token(pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
@@ -128,6 +131,7 @@ impl Analysis {
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
+  #[must_use]
   pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
     let ft = self.get_file_and_token(pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
@@ -143,6 +147,7 @@ impl Analysis {
 
   /// Given a position on a `case` expression, return the code and its range to fill the case with
   /// all of the variants of the head's type.
+  #[must_use]
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
     let ft = self.get_file_and_token(pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
@@ -152,7 +157,7 @@ impl Analysis {
     let range = ft.file.pos_db.range(range)?;
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
-    let head = ft.file.lowered.ptrs.ast_to_hir(head_ptr)?;
+    let head = ft.file.lowered.ptrs.ast_to_hir(&head_ptr)?;
     let variants = ft.file.info.get_variants(&self.syms, head)?;
     let case = CaseDisplay {
       needs_starting_bar: case.matcher().map_or(false, |x| x.match_rules().count() > 0),
@@ -162,6 +167,7 @@ impl Analysis {
   }
 
   /// Format the given file, and return the end position of the file.
+  #[must_use]
   pub fn format(&self, path: PathId) -> Option<(String, Position)> {
     let file = self.source_files.get(&path)?;
     let mut buf = String::new();
@@ -309,7 +315,7 @@ impl FileAndToken<'_> {
     let mut node = self.token.parent()?;
     loop {
       let ptr = SyntaxNodePtr::new(&node);
-      match self.file.lowered.ptrs.ast_to_hir(ptr.clone()) {
+      match self.file.lowered.ptrs.ast_to_hir(&ptr) {
         Some(idx) => return Some((ptr, idx)),
         None => node = node.parent()?,
       }

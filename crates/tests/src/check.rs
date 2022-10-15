@@ -36,7 +36,7 @@ use std::fmt::{self, Write as _};
 /// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Error)
+  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }
 
 /// Like [`check`], but the expectation comments should be not satisfied.
@@ -63,13 +63,13 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Fail, Severity::Error)
+  go(&[s], StdBasis::Minimal, Outcome::Fail, Severity::Error);
 }
 
 /// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  go(&[s], StdBasis::Full, Outcome::Pass, Severity::Error)
+  go(&[s], StdBasis::Full, Outcome::Pass, Severity::Error);
 }
 
 /// The low-level impl that all top-level functions delegate to.
@@ -87,13 +87,14 @@ pub(crate) fn go(ss: &[&str], std_basis: StdBasis, want: Outcome, min_severity: 
   }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum StdBasis {
   Minimal,
   Full,
 }
 
 impl StdBasis {
-  fn to_analysis(&self) -> mlb_statics::StdBasis {
+  fn to_analysis(self) -> mlb_statics::StdBasis {
     match self {
       StdBasis::Minimal => MINIMAL.clone(),
       StdBasis::Full => FULL.clone(),
@@ -165,8 +166,8 @@ impl Check {
         errors.into_iter().filter_map(move |e| (e.severity >= min_severity).then_some((id, e)))
       })
       .next();
-    for (&path, file) in ret.files.iter() {
-      for (&region, expect) in file.want.iter() {
+    for (&path, file) in &ret.files {
+      for (&region, expect) in &file.want {
         if matches!(expect.kind, ExpectKind::Hover) {
           let pos = match region {
             Region::Exact { line, col_start, .. } => {
@@ -182,9 +183,8 @@ impl Check {
             Some((got, _)) => {
               if got.contains(&expect.msg) {
                 continue;
-              } else {
-                Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
               }
+              Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
             }
           };
           ret.reasons.push(r);
@@ -227,7 +227,7 @@ impl Check {
     let want = match file.want.get(&region) {
       None => return Err(Reason::GotButNotWanted(path_region, got)),
       Some(exp) => match exp.kind {
-        ExpectKind::Error => exp.msg.to_owned(),
+        ExpectKind::Error => exp.msg.clone(),
         ExpectKind::Hover => return Err(Reason::GotButNotWanted(path_region, got)),
       },
     };
@@ -242,7 +242,7 @@ impl Check {
 impl fmt::Display for Check {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("\n\n  reasons:\n")?;
-    for reason in self.reasons.iter() {
+    for reason in &self.reasons {
       f.write_str("  - ")?;
       match reason {
         Reason::WantWrongNumError(want_len) => {
@@ -280,7 +280,7 @@ impl fmt::Display for Check {
     } else {
       f.write_str("\n")?;
       for file in self.files.values() {
-        for (region, expect) in file.want.iter() {
+        for (region, expect) in &file.want {
           writeln!(f, "  - {region}: {expect}")?;
         }
       }
@@ -357,7 +357,7 @@ const EXPECT_COMMENT_START: &str = "(**";
 /// Parses expectation comments from a line of text. The line will be the following in order:
 ///
 /// - zero or more of any character
-/// - the string EXPECT_COMMENT_START (the comment start)
+/// - the string `EXPECT_COMMENT_START` (the comment start)
 /// - zero or more spaces
 /// - one of `^` or `v` (the arrow character)
 /// - zero or more non-spaces (the column range for the arrow. usually these are all the same as the
@@ -368,7 +368,7 @@ const EXPECT_COMMENT_START: &str = "(**";
 /// - the string `*)` (the comment end)
 /// - zero or more of any character
 ///
-/// If so, this returns Some((line, col_range, msg)), else returns None.
+/// If so, this returns `Some((line, col_range, msg))`, else returns `None`.
 ///
 /// Note the arrows might be a little wonky with non-ascii.
 fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {

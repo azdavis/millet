@@ -8,33 +8,36 @@ use text_pos::Range;
 
 /// An error when getting input.
 ///
-/// We might like this to be non-pub and just a variant of [`crate::error::Error`]. The problem is
-/// that _sometimes_, a `GetInputError` is for a file which doesn't exist (or a non-file), so we
-/// can't always show these in the editor inline.
+/// We might like this to be non-pub. The problem is that _sometimes_, a `GetInputError` is for a
+/// file which doesn't exist (or a non-file), so we can't always show these in the editor inline.
 #[derive(Debug)]
-pub struct InputError {
+pub struct Error {
   pub(crate) source: ErrorSource,
   pub(crate) path: PathBuf,
   pub(crate) kind: ErrorKind,
 }
 
-impl InputError {
+impl Error {
   /// Returns a path associated with this error, which may or may not exist.
+  #[must_use]
   pub fn path(&self) -> &Path {
     self.source.path.as_ref().unwrap_or(&self.path).as_path()
   }
 
   /// Returns a range for this error in `path`.
+  #[must_use]
   pub fn range(&self) -> Option<Range> {
     self.source.range
   }
 
   /// Return this as an I/O error.
+  #[must_use]
   pub fn from_io(path: PathBuf, e: std::io::Error) -> Self {
     Self { source: ErrorSource::default(), path, kind: ErrorKind::Io(e) }
   }
 
   /// Returns the code for this.
+  #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
       ErrorKind::Io(_) => Code::n(1001),
@@ -55,12 +58,13 @@ impl InputError {
   }
 
   /// Returns the severity for this.
+  #[must_use]
   pub fn severity(&self) -> Severity {
     Severity::Error
   }
 }
 
-impl fmt::Display for InputError {
+impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     if self.source.path.is_some() {
       write!(f, "{}: ", self.path.display())?;
@@ -123,8 +127,7 @@ pub(crate) struct ErrorSource {
   pub(crate) range: Option<Range>,
 }
 
-/// std's Result with GetInputError as the default error.
-pub(crate) type Result<T, E = InputError> = std::result::Result<T, E>;
+pub(crate) type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub(crate) fn get_path_id<F>(
   fs: &F,
@@ -135,30 +138,26 @@ pub(crate) fn get_path_id<F>(
 where
   F: paths::FileSystem,
 {
-  let canonical = canonicalize(fs, path, &source)?;
+  let canonical = canonicalize(fs, path, source)?;
   Ok(store.get_id(&canonical))
 }
 
 pub(crate) fn canonicalize<F>(
   fs: &F,
   path: &Path,
-  source: &ErrorSource,
+  source: ErrorSource,
 ) -> Result<paths::CanonicalPathBuf>
 where
   F: paths::FileSystem,
 {
-  fs.canonicalize(path).map_err(|e| InputError {
-    source: source.clone(),
-    path: path.to_owned(),
-    kind: ErrorKind::Io(e),
-  })
+  fs.canonicalize(path).map_err(|e| Error { source, path: path.to_owned(), kind: ErrorKind::Io(e) })
 }
 
 pub(crate) fn read_file<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<String>
 where
   F: paths::FileSystem,
 {
-  fs.read_to_string(path).map_err(|e| InputError {
+  fs.read_to_string(path).map_err(|e| Error {
     source,
     path: path.to_owned(),
     kind: ErrorKind::Io(e),
@@ -169,11 +168,7 @@ pub(crate) fn read_dir<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<Ve
 where
   F: paths::FileSystem,
 {
-  fs.read_dir(path).map_err(|e| InputError {
-    source,
-    path: path.to_owned(),
-    kind: ErrorKind::Io(e),
-  })
+  fs.read_dir(path).map_err(|e| Error { source, path: path.to_owned(), kind: ErrorKind::Io(e) })
 }
 
 #[derive(Debug, Clone, Copy)]

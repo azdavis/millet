@@ -33,7 +33,7 @@ pub(crate) fn get(
       st.err(ty, ErrorKind::TyHole);
       Ty::None
     }
-    // sml_def(44)
+    // Def(44)
     sml_hir::Ty::Var(v) => match cx.fixed.get(v) {
       None => {
         st.err(ty, ErrorKind::Undefined(Item::TyVar, v.as_name().clone()));
@@ -48,24 +48,24 @@ pub(crate) fn get(
         }
       },
     },
-    // sml_def(45)
+    // Def(45)
     sml_hir::Ty::Record(rows) => {
       let rows = record(st, rows, ty.into(), |st, _, ty| get(st, cx, ars, mode, ty));
       Ty::Record(rows)
     }
-    // sml_def(46)
-    sml_hir::Ty::Con(args, path) => match get_ty_info(&cx.env, path) {
+    // Def(46)
+    sml_hir::Ty::Con(arguments, path) => match get_ty_info(&cx.env, path) {
       Ok(ty_info) => {
         ty_scheme = Some(ty_info.ty_scheme.clone());
         def = ty_info.def;
         let want_len = ty_info.ty_scheme.bound_vars.len();
         let mut ret = Ty::None;
-        if want_len == args.len() {
-          let args: Vec<_> = args.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
+        if want_len == arguments.len() {
+          let arguments: Vec<_> = arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
           ret = ty_info.ty_scheme.ty.clone();
-          apply_bv(&args, &mut ret)
+          apply_bv(&arguments, &mut ret);
         } else {
-          st.err(ty, ErrorKind::WrongNumTyArgs(want_len, args.len()));
+          st.err(ty, ErrorKind::WrongNumTyArgs(want_len, arguments.len()));
         }
         // NOTE: just because `ty` was a `sml_hir::Ty::Con` doesn't mean `ret` is ultimately a
         // `Ty::Con`. there could have been a type alias. e.g. `type unit = {}` (which indeed is
@@ -77,7 +77,7 @@ pub(crate) fn get(
         Ty::None
       }
     },
-    // sml_def(47)
+    // Def(47)
     sml_hir::Ty::Fn(param, res) => {
       let param = get(st, cx, ars, mode, *param);
       let res = get(st, cx, ars, mode, *res);
