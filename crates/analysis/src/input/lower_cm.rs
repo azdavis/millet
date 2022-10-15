@@ -11,7 +11,8 @@ use crate::input::util::{
 pub(crate) struct CmFile {
   /// only optional so this can derive default.
   pub(crate) pos_db: Option<text_pos::PositionDb>,
-  pub(crate) paths: Vec<mlb_hir::BasDec>,
+  pub(crate) cm_paths: Vec<paths::PathId>,
+  pub(crate) sml_paths: Vec<paths::PathId>,
   pub(crate) exports: Vec<Export>,
 }
 
@@ -54,32 +55,26 @@ where
       })
     }
   };
-  let paths = cm
-    .paths
-    .into_iter()
-    .map(|parsed_path| {
-      let source = ErrorSource {
-        path: Some(group_path.to_owned()),
-        range: group_file.pos_db.range(parsed_path.range),
-      };
-      let path = group_parent.join(parsed_path.val.as_path());
-      let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
-      let kind = match parsed_path.val.kind() {
-        cm::PathKind::Sml => {
-          let contents = read_file(fs, source, path.as_path())?;
-          sources.insert(path_id, contents);
-          mlb_hir::PathKind::Sml
-        }
-        cm::PathKind::Cm => {
-          let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-          get(fs, store, path_vars, sources, cm_files, cur)?;
-          // NOTE this is a lie.
-          mlb_hir::PathKind::Mlb
-        }
-      };
-      Ok((path_id, kind))
-    })
-    .collect::<Result<Vec<_>>>()?;
+  for parsed_path in cm.paths {
+    let source = ErrorSource {
+      path: Some(group_path.to_owned()),
+      range: group_file.pos_db.range(parsed_path.range),
+    };
+    let path = group_parent.join(parsed_path.val.as_path());
+    let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
+    match parsed_path.val.kind() {
+      cm::PathKind::Sml => {
+        let contents = read_file(fs, source, path.as_path())?;
+        sources.insert(path_id, contents);
+        ret.sml_paths.push(path_id);
+      }
+      cm::PathKind::Cm => {
+        let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
+        get(fs, store, path_vars, sources, cm_files, cur)?;
+        ret.cm_paths.push(path_id);
+      }
+    }
+  }
   for export in cm.exports {
     match export {
       cm::Export::Regular(ns, name) => {
@@ -122,17 +117,14 @@ where
         })
       }
       cm::Export::Group(_) => {
-        for (path, kind) in &paths {
-          if matches!(kind, mlb_hir::PathKind::Mlb) {
-            let other = cm_files.get(path).expect("child cm file should be set");
-            ret.exports.extend(other.exports.iter().cloned());
-          }
+        for path in &ret.cm_paths {
+          let other = cm_files.get(path).expect("child cm file should be set");
+          ret.exports.extend(other.exports.iter().cloned());
         }
       }
     }
   }
   ret.pos_db = Some(group_file.pos_db);
-  ret.paths = paths.into_iter().map(|(p, k)| mlb_hir::BasDec::Path(p, k)).collect();
   cm_files.insert(cur.path, ret);
   Ok(())
 }
