@@ -40,6 +40,7 @@ where
   }
   // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
   cm_files.insert(cur.path, CmFile::default());
+  let mut ret = CmFile::default();
   let group_file = StartedGroupFile::new(store, cur, fs)?;
   let group_path = group_file.path.as_path();
   let group_parent = group_path.parent().expect("path from get_path has no parent");
@@ -79,7 +80,6 @@ where
       Ok((path_id, kind))
     })
     .collect::<Result<Vec<_>>>()?;
-  let mut exports = Vec::<Export>::new();
   for export in cm.exports {
     match export {
       cm::Export::Regular(ns, name) => {
@@ -95,7 +95,7 @@ where
             })
           }
         };
-        exports.push(Export { namespace, name });
+        ret.exports.push(Export { namespace, name });
       }
       cm::Export::Library(lib) => {
         let source = ErrorSource {
@@ -106,9 +106,9 @@ where
         let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
         get(fs, store, path_vars, sources, cm_files, cur)?;
-        let cm_file = cm_files.get(&cur.path).expect("cm file should be set after get_cm_file");
-        exports.extend(
-          cm_file
+        let other = cm_files.get(&cur.path).expect("cm file should be set after get_cm_file");
+        ret.exports.extend(
+          other
             .exports
             .iter()
             .map(|ex| Export { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
@@ -124,18 +124,15 @@ where
       cm::Export::Group(_) => {
         for (path, kind) in &paths {
           if matches!(kind, mlb_hir::PathKind::Mlb) {
-            let cm_file = cm_files.get(path).expect("child cm file should be set");
-            exports.extend(cm_file.exports.iter().cloned());
+            let other = cm_files.get(path).expect("child cm file should be set");
+            ret.exports.extend(other.exports.iter().cloned());
           }
         }
       }
     }
   }
-  let cm_file = CmFile {
-    pos_db: Some(group_file.pos_db),
-    paths: paths.into_iter().map(|(p, k)| mlb_hir::BasDec::Path(p, k)).collect(),
-    exports,
-  };
-  cm_files.insert(cur.path, cm_file);
+  ret.pos_db = Some(group_file.pos_db);
+  ret.paths = paths.into_iter().map(|(p, k)| mlb_hir::BasDec::Path(p, k)).collect();
+  cm_files.insert(cur.path, ret);
   Ok(())
 }
