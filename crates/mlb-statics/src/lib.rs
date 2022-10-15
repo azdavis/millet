@@ -29,7 +29,6 @@ pub struct MlbStatics {
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub struct SourceFile {
-  pub pos_db: text_pos::PositionDb,
   pub syntax: SourceFileSyntax,
   pub statics_errors: Vec<sml_statics::Error>,
   pub info: sml_statics::Info,
@@ -250,12 +249,7 @@ fn get_bas_dec(
         );
         let mut info = checked.info;
         add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
-        let file = SourceFile {
-          syntax,
-          pos_db: text_pos::PositionDb::new(contents),
-          statics_errors: checked.errors,
-          info,
-        };
+        let file = SourceFile { syntax, statics_errors: checked.errors, info };
         ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
         // NOTE: we would like to assert that the insert returns None, but actually it may not
         // always.
@@ -279,6 +273,8 @@ fn get_bas_dec(
 /// A source file analyzed at the purely syntactic level.
 #[derive(Debug)]
 pub struct SourceFileSyntax {
+  /// The position database for this file.
+  pub pos_db: text_pos::PositionDb,
   /// Lex errors from the file.
   pub lex_errors: Vec<sml_lex::Error>,
   /// The lossless concrete syntax tree.
@@ -294,7 +290,7 @@ impl SourceFileSyntax {
     let parse = sml_parse::get(&lexed.tokens, fix_env);
     let mut lower = sml_lower::get(&parse.root);
     sml_ty_var_scope::get(&mut lower.arenas, lower.root);
-    Self { lex_errors: lexed.errors, parse, lower }
+    Self { pos_db: text_pos::PositionDb::new(contents), lex_errors: lexed.errors, parse, lower }
   }
 }
 

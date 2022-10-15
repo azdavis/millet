@@ -44,12 +44,7 @@ impl Analysis {
       sml_statics::get(&mut syms, &basis, mode, &syntax.lower.arenas, syntax.lower.root);
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
-    let file = mlb_statics::SourceFile {
-      pos_db: text_pos::PositionDb::new(contents),
-      syntax,
-      statics_errors: checked.errors,
-      info,
-    };
+    let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
     source_file_errors(&file, &syms, self.error_lines)
   }
 
@@ -116,7 +111,7 @@ impl Analysis {
     if parts.is_empty() {
       return None;
     }
-    let range = ft.file.pos_db.range(range)?;
+    let range = ft.file.syntax.pos_db.range(range)?;
     Some((parts.join("\n\n---\n\n"), range))
   }
 
@@ -153,7 +148,7 @@ impl Analysis {
     let ptr = ptr.cast::<sml_syntax::ast::CaseExp>()?;
     let case = ptr.to_node(ft.file.syntax.parse.root.syntax());
     let range = text_size_util::TextRange::empty(case.syntax().text_range().end());
-    let range = ft.file.pos_db.range(range)?;
+    let range = ft.file.syntax.pos_db.range(range)?;
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
     let head = ft.file.syntax.lower.ptrs.ast_to_hir(&head_ptr)?;
@@ -171,12 +166,12 @@ impl Analysis {
     let file = self.source_files.get(&path)?;
     let mut buf = String::new();
     write!(buf, "{}", sml_fmt::display_root(&file.syntax.parse.root)).ok()?;
-    Some((buf, file.pos_db.end_position()))
+    Some((buf, file.syntax.pos_db.end_position()))
   }
 
   fn get_file_and_token(&self, pos: WithPath<Position>) -> Option<FileAndToken<'_>> {
     let file = self.source_files.get(&pos.path)?;
-    let idx = file.pos_db.text_size(pos.val)?;
+    let idx = file.syntax.pos_db.text_size(pos.val)?;
     if !file.syntax.parse.root.syntax().text_range().contains(idx) {
       return None;
     }
@@ -202,7 +197,7 @@ impl Analysis {
     let def_file = self.source_files.get(&path)?;
     let ptr = def_file.syntax.lower.ptrs.hir_to_ast(def.idx)?;
     let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
-    Some(path.wrap(def_file.pos_db.range(def_range)?))
+    Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
   }
 }
 
@@ -232,7 +227,7 @@ fn source_file_errors(
   std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
       Some(Error {
-        range: file.pos_db.range(err.range())?,
+        range: file.syntax.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
         severity: err.severity(),
@@ -240,7 +235,7 @@ fn source_file_errors(
     }))
     .chain(file.syntax.parse.errors.iter().filter_map(|err| {
       Some(Error {
-        range: file.pos_db.range(err.range())?,
+        range: file.syntax.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
         severity: err.severity(),
@@ -248,7 +243,7 @@ fn source_file_errors(
     }))
     .chain(file.syntax.lower.errors.iter().filter_map(|err| {
       Some(Error {
-        range: file.pos_db.range(err.range())?,
+        range: file.syntax.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
         severity: err.severity(),
@@ -257,8 +252,9 @@ fn source_file_errors(
     .chain(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
+      let node = syntax.to_node(file.syntax.parse.root.syntax());
       Some(Error {
-        range: file.pos_db.range(syntax.to_node(file.syntax.parse.root.syntax()).text_range())?,
+        range: file.syntax.pos_db.range(node.text_range())?,
         message: err.display(syms, file.info.meta_vars(), lines).to_string(),
         code: err.code(),
         severity: err.severity(),
