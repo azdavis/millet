@@ -23,7 +23,7 @@ pub struct Arenas {
 }
 
 macro_rules! mk_idx {
-  ($($name:ident)*) => {
+  ( $( $name:ident ),* $(,)? ) => {
     #[doc = "An index into an arena."]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum Idx {
@@ -40,7 +40,7 @@ macro_rules! mk_idx {
   };
 }
 
-mk_idx! { StrDec StrExp SigExp Spec Exp Dec Pat Ty }
+mk_idx![StrDec, StrExp, SigExp, Spec, Exp, Dec, Pat, Ty];
 
 pub type OptIdx<T> = Option<la_arena::Idx<T>>;
 

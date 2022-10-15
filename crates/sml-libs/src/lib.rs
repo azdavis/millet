@@ -9,10 +9,10 @@ pub mod std_basis;
 pub mod std_basis_extra;
 
 macro_rules! files {
-  ( $( $x:literal ),* $(,)? ) => {{
+  ( $( $path:literal ),* $(,)? ) => {{
     &[
       $(
-        ($x, include_str!($x)),
+        ($path, include_str!($path)),
       )*
     ]
   }};
