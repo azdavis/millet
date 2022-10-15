@@ -93,7 +93,7 @@ where
         contents = &owned_contents;
       }
       let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-      let started = SourceFileSyntax::new(contents, &mut fix_env);
+      let started = SourceFileSyntax::new(&mut fix_env, contents);
       if let Some(e) = started.lex_errors.first() {
         panic!("{name}: lex error: {}", e.display());
       }

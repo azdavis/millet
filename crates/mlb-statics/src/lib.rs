@@ -242,7 +242,7 @@ fn get_bas_dec(
           Some(x) => x.as_ref().clone(),
           None => {
             let contents = files.sml.get(path).expect("no sml file for path id");
-            SourceFileSyntax::new(contents, &mut fix_env)
+            SourceFileSyntax::new(&mut fix_env, contents)
           }
         };
         let mode = sml_statics::Mode::Regular(Some(*path));
@@ -291,7 +291,7 @@ pub struct SourceFileSyntax {
 
 impl SourceFileSyntax {
   /// Starts processing a single source file.
-  pub fn new(contents: &str, fix_env: &mut sml_parse::parser::FixEnv) -> Self {
+  pub fn new(fix_env: &mut sml_parse::parser::FixEnv, contents: &str) -> Self {
     let lexed = sml_lex::get(contents);
     let parse = sml_parse::get(&lexed.tokens, fix_env);
     let mut lower = sml_lower::get(&parse.root);

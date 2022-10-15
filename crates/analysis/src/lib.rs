@@ -36,7 +36,7 @@ impl Analysis {
   /// Given the contents of one isolated file, return the errors for it.
   pub fn get_one(&self, contents: &str) -> Vec<Error> {
     let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-    let syntax = mlb_statics::SourceFileSyntax::new(contents, &mut fix_env);
+    let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, contents);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
     let mode = sml_statics::Mode::Regular(None);
