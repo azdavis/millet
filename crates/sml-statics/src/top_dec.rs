@@ -1,6 +1,6 @@
+use crate::compatible::{eq_ty_scheme, eq_ty_scheme_no_emit, generalizes};
 use crate::config::Cfg;
 use crate::error::{ErrorKind, Item};
-use crate::generalizes::{eq_ty_scheme, eq_ty_scheme_no_emit, generalizes};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::st::St;
 use crate::types::{

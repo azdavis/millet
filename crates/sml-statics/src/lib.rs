@@ -6,12 +6,12 @@
 
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
+mod compatible;
 mod config;
 mod dec;
 mod error;
 mod exp;
 mod fmt_util;
-mod generalizes;
 mod get_env;
 mod info;
 mod pat;

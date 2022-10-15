@@ -1,6 +1,6 @@
+use crate::compatible::eq_ty_scheme;
 use crate::config;
 use crate::error::{ErrorKind, Item};
-use crate::generalizes::eq_ty_scheme;
 use crate::get_env::get_val_info;
 use crate::info::{Mode, TyEntry};
 use crate::pat_match::{Con, Pat, VariantName};
