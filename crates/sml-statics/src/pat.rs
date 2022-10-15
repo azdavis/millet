@@ -223,7 +223,10 @@ fn get_(
           assert!(fst_val_info.id_status.same_kind_as(&IdStatus::Val));
           assert!(rest_val_info.id_status.same_kind_as(&IdStatus::Val));
           let rest_ty_scheme = rest_val_info.ty_scheme.clone();
-          eq_ty_scheme(st, &fst_val_info.ty_scheme, rest_ty_scheme, idx);
+          match eq_ty_scheme(st, &fst_val_info.ty_scheme, rest_ty_scheme) {
+            Ok(()) => {}
+            Err(e) => st.err(idx, e),
+          }
         }
         if let Some(name) = rest_ve.into_keys().next() {
           st.err(idx, ErrorKind::OrPatNotSameBindings(name));
