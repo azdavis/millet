@@ -10,7 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
-cm = { path = "../cm" }
+cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 elapsed = { path = "../elapsed" }

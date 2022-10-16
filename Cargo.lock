@@ -15,7 +15,7 @@ dependencies = [
 name = "analysis"
 version = "0.1.0"
 dependencies = [
- "cm",
+ "cm-syntax",
  "config",
  "diagnostic-util",
  "elapsed",
@@ -90,7 +90,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cm"
+name = "cm-syntax"
 version = "0.1.0"
 dependencies = [
  "lex-util",

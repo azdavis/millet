@@ -84,7 +84,7 @@ pub(crate) enum ErrorKind {
   NotGroup,
   CouldNotParseConfig(toml::de::Error),
   InvalidConfigVersion(u16),
-  Cm(cm::Error),
+  Cm(cm_syntax::Error),
   Mlb(mlb_syntax::Error),
   Cycle,
   Duplicate(str_util::Name),

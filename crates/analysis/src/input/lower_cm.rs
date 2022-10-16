@@ -45,7 +45,7 @@ where
   let group_file = StartedGroupFile::new(store, cur, fs)?;
   let group_path = group_file.path.as_path();
   let group_parent = group_path.parent().expect("path from get_path has no parent");
-  let cm = match cm::get(group_file.contents.as_str(), path_vars) {
+  let cm = match cm_syntax::get(group_file.contents.as_str(), path_vars) {
     Ok(x) => x,
     Err(e) => {
       return Err(Error {
@@ -63,7 +63,7 @@ where
     let path = group_parent.join(parsed_path.val.as_path());
     let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
     match parsed_path.val.kind() {
-      cm::PathKind::Sml => {
+      cm_syntax::PathKind::Sml => {
         let contents = read_file(fs, source, path.as_path())?;
         let mut fix_env = sml_parse::parser::STD_BASIS.clone();
         let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, &contents);
@@ -71,7 +71,7 @@ where
         sources.insert(path_id, contents);
         ret.sml_paths.push((path_id, syntax));
       }
-      cm::PathKind::Cm => {
+      cm_syntax::PathKind::Cm => {
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
         get(fs, store, path_vars, sources, cm_files, cur)?;
         ret.cm_paths.push(path_id);
@@ -80,12 +80,12 @@ where
   }
   for export in cm.exports {
     match export {
-      cm::Export::Regular(ns, name) => {
+      cm_syntax::Export::Regular(ns, name) => {
         let namespace = match ns.val {
-          cm::Namespace::Structure => sml_statics::basis::Namespace::Structure,
-          cm::Namespace::Signature => sml_statics::basis::Namespace::Signature,
-          cm::Namespace::Functor => sml_statics::basis::Namespace::Functor,
-          cm::Namespace::FunSig => {
+          cm_syntax::Namespace::Structure => sml_statics::basis::Namespace::Structure,
+          cm_syntax::Namespace::Signature => sml_statics::basis::Namespace::Signature,
+          cm_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
+          cm_syntax::Namespace::FunSig => {
             return Err(Error {
               source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },
               path: group_path.to_owned(),
@@ -95,7 +95,7 @@ where
         };
         ret.exports.push(Export { namespace, name });
       }
-      cm::Export::Library(lib) => {
+      cm_syntax::Export::Library(lib) => {
         let source = ErrorSource {
           path: Some(group_path.to_owned()),
           range: group_file.pos_db.range(lib.range),
@@ -112,14 +112,14 @@ where
             .map(|ex| Export { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
         );
       }
-      cm::Export::Source(range) => {
+      cm_syntax::Export::Source(range) => {
         return Err(Error {
           source: ErrorSource { path: None, range: group_file.pos_db.range(range) },
           path: group_path.to_owned(),
           kind: ErrorKind::UnsupportedExport,
         })
       }
-      cm::Export::Group(_) => {
+      cm_syntax::Export::Group(_) => {
         for path in &ret.cm_paths {
           let other = cm_files.get(path).expect("child cm file should be set");
           ret.exports.extend(other.exports.iter().cloned());

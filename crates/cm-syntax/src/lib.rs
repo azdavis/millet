@@ -1,4 +1,4 @@
-//! Process SML/NJ Compilation Manager files.
+//! Process the syntax of SML/NJ Compilation Manager files.
 //!
 //! Note that **many** features are not supported.
 //!

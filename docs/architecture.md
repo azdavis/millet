@@ -143,9 +143,9 @@ Naively format SML files.
 
 Extract interesting comments from above SML syntax nodes, like doc comments.
 
-### `crates/cm`
+### `crates/cm-syntax`
 
-Processes SML/NJ Compilation Manager (`.cm`) files.
+Processes the syntax of SML/NJ Compilation Manager (`.cm`) files.
 
 ### `crates/mlb-syntax`
 
