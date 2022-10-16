@@ -208,23 +208,16 @@ fn get_bas_dec(
     }
     // NOTE this doesn't do any of the stuff with the side conditions with the ty names and whatnot.
     // those might be necessary.
-    BasDec::Export(ns, lhs, rhs) => match ns {
-      Namespace::Structure => {
-        if !ac.basis.add_str(lhs.val.clone(), &scope.basis, &rhs.val) {
-          cx.undef(path, Item::Structure, rhs.clone());
-        }
+    BasDec::Export(ns, lhs, rhs) => {
+      if !ac.basis.add(*ns, lhs.val.clone(), &scope.basis, &rhs.val) {
+        let item = match ns {
+          sml_statics::basis::Namespace::Structure => Item::Structure,
+          sml_statics::basis::Namespace::Signature => Item::Signature,
+          sml_statics::basis::Namespace::Functor => Item::Functor,
+        };
+        cx.undef(path, item, rhs.clone());
       }
-      Namespace::Signature => {
-        if !ac.basis.add_sig(lhs.val.clone(), &scope.basis, &rhs.val) {
-          cx.undef(path, Item::Signature, rhs.clone());
-        }
-      }
-      Namespace::Functor => {
-        if !ac.basis.add_fun(lhs.val.clone(), &scope.basis, &rhs.val) {
-          cx.undef(path, Item::Functor, rhs.clone());
-        }
-      }
-    },
+    }
     BasDec::Seq(decs) => {
       let mut scope = scope.clone();
       for dec in decs {
@@ -335,7 +328,7 @@ pub enum BasDec {
   Basis(WithRange<str_util::Name>, Box<BasExp>),
   Open(WithRange<str_util::Name>),
   Local(Box<BasDec>, Box<BasDec>),
-  Export(Namespace, WithRange<str_util::Name>, WithRange<str_util::Name>),
+  Export(sml_statics::basis::Namespace, WithRange<str_util::Name>, WithRange<str_util::Name>),
   Seq(Vec<BasDec>),
   Path(paths::PathId, PathKind),
 }
@@ -363,15 +356,6 @@ pub enum BasExp {
   Bas(BasDec),
   Name(WithRange<str_util::Name>),
   Let(BasDec, Box<BasExp>),
-}
-
-/// A namespace for an export.
-#[derive(Debug, Clone, Copy)]
-#[allow(missing_docs)]
-pub enum Namespace {
-  Structure,
-  Signature,
-  Functor,
 }
 
 /// A kind of path.

@@ -18,7 +18,7 @@ pub(crate) struct CmFile {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Export {
-  pub(crate) namespace: mlb_statics::Namespace,
+  pub(crate) namespace: sml_statics::basis::Namespace,
   pub(crate) name: text_size_util::WithRange<str_util::Name>,
 }
 
@@ -82,9 +82,9 @@ where
     match export {
       cm::Export::Regular(ns, name) => {
         let namespace = match ns.val {
-          cm::Namespace::Structure => mlb_statics::Namespace::Structure,
-          cm::Namespace::Signature => mlb_statics::Namespace::Signature,
-          cm::Namespace::Functor => mlb_statics::Namespace::Functor,
+          cm::Namespace::Structure => sml_statics::basis::Namespace::Structure,
+          cm::Namespace::Signature => sml_statics::basis::Namespace::Signature,
+          cm::Namespace::Functor => sml_statics::basis::Namespace::Functor,
           cm::Namespace::FunSig => {
             return Err(Error {
               source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },

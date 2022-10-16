@@ -20,51 +20,49 @@ impl Basis {
 
   /// Adds the structure named `other_name` from `other` into `self` with the name `name`, or
   /// returns `false` if this was not possible.
-  pub fn add_str(
+  pub fn add(
     &mut self,
+    ns: Namespace,
     name: str_util::Name,
     other: &Self,
     other_name: &str_util::Name,
   ) -> bool {
-    let env = match other.inner.env.get_str(other_name) {
-      Some(x) => x.clone(),
-      None => return false,
-    };
-    self.inner.env.push(Env { str_env: map([(name, env)]), ..Default::default() });
-    true
+    match ns {
+      Namespace::Structure => match other.inner.env.get_str(other_name) {
+        Some(env) => {
+          let env = Env { str_env: map([(name, env.clone())]), ..Default::default() };
+          self.inner.env.push(env);
+          true
+        }
+        None => false,
+      },
+      Namespace::Signature => match other.inner.sig_env.get(other_name) {
+        Some(env) => {
+          let env = env.clone();
+          self.inner.as_mut_sig_env().insert(name, env);
+          true
+        }
+        None => false,
+      },
+      Namespace::Functor => match other.inner.fun_env.get(other_name) {
+        Some(env) => {
+          let env = env.clone();
+          self.inner.as_mut_fun_env().insert(name, env);
+          true
+        }
+        None => false,
+      },
+    }
   }
+}
 
-  /// Adds the signature named `other_name` from `other` into `self` with the name `name`, or
-  /// returns `false` if this was not possible.
-  pub fn add_sig(
-    &mut self,
-    name: str_util::Name,
-    other: &Self,
-    other_name: &str_util::Name,
-  ) -> bool {
-    let env = match other.inner.sig_env.get(other_name) {
-      Some(x) => x.clone(),
-      None => return false,
-    };
-    self.inner.as_mut_sig_env().insert(name, env);
-    true
-  }
-
-  /// Adds the functor named `other_name` from `other` into `self` with the name `name`, or
-  /// returns `false` if this was not possible.
-  pub fn add_fun(
-    &mut self,
-    name: str_util::Name,
-    other: &Self,
-    other_name: &str_util::Name,
-  ) -> bool {
-    let env = match other.inner.fun_env.get(other_name) {
-      Some(x) => x.clone(),
-      None => return false,
-    };
-    self.inner.as_mut_fun_env().insert(name, env);
-    true
-  }
+/// A namespace for an export.
+#[derive(Debug, Clone, Copy)]
+#[allow(missing_docs)]
+pub enum Namespace {
+  Structure,
+  Signature,
+  Functor,
 }
 
 /// Returns the minimal basis and symbols.

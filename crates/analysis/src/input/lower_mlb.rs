@@ -65,9 +65,9 @@ where
           }
           let rhs = rhs.unwrap_or_else(|| lhs.clone());
           let ns = match ns {
-            mlb_syntax::Namespace::Structure => mlb_statics::Namespace::Structure,
-            mlb_syntax::Namespace::Signature => mlb_statics::Namespace::Signature,
-            mlb_syntax::Namespace::Functor => mlb_statics::Namespace::Functor,
+            mlb_syntax::Namespace::Structure => sml_statics::basis::Namespace::Structure,
+            mlb_syntax::Namespace::Signature => sml_statics::basis::Namespace::Signature,
+            mlb_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
           };
           Ok(mlb_statics::BasDec::Export(ns, lhs, rhs))
         })
