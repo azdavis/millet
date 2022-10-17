@@ -17,8 +17,13 @@ pub(crate) fn get(s: &str) -> Result<Vec<WithRange<Token<'_>>>> {
   Ok(tokens)
 }
 
-const PUNCTUATION: [(u8, Token<'_>); 4] =
-  [(b':', Token::Colon), (b'(', Token::LRound), (b')', Token::RRound), (b'-', Token::Minus)];
+const PUNCTUATION: [(u8, Token<'_>); 5] = [
+  (b'*', Token::Star),
+  (b'-', Token::Minus),
+  (b':', Token::Colon),
+  (b'(', Token::LRound),
+  (b')', Token::RRound),
+];
 
 fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> {
   let start = *idx;
@@ -60,11 +65,10 @@ fn token<'s>(idx: &mut usize, b: u8, bs: &'s [u8]) -> Result<Option<Token<'s>>> 
     "signature" => Token::Signature,
     "functor" => Token::Functor,
     "funsig" => Token::FunSig,
-    "Group" | "group" => Token::Group,
-    "Library" | "library" => Token::Library,
-    "Alias" | "alias" => Token::Alias,
-    "Is" | "is" => Token::Is,
-    "source" => Token::Source,
+    "group" | "Group" | "GROUP" => Token::Group,
+    "library" | "Library" | "LIBRARY" => Token::Library,
+    "source" | "Source" | "SOURCE" => Token::Source,
+    "is" | "IS" => Token::Is,
     s => Token::String(s),
   };
   Ok(Some(ret))

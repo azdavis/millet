@@ -61,28 +61,18 @@ impl<'a> Parser<'a> {
 
 fn root(p: &mut Parser<'_>) -> Result<Root> {
   let ret = match p.cur() {
-    Some(Token::Alias) => {
-      p.bump();
-      let s = p.string()?;
-      p.bump();
-      let path = match path(p, s.val)? {
-        Some(x) => x,
-        None => return p.err(ErrorKind::AliasWithIgnoredPathVar),
-      };
-      Root::Alias(s.wrap(path))
-    }
     Some(Token::Group) => {
       p.bump();
-      let (es, ms) = exports_and_members(p)?;
-      Root::Desc(DescKind::Group, es, ms)
+      let (exports, members) = exports_and_members(p)?;
+      Root { kind: DescKind::Group, exports, members }
     }
     Some(Token::Library) => {
       p.bump();
-      let (es, ms) = exports_and_members(p)?;
-      if es.is_empty() {
+      let (exports, members) = exports_and_members(p)?;
+      if exports.is_empty() {
         return p.err(ErrorKind::EmptyExportList);
       }
-      Root::Desc(DescKind::Library, es, ms)
+      Root { kind: DescKind::Library, exports, members }
     }
     _ => return p.err(ErrorKind::ExpectedDesc),
   };

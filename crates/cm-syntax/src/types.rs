@@ -15,11 +15,9 @@ pub(crate) enum ErrorKind {
   ExpectedString,
   ExpectedDesc,
   ExpectedExport,
-  UnsupportedAlias,
   UnsupportedClass(PathBuf, String),
   CouldNotDetermineClass(PathBuf),
   SlashVarPathError(paths::slash_var_path::Error),
-  AliasWithIgnoredPathVar,
 }
 
 /// An error when processing a CM file.
@@ -47,15 +45,11 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedString => f.write_str("expected a string"),
       ErrorKind::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
       ErrorKind::ExpectedExport => f.write_str("expected an export"),
-      ErrorKind::UnsupportedAlias => f.write_str("unsupported: `Alias`"),
       ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
       ErrorKind::CouldNotDetermineClass(p) => {
         write!(f, "{}: couldn't determine class", p.display())
       }
       ErrorKind::SlashVarPathError(e) => write!(f, "cannot construct path: {e}"),
-      ErrorKind::AliasWithIgnoredPathVar => {
-        f.write_str("cannot use `Alias` with a path containing an ignored variable")
-      }
     }
   }
 }
@@ -68,34 +62,35 @@ pub enum Token<'a> {
   FunSig,
   Group,
   Library,
-  Alias,
-  Is,
   Source,
+  Is,
+  Star,
+  Minus,
   Colon,
   LRound,
   RRound,
-  Minus,
   String(&'a str),
 }
 
 impl<'a> fmt::Display for Token<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Token::Structure => f.write_str("structure"),
-      Token::Signature => f.write_str("signature"),
-      Token::Functor => f.write_str("functor"),
-      Token::FunSig => f.write_str("funsig"),
-      Token::Group => f.write_str("Group"),
-      Token::Library => f.write_str("Library"),
-      Token::Alias => f.write_str("Alias"),
-      Token::Is => f.write_str("is"),
-      Token::Source => f.write_str("source"),
-      Token::Colon => f.write_str(":"),
-      Token::LRound => f.write_str("("),
-      Token::RRound => f.write_str(")"),
-      Token::Minus => f.write_str("-"),
-      Token::String(s) => s.fmt(f),
-    }
+    let s = match self {
+      Token::Structure => "structure",
+      Token::Signature => "signature",
+      Token::Functor => "functor",
+      Token::FunSig => "funsig",
+      Token::Group => "group",
+      Token::Library => "library",
+      Token::Source => "source",
+      Token::Is => "is",
+      Token::Star => "*",
+      Token::Minus => "-",
+      Token::Colon => ":",
+      Token::LRound => "(",
+      Token::RRound => ")",
+      Token::String(s) => s,
+    };
+    f.write_str(s)
   }
 }
 
@@ -135,9 +130,11 @@ impl ParsedPath {
   }
 }
 
-pub(crate) enum Root {
-  Alias(WithRange<PathBuf>),
-  Desc(DescKind, Vec<Export>, Vec<Member>),
+pub(crate) struct Root {
+  #[allow(unused)]
+  pub(crate) kind: DescKind,
+  pub(crate) exports: Vec<Export>,
+  pub(crate) members: Vec<Member>,
 }
 
 pub(crate) enum DescKind {
