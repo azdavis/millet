@@ -23,6 +23,8 @@ The versioning system is basically the following:
   ```
 - Change error severity to kebab case (e.g. `warning` instead of `Warning`).
 - Allow ignoring errors with a severity of `ignore`.
+- Automatically determine the order in which to analyze files for CM.
+- Handle `group(path)` in CM.
 
 ## v0.4.2
 

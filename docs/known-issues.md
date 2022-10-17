@@ -7,11 +7,10 @@ See also the [TODO][].
 - The distinction between equality types and non-equality types is ignored.
 - Some language constructs like `abstype` are not supported.
 - Paths with certain 'default' path variables are ignored. (This is because Millet includes the std basis and other definitions.)
-- CM support is rudimentary.
-  - Files are analyzed in the order listed in the CM files.
+- CM support is limited.
   - The preprocessor is ignored.
+  - Some export types like `source(...)` are not supported.
   - String paths (wrapped in quotes) are not supported.
-  - Some export types like `source(...)` and `group(...)` are not supported.
 - ML Basis support is limited.
   - Annotations are ignored.
   - String paths (wrapped in quotes) are not supported.
