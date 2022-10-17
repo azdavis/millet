@@ -2,7 +2,7 @@ use crate::error::{Error, ErrorKind};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
 use crate::types::{
-  Def, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty, TyVarSrc,
+  Def, DefPath, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty, TyVarSrc,
 };
 use crate::util::apply;
 use fast_hash::FxHashSet;
@@ -42,12 +42,16 @@ impl St {
     }
   }
 
-  pub(crate) fn mode(&self) -> &Mode {
+  pub(crate) fn mode(&self) -> Mode {
     self.info.mode()
   }
 
   pub(crate) fn def(&self, idx: sml_hir::Idx) -> Option<Def> {
-    self.mode().path().map(|path| Def { path, idx })
+    let path = match self.mode() {
+      Mode::Regular(p) => DefPath::Regular(p?),
+      Mode::StdBasis(p) => DefPath::StdBasis(p),
+    };
+    Some(Def { path, idx })
   }
 
   pub(crate) fn subst(&mut self) -> &mut Subst {

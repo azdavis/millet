@@ -1,4 +1,4 @@
-use crate::types::{Def, DefPath, MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
+use crate::types::{Def, MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
 use crate::util::ty_syms;
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
@@ -52,8 +52,8 @@ impl Info {
     self.store.values_mut().filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
   }
 
-  pub(crate) fn mode(&self) -> &Mode {
-    &self.mode
+  pub(crate) fn mode(&self) -> Mode {
+    self.mode
   }
 
   /// Returns information about meta type variables.
@@ -145,7 +145,7 @@ impl Info {
 }
 
 /// The mode for checking.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Mode {
   /// Regular checking. The default.
   Regular(Option<paths::PathId>),
@@ -154,21 +154,4 @@ pub enum Mode {
   ///
   /// The string is the name of the std basis file.
   StdBasis(&'static str),
-}
-
-impl Mode {
-  pub(crate) fn is_regular(&self) -> bool {
-    matches!(self, Self::Regular(_))
-  }
-
-  pub(crate) fn is_std_basis(&self) -> bool {
-    matches!(self, Self::StdBasis(_))
-  }
-
-  pub(crate) fn path(&self) -> Option<DefPath> {
-    match self {
-      Self::Regular(p) => p.map(DefPath::Regular),
-      Self::StdBasis(name) => Some(DefPath::StdBasis(name)),
-    }
-  }
 }

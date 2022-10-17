@@ -2,6 +2,7 @@ use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::config::Cfg;
 use crate::error::{ErrorKind, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
+use crate::info::Mode;
 use crate::st::St;
 use crate::types::{
   generalize, generalize_fixed, BasicOverload, Bs, Env, EnvLike, EnvStack, FunEnv, FunSig,
@@ -182,10 +183,13 @@ fn get_str_exp(
       let sig = env_to_sig(bs, sig_exp_env);
       let mut subst = TyRealization::default();
       let mut to_add = sig.env.clone();
-      if st.mode().is_regular() {
-        env_instance_sig(st, &mut subst, &str_exp_env, &sig, str_exp.into());
-        env_realize(&subst, &mut to_add);
-        env_enrich(st, &str_exp_env, &to_add, str_exp.into());
+      match st.mode() {
+        Mode::Regular(_) => {
+          env_instance_sig(st, &mut subst, &str_exp_env, &sig, str_exp.into());
+          env_realize(&subst, &mut to_add);
+          env_enrich(st, &str_exp_env, &to_add, str_exp.into());
+        }
+        Mode::StdBasis(_) => {}
       }
       if matches!(asc, sml_hir::Ascription::Opaque) {
         subst.clear();
@@ -271,15 +275,14 @@ fn get_sig_exp(
         env_realize(&subst, &mut sig_env);
         st.info().insert(sig_exp.into(), None, sig.env.def);
         ac.append(&mut sig_env);
-        if st.mode().is_std_basis() {
-          match name.as_str() {
+        match st.mode() {
+          Mode::StdBasis(_) => match name.as_str() {
             "WORD" => Some(BasicOverload::Word),
             "INTEGER" | "INT_INF" => Some(BasicOverload::Int),
             "REAL" => Some(BasicOverload::Real),
             _ => None,
-          }
-        } else {
-          None
+          },
+          Mode::Regular(_) => None,
         }
       }
       None => {
