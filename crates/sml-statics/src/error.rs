@@ -262,6 +262,12 @@ fn suggestion(s: &str) -> Option<&'static str> {
     "Str" => "String",
     "vec" => "vector",
     "Vec" => "Vector",
+    "Optional" | "Maybe" => "option",
+    // nil is the empty list
+    "none" | "None" | "Nothing" | "null" | "NULL" | "nullptr" | "undefined" => "NONE",
+    "some" | "Some" | "Just" => "SOME",
+    "True" | "TRUE" | "YES" => "true",
+    "False" | "FALSE" | "NO" => "false",
     _ => return None,
   };
   Some(ret)
