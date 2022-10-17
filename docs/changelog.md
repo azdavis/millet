@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.0
 
 - Correctly check for equality of type functions. This means we now correctly reject the following example program:
   ```sml
