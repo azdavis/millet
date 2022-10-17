@@ -12,7 +12,7 @@ pub(crate) struct CmFile {
   /// only optional so this can derive default.
   pub(crate) pos_db: Option<text_pos::PositionDb>,
   pub(crate) cm_paths: Vec<paths::PathId>,
-  pub(crate) sml_paths: Vec<(paths::PathId, mlb_statics::SourceFileSyntax)>,
+  pub(crate) sml_paths: Vec<paths::PathId>,
   pub(crate) exports: Vec<Export>,
 }
 
@@ -65,11 +65,8 @@ where
     match parsed_path.val.kind() {
       cm_syntax::PathKind::Sml => {
         let contents = read_file(fs, source, path.as_path())?;
-        let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-        let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, &contents);
-        // TODO refactor to put source file syntax in sources instead of the contents?
         sources.insert(path_id, contents);
-        ret.sml_paths.push((path_id, syntax));
+        ret.sml_paths.push(path_id);
       }
       cm_syntax::PathKind::Cm => {
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };

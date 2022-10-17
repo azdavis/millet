@@ -228,16 +228,10 @@ fn get_bas_dec(
       }
     }
     BasDec::Path(path, kind) => match kind {
-      PathKind::Source(syntax) => {
-        // TODO this lies about the fix env if the syntax was already parsed
+      PathKind::Source => {
+        let contents = files.sml.get(path).expect("no sml file for path id");
         let mut fix_env = scope.fix_env.clone();
-        let syntax = match syntax {
-          Some(x) => x.as_ref().clone(),
-          None => {
-            let contents = files.sml.get(path).expect("no sml file for path id");
-            SourceFileSyntax::new(&mut fix_env, contents)
-          }
-        };
+        let syntax = SourceFileSyntax::new(&mut fix_env, contents);
         let mode = sml_statics::Mode::Regular(Some(*path));
         let checked = sml_statics::get(
           &mut cx.syms,
@@ -270,7 +264,7 @@ fn get_bas_dec(
 }
 
 /// A source file analyzed at the purely syntactic level.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct SourceFileSyntax {
   /// The position database for this file.
   pub pos_db: text_pos::PositionDb,
@@ -359,10 +353,10 @@ pub enum BasExp {
 }
 
 /// A kind of path.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum PathKind {
-  /// An SML source path. We may have already parsed the syntax for the file at this path.
-  Source(Option<Box<SourceFileSyntax>>),
+  /// An SML source path.
+  Source,
   /// A group path, like MLB or CM.
   Group,
 }

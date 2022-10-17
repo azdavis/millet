@@ -83,7 +83,7 @@ where
         mlb_syntax::PathKind::Sml => {
           let contents = read_file(cx.fs, source, path.as_path())?;
           cx.sources.insert(path_id, contents);
-          mlb_statics::PathKind::Source(None)
+          mlb_statics::PathKind::Source
         }
         mlb_syntax::PathKind::Mlb => {
           cx.stack.push(GroupPathToProcess {
