@@ -62,36 +62,6 @@ fn get_str_dec(
       }
       ac.as_mut_env().str_env.extend(str_env);
     }
-    // Def(58)
-    sml_hir::StrDec::Local(local_dec, in_dec) => {
-      let mut local_bs = Bs::default();
-      get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), *local_dec);
-      let mut bs = bs.clone();
-      bs.append(local_bs);
-      get_str_dec(st, &bs, ars, ac, *in_dec);
-    }
-    // Def(59), Def(60)
-    sml_hir::StrDec::Seq(str_decs) => {
-      let mut bs = bs.clone();
-      match ac {
-        StrDecAc::Env(ac) => {
-          let mut one_env = Env::default();
-          for &str_dec in str_decs {
-            get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-            bs.env.push(one_env.clone());
-            ac.append(&mut one_env);
-          }
-        }
-        StrDecAc::Bs(ac) => {
-          for &str_dec in str_decs {
-            let mut one_bs = Bs::default();
-            get_str_dec(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
-            bs.append(one_bs.clone());
-            ac.append(one_bs);
-          }
-        }
-      }
-    }
     // Def(66), Def(88)
     sml_hir::StrDec::Signature(sig_binds) => {
       let ac = match ac {
@@ -148,6 +118,36 @@ fn get_str_dec(
         }
       }
       ac.as_mut_fun_env().extend(fun_env);
+    }
+    // Def(58)
+    sml_hir::StrDec::Local(local_dec, in_dec) => {
+      let mut local_bs = Bs::default();
+      get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), *local_dec);
+      let mut bs = bs.clone();
+      bs.append(local_bs);
+      get_str_dec(st, &bs, ars, ac, *in_dec);
+    }
+    // Def(59), Def(60)
+    sml_hir::StrDec::Seq(str_decs) => {
+      let mut bs = bs.clone();
+      match ac {
+        StrDecAc::Env(ac) => {
+          let mut one_env = Env::default();
+          for &str_dec in str_decs {
+            get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
+            bs.env.push(one_env.clone());
+            ac.append(&mut one_env);
+          }
+        }
+        StrDecAc::Bs(ac) => {
+          for &str_dec in str_decs {
+            let mut one_bs = Bs::default();
+            get_str_dec(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
+            bs.append(one_bs.clone());
+            ac.append(one_bs);
+          }
+        }
+      }
     }
   }
 }

@@ -80,15 +80,6 @@ fn get_str_dec(cx: &mut Cx, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) 
         get_str_exp(cx, ars, str_bind.str_exp);
       }
     }
-    sml_hir::StrDec::Local(local_dec, in_dec) => {
-      get_str_dec(cx, ars, *local_dec);
-      get_str_dec(cx, ars, *in_dec);
-    }
-    sml_hir::StrDec::Seq(str_decs) => {
-      for &str_dec in str_decs {
-        get_str_dec(cx, ars, str_dec);
-      }
-    }
     sml_hir::StrDec::Signature(sig_binds) => {
       for sig_bind in sig_binds {
         get_sig_exp(cx, ars, sig_bind.sig_exp);
@@ -98,6 +89,15 @@ fn get_str_dec(cx: &mut Cx, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) 
       for fun_bind in fun_binds {
         get_sig_exp(cx, ars, fun_bind.param_sig);
         get_str_exp(cx, ars, fun_bind.body);
+      }
+    }
+    sml_hir::StrDec::Local(local_dec, in_dec) => {
+      get_str_dec(cx, ars, *local_dec);
+      get_str_dec(cx, ars, *in_dec);
+    }
+    sml_hir::StrDec::Seq(str_decs) => {
+      for &str_dec in str_decs {
+        get_str_dec(cx, ars, str_dec);
       }
     }
   }

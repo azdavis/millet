@@ -86,10 +86,6 @@ fn get_str_dec(cx: &mut Cx, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
 fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
   let ptr = SyntaxNodePtr::new(str_dec.syntax());
   let res = match str_dec {
-    ast::DecOne::LocalDec(str_dec) => sml_hir::StrDec::Local(
-      get_str_dec(cx, str_dec.local_dec()),
-      get_str_dec(cx, str_dec.in_dec()),
-    ),
     ast::DecOne::StructureDec(str_dec) => sml_hir::StrDec::Structure(
       str_dec
         .str_binds()
@@ -140,6 +136,10 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
           Some(sml_hir::FunctorBind { functor_name, param_name, param_sig, body })
         })
         .collect(),
+    ),
+    ast::DecOne::LocalDec(str_dec) => sml_hir::StrDec::Local(
+      get_str_dec(cx, str_dec.local_dec()),
+      get_str_dec(cx, str_dec.in_dec()),
     ),
     _ => sml_hir::StrDec::Dec(get_one(cx, str_dec)),
   };

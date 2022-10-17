@@ -990,9 +990,9 @@ pub(crate) type FunEnv = FxHashMap<str_util::Name, FunSig>;
 /// Definition: Basis
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Bs<E = EnvStack> {
-  pub(crate) fun_env: Arc<FunEnv>,
-  pub(crate) sig_env: Arc<SigEnv>,
   pub(crate) env: E,
+  pub(crate) sig_env: Arc<SigEnv>,
+  pub(crate) fun_env: Arc<FunEnv>,
 }
 
 impl Bs {
@@ -1011,8 +1011,8 @@ impl<E: EnvLike> Bs<E> {
   }
 
   pub(crate) fn append<E2: EnvLike>(&mut self, mut other: Bs<E2>) {
-    self.as_mut_fun_env().extend(other.as_mut_fun_env().drain());
     self.as_mut_sig_env().extend(other.as_mut_sig_env().drain());
+    self.as_mut_fun_env().extend(other.as_mut_fun_env().drain());
     self.env.append(&mut other.env.into_env());
   }
 }

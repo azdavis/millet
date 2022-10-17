@@ -68,12 +68,12 @@ pub type StrDecArena = Arena<StrDec>;
 pub enum StrDec {
   Dec(DecIdx),
   Structure(Vec<StrBind>),
-  Local(StrDecIdx, StrDecIdx),
-  Seq(Vec<StrDecIdx>),
   /// technically a top dec in the Definition.
   Signature(Vec<SigBind>),
   /// technically a top dec in the Definition.
   Functor(Vec<FunctorBind>),
+  Local(StrDecIdx, StrDecIdx),
+  Seq(Vec<StrDecIdx>),
 }
 
 #[derive(Debug)]
