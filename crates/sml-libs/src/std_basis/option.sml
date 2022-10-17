@@ -65,23 +65,23 @@ end
 
 structure Option :> OPTION = struct end
 
-(*
+(*!
  * Alias for `Option.option`.
  *)
 datatype option = datatype Option.option
-(*
+(*!
  * Alias for `Option.Option`.
  *)
 exception Option = Option.Option
-(*
+(*!
  * Alias for `Option.getOpt`.
  *)
 val getOpt = Option.getOpt
-(*
+(*!
  * Alias for `Option.isSome`.
  *)
 val isSome = Option.isSome
-(*
+(*!
  * Alias for `Option.valOf`.
  *)
 val valOf = Option.valOf

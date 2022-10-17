@@ -177,23 +177,23 @@ structure WideString :> STRING (* OPTIONAL *)
   where type string = WideCharVector.vector
   where type char = WideChar.char = struct end
 
-(*
+(*!
  * Alias for `String.^`.
  *)
 val op ^ = String.^
-(*
+(*!
  * Alias for `String.explode`.
  *)
 val explode = String.explode
-(*
+(*!
  * Alias for `String.implode`.
  *)
 val implode = String.implode
-(*
+(*!
  * Alias for `String.size`.
  *)
 val size = String.size
-(*
+(*!
  * Alias for `String.str`.
  *)
 val str = String.str

@@ -249,11 +249,11 @@ structure WideSubstring :> SUBSTRING (* OPTIONAL *)
   where type string = WideString.string
   where type char = WideChar.char = struct end
 
-(*
+(*!
  * Alias for `Substring.substring`.
  *)
 type substring = Substring.substring
-(*
+(*!
  * Alias for `Substring.substring`.
  *)
 val substring = Substring.substring

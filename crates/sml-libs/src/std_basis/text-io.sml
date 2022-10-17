@@ -85,7 +85,7 @@ end
 
 structure TextIO :> TEXT_IO = struct end
 structure WideTextIO :> TEXT_IO (* OPTIONAL *) = struct end
-(*
+(*!
  * Alias for `TextIO.print`.
  *)
 val print = TextIO.print
