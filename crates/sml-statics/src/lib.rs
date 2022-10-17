@@ -25,6 +25,7 @@ mod unify;
 mod util;
 
 pub mod basis;
+pub mod path_order;
 
 pub use error::Error;
 pub use info::{Info, Mode};

@@ -34,6 +34,7 @@ fn bas_dec_paths(ac: &mut BTreeSet<PathId>, dec: &mlb_statics::BasDec) {
         bas_dec_paths(ac, dec);
       }
     }
+    mlb_statics::BasDec::SourcePathSet(paths) => ac.extend(paths.iter().copied()),
   }
 }
 

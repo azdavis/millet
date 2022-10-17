@@ -48,22 +48,14 @@ impl Input {
             .into_iter()
             .map(|ex| mlb_statics::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
             .collect();
-          let paths: Vec<_> = std::iter::empty()
-            .chain(
-              cm_file
-                .cm_paths
-                .iter()
-                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group)),
-            )
-            .chain(
-              cm_file
-                .sml_paths
-                .iter()
-                .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Source)),
-            )
+          let path_decs: Vec<_> = cm_file
+            .cm_paths
+            .iter()
+            .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
+            .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
             .collect();
           let bas_dec = mlb_statics::BasDec::Local(
-            mlb_statics::BasDec::seq(paths).into(),
+            mlb_statics::BasDec::seq(path_decs).into(),
             mlb_statics::BasDec::seq(exports).into(),
           );
           let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };

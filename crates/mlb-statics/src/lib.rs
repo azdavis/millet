@@ -5,7 +5,7 @@
 mod std_basis;
 
 use diagnostic_util::{Code, Severity};
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use sml_syntax::ast::AstNode;
 use std::fmt;
 use text_size_util::WithRange;
@@ -239,6 +239,35 @@ fn get_bas_dec(
         None => get_group_file(cx, files, ac, *path),
       },
     },
+    BasDec::SourcePathSet(paths) => {
+      let mut syntaxes: paths::PathMap<_> = paths
+        .iter()
+        .map(|path| {
+          let mut fix_env = scope.fix_env.clone();
+          let contents = files.sml.get(path).expect("no sml file for path id");
+          let syntax = SourceFileSyntax::new(&mut fix_env, contents);
+          (*path, (fix_env, syntax))
+        })
+        .collect();
+      let hir_roots: paths::PathMap<_> = syntaxes
+        .iter()
+        .map(|(&path, (_, syntax))| (path, (&syntax.lower.arenas, syntax.lower.root)))
+        .collect();
+      assert_eq!(syntaxes.len(), hir_roots.len());
+      let order = sml_statics::path_order::get(cx.syms.clone(), scope.basis.clone(), hir_roots);
+      assert_eq!(syntaxes.len(), order.len());
+      // we could make a sequence of source path defs from the order and recurse on that, but doing
+      // it like this lets us avoid re-parsing the syntax. it is a little un-DRY though in the sense
+      // of largely duplicating the Seq case.
+      let mut scope = scope.clone();
+      for path in order {
+        let mut one_m_basis = MBasis::default();
+        let (fix_env, syntax) = syntaxes.remove(&path).expect("path from order is in syntaxes");
+        get_source_file(cx, path, &scope, &mut one_m_basis, fix_env, syntax);
+        scope.append(one_m_basis.clone());
+        ac.append(one_m_basis);
+      }
+    }
   }
 }
 
@@ -331,6 +360,8 @@ pub enum BasDec {
   Export(sml_statics::basis::Namespace, WithRange<str_util::Name>, WithRange<str_util::Name>),
   Seq(Vec<BasDec>),
   Path(paths::PathId, PathKind),
+  /// Used by CM.
+  SourcePathSet(FxHashSet<paths::PathId>),
 }
 
 impl BasDec {
