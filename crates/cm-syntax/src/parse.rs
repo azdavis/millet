@@ -104,18 +104,16 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
       Token::Source => {
         p.bump();
         p.eat(Token::LRound)?;
-        // TODO also accept one or more filenames?
-        p.eat(Token::Minus)?;
+        let path = path_or_minus(p)?;
         p.eat(Token::RRound)?;
-        Some(Export::Source(tok.range))
+        Some(Export::Source(tok.wrap(path)))
       }
       Token::Group => {
         p.bump();
         p.eat(Token::LRound)?;
-        // TODO also accept one or more filenames?
-        p.eat(Token::Minus)?;
+        let path = path_or_minus(p)?;
         p.eat(Token::RRound)?;
-        Some(Export::Group(tok.range))
+        Some(Export::Group(tok.wrap(path)))
       }
       Token::Is => break,
       _ => {
@@ -159,6 +157,20 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
     }
   }
   Ok((exports, members))
+}
+
+fn path_or_minus(p: &mut Parser<'_>) -> Result<Option<PathBuf>> {
+  match p.cur() {
+    Some(Token::Minus) => {
+      p.bump();
+      Ok(None)
+    }
+    Some(Token::String(s)) => {
+      p.bump();
+      path(p, s)
+    }
+    _ => p.err(ErrorKind::ExpectedPathOrMinus),
+  }
 }
 
 fn regular(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> Result<Export> {

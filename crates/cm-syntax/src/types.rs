@@ -15,6 +15,7 @@ pub(crate) enum ErrorKind {
   ExpectedString,
   ExpectedDesc,
   ExpectedExport,
+  ExpectedPathOrMinus,
   UnsupportedClass(PathBuf, String),
   CouldNotDetermineClass(PathBuf),
   SlashVarPathError(paths::slash_var_path::Error),
@@ -45,6 +46,7 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedString => f.write_str("expected a string"),
       ErrorKind::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
       ErrorKind::ExpectedExport => f.write_str("expected an export"),
+      ErrorKind::ExpectedPathOrMinus => f.write_str("expected a path or `-`"),
       ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
       ErrorKind::CouldNotDetermineClass(p) => {
         write!(f, "{}: couldn't determine class", p.display())
@@ -150,9 +152,9 @@ pub enum Export {
   /// A re-export of another CM library.
   Library(WithRange<PathBuf>),
   /// A source export.
-  Source(TextRange),
+  Source(WithRange<Option<PathBuf>>),
   /// A group export.
-  Group(TextRange),
+  Group(WithRange<Option<PathBuf>>),
 }
 
 /// A namespace, like `structure` in `structure S`.

@@ -102,7 +102,7 @@ where
         let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
         get(fs, store, path_vars, sources, cm_files, cur)?;
-        let other = cm_files.get(&cur.path).expect("cm file should be set after get_cm_file");
+        let other = cm_files.get(&cur.path).expect("cm file should be set after get");
         ret.exports.extend(
           other
             .exports
@@ -110,19 +110,33 @@ where
             .map(|ex| Export { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
         );
       }
-      cm_syntax::Export::Source(range) => {
+      cm_syntax::Export::Source(path) => {
         return Err(Error {
-          source: ErrorSource { path: None, range: group_file.pos_db.range(range) },
+          source: ErrorSource { path: None, range: group_file.pos_db.range(path.range) },
           path: group_path.to_owned(),
           kind: ErrorKind::UnsupportedExport,
         })
       }
-      cm_syntax::Export::Group(_) => {
-        for path in &ret.cm_paths {
-          let other = cm_files.get(path).expect("child cm file should be set");
+      cm_syntax::Export::Group(path) => match path.val {
+        Some(p) => {
+          let source = ErrorSource {
+            path: Some(group_path.to_owned()),
+            range: group_file.pos_db.range(path.range),
+          };
+          let path = group_parent.join(p.as_path());
+          let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
+          let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
+          get(fs, store, path_vars, sources, cm_files, cur)?;
+          let other = cm_files.get(&cur.path).expect("cm file should be set after get");
           ret.exports.extend(other.exports.iter().cloned());
         }
-      }
+        None => {
+          for path in &ret.cm_paths {
+            let other = cm_files.get(path).expect("cm file should be set after get");
+            ret.exports.extend(other.exports.iter().cloned());
+          }
+        }
+      },
     }
   }
   ret.pos_db = Some(group_file.pos_db);
