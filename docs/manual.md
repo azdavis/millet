@@ -44,6 +44,8 @@ These file types list out SML source files and other group files to organize the
 
 For more exotic projects, you may wish to create an optional `millet.toml`.
 
+**Note:** If a file is not transitively reachable from the root group file, it will not be analyzed.
+
 ## Configuration
 
 There are two places where Millet can be configured:
@@ -64,7 +66,8 @@ FOO = { value = "bar" }
 QUZ = { path = "lib" }
 [errors]
 5011.severity = "warning"
-5012.severity = "warning"
+4015.severity = "error"
+5029.severity = "ignore"
 ```
 
 - `version` is the version of the config file. At time of writing, it must be exactly `1`.
@@ -77,8 +80,9 @@ QUZ = { path = "lib" }
     - Each key is an error code.
     - For each key, the value is a table.
       - The `severity` key overrides the default severity for this error. The acceptable values are:
-        - `"Warning"`
-        - `"Error"`
+        - `ignore`: the error is not reported.
+        - `warning`: the error is reported as a warning.
+        - `error`: the error is reported with maximum severity.
 
 <!--
 

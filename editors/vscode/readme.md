@@ -21,24 +21,34 @@ You can turn it off by setting `millet.server.enable` to `false` in your VS Code
 
 ## Usage
 
-1. Install the extension.
-2. Open VS Code to a folder directly containing a single "group file", i.e. one of
-   - a [ML Basis][mlb] file, with extension `.mlb`
-   - a [SML/NJ Compilation Manager][cm] file, with extension `.cm`
-3. Ensure that group file lists all the SML/other group files in the folder, in the order you wish for them to be analyzed.
+First, install the extension, and open VS Code on a folder with SML files.
 
-**Note:** If a file is not transitively reachable from the root group file, it will not be analyzed.
+If VS Code does not automatically detect how to analyze the project, add a `millet.toml` that defines the "root" of the project. All files should be reachable from this root.
 
-### Example
+To define the root, set `workspace.root` in `millet.toml` to the path to a file that lists out all the SML files Millet should analyze. This file should be either:
 
-#### `sources.mlb`
+- a [ML Basis][mlb] (MLB) file, with extension `.mlb`
+- a [SML/NJ Compilation Manager][cm] (CM) file, with extension `.cm`
+
+MLB and CM are the two most common ways of managing large SML projects with many files.
+
+In the example below, we've opened VS Code to a folder with 4 files: a Millet config file, a "root" file with MLB syntax, and two SML files.
+
+### `millet.toml`
+
+```toml
+version = 1
+workspace.root = "sources.mlb"
+```
+
+### `sources.mlb`
 
 ```mlb
 a.sml
 b.sml
 ```
 
-#### `a.sml`
+### `a.sml`
 
 ```sml
 (*!
@@ -47,10 +57,11 @@ b.sml
 fun increment x = x + 1
 ```
 
-#### `b.sml`
+### `b.sml`
 
 ```sml
 val four = increment 3
+val () = "this is a type error. if you see an error, Millet is working!"
 ```
 
 ## Community
