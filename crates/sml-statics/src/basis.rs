@@ -18,7 +18,7 @@ impl Basis {
     self.inner.append(other.inner);
   }
 
-  /// Adds the structure named `other_name` from `other` into `self` with the name `name`, or
+  /// Adds the item named `other_name` from `other` into `self` with the name `name`, or
   /// returns `false` if this was not possible.
   pub fn add(
     &mut self,
