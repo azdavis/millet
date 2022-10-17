@@ -33,8 +33,8 @@ pub fn get(mut syms: Syms, mut basis: Basis, mut paths: SmlHirPaths<'_>) -> Vec<
     let old_ok_paths_len = ok_paths.len();
     let mut new_paths: SmlHirPaths<'_> = fast_hash::map_with_capacity(paths.len());
     for (path, (arenas, root)) in paths {
-      // TODO greatly limit the checks we do in statics since much of them are useless for getting
-      // the path order.
+      // NOTE: this inner loop body runs O(n^2) times. to make this hurt less, we use a special path
+      // order mode for statics, which reduces the number of checks we do.
       let mut st = St::new(Mode::PathOrder, syms);
       let inner = top_dec::get(&mut st, &basis.inner, arenas, root);
       let (new_syms, errors, _) = st.finish();
