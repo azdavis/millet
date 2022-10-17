@@ -259,7 +259,7 @@ fn insert_name(
         st.mark_defined(idx, name.clone());
       }
     }
-    Mode::Regular(None) | Mode::StdBasis(_) => {}
+    Mode::Regular(None) | Mode::StdBasis(_) | Mode::PathOrder => {}
   }
   if let Some(e) = ins_check_name(ve, name, vi, Item::Val) {
     st.err(idx, e);

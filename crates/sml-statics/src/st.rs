@@ -1,4 +1,4 @@
-use crate::error::{Error, ErrorKind};
+use crate::error::{Error, ErrorKind, Item};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
 use crate::types::{
@@ -50,6 +50,7 @@ impl St {
     let path = match self.mode() {
       Mode::Regular(p) => DefPath::Regular(p?),
       Mode::StdBasis(p) => DefPath::StdBasis(p),
+      Mode::PathOrder => return None,
     };
     Some(Def { path, idx })
   }
@@ -62,7 +63,13 @@ impl St {
   where
     I: Into<sml_hir::Idx>,
   {
-    self.errors.push(Error { idx: idx.into(), kind });
+    match (self.mode(), &kind) {
+      (Mode::PathOrder, ErrorKind::Undefined(Item::Struct | Item::Sig | Item::Functor, _))
+      | (Mode::Regular(_) | Mode::StdBasis(_), _) => {
+        self.errors.push(Error { idx: idx.into(), kind });
+      }
+      (Mode::PathOrder, _) => {}
+    }
   }
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: sml_hir::TyVar, src: TyVarSrc) -> FixedTyVar {
@@ -74,18 +81,30 @@ impl St {
   }
 
   pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {
+    if matches!(self.mode(), Mode::PathOrder) {
+      return;
+    }
     self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx });
   }
 
   pub(crate) fn insert_handle(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
+    if matches!(self.mode(), Mode::PathOrder) {
+      return;
+    }
     self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx });
   }
 
   pub(crate) fn insert_case(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
+    if matches!(self.mode(), Mode::PathOrder) {
+      return;
+    }
     self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
   pub(crate) fn insert_hole(&mut self, mv: MetaTyVar, idx: sml_hir::Idx) {
+    if matches!(self.mode(), Mode::PathOrder) {
+      return;
+    }
     self.holes.push((mv, idx));
   }
 
@@ -94,6 +113,9 @@ impl St {
   }
 
   pub(crate) fn mark_used(&mut self, idx: sml_hir::Idx) {
+    if matches!(self.mode(), Mode::PathOrder) {
+      return;
+    }
     self.used.insert(idx);
   }
 

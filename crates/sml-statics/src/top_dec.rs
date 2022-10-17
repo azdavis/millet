@@ -189,7 +189,7 @@ fn get_str_exp(
           env_realize(&subst, &mut to_add);
           env_enrich(st, &str_exp_env, &to_add, str_exp.into());
         }
-        Mode::StdBasis(_) => {}
+        Mode::StdBasis(_) | Mode::PathOrder => {}
       }
       if matches!(asc, sml_hir::Ascription::Opaque) {
         subst.clear();
@@ -282,7 +282,7 @@ fn get_sig_exp(
             "REAL" => Some(BasicOverload::Real),
             _ => None,
           },
-          Mode::Regular(_) => None,
+          Mode::Regular(_) | Mode::PathOrder => None,
         }
       }
       None => {

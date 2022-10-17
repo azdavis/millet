@@ -2,7 +2,6 @@
 //! structure-level name errors.
 
 use crate::basis::Basis;
-use crate::error::{ErrorKind, Item};
 use crate::info::Mode;
 use crate::st::St;
 use crate::top_dec;
@@ -36,18 +35,15 @@ pub fn get(mut syms: Syms, mut basis: Basis, mut paths: SmlHirPaths<'_>) -> Vec<
     for (path, (arenas, root)) in paths {
       // TODO greatly limit the checks we do in statics since much of them are useless for getting
       // the path order.
-      let mut st = St::new(Mode::Regular(Some(path)), syms);
+      let mut st = St::new(Mode::PathOrder, syms);
       let inner = top_dec::get(&mut st, &basis.inner, arenas, root);
       let (new_syms, errors, _) = st.finish();
       syms = new_syms;
-      let any_needed = errors.iter().any(|x| {
-        matches!(x.kind, ErrorKind::Undefined(Item::Functor | Item::Sig | Item::Struct, _))
-      });
-      if any_needed {
-        new_paths.insert(path, (arenas, root));
-      } else {
+      if errors.is_empty() {
         basis.append(Basis { inner });
         ok_paths.push(path);
+      } else {
+        new_paths.insert(path, (arenas, root));
       }
     }
     paths = new_paths;
