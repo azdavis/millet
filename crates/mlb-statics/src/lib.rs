@@ -232,28 +232,7 @@ fn get_bas_dec(
         let contents = files.sml.get(path).expect("no sml file for path id");
         let mut fix_env = scope.fix_env.clone();
         let syntax = SourceFileSyntax::new(&mut fix_env, contents);
-        let mode = sml_statics::Mode::Regular(Some(*path));
-        let checked = sml_statics::get(
-          &mut cx.syms,
-          &scope.basis,
-          mode,
-          &syntax.lower.arenas,
-          syntax.lower.root,
-        );
-        let mut info = checked.info;
-        add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
-        let file = SourceFile { syntax, statics_errors: checked.errors, info };
-        ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
-        // NOTE: we would like to assert that the insert returns None, but actually it may not
-        // always.
-        //
-        // this is because a single source file might be included by two different groups. in such a
-        // case, it's not actually clear what errors we should emit. (it might be confusing to
-        // re-emit some of the same errors, but also maybe have different errors from different
-        // analyses, on the same file.)
-        //
-        // this drops the errors from any previous analyses of this file on the floor.
-        cx.sml.insert(*path, file);
+        get_source_file(cx, *path, scope, ac, fix_env, syntax);
       }
       PathKind::Group => match cx.cache.get(path) {
         Some(mb) => ac.append(mb.clone()),
@@ -261,6 +240,33 @@ fn get_bas_dec(
       },
     },
   }
+}
+
+fn get_source_file(
+  cx: &mut Cx,
+  path: paths::PathId,
+  scope: &MBasis,
+  ac: &mut MBasis,
+  fix_env: sml_parse::parser::FixEnv,
+  syntax: SourceFileSyntax,
+) {
+  let mode = sml_statics::Mode::Regular(Some(path));
+  let checked =
+    sml_statics::get(&mut cx.syms, &scope.basis, mode, &syntax.lower.arenas, syntax.lower.root);
+  let mut info = checked.info;
+  add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
+  let file = SourceFile { syntax, statics_errors: checked.errors, info };
+  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
+  // NOTE: we would like to assert that the insert returns None, but actually it may not
+  // always.
+  //
+  // this is because a single source file might be included by two different groups. in such a
+  // case, it's not actually clear what errors we should emit. (it might be confusing to
+  // re-emit some of the same errors, but also maybe have different errors from different
+  // analyses, on the same file.)
+  //
+  // this drops the errors from any previous analyses of this file on the floor.
+  cx.sml.insert(path, file);
 }
 
 /// A source file analyzed at the purely syntactic level.
