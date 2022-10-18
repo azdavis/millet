@@ -1,5 +1,45 @@
 //! Determining the order in which to analyze a set of paths that will minimize undefined
 //! structure-level name errors.
+//!
+//! In order to conform to the CM specification, an implementation must ignore the order of source
+//! files listed in the CM files, and instead determine the correct order in which to analyze the
+//! files.
+//!
+//! How are we to do this? In order to produce a single ordering in which to visit all of the source
+//! files, we must know what files define what things and what files use those things. Then we know
+//! how to order the files: process first the files that define the thing, then the ones that use
+//! the thing. This is a topological ordering.
+//!
+//! How do we know what things a file defines or uses? The CM specification guarantees that it is
+//! syntactically knowable what structure level names a file defines because it bans top level open.
+//! (CM also does not allow sharing non-structure-level names between files). However, knowing what
+//! names a file needs from other files is less trivial.
+//!
+//! You may think that the answer is knowable with a similarly simple, purely syntactic analysis of
+//! the file: simply traverse the syntax tree, searching for names in a "reference" position and
+//! collect any structure level identifiers found.
+//!
+//! However, note that SML has things like `functor` and `let` and `local`, which cause structure
+//! level identifiers to go in and out of scope. So we need some notion of scope. Still not too bad
+//! right?
+//!
+//! Wrong. Things really start to get hairy when you consider `open` and `include`. Now you have the
+//! ability to bring structure and signature level identifiers into scope without directly
+//! syntactically mentioning them. So now we must track environments and associate them with the
+//! names in scope, so we know what new names are brought into scope when we `open` a structure
+//! identifier or `include` a signature.
+//!
+//! We also have things like functor application and signature ascription, all of which affect name
+//! resolution and visibility. At this point we're starting to require quite a sophisticated level
+//! of analysis just to get CM to work.
+//!
+//! So the approach we take is to just run all of statics on every file in a loop, but just
+//! structure name resolution purposes. When a file emits no undefined errors pertaining to
+//! undefined structure-level identifiers, we add this file to the ordering.
+//!
+//! As an "optimization", we pass to statics a mode that indicates that we don't care about anything
+//! except name resolution. That means we can skip things like exhaustiveness checking and type
+//! unification.
 
 use crate::basis::Basis;
 use crate::info::Mode;
