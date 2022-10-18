@@ -17,7 +17,7 @@ paths = { path = "../paths" }
 sml-comment = { path = "../sml-comment" }
 sml-hir = { path = "../sml-hir" }
 sml-lex = { path = "../sml-lex" }
-sml-libs = { path = "../sml-libs" }
+sml-libs = { git = "https://github.com/azdavis/sml-libs.git" }
 sml-lower = { path = "../sml-lower" }
 sml-parse = { path = "../sml-parse" }
 sml-statics = { path = "../sml-statics" }
