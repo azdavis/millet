@@ -13,9 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.1
 
 - Add more suggestions for booleans and options.
+- Add MLton libraries.
 
 ## v0.5.0
 
