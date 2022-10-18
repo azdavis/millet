@@ -141,6 +141,9 @@ end
 
 structure Int :> INTEGER
   where type int = int = Int
+structure Int8 :> INTEGER (* OPTIONAL *) = struct end
+structure Int16 :> INTEGER (* OPTIONAL *) = struct end
 structure Int32 :> INTEGER (* OPTIONAL *) = struct end
+structure Int64 :> INTEGER (* OPTIONAL *) = struct end
 structure FixedInt :> INTEGER (* OPTIONAL *) = struct end
 structure Position :> INTEGER = struct end

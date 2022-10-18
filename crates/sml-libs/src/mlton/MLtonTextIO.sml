@@ -1,0 +1,1 @@
+signature MLTON_TEXT_IO = MLTON_IO
