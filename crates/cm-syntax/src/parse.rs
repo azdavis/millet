@@ -88,10 +88,10 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
       None => break,
     };
     let export = match tok.val {
-      Token::Structure => Some(regular(p, tok, Namespace::Structure)?),
-      Token::Signature => Some(regular(p, tok, Namespace::Signature)?),
-      Token::Functor => Some(regular(p, tok, Namespace::Functor)?),
-      Token::FunSig => Some(regular(p, tok, Namespace::FunSig)?),
+      Token::Structure => Some(name_export(p, tok, Namespace::Structure)?),
+      Token::Signature => Some(name_export(p, tok, Namespace::Signature)?),
+      Token::Functor => Some(name_export(p, tok, Namespace::Functor)?),
+      Token::FunSig => Some(name_export(p, tok, Namespace::FunSig)?),
       Token::Library => {
         p.bump();
         p.eat(Token::LRound)?;
@@ -173,7 +173,7 @@ fn path_or_minus(p: &mut Parser<'_>) -> Result<Option<PathBuf>> {
   }
 }
 
-fn regular(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> Result<Export> {
+fn name_export(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> Result<Export> {
   p.bump();
   let s = p.string()?;
   let name = str_util::Name::new(s.val);
