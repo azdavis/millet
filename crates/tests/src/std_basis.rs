@@ -170,3 +170,17 @@ val _ = 100.0 * start / finish
 "#,
   );
 }
+
+#[test]
+fn mlton() {
+  check_with_std_basis(
+    r#"
+val a = if MLton.isMLton then "yep" else "nope"
+(* segfault in sml?? *)
+val n = MLton.Pointer.getInt8 (MLton.Pointer.null, 0)
+val b = MLton.Cont.callcc (fn cont =>
+  if MLton.hash () > 0w3 then "hi" else MLton.Cont.throw (cont, "bye"))
+val _ = a ^ b
+"#,
+  );
+}
