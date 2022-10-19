@@ -79,7 +79,6 @@ struct Export {
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
 /// of a given library path on demand.
-#[allow(clippy::too_many_lines)]
 fn get_one<F>(st: &mut St<'_, F>, cur: GroupPathToProcess) -> Result<()>
 where
   F: paths::FileSystem,
@@ -122,7 +121,24 @@ where
       }
     }
   }
-  for export in cm.exports {
+  get_exports(st, cm.exports, &group_file, group_parent, cur.path, &mut ret)?;
+  ret.pos_db = Some(group_file.pos_db);
+  st.cm_files.insert(cur.path, ret);
+  Ok(())
+}
+
+fn get_exports<F>(
+  st: &mut St<'_, F>,
+  exports: Vec<cm_syntax::Export>,
+  group_file: &StartedGroupFile,
+  group_parent: &std::path::Path,
+  cur_path_id: paths::PathId,
+  cm_file: &mut CmFile,
+) -> Result<()>
+where
+  F: paths::FileSystem,
+{
+  for export in exports {
     match export {
       cm_syntax::Export::Name(ns, name) => {
         let namespace = match ns.val {
@@ -137,7 +153,7 @@ where
             })
           }
         };
-        ret.exports.push(Export { namespace, name });
+        cm_file.exports.push(Export { namespace, name });
       }
       cm_syntax::Export::Library(lib) => {
         let source = ErrorSource {
@@ -150,10 +166,10 @@ where
         };
         let path = group_parent.join(path);
         let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
-        let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
+        let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
         get_one(st, cur)?;
         let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-        ret.exports.extend(
+        cm_file.exports.extend(
           other
             .exports
             .iter()
@@ -175,21 +191,19 @@ where
           };
           let path = group_parent.join(p.as_path());
           let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
-          let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
+          let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
           get_one(st, cur)?;
           let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-          ret.exports.extend(other.exports.iter().cloned());
+          cm_file.exports.extend(other.exports.iter().cloned());
         }
         cm_syntax::PathOrMinus::Minus => {
-          for path in &ret.cm_paths {
+          for path in &cm_file.cm_paths {
             let other = st.cm_files.get(path).expect("cm file should be set after get");
-            ret.exports.extend(other.exports.iter().cloned());
+            cm_file.exports.extend(other.exports.iter().cloned());
           }
         }
       },
     }
   }
-  ret.pos_db = Some(group_file.pos_db);
-  st.cm_files.insert(cur.path, ret);
   Ok(())
 }
