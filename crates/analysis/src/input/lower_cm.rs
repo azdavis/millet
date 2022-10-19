@@ -91,21 +91,20 @@ where
   st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
   let group_file = StartedGroupFile::new(st.store, cur, st.fs)?;
-  let group_path = group_file.path.as_path();
-  let group_parent = group_path.parent().expect("path from get_path has no parent");
+  let group_parent = group_file.path.as_path().parent().expect("path from get_path has no parent");
   let cm = match cm_syntax::get(group_file.contents.as_str(), st.path_vars) {
     Ok(x) => x,
     Err(e) => {
       return Err(Error {
         source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
-        path: group_path.to_owned(),
+        path: group_file.path.as_path().to_owned(),
         kind: ErrorKind::Cm(e),
       })
     }
   };
   for parsed_path in cm.paths {
     let source = ErrorSource {
-      path: Some(group_path.to_owned()),
+      path: Some(group_file.path.as_path().to_owned()),
       range: group_file.pos_db.range(parsed_path.range),
     };
     let path = group_parent.join(parsed_path.val.as_path());
@@ -133,7 +132,7 @@ where
           cm_syntax::Namespace::FunSig => {
             return Err(Error {
               source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },
-              path: group_path.to_owned(),
+              path: group_file.path.as_path().to_owned(),
               kind: ErrorKind::UnsupportedExport,
             })
           }
@@ -142,7 +141,7 @@ where
       }
       cm_syntax::Export::Library(lib) => {
         let source = ErrorSource {
-          path: Some(group_path.to_owned()),
+          path: Some(group_file.path.as_path().to_owned()),
           range: group_file.pos_db.range(lib.range),
         };
         let path = match &lib.val {
@@ -164,14 +163,14 @@ where
       cm_syntax::Export::Source(path) => {
         return Err(Error {
           source: ErrorSource { path: None, range: group_file.pos_db.range(path.range) },
-          path: group_path.to_owned(),
+          path: group_file.path.as_path().to_owned(),
           kind: ErrorKind::UnsupportedExport,
         })
       }
       cm_syntax::Export::Group(path) => match path.val {
         cm_syntax::PathOrMinus::Path(p) => {
           let source = ErrorSource {
-            path: Some(group_path.to_owned()),
+            path: Some(group_file.path.as_path().to_owned()),
             range: group_file.pos_db.range(path.range),
           };
           let path = group_parent.join(p.as_path());
