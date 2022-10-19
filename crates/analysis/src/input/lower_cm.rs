@@ -162,20 +162,11 @@ where
       ac.insert(NameExport { namespace, name: name.val }, name.range);
     }
     cm_syntax::Export::Library(lib) => {
-      let path = match &lib.val {
-        cm_syntax::PathOrStdBasis::Path(p) => p.as_path(),
+      let p = match &lib.val {
+        cm_syntax::PathOrStdBasis::Path(p) => parent.join(p.as_path()),
         cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
       };
-      let source = ErrorSource {
-        path: Some(group.path.as_path().to_owned()),
-        range: group.pos_db.range(lib.range),
-      };
-      let path = parent.join(path);
-      let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
-      let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
-      get_one(st, cur)?;
-      let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-      ac.extend(other.exports.keys().map(|ex| (ex.clone(), lib.range)));
+      get_file(st, group, cur_path_id, p.as_path(), lib.range, ac)?;
     }
     cm_syntax::Export::Source(path) => {
       return Err(Error {
@@ -186,16 +177,8 @@ where
     }
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        let source = ErrorSource {
-          path: Some(group.path.as_path().to_owned()),
-          range: group.pos_db.range(path.range),
-        };
-        let path = parent.join(p.as_path());
-        let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
-        let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
-        get_one(st, cur)?;
-        let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-        ac.extend(other.exports.iter().map(|(a, &b)| (a.clone(), b)));
+        let p = parent.join(p.as_path());
+        get_file(st, group, cur_path_id, p.as_path(), path.range, ac)?;
       }
       cm_syntax::PathOrMinus::Minus => {
         for path in cm_paths {
@@ -228,5 +211,26 @@ where
       ac.extend(lhs_ac);
     }
   }
+  Ok(())
+}
+
+fn get_file<F>(
+  st: &mut St<'_, F>,
+  group: &StartedGroup,
+  parent: paths::PathId,
+  path: &std::path::Path,
+  range: text_size_util::TextRange,
+  ac: &mut NameExports,
+) -> Result<()>
+where
+  F: paths::FileSystem,
+{
+  let source =
+    ErrorSource { path: Some(group.path.as_path().to_owned()), range: group.pos_db.range(range) };
+  let path_id = get_path_id(st.fs, st.store, source.clone(), path)?;
+  let cur = GroupPathToProcess { parent, range: source.range, path: path_id };
+  get_one(st, cur)?;
+  let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
+  ac.extend(other.exports.keys().map(|ex| (ex.clone(), range)));
   Ok(())
 }
