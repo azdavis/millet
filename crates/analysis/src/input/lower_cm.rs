@@ -161,7 +161,7 @@ where
         cm_syntax::PathOrStdBasis::Path(p) => p,
         cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
       };
-      get_file(st, group, cur_path_id, p.as_path(), lib.range, ac)?;
+      get_one_and_extend_with(st, group, cur_path_id, p.as_path(), lib.range, ac)?;
     }
     cm_syntax::Export::Source(path) => {
       return Err(Error {
@@ -172,11 +172,11 @@ where
     }
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        get_file(st, group, cur_path_id, p.as_path(), path.range, ac)?;
+        get_one_and_extend_with(st, group, cur_path_id, p.as_path(), path.range, ac)?;
       }
       cm_syntax::PathOrMinus::Minus => {
         for &path_id in cm_paths {
-          extend_with_other(st, path_id, path.range, ac);
+          extend_with(st, path_id, path.range, ac);
         }
       }
     },
@@ -207,7 +207,7 @@ where
   Ok(())
 }
 
-fn get_file<F>(
+fn get_one_and_extend_with<F>(
   st: &mut St<'_, F>,
   group: &StartedGroup,
   parent: paths::PathId,
@@ -221,11 +221,11 @@ where
   let (path_id, _, source) = get_path_id_in_group(st.fs, st.store, group, path, range)?;
   let cur = GroupPathToProcess { parent, range: source.range, path: path_id };
   get_one(st, cur)?;
-  extend_with_other(st, cur.path, range, ac);
+  extend_with(st, cur.path, range, ac);
   Ok(())
 }
 
-fn extend_with_other<F>(
+fn extend_with<F>(
   st: &mut St<'_, F>,
   path: paths::PathId,
   range: text_size_util::TextRange,
