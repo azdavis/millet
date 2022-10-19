@@ -94,24 +94,24 @@ where
   // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
   st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
-  let group_file = StartedGroupFile::new(st.store, cur, st.fs)?;
-  let group_parent = group_file.path.as_path().parent().expect("path from get_path has no parent");
-  let cm = match cm_syntax::get(group_file.contents.as_str(), st.path_vars) {
+  let group = StartedGroupFile::new(st.store, cur, st.fs)?;
+  let parent = group.path.as_path().parent().expect("path from get_path has no parent");
+  let cm = match cm_syntax::get(group.contents.as_str(), st.path_vars) {
     Ok(x) => x,
     Err(e) => {
       return Err(Error {
-        source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
-        path: group_file.path.as_path().to_owned(),
+        source: ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
+        path: group.path.as_path().to_owned(),
         kind: ErrorKind::Cm(e),
       })
     }
   };
   for parsed_path in cm.paths {
     let source = ErrorSource {
-      path: Some(group_file.path.as_path().to_owned()),
-      range: group_file.pos_db.range(parsed_path.range),
+      path: Some(group.path.as_path().to_owned()),
+      range: group.pos_db.range(parsed_path.range),
     };
-    let path = group_parent.join(parsed_path.val.as_path());
+    let path = parent.join(parsed_path.val.as_path());
     let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
     match parsed_path.val.kind() {
       cm_syntax::PathKind::Sml => {
@@ -127,16 +127,16 @@ where
     }
   }
   let mut exports = BTreeMap::<NameExport, TextRange>::new();
-  get_export(st, &group_file, group_parent, &ret.cm_paths, &mut exports, cur.path, cm.export)?;
-  ret.pos_db = Some(group_file.pos_db);
+  get_export(st, &group, parent, &ret.cm_paths, &mut exports, cur.path, cm.export)?;
+  ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
   Ok(())
 }
 
 fn get_export<F>(
   st: &mut St<'_, F>,
-  group_file: &StartedGroupFile,
-  group_parent: &std::path::Path,
+  group: &StartedGroupFile,
+  parent: &std::path::Path,
   cm_paths: &[paths::PathId],
   ac: &mut BTreeMap<NameExport, TextRange>,
   cur_path_id: paths::PathId,
@@ -153,8 +153,8 @@ where
         cm_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
         cm_syntax::Namespace::FunSig => {
           return Err(Error {
-            source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },
-            path: group_file.path.as_path().to_owned(),
+            source: ErrorSource { path: None, range: group.pos_db.range(ns.range) },
+            path: group.path.as_path().to_owned(),
             kind: ErrorKind::UnsupportedExport,
           })
         }
@@ -163,14 +163,14 @@ where
     }
     cm_syntax::Export::Library(lib) => {
       let source = ErrorSource {
-        path: Some(group_file.path.as_path().to_owned()),
-        range: group_file.pos_db.range(lib.range),
+        path: Some(group.path.as_path().to_owned()),
+        range: group.pos_db.range(lib.range),
       };
       let path = match &lib.val {
         cm_syntax::PathOrStdBasis::Path(p) => p.as_path(),
         cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
       };
-      let path = group_parent.join(path);
+      let path = parent.join(path);
       let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
       let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
       get_one(st, cur)?;
@@ -179,18 +179,18 @@ where
     }
     cm_syntax::Export::Source(path) => {
       return Err(Error {
-        source: ErrorSource { path: None, range: group_file.pos_db.range(path.range) },
-        path: group_file.path.as_path().to_owned(),
+        source: ErrorSource { path: None, range: group.pos_db.range(path.range) },
+        path: group.path.as_path().to_owned(),
         kind: ErrorKind::UnsupportedExport,
       })
     }
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
         let source = ErrorSource {
-          path: Some(group_file.path.as_path().to_owned()),
-          range: group_file.pos_db.range(path.range),
+          path: Some(group.path.as_path().to_owned()),
+          range: group.pos_db.range(path.range),
         };
-        let path = group_parent.join(p.as_path());
+        let path = parent.join(p.as_path());
         let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
         get_one(st, cur)?;
@@ -206,13 +206,13 @@ where
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
-        get_export(st, group_file, group_parent, cm_paths, ac, cur_path_id, export)?;
+        get_export(st, group, parent, cm_paths, ac, cur_path_id, export)?;
       }
     }
     cm_syntax::Export::Difference(_, op, _) | cm_syntax::Export::Intersection(_, op, _) => {
       return Err(Error {
-        source: ErrorSource { path: None, range: group_file.pos_db.range(op.range) },
-        path: group_file.path.as_path().to_owned(),
+        source: ErrorSource { path: None, range: group.pos_db.range(op.range) },
+        path: group.path.as_path().to_owned(),
         kind: ErrorKind::UnsupportedExport,
       })
     }
