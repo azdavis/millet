@@ -37,30 +37,31 @@ where
           });
         }
       };
-    let mut cx = MlbCx {
-      group_file: &group_file,
-      fs,
-      store,
-      sources: &mut sources,
-      stack: &mut stack,
-      path_id: cur.path,
-    };
-    let bas_dec = get_bas_dec(&mut cx, syntax_dec)?;
-    groups.insert(cur.path, Group { bas_dec, pos_db: group_file.pos_db });
+    let mut st = St { fs, store, sources: &mut sources, stack: &mut stack };
+    let cx = Cx { group_file, path_id: cur.path };
+    let bas_dec = get_bas_dec(&mut st, &cx, syntax_dec)?;
+    groups.insert(cur.path, Group { bas_dec, pos_db: cx.group_file.pos_db });
   }
   Ok((sources, groups))
 }
 
-struct MlbCx<'a, F> {
-  group_file: &'a StartedGroupFile,
+struct St<'a, F> {
   fs: &'a F,
   store: &'a mut paths::Store,
   sources: &'a mut PathMap<String>,
   stack: &'a mut Vec<GroupPathToProcess>,
+}
+
+struct Cx {
+  group_file: StartedGroupFile,
   path_id: PathId,
 }
 
-fn get_bas_dec<F>(cx: &mut MlbCx<'_, F>, dec: mlb_syntax::BasDec) -> Result<mlb_statics::BasDec>
+fn get_bas_dec<F>(
+  st: &mut St<'_, F>,
+  cx: &Cx,
+  dec: mlb_syntax::BasDec,
+) -> Result<mlb_statics::BasDec>
 where
   F: paths::FileSystem,
 {
@@ -77,7 +78,7 @@ where
               kind: ErrorKind::Duplicate(name.val),
             });
           }
-          let exp = get_bas_exp(cx, exp)?;
+          let exp = get_bas_exp(st, cx, exp)?;
           Ok(mlb_statics::BasDec::Basis(name, exp.into()))
         })
         .collect::<Result<Vec<_>>>()?;
@@ -87,8 +88,8 @@ where
       mlb_statics::BasDec::seq(names.into_iter().map(mlb_statics::BasDec::Open).collect())
     }
     mlb_syntax::BasDec::Local(local_dec, in_dec) => mlb_statics::BasDec::Local(
-      get_bas_dec(cx, *local_dec)?.into(),
-      get_bas_dec(cx, *in_dec)?.into(),
+      get_bas_dec(st, cx, *local_dec)?.into(),
+      get_bas_dec(st, cx, *in_dec)?.into(),
     ),
     mlb_syntax::BasDec::Export(ns, binds) => {
       let mut names = FxHashSet::<str_util::Name>::default();
@@ -125,15 +126,15 @@ where
         .parent()
         .expect("path from get_path has no parent")
         .join(parsed_path.val.as_path());
-      let path_id = get_path_id(cx.fs, cx.store, source.clone(), path.as_path())?;
+      let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
       let kind = match parsed_path.val.kind() {
         mlb_syntax::PathKind::Sml => {
-          let contents = read_file(cx.fs, source, path.as_path())?;
-          cx.sources.insert(path_id, contents);
+          let contents = read_file(st.fs, source, path.as_path())?;
+          st.sources.insert(path_id, contents);
           mlb_statics::PathKind::Source
         }
         mlb_syntax::PathKind::Mlb => {
-          cx.stack.push(GroupPathToProcess {
+          st.stack.push(GroupPathToProcess {
             parent: cx.path_id,
             range: source.range,
             path: path_id,
@@ -143,23 +144,27 @@ where
       };
       mlb_statics::BasDec::Path(path_id, kind)
     }
-    mlb_syntax::BasDec::Ann(_, dec) => get_bas_dec(cx, *dec)?,
+    mlb_syntax::BasDec::Ann(_, dec) => get_bas_dec(st, cx, *dec)?,
     mlb_syntax::BasDec::Seq(decs) => mlb_statics::BasDec::seq(
-      decs.into_iter().map(|dec| get_bas_dec(cx, dec)).collect::<Result<Vec<_>>>()?,
+      decs.into_iter().map(|dec| get_bas_dec(st, cx, dec)).collect::<Result<Vec<_>>>()?,
     ),
   };
   Ok(ret)
 }
 
-fn get_bas_exp<F>(cx: &mut MlbCx<'_, F>, exp: mlb_syntax::BasExp) -> Result<mlb_statics::BasExp>
+fn get_bas_exp<F>(
+  st: &mut St<'_, F>,
+  cx: &Cx,
+  exp: mlb_syntax::BasExp,
+) -> Result<mlb_statics::BasExp>
 where
   F: paths::FileSystem,
 {
   let ret = match exp {
-    mlb_syntax::BasExp::Bas(dec) => mlb_statics::BasExp::Bas(get_bas_dec(cx, dec)?),
+    mlb_syntax::BasExp::Bas(dec) => mlb_statics::BasExp::Bas(get_bas_dec(st, cx, dec)?),
     mlb_syntax::BasExp::Name(name) => mlb_statics::BasExp::Name(name),
     mlb_syntax::BasExp::Let(dec, exp) => {
-      mlb_statics::BasExp::Let(get_bas_dec(cx, dec)?, get_bas_exp(cx, *exp)?.into())
+      mlb_statics::BasExp::Let(get_bas_dec(st, cx, dec)?, get_bas_exp(st, cx, *exp)?.into())
     }
   };
   Ok(ret)
