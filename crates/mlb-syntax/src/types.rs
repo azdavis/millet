@@ -50,7 +50,7 @@ impl fmt::Display for Error {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Token<'a> {
+pub(crate) enum Token<'a> {
   Signature,
   Structure,
   Functor,
