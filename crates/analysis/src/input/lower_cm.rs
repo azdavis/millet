@@ -2,7 +2,8 @@
 
 use crate::input::root_group::RootGroup;
 use crate::input::util::{
-  get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result, StartedGroup,
+  get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
+  StartedGroup,
 };
 use crate::input::Group;
 use fast_hash::FxHashSet;
@@ -96,7 +97,6 @@ where
   st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
   let group = StartedGroup::new(st.store, cur, st.fs)?;
-  let parent = group.path.as_path().parent().expect("path from get_path has no parent");
   let cm = match cm_syntax::get(group.contents.as_str(), st.path_vars) {
     Ok(x) => x,
     Err(e) => {
@@ -107,14 +107,10 @@ where
       })
     }
   };
-  for parsed_path in cm.paths {
-    let source = ErrorSource {
-      path: Some(group.path.as_path().to_owned()),
-      range: group.pos_db.range(parsed_path.range),
-    };
-    let path = parent.join(parsed_path.val.as_path());
-    let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
-    match parsed_path.val.kind() {
+  for pp in cm.paths {
+    let (path_id, path, source) =
+      get_path_id_in_group(st.fs, st.store, &group, pp.val.as_path(), pp.range)?;
+    match pp.val.kind() {
       cm_syntax::PathKind::Sml => {
         let contents = read_file(st.fs, source, path.as_path())?;
         st.sources.insert(path_id, contents);
@@ -127,7 +123,7 @@ where
       }
     }
   }
-  get_export(st, &group, parent, &ret.cm_paths, cur.path, &mut ret.exports, cm.export)?;
+  get_export(st, &group, &ret.cm_paths, cur.path, &mut ret.exports, cm.export)?;
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
   Ok(())
@@ -136,7 +132,6 @@ where
 fn get_export<F>(
   st: &mut St<'_, F>,
   group: &StartedGroup,
-  parent: &std::path::Path,
   cm_paths: &[paths::PathId],
   cur_path_id: paths::PathId,
   ac: &mut NameExports,
@@ -163,7 +158,7 @@ where
     }
     cm_syntax::Export::Library(lib) => {
       let p = match &lib.val {
-        cm_syntax::PathOrStdBasis::Path(p) => parent.join(p.as_path()),
+        cm_syntax::PathOrStdBasis::Path(p) => p,
         cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
       };
       get_file(st, group, cur_path_id, p.as_path(), lib.range, ac)?;
@@ -177,26 +172,25 @@ where
     }
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        let p = parent.join(p.as_path());
         get_file(st, group, cur_path_id, p.as_path(), path.range, ac)?;
       }
       cm_syntax::PathOrMinus::Minus => {
-        for path in cm_paths {
-          let other = st.cm_files.get(path).expect("cm file should be set after get");
-          ac.extend(other.exports.iter().map(|(a, &b)| (a.clone(), b)));
+        for path_id in cm_paths {
+          let other = st.cm_files.get(path_id).expect("cm file should be set after get");
+          ac.extend(other.exports.iter().map(|(a, _)| (a.clone(), path.range)));
         }
       }
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
-        get_export(st, group, parent, cm_paths, cur_path_id, ac, export)?;
+        get_export(st, group, cm_paths, cur_path_id, ac, export)?;
       }
     }
     cm_syntax::Export::Difference(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
-      get_export(st, group, parent, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
-      get_export(st, group, parent, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
+      get_export(st, group, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
+      get_export(st, group, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
       // keep only those that ARE NOT in rhs.
       lhs_ac.retain(|k, _| !rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
@@ -204,8 +198,8 @@ where
     cm_syntax::Export::Intersection(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
-      get_export(st, group, parent, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
-      get_export(st, group, parent, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
+      get_export(st, group, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
+      get_export(st, group, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
       // keep only those that ARE in rhs. only 1 character of difference from the Difference case!
       lhs_ac.retain(|k, _| rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
@@ -225,9 +219,7 @@ fn get_file<F>(
 where
   F: paths::FileSystem,
 {
-  let source =
-    ErrorSource { path: Some(group.path.as_path().to_owned()), range: group.pos_db.range(range) };
-  let path_id = get_path_id(st.fs, st.store, source.clone(), path)?;
+  let (path_id, _, source) = get_path_id_in_group(st.fs, st.store, group, path, range)?;
   let cur = GroupPathToProcess { parent, range: source.range, path: path_id };
   get_one(st, cur)?;
   let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");

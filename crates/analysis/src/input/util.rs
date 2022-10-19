@@ -142,6 +142,24 @@ where
   Ok(store.get_id(&canonical))
 }
 
+pub(crate) fn get_path_id_in_group<F>(
+  fs: &F,
+  store: &mut paths::Store,
+  group: &StartedGroup,
+  path: &Path,
+  range: text_size_util::TextRange,
+) -> Result<(paths::PathId, paths::CanonicalPathBuf, ErrorSource)>
+where
+  F: paths::FileSystem,
+{
+  let source =
+    ErrorSource { path: Some(group.path.as_path().to_owned()), range: group.pos_db.range(range) };
+  let path = group.path.as_path().parent().expect("group path with no parent").join(path);
+  let canonical = canonicalize(fs, path.as_path(), source.clone())?;
+  let id = store.get_id(&canonical);
+  Ok((id, canonical, source))
+}
+
 pub(crate) fn canonicalize<F>(
   fs: &F,
   path: &Path,

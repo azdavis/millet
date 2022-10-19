@@ -2,7 +2,8 @@
 
 use crate::input::root_group::RootGroup;
 use crate::input::util::{
-  get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result, StartedGroup,
+  get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
+  StartedGroup,
 };
 use crate::input::Group;
 use fast_hash::FxHashSet;
@@ -110,20 +111,10 @@ where
         .collect::<Result<Vec<_>>>()?;
       mlb_statics::BasDec::seq(binds)
     }
-    mlb_syntax::BasDec::Path(parsed_path) => {
-      let source = ErrorSource {
-        path: Some(cx.group.path.as_path().to_owned()),
-        range: cx.group.pos_db.range(parsed_path.range),
-      };
-      let path = cx
-        .group
-        .path
-        .as_path()
-        .parent()
-        .expect("path from get_path has no parent")
-        .join(parsed_path.val.as_path());
-      let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
-      let kind = match parsed_path.val.kind() {
+    mlb_syntax::BasDec::Path(pp) => {
+      let (path_id, path, source) =
+        get_path_id_in_group(st.fs, st.store, &cx.group, pp.val.as_path(), pp.range)?;
+      let kind = match pp.val.kind() {
         mlb_syntax::PathKind::Sml => {
           let contents = read_file(st.fs, source, path.as_path())?;
           st.sources.insert(path_id, contents);
