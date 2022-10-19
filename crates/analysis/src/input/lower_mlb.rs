@@ -2,8 +2,7 @@
 
 use crate::input::root_group::RootGroup;
 use crate::input::util::{
-  get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
-  StartedGroupFile,
+  get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result, StartedGroup,
 };
 use crate::input::Group;
 use fast_hash::FxHashSet;
@@ -24,21 +23,20 @@ where
     if groups.contains_key(&cur.path) {
       continue;
     }
-    let group_file = StartedGroupFile::new(st.store, cur, fs)?;
-    let syntax_dec =
-      match mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars) {
-        Ok(x) => x,
-        Err(e) => {
-          return Err(Error {
-            source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
-            path: group_file.path.as_path().to_owned(),
-            kind: ErrorKind::Mlb(e),
-          });
-        }
-      };
-    let cx = Cx { group_file, path_id: cur.path };
+    let group = StartedGroup::new(st.store, cur, fs)?;
+    let syntax_dec = match mlb_syntax::get(group.contents.as_str(), &root_group.config.path_vars) {
+      Ok(x) => x,
+      Err(e) => {
+        return Err(Error {
+          source: ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
+          path: group.path.as_path().to_owned(),
+          kind: ErrorKind::Mlb(e),
+        });
+      }
+    };
+    let cx = Cx { group, path_id: cur.path };
     let bas_dec = get_bas_dec(&mut st, &cx, syntax_dec)?;
-    groups.insert(cur.path, Group { bas_dec, pos_db: cx.group_file.pos_db });
+    groups.insert(cur.path, Group { bas_dec, pos_db: cx.group.pos_db });
   }
   Ok((st.sources, groups))
 }
@@ -51,7 +49,7 @@ struct St<'a, F> {
 }
 
 struct Cx {
-  group_file: StartedGroupFile,
+  group: StartedGroup,
   path_id: PathId,
 }
 
@@ -71,8 +69,8 @@ where
         .map(|(name, exp)| {
           if !names.insert(name.val.clone()) {
             return Err(Error {
-              source: ErrorSource { path: None, range: cx.group_file.pos_db.range(name.range) },
-              path: cx.group_file.path.as_path().to_owned(),
+              source: ErrorSource { path: None, range: cx.group.pos_db.range(name.range) },
+              path: cx.group.path.as_path().to_owned(),
               kind: ErrorKind::Duplicate(name.val),
             });
           }
@@ -96,8 +94,8 @@ where
         .map(|(lhs, rhs)| {
           if !names.insert(lhs.val.clone()) {
             return Err(Error {
-              source: ErrorSource { path: None, range: cx.group_file.pos_db.range(lhs.range) },
-              path: cx.group_file.path.as_path().to_owned(),
+              source: ErrorSource { path: None, range: cx.group.pos_db.range(lhs.range) },
+              path: cx.group.path.as_path().to_owned(),
               kind: ErrorKind::Duplicate(lhs.val),
             });
           }
@@ -114,11 +112,11 @@ where
     }
     mlb_syntax::BasDec::Path(parsed_path) => {
       let source = ErrorSource {
-        path: Some(cx.group_file.path.as_path().to_owned()),
-        range: cx.group_file.pos_db.range(parsed_path.range),
+        path: Some(cx.group.path.as_path().to_owned()),
+        range: cx.group.pos_db.range(parsed_path.range),
       };
       let path = cx
-        .group_file
+        .group
         .path
         .as_path()
         .parent()

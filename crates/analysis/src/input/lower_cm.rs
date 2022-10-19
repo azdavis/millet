@@ -2,8 +2,7 @@
 
 use crate::input::root_group::RootGroup;
 use crate::input::util::{
-  get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
-  StartedGroupFile,
+  get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result, StartedGroup,
 };
 use crate::input::Group;
 use fast_hash::FxHashSet;
@@ -96,7 +95,7 @@ where
   // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
   st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
-  let group = StartedGroupFile::new(st.store, cur, st.fs)?;
+  let group = StartedGroup::new(st.store, cur, st.fs)?;
   let parent = group.path.as_path().parent().expect("path from get_path has no parent");
   let cm = match cm_syntax::get(group.contents.as_str(), st.path_vars) {
     Ok(x) => x,
@@ -136,7 +135,7 @@ where
 
 fn get_export<F>(
   st: &mut St<'_, F>,
-  group: &StartedGroupFile,
+  group: &StartedGroup,
   parent: &std::path::Path,
   cm_paths: &[paths::PathId],
   cur_path_id: paths::PathId,

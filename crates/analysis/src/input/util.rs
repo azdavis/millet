@@ -181,13 +181,13 @@ pub(crate) struct GroupPathToProcess {
   pub(crate) path: PathId,
 }
 
-pub(crate) struct StartedGroupFile {
+pub(crate) struct StartedGroup {
   pub(crate) path: paths::CanonicalPathBuf,
   pub(crate) contents: String,
   pub(crate) pos_db: text_pos::PositionDb,
 }
 
-impl StartedGroupFile {
+impl StartedGroup {
   pub(crate) fn new<F>(store: &mut paths::Store, cur: GroupPathToProcess, fs: &F) -> Result<Self>
   where
     F: paths::FileSystem,
