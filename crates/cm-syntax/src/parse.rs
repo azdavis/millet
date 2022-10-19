@@ -79,7 +79,7 @@ fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
   Ok(ret)
 }
 
-/// if not at the beginning of an export, return Ok(None) and consume no tokens
+/// iff not at the beginning of an export, return Ok(None) and consume no tokens
 fn export(p: &mut Parser<'_>) -> Result<Option<Export>> {
   let tok = match p.cur_tok() {
     Some(x) => x,
@@ -126,11 +126,17 @@ fn name_export(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> 
   Ok(Export::Name(tok.wrap(ns), s.wrap(name)))
 }
 
-fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)> {
+/// iff not at the beginning of an export, return Ok(vec![])
+fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
   let mut exports = Vec::<Export>::new();
   while let Some(e) = export(p)? {
     exports.push(e);
   }
+  Ok(exports)
+}
+
+fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)> {
+  let es = exports(p)?;
   p.eat(Token::Is)?;
   let mut members = Vec::<Member>::new();
   loop {
@@ -160,7 +166,7 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
     };
     members.push(Member { pathname: tok.wrap(pathname), class });
   }
-  Ok((exports, members))
+  Ok((es, members))
 }
 
 fn path_or_minus(p: &mut Parser<'_>) -> Result<PathOrMinus> {
