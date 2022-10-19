@@ -63,13 +63,13 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
   let ret = match p.cur() {
     Some(Token::Group) => {
       p.bump();
-      let (exports, members) = exports_and_members(p)?;
+      let (exports, members, _) = exports_and_members(p)?;
       Root { kind: DescKind::Group, exports, members }
     }
     Some(Token::Library) => {
       p.bump();
-      let (exports, members) = exports_and_members(p)?;
-      if exports.is_empty() {
+      let (exports, members, std_basis_export) = exports_and_members(p)?;
+      if exports.is_empty() && !std_basis_export {
         return p.err(ErrorKind::EmptyExportList);
       }
       Root { kind: DescKind::Library, exports, members }
@@ -79,8 +79,9 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
   Ok(ret)
 }
 
-fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)> {
+fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, bool)> {
   let mut exports = Vec::<Export>::new();
+  let mut std_basis_export = false;
   loop {
     let tok = p.cur_tok();
     let tok = match tok {
@@ -121,8 +122,9 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
         return p.err(ErrorKind::ExpectedExport);
       }
     };
-    if let Some(export) = export {
-      exports.push(export);
+    match export {
+      Some(export) => exports.push(export),
+      None => std_basis_export = true,
     }
   }
   p.eat(Token::Is)?;
@@ -156,7 +158,7 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
       members.push(Member { pathname: tok.wrap(pathname), class });
     }
   }
-  Ok((exports, members))
+  Ok((exports, members, std_basis_export))
 }
 
 fn path_or_minus(p: &mut Parser<'_>) -> Result<Option<PathBuf>> {

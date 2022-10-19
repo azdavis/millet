@@ -183,6 +183,17 @@ version = 1
   assert!(e.to_string().contains("unknown variant `Warning`"));
 }
 
+#[test]
+fn std_basis_export() {
+  let contents = r#"
+Library
+  library($/basis.cm)
+is
+  $/basis.cm
+"#;
+  check_input([("sources.cm", contents)], None).unwrap();
+}
+
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,
