@@ -8,8 +8,14 @@ fn arbitrary_root_group() {
 }
 
 #[test]
-fn no_root_group() {
+fn no_root_group_empty() {
   let e = check_empty_cm(&[], None).unwrap_err();
+  assert!(e.to_string().contains("no root group file"));
+}
+
+#[test]
+fn no_root_group_wrong_ext() {
+  let e = check_input([("foo.txt", "hi there"), ("foo.rs", "fn main() {}")], None).unwrap_err();
   assert!(e.to_string().contains("no root group file"));
 }
 
@@ -204,6 +210,26 @@ is
 "#;
   let e = check_input([("sources.cm", contents)], None).unwrap_err();
   assert!(e.to_string().contains("expected a regular path or `-`"));
+}
+
+#[test]
+fn cm_ident() {
+  let contents = r#"
+Library
+  structure FOO_BAR_QUZ
+  signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234
+is
+"#;
+  check_input([("sources.cm", contents)], None).unwrap();
+}
+
+#[test]
+fn mlb_ident() {
+  let contents = r#"
+structure FOO_BAR_QUZ
+signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234
+"#;
+  check_input([("sources.mlb", contents)], None).unwrap();
 }
 
 fn check_empty_cm(
