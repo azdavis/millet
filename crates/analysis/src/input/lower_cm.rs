@@ -127,7 +127,7 @@ where
     }
   }
   let mut exports = BTreeMap::<NameExport, TextRange>::new();
-  get_export(st, &group, parent, &ret.cm_paths, &mut exports, cur.path, cm.export)?;
+  get_export(st, &group, parent, &ret.cm_paths, cur.path, &mut exports, cm.export)?;
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
   Ok(())
@@ -138,8 +138,8 @@ fn get_export<F>(
   group: &StartedGroupFile,
   parent: &std::path::Path,
   cm_paths: &[paths::PathId],
-  ac: &mut BTreeMap<NameExport, TextRange>,
   cur_path_id: paths::PathId,
+  ac: &mut BTreeMap<NameExport, TextRange>,
   export: cm_syntax::Export,
 ) -> Result<()>
 where
@@ -206,7 +206,7 @@ where
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
-        get_export(st, group, parent, cm_paths, ac, cur_path_id, export)?;
+        get_export(st, group, parent, cm_paths, cur_path_id, ac, export)?;
       }
     }
     cm_syntax::Export::Difference(_, op, _) | cm_syntax::Export::Intersection(_, op, _) => {
