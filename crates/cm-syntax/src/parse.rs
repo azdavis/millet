@@ -1,7 +1,7 @@
 use crate::types::{
-  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, PathOrMinus, Result, Root, Token,
+  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, PathOrMinus, PathOrStdBasis,
+  Result, Root, Token,
 };
-use std::path::PathBuf;
 use text_size_util::{TextRange, WithRange};
 
 pub(crate) fn get(
@@ -63,13 +63,13 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
   let ret = match p.cur() {
     Some(Token::Group) => {
       p.bump();
-      let (exports, members, _) = exports_and_members(p)?;
+      let (exports, members) = exports_and_members(p)?;
       Root { kind: DescKind::Group, exports, members }
     }
     Some(Token::Library) => {
       p.bump();
-      let (exports, members, std_basis_export) = exports_and_members(p)?;
-      if exports.is_empty() && !std_basis_export {
+      let (exports, members) = exports_and_members(p)?;
+      if exports.is_empty() {
         return p.err(ErrorKind::EmptyExportList);
       }
       Root { kind: DescKind::Library, exports, members }
@@ -79,9 +79,8 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
   Ok(ret)
 }
 
-fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, bool)> {
+fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)> {
   let mut exports = Vec::<Export>::new();
-  let mut std_basis_export = false;
   loop {
     let tok = p.cur_tok();
     let tok = match tok {
@@ -89,10 +88,10 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, 
       None => break,
     };
     let export = match tok.val {
-      Token::Structure => Some(name_export(p, tok, Namespace::Structure)?),
-      Token::Signature => Some(name_export(p, tok, Namespace::Signature)?),
-      Token::Functor => Some(name_export(p, tok, Namespace::Functor)?),
-      Token::FunSig => Some(name_export(p, tok, Namespace::FunSig)?),
+      Token::Structure => name_export(p, tok, Namespace::Structure)?,
+      Token::Signature => name_export(p, tok, Namespace::Signature)?,
+      Token::Functor => name_export(p, tok, Namespace::Functor)?,
+      Token::FunSig => name_export(p, tok, Namespace::FunSig)?,
       Token::Library => {
         p.bump();
         p.eat(Token::LRound)?;
@@ -100,21 +99,21 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, 
         p.bump();
         let pathname = path(p, s.val)?;
         p.eat(Token::RRound)?;
-        pathname.map(|pn| Export::Library(s.wrap(pn)))
+        Export::Library(s.wrap(pathname))
       }
       Token::Source => {
         p.bump();
         p.eat(Token::LRound)?;
         let path = source_or_group_export_arg(p)?;
         p.eat(Token::RRound)?;
-        Some(Export::Source(tok.wrap(path)))
+        Export::Source(tok.wrap(path))
       }
       Token::Group => {
         p.bump();
         p.eat(Token::LRound)?;
         let path = source_or_group_export_arg(p)?;
         p.eat(Token::RRound)?;
-        Some(Export::Group(tok.wrap(path)))
+        Export::Group(tok.wrap(path))
       }
       Token::Is => break,
       _ => {
@@ -122,10 +121,7 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, 
         return p.err(ErrorKind::ExpectedExport);
       }
     };
-    match export {
-      Some(export) => exports.push(export),
-      None => std_basis_export = true,
-    }
+    exports.push(export);
   }
   p.eat(Token::Is)?;
   let mut members = Vec::<Member>::new();
@@ -154,11 +150,9 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, 
       }
       _ => None,
     };
-    if let Some(pathname) = pathname {
-      members.push(Member { pathname: tok.wrap(pathname), class });
-    }
+    members.push(Member { pathname: tok.wrap(pathname), class });
   }
-  Ok((exports, members, std_basis_export))
+  Ok((exports, members))
 }
 
 fn source_or_group_export_arg(p: &mut Parser<'_>) -> Result<PathOrMinus> {
@@ -170,8 +164,8 @@ fn source_or_group_export_arg(p: &mut Parser<'_>) -> Result<PathOrMinus> {
     Some(Token::String(s)) => {
       p.bump();
       match path(p, s)? {
-        Some(x) => Ok(PathOrMinus::Path(x)),
-        None => p.err(ErrorKind::ExpectedPathOrMinus),
+        PathOrStdBasis::Path(x) => Ok(PathOrMinus::Path(x)),
+        PathOrStdBasis::StdBasis => p.err(ErrorKind::ExpectedPathOrMinus),
       }
     }
     _ => p.err(ErrorKind::ExpectedPathOrMinus),
@@ -186,13 +180,13 @@ fn name_export(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> 
   Ok(Export::Name(tok.wrap(ns), s.wrap(name)))
 }
 
-fn path(p: &Parser<'_>, s: &str) -> Result<Option<PathBuf>> {
+fn path(p: &Parser<'_>, s: &str) -> Result<PathOrStdBasis> {
   match paths::slash_var_path::get(s, p.env) {
-    Ok(x) => Ok(Some(x)),
+    Ok(x) => Ok(PathOrStdBasis::Path(x)),
     Err(e) => {
       if let paths::slash_var_path::Error::Undefined(var) = &e {
         if matches!(var.as_str(), "" | "SMLNJ-LIB") {
-          return Ok(None);
+          return Ok(PathOrStdBasis::StdBasis);
         }
       }
       p.err(ErrorKind::SlashVarPathError(e))

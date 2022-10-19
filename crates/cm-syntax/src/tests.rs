@@ -1,4 +1,4 @@
-use crate::types::{Export, Namespace, PathKind};
+use crate::types::{Export, Namespace, PathKind, PathOrMinus, PathOrStdBasis};
 use std::path::PathBuf;
 use str_util::Name;
 
@@ -11,8 +11,8 @@ fn check(s: &str, want_exports: &[RawExport], want_paths: &[(&str, PathKind)]) {
     .map(|x| match x {
       Export::Name(ns, n) => RawExport::Name(ns.val, n.val),
       Export::Library(p) => RawExport::Library(p.val),
-      Export::Source(_) => RawExport::Source,
-      Export::Group(_) => RawExport::Group,
+      Export::Source(p) => RawExport::Source(p.val),
+      Export::Group(p) => RawExport::Group(p.val),
     })
     .collect();
   let got_paths: Vec<_> =
@@ -21,12 +21,13 @@ fn check(s: &str, want_exports: &[RawExport], want_paths: &[(&str, PathKind)]) {
   assert_eq!(want_paths, got_paths);
 }
 
+/// Like [`Export`], but without the range info, and thus able to use `==`.
 #[derive(Debug, PartialEq, Eq)]
 enum RawExport {
   Name(Namespace, Name),
-  Library(PathBuf),
-  Source,
-  Group,
+  Library(PathOrStdBasis),
+  Source(PathOrMinus),
+  Group(PathOrMinus),
 }
 
 fn mk_name(ns: Namespace, name: &str) -> RawExport {
@@ -34,7 +35,7 @@ fn mk_name(ns: Namespace, name: &str) -> RawExport {
 }
 
 fn mk_library(name: &str) -> RawExport {
-  RawExport::Library(mk_path_buf(name))
+  RawExport::Library(PathOrStdBasis::Path(mk_path_buf(name)))
 }
 
 fn mk_path_buf(s: &str) -> PathBuf {

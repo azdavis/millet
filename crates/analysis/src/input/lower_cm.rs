@@ -98,7 +98,11 @@ where
           path: Some(group_path.to_owned()),
           range: group_file.pos_db.range(lib.range),
         };
-        let path = group_parent.join(lib.val.as_path());
+        let path = match &lib.val {
+          cm_syntax::PathOrStdBasis::Path(p) => p.as_path(),
+          cm_syntax::PathOrStdBasis::StdBasis => continue,
+        };
+        let path = group_parent.join(path);
         let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
         get(fs, store, path_vars, sources, cm_files, cur)?;

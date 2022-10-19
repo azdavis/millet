@@ -150,17 +150,26 @@ pub enum Export {
   /// A named export.
   Name(WithRange<Namespace>, WithRange<Name>),
   /// A re-export of another CM library.
-  Library(WithRange<PathBuf>),
+  Library(WithRange<PathOrStdBasis>),
   /// A source export.
   Source(WithRange<PathOrMinus>),
   /// A group export.
   Group(WithRange<PathOrMinus>),
 }
 
+/// Either a regular path or a std basis path (e.g. `$/basis.cm`).
+#[derive(Debug, PartialEq, Eq)]
+pub enum PathOrStdBasis {
+  /// A path.
+  Path(PathBuf),
+  /// A std basis path.
+  StdBasis,
+}
+
 /// The "argument" to a source or group export.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum PathOrMinus {
-  /// A pathname.
+  /// A path.
   Path(PathBuf),
   /// A minus.
   Minus,
@@ -177,16 +186,16 @@ pub enum Namespace {
 }
 
 pub(crate) struct Member {
-  pub(crate) pathname: WithRange<PathBuf>,
+  pub(crate) pathname: WithRange<PathOrStdBasis>,
   pub(crate) class: Option<WithRange<Class>>,
 }
 
 impl Member {
   pub(crate) fn class(&self) -> Option<WithRange<Class>> {
-    self
-      .class
-      .clone()
-      .or_else(|| Class::from_path(self.pathname.val.as_path()).map(|x| self.pathname.wrap(x)))
+    self.class.clone().or_else(|| match &self.pathname.val {
+      PathOrStdBasis::Path(p) => Class::from_path(p.as_path()).map(|x| self.pathname.wrap(x)),
+      PathOrStdBasis::StdBasis => None,
+    })
   }
 }
 
