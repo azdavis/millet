@@ -268,6 +268,28 @@ is
   assert!(e.to_string().contains("unsupported export kind"));
 }
 
+#[test]
+fn cm_source_file() {
+  let contents = r#"
+Library
+  source(foo.sml)
+is
+"#;
+  let e = check_input([("sources.cm", contents)], None).unwrap_err();
+  assert!(e.to_string().contains("unsupported export kind"));
+}
+
+#[test]
+fn cm_source_dash() {
+  let contents = r#"
+Library
+  source(-)
+is
+"#;
+  let e = check_input([("sources.cm", contents)], None).unwrap_err();
+  assert!(e.to_string().contains("unsupported export kind"));
+}
+
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,
