@@ -1,5 +1,4 @@
-use diagnostic_util::Code;
-use paths::FileSystem;
+use paths::FileSystem as _;
 
 fn usage() {
   let current_exe_name = std::env::current_exe()
@@ -31,7 +30,7 @@ fn run() -> usize {
   let root: String = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
-      println!("error[{}]: {}", Code::n(1997), e);
+      println!("error[{}]: {}", diagnostic_util::Code::n(1997), e);
       return 1;
     }
   };
