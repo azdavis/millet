@@ -129,11 +129,11 @@ impl Check {
     }
     m.insert(ROOT.as_path().join("sources.mlb"), mlb_file);
     let fs = paths::MemoryFileSystem::new(m);
-    let mut root = paths::Store::new();
+    let mut store = paths::Store::new();
     let input =
-      analysis::input::Input::new(&fs, &mut root, &ROOT).expect("invalid MemoryFileSystem");
+      analysis::input::Input::new(&fs, &mut store, &ROOT).expect("invalid MemoryFileSystem");
     let mut ret = Self {
-      store: root,
+      store,
       files: input
         .iter_sources()
         .map(|s| {
