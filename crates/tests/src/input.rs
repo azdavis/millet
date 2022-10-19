@@ -232,6 +232,20 @@ signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234
   check_input([("sources.mlb", contents)], None).unwrap();
 }
 
+#[test]
+fn cm_union() {
+  let contents = r#"
+Library
+  structure FOO
+  (
+    signature BAR
+    signature QUZ
+  )
+is
+"#;
+  check_input([("sources.cm", contents)], None).unwrap();
+}
+
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,

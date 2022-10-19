@@ -19,6 +19,7 @@ enum RawExport {
   Library(PathOrStdBasis),
   Source(PathOrMinus),
   Group(PathOrMinus),
+  Union(Vec<RawExport>),
 }
 
 impl From<Export> for RawExport {
@@ -28,6 +29,7 @@ impl From<Export> for RawExport {
       Export::Library(p) => RawExport::Library(p.val),
       Export::Source(p) => RawExport::Source(p.val),
       Export::Group(p) => RawExport::Group(p.val),
+      Export::Union(es) => RawExport::Union(es.into_iter().map(RawExport::from).collect()),
     }
   }
 }

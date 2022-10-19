@@ -153,6 +153,8 @@ pub enum Export {
   Source(WithRange<PathOrMinus>),
   /// A group export.
   Group(WithRange<PathOrMinus>),
+  /// A union of exports.
+  Union(Vec<Export>),
 }
 
 /// Either a regular path or a std basis path (e.g. `$/basis.cm`).

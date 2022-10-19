@@ -113,6 +113,12 @@ fn export(p: &mut Parser<'_>) -> Result<Option<Export>> {
       p.eat(Token::RRound)?;
       Export::Group(tok.wrap(path))
     }
+    Token::LRound => {
+      p.bump();
+      let es = exports(p)?;
+      p.eat(Token::RRound)?;
+      Export::Union(es)
+    }
     _ => return Ok(None),
   };
   Ok(Some(ret))

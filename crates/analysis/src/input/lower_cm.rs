@@ -203,6 +203,9 @@ where
           }
         }
       },
+      cm_syntax::Export::Union(es) => {
+        get_exports(st, es, group_file, group_parent, cur_path_id, cm_file)?;
+      }
     }
   }
   Ok(())
