@@ -79,7 +79,7 @@ fn bas_dec(p: &mut Parser<'_>) -> Result<BasDec> {
   loop {
     let bd = match bas_dec_one(p)? {
       BasDecOne::NoStartTok => break,
-      BasDecOne::Ignore => None,
+      BasDecOne::StdBasisPath => None,
       BasDecOne::Ok(bd) => Some(bd),
     };
     if p.cur() == Some(Token::Semicolon) {
@@ -95,7 +95,7 @@ fn bas_dec(p: &mut Parser<'_>) -> Result<BasDec> {
 
 enum BasDecOne {
   NoStartTok,
-  Ignore,
+  StdBasisPath,
   Ok(BasDec),
 }
 
@@ -154,7 +154,7 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
           if let paths::slash_var_path::Error::Undefined(var) = &e {
             // ignore the sml lib paths (http://mlton.org/MLBasisPathMap) since they're baked in.
             if var == "SML_LIB" {
-              return Ok(BasDecOne::Ignore);
+              return Ok(BasDecOne::StdBasisPath);
             }
           }
           return p.err(ErrorKind::SlashVarPathError(e));
