@@ -32,10 +32,10 @@ impl From<Export> for RawExport {
       Export::Source(p) => RawExport::Source(p.val),
       Export::Group(p) => RawExport::Group(p.val),
       Export::Union(es) => RawExport::Union(es.into_iter().map(RawExport::from).collect()),
-      Export::Difference(e1, _, e2) => {
+      Export::Difference(e1, e2) => {
         RawExport::Difference(Box::new(RawExport::from(*e1)), Box::new(RawExport::from(*e2)))
       }
-      Export::Intersection(e1, _, e2) => {
+      Export::Intersection(e1, e2) => {
         RawExport::Intersection(Box::new(RawExport::from(*e1)), Box::new(RawExport::from(*e2)))
       }
     }

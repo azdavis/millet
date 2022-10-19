@@ -83,7 +83,7 @@ fn export_is_empty(e: &Export) -> bool {
   match e {
     Export::Name(_, _) | Export::Library(_) | Export::Source(_) | Export::Group(_) => false,
     Export::Union(es) => es.iter().all(export_is_empty),
-    Export::Difference(e1, _, e2) | Export::Intersection(e1, _, e2) => {
+    Export::Difference(e1, e2) | Export::Intersection(e1, e2) => {
       export_is_empty(e1) && export_is_empty(e2)
     }
   }
@@ -121,7 +121,7 @@ fn export_prec(p: &mut Parser<'_>, min_prec: Prec) -> Result<Option<Export>> {
         }
         p.bump();
         let rhs = export_must(p, Prec::Minus)?;
-        ret = Export::Difference(Box::new(ret), tok.wrap(()), Box::new(rhs));
+        ret = Export::Difference(Box::new(ret), Box::new(rhs));
       }
       Token::Star => {
         if Prec::Star <= min_prec {
@@ -129,7 +129,7 @@ fn export_prec(p: &mut Parser<'_>, min_prec: Prec) -> Result<Option<Export>> {
         }
         p.bump();
         let rhs = export_must(p, Prec::Star)?;
-        ret = Export::Intersection(Box::new(ret), tok.wrap(()), Box::new(rhs));
+        ret = Export::Intersection(Box::new(ret), Box::new(rhs));
       }
       _ => break,
     }

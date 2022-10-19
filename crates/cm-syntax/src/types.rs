@@ -158,9 +158,9 @@ pub enum Export {
   /// A union of exports.
   Union(Vec<Export>),
   /// A difference of exports.
-  Difference(Box<Export>, WithRange<()>, Box<Export>),
+  Difference(Box<Export>, Box<Export>),
   /// An intersection of exports.
-  Intersection(Box<Export>, WithRange<()>, Box<Export>),
+  Intersection(Box<Export>, Box<Export>),
 }
 
 /// Either a regular path or a std basis path (e.g. `$/basis.cm`).

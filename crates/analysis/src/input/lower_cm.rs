@@ -209,7 +209,7 @@ where
         get_export(st, group, parent, cm_paths, cur_path_id, ac, export)?;
       }
     }
-    cm_syntax::Export::Difference(lhs, _, rhs) => {
+    cm_syntax::Export::Difference(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
       get_export(st, group, parent, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
@@ -218,7 +218,7 @@ where
       lhs_ac.retain(|k, _| !rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
     }
-    cm_syntax::Export::Intersection(lhs, _, rhs) => {
+    cm_syntax::Export::Intersection(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
       get_export(st, group, parent, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
