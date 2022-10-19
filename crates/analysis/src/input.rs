@@ -7,7 +7,7 @@ mod topo;
 mod util;
 
 use paths::{PathId, PathMap, WithPath};
-use util::{ErrorKind, ErrorSource, GroupPathKind, GroupPathToProcess, Result};
+use util::{ErrorKind, ErrorSource, GroupPathKind, Result};
 
 pub use util::Error;
 
@@ -35,34 +35,8 @@ impl Input {
     F: paths::FileSystem,
   {
     let root_group = root_group::RootGroup::new(fs, store, root)?;
-    let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
     let (sources, groups) = match root_group.kind {
-      GroupPathKind::Cm => {
-        let mut sources = PathMap::<String>::default();
-        let mut groups = PathMap::<Group>::default();
-        let mut cm_files = PathMap::<lower_cm::CmFile>::default();
-        lower_cm::get(fs, store, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
-        groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
-          let exports: Vec<_> = cm_file
-            .exports
-            .into_iter()
-            .map(|ex| mlb_statics::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
-            .collect();
-          let path_decs: Vec<_> = cm_file
-            .cm_paths
-            .iter()
-            .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
-            .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
-            .collect();
-          let bas_dec = mlb_statics::BasDec::Local(
-            mlb_statics::BasDec::seq(path_decs).into(),
-            mlb_statics::BasDec::seq(exports).into(),
-          );
-          let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
-          (path, group)
-        }));
-        (sources, groups)
-      }
+      GroupPathKind::Cm => lower_cm::get(fs, store, &root_group)?,
       GroupPathKind::Mlb => lower_mlb::get(fs, store, &root_group)?,
     };
     let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));

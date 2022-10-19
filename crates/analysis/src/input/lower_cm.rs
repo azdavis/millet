@@ -1,32 +1,70 @@
 //! Lower a CM file into paths and exports.
 
+use crate::input::root_group::RootGroup;
 use crate::input::util::{
   get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
   StartedGroupFile,
 };
+use crate::input::Group;
 use fast_hash::FxHashSet;
+use paths::PathMap;
+
+pub(crate) fn get<F>(
+  fs: &F,
+  store: &mut paths::Store,
+  root_group: &RootGroup,
+) -> Result<(PathMap<String>, PathMap<Group>)>
+where
+  F: paths::FileSystem,
+{
+  let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
+  let mut sources = PathMap::<String>::default();
+  let mut groups = PathMap::<Group>::default();
+  let mut cm_files = PathMap::<CmFile>::default();
+  get_one(fs, store, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
+  groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
+    let exports: Vec<_> = cm_file
+      .exports
+      .into_iter()
+      .map(|ex| mlb_statics::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
+      .collect();
+    let path_decs: Vec<_> = cm_file
+      .cm_paths
+      .iter()
+      .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
+      .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
+      .collect();
+    let bas_dec = mlb_statics::BasDec::Local(
+      mlb_statics::BasDec::seq(path_decs).into(),
+      mlb_statics::BasDec::seq(exports).into(),
+    );
+    let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
+    (path, group)
+  }));
+  Ok((sources, groups))
+}
 
 /// only derives default because we need to mark in-progress files as visited to prevent infinite
 /// recursing.
 #[derive(Debug, Default)]
-pub(crate) struct CmFile {
+struct CmFile {
   /// only optional so this can derive default.
-  pub(crate) pos_db: Option<text_pos::PositionDb>,
-  pub(crate) cm_paths: Vec<paths::PathId>,
-  pub(crate) sml_paths: FxHashSet<paths::PathId>,
-  pub(crate) exports: Vec<Export>,
+  pos_db: Option<text_pos::PositionDb>,
+  cm_paths: Vec<paths::PathId>,
+  sml_paths: FxHashSet<paths::PathId>,
+  exports: Vec<Export>,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Export {
-  pub(crate) namespace: sml_statics::basis::Namespace,
-  pub(crate) name: text_size_util::WithRange<str_util::Name>,
+struct Export {
+  namespace: sml_statics::basis::Namespace,
+  name: text_size_util::WithRange<str_util::Name>,
 }
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
 /// of a given library path on demand.
 #[allow(clippy::too_many_lines)]
-pub(crate) fn get<F>(
+fn get_one<F>(
   fs: &F,
   store: &mut paths::Store,
   path_vars: &paths::slash_var_path::Env,
@@ -71,7 +109,7 @@ where
       }
       cm_syntax::PathKind::Cm => {
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-        get(fs, store, path_vars, sources, cm_files, cur)?;
+        get_one(fs, store, path_vars, sources, cm_files, cur)?;
         ret.cm_paths.push(path_id);
       }
     }
@@ -105,7 +143,7 @@ where
         let path = group_parent.join(path);
         let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-        get(fs, store, path_vars, sources, cm_files, cur)?;
+        get_one(fs, store, path_vars, sources, cm_files, cur)?;
         let other = cm_files.get(&cur.path).expect("cm file should be set after get");
         ret.exports.extend(
           other
@@ -130,7 +168,7 @@ where
           let path = group_parent.join(p.as_path());
           let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
           let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-          get(fs, store, path_vars, sources, cm_files, cur)?;
+          get_one(fs, store, path_vars, sources, cm_files, cur)?;
           let other = cm_files.get(&cur.path).expect("cm file should be set after get");
           ret.exports.extend(other.exports.iter().cloned());
         }
