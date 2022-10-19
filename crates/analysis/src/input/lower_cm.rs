@@ -8,6 +8,8 @@ use crate::input::util::{
 use crate::input::Group;
 use fast_hash::FxHashSet;
 use paths::PathMap;
+use std::collections::BTreeMap;
+use text_size_util::{TextRange, WithRange};
 
 pub(crate) fn get<F>(
   fs: &F,
@@ -33,7 +35,10 @@ where
       let exports: Vec<_> = cm_file
         .exports
         .into_iter()
-        .map(|ex| mlb_statics::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
+        .map(|(ex, range)| {
+          let name = WithRange { val: ex.name, range };
+          mlb_statics::BasDec::Export(ex.namespace, name.clone(), name)
+        })
         .collect();
       let path_decs: Vec<_> = cm_file
         .cm_paths
@@ -68,13 +73,13 @@ struct CmFile {
   pos_db: Option<text_pos::PositionDb>,
   cm_paths: Vec<paths::PathId>,
   sml_paths: FxHashSet<paths::PathId>,
-  exports: Vec<NameExport>,
+  exports: BTreeMap<NameExport, TextRange>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct NameExport {
   namespace: sml_statics::basis::Namespace,
-  name: text_size_util::WithRange<str_util::Name>,
+  name: str_util::Name,
 }
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
@@ -121,7 +126,8 @@ where
       }
     }
   }
-  get_export(st, cm.export, &group_file, group_parent, cur.path, &mut ret)?;
+  let mut exports = BTreeMap::<NameExport, TextRange>::new();
+  get_export(st, cm.export, &group_file, group_parent, cur.path, &ret.cm_paths, &mut exports)?;
   ret.pos_db = Some(group_file.pos_db);
   st.cm_files.insert(cur.path, ret);
   Ok(())
@@ -133,7 +139,8 @@ fn get_export<F>(
   group_file: &StartedGroupFile,
   group_parent: &std::path::Path,
   cur_path_id: paths::PathId,
-  cm_file: &mut CmFile,
+  cm_paths: &[paths::PathId],
+  ac: &mut BTreeMap<NameExport, TextRange>,
 ) -> Result<()>
 where
   F: paths::FileSystem,
@@ -152,7 +159,7 @@ where
           })
         }
       };
-      cm_file.exports.push(NameExport { namespace, name });
+      ac.insert(NameExport { namespace, name: name.val }, name.range);
     }
     cm_syntax::Export::Library(lib) => {
       let source = ErrorSource {
@@ -168,12 +175,7 @@ where
       let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
       get_one(st, cur)?;
       let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-      cm_file.exports.extend(
-        other
-          .exports
-          .iter()
-          .map(|ex| NameExport { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
-      );
+      ac.extend(other.exports.keys().map(|ex| (ex.clone(), lib.range)));
     }
     cm_syntax::Export::Source(path) => {
       return Err(Error {
@@ -193,18 +195,18 @@ where
         let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
         get_one(st, cur)?;
         let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-        cm_file.exports.extend(other.exports.iter().cloned());
+        ac.extend(other.exports.iter().map(|(a, &b)| (a.clone(), b)));
       }
       cm_syntax::PathOrMinus::Minus => {
-        for path in &cm_file.cm_paths {
+        for path in cm_paths {
           let other = st.cm_files.get(path).expect("cm file should be set after get");
-          cm_file.exports.extend(other.exports.iter().cloned());
+          ac.extend(other.exports.iter().map(|(a, &b)| (a.clone(), b)));
         }
       }
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
-        get_export(st, export, group_file, group_parent, cur_path_id, cm_file)?;
+        get_export(st, export, group_file, group_parent, cur_path_id, cm_paths, ac)?;
       }
     }
     cm_syntax::Export::Difference(_, op, _) | cm_syntax::Export::Intersection(_, op, _) => {

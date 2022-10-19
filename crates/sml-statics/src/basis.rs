@@ -57,7 +57,7 @@ impl Basis {
 }
 
 /// A namespace for an export.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(missing_docs)]
 pub enum Namespace {
   Structure,
