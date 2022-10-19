@@ -1,13 +1,13 @@
 use crate::types::{
-  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, PathOrMinus, PathOrStdBasis,
-  Result, Root, Token,
+  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, ParseRoot, PathOrMinus,
+  PathOrStdBasis, Result, Token,
 };
 use text_size_util::{TextRange, WithRange};
 
 pub(crate) fn get(
   tokens: &[WithRange<Token<'_>>],
   env: &paths::slash_var_path::Env,
-) -> Result<Root> {
+) -> Result<ParseRoot> {
   let mut p = Parser { tokens, idx: 0, last_range: TextRange::default(), env };
   root(&mut p)
 }
@@ -59,12 +59,12 @@ impl<'a> Parser<'a> {
   }
 }
 
-fn root(p: &mut Parser<'_>) -> Result<Root> {
+fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
   let ret = match p.cur() {
     Some(Token::Group) => {
       p.bump();
       let (exports, members) = exports_and_members(p)?;
-      Root { kind: DescKind::Group, exports, members }
+      ParseRoot { kind: DescKind::Group, exports, members }
     }
     Some(Token::Library) => {
       p.bump();
@@ -72,7 +72,7 @@ fn root(p: &mut Parser<'_>) -> Result<Root> {
       if exports.is_empty() {
         return p.err(ErrorKind::EmptyExportList);
       }
-      Root { kind: DescKind::Library, exports, members }
+      ParseRoot { kind: DescKind::Library, exports, members }
     }
     _ => return p.err(ErrorKind::ExpectedDesc),
   };

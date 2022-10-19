@@ -1,9 +1,9 @@
 use crate::types::{
-  Class, CmFile, Error, ErrorKind, ParsedPath, PathKind, PathOrStdBasis, Result, Root,
+  Class, CmFile, Error, ErrorKind, ParseRoot, ParsedPath, PathKind, PathOrStdBasis, Result,
 };
 use text_size_util::WithRange;
 
-pub(crate) fn get(root: Root) -> Result<CmFile> {
+pub(crate) fn get(root: ParseRoot) -> Result<CmFile> {
   let mut paths = Vec::<WithRange<ParsedPath>>::new();
   for member in root.members {
     let cls = member.class();
