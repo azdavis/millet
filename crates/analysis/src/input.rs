@@ -7,7 +7,7 @@ mod topo;
 mod util;
 
 use paths::{PathId, PathMap, WithPath};
-use util::{ErrorKind, ErrorSource, GroupPathKind, GroupPathToProcess, Result, StartedGroupFile};
+use util::{ErrorKind, ErrorSource, GroupPathKind, GroupPathToProcess, Result};
 
 pub use util::Error;
 
@@ -35,11 +35,11 @@ impl Input {
     F: paths::FileSystem,
   {
     let root_group = root_group::RootGroup::new(fs, store, root)?;
-    let mut sources = PathMap::<String>::default();
-    let mut groups = PathMap::<Group>::default();
     let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
-    match root_group.kind {
+    let (sources, groups) = match root_group.kind {
       GroupPathKind::Cm => {
+        let mut sources = PathMap::<String>::default();
+        let mut groups = PathMap::<Group>::default();
         let mut cm_files = PathMap::<lower_cm::CmFile>::default();
         lower_cm::get(fs, store, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
         groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
@@ -61,44 +61,9 @@ impl Input {
           let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
           (path, group)
         }));
+        (sources, groups)
       }
-      GroupPathKind::Mlb => {
-        let mut stack = vec![init];
-        while let Some(cur) = stack.pop() {
-          if groups.contains_key(&cur.path) {
-            continue;
-          }
-          let group_file = StartedGroupFile::new(store, cur, fs)?;
-          let group_path = group_file.path.as_path();
-          let group_parent = group_path.parent().expect("path from get_path has no parent");
-          let syntax_dec =
-            match mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars) {
-              Ok(x) => x,
-              Err(e) => {
-                return Err(Error {
-                  source: ErrorSource {
-                    path: None,
-                    range: group_file.pos_db.range(e.text_range()),
-                  },
-                  path: group_path.to_owned(),
-                  kind: ErrorKind::Mlb(e),
-                });
-              }
-            };
-          let mut cx = lower_mlb::MlbCx {
-            path: group_path,
-            parent: group_parent,
-            pos_db: &group_file.pos_db,
-            fs,
-            store,
-            sources: &mut sources,
-            stack: &mut stack,
-            path_id: cur.path,
-          };
-          let bas_dec = lower_mlb::get_bas_dec(&mut cx, syntax_dec)?;
-          groups.insert(cur.path, Group { bas_dec, pos_db: group_file.pos_db });
-        }
-      }
+      GroupPathKind::Mlb => lower_mlb::get(fs, store, &root_group)?,
     };
     let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {

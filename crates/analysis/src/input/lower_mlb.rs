@@ -1,27 +1,73 @@
-//! Lower a MLB syntax `BasDec` into the HIR equivalent.
+//! Lower a MLB root group into a map of source files and parsed groups.
 
+use crate::input::root_group::RootGroup;
 use crate::input::util::{
   get_path_id, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
+  StartedGroupFile,
 };
+use crate::input::Group;
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
 use std::path::Path;
 
-pub(crate) struct MlbCx<'a, F> {
-  pub(crate) path: &'a Path,
-  pub(crate) parent: &'a Path,
-  pub(crate) pos_db: &'a text_pos::PositionDb,
-  pub(crate) fs: &'a F,
-  pub(crate) store: &'a mut paths::Store,
-  pub(crate) sources: &'a mut PathMap<String>,
-  pub(crate) stack: &'a mut Vec<GroupPathToProcess>,
-  pub(crate) path_id: PathId,
+pub(crate) fn get<F>(
+  fs: &F,
+  store: &mut paths::Store,
+  root_group: &RootGroup,
+) -> Result<(PathMap<String>, PathMap<Group>)>
+where
+  F: paths::FileSystem,
+{
+  let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
+  let mut sources = PathMap::<String>::default();
+  let mut groups = PathMap::<Group>::default();
+  let mut stack = vec![init];
+  while let Some(cur) = stack.pop() {
+    if groups.contains_key(&cur.path) {
+      continue;
+    }
+    let group_file = StartedGroupFile::new(store, cur, fs)?;
+    let group_path = group_file.path.as_path();
+    let group_parent = group_path.parent().expect("path from get_path has no parent");
+    let syntax_dec =
+      match mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars) {
+        Ok(x) => x,
+        Err(e) => {
+          return Err(Error {
+            source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
+            path: group_path.to_owned(),
+            kind: ErrorKind::Mlb(e),
+          });
+        }
+      };
+    let mut cx = MlbCx {
+      path: group_path,
+      parent: group_parent,
+      pos_db: &group_file.pos_db,
+      fs,
+      store,
+      sources: &mut sources,
+      stack: &mut stack,
+      path_id: cur.path,
+    };
+    let bas_dec = get_bas_dec(&mut cx, syntax_dec)?;
+    groups.insert(cur.path, Group { bas_dec, pos_db: group_file.pos_db });
+  }
+  Ok((sources, groups))
 }
 
-pub(crate) fn get_bas_dec<F>(
-  cx: &mut MlbCx<'_, F>,
-  dec: mlb_syntax::BasDec,
-) -> Result<mlb_statics::BasDec>
+struct MlbCx<'a, F> {
+  path: &'a Path,
+  parent: &'a Path,
+  pos_db: &'a text_pos::PositionDb,
+  fs: &'a F,
+  store: &'a mut paths::Store,
+  sources: &'a mut PathMap<String>,
+  stack: &'a mut Vec<GroupPathToProcess>,
+  path_id: PathId,
+}
+
+fn get_bas_dec<F>(cx: &mut MlbCx<'_, F>, dec: mlb_syntax::BasDec) -> Result<mlb_statics::BasDec>
 where
   F: paths::FileSystem,
 {
