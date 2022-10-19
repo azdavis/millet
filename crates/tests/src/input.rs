@@ -253,8 +253,7 @@ Library
   structure FOO * signature BAR
 is
 "#;
-  let e = check_input([("sources.cm", contents)], None).unwrap_err();
-  assert!(e.to_string().contains("unsupported export kind"));
+  check_input([("sources.cm", contents)], None).unwrap();
 }
 
 #[test]
@@ -264,8 +263,7 @@ Library
   structure FOO - signature BAR
 is
 "#;
-  let e = check_input([("sources.cm", contents)], None).unwrap_err();
-  assert!(e.to_string().contains("unsupported export kind"));
+  check_input([("sources.cm", contents)], None).unwrap();
 }
 
 #[test]

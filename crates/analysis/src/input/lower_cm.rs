@@ -211,12 +211,23 @@ where
         get_export(st, group, parent, cm_paths, cur_path_id, ac, export)?;
       }
     }
-    cm_syntax::Export::Difference(_, op, _) | cm_syntax::Export::Intersection(_, op, _) => {
-      return Err(Error {
-        source: ErrorSource { path: None, range: group.pos_db.range(op.range) },
-        path: group.path.as_path().to_owned(),
-        kind: ErrorKind::UnsupportedExport,
-      })
+    cm_syntax::Export::Difference(lhs, _, rhs) => {
+      let mut lhs_ac = NameExports::new();
+      let mut rhs_ac = NameExports::new();
+      get_export(st, group, parent, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
+      get_export(st, group, parent, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
+      // keep only those that ARE NOT in rhs.
+      lhs_ac.retain(|k, _| !rhs_ac.contains_key(k));
+      ac.extend(lhs_ac);
+    }
+    cm_syntax::Export::Intersection(lhs, _, rhs) => {
+      let mut lhs_ac = NameExports::new();
+      let mut rhs_ac = NameExports::new();
+      get_export(st, group, parent, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
+      get_export(st, group, parent, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
+      // keep only those that ARE in rhs. only 1 character of difference from the Difference case!
+      lhs_ac.retain(|k, _| rhs_ac.contains_key(k));
+      ac.extend(lhs_ac);
     }
   }
   Ok(())
