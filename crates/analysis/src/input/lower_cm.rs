@@ -175,9 +175,8 @@ where
         get_file(st, group, cur_path_id, p.as_path(), path.range, ac)?;
       }
       cm_syntax::PathOrMinus::Minus => {
-        for path_id in cm_paths {
-          let other = st.cm_files.get(path_id).expect("cm file should be set after get");
-          ac.extend(other.exports.iter().map(|(a, _)| (a.clone(), path.range)));
+        for &path_id in cm_paths {
+          extend_with_other(st, path_id, path.range, ac);
         }
       }
     },
@@ -222,7 +221,18 @@ where
   let (path_id, _, source) = get_path_id_in_group(st.fs, st.store, group, path, range)?;
   let cur = GroupPathToProcess { parent, range: source.range, path: path_id };
   get_one(st, cur)?;
-  let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-  ac.extend(other.exports.keys().map(|ex| (ex.clone(), range)));
+  extend_with_other(st, cur.path, range, ac);
   Ok(())
+}
+
+fn extend_with_other<F>(
+  st: &mut St<'_, F>,
+  path: paths::PathId,
+  range: text_size_util::TextRange,
+  ac: &mut NameExports,
+) where
+  F: paths::FileSystem,
+{
+  let other = st.cm_files.get(&path).expect("cm file should be set after get");
+  ac.extend(other.exports.keys().map(|ex| (ex.clone(), range)));
 }
