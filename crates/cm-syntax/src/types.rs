@@ -15,6 +15,7 @@ pub(crate) enum ErrorKind {
   ExpectedString,
   ExpectedDesc,
   ExpectedPathOrMinus,
+  ExpectedExport,
   UnsupportedClass(PathBuf, String),
   CouldNotDetermineClass(PathBuf),
   SlashVarPathError(paths::slash_var_path::Error),
@@ -45,6 +46,7 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedString => f.write_str("expected a string"),
       ErrorKind::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
       ErrorKind::ExpectedPathOrMinus => f.write_str("expected a regular path or `-`"),
+      ErrorKind::ExpectedExport => f.write_str("expected an export"),
       ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
       ErrorKind::CouldNotDetermineClass(p) => {
         write!(f, "{}: couldn't determine class", p.display())
@@ -155,6 +157,10 @@ pub enum Export {
   Group(WithRange<PathOrMinus>),
   /// A union of exports.
   Union(Vec<Export>),
+  /// A difference of exports.
+  Difference(Box<Export>, WithRange<()>, Box<Export>),
+  /// An intersection of exports.
+  Intersection(Box<Export>, WithRange<()>, Box<Export>),
 }
 
 /// Either a regular path or a std basis path (e.g. `$/basis.cm`).

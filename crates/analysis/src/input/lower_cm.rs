@@ -207,6 +207,13 @@ where
         get_export(st, export, group_file, group_parent, cur_path_id, cm_file)?;
       }
     }
+    cm_syntax::Export::Difference(_, op, _) | cm_syntax::Export::Intersection(_, op, _) => {
+      return Err(Error {
+        source: ErrorSource { path: None, range: group_file.pos_db.range(op.range) },
+        path: group_file.path.as_path().to_owned(),
+        kind: ErrorKind::UnsupportedExport,
+      })
+    }
   }
   Ok(())
 }

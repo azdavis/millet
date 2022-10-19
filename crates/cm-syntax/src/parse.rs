@@ -83,11 +83,62 @@ fn export_is_empty(e: &Export) -> bool {
   match e {
     Export::Name(_, _) | Export::Library(_) | Export::Source(_) | Export::Group(_) => false,
     Export::Union(es) => es.iter().all(export_is_empty),
+    Export::Difference(e1, _, e2) | Export::Intersection(e1, _, e2) => {
+      export_is_empty(e1) && export_is_empty(e2)
+    }
   }
 }
 
 /// iff not at the beginning of an export, return Ok(None) and consume no tokens
 fn export(p: &mut Parser<'_>) -> Result<Option<Export>> {
+  export_prec(p, Prec::Min)
+}
+
+fn export_must(p: &mut Parser<'_>, min_prec: Prec) -> Result<Export> {
+  match export_prec(p, min_prec)? {
+    Some(x) => Ok(x),
+    None => p.err(ErrorKind::ExpectedExport),
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Prec {
+  Min,
+  Minus,
+  Star,
+}
+
+fn export_prec(p: &mut Parser<'_>, min_prec: Prec) -> Result<Option<Export>> {
+  let mut ret = match at_export(p)? {
+    Some(x) => x,
+    None => return Ok(None),
+  };
+  while let Some(tok) = p.cur_tok() {
+    match tok.val {
+      Token::Minus => {
+        if Prec::Minus < min_prec {
+          break;
+        }
+        p.bump();
+        let rhs = export_must(p, Prec::Minus)?;
+        ret = Export::Difference(Box::new(ret), tok.wrap(()), Box::new(rhs));
+      }
+      Token::Star => {
+        if Prec::Star < min_prec {
+          break;
+        }
+        p.bump();
+        let rhs = export_must(p, Prec::Star)?;
+        ret = Export::Intersection(Box::new(ret), tok.wrap(()), Box::new(rhs));
+      }
+      _ => break,
+    }
+  }
+  Ok(Some(ret))
+}
+
+/// iff not at the beginning of an export, return Ok(None) and consume no tokens
+fn at_export(p: &mut Parser<'_>) -> Result<Option<Export>> {
   let tok = match p.cur_tok() {
     Some(x) => x,
     None => return Ok(None),

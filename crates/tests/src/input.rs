@@ -246,6 +246,28 @@ is
   check_input([("sources.cm", contents)], None).unwrap();
 }
 
+#[test]
+fn cm_intersection() {
+  let contents = r#"
+Library
+  structure FOO * signature BAR
+is
+"#;
+  let e = check_input([("sources.cm", contents)], None).unwrap_err();
+  assert!(e.to_string().contains("unsupported export kind"));
+}
+
+#[test]
+fn cm_difference() {
+  let contents = r#"
+Library
+  structure FOO - signature BAR
+is
+"#;
+  let e = check_input([("sources.cm", contents)], None).unwrap_err();
+  assert!(e.to_string().contains("unsupported export kind"));
+}
+
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,
