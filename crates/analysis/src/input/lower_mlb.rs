@@ -18,14 +18,13 @@ where
   F: paths::FileSystem,
 {
   let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
-  let mut sources = PathMap::<String>::default();
   let mut groups = PathMap::<Group>::default();
-  let mut stack = vec![init];
-  while let Some(cur) = stack.pop() {
+  let mut st = St { fs, store, sources: PathMap::<String>::default(), stack: vec![init] };
+  while let Some(cur) = st.stack.pop() {
     if groups.contains_key(&cur.path) {
       continue;
     }
-    let group_file = StartedGroupFile::new(store, cur, fs)?;
+    let group_file = StartedGroupFile::new(st.store, cur, fs)?;
     let syntax_dec =
       match mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars) {
         Ok(x) => x,
@@ -37,19 +36,18 @@ where
           });
         }
       };
-    let mut st = St { fs, store, sources: &mut sources, stack: &mut stack };
     let cx = Cx { group_file, path_id: cur.path };
     let bas_dec = get_bas_dec(&mut st, &cx, syntax_dec)?;
     groups.insert(cur.path, Group { bas_dec, pos_db: cx.group_file.pos_db });
   }
-  Ok((sources, groups))
+  Ok((st.sources, groups))
 }
 
 struct St<'a, F> {
   fs: &'a F,
   store: &'a mut paths::Store,
-  sources: &'a mut PathMap<String>,
-  stack: &'a mut Vec<GroupPathToProcess>,
+  sources: PathMap<String>,
+  stack: Vec<GroupPathToProcess>,
 }
 
 struct Cx {
