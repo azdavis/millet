@@ -73,8 +73,10 @@ struct CmFile {
   pos_db: Option<text_pos::PositionDb>,
   cm_paths: Vec<paths::PathId>,
   sml_paths: FxHashSet<paths::PathId>,
-  exports: BTreeMap<NameExport, TextRange>,
+  exports: NameExports,
 }
+
+type NameExports = BTreeMap<NameExport, TextRange>;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct NameExport {
@@ -126,7 +128,7 @@ where
       }
     }
   }
-  let mut exports = BTreeMap::<NameExport, TextRange>::new();
+  let mut exports = NameExports::new();
   get_export(st, &group, parent, &ret.cm_paths, cur.path, &mut exports, cm.export)?;
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
@@ -139,7 +141,7 @@ fn get_export<F>(
   parent: &std::path::Path,
   cm_paths: &[paths::PathId],
   cur_path_id: paths::PathId,
-  ac: &mut BTreeMap<NameExport, TextRange>,
+  ac: &mut NameExports,
   export: cm_syntax::Export,
 ) -> Result<()>
 where
