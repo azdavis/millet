@@ -162,13 +162,13 @@ where
       ac.insert(NameExport { namespace, name: name.val }, name.range);
     }
     cm_syntax::Export::Library(lib) => {
-      let source = ErrorSource {
-        path: Some(group.path.as_path().to_owned()),
-        range: group.pos_db.range(lib.range),
-      };
       let path = match &lib.val {
         cm_syntax::PathOrStdBasis::Path(p) => p.as_path(),
         cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
+      };
+      let source = ErrorSource {
+        path: Some(group.path.as_path().to_owned()),
+        range: group.pos_db.range(lib.range),
       };
       let path = parent.join(path);
       let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
