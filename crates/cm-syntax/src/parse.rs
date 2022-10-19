@@ -116,7 +116,7 @@ fn export_prec(p: &mut Parser<'_>, min_prec: Prec) -> Result<Option<Export>> {
   while let Some(tok) = p.cur_tok() {
     match tok.val {
       Token::Minus => {
-        if Prec::Minus < min_prec {
+        if Prec::Minus <= min_prec {
           break;
         }
         p.bump();
@@ -124,7 +124,7 @@ fn export_prec(p: &mut Parser<'_>, min_prec: Prec) -> Result<Option<Export>> {
         ret = Export::Difference(Box::new(ret), tok.wrap(()), Box::new(rhs));
       }
       Token::Star => {
-        if Prec::Star < min_prec {
+        if Prec::Star <= min_prec {
           break;
         }
         p.bump();
