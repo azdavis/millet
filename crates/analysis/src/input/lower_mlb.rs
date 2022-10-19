@@ -8,7 +8,6 @@ use crate::input::util::{
 use crate::input::Group;
 use fast_hash::FxHashSet;
 use paths::{PathId, PathMap};
-use std::path::Path;
 
 pub(crate) fn get<F>(
   fs: &F,
@@ -27,23 +26,19 @@ where
       continue;
     }
     let group_file = StartedGroupFile::new(store, cur, fs)?;
-    let group_path = group_file.path.as_path();
-    let group_parent = group_path.parent().expect("path from get_path has no parent");
     let syntax_dec =
       match mlb_syntax::get(group_file.contents.as_str(), &root_group.config.path_vars) {
         Ok(x) => x,
         Err(e) => {
           return Err(Error {
             source: ErrorSource { path: None, range: group_file.pos_db.range(e.text_range()) },
-            path: group_path.to_owned(),
+            path: group_file.path.as_path().to_owned(),
             kind: ErrorKind::Mlb(e),
           });
         }
       };
     let mut cx = MlbCx {
-      path: group_path,
-      parent: group_parent,
-      pos_db: &group_file.pos_db,
+      group_file: &group_file,
       fs,
       store,
       sources: &mut sources,
@@ -57,9 +52,7 @@ where
 }
 
 struct MlbCx<'a, F> {
-  path: &'a Path,
-  parent: &'a Path,
-  pos_db: &'a text_pos::PositionDb,
+  group_file: &'a StartedGroupFile,
   fs: &'a F,
   store: &'a mut paths::Store,
   sources: &'a mut PathMap<String>,
@@ -79,8 +72,8 @@ where
         .map(|(name, exp)| {
           if !names.insert(name.val.clone()) {
             return Err(Error {
-              source: ErrorSource { path: None, range: cx.pos_db.range(name.range) },
-              path: cx.path.to_owned(),
+              source: ErrorSource { path: None, range: cx.group_file.pos_db.range(name.range) },
+              path: cx.group_file.path.as_path().to_owned(),
               kind: ErrorKind::Duplicate(name.val),
             });
           }
@@ -104,8 +97,8 @@ where
         .map(|(lhs, rhs)| {
           if !names.insert(lhs.val.clone()) {
             return Err(Error {
-              source: ErrorSource { path: None, range: cx.pos_db.range(lhs.range) },
-              path: cx.path.to_owned(),
+              source: ErrorSource { path: None, range: cx.group_file.pos_db.range(lhs.range) },
+              path: cx.group_file.path.as_path().to_owned(),
               kind: ErrorKind::Duplicate(lhs.val),
             });
           }
@@ -121,9 +114,17 @@ where
       mlb_statics::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(parsed_path) => {
-      let source =
-        ErrorSource { path: Some(cx.path.to_owned()), range: cx.pos_db.range(parsed_path.range) };
-      let path = cx.parent.join(parsed_path.val.as_path());
+      let source = ErrorSource {
+        path: Some(cx.group_file.path.as_path().to_owned()),
+        range: cx.group_file.pos_db.range(parsed_path.range),
+      };
+      let path = cx
+        .group_file
+        .path
+        .as_path()
+        .parent()
+        .expect("path from get_path has no parent")
+        .join(parsed_path.val.as_path());
       let path_id = get_path_id(cx.fs, cx.store, source.clone(), path.as_path())?;
       let kind = match parsed_path.val.kind() {
         mlb_syntax::PathKind::Sml => {
