@@ -141,11 +141,11 @@ fn name_export(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> 
 
 /// iff not at the beginning of an export, return Ok(vec![])
 fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
-  let mut exports = Vec::<Export>::new();
+  let mut ret = Vec::<Export>::new();
   while let Some(e) = export(p)? {
-    exports.push(e);
+    ret.push(e);
   }
-  Ok(exports)
+  Ok(ret)
 }
 
 fn exports_and_members(p: &mut Parser<'_>) -> Result<(Export, Vec<Member>)> {
