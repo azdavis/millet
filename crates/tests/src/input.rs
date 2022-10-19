@@ -2,6 +2,31 @@
 
 use crate::check::ROOT;
 
+fn check_empty_cm(
+  names: &[&str],
+  config: Option<&str>,
+) -> Result<analysis::input::Input, analysis::input::Error> {
+  check_input(names.iter().map(|&x| (x, "Group is")), config)
+}
+
+fn check_input<'a, I>(
+  groups: I,
+  config: Option<&str>,
+) -> Result<analysis::input::Input, analysis::input::Error>
+where
+  I: IntoIterator<Item = (&'a str, &'a str)>,
+{
+  let fs = paths::MemoryFileSystem::new(
+    groups
+      .into_iter()
+      .map(|(name, contents)| (ROOT.as_path().join(name), contents.to_owned()))
+      .chain(config.map(|x| (ROOT.as_path().join(config::FILE_NAME), x.to_owned())))
+      .collect(),
+  );
+  let mut store = paths::Store::new();
+  analysis::input::Input::new(&fs, &mut store, &ROOT)
+}
+
 #[test]
 fn arbitrary_root_group() {
   check_empty_cm(&["foo.cm"], None).unwrap();
@@ -286,29 +311,4 @@ is
 "#;
   let e = check_input([("sources.cm", contents)], None).unwrap_err();
   assert!(e.to_string().contains("unsupported export kind"));
-}
-
-fn check_empty_cm(
-  names: &[&str],
-  config: Option<&str>,
-) -> Result<analysis::input::Input, analysis::input::Error> {
-  check_input(names.iter().map(|&x| (x, "Group is")), config)
-}
-
-fn check_input<'a, I>(
-  groups: I,
-  config: Option<&str>,
-) -> Result<analysis::input::Input, analysis::input::Error>
-where
-  I: IntoIterator<Item = (&'a str, &'a str)>,
-{
-  let fs = paths::MemoryFileSystem::new(
-    groups
-      .into_iter()
-      .map(|(name, contents)| (ROOT.as_path().join(name), contents.to_owned()))
-      .chain(config.map(|x| (ROOT.as_path().join(config::FILE_NAME), x.to_owned())))
-      .collect(),
-  );
-  let mut store = paths::Store::new();
-  analysis::input::Input::new(&fs, &mut store, &ROOT)
 }
