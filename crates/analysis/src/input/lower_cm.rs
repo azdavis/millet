@@ -118,7 +118,7 @@ where
         })
       }
       cm_syntax::Export::Group(path) => match path.val {
-        Some(p) => {
+        cm_syntax::PathOrMinus::Path(p) => {
           let source = ErrorSource {
             path: Some(group_path.to_owned()),
             range: group_file.pos_db.range(path.range),
@@ -130,7 +130,7 @@ where
           let other = cm_files.get(&cur.path).expect("cm file should be set after get");
           ret.exports.extend(other.exports.iter().cloned());
         }
-        None => {
+        cm_syntax::PathOrMinus::Minus => {
           for path in &ret.cm_paths {
             let other = cm_files.get(path).expect("cm file should be set after get");
             ret.exports.extend(other.exports.iter().cloned());

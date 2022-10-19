@@ -1,5 +1,5 @@
 use crate::types::{
-  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, Result, Root, Token,
+  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, PathOrMinus, Result, Root, Token,
 };
 use std::path::PathBuf;
 use text_size_util::{TextRange, WithRange};
@@ -105,14 +105,14 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, 
       Token::Source => {
         p.bump();
         p.eat(Token::LRound)?;
-        let path = path_or_minus(p)?;
+        let path = source_or_group_export_arg(p)?;
         p.eat(Token::RRound)?;
         Some(Export::Source(tok.wrap(path)))
       }
       Token::Group => {
         p.bump();
         p.eat(Token::LRound)?;
-        let path = path_or_minus(p)?;
+        let path = source_or_group_export_arg(p)?;
         p.eat(Token::RRound)?;
         Some(Export::Group(tok.wrap(path)))
       }
@@ -161,15 +161,18 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>, 
   Ok((exports, members, std_basis_export))
 }
 
-fn path_or_minus(p: &mut Parser<'_>) -> Result<Option<PathBuf>> {
+fn source_or_group_export_arg(p: &mut Parser<'_>) -> Result<PathOrMinus> {
   match p.cur() {
     Some(Token::Minus) => {
       p.bump();
-      Ok(None)
+      Ok(PathOrMinus::Minus)
     }
     Some(Token::String(s)) => {
       p.bump();
-      path(p, s)
+      match path(p, s)? {
+        Some(x) => Ok(PathOrMinus::Path(x)),
+        None => p.err(ErrorKind::ExpectedPathOrMinus),
+      }
     }
     _ => p.err(ErrorKind::ExpectedPathOrMinus),
   }

@@ -46,7 +46,7 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedString => f.write_str("expected a string"),
       ErrorKind::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
       ErrorKind::ExpectedExport => f.write_str("expected an export"),
-      ErrorKind::ExpectedPathOrMinus => f.write_str("expected a path or `-`"),
+      ErrorKind::ExpectedPathOrMinus => f.write_str("expected a regular path or `-`"),
       ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
       ErrorKind::CouldNotDetermineClass(p) => {
         write!(f, "{}: couldn't determine class", p.display())
@@ -152,9 +152,18 @@ pub enum Export {
   /// A re-export of another CM library.
   Library(WithRange<PathBuf>),
   /// A source export.
-  Source(WithRange<Option<PathBuf>>),
+  Source(WithRange<PathOrMinus>),
   /// A group export.
-  Group(WithRange<Option<PathBuf>>),
+  Group(WithRange<PathOrMinus>),
+}
+
+/// The "argument" to a source or group export.
+#[derive(Debug)]
+pub enum PathOrMinus {
+  /// A pathname.
+  Path(PathBuf),
+  /// A minus.
+  Minus,
 }
 
 /// A namespace, like `structure` in `structure S`.

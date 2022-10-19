@@ -194,6 +194,18 @@ is
   check_input([("sources.cm", contents)], None).unwrap();
 }
 
+#[test]
+fn std_basis_group() {
+  let contents = r#"
+Library
+  group($/basis.cm)
+is
+  $/basis.cm
+"#;
+  let e = check_input([("sources.cm", contents)], None).unwrap_err();
+  assert!(e.to_string().contains("expected a regular path or `-`"));
+}
+
 fn check_empty_cm(
   names: &[&str],
   config: Option<&str>,
