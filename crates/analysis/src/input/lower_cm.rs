@@ -68,11 +68,11 @@ struct CmFile {
   pos_db: Option<text_pos::PositionDb>,
   cm_paths: Vec<paths::PathId>,
   sml_paths: FxHashSet<paths::PathId>,
-  exports: Vec<Export>,
+  exports: Vec<NameExport>,
 }
 
 #[derive(Debug, Clone)]
-struct Export {
+struct NameExport {
   namespace: sml_statics::basis::Namespace,
   name: text_size_util::WithRange<str_util::Name>,
 }
@@ -153,7 +153,7 @@ where
             })
           }
         };
-        cm_file.exports.push(Export { namespace, name });
+        cm_file.exports.push(NameExport { namespace, name });
       }
       cm_syntax::Export::Library(lib) => {
         let source = ErrorSource {
@@ -173,7 +173,7 @@ where
           other
             .exports
             .iter()
-            .map(|ex| Export { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
+            .map(|ex| NameExport { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
         );
       }
       cm_syntax::Export::Source(path) => {
