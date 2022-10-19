@@ -1,9 +1,8 @@
-use fast_hash::FxHashMap;
-
 use crate::error::ErrorKind;
 use crate::st::St;
 use crate::types::{meta_vars, MetaTyVar, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
+use fast_hash::FxHashMap;
 
 pub(crate) fn unify(st: &mut St, want: Ty, got: Ty, idx: sml_hir::Idx) {
   match unify_no_emit(st, want, got) {
