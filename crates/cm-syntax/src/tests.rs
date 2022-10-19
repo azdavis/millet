@@ -5,16 +5,7 @@ use str_util::Name;
 fn check(s: &str, want_exports: &[RawExport], want_paths: &[(&str, PathKind)]) {
   let file = crate::get(s, &paths::slash_var_path::Env::default()).unwrap();
   let want_paths: Vec<_> = want_paths.iter().map(|&(s, kind)| (mk_path_buf(s), kind)).collect();
-  let got_exports: Vec<_> = file
-    .exports
-    .into_iter()
-    .map(|x| match x {
-      Export::Name(ns, n) => RawExport::Name(ns.val, n.val),
-      Export::Library(p) => RawExport::Library(p.val),
-      Export::Source(p) => RawExport::Source(p.val),
-      Export::Group(p) => RawExport::Group(p.val),
-    })
-    .collect();
+  let got_exports: Vec<_> = file.exports.into_iter().map(RawExport::from).collect();
   let got_paths: Vec<_> =
     file.paths.into_iter().map(|path| (path.val.path, path.val.kind)).collect();
   assert_eq!(want_exports, got_exports);
@@ -28,6 +19,17 @@ enum RawExport {
   Library(PathOrStdBasis),
   Source(PathOrMinus),
   Group(PathOrMinus),
+}
+
+impl From<Export> for RawExport {
+  fn from(e: Export) -> Self {
+    match e {
+      Export::Name(ns, n) => RawExport::Name(ns.val, n.val),
+      Export::Library(p) => RawExport::Library(p.val),
+      Export::Source(p) => RawExport::Source(p.val),
+      Export::Group(p) => RawExport::Group(p.val),
+    }
+  }
 }
 
 fn mk_name(ns: Namespace, name: &str) -> RawExport {
