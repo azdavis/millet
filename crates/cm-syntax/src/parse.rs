@@ -104,14 +104,14 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
       Token::Source => {
         p.bump();
         p.eat(Token::LRound)?;
-        let path = source_or_group_export_arg(p)?;
+        let path = path_or_minus(p)?;
         p.eat(Token::RRound)?;
         Export::Source(tok.wrap(path))
       }
       Token::Group => {
         p.bump();
         p.eat(Token::LRound)?;
-        let path = source_or_group_export_arg(p)?;
+        let path = path_or_minus(p)?;
         p.eat(Token::RRound)?;
         Export::Group(tok.wrap(path))
       }
@@ -155,7 +155,7 @@ fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)>
   Ok((exports, members))
 }
 
-fn source_or_group_export_arg(p: &mut Parser<'_>) -> Result<PathOrMinus> {
+fn path_or_minus(p: &mut Parser<'_>) -> Result<PathOrMinus> {
   match p.cur() {
     Some(Token::Minus) => {
       p.bump();
