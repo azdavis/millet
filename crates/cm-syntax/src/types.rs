@@ -147,8 +147,8 @@ pub(crate) enum DescKind {
 /// An export, like `structure S`.
 #[derive(Debug)]
 pub enum Export {
-  /// A 'regular' export.
-  Regular(WithRange<Namespace>, WithRange<Name>),
+  /// A named export.
+  Name(WithRange<Namespace>, WithRange<Name>),
   /// A re-export of another CM library.
   Library(WithRange<PathBuf>),
   /// A source export.

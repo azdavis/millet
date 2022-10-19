@@ -78,7 +78,7 @@ where
   }
   for export in cm.exports {
     match export {
-      cm_syntax::Export::Regular(ns, name) => {
+      cm_syntax::Export::Name(ns, name) => {
         let namespace = match ns.val {
           cm_syntax::Namespace::Structure => sml_statics::basis::Namespace::Structure,
           cm_syntax::Namespace::Signature => sml_statics::basis::Namespace::Signature,

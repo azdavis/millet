@@ -9,7 +9,7 @@ fn check(s: &str, want_exports: &[RawExport], want_paths: &[(&str, PathKind)]) {
     .exports
     .into_iter()
     .map(|x| match x {
-      Export::Regular(ns, n) => RawExport::Regular(ns.val, n.val),
+      Export::Name(ns, n) => RawExport::Name(ns.val, n.val),
       Export::Library(p) => RawExport::Library(p.val),
       Export::Source(_) => RawExport::Source,
       Export::Group(_) => RawExport::Group,
@@ -23,14 +23,14 @@ fn check(s: &str, want_exports: &[RawExport], want_paths: &[(&str, PathKind)]) {
 
 #[derive(Debug, PartialEq, Eq)]
 enum RawExport {
-  Regular(Namespace, Name),
+  Name(Namespace, Name),
   Library(PathBuf),
   Source,
   Group,
 }
 
-fn mk_regular(ns: Namespace, name: &str) -> RawExport {
-  RawExport::Regular(ns, Name::new(name))
+fn mk_name(ns: Namespace, name: &str) -> RawExport {
+  RawExport::Name(ns, Name::new(name))
 }
 
 fn mk_library(name: &str) -> RawExport {
@@ -75,9 +75,9 @@ is
   uh:sml
 "#,
     &[
-      mk_regular(Namespace::Structure, "A"),
-      mk_regular(Namespace::Functor, "B"),
-      mk_regular(Namespace::Signature, "C"),
+      mk_name(Namespace::Structure, "A"),
+      mk_name(Namespace::Functor, "B"),
+      mk_name(Namespace::Signature, "C"),
     ],
     &[
       ("a.sml", PathKind::Sml),
@@ -104,9 +104,9 @@ is
   quz/baz.cm
 "#,
     &[
-      mk_regular(Namespace::Structure, "Foo"),
+      mk_name(Namespace::Structure, "Foo"),
       mk_library("quz/baz.cm"),
-      mk_regular(Namespace::Signature, "BAR"),
+      mk_name(Namespace::Signature, "BAR"),
     ],
     &[("Foo.sml", PathKind::Sml), ("Bar/sources.cm", PathKind::Cm), ("quz/baz.cm", PathKind::Cm)],
   );

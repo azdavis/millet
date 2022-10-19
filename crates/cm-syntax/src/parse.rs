@@ -183,7 +183,7 @@ fn name_export(p: &mut Parser<'_>, tok: WithRange<Token<'_>>, ns: Namespace) -> 
   let s = p.string()?;
   let name = str_util::Name::new(s.val);
   p.bump();
-  Ok(Export::Regular(tok.wrap(ns), s.wrap(name)))
+  Ok(Export::Name(tok.wrap(ns), s.wrap(name)))
 }
 
 fn path(p: &Parser<'_>, s: &str) -> Result<Option<PathBuf>> {
