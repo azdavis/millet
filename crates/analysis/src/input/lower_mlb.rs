@@ -18,8 +18,8 @@ where
   F: paths::FileSystem,
 {
   let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
-  let mut groups = PathMap::<Group>::default();
   let mut st = St { fs, store, sources: PathMap::<String>::default(), stack: vec![init] };
+  let mut groups = PathMap::<Group>::default();
   while let Some(cur) = st.stack.pop() {
     if groups.contains_key(&cur.path) {
       continue;

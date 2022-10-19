@@ -17,31 +17,47 @@ pub(crate) fn get<F>(
 where
   F: paths::FileSystem,
 {
+  let mut st = St {
+    fs,
+    store,
+    path_vars: &root_group.config.path_vars,
+    sources: PathMap::<String>::default(),
+    cm_files: PathMap::<CmFile>::default(),
+  };
   let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
-  let mut sources = PathMap::<String>::default();
-  let mut groups = PathMap::<Group>::default();
-  let mut cm_files = PathMap::<CmFile>::default();
-  get_one(fs, store, &root_group.config.path_vars, &mut sources, &mut cm_files, init)?;
-  groups.extend(cm_files.into_iter().map(|(path, cm_file)| {
-    let exports: Vec<_> = cm_file
-      .exports
-      .into_iter()
-      .map(|ex| mlb_statics::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
-      .collect();
-    let path_decs: Vec<_> = cm_file
-      .cm_paths
-      .iter()
-      .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
-      .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
-      .collect();
-    let bas_dec = mlb_statics::BasDec::Local(
-      mlb_statics::BasDec::seq(path_decs).into(),
-      mlb_statics::BasDec::seq(exports).into(),
-    );
-    let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
-    (path, group)
-  }));
-  Ok((sources, groups))
+  get_one(&mut st, init)?;
+  let groups: PathMap<_> = st
+    .cm_files
+    .into_iter()
+    .map(|(path, cm_file)| {
+      let exports: Vec<_> = cm_file
+        .exports
+        .into_iter()
+        .map(|ex| mlb_statics::BasDec::Export(ex.namespace, ex.name.clone(), ex.name))
+        .collect();
+      let path_decs: Vec<_> = cm_file
+        .cm_paths
+        .iter()
+        .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
+        .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
+        .collect();
+      let bas_dec = mlb_statics::BasDec::Local(
+        mlb_statics::BasDec::seq(path_decs).into(),
+        mlb_statics::BasDec::seq(exports).into(),
+      );
+      let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
+      (path, group)
+    })
+    .collect();
+  Ok((st.sources, groups))
+}
+
+struct St<'a, F> {
+  fs: &'a F,
+  store: &'a mut paths::Store,
+  path_vars: &'a paths::slash_var_path::Env,
+  sources: PathMap<String>,
+  cm_files: PathMap<CmFile>,
 }
 
 /// only derives default because we need to mark in-progress files as visited to prevent infinite
@@ -64,27 +80,20 @@ struct Export {
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
 /// of a given library path on demand.
 #[allow(clippy::too_many_lines)]
-fn get_one<F>(
-  fs: &F,
-  store: &mut paths::Store,
-  path_vars: &paths::slash_var_path::Env,
-  sources: &mut paths::PathMap<String>,
-  cm_files: &mut paths::PathMap<CmFile>,
-  cur: GroupPathToProcess,
-) -> Result<()>
+fn get_one<F>(st: &mut St<'_, F>, cur: GroupPathToProcess) -> Result<()>
 where
   F: paths::FileSystem,
 {
-  if cm_files.contains_key(&cur.path) {
+  if st.cm_files.contains_key(&cur.path) {
     return Ok(());
   }
   // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
-  cm_files.insert(cur.path, CmFile::default());
+  st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
-  let group_file = StartedGroupFile::new(store, cur, fs)?;
+  let group_file = StartedGroupFile::new(st.store, cur, st.fs)?;
   let group_path = group_file.path.as_path();
   let group_parent = group_path.parent().expect("path from get_path has no parent");
-  let cm = match cm_syntax::get(group_file.contents.as_str(), path_vars) {
+  let cm = match cm_syntax::get(group_file.contents.as_str(), st.path_vars) {
     Ok(x) => x,
     Err(e) => {
       return Err(Error {
@@ -100,16 +109,16 @@ where
       range: group_file.pos_db.range(parsed_path.range),
     };
     let path = group_parent.join(parsed_path.val.as_path());
-    let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
+    let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
     match parsed_path.val.kind() {
       cm_syntax::PathKind::Sml => {
-        let contents = read_file(fs, source, path.as_path())?;
-        sources.insert(path_id, contents);
+        let contents = read_file(st.fs, source, path.as_path())?;
+        st.sources.insert(path_id, contents);
         ret.sml_paths.insert(path_id);
       }
       cm_syntax::PathKind::Cm => {
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-        get_one(fs, store, path_vars, sources, cm_files, cur)?;
+        get_one(st, cur)?;
         ret.cm_paths.push(path_id);
       }
     }
@@ -141,10 +150,10 @@ where
           cm_syntax::PathOrStdBasis::StdBasis => continue,
         };
         let path = group_parent.join(path);
-        let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
+        let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-        get_one(fs, store, path_vars, sources, cm_files, cur)?;
-        let other = cm_files.get(&cur.path).expect("cm file should be set after get");
+        get_one(st, cur)?;
+        let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
         ret.exports.extend(
           other
             .exports
@@ -166,15 +175,15 @@ where
             range: group_file.pos_db.range(path.range),
           };
           let path = group_parent.join(p.as_path());
-          let path_id = get_path_id(fs, store, source.clone(), path.as_path())?;
+          let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
           let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-          get_one(fs, store, path_vars, sources, cm_files, cur)?;
-          let other = cm_files.get(&cur.path).expect("cm file should be set after get");
+          get_one(st, cur)?;
+          let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
           ret.exports.extend(other.exports.iter().cloned());
         }
         cm_syntax::PathOrMinus::Minus => {
           for path in &ret.cm_paths {
-            let other = cm_files.get(path).expect("cm file should be set after get");
+            let other = st.cm_files.get(path).expect("cm file should be set after get");
             ret.exports.extend(other.exports.iter().cloned());
           }
         }
@@ -182,6 +191,6 @@ where
     }
   }
   ret.pos_db = Some(group_file.pos_db);
-  cm_files.insert(cur.path, ret);
+  st.cm_files.insert(cur.path, ret);
   Ok(())
 }
