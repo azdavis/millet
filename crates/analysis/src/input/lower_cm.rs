@@ -121,15 +121,15 @@ where
       }
     }
   }
-  get_exports(st, cm.exports, &group_file, group_parent, cur.path, &mut ret)?;
+  get_export(st, cm.export, &group_file, group_parent, cur.path, &mut ret)?;
   ret.pos_db = Some(group_file.pos_db);
   st.cm_files.insert(cur.path, ret);
   Ok(())
 }
 
-fn get_exports<F>(
+fn get_export<F>(
   st: &mut St<'_, F>,
-  exports: Vec<cm_syntax::Export>,
+  export: cm_syntax::Export,
   group_file: &StartedGroupFile,
   group_parent: &std::path::Path,
   cur_path_id: paths::PathId,
@@ -138,73 +138,73 @@ fn get_exports<F>(
 where
   F: paths::FileSystem,
 {
-  for export in exports {
-    match export {
-      cm_syntax::Export::Name(ns, name) => {
-        let namespace = match ns.val {
-          cm_syntax::Namespace::Structure => sml_statics::basis::Namespace::Structure,
-          cm_syntax::Namespace::Signature => sml_statics::basis::Namespace::Signature,
-          cm_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
-          cm_syntax::Namespace::FunSig => {
-            return Err(Error {
-              source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },
-              path: group_file.path.as_path().to_owned(),
-              kind: ErrorKind::UnsupportedExport,
-            })
-          }
-        };
-        cm_file.exports.push(NameExport { namespace, name });
-      }
-      cm_syntax::Export::Library(lib) => {
+  match export {
+    cm_syntax::Export::Name(ns, name) => {
+      let namespace = match ns.val {
+        cm_syntax::Namespace::Structure => sml_statics::basis::Namespace::Structure,
+        cm_syntax::Namespace::Signature => sml_statics::basis::Namespace::Signature,
+        cm_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
+        cm_syntax::Namespace::FunSig => {
+          return Err(Error {
+            source: ErrorSource { path: None, range: group_file.pos_db.range(ns.range) },
+            path: group_file.path.as_path().to_owned(),
+            kind: ErrorKind::UnsupportedExport,
+          })
+        }
+      };
+      cm_file.exports.push(NameExport { namespace, name });
+    }
+    cm_syntax::Export::Library(lib) => {
+      let source = ErrorSource {
+        path: Some(group_file.path.as_path().to_owned()),
+        range: group_file.pos_db.range(lib.range),
+      };
+      let path = match &lib.val {
+        cm_syntax::PathOrStdBasis::Path(p) => p.as_path(),
+        cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
+      };
+      let path = group_parent.join(path);
+      let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
+      let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
+      get_one(st, cur)?;
+      let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
+      cm_file.exports.extend(
+        other
+          .exports
+          .iter()
+          .map(|ex| NameExport { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
+      );
+    }
+    cm_syntax::Export::Source(path) => {
+      return Err(Error {
+        source: ErrorSource { path: None, range: group_file.pos_db.range(path.range) },
+        path: group_file.path.as_path().to_owned(),
+        kind: ErrorKind::UnsupportedExport,
+      })
+    }
+    cm_syntax::Export::Group(path) => match path.val {
+      cm_syntax::PathOrMinus::Path(p) => {
         let source = ErrorSource {
           path: Some(group_file.path.as_path().to_owned()),
-          range: group_file.pos_db.range(lib.range),
+          range: group_file.pos_db.range(path.range),
         };
-        let path = match &lib.val {
-          cm_syntax::PathOrStdBasis::Path(p) => p.as_path(),
-          cm_syntax::PathOrStdBasis::StdBasis => continue,
-        };
-        let path = group_parent.join(path);
+        let path = group_parent.join(p.as_path());
         let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
         let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
         get_one(st, cur)?;
         let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
-        cm_file.exports.extend(
-          other
-            .exports
-            .iter()
-            .map(|ex| NameExport { namespace: ex.namespace, name: lib.wrap(ex.name.val.clone()) }),
-        );
+        cm_file.exports.extend(other.exports.iter().cloned());
       }
-      cm_syntax::Export::Source(path) => {
-        return Err(Error {
-          source: ErrorSource { path: None, range: group_file.pos_db.range(path.range) },
-          path: group_file.path.as_path().to_owned(),
-          kind: ErrorKind::UnsupportedExport,
-        })
-      }
-      cm_syntax::Export::Group(path) => match path.val {
-        cm_syntax::PathOrMinus::Path(p) => {
-          let source = ErrorSource {
-            path: Some(group_file.path.as_path().to_owned()),
-            range: group_file.pos_db.range(path.range),
-          };
-          let path = group_parent.join(p.as_path());
-          let path_id = get_path_id(st.fs, st.store, source.clone(), path.as_path())?;
-          let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
-          get_one(st, cur)?;
-          let other = st.cm_files.get(&cur.path).expect("cm file should be set after get");
+      cm_syntax::PathOrMinus::Minus => {
+        for path in &cm_file.cm_paths {
+          let other = st.cm_files.get(path).expect("cm file should be set after get");
           cm_file.exports.extend(other.exports.iter().cloned());
         }
-        cm_syntax::PathOrMinus::Minus => {
-          for path in &cm_file.cm_paths {
-            let other = st.cm_files.get(path).expect("cm file should be set after get");
-            cm_file.exports.extend(other.exports.iter().cloned());
-          }
-        }
-      },
-      cm_syntax::Export::Union(es) => {
-        get_exports(st, es, group_file, group_parent, cur_path_id, cm_file)?;
+      }
+    },
+    cm_syntax::Export::Union(exports) => {
+      for export in exports {
+        get_export(st, export, group_file, group_parent, cur_path_id, cm_file)?;
       }
     }
   }

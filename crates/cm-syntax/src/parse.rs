@@ -63,20 +63,27 @@ fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
   let ret = match p.cur() {
     Some(Token::Group) => {
       p.bump();
-      let (exports, members) = exports_and_members(p)?;
-      ParseRoot { kind: DescKind::Group, exports, members }
+      let (export, members) = exports_and_members(p)?;
+      ParseRoot { kind: DescKind::Group, export, members }
     }
     Some(Token::Library) => {
       p.bump();
-      let (exports, members) = exports_and_members(p)?;
-      if exports.is_empty() {
+      let (export, members) = exports_and_members(p)?;
+      if export_is_empty(&export) {
         return p.err(ErrorKind::EmptyExportList);
       }
-      ParseRoot { kind: DescKind::Library, exports, members }
+      ParseRoot { kind: DescKind::Library, export, members }
     }
     _ => return p.err(ErrorKind::ExpectedDesc),
   };
   Ok(ret)
+}
+
+fn export_is_empty(e: &Export) -> bool {
+  match e {
+    Export::Name(_, _) | Export::Library(_) | Export::Source(_) | Export::Group(_) => false,
+    Export::Union(es) => es.iter().all(export_is_empty),
+  }
 }
 
 /// iff not at the beginning of an export, return Ok(None) and consume no tokens
@@ -141,8 +148,8 @@ fn exports(p: &mut Parser<'_>) -> Result<Vec<Export>> {
   Ok(exports)
 }
 
-fn exports_and_members(p: &mut Parser<'_>) -> Result<(Vec<Export>, Vec<Member>)> {
-  let es = exports(p)?;
+fn exports_and_members(p: &mut Parser<'_>) -> Result<(Export, Vec<Member>)> {
+  let es = Export::Union(exports(p)?);
   p.eat(Token::Is)?;
   let mut members = Vec::<Member>::new();
   loop {

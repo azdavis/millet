@@ -97,8 +97,8 @@ impl<'a> fmt::Display for Token<'a> {
 /// A processed CM file.
 #[derive(Debug)]
 pub struct CmFile {
-  /// The exports.
-  pub exports: Vec<Export>,
+  /// The export.
+  pub export: Export,
   /// The path.
   pub paths: Vec<WithRange<ParsedPath>>,
 }
@@ -133,7 +133,7 @@ impl ParsedPath {
 pub(crate) struct ParseRoot {
   #[allow(unused)]
   pub(crate) kind: DescKind,
-  pub(crate) exports: Vec<Export>,
+  pub(crate) export: Export,
   pub(crate) members: Vec<Member>,
 }
 

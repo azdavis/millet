@@ -2,13 +2,13 @@ use crate::types::{Export, Namespace, PathKind, PathOrMinus, PathOrStdBasis};
 use std::path::PathBuf;
 use str_util::Name;
 
-fn check(s: &str, want_exports: &[RawExport], want_paths: &[(&str, PathKind)]) {
+fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)]) {
   let file = crate::get(s, &paths::slash_var_path::Env::default()).unwrap();
   let want_paths: Vec<_> = want_paths.iter().map(|&(s, kind)| (mk_path_buf(s), kind)).collect();
-  let got_exports: Vec<_> = file.exports.into_iter().map(RawExport::from).collect();
+  let got_export = RawExport::from(file.export);
   let got_paths: Vec<_> =
     file.paths.into_iter().map(|path| (path.val.path, path.val.kind)).collect();
-  assert_eq!(want_exports, got_exports);
+  assert_eq!(RawExport::Union(want_exports), got_export);
   assert_eq!(want_paths, got_paths);
 }
 
@@ -58,7 +58,7 @@ Group is
   *)
   support.sml
 "#,
-    &[],
+    vec![],
     &[("hi.sml", PathKind::Sml), ("support.sml", PathKind::Sml)],
   );
 }
@@ -79,7 +79,7 @@ is
   f.sig
   uh:sml
 "#,
-    &[
+    vec![
       mk_name(Namespace::Structure, "A"),
       mk_name(Namespace::Functor, "B"),
       mk_name(Namespace::Signature, "C"),
@@ -108,7 +108,7 @@ is
   Bar/sources.cm
   quz/baz.cm
 "#,
-    &[
+    vec![
       mk_name(Namespace::Structure, "Foo"),
       mk_library("quz/baz.cm"),
       mk_name(Namespace::Signature, "BAR"),
