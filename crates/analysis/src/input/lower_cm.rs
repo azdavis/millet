@@ -128,8 +128,7 @@ where
       }
     }
   }
-  let mut exports = NameExports::new();
-  get_export(st, &group, parent, &ret.cm_paths, cur.path, &mut exports, cm.export)?;
+  get_export(st, &group, parent, &ret.cm_paths, cur.path, &mut ret.exports, cm.export)?;
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
   Ok(())
