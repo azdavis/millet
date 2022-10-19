@@ -81,28 +81,28 @@ impl St {
   }
 
   pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {
-    if matches!(self.mode(), Mode::PathOrder) {
+    if self.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx });
   }
 
   pub(crate) fn insert_handle(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    if matches!(self.mode(), Mode::PathOrder) {
+    if self.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx });
   }
 
   pub(crate) fn insert_case(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    if matches!(self.mode(), Mode::PathOrder) {
+    if self.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
   pub(crate) fn insert_hole(&mut self, mv: MetaTyVar, idx: sml_hir::Idx) {
-    if matches!(self.mode(), Mode::PathOrder) {
+    if self.mode().is_path_order() {
       return;
     }
     self.holes.push((mv, idx));
@@ -113,7 +113,7 @@ impl St {
   }
 
   pub(crate) fn mark_used(&mut self, idx: sml_hir::Idx) {
-    if matches!(self.mode(), Mode::PathOrder) {
+    if self.mode().is_path_order() {
       return;
     }
     self.used.insert(idx);

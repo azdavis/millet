@@ -1,7 +1,6 @@
 use fast_hash::FxHashMap;
 
 use crate::error::ErrorKind;
-use crate::info::Mode;
 use crate::st::St;
 use crate::types::{meta_vars, MetaTyVar, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
@@ -14,9 +13,8 @@ pub(crate) fn unify(st: &mut St, want: Ty, got: Ty, idx: sml_hir::Idx) {
 }
 
 pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorKind> {
-  match st.mode() {
-    Mode::Regular(_) | Mode::StdBasis(_) => {}
-    Mode::PathOrder => return Ok(()),
+  if st.mode().is_path_order() {
+    return Ok(());
   }
   unify_(st, want.clone(), got.clone()).map_err(|e| match e {
     UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),

@@ -161,3 +161,10 @@ pub enum Mode {
   /// checks that we conceivably could skip, but that's ok from a correctness standpoint.
   PathOrder,
 }
+
+impl Mode {
+  #[must_use]
+  pub(crate) fn is_path_order(&self) -> bool {
+    matches!(self, Mode::PathOrder)
+  }
+}
