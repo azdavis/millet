@@ -218,7 +218,7 @@ fn get_one_and_extend_with<F>(
   group: &StartedGroup,
   parent: paths::PathId,
   path: &std::path::Path,
-  range: text_size_util::TextRange,
+  range: TextRange,
   ac: &mut NameExports,
 ) -> Result<()>
 where
@@ -231,12 +231,8 @@ where
   Ok(())
 }
 
-fn extend_with<F>(
-  st: &mut St<'_, F>,
-  path: paths::PathId,
-  range: text_size_util::TextRange,
-  ac: &mut NameExports,
-) where
+fn extend_with<F>(st: &mut St<'_, F>, path: paths::PathId, range: TextRange, ac: &mut NameExports)
+where
   F: paths::FileSystem,
 {
   let other = st.cm_files.get(&path).expect("cm file should be set after get");
