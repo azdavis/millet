@@ -314,11 +314,20 @@ pub struct SourceFileSyntax {
 impl SourceFileSyntax {
   /// Starts processing a single source file.
   pub fn new(fix_env: &mut sml_parse::parser::FixEnv, contents: &str) -> Self {
-    let lexed = sml_lex::get(contents);
-    let parse = sml_parse::get(&lexed.tokens, fix_env);
+    let (lex_errors, parse) = Self::lex_and_parse(fix_env, contents);
     let mut lower = sml_lower::get(&parse.root);
     sml_ty_var_scope::get(&mut lower.arenas, lower.root);
-    Self { pos_db: text_pos::PositionDb::new(contents), lex_errors: lexed.errors, parse, lower }
+    Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower }
+  }
+
+  /// Lex and parse a source file.
+  pub fn lex_and_parse(
+    fix_env: &mut sml_parse::parser::FixEnv,
+    contents: &str,
+  ) -> (Vec<sml_lex::Error>, sml_parse::Parse) {
+    let lexed = sml_lex::get(contents);
+    let parse = sml_parse::get(&lexed.tokens, fix_env);
+    (lexed.errors, parse)
   }
 }
 

@@ -189,12 +189,12 @@ where
             })
           }
         };
-        get_top_level_defs(contents, ac, path.range);
+        get_top_defs(contents, ac, path.range);
       }
       cm_syntax::PathOrMinus::Minus => {
         for path_id in cx.sml_paths {
           let contents = st.sources.get(path_id).expect("sml file should be set").as_str();
-          get_top_level_defs(contents, ac, path.range);
+          get_top_defs(contents, ac, path.range);
         }
       }
     },
@@ -262,56 +262,52 @@ where
 }
 
 /// it's pretty annoying to have to do this here, but not sure if there's a better option.
-fn get_top_level_defs(contents: &str, ac: &mut NameExports, range: TextRange) {
+fn get_top_defs(contents: &str, ac: &mut NameExports, range: TextRange) {
   let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-  let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, contents);
-  get_top_level_defs_rec(ac, &syntax.lower.arenas, syntax.lower.root, range);
+  let (_, parse) = mlb_statics::SourceFileSyntax::lex_and_parse(&mut fix_env, contents);
+  get_top_defs_dec(ac, parse.root.dec(), range);
 }
 
-fn get_top_level_defs_rec(
-  ac: &mut NameExports,
-  ars: &sml_hir::Arenas,
-  dec: sml_hir::StrDecIdx,
-  range: TextRange,
-) {
-  let dec = match dec {
-    Some(x) => x,
-    None => return,
-  };
-  match &ars.str_dec[dec] {
-    sml_hir::StrDec::Dec(_) => {}
-    sml_hir::StrDec::Structure(binds) => {
-      for bind in binds {
-        let export = NameExport {
-          namespace: sml_statics::basis::Namespace::Structure,
-          name: bind.name.clone(),
-        };
-        ac.insert(export, range);
+fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, range: TextRange) {
+  let iter = dec
+    .into_iter()
+    .flat_map(|x| x.dec_with_tail_in_seqs())
+    .filter_map(|x| x.dec_with_tail())
+    .flat_map(|x| x.dec_in_seqs())
+    .filter_map(|x| x.dec_one());
+  for dec in iter {
+    match dec {
+      sml_syntax::ast::DecOne::LocalDec(dec) => {
+        get_top_defs_dec(ac, dec.in_dec(), range);
       }
-    }
-    sml_hir::StrDec::Signature(binds) => {
-      for bind in binds {
-        let export = NameExport {
-          namespace: sml_statics::basis::Namespace::Signature,
-          name: bind.name.clone(),
-        };
-        ac.insert(export, range);
+      sml_syntax::ast::DecOne::StructureDec(dec) => {
+        for name in dec.str_binds().filter_map(|x| x.name()) {
+          let export = NameExport {
+            namespace: sml_statics::basis::Namespace::Structure,
+            name: str_util::Name::new(name.text()),
+          };
+          ac.insert(export, range);
+        }
       }
-    }
-    sml_hir::StrDec::Functor(binds) => {
-      for bind in binds {
-        let export = NameExport {
-          namespace: sml_statics::basis::Namespace::Functor,
-          name: bind.functor_name.clone(),
-        };
-        ac.insert(export, range);
+      sml_syntax::ast::DecOne::SignatureDec(dec) => {
+        for name in dec.sig_binds().filter_map(|x| x.name()) {
+          let export = NameExport {
+            namespace: sml_statics::basis::Namespace::Signature,
+            name: str_util::Name::new(name.text()),
+          };
+          ac.insert(export, range);
+        }
       }
-    }
-    sml_hir::StrDec::Local(_, in_dec) => get_top_level_defs_rec(ac, ars, *in_dec, range),
-    sml_hir::StrDec::Seq(decs) => {
-      for &dec in decs {
-        get_top_level_defs_rec(ac, ars, dec, range);
+      sml_syntax::ast::DecOne::FunctorDec(dec) => {
+        for name in dec.functor_binds().filter_map(|x| x.functor_name()) {
+          let export = NameExport {
+            namespace: sml_statics::basis::Namespace::Functor,
+            name: str_util::Name::new(name.text()),
+          };
+          ac.insert(export, range);
+        }
       }
+      _ => {}
     }
   }
 }
