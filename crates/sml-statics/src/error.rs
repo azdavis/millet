@@ -23,7 +23,7 @@ pub(crate) enum ErrorKind {
   ConPatMustNotHaveArg,
   ConPatMustHaveArg,
   InvalidAsPatName(str_util::Name),
-  TyNameEscape(Ty),
+  TyEscape(Ty),
   ValRecExpNotFn,
   WrongNumTyArgs(usize, usize),
   ExnCopyNotExnIdStatus,
@@ -86,7 +86,7 @@ impl Error {
       ErrorKind::ConPatMustNotHaveArg => Code::n(5014),
       ErrorKind::ConPatMustHaveArg => Code::n(5015),
       ErrorKind::InvalidAsPatName(_) => Code::n(5016),
-      ErrorKind::TyNameEscape(_) => Code::n(5017),
+      ErrorKind::TyEscape(_) => Code::n(5017),
       ErrorKind::ValRecExpNotFn => Code::n(5018),
       ErrorKind::WrongNumTyArgs(_, _) => Code::n(5019),
       ErrorKind::ExnCopyNotExnIdStatus => Code::n(5020),
@@ -195,11 +195,11 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
       ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
-      ErrorKind::TyNameEscape(ty) => {
+      ErrorKind::TyEscape(ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);
         let ty = ty.display(&mvs, self.syms);
-        write!(f, "type name escapes its scope: {ty}")
+        write!(f, "type escapes its scope: {ty}")
       }
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
       ErrorKind::WrongNumTyArgs(want, got) => {

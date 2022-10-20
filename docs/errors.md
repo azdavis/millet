@@ -1667,7 +1667,7 @@ fun f x =
 
 ## 5017
 
-A type name escapes the scope in which it is valid.
+A type escapes the scope in which it is valid.
 
 Here, the type `d` is only available for the scope of the `let` expression, but the `let` expression would cause a value of type `d` to "escape" the `let` and be bound to `x`, outside the `let`.
 
@@ -1680,6 +1680,23 @@ val x =
     D
   end
 ```
+
+This can also occur for explicit type variables, as in this example:
+
+```sml
+(* error *)
+fun f x =
+  let
+    fun g (y : 'a) = if true then x else y
+  in
+    ()
+  end
+```
+
+Here, `x` and `y` are both inferred to have type `'a`. Note that:
+
+- `'a` is implicitly bound at `fun g`.
+- `x` is bound before `fun g`.
 
 To fix, try one of the following:
 
@@ -1700,6 +1717,30 @@ To fix, try one of the following:
       datatype d = D
     in
       4
+    end
+  ```
+
+- Remove explicit type variable annotations:
+
+  ```sml
+  (* ok *)
+  fun f x =
+    let
+      fun g y = if true then x else y
+    in
+      ()
+    end
+  ```
+
+- Change where type variables are bound:
+
+  ```sml
+  (* ok *)
+  fun 'a f x =
+    let
+      fun g (y : 'a) = if true then x else y
+    in
+      ()
     end
   ```
 

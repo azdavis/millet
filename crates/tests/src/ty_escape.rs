@@ -4,10 +4,8 @@ use crate::check::check;
 fn smoke() {
   check(
     r#"
-val _ =
-  let datatype bad = guh
-  in guh end
-(**  ^^^ type name escapes its scope: bad *)
+val _ = let datatype bad = guh in guh end
+(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: bad *)
 "#,
   );
 }
@@ -16,14 +14,8 @@ val _ =
 fn seq() {
   check(
     r#"
-val _ =
-  let
-    datatype foo = bar
-    val quz = bar
-  in
-    (true; false; bar; 3 + 3; quz)
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type name escapes its scope: foo *)
-  end
+val _ = let datatype foo = bar val quz = bar in (bar; 3 + 3; quz) end
+(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: foo *)
 "#,
   );
 }
@@ -32,13 +24,7 @@ val _ =
 fn does_not_escape() {
   check(
     r#"
-val _ =
-  let
-    datatype foo = bar
-    val quz = bar
-  in
-    (true; false; bar; 3 + 3; quz; 123)
-  end
+val _ = let datatype foo = bar val quz = bar in (bar; 3 + 3; quz; 123) end
 "#,
   );
 }
@@ -47,13 +33,8 @@ val _ =
 fn branch() {
   check(
     r#"
-val _ =
-  let
-    datatype guh = bad
-  in
-    if 3 < 4 then [] else [(3, bad, false, "hey")]
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type name escapes its scope: guh *)
-  end
+val _ = let datatype d = D in if 3 < 4 then [] else [(3, D, "hi")] end
+(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: d *)
 "#,
   );
 }
@@ -64,7 +45,7 @@ fn shadow() {
     r#"
 datatype t = One
 val _ = let datatype t = Two in Two end
-(**                             ^^^ type name escapes its scope: t *)
+(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: t *)
 "#,
   );
 }

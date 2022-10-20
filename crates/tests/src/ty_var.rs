@@ -1,6 +1,6 @@
 // Some tests are from [mlton docs](http://mlton.org/TypeVariableScope).
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn across_var() {
@@ -237,30 +237,20 @@ val _ = (let val id : 'a -> 'a = fn z => z in id id end; fn z => z : 'a)
 
 #[test]
 fn inner_fun_scope_implicit() {
-  fail(
+  check(
     r#"
-fun f x =
-  let
-    fun g (y : 'a) = if true then x else y
-(**                                      ^ expected ?a, found 'a *)
-  in
-    g x
-  end
+fun f x = let fun g (y : 'a) = if true then x else y in () end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: 'a *)
 "#,
   );
 }
 
 #[test]
 fn inner_fun_scope_explicit() {
-  fail(
+  check(
     r#"
-fun f x =
-  let
-    fun 'a g (y : 'a) = if true then x else y
-(**                                      ^ expected ?a, found 'a *)
-  in
-    g x
-  end
+fun f x = let fun 'a g (y : 'a) = if true then x else y in () end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: 'a *)
 "#,
   );
 }
