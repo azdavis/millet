@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Check for type variable scope escape.
+
 ## v0.5.4
 
 - Fix some panics when encountering strange programs.
