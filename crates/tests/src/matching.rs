@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke_case() {
@@ -473,6 +473,19 @@ fun f x =
     {a = 3, ...} => 1
   | {b = 5, ...} => 2
   | {a = _, b = _, c, d = _, e = _} => c
+"#,
+  );
+}
+
+#[test]
+fn char_escape() {
+  fail(
+    r#"
+fun f x =
+  case x of
+  | #"\n" => 1
+  | #"\t" => 2
+  | _ => 3
 "#,
   );
 }
