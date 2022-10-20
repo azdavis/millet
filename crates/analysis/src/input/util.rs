@@ -52,7 +52,7 @@ impl Error {
       ErrorKind::Cycle => Code::n(1010),
       ErrorKind::Duplicate(_) => Code::n(1011),
       ErrorKind::InvalidErrorCode(_, _) => Code::n(1012),
-      ErrorKind::HasMembersButAlsoOtherSettings => Code::n(1013),
+      ErrorKind::HasMembersButAlsoOtherSettings => Code::n(1995),
       ErrorKind::UnsupportedExport => Code::n(1999),
     }
   }

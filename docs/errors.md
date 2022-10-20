@@ -113,7 +113,7 @@ A valid error code will be a positive integer.
 
 To fix, make the key of the `errors` table an error code.
 
-## 1013
+## 1995
 
 In a `millet.toml` config file, both `workspace.members` and another configuration setting were set.
 
