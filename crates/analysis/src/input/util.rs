@@ -52,6 +52,7 @@ impl Error {
       ErrorKind::Cycle => Code::n(1010),
       ErrorKind::Duplicate(_) => Code::n(1011),
       ErrorKind::InvalidErrorCode(_, _) => Code::n(1012),
+      ErrorKind::SourcePathNotInFiles => Code::n(1013),
       ErrorKind::HasMembersButAlsoOtherSettings => Code::n(1995),
       ErrorKind::UnsupportedExport => Code::n(1999),
     }
@@ -89,6 +90,7 @@ pub(crate) enum ErrorKind {
   Cycle,
   Duplicate(str_util::Name),
   InvalidErrorCode(str_util::SmolStr, diagnostic_util::ParseCodeError),
+  SourcePathNotInFiles,
   HasMembersButAlsoOtherSettings,
   /// must be last
   UnsupportedExport,
@@ -113,6 +115,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
       ErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
       ErrorKind::InvalidErrorCode(ec, e) => write!(f, "invalid error code: {ec}: {e}"),
+      ErrorKind::SourcePathNotInFiles => f.write_str("`source` export not in file list"),
       ErrorKind::HasMembersButAlsoOtherSettings => {
         f.write_str("cannot set `workspace.members` but also set other configuration settings")
       }

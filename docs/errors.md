@@ -113,6 +113,27 @@ A valid error code will be a positive integer.
 
 To fix, make the key of the `errors` table an error code.
 
+## 1013
+
+In a SML/NJ CM file, there was a `source(path)` export whose path was not in the list of files.
+
+```sml-nj-cm
+Library
+  source(foo.sml)
+is
+  bar.sml
+```
+
+To fix, include the path in the list of files.
+
+```sml-nj-cm
+Library
+  source(foo.sml)
+is
+  foo.sml
+  bar.sml
+```
+
 ## 1995
 
 In a `millet.toml` config file, both `workspace.members` and another configuration setting were set.

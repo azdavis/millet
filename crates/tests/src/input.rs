@@ -297,9 +297,10 @@ fn cm_source_file() {
 Library
   source(foo.sml)
 is
+  foo.sml
+  bar.sml
 "#;
-  let e = check_input([("sources.cm", contents)], None).unwrap_err();
-  assert!(e.to_string().contains("unsupported export kind"));
+  check_input([("sources.cm", contents), ("foo.sml", ""), ("bar.sml", "")], None).unwrap();
 }
 
 #[test]
@@ -308,7 +309,21 @@ fn cm_source_dash() {
 Library
   source(-)
 is
+  foo.sml
+  bar.sml
 "#;
-  let e = check_input([("sources.cm", contents)], None).unwrap_err();
-  assert!(e.to_string().contains("unsupported export kind"));
+  check_input([("sources.cm", contents), ("foo.sml", ""), ("bar.sml", "")], None).unwrap();
+}
+
+#[test]
+fn cm_source_not_in_files() {
+  let contents = r#"
+Library
+  source(foo.sml)
+is
+  bar.sml
+"#;
+  let e =
+    check_input([("sources.cm", contents), ("foo.sml", ""), ("bar.sml", "")], None).unwrap_err();
+  assert!(e.to_string().contains("not in file list"));
 }

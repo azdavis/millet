@@ -123,7 +123,12 @@ where
       }
     }
   }
-  let cx = ExportCx { group: &group, cm_paths: &ret.cm_paths, cur_path_id: cur.path };
+  let cx = ExportCx {
+    group: &group,
+    cm_paths: &ret.cm_paths,
+    sml_paths: &ret.sml_paths,
+    cur_path_id: cur.path,
+  };
   get_export(st, cx, &mut ret.exports, cm.export)?;
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
@@ -134,6 +139,7 @@ where
 struct ExportCx<'a> {
   group: &'a StartedGroup,
   cm_paths: &'a [paths::PathId],
+  sml_paths: &'a FxHashSet<paths::PathId>,
   cur_path_id: paths::PathId,
 }
 
@@ -169,13 +175,29 @@ where
       };
       get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), lib.range, ac)?;
     }
-    cm_syntax::Export::Source(path) => {
-      return Err(Error {
-        source: ErrorSource { path: None, range: cx.group.pos_db.range(path.range) },
-        path: cx.group.path.as_path().to_owned(),
-        kind: ErrorKind::UnsupportedExport,
-      })
-    }
+    cm_syntax::Export::Source(path) => match path.val {
+      cm_syntax::PathOrMinus::Path(p) => {
+        let (path_id, _, source) =
+          get_path_id_in_group(st.fs, st.store, cx.group, p.as_path(), path.range)?;
+        let contents = match st.sources.get(&path_id) {
+          Some(x) => x.as_str(),
+          None => {
+            return Err(Error {
+              source,
+              path: cx.group.path.as_path().to_owned(),
+              kind: ErrorKind::SourcePathNotInFiles,
+            })
+          }
+        };
+        get_top_level_defs(contents, ac, path.range);
+      }
+      cm_syntax::PathOrMinus::Minus => {
+        for path_id in cx.sml_paths {
+          let contents = st.sources.get(path_id).expect("sml file should be set").as_str();
+          get_top_level_defs(contents, ac, path.range);
+        }
+      }
+    },
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
         get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), path.range, ac)?;
@@ -237,4 +259,59 @@ where
 {
   let other = st.cm_files.get(&path).expect("cm file should be set after get");
   ac.extend(other.exports.keys().map(|ex| (ex.clone(), range)));
+}
+
+/// it's pretty annoying to have to do this here, but not sure if there's a better option.
+fn get_top_level_defs(contents: &str, ac: &mut NameExports, range: TextRange) {
+  let mut fix_env = sml_parse::parser::STD_BASIS.clone();
+  let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, contents);
+  get_top_level_defs_rec(ac, &syntax.lower.arenas, syntax.lower.root, range);
+}
+
+fn get_top_level_defs_rec(
+  ac: &mut NameExports,
+  ars: &sml_hir::Arenas,
+  dec: sml_hir::StrDecIdx,
+  range: TextRange,
+) {
+  let dec = match dec {
+    Some(x) => x,
+    None => return,
+  };
+  match &ars.str_dec[dec] {
+    sml_hir::StrDec::Dec(_) => {}
+    sml_hir::StrDec::Structure(binds) => {
+      for bind in binds {
+        let export = NameExport {
+          namespace: sml_statics::basis::Namespace::Structure,
+          name: bind.name.clone(),
+        };
+        ac.insert(export, range);
+      }
+    }
+    sml_hir::StrDec::Signature(binds) => {
+      for bind in binds {
+        let export = NameExport {
+          namespace: sml_statics::basis::Namespace::Signature,
+          name: bind.name.clone(),
+        };
+        ac.insert(export, range);
+      }
+    }
+    sml_hir::StrDec::Functor(binds) => {
+      for bind in binds {
+        let export = NameExport {
+          namespace: sml_statics::basis::Namespace::Functor,
+          name: bind.functor_name.clone(),
+        };
+        ac.insert(export, range);
+      }
+    }
+    sml_hir::StrDec::Local(_, in_dec) => get_top_level_defs_rec(ac, ars, *in_dec, range),
+    sml_hir::StrDec::Seq(decs) => {
+      for &dec in decs {
+        get_top_level_defs_rec(ac, ars, dec, range);
+      }
+    }
+  }
 }
