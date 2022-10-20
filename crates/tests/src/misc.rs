@@ -758,3 +758,14 @@ fn eqtype_dec() {
 "#,
   );
 }
+
+// TODO investigate
+#[test]
+#[should_panic = "can't resolve local ptr to SyntaxNode"]
+fn rowan_panic() {
+  check(
+    r#"
+functor MkThing
+"#,
+  );
+}
