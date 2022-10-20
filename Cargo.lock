@@ -84,6 +84,7 @@ dependencies = [
  "analysis",
  "config",
  "diagnostic-util",
+ "env_logger",
  "mlb-statics",
  "paths",
  "pico-args",

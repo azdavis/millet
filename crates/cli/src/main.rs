@@ -22,6 +22,13 @@ arguments:
 }
 
 fn run() -> usize {
+  match env_logger::try_init_from_env(env_logger::Env::default().default_filter_or("error")) {
+    Ok(()) => {}
+    Err(e) => {
+      println!("could not start env logger: {e}");
+      return 1;
+    }
+  }
   let mut args = pico_args::Arguments::from_env();
   if args.contains(["-h", "--help"]) {
     usage();
