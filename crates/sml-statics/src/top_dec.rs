@@ -644,6 +644,7 @@ fn env_instance_sig(
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
       // @test(sig::no_path_to_sym). there should have already been an error emitted for this
+      log::warn!("no path to sym");
       return;
     }
     let last = path.pop().unwrap();
