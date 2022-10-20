@@ -52,7 +52,10 @@ fn get_(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
           b'a' | b'b' | b't' | b'n' | b'v' | b'f' | b'r' | b'"' | b'\\' => *idx += 1,
           b'^' => {
             *idx += 1;
-            bs.get(*idx)?;
+            let &c = bs.get(*idx)?;
+            if !(64..=95).contains(&c) {
+              res.errors.push((*idx, Error::InvalidEscape));
+            }
             *idx += 1;
           }
           b'u' => {
