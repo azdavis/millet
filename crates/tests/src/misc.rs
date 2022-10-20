@@ -759,7 +759,7 @@ fn eqtype_dec() {
   );
 }
 
-// TODO investigate
+// TODO fix https://github.com/rust-analyzer/rowan/issues/144
 #[test]
 #[should_panic = "can't resolve local ptr to SyntaxNode"]
 fn rowan_panic() {
