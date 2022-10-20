@@ -5,8 +5,7 @@ use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
   generalize, generalize_fixed, Cx, Env, EnvLike as _, FixedTyVars, Generalizable,
-  HasRecordMetaVars, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarSrc,
-  ValEnv, ValInfo,
+  HasRecordMetaVars, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
@@ -51,11 +50,7 @@ pub(crate) fn get(
         // @def(25)
         let (pm_pat, mut want) =
           get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
-        let got = exp::get(st, exp_cfg, &cx, ars, val_bind.exp);
-        if let Some(ty) = ty_escape(&cx, &marker, &got) {
-          let idx = val_bind.exp.map_or(sml_hir::Idx::from(dec), Into::into);
-          st.err(idx, ErrorKind::TyEscape(ty));
-        }
+        let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, &marker, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into));
@@ -85,11 +80,7 @@ pub(crate) fn get(
             st.err(dec, ErrorKind::ValRecExpNotFn);
           }
         }
-        let got = exp::get(st, exp_cfg, &cx, ars, val_bind.exp);
-        if let Some(ty) = ty_escape(&cx, &marker, &got) {
-          let idx = val_bind.exp.map_or(sml_hir::Idx::from(dec), Into::into);
-          st.err(idx, ErrorKind::TyEscape(ty));
-        }
+        let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, &marker, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, dec.into());
@@ -420,18 +411,5 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
         Ok(None) | Err(_) => true,
       }
     }
-  }
-}
-
-fn ty_escape(cx: &Cx, m: &SymsMarker, ty: &Ty) -> Option<Ty> {
-  match ty {
-    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) => None,
-    Ty::FixedVar(fv) => (!cx.fixed.contains_key(fv.ty_var())).then(|| ty.clone()),
-    Ty::Record(rows) => rows.values().find_map(|ty| ty_escape(cx, m, ty)),
-    Ty::Con(args, sym) => sym
-      .generated_after(m)
-      .then(|| ty.clone())
-      .or_else(|| args.iter().find_map(|ty| ty_escape(cx, m, ty))),
-    Ty::Fn(param, res) => ty_escape(cx, m, param).or_else(|| ty_escape(cx, m, res)),
   }
 }
