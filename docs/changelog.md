@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.5.3
+
+- Support `source` exports in SML/NJ CM export lists.
+
 ## v0.5.2
 
 - Support union, intersection, and difference in SML/NJ CM file export lists.
