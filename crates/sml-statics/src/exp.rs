@@ -4,9 +4,7 @@ use crate::get_env::get_val_info;
 use crate::info::TyEntry;
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{
-  Cx, Def, Env, EnvLike as _, Generalizable, Sym, SymsMarker, Ty, TyScheme, ValEnv,
-};
+use crate::types::{Cx, Def, Env, EnvLike as _, Generalizable, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
@@ -65,8 +63,8 @@ pub(crate) fn get(
       let mut cx = cx.clone();
       cx.env.append(&mut let_env);
       let got = get(st, cfg, &cx, ars, *inner);
-      if let Some(sym) = ty_name_escape(&marker, &got) {
-        st.err(inner.unwrap_or(exp), ErrorKind::TyNameEscape(sym));
+      if let Some(ty) = ty_name_escape(&marker, &got) {
+        st.err(inner.unwrap_or(exp), ErrorKind::TyNameEscape(ty));
       }
       got
     }
@@ -168,13 +166,13 @@ fn get_matcher(
   (pats, param_ty, res_ty)
 }
 
-fn ty_name_escape(m: &SymsMarker, ty: &Ty) -> Option<Sym> {
+fn ty_name_escape(m: &SymsMarker, ty: &Ty) -> Option<Ty> {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => None,
     Ty::Record(rows) => rows.values().find_map(|ty| ty_name_escape(m, ty)),
     Ty::Con(args, sym) => sym
       .generated_after(m)
-      .then_some(*sym)
+      .then(|| ty.clone())
       .or_else(|| args.iter().find_map(|ty| ty_name_escape(m, ty))),
     Ty::Fn(param, res) => ty_name_escape(m, param).or_else(|| ty_name_escape(m, res)),
   }
