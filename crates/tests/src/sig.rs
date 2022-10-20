@@ -727,3 +727,15 @@ signature BAD = HAS_INT where type t = string
 "#,
   );
 }
+
+#[test]
+fn no_path_to_sym() {
+  check(
+    r#"
+signature FOO = sig type t end
+signature BAR = sig type t val x : t include FOO end
+(**                                  ^^^^^^^^^^^ duplicate type: t *)
+structure Bar :> BAR = struct type t = unit val x = () end
+"#,
+  );
+}

@@ -643,8 +643,7 @@ fn env_instance_sig(
     let (_, ty_info) = st.syms.get(sym).unwrap();
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
-      // known to be reachable. TODO fix
-      st.err(idx, ErrorKind::Unsupported("BUG: no path for sym"));
+      // there should have already been an error emitted for this
       return;
     }
     let last = path.pop().unwrap();
