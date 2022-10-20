@@ -123,17 +123,23 @@ where
       }
     }
   }
-  get_export(st, &group, &ret.cm_paths, cur.path, &mut ret.exports, cm.export)?;
+  let cx = ExportCx { group: &group, cm_paths: &ret.cm_paths, cur_path_id: cur.path };
+  get_export(st, cx, &mut ret.exports, cm.export)?;
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
   Ok(())
 }
 
+#[derive(Clone, Copy)]
+struct ExportCx<'a> {
+  group: &'a StartedGroup,
+  cm_paths: &'a [paths::PathId],
+  cur_path_id: paths::PathId,
+}
+
 fn get_export<F>(
   st: &mut St<'_, F>,
-  group: &StartedGroup,
-  cm_paths: &[paths::PathId],
-  cur_path_id: paths::PathId,
+  cx: ExportCx<'_>,
   ac: &mut NameExports,
   export: cm_syntax::Export,
 ) -> Result<()>
@@ -148,8 +154,8 @@ where
         cm_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
         cm_syntax::Namespace::FunSig => {
           return Err(Error {
-            source: ErrorSource { path: None, range: group.pos_db.range(ns.range) },
-            path: group.path.as_path().to_owned(),
+            source: ErrorSource { path: None, range: cx.group.pos_db.range(ns.range) },
+            path: cx.group.path.as_path().to_owned(),
             kind: ErrorKind::UnsupportedExport,
           })
         }
@@ -161,35 +167,35 @@ where
         cm_syntax::PathOrStdBasis::Path(p) => p,
         cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
       };
-      get_one_and_extend_with(st, group, cur_path_id, p.as_path(), lib.range, ac)?;
+      get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), lib.range, ac)?;
     }
     cm_syntax::Export::Source(path) => {
       return Err(Error {
-        source: ErrorSource { path: None, range: group.pos_db.range(path.range) },
-        path: group.path.as_path().to_owned(),
+        source: ErrorSource { path: None, range: cx.group.pos_db.range(path.range) },
+        path: cx.group.path.as_path().to_owned(),
         kind: ErrorKind::UnsupportedExport,
       })
     }
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        get_one_and_extend_with(st, group, cur_path_id, p.as_path(), path.range, ac)?;
+        get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), path.range, ac)?;
       }
       cm_syntax::PathOrMinus::Minus => {
-        for &path_id in cm_paths {
+        for &path_id in cx.cm_paths {
           extend_with(st, path_id, path.range, ac);
         }
       }
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
-        get_export(st, group, cm_paths, cur_path_id, ac, export)?;
+        get_export(st, cx, ac, export)?;
       }
     }
     cm_syntax::Export::Difference(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
-      get_export(st, group, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
-      get_export(st, group, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
+      get_export(st, cx, &mut lhs_ac, *lhs)?;
+      get_export(st, cx, &mut rhs_ac, *rhs)?;
       // keep only those that ARE NOT in rhs.
       lhs_ac.retain(|k, _| !rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
@@ -197,8 +203,8 @@ where
     cm_syntax::Export::Intersection(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
-      get_export(st, group, cm_paths, cur_path_id, &mut lhs_ac, *lhs)?;
-      get_export(st, group, cm_paths, cur_path_id, &mut rhs_ac, *rhs)?;
+      get_export(st, cx, &mut lhs_ac, *lhs)?;
+      get_export(st, cx, &mut rhs_ac, *rhs)?;
       // keep only those that ARE in rhs. only 1 character of difference from the Difference case!
       lhs_ac.retain(|k, _| rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
