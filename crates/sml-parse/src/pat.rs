@@ -2,7 +2,7 @@ use crate::parser::{Entered, ErrorKind, Exited, Expected, Infix, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{
   comma_sep, eat_name_star, lab, must, name_star, path, path_infix, path_no_infix, scon,
-  should_break, InfixErr, ShouldBreak,
+  should_break, InfixErr,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -79,14 +79,13 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec, infix: InfixErr) -> Option<Ex
         }
         AtPatHd::Infix(st, op_info) => {
           state = st;
-          let should_break = match min_prec {
-            PatPrec::Min | PatPrec::Or => ShouldBreak::No,
-            PatPrec::Infix(min_prec) => should_break(op_info, min_prec),
-          };
-          match should_break {
-            ShouldBreak::Yes => break,
-            ShouldBreak::No => {}
-            ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
+          match min_prec {
+            PatPrec::Min | PatPrec::Or => {}
+            PatPrec::Infix(min_prec) => {
+              if should_break(p, op_info, min_prec) {
+                break;
+              }
+            }
           }
           let ex = state.exit(p);
           let en = p.precede(ex);

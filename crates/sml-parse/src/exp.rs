@@ -4,7 +4,7 @@ use crate::pat::pat;
 use crate::ty::ty;
 use crate::util::{
   comma_sep, lab, many_sep, must, name_star_eq, path_infix, path_no_infix, scon, should_break,
-  InfixErr, ShouldBreak,
+  InfixErr,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -69,10 +69,8 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         None
       };
       ex = if let Some(op_info) = op_info {
-        match should_break_exp(ExpPrec::Infix(op_info), min_prec) {
-          ShouldBreak::Yes => break,
-          ShouldBreak::No => {}
-          ShouldBreak::Error => p.error(ErrorKind::SameFixityDiffAssoc),
+        if should_break_exp(p, ExpPrec::Infix(op_info), min_prec) {
+          break;
         }
         let en = p.precede(ex);
         p.bump();
@@ -87,20 +85,16 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
         ty(p);
         p.exit(en, SK::TypedExp)
       } else if p.at(SK::AndalsoKw) {
-        match should_break_exp(ExpPrec::Andalso, min_prec) {
-          ShouldBreak::Yes => break,
-          ShouldBreak::No => {}
-          ShouldBreak::Error => unreachable!("not an infix op"),
+        if should_break_exp(p, ExpPrec::Andalso, min_prec) {
+          break;
         }
         let en = p.precede(ex);
         p.bump();
         must(p, |p| exp_prec(p, ExpPrec::Andalso), Expected::Exp);
         p.exit(en, SK::AndalsoExp)
       } else if p.at(SK::OrelseKw) {
-        match should_break_exp(ExpPrec::Orelse, min_prec) {
-          ShouldBreak::Yes => break,
-          ShouldBreak::No => {}
-          ShouldBreak::Error => unreachable!("not an infix op"),
+        if should_break_exp(p, ExpPrec::Orelse, min_prec) {
+          break;
         }
         let en = p.precede(ex);
         p.bump();
@@ -273,15 +267,13 @@ enum ExpPrec {
   Min,
 }
 
-fn should_break_exp(prec: ExpPrec, min_prec: ExpPrec) -> ShouldBreak {
+fn should_break_exp(p: &mut Parser<'_>, prec: ExpPrec, min_prec: ExpPrec) -> bool {
   match (prec, min_prec) {
-    (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(prec, min_prec),
-    (_, ExpPrec::Min) | (ExpPrec::Infix(_), _) | (ExpPrec::Andalso, ExpPrec::Orelse) => {
-      ShouldBreak::No
-    }
+    (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(p, prec, min_prec),
+    (_, ExpPrec::Min) | (ExpPrec::Infix(_), _) | (ExpPrec::Andalso, ExpPrec::Orelse) => false,
     (_, ExpPrec::Infix(_))
     | (ExpPrec::Andalso, ExpPrec::Andalso)
-    | (ExpPrec::Orelse, ExpPrec::Orelse | ExpPrec::Andalso) => ShouldBreak::Yes,
+    | (ExpPrec::Orelse, ExpPrec::Orelse | ExpPrec::Andalso) => true,
     (ExpPrec::Min, _) => unreachable!("Min is only ever the starting prec, not a new prec"),
   }
 }

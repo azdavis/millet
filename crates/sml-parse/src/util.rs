@@ -98,24 +98,14 @@ where
   ret
 }
 
-pub(crate) enum ShouldBreak {
-  Yes,
-  No,
-  Error,
-}
-
-pub(crate) fn should_break(op_info: Infix, min_prec: Infix) -> ShouldBreak {
+pub(crate) fn should_break(p: &mut Parser<'_>, op_info: Infix, min_prec: Infix) -> bool {
   if op_info.prec == min_prec.prec && op_info.assoc != min_prec.assoc {
-    ShouldBreak::Error
+    p.error(ErrorKind::SameFixityDiffAssoc);
+    false
   } else {
-    let res = match min_prec.assoc {
+    match min_prec.assoc {
       Assoc::Left => op_info.prec <= min_prec.prec,
       Assoc::Right => op_info.prec < min_prec.prec,
-    };
-    if res {
-      ShouldBreak::Yes
-    } else {
-      ShouldBreak::No
     }
   }
 }
