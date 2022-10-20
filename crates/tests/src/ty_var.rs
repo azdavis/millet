@@ -1,4 +1,6 @@
-use crate::check::check;
+// Some tests are from [mlton docs](http://mlton.org/TypeVariableScope).
+
+use crate::check::{check, fail};
 
 #[test]
 fn across_var() {
@@ -210,6 +212,85 @@ fn on_fun_in_exn() {
   check(
     r#"
 fun 'a foo () = let exception E of 'a in () end
+"#,
+  );
+}
+
+#[test]
+fn definition_ex_1() {
+  check(
+    r#"
+val x : int -> int = let val id : 'a -> 'a = fn z => z in id id end
+"#,
+  );
+}
+
+#[test]
+fn definition_ex_2() {
+  check(
+    r#"
+val _ = (let val id : 'a -> 'a = fn z => z in id id end; fn z => z : 'a)
+(**                                              ^^ expected 'a, found 'a -> 'a *)
+"#,
+  );
+}
+
+#[test]
+fn inner_fun_scope_implicit() {
+  fail(
+    r#"
+fun f x =
+  let
+    fun g (y : 'a) = if true then x else y
+(**                                      ^ expected ?a, found 'a *)
+  in
+    g x
+  end
+"#,
+  );
+}
+
+#[test]
+fn inner_fun_scope_explicit() {
+  fail(
+    r#"
+fun f x =
+  let
+    fun 'a g (y : 'a) = if true then x else y
+(**                                      ^ expected ?a, found 'a *)
+  in
+    g x
+  end
+"#,
+  );
+}
+
+#[test]
+fn already_in_scope_explicit() {
+  check(
+    r#"
+fun 'a f (x : 'a) =
+  let
+    fun 'a g (y : 'a) = y
+(** ^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+  in
+    ()
+  end
+"#,
+  );
+}
+
+#[test]
+fn already_in_scope_implicit() {
+  check(
+    r#"
+fun f (x : 'a) =
+  let
+    fun 'a g (y : 'a) = y
+(** ^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+  in
+    ()
+  end
 "#,
   );
 }
