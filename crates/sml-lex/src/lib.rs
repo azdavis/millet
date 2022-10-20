@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use diagnostic_util::{Code, Severity};
-use lex_util::{advance_while, block_comment, is_whitespace};
+use lex_util::{advance_while, block_comment, is_whitespace, string};
 use sml_syntax::rowan::{TextRange, TextSize};
 use sml_syntax::{token::Token, SyntaxKind as SK};
 use std::fmt;
@@ -25,12 +25,10 @@ enum ErrorKind {
   InvalidSource,
   UnclosedComment,
   IncompleteTyVar,
-  UnclosedStringLit,
   NegativeWordLit,
   WrongLenCharLit,
   MissingDigitsInNumLit,
-  InvalidStringEscape,
-  NonWhitespaceInStringContinuation,
+  String(string::Error),
 }
 
 impl fmt::Display for ErrorKind {
@@ -39,12 +37,12 @@ impl fmt::Display for ErrorKind {
       ErrorKind::InvalidSource => f.write_str("invalid source character"),
       ErrorKind::UnclosedComment => f.write_str("unclosed comment"),
       ErrorKind::IncompleteTyVar => f.write_str("incomplete type variable"),
-      ErrorKind::UnclosedStringLit => f.write_str("unclosed string literal"),
+      ErrorKind::String(string::Error::Unclosed) => f.write_str("unclosed string literal"),
       ErrorKind::NegativeWordLit => f.write_str("negative word literal"),
       ErrorKind::WrongLenCharLit => f.write_str("character literal must have length 1"),
       ErrorKind::MissingDigitsInNumLit => f.write_str("missing digits in number literal"),
-      ErrorKind::InvalidStringEscape => f.write_str("invalid string escape"),
-      ErrorKind::NonWhitespaceInStringContinuation => {
+      ErrorKind::String(string::Error::InvalidEscape) => f.write_str("invalid string escape"),
+      ErrorKind::String(string::Error::NonWhitespaceInContinuation) => {
         f.write_str("non-whitespace in string continuation")
       }
     }
@@ -78,12 +76,12 @@ impl Error {
       ErrorKind::InvalidSource => Code::n(2001),
       ErrorKind::UnclosedComment => Code::n(2002),
       ErrorKind::IncompleteTyVar => Code::n(2003),
-      ErrorKind::UnclosedStringLit => Code::n(2004),
+      ErrorKind::String(string::Error::Unclosed) => Code::n(2004),
       ErrorKind::NegativeWordLit => Code::n(2005),
       ErrorKind::WrongLenCharLit => Code::n(2006),
       ErrorKind::MissingDigitsInNumLit => Code::n(2007),
-      ErrorKind::InvalidStringEscape => Code::n(2008),
-      ErrorKind::NonWhitespaceInStringContinuation => Code::n(2009),
+      ErrorKind::String(string::Error::InvalidEscape) => Code::n(2008),
+      ErrorKind::String(string::Error::NonWhitespaceInContinuation) => Code::n(2009),
     }
   }
 
@@ -236,14 +234,13 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   }
   // string lit
   if b == b'"' {
-    cx.i += 1;
-    string(start, cx, bs);
+    get_string(start, cx, bs);
     return SK::StringLit;
   }
   // char lit
   if b == b'#' && bs.get(cx.i + 1) == Some(&b'"') {
-    cx.i += 2;
-    if string(start, cx, bs) != 1 {
+    cx.i += 1;
+    if get_string(start, cx, bs) != 1 {
       err(cx, start, ErrorKind::WrongLenCharLit);
     }
     return SK::CharLit;
@@ -280,77 +277,12 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   SK::Invalid
 }
 
-/// requires we just entered a string (so cx.i - 1 is a `"`). returns the number of 'characters' in
-/// the string.
-fn string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
-  let mut ret = 0;
-  if string_(&mut ret, cx, bs).is_none() {
-    err(cx, start, ErrorKind::UnclosedStringLit);
+fn get_string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
+  let res = string::get(&mut cx.i, bs);
+  for (idx, e) in res.errors {
+    cx.errors.push(Error { range: range(start, idx), kind: ErrorKind::String(e) });
   }
-  ret
-}
-
-/// returns None iff there was no matching `"` to close the string
-fn string_(ret: &mut usize, cx: &mut Cx, bs: &[u8]) -> Option<()> {
-  let start = cx.i - 1;
-  loop {
-    match *bs.get(cx.i)? {
-      b'\n' => return None,
-      b'"' => {
-        cx.i += 1;
-        break;
-      }
-      b'\\' => {
-        cx.i += 1;
-        match *bs.get(cx.i)? {
-          b'a' | b'b' | b't' | b'n' | b'v' | b'f' | b'r' | b'"' | b'\\' => cx.i += 1,
-          b'^' => {
-            cx.i += 1;
-            bs.get(cx.i)?;
-            cx.i += 1;
-          }
-          b'u' => {
-            cx.i += 1;
-            for _ in 0..4 {
-              if !bs.get(cx.i)?.is_ascii_hexdigit() {
-                err(cx, start, ErrorKind::InvalidStringEscape);
-              }
-              cx.i += 1;
-            }
-          }
-          b => {
-            if is_whitespace(b) {
-              loop {
-                cx.i += 1;
-                let b = *bs.get(cx.i)?;
-                if b == b'\\' {
-                  cx.i += 1;
-                  break;
-                }
-                if !is_whitespace(b) {
-                  err(cx, start, ErrorKind::NonWhitespaceInStringContinuation);
-                }
-              }
-            } else if b.is_ascii_digit() {
-              cx.i += 1;
-              for _ in 0..2 {
-                if !bs.get(cx.i)?.is_ascii_digit() {
-                  err(cx, start, ErrorKind::InvalidStringEscape);
-                }
-                cx.i += 1;
-              }
-            } else {
-              err(cx, start, ErrorKind::InvalidStringEscape);
-              cx.i += 1;
-            }
-          }
-        }
-      }
-      _ => cx.i += 1,
-    }
-    *ret += 1;
-  }
-  Some(())
+  res.len
 }
 
 enum AlphaNum {

@@ -1,8 +1,9 @@
-//! Utilities.
+//! Utilities for lexing SML-adjacent languages.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub mod block_comment;
+pub mod string;
 
 /// Returns whether `b` is a whitespace character for our purposes.
 #[must_use]
