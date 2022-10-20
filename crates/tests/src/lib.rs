@@ -6,7 +6,6 @@
 #![cfg(test)]
 #![deny(clippy::pedantic, rust_2018_idioms)]
 
-mod ascribe;
 mod check;
 mod datatype_copy;
 mod deviations;
@@ -31,6 +30,7 @@ mod repo;
 mod rest_pat;
 mod rust;
 mod shadow;
+mod sig;
 mod smoke;
 mod std_basis;
 mod ty_name_escape;
