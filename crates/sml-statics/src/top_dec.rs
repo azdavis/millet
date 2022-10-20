@@ -357,7 +357,8 @@ fn get_where_type(
           // TODO side condition for sym not in T of B?
           // TODO side condition for well-formed?
           Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), inner_env),
-          t => unreachable!("bad `where`: {t:?}"),
+          // known to be reachable. TODO fix
+          _ => st.err(idx, ErrorKind::Unsupported("BUG: can't handle non-Con `where type`")),
         }
       } else {
         st.err(idx, ErrorKind::WrongNumTyArgs(want_len, got_len));
@@ -641,7 +642,8 @@ fn env_instance_sig(
     let (_, ty_info) = st.syms.get(sym).unwrap();
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
-      unreachable!("couldn't get a path for {sym:?} in {sig:?}");
+      // known to be reachable. TODO fix
+      st.err(idx, ErrorKind::Unsupported("BUG: failed to get a path for symbol"));
     }
     let last = path.pop().unwrap();
     match get_ty_info_raw(env, path, last) {

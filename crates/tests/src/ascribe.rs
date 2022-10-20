@@ -1,4 +1,4 @@
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn ok_smoke() {
@@ -681,6 +681,37 @@ signature SIG =
 structure Str :> SIG =
     struct datatype ('a, 'b) t = T of 'b * 'a end
 (** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b -> ('a, 'b) t, found 'b * 'a -> ('a, 'b) t *)
+"#,
+  );
+}
+
+#[test]
+fn where_not_con() {
+  fail(
+    r#"
+signature VIEW = sig
+  type 't view
+end
+
+signature CO_INDUCTIVE = sig
+  structure T : VIEW
+  type t
+end
+
+structure FooOp = struct
+  type 't view = unit * (unit -> 't)
+end
+
+signature THING = sig
+  structure Foo : CO_INDUCTIVE where T = FooOp
+end
+
+functor MkThing (
+  structure Arg : CO_INDUCTIVE where T = FooOp
+) :> THING where Foo = Arg =
+struct
+  structure Foo = Arg
+end
 "#,
   );
 }

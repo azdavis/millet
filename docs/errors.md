@@ -2088,4 +2088,6 @@ At time of writing, the following constructs are not supported:
 
 - `abstype` declarations.
 
+This error also may be emitted for known bugs in Millet. We report this error instead of crashing.
+
 [config]: /docs/config.md
