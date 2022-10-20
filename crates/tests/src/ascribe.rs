@@ -715,3 +715,14 @@ end
 "#,
   );
 }
+
+#[test]
+fn impossible_sig() {
+  fail(
+    r#"
+signature HAS_T = sig type t end
+signature HAS_UNIT = HAS_T where type t = unit
+signature BAD = HAS_UNIT where type t = int
+"#,
+  );
+}
