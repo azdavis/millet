@@ -689,28 +689,27 @@ structure Str :> SIG =
 fn where_not_con() {
   fail(
     r#"
-signature VIEW = sig
-  type 't view
-end
-
-signature CO_INDUCTIVE = sig
-  structure T : VIEW
+signature FOO = sig
   type t
 end
 
-structure FooOp = struct
-  type 't view = unit * (unit -> 't)
+signature HAS_FOO = sig
+  structure Foo : FOO
+end
+
+structure FooUnit = struct
+  type t = unit
 end
 
 signature THING = sig
-  structure Foo : CO_INDUCTIVE where T = FooOp
+  structure HasFoo : HAS_FOO where Foo = FooUnit
 end
 
 functor MkThing (
-  structure Arg : CO_INDUCTIVE where T = FooOp
-) :> THING where Foo = Arg =
+  structure Arg : HAS_FOO where Foo = FooUnit
+) :> THING where HasFoo = Arg =
 struct
-  structure Foo = Arg
+  structure HasFoo = Arg
 end
 "#,
   );
