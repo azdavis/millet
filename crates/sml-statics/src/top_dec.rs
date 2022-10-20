@@ -645,6 +645,7 @@ fn env_instance_sig(
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
       // known to be reachable. TODO fix
       st.err(idx, ErrorKind::Unsupported("BUG: no path for sym"));
+      return;
     }
     let last = path.pop().unwrap();
     match get_ty_info_raw(env, path, last) {
