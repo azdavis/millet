@@ -66,9 +66,9 @@ fn get_(
   let mut ty_scheme = None::<TyScheme>;
   let mut def = None::<Def>;
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
-    // Def(32)
+    // @def(32)
     sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), Ty::MetaVar(st.meta_gen.gen(cfg.gen))),
-    // Def(33)
+    // @def(33)
     sml_hir::Pat::SCon(special_con) => {
       let con = match special_con {
         sml_hir::SCon::Int(i) => Con::Int(i.clone()),
@@ -92,11 +92,11 @@ fn get_(
           return None;
         }
       };
-      // test(deviations::mlton::rebind_ctor)
+      // @test(deviations::mlton::rebind_ctor)
       let is_var = argument.is_none()
         && path.structures().is_empty()
         && (ok_val_info(maybe_val_info) || cfg.rec);
-      // Def(34)
+      // @def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
         insert_name(st, cfg.cfg, ve, path.last().clone(), ty.clone(), pat_idx.into());
@@ -118,7 +118,7 @@ fn get_(
         IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
       let ty = instantiate(st, cfg.gen, val_info.ty_scheme.clone());
-      // Def(35), Def(41)
+      // @def(35), @def(41)
       let (sym, arguments, ty) = match ty {
         Ty::Con(_, sym) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
@@ -133,14 +133,14 @@ fn get_(
             bound_vars: val_info.ty_scheme.bound_vars.clone(),
             ty: match &val_info.ty_scheme.ty {
               Ty::Fn(_, res_ty) => res_ty.as_ref().clone(),
-              // test(pat::weird_pat_fn_1)
+              // @test(pat::weird_pat_fn_1)
               _ => return None,
             },
           });
           def = val_info.def;
           let sym = match res_ty.as_ref() {
             Ty::Con(_, x) => *x,
-            // test(pat::weird_pat_fn_2)
+            // @test(pat::weird_pat_fn_2)
             _ => return None,
           };
           let arg_pat = match argument {
@@ -162,7 +162,7 @@ fn get_(
       let pat = Pat::con(Con::Variant(sym, variant_name), arguments, pat);
       (pat, ty)
     }
-    // Def(36)
+    // @def(36)
     sml_hir::Pat::Record { rows, allows_other } => {
       let mut labels = BTreeSet::<sml_hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
@@ -173,7 +173,7 @@ fn get_(
         ty
       });
       let ty = if *allows_other {
-        // Def(38)
+        // @def(38)
         let mv = st.meta_gen.gen(cfg.gen);
         let k = SubstEntry::Kind(TyVarKind::Record(rows));
         assert!(st.subst().insert(mv, k).is_none(),);
@@ -184,7 +184,7 @@ fn get_(
       let con = Con::Record { labels, allows_other: *allows_other };
       (Pat::con(con, pats, pat), ty)
     }
-    // Def(42)
+    // @def(42)
     sml_hir::Pat::Typed(inner, want) => {
       let (pm_pat, got) = get(st, cfg, ars, cx, ve, *inner);
       let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
@@ -192,7 +192,7 @@ fn get_(
       apply(st.subst(), &mut want);
       (pm_pat, want)
     }
-    // Def(43)
+    // @def(43)
     sml_hir::Pat::As(name, pat) => {
       let (pm_pat, ty) = get(st, cfg, ars, cx, ve, *pat);
       if !ok_val_info(cx.env.get_val(name)) {

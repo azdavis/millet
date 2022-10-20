@@ -31,9 +31,9 @@ pub(crate) fn get(
       st.insert_hole(mv, exp.into());
       Ty::MetaVar(mv)
     }
-    // Def(1)
+    // @def(1)
     sml_hir::Exp::SCon(scon) => get_scon(st, Generalizable::Always, scon),
-    // Def(2)
+    // @def(2)
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
@@ -52,12 +52,12 @@ pub(crate) fn get(
         Ty::None
       }
     },
-    // Def(3)
+    // @def(3)
     sml_hir::Exp::Record(rows) => {
       let rows = record(st, rows, exp.into(), |st, _, exp| get(st, cfg, cx, ars, exp));
       Ty::Record(rows)
     }
-    // Def(4)
+    // @def(4)
     sml_hir::Exp::Let(dec, inner) => {
       let mut let_env = Env::default();
       let marker = st.syms.mark();
@@ -70,7 +70,7 @@ pub(crate) fn get(
       }
       got
     }
-    // Def(8)
+    // @def(8)
     sml_hir::Exp::App(func, argument) => {
       let func_ty = get(st, cfg, cx, ars, *func);
       let arg_ty = get(st, cfg, cx, ars, *argument);
@@ -98,7 +98,7 @@ pub(crate) fn get(
         }
       }
     }
-    // Def(10)
+    // @def(10)
     sml_hir::Exp::Handle(inner, matcher) => {
       let mut exp_ty = get(st, cfg, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
@@ -109,19 +109,19 @@ pub(crate) fn get(
       st.insert_handle(pats, param, idx.into());
       exp_ty
     }
-    // Def(11)
+    // @def(11)
     sml_hir::Exp::Raise(inner) => {
       let got = get(st, cfg, cx, ars, *inner);
       unify(st, Ty::EXN, got, inner.unwrap_or(exp).into());
       Ty::MetaVar(st.meta_gen.gen(Generalizable::Always))
     }
-    // Def(12)
+    // @def(12)
     sml_hir::Exp::Fn(matcher) => {
       let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
       st.insert_case(pats, param.clone(), exp.into());
       Ty::fun(param, res)
     }
-    // Def(9)
+    // @def(9)
     sml_hir::Exp::Typed(inner, want) => {
       let got = get(st, cfg, cx, ars, *inner);
       let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
@@ -135,7 +135,7 @@ pub(crate) fn get(
   ret
 }
 
-/// Def(13)
+/// @def(13)
 fn get_matcher(
   st: &mut St,
   cfg: Cfg,
@@ -148,7 +148,7 @@ fn get_matcher(
   let mut res_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
   let mut pats = Vec::<Pat>::new();
   st.meta_gen.inc_rank();
-  // Def(14)
+  // @def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
     let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };

@@ -24,7 +24,7 @@ fn basic_overload(st: &mut St, g: Generalizable, b: BasicOverload) -> Ty {
   Ty::MetaVar(mv)
 }
 
-/// Def(6), Def(39), Def(49)
+/// @def(6), @def(39), @def(49)
 pub(crate) fn record<T, F>(
   st: &mut St,
   rows: &[(sml_hir::Lab, T)],

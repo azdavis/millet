@@ -33,7 +33,7 @@ pub(crate) fn get(
       st.err(ty, ErrorKind::TyHole);
       Ty::None
     }
-    // Def(44)
+    // @def(44)
     sml_hir::Ty::Var(v) => match cx.fixed.get(v) {
       None => {
         st.err(ty, ErrorKind::Undefined(Item::TyVar, v.as_name().clone()));
@@ -48,12 +48,12 @@ pub(crate) fn get(
         }
       },
     },
-    // Def(45)
+    // @def(45)
     sml_hir::Ty::Record(rows) => {
       let rows = record(st, rows, ty.into(), |st, _, ty| get(st, cx, ars, mode, ty));
       Ty::Record(rows)
     }
-    // Def(46)
+    // @def(46)
     sml_hir::Ty::Con(arguments, path) => match get_ty_info(&cx.env, path) {
       Ok(ty_info) => {
         ty_scheme = Some(ty_info.ty_scheme.clone());
@@ -77,7 +77,7 @@ pub(crate) fn get(
         Ty::None
       }
     },
-    // Def(47)
+    // @def(47)
     sml_hir::Ty::Fn(param, res) => {
       let param = get(st, cx, ars, mode, *param);
       let res = get(st, cx, ars, mode, *res);

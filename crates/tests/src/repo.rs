@@ -25,7 +25,7 @@ fn sml_def() {
   sh.change_dir(root_dir());
   let dirs: [PathBuf; 3] =
     ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
-  let out = cmd!(sh, "git grep -hoE 'Def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
+  let out = cmd!(sh, "git grep -hoE '@def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
   let got: BTreeSet<u16> = String::from_utf8(out.stdout)
     .unwrap()
     .lines()
@@ -47,12 +47,12 @@ fn test_refs() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
   let dir: PathBuf = ["crates", "sml-statics", "src"].into_iter().collect();
-  let out = cmd!(sh, "git grep -hoE 'test\\(([a-z0-9_:]+)\\)' {dir}").output().unwrap();
+  let out = cmd!(sh, "git grep -hoE '@test\\(([a-z0-9_:]+)\\)' {dir}").output().unwrap();
   let out = String::from_utf8(out.stdout).unwrap();
   let referenced: BTreeSet<_> = out
     .lines()
     .filter_map(|line| {
-      let (_, inner) = line.split_once("// test(")?;
+      let (_, inner) = line.split_once("@test(")?;
       let (name, _) = inner.split_once(')')?;
       Some(name)
     })

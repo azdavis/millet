@@ -70,7 +70,7 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
       }
       sml_hir::Pat::Record { rows, allows_other: rest_pat_row.is_some() }
     }
-    // Def(37)
+    // @def(37)
     ast::Pat::ParenPat(pat) => {
       let inner = pat.pat()?;
       if warn_unnecessary_parens(&inner) {

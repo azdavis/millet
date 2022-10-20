@@ -63,7 +63,7 @@ pub struct FunctorBind {
 pub type StrDecIdx = OptIdx<StrDec>;
 pub type StrDecArena = Arena<StrDec>;
 
-/// Def(87) is handled by not distinguishing between top decs and str decs.
+/// @def(87) is handled by not distinguishing between top decs and str decs.
 #[derive(Debug)]
 pub enum StrDec {
   Dec(DecIdx),
@@ -171,7 +171,7 @@ pub struct StrDesc {
 pub type ExpIdx = OptIdx<Exp>;
 pub type ExpArena = Arena<Exp>;
 
-/// Def(7) is handled by having no distinction between atomic expressions and others here.
+/// @def(7) is handled by having no distinction between atomic expressions and others here.
 #[derive(Debug)]
 pub enum Exp {
   Hole,
@@ -240,7 +240,7 @@ pub enum ExBind {
 pub type PatIdx = OptIdx<Pat>;
 pub type PatArena = Arena<Pat>;
 
-/// Def(40) is handled by having no distinction between atomic expressions and others here.
+/// @def(40) is handled by having no distinction between atomic expressions and others here.
 #[derive(Debug)]
 pub enum Pat {
   Wild,

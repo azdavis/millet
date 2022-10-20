@@ -51,7 +51,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let body = cx.exp(name(fresh.as_str()), ptr.clone());
       sml_hir::Exp::Fn(vec![(param, body)])
     }
-    // Def(5)
+    // @def(5)
     ast::Exp::ParenExp(exp) => {
       let inner = exp.exp();
       if inner.as_ref().map_or(false, warn_unnecessary_parens) {

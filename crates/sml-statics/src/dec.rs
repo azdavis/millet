@@ -25,7 +25,7 @@ pub(crate) fn get(
     None => return,
   };
   match &ars.dec[dec] {
-    // Def(15)
+    // @def(15)
     sml_hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();
       let fixed = add_fixed_ty_vars(st, &mut cx, TyVarSrc::Val, ty_vars, dec.into());
@@ -46,7 +46,7 @@ pub(crate) fn get(
           break;
         }
         idx += 1;
-        // Def(25)
+        // @def(25)
         let (pm_pat, mut want) =
           get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
         let got = exp::get(st, exp_cfg, &cx, ars, val_bind.exp);
@@ -73,7 +73,7 @@ pub(crate) fn get(
       // extend the cx with only the recursive ValEnv.
       cx.env.push(Env { val_env: rec_ve, ..Default::default() });
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
-        // Def(26)
+        // @def(26)
         if let Some(exp) = val_bind.exp {
           if !matches!(ars.exp[exp], sml_hir::Exp::Fn(_)) {
             st.err(dec, ErrorKind::ValRecExpNotFn);
@@ -106,22 +106,22 @@ pub(crate) fn get(
       // extend the overall env with that.
       env.val_env.extend(ve);
     }
-    // Def(16)
+    // @def(16)
     sml_hir::Dec::Ty(ty_binds) => {
       let mut cx = cx.clone();
       let mut ty_env = TyEnv::default();
-      // Def(27)
+      // @def(27)
       get_ty_binds(st, &mut cx, ars, &mut ty_env, ty_binds, dec.into());
       env.ty_env.extend(ty_env);
     }
-    // Def(17)
+    // @def(17)
     sml_hir::Dec::Datatype(dat_binds, ty_binds) => {
       let (ty_env, big_val_env) =
         get_dat_binds(st, cx.clone(), ars, dat_binds, ty_binds, dec.into());
       env.ty_env.extend(ty_env);
       env.val_env.extend(big_val_env);
     }
-    // Def(18)
+    // @def(18)
     sml_hir::Dec::DatatypeCopy(name, path) => match get_ty_info(&cx.env, path) {
       Ok(ty_info) => {
         env.ty_env.insert(name.clone(), ty_info.clone());
@@ -129,14 +129,14 @@ pub(crate) fn get(
       }
       Err(e) => st.err(dec, e),
     },
-    // Def(19)
+    // @def(19)
     sml_hir::Dec::Abstype(_, _, _) => st.err(dec, ErrorKind::Unsupported("`abstype` declarations")),
-    // Def(20)
+    // @def(20)
     sml_hir::Dec::Exception(ex_binds) => {
       let mut val_env = ValEnv::default();
       for ex_bind in ex_binds {
         match ex_bind {
-          // Def(30)
+          // @def(30)
           sml_hir::ExBind::New(name, param) => {
             let mut ty = Ty::EXN;
             let param = param.map(|param| ty::get(st, cx, ars, ty::Mode::Regular, param));
@@ -153,7 +153,7 @@ pub(crate) fn get(
               st.err(dec, e);
             }
           }
-          // Def(31)
+          // @def(31)
           sml_hir::ExBind::Copy(name, path) => match get_val_info(&cx.env, path) {
             Ok(Some(val_info)) => match val_info.id_status {
               IdStatus::Exn(_) => {
@@ -172,7 +172,7 @@ pub(crate) fn get(
       }
       env.val_env.extend(val_env);
     }
-    // Def(21)
+    // @def(21)
     sml_hir::Dec::Local(local_dec, in_dec) => {
       let mut local_env = Env::default();
       get(st, cfg, cx, ars, &mut local_env, *local_dec);
@@ -180,7 +180,7 @@ pub(crate) fn get(
       cx.env.append(&mut local_env);
       get(st, cfg, &cx, ars, env, *in_dec);
     }
-    // Def(22)
+    // @def(22)
     sml_hir::Dec::Open(paths) => {
       for path in paths {
         match get_env_from_str_path(&cx.env, path) {
@@ -189,7 +189,7 @@ pub(crate) fn get(
         }
       }
     }
-    // Def(23), Def(24)
+    // @def(23), @def(24)
     sml_hir::Dec::Seq(decs) => {
       let mut cx = cx.clone();
       let mut one_env = Env::default();
@@ -329,7 +329,7 @@ pub(crate) fn get_dat_binds(
     datatypes.len(),
     "we created datatypes from a for loop over dat_binds"
   );
-  // Def(28), Def(81)
+  // @def(28), @def(81)
   for (dat_bind, datatype) in dat_binds.iter().zip(datatypes) {
     // bring the type variables for this datatype into scope.
     for fv in datatype.fixed.iter() {
@@ -339,7 +339,7 @@ pub(crate) fn get_dat_binds(
       }
     }
     let mut val_env = ValEnv::default();
-    // Def(29), Def(82)
+    // @def(29), @def(82)
     for con_bind in &dat_bind.cons {
       let mut ty = datatype.out_ty.clone();
       if let Some(of_ty) = con_bind.ty {
