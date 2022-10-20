@@ -281,31 +281,31 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
         get_top_defs_dec(ac, dec.in_dec(), range);
       }
       sml_syntax::ast::DecOne::StructureDec(dec) => {
-        for name in dec.str_binds().filter_map(|x| x.name()) {
+        ac.extend(dec.str_binds().filter_map(|x| {
           let export = NameExport {
             namespace: sml_statics::basis::Namespace::Structure,
-            name: str_util::Name::new(name.text()),
+            name: str_util::Name::new(x.name()?.text()),
           };
-          ac.insert(export, range);
-        }
+          Some((export, range))
+        }));
       }
       sml_syntax::ast::DecOne::SignatureDec(dec) => {
-        for name in dec.sig_binds().filter_map(|x| x.name()) {
+        ac.extend(dec.sig_binds().filter_map(|x| {
           let export = NameExport {
             namespace: sml_statics::basis::Namespace::Signature,
-            name: str_util::Name::new(name.text()),
+            name: str_util::Name::new(x.name()?.text()),
           };
-          ac.insert(export, range);
-        }
+          Some((export, range))
+        }));
       }
       sml_syntax::ast::DecOne::FunctorDec(dec) => {
-        for name in dec.functor_binds().filter_map(|x| x.functor_name()) {
+        ac.extend(dec.functor_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_statics::basis::Namespace::Functor,
-            name: str_util::Name::new(name.text()),
+            namespace: sml_statics::basis::Namespace::Signature,
+            name: str_util::Name::new(x.functor_name()?.text()),
           };
-          ac.insert(export, range);
-        }
+          Some((export, range))
+        }));
       }
       _ => {}
     }
