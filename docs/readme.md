@@ -7,7 +7,6 @@ This is documentation for Millet.
 - [Code of conduct](./code_of_conduct.md): How we expect all project contributors to behave.
 - [Contributing](./contributing.md): How to contribute to the project.
 - [Errors](./errors.md): Every error Millet can emit, what it means, and maybe even how to fix it.
-- [For 15-150](./for-15-150.md): Instructions and guidance for how to use Millet, specific to CMU 15-150 students.
 - [Known issues](./known-issues.md): Known issues and limitations with Millet.
 - [Manual](./manual.md): How to install and use Millet.
 - [Tokens](./tokens.md): Information about (almost) every token in SML. This is built-in to Millet itself.
