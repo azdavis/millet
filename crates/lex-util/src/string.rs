@@ -46,58 +46,62 @@ fn get_(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
         *idx += 1;
         break;
       }
-      b'\\' => {
-        *idx += 1;
-        match *bs.get(*idx)? {
-          b'a' | b'b' | b't' | b'n' | b'v' | b'f' | b'r' | b'"' | b'\\' => *idx += 1,
-          b'^' => {
-            *idx += 1;
-            let &c = bs.get(*idx)?;
-            if !(64..=95).contains(&c) {
-              res.errors.push((*idx, Error::InvalidEscape));
-            }
-            *idx += 1;
-          }
-          b'u' => {
-            *idx += 1;
-            for _ in 0..4 {
-              if !bs.get(*idx)?.is_ascii_hexdigit() {
-                res.errors.push((*idx, Error::InvalidEscape));
-              }
-              *idx += 1;
-            }
-          }
-          b => {
-            if is_whitespace(b) {
-              loop {
-                *idx += 1;
-                let b = *bs.get(*idx)?;
-                if b == b'\\' {
-                  *idx += 1;
-                  break;
-                }
-                if !is_whitespace(b) {
-                  res.errors.push((*idx, Error::NonWhitespaceInContinuation));
-                }
-              }
-            } else if b.is_ascii_digit() {
-              *idx += 1;
-              for _ in 0..2 {
-                if !bs.get(*idx)?.is_ascii_digit() {
-                  res.errors.push((*idx, Error::InvalidEscape));
-                }
-                *idx += 1;
-              }
-            } else {
-              res.errors.push((*idx, Error::InvalidEscape));
-              *idx += 1;
-            }
-          }
-        }
-      }
+      b'\\' => get_escape(res, idx, bs)?,
       _ => *idx += 1,
     }
     res.len += 1;
+  }
+  Some(())
+}
+
+fn get_escape(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
+  assert_eq!(bs[*idx], b'\\');
+  *idx += 1;
+  match *bs.get(*idx)? {
+    b'a' | b'b' | b't' | b'n' | b'v' | b'f' | b'r' | b'"' | b'\\' => *idx += 1,
+    b'^' => {
+      *idx += 1;
+      let &c = bs.get(*idx)?;
+      if !(64..=95).contains(&c) {
+        res.errors.push((*idx, Error::InvalidEscape));
+      }
+      *idx += 1;
+    }
+    b'u' => {
+      *idx += 1;
+      for _ in 0..4 {
+        if !bs.get(*idx)?.is_ascii_hexdigit() {
+          res.errors.push((*idx, Error::InvalidEscape));
+        }
+        *idx += 1;
+      }
+    }
+    b => {
+      if is_whitespace(b) {
+        loop {
+          *idx += 1;
+          let b = *bs.get(*idx)?;
+          if b == b'\\' {
+            *idx += 1;
+            break;
+          }
+          if !is_whitespace(b) {
+            res.errors.push((*idx, Error::NonWhitespaceInContinuation));
+          }
+        }
+      } else if b.is_ascii_digit() {
+        *idx += 1;
+        for _ in 0..2 {
+          if !bs.get(*idx)?.is_ascii_digit() {
+            res.errors.push((*idx, Error::InvalidEscape));
+          }
+          *idx += 1;
+        }
+      } else {
+        res.errors.push((*idx, Error::InvalidEscape));
+        *idx += 1;
+      }
+    }
   }
   Some(())
 }
