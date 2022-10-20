@@ -357,8 +357,9 @@ fn get_where_type(
           // TODO side condition for sym not in T of B?
           // TODO side condition for well-formed?
           Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), inner_env),
-          // known to be reachable. TODO fix
-          _ => st.err(idx, ErrorKind::Unsupported("BUG: non-Con `where type`")),
+          // known to be reachable. TODO is this an error? there's nothing to realize. should we
+          // just do nothing?
+          t => log::warn!("non-constructor `where type`: {t:?}"),
         }
       } else {
         st.err(idx, ErrorKind::WrongNumTyArgs(want_len, got_len));

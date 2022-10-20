@@ -615,6 +615,7 @@ dependencies = [
  "drop_bomb",
  "fast-hash",
  "fmt-util",
+ "log",
  "paths",
  "pattern-match",
  "sml-hir",

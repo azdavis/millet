@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -685,9 +685,10 @@ structure Str :> SIG =
   );
 }
 
+// TODO this probably should not error (minimized from real valid code), but not sure.
 #[test]
 fn where_not_con() {
-  fail(
+  check(
     r#"
 signature FOO = sig
   type t
@@ -715,13 +716,14 @@ end
   );
 }
 
+// TODO not sure if this needs to error, but `BAD` is impossible.
 #[test]
 fn impossible_sig() {
-  fail(
+  check(
     r#"
 signature HAS_T = sig type t end
-signature HAS_UNIT = HAS_T where type t = unit
-signature BAD = HAS_UNIT where type t = int
+signature HAS_INT = HAS_T where type t = int
+signature BAD = HAS_INT where type t = string
 "#,
   );
 }
