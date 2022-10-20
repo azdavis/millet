@@ -14,9 +14,9 @@ where
   T: Ord + std::fmt::Debug,
 {
   let only_lhs_set: Vec<_> = lhs.difference(rhs).collect();
-  assert!(only_lhs_set.is_empty(), "{only_lhs}: {only_lhs_set:?}");
+  assert!(only_lhs_set.is_empty(), "{only_lhs}: {only_lhs_set:#?}");
   let only_rhs_set: Vec<_> = rhs.difference(lhs).collect();
-  assert!(only_rhs_set.is_empty(), "{only_rhs}: {only_rhs_set:?}");
+  assert!(only_rhs_set.is_empty(), "{only_rhs}: {only_rhs_set:#?}");
 }
 
 #[test]
