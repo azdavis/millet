@@ -39,6 +39,7 @@ pub(crate) enum ErrorKind {
   TyVarNotAllowedForTyRhs,
   CannotShareTy(sml_hir::Path, TyScheme),
   CannotRealizeTy(sml_hir::Path, TyScheme),
+  EqOn(str_util::Name),
   /// must be last
   Unsupported(&'static str),
 }
@@ -104,6 +105,7 @@ impl Error {
       ErrorKind::TyVarNotAllowedForTyRhs => Code::n(5030),
       ErrorKind::CannotShareTy(_, _) => Code::n(5031),
       ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
+      ErrorKind::EqOn(_) => Code::n(5033),
       ErrorKind::Unsupported(_) => Code::n(5999),
     }
   }
@@ -112,7 +114,7 @@ impl Error {
   #[must_use]
   pub fn severity(&self) -> Severity {
     match self.kind {
-      ErrorKind::Unused(_) => Severity::Warning,
+      ErrorKind::Unused(_) | ErrorKind::EqOn(_) => Severity::Warning,
       _ => Severity::Error,
     }
   }
@@ -251,6 +253,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ts = ts.display(&mvs, self.syms);
         write!(f, "cannot realize type {path} as {ts}")
       }
+      ErrorKind::EqOn(name) => write!(f, "calling `=` on {name}"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }

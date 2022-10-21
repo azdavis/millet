@@ -4,7 +4,9 @@ use crate::get_env::get_val_info;
 use crate::info::TyEntry;
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{Cx, Def, Env, EnvLike as _, Generalizable, SymsMarker, Ty, TyScheme, ValEnv};
+use crate::types::{
+  Cx, Def, DefPath, Env, EnvLike as _, Generalizable, SymsMarker, Ty, TyScheme, ValEnv,
+};
 use crate::unify::unify;
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{dec, pat, ty};
@@ -74,6 +76,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
     // @def(8)
     sml_hir::Exp::App(func, argument) => {
+      lint_app(st, cx, ars, *func, *argument);
       let func_ty = get(st, cfg, cx, ars, *func);
       let arg_ty = get(st, cfg, cx, ars, *argument);
       // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
@@ -135,6 +138,52 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
   st.info().insert(exp.into(), Some(ty_entry), definition);
   ret
+}
+
+/// this return `Option<()>` so we can use `?`, but we don't care if it returns None because we'll
+/// error elsewhere.
+fn lint_app(
+  st: &mut St,
+  cx: &Cx,
+  ars: &sml_hir::Arenas,
+  func: sml_hir::ExpIdx,
+  argument: sml_hir::ExpIdx,
+) -> Option<()> {
+  match &ars.exp[func?] {
+    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def? {
+      Def::Primitive => {
+        assert!(path.prefix().is_empty(), "primitives are at the top level");
+        if path.last().as_str() != "=" {
+          return None;
+        }
+      }
+      Def::Path(_, _) => return None,
+    },
+    _ => return None,
+  }
+  let arguments = match &ars.exp[argument?] {
+    sml_hir::Exp::Record(rows) => match rows.as_slice() {
+      &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] => [a?, b?],
+      _ => return None,
+    },
+    _ => return None,
+  };
+  for argument in arguments {
+    let path = match &ars.exp[argument] {
+      sml_hir::Exp::Path(p) => p,
+      _ => continue,
+    };
+    let vi = get_val_info(&cx.env, path).ok()??;
+    match vi.def? {
+      Def::Path(DefPath::StdBasis(_), _) | Def::Primitive => {}
+      Def::Path(DefPath::Regular(_), _) => continue,
+    }
+    match path.last().as_str() {
+      "NONE" | "nil" | "true" | "false" => st.err(argument, ErrorKind::EqOn(path.last().clone())),
+      _ => {}
+    }
+  }
+  Some(())
 }
 
 /// @def(13)

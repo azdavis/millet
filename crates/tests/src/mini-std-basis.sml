@@ -1,9 +1,5 @@
 (* doesn't need to be right, just needs to type-check! *)
 
-datatype 'a option =
-  NONE
-| SOME of 'a
-
 structure Int = struct
   fun max (_ : int, _ : int) = 0
   fun toString (_ : int) = ""
@@ -23,12 +19,35 @@ structure List = struct
     case xs of
       nil => nil
     | x :: xs => foldl f (f (x, z)) xs
+
+  fun null xs =
+    case xs of
+      nil => true
+    | _ :: _ => false
 end
 
 fun (xs @ ys) =
   case xs of
     nil => ys
   | x :: xs => x :: xs @ ys
+
+datatype 'a option =
+  NONE
+| SOME of 'a
+
+structure Option = struct
+  exception Option
+
+  fun isSome x =
+    case x of
+      NONE => false
+    | SOME _ => true
+end
+
+fun valOf x =
+  case x of
+    NONE => raise Option.Option
+  | SOME x => x
 
 fun ((_ : 'a ref) := (_ : 'a)) = ()
 

@@ -2148,6 +2148,97 @@ end
   where type t = string
 ```
 
+## 5033
+
+The equality function `=` was applied to a discouraged argument.
+
+```sml
+(* warning *)
+fun isEmpty xs = xs = []
+```
+
+Using `=` may unnecessarily restrict the type to be an "equality" type. Although Millet does not track the distinction between equality and non-equality types, a conforming SML implementation will report the type of `isEmpty` above as `''a list -> bool` instead of the perhaps expected `'a list -> bool`.
+
+Note the extra tick mark: `''a` is a type variable that can only be substituted with equality types, whereas `'a` is an unrestricted type variable. This is due to the usage of `=`.
+
+Although `bool` is already an equality type, it is also discouraged to call `=` on boolean literals, because the expression can be simplified:
+
+| Complex     | Simple  |
+| ----------- | ------- |
+| `x = true`  | `x`     |
+| `x = false` | `not x` |
+
+To fix, if the error is on a `bool` literal, consult the above table to simplify the expression. For lists and options, consider whether you need to access the values inside the constructors (e.g. the head or tail of the list, or the value in a `SOME`.) If you do, use pattern matching.
+
+Before:
+
+```sml
+(* warning *)
+fun sum xs =
+  if xs = [] then
+    0
+  else
+    hd xs + sum (tl xs)
+  end
+
+fun foo opt =
+  if opt = NONE then
+    "hi"
+  else
+    valOf opt ^ "!"
+```
+
+After:
+
+```sml
+(* ok *)
+fun sum xs =
+  case xs of
+    [] => 0
+  | x :: r => x + sum r
+
+fun foo opt =
+  case opt of
+    NONE => "hi"
+  | SOME x => x ^ "!"
+```
+
+If you don't need the values inside the constructors, use the convenience functions `List.null` and `Option.isSome`.
+
+Before:
+
+```sml
+(* warning *)
+fun reportList xs =
+  if xs = [] then
+    "empty list"
+  else
+    "non empty list"
+
+fun reportOption opt =
+  if opt = NONE then
+    "nothing"
+  else
+    "something inside"
+```
+
+After:
+
+```sml
+(* ok *)
+fun reportList xs =
+  if List.null xs then
+    "empty list"
+  else
+    "non empty list"
+
+fun reportOption opt =
+  if Option.isSome opt then
+    "something inside"
+  else
+    "nothing"
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.
