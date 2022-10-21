@@ -124,10 +124,16 @@ impl St {
   }
 
   pub(crate) fn push_structure(&mut self, name: str_util::Name) {
+    if self.mode().is_path_order() {
+      return;
+    }
     self.cur_structures.push(name);
   }
 
   pub(crate) fn pop_structure(&mut self) {
+    if self.mode().is_path_order() {
+      return;
+    }
     self.cur_structures.pop().expect("no matching push_structure");
   }
 

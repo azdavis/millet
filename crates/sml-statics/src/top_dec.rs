@@ -77,9 +77,19 @@ fn get_str_dec(
       // @def(67)
       for sig_bind in sig_binds {
         let mut env = Env::with_def(st.def(str_dec.into()));
-        st.push_structure(sig_bind.name.clone());
+        let should_push = match st.mode() {
+          Mode::Regular(_) => true,
+          // `datatype option` is well-known
+          Mode::StdBasis(_) => sig_bind.name.as_str() != "OPTION",
+          Mode::PathOrder => false,
+        };
+        if should_push {
+          st.push_structure(sig_bind.name.clone());
+        }
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
-        st.pop_structure();
+        if should_push {
+          st.pop_structure();
+        }
         let sig = env_to_sig(bs, env);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);
