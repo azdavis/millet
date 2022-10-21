@@ -7,11 +7,11 @@ See also the [TODO][].
 - The distinction between equality types and non-equality types is ignored.
 - Some language constructs like `abstype` are not supported.
 - Paths with certain 'default' path variables are ignored. (This is because Millet includes the std basis and other definitions.)
-- CM support is limited.
+- CM support is incomplete.
   - The preprocessor is ignored.
-  - Some export types like `source(...)` are not supported.
+  - Tool options are not supported.
   - String paths (wrapped in quotes) are not supported.
-- ML Basis support is limited.
+- ML Basis support is incomplete.
   - Annotations are ignored.
   - String paths (wrapped in quotes) are not supported.
 - The standard basis is made available to all files, regardless of whether files ask for it.

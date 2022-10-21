@@ -47,8 +47,8 @@
       "end"
     ]
   },
-  "print with newline": {
+  "print with newline exp": {
     "prefix": "println",
-    "body": ["val () = print (${1:exp} ^ \"\\n\")"]
+    "body": ["print (${1:exp} ^ \"\\n\")"]
   }
 }

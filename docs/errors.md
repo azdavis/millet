@@ -80,13 +80,13 @@ To fix, only use version 1.
 
 There was an error when parsing a SML/NJ CM file.
 
-To fix, use only the subset of CM syntax Millet understands (which is, at time of writing, very limited).
+To fix, use only the subset of CM syntax Millet understands. Some features, like the "preprocessor", tool options, and string paths, are not supported.
 
 ## 1009
 
 There was an error when parsing a ML Basis file.
 
-To fix, use only the subset of MLB syntax Millet understands. Some features, like string paths, are not supported.
+To fix, use only the subset of MLB syntax Millet understands. Some features, like string paths and annotations, are not supported.
 
 ## 1010
 
@@ -178,11 +178,7 @@ To fix, define the export in source files, or remove the export in the group fil
 
 There was an unsupported export kind in a SML/NJ CM file.
 
-At time of writing, Millet does not support:
-
-- `funsig` exports.
-- `source(s)` and `source(-)` exports.
-- `group(g)` exports.
+At time of writing, Millet does not support `funsig` exports.
 
 ## 2001
 
@@ -1112,7 +1108,7 @@ There was an occurrence of an unsupported SML construct.
 val x = #[1, 2]
 ```
 
-At time of writing, the following constructs are not supported:
+At time of writing, Millet does not support the following constructs:
 
 | Name                         | Example                   |
 | ---------------------------- | ------------------------- |
@@ -2135,14 +2131,21 @@ A `where type` was invalid.
 
 ```sml
 (* error *)
-signature BAD = sig type t end where type t = int where type t = string
+signature BAD = sig
+  type t
+end
+  where type t = int
+  where type t = string
 ```
 
 This error also arises when using `type a = b` in signatures, because that is syntactic sugar for a usage of `where type`.
 
 ```sml
 (* error *)
-signature BAD = sig type t = int end where type t = string
+signature BAD = sig
+  type t = int
+end
+  where type t = string
 ```
 
 ## 5999
@@ -2154,10 +2157,6 @@ There was an occurrence of an unsupported SML construct.
 abstype t = T with val _ = 3 end
 ```
 
-At time of writing, the following constructs are not supported:
-
-- `abstype` declarations.
-
-This error also may be emitted for known bugs in Millet. We report this error instead of crashing.
+At time of writing, Millet does not support `abstype` declarations.
 
 [config]: /docs/config.md

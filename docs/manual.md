@@ -184,6 +184,7 @@ The snippets provided are:
   - `structure` dec
   - `signature` dec
   - `functor` dec
+  - `println` exp
 
 ### Inline errors
 
