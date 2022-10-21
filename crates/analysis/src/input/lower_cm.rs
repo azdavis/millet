@@ -301,7 +301,7 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
       sml_syntax::ast::DecOne::FunctorDec(dec) => {
         ac.extend(dec.functor_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_statics::basis::Namespace::Signature,
+            namespace: sml_statics::basis::Namespace::Functor,
             name: str_util::Name::new(x.functor_name()?.text()),
           };
           Some((export, range))
