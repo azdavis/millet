@@ -238,9 +238,9 @@ end
 val _ = Add.add Add.zero Add.zero
 val _ = Mul.add Mul.zero Mul.zero
 
-(* TODO improve error message with FQN *)
+(* TODO improve error message with FQN + structure name *)
 val _ = Mul.add Mul.zero Add.zero
-(**                      ^^^^^^^^ expected t, found t *)
+(**                      ^^^^^^^^ expected MONOID.t, found MONOID.t *)
 "#,
   );
 }
@@ -270,7 +270,7 @@ end
 val _ = A.bar A.foo = B.bar B.foo
 
 val _ = A.bar B.foo
-(**           ^^^^^ expected t, found t *)
+(**           ^^^^^ expected SIG.t, found SIG.t *)
 "#,
   );
 }
@@ -301,7 +301,7 @@ val _ = inc S.foo
 
 val _ = A.bar A.foo
 val _ = A.bar 123
-(**           ^^^ expected t, found int *)
+(**           ^^^ expected SIG.t, found int *)
 "#,
   );
 }
@@ -334,7 +334,7 @@ val _ = inc S.foo
 val _ = A.bar A.foo
 val _ = B.bar B.foo
 val _ = B.bar A.foo
-(**           ^^^^^ expected t, found t *)
+(**           ^^^^^ expected SIG.t, found SIG.t *)
 "#,
   );
 }
@@ -362,7 +362,7 @@ structure C:> SIG = Str
 structure D:> SIG = Str
 
 val _ = D.x: C.t
-(**     ^^^^^^^^ expected t, found t *)
+(**     ^^^^^^^^ expected SIG.t, found SIG.t *)
 "#,
   );
 }
@@ -383,7 +383,7 @@ end
 
 val _: S.t = S.x
 val _ = S.x: int
-(**     ^^^^^^^^ expected int, found t *)
+(**     ^^^^^^^^ expected int, found SIG.t *)
 "#,
   );
 }
@@ -444,7 +444,7 @@ fn where_in_functor() {
     r#"
 signature T = sig type t end
 functor Id (X : T) :> T where type t = int = X
-(**                                          ^ expected int, found t *)
+(**                                          ^ expected int, found T.t *)
 "#,
   );
 }
@@ -680,7 +680,7 @@ signature SIG =
     sig    datatype ('a, 'b) t = T of 'a * 'b end
 structure Str :> SIG =
     struct datatype ('a, 'b) t = T of 'b * 'a end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b -> ('a, 'b) t, found 'b * 'a -> ('a, 'b) t *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b -> ('a, 'b) Str.t, found 'b * 'a -> ('a, 'b) Str.t *)
 "#,
   );
 }
@@ -833,7 +833,7 @@ end
 
 structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
-(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as foo *)
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as FOO.foo *)
   =  struct structure F = Foo structure B = Bar end
 "#,
   );

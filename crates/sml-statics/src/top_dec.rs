@@ -55,7 +55,9 @@ fn get_str_dec(
       let mut str_env = StrEnv::default();
       for str_bind in str_binds {
         let mut env = Env::with_def(st.def(str_dec.into()));
+        st.push_structure(str_bind.name.clone());
         get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
+        st.pop_structure();
         if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
           st.err(str_dec, e);
         }
@@ -75,7 +77,9 @@ fn get_str_dec(
       // @def(67)
       for sig_bind in sig_binds {
         let mut env = Env::with_def(st.def(str_dec.into()));
+        st.push_structure(sig_bind.name.clone());
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
+        st.pop_structure();
         let sig = env_to_sig(bs, env);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);
@@ -104,7 +108,10 @@ fn get_str_dec(
           ..Default::default()
         });
         let mut body_env = Env::with_def(st.def(str_dec.into()));
+        // TODO represent the "path" of a functor app differently?
+        st.push_structure(str_util::Name::new(&format!("{}(...)", fun_bind.functor_name)));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
+        st.pop_structure();
         let mut body_ty_names = TyNameSet::default();
         env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
         bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
@@ -481,7 +488,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       if let Some(ref param) = param {
         ty = Ty::fun(param.clone(), ty);
       }
-      let exn = st.syms.insert_exn(ex_desc.name.clone(), param);
+      let exn = st.syms.insert_exn(st.mk_path(ex_desc.name.clone()), param);
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
@@ -494,7 +501,9 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     // @def(74), @def(84)
     sml_hir::Spec::Str(str_desc) => {
       let mut one_env = Env::default();
+      st.push_structure(str_desc.name.clone());
       get_sig_exp(st, bs, ars, &mut one_env, str_desc.sig_exp);
+      st.pop_structure();
       let name = str_desc.name.clone();
       if let Some(e) = ins_no_dupe(&mut ac.str_env, name, one_env, Item::Struct) {
         st.err(spec, e);
@@ -639,7 +648,7 @@ fn get_ty_cons(structures: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir:
 // @def(80). TODO equality checks
 fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &sml_hir::TyDesc, idx: sml_hir::Idx) {
   let mut ty_vars = FxHashSet::<&sml_hir::TyVar>::default();
-  let started = st.syms.start(ty_desc.name.clone());
+  let started = st.syms.start(st.mk_path(ty_desc.name.clone()));
   for ty_var in &ty_desc.ty_vars {
     if !ty_vars.insert(ty_var) {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());

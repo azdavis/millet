@@ -368,7 +368,7 @@ impl<'a> fmt::Display for PatDisplay<'a> {
         Con::Variant(_, name) => {
           let name = match name {
             VariantName::Name(name) => name.as_str(),
-            VariantName::Exn(exn) => self.syms.get_exn(*exn).0.as_str(),
+            VariantName::Exn(exn) => self.syms.get_exn(*exn).0.last().as_str(),
           };
           let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
           // these names are guaranteed not to be rebound, so they always are list constructors.

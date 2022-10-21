@@ -19,6 +19,7 @@ The versioning system is basically the following:
 - Check for invalid `\^` string escapes.
 - Fix pattern matching analysis for strings and characters.
 - Improve checking of `where type` and `sharing type`.
+- Report type names as fully qualified.
 
 ## v0.5.4
 

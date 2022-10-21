@@ -7,7 +7,7 @@ use crate::types::{
 use crate::util::apply;
 use fast_hash::FxHashSet;
 
-/// The state.
+/// The mutable state.
 ///
 /// Usually I call this `Cx` but the Definition defines a 'Context' already.
 #[derive(Debug)]
@@ -24,6 +24,9 @@ pub(crate) struct St {
   /// function.
   defined: Vec<(sml_hir::Idx, str_util::Name)>,
   used: FxHashSet<sml_hir::Idx>,
+  /// for making fully qualified names. TODO rename this (and the method on Path) to "prefix" or
+  /// something. (it's not always structures?)
+  cur_structures: Vec<str_util::Name>,
 }
 
 impl St {
@@ -39,6 +42,7 @@ impl St {
       syms,
       defined: Vec::new(),
       used: FxHashSet::default(),
+      cur_structures: Vec::new(),
     }
   }
 
@@ -117,6 +121,18 @@ impl St {
       return;
     }
     self.used.insert(idx);
+  }
+
+  pub(crate) fn push_structure(&mut self, name: str_util::Name) {
+    self.cur_structures.push(name);
+  }
+
+  pub(crate) fn pop_structure(&mut self) {
+    self.cur_structures.pop().expect("no matching push_structure");
+  }
+
+  pub(crate) fn mk_path(&self, last: str_util::Name) -> sml_hir::Path {
+    sml_hir::Path::new(self.cur_structures.iter().cloned(), last)
   }
 
   pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {

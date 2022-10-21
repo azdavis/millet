@@ -70,6 +70,10 @@ pub enum Namespace {
 /// This is distinct from `std_basis` in analysis. This (mostly) just has the definitions that can't
 /// be expressed with regular SML files, like `int` and `real` and `string`. Also `bool` and `list`
 /// because rebinding their constructor names is forbidden.
+///
+/// # Panics
+///
+/// Upon internal error.
 #[must_use]
 pub fn minimal() -> (Syms, Basis) {
   let mut syms = Syms::default();
@@ -106,7 +110,10 @@ pub fn minimal() -> (Syms, Basis) {
   let aliases = [("unit", Ty::Record(RecordTy::new())), ("exn", Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter()
-    .map(|(a, b)| (a.clone(), b.clone()))
+    .map(|(a, b)| {
+      assert!(a.structures().is_empty(), "only built-in types are currently in this Syms");
+      (a.last().clone(), b.clone())
+    })
     .chain(aliases.into_iter().map(|(name, ty)| {
       let ti = TyInfo { ty_scheme: TyScheme::zero(ty), val_env: ValEnv::default(), def: None };
       (str_util::Name::new(name), ti)
@@ -163,7 +170,7 @@ pub fn minimal() -> (Syms, Basis) {
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
-  let started = syms.start(str_util::Name::new(sym.special().unwrap()));
+  let started = syms.start(sml_hir::Path::one(str_util::Name::new(sym.special().unwrap())));
   assert_eq!(sym, started.sym());
   syms.finish(started, ty_info);
 }

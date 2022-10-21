@@ -700,13 +700,13 @@ impl Sym {
 #[derive(Debug, Default, Clone)]
 pub struct Syms {
   /// remember: always use Sym::idx to index
-  store: Vec<(str_util::Name, TyInfo)>,
-  exns: Vec<(str_util::Name, Option<Ty>)>,
+  store: Vec<(sml_hir::Path, TyInfo)>,
+  exns: Vec<(sml_hir::Path, Option<Ty>)>,
   overloads: Overloads,
 }
 
 impl Syms {
-  pub(crate) fn start(&mut self, name: str_util::Name) -> StartedSym {
+  pub(crate) fn start(&mut self, name: sml_hir::Path) -> StartedSym {
     let ty_info =
       TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
     self.store.push((name, ty_info));
@@ -723,7 +723,7 @@ impl Syms {
   }
 
   /// Returns `None` iff passed `Sym::EXN`.
-  pub(crate) fn get(&self, sym: Sym) -> Option<(&str_util::Name, &TyInfo)> {
+  pub(crate) fn get(&self, sym: Sym) -> Option<(&sml_hir::Path, &TyInfo)> {
     if sym == Sym::EXN {
       return None;
     }
@@ -731,13 +731,13 @@ impl Syms {
     Some((name, info))
   }
 
-  pub(crate) fn insert_exn(&mut self, name: str_util::Name, param: Option<Ty>) -> Exn {
+  pub(crate) fn insert_exn(&mut self, name: sml_hir::Path, param: Option<Ty>) -> Exn {
     let ret = Exn(self.exns.len());
     self.exns.push((name, param));
     ret
   }
 
-  pub(crate) fn get_exn(&self, exn: Exn) -> (&str_util::Name, Option<&Ty>) {
+  pub(crate) fn get_exn(&self, exn: Exn) -> (&sml_hir::Path, Option<&Ty>) {
     let &(ref name, ref param) = self.exns.get(exn.0).unwrap();
     (name, param.as_ref())
   }
@@ -746,7 +746,7 @@ impl Syms {
     SymsMarker(self.store.len())
   }
 
-  pub(crate) fn iter(&self) -> impl Iterator<Item = (&str_util::Name, &TyInfo)> {
+  pub(crate) fn iter(&self) -> impl Iterator<Item = (&sml_hir::Path, &TyInfo)> {
     self.store.iter().map(|&(ref a, ref b)| (a, b))
   }
 
