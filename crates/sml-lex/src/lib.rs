@@ -282,7 +282,7 @@ fn get_string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
   for (idx, e) in res.errors {
     cx.errors.push(Error { range: range(start, idx), kind: ErrorKind::String(e) });
   }
-  res.len
+  res.bytes.len()
 }
 
 enum AlphaNum {
