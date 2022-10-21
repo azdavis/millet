@@ -3,7 +3,7 @@
 //!
 //! [1]: http://www.mlton.org/SMLNJDeviations
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn op_in_val() {
@@ -204,20 +204,40 @@ end
 
 #[test]
 fn sharing_via_abbreviation_short() {
-  fail(
+  check(
     r#"
-signature SIG = sig type t = int type u = int sharing type t = u end
-(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share between type abbreviations *)
+signature SIG = sig type a = int type b = int sharing type a = b end
+(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type a as int *)
 "#,
   );
 }
 
 #[test]
 fn sharing_via_abbreviation_long() {
-  fail(
+  check(
     r#"
-signature SIG = sig type t = int * int type u = int * int sharing type t = u end
-(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share between type abbreviations *)
+signature SIG = sig type a = int * int type b = int * int sharing type a = b end
+(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type a as int * int *)
+"#,
+  );
+}
+
+#[test]
+fn sharing_via_abbreviation_fst() {
+  check(
+    r#"
+signature S = sig type a = int * int type b sharing type a = b end
+(**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type a as int * int *)
+"#,
+  );
+}
+
+#[test]
+fn sharing_via_abbreviation_snd() {
+  check(
+    r#"
+signature S = sig type a type b = int * int sharing type a = b end
+(**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type b as int * int *)
 "#,
   );
 }

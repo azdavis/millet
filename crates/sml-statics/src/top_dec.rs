@@ -6,8 +6,8 @@ use crate::info::Mode;
 use crate::st::St;
 use crate::types::{
   generalize, generalize_fixed, BasicOverload, Bs, Env, EnvLike, EnvStack, FunEnv, FunSig,
-  HasRecordMetaVars, IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, Ty, TyEnv, TyInfo, TyNameSet,
-  TyScheme, TyVarKind, TyVarSrc, ValEnv, ValInfo,
+  HasRecordMetaVars, IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, SymsMarker, Ty, TyEnv, TyInfo,
+  TyNameSet, TyScheme, TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -292,18 +292,20 @@ fn get_sig_exp(
     },
     // @def(64)
     sml_hir::SigExp::WhereType(inner, ty_vars, path, ty) => {
+      let marker = st.syms.mark();
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
       let mut cx = bs.as_cx();
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Ty, ty_vars, sig_exp.into());
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
       generalize_fixed(fixed, &mut ty_scheme);
-      get_where_type(st, &mut inner_env, path, ty_scheme, sig_exp.into());
+      get_where_type(st, &marker, &mut inner_env, path, ty_scheme, sig_exp.into());
       ac.append(&mut inner_env);
       ov
     }
     // SML/NJ extension
     sml_hir::SigExp::Where(inner, lhs, rhs) => {
+      let marker = st.syms.mark();
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
       let lhs_ty_cons = match get_path_ty_cons(&inner_env, lhs) {
@@ -329,7 +331,7 @@ fn get_sig_exp(
         match get_ty_info(&bs.env, &rhs) {
           Ok(ty_info) => {
             let ty_scheme = ty_info.ty_scheme.clone();
-            get_where_type(st, &mut inner_env, &lhs, ty_scheme, sig_exp.into());
+            get_where_type(st, &marker, &mut inner_env, &lhs, ty_scheme, sig_exp.into());
           }
           Err(e) => st.err(sig_exp, e),
         }
@@ -342,6 +344,7 @@ fn get_sig_exp(
 
 fn get_where_type(
   st: &mut St,
+  marker: &SymsMarker,
   inner_env: &mut Env,
   path: &sml_hir::Path,
   ty_scheme: TyScheme,
@@ -354,12 +357,17 @@ fn get_where_type(
       if want_len == got_len {
         match &ty_info.ty_scheme.ty {
           Ty::None => {}
-          // TODO side condition for sym not in T of B?
           // TODO side condition for well-formed?
-          Ty::Con(_, sym) => env_realize(&map([(*sym, ty_scheme)]), inner_env),
-          // @test(sig::where_not_con). TODO is this an error? there's nothing to realize. should we
-          // just do nothing?
-          t => log::warn!("non-constructor `where type`: {t:?}"),
+          Ty::Con(_, sym) => {
+            if sym.generated_after(marker) {
+              env_realize(&map([(*sym, ty_scheme)]), inner_env);
+            } else {
+              // @test(sig::impossible)
+              st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone()));
+            }
+          }
+          // @test(sig::where_not_con)
+          _ => st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone())),
         }
       } else {
         st.err(idx, ErrorKind::WrongNumTyArgs(want_len, got_len));
@@ -418,11 +426,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         }
       }
     }
-    // @def(69)
-    //
-    // @def(70)
-    //
-    // TODO equality checks
+    // @def(69), @def(70). TODO equality checks
     sml_hir::Spec::Ty(ty_descs) | sml_hir::Spec::EqTy(ty_descs) => {
       get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into());
     }
@@ -492,10 +496,13 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     }
     // @def(78)
     sml_hir::Spec::Sharing(inner, kind, paths) => {
+      let marker = st.syms.mark();
       let mut inner_env = Env::default();
       get_spec(st, bs, ars, &mut inner_env, *inner);
       match kind {
-        sml_hir::SharingKind::Regular => get_sharing_type(st, &mut inner_env, paths, spec.into()),
+        sml_hir::SharingKind::Regular => {
+          get_sharing_type(st, &marker, &mut inner_env, paths, spec.into());
+        }
         sml_hir::SharingKind::Derived => {
           let mut all: Vec<_> = paths
             .iter()
@@ -515,7 +522,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
                 }
                 let path_1 = join_paths(struct_1, &ty_con);
                 let path_2 = join_paths(*struct_2, &ty_con);
-                get_sharing_type(st, &mut inner_env, &[path_1, path_2], spec.into());
+                get_sharing_type(st, &marker, &mut inner_env, &[path_1, path_2], spec.into());
               }
             }
           }
@@ -556,7 +563,13 @@ fn append_no_dupe(st: &mut St, ac: &mut Env, other: &mut Env, idx: sml_hir::Idx)
 }
 
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
-fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[sml_hir::Path], idx: sml_hir::Idx) {
+fn get_sharing_type(
+  st: &mut St,
+  marker: &SymsMarker,
+  inner_env: &mut Env,
+  paths: &[sml_hir::Path],
+  idx: sml_hir::Idx,
+) {
   let mut ty_scheme = None::<TyScheme>;
   let mut syms = Vec::<Sym>::with_capacity(paths.len());
   for path in paths {
@@ -564,22 +577,30 @@ fn get_sharing_type(st: &mut St, inner_env: &mut Env, paths: &[sml_hir::Path], i
       Ok(ty_info) => {
         // TODO assert exists c s.t. for all ty schemes, arity of ty scheme = c? and all other
         // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
-        if let Ty::Con(_, sym) = &ty_info.ty_scheme.ty {
-          if ty_scheme.is_none() {
-            ty_scheme = Some(ty_info.ty_scheme.clone());
+        match &ty_info.ty_scheme.ty {
+          Ty::Con(_, sym) => {
+            if sym.generated_after(marker) {
+              if ty_scheme.is_none() {
+                ty_scheme = Some(ty_info.ty_scheme.clone());
+              }
+              syms.push(*sym);
+            } else {
+              st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone()));
+            }
           }
-          syms.push(*sym);
+          _ => st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone())),
         }
-        // TODO the else is reachable, but doesn't make a lot of sense.
       }
       Err(e) => st.err(idx, e),
     }
   }
-  if let Some(ty_scheme) = ty_scheme {
-    let subst: TyRealization = syms.into_iter().map(|sym| (sym, ty_scheme.clone())).collect();
-    env_realize(&subst, inner_env);
+  match ty_scheme {
+    Some(ty_scheme) => {
+      let subst: TyRealization = syms.into_iter().map(|sym| (sym, ty_scheme.clone())).collect();
+      env_realize(&subst, inner_env);
+    }
+    None => log::info!("should have already errored"),
   }
-  // TODO the None case is reachable (because of the above), but bad.
 }
 
 fn get_path_ty_cons<E: EnvLike>(

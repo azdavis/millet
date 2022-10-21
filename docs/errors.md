@@ -2116,6 +2116,35 @@ To fix, bind the type variable at the `type` or `datatype`, or remove it from th
 fun 'a foo (x : 'a) = let type 'b t = 'b * 'b in (x, x) : 'a t end
 ```
 
+## 5031
+
+A `sharing type` was invalid.
+
+```sml
+(* error *)
+signature SIG = sig
+  type a = int
+  type b = int
+  sharing type a = b
+end
+```
+
+## 5032
+
+A `where type` was invalid.
+
+```sml
+(* error *)
+signature BAD = sig type t end where type t = int where type t = string
+```
+
+This error also arises when using `type a = b` in signatures, because that is syntactic sugar for a usage of `where type`.
+
+```sml
+(* error *)
+signature BAD = sig type t = int end where type t = string
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.

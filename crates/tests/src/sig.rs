@@ -685,7 +685,6 @@ structure Str :> SIG =
   );
 }
 
-// TODO this probably should not error (minimized from real valid code), but not sure.
 #[test]
 fn where_not_con() {
   check(
@@ -703,12 +702,13 @@ structure FooUnit = struct
 end
 
 signature THING = sig
-  structure HasFoo : HAS_FOO where Foo = FooUnit
+  structure HasFoo : HAS_FOO where type Foo.t = FooUnit.t
 end
 
 functor MkThing (
-  structure Arg : HAS_FOO where Foo = FooUnit
-) :> THING where HasFoo = Arg =
+  structure Arg : HAS_FOO where type Foo.t = FooUnit.t
+) :> THING where type HasFoo.Foo.t = Arg.Foo.t =
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type HasFoo.Foo.t as unit *)
 struct
   structure HasFoo = Arg
 end
@@ -716,14 +716,14 @@ end
   );
 }
 
-// TODO not sure if this needs to error, but `BAD` is impossible.
 #[test]
-fn impossible_sig() {
+fn impossible() {
   check(
     r#"
 signature HAS_T = sig type t end
 signature HAS_INT = HAS_T where type t = int
 signature BAD = HAS_INT where type t = string
+(**             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type t as int *)
 "#,
   );
 }
@@ -736,6 +736,153 @@ signature FOO = sig type t end
 signature BAR = sig type t val x : t include FOO end
 (**                                  ^^^^^^^^^^^ duplicate type: t *)
 structure Bar :> BAR = struct type t = unit val x = () end
+"#,
+  );
+}
+
+#[test]
+fn where_pair_sharing_same() {
+  check(
+    r#"
+datatype d = D
+
+structure Foo = struct type foo = d end
+structure Bar = struct type bar = d end
+
+signature QUZ = sig
+  structure F : sig type foo end
+  structure B : sig type bar end
+  sharing type F.foo = B.bar
+end
+
+structure Quz : QUZ
+(**             + cannot realize type B.bar as d *)
+  where type F.foo = Foo.foo
+  where type B.bar = Bar.bar
+= struct
+  structure F = Foo
+  structure B = Bar
+end
+"#,
+  );
+}
+
+#[test]
+fn where_pair_eq_rhs_same() {
+  check(
+    r#"
+datatype d = D
+
+structure Foo = struct type foo = d end
+structure Bar = struct type bar = d end
+
+signature QUZ = sig
+  structure F : sig type foo end
+  structure B : sig type bar = F.foo end
+end
+
+structure Quz : QUZ
+(**             + cannot realize type B.bar as d *)
+  where type F.foo = Foo.foo
+  where type B.bar = Bar.bar
+= struct
+  structure F = Foo
+  structure B = Bar
+end
+"#,
+  );
+}
+
+#[test]
+fn realize_no_sharing_opaque_unit() {
+  check(
+    r#"
+signature FOO = sig type foo end
+signature BAR = sig type bar end
+
+structure Foo :> FOO = struct type foo = unit end
+structure Bar :> BAR = struct type bar = unit end
+
+signature QUZ = sig
+  structure F : FOO
+  structure B : BAR
+end
+
+structure Quz
+  :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
+  =  struct structure F = Foo structure B = Bar end
+"#,
+  );
+}
+
+#[test]
+fn realize_sharing_opaque_unit() {
+  check(
+    r#"
+signature FOO = sig type foo end
+signature BAR = sig type bar end
+
+structure Foo :> FOO = struct type foo = unit end
+structure Bar :> BAR = struct type bar = unit end
+
+signature QUZ = sig
+  structure F : FOO
+  structure B : BAR
+  sharing type F.foo = B.bar
+end
+
+structure Quz
+  :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as foo *)
+  =  struct structure F = Foo structure B = Bar end
+"#,
+  );
+}
+
+#[test]
+fn realize_sharing_transparent_unit() {
+  check(
+    r#"
+signature FOO = sig type foo end
+signature BAR = sig type bar end
+
+structure Foo : FOO = struct type foo = unit end
+structure Bar : BAR = struct type bar = unit end
+
+signature QUZ = sig
+  structure F : FOO
+  structure B : BAR
+  sharing type F.foo = B.bar
+end
+
+structure Quz
+  :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as unit *)
+  =  struct structure F = Foo structure B = Bar end
+"#,
+  );
+}
+
+#[test]
+fn realize_sharing_transparent_int() {
+  check(
+    r#"
+signature FOO = sig type foo end
+signature BAR = sig type bar end
+
+structure Foo : FOO = struct type foo = int end
+structure Bar : BAR = struct type bar = int end
+
+signature QUZ = sig
+  structure F : FOO
+  structure B : BAR
+  sharing type F.foo = B.bar
+end
+
+structure Quz
+  :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as int *)
+  =  struct structure F = Foo structure B = Bar end
 "#,
   );
 }

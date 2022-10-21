@@ -1,5 +1,5 @@
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Syms, Ty};
+use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
 use diagnostic_util::{Code, Severity};
 use fmt_util::{comma_seq, sep_seq};
 use pattern_match::RawPat;
@@ -37,6 +37,8 @@ pub(crate) enum ErrorKind {
   BindPolymorphicExpansiveExp,
   Unused(str_util::Name),
   TyVarNotAllowedForTyRhs,
+  CannotShareTy(sml_hir::Path, TyScheme),
+  CannotRealizeTy(sml_hir::Path, TyScheme),
   /// must be last
   Unsupported(&'static str),
 }
@@ -100,6 +102,8 @@ impl Error {
       ErrorKind::BindPolymorphicExpansiveExp => Code::n(5028),
       ErrorKind::Unused(_) => Code::n(5029),
       ErrorKind::TyVarNotAllowedForTyRhs => Code::n(5030),
+      ErrorKind::CannotShareTy(_, _) => Code::n(5031),
+      ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
       ErrorKind::Unsupported(_) => Code::n(5999),
     }
   }
@@ -234,6 +238,18 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::TyVarNotAllowedForTyRhs => {
         f.write_str("type variable bound at `val` or `fun` not allowed here")
+      }
+      ErrorKind::CannotShareTy(path, ts) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(&ts.ty);
+        let ts = ts.display(&mvs, self.syms);
+        write!(f, "cannot share type {path} as {ts}")
+      }
+      ErrorKind::CannotRealizeTy(path, ts) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(&ts.ty);
+        let ts = ts.display(&mvs, self.syms);
+        write!(f, "cannot realize type {path} as {ts}")
       }
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
