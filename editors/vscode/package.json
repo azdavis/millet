@@ -40,7 +40,7 @@
     "vsce": "^2.13.0"
   },
   "engines": {
-    "vscode": "^1.68.0"
+    "vscode": "^1.72.0"
   },
   "activationEvents": [
     "onLanguage:sml",
