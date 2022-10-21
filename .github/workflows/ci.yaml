@@ -100,6 +100,9 @@ jobs:
         with:
           name: dist
           path: editors/vscode/dist
-      - name: Publish artifacts
+      - name: Publish to VS Code Marketplace
         run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath dist/*
+        working-directory: editors/vscode
+      - name: Publish to Open VSX
+        run: npx --no-install ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }} --packagePath dist/*
         working-directory: editors/vscode
