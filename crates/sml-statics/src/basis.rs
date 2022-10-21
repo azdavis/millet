@@ -1,8 +1,9 @@
 //! Bases.
 
 use crate::types::{
-  BasicOverload, Bs, CompositeOverload, Env, EnvLike as _, EnvStack, FunEnv, IdStatus, Overload,
-  RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
+  BasicOverload, Bs, CompositeOverload, Def, Env, EnvLike as _, EnvStack, FunEnv, IdStatus,
+  Overload, RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv,
+  ValInfo,
 };
 use fast_hash::map;
 
@@ -93,7 +94,7 @@ pub fn minimal() -> (Syms, Basis) {
     TyInfo {
       ty_scheme: alpha_list.clone(),
       val_env: datatype_ve([("nil", alpha_list), ("::", cons)]),
-      def: None,
+      def: Some(Def::Primitive),
     }
   };
   insert_special(&mut syms, Sym::LIST, list_info);
@@ -103,7 +104,7 @@ pub fn minimal() -> (Syms, Basis) {
     TyInfo {
       ty_scheme: TyScheme::one(|a| (ref_(a), None)),
       val_env: datatype_ve([("ref", con)]),
-      def: None,
+      def: Some(Def::Primitive),
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
@@ -115,7 +116,11 @@ pub fn minimal() -> (Syms, Basis) {
       (a.last().clone(), b.clone())
     })
     .chain(aliases.into_iter().map(|(name, ty)| {
-      let ti = TyInfo { ty_scheme: TyScheme::zero(ty), val_env: ValEnv::default(), def: None };
+      let ti = TyInfo {
+        ty_scheme: TyScheme::zero(ty),
+        val_env: ValEnv::default(),
+        def: Some(Def::Primitive),
+      };
       (str_util::Name::new(name), ti)
     }))
     .collect();
@@ -155,7 +160,7 @@ pub fn minimal() -> (Syms, Basis) {
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
     .chain(fns.into_iter().map(|(name, ty_scheme)| {
-      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: None };
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: Some(Def::Primitive) };
       (str_util::Name::new(name), vi)
     }))
     .collect();
@@ -178,7 +183,7 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
 fn basic_datatype(ty: Ty, ctors: &[&str]) -> TyInfo {
   let ty_scheme = TyScheme::zero(ty);
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
-  TyInfo { ty_scheme, val_env, def: None }
+  TyInfo { ty_scheme, val_env, def: Some(Def::Primitive) }
 }
 
 fn datatype_ve<'a, I>(xs: I) -> ValEnv
@@ -187,7 +192,8 @@ where
 {
   xs.into_iter()
     .map(|(name, ty_scheme)| {
-      (str_util::Name::new(name), ValInfo { ty_scheme, id_status: IdStatus::Con, def: None })
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, def: Some(Def::Primitive) };
+      (str_util::Name::new(name), vi)
     })
     .collect()
 }

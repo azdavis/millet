@@ -1279,11 +1279,11 @@ fn handle_bv(
 
 /// A definition site.
 #[derive(Debug, Clone, Copy)]
-pub struct Def {
-  /// The path.
-  pub path: DefPath,
-  /// The HIR index.
-  pub idx: sml_hir::Idx,
+pub enum Def {
+  /// A def contained at a path.
+  Path(DefPath, sml_hir::Idx),
+  /// A primitive, inherent def.
+  Primitive,
 }
 
 /// A definition path.

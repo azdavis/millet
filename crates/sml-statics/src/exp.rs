@@ -45,8 +45,8 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
         definition = val_info.def;
-        if let Some(def) = val_info.def {
-          st.mark_used(def.idx);
+        if let Some(Def::Path(_, idx)) = val_info.def {
+          st.mark_used(idx);
         }
         instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
       }

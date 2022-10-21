@@ -55,7 +55,7 @@ impl St {
       Mode::StdBasis(p) => DefPath::StdBasis(p),
       Mode::PathOrder => return None,
     };
-    Some(Def { path, idx })
+    Some(Def::Path(path, idx))
   }
 
   pub(crate) fn subst(&mut self) -> &mut Subst {
