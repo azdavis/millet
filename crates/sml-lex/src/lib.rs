@@ -240,7 +240,8 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   // char lit
   if b == b'#' && bs.get(cx.i + 1) == Some(&b'"') {
     cx.i += 1;
-    if get_string(start, cx, bs) != 1 {
+    let s = get_string(start, cx, bs);
+    if s.map_or(false, |x| x.len() != 1) {
       err(cx, start, ErrorKind::WrongLenCharLit);
     }
     return SK::CharLit;
@@ -277,12 +278,12 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   SK::Invalid
 }
 
-fn get_string(start: usize, cx: &mut Cx, bs: &[u8]) -> usize {
+fn get_string(start: usize, cx: &mut Cx, bs: &[u8]) -> Option<String> {
   let res = string::get(&mut cx.i, bs);
   for (idx, e) in res.errors {
     cx.errors.push(Error { range: range(start, idx), kind: ErrorKind::String(e) });
   }
-  res.bytes.len()
+  res.actual
 }
 
 enum AlphaNum {

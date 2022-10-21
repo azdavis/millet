@@ -5,8 +5,8 @@ use crate::is_whitespace;
 /// The result of lexing a string.
 #[derive(Debug, Default)]
 pub struct Res {
-  /// The bytes of the string, with escapes replaced.
-  pub bytes: Vec<u8>,
+  /// The actual the string, with escapes replaced, or None if it was not UTF-8.
+  pub actual: Option<String>,
   /// The errors encountered as pairs of (index where encountered, kind of error).
   pub errors: Vec<(usize, Error)>,
 }
@@ -30,15 +30,21 @@ pub enum Error {
 pub fn get(idx: &mut usize, bs: &[u8]) -> Res {
   assert_eq!(bs[*idx], b'"');
   *idx += 1;
-  let mut res = Res::default();
-  if get_(&mut res, idx, bs).is_none() {
-    res.errors.push((*idx, Error::Unclosed));
+  let mut st = St::default();
+  if get_(&mut st, idx, bs).is_none() {
+    st.errors.push((*idx, Error::Unclosed));
   }
-  res
+  Res { actual: String::from_utf8(st.bytes).ok(), errors: st.errors }
+}
+
+#[derive(Debug, Default)]
+struct St {
+  bytes: Vec<u8>,
+  errors: Vec<(usize, Error)>,
 }
 
 /// returns None iff there was no matching `"` to close the string.
-fn get_(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
+fn get_(st: &mut St, idx: &mut usize, bs: &[u8]) -> Option<()> {
   loop {
     match *bs.get(*idx)? {
       b'\n' => return None,
@@ -46,33 +52,33 @@ fn get_(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
         *idx += 1;
         break;
       }
-      b'\\' => get_escape(res, idx, bs)?,
-      b => push_one(res, idx, b),
+      b'\\' => get_escape(st, idx, bs)?,
+      b => push_one(st, idx, b),
     }
   }
   Some(())
 }
 
-fn get_escape(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
+fn get_escape(st: &mut St, idx: &mut usize, bs: &[u8]) -> Option<()> {
   assert_eq!(bs[*idx], b'\\');
   *idx += 1;
   match *bs.get(*idx)? {
-    b'a' => push_one(res, idx, 7),
-    b'b' => push_one(res, idx, 8),
-    b't' => push_one(res, idx, 9),
-    b'n' => push_one(res, idx, 10),
-    b'v' => push_one(res, idx, 11),
-    b'f' => push_one(res, idx, 12),
-    b'r' => push_one(res, idx, 13),
-    b'"' => push_one(res, idx, b'"'),
-    b'\\' => push_one(res, idx, b'\\'),
+    b'a' => push_one(st, idx, 7),
+    b'b' => push_one(st, idx, 8),
+    b't' => push_one(st, idx, 9),
+    b'n' => push_one(st, idx, 10),
+    b'v' => push_one(st, idx, 11),
+    b'f' => push_one(st, idx, 12),
+    b'r' => push_one(st, idx, 13),
+    b'"' => push_one(st, idx, b'"'),
+    b'\\' => push_one(st, idx, b'\\'),
     b'^' => {
       *idx += 1;
       let &c = bs.get(*idx)?;
       if (64..=95).contains(&c) {
-        push_one(res, idx, c - 64);
+        push_one(st, idx, c - 64);
       } else {
-        res.errors.push((*idx, Error::InvalidEscape));
+        st.errors.push((*idx, Error::InvalidEscape));
         *idx += 1;
       }
     }
@@ -91,11 +97,11 @@ fn get_escape(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
           let fst = (a << 2) | b;
           let snd = (c << 2) | d;
           if fst != 0 {
-            res.bytes.push(fst);
+            st.bytes.push(fst);
           }
-          res.bytes.push(snd);
+          st.bytes.push(snd);
         }
-        _ => res.errors.push((*idx, Error::InvalidEscape)),
+        _ => st.errors.push((*idx, Error::InvalidEscape)),
       }
     }
     b => {
@@ -108,7 +114,7 @@ fn get_escape(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
             break;
           }
           if !is_whitespace(b) {
-            res.errors.push((*idx, Error::NonWhitespaceInContinuation));
+            st.errors.push((*idx, Error::NonWhitespaceInContinuation));
           }
         }
       } else if let Some(mut ac) = ascii_digit(b) {
@@ -116,13 +122,13 @@ fn get_escape(res: &mut Res, idx: &mut usize, bs: &[u8]) -> Option<()> {
           *idx += 1;
           let &c = bs.get(*idx)?;
           match ascii_digit(c).and_then(|c| ac.checked_mul(10)?.checked_add(c)) {
-            None => res.errors.push((*idx, Error::InvalidEscape)),
+            None => st.errors.push((*idx, Error::InvalidEscape)),
             Some(new_ac) => ac = new_ac,
           }
         }
-        push_one(res, idx, ac);
+        push_one(st, idx, ac);
       } else {
-        res.errors.push((*idx, Error::InvalidEscape));
+        st.errors.push((*idx, Error::InvalidEscape));
         *idx += 1;
       }
     }
@@ -160,7 +166,7 @@ fn ascii_hexdigit(b: u8) -> Option<u8> {
   Some(ret)
 }
 
-fn push_one(res: &mut Res, idx: &mut usize, b: u8) {
+fn push_one(st: &mut St, idx: &mut usize, b: u8) {
   *idx += 1;
-  res.bytes.push(b);
+  st.bytes.push(b);
 }
