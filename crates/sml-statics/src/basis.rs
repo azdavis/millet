@@ -111,7 +111,7 @@ pub fn minimal() -> (Syms, Basis) {
   let ty_env: TyEnv = syms
     .iter()
     .map(|(a, b)| {
-      assert!(a.structures().is_empty(), "only built-in types are currently in this Syms");
+      assert!(a.prefix().is_empty(), "only built-in types are currently in this Syms");
       (a.last().clone(), b.clone())
     })
     .chain(aliases.into_iter().map(|(name, ty)| {

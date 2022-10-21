@@ -55,9 +55,9 @@ fn get_str_dec(
       let mut str_env = StrEnv::default();
       for str_bind in str_binds {
         let mut env = Env::with_def(st.def(str_dec.into()));
-        st.push_structure(str_bind.name.clone());
+        st.push_prefix(str_bind.name.clone());
         get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
-        st.pop_structure();
+        st.pop_prefix();
         if let Some(e) = ins_no_dupe(&mut str_env, str_bind.name.clone(), env, Item::Struct) {
           st.err(str_dec, e);
         }
@@ -84,11 +84,11 @@ fn get_str_dec(
           Mode::PathOrder => false,
         };
         if should_push {
-          st.push_structure(sig_bind.name.clone());
+          st.push_prefix(sig_bind.name.clone());
         }
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
         if should_push {
-          st.pop_structure();
+          st.pop_prefix();
         }
         let sig = env_to_sig(bs, env);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
@@ -119,9 +119,9 @@ fn get_str_dec(
         });
         let mut body_env = Env::with_def(st.def(str_dec.into()));
         // TODO represent the "path" of a functor app differently?
-        st.push_structure(str_util::Name::new(&format!("{}(...)", fun_bind.functor_name)));
+        st.push_prefix(str_util::Name::new(&format!("{}(...)", fun_bind.functor_name)));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
-        st.pop_structure();
+        st.pop_prefix();
         let mut body_ty_names = TyNameSet::default();
         env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
         bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
@@ -511,9 +511,9 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     // @def(74), @def(84)
     sml_hir::Spec::Str(str_desc) => {
       let mut one_env = Env::default();
-      st.push_structure(str_desc.name.clone());
+      st.push_prefix(str_desc.name.clone());
       get_sig_exp(st, bs, ars, &mut one_env, str_desc.sig_exp);
-      st.pop_structure();
+      st.pop_prefix();
       let name = str_desc.name.clone();
       if let Some(e) = ins_no_dupe(&mut ac.str_env, name, one_env, Item::Struct) {
         st.err(spec, e);
@@ -643,15 +643,15 @@ fn get_path_ty_cons<E: EnvLike>(
 }
 
 fn join_paths(p1: &sml_hir::Path, p2: &sml_hir::Path) -> sml_hir::Path {
-  sml_hir::Path::new(p1.all_names().chain(p2.structures()).cloned(), p2.last().clone())
+  sml_hir::Path::new(p1.all_names().chain(p2.prefix()).cloned(), p2.last().clone())
 }
 
-fn get_ty_cons(structures: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
-  ac.extend(env.ty_env.keys().map(|name| sml_hir::Path::new(structures.clone(), name.clone())));
+fn get_ty_cons(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
+  ac.extend(env.ty_env.keys().map(|name| sml_hir::Path::new(prefix.clone(), name.clone())));
   for (name, env) in &env.str_env {
-    structures.push(name.clone());
-    get_ty_cons(structures, ac, env);
-    structures.pop().unwrap();
+    prefix.push(name.clone());
+    get_ty_cons(prefix, ac, env);
+    prefix.pop().unwrap();
   }
 }
 

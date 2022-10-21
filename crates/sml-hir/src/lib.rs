@@ -329,16 +329,16 @@ impl fmt::Display for Int {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Path {
-  structures: Vec<Name>,
+  prefix: Vec<Name>,
   last: Name,
 }
 
 impl Path {
-  pub fn new<I>(structures: I, last: Name) -> Self
+  pub fn new<I>(prefix: I, last: Name) -> Self
   where
     I: IntoIterator<Item = Name>,
   {
-    Self { structures: structures.into_iter().collect(), last }
+    Self { prefix: prefix.into_iter().collect(), last }
   }
 
   #[must_use]
@@ -358,19 +358,19 @@ impl Path {
   }
 
   #[must_use]
-  pub fn structures(&self) -> &[Name] {
-    &self.structures
+  pub fn prefix(&self) -> &[Name] {
+    &self.prefix
   }
 
   pub fn all_names(&self) -> impl Iterator<Item = &Name> {
-    self.structures.iter().chain(std::iter::once(&self.last))
+    self.prefix.iter().chain(std::iter::once(&self.last))
   }
 }
 
 impl fmt::Display for Path {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    for structure in &self.structures {
-      structure.fmt(f)?;
+    for name in &self.prefix {
+      name.fmt(f)?;
       f.write_str(".")?;
     }
     self.last.fmt(f)

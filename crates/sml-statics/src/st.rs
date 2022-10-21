@@ -24,9 +24,8 @@ pub(crate) struct St {
   /// function.
   defined: Vec<(sml_hir::Idx, str_util::Name)>,
   used: FxHashSet<sml_hir::Idx>,
-  /// for making fully qualified names. TODO rename this (and the method on Path) to "prefix" or
-  /// something. (it's not always structures?)
-  cur_structures: Vec<str_util::Name>,
+  /// for making fully qualified names.
+  cur_prefix: Vec<str_util::Name>,
 }
 
 impl St {
@@ -42,7 +41,7 @@ impl St {
       syms,
       defined: Vec::new(),
       used: FxHashSet::default(),
-      cur_structures: Vec::new(),
+      cur_prefix: Vec::new(),
     }
   }
 
@@ -123,22 +122,22 @@ impl St {
     self.used.insert(idx);
   }
 
-  pub(crate) fn push_structure(&mut self, name: str_util::Name) {
+  pub(crate) fn push_prefix(&mut self, name: str_util::Name) {
     if self.mode().is_path_order() {
       return;
     }
-    self.cur_structures.push(name);
+    self.cur_prefix.push(name);
   }
 
-  pub(crate) fn pop_structure(&mut self) {
+  pub(crate) fn pop_prefix(&mut self) {
     if self.mode().is_path_order() {
       return;
     }
-    self.cur_structures.pop().expect("no matching push_structure");
+    self.cur_prefix.pop().expect("no matching push_structure");
   }
 
   pub(crate) fn mk_path(&self, last: str_util::Name) -> sml_hir::Path {
-    sml_hir::Path::new(self.cur_structures.iter().cloned(), last)
+    sml_hir::Path::new(self.cur_prefix.iter().cloned(), last)
   }
 
   pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {

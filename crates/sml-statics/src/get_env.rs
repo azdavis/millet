@@ -44,19 +44,19 @@ pub(crate) fn get_ty_info<'e, E>(env: &'e E, path: &sml_hir::Path) -> Result<&'e
 where
   E: EnvLike,
 {
-  get_ty_info_raw(env, path.structures().iter(), path.last())
+  get_ty_info_raw(env, path.prefix().iter(), path.last())
 }
 
 pub(crate) fn get_ty_info_raw<'e, 'n, S, E>(
   env: &'e E,
-  structures: S,
+  prefix: S,
   last: &'n str_util::Name,
 ) -> Result<&'e TyInfo, ErrorKind>
 where
   S: IntoIterator<Item = &'n str_util::Name>,
   E: EnvLike,
 {
-  let got_env = get_env(env, structures)?;
+  let got_env = get_env(env, prefix)?;
   let ty_info = match got_env {
     Some(got_env) => got_env.ty_env.get(last),
     None => env.get_ty(last),
@@ -71,7 +71,7 @@ pub(crate) fn get_val_info<'e, E>(
 where
   E: EnvLike,
 {
-  match get_env(env, path.structures())? {
+  match get_env(env, path.prefix())? {
     Some(e) => Ok(e.val_env.get(path.last())),
     None => Ok(env.get_val(path.last())),
   }

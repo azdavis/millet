@@ -403,7 +403,7 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| constructor(cx, ars, exp)),
     sml_hir::Exp::Typed(exp, _) => constructor(cx, ars, *exp),
     sml_hir::Exp::Path(path) => {
-      if path.structures().is_empty() && path.last().as_str() == "ref" {
+      if path.prefix().is_empty() && path.last().as_str() == "ref" {
         return false;
       }
       match get_val_info(&cx.env, path) {

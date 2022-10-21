@@ -93,9 +93,8 @@ fn get_(
         }
       };
       // @test(deviations::mlton::rebind_ctor)
-      let is_var = argument.is_none()
-        && path.structures().is_empty()
-        && (ok_val_info(maybe_val_info) || cfg.rec);
+      let is_var =
+        argument.is_none() && path.prefix().is_empty() && (ok_val_info(maybe_val_info) || cfg.rec);
       // @def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
