@@ -16,6 +16,9 @@ The versioning system is basically the following:
 ## main
 
 - Check for type variable scope escape.
+- Check for invalid `\^` string escapes.
+- Fix pattern matching analysis for strings and characters.
+- Improve checking of `where type` and `sharing type`.
 
 ## v0.5.4
 
