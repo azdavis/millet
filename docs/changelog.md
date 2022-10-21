@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.5
 
 - Check for type variable scope escape.
 - Check for invalid `\^` string escapes.
