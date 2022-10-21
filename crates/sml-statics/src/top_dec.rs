@@ -291,35 +291,47 @@ fn get_sig_exp(
       }
     },
     // @def(64)
-    sml_hir::SigExp::WhereType(inner, ty_vars, path, ty) => {
+    sml_hir::SigExp::Where(inner, kind) => {
       let marker = st.syms.mark();
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
-      let mut cx = bs.as_cx();
-      let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Ty, ty_vars, sig_exp.into());
-      let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
-      generalize_fixed(fixed, &mut ty_scheme);
-      get_where_type(st, &marker, &mut inner_env, path, ty_scheme, sig_exp.into());
+      get_where_kind(st, bs, &marker, ars, &mut inner_env, kind, sig_exp.into());
       ac.append(&mut inner_env);
       ov
     }
-    // SML/NJ extension
-    sml_hir::SigExp::Where(inner, lhs, rhs) => {
-      let marker = st.syms.mark();
-      let mut inner_env = Env::default();
-      let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
-      let lhs_ty_cons = match get_path_ty_cons(&inner_env, lhs) {
+  }
+}
+
+fn get_where_kind(
+  st: &mut St,
+  bs: &Bs,
+  marker: &SymsMarker,
+  ars: &sml_hir::Arenas,
+  inner_env: &mut Env,
+  kind: &sml_hir::WhereKind,
+  idx: sml_hir::Idx,
+) {
+  match kind {
+    sml_hir::WhereKind::Type(ty_vars, path, ty) => {
+      let mut cx = bs.as_cx();
+      let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Ty, ty_vars, idx);
+      let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
+      generalize_fixed(fixed, &mut ty_scheme);
+      get_where_type(st, marker, inner_env, path, ty_scheme, idx);
+    }
+    sml_hir::WhereKind::Structure(lhs, rhs) => {
+      let lhs_ty_cons = match get_path_ty_cons(inner_env, lhs) {
         Ok(x) => x,
         Err(e) => {
-          st.err(sig_exp, e);
-          return ov;
+          st.err(idx, e);
+          return;
         }
       };
       let rhs_ty_cons = match get_path_ty_cons(&bs.env, rhs) {
         Ok(x) => x,
         Err(e) => {
-          st.err(sig_exp, e);
-          return ov;
+          st.err(idx, e);
+          return;
         }
       };
       for ty_con in lhs_ty_cons {
@@ -331,13 +343,11 @@ fn get_sig_exp(
         match get_ty_info(&bs.env, &rhs) {
           Ok(ty_info) => {
             let ty_scheme = ty_info.ty_scheme.clone();
-            get_where_type(st, &marker, &mut inner_env, &lhs, ty_scheme, sig_exp.into());
+            get_where_type(st, marker, inner_env, &lhs, ty_scheme, idx);
           }
-          Err(e) => st.err(sig_exp, e),
+          Err(e) => st.err(idx, e),
         }
       }
-      ac.append(&mut inner_env);
-      ov
     }
   }
 }

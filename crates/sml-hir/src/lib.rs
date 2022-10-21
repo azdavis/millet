@@ -107,9 +107,13 @@ pub type SigExpArena = Arena<SigExp>;
 pub enum SigExp {
   Spec(SpecIdx),
   Name(Name),
-  WhereType(SigExpIdx, Vec<TyVar>, Path, TyIdx),
-  /// not in the Definition
-  Where(SigExpIdx, Path, Path),
+  Where(SigExpIdx, WhereKind),
+}
+
+#[derive(Debug)]
+pub enum WhereKind {
+  Type(Vec<TyVar>, Path, TyIdx),
+  Structure(Path, Path),
 }
 
 pub type SpecIdx = OptIdx<Spec>;

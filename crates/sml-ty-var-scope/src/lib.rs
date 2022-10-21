@@ -131,7 +131,7 @@ fn get_sig_exp(cx: &mut Cx, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) 
   match &ars.sig_exp[sig_exp] {
     sml_hir::SigExp::Spec(spec) => get_spec(cx, ars, *spec),
     sml_hir::SigExp::Name(_) => {}
-    sml_hir::SigExp::WhereType(sig_exp, _, _, _) | sml_hir::SigExp::Where(sig_exp, _, _) => {
+    sml_hir::SigExp::Where(sig_exp, _) => {
       get_sig_exp(cx, ars, *sig_exp);
     }
   }

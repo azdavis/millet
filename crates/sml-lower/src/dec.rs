@@ -179,16 +179,17 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
   let ret = match sig_exp {
     ast::SigExp::SigSigExp(sig_exp) => sml_hir::SigExp::Spec(get_spec(cx, sig_exp.dec())),
     ast::SigExp::NameSigExp(sig_exp) => sml_hir::SigExp::Name(get_name(sig_exp.name())?),
-    ast::SigExp::WhereTypeSigExp(sig_exp) => sml_hir::SigExp::WhereType(
+    ast::SigExp::WhereTypeSigExp(sig_exp) => sml_hir::SigExp::Where(
       get_sig_exp(cx, sig_exp.sig_exp()),
-      ty::var_seq(sig_exp.ty_var_seq()),
-      get_path(sig_exp.path()?)?,
-      ty::get(cx, sig_exp.ty()),
+      sml_hir::WhereKind::Type(
+        ty::var_seq(sig_exp.ty_var_seq()),
+        get_path(sig_exp.path()?)?,
+        ty::get(cx, sig_exp.ty()),
+      ),
     ),
     ast::SigExp::WhereSigExp(sig_exp) => sml_hir::SigExp::Where(
       get_sig_exp(cx, sig_exp.sig_exp()),
-      get_path(sig_exp.lhs()?)?,
-      get_path(sig_exp.rhs()?)?,
+      sml_hir::WhereKind::Structure(get_path(sig_exp.lhs()?)?, get_path(sig_exp.rhs()?)?),
     ),
   };
   cx.sig_exp(ret, ptr)
@@ -313,7 +314,10 @@ fn get_spec_one(cx: &mut Cx, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> 
             let spec_idx = cx.spec(ret, ptr.clone());
             let sig_exp = cx.sig_exp(sml_hir::SigExp::Spec(spec_idx), ptr.clone());
             let sig_exp = cx.sig_exp(
-              sml_hir::SigExp::WhereType(sig_exp, ty_vars, sml_hir::Path::one(name), ty),
+              sml_hir::SigExp::Where(
+                sig_exp,
+                sml_hir::WhereKind::Type(ty_vars, sml_hir::Path::one(name), ty),
+              ),
               ptr.clone(),
             );
             ret = sml_hir::Spec::Include(sig_exp);
