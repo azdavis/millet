@@ -13,9 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.6
 
 - Warn when using `=` on some special constants.
+- Publish to Open VSX as well as the VS Code marketplace.
 
 ## v0.5.5
 
