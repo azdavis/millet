@@ -12,6 +12,7 @@ test = false
 [dependencies]
 diagnostic-util = { path = "../diagnostic-util" }
 fast-hash = { path = "../fast-hash" }
+lex-util = { path = "../lex-util" }
 num-traits = "0.2"
 sml-hir = { path = "../sml-hir" }
 sml-syntax = { path = "../sml-syntax" }

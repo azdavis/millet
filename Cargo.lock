@@ -588,6 +588,7 @@ version = "0.1.0"
 dependencies = [
  "diagnostic-util",
  "fast-hash",
+ "lex-util",
  "num-traits",
  "sml-hir",
  "sml-syntax",

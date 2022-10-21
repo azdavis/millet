@@ -1,4 +1,4 @@
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke_case() {
@@ -479,11 +479,11 @@ fun f x =
 
 #[test]
 fn char_escape() {
-  fail(
+  check(
     r#"
 fun f x =
   case x of
-  | #"\n" => 1
+    #"\n" => 1
   | #"\t" => 2
   | _ => 3
 "#,

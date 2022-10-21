@@ -75,13 +75,21 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<sml_hir::SCon> {
       sml_hir::SCon::Word(n)
     }
     ast::SConKind::CharLit => {
-      sml_hir::SCon::Char(tok.text().strip_prefix("#\"")?.strip_suffix('"')?.chars().next()?)
+      sml_hir::SCon::Char(sml_string(tok.text().strip_prefix('#')?)?.chars().next()?)
     }
-    ast::SConKind::StringLit => {
-      sml_hir::SCon::String(tok.text().strip_prefix('"')?.strip_suffix('"')?.into())
-    }
+    ast::SConKind::StringLit => sml_hir::SCon::String(sml_string(tok.text())?.into()),
   };
   Some(ret)
+}
+
+fn sml_string(s: &str) -> Option<String> {
+  let mut idx = 0usize;
+  let res = lex_util::string::get(&mut idx, s.as_bytes());
+  if idx == s.len() {
+    res.actual
+  } else {
+    None
+  }
 }
 
 pub(crate) fn get_name(n: Option<sml_syntax::SyntaxToken>) -> Option<str_util::Name> {
