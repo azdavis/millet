@@ -2,8 +2,6 @@
 
 This is a manual for how to use Millet.
 
-If a feature of Millet is not documented here, please file an issue.
-
 See also the [blog post](https://azdavis.net/posts/millet/) for an overview.
 
 ## A note about VS Code

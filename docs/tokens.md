@@ -2,8 +2,6 @@
 
 This is documentation for all the tokens in SML, and what they mean.
 
-If an SML token is not documented here, please file an issue.
-
 ## `exception`
 
 Define an exception.

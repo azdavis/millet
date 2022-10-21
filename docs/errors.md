@@ -2,8 +2,6 @@
 
 This is documentation for all the errors Millet can emit, and what they mean.
 
-If Millet emitted an error not documented here, please file an issue.
-
 ## 1001
 
 Millet failed to perform file or directory I/O with the filesystem. It could be that the path in question:
