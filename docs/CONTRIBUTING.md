@@ -13,6 +13,6 @@ Note that this project has a [Code of Conduct][coc], to which we expect all memb
   - Your PR must pass CI to be merged.
   - To try locally, run `cargo xtask ci`.
 
-[coc]: /docs/code_of_conduct.md
+[coc]: /docs/CODE_OF_CONDUCT.md
 [discord]: https://discord.gg/hgPSUby2Ny
 [issue]: https://github.com/azdavis/millet/issues/new/choose

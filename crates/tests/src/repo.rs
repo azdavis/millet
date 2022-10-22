@@ -79,7 +79,7 @@ fn no_ignore() {
 fn crate_architecture_doc() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
-  let in_doc: BTreeSet<_> = include_str!("../../../docs/architecture.md")
+  let in_doc: BTreeSet<_> = include_str!("../../../docs/ARCHITECTURE.md")
     .lines()
     .filter_map(|line| Some(line.strip_prefix("### `crates/")?.strip_suffix('`')?.to_owned()))
     .collect();
@@ -101,7 +101,7 @@ fn crate_architecture_doc() {
 fn docs_readme() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
-  let in_readme: BTreeSet<_> = include_str!("../../../docs/readme.md")
+  let in_readme: BTreeSet<_> = include_str!("../../../docs/README.md")
     .lines()
     .filter_map(|x| {
       let x = x.strip_prefix("- [")?;
@@ -116,10 +116,10 @@ fn docs_readme() {
     .into_iter()
     .filter_map(|x| {
       let x = x.file_name()?.to_str()?;
-      (x != "readme.md").then(|| x.to_owned())
+      (x != "README.md").then(|| x.to_owned())
     })
     .collect();
-  eq_sets(&in_readme, &in_dir, "in readme, but doesn't exist", "not in readme, but exists");
+  eq_sets(&in_readme, &in_dir, "in README, but doesn't exist", "not in README, but exists");
 }
 
 #[test]
@@ -147,7 +147,7 @@ fn changelog() {
   sh.change_dir(root_dir());
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output().unwrap().stdout).unwrap();
   let tags: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
-  let entries: BTreeSet<_> = include_str!("../../../docs/changelog.md")
+  let entries: BTreeSet<_> = include_str!("../../../docs/CHANGELOG.md")
     .lines()
     .filter_map(|line| {
       let title = line.strip_prefix("## ")?;

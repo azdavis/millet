@@ -46,7 +46,7 @@ If you're using VS Code, you can try out the VS Code extension:
 3. Select "extension" in the drop down.
 4. Press the green play button.
 
-See also the [architecture][] documentation.
+See also the [documentation][].
 
 ## Naming
 
@@ -62,10 +62,10 @@ Also:
 
 Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.
 
-[architecture]: /docs/architecture.md
 [blog]: https://azdavis.net/posts/millet/
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [discord]: https://discord.gg/hgPSUby2Ny
+[documentation]: /docs/README.md
 [git]: https://git-scm.com
 [known-issues]: /docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
