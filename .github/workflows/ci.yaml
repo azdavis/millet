@@ -21,7 +21,7 @@ jobs:
         with:
           components: rustfmt, clippy
       - name: Cache rust
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
       - name: Run tests
         run: cargo xtask ci
   dist:
@@ -67,9 +67,9 @@ jobs:
         with:
           target: ${{ matrix.rust }}
       - name: Cache rust
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
       - name: Set up node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 16.x
       - name: Make dist
@@ -89,7 +89,7 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v3
       - name: Set up node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 16.x
       - name: Install node dependencies
