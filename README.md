@@ -19,9 +19,10 @@ The [language server][lang-srv] is [beta-quality software][known-issues]. It mig
 
 ## Install
 
-There is a [VS Code][vscode] extension on the [marketplace][].
+- There is a [VS Code][vscode] extension on the VS Code [marketplace][].
+- The same extension is also published on [Open VSX][ovsx].
 
-VS Code is the only editor for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
+VS Code (and compatible editors) is the only editor for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
 
 ## Community
 
@@ -73,6 +74,7 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [mlton]: http://mlton.org
 [nodejs]: https://nodejs.org/en/
+[ovsx]: https://open-vsx.org/extension/azdavis/millet
 [rust]: https://rustup.rs
 [sml]: https://smlfamily.github.io
 [smlnj]: https://www.smlnj.org
