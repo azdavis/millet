@@ -172,22 +172,21 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
     },
     _ => return None,
   };
-  for argument in [lhs, rhs] {
+  [lhs, rhs].into_iter().find_map(|argument| {
     let path = match &ars.exp[argument] {
       sml_hir::Exp::Path(p) => p,
-      _ => continue,
+      _ => return None,
     };
     let vi = get_val_info(&cx.env, path).ok()??;
     match vi.def? {
       Def::Path(DefPath::BuiltinLib(_), _) | Def::Primitive => {}
-      Def::Path(DefPath::Regular(_), _) => continue,
+      Def::Path(DefPath::Regular(_), _) => return None,
     }
     match path.last().as_str() {
-      "NONE" | "nil" | "true" | "false" => return Some(ErrorKind::EqOn(path.last().clone())),
-      _ => {}
+      "NONE" | "nil" | "true" | "false" => Some(ErrorKind::EqOn(path.last().clone())),
+      _ => None,
     }
-  }
-  None
+  })
 }
 
 /// @def(13)
