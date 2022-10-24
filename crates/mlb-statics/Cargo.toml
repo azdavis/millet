@@ -13,6 +13,7 @@ doctest = false
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 fast-hash = { path = "../fast-hash" }
+once_cell = "1"
 paths = { path = "../paths" }
 sml-comment = { path = "../sml-comment" }
 sml-hir = { path = "../sml-hir" }

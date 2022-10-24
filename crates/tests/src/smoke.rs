@@ -1,4 +1,4 @@
-use crate::check::{check, go, Outcome, StdBasis};
+use crate::check::{check, go, Outcome};
 use diagnostic_util::Severity;
 
 mod dec;
@@ -124,7 +124,7 @@ val b = a + 4
 fun err s = if s = "bad" then raise Bad else ()
 "#,
   ];
-  go(ss, StdBasis::Minimal, Outcome::Pass, Severity::Error);
+  go(ss, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }
 
 #[test]

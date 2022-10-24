@@ -36,7 +36,7 @@ use std::fmt::{self, Write as _};
 /// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Error);
+  go(&[s], analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }
 
 /// Like [`check`], but the expectation comments should be not satisfied.
@@ -63,47 +63,34 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  go(&[s], StdBasis::Minimal, Outcome::Fail, Severity::Error);
+  go(&[s], analysis::StdBasis::Minimal, Outcome::Fail, Severity::Error);
 }
 
 /// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  go(&[s], StdBasis::Full, Outcome::Pass, Severity::Error);
+  go(&[s], analysis::StdBasis::Full, Outcome::Pass, Severity::Error);
 }
 
 /// The low-level impl that all top-level functions delegate to.
-pub(crate) fn go(ss: &[&str], std_basis: StdBasis, want: Outcome, min_severity: Severity) {
+pub(crate) fn go(
+  ss: &[&str],
+  std_basis: analysis::StdBasis,
+  want: Outcome,
+  min_severity: Severity,
+) {
   // ignore the Err if we already initialized logging, since that's fine.
   let _ = env_logger::builder().is_test(true).try_init();
-  if matches!(std_basis, StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
+  if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
     return;
   }
-  let c = Check::new(ss, std_basis.to_analysis(), min_severity);
+  let c = Check::new(ss, std_basis, min_severity);
   match (want, c.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
     (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
     (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {c}"),
   }
 }
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum StdBasis {
-  Minimal,
-  Full,
-}
-
-impl StdBasis {
-  fn to_analysis(self) -> mlb_statics::StdBasis {
-    match self {
-      StdBasis::Minimal => MINIMAL.clone(),
-      StdBasis::Full => FULL.clone(),
-    }
-  }
-}
-
-static MINIMAL: Lazy<mlb_statics::StdBasis> = Lazy::new(mlb_statics::StdBasis::minimal);
-static FULL: Lazy<mlb_statics::StdBasis> = Lazy::new(mlb_statics::StdBasis::full);
 
 /// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
@@ -118,7 +105,7 @@ struct Check {
 }
 
 impl Check {
-  fn new(ss: &[&str], std_basis: mlb_statics::StdBasis, min_severity: Severity) -> Self {
+  fn new(ss: &[&str], std_basis: analysis::StdBasis, min_severity: Severity) -> Self {
     let mut m = FxHashMap::<std::path::PathBuf, String>::default();
     let mut mlb_file = String::new();
     for (idx, &s) in ss.iter().enumerate() {

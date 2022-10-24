@@ -1,4 +1,4 @@
-use crate::check::{go, Outcome, StdBasis};
+use crate::check::{go, Outcome};
 use diagnostic_util::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
@@ -59,13 +59,13 @@ fn errors() {
     } else {
       panic!("unsure how to handle a code block (not marked as ok, error, or ignore): {s}");
     };
-    go(&[MINI_STD_BASIS, s], StdBasis::Minimal, outcome, severity);
+    go(&[MINI_STD_BASIS, s], analysis::StdBasis::Minimal, outcome, severity);
   });
 }
 
 #[test]
 fn tokens() {
   check_all(include_str!("../../../docs/tokens.md"), |s| {
-    go(&[MINI_STD_BASIS, s], StdBasis::Minimal, Outcome::Pass, Severity::Error);
+    go(&[MINI_STD_BASIS, s], analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
   });
 }

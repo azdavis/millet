@@ -24,9 +24,9 @@ pub struct Analysis {
 impl Analysis {
   /// Returns a new `Analysis`.
   #[must_use]
-  pub fn new(std_basis: mlb_statics::StdBasis, error_lines: config::ErrorLines) -> Self {
+  pub fn new(std_basis: StdBasis, error_lines: config::ErrorLines) -> Self {
     Self {
-      std_basis,
+      std_basis: std_basis.to_mlb_statics(),
       error_lines,
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
@@ -207,6 +207,24 @@ impl Analysis {
     let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx)?;
     let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
     Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
+  }
+}
+
+/// A std basis.
+#[derive(Debug, Clone, Copy)]
+pub enum StdBasis {
+  /// The minimal one.
+  Minimal,
+  /// The full one.
+  Full,
+}
+
+impl StdBasis {
+  fn to_mlb_statics(self) -> mlb_statics::StdBasis {
+    match self {
+      StdBasis::Minimal => mlb_statics::StdBasis::minimal(),
+      StdBasis::Full => mlb_statics::StdBasis::full(),
+    }
   }
 }
 

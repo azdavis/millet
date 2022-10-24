@@ -81,7 +81,7 @@ impl State {
       registered_for_watched_files: false,
       sender,
       req_queue: ReqQueue::default(),
-      analysis: analysis::Analysis::new(mlb_statics::StdBasis::full(), config::ErrorLines::Many),
+      analysis: analysis::Analysis::new(analysis::StdBasis::Full, config::ErrorLines::Many),
       file_system,
       options,
     };

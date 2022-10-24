@@ -1,4 +1,4 @@
-use crate::check::{check, fail, go, Outcome, StdBasis};
+use crate::check::{check, fail, go, Outcome};
 use diagnostic_util::Severity;
 
 #[test]
@@ -726,7 +726,7 @@ fn unused_var() {
 fun f x = ()
 (**   ^ unused value: x *)
 "#;
-  go(&[s], StdBasis::Minimal, Outcome::Pass, Severity::Warning);
+  go(&[s], analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
 }
 
 #[test]
