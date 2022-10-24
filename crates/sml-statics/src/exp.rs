@@ -76,7 +76,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
     // @def(8)
     sml_hir::Exp::App(func, argument) => {
-      lint_app(st, cx, ars, *func, *argument);
+      lint_app(st, cx, ars, *func, *argument, exp.into());
       let func_ty = get(st, cfg, cx, ars, *func);
       let arg_ty = get(st, cfg, cx, ars, *argument);
       // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
@@ -148,6 +148,7 @@ fn lint_app(
   ars: &sml_hir::Arenas,
   func: sml_hir::ExpIdx,
   argument: sml_hir::ExpIdx,
+  idx: sml_hir::Idx,
 ) -> Option<()> {
   match &ars.exp[func?] {
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def? {
@@ -161,14 +162,14 @@ fn lint_app(
     },
     _ => return None,
   }
-  let arguments = match &ars.exp[argument?] {
+  let (lhs, rhs) = match &ars.exp[argument?] {
     sml_hir::Exp::Record(rows) => match rows.as_slice() {
-      &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] => [a?, b?],
+      &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] => (a?, b?),
       _ => return None,
     },
     _ => return None,
   };
-  for argument in arguments {
+  for argument in [lhs, rhs] {
     let path = match &ars.exp[argument] {
       sml_hir::Exp::Path(p) => p,
       _ => continue,
@@ -179,7 +180,7 @@ fn lint_app(
       Def::Path(DefPath::Regular(_), _) => continue,
     }
     match path.last().as_str() {
-      "NONE" | "nil" | "true" | "false" => st.err(argument, ErrorKind::EqOn(path.last().clone())),
+      "NONE" | "nil" | "true" | "false" => st.err(idx, ErrorKind::EqOn(path.last().clone())),
       _ => {}
     }
   }
