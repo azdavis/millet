@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Warn on mismatched sugar content for functor application.
+- Warn when using `@` for empty lists (as either argument) or singleton lists (as the first argument).
 
 ## v0.5.6
 

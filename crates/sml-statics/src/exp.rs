@@ -1,5 +1,5 @@
 use crate::config::Cfg;
-use crate::error::{ErrorKind, Item};
+use crate::error::{AppendArg, ErrorKind, Item};
 use crate::get_env::get_val_info;
 use crate::info::TyEntry;
 use crate::pat_match::Pat;
@@ -158,6 +158,13 @@ fn lint_app(
           None
         }
       }
+      Def::Path(DefPath::BuiltinLib("std_basis/list.sml"), _) => {
+        if path.last().as_str() == "@" {
+          lint_append(ars, argument)
+        } else {
+          None
+        }
+      }
       Def::Path(_, _) => None,
     },
     _ => None,
@@ -193,6 +200,37 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
       _ => None,
     }
   })
+}
+
+fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<ErrorKind> {
+  let [lhs, rhs] = get_pair(ars, argument?)?;
+  if let sml_hir::Exp::Path(p) = &ars.exp[rhs] {
+    if p.last().as_str() == "nil" {
+      return Some(ErrorKind::InvalidAppend(AppendArg::Empty));
+    }
+  }
+  let (func, argument) = match ars.exp[lhs] {
+    sml_hir::Exp::App(a, b) => (a?, b?),
+    sml_hir::Exp::Path(ref p) => {
+      return (p.last().as_str() == "nil").then_some(ErrorKind::InvalidAppend(AppendArg::Empty))
+    }
+    _ => return None,
+  };
+  match &ars.exp[func] {
+    sml_hir::Exp::Path(p) => {
+      if p.last().as_str() != "::" {
+        return None;
+      }
+    }
+    _ => return None,
+  }
+  let [_, rhs] = get_pair(ars, argument)?;
+  if let sml_hir::Exp::Path(p) = &ars.exp[rhs] {
+    if p.last().as_str() == "nil" {
+      return Some(ErrorKind::InvalidAppend(AppendArg::Singleton));
+    }
+  }
+  None
 }
 
 /// @def(13)

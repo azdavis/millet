@@ -2252,6 +2252,30 @@ This will error. To fix, do not use the syntax sugar at the call site.
 +structure S = Func (Arg)
 ```
 
+## 5035
+
+There was a call to `@`, the list append function, with a discouraged first argument.
+
+<!-- @ignore -->
+<!-- TODO get this check to work with mini std basis version of @ -->
+
+```sml
+(* warning *)
+fun overlyComplicatedId xs = [] @ xs
+fun overlyComplicatedId' xs = xs @ []
+fun overlyComplicatedCons x xs = [x] @ xs
+```
+
+These expressions can be simplified:
+
+| Complex    | Simple    |
+| ---------- | --------- |
+| `[] @ xs`  | `xs`      |
+| `xs @ []`  | `xs`      |
+| `[x] @ xs` | `x :: xs` |
+
+To fix, simplify the expressions.
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.

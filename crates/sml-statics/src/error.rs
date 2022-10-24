@@ -44,6 +44,7 @@ pub(crate) enum ErrorKind {
   MismatchedFunctorSugar(FunctorSugarUser),
   /// must be last
   Unsupported(&'static str),
+  InvalidAppend(AppendArg),
 }
 
 /// A statics error.
@@ -109,6 +110,7 @@ impl Error {
       ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
       ErrorKind::InvalidEq(_) => Code::n(5033),
       ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
+      ErrorKind::InvalidAppend(_) => Code::n(5035),
       ErrorKind::Unsupported(_) => Code::n(5999),
     }
   }
@@ -144,6 +146,21 @@ impl fmt::Display for FunctorSugarUser {
     match self {
       FunctorSugarUser::Def => f.write_str("functor definition"),
       FunctorSugarUser::App => f.write_str("functor application"),
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum AppendArg {
+  Empty,
+  Singleton,
+}
+
+impl fmt::Display for AppendArg {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      AppendArg::Empty => f.write_str("empty"),
+      AppendArg::Singleton => f.write_str("singleton"),
     }
   }
 }
@@ -286,6 +303,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let other = sugary.other();
         write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
       }
+      ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with a {kind} list"),
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
