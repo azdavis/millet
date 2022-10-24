@@ -39,7 +39,7 @@ pub(crate) enum ErrorKind {
   TyVarNotAllowedForTyRhs,
   CannotShareTy(sml_hir::Path, TyScheme),
   CannotRealizeTy(sml_hir::Path, TyScheme),
-  EqOn(str_util::Name),
+  InvalidEq(str_util::Name),
   /// The argument is the more sugary one.
   MismatchedFunctorSugar(FunctorSugarUser),
   /// must be last
@@ -107,7 +107,7 @@ impl Error {
       ErrorKind::TyVarNotAllowedForTyRhs => Code::n(5030),
       ErrorKind::CannotShareTy(_, _) => Code::n(5031),
       ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
-      ErrorKind::EqOn(_) => Code::n(5033),
+      ErrorKind::InvalidEq(_) => Code::n(5033),
       ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
       ErrorKind::Unsupported(_) => Code::n(5999),
     }
@@ -117,7 +117,7 @@ impl Error {
   #[must_use]
   pub fn severity(&self) -> Severity {
     match self.kind {
-      ErrorKind::Unused(_) | ErrorKind::EqOn(_) | ErrorKind::MismatchedFunctorSugar(_) => {
+      ErrorKind::Unused(_) | ErrorKind::InvalidEq(_) | ErrorKind::MismatchedFunctorSugar(_) => {
         Severity::Warning
       }
       _ => Severity::Error,
@@ -281,7 +281,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ts = ts.display(&mvs, self.syms);
         write!(f, "cannot realize type {path} as {ts}")
       }
-      ErrorKind::EqOn(name) => write!(f, "calling `=` or `<>` on {name}"),
+      ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on {name}"),
       ErrorKind::MismatchedFunctorSugar(sugary) => {
         let other = sugary.other();
         write!(f, "the {sugary} uses syntax sugar, but the {other} does not")

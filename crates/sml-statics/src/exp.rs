@@ -184,7 +184,7 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
       Def::Path(DefPath::Regular(_), _) => return None,
     }
     match path.last().as_str() {
-      "NONE" | "nil" | "true" | "false" => Some(ErrorKind::EqOn(path.last().clone())),
+      "NONE" | "nil" | "true" | "false" => Some(ErrorKind::InvalidEq(path.last().clone())),
       _ => None,
     }
   })
