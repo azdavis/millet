@@ -76,7 +76,9 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
     // @def(8)
     sml_hir::Exp::App(func, argument) => {
-      lint_app(st, cx, ars, *func, *argument, exp.into());
+      if let Some(ek) = lint_app(cx, ars, *func, *argument) {
+        st.err(exp, ek);
+      }
       let func_ty = get(st, cfg, cx, ars, *func);
       let arg_ty = get(st, cfg, cx, ars, *argument);
       // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
@@ -140,16 +142,12 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   ret
 }
 
-/// this return `Option<()>` so we can use `?`, but we don't care if it returns None because we'll
-/// error elsewhere.
 fn lint_app(
-  st: &mut St,
   cx: &Cx,
   ars: &sml_hir::Arenas,
   func: sml_hir::ExpIdx,
   argument: sml_hir::ExpIdx,
-  idx: sml_hir::Idx,
-) -> Option<()> {
+) -> Option<ErrorKind> {
   match &ars.exp[func?] {
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def? {
       Def::Primitive => {
@@ -180,11 +178,11 @@ fn lint_app(
       Def::Path(DefPath::Regular(_), _) => continue,
     }
     match path.last().as_str() {
-      "NONE" | "nil" | "true" | "false" => st.err(idx, ErrorKind::EqOn(path.last().clone())),
+      "NONE" | "nil" | "true" | "false" => return Some(ErrorKind::EqOn(path.last().clone())),
       _ => {}
     }
   }
-  Some(())
+  None
 }
 
 /// @def(13)
