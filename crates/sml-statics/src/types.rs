@@ -982,6 +982,7 @@ pub(crate) struct FunSig {
   pub(crate) param: Sig,
   pub(crate) body_ty_names: TyNameSet,
   pub(crate) body_env: Env,
+  pub(crate) flavor: sml_hir::Flavor,
 }
 
 pub(crate) type SigEnv = FxHashMap<str_util::Name, Sig>;

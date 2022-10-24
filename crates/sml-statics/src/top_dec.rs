@@ -1,6 +1,6 @@
 use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::config::Cfg;
-use crate::error::{ErrorKind, Item};
+use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::info::Mode;
 use crate::st::St;
@@ -129,7 +129,7 @@ fn get_str_dec(
           body_ty_names.remove(sym);
         }
         let fun_name = fun_bind.functor_name.clone();
-        let fun_sig = FunSig { param: param_sig, body_ty_names, body_env };
+        let fun_sig = FunSig { param: param_sig, body_ty_names, body_env, flavor: fun_bind.flavor };
         if let Some(e) = ins_no_dupe(&mut fun_env, fun_name, fun_sig, Item::Functor) {
           st.err(str_dec, e);
         }
@@ -227,8 +227,17 @@ fn get_str_exp(
       ac.append(&mut to_add);
     }
     // @def(54)
-    sml_hir::StrExp::App(fun_name, arg_str_exp) => match bs.fun_env.get(fun_name) {
+    sml_hir::StrExp::App(fun_name, arg_str_exp, flavor) => match bs.fun_env.get(fun_name) {
       Some(fun_sig) => {
+        let sugar_user = match (fun_sig.flavor, flavor) {
+          (sml_hir::Flavor::Plain, sml_hir::Flavor::Plain)
+          | (sml_hir::Flavor::Sugared, sml_hir::Flavor::Sugared) => None,
+          (sml_hir::Flavor::Plain, sml_hir::Flavor::Sugared) => Some(FunctorSugarUser::App),
+          (sml_hir::Flavor::Sugared, sml_hir::Flavor::Plain) => Some(FunctorSugarUser::Def),
+        };
+        if let Some(sugar_user) = sugar_user {
+          st.err(str_exp, ErrorKind::MismatchedFunctorSugar(sugar_user));
+        }
         let mut arg_env = Env::default();
         get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
         let mut subst = TyRealization::default();

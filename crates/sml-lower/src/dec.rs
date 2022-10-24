@@ -118,9 +118,9 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
         .filter_map(|fun_bind| {
           let functor_name = get_name(fun_bind.functor_name())?;
           let body = with_ascription_tail(cx, fun_bind.body(), fun_bind.ascription_tail());
-          let (param_name, param_sig, body) = match fun_bind.functor_arg()? {
+          let (param_name, param_sig, body, flavor) = match fun_bind.functor_arg()? {
             ast::FunctorArg::FunctorArgNameSigExp(arg) => {
-              (get_name(arg.name())?, get_sig_exp(cx, arg.sig_exp()), body)
+              (get_name(arg.name())?, get_sig_exp(cx, arg.sig_exp()), body, sml_hir::Flavor::Plain)
             }
             ast::FunctorArg::Dec(arg) => {
               let param_name = cx.fresh();
@@ -130,10 +130,10 @@ fn get_str_dec_one(cx: &mut Cx, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
                 .dec(sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]), ptr.clone());
               let str_dec = cx.str_dec(sml_hir::StrDec::Dec(dec), ptr.clone());
               let body = cx.str_exp(sml_hir::StrExp::Let(str_dec, body), ptr.clone());
-              (param_name, param_sig, body)
+              (param_name, param_sig, body, sml_hir::Flavor::Sugared)
             }
           };
-          Some(sml_hir::FunctorBind { functor_name, param_name, param_sig, body })
+          Some(sml_hir::FunctorBind { functor_name, param_name, param_sig, body, flavor })
         })
         .collect(),
     ),
@@ -156,16 +156,18 @@ fn get_str_exp(cx: &mut Cx, str_exp: Option<ast::StrExp>) -> sml_hir::StrExpIdx 
       let (kind, sig_exp) = ascription_tail(cx, str_exp.ascription_tail());
       sml_hir::StrExp::Ascription(get_str_exp(cx, str_exp.str_exp()), kind, sig_exp)
     }
-    ast::StrExp::AppStrExp(str_exp) => sml_hir::StrExp::App(
-      get_name(str_exp.name())?,
-      match str_exp.app_str_exp_arg()? {
-        ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(cx, arg.str_exp()),
+    ast::StrExp::AppStrExp(str_exp) => {
+      let (arg, flavor) = match str_exp.app_str_exp_arg()? {
+        ast::AppStrExpArg::AppStrExpArgStrExp(arg) => {
+          (get_str_exp(cx, arg.str_exp()), sml_hir::Flavor::Plain)
+        }
         ast::AppStrExpArg::Dec(arg) => {
           let sd = get_str_dec(cx, Some(arg));
-          cx.str_exp(sml_hir::StrExp::Struct(sd), ptr.clone())
+          (cx.str_exp(sml_hir::StrExp::Struct(sd), ptr.clone()), sml_hir::Flavor::Sugared)
         }
-      },
-    ),
+      };
+      sml_hir::StrExp::App(get_name(str_exp.name())?, arg, flavor)
+    }
     ast::StrExp::LetStrExp(str_exp) => {
       sml_hir::StrExp::Let(get_str_dec(cx, str_exp.dec()), get_str_exp(cx, str_exp.str_exp()))
     }

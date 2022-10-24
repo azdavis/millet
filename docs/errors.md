@@ -1202,92 +1202,7 @@ structure Str : SIG = struct end
 
 To fix, provide definitions for the missing items.
 
-One type of situation in which this error may confusingly appear involves "syntax sugar" around functor definition and application. Here's an example:
-
-```sml
-(* error *)
-signature SIG = sig type t end
-structure Arg : SIG = struct type t = unit end
-functor Func (structure Param : SIG) = struct ... end
-structure S = Func (Arg)
-```
-
-This is invalid, but the reason why is subtle. Before we explain the reason, note that the bottom line is that the call site of `Func` must be changed:
-
-```diff
--structure S = Func (Arg)
-+structure S = Func (structure Param = Arg)
-```
-
-The fact that both the definition site and the corrected call site for `Func` have an extra `structure` keyword is a clue.
-
-The key is in the definition of `Func`. We use the syntax:
-
-<!-- @ignore -->
-
-```sml
-functor Func (structure Param : SIG)
-```
-
-which has a distinct meaning from:
-
-<!-- @ignore -->
-
-```sml
-functor Func (Param : SIG)
-```
-
-Both forms are legal SML. The first form is syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of the second, more "fundamental" syntax.
-
-As an aside, another example of syntax sugar is how list literals like `[2, 4, 6]` "desugar" to usages of the list constructors `::` and `nil`, namely `2 :: 4 :: 6 :: nil`.
-
-In the example, the sugar is expanded in the following manner:
-
-<!-- @ignore -->
-
-```sml
-(* original *)
-functor Func (structure Param : SIG) = struct ... end
-
-(* desugared *)
-functor Func (<<FuncArg>> : sig
-  structure Param : SIG
-end) = let
-  open <<FuncArg>>
-in
-  struct ... end
-end
-```
-
-Note the invalid SML syntax for the name of the functor argument `<<FuncArg>>`. This is to emphasize that when expanding the syntax sugar, an SML implementation will generate an unnameable, unique structure name. This name is then used exclusively in the `open`.
-
-Similarly, once we modify the call site, we are using more syntax sugar, which also expands:
-
-<!-- @ignore -->
-
-```sml
-(* original *)
-structure S = Func (structure Param = Arg)
-
-(* desugared *)
-structure S = Func (struct structure Param = Arg end)
-```
-
-A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
-
-<!-- @ignore -->
-
-```sml
-functor Func (Param : SIG) = struct ... end
-structure S = Func (structure Param = Arg)
-```
-
-This will error. To fix, do not use the syntax sugar at the call site.
-
-```diff
--structure S = Func (structure Param = Arg)
-+structure S = Func (Arg)
-```
+See also [5034](#5034) for a particular case in which this error may confusingly appear.
 
 ## 5004
 
@@ -2235,6 +2150,104 @@ fun reportOption opt =
     "something inside"
   else
     "nothing"
+```
+
+## 5034
+
+A functor application did not use the declaration "syntax sugar" when the functor definition did, or vice versa.
+
+This example triggers the warning:
+
+```sml
+(* warning *)
+functor Func (val x : int) = struct end
+structure S = Func (struct val x = 3 end)
+```
+
+This example triggers a warning, and also other errors:
+
+```sml
+(* error *)
+signature SIG = sig type t end
+functor Func (structure Param : SIG) = struct ... end
+structure Arg : SIG = struct type t = unit end
+structure S = Func (Arg)
+```
+
+This is invalid, but the reason why is subtle. Before we explain the reason, note that the bottom line is that the call site of `Func` must be changed:
+
+```diff
+-structure S = Func (Arg)
++structure S = Func (structure Param = Arg)
+```
+
+The fact that both the definition site and the corrected call site for `Func` have an extra `structure` keyword is a clue.
+
+The key is in the definition of `Func`. We use the syntax:
+
+<!-- @ignore -->
+
+```sml
+functor Func (structure Param : SIG)
+```
+
+which has a distinct meaning from:
+
+<!-- @ignore -->
+
+```sml
+functor Func (Param : SIG)
+```
+
+Both forms are legal SML. The first form is syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of the second, more "fundamental" syntax.
+
+In the example, the sugar is expanded in the following manner:
+
+<!-- @ignore -->
+
+```sml
+(* original *)
+functor Func (structure Param : SIG) = struct ... end
+
+(* desugared *)
+functor Func (<<FuncArg>> : sig
+  structure Param : SIG
+end) = let
+  open <<FuncArg>>
+in
+  struct ... end
+end
+```
+
+Note the invalid SML syntax for the name of the functor argument `<<FuncArg>>`. This is to emphasize that when expanding the syntax sugar, an SML implementation will generate an unnameable, unique structure name. This name is then used exclusively in the `open`.
+
+Similarly, once we modify the call site, we are using more syntax sugar, which also expands:
+
+<!-- @ignore -->
+
+```sml
+(* original *)
+structure S = Func (structure Param = Arg)
+
+(* desugared *)
+structure S = Func (struct structure Param = Arg end)
+```
+
+A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
+
+```sml
+(* error *)
+signature SIG = sig type t end
+functor Func (Param : SIG) = struct ... end
+structure Arg : SIG = struct type t = unit end
+structure S = Func (structure Param = Arg)
+```
+
+This will error. To fix, do not use the syntax sugar at the call site.
+
+```diff
+-structure S = Func (structure Param = Arg)
++structure S = Func (Arg)
 ```
 
 ## 5999

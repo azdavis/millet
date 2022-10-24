@@ -46,6 +46,15 @@ pub type OptIdx<T> = Option<la_arena::Idx<T>>;
 
 // modules //
 
+/// Whether something used syntax sugar.
+#[derive(Debug, Clone, Copy)]
+pub enum Flavor {
+  /// It used sugar.
+  Sugared,
+  /// It didn't.
+  Plain,
+}
+
 #[derive(Debug)]
 pub struct SigBind {
   pub name: Name,
@@ -58,6 +67,7 @@ pub struct FunctorBind {
   pub param_name: Name,
   pub param_sig: SigExpIdx,
   pub body: StrExpIdx,
+  pub flavor: Flavor,
 }
 
 pub type StrDecIdx = OptIdx<StrDec>;
@@ -90,7 +100,7 @@ pub enum StrExp {
   Struct(StrDecIdx),
   Path(Path),
   Ascription(StrExpIdx, Ascription, SigExpIdx),
-  App(Name, StrExpIdx),
+  App(Name, StrExpIdx, Flavor),
   Let(StrDecIdx, StrExpIdx),
 }
 

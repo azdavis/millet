@@ -115,7 +115,7 @@ fn get_str_exp(cx: &mut Cx, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) 
       get_str_exp(cx, ars, *str_exp);
       get_sig_exp(cx, ars, *sig_exp);
     }
-    sml_hir::StrExp::App(_, str_exp) => get_str_exp(cx, ars, *str_exp),
+    sml_hir::StrExp::App(_, str_exp, _) => get_str_exp(cx, ars, *str_exp),
     sml_hir::StrExp::Let(str_dec, str_exp) => {
       get_str_dec(cx, ars, *str_dec);
       get_str_exp(cx, ars, *str_exp);

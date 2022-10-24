@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Warn on mismatched sugar content for functor application.
+
 ## v0.5.6
 
 - Warn when using `=` on some special constants.

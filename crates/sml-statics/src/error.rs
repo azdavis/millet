@@ -40,6 +40,8 @@ pub(crate) enum ErrorKind {
   CannotShareTy(sml_hir::Path, TyScheme),
   CannotRealizeTy(sml_hir::Path, TyScheme),
   EqOn(str_util::Name),
+  /// The argument is the more sugary one.
+  MismatchedFunctorSugar(FunctorSugarUser),
   /// must be last
   Unsupported(&'static str),
 }
@@ -106,6 +108,7 @@ impl Error {
       ErrorKind::CannotShareTy(_, _) => Code::n(5031),
       ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
       ErrorKind::EqOn(_) => Code::n(5033),
+      ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
       ErrorKind::Unsupported(_) => Code::n(5999),
     }
   }
@@ -114,8 +117,33 @@ impl Error {
   #[must_use]
   pub fn severity(&self) -> Severity {
     match self.kind {
-      ErrorKind::Unused(_) | ErrorKind::EqOn(_) => Severity::Warning,
+      ErrorKind::Unused(_) | ErrorKind::EqOn(_) | ErrorKind::MismatchedFunctorSugar(_) => {
+        Severity::Warning
+      }
       _ => Severity::Error,
+    }
+  }
+}
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum FunctorSugarUser {
+  Def,
+  App,
+}
+
+impl FunctorSugarUser {
+  fn other(self) -> Self {
+    match self {
+      FunctorSugarUser::Def => FunctorSugarUser::App,
+      FunctorSugarUser::App => FunctorSugarUser::Def,
+    }
+  }
+}
+
+impl fmt::Display for FunctorSugarUser {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      FunctorSugarUser::Def => f.write_str("functor definition"),
+      FunctorSugarUser::App => f.write_str("functor application"),
     }
   }
 }
@@ -254,6 +282,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "cannot realize type {path} as {ts}")
       }
       ErrorKind::EqOn(name) => write!(f, "calling `=` on {name}"),
+      ErrorKind::MismatchedFunctorSugar(sugary) => {
+        let other = sugary.other();
+        write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
+      }
       ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
