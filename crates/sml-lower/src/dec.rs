@@ -660,21 +660,30 @@ where
   I: Iterator<Item = ast::DatBind> + 'a,
 {
   iter.filter_map(|dat_bind| {
-    if let Some(bar) = dat_bind.bar() {
-      cx.err(bar.text_range(), ErrorKind::PrecedingBar);
-    }
+    let cons: Vec<sml_hir::ConBind> = match dat_bind.eq_con_binds() {
+      None => {
+        cx.err(dat_bind.syntax().text_range(), ErrorKind::MissingRhs);
+        vec![]
+      }
+      Some(eq_con_binds) => {
+        if let Some(bar) = eq_con_binds.bar() {
+          cx.err(bar.text_range(), ErrorKind::PrecedingBar);
+        }
+        eq_con_binds
+          .con_binds()
+          .filter_map(|con_bind| {
+            Some(sml_hir::ConBind {
+              name: str_util::Name::new(con_bind.name_star_eq()?.token.text()),
+              ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
+            })
+          })
+          .collect()
+      }
+    };
     Some(sml_hir::DatBind {
       ty_vars: ty::var_seq(dat_bind.ty_var_seq()),
       name: get_name(dat_bind.name())?,
-      cons: dat_bind
-        .con_binds()
-        .filter_map(|con_bind| {
-          Some(sml_hir::ConBind {
-            name: str_util::Name::new(con_bind.name_star_eq()?.token.text()),
-            ty: con_bind.of_ty().map(|x| ty::get(cx, x.ty())),
-          })
-        })
-        .collect(),
+      cons,
     })
   })
 }

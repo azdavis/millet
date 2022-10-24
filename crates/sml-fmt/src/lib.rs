@@ -282,13 +282,14 @@ where
   sep_with_lines(f, cfg, "and ", iter, |f, dat_bind| {
     ty_var_seq(f, dat_bind.ty_var_seq())?;
     output(f, dat_bind.name()?.text())?;
-    if dat_bind.con_binds().count() > 1 {
+    let eq_con_binds = dat_bind.eq_con_binds()?;
+    if eq_con_binds.con_binds().count() > 1 {
       output(f, " =\n")?;
       cfg.indented().output_indent(f)?;
-      sep_with_lines(f, cfg, "| ", dat_bind.con_binds(), con_bind)
+      sep_with_lines(f, cfg, "| ", eq_con_binds.con_binds(), con_bind)
     } else {
       output(f, " = ")?;
-      sep(f, " | ", dat_bind.con_binds(), con_bind)
+      sep(f, " | ", eq_con_binds.con_binds(), con_bind)
     }
   })
 }

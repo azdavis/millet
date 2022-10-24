@@ -388,24 +388,28 @@ fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
     if !ty_var_seq(p) & p.eat(SK::Name).is_none() {
       return false;
     }
-    p.eat(SK::Eq);
-    if p.at(SK::Bar) {
+    if p.at(SK::Eq) {
+      let en = p.enter();
       p.bump();
-    }
-    many_sep(p, SK::Bar, SK::ConBind, |p| {
-      let mut got = false;
-      if allow_op && p.at(SK::OpKw) {
-        p.error(ErrorKind::UnnecessaryOp);
+      if p.at(SK::Bar) {
         p.bump();
-        got = true;
       }
-      got |= eat_name_star(p).is_some();
-      if !got {
-        return false;
-      }
-      let _ = of_ty(p);
-      true
-    });
+      many_sep(p, SK::Bar, SK::ConBind, |p| {
+        let mut got = false;
+        if allow_op && p.at(SK::OpKw) {
+          p.error(ErrorKind::UnnecessaryOp);
+          p.bump();
+          got = true;
+        }
+        got |= eat_name_star(p).is_some();
+        if !got {
+          return false;
+        }
+        let _ = of_ty(p);
+        true
+      });
+      p.exit(en, SK::EqConBinds);
+    }
     true
   });
   if p.at(SK::WithtypeKw) {

@@ -55,7 +55,7 @@ TyHead = 'type' | 'eqtype'
 ValBind = 'rec'? Pat EqExp? 'and'?
 FunBind = FunBindCase* 'and'?
 TyBind = TyVarSeq 'Name' EqTy? 'and'?
-DatBind = TyVarSeq 'Name' '=' '|'? ConBind* 'and'?
+DatBind = TyVarSeq 'Name' EqConBinds? 'and'?
 ConBind = 'op'? NameStarEq OfTy? '|'?
 ExBind = 'op'? NameStarEq ExBindInner? 'and'?
 StrBind = 'Name' AscriptionTail? EqStrExp? 'and'?
@@ -67,6 +67,7 @@ FunctorBind =
 
 EqExp = '=' Exp
 EqStrExp = '=' StrExp
+EqConBinds = '=' '|'? ConBind*
 
 FunBindCase = FunBindCaseHead Pat* TyAnnotation? EqExp? '|'?
 FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
