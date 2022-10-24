@@ -80,7 +80,7 @@ fn get_str_dec(
         let should_push = match st.mode() {
           Mode::Regular(_) => true,
           // `datatype option` is well-known
-          Mode::StdBasis(_) => sig_bind.name.as_str() != "OPTION",
+          Mode::BuiltinLib(_) => sig_bind.name.as_str() != "OPTION",
           Mode::PathOrder => false,
         };
         if should_push {
@@ -206,7 +206,7 @@ fn get_str_exp(
           env_realize(&subst, &mut to_add);
           env_enrich(st, &str_exp_env, &to_add, str_exp.into());
         }
-        Mode::StdBasis(_) | Mode::PathOrder => {}
+        Mode::BuiltinLib(_) | Mode::PathOrder => {}
       }
       if matches!(asc, sml_hir::Ascription::Opaque) {
         subst.clear();
@@ -302,7 +302,7 @@ fn get_sig_exp(
         st.info().insert(sig_exp.into(), None, sig.env.def);
         ac.append(&mut sig_env);
         match st.mode() {
-          Mode::StdBasis(_) => match name.as_str() {
+          Mode::BuiltinLib(_) => match name.as_str() {
             "WORD" => Some(BasicOverload::Word),
             "INTEGER" | "INT_INF" => Some(BasicOverload::Int),
             "REAL" => Some(BasicOverload::Real),

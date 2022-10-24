@@ -176,7 +176,7 @@ fn lint_app(
     };
     let vi = get_val_info(&cx.env, path).ok()??;
     match vi.def? {
-      Def::Path(DefPath::StdBasis(_), _) | Def::Primitive => {}
+      Def::Path(DefPath::BuiltinLib(_), _) | Def::Primitive => {}
       Def::Path(DefPath::Regular(_), _) => continue,
     }
     match path.last().as_str() {

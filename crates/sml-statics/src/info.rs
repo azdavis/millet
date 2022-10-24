@@ -149,11 +149,11 @@ impl Info {
 pub enum Mode {
   /// Regular checking. The default.
   Regular(Option<paths::PathId>),
-  /// Standard basis checking. Notably, ascription structure expressions will not check to see if
+  /// Built-in library checking. Notably, ascription structure expressions will not check to see if
   /// they actually match the signature.
   ///
-  /// The string is the name of the std basis file.
-  StdBasis(&'static str),
+  /// The string is the name of the built-in library file.
+  BuiltinLib(&'static str),
   /// Only used for path ordering.
   ///
   /// Since path ordering only cares about structure-level name resolution, we can skip lots of

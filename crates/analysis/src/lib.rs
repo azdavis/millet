@@ -103,7 +103,7 @@ impl Analysis {
           sml_statics::Def::Path(path, idx) => {
             let info = match path {
               sml_statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
-              sml_statics::DefPath::StdBasis(name) => self.std_basis.get_info(name)?,
+              sml_statics::DefPath::BuiltinLib(name) => self.std_basis.get_info(name)?,
             };
             info.get_doc(idx)
           }
@@ -200,7 +200,7 @@ impl Analysis {
   fn def_to_path_and_range(&self, def: sml_statics::Def) -> Option<WithPath<Range>> {
     let (path, idx) = match def {
       sml_statics::Def::Path(sml_statics::DefPath::Regular(a), b) => (a, b),
-      sml_statics::Def::Path(sml_statics::DefPath::StdBasis(_), _)
+      sml_statics::Def::Path(sml_statics::DefPath::BuiltinLib(_), _)
       | sml_statics::Def::Primitive => return None,
     };
     let def_file = self.source_files.get(&path)?;

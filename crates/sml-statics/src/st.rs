@@ -52,7 +52,7 @@ impl St {
   pub(crate) fn def(&self, idx: sml_hir::Idx) -> Option<Def> {
     let path = match self.mode() {
       Mode::Regular(p) => DefPath::Regular(p?),
-      Mode::StdBasis(p) => DefPath::StdBasis(p),
+      Mode::BuiltinLib(p) => DefPath::BuiltinLib(p),
       Mode::PathOrder => return None,
     };
     Some(Def::Path(path, idx))
@@ -68,7 +68,7 @@ impl St {
   {
     match (self.mode(), &kind) {
       (Mode::PathOrder, ErrorKind::Undefined(Item::Struct | Item::Sig | Item::Functor, _))
-      | (Mode::Regular(_) | Mode::StdBasis(_), _) => {
+      | (Mode::Regular(_) | Mode::BuiltinLib(_), _) => {
         self.errors.push(Error { idx: idx.into(), kind });
       }
       (Mode::PathOrder, _) => {}

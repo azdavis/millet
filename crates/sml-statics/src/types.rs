@@ -1292,6 +1292,8 @@ pub enum Def {
 pub enum DefPath {
   /// A regular path.
   Regular(paths::PathId),
-  /// A std basis path.
-  StdBasis(&'static str),
+  /// A built-in library path, like the std basis or other such similar "always available"
+  /// libraries. Contrast with primitives, which are built-in but not expressible in a regular SML
+  /// source file.
+  BuiltinLib(&'static str),
 }

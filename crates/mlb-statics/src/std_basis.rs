@@ -104,7 +104,7 @@ where
       if let Some(e) = started.lower.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
-      let mode = sml_statics::Mode::StdBasis(name);
+      let mode = sml_statics::Mode::BuiltinLib(name);
       let low = started.lower;
       let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
       basis.append(checked.basis);
