@@ -281,7 +281,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ts = ts.display(&mvs, self.syms);
         write!(f, "cannot realize type {path} as {ts}")
       }
-      ErrorKind::EqOn(name) => write!(f, "calling `=` on {name}"),
+      ErrorKind::EqOn(name) => write!(f, "calling `=` or `<>` on {name}"),
       ErrorKind::MismatchedFunctorSugar(sugary) => {
         let other = sugary.other();
         write!(f, "the {sugary} uses syntax sugar, but the {other} does not")

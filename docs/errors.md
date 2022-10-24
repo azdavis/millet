@@ -2063,23 +2063,25 @@ end
 
 ## 5033
 
-The equality function `=` was applied to a discouraged argument.
+The equality function `=` or the inequality function `<>` was applied to a discouraged argument.
 
 ```sml
 (* warning *)
 fun isEmpty xs = xs = []
 ```
 
-Using `=` may unnecessarily restrict the type to be an "equality" type. Although Millet does not track the distinction between equality and non-equality types, a conforming SML implementation will report the type of `isEmpty` above as `''a list -> bool` instead of the perhaps expected `'a list -> bool`.
+Using `=` or `<>` may unnecessarily restrict the type to be an "equality" type. Although Millet does not track the distinction between equality and non-equality types, a conforming SML implementation will report the type of `isEmpty` above as `''a list -> bool` instead of the perhaps expected `'a list -> bool`.
 
 Note the extra tick mark: `''a` is a type variable that can only be substituted with equality types, whereas `'a` is an unrestricted type variable. This is due to the usage of `=`.
 
-Although `bool` is already an equality type, it is also discouraged to call `=` on boolean literals, because the expression can be simplified:
+Although `bool` is already an equality type, it is also discouraged to call `=` or `<>` on boolean literals, because the expression can be simplified:
 
-| Complex     | Simple  |
-| ----------- | ------- |
-| `x = true`  | `x`     |
-| `x = false` | `not x` |
+| Complex      | Simple  |
+| ------------ | ------- |
+| `x = true`   | `x`     |
+| `x = false`  | `not x` |
+| `x <> true`  | `not x` |
+| `x <> false` | `x`     |
 
 To fix, if the error is on a `bool` literal, consult the above table to simplify the expression. For lists and options, consider whether you need to access the values inside the constructors (e.g. the head or tail of the list, or the value in a `SOME`.) If you do, use pattern matching.
 
