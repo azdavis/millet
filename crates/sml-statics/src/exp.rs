@@ -164,16 +164,21 @@ fn lint_app(
   }
 }
 
+type SomeExpIdx = sml_hir::la_arena::Idx<sml_hir::Exp>;
+
+fn get_pair(ars: &sml_hir::Arenas, idx: SomeExpIdx) -> Option<[SomeExpIdx; 2]> {
+  match &ars.exp[idx] {
+    sml_hir::Exp::Record(rows) => match rows.as_slice() {
+      &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] => Some([a?, b?]),
+      _ => None,
+    },
+    _ => None,
+  }
+}
+
 /// not just for `=` but also `<>`.
 fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<ErrorKind> {
-  let (lhs, rhs) = match &ars.exp[argument?] {
-    sml_hir::Exp::Record(rows) => match rows.as_slice() {
-      &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] => (a?, b?),
-      _ => return None,
-    },
-    _ => return None,
-  };
-  [lhs, rhs].into_iter().find_map(|argument| {
+  get_pair(ars, argument?)?.into_iter().find_map(|argument| {
     let path = match &ars.exp[argument] {
       sml_hir::Exp::Path(p) => p,
       _ => return None,
