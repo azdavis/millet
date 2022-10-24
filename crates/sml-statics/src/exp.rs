@@ -152,14 +152,19 @@ fn lint_app(
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def? {
       Def::Primitive => {
         assert!(path.prefix().is_empty(), "primitives are at the top level");
-        if path.last().as_str() != "=" {
-          return None;
+        if path.last().as_str() == "=" {
+          lint_eq(cx, ars, argument)
+        } else {
+          None
         }
       }
-      Def::Path(_, _) => return None,
+      Def::Path(_, _) => None,
     },
-    _ => return None,
+    _ => None,
   }
+}
+
+fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<ErrorKind> {
   let (lhs, rhs) = match &ars.exp[argument?] {
     sml_hir::Exp::Record(rows) => match rows.as_slice() {
       &[(sml_hir::Lab::Num(1), a), (sml_hir::Lab::Num(2), b)] => (a?, b?),
