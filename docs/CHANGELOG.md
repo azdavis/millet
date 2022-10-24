@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.7
 
 - Warn on mismatched sugar content for functor application.
 - Warn when using `@` for empty lists (as either argument) or singleton lists (as the first argument).
