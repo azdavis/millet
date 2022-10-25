@@ -33,6 +33,8 @@ impl Ptrs {
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
+  /// must be first here, but have the highest error codes
+  Unsupported(&'static str),
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
   InvalidIntLit(std::num::ParseIntError),
@@ -59,13 +61,12 @@ pub(crate) enum ErrorKind {
   DecHole,
   NotSpec,
   AsPatLhsNotName,
-  /// must be last
-  Unsupported(&'static str),
 }
 
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
         write!(f, "expected a function clause for {want}, found one for {got}")
       }
@@ -98,7 +99,6 @@ impl fmt::Display for ErrorKind {
       ErrorKind::DecHole => f.write_str("declaration hole"),
       ErrorKind::NotSpec => f.write_str("non-specification not allowed here"),
       ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
-      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
 }
@@ -127,6 +127,7 @@ impl Error {
   #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
+      ErrorKind::Unsupported(_) => Code::n(4999),
       ErrorKind::FunBindMismatchedName(_, _) => Code::n(4001),
       ErrorKind::FunBindWrongNumPats(_, _) => Code::n(4002),
       ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidBigIntLit(_) => Code::n(4003),
@@ -151,7 +152,6 @@ impl Error {
       ErrorKind::DecHole => Code::n(4022),
       ErrorKind::NotSpec => Code::n(4023),
       ErrorKind::AsPatLhsNotName => Code::n(4024),
-      ErrorKind::Unsupported(_) => Code::n(4999),
     }
   }
 

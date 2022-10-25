@@ -7,6 +7,8 @@ use std::fmt;
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
+  /// must be first here, but have the highest error code
+  Unsupported(&'static str),
   Undefined(Item, str_util::Name),
   Duplicate(Item, str_util::Name),
   Missing(Item, str_util::Name),
@@ -43,8 +45,6 @@ pub(crate) enum ErrorKind {
   /// The argument is the more sugary one.
   MismatchedFunctorSugar(FunctorSugarUser),
   InvalidAppend(AppendArg),
-  /// must be last
-  Unsupported(&'static str),
 }
 
 /// A statics error.
@@ -76,6 +76,7 @@ impl Error {
   #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
+      ErrorKind::Unsupported(_) => Code::n(5999),
       ErrorKind::Undefined(_, _) => Code::n(5001),
       ErrorKind::Duplicate(_, _) => Code::n(5002),
       ErrorKind::Missing(_, _) => Code::n(5003),
@@ -111,7 +112,6 @@ impl Error {
       ErrorKind::InvalidEq(_) => Code::n(5033),
       ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
       ErrorKind::InvalidAppend(_) => Code::n(5035),
-      ErrorKind::Unsupported(_) => Code::n(5999),
     }
   }
 
@@ -198,6 +198,7 @@ struct ErrorKindDisplay<'a> {
 impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
+      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
       ErrorKind::Undefined(item, name) => {
         write!(f, "undefined {item}: {name}")?;
         if let Some(sug) = suggestion(name.as_str()) {
@@ -304,7 +305,6 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
       }
       ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with a {kind} list"),
-      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
     }
   }
 }
