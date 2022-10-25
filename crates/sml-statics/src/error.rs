@@ -45,6 +45,7 @@ pub(crate) enum ErrorKind {
   /// The argument is the more sugary one.
   MismatchedFunctorSugar(FunctorSugarUser),
   InvalidAppend(AppendArg),
+  BoolCase,
 }
 
 /// A statics error.
@@ -112,6 +113,7 @@ impl Error {
       ErrorKind::InvalidEq(_) => Code::n(5033),
       ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
       ErrorKind::InvalidAppend(_) => Code::n(5035),
+      ErrorKind::BoolCase => Code::n(5036),
     }
   }
 
@@ -119,9 +121,10 @@ impl Error {
   #[must_use]
   pub fn severity(&self) -> Severity {
     match self.kind {
-      ErrorKind::Unused(_) | ErrorKind::InvalidEq(_) | ErrorKind::MismatchedFunctorSugar(_) => {
-        Severity::Warning
-      }
+      ErrorKind::Unused(_)
+      | ErrorKind::InvalidEq(_)
+      | ErrorKind::MismatchedFunctorSugar(_)
+      | ErrorKind::BoolCase => Severity::Warning,
       _ => Severity::Error,
     }
   }
@@ -305,6 +308,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
       }
       ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with a {kind} list"),
+      ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
     }
   }
 }

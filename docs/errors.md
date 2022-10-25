@@ -2276,6 +2276,29 @@ These expressions can be simplified:
 
 To fix, simplify the expressions.
 
+## 5036
+
+There was a `case` on a `bool` expression.
+
+```sml
+(* warning *)
+fun mainCharacter old =
+  case old of
+    true => "porco rosso"
+  | false => "nausicaa"
+```
+
+Usually, `if` is preferred.
+
+```sml
+(* ok *)
+fun mainCharacter old =
+  if old then
+    "porco rosso"
+  else
+    "nausicaa"
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.

@@ -290,7 +290,7 @@ fn get_exp(
       }
     }
     sml_hir::Exp::Raise(exp) => get_exp(cx, ars, scope, mode, *exp),
-    sml_hir::Exp::Fn(matcher_arms) => {
+    sml_hir::Exp::Fn(matcher_arms, _) => {
       for &(pat, exp) in matcher_arms {
         match mode {
           Mode::Get(ac) => get_pat(cx, ars, ac, pat),

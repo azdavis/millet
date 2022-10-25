@@ -47,6 +47,9 @@ pub type OptIdx<T> = Option<la_arena::Idx<T>>;
 // modules //
 
 /// Whether something used syntax sugar.
+///
+/// An implementation MUST NOT depend on this for semantics, e.g. type check differently based on
+/// the flavor. It MUST only be used for "niceties", e.g. to emit better error messages.
 #[derive(Debug, Clone, Copy)]
 pub enum Flavor {
   /// It used sugar.
@@ -196,8 +199,32 @@ pub enum Exp {
   App(ExpIdx, ExpIdx),
   Handle(ExpIdx, Vec<(PatIdx, ExpIdx)>),
   Raise(ExpIdx),
-  Fn(Vec<(PatIdx, ExpIdx)>),
+  Fn(Vec<(PatIdx, ExpIdx)>, FnFlavor),
   Typed(ExpIdx, TyIdx),
+}
+
+/// The original bit of syntax that got eventually lowered to stuff involving `fn`.
+///
+/// An implementation MUST NOT depend on this for semantics, e.g. type check differently based on
+/// the flavor. It MUST only be used for "niceties", e.g. to emit better error messages.
+#[derive(Debug, Clone, Copy)]
+pub enum FnFlavor {
+  /// i.e. `andalso`/`orelse`. Lowers to `if`.
+  BoolBinOp,
+  /// Lowers to `case`.
+  If,
+  /// Lowers to `fn` applied to the head.
+  Case,
+  /// Lowers to `val rec` with a bunch of `fn`, then a `case` on a tuple.
+  Fun,
+  /// Lowers to `fn` with a record pattern with a `...` pattern row.
+  Selector,
+  /// Lowers to `fun` and `if`.
+  While,
+  /// Lowers to successive `case`s.
+  Seq,
+  /// Lowers to itself!
+  Fn,
 }
 
 pub type DecIdx = OptIdx<Dec>;

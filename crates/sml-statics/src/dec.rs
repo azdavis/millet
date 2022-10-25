@@ -76,7 +76,7 @@ pub(crate) fn get(
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
         // @def(26)
         if let Some(exp) = val_bind.exp {
-          if !matches!(ars.exp[exp], sml_hir::Exp::Fn(_)) {
+          if !matches!(ars.exp[exp], sml_hir::Exp::Fn(_, _)) {
             st.err(dec, ErrorKind::ValRecExpNotFn);
           }
         }
@@ -373,7 +373,7 @@ fn expansive(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     None => return false,
   };
   match &ars.exp[exp] {
-    sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_) => {
+    sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => {
       false
     }
     sml_hir::Exp::Let(_, _) | sml_hir::Exp::Raise(_) | sml_hir::Exp::Handle(_, _) => true,
@@ -399,7 +399,7 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     | sml_hir::Exp::App(_, _)
     | sml_hir::Exp::Handle(_, _)
     | sml_hir::Exp::Raise(_)
-    | sml_hir::Exp::Fn(_) => false,
+    | sml_hir::Exp::Fn(_, _) => false,
     sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| constructor(cx, ars, exp)),
     sml_hir::Exp::Typed(exp, _) => constructor(cx, ars, *exp),
     sml_hir::Exp::Path(path) => {

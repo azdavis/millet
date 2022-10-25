@@ -562,10 +562,10 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
               let tup = exp::tuple(arg_exprs);
               cx.exp(tup, ptr.clone())
             };
-            let case = exp::case(cx, head, arms, ptr.clone());
+            let case = exp::case(cx, head, arms, ptr.clone(), sml_hir::FnFlavor::Fun);
             arg_names.into_iter().rev().fold(cx.exp(case, ptr.clone()), |body, name| {
               let pat = cx.pat(pat::name(name.as_str()), ptr.clone());
-              cx.exp(sml_hir::Exp::Fn(vec![(pat, body)]), ptr.clone())
+              cx.exp(sml_hir::Exp::Fn(vec![(pat, body)], sml_hir::FnFlavor::Fun), ptr.clone())
             })
           };
           sml_hir::ValBind {
