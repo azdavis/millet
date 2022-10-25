@@ -42,9 +42,9 @@ pub(crate) enum ErrorKind {
   InvalidEq(str_util::Name),
   /// The argument is the more sugary one.
   MismatchedFunctorSugar(FunctorSugarUser),
+  InvalidAppend(AppendArg),
   /// must be last
   Unsupported(&'static str),
-  InvalidAppend(AppendArg),
 }
 
 /// A statics error.
