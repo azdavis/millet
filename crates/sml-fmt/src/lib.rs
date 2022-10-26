@@ -224,6 +224,7 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       st.buf.push_str("infix ");
       if let Some(int_lit) = dec.int_lit() {
         st.buf.push_str(int_lit.text());
+        st.buf.push(' ');
       }
       names_space(st, dec.name_star_eqs())?;
     }
@@ -231,6 +232,7 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       st.buf.push_str("infixr ");
       if let Some(int_lit) = dec.int_lit() {
         st.buf.push_str(int_lit.text());
+        st.buf.push(' ');
       }
       names_space(st, dec.name_star_eqs())?;
     }
