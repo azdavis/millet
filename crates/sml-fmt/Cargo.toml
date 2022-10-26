@@ -10,4 +10,5 @@ test = false
 doctest = false
 
 [dependencies]
+sml-comment = { path = "../sml-comment" }
 sml-syntax = { path = "../sml-syntax" }

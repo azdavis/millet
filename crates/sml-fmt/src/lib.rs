@@ -10,7 +10,7 @@
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
 
-use sml_syntax::ast;
+use sml_syntax::ast::{self, AstNode as _};
 use std::fmt;
 
 /// Returns a value that displays the root.
@@ -84,6 +84,10 @@ fn get_dec(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::Dec) -> Res {
 }
 
 fn get_dec_one(f: &mut fmt::Formatter<'_>, cfg: Cfg, dec: ast::DecOne) -> Res {
+  if let Some(tok) = sml_comment::comment_above(dec.syntax()) {
+    output(f, tok.text().trim())?;
+    output(f, "\n")?;
+  }
   match dec {
     ast::DecOne::HoleDec(_) => output(f, "..."),
     ast::DecOne::ValDec(dec) => {

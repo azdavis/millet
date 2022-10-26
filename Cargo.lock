@@ -555,6 +555,7 @@ dependencies = [
 name = "sml-fmt"
 version = "0.1.0"
 dependencies = [
+ "sml-comment",
  "sml-syntax",
 ]
 
