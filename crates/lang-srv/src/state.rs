@@ -205,26 +205,7 @@ impl State {
       let range = analysis_range(params.range);
       let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
       if let Some((range, new_text)) = self.analysis.fill_case(path.wrap(range.start)) {
-        actions.push(lsp_types::CodeActionOrCommand::CodeAction(lsp_types::CodeAction {
-          title: "Fill case".to_owned(),
-          kind: Some(lsp_types::CodeActionKind::QUICKFIX),
-          edit: Some(lsp_types::WorkspaceEdit {
-            document_changes: Some(lsp_types::DocumentChanges::Edits(vec![
-              lsp_types::TextDocumentEdit {
-                text_document: lsp_types::OptionalVersionedTextDocumentIdentifier {
-                  uri: url,
-                  version: None,
-                },
-                edits: vec![lsp_types::OneOf::Left(lsp_types::TextEdit {
-                  range: lsp_range(range),
-                  new_text,
-                })],
-              },
-            ])),
-            ..Default::default()
-          }),
-          ..Default::default()
-        }));
+        actions.push(quick_fix("Fill case".to_owned(), url, range, new_text));
       }
       self.send_response(Response::new_ok(id, actions));
       Ok(())
@@ -655,6 +636,34 @@ where
     method: N::METHOD.to_owned(),
     register_options: Some(serde_json::to_value(options).unwrap()),
   }
+}
+
+fn quick_fix(
+  title: String,
+  url: Url,
+  range: text_pos::Range,
+  new_text: String,
+) -> lsp_types::CodeActionOrCommand {
+  lsp_types::CodeActionOrCommand::CodeAction(lsp_types::CodeAction {
+    title,
+    kind: Some(lsp_types::CodeActionKind::QUICKFIX),
+    edit: Some(lsp_types::WorkspaceEdit {
+      document_changes: Some(lsp_types::DocumentChanges::Edits(vec![
+        lsp_types::TextDocumentEdit {
+          text_document: lsp_types::OptionalVersionedTextDocumentIdentifier {
+            uri: url,
+            version: None,
+          },
+          edits: vec![lsp_types::OneOf::Left(lsp_types::TextEdit {
+            range: lsp_range(range),
+            new_text,
+          })],
+        },
+      ])),
+      ..Default::default()
+    }),
+    ..Default::default()
+  })
 }
 
 /// this makes sure it's a CI failure to turn on formatting.
