@@ -3,7 +3,6 @@
 //! Very WIP.
 //!
 //! - Doesn't handle comments.
-//! - Doesn't handle many, many actual language constructs.
 //! - No attempt is made to restrict lines to a reasonable length.
 //!
 //! Basically: don't use this.
