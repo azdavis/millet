@@ -10,5 +10,6 @@ test = false
 doctest = false
 
 [dependencies]
+fast-hash = { path = "../fast-hash" }
 sml-comment = { path = "../sml-comment" }
 sml-syntax = { path = "../sml-syntax" }

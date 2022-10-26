@@ -169,11 +169,14 @@ impl Analysis {
   }
 
   /// Format the given file, and return the end position of the file.
-  #[must_use]
-  pub fn format(&self, path: PathId) -> Option<(String, Position)> {
-    let file = self.source_files.get(&path)?;
-    let buf = sml_fmt::display_root(&file.syntax.parse.root)?;
-    Some((buf, file.syntax.pos_db.end_position()))
+  ///
+  /// # Errors
+  ///
+  /// If there was no file, or if formatting the file failed.
+  pub fn format(&self, path: PathId) -> Result<(String, Position), FormatError> {
+    let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
+    let buf = sml_fmt::get(&file.syntax.parse.root).map_err(FormatError::Format)?;
+    Ok((buf, file.syntax.pos_db.end_position()))
   }
 
   fn get_file_and_token(&self, pos: WithPath<Position>) -> Option<FileAndToken<'_>> {
@@ -225,6 +228,15 @@ impl StdBasis {
       StdBasis::Full => mlb_statics::StdBasis::full(),
     }
   }
+}
+
+/// An error when formatting a file.
+#[derive(Debug)]
+pub enum FormatError {
+  /// There was no file to format.
+  NoFile,
+  /// A formatting error.
+  Format(sml_fmt::Error),
 }
 
 fn priority(kind: SyntaxKind) -> u8 {

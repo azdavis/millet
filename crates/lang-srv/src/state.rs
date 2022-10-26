@@ -219,7 +219,7 @@ impl State {
       let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
       self.send_response(Response::new_ok(
         id,
-        self.analysis.format(path).map(|(new_text, end)| {
+        self.analysis.format(path).ok().map(|(new_text, end)| {
           vec![lsp_types::TextEdit {
             range: lsp_types::Range {
               start: lsp_types::Position { line: 0, character: 0 },

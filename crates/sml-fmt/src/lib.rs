@@ -10,19 +10,53 @@
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
 
+use fast_hash::FxHashSet;
 use sml_syntax::ast::{self, AstNode as _};
+use sml_syntax::rowan::TextRange;
+use sml_syntax::SyntaxKind;
 
-/// Returns a value that displays the root.
-#[must_use]
-pub fn display_root(root: &ast::Root) -> Option<String> {
-  let mut st = St::default();
-  get_dec(&mut st, Cfg::default(), root.dec()?)?;
-  Some(st.buf)
+/// Returns either the
+///
+/// # Errors
+///
+/// If there was a syntax error or comments in an un-format-able position.
+pub fn get(root: &ast::Root) -> Result<String, Error> {
+  let mut st = St {
+    buf: String::new(),
+    comment_ranges: root
+      .syntax()
+      .descendants_with_tokens()
+      .filter_map(|x| {
+        let tok = x.into_token()?;
+        (tok.kind() == SyntaxKind::BlockComment).then(|| tok.text_range())
+      })
+      .collect(),
+  };
+  match root.dec().and_then(|d| get_dec(&mut st, Cfg::default(), d)) {
+    Some(()) => {
+      if st.comment_ranges.is_empty() {
+        Ok(st.buf)
+      } else {
+        Err(Error::Comments(st.comment_ranges))
+      }
+    }
+    None => Err(Error::Syntax),
+  }
+}
+
+/// A failure to format a file.
+#[derive(Debug)]
+pub enum Error {
+  /// There is a syntax error in the file that prevents formatting.
+  Syntax,
+  /// There were comments that couldn't be formatted.
+  Comments(FxHashSet<TextRange>),
 }
 
 #[derive(Debug, Default)]
 struct St {
   buf: String,
+  comment_ranges: FxHashSet<TextRange>,
 }
 
 type Res = Option<()>;
@@ -78,6 +112,8 @@ fn get_dec(st: &mut St, cfg: Cfg, dec: ast::Dec) -> Res {
 
 fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
   if let Some(tok) = sml_comment::comment_above(dec.syntax()) {
+    st.comment_ranges.remove(&tok.text_range());
+    cfg.output_indent(st);
     st.buf.push_str(tok.text().trim());
     st.buf.push('\n');
   }
