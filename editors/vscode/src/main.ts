@@ -30,6 +30,7 @@ export async function activate(cx: vscode.ExtensionContext) {
       show_token_hover: config.get("server.hover.token.enable") ?? false,
       diagnostics_on_change:
         config.get("server.diagnostics.onChange.enable") ?? false,
+      format: config.get("format.enable") ?? false,
     },
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);

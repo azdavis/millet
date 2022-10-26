@@ -85,4 +85,9 @@ pub struct Options {
   pub show_token_hover: bool,
   /// Send diagnostics when file contents change before saving.
   pub diagnostics_on_change: bool,
+  /// **WARNING: THE FORMATTER REWRITES YOUR CODE. IT IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY
+  /// DESTROY SOME OR ALL OF YOUR CODE.**
+  ///
+  /// Naively format open SML files on save.
+  pub format: bool,
 }

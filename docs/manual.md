@@ -135,6 +135,15 @@ Show information about tokens on hover.
 
 Send diagnostics when file contents change before saving.
 
+#### `millet.format.enable`
+
+- Type: `boolean`
+- Default: `false`
+
+**WARNING: THE FORMATTER REWRITES YOUR CODE. IT IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
+
+Naively format open SML files on save.
+
 ## Features
 
 Millet has a bevy of features to help you read, write, and understand SML code.

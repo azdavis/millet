@@ -10,12 +10,6 @@ use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, Request
 use lsp_types::Url;
 use std::ops::ControlFlow;
 
-/// TODO remove when formatting is implemented.
-///
-/// Because the formatter is not fully implemented or tested, only set this to true if you're
-/// prepared for the formatter to permanently and entirely wipe away all of your SML code.
-const FORMAT: bool = false;
-
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
     text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Options(
@@ -35,7 +29,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
     definition_provider: Some(lsp_types::OneOf::Left(true)),
     type_definition_provider: Some(lsp_types::TypeDefinitionProviderCapability::Simple(true)),
     code_action_provider: Some(lsp_types::CodeActionProviderCapability::Simple(true)),
-    document_formatting_provider: Some(lsp_types::OneOf::Left(FORMAT)),
+    document_formatting_provider: Some(lsp_types::OneOf::Left(true)),
     ..Default::default()
   }
 }
@@ -211,7 +205,7 @@ impl State {
       Ok(())
     })?;
     r = try_request::<lsp_types::request::Formatting, _>(r, |id, params| {
-      if !FORMAT {
+      if !self.options.format {
         self.send_response(Response::new_ok(id, None::<()>));
         return Ok(());
       }
@@ -664,14 +658,4 @@ fn quick_fix(
     }),
     ..Default::default()
   })
-}
-
-/// this makes sure it's a CI failure to turn on formatting.
-#[test]
-fn no_formatting() {
-  let can_fmt = capabilities().document_formatting_provider.map_or(false, |x| match x {
-    lsp_types::OneOf::Left(x) => x,
-    lsp_types::OneOf::Right(_) => true,
-  });
-  assert!(!can_fmt);
 }
