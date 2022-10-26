@@ -9,7 +9,7 @@ use fmt_util::sep_seq;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
 use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
-use std::fmt::{self, Write as _};
+use std::fmt;
 use text_pos::{Position, Range};
 
 /// Performs analysis.
@@ -172,8 +172,7 @@ impl Analysis {
   #[must_use]
   pub fn format(&self, path: PathId) -> Option<(String, Position)> {
     let file = self.source_files.get(&path)?;
-    let mut buf = String::new();
-    write!(buf, "{}", sml_fmt::display_root(&file.syntax.parse.root)).ok()?;
+    let buf = sml_fmt::display_root(&file.syntax.parse.root)?;
     Some((buf, file.syntax.pos_db.end_position()))
   }
 
