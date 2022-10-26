@@ -79,7 +79,7 @@ pub enum ErrorLines {
 }
 
 /// Optional settings for the server.
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Options {
   /// Show information about tokens on hover.
   pub show_token_hover: bool,
@@ -90,4 +90,10 @@ pub struct Options {
   ///
   /// Naively format open SML files on save.
   pub format: bool,
+}
+
+impl Default for Options {
+  fn default() -> Self {
+    Self { show_token_hover: true, diagnostics_on_change: false, format: false }
+  }
 }
