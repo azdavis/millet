@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Warn when using `case` on a `bool`.
+- Allow using the highly experimental SML formatter. It defaults to off.
+
 ## v0.5.7
 
 - Warn on mismatched sugar content for functor application.
