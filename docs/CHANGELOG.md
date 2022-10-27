@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.8
 
 - Warn when using `case` on a `bool`.
 - Allow using the highly experimental SML formatter. It defaults to off.
