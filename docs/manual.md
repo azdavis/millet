@@ -238,6 +238,95 @@ This allows writing "example" code that actually parses. In the case of expressi
 
 When your cursor is over the `case` or `of` keywords of a `case` expression, Millet can fill in the case with arms for each variant of the type of the head expression.
 
+### Formatter
+
+**WARNING: THE FORMATTER REWRITES YOUR CODE. IT IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
+
+Millet can automatically format your open SML files. Set `millet.format.enable` to true in your settings, then reload your editor. Now, when saving an open file, Millet will format.
+
+There are some caveats, however.
+
+#### Experimental
+
+The first and most obvious caveat is the one above, in big bold uppercase.
+
+Most Millet features only **read** your files, and produce output only in the form of things like
+
+- errors
+- hover information
+- locations for definition sites
+
+If Millet has a bug, then the worst that happens is it provides incorrect information about your files. This can be safely ignored with no damage to your files.
+
+The formatter, however, **rewrites** your files. If there is a bug in the formatter, in the worst case, it could overwrite your files with
+
+- invalid syntax
+- garbage
+- nothing at all (i.e. essentially delete your files)
+
+So, the formatter is disabled by default, and great care should be taken when using it.
+
+#### Long lines
+
+The Millet formatter employs exceedingly unsophisticated strategies to break code across many lines. What this means is that large expressions (e.g. a function call expression with many long arguments) may be formatted all on one line.
+
+The suggested workaround is to use a `let ... in ... end` expression and split out sub-expressions into variables. So instead of
+
+```sml
+Boop.beep (if bar x then quz y else Fee.Fi.Fo.fum z) (fn res => s (blab :: res)) (fn () => k []) (fn (x, ac) => ac andalso x) (xs @ ys @ zs)
+```
+
+Try something like
+
+```sml
+let
+  val fst = if bar x then quz y else Fee.Fi.Fo.fum z
+  fun succeed res = s (blab :: res)
+  fun fail () = k []
+  fun andBoth (x, ac) = ac andalso x
+  val all = xs @ ys @ zs
+in
+  Boop.beep fst succeed fail andBoth all
+end
+```
+
+An arguably good thing about this is that it might improve readability anyway.
+
+#### Comments
+
+The formatter completely gives up on formatting the file if a comment appears in a place that the formatter doesn't know how to deal with.
+
+The **only** kind of comment the formatter even **attempts** to deal with are comments above declarations, like this:
+
+```sml
+(* i'm above a declaration *)
+val a = 1
+(* and so am i *)
+fun id x = x
+(* and i as well *)
+datatype dayKind = Weekday | Weekend
+```
+
+Comments in other positions, like inside expressions, are not supported.
+
+```sml
+val uh =
+  if foo then
+    (* always bar when foo *)
+    bar
+  else
+    (* fall back to quz otherwise *)
+    quz
+```
+
+When the formatter cannot format a file, it simply does nothing, and the file will not be formatted.
+
+#### Configuration
+
+There are no options to configure the formatter (other than to enable it or not).
+
+This is by design. More options means more ability to have different formatting styles.
+
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [mlb]: http://mlton.org/MLBasis
 [vs-code-ext]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
