@@ -379,8 +379,10 @@ fn get_where_kind(
         match get_ty_info(&bs.env, &rhs) {
           Ok(ty_info) => {
             let ty_scheme = ty_info.ty_scheme.clone();
+            // HACK: intentionally ignore CannotRealizeTy. I'm not exactly sure of the semantics of
+            // `where S = T` but this silences some errors seen in valid NJ-flavored SML.
             match get_where_type(marker, inner_env, &lhs, ty_scheme) {
-              Ok(()) => {}
+              Ok(()) | Err(ErrorKind::CannotRealizeTy(_, _)) => {}
               Err(e) => st.err(idx, e),
             }
           }

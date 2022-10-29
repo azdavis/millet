@@ -3,7 +3,7 @@
 //!
 //! [1]: http://www.mlton.org/SMLNJDeviations
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn op_in_val() {
@@ -376,7 +376,7 @@ end
 
 #[test]
 fn where_structure_ty_already_def() {
-  fail(
+  check(
     r#"
 signature FOO = sig
   type t
