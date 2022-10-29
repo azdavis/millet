@@ -29,7 +29,7 @@ where
 
 #[track_caller]
 fn check_err(e: &analysis::input::Error, s: &str) {
-  assert!(e.to_string().contains(s));
+  assert!(e.display(ROOT.as_path()).to_string().contains(s));
 }
 
 #[test]

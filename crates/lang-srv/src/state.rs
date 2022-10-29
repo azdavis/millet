@@ -375,17 +375,20 @@ impl State {
     });
     let mut input = match input {
       Ok(x) => x,
-      Err(e) => {
+      Err(err) => {
+        // need the root to display, but also need to mutate self
+        let root = root.clone();
+        let err_display = err.display(root.as_path());
         for url in std::mem::take(&mut self.has_diagnostics) {
           self.send_diagnostics(url, Vec::new());
         }
-        let did_send_as_diagnostic = if e.path().is_file() {
-          match file_url(e.path()) {
+        let did_send_as_diagnostic = if err.abs_path().is_file() {
+          match file_url(err.abs_path()) {
             Ok(url) => {
               self.has_diagnostics.insert(url.clone());
               self.send_diagnostics(
                 url,
-                vec![diagnostic(e.to_string(), e.range(), e.code(), e.severity())],
+                vec![diagnostic(err_display.to_string(), err.range(), err.code(), err.severity())],
               );
               true
             }
@@ -395,7 +398,10 @@ impl State {
           false
         };
         if !did_send_as_diagnostic {
-          self.show_error(format!("{}: {}", e.path().display(), e), e.code());
+          self.show_error(
+            format!("{}: {}", err.maybe_rel_path(root.as_path()).display(), err_display),
+            err.code(),
+          );
         }
         return false;
       }

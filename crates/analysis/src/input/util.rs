@@ -18,9 +18,17 @@ pub struct Error {
 }
 
 impl Error {
-  /// Returns a path associated with this error, which may or may not exist.
+  /// Returns `abs_path`, but possibly relative to the `root`.
+  ///
+  /// The path will be relative to `root` if it is contained in `root`. Else, it will be absolute.
   #[must_use]
-  pub fn path(&self) -> &Path {
+  pub fn maybe_rel_path(&self, root: &Path) -> &Path {
+    maybe_rel_to_root(root, self.abs_path())
+  }
+
+  /// Returns an absolute path for this error, which may or may not exist.
+  #[must_use]
+  pub fn abs_path(&self) -> &Path {
     self.source.path.as_ref().unwrap_or(&self.path).as_path()
   }
 
@@ -63,14 +71,13 @@ impl Error {
   pub fn severity(&self) -> Severity {
     Severity::Error
   }
-}
 
-impl fmt::Display for Error {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    if self.source.path.is_some() {
-      write!(f, "{}: ", self.path.display())?;
-    }
-    self.kind.fmt(f)
+  /// Returns a value that displays this.
+  ///
+  /// Any paths in the error will be relative to `root` if they are contained in `root`.
+  #[must_use]
+  pub fn display<'a>(&'a self, root: &'a Path) -> impl fmt::Display + 'a {
+    ErrorDisplay { err: self, root }
   }
 }
 
@@ -96,12 +103,22 @@ pub(crate) enum ErrorKind {
   UnsupportedExport,
 }
 
-impl fmt::Display for ErrorKind {
+struct ErrorDisplay<'a> {
+  err: &'a Error,
+  root: &'a Path,
+}
+
+impl fmt::Display for ErrorDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
+    if self.err.source.path.is_some() {
+      write!(f, "{}: ", self.err.maybe_rel_path(self.root).display())?;
+    }
+    match &self.err.kind {
       ErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
       ErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
       ErrorKind::MultipleRoots(a, b) => {
+        let a = maybe_rel_to_root(self.root, a);
+        let b = maybe_rel_to_root(self.root, b);
         write!(f, "multiple root group files: {} and {}", a.display(), b.display())
       }
       ErrorKind::NoRoot => f.write_str("no root group file"),
@@ -131,6 +148,10 @@ pub(crate) struct ErrorSource {
 }
 
 pub(crate) type Result<T, E = Error> = std::result::Result<T, E>;
+
+fn maybe_rel_to_root<'a, 'r>(root: &'r Path, path: &'a Path) -> &'a Path {
+  path.strip_prefix(root).unwrap_or(path)
+}
 
 pub(crate) fn get_path_id<F>(
   fs: &F,
