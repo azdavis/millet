@@ -1,11 +1,11 @@
 ## Description
 
-TODO: what changed?
+<!-- Describe what changed. -->
 
 ## Motivation
 
-TODO: why make this change?
+<!-- Explain why you made this change. -->
 
 ## Tests
 
-TODO: how was this change tested?
+<!-- Explain how this change was tested. -->

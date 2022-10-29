@@ -6,21 +6,18 @@ labels: bug
 
 ## Environment
 
-- Millet version: TODO
-- VS Code version: TODO
-- OS version: TODO
+- Millet version:
+- VS Code version:
+- OS version:
 
 ## Steps to reproduce
 
 <!-- Please minimize the bug as much as possible. -->
 
-1. TODO
-2. TODO
-
 ## Expected behavior
 
-TODO
+<!-- Describe what you expected to happen. -->
 
 ## Actual behavior
 
-TODO
+<!-- Describe what actually happened. -->
