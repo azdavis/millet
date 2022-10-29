@@ -164,6 +164,3 @@ pub(crate) fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
     }
   }
 }
-
-/// useful for closures that add/remove things from sets, since those methods return `bool`.
-pub(crate) fn ignore(_: bool) {}

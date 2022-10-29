@@ -9,7 +9,7 @@ use crate::types::{
   HasRecordMetaVars, IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, SymsMarker, Ty, TyEnv, TyInfo,
   TyNameSet, TyScheme, TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
-use crate::util::{apply_bv, ignore, ins_check_name, ins_no_dupe, ty_syms};
+use crate::util::{apply_bv, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
@@ -76,6 +76,7 @@ fn get_str_dec(
       let mut sig_env = SigEnv::default();
       // @def(67)
       for sig_bind in sig_binds {
+        let marker = st.syms.mark();
         let mut env = Env::with_def(st.def(str_dec.into()));
         let should_push = match st.mode() {
           Mode::Regular(_) => true,
@@ -90,7 +91,7 @@ fn get_str_dec(
         if should_push {
           st.pop_prefix();
         }
-        let sig = env_to_sig(bs, env);
+        let sig = env_to_sig(env, &marker);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);
         }
@@ -110,21 +111,29 @@ fn get_str_dec(
       // @def(86)
       for fun_bind in fun_binds {
         let mut param_env = Env::default();
+        let marker = st.syms.mark();
         get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
-        let param_sig = env_to_sig(bs, param_env);
+        let param_sig = env_to_sig(param_env, &marker);
         let mut bs_clone = bs.clone();
         bs_clone.env.push(Env {
           str_env: map([(fun_bind.param_name.clone(), param_sig.env.clone())]),
           ..Default::default()
         });
         let mut body_env = Env::with_def(st.def(str_dec.into()));
+        let marker = st.syms.mark();
         // TODO represent the "path" of a functor app differently?
         st.push_prefix(str_util::Name::new(&format!("{}(...)", fun_bind.functor_name)));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
         st.pop_prefix();
         let mut body_ty_names = TyNameSet::default();
-        env_syms(&mut |x| ignore(body_ty_names.insert(x)), &body_env);
-        bs_syms(&mut |x| ignore(body_ty_names.remove(&x)), &bs_clone);
+        env_syms(
+          &mut |x| {
+            if x.generated_after(&marker) {
+              body_ty_names.insert(x);
+            }
+          },
+          &body_env,
+        );
         for sym in &param_sig.ty_names {
           body_ty_names.remove(sym);
         }
@@ -196,8 +205,9 @@ fn get_str_exp(
       let mut str_exp_env = Env::default();
       get_str_exp(st, bs, ars, &mut str_exp_env, *inner_str_exp);
       let mut sig_exp_env = Env::default();
+      let marker = st.syms.mark();
       let ov = get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
-      let sig = env_to_sig(bs, sig_exp_env);
+      let sig = env_to_sig(sig_exp_env, &marker);
       let mut subst = TyRealization::default();
       let mut to_add = sig.env.clone();
       match st.mode() {
@@ -432,10 +442,16 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
 }
 
 // @def(65)
-fn env_to_sig(bs: &Bs, env: Env) -> Sig {
+fn env_to_sig(env: Env, marker: &SymsMarker) -> Sig {
   let mut ty_names = TyNameSet::default();
-  env_syms(&mut |x| ignore(ty_names.insert(x)), &env);
-  bs_syms(&mut |x| ignore(ty_names.remove(&x)), bs);
+  env_syms(
+    &mut |x| {
+      if x.generated_after(marker) {
+        ty_names.insert(x);
+      }
+    },
+    &env,
+  );
   Sig { ty_names, env }
 }
 
@@ -861,27 +877,6 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
       ty_realize(subst, res);
     }
   }
-}
-
-fn bs_syms<F: FnMut(Sym)>(f: &mut F, bs: &Bs) {
-  for fun_sig in bs.fun_env.values() {
-    sig_syms(f, &fun_sig.param);
-    for &sym in &fun_sig.body_ty_names {
-      f(sym);
-    }
-    env_syms(f, &fun_sig.body_env);
-  }
-  for sig in bs.sig_env.values() {
-    sig_syms(f, sig);
-  }
-  env_syms(f, &bs.env);
-}
-
-fn sig_syms<F: FnMut(Sym)>(f: &mut F, sig: &Sig) {
-  for &sym in &sig.ty_names {
-    f(sym);
-  }
-  env_syms(f, &sig.env);
 }
 
 fn env_syms<F, E>(f: &mut F, env: &E)
