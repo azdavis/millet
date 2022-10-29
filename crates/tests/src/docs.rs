@@ -36,7 +36,7 @@ fn check_all(contents: &str) {
         }
       }
       Event::Html(s) => {
-        if s.trim() == "<!-- @ignore -->" {
+        if s.trim().starts_with("<!-- @ignore ") {
           ignore_next = true;
         }
       }

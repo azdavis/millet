@@ -199,8 +199,7 @@ val kujoJotaro = 3
 
 There was an unclosed comment. This means an open comment delimiter `(*` was not matched by a later close comment delimiter `*)`.
 
-<!-- @ignore -->
-<!-- can't point at an unclosed comment with a comment -->
+<!-- @ignore can't point at an unclosed comment with a comment -->
 
 ```sml
 val kujo = 3
@@ -241,8 +240,7 @@ val xs : 'a list = []
 
 A `string` literal was not closed. String literals start and end with `"`.
 
-<!-- @ignore -->
-<!-- too hard to point at the end of the file -->
+<!-- @ignore too hard to point at the end of the file -->
 
 ```sml
 val greeting = "hello there
@@ -356,8 +354,7 @@ val _ = "this has\na newline"
 
 There was a non-whitespace character in a string continuation.
 
-<!-- @ignore -->
-<!-- too hard to point at the string continuations across lines -->
+<!-- @ignore too hard to point at the string continuations across lines -->
 
 ```sml
 val _ =
@@ -760,8 +757,7 @@ def bar(x):
 
 Again, in SML, an attempt to translate this literally may result in an invalid program, even when adding the necessary type conversion and newline for SML's `print`:
 
-<!-- @ignore -->
-<!-- requires the use of semicolons -->
+<!-- @ignore requires the use of semicolons -->
 
 ```sml
 fun bar x =
@@ -1587,8 +1583,7 @@ To fix, try one of the following:
 
 - Remove explicit type variable annotations:
 
-  <!-- @ignore -->
-  <!-- unused value -->
+  <!-- @ignore unused value -->
 
   ```sml
   fun f b x =
@@ -1601,8 +1596,7 @@ To fix, try one of the following:
 
 - Change where type variables are bound:
 
-  <!-- @ignore -->
-  <!-- unused value -->
+  <!-- @ignore unused value -->
 
   ```sml
   fun 'a f b x =
@@ -1782,8 +1776,7 @@ fun toInt (x : t) : int =
 
 To fix, ensure all alternatives bind the same names. The types must also match.
 
-<!-- @ignore -->
-<!-- TODO allow multi def sites. this warns the y from Bar is unused -->
+<!-- @ignore TODO allow multi def sites. this warns the y from Bar is unused -->
 
 ```sml
 datatype t = Foo of int | Bar of int
@@ -2128,8 +2121,7 @@ structure S = Func (struct val x = 3 end)
 
 This example triggers a warning, and also other errors:
 
-<!-- @ignore -->
-<!-- declaration hole -->
+<!-- @ignore declaration hole -->
 
 ```sml
 signature SIG = sig type t end
@@ -2149,7 +2141,7 @@ The fact that both the definition site and the corrected call site for `Func` ha
 
 The key is in the definition of `Func`. We use the syntax:
 
-<!-- @ignore -->
+<!-- @ignore invalid syntax -->
 
 ```sml
 functor Func (structure Param : SIG)
@@ -2157,7 +2149,7 @@ functor Func (structure Param : SIG)
 
 which has a distinct meaning from:
 
-<!-- @ignore -->
+<!-- @ignore invalid syntax -->
 
 ```sml
 functor Func (Param : SIG)
@@ -2167,7 +2159,7 @@ Both forms are legal SML. The first form is syntax sugar. This means it is extra
 
 In the example, the sugar is expanded in the following manner:
 
-<!-- @ignore -->
+<!-- @ignore invalid syntax -->
 
 ```sml
 (* original *)
@@ -2187,7 +2179,7 @@ Note the invalid SML syntax for the name of the functor argument `<<FuncArg>>`. 
 
 Similarly, once we modify the call site, we are using more syntax sugar, which also expands:
 
-<!-- @ignore -->
+<!-- @ignore syntax sugar example -->
 
 ```sml
 (* original *)
@@ -2199,8 +2191,7 @@ structure S = Func (struct structure Param = Arg end)
 
 A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
 
-<!-- @ignore -->
-<!-- declaration hole -->
+<!-- @ignore declaration hole -->
 
 ```sml
 signature SIG = sig type t end
@@ -2220,8 +2211,7 @@ This will error. To fix, do not use the syntax sugar at the call site.
 
 There was a call to `@`, the list append function, with a discouraged first argument.
 
-<!-- @ignore -->
-<!-- TODO get this check to work with mini std basis version of @ -->
+<!-- @ignore TODO get this check to work with mini std basis -->
 
 ```sml
 fun overlyComplicatedId xs =
