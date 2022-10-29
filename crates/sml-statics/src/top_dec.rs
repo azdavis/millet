@@ -804,7 +804,7 @@ fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_h
   for (name, specific) in specific.val_env {
     match general.val_env.remove(&name) {
       Some(general) => {
-        if !general.id_status.same_kind_as(&specific.id_status) {
+        if !general.id_status.same_kind_as(specific.id_status) {
           st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
         }
         eq_ty_fn(st, specific.ty_scheme, general.ty_scheme.clone(), idx);
@@ -825,7 +825,7 @@ fn val_info_enrich(
   idx: sml_hir::Idx,
 ) {
   generalizes(st, general.ty_scheme, &specific.ty_scheme, idx);
-  if !general.id_status.same_kind_as(&specific.id_status)
+  if !general.id_status.same_kind_as(specific.id_status)
     && !matches!(specific.id_status, IdStatus::Val)
   {
     st.err(idx, ErrorKind::WrongIdStatus(name.clone()));

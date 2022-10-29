@@ -811,7 +811,7 @@ pub(crate) enum IdStatus {
 }
 
 impl IdStatus {
-  pub(crate) fn same_kind_as(&self, other: &Self) -> bool {
+  pub(crate) fn same_kind_as(self, other: Self) -> bool {
     matches!(
       (self, other),
       (Self::Con, Self::Con) | (Self::Exn(_), Self::Exn(_)) | (Self::Val, Self::Val)

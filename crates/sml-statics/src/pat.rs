@@ -219,8 +219,8 @@ fn get_(
               continue;
             }
           };
-          assert!(fst_val_info.id_status.same_kind_as(&IdStatus::Val));
-          assert!(rest_val_info.id_status.same_kind_as(&IdStatus::Val));
+          assert!(fst_val_info.id_status.same_kind_as(IdStatus::Val));
+          assert!(rest_val_info.id_status.same_kind_as(IdStatus::Val));
           let rest_ty_scheme = rest_val_info.ty_scheme.clone();
           match eq_ty_scheme(st, &fst_val_info.ty_scheme, rest_ty_scheme) {
             Ok(()) => {}
