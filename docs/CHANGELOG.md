@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.5.9
+
+- Improve performance by using smaller integer types.
+- Improve performance by using cheap integer comparisons instead of iterating over the entire basis.
+
 ## v0.5.8
 
 - Warn when using `case` on a `bool`.
