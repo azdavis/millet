@@ -43,6 +43,25 @@ fn sml_def() {
 }
 
 #[test]
+fn sync() {
+  let sh = Shell::new().unwrap();
+  sh.change_dir(root_dir());
+  let out = cmd!(sh, "git grep -hoE '@sync\\(([a-z_]+)\\)'").output().unwrap();
+  let out = String::from_utf8(out.stdout).unwrap();
+  let iter = out.lines().filter_map(|line| {
+    let (_, inner) = line.split_once("@sync(")?;
+    let (s, _) = inner.split_once(')')?;
+    Some(s)
+  });
+  let mut map = FxHashMap::<&str, usize>::default();
+  for x in iter {
+    *map.entry(x).or_default() += 1;
+  }
+  map.retain(|_, &mut v| v != 2);
+  assert!(map.is_empty(), "some sync comments occurred not exactly twice: {map:?}");
+}
+
+#[test]
 fn test_refs() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());

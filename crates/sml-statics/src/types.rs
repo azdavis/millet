@@ -667,8 +667,7 @@ macro_rules! mk_special_syms {
   (@mk_ty, n, $name:ident, $idx:expr) => {};
 }
 
-// keep in sync with `std_basis`. weird symbols (i.e. EXN) must come first. indices must start at 0
-// and go up by 1.
+// @sync(special_sym_order)
 mk_special_syms![
   (0, y, EXN, "exn"),
   (1, y, INT, "int"),

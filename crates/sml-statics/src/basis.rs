@@ -77,6 +77,7 @@ pub enum Namespace {
 /// Upon internal error.
 #[must_use]
 pub fn minimal() -> (Syms, Basis) {
+  // @sync(special_sym_order)
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
     insert_special(&mut syms, sym, basic_datatype(Ty::zero(sym), &[]));
