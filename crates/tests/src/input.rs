@@ -27,6 +27,11 @@ where
   analysis::input::Input::new(&fs, &mut store, &ROOT)
 }
 
+#[track_caller]
+fn check_err(e: &analysis::input::Error, s: &str) {
+  assert!(e.to_string().contains(s));
+}
+
 #[test]
 fn arbitrary_root_group() {
   check_empty_cm(&["foo.cm"], None).unwrap();
@@ -35,19 +40,19 @@ fn arbitrary_root_group() {
 #[test]
 fn no_root_group_empty() {
   let e = check_empty_cm(&[], None).unwrap_err();
-  assert!(e.to_string().contains("no root group file"));
+  check_err(&e, "no root group file");
 }
 
 #[test]
 fn no_root_group_wrong_ext() {
   let e = check_input([("foo.txt", "hi there"), ("foo.rs", "fn main() {}")], None).unwrap_err();
-  assert!(e.to_string().contains("no root group file"));
+  check_err(&e, "no root group file");
 }
 
 #[test]
 fn multiple_root_groups_err() {
   let e = check_empty_cm(&["foo.cm", "bar.cm"], None).unwrap_err();
-  assert!(e.to_string().contains("multiple root group files"));
+  check_err(&e, "multiple root group files");
 }
 
 #[test]
@@ -69,7 +74,7 @@ fn no_root_group_in_config_ok() {
 #[test]
 fn config_invalid_version() {
   let e = check_empty_cm(&["sources.cm"], Some("version = 123")).unwrap_err();
-  assert!(e.to_string().contains("invalid config version"));
+  check_err(&e, "invalid config version");
 }
 
 #[test]
@@ -84,13 +89,13 @@ workspace.root = "nope.cm"
 #[test]
 fn config_parse_err() {
   let e = check_empty_cm(&["foo.cm"], Some("岡部倫太郎")).unwrap_err();
-  assert!(e.to_string().contains("couldn't parse config"));
+  check_err(&e, "couldn't parse config");
 }
 
 #[test]
 fn cycle_1() {
   let e = check_input([("foo.cm", "Group is foo.cm")], None).unwrap_err();
-  assert!(e.to_string().contains("there is a cycle"));
+  check_err(&e, "there is a cycle");
 }
 
 #[test]
@@ -102,7 +107,7 @@ version = 1
 root = "foo.cm"
   "#;
   let e = check_input(inp, Some(config)).unwrap_err();
-  assert!(e.to_string().contains("there is a cycle"));
+  check_err(&e, "there is a cycle");
 }
 
 #[test]
@@ -112,7 +117,7 @@ version = 1
 workspace.root = "nope.txt"
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
-  assert!(e.to_string().contains("not a group file path"));
+  check_err(&e, "not a group file path");
 }
 
 #[test]
@@ -136,7 +141,7 @@ members = ["*"]
 root = "foo.cm"
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
-  assert!(e.to_string().contains("cannot set `workspace.members` but also set"));
+  check_err(&e, "cannot set `workspace.members` but also set");
 }
 
 #[test]
@@ -148,7 +153,7 @@ members = ["*"]
 path-vars.FOO = { value = "BAR" }
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
-  assert!(e.to_string().contains("cannot set `workspace.members` but also set"));
+  check_err(&e, "cannot set `workspace.members` but also set");
 }
 
 #[test]
@@ -169,7 +174,7 @@ fn mlb() {
 #[test]
 fn mlb_cm_err() {
   let e = check_empty_cm(&["foo.mlb", "foo.cm"], None).unwrap_err();
-  assert!(e.to_string().contains("multiple root group files"));
+  check_err(&e, "multiple root group files");
 }
 
 #[test]
@@ -211,7 +216,7 @@ version = 1
 1001.severity = "Warning"
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
-  assert!(e.to_string().contains("unknown variant `Warning`"));
+  check_err(&e, "unknown variant `Warning`");
 }
 
 #[test]
@@ -234,7 +239,7 @@ is
   $/basis.cm
 "#;
   let e = check_input([("sources.cm", contents)], None).unwrap_err();
-  assert!(e.to_string().contains("expected a regular path or `-`"));
+  check_err(&e, "expected a regular path or `-`");
 }
 
 #[test]
@@ -325,5 +330,5 @@ is
 "#;
   let e =
     check_input([("sources.cm", contents), ("foo.sml", ""), ("bar.sml", "")], None).unwrap_err();
-  assert!(e.to_string().contains("not in file list"));
+  check_err(&e, "not in file list");
 }
