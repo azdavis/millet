@@ -3,7 +3,7 @@
 //!
 //! [1]: http://www.mlton.org/SMLNJDeviations
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn op_in_val() {
@@ -369,6 +369,31 @@ end
 
 functor Func (Arg : FOO) :> BAR where Foo = Arg = struct
   structure Foo = Arg
+end
+"#,
+  );
+}
+
+#[test]
+fn where_structure_ty_already_def() {
+  fail(
+    r#"
+signature FOO = sig
+  type t
+  type foo = t
+end
+
+signature BAR = sig
+  structure Foo : FOO
+end
+
+structure UnitFoo :> FOO = struct
+  type t = unit
+  type foo = t
+end
+
+structure UnitBar : BAR where Foo = UnitFoo = struct
+  structure Foo = UnitFoo
 end
 "#,
   );
