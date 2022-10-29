@@ -350,7 +350,10 @@ fn get_where_kind(
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Ty, ty_vars, idx);
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
       generalize_fixed(fixed, &mut ty_scheme);
-      get_where_type(st, marker, inner_env, path, ty_scheme, idx);
+      match get_where_type(marker, inner_env, path, ty_scheme) {
+        Ok(()) => {}
+        Err(e) => st.err(idx, e),
+      }
     }
     sml_hir::WhereKind::Structure(lhs, rhs) => {
       let lhs_ty_cons = match get_path_ty_cons(inner_env, lhs) {
@@ -376,7 +379,10 @@ fn get_where_kind(
         match get_ty_info(&bs.env, &rhs) {
           Ok(ty_info) => {
             let ty_scheme = ty_info.ty_scheme.clone();
-            get_where_type(st, marker, inner_env, &lhs, ty_scheme, idx);
+            match get_where_type(marker, inner_env, &lhs, ty_scheme) {
+              Ok(()) => {}
+              Err(e) => st.err(idx, e),
+            }
           }
           Err(e) => st.err(idx, e),
         }
@@ -386,37 +392,32 @@ fn get_where_kind(
 }
 
 fn get_where_type(
-  st: &mut St,
   marker: SymsMarker,
   inner_env: &mut Env,
   path: &sml_hir::Path,
   ty_scheme: TyScheme,
-  idx: sml_hir::Idx,
-) {
+) -> Result<(), ErrorKind> {
   let got_len = ty_scheme.bound_vars.len();
-  match get_ty_info(inner_env, path) {
-    Ok(ty_info) => {
-      let want_len = ty_info.ty_scheme.bound_vars.len();
-      if want_len == got_len {
-        match &ty_info.ty_scheme.ty {
-          Ty::None => {}
-          // TODO side condition for well-formed?
-          Ty::Con(_, sym) => {
-            if sym.generated_after(marker) {
-              env_realize(&map([(*sym, ty_scheme)]), inner_env);
-            } else {
-              // @test(sig::impossible)
-              st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone()));
-            }
-          }
-          // @test(sig::where_not_con)
-          _ => st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone())),
+  let ty_info = get_ty_info(inner_env, path)?;
+  let want_len = ty_info.ty_scheme.bound_vars.len();
+  if want_len == got_len {
+    match &ty_info.ty_scheme.ty {
+      Ty::None => Ok(()),
+      // TODO side condition for well-formed?
+      Ty::Con(_, sym) => {
+        if sym.generated_after(marker) {
+          env_realize(&map([(*sym, ty_scheme)]), inner_env);
+          Ok(())
+        } else {
+          // @test(sig::impossible)
+          Err(ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone()))
         }
-      } else {
-        st.err(idx, ErrorKind::WrongNumTyArgs(want_len, got_len));
       }
+      // @test(sig::where_not_con)
+      _ => Err(ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone())),
     }
-    Err(e) => st.err(idx, e),
+  } else {
+    Err(ErrorKind::WrongNumTyArgs(want_len, got_len))
   }
 }
 
