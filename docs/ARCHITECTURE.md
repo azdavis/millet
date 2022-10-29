@@ -196,6 +196,10 @@ A small crate defining primarily the overall `Error` type, which Millet reports 
 
 A thin wrapper over `FxHash{Map, Set}` with some extra helper functions. These types use `FxHasher`, which is a very fast, but not HashDOS-resistant, hashing algorithm used in Firefox and `rustc`.
 
+### `crates/idx`
+
+A utility crate for an `Idx` type, a cheap copyable type that can index into slices.
+
 ### `crates/elapsed`
 
 A small utility crate for timing function calls.

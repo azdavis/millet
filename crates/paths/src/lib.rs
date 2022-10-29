@@ -27,7 +27,7 @@ impl Store {
     match self.path_to_id.get(path) {
       Some(x) => *x,
       None => {
-        let id = PathId(self.id_to_path.len());
+        let id = PathId(idx::Idx::new(self.id_to_path.len()));
         self.id_to_path.push(path.clone());
         self.path_to_id.insert(path.clone(), id);
         id
@@ -38,13 +38,13 @@ impl Store {
   /// Returns the path for this ID.
   #[must_use]
   pub fn get_path(&self, id: PathId) -> &CanonicalPathBuf {
-    &self.id_to_path[id.0]
+    &self.id_to_path[id.0.to_usize()]
   }
 }
 
 /// A path identifier. Cheap to copy and compare.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PathId(usize);
+pub struct PathId(idx::Idx);
 
 impl PathId {
   /// Wrap a value with the path id.

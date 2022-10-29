@@ -10,4 +10,5 @@ doctest = false
 
 [dependencies]
 fast-hash = { path = "../fast-hash" }
+idx = { path = "../idx" }
 str-util = { path = "../str-util" }

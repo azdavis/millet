@@ -242,6 +242,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "idx"
+version = "0.1.0"
+
+[[package]]
 name = "itoa"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -407,6 +411,7 @@ name = "paths"
 version = "0.1.0"
 dependencies = [
  "fast-hash",
+ "idx",
  "str-util",
 ]
 
@@ -617,6 +622,7 @@ dependencies = [
  "drop_bomb",
  "fast-hash",
  "fmt-util",
+ "idx",
  "log",
  "paths",
  "pattern-match",
