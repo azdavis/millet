@@ -113,9 +113,9 @@ fn get_dec(st: &mut St, cfg: Cfg, dec: ast::Dec) -> Res {
 fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
   if let Some(tok) = sml_comment::comment_above(dec.syntax()) {
     st.comment_ranges.remove(&tok.text_range());
-    cfg.output_indent(st);
     st.buf.push_str(tok.text().trim());
     st.buf.push('\n');
+    cfg.output_indent(st);
   }
   match dec {
     ast::DecOne::HoleDec(_) => st.buf.push_str("..."),
