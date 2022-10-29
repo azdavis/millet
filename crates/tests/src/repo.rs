@@ -211,12 +211,12 @@ fn error_codes() {
   sh.change_dir(root_dir());
   let output = cmd!(sh, "git grep -hoE 'Code::n\\([[:digit:]]+\\)'").read().unwrap();
   let in_doc = no_dupes(
-    include_str!("../../../docs/errors.md")
+    include_str!("../../../docs/diagnostics.md")
       .lines()
       .filter_map(|line| Some(line.strip_prefix("## ")?.parse::<u16>().unwrap())),
   );
   let in_code = no_dupes(output.lines().map(|line| {
     line.strip_prefix("Code::n(").unwrap().strip_suffix(')').unwrap().parse::<u16>().unwrap()
   }));
-  eq_sets(&in_doc, &in_code, "errors documented but not used", "errors not documented");
+  eq_sets(&in_doc, &in_code, "diagnostics documented but not used", "diagnostics not documented");
 }

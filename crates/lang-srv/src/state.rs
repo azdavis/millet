@@ -536,7 +536,7 @@ fn file_url(path: &std::path::Path) -> Result<Url> {
     .with_context(|| format!("couldn't parse path into a URL: {path:?}"))
 }
 
-fn diagnostics(errors: Vec<diagnostic_util::Error>) -> Vec<lsp_types::Diagnostic> {
+fn diagnostics(errors: Vec<diagnostic_util::Diagnostic>) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
     .map(|err| diagnostic(err.message, Some(err.range), err.code, err.severity))
@@ -544,8 +544,7 @@ fn diagnostics(errors: Vec<diagnostic_util::Error>) -> Vec<lsp_types::Diagnostic
 }
 
 fn error_url(code: Code) -> Url {
-  Url::parse(&format!("{}#{}", diagnostic_util::ERRORS_URL, code))
-    .expect("couldn't parse error URL")
+  Url::parse(&format!("{}#{}", diagnostic_util::URL, code)).expect("couldn't parse error URL")
 }
 
 fn diagnostic(

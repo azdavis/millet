@@ -4,7 +4,7 @@
 
 pub mod input;
 
-use diagnostic_util::Error;
+use diagnostic_util::Diagnostic;
 use fmt_util::sep_seq;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
@@ -33,8 +33,8 @@ impl Analysis {
     }
   }
 
-  /// Given the contents of one isolated file, return the errors for it.
-  pub fn get_one(&self, contents: &str) -> Vec<Error> {
+  /// Given the contents of one isolated file, return the diagnostics for it.
+  pub fn get_one(&self, contents: &str) -> Vec<Diagnostic> {
     let mut fix_env = sml_parse::parser::STD_BASIS.clone();
     let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, contents);
     let mut syms = self.std_basis.syms().clone();
@@ -45,12 +45,12 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    source_file_errors(&file, &syms, self.error_lines)
+    source_file_diagnostics(&file, &syms, self.error_lines)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
-  /// mapping from source paths to errors.
-  pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Error>> {
+  /// mapping from source paths to diagnostics.
+  pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Diagnostic>> {
     let syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
     let groups: paths::PathMap<_> =
@@ -64,7 +64,7 @@ impl Analysis {
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
         let path = err.path();
         let group = input.groups.get(&path).expect("no such group");
-        let err = Error {
+        let err = Diagnostic {
           range: group.pos_db.range(err.range())?,
           message: err.to_string(),
           code: err.code(),
@@ -73,7 +73,7 @@ impl Analysis {
         Some((path, vec![err]))
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
-        let es: Vec<_> = source_file_errors(file, &self.syms, self.error_lines)
+        let es: Vec<_> = source_file_diagnostics(file, &self.syms, self.error_lines)
           .into_iter()
           .filter_map(|mut e| match input.severities.get(&e.code) {
             Some(&Some(sev)) => {
@@ -254,17 +254,18 @@ fn priority(kind: SyntaxKind) -> u8 {
   }
 }
 
-/// TODO: we used to limit the max number of errors per file, but now it's trickier because not all
-/// errors are "errors", but it would be bad to hit the max number of errors on entirely warnings
-/// and then not emit the actual errors. We'd need to come up with a way to order the errors.
-fn source_file_errors(
+/// TODO: we used to limit the max number of diagnostics per file, but now it's trickier because not
+/// all diagnostics are "errors", but it would be bad to hit the max number of diagnostics on
+/// entirely warnings and then not emit the actual diagnostics. We'd need to come up with a way to
+/// order the diagnostics.
+fn source_file_diagnostics(
   file: &mlb_statics::SourceFile,
   syms: &sml_statics::Syms,
   lines: config::ErrorLines,
-) -> Vec<Error> {
+) -> Vec<Diagnostic> {
   std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
-      Some(Error {
+      Some(Diagnostic {
         range: file.syntax.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
@@ -272,7 +273,7 @@ fn source_file_errors(
       })
     }))
     .chain(file.syntax.parse.errors.iter().filter_map(|err| {
-      Some(Error {
+      Some(Diagnostic {
         range: file.syntax.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
@@ -280,7 +281,7 @@ fn source_file_errors(
       })
     }))
     .chain(file.syntax.lower.errors.iter().filter_map(|err| {
-      Some(Error {
+      Some(Diagnostic {
         range: file.syntax.pos_db.range(err.range())?,
         message: err.display().to_string(),
         code: err.code(),
@@ -291,7 +292,7 @@ fn source_file_errors(
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
       let node = syntax.to_node(file.syntax.parse.root.syntax());
-      Some(Error {
+      Some(Diagnostic {
         range: file.syntax.pos_db.range(node.text_range())?,
         message: err.display(syms, file.info.meta_vars(), lines).to_string(),
         code: err.code(),

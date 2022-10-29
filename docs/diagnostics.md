@@ -1,6 +1,6 @@
-# Errors
+# Diagnostics
 
-This is documentation for all the errors Millet can emit, and what they mean.
+This is documentation for all the diagnostics Millet can emit, and what they mean.
 
 ## 1001
 
@@ -105,11 +105,11 @@ To fix, use different names, or remove the `and`. See also 5002.
 
 ## 1012
 
-In a `millet.toml` config file, a key of the `errors` table was not a valid error code.
+In a `millet.toml` config file, a key of the `diagnostics` table was not a valid error code.
 
 A valid error code will be a positive integer.
 
-To fix, make the key of the `errors` table an error code.
+To fix, make the key of the `diagnostics` table an error code.
 
 ## 1013
 

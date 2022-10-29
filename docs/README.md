@@ -6,7 +6,7 @@ This is documentation for Millet.
 - [Changelog](./CHANGELOG.md): A non-exhaustive list of changes to each version.
 - [Code of conduct](./CODE_OF_CONDUCT.md): How we expect all project contributors to behave.
 - [Contributing](./CONTRIBUTING.md): How to contribute to the project.
-- [Errors](./errors.md): Every error Millet can emit, what it means, and maybe even how to fix it.
+- [Diagnostics](./diagnostics.md): Every error Millet can emit, what it means, and maybe even how to fix it.
 - [Known issues](./known-issues.md): Known issues and limitations with Millet.
 - [Manual](./manual.md): How to install and use Millet.
 - [Tokens](./tokens.md): Information about (almost) every token in SML. This is built-in to Millet itself.

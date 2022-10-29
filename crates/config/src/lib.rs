@@ -16,10 +16,10 @@ pub struct Root {
   pub version: u16,
   /// The workspace config.
   pub workspace: Option<Workspace>,
-  /// The errors config.
+  /// The diagnostics config.
   ///
   /// Cannot be set when `workspace.members` is set.
-  pub errors: Option<FxHashMap<SmolStr, ErrorConfig>>,
+  pub diagnostics: Option<FxHashMap<SmolStr, ErrorConfig>>,
 }
 
 /// The workspace config.

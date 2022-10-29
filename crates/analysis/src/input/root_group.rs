@@ -115,7 +115,7 @@ impl ConfigFromFile {
     }
     if let Some(ws) = parsed.workspace {
       if let Some(members) = ws.members {
-        if ws.root.is_some() || ws.path_vars.is_some() || parsed.errors.is_some() {
+        if ws.root.is_some() || ws.path_vars.is_some() || parsed.diagnostics.is_some() {
           return Err(Error {
             source: ErrorSource::default(),
             path: ret.path,
@@ -152,7 +152,7 @@ impl ConfigFromFile {
         }
       }
     }
-    for (code, config) in parsed.errors.into_iter().flatten() {
+    for (code, config) in parsed.diagnostics.into_iter().flatten() {
       let code = match code.parse::<diagnostic_util::Code>() {
         Ok(x) => x,
         Err(e) => {

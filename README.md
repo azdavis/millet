@@ -4,7 +4,7 @@ A language server for [Standard ML][sml] (SML).
 
 Millet analyzes SML code without running it, and provides information like:
 
-- Inline errors
+- Inline diagnostics
 - Hover for type/documentation
 - Jump to definition
 

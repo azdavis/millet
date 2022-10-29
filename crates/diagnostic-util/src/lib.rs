@@ -4,12 +4,12 @@
 
 use std::fmt;
 
-/// The url to go to for information about errors.
-pub const ERRORS_URL: &str = "https://github.com/azdavis/millet/blob/main/docs/errors.md";
+/// The url to go to for information about diagnostics.
+pub const URL: &str = "https://github.com/azdavis/millet/blob/main/docs/diagnostics.md";
 
 /// An error.
 #[derive(Debug)]
-pub struct Error {
+pub struct Diagnostic {
   /// The range of the error.
   pub range: text_pos::Range,
   /// The message of the error.

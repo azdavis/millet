@@ -62,7 +62,7 @@ root = "foo.cm"
 [workspace.path-vars]
 FOO = { value = "bar" }
 QUZ = { path = "lib" }
-[errors]
+[diagnostics]
 5011.severity = "warning"
 4015.severity = "error"
 5029.severity = "ignore"
@@ -74,13 +74,13 @@ QUZ = { path = "lib" }
   - `path-vars` is a table for expanding variables in paths in group files.
     - If the value is a `value`, the value is used unchanged.
     - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
-  - `errors` is a table for configuring error codes.
-    - Each key is an error code.
+  - `diagnostics` is a table for configuring diagnostic codes.
+    - Each key is an diagnostic code.
     - For each key, the value is a table.
-      - The `severity` key overrides the default severity for this error. The acceptable values are:
-        - `ignore`: the error is not reported.
-        - `warning`: the error is reported as a warning.
-        - `error`: the error is reported with maximum severity.
+      - The `severity` key overrides the default severity for this diagnostic. The acceptable values are:
+        - `ignore`: the diagnostic is not reported.
+        - `warning`: the diagnostic is reported as a warning.
+        - `error`: the diagnostic is reported with maximum severity.
 
 <!--
 
@@ -193,9 +193,9 @@ The snippets provided are:
   - `functor` dec
   - `println` exp
 
-### Inline errors
+### Inline diagnostics
 
-Millet will analyze source (SML) and group (MLB/CM) files and report errors directly on the offending area of the file.
+Millet will analyze source (SML) and group (MLB/CM) files and report diagnostics directly on the offending area of the file.
 
 ### Hover for info
 
@@ -252,7 +252,7 @@ The first and most obvious caveat is the one above, in big bold uppercase.
 
 Most Millet features only **read** your files, and produce output only in the form of things like
 
-- errors
+- diagnostics
 - hover information
 - locations for definition sites
 

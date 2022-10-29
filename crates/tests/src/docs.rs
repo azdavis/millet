@@ -48,8 +48,8 @@ where
 }
 
 #[test]
-fn errors() {
-  check_all(include_str!("../../../docs/errors.md"), |s| {
+fn diagnostics() {
+  check_all(include_str!("../../../docs/diagnostics.md"), |s| {
     let (outcome, severity) = if s.starts_with("(* ok *)") {
       (Outcome::Pass, Severity::Error)
     } else if s.starts_with("(* error *)") {

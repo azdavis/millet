@@ -192,10 +192,10 @@ workspace.root = "foo.mlb"
 }
 
 #[test]
-fn errors_severity() {
+fn diagnostics_severity() {
   let config = r#"
 version = 1
-[errors]
+[diagnostics]
 1001.severity = "error"
 1002.severity = "warning"
 1003.severity = "ignore"
@@ -204,10 +204,10 @@ version = 1
 }
 
 #[test]
-fn errors_severity_unknown() {
+fn diagnostics_severity_unknown() {
   let config = r#"
 version = 1
-[errors]
+[diagnostics]
 1001.severity = "Warning"
 "#;
   let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();

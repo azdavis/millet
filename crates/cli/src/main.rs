@@ -60,7 +60,7 @@ fn run() -> usize {
   };
   let mut an = analysis::Analysis::new(analysis::StdBasis::Full, config::ErrorLines::One);
   let got = an.get_many(&inp);
-  let num_errors: usize = got.iter().map(|(_, errors)| errors.len()).sum();
+  let num_errors: usize = got.iter().map(|(_, es)| es.len()).sum();
   for (path, errors) in got {
     for e in errors {
       let path = store.get_path(path);
@@ -85,7 +85,7 @@ fn main() {
     0 => println!("no errors"),
     n => {
       let suffix = if n == 1 { "" } else { "s" };
-      println!("{n} error{suffix}. see {} for more information", diagnostic_util::ERRORS_URL);
+      println!("{n} error{suffix}. see {} for more information", diagnostic_util::URL);
       std::process::exit(1)
     }
   }
