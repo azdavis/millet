@@ -143,20 +143,20 @@ Compare with `open`, which is like `include` but for structures.
 Share types in a signature.
 
 ```sml
-signature A = sig
+signature FOO = sig
   type t
-  val a : t
+  val foo : t
 end
 
-signature B = sig
+signature BAR = sig
   type t
-  val b : t
+  val bar : t
 end
 
-signature TXT = sig
-  structure A : A
-  structure B : B
-  sharing type A.t = B.t
+signature QUZ = sig
+  structure Foo : FOO
+  structure Bar : BAR
+  sharing type Foo.t = Bar.t
 end
 ```
 
