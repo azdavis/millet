@@ -35,7 +35,7 @@ fn circularity_1() {
   check(
     r#"
     fun f _ = f
-(** ^^^^^^^^^^^ attempted to a set a type variable ?b to a type containing that variable: ?a -> ?b *)
+(** ^^^^^^^^^^^ circular type: ?b occurs in ?a -> ?b *)
 "#,
   );
 }
@@ -45,7 +45,7 @@ fn circularity_2() {
   check(
     r#"
 fun f x = x x
-(**       ^^^ attempted to a set a type variable ?a to a type containing that variable: ?a -> ?b *)
+(**       ^^^ circular type: ?a occurs in ?a -> ?b *)
 "#,
   );
 }

@@ -44,7 +44,7 @@ fn unresolved_smoke() {
   check(
     r#"
     val f = #foo
-(** ^^^^^^^^^^^^ cannot resolve record type containing `...` due to lack of context *)
+(** ^^^^^^^^^^^^ cannot resolve record type containing `...` *)
 "#,
   );
 }
@@ -54,7 +54,7 @@ fn unresolved_complex() {
   check(
     r#"
     fun f x = #foo x + #bar x + 1.1
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot resolve record type containing `...` due to lack of context *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot resolve record type containing `...` *)
 "#,
   );
 }

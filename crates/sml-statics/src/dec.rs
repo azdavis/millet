@@ -164,7 +164,7 @@ pub(crate) fn get(
                   st.err(dec, e);
                 }
               }
-              _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus),
+              _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone())),
             },
             Ok(None) => st.err(dec, ErrorKind::Undefined(Item::Val, path.last().clone())),
             Err(e) => st.err(dec, e),

@@ -28,7 +28,7 @@ pub(crate) enum ErrorKind {
   TyEscape(Ty),
   ValRecExpNotFn,
   WrongNumTyArgs(usize, usize),
-  ExnCopyNotExnIdStatus,
+  ExnCopyNotExnIdStatus(sml_hir::Path),
   InvalidRebindName(str_util::Name),
   WrongIdStatus(str_util::Name),
   UnresolvedRecordTy,
@@ -97,7 +97,7 @@ impl Error {
       ErrorKind::TyEscape(_) => Code::n(5017),
       ErrorKind::ValRecExpNotFn => Code::n(5018),
       ErrorKind::WrongNumTyArgs(_, _) => Code::n(5019),
-      ErrorKind::ExnCopyNotExnIdStatus => Code::n(5020),
+      ErrorKind::ExnCopyNotExnIdStatus(_) => Code::n(5020),
       ErrorKind::InvalidRebindName(_) => Code::n(5021),
       ErrorKind::WrongIdStatus(_) => Code::n(5022),
       ErrorKind::UnresolvedRecordTy => Code::n(5023),
@@ -162,8 +162,8 @@ pub(crate) enum AppendArg {
 impl fmt::Display for AppendArg {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      AppendArg::Empty => f.write_str("empty"),
-      AppendArg::Singleton => f.write_str("singleton"),
+      AppendArg::Empty => f.write_str("an empty list"),
+      AppendArg::Singleton => f.write_str("a singleton list"),
     }
   }
 }
@@ -217,8 +217,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mvs.extend_for(ty);
         let name = mvs.get(*mv).ok_or(fmt::Error)?;
         let ty = ty.display(&mvs, self.syms);
-        write!(f, "attempted to a set a type variable {name} ")?;
-        write!(f, "to a type containing that variable: {ty}")
+        write!(f, "circular type: {name} occurs in {ty}")
       }
       ErrorKind::MismatchedTypes(want, got) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
@@ -261,18 +260,14 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let s = if *want == 1 { "" } else { "s" };
         write!(f, "expected {want} type argument{s}, found {got}")
       }
-      ErrorKind::ExnCopyNotExnIdStatus => f.write_str("not an exception"),
+      ErrorKind::ExnCopyNotExnIdStatus(path) => write!(f, "not an exception: {path}"),
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
-      ErrorKind::UnresolvedRecordTy => {
-        f.write_str("cannot resolve record type containing `...` due to lack of context")
-      }
+      ErrorKind::UnresolvedRecordTy => f.write_str("cannot resolve record type containing `...`"),
       ErrorKind::OrPatNotSameBindings(name) => {
-        write!(f, "{name} was bound in one or pattern alternative, but not in another")
+        write!(f, "{name} was bound in one alternative, but not in another")
       }
-      ErrorKind::DecNotAllowedHere => {
-        f.write_str("`signature` or `functor` declaration not allowed here")
-      }
+      ErrorKind::DecNotAllowedHere => f.write_str("`signature` or `functor` not allowed here"),
       ErrorKind::ExpHole(ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);
@@ -307,7 +302,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let other = sugary.other();
         write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
       }
-      ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with a {kind} list"),
+      ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
       ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
     }
   }
