@@ -142,9 +142,8 @@ impl Check {
       .values()
       .map(|x| x.want.iter().filter(|(_, e)| matches!(e.kind, ExpectKind::Error)).count())
       .sum();
-    if !matches!(want_err_len, 0 | 1) {
-      ret.reasons.push(Reason::WantWrongNumError(want_err_len));
-    }
+    // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
+    // allows us to write multiple error expectations. e.g. in the diagnostics tests.
     let mut an = analysis::Analysis::new(std_basis, config::ErrorLines::One);
     let err = an
       .get_many(&input)
@@ -232,9 +231,6 @@ impl fmt::Display for Check {
     for reason in &self.reasons {
       f.write_str("  - ")?;
       match reason {
-        Reason::WantWrongNumError(want_len) => {
-          writeln!(f, "want 0 or 1 wanted errors, got {want_len}")?;
-        }
         Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
         Reason::GotButNotWanted(r, got) => {
           let path = self.store.get_path(r.path).as_path().display();
@@ -312,7 +308,6 @@ impl fmt::Display for ExpectKind {
 }
 
 enum Reason {
-  WantWrongNumError(usize),
   NoErrorsEmitted(usize),
   GotButNotWanted(paths::WithPath<Region>, String),
   Mismatched(paths::WithPath<Region>, String, String),
