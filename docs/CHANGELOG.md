@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.5.10
+
+- Report errors with relative paths where possible.
+- Ignore some "realize type" errors when using `where S = T`. (This is probably unsound, but it silences errors seen in NJ-flavored SML accepted by SMLNJ.)
+
 ## v0.5.9
 
 - Improve performance by using smaller integer types.
