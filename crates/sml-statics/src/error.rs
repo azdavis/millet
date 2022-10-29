@@ -201,7 +201,7 @@ struct ErrorKindDisplay<'a> {
 impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
-      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
+      ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
       ErrorKind::Undefined(item, name) => {
         write!(f, "undefined {item}: {name}")?;
         if let Some(sug) = suggestion(name.as_str()) {

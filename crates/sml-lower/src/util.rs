@@ -66,7 +66,7 @@ pub(crate) enum ErrorKind {
 impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      ErrorKind::Unsupported(s) => write!(f, "unsupported language construct: {s}"),
+      ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
         write!(f, "expected a function clause for {want}, found one for {got}")
       }

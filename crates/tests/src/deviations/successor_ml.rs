@@ -10,7 +10,7 @@ fn do_dec() {
     r#"
     fun print _ = ()
     do print "hi"
-(** ^^^^^^^^^^^^^ unsupported language construct: `do` declarations *)
+(** ^^^^^^^^^^^^^ unsupported: `do` declarations *)
 "#,
   );
 }
@@ -87,7 +87,7 @@ fn exp_row_pun() {
     r#"
 fun incB r =
   case r of {a, b, c} => {a, b = b + 1, c}
-(**                       ^ unsupported language construct: expression row punning *)
+(**                       ^ unsupported: expression row punning *)
 "#,
   );
 }
@@ -100,7 +100,7 @@ signature STREAM =
   sig
     datatype 'a u = Nil | Cons of 'a * 'a t
     withtype 'a t = unit -> 'a u
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported language construct: `withtype` in specifications *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported: `withtype` in specifications *)
   end
 "#,
   );

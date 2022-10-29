@@ -92,7 +92,7 @@ fn vector_exp() {
   check(
     r#"
 val _ = #[1, 2]
-(**     ^^^^^^^ unsupported language construct: vector expressions *)
+(**     ^^^^^^^ unsupported: vector expressions *)
 "#,
   );
 }
@@ -102,7 +102,7 @@ fn vector_pat() {
   check(
     r#"
 val _ = fn #[x, 2] => x | _ => 2
-(**        ^^^^^^^ unsupported language construct: vector patterns *)
+(**        ^^^^^^^ unsupported: vector patterns *)
 "#,
   );
 }
