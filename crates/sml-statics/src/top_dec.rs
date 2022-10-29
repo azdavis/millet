@@ -126,14 +126,11 @@ fn get_str_dec(
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
         st.pop_prefix();
         let mut body_ty_names = TyNameSet::default();
-        env_syms(
-          &mut |x| {
-            if x.generated_after(marker) {
-              body_ty_names.insert(x);
-            }
-          },
-          &body_env,
-        );
+        env_syms(&body_env, &mut |x| {
+          if x.generated_after(marker) {
+            body_ty_names.insert(x);
+          }
+        });
         for sym in &param_sig.ty_names {
           body_ty_names.remove(sym);
         }
@@ -444,14 +441,11 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
 // @def(65)
 fn env_to_sig(env: Env, marker: SymsMarker) -> Sig {
   let mut ty_names = TyNameSet::default();
-  env_syms(
-    &mut |x| {
-      if x.generated_after(marker) {
-        ty_names.insert(x);
-      }
-    },
-    &env,
-  );
+  env_syms(&env, &mut |x| {
+    if x.generated_after(marker) {
+      ty_names.insert(x);
+    }
+  });
   Sig { ty_names, env }
 }
 
@@ -879,26 +873,28 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
   }
 }
 
-fn env_syms<F, E>(f: &mut F, env: &E)
+/// putting `f` last allows calls with the closure constructed at the call site to be formatted
+/// across fewer lines.
+fn env_syms<E, F>(env: &E, f: &mut F)
 where
-  F: FnMut(Sym),
   E: EnvLike,
+  F: FnMut(Sym),
 {
   for env in env.all_str() {
-    env_syms(f, env);
+    env_syms(env, f);
   }
   for ty_info in env.all_ty() {
-    ty_syms(f, &ty_info.ty_scheme.ty);
-    val_env_syms(f, &ty_info.val_env);
+    ty_syms(&ty_info.ty_scheme.ty, f);
+    val_env_syms(&ty_info.val_env, f);
   }
   for val_info in env.all_val() {
-    ty_syms(f, &val_info.ty_scheme.ty);
+    ty_syms(&val_info.ty_scheme.ty, f);
   }
 }
 
-fn val_env_syms<F: FnMut(Sym)>(f: &mut F, val_env: &ValEnv) {
+fn val_env_syms<F: FnMut(Sym)>(val_env: &ValEnv, f: &mut F) {
   for val_info in val_env.values() {
-    ty_syms(f, &val_info.ty_scheme.ty);
+    ty_syms(&val_info.ty_scheme.ty, f);
   }
 }
 

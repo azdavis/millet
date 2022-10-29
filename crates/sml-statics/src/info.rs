@@ -105,16 +105,13 @@ impl Info {
   pub fn get_ty_defs(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<Vec<Def>> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
     let mut ret = Vec::<Def>::new();
-    ty_syms(
-      &mut |sym| match syms.get(sym) {
+    ty_syms(&ty_entry.ty, &mut |sym| match syms.get(sym) {
+      None => {}
+      Some((_, ty_info)) => match ty_info.def {
         None => {}
-        Some((_, ty_info)) => match ty_info.def {
-          None => {}
-          Some(def) => ret.push(def),
-        },
+        Some(def) => ret.push(def),
       },
-      &ty_entry.ty,
-    );
+    });
     Some(ret)
   }
 

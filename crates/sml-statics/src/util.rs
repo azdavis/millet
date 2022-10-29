@@ -144,23 +144,23 @@ pub(crate) fn ins_check_name<V>(
     .or_else(|| ins_no_dupe(map, name, val, item))
 }
 
-pub(crate) fn ty_syms<F: FnMut(Sym)>(f: &mut F, ty: &Ty) {
+pub(crate) fn ty_syms<F: FnMut(Sym)>(ty: &Ty, f: &mut F) {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
     Ty::Record(rows) => {
       for ty in rows.values() {
-        ty_syms(f, ty);
+        ty_syms(ty, f);
       }
     }
     Ty::Con(args, sym) => {
       for ty in args {
-        ty_syms(f, ty);
+        ty_syms(ty, f);
       }
       f(*sym);
     }
     Ty::Fn(param, res) => {
-      ty_syms(f, param);
-      ty_syms(f, res);
+      ty_syms(param, f);
+      ty_syms(res, f);
     }
   }
 }
