@@ -641,7 +641,7 @@ macro_rules! mk_special_syms {
   ($( ($idx:expr, $mk_ty:ident, $name:ident, $str:literal), )*) => {
     impl Sym {
       $(
-        pub(crate) const $name: Self = Self(idx::Idx::new($idx));
+        pub(crate) const $name: Self = Self(idx::Idx::new_u32($idx));
       )*
 
       pub(crate) fn special(&self) -> Option<&'static str> {
