@@ -50,7 +50,7 @@ pub(crate) fn get(
         // @def(25)
         let (pm_pat, mut want) =
           get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
-        let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, &marker, ars, val_bind.exp);
+        let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into));
@@ -80,7 +80,7 @@ pub(crate) fn get(
             st.err(dec, ErrorKind::ValRecExpNotFn);
           }
         }
-        let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, &marker, ars, val_bind.exp);
+        let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
         apply(st.subst(), &mut want);
         st.insert_bind(pm_pat, want, dec.into());

@@ -15,7 +15,7 @@ pub(crate) fn get_and_check_ty_escape(
   st: &mut St,
   cfg: Cfg,
   cx: &Cx,
-  marker: &SymsMarker,
+  marker: SymsMarker,
   ars: &sml_hir::Arenas,
   exp: sml_hir::ExpIdx,
 ) -> Ty {
@@ -285,7 +285,7 @@ fn get_matcher(
   (pats, param_ty, res_ty)
 }
 
-fn ty_escape(cx: &Cx, m: &SymsMarker, ty: &Ty) -> Option<Ty> {
+fn ty_escape(cx: &Cx, m: SymsMarker, ty: &Ty) -> Option<Ty> {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) => None,
     Ty::FixedVar(fv) => (!cx.fixed.contains_key(fv.ty_var())).then(|| ty.clone()),

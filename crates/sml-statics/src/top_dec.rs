@@ -91,7 +91,7 @@ fn get_str_dec(
         if should_push {
           st.pop_prefix();
         }
-        let sig = env_to_sig(env, &marker);
+        let sig = env_to_sig(env, marker);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);
         }
@@ -113,7 +113,7 @@ fn get_str_dec(
         let mut param_env = Env::default();
         let marker = st.syms.mark();
         get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
-        let param_sig = env_to_sig(param_env, &marker);
+        let param_sig = env_to_sig(param_env, marker);
         let mut bs_clone = bs.clone();
         bs_clone.env.push(Env {
           str_env: map([(fun_bind.param_name.clone(), param_sig.env.clone())]),
@@ -128,7 +128,7 @@ fn get_str_dec(
         let mut body_ty_names = TyNameSet::default();
         env_syms(
           &mut |x| {
-            if x.generated_after(&marker) {
+            if x.generated_after(marker) {
               body_ty_names.insert(x);
             }
           },
@@ -207,7 +207,7 @@ fn get_str_exp(
       let mut sig_exp_env = Env::default();
       let marker = st.syms.mark();
       let ov = get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
-      let sig = env_to_sig(sig_exp_env, &marker);
+      let sig = env_to_sig(sig_exp_env, marker);
       let mut subst = TyRealization::default();
       let mut to_add = sig.env.clone();
       match st.mode() {
@@ -331,7 +331,7 @@ fn get_sig_exp(
       let marker = st.syms.mark();
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
-      get_where_kind(st, bs, &marker, ars, &mut inner_env, kind, sig_exp.into());
+      get_where_kind(st, bs, marker, ars, &mut inner_env, kind, sig_exp.into());
       ac.append(&mut inner_env);
       ov
     }
@@ -341,7 +341,7 @@ fn get_sig_exp(
 fn get_where_kind(
   st: &mut St,
   bs: &Bs,
-  marker: &SymsMarker,
+  marker: SymsMarker,
   ars: &sml_hir::Arenas,
   inner_env: &mut Env,
   kind: &sml_hir::WhereKind,
@@ -390,7 +390,7 @@ fn get_where_kind(
 
 fn get_where_type(
   st: &mut St,
-  marker: &SymsMarker,
+  marker: SymsMarker,
   inner_env: &mut Env,
   path: &sml_hir::Path,
   ty_scheme: TyScheme,
@@ -442,7 +442,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
 }
 
 // @def(65)
-fn env_to_sig(env: Env, marker: &SymsMarker) -> Sig {
+fn env_to_sig(env: Env, marker: SymsMarker) -> Sig {
   let mut ty_names = TyNameSet::default();
   env_syms(
     &mut |x| {
@@ -555,7 +555,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       get_spec(st, bs, ars, &mut inner_env, *inner);
       match kind {
         sml_hir::SharingKind::Regular => {
-          get_sharing_type(st, &marker, &mut inner_env, paths, spec.into());
+          get_sharing_type(st, marker, &mut inner_env, paths, spec.into());
         }
         sml_hir::SharingKind::Derived => {
           let mut all: Vec<_> = paths
@@ -576,7 +576,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
                 }
                 let path_1 = join_paths(struct_1, &ty_con);
                 let path_2 = join_paths(*struct_2, &ty_con);
-                get_sharing_type(st, &marker, &mut inner_env, &[path_1, path_2], spec.into());
+                get_sharing_type(st, marker, &mut inner_env, &[path_1, path_2], spec.into());
               }
             }
           }
@@ -619,7 +619,7 @@ fn append_no_dupe(st: &mut St, ac: &mut Env, other: &mut Env, idx: sml_hir::Idx)
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
 fn get_sharing_type(
   st: &mut St,
-  marker: &SymsMarker,
+  marker: SymsMarker,
   inner_env: &mut Env,
   paths: &[sml_hir::Path],
   idx: sml_hir::Idx,
