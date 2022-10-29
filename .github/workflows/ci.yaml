@@ -71,7 +71,7 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - name: Make dist
         run: cargo xtask dist --release --target ${{ matrix.rust }}
       - name: Package vsix
@@ -91,7 +91,7 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - name: Install node dependencies
         run: npm ci
         working-directory: editors/vscode
