@@ -1,5 +1,7 @@
 (* doesn't need to be right, just needs to type-check! *)
 
+exception Overflow
+
 structure Int = struct
   fun max (_ : int, _ : int) = 0
   fun toString (_ : int) = ""
@@ -10,6 +12,8 @@ structure Real = struct
 end
 
 structure List = struct
+  exception Empty
+
   fun map f xs =
     case xs of
       nil => nil
@@ -25,6 +29,16 @@ structure List = struct
       nil => true
     | _ :: _ => false
 end
+
+fun hd xs =
+  case xs of
+    nil => raise List.Empty
+  | x :: _ => x
+
+fun tl xs =
+  case xs of
+    nil => raise List.Empty
+  | _ :: xs => xs
 
 fun (xs @ ys) =
   case xs of

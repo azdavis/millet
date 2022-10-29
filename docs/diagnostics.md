@@ -183,8 +183,8 @@ At time of writing, Millet does not support `funsig` exports.
 There was an invalid character in the source file.
 
 ```sml
-(* error *)
 val 空条承太郎 = 3
+(** ^ invalid source character *)
 ```
 
 Only certain ASCII characters may appear in names and the like.
@@ -192,7 +192,6 @@ Only certain ASCII characters may appear in names and the like.
 To fix, only use allowed source characters. Only ASCII characters (but not all ASCII characters) are allowed.
 
 ```sml
-(* ok *)
 val kujoJotaro = 3
 ```
 
@@ -200,8 +199,10 @@ val kujoJotaro = 3
 
 There was an unclosed comment. This means an open comment delimiter `(*` was not matched by a later close comment delimiter `*)`.
 
+<!-- @ignore -->
+<!-- can't point at an unclosed comment with a comment -->
+
 ```sml
-(* error *)
 val kujo = 3
 (* a comment that doesn't end
 val josuke = 4
@@ -210,7 +211,6 @@ val josuke = 4
 To fix, close the comment with `*)`. Note that comments may be nested.
 
 ```sml
-(* ok *)
 val kujo = 3
 (* a comment that ends *)
 val josuke = 4
@@ -221,8 +221,8 @@ val josuke = 4
 A type variable name was incomplete.
 
 ```sml
-(* error *)
 val xs : ' list = []
+(**      ^ incomplete type variable *)
 ```
 
 To be complete, a type variable name must be the following in sequence:
@@ -234,7 +234,6 @@ To be complete, a type variable name must be the following in sequence:
 To fix, use a valid type variable name.
 
 ```sml
-(* ok *)
 val xs : 'a list = []
 ```
 
@@ -242,22 +241,23 @@ val xs : 'a list = []
 
 A `string` literal was not closed. String literals start and end with `"`.
 
+<!-- @ignore -->
+<!-- too hard to point at the end of the file -->
+
 ```sml
-(* error *)
 val greeting = "hello there
+(**                        ^ unclosed string literal *)
 ```
 
 To fix, close the string literal with `"`.
 
 ```sml
-(* ok *)
 val greeting = "hello there"
 ```
 
 This error may occur when trying to embed `"` in a string literal. To embed `"` in a string literal, use `\"`.
 
 ```sml
-(* ok *)
 val greeting = "he jumped down and said \"hello there\" to the general."
 ```
 
@@ -266,14 +266,13 @@ val greeting = "he jumped down and said \"hello there\" to the general."
 A `word` literal was negative. Words cannot be negative.
 
 ```sml
-(* error *)
 val neg = ~0w123
+(**       ^^^^^^ negative word literal *)
 ```
 
 To fix, use a different type, like `int`, or remove the negative sign.
 
 ```sml
-(* ok *)
 val negInt = ~123
 val posWord = 0w123
 ```
@@ -283,15 +282,15 @@ val posWord = 0w123
 A `char` literal contained more (or less) than 1 character.
 
 ```sml
-(* error *)
 val tooBig = #"hello there"
+(**          ^^^^^^^^^^^^^^ character literal must have length 1 *)
 val tooSmall = #""
+(**            ^^^ character literal must have length 1 *)
 ```
 
 To fix, make the character literal 1 character long, or use a string literal.
 
 ```sml
-(* ok *)
 val justRight = #"h"
 val greeting = "hello there"
 val empty = ""
@@ -302,16 +301,17 @@ val empty = ""
 A number (`int`, `word`, or `real`) literal was incomplete. For instance, a word literal that starts with `0w`, but then with no digits following, is incomplete. Or a real literal that has no digits after the decimal point, marked with `.`, or exponent, marked with `e` or `E`.
 
 ```sml
-(* error *)
 val x : word = 0w
+(**            ^^ missing digits in number literal *)
 val y : real = 1.
+(**            ^^ missing digits in number literal *)
 val z : real = 1e
+(**            ^^ missing digits in number literal *)
 ```
 
 To fix, add some digits.
 
 ```sml
-(* ok *)
 val x : word = 0w123
 val y : real = 1.123
 val z : real = 1e123
@@ -322,8 +322,8 @@ val z : real = 1e123
 A string escape was invalid.
 
 ```sml
-(* error *)
 val _ = "this doesn't work: \c"
+(**     ^^^^^^^^^^^^^^^^^^^^^ invalid string escape *)
 ```
 
 String escapes start with `\`. Valid simple escapes are:
@@ -349,7 +349,6 @@ Valid complex escapes are:
 To fix, only use valid escapes.
 
 ```sml
-(* ok *)
 val _ = "this has\na newline"
 ```
 
@@ -357,8 +356,10 @@ val _ = "this has\na newline"
 
 There was a non-whitespace character in a string continuation.
 
+<!-- @ignore -->
+<!-- too hard to point at the string continuations across lines -->
+
 ```sml
-(* error *)
 val _ =
   "this string is\  not
   \ valid because there\ are
@@ -371,7 +372,6 @@ String literals permit the sequence `\...\`, where `...` represents 1 or more wh
 To fix, ensure the string continuations contain only whitespace. Millet recognizes all characters defined in the Definition as whitespace, as well as some others, like carriage return (common on Windows).
 
 ```sml
-(* ok *)
 val _ =
   "this string is\
   \ valid because there are only\
@@ -384,15 +384,14 @@ val _ =
 A name that was not declared infix was used as infix.
 
 ```sml
-(* error *)
 datatype t = C of int * int
 fun add (a C b) = a + b
+(**          ^ non-infix name used as infix *)
 ```
 
 To fix, use the name as non-infix, or declare the name as infix.
 
 ```sml
-(* ok *)
 datatype t = C of int * int
 fun add (C (a, b)) = a + b
 infix C
@@ -404,14 +403,13 @@ fun mul (a C b) = a * b
 A name that was declared infix was used as non-infix without the required preceding `op` keyword.
 
 ```sml
-(* error *)
 val _ = + (2, 3)
+(**     ^ infix name used as non-infix without `op` *)
 ```
 
 To fix, use the name infix, or add `op`.
 
 ```sml
-(* ok *)
 val _ = 2 + 3
 val _ = op+ (2, 3)
 ```
@@ -423,14 +421,13 @@ A fixity declaration was invalid.
 This can happen when the fixity is too large.
 
 ```sml
-(* error *)
 infix 123456789123456789 foo
+(**   ^^^^^^^^^^^^^^^^^^ invalid fixity: number too large to fit in target type *)
 ```
 
 To fix, only use small-ish fixities.
 
 ```sml
-(* ok *)
 infix 9 foo
 ```
 
@@ -439,14 +436,13 @@ infix 9 foo
 A fixity declaration was negative.
 
 ```sml
-(* error *)
 infix ~3 foo
+(**   ^^ fixity is negative *)
 ```
 
 To fix, only use non-negative fixities. Zero is allowed. In fact, zero is implied when a fixity number is not given.
 
 ```sml
-(* ok *)
 infix 3 foo
 infix 0 bar
 infix quz
@@ -457,12 +453,12 @@ infix quz
 Consecutive infix names with the same fixity, but different associativity, were used without parentheses to disambiguate.
 
 ```sml
-(* error *)
 infix <<
 infixr >>
 fun a << b = a + b
 fun a >> b = a * b
 val _ = 1 << 2 >> 3
+(**            ^^ consecutive infix names with same fixity but different associativity *)
 ```
 
 It's not clear if this should be parsed as `(1 << 2) >> 3` or `1 << (2 >> 3)`.
@@ -479,10 +475,8 @@ To fix, do one of the following:
 The parser expected something, but it didn't find it. For example, in this case, the parser expected a name after the `structure` keyword, but found the `val` keyword instead.
 
 ```sml
-(* error *)
-structure
-
-val platinum = 3
+structure val platinum = 3
+(**       ^^^ expected a name *)
 ```
 
 This is the most common kind of parse error. It's not easy to give general advice for how to fix it.
@@ -494,15 +488,15 @@ One bit of advice is this: Since the parser tries to continue parsing a file eve
 There was an unnecessary usage of `op`.
 
 ```sml
-(* warning *)
 exception op E
+(**       ^^ unnecessary `op` *)
 val op x = 3
+(** ^^ unnecessary `op` *)
 ```
 
 To fix, remove the `op`.
 
 ```sml
-(* ok *)
 exception E
 val x = 3
 ```
@@ -512,15 +506,14 @@ val x = 3
 In a `fun` binding with multiple cases, the cases did not all name the same function.
 
 ```sml
-(* error *)
 fun jonathan 1 = 2
   | dio _ = 3
+(** ^^^ expected a function clause for jonathan, found one for dio *)
 ```
 
 To fix, use a consistent name for the function.
 
 ```sml
-(* ok *)
 fun jonathan 1 = 2
   | jonathan _ = 3
 ```
@@ -530,15 +523,14 @@ fun jonathan 1 = 2
 In a `fun` binding with multiple cases, the cases did not all have the same number of patterns.
 
 ```sml
-(* error *)
 fun muska 1 = 2
   | muska x y z = x + y + z
+(** ^^^^^^^^^^^^^^^^^^^^^^^ expected 1 patterns, found 3 *)
 ```
 
 To fix, use a consistent number of patterns across all cases.
 
 ```sml
-(* ok *)
 fun muska 1 = 2
   | muska x = x + 3
 ```
@@ -548,14 +540,13 @@ fun muska 1 = 2
 An integer (`int` or `word`) literal was invalid. This can happen when it is too large.
 
 ```sml
-(* error *)
-val _ = 0w123456789123456789123456789123456789
+val _ = 0w123456789123456789123456789
+(**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ invalid literal: number too large to fit in target type *)
 ```
 
 To fix, use smaller literals.
 
 ```sml
-(* ok *)
 val _ = 0w123456789
 ```
 
@@ -570,14 +561,13 @@ A real literal was invalid.
 A numeric label (as for a record) was invalid. This can happen when it was non-positive (i.e. negative or zero), or too large.
 
 ```sml
-(* error *)
-val _ = { 123456789123456789123456789123456789 = "hi" }
+val _ = { 123456789123456789123456789 = "hi" }
+(**       ^^^^^^^^^^^^^^^^^^^^^^^^^^^ invalid numeric label: number too large to fit in target type *)
 ```
 
 To fix, use small positive numbers for labels.
 
 ```sml
-(* ok *)
 val _ = { 3 = "hi" }
 ```
 
@@ -586,14 +576,13 @@ val _ = { 3 = "hi" }
 There were multiple `...` rest pattern rows.
 
 ```sml
-(* error *)
 val {a, ..., ...} = {a = 1, b = "hi"}
+(** ^^^^^^^^^^^^^ multiple `...` *)
 ```
 
 To fix, only provide one such row.
 
 ```sml
-(* ok *)
 val {a, ...} = {a = 1, b = "hi"}
 ```
 
@@ -602,14 +591,13 @@ val {a, ...} = {a = 1, b = "hi"}
 There was a non-`...` pattern row after a `...` pattern row.
 
 ```sml
-(* error *)
 val {..., b} = {a = 1, b = "hi"}
+(** ^^^^^^^^ `...` must come last *)
 ```
 
 To fix, put the `...` pattern row last.
 
 ```sml
-(* ok *)
 val {b, ...} = {a = 1, b = "hi"}
 ```
 
@@ -622,16 +610,15 @@ There was a bar (aka `|`) before the first:
 - Constructor in a `datatype` declaration or case.
 
 ```sml
-(* error *)
-datatype d =
-| Chihiro
-| Sheeta
+    datatype d =
+    | Chihiro
+(** ^ preceding `|` *)
+    | Sheeta
 ```
 
 To fix, remove the bar.
 
 ```sml
-(* ok *)
 datatype d =
   Chihiro
 | Sheeta
@@ -642,14 +629,13 @@ datatype d =
 There was an `open` or `include` without operands.
 
 ```sml
-(* error *)
-open
+    open
+(** ^^^^ requires at least 1 operand *)
 ```
 
 To fix, give them some operands, or delete the empty `open` or `include`.
 
 ```sml
-(* ok *)
 structure S = struct
   val x = 3
 end
@@ -668,10 +654,10 @@ A structure-level declaration, i.e. one that starts with one of:
 occurred in a disallowed position, like inside a regular declaration.
 
 ```sml
-(* error *)
 val s =
   let
     structure Integer = Int
+(** ^^^^^^^^^^^^^^^^^^^^^^^ structure-level declaration not allowed here *)
     val x = 3
   in
     Integer.toString x
@@ -681,7 +667,6 @@ val s =
 To fix, move the declaration to an allowed position.
 
 ```sml
-(* ok *)
 structure Integer = Int
 val s =
   let
@@ -698,9 +683,10 @@ This error is also emitted for `include` specifications occurring in declaration
 `op` does not work with `andalso` or `orelse`.
 
 ```sml
-(* error *)
 fun bigAnd bs = List.foldl (op andalso) true bs
+(**                         ^^^^^^^^^^ `andalso` and `orelse` not allowed with `op` *)
 fun bigOr bs = List.foldl (op orelse) false bs
+(**                        ^^^^^^^^^ `andalso` and `orelse` not allowed with `op` *)
 ```
 
 `andalso` and `orelse` are SML keywords, and short-circuit. They are not infix identifiers. Because of this, they do not work with `op`.
@@ -708,7 +694,6 @@ fun bigOr bs = List.foldl (op orelse) false bs
 To fix, use a lambda or helper function.
 
 ```sml
-(* ok *)
 infix && ||
 fun (a && b) = a andalso b
 fun (a || b) = a orelse b
@@ -735,14 +720,11 @@ def foo(x):
 An attempt to translate this literally into SML will emit an error:
 
 ```sml
-(* error *)
 fun foo x =
   let
     val y = 3
-    if x = 4 then
-      y = 5
-    else
-      ()
+    if x = 4 then y = 5 else ()
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ expression not allowed here *)
   in
     y + x
   end
@@ -751,14 +733,9 @@ fun foo x =
 Instead, we can define `y` as the result of evaluating an `if` expression.
 
 ```sml
-(* ok *)
 fun foo x =
   let
-    val y =
-      if x = 4 then
-        5
-      else
-        3
+    val y = if x = 4 then 5 else 3
   in
     y + x
   end
@@ -783,12 +760,15 @@ def bar(x):
 
 Again, in SML, an attempt to translate this literally may result in an invalid program, even when adding the necessary type conversion and newline for SML's `print`:
 
+<!-- @ignore -->
+<!-- requires the use of semicolons -->
+
 ```sml
-(* error *)
 fun bar x =
   let
     val y = x + 1;
     print (Int.toString y ^ "\n");
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expression not allowed here *)
   in
     y
   end
@@ -799,7 +779,6 @@ Here, the solution could either be to:
 - Use a val binding in the `let ... in`:
 
   ```sml
-  (* ok *)
   fun bar x =
     let
       val y = x + 1
@@ -812,7 +791,6 @@ Here, the solution could either be to:
 - Use an expression sequence with `;` in the `in ... end`:
 
   ```sml
-  (* ok *)
   fun bar x =
     let
       val y = x + 1
@@ -827,10 +805,10 @@ Here, the solution could either be to:
 A specification used syntax only available in declarations.
 
 ```sml
-(* error *)
 signature MAPPABLE = sig
   type 'a t
   val ('a, 'b) map : ('a -> 'b) -> ('a t -> 'b t)
+(**   ^^^^^^^^ specification uses declaration syntax not allowed here *)
 end
 ```
 
@@ -843,7 +821,6 @@ Some examples of declaration-only syntax:
 To fix, remove the disallowed syntax.
 
 ```sml
-(* ok *)
 signature MAPPABLE = sig
   type 'a t
   val map : ('a -> 'b) -> ('a t -> 'b t)
@@ -855,10 +832,12 @@ end
 There were unnecessary parentheses around something.
 
 ```sml
-(* warning *)
 val _ = (3)
+(**     ^^^ unnecessary parentheses *)
 fun inc (x) = x + 1
+(**     ^^^ unnecessary parentheses *)
 type t = (int)
+(**      ^^^^^ unnecessary parentheses *)
 ```
 
 Many things are "atomic", meaning they do not need parentheses around them to override precedence.
@@ -876,13 +855,20 @@ Note that e.g. `op +` is technically atomic, but this error is not issued for pa
 
 To fix, remove the parentheses.
 
+```sml
+val _ = 3
+fun inc x = x + 1
+type t = int
+```
+
 ## 4015
 
 There was an overly complex expression involving `bool`s.
 
 ```sml
-(* warning *)
-fun booleanIdentity x = if x then true else false
+fun booleanIdentity x =
+    if x then true else false
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^ overly complex `bool` expression *)
 ```
 
 An expression is "overly complex" if it involves `if`, `andalso`, or `orelse`, and contains a `bool` literal `true` or `false`. Such expressions can always be simplified. For example:
@@ -907,9 +893,9 @@ To fix, simplify the expression.
 There was a `case` expression with only one arm.
 
 ```sml
-(* warning *)
 datatype d = D of int
 fun toInt x = case x of D y => y
+(**           ^^^^^^^^^^^^^^^^^^ `case` with only one arm *)
 ```
 
 - An exhaustive case with only one arm is better expressed as an irrefutable binding, e.g. with `val`.
@@ -918,7 +904,6 @@ fun toInt x = case x of D y => y
 To fix, rewrite the `case` as something else, or add more arms.
 
 ```sml
-(* ok *)
 datatype d = D of int
 fun toInt (D y) = y
 ```
@@ -928,9 +913,10 @@ fun toInt (D y) = y
 There was an unnecessary semicolon.
 
 ```sml
-(* warning *)
 val x = 3;
+(**      ^ unnecessary `;` *)
 val y = "hi";
+(**         ^ unnecessary `;` *)
 ```
 
 Semicolons are used in a REPL setting to indicate the end of input, but are unnecessary in most cases in source files.
@@ -938,7 +924,6 @@ Semicolons are used in a REPL setting to indicate the end of input, but are unne
 To fix, remove the semicolon.
 
 ```sml
-(* ok *)
 val x = 3
 val y = "hi"
 ```
@@ -948,15 +933,16 @@ val y = "hi"
 There were multiple type annotations on a single overall pattern.
 
 ```sml
-(* warning *)
 fun add ((x : int, y : int) : int * int) = x + y
+(**      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ multiple types on one pattern *)
 ```
 
 This error will occur in situations like this:
 
 ```sml
-(* warning *)
-val inc = fn (x : int) : int => x + 1
+val inc =
+  fn (x : int) : int => x + 1
+(**  ^^^^^^^^^^^^^^^ multiple types on one pattern *)
 ```
 
 This may look like it is annotating both the input and output types of this `fn` as `int`, but actually it is annotating the input as `int` twice, redundantly.
@@ -964,14 +950,14 @@ This may look like it is annotating both the input and output types of this `fn`
 Indeed, the below similar code triggers this error, as well as another error that `bool` and `int` are mismatched types. This gives a clue as to what is happening: we are actually trying to annotate `x` as both `bool` and `int`.
 
 ```sml
-(* error *)
-val greaterThanFive = fn (x : int) : bool => x > 5
+val greaterThanFive =
+  fn (x : int) : bool => x > 5
+(**  ^^^^^^^^^^^^^^^^ multiple types on one pattern *)
 ```
 
 To fix, use only one type annotation. In the first example, either of the following would work:
 
 ```sml
-(* ok *)
 fun addAnnotateEach (x : int, y : int) = x + y
 fun addAnnotatePair ((x, y) : int * int) = x + y
 ```
@@ -981,21 +967,18 @@ For the `fn` examples, it may work to:
 - Annotate the type elsewhere, e.g. with a `val` annotation:
 
   ```sml
-  (* ok *)
   val inc : int -> int = fn x => x + 1
   ```
 
 - Annotate the body of the function:
 
   ```sml
-  (* ok *)
   val inc = fn (x : int) => (x + 1) : int
   ```
 
 - Skip annotating the return type:
 
   ```sml
-  (* ok *)
   val inc = fn (x : int) => x + 1
   ```
 
@@ -1004,8 +987,8 @@ For the `fn` examples, it may work to:
 There was a declaration missing its right-hand side.
 
 ```sml
-(* error *)
 val x : int
+(** ^^^^^^^ missing right-hand side of declaration *)
 ```
 
 The above example is valid specification syntax for signatures, but is not a valid declaration.
@@ -1013,7 +996,6 @@ The above example is valid specification syntax for signatures, but is not a val
 To fix, provide a right-hand side.
 
 ```sml
-(* ok *)
 val x : int = 3
 ```
 
@@ -1022,8 +1004,8 @@ val x : int = 3
 There was a declaration with a `sharing type`.
 
 ```sml
-(* error *)
 val x = 3 sharing type t = u
+(**       ^^^^^^^^^^^^^^^^^^ `sharing type` not allowed here *)
 ```
 
 `sharing type` is allowed on specifications, not declarations.
@@ -1035,8 +1017,8 @@ To fix, remove the `sharing type`.
 There was a declaration with `eqtype`.
 
 ```sml
-(* error *)
-eqtype num = int
+    eqtype num = int
+(** ^^^^^^ `eqtype` not allowed here *)
 ```
 
 `eqtype` is allowed on specifications, not declarations.
@@ -1048,15 +1030,13 @@ To fix, change `eqtype` to `type`.
 There was a declaration hole.
 
 ```sml
-(* error *)
-structure S = struct
-  ...
-end
+structure S = struct ... end
+(**                  ^^^ declaration hole *)
 ```
 
 Declaration holes are written `...`.
 
-Sometimes `...` is used in declaration position as a placeholder or filler in examples, for example in the discussion of functor argument interface syntax sugar in the description of 5003.
+Sometimes `...` is used in declaration position as a placeholder or filler in examples.
 
 To fix, replace or remove the hole.
 
@@ -1065,9 +1045,9 @@ To fix, replace or remove the hole.
 There was a non-specification declaration in a specification context.
 
 ```sml
-(* error *)
 signature S = sig
-  fun inc x = x + 1
+    fun inc x = x + 1
+(** ^^^^^^^^^^^^^^^^^ non-specification not allowed here *)
 end
 ```
 
@@ -1078,10 +1058,10 @@ To fix, move the declaration out of the signature, or remove it.
 The left-hand side of an `as` pattern was neither a name nor a typed name.
 
 ```sml
-(* error *)
 fun f x =
   case x of
-    3 as y => 8
+    3 as y => y
+(** ^ left-hand side of `as` pattern must be a name *)
   | _ => x
 ```
 
@@ -1090,10 +1070,9 @@ The syntax for `as` patterns is `<name> (: <ty>)? as <pat>`.
 To fix, ensure the left hand side of the `as` is either a name or a typed name.
 
 ```sml
-(* ok *)
 fun f x =
   case x of
-    y as 3 => 8
+    y as 3 => y
   | _ => x
 ```
 
@@ -1102,8 +1081,8 @@ fun f x =
 There was an occurrence of an unsupported SML construct.
 
 ```sml
-(* error *)
 val x = #[1, 2]
+(**     ^^^^^^^ unsupported: vector expressions *)
 ```
 
 At time of writing, Millet does not support the following constructs:
@@ -1125,8 +1104,8 @@ To fix, avoid such constructs.
 A name was referenced, but it was not defined in that scope.
 
 ```sml
-(* error *)
 val _ = foo
+(**     ^^^ undefined value: foo *)
 ```
 
 To fix, try any of the following:
@@ -1138,26 +1117,25 @@ To fix, try any of the following:
   In this example, there is a value named `x` defined, but then we try to use `x` as a type. There is no type `x` defined, so this is invalid.
 
   ```sml
-  (* error *)
   val x = 4
   val y : x = 5
+  (**     ^ undefined type: x *)
   ```
 
 - Check that the name is not explicitly forbidden from being accessed by a signature ascription. Ascribing a structure to a more restrictive signature prohibits accessing the "extra" items inside the structure.
 
   ```sml
-  (* error *)
-
   signature SIG = sig
     val foo : int
   end
 
-  structure Str : SIG =
+  structure Str : SIG = struct
     val foo = 3
     val bar = "hi"
   end
 
   val _ = Str.bar
+  (**     ^^^^^^^ undefined value: bar *)
   ```
 
 ## 5002
@@ -1167,22 +1145,21 @@ There was a duplicate of something.
 This may occur when using `and` to declare many things at once.
 
 ```sml
-(* error *)
 val x = 3
 and x = 4
+(** ^ duplicate value: x *)
 ```
 
 It may also occur when binding the same name more than once in a pattern.
 
 ```sml
-(* error *)
 fun add (x, x) = x + x
+(**         ^ duplicate value: x *)
 ```
 
 To fix, use different names, or avoid `and`. (The latter induces shadowing.)
 
 ```sml
-(* ok *)
 val x = 3
 val x = 4
 ```
@@ -1192,12 +1169,13 @@ val x = 4
 Something was requested by a signature, but not present in the structure that is attempting to ascribe to that signature.
 
 ```sml
-(* error *)
 signature SIG = sig
   val x : int
 end
 
-structure Str : SIG = struct end
+structure Str : SIG =
+    struct end
+(** ^^^^^^^^^^ missing value required by signature: x *)
 ```
 
 To fix, provide definitions for the missing items.
@@ -1211,27 +1189,18 @@ Something was not requested by a signature, but was present in the structure tha
 Usually, this is allowed, but it is forbidden for `datatype` declarations.
 
 ```sml
-(* error *)
-signature SIG = sig
-  datatype d = Pazu
-end
-
-structure Str : SIG = struct
-  datatype d = Pazu | Sosuke
-end
+structure S
+  : sig    datatype d = Pazu          end
+  = struct datatype d = Pazu | Sosuke end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ extra value not present in signature: Sosuke *)
 ```
 
 To fix, ensure only the requested items are defined.
 
 ```sml
-(* ok *)
-signature SIG = sig
-  datatype d = Pazu
-end
-
-structure Str : SIG = struct
-  datatype d = Pazu
-end
+structure S
+  : sig    datatype d = Pazu end
+  = struct datatype d = Pazu end
 ```
 
 ## 5005
@@ -1241,8 +1210,8 @@ Typechecking failed, because of "circularity", which means we attempted to a set
 Consider this example:
 
 ```sml
-(* error *)
 fun f x = x x
+(**       ^^^ circular type: ?a occurs in ?a -> ?b *)
 ```
 
 When typechecking `f`, Millet does the following:
@@ -1271,8 +1240,8 @@ This is probably the most common typechecking error, so it's hard to give genera
 Millet tries to report which type was "expected" and which was "found". For instance, in this example, we consider `int` the "expected" type, because of the annotation. This explicit annotation implies the programmer really thought it should be that type.
 
 ```sml
-(* error *)
-val x : int = "no"
+    val x : int = "no"
+(** ^^^^^^^^^^^^^^^^^^ expected int, found string *)
 ```
 
 This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
@@ -1280,9 +1249,9 @@ This hints at a possible strategy for debugging this kind of error: if the expec
 This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `choose` takes a `bool`.
 
 ```sml
-(* error *)
 fun choose x = if x then "sosuke" else "pazu"
 val _ = choose 4
+(**            ^ expected bool, found int *)
 ```
 
 Note that certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
@@ -1307,8 +1276,8 @@ Finally, if Millet encounters an invalid expression, like a variable that was un
 A function application expression was encountered, but the function expression did not have a function type.
 
 ```sml
-(* error *)
 val _ = "foo" 3
+(**     ^^^^^ expected a function type, found string *)
 ```
 
 In this example, we attempt to treat the string `"foo"` as a function and apply it to the argument `3`.
@@ -1322,14 +1291,13 @@ To fix, only apply functions to arguments.
 There was a duplicate label.
 
 ```sml
-(* error *)
 val _ = { a = 1, a = 2 }
+(**     ^^^^^^^^^^^^^^^^ duplicate label: a *)
 ```
 
 To fix, use differently named labels, or remove one of the record rows.
 
 ```sml
-(* ok *)
 val _ = { a = 1, b = 2 }
 val _ = { a = 1 }
 ```
@@ -1339,19 +1307,18 @@ val _ = { a = 1 }
 A real literal was used as a pattern.
 
 ```sml
-(* error *)
 fun f (x : real) : int =
   case x of
     1.2 => 3
-  | 1.4 => 5
-  | _ => 6
+(** ^^^ real literal used as a pattern *)
+  | _ => 4
 ```
 
 To fix, consider checking that the given real is within some epsilon value of the desired real.
 
 ```sml
-(* ok *)
 val eps = 0.01
+
 fun f (x : real) : int =
   if Real.abs (x - 1.2) <= eps then
     3
@@ -1370,11 +1337,11 @@ A pattern in a `case` expression or similar (like `handle`) was not reachable.
 Patterns in a `case` are tried from top to bottom. If a pattern further up the `case` always matches certain values, then the lower pattern will never be reached. Thus, the lower pattern is unreachable.
 
 ```sml
-(* error *)
 fun f x =
   case x of
     1 => 2
   | 1 => 3
+(** ^ unreachable pattern *)
   | _ => 4
 ```
 
@@ -1397,12 +1364,13 @@ Thus, if:
 then the `case` is not exhaustive.
 
 ```sml
-(* error *)
-datatype d = A of string | B of int
+datatype d = A of string | B of int | C of bool
 
 fun f (x : d) : int =
   case x of
+(**    + non-exhaustive case: missing A _ *)
     B y => y
+  | C z => if z then 1 else 2
 ```
 
 To fix, add patterns matching the missing cases. The error message reports examples of patterns not matched.
@@ -1414,12 +1382,12 @@ A binding, like with `val`, was not exhaustive.
 This is effectively the same error as 5011, but for singular bindings.
 
 ```sml
-(* error *)
-datatype d = A of string | B of int
+datatype d = A of string | B of int | C of bool
 
 fun f (x : d) : string =
   let
     val A y = x
+(**     ^^^ non-exhaustive binding: missing C _, B _ *)
   in
     y
   end
@@ -1439,7 +1407,6 @@ To fix, use a `case` or similar instead.
 A pattern match treated a value as if it were a pattern.
 
 ```sml
-(* error *)
 structure S = struct
   val x = 3
 end
@@ -1447,6 +1414,7 @@ end
 fun f y =
   case y of
     S.x => 1
+(** ^^^ value binding used as a pattern *)
   | 4 => 5
   | _ => 6
 ```
@@ -1454,7 +1422,6 @@ fun f y =
 To fix check for equality another way, for instance with `=`.
 
 ```sml
-(* ok *)
 structure S = struct
   val x = 3
 end
@@ -1473,12 +1440,12 @@ fun f y =
 A constructor had an argument in a pattern match, but it was defined to have no argument.
 
 ```sml
-(* error *)
 datatype d = A | B of int
 
 fun f x =
   case x of
     A y => y + 1
+(** ^^^ unexpected argument for constructor pattern *)
   | B z => z - 1
 ```
 
@@ -1487,7 +1454,6 @@ To fix, try one of the following:
 - Remove the argument from the pattern:
 
   ```sml
-  (* ok *)
   datatype d = A | B of int
 
   fun f x =
@@ -1499,7 +1465,6 @@ To fix, try one of the following:
 - Define the constructor to have an argument:
 
   ```sml
-  (* ok *)
   datatype d = A of int | B of int
 
   fun f x =
@@ -1513,13 +1478,13 @@ To fix, try one of the following:
 A constructor had no argument in a pattern match, but it was defined to have an argument.
 
 ```sml
-(* error *)
 datatype d = A | B of int
 
 fun f x =
   case x of
     A => 1
   | B => 2
+(** ^ missing argument for constructor pattern *)
 ```
 
 To fix, try one of the following:
@@ -1527,7 +1492,6 @@ To fix, try one of the following:
 - Add an argument to the pattern:
 
   ```sml
-  (* ok *)
   datatype d = A | B of int
 
   fun f x =
@@ -1539,7 +1503,6 @@ To fix, try one of the following:
 - Define the constructor to not have an argument:
 
   ```sml
-  (* ok *)
   datatype d = A | B
 
   fun f x =
@@ -1555,18 +1518,17 @@ An invalid name was used as the left hand side of an `as` pattern.
 As-patterns allow binding the entirety of a pattern `p` to a name `n` with the pattern `n as p`. However, the name `n` may not, for instance, already exist as a non-value:
 
 ```sml
-(* error *)
 exception e
 fun f x =
   case x of
     e as [_] => 1 :: e
+(** ^^^^^^^^ invalid `as` pat name: e *)
   | _ => []
 ```
 
 To fix, use a valid name.
 
 ```sml
-(* ok *)
 exception e
 fun f x =
   case x of
@@ -1581,22 +1543,18 @@ A type escapes the scope in which it is valid.
 Here, the type `d` is only available for the scope of the `let` expression, but the `let` expression would cause a value of type `d` to "escape" the `let` and be bound to `x`, outside the `let`.
 
 ```sml
-(* error *)
 val x =
-  let
-    datatype d = D
-  in
-    D
-  end
+    let datatype d = D in D end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: d *)
 ```
 
 This can also occur for explicit type variables, as in this example:
 
 ```sml
-(* error *)
-fun f x =
+fun f b x =
+(** + type escapes its scope: 'a *)
   let
-    fun g (y : 'a) = if true then x else y
+    fun g (y : 'a) = if b then x else y
   in
     ()
   end
@@ -1612,7 +1570,6 @@ To fix, try one of the following:
 - Extend the scope of the type:
 
   ```sml
-  (* ok *)
   datatype d = D
   val x = D
   ```
@@ -1620,7 +1577,6 @@ To fix, try one of the following:
 - Do not allow its values to escape its scope:
 
   ```sml
-  (* ok *)
   val x =
     let
       datatype d = D
@@ -1631,11 +1587,13 @@ To fix, try one of the following:
 
 - Remove explicit type variable annotations:
 
+  <!-- @ignore -->
+  <!-- unused value -->
+
   ```sml
-  (* ok *)
-  fun f x =
+  fun f b x =
     let
-      fun g y = if true then x else y
+      fun g y = if b then x else y
     in
       ()
     end
@@ -1643,11 +1601,13 @@ To fix, try one of the following:
 
 - Change where type variables are bound:
 
+  <!-- @ignore -->
+  <!-- unused value -->
+
   ```sml
-  (* ok *)
-  fun 'a f x =
+  fun 'a f b x =
     let
-      fun g (y : 'a) = if true then x else y
+      fun g (y : 'a) = if b then x else y
     in
       ()
     end
@@ -1658,29 +1618,28 @@ To fix, try one of the following:
 In a `val rec` binding, the expression must be a literal `fn` expression.
 
 ```sml
-(* error *)
-val rec x = x + 3
+    val rec x = x + 3
+(** ^^^^^^^^^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
 ```
 
 It is an error even if the expression does not use the recursive binding.
 
 ```sml
-(* error *)
-val rec x = 3
+    val rec x = 3
+(** ^^^^^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
 ```
 
 It is also an error even if the expression has function type.
 
 ```sml
-(* error *)
-val mkAdd3 = fn () => fn x => x + 3
-val rec add3 = mkAdd3 ()
+    val mkAdd3 = fn () => fn x => x + 3
+    val rec add3 = mkAdd3 ()
+(** ^^^^^^^^^^^^^^^^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
 ```
 
 To fix, ensure the expression is a literal `fn` expression.
 
 ```sml
-(* ok *)
 val rec add3 = fn n => n + 3
 val rec fact = fn n => if n = 0 then 1 else n * fact (n - 1)
 ```
@@ -1690,22 +1649,21 @@ val rec fact = fn n => if n = 0 then 1 else n * fact (n - 1)
 The wrong number of type arguments was passed to a type-level function.
 
 ```sml
-(* error *)
 type ('a, 'b) pair = 'a * 'b
 type nope = int pair
+(**         ^^^^^^^^ expected 2 type arguments, found 1 *)
 ```
 
 `datatype`s, like `'a list`, also define type-level functions.
 
 ```sml
-(* error *)
 val xs : list = []
+(**      ^^^^ expected 1 type argument, found 0 *)
 ```
 
 To fix, pass the correct number of type arguments.
 
 ```sml
-(* ok *)
 type ('a, 'b) pair = 'a * 'b
 type yep = (int, string) pair
 val xs : yep list = []
@@ -1716,17 +1674,16 @@ val xs : yep list = []
 In an exception copy declaration, the right hand side was not an exception.
 
 ```sml
-(* error *)
-val x = 3
-exception Nope = x
+    val e = 3
+    exception Nope = e
+(** ^^^^^^^^^^^^^^^^^^ not an exception: e *)
 ```
 
 To fix, only use exceptions on the right hand side.
 
 ```sml
-(* ok *)
-exception Bad
-exception Nope = Bad
+exception E
+exception Nope = E
 ```
 
 ## 5021
@@ -1744,8 +1701,8 @@ Certain names in certain namespaces may not be rebound. These names are:
 | `it`    | the value of the last expression entered in a REPL |
 
 ```sml
-(* error *)
-val false = 123
+val it = 3
+(** ^^ cannot re-bind name: it *)
 ```
 
 To fix, do not attempt to rebind these names.
@@ -1761,36 +1718,31 @@ Names have "statuses", which can be one of:
 These statuses must be compatible for the purposes of matching a structure against a signature.
 
 ```sml
-(* error *)
 exception Foo
 
-structure S : sig
-  exception E
-end = struct
-  val E = Foo
-end
+structure S
+  : sig    exception E       end
+  = struct val       E = Foo end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: E *)
 ```
 
 To fix, ensure the names have compatible statuses.
 
 ```sml
-(* ok *)
 exception Foo
 
-structure S : sig
-  exception E
-end = struct
-  exception E = Foo
-end
+structure S
+  : sig    exception E       end
+  = struct exception E = Foo end
 ```
 
 ## 5023
 
-A record type couldn't be fully resolved, due to the use of a `...` pattern row.
+A record type couldn't be fully resolved, due to the use of a `...` pattern row with insufficient surrounding context.
 
 ```sml
-(* error *)
-fun getX {x, ...} = x
+    fun getX {x, ...} = x
+(** ^^^^^^^^^^^^^^^^^^^^^ cannot resolve record type containing `...` *)
 ```
 
 SML lacks row polymorphism, so the above example function does not typecheck.
@@ -1798,7 +1750,6 @@ SML lacks row polymorphism, so the above example function does not typecheck.
 To fix, consider adding a type annotation.
 
 ```sml
-(* ok *)
 type t = {x : int, y : bool, z : string}
 fun getX ({x, ...} : t) = x
 ```
@@ -1806,14 +1757,13 @@ fun getX ({x, ...} : t) = x
 This error may arise when using `#` selectors.
 
 ```sml
-(* error *)
-fun addFooBar x = #foo x + #bar x
+    fun addFooBar x = #foo x + #bar x
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot resolve record type containing `...` *)
 ```
 
 Again, the fix is usually to add a type annotation. Though, an alternative would be to avoid `...` pattern rows altogether.
 
 ```sml
-(* ok *)
 fun addFooBar {foo, bar} = foo + bar
 ```
 
@@ -1822,23 +1772,25 @@ fun addFooBar {foo, bar} = foo + bar
 Not all or pattern alternatives bound the same names.
 
 ```sml
-(* error *)
 datatype t = Foo of int | Bar of int
 
 fun toInt (x : t) : int =
-  case x of
-    (Foo y | Bar _) => y
+  let val (Foo y | Bar _) = x
+(**                ^^^^^ y was bound in one alternative, but not in another *)
+  in y end
 ```
 
 To fix, ensure all alternatives bind the same names. The types must also match.
 
+<!-- @ignore -->
+<!-- TODO allow multi def sites. this warns the y from Bar is unused -->
+
 ```sml
-(* ok *)
 datatype t = Foo of int | Bar of int
 
 fun toInt (x : t) : int =
-  case x of
-    (Foo y | Bar y) => y
+  let val (Foo y | Bar y) = x
+  in y end
 ```
 
 Note that or patterns are not permitted by the Definition, though they are a common extension, implemented by SML/NJ and MLton.
@@ -1848,17 +1800,17 @@ Note that or patterns are not permitted by the Definition, though they are a com
 A `signature` or `functor` declaration occurred in a disallowed position, like inside `struct ... end`.
 
 ```sml
-(* error *)
 structure Str = struct
-  signature SIG = sig end
-  functor Func() = struct end
+    signature SIG = sig end
+(** ^^^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` not allowed here *)
+    functor Func() = struct end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` not allowed here *)
 end
 ```
 
 To fix, declare the signature or functor at the top level.
 
 ```sml
-(* ok *)
 structure Str = struct end
 signature SIG = sig end
 functor Func() = struct end
@@ -1867,7 +1819,6 @@ functor Func() = struct end
 Although not permitted by the Definition, Millet also allows defining the signature or functor in a `local`.
 
 ```sml
-(* ok *)
 local
   signature SIG = sig val y : int end
   functor Func(val x : int) : SIG = struct val y = x + 2 end
@@ -1882,18 +1833,18 @@ end
 There was an expression hole.
 
 ```sml
-(* error *)
-val answer = if _ then "yes" else "no"
+val answer = if ... then "yes" else "no"
+(**             ^^^ expression hole with type bool *)
 ```
 
 The error message contains information about the type of the hole given the surrounding context. For instance, in the above example, the hole is reported to have type `bool` because it is being used as the condition to an `if` expression.
 
-Expression holes can either be `_` or `...`.
+Expression holes can either be `...` or `_`.
 
 ```sml
-(* error *)
-fun f x = ...
-val _ = f 5
+fun f x = _ + 5
+(**       ^ expression hole with type int *)
+val ans = f 3
 ```
 
 To fix, replace the hole with a real expression of the correct type.
@@ -1903,15 +1854,15 @@ To fix, replace the hole with a real expression of the correct type.
 There was a type hole.
 
 ```sml
-(* error *)
-type thing = string * _ list * int
+type thing = ... list * int
+(**          ^^^ type hole *)
 ```
 
-Type holes can be either `_` or `...`.
+Type holes can be either `...` or `_`.
 
 ```sml
-(* error *)
-type func = ... -> ...
+type func = int -> _
+(**                ^ type hole *)
 ```
 
 To fix, replace the hole with a real type.
@@ -1943,8 +1894,8 @@ A polymorphic type is one which contains type variables, like `'a` or `'b`.
 If Millet did not emit an error for cases like this, we could break type safety:
 
 ```sml
-(* error *)
 val r : 'a option ref = ref NONE
+(**                     ^^^^^^^^ cannot bind expansive polymorphic expression *)
 val () = r := SOME "foo"
 val v : int = valOf (!r)
 ```
@@ -1963,17 +1914,18 @@ To fix, try any of the following:
   Before:
 
   ```sml
-  (* error *)
+
   val mapFst =
-    List.map (fn (x, _) => x)
+      List.map (fn (x, _) => x)
+  (** ^^^^^^^^^^^^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
+
   ```
 
   After:
 
   ```sml
-  (* ok *)
   fun mapFst xs =
-    List.map (fn (x, _) => x) xs
+      List.map (fn (x, _) => x) xs
   ```
 
 - Annotate the expression (or pattern) with a non-polymorphic type.
@@ -1981,15 +1933,16 @@ To fix, try any of the following:
   Before:
 
   ```sml
-  (* error *)
-  val r = ref []
+  val r =
+      ref []
+  (** ^^^^^^ cannot bind expansive polymorphic expression *)
   ```
 
   After:
 
   ```sml
-  (* ok *)
-  val r : int list ref = ref []
+  val r : int list ref =
+      ref []
   ```
 
 ## 5029
@@ -1997,14 +1950,13 @@ To fix, try any of the following:
 There was an unused variable.
 
 ```sml
-(* warning *)
 fun ignoreArg x = 3
+(**           ^ unused value: x *)
 ```
 
 To fix, use the variable, or do not define it.
 
 ```sml
-(* ok *)
 fun useArg x = x + 3
 fun doNotBindArg _ = 3
 ```
@@ -2014,15 +1966,24 @@ fun doNotBindArg _ = 3
 A type variable bound at a `val` or `fun` declaration was used in the right-hand side of a `type` or `datatype` declaration.
 
 ```sml
-(* error *)
-fun 'a foo (x : 'a) = let type t = 'a * 'a in (x, x) : t end
+fun 'a foo (x : 'a) =
+  let
+    type t = 'a * 'a
+(**          ^^ type variable bound at `val` or `fun` not allowed here *)
+  in
+    (x, x) : t
+  end
 ```
 
 To fix, bind the type variable at the `type` or `datatype`, or remove it from the right-hand side.
 
 ```sml
-(* ok *)
-fun 'a foo (x : 'a) = let type 'b t = 'b * 'b in (x, x) : 'a t end
+fun 'a foo (x : 'a) =
+  let
+    type 'b t = 'b * 'b
+  in
+    (x, x) : 'a t
+  end
 ```
 
 ## 5031
@@ -2030,9 +1991,9 @@ fun 'a foo (x : 'a) = let type 'b t = 'b * 'b in (x, x) : 'a t end
 A `sharing type` was invalid.
 
 ```sml
-(* error *)
 signature SIG = sig
   type a = int
+(**    + cannot share type a as int *)
   type b = int
   sharing type a = b
 end
@@ -2043,8 +2004,8 @@ end
 A `where type` was invalid.
 
 ```sml
-(* error *)
 signature BAD = sig
+(**             + cannot realize type t as int *)
   type t
 end
   where type t = int
@@ -2054,8 +2015,8 @@ end
 This error also arises when using `type a = b` in signatures, because that is syntactic sugar for a usage of `where type`.
 
 ```sml
-(* error *)
 signature BAD = sig
+(**             + cannot realize type t as int *)
   type t = int
 end
   where type t = string
@@ -2066,8 +2027,8 @@ end
 The equality function `=` or the inequality function `<>` was applied to a discouraged argument.
 
 ```sml
-(* warning *)
 fun isEmpty xs = xs = []
+(**              ^^^^^^^ calling `=` or `<>` on nil *)
 ```
 
 Using `=` or `<>` may unnecessarily restrict the type to be an "equality" type. Although Millet does not track the distinction between equality and non-equality types, a conforming SML implementation will report the type of `isEmpty` above as `''a list -> bool` instead of the perhaps expected `'a list -> bool`.
@@ -2088,16 +2049,16 @@ To fix, if the error is on a `bool` literal, consult the above table to simplify
 Before:
 
 ```sml
-(* warning *)
 fun sum xs =
   if xs = [] then
+(**  ^^^^^^^ calling `=` or `<>` on nil *)
     0
   else
     hd xs + sum (tl xs)
-  end
 
 fun foo opt =
   if opt = NONE then
+(**  ^^^^^^^^^^ calling `=` or `<>` on NONE *)
     "hi"
   else
     valOf opt ^ "!"
@@ -2106,7 +2067,6 @@ fun foo opt =
 After:
 
 ```sml
-(* ok *)
 fun sum xs =
   case xs of
     [] => 0
@@ -2123,15 +2083,16 @@ If you don't need the values inside the constructors, use the convenience functi
 Before:
 
 ```sml
-(* warning *)
 fun reportList xs =
   if xs = [] then
+(**  ^^^^^^^ calling `=` or `<>` on nil *)
     "empty list"
   else
     "non empty list"
 
 fun reportOption opt =
   if opt = NONE then
+(**  ^^^^^^^^^^ calling `=` or `<>` on NONE *)
     "nothing"
   else
     "something inside"
@@ -2140,7 +2101,6 @@ fun reportOption opt =
 After:
 
 ```sml
-(* ok *)
 fun reportList xs =
   if List.null xs then
     "empty list"
@@ -2161,15 +2121,17 @@ A functor application did not use the declaration "syntax sugar" when the functo
 This example triggers the warning:
 
 ```sml
-(* warning *)
 functor Func (val x : int) = struct end
 structure S = Func (struct val x = 3 end)
+(**           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ the functor definition uses syntax sugar, but the functor application does not *)
 ```
 
 This example triggers a warning, and also other errors:
 
+<!-- @ignore -->
+<!-- declaration hole -->
+
 ```sml
-(* error *)
 signature SIG = sig type t end
 functor Func (structure Param : SIG) = struct ... end
 structure Arg : SIG = struct type t = unit end
@@ -2237,8 +2199,10 @@ structure S = Func (struct structure Param = Arg end)
 
 A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
 
+<!-- @ignore -->
+<!-- declaration hole -->
+
 ```sml
-(* error *)
 signature SIG = sig type t end
 functor Func (Param : SIG) = struct ... end
 structure Arg : SIG = struct type t = unit end
@@ -2260,10 +2224,15 @@ There was a call to `@`, the list append function, with a discouraged first argu
 <!-- TODO get this check to work with mini std basis version of @ -->
 
 ```sml
-(* warning *)
-fun overlyComplicatedId xs = [] @ xs
-fun overlyComplicatedId' xs = xs @ []
-fun overlyComplicatedCons x xs = [x] @ xs
+fun overlyComplicatedId xs =
+    [] @ xs
+(** ^^^^^^^ calling `@` with an empty list *)
+fun overlyComplicatedId' xs =
+    xs @ []
+(** ^^^^^^^ calling `@` with an empty list *)
+fun overlyComplicatedCons x xs =
+    [x] @ xs
+(** ^^^^^^^^ calling `@` with a singleton list *)
 ```
 
 These expressions can be simplified:
@@ -2281,9 +2250,9 @@ To fix, simplify the expressions.
 There was a `case` on a `bool` expression.
 
 ```sml
-(* warning *)
 fun mainCharacter old =
   case old of
+(**    + `case` on a `bool` *)
     true => "porco rosso"
   | false => "nausicaa"
 ```
@@ -2291,7 +2260,6 @@ fun mainCharacter old =
 Usually, `if` is preferred.
 
 ```sml
-(* ok *)
 fun mainCharacter old =
   if old then
     "porco rosso"
@@ -2304,8 +2272,8 @@ fun mainCharacter old =
 There was an occurrence of an unsupported SML construct.
 
 ```sml
-(* error *)
-abstype t = T with val _ = 3 end
+    abstype t = T with val _ = 3 end
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported: `abstype` declarations *)
 ```
 
 At time of writing, Millet does not support `abstype` declarations.

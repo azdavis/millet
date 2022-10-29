@@ -5,10 +5,7 @@ use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 const SML: &str = "sml";
 const MINI_STD_BASIS: &str = include_str!("mini-std-basis.sml");
 
-fn check_all<F>(contents: &str, mut f: F)
-where
-  F: FnMut(&str),
-{
+fn check_all(contents: &str) {
   let mut options = Options::empty();
   options.insert(Options::ENABLE_TABLES);
   let parser = Parser::new_ext(contents, options);
@@ -25,7 +22,8 @@ where
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
         if lang.as_ref() == SML {
           if !ignore_next {
-            f(ac.as_str());
+            let prog = &[MINI_STD_BASIS, ac.as_str()];
+            go(prog, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
           }
           ac.clear();
           inside = false;
@@ -49,23 +47,10 @@ where
 
 #[test]
 fn diagnostics() {
-  check_all(include_str!("../../../docs/diagnostics.md"), |s| {
-    let (outcome, severity) = if s.starts_with("(* ok *)") {
-      (Outcome::Pass, Severity::Error)
-    } else if s.starts_with("(* error *)") {
-      (Outcome::Fail, Severity::Error)
-    } else if s.starts_with("(* warning *)") {
-      (Outcome::Fail, Severity::Warning)
-    } else {
-      panic!("unsure how to handle a code block (not marked as ok, error, or ignore): {s}");
-    };
-    go(&[MINI_STD_BASIS, s], analysis::StdBasis::Minimal, outcome, severity);
-  });
+  check_all(include_str!("../../../docs/diagnostics.md"));
 }
 
 #[test]
 fn tokens() {
-  check_all(include_str!("../../../docs/tokens.md"), |s| {
-    go(&[MINI_STD_BASIS, s], analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
-  });
+  check_all(include_str!("../../../docs/tokens.md"));
 }
