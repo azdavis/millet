@@ -110,9 +110,6 @@ struct ErrorDisplay<'a> {
 
 impl fmt::Display for ErrorDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    if self.err.source.path.is_some() {
-      write!(f, "{}: ", self.err.maybe_rel_path(self.root).display())?;
-    }
     match &self.err.kind {
       ErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
       ErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
