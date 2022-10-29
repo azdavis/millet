@@ -140,7 +140,7 @@ Send diagnostics when file contents change before saving.
 - Type: `boolean`
 - Default: `false`
 
-**WARNING: THE FORMATTER REWRITES YOUR CODE. IT IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
+**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
 
 Naively format open SML files on save.
 
@@ -240,7 +240,7 @@ When your cursor is over the `case` or `of` keywords of a `case` expression, Mil
 
 ### Formatter
 
-**WARNING: THE FORMATTER REWRITES YOUR CODE. IT IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
+**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
 
 Millet can automatically format your open SML files. Set `millet.format.enable` to true in your settings, then reload your editor. Now, when saving an open file, Millet will format.
 

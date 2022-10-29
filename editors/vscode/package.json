@@ -76,7 +76,7 @@
         "millet.format.enable": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "**WARNING: THE FORMATTER REWRITES YOUR CODE. IT IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nNaively format open SML files on save."
+          "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nNaively format open SML files on save."
         }
       }
     },
