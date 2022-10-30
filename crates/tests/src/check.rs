@@ -143,7 +143,8 @@ impl Check {
       .map(|x| x.want.iter().filter(|(_, e)| matches!(e.kind, ExpectKind::Error)).count())
       .sum();
     // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
-    // allows us to write multiple error expectations. e.g. in the diagnostics tests.
+    // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
+    // only one expectation is actually used.
     let mut an = analysis::Analysis::new(std_basis, config::ErrorLines::One);
     let err = an
       .get_many(&input)
