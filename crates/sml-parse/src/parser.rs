@@ -162,6 +162,7 @@ pub(crate) enum ErrorKind {
   SameFixityDiffAssoc,
   Expected(Expected),
   UnnecessaryOp,
+  UnmatchedClosingDelimiter,
 }
 
 impl fmt::Display for ErrorKind {
@@ -176,6 +177,7 @@ impl fmt::Display for ErrorKind {
       }
       ErrorKind::Expected(e) => write!(f, "expected {e}"),
       ErrorKind::UnnecessaryOp => f.write_str("unnecessary `op`"),
+      ErrorKind::UnmatchedClosingDelimiter => f.write_str("unmatched closing delimiter"),
     }
   }
 }
@@ -214,6 +216,7 @@ impl Error {
       ErrorKind::SameFixityDiffAssoc => Code::n(3005),
       ErrorKind::Expected(_) => Code::n(3006),
       ErrorKind::UnnecessaryOp => Code::n(3007),
+      ErrorKind::UnmatchedClosingDelimiter => Code::n(3008),
     }
   }
 

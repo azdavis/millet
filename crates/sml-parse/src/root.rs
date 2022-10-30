@@ -3,10 +3,14 @@ use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn root(p: &mut Parser<'_>) {
   let entered = p.enter();
-  while p.peek().is_some() {
+  while let Some(tok) = p.peek() {
     if !crate::dec::dec(p, crate::util::InfixErr::Yes) {
       // avoid infinite loop
-      p.error(ErrorKind::Expected(Expected::Item));
+      let ek = match tok.kind {
+        SK::RRound | SK::RCurly | SK::RSquare | SK::EndKw => ErrorKind::UnmatchedClosingDelimiter,
+        _ => ErrorKind::Expected(Expected::Item),
+      };
+      p.error(ek);
       p.bump();
     }
   }

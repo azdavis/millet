@@ -498,6 +498,22 @@ exception E
 val x = 3
 ```
 
+## 3008
+
+There was a unmatched closing delimiter, like `)` or `end`.
+
+```sml
+val oops = 3]
+(**         ^ unmatched closing delimiter *)
+```
+
+To fix, remove the stray delimiter or match it with an opening delimiter.
+
+```sml
+val remove = 3
+val addOpening = [3]
+```
+
 ## 4001
 
 In a `fun` binding with multiple cases, the cases did not all name the same function.
