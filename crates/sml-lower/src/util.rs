@@ -61,6 +61,7 @@ pub(crate) enum ErrorKind {
   DecHole,
   NotSpec,
   AsPatLhsNotName,
+  PatNameIsNameOfContainingFun,
 }
 
 impl fmt::Display for ErrorKind {
@@ -99,6 +100,9 @@ impl fmt::Display for ErrorKind {
       ErrorKind::DecHole => f.write_str("declaration hole"),
       ErrorKind::NotSpec => f.write_str("non-specification not allowed here"),
       ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
+      ErrorKind::PatNameIsNameOfContainingFun => {
+        f.write_str("name bound in pattern matches name of a `fun` that contains the pattern")
+      }
     }
   }
 }
@@ -152,6 +156,7 @@ impl Error {
       ErrorKind::DecHole => Code::n(4022),
       ErrorKind::NotSpec => Code::n(4023),
       ErrorKind::AsPatLhsNotName => Code::n(4024),
+      ErrorKind::PatNameIsNameOfContainingFun => Code::n(4025),
     }
   }
 
@@ -163,7 +168,8 @@ impl Error {
       | ErrorKind::ComplexBoolExp
       | ErrorKind::OneArmedCase
       | ErrorKind::UnnecessarySemicolon
-      | ErrorKind::MultipleTypedPat => Severity::Warning,
+      | ErrorKind::MultipleTypedPat
+      | ErrorKind::PatNameIsNameOfContainingFun => Severity::Warning,
       _ => Severity::Error,
     }
   }
@@ -188,6 +194,7 @@ pub(crate) struct Cx {
   errors: Vec<Error>,
   arenas: sml_hir::Arenas,
   ptrs: Ptrs,
+  fun_names: Vec<str_util::Name>,
 }
 
 #[allow(clippy::unnecessary_wraps)]
@@ -256,5 +263,17 @@ impl Cx {
     let idx = self.arenas.ty.alloc(val);
     self.ptrs.insert(idx.into(), ptr);
     Some(idx)
+  }
+
+  pub(crate) fn push_fun_name(&mut self, name: str_util::Name) {
+    self.fun_names.push(name);
+  }
+
+  pub(crate) fn pop_fun_name(&mut self) {
+    self.fun_names.pop().expect("no fun name to pop");
+  }
+
+  pub(crate) fn is_name_of_cur_fun(&self, name: &str) -> bool {
+    self.fun_names.iter().any(|x| x.as_str() == name)
   }
 }

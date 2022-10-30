@@ -21,6 +21,11 @@ fn get_or(cx: &mut Cx, pat: ast::Pat) -> Option<sml_hir::OrPat> {
     ast::Pat::WildcardPat(_) => sml_hir::Pat::Wild,
     ast::Pat::SConPat(pat) => sml_hir::Pat::SCon(get_scon(cx, pat.s_con()?)?),
     ast::Pat::ConPat(pat) => {
+      let mut iter = pat.path()?.name_star_eq_dots();
+      let name = iter.next()?.name_star_eq()?.token;
+      if iter.next().is_none() && cx.is_name_of_cur_fun(name.text()) {
+        cx.err(name.text_range(), ErrorKind::PatNameIsNameOfContainingFun);
+      }
       sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(cx, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {

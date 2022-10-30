@@ -1088,6 +1088,43 @@ fun f x =
   | _ => x
 ```
 
+## 4025
+
+A name bound in a pattern in a matcher (e.g. `case`) was the same as the name of a `fun` declaration that contained the pattern.
+
+```sml
+fun foo x =
+  case x of
+    0 => 1
+  | foo => foo
+(** ^^^ name bound in pattern matches name of a `fun` that contains the pattern *)
+```
+
+This is at best a possibly confusing case of shadowing.
+
+This warning occurs in the following somewhat common scenario:
+
+<!-- @ignore many errors and warnings, including the one mentioned -->
+
+```sml
+fun foo 0 y = y
+  | foo 1 y =
+      case y of
+        0 => 1
+      | 2 => 3
+      | _ => 4
+  | foo x y = x + y
+(** ^^^ name bound in pattern matches name of a `fun` that contains the pattern *)
+```
+
+This looks like a `fun` with many cases, one of which has an inner `case`. However, most SML parsers (including Millet) attempt to parse the final `foo x y` as part of the `case` instead as part of the `fun`. This leads to confusing errors, often [3001](#3001) and [3002](#3002).
+
+To fix, try one of the following:
+
+- Rename the binding.
+- Ignore this warning in `millet.toml`.
+- Put `()` around the inner `case`.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

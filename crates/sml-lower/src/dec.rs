@@ -539,6 +539,9 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
               if body.is_none() {
                 cx.err(dec.syntax().text_range(), ErrorKind::MissingRhs);
               }
+              if let Some(name) = &name {
+                cx.push_fun_name(str_util::Name::new(name.text()));
+              }
               let body = body.and_then(|body| {
                 let ptr = SyntaxNodePtr::new(body.syntax());
                 let mut body = exp::get(cx, Some(body));
@@ -547,6 +550,9 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
                 }
                 body
               });
+              if name.is_some() {
+                cx.pop_fun_name();
+              }
               (pat, body)
             })
             .collect();
