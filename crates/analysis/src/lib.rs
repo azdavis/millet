@@ -16,7 +16,7 @@ use text_pos::{Position, Range};
 #[derive(Debug)]
 pub struct Analysis {
   std_basis: mlb_statics::StdBasis,
-  error_lines: config::ErrorLines,
+  diagnostics_options: DiagnosticsOptions,
   source_files: PathMap<mlb_statics::SourceFile>,
   syms: sml_statics::Syms,
 }
@@ -24,10 +24,10 @@ pub struct Analysis {
 impl Analysis {
   /// Returns a new `Analysis`.
   #[must_use]
-  pub fn new(std_basis: StdBasis, error_lines: config::ErrorLines) -> Self {
+  pub fn new(std_basis: StdBasis, lines: config::ErrorLines) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
-      error_lines,
+      diagnostics_options: DiagnosticsOptions { lines },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
     }
@@ -45,7 +45,7 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    source_file_diagnostics(&file, &syms, self.error_lines)
+    source_file_diagnostics(&file, &syms, self.diagnostics_options)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -73,7 +73,7 @@ impl Analysis {
         Some((path, vec![err]))
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
-        let es: Vec<_> = source_file_diagnostics(file, &self.syms, self.error_lines)
+        let es: Vec<_> = source_file_diagnostics(file, &self.syms, self.diagnostics_options)
           .into_iter()
           .filter_map(|mut e| match input.severities.get(&e.code) {
             Some(&Some(sev)) => {
@@ -254,6 +254,11 @@ fn priority(kind: SyntaxKind) -> u8 {
   }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct DiagnosticsOptions {
+  lines: config::ErrorLines,
+}
+
 /// TODO: we used to limit the max number of diagnostics per file, but now it's trickier because not
 /// all diagnostics are "errors", but it would be bad to hit the max number of diagnostics on
 /// entirely warnings and then not emit the actual diagnostics. We'd need to come up with a way to
@@ -261,7 +266,7 @@ fn priority(kind: SyntaxKind) -> u8 {
 fn source_file_diagnostics(
   file: &mlb_statics::SourceFile,
   syms: &sml_statics::Syms,
-  lines: config::ErrorLines,
+  options: DiagnosticsOptions,
 ) -> Vec<Diagnostic> {
   std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
@@ -294,7 +299,7 @@ fn source_file_diagnostics(
       let node = syntax.to_node(file.syntax.parse.root.syntax());
       Some(Diagnostic {
         range: file.syntax.pos_db.range(node.text_range())?,
-        message: err.display(syms, file.info.meta_vars(), lines).to_string(),
+        message: err.display(syms, file.info.meta_vars(), options.lines).to_string(),
         code: err.code(),
         severity: err.severity(),
       })
