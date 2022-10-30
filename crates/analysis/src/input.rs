@@ -9,6 +9,7 @@ mod util;
 use paths::{PathId, PathMap, WithPath};
 use util::{ErrorKind, ErrorSource, GroupPathKind, Result};
 
+pub(crate) use root_group::Severities;
 pub use util::Error;
 
 /// The input to analysis.
@@ -21,7 +22,7 @@ pub struct Input {
   /// The root group id.
   pub(crate) root_group_id: PathId,
   /// Severities to override.
-  pub(crate) severities: root_group::Severities,
+  pub(crate) severities: Severities,
 }
 
 impl Input {

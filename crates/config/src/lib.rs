@@ -60,7 +60,7 @@ pub struct ErrorConfig {
 }
 
 /// A severity for an error.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Severity {
   /// Ignore this error.
