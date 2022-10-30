@@ -138,7 +138,7 @@ Send diagnostics when file contents change before saving.
 #### `millet.server.diagnostics.filter`
 
 - Type: `string`
-- Default: `"earliest"`
+- Default: `"syntax"`
 
 What diagnostics to send per file.
 

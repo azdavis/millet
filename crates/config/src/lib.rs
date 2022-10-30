@@ -108,7 +108,7 @@ impl Default for Options {
     Self {
       show_token_hover: true,
       diagnostics_on_change: false,
-      diagnostics_filter: DiagnosticsFilter::Earliest,
+      diagnostics_filter: DiagnosticsFilter::Syntax,
       format: false,
     }
   }

@@ -75,7 +75,7 @@
         },
         "millet.server.diagnostics.filter": {
           "type": "string",
-          "default": "earliest",
+          "default": "syntax",
           "markdownDescription": "What diagnostics to send per file.",
           "enum": [
             "all",
