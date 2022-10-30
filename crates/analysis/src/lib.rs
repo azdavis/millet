@@ -306,8 +306,13 @@ fn source_file_diagnostics(
   ret.extend(file.syntax.lower.errors.iter().filter_map(|err| {
     diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
   }));
-  if earliest && !ret.is_empty() {
-    return ret;
+  match options.filter {
+    config::DiagnosticsFilter::Earliest | config::DiagnosticsFilter::Syntax => {
+      if !ret.is_empty() {
+        return ret;
+      }
+    }
+    config::DiagnosticsFilter::All => {}
   }
   ret.extend(file.statics_errors.iter().filter_map(|err| {
     let idx = err.idx();

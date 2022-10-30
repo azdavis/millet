@@ -88,6 +88,9 @@ pub enum DiagnosticsFilter {
   All,
   /// Only diagnostics from the earliest 'pass' that has diagnostics are sent.
   Earliest,
+  /// If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics
+  /// diagnostics.
+  Syntax,
 }
 
 /// Optional settings for the server.
