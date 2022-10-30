@@ -75,7 +75,11 @@ impl State {
       registered_for_watched_files: false,
       sender,
       req_queue: ReqQueue::default(),
-      analysis: analysis::Analysis::new(analysis::StdBasis::Full, config::ErrorLines::Many),
+      analysis: analysis::Analysis::new(
+        analysis::StdBasis::Full,
+        config::ErrorLines::Many,
+        options.diagnostics_filter,
+      ),
       file_system,
       options,
     };

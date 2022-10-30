@@ -58,7 +58,11 @@ fn run() -> usize {
       return 1;
     }
   };
-  let mut an = analysis::Analysis::new(analysis::StdBasis::Full, config::ErrorLines::One);
+  let mut an = analysis::Analysis::new(
+    analysis::StdBasis::Full,
+    config::ErrorLines::One,
+    config::DiagnosticsFilter::OnlyEarliest,
+  );
   let got = an.get_many(&inp);
   let num_errors: usize = got.iter().map(|(_, es)| es.len()).sum();
   for (path, errors) in got {

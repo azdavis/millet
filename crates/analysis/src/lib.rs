@@ -24,10 +24,14 @@ pub struct Analysis {
 impl Analysis {
   /// Returns a new `Analysis`.
   #[must_use]
-  pub fn new(std_basis: StdBasis, lines: config::ErrorLines) -> Self {
+  pub fn new(
+    std_basis: StdBasis,
+    lines: config::ErrorLines,
+    filter: config::DiagnosticsFilter,
+  ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
-      diagnostics_options: DiagnosticsOptions { lines },
+      diagnostics_options: DiagnosticsOptions { lines, filter },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
     }
@@ -257,6 +261,7 @@ fn priority(kind: SyntaxKind) -> u8 {
 #[derive(Debug, Clone, Copy)]
 struct DiagnosticsOptions {
   lines: config::ErrorLines,
+  filter: config::DiagnosticsFilter,
 }
 
 /// TODO: we used to limit the max number of diagnostics per file, but now it's trickier because not
@@ -268,43 +273,53 @@ fn source_file_diagnostics(
   syms: &sml_statics::Syms,
   options: DiagnosticsOptions,
 ) -> Vec<Diagnostic> {
-  std::iter::empty()
-    .chain(file.syntax.lex_errors.iter().filter_map(|err| {
-      Some(Diagnostic {
-        range: file.syntax.pos_db.range(err.range())?,
-        message: err.display().to_string(),
-        code: err.code(),
-        severity: err.severity(),
-      })
-    }))
-    .chain(file.syntax.parse.errors.iter().filter_map(|err| {
-      Some(Diagnostic {
-        range: file.syntax.pos_db.range(err.range())?,
-        message: err.display().to_string(),
-        code: err.code(),
-        severity: err.severity(),
-      })
-    }))
-    .chain(file.syntax.lower.errors.iter().filter_map(|err| {
-      Some(Diagnostic {
-        range: file.syntax.pos_db.range(err.range())?,
-        message: err.display().to_string(),
-        code: err.code(),
-        severity: err.severity(),
-      })
-    }))
-    .chain(file.statics_errors.iter().filter_map(|err| {
-      let idx = err.idx();
-      let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
-      let node = syntax.to_node(file.syntax.parse.root.syntax());
-      Some(Diagnostic {
-        range: file.syntax.pos_db.range(node.text_range())?,
-        message: err.display(syms, file.info.meta_vars(), options.lines).to_string(),
-        code: err.code(),
-        severity: err.severity(),
-      })
-    }))
-    .collect()
+  let mut ret = Vec::<Diagnostic>::new();
+  let only_earliest = matches!(options.filter, config::DiagnosticsFilter::OnlyEarliest);
+  ret.extend(file.syntax.lex_errors.iter().filter_map(|err| {
+    Some(Diagnostic {
+      range: file.syntax.pos_db.range(err.range())?,
+      message: err.display().to_string(),
+      code: err.code(),
+      severity: err.severity(),
+    })
+  }));
+  if only_earliest && !ret.is_empty() {
+    return ret;
+  }
+  ret.extend(file.syntax.parse.errors.iter().filter_map(|err| {
+    Some(Diagnostic {
+      range: file.syntax.pos_db.range(err.range())?,
+      message: err.display().to_string(),
+      code: err.code(),
+      severity: err.severity(),
+    })
+  }));
+  if only_earliest && !ret.is_empty() {
+    return ret;
+  }
+  ret.extend(file.syntax.lower.errors.iter().filter_map(|err| {
+    Some(Diagnostic {
+      range: file.syntax.pos_db.range(err.range())?,
+      message: err.display().to_string(),
+      code: err.code(),
+      severity: err.severity(),
+    })
+  }));
+  if only_earliest && !ret.is_empty() {
+    return ret;
+  }
+  ret.extend(file.statics_errors.iter().filter_map(|err| {
+    let idx = err.idx();
+    let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
+    let node = syntax.to_node(file.syntax.parse.root.syntax());
+    Some(Diagnostic {
+      range: file.syntax.pos_db.range(node.text_range())?,
+      message: err.display(syms, file.info.meta_vars(), options.lines).to_string(),
+      code: err.code(),
+      severity: err.severity(),
+    })
+  }));
+  ret
 }
 
 struct CaseDisplay<'a> {

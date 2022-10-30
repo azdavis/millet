@@ -73,6 +73,19 @@
           "default": false,
           "markdownDescription": "Send diagnostics when file contents change before saving."
         },
+        "millet.server.diagnostics.filter": {
+          "type": "string",
+          "default": "only-earliest",
+          "markdownDescription": "What diagnostics to send per file.",
+          "enum": [
+            "all",
+            "only-earliest"
+          ],
+          "markdownEnumDescriptions": [
+            "All available diagnostics are sent.",
+            "Only diagnostics from the earliest 'pass' that has diagnostics are sent."
+          ]
+        },
         "millet.format.enable": {
           "type": "boolean",
           "default": false,

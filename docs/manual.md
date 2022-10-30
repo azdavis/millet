@@ -135,6 +135,16 @@ Show information about tokens on hover.
 
 Send diagnostics when file contents change before saving.
 
+#### `millet.server.diagnostics.filter`
+
+- Type: `string`
+- Default: `"only-earliest"`
+
+What diagnostics to send per file.
+
+- `"all"`: All available diagnostics are sent.
+- `"only-earliest"`: Only diagnostics from the earliest 'pass' that has diagnostics are sent.
+
 #### `millet.format.enable`
 
 - Type: `boolean`

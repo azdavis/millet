@@ -80,17 +80,33 @@ pub enum ErrorLines {
   Many,
 }
 
+/// What diagnostics to send per file.
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum DiagnosticsFilter {
+  /// All available diagnostics are sent.
+  All,
+  /// Only diagnostics from the earliest 'pass' that has diagnostics are sent.
+  OnlyEarliest,
+}
+
 /// Optional settings for the server.
 #[derive(Debug, Deserialize)]
 #[allow(missing_docs)]
 pub struct Options {
   pub show_token_hover: bool,
   pub diagnostics_on_change: bool,
+  pub diagnostics_filter: DiagnosticsFilter,
   pub format: bool,
 }
 
 impl Default for Options {
   fn default() -> Self {
-    Self { show_token_hover: true, diagnostics_on_change: false, format: false }
+    Self {
+      show_token_hover: true,
+      diagnostics_on_change: false,
+      diagnostics_filter: DiagnosticsFilter::OnlyEarliest,
+      format: false,
+    }
   }
 }

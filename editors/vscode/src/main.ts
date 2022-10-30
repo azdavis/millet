@@ -29,6 +29,7 @@ export async function activate(cx: vscode.ExtensionContext) {
     initializationOptions: {
       show_token_hover: config.get("server.hover.token.enable"),
       diagnostics_on_change: config.get("server.diagnostics.onChange.enable"),
+      diagnostics_filter: config.get("server.diagnostics.filter"),
       format: config.get("format.enable"),
     },
   };
