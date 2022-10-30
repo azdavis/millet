@@ -11,6 +11,7 @@ pub const FILE_NAME: &str = "millet.toml";
 
 /// The root config.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Root {
   /// The version. Should be 1.
   pub version: u16,
@@ -52,6 +53,7 @@ pub enum PathVar {
 
 /// Configuration for an error code.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct ErrorConfig {
   /// The severity to display this error code at.
   pub severity: Option<Severity>,
