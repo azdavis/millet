@@ -87,7 +87,7 @@ pub enum DiagnosticsFilter {
   /// All available diagnostics are sent.
   All,
   /// Only diagnostics from the earliest 'pass' that has diagnostics are sent.
-  OnlyEarliest,
+  Earliest,
 }
 
 /// Optional settings for the server.
@@ -105,7 +105,7 @@ impl Default for Options {
     Self {
       show_token_hover: true,
       diagnostics_on_change: false,
-      diagnostics_filter: DiagnosticsFilter::OnlyEarliest,
+      diagnostics_filter: DiagnosticsFilter::Earliest,
       format: false,
     }
   }

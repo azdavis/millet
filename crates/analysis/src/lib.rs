@@ -290,23 +290,23 @@ fn source_file_diagnostics(
   options: DiagnosticsOptions,
 ) -> Vec<Diagnostic> {
   let mut ret = Vec::<Diagnostic>::new();
-  let only_earliest = matches!(options.filter, config::DiagnosticsFilter::OnlyEarliest);
+  let earliest = matches!(options.filter, config::DiagnosticsFilter::Earliest);
   ret.extend(file.syntax.lex_errors.iter().filter_map(|err| {
     diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
   }));
-  if only_earliest && !ret.is_empty() {
+  if earliest && !ret.is_empty() {
     return ret;
   }
   ret.extend(file.syntax.parse.errors.iter().filter_map(|err| {
     diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
   }));
-  if only_earliest && !ret.is_empty() {
+  if earliest && !ret.is_empty() {
     return ret;
   }
   ret.extend(file.syntax.lower.errors.iter().filter_map(|err| {
     diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
   }));
-  if only_earliest && !ret.is_empty() {
+  if earliest && !ret.is_empty() {
     return ret;
   }
   ret.extend(file.statics_errors.iter().filter_map(|err| {
