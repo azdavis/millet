@@ -300,16 +300,15 @@ fn source_file_diagnostics(
       diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
     }))
     .collect();
-  if matches!(options.filter, config::DiagnosticsFilter::Syntax) && !ret.is_empty() {
-    return ret;
+  if matches!(options.filter, config::DiagnosticsFilter::All) || ret.is_empty() {
+    ret.extend(file.statics_errors.iter().filter_map(|err| {
+      let idx = err.idx();
+      let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
+      let node = syntax.to_node(file.syntax.parse.root.syntax());
+      let msg = err.display(syms, file.info.meta_vars(), options.lines);
+      diagnostic(file, severities, node.text_range(), msg, err.code(), err.severity())
+    }));
   }
-  ret.extend(file.statics_errors.iter().filter_map(|err| {
-    let idx = err.idx();
-    let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
-    let node = syntax.to_node(file.syntax.parse.root.syntax());
-    let msg = err.display(syms, file.info.meta_vars(), options.lines);
-    diagnostic(file, severities, node.text_range(), msg, err.code(), err.severity())
-  }));
   ret
 }
 
