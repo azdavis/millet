@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.11
 
 - Add a specific diagnostic for unmatched closing delimiters.
 - Do not report statics errors if there are syntax errors by default.
