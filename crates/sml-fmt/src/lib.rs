@@ -15,7 +15,7 @@ use sml_syntax::ast::{self, AstNode as _};
 use sml_syntax::rowan::TextRange;
 use sml_syntax::SyntaxKind;
 
-/// Returns either the
+/// Returns either the formatted syntax tree as a string or an error.
 ///
 /// # Errors
 ///
