@@ -13,6 +13,12 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Shorten range for errors on a `case` to just the `case ... of`.
+- Improve `fn` and `val` formatting.
+- Warn when comments prevent formatting.
+
 ## v0.5.11
 
 - Add a specific diagnostic for unmatched closing delimiters.
