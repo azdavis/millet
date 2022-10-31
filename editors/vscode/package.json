@@ -79,12 +79,10 @@
           "markdownDescription": "What diagnostics to send per file.",
           "enum": [
             "all",
-            "earliest",
             "syntax"
           ],
           "markdownEnumDescriptions": [
             "All available diagnostics are sent.",
-            "Only diagnostics from the earliest 'pass' that has diagnostics are sent.",
             "If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics diagnostics."
           ]
         },
