@@ -142,7 +142,7 @@ Send diagnostics when file contents change before saving.
 
 What diagnostics to send per file.
 
-- `"all"`: All available diagnostics are sent.
+- `"none"`: No filter, i.e. available diagnostics are sent.
 - `"syntax"`: If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics diagnostics.
 
 #### `millet.format.enable`

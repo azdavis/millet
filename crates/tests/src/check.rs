@@ -146,7 +146,7 @@ impl Check {
     // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
     // only one expectation is actually used.
     let mut an =
-      analysis::Analysis::new(std_basis, config::ErrorLines::One, config::DiagnosticsFilter::All);
+      analysis::Analysis::new(std_basis, config::ErrorLines::One, config::DiagnosticsFilter::None);
     let err = an
       .get_many(&input)
       .into_iter()

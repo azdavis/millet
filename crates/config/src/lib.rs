@@ -84,8 +84,8 @@ pub enum ErrorLines {
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DiagnosticsFilter {
-  /// All available diagnostics are sent.
-  All,
+  /// No filter, i.e. available diagnostics are sent.
+  None,
   /// If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics
   /// diagnostics.
   Syntax,

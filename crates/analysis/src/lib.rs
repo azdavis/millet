@@ -300,7 +300,7 @@ fn source_file_diagnostics(
       diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
     }))
     .collect();
-  if matches!(options.filter, config::DiagnosticsFilter::All) || ret.is_empty() {
+  if matches!(options.filter, config::DiagnosticsFilter::None) || ret.is_empty() {
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
