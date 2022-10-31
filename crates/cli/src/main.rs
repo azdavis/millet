@@ -62,6 +62,7 @@ fn run() -> usize {
     analysis::StdBasis::Full,
     config::ErrorLines::One,
     config::DiagnosticsFilter::Syntax,
+    false,
   );
   let got = an.get_many(&inp);
   let num_errors: usize = got.iter().map(|(_, es)| es.len()).sum();

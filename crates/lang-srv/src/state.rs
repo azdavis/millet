@@ -77,6 +77,7 @@ impl State {
         analysis::StdBasis::Full,
         config::ErrorLines::Many,
         options.diagnostics_filter,
+        options.format,
       ),
       file_system,
       options,

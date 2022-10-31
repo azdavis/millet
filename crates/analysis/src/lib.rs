@@ -28,10 +28,11 @@ impl Analysis {
     std_basis: StdBasis,
     lines: config::ErrorLines,
     filter: config::DiagnosticsFilter,
+    format: bool,
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
-      diagnostics_options: DiagnosticsOptions { lines, filter },
+      diagnostics_options: DiagnosticsOptions { lines, filter, format },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
     }
@@ -253,6 +254,7 @@ fn priority(kind: SyntaxKind) -> u8 {
 struct DiagnosticsOptions {
   lines: config::ErrorLines,
   filter: config::DiagnosticsFilter,
+  format: bool,
 }
 
 fn diagnostic<M>(
@@ -314,6 +316,20 @@ fn source_file_diagnostics(
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
       diagnostic(file, severities, range, msg, err.code(), err.severity())
     }));
+    if options.format {
+      if let Err(sml_fmt::Error::Comments(ranges)) = sml_fmt::check(&file.syntax.parse.root) {
+        ret.extend(ranges.into_iter().filter_map(|range| {
+          diagnostic(
+            file,
+            severities,
+            range,
+            "comment prevents formatting",
+            diagnostic_util::Code::n(6001),
+            diagnostic_util::Severity::Warning,
+          )
+        }));
+      }
+    }
   }
   ret
 }

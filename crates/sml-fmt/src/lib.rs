@@ -17,8 +17,27 @@ use sml_syntax::SyntaxKind;
 ///
 /// If there was a syntax error or comments in an un-format-able position.
 pub fn get(root: &ast::Root) -> Result<String, Error> {
+  match go(Mode::Write(String::new()), root)? {
+    Mode::Write(s) => Ok(s),
+    Mode::Check => unreachable!("changed mode to Check"),
+  }
+}
+
+/// Returns `Ok(())` if the syntax tree could be formatted.
+///
+/// # Errors
+///
+/// If there was a syntax error or comments in an un-format-able position.
+pub fn check(root: &ast::Root) -> Result<(), Error> {
+  match go(Mode::Check, root)? {
+    Mode::Write(_) => unreachable!("changed mode to Write"),
+    Mode::Check => Ok(()),
+  }
+}
+
+fn go(mode: Mode, root: &ast::Root) -> Result<Mode, Error> {
   let mut st = St {
-    buf: String::new(),
+    mode,
     comment_ranges: root
       .syntax()
       .descendants_with_tokens()
@@ -31,7 +50,7 @@ pub fn get(root: &ast::Root) -> Result<String, Error> {
   match root.dec().and_then(|d| get_dec(&mut st, Cfg::default(), d)) {
     Some(()) => {
       if st.comment_ranges.is_empty() {
-        Ok(st.buf)
+        Ok(st.mode)
       } else {
         Err(Error::Comments(st.comment_ranges))
       }
@@ -50,14 +69,23 @@ pub enum Error {
 }
 
 #[derive(Debug)]
+enum Mode {
+  Write(String),
+  Check,
+}
+
+#[derive(Debug)]
 struct St {
-  buf: String,
+  mode: Mode,
   comment_ranges: FxHashSet<TextRange>,
 }
 
 impl St {
   fn write(&mut self, s: &str) {
-    self.buf.push_str(s);
+    match &mut self.mode {
+      Mode::Write(buf) => buf.push_str(s),
+      Mode::Check => {}
+    }
   }
 }
 

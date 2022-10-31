@@ -2320,4 +2320,13 @@ There was an occurrence of an unsupported SML construct.
 
 At time of writing, Millet does not support `abstype` declarations.
 
+## 6001
+
+A comment prevented automatic formatting of a SML file.
+
+To fix, try one of the following:
+
+- Move, merge, or remove the comment.
+- Disable automatic formatting.
+
 [config]: /docs/config.md
