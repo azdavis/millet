@@ -289,16 +289,17 @@ fn source_file_diagnostics(
   severities: &input::Severities,
   options: DiagnosticsOptions,
 ) -> Vec<Diagnostic> {
-  let mut ret = Vec::<Diagnostic>::new();
-  ret.extend(file.syntax.lex_errors.iter().filter_map(|err| {
-    diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
-  }));
-  ret.extend(file.syntax.parse.errors.iter().filter_map(|err| {
-    diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
-  }));
-  ret.extend(file.syntax.lower.errors.iter().filter_map(|err| {
-    diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
-  }));
+  let mut ret: Vec<_> = std::iter::empty()
+    .chain(file.syntax.lex_errors.iter().filter_map(|err| {
+      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
+    }))
+    .chain(file.syntax.parse.errors.iter().filter_map(|err| {
+      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
+    }))
+    .chain(file.syntax.lower.errors.iter().filter_map(|err| {
+      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
+    }))
+    .collect();
   if matches!(options.filter, config::DiagnosticsFilter::Syntax) && !ret.is_empty() {
     return ret;
   }
