@@ -497,17 +497,21 @@ fn ty_var_seq(st: &mut St, tvs: Option<ast::TyVarSeq>) -> Res {
   Some(())
 }
 
-fn get_body_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
-  let needs_newline = matches!(
-    exp,
+fn body_exp_needs_newline(exp: &ast::Exp) -> bool {
+  match exp {
     ast::Exp::SeqExp(_)
-      | ast::Exp::LetExp(_)
-      | ast::Exp::HandleExp(_)
-      | ast::Exp::IfExp(_)
-      | ast::Exp::WhileExp(_)
-      | ast::Exp::CaseExp(_)
-  );
-  if needs_newline {
+    | ast::Exp::LetExp(_)
+    | ast::Exp::HandleExp(_)
+    | ast::Exp::IfExp(_)
+    | ast::Exp::WhileExp(_)
+    | ast::Exp::CaseExp(_) => true,
+    ast::Exp::ParenExp(exp) => exp.exp().as_ref().map_or(false, body_exp_needs_newline),
+    _ => false,
+  }
+}
+
+fn get_body_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
+  if body_exp_needs_newline(&exp) {
     st.write("\n");
     let new_cfg = cfg.indented();
     new_cfg.output_indent(st);
