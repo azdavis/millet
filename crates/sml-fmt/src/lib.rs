@@ -1,11 +1,7 @@
 //! Format SML files.
 //!
-//! Very WIP.
-//!
-//! - Doesn't handle comments.
+//! - Only handles certain comments.
 //! - No attempt is made to restrict lines to a reasonable length.
-//!
-//! Basically: don't use this.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
