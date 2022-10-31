@@ -1121,9 +1121,8 @@ This looks like a `fun` with many cases, one of which has an inner `case`. Howev
 
 To fix, try one of the following:
 
-- Rename the binding.
-- Ignore this warning in `millet.toml`.
-- Put `()` around the inner `case`.
+- Put `()` around the inner matcher (i.e. `case`, `fn`, or `handle`).
+- Rename the binding to avoid shadowing.
 
 ## 4999
 

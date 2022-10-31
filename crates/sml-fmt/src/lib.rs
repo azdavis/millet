@@ -11,7 +11,7 @@ use sml_syntax::ast::{self, AstNode as _};
 use sml_syntax::rowan::TextRange;
 use sml_syntax::SyntaxKind;
 
-/// Returns either the formatted syntax tree as a string or an error.
+/// Returns the formatted syntax tree.
 ///
 /// # Errors
 ///
@@ -49,7 +49,7 @@ pub enum Error {
   Comments(FxHashSet<TextRange>),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct St {
   buf: String,
   comment_ranges: FxHashSet<TextRange>,
