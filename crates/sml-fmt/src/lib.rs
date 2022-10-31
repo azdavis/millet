@@ -59,6 +59,12 @@ struct St {
   comment_ranges: FxHashSet<TextRange>,
 }
 
+impl St {
+  fn write(&mut self, s: &str) {
+    self.buf.push_str(s);
+  }
+}
+
 type Res = Option<()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -84,7 +90,7 @@ impl Cfg {
 
   fn output_indent(&self, st: &mut St) {
     for _ in 0..self.indent {
-      st.buf.push_str("  ");
+      st.write("  ");
     }
   }
 }
@@ -95,16 +101,16 @@ fn get_dec(st: &mut St, cfg: Cfg, dec: ast::Dec) -> Res {
     sep_with_lines(st, cfg, "", dwt.dec_in_seqs(), |st, dec_in_seq| {
       get_dec_one(st, cfg.extra_blank(false), dec_in_seq.dec_one()?)?;
       if dec_in_seq.semicolon().is_some() {
-        st.buf.push(';');
+        st.write(";");
       }
       Some(())
     })?;
     sep_with_lines(st, cfg, "", dwt.sharing_tails(), |st, sharing| {
-      st.buf.push_str("sharing type ");
+      st.write("sharing type ");
       sep(st, " = ", sharing.path_eqs(), |st, p| path(st, p.path()?))
     })?;
     if dwt_in_seq.semicolon().is_some() {
-      st.buf.push(';');
+      st.write(";");
     }
     Some(())
   })
@@ -113,55 +119,55 @@ fn get_dec(st: &mut St, cfg: Cfg, dec: ast::Dec) -> Res {
 fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
   if let Some(tok) = sml_comment::comment_above(dec.syntax()) {
     st.comment_ranges.remove(&tok.text_range());
-    st.buf.push_str(tok.text().trim());
-    st.buf.push('\n');
+    st.write(tok.text().trim());
+    st.write("\n");
     cfg.output_indent(st);
   }
   match dec {
-    ast::DecOne::HoleDec(_) => st.buf.push_str("..."),
+    ast::DecOne::HoleDec(_) => st.write("..."),
     ast::DecOne::ValDec(dec) => {
-      st.buf.push_str("val ");
+      st.write("val ");
       sep_with_lines(st, cfg, "and ", dec.val_binds(), |st, val_bind| {
         get_pat(st, val_bind.pat()?)?;
         if let Some(eq_exp) = val_bind.eq_exp() {
-          st.buf.push_str(" =");
+          st.write(" =");
           get_body_exp(st, cfg, eq_exp.exp()?)?;
         }
         Some(())
       })?;
     }
     ast::DecOne::FunDec(dec) => {
-      st.buf.push_str("fun ");
+      st.write("fun ");
       ty_var_seq(st, dec.ty_var_seq())?;
       sep_with_lines(st, cfg, "and ", dec.fun_binds(), |st, fun_bind| {
         sep_with_lines(st, cfg.indented(), "| ", fun_bind.fun_bind_cases(), |st, fun_bind_case| {
           match fun_bind_case.fun_bind_case_head()? {
             ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => {
               if head.op_kw().is_some() {
-                st.buf.push_str("op ");
+                st.write("op ");
               }
-              st.buf.push_str(head.name_star_eq()?.token.text());
+              st.write(head.name_star_eq()?.token.text());
             }
             ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
               let parens = head.l_round().is_some();
               if parens {
-                st.buf.push('(');
+                st.write("(");
               }
               get_pat(st, head.lhs()?)?;
-              st.buf.push(' ');
-              st.buf.push_str(head.name_star_eq()?.token.text());
-              st.buf.push(' ');
+              st.write(" ");
+              st.write(head.name_star_eq()?.token.text());
+              st.write(" ");
               get_pat(st, head.lhs()?)?;
               if parens {
-                st.buf.push(')');
+                st.write(")");
               }
             }
           }
-          st.buf.push(' ');
+          st.write(" ");
           sep(st, " ", fun_bind_case.pats(), get_pat)?;
           ty_annotation(st, fun_bind_case.ty_annotation())?;
           if let Some(eq_exp) = fun_bind_case.eq_exp() {
-            st.buf.push_str(" =");
+            st.write(" =");
             get_body_exp(st, cfg, eq_exp.exp()?)?;
           }
           Some(())
@@ -169,46 +175,46 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       })?;
     }
     ast::DecOne::TyDec(dec) => {
-      st.buf.push_str("type ");
+      st.write("type ");
       ty_binds(st, cfg, dec.ty_binds())?;
     }
     ast::DecOne::DatDec(dec) => {
-      st.buf.push_str("datatype ");
+      st.write("datatype ");
       dat_binds(st, cfg, dec.dat_binds())?;
       if let Some(withtype) = dec.with_type() {
-        st.buf.push_str(" withtype ");
+        st.write(" withtype ");
         ty_binds(st, cfg, withtype.ty_binds())?;
       }
     }
     ast::DecOne::DatCopyDec(dec) => {
-      st.buf.push_str("datatype ");
-      st.buf.push_str(dec.name()?.text());
-      st.buf.push_str(" = datatype ");
+      st.write("datatype ");
+      st.write(dec.name()?.text());
+      st.write(" = datatype ");
       path(st, dec.path()?)?;
     }
     ast::DecOne::AbstypeDec(dec) => {
-      st.buf.push_str("abstype ");
+      st.write("abstype ");
       dat_binds(st, cfg, dec.dat_binds())?;
       if let Some(withtype) = dec.with_type() {
-        st.buf.push_str(" withtype ");
+        st.write(" withtype ");
         ty_binds(st, cfg, withtype.ty_binds())?;
       }
-      st.buf.push_str(" with ");
+      st.write(" with ");
       get_dec(st, cfg, dec.dec()?)?;
-      st.buf.push_str(" end");
+      st.write(" end");
     }
     ast::DecOne::ExDec(dec) => {
-      st.buf.push_str("exception ");
+      st.write("exception ");
       sep_with_lines(st, cfg, "and ", dec.ex_binds(), |st, ex_bind| {
-        st.buf.push_str(ex_bind.name_star_eq()?.token.text());
+        st.write(ex_bind.name_star_eq()?.token.text());
         match ex_bind.ex_bind_inner() {
           Some(inner) => match inner {
             ast::ExBindInner::OfTy(of_ty) => {
-              st.buf.push_str(" of ");
+              st.write(" of ");
               get_ty(st, of_ty.ty()?)
             }
             ast::ExBindInner::EqPath(eq_path) => {
-              st.buf.push_str(" = ");
+              st.write(" = ");
               path(st, eq_path.path()?)
             }
           },
@@ -217,31 +223,31 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       })?;
     }
     ast::DecOne::OpenDec(dec) => {
-      st.buf.push_str("open ");
+      st.write("open ");
       sep(st, " ", dec.paths(), path)?;
     }
     ast::DecOne::InfixDec(dec) => {
-      st.buf.push_str("infix ");
+      st.write("infix ");
       if let Some(int_lit) = dec.int_lit() {
-        st.buf.push_str(int_lit.text());
-        st.buf.push(' ');
+        st.write(int_lit.text());
+        st.write(" ");
       }
       names_space(st, dec.name_star_eqs())?;
     }
     ast::DecOne::InfixrDec(dec) => {
-      st.buf.push_str("infixr ");
+      st.write("infixr ");
       if let Some(int_lit) = dec.int_lit() {
-        st.buf.push_str(int_lit.text());
-        st.buf.push(' ');
+        st.write(int_lit.text());
+        st.write(" ");
       }
       names_space(st, dec.name_star_eqs())?;
     }
     ast::DecOne::NonfixDec(dec) => {
-      st.buf.push_str("nonfix ");
+      st.write("nonfix ");
       names_space(st, dec.name_star_eqs())?;
     }
     ast::DecOne::DoDec(dec) => {
-      st.buf.push_str("do ");
+      st.write("do ");
       get_exp(st, cfg, dec.exp()?)?;
     }
     ast::DecOne::LocalDec(dec) => in_end(
@@ -252,57 +258,57 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       |st, cfg| get_dec(st, cfg, dec.in_dec()?),
     )?,
     ast::DecOne::StructureDec(dec) => {
-      st.buf.push_str("structure ");
+      st.write("structure ");
       sep_with_lines(st, cfg, "and ", dec.str_binds(), |st, str_bind| {
-        st.buf.push_str(str_bind.name()?.text());
+        st.write(str_bind.name()?.text());
         if let Some(tail) = str_bind.ascription_tail() {
           ascription_tail(st, cfg, tail)?;
         }
         if let Some(eq_str_exp) = str_bind.eq_str_exp() {
-          st.buf.push_str(" = ");
+          st.write(" = ");
           get_str_exp(st, cfg, eq_str_exp.str_exp()?)?;
         }
         Some(())
       })?;
     }
     ast::DecOne::SignatureDec(dec) => {
-      st.buf.push_str("signature ");
+      st.write("signature ");
       sep_with_lines(st, cfg, "and ", dec.sig_binds(), |st, sig_bind| {
-        st.buf.push_str(sig_bind.name()?.text());
-        st.buf.push_str(" = ");
+        st.write(sig_bind.name()?.text());
+        st.write(" = ");
         get_sig_exp(st, cfg, sig_bind.sig_exp()?)
       })?;
     }
     ast::DecOne::FunctorDec(dec) => {
-      st.buf.push_str("functor ");
+      st.write("functor ");
       sep_with_lines(st, cfg, "and ", dec.functor_binds(), |st, functor_bind| {
-        st.buf.push_str(functor_bind.functor_name()?.text());
-        st.buf.push_str(" (");
+        st.write(functor_bind.functor_name()?.text());
+        st.write(" (");
         match functor_bind.functor_arg()? {
           ast::FunctorArg::FunctorArgNameSigExp(arg) => {
-            st.buf.push_str(arg.name()?.text());
-            st.buf.push_str(" : ");
+            st.write(arg.name()?.text());
+            st.write(" : ");
             get_sig_exp(st, cfg, arg.sig_exp()?)?;
           }
           ast::FunctorArg::Dec(dec) => {
-            st.buf.push('\n');
+            st.write("\n");
             let new_cfg = cfg.indented();
             new_cfg.output_indent(st);
             get_dec(st, new_cfg, dec)?;
-            st.buf.push('\n');
+            st.write("\n");
           }
         }
-        st.buf.push(')');
+        st.write(")");
         if let Some(tail) = functor_bind.ascription_tail() {
           ascription_tail(st, cfg, tail)?;
         }
-        st.buf.push_str(" = ");
+        st.write(" = ");
         get_str_exp(st, cfg, functor_bind.body()?)
       })?;
     }
     ast::DecOne::ExpDec(dec) => get_exp(st, cfg, dec.exp()?)?,
     ast::DecOne::IncludeDec(dec) => {
-      st.buf.push_str("include ");
+      st.write("include ");
       sep(st, " ", dec.sig_exps(), |st, sig_exp| get_sig_exp(st, cfg, sig_exp))?;
     }
   }
@@ -314,7 +320,7 @@ where
   I: Iterator<Item = ast::NameStarEq>,
 {
   sep(st, " ", iter, |st, n| {
-    st.buf.push_str(n.token.text());
+    st.write(n.token.text());
     Some(())
   })
 }
@@ -325,45 +331,45 @@ where
 {
   sep_with_lines(st, cfg, "and ", iter, |st, dat_bind| {
     ty_var_seq(st, dat_bind.ty_var_seq())?;
-    st.buf.push_str(dat_bind.name()?.text());
+    st.write(dat_bind.name()?.text());
     let eq_con_binds = dat_bind.eq_con_binds()?;
     if eq_con_binds.con_binds().count() > 1 {
-      st.buf.push_str(" =\n");
+      st.write(" =\n");
       cfg.indented().output_indent(st);
       sep_with_lines(st, cfg, "| ", eq_con_binds.con_binds(), con_bind)
     } else {
-      st.buf.push_str(" = ");
+      st.write(" = ");
       sep(st, " | ", eq_con_binds.con_binds(), con_bind)
     }
   })
 }
 
 fn con_bind(st: &mut St, con_bind: ast::ConBind) -> Res {
-  st.buf.push_str(con_bind.name_star_eq()?.token.text());
+  st.write(con_bind.name_star_eq()?.token.text());
   if let Some(of_ty) = con_bind.of_ty() {
-    st.buf.push_str(" of ");
+    st.write(" of ");
     get_ty(st, of_ty.ty()?)?;
   }
   Some(())
 }
 
 fn ascription_tail(st: &mut St, cfg: Cfg, tail: ast::AscriptionTail) -> Res {
-  st.buf.push(' ');
-  st.buf.push_str(tail.ascription()?.token.text());
-  st.buf.push(' ');
+  st.write(" ");
+  st.write(tail.ascription()?.token.text());
+  st.write(" ");
   get_sig_exp(st, cfg, tail.sig_exp()?)
 }
 
 fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
   match str_exp {
     ast::StrExp::StructStrExp(exp) => {
-      st.buf.push_str("struct\n");
+      st.write("struct\n");
       let new_cfg = cfg.indented().extra_blank(true);
       new_cfg.output_indent(st);
       get_dec(st, new_cfg, exp.dec()?)?;
-      st.buf.push('\n');
+      st.write("\n");
       cfg.output_indent(st);
-      st.buf.push_str("end");
+      st.write("end");
     }
     ast::StrExp::PathStrExp(exp) => path(st, exp.path()?)?,
     ast::StrExp::AscriptionStrExp(exp) => {
@@ -371,13 +377,13 @@ fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
       ascription_tail(st, cfg, exp.ascription_tail()?)?;
     }
     ast::StrExp::AppStrExp(exp) => {
-      st.buf.push_str(exp.name()?.text());
-      st.buf.push_str(" (");
+      st.write(exp.name()?.text());
+      st.write(" (");
       match exp.app_str_exp_arg()? {
         ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(st, cfg, arg.str_exp()?)?,
         ast::AppStrExpArg::Dec(arg) => get_dec(st, cfg, arg)?,
       }
-      st.buf.push(')');
+      st.write(")");
     }
     ast::StrExp::LetStrExp(exp) => in_end(
       st,
@@ -393,28 +399,28 @@ fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
 fn get_sig_exp(st: &mut St, cfg: Cfg, sig_exp: ast::SigExp) -> Res {
   match sig_exp {
     ast::SigExp::SigSigExp(exp) => {
-      st.buf.push_str("sig\n");
+      st.write("sig\n");
       let new_cfg = cfg.indented();
       new_cfg.output_indent(st);
       get_dec(st, new_cfg, exp.dec()?)?;
-      st.buf.push('\n');
+      st.write("\n");
       cfg.output_indent(st);
-      st.buf.push_str("end");
+      st.write("end");
     }
-    ast::SigExp::NameSigExp(exp) => st.buf.push_str(exp.name()?.text()),
+    ast::SigExp::NameSigExp(exp) => st.write(exp.name()?.text()),
     ast::SigExp::WhereTypeSigExp(exp) => {
       get_sig_exp(st, cfg, exp.sig_exp()?)?;
-      st.buf.push_str(" where type ");
+      st.write(" where type ");
       ty_var_seq(st, exp.ty_var_seq())?;
       path(st, exp.path()?)?;
-      st.buf.push_str(" = ");
+      st.write(" = ");
       get_ty(st, exp.ty()?)?;
     }
     ast::SigExp::WhereSigExp(exp) => {
       get_sig_exp(st, cfg, exp.sig_exp()?)?;
-      st.buf.push_str(" where ");
+      st.write(" where ");
       path(st, exp.lhs()?)?;
-      st.buf.push_str(" = ");
+      st.write(" = ");
       path(st, exp.rhs()?)?;
     }
   }
@@ -424,7 +430,7 @@ fn get_sig_exp(st: &mut St, cfg: Cfg, sig_exp: ast::SigExp) -> Res {
 fn ty_annotation(st: &mut St, ty_ann: Option<ast::TyAnnotation>) -> Res {
   match ty_ann {
     Some(ty_ann) => {
-      st.buf.push_str(" : ");
+      st.write(" : ");
       get_ty(st, ty_ann.ty()?)
     }
     None => Some(()),
@@ -437,9 +443,9 @@ where
 {
   sep_with_lines(st, cfg, "and ", iter, |st, ty_bind| {
     ty_var_seq(st, ty_bind.ty_var_seq())?;
-    st.buf.push_str(ty_bind.name()?.text());
+    st.write(ty_bind.name()?.text());
     if let Some(eq_ty) = ty_bind.eq_ty() {
-      st.buf.push_str(" = ");
+      st.write(" = ");
       get_ty(st, eq_ty.ty()?)?;
     }
     Some(())
@@ -454,16 +460,16 @@ fn ty_var_seq(st: &mut St, tvs: Option<ast::TyVarSeq>) -> Res {
   };
   let parens = tvs.l_round().is_some();
   if parens {
-    st.buf.push('(');
+    st.write("(");
   }
   sep(st, ", ", tvs.ty_var_args(), |st, tv| {
-    st.buf.push_str(tv.ty_var()?.text());
+    st.write(tv.ty_var()?.text());
     Some(())
   })?;
   if parens {
-    st.buf.push(')');
+    st.write(")");
   }
-  st.buf.push(' ');
+  st.write(" ");
   Some(())
 }
 
@@ -478,73 +484,73 @@ fn get_body_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       | ast::Exp::CaseExp(_)
   );
   if needs_newline {
-    st.buf.push('\n');
+    st.write("\n");
     let new_cfg = cfg.indented();
     new_cfg.output_indent(st);
     get_exp(st, new_cfg, exp)
   } else {
-    st.buf.push(' ');
+    st.write(" ");
     get_exp(st, cfg, exp)
   }
 }
 
 fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
   match exp {
-    ast::Exp::HoleExp(_) => st.buf.push_str("..."),
-    ast::Exp::WildcardExp(_) => st.buf.push('_'),
-    ast::Exp::OpAndalsoExp(_) => st.buf.push_str("op andalso"),
-    ast::Exp::OpOrelseExp(_) => st.buf.push_str("op orelse"),
-    ast::Exp::SConExp(exp) => st.buf.push_str(exp.s_con()?.token.text()),
+    ast::Exp::HoleExp(_) => st.write("..."),
+    ast::Exp::WildcardExp(_) => st.write("_"),
+    ast::Exp::OpAndalsoExp(_) => st.write("op andalso"),
+    ast::Exp::OpOrelseExp(_) => st.write("op orelse"),
+    ast::Exp::SConExp(exp) => st.write(exp.s_con()?.token.text()),
     ast::Exp::PathExp(exp) => {
       if exp.op_kw().is_some() {
-        st.buf.push_str("op ");
+        st.write("op ");
       }
       path(st, exp.path()?)?;
     }
     ast::Exp::RecordExp(exp) => {
-      st.buf.push('{');
+      st.write("{");
       sep(st, ", ", exp.exp_rows(), |st, row| {
-        st.buf.push_str(row.lab()?.token.text());
+        st.write(row.lab()?.token.text());
         if let Some(eq_exp) = row.eq_exp() {
-          st.buf.push_str(" = ");
+          st.write(" = ");
           get_exp(st, cfg, eq_exp.exp()?)?;
         }
         Some(())
       })?;
-      st.buf.push('}');
+      st.write("}");
     }
     ast::Exp::SelectorExp(exp) => {
-      st.buf.push('#');
-      st.buf.push_str(exp.lab()?.token.text());
+      st.write("#");
+      st.write(exp.lab()?.token.text());
     }
     ast::Exp::ParenExp(exp) => {
-      st.buf.push('(');
+      st.write("(");
       get_exp(st, cfg, exp.exp()?)?;
-      st.buf.push(')');
+      st.write(")");
     }
     ast::Exp::TupleExp(exp) => {
-      st.buf.push('(');
+      st.write("(");
       exp_args(st, cfg, exp.exp_args())?;
-      st.buf.push(')');
+      st.write(")");
     }
     ast::Exp::ListExp(exp) => {
-      st.buf.push('[');
+      st.write("[");
       exp_args(st, cfg, exp.exp_args())?;
-      st.buf.push(']');
+      st.write("]");
     }
     ast::Exp::VectorExp(exp) => {
-      st.buf.push_str("#[");
+      st.write("#[");
       exp_args(st, cfg, exp.list_exp()?.exp_args())?;
-      st.buf.push(']');
+      st.write("]");
     }
     ast::Exp::SeqExp(exp) => {
-      st.buf.push_str("(\n");
+      st.write("(\n");
       let new_cfg = cfg.indented();
       new_cfg.output_indent(st);
       exp_semi_seq(st, new_cfg, exp.exps_in_seq())?;
-      st.buf.push('\n');
+      st.write("\n");
       cfg.output_indent(st);
-      st.buf.push(')');
+      st.write(")");
     }
     ast::Exp::LetExp(exp) => in_end(
       st,
@@ -573,75 +579,75 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       };
       get_exp(st, cfg, func)?;
       if !func_is_bang || arg_is_symbolic {
-        st.buf.push(' ');
+        st.write(" ");
       }
       get_exp(st, cfg, arg)?;
     }
     ast::Exp::InfixExp(exp) => {
       get_exp(st, cfg, exp.lhs()?)?;
-      st.buf.push(' ');
-      st.buf.push_str(exp.name_star_eq()?.token.text());
-      st.buf.push(' ');
+      st.write(" ");
+      st.write(exp.name_star_eq()?.token.text());
+      st.write(" ");
       get_exp(st, cfg, exp.rhs()?)?;
     }
     ast::Exp::TypedExp(exp) => {
       get_exp(st, cfg, exp.exp()?)?;
-      st.buf.push_str(" : ");
+      st.write(" : ");
       get_ty(st, exp.ty()?)?;
     }
     ast::Exp::AndalsoExp(exp) => {
       get_exp(st, cfg, exp.lhs()?)?;
-      st.buf.push_str(" andalso ");
+      st.write(" andalso ");
       get_exp(st, cfg, exp.rhs()?)?;
     }
     ast::Exp::OrelseExp(exp) => {
       get_exp(st, cfg, exp.lhs()?)?;
-      st.buf.push_str(" orelse ");
+      st.write(" orelse ");
       get_exp(st, cfg, exp.rhs()?)?;
     }
     ast::Exp::HandleExp(exp) => {
       get_exp(st, cfg, exp.exp()?)?;
-      st.buf.push_str(" handle\n");
+      st.write(" handle\n");
       get_matcher_across_lines(st, cfg, exp.matcher()?)?;
     }
     ast::Exp::RaiseExp(exp) => {
-      st.buf.push_str("raise ");
+      st.write("raise ");
       get_exp(st, cfg, exp.exp()?)?;
     }
     ast::Exp::IfExp(exp) => {
-      st.buf.push_str("if ");
+      st.write("if ");
       get_exp(st, cfg, exp.cond()?)?;
-      st.buf.push_str(" then\n");
+      st.write(" then\n");
       let new_cfg = cfg.indented();
       new_cfg.output_indent(st);
       get_exp(st, new_cfg, exp.yes()?)?;
-      st.buf.push('\n');
+      st.write("\n");
       cfg.output_indent(st);
-      st.buf.push_str("else");
+      st.write("else");
       let no = exp.no()?;
       if matches!(no, ast::Exp::IfExp(_)) {
-        st.buf.push(' ');
+        st.write(" ");
         get_exp(st, cfg, no)?;
       } else {
-        st.buf.push('\n');
+        st.write("\n");
         new_cfg.output_indent(st);
         get_exp(st, new_cfg, no)?;
       }
     }
     ast::Exp::WhileExp(exp) => {
-      st.buf.push_str("while");
+      st.write("while");
       get_exp(st, cfg, exp.cond()?)?;
-      st.buf.push_str(" do ");
+      st.write(" do ");
       get_exp(st, cfg, exp.body()?)?;
     }
     ast::Exp::CaseExp(exp) => {
-      st.buf.push_str("case ");
+      st.write("case ");
       get_exp(st, cfg, exp.exp()?)?;
-      st.buf.push_str(" of\n");
+      st.write(" of\n");
       get_matcher_across_lines(st, cfg, exp.matcher()?)?;
     }
     ast::Exp::FnExp(exp) => {
-      st.buf.push_str("fn ");
+      st.write("fn ");
       sep(st, " | ", exp.matcher()?.match_rules(), |st, arm| get_matcher_arm(st, cfg, arm))?;
     }
   }
@@ -655,87 +661,87 @@ fn get_matcher_across_lines(st: &mut St, cfg: Cfg, matcher: ast::Matcher) -> Res
 
 fn get_matcher_arm(st: &mut St, cfg: Cfg, arm: ast::MatchRule) -> Res {
   get_pat(st, arm.pat()?)?;
-  st.buf.push_str(" =>");
+  st.write(" =>");
   get_body_exp(st, cfg, arm.exp()?)
 }
 
 fn get_pat(st: &mut St, pat: ast::Pat) -> Res {
   match pat {
-    ast::Pat::WildcardPat(_) => st.buf.push('_'),
-    ast::Pat::SConPat(pat) => st.buf.push_str(pat.s_con()?.token.text()),
+    ast::Pat::WildcardPat(_) => st.write("_"),
+    ast::Pat::SConPat(pat) => st.write(pat.s_con()?.token.text()),
     ast::Pat::ConPat(pat) => {
       if pat.op_kw().is_some() {
-        st.buf.push_str("op ");
+        st.write("op ");
       }
       path(st, pat.path()?)?;
       if let Some(pat) = pat.pat() {
-        st.buf.push(' ');
+        st.write(" ");
         get_pat(st, pat)?;
       }
     }
     ast::Pat::RecordPat(pat) => {
-      st.buf.push('{');
+      st.write("{");
       sep(st, ", ", pat.pat_rows(), |st, row| {
         match row.pat_row_inner()? {
-          ast::PatRowInner::RestPatRow(_) => st.buf.push_str("..."),
+          ast::PatRowInner::RestPatRow(_) => st.write("..."),
           ast::PatRowInner::LabAndPatPatRow(row) => {
-            st.buf.push_str(row.lab()?.token.text());
-            st.buf.push_str(" = ");
+            st.write(row.lab()?.token.text());
+            st.write(" = ");
             get_pat(st, row.pat()?)?;
           }
           ast::PatRowInner::LabPatRow(row) => {
-            st.buf.push_str(row.name_star_eq()?.token.text());
+            st.write(row.name_star_eq()?.token.text());
             ty_annotation(st, row.ty_annotation())?;
             if let Some(tail) = row.as_pat_tail() {
-              st.buf.push_str(" as ");
+              st.write(" as ");
               get_pat(st, tail.pat()?)?;
             }
           }
         }
         Some(())
       })?;
-      st.buf.push('}');
+      st.write("}");
     }
     ast::Pat::ParenPat(pat) => {
-      st.buf.push('(');
+      st.write("(");
       get_pat(st, pat.pat()?)?;
-      st.buf.push(')');
+      st.write(")");
     }
     ast::Pat::TuplePat(pat) => {
-      st.buf.push('(');
+      st.write("(");
       pat_args(st, pat.pat_args())?;
-      st.buf.push(')');
+      st.write(")");
     }
     ast::Pat::ListPat(pat) => {
-      st.buf.push('[');
+      st.write("[");
       pat_args(st, pat.pat_args())?;
-      st.buf.push(']');
+      st.write("]");
     }
     ast::Pat::VectorPat(pat) => {
-      st.buf.push_str("#[");
+      st.write("#[");
       pat_args(st, pat.list_pat()?.pat_args())?;
-      st.buf.push(']');
+      st.write("]");
     }
     ast::Pat::InfixPat(pat) => {
       get_pat(st, pat.lhs()?)?;
-      st.buf.push(' ');
-      st.buf.push_str(pat.name_star_eq()?.token.text());
-      st.buf.push(' ');
+      st.write(" ");
+      st.write(pat.name_star_eq()?.token.text());
+      st.write(" ");
       get_pat(st, pat.rhs()?)?;
     }
     ast::Pat::TypedPat(pat) => {
       get_pat(st, pat.pat()?)?;
-      st.buf.push_str(" : ");
+      st.write(" : ");
       get_ty(st, pat.ty()?)?;
     }
     ast::Pat::AsPat(pat) => {
       get_pat(st, pat.pat()?)?;
-      st.buf.push_str(" as ");
+      st.write(" as ");
       get_pat(st, pat.as_pat_tail()?.pat()?)?;
     }
     ast::Pat::OrPat(pat) => {
       get_pat(st, pat.lhs()?)?;
-      st.buf.push_str(" | ");
+      st.write(" | ");
       get_pat(st, pat.rhs()?)?;
     }
   }
@@ -744,47 +750,47 @@ fn get_pat(st: &mut St, pat: ast::Pat) -> Res {
 
 fn get_ty(st: &mut St, ty: ast::Ty) -> Res {
   match ty {
-    ast::Ty::HoleTy(_) => st.buf.push_str("..."),
-    ast::Ty::WildcardTy(_) => st.buf.push('_'),
-    ast::Ty::TyVarTy(ty) => st.buf.push_str(ty.ty_var()?.text()),
+    ast::Ty::HoleTy(_) => st.write("..."),
+    ast::Ty::WildcardTy(_) => st.write("_"),
+    ast::Ty::TyVarTy(ty) => st.write(ty.ty_var()?.text()),
     ast::Ty::RecordTy(ty) => {
-      st.buf.push('{');
+      st.write("{");
       sep(st, ", ", ty.ty_rows(), |st, row| {
-        st.buf.push_str(row.lab()?.token.text());
-        st.buf.push_str(" : ");
+        st.write(row.lab()?.token.text());
+        st.write(" : ");
         get_ty(st, row.ty()?)
       })?;
-      st.buf.push('}');
+      st.write("}");
     }
     ast::Ty::ConTy(ty) => {
       if let Some(ty_seq) = ty.ty_seq() {
-        st.buf.push('(');
+        st.write("(");
         sep(st, ", ", ty_seq.ty_args(), |st, t| get_ty(st, t.ty()?))?;
-        st.buf.push_str(") ");
+        st.write(") ");
       }
       path(st, ty.path()?)?;
     }
     ast::Ty::OneArgConTy(ty) => {
       get_ty(st, ty.ty()?)?;
-      st.buf.push(' ');
+      st.write(" ");
       path(st, ty.path()?)?;
     }
     ast::Ty::TupleTy(ty) => {
       get_ty(st, ty.ty()?);
       for ty in ty.star_tys() {
-        st.buf.push_str(" * ");
+        st.write(" * ");
         get_ty(st, ty.ty()?)?;
       }
     }
     ast::Ty::FnTy(ty) => {
       get_ty(st, ty.param()?)?;
-      st.buf.push_str(" -> ");
+      st.write(" -> ");
       get_ty(st, ty.res()?)?;
     }
     ast::Ty::ParenTy(ty) => {
-      st.buf.push('(');
+      st.write("(");
       get_ty(st, ty.ty()?)?;
-      st.buf.push(')');
+      st.write(")");
     }
   }
   Some(())
@@ -795,25 +801,25 @@ where
   F1: FnOnce(&mut St, Cfg) -> Res,
   F2: FnOnce(&mut St, Cfg) -> Res,
 {
-  st.buf.push_str(kw);
-  st.buf.push('\n');
+  st.write(kw);
+  st.write("\n");
   let new_cfg = cfg.indented();
   new_cfg.output_indent(st);
   f1(st, new_cfg)?;
-  st.buf.push('\n');
+  st.write("\n");
   cfg.output_indent(st);
-  st.buf.push_str("in\n");
+  st.write("in\n");
   new_cfg.output_indent(st);
   f2(st, new_cfg)?;
-  st.buf.push('\n');
+  st.write("\n");
   cfg.output_indent(st);
-  st.buf.push_str("end");
+  st.write("end");
   Some(())
 }
 
 fn path(st: &mut St, p: ast::Path) -> Res {
   sep(st, ".", p.name_star_eq_dots(), |st, x| {
-    st.buf.push_str(x.name_star_eq()?.token.text());
+    st.write(x.name_star_eq()?.token.text());
     Some(())
   })
 }
@@ -841,7 +847,7 @@ where
     get_t(st, arg)?;
   }
   for arg in iter {
-    st.buf.push_str(s);
+    st.write(s);
     get_t(st, arg)?;
   }
   Some(())
@@ -856,12 +862,12 @@ where
     get_t(st, arg)?;
   }
   for arg in iter {
-    st.buf.push('\n');
+    st.write("\n");
     if cfg.extra_blank {
-      st.buf.push('\n');
+      st.write("\n");
     }
     cfg.output_indent(st);
-    st.buf.push_str(s);
+    st.write(s);
     get_t(st, arg)?;
   }
   Some(())
@@ -875,7 +881,7 @@ where
     get_exp(st, cfg, e.exp()?)?;
   }
   for e in iter {
-    st.buf.push_str(";\n");
+    st.write(";\n");
     cfg.output_indent(st);
     get_exp(st, cfg, e.exp()?)?;
   }
