@@ -305,8 +305,14 @@ fn source_file_diagnostics(
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
       let node = syntax.to_node(file.syntax.parse.root.syntax());
+      let mut range = node.text_range();
+      if let Some((case, of)) =
+        sml_syntax::ast::CaseExp::cast(node).and_then(|case| case.case_kw().zip(case.of_kw()))
+      {
+        range = text_size_util::TextRange::new(case.text_range().start(), of.text_range().end());
+      }
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
-      diagnostic(file, severities, node.text_range(), msg, err.code(), err.severity())
+      diagnostic(file, severities, range, msg, err.code(), err.severity())
     }));
   }
   ret

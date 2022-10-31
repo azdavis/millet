@@ -1416,10 +1416,10 @@ then the `case` is not exhaustive.
 datatype d = A of string | B of int | C of bool
 
 fun f (x : d) : int =
-  case x of
-(**    + non-exhaustive case: missing A _ *)
-    B y => y
-  | C z => if z then 1 else 2
+    case x of
+(** ^^^^^^^^^ non-exhaustive case: missing A _ *)
+      B y => y
+    | C z => if z then 1 else 2
 ```
 
 To fix, add patterns matching the missing cases. The error message reports examples of patterns not matched.
@@ -2294,10 +2294,10 @@ There was a `case` on a `bool` expression.
 
 ```sml
 fun mainCharacter old =
-  case old of
-(**    + `case` on a `bool` *)
-    true => "porco rosso"
-  | false => "nausicaa"
+    case old of
+(** ^^^^^^^^^^^ `case` on a `bool` *)
+      true => "porco rosso"
+    | false => "nausicaa"
 ```
 
 Usually, `if` is preferred.
