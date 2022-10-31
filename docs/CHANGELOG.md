@@ -13,6 +13,12 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Add a specific diagnostic for unmatched closing delimiters.
+- Do not report statics errors if there are syntax errors by default.
+- Warn about shadowing the name of a containing `fun` in matcher patterns. (This is often a sign that a `case` needs `()` around it.)
+
 ## v0.5.10
 
 - Report errors with relative paths where possible.
