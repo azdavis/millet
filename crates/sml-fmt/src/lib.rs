@@ -124,8 +124,8 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       sep_with_lines(st, cfg, "and ", dec.val_binds(), |st, val_bind| {
         get_pat(st, val_bind.pat()?)?;
         if let Some(eq_exp) = val_bind.eq_exp() {
-          st.buf.push_str(" = ");
-          get_exp(st, cfg, eq_exp.exp()?)?;
+          st.buf.push_str(" =");
+          get_body_exp(st, cfg, eq_exp.exp()?)?;
         }
         Some(())
       })?;
@@ -602,7 +602,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
     ast::Exp::HandleExp(exp) => {
       get_exp(st, cfg, exp.exp()?)?;
       st.buf.push_str(" handle\n");
-      get_matcher(st, cfg, exp.matcher()?)?;
+      get_matcher_across_lines(st, cfg, exp.matcher()?)?;
     }
     ast::Exp::RaiseExp(exp) => {
       st.buf.push_str("raise ");
@@ -638,23 +638,25 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       st.buf.push_str("case ");
       get_exp(st, cfg, exp.exp()?)?;
       st.buf.push_str(" of\n");
-      get_matcher(st, cfg, exp.matcher()?)?;
+      get_matcher_across_lines(st, cfg, exp.matcher()?)?;
     }
     ast::Exp::FnExp(exp) => {
       st.buf.push_str("fn ");
-      get_matcher(st, cfg, exp.matcher()?)?;
+      sep(st, " | ", exp.matcher()?.match_rules(), |st, arm| get_matcher_arm(st, cfg, arm))?;
     }
   }
   Some(())
 }
 
-fn get_matcher(st: &mut St, cfg: Cfg, matcher: ast::Matcher) -> Res {
+fn get_matcher_across_lines(st: &mut St, cfg: Cfg, matcher: ast::Matcher) -> Res {
   cfg.indented().output_indent(st);
-  sep_with_lines(st, cfg, "| ", matcher.match_rules(), |st, arm| {
-    get_pat(st, arm.pat()?)?;
-    st.buf.push_str(" =>");
-    get_body_exp(st, cfg, arm.exp()?)
-  })
+  sep_with_lines(st, cfg, "| ", matcher.match_rules(), |st, arm| get_matcher_arm(st, cfg, arm))
+}
+
+fn get_matcher_arm(st: &mut St, cfg: Cfg, arm: ast::MatchRule) -> Res {
+  get_pat(st, arm.pat()?)?;
+  st.buf.push_str(" =>");
+  get_body_exp(st, cfg, arm.exp()?)
 }
 
 fn get_pat(st: &mut St, pat: ast::Pat) -> Res {
