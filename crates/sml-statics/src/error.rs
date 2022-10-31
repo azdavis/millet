@@ -48,6 +48,123 @@ pub(crate) enum ErrorKind {
   BoolCase,
 }
 
+struct ErrorKindDisplay<'a> {
+  kind: &'a ErrorKind,
+  syms: &'a Syms,
+  mv_info: &'a MetaVarInfo,
+  lines: config::ErrorLines,
+}
+
+impl fmt::Display for ErrorKindDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.kind {
+      ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
+      ErrorKind::Undefined(item, name) => {
+        write!(f, "undefined {item}: {name}")?;
+        if let Some(sug) = suggestion(name.as_str()) {
+          write!(f, " (did you mean `{sug}`?)")?;
+        }
+        Ok(())
+      }
+      ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
+      ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
+      ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
+      ErrorKind::Circularity(mv, ty) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(ty);
+        let name = mvs.get(*mv).ok_or(fmt::Error)?;
+        let ty = ty.display(&mvs, self.syms);
+        write!(f, "circular type: {name} occurs in {ty}")
+      }
+      ErrorKind::MismatchedTypes(want, got) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(want);
+        mvs.extend_for(got);
+        let want = want.display(&mvs, self.syms);
+        let got = got.display(&mvs, self.syms);
+        match self.lines {
+          config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
+          config::ErrorLines::Many => {
+            writeln!(f, "mismatched types:")?;
+            writeln!(f, "  expected {want}")?;
+            write!(f, "     found {got}")
+          }
+        }
+      }
+      ErrorKind::AppLhsNotFn(got) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(got);
+        let got = got.display(&mvs, self.syms);
+        write!(f, "expected a function type, found {got}")
+      }
+      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
+      ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
+      ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
+      ErrorKind::NonExhaustiveCase(pats) => non_exhaustive(f, self.syms, pats, "case"),
+      ErrorKind::NonExhaustiveBinding(pats) => non_exhaustive(f, self.syms, pats, "binding"),
+      ErrorKind::PatValIdStatus => f.write_str("value binding used as a pattern"),
+      ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
+      ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
+      ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
+      ErrorKind::TyEscape(ty) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(ty);
+        let ty = ty.display(&mvs, self.syms);
+        write!(f, "type escapes its scope: {ty}")
+      }
+      ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
+      ErrorKind::WrongNumTyArgs(want, got) => {
+        let s = if *want == 1 { "" } else { "s" };
+        write!(f, "expected {want} type argument{s}, found {got}")
+      }
+      ErrorKind::ExnCopyNotExnIdStatus(path) => write!(f, "not an exception: {path}"),
+      ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
+      ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
+      ErrorKind::UnresolvedRecordTy => f.write_str("cannot resolve record type containing `...`"),
+      ErrorKind::OrPatNotSameBindings(name) => {
+        write!(f, "{name} was bound in one alternative, but not in another")
+      }
+      ErrorKind::DecNotAllowedHere => f.write_str("`signature` or `functor` not allowed here"),
+      ErrorKind::ExpHole(ty) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(ty);
+        let ty = ty.display(&mvs, self.syms);
+        write!(f, "expression hole with type {ty}")
+      }
+      ErrorKind::TyHole => f.write_str("type hole"),
+      ErrorKind::BindPolymorphicExpansiveExp => {
+        f.write_str("cannot bind expansive polymorphic expression")
+      }
+      ErrorKind::Unused(name) => {
+        let item = Item::Val;
+        write!(f, "unused {item}: {name}")
+      }
+      ErrorKind::TyVarNotAllowedForTyRhs => {
+        f.write_str("type variable bound at `val` or `fun` not allowed here")
+      }
+      ErrorKind::CannotShareTy(path, ts) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(&ts.ty);
+        let ts = ts.display(&mvs, self.syms);
+        write!(f, "cannot share type {path} as {ts}")
+      }
+      ErrorKind::CannotRealizeTy(path, ts) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(&ts.ty);
+        let ts = ts.display(&mvs, self.syms);
+        write!(f, "cannot realize type {path} as {ts}")
+      }
+      ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on {name}"),
+      ErrorKind::MismatchedFunctorSugar(sugary) => {
+        let other = sugary.other();
+        write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
+      }
+      ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
+      ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
+    }
+  }
+}
+
 /// A statics error.
 #[derive(Debug)]
 pub struct Error {
@@ -187,123 +304,6 @@ impl fmt::Display for Item {
       Item::Struct => f.write_str("structure"),
       Item::Sig => f.write_str("signature"),
       Item::Functor => f.write_str("functor"),
-    }
-  }
-}
-
-struct ErrorKindDisplay<'a> {
-  kind: &'a ErrorKind,
-  syms: &'a Syms,
-  mv_info: &'a MetaVarInfo,
-  lines: config::ErrorLines,
-}
-
-impl fmt::Display for ErrorKindDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.kind {
-      ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
-      ErrorKind::Undefined(item, name) => {
-        write!(f, "undefined {item}: {name}")?;
-        if let Some(sug) = suggestion(name.as_str()) {
-          write!(f, " (did you mean `{sug}`?)")?;
-        }
-        Ok(())
-      }
-      ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
-      ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
-      ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
-      ErrorKind::Circularity(mv, ty) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(ty);
-        let name = mvs.get(*mv).ok_or(fmt::Error)?;
-        let ty = ty.display(&mvs, self.syms);
-        write!(f, "circular type: {name} occurs in {ty}")
-      }
-      ErrorKind::MismatchedTypes(want, got) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(want);
-        mvs.extend_for(got);
-        let want = want.display(&mvs, self.syms);
-        let got = got.display(&mvs, self.syms);
-        match self.lines {
-          config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
-          config::ErrorLines::Many => {
-            writeln!(f, "mismatched types:")?;
-            writeln!(f, "  expected {want}")?;
-            write!(f, "     found {got}")
-          }
-        }
-      }
-      ErrorKind::AppLhsNotFn(got) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(got);
-        let got = got.display(&mvs, self.syms);
-        write!(f, "expected a function type, found {got}")
-      }
-      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
-      ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
-      ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
-      ErrorKind::NonExhaustiveCase(pats) => non_exhaustive(f, self.syms, pats, "case"),
-      ErrorKind::NonExhaustiveBinding(pats) => non_exhaustive(f, self.syms, pats, "binding"),
-      ErrorKind::PatValIdStatus => f.write_str("value binding used as a pattern"),
-      ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
-      ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
-      ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
-      ErrorKind::TyEscape(ty) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(ty);
-        let ty = ty.display(&mvs, self.syms);
-        write!(f, "type escapes its scope: {ty}")
-      }
-      ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
-      ErrorKind::WrongNumTyArgs(want, got) => {
-        let s = if *want == 1 { "" } else { "s" };
-        write!(f, "expected {want} type argument{s}, found {got}")
-      }
-      ErrorKind::ExnCopyNotExnIdStatus(path) => write!(f, "not an exception: {path}"),
-      ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
-      ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
-      ErrorKind::UnresolvedRecordTy => f.write_str("cannot resolve record type containing `...`"),
-      ErrorKind::OrPatNotSameBindings(name) => {
-        write!(f, "{name} was bound in one alternative, but not in another")
-      }
-      ErrorKind::DecNotAllowedHere => f.write_str("`signature` or `functor` not allowed here"),
-      ErrorKind::ExpHole(ty) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(ty);
-        let ty = ty.display(&mvs, self.syms);
-        write!(f, "expression hole with type {ty}")
-      }
-      ErrorKind::TyHole => f.write_str("type hole"),
-      ErrorKind::BindPolymorphicExpansiveExp => {
-        f.write_str("cannot bind expansive polymorphic expression")
-      }
-      ErrorKind::Unused(name) => {
-        let item = Item::Val;
-        write!(f, "unused {item}: {name}")
-      }
-      ErrorKind::TyVarNotAllowedForTyRhs => {
-        f.write_str("type variable bound at `val` or `fun` not allowed here")
-      }
-      ErrorKind::CannotShareTy(path, ts) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(&ts.ty);
-        let ts = ts.display(&mvs, self.syms);
-        write!(f, "cannot share type {path} as {ts}")
-      }
-      ErrorKind::CannotRealizeTy(path, ts) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(&ts.ty);
-        let ts = ts.display(&mvs, self.syms);
-        write!(f, "cannot realize type {path} as {ts}")
-      }
-      ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on {name}"),
-      ErrorKind::MismatchedFunctorSugar(sugary) => {
-        let other = sugary.other();
-        write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
-      }
-      ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
-      ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
     }
   }
 }
