@@ -468,7 +468,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
           }
           sml_hir::ValBind {
             rec: val_bind.rec_kw().is_some(),
-            pat: pat::get(cx, val_bind.pat()),
+            pat: pat::get(cx, None, val_bind.pat()),
             exp: exp::get(cx, exp),
           }
         })
@@ -496,7 +496,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
                   ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
                     let lhs = head.lhs();
                     let rhs = head.rhs();
-                    let tup = tuple([pat::get(cx, lhs), pat::get(cx, rhs)]);
+                    let tup = tuple([pat::get(cx, None, lhs), pat::get(cx, None, rhs)]);
                     pats.push(cx.pat(tup, ptr.clone()));
                     head.name_star_eq()
                   }
@@ -517,7 +517,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
                   }
                 }
               }
-              pats.extend(case.pats().map(|pat| pat::get(cx, Some(pat))));
+              pats.extend(case.pats().map(|pat| pat::get(cx, None, Some(pat))));
               match num_pats {
                 None => num_pats = Some(pats.len()),
                 Some(num_pats) => {

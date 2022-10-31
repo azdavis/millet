@@ -61,7 +61,7 @@ pub(crate) enum ErrorKind {
   DecHole,
   NotSpec,
   AsPatLhsNotName,
-  PatNameIsNameOfContainingFun,
+  PatNameIsNameOfContainingFun(MatcherFlavor),
 }
 
 impl fmt::Display for ErrorKind {
@@ -100,9 +100,26 @@ impl fmt::Display for ErrorKind {
       ErrorKind::DecHole => f.write_str("declaration hole"),
       ErrorKind::NotSpec => f.write_str("non-specification not allowed here"),
       ErrorKind::AsPatLhsNotName => f.write_str("left-hand side of `as` pattern must be a name"),
-      ErrorKind::PatNameIsNameOfContainingFun => {
-        f.write_str("name bound in pattern matches name of a `fun` that contains the pattern")
+      ErrorKind::PatNameIsNameOfContainingFun(flavor) => {
+        write!(f, "name bound in pattern inside a `{flavor}` matches name of a `fun` that contains the `{flavor}`")
       }
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum MatcherFlavor {
+  Case,
+  Fn,
+  Handle,
+}
+
+impl fmt::Display for MatcherFlavor {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      MatcherFlavor::Case => f.write_str("case"),
+      MatcherFlavor::Fn => f.write_str("fn"),
+      MatcherFlavor::Handle => f.write_str("handle"),
     }
   }
 }
@@ -156,7 +173,7 @@ impl Error {
       ErrorKind::DecHole => Code::n(4022),
       ErrorKind::NotSpec => Code::n(4023),
       ErrorKind::AsPatLhsNotName => Code::n(4024),
-      ErrorKind::PatNameIsNameOfContainingFun => Code::n(4025),
+      ErrorKind::PatNameIsNameOfContainingFun(_) => Code::n(4025),
     }
   }
 
@@ -169,7 +186,7 @@ impl Error {
       | ErrorKind::OneArmedCase
       | ErrorKind::UnnecessarySemicolon
       | ErrorKind::MultipleTypedPat
-      | ErrorKind::PatNameIsNameOfContainingFun => Severity::Warning,
+      | ErrorKind::PatNameIsNameOfContainingFun(_) => Severity::Warning,
       _ => Severity::Error,
     }
   }

@@ -1,5 +1,5 @@
 use crate::common::{get_lab, get_path, get_scon};
-use crate::util::{Cx, ErrorKind};
+use crate::util::{Cx, ErrorKind, MatcherFlavor};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
@@ -111,9 +111,10 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let no = get(cx, rhs);
       if_(cx, cond, yes, no, ptr.clone(), sml_hir::FnFlavor::BoolBinOp)
     }
-    ast::Exp::HandleExp(exp) => {
-      sml_hir::Exp::Handle(get(cx, exp.exp()), matcher(cx, exp.matcher()))
-    }
+    ast::Exp::HandleExp(exp) => sml_hir::Exp::Handle(
+      get(cx, exp.exp()),
+      matcher(cx, Some(MatcherFlavor::Handle), exp.matcher()),
+    ),
     ast::Exp::RaiseExp(exp) => sml_hir::Exp::Raise(get(cx, exp.exp())),
     ast::Exp::IfExp(exp) => {
       let cond = exp.cond();
@@ -150,13 +151,15 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::CaseExp(exp) => {
       let head = get(cx, exp.exp());
-      let arms = matcher(cx, exp.matcher());
+      let arms = matcher(cx, Some(MatcherFlavor::Case), exp.matcher());
       if arms.len() == 1 {
         cx.err(exp.syntax().text_range(), ErrorKind::OneArmedCase);
       }
       case(cx, head, arms, ptr.clone(), sml_hir::FnFlavor::Case)
     }
-    ast::Exp::FnExp(exp) => sml_hir::Exp::Fn(matcher(cx, exp.matcher()), sml_hir::FnFlavor::Fn),
+    ast::Exp::FnExp(exp) => {
+      sml_hir::Exp::Fn(matcher(cx, Some(MatcherFlavor::Fn), exp.matcher()), sml_hir::FnFlavor::Fn)
+    }
   };
   cx.exp(ret, ptr)
 }
@@ -285,13 +288,17 @@ pub(crate) fn case(
   sml_hir::Exp::App(cx.exp(sml_hir::Exp::Fn(arms, flavor), ptr), head)
 }
 
-fn matcher(cx: &mut Cx, matcher: Option<ast::Matcher>) -> Vec<(sml_hir::PatIdx, sml_hir::ExpIdx)> {
+fn matcher(
+  cx: &mut Cx,
+  flavor: Option<MatcherFlavor>,
+  matcher: Option<ast::Matcher>,
+) -> Vec<(sml_hir::PatIdx, sml_hir::ExpIdx)> {
   if let Some(bar) = matcher.as_ref().and_then(sml_syntax::ast::Matcher::bar) {
     cx.err(bar.text_range(), ErrorKind::PrecedingBar);
   }
   matcher
     .into_iter()
     .flat_map(|x| x.match_rules())
-    .map(|arm| (pat::get(cx, arm.pat()), get(cx, arm.exp())))
+    .map(|arm| (pat::get(cx, flavor, arm.pat()), get(cx, arm.exp())))
     .collect()
 }

@@ -1097,7 +1097,7 @@ fun foo x =
   case x of
     0 => 1
   | foo => foo
-(** ^^^ name bound in pattern matches name of a `fun` that contains the pattern *)
+(** ^^^ name bound in pattern inside a `case` matches name of a `fun` that contains the `case` *)
 ```
 
 This is at best a possibly confusing case of shadowing.
@@ -1114,7 +1114,7 @@ fun foo 0 y = y
       | 2 => 3
       | _ => 4
   | foo x y = x + y
-(** ^^^ name bound in pattern matches name of a `fun` that contains the pattern *)
+(** ^^^ name bound in pattern inside a `case` matches name of a `fun` that contains the `case` *)
 ```
 
 This looks like a `fun` with many cases, one of which has an inner `case`. However, most SML parsers (including Millet) attempt to parse the final `foo x y` as part of the `case` instead as part of the `fun`. This leads to confusing errors, often [3001](#3001) and [3002](#3002).
