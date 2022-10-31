@@ -33,7 +33,7 @@ DecOne =
 
 HoleDec = '...'
 ValDec = 'val' TyVarSeq ValBind*
-FunDec = 'fun' TyVarSeq '|'? FunBind*
+FunDec = 'fun' TyVarSeq FunBind*
 TyDec = TyHead TyBind*
 DatDec = 'datatype' DatBind* WithType?
 DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
@@ -53,10 +53,15 @@ IncludeDec = 'include' SigExp*
 
 TyHead = 'type' | 'eqtype'
 ValBind = 'rec'? Pat EqExp? 'and'?
-FunBind = FunBindCase* 'and'?
 TyBind = TyVarSeq 'Name' EqTy? 'and'?
+
+FunBind = '|'? FunBindCase* 'and'?
+FunBindCase = FunBindCaseHead Pat* TyAnnotation? EqExp? '|'?
+
 DatBind = TyVarSeq 'Name' EqConBinds? 'and'?
+EqConBinds = '=' '|'? ConBind*
 ConBind = 'op'? NameStarEq OfTy? '|'?
+
 ExBind = 'op'? NameStarEq ExBindInner? 'and'?
 StrBind = 'Name' AscriptionTail? EqStrExp? 'and'?
 SigBind = 'Name' '=' SigExp 'and'?
@@ -67,9 +72,7 @@ FunctorBind =
 
 EqExp = '=' Exp
 EqStrExp = '=' StrExp
-EqConBinds = '=' '|'? ConBind*
 
-FunBindCase = FunBindCaseHead Pat* TyAnnotation? EqExp? '|'?
 FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
 PrefixFunBindCaseHead = 'op'? NameStarEq
 InfixFunBindCaseHead = '('? lhs:Pat NameStarEq rhs:Pat ')'?

@@ -475,13 +475,13 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
         .collect(),
     ),
     ast::DecOne::FunDec(dec) => {
-      if let Some(bar) = dec.bar() {
-        cx.err(bar.text_range(), ErrorKind::PrecedingBar);
-      }
       let ty_vars = ty::var_seq(dec.ty_var_seq());
       let val_binds: Vec<_> = dec
         .fun_binds()
         .map(|fun_bind| {
+          if let Some(bar) = fun_bind.bar() {
+            cx.err(bar.text_range(), ErrorKind::PrecedingBar);
+          }
           let ptr = SyntaxNodePtr::new(fun_bind.syntax());
           let mut name = None::<sml_syntax::SyntaxToken>;
           let mut num_pats = None::<usize>;

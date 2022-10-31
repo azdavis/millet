@@ -38,10 +38,10 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   } else if p.at(SK::FunKw) {
     p.bump();
     ty_var_seq(p);
-    if p.at(SK::Bar) {
-      p.bump();
-    }
     many_sep(p, SK::AndKw, SK::FunBind, |p| {
+      if p.at(SK::Bar) {
+        p.bump();
+      }
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
         let en = p.enter();
         let save = p.save();
