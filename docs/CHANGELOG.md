@@ -23,7 +23,7 @@ The versioning system is basically the following:
 
 - Add a specific diagnostic for unmatched closing delimiters.
 - Do not report statics errors if there are syntax errors by default.
-- Warn about shadowing the name of a containing `fun` in matcher patterns. (This is often a sign that a `case` needs `()` around it.)
+- Warn about shadowing the name of a containing `fun` in matcher patterns. (This is often a sign that a `case` or similar needs parentheses around it.)
 
 ## v0.5.10
 
