@@ -1,5 +1,5 @@
 use crate::dec::dec;
-use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, Infix, ParensExpFlavor, Parser};
 use crate::pat::pat;
 use crate::ty::ty;
 use crate::util::{
@@ -28,13 +28,21 @@ pub(crate) fn eq_exp(p: &mut Parser<'_>) {
   }
 }
 
+#[allow(clippy::too_many_lines)]
 fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
   let en = p.enter();
+  let infix = matches!(min_prec, ExpPrec::Infix(_));
   let ex = if p.at(SK::RaiseKw) {
+    if infix {
+      p.error(ErrorKind::NeedParensAroundExpHere(ParensExpFlavor::Raise));
+    }
     p.bump();
     exp(p);
     p.exit(en, SK::RaiseExp)
   } else if p.at(SK::IfKw) {
+    if infix {
+      p.error(ErrorKind::NeedParensAroundExpHere(ParensExpFlavor::If));
+    }
     p.bump();
     exp(p);
     p.eat(SK::ThenKw);
@@ -43,18 +51,27 @@ fn exp_prec(p: &mut Parser<'_>, min_prec: ExpPrec) -> Option<Exited> {
     exp(p);
     p.exit(en, SK::IfExp)
   } else if p.at(SK::WhileKw) {
+    if infix {
+      p.error(ErrorKind::NeedParensAroundExpHere(ParensExpFlavor::While));
+    }
     p.bump();
     exp(p);
     p.eat(SK::DoKw);
     exp(p);
     p.exit(en, SK::WhileExp)
   } else if p.at(SK::CaseKw) {
+    if infix {
+      p.error(ErrorKind::NeedParensAroundExpHere(ParensExpFlavor::Case));
+    }
     p.bump();
     exp(p);
     p.eat(SK::OfKw);
     matcher(p);
     p.exit(en, SK::CaseExp)
   } else if p.at(SK::FnKw) {
+    if infix {
+      p.error(ErrorKind::NeedParensAroundExpHere(ParensExpFlavor::Fn));
+    }
     p.bump();
     matcher(p);
     p.exit(en, SK::FnExp)

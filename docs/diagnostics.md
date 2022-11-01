@@ -514,6 +514,21 @@ val remove = 3
 val addOpening = [3]
 ```
 
+## 3009
+
+A sub-expression was missing required parentheses.
+
+```sml
+val seven = 3 + if 5 > 2 then 4 else 1
+(**             ^^ parentheses required around `if` expressions here *)
+```
+
+To fix, add parentheses.
+
+```sml
+val seven = 3 + (if 5 > 2 then 4 else 1)
+```
+
 ## 4001
 
 In a `fun` binding with multiple cases, the cases did not all name the same function.

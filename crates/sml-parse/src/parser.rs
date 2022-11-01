@@ -163,6 +163,7 @@ pub(crate) enum ErrorKind {
   Expected(Expected),
   UnnecessaryOp,
   UnmatchedClosingDelimiter,
+  NeedParensAroundExpHere(ParensExpFlavor),
 }
 
 impl fmt::Display for ErrorKind {
@@ -178,6 +179,30 @@ impl fmt::Display for ErrorKind {
       ErrorKind::Expected(e) => write!(f, "expected {e}"),
       ErrorKind::UnnecessaryOp => f.write_str("unnecessary `op`"),
       ErrorKind::UnmatchedClosingDelimiter => f.write_str("unmatched closing delimiter"),
+      ErrorKind::NeedParensAroundExpHere(flavor) => {
+        write!(f, "parentheses required around `{flavor}` expressions here")
+      }
+    }
+  }
+}
+
+#[derive(Debug)]
+pub(crate) enum ParensExpFlavor {
+  Raise,
+  If,
+  While,
+  Case,
+  Fn,
+}
+
+impl fmt::Display for ParensExpFlavor {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ParensExpFlavor::Raise => f.write_str("raise"),
+      ParensExpFlavor::If => f.write_str("if"),
+      ParensExpFlavor::While => f.write_str("while"),
+      ParensExpFlavor::Case => f.write_str("case"),
+      ParensExpFlavor::Fn => f.write_str("fn"),
     }
   }
 }
@@ -217,6 +242,7 @@ impl Error {
       ErrorKind::Expected(_) => Code::n(3006),
       ErrorKind::UnnecessaryOp => Code::n(3007),
       ErrorKind::UnmatchedClosingDelimiter => Code::n(3008),
+      ErrorKind::NeedParensAroundExpHere(_) => Code::n(3009),
     }
   }
 
