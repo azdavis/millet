@@ -114,17 +114,6 @@ impl ConfigFromFile {
       });
     }
     if let Some(ws) = parsed.workspace {
-      if let Some(members) = ws.members {
-        if ws.root.is_some() || ws.path_vars.is_some() || parsed.diagnostics.is_some() {
-          return Err(Error {
-            source: ErrorSource::default(),
-            path: ret.path,
-            kind: ErrorKind::HasMembersButAlsoOtherSettings,
-          });
-        }
-        // TODO
-        log::error!("unsupported use of members: {members:?}");
-      }
       if let Some(path) = ws.root {
         let path = root.as_path().join(path.as_str());
         match GroupPathBuf::new(fs, path.clone()) {

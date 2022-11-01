@@ -132,20 +132,6 @@ is
   bar.sml
 ```
 
-## 1995
-
-In a `millet.toml` config file, both `workspace.members` and another configuration setting were set.
-
-<!--
-
-When a `millet.toml` file has `workspace.members` set, the `members` are subdirectories that themselves have `millet.toml` files in them. This allows for a single project to have many different sub-projects.
-
-But, when a `millet.toml` has the other workspace properties set, it may not contain sub-projects.
-
- -->
-
-To fix, do not set any other configuration (other than the required `version`) when setting `workspace.members` in a `millet.toml` file.
-
 ## 1996
 
 Millet couldn't initialize the workspace root.

@@ -82,27 +82,6 @@ QUZ = { path = "lib" }
         - `warning`: the diagnostic is reported as a warning.
         - `error`: the diagnostic is reported with maximum severity.
 
-<!--
-
-Alternatively, it may have the following other, mutually exclusive format:
-
-```toml
-version = 1
-[workspace]
-members = ["*"]
-```
-
-The `version = 1` is the same, but the `workspace` table now contains only one key, `members`, which is a list of paths to directories. These paths are each treated as their own "roots", i.e. each path may contain either a root group file or its own `millet.toml`. Each path is analyzed separately from the others.
-
-The string `"*"` is treated specially to mean "every immediate subdirectory of the directory in which `millet.toml` resides". There is no other special treatment of glob-like paths.
-
-A key use case for this special format is e.g. when taking a class taught in Standard ML, in which each assignment is distributed separately from the others over time. A student may:
-
-1. Create a single "class" folder, into which they may place a `millet.toml` file as above.
-2. Successively download assignment handouts and place them in the class folder, yet always open VS Code onto this same class folder. Each assignment will be analyzed separately, but there is no need to re-open VS Code to each new assignment.
-
- -->
-
 ### VS Code settings
 
 Millet offers the following configuration options via VS Code settings:
