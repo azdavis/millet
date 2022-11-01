@@ -13,11 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.12
 
-- Improve range for errors on `case`, `let`, `local`, `struct`, and `sig`.
+- Improve range for statics errors on `case`, `let`, `local`, `struct`, and `sig`.
 - Improve formatting for `fn`, `val`, `let`, parenthesized expressions, `withtype`, and functor declaration arguments.
-- Warn when comments prevent formatting.
+- Warn when formatting is enabled but a comment prevents formatting.
 - Correctly error when using e.g. `if` or `case` as an argument to an infix operator without parentheses.
 - Add an error for `fun` with no parameters.
 
