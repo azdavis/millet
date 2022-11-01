@@ -331,9 +331,12 @@ fn source_file_diagnostics(
 }
 
 fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
-  ast::CaseExp::cast(node)
-    .and_then(|case| case.case_kw().zip(case.of_kw()))
-    .map(|(case, of)| TextRange::new(case.text_range().start(), of.text_range().end()))
+  if let Some(case) = ast::CaseExp::cast(node) {
+    let case_kw = case.case_kw()?;
+    let of_kw = case.of_kw()?;
+    return Some(TextRange::new(case_kw.text_range().start(), of_kw.text_range().end()));
+  }
+  None
 }
 
 struct CaseDisplay<'a> {
