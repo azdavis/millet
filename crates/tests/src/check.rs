@@ -215,18 +215,10 @@ impl Check {
     } else {
       Region::Line(range.start.line)
     };
-    let path_region = path.wrap(region);
-    let want = match file.want.get(&region) {
-      None => return Err(Reason::GotButNotWanted(path_region, got)),
-      Some(exp) => match exp.kind {
-        ExpectKind::Error => exp.msg.clone(),
-        ExpectKind::Hover => return Err(Reason::GotButNotWanted(path_region, got)),
-      },
-    };
-    if want == got {
+    if try_region(file, path.wrap(region), got.as_str())? {
       Ok(())
     } else {
-      Err(Reason::Mismatched(path_region, want, got))
+      Err(Reason::GotButNotWanted(path.wrap(region), got))
     }
   }
 }
@@ -276,6 +268,26 @@ impl fmt::Display for Check {
     }
     writeln!(f)?;
     Ok(())
+  }
+}
+
+fn try_region(
+  file: &ExpectFile,
+  region: paths::WithPath<Region>,
+  got: &str,
+) -> Result<bool, Reason> {
+  match file.want.get(&region.val) {
+    None => Ok(false),
+    Some(exp) => match exp.kind {
+      ExpectKind::Error => {
+        if exp.msg == got {
+          Ok(true)
+        } else {
+          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
+        }
+      }
+      ExpectKind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
+    },
   }
 }
 
