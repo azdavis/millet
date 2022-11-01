@@ -261,10 +261,10 @@ fn at_exp_hd(p: &mut Parser<'_>) -> bool {
 
 #[derive(Debug, Clone, Copy)]
 enum ExpPrec {
-  Infix(Infix),
-  Andalso,
-  Orelse,
   Min,
+  Orelse,
+  Andalso,
+  Infix(Infix),
 }
 
 fn should_break_exp(p: &mut Parser<'_>, prec: ExpPrec, min_prec: ExpPrec) -> bool {
