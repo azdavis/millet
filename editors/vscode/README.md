@@ -61,14 +61,14 @@ fun increment x = x + 1
 
 ```sml
 val four = increment 3
-val () = "this is a type error. if you see an error, Millet is working!"
+val () = "if you see a type error, Millet is working!"
 ```
 
 ## Community
 
 Millet is affiliated with Project Savanna, a project whose goal is to improve tooling for Standard ML.
 
-There is a [Discord server][discord] for Project Savanna, and Millet has its own channel there. You can get support and discuss the project there.
+There is a [Discord server][discord] for Project Savanna, in which Millet has its own channel. You can get support and discuss the project there.
 
 ## License
 
