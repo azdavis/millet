@@ -602,7 +602,7 @@ fn empty_fun() {
   check(
     r#"
     fun f = 3
-(** ^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
+(** ^^^^^^^^^ `fun` with no parameters *)
 "#,
   );
 }

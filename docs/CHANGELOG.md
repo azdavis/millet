@@ -19,6 +19,7 @@ The versioning system is basically the following:
 - Improve formatting for `fn`, `val`, `let`, parenthesized expressions, `withtype`, and functor declaration arguments.
 - Warn when comments prevent formatting.
 - Correctly error when using e.g. `if` or `case` as an argument to an infix operator without parentheses.
+- Add an error for `fun` with no parameters.
 
 ## v0.5.11
 

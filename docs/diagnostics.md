@@ -1135,6 +1135,21 @@ fun foo 0 y = y
   | foo x y = x + y
 ```
 
+## 4026
+
+There was a `fun` with no parameters.
+
+```sml
+    fun totoro = 3
+(** ^^^^^^^^^^^^^^ `fun` with no parameters *)
+```
+
+To fix, add some parameters.
+
+```sml
+fun totoro x = x + 3
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

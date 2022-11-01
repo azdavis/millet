@@ -62,6 +62,7 @@ pub(crate) enum ErrorKind {
   NotSpec,
   AsPatLhsNotName,
   PatNameIsNameOfContainingFun(MatcherFlavor),
+  EmptyFun,
 }
 
 impl fmt::Display for ErrorKind {
@@ -103,6 +104,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::PatNameIsNameOfContainingFun(flavor) => {
         write!(f, "name bound in pattern inside a `{flavor}` matches name of a `fun` that contains the `{flavor}`")
       }
+      ErrorKind::EmptyFun => f.write_str("`fun` with no parameters"),
     }
   }
 }
@@ -174,6 +176,7 @@ impl Error {
       ErrorKind::NotSpec => Code::n(4023),
       ErrorKind::AsPatLhsNotName => Code::n(4024),
       ErrorKind::PatNameIsNameOfContainingFun(_) => Code::n(4025),
+      ErrorKind::EmptyFun => Code::n(4026),
     }
   }
 
