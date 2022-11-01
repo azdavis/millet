@@ -81,9 +81,6 @@ pub(crate) fn go(
 ) {
   // ignore the Err if we already initialized logging, since that's fine.
   let _ = env_logger::builder().is_test(true).try_init();
-  if matches!(std_basis, analysis::StdBasis::Full) && env_var_eq_1("TEST_MINIMAL") {
-    return;
-  }
   let c = Check::new(ss, std_basis, min_severity);
   match (want, c.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
@@ -399,8 +396,4 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
     Region::Line(line)
   };
   Some((region, expect))
-}
-
-fn env_var_eq_1(s: &str) -> bool {
-  std::env::var_os(s).map_or(false, |x| x == "1")
 }
