@@ -1139,6 +1139,16 @@ To fix, try one of the following:
 - Put parentheses around the inner matcher (i.e. `case`, `fn`, or `handle`).
 - Rename the binding to avoid shadowing.
 
+```sml
+fun foo 0 y = y
+  | foo 1 y =
+      (case y of
+        0 => 1
+      | 2 => 3
+      | _ => 4)
+  | foo x y = x + y
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
