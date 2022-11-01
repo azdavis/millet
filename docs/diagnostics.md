@@ -1606,7 +1606,7 @@ Here, the type `d` is only available for the scope of the `let` expression, but 
 ```sml
 val x =
     let datatype d = D in D end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: d *)
+(** ^^^ type escapes its scope: d *)
 ```
 
 This can also occur for explicit type variables, as in this example:

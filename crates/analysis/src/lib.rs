@@ -336,6 +336,15 @@ fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
     let of_kw = node.of_kw()?;
     return Some(TextRange::new(case_kw.text_range().start(), of_kw.text_range().end()));
   }
+  if let Some(node) = ast::LetExp::cast(node.clone()) {
+    return Some(node.let_kw()?.text_range());
+  }
+  if let Some(node) = ast::LocalDec::cast(node.clone()) {
+    return Some(node.local_kw()?.text_range());
+  }
+  if let Some(node) = ast::LetStrExp::cast(node.clone()) {
+    return Some(node.let_kw()?.text_range());
+  }
   if let Some(node) = ast::StructStrExp::cast(node.clone()) {
     return Some(node.struct_kw()?.text_range());
   }
