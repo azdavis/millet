@@ -880,8 +880,8 @@ There was an overly complex expression involving `bool`s.
 
 ```sml
 fun booleanIdentity x =
-    if x then true else false
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^ overly complex `bool` expression *)
+  if x then true else false
+(** + overly complex `bool` expression *)
 ```
 
 An expression is "overly complex" if it involves `if`, `andalso`, or `orelse`, and contains a `bool` literal `true` or `false`. Such expressions can always be simplified. For example:
@@ -1030,8 +1030,8 @@ To fix, remove the `sharing type`.
 There was a declaration with `eqtype`.
 
 ```sml
-    eqtype num = int
-(** ^^^^^^ `eqtype` not allowed here *)
+eqtype num = int
+(** + `eqtype` not allowed here *)
 ```
 
 `eqtype` is allowed on specifications, not declarations.
@@ -1059,8 +1059,8 @@ There was a non-specification declaration in a specification context.
 
 ```sml
 signature S = sig
-    fun inc x = x + 1
-(** ^^^^^^^^^^^^^^^^^ non-specification not allowed here *)
+fun inc x = x + 1
+(** + non-specification not allowed here *)
 end
 ```
 
@@ -1140,8 +1140,8 @@ fun foo 0 y = y
 There was a `fun` with no parameters.
 
 ```sml
-    fun totoro = 3
-(** ^^^^^^^^^^^^^^ `fun` with no parameters *)
+fun totoro = 3
+(** + `fun` with no parameters *)
 ```
 
 To fix, add some parameters.
@@ -1316,8 +1316,8 @@ This is probably the most common typechecking error, so it's hard to give genera
 Millet tries to report which type was "expected" and which was "found". For instance, in this example, we consider `int` the "expected" type, because of the annotation. This explicit annotation implies the programmer really thought it should be that type.
 
 ```sml
-    val x : int = "no"
-(** ^^^^^^^^^^^^^^^^^^ expected int, found string *)
+val x : int = "no"
+(** + expected int, found string *)
 ```
 
 This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
@@ -1692,23 +1692,23 @@ To fix, try one of the following:
 In a `val rec` binding, the expression must be a literal `fn` expression.
 
 ```sml
-    val rec x = x + 3
-(** ^^^^^^^^^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
+val rec x = x + 3
+(** + the expression for a `val rec` was not a `fn` *)
 ```
 
 It is an error even if the expression does not use the recursive binding.
 
 ```sml
-    val rec x = 3
-(** ^^^^^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
+val rec x = 3
+(** + the expression for a `val rec` was not a `fn` *)
 ```
 
 It is also an error even if the expression has function type.
 
 ```sml
-    val mkAdd3 = fn () => fn x => x + 3
-    val rec add3 = mkAdd3 ()
-(** ^^^^^^^^^^^^^^^^^^^^^^^^ the expression for a `val rec` was not a `fn` *)
+val mkAdd3 = fn () => fn x => x + 3
+val rec add3 = mkAdd3 ()
+(** + the expression for a `val rec` was not a `fn` *)
 ```
 
 To fix, ensure the expression is a literal `fn` expression.
@@ -1748,9 +1748,9 @@ val xs : yep list = []
 In an exception copy declaration, the right hand side was not an exception.
 
 ```sml
-    val e = 3
-    exception Nope = e
-(** ^^^^^^^^^^^^^^^^^^ not an exception: e *)
+val e = 3
+exception Nope = e
+(** + not an exception: e *)
 ```
 
 To fix, only use exceptions on the right hand side.
@@ -1815,8 +1815,8 @@ structure S
 A record type couldn't be fully resolved, due to the use of a `...` pattern row with insufficient surrounding context.
 
 ```sml
-    fun getX {x, ...} = x
-(** ^^^^^^^^^^^^^^^^^^^^^ cannot resolve record type containing `...` *)
+fun getX {x, ...} = x
+(** + cannot resolve record type containing `...` *)
 ```
 
 SML lacks row polymorphism, so the above example function does not typecheck.
@@ -1831,8 +1831,8 @@ fun getX ({x, ...} : t) = x
 This error may arise when using `#` selectors.
 
 ```sml
-    fun addFooBar x = #foo x + #bar x
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot resolve record type containing `...` *)
+fun addFooBar x = #foo x + #bar x
+(** + cannot resolve record type containing `...` *)
 ```
 
 Again, the fix is usually to add a type annotation. Though, an alternative would be to avoid `...` pattern rows altogether.
@@ -1874,10 +1874,10 @@ A `signature` or `functor` declaration occurred in a disallowed position, like i
 
 ```sml
 structure Str = struct
-    signature SIG = sig end
-(** ^^^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` not allowed here *)
-    functor Func() = struct end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ `signature` or `functor` not allowed here *)
+  signature SIG = sig end
+(** + `signature` or `functor` not allowed here *)
+  functor Func() = struct end
+(** + `signature` or `functor` not allowed here *)
 end
 ```
 
@@ -1989,8 +1989,8 @@ To fix, try any of the following:
   ```sml
 
   val mapFst =
-      List.map (fn (x, _) => x)
-  (** ^^^^^^^^^^^^^^^^^^^^^^^^^ cannot bind expansive polymorphic expression *)
+    List.map (fn (x, _) => x)
+  (** + cannot bind expansive polymorphic expression *)
 
   ```
 
@@ -1998,7 +1998,7 @@ To fix, try any of the following:
 
   ```sml
   fun mapFst xs =
-      List.map (fn (x, _) => x) xs
+    List.map (fn (x, _) => x) xs
   ```
 
 - Annotate the expression (or pattern) with a non-polymorphic type.
@@ -2006,16 +2006,14 @@ To fix, try any of the following:
   Before:
 
   ```sml
-  val r =
-      ref []
-  (** ^^^^^^ cannot bind expansive polymorphic expression *)
+  val r = ref []
+  (**     ^^^^^^ cannot bind expansive polymorphic expression *)
   ```
 
   After:
 
   ```sml
-  val r : int list ref =
-      ref []
+  val r : int list ref = ref []
   ```
 
 ## 5029
@@ -2295,14 +2293,16 @@ There was a call to `@`, the list append function, with a discouraged first argu
 
 ```sml
 fun overlyComplicatedId xs =
-    [] @ xs
-(** ^^^^^^^ calling `@` with an empty list *)
+  [] @ xs
+(** + calling `@` with an empty list *)
+
 fun overlyComplicatedId' xs =
-    xs @ []
-(** ^^^^^^^ calling `@` with an empty list *)
+  xs @ []
+(** + calling `@` with an empty list *)
+
 fun overlyComplicatedCons x xs =
-    [x] @ xs
-(** ^^^^^^^^ calling `@` with a singleton list *)
+  [x] @ xs
+(** + calling `@` with a singleton list *)
 ```
 
 These expressions can be simplified:
@@ -2342,8 +2342,8 @@ fun mainCharacter old =
 There was an occurrence of an unsupported SML construct.
 
 ```sml
-    abstype t = T with val _ = 3 end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsupported: `abstype` declarations *)
+abstype t = T with val _ = 3 end
+(** + unsupported: `abstype` declarations *)
 ```
 
 At time of writing, Millet does not support `abstype` declarations.
