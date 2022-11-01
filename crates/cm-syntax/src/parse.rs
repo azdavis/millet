@@ -1,6 +1,6 @@
 use crate::types::{
-  Class, DescKind, Error, ErrorKind, Export, Member, Namespace, ParseRoot, PathOrMinus,
-  PathOrStdBasis, Result, Token,
+  Class, Error, ErrorKind, Export, Member, Namespace, ParseRoot, PathOrMinus, PathOrStdBasis,
+  Result, Token,
 };
 use text_size_util::{TextRange, WithRange};
 
@@ -64,7 +64,7 @@ fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
     Some(Token::Group) => {
       p.bump();
       let (export, members) = exports_and_members(p)?;
-      ParseRoot { kind: DescKind::Group, export, members }
+      ParseRoot { export, members }
     }
     Some(Token::Library) => {
       p.bump();
@@ -72,7 +72,7 @@ fn root(p: &mut Parser<'_>) -> Result<ParseRoot> {
       if export_is_empty(&export) {
         return p.err(ErrorKind::EmptyExportList);
       }
-      ParseRoot { kind: DescKind::Library, export, members }
+      ParseRoot { export, members }
     }
     _ => return p.err(ErrorKind::ExpectedDesc),
   };

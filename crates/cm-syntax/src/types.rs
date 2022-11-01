@@ -133,15 +133,8 @@ impl ParsedPath {
 }
 
 pub(crate) struct ParseRoot {
-  #[allow(unused)]
-  pub(crate) kind: DescKind,
   pub(crate) export: Export,
   pub(crate) members: Vec<Member>,
-}
-
-pub(crate) enum DescKind {
-  Group,
-  Library,
 }
 
 /// An export.
