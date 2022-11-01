@@ -413,8 +413,8 @@ fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
       st,
       cfg,
       "let",
-      |st, cfg| get_str_exp(st, cfg, exp.str_exp()?),
       |st, cfg| get_dec(st, cfg, exp.dec()?),
+      |st, cfg| get_str_exp(st, cfg, exp.str_exp()?),
     )?,
   }
   Some(())
