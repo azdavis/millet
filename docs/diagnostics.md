@@ -2354,4 +2354,4 @@ To fix, try one of the following:
 - Move, merge, or remove the comment.
 - Disable automatic formatting.
 
-[config]: /docs/config.md
+[config]: /docs/manual.md#configuration
