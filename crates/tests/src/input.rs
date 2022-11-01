@@ -1,5 +1,9 @@
 //! Low-level tests for analysis input.
 
+mod cm;
+mod mlb;
+mod slash_var_path;
+
 use crate::check::ROOT;
 
 fn check_empty_cm(

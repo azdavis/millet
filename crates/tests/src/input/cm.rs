@@ -1,13 +1,13 @@
-use crate::types::{Export, Namespace, PathKind, PathOrMinus, PathOrStdBasis};
+use cm_syntax::{Export, Namespace, PathKind, PathOrMinus, PathOrStdBasis};
 use std::path::PathBuf;
 use str_util::Name;
 
 fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)]) {
-  let file = crate::get(s, &paths::slash_var_path::Env::default()).unwrap();
+  let file = cm_syntax::get(s, &paths::slash_var_path::Env::default()).unwrap();
   let want_paths: Vec<_> = want_paths.iter().map(|&(s, kind)| (mk_path_buf(s), kind)).collect();
   let got_export = RawExport::from(file.export);
   let got_paths: Vec<_> =
-    file.paths.into_iter().map(|path| (path.val.path, path.val.kind)).collect();
+    file.paths.into_iter().map(|path| (path.val.as_path().to_owned(), path.val.kind())).collect();
   assert_eq!(RawExport::Union(want_exports), got_export);
   assert_eq!(want_paths, got_paths);
 }
@@ -127,7 +127,7 @@ is
 
 #[test]
 fn unknown_class() {
-  let e = crate::get(r#"Group is foo.sml : succ-ml"#, &paths::slash_var_path::Env::default())
+  let e = cm_syntax::get(r#"Group is foo.sml : succ-ml"#, &paths::slash_var_path::Env::default())
     .unwrap_err();
   assert!(e.to_string().contains("unsupported class: succ-ml"));
 }

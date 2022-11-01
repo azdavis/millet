@@ -5,9 +5,6 @@
 //! 1. have `/` as the separator
 //! 2. may contain path variables starting with `$`
 
-#[cfg(test)]
-mod tests;
-
 use fast_hash::FxHashMap;
 use std::fmt;
 use std::path::PathBuf;

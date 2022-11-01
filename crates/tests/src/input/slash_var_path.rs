@@ -1,11 +1,8 @@
-use super::{get, Env};
-use std::path::PathBuf;
-
 #[track_caller]
 fn check(s: &str, env: &[(&str, &str)], want: &[&str]) {
-  let env: Env = env.iter().map(|&(k, v)| (k.into(), v.into())).collect();
-  let want: PathBuf = want.iter().collect();
-  let got = get(s, &env).unwrap();
+  let env: paths::slash_var_path::Env = env.iter().map(|&(k, v)| (k.into(), v.into())).collect();
+  let want: std::path::PathBuf = want.iter().collect();
+  let got = paths::slash_var_path::get(s, &env).unwrap();
   assert_eq!(want, got);
 }
 

@@ -704,16 +704,19 @@ name = "tests"
 version = "0.1.0"
 dependencies = [
  "analysis",
+ "cm-syntax",
  "config",
  "diagnostic-util",
  "env_logger",
  "fast-hash",
  "log",
+ "mlb-syntax",
  "once_cell",
  "paths",
  "pulldown-cmark",
  "serde_json",
  "sml-syntax",
+ "str-util",
  "text-pos",
  "xshell",
 ]
