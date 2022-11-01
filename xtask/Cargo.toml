@@ -5,6 +5,10 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 publish = false
 
+[[bin]]
+name = "xtask"
+test = false
+
 [dependencies]
 anyhow = "1"
 pico-args = "0.5"

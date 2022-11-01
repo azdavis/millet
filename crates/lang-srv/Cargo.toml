@@ -5,6 +5,10 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 publish = false
 
+[[bin]]
+name = "lang-srv"
+test = false
+
 [dependencies]
 analysis = { path = "../analysis" }
 anyhow = "1"
