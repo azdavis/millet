@@ -206,7 +206,9 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       st.write("datatype ");
       dat_binds(st, cfg, dec.dat_binds())?;
       if let Some(withtype) = dec.with_type() {
-        st.write(" withtype ");
+        st.write("\n");
+        cfg.output_indent(st);
+        st.write("withtype ");
         ty_binds(st, cfg, withtype.ty_binds())?;
       }
     }
@@ -220,7 +222,9 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       st.write("abstype ");
       dat_binds(st, cfg, dec.dat_binds())?;
       if let Some(withtype) = dec.with_type() {
-        st.write(" withtype ");
+        st.write("\n");
+        cfg.output_indent(st);
+        st.write("withtype ");
         ty_binds(st, cfg, withtype.ty_binds())?;
       }
       st.write(" with ");
@@ -405,7 +409,13 @@ fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
       st.write(" (");
       match exp.app_str_exp_arg()? {
         ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(st, cfg, arg.str_exp()?)?,
-        ast::AppStrExpArg::Dec(arg) => get_dec(st, cfg, arg)?,
+        ast::AppStrExpArg::Dec(arg) => {
+          st.write("\n");
+          let new_cfg = cfg.indented();
+          new_cfg.output_indent(st);
+          get_dec(st, new_cfg, arg)?;
+          st.write("\n");
+        }
       }
       st.write(")");
     }
