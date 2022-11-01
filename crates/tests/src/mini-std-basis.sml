@@ -43,7 +43,7 @@ fun tl xs =
 fun (xs @ ys) =
   case xs of
     nil => ys
-  | x :: xs => x :: xs @ ys
+  | x :: xs => x :: (xs @ ys)
 
 datatype 'a option =
   NONE
