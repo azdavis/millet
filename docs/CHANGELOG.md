@@ -15,7 +15,7 @@ The versioning system is basically the following:
 
 ## main
 
-- Shorten range for errors on a `case` to just the `case ... of`.
+- Improve range for errors on `case`, `struct ... end`, and `sig ... end`.
 - Improve formatting for `fn`, `val`, `let`, parenthesized expressions, `withtype`, and functor declaration arguments.
 - Warn when comments prevent formatting.
 - Correctly error when using e.g. `if` or `case` as an argument to an infix operator without parentheses.

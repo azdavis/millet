@@ -1,3 +1,5 @@
+//! NOTE: intentionally use a mix of `S:> SIG` and `S :> SIG` across tests to make sure both parse.
+
 use crate::check::check;
 
 #[test]
@@ -35,7 +37,7 @@ fn not_in_struct() {
 structure S: sig
   val x: int
 end = struct end
-(**   ^^^^^^^^^^ missing value required by signature: x *)
+(**   ^^^^^^ missing value required by signature: x *)
 "#,
   );
 }
@@ -48,8 +50,10 @@ exception Foo
 
 structure S: sig
   exception E
-end = struct val E = Foo end
-(**   ^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: E *)
+end = struct
+(**   ^^^^^^ incompatible identifier statuses: E *)
+  val E = Foo
+end
 "#,
   );
 }
@@ -91,8 +95,10 @@ fn datatype_missing_ctor() {
     r#"
 structure S: sig
   datatype d = A | B
-end = struct datatype d = A end
-(**   ^^^^^^^^^^^^^^^^^^^^^^^^^ missing value required by signature: B *)
+end = struct
+(**   ^^^^^^ missing value required by signature: B *)
+  datatype d = A
+end
 "#,
   );
 }
@@ -103,8 +109,10 @@ fn datatype_extra_ctor() {
     r#"
 structure S: sig
   datatype d = A
-end = struct datatype d = A | B end
-(**   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ extra value not present in signature: B *)
+end = struct
+(**   ^^^^^^ extra value not present in signature: B *)
+  datatype d = A | B
+end
 "#,
   );
 }
@@ -579,7 +587,7 @@ end
 
 structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either =
     struct type ('a, 'b) t = ('a, 'b) either end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected ('b, 'a) either, found ('a, 'b) either *)
+(** ^^^^^^ expected ('b, 'a) either, found ('a, 'b) either *)
 "#,
   );
 }
@@ -596,7 +604,7 @@ end
 
 structure Str :> SIG where type ('a, 'b) t = ('a, 'b) either =
     struct type ('a, 'b) t = ('b, 'a) either end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected ('a, 'b) either, found ('b, 'a) either *)
+(** ^^^^^^ expected ('a, 'b) either, found ('b, 'a) either *)
 "#,
   );
 }
@@ -606,9 +614,10 @@ fn sig_where_str_more_poly() {
   check(
     r#"
 signature SIG = sig type 'a t end
-structure Str :> SIG where type 'a t = unit =
-    struct type ('a, 'b) t = unit end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
+structure Str :> SIG where type 'a t = unit = struct
+(**                                           ^^^^^^ expected 1 type argument, found 2 *)
+  type ('a, 'b) t = unit
+end
 "#,
   );
 }
@@ -640,8 +649,10 @@ fn sig_more_poly() {
   check(
     r#"
 signature SIG = sig type 'a t end
-structure Str :> SIG = struct type t = unit end
-(**                    ^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 0 *)
+structure Str :> SIG = struct
+(**                    ^^^^^^ expected 1 type argument, found 0 *)
+  type t = unit
+end
 "#,
   );
 }
@@ -651,8 +662,10 @@ fn str_less_poly() {
   check(
     r#"
 signature SIG = sig type 'a t end
-structure Str :> SIG = struct type ('a, 'b) t = unit end
-(**                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
+structure Str :> SIG = struct
+(**                    ^^^^^^ expected 1 type argument, found 2 *)
+  type ('a, 'b) t = unit
+end
 "#,
   );
 }
@@ -665,9 +678,10 @@ signature SIG = sig
   type ('a, 'b) t = 'a * 'b
 end
 
-structure Str :> SIG =
-    struct type ('a, 'b) t = 'b * 'a end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b, found 'b * 'a *)
+structure Str :> SIG = struct
+(**                    ^^^^^^ expected 'a * 'b, found 'b * 'a *)
+  type ('a, 'b) t = 'b * 'a
+end
 "#,
   );
 }
@@ -676,11 +690,13 @@ structure Str :> SIG =
 fn datatype_ty_var_wrong_order() {
   check(
     r#"
-signature SIG =
-    sig    datatype ('a, 'b) t = T of 'a * 'b end
-structure Str :> SIG =
-    struct datatype ('a, 'b) t = T of 'b * 'a end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 'a * 'b -> ('a, 'b) Str.t, found 'b * 'a -> ('a, 'b) Str.t *)
+signature SIG = sig
+  datatype ('a, 'b) t = T of 'a * 'b
+end
+structure Str :> SIG = struct
+(**                    ^^^^^^ expected 'a * 'b -> ('a, 'b) Str.t, found 'b * 'a -> ('a, 'b) Str.t *)
+  datatype ('a, 'b) t = T of 'b * 'a
+end
 "#,
   );
 }

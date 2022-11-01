@@ -1230,11 +1230,13 @@ Something was requested by a signature, but not present in the structure that is
 ```sml
 signature SIG = sig
   val x : int
+  val y : string
 end
 
-structure Str : SIG =
-    struct end
-(** ^^^^^^^^^^ missing value required by signature: x *)
+structure Str : SIG = struct
+(**                   ^^^^^^ missing value required by signature: x *)
+  val y = "oops"
+end
 ```
 
 To fix, provide definitions for the missing items.
@@ -1251,7 +1253,7 @@ Usually, this is allowed, but it is forbidden for `datatype` declarations.
 structure S
   : sig    datatype d = Pazu          end
   = struct datatype d = Pazu | Sosuke end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ extra value not present in signature: Sosuke *)
+(** ^^^^^^ extra value not present in signature: Sosuke *)
 ```
 
 To fix, ensure only the requested items are defined.
@@ -1780,7 +1782,7 @@ exception Foo
 structure S
   : sig    exception E       end
   = struct val       E = Foo end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ incompatible identifier statuses: E *)
+(** ^^^^^^ incompatible identifier statuses: E *)
 ```
 
 To fix, ensure the names have compatible statuses.

@@ -331,10 +331,16 @@ fn source_file_diagnostics(
 }
 
 fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
-  if let Some(node) = ast::CaseExp::cast(node) {
+  if let Some(node) = ast::CaseExp::cast(node.clone()) {
     let case_kw = node.case_kw()?;
     let of_kw = node.of_kw()?;
     return Some(TextRange::new(case_kw.text_range().start(), of_kw.text_range().end()));
+  }
+  if let Some(node) = ast::StructStrExp::cast(node.clone()) {
+    return Some(node.struct_kw()?.text_range());
+  }
+  if let Some(node) = ast::SigSigExp::cast(node) {
+    return Some(node.sig_kw()?.text_range());
   }
   None
 }
