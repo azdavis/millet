@@ -7,10 +7,11 @@ pub mod input;
 use diagnostic_util::Diagnostic;
 use fmt_util::sep_seq;
 use paths::{PathId, PathMap, WithPath};
-use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
-use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
+use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
+use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode, SyntaxToken};
 use std::fmt;
 use text_pos::{Position, Range};
+use text_size_util::TextRange;
 
 /// Performs analysis.
 #[derive(Debug)]
@@ -149,9 +150,9 @@ impl Analysis {
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
     let ft = self.get_file_and_token(pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
-    let ptr = ptr.cast::<sml_syntax::ast::CaseExp>()?;
+    let ptr = ptr.cast::<ast::CaseExp>()?;
     let case = ptr.to_node(ft.file.syntax.parse.root.syntax());
-    let range = text_size_util::TextRange::empty(case.syntax().text_range().end());
+    let range = TextRange::empty(case.syntax().text_range().end());
     let range = ft.file.syntax.pos_db.range(range)?;
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
@@ -260,7 +261,7 @@ struct DiagnosticsOptions {
 fn diagnostic<M>(
   file: &mlb_statics::SourceFile,
   severities: &input::Severities,
-  range: text_size_util::TextRange,
+  range: TextRange,
   message: M,
   code: diagnostic_util::Code,
   severity: diagnostic_util::Severity,
@@ -307,12 +308,7 @@ fn source_file_diagnostics(
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
       let node = syntax.to_node(file.syntax.parse.root.syntax());
-      let mut range = node.text_range();
-      if let Some((case, of)) =
-        sml_syntax::ast::CaseExp::cast(node).and_then(|case| case.case_kw().zip(case.of_kw()))
-      {
-        range = text_size_util::TextRange::new(case.text_range().start(), of.text_range().end());
-      }
+      let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
       diagnostic(file, severities, range, msg, err.code(), err.severity())
     }));
@@ -332,6 +328,12 @@ fn source_file_diagnostics(
     }
   }
   ret
+}
+
+fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
+  ast::CaseExp::cast(node)
+    .and_then(|case| case.case_kw().zip(case.of_kw()))
+    .map(|(case, of)| TextRange::new(case.text_range().start(), of.text_range().end()))
 }
 
 struct CaseDisplay<'a> {
