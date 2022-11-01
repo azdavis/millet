@@ -206,15 +206,17 @@ impl Check {
     got: String,
   ) -> Result<(), Reason> {
     let file = &self.files[&path];
-    let region = if range.start.line == range.end.line {
-      Region::Exact {
+    if range.start.line == range.end.line {
+      let region = Region::Exact {
         line: range.start.line,
         col_start: range.start.character,
         col_end: range.end.character,
+      };
+      if try_region(file, path.wrap(region), got.as_str())? {
+        return Ok(());
       }
-    } else {
-      Region::Line(range.start.line)
-    };
+    }
+    let region = Region::Line(range.start.line);
     if try_region(file, path.wrap(region), got.as_str())? {
       Ok(())
     } else {
