@@ -1958,9 +1958,10 @@ An expansive expression is one that may raise an exception or allocate memory du
 Note that an application expression `f x` is considered expansive if:
 
 - The function `f` is the `ref` constructor.
-- The function `f` is **not** a constructor, or the argument `x` is expansive.
+- The function `f` is a "regular" function (i.e. **not** a constructor).
+- The argument `x` is expansive.
 
-This means that e.g. `SOME 3` is not expansive, because the function is a constructor (`SOME`), and the argument (`3`) is not expansive.
+This means that e.g. `SOME 3` is **not** expansive, because the function (`SOME`) is a non-`ref` constructor, and the argument (`3`) is not expansive.
 
 A polymorphic type is one which contains type variables, like `'a` or `'b`.
 
