@@ -364,55 +364,61 @@ impl State {
     self.sender.send(msg).unwrap()
   }
 
+  fn try_get_input(&mut self) -> Option<analysis::input::Input> {
+    let root = match &self.root {
+      None => return None,
+      Some(x) => x,
+    };
+    let input = elapsed::log("Input::new", || {
+      analysis::input::Input::new(&self.file_system, &mut self.store, root)
+    });
+    let err = match input {
+      Ok(x) => return Some(x),
+      Err(x) => x,
+    };
+    // need the root to display, but also need to mutate self
+    let root = root.clone();
+    let err_display = err.display(root.as_path());
+    for url in std::mem::take(&mut self.has_diagnostics) {
+      self.send_diagnostics(url, Vec::new());
+    }
+    let did_send_as_diagnostic = if err.abs_path().is_file() {
+      match file_url(err.abs_path()) {
+        Ok(url) => {
+          self.has_diagnostics.insert(url.clone());
+          self.send_diagnostics(
+            url,
+            vec![diagnostic(err_display.to_string(), err.range(), err.code(), err.severity())],
+          );
+          true
+        }
+        Err(_) => false,
+      }
+    } else {
+      false
+    };
+    if !did_send_as_diagnostic {
+      self.show_error(
+        format!("{}: {}", err.maybe_rel_path(root.as_path()).display(), err_display),
+        err.code(),
+      );
+    }
+    None
+  }
+
   // diagnostics //
 
   /// also gets input from the filesystem.
   fn try_publish_diagnostics(&mut self, extra: Option<(paths::PathId, String)>) -> bool {
-    let root = match &self.root {
-      None => return false,
+    let mut input = match self.try_get_input() {
       Some(x) => x,
-    };
-    let mut has_diagnostics = FxHashSet::<Url>::default();
-    let input = elapsed::log("Input::new", || {
-      analysis::input::Input::new(&self.file_system, &mut self.store, root)
-    });
-    let mut input = match input {
-      Ok(x) => x,
-      Err(err) => {
-        // need the root to display, but also need to mutate self
-        let root = root.clone();
-        let err_display = err.display(root.as_path());
-        for url in std::mem::take(&mut self.has_diagnostics) {
-          self.send_diagnostics(url, Vec::new());
-        }
-        let did_send_as_diagnostic = if err.abs_path().is_file() {
-          match file_url(err.abs_path()) {
-            Ok(url) => {
-              self.has_diagnostics.insert(url.clone());
-              self.send_diagnostics(
-                url,
-                vec![diagnostic(err_display.to_string(), err.range(), err.code(), err.severity())],
-              );
-              true
-            }
-            Err(_) => false,
-          }
-        } else {
-          false
-        };
-        if !did_send_as_diagnostic {
-          self.show_error(
-            format!("{}: {}", err.maybe_rel_path(root.as_path()).display(), err_display),
-            err.code(),
-          );
-        }
-        return false;
-      }
+      None => return false,
     };
     if let Some((path, contents)) = extra {
       input.override_source(path, contents);
     }
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
+    let mut has_diagnostics = FxHashSet::<Url>::default();
     for (path_id, errors) in got_many {
       let path = self.store.get_path(path_id);
       let url = match file_url(path.as_path()) {
