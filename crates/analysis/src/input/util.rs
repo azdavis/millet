@@ -12,9 +12,9 @@ use text_pos::Range;
 /// file which doesn't exist (or a non-file), so we can't always show these in the editor inline.
 #[derive(Debug)]
 pub struct Error {
-  source: ErrorSource,
+  source: Box<ErrorSource>,
   path: PathBuf,
-  kind: ErrorKind,
+  kind: Box<ErrorKind>,
 }
 
 impl Error {
@@ -45,13 +45,13 @@ impl Error {
   /// Return this as an I/O error.
   #[must_use]
   pub fn from_io(path: PathBuf, e: std::io::Error) -> Self {
-    Self { source: ErrorSource::default(), path, kind: ErrorKind::Io(e) }
+    Self::new(ErrorSource::default(), path, ErrorKind::Io(e))
   }
 
   /// Returns the code for this.
   #[must_use]
   pub fn code(&self) -> Code {
-    match self.kind {
+    match *self.kind {
       ErrorKind::Io(_) => Code::n(1001),
       ErrorKind::NotInRoot(_) => Code::n(1002),
       ErrorKind::MultipleRoots(_, _) => Code::n(1003),
@@ -112,7 +112,7 @@ struct ErrorDisplay<'a> {
 
 impl fmt::Display for ErrorDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &self.err.kind {
+    match &*self.err.kind {
       ErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
       ErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
       ErrorKind::MultipleRoots(a, b) => {
