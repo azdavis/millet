@@ -28,11 +28,11 @@ where
     let syntax_dec = match mlb_syntax::get(group.contents.as_str(), &root_group.config.path_vars) {
       Ok(x) => x,
       Err(e) => {
-        return Err(Error {
-          source: ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
-          path: group.path.as_path().to_owned(),
-          kind: ErrorKind::Mlb(e),
-        });
+        return Err(Error::new(
+          ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
+          group.path.as_path().to_owned(),
+          ErrorKind::Mlb(e),
+        ));
       }
     };
     let cx = Cx { group, path_id: cur.path };
@@ -69,11 +69,11 @@ where
         .into_iter()
         .map(|(name, exp)| {
           if !names.insert(name.val.clone()) {
-            return Err(Error {
-              source: ErrorSource { path: None, range: cx.group.pos_db.range(name.range) },
-              path: cx.group.path.as_path().to_owned(),
-              kind: ErrorKind::Duplicate(name.val),
-            });
+            return Err(Error::new(
+              ErrorSource { path: None, range: cx.group.pos_db.range(name.range) },
+              cx.group.path.as_path().to_owned(),
+              ErrorKind::Duplicate(name.val),
+            ));
           }
           let exp = get_bas_exp(st, cx, exp)?;
           Ok(mlb_statics::BasDec::Basis(name, exp.into()))
@@ -94,11 +94,11 @@ where
         .into_iter()
         .map(|(lhs, rhs)| {
           if !names.insert(lhs.val.clone()) {
-            return Err(Error {
-              source: ErrorSource { path: None, range: cx.group.pos_db.range(lhs.range) },
-              path: cx.group.path.as_path().to_owned(),
-              kind: ErrorKind::Duplicate(lhs.val),
-            });
+            return Err(Error::new(
+              ErrorSource { path: None, range: cx.group.pos_db.range(lhs.range) },
+              cx.group.path.as_path().to_owned(),
+              ErrorKind::Duplicate(lhs.val),
+            ));
           }
           let rhs = rhs.unwrap_or_else(|| lhs.clone());
           let ns = match ns {

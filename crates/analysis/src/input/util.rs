@@ -12,12 +12,16 @@ use text_pos::Range;
 /// file which doesn't exist (or a non-file), so we can't always show these in the editor inline.
 #[derive(Debug)]
 pub struct Error {
-  pub(crate) source: ErrorSource,
-  pub(crate) path: PathBuf,
-  pub(crate) kind: ErrorKind,
+  source: ErrorSource,
+  path: PathBuf,
+  kind: ErrorKind,
 }
 
 impl Error {
+  pub(crate) fn new(source: ErrorSource, path: PathBuf, kind: ErrorKind) -> Self {
+    Self { source: Box::new(source), path, kind: Box::new(kind) }
+  }
+
   /// Returns `abs_path`, but possibly relative to the `root`.
   ///
   /// The path will be relative to `root` if it is contained in `root`. Else, it will be absolute.
@@ -184,25 +188,21 @@ pub(crate) fn canonicalize<F>(
 where
   F: paths::FileSystem,
 {
-  fs.canonicalize(path).map_err(|e| Error { source, path: path.to_owned(), kind: ErrorKind::Io(e) })
+  fs.canonicalize(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
 }
 
 pub(crate) fn read_file<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<String>
 where
   F: paths::FileSystem,
 {
-  fs.read_to_string(path).map_err(|e| Error {
-    source,
-    path: path.to_owned(),
-    kind: ErrorKind::Io(e),
-  })
+  fs.read_to_string(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
 }
 
 pub(crate) fn read_dir<F>(fs: &F, source: ErrorSource, path: &Path) -> Result<Vec<PathBuf>>
 where
   F: paths::FileSystem,
 {
-  fs.read_dir(path).map_err(|e| Error { source, path: path.to_owned(), kind: ErrorKind::Io(e) })
+  fs.read_dir(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
 }
 
 #[derive(Debug, Clone, Copy)]

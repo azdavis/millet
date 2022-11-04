@@ -100,11 +100,11 @@ where
   let cm = match cm_syntax::get(group.contents.as_str(), st.path_vars) {
     Ok(x) => x,
     Err(e) => {
-      return Err(Error {
-        source: ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
-        path: group.path.as_path().to_owned(),
-        kind: ErrorKind::Cm(e),
-      })
+      return Err(Error::new(
+        ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
+        group.path.as_path().to_owned(),
+        ErrorKind::Cm(e),
+      ))
     }
   };
   for pp in cm.paths {
@@ -159,11 +159,11 @@ where
         cm_syntax::Namespace::Signature => sml_statics::basis::Namespace::Signature,
         cm_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
         cm_syntax::Namespace::FunSig => {
-          return Err(Error {
-            source: ErrorSource { path: None, range: cx.group.pos_db.range(ns.range) },
-            path: cx.group.path.as_path().to_owned(),
-            kind: ErrorKind::UnsupportedExport,
-          })
+          return Err(Error::new(
+            ErrorSource { path: None, range: cx.group.pos_db.range(ns.range) },
+            cx.group.path.as_path().to_owned(),
+            ErrorKind::UnsupportedExport,
+          ))
         }
       };
       ac.insert(NameExport { namespace, name: name.val }, name.range);
@@ -182,11 +182,11 @@ where
         let contents = match st.sources.get(&path_id) {
           Some(x) => x.as_str(),
           None => {
-            return Err(Error {
+            return Err(Error::new(
               source,
-              path: cx.group.path.as_path().to_owned(),
-              kind: ErrorKind::SourcePathNotInFiles,
-            })
+              cx.group.path.as_path().to_owned(),
+              ErrorKind::SourcePathNotInFiles,
+            ))
           }
         };
         get_top_defs(contents, ac, path.range);

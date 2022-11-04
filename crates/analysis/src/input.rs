@@ -42,11 +42,11 @@ impl Input {
     };
     let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
-      return Err(Error {
-        source: ErrorSource::default(),
-        path: store.get_path(err.witness()).as_path().to_owned(),
-        kind: ErrorKind::Cycle,
-      });
+      return Err(Error::new(
+        ErrorSource::default(),
+        store.get_path(err.witness()).as_path().to_owned(),
+        ErrorKind::Cycle,
+      ));
     }
     Ok(Self {
       sources,
