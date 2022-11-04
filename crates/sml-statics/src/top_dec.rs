@@ -572,7 +572,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
                   continue;
                 }
                 let path_1 = join_paths(struct_1, &ty_con);
-                let path_2 = join_paths(*struct_2, &ty_con);
+                let path_2 = join_paths(struct_2, &ty_con);
                 get_sharing_type(st, marker, &mut inner_env, &[path_1, path_2], spec.into());
               }
             }

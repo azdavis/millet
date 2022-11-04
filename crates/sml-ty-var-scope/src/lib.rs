@@ -146,7 +146,7 @@ fn get_spec(cx: &mut Cx, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
     sml_hir::Spec::Val(_, val_descs) => {
       let mut ac = TyVarSet::default();
       for val_desc in val_descs {
-        get_ty(cx, ars, &mut ac, val_desc.ty);
+        get_ty(ars, &mut ac, val_desc.ty);
       }
       assert!(cx.val_spec.insert(spec, ac).is_none());
     }
@@ -209,7 +209,7 @@ fn get_dec(
           let mut mode = Mode::Get(TyVarSet::default());
           for val_bind in val_binds {
             match &mut mode {
-              Mode::Get(ac) => get_pat(cx, ars, ac, val_bind.pat),
+              Mode::Get(ac) => get_pat(ars, ac, val_bind.pat),
               Mode::Set => unreachable!("mode changed to Set"),
             }
             get_exp(cx, ars, &scope, &mut mode, val_bind.exp);
@@ -283,7 +283,7 @@ fn get_exp(
       get_exp(cx, ars, scope, mode, *head);
       for &(pat, exp) in matcher_arms {
         match mode {
-          Mode::Get(ac) => get_pat(cx, ars, ac, pat),
+          Mode::Get(ac) => get_pat(ars, ac, pat),
           Mode::Set => {}
         }
         get_exp(cx, ars, scope, mode, exp);
@@ -293,7 +293,7 @@ fn get_exp(
     sml_hir::Exp::Fn(matcher_arms, _) => {
       for &(pat, exp) in matcher_arms {
         match mode {
-          Mode::Get(ac) => get_pat(cx, ars, ac, pat),
+          Mode::Get(ac) => get_pat(ars, ac, pat),
           Mode::Set => {}
         }
         get_exp(cx, ars, scope, mode, exp);
@@ -302,41 +302,41 @@ fn get_exp(
     sml_hir::Exp::Typed(exp, ty) => {
       get_exp(cx, ars, scope, mode, *exp);
       match mode {
-        Mode::Get(ac) => get_ty(cx, ars, ac, *ty),
+        Mode::Get(ac) => get_ty(ars, ac, *ty),
         Mode::Set => {}
       }
     }
   }
 }
 
-fn get_pat(cx: &mut Cx, ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
+fn get_pat(ars: &sml_hir::Arenas, ac: &mut TyVarSet, pat: sml_hir::PatIdx) {
   let pat = match pat {
     Some(x) => x,
     None => return,
   };
   match &ars.pat[pat] {
     sml_hir::Pat::Wild | sml_hir::Pat::SCon(_) => {}
-    sml_hir::Pat::Con(_, argument) => get_pat(cx, ars, ac, argument.flatten()),
+    sml_hir::Pat::Con(_, argument) => get_pat(ars, ac, argument.flatten()),
     sml_hir::Pat::Record { rows, .. } => {
       for &(_, pat) in rows {
-        get_pat(cx, ars, ac, pat);
+        get_pat(ars, ac, pat);
       }
     }
     sml_hir::Pat::Typed(pat, ty) => {
-      get_pat(cx, ars, ac, *pat);
-      get_ty(cx, ars, ac, *ty);
+      get_pat(ars, ac, *pat);
+      get_ty(ars, ac, *ty);
     }
-    sml_hir::Pat::As(_, pat) => get_pat(cx, ars, ac, *pat),
+    sml_hir::Pat::As(_, pat) => get_pat(ars, ac, *pat),
     sml_hir::Pat::Or(or_pat) => {
-      get_pat(cx, ars, ac, or_pat.first);
+      get_pat(ars, ac, or_pat.first);
       for &pat in &or_pat.rest {
-        get_pat(cx, ars, ac, pat);
+        get_pat(ars, ac, pat);
       }
     }
   }
 }
 
-fn get_ty(cx: &mut Cx, ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::TyIdx) {
+fn get_ty(ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::TyIdx) {
   let ty = match ty {
     Some(x) => x,
     None => return,
@@ -348,17 +348,17 @@ fn get_ty(cx: &mut Cx, ars: &sml_hir::Arenas, ac: &mut TyVarSet, ty: sml_hir::Ty
     }
     sml_hir::Ty::Record(rows) => {
       for &(_, ty) in rows {
-        get_ty(cx, ars, ac, ty);
+        get_ty(ars, ac, ty);
       }
     }
     sml_hir::Ty::Con(arguments, _) => {
       for &ty in arguments {
-        get_ty(cx, ars, ac, ty);
+        get_ty(ars, ac, ty);
       }
     }
     sml_hir::Ty::Fn(param, res) => {
-      get_ty(cx, ars, ac, *param);
-      get_ty(cx, ars, ac, *res);
+      get_ty(ars, ac, *param);
+      get_ty(ars, ac, *res);
     }
   }
 }

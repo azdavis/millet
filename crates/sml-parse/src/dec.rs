@@ -58,7 +58,7 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
             p.exit(en, SK::InfixFunBindCaseHead);
           } else {
             let saw_op = p.at(SK::OpKw);
-            let name = p.peek_n(if saw_op { 1 } else { 0 });
+            let name = p.peek_n(usize::from(saw_op));
             let is_name_star = name.map_or(false, |tok| matches!(tok.kind, SK::Name | SK::Star));
             let is_infix = name.map_or(false, |tok| p.is_infix(tok.text));
             if saw_op {
