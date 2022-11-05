@@ -8,7 +8,7 @@ publish = false
 [lib]
 doctest = false
 
-[dependencies]
+[dev-dependencies]
 analysis = { path = "../analysis" }
 cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
