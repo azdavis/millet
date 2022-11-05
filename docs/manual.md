@@ -86,59 +86,59 @@ QUZ = { path = "lib" }
 
 Millet offers the following configuration options via VS Code settings:
 
-#### `millet.server.enable`
-
-- Type: `boolean`
-- Default: `true`
-
-Enable the language server.
-
-#### `millet.server.path`
-
-- Type: `string`
-- Default: `""`
-
-Path to the `lang-srv` executable. When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.
-
-#### `millet.server.hover.token.enable`
-
-- Type: `boolean`
-- Default: `true`
-
-Show information about tokens on hover.
-
-#### `millet.server.diagnostics.onChange.enable`
-
-- Type: `boolean`
-- Default: `false`
-
-Send diagnostics when file contents change before saving.
-
-#### `millet.server.diagnostics.filter`
-
-- Type: `string`
-- Default: `"syntax"`
-
-What diagnostics to send per file.
-
-- `"none"`: No filter, i.e. available diagnostics are sent.
-- `"syntax"`: If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics diagnostics.
-
-#### `millet.server.diagnostics.moreInfoHint.enable`
-
-- Type: `boolean`
-- Default: `true`
-
-Show a hint on diagnostic messages about clicking the error code number for more information.
-
-#### `millet.format.enable`
-
-- Type: `boolean`
-- Default: `false`
+## millet.format.enable
 
 **WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
 
 Naively format open SML files on save.
+
+- Type: `boolean`
+- Default: `false`
+
+## millet.server.diagnostics.filter
+
+What diagnostics to send per file.
+
+- Type: `string`
+- Default: `"syntax"`
+- Valid values:
+  - `"none"`: No filter, i.e. available diagnostics are sent.
+  - `"syntax"`: If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics diagnostics.
+
+## millet.server.diagnostics.moreInfoHint.enable
+
+Show a hint on diagnostic messages about clicking the error code number for more information.
+
+- Type: `boolean`
+- Default: `true`
+
+## millet.server.diagnostics.onChange.enable
+
+Send diagnostics when file contents change before saving.
+
+- Type: `boolean`
+- Default: `false`
+
+## millet.server.enable
+
+Enable the language server.
+
+- Type: `boolean`
+- Default: `true`
+
+## millet.server.hover.token.enable
+
+Show information about tokens on hover.
+
+- Type: `boolean`
+- Default: `true`
+
+## millet.server.path
+
+Path to the `lang-srv` executable. When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.
+
+- Type: `string`
+- Default: `""`
 
 ## Features
 

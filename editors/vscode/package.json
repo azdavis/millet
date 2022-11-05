@@ -53,25 +53,10 @@
       "type": "object",
       "title": "Millet",
       "properties": {
-        "millet.server.enable": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Enable the language server."
-        },
-        "millet.server.path": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Path to the `lang-srv` executable. When set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
-        },
-        "millet.server.hover.token.enable": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Show information about tokens on hover."
-        },
-        "millet.server.diagnostics.onChange.enable": {
+        "millet.format.enable": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Send diagnostics when file contents change before saving."
+          "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nNaively format open SML files on save."
         },
         "millet.server.diagnostics.filter": {
           "type": "string",
@@ -91,10 +76,25 @@
           "default": true,
           "markdownDescription": "Show a hint on diagnostic messages about clicking the error code number for more information."
         },
-        "millet.format.enable": {
+        "millet.server.diagnostics.onChange.enable": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nNaively format open SML files on save."
+          "markdownDescription": "Send diagnostics when file contents change before saving."
+        },
+        "millet.server.enable": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable the language server."
+        },
+        "millet.server.hover.token.enable": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show information about tokens on hover."
+        },
+        "millet.server.path": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the `lang-srv` executable. When set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
         }
       }
     },
