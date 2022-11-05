@@ -301,7 +301,7 @@ impl fmt::Display for ConfigProperty<'_> {
 }
 
 #[test]
-fn config() {
+fn vs_code_config() {
   let package_json = include_str!("../../../editors/vscode/package.json");
   let package_json: serde_json::Value = serde_json::from_str(package_json).unwrap();
   let properties = package_json
