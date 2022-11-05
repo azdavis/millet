@@ -2,6 +2,7 @@
 
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
+use std::fmt;
 use std::path::{Path, PathBuf};
 use xshell::{cmd, Shell};
 
@@ -238,4 +239,125 @@ fn error_codes() {
     line.strip_prefix("Code::n(").unwrap().strip_suffix(')').unwrap().parse::<u16>().unwrap()
   }));
   eq_sets(&in_doc, &in_code, "diagnostics documented but not used", "diagnostics not documented");
+}
+
+#[derive(Debug)]
+struct EnumVariant {
+  name: String,
+  desc: String,
+}
+
+impl fmt::Display for EnumVariant {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "`{:?}`: {}", self.name, self.desc)
+  }
+}
+
+#[derive(Debug)]
+enum TypeAndDefault {
+  Bool(bool),
+  String(String, Vec<EnumVariant>),
+}
+
+impl fmt::Display for TypeAndDefault {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      TypeAndDefault::Bool(b) => {
+        writeln!(f, "- Type: `boolean`")?;
+        writeln!(f, "- Default: `{b:?}`")?;
+        Ok(())
+      }
+      TypeAndDefault::String(s, vs) => {
+        writeln!(f, "- Type: `string`")?;
+        writeln!(f, "- Default: `{s:?}`")?;
+        if !vs.is_empty() {
+          writeln!(f, "- Valid values:")?;
+          for v in vs {
+            writeln!(f, "  - {v}")?;
+          }
+        }
+        Ok(())
+      }
+    }
+  }
+}
+
+#[derive(Debug)]
+struct ConfigProperty {
+  name: String,
+  desc: String,
+  type_and_default: TypeAndDefault,
+}
+
+impl fmt::Display for ConfigProperty {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    writeln!(f, "## {}", self.name)?;
+    writeln!(f)?;
+    writeln!(f, "{}", self.desc)?;
+    writeln!(f)?;
+    self.type_and_default.fmt(f)?;
+    Ok(())
+  }
+}
+
+#[test]
+fn config() {
+  use std::fmt::Write as _;
+  let package_json = include_str!("../../../editors/vscode/package.json");
+  let package_json: serde_json::Value = serde_json::from_str(package_json).unwrap();
+  let properties = package_json
+    .as_object()
+    .unwrap()
+    .get("contributes")
+    .unwrap()
+    .as_object()
+    .unwrap()
+    .get("configuration")
+    .unwrap()
+    .as_object()
+    .unwrap()
+    .get("properties")
+    .unwrap()
+    .as_object()
+    .unwrap();
+  let mut want_doc = String::new();
+  for (name, val) in properties {
+    let val = val.as_object().unwrap();
+    let typ = val.get("type").unwrap().as_str().unwrap();
+    let default = val.get("default").unwrap();
+    let desc = val.get("markdownDescription").unwrap().as_str().unwrap();
+    let enums = val.get("enum").and_then(|x| Some(x.as_array()?.clone())).unwrap_or_default();
+    let enum_descs = val
+      .get("markdownEnumDescriptions")
+      .and_then(|x| Some(x.as_array()?.clone()))
+      .unwrap_or_default();
+    assert_eq!(enums.len(), enum_descs.len());
+    let enum_variants: Vec<_> = enums
+      .iter()
+      .zip(enum_descs)
+      .map(|(name, desc)| {
+        let name = name.as_str().unwrap().to_owned();
+        let desc = desc.as_str().unwrap().to_owned();
+        EnumVariant { name, desc }
+      })
+      .collect();
+    let type_and_default = match typ {
+      "boolean" => {
+        assert!(enum_variants.is_empty());
+        TypeAndDefault::Bool(default.as_bool().unwrap())
+      }
+      "string" => TypeAndDefault::String(default.as_str().unwrap().to_owned(), enum_variants),
+      _ => panic!("unknown type: {typ}"),
+    };
+    let config_property =
+      ConfigProperty { name: name.clone(), desc: desc.to_owned(), type_and_default };
+    writeln!(want_doc, "{config_property}").unwrap();
+  }
+  let manual = include_str!("../../../docs/manual.md");
+  let mut iter = manual.lines();
+  iter.find(|x| x.trim() == "<!-- @begin vscode-config -->");
+  let got_doc_lines: Vec<_> =
+    iter.take_while(|x| x.trim() != "<!-- @end vscode-config -->").collect();
+  let got_doc = got_doc_lines.join("\n");
+  assert!(want_doc.trim() == got_doc.trim(), "=== want===\n{want_doc}\n===got===\n{got_doc}");
 }

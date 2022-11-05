@@ -86,6 +86,8 @@ QUZ = { path = "lib" }
 
 Millet offers the following configuration options via VS Code settings:
 
+<!-- @begin vscode-config -->
+
 ## millet.format.enable
 
 **WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
@@ -139,6 +141,8 @@ Path to the `lang-srv` executable. When set to the empty string `""` (the defaul
 
 - Type: `string`
 - Default: `""`
+
+<!-- @end vscode-config -->
 
 ## Features
 
