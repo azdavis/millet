@@ -2,7 +2,7 @@
 
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
-use std::fmt;
+use std::fmt::{self, Write as _};
 use std::path::{Path, PathBuf};
 use xshell::{cmd, Shell};
 
@@ -302,7 +302,6 @@ impl fmt::Display for ConfigProperty {
 
 #[test]
 fn config() {
-  use std::fmt::Write as _;
   let package_json = include_str!("../../../editors/vscode/package.json");
   let package_json: serde_json::Value = serde_json::from_str(package_json).unwrap();
   let properties = package_json
