@@ -574,6 +574,9 @@ fn error_url(code: Code) -> Url {
   Url::parse(&format!("{}#{}", diagnostic_util::URL, code)).expect("couldn't parse error URL")
 }
 
+const DISABLE: &str =
+  "in VS Code, set `millet.server.diagnostics.moreInfoHint.enable` to `false` to disable this hint";
+
 fn diagnostic(
   message: String,
   range: Option<text_pos::Range>,
@@ -581,6 +584,13 @@ fn diagnostic(
   severity: Severity,
   more_info_hint: bool,
 ) -> lsp_types::Diagnostic {
+  let url = error_url(code);
+  let related_information = more_info_hint.then(|| {
+    vec![lsp_types::DiagnosticRelatedInformation {
+      location: lsp_types::Location { uri: url.clone(), range: lsp_types::Range::default() },
+      message: format!("click the blue '{code}' for more information. {DISABLE}"),
+    }]
+  });
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(match severity {
@@ -588,14 +598,10 @@ fn diagnostic(
       Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
     }),
     code: Some(lsp_types::NumberOrString::Number(code.as_i32())),
-    code_description: Some(lsp_types::CodeDescription { href: error_url(code) }),
+    code_description: Some(lsp_types::CodeDescription { href: url }),
     source: Some("Millet".to_owned()),
-    message: if more_info_hint {
-      format!("{message}\nclick the blue '{code}' for more info")
-    } else {
-      message
-    },
-    related_information: None,
+    message,
+    related_information,
     tags: None,
     data: None,
   }

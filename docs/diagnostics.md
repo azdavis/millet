@@ -2,6 +2,8 @@
 
 This is documentation for all the diagnostics Millet can emit, and what they mean.
 
+If you're here, you may have followed a diagnostic code link from your editor. To turn off the hint about clicking those links in VS Code, set `millet.server.diagnostics.moreInfoHint.enable` to false.
+
 ## 1001
 
 Millet failed to perform file or directory I/O with the filesystem. It could be that the path in question:
