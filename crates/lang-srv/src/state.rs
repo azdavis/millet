@@ -6,6 +6,7 @@ use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
 use lsp_types::Url;
+use std::fmt;
 use std::ops::ControlFlow;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
@@ -574,8 +575,18 @@ fn error_url(code: Code) -> Url {
   Url::parse(&format!("{}#{}", diagnostic_util::URL, code)).expect("couldn't parse error URL")
 }
 
-const DISABLE: &str =
-  "in VS Code, set `millet.server.diagnostics.moreInfoHint.enable` to `false` to disable this hint";
+struct ClickCodeHint {
+  code: Code,
+}
+
+impl fmt::Display for ClickCodeHint {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "click the blue {} for more info and/or advice for how to fix. ", self.code)?;
+    write!(f, "in VS Code, set `millet.server.diagnostics.moreInfoHint.enable` to `false` ")?;
+    write!(f, "to disable this hint.")?;
+    Ok(())
+  }
+}
 
 fn diagnostic(
   message: String,
@@ -588,7 +599,7 @@ fn diagnostic(
   let related_information = more_info_hint.then(|| {
     vec![lsp_types::DiagnosticRelatedInformation {
       location: lsp_types::Location { uri: url.clone(), range: lsp_types::Range::default() },
-      message: format!("click the blue '{code}' for more information. {DISABLE}"),
+      message: ClickCodeHint { code }.to_string(),
     }]
   });
   lsp_types::Diagnostic {
