@@ -359,5 +359,5 @@ fn config() {
   let got_doc_lines: Vec<_> =
     iter.take_while(|x| x.trim() != "<!-- @end vscode-config -->").collect();
   let got_doc = got_doc_lines.join("\n");
-  assert!(want_doc.trim() == got_doc.trim(), "=== want===\n{want_doc}\n===got===\n{got_doc}");
+  pretty_assertions::assert_str_eq!(got_doc.trim(), want_doc.trim(),);
 }
