@@ -35,10 +35,14 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 
 const LEARN_MORE: &str = "Learn more";
 
+struct Root {
+  path: paths::CanonicalPathBuf,
+}
+
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
 /// that communicate over stdin and stdout.)
 pub(crate) struct State {
-  root: Option<paths::CanonicalPathBuf>,
+  root: Option<Root>,
   store: paths::Store,
   has_diagnostics: FxHashSet<Url>,
   registered_for_watched_files: bool,
@@ -68,7 +72,7 @@ impl State {
       .transpose();
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
-      root: root.as_mut().ok().and_then(Option::take),
+      root: root.as_mut().ok().and_then(Option::take).map(|path| Root { path }),
       store: paths::Store::new(),
       has_diagnostics: FxHashSet::default(),
       registered_for_watched_files: false,
@@ -96,12 +100,11 @@ impl State {
         .root
         .as_ref()
         .map(|root| {
-          let watchers = vec![lsp_types::FileSystemWatcher {
-            // not sure if possible to only listen to millet.toml. "nested alternate groups are not
-            // allowed" at time of writing
-            glob_pattern: format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.as_path().display()),
-            kind: None,
-          }];
+          // not sure if possible to only listen to millet.toml. "nested alternate groups are not
+          // allowed" at time of writing
+          let glob_pattern =
+            format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
+          let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
           ret.registered_for_watched_files = true;
           vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
@@ -366,20 +369,20 @@ impl State {
   }
 
   fn try_get_input(&mut self) -> Option<analysis::input::Input> {
-    let root = match &self.root {
+    let root = match self.root.take() {
       None => return None,
       Some(x) => x,
     };
     let input = elapsed::log("Input::new", || {
-      analysis::input::Input::new(&self.file_system, &mut self.store, root)
+      analysis::input::Input::new(&self.file_system, &mut self.store, &root.path)
     });
     let err = match input {
-      Ok(x) => return Some(x),
+      Ok(x) => {
+        self.root = Some(root);
+        return Some(x);
+      }
       Err(x) => x,
     };
-    // need the root to display, but also need to mutate self
-    let root = root.clone();
-    let err_display = err.display(root.as_path());
     for url in std::mem::take(&mut self.has_diagnostics) {
       self.send_diagnostics(url, Vec::new());
     }
@@ -390,7 +393,7 @@ impl State {
           self.send_diagnostics(
             url,
             vec![diagnostic(
-              err_display.to_string(),
+              err.display(root.path.as_path()).to_string(),
               err.range(),
               err.code(),
               err.severity(),
@@ -406,10 +409,15 @@ impl State {
     };
     if !did_send_as_diagnostic {
       self.show_error(
-        format!("{}: {}", err.maybe_rel_path(root.as_path()).display(), err_display),
+        format!(
+          "{}: {}",
+          err.maybe_rel_path(root.path.as_path()).display(),
+          err.display(root.path.as_path())
+        ),
         err.code(),
       );
     }
+    self.root = Some(root);
     None
   }
 
