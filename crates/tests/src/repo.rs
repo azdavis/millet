@@ -242,24 +242,24 @@ fn error_codes() {
 }
 
 #[derive(Debug)]
-struct EnumVariant {
-  name: String,
-  desc: String,
+struct EnumVariant<'a> {
+  name: &'a str,
+  desc: &'a str,
 }
 
-impl fmt::Display for EnumVariant {
+impl fmt::Display for EnumVariant<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "`{:?}`: {}", self.name, self.desc)
   }
 }
 
 #[derive(Debug)]
-enum TypeAndDefault {
+enum TypeAndDefault<'a> {
   Bool(bool),
-  String(String, Vec<EnumVariant>),
+  String(&'a str, Vec<EnumVariant<'a>>),
 }
 
-impl fmt::Display for TypeAndDefault {
+impl fmt::Display for TypeAndDefault<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       TypeAndDefault::Bool(b) => {
@@ -283,13 +283,13 @@ impl fmt::Display for TypeAndDefault {
 }
 
 #[derive(Debug)]
-struct ConfigProperty {
-  name: String,
-  desc: String,
-  type_and_default: TypeAndDefault,
+struct ConfigProperty<'a> {
+  name: &'a str,
+  desc: &'a str,
+  type_and_default: TypeAndDefault<'a>,
 }
 
-impl fmt::Display for ConfigProperty {
+impl fmt::Display for ConfigProperty<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     writeln!(f, "## {}", self.name)?;
     writeln!(f)?;
@@ -325,19 +325,16 @@ fn config() {
     let typ = val.get("type").unwrap().as_str().unwrap();
     let default = val.get("default").unwrap();
     let desc = val.get("markdownDescription").unwrap().as_str().unwrap();
-    let enums = val.get("enum").and_then(|x| Some(x.as_array()?.clone())).unwrap_or_default();
-    let enum_descs = val
-      .get("markdownEnumDescriptions")
-      .and_then(|x| Some(x.as_array()?.clone()))
-      .unwrap_or_default();
-    assert_eq!(enums.len(), enum_descs.len());
+    let enums = val.get("enum").and_then(serde_json::Value::as_array);
+    let enum_descs = val.get("markdownEnumDescriptions").and_then(serde_json::Value::as_array);
+    assert_eq!(enums.map(Vec::len), enum_descs.map(Vec::len));
     let enum_variants: Vec<_> = enums
-      .iter()
-      .zip(enum_descs)
-      .map(|(name, desc)| {
-        let name = name.as_str().unwrap().to_owned();
-        let desc = desc.as_str().unwrap().to_owned();
-        EnumVariant { name, desc }
+      .into_iter()
+      .flatten()
+      .zip(enum_descs.into_iter().flatten())
+      .map(|(name, desc)| EnumVariant {
+        name: name.as_str().unwrap(),
+        desc: desc.as_str().unwrap(),
       })
       .collect();
     let type_and_default = match typ {
@@ -345,11 +342,10 @@ fn config() {
         assert!(enum_variants.is_empty());
         TypeAndDefault::Bool(default.as_bool().unwrap())
       }
-      "string" => TypeAndDefault::String(default.as_str().unwrap().to_owned(), enum_variants),
+      "string" => TypeAndDefault::String(default.as_str().unwrap(), enum_variants),
       _ => panic!("unknown type: {typ}"),
     };
-    let config_property =
-      ConfigProperty { name: name.clone(), desc: desc.to_owned(), type_and_default };
+    let config_property = ConfigProperty { name, desc, type_and_default };
     writeln!(want_doc, "{config_property}").unwrap();
   }
   let manual = include_str!("../../../docs/manual.md");
