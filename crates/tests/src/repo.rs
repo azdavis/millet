@@ -19,6 +19,18 @@ where
   assert!(only_rhs_set.is_empty(), "{only_rhs}: {only_rhs_set:#?}");
 }
 
+fn no_dupes<I, T>(iter: I) -> BTreeSet<T>
+where
+  I: Iterator<Item = T>,
+  T: Ord + Copy + std::fmt::Display,
+{
+  let mut ret = BTreeSet::<T>::default();
+  for x in iter {
+    assert!(ret.insert(x), "duplicate: {x}");
+  }
+  ret
+}
+
 #[test]
 fn sml_def() {
   let sh = Shell::new().unwrap();
@@ -210,18 +222,6 @@ fn licenses() {
     println!("{license}: {names:?}");
   }
   assert!(new_licenses.is_empty(), "found {} new licenses", new_licenses.len());
-}
-
-fn no_dupes<I, T>(iter: I) -> BTreeSet<T>
-where
-  I: Iterator<Item = T>,
-  T: Ord + Copy + std::fmt::Display,
-{
-  let mut ret = BTreeSet::<T>::default();
-  for x in iter {
-    assert!(ret.insert(x), "duplicate: {x}");
-  }
-  ret
 }
 
 #[test]
