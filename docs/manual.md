@@ -124,6 +124,13 @@ What diagnostics to send per file.
 - `"none"`: No filter, i.e. available diagnostics are sent.
 - `"syntax"`: If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics diagnostics.
 
+#### `millet.server.diagnostics.moreInfoHint.enable`
+
+- Type: `boolean`
+- Default: `true`
+
+Show a hint on diagnostic messages about clicking the error code number for more information.
+
 #### `millet.format.enable`
 
 - Type: `boolean`

@@ -388,7 +388,13 @@ impl State {
           self.has_diagnostics.insert(url.clone());
           self.send_diagnostics(
             url,
-            vec![diagnostic(err_display.to_string(), err.range(), err.code(), err.severity())],
+            vec![diagnostic(
+              err_display.to_string(),
+              err.range(),
+              err.code(),
+              err.severity(),
+              self.options.diagnostics_more_info_hint,
+            )],
           );
           true
         }
@@ -428,7 +434,7 @@ impl State {
           continue;
         }
       };
-      let ds = diagnostics(errors);
+      let ds = diagnostics(errors, self.options.diagnostics_more_info_hint);
       if ds.is_empty() {
         continue;
       }
@@ -451,7 +457,10 @@ impl State {
   }
 
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
-    self.send_diagnostics(url, diagnostics(self.analysis.get_one(text)));
+    self.send_diagnostics(
+      url,
+      diagnostics(self.analysis.get_one(text), self.options.diagnostics_more_info_hint),
+    );
   }
 
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
@@ -551,10 +560,13 @@ fn file_url(path: &std::path::Path) -> Result<Url> {
     .with_context(|| format!("couldn't parse path into a URL: {path:?}"))
 }
 
-fn diagnostics(errors: Vec<diagnostic_util::Diagnostic>) -> Vec<lsp_types::Diagnostic> {
+fn diagnostics(
+  errors: Vec<diagnostic_util::Diagnostic>,
+  more_info_hint: bool,
+) -> Vec<lsp_types::Diagnostic> {
   errors
     .into_iter()
-    .map(|err| diagnostic(err.message, Some(err.range), err.code, err.severity))
+    .map(|err| diagnostic(err.message, Some(err.range), err.code, err.severity, more_info_hint))
     .collect()
 }
 
@@ -567,6 +579,7 @@ fn diagnostic(
   range: Option<text_pos::Range>,
   code: Code,
   severity: Severity,
+  more_info_hint: bool,
 ) -> lsp_types::Diagnostic {
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
@@ -577,7 +590,11 @@ fn diagnostic(
     code: Some(lsp_types::NumberOrString::Number(code.as_i32())),
     code_description: Some(lsp_types::CodeDescription { href: error_url(code) }),
     source: Some("Millet".to_owned()),
-    message,
+    message: if more_info_hint {
+      format!("{message}\nclick the blue '{code}' for more info")
+    } else {
+      message
+    },
     related_information: None,
     tags: None,
     data: None,

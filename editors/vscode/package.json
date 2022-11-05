@@ -86,6 +86,11 @@
             "If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics diagnostics."
           ]
         },
+        "millet.server.diagnostics.moreInfoHint.enable": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show a hint on diagnostic messages about clicking the error code number for more information."
+        },
         "millet.format.enable": {
           "type": "boolean",
           "default": false,

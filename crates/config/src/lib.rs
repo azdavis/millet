@@ -84,10 +84,12 @@ pub enum DiagnosticsFilter {
 /// Optional settings for the server.
 #[derive(Debug, Deserialize)]
 #[allow(missing_docs)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Options {
   pub show_token_hover: bool,
   pub diagnostics_on_change: bool,
   pub diagnostics_filter: DiagnosticsFilter,
+  pub diagnostics_more_info_hint: bool,
   pub format: bool,
 }
 
@@ -97,6 +99,7 @@ impl Default for Options {
       show_token_hover: true,
       diagnostics_on_change: false,
       diagnostics_filter: DiagnosticsFilter::Syntax,
+      diagnostics_more_info_hint: true,
       format: false,
     }
   }
