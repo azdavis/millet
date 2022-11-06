@@ -34,6 +34,11 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 
 const LEARN_MORE: &str = "Learn more";
 
+enum Mode {
+  Root(Root),
+  NoRoot,
+}
+
 struct Root {
   path: paths::CanonicalPathBuf,
   input: Option<analysis::input::Input>,
@@ -42,7 +47,7 @@ struct Root {
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
 /// that communicate over stdin and stdout.)
 pub(crate) struct State {
-  root: Option<Root>,
+  mode: Mode,
   has_diagnostics: FxHashSet<Url>,
   analysis: analysis::Analysis,
   sp: SPState,
@@ -81,10 +86,13 @@ impl State {
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
-      root: root.as_mut().ok().and_then(Option::take).map(|path| {
-        let input = sp.try_get_input(&path, &mut has_diagnostics);
-        Root { path, input }
-      }),
+      mode: match root.as_mut().ok().and_then(Option::take) {
+        Some(path) => {
+          let input = sp.try_get_input(&path, &mut has_diagnostics);
+          Mode::Root(Root { path, input })
+        }
+        None => Mode::NoRoot,
+      },
       has_diagnostics,
       analysis,
       sp,
@@ -98,10 +106,8 @@ impl State {
       .and_then(|x| x.file_operations?.dynamic_registration)
       .unwrap_or_default();
     if dynamic_registration {
-      let registrations = ret
-        .root
-        .as_ref()
-        .map(|root| {
+      let registrations = match &ret.mode {
+        Mode::Root(root) => {
           // not sure if possible to only listen to millet.toml. "nested alternate groups are not
           // allowed" at time of writing
           let glob_pattern =
@@ -111,8 +117,9 @@ impl State {
           vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
           )]
-        })
-        .unwrap_or_default();
+        }
+        Mode::NoRoot => vec![],
+      };
       ret.sp.send_request::<lsp_types::request::RegisterCapability>(
         lsp_types::RegistrationParams { registrations },
         None,
@@ -272,22 +279,22 @@ impl State {
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
     n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(
       n,
-      |_| match &mut self.root {
-        Some(root) => {
+      |_| match &mut self.mode {
+        Mode::Root(root) => {
           root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
           self.try_publish_diagnostics();
           Ok(())
         }
-        None => bail!("can't handle DidChangeWatchedFiles with no root"),
+        Mode::NoRoot => bail!("can't handle DidChangeWatchedFiles with no root"),
       },
     )?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
-      let root = match &mut self.root {
-        Some(x) => x,
+      let root = match &mut self.mode {
+        Mode::Root(x) => x,
         // TODO get this working. might require keeping the current contents of every open file
         // in the State, so we could feed it into publish_diagnostics_one?
-        None => bail!("not implemented: DidChangeTextDocument with no root"),
+        Mode::NoRoot => bail!("not implemented: DidChangeTextDocument with no root"),
       };
       let input = match &mut root.input {
         Some(x) => x,
@@ -309,16 +316,19 @@ impl State {
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
-      if self.root.is_none() {
-        let url = params.text_document.uri;
-        let text = params.text_document.text;
-        self.publish_diagnostics_one(url, &text);
+      match self.mode {
+        Mode::Root(_) => {}
+        Mode::NoRoot => {
+          let url = params.text_document.uri;
+          let text = params.text_document.text;
+          self.publish_diagnostics_one(url, &text);
+        }
       }
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
-      match &mut self.root {
-        Some(root) => {
+      match &mut self.mode {
+        Mode::Root(root) => {
           if self.sp.registered_for_watched_files {
             log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
           } else {
@@ -326,7 +336,7 @@ impl State {
             self.try_publish_diagnostics();
           }
         }
-        None => match params.text {
+        Mode::NoRoot => match params.text {
           Some(text) => {
             let url = params.text_document.uri;
             self.publish_diagnostics_one(url, &text);
@@ -337,9 +347,12 @@ impl State {
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
-      if self.root.is_none() {
-        let url = params.text_document.uri;
-        self.sp.send_diagnostics(url, Vec::new());
+      match self.mode {
+        Mode::Root(_) => {}
+        Mode::NoRoot => {
+          let url = params.text_document.uri;
+          self.sp.send_diagnostics(url, Vec::new());
+        }
       }
       Ok(())
     })?;
@@ -349,7 +362,11 @@ impl State {
   // diagnostics //
 
   fn try_publish_diagnostics(&mut self) -> bool {
-    let input = match self.root.as_mut().and_then(|x| x.input.as_mut()) {
+    let root = match &mut self.mode {
+      Mode::Root(x) => x,
+      Mode::NoRoot => return false,
+    };
+    let input = match &mut root.input {
       Some(x) => x,
       None => return false,
     };
