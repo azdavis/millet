@@ -291,7 +291,7 @@ struct ConfigProperty<'a> {
 
 impl fmt::Display for ConfigProperty<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    writeln!(f, "## {}", self.name)?;
+    writeln!(f, "#### `{}`", self.name)?;
     writeln!(f)?;
     writeln!(f, "{}", self.desc)?;
     writeln!(f)?;
