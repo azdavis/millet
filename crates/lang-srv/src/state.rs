@@ -301,7 +301,7 @@ impl State {
       apply_changes(text, params.content_changes);
       if self.sp.options.diagnostics_on_change {
         self.try_publish_diagnostics();
-      } else {
+      } else if self.sp.options.format {
         // TODO this is expensive, but currently necessary to make formatting work. can we
         // make it just do it for formatting (i.e. syntax) only (no statics)?
         self.analysis.get_many(input);
