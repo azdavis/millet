@@ -364,10 +364,9 @@ impl State {
   }
 
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
-    self.sp.send_diagnostics(
-      url,
-      helpers::diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint),
-    );
+    let ds =
+      helpers::diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint);
+    self.sp.send_diagnostics(url, ds);
   }
 }
 
