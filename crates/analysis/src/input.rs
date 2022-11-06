@@ -61,9 +61,9 @@ impl Input {
     self.sources.iter().map(|(&path, s)| path.wrap(s.as_str()))
   }
 
-  /// Override a source file to have the given contents.
-  pub fn override_source(&mut self, path: PathId, contents: String) {
-    self.sources.insert(path, contents);
+  /// Returns a mutable ref to the source for this path.
+  pub fn get_mut_source(&mut self, path: PathId) -> Option<&mut String> {
+    self.sources.get_mut(&path)
   }
 }
 

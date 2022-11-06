@@ -119,7 +119,7 @@ impl State {
         None,
       );
     }
-    ret.try_publish_diagnostics(None);
+    ret.try_publish_diagnostics();
     if !ret.sp.registered_for_watched_files {
       log::warn!("millet will not necessarily receive notifications when files change on-disk.");
       log::warn!("this means the internal state of millet can get out of sync with what is");
@@ -276,7 +276,7 @@ impl State {
       |_| match &mut self.root {
         Some(root) => {
           root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
-          self.try_publish_diagnostics(None);
+          self.try_publish_diagnostics();
           Ok(())
         }
         None => bail!("can't handle DidChangeWatchedFiles with no root"),
@@ -284,27 +284,24 @@ impl State {
     )?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
-      let mut changes = params.content_changes;
-      let change = match changes.pop() {
-        Some(x) => x,
-        None => bail!("no content changes"),
-      };
-      if !changes.is_empty() {
-        bail!("not exactly 1 content change");
-      }
-      if change.range.is_some() {
-        bail!("not a full document change");
-      }
-      let contents = change.text;
       if self.sp.options.diagnostics_on_change {
         match &mut self.root {
           Some(root) => {
             let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
-            root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
-            self.try_publish_diagnostics(Some((path, contents)));
+            match root.input.as_mut().and_then(|input| input.get_mut_source(path)) {
+              Some(text) => {
+                apply_changes(text, params.content_changes);
+                self.try_publish_diagnostics();
+              }
+              None => {
+                log::warn!("no input or no source in the input")
+              }
+            }
           }
           None => {
-            self.publish_diagnostics_one(url, &contents);
+            log::warn!("not implemented: DidChangeTextDocument with no root");
+            // TODO get this working. might require keeping the current contents of every open file
+            // in the State, so we could feed it into publish_diagnostics_one?
           }
         }
       }
@@ -325,7 +322,7 @@ impl State {
             log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
           } else {
             root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
-            self.try_publish_diagnostics(None);
+            self.try_publish_diagnostics();
           }
         }
         None => match params.text {
@@ -350,14 +347,11 @@ impl State {
 
   // diagnostics //
 
-  fn try_publish_diagnostics(&mut self, extra: Option<(paths::PathId, String)>) -> bool {
+  fn try_publish_diagnostics(&mut self) -> bool {
     let input = match self.root.as_mut().and_then(|x| x.input.as_mut()) {
       Some(x) => x,
       None => return false,
     };
-    if let Some((path, contents)) = extra {
-      input.override_source(path, contents);
-    }
     let got_many = elapsed::log("get_many", || self.analysis.get_many(input));
     let mut has_diagnostics = FxHashSet::<Url>::default();
     for (path_id, errors) in got_many {
@@ -532,8 +526,7 @@ where
   }
 }
 
-/// adapted from rust-analyzer. TODO use
-#[allow(dead_code)]
+/// adapted from rust-analyzer.
 fn apply_changes(text: &mut String, changes: Vec<lsp_types::TextDocumentContentChangeEvent>) {
   let mut pos_db = text_pos::PositionDb::new(text);
   let mut up_to_line = None::<u32>;
