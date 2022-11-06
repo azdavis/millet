@@ -338,66 +338,20 @@ impl State {
     ControlFlow::Continue(n)
   }
 
-  fn try_get_input(&mut self) -> Option<analysis::input::Input> {
-    let root = match self.root.take() {
-      None => return None,
-      Some(x) => x,
-    };
-    let input = elapsed::log("Input::new", || {
-      analysis::input::Input::new(&self.sp.file_system, &mut self.sp.store, &root.path)
-    });
-    let err = match input {
-      Ok(x) => {
-        self.root = Some(root);
-        return Some(x);
-      }
-      Err(x) => x,
-    };
-    for url in std::mem::take(&mut self.has_diagnostics) {
-      self.sp.send_diagnostics(url, Vec::new());
-    }
-    let did_send_as_diagnostic = if err.abs_path().is_file() {
-      match file_url(err.abs_path()) {
-        Ok(url) => {
-          self.has_diagnostics.insert(url.clone());
-          self.sp.send_diagnostics(
-            url,
-            vec![diagnostic(
-              err.display(root.path.as_path()).to_string(),
-              err.range(),
-              err.code(),
-              err.severity(),
-              self.sp.options.diagnostics_more_info_hint,
-            )],
-          );
-          true
-        }
-        Err(_) => false,
-      }
-    } else {
-      false
-    };
-    if !did_send_as_diagnostic {
-      self.sp.show_error(
-        format!(
-          "{}: {}",
-          err.maybe_rel_path(root.path.as_path()).display(),
-          err.display(root.path.as_path())
-        ),
-        err.code(),
-      );
-    }
-    self.root = Some(root);
-    None
-  }
-
   // diagnostics //
 
   /// also gets input from the filesystem.
   fn try_publish_diagnostics(&mut self, extra: Option<(paths::PathId, String)>) -> bool {
-    let mut input = match self.try_get_input() {
+    let root = match self.root.take() {
       Some(x) => x,
       None => return false,
+    };
+    let mut input = match self.sp.try_get_input(&root.path, &mut self.has_diagnostics) {
+      Some(x) => x,
+      None => {
+        self.root = Some(root);
+        return false;
+      }
     };
     if let Some((path, contents)) = extra {
       input.override_source(path, contents);
@@ -432,6 +386,7 @@ impl State {
       self.sp.send_diagnostics(url, Vec::new());
     }
     self.has_diagnostics = has_diagnostics;
+    self.root = Some(root);
     true
   }
 
@@ -502,6 +457,55 @@ impl SPState {
       },
       Some(code),
     );
+  }
+
+  fn try_get_input(
+    &mut self,
+    root: &paths::CanonicalPathBuf,
+    has_diagnostics: &mut FxHashSet<Url>,
+  ) -> Option<analysis::input::Input> {
+    let input = elapsed::log("Input::new", || {
+      analysis::input::Input::new(&self.file_system, &mut self.store, root)
+    });
+    let err = match input {
+      Ok(x) => return Some(x),
+      Err(x) => x,
+    };
+    for url in std::mem::take(has_diagnostics) {
+      self.send_diagnostics(url, Vec::new());
+    }
+    let did_send_as_diagnostic = if err.abs_path().is_file() {
+      match file_url(err.abs_path()) {
+        Ok(url) => {
+          has_diagnostics.insert(url.clone());
+          self.send_diagnostics(
+            url,
+            vec![diagnostic(
+              err.display(root.as_path()).to_string(),
+              err.range(),
+              err.code(),
+              err.severity(),
+              self.options.diagnostics_more_info_hint,
+            )],
+          );
+          true
+        }
+        Err(_) => false,
+      }
+    } else {
+      false
+    };
+    if !did_send_as_diagnostic {
+      self.show_error(
+        format!(
+          "{}: {}",
+          err.maybe_rel_path(root.as_path()).display(),
+          err.display(root.as_path())
+        ),
+        err.code(),
+      );
+    }
+    None
   }
 }
 
