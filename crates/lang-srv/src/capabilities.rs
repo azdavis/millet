@@ -7,8 +7,7 @@ pub(crate) fn get() -> lsp_types::ServerCapabilities {
         will_save: None,
         will_save_wait_until: None,
         save: Some(lsp_types::TextDocumentSyncSaveOptions::SaveOptions(lsp_types::SaveOptions {
-          // TODO make None
-          include_text: Some(true),
+          include_text: None,
         })),
       },
     )),

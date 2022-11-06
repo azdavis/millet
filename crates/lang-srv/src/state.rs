@@ -5,7 +5,7 @@ mod helpers;
 use anyhow::{anyhow, bail, Result};
 use crossbeam_channel::Sender;
 use diagnostic_util::Code;
-use fast_hash::FxHashSet;
+use fast_hash::{FxHashMap, FxHashSet};
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
 use lsp_types::Url;
 use std::ops::ControlFlow;
@@ -59,7 +59,7 @@ impl State {
           let input = sp.try_get_input(&path, &mut has_diagnostics);
           Mode::Root(Root { path, input })
         }
-        None => Mode::NoRoot,
+        None => Mode::NoRoot(FxHashMap::default()),
       },
       sp,
       analysis,
@@ -249,19 +249,19 @@ impl State {
           root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
           self.try_publish_diagnostics();
         }
-        Mode::NoRoot => log::warn!("ignoring DidChangeWatchedFiles with NoRoot"),
+        Mode::NoRoot(_) => log::warn!("ignoring DidChangeWatchedFiles with NoRoot"),
       }
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
+      let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       match &mut self.mode {
         Mode::Root(root) => {
           let input = match &mut root.input {
             Some(x) => x,
             None => bail!("no input for DidChangeTextDocument"),
           };
-          let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
           let text = match input.get_mut_source(path) {
             Some(x) => x,
             None => bail!("no source in the input for DidChangeTextDocument"),
@@ -277,14 +277,27 @@ impl State {
         }
         // TODO get this working. might require keeping the current contents of every open file in
         // the State, so we could feed it into publish_diagnostics_one?
-        Mode::NoRoot => bail!("not implemented: DidChangeTextDocument with no root"),
+        Mode::NoRoot(open_files) => match open_files.get_mut(&path) {
+          Some(text) => {
+            apply_changes(text, params.content_changes);
+            if self.sp.options.diagnostics_on_change {
+              // NOTE: clone to satisfy borrow checker
+              let text = text.clone();
+              self.publish_diagnostics_one(url, &text);
+            }
+          }
+          None => bail!("no open file found for DidChangeTextDocument"),
+        },
       }
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
-      if let Mode::NoRoot = self.mode {
+      if let Mode::NoRoot(open_files) = &mut self.mode {
         let url = params.text_document.uri;
         let text = params.text_document.text;
+        let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+        // NOTE: clone to satisfy borrow checker
+        open_files.insert(path, text.clone());
         self.publish_diagnostics_one(url, &text);
       }
       Ok(())
@@ -299,19 +312,29 @@ impl State {
             self.try_publish_diagnostics();
           }
         }
-        Mode::NoRoot => match params.text {
-          Some(text) => {
-            let url = params.text_document.uri;
-            self.publish_diagnostics_one(url, &text);
+        Mode::NoRoot(open_files) => {
+          if params.text.is_some() {
+            log::warn!("got text for DidSaveTextDocument");
           }
-          None => bail!("no text for DidSaveTextDocument"),
-        },
+          let url = params.text_document.uri;
+          let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+          match open_files.get(&path) {
+            Some(text) => {
+              // NOTE: clone to satisfy borrow checker
+              let text = text.clone();
+              self.publish_diagnostics_one(url, &text);
+            }
+            None => bail!("no open file found for DidSaveTextDocument"),
+          }
+        }
       }
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
-      if let Mode::NoRoot = self.mode {
+      if let Mode::NoRoot(open_files) = &mut self.mode {
         let url = params.text_document.uri;
+        let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+        open_files.remove(&path);
         self.sp.send_diagnostics(url, Vec::new());
       }
       Ok(())
@@ -324,7 +347,7 @@ impl State {
   fn try_publish_diagnostics(&mut self) -> bool {
     let root = match &mut self.mode {
       Mode::Root(x) => x,
-      Mode::NoRoot => return false,
+      Mode::NoRoot(_) => return false,
     };
     let input = match &mut root.input {
       Some(x) => x,
@@ -371,8 +394,10 @@ impl State {
 }
 
 enum Mode {
+  /// We have a workspace root.
   Root(Root),
-  NoRoot,
+  /// We have no workspace root. We track the open files.
+  NoRoot(FxHashMap<paths::PathId, String>),
 }
 
 struct Root {
