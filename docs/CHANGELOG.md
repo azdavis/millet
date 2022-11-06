@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Show a hint by default about clicking the diagnostic code number for more information.
+- Improve auto-formatting to not discard new edits.
+
 ## v0.5.12
 
 - Improve range for statics errors on `case`, `let`, `local`, `struct`, and `sig`.
