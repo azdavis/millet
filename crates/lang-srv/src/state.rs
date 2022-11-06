@@ -34,16 +34,6 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
 
 const LEARN_MORE: &str = "Learn more";
 
-enum Mode {
-  Root(Root),
-  NoRoot,
-}
-
-struct Root {
-  path: paths::CanonicalPathBuf,
-  input: Option<analysis::input::Input>,
-}
-
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
 /// that communicate over stdin and stdout.)
 pub(crate) struct State {
@@ -401,6 +391,16 @@ impl State {
       diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint),
     );
   }
+}
+
+enum Mode {
+  Root(Root),
+  NoRoot,
+}
+
+struct Root {
+  path: paths::CanonicalPathBuf,
+  input: Option<analysis::input::Input>,
 }
 
 /// Semi-Permanent state. Some things on this are totally immutable after initialization. Other
