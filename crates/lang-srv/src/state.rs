@@ -1,12 +1,13 @@
 //! See [`State`].
 
-use anyhow::{anyhow, bail, Context, Result};
+mod helpers;
+
+use anyhow::{anyhow, bail, Result};
 use crossbeam_channel::Sender;
-use diagnostic_util::{Code, Severity};
+use diagnostic_util::Code;
 use fast_hash::FxHashSet;
 use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
 use lsp_types::Url;
-use std::fmt;
 use std::ops::ControlFlow;
 
 pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
@@ -71,7 +72,7 @@ impl State {
     };
     let mut root = init
       .root_uri
-      .map(|url| canonical_path_buf(&sp.file_system, &url).map_err(|e| (e, url)))
+      .map(|url| helpers::canonical_path_buf(&sp.file_system, &url).map_err(|e| (e, url)))
       .transpose();
     let mut has_diagnostics = FxHashSet::<Url>::default();
     let mut ret = Self {
@@ -103,7 +104,7 @@ impl State {
           format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
         let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
         let did_changed_registration =
-          registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
+          helpers::registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
           );
         ret.sp.send_request::<lsp_types::request::RegisterCapability>(
@@ -136,7 +137,7 @@ impl State {
   fn handle_request_(&mut self, mut r: Request) -> ControlFlow<Result<()>, Request> {
     r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
+      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let res =
         self.analysis.get_md(pos, self.sp.options.show_token_hover).map(|(value, range)| {
           lsp_types::Hover {
@@ -144,7 +145,7 @@ impl State {
               kind: lsp_types::MarkupKind::Markdown,
               value,
             }),
-            range: Some(lsp_range(range)),
+            range: Some(helpers::lsp_range(range)),
           }
         });
       self.sp.send_response(Response::new_ok(id, res));
@@ -152,22 +153,22 @@ impl State {
     })?;
     r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
+      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let res = self.analysis.get_def(pos).and_then(|range| {
-        lsp_location(&self.sp.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
+        helpers::lsp_location(&self.sp.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
       });
       self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
+      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let locs: Vec<_> = self
         .analysis
         .get_ty_defs(pos)
         .into_iter()
         .flatten()
-        .filter_map(|range| lsp_location(&self.sp.store, range))
+        .filter_map(|range| helpers::lsp_location(&self.sp.store, range))
         .collect();
       let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
       self.sp.send_response(Response::new_ok(id, res));
@@ -177,11 +178,11 @@ impl State {
     // CodeActionRequest
     r = try_request::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
       let url = params.text_document.uri;
-      let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
-      let range = analysis_range(params.range);
+      let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+      let range = helpers::analysis_range(params.range);
       let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
       if let Some((range, new_text)) = self.analysis.fill_case(path.wrap(range.start)) {
-        actions.push(quick_fix("Fill case".to_owned(), url, range, new_text));
+        actions.push(helpers::quick_fix("Fill case".to_owned(), url, range, new_text));
       }
       self.sp.send_response(Response::new_ok(id, actions));
       Ok(())
@@ -192,14 +193,14 @@ impl State {
         return Ok(());
       }
       let url = params.text_document.uri;
-      let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+      let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       self.sp.send_response(Response::new_ok(
         id,
         self.analysis.format(path).ok().map(|(new_text, end)| {
           vec![lsp_types::TextEdit {
             range: lsp_types::Range {
               start: lsp_types::Position { line: 0, character: 0 },
-              end: lsp_position(end),
+              end: helpers::lsp_position(end),
             },
             new_text,
           }]
@@ -246,7 +247,7 @@ impl State {
     }
     self.sp.send_request::<lsp_types::request::ShowDocument>(
       lsp_types::ShowDocumentParams {
-        uri: error_url(code),
+        uri: helpers::error_url(code),
         external: Some(true),
         take_focus: Some(true),
         selection: None,
@@ -288,7 +289,7 @@ impl State {
         Some(x) => x,
         None => bail!("no input for DidChangeTextDocument"),
       };
-      let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+      let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       let text = match input.get_mut_source(path) {
         Some(x) => x,
         None => bail!("no source in the input for DidChangeTextDocument"),
@@ -356,14 +357,14 @@ impl State {
     let mut has_diagnostics = FxHashSet::<Url>::default();
     for (path_id, errors) in got_many {
       let path = self.sp.store.get_path(path_id);
-      let url = match file_url(path.as_path()) {
+      let url = match helpers::file_url(path.as_path()) {
         Ok(x) => x,
         Err(e) => {
           log::error!("couldn't get path as a file url: {e:#}");
           continue;
         }
       };
-      let ds = diagnostics(errors, self.sp.options.diagnostics_more_info_hint);
+      let ds = helpers::diagnostics(errors, self.sp.options.diagnostics_more_info_hint);
       if ds.is_empty() {
         continue;
       }
@@ -388,7 +389,7 @@ impl State {
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
     self.sp.send_diagnostics(
       url,
-      diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint),
+      helpers::diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint),
     );
   }
 }
@@ -480,12 +481,12 @@ impl SPState {
       self.send_diagnostics(url, Vec::new());
     }
     let did_send_as_diagnostic = if err.abs_path().is_file() {
-      match file_url(err.abs_path()) {
+      match helpers::file_url(err.abs_path()) {
         Ok(url) => {
           has_diagnostics.insert(url.clone());
           self.send_diagnostics(
             url,
-            vec![diagnostic(
+            vec![helpers::diagnostic(
               err.display(root.as_path()).to_string(),
               err.range(),
               err.code(),
@@ -546,7 +547,7 @@ fn apply_changes(text: &mut String, changes: Vec<lsp_types::TextDocumentContentC
         if up_to_line.map_or(false, |utl| utl <= range.end.line) {
           pos_db = text_pos::PositionDb::new(text);
         }
-        match pos_db.text_range(analysis_range(range)) {
+        match pos_db.text_range(helpers::analysis_range(range)) {
           Some(text_range) => {
             text.replace_range(std::ops::Range::<usize>::from(text_range), &change.text);
             up_to_line = Some(range.start.line);
@@ -569,169 +570,4 @@ fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
       ControlFlow::Break(Err(anyhow!("couldn't deserialize for {method}: {error}")))
     }
   }
-}
-
-fn canonical_path_buf<F>(fs: &F, url: &Url) -> Result<paths::CanonicalPathBuf>
-where
-  F: paths::FileSystem,
-{
-  if url.scheme() != "file" {
-    bail!("not a file url: {url}")
-  }
-  match url.to_file_path() {
-    Ok(pb) => Ok(fs.canonicalize(pb.as_path())?),
-    Err(()) => bail!("couldn't make a URL into a file path: {url}"),
-  }
-}
-
-fn file_url(path: &std::path::Path) -> Result<Url> {
-  Url::parse(&format!("file://{}", path.display()))
-    .with_context(|| format!("couldn't parse path into a URL: {path:?}"))
-}
-
-fn diagnostics(
-  errors: Vec<diagnostic_util::Diagnostic>,
-  more_info_hint: bool,
-) -> Vec<lsp_types::Diagnostic> {
-  errors
-    .into_iter()
-    .map(|err| diagnostic(err.message, Some(err.range), err.code, err.severity, more_info_hint))
-    .collect()
-}
-
-fn error_url(code: Code) -> Url {
-  Url::parse(&format!("{}#{}", diagnostic_util::URL, code)).expect("couldn't parse error URL")
-}
-
-struct ClickCodeHint {
-  code: Code,
-}
-
-impl fmt::Display for ClickCodeHint {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "click the blue {} for more info and/or advice for how to fix. ", self.code)?;
-    write!(f, "in VS Code, set `millet.server.diagnostics.moreInfoHint.enable` to `false` ")?;
-    write!(f, "to disable this hint.")?;
-    Ok(())
-  }
-}
-
-fn diagnostic(
-  message: String,
-  range: Option<text_pos::Range>,
-  code: Code,
-  severity: Severity,
-  more_info_hint: bool,
-) -> lsp_types::Diagnostic {
-  let url = error_url(code);
-  let related_information = more_info_hint.then(|| {
-    vec![lsp_types::DiagnosticRelatedInformation {
-      location: lsp_types::Location { uri: url.clone(), range: lsp_types::Range::default() },
-      message: ClickCodeHint { code }.to_string(),
-    }]
-  });
-  lsp_types::Diagnostic {
-    range: range.map(lsp_range).unwrap_or_default(),
-    severity: Some(match severity {
-      Severity::Warning => lsp_types::DiagnosticSeverity::WARNING,
-      Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
-    }),
-    code: Some(lsp_types::NumberOrString::Number(code.as_i32())),
-    code_description: Some(lsp_types::CodeDescription { href: url }),
-    source: Some("Millet".to_owned()),
-    message,
-    related_information,
-    tags: None,
-    data: None,
-  }
-}
-
-fn lsp_range(range: text_pos::Range) -> lsp_types::Range {
-  lsp_types::Range { start: lsp_position(range.start), end: lsp_position(range.end) }
-}
-
-fn lsp_position(pos: text_pos::Position) -> lsp_types::Position {
-  lsp_types::Position { line: pos.line, character: pos.character }
-}
-
-fn lsp_location(
-  store: &paths::Store,
-  range: paths::WithPath<text_pos::Range>,
-) -> Option<lsp_types::Location> {
-  let uri = match file_url(store.get_path(range.path).as_path()) {
-    Ok(x) => x,
-    Err(e) => {
-      log::error!("couldn't get path as a file url: {e:#}");
-      return None;
-    }
-  };
-  Some(lsp_types::Location { uri, range: lsp_range(range.val) })
-}
-
-fn analysis_position(pos: lsp_types::Position) -> text_pos::Position {
-  text_pos::Position { line: pos.line, character: pos.character }
-}
-
-fn analysis_range(range: lsp_types::Range) -> text_pos::Range {
-  text_pos::Range { start: analysis_position(range.start), end: analysis_position(range.end) }
-}
-
-fn url_to_path_id<F>(fs: &F, store: &mut paths::Store, url: &Url) -> Result<paths::PathId>
-where
-  F: paths::FileSystem,
-{
-  Ok(store.get_id(&canonical_path_buf(fs, url)?))
-}
-
-fn text_doc_pos_params<F>(
-  fs: &F,
-  store: &mut paths::Store,
-  params: lsp_types::TextDocumentPositionParams,
-) -> Result<paths::WithPath<text_pos::Position>>
-where
-  F: paths::FileSystem,
-{
-  let path = url_to_path_id(fs, store, &params.text_document.uri)?;
-  let pos = analysis_position(params.position);
-  Ok(path.wrap(pos))
-}
-
-fn registration<N, T>(options: T) -> lsp_types::Registration
-where
-  N: lsp_types::notification::Notification,
-  T: serde::Serialize,
-{
-  lsp_types::Registration {
-    id: N::METHOD.to_owned(),
-    method: N::METHOD.to_owned(),
-    register_options: Some(serde_json::to_value(options).unwrap()),
-  }
-}
-
-fn quick_fix(
-  title: String,
-  url: Url,
-  range: text_pos::Range,
-  new_text: String,
-) -> lsp_types::CodeActionOrCommand {
-  lsp_types::CodeActionOrCommand::CodeAction(lsp_types::CodeAction {
-    title,
-    kind: Some(lsp_types::CodeActionKind::QUICKFIX),
-    edit: Some(lsp_types::WorkspaceEdit {
-      document_changes: Some(lsp_types::DocumentChanges::Edits(vec![
-        lsp_types::TextDocumentEdit {
-          text_document: lsp_types::OptionalVersionedTextDocumentIdentifier {
-            uri: url,
-            version: None,
-          },
-          edits: vec![lsp_types::OneOf::Left(lsp_types::TextEdit {
-            range: lsp_range(range),
-            new_text,
-          })],
-        },
-      ])),
-      ..Default::default()
-    }),
-    ..Default::default()
-  })
 }
