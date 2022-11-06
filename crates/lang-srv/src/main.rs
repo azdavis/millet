@@ -1,5 +1,6 @@
 //! A language server for Standard ML.
 
+mod capabilities;
 mod state;
 
 fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyhow::Result<()> {
@@ -25,7 +26,7 @@ fn main() -> anyhow::Result<()> {
   env_logger::try_init_from_env(env_logger::Env::default().default_filter_or("error"))?;
   log::info!("start up millet lsp server");
   let (connection, io_threads) = lsp_server::Connection::stdio();
-  let params = connection.initialize(serde_json::to_value(&state::capabilities())?)?;
+  let params = connection.initialize(serde_json::to_value(&capabilities::get())?)?;
   run(connection, serde_json::from_value(params)?)?;
   io_threads.join()?;
   log::info!("shut down millet lsp server");

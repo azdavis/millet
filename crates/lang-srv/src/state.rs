@@ -10,29 +10,6 @@ use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, Request
 use lsp_types::Url;
 use std::ops::ControlFlow;
 
-pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
-  lsp_types::ServerCapabilities {
-    text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Options(
-      lsp_types::TextDocumentSyncOptions {
-        open_close: Some(true),
-        change: Some(lsp_types::TextDocumentSyncKind::INCREMENTAL),
-        will_save: None,
-        will_save_wait_until: None,
-        save: Some(lsp_types::TextDocumentSyncSaveOptions::SaveOptions(lsp_types::SaveOptions {
-          // TODO make None
-          include_text: Some(true),
-        })),
-      },
-    )),
-    hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
-    definition_provider: Some(lsp_types::OneOf::Left(true)),
-    type_definition_provider: Some(lsp_types::TypeDefinitionProviderCapability::Simple(true)),
-    code_action_provider: Some(lsp_types::CodeActionProviderCapability::Simple(true)),
-    document_formatting_provider: Some(lsp_types::OneOf::Left(true)),
-    ..Default::default()
-  }
-}
-
 const LEARN_MORE: &str = "Learn more";
 
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
