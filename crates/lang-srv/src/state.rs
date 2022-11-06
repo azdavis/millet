@@ -353,7 +353,7 @@ impl State {
       Some(x) => x,
       None => return false,
     };
-    let got_many = elapsed::log("get_many", || self.analysis.get_many(input));
+    let got_many = self.analysis.get_many(input);
     let mut has_diagnostics = FxHashSet::<Url>::default();
     for (path_id, errors) in got_many {
       let path = self.sp.store.get_path(path_id);
