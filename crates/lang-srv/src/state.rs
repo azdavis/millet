@@ -48,18 +48,6 @@ pub(crate) struct State {
   sp: SPState,
 }
 
-/// Semi-Permanent state. Some things on this are totally immutable after initialization. Other
-/// things are mutable, but nothing on this will ever get "replaced" entirely; instead, _if_ it's
-/// mutable, _when_ it's mutate, it'll only be "tweaked" a bit.
-struct SPState {
-  options: config::Options,
-  registered_for_watched_files: bool,
-  store: paths::Store,
-  file_system: paths::RealFileSystem,
-  sender: Sender<Message>,
-  req_queue: ReqQueue<(), Option<Code>>,
-}
-
 impl State {
   pub(crate) fn new(init: lsp_types::InitializeParams, sender: Sender<Message>) -> Self {
     let file_system = paths::RealFileSystem::default();
@@ -97,7 +85,7 @@ impl State {
       },
     };
     if let Err((e, url)) = root {
-      ret.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1996));
+      ret.sp.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1996));
     }
     let dynamic_registration = init
       .capabilities
@@ -120,7 +108,7 @@ impl State {
           )]
         })
         .unwrap_or_default();
-      ret.send_request::<lsp_types::request::RegisterCapability>(
+      ret.sp.send_request::<lsp_types::request::RegisterCapability>(
         lsp_types::RegistrationParams { registrations },
         None,
       );
@@ -133,29 +121,6 @@ impl State {
       log::warn!("files not via the language client (i.e. the editor millet is attached to).");
     }
     ret
-  }
-
-  fn send_request<R>(&mut self, params: R::Params, data: Option<Code>)
-  where
-    R: lsp_types::request::Request,
-  {
-    let req = self.sp.req_queue.outgoing.register(R::METHOD.to_owned(), params, data);
-    self.send(req.into())
-  }
-
-  fn send_response(&mut self, res: Response) {
-    match self.sp.req_queue.incoming.complete(res.id.clone()) {
-      Some(()) => self.send(res.into()),
-      None => log::warn!("tried to respond to a non-queued request: {res:?}"),
-    }
-  }
-
-  fn send_notification<N>(&self, params: N::Params)
-  where
-    N: lsp_types::notification::Notification,
-  {
-    let notif = Notification::new(N::METHOD.to_owned(), params);
-    self.send(notif.into())
   }
 
   pub(crate) fn handle_request(&mut self, req: Request) {
@@ -182,7 +147,7 @@ impl State {
             range: Some(lsp_range(range)),
           }
         });
-      self.send_response(Response::new_ok(id, res));
+      self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
@@ -191,7 +156,7 @@ impl State {
       let res = self.analysis.get_def(pos).and_then(|range| {
         lsp_location(&self.sp.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
       });
-      self.send_response(Response::new_ok(id, res));
+      self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
@@ -205,7 +170,7 @@ impl State {
         .filter_map(|range| lsp_location(&self.sp.store, range))
         .collect();
       let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
-      self.send_response(Response::new_ok(id, res));
+      self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     // TODO do CodeActionResolveRequest and lazily compute the edit, instead of doing everything in
@@ -218,17 +183,17 @@ impl State {
       if let Some((range, new_text)) = self.analysis.fill_case(path.wrap(range.start)) {
         actions.push(quick_fix("Fill case".to_owned(), url, range, new_text));
       }
-      self.send_response(Response::new_ok(id, actions));
+      self.sp.send_response(Response::new_ok(id, actions));
       Ok(())
     })?;
     r = try_request::<lsp_types::request::Formatting, _>(r, |id, params| {
       if !self.sp.options.format {
-        self.send_response(Response::new_ok(id, None::<()>));
+        self.sp.send_response(Response::new_ok(id, None::<()>));
         return Ok(());
       }
       let url = params.text_document.uri;
       let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
-      self.send_response(Response::new_ok(
+      self.sp.send_response(Response::new_ok(
         id,
         self.analysis.format(path).ok().map(|(new_text, end)| {
           vec![lsp_types::TextEdit {
@@ -279,7 +244,7 @@ impl State {
       log::warn!("unknown item.title: {}", item.title);
       return;
     }
-    self.send_request::<lsp_types::request::ShowDocument>(
+    self.sp.send_request::<lsp_types::request::ShowDocument>(
       lsp_types::ShowDocumentParams {
         uri: error_url(code),
         external: Some(true),
@@ -366,16 +331,11 @@ impl State {
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
       if self.root.is_none() {
         let url = params.text_document.uri;
-        self.send_diagnostics(url, Vec::new());
+        self.sp.send_diagnostics(url, Vec::new());
       }
       Ok(())
     })?;
     ControlFlow::Continue(n)
-  }
-
-  fn send(&self, msg: Message) {
-    log::info!("sending {msg:?}");
-    self.sp.sender.send(msg).unwrap()
   }
 
   fn try_get_input(&mut self) -> Option<analysis::input::Input> {
@@ -394,13 +354,13 @@ impl State {
       Err(x) => x,
     };
     for url in std::mem::take(&mut self.has_diagnostics) {
-      self.send_diagnostics(url, Vec::new());
+      self.sp.send_diagnostics(url, Vec::new());
     }
     let did_send_as_diagnostic = if err.abs_path().is_file() {
       match file_url(err.abs_path()) {
         Ok(url) => {
           self.has_diagnostics.insert(url.clone());
-          self.send_diagnostics(
+          self.sp.send_diagnostics(
             url,
             vec![diagnostic(
               err.display(root.path.as_path()).to_string(),
@@ -418,7 +378,7 @@ impl State {
       false
     };
     if !did_send_as_diagnostic {
-      self.show_error(
+      self.sp.show_error(
         format!(
           "{}: {}",
           err.maybe_rel_path(root.path.as_path()).display(),
@@ -458,7 +418,7 @@ impl State {
         continue;
       }
       has_diagnostics.insert(url.clone());
-      self.send_diagnostics(url, ds);
+      self.sp.send_diagnostics(url, ds);
     }
     // this is the old one.
     let old_has_diagnostics = std::mem::take(&mut self.has_diagnostics);
@@ -469,17 +429,59 @@ impl State {
         continue;
       }
       // had old diagnostics, but no new diagnostics. clear the old diagnostics.
-      self.send_diagnostics(url, Vec::new());
+      self.sp.send_diagnostics(url, Vec::new());
     }
     self.has_diagnostics = has_diagnostics;
     true
   }
 
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
-    self.send_diagnostics(
+    self.sp.send_diagnostics(
       url,
       diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint),
     );
+  }
+}
+
+/// Semi-Permanent state. Some things on this are totally immutable after initialization. Other
+/// things are mutable, but nothing on this will ever get "replaced" entirely; instead, _if_ it's
+/// mutable, _when_ it's mutate, it'll only be "tweaked" a bit.
+struct SPState {
+  options: config::Options,
+  registered_for_watched_files: bool,
+  store: paths::Store,
+  file_system: paths::RealFileSystem,
+  sender: Sender<Message>,
+  req_queue: ReqQueue<(), Option<Code>>,
+}
+
+impl SPState {
+  fn send(&self, msg: Message) {
+    log::info!("sending {msg:?}");
+    self.sender.send(msg).unwrap()
+  }
+
+  fn send_request<R>(&mut self, params: R::Params, data: Option<Code>)
+  where
+    R: lsp_types::request::Request,
+  {
+    let req = self.req_queue.outgoing.register(R::METHOD.to_owned(), params, data);
+    self.send(req.into())
+  }
+
+  fn send_response(&mut self, res: Response) {
+    match self.req_queue.incoming.complete(res.id.clone()) {
+      Some(()) => self.send(res.into()),
+      None => log::warn!("tried to respond to a non-queued request: {res:?}"),
+    }
+  }
+
+  fn send_notification<N>(&self, params: N::Params)
+  where
+    N: lsp_types::notification::Notification,
+  {
+    let notif = Notification::new(N::METHOD.to_owned(), params);
+    self.send(notif.into())
   }
 
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
