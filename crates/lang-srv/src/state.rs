@@ -43,14 +43,21 @@ struct Root {
 /// that communicate over stdin and stdout.)
 pub(crate) struct State {
   root: Option<Root>,
-  store: paths::Store,
   has_diagnostics: FxHashSet<Url>,
+  analysis: analysis::Analysis,
+  sp: SPState,
+}
+
+/// Semi-Permanent state. Some things on this are totally immutable after initialization. Other
+/// things are mutable, but nothing on this will ever get "replaced" entirely; instead, _if_ it's
+/// mutable, _when_ it's mutate, it'll only be "tweaked" a bit.
+struct SPState {
+  options: config::Options,
   registered_for_watched_files: bool,
+  store: paths::Store,
+  file_system: paths::RealFileSystem,
   sender: Sender<Message>,
   req_queue: ReqQueue<(), Option<Code>>,
-  analysis: analysis::Analysis,
-  file_system: paths::RealFileSystem,
-  options: config::Options,
 }
 
 impl State {
@@ -73,19 +80,21 @@ impl State {
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
       root: root.as_mut().ok().and_then(Option::take).map(|path| Root { path }),
-      store: paths::Store::new(),
       has_diagnostics: FxHashSet::default(),
-      registered_for_watched_files: false,
-      sender,
-      req_queue: ReqQueue::default(),
       analysis: analysis::Analysis::new(
         analysis::StdBasis::Full,
         config::ErrorLines::Many,
         options.diagnostics_filter,
         options.format,
       ),
-      file_system,
-      options,
+      sp: SPState {
+        options,
+        registered_for_watched_files: false,
+        store: paths::Store::new(),
+        file_system,
+        sender,
+        req_queue: ReqQueue::default(),
+      },
     };
     if let Err((e, url)) = root {
       ret.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1996));
@@ -105,7 +114,7 @@ impl State {
           let glob_pattern =
             format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
           let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
-          ret.registered_for_watched_files = true;
+          ret.sp.registered_for_watched_files = true;
           vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
           )]
@@ -117,7 +126,7 @@ impl State {
       );
     }
     ret.try_publish_diagnostics(None);
-    if !ret.registered_for_watched_files {
+    if !ret.sp.registered_for_watched_files {
       log::warn!("millet will not necessarily receive notifications when files change on-disk.");
       log::warn!("this means the internal state of millet can get out of sync with what is");
       log::warn!("actually on disk, e.g. when using `git checkout` or other means of modifying");
@@ -130,12 +139,12 @@ impl State {
   where
     R: lsp_types::request::Request,
   {
-    let req = self.req_queue.outgoing.register(R::METHOD.to_owned(), params, data);
+    let req = self.sp.req_queue.outgoing.register(R::METHOD.to_owned(), params, data);
     self.send(req.into())
   }
 
   fn send_response(&mut self, res: Response) {
-    match self.req_queue.incoming.complete(res.id.clone()) {
+    match self.sp.req_queue.incoming.complete(res.id.clone()) {
       Some(()) => self.send(res.into()),
       None => log::warn!("tried to respond to a non-queued request: {res:?}"),
     }
@@ -151,7 +160,7 @@ impl State {
 
   pub(crate) fn handle_request(&mut self, req: Request) {
     log::info!("got request: {req:?}");
-    self.req_queue.incoming.register(req.id.clone(), ());
+    self.sp.req_queue.incoming.register(req.id.clone(), ());
     match self.handle_request_(req) {
       ControlFlow::Break(Ok(())) => {}
       ControlFlow::Break(Err(e)) => log::error!("couldn't handle request: {e}"),
@@ -162,37 +171,38 @@ impl State {
   fn handle_request_(&mut self, mut r: Request) -> ControlFlow<Result<()>, Request> {
     r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.file_system, &mut self.store, params)?;
-      let res = self.analysis.get_md(pos, self.options.show_token_hover).map(|(value, range)| {
-        lsp_types::Hover {
-          contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
-            kind: lsp_types::MarkupKind::Markdown,
-            value,
-          }),
-          range: Some(lsp_range(range)),
-        }
-      });
+      let pos = text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
+      let res =
+        self.analysis.get_md(pos, self.sp.options.show_token_hover).map(|(value, range)| {
+          lsp_types::Hover {
+            contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
+              kind: lsp_types::MarkupKind::Markdown,
+              value,
+            }),
+            range: Some(lsp_range(range)),
+          }
+        });
       self.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.file_system, &mut self.store, params)?;
+      let pos = text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let res = self.analysis.get_def(pos).and_then(|range| {
-        lsp_location(&self.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
+        lsp_location(&self.sp.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
       });
       self.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     r = try_request::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = text_doc_pos_params(&self.file_system, &mut self.store, params)?;
+      let pos = text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let locs: Vec<_> = self
         .analysis
         .get_ty_defs(pos)
         .into_iter()
         .flatten()
-        .filter_map(|range| lsp_location(&self.store, range))
+        .filter_map(|range| lsp_location(&self.sp.store, range))
         .collect();
       let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
       self.send_response(Response::new_ok(id, res));
@@ -202,7 +212,7 @@ impl State {
     // CodeActionRequest
     r = try_request::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
       let url = params.text_document.uri;
-      let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
+      let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       let range = analysis_range(params.range);
       let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
       if let Some((range, new_text)) = self.analysis.fill_case(path.wrap(range.start)) {
@@ -212,12 +222,12 @@ impl State {
       Ok(())
     })?;
     r = try_request::<lsp_types::request::Formatting, _>(r, |id, params| {
-      if !self.options.format {
+      if !self.sp.options.format {
         self.send_response(Response::new_ok(id, None::<()>));
         return Ok(());
       }
       let url = params.text_document.uri;
-      let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
+      let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       self.send_response(Response::new_ok(
         id,
         self.analysis.format(path).ok().map(|(new_text, end)| {
@@ -237,7 +247,7 @@ impl State {
 
   pub(crate) fn handle_response(&mut self, res: Response) {
     log::info!("got response: {res:?}");
-    let data = match self.req_queue.outgoing.complete(res.id.clone()) {
+    let data = match self.sp.req_queue.outgoing.complete(res.id.clone()) {
       Some(x) => x,
       None => {
         log::warn!("received response for non-queued request: {res:?}");
@@ -313,10 +323,10 @@ impl State {
         bail!("not a full document change");
       }
       let contents = change.text;
-      if self.options.diagnostics_on_change {
+      if self.sp.options.diagnostics_on_change {
         match self.root {
           Some(_) => {
-            let path = url_to_path_id(&self.file_system, &mut self.store, &url)?;
+            let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
             self.try_publish_diagnostics(Some((path, contents)));
           }
           None => {
@@ -337,7 +347,7 @@ impl State {
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
       match &self.root {
         Some(_) => {
-          if self.registered_for_watched_files {
+          if self.sp.registered_for_watched_files {
             log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
           } else {
             self.try_publish_diagnostics(None);
@@ -365,7 +375,7 @@ impl State {
 
   fn send(&self, msg: Message) {
     log::info!("sending {msg:?}");
-    self.sender.send(msg).unwrap()
+    self.sp.sender.send(msg).unwrap()
   }
 
   fn try_get_input(&mut self) -> Option<analysis::input::Input> {
@@ -374,7 +384,7 @@ impl State {
       Some(x) => x,
     };
     let input = elapsed::log("Input::new", || {
-      analysis::input::Input::new(&self.file_system, &mut self.store, &root.path)
+      analysis::input::Input::new(&self.sp.file_system, &mut self.sp.store, &root.path)
     });
     let err = match input {
       Ok(x) => {
@@ -397,7 +407,7 @@ impl State {
               err.range(),
               err.code(),
               err.severity(),
-              self.options.diagnostics_more_info_hint,
+              self.sp.options.diagnostics_more_info_hint,
             )],
           );
           true
@@ -435,7 +445,7 @@ impl State {
     let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
     let mut has_diagnostics = FxHashSet::<Url>::default();
     for (path_id, errors) in got_many {
-      let path = self.store.get_path(path_id);
+      let path = self.sp.store.get_path(path_id);
       let url = match file_url(path.as_path()) {
         Ok(x) => x,
         Err(e) => {
@@ -443,7 +453,7 @@ impl State {
           continue;
         }
       };
-      let ds = diagnostics(errors, self.options.diagnostics_more_info_hint);
+      let ds = diagnostics(errors, self.sp.options.diagnostics_more_info_hint);
       if ds.is_empty() {
         continue;
       }
@@ -468,7 +478,7 @@ impl State {
   fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
     self.send_diagnostics(
       url,
-      diagnostics(self.analysis.get_one(text), self.options.diagnostics_more_info_hint),
+      diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint),
     );
   }
 
