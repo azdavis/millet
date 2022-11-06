@@ -243,17 +243,16 @@ impl State {
   }
 
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
-    n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(
-      n,
-      |_| match &mut self.mode {
+    n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
+      match &mut self.mode {
         Mode::Root(root) => {
           root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
           self.try_publish_diagnostics();
-          Ok(())
         }
-        Mode::NoRoot => bail!("can't handle DidChangeWatchedFiles with no root"),
-      },
-    )?;
+        Mode::NoRoot => log::warn!("ignoring DidChangeWatchedFiles with NoRoot"),
+      }
+      Ok(())
+    })?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
       match &mut self.mode {
