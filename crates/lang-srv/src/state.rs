@@ -16,9 +16,9 @@ const LEARN_MORE: &str = "Learn more";
 /// that communicate over stdin and stdout.)
 pub(crate) struct State {
   mode: Mode,
-  has_diagnostics: FxHashSet<Url>,
-  analysis: analysis::Analysis,
   sp: SPState,
+  analysis: analysis::Analysis,
+  has_diagnostics: FxHashSet<Url>,
 }
 
 impl State {
@@ -61,9 +61,9 @@ impl State {
         }
         None => Mode::NoRoot,
       },
-      has_diagnostics,
-      analysis,
       sp,
+      analysis,
+      has_diagnostics,
     };
     if let Err((e, url)) = root {
       ret.sp.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1996));
