@@ -37,6 +37,7 @@ const LEARN_MORE: &str = "Learn more";
 
 struct Root {
   path: paths::CanonicalPathBuf,
+  input: Option<analysis::input::Input>,
 }
 
 /// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
@@ -50,7 +51,6 @@ pub(crate) struct State {
 
 impl State {
   pub(crate) fn new(init: lsp_types::InitializeParams, sender: Sender<Message>) -> Self {
-    let file_system = paths::RealFileSystem::default();
     let options: config::Options = init
       .initialization_options
       .and_then(|v| match serde_json::from_value(v) {
@@ -61,28 +61,34 @@ impl State {
         }
       })
       .unwrap_or_default();
+    let analysis = analysis::Analysis::new(
+      analysis::StdBasis::Full,
+      config::ErrorLines::Many,
+      options.diagnostics_filter,
+      options.format,
+    );
+    let mut sp = SPState {
+      options,
+      registered_for_watched_files: false,
+      store: paths::Store::new(),
+      file_system: paths::RealFileSystem::default(),
+      sender,
+      req_queue: ReqQueue::default(),
+    };
     let mut root = init
       .root_uri
-      .map(|url| canonical_path_buf(&file_system, &url).map_err(|e| (e, url)))
+      .map(|url| canonical_path_buf(&sp.file_system, &url).map_err(|e| (e, url)))
       .transpose();
+    let mut has_diagnostics = FxHashSet::<Url>::default();
     let mut ret = Self {
       // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
-      root: root.as_mut().ok().and_then(Option::take).map(|path| Root { path }),
-      has_diagnostics: FxHashSet::default(),
-      analysis: analysis::Analysis::new(
-        analysis::StdBasis::Full,
-        config::ErrorLines::Many,
-        options.diagnostics_filter,
-        options.format,
-      ),
-      sp: SPState {
-        options,
-        registered_for_watched_files: false,
-        store: paths::Store::new(),
-        file_system,
-        sender,
-        req_queue: ReqQueue::default(),
-      },
+      root: root.as_mut().ok().and_then(Option::take).map(|path| {
+        let input = sp.try_get_input(&path, &mut has_diagnostics);
+        Root { path, input }
+      }),
+      has_diagnostics,
+      analysis,
+      sp,
     };
     if let Err((e, url)) = root {
       ret.sp.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1996));
@@ -265,15 +271,17 @@ impl State {
   }
 
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
-    n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-      match self.root {
-        Some(_) => {
+    n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(
+      n,
+      |_| match &mut self.root {
+        Some(root) => {
+          root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
           self.try_publish_diagnostics(None);
           Ok(())
         }
         None => bail!("can't handle DidChangeWatchedFiles with no root"),
-      }
-    })?;
+      },
+    )?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
       let mut changes = params.content_changes;
@@ -289,9 +297,10 @@ impl State {
       }
       let contents = change.text;
       if self.sp.options.diagnostics_on_change {
-        match self.root {
-          Some(_) => {
+        match &mut self.root {
+          Some(root) => {
             let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+            root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
             self.try_publish_diagnostics(Some((path, contents)));
           }
           None => {
@@ -310,11 +319,12 @@ impl State {
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
-      match &self.root {
-        Some(_) => {
+      match &mut self.root {
+        Some(root) => {
           if self.sp.registered_for_watched_files {
             log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
           } else {
+            root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
             self.try_publish_diagnostics(None);
           }
         }
@@ -340,23 +350,15 @@ impl State {
 
   // diagnostics //
 
-  /// also gets input from the filesystem.
   fn try_publish_diagnostics(&mut self, extra: Option<(paths::PathId, String)>) -> bool {
-    let root = match self.root.take() {
+    let input = match self.root.as_mut().and_then(|x| x.input.as_mut()) {
       Some(x) => x,
       None => return false,
-    };
-    let mut input = match self.sp.try_get_input(&root.path, &mut self.has_diagnostics) {
-      Some(x) => x,
-      None => {
-        self.root = Some(root);
-        return false;
-      }
     };
     if let Some((path, contents)) = extra {
       input.override_source(path, contents);
     }
-    let got_many = elapsed::log("get_many", || self.analysis.get_many(&input));
+    let got_many = elapsed::log("get_many", || self.analysis.get_many(input));
     let mut has_diagnostics = FxHashSet::<Url>::default();
     for (path_id, errors) in got_many {
       let path = self.sp.store.get_path(path_id);
@@ -386,7 +388,6 @@ impl State {
       self.sp.send_diagnostics(url, Vec::new());
     }
     self.has_diagnostics = has_diagnostics;
-    self.root = Some(root);
     true
   }
 
