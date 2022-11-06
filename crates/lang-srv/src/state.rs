@@ -283,25 +283,32 @@ impl State {
     )?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
-      if self.sp.options.diagnostics_on_change {
-        match &mut self.root {
-          Some(root) => {
+      match &mut self.root {
+        Some(root) => match &mut root.input {
+          Some(input) => {
             let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
-            match root.input.as_mut().and_then(|input| input.get_mut_source(path)) {
+            match input.get_mut_source(path) {
               Some(text) => {
                 apply_changes(text, params.content_changes);
-                self.try_publish_diagnostics();
+                if self.sp.options.diagnostics_on_change {
+                  self.try_publish_diagnostics();
+                } else {
+                  // TODO this is expensive, but currently necessary to make formatting work. can we
+                  // make it just do it for formatting (i.e. syntax) only (no statics)?
+                  self.analysis.get_many(input);
+                }
               }
-              None => {
-                log::warn!("no input or no source in the input")
-              }
+              None => log::warn!("no source in the input for DidChangeTextDocument"),
             }
           }
           None => {
-            log::warn!("not implemented: DidChangeTextDocument with no root");
-            // TODO get this working. might require keeping the current contents of every open file
-            // in the State, so we could feed it into publish_diagnostics_one?
+            log::warn!("no input for DidChangeTextDocument")
           }
+        },
+        None => {
+          log::warn!("not implemented: DidChangeTextDocument with no root");
+          // TODO get this working. might require keeping the current contents of every open file
+          // in the State, so we could feed it into publish_diagnostics_one?
         }
       }
       Ok(())
