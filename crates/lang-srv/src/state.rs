@@ -14,8 +14,7 @@ pub(crate) fn capabilities() -> lsp_types::ServerCapabilities {
     text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Options(
       lsp_types::TextDocumentSyncOptions {
         open_close: Some(true),
-        // TODO make INCREMENTAL
-        change: Some(lsp_types::TextDocumentSyncKind::FULL),
+        change: Some(lsp_types::TextDocumentSyncKind::INCREMENTAL),
         will_save: None,
         will_save_wait_until: None,
         save: Some(lsp_types::TextDocumentSyncSaveOptions::SaveOptions(lsp_types::SaveOptions {
