@@ -106,24 +106,22 @@ impl State {
       .and_then(|x| x.file_operations?.dynamic_registration)
       .unwrap_or_default();
     if dynamic_registration {
-      let registrations = match &ret.mode {
-        Mode::Root(root) => {
-          // not sure if possible to only listen to millet.toml. "nested alternate groups are not
-          // allowed" at time of writing
-          let glob_pattern =
-            format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
-          let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
-          ret.sp.registered_for_watched_files = true;
-          vec![registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
+      if let Mode::Root(root) = &ret.mode {
+        // not sure if possible to only listen to millet.toml. "nested alternate groups are not
+        // allowed" at time of writing
+        let glob_pattern =
+          format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
+        let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
+        let did_changed_registration =
+          registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
             lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
-          )]
-        }
-        Mode::NoRoot => vec![],
+          );
+        ret.sp.send_request::<lsp_types::request::RegisterCapability>(
+          lsp_types::RegistrationParams { registrations: vec![did_changed_registration] },
+          None,
+        );
+        ret.sp.registered_for_watched_files = true;
       };
-      ret.sp.send_request::<lsp_types::request::RegisterCapability>(
-        lsp_types::RegistrationParams { registrations },
-        None,
-      );
     }
     ret.try_publish_diagnostics();
     if !ret.sp.registered_for_watched_files {
@@ -316,13 +314,10 @@ impl State {
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
-      match self.mode {
-        Mode::Root(_) => {}
-        Mode::NoRoot => {
-          let url = params.text_document.uri;
-          let text = params.text_document.text;
-          self.publish_diagnostics_one(url, &text);
-        }
+      if let Mode::NoRoot = self.mode {
+        let url = params.text_document.uri;
+        let text = params.text_document.text;
+        self.publish_diagnostics_one(url, &text);
       }
       Ok(())
     })?;
@@ -347,12 +342,9 @@ impl State {
       Ok(())
     })?;
     n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
-      match self.mode {
-        Mode::Root(_) => {}
-        Mode::NoRoot => {
-          let url = params.text_document.uri;
-          self.sp.send_diagnostics(url, Vec::new());
-        }
+      if let Mode::NoRoot = self.mode {
+        let url = params.text_document.uri;
+        self.sp.send_diagnostics(url, Vec::new());
       }
       Ok(())
     })?;
