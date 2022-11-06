@@ -283,33 +283,28 @@ impl State {
     )?;
     n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
-      match &mut self.root {
-        Some(root) => match &mut root.input {
-          Some(input) => {
-            let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
-            match input.get_mut_source(path) {
-              Some(text) => {
-                apply_changes(text, params.content_changes);
-                if self.sp.options.diagnostics_on_change {
-                  self.try_publish_diagnostics();
-                } else {
-                  // TODO this is expensive, but currently necessary to make formatting work. can we
-                  // make it just do it for formatting (i.e. syntax) only (no statics)?
-                  self.analysis.get_many(input);
-                }
-              }
-              None => log::warn!("no source in the input for DidChangeTextDocument"),
-            }
-          }
-          None => {
-            log::warn!("no input for DidChangeTextDocument")
-          }
-        },
-        None => {
-          log::warn!("not implemented: DidChangeTextDocument with no root");
-          // TODO get this working. might require keeping the current contents of every open file
-          // in the State, so we could feed it into publish_diagnostics_one?
-        }
+      let root = match &mut self.root {
+        Some(x) => x,
+        // TODO get this working. might require keeping the current contents of every open file
+        // in the State, so we could feed it into publish_diagnostics_one?
+        None => bail!("not implemented: DidChangeTextDocument with no root"),
+      };
+      let input = match &mut root.input {
+        Some(x) => x,
+        None => bail!("no input for DidChangeTextDocument"),
+      };
+      let path = url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
+      let text = match input.get_mut_source(path) {
+        Some(x) => x,
+        None => bail!("no source in the input for DidChangeTextDocument"),
+      };
+      apply_changes(text, params.content_changes);
+      if self.sp.options.diagnostics_on_change {
+        self.try_publish_diagnostics();
+      } else {
+        // TODO this is expensive, but currently necessary to make formatting work. can we
+        // make it just do it for formatting (i.e. syntax) only (no statics)?
+        self.analysis.get_many(input);
       }
       Ok(())
     })?;
