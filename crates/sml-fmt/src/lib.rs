@@ -93,7 +93,7 @@ type Res = Option<()>;
 
 #[derive(Debug, Clone, Copy)]
 struct Cfg {
-  indent: usize,
+  indent: u32,
   extra_blank: bool,
 }
 
