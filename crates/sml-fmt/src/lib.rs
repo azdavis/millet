@@ -16,8 +16,8 @@ use sml_syntax::SyntaxKind;
 /// # Errors
 ///
 /// If there was a syntax error or comments in an un-format-able position.
-pub fn get(root: &ast::Root) -> Result<String, Error> {
-  match go(Mode::Write(String::new()), root)? {
+pub fn get(root: &ast::Root, tab_size: u32) -> Result<String, Error> {
+  match go(Mode::Write(String::new()), root, tab_size)? {
     Mode::Write(s) => Ok(s),
     Mode::Check => unreachable!("changed mode to Check"),
   }
@@ -29,13 +29,13 @@ pub fn get(root: &ast::Root) -> Result<String, Error> {
 ///
 /// If there was a syntax error or comments in an un-format-able position.
 pub fn check(root: &ast::Root) -> Result<(), Error> {
-  match go(Mode::Check, root)? {
+  match go(Mode::Check, root, 0)? {
     Mode::Write(_) => unreachable!("changed mode to Write"),
     Mode::Check => Ok(()),
   }
 }
 
-fn go(mode: Mode, root: &ast::Root) -> Result<Mode, Error> {
+fn go(mode: Mode, root: &ast::Root, tab_size: u32) -> Result<Mode, Error> {
   let mut st = St {
     mode,
     comment_ranges: root
@@ -47,7 +47,7 @@ fn go(mode: Mode, root: &ast::Root) -> Result<Mode, Error> {
       })
       .collect(),
   };
-  match root.dec().and_then(|d| get_dec(&mut st, Cfg::default(), d)) {
+  match root.dec().and_then(|d| get_dec(&mut st, Cfg::new(tab_size), d)) {
     Some(()) => {
       if st.comment_ranges.is_empty() {
         Ok(st.mode)
@@ -94,18 +94,17 @@ type Res = Option<()>;
 #[derive(Debug, Clone, Copy)]
 struct Cfg {
   indent: u32,
+  tab_size: u32,
   extra_blank: bool,
 }
 
-impl Default for Cfg {
-  fn default() -> Self {
-    Self { indent: 0, extra_blank: true }
-  }
-}
-
 impl Cfg {
+  fn new(tab_size: u32) -> Self {
+    Self { indent: 0, tab_size, extra_blank: true }
+  }
+
   fn indented(self) -> Self {
-    Self { indent: self.indent + 1, ..self }
+    Self { indent: self.indent + self.tab_size, ..self }
   }
 
   fn extra_blank(self, extra_blank: bool) -> Self {
@@ -114,7 +113,7 @@ impl Cfg {
 
   fn output_indent(&self, st: &mut St) {
     for _ in 0..self.indent {
-      st.write("  ");
+      st.write(" ");
     }
   }
 }

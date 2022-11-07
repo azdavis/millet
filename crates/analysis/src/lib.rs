@@ -172,12 +172,12 @@ impl Analysis {
   /// - Formatting is disabled
   /// - There was no file to format
   /// - Formatting the file failed
-  pub fn format(&self, path: PathId) -> Result<(String, Position), FormatError> {
+  pub fn format(&self, path: PathId, tab_size: u32) -> Result<(String, Position), FormatError> {
     if !self.diagnostics_options.format {
       return Err(FormatError::Disabled);
     }
     let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
-    let buf = sml_fmt::get(&file.syntax.parse.root).map_err(FormatError::Format)?;
+    let buf = sml_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::Format)?;
     Ok((buf, file.syntax.pos_db.end_position()))
   }
 
