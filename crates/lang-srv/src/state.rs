@@ -165,10 +165,6 @@ impl State {
       Ok(())
     })?;
     r = try_request::<lsp_types::request::Formatting, _>(r, |id, params| {
-      if !self.sp.options.format {
-        self.sp.send_response(Response::new_ok(id, None::<()>));
-        return Ok(());
-      }
       let url = params.text_document.uri;
       let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       self.sp.send_response(Response::new_ok(
