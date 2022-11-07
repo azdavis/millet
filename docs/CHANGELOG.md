@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Improve performance slightly.
+- Respect tab size options when formatting.
+
 ## v0.5.13
 
 - Show a hint by default about clicking the diagnostic code number for more information.
