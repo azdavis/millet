@@ -17,6 +17,8 @@ The versioning system is basically the following:
 
 - Improve performance slightly.
 - Respect tab size options when formatting.
+- Improve showing directories in some errors.
+- Ignore CM preprocessor on the first line.
 
 ## v0.5.13
 
