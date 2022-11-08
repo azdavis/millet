@@ -26,13 +26,15 @@ To fix, move the file into the root, or do not reference it.
 
 ## 1003
 
-There were multiple root group files (aka SML/NJ CM or ML Basis files).
+There were multiple "group files" in the root directory for the workspace.
 
-Given a directory to serve as the root, Millet will look for a **single** `.cm` or `.mlb` file directly in that directory. (By "directly", we mean that Millet will not recurse into subdirectories to do this.)
+Group files are SML/NJ Compilation Manager (`.cm`) or ML Basis (`.mlb`) files.
 
-If exactly one such file is found, it is treated as the root group file. But if more than one was found, Millet requires that you disambiguate with a config file.
+Given a workspace directory, Millet will look for group files directly in that directory. (By "directly", we mean not in sub-directories.)
 
-To fix, either remove all but one of the root group files, or select which one you want to be the root group file with a `millet.toml` [config file][config], like this:
+If exactly one such group file is found, it is treated as the "root" group file. But if more than one was found, Millet emits this error, and requires that you choose which group file should be the root.
+
+To fix, select which group you want to be the root group file with a `millet.toml` [config file][config], like this:
 
 ```toml
 version = 1
@@ -41,13 +43,26 @@ workspace.root = "foo.cm"
 
 ## 1004
 
-There was no group file (aka `.mlb` or `.cm` file) in the top-level (aka "root") directory.
+There were no "group files" in the root directory for the workspace.
 
-See error 1003, which is the error when there was more than one root group file.
+Group files are SML/NJ Compilation Manager (`.cm`) or ML Basis (`.mlb`) files.
+
+Given a workspace directory, Millet will look for group files directly in that directory. (By "directly", we mean not in sub-directories.)
+
+If exactly one such group file is found, it is treated as the "root" group file. But if zero were found, Millet emits this error.
 
 To fix, try any of the following:
 
-- Create a group file in the top-level directory.
+- Create a group file in the top-level directory. The simplest group file is a ML Basis file listing all of the SML files in your workspace. For instance, you could create a file `sources.mlb` in your workspace root like this:
+
+  ```mlb
+  foo.sml
+  lib/bar.sml
+  many/directories/deep/quz.sml
+  ```
+
+  That is, each SML file is listed in order, one per line.
+
 - Change the top-level directory, by opening your editor onto a different directory.
 - Create a `millet.toml` file in the top-level directory pointing at a root group file.
 
