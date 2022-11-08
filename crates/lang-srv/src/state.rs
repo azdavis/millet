@@ -269,8 +269,6 @@ impl State {
             self.analysis.get_many(input);
           }
         }
-        // TODO get this working. might require keeping the current contents of every open file in
-        // the State, so we could feed it into publish_diagnostics_one?
         Mode::NoRoot(open_files) => match open_files.get_mut(&path) {
           Some(text) => {
             apply_changes(text, params.content_changes);
