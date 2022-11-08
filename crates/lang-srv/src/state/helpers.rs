@@ -40,7 +40,7 @@ struct ClickCodeHint {
 
 impl fmt::Display for ClickCodeHint {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "click the blue {} for more info and/or advice for how to fix. ", self.code)?;
+    write!(f, "click the blue '{}' for more info and/or advice for how to fix. ", self.code)?;
     write!(f, "in VS Code, set `millet.server.diagnostics.moreInfoHint.enable` to `false` ")?;
     write!(f, "to disable this hint.")?;
     Ok(())
