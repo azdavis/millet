@@ -273,9 +273,11 @@ impl State {
           Some(text) => {
             apply_changes(text, params.content_changes);
             if self.sp.options.diagnostics_on_change {
-              // NOTE: clone to satisfy borrow checker
-              let text = text.clone();
-              self.publish_diagnostics_one(url, &text);
+              let ds = helpers::diagnostics(
+                self.analysis.get_one(text),
+                self.sp.options.diagnostics_more_info_hint,
+              );
+              self.sp.send_diagnostics(url, ds);
             }
           }
           None => bail!("no open file found for DidChangeTextDocument"),
@@ -288,9 +290,12 @@ impl State {
         let url = params.text_document.uri;
         let text = params.text_document.text;
         let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
-        // NOTE: clone to satisfy borrow checker
-        open_files.insert(path, text.clone());
-        self.publish_diagnostics_one(url, &text);
+        let ds = helpers::diagnostics(
+          self.analysis.get_one(&text),
+          self.sp.options.diagnostics_more_info_hint,
+        );
+        self.sp.send_diagnostics(url, ds);
+        open_files.insert(path, text);
       }
       Ok(())
     })?;
@@ -312,9 +317,11 @@ impl State {
           let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
           match open_files.get(&path) {
             Some(text) => {
-              // NOTE: clone to satisfy borrow checker
-              let text = text.clone();
-              self.publish_diagnostics_one(url, &text);
+              let ds = helpers::diagnostics(
+                self.analysis.get_one(text),
+                self.sp.options.diagnostics_more_info_hint,
+              );
+              self.sp.send_diagnostics(url, ds);
             }
             None => bail!("no open file found for DidSaveTextDocument"),
           }
@@ -375,12 +382,6 @@ impl State {
     }
     self.has_diagnostics = has_diagnostics;
     true
-  }
-
-  fn publish_diagnostics_one(&mut self, url: Url, text: &str) {
-    let ds =
-      helpers::diagnostics(self.analysis.get_one(text), self.sp.options.diagnostics_more_info_hint);
-    self.sp.send_diagnostics(url, ds);
   }
 }
 
