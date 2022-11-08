@@ -365,12 +365,11 @@ impl State {
       has_diagnostics.insert(url.clone());
       self.sp.send_diagnostics(url, ds);
     }
-    // this is the old one.
-    let old_has_diagnostics = std::mem::take(&mut self.has_diagnostics);
-    for url in old_has_diagnostics {
-      // this is the new one.
+    // iter over the old list of urls with diagnostics.
+    for url in std::mem::take(&mut self.has_diagnostics) {
       if has_diagnostics.contains(&url) {
-        // had old diagnostics, and has new diagnostics. we just sent the new ones.
+        // this url both had old diagnostics, and has new diagnostics. we just sent the new ones, so
+        // nothing to do here.
         continue;
       }
       // had old diagnostics, but no new diagnostics. clear the old diagnostics.
@@ -472,6 +471,7 @@ impl SPState {
       Ok(x) => return Some(x),
       Err(x) => x,
     };
+    // clear all current diagnostics. if there is an error getting input, it is the only error.
     for url in std::mem::take(has_diagnostics) {
       self.send_diagnostics(url, Vec::new());
     }
