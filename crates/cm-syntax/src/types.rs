@@ -44,7 +44,7 @@ impl fmt::Display for Error {
       ErrorKind::EmptyExportList => f.write_str("invalid empty export list"),
       ErrorKind::Expected(tok) => write!(f, "expected `{tok}`"),
       ErrorKind::ExpectedString => f.write_str("expected a string"),
-      ErrorKind::ExpectedDesc => f.write_str("expected `Group`, `Library`, or `Alias`"),
+      ErrorKind::ExpectedDesc => f.write_str("expected `Group` or `Library`"),
       ErrorKind::ExpectedPathOrMinus => f.write_str("expected a regular path or `-`"),
       ErrorKind::ExpectedExport => f.write_str("expected an export"),
       ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
