@@ -167,18 +167,16 @@ impl State {
     r = try_request::<lsp_types::request::Formatting, _>(r, |id, params| {
       let url = params.text_document.uri;
       let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
-      self.sp.send_response(Response::new_ok(
-        id,
-        self.analysis.format(path, params.options.tab_size).ok().map(|(new_text, end)| {
-          vec![lsp_types::TextEdit {
-            range: lsp_types::Range {
-              start: lsp_types::Position { line: 0, character: 0 },
-              end: helpers::lsp_position(end),
-            },
-            new_text,
-          }]
-        }),
-      ));
+      let res = self.analysis.format(path, params.options.tab_size).ok().map(|(new_text, end)| {
+        vec![lsp_types::TextEdit {
+          range: lsp_types::Range {
+            start: lsp_types::Position { line: 0, character: 0 },
+            end: helpers::lsp_position(end),
+          },
+          new_text,
+        }]
+      });
+      self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
     ControlFlow::Continue(r)
