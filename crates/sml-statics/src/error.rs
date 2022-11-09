@@ -3,8 +3,8 @@ mod suggestion;
 
 use crate::pat_match::Pat;
 use crate::types::{
-  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, MetaVarNames, Overload, RecordTy, Sym, Syms, Ty,
-  TyScheme,
+  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, MetaVarNames, Overload, RecordTy, Sym,
+  SymDisplay, Syms, Ty, TyScheme,
 };
 use diagnostic_util::{Code, Severity};
 use std::fmt;
@@ -80,7 +80,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ty = ty.display(&mvs, self.syms);
         write!(f, "circular type: {name} occurs in {ty}")
       }
-      ErrorKind::MismatchedTypes(_, want, got) => {
+      ErrorKind::MismatchedTypes(flavor, want, got) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
@@ -89,7 +89,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         match self.lines {
           config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
           config::ErrorLines::Many => {
-            writeln!(f, "mismatched types:")?;
+            writeln!(f, "mismatched types: {}", flavor.display(&mvs, self.syms))?;
             writeln!(f, "  expected {want}")?;
             write!(f, "     found {got}")
           }
@@ -233,6 +233,7 @@ impl fmt::Display for Item {
 
 #[derive(Debug)]
 pub(crate) enum MismatchedTypesFlavor {
+  /// NOTE: this might never happen.
   BoundTyVar(BoundTyVar, BoundTyVar),
   FixedTyVar(FixedTyVar, FixedTyVar),
   MissingRow(sml_hir::Lab),
@@ -245,6 +246,78 @@ pub(crate) enum MismatchedTypesFlavor {
   OverloadHeadMismatch(Overload, Ty),
   UnresolvedRecordMissingRow(sml_hir::Lab),
   UnresolvedRecordHeadMismatch(RecordTy, Ty),
+}
+
+impl MismatchedTypesFlavor {
+  fn display<'a>(
+    &'a self,
+    meta_vars: &'a MetaVarNames<'a>,
+    syms: &'a Syms,
+  ) -> MismatchedTypesFlavorDisplay<'a> {
+    MismatchedTypesFlavorDisplay { flavor: self, meta_vars, syms }
+  }
+}
+
+struct MismatchedTypesFlavorDisplay<'a> {
+  flavor: &'a MismatchedTypesFlavor,
+  meta_vars: &'a MetaVarNames<'a>,
+  syms: &'a Syms,
+}
+
+impl fmt::Display for MismatchedTypesFlavorDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.flavor {
+      MismatchedTypesFlavor::BoundTyVar(_, _) => f.write_str("type variables are different"),
+      MismatchedTypesFlavor::FixedTyVar(a, b) => {
+        write!(f, "{a} and {b} are different type variables")
+      }
+      MismatchedTypesFlavor::MissingRow(lab) => {
+        write!(f, "record or tuple type is missing field: {lab}")
+      }
+      MismatchedTypesFlavor::ExtraRows(rows) => {
+        write!(f, "record or tuple type has extra fields: ")?;
+        fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| lab))
+      }
+      MismatchedTypesFlavor::Con(a, b) => {
+        let a = SymDisplay { sym: *a, syms: self.syms };
+        let b = SymDisplay { sym: *b, syms: self.syms };
+        write!(f, "{a} and {b} are different type constructors")
+      }
+      MismatchedTypesFlavor::Head(a, b) => {
+        let a_display = a.display(self.meta_vars, self.syms);
+        let b_display = b.display(self.meta_vars, self.syms);
+        let a_desc = a.desc();
+        let b_desc = b.desc();
+        write!(f, "{a_display} is {a_desc}, but {b_display} is {b_desc}")
+      }
+      MismatchedTypesFlavor::OverloadCon(ov, s) => {
+        let s = SymDisplay { sym: *s, syms: self.syms };
+        write!(f, "{s} is not compatible with the {ov} overload")
+      }
+      MismatchedTypesFlavor::OverloadUnify(want, got) => {
+        write!(f, "{want} and {got} are incompatible overloads")
+      }
+      MismatchedTypesFlavor::OverloadRecord(_, ov) => {
+        write!(f, "record types is not compatible with the {ov} overload")
+      }
+      MismatchedTypesFlavor::OverloadHeadMismatch(ov, ty) => {
+        let ty_display = ty.display(self.meta_vars, self.syms);
+        let ty_desc = ty.desc();
+        write!(f, "{ov} is not compatible with {ty_display}, which is {ty_desc}")
+      }
+      MismatchedTypesFlavor::UnresolvedRecordMissingRow(lab) => {
+        write!(f, "unresolved record or tuple type is missing field: {lab}")
+      }
+      MismatchedTypesFlavor::UnresolvedRecordHeadMismatch(_, ty) => {
+        let ty_display = ty.display(self.meta_vars, self.syms);
+        let ty_desc = ty.desc();
+        write!(
+          f,
+          "unresolved record or tuple type is not compatible with {ty_display}, which is {ty_desc}"
+        )
+      }
+    }
+  }
 }
 
 /// A statics error.

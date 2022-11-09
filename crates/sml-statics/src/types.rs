@@ -50,6 +50,18 @@ impl Ty {
   ) -> impl fmt::Display + 'a {
     TyDisplay { ty: self, bound_vars: None, meta_vars, syms, prec: TyPrec::Arrow }
   }
+
+  pub(crate) fn desc(&self) -> &'static str {
+    match self {
+      Ty::None => "an unknown type",
+      Ty::BoundVar(_) => "a bound type variable",
+      Ty::MetaVar(_) => "an unsolved type variable",
+      Ty::FixedVar(_) => "a fixed type variable",
+      Ty::Record(_) => "a record or tuple type",
+      Ty::Con(_, _) => "a constructor type",
+      Ty::Fn(_, _) => "a function type",
+    }
+  }
 }
 
 struct TyDisplay<'a> {
