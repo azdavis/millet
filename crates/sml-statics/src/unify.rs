@@ -1,4 +1,4 @@
-use crate::error::ErrorKind;
+use crate::error::{ErrorKind, MismatchedTypesFlavor};
 use crate::st::St;
 use crate::types::{meta_vars, MetaTyVar, SubstEntry, Ty, TyVarKind};
 use crate::util::apply;
@@ -16,15 +16,21 @@ pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorK
     return Ok(());
   }
   unify_(st, want.clone(), got.clone()).map_err(|e| match e {
-    UnifyError::OccursCheck(mv, ty) => ErrorKind::Circularity(mv, ty),
-    UnifyError::HeadMismatch => ErrorKind::MismatchedTypes(want, got),
+    UnifyError::Circularity(mv, ty) => ErrorKind::Circularity(mv, ty),
+    UnifyError::MismatchedTypes(flavor) => ErrorKind::MismatchedTypes(flavor, want, got),
   })
 }
 
 #[derive(Debug)]
 enum UnifyError {
-  OccursCheck(MetaTyVar, Ty),
-  HeadMismatch,
+  Circularity(MetaTyVar, Ty),
+  MismatchedTypes(MismatchedTypesFlavor),
+}
+
+impl From<MismatchedTypesFlavor> for UnifyError {
+  fn from(val: MismatchedTypesFlavor) -> Self {
+    Self::MismatchedTypes(val)
+  }
 }
 
 type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
@@ -37,24 +43,38 @@ fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
   apply(st.subst(), &mut got);
   match (want, got) {
     (Ty::None, _) | (_, Ty::None) => Ok(()),
-    (Ty::BoundVar(want), Ty::BoundVar(got)) => head_match(want == got),
+    (Ty::BoundVar(want), Ty::BoundVar(got)) => {
+      if want == got {
+        Ok(())
+      } else {
+        Err(MismatchedTypesFlavor::BoundTyVar(want, got).into())
+      }
+    }
     (Ty::MetaVar(mv), ty) | (ty, Ty::MetaVar(mv)) => unify_mv(st, mv, ty),
-    (Ty::FixedVar(want), Ty::FixedVar(got)) => head_match(want == got),
+    (Ty::FixedVar(want), Ty::FixedVar(got)) => {
+      if want == got {
+        Ok(())
+      } else {
+        Err(MismatchedTypesFlavor::FixedTyVar(want, got).into())
+      }
+    }
     (Ty::Record(want_rows), Ty::Record(mut got_rows)) => {
       for (lab, want) in want_rows {
         match got_rows.remove(&lab) {
-          None => return Err(UnifyError::HeadMismatch),
+          None => return Err(MismatchedTypesFlavor::MissingRow(lab).into()),
           Some(got) => unify_(st, want, got)?,
         }
       }
       if got_rows.is_empty() {
         Ok(())
       } else {
-        Err(UnifyError::HeadMismatch)
+        Err(MismatchedTypesFlavor::ExtraRows(got_rows).into())
       }
     }
     (Ty::Con(want_args, want_sym), Ty::Con(got_args, got_sym)) => {
-      head_match(want_sym == got_sym)?;
+      if want_sym != got_sym {
+        return Err(MismatchedTypesFlavor::Con(want_sym, got_sym).into());
+      }
       assert_eq!(want_args.len(), got_args.len());
       for (want, got) in want_args.into_iter().zip(got_args) {
         unify_(st, want, got)?;
@@ -65,9 +85,7 @@ fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
       unify_(st, *want_param, *got_param)?;
       unify_(st, *want_res, *got_res)
     }
-    (Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Con(_, _) | Ty::Fn(_, _), _) => {
-      Err(UnifyError::HeadMismatch)
-    }
+    (want, got) => Err(MismatchedTypesFlavor::Head(want, got).into()),
   }
 }
 
@@ -80,7 +98,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
   }
   // forbid circularity.
   if occurs(mv, &ty) {
-    return Err(UnifyError::OccursCheck(mv, ty));
+    return Err(UnifyError::Circularity(mv, ty));
   }
   // tweak down the rank of all other meta vars in the ty.
   let mut map = FxHashMap::<MetaTyVar, (MetaTyVar, Option<TyVarKind>)>::default();
@@ -121,7 +139,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
           if ov.as_basics().iter().any(|&ov| st.syms.overloads()[ov].contains(&s)) {
             assert!(args.is_empty());
           } else {
-            return Err(UnifyError::HeadMismatch);
+            return Err(MismatchedTypesFlavor::OverloadCon(ov, s).into());
           }
         }
         // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
@@ -138,10 +156,12 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
               // it too was an overload. attempt to unify the two overloads.
               TyVarKind::Overloaded(ov_other) => match ov.unify(*ov_other) {
                 Some(ov) => ov,
-                None => return Err(UnifyError::HeadMismatch),
+                None => return Err(MismatchedTypesFlavor::OverloadUnify(ov, *ov_other).into()),
               },
               // no overloaded type is a record.
-              TyVarKind::Record(_) => return Err(UnifyError::HeadMismatch),
+              TyVarKind::Record(rows) => {
+                return Err(MismatchedTypesFlavor::OverloadRecord(rows.clone(), ov).into())
+              }
             },
           };
           let k = SubstEntry::Kind(TyVarKind::Overloaded(ov));
@@ -149,7 +169,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
         }
         // none of these are overloaded types.
         Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
-          return Err(UnifyError::HeadMismatch)
+          return Err(MismatchedTypesFlavor::OverloadHeadMismatch(ov, ty).into())
         }
       },
       // mv was a record ty var (i.e. from a `...` pattern). ty must have the rows gotten so
@@ -162,7 +182,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
         Ty::Record(mut got_rows) => {
           for (lab, want) in want_rows {
             match got_rows.remove(&lab) {
-              None => return Err(UnifyError::HeadMismatch),
+              None => return Err(MismatchedTypesFlavor::UnresolvedRecordMissingRow(lab).into()),
               Some(got) => unify_(st, want, got)?,
             }
           }
@@ -180,7 +200,9 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
               // TODO check if the rows so far are equality.
               TyVarKind::Equality => {}
               // no overloaded type is a record type.
-              TyVarKind::Overloaded(_) => return Err(UnifyError::HeadMismatch),
+              TyVarKind::Overloaded(ov) => {
+                return Err(MismatchedTypesFlavor::OverloadRecord(want_rows, *ov).into())
+              }
               // mv2 was another record ty var. merge the rows, and for those that appear in
               // both, unify the types.
               TyVarKind::Record(other_rows) => {
@@ -200,20 +222,12 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
         }
         // none of these are record types.
         Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Con(_, _) | Ty::Fn(_, _) => {
-          return Err(UnifyError::HeadMismatch)
+          return Err(MismatchedTypesFlavor::UnresolvedRecordHeadMismatch(want_rows, ty).into())
         }
       },
     },
   }
   Ok(())
-}
-
-fn head_match(b: bool) -> Result {
-  if b {
-    Ok(())
-  } else {
-    Err(UnifyError::HeadMismatch)
-  }
 }
 
 fn occurs(mv: MetaTyVar, ty: &Ty) -> bool {

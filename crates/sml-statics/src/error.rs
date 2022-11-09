@@ -1,5 +1,8 @@
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{MetaTyVar, MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
+use crate::types::{
+  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, MetaVarNames, Overload, RecordTy, Sym, Syms, Ty,
+  TyScheme,
+};
 use diagnostic_util::{Code, Severity};
 use fmt_util::{comma_seq, sep_seq};
 use pattern_match::RawPat;
@@ -14,7 +17,7 @@ pub(crate) enum ErrorKind {
   Missing(Item, str_util::Name),
   Extra(Item, str_util::Name),
   Circularity(MetaTyVar, Ty),
-  MismatchedTypes(Ty, Ty),
+  MismatchedTypes(MismatchedTypesFlavor, Ty, Ty),
   AppLhsNotFn(Ty),
   DuplicateLab(sml_hir::Lab),
   RealPat,
@@ -76,7 +79,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ty = ty.display(&mvs, self.syms);
         write!(f, "circular type: {name} occurs in {ty}")
       }
-      ErrorKind::MismatchedTypes(want, got) => {
+      ErrorKind::MismatchedTypes(_, want, got) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
@@ -200,7 +203,7 @@ impl Error {
       ErrorKind::Missing(_, _) => Code::n(5003),
       ErrorKind::Extra(_, _) => Code::n(5004),
       ErrorKind::Circularity(_, _) => Code::n(5005),
-      ErrorKind::MismatchedTypes(_, _) => Code::n(5006),
+      ErrorKind::MismatchedTypes(_, _, _) => Code::n(5006),
       ErrorKind::AppLhsNotFn(_) => Code::n(5007),
       ErrorKind::DuplicateLab(_) => Code::n(5008),
       ErrorKind::RealPat => Code::n(5009),
@@ -306,6 +309,22 @@ impl fmt::Display for Item {
       Item::Functor => f.write_str("functor"),
     }
   }
+}
+
+#[derive(Debug)]
+pub(crate) enum MismatchedTypesFlavor {
+  BoundTyVar(BoundTyVar, BoundTyVar),
+  FixedTyVar(FixedTyVar, FixedTyVar),
+  MissingRow(sml_hir::Lab),
+  ExtraRows(RecordTy),
+  Con(Sym, Sym),
+  Head(Ty, Ty),
+  OverloadCon(Overload, Sym),
+  OverloadUnify(Overload, Overload),
+  OverloadRecord(RecordTy, Overload),
+  OverloadHeadMismatch(Overload, Ty),
+  UnresolvedRecordMissingRow(sml_hir::Lab),
+  UnresolvedRecordHeadMismatch(RecordTy, Ty),
 }
 
 fn suggestion(s: &str) -> Option<&'static str> {
