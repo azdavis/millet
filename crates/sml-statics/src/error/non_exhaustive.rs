@@ -29,7 +29,7 @@ struct PatDisplay<'a> {
   prec: PatPrec,
 }
 
-impl<'a> fmt::Display for PatDisplay<'a> {
+impl fmt::Display for PatDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.pat.raw {
       RawPat::Con(con, args) => match con {
@@ -203,7 +203,7 @@ enum RowDisplay<'a> {
   Rest,
 }
 
-impl<'a> fmt::Display for RowDisplay<'a> {
+impl fmt::Display for RowDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       RowDisplay::Row { lab, pat, syms } => {

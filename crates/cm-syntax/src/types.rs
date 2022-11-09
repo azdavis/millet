@@ -74,7 +74,7 @@ pub(crate) enum Token<'a> {
   String(&'a str),
 }
 
-impl<'a> fmt::Display for Token<'a> {
+impl fmt::Display for Token<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let s = match self {
       Token::Structure => "structure",

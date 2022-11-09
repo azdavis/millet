@@ -66,7 +66,7 @@ impl<'a> TyDisplay<'a> {
   }
 }
 
-impl<'a> fmt::Display for TyDisplay<'a> {
+impl fmt::Display for TyDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.ty {
       Ty::None => f.write_str("_")?,
@@ -232,7 +232,7 @@ struct RowDisplay<'a> {
   ty: &'a Ty,
 }
 
-impl<'a> fmt::Display for RowDisplay<'a> {
+impl fmt::Display for RowDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     fmt::Display::fmt(self.lab, f)?;
     f.write_str(" : ")?;
@@ -1191,7 +1191,7 @@ struct Generalizer<'a> {
   has_record_meta_var: bool,
 }
 
-impl<'a> Generalizer<'a> {
+impl Generalizer<'_> {
   fn go(&mut self, ty: &mut Ty) {
     match ty {
       Ty::None => {}
