@@ -186,6 +186,12 @@ impl fmt::Display for ErrorKind {
   }
 }
 
+impl event_parse::Expected<SK> for ErrorKind {
+  fn expected(kind: SK) -> Self {
+    Self::Expected(Expected::Kind(kind))
+  }
+}
+
 #[derive(Debug)]
 pub(crate) enum ParensExpFlavor {
   Raise,
@@ -207,9 +213,36 @@ impl fmt::Display for ParensExpFlavor {
   }
 }
 
-impl event_parse::Expected<SK> for ErrorKind {
-  fn expected(kind: SK) -> Self {
-    Self::Expected(Expected::Kind(kind))
+#[derive(Debug)]
+pub(crate) enum Expected {
+  Exp,
+  Lab,
+  Pat,
+  Path,
+  SigExp,
+  StrExp,
+  Ty,
+  LRoundExpTail,
+  Item,
+  NameOrInt,
+  Kind(SK),
+}
+
+impl fmt::Display for Expected {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Expected::Exp => f.write_str("an expression"),
+      Expected::Lab => f.write_str("a label"),
+      Expected::Pat => f.write_str("a pattern"),
+      Expected::Path => f.write_str("a path"),
+      Expected::SigExp => f.write_str("a signature expression"),
+      Expected::StrExp => f.write_str("a structure expression"),
+      Expected::Ty => f.write_str("a type"),
+      Expected::LRoundExpTail => f.write_str("`)`, `,`, or `;`"),
+      Expected::Item => f.write_str("a top-level item"),
+      Expected::NameOrInt => f.write_str("a name or integer literal"),
+      Expected::Kind(k) => k.fmt(f),
+    }
   }
 }
 
@@ -252,39 +285,6 @@ impl Error {
     match self.0.kind {
       ErrorKind::UnnecessaryOp => Severity::Warning,
       _ => Severity::Error,
-    }
-  }
-}
-
-#[derive(Debug)]
-pub(crate) enum Expected {
-  Exp,
-  Lab,
-  Pat,
-  Path,
-  SigExp,
-  StrExp,
-  Ty,
-  LRoundExpTail,
-  Item,
-  NameOrInt,
-  Kind(SK),
-}
-
-impl fmt::Display for Expected {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Expected::Exp => f.write_str("an expression"),
-      Expected::Lab => f.write_str("a label"),
-      Expected::Pat => f.write_str("a pattern"),
-      Expected::Path => f.write_str("a path"),
-      Expected::SigExp => f.write_str("a signature expression"),
-      Expected::StrExp => f.write_str("a structure expression"),
-      Expected::Ty => f.write_str("a type"),
-      Expected::LRoundExpTail => f.write_str("`)`, `,`, or `;`"),
-      Expected::Item => f.write_str("a top-level item"),
-      Expected::NameOrInt => f.write_str("a name or integer literal"),
-      Expected::Kind(k) => k.fmt(f),
     }
   }
 }

@@ -168,87 +168,6 @@ impl fmt::Display for ErrorKindDisplay<'_> {
   }
 }
 
-/// A statics error.
-#[derive(Debug)]
-pub struct Error {
-  pub(crate) idx: sml_hir::Idx,
-  pub(crate) kind: ErrorKind,
-}
-
-impl Error {
-  /// Returns the [`sml_hir::Idx`] for this.
-  #[must_use]
-  pub fn idx(&self) -> sml_hir::Idx {
-    self.idx
-  }
-
-  /// Returns a value that displays the message.
-  #[must_use]
-  pub fn display<'a>(
-    &'a self,
-    syms: &'a Syms,
-    mv_info: &'a MetaVarInfo,
-    lines: config::ErrorLines,
-  ) -> impl fmt::Display + 'a {
-    ErrorKindDisplay { kind: &self.kind, syms, mv_info, lines }
-  }
-
-  /// Return the code for this.
-  #[must_use]
-  pub fn code(&self) -> Code {
-    match self.kind {
-      ErrorKind::Unsupported(_) => Code::n(5999),
-      ErrorKind::Undefined(_, _) => Code::n(5001),
-      ErrorKind::Duplicate(_, _) => Code::n(5002),
-      ErrorKind::Missing(_, _) => Code::n(5003),
-      ErrorKind::Extra(_, _) => Code::n(5004),
-      ErrorKind::Circularity(_, _) => Code::n(5005),
-      ErrorKind::MismatchedTypes(_, _, _) => Code::n(5006),
-      ErrorKind::AppLhsNotFn(_) => Code::n(5007),
-      ErrorKind::DuplicateLab(_) => Code::n(5008),
-      ErrorKind::RealPat => Code::n(5009),
-      ErrorKind::UnreachablePattern => Code::n(5010),
-      ErrorKind::NonExhaustiveCase(_) => Code::n(5011),
-      ErrorKind::NonExhaustiveBinding(_) => Code::n(5012),
-      ErrorKind::PatValIdStatus => Code::n(5013),
-      ErrorKind::ConPatMustNotHaveArg => Code::n(5014),
-      ErrorKind::ConPatMustHaveArg => Code::n(5015),
-      ErrorKind::InvalidAsPatName(_) => Code::n(5016),
-      ErrorKind::TyEscape(_) => Code::n(5017),
-      ErrorKind::ValRecExpNotFn => Code::n(5018),
-      ErrorKind::WrongNumTyArgs(_, _) => Code::n(5019),
-      ErrorKind::ExnCopyNotExnIdStatus(_) => Code::n(5020),
-      ErrorKind::InvalidRebindName(_) => Code::n(5021),
-      ErrorKind::WrongIdStatus(_) => Code::n(5022),
-      ErrorKind::UnresolvedRecordTy => Code::n(5023),
-      ErrorKind::OrPatNotSameBindings(_) => Code::n(5024),
-      ErrorKind::DecNotAllowedHere => Code::n(5025),
-      ErrorKind::ExpHole(_) => Code::n(5026),
-      ErrorKind::TyHole => Code::n(5027),
-      ErrorKind::BindPolymorphicExpansiveExp => Code::n(5028),
-      ErrorKind::Unused(_) => Code::n(5029),
-      ErrorKind::TyVarNotAllowedForTyRhs => Code::n(5030),
-      ErrorKind::CannotShareTy(_, _) => Code::n(5031),
-      ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
-      ErrorKind::InvalidEq(_) => Code::n(5033),
-      ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
-      ErrorKind::InvalidAppend(_) => Code::n(5035),
-      ErrorKind::BoolCase => Code::n(5036),
-    }
-  }
-
-  /// Returns the severity for this.
-  #[must_use]
-  pub fn severity(&self) -> Severity {
-    match self.kind {
-      ErrorKind::Unused(_)
-      | ErrorKind::InvalidEq(_)
-      | ErrorKind::MismatchedFunctorSugar(_)
-      | ErrorKind::BoolCase => Severity::Warning,
-      _ => Severity::Error,
-    }
-  }
-}
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum FunctorSugarUser {
   Def,
@@ -572,6 +491,88 @@ impl<'a> fmt::Display for RowDisplay<'a> {
         pd.fmt(f)
       }
       RowDisplay::Rest => f.write_str("..."),
+    }
+  }
+}
+
+/// A statics error.
+#[derive(Debug)]
+pub struct Error {
+  pub(crate) idx: sml_hir::Idx,
+  pub(crate) kind: ErrorKind,
+}
+
+impl Error {
+  /// Returns the [`sml_hir::Idx`] for this.
+  #[must_use]
+  pub fn idx(&self) -> sml_hir::Idx {
+    self.idx
+  }
+
+  /// Returns a value that displays the message.
+  #[must_use]
+  pub fn display<'a>(
+    &'a self,
+    syms: &'a Syms,
+    mv_info: &'a MetaVarInfo,
+    lines: config::ErrorLines,
+  ) -> impl fmt::Display + 'a {
+    ErrorKindDisplay { kind: &self.kind, syms, mv_info, lines }
+  }
+
+  /// Return the code for this.
+  #[must_use]
+  pub fn code(&self) -> Code {
+    match self.kind {
+      ErrorKind::Unsupported(_) => Code::n(5999),
+      ErrorKind::Undefined(_, _) => Code::n(5001),
+      ErrorKind::Duplicate(_, _) => Code::n(5002),
+      ErrorKind::Missing(_, _) => Code::n(5003),
+      ErrorKind::Extra(_, _) => Code::n(5004),
+      ErrorKind::Circularity(_, _) => Code::n(5005),
+      ErrorKind::MismatchedTypes(_, _, _) => Code::n(5006),
+      ErrorKind::AppLhsNotFn(_) => Code::n(5007),
+      ErrorKind::DuplicateLab(_) => Code::n(5008),
+      ErrorKind::RealPat => Code::n(5009),
+      ErrorKind::UnreachablePattern => Code::n(5010),
+      ErrorKind::NonExhaustiveCase(_) => Code::n(5011),
+      ErrorKind::NonExhaustiveBinding(_) => Code::n(5012),
+      ErrorKind::PatValIdStatus => Code::n(5013),
+      ErrorKind::ConPatMustNotHaveArg => Code::n(5014),
+      ErrorKind::ConPatMustHaveArg => Code::n(5015),
+      ErrorKind::InvalidAsPatName(_) => Code::n(5016),
+      ErrorKind::TyEscape(_) => Code::n(5017),
+      ErrorKind::ValRecExpNotFn => Code::n(5018),
+      ErrorKind::WrongNumTyArgs(_, _) => Code::n(5019),
+      ErrorKind::ExnCopyNotExnIdStatus(_) => Code::n(5020),
+      ErrorKind::InvalidRebindName(_) => Code::n(5021),
+      ErrorKind::WrongIdStatus(_) => Code::n(5022),
+      ErrorKind::UnresolvedRecordTy => Code::n(5023),
+      ErrorKind::OrPatNotSameBindings(_) => Code::n(5024),
+      ErrorKind::DecNotAllowedHere => Code::n(5025),
+      ErrorKind::ExpHole(_) => Code::n(5026),
+      ErrorKind::TyHole => Code::n(5027),
+      ErrorKind::BindPolymorphicExpansiveExp => Code::n(5028),
+      ErrorKind::Unused(_) => Code::n(5029),
+      ErrorKind::TyVarNotAllowedForTyRhs => Code::n(5030),
+      ErrorKind::CannotShareTy(_, _) => Code::n(5031),
+      ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
+      ErrorKind::InvalidEq(_) => Code::n(5033),
+      ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
+      ErrorKind::InvalidAppend(_) => Code::n(5035),
+      ErrorKind::BoolCase => Code::n(5036),
+    }
+  }
+
+  /// Returns the severity for this.
+  #[must_use]
+  pub fn severity(&self) -> Severity {
+    match self.kind {
+      ErrorKind::Unused(_)
+      | ErrorKind::InvalidEq(_)
+      | ErrorKind::MismatchedFunctorSugar(_)
+      | ErrorKind::BoolCase => Severity::Warning,
+      _ => Severity::Error,
     }
   }
 }
