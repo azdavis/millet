@@ -13,12 +13,13 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.14
 
 - Improve performance slightly.
 - Respect tab size options when formatting.
 - Improve showing directories in some errors.
 - Ignore CM preprocessor on the first line.
+- Give more context on why types were mismatched.
 
 ## v0.5.13
 
