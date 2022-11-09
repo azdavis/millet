@@ -134,10 +134,7 @@ impl fmt::Display for TyDisplay<'_> {
           }
           f.write_str(" ")?;
         }
-        match self.syms.get(*sym) {
-          None => f.write_str("exn")?,
-          Some((name, _)) => name.fmt(f)?,
-        }
+        SymDisplay { sym: *sym, syms: self.syms }.fmt(f)?;
       }
       Ty::Fn(param, res) => {
         let needs_parens = self.prec > TyPrec::Arrow;
@@ -693,6 +690,20 @@ impl Sym {
   /// `marker`.
   pub(crate) fn generated_after(self, marker: SymsMarker) -> bool {
     self != Self::EXN && self.idx() >= marker.0
+  }
+}
+
+pub(crate) struct SymDisplay<'a> {
+  pub(crate) sym: Sym,
+  pub(crate) syms: &'a Syms,
+}
+
+impl fmt::Display for SymDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.syms.get(self.sym) {
+      None => f.write_str("exn"),
+      Some((name, _)) => name.fmt(f),
+    }
   }
 }
 
