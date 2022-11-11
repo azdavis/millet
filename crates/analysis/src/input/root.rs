@@ -27,24 +27,24 @@ impl Root {
     F: paths::FileSystem,
   {
     let mut root_group_source = ErrorSource::default();
-    let mut root_group_path = None::<GroupPathBuf>;
+    let mut root_group_paths = Vec::<GroupPathBuf>::new();
     let config_path = root.as_path().join(config::FILE_NAME);
     let config = match fs.read_to_string(&config_path) {
       Ok(contents) => {
         let cff = ConfigFromFile::new(fs, root, config_path, contents.as_str())?;
-        if let Some(path) = cff.root_group {
-          root_group_path = Some(path);
+        if !cff.root_groups.is_empty() {
+          root_group_paths.extend(cff.root_groups);
           root_group_source.path = Some(cff.path);
         }
         cff.config
       }
       Err(_) => Config::default(),
     };
-    if root_group_path.is_none() {
+    if root_group_paths.is_empty() {
       let dir_entries = read_dir(fs, ErrorSource::default(), root.as_path())?;
       for entry in dir_entries {
         if let Some(group_path) = GroupPathBuf::new(fs, entry.clone()) {
-          match &root_group_path {
+          match root_group_paths.first() {
             Some(rgp) => {
               return Err(Error::new(
                 ErrorSource { path: Some(rgp.path.clone()), range: None },
@@ -52,26 +52,24 @@ impl Root {
                 ErrorKind::MultipleRoots(rgp.path.clone(), entry),
               ))
             }
-            None => root_group_path = Some(group_path),
+            None => root_group_paths.push(group_path),
           }
         }
       }
     }
-    let root_group_path = match &root_group_path {
-      Some(x) => x,
-      None => {
-        return Err(Error::new(
-          ErrorSource::default(),
-          root.as_path().to_owned(),
-          ErrorKind::NoRoot,
-        ))
-      }
-    };
+    if root_group_paths.is_empty() {
+      return Err(Error::new(ErrorSource::default(), root.as_path().to_owned(), ErrorKind::NoRoot));
+    }
     Ok(Self {
-      groups: vec![RootGroup {
-        path: get_path_id(fs, store, root_group_source, &root_group_path.path)?,
-        kind: root_group_path.kind,
-      }],
+      groups: root_group_paths
+        .into_iter()
+        .map(|root_group_path| {
+          Ok(RootGroup {
+            path: get_path_id(fs, store, root_group_source.clone(), &root_group_path.path)?,
+            kind: root_group_path.kind,
+          })
+        })
+        .collect::<Result<Vec<_>>>()?,
       config,
     })
   }
@@ -87,7 +85,7 @@ pub(crate) struct Config {
 
 struct ConfigFromFile {
   path: PathBuf,
-  root_group: Option<GroupPathBuf>,
+  root_groups: Vec<GroupPathBuf>,
   config: Config,
 }
 
@@ -101,7 +99,7 @@ impl ConfigFromFile {
   where
     F: paths::FileSystem,
   {
-    let mut ret = Self { path: config_path, root_group: None, config: Config::default() };
+    let mut ret = Self { path: config_path, root_groups: Vec::new(), config: Config::default() };
     let parsed: config::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
@@ -116,10 +114,11 @@ impl ConfigFromFile {
       ));
     }
     if let Some(ws) = parsed.workspace {
+      // TODO use many
       if let Some(path) = ws.root {
         let path = root.as_path().join(path.as_str());
         match GroupPathBuf::new(fs, path.clone()) {
-          Some(path) => ret.root_group = Some(path),
+          Some(path) => ret.root_groups.push(path),
           None => {
             return Err(Error::new(
               ErrorSource { path: Some(ret.path), range: None },
