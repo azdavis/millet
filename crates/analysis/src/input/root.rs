@@ -1,4 +1,4 @@
-//! Get the root group.
+//! Get the root groups.
 
 use crate::input::util::{
   get_path_id, read_dir, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
