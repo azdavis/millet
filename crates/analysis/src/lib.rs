@@ -62,8 +62,8 @@ impl Analysis {
     let basis = self.std_basis.basis().clone();
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
-    assert_eq!(input.root_group_ids.len(), 1, "no support for multiple root groups yet");
-    let &id = input.root_group_ids.first().expect("just checked length");
+    assert_eq!(input.root_group_paths.len(), 1, "no support for multiple root groups yet");
+    let &id = input.root_group_paths.first().expect("just checked length");
     let res = elapsed::log("mlb_statics::get", || {
       mlb_statics::get(syms, basis, &input.sources, &groups, id)
     });

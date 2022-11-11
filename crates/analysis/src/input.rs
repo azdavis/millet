@@ -20,7 +20,7 @@ pub struct Input {
   /// A map from group paths to their (parsed) contents.
   pub(crate) groups: PathMap<Group>,
   /// The root group id.
-  pub(crate) root_group_ids: Vec<PathId>,
+  pub(crate) root_group_paths: Vec<PathId>,
   /// Severities to override.
   pub(crate) severities: Severities,
 }
@@ -39,7 +39,7 @@ impl Input {
     let mut ret = Self {
       sources: PathMap::default(),
       groups: PathMap::default(),
-      root_group_ids: Vec::new(),
+      root_group_paths: Vec::new(),
       severities: root.config.severities,
     };
     for group in root.groups {
@@ -48,7 +48,7 @@ impl Input {
         GroupPathKind::Mlb => lower_mlb::get,
       };
       f(fs, &mut ret.sources, &mut ret.groups, store, &root.config.path_vars, group.path)?;
-      ret.root_group_ids.push(group.path);
+      ret.root_group_paths.push(group.path);
     }
     let bas_decs = ret.groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
