@@ -31,9 +31,9 @@ impl Root {
     let config_path = root.as_path().join(config::FILE_NAME);
     let config = match fs.read_to_string(&config_path) {
       Ok(contents) => {
-        let cff = ConfigFromFile::new(fs, root, config_path, contents.as_str())?;
-        if !cff.root_groups.is_empty() {
-          root_group_paths.extend(cff.root_groups);
+        let cff =
+          ConfigFromFile::new(fs, &mut root_group_paths, root, config_path, contents.as_str())?;
+        if !root_group_paths.is_empty() {
           root_group_source.path = Some(cff.path);
         }
         cff.config
@@ -85,13 +85,13 @@ pub(crate) struct Config {
 
 struct ConfigFromFile {
   path: PathBuf,
-  root_groups: Vec<GroupPathBuf>,
   config: Config,
 }
 
 impl ConfigFromFile {
   fn new<F>(
     fs: &F,
+    root_group_paths: &mut Vec<GroupPathBuf>,
     root: &paths::CanonicalPathBuf,
     config_path: PathBuf,
     contents: &str,
@@ -99,7 +99,7 @@ impl ConfigFromFile {
   where
     F: paths::FileSystem,
   {
-    let mut ret = Self { path: config_path, root_groups: Vec::new(), config: Config::default() };
+    let mut ret = Self { path: config_path, config: Config::default() };
     let parsed: config::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
@@ -134,7 +134,7 @@ impl ConfigFromFile {
           };
           let path = root.as_path().join(path);
           match GroupPathBuf::new(fs, path.clone()) {
-            Some(path) => ret.root_groups.push(path),
+            Some(path) => root_group_paths.push(path),
             None => {
               return Err(Error::new(
                 ErrorSource { path: Some(ret.path), range: None },
