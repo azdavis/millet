@@ -7,13 +7,13 @@ use fast_hash::FxHashMap;
 use paths::PathId;
 use std::path::PathBuf;
 
-pub(crate) struct Fella {
+pub(crate) struct RootGroup {
   pub(crate) path: PathId,
   pub(crate) kind: GroupPathKind,
 }
 
 pub(crate) struct Root {
-  pub(crate) groups: Vec<Fella>,
+  pub(crate) groups: Vec<RootGroup>,
   pub(crate) config: Config,
 }
 
@@ -68,7 +68,7 @@ impl Root {
       }
     };
     Ok(Self {
-      groups: vec![Fella {
+      groups: vec![RootGroup {
         path: get_path_id(fs, store, root_group_source, &root_group_path.path)?,
         kind: root_group_path.kind,
       }],
