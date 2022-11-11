@@ -70,7 +70,7 @@ QUZ = { path = "lib" }
 
 - `version` is the version of the config file. At time of writing, it must be exactly `1`.
 - `workspace` is configuration for the workspace.
-  - `root` sets the root group file. In the case where there is exactly one group file in the root project folder, Millet infers that group file to be the root group file. But if not, it must be explicitly set here.
+  - `root` sets the root group file(s). In the case where there is exactly one group file in the root project folder, Millet infers that group file to be the root group file. But if not, it must be explicitly set here. You can use glob syntax for this to specify multiple roots.
   - `path-vars` is a table for expanding variables in paths in group files.
     - If the value is a `value`, the value is used unchanged.
     - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.

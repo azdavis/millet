@@ -114,17 +114,34 @@ impl ConfigFromFile {
       ));
     }
     if let Some(ws) = parsed.workspace {
-      // TODO use many
-      if let Some(path) = ws.root {
-        let path = root.as_path().join(path.as_str());
-        match GroupPathBuf::new(fs, path.clone()) {
-          Some(path) => ret.root_groups.push(path),
-          None => {
-            return Err(Error::new(
-              ErrorSource { path: Some(ret.path), range: None },
-              path,
-              ErrorKind::NotGroup,
-            ))
+      if let Some(root_path_glob) = ws.root {
+        let paths = match fs.glob(root_path_glob.as_str()) {
+          Ok(x) => x,
+          Err(e) => {
+            return Err(Error::new(ErrorSource::default(), ret.path, ErrorKind::GlobPattern(e)))
+          }
+        };
+        for path in paths {
+          let path = match path {
+            Ok(x) => x,
+            Err(e) => {
+              return Err(Error::new(
+                ErrorSource::default(),
+                ret.path,
+                ErrorKind::Io(e.into_error()),
+              ))
+            }
+          };
+          let path = root.as_path().join(path);
+          match GroupPathBuf::new(fs, path.clone()) {
+            Some(path) => ret.root_groups.push(path),
+            None => {
+              return Err(Error::new(
+                ErrorSource { path: Some(ret.path), range: None },
+                path,
+                ErrorKind::NotGroup,
+              ))
+            }
           }
         }
       }

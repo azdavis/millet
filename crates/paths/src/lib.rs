@@ -5,6 +5,8 @@
 
 pub mod slash_var_path;
 
+pub use glob::{GlobError, PatternError};
+
 use fast_hash::FxHashMap;
 use std::path::{Path, PathBuf};
 
@@ -105,6 +107,14 @@ pub trait FileSystem {
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
   /// Returns whether this is a file. If unknown, returns false.
   fn is_file(&self, path: &Path) -> bool;
+  /// An iterator of paths from `glob`.
+  type GlobPaths: Iterator<Item = glob::GlobResult>;
+  /// Glob the file system.
+  ///
+  /// # Errors
+  ///
+  /// If the pattern is invalid.
+  fn glob(&self, pattern: &str) -> Result<Self::GlobPaths, glob::PatternError>;
 }
 
 /// The real file system. Does actual I/O.
@@ -127,6 +137,12 @@ impl FileSystem for RealFileSystem {
   fn is_file(&self, path: &Path) -> bool {
     path.is_file()
   }
+
+  type GlobPaths = glob::Paths;
+
+  fn glob(&self, pattern: &str) -> Result<Self::GlobPaths, glob::PatternError> {
+    glob::glob(pattern)
+  }
 }
 
 /// A 'file system' in memory.
@@ -137,6 +153,8 @@ impl FileSystem for RealFileSystem {
 /// - Have `.`
 /// - Have `..`
 /// - Do not start with `/`
+///
+/// Also, using `glob` doesn't actually glob.
 ///
 /// But this is mainly intended for basic testing purposes, so it's fine.
 #[derive(Debug, Default)]
@@ -174,5 +192,11 @@ impl FileSystem for MemoryFileSystem {
 
   fn is_file(&self, path: &Path) -> bool {
     self.0.contains_key(path)
+  }
+
+  type GlobPaths = std::iter::Once<glob::GlobResult>;
+
+  fn glob(&self, pattern: &str) -> Result<Self::GlobPaths, glob::PatternError> {
+    Ok(std::iter::once(Ok(PathBuf::from(pattern))))
   }
 }

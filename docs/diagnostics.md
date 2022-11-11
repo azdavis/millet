@@ -149,6 +149,14 @@ is
   bar.sml
 ```
 
+## 1014
+
+There was a glob pattern parse error in `workspace.root`.
+
+Currently, Millet uses the [glob crate](https://docs.rs/glob/latest/glob) for glob parsing. This may change in the future.
+
+To fix, consult the docs linked above for valid glob syntax.
+
 ## 1996
 
 Millet couldn't initialize the workspace root.
