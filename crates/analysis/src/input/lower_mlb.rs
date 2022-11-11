@@ -1,6 +1,5 @@
 //! Lower a MLB root group into a map of source files and parsed groups.
 
-use crate::input::root::RootGroup;
 use crate::input::util::{
   get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
   StartedGroup,
@@ -11,21 +10,23 @@ use paths::{PathId, PathMap};
 
 pub(crate) fn get<F>(
   fs: &F,
+  sources: &mut PathMap<String>,
+  groups: &mut PathMap<Group>,
   store: &mut paths::Store,
-  root_group: &RootGroup,
-) -> Result<(PathMap<String>, PathMap<Group>)>
+  path_vars: &paths::slash_var_path::Env,
+  path: paths::PathId,
+) -> Result<()>
 where
   F: paths::FileSystem,
 {
-  let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
-  let mut st = St { fs, store, sources: PathMap::<String>::default(), stack: vec![init] };
-  let mut groups = PathMap::<Group>::default();
+  let init = GroupPathToProcess { parent: path, range: None, path };
+  let mut st = St { fs, store, sources, stack: vec![init] };
   while let Some(cur) = st.stack.pop() {
     if groups.contains_key(&cur.path) {
       continue;
     }
     let group = StartedGroup::new(st.store, cur, fs)?;
-    let syntax_dec = match mlb_syntax::get(group.contents.as_str(), &root_group.config.path_vars) {
+    let syntax_dec = match mlb_syntax::get(group.contents.as_str(), path_vars) {
       Ok(x) => x,
       Err(e) => {
         return Err(Error::new(
@@ -39,13 +40,13 @@ where
     let bas_dec = get_bas_dec(&mut st, &cx, syntax_dec)?;
     groups.insert(cur.path, Group { bas_dec, pos_db: cx.group.pos_db });
   }
-  Ok((st.sources, groups))
+  Ok(())
 }
 
 struct St<'a, F> {
   fs: &'a F,
   store: &'a mut paths::Store,
-  sources: PathMap<String>,
+  sources: &'a mut PathMap<String>,
   stack: Vec<GroupPathToProcess>,
 }
 

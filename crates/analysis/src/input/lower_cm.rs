@@ -1,6 +1,5 @@
 //! Lower a CM file into paths and exports.
 
-use crate::input::root::RootGroup;
 use crate::input::util::{
   get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
   StartedGroup,
@@ -13,55 +12,48 @@ use text_size_util::{TextRange, WithRange};
 
 pub(crate) fn get<F>(
   fs: &F,
+  sources: &mut PathMap<String>,
+  groups: &mut PathMap<Group>,
   store: &mut paths::Store,
-  root_group: &RootGroup,
-) -> Result<(PathMap<String>, PathMap<Group>)>
+  path_vars: &paths::slash_var_path::Env,
+  path: paths::PathId,
+) -> Result<()>
 where
   F: paths::FileSystem,
 {
-  let mut st = St {
-    fs,
-    store,
-    path_vars: &root_group.config.path_vars,
-    sources: PathMap::<String>::default(),
-    cm_files: PathMap::<CmFile>::default(),
-  };
-  let init = GroupPathToProcess { parent: root_group.path, range: None, path: root_group.path };
+  let mut st = St { fs, store, path_vars, sources, cm_files: PathMap::<CmFile>::default() };
+  let init = GroupPathToProcess { parent: path, range: None, path };
   get_one(&mut st, init)?;
-  let groups: PathMap<_> = st
-    .cm_files
-    .into_iter()
-    .map(|(path, cm_file)| {
-      let exports: Vec<_> = cm_file
-        .exports
-        .into_iter()
-        .map(|(ex, range)| {
-          let name = WithRange { val: ex.name, range };
-          mlb_statics::BasDec::Export(ex.namespace, name.clone(), name)
-        })
-        .collect();
-      let path_decs: Vec<_> = cm_file
-        .cm_paths
-        .iter()
-        .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
-        .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
-        .collect();
-      let bas_dec = mlb_statics::BasDec::Local(
-        mlb_statics::BasDec::seq(path_decs).into(),
-        mlb_statics::BasDec::seq(exports).into(),
-      );
-      let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
-      (path, group)
-    })
-    .collect();
-  Ok((st.sources, groups))
+  for (path, cm_file) in st.cm_files {
+    let exports: Vec<_> = cm_file
+      .exports
+      .into_iter()
+      .map(|(ex, range)| {
+        let name = WithRange { val: ex.name, range };
+        mlb_statics::BasDec::Export(ex.namespace, name.clone(), name)
+      })
+      .collect();
+    let path_decs: Vec<_> = cm_file
+      .cm_paths
+      .iter()
+      .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
+      .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
+      .collect();
+    let bas_dec = mlb_statics::BasDec::Local(
+      mlb_statics::BasDec::seq(path_decs).into(),
+      mlb_statics::BasDec::seq(exports).into(),
+    );
+    let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
+    groups.insert(path, group);
+  }
+  Ok(())
 }
 
 struct St<'a, F> {
   fs: &'a F,
   store: &'a mut paths::Store,
   path_vars: &'a paths::slash_var_path::Env,
-  sources: PathMap<String>,
+  sources: &'a mut PathMap<String>,
   cm_files: PathMap<CmFile>,
 }
 

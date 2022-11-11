@@ -36,10 +36,26 @@ impl Input {
     F: paths::FileSystem,
   {
     let root_group = root::RootGroup::new(fs, store, root)?;
-    let (sources, groups) = match root_group.kind {
-      GroupPathKind::Cm => lower_cm::get(fs, store, &root_group)?,
-      GroupPathKind::Mlb => lower_mlb::get(fs, store, &root_group)?,
-    };
+    let mut sources = PathMap::<String>::default();
+    let mut groups = PathMap::<Group>::default();
+    match root_group.kind {
+      GroupPathKind::Cm => lower_cm::get(
+        fs,
+        &mut sources,
+        &mut groups,
+        store,
+        &root_group.config.path_vars,
+        root_group.path,
+      )?,
+      GroupPathKind::Mlb => lower_mlb::get(
+        fs,
+        &mut sources,
+        &mut groups,
+        store,
+        &root_group.config.path_vars,
+        root_group.path,
+      )?,
+    }
     let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
       return Err(Error::new(
