@@ -139,10 +139,10 @@ impl MBasis {
 #[must_use]
 pub fn get(
   syms: sml_statics::Syms,
-  basis: sml_statics::basis::Basis,
+  basis: &sml_statics::basis::Basis,
   sml: &paths::PathMap<String>,
   mlb: &paths::PathMap<&BasDec>,
-  root_mlb: paths::PathId,
+  root_group_paths: &[paths::PathId],
 ) -> MlbStatics {
   let mut cx = Cx {
     syms,
@@ -150,10 +150,15 @@ pub fn get(
     sml: paths::PathMap::default(),
     mlb_errors: Vec::new(),
   };
-  let std_basis =
-    MBasis { fix_env: sml_parse::parser::STD_BASIS.clone(), bas_env: FxHashMap::default(), basis };
-  let files = Files { sml, mlb, std_basis: &std_basis };
-  get_group_file(&mut cx, files, &mut MBasis::default(), root_mlb);
+  for &path in root_group_paths {
+    let std_basis = MBasis {
+      fix_env: sml_parse::parser::STD_BASIS.clone(),
+      bas_env: FxHashMap::default(),
+      basis: basis.clone(),
+    };
+    let files = Files { sml, mlb, std_basis: &std_basis };
+    get_group_file(&mut cx, files, &mut MBasis::default(), path);
+  }
   MlbStatics { mlb_errors: cx.mlb_errors, syms: cx.syms, sml: cx.sml }
 }
 
