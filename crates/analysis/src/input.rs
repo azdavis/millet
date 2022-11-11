@@ -20,7 +20,7 @@ pub struct Input {
   /// A map from group paths to their (parsed) contents.
   pub(crate) groups: PathMap<Group>,
   /// The root group id.
-  pub(crate) root_group_id: PathId,
+  pub(crate) root_group_ids: Vec<PathId>,
   /// Severities to override.
   pub(crate) severities: Severities,
 }
@@ -35,15 +35,22 @@ impl Input {
   where
     F: paths::FileSystem,
   {
-    let root_group = root::RootGroup::new(fs, store, root)?;
-    let mut sources = PathMap::<String>::default();
-    let mut groups = PathMap::<Group>::default();
-    let f = match root_group.kind {
-      GroupPathKind::Cm => lower_cm::get,
-      GroupPathKind::Mlb => lower_mlb::get,
+    let root = root::Root::new(fs, store, root)?;
+    let mut ret = Self {
+      sources: PathMap::default(),
+      groups: PathMap::default(),
+      root_group_ids: Vec::new(),
+      severities: root.config.severities,
     };
-    f(fs, &mut sources, &mut groups, store, &root_group.config.path_vars, root_group.path)?;
-    let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
+    for group in root.groups {
+      let f = match group.kind {
+        GroupPathKind::Cm => lower_cm::get,
+        GroupPathKind::Mlb => lower_mlb::get,
+      };
+      f(fs, &mut ret.sources, &mut ret.groups, store, &root.config.path_vars, group.path)?;
+      ret.root_group_ids.push(group.path);
+    }
+    let bas_decs = ret.groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
       return Err(Error::new(
         ErrorSource::default(),
@@ -51,12 +58,7 @@ impl Input {
         ErrorKind::Cycle,
       ));
     }
-    Ok(Self {
-      sources,
-      groups,
-      root_group_id: root_group.path,
-      severities: root_group.config.severities,
-    })
+    Ok(ret)
   }
 
   /// Return an iterator over the source paths.

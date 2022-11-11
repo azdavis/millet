@@ -56,13 +56,16 @@ impl Analysis {
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to diagnostics.
+  #[allow(clippy::missing_panics_doc)]
   pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Diagnostic>> {
     let syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
+    assert_eq!(input.root_group_ids.len(), 1, "no support for multiple root groups yet");
+    let &id = input.root_group_ids.first().expect("just checked length");
     let res = elapsed::log("mlb_statics::get", || {
-      mlb_statics::get(syms, basis, &input.sources, &groups, input.root_group_id)
+      mlb_statics::get(syms, basis, &input.sources, &groups, id)
     });
     self.source_files = res.sml;
     self.syms = res.syms;
