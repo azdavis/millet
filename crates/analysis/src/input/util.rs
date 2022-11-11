@@ -6,6 +6,65 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use text_pos::Range;
 
+#[derive(Debug)]
+pub(crate) enum ErrorKind {
+  Io(std::io::Error),
+  /// TODO use or rm
+  #[allow(dead_code)]
+  NotInRoot(std::path::StripPrefixError),
+  MultipleRoots(PathBuf, PathBuf),
+  NoRoot,
+  NotGroup,
+  CouldNotParseConfig(toml::de::Error),
+  InvalidConfigVersion(u16),
+  Cm(cm_syntax::Error),
+  Mlb(mlb_syntax::Error),
+  Cycle,
+  Duplicate(str_util::Name),
+  InvalidErrorCode(str_util::SmolStr, diagnostic_util::ParseCodeError),
+  SourcePathNotInFiles,
+  /// must be last
+  UnsupportedExport,
+}
+
+struct ErrorDisplay<'a> {
+  err: &'a Error,
+  root: &'a Path,
+}
+
+impl fmt::Display for ErrorDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match &*self.err.kind {
+      ErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
+      ErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
+      ErrorKind::MultipleRoots(a, b) => {
+        let a = maybe_rel_to_root(self.root, a);
+        let b = maybe_rel_to_root(self.root, b);
+        write!(f, "multiple root group files: {} and {}", a.display(), b.display())
+      }
+      ErrorKind::NoRoot => f.write_str("no root group file"),
+      ErrorKind::NotGroup => f.write_str("not a group file path"),
+      ErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
+      ErrorKind::InvalidConfigVersion(n) => {
+        write!(f, "invalid config version: expected 1, found {n}")
+      }
+      ErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
+      ErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
+      ErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
+      ErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
+      ErrorKind::InvalidErrorCode(ec, e) => write!(f, "invalid error code: {ec}: {e}"),
+      ErrorKind::SourcePathNotInFiles => f.write_str("`source` export not in file list"),
+      ErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
+    }
+  }
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct ErrorSource {
+  pub(crate) path: Option<PathBuf>,
+  pub(crate) range: Option<Range>,
+}
+
 /// An error when getting input.
 ///
 /// We might like this to be non-pub. The problem is that _sometimes_, a `GetInputError` is for a
@@ -82,65 +141,6 @@ impl Error {
   pub fn display<'a>(&'a self, root: &'a Path) -> impl fmt::Display + 'a {
     ErrorDisplay { err: self, root }
   }
-}
-
-#[derive(Debug)]
-pub(crate) enum ErrorKind {
-  Io(std::io::Error),
-  /// TODO use or rm
-  #[allow(dead_code)]
-  NotInRoot(std::path::StripPrefixError),
-  MultipleRoots(PathBuf, PathBuf),
-  NoRoot,
-  NotGroup,
-  CouldNotParseConfig(toml::de::Error),
-  InvalidConfigVersion(u16),
-  Cm(cm_syntax::Error),
-  Mlb(mlb_syntax::Error),
-  Cycle,
-  Duplicate(str_util::Name),
-  InvalidErrorCode(str_util::SmolStr, diagnostic_util::ParseCodeError),
-  SourcePathNotInFiles,
-  /// must be last
-  UnsupportedExport,
-}
-
-struct ErrorDisplay<'a> {
-  err: &'a Error,
-  root: &'a Path,
-}
-
-impl fmt::Display for ErrorDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &*self.err.kind {
-      ErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
-      ErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
-      ErrorKind::MultipleRoots(a, b) => {
-        let a = maybe_rel_to_root(self.root, a);
-        let b = maybe_rel_to_root(self.root, b);
-        write!(f, "multiple root group files: {} and {}", a.display(), b.display())
-      }
-      ErrorKind::NoRoot => f.write_str("no root group file"),
-      ErrorKind::NotGroup => f.write_str("not a group file path"),
-      ErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
-      ErrorKind::InvalidConfigVersion(n) => {
-        write!(f, "invalid config version: expected 1, found {n}")
-      }
-      ErrorKind::Cm(e) => write!(f, "couldn't process SML/NJ CM file: {e}"),
-      ErrorKind::Mlb(e) => write!(f, "couldn't process ML Basis file: {e}"),
-      ErrorKind::Cycle => f.write_str("there is a cycle involving this path"),
-      ErrorKind::Duplicate(name) => write!(f, "duplicate name: {name}"),
-      ErrorKind::InvalidErrorCode(ec, e) => write!(f, "invalid error code: {ec}: {e}"),
-      ErrorKind::SourcePathNotInFiles => f.write_str("`source` export not in file list"),
-      ErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
-    }
-  }
-}
-
-#[derive(Debug, Default, Clone)]
-pub(crate) struct ErrorSource {
-  pub(crate) path: Option<PathBuf>,
-  pub(crate) range: Option<Range>,
 }
 
 pub(crate) type Result<T, E = Error> = std::result::Result<T, E>;
