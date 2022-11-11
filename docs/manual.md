@@ -51,7 +51,7 @@ There are two places where Millet can be configured:
 - `millet.toml`. This is for project-wide settings.
 - VS Code extension settings. This is for user-specific settings.
 
-### `millet.toml`
+### Project-wide settings
 
 Millet can be configured with a `millet.toml` in the workspace root. It has the following format:
 
