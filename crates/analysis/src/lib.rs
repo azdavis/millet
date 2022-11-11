@@ -56,7 +56,6 @@ impl Analysis {
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to diagnostics.
-  #[allow(clippy::missing_panics_doc)]
   pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Diagnostic>> {
     let syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis();
