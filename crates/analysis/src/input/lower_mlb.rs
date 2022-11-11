@@ -1,6 +1,6 @@
 //! Lower a MLB root group into a map of source files and parsed groups.
 
-use crate::input::root_group::RootGroup;
+use crate::input::root::RootGroup;
 use crate::input::util::{
   get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
   StartedGroup,

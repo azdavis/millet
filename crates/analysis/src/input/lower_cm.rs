@@ -1,6 +1,6 @@
 //! Lower a CM file into paths and exports.
 
-use crate::input::root_group::RootGroup;
+use crate::input::root::RootGroup;
 use crate::input::util::{
   get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
   StartedGroup,

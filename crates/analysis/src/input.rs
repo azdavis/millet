@@ -2,14 +2,14 @@
 
 mod lower_cm;
 mod lower_mlb;
-mod root_group;
+mod root;
 mod topo;
 mod util;
 
 use paths::{PathId, PathMap, WithPath};
 use util::{ErrorKind, ErrorSource, GroupPathKind, Result};
 
-pub(crate) use root_group::Severities;
+pub(crate) use root::Severities;
 pub use util::Error;
 
 /// The input to analysis.
@@ -35,7 +35,7 @@ impl Input {
   where
     F: paths::FileSystem,
   {
-    let root_group = root_group::RootGroup::new(fs, store, root)?;
+    let root_group = root::RootGroup::new(fs, store, root)?;
     let (sources, groups) = match root_group.kind {
       GroupPathKind::Cm => lower_cm::get(fs, store, &root_group)?,
       GroupPathKind::Mlb => lower_mlb::get(fs, store, &root_group)?,
