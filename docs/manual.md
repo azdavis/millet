@@ -95,7 +95,7 @@ A table for configuring diagnostic codes.
 
 #### `diagnostics.<CODE>`
 
-Configuration for the diagnostic with code `<CODE>`. `<CODE>` must be an integer.
+Configuration for the diagnostic with code `<CODE>`. It must be an integer.
 
 #### `diagnostics.<CODE>.severity`
 
