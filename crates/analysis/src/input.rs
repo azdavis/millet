@@ -38,24 +38,11 @@ impl Input {
     let root_group = root::RootGroup::new(fs, store, root)?;
     let mut sources = PathMap::<String>::default();
     let mut groups = PathMap::<Group>::default();
-    match root_group.kind {
-      GroupPathKind::Cm => lower_cm::get(
-        fs,
-        &mut sources,
-        &mut groups,
-        store,
-        &root_group.config.path_vars,
-        root_group.path,
-      )?,
-      GroupPathKind::Mlb => lower_mlb::get(
-        fs,
-        &mut sources,
-        &mut groups,
-        store,
-        &root_group.config.path_vars,
-        root_group.path,
-      )?,
-    }
+    let f = match root_group.kind {
+      GroupPathKind::Cm => lower_cm::get,
+      GroupPathKind::Mlb => lower_mlb::get,
+    };
+    f(fs, &mut sources, &mut groups, store, &root_group.config.path_vars, root_group.path)?;
     let bas_decs = groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
       return Err(Error::new(
