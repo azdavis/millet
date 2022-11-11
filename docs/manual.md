@@ -93,11 +93,11 @@ A table for expanding variables in paths in group files.
 
 A table for configuring diagnostic codes.
 
-#### `diagnostics.<CODE>`
+#### `diagnostics.<code>`
 
-Configuration for the diagnostic with code `<CODE>`. It must be an integer.
+Configuration for the diagnostic with code number `<code>`. It must be an integer.
 
-#### `diagnostics.<CODE>.severity`
+#### `diagnostics.<code>.severity`
 
 Overrides the default severity for this diagnostic. The acceptable values are:
 
