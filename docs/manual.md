@@ -78,7 +78,9 @@ Configuration for the workspace.
 
 #### `workspace.root`
 
-Sets the root group file(s). In the case where there is exactly one group file in the root project folder, Millet infers that group file to be the root group file. But if not, it must be explicitly set here.
+Sets the root group file(s).
+
+In the case where there is exactly one group file in the root project folder, Millet infers that group file to be the root group file. But if not, it must be explicitly set here.
 
 You can use glob syntax for this to specify multiple roots.
 
