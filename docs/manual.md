@@ -68,19 +68,42 @@ QUZ = { path = "lib" }
 5029.severity = "ignore"
 ```
 
-- `version` is the version of the config file. At time of writing, it must be exactly `1`.
-- `workspace` is configuration for the workspace.
-  - `root` sets the root group file(s). In the case where there is exactly one group file in the root project folder, Millet infers that group file to be the root group file. But if not, it must be explicitly set here. You can use glob syntax for this to specify multiple roots.
-  - `path-vars` is a table for expanding variables in paths in group files.
-    - If the value is a `value`, the value is used unchanged.
-    - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
-  - `diagnostics` is a table for configuring diagnostic codes.
-    - Each key is an diagnostic code.
-    - For each key, the value is a table.
-      - The `severity` key overrides the default severity for this diagnostic. The acceptable values are:
-        - `ignore`: the diagnostic is not reported.
-        - `warning`: the diagnostic is reported as a warning.
-        - `error`: the diagnostic is reported with maximum severity.
+#### `version`
+
+The version of the config file. At time of writing, it must be exactly `1`.
+
+#### `workspace`
+
+Configuration for the workspace.
+
+#### `workspace.root`
+
+Sets the root group file(s). In the case where there is exactly one group file in the root project folder, Millet infers that group file to be the root group file. But if not, it must be explicitly set here.
+
+You can use glob syntax for this to specify multiple roots.
+
+#### `workspace.path-vars`
+
+A table for expanding variables in paths in group files.
+
+- If the value is a `value`, the value is used unchanged.
+- If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
+
+#### `diagnostics`
+
+A table for configuring diagnostic codes.
+
+#### `diagnostics.<CODE>`
+
+Configuration for the diagnostic with code `<CODE>`. `<CODE>` must be an integer.
+
+#### `diagnostics.<CODE>.severity`
+
+Overrides the default severity for this diagnostic. The acceptable values are:
+
+- `ignore`: the diagnostic is not reported.
+- `warning`: the diagnostic is reported as a warning.
+- `error`: the diagnostic is reported with maximum severity.
 
 ### VS Code settings
 
