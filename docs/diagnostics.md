@@ -1314,7 +1314,7 @@ Consider this example:
 
 ```sml
 fun f x = x x
-(**       ^^^ circular type: ?a occurs in ?a -> ?b *)
+(**       ^ circular type: ?a occurs in ?a -> ?b *)
 ```
 
 When typechecking `f`, Millet does the following:
@@ -1376,7 +1376,11 @@ Finally, if Millet encounters an invalid expression, like a variable that was un
 
 ## 5007
 
+**NOTE**: This diagnostic is no longer emitted.
+
 A function application expression was encountered, but the function expression did not have a function type.
+
+<!-- @ignore no longer emitted -->
 
 ```sml
 val _ = "foo" 3

@@ -19,7 +19,6 @@ pub(crate) enum ErrorKind {
   Extra(Item, str_util::Name),
   Circularity(MetaTyVar, Ty),
   MismatchedTypes(MismatchedTypesFlavor, Ty, Ty),
-  AppLhsNotFn(Ty),
   DuplicateLab(sml_hir::Lab),
   RealPat,
   UnreachablePattern,
@@ -94,12 +93,6 @@ impl fmt::Display for ErrorKindDisplay<'_> {
             write!(f, "     found {got}")
           }
         }
-      }
-      ErrorKind::AppLhsNotFn(got) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(got);
-        let got = got.display(&mvs, self.syms);
-        write!(f, "expected a function type, found {got}")
       }
       ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
@@ -356,7 +349,6 @@ impl Error {
       ErrorKind::Extra(_, _) => Code::n(5004),
       ErrorKind::Circularity(_, _) => Code::n(5005),
       ErrorKind::MismatchedTypes(_, _, _) => Code::n(5006),
-      ErrorKind::AppLhsNotFn(_) => Code::n(5007),
       ErrorKind::DuplicateLab(_) => Code::n(5008),
       ErrorKind::RealPat => Code::n(5009),
       ErrorKind::UnreachablePattern => Code::n(5010),

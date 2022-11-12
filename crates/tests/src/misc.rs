@@ -22,7 +22,7 @@ val _ = fn f => fn x =>
     f x;
     f x x x andalso false;
     f 3;
-(** ^ expected a function type, found unit *)
+(** ^ expected unit, found int -> ?b *)
     f: unit;
     false
   )
@@ -45,7 +45,7 @@ fn circularity_2() {
   check(
     r#"
 fun f x = x x
-(**       ^^^ circular type: ?a occurs in ?a -> ?b *)
+(**       ^ circular type: ?a occurs in ?a -> ?b *)
 "#,
   );
 }
@@ -226,7 +226,7 @@ fn not_arrow_ty() {
   check(
     r#"
 val _ = "foo" 3
-(**     ^^^^^ expected a function type, found string *)
+(**     ^^^^^ expected string, found int -> ?b *)
 "#,
   );
 }

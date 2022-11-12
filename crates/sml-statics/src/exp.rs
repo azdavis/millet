@@ -81,27 +81,20 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       }
       let func_ty = get(st, cfg, cx, ars, *func);
       let arg_ty = get(st, cfg, cx, ars, *argument);
-      // we could choose to not `match` on `func_ty` and just use the `MetaVar` case always and it
-      // would still be correct. however, matching on `func_ty` lets us emit slightly better error
-      // messages sometimes.
+      // we could use the `_` case always, but it's slightly nicer if we know the function is
+      // already a function type to just unify the parameter with the argument.
       match func_ty {
-        Ty::None => Ty::None,
-        Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),
-        Ty::MetaVar(_) => {
+        Ty::Fn(param_ty, mut ret) => {
+          unify(st, *param_ty, arg_ty, argument.unwrap_or(exp).into());
+          apply(st.subst(), ret.as_mut());
+          *ret
+        }
+        _ => {
           let mut ret = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
           let got = Ty::fun(arg_ty, ret.clone());
-          unify(st, func_ty, got, exp.into());
+          unify(st, func_ty, got, func.unwrap_or(exp).into());
           apply(st.subst(), &mut ret);
           ret
-        }
-        Ty::FixedVar(_) | Ty::Record(_) | Ty::Con(_, _) => {
-          st.err(func.unwrap_or(exp), ErrorKind::AppLhsNotFn(func_ty));
-          Ty::None
-        }
-        Ty::Fn(want_arg, mut want_res) => {
-          unify(st, *want_arg, arg_ty, argument.unwrap_or(exp).into());
-          apply(st.subst(), want_res.as_mut());
-          *want_res
         }
       }
     }
