@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Remove 5007 as a separate error.
+
 ## v0.5.15
 
 - Treat `workspace.root` as a glob pattern, to allow for multiple root groups.
