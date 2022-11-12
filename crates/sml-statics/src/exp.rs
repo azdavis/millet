@@ -91,8 +91,8 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
         }
         _ => {
           let mut ret = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
-          let got = Ty::fun(arg_ty, ret.clone());
-          unify(st, func_ty, got, func.unwrap_or(exp).into());
+          let want = Ty::fun(arg_ty, ret.clone());
+          unify(st, want, func_ty, func.unwrap_or(exp).into());
           apply(st.subst(), &mut ret);
           ret
         }

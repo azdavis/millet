@@ -22,7 +22,7 @@ val _ = fn f => fn x =>
     f x;
     f x x x andalso false;
     f 3;
-(** ^ expected unit, found int -> ?b *)
+(** ^ expected int -> ?b, found unit *)
     f: unit;
     false
   )
@@ -226,7 +226,7 @@ fn not_arrow_ty() {
   check(
     r#"
 val _ = "foo" 3
-(**     ^^^^^ expected string, found int -> ?b *)
+(**     ^^^^^ expected int -> ?b, found string *)
 "#,
   );
 }

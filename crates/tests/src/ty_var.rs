@@ -7,7 +7,7 @@ fn across_var() {
   check(
     r#"
 fun 'a f (x: 'a) = let val y = x in y false; y end
-(**                                 ^ expected 'a, found bool -> ?a *)
+(**                                 ^ expected bool -> ?a, found 'a *)
 "#,
   );
 }
