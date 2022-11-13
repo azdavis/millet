@@ -180,7 +180,7 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
               st.write(" ");
               st.write(head.name_star_eq()?.token.text());
               st.write(" ");
-              get_pat(st, head.lhs()?)?;
+              get_pat(st, head.rhs()?)?;
               if parens {
                 st.write(")");
               }

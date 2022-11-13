@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Remove 5007 as a separate error.
+- Improve formatting of infix `fun` declarations.
 
 ## v0.5.15
 
