@@ -186,8 +186,10 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
               }
             }
           }
-          st.write(" ");
-          sep(st, " ", fun_bind_case.pats(), get_pat)?;
+          for arg in fun_bind_case.pats() {
+            st.write(" ");
+            get_pat(st, arg)?;
+          }
           ty_annotation(st, fun_bind_case.ty_annotation())?;
           if let Some(eq_exp) = fun_bind_case.eq_exp() {
             st.write(" =");
