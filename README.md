@@ -14,6 +14,7 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 
 - Check out the [blog post][blog] introducing the project.
 - Refer to the [manual][] for information about setup, usage, and features.
+- See the full [documentation][] for other information, like explanations for diagnostics and project policies.
 
 ## Warning
 
@@ -47,8 +48,6 @@ If you're using VS Code, you can try out the VS Code extension:
 2. Open the Run panel from the activity bar (the play button with bug).
 3. Select "extension" in the drop down.
 4. Press the green play button.
-
-See also the [documentation][].
 
 ## Naming
 

@@ -12,6 +12,7 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 
 - Check out the [blog post][blog] introducing the project.
 - Refer to the [manual][] for information about setup, usage, and features.
+- See the full [documentation][] for other information, like explanations for diagnostics and project policies.
 
 ## Warning
 
@@ -78,6 +79,7 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [discord]: https://discord.gg/hgPSUby2Ny
 [known-issues]: https://github.com/azdavis/millet/blob/main/docs/known-issues.md
+[documentation]: https://github.com/azdavis/millet/blob/main/docs/README.md
 [manual]: https://github.com/azdavis/millet/blob/main/docs/manual.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [mlb]: http://mlton.org/MLBasis
