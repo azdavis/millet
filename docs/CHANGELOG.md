@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.5.16
 
 - Remove 5007 as a separate error.
 - Improve formatting of infix `fun` declarations.
