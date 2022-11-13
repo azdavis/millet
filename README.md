@@ -36,15 +36,14 @@ There is a [Discord server][discord] for Project Savanna, and Millet has its own
 
 Install the dependencies:
 
-- [git][], to clone the repository.
 - [rust][] (i.e. `rustc` and `cargo`), to build Rust code.
 - [nodejs][] (i.e. `node` and `npm`), to build the VS Code extension in TypeScript.
 
-Then, `git clone` the repo, `cd` inside, and run `cargo xtask ci`.
+Then, download/clone the repo and run `cargo xtask ci` inside it. This will build the project and run tests.
 
 If you're using VS Code, you can try out the VS Code extension:
 
-1. Open the root directory of this repository in VS Code.
+1. Open the root directory of the repo in VS Code.
 2. Open the Run panel from the activity bar (the play button with bug).
 3. Select "extension" in the drop down.
 4. Press the green play button.
@@ -71,7 +70,6 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [discord]: https://discord.gg/hgPSUby2Ny
 [documentation]: /docs/README.md
-[git]: https://git-scm.com
 [known-issues]: /docs/known-issues.md
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [manual]: /docs/manual.md
