@@ -2,6 +2,8 @@
 
 A language server for [Standard ML][sml] (SML).
 
+![Millet logo](./editors/vscode/icon.png)
+
 Millet analyzes SML code without running it, and provides information like:
 
 - Inline diagnostics
