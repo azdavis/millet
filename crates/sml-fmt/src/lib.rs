@@ -621,10 +621,18 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       get_exp(st, cfg, arg)?;
     }
     ast::Exp::InfixExp(exp) => {
+      let operator = exp.name_star_eq()?;
+      let operator = operator.token.text();
       get_exp(st, cfg, exp.lhs()?)?;
-      st.write(" ");
-      st.write(exp.name_star_eq()?.token.text());
-      st.write(" ");
+      if operator == "|>" {
+        st.write("\n");
+        cfg.indented().output_indent(st);
+        st.write("|> ");
+      } else {
+        st.write(" ");
+        st.write(operator);
+        st.write(" ");
+      }
       get_exp(st, cfg, exp.rhs()?)?;
     }
     ast::Exp::TypedExp(exp) => {

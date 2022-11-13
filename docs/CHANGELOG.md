@@ -17,6 +17,7 @@ The versioning system is basically the following:
 
 - Remove 5007 as a separate error.
 - Improve formatting of infix `fun` declarations.
+- Format "pipe expressions" with `|>` across many lines.
 
 ## v0.5.15
 
