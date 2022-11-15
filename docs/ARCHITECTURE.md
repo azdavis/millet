@@ -1,8 +1,14 @@
 # Architecture
 
-Millet is a language server for SML. A language server is a long-running, stateful process that transforms a repository of code, and the client's edits to that code, into a semantic model about that code that can be queried by the client.
+Millet is a language server for SML.
 
-## Code map
+A language server is a long-running, stateful process that transforms a repository of code, and the client's edits to that code, into a semantic model about that code that can be queried by the client.
+
+Millet is mostly written in Rust, and is split into a few somewhat modular "crates".
+
+## Type crates
+
+These crates provide foundational types that many other crates use.
 
 ### `crates/sml-syntax`
 
@@ -52,25 +58,33 @@ The "almost" is because: since we need to represent partial nodes (from a partia
 type ExpIdx = Option<Idx<Exp>>;
 ```
 
+## Passes crates
+
+These crates are the main "passes" on SML code. Together they form essentially a SML compiler frontend.
+
+Notably, passes that can produce errors have the approximate shape
+
+```rs
+Input -> (Output, Vec<Error>)
+```
+
+instead of
+
+```rs
+Input -> Result<Output, Error>
+```
+
+That is to say, we always produce _both_ as best an output we could make _and_ as many errors as we could find, as opposed to _either_ a "perfect" output _or_ the first error we encountered.
+
+The latter is more common in "regular" compilers, but we're a language server. In the case of a language server, we want to analyze as much of the code as possible as far as possible, even if the information we have is imperfect.
+
 ### `crates/sml-lex`
 
 ```rs
 String -> (Vec<sml_syntax::Token>, Vec<LexError>)
 ```
 
-Note that for this and all of the rest of the "passes", the "signatures" given, like the one above, are not exact.
-
-Lexes ("tokenizes") a string into tokens.
-
-Note that the signature is _not_ this:
-
-```rs
-String -> Result<Vec<sml_syntax::Token>, Vec<LexError>>
-```
-
-That is to say, we always produce _both_ whatever tokens we could _and_ as many errors as we could find. This pattern is common across the rest of the "passes".
-
-The idea is: we want to analyze as much of the code as possible as far as possible, even if the information we have is imperfect.
+Lex (aka tokenize) a string into tokens.
 
 ### `crates/sml-parse`
 
@@ -120,7 +134,7 @@ Handles adding implicitly-scoped type variables to their `val` declaration/speci
 ### `crates/sml-statics`
 
 ```rs
-(sml_statics::State, sml_hir::Root) -> (sml_statics::State, Vec<StaticsError>)
+(State, Basis, sml_hir::Root) -> (State, Basis, Info, Vec<StaticsError>)
 ```
 
 Does static analysis ("typechecking") on HIR.
@@ -131,6 +145,10 @@ Statics errors use an abstract `Idx`, and this index gets turned into an actual 
 
 NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), like "the name of the third con bind in the second dat bind of this datatype dec".
 
+## SML-adjacent helper crates
+
+These crates do interesting things related to SML files, but aren't really full "passes".
+
 ### `crates/sml-fmt`
 
 Naively format SML files.
@@ -138,6 +156,17 @@ Naively format SML files.
 ### `crates/sml-comment`
 
 Extract interesting comments from above SML syntax nodes, like doc comments.
+
+### `crates/lex-util`
+
+Some common lex utilities used in multiple lexing crates, like:
+
+- Handling `(* ... *)` style block comments with nesting.
+- Handling whitespace.
+
+## SML group file crates
+
+These crates are related to "group files" in the SML ecosystem, namely SML/NJ Compilation Manager and ML Basis.
 
 ### `crates/cm-syntax`
 
@@ -153,9 +182,9 @@ Static semantics for MLB files.
 
 Because the semantics for MLB files determines when source (SML) files get parsed and statically analyzed, this depends on most of the crates that analyze SML.
 
-### `crates/config`
+## Utility crates
 
-The format for the optional Millet configuration file.
+These crates are somewhat general purpose, and might conceivably be able to be pulled out of Millet and made into their own libraries.
 
 ### `crates/paths`
 
@@ -165,13 +194,6 @@ Types for working with paths, notably:
 - A type that transforms these canonical path buffers into cheap IDs, given that a path is "contained" in a "root" canonical path buf.
 
 These are ideal for the use case of language servers, in which we have a "workspace root" containing all the files.
-
-### `crates/lex-util`
-
-Some common lex utilities used in multiple lexing crates, like:
-
-- Handling `(* ... *)` style block comments with nesting.
-- Handling whitespace.
 
 ### `crates/str-util`
 
@@ -204,6 +226,10 @@ A utility crate for an `Idx` type, a cheap copyable type that can index into sli
 
 A small utility crate for timing function calls.
 
+## Overall crates
+
+These crates depend on many other crates to "unite" everything together.
+
 ### `crates/analysis`
 
 Unifies all the passes into one single API.
@@ -216,9 +242,19 @@ Depends on `analysis` and a bunch of third party crates to implement a language 
 
 A CLI wrapper around `analysis`. It basically does one full analysis of the input, prints any errors to stdout, and exits, much like a conventional compiler or linter.
 
+## Other crates
+
+These crates don't really fit in anywhere else.
+
+### `crates/config`
+
+The format for the optional Millet configuration file.
+
 ### `crates/tests`
 
-The tests. Depends on `analysis`, and consumes its public API to test functionality of each of the 'passes'.
+All the tests for all of the other crates. Depends on `analysis`, and consumes its public API to test functionality of each of the 'passes'.
+
+No crate except this crate is expected to have tests, and this crate is expected to have nothing but tests.
 
 Test case are usually SML programs, which contain "expectation comments" asserting that `analysis` should behave a certain way about a certain region of the program.
 
@@ -236,7 +272,9 @@ val _ = nope
 }
 ```
 
-See the documentation of `check()` for how to write tests.
+## Other code
+
+Most of the code is contained in the Rust crates documented above, but some code lives elsewhere.
 
 ### `docs`
 
@@ -244,7 +282,7 @@ Documentation, like this!
 
 ### `editors`
 
-Support for specific text editors. Right now there is only one.
+Support for specific text editors via language client extensions/"glue code".
 
 ### `editors/vscode`
 
@@ -266,7 +304,7 @@ Configuration for GitHub, like:
 
 - PR templates
 - Issue templates
-- The CI job run, run o GitHub Actions.
+- The CI job run, run on GitHub Actions.
 
 ### `.vscode`
 
