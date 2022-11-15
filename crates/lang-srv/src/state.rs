@@ -1,5 +1,3 @@
-//! See [`State`].
-
 mod helpers;
 
 use anyhow::{bail, Result};
@@ -12,8 +10,7 @@ use std::ops::ControlFlow;
 
 const LEARN_MORE: &str = "Learn more";
 
-/// The state of the language server. Only this may do IO. (Well, also the [`lsp_server`] channels
-/// that communicate over stdin and stdout.)
+/// The state of the language server.
 pub(crate) struct State {
   mode: Mode,
   sp: SPState,
@@ -75,8 +72,8 @@ impl State {
       .unwrap_or_default();
     if dynamic_registration {
       if let Mode::Root(root) = &ret.mode {
-        // not sure if possible to only listen to millet.toml. "nested alternate groups are not
-        // allowed" at time of writing
+        // we'd like to only listen to millet.toml, not all toml, but "nested alternate groups are
+        // not allowed" at time of writing.
         let glob_pattern =
           format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
         let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
@@ -151,8 +148,7 @@ impl State {
       self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
-    // TODO do CodeActionResolveRequest and lazily compute the edit, instead of doing everything in
-    // CodeActionRequest
+    // TODO do CodeActionResolveRequest and lazily compute the edit
     r = helpers::try_req::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
       let url = params.text_document.uri;
       let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
@@ -341,8 +337,6 @@ impl State {
     ControlFlow::Continue(n)
   }
 
-  // diagnostics //
-
   fn try_publish_diagnostics(&mut self) -> bool {
     let root = match &mut self.mode {
       Mode::Root(x) => x,
@@ -373,8 +367,7 @@ impl State {
     // iter over the old list of urls with diagnostics.
     for url in std::mem::take(&mut self.has_diagnostics) {
       if has_diagnostics.contains(&url) {
-        // this url both had old diagnostics, and has new diagnostics. we just sent the new ones, so
-        // nothing to do here.
+        // had old and new diagnostics. just sent the new ones.
         continue;
       }
       // had old diagnostics, but no new diagnostics. clear the old diagnostics.
