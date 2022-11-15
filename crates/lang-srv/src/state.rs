@@ -2,11 +2,11 @@
 
 mod helpers;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use diagnostic_util::Code;
 use fast_hash::{FxHashMap, FxHashSet};
-use lsp_server::{ExtractError, Message, Notification, ReqQueue, Request, RequestId, Response};
+use lsp_server::{Message, Notification, ReqQueue, Request, Response};
 use lsp_types::Url;
 use std::ops::ControlFlow;
 
@@ -112,7 +112,7 @@ impl State {
   }
 
   fn handle_request_(&mut self, mut r: Request) -> ControlFlow<Result<()>, Request> {
-    r = try_request::<lsp_types::request::HoverRequest, _>(r, |id, params| {
+    r = helpers::try_req::<lsp_types::request::HoverRequest, _>(r, |id, params| {
       let params = params.text_document_position_params;
       let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let res =
@@ -128,7 +128,7 @@ impl State {
       self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
-    r = try_request::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
+    r = helpers::try_req::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
       let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let res = self.analysis.get_def(pos).and_then(|range| {
@@ -137,7 +137,7 @@ impl State {
       self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
-    r = try_request::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
+    r = helpers::try_req::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
       let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
       let locs: Vec<_> = self
@@ -153,7 +153,7 @@ impl State {
     })?;
     // TODO do CodeActionResolveRequest and lazily compute the edit, instead of doing everything in
     // CodeActionRequest
-    r = try_request::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
+    r = helpers::try_req::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
       let url = params.text_document.uri;
       let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       let range = helpers::analysis_range(params.range);
@@ -164,7 +164,7 @@ impl State {
       self.sp.send_response(Response::new_ok(id, actions));
       Ok(())
     })?;
-    r = try_request::<lsp_types::request::Formatting, _>(r, |id, params| {
+    r = helpers::try_req::<lsp_types::request::Formatting, _>(r, |id, params| {
       let url = params.text_document.uri;
       let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       let res = self.analysis.format(path, params.options.tab_size).ok().map(|(new_text, end)| {
@@ -237,7 +237,7 @@ impl State {
   }
 
   fn handle_notification_(&mut self, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
-    n = try_notification::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
+    n = helpers::try_notif::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
       match &mut self.mode {
         Mode::Root(root) => {
           root.input = self.sp.try_get_input(&root.path, &mut self.has_diagnostics);
@@ -247,7 +247,7 @@ impl State {
       }
       Ok(())
     })?;
-    n = try_notification::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
+    n = helpers::try_notif::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
       let url = params.text_document.uri;
       let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
       match &mut self.mode {
@@ -260,7 +260,7 @@ impl State {
             Some(x) => x,
             None => bail!("no source in the input for DidChangeTextDocument"),
           };
-          apply_changes(text, params.content_changes);
+          helpers::apply_changes(text, params.content_changes);
           if self.sp.options.diagnostics_on_change {
             self.try_publish_diagnostics();
           } else if self.sp.options.format {
@@ -271,7 +271,7 @@ impl State {
         }
         Mode::NoRoot(open_files) => match open_files.get_mut(&path) {
           Some(text) => {
-            apply_changes(text, params.content_changes);
+            helpers::apply_changes(text, params.content_changes);
             if self.sp.options.diagnostics_on_change {
               let ds = helpers::diagnostics(
                 self.analysis.get_one(text),
@@ -285,7 +285,7 @@ impl State {
       }
       Ok(())
     })?;
-    n = try_notification::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
+    n = helpers::try_notif::<lsp_types::notification::DidOpenTextDocument, _>(n, |params| {
       if let Mode::NoRoot(open_files) = &mut self.mode {
         let url = params.text_document.uri;
         let text = params.text_document.text;
@@ -299,7 +299,7 @@ impl State {
       }
       Ok(())
     })?;
-    n = try_notification::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
+    n = helpers::try_notif::<lsp_types::notification::DidSaveTextDocument, _>(n, |params| {
       match &mut self.mode {
         Mode::Root(root) => {
           if self.sp.registered_for_watched_files {
@@ -329,7 +329,7 @@ impl State {
       }
       Ok(())
     })?;
-    n = try_notification::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
+    n = helpers::try_notif::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
       if let Mode::NoRoot(open_files) = &mut self.mode {
         let url = params.text_document.uri;
         let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;
@@ -506,62 +506,5 @@ impl SPState {
       );
     }
     None
-  }
-}
-
-fn try_request<R, F>(req: Request, f: F) -> ControlFlow<Result<()>, Request>
-where
-  R: lsp_types::request::Request,
-  F: FnOnce(RequestId, R::Params) -> Result<()>,
-{
-  match req.extract::<R::Params>(R::METHOD) {
-    Ok((id, params)) => ControlFlow::Break(f(id, params)),
-    Err(e) => extract_error(e),
-  }
-}
-
-fn try_notification<N, F>(notif: Notification, f: F) -> ControlFlow<Result<()>, Notification>
-where
-  N: lsp_types::notification::Notification,
-  F: FnOnce(N::Params) -> Result<()>,
-{
-  match notif.extract::<N::Params>(N::METHOD) {
-    Ok(params) => ControlFlow::Break(f(params)),
-    Err(e) => extract_error(e),
-  }
-}
-
-/// adapted from rust-analyzer.
-fn apply_changes(text: &mut String, changes: Vec<lsp_types::TextDocumentContentChangeEvent>) {
-  let mut pos_db = text_pos::PositionDb::new(text);
-  let mut up_to_line = None::<u32>;
-  for change in changes {
-    match change.range {
-      Some(range) => {
-        if up_to_line.map_or(false, |utl| utl <= range.end.line) {
-          pos_db = text_pos::PositionDb::new(text);
-        }
-        match pos_db.text_range(helpers::analysis_range(range)) {
-          Some(text_range) => {
-            text.replace_range(std::ops::Range::<usize>::from(text_range), &change.text);
-            up_to_line = Some(range.start.line);
-          }
-          None => log::error!("unable to apply text document change {change:?}"),
-        }
-      }
-      None => {
-        *text = change.text;
-        up_to_line = Some(0);
-      }
-    }
-  }
-}
-
-fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
-  match e {
-    ExtractError::MethodMismatch(x) => ControlFlow::Continue(x),
-    ExtractError::JsonError { method, error } => {
-      ControlFlow::Break(Err(anyhow!("couldn't deserialize for {method}: {error}")))
-    }
   }
 }
