@@ -103,9 +103,9 @@ Configuration for the diagnostic with code number `<code>`. It must be an intege
 
 Overrides the default severity for this diagnostic. The acceptable values are:
 
-- `ignore`: the diagnostic is not reported.
-- `warning`: the diagnostic is reported as a warning.
-- `error`: the diagnostic is reported with maximum severity.
+- `"ignore"`: the diagnostic is not reported.
+- `"warning"`: the diagnostic is reported as a warning.
+- `"error"`: the diagnostic is reported with maximum severity.
 
 ### VS Code settings
 
