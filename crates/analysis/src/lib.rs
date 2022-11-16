@@ -310,7 +310,9 @@ fn source_file_diagnostics(
       diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
     }))
     .collect();
-  if matches!(options.filter, config::DiagnosticsFilter::None) || ret.is_empty() {
+  let no_filter = matches!(options.filter, config::DiagnosticsFilter::None);
+  let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic_util::Severity::Error));
+  if no_filter || !has_any_error {
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
