@@ -2359,7 +2359,7 @@ fun mainCharacter old =
     | false => "nausicaa"
 ```
 
-Usually, `if` is preferred.
+To fix, use `if` instead.
 
 ```sml
 fun mainCharacter old =
