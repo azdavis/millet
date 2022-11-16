@@ -130,7 +130,7 @@ What diagnostics to send per file.
 - Default: `"syntax"`
 - Valid values:
   - `"none"`: No filter, i.e. available diagnostics are sent.
-  - `"syntax"`: If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics diagnostics.
+  - `"syntax"`: If there are syntax errors (lex, parse, etc), send only those. Do not send e.g. statics diagnostics.
 
 #### `millet.server.diagnostics.moreInfoHint.enable`
 
