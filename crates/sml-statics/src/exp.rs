@@ -179,6 +179,7 @@ fn lint_app(
       }
       Def::Path(_, _) => None,
     },
+    sml_hir::Exp::Fn(_, sml_hir::FnFlavor::Fn) => Some(ErrorKind::AppFn),
     _ => None,
   }
 }

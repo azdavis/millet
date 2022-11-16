@@ -49,6 +49,7 @@ pub(crate) enum ErrorKind {
   MismatchedFunctorSugar(FunctorSugarUser),
   InvalidAppend(AppendArg),
   BoolCase,
+  AppFn,
 }
 
 struct ErrorKindDisplay<'a> {
@@ -158,6 +159,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
       ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
+      ErrorKind::AppFn => f.write_str("applying a function literal to an argument"),
     }
   }
 }
@@ -378,6 +380,7 @@ impl Error {
       ErrorKind::MismatchedFunctorSugar(_) => Code::n(5034),
       ErrorKind::InvalidAppend(_) => Code::n(5035),
       ErrorKind::BoolCase => Code::n(5036),
+      ErrorKind::AppFn => Code::n(5037),
     }
   }
 
@@ -388,7 +391,8 @@ impl Error {
       ErrorKind::Unused(_)
       | ErrorKind::InvalidEq(_)
       | ErrorKind::MismatchedFunctorSugar(_)
-      | ErrorKind::BoolCase => Severity::Warning,
+      | ErrorKind::BoolCase
+      | ErrorKind::AppFn => Severity::Warning,
       _ => Severity::Error,
     }
   }

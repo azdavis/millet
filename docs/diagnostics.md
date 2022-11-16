@@ -2369,6 +2369,26 @@ fun mainCharacter old =
     "nausicaa"
 ```
 
+## 5037
+
+A function literal expression ("lambda") was applied to an argument.
+
+```sml
+val _ = (fn x => x + 1) 3
+(**     ^^^^^^^^^^^^^^^^^ applying a function literal to an argument *)
+```
+
+To fix, "inline" the literal, or use something like `let`.
+
+```sml
+val _ =
+  let
+    val x = 3
+  in
+    x + 1
+  end
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.
