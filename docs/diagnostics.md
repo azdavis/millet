@@ -2378,10 +2378,12 @@ val _ = (fn x => x + 1) 3
 (**     ^^^^^^^^^^^^^^^^^ applying a function literal to an argument *)
 ```
 
-To fix, "inline" the literal, or use something like `let`.
+To fix, "inline" the literal, or use something like `let` or `case`.
 
 ```sml
-val _ =
+val inlined = 4
+
+val usingLet =
   let
     val x = 3
   in
