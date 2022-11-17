@@ -14,12 +14,6 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 - Refer to the [manual][] for information about setup, usage, and features.
 - See the full [documentation][] for other information, like explanations for diagnostics and project policies.
 
-## Warning
-
-The [language server][lang-srv] is [beta-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
-
-You can turn it off by setting `millet.server.enable` to `false` in your VS Code settings.
-
 ## Usage
 
 First, install the extension, and open VS Code on a folder with SML files.
@@ -78,10 +72,8 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [blog]: https://azdavis.net/posts/millet/
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [discord]: https://discord.gg/hgPSUby2Ny
-[known-issues]: https://github.com/azdavis/millet/blob/main/docs/known-issues.md
 [documentation]: https://github.com/azdavis/millet/blob/main/docs/README.md
 [manual]: https://github.com/azdavis/millet/blob/main/docs/manual.md
-[lang-srv]: https://microsoft.github.io/language-server-protocol/
 [mlb]: http://mlton.org/MLBasis
 [mlton]: http://mlton.org
 [sml]: https://smlfamily.github.io

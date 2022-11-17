@@ -16,10 +16,6 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 - Refer to the [manual][] for information about setup, usage, and features.
 - See the full [documentation][] for other information, like explanations for diagnostics and project policies.
 
-## Warning
-
-The [language server][lang-srv] is [beta-quality software][known-issues]. It might be slow, wrong, incomplete, or unstable.
-
 ## Install
 
 - There is a [VS Code][vscode] extension on the [marketplace][].
@@ -69,8 +65,6 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [cmu150]: http://www.cs.cmu.edu/~15150/
 [discord]: https://discord.gg/hgPSUby2Ny
 [documentation]: /docs/README.md
-[known-issues]: /docs/known-issues.md
-[lang-srv]: https://microsoft.github.io/language-server-protocol/
 [manual]: /docs/manual.md
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [mlton]: http://mlton.org
