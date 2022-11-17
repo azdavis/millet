@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.6.0
 
 - Only hide statics diagnostics when there are syntax _errors_ when `millet.server.diagnostics.filter` is set to `"syntax"`.
 - Warn when applying a function literal ("lambda") to an argument.
