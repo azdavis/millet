@@ -8,7 +8,7 @@ use std::fmt;
 /// A type that is not equality.
 #[derive(Debug)]
 pub(crate) enum NotEqTy {
-  RegularTyVar,
+  FixedTyVar,
   Real,
   Fn,
 }
@@ -16,7 +16,7 @@ pub(crate) enum NotEqTy {
 impl fmt::Display for NotEqTy {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      NotEqTy::RegularTyVar => f.write_str("a regular type variable"),
+      NotEqTy::FixedTyVar => f.write_str("a fixed non-equality type variable"),
       NotEqTy::Real => f.write_str("`real`"),
       NotEqTy::Fn => f.write_str("a function type"),
     }
@@ -33,7 +33,7 @@ pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqTy> {
     Ty::None => None,
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
     Ty::MetaVar(mv) => match subst.get(*mv) {
-      None => Some(NotEqTy::RegularTyVar),
+      None => todo!("should record the non-subst'd meta vars for unification"),
       Some(entry) => match entry {
         SubstEntry::Solved(ty) => ck(subst, ty),
         SubstEntry::Kind(kind) => match kind {
@@ -46,7 +46,7 @@ pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqTy> {
         },
       },
     },
-    Ty::FixedVar(fv) => (!fv.ty_var().is_equality()).then_some(NotEqTy::RegularTyVar),
+    Ty::FixedVar(fv) => (!fv.ty_var().is_equality()).then_some(NotEqTy::FixedTyVar),
     Ty::Record(rows) => ck_record(subst, rows),
     Ty::Con(args, sym) => {
       // TODO arrays should be equality?
