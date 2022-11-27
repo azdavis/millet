@@ -23,8 +23,11 @@ impl fmt::Display for NotEqTy {
   }
 }
 
-/// If the given type is an equality type, returns `None`. Else, returns a kind of type contained in
-/// the given type that makes the given type not an equality type.
+/// Returns a witness to the given type being **not** an equality type, if there is one. That is:
+///
+/// - If it **is** an equality type, returns nothing.
+/// - If it **is not** an equality type, returns the first kind of type contained in it that makes
+///   it not an equality type.
 pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqTy> {
   match ty {
     Ty::None => None,

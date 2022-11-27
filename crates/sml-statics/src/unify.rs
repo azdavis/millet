@@ -15,7 +15,7 @@ pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorK
   if st.info.mode().is_path_order() {
     return Ok(());
   }
-  unify_(st, want.clone(), got.clone()).map_err(|e| match e {
+  unify_(st, want.clone(), got.clone()).map_err(|err| match err {
     UnifyError::Circularity(mv, ty) => ErrorKind::Circularity(mv, ty),
     UnifyError::MismatchedTypes(flavor) => ErrorKind::MismatchedTypes(flavor, want, got),
   })

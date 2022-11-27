@@ -51,9 +51,6 @@ pub(crate) enum ErrorKind {
   InvalidAppend(AppendArg),
   BoolCase,
   AppFn,
-  /// TODO use
-  #[allow(unused)]
-  NotEqTy(Ty, equality::NotEqTy),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -164,12 +161,6 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
       ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
       ErrorKind::AppFn => f.write_str("applying a function literal to an argument"),
-      ErrorKind::NotEqTy(ty, not_eq) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(ty);
-        let ty = ty.display(&mvs, self.syms);
-        write!(f, "not an equality type because it contains {not_eq}: {ty}")
-      }
     }
   }
 }
@@ -251,6 +242,8 @@ pub(crate) enum MismatchedTypesFlavor {
   OverloadHeadMismatch(Overload, Ty),
   UnresolvedRecordMissingRow(sml_hir::Lab),
   UnresolvedRecordHeadMismatch(RecordTy, Ty),
+  #[allow(dead_code)]
+  NotEqTy(Ty, equality::NotEqTy),
 }
 
 impl MismatchedTypesFlavor {
@@ -265,6 +258,8 @@ impl MismatchedTypesFlavor {
 
 struct MismatchedTypesFlavorDisplay<'a> {
   flavor: &'a MismatchedTypesFlavor,
+  /// NOTE: all types contained inside the MismatchedTypesFlavor should be cloned off of the "main"
+  /// 2 types in the containing ErrorKind, so we'll already have extended the MetaVarNames for them.
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
 }
@@ -320,6 +315,10 @@ impl fmt::Display for MismatchedTypesFlavorDisplay<'_> {
           f,
           "unresolved record or tuple type is not compatible with {ty_display}, which is {ty_desc}"
         )
+      }
+      MismatchedTypesFlavor::NotEqTy(ty, not_eq) => {
+        let ty = ty.display(self.meta_vars, self.syms);
+        write!(f, "not an equality type because it contains {not_eq}: {ty}")
       }
     }
   }
@@ -391,7 +390,6 @@ impl Error {
       ErrorKind::InvalidAppend(_) => Code::n(5035),
       ErrorKind::BoolCase => Code::n(5036),
       ErrorKind::AppFn => Code::n(5037),
-      ErrorKind::NotEqTy(_, _) => Code::n(5038),
     }
   }
 
