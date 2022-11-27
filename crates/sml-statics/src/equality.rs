@@ -29,7 +29,9 @@ impl fmt::Display for NotEqTy {
 /// - If it **is** an equality type, returns nothing.
 /// - If it **is not** an equality type, returns the first kind of type contained in it that makes
 ///   it not an equality type.
-pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqTy> {
+///
+/// Also sets any non-constrained meta type variables to be equality type variables.
+pub(crate) fn ck(subst: &mut Subst, ty: &Ty) -> Option<NotEqTy> {
   if !ENABLED {
     return None;
   }
@@ -37,16 +39,19 @@ pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqTy> {
     Ty::None => None,
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
     Ty::MetaVar(mv) => match subst.get(*mv) {
-      None => todo!("should record the non-subst'd meta vars for unification"),
-      Some(entry) => match entry {
-        SubstEntry::Solved(ty) => ck(subst, ty),
+      None => {
+        subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality));
+        None
+      }
+      Some(entry) => match entry.clone() {
+        SubstEntry::Solved(ty) => ck(subst, &ty),
         SubstEntry::Kind(kind) => match kind {
           TyVarKind::Equality => None,
           TyVarKind::Overloaded(ov) => match ov {
-            Overload::Basic(basic) => ck_basic(*basic),
+            Overload::Basic(basic) => ck_basic(basic),
             Overload::Composite(comp) => comp.as_basics().iter().find_map(|&basic| ck_basic(basic)),
           },
-          TyVarKind::Record(rows) => ck_record(subst, rows),
+          TyVarKind::Record(rows) => ck_record(subst, &rows),
         },
       },
     },
@@ -66,7 +71,7 @@ pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqTy> {
   }
 }
 
-fn ck_record(subst: &Subst, rows: &RecordTy) -> Option<NotEqTy> {
+fn ck_record(subst: &mut Subst, rows: &RecordTy) -> Option<NotEqTy> {
   rows.values().find_map(|ty| ck(subst, ty))
 }
 

@@ -1079,7 +1079,7 @@ impl Subst {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum SubstEntry {
   /// We solved this meta var to a `Ty`.
   Solved(Ty),
