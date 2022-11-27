@@ -377,10 +377,6 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   let inner = &inner[non_space_idx..];
   let (col_range, msg) = inner.split_once(' ')?;
   let msg = msg.trim_end_matches(' ');
-  let expect = match msg.strip_prefix("hover: ") {
-    Some(msg) => Expect { msg: msg.to_owned(), kind: ExpectKind::Hover },
-    None => Expect { msg: msg.to_owned(), kind: ExpectKind::Error },
-  };
   let (line, exact) = match col_range.chars().next()? {
     '^' => (line_n - 1, true),
     '+' => (line_n - 1, false),
@@ -395,5 +391,12 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   } else {
     Region::Line(line)
   };
-  Some((region, expect))
+  Some((region, get_expect(msg)))
+}
+
+fn get_expect(msg: &str) -> Expect {
+  if let Some(msg) = msg.strip_prefix("hover: ") {
+    return Expect { msg: msg.to_owned(), kind: ExpectKind::Hover };
+  }
+  Expect { msg: msg.to_owned(), kind: ExpectKind::Error }
 }
