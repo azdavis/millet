@@ -19,8 +19,9 @@ use std::fmt::{self, Write as _};
 ///
 /// The expectation messages have a certain format:
 ///
-/// - Error expects have no special prefix, and must match exactly.
-/// - Hover expects begin with `hover: `, and the actual hover must merely contain the message.
+/// - Error expects that must match **exactly** have no prefix.
+/// - Error expects that must merely be **contained** begin with `contains: `.
+/// - Hover expects begin with `hover: `, and the actual hover must merely contain the expectation.
 ///
 /// To construct the string to pass without worrying about Rust string escape sequences, use the raw
 /// string syntax: `r#"..."#`.
@@ -137,7 +138,12 @@ impl Check {
     let want_err_len: usize = ret
       .files
       .values()
-      .map(|x| x.want.iter().filter(|(_, e)| matches!(e.kind, ExpectKind::Error)).count())
+      .map(|x| {
+        x.want
+          .iter()
+          .filter(|(_, e)| matches!(e.kind, ExpectKind::ErrorExact | ExpectKind::ErrorContains))
+          .count()
+      })
       .sum();
     // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
     // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
@@ -278,8 +284,15 @@ fn try_region(
   match file.want.get(&region.val) {
     None => Ok(false),
     Some(exp) => match exp.kind {
-      ExpectKind::Error => {
+      ExpectKind::ErrorExact => {
         if exp.msg == got {
+          Ok(true)
+        } else {
+          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
+        }
+      }
+      ExpectKind::ErrorContains => {
+        if got.contains(&exp.msg) {
           Ok(true)
         } else {
           Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
@@ -311,15 +324,17 @@ impl fmt::Display for Expect {
 }
 
 enum ExpectKind {
-  Error,
+  ErrorExact,
+  ErrorContains,
   Hover,
 }
 
 impl fmt::Display for ExpectKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      ExpectKind::Error => f.write_str("error"),
-      ExpectKind::Hover => f.write_str("hover"),
+      ExpectKind::ErrorExact => f.write_str("error (exact)"),
+      ExpectKind::ErrorContains => f.write_str("error (contains)"),
+      ExpectKind::Hover => f.write_str("hover (contains"),
     }
   }
 }
@@ -395,8 +410,11 @@ fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
 }
 
 fn get_expect(msg: &str) -> Expect {
+  if let Some(msg) = msg.strip_prefix("contains: ") {
+    return Expect { msg: msg.to_owned(), kind: ExpectKind::ErrorContains };
+  }
   if let Some(msg) = msg.strip_prefix("hover: ") {
     return Expect { msg: msg.to_owned(), kind: ExpectKind::Hover };
   }
-  Expect { msg: msg.to_owned(), kind: ExpectKind::Error }
+  Expect { msg: msg.to_owned(), kind: ExpectKind::ErrorExact }
 }
