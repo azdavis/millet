@@ -1,9 +1,7 @@
 use crate::error::{Error, ErrorKind, Item};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
-use crate::types::{
-  Def, DefPath, FixedTyVar, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty, TyVarSrc,
-};
+use crate::types::{Def, DefPath, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
 use crate::util::apply;
 use fast_hash::FxHashSet;
 
@@ -15,7 +13,7 @@ pub(crate) struct St {
   pub(crate) subst: Subst,
   errors: Vec<Error>,
   pub(crate) meta_gen: MetaTyVarGen,
-  fixed_gen: FixedTyVarGen,
+  pub(crate) fixed_gen: FixedTyVarGen,
   pub(crate) info: Info,
   matches: Vec<Match>,
   holes: Vec<(MetaTyVar, sml_hir::Idx)>,
@@ -69,10 +67,6 @@ impl St {
       }
       (Mode::PathOrder, _) => {}
     }
-  }
-
-  pub(crate) fn gen_fixed_var(&mut self, ty_var: sml_hir::TyVar, src: TyVarSrc) -> FixedTyVar {
-    self.fixed_gen.gen(ty_var, src)
   }
 
   pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {

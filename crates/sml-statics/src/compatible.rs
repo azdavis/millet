@@ -41,7 +41,7 @@ fn fixed_var_subst(st: &mut St, bound_vars: &BoundTyVars) -> Vec<Ty> {
     .map(|(idx, kind)| {
       let equality = matches!(kind, Some(TyVarKind::Equality));
       let ty_var = ty_var_name(equality, idx).to_string();
-      Ty::FixedVar(st.gen_fixed_var(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty))
+      Ty::FixedVar(st.fixed_gen.gen(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty))
     })
     .collect()
 }

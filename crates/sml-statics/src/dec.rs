@@ -235,7 +235,7 @@ pub(crate) fn add_fixed_ty_vars(
 ) -> FixedTyVars {
   let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
-    let fv = st.gen_fixed_var(ty_var.clone(), src);
+    let fv = st.fixed_gen.gen(ty_var.clone(), src);
     if cx.fixed.insert(ty_var.clone(), fv.clone()).is_some() {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
       st.err(idx, e);
@@ -294,7 +294,7 @@ pub(crate) fn get_dat_binds(
     // just create the fixed ty vars, do not bring them into the scope of the cx yet.
     let mut fixed = FixedTyVars::default();
     for ty_var in &dat_bind.ty_vars {
-      fixed.insert(st.gen_fixed_var(ty_var.clone(), TyVarSrc::Ty));
+      fixed.insert(st.fixed_gen.gen(ty_var.clone(), TyVarSrc::Ty));
     }
     let out_ty = Ty::Con(fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(), started.sym());
     let ty_scheme = {
