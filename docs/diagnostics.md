@@ -2391,6 +2391,12 @@ val usingLet =
   end
 ```
 
+## 5038
+
+A type was required to be an equality type, but it was not.
+
+<!-- TODO expand on this -->
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.

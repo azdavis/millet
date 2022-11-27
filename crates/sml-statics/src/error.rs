@@ -1,6 +1,7 @@
 mod non_exhaustive;
 mod suggestion;
 
+use crate::equality::NotEqTy;
 use crate::pat_match::Pat;
 use crate::types::{
   BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, MetaVarNames, Overload, RecordTy, Sym,
@@ -50,6 +51,9 @@ pub(crate) enum ErrorKind {
   InvalidAppend(AppendArg),
   BoolCase,
   AppFn,
+  /// TODO use
+  #[allow(unused)]
+  NotEqTy(Ty, NotEqTy),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -160,6 +164,12 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
       ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
       ErrorKind::AppFn => f.write_str("applying a function literal to an argument"),
+      ErrorKind::NotEqTy(ty, not_eq) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        mvs.extend_for(ty);
+        let ty = ty.display(&mvs, self.syms);
+        write!(f, "not an equality type because it contains {not_eq}: {ty}")
+      }
     }
   }
 }
@@ -381,6 +391,7 @@ impl Error {
       ErrorKind::InvalidAppend(_) => Code::n(5035),
       ErrorKind::BoolCase => Code::n(5036),
       ErrorKind::AppFn => Code::n(5037),
+      ErrorKind::NotEqTy(_, _) => Code::n(5038),
     }
   }
 
