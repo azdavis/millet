@@ -73,7 +73,8 @@ impl fmt::Display for ErrorKind {
         write!(f, "expected a function clause for {want}, found one for {got}")
       }
       ErrorKind::FunBindWrongNumPats(want, got) => {
-        write!(f, "expected {want} patterns, found {got}")
+        let s = if *want == 1 { "" } else { "s" };
+        write!(f, "expected {want} pattern{s}, found {got}")
       }
       ErrorKind::InvalidIntLit(e) => write!(f, "invalid literal: {e}"),
       ErrorKind::InvalidBigIntLit(e) => write!(f, "invalid literal: {e}"),

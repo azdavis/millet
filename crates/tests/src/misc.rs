@@ -149,7 +149,7 @@ fn fun_dec_wrong_num_pats() {
     r#"
 fun f 1 = 2
   | f 3 4 = 5
-(** ^^^^^^^^^ expected 1 patterns, found 2 *)
+(** ^^^^^^^^^ expected 1 pattern, found 2 *)
 "#,
   );
 }

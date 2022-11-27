@@ -564,7 +564,7 @@ In a `fun` binding with multiple cases, the cases did not all have the same numb
 ```sml
 fun muska 1 = 2
   | muska x y z = x + y + z
-(** ^^^^^^^^^^^^^^^^^^^^^^^ expected 1 patterns, found 3 *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^ expected 1 pattern, found 3 *)
 ```
 
 To fix, use a consistent number of patterns across all cases.
