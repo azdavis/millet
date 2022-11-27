@@ -163,12 +163,12 @@ impl St {
   }
 }
 
-/// returns the missing pats
+/// returns the missing pats.
 fn get_match(errors: &mut Vec<Error>, lang: &Lang, pats: Vec<Pat>, ty: Ty) -> Vec<Pat> {
   let ck = pattern_match::check(lang, pats, ty);
   let ck = match ck {
     Ok(x) => x,
-    // we already should have emitted other errors in this case
+    // we already should have emitted other errors in this case.
     Err(_) => return Vec::new(),
   };
   let mut unreachable: Vec<_> = ck.unreachable.into_iter().flatten().collect();
