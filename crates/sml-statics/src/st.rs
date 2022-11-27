@@ -43,12 +43,8 @@ impl St {
     }
   }
 
-  pub(crate) fn mode(&self) -> Mode {
-    self.info.mode()
-  }
-
   pub(crate) fn def(&self, idx: sml_hir::Idx) -> Option<Def> {
-    let path = match self.mode() {
+    let path = match self.info.mode() {
       Mode::Regular(p) => DefPath::Regular(p?),
       Mode::BuiltinLib(p) => DefPath::BuiltinLib(p),
       Mode::PathOrder => return None,
@@ -60,7 +56,7 @@ impl St {
   where
     I: Into<sml_hir::Idx>,
   {
-    match (self.mode(), &kind) {
+    match (self.info.mode(), &kind) {
       (Mode::PathOrder, ErrorKind::Undefined(Item::Struct | Item::Sig | Item::Functor, _))
       | (Mode::Regular(_) | Mode::BuiltinLib(_), _) => {
         self.errors.push(Error { idx: idx.into(), kind });
@@ -70,28 +66,28 @@ impl St {
   }
 
   pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {
-    if self.mode().is_path_order() {
+    if self.info.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx });
   }
 
   pub(crate) fn insert_handle(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    if self.mode().is_path_order() {
+    if self.info.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx });
   }
 
   pub(crate) fn insert_case(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
-    if self.mode().is_path_order() {
+    if self.info.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
   pub(crate) fn insert_hole(&mut self, mv: MetaTyVar, idx: sml_hir::Idx) {
-    if self.mode().is_path_order() {
+    if self.info.mode().is_path_order() {
       return;
     }
     self.holes.push((mv, idx));
@@ -102,21 +98,21 @@ impl St {
   }
 
   pub(crate) fn mark_used(&mut self, idx: sml_hir::Idx) {
-    if self.mode().is_path_order() {
+    if self.info.mode().is_path_order() {
       return;
     }
     self.used.insert(idx);
   }
 
   pub(crate) fn push_prefix(&mut self, name: str_util::Name) {
-    if self.mode().is_path_order() {
+    if self.info.mode().is_path_order() {
       return;
     }
     self.cur_prefix.push(name);
   }
 
   pub(crate) fn pop_prefix(&mut self) {
-    if self.mode().is_path_order() {
+    if self.info.mode().is_path_order() {
       return;
     }
     self.cur_prefix.pop().expect("no matching push_structure");

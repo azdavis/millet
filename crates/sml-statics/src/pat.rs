@@ -252,7 +252,7 @@ fn insert_name(
 ) {
   let def = st.def(idx);
   let vi = ValInfo { ty_scheme: TyScheme::zero(ty), id_status: IdStatus::Val, def };
-  match st.mode() {
+  match st.info.mode() {
     Mode::Regular(Some(_)) => {
       if cfg.mark_defined {
         st.mark_defined(idx, name.clone());

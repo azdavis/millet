@@ -78,7 +78,7 @@ fn get_str_dec(
       for sig_bind in sig_binds {
         let marker = st.syms.mark();
         let mut env = Env::with_def(st.def(str_dec.into()));
-        let should_push = match st.mode() {
+        let should_push = match st.info.mode() {
           Mode::Regular(_) => true,
           // `datatype option` is well-known
           Mode::BuiltinLib(_) => sig_bind.name.as_str() != "OPTION",
@@ -207,7 +207,7 @@ fn get_str_exp(
       let sig = env_to_sig(sig_exp_env, marker);
       let mut subst = TyRealization::default();
       let mut to_add = sig.env.clone();
-      match st.mode() {
+      match st.info.mode() {
         Mode::Regular(_) => {
           env_instance_sig(st, &mut subst, &str_exp_env, &sig, str_exp.into());
           env_realize(&subst, &mut to_add);
@@ -308,7 +308,7 @@ fn get_sig_exp(
         env_realize(&subst, &mut sig_env);
         st.info.insert(sig_exp.into(), None, sig.env.def);
         ac.append(&mut sig_env);
-        match st.mode() {
+        match st.info.mode() {
           Mode::BuiltinLib(_) => match name.as_str() {
             "WORD" => Some(BasicOverload::Word),
             "INTEGER" | "INT_INF" => Some(BasicOverload::Int),
