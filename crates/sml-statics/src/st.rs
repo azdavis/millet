@@ -12,11 +12,11 @@ use fast_hash::FxHashSet;
 /// Usually I call this `Cx` but the Definition defines a 'Context' already.
 #[derive(Debug)]
 pub(crate) struct St {
-  subst: Subst,
+  pub(crate) subst: Subst,
   errors: Vec<Error>,
   pub(crate) meta_gen: MetaTyVarGen,
   fixed_gen: FixedTyVarGen,
-  info: Info,
+  pub(crate) info: Info,
   matches: Vec<Match>,
   holes: Vec<(MetaTyVar, sml_hir::Idx)>,
   pub(crate) syms: Syms,
@@ -58,10 +58,6 @@ impl St {
     Some(Def::Path(path, idx))
   }
 
-  pub(crate) fn subst(&mut self) -> &mut Subst {
-    &mut self.subst
-  }
-
   pub(crate) fn err<I>(&mut self, idx: I, kind: ErrorKind)
   where
     I: Into<sml_hir::Idx>,
@@ -77,10 +73,6 @@ impl St {
 
   pub(crate) fn gen_fixed_var(&mut self, ty_var: sml_hir::TyVar, src: TyVarSrc) -> FixedTyVar {
     self.fixed_gen.gen(ty_var, src)
-  }
-
-  pub(crate) fn info(&mut self) -> &mut Info {
-    &mut self.info
   }
 
   pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {

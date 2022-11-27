@@ -85,6 +85,6 @@ pub(crate) fn get(
     }
   };
   let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
-  st.info().insert(ty.into(), Some(ty_entry), def);
+  st.info.insert(ty.into(), Some(ty_entry), def);
   ret
 }

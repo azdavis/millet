@@ -52,7 +52,7 @@ pub(crate) fn get(
           get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
-        apply(st.subst(), &mut want);
+        apply(&st.subst, &mut want);
         st.insert_bind(pm_pat, want, val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into));
       }
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
@@ -82,7 +82,7 @@ pub(crate) fn get(
         }
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
         unify(st, want.clone(), got, dec.into());
-        apply(st.subst(), &mut want);
+        apply(&st.subst, &mut want);
         st.insert_bind(pm_pat, want, dec.into());
       }
       let mut generalized = FxHashSet::<sml_hir::ExpIdx>::default();
@@ -93,7 +93,7 @@ pub(crate) fn get(
           continue;
         }
         let mv_g = st.meta_gen.generalizer();
-        let g = generalize(mv_g, st.subst(), fixed.clone(), &mut val_info.ty_scheme);
+        let g = generalize(mv_g, &st.subst, fixed.clone(), &mut val_info.ty_scheme);
         if expansive(&cx, ars, exp) && !val_info.ty_scheme.bound_vars.is_empty() {
           st.err(
             exp.map_or(sml_hir::Idx::Dec(dec), sml_hir::Idx::Exp),

@@ -20,7 +20,7 @@ pub(crate) fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon) -> T
 fn basic_overload(st: &mut St, g: Generalizable, b: BasicOverload) -> Ty {
   let mv = st.meta_gen.gen(g);
   let entry = SubstEntry::Kind(TyVarKind::Overloaded(Overload::Basic(b)));
-  st.subst().insert(mv, entry);
+  st.subst.insert(mv, entry);
   Ty::MetaVar(mv)
 }
 
@@ -87,14 +87,14 @@ pub(crate) fn instantiate(st: &mut St, g: Generalizable, ty_scheme: TyScheme) ->
       let mv = st.meta_gen.gen(g);
       if let Some(k) = x {
         let k = SubstEntry::Kind(k.clone());
-        assert!(st.subst().insert(mv, k).is_none());
+        assert!(st.subst.insert(mv, k).is_none());
       }
       Ty::MetaVar(mv)
     })
     .collect();
   let mut ty = ty_scheme.ty;
   apply_bv(&subst, &mut ty);
-  apply(st.subst(), &mut ty);
+  apply(&st.subst, &mut ty);
   ty
 }
 

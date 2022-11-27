@@ -37,8 +37,8 @@ impl From<MismatchedTypesFlavor> for UnifyError {
 ///
 /// `want` and `got` will have `subst` applied to them upon entry to this function.
 fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result<(), UnifyError> {
-  apply(st.subst(), &mut want);
-  apply(st.subst(), &mut got);
+  apply(&st.subst, &mut want);
+  apply(&st.subst, &mut got);
   match (want, got) {
     (Ty::None, _) | (_, Ty::None) => Ok(()),
     (Ty::BoundVar(want), Ty::BoundVar(got)) => {
@@ -100,27 +100,25 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
   }
   // tweak down the rank of all other meta vars in the ty.
   let mut map = FxHashMap::<MetaTyVar, (MetaTyVar, Option<TyVarKind>)>::default();
-  let mut meta_gen = std::mem::take(&mut st.meta_gen);
   meta_vars(
-    st.subst(),
+    &st.subst,
     &mut |x, k| {
       // this is crucial!
       if x.rank() > mv.rank() {
-        map.insert(x, (meta_gen.gen_same_rank(mv), k.cloned()));
+        map.insert(x, (st.meta_gen.gen_same_rank(mv), k.cloned()));
       }
     },
     &ty,
   );
-  st.meta_gen = meta_gen;
   for (k, (v, kind)) in map {
-    st.subst().insert(k, SubstEntry::Solved(Ty::MetaVar(v)));
+    st.subst.insert(k, SubstEntry::Solved(Ty::MetaVar(v)));
     if let Some(kind) = kind {
-      st.subst().insert(v, SubstEntry::Kind(kind));
+      st.subst.insert(v, SubstEntry::Kind(kind));
     }
   }
-  apply(st.subst(), &mut ty);
+  apply(&st.subst, &mut ty);
   // solve mv to ty. however, mv may already have an entry.
-  match st.subst().insert(mv, SubstEntry::Solved(ty.clone())) {
+  match st.subst.insert(mv, SubstEntry::Solved(ty.clone())) {
     // do nothing if no entry.
     None => {}
     // unreachable because we applied upon entry.
@@ -143,7 +141,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
         // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
         // but mv2 itself may also have an entry.
         Ty::MetaVar(mv2) => {
-          let ov = match st.subst().get(mv2) {
+          let ov = match &mut st.subst.get(mv2) {
             // it didn't have an entry.
             None => ov,
             // unreachable because of apply.
@@ -163,7 +161,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             },
           };
           let k = SubstEntry::Kind(TyVarKind::Overloaded(ov));
-          st.subst().insert(mv2, k);
+          st.subst.insert(mv2, k);
         }
         // none of these are overloaded types.
         Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Record(_) | Ty::Fn(_, _) => {
@@ -189,7 +187,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
         // setting mv2's entry to mv's old entry, which specifies the rows for this record ty
         // var.
         Ty::MetaVar(mv2) => {
-          match st.subst().get(mv2) {
+          match &mut st.subst.get(mv2) {
             // there was no entry.
             None => {}
             // unreachable because of apply.
@@ -207,7 +205,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
                 for (lab, mut want) in other_rows.clone() {
                   if let Some(got) = want_rows.get(&lab) {
                     unify_(st, want.clone(), got.clone())?;
-                    apply(st.subst(), &mut want);
+                    apply(&st.subst, &mut want);
                   }
                   want_rows.insert(lab, want);
                 }
@@ -216,7 +214,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
           }
           // set the entry to make mv2 a record ty var.
           let k = SubstEntry::Kind(TyVarKind::Record(want_rows));
-          st.subst().insert(mv2, k);
+          st.subst.insert(mv2, k);
         }
         // none of these are record types.
         Ty::BoundVar(_) | Ty::FixedVar(_) | Ty::Con(_, _) | Ty::Fn(_, _) => {

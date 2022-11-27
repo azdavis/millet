@@ -43,7 +43,7 @@ pub(crate) fn get(
     },
   };
   let ty_entry = TyEntry { ty: ret.ty.clone(), ty_scheme: ret.ty_scheme };
-  st.info().insert(pat_.into(), Some(ty_entry), ret.def);
+  st.info.insert(pat_.into(), Some(ty_entry), ret.def);
   (ret.pm_pat, ret.ty)
 }
 
@@ -149,7 +149,7 @@ fn get_(
             }
             Some((arg_pat, arg_ty)) => {
               unify(st, *param_ty, arg_ty, pat_idx.into());
-              apply(st.subst(), &mut res_ty);
+              apply(&st.subst, &mut res_ty);
               arg_pat
             }
           };
@@ -175,7 +175,7 @@ fn get_(
         // @def(38)
         let mv = st.meta_gen.gen(cfg.gen);
         let k = SubstEntry::Kind(TyVarKind::Record(rows));
-        assert!(st.subst().insert(mv, k).is_none(),);
+        assert!(st.subst.insert(mv, k).is_none());
         Ty::MetaVar(mv)
       } else {
         Ty::Record(rows)
@@ -188,7 +188,7 @@ fn get_(
       let (pm_pat, got) = get(st, cfg, ars, cx, ve, *inner);
       let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
       unify(st, want.clone(), got, inner.unwrap_or(pat_idx).into());
-      apply(st.subst(), &mut want);
+      apply(&st.subst, &mut want);
       (pm_pat, want)
     }
     // @def(43)
@@ -210,7 +210,7 @@ fn get_(
         pm_pats.push(rest_pm_pat);
         let idx = sml_hir::Idx::from(pat.unwrap_or(pat_idx));
         unify(st, ty.clone(), rest_ty, idx);
-        apply(st.subst(), &mut ty);
+        apply(&st.subst, &mut ty);
         for (name, fst_val_info) in &fst_ve {
           let rest_val_info = match rest_ve.remove(name) {
             Some(x) => x,
