@@ -776,7 +776,11 @@ impl Syms {
     self.store.iter().map(|&(ref a, ref b)| (a, b))
   }
 
-  pub(crate) fn overloads(&mut self) -> &mut Overloads {
+  pub(crate) fn overloads(&self) -> &Overloads {
+    &self.overloads
+  }
+
+  pub(crate) fn overloads_mut(&mut self) -> &mut Overloads {
     &mut self.overloads
   }
 }

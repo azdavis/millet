@@ -226,7 +226,7 @@ fn get_str_exp(
         match &ty_info.ty_scheme.ty {
           Ty::Con(arguments, sym) => {
             assert!(arguments.is_empty());
-            st.syms.overloads()[ov].push(*sym);
+            st.syms.overloads_mut()[ov].push(*sym);
           }
           t => unreachable!("overload not a Con: {t:?}"),
         }

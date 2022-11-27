@@ -82,11 +82,11 @@ pub fn minimal() -> (Syms, Basis) {
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
     insert_special(&mut syms, sym, basic_datatype(Ty::zero(sym), &[]));
   }
-  syms.overloads().int.push(Sym::INT);
-  syms.overloads().word.push(Sym::WORD);
-  syms.overloads().real.push(Sym::REAL);
-  syms.overloads().char.push(Sym::CHAR);
-  syms.overloads().string.push(Sym::STRING);
+  syms.overloads_mut().int.push(Sym::INT);
+  syms.overloads_mut().word.push(Sym::WORD);
+  syms.overloads_mut().real.push(Sym::REAL);
+  syms.overloads_mut().char.push(Sym::CHAR);
+  syms.overloads_mut().string.push(Sym::STRING);
   insert_special(&mut syms, Sym::BOOL, basic_datatype(Ty::BOOL, &["true", "false"]));
   let list_info = {
     let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
