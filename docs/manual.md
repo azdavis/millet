@@ -130,7 +130,7 @@ What diagnostics to send per file.
 - Default: `"syntax"`
 - Valid values:
   - `"none"`: No filter, i.e. available diagnostics are sent.
-  - `"syntax"`: If there are syntax errors (lex, parse, etc), send only those. Do not send e.g. statics diagnostics.
+  - `"syntax"`: If there are syntax errors (lex, parse, etc), send only those, and do not send e.g. statics diagnostics.
 
 #### `millet.server.diagnostics.moreInfoHint.enable`
 
@@ -162,7 +162,9 @@ Show information about tokens on hover.
 
 #### `millet.server.path`
 
-Path to the `lang-srv` executable. When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.
+Path to the `lang-srv` executable.
+
+When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.
 
 - Type: `string`
 - Default: `""`

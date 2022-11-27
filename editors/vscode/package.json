@@ -68,7 +68,7 @@
           ],
           "markdownEnumDescriptions": [
             "No filter, i.e. available diagnostics are sent.",
-            "If there are syntax errors (lex, parse, etc), send only those. Do not send e.g. statics diagnostics."
+            "If there are syntax errors (lex, parse, etc), send only those, and do not send e.g. statics diagnostics."
           ]
         },
         "millet.server.diagnostics.moreInfoHint.enable": {
@@ -94,7 +94,7 @@
         "millet.server.path": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `lang-srv` executable. When set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
+          "markdownDescription": "Path to the `lang-srv` executable.\n\nWhen set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
         }
       }
     },
