@@ -10,6 +10,7 @@
 mod compatible;
 mod config;
 mod dec;
+mod equality;
 mod error;
 mod exp;
 mod fmt_util;
