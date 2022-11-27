@@ -9,13 +9,12 @@ pub(crate) enum NotEqReason {
   TyVar,
   Real,
   Fn,
-  Unknown,
 }
 
 /// Returns the reason why this is **not** an equality type, or None if it **is** an equality type.
 pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqReason> {
   match ty {
-    Ty::None => Some(NotEqReason::Unknown),
+    Ty::None => None,
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
     Ty::MetaVar(mv) => match subst.get(*mv)? {
       SubstEntry::Solved(ty) => ck(subst, ty),
