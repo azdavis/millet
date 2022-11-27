@@ -90,7 +90,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         match self.lines {
           config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
           config::ErrorLines::Many => {
-            writeln!(f, "mismatched types: {}", flavor.display(&mvs, self.syms))?;
+            let flavor = flavor.display(&mvs, self.syms);
+            writeln!(f, "mismatched types: {flavor}")?;
             writeln!(f, "  expected {want}")?;
             write!(f, "     found {got}")
           }
