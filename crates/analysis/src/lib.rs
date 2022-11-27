@@ -13,6 +13,8 @@ use std::fmt;
 use text_pos::{Position, Range};
 use text_size_util::TextRange;
 
+pub use sml_statics::EQUALITY_CHECKS_ENABLED;
+
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {

@@ -2,12 +2,11 @@ use crate::check::{check, fail};
 
 #[test]
 fn real_no() {
-  fail(
-    r#"
+  let f = if analysis::EQUALITY_CHECKS_ENABLED { check } else { fail };
+  f(r#"
 val _ = 2.2 = 3.3
 (**     ^^^^^^^^^ contains: not an equality type *)
-"#,
-  );
+"#);
 }
 
 #[test]
@@ -32,7 +31,6 @@ end :> sig
   val x : t
   val y : t
 end
-
 val _ = S.x = S.y
 (**     ^^^^^^^^^ contains: not an equality type *)
 "#,
@@ -52,34 +50,74 @@ end :> sig
   val x : t
   val y : t
 end
-
 val _ = S.x = S.y
 "#,
   );
 }
 
 #[test]
-fn datatype_sometimes() {
-  fail(
-    r#"
+fn datatype_sometimes_1() {
+  let f = if analysis::EQUALITY_CHECKS_ENABLED { check } else { fail };
+  f(r#"
 datatype 'a t = A of 'a | B of int | C of string | D
-
 val _ = B 3 = C "hi"
 val _ = A () = D
 val _ = A 3.3 = D
 (**     ^^^^^^^^^ contains: not an equality type *)
+"#);
+}
+
+#[test]
+fn datatype_sometimes_2() {
+  let f = if analysis::EQUALITY_CHECKS_ENABLED { check } else { fail };
+  f(r#"
+datatype 'a t = A of 'a | B of int | C of string | D
+fun ''a eq (x : ''a t) (y : ''a t) : bool = x = y
+fun 'a eq (x : 'a t) (y : 'a t) : bool = x = y
+(** + contains: contains a fixed non-equality type variable *)
+"#);
+}
+
+#[test]
+fn datatype_eq_ty_var_1() {
+  check(
+    r#"
+datatype ''a t = A of ''a | B
+fun ''a eq (x : ''a t) (y : ''a t) : bool = x = y
+fun 'a yes (x : 'a t) : unit = ()
 "#,
   );
 }
 
 #[test]
-fn datatype_no_ty_var() {
+fn datatype_eq_ty_var_2() {
   fail(
     r#"
-datatype ''a t = A of ''a | B of int | C of string | D
+datatype ''a t = A of ''a | B
+fun 'a no (x : 'a) : 'a t = A x
+(** + contains: not an equality type *)
+"#,
+  );
+}
 
-val _ = B 3 = C "hi"
-(**     ^^^^^^^^^^^^ contains: not an equality type *)
+#[test]
+fn datatype_eq_ty_var_3() {
+  fail(
+    r#"
+datatype ''a t = A of ''a | B
+fun 'a no (x : 'a) : 'a t = B
+(** + contains: not an equality type *)
+"#,
+  );
+}
+
+#[test]
+fn datatype_eq_ty_var_4() {
+  check(
+    r#"
+datatype ''a t = A of ''a | B
+exception E
+fun 'a yes (x : 'a) : 'a t = raise E
 "#,
   );
 }
@@ -88,8 +126,7 @@ val _ = B 3 = C "hi"
 fn datatype_no_real() {
   fail(
     r#"
-datatype 'a t = A of 'a | B of real | C of string | D
-
+datatype t = B of real | C of string | D
 val _ = C "hi" = D
 (**     ^^^^^^^^^^ contains: not an equality type *)
 "#,

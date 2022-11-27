@@ -28,6 +28,7 @@ mod util;
 pub mod basis;
 pub mod path_order;
 
+pub use equality::ENABLED as EQUALITY_CHECKS_ENABLED;
 pub use error::Error;
 pub use info::{Info, Mode};
 pub use types::{Def, DefPath, MetaVarInfo, Syms};

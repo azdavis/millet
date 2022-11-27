@@ -1,7 +1,9 @@
 //! Checking if a type is an equality type.
 
+/// Whether equality type check are performed.
+///
 /// TODO remove this and all false branches.
-const ENABLED: bool = false;
+pub const ENABLED: bool = false;
 
 use crate::types::{BasicOverload, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyVarKind};
 use std::fmt;
