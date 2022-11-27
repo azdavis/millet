@@ -10,7 +10,7 @@ pub(crate) fn ck(subst: &Subst, ty: &Ty) -> bool {
     Ty::None | Ty::Fn(_, _) => false,
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
     Ty::MetaVar(mv) => match subst.get(*mv) {
-      None => false,
+      None => true,
       Some(entry) => match entry {
         SubstEntry::Solved(ty) => ck(subst, ty),
         SubstEntry::Kind(kind) => match kind {
