@@ -17,20 +17,17 @@ pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqReason> {
   match ty {
     Ty::None => Some(NotEqReason::Unknown),
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
-    Ty::MetaVar(mv) => match subst.get(*mv) {
-      None => None,
-      Some(entry) => match entry {
-        SubstEntry::Solved(ty) => ck(subst, ty),
-        SubstEntry::Kind(kind) => match kind {
-          TyVarKind::Equality => None,
-          TyVarKind::Overloaded(ov) => match ov {
-            Overload::Basic(basic) => ck_basic_overload(*basic),
-            Overload::Composite(comp) => {
-              comp.as_basics().iter().find_map(|&basic| ck_basic_overload(basic))
-            }
-          },
-          TyVarKind::Record(rows) => ck_record(subst, rows),
+    Ty::MetaVar(mv) => match subst.get(*mv)? {
+      SubstEntry::Solved(ty) => ck(subst, ty),
+      SubstEntry::Kind(kind) => match kind {
+        TyVarKind::Equality => None,
+        TyVarKind::Overloaded(ov) => match ov {
+          Overload::Basic(basic) => ck_basic_overload(*basic),
+          Overload::Composite(comp) => {
+            comp.as_basics().iter().find_map(|&basic| ck_basic_overload(basic))
+          }
         },
+        TyVarKind::Record(rows) => ck_record(subst, rows),
       },
     },
     Ty::FixedVar(fv) => (!fv.ty_var().is_equality()).then_some(NotEqReason::TyVar),
