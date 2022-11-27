@@ -33,12 +33,10 @@ impl From<MismatchedTypesFlavor> for UnifyError {
   }
 }
 
-type Result<T = (), E = UnifyError> = std::result::Result<T, E>;
-
 /// does not emit any errors to the `st`, instead returns an error (if any).
 ///
 /// `want` and `got` will have `subst` applied to them upon entry to this function.
-fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
+fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result<(), UnifyError> {
   apply(st.subst(), &mut want);
   apply(st.subst(), &mut got);
   match (want, got) {
@@ -89,7 +87,7 @@ fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result {
   }
 }
 
-fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result {
+fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
   // return without doing anything if the meta vars are the same.
   if let Ty::MetaVar(mv2) = &ty {
     if mv == *mv2 {
