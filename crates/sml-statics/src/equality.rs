@@ -31,7 +31,7 @@ impl fmt::Display for NotEqTy {
 ///   it not an equality type.
 ///
 /// Also sets any non-constrained meta type variables to be equality type variables.
-pub(crate) fn ck(subst: &mut Subst, ty: &Ty) -> Option<NotEqTy> {
+pub(crate) fn get(subst: &mut Subst, ty: &Ty) -> Option<NotEqTy> {
   if !ENABLED {
     return None;
   }
@@ -44,19 +44,21 @@ pub(crate) fn ck(subst: &mut Subst, ty: &Ty) -> Option<NotEqTy> {
         None
       }
       Some(entry) => match entry.clone() {
-        SubstEntry::Solved(ty) => ck(subst, &ty),
+        SubstEntry::Solved(ty) => get(subst, &ty),
         SubstEntry::Kind(kind) => match kind {
           TyVarKind::Equality => None,
           TyVarKind::Overloaded(ov) => match ov {
-            Overload::Basic(basic) => ck_basic(basic),
-            Overload::Composite(comp) => comp.as_basics().iter().find_map(|&basic| ck_basic(basic)),
+            Overload::Basic(basic) => get_basic(basic),
+            Overload::Composite(comp) => {
+              comp.as_basics().iter().find_map(|&basic| get_basic(basic))
+            }
           },
-          TyVarKind::Record(rows) => ck_record(subst, &rows),
+          TyVarKind::Record(rows) => get_record(subst, &rows),
         },
       },
     },
     Ty::FixedVar(fv) => (!fv.ty_var().is_equality()).then_some(NotEqTy::FixedTyVar),
-    Ty::Record(rows) => ck_record(subst, rows),
+    Ty::Record(rows) => get_record(subst, rows),
     Ty::Con(args, sym) => {
       // TODO arrays should be equality?
       if *sym == Sym::REAL {
@@ -64,15 +66,15 @@ pub(crate) fn ck(subst: &mut Subst, ty: &Ty) -> Option<NotEqTy> {
       } else if *sym == Sym::REF {
         None
       } else {
-        args.iter().find_map(|ty| ck(subst, ty))
+        args.iter().find_map(|ty| get(subst, ty))
       }
     }
     Ty::Fn(_, _) => Some(NotEqTy::Fn),
   }
 }
 
-fn ck_record(subst: &mut Subst, rows: &RecordTy) -> Option<NotEqTy> {
-  rows.values().find_map(|ty| ck(subst, ty))
+fn get_record(subst: &mut Subst, rows: &RecordTy) -> Option<NotEqTy> {
+  rows.values().find_map(|ty| get(subst, ty))
 }
 
 /// NOTE: this is an optimization. The (ideally, if our assumptions are correct) equivalent but
@@ -82,7 +84,7 @@ fn ck_record(subst: &mut Subst, rows: &RecordTy) -> Option<NotEqTy> {
 /// However, that should always return the same result as this because the signatures `INTEGER`,
 /// `WORD`, `STRING`, and `CHAR` all have their primary types (e.g. `int` for `INTEGER`) as
 /// `eqtype`s.
-fn ck_basic(ov: BasicOverload) -> Option<NotEqTy> {
+fn get_basic(ov: BasicOverload) -> Option<NotEqTy> {
   match ov {
     BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => None,
     BasicOverload::Real => Some(NotEqTy::Real),

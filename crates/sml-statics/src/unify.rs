@@ -126,7 +126,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
     Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
     Some(SubstEntry::Kind(kind)) => match kind {
       TyVarKind::Equality => {
-        if let Some(not_eq) = equality::ck(&mut st.subst, &ty) {
+        if let Some(not_eq) = equality::get(&mut st.subst, &ty) {
           return Err(MismatchedTypesFlavor::NotEqTy(ty.clone(), not_eq).into());
         }
       }
@@ -151,7 +151,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
-              TyVarKind::Equality => match equality::ck(&mut st.subst, &Ty::MetaVar(mv)) {
+              TyVarKind::Equality => match equality::get(&mut st.subst, &Ty::MetaVar(mv)) {
                 Some(not_eq) => {
                   return Err(MismatchedTypesFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
                 }
@@ -202,7 +202,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
               TyVarKind::Equality => {
-                if let Some(not_eq) = equality::ck(&mut st.subst, &Ty::MetaVar(mv)) {
+                if let Some(not_eq) = equality::get(&mut st.subst, &Ty::MetaVar(mv)) {
                   return Err(MismatchedTypesFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into());
                 }
               }
