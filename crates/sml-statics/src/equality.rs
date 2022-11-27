@@ -1,6 +1,7 @@
-//! Checking if a type is an equality type. TODO use
+//! Checking if a type is an equality type.
 
-#![allow(dead_code)]
+/// TODO remove this and all false branches.
+const ENABLED: bool = false;
 
 use crate::types::{BasicOverload, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyVarKind};
 use std::fmt;
@@ -29,6 +30,9 @@ impl fmt::Display for NotEqTy {
 /// - If it **is not** an equality type, returns the first kind of type contained in it that makes
 ///   it not an equality type.
 pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqTy> {
+  if !ENABLED {
+    return None;
+  }
   match ty {
     Ty::None => None,
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
