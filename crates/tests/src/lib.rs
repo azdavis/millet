@@ -11,6 +11,7 @@ mod datatype_copy;
 mod deviations;
 mod docs;
 mod dupe;
+mod equality;
 mod exn;
 mod fixity;
 mod functor;

@@ -1,4 +1,4 @@
-use crate::check::{check, fail, go, Outcome};
+use crate::check::{check, go, Outcome};
 use diagnostic_util::Severity;
 
 #[test]
@@ -227,16 +227,6 @@ fn not_arrow_ty() {
     r#"
 val _ = "foo" 3
 (**     ^^^^^ contains: expected int -> ?b, found string *)
-"#,
-  );
-}
-
-#[test]
-fn not_equality() {
-  fail(
-    r#"
-val _ = 2.2 = 3.3
-(**     ^^^^^^^^^ not an equality type: real *)
 "#,
   );
 }
