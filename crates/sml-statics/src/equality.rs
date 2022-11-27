@@ -21,10 +21,8 @@ pub(crate) fn ck(subst: &Subst, ty: &Ty) -> Option<NotEqReason> {
       SubstEntry::Kind(kind) => match kind {
         TyVarKind::Equality => None,
         TyVarKind::Overloaded(ov) => match ov {
-          Overload::Basic(basic) => ck_basic_overload(*basic),
-          Overload::Composite(comp) => {
-            comp.as_basics().iter().find_map(|&basic| ck_basic_overload(basic))
-          }
+          Overload::Basic(basic) => ck_basic(*basic),
+          Overload::Composite(comp) => comp.as_basics().iter().find_map(|&basic| ck_basic(basic)),
         },
         TyVarKind::Record(rows) => ck_record(subst, rows),
       },
@@ -56,7 +54,7 @@ fn ck_record(subst: &Subst, rows: &RecordTy) -> Option<NotEqReason> {
 /// However, that should always return the same result as this because the signatures `INTEGER`,
 /// `WORD`, `STRING`, and `CHAR` all have their primary types (e.g. `int` for `INTEGER`) as
 /// `eqtype`s.
-fn ck_basic_overload(ov: BasicOverload) -> Option<NotEqReason> {
+fn ck_basic(ov: BasicOverload) -> Option<NotEqReason> {
   match ov {
     BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => None,
     BasicOverload::Real => Some(NotEqReason::Real),
