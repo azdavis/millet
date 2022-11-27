@@ -11,13 +11,13 @@ use fast_hash::FxHashSet;
 #[derive(Debug)]
 pub(crate) struct St {
   pub(crate) subst: Subst,
-  errors: Vec<Error>,
   pub(crate) meta_gen: MetaTyVarGen,
   pub(crate) fixed_gen: FixedTyVarGen,
   pub(crate) info: Info,
+  pub(crate) syms: Syms,
+  errors: Vec<Error>,
   matches: Vec<Match>,
   holes: Vec<(MetaTyVar, sml_hir::Idx)>,
-  pub(crate) syms: Syms,
   /// a subset of all things that have definition sites. currently, only local value variables to a
   /// function.
   defined: Vec<(sml_hir::Idx, str_util::Name)>,
