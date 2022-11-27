@@ -1,7 +1,7 @@
 mod non_exhaustive;
 mod suggestion;
 
-use crate::equality::NotEqTy;
+use crate::equality;
 use crate::pat_match::Pat;
 use crate::types::{
   BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, MetaVarNames, Overload, RecordTy, Sym,
@@ -53,7 +53,7 @@ pub(crate) enum ErrorKind {
   AppFn,
   /// TODO use
   #[allow(unused)]
-  NotEqTy(Ty, NotEqTy),
+  NotEqTy(Ty, equality::NotEqTy),
 }
 
 struct ErrorKindDisplay<'a> {
