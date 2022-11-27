@@ -7,7 +7,7 @@ fn apply() {
     r#"
 val apply = fn (f, x) => f x
 val _ = apply: unit
-(**     ^^^^^^^^^^^ expected unit, found (?a -> ?b) * ?a -> ?b *)
+(**     ^^^^^^^^^^^ contains: expected unit, found (?a -> ?b) * ?a -> ?b *)
 "#,
   );
 }
@@ -22,7 +22,7 @@ val _ = fn f => fn x =>
     f x;
     f x x x andalso false;
     f 3;
-(** ^ expected int -> ?b, found unit *)
+(** ^ contains: expected int -> ?b, found unit *)
     f: unit;
     false
   )
@@ -64,7 +64,7 @@ fun find t p ok err =
       else
         find left p ok (fn () => find right p ok err)
     val _ : unit = find
-(** ^^^^^^^^^^^^^^^^^^^ expected unit, found ?a tree -> (?a -> bool) -> (?a -> ?b) -> (unit -> ?b) -> ?b *)
+(** ^^^^^^^^^^^^^^^^^^^ contains: expected unit, found ?a tree -> (?a -> bool) -> (?a -> ?b) -> (unit -> ?b) -> ?b *)
 "#,
   );
 }
@@ -162,7 +162,7 @@ val _ =
   case 0 of
     1 => 1
   | (2, 2) => 2
-(** ^^^^^^ expected int, found int * int *)
+(** ^^^^^^ contains: expected int, found int * int *)
   | _ => 3
 "#,
   );
@@ -187,7 +187,7 @@ fn inc() {
 val inc = fn x => x + 1
 val _ = inc 3
 val _ = inc "nope"
-(**         ^^^^^^ expected int, found string *)
+(**         ^^^^^^ contains: expected int, found string *)
 "#,
   );
 }
@@ -202,7 +202,7 @@ fun map f xs =
   | x :: xs => f x :: map f xs
 
 val _ = map: unit
-(**     ^^^^^^^^^ expected unit, found (?a -> ?b) -> ?a list -> ?b list *)
+(**     ^^^^^^^^^ contains: expected unit, found (?a -> ?b) -> ?a list -> ?b list *)
 "#,
   );
 }
@@ -226,7 +226,7 @@ fn not_arrow_ty() {
   check(
     r#"
 val _ = "foo" 3
-(**     ^^^^^ expected int -> ?b, found string *)
+(**     ^^^^^ contains: expected int -> ?b, found string *)
 "#,
   );
 }
@@ -268,7 +268,7 @@ fn ty_var_fixed() {
   check(
     r#"
 val _ = fn id => (id 3; id "nope")
-(**                  ^ expected string, found int *)
+(**                  ^ contains: expected string, found int *)
 "#,
   );
 }
@@ -279,7 +279,7 @@ fn useless_ty_var() {
     r#"
 fun 'a f () = 3
 val _ = f: unit
-(**     ^^^^^^^ expected unit, found unit -> int *)
+(**     ^^^^^^^ contains: expected unit, found unit -> int *)
 "#,
   );
 }

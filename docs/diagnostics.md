@@ -1344,7 +1344,7 @@ Millet tries to report which type was "expected" and which was "found". For inst
 
 ```sml
 val x : int = "no"
-(** + expected int, found string *)
+(** + contains: expected int, found string *)
 ```
 
 This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
@@ -1354,7 +1354,7 @@ This error commonly occurs when applying a function to an argument, but the argu
 ```sml
 fun choose x = if x then "sosuke" else "pazu"
 val _ = choose 4
-(**            ^ expected bool, found int *)
+(**            ^ contains: expected bool, found int *)
 ```
 
 Note that certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.

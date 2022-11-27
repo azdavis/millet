@@ -6,7 +6,7 @@ fn curry_add() {
     r#"
 fun add a b = a + b
 val _ = add false
-(**         ^^^^^ expected int, found bool *)
+(**         ^^^^^ contains: expected int, found bool *)
 "#,
   );
 }
@@ -27,7 +27,7 @@ fn op_add_err() {
     r#"
 val add = op+
 val _ = add (false, true)
-(**         ^^^^^^^^^^^^^ expected int * int, found bool * bool *)
+(**         ^^^^^^^^^^^^^ contains: expected int * int, found bool * bool *)
 "#,
   );
 }
@@ -38,7 +38,7 @@ fn immediately_solve_to_default() {
     r#"
 val add = op+
 val _ = add (1.1, 2.2)
-(**         ^^^^^^^^^^ expected int * int, found real * real *)
+(**         ^^^^^^^^^^ contains: expected int * int, found real * real *)
 val _ = add (1, 2)
 "#,
   );
@@ -51,7 +51,7 @@ fn explicit_annotate() {
 val add = op+ : real * real -> real
 val _ = add (1.1, 2.2)
 val _ = add (1, 2)
-(**         ^^^^^^ expected real * real, found int * int *)
+(**         ^^^^^^ contains: expected real * real, found int * int *)
 "#,
   );
 }
@@ -64,7 +64,7 @@ val add = op+
 (* make this a top-dec level seq *)
 signature S = sig end
 val _ = add (1.1, 2.2)
-(**         ^^^^^^^^^^ expected int * int, found real * real *)
+(**         ^^^^^^^^^^ contains: expected int * int, found real * real *)
 "#,
   );
 }
@@ -132,7 +132,7 @@ fn must_solve_to_single_overloaded_type() {
   check(
     r#"
 val _ = 1.1 + 1
-(**     ^^^^^^^ expected <num> * <num>, found real * int *)
+(**     ^^^^^^^ contains: expected <num> * <num>, found real * int *)
 "#,
   );
 }
@@ -142,7 +142,7 @@ fn overload_err() {
   check(
     r#"
 val  _ = false + true
-(**      ^^^^^^^^^^^^ expected <num> * <num>, found bool * bool *)
+(**      ^^^^^^^^^^^^ contains: expected <num> * <num>, found bool * bool *)
 "#,
   );
 }
@@ -153,7 +153,7 @@ fn three_int() {
     r#"
 fun f a b c = a + b + c
 val _ = f : unit
-(**     ^^^^^^^^ expected unit, found int -> int -> int -> int *)
+(**     ^^^^^^^^ contains: expected unit, found int -> int -> int -> int *)
 "#,
   );
 }
@@ -164,7 +164,7 @@ fn three_real() {
     r#"
 fun f a b c = a + b + c + 1.1
 val _ = f : unit
-(**     ^^^^^^^^ expected unit, found real -> real -> real -> real *)
+(**     ^^^^^^^^ contains: expected unit, found real -> real -> real -> real *)
 "#,
   );
 }

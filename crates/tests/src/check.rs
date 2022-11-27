@@ -49,7 +49,7 @@ pub(crate) fn check(s: &str) {
 /// ```ignore
 /// fail(r#"
 /// val _ = 1 + 2
-/// (**     ^^^^^ expected bool, found int *)
+/// (**     ^^^^^ contains: expected bool, found int *)
 /// "#);
 /// ```
 ///

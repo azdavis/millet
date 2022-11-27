@@ -7,7 +7,7 @@ fn across_var() {
   check(
     r#"
 fun 'a f (x: 'a) = let val y = x in y false; y end
-(**                                 ^ expected bool -> ?a, found 'a *)
+(**                                 ^ contains: expected bool -> ?a, found 'a *)
 "#,
   );
 }
@@ -18,7 +18,7 @@ fn bound_at_fun_1() {
     r#"
 fun bar (x: int): unit = ()
 fun 'a f (id: 'a -> 'a) x = bar (id x)
-(**                              ^^^^ expected int, found 'a *)
+(**                              ^^^^ contains: expected int, found 'a *)
 "#,
   );
 }
@@ -28,7 +28,7 @@ fn bound_at_fun_2() {
   check(
     r#"
 fun 'a f (id: 'a -> 'a) x = id x + 1
-(**                         ^^^^^^^^ expected <num> * <num>, found 'a * int *)
+(**                         ^^^^^^^^ contains: expected <num> * <num>, found 'a * int *)
 "#,
   );
 }
@@ -38,7 +38,7 @@ fn annotate() {
   check(
     r#"
 val 'a _ = false: 'a
-(**        ^^^^^^^^^ expected 'a, found bool *)
+(**        ^^^^^^^^^ contains: expected 'a, found bool *)
 "#,
   );
 }
@@ -51,7 +51,7 @@ type 'a heh = 'a list
 datatype 'a bad = Bad of 'a
 val _: int heh = [1]
 val _ = Bad: unit
-(**     ^^^^^^^^^ expected unit, found ?a -> ?a bad *)
+(**     ^^^^^^^^^ contains: expected unit, found ?a -> ?a bad *)
 "#,
   );
 }
@@ -62,7 +62,7 @@ fn apply() {
     r#"
 fun ('t, 'u) apply (f: 't -> 'u) (x: 't): 'u = f x
 val _ = apply op+ (1, false)
-(**               ^^^^^^^^^^ expected <num> * <num>, found int * bool *)
+(**               ^^^^^^^^^^ contains: expected <num> * <num>, found int * bool *)
 "#,
   );
 }
@@ -73,7 +73,7 @@ fn different_vars() {
     r#"
 fun ('a, 'b) f (xs: 'a list) (x: 'b) =
     x :: xs
-(** ^^^^^^^ expected ?a * ?a list, found 'b * 'a list *)
+(** ^^^^^^^ contains: expected ?a * ?a list, found 'b * 'a list *)
 "#,
   );
 }
@@ -230,7 +230,7 @@ fn definition_ex_2() {
   check(
     r#"
 val _ = (let val id : 'a -> 'a = fn z => z in id id end; fn z => z : 'a)
-(**                                              ^^ expected 'a, found 'a -> 'a *)
+(**                                              ^^ contains: expected 'a, found 'a -> 'a *)
 "#,
   );
 }

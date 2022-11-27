@@ -85,12 +85,14 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
+        let flavor = flavor.display(&mvs, self.syms);
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
         match self.lines {
-          config::ErrorLines::One => write!(f, "expected {want}, found {got}"),
+          config::ErrorLines::One => {
+            write!(f, "mismatched types: {flavor}: expected {want}, found {got}")
+          }
           config::ErrorLines::Many => {
-            let flavor = flavor.display(&mvs, self.syms);
             writeln!(f, "mismatched types: {flavor}")?;
             writeln!(f, "  expected {want}")?;
             write!(f, "     found {got}")

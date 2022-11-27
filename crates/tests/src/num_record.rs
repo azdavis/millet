@@ -6,7 +6,7 @@ fn record_is_tuple() {
     r#"
 type t = { 1: int, 2: bool }
 val _ = (): t
-(**     ^^^^^ expected int * bool, found unit *)
+(**     ^^^^^ contains: expected int * bool, found unit *)
 "#,
   );
 }
@@ -27,7 +27,7 @@ fn not_tuple_if_only_one_label() {
     r#"
 type t = { 1: int }
 val _ = (): t
-(**     ^^^^^ expected { 1 : int }, found unit *)
+(**     ^^^^^ contains: expected { 1 : int }, found unit *)
 "#,
   );
 }
@@ -38,7 +38,7 @@ fn not_tuple_if_not_all_labels_in_range() {
     r#"
 type t = { 1: int, 3: bool }
 val _ = (): t
-(**     ^^^^^ expected { 1 : int, 3 : bool }, found unit *)
+(**     ^^^^^ contains: expected { 1 : int, 3 : bool }, found unit *)
 "#,
   );
 }

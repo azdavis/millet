@@ -126,7 +126,7 @@ structure One = F (S)
 structure Two = F (S)
 
 val _ = One.f Two.C
-(**           ^^^^^ expected F(...).t, found F(...).t *)
+(**           ^^^^^ contains: expected F(...).t, found F(...).t *)
 "#,
   );
 }

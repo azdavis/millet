@@ -51,7 +51,7 @@ fn exception() {
 exception E
 exception E of int
 val _ = E: unit
-(**     ^^^^^^^ expected unit, found int -> exn *)
+(**     ^^^^^^^ contains: expected unit, found int -> exn *)
 "#,
   );
 }

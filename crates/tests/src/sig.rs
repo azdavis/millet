@@ -248,7 +248,7 @@ val _ = Mul.add Mul.zero Mul.zero
 
 (* TODO improve error message with FQN + structure name *)
 val _ = Mul.add Mul.zero Add.zero
-(**                      ^^^^^^^^ expected MONOID.t, found MONOID.t *)
+(**                      ^^^^^^^^ contains: expected MONOID.t, found MONOID.t *)
 "#,
   );
 }
@@ -278,7 +278,7 @@ end
 val _ = A.bar A.foo = B.bar B.foo
 
 val _ = A.bar B.foo
-(**           ^^^^^ expected SIG.t, found SIG.t *)
+(**           ^^^^^ contains: expected SIG.t, found SIG.t *)
 "#,
   );
 }
@@ -309,7 +309,7 @@ val _ = inc S.foo
 
 val _ = A.bar A.foo
 val _ = A.bar 123
-(**           ^^^ expected SIG.t, found int *)
+(**           ^^^ contains: expected SIG.t, found int *)
 "#,
   );
 }
@@ -342,7 +342,7 @@ val _ = inc S.foo
 val _ = A.bar A.foo
 val _ = B.bar B.foo
 val _ = B.bar A.foo
-(**           ^^^^^ expected SIG.t, found SIG.t *)
+(**           ^^^^^ contains: expected SIG.t, found SIG.t *)
 "#,
   );
 }
@@ -370,7 +370,7 @@ structure C:> SIG = Str
 structure D:> SIG = Str
 
 val _ = D.x: C.t
-(**     ^^^^^^^^ expected SIG.t, found SIG.t *)
+(**     ^^^^^^^^ contains: expected SIG.t, found SIG.t *)
 "#,
   );
 }
@@ -391,7 +391,7 @@ end
 
 val _: S.t = S.x
 val _ = S.x: int
-(**     ^^^^^^^^ expected int, found SIG.t *)
+(**     ^^^^^^^^ contains: expected int, found SIG.t *)
 "#,
   );
 }
@@ -452,7 +452,7 @@ fn where_in_functor() {
     r#"
 signature T = sig type t end
 functor Id (X : T) :> T where type t = int = X
-(**                                          ^ expected int, found T.t *)
+(**                                          ^ contains: expected int, found T.t *)
 "#,
   );
 }
@@ -587,7 +587,7 @@ end
 
 structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either =
     struct type ('a, 'b) t = ('a, 'b) either end
-(** ^^^^^^ expected ('b, 'a) either, found ('a, 'b) either *)
+(** ^^^^^^ contains: expected ('b, 'a) either, found ('a, 'b) either *)
 "#,
   );
 }
@@ -604,7 +604,7 @@ end
 
 structure Str :> SIG where type ('a, 'b) t = ('a, 'b) either =
     struct type ('a, 'b) t = ('b, 'a) either end
-(** ^^^^^^ expected ('a, 'b) either, found ('b, 'a) either *)
+(** ^^^^^^ contains: expected ('a, 'b) either, found ('b, 'a) either *)
 "#,
   );
 }
@@ -679,7 +679,7 @@ signature SIG = sig
 end
 
 structure Str :> SIG = struct
-(**                    ^^^^^^ expected 'a * 'b, found 'b * 'a *)
+(**                    ^^^^^^ contains: expected 'a * 'b, found 'b * 'a *)
   type ('a, 'b) t = 'b * 'a
 end
 "#,
@@ -694,7 +694,7 @@ signature SIG = sig
   datatype ('a, 'b) t = T of 'a * 'b
 end
 structure Str :> SIG = struct
-(**                    ^^^^^^ expected 'a * 'b -> ('a, 'b) Str.t, found 'b * 'a -> ('a, 'b) Str.t *)
+(**                    ^^^^^^ contains: expected 'a * 'b -> ('a, 'b) Str.t, found 'b * 'a -> ('a, 'b) Str.t *)
   datatype ('a, 'b) t = T of 'b * 'a
 end
 "#,
