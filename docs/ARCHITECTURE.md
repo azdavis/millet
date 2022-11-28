@@ -298,6 +298,18 @@ Allows you to invoke `cargo xtask <task>` to run the `<task>`.
 
 Configuration for Cargo, Rust's package manager and build tool. Allows `cargo xtask` to work.
 
+### `Cargo.toml`
+
+At the top level, this sets up a "Cargo workspace" of all the crates in `crates` and `xtask`. Each crate also has its own `Cargo.toml` defining fundamental things about the crate like its name and dependencies.
+
+### `Cargo.lock`
+
+A lockfile for Cargo that records the exact versions of all dependencies that Cargo resolved.
+
+### `rustfmt.toml`
+
+Configuration for rustfmt, Rust's automatic code formatter. Before checking code into git, it must be formatted by rustfmt.
+
 ### `.github`
 
 Configuration for GitHub, like:
@@ -305,6 +317,10 @@ Configuration for GitHub, like:
 - PR templates
 - Issue templates
 - The CI job run, run on GitHub Actions.
+
+### `.gitignore`
+
+Configuration for git, to ignore generated files like `/target` (the output folder for Rust).
 
 ### `.vscode`
 

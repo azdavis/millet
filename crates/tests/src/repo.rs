@@ -115,16 +115,7 @@ fn architecture() {
     .lines()
     .filter_map(|line| Some(line.strip_prefix("### `")?.strip_suffix('`')?.to_owned()))
     .collect();
-  let mut no_doc = BTreeSet::from([
-    ".gitignore",
-    "Cargo.lock",
-    "Cargo.toml",
-    "crates",
-    "LICENSE-APACHE.md",
-    "LICENSE-MIT.md",
-    "README.md",
-    "rustfmt.toml",
-  ]);
+  let mut no_doc = BTreeSet::from(["crates", "LICENSE-APACHE.md", "LICENSE-MIT.md", "README.md"]);
   let on_fs: BTreeSet<_> = std::iter::empty()
     .chain(sh.read_dir("crates").unwrap().into_iter().filter_map(|x| {
       let file_name = x.file_name()?.to_str()?;
