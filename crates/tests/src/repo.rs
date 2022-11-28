@@ -45,7 +45,7 @@ fn sml_def() {
   sh.change_dir(root_dir());
   let dirs: [PathBuf; 3] =
     ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
-  let out = cmd!(sh, "git grep -hoE '@def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
+  let out = cmd!(sh, "git grep -h -o -E '@def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
   let got: BTreeSet<u16> = String::from_utf8(out.stdout)
     .unwrap()
     .lines()
@@ -55,18 +55,15 @@ fn sml_def() {
       num.parse().ok()
     })
     .collect();
-  let want = 1u16..=89;
-  let missing: Vec<_> = want.clone().filter(|x| !got.contains(x)).collect();
-  assert!(missing.is_empty(), "missing sml definition references: {missing:?}");
-  let extra: Vec<_> = got.iter().filter(|&x| !want.contains(x)).collect();
-  assert!(extra.is_empty(), "extra sml definition references: {extra:?}");
+  let want: BTreeSet<_> = (1u16..=89).collect();
+  eq_sets(&want, &got, "missing sml definition references", "extra sml definition references");
 }
 
 #[test]
 fn sync() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
-  let out = cmd!(sh, "git grep -hoE '@sync\\(([a-z_]+)\\)'").output().unwrap();
+  let out = cmd!(sh, "git grep -h -o -E '@sync\\(([a-z_]+)\\)'").output().unwrap();
   let out = String::from_utf8(out.stdout).unwrap();
   let iter = out.lines().filter_map(|line| {
     let (_, inner) = line.split_once("@sync(")?;
@@ -77,8 +74,9 @@ fn sync() {
   for x in iter {
     *map.entry(x).or_default() += 1;
   }
+  let not_twice: BTreeSet<_> = map.iter().filter_map(|(&k, &v)| (v != 2).then_some(k)).collect();
   map.retain(|_, &mut v| v != 2);
-  assert!(map.is_empty(), "some sync comments occurred not exactly twice: {map:?}");
+  empty_set(&not_twice, "sync comments occurred not exactly twice");
 }
 
 #[test]
@@ -86,7 +84,7 @@ fn test_refs() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
   let dir: PathBuf = ["crates", "sml-statics", "src"].into_iter().collect();
-  let out = cmd!(sh, "git grep -hoE '@test\\(([a-z0-9_:]+)\\)' {dir}").output().unwrap();
+  let out = cmd!(sh, "git grep -h -o -E '@test\\(([a-z0-9_:]+)\\)' {dir}").output().unwrap();
   let out = String::from_utf8(out.stdout).unwrap();
   let referenced: BTreeSet<_> = out
     .lines()
@@ -100,7 +98,7 @@ fn test_refs() {
   let out = String::from_utf8(out.stdout).unwrap();
   let defined: BTreeSet<_> = out.lines().filter_map(|line| line.strip_suffix(": test")).collect();
   let ref_not_defined: BTreeSet<_> = referenced.difference(&defined).copied().collect();
-  assert!(ref_not_defined.is_empty(), "tests referenced but not defined: {ref_not_defined:?}");
+  empty_set(&ref_not_defined, "tests referenced but not defined");
 }
 
 #[test]
@@ -108,10 +106,10 @@ fn no_ignore() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
   let word = "ignore";
-  let has_ignore = cmd!(sh, "git grep -lFe #[{word}").ignore_status().output().unwrap();
+  let has_ignore = cmd!(sh, "git grep -F -n -e #[{word}").ignore_status().output().unwrap();
   let out = String::from_utf8(has_ignore.stdout).unwrap();
   let set: BTreeSet<_> = out.lines().collect();
-  assert!(set.is_empty(), "found files with {word}: {set:?}");
+  empty_set(&set, "files with ignore");
 }
 
 #[test]
@@ -192,8 +190,8 @@ fn changelog() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output().unwrap().stdout).unwrap();
-  let tags: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
-  let entries: BTreeSet<_> = include_str!("../../../docs/CHANGELOG.md")
+  let in_git: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
+  let in_doc: BTreeSet<_> = include_str!("../../../docs/CHANGELOG.md")
     .lines()
     .filter_map(|line| {
       let title = line.strip_prefix("## ")?;
@@ -201,7 +199,7 @@ fn changelog() {
       (title != "main").then_some(title)
     })
     .collect();
-  eq_sets(&tags, &entries, "tags that have no changelog entry", "changelog entries without a tag");
+  eq_sets(&in_git, &in_doc, "tags that have no changelog entry", "changelog entries without a tag");
 }
 
 #[test]
@@ -245,7 +243,7 @@ fn licenses() {
 fn error_codes() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
-  let output = cmd!(sh, "git grep -hoE 'Code::n\\([[:digit:]]+\\)'").read().unwrap();
+  let output = cmd!(sh, "git grep -h -o -E 'Code::n\\([[:digit:]]+\\)'").read().unwrap();
   let in_doc = no_dupes(
     include_str!("../../../docs/diagnostics.md")
       .lines()
@@ -339,7 +337,7 @@ fn vs_code_config() {
   for (name, val) in properties {
     let val = val.as_object().unwrap();
     let typ = val.get("type").unwrap().as_str().unwrap();
-    let default = val.get("default").unwrap();
+    let default_ = val.get("default").unwrap();
     let desc = val.get("markdownDescription").unwrap().as_str().unwrap();
     let enums = val.get("enum").and_then(serde_json::Value::as_array);
     let enum_descs = val.get("markdownEnumDescriptions").and_then(serde_json::Value::as_array);
@@ -356,9 +354,9 @@ fn vs_code_config() {
     let type_and_default = match typ {
       "boolean" => {
         assert!(enum_variants.is_empty());
-        TypeAndDefault::Bool(default.as_bool().unwrap())
+        TypeAndDefault::Bool(default_.as_bool().unwrap())
       }
-      "string" => TypeAndDefault::String(default.as_str().unwrap(), enum_variants),
+      "string" => TypeAndDefault::String(default_.as_str().unwrap(), enum_variants),
       _ => panic!("unknown type: {typ}"),
     };
     let config_property = ConfigProperty { name, desc, type_and_default };
@@ -386,5 +384,5 @@ fn rs_file_comments() {
       (!fst.starts_with("//! ")).then_some(file)
     })
     .collect();
-  empty_set(&no_doc, "rust files without `//!` doc comment at top");
+  empty_set(&no_doc, "rust files without doc comment at top");
 }
