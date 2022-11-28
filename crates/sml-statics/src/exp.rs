@@ -1,3 +1,5 @@
+//! Checking expressions.
+
 use crate::config::Cfg;
 use crate::error::{AppendArg, ErrorKind, Item};
 use crate::get_env::get_val_info;

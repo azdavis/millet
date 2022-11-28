@@ -1,3 +1,5 @@
+//! See [`Info`].
+
 use crate::types::{Def, MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
 use crate::util::ty_syms;
 use fast_hash::FxHashMap;

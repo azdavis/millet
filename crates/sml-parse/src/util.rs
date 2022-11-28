@@ -1,3 +1,5 @@
+//! Parse utilities.
+
 use crate::parser::{Assoc, ErrorKind, Exited, Expected, Infix, Parser};
 use sml_syntax::{token::Token, SyntaxKind as SK};
 

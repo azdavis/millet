@@ -1,4 +1,4 @@
-//! Nested block comments delimited with `(*` and `*)`.
+//! Handling nested block comments delimited with `(*` and `*)`.
 
 /// A marker signifying a block comment was consumed.
 #[derive(Debug)]

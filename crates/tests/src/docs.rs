@@ -1,3 +1,5 @@
+//! Tests to make sure Millet behaves as expected on the public documentation.
+
 use crate::check::{go, Outcome};
 use diagnostic_util::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};

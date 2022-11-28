@@ -1,3 +1,5 @@
+//! Checking top-level declarations (and therefore signatures, and therefore specifications).
+
 use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::config::Cfg;
 use crate::error::{ErrorKind, FunctorSugarUser, Item};

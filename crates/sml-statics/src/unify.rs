@@ -1,3 +1,5 @@
+//! Unification: given two types, figuring out whether they are "compatible", and if so, how.
+
 use crate::equality;
 use crate::error::{ErrorKind, MismatchedTypesFlavor};
 use crate::st::St;

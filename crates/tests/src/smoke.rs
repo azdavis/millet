@@ -1,3 +1,5 @@
+//! Some simple tests.
+
 use crate::check::{check, go, Outcome};
 use diagnostic_util::Severity;
 

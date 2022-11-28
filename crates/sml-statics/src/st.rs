@@ -1,3 +1,5 @@
+//! See [`St`].
+
 use crate::error::{Error, ErrorKind, Item};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};

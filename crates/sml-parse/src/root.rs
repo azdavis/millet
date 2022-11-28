@@ -1,3 +1,5 @@
+//! Parsing a full program.
+
 use crate::parser::{ErrorKind, Expected, Parser};
 use sml_syntax::SyntaxKind as SK;
 

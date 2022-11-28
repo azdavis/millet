@@ -1,4 +1,4 @@
-//! Process ML Basis files.
+//! Processing ML Basis files.
 //!
 //! From [the `MLton` docs](http://mlton.org/MLBasis).
 

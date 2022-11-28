@@ -1,3 +1,5 @@
+//! `local`.
+
 use crate::check::check;
 
 #[test]

@@ -1,3 +1,5 @@
+//! Type names escaping the scope in which they are valid.
+
 use crate::check::check;
 
 #[test]

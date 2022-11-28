@@ -1,3 +1,5 @@
+//! Lexing CM files.
+
 use crate::types::{Error, ErrorKind, Result, Token};
 use lex_util::{advance_while, block_comment, is_whitespace};
 use text_size_util::{mk_text_size, TextRange, WithRange};

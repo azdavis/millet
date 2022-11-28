@@ -1,3 +1,5 @@
+//! Using infix operators without `op`.
+
 use crate::check::check;
 
 #[test]

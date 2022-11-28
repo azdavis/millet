@@ -1,3 +1,5 @@
+//! Equality types.
+
 use crate::check::{check, fail};
 
 #[test]

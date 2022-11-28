@@ -1,3 +1,5 @@
+//! Common utilities.
+
 #![allow(clippy::needless_pass_by_value)]
 
 use crate::util::{Cx, ErrorKind};

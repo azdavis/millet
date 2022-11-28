@@ -1,3 +1,5 @@
+//! Checking patterns.
+
 use crate::compatible::eq_ty_scheme;
 use crate::config;
 use crate::error::{ErrorKind, Item};

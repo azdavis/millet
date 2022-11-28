@@ -1,3 +1,5 @@
+//! Parse MLB tokens into a syntax tree.
+
 use crate::types::{
   BasDec, BasExp, Error, ErrorKind, NamesSeq, Namespace, ParsedPath, PathKind, Result, Token,
 };

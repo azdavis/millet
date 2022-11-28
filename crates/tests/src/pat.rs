@@ -1,3 +1,5 @@
+//! Or patterns.
+
 mod or;
 
 use crate::check::check;

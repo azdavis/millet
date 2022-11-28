@@ -1,3 +1,5 @@
+//! Tests that witness the fact that tuples, records, and `unit` are all eventually records.
+
 use crate::check::check;
 
 #[test]

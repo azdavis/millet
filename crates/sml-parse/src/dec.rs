@@ -1,3 +1,7 @@
+//! Parsing declarations.
+//!
+//! Note that we parse specifications as declarations and separate them out later.
+
 use crate::exp::{eq_exp, exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
 use crate::pat::{at_pat, pat};

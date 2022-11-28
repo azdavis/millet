@@ -1,3 +1,5 @@
+//! Lowering patterns.
+
 use crate::common::{get_lab, get_path, get_scon};
 use crate::ty;
 use crate::util::{Cx, ErrorKind, MatcherFlavor};

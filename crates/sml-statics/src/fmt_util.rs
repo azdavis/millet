@@ -1,3 +1,5 @@
+//! Formatting utilities.
+
 use std::fmt;
 
 /// returns a char iterator that when collected could be a name for a type variable.

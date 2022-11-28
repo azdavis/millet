@@ -1,3 +1,5 @@
+//! Tests for MLB syntax.
+
 fn check(s: &str) {
   mlb_syntax::get(s, &paths::slash_var_path::Env::default()).unwrap();
 }

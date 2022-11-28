@@ -1,3 +1,5 @@
+//! Parsing patterns.
+
 use crate::parser::{Entered, ErrorKind, Exited, Expected, Infix, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{

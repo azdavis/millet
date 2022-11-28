@@ -1,3 +1,5 @@
+//! Checking declarations.
+
 use crate::config::Cfg;
 use crate::error::{ErrorKind, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};

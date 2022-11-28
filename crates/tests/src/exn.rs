@@ -1,3 +1,5 @@
+//! Exceptions.
+
 use crate::check::check;
 
 #[test]

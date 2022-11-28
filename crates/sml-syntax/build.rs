@@ -1,3 +1,5 @@
+//! Generating Rust code from the ungrammar.
+
 use fast_hash::FxHashMap;
 use identifier_case::snake_to_pascal;
 use syntax_gen::{gen, Token, TokenKind};

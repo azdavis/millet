@@ -1,3 +1,5 @@
+//! See [`get`].
+
 /// Returns the capabilities of the server.
 pub(crate) fn get() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {

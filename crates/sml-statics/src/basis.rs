@@ -1,4 +1,4 @@
-//! Bases.
+//! Bases. (The plural of "basis".)
 
 use crate::types::{
   BasicOverload, Bs, CompositeOverload, Def, Env, EnvLike as _, EnvStack, FunEnv, IdStatus,

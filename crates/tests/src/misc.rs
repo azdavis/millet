@@ -1,3 +1,5 @@
+//! Miscellaneous tests. If unsure where to put a test, put it here.
+
 use crate::check::{check, go, Outcome};
 use diagnostic_util::Severity;
 

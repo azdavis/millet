@@ -1,3 +1,5 @@
+//! Hover tests.
+
 use crate::check::check;
 
 #[test]

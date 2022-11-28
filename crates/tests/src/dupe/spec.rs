@@ -1,3 +1,5 @@
+//! Duplicate specifications.
+
 use crate::check::check;
 
 #[test]

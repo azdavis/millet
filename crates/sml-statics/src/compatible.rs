@@ -1,3 +1,5 @@
+//! Checking whether type schemes are compatible with each other.
+
 use crate::error::ErrorKind;
 use crate::fmt_util::ty_var_name;
 use crate::st::St;

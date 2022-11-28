@@ -1,3 +1,5 @@
+//! Shadowing, as in `let a = false; let a = 2; let b = a + 3`.
+
 use crate::check::check;
 
 #[test]

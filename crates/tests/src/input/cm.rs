@@ -1,3 +1,5 @@
+//! Tests for CM syntax.
+
 use cm_syntax::{Export, Namespace, PathKind, PathOrMinus, PathOrStdBasis};
 use std::path::PathBuf;
 use str_util::Name;

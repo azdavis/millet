@@ -1,3 +1,5 @@
+//! Getting information from environments.
+
 use crate::error::{ErrorKind, Item};
 use crate::types::{Env, EnvLike, TyInfo, ValInfo};
 

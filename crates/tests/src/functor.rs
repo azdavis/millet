@@ -1,3 +1,5 @@
+//! Functors.
+
 use crate::check::check;
 
 #[test]

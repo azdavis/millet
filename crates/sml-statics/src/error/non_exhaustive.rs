@@ -1,3 +1,5 @@
+//! Displaying non-exhaustive errors with witnesses.
+
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::Syms;
 use fmt_util::{comma_seq, sep_seq};

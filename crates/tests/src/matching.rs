@@ -1,3 +1,5 @@
+//! Matching with `case` and friends.
+
 use crate::check::check;
 
 #[test]

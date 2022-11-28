@@ -1,4 +1,4 @@
-//! Format SML files.
+//! Formatting SML files.
 //!
 //! - Only handles certain comments.
 //! - No attempt is made to restrict lines to a reasonable length.

@@ -1,3 +1,5 @@
+//! The main mutable state of the language server.
+
 mod helpers;
 
 use anyhow::{bail, Result};
@@ -10,7 +12,7 @@ use std::ops::ControlFlow;
 
 const LEARN_MORE: &str = "Learn more";
 
-/// The state of the language server.
+/// The state.
 pub(crate) struct State {
   mode: Mode,
   sp: SPState,

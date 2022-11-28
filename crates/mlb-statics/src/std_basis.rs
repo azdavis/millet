@@ -1,3 +1,6 @@
+//! Representing the standard basis libraries and all other "built-in" libraries by parsing and
+//! analyzing them at runtime at when starting up.
+
 use crate::{add_all_doc_comments, SourceFileSyntax};
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;

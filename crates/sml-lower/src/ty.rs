@@ -1,3 +1,5 @@
+//! Lowering types.
+
 use crate::common::{get_lab, get_path};
 use crate::util::Cx;
 use crate::util::ErrorKind;

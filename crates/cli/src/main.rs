@@ -1,3 +1,5 @@
+//! A thin CLI front-end for running Millet once over some files.
+
 use paths::FileSystem as _;
 
 fn usage() {

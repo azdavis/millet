@@ -1,3 +1,5 @@
+//! Utilities.
+
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{

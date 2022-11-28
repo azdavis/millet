@@ -1,3 +1,5 @@
+//! See [`Cfg`].
+
 /// Configuration.
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct Cfg {

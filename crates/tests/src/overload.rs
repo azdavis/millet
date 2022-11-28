@@ -1,3 +1,5 @@
+//! Overloaded operators and literals.
+
 use crate::check::check;
 
 #[test]

@@ -1,3 +1,5 @@
+//! Standard library and definitions.
+
 use crate::check::check_with_std_basis;
 
 #[test]

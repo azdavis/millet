@@ -1,3 +1,5 @@
+//! Helpers, often for converting from "Millet" types to "language server protocol" types.
+
 use anyhow::{anyhow, bail, Context as _, Result};
 use lsp_server::{ExtractError, Notification, Request, RequestId};
 use lsp_types::Url;

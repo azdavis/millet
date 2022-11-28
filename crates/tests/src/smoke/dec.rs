@@ -1,3 +1,5 @@
+//! Declaration smoke tests.
+
 use crate::check::check;
 
 #[test]

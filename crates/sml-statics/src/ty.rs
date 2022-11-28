@@ -1,3 +1,5 @@
+//! Checking types.
+
 use crate::error::{ErrorKind, Item};
 use crate::get_env::get_ty_info;
 use crate::info::TyEntry;

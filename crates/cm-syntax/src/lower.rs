@@ -1,3 +1,5 @@
+//! Lowering a parsed CM file and check it for validity.
+
 use crate::types::{
   Class, CmFile, Error, ErrorKind, ParseRoot, ParsedPath, PathKind, PathOrStdBasis, Result,
 };

@@ -1,3 +1,5 @@
+//! Parsing expressions.
+
 use crate::dec::dec;
 use crate::parser::{ErrorKind, Exited, Expected, Infix, ParensExpFlavor, Parser};
 use crate::pat::pat;

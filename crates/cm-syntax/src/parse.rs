@@ -1,3 +1,5 @@
+//! Parsing CM tokens into a syntax tree.
+
 use crate::types::{
   Class, Error, ErrorKind, Export, Member, Namespace, ParseRoot, PathOrMinus, PathOrStdBasis,
   Result, Token,

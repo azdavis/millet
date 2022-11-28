@@ -1,3 +1,5 @@
+//! Duplicate identifiers, often with `and`.
+
 use crate::check::check;
 
 mod spec;

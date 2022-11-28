@@ -1,9 +1,8 @@
-//! Process the syntax of SML/NJ Compilation Manager files.
+//! Processing the syntax of [SML/NJ Compilation Manager][spec] files.
 //!
-//! Note that **many** features are not supported.
+//! Some features are not supported.
 //!
-//! - [The old spec](https://www.smlnj.org/doc/CM/Old/index.html)
-//! - [The new spec](https://www.smlnj.org/doc/CM/new.pdf)
+//! [spec]: https://www.smlnj.org/doc/CM/new.pdf
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 

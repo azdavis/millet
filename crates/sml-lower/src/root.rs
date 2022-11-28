@@ -1,3 +1,5 @@
+//! Lowering a whole program.
+
 use crate::util::{Cx, Lower};
 use sml_syntax::ast;
 

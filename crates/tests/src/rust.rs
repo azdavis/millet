@@ -1,3 +1,5 @@
+//! Some Rust-y types and functions ported (back?) to SML.
+
 use crate::check::check;
 
 #[test]

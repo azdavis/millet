@@ -1,3 +1,5 @@
+//! Errors.
+
 mod non_exhaustive;
 mod suggestion;
 

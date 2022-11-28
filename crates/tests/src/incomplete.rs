@@ -1,3 +1,5 @@
+//! Incomplete tokens.
+
 use crate::check::check;
 
 #[test]

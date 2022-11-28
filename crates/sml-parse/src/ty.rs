@@ -1,3 +1,5 @@
+//! Parsing types.
+
 use crate::parser::{Exited, Expected, Parser};
 use crate::util::{comma_sep, lab, must, path};
 use sml_syntax::SyntaxKind as SK;

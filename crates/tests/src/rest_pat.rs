@@ -1,3 +1,5 @@
+//! `{a, ...}` patterns, as used in `#a`.
+
 use crate::check::check;
 
 #[test]

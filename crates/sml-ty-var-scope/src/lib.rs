@@ -1,4 +1,4 @@
-//! Add implicitly-scoped type variables to explicit binding sites.
+//! Adding implicitly-scoped type variables to explicit binding sites.
 //!
 //! ```sml
 //! type 'a guy = unit

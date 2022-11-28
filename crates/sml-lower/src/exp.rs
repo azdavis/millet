@@ -1,3 +1,5 @@
+//! Lowering expressions.
+
 use crate::common::{get_lab, get_path, get_scon};
 use crate::util::{Cx, ErrorKind, MatcherFlavor};
 use crate::{dec, pat, ty};

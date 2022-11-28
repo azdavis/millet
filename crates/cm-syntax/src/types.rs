@@ -1,3 +1,5 @@
+//! Types for the rest of the crate.
+
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;

@@ -1,3 +1,5 @@
+//! Tests targeted at the "generalize" step of the algorithm we use to implement HM.
+
 use crate::check::check;
 
 #[test]

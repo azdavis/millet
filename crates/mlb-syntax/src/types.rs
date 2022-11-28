@@ -1,3 +1,5 @@
+//! Types used across the crate.
+
 use std::fmt;
 use std::path::{Path, PathBuf};
 use str_util::Name;

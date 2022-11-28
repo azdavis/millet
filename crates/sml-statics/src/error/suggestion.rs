@@ -1,3 +1,6 @@
+//! See [`get`].
+
+/// Suggests a bit of syntax that may be similar to the input.
 pub(crate) fn get(s: &str) -> Option<&'static str> {
   let ret = match s {
     "func" | "function" | "def" => "fun",

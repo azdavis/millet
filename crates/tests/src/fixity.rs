@@ -1,3 +1,5 @@
+//! Fixities (like `infix` and `nonfix`.)
+
 use crate::check::check;
 
 #[test]

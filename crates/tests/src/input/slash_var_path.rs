@@ -1,3 +1,5 @@
+//! Tests for slash var paths with variables.
+
 #[track_caller]
 fn check(s: &str, env: &[(&str, &str)], want: &[&str]) {
   let env: paths::slash_var_path::Env = env.iter().map(|&(k, v)| (k.into(), v.into())).collect();
