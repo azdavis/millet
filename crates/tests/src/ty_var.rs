@@ -1,4 +1,4 @@
-// Some tests are from [mlton docs](http://mlton.org/TypeVariableScope).
+//! Some tests are from [mlton docs](http://mlton.org/TypeVariableScope).
 
 use crate::check::check;
 

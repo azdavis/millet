@@ -372,3 +372,19 @@ fn vs_code_config() {
   let got_doc = got_doc_lines.join("\n");
   pretty_assertions::assert_str_eq!(got_doc.trim(), want_doc.trim(),);
 }
+
+#[test]
+fn rs_file_comments() {
+  let sh = Shell::new().unwrap();
+  let files =
+    String::from_utf8(cmd!(sh, "git ls-files '**/*.rs'").output().unwrap().stdout).unwrap();
+  let no_doc: BTreeSet<_> = files
+    .lines()
+    .filter_map(|file| {
+      let out = sh.read_file(file).unwrap();
+      let fst = out.lines().next().unwrap();
+      (!fst.starts_with("//! ")).then_some(file)
+    })
+    .collect();
+  empty_set(&no_doc, "rust files without `//!` doc comment at top");
+}
