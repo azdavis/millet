@@ -14,9 +14,13 @@ These crates provide foundational types that many other crates use.
 
 ### `crates/sml-syntax`
 
-SML concrete syntax (like tokens), and AST wrapper API.
+SML tokens and lossless concrete syntax trees (CST), and abstract syntax tree (AST) wrapper API. Depends on [rowan][], a library for CSTs.
 
-Depends on [rowan][], a library for lossless concrete syntax trees. "Lossless" means we can represent partial parses with no information loss, which is important for the IDE use case since the code is often in the middle of being edited by the client and therefore syntactically invalid.
+"Lossless" means the exact input source file can be reproduced from its CST.
+
+In a conventional compiler, source code is often first lexed into tokens, then those tokens are parsed into ASTs. Often, by design, these AST types do not allow for representing partially-formed programs. For example, we could represent `1 + 3` or `foo(3, 5) - bar(4)` with an AST, but not `1 +` or `foo(3,`.
+
+This is fine for the regular compiler use case; in fact, it is **desired**, since a compiler should not compile malformed, incomplete programs. But for the language server use case, this is unacceptable, because the client is often in the middle of editing their code, and therefore their code is syntactically invalid. A language server should, in spite of this, strive to understand as much about the (possibly syntactically invalid) code as possible.
 
 Thus, since the AST wrapper API provides a "view" into a concrete syntax tree, and that concrete tree may be partial and/or malformed, pretty much all "fields" exposed by the AST API are optional.
 
@@ -24,9 +28,9 @@ Mostly generated from its [ungrammar][].
 
 ### `crates/sml-hir`
 
-High-level intermediate representation. Uses arenas, and indices into those arenas, to represent recursive structure.
+High-level Intermediate Representation.
 
-For instance, instead of the usual
+Uses arenas, and indices into those arenas, to represent recursive structure. For instance, instead of the usual
 
 ```rs
 enum Exp {
@@ -193,9 +197,7 @@ These crates are somewhat general purpose, and might conceivably be able to be p
 Types for working with paths, notably:
 
 - A wrapper type for `PathBuf` that guarantees the inner `PathBuf` is canonical.
-- A type that transforms these canonical path buffers into cheap IDs, given that a path is "contained" in a "root" canonical path buf.
-
-These are ideal for the use case of language servers, in which we have a "workspace root" containing all the files.
+- A type that transforms these canonical path buffers into cheap IDs.
 
 ### `crates/str-util`
 
@@ -288,11 +290,11 @@ Support for specific text editors via language client extensions/"glue code".
 
 ### `editors/vscode`
 
-The VS Code client extension, in TypeScript.
+The VS Code client extension, in [TypeScript][ts].
 
 ### `xtask`
 
-A [task runner/"build system"][xtask] written in Rust.
+A [task runner][xtask] written in Rust.
 
 Allows you to invoke `cargo xtask <task>` to run the `<task>`.
 
@@ -318,7 +320,7 @@ Configuration for GitHub, like:
 
 - PR templates
 - Issue templates
-- The CI job run, run on GitHub Actions.
+- How to run CI on GitHub Actions
 
 ### `.gitignore`
 
@@ -337,5 +339,6 @@ Configuration for VS Code, like:
 [rowan]: https://github.com/rust-analyzer/rowan
 [rust]: https://www.rust-lang.org
 [sml]: https://smlfamily.github.io
+[ts]: https://www.typescriptlang.org
 [ungrammar]: https://github.com/rust-analyzer/ungrammar
 [xtask]: https://github.com/matklad/cargo-xtask
