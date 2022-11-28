@@ -108,7 +108,7 @@ fn no_ignore() {
 }
 
 #[test]
-fn crate_architecture_doc() {
+fn architecture() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
   let in_doc: BTreeSet<_> = include_str!("../../../docs/ARCHITECTURE.md")
@@ -133,7 +133,7 @@ fn crate_architecture_doc() {
 fn docs_readme() {
   let sh = Shell::new().unwrap();
   sh.change_dir(root_dir());
-  let in_readme: BTreeSet<_> = include_str!("../../../docs/README.md")
+  let in_doc: BTreeSet<_> = include_str!("../../../docs/README.md")
     .lines()
     .filter_map(|x| {
       let x = x.strip_prefix("- [")?;
@@ -142,7 +142,7 @@ fn docs_readme() {
       Some(x.to_owned())
     })
     .collect();
-  let in_dir: BTreeSet<_> = sh
+  let on_fs: BTreeSet<_> = sh
     .read_dir("docs")
     .unwrap()
     .into_iter()
@@ -151,7 +151,7 @@ fn docs_readme() {
       (x != "README.md").then(|| x.to_owned())
     })
     .collect();
-  eq_sets(&in_readme, &in_dir, "in README, but doesn't exist", "not in README, but exists");
+  eq_sets(&in_doc, &on_fs, "in README, but doesn't exist", "not in README, but exists");
 }
 
 #[test]
