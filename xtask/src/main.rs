@@ -94,6 +94,14 @@ fn finish_args(args: Arguments) -> Result<()> {
   Ok(())
 }
 
+fn run_ci(sh: &Shell) -> Result<()> {
+  cmd!(sh, "cargo build --locked").run()?;
+  cmd!(sh, "cargo fmt -- --check").run()?;
+  cmd!(sh, "cargo clippy").run()?;
+  cmd!(sh, "cargo test --locked").run()?;
+  Ok(())
+}
+
 fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
   let release_arg = release.then_some("--release");
   let target_arg = match target {
@@ -136,11 +144,54 @@ fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
   Ok(())
 }
 
-fn run_ci(sh: &Shell) -> Result<()> {
-  cmd!(sh, "cargo build --locked").run()?;
-  cmd!(sh, "cargo fmt -- --check").run()?;
-  cmd!(sh, "cargo clippy").run()?;
-  cmd!(sh, "cargo test --locked").run()?;
+fn tag(sh: &Shell, tag_arg: &str) -> Result<()> {
+  let version = match tag_arg.strip_prefix('v') {
+    Some(x) => x,
+    None => bail!("tag must start with v"),
+  };
+  let version_parts: Vec<_> = version.split('.').collect();
+  let num_parts = version_parts.len();
+  if num_parts != 3 {
+    bail!("version must have 3 dot-separated parts (got {num_parts})")
+  }
+  for part in version_parts {
+    if let Err(e) = part.parse::<u16>() {
+      bail!("{part}: not a non-negative 16-bit integer: {e}")
+    }
+  }
+  let paths: Vec<PathBuf> = ["package.json", "package-lock.json"]
+    .into_iter()
+    .map(|p| ["editors", "vscode", p].into_iter().collect())
+    .collect();
+  for path in paths.iter() {
+    let contents = sh.read_file(path)?;
+    let mut out = String::with_capacity(contents.len());
+    for (idx, line) in contents.lines().enumerate() {
+      if idx >= 15 {
+        out.push_str(line);
+      } else {
+        match line.split_once(": ") {
+          None => out.push_str(line),
+          Some((key, _)) => {
+            if key.trim() == "\"version\"" {
+              out.push_str(key);
+              out.push_str(": \"");
+              out.push_str(version);
+              out.push_str("\",");
+            } else {
+              out.push_str(line);
+            }
+          }
+        }
+      }
+      out.push('\n');
+    }
+    sh.write_file(path, out)?;
+  }
+  cmd!(sh, "git add {paths...}").run()?;
+  let msg = format!("Release {tag_arg}");
+  cmd!(sh, "git commit -m {msg} --no-verify").run()?;
+  cmd!(sh, "git tag {tag_arg}").run()?;
   Ok(())
 }
 
@@ -172,55 +223,9 @@ fn main() -> Result<()> {
       dist(&sh, release, target.as_deref())?;
     }
     Cmd::Tag => {
-      let tag: String = args.free_from_str()?;
+      let tag_arg: String = args.free_from_str()?;
       finish_args(args)?;
-      let version = match tag.strip_prefix('v') {
-        Some(x) => x,
-        None => bail!("tag must start with v"),
-      };
-      let version_parts: Vec<_> = version.split('.').collect();
-      let num_parts = version_parts.len();
-      if num_parts != 3 {
-        bail!("version must have 3 dot-separated parts (got {num_parts})")
-      }
-      for part in version_parts {
-        if let Err(e) = part.parse::<u16>() {
-          bail!("{part}: not a non-negative 16-bit integer: {e}")
-        }
-      }
-      let paths: Vec<PathBuf> = ["package.json", "package-lock.json"]
-        .into_iter()
-        .map(|p| ["editors", "vscode", p].into_iter().collect())
-        .collect();
-      for path in paths.iter() {
-        let contents = sh.read_file(path)?;
-        let mut out = String::with_capacity(contents.len());
-        for (idx, line) in contents.lines().enumerate() {
-          if idx >= 15 {
-            out.push_str(line);
-          } else {
-            match line.split_once(": ") {
-              None => out.push_str(line),
-              Some((key, _)) => {
-                if key.trim() == "\"version\"" {
-                  out.push_str(key);
-                  out.push_str(": \"");
-                  out.push_str(version);
-                  out.push_str("\",");
-                } else {
-                  out.push_str(line);
-                }
-              }
-            }
-          }
-          out.push('\n');
-        }
-        sh.write_file(path, out)?;
-      }
-      cmd!(sh, "git add {paths...}").run()?;
-      let msg = format!("Release {tag}");
-      cmd!(sh, "git commit -m {msg} --no-verify").run()?;
-      cmd!(sh, "git tag {tag}").run()?;
+      tag(&sh, &tag_arg)?;
       run_ci(&sh)?;
     }
   }
