@@ -20,6 +20,13 @@ where
   assert!(only_rhs_set.is_empty(), "{only_rhs}: {only_rhs_set:#?}");
 }
 
+fn empty_set<T>(set: &BTreeSet<T>, msg: &str)
+where
+  T: Ord + std::fmt::Debug,
+{
+  assert!(set.is_empty(), "{msg}: {set:#?}");
+}
+
 fn no_dupes<I, T>(iter: I) -> BTreeSet<T>
 where
   I: Iterator<Item = T>,
@@ -132,7 +139,7 @@ fn architecture() {
         .filter_map(|x| if no_doc.remove(x) { None } else { Some(x.to_owned()) }),
     )
     .collect();
-  eq_sets(&BTreeSet::new(), &no_doc, "???", "explicitly non-documented items not found on fs");
+  empty_set(&no_doc, "explicitly non-documented items not found on fs");
   eq_sets(&in_doc, &on_fs, "documented items that don't exist", "items without documentation");
 }
 
@@ -174,7 +181,7 @@ fn no_debugging() {
     cmd!(sh, "git grep -F -n -e {fst} -e {snd} -e {thd}").ignore_status().output().unwrap().stdout;
   let got = String::from_utf8(got).unwrap();
   let got: BTreeSet<_> = got.lines().collect();
-  eq_sets(&BTreeSet::new(), &got, "expected to have debugging", "not allowed to have debugging");
+  empty_set(&got, "not allowed to have debugging");
 }
 
 #[test]
