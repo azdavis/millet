@@ -113,20 +113,36 @@ fn architecture() {
   sh.change_dir(root_dir());
   let in_doc: BTreeSet<_> = include_str!("../../../docs/ARCHITECTURE.md")
     .lines()
-    .filter_map(|line| Some(line.strip_prefix("### `crates/")?.strip_suffix('`')?.to_owned()))
+    .filter_map(|line| Some(line.strip_prefix("### `")?.strip_suffix('`')?.to_owned()))
     .collect();
-  let in_crates: BTreeSet<_> = sh
-    .read_dir("crates")
-    .unwrap()
-    .into_iter()
-    .filter_map(|x| Some(x.file_name()?.to_str()?.to_owned()))
+  let mut no_doc = BTreeSet::from([
+    ".gitignore",
+    "Cargo.lock",
+    "Cargo.toml",
+    "crates",
+    "LICENSE-APACHE.md",
+    "LICENSE-MIT.md",
+    "README.md",
+    "rustfmt.toml",
+  ]);
+  let on_fs: BTreeSet<_> = std::iter::empty()
+    .chain(sh.read_dir("crates").unwrap().into_iter().filter_map(|x| {
+      let file_name = x.file_name()?.to_str()?;
+      Some(format!("crates/{file_name}"))
+    }))
+    .chain(sh.read_dir("editors").unwrap().into_iter().filter_map(|x| {
+      let file_name = x.file_name()?.to_str()?;
+      Some(format!("editors/{file_name}"))
+    }))
+    .chain(
+      String::from_utf8(cmd!(sh, "git ls-tree --name-only HEAD").output().unwrap().stdout)
+        .unwrap()
+        .lines()
+        .filter_map(|x| if no_doc.remove(x) { None } else { Some(x.to_owned()) }),
+    )
     .collect();
-  eq_sets(
-    &in_doc,
-    &in_crates,
-    "documented crates that don't exist",
-    "crates without documentation",
-  );
+  eq_sets(&BTreeSet::new(), &no_doc, "???", "explicitly non-documented items not found on fs");
+  eq_sets(&in_doc, &on_fs, "documented items that don't exist", "items without documentation");
 }
 
 #[test]
