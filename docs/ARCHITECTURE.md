@@ -1,10 +1,12 @@
 # Architecture
 
-Millet is a language server for SML.
+This is a high-level [architecture][] of Millet. Millet is a language server for Standard ML (SML), written in Rust.
 
-A language server is a long-running, stateful process that transforms a repository of code, and the client's edits to that code, into a semantic model about that code that can be queried by the client.
+A [language server][ls] is a long-running, stateful process that transforms a repository of code, and the client's edits to that code, into a semantic model about that code that can be queried by the client.
 
-Millet is mostly written in Rust, and is split into a few somewhat modular "crates".
+[SML][sml] is a functional programming language, formally defined by its [Definition][defn]. It emphasizes modularity, purity, and formal reasoning about programs. It is often used in educational contexts to teach students the basics of functional programming.
+
+[Rust][rust] is a programming language with an emphasis on reliability and efficiency. Being written in Rust, Millet is split into several, somewhat modular "crates".
 
 ## Type crates
 
@@ -329,6 +331,11 @@ Configuration for VS Code, like:
 - How to launch an instance of VS Code with a local version of the extension for testing
 - What files to ignore in the sidebar (e.g. `/target`)
 
-[xtask]: https://github.com/matklad/cargo-xtask
+[architecture]: https://matklad.github.io/2021/02/06/ARCHITECTURE.md.html
+[defn]: https://smlfamily.github.io/sml97-defn.pdf
+[ls]: https://microsoft.github.io/language-server-protocol/
 [rowan]: https://github.com/rust-analyzer/rowan
+[rust]: https://www.rust-lang.org
+[sml]: https://smlfamily.github.io
 [ungrammar]: https://github.com/rust-analyzer/ungrammar
+[xtask]: https://github.com/matklad/cargo-xtask
