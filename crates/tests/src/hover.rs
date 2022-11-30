@@ -22,3 +22,14 @@ val _ = (   3, "hi", Uh false)
 "#,
   );
 }
+
+#[test]
+fn fully_qualified() {
+  check(
+    r#"
+structure Foo = struct datatype bar = baz end
+val _  = Foo.baz
+(**      ^ hover: Foo.bar *)
+"#,
+  );
+}
