@@ -683,7 +683,7 @@ fn get_ty_cons(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Pat
   }
 }
 
-// @def(80). TODO equality checks
+// @def(80)
 fn get_ty_desc(
   st: &mut St,
   ty_env: &mut TyEnv,
