@@ -1348,6 +1348,8 @@ Two types that were supposed to be compatible were not.
 
 This is probably the most common typechecking error, so it's hard to give general advice for how to fix it.
 
+### Expected and found
+
 Millet tries to report which type was "expected" and which was "found". For instance, in this example, we consider `int` the "expected" type, because of the annotation. This explicit annotation implies the programmer really thought it should be that type.
 
 ```sml
@@ -1357,6 +1359,8 @@ val x : int = "no"
 
 This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
 
+### Function application
+
 This error commonly occurs when applying a function to an argument, but the argument did not have the type the function expected. For instance, in this example, Millet reports that we "expected" `bool`, because the function `choose` takes a `bool`.
 
 ```sml
@@ -1364,6 +1368,8 @@ fun choose x = if x then "sosuke" else "pazu"
 val _ = choose 4
 (**            ^ contains: expected bool, found int *)
 ```
+
+### Overloads
 
 Note that certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
 
@@ -1378,9 +1384,11 @@ Millet reports these overloaded types with intentionally invalid SML syntax. Her
 
 When using overloaded functions, there must exist a single actual type being used. For instance, `+` is overloaded as `<num>`, which means it works with `word`, `real`, and `int`. However, `+` cannot add a `real` to a `word`, or an `int` to a `real`, or any such similar combination. It can only add two `word`s, or two `real`s, or two `int`s.
 
-Further, Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax.
+### Reporting types
 
-Finally, if Millet encounters an invalid expression, like a variable that was undefined, it will report the type `_`. Although Millet is able to parse `_` as a type "hole" if written in code, this again is not valid SML syntax.
+Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax.
+
+If Millet encounters an invalid expression, like a variable that was undefined, it will report the type `_`. Although Millet is able to parse `_` as a type "hole" if written in code, this again is not valid SML syntax.
 
 ## 5007
 
