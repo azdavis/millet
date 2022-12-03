@@ -1,19 +1,15 @@
 //! Checking declarations.
 
-use crate::config::Cfg;
 use crate::env::{Cx, Env, EnvLike as _};
 use crate::error::{ErrorKind, Item};
 use crate::generalize::{generalize, generalize_fixed, HasRecordMetaVars};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
-use crate::pat_match::Pat;
-use crate::st::St;
 use crate::types::{
   Equality, FixedTyVars, Generalizable, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme,
   TyVarSrc, ValEnv, ValInfo,
 };
-use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
-use crate::{exp, pat, ty};
+use crate::{config::Cfg, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
 
 pub(crate) fn get(
