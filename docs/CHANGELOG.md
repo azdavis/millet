@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.6.1
 
 - Emit an error if the `workspace.root` glob pattern matches no paths.
 - Improve other "startup" errors (i.e. errors in the 1000s).
