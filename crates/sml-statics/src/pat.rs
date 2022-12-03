@@ -1,19 +1,15 @@
 //! Checking patterns.
 
 use crate::compatible::eq_ty_scheme;
-use crate::config;
 use crate::error::{ErrorKind, Item};
-use crate::get_env::get_val_info;
 use crate::info::{Mode, TyEntry};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::st::St;
-use crate::ty;
 use crate::types::{
-  Cx, Def, EnvLike as _, Generalizable, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv,
-  ValInfo,
+  Cx, EnvLike as _, Generalizable, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
+use crate::{config, def, get_env::get_val_info, st::St, ty};
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Copy)]
@@ -53,7 +49,7 @@ struct PatRet {
   pm_pat: Pat,
   ty: Ty,
   ty_scheme: Option<TyScheme>,
-  def: Option<Def>,
+  def: Option<def::Def>,
 }
 
 fn get_(
@@ -66,7 +62,7 @@ fn get_(
 ) -> Option<PatRet> {
   let pat = Some(pat_idx);
   let mut ty_scheme = None::<TyScheme>;
-  let mut def = None::<Def>;
+  let mut def = None::<def::Def>;
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
     // @def(32)
     sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), Ty::MetaVar(st.meta_gen.gen(cfg.gen))),

@@ -1,7 +1,7 @@
 //! See [`Info`].
 
-use crate::types::{Def, MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
-use crate::util::ty_syms;
+use crate::types::{MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
+use crate::{def, util::ty_syms};
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
 
@@ -22,7 +22,7 @@ pub(crate) struct TyEntry {
 #[derive(Debug, Default, Clone)]
 struct InfoEntry {
   ty_entry: Option<TyEntry>,
-  def: Option<Def>,
+  def: Option<def::Def>,
   doc: Option<String>,
 }
 
@@ -31,7 +31,12 @@ impl Info {
     Self { mode, store: FxHashMap::default(), meta_vars: MetaVarInfo::default() }
   }
 
-  pub(crate) fn insert(&mut self, idx: sml_hir::Idx, ty_entry: Option<TyEntry>, def: Option<Def>) {
+  pub(crate) fn insert(
+    &mut self,
+    idx: sml_hir::Idx,
+    ty_entry: Option<TyEntry>,
+    def: Option<def::Def>,
+  ) {
     // ignore ty schemes that bind no vars
     let entry = InfoEntry {
       ty_entry: ty_entry.map(|mut ty_entry| {
@@ -98,15 +103,15 @@ impl Info {
 
   /// Returns the definition site of the idx.
   #[must_use]
-  pub fn get_def(&self, idx: sml_hir::Idx) -> Option<Def> {
+  pub fn get_def(&self, idx: sml_hir::Idx) -> Option<def::Def> {
     self.store.get(&idx)?.def
   }
 
   /// Returns the definition site of the type for the idx.
   #[must_use]
-  pub fn get_ty_defs(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<Vec<Def>> {
+  pub fn get_ty_defs(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<Vec<def::Def>> {
     let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
-    let mut ret = Vec::<Def>::new();
+    let mut ret = Vec::<def::Def>::new();
     ty_syms(&ty_entry.ty, &mut |sym| match syms.get(sym) {
       None => {}
       Some((_, ty_info)) => match ty_info.def {

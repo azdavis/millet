@@ -1,11 +1,9 @@
 //! Checking types.
 
 use crate::error::{ErrorKind, Item};
-use crate::get_env::get_ty_info;
-use crate::info::TyEntry;
-use crate::st::St;
-use crate::types::{Cx, Def, Ty, TyScheme, TyVarSrc};
+use crate::types::{Cx, Ty, TyScheme, TyVarSrc};
 use crate::util::{apply_bv, record};
+use crate::{def, get_env::get_ty_info, info::TyEntry, st::St};
 
 /// The mode for how we're checking this type.
 #[derive(Debug, Clone, Copy)]
@@ -29,7 +27,7 @@ pub(crate) fn get(
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut def = None::<Def>;
+  let mut def = None::<def::Def>;
   let ret = match &ars.ty[ty] {
     sml_hir::Ty::Hole => {
       st.err(ty, ErrorKind::TyHole);

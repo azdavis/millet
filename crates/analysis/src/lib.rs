@@ -99,14 +99,14 @@ impl Analysis {
         ty_md = ft.file.info.get_ty_md(&self.syms, idx);
         parts.extend(ty_md.as_deref());
         parts.extend(ft.file.info.get_def(idx).and_then(|def| match def {
-          sml_statics::Def::Path(path, idx) => {
+          sml_statics::def::Def::Path(path, idx) => {
             let info = match path {
-              sml_statics::DefPath::Regular(path) => &self.source_files.get(&path)?.info,
-              sml_statics::DefPath::BuiltinLib(name) => self.std_basis.get_info(name)?,
+              sml_statics::def::Path::Regular(path) => &self.source_files.get(&path)?.info,
+              sml_statics::def::Path::BuiltinLib(name) => self.std_basis.get_info(name)?,
             };
             info.get_doc(idx)
           }
-          sml_statics::Def::Primitive => None,
+          sml_statics::def::Def::Primitive => None,
         }));
         ptr.to_node(ft.file.syntax.parse.root.syntax()).text_range()
       }
@@ -203,11 +203,11 @@ impl Analysis {
     Some(FileAndToken { file, token })
   }
 
-  fn def_to_path_and_range(&self, def: sml_statics::Def) -> Option<WithPath<Range>> {
+  fn def_to_path_and_range(&self, def: sml_statics::def::Def) -> Option<WithPath<Range>> {
     let (path, idx) = match def {
-      sml_statics::Def::Path(sml_statics::DefPath::Regular(a), b) => (a, b),
-      sml_statics::Def::Path(sml_statics::DefPath::BuiltinLib(_), _)
-      | sml_statics::Def::Primitive => return None,
+      sml_statics::def::Def::Path(sml_statics::def::Path::Regular(a), b) => (a, b),
+      sml_statics::def::Def::Path(sml_statics::def::Path::BuiltinLib(_), _)
+      | sml_statics::def::Def::Primitive => return None,
     };
     let def_file = self.source_files.get(&path)?;
     let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx)?;

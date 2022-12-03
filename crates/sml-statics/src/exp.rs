@@ -6,12 +6,10 @@ use crate::get_env::get_val_info;
 use crate::info::TyEntry;
 use crate::pat_match::Pat;
 use crate::st::St;
-use crate::types::{
-  Cx, Def, DefPath, Env, EnvLike as _, Generalizable, Sym, SymsMarker, Ty, TyScheme, ValEnv,
-};
+use crate::types::{Cx, Env, EnvLike as _, Generalizable, Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::unify::unify;
 use crate::util::{apply, get_scon, instantiate, record};
-use crate::{dec, pat, ty};
+use crate::{dec, def, pat, ty};
 
 pub(crate) fn get_and_check_ty_escape(
   st: &mut St,
@@ -35,7 +33,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut definition = None::<Def>;
+  let mut definition = None::<def::Def>;
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.meta_gen.gen(Generalizable::Always);
@@ -49,7 +47,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
         definition = val_info.def;
-        if let Some(Def::Path(_, idx)) = val_info.def {
+        if let Some(def::Def::Path(_, idx)) = val_info.def {
           st.mark_used(idx);
         }
         instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
@@ -164,7 +162,7 @@ fn lint_app(
 ) -> Option<ErrorKind> {
   match &ars.exp[func?] {
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def? {
-      Def::Primitive => {
+      def::Def::Primitive => {
         assert!(path.prefix().is_empty(), "primitives are at the top level");
         if matches!(path.last().as_str(), "=" | "<>") {
           lint_eq(cx, ars, argument)
@@ -172,14 +170,14 @@ fn lint_app(
           None
         }
       }
-      Def::Path(DefPath::BuiltinLib("std_basis/list.sml"), _) => {
+      def::Def::Path(def::Path::BuiltinLib("std_basis/list.sml"), _) => {
         if path.last().as_str() == "@" {
           lint_append(ars, argument)
         } else {
           None
         }
       }
-      Def::Path(_, _) => None,
+      def::Def::Path(_, _) => None,
     },
     sml_hir::Exp::Fn(_, sml_hir::FnFlavor::Fn) => Some(ErrorKind::AppFn),
     _ => None,
@@ -207,8 +205,8 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
     };
     let vi = get_val_info(&cx.env, path).ok()??;
     match vi.def? {
-      Def::Path(DefPath::BuiltinLib(_), _) | Def::Primitive => {}
-      Def::Path(DefPath::Regular(_), _) => return None,
+      def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive => {}
+      def::Def::Path(def::Path::Regular(_), _) => return None,
     }
     match path.last().as_str() {
       "NONE" | "nil" | "true" | "false" => Some(ErrorKind::InvalidEq(path.last().clone())),

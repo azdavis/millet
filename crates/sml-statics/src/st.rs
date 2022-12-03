@@ -3,8 +3,8 @@
 use crate::error::{Error, ErrorKind, Item};
 use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
-use crate::types::{Def, DefPath, FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
-use crate::util::apply;
+use crate::types::{FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
+use crate::{def, util::apply};
 use fast_hash::FxHashSet;
 
 /// The mutable state.
@@ -45,13 +45,13 @@ impl St {
     }
   }
 
-  pub(crate) fn def(&self, idx: sml_hir::Idx) -> Option<Def> {
+  pub(crate) fn def(&self, idx: sml_hir::Idx) -> Option<def::Def> {
     let path = match self.info.mode() {
-      Mode::Regular(p) => DefPath::Regular(p?),
-      Mode::BuiltinLib(p) => DefPath::BuiltinLib(p),
+      Mode::Regular(p) => def::Path::Regular(p?),
+      Mode::BuiltinLib(p) => def::Path::BuiltinLib(p),
       Mode::PathOrder => return None,
     };
-    Some(Def::Path(path, idx))
+    Some(def::Def::Path(path, idx))
   }
 
   pub(crate) fn err<I>(&mut self, idx: I, kind: ErrorKind)

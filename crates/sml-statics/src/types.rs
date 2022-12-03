@@ -5,13 +5,12 @@
 
 mod overload;
 
+use crate::def;
 use crate::fmt_util::{idx_to_name, ty_var_name};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use fmt_util::comma_seq;
-use std::collections::BTreeMap;
-use std::fmt;
-use std::sync::Arc;
+use std::{collections::BTreeMap, fmt, sync::Arc};
 use uniq::{Uniq, UniqGen};
 
 pub(crate) use overload::{BasicOverload, CompositeOverload, Overload};
@@ -693,7 +692,7 @@ impl StartedSym {
 pub(crate) struct TyInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) val_env: ValEnv,
-  pub(crate) def: Option<Def>,
+  pub(crate) def: Option<def::Def>,
 }
 
 /// Definition: `StrEnv`
@@ -709,7 +708,7 @@ pub(crate) type ValEnv = FxHashMap<str_util::Name, ValInfo>;
 pub(crate) struct ValInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) id_status: IdStatus,
-  pub(crate) def: Option<Def>,
+  pub(crate) def: Option<def::Def>,
 }
 
 /// Definition: `IdStatus`
@@ -747,11 +746,11 @@ pub(crate) struct Env {
   pub(crate) str_env: StrEnv,
   pub(crate) ty_env: TyEnv,
   pub(crate) val_env: ValEnv,
-  pub(crate) def: Option<Def>,
+  pub(crate) def: Option<def::Def>,
 }
 
 impl Env {
-  pub(crate) fn with_def(def: Option<Def>) -> Self {
+  pub(crate) fn with_def(def: Option<def::Def>) -> Self {
     Self { def, ..Default::default() }
   }
 }
@@ -1191,24 +1190,4 @@ fn handle_bv(
       }
     },
   };
-}
-
-/// A definition site.
-#[derive(Debug, Clone, Copy)]
-pub enum Def {
-  /// A def contained at a path.
-  Path(DefPath, sml_hir::Idx),
-  /// A primitive, inherent def.
-  Primitive,
-}
-
-/// A definition path.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DefPath {
-  /// A regular path.
-  Regular(paths::PathId),
-  /// A built-in library path, like the std basis or other such similar "always available"
-  /// libraries. Contrast with primitives, which are built-in but not expressible in a regular SML
-  /// source file.
-  BuiltinLib(&'static str),
 }
