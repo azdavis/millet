@@ -162,7 +162,7 @@ fn handle_bv(
     None => return,
   };
   *ty = match bv {
-    Some(bv) => Ty::BoundVar(bv.clone()),
+    Some(bv) => Ty::BoundVar(*bv),
     None => match kind {
       Some(TyVarKind::Overloaded(ov)) => match ov {
         Overload::Basic(b) => match b {
@@ -181,7 +181,7 @@ fn handle_bv(
       }
       None | Some(TyVarKind::Equality) => {
         let new_bv = BoundTyVar::add_to_binder(bound_vars, |_| kind);
-        *bv = Some(new_bv.clone());
+        *bv = Some(new_bv);
         Ty::BoundVar(new_bv)
       }
     },
