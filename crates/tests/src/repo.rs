@@ -6,10 +6,6 @@ use std::fmt::{self, Write as _};
 use std::path::{Path, PathBuf};
 use xshell::{cmd, Shell};
 
-fn root_dir() -> &'static Path {
-  Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap()
-}
-
 fn eq_sets<T>(lhs: &BTreeSet<T>, rhs: &BTreeSet<T>, only_lhs: &str, only_rhs: &str)
 where
   T: Ord + std::fmt::Debug,
@@ -39,10 +35,16 @@ where
   ret
 }
 
+fn shell() -> Shell {
+  let sh = Shell::new().unwrap();
+  let root_dir = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+  sh.change_dir(root_dir);
+  sh
+}
+
 #[test]
 fn sml_def() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let dirs: [PathBuf; 3] =
     ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
   let out = cmd!(sh, "git grep -h -o -E '@def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
@@ -61,8 +63,7 @@ fn sml_def() {
 
 #[test]
 fn sync() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let out = cmd!(sh, "git grep -h -o -E '@sync\\(([a-z_]+)\\)'").output().unwrap();
   let out = String::from_utf8(out.stdout).unwrap();
   let iter = out.lines().filter_map(|line| {
@@ -81,8 +82,7 @@ fn sync() {
 
 #[test]
 fn test_refs() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let dir: PathBuf = ["crates", "sml-statics", "src"].into_iter().collect();
   let out = cmd!(sh, "git grep -h -o -E '@test\\(([a-z0-9_:]+)\\)' {dir}").output().unwrap();
   let out = String::from_utf8(out.stdout).unwrap();
@@ -103,8 +103,7 @@ fn test_refs() {
 
 #[test]
 fn no_ignore() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let word = "ignore";
   let has_ignore = cmd!(sh, "git grep -F -n -e #[{word}").ignore_status().output().unwrap();
   let out = String::from_utf8(has_ignore.stdout).unwrap();
@@ -114,8 +113,7 @@ fn no_ignore() {
 
 #[test]
 fn architecture() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let in_doc: BTreeSet<_> = include_str!("../../../docs/ARCHITECTURE.md")
     .lines()
     .filter_map(|line| Some(line.strip_prefix("### `")?.strip_suffix('`')?.to_owned()))
@@ -143,8 +141,7 @@ fn architecture() {
 
 #[test]
 fn docs_readme() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let in_doc: BTreeSet<_> = include_str!("../../../docs/README.md")
     .lines()
     .filter_map(|x| {
@@ -168,8 +165,7 @@ fn docs_readme() {
 
 #[test]
 fn no_debugging() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   // the uppercase + to_ascii_lowercase is to prevent git grep from triggering on this file.
   let fst = "DBG".to_ascii_lowercase();
   let snd = "EPRINT".to_ascii_lowercase();
@@ -187,8 +183,7 @@ fn changelog() {
   if option_env!("CI") == Some("1") {
     return;
   }
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let tag_out = String::from_utf8(cmd!(sh, "git tag").output().unwrap().stdout).unwrap();
   let in_git: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
   let in_doc: BTreeSet<_> = include_str!("../../../docs/CHANGELOG.md")
@@ -217,7 +212,7 @@ fn licenses() {
     "Unlicense/MIT",
     "Zlib OR Apache-2.0 OR MIT",
   ]);
-  let sh = Shell::new().unwrap();
+  let sh = shell();
   let output = cmd!(sh, "cargo metadata --format-version 1").read().unwrap();
   let json: serde_json::Value = serde_json::from_str(&output).unwrap();
   let packages = json.as_object().unwrap().get("packages").unwrap().as_array().unwrap();
@@ -241,8 +236,7 @@ fn licenses() {
 /// - `Code::n(5007)`
 #[test]
 fn error_codes() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let output = cmd!(sh, "git grep -h -o -E 'Code::n\\([[:digit:]]+\\)'").read().unwrap();
   let in_doc = no_dupes(
     include_str!("../../../docs/diagnostics.md")
@@ -373,8 +367,7 @@ fn vs_code_config() {
 
 #[test]
 fn rs_file_comments() {
-  let sh = Shell::new().unwrap();
-  sh.change_dir(root_dir());
+  let sh = shell();
   let files =
     String::from_utf8(cmd!(sh, "git ls-files '**/*.rs'").output().unwrap().stdout).unwrap();
   let no_doc: BTreeSet<_> = files
