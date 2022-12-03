@@ -8,6 +8,26 @@ pub const ENABLED: bool = false;
 use crate::types::{BasicOverload, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyVarKind};
 use std::fmt;
 
+pub(crate) enum Ans {
+  Yes,
+  No(NotEqTy),
+}
+
+impl Ans {
+  fn all<I>(iter: I) -> Ans
+  where
+    I: Iterator<Item = Ans>,
+  {
+    for x in iter {
+      match x {
+        Ans::Yes => {}
+        no @ Ans::No(_) => return no,
+      }
+    }
+    Ans::Yes
+  }
+}
+
 /// A type that is not equality.
 #[derive(Debug)]
 pub(crate) enum NotEqTy {
@@ -26,57 +46,63 @@ impl fmt::Display for NotEqTy {
   }
 }
 
-/// Returns a witness to the given type being **not** an equality type, if there is one. That is:
+/// Returns whether `ty` admits equality. That is:
 ///
-/// - If it **is** an equality type, returns nothing.
-/// - If it **is not** an equality type, returns the first kind of type contained in it that makes
-///   it not an equality type.
+/// - If it **is** an equality type, returns Yes.
+/// - If it **is not** an equality type, returns No with the first kind of type contained in it that
+///   makes it not an equality type.
 ///
 /// Also sets any non-constrained meta type variables to be equality type variables.
-pub(crate) fn get(subst: &mut Subst, ty: &Ty) -> Option<NotEqTy> {
+pub(crate) fn get_ty(subst: &mut Subst, ty: &Ty) -> Ans {
   if !ENABLED {
-    return None;
+    return Ans::Yes;
   }
   match ty {
-    Ty::None => None,
+    Ty::None => Ans::Yes,
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
     Ty::MetaVar(mv) => match subst.get(*mv) {
       None => {
         subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality));
-        None
+        Ans::Yes
       }
       Some(entry) => match entry.clone() {
-        SubstEntry::Solved(ty) => get(subst, &ty),
+        SubstEntry::Solved(ty) => get_ty(subst, &ty),
         SubstEntry::Kind(kind) => match kind {
-          TyVarKind::Equality => None,
+          TyVarKind::Equality => Ans::Yes,
           TyVarKind::Overloaded(ov) => match ov {
             Overload::Basic(basic) => get_basic(basic),
             Overload::Composite(comp) => {
-              comp.as_basics().iter().find_map(|&basic| get_basic(basic))
+              Ans::all(comp.as_basics().iter().map(|&basic| get_basic(basic)))
             }
           },
           TyVarKind::Record(rows) => get_record(subst, &rows),
         },
       },
     },
-    Ty::FixedVar(fv) => (!fv.ty_var().is_equality()).then_some(NotEqTy::FixedTyVar),
+    Ty::FixedVar(fv) => {
+      if fv.ty_var().is_equality() {
+        Ans::Yes
+      } else {
+        Ans::No(NotEqTy::FixedTyVar)
+      }
+    }
     Ty::Record(rows) => get_record(subst, rows),
     Ty::Con(args, sym) => {
       // TODO arrays should be equality?
       if *sym == Sym::REAL {
-        Some(NotEqTy::Real)
+        Ans::No(NotEqTy::Real)
       } else if *sym == Sym::REF {
-        None
+        Ans::Yes
       } else {
-        args.iter().find_map(|ty| get(subst, ty))
+        Ans::all(args.iter().map(|ty| get_ty(subst, ty)))
       }
     }
-    Ty::Fn(_, _) => Some(NotEqTy::Fn),
+    Ty::Fn(_, _) => Ans::No(NotEqTy::Fn),
   }
 }
 
-fn get_record(subst: &mut Subst, rows: &RecordTy) -> Option<NotEqTy> {
-  rows.values().find_map(|ty| get(subst, ty))
+fn get_record(subst: &mut Subst, rows: &RecordTy) -> Ans {
+  Ans::all(rows.values().map(|ty| get_ty(subst, ty)))
 }
 
 /// NOTE: this is an optimization. The (ideally, if our assumptions are correct) equivalent but
@@ -86,9 +112,11 @@ fn get_record(subst: &mut Subst, rows: &RecordTy) -> Option<NotEqTy> {
 /// However, that should always return the same result as this because the signatures `INTEGER`,
 /// `WORD`, `STRING`, and `CHAR` all have their primary types (e.g. `int` for `INTEGER`) as
 /// `eqtype`s.
-fn get_basic(ov: BasicOverload) -> Option<NotEqTy> {
+fn get_basic(ov: BasicOverload) -> Ans {
   match ov {
-    BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => None,
-    BasicOverload::Real => Some(NotEqTy::Real),
+    BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => {
+      Ans::Yes
+    }
+    BasicOverload::Real => Ans::No(NotEqTy::Real),
   }
 }

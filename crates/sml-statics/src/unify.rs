@@ -127,11 +127,12 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
     // unreachable because we applied upon entry.
     Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
     Some(SubstEntry::Kind(kind)) => match kind {
-      TyVarKind::Equality => {
-        if let Some(not_eq) = equality::get(&mut st.subst, &ty) {
-          return Err(MismatchedTypesFlavor::NotEqTy(ty.clone(), not_eq).into());
+      TyVarKind::Equality => match equality::get_ty(&mut st.subst, &ty) {
+        equality::Ans::Yes => {}
+        equality::Ans::No(not_eq) => {
+          return Err(MismatchedTypesFlavor::NotEqTy(ty.clone(), not_eq).into())
         }
-      }
+      },
       // mv was an overloaded ty var. ty must conform to that overload.
       TyVarKind::Overloaded(ov) => match ty {
         // don't emit more errors for None.
@@ -153,11 +154,11 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
-              TyVarKind::Equality => match equality::get(&mut st.subst, &Ty::MetaVar(mv)) {
-                Some(not_eq) => {
+              TyVarKind::Equality => match equality::get_ty(&mut st.subst, &Ty::MetaVar(mv)) {
+                equality::Ans::Yes => ov,
+                equality::Ans::No(not_eq) => {
                   return Err(MismatchedTypesFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
                 }
-                None => ov,
               },
               // it too was an overload. attempt to unify the two overloads.
               TyVarKind::Overloaded(ov_other) => match ov.unify(*ov_other) {
@@ -203,11 +204,12 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
-              TyVarKind::Equality => {
-                if let Some(not_eq) = equality::get(&mut st.subst, &Ty::MetaVar(mv)) {
-                  return Err(MismatchedTypesFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into());
+              TyVarKind::Equality => match equality::get_ty(&mut st.subst, &Ty::MetaVar(mv)) {
+                equality::Ans::Yes => {}
+                equality::Ans::No(not_eq) => {
+                  return Err(MismatchedTypesFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
                 }
-              }
+              },
               // no overloaded type is a record type.
               TyVarKind::Overloaded(ov) => {
                 return Err(MismatchedTypesFlavor::OverloadRecord(want_rows, *ov).into())
