@@ -177,6 +177,7 @@ pub fn minimal() -> (Syms, Basis) {
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
+  assert_ne!(sym, Sym::EXN);
   let equality = if sym == Sym::REF {
     Equality::Always
   } else if sym == Sym::REAL {
