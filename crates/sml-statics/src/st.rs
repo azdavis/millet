@@ -32,13 +32,13 @@ impl St {
   pub(crate) fn new(mode: Mode, syms: Syms) -> Self {
     Self {
       subst: Subst::default(),
-      errors: Vec::new(),
       meta_gen: MetaTyVarGen::default(),
       fixed_gen: FixedTyVarGen::default(),
       info: Info::new(mode),
+      syms,
+      errors: Vec::new(),
       matches: Vec::new(),
       holes: Vec::new(),
-      syms,
       defined: Vec::new(),
       used: FxHashSet::default(),
       cur_prefix: Vec::new(),
