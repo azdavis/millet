@@ -154,15 +154,13 @@ impl ConfigFromFile {
       }
       if let Some(ws_path_vars) = ws.path_vars {
         for (key, val) in ws_path_vars {
-          match val {
-            config::PathVar::Value(val) => {
-              ret.config.path_vars.insert(key, val);
+          let val = match val {
+            config::PathVar::Value(val) => val,
+            config::PathVar::Path(val) => {
+              root.as_path().join(val.as_str()).to_string_lossy().into()
             }
-            config::PathVar::Path(p) => {
-              let val: str_util::SmolStr = root.as_path().join(p.as_str()).to_string_lossy().into();
-              ret.config.path_vars.insert(key, val);
-            }
-          }
+          };
+          ret.config.path_vars.insert(key, val);
         }
       }
     }
