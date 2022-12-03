@@ -137,6 +137,29 @@ chihiro = true
 }
 
 #[test]
+fn path_vars_ok() {
+  let config = r#"
+version = 1
+[workspace.path-vars]
+okabe = { value = "rintarou" }
+shiina = { path = "mayuri" }
+hashida = { workspace-path = "itaru" }
+"#;
+  check_empty_cm(&["foo.cm"], Some(config)).unwrap();
+}
+
+#[test]
+fn path_vars_err() {
+  let config = r#"
+version = 1
+[workspace.path-vars]
+makise = { christina = "kurisu" }
+"#;
+  let e = check_empty_cm(&["foo.cm"], Some(config)).unwrap_err();
+  check_err(&e, "unknown variant `christina`");
+}
+
+#[test]
 fn mlb() {
   check_input([("foo.mlb", "")], None).unwrap();
 }
