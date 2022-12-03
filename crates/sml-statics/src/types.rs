@@ -3,6 +3,7 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
+mod fixed_var;
 mod meta_var;
 mod overload;
 
@@ -12,8 +13,8 @@ use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use fmt_util::comma_seq;
 use std::{collections::BTreeMap, fmt, sync::Arc};
-use uniq::{Uniq, UniqGen};
 
+pub(crate) use fixed_var::{FixedTyVar, FixedTyVarGen, TyVarSrc};
 pub(crate) use meta_var::{Generalizable, MetaTyVar, MetaTyVarGen, MetaTyVarGeneralizer};
 pub(crate) use overload::{BasicOverload, CompositeOverload, Overload};
 
@@ -385,48 +386,6 @@ pub(crate) struct BoundTyVar(idx::Idx);
 impl BoundTyVar {
   pub(crate) fn index_into<'a, T>(&self, xs: &'a [T]) -> &'a T {
     xs.get(self.0.to_usize()).unwrap()
-  }
-}
-
-/// Corresponds to a user written type variable.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) struct FixedTyVar {
-  id: Uniq,
-  ty_var: sml_hir::TyVar,
-  src: TyVarSrc,
-}
-
-impl FixedTyVar {
-  pub(crate) fn ty_var(&self) -> &sml_hir::TyVar {
-    &self.ty_var
-  }
-
-  pub(crate) fn src(&self) -> TyVarSrc {
-    self.src
-  }
-}
-
-impl fmt::Display for FixedTyVar {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    self.ty_var.fmt(f)
-  }
-}
-
-/// Where a type variable was bound.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) enum TyVarSrc {
-  /// Bound at `type` or `datatype` (or `where type`).
-  Ty,
-  /// Bound at `val` (or `fun`).
-  Val,
-}
-
-#[derive(Debug, Default)]
-pub(crate) struct FixedTyVarGen(UniqGen);
-
-impl FixedTyVarGen {
-  pub(crate) fn gen(&mut self, ty_var: sml_hir::TyVar, src: TyVarSrc) -> FixedTyVar {
-    FixedTyVar { id: self.0.gen(), ty_var, src }
   }
 }
 
@@ -968,7 +927,7 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
   let mut bound_vars = Vec::with_capacity(fixed.0.len());
   for (idx, (fv, bv)) in fixed.0.iter_mut().enumerate() {
     assert!(bv.is_none());
-    bound_vars.push(fv.ty_var.is_equality().then_some(TyVarKind::Equality));
+    bound_vars.push(fv.ty_var().is_equality().then_some(TyVarKind::Equality));
     *bv = Some(BoundTyVar(idx::Idx::new(idx)));
   }
   let mut g = Generalizer {
@@ -1050,7 +1009,7 @@ impl Generalizer<'_> {
         self.fixed.0.get_mut(fv),
         &mut self.bound_vars,
         &mut self.has_record_meta_var,
-        fv.ty_var.is_equality().then_some(TyVarKind::Equality),
+        fv.ty_var().is_equality().then_some(TyVarKind::Equality),
         ty,
       ),
       Ty::Record(rows) => {
