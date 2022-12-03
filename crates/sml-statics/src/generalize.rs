@@ -1,9 +1,10 @@
 //! Generalization, one of the fundamental operations on types for the inference algorithm.
 
 use crate::types::{
-  meta_vars, BasicOverload, BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer,
-  Overload, Subst, SubstEntry, Ty, TyScheme, TyVarKind,
+  BasicOverload, BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer, Overload,
+  Subst, SubstEntry, Ty, TyScheme, TyVarKind,
 };
+use crate::util::meta_vars;
 use fast_hash::FxHashMap;
 
 /// given a type scheme that binds no vars, mutate it and the type to be generalized.

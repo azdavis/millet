@@ -1,10 +1,9 @@
 //! Displaying some types.
 
-use crate::fmt_util::idx_to_name;
 use crate::types::{
-  meta_vars, BoundTyVars, MetaTyVar, MetaVarInfo, Overload, Subst, Sym, Syms, Ty, TyScheme,
-  TyVarKind,
+  BoundTyVars, MetaTyVar, MetaVarInfo, Overload, Subst, Sym, Syms, Ty, TyScheme, TyVarKind,
 };
+use crate::{fmt_util::idx_to_name, util::meta_vars};
 use fast_hash::FxHashMap;
 use fmt_util::comma_seq;
 use std::fmt;

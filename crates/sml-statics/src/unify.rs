@@ -3,8 +3,8 @@
 use crate::equality;
 use crate::error::{ErrorKind, MismatchedTypesFlavor};
 use crate::st::St;
-use crate::types::{meta_vars, MetaTyVar, SubstEntry, Ty, TyVarKind};
-use crate::util::apply;
+use crate::types::{MetaTyVar, SubstEntry, Ty, TyVarKind};
+use crate::util::{apply, meta_vars};
 use fast_hash::FxHashMap;
 
 pub(crate) fn unify(st: &mut St, want: Ty, got: Ty, idx: sml_hir::Idx) {

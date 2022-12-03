@@ -3,7 +3,8 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{
-  BasicOverload, Generalizable, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
+  BasicOverload, Generalizable, MetaTyVar, Overload, RecordTy, Subst, SubstEntry, Sym, Ty,
+  TyScheme, TyVarKind,
 };
 use fast_hash::FxHashMap;
 
@@ -163,6 +164,34 @@ pub(crate) fn ty_syms<F: FnMut(Sym)>(ty: &Ty, f: &mut F) {
     Ty::Fn(param, res) => {
       ty_syms(param, f);
       ty_syms(res, f);
+    }
+  }
+}
+
+pub(crate) fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
+where
+  F: FnMut(MetaTyVar, Option<&TyVarKind>),
+{
+  match ty {
+    Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
+    Ty::MetaVar(mv) => match subst.get(*mv) {
+      None => f(*mv, None),
+      Some(SubstEntry::Kind(k)) => f(*mv, Some(k)),
+      Some(SubstEntry::Solved(ty)) => meta_vars(subst, f, ty),
+    },
+    Ty::Record(rows) => {
+      for ty in rows.values() {
+        meta_vars(subst, f, ty);
+      }
+    }
+    Ty::Con(args, _) => {
+      for ty in args.iter() {
+        meta_vars(subst, f, ty);
+      }
+    }
+    Ty::Fn(param, res) => {
+      meta_vars(subst, f, param);
+      meta_vars(subst, f, res);
     }
   }
 }
