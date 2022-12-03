@@ -147,6 +147,8 @@ Does static analysis ("typechecking") on HIR.
 
 The other passes thus far operate on single files, but this one is meant to be run "across" many files. So we take in and give out updated state.
 
+This crate contains the implementation of most of the rules of the statics for SML from the Definition. (Some trivial ones like the rules for parenthesized expressions are handled implicitly when lowering). Relevant code is tagged with the special comment `@def(N)` for statics rule N.
+
 Statics errors use an abstract `Idx`, and this index gets turned into an actual text range with the `TwoWayPointers` from lower.
 
 In the future we could add more to this `Idx`, like "the name of the third con bind in the second dat bind of this datatype dec".
