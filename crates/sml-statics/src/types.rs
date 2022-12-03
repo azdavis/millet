@@ -3,6 +3,7 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
+mod meta_var;
 mod overload;
 
 use crate::def;
@@ -13,6 +14,7 @@ use fmt_util::comma_seq;
 use std::{collections::BTreeMap, fmt, sync::Arc};
 use uniq::{Uniq, UniqGen};
 
+pub(crate) use meta_var::{Generalizable, MetaTyVar, MetaTyVarGen, MetaTyVarGeneralizer};
 pub(crate) use overload::{BasicOverload, CompositeOverload, Overload};
 
 /// Definition: Type
@@ -383,90 +385,6 @@ pub(crate) struct BoundTyVar(idx::Idx);
 impl BoundTyVar {
   pub(crate) fn index_into<'a, T>(&self, xs: &'a [T]) -> &'a T {
     xs.get(self.0.to_usize()).unwrap()
-  }
-}
-
-/// Generated, and to be solved for a real type, by the inference algorithm.
-///
-/// Should eventually be solved in a [`Subst`], but before that, it may be "restricted" by the
-/// `Subst` without yet being fully solved to a type.
-///
-/// Internally contains a "rank" to know when it should be generalizable; see "Efficient ML Type
-/// Inference Using Ranked Type Variables" (doi:10.1145/1292535.1292538)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) struct MetaTyVar {
-  id: u32,
-  rank: MetaTyVarRank,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) enum MetaTyVarRank {
-  Finite(u16),
-  Infinite,
-}
-
-impl MetaTyVar {
-  pub(crate) fn rank(self) -> MetaTyVarRank {
-    self.rank
-  }
-}
-
-#[derive(Debug, Default)]
-pub(crate) struct MetaTyVarGen {
-  id: u32,
-  rank: u16,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum Generalizable {
-  Sometimes,
-  Always,
-}
-
-impl MetaTyVarGen {
-  pub(crate) fn gen(&mut self, g: Generalizable) -> MetaTyVar {
-    let ret = MetaTyVar {
-      id: self.id,
-      rank: match g {
-        Generalizable::Sometimes => MetaTyVarRank::Finite(self.rank),
-        Generalizable::Always => MetaTyVarRank::Infinite,
-      },
-    };
-    self.id += 1;
-    ret
-  }
-
-  pub(crate) fn inc_rank(&mut self) {
-    self.rank += 1;
-  }
-
-  pub(crate) fn dec_rank(&mut self) {
-    self.rank -= 1;
-  }
-
-  pub(crate) fn generalizer(&self) -> MetaTyVarGeneralizer {
-    MetaTyVarGeneralizer { rank: self.rank }
-  }
-
-  pub(crate) fn gen_same_rank(&mut self, mv: MetaTyVar) -> MetaTyVar {
-    let ret = MetaTyVar { id: self.id, rank: mv.rank };
-    self.id += 1;
-    ret
-  }
-}
-
-#[derive(Debug)]
-pub(crate) struct MetaTyVarGeneralizer {
-  rank: u16,
-}
-
-impl MetaTyVarGeneralizer {
-  /// Returns in O(1) time.
-  fn is_generalizable(&self, mv: MetaTyVar) -> bool {
-    match mv.rank {
-      MetaTyVarRank::Finite(r) => r > self.rank,
-      MetaTyVarRank::Infinite => true,
-    }
   }
 }
 
