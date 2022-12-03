@@ -1,4 +1,4 @@
-//! Checking if a type is an equality type.
+//! Checking if various structures respect/admit equality.
 
 /// Whether equality type check are performed.
 ///
