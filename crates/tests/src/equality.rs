@@ -1,6 +1,6 @@
 //! Equality types.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn real_no() {
@@ -129,7 +129,7 @@ fun 'a yes (x : 'a) : 'a t = raise E
 
 #[test]
 fn datatype_no_real() {
-  fail(
+  check(
     r#"
 datatype t = B of real | C of string | D
 val _ = C "hi" = D

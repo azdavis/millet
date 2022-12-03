@@ -174,7 +174,9 @@ impl Syms {
   pub(crate) fn start(&mut self, path: sml_hir::Path) -> StartedSym {
     let ty_info =
       TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
-    self.syms.push(SymInfo { path, ty_info, equality: Equality::Never });
+    // must start with sometimes equality, as an assumption for constructing datatypes. we may
+    // realize that it should actually be never equality based on arguments to constructors.
+    self.syms.push(SymInfo { path, ty_info, equality: Equality::Sometimes });
     StartedSym {
       bomb: DropBomb::new("must be passed to Syms::finish"),
       // calculate len after push, because we sub 1 in get, because of Sym::EXN.

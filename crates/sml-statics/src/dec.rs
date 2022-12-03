@@ -9,7 +9,7 @@ use crate::types::{
   TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply, ins_check_name, ins_no_dupe};
-use crate::{config::Cfg, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
+use crate::{config::Cfg, equality, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
 
 pub(crate) fn get(
@@ -357,8 +357,11 @@ pub(crate) fn get_dat_binds(
     // NOTE: no checking for duplicates here
     big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
     let ty_info = TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx) };
-    // TODO figure out equality here
-    st.syms.finish(datatype.started, ty_info.clone(), Equality::Sometimes);
+    let equality = match equality::get_ty_info(st, ty_info.clone()) {
+      Ok(()) => Equality::Sometimes,
+      Err(_) => Equality::Never,
+    };
+    st.syms.finish(datatype.started, ty_info.clone(), equality);
     ty_env.insert(dat_bind.name.clone(), ty_info);
     for ty_var in &dat_bind.ty_vars {
       cx.fixed.remove(ty_var);
