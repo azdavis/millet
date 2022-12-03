@@ -21,7 +21,7 @@ impl Ans {
     for x in iter {
       match x {
         Ans::Yes => {}
-        no @ Ans::No(_) => return no,
+        Ans::No(_) => return x,
       }
     }
     Ans::Yes
