@@ -42,7 +42,7 @@ These file types list out SML source files and other group files to organize the
 
 For more exotic projects, you may wish to create an optional `millet.toml`.
 
-**Note:** If a file is not transitively reachable from the root group file, it will not be analyzed.
+**NOTE:** If a file is not transitively reachable from the root group file, it will not be analyzed.
 
 ## Configuration
 

@@ -2329,7 +2329,7 @@ This will error. To fix, do not use the syntax sugar at the call site.
 
 There was a call to `@`, the list append function, with a discouraged first argument.
 
-<!-- @ignore TODO get this check to work with mini std basis -->
+<!-- @ignore this check does not work with mini std basis -->
 
 ```sml
 fun overlyComplicatedId xs =

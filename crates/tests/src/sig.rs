@@ -246,7 +246,7 @@ end
 val _ = Add.add Add.zero Add.zero
 val _ = Mul.add Mul.zero Mul.zero
 
-(* TODO improve error message with FQN + structure name *)
+(* TODO improve this error message *)
 val _ = Mul.add Mul.zero Add.zero
 (**                      ^^^^^^^^ contains: expected MONOID.t, found MONOID.t *)
 "#,

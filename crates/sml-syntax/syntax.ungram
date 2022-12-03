@@ -263,7 +263,9 @@ Lab = 'Name' | '*' | 'IntLit'
 // NameStarEq can be a Name, *, or =, maybe. though, depending on the circumstance, only * and not =
 // may be additionally allowed (like for patterns).
 //
-// TODO maybe we should have separate classes of Name for alphanumeric and symbolic.
+// note that Name encompasses both alphanumeric and symbolic names, so they cannot be easily
+// distinguished later. this may technically be a violation of the Definition, since I think the
+// Definition doesn't like structure etc. names to be symbolic.
 NameStarEq = 'Name' | '*' | '='
 
 SCon =

@@ -149,7 +149,7 @@ The other passes thus far operate on single files, but this one is meant to be r
 
 Statics errors use an abstract `Idx`, and this index gets turned into an actual text range with the `TwoWayPointers` from lower.
 
-NOTE: In the future we could add more to this `Idx` (maybe call it `Entity`), like "the name of the third con bind in the second dat bind of this datatype dec".
+In the future we could add more to this `Idx`, like "the name of the third con bind in the second dat bind of this datatype dec".
 
 ## SML-adjacent helper crates
 

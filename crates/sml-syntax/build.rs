@@ -31,7 +31,7 @@ fn main() -> std::io::Result<()> {
           assert!(doc_map.insert(tok, s).is_none());
         }
         tok = Some(new_tok);
-        // TODO this used to be a sml code block, but the VS Code markdown viewer doesn't do well
+        // NOTE: this used to be a sml code block, but the VS Code markdown viewer doesn't do well
         // with a horizontal rule followed by a code block.
         s = format!("Token: `{new_tok}`\n");
       }

@@ -4,7 +4,7 @@ use crate::check::check;
 
 #[test]
 fn fun_bar_case() {
-  // note: the specific error doesn't matter a whole lot, this just illustrates that we (along with
+  // NOTE: the specific error doesn't matter a whole lot, this just illustrates that we (along with
   // every sml impl) require `()` to disambiguate this case (literally).
   check(
     r#"

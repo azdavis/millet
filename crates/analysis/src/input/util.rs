@@ -9,9 +9,6 @@ use text_pos::Range;
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   Io(std::io::Error),
-  /// TODO use or rm
-  #[allow(dead_code)]
-  NotInRoot(std::path::StripPrefixError),
   MultipleRoots(PathBuf, PathBuf),
   NoRoot,
   NotGroup,
@@ -37,7 +34,6 @@ impl fmt::Display for ErrorDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &*self.err.kind {
       ErrorKind::Io(e) => write!(f, "couldn't perform file I/O: {e}"),
-      ErrorKind::NotInRoot(e) => write!(f, "path not contained in root: {e}"),
       ErrorKind::MultipleRoots(a, b) => {
         let a = maybe_rel_to_root(self.root, a);
         let b = maybe_rel_to_root(self.root, b);
@@ -111,11 +107,14 @@ impl Error {
   }
 
   /// Returns the code for this.
+  ///
+  /// Used to emit, no longer used:
+  ///
+  /// - `Code::n(1002)`
   #[must_use]
   pub fn code(&self) -> Code {
     match *self.kind {
       ErrorKind::Io(_) => Code::n(1001),
-      ErrorKind::NotInRoot(_) => Code::n(1002),
       ErrorKind::MultipleRoots(_, _) => Code::n(1003),
       ErrorKind::NoRoot => Code::n(1004),
       ErrorKind::NotGroup => Code::n(1005),

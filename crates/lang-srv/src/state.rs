@@ -150,7 +150,6 @@ impl State {
       self.sp.send_response(Response::new_ok(id, res));
       Ok(())
     })?;
-    // TODO do CodeActionResolveRequest and lazily compute the edit
     r = helpers::try_req::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
       let url = params.text_document.uri;
       let path = helpers::url_to_path_id(&self.sp.file_system, &mut self.sp.store, &url)?;

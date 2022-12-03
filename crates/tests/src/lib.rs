@@ -34,5 +34,6 @@ mod shadow;
 mod sig;
 mod smoke;
 mod std_basis;
+mod symbolic;
 mod ty_escape;
 mod ty_var;
