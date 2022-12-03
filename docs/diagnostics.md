@@ -1369,11 +1369,36 @@ val _ = choose 4
 (**            ^ contains: expected bool, found int *)
 ```
 
+### Fully qualified names
+
+Millet reports types defined in structures and signatures prefixed with the names of the relevant structures or signatures. This is sometimes called a "fully qualified name" or "FQN".
+
+Because of how signature matching works and internal Millet design decisions, Millet reports the type `t` in this example as `FOO.t` instead of `Foo.t`:
+
+```sml
+signature FOO = sig
+  type t
+  val x : t
+end
+
+structure Foo :> FOO = struct
+  type t = int
+  val x = 3
+end
+
+val _ = Foo.x : unit
+(**     ^^^^^^^^^^^^ contains: expected unit, found FOO.t *)
+```
+
 ### Overloads
 
-Note that certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
+Certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
 
-Millet reports these overloaded types with intentionally invalid SML syntax. Here is what they mean:
+When using overloaded functions, there must exist a single actual type being used. For instance, `+` works with `word`, `real`, and `int`. However, `+` cannot add a `real` to a `word`, or an `int` to a `real`, or any such similar combination. It can only add two `word`s, or two `real`s, or two `int`s.
+
+### Reporting types with invalid syntax
+
+Millet reports overloaded types with intentionally invalid SML syntax. Here is what they mean:
 
 | Overload    | Meaning                                 |
 | ----------- | --------------------------------------- |
@@ -1381,10 +1406,6 @@ Millet reports these overloaded types with intentionally invalid SML syntax. Her
 | `<realint>` | `real`, `int`                           |
 | `<num>`     | `word`, `real`, `int`                   |
 | `<numtxt>`  | `word`, `real`, `int`, `string`, `char` |
-
-When using overloaded functions, there must exist a single actual type being used. For instance, `+` is overloaded as `<num>`, which means it works with `word`, `real`, and `int`. However, `+` cannot add a `real` to a `word`, or an `int` to a `real`, or any such similar combination. It can only add two `word`s, or two `real`s, or two `int`s.
-
-### Reporting types
 
 Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax.
 
