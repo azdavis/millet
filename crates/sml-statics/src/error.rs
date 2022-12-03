@@ -79,9 +79,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Circularity(mv, ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);
-        let name = mvs.get(*mv).ok_or(fmt::Error)?;
+        let mv = Ty::MetaVar(*mv);
+        let mv = mv.display(&mvs, self.syms);
         let ty = ty.display(&mvs, self.syms);
-        write!(f, "circular type: {name} occurs in {ty}")
+        write!(f, "circular type: {mv} occurs in {ty}")
       }
       ErrorKind::MismatchedTypes(flavor, want, got) => {
         let mut mvs = MetaVarNames::new(self.mv_info);

@@ -197,7 +197,7 @@ impl<'a> MetaVarNames<'a> {
   }
 
   /// tries the [`MetaVarInfo`] first, then fall back to a generated name like `?a`, `?b`, etc.
-  pub(crate) fn get(&self, mv: MetaTyVar) -> Option<MetaVarName> {
+  fn get(&self, mv: MetaTyVar) -> Option<MetaVarName> {
     self
       .info
       .0
@@ -211,7 +211,7 @@ impl<'a> MetaVarNames<'a> {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum MetaVarName {
+enum MetaVarName {
   Idx(idx::Idx),
   Overload(Overload),
 }
