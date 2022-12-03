@@ -15,26 +15,7 @@ use crate::types::{
 use crate::{st::St, util::instantiate};
 use std::fmt;
 
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) enum Ans {
-  Yes,
-  No(NotEqTy),
-}
-
-impl Ans {
-  fn all<I>(iter: I) -> Ans
-  where
-    I: Iterator<Item = Ans>,
-  {
-    for x in iter {
-      match x {
-        Ans::Yes => {}
-        Ans::No(_) => return x,
-      }
-    }
-    Ans::Yes
-  }
-}
+pub(crate) type Result<T = (), E = NotEqTy> = std::result::Result<T, E>;
 
 /// A type that is not equality.
 #[derive(Debug, PartialEq, Eq)]
@@ -54,33 +35,43 @@ impl fmt::Display for NotEqTy {
   }
 }
 
+fn all<I>(iter: I) -> Result
+where
+  I: Iterator<Item = Result>,
+{
+  for x in iter {
+    x?;
+  }
+  Ok(())
+}
+
 /// Returns whether `ty` admits equality. That is:
 ///
-/// - If it **is** an equality type, returns Yes.
-/// - If it **is not** an equality type, returns No with the first kind of type contained in it that
+/// - If it **is** an equality type, returns Ok.
+/// - If it **is not** an equality type, returns Err with the first kind of type contained in it that
 ///   makes it not an equality type.
 ///
 /// Also sets any non-constrained meta type variables to be equality type variables.
-pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Ans {
+pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
   if !ENABLED {
-    return Ans::Yes;
+    return Ok(());
   }
   match ty {
-    Ty::None => Ans::Yes,
+    Ty::None => Ok(()),
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
     Ty::MetaVar(mv) => match st.subst.get(*mv) {
       None => {
         st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality));
-        Ans::Yes
+        Ok(())
       }
       Some(entry) => match entry.clone() {
         SubstEntry::Solved(ty) => get_ty(st, &ty),
         SubstEntry::Kind(kind) => match kind {
-          TyVarKind::Equality => Ans::Yes,
+          TyVarKind::Equality => Ok(()),
           TyVarKind::Overloaded(ov) => match ov {
             Overload::Basic(basic) => get_basic(st, basic),
             Overload::Composite(comp) => {
-              Ans::all(comp.as_basics().iter().map(|&basic| get_basic(st, basic)))
+              all(comp.as_basics().iter().map(|&basic| get_basic(st, basic)))
             }
           },
           TyVarKind::Record(rows) => get_record(st, &rows),
@@ -89,22 +80,22 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Ans {
     },
     Ty::FixedVar(fv) => {
       if fv.ty_var().is_equality() {
-        Ans::Yes
+        Ok(())
       } else {
-        Ans::No(NotEqTy::FixedTyVar)
+        Err(NotEqTy::FixedTyVar)
       }
     }
     Ty::Record(rows) => get_record(st, rows),
     Ty::Con(args, sym) => get_con(st, args, *sym),
-    Ty::Fn(_, _) => Ans::No(NotEqTy::Fn),
+    Ty::Fn(_, _) => Err(NotEqTy::Fn),
   }
 }
 
-fn get_record(st: &mut St, rows: &RecordTy) -> Ans {
-  Ans::all(rows.values().map(|ty| get_ty(st, ty)))
+fn get_record(st: &mut St, rows: &RecordTy) -> Result {
+  all(rows.values().map(|ty| get_ty(st, ty)))
 }
 
-fn get_basic(st: &mut St, ov: BasicOverload) -> Ans {
+fn get_basic(st: &mut St, ov: BasicOverload) -> Result {
   let ret = get_basic_opt(ov);
   // NOTE: this should always succeed because the signatures `INTEGER`, `WORD`, `STRING`, and `CHAR`
   // all have their primary types (e.g. `int` for `INTEGER`) as `eqtype`s.
@@ -115,30 +106,30 @@ fn get_basic(st: &mut St, ov: BasicOverload) -> Ans {
 }
 
 /// optimized but ideally logically equivalent form of [`get_basic_naive`].
-fn get_basic_opt(ov: BasicOverload) -> Ans {
+fn get_basic_opt(ov: BasicOverload) -> Result {
   match ov {
     BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => {
-      Ans::Yes
+      Ok(())
     }
-    BasicOverload::Real => Ans::No(NotEqTy::Sym(Sym::REAL)),
+    BasicOverload::Real => Err(NotEqTy::Sym(Sym::REAL)),
   }
 }
 
-fn get_basic_naive(st: &mut St, ov: BasicOverload) -> Ans {
+fn get_basic_naive(st: &mut St, ov: BasicOverload) -> Result {
   let syms = st.syms.overloads()[ov].clone();
-  Ans::all(syms.into_iter().map(|sym| get_con(st, &[], sym)))
+  all(syms.into_iter().map(|sym| get_con(st, &[], sym)))
 }
 
-fn get_con(st: &mut St, args: &[Ty], sym: Sym) -> Ans {
+fn get_con(st: &mut St, args: &[Ty], sym: Sym) -> Result {
   match st.syms.equality(sym) {
-    Equality::Always => Ans::Yes,
-    Equality::Sometimes => Ans::all(args.iter().map(|ty| get_ty(st, ty))),
-    Equality::Never => Ans::No(NotEqTy::Sym(sym)),
+    Equality::Always => Ok(()),
+    Equality::Sometimes => all(args.iter().map(|ty| get_ty(st, ty))),
+    Equality::Never => Err(NotEqTy::Sym(sym)),
   }
 }
 
 #[allow(dead_code)]
-pub(crate) fn get_ty_scheme(st: &mut St, ty_scheme: TyScheme) -> Ans {
+pub(crate) fn get_ty_scheme(st: &mut St, ty_scheme: TyScheme) -> Result {
   let ty = instantiate(st, Generalizable::Always, ty_scheme);
   get_ty(st, &ty)
 }
