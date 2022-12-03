@@ -16,7 +16,7 @@ pub(crate) type Result<T = (), E = NotEqTy> = std::result::Result<T, E>;
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum NotEqTy {
   FixedTyVar,
-  Sym(Sym),
+  Sym,
   Fn,
 }
 
@@ -24,7 +24,7 @@ impl fmt::Display for NotEqTy {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       NotEqTy::FixedTyVar => f.write_str("a fixed non-equality type variable"),
-      NotEqTy::Sym(_) => f.write_str("a non-equality type constructor"),
+      NotEqTy::Sym => f.write_str("a non-equality type constructor"),
       NotEqTy::Fn => f.write_str("a function type"),
     }
   }
@@ -106,7 +106,7 @@ fn get_basic_opt(ov: BasicOverload) -> Result {
     BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => {
       Ok(())
     }
-    BasicOverload::Real => Err(NotEqTy::Sym(Sym::REAL)),
+    BasicOverload::Real => Err(NotEqTy::Sym),
   }
 }
 
@@ -119,7 +119,7 @@ fn get_con(st: &mut St, args: &[Ty], sym: Sym) -> Result {
   match st.syms.equality(sym) {
     Equality::Always => Ok(()),
     Equality::Sometimes => all(args.iter().map(|ty| get_ty(st, ty))),
-    Equality::Never => Err(NotEqTy::Sym(sym)),
+    Equality::Never => Err(NotEqTy::Sym),
   }
 }
 
