@@ -9,8 +9,8 @@ pub const ENABLED: bool = true;
 const ENABLE_DEBUG_CHECK: bool = false;
 
 use crate::types::{
-  BasicOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyScheme,
-  TyVarKind,
+  BasicOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyInfo,
+  TyScheme, TyVarKind,
 };
 use crate::{st::St, util::instantiate};
 use std::fmt;
@@ -132,4 +132,18 @@ fn get_con(st: &mut St, args: &[Ty], sym: Sym) -> Result {
 pub(crate) fn get_ty_scheme(st: &mut St, ty_scheme: TyScheme) -> Result {
   let ty = instantiate(st, Generalizable::Always, ty_scheme);
   get_ty(st, &ty)
+}
+
+#[allow(dead_code)]
+pub(crate) fn get_ty_info(st: &mut St, ty_info: TyInfo) -> Result {
+  let is_ref = match &ty_info.ty_scheme.ty {
+    Ty::Con(args, sym) => args.is_empty() && *sym == Sym::REF,
+    _ => false,
+  };
+  get_ty_scheme(st, ty_info.ty_scheme)?;
+  if is_ref {
+    Ok(())
+  } else {
+    all(ty_info.val_env.into_values().map(|vi| get_ty_scheme(st, vi.ty_scheme)))
+  }
 }
