@@ -58,7 +58,7 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
   }
   match ty {
     Ty::None => Ok(()),
-    Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
+    Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),
     Ty::MetaVar(mv) => match st.subst.get(*mv) {
       None => {
         st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality));
