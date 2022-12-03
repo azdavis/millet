@@ -374,6 +374,7 @@ fn vs_code_config() {
 #[test]
 fn rs_file_comments() {
   let sh = Shell::new().unwrap();
+  sh.change_dir(root_dir());
   let files =
     String::from_utf8(cmd!(sh, "git ls-files '**/*.rs'").output().unwrap().stdout).unwrap();
   let no_doc: BTreeSet<_> = files
