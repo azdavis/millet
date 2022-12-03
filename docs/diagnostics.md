@@ -2410,6 +2410,8 @@ abstype t = T with val _ = 3 end
 
 At time of writing, Millet does not support `abstype` declarations.
 
+To fix, avoid such constructs. `abstype` is often avoided in modern SML, replaced with a combination of `datatype`, `structure`, and `signature`.
+
 ## 6001
 
 A comment prevented automatic formatting of a SML file.
