@@ -171,10 +171,10 @@ pub struct Syms {
 }
 
 impl Syms {
-  pub(crate) fn start(&mut self, path: sml_hir::Path, equality: Equality) -> StartedSym {
+  pub(crate) fn start(&mut self, path: sml_hir::Path) -> StartedSym {
     let ty_info =
       TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
-    self.syms.push(SymInfo { path, ty_info, equality });
+    self.syms.push(SymInfo { path, ty_info, equality: Equality::Never });
     StartedSym {
       bomb: DropBomb::new("must be passed to Syms::finish"),
       // calculate len after push, because we sub 1 in get, because of Sym::EXN.
@@ -182,9 +182,11 @@ impl Syms {
     }
   }
 
-  pub(crate) fn finish(&mut self, mut started: StartedSym, ty_info: TyInfo) {
+  pub(crate) fn finish(&mut self, mut started: StartedSym, ty_info: TyInfo, equality: Equality) {
     started.bomb.defuse();
-    self.syms[started.sym.idx()].ty_info = ty_info;
+    let sym_info = &mut self.syms[started.sym.idx()];
+    sym_info.ty_info = ty_info;
+    sym_info.equality = equality;
   }
 
   /// Returns `None` iff passed `Sym::EXN`.

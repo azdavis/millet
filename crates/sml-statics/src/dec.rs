@@ -294,8 +294,7 @@ pub(crate) fn get_dat_binds(
   // do a first pass through the datatypes to allow for recursive reference, and to put them in
   // scope for the types.
   for dat_bind in dat_binds.iter() {
-    // TODO pass down equality here?
-    let started = st.syms.start(st.mk_path(dat_bind.name.clone()), Equality::Sometimes);
+    let started = st.syms.start(st.mk_path(dat_bind.name.clone()));
     // just create the fixed ty vars, do not bring them into the scope of the cx yet.
     let mut fixed = FixedTyVars::default();
     for ty_var in &dat_bind.ty_vars {
@@ -363,7 +362,8 @@ pub(crate) fn get_dat_binds(
     // NOTE: no checking for duplicates here
     big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
     let ty_info = TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx) };
-    st.syms.finish(datatype.started, ty_info.clone());
+    // TODO figure out equality here
+    st.syms.finish(datatype.started, ty_info.clone(), Equality::Sometimes);
     ty_env.insert(dat_bind.name.clone(), ty_info);
     for ty_var in &dat_bind.ty_vars {
       cx.fixed.remove(ty_var);

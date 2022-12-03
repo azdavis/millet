@@ -185,10 +185,9 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
   } else {
     Equality::Sometimes
   };
-  let started =
-    syms.start(sml_hir::Path::one(str_util::Name::new(sym.special().unwrap())), equality);
+  let started = syms.start(sml_hir::Path::one(str_util::Name::new(sym.special().unwrap())));
   assert_eq!(sym, started.sym());
-  syms.finish(started, ty_info);
+  syms.finish(started, ty_info, equality);
 }
 
 fn basic_datatype(ty: Ty, ctors: &[&str]) -> TyInfo {

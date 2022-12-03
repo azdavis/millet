@@ -426,19 +426,20 @@ fn get_where_type(
 }
 
 fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) {
-  let mut ac = Vec::<(StartedSym, TyInfo)>::new();
+  let mut ac = Vec::<(StartedSym, TyInfo, Equality)>::new();
   for &sym in ty_names.iter() {
     let sym_info = st.syms.get(sym).unwrap();
     let mut ty_info = sym_info.ty_info.clone();
-    let started = st.syms.start(sym_info.path.clone(), sym_info.equality);
+    let equality = sym_info.equality;
+    let started = st.syms.start(sym_info.path.clone());
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.iter().cloned(), started.sym());
     ty_info.ty_scheme = ty_scheme.clone();
-    ac.push((started, ty_info));
+    ac.push((started, ty_info, equality));
     assert!(subst.insert(sym, ty_scheme).is_none());
   }
-  for (started, mut ty_info) in ac {
+  for (started, mut ty_info, equality) in ac {
     val_env_realize(subst, &mut ty_info.val_env);
-    st.syms.finish(started, ty_info);
+    st.syms.finish(started, ty_info, equality);
   }
 }
 
@@ -691,7 +692,7 @@ fn get_ty_desc(
   idx: sml_hir::Idx,
 ) {
   let mut ty_vars = FxHashSet::<&sml_hir::TyVar>::default();
-  let started = st.syms.start(st.mk_path(ty_desc.name.clone()), equality);
+  let started = st.syms.start(st.mk_path(ty_desc.name.clone()));
   for ty_var in &ty_desc.ty_vars {
     if !ty_vars.insert(ty_var) {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
@@ -706,7 +707,7 @@ fn get_ty_desc(
     val_env: ValEnv::default(),
     def: st.def(idx),
   };
-  st.syms.finish(started, ty_info.clone());
+  st.syms.finish(started, ty_info.clone(), equality);
   if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
     st.err(idx, e);
   }
