@@ -3,8 +3,8 @@
 use crate::def::Def;
 use crate::env::{Bs, Env, EnvLike as _, EnvStack, FunEnv, SigEnv, StrEnv};
 use crate::types::{
-  BasicOverload, CompositeOverload, IdStatus, Overload, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo,
-  TyScheme, TyVarKind, ValEnv, ValInfo,
+  BasicOverload, CompositeOverload, Equality, IdStatus, Overload, RecordTy, Sym, Syms, Ty, TyEnv,
+  TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use fast_hash::map;
 
@@ -177,7 +177,15 @@ pub fn minimal() -> (Syms, Basis) {
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
-  let started = syms.start(sml_hir::Path::one(str_util::Name::new(sym.special().unwrap())));
+  let equality = if sym == Sym::REF {
+    Equality::Always
+  } else if sym == Sym::REAL {
+    Equality::Never
+  } else {
+    Equality::Sometimes
+  };
+  let started =
+    syms.start(sml_hir::Path::one(str_util::Name::new(sym.special().unwrap())), equality);
   assert_eq!(sym, started.sym());
   syms.finish(started, ty_info);
 }

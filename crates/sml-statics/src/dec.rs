@@ -8,8 +8,8 @@ use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
-  FixedTyVars, Generalizable, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, TyVarSrc, ValEnv,
-  ValInfo,
+  Equality, FixedTyVars, Generalizable, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme,
+  TyVarSrc, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
@@ -294,7 +294,8 @@ pub(crate) fn get_dat_binds(
   // do a first pass through the datatypes to allow for recursive reference, and to put them in
   // scope for the types.
   for dat_bind in dat_binds.iter() {
-    let started = st.syms.start(st.mk_path(dat_bind.name.clone()));
+    // TODO pass down equality here?
+    let started = st.syms.start(st.mk_path(dat_bind.name.clone()), Equality::Sometimes);
     // just create the fixed ty vars, do not bring them into the scope of the cx yet.
     let mut fixed = FixedTyVars::default();
     for ty_var in &dat_bind.ty_vars {

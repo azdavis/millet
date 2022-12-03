@@ -9,8 +9,8 @@ use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::info::Mode;
 use crate::st::St;
 use crate::types::{
-  BasicOverload, IdStatus, StartedSym, Sym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind,
-  TyVarSrc, ValEnv, ValInfo,
+  BasicOverload, Equality, IdStatus, StartedSym, Sym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme,
+  TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -430,7 +430,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
   for &sym in ty_names.iter() {
     let sym_info = st.syms.get(sym).unwrap();
     let mut ty_info = sym_info.ty_info.clone();
-    let started = st.syms.start(sym_info.path.clone());
+    let started = st.syms.start(sym_info.path.clone(), sym_info.equality);
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.iter().cloned(), started.sym());
     ty_info.ty_scheme = ty_scheme.clone();
     ac.push((started, ty_info));
@@ -681,7 +681,8 @@ fn get_ty_cons(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Pat
 // @def(80). TODO equality checks
 fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &sml_hir::TyDesc, idx: sml_hir::Idx) {
   let mut ty_vars = FxHashSet::<&sml_hir::TyVar>::default();
-  let started = st.syms.start(st.mk_path(ty_desc.name.clone()));
+  // TODO pass down equality here?
+  let started = st.syms.start(st.mk_path(ty_desc.name.clone()), Equality::Sometimes);
   for ty_var in &ty_desc.ty_vars {
     if !ty_vars.insert(ty_var) {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());

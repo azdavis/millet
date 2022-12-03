@@ -138,10 +138,18 @@ impl Sym {
   }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Equality {
+  Always,
+  Sometimes,
+  Never,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct SymInfo {
   pub(crate) path: sml_hir::Path,
   pub(crate) ty_info: TyInfo,
+  pub(crate) equality: Equality,
 }
 
 #[derive(Debug, Clone)]
@@ -163,10 +171,10 @@ pub struct Syms {
 }
 
 impl Syms {
-  pub(crate) fn start(&mut self, path: sml_hir::Path) -> StartedSym {
+  pub(crate) fn start(&mut self, path: sml_hir::Path, equality: Equality) -> StartedSym {
     let ty_info =
       TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
-    self.syms.push(SymInfo { path, ty_info });
+    self.syms.push(SymInfo { path, ty_info, equality });
     StartedSym {
       bomb: DropBomb::new("must be passed to Syms::finish"),
       // calculate len after push, because we sub 1 in get, because of Sym::EXN.
@@ -185,6 +193,13 @@ impl Syms {
       return None;
     }
     self.syms.get(sym.idx())
+  }
+
+  pub(crate) fn equality(&self, sym: Sym) -> Equality {
+    match self.get(sym) {
+      Some(sym_info) => sym_info.equality,
+      None => Equality::Never,
+    }
   }
 
   pub(crate) fn insert_exn(&mut self, path: sml_hir::Path, param: Option<Ty>) -> Exn {
