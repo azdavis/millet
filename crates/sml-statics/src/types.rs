@@ -94,7 +94,7 @@ impl fmt::Display for TyDisplay<'_> {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        let equality = matches!(bv.index_into(&vars.0), Some(TyVarKind::Equality));
+        let equality = matches!(bv.index_into(vars), Some(TyVarKind::Equality));
         let name = bv.name(equality);
         write!(f, "{name}")?;
       }
@@ -265,6 +265,34 @@ impl fmt::Display for RowDisplay<'_> {
   }
 }
 
+pub(crate) fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
+where
+  F: FnMut(MetaTyVar, Option<&TyVarKind>),
+{
+  match ty {
+    Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
+    Ty::MetaVar(mv) => match subst.get(*mv) {
+      None => f(*mv, None),
+      Some(SubstEntry::Kind(k)) => f(*mv, Some(k)),
+      Some(SubstEntry::Solved(ty)) => meta_vars(subst, f, ty),
+    },
+    Ty::Record(rows) => {
+      for ty in rows.values() {
+        meta_vars(subst, f, ty);
+      }
+    }
+    Ty::Con(args, _) => {
+      for ty in args.iter() {
+        meta_vars(subst, f, ty);
+      }
+    }
+    Ty::Fn(param, res) => {
+      meta_vars(subst, f, param);
+      meta_vars(subst, f, res);
+    }
+  }
+}
+
 /// Definition: `TypeScheme`, `TypeFcn`
 #[derive(Debug, Clone)]
 pub(crate) struct TyScheme {
@@ -283,9 +311,9 @@ impl TyScheme {
   where
     F: FnOnce(Ty) -> (Ty, Option<TyVarKind>),
   {
-    let mut bound_vars = BoundTyVars(Vec::new());
+    let mut bound_vars = BoundTyVars::new();
     let mut ty = None::<Ty>;
-    BoundTyVar::add_to_binder(&mut bound_vars.0, |x| {
+    BoundTyVar::add_to_binder(&mut bound_vars, |x| {
       let res = f(Ty::BoundVar(x));
       ty = Some(res.0);
       res.1
@@ -297,11 +325,9 @@ impl TyScheme {
   where
     I: Iterator<Item = Option<TyVarKind>>,
   {
-    let bound_vars = BoundTyVars(iter.collect());
-    let ty = Ty::Con(
-      BoundTyVar::iter_for(bound_vars.0.iter()).map(|(x, _)| Ty::BoundVar(x)).collect(),
-      sym,
-    );
+    let bound_vars: BoundTyVars = iter.collect();
+    let ty =
+      Ty::Con(BoundTyVar::iter_for(bound_vars.iter()).map(|(x, _)| Ty::BoundVar(x)).collect(), sym);
     Self { bound_vars, ty }
   }
 
@@ -317,23 +343,6 @@ impl TyScheme {
       syms,
       prec: TyPrec::Arrow,
     }
-  }
-}
-
-#[derive(Debug, Default, Clone)]
-pub(crate) struct BoundTyVars(Vec<Option<TyVarKind>>);
-
-impl BoundTyVars {
-  pub(crate) fn len(&self) -> usize {
-    self.0.len()
-  }
-
-  pub(crate) fn is_empty(&self) -> bool {
-    self.0.is_empty()
-  }
-
-  pub(crate) fn kinds(&self) -> impl Iterator<Item = &Option<TyVarKind>> + '_ {
-    self.0.iter()
   }
 }
 
@@ -630,222 +639,8 @@ pub(crate) enum SubstEntry {
   Kind(TyVarKind),
 }
 
-#[derive(Debug, Default, Clone)]
-pub(crate) struct FixedTyVars(BTreeMap<FixedTyVar, Option<BoundTyVar>>);
+/// Used to be a newtype, but we ended up wanting to use many fundamental vec operations.
+pub(crate) type BoundTyVars = Vec<Option<TyVarKind>>;
 
-impl FixedTyVars {
-  pub(crate) fn insert(&mut self, var: FixedTyVar) {
-    assert!(self.0.insert(var, None).is_none());
-  }
-
-  /// the ordering is always the same.
-  pub(crate) fn iter(&self) -> impl Iterator<Item = &FixedTyVar> + '_ {
-    self.0.keys()
-  }
-}
-
-/// generalizes the type in the type scheme.
-///
-/// replaces:
-/// - any fixed vars from `fixed_vars`
-/// - any meta vars not already solved by `subst` which were generated after the `mv_marker`
-///
-/// in the type with bound vars, and updates the type scheme to bind those vars.
-///
-/// panics if the type scheme already binds vars.
-#[allow(clippy::needless_pass_by_value)]
-pub(crate) fn generalize(
-  mv_generalizer: MetaTyVarGeneralizer,
-  subst: &Subst,
-  fixed: FixedTyVars,
-  ty_scheme: &mut TyScheme,
-) -> Result<(), HasRecordMetaVars> {
-  assert!(ty_scheme.bound_vars.is_empty());
-  let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
-  // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
-  // if we did not, we would have to traverse the whole `Env` to know what ty vars are present in
-  // it, and subtract those vars from the vars in `ty_scheme.ty`.
-  meta_vars(
-    subst,
-    &mut |x, _| {
-      if mv_generalizer.is_generalizable(x) {
-        meta.insert(x, None);
-      }
-    },
-    &ty_scheme.ty,
-  );
-  let mut g = Generalizer {
-    subst,
-    fixed,
-    meta,
-    bound_vars: BoundTyVars::default(),
-    has_record_meta_var: false,
-  };
-  g.go(&mut ty_scheme.ty);
-  ty_scheme.bound_vars = g.bound_vars;
-  if g.has_record_meta_var {
-    Err(HasRecordMetaVars)
-  } else {
-    Ok(())
-  }
-}
-
-/// a marker for when a type contained record meta vars.
-#[derive(Debug)]
-pub(crate) struct HasRecordMetaVars;
-
-/// like [`generalize`], but:
-///
-/// - doesn't allow meta vars
-/// - always generalizes exactly the given fixed vars, even if they don't appear in the
-///   `ty_scheme.ty`
-///
-/// use this to:
-///
-/// - explicitly create a ty scheme with the written arity, e.g. to support phantom types.
-/// - preserve the order of fixed type vars for the bound ty var binders.
-pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
-  assert!(ty_scheme.bound_vars.is_empty());
-  let mut bound_vars = Vec::with_capacity(fixed.0.len());
-  for (new_bv, (fv, bv)) in BoundTyVar::iter_for(fixed.0.iter_mut()) {
-    assert!(bv.is_none());
-    bound_vars.push(fv.ty_var().is_equality().then_some(TyVarKind::Equality));
-    *bv = Some(new_bv);
-  }
-  let mut g = Generalizer {
-    subst: &Subst::default(),
-    fixed,
-    meta: FxHashMap::default(),
-    bound_vars: BoundTyVars(bound_vars),
-    has_record_meta_var: false,
-  };
-  g.go(&mut ty_scheme.ty);
-  ty_scheme.bound_vars = g.bound_vars;
-  assert!(!g.has_record_meta_var, "there should be no meta vars at all, much less record ones");
-}
-
-pub(crate) fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
-where
-  F: FnMut(MetaTyVar, Option<&TyVarKind>),
-{
-  match ty {
-    Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}
-    Ty::MetaVar(mv) => match subst.get(*mv) {
-      None => f(*mv, None),
-      Some(SubstEntry::Kind(k)) => f(*mv, Some(k)),
-      Some(SubstEntry::Solved(ty)) => meta_vars(subst, f, ty),
-    },
-    Ty::Record(rows) => {
-      for ty in rows.values() {
-        meta_vars(subst, f, ty);
-      }
-    }
-    Ty::Con(args, _) => {
-      for ty in args.iter() {
-        meta_vars(subst, f, ty);
-      }
-    }
-    Ty::Fn(param, res) => {
-      meta_vars(subst, f, param);
-      meta_vars(subst, f, res);
-    }
-  }
-}
-
-struct Generalizer<'a> {
-  subst: &'a Subst,
-  fixed: FixedTyVars,
-  meta: FxHashMap<MetaTyVar, Option<BoundTyVar>>,
-  bound_vars: BoundTyVars,
-  has_record_meta_var: bool,
-}
-
-impl Generalizer<'_> {
-  fn go(&mut self, ty: &mut Ty) {
-    match ty {
-      Ty::None => {}
-      Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),
-      Ty::MetaVar(mv) => match self.subst.get(*mv) {
-        None => handle_bv(
-          self.meta.get_mut(mv),
-          &mut self.bound_vars,
-          &mut self.has_record_meta_var,
-          None,
-          ty,
-        ),
-        Some(entry) => match entry {
-          SubstEntry::Solved(t) => {
-            *ty = t.clone();
-            self.go(ty);
-          }
-          SubstEntry::Kind(k) => handle_bv(
-            self.meta.get_mut(mv),
-            &mut self.bound_vars,
-            &mut self.has_record_meta_var,
-            Some(k.clone()),
-            ty,
-          ),
-        },
-      },
-      Ty::FixedVar(fv) => handle_bv(
-        self.fixed.0.get_mut(fv),
-        &mut self.bound_vars,
-        &mut self.has_record_meta_var,
-        fv.ty_var().is_equality().then_some(TyVarKind::Equality),
-        ty,
-      ),
-      Ty::Record(rows) => {
-        for ty in rows.values_mut() {
-          self.go(ty);
-        }
-      }
-      Ty::Con(args, _) => {
-        for ty in args.iter_mut() {
-          self.go(ty);
-        }
-      }
-      Ty::Fn(param, res) => {
-        self.go(param);
-        self.go(res);
-      }
-    }
-  }
-}
-
-fn handle_bv(
-  bv: Option<&mut Option<BoundTyVar>>,
-  bound_vars: &mut BoundTyVars,
-  has_record_meta_var: &mut bool,
-  kind: Option<TyVarKind>,
-  ty: &mut Ty,
-) {
-  let bv = match bv {
-    Some(bv) => bv,
-    None => return,
-  };
-  *ty = match bv {
-    Some(bv) => Ty::BoundVar(bv.clone()),
-    None => match kind {
-      Some(TyVarKind::Overloaded(ov)) => match ov {
-        Overload::Basic(b) => match b {
-          BasicOverload::Int => Ty::INT,
-          BasicOverload::Real => Ty::REAL,
-          BasicOverload::Word => Ty::WORD,
-          BasicOverload::String => Ty::STRING,
-          BasicOverload::Char => Ty::CHAR,
-        },
-        // all composite overloads contain, and default to, int.
-        Overload::Composite(_) => Ty::INT,
-      },
-      Some(TyVarKind::Record(_)) => {
-        *has_record_meta_var = true;
-        Ty::None
-      }
-      None | Some(TyVarKind::Equality) => {
-        let new_bv = BoundTyVar::add_to_binder(&mut bound_vars.0, |_| kind);
-        *bv = Some(new_bv.clone());
-        Ty::BoundVar(new_bv)
-      }
-    },
-  };
-}
+/// Used to be a newtype, but we ended up wanting to use many fundamental map operations.
+pub(crate) type FixedTyVars = BTreeMap<FixedTyVar, Option<BoundTyVar>>;

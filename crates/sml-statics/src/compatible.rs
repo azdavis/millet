@@ -38,7 +38,7 @@ pub(crate) fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: TyScheme) -> Result
 
 fn fixed_var_subst(st: &mut St, bound_vars: &BoundTyVars) -> Vec<Ty> {
   bound_vars
-    .kinds()
+    .iter()
     .enumerate()
     .map(|(idx, kind)| {
       let equality = matches!(kind, Some(TyVarKind::Equality));

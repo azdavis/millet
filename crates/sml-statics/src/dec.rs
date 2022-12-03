@@ -3,12 +3,13 @@
 use crate::config::Cfg;
 use crate::env::{Cx, Env, EnvLike as _};
 use crate::error::{ErrorKind, Item};
+use crate::generalize::{generalize, generalize_fixed, HasRecordMetaVars};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, FixedTyVars, Generalizable, HasRecordMetaVars, IdStatus,
-  StartedSym, Ty, TyEnv, TyInfo, TyScheme, TyVarSrc, ValEnv, ValInfo,
+  FixedTyVars, Generalizable, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, TyVarSrc, ValEnv,
+  ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};
@@ -243,7 +244,7 @@ pub(crate) fn add_fixed_ty_vars(
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
       st.err(idx, e);
     }
-    ret.insert(fv);
+    ret.insert(fv, None);
   }
   ret
 }
@@ -297,9 +298,9 @@ pub(crate) fn get_dat_binds(
     // just create the fixed ty vars, do not bring them into the scope of the cx yet.
     let mut fixed = FixedTyVars::default();
     for ty_var in &dat_bind.ty_vars {
-      fixed.insert(st.fixed_gen.gen(ty_var.clone(), TyVarSrc::Ty));
+      fixed.insert(st.fixed_gen.gen(ty_var.clone(), TyVarSrc::Ty), None);
     }
-    let out_ty = Ty::Con(fixed.iter().map(|x| Ty::FixedVar(x.clone())).collect(), started.sym());
+    let out_ty = Ty::Con(fixed.keys().map(|x| Ty::FixedVar(x.clone())).collect(), started.sym());
     let ty_scheme = {
       let mut res = TyScheme::zero(out_ty.clone());
       // just `generalize` would also work, because `out_ty` mentions every fixed var.
@@ -336,7 +337,7 @@ pub(crate) fn get_dat_binds(
   // @def(28), @def(81)
   for (dat_bind, datatype) in dat_binds.iter().zip(datatypes) {
     // bring the type variables for this datatype into scope.
-    for fv in datatype.fixed.iter() {
+    for fv in datatype.fixed.keys() {
       if cx.fixed.insert(fv.ty_var().clone(), fv.clone()).is_some() {
         let e = ErrorKind::Duplicate(Item::TyVar, fv.ty_var().as_name().clone());
         st.err(idx, e);

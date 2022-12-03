@@ -84,7 +84,7 @@ pub(crate) fn apply(subst: &Subst, ty: &mut Ty) {
 pub(crate) fn instantiate(st: &mut St, g: Generalizable, ty_scheme: TyScheme) -> Ty {
   let subst: Vec<_> = ty_scheme
     .bound_vars
-    .kinds()
+    .iter()
     .map(|x| {
       let mv = st.meta_gen.gen(g);
       if let Some(k) = x {

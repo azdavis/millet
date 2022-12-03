@@ -15,6 +15,7 @@ mod equality;
 mod error;
 mod exp;
 mod fmt_util;
+mod generalize;
 mod get_env;
 mod info;
 mod pat;

@@ -4,12 +4,13 @@ use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::config::Cfg;
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
+use crate::generalize::{generalize, generalize_fixed, HasRecordMetaVars};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::info::Mode;
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, BasicOverload, HasRecordMetaVars, IdStatus, StartedSym, Sym,
-  SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, TyVarSrc, ValEnv, ValInfo,
+  BasicOverload, IdStatus, StartedSym, Sym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind,
+  TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};
@@ -432,7 +433,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
     let name = name.clone();
     let mut ty_info = ty_info.clone();
     let started = st.syms.start(name);
-    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), started.sym());
+    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.iter().cloned(), started.sym());
     ty_info.ty_scheme = ty_scheme.clone();
     ac.push((started, ty_info));
     assert!(subst.insert(sym, ty_scheme).is_none());
@@ -715,7 +716,7 @@ fn env_instance_sig(
   for &sym in &sig.ty_names {
     let mut path = Vec::<&str_util::Name>::new();
     let (_, ty_info) = st.syms.get(sym).unwrap();
-    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.kinds().cloned(), sym);
+    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.iter().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
       // @test(sig::no_path_to_sym). there should have already been an error emitted for this
       log::warn!("no path to sym");
