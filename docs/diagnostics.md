@@ -995,7 +995,7 @@ val inc =
 
 This may look like it is annotating both the input and output types of this `fn` as `int`, but actually it is annotating the input as `int` twice, redundantly.
 
-Indeed, the below similar code triggers this error, as well as another error that `bool` and `int` are mismatched types. This gives a clue as to what is happening: we are actually trying to annotate `x` as both `bool` and `int`.
+Indeed, the below similar code triggers this error, as well as another error that `bool` and `int` are incompatible types. This gives a clue as to what is happening: we are actually trying to annotate `x` as both `bool` and `int`.
 
 ```sml
 val greaterThanFive =
@@ -1344,7 +1344,7 @@ Substituting, we have `?a = ?a -> ?b`. That is, we are setting a type variable, 
 
 ## 5006
 
-Two types that were supposed to be "the same" were not.
+Two types that were supposed to be compatible were not.
 
 This is probably the most common typechecking error, so it's hard to give general advice for how to fix it.
 

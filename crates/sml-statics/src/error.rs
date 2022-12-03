@@ -19,7 +19,7 @@ pub(crate) enum ErrorKind {
   Missing(Item, str_util::Name),
   Extra(Item, str_util::Name),
   Circularity(MetaTyVar, Ty),
-  MismatchedTypes(MismatchedTypesFlavor, Ty, Ty),
+  IncompatibleTys(IncompatibleTysFlavor, Ty, Ty),
   DuplicateLab(sml_hir::Lab),
   RealPat,
   UnreachablePattern,
@@ -82,7 +82,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let ty = ty.display(&mvs, self.syms);
         write!(f, "circular type: {mv} occurs in {ty}")
       }
-      ErrorKind::MismatchedTypes(flavor, want, got) => {
+      ErrorKind::IncompatibleTys(flavor, want, got) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
@@ -91,10 +91,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let got = got.display(&mvs, self.syms);
         match self.lines {
           config::ErrorLines::One => {
-            write!(f, "mismatched types: {flavor}: expected {want}, found {got}")
+            write!(f, "incompatible types: {flavor}: expected {want}, found {got}")
           }
           config::ErrorLines::Many => {
-            writeln!(f, "mismatched types: {flavor}")?;
+            writeln!(f, "incompatible types: {flavor}")?;
             writeln!(f, "  expected {want}")?;
             write!(f, "     found {got}")
           }
@@ -232,7 +232,7 @@ impl fmt::Display for Item {
 }
 
 #[derive(Debug)]
-pub(crate) enum MismatchedTypesFlavor {
+pub(crate) enum IncompatibleTysFlavor {
   /// NOTE: this might never happen.
   BoundTyVar(BoundTyVar, BoundTyVar),
   FixedTyVar(FixedTyVar, FixedTyVar),
@@ -250,69 +250,69 @@ pub(crate) enum MismatchedTypesFlavor {
   NotEqTy(Ty, equality::NotEqTy),
 }
 
-impl MismatchedTypesFlavor {
+impl IncompatibleTysFlavor {
   fn display<'a>(
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
-  ) -> MismatchedTypesFlavorDisplay<'a> {
-    MismatchedTypesFlavorDisplay { flavor: self, meta_vars, syms }
+  ) -> IncompatibleTysFlavorDisplay<'a> {
+    IncompatibleTysFlavorDisplay { flavor: self, meta_vars, syms }
   }
 }
 
-struct MismatchedTypesFlavorDisplay<'a> {
-  flavor: &'a MismatchedTypesFlavor,
-  /// NOTE: all types contained inside the MismatchedTypesFlavor should be cloned off of the "main"
+struct IncompatibleTysFlavorDisplay<'a> {
+  flavor: &'a IncompatibleTysFlavor,
+  /// NOTE: all types contained inside the IncompatibleTysFlavor should be cloned off of the "main"
   /// 2 types in the containing ErrorKind, so we'll already have extended the MetaVarNames for them.
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
 }
 
-impl fmt::Display for MismatchedTypesFlavorDisplay<'_> {
+impl fmt::Display for IncompatibleTysFlavorDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.flavor {
-      MismatchedTypesFlavor::BoundTyVar(_, _) => f.write_str("type variables are different"),
-      MismatchedTypesFlavor::FixedTyVar(a, b) => {
+      IncompatibleTysFlavor::BoundTyVar(_, _) => f.write_str("type variables are different"),
+      IncompatibleTysFlavor::FixedTyVar(a, b) => {
         write!(f, "{a} and {b} are different type variables")
       }
-      MismatchedTypesFlavor::MissingRow(lab) => {
+      IncompatibleTysFlavor::MissingRow(lab) => {
         write!(f, "record or tuple type is missing field: {lab}")
       }
-      MismatchedTypesFlavor::ExtraRows(rows) => {
+      IncompatibleTysFlavor::ExtraRows(rows) => {
         write!(f, "record or tuple type has extra fields: ")?;
         fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| lab))
       }
-      MismatchedTypesFlavor::Con(a, b) => {
+      IncompatibleTysFlavor::Con(a, b) => {
         let a = a.display(self.syms);
         let b = b.display(self.syms);
         write!(f, "{a} and {b} are different type constructors")
       }
-      MismatchedTypesFlavor::Head(a, b) => {
+      IncompatibleTysFlavor::Head(a, b) => {
         let a_display = a.display(self.meta_vars, self.syms);
         let b_display = b.display(self.meta_vars, self.syms);
         let a_desc = a.desc();
         let b_desc = b.desc();
         write!(f, "{a_display} is {a_desc}, but {b_display} is {b_desc}")
       }
-      MismatchedTypesFlavor::OverloadCon(ov, s) => {
+      IncompatibleTysFlavor::OverloadCon(ov, s) => {
         let s = s.display(self.syms);
         write!(f, "{s} is not compatible with the {ov} overload")
       }
-      MismatchedTypesFlavor::OverloadUnify(want, got) => {
+      IncompatibleTysFlavor::OverloadUnify(want, got) => {
         write!(f, "{want} and {got} are incompatible overloads")
       }
-      MismatchedTypesFlavor::OverloadRecord(_, ov) => {
+      IncompatibleTysFlavor::OverloadRecord(_, ov) => {
         write!(f, "record types is not compatible with the {ov} overload")
       }
-      MismatchedTypesFlavor::OverloadHeadMismatch(ov, ty) => {
+      IncompatibleTysFlavor::OverloadHeadMismatch(ov, ty) => {
         let ty_display = ty.display(self.meta_vars, self.syms);
         let ty_desc = ty.desc();
         write!(f, "{ov} is not compatible with {ty_display}, which is {ty_desc}")
       }
-      MismatchedTypesFlavor::UnresolvedRecordMissingRow(lab) => {
+      IncompatibleTysFlavor::UnresolvedRecordMissingRow(lab) => {
         write!(f, "unresolved record or tuple type is missing field: {lab}")
       }
-      MismatchedTypesFlavor::UnresolvedRecordHeadMismatch(_, ty) => {
+      IncompatibleTysFlavor::UnresolvedRecordHeadMismatch(_, ty) => {
         let ty_display = ty.display(self.meta_vars, self.syms);
         let ty_desc = ty.desc();
         write!(
@@ -320,7 +320,7 @@ impl fmt::Display for MismatchedTypesFlavorDisplay<'_> {
           "unresolved record or tuple type is not compatible with {ty_display}, which is {ty_desc}"
         )
       }
-      MismatchedTypesFlavor::NotEqTy(ty, not_eq) => {
+      IncompatibleTysFlavor::NotEqTy(ty, not_eq) => {
         let ty = ty.display(self.meta_vars, self.syms);
         write!(f, "not an equality type because it contains {not_eq}: {ty}")
       }
@@ -363,7 +363,7 @@ impl Error {
       ErrorKind::Missing(_, _) => Code::n(5003),
       ErrorKind::Extra(_, _) => Code::n(5004),
       ErrorKind::Circularity(_, _) => Code::n(5005),
-      ErrorKind::MismatchedTypes(_, _, _) => Code::n(5006),
+      ErrorKind::IncompatibleTys(_, _, _) => Code::n(5006),
       ErrorKind::DuplicateLab(_) => Code::n(5008),
       ErrorKind::RealPat => Code::n(5009),
       ErrorKind::UnreachablePattern => Code::n(5010),
