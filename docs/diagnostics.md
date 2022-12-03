@@ -157,6 +157,14 @@ Currently, Millet uses the [glob crate](https://docs.rs/glob/latest/glob) for gl
 
 To fix, consult the docs linked above for valid glob syntax.
 
+## 1015
+
+The glob pattern for `workspace.root` matched no paths.
+
+This means Millet cannot determine what the workspace root(s) should be.
+
+To fix, change the pattern to match at least one path, or create at least one file that would be matched by the pattern.
+
 ## 1996
 
 Millet couldn't initialize the workspace root.

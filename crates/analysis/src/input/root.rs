@@ -144,6 +144,13 @@ impl ConfigFromFile {
             }
           }
         }
+        if root_group_paths.is_empty() {
+          return Err(Error::new(
+            ErrorSource::default(),
+            ret.path,
+            ErrorKind::EmptyGlob(root_path_glob),
+          ));
+        }
       }
       if let Some(ws_path_vars) = ws.path_vars {
         for (key, val) in ws_path_vars {

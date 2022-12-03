@@ -24,6 +24,7 @@ pub(crate) enum ErrorKind {
   InvalidErrorCode(str_util::SmolStr, diagnostic_util::ParseCodeError),
   SourcePathNotInFiles,
   GlobPattern(paths::PatternError),
+  EmptyGlob(str_util::SmolStr),
   /// must be last
   UnsupportedExport,
 }
@@ -56,6 +57,7 @@ impl fmt::Display for ErrorDisplay<'_> {
       ErrorKind::InvalidErrorCode(ec, e) => write!(f, "invalid error code: {ec}: {e}"),
       ErrorKind::SourcePathNotInFiles => f.write_str("`source` export not in file list"),
       ErrorKind::GlobPattern(e) => write!(f, "glob pattern error: {e}"),
+      ErrorKind::EmptyGlob(pat) => write!(f, "glob pattern matched no paths: {pat}"),
       ErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
     }
   }
@@ -127,6 +129,7 @@ impl Error {
       ErrorKind::InvalidErrorCode(_, _) => Code::n(1012),
       ErrorKind::SourcePathNotInFiles => Code::n(1013),
       ErrorKind::GlobPattern(_) => Code::n(1014),
+      ErrorKind::EmptyGlob(_) => Code::n(1015),
       ErrorKind::UnsupportedExport => Code::n(1999),
     }
   }
