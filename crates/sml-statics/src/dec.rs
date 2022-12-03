@@ -120,9 +120,9 @@ pub(crate) fn get(
       env.ty_env.extend(ty_env);
     }
     // @def(17)
-    sml_hir::Dec::Datatype(dat_binds, ty_binds) => {
+    sml_hir::Dec::Datatype(dat_binds, with_types) => {
       let (ty_env, big_val_env) =
-        get_dat_binds(st, cx.clone(), ars, dat_binds, ty_binds, dec.into());
+        get_dat_binds(st, cx.clone(), ars, dat_binds, with_types, dec.into());
       env.ty_env.extend(ty_env);
       env.val_env.extend(big_val_env);
     }
@@ -278,13 +278,12 @@ struct Datatype {
   ty_scheme: TyScheme,
 }
 
-/// TODO handle side conditions
 pub(crate) fn get_dat_binds(
   st: &mut St,
   mut cx: Cx,
   ars: &sml_hir::Arenas,
   dat_binds: &[sml_hir::DatBind],
-  ty_binds: &[sml_hir::TyBind],
+  with_types: &[sml_hir::TyBind],
   idx: sml_hir::Idx,
 ) -> (TyEnv, ValEnv) {
   // 'fake' because it's just to allow recursive reference, it doesn't have the val env filled in
@@ -316,9 +315,9 @@ pub(crate) fn get_dat_binds(
   }
   // bring all the datatypes into scope.
   cx.env.push(Env { ty_env: fake_ty_env.clone(), ..Default::default() });
-  // now get the types. this `ty_env` will be the ultimate one we return.
+  // now get the `withtype`s. this `ty_env` will be the ultimate one we return.
   let mut ty_env = TyEnv::default();
-  get_ty_binds(st, &mut cx, ars, &mut ty_env, ty_binds, idx);
+  get_ty_binds(st, &mut cx, ars, &mut ty_env, with_types, idx);
   // make sure the types did not conflict with the datatypes.
   for (name, val) in &ty_env {
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, name.clone(), val.clone(), Item::Ty) {
