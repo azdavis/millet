@@ -9,10 +9,8 @@ mod meta_var;
 mod overload;
 
 use crate::def;
-use crate::fmt_util::idx_to_name;
 use drop_bomb::DropBomb;
 use fast_hash::FxHashMap;
-use fmt_util::comma_seq;
 use std::{collections::BTreeMap, fmt};
 
 pub(crate) use bound_var::BoundTyVar;
@@ -51,14 +49,6 @@ impl Ty {
     Self::Fn(param.into(), res.into())
   }
 
-  pub(crate) fn display<'a>(
-    &'a self,
-    meta_vars: &'a MetaVarNames<'a>,
-    syms: &'a Syms,
-  ) -> impl fmt::Display + 'a {
-    TyDisplay { ty: self, bound_vars: None, meta_vars, syms, prec: TyPrec::Arrow }
-  }
-
   pub(crate) fn desc(&self) -> &'static str {
     match self {
       Ty::None => "an unknown type",
@@ -73,197 +63,6 @@ impl Ty {
 }
 
 pub(crate) type RecordTy = BTreeMap<sml_hir::Lab, Ty>;
-
-struct TyDisplay<'a> {
-  ty: &'a Ty,
-  bound_vars: Option<&'a BoundTyVars>,
-  meta_vars: &'a MetaVarNames<'a>,
-  syms: &'a Syms,
-  prec: TyPrec,
-}
-
-impl<'a> TyDisplay<'a> {
-  fn with(&self, ty: &'a Ty, prec: TyPrec) -> Self {
-    Self { ty, bound_vars: self.bound_vars, meta_vars: self.meta_vars, syms: self.syms, prec }
-  }
-}
-
-impl fmt::Display for TyDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.ty {
-      Ty::None => f.write_str("_")?,
-      Ty::BoundVar(bv) => {
-        let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        let equality = matches!(bv.index_into(vars), Some(TyVarKind::Equality));
-        let name = bv.name(equality);
-        write!(f, "{name}")?;
-      }
-      Ty::MetaVar(mv) => {
-        let name = self.meta_vars.get(*mv).ok_or(fmt::Error)?;
-        write!(f, "{name}")?;
-      }
-      Ty::FixedVar(fv) => fv.fmt(f)?,
-      Ty::Record(rows) => {
-        if rows.is_empty() {
-          return f.write_str("unit");
-        }
-        let is_tuple = rows.len() > 1
-          && rows.keys().enumerate().all(|(idx, lab)| sml_hir::Lab::tuple(idx) == *lab);
-        if is_tuple {
-          let needs_parens = self.prec > TyPrec::Star;
-          if needs_parens {
-            f.write_str("(")?;
-          }
-          let mut tys = rows.values();
-          let ty = tys.next().unwrap();
-          self.with(ty, TyPrec::App).fmt(f)?;
-          for ty in tys {
-            f.write_str(" * ")?;
-            self.with(ty, TyPrec::App).fmt(f)?;
-          }
-          if needs_parens {
-            f.write_str(")")?;
-          }
-        } else {
-          f.write_str("{ ")?;
-          comma_seq(
-            f,
-            rows.iter().map(|(lab, ty)| RowDisplay {
-              bound_vars: self.bound_vars,
-              meta_vars: self.meta_vars,
-              syms: self.syms,
-              lab,
-              ty,
-            }),
-          )?;
-          f.write_str(" }")?;
-        }
-      }
-      Ty::Con(args, sym) => {
-        let mut args_iter = args.iter();
-        if let Some(arg) = args_iter.next() {
-          if args.len() == 1 {
-            self.with(arg, TyPrec::App).fmt(f)?;
-          } else {
-            f.write_str("(")?;
-            self.with(arg, TyPrec::Arrow).fmt(f)?;
-            for arg in args_iter {
-              f.write_str(", ")?;
-              self.with(arg, TyPrec::Arrow).fmt(f)?;
-            }
-            f.write_str(")")?;
-          }
-          f.write_str(" ")?;
-        }
-        SymDisplay { sym: *sym, syms: self.syms }.fmt(f)?;
-      }
-      Ty::Fn(param, res) => {
-        let needs_parens = self.prec > TyPrec::Arrow;
-        if needs_parens {
-          f.write_str("(")?;
-        }
-        self.with(param, TyPrec::Star).fmt(f)?;
-        f.write_str(" -> ")?;
-        self.with(res, TyPrec::Arrow).fmt(f)?;
-        if needs_parens {
-          f.write_str(")")?;
-        }
-      }
-    }
-    Ok(())
-  }
-}
-
-#[derive(Debug)]
-pub(crate) struct MetaVarNames<'a> {
-  next_idx: usize,
-  map: FxHashMap<MetaTyVar, MetaVarName>,
-  info: &'a MetaVarInfo,
-}
-
-impl<'a> MetaVarNames<'a> {
-  pub(crate) fn new(info: &'a MetaVarInfo) -> Self {
-    Self { next_idx: 0, map: FxHashMap::default(), info }
-  }
-
-  pub(crate) fn extend_for(&mut self, ty: &Ty) {
-    meta_vars(
-      &Subst::default(),
-      &mut |x, _| {
-        self.map.entry(x).or_insert_with(|| {
-          let ret = MetaVarName::Idx(idx::Idx::new(self.next_idx));
-          self.next_idx += 1;
-          ret
-        });
-      },
-      ty,
-    );
-  }
-
-  /// tries the [`MetaVarInfo`] first, then fall back to a generated name like `?a`, `?b`, etc.
-  fn get(&self, mv: MetaTyVar) -> Option<MetaVarName> {
-    self
-      .info
-      .0
-      .get(&mv)
-      .and_then(|kind| match kind {
-        TyVarKind::Overloaded(ov) => Some(MetaVarName::Overload(*ov)),
-        TyVarKind::Equality | TyVarKind::Record(_) => None,
-      })
-      .or_else(|| self.map.get(&mv).copied())
-  }
-}
-
-#[derive(Debug, Clone, Copy)]
-enum MetaVarName {
-  Idx(idx::Idx),
-  Overload(Overload),
-}
-
-impl fmt::Display for MetaVarName {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match *self {
-      MetaVarName::Idx(idx) => {
-        f.write_str("?")?;
-        for c in idx_to_name(idx.to_usize()) {
-          write!(f, "{c}")?;
-        }
-        Ok(())
-      }
-      MetaVarName::Overload(ov) => ov.fmt(f),
-    }
-  }
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum TyPrec {
-  Arrow,
-  Star,
-  App,
-}
-
-struct RowDisplay<'a> {
-  bound_vars: Option<&'a BoundTyVars>,
-  meta_vars: &'a MetaVarNames<'a>,
-  syms: &'a Syms,
-  lab: &'a sml_hir::Lab,
-  ty: &'a Ty,
-}
-
-impl fmt::Display for RowDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    fmt::Display::fmt(self.lab, f)?;
-    f.write_str(" : ")?;
-    let td = TyDisplay {
-      ty: self.ty,
-      bound_vars: self.bound_vars,
-      meta_vars: self.meta_vars,
-      syms: self.syms,
-      prec: TyPrec::Arrow,
-    };
-    fmt::Display::fmt(&td, f)
-  }
-}
 
 pub(crate) fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
 where
@@ -289,59 +88,6 @@ where
     Ty::Fn(param, res) => {
       meta_vars(subst, f, param);
       meta_vars(subst, f, res);
-    }
-  }
-}
-
-/// Definition: `TypeScheme`, `TypeFcn`
-#[derive(Debug, Clone)]
-pub(crate) struct TyScheme {
-  pub(crate) bound_vars: BoundTyVars,
-  pub(crate) ty: Ty,
-}
-
-impl TyScheme {
-  /// zero as in this type scheme binds zero variables.
-  pub(crate) fn zero(ty: Ty) -> Self {
-    Self { bound_vars: BoundTyVars::default(), ty }
-  }
-
-  /// one as in this type scheme binds one variable.
-  pub(crate) fn one<F>(f: F) -> Self
-  where
-    F: FnOnce(Ty) -> (Ty, Option<TyVarKind>),
-  {
-    let mut bound_vars = BoundTyVars::new();
-    let mut ty = None::<Ty>;
-    BoundTyVar::add_to_binder(&mut bound_vars, |x| {
-      let res = f(Ty::BoundVar(x));
-      ty = Some(res.0);
-      res.1
-    });
-    Self { bound_vars, ty: ty.unwrap() }
-  }
-
-  pub(crate) fn n_ary<I>(iter: I, sym: Sym) -> Self
-  where
-    I: Iterator<Item = Option<TyVarKind>>,
-  {
-    let bound_vars: BoundTyVars = iter.collect();
-    let ty =
-      Ty::Con(BoundTyVar::iter_for(bound_vars.iter()).map(|(x, _)| Ty::BoundVar(x)).collect(), sym);
-    Self { bound_vars, ty }
-  }
-
-  pub(crate) fn display<'a>(
-    &'a self,
-    meta_vars: &'a MetaVarNames<'a>,
-    syms: &'a Syms,
-  ) -> impl fmt::Display + 'a {
-    TyDisplay {
-      ty: &self.ty,
-      bound_vars: Some(&self.bound_vars),
-      meta_vars,
-      syms,
-      prec: TyPrec::Arrow,
     }
   }
 }
@@ -463,20 +209,6 @@ impl Sym {
   }
 }
 
-pub(crate) struct SymDisplay<'a> {
-  pub(crate) sym: Sym,
-  pub(crate) syms: &'a Syms,
-}
-
-impl fmt::Display for SymDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.syms.get(self.sym) {
-      None => f.write_str("exn"),
-      Some((name, _)) => name.fmt(f),
-    }
-  }
-}
-
 /// Information about generated types, generated exceptions, and overload types.
 ///
 /// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
@@ -562,6 +294,45 @@ impl StartedSym {
   }
 }
 
+/// Definition: `TypeScheme`, `TypeFcn`
+#[derive(Debug, Clone)]
+pub(crate) struct TyScheme {
+  pub(crate) bound_vars: BoundTyVars,
+  pub(crate) ty: Ty,
+}
+
+impl TyScheme {
+  /// zero as in this type scheme binds zero variables.
+  pub(crate) fn zero(ty: Ty) -> Self {
+    Self { bound_vars: BoundTyVars::default(), ty }
+  }
+
+  /// one as in this type scheme binds one variable.
+  pub(crate) fn one<F>(f: F) -> Self
+  where
+    F: FnOnce(Ty) -> (Ty, Option<TyVarKind>),
+  {
+    let mut bound_vars = BoundTyVars::new();
+    let mut ty = None::<Ty>;
+    BoundTyVar::add_to_binder(&mut bound_vars, |x| {
+      let res = f(Ty::BoundVar(x));
+      ty = Some(res.0);
+      res.1
+    });
+    Self { bound_vars, ty: ty.unwrap() }
+  }
+
+  pub(crate) fn n_ary<I>(iter: I, sym: Sym) -> Self
+  where
+    I: Iterator<Item = Option<TyVarKind>>,
+  {
+    let bound_vars: BoundTyVars = iter.collect();
+    let ty =
+      Ty::Con(BoundTyVar::iter_for(bound_vars.iter()).map(|(x, _)| Ty::BoundVar(x)).collect(), sym);
+    Self { bound_vars, ty }
+  }
+}
+
 /// Definition: `TyStr`
 #[derive(Debug, Clone)]
 pub(crate) struct TyInfo {
@@ -603,6 +374,12 @@ impl IdStatus {
 /// Information about meta type variables.
 #[derive(Debug, Default, Clone)]
 pub struct MetaVarInfo(FxHashMap<MetaTyVar, TyVarKind>);
+
+impl MetaVarInfo {
+  pub(crate) fn get(&self, mv: MetaTyVar) -> Option<&TyVarKind> {
+    self.0.get(&mv)
+  }
+}
 
 #[derive(Debug, Default)]
 pub(crate) struct Subst {

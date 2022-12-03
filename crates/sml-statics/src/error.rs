@@ -3,12 +3,10 @@
 mod non_exhaustive;
 mod suggestion;
 
-use crate::equality;
-use crate::pat_match::Pat;
 use crate::types::{
-  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, MetaVarNames, Overload, RecordTy, Sym,
-  SymDisplay, Syms, Ty, TyScheme,
+  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, Overload, RecordTy, Sym, Syms, Ty, TyScheme,
 };
+use crate::{display::MetaVarNames, equality, pat_match::Pat};
 use diagnostic_util::{Code, Severity};
 use std::fmt;
 
@@ -285,8 +283,8 @@ impl fmt::Display for MismatchedTypesFlavorDisplay<'_> {
         fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| lab))
       }
       MismatchedTypesFlavor::Con(a, b) => {
-        let a = SymDisplay { sym: *a, syms: self.syms };
-        let b = SymDisplay { sym: *b, syms: self.syms };
+        let a = a.display(self.syms);
+        let b = b.display(self.syms);
         write!(f, "{a} and {b} are different type constructors")
       }
       MismatchedTypesFlavor::Head(a, b) => {
@@ -297,7 +295,7 @@ impl fmt::Display for MismatchedTypesFlavorDisplay<'_> {
         write!(f, "{a_display} is {a_desc}, but {b_display} is {b_desc}")
       }
       MismatchedTypesFlavor::OverloadCon(ov, s) => {
-        let s = SymDisplay { sym: *s, syms: self.syms };
+        let s = s.display(self.syms);
         write!(f, "{s} is not compatible with the {ov} overload")
       }
       MismatchedTypesFlavor::OverloadUnify(want, got) => {

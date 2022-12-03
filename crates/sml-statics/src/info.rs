@@ -1,7 +1,7 @@
 //! See [`Info`].
 
-use crate::types::{MetaVarInfo, MetaVarNames, Syms, Ty, TyScheme};
-use crate::{def, util::ty_syms};
+use crate::types::{MetaVarInfo, Syms, Ty, TyScheme};
+use crate::{def, display::MetaVarNames, util::ty_syms};
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
 
