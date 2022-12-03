@@ -64,49 +64,6 @@ impl Ty {
 
 pub(crate) type RecordTy = BTreeMap<sml_hir::Lab, Ty>;
 
-#[derive(Debug, Clone)]
-pub(crate) enum TyVarKind {
-  Equality,
-  Overloaded(Overload),
-  Record(RecordTy),
-}
-
-/// Information about overloads.
-#[derive(Debug, Default, Clone)]
-pub(crate) struct Overloads {
-  pub(crate) int: Vec<Sym>,
-  pub(crate) real: Vec<Sym>,
-  pub(crate) word: Vec<Sym>,
-  pub(crate) string: Vec<Sym>,
-  pub(crate) char: Vec<Sym>,
-}
-
-impl std::ops::Index<BasicOverload> for Overloads {
-  type Output = Vec<Sym>;
-
-  fn index(&self, index: BasicOverload) -> &Self::Output {
-    match index {
-      BasicOverload::Int => &self.int,
-      BasicOverload::Real => &self.real,
-      BasicOverload::Word => &self.word,
-      BasicOverload::String => &self.string,
-      BasicOverload::Char => &self.char,
-    }
-  }
-}
-
-impl std::ops::IndexMut<BasicOverload> for Overloads {
-  fn index_mut(&mut self, index: BasicOverload) -> &mut Self::Output {
-    match index {
-      BasicOverload::Int => &mut self.int,
-      BasicOverload::Real => &mut self.real,
-      BasicOverload::Word => &mut self.word,
-      BasicOverload::String => &mut self.string,
-      BasicOverload::Char => &mut self.char,
-    }
-  }
-}
-
 /// Definition: `TyName`
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Sym(idx::Idx);
@@ -247,6 +204,41 @@ impl Syms {
   }
 }
 
+/// Information about overloads.
+#[derive(Debug, Default, Clone)]
+pub(crate) struct Overloads {
+  pub(crate) int: Vec<Sym>,
+  pub(crate) real: Vec<Sym>,
+  pub(crate) word: Vec<Sym>,
+  pub(crate) string: Vec<Sym>,
+  pub(crate) char: Vec<Sym>,
+}
+
+impl std::ops::Index<BasicOverload> for Overloads {
+  type Output = Vec<Sym>;
+
+  fn index(&self, index: BasicOverload) -> &Self::Output {
+    match index {
+      BasicOverload::Int => &self.int,
+      BasicOverload::Real => &self.real,
+      BasicOverload::Word => &self.word,
+      BasicOverload::String => &self.string,
+      BasicOverload::Char => &self.char,
+    }
+  }
+}
+
+impl std::ops::IndexMut<BasicOverload> for Overloads {
+  fn index_mut(&mut self, index: BasicOverload) -> &mut Self::Output {
+    match index {
+      BasicOverload::Int => &mut self.int,
+      BasicOverload::Real => &mut self.real,
+      BasicOverload::Word => &mut self.word,
+      BasicOverload::String => &mut self.string,
+      BasicOverload::Char => &mut self.char,
+    }
+  }
+}
 /// A marker to determine when a `Sym` was generated.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct SymsMarker(usize);
@@ -303,6 +295,13 @@ impl TyScheme {
       Ty::Con(BoundTyVar::iter_for(bound_vars.iter()).map(|(x, _)| Ty::BoundVar(x)).collect(), sym);
     Self { bound_vars, ty }
   }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum TyVarKind {
+  Equality,
+  Overloaded(Overload),
+  Record(RecordTy),
 }
 
 /// Definition: `TyStr`
