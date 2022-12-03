@@ -43,11 +43,14 @@ impl Input {
       severities: root.config.severities,
     };
     for group in root.groups {
+      let parent =
+        store.get_path(group.path).as_path().parent().expect("group path with no parent");
+      let path_var_env = paths::slash_var_path::resolve_env(parent, root.config.path_vars.clone());
       let f = match group.kind {
         GroupPathKind::Cm => lower_cm::get,
         GroupPathKind::Mlb => lower_mlb::get,
       };
-      f(fs, &mut ret.sources, &mut ret.groups, store, &root.config.path_vars, group.path)?;
+      f(fs, &mut ret.sources, &mut ret.groups, store, &path_var_env, group.path)?;
       ret.root_group_paths.push(group.path);
     }
     let bas_decs = ret.groups.iter().map(|(&a, b)| (a, &b.bas_dec));

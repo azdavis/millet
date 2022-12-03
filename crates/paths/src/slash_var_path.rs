@@ -7,7 +7,7 @@
 
 use fast_hash::FxHashMap;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use str_util::SmolStr;
 
 /// An error when parsing a slash var path.
@@ -31,8 +31,46 @@ impl fmt::Display for Error {
   }
 }
 
+/// An un-resolved environment for path variables. Needs to know what the workspace root is to
+/// resolve it.
+pub type UnresolvedEnv = FxHashMap<SmolStr, EnvEntry>;
+
 /// An environment for path variables.
 pub type Env = FxHashMap<SmolStr, SmolStr>;
+
+/// An entry in the path var env.
+#[derive(Debug, Clone)]
+pub struct EnvEntry {
+  /// The kind of entry.
+  pub kind: EnvEntryKind,
+  /// The suffix, or, the entire value itself, which is also technically a suffix, depending on the
+  /// kind.
+  pub suffix: SmolStr,
+}
+
+/// An kind of env entry.
+#[derive(Debug, Clone, Copy)]
+pub enum EnvEntryKind {
+  /// The `suffix` is a literal value and should not be changed.
+  Value,
+  /// The `suffix` should be appended to path of the parent of the workspace root.
+  WorkspacePath,
+}
+
+/// Resolves an environment.
+#[must_use]
+pub fn resolve_env(parent: &Path, env: UnresolvedEnv) -> Env {
+  env
+    .into_iter()
+    .map(|(k, v)| {
+      let v = match v.kind {
+        EnvEntryKind::Value => v.suffix,
+        EnvEntryKind::WorkspacePath => parent.join(v.suffix.as_str()).to_string_lossy().into(),
+      };
+      (k, v)
+    })
+    .collect()
+}
 
 #[derive(Debug, PartialEq, Eq)]
 enum Component {

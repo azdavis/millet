@@ -90,6 +90,7 @@ A table for expanding variables in paths in group files.
 
 - If the value is a `value`, the value is used unchanged.
 - If it is a `path`, then the value is expanded into a full path relative to the `millet.toml` file.
+- If it is a `workspace-path`, then the value is expanded into a full path relative to the workspace root group file (of which there may be many, because `workspace.root` can be a glob).
 
 #### `diagnostics`
 

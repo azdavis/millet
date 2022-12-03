@@ -39,6 +39,8 @@ pub enum PathVar {
   Value(SmolStr),
   /// A path, interpreted relative to the config file.
   Path(SmolStr),
+  /// A path, interpreted relative to the workspace root file.
+  WorkspacePath(SmolStr),
 }
 
 /// Configuration for an error code.

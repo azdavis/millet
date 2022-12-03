@@ -4,6 +4,7 @@ use crate::input::util::{
   get_path_id, read_dir, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
 };
 use fast_hash::FxHashMap;
+use paths::slash_var_path::{EnvEntry, EnvEntryKind};
 use paths::PathId;
 use std::path::PathBuf;
 
@@ -79,7 +80,7 @@ pub(crate) type Severities = FxHashMap<diagnostic_util::Code, Option<diagnostic_
 
 #[derive(Default)]
 pub(crate) struct Config {
-  pub(crate) path_vars: paths::slash_var_path::Env,
+  pub(crate) path_vars: paths::slash_var_path::UnresolvedEnv,
   pub(crate) severities: Severities,
 }
 
@@ -154,13 +155,18 @@ impl ConfigFromFile {
       }
       if let Some(ws_path_vars) = ws.path_vars {
         for (key, val) in ws_path_vars {
-          let val = match val {
-            config::PathVar::Value(val) => val,
+          // we resolve config-root-relative paths here, but we have to wait until later to resolve
+          // workspace-root-relative paths.
+          let (kind, suffix) = match val {
+            config::PathVar::Value(val) => (EnvEntryKind::Value, val),
             config::PathVar::Path(val) => {
-              root.as_path().join(val.as_str()).to_string_lossy().into()
+              let val: str_util::SmolStr =
+                root.as_path().join(val.as_str()).to_string_lossy().into();
+              (EnvEntryKind::Value, val)
             }
+            config::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),
           };
-          ret.config.path_vars.insert(key, val);
+          ret.config.path_vars.insert(key, EnvEntry { kind, suffix });
         }
       }
     }
