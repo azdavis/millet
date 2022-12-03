@@ -4,11 +4,12 @@ use crate::check::{check, fail};
 
 #[test]
 fn real_no() {
-  let f = if analysis::EQUALITY_CHECKS_ENABLED { check } else { fail };
-  f(r#"
+  check(
+    r#"
 val _ = 2.2 = 3.3
 (**     ^^^^^^^^^ contains: not an equality type *)
-"#);
+"#,
+  );
 }
 
 #[test]
@@ -59,25 +60,27 @@ val _ = S.x = S.y
 
 #[test]
 fn datatype_sometimes_1() {
-  let f = if analysis::EQUALITY_CHECKS_ENABLED { check } else { fail };
-  f(r#"
+  check(
+    r#"
 datatype 'a t = A of 'a | B of int | C of string | D
 val _ = B 3 = C "hi"
 val _ = A () = D
 val _ = A 3.3 = D
 (**     ^^^^^^^^^ contains: not an equality type *)
-"#);
+"#,
+  );
 }
 
 #[test]
 fn datatype_sometimes_2() {
-  let f = if analysis::EQUALITY_CHECKS_ENABLED { check } else { fail };
-  f(r#"
+  check(
+    r#"
 datatype 'a t = A of 'a | B of int | C of string | D
 fun ''a eq (x : ''a t) (y : ''a t) : bool = x = y
 fun 'a eq (x : 'a t) (y : 'a t) : bool = x = y
 (** + contains: contains a fixed non-equality type variable *)
-"#);
+"#,
+  );
 }
 
 #[test]
@@ -93,7 +96,7 @@ fun 'a yes (x : 'a t) : unit = ()
 
 #[test]
 fn datatype_eq_ty_var_2() {
-  fail(
+  check(
     r#"
 datatype ''a t = A of ''a | B
 fun 'a no (x : 'a) : 'a t = A x
@@ -104,7 +107,7 @@ fun 'a no (x : 'a) : 'a t = A x
 
 #[test]
 fn datatype_eq_ty_var_3() {
-  fail(
+  check(
     r#"
 datatype ''a t = A of ''a | B
 fun 'a no (x : 'a) : 'a t = B

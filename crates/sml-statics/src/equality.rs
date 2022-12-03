@@ -3,7 +3,7 @@
 /// Whether equality type check are performed.
 ///
 /// TODO remove this and all false branches.
-pub const ENABLED: bool = false;
+pub const ENABLED: bool = true;
 
 use crate::types::{BasicOverload, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyVarKind};
 use std::fmt;
