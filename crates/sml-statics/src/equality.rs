@@ -5,7 +5,10 @@
 /// TODO remove this and all false branches.
 pub const ENABLED: bool = true;
 
-use crate::types::{BasicOverload, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyVarKind};
+use crate::types::{
+  BasicOverload, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
+};
+use crate::{st::St, util::instantiate};
 use std::fmt;
 
 pub(crate) enum Ans {
@@ -53,20 +56,20 @@ impl fmt::Display for NotEqTy {
 ///   makes it not an equality type.
 ///
 /// Also sets any non-constrained meta type variables to be equality type variables.
-pub(crate) fn get_ty(subst: &mut Subst, ty: &Ty) -> Ans {
+pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Ans {
   if !ENABLED {
     return Ans::Yes;
   }
   match ty {
     Ty::None => Ans::Yes,
     Ty::BoundVar(_) => panic!("need binders to determine if bound var is equality"),
-    Ty::MetaVar(mv) => match subst.get(*mv) {
+    Ty::MetaVar(mv) => match st.subst.get(*mv) {
       None => {
-        subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality));
+        st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality));
         Ans::Yes
       }
       Some(entry) => match entry.clone() {
-        SubstEntry::Solved(ty) => get_ty(subst, &ty),
+        SubstEntry::Solved(ty) => get_ty(st, &ty),
         SubstEntry::Kind(kind) => match kind {
           TyVarKind::Equality => Ans::Yes,
           TyVarKind::Overloaded(ov) => match ov {
@@ -75,7 +78,7 @@ pub(crate) fn get_ty(subst: &mut Subst, ty: &Ty) -> Ans {
               Ans::all(comp.as_basics().iter().map(|&basic| get_basic(basic)))
             }
           },
-          TyVarKind::Record(rows) => get_record(subst, &rows),
+          TyVarKind::Record(rows) => get_record(st, &rows),
         },
       },
     },
@@ -86,7 +89,7 @@ pub(crate) fn get_ty(subst: &mut Subst, ty: &Ty) -> Ans {
         Ans::No(NotEqTy::FixedTyVar)
       }
     }
-    Ty::Record(rows) => get_record(subst, rows),
+    Ty::Record(rows) => get_record(st, rows),
     Ty::Con(args, sym) => {
       // TODO arrays should be equality?
       if *sym == Sym::REAL {
@@ -94,15 +97,15 @@ pub(crate) fn get_ty(subst: &mut Subst, ty: &Ty) -> Ans {
       } else if *sym == Sym::REF {
         Ans::Yes
       } else {
-        Ans::all(args.iter().map(|ty| get_ty(subst, ty)))
+        Ans::all(args.iter().map(|ty| get_ty(st, ty)))
       }
     }
     Ty::Fn(_, _) => Ans::No(NotEqTy::Fn),
   }
 }
 
-fn get_record(subst: &mut Subst, rows: &RecordTy) -> Ans {
-  Ans::all(rows.values().map(|ty| get_ty(subst, ty)))
+fn get_record(st: &mut St, rows: &RecordTy) -> Ans {
+  Ans::all(rows.values().map(|ty| get_ty(st, ty)))
 }
 
 /// NOTE: this is an optimization. The (ideally, if our assumptions are correct) equivalent but
@@ -119,4 +122,10 @@ fn get_basic(ov: BasicOverload) -> Ans {
     }
     BasicOverload::Real => Ans::No(NotEqTy::Real),
   }
+}
+
+#[allow(dead_code)]
+pub(crate) fn get_ty_scheme(st: &mut St, ty_scheme: TyScheme) -> Ans {
+  let ty = instantiate(st, Generalizable::Always, ty_scheme);
+  get_ty(st, &ty)
 }

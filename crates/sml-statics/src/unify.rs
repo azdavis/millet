@@ -127,7 +127,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
     // unreachable because we applied upon entry.
     Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
     Some(SubstEntry::Kind(kind)) => match kind {
-      TyVarKind::Equality => match equality::get_ty(&mut st.subst, &ty) {
+      TyVarKind::Equality => match equality::get_ty(st, &ty) {
         equality::Ans::Yes => {}
         equality::Ans::No(not_eq) => {
           return Err(MismatchedTypesFlavor::NotEqTy(ty.clone(), not_eq).into())
@@ -154,7 +154,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
-              TyVarKind::Equality => match equality::get_ty(&mut st.subst, &Ty::MetaVar(mv)) {
+              TyVarKind::Equality => match equality::get_ty(st, &Ty::MetaVar(mv)) {
                 equality::Ans::Yes => ov,
                 equality::Ans::No(not_eq) => {
                   return Err(MismatchedTypesFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
@@ -204,7 +204,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
-              TyVarKind::Equality => match equality::get_ty(&mut st.subst, &Ty::MetaVar(mv)) {
+              TyVarKind::Equality => match equality::get_ty(st, &Ty::MetaVar(mv)) {
                 equality::Ans::Yes => {}
                 equality::Ans::No(not_eq) => {
                   return Err(MismatchedTypesFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
