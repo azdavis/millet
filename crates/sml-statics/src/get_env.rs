@@ -1,7 +1,8 @@
 //! Getting information from environments.
 
+use crate::env::{Env, EnvLike};
 use crate::error::{ErrorKind, Item};
-use crate::types::{Env, EnvLike, TyInfo, ValInfo};
+use crate::types::{TyInfo, ValInfo};
 
 /// uses the `names` to traverse through the `StrEnv`s of successive `env`s, returning either the
 /// final `env` or an error for the first name that was unbound.

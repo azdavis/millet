@@ -2,14 +2,14 @@
 
 use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::config::Cfg;
+use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::info::Mode;
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, BasicOverload, Bs, Env, EnvLike, EnvStack, FunEnv, FunSig,
-  HasRecordMetaVars, IdStatus, Sig, SigEnv, StartedSym, StrEnv, Sym, SymsMarker, Ty, TyEnv, TyInfo,
-  TyNameSet, TyScheme, TyVarKind, TyVarSrc, ValEnv, ValInfo,
+  generalize, generalize_fixed, BasicOverload, HasRecordMetaVars, IdStatus, StartedSym, Sym,
+  SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ins_check_name, ins_no_dupe, ty_syms};
 use crate::{dec, ty};

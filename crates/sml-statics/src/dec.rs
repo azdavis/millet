@@ -1,13 +1,14 @@
 //! Checking declarations.
 
 use crate::config::Cfg;
+use crate::env::{Cx, Env, EnvLike as _};
 use crate::error::{ErrorKind, Item};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::pat_match::Pat;
 use crate::st::St;
 use crate::types::{
-  generalize, generalize_fixed, Cx, Env, EnvLike as _, FixedTyVars, Generalizable,
-  HasRecordMetaVars, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, TyVarSrc, ValEnv, ValInfo,
+  generalize, generalize_fixed, FixedTyVars, Generalizable, HasRecordMetaVars, IdStatus,
+  StartedSym, Ty, TyEnv, TyInfo, TyScheme, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::unify::unify;
 use crate::util::{apply, ins_check_name, ins_no_dupe};

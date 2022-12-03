@@ -1,9 +1,10 @@
 //! Bases. (The plural of "basis".)
 
 use crate::def::Def;
+use crate::env::{Bs, Env, EnvLike as _, EnvStack, FunEnv, SigEnv, StrEnv};
 use crate::types::{
-  BasicOverload, Bs, CompositeOverload, Env, EnvLike as _, EnvStack, FunEnv, IdStatus, Overload,
-  RecordTy, SigEnv, StrEnv, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
+  BasicOverload, CompositeOverload, IdStatus, Overload, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo,
+  TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use fast_hash::map;
 

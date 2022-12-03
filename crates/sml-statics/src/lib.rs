@@ -10,6 +10,7 @@
 mod compatible;
 mod config;
 mod dec;
+mod env;
 mod equality;
 mod error;
 mod exp;

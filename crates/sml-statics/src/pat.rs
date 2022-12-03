@@ -1,15 +1,14 @@
 //! Checking patterns.
 
-use crate::compatible::eq_ty_scheme;
+use crate::env::{Cx, EnvLike as _};
 use crate::error::{ErrorKind, Item};
 use crate::info::{Mode, TyEntry};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{
-  Cx, EnvLike as _, Generalizable, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo,
-};
-use crate::unify::unify;
+use crate::types::{Generalizable, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo};
 use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
-use crate::{config, def, get_env::get_val_info, st::St, ty};
+use crate::{
+  compatible::eq_ty_scheme, config, def, get_env::get_val_info, st::St, ty, unify::unify,
+};
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Copy)]
