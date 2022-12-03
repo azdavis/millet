@@ -171,7 +171,17 @@ There was a `funsig` export kind in a SML/NJ CM file.
 
 Millet does not support `funsig` exports because it does not support `funsig` in SML source files.
 
-## 1996
+## 1017
+
+An export was undefined.
+
+Millet uses either SML/NJ CM files or ML Basis files (aka "group" files) to know what SML source files to analyze, and in what order. Both of these group file types allow for listing "exports", which are generally the names of structures, signatures, or functors.
+
+This error will be emitted when a group file lists an export not defined by the source files.
+
+To fix, define the export in source files, or remove the export in the group file.
+
+## 1018
 
 Millet couldn't initialize the workspace root.
 
@@ -181,21 +191,11 @@ Millet will attempt to parse this URL into a real directory and process the file
 
 To fix, inspect the workspace root URL/underlying error message for more details.
 
-## 1997
+## 1019
 
 When run as a CLI, there was an invalid or missing argument or option.
 
 To fix, run `--help` to see permitted options and arguments.
-
-## 1998
-
-An export was undefined.
-
-Millet uses either SML/NJ CM files or ML Basis files (aka "group" files) to know what SML source files to analyze, and in what order. Both of these group file types allow for listing "exports", which are generally the names of structures, signatures, or functors.
-
-This error will be emitted when a group file lists an export not defined by the source files.
-
-To fix, define the export in source files, or remove the export in the group file.
 
 ## 2001
 

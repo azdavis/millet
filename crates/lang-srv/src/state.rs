@@ -65,7 +65,7 @@ impl State {
       has_diagnostics,
     };
     if let Err((e, url)) = root {
-      ret.sp.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1996));
+      ret.sp.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1018));
     }
     let dynamic_registration = init
       .capabilities

@@ -58,7 +58,7 @@ impl Error {
   /// Returns the code for this.
   #[must_use]
   pub fn code(&self) -> Code {
-    Code::n(1998)
+    Code::n(1017)
   }
 
   /// Returns the severity for this.
