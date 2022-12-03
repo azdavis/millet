@@ -25,8 +25,7 @@ pub(crate) enum ErrorKind {
   SourcePathNotInFiles,
   GlobPattern(paths::PatternError),
   EmptyGlob(str_util::SmolStr),
-  /// must be last
-  UnsupportedExport,
+  FunSig,
 }
 
 struct ErrorDisplay<'a> {
@@ -58,7 +57,7 @@ impl fmt::Display for ErrorDisplay<'_> {
       ErrorKind::SourcePathNotInFiles => f.write_str("`source` export not in file list"),
       ErrorKind::GlobPattern(e) => write!(f, "glob pattern error: {e}"),
       ErrorKind::EmptyGlob(pat) => write!(f, "glob pattern matched no paths: {pat}"),
-      ErrorKind::UnsupportedExport => f.write_str("unsupported export kind"),
+      ErrorKind::FunSig => f.write_str("unsupported export kind `funsig`"),
     }
   }
 }
@@ -130,7 +129,7 @@ impl Error {
       ErrorKind::SourcePathNotInFiles => Code::n(1013),
       ErrorKind::GlobPattern(_) => Code::n(1014),
       ErrorKind::EmptyGlob(_) => Code::n(1015),
-      ErrorKind::UnsupportedExport => Code::n(1999),
+      ErrorKind::FunSig => Code::n(1016),
     }
   }
 

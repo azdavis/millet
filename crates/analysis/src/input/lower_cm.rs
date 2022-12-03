@@ -154,7 +154,7 @@ where
           return Err(Error::new(
             ErrorSource { path: None, range: cx.group.pos_db.range(ns.range) },
             cx.group.path.as_path().to_owned(),
-            ErrorKind::UnsupportedExport,
+            ErrorKind::FunSig,
           ))
         }
       };

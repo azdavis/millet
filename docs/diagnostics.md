@@ -165,6 +165,12 @@ This means Millet cannot determine what the workspace root(s) should be.
 
 To fix, change the pattern to match at least one path, or create at least one file that would be matched by the pattern.
 
+## 1016
+
+There was a `funsig` export kind in a SML/NJ CM file.
+
+Millet does not support `funsig` exports because it does not support `funsig` in SML source files.
+
 ## 1996
 
 Millet couldn't initialize the workspace root.
@@ -190,12 +196,6 @@ Millet uses either SML/NJ CM files or ML Basis files (aka "group" files) to know
 This error will be emitted when a group file lists an export not defined by the source files.
 
 To fix, define the export in source files, or remove the export in the group file.
-
-## 1999
-
-There was an unsupported export kind in a SML/NJ CM file.
-
-At time of writing, Millet does not support `funsig` exports.
 
 ## 2001
 
