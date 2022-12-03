@@ -1396,6 +1396,15 @@ Certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means
 
 When using overloaded functions, there must exist a single actual type being used. For instance, `+` works with `word`, `real`, and `int`. However, `+` cannot add a `real` to a `word`, or an `int` to a `real`, or any such similar combination. It can only add two `word`s, or two `real`s, or two `int`s.
 
+### Equality
+
+Part of checking for type compatibility is ensuring that the equality attribute of types is respected. For instance, `=` compares two equality types, and `real` is not an equality type, so the following fails.
+
+```sml
+val _ = 1.2 = 3.4
+(**     ^^^^^^^^^ contains: not an equality type *)
+```
+
 ### Reporting types with invalid syntax
 
 Millet reports overloaded types with intentionally invalid SML syntax. Here is what they mean:

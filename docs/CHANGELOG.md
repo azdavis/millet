@@ -17,6 +17,7 @@ The versioning system is basically the following:
 
 - Emit an error if the `workspace.root` glob pattern matches no paths.
 - Improve other "startup" errors (i.e. errors in the 1000s).
+- Perform equality checks on types.
 
 ## v0.6.0
 
