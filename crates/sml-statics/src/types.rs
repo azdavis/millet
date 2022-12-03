@@ -3,17 +3,19 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
+mod bound_var;
 mod fixed_var;
 mod meta_var;
 mod overload;
 
 use crate::def;
-use crate::fmt_util::{idx_to_name, ty_var_name};
+use crate::fmt_util::idx_to_name;
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use fmt_util::comma_seq;
 use std::{collections::BTreeMap, fmt, sync::Arc};
 
+pub(crate) use bound_var::BoundTyVar;
 pub(crate) use fixed_var::{FixedTyVar, FixedTyVarGen, TyVarSrc};
 pub(crate) use meta_var::{Generalizable, MetaTyVar, MetaTyVarGen, MetaTyVarGeneralizer};
 pub(crate) use overload::{BasicOverload, CompositeOverload, Overload};
@@ -90,9 +92,8 @@ impl fmt::Display for TyDisplay<'_> {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
         let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
-        let u = bv.0.to_usize();
-        let equality = matches!(vars.0[u], Some(TyVarKind::Equality));
-        let name = ty_var_name(equality, u);
+        let equality = matches!(bv.index_into(&vars.0), Some(TyVarKind::Equality));
+        let name = bv.name(equality);
         write!(f, "{name}")?;
       }
       Ty::MetaVar(mv) => {
@@ -280,8 +281,14 @@ impl TyScheme {
   where
     F: FnOnce(Ty) -> (Ty, Option<TyVarKind>),
   {
-    let (ty, kind) = f(Ty::BoundVar(BoundTyVar(idx::Idx::new(0))));
-    Self { bound_vars: BoundTyVars(vec![kind]), ty }
+    let mut bound_vars = BoundTyVars(Vec::new());
+    let mut ty = None::<Ty>;
+    BoundTyVar::add_to_binder(&mut bound_vars.0, |x| {
+      let res = f(Ty::BoundVar(x));
+      ty = Some(res.0);
+      res.1
+    });
+    Self { bound_vars, ty: ty.unwrap() }
   }
 
   pub(crate) fn n_ary<I>(iter: I, sym: Sym) -> Self
@@ -290,7 +297,7 @@ impl TyScheme {
   {
     let bound_vars = BoundTyVars(iter.collect());
     let ty = Ty::Con(
-      (0..bound_vars.len()).map(|i| Ty::BoundVar(BoundTyVar(idx::Idx::new(i)))).collect(),
+      BoundTyVar::iter_for(bound_vars.0.iter()).map(|(x, _)| Ty::BoundVar(x)).collect(),
       sym,
     );
     Self { bound_vars, ty }
@@ -368,24 +375,6 @@ impl std::ops::IndexMut<BasicOverload> for Overloads {
       BasicOverload::String => &mut self.string,
       BasicOverload::Char => &mut self.char,
     }
-  }
-}
-
-/// Definition: `TyVar`
-///
-/// But only kind of. There's also:
-///
-/// - [`MetaTyVar`]
-/// - [`FixedTyVar`]
-/// - [`sml_hir::TyVar`]
-///
-/// Basically a de Bruijn index.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct BoundTyVar(idx::Idx);
-
-impl BoundTyVar {
-  pub(crate) fn index_into<'a, T>(&self, xs: &'a [T]) -> &'a T {
-    xs.get(self.0.to_usize()).unwrap()
   }
 }
 
@@ -925,10 +914,10 @@ pub(crate) struct HasRecordMetaVars;
 pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme) {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut bound_vars = Vec::with_capacity(fixed.0.len());
-  for (idx, (fv, bv)) in fixed.0.iter_mut().enumerate() {
+  for (new_bv, (fv, bv)) in BoundTyVar::iter_for(fixed.0.iter_mut()) {
     assert!(bv.is_none());
     bound_vars.push(fv.ty_var().is_equality().then_some(TyVarKind::Equality));
-    *bv = Some(BoundTyVar(idx::Idx::new(idx)));
+    *bv = Some(new_bv);
   }
   let mut g = Generalizer {
     subst: &Subst::default(),
@@ -1060,9 +1049,8 @@ fn handle_bv(
         Ty::None
       }
       None | Some(TyVarKind::Equality) => {
-        let new_bv = BoundTyVar(idx::Idx::new(bound_vars.len()));
+        let new_bv = BoundTyVar::add_to_binder(&mut bound_vars.0, |_| kind);
         *bv = Some(new_bv.clone());
-        bound_vars.0.push(kind);
         Ty::BoundVar(new_bv)
       }
     },
