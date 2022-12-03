@@ -37,7 +37,7 @@ impl pattern_match::Lang for Lang {
           let ty_info = match self.syms.get(*ty_name) {
             // we can't know how many variants of exn there are, since it's EXteNsible.
             None => return Ok(vec![Con::Any]),
-            Some((_, x)) => x,
+            Some(sym_info) => &sym_info.ty_info,
           };
           let all: Vec<_> = ty_info
             .val_env
@@ -79,10 +79,10 @@ impl pattern_match::Lang for Lang {
           }
           match (variant_name, self.syms.get(*ty_name)) {
             (VariantName::Exn(exn), None) => {
-              self.syms.get_exn(*exn).1.into_iter().cloned().collect()
+              self.syms.get_exn(*exn).param.iter().cloned().collect()
             }
-            (VariantName::Name(name), Some((_, ty_info))) => {
-              let val_info = ty_info.val_env.get(name).ok_or(CheckError)?;
+            (VariantName::Name(name), Some(sym_info)) => {
+              let val_info = sym_info.ty_info.val_env.get(name).ok_or(CheckError)?;
               match &val_info.ty_scheme.ty {
                 Ty::Con(_, _) => Vec::new(),
                 Ty::Fn(arg, _) => {

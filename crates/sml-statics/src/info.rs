@@ -114,7 +114,7 @@ impl Info {
     let mut ret = Vec::<def::Def>::new();
     ty_syms(&ty_entry.ty, &mut |sym| match syms.get(sym) {
       None => {}
-      Some((_, ty_info)) => match ty_info.def {
+      Some(sym_info) => match sym_info.ty_info.def {
         None => {}
         Some(def) => ret.push(def),
       },
@@ -134,8 +134,9 @@ impl Info {
       Ty::Con(_, x) => x,
       _ => return None,
     };
-    let (_, ty_info) = syms.get(sym)?;
-    let mut ret: Vec<_> = ty_info
+    let mut ret: Vec<_> = syms
+      .get(sym)?
+      .ty_info
       .val_env
       .iter()
       .map(|(name, val_info)| {

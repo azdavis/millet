@@ -112,10 +112,10 @@ pub fn minimal() -> (Syms, Basis) {
   insert_special(&mut syms, Sym::REF, ref_info);
   let aliases = [("unit", Ty::Record(RecordTy::new())), ("exn", Ty::EXN)];
   let ty_env: TyEnv = syms
-    .iter()
-    .map(|(a, b)| {
-      assert!(a.prefix().is_empty(), "only built-in types are currently in this Syms");
-      (a.last().clone(), b.clone())
+    .iter_syms()
+    .map(|sym_info| {
+      assert!(sym_info.path.prefix().is_empty(), "only built-in types are currently in this Syms");
+      (sym_info.path.last().clone(), sym_info.ty_info.clone())
     })
     .chain(aliases.into_iter().map(|(name, ty)| {
       let ti = TyInfo {

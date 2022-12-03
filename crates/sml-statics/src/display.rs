@@ -179,7 +179,7 @@ impl fmt::Display for SymDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.syms.get(self.sym) {
       None => f.write_str("exn"),
-      Some((name, _)) => name.fmt(f),
+      Some(sym_info) => sym_info.path.fmt(f),
     }
   }
 }

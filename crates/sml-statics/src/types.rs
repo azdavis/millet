@@ -138,61 +138,71 @@ impl Sym {
   }
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct SymInfo {
+  pub(crate) path: sml_hir::Path,
+  pub(crate) ty_info: TyInfo,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct ExnInfo {
+  pub(crate) path: sml_hir::Path,
+  pub(crate) param: Option<Ty>,
+}
+
 /// Information about generated types, generated exceptions, and overload types.
 ///
 /// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
 /// even built-in items like `type int` and `exception Bind`.
 #[derive(Debug, Default, Clone)]
 pub struct Syms {
-  /// remember: always use Sym::idx to index
-  store: Vec<(sml_hir::Path, TyInfo)>,
-  exns: Vec<(sml_hir::Path, Option<Ty>)>,
+  /// always use Sym::idx to index
+  syms: Vec<SymInfo>,
+  exns: Vec<ExnInfo>,
   overloads: Overloads,
 }
 
 impl Syms {
-  pub(crate) fn start(&mut self, name: sml_hir::Path) -> StartedSym {
+  pub(crate) fn start(&mut self, path: sml_hir::Path) -> StartedSym {
     let ty_info =
       TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
-    self.store.push((name, ty_info));
+    self.syms.push(SymInfo { path, ty_info });
     StartedSym {
       bomb: DropBomb::new("must be passed to Syms::finish"),
       // calculate len after push, because we sub 1 in get, because of Sym::EXN.
-      sym: Sym(idx::Idx::new(self.store.len())),
+      sym: Sym(idx::Idx::new(self.syms.len())),
     }
   }
 
   pub(crate) fn finish(&mut self, mut started: StartedSym, ty_info: TyInfo) {
     started.bomb.defuse();
-    self.store[started.sym.idx()].1 = ty_info;
+    self.syms[started.sym.idx()].ty_info = ty_info;
   }
 
   /// Returns `None` iff passed `Sym::EXN`.
-  pub(crate) fn get(&self, sym: Sym) -> Option<(&sml_hir::Path, &TyInfo)> {
+  pub(crate) fn get(&self, sym: Sym) -> Option<&SymInfo> {
     if sym == Sym::EXN {
       return None;
     }
-    let &(ref name, ref info) = self.store.get(sym.idx()).unwrap();
-    Some((name, info))
+    self.syms.get(sym.idx())
   }
 
-  pub(crate) fn insert_exn(&mut self, name: sml_hir::Path, param: Option<Ty>) -> Exn {
+  pub(crate) fn insert_exn(&mut self, path: sml_hir::Path, param: Option<Ty>) -> Exn {
     let ret = Exn(idx::Idx::new(self.exns.len()));
-    self.exns.push((name, param));
+    self.exns.push(ExnInfo { path, param });
     ret
   }
 
-  pub(crate) fn get_exn(&self, exn: Exn) -> (&sml_hir::Path, Option<&Ty>) {
-    let &(ref name, ref param) = self.exns.get(exn.0.to_usize()).unwrap();
-    (name, param.as_ref())
+  pub(crate) fn get_exn(&self, exn: Exn) -> &ExnInfo {
+    self.exns.get(exn.0.to_usize()).unwrap()
   }
 
   pub(crate) fn mark(&self) -> SymsMarker {
-    SymsMarker(self.store.len())
+    SymsMarker(self.syms.len())
   }
 
-  pub(crate) fn iter(&self) -> impl Iterator<Item = (&sml_hir::Path, &TyInfo)> {
-    self.store.iter().map(|&(ref a, ref b)| (a, b))
+  pub(crate) fn iter_syms(&self) -> impl Iterator<Item = &SymInfo> {
+    self.syms.iter()
   }
 
   pub(crate) fn overloads(&self) -> &Overloads {

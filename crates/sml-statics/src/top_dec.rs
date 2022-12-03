@@ -428,10 +428,9 @@ fn get_where_type(
 fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) {
   let mut ac = Vec::<(StartedSym, TyInfo)>::new();
   for &sym in ty_names.iter() {
-    let (name, ty_info) = st.syms.get(sym).unwrap();
-    let name = name.clone();
-    let mut ty_info = ty_info.clone();
-    let started = st.syms.start(name);
+    let sym_info = st.syms.get(sym).unwrap();
+    let mut ty_info = sym_info.ty_info.clone();
+    let started = st.syms.start(sym_info.path.clone());
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.iter().cloned(), started.sym());
     ty_info.ty_scheme = ty_scheme.clone();
     ac.push((started, ty_info));
@@ -714,8 +713,8 @@ fn env_instance_sig(
 ) {
   for &sym in &sig.ty_names {
     let mut path = Vec::<&str_util::Name>::new();
-    let (_, ty_info) = st.syms.get(sym).unwrap();
-    let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.iter().cloned(), sym);
+    let ty_scheme =
+      TyScheme::n_ary(st.syms.get(sym).unwrap().ty_info.ty_scheme.bound_vars.iter().cloned(), sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
       // @test(sig::no_path_to_sym). there should have already been an error emitted for this
       log::warn!("no path to sym");
