@@ -153,6 +153,7 @@ impl Check {
       config::ErrorLines::One,
       config::DiagnosticsFilter::None,
       false,
+      true,
     );
     let err = an
       .get_many(&input)

@@ -34,6 +34,8 @@ export async function activate(cx: vscode.ExtensionContext) {
         "server.diagnostics.moreInfoHint.enable",
       ),
       format: config.get("format.enable"),
+      // TODO(equality_checks) remove
+      equality_checks: config.get("server.experimental.equalityChecks.enable"),
     },
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);

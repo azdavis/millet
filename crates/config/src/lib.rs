@@ -91,6 +91,8 @@ pub struct Options {
   pub diagnostics_filter: DiagnosticsFilter,
   pub diagnostics_more_info_hint: bool,
   pub format: bool,
+  /// TODO(equality-checks) remove
+  pub equality_checks: bool,
 }
 
 impl Default for Options {
@@ -101,6 +103,7 @@ impl Default for Options {
       diagnostics_filter: DiagnosticsFilter::Syntax,
       diagnostics_more_info_hint: true,
       format: false,
+      equality_checks: true,
     }
   }
 }

@@ -152,8 +152,8 @@ impl Info {
 /// The mode for checking.
 #[derive(Debug, Clone, Copy)]
 pub enum Mode {
-  /// Regular checking. The default.
-  Regular(Option<paths::PathId>),
+  /// Regular checking. The default. TODO(equality-checks) remove bool.
+  Regular(Option<paths::PathId>, bool),
   /// Built-in library checking. Notably, ascription structure expressions will not check to see if
   /// they actually match the signature.
   ///
@@ -171,5 +171,14 @@ impl Mode {
   #[must_use]
   pub(crate) fn is_path_order(&self) -> bool {
     matches!(self, Mode::PathOrder)
+  }
+
+  /// TODO(equality-checks) remove
+  pub(crate) fn equality_checks(&self) -> bool {
+    match self {
+      Mode::Regular(_, eq) => *eq,
+      Mode::BuiltinLib(_) => true,
+      Mode::PathOrder => false,
+    }
   }
 }

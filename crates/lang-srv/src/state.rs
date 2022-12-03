@@ -37,6 +37,7 @@ impl State {
       config::ErrorLines::Many,
       options.diagnostics_filter,
       options.format,
+      options.equality_checks,
     );
     let mut sp = SPState {
       options,

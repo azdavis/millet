@@ -99,6 +99,8 @@ struct Cx {
   cache: paths::PathMap<MBasis>,
   sml: paths::PathMap<SourceFile>,
   mlb_errors: Vec<Error>,
+  /// TODO(equality-checks) remove
+  equality_checks: bool,
 }
 
 impl Cx {
@@ -143,12 +145,14 @@ pub fn get(
   sml: &paths::PathMap<String>,
   mlb: &paths::PathMap<&BasDec>,
   root_group_paths: &[paths::PathId],
+  equality_checks: bool,
 ) -> MlbStatics {
   let mut cx = Cx {
     syms,
     cache: paths::PathMap::default(),
     sml: paths::PathMap::default(),
     mlb_errors: Vec::new(),
+    equality_checks,
   };
   for &path in root_group_paths {
     let std_basis = MBasis {
@@ -284,7 +288,7 @@ fn get_source_file(
   fix_env: sml_parse::parser::FixEnv,
   syntax: SourceFileSyntax,
 ) {
-  let mode = sml_statics::Mode::Regular(Some(path));
+  let mode = sml_statics::Mode::Regular(Some(path), cx.equality_checks);
   let checked =
     sml_statics::get(&mut cx.syms, &scope.basis, mode, &syntax.lower.arenas, syntax.lower.root);
   let mut info = checked.info;

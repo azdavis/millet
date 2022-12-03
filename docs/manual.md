@@ -153,6 +153,15 @@ Enable the language server.
 - Type: `boolean`
 - Default: `true`
 
+#### `millet.server.experimental.equalityChecks.enable`
+
+Enable equality checks.
+
+This setting is temporary, and will go away once we have confidence that equality checks work.
+
+- Type: `boolean`
+- Default: `true`
+
 #### `millet.server.hover.token.enable`
 
 Show information about tokens on hover.
