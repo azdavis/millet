@@ -6,7 +6,8 @@
 pub const ENABLED: bool = true;
 
 use crate::types::{
-  BasicOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Ty, TyScheme, TyVarKind,
+  BasicOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyScheme,
+  TyVarKind,
 };
 use crate::{st::St, util::instantiate};
 use std::fmt;
@@ -35,7 +36,7 @@ impl Ans {
 #[derive(Debug)]
 pub(crate) enum NotEqTy {
   FixedTyVar,
-  Sym,
+  Sym(Sym),
   Fn,
 }
 
@@ -43,7 +44,7 @@ impl fmt::Display for NotEqTy {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       NotEqTy::FixedTyVar => f.write_str("a fixed non-equality type variable"),
-      NotEqTy::Sym => f.write_str("a non-equality type constructor"),
+      NotEqTy::Sym(_) => f.write_str("a non-equality type constructor"),
       NotEqTy::Fn => f.write_str("a function type"),
     }
   }
@@ -93,7 +94,7 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Ans {
     Ty::Con(args, sym) => match st.syms.equality(*sym) {
       Equality::Always => Ans::Yes,
       Equality::Sometimes => Ans::all(args.iter().map(|ty| get_ty(st, ty))),
-      Equality::Never => Ans::No(NotEqTy::Sym),
+      Equality::Never => Ans::No(NotEqTy::Sym(*sym)),
     },
     Ty::Fn(_, _) => Ans::No(NotEqTy::Fn),
   }
@@ -115,7 +116,7 @@ fn get_basic(ov: BasicOverload) -> Ans {
     BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => {
       Ans::Yes
     }
-    BasicOverload::Real => Ans::No(NotEqTy::Sym),
+    BasicOverload::Real => Ans::No(NotEqTy::Sym(Sym::REAL)),
   }
 }
 
