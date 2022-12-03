@@ -23,7 +23,7 @@ val _ = (ref 2.2) = (ref 3.3)
 
 #[test]
 fn sig_type_no() {
-  fail(
+  check(
     r#"
 structure S = struct
   type t = int

@@ -476,9 +476,13 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         }
       }
     }
-    // @def(69), @def(70). TODO equality checks
-    sml_hir::Spec::Ty(ty_descs) | sml_hir::Spec::EqTy(ty_descs) => {
-      get_ty_desc(st, &mut ac.ty_env, ty_descs, spec.into());
+    // @def(69)
+    sml_hir::Spec::Ty(ty_descs) => {
+      get_ty_desc(st, &mut ac.ty_env, ty_descs, Equality::Never, spec.into());
+    }
+    // @def(70)
+    sml_hir::Spec::EqTy(ty_descs) => {
+      get_ty_desc(st, &mut ac.ty_env, ty_descs, Equality::Sometimes, spec.into());
     }
     // @def(71)
     sml_hir::Spec::Datatype(dat_desc) => {
@@ -679,10 +683,15 @@ fn get_ty_cons(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Pat
 }
 
 // @def(80). TODO equality checks
-fn get_ty_desc(st: &mut St, ty_env: &mut TyEnv, ty_desc: &sml_hir::TyDesc, idx: sml_hir::Idx) {
+fn get_ty_desc(
+  st: &mut St,
+  ty_env: &mut TyEnv,
+  ty_desc: &sml_hir::TyDesc,
+  equality: Equality,
+  idx: sml_hir::Idx,
+) {
   let mut ty_vars = FxHashSet::<&sml_hir::TyVar>::default();
-  // TODO pass down equality here?
-  let started = st.syms.start(st.mk_path(ty_desc.name.clone()), Equality::Sometimes);
+  let started = st.syms.start(st.mk_path(ty_desc.name.clone()), equality);
   for ty_var in &ty_desc.ty_vars {
     if !ty_vars.insert(ty_var) {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
