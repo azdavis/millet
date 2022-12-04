@@ -7,10 +7,13 @@ mod topo;
 mod util;
 
 use paths::{PathId, PathMap, WithPath};
-use util::{ErrorKind, ErrorSource, GroupPathKind, Result};
+use util::{ErrorKind, ErrorSource, GroupPathKind};
 
 pub(crate) use root::Severities;
 pub use util::Error;
+
+/// A result type defaulting to success = Input and error = Error.
+pub type Result<T = Input, E = Error> = std::result::Result<T, E>;
 
 /// The input to analysis.
 #[derive(Debug)]
@@ -31,7 +34,7 @@ impl Input {
   /// # Errors
   ///
   /// When getting input failed.
-  pub fn new<F>(fs: &F, store: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Result<Self>
+  pub fn new<F>(fs: &F, store: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Result
   where
     F: paths::FileSystem,
   {

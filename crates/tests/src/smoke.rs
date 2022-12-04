@@ -116,7 +116,7 @@ val _: int = S.x
 
 #[test]
 fn multi() {
-  let ss = &[
+  let files = [
     (
       "a.sml",
       r#"
@@ -133,7 +133,7 @@ fun err s = if s = "bad" then raise Bad else ()
     ),
     ("sources.mlb", "a.sml b.sml"),
   ];
-  go(ss, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
+  go(files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }
 
 #[test]

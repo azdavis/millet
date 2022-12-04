@@ -724,7 +724,7 @@ fun f x = ()
     ),
     ("sources.mlb", "a.sml"),
   ];
-  go(&files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
+  go(files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
 }
 
 #[test]

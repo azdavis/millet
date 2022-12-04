@@ -37,7 +37,13 @@ use std::fmt;
 /// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  go(&one_file_fs(s), analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
+  check_multi(one_file_fs(s));
+}
+
+/// Like [`check`], but allows multiple files.
+#[track_caller]
+pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
+  go(files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }
 
 /// Like [`check`], but the expectation comments should be not satisfied.
@@ -64,25 +70,28 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  go(&one_file_fs(s), analysis::StdBasis::Minimal, Outcome::Fail, Severity::Error);
+  go(one_file_fs(s), analysis::StdBasis::Minimal, Outcome::Fail, Severity::Error);
 }
 
 /// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  go(&one_file_fs(s), analysis::StdBasis::Full, Outcome::Pass, Severity::Error);
+  go(one_file_fs(s), analysis::StdBasis::Full, Outcome::Pass, Severity::Error);
 }
 
-/// The low-level impl that all top-level functions delegate to.
-pub(crate) fn go(
-  files: &[(&str, &str)],
+/// The low-level impl that almost all top-level functions delegate to.
+pub(crate) fn go<'a, I>(
+  files: I,
   std_basis: analysis::StdBasis,
   want: Outcome,
   min_severity: Severity,
-) {
+) where
+  I: IntoIterator<Item = (&'a str, &'a str)>,
+{
   // ignore the Err if we already initialized logging, since that's fine.
-  let _ = env_logger::builder().is_test(true).try_init();
-  let c = Check::new(files, std_basis, min_severity);
+  let (input, store) = get_input(files);
+  let input = input.expect("unexpectedly bad input");
+  let c = Check::new(&input, store, std_basis, min_severity);
   match (want, c.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
     (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
@@ -90,14 +99,55 @@ pub(crate) fn go(
   }
 }
 
+/// An expected outcome from a test.
+#[derive(Debug)]
+pub(crate) enum Outcome {
+  Pass,
+  Fail,
+}
+
+/// Asserts the input from the files generates an error at the given path containing the given
+/// message.
+#[track_caller]
+pub(crate) fn check_bad_input<'a, I>(path: &str, msg: &str, files: I)
+where
+  I: IntoIterator<Item = (&'a str, &'a str)>,
+{
+  let (input, _) = get_input(files);
+  let e = input.expect_err("unexpectedly good input");
+  let got_path = e.abs_path().strip_prefix(ROOT.as_path()).expect("could not strip prefix");
+  assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
+  let got_msg = e.display(ROOT.as_path()).to_string();
+  assert!(got_msg.contains(msg), "want not contained in got\n  want: {msg}\n  got: {got_msg}");
+}
+
 fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("file.sml", s), ("sources.mlb", "file.sml")]
+}
+
+fn get_input<'a, I>(files: I) -> (analysis::input::Result, paths::Store)
+where
+  I: IntoIterator<Item = (&'a str, &'a str)>,
+{
+  let _ = env_logger::builder().is_test(true).try_init();
+  let map: FxHashMap<_, _> = files
+    .into_iter()
+    .map(|(name, contents)| {
+      let mut buf = ROOT.as_path().to_owned();
+      buf.push(name);
+      (buf, contents.to_owned())
+    })
+    .collect();
+  let fs = paths::MemoryFileSystem::new(map);
+  let mut store = paths::Store::new();
+  let input = analysis::input::Input::new(&fs, &mut store, &ROOT);
+  (input, store)
 }
 
 /// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
 /// run?)
-pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> =
+static ROOT: Lazy<paths::CanonicalPathBuf> =
   Lazy::new(|| paths::RealFileSystem::default().canonicalize(std::path::Path::new("/")).unwrap());
 
 struct Check {
@@ -107,17 +157,12 @@ struct Check {
 }
 
 impl Check {
-  fn new(files: &[(&str, &str)], std_basis: analysis::StdBasis, min_severity: Severity) -> Self {
-    let mut m = FxHashMap::<std::path::PathBuf, String>::default();
-    for &(name, contents) in files {
-      let mut buf = ROOT.as_path().to_owned();
-      buf.push(name);
-      m.insert(buf, contents.to_owned());
-    }
-    let fs = paths::MemoryFileSystem::new(m);
-    let mut store = paths::Store::new();
-    let input =
-      analysis::input::Input::new(&fs, &mut store, &ROOT).expect("invalid MemoryFileSystem");
+  fn new(
+    input: &analysis::input::Input,
+    store: paths::Store,
+    std_basis: analysis::StdBasis,
+    min_severity: Severity,
+  ) -> Self {
     let mut ret = Self {
       store,
       files: input
@@ -157,7 +202,7 @@ impl Check {
       true,
     );
     let err = an
-      .get_many(&input)
+      .get_many(input)
       .into_iter()
       .flat_map(|(id, errors)| {
         errors.into_iter().filter_map(move |e| (e.severity >= min_severity).then_some((id, e)))
@@ -305,15 +350,12 @@ fn try_region(
   }
 }
 
-pub(crate) enum Outcome {
-  Pass,
-  Fail,
-}
-
+#[derive(Debug)]
 struct ExpectFile {
   want: FxHashMap<Region, Expect>,
 }
 
+#[derive(Debug)]
 struct Expect {
   msg: String,
   kind: ExpectKind,
@@ -325,6 +367,7 @@ impl fmt::Display for Expect {
   }
 }
 
+#[derive(Debug)]
 enum ExpectKind {
   ErrorExact,
   ErrorContains,
