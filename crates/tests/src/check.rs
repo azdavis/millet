@@ -97,5 +97,5 @@ where
 }
 
 fn one_file_fs(s: &str) -> [(&str, &str); 2] {
-  [("file.sml", s), ("sources.mlb", "file.sml")]
+  [("f.sml", s), ("s.mlb", "f.sml")]
 }

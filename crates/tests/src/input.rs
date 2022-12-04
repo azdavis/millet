@@ -10,7 +10,7 @@ const EMPTY_CM: &str = "Group is";
 
 #[test]
 fn arbitrary_root_group() {
-  check_multi([("foo.cm", EMPTY_CM)]);
+  check_multi([("a.cm", EMPTY_CM)]);
 }
 
 #[test]
@@ -25,11 +25,7 @@ fn no_root_group_wrong_ext() {
 
 #[test]
 fn multiple_root_groups_err() {
-  check_bad_input(
-    "bar.cm",
-    "multiple root group files",
-    [("foo.cm", EMPTY_CM), ("bar.cm", EMPTY_CM)],
-  );
+  check_bad_input("b.cm", "multiple root group files", [("a.cm", EMPTY_CM), ("b.cm", EMPTY_CM)]);
 }
 
 #[test]
@@ -38,14 +34,14 @@ fn multiple_root_groups_ok() {
 version = 1
 [workspace]
 # prefer foo over bar
-root = "foo.cm"
+root = "a.cm"
 "#;
-  check_multi([("foo.cm", EMPTY_CM), ("bar.cm", EMPTY_CM), (config::FILE_NAME, config)]);
+  check_multi([("a.cm", EMPTY_CM), ("b.cm", EMPTY_CM), (config::FILE_NAME, config)]);
 }
 
 #[test]
 fn no_root_group_in_config_ok() {
-  check_multi([("sources.cm", EMPTY_CM), (config::FILE_NAME, "version = 1")]);
+  check_multi([("a.cm", EMPTY_CM), (config::FILE_NAME, "version = 1")]);
 }
 
 #[test]
@@ -73,7 +69,7 @@ fn config_parse_err() {
 
 #[test]
 fn cycle_1() {
-  check_bad_input("foo.cm", "there is a cycle", [("foo.cm", "Group is foo.cm")]);
+  check_bad_input("a.cm", "there is a cycle", [("a.cm", "Group is a.cm")]);
 }
 
 #[test]
@@ -81,12 +77,12 @@ fn cycle_2() {
   let config = r#"
 version = 1
 [workspace]
-root = "foo.cm"
+root = "a.cm"
   "#;
   check_bad_input(
-    "bar.cm",
+    "b.cm",
     "there is a cycle",
-    [("foo.cm", "Group is bar.cm"), ("bar.cm", "Group is foo.cm"), (config::FILE_NAME, config)],
+    [("a.cm", "Group is b.cm"), ("b.cm", "Group is a.cm"), (config::FILE_NAME, config)],
   );
 }
 
@@ -99,7 +95,7 @@ workspace.root = "nope.txt"
   check_bad_input(
     config::FILE_NAME,
     "not a group file path",
-    [("foo.cm", EMPTY_CM), (config::FILE_NAME, config)],
+    [("a.cm", EMPTY_CM), (config::FILE_NAME, config)],
   );
 }
 
@@ -112,7 +108,7 @@ workspace.woofer = "bark.txt"
 [quz]
 chihiro = true
 "#;
-  check_multi([("foo.cm", EMPTY_CM), (config::FILE_NAME, config)]);
+  check_multi([("a.cm", EMPTY_CM), (config::FILE_NAME, config)]);
 }
 
 #[test]
@@ -124,7 +120,7 @@ okabe = { value = "rintarou" }
 shiina = { path = "mayuri" }
 hashida = { workspace-path = "itaru" }
 "#;
-  check_multi([("foo.cm", EMPTY_CM), (config::FILE_NAME, config)]);
+  check_multi([("a.cm", EMPTY_CM), (config::FILE_NAME, config)]);
 }
 
 #[test]
@@ -137,18 +133,18 @@ makise = { christina = "kurisu" }
   check_bad_input(
     config::FILE_NAME,
     "unknown variant `christina`",
-    [("foo.cm", EMPTY_CM), (config::FILE_NAME, config)],
+    [("a.cm", EMPTY_CM), (config::FILE_NAME, config)],
   );
 }
 
 #[test]
 fn mlb() {
-  check_multi([("foo.mlb", "")]);
+  check_multi([("a.mlb", "")]);
 }
 
 #[test]
 fn mlb_cm_err() {
-  check_bad_input("foo.mlb", "multiple root group files", [("foo.cm", EMPTY_CM), ("foo.mlb", "")]);
+  check_bad_input("a.cm", "multiple root group files", [("a.cm", EMPTY_CM), ("a.mlb", "")]);
 }
 
 #[test]
@@ -156,18 +152,18 @@ fn mlb_cm_config_cm_ok() {
   let config = r#"
 version = 1
 [workspace]
-root = "foo.cm"
+root = "a.cm"
 "#;
-  check_multi([("foo.cm", EMPTY_CM), ("foo.mlb", ""), (config::FILE_NAME, config)]);
+  check_multi([("a.cm", EMPTY_CM), ("a.mlb", ""), (config::FILE_NAME, config)]);
 }
 
 #[test]
 fn mlb_cm_config_mlb_ok() {
   let config = r#"
 version = 1
-workspace.root = "foo.mlb"
+workspace.root = "a.mlb"
 "#;
-  check_multi([("foo.cm", EMPTY_CM), ("foo.mlb", ""), (config::FILE_NAME, config)]);
+  check_multi([("a.cm", EMPTY_CM), ("a.mlb", ""), (config::FILE_NAME, config)]);
 }
 
 #[test]
@@ -179,7 +175,7 @@ version = 1
 1002.severity = "warning"
 1003.severity = "ignore"
 "#;
-  check_multi([("foo.mlb", ""), (config::FILE_NAME, config)]);
+  check_multi([("a.mlb", ""), (config::FILE_NAME, config)]);
 }
 
 #[test]
@@ -192,7 +188,7 @@ version = 1
   check_bad_input(
     config::FILE_NAME,
     "unknown variant `Warning`",
-    [("foo.mlb", ""), (config::FILE_NAME, config)],
+    [("a.mlb", ""), (config::FILE_NAME, config)],
   );
 }
 
@@ -204,7 +200,7 @@ Library
 is
   $/basis.cm
 "#;
-  check_multi([("sources.cm", cm)]);
+  check_multi([("a.cm", cm)]);
 }
 
 #[test]
@@ -215,7 +211,7 @@ Library
 is
   $/basis.cm
 "#;
-  check_bad_input("sources.cm", "expected a regular path or `-`", [("sources.cm", cm)]);
+  check_bad_input("a.cm", "expected a regular path or `-`", [("a.cm", cm)]);
 }
 
 #[test]
@@ -231,7 +227,7 @@ is
 structure FOO_BAR_QUZ = struct end
 signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234 = sig end
 "#;
-  check_multi([("sources.cm", cm), ("a.sml", sml)]);
+  check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
@@ -268,7 +264,7 @@ structure FOO = struct end
 signature BAR = sig end
 signature QUZ = sig end
 "#;
-  check_multi([("sources.cm", cm), ("a.sml", sml)]);
+  check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
@@ -283,7 +279,7 @@ is
 structure FOO = struct end
 signature BAR = sig end
 "#;
-  check_multi([("sources.cm", cm), ("a.sml", sml)]);
+  check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
@@ -298,7 +294,7 @@ is
 structure FOO = struct end
 signature BAR = sig end
 "#;
-  check_multi([("sources.cm", cm), ("a.sml", sml)]);
+  check_multi([("a.cm", cm), ("a.sml", sml)]);
 }
 
 #[test]
@@ -310,7 +306,7 @@ is
   foo.sml
   bar.sml
 "#;
-  check_multi([("sources.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
+  check_multi([("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
 
 #[test]
@@ -322,7 +318,7 @@ is
   foo.sml
   bar.sml
 "#;
-  check_multi([("sources.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
+  check_multi([("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
 
 #[test]
@@ -333,9 +329,5 @@ Library
 is
   bar.sml
 "#;
-  check_bad_input(
-    "sources.cm",
-    "not in file list",
-    [("sources.cm", cm), ("foo.sml", ""), ("bar.sml", "")],
-  );
+  check_bad_input("a.cm", "not in file list", [("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
