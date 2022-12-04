@@ -117,14 +117,21 @@ val _: int = S.x
 #[test]
 fn multi() {
   let ss = &[
-    r#"
+    (
+      "a.sml",
+      r#"
 val a = 3
 exception Bad
 "#,
-    r#"
+    ),
+    (
+      "b.sml",
+      r#"
 val b = a + 4
 fun err s = if s = "bad" then raise Bad else ()
 "#,
+    ),
+    ("sources.mlb", "a.sml b.sml"),
   ];
   go(ss, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }

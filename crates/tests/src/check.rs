@@ -4,7 +4,7 @@ use diagnostic_util::Severity;
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
 use paths::FileSystem as _;
-use std::fmt::{self, Write as _};
+use std::fmt;
 
 /// Given the string of an SML program with some expectation comments, panics iff the expectation
 /// comments are not satisfied.
@@ -37,7 +37,7 @@ use std::fmt::{self, Write as _};
 /// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  go(&[s], analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
+  go(&one_file_fs(s), analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
 }
 
 /// Like [`check`], but the expectation comments should be not satisfied.
@@ -64,30 +64,34 @@ pub(crate) fn check(s: &str) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  go(&[s], analysis::StdBasis::Minimal, Outcome::Fail, Severity::Error);
+  go(&one_file_fs(s), analysis::StdBasis::Minimal, Outcome::Fail, Severity::Error);
 }
 
 /// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  go(&[s], analysis::StdBasis::Full, Outcome::Pass, Severity::Error);
+  go(&one_file_fs(s), analysis::StdBasis::Full, Outcome::Pass, Severity::Error);
 }
 
 /// The low-level impl that all top-level functions delegate to.
 pub(crate) fn go(
-  ss: &[&str],
+  files: &[(&str, &str)],
   std_basis: analysis::StdBasis,
   want: Outcome,
   min_severity: Severity,
 ) {
   // ignore the Err if we already initialized logging, since that's fine.
   let _ = env_logger::builder().is_test(true).try_init();
-  let c = Check::new(ss, std_basis, min_severity);
+  let c = Check::new(files, std_basis, min_severity);
   match (want, c.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
     (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
     (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {c}"),
   }
+}
+
+fn one_file_fs(s: &str) -> [(&str, &str); 2] {
+  [("file.sml", s), ("sources.mlb", "file.sml")]
 }
 
 /// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
@@ -103,16 +107,13 @@ struct Check {
 }
 
 impl Check {
-  fn new(ss: &[&str], std_basis: analysis::StdBasis, min_severity: Severity) -> Self {
+  fn new(files: &[(&str, &str)], std_basis: analysis::StdBasis, min_severity: Severity) -> Self {
     let mut m = FxHashMap::<std::path::PathBuf, String>::default();
-    let mut mlb_file = String::new();
-    for (idx, &s) in ss.iter().enumerate() {
-      let file_name = format!("f{idx}.sml");
-      writeln!(mlb_file, "{file_name}").unwrap();
-      let file_name = std::path::PathBuf::from(file_name);
-      m.insert(ROOT.as_path().join(file_name), s.to_owned());
+    for &(name, contents) in files {
+      let mut buf = ROOT.as_path().to_owned();
+      buf.push(name);
+      m.insert(buf, contents.to_owned());
     }
-    m.insert(ROOT.as_path().join("sources.mlb"), mlb_file);
     let fs = paths::MemoryFileSystem::new(m);
     let mut store = paths::Store::new();
     let input =

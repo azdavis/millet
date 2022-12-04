@@ -714,11 +714,17 @@ fun foo x =
 
 #[test]
 fn unused_var() {
-  let s = r#"
+  let files = [
+    (
+      "a.sml",
+      r#"
 fun f x = ()
 (**   ^ unused value: x *)
-"#;
-  go(&[s], analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
+"#,
+    ),
+    ("sources.mlb", "a.sml"),
+  ];
+  go(&files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
 }
 
 #[test]

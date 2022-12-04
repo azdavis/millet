@@ -24,8 +24,12 @@ fn check_all(contents: &str) {
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
         if lang.as_ref() == SML {
           if !ignore_next {
-            let prog = &[MINI_STD_BASIS, ac.as_str()];
-            go(prog, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
+            let files = [
+              ("std.sml", MINI_STD_BASIS),
+              ("prog.sml", ac.as_str()),
+              ("sources.mlb", ("std.sml prog.sml")),
+            ];
+            go(&files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
           }
           ac.clear();
           inside = false;
