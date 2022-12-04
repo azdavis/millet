@@ -3,9 +3,9 @@
 mod expect;
 mod input;
 mod reason;
+mod show;
 
 use diagnostic_util::Severity;
-use std::fmt;
 
 /// Given the string of an SML program with some expectation comments, panics iff the expectation
 /// comments are not satisfied.
@@ -99,7 +99,7 @@ pub(crate) fn go<'a, I>(
   // ignore the Err if we already initialized logging, since that's fine.
   let (input, store) = input::get(files);
   let input = input.expect("unexpectedly bad input");
-  let mut ck = Check::new(
+  let mut ck = show::Show::new(
     store,
     input.iter_sources().map(|s| {
       let file = expect::File::new(s.val);
@@ -194,69 +194,4 @@ where
 
 fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("file.sml", s), ("sources.mlb", "file.sml")]
-}
-
-struct Check {
-  store: paths::Store,
-  files: paths::PathMap<expect::File>,
-  reasons: Vec<reason::Reason>,
-}
-
-impl Check {
-  fn new<I>(store: paths::Store, files: I) -> Self
-  where
-    I: Iterator<Item = (paths::PathId, expect::File)>,
-  {
-    Self { store, files: files.collect(), reasons: Vec::new() }
-  }
-}
-
-impl fmt::Display for Check {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.write_str("\n\n  reasons:\n")?;
-    for reason in &self.reasons {
-      f.write_str("  - ")?;
-      match reason {
-        reason::Reason::NoErrorsEmitted(want_len) => {
-          writeln!(f, "wanted {want_len} errors, but got none")?;
-        }
-        reason::Reason::GotButNotWanted(r, got) => {
-          let path = self.store.get_path(r.path).as_path().display();
-          let range = r.val;
-          writeln!(f, "{path}:{range}: got an error, but wanted none")?;
-          writeln!(f, "    - got:  {got}")?;
-        }
-        reason::Reason::Mismatched(r, want, got) => {
-          let path = self.store.get_path(r.path).as_path().display();
-          let range = r.val;
-          writeln!(f, "{path}:{range}: mismatched")?;
-          writeln!(f, "    - want: {want}")?;
-          writeln!(f, "    - got:  {got}")?;
-        }
-        reason::Reason::NoHover(r) => {
-          let path = self.store.get_path(r.path).as_path().display();
-          let range = r.val;
-          writeln!(f, "{path}:{range}: wanted a hover, but got none")?;
-        }
-        reason::Reason::InexactHover(line) => {
-          let path = self.store.get_path(line.path).as_path().display();
-          let line = line.val;
-          writeln!(f, "{path}:{line}: inexact arrows for hover")?;
-        }
-      }
-    }
-    f.write_str("\n  want:")?;
-    if self.files.values().all(expect::File::is_empty) {
-      f.write_str(" <empty>")?;
-    } else {
-      f.write_str("\n")?;
-      for file in self.files.values() {
-        for (region, expect) in file.iter() {
-          writeln!(f, "  - {region}: {expect}")?;
-        }
-      }
-    }
-    writeln!(f)?;
-    Ok(())
-  }
 }
