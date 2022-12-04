@@ -2,6 +2,7 @@
 
 mod expect;
 mod input;
+mod reason;
 
 use diagnostic_util::Severity;
 use std::fmt;
@@ -139,17 +140,17 @@ pub(crate) fn go<'a, I>(
             text_pos::Position { line, character: col_start }
           }
           expect::Region::Line(n) => {
-            ck.reasons.push(Reason::InexactHover(path.wrap(n)));
+            ck.reasons.push(reason::Reason::InexactHover(path.wrap(n)));
             continue;
           }
         };
         let r = match an.get_md(path.wrap(pos), true) {
-          None => Reason::NoHover(path.wrap(region)),
+          None => reason::Reason::NoHover(path.wrap(region)),
           Some((got, _)) => {
             if got.contains(&expect.msg) {
               continue;
             }
-            Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
+            reason::Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
           }
         };
         ck.reasons.push(r);
@@ -158,7 +159,7 @@ pub(crate) fn go<'a, I>(
   }
   let had_error = match err {
     Some((id, e)) => {
-      match get_err_reason(&ck.files, id, e.range, e.message) {
+      match reason::get(&ck.files, id, e.range, e.message) {
         Ok(()) => {}
         Err(r) => ck.reasons.push(r),
       }
@@ -167,7 +168,7 @@ pub(crate) fn go<'a, I>(
     None => false,
   };
   if !had_error && want_err_len != 0 {
-    ck.reasons.push(Reason::NoErrorsEmitted(want_err_len));
+    ck.reasons.push(reason::Reason::NoErrorsEmitted(want_err_len));
   }
   match (want, ck.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
@@ -195,70 +196,10 @@ fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("file.sml", s), ("sources.mlb", "file.sml")]
 }
 
-enum Reason {
-  NoErrorsEmitted(usize),
-  GotButNotWanted(paths::WithPath<expect::Region>, String),
-  Mismatched(paths::WithPath<expect::Region>, String, String),
-  NoHover(paths::WithPath<expect::Region>),
-  InexactHover(paths::WithPath<u32>),
-}
-
-fn get_err_reason(
-  files: &paths::PathMap<expect::File>,
-  path: paths::PathId,
-  range: text_pos::Range,
-  got: String,
-) -> Result<(), Reason> {
-  let file = &files[&path];
-  if range.start.line == range.end.line {
-    let region = expect::Region::Exact {
-      line: range.start.line,
-      col_start: range.start.character,
-      col_end: range.end.character,
-    };
-    if try_region(file, path.wrap(region), got.as_str())? {
-      return Ok(());
-    }
-  }
-  let region = expect::Region::Line(range.start.line);
-  if try_region(file, path.wrap(region), got.as_str())? {
-    Ok(())
-  } else {
-    Err(Reason::GotButNotWanted(path.wrap(region), got))
-  }
-}
-
-fn try_region(
-  file: &expect::File,
-  region: paths::WithPath<expect::Region>,
-  got: &str,
-) -> Result<bool, Reason> {
-  match file.get(region.val) {
-    None => Ok(false),
-    Some(exp) => match exp.kind {
-      expect::Kind::ErrorExact => {
-        if exp.msg == got {
-          Ok(true)
-        } else {
-          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
-        }
-      }
-      expect::Kind::ErrorContains => {
-        if got.contains(&exp.msg) {
-          Ok(true)
-        } else {
-          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
-        }
-      }
-      expect::Kind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
-    },
-  }
-}
-
 struct Check {
   store: paths::Store,
   files: paths::PathMap<expect::File>,
-  reasons: Vec<Reason>,
+  reasons: Vec<reason::Reason>,
 }
 
 impl Check {
@@ -276,26 +217,28 @@ impl fmt::Display for Check {
     for reason in &self.reasons {
       f.write_str("  - ")?;
       match reason {
-        Reason::NoErrorsEmitted(want_len) => writeln!(f, "wanted {want_len} errors, but got none")?,
-        Reason::GotButNotWanted(r, got) => {
+        reason::Reason::NoErrorsEmitted(want_len) => {
+          writeln!(f, "wanted {want_len} errors, but got none")?;
+        }
+        reason::Reason::GotButNotWanted(r, got) => {
           let path = self.store.get_path(r.path).as_path().display();
           let range = r.val;
           writeln!(f, "{path}:{range}: got an error, but wanted none")?;
           writeln!(f, "    - got:  {got}")?;
         }
-        Reason::Mismatched(r, want, got) => {
+        reason::Reason::Mismatched(r, want, got) => {
           let path = self.store.get_path(r.path).as_path().display();
           let range = r.val;
           writeln!(f, "{path}:{range}: mismatched")?;
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
-        Reason::NoHover(r) => {
+        reason::Reason::NoHover(r) => {
           let path = self.store.get_path(r.path).as_path().display();
           let range = r.val;
           writeln!(f, "{path}:{range}: wanted a hover, but got none")?;
         }
-        Reason::InexactHover(line) => {
+        reason::Reason::InexactHover(line) => {
           let path = self.store.get_path(line.path).as_path().display();
           let line = line.val;
           writeln!(f, "{path}:{line}: inexact arrows for hover")?;
