@@ -1,11 +1,9 @@
 //! Test infra.
 
 mod expect;
+mod input;
 
 use diagnostic_util::Severity;
-use fast_hash::FxHashMap;
-use once_cell::sync::Lazy;
-use paths::FileSystem as _;
 use std::fmt;
 
 /// Given the string of an SML program with some expectation comments, panics iff the expectation
@@ -81,6 +79,13 @@ pub(crate) fn check_with_std_basis(s: &str) {
   go(one_file_fs(s), analysis::StdBasis::Full, Outcome::Pass, Severity::Error);
 }
 
+/// An expected outcome from a test.
+#[derive(Debug)]
+pub(crate) enum Outcome {
+  Pass,
+  Fail,
+}
+
 /// The low-level impl that almost all top-level functions delegate to.
 pub(crate) fn go<'a, I>(
   files: I,
@@ -91,7 +96,7 @@ pub(crate) fn go<'a, I>(
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
   // ignore the Err if we already initialized logging, since that's fine.
-  let (input, store) = get_input(files);
+  let (input, store) = input::get(files);
   let input = input.expect("unexpectedly bad input");
   let mut ck = Check::new(
     store,
@@ -171,13 +176,6 @@ pub(crate) fn go<'a, I>(
   }
 }
 
-/// An expected outcome from a test.
-#[derive(Debug)]
-pub(crate) enum Outcome {
-  Pass,
-  Fail,
-}
-
 /// Asserts the input from the files generates an error at the given path containing the given
 /// message.
 #[track_caller]
@@ -185,11 +183,11 @@ pub(crate) fn check_bad_input<'a, I>(path: &str, msg: &str, files: I)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
-  let (input, _) = get_input(files);
+  let (input, _) = input::get(files);
   let e = input.expect_err("unexpectedly good input");
-  let got_path = e.abs_path().strip_prefix(ROOT.as_path()).expect("could not strip prefix");
+  let got_path = e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip prefix");
   assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
-  let got_msg = e.display(ROOT.as_path()).to_string();
+  let got_msg = e.display(input::ROOT.as_path()).to_string();
   assert!(got_msg.contains(msg), "want not contained in got\n  want: {msg}\n  got: {got_msg}");
 }
 
@@ -197,23 +195,12 @@ fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("file.sml", s), ("sources.mlb", "file.sml")]
 }
 
-fn get_input<'a, I>(files: I) -> (analysis::input::Result, paths::Store)
-where
-  I: IntoIterator<Item = (&'a str, &'a str)>,
-{
-  let _ = env_logger::builder().is_test(true).try_init();
-  let map: FxHashMap<_, _> = files
-    .into_iter()
-    .map(|(name, contents)| {
-      let mut buf = ROOT.as_path().to_owned();
-      buf.push(name);
-      (buf, contents.to_owned())
-    })
-    .collect();
-  let fs = paths::MemoryFileSystem::new(map);
-  let mut store = paths::Store::new();
-  let input = analysis::input::Input::new(&fs, &mut store, &ROOT);
-  (input, store)
+enum Reason {
+  NoErrorsEmitted(usize),
+  GotButNotWanted(paths::WithPath<expect::Region>, String),
+  Mismatched(paths::WithPath<expect::Region>, String, String),
+  NoHover(paths::WithPath<expect::Region>),
+  InexactHover(paths::WithPath<u32>),
 }
 
 fn get_err_reason(
@@ -241,11 +228,32 @@ fn get_err_reason(
   }
 }
 
-/// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
-/// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
-/// run?)
-static ROOT: Lazy<paths::CanonicalPathBuf> =
-  Lazy::new(|| paths::RealFileSystem::default().canonicalize(std::path::Path::new("/")).unwrap());
+fn try_region(
+  file: &expect::File,
+  region: paths::WithPath<expect::Region>,
+  got: &str,
+) -> Result<bool, Reason> {
+  match file.get(region.val) {
+    None => Ok(false),
+    Some(exp) => match exp.kind {
+      expect::Kind::ErrorExact => {
+        if exp.msg == got {
+          Ok(true)
+        } else {
+          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
+        }
+      }
+      expect::Kind::ErrorContains => {
+        if got.contains(&exp.msg) {
+          Ok(true)
+        } else {
+          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
+        }
+      }
+      expect::Kind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
+    },
+  }
+}
 
 struct Check {
   store: paths::Store,
@@ -308,39 +316,4 @@ impl fmt::Display for Check {
     writeln!(f)?;
     Ok(())
   }
-}
-
-fn try_region(
-  file: &expect::File,
-  region: paths::WithPath<expect::Region>,
-  got: &str,
-) -> Result<bool, Reason> {
-  match file.get(region.val) {
-    None => Ok(false),
-    Some(exp) => match exp.kind {
-      expect::Kind::ErrorExact => {
-        if exp.msg == got {
-          Ok(true)
-        } else {
-          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
-        }
-      }
-      expect::Kind::ErrorContains => {
-        if got.contains(&exp.msg) {
-          Ok(true)
-        } else {
-          Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
-        }
-      }
-      expect::Kind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
-    },
-  }
-}
-
-enum Reason {
-  NoErrorsEmitted(usize),
-  GotButNotWanted(paths::WithPath<expect::Region>, String),
-  Mismatched(paths::WithPath<expect::Region>, String, String),
-  NoHover(paths::WithPath<expect::Region>),
-  InexactHover(paths::WithPath<u32>),
 }
