@@ -91,11 +91,89 @@ pub(crate) fn go<'a, I>(
   // ignore the Err if we already initialized logging, since that's fine.
   let (input, store) = get_input(files);
   let input = input.expect("unexpectedly bad input");
-  let c = Check::new(&input, store, std_basis, min_severity);
-  match (want, c.reasons.is_empty()) {
+  let mut ck = Check::new(
+    store,
+    input.iter_sources().map(|s| {
+      let file = ExpectFile {
+        want: s
+          .val
+          .lines()
+          .enumerate()
+          .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
+          .collect(),
+      };
+      (s.path, file)
+    }),
+  );
+  let want_err_len: usize = ck
+    .files
+    .values()
+    .map(|x| {
+      x.want
+        .iter()
+        .filter(|(_, e)| matches!(e.kind, ExpectKind::ErrorExact | ExpectKind::ErrorContains))
+        .count()
+    })
+    .sum();
+  // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
+  // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
+  // only one expectation is actually used.
+  let mut an = analysis::Analysis::new(
+    std_basis,
+    config::ErrorLines::One,
+    config::DiagnosticsFilter::None,
+    false,
+    true,
+  );
+  let err = an
+    .get_many(&input)
+    .into_iter()
+    .flat_map(|(id, errors)| {
+      errors.into_iter().filter_map(move |e| (e.severity >= min_severity).then_some((id, e)))
+    })
+    .next();
+  for (&path, file) in &ck.files {
+    for (&region, expect) in &file.want {
+      if matches!(expect.kind, ExpectKind::Hover) {
+        let pos = match region {
+          Region::Exact { line, col_start, .. } => {
+            text_pos::Position { line, character: col_start }
+          }
+          Region::Line(n) => {
+            ck.reasons.push(Reason::InexactHover(path.wrap(n)));
+            continue;
+          }
+        };
+        let r = match an.get_md(path.wrap(pos), true) {
+          None => Reason::NoHover(path.wrap(region)),
+          Some((got, _)) => {
+            if got.contains(&expect.msg) {
+              continue;
+            }
+            Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
+          }
+        };
+        ck.reasons.push(r);
+      }
+    }
+  }
+  let had_error = match err {
+    Some((id, e)) => {
+      match get_err_reason(&ck.files, id, e.range, e.message) {
+        Ok(()) => {}
+        Err(r) => ck.reasons.push(r),
+      }
+      true
+    }
+    None => false,
+  };
+  if !had_error && want_err_len != 0 {
+    ck.reasons.push(Reason::NoErrorsEmitted(want_err_len));
+  }
+  match (want, ck.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
-    (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {c}"),
-    (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {c}"),
+    (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {ck}"),
+    (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {ck}"),
   }
 }
 
@@ -144,6 +222,31 @@ where
   (input, store)
 }
 
+fn get_err_reason(
+  files: &paths::PathMap<ExpectFile>,
+  path: paths::PathId,
+  range: text_pos::Range,
+  got: String,
+) -> Result<(), Reason> {
+  let file = &files[&path];
+  if range.start.line == range.end.line {
+    let region = Region::Exact {
+      line: range.start.line,
+      col_start: range.start.character,
+      col_end: range.end.character,
+    };
+    if try_region(file, path.wrap(region), got.as_str())? {
+      return Ok(());
+    }
+  }
+  let region = Region::Line(range.start.line);
+  if try_region(file, path.wrap(region), got.as_str())? {
+    Ok(())
+  } else {
+    Err(Reason::GotButNotWanted(path.wrap(region), got))
+  }
+}
+
 /// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
 /// run?)
@@ -157,121 +260,11 @@ struct Check {
 }
 
 impl Check {
-  fn new(
-    input: &analysis::input::Input,
-    store: paths::Store,
-    std_basis: analysis::StdBasis,
-    min_severity: Severity,
-  ) -> Self {
-    let mut ret = Self {
-      store,
-      files: input
-        .iter_sources()
-        .map(|s| {
-          let file = ExpectFile {
-            want: s
-              .val
-              .lines()
-              .enumerate()
-              .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
-              .collect(),
-          };
-          (s.path, file)
-        })
-        .collect(),
-      reasons: Vec::new(),
-    };
-    let want_err_len: usize = ret
-      .files
-      .values()
-      .map(|x| {
-        x.want
-          .iter()
-          .filter(|(_, e)| matches!(e.kind, ExpectKind::ErrorExact | ExpectKind::ErrorContains))
-          .count()
-      })
-      .sum();
-    // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
-    // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
-    // only one expectation is actually used.
-    let mut an = analysis::Analysis::new(
-      std_basis,
-      config::ErrorLines::One,
-      config::DiagnosticsFilter::None,
-      false,
-      true,
-    );
-    let err = an
-      .get_many(input)
-      .into_iter()
-      .flat_map(|(id, errors)| {
-        errors.into_iter().filter_map(move |e| (e.severity >= min_severity).then_some((id, e)))
-      })
-      .next();
-    for (&path, file) in &ret.files {
-      for (&region, expect) in &file.want {
-        if matches!(expect.kind, ExpectKind::Hover) {
-          let pos = match region {
-            Region::Exact { line, col_start, .. } => {
-              text_pos::Position { line, character: col_start }
-            }
-            Region::Line(n) => {
-              ret.reasons.push(Reason::InexactHover(path.wrap(n)));
-              continue;
-            }
-          };
-          let r = match an.get_md(path.wrap(pos), true) {
-            None => Reason::NoHover(path.wrap(region)),
-            Some((got, _)) => {
-              if got.contains(&expect.msg) {
-                continue;
-              }
-              Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
-            }
-          };
-          ret.reasons.push(r);
-        }
-      }
-    }
-    let had_error = match err {
-      Some((id, e)) => {
-        match ret.get_err_reason(id, e.range, e.message) {
-          Ok(()) => {}
-          Err(r) => ret.reasons.push(r),
-        }
-        true
-      }
-      None => false,
-    };
-    if !had_error && want_err_len != 0 {
-      ret.reasons.push(Reason::NoErrorsEmitted(want_err_len));
-    }
-    ret
-  }
-
-  fn get_err_reason(
-    &mut self,
-    path: paths::PathId,
-    range: text_pos::Range,
-    got: String,
-  ) -> Result<(), Reason> {
-    let file = &self.files[&path];
-    if range.start.line == range.end.line {
-      let region = Region::Exact {
-        line: range.start.line,
-        col_start: range.start.character,
-        col_end: range.end.character,
-      };
-      if try_region(file, path.wrap(region), got.as_str())? {
-        return Ok(());
-      }
-    }
-    let region = Region::Line(range.start.line);
-    if try_region(file, path.wrap(region), got.as_str())? {
-      Ok(())
-    } else {
-      Err(Reason::GotButNotWanted(path.wrap(region), got))
-    }
+  fn new<I>(store: paths::Store, files: I) -> Self
+  where
+    I: Iterator<Item = (paths::PathId, ExpectFile)>,
+  {
+    Self { store, files: files.collect(), reasons: Vec::new() }
   }
 }
 
