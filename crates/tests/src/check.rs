@@ -1,5 +1,7 @@
 //! Test infra.
 
+mod expect;
+
 use diagnostic_util::Severity;
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
@@ -94,14 +96,7 @@ pub(crate) fn go<'a, I>(
   let mut ck = Check::new(
     store,
     input.iter_sources().map(|s| {
-      let file = ExpectFile {
-        want: s
-          .val
-          .lines()
-          .enumerate()
-          .filter_map(|(line_n, line_s)| get_expect_comment(line_n, line_s))
-          .collect(),
-      };
+      let file = expect::File::new(s.val);
       (s.path, file)
     }),
   );
@@ -109,9 +104,8 @@ pub(crate) fn go<'a, I>(
     .files
     .values()
     .map(|x| {
-      x.want
-        .iter()
-        .filter(|(_, e)| matches!(e.kind, ExpectKind::ErrorExact | ExpectKind::ErrorContains))
+      x.iter()
+        .filter(|(_, e)| matches!(e.kind, expect::Kind::ErrorExact | expect::Kind::ErrorContains))
         .count()
     })
     .sum();
@@ -133,13 +127,13 @@ pub(crate) fn go<'a, I>(
     })
     .next();
   for (&path, file) in &ck.files {
-    for (&region, expect) in &file.want {
-      if matches!(expect.kind, ExpectKind::Hover) {
+    for (&region, expect) in file.iter() {
+      if matches!(expect.kind, expect::Kind::Hover) {
         let pos = match region {
-          Region::Exact { line, col_start, .. } => {
+          expect::Region::Exact { line, col_start, .. } => {
             text_pos::Position { line, character: col_start }
           }
-          Region::Line(n) => {
+          expect::Region::Line(n) => {
             ck.reasons.push(Reason::InexactHover(path.wrap(n)));
             continue;
           }
@@ -223,14 +217,14 @@ where
 }
 
 fn get_err_reason(
-  files: &paths::PathMap<ExpectFile>,
+  files: &paths::PathMap<expect::File>,
   path: paths::PathId,
   range: text_pos::Range,
   got: String,
 ) -> Result<(), Reason> {
   let file = &files[&path];
   if range.start.line == range.end.line {
-    let region = Region::Exact {
+    let region = expect::Region::Exact {
       line: range.start.line,
       col_start: range.start.character,
       col_end: range.end.character,
@@ -239,7 +233,7 @@ fn get_err_reason(
       return Ok(());
     }
   }
-  let region = Region::Line(range.start.line);
+  let region = expect::Region::Line(range.start.line);
   if try_region(file, path.wrap(region), got.as_str())? {
     Ok(())
   } else {
@@ -255,14 +249,14 @@ static ROOT: Lazy<paths::CanonicalPathBuf> =
 
 struct Check {
   store: paths::Store,
-  files: paths::PathMap<ExpectFile>,
+  files: paths::PathMap<expect::File>,
   reasons: Vec<Reason>,
 }
 
 impl Check {
   fn new<I>(store: paths::Store, files: I) -> Self
   where
-    I: Iterator<Item = (paths::PathId, ExpectFile)>,
+    I: Iterator<Item = (paths::PathId, expect::File)>,
   {
     Self { store, files: files.collect(), reasons: Vec::new() }
   }
@@ -301,12 +295,12 @@ impl fmt::Display for Check {
       }
     }
     f.write_str("\n  want:")?;
-    if self.files.values().all(|x| x.want.is_empty()) {
+    if self.files.values().all(expect::File::is_empty) {
       f.write_str(" <empty>")?;
     } else {
       f.write_str("\n")?;
       for file in self.files.values() {
-        for (region, expect) in &file.want {
+        for (region, expect) in file.iter() {
           writeln!(f, "  - {region}: {expect}")?;
         }
       }
@@ -317,142 +311,36 @@ impl fmt::Display for Check {
 }
 
 fn try_region(
-  file: &ExpectFile,
-  region: paths::WithPath<Region>,
+  file: &expect::File,
+  region: paths::WithPath<expect::Region>,
   got: &str,
 ) -> Result<bool, Reason> {
-  match file.want.get(&region.val) {
+  match file.get(region.val) {
     None => Ok(false),
     Some(exp) => match exp.kind {
-      ExpectKind::ErrorExact => {
+      expect::Kind::ErrorExact => {
         if exp.msg == got {
           Ok(true)
         } else {
           Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
         }
       }
-      ExpectKind::ErrorContains => {
+      expect::Kind::ErrorContains => {
         if got.contains(&exp.msg) {
           Ok(true)
         } else {
           Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
         }
       }
-      ExpectKind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
+      expect::Kind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
     },
-  }
-}
-
-#[derive(Debug)]
-struct ExpectFile {
-  want: FxHashMap<Region, Expect>,
-}
-
-#[derive(Debug)]
-struct Expect {
-  msg: String,
-  kind: ExpectKind,
-}
-
-impl fmt::Display for Expect {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}: {}", self.kind, self.msg)
-  }
-}
-
-#[derive(Debug)]
-enum ExpectKind {
-  ErrorExact,
-  ErrorContains,
-  Hover,
-}
-
-impl fmt::Display for ExpectKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      ExpectKind::ErrorExact => f.write_str("error (exact)"),
-      ExpectKind::ErrorContains => f.write_str("error (contains)"),
-      ExpectKind::Hover => f.write_str("hover (contains"),
-    }
   }
 }
 
 enum Reason {
   NoErrorsEmitted(usize),
-  GotButNotWanted(paths::WithPath<Region>, String),
-  Mismatched(paths::WithPath<Region>, String, String),
-  NoHover(paths::WithPath<Region>),
+  GotButNotWanted(paths::WithPath<expect::Region>, String),
+  Mismatched(paths::WithPath<expect::Region>, String, String),
+  NoHover(paths::WithPath<expect::Region>),
   InexactHover(paths::WithPath<u32>),
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Region {
-  Exact { line: u32, col_start: u32, col_end: u32 },
-  Line(u32),
-}
-
-impl fmt::Display for Region {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    // don't add 1 for the line because the check strings usually have the first line blank.
-    match self {
-      Region::Exact { line, col_start, col_end } => {
-        write!(f, "{}:{}..{}", line, col_start + 1, col_end + 1)
-      }
-      Region::Line(line) => write!(f, "{line}"),
-    }
-  }
-}
-
-/// See [`get_expect_comment`].
-const EXPECT_COMMENT_START: &str = "(**";
-
-/// Parses expectation comments from a line of text. The line will be the following in order:
-///
-/// - zero or more of any character
-/// - the string `EXPECT_COMMENT_START` (the comment start)
-/// - zero or more spaces
-/// - one of `^` or `v` (the arrow character)
-/// - zero or more non-spaces (the column range for the arrow. usually these are all the same as the
-///   arrow character)
-/// - one space
-/// - one or more of any character (the message)
-/// - zero or more spaces
-/// - the string `*)` (the comment end)
-/// - zero or more of any character
-///
-/// If so, this returns `Some((line, col_range, msg))`, else returns `None`.
-///
-/// Note the arrows might be a little wonky with non-ascii.
-fn get_expect_comment(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
-  let (before, inner) = line_s.split_once(EXPECT_COMMENT_START)?;
-  let (inner, _) = inner.split_once("*)")?;
-  let non_space_idx = inner.find(|c| c != ' ')?;
-  let inner = &inner[non_space_idx..];
-  let (col_range, msg) = inner.split_once(' ')?;
-  let msg = msg.trim_end_matches(' ');
-  let (line, exact) = match col_range.chars().next()? {
-    '^' => (line_n - 1, true),
-    '+' => (line_n - 1, false),
-    'v' => (line_n + 1, true),
-    c => panic!("invalid arrow: {c}"),
-  };
-  let line = u32::try_from(line).ok()?;
-  let region = if exact {
-    let start = before.len() + EXPECT_COMMENT_START.len() + non_space_idx;
-    let end = start + col_range.len();
-    Region::Exact { line, col_start: u32::try_from(start).ok()?, col_end: u32::try_from(end).ok()? }
-  } else {
-    Region::Line(line)
-  };
-  Some((region, get_expect(msg)))
-}
-
-fn get_expect(msg: &str) -> Expect {
-  if let Some(msg) = msg.strip_prefix("contains: ") {
-    return Expect { msg: msg.to_owned(), kind: ExpectKind::ErrorContains };
-  }
-  if let Some(msg) = msg.strip_prefix("hover: ") {
-    return Expect { msg: msg.to_owned(), kind: ExpectKind::Hover };
-  }
-  Expect { msg: msg.to_owned(), kind: ExpectKind::ErrorExact }
 }
