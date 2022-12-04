@@ -59,7 +59,7 @@ fn config_path_not_exist() {
 version = 1
 workspace.root = "nope.cm"
 "#;
-  check_bad_input(config::FILE_NAME, "not a group file path", [(config::FILE_NAME, config)]);
+  check_bad_input(config::FILE_NAME, "pattern matched no paths:", [(config::FILE_NAME, config)]);
 }
 
 #[test]
@@ -94,7 +94,7 @@ workspace.root = "nope.txt"
 "#;
   check_bad_input(
     config::FILE_NAME,
-    "not a group file path",
+    "pattern matched no paths",
     [("a.cm", EMPTY_CM), (config::FILE_NAME, config)],
   );
 }

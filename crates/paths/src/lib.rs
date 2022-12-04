@@ -194,9 +194,24 @@ impl FileSystem for MemoryFileSystem {
     self.0.contains_key(path)
   }
 
-  type GlobPaths = std::iter::Once<glob::GlobResult>;
+  type GlobPaths = std::vec::IntoIter<glob::GlobResult>;
 
   fn glob(&self, pattern: &str) -> Result<Self::GlobPaths, glob::PatternError> {
-    Ok(std::iter::once(Ok(PathBuf::from(pattern))))
+    let cs: Vec<_> = Path::new(pattern).components().collect();
+    #[allow(clippy::needless_collect)]
+    let ret: Vec<_> = self
+      .0
+      .keys()
+      .filter_map(|path| {
+        if cs.len() != path.components().count() {
+          return None;
+        }
+        cs.iter()
+          .zip(path.components())
+          .all(|(&c, p)| c == std::path::Component::Normal(std::ffi::OsStr::new("*")) || c == p)
+          .then(|| Ok(path.clone()))
+      })
+      .collect();
+    Ok(ret.into_iter())
   }
 }

@@ -116,7 +116,9 @@ impl ConfigFromFile {
     }
     if let Some(ws) = parsed.workspace {
       if let Some(root_path_glob) = ws.root {
-        let paths = match fs.glob(root_path_glob.as_str()) {
+        let glob = root.as_path().join(root_path_glob.as_str());
+        let glob = glob.as_os_str().to_string_lossy();
+        let paths = match fs.glob(glob.as_ref()) {
           Ok(x) => x,
           Err(e) => {
             return Err(Error::new(ErrorSource::default(), ret.path, ErrorKind::GlobPattern(e)))

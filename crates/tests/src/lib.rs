@@ -6,6 +6,7 @@
 #![cfg(test)]
 #![deny(clippy::pedantic, rust_2018_idioms)]
 
+mod big;
 mod check;
 mod datatype_copy;
 mod deviations;
