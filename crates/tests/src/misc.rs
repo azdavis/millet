@@ -1,6 +1,6 @@
 //! Miscellaneous tests. If unsure where to put a test, put it here.
 
-use crate::check::{check, go, Outcome};
+use crate::check::{check, raw};
 use diagnostic_util::Severity;
 
 #[test]
@@ -724,7 +724,7 @@ fun f x = ()
     ),
     ("sources.mlb", "a.sml"),
   ];
-  go(files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
+  raw::get(files, analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Warning);
 }
 
 #[test]

@@ -1,6 +1,6 @@
 //! Tests to make sure Millet behaves as expected on the public documentation.
 
-use crate::check::{go, Outcome};
+use crate::check::raw;
 use diagnostic_util::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
@@ -29,7 +29,7 @@ fn check_all(contents: &str) {
               ("prog.sml", ac.as_str()),
               ("sources.mlb", ("std.sml prog.sml")),
             ];
-            go(files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Warning);
+            raw::get(files, analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Warning);
           }
           ac.clear();
           inside = false;

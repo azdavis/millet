@@ -1,6 +1,6 @@
 //! Some simple tests.
 
-use crate::check::{check, go, Outcome};
+use crate::check::{check, raw};
 use diagnostic_util::Severity;
 
 mod dec;
@@ -133,7 +133,7 @@ fun err s = if s = "bad" then raise Bad else ()
     ),
     ("sources.mlb", "a.sml b.sml"),
   ];
-  go(files, analysis::StdBasis::Minimal, Outcome::Pass, Severity::Error);
+  raw::get(files, analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Error);
 }
 
 #[test]
