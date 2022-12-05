@@ -60,6 +60,7 @@ pub(crate) fn get(
       }
       realize::get_env(&subst, inner_env);
     }
+    // @test(deviations::smlnj::sharing_via_abbreviation_short)
     None => log::info!("should have already errored"),
   }
 }
