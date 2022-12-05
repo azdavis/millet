@@ -931,8 +931,12 @@ An expression is "overly complex" if it involves `if`, `andalso`, or `orelse`, a
 | `x orelse false`            | `x`           |
 | `x andalso true`            | `x`           |
 | `x andalso false`           | `(x; false)`  |
+| `true orelse x`             | `true`        |
+| `false orelse x`            | `x`           |
+| `true andalso x`            | `x`           |
+| `false andalso x`           | `false`       |
 
-Note also e.g. `(x; true)` can be further simplified to `true` if evaluating `x` has no side effects.
+Note also for any `b`, `(x; b)` can be further simplified to `b` if evaluating `x` has no side effects.
 
 To fix, simplify the expression.
 
