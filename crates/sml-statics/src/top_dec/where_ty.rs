@@ -24,10 +24,7 @@ pub(crate) fn get(
       let fixed = add_fixed_ty_vars(st, idx, &mut cx, TyVarSrc::Ty, ty_vars);
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
       generalize_fixed(fixed, &mut ty_scheme);
-      match get_where_type(st, idx, marker, inner_env, path, ty_scheme) {
-        Ok(()) => {}
-        Err(e) => st.err(idx, e),
-      }
+      get_where_type(st, idx, marker, inner_env, path, ty_scheme, true);
     }
     sml_hir::WhereKind::Structure(lhs, rhs) => {
       let lhs_ty_cons = match ty_con_paths::get(inner_env, lhs) {
@@ -53,12 +50,7 @@ pub(crate) fn get(
         match get_ty_info(&bs.env, &rhs) {
           Ok(ty_info) => {
             let ty_scheme = ty_info.ty_scheme.clone();
-            // HACK: intentionally ignore CannotRealizeTy. I'm not exactly sure of the semantics of
-            // `where S = T` but this silences some errors seen in valid NJ-flavored SML.
-            match get_where_type(st, idx, marker, inner_env, &lhs, ty_scheme) {
-              Ok(()) | Err(ErrorKind::CannotRealizeTy(_, _)) => {}
-              Err(e) => st.err(idx, e),
-            }
+            get_where_type(st, idx, marker, inner_env, &lhs, ty_scheme, false);
           }
           Err(e) => st.err(idx, e),
         }
@@ -67,6 +59,8 @@ pub(crate) fn get(
   }
 }
 
+/// HACK: we allow intentionally ignoring cannot realize ty errors. I'm not exactly sure of the
+/// semantics of `where S = T` but this silences some errors seen in valid NJ-flavored SML.
 fn get_where_type(
   st: &mut St,
   idx: sml_hir::Idx,
@@ -74,21 +68,33 @@ fn get_where_type(
   inner_env: &mut Env,
   path: &sml_hir::Path,
   ty_scheme: TyScheme,
-) -> Result<(), ErrorKind> {
-  let ty_info = get_ty_info(inner_env, path)?;
-  match &ty_info.ty_scheme.ty {
-    Ty::None => Ok(()),
+  emit_cannot_realize: bool,
+) {
+  let path_ty_scheme = match get_ty_info(inner_env, path) {
+    Ok(x) => &x.ty_scheme,
+    Err(e) => {
+      st.err(idx, e);
+      return;
+    }
+  };
+  match &path_ty_scheme.ty {
+    Ty::None => {}
     // TODO side condition for well-formed?
     Ty::Con(_, sym) => {
       if sym.generated_after(marker) {
         realize::get_env(st, idx, &map([(*sym, ty_scheme)]), inner_env);
-        Ok(())
       } else {
         // @test(sig::impossible)
-        Err(ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone()))
+        if emit_cannot_realize {
+          st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), path_ty_scheme.clone()));
+        };
       }
     }
     // @test(sig::where_not_con)
-    _ => Err(ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone())),
+    _ => {
+      if emit_cannot_realize {
+        st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), path_ty_scheme.clone()));
+      }
+    }
   }
 }
