@@ -1,9 +1,10 @@
 //! Checking top-level declarations (and therefore signatures, and therefore specifications).
 
+mod enrich;
 mod env_syms;
 mod realize;
 
-use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
+use crate::compatible::eq_ty_fn_no_emit;
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::generalize::{generalize, generalize_fixed, HasRecordMetaVars};
@@ -214,7 +215,7 @@ fn get_str_exp(
         Mode::Regular(_, _) => {
           env_instance_sig(st, idx, &mut subst, &str_exp_env, &sig);
           realize::get_env(st, idx, &subst, &mut to_add);
-          env_enrich(st, idx, &str_exp_env, &to_add);
+          enrich::get_env(st, idx, &str_exp_env, &to_add);
         }
         Mode::BuiltinLib(_) | Mode::PathOrder => {}
       }
@@ -259,7 +260,7 @@ fn get_str_exp(
         realize::get_env(st, idx, &subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
         realize::get_env(st, arg_idx, &subst, &mut param_env);
-        env_enrich(st, arg_idx, &arg_env, &param_env);
+        enrich::get_env(st, arg_idx, &arg_env, &param_env);
         let def = st.def(idx);
         for env in to_add.str_env.values_mut() {
           env.def = def;
@@ -801,69 +802,6 @@ fn bound_ty_name_to_path<'e>(
     ac.pop();
   }
   false
-}
-
-// TODO improve error messages/range for the enrich family of fns.
-//
-// for ranges, we might need to track `sml_hir::Idx`es either in the Env or in a separate map with
-// exactly the same keys (names). or we could add a special env only for use here that has the
-// indices?
-
-fn env_enrich(st: &mut St, idx: sml_hir::Idx, general: &Env, specific: &Env) {
-  for (name, specific) in &specific.str_env {
-    match general.str_env.get(name) {
-      Some(general) => env_enrich(st, idx, general, specific),
-      None => st.err(idx, ErrorKind::Missing(Item::Struct, name.clone())),
-    }
-  }
-  for (name, specific) in &specific.ty_env {
-    match general.ty_env.get(name) {
-      Some(general) => ty_info_enrich(st, idx, general.clone(), specific.clone()),
-      None => st.err(idx, ErrorKind::Missing(Item::Ty, name.clone())),
-    }
-  }
-  for (name, specific) in &specific.val_env {
-    match general.val_env.get(name) {
-      Some(general) => val_info_enrich(st, idx, general.clone(), specific, name),
-      None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
-    }
-  }
-}
-
-fn ty_info_enrich(st: &mut St, idx: sml_hir::Idx, mut general: TyInfo, specific: TyInfo) {
-  eq_ty_fn(st, idx, specific.ty_scheme, general.ty_scheme.clone());
-  if specific.val_env.is_empty() {
-    return;
-  }
-  for (name, specific) in specific.val_env {
-    match general.val_env.remove(&name) {
-      Some(general) => {
-        if !general.id_status.same_kind_as(specific.id_status) {
-          st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
-        }
-        eq_ty_fn(st, idx, specific.ty_scheme, general.ty_scheme.clone());
-      }
-      None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
-    }
-  }
-  for name in general.val_env.keys() {
-    st.err(idx, ErrorKind::Extra(Item::Val, name.clone()));
-  }
-}
-
-fn val_info_enrich(
-  st: &mut St,
-  idx: sml_hir::Idx,
-  general: ValInfo,
-  specific: &ValInfo,
-  name: &str_util::Name,
-) {
-  generalizes(st, idx, general.ty_scheme, &specific.ty_scheme);
-  if !general.id_status.same_kind_as(specific.id_status)
-    && !matches!(specific.id_status, IdStatus::Val)
-  {
-    st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
-  }
 }
 
 fn assert_ty_has_no_record_meta_vars(x: Result<(), HasRecordMetaVars>) {
