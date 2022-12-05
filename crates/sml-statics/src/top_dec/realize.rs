@@ -4,7 +4,24 @@ use crate::types::{Sym, Ty, TyScheme, ValEnv};
 use crate::{env::Env, error::ErrorKind, st::St, util::apply_bv};
 use fast_hash::FxHashMap;
 
-pub(crate) type TyRealization = FxHashMap<Sym, TyScheme>;
+/// A type realization.
+#[derive(Debug, Default)]
+pub(crate) struct TyRealization(FxHashMap<Sym, TyScheme>);
+
+impl TyRealization {
+  pub(crate) fn clear(&mut self) {
+    self.0.clear();
+  }
+
+  /// Inserts the mapping from `sym` to `ty_scheme`.
+  ///
+  /// Callers **must** ensure `sym` has the same arity as `ty_scheme`.
+  ///
+  /// Panics if this overwrites an existing `Sym`.
+  pub(crate) fn insert(&mut self, sym: Sym, ty_scheme: TyScheme) {
+    assert!(self.0.insert(sym, ty_scheme).is_none());
+  }
+}
 
 pub(crate) fn get_env(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, env: &mut Env) {
   for env in env.str_env.values_mut() {
@@ -40,7 +57,7 @@ fn get_ty(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, ty: &mut Ty) {
       for ty in args.iter_mut() {
         get_ty(st, idx, subst, ty);
       }
-      if let Some(ty_scheme) = subst.get(sym) {
+      if let Some(ty_scheme) = subst.0.get(sym) {
         let want = args.len();
         let got = ty_scheme.bound_vars.len();
         if want == got {

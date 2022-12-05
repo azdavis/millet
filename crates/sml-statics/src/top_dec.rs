@@ -359,7 +359,7 @@ fn gen_fresh_syms(
     let ty_scheme = TyScheme::n_ary(ty_info.ty_scheme.bound_vars.iter().cloned(), started.sym());
     ty_info.ty_scheme = ty_scheme.clone();
     ac.push((started, ty_info, equality));
-    assert!(subst.insert(sym, ty_scheme).is_none());
+    subst.insert(sym, ty_scheme);
   }
   for (started, mut ty_info, equality) in ac {
     realize::get_val_env(st, idx, subst, &mut ty_info.val_env);

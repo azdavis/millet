@@ -7,7 +7,6 @@ use crate::{
   dec::add_fixed_ty_vars, error::ErrorKind, generalize::generalize_fixed, get_env::get_ty_info,
   st::St, ty,
 };
-use fast_hash::map;
 
 pub(crate) fn get(
   st: &mut St,
@@ -89,7 +88,9 @@ fn get_where_type(
       // TODO well-formed check - need to check every ty info in the resulting env has either empty
       // val env or the ty scheme is a Con?
       if sym.generated_after(marker) {
-        realize::get_env(st, idx, &map([(*sym, ty_scheme)]), inner_env);
+        let mut subst = realize::TyRealization::default();
+        subst.insert(*sym, ty_scheme);
+        realize::get_env(st, idx, &subst, inner_env);
       } else {
         // @test(sig::impossible)
         if emit_cannot_realize {

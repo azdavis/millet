@@ -2,6 +2,7 @@
 
 use crate::types::{Sym, SymsMarker, Ty, TyScheme};
 use crate::{env::Env, equality, error::ErrorKind, get_env::get_ty_info, st::St, top_dec::realize};
+use fast_hash::set_with_capacity;
 
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
 pub(crate) fn get(
@@ -12,7 +13,7 @@ pub(crate) fn get(
   paths: &[sml_hir::Path],
 ) {
   let mut ac = None::<SharingTyScheme>;
-  let mut syms = Vec::<Sym>::with_capacity(paths.len());
+  let mut syms = set_with_capacity::<Sym>(paths.len());
   for path in paths {
     let ty_scheme = match get_ty_info(inner_env, path) {
       Ok(x) => &x.ty_scheme,
@@ -49,12 +50,14 @@ pub(crate) fn get(
         }
       }
     }
-    syms.push(sym);
+    syms.insert(sym);
   }
   match ac {
     Some(ac) => {
-      let subst: realize::TyRealization =
-        syms.into_iter().map(|sym| (sym, ac.ty_scheme.clone())).collect();
+      let mut subst = realize::TyRealization::default();
+      for sym in syms {
+        subst.insert(sym, ac.ty_scheme.clone());
+      }
       realize::get_env(st, idx, &subst, inner_env);
     }
     None => log::info!("should have already errored"),
