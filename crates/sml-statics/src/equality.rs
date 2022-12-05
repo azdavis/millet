@@ -1,8 +1,5 @@
 //! Checking if various structures respect/admit equality.
 
-/// TODO remove this and all false branches. currently it fails, possible because of `where type`?
-const ENABLE_DEBUG_CHECK: bool = false;
-
 use crate::types::{
   BasicOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyInfo,
   TyScheme, TyVarKind,
@@ -94,9 +91,7 @@ fn get_basic(st: &mut St, ov: BasicOverload) -> Result {
   let ret = get_basic_opt(ov);
   // NOTE: this should always succeed because the signatures `INTEGER`, `WORD`, `STRING`, and `CHAR`
   // all have their primary types (e.g. `int` for `INTEGER`) as `eqtype`s.
-  if ENABLE_DEBUG_CHECK {
-    assert_eq!(ret, get_basic_naive(st, ov));
-  }
+  debug_assert_eq!(ret, get_basic_naive(st, ov));
   ret
 }
 
