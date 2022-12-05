@@ -1,6 +1,7 @@
 //! Checking top-level declarations (and therefore signatures, and therefore specifications).
 
 mod env_syms;
+mod realize;
 
 use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
@@ -11,9 +12,9 @@ use crate::types::{
   BasicOverload, Equality, IdStatus, StartedSym, Sym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme,
   TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
-use crate::util::{apply_bv, ins_check_name, ins_no_dupe};
+use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, dec, equality, info::Mode, st::St, ty};
-use fast_hash::{map, FxHashMap, FxHashSet};
+use fast_hash::{map, FxHashSet};
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
   let mut ac = Bs::<Env>::default();
@@ -206,13 +207,13 @@ fn get_str_exp(
       let marker = st.syms.mark();
       let ov = get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
       let sig = env_to_sig(sig_exp_env, marker);
-      let mut subst = TyRealization::default();
+      let mut subst = realize::TyRealization::default();
       let mut to_add = sig.env.clone();
       let idx = sml_hir::Idx::from(str_exp);
       match st.info.mode() {
         Mode::Regular(_, _) => {
           env_instance_sig(st, idx, &mut subst, &str_exp_env, &sig);
-          env_realize(st, idx, &subst, &mut to_add);
+          realize::get_env(st, idx, &subst, &mut to_add);
           env_enrich(st, idx, &str_exp_env, &to_add);
         }
         Mode::BuiltinLib(_) | Mode::PathOrder => {}
@@ -221,7 +222,7 @@ fn get_str_exp(
         subst.clear();
         gen_fresh_syms(st, idx, &mut subst, &sig.ty_names);
         to_add = sig.env.clone();
-        env_realize(st, idx, &subst, &mut to_add);
+        realize::get_env(st, idx, &subst, &mut to_add);
       }
       if let Some(ov) = ov {
         let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
@@ -250,14 +251,14 @@ fn get_str_exp(
         }
         let mut arg_env = Env::default();
         get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
-        let mut subst = TyRealization::default();
+        let mut subst = realize::TyRealization::default();
         let mut to_add = fun_sig.body_env.clone();
         let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
         env_instance_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
         gen_fresh_syms(st, idx, &mut subst, &fun_sig.body_ty_names);
-        env_realize(st, idx, &subst, &mut to_add);
+        realize::get_env(st, idx, &subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
-        env_realize(st, arg_idx, &subst, &mut param_env);
+        realize::get_env(st, arg_idx, &subst, &mut param_env);
         env_enrich(st, arg_idx, &arg_env, &param_env);
         let def = st.def(idx);
         for env in to_add.str_env.values_mut() {
@@ -305,11 +306,11 @@ fn get_sig_exp(
     // @def(63)
     sml_hir::SigExp::Name(name) => match bs.sig_env.get(name) {
       Some(sig) => {
-        let mut subst = TyRealization::default();
+        let mut subst = realize::TyRealization::default();
         let idx = sml_hir::Idx::from(sig_exp);
         gen_fresh_syms(st, idx, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
-        env_realize(st, idx, &subst, &mut sig_env);
+        realize::get_env(st, idx, &subst, &mut sig_env);
         st.info.insert(idx, None, sig.env.def);
         ac.append(&mut sig_env);
         match st.info.mode() {
@@ -411,7 +412,7 @@ fn get_where_type(
     // TODO side condition for well-formed?
     Ty::Con(_, sym) => {
       if sym.generated_after(marker) {
-        env_realize(st, idx, &map([(*sym, ty_scheme)]), inner_env);
+        realize::get_env(st, idx, &map([(*sym, ty_scheme)]), inner_env);
         Ok(())
       } else {
         // @test(sig::impossible)
@@ -423,7 +424,12 @@ fn get_where_type(
   }
 }
 
-fn gen_fresh_syms(st: &mut St, idx: sml_hir::Idx, subst: &mut TyRealization, ty_names: &TyNameSet) {
+fn gen_fresh_syms(
+  st: &mut St,
+  idx: sml_hir::Idx,
+  subst: &mut realize::TyRealization,
+  ty_names: &TyNameSet,
+) {
   let mut ac = Vec::<(StartedSym, TyInfo, Equality)>::new();
   for &sym in ty_names.iter() {
     let sym_info = st.syms.get(sym).unwrap();
@@ -436,7 +442,7 @@ fn gen_fresh_syms(st: &mut St, idx: sml_hir::Idx, subst: &mut TyRealization, ty_
     assert!(subst.insert(sym, ty_scheme).is_none());
   }
   for (started, mut ty_info, equality) in ac {
-    val_env_realize(st, idx, subst, &mut ty_info.val_env);
+    realize::get_val_env(st, idx, subst, &mut ty_info.val_env);
     st.syms.finish(started, ty_info, equality);
   }
 }
@@ -661,8 +667,9 @@ fn get_sharing_type(
   }
   match ac {
     Some(ac) => {
-      let subst: TyRealization = syms.into_iter().map(|sym| (sym, ac.ty_scheme.clone())).collect();
-      env_realize(st, idx, &subst, inner_env);
+      let subst: realize::TyRealization =
+        syms.into_iter().map(|sym| (sym, ac.ty_scheme.clone())).collect();
+      realize::get_env(st, idx, &subst, inner_env);
     }
     None => log::info!("should have already errored"),
   }
@@ -733,12 +740,10 @@ fn get_ty_desc(
   }
 }
 
-type TyRealization = FxHashMap<Sym, TyScheme>;
-
 fn env_instance_sig(
   st: &mut St,
   idx: sml_hir::Idx,
-  subst: &mut TyRealization,
+  subst: &mut realize::TyRealization,
   env: &Env,
   sig: &Sig,
 ) {
@@ -858,56 +863,6 @@ fn val_info_enrich(
     && !matches!(specific.id_status, IdStatus::Val)
   {
     st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
-  }
-}
-
-// uh... recursion schemes??
-
-fn env_realize(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, env: &mut Env) {
-  for env in env.str_env.values_mut() {
-    env_realize(st, idx, subst, env);
-  }
-  for ty_info in env.ty_env.values_mut() {
-    ty_realize(st, idx, subst, &mut ty_info.ty_scheme.ty);
-    val_env_realize(st, idx, subst, &mut ty_info.val_env);
-  }
-  val_env_realize(st, idx, subst, &mut env.val_env);
-}
-
-fn val_env_realize(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, val_env: &mut ValEnv) {
-  for val_info in val_env.values_mut() {
-    ty_realize(st, idx, subst, &mut val_info.ty_scheme.ty);
-  }
-}
-
-fn ty_realize(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, ty: &mut Ty) {
-  match ty {
-    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
-    Ty::Record(rows) => {
-      for ty in rows.values_mut() {
-        ty_realize(st, idx, subst, ty);
-      }
-    }
-    Ty::Con(args, sym) => {
-      for ty in args.iter_mut() {
-        ty_realize(st, idx, subst, ty);
-      }
-      if let Some(ty_scheme) = subst.get(sym) {
-        let want = args.len();
-        let got = ty_scheme.bound_vars.len();
-        if want == got {
-          let mut ty_scheme_ty = ty_scheme.ty.clone();
-          apply_bv(args, &mut ty_scheme_ty);
-          *ty = ty_scheme_ty;
-        } else {
-          st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
-        }
-      }
-    }
-    Ty::Fn(param, res) => {
-      ty_realize(st, idx, subst, param);
-      ty_realize(st, idx, subst, res);
-    }
   }
 }
 
