@@ -2,7 +2,7 @@
   "private": true,
   "name": "millet",
   "displayName": "Millet",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Standard ML support",
   "publisher": "azdavis",
   "icon": "icon.png",

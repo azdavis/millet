@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.6.2
 
 - Add `workspace-path` path variables.
 - Fix some top-level standard library definitions.
