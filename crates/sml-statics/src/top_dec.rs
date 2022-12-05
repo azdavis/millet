@@ -5,6 +5,7 @@ mod env_syms;
 mod instance;
 mod realize;
 mod sharing_ty;
+mod ty_con_paths;
 
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
@@ -363,14 +364,14 @@ fn get_where_kind(
       }
     }
     sml_hir::WhereKind::Structure(lhs, rhs) => {
-      let lhs_ty_cons = match get_path_ty_cons(inner_env, lhs) {
+      let lhs_ty_cons = match ty_con_paths::get(inner_env, lhs) {
         Ok(x) => x,
         Err(e) => {
           st.err(idx, e);
           return;
         }
       };
-      let rhs_ty_cons = match get_path_ty_cons(&bs.env, rhs) {
+      let rhs_ty_cons = match ty_con_paths::get(&bs.env, rhs) {
         Ok(x) => x,
         Err(e) => {
           st.err(idx, e);
@@ -569,7 +570,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         sml_hir::SharingKind::Derived => {
           let mut all: Vec<_> = paths
             .iter()
-            .filter_map(|path| match get_path_ty_cons(&inner_env, path) {
+            .filter_map(|path| match ty_con_paths::get(&inner_env, path) {
               Ok(ty_cons) => Some((path, ty_cons)),
               Err(e) => {
                 st.err(spec, e);
@@ -625,27 +626,8 @@ fn append_no_dupe(st: &mut St, idx: sml_hir::Idx, ac: &mut Env, other: &mut Env)
   }
 }
 
-fn get_path_ty_cons<E: EnvLike>(
-  env: &E,
-  path: &sml_hir::Path,
-) -> Result<FxHashSet<sml_hir::Path>, ErrorKind> {
-  let got_env = get_env_from_str_path(env, path)?;
-  let mut ty_cons = FxHashSet::<sml_hir::Path>::default();
-  get_ty_cons(&mut Vec::new(), &mut ty_cons, got_env);
-  Ok(ty_cons)
-}
-
 fn join_paths(p1: &sml_hir::Path, p2: &sml_hir::Path) -> sml_hir::Path {
   sml_hir::Path::new(p1.all_names().chain(p2.prefix()).cloned(), p2.last().clone())
-}
-
-fn get_ty_cons(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
-  ac.extend(env.ty_env.keys().map(|name| sml_hir::Path::new(prefix.clone(), name.clone())));
-  for (name, env) in &env.str_env {
-    prefix.push(name.clone());
-    get_ty_cons(prefix, ac, env);
-    prefix.pop().unwrap();
-  }
 }
 
 // @def(80)
