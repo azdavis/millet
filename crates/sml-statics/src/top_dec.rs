@@ -7,7 +7,7 @@ mod realize;
 use crate::compatible::eq_ty_fn_no_emit;
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
-use crate::generalize::{generalize, generalize_fixed, HasRecordMetaVars};
+use crate::generalize::{generalize, generalize_fixed};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
 use crate::types::{
   BasicOverload, Equality, IdStatus, StartedSym, Sym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme,
@@ -473,8 +473,8 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       for val_desc in val_descs {
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::Regular, val_desc.ty));
         let mv_g = st.meta_gen.generalizer();
-        let g = generalize(mv_g, &st.subst, fixed.clone(), &mut ty_scheme);
-        assert_ty_has_no_record_meta_vars(g);
+        generalize(mv_g, &st.subst, fixed.clone(), &mut ty_scheme)
+          .expect("a type cannot have record meta vars because it has no patterns");
         let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: st.def(spec.into()) };
         let name = &val_desc.name;
         if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
@@ -802,8 +802,4 @@ fn bound_ty_name_to_path<'e>(
     ac.pop();
   }
   false
-}
-
-fn assert_ty_has_no_record_meta_vars(x: Result<(), HasRecordMetaVars>) {
-  x.expect("a type cannot have record meta vars because it has no patterns");
 }
