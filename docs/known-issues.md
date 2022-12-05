@@ -1,6 +1,5 @@
 # Known issues
 
-- The distinction between equality types and non-equality types is ignored.
 - Some features like `abstype` are not supported.
 - Paths with certain 'default' path variables are ignored. (This is because Millet includes the std basis and other definitions.)
 - CM support is incomplete.

@@ -2180,7 +2180,7 @@ fun isEmpty xs = xs = []
 (**              ^^^^^^^ calling `=` or `<>` on nil *)
 ```
 
-Using `=` or `<>` may unnecessarily restrict the type to be an "equality" type. Although Millet does not track the distinction between equality and non-equality types, a conforming SML implementation will report the type of `isEmpty` above as `''a list -> bool` instead of the perhaps expected `'a list -> bool`.
+Using `=` or `<>` may unnecessarily restrict the type to be an "equality" type. Millet will report the type of `isEmpty` above as `''a list -> bool` instead of the perhaps expected `'a list -> bool`.
 
 Note the extra tick mark: `''a` is a type variable that can only be substituted with equality types, whereas `'a` is an unrestricted type variable. This is due to the usage of `=`.
 
