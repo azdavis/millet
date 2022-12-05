@@ -935,3 +935,23 @@ end
 "#,
   );
 }
+
+#[test]
+fn sharing_eqtype() {
+  check(
+    r#"
+signature FOO = sig type   t val x : t end
+signature BAR = sig eqtype t val x : t end
+
+signature QUZ = sig
+  structure Foo : FOO
+  structure Bar : BAR
+  sharing type Foo.t = Bar.t
+end
+
+functor F (Quz : QUZ) = struct
+  val _ = Quz.Foo.x = Quz.Bar.x
+end
+"#,
+  );
+}
