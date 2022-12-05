@@ -306,9 +306,9 @@ version = "0.1.0"
 
 [[package]]
 name = "libc"
-version = "0.2.137"
+version = "0.2.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc7fcc620a3bff7cdd7a365be3376c97191aeaccc2a603e600951e452615bf89"
+checksum = "db6d7e329c562c5dfab7a46a2afabc8b987ab9a4834c9d1ca04dc54c1546cef8"
 
 [[package]]
 name = "log"
@@ -630,7 +630,7 @@ dependencies = [
 [[package]]
 name = "sml-libs"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/sml-libs.git#0830d1cafbe879bcfdac2e719a5d08d101603dff"
+source = "git+https://github.com/azdavis/sml-libs.git#79db779be213122b56927ca992013e8840eb00ba"
 
 [[package]]
 name = "sml-lower"
@@ -713,9 +713,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.104"
+version = "1.0.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ae548ec36cf198c0ef7710d3c230987c2d6d7bd98ad6edc0274462724c585ce"
+checksum = "60b9b43d45702de4c839cb9b51d9f529c5dd26a4aff255b42b1ebc03e88ee908"
 dependencies = [
  "proc-macro2",
  "quote",
