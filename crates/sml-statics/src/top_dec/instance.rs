@@ -1,6 +1,7 @@
 //! Signature instantiation.
 
 use crate::env::{Env, Sig};
+use crate::error::ErrorKind;
 use crate::{
   compatible::eq_ty_fn_no_emit, get_env::get_ty_info_raw, st::St, top_dec::realize, types::TyScheme,
 };
@@ -22,9 +23,15 @@ pub(crate) fn env_of_sig(
       return;
     }
     let last = path.pop().unwrap();
+    let want = ty_scheme.bound_vars.len();
     match get_ty_info_raw(env, path, last) {
       Ok(ty_info) => {
-        subst.insert(sym, ty_info.ty_scheme.clone());
+        let got = ty_info.ty_scheme.bound_vars.len();
+        if want == got {
+          subst.insert(sym, ty_info.ty_scheme.clone());
+        } else {
+          st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
+        }
       }
       Err(e) => st.err(idx, e),
     }

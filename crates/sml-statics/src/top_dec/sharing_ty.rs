@@ -39,6 +39,7 @@ pub(crate) fn get(
         let got = ty_scheme.bound_vars.len();
         if want != got {
           st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
+          continue;
         }
         if !cur_ac.equality {
           let new = SharingTyScheme::new(st, ty_scheme.clone());
