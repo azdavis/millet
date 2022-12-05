@@ -2437,6 +2437,24 @@ val usingLet =
   end
 ```
 
+## 5038
+
+There was a usage of the top-level `use` function, which has implementation-defined semantics.
+
+```sml
+val () = use "foo.sml"
+(**      ^^^ `use` is implementation-defined *)
+val x = Foo.bar + 3
+```
+
+This function is provided by some SML implementations, like SML/NJ, but not others, like MLton. When it is provided, its approximate semantics are to "load" the contents of the SML file with the given name.
+
+This is sometimes used for simple multi-file SML projects. However, Millet only supports using "group files", aka ML Basis and SML/NJ CM to coordinate multi-file SML projects.
+
+To fix, use group files to inform Millet about the dependencies between SML files.
+
+If you wish to also compile and run your SML project with group files, you can remove the calls to `use`. If, however, you only want to use group files for Millet, and still want to use `use` when compiling your project, e.g. with SML/NJ, you can ignore this error in your `millet.toml`.
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.
