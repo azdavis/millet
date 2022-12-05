@@ -1,5 +1,7 @@
 //! Checking top-level declarations (and therefore signatures, and therefore specifications).
 
+mod env_syms;
+
 use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
@@ -9,7 +11,7 @@ use crate::types::{
   BasicOverload, Equality, IdStatus, StartedSym, Sym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme,
   TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
-use crate::util::{apply_bv, ins_check_name, ins_no_dupe, ty_syms};
+use crate::util::{apply_bv, ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, dec, equality, info::Mode, st::St, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
@@ -125,7 +127,7 @@ fn get_str_dec(
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
         st.pop_prefix();
         let mut body_ty_names = TyNameSet::default();
-        env_syms(&body_env, &mut |x| {
+        env_syms::get(&body_env, &mut |x| {
           if x.generated_after(marker) {
             body_ty_names.insert(x);
           }
@@ -442,7 +444,7 @@ fn gen_fresh_syms(st: &mut St, idx: sml_hir::Idx, subst: &mut TyRealization, ty_
 // @def(65)
 fn env_to_sig(env: Env, marker: SymsMarker) -> Sig {
   let mut ty_names = TyNameSet::default();
-  env_syms(&env, &mut |x| {
+  env_syms::get(&env, &mut |x| {
     if x.generated_after(marker) {
       ty_names.insert(x);
     }
@@ -906,31 +908,6 @@ fn ty_realize(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, ty: &mut Ty
       ty_realize(st, idx, subst, param);
       ty_realize(st, idx, subst, res);
     }
-  }
-}
-
-/// putting `f` last allows calls with the closure constructed at the call site to be formatted
-/// across fewer lines.
-fn env_syms<E, F>(env: &E, f: &mut F)
-where
-  E: EnvLike,
-  F: FnMut(Sym),
-{
-  for env in env.all_str() {
-    env_syms(env, f);
-  }
-  for ty_info in env.all_ty() {
-    ty_syms(&ty_info.ty_scheme.ty, f);
-    val_env_syms(&ty_info.val_env, f);
-  }
-  for val_info in env.all_val() {
-    ty_syms(&val_info.ty_scheme.ty, f);
-  }
-}
-
-fn val_env_syms<F: FnMut(Sym)>(val_env: &ValEnv, f: &mut F) {
-  for val_info in val_env.values() {
-    ty_syms(&val_info.ty_scheme.ty, f);
   }
 }
 
