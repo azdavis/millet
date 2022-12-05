@@ -1,19 +1,16 @@
 //! Checking top-level declarations (and therefore signatures, and therefore specifications).
 
 use crate::compatible::{eq_ty_fn, eq_ty_fn_no_emit, generalizes};
-use crate::config::Cfg;
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::generalize::{generalize, generalize_fixed, HasRecordMetaVars};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
-use crate::info::Mode;
-use crate::st::St;
 use crate::types::{
   BasicOverload, Equality, IdStatus, StartedSym, Sym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme,
   TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ins_check_name, ins_no_dupe, ty_syms};
-use crate::{dec, ty};
+use crate::{config::Cfg, dec, info::Mode, st::St, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
