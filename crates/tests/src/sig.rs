@@ -1,6 +1,6 @@
 //! NOTE: intentionally use a mix of `S:> SIG` and `S :> SIG` across tests to make sure both parse.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn ok_smoke() {
@@ -899,6 +899,39 @@ structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
 (**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as int *)
   =  struct structure F = Foo structure B = Bar end
+"#,
+  );
+}
+
+#[test]
+fn sharing_matched_arity() {
+  check(
+    r#"
+signature FOO = sig type t end
+signature BAR = sig type t end
+
+signature QUZ = sig
+  structure Foo : FOO
+  structure Bar : BAR
+  sharing type Foo.t = Bar.t
+end
+"#,
+  );
+}
+
+#[test]
+fn sharing_mismatched_arity() {
+  fail(
+    r#"
+signature FOO = sig type    t end
+signature BAR = sig type 'a t end
+
+signature QUZ = sig
+  structure Foo : FOO
+  structure Bar : BAR
+  sharing type Foo.t = Bar.t
+(** + contains: wrong number of type arguments *)
+end
 "#,
   );
 }
