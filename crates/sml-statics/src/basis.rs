@@ -110,7 +110,7 @@ pub fn minimal() -> (Syms, Basis) {
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
-  let aliases = [("unit", Ty::Record(RecordTy::new())), ("exn", Ty::EXN)];
+  let aliases = [("unit", unit()), ("exn", Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter_syms()
     .map(|sym_info| {
@@ -156,6 +156,7 @@ pub fn minimal() -> (Syms, Basis) {
       ("mod", wordint_pair_to_wordint),
       ("=", equality_pair_to_bool.clone()),
       ("<>", equality_pair_to_bool),
+      ("use", TyScheme::zero(Ty::fun(Ty::STRING, unit()))),
     ]
   };
   let val_env: ValEnv = ty_env
@@ -221,4 +222,8 @@ fn dup(ty: Ty) -> Ty {
 
 fn pair(t1: Ty, t2: Ty) -> Ty {
   Ty::Record(RecordTy::from([(sml_hir::Lab::Num(1), t1), (sml_hir::Lab::Num(2), t2)]))
+}
+
+fn unit() -> Ty {
+  Ty::Record(RecordTy::new())
 }
