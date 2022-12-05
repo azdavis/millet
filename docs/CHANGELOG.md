@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Add `workspace-path` path variables.
+- Fix some top-level standard library definitions.
+
 ## v0.6.1
 
 - Emit an error if the `workspace.root` glob pattern matches no paths.
