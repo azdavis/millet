@@ -67,28 +67,28 @@ impl St {
     }
   }
 
-  pub(crate) fn insert_bind(&mut self, pat: Pat, want: Ty, idx: sml_hir::Idx) {
+  pub(crate) fn insert_bind(&mut self, idx: sml_hir::Idx, pat: Pat, want: Ty) {
     if self.info.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx });
   }
 
-  pub(crate) fn insert_handle(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
+  pub(crate) fn insert_handle(&mut self, idx: sml_hir::Idx, pats: Vec<Pat>, want: Ty) {
     if self.info.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx });
   }
 
-  pub(crate) fn insert_case(&mut self, pats: Vec<Pat>, want: Ty, idx: sml_hir::Idx) {
+  pub(crate) fn insert_case(&mut self, idx: sml_hir::Idx, pats: Vec<Pat>, want: Ty) {
     if self.info.mode().is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
-  pub(crate) fn insert_hole(&mut self, mv: MetaTyVar, idx: sml_hir::Idx) {
+  pub(crate) fn insert_hole(&mut self, idx: sml_hir::Idx, mv: MetaTyVar) {
     if self.info.mode().is_path_order() {
       return;
     }

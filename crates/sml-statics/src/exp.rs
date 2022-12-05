@@ -36,7 +36,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.meta_gen.gen(Generalizable::Always);
-      st.insert_hole(mv, exp.into());
+      st.insert_hole(exp.into(), mv);
       Ty::MetaVar(mv)
     }
     // @def(1)
@@ -62,7 +62,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     },
     // @def(3)
     sml_hir::Exp::Record(rows) => {
-      let rows = record(st, rows, exp.into(), |st, _, exp| get(st, cfg, cx, ars, exp));
+      let rows = record(st, exp.into(), rows, |st, _, exp| get(st, cfg, cx, ars, exp));
       Ty::Record(rows)
     }
     // @def(4)
@@ -84,14 +84,14 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       // already a function type to just unify the parameter with the argument.
       match func_ty {
         Ty::Fn(param_ty, mut ret) => {
-          unify(st, *param_ty, arg_ty, argument.unwrap_or(exp).into());
+          unify(st, argument.unwrap_or(exp).into(), *param_ty, arg_ty);
           apply(&st.subst, ret.as_mut());
           *ret
         }
         _ => {
           let mut ret = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
           let want = Ty::fun(arg_ty, ret.clone());
-          unify(st, want, func_ty, func.unwrap_or(exp).into());
+          unify(st, func.unwrap_or(exp).into(), want, func_ty);
           apply(&st.subst, &mut ret);
           ret
         }
@@ -100,23 +100,23 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     // @def(10)
     sml_hir::Exp::Handle(inner, matcher) => {
       let mut exp_ty = get(st, cfg, cx, ars, *inner);
-      let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
+      let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
       let idx = inner.unwrap_or(exp);
-      unify(st, Ty::EXN, param.clone(), idx.into());
-      unify(st, exp_ty.clone(), res, idx.into());
+      unify(st, idx.into(), Ty::EXN, param.clone());
+      unify(st, idx.into(), exp_ty.clone(), res);
       apply(&st.subst, &mut exp_ty);
-      st.insert_handle(pats, param, idx.into());
+      st.insert_handle(idx.into(), pats, param);
       exp_ty
     }
     // @def(11)
     sml_hir::Exp::Raise(inner) => {
       let got = get(st, cfg, cx, ars, *inner);
-      unify(st, Ty::EXN, got, inner.unwrap_or(exp).into());
+      unify(st, inner.unwrap_or(exp).into(), Ty::EXN, got);
       Ty::MetaVar(st.meta_gen.gen(Generalizable::Always))
     }
     // @def(12)
     sml_hir::Exp::Fn(matcher, flavor) => {
-      let (pats, param, res) = get_matcher(st, cfg, cx, ars, matcher, exp.into());
+      let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
       if let Ty::Con(arguments, sym) = &param {
         if *sym == Sym::BOOL {
           assert!(arguments.is_empty(), "bool should have no ty args");
@@ -136,14 +136,14 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
           }
         }
       }
-      st.insert_case(pats, param.clone(), exp.into());
+      st.insert_case(exp.into(), pats, param.clone());
       Ty::fun(param, res)
     }
     // @def(9)
     sml_hir::Exp::Typed(inner, want) => {
       let got = get(st, cfg, cx, ars, *inner);
       let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
-      unify(st, want.clone(), got, exp.into());
+      unify(st, exp.into(), want.clone(), got);
       apply(&st.subst, &mut want);
       want
     }
@@ -254,11 +254,11 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
 /// @def(13)
 fn get_matcher(
   st: &mut St,
+  idx: sml_hir::Idx,
   cfg: Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
   matcher: &[(sml_hir::PatIdx, sml_hir::ExpIdx)],
-  idx: sml_hir::Idx,
 ) -> (Vec<Pat>, Ty, Ty) {
   let mut param_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
   let mut res_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
@@ -272,10 +272,8 @@ fn get_matcher(
     let mut cx = cx.clone();
     cx.env.push(Env { val_env: ve, ..Default::default() });
     let exp_ty = get(st, cfg.cfg, &cx, ars, exp);
-    let pi = pat.map_or(idx, Into::into);
-    unify(st, param_ty.clone(), pat_ty, pi);
-    let ei = exp.map_or(idx, Into::into);
-    unify(st, res_ty.clone(), exp_ty, ei);
+    unify(st, pat.map_or(idx, Into::into), param_ty.clone(), pat_ty);
+    unify(st, exp.map_or(idx, Into::into), res_ty.clone(), exp_ty);
     apply(&st.subst, &mut param_ty);
     apply(&st.subst, &mut res_ty);
     pats.push(pm_pat);

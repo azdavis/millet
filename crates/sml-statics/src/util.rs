@@ -30,8 +30,8 @@ fn basic_overload(st: &mut St, g: Generalizable, b: BasicOverload) -> Ty {
 /// @def(6), @def(39), @def(49)
 pub(crate) fn record<T, F>(
   st: &mut St,
-  rows: &[(sml_hir::Lab, T)],
   idx: sml_hir::Idx,
+  rows: &[(sml_hir::Lab, T)],
   mut f: F,
 ) -> RecordTy
 where

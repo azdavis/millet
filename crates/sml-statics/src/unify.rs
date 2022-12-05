@@ -7,7 +7,7 @@ use crate::types::{MetaTyVar, SubstEntry, Ty, TyVarKind};
 use crate::util::{apply, meta_vars};
 use fast_hash::FxHashMap;
 
-pub(crate) fn unify(st: &mut St, want: Ty, got: Ty, idx: sml_hir::Idx) {
+pub(crate) fn unify(st: &mut St, idx: sml_hir::Idx, want: Ty, got: Ty) {
   match unify_no_emit(st, want, got) {
     Ok(()) => {}
     Err(e) => st.err(idx, e),

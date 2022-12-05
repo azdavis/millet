@@ -209,9 +209,9 @@ fn get_str_exp(
       let idx = sml_hir::Idx::from(str_exp);
       match st.info.mode() {
         Mode::Regular(_, _) => {
-          env_instance_sig(st, &mut subst, &str_exp_env, &sig, idx);
+          env_instance_sig(st, idx, &mut subst, &str_exp_env, &sig);
           env_realize(st, idx, &subst, &mut to_add);
-          env_enrich(st, &str_exp_env, &to_add, idx);
+          env_enrich(st, idx, &str_exp_env, &to_add);
         }
         Mode::BuiltinLib(_) | Mode::PathOrder => {}
       }
@@ -251,12 +251,12 @@ fn get_str_exp(
         let mut subst = TyRealization::default();
         let mut to_add = fun_sig.body_env.clone();
         let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
-        env_instance_sig(st, &mut subst, &arg_env, &fun_sig.param, arg_idx);
+        env_instance_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
         gen_fresh_syms(st, idx, &mut subst, &fun_sig.body_ty_names);
         env_realize(st, idx, &subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
-        env_realize(st, idx, &subst, &mut param_env);
-        env_enrich(st, &arg_env, &param_env, arg_idx);
+        env_realize(st, arg_idx, &subst, &mut param_env);
+        env_enrich(st, arg_idx, &arg_env, &param_env);
         let def = st.def(idx);
         for env in to_add.str_env.values_mut() {
           env.def = def;
@@ -330,7 +330,7 @@ fn get_sig_exp(
       let marker = st.syms.mark();
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
-      get_where_kind(st, bs, marker, ars, &mut inner_env, kind, sig_exp.into());
+      get_where_kind(st, sig_exp.into(), bs, marker, ars, &mut inner_env, kind);
       ac.append(&mut inner_env);
       ov
     }
@@ -339,17 +339,17 @@ fn get_sig_exp(
 
 fn get_where_kind(
   st: &mut St,
+  idx: sml_hir::Idx,
   bs: &Bs,
   marker: SymsMarker,
   ars: &sml_hir::Arenas,
   inner_env: &mut Env,
   kind: &sml_hir::WhereKind,
-  idx: sml_hir::Idx,
 ) {
   match kind {
     sml_hir::WhereKind::Type(ty_vars, path, ty) => {
       let mut cx = bs.as_cx();
-      let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Ty, ty_vars, idx);
+      let fixed = dec::add_fixed_ty_vars(st, idx, &mut cx, TyVarSrc::Ty, ty_vars);
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
       generalize_fixed(fixed, &mut ty_scheme);
       match get_where_type(st, idx, marker, inner_env, path, ty_scheme) {
@@ -460,7 +460,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     sml_hir::Spec::Val(ty_vars, val_descs) => {
       // @def(79)
       let mut cx = bs.as_cx();
-      let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Val, ty_vars, spec.into());
+      let fixed = dec::add_fixed_ty_vars(st, spec.into(), &mut cx, TyVarSrc::Val, ty_vars);
       for val_desc in val_descs {
         let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::Regular, val_desc.ty));
         let mv_g = st.meta_gen.generalizer();
@@ -475,17 +475,17 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     }
     // @def(69)
     sml_hir::Spec::Ty(ty_descs) => {
-      get_ty_desc(st, &mut ac.ty_env, ty_descs, Equality::Never, spec.into());
+      get_ty_desc(st, spec.into(), &mut ac.ty_env, ty_descs, Equality::Never);
     }
     // @def(70)
     sml_hir::Spec::EqTy(ty_descs) => {
-      get_ty_desc(st, &mut ac.ty_env, ty_descs, Equality::Sometimes, spec.into());
+      get_ty_desc(st, spec.into(), &mut ac.ty_env, ty_descs, Equality::Sometimes);
     }
     // @def(71)
     sml_hir::Spec::Datatype(dat_desc) => {
       let dat_descs = std::slice::from_ref(dat_desc);
       let (ty_env, big_val_env) =
-        dec::get_dat_binds(st, bs.as_cx(), ars, dat_descs, &[], spec.into());
+        dec::get_dat_binds(st, spec.into(), bs.as_cx(), ars, dat_descs, &[]);
       for (name, val) in ty_env {
         if let Some(e) = ins_no_dupe(&mut ac.ty_env, name, val, Item::Ty) {
           st.err(spec, e);
@@ -554,7 +554,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       get_spec(st, bs, ars, &mut inner_env, *inner);
       match kind {
         sml_hir::SharingKind::Regular => {
-          get_sharing_type(st, marker, &mut inner_env, paths, spec.into());
+          get_sharing_type(st, spec.into(), marker, &mut inner_env, paths);
         }
         sml_hir::SharingKind::Derived => {
           let mut all: Vec<_> = paths
@@ -575,13 +575,13 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
                 }
                 let path_1 = join_paths(struct_1, &ty_con);
                 let path_2 = join_paths(struct_2, &ty_con);
-                get_sharing_type(st, marker, &mut inner_env, &[path_1, path_2], spec.into());
+                get_sharing_type(st, spec.into(), marker, &mut inner_env, &[path_1, path_2]);
               }
             }
           }
         }
       }
-      append_no_dupe(st, ac, &mut inner_env, spec.into());
+      append_no_dupe(st, spec.into(), ac, &mut inner_env);
     }
     // @def(76), @def(77)
     sml_hir::Spec::Seq(specs) => {
@@ -590,14 +590,14 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       for &seq_spec in specs {
         get_spec(st, &bs, ars, &mut one_env, seq_spec);
         bs.env.append(&mut one_env.clone());
-        append_no_dupe(st, ac, &mut one_env, seq_spec.unwrap_or(spec).into());
+        append_no_dupe(st, seq_spec.unwrap_or(spec).into(), ac, &mut one_env);
       }
     }
   }
 }
 
 /// empties other into ac, while checking for dupes.
-fn append_no_dupe(st: &mut St, ac: &mut Env, other: &mut Env, idx: sml_hir::Idx) {
+fn append_no_dupe(st: &mut St, idx: sml_hir::Idx, ac: &mut Env, other: &mut Env) {
   for (name, val) in other.str_env.drain() {
     if let Some(e) = ins_no_dupe(&mut ac.str_env, name, val, Item::Struct) {
       st.err(idx, e);
@@ -618,10 +618,10 @@ fn append_no_dupe(st: &mut St, ac: &mut Env, other: &mut Env, idx: sml_hir::Idx)
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
 fn get_sharing_type(
   st: &mut St,
+  idx: sml_hir::Idx,
   marker: SymsMarker,
   inner_env: &mut Env,
   paths: &[sml_hir::Path],
-  idx: sml_hir::Idx,
 ) {
   let mut ac = None::<SharingTyScheme>;
   let mut syms = Vec::<Sym>::with_capacity(paths.len());
@@ -704,10 +704,10 @@ fn get_ty_cons(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Pat
 // @def(80)
 fn get_ty_desc(
   st: &mut St,
+  idx: sml_hir::Idx,
   ty_env: &mut TyEnv,
   ty_desc: &sml_hir::TyDesc,
   equality: Equality,
-  idx: sml_hir::Idx,
 ) {
   let mut ty_vars = FxHashSet::<&sml_hir::TyVar>::default();
   let started = st.syms.start(st.mk_path(ty_desc.name.clone()));
@@ -735,10 +735,10 @@ type TyRealization = FxHashMap<Sym, TyScheme>;
 
 fn env_instance_sig(
   st: &mut St,
+  idx: sml_hir::Idx,
   subst: &mut TyRealization,
   env: &Env,
   sig: &Sig,
-  idx: sml_hir::Idx,
 ) {
   for &sym in &sig.ty_names {
     let mut path = Vec::<&str_util::Name>::new();
@@ -802,29 +802,29 @@ fn bound_ty_name_to_path<'e>(
 // exactly the same keys (names). or we could add a special env only for use here that has the
 // indices?
 
-fn env_enrich(st: &mut St, general: &Env, specific: &Env, idx: sml_hir::Idx) {
+fn env_enrich(st: &mut St, idx: sml_hir::Idx, general: &Env, specific: &Env) {
   for (name, specific) in &specific.str_env {
     match general.str_env.get(name) {
-      Some(general) => env_enrich(st, general, specific, idx),
+      Some(general) => env_enrich(st, idx, general, specific),
       None => st.err(idx, ErrorKind::Missing(Item::Struct, name.clone())),
     }
   }
   for (name, specific) in &specific.ty_env {
     match general.ty_env.get(name) {
-      Some(general) => ty_info_enrich(st, general.clone(), specific.clone(), idx),
+      Some(general) => ty_info_enrich(st, idx, general.clone(), specific.clone()),
       None => st.err(idx, ErrorKind::Missing(Item::Ty, name.clone())),
     }
   }
   for (name, specific) in &specific.val_env {
     match general.val_env.get(name) {
-      Some(general) => val_info_enrich(st, general.clone(), specific, name, idx),
+      Some(general) => val_info_enrich(st, idx, general.clone(), specific, name),
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
     }
   }
 }
 
-fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_hir::Idx) {
-  eq_ty_fn(st, specific.ty_scheme, general.ty_scheme.clone(), idx);
+fn ty_info_enrich(st: &mut St, idx: sml_hir::Idx, mut general: TyInfo, specific: TyInfo) {
+  eq_ty_fn(st, idx, specific.ty_scheme, general.ty_scheme.clone());
   if specific.val_env.is_empty() {
     return;
   }
@@ -834,7 +834,7 @@ fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_h
         if !general.id_status.same_kind_as(specific.id_status) {
           st.err(idx, ErrorKind::WrongIdStatus(name.clone()));
         }
-        eq_ty_fn(st, specific.ty_scheme, general.ty_scheme.clone(), idx);
+        eq_ty_fn(st, idx, specific.ty_scheme, general.ty_scheme.clone());
       }
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
     }
@@ -846,12 +846,12 @@ fn ty_info_enrich(st: &mut St, mut general: TyInfo, specific: TyInfo, idx: sml_h
 
 fn val_info_enrich(
   st: &mut St,
+  idx: sml_hir::Idx,
   general: ValInfo,
   specific: &ValInfo,
   name: &str_util::Name,
-  idx: sml_hir::Idx,
 ) {
-  generalizes(st, general.ty_scheme, &specific.ty_scheme, idx);
+  generalizes(st, idx, general.ty_scheme, &specific.ty_scheme);
   if !general.id_status.same_kind_as(specific.id_status)
     && !matches!(specific.id_status, IdStatus::Val)
   {

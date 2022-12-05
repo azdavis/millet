@@ -22,7 +22,7 @@ pub(crate) fn eq_ty_fn_no_emit(st: &mut St, mut lhs: TyScheme, mut rhs: TyScheme
 }
 
 /// emits no error iff the ty fns are equal.
-pub(crate) fn eq_ty_fn(st: &mut St, lhs: TyScheme, rhs: TyScheme, idx: sml_hir::Idx) {
+pub(crate) fn eq_ty_fn(st: &mut St, idx: sml_hir::Idx, lhs: TyScheme, rhs: TyScheme) {
   match eq_ty_fn_no_emit(st, lhs, rhs) {
     Ok(()) => {}
     Err(e) => st.err(idx, e),
@@ -57,7 +57,7 @@ fn generalizes_no_emit(st: &mut St, general: TyScheme, specific: &TyScheme) -> R
 }
 
 /// emits no error iff `general` generalizes `specific`.
-pub(crate) fn generalizes(st: &mut St, general: TyScheme, specific: &TyScheme, idx: sml_hir::Idx) {
+pub(crate) fn generalizes(st: &mut St, idx: sml_hir::Idx, general: TyScheme, specific: &TyScheme) {
   match generalizes_no_emit(st, general, specific) {
     Ok(()) => {}
     Err(e) => st.err(idx, e),

@@ -28,7 +28,7 @@ pub(crate) fn get(
     // @def(15)
     sml_hir::Dec::Val(ty_vars, val_binds) => {
       let mut cx = cx.clone();
-      let fixed = add_fixed_ty_vars(st, &mut cx, TyVarSrc::Val, ty_vars, dec.into());
+      let fixed = add_fixed_ty_vars(st, dec.into(), &mut cx, TyVarSrc::Val, ty_vars);
       // we actually resort to indexing logic because this is a little weird:
       // - we represent the recursive nature of ValBinds (and all other things that recurse with
       //   `and`) as a sequence of non-recursive items.
@@ -51,9 +51,9 @@ pub(crate) fn get(
         let (pm_pat, mut want) =
           get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
-        unify(st, want.clone(), got, dec.into());
+        unify(st, dec.into(), want.clone(), got);
         apply(&st.subst, &mut want);
-        st.insert_bind(pm_pat, want, val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into));
+        st.insert_bind(val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into), pm_pat, want);
       }
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
       // also need a separate recursive-only ValEnv.
@@ -81,9 +81,9 @@ pub(crate) fn get(
           }
         }
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
-        unify(st, want.clone(), got, dec.into());
+        unify(st, dec.into(), want.clone(), got);
         apply(&st.subst, &mut want);
-        st.insert_bind(pm_pat, want, dec.into());
+        st.insert_bind(dec.into(), pm_pat, want);
       }
       let mut generalized = FxHashSet::<sml_hir::ExpIdx>::default();
       // generalize the entire merged ValEnv.
@@ -112,13 +112,13 @@ pub(crate) fn get(
       let mut cx = cx.clone();
       let mut ty_env = TyEnv::default();
       // @def(27)
-      get_ty_binds(st, &mut cx, ars, &mut ty_env, ty_binds, dec.into());
+      get_ty_binds(st, dec.into(), &mut cx, ars, &mut ty_env, ty_binds);
       env.ty_env.extend(ty_env);
     }
     // @def(17)
     sml_hir::Dec::Datatype(dat_binds, with_types) => {
       let (ty_env, big_val_env) =
-        get_dat_binds(st, cx.clone(), ars, dat_binds, with_types, dec.into());
+        get_dat_binds(st, dec.into(), cx.clone(), ars, dat_binds, with_types);
       env.ty_env.extend(ty_env);
       env.val_env.extend(big_val_env);
     }
@@ -228,10 +228,10 @@ fn get_pat_and_src_exp(
 
 pub(crate) fn add_fixed_ty_vars(
   st: &mut St,
+  idx: sml_hir::Idx,
   cx: &mut Cx,
   src: TyVarSrc,
   ty_vars: &[sml_hir::TyVar],
-  idx: sml_hir::Idx,
 ) -> FixedTyVars {
   let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
@@ -247,14 +247,14 @@ pub(crate) fn add_fixed_ty_vars(
 
 fn get_ty_binds(
   st: &mut St,
+  idx: sml_hir::Idx,
   cx: &mut Cx,
   ars: &sml_hir::Arenas,
   ty_env: &mut TyEnv,
   ty_binds: &[sml_hir::TyBind],
-  idx: sml_hir::Idx,
 ) {
   for ty_bind in ty_binds {
-    let fixed = add_fixed_ty_vars(st, cx, TyVarSrc::Ty, &ty_bind.ty_vars, idx);
+    let fixed = add_fixed_ty_vars(st, idx, cx, TyVarSrc::Ty, &ty_bind.ty_vars);
     let mut ty_scheme = TyScheme::zero(ty::get(st, cx, ars, ty::Mode::TyRhs, ty_bind.ty));
     generalize_fixed(fixed, &mut ty_scheme);
     let ty_info = TyInfo { ty_scheme, val_env: ValEnv::default(), def: st.def(idx) };
@@ -276,11 +276,11 @@ struct Datatype {
 
 pub(crate) fn get_dat_binds(
   st: &mut St,
+  idx: sml_hir::Idx,
   mut cx: Cx,
   ars: &sml_hir::Arenas,
   dat_binds: &[sml_hir::DatBind],
   with_types: &[sml_hir::TyBind],
-  idx: sml_hir::Idx,
 ) -> (TyEnv, ValEnv) {
   // 'fake' because it's just to allow recursive reference, it doesn't have the val env filled in
   // with the constructors.
@@ -313,7 +313,7 @@ pub(crate) fn get_dat_binds(
   cx.env.push(Env { ty_env: fake_ty_env.clone(), ..Default::default() });
   // now get the `withtype`s. this `ty_env` will be the ultimate one we return.
   let mut ty_env = TyEnv::default();
-  get_ty_binds(st, &mut cx, ars, &mut ty_env, with_types, idx);
+  get_ty_binds(st, idx, &mut cx, ars, &mut ty_env, with_types);
   // make sure the types did not conflict with the datatypes.
   for (name, val) in &ty_env {
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, name.clone(), val.clone(), Item::Ty) {

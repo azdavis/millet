@@ -50,7 +50,7 @@ pub(crate) fn get(
     },
     // @def(45)
     sml_hir::Ty::Record(rows) => {
-      let rows = record(st, rows, ty.into(), |st, _, ty| get(st, cx, ars, mode, ty));
+      let rows = record(st, ty.into(), rows, |st, _, ty| get(st, cx, ars, mode, ty));
       Ty::Record(rows)
     }
     // @def(46)

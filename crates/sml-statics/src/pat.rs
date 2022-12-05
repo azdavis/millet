@@ -95,7 +95,7 @@ fn get_(
       // @def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
-        insert_name(st, cfg.cfg, ve, path.last().clone(), ty.clone(), pat_idx.into());
+        insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty.clone());
         return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, def });
       }
       let val_info = match maybe_val_info {
@@ -145,7 +145,7 @@ fn get_(
               Pat::zero(Con::Any, pat)
             }
             Some((arg_pat, arg_ty)) => {
-              unify(st, *param_ty, arg_ty, pat_idx.into());
+              unify(st, pat_idx.into(), *param_ty, arg_ty);
               apply(&st.subst, &mut res_ty);
               arg_pat
             }
@@ -162,7 +162,7 @@ fn get_(
     sml_hir::Pat::Record { rows, allows_other } => {
       let mut labels = BTreeSet::<sml_hir::Lab>::new();
       let mut pats = Vec::<Pat>::with_capacity(rows.len());
-      let rows = record(st, rows, pat_idx.into(), |st, lab, pat| {
+      let rows = record(st, pat_idx.into(), rows, |st, lab, pat| {
         let (pm_pat, ty) = get(st, cfg, ars, cx, ve, pat);
         labels.insert(lab.clone());
         pats.push(pm_pat);
@@ -184,7 +184,7 @@ fn get_(
     sml_hir::Pat::Typed(inner, want) => {
       let (pm_pat, got) = get(st, cfg, ars, cx, ve, *inner);
       let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
-      unify(st, want.clone(), got, inner.unwrap_or(pat_idx).into());
+      unify(st, inner.unwrap_or(pat_idx).into(), want.clone(), got);
       apply(&st.subst, &mut want);
       (pm_pat, want)
     }
@@ -194,7 +194,7 @@ fn get_(
       if !ok_val_info(cx.env.get_val(name)) {
         st.err(pat_idx, ErrorKind::InvalidAsPatName(name.clone()));
       }
-      insert_name(st, cfg.cfg, ve, name.clone(), ty.clone(), pat_idx.into());
+      insert_name(st, pat_idx.into(), cfg.cfg, ve, name.clone(), ty.clone());
       (pm_pat, ty)
     }
     sml_hir::Pat::Or(or_pat) => {
@@ -206,7 +206,7 @@ fn get_(
         let (rest_pm_pat, rest_ty) = get(st, cfg, ars, cx, &mut rest_ve, pat);
         pm_pats.push(rest_pm_pat);
         let idx = sml_hir::Idx::from(pat.unwrap_or(pat_idx));
-        unify(st, ty.clone(), rest_ty, idx);
+        unify(st, idx, ty.clone(), rest_ty);
         apply(&st.subst, &mut ty);
         for (name, fst_val_info) in &fst_ve {
           let rest_val_info = match rest_ve.remove(name) {
@@ -241,11 +241,11 @@ fn ok_val_info(vi: Option<&ValInfo>) -> bool {
 
 fn insert_name(
   st: &mut St,
+  idx: sml_hir::Idx,
   cfg: config::Cfg,
   ve: &mut ValEnv,
   name: str_util::Name,
   ty: Ty,
-  idx: sml_hir::Idx,
 ) {
   let def = st.def(idx);
   let vi = ValInfo { ty_scheme: TyScheme::zero(ty), id_status: IdStatus::Val, def };
