@@ -2443,7 +2443,7 @@ There was a usage of the top-level `use` function, which has implementation-defi
 
 ```sml
 val () = use "foo.sml"
-(**      ^^^ contains: `use` ignored *)
+(**      ^^^^^^^^^^^^^ contains: `use` ignored *)
 val x = Foo.bar + 3
 ```
 

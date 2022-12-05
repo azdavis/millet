@@ -51,7 +51,7 @@ pub(crate) enum ErrorKind {
   InvalidAppend(AppendArg),
   BoolCase,
   AppFn,
-  Use,
+  Use(Option<str_util::SmolStr>),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -166,7 +166,13 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
       ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
       ErrorKind::AppFn => f.write_str("applying a function literal to an argument"),
-      ErrorKind::Use => f.write_str("`use` ignored, no additional definitions brought into scope"),
+      ErrorKind::Use(file) => {
+        f.write_str("`use` ignored, no additional definitions ")?;
+        if let Some(file) = file {
+          write!(f, "from {file:?} ")?;
+        }
+        f.write_str("brought into scope")
+      }
     }
   }
 }
@@ -396,7 +402,7 @@ impl Error {
       ErrorKind::InvalidAppend(_) => Code::n(5035),
       ErrorKind::BoolCase => Code::n(5036),
       ErrorKind::AppFn => Code::n(5037),
-      ErrorKind::Use => Code::n(5038),
+      ErrorKind::Use(_) => Code::n(5038),
     }
   }
 
@@ -409,7 +415,7 @@ impl Error {
       | ErrorKind::MismatchedFunctorSugar(_)
       | ErrorKind::BoolCase
       | ErrorKind::AppFn
-      | ErrorKind::Use => Severity::Warning,
+      | ErrorKind::Use(_) => Severity::Warning,
       _ => Severity::Error,
     }
   }
