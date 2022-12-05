@@ -16,8 +16,8 @@ The versioning system is basically the following:
 ## main
 
 - Improve location and message for `use` warning.
-- Reject `sharing type` where the shared types have mismatched arities.
 - Improve equality type checking for `sharing type`.
+- Reject `sharing type` where the shared types have mismatched arities.
 - Improve formatting for `sharing type` and `eqtype`.
 
 ## v0.6.2
