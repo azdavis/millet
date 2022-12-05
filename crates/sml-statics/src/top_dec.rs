@@ -627,30 +627,36 @@ fn get_sharing_type(
   let mut ac = None::<SharingTyScheme>;
   let mut syms = Vec::<Sym>::with_capacity(paths.len());
   for path in paths {
-    match get_ty_info(inner_env, path) {
-      Ok(ty_info) => match &ty_info.ty_scheme.ty {
-        Ty::Con(_, sym) => {
-          if sym.generated_after(marker) {
-            match &ac {
-              None => ac = Some(SharingTyScheme::new(st, ty_info.ty_scheme.clone())),
-              Some(cur_ac) => {
-                if !cur_ac.equality {
-                  let new = SharingTyScheme::new(st, ty_info.ty_scheme.clone());
-                  if new.equality {
-                    ac = Some(new);
-                  }
-                }
-              }
-            }
-            syms.push(*sym);
-          } else {
-            st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone()));
+    let ty_scheme = match get_ty_info(inner_env, path) {
+      Ok(x) => &x.ty_scheme,
+      Err(e) => {
+        st.err(idx, e);
+        continue;
+      }
+    };
+    let sym = match &ty_scheme.ty {
+      Ty::Con(_, x) => *x,
+      _ => {
+        st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_scheme.clone()));
+        continue;
+      }
+    };
+    if !sym.generated_after(marker) {
+      st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_scheme.clone()));
+      continue;
+    }
+    match &ac {
+      None => ac = Some(SharingTyScheme::new(st, ty_scheme.clone())),
+      Some(cur_ac) => {
+        if !cur_ac.equality {
+          let new = SharingTyScheme::new(st, ty_scheme.clone());
+          if new.equality {
+            ac = Some(new);
           }
         }
-        _ => st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone())),
-      },
-      Err(e) => st.err(idx, e),
+      }
     }
+    syms.push(sym);
   }
   match ac {
     Some(ac) => {
