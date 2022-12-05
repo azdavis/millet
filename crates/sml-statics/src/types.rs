@@ -199,13 +199,6 @@ impl Syms {
     self.syms.get(sym.idx())
   }
 
-  pub(crate) fn equality(&self, sym: Sym) -> Equality {
-    match self.get(sym) {
-      Some(sym_info) => sym_info.equality,
-      None => Equality::Never,
-    }
-  }
-
   pub(crate) fn insert_exn(&mut self, path: sml_hir::Path, param: Option<Ty>) -> Exn {
     let ret = Exn(idx::Idx::new(self.exns.len()));
     self.exns.push(ExnInfo { path, param });

@@ -116,7 +116,11 @@ fn get_basic_naive(st: &mut St, ov: BasicOverload) -> Result {
 }
 
 fn get_con(st: &mut St, args: &[Ty], sym: Sym) -> Result {
-  match st.syms.equality(sym) {
+  let equality = match st.syms.get(sym) {
+    Some(sym_info) => sym_info.equality,
+    None => Equality::Never,
+  };
+  match equality {
     Equality::Always => Ok(()),
     Equality::Sometimes => all(args.iter().map(|ty| get_ty(st, ty))),
     Equality::Never => Err(NotEqTy::Sym),
