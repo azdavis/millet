@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Improve location and message for `use` warning.
+- Reject `sharing type` where the shared types have mismatched arities.
 
 ## v0.6.2
 
