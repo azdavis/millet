@@ -2,14 +2,14 @@
 
 mod enrich;
 mod env_syms;
+mod instance;
 mod realize;
 mod sharing_ty;
 
-use crate::compatible::eq_ty_fn_no_emit;
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::generalize::{generalize, generalize_fixed};
-use crate::get_env::{get_env_from_str_path, get_ty_info, get_ty_info_raw};
+use crate::get_env::{get_env_from_str_path, get_ty_info};
 use crate::types::{
   BasicOverload, Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme,
   TyVarKind, TyVarSrc, ValEnv, ValInfo,
@@ -214,7 +214,7 @@ fn get_str_exp(
       let idx = sml_hir::Idx::from(str_exp);
       match st.info.mode() {
         Mode::Regular(_, _) => {
-          env_instance_sig(st, idx, &mut subst, &str_exp_env, &sig);
+          instance::env_of_sig(st, idx, &mut subst, &str_exp_env, &sig);
           realize::get_env(st, idx, &subst, &mut to_add);
           enrich::get_env(st, idx, &str_exp_env, &to_add);
         }
@@ -256,7 +256,7 @@ fn get_str_exp(
         let mut subst = realize::TyRealization::default();
         let mut to_add = fun_sig.body_env.clone();
         let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
-        env_instance_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
+        instance::env_of_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
         gen_fresh_syms(st, idx, &mut subst, &fun_sig.body_ty_names);
         realize::get_env(st, idx, &subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
@@ -676,67 +676,4 @@ fn get_ty_desc(
   if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
     st.err(idx, e);
   }
-}
-
-fn env_instance_sig(
-  st: &mut St,
-  idx: sml_hir::Idx,
-  subst: &mut realize::TyRealization,
-  env: &Env,
-  sig: &Sig,
-) {
-  for &sym in &sig.ty_names {
-    let mut path = Vec::<&str_util::Name>::new();
-    let ty_scheme =
-      TyScheme::n_ary(st.syms.get(sym).unwrap().ty_info.ty_scheme.bound_vars.iter().cloned(), sym);
-    if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
-      // @test(sig::no_path_to_sym). there should have already been an error emitted for this
-      log::warn!("no path to sym");
-      return;
-    }
-    let last = path.pop().unwrap();
-    match get_ty_info_raw(env, path, last) {
-      Ok(ty_info) => {
-        subst.insert(sym, ty_info.ty_scheme.clone());
-      }
-      Err(e) => st.err(idx, e),
-    }
-  }
-}
-
-/// note that given an environment for the signature:
-///
-/// ```sml
-/// signature SIG = sig
-///   type t
-///   type u = t
-/// end
-/// ```
-///
-/// and a request to find the path to the single ty name bound by this signature's env (there is
-/// only one), this function will report _either_ `t` or `u` based on which one comes up first in
-/// the `iter()` order.
-///
-/// this seems slightly questionable, but I'm not actually sure if it's an issue. I mean, it says
-/// right there that they should be equal anyway.
-fn bound_ty_name_to_path<'e>(
-  st: &mut St,
-  ac: &mut Vec<&'e str_util::Name>,
-  env: &'e Env,
-  ty_scheme: &TyScheme,
-) -> bool {
-  for (name, ty_info) in &env.ty_env {
-    if eq_ty_fn_no_emit(st, ty_info.ty_scheme.clone(), ty_scheme.clone()).is_ok() {
-      ac.push(name);
-      return true;
-    }
-  }
-  for (name, env) in &env.str_env {
-    ac.push(name);
-    if bound_ty_name_to_path(st, ac, env, ty_scheme) {
-      return true;
-    }
-    ac.pop();
-  }
-  false
 }
