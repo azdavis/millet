@@ -53,10 +53,15 @@ fn get_ty(subst: &TyRealization, ty: &mut Ty) {
         get_ty(subst, ty);
       }
       if let Some(ty_scheme) = subst.0.get(sym) {
-        assert_eq!(args.len(), ty_scheme.bound_vars.len(), "malformed TyRealization");
-        let mut ty_scheme_ty = ty_scheme.ty.clone();
-        apply_bv(args, &mut ty_scheme_ty);
-        *ty = ty_scheme_ty;
+        if args.len() == ty_scheme.bound_vars.len() {
+          let mut ty_scheme_ty = ty_scheme.ty.clone();
+          apply_bv(args, &mut ty_scheme_ty);
+          *ty = ty_scheme_ty;
+        } else if cfg!(debug_assertions) {
+          // not sure if this is actually reachable given how we construct the `TyRealization` and
+          // how we've checked everything that were now applying the realization to.
+          unreachable!("malformed TyRealization");
+        }
       }
     }
     Ty::Fn(param, res) => {
