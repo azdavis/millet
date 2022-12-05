@@ -58,7 +58,7 @@ pub(crate) fn get(
       for sym in syms {
         subst.insert(sym, ac.ty_scheme.clone());
       }
-      realize::get_env(st, idx, &subst, inner_env);
+      realize::get_env(&subst, inner_env);
     }
     None => log::info!("should have already errored"),
   }

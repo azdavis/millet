@@ -217,16 +217,16 @@ fn get_str_exp(
       match st.info.mode() {
         Mode::Regular(_, _) => {
           instance::env_of_sig(st, idx, &mut subst, &str_exp_env, &sig);
-          realize::get_env(st, idx, &subst, &mut to_add);
+          realize::get_env(&subst, &mut to_add);
           enrich::get_env(st, idx, &str_exp_env, &to_add);
         }
         Mode::BuiltinLib(_) | Mode::PathOrder => {}
       }
       if matches!(asc, sml_hir::Ascription::Opaque) {
         subst.clear();
-        gen_fresh_syms(st, idx, &mut subst, &sig.ty_names);
+        gen_fresh_syms(st, &mut subst, &sig.ty_names);
         to_add = sig.env.clone();
-        realize::get_env(st, idx, &subst, &mut to_add);
+        realize::get_env(&subst, &mut to_add);
       }
       if let Some(ov) = ov {
         let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
@@ -259,10 +259,10 @@ fn get_str_exp(
         let mut to_add = fun_sig.body_env.clone();
         let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
         instance::env_of_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
-        gen_fresh_syms(st, idx, &mut subst, &fun_sig.body_ty_names);
-        realize::get_env(st, idx, &subst, &mut to_add);
+        gen_fresh_syms(st, &mut subst, &fun_sig.body_ty_names);
+        realize::get_env(&subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
-        realize::get_env(st, arg_idx, &subst, &mut param_env);
+        realize::get_env(&subst, &mut param_env);
         enrich::get_env(st, arg_idx, &arg_env, &param_env);
         let def = st.def(idx);
         for env in to_add.str_env.values_mut() {
@@ -312,9 +312,9 @@ fn get_sig_exp(
       Some(sig) => {
         let mut subst = realize::TyRealization::default();
         let idx = sml_hir::Idx::from(sig_exp);
-        gen_fresh_syms(st, idx, &mut subst, &sig.ty_names);
+        gen_fresh_syms(st, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
-        realize::get_env(st, idx, &subst, &mut sig_env);
+        realize::get_env(&subst, &mut sig_env);
         st.info.insert(idx, None, sig.env.def);
         ac.append(&mut sig_env);
         match st.info.mode() {
@@ -344,12 +344,7 @@ fn get_sig_exp(
   }
 }
 
-fn gen_fresh_syms(
-  st: &mut St,
-  idx: sml_hir::Idx,
-  subst: &mut realize::TyRealization,
-  ty_names: &TyNameSet,
-) {
+fn gen_fresh_syms(st: &mut St, subst: &mut realize::TyRealization, ty_names: &TyNameSet) {
   let mut ac = Vec::<(StartedSym, TyInfo, Equality)>::new();
   for &sym in ty_names.iter() {
     let sym_info = st.syms.get(sym).unwrap();
@@ -362,7 +357,7 @@ fn gen_fresh_syms(
     subst.insert(sym, ty_scheme);
   }
   for (started, mut ty_info, equality) in ac {
-    realize::get_val_env(st, idx, subst, &mut ty_info.val_env);
+    realize::get_val_env(subst, &mut ty_info.val_env);
     st.syms.finish(started, ty_info, equality);
   }
 }

@@ -1,7 +1,7 @@
 //! Type realizations.
 
 use crate::types::{Sym, Ty, TyScheme, ValEnv};
-use crate::{env::Env, error::ErrorKind, st::St, util::apply_bv};
+use crate::{env::Env, util::apply_bv};
 use fast_hash::FxHashMap;
 
 /// A type realization.
@@ -23,56 +23,45 @@ impl TyRealization {
   }
 }
 
-pub(crate) fn get_env(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, env: &mut Env) {
+pub(crate) fn get_env(subst: &TyRealization, env: &mut Env) {
   for env in env.str_env.values_mut() {
-    get_env(st, idx, subst, env);
+    get_env(subst, env);
   }
   for ty_info in env.ty_env.values_mut() {
-    get_ty(st, idx, subst, &mut ty_info.ty_scheme.ty);
-    get_val_env(st, idx, subst, &mut ty_info.val_env);
+    get_ty(subst, &mut ty_info.ty_scheme.ty);
+    get_val_env(subst, &mut ty_info.val_env);
   }
-  get_val_env(st, idx, subst, &mut env.val_env);
+  get_val_env(subst, &mut env.val_env);
 }
 
-pub(crate) fn get_val_env(
-  st: &mut St,
-  idx: sml_hir::Idx,
-  subst: &TyRealization,
-  val_env: &mut ValEnv,
-) {
+pub(crate) fn get_val_env(subst: &TyRealization, val_env: &mut ValEnv) {
   for val_info in val_env.values_mut() {
-    get_ty(st, idx, subst, &mut val_info.ty_scheme.ty);
+    get_ty(subst, &mut val_info.ty_scheme.ty);
   }
 }
 
-fn get_ty(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, ty: &mut Ty) {
+fn get_ty(subst: &TyRealization, ty: &mut Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
     Ty::Record(rows) => {
       for ty in rows.values_mut() {
-        get_ty(st, idx, subst, ty);
+        get_ty(subst, ty);
       }
     }
     Ty::Con(args, sym) => {
       for ty in args.iter_mut() {
-        get_ty(st, idx, subst, ty);
+        get_ty(subst, ty);
       }
       if let Some(ty_scheme) = subst.0.get(sym) {
-        let want = args.len();
-        let got = ty_scheme.bound_vars.len();
-        if want == got {
-          let mut ty_scheme_ty = ty_scheme.ty.clone();
-          apply_bv(args, &mut ty_scheme_ty);
-          *ty = ty_scheme_ty;
-        } else {
-          // TODO remove?
-          st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
-        }
+        assert_eq!(args.len(), ty_scheme.bound_vars.len(), "malformed TyRealization");
+        let mut ty_scheme_ty = ty_scheme.ty.clone();
+        apply_bv(args, &mut ty_scheme_ty);
+        *ty = ty_scheme_ty;
       }
     }
     Ty::Fn(param, res) => {
-      get_ty(st, idx, subst, param);
-      get_ty(st, idx, subst, res);
+      get_ty(subst, param);
+      get_ty(subst, res);
     }
   }
 }

@@ -90,7 +90,7 @@ fn get_where_type(
       if sym.generated_after(marker) {
         let mut subst = realize::TyRealization::default();
         subst.insert(*sym, ty_scheme);
-        realize::get_env(st, idx, &subst, inner_env);
+        realize::get_env(&subst, inner_env);
       } else {
         // @test(sig::impossible)
         if emit_cannot_realize {
