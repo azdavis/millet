@@ -77,10 +77,17 @@ fn get_where_type(
       return;
     }
   };
+  let want = path_ty_scheme.bound_vars.len();
+  let got = ty_scheme.bound_vars.len();
+  if want != got {
+    st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
+    return;
+  }
   match &path_ty_scheme.ty {
     Ty::None => {}
-    // TODO side condition for well-formed?
     Ty::Con(_, sym) => {
+      // TODO well-formed check - need to check every ty info in the resulting env has either empty
+      // val env or the ty scheme is a Con?
       if sym.generated_after(marker) {
         realize::get_env(st, idx, &map([(*sym, ty_scheme)]), inner_env);
       } else {

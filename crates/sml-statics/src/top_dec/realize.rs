@@ -48,6 +48,7 @@ fn get_ty(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, ty: &mut Ty) {
           apply_bv(args, &mut ty_scheme_ty);
           *ty = ty_scheme_ty;
         } else {
+          // TODO remove?
           st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
         }
       }

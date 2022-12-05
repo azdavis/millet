@@ -35,6 +35,11 @@ pub(crate) fn get(
     match &ac {
       None => ac = Some(SharingTyScheme::new(st, ty_scheme.clone())),
       Some(cur_ac) => {
+        let want = cur_ac.ty_scheme.bound_vars.len();
+        let got = ty_scheme.bound_vars.len();
+        if want != got {
+          st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
+        }
         if !cur_ac.equality {
           let new = SharingTyScheme::new(st, ty_scheme.clone());
           if new.equality {

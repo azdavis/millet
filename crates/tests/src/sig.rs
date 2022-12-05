@@ -928,7 +928,7 @@ signature BAR = sig type 'a t end
 
 signature QUZ = sig
   structure Foo : FOO
-(** + contains: expected 1 type argument, found 0 *)
+(** + contains: expected 0 type arguments, found 1 *)
   structure Bar : BAR
   sharing type Foo.t = Bar.t
 end
