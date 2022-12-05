@@ -206,19 +206,20 @@ fn get_str_exp(
       let sig = env_to_sig(sig_exp_env, marker);
       let mut subst = TyRealization::default();
       let mut to_add = sig.env.clone();
+      let idx = sml_hir::Idx::from(str_exp);
       match st.info.mode() {
         Mode::Regular(_, _) => {
-          env_instance_sig(st, &mut subst, &str_exp_env, &sig, str_exp.into());
-          env_realize(&subst, &mut to_add);
-          env_enrich(st, &str_exp_env, &to_add, str_exp.into());
+          env_instance_sig(st, &mut subst, &str_exp_env, &sig, idx);
+          env_realize(st, idx, &subst, &mut to_add);
+          env_enrich(st, &str_exp_env, &to_add, idx);
         }
         Mode::BuiltinLib(_) | Mode::PathOrder => {}
       }
       if matches!(asc, sml_hir::Ascription::Opaque) {
         subst.clear();
-        gen_fresh_syms(st, &mut subst, &sig.ty_names);
+        gen_fresh_syms(st, idx, &mut subst, &sig.ty_names);
         to_add = sig.env.clone();
-        env_realize(&subst, &mut to_add);
+        env_realize(st, idx, &subst, &mut to_add);
       }
       if let Some(ov) = ov {
         let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
@@ -235,6 +236,7 @@ fn get_str_exp(
     // @def(54)
     sml_hir::StrExp::App(fun_name, arg_str_exp, flavor) => match bs.fun_env.get(fun_name) {
       Some(fun_sig) => {
+        let idx = sml_hir::Idx::from(str_exp);
         let sugar_user = match (fun_sig.flavor, flavor) {
           (sml_hir::Flavor::Plain, sml_hir::Flavor::Plain)
           | (sml_hir::Flavor::Sugared, sml_hir::Flavor::Sugared) => None,
@@ -250,12 +252,12 @@ fn get_str_exp(
         let mut to_add = fun_sig.body_env.clone();
         let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
         env_instance_sig(st, &mut subst, &arg_env, &fun_sig.param, arg_idx);
-        gen_fresh_syms(st, &mut subst, &fun_sig.body_ty_names);
-        env_realize(&subst, &mut to_add);
+        gen_fresh_syms(st, idx, &mut subst, &fun_sig.body_ty_names);
+        env_realize(st, idx, &subst, &mut to_add);
         let mut param_env = fun_sig.param.env.clone();
-        env_realize(&subst, &mut param_env);
+        env_realize(st, idx, &subst, &mut param_env);
         env_enrich(st, &arg_env, &param_env, arg_idx);
-        let def = st.def(str_exp.into());
+        let def = st.def(idx);
         for env in to_add.str_env.values_mut() {
           env.def = def;
         }
@@ -265,7 +267,7 @@ fn get_str_exp(
         for val_info in to_add.val_env.values_mut() {
           val_info.def = def;
         }
-        st.info.insert(str_exp.into(), None, fun_sig.body_env.def);
+        st.info.insert(idx, None, fun_sig.body_env.def);
         ac.append(&mut to_add);
       }
       None => st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone())),
@@ -302,10 +304,11 @@ fn get_sig_exp(
     sml_hir::SigExp::Name(name) => match bs.sig_env.get(name) {
       Some(sig) => {
         let mut subst = TyRealization::default();
-        gen_fresh_syms(st, &mut subst, &sig.ty_names);
+        let idx = sml_hir::Idx::from(sig_exp);
+        gen_fresh_syms(st, idx, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
-        env_realize(&subst, &mut sig_env);
-        st.info.insert(sig_exp.into(), None, sig.env.def);
+        env_realize(st, idx, &subst, &mut sig_env);
+        st.info.insert(idx, None, sig.env.def);
         ac.append(&mut sig_env);
         match st.info.mode() {
           Mode::BuiltinLib(_) => match name.as_str() {
@@ -349,7 +352,7 @@ fn get_where_kind(
       let fixed = dec::add_fixed_ty_vars(st, &mut cx, TyVarSrc::Ty, ty_vars, idx);
       let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
       generalize_fixed(fixed, &mut ty_scheme);
-      match get_where_type(marker, inner_env, path, ty_scheme) {
+      match get_where_type(st, idx, marker, inner_env, path, ty_scheme) {
         Ok(()) => {}
         Err(e) => st.err(idx, e),
       }
@@ -380,7 +383,7 @@ fn get_where_kind(
             let ty_scheme = ty_info.ty_scheme.clone();
             // HACK: intentionally ignore CannotRealizeTy. I'm not exactly sure of the semantics of
             // `where S = T` but this silences some errors seen in valid NJ-flavored SML.
-            match get_where_type(marker, inner_env, &lhs, ty_scheme) {
+            match get_where_type(st, idx, marker, inner_env, &lhs, ty_scheme) {
               Ok(()) | Err(ErrorKind::CannotRealizeTy(_, _)) => {}
               Err(e) => st.err(idx, e),
             }
@@ -393,6 +396,8 @@ fn get_where_kind(
 }
 
 fn get_where_type(
+  st: &mut St,
+  idx: sml_hir::Idx,
   marker: SymsMarker,
   inner_env: &mut Env,
   path: &sml_hir::Path,
@@ -407,7 +412,7 @@ fn get_where_type(
       // TODO side condition for well-formed?
       Ty::Con(_, sym) => {
         if sym.generated_after(marker) {
-          env_realize(&map([(*sym, ty_scheme)]), inner_env);
+          env_realize(st, idx, &map([(*sym, ty_scheme)]), inner_env);
           Ok(())
         } else {
           // @test(sig::impossible)
@@ -422,7 +427,7 @@ fn get_where_type(
   }
 }
 
-fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) {
+fn gen_fresh_syms(st: &mut St, idx: sml_hir::Idx, subst: &mut TyRealization, ty_names: &TyNameSet) {
   let mut ac = Vec::<(StartedSym, TyInfo, Equality)>::new();
   for &sym in ty_names.iter() {
     let sym_info = st.syms.get(sym).unwrap();
@@ -435,7 +440,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut TyRealization, ty_names: &TyNameSet) 
     assert!(subst.insert(sym, ty_scheme).is_none());
   }
   for (started, mut ty_info, equality) in ac {
-    val_env_realize(subst, &mut ty_info.val_env);
+    val_env_realize(st, idx, subst, &mut ty_info.val_env);
     st.syms.finish(started, ty_info, equality);
   }
 }
@@ -661,7 +666,7 @@ fn get_sharing_type(
   match ac {
     Some(ac) => {
       let subst: TyRealization = syms.into_iter().map(|sym| (sym, ac.ty_scheme.clone())).collect();
-      env_realize(&subst, inner_env);
+      env_realize(st, idx, &subst, inner_env);
     }
     None => log::info!("should have already errored"),
   }
@@ -862,49 +867,50 @@ fn val_info_enrich(
 
 // uh... recursion schemes??
 
-fn env_realize(subst: &TyRealization, env: &mut Env) {
+fn env_realize(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, env: &mut Env) {
   for env in env.str_env.values_mut() {
-    env_realize(subst, env);
+    env_realize(st, idx, subst, env);
   }
   for ty_info in env.ty_env.values_mut() {
-    ty_realize(subst, &mut ty_info.ty_scheme.ty);
-    val_env_realize(subst, &mut ty_info.val_env);
+    ty_realize(st, idx, subst, &mut ty_info.ty_scheme.ty);
+    val_env_realize(st, idx, subst, &mut ty_info.val_env);
   }
-  val_env_realize(subst, &mut env.val_env);
+  val_env_realize(st, idx, subst, &mut env.val_env);
 }
 
-fn val_env_realize(subst: &TyRealization, val_env: &mut ValEnv) {
+fn val_env_realize(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, val_env: &mut ValEnv) {
   for val_info in val_env.values_mut() {
-    ty_realize(subst, &mut val_info.ty_scheme.ty);
+    ty_realize(st, idx, subst, &mut val_info.ty_scheme.ty);
   }
 }
 
-fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
+fn ty_realize(st: &mut St, idx: sml_hir::Idx, subst: &TyRealization, ty: &mut Ty) {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
     Ty::Record(rows) => {
       for ty in rows.values_mut() {
-        ty_realize(subst, ty);
+        ty_realize(st, idx, subst, ty);
       }
     }
     Ty::Con(args, sym) => {
       for ty in args.iter_mut() {
-        ty_realize(subst, ty);
+        ty_realize(st, idx, subst, ty);
       }
       if let Some(ty_scheme) = subst.get(sym) {
-        // if this `if` does not hold, the sml is malformed, so let's just not proceed further.
-        // TODO emit error here? like e.g. for sharing type, if we don't emit an error here it'll be
-        // silently accepted.
-        if ty_scheme.bound_vars.len() == args.len() {
+        let want = args.len();
+        let got = ty_scheme.bound_vars.len();
+        if want == got {
           let mut ty_scheme_ty = ty_scheme.ty.clone();
           apply_bv(args, &mut ty_scheme_ty);
           *ty = ty_scheme_ty;
+        } else {
+          st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
         }
       }
     }
     Ty::Fn(param, res) => {
-      ty_realize(subst, param);
-      ty_realize(subst, res);
+      ty_realize(st, idx, subst, param);
+      ty_realize(st, idx, subst, res);
     }
   }
 }

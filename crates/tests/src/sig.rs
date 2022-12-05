@@ -1,6 +1,6 @@
 //! NOTE: intentionally use a mix of `S:> SIG` and `S :> SIG` across tests to make sure both parse.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn ok_smoke() {
@@ -921,16 +921,16 @@ end
 
 #[test]
 fn sharing_mismatched_arity() {
-  fail(
+  check(
     r#"
 signature FOO = sig type    t end
 signature BAR = sig type 'a t end
 
 signature QUZ = sig
   structure Foo : FOO
+(** + contains: expected 1 type argument, found 0 *)
   structure Bar : BAR
   sharing type Foo.t = Bar.t
-(** + contains: wrong number of type arguments *)
 end
 "#,
   );
