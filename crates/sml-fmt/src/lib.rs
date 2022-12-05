@@ -128,10 +128,12 @@ fn get_dec(st: &mut St, cfg: Cfg, dec: ast::Dec) -> Res {
       }
       Some(())
     })?;
-    sep_with_lines(st, cfg, "", dwt.sharing_tails(), |st, sharing| {
+    for sharing in dwt.sharing_tails() {
+      st.write("\n");
+      cfg.output_indent(st);
       st.write("sharing type ");
-      sep(st, " = ", sharing.path_eqs(), |st, p| path(st, p.path()?))
-    })?;
+      sep(st, " = ", sharing.path_eqs(), |st, p| path(st, p.path()?))?;
+    }
     if dwt_in_seq.semicolon().is_some() {
       st.write(";");
     }
@@ -200,7 +202,8 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       })?;
     }
     ast::DecOne::TyDec(dec) => {
-      st.write("type ");
+      st.write(dec.ty_head()?.token.text());
+      st.write(" ");
       ty_binds(st, cfg, dec.ty_binds())?;
     }
     ast::DecOne::DatDec(dec) => {
