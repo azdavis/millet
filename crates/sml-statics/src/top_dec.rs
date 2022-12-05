@@ -10,7 +10,7 @@ use crate::types::{
   TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{apply_bv, ins_check_name, ins_no_dupe, ty_syms};
-use crate::{config::Cfg, dec, info::Mode, st::St, ty};
+use crate::{config::Cfg, dec, equality, info::Mode, st::St, ty};
 use fast_hash::{map, FxHashMap, FxHashSet};
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
@@ -624,36 +624,52 @@ fn get_sharing_type(
   paths: &[sml_hir::Path],
   idx: sml_hir::Idx,
 ) {
-  let mut ty_scheme = None::<TyScheme>;
+  let mut ac = None::<SharingTyScheme>;
   let mut syms = Vec::<Sym>::with_capacity(paths.len());
   for path in paths {
     match get_ty_info(inner_env, path) {
-      Ok(ty_info) => {
-        // TODO assert exists c s.t. for all ty schemes, arity of ty scheme = c? and all other
-        // things about the bound ty vars are 'compatible'? (the bit about admitting equality?)
-        match &ty_info.ty_scheme.ty {
-          Ty::Con(_, sym) => {
-            if sym.generated_after(marker) {
-              if ty_scheme.is_none() {
-                ty_scheme = Some(ty_info.ty_scheme.clone());
+      Ok(ty_info) => match &ty_info.ty_scheme.ty {
+        Ty::Con(_, sym) => {
+          if sym.generated_after(marker) {
+            match &ac {
+              None => ac = Some(SharingTyScheme::new(st, ty_info.ty_scheme.clone())),
+              Some(cur_ac) => {
+                if !cur_ac.equality {
+                  let new = SharingTyScheme::new(st, ty_info.ty_scheme.clone());
+                  if new.equality {
+                    ac = Some(new);
+                  }
+                }
               }
-              syms.push(*sym);
-            } else {
-              st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone()));
             }
+            syms.push(*sym);
+          } else {
+            st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone()));
           }
-          _ => st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone())),
         }
-      }
+        _ => st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_info.ty_scheme.clone())),
+      },
       Err(e) => st.err(idx, e),
     }
   }
-  match ty_scheme {
-    Some(ty_scheme) => {
-      let subst: TyRealization = syms.into_iter().map(|sym| (sym, ty_scheme.clone())).collect();
+  match ac {
+    Some(ac) => {
+      let subst: TyRealization = syms.into_iter().map(|sym| (sym, ac.ty_scheme.clone())).collect();
       env_realize(&subst, inner_env);
     }
     None => log::info!("should have already errored"),
+  }
+}
+
+struct SharingTyScheme {
+  ty_scheme: TyScheme,
+  equality: bool,
+}
+
+impl SharingTyScheme {
+  fn new(st: &mut St, ty_scheme: TyScheme) -> Self {
+    let equality = equality::get_ty_scheme(st, ty_scheme.clone()).is_ok();
+    Self { ty_scheme, equality }
   }
 }
 
@@ -871,6 +887,8 @@ fn ty_realize(subst: &TyRealization, ty: &mut Ty) {
       }
       if let Some(ty_scheme) = subst.get(sym) {
         // if this `if` does not hold, the sml is malformed, so let's just not proceed further.
+        // TODO emit error here? like e.g. for sharing type, if we don't emit an error here it'll be
+        // silently accepted.
         if ty_scheme.bound_vars.len() == args.len() {
           let mut ty_scheme_ty = ty_scheme.ty.clone();
           apply_bv(args, &mut ty_scheme_ty);
