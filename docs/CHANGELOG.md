@@ -17,6 +17,7 @@ The versioning system is basically the following:
 
 - Add `workspace-path` path variables.
 - Fix some top-level standard library definitions.
+- Add types for top-level `use`, but warn on its use.
 
 ## v0.6.1
 

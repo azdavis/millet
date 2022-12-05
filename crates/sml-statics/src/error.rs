@@ -166,7 +166,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidAppend(kind) => write!(f, "calling `@` with {kind}"),
       ErrorKind::BoolCase => f.write_str("`case` on a `bool`"),
       ErrorKind::AppFn => f.write_str("applying a function literal to an argument"),
-      ErrorKind::Use => f.write_str("`use` is implementation-defined"),
+      ErrorKind::Use => f.write_str("`use` ignored, no additional definitions brought into scope"),
     }
   }
 }
