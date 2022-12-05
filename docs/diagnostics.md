@@ -919,22 +919,24 @@ fun booleanIdentity x =
 
 An expression is "overly complex" if it involves `if`, `andalso`, or `orelse`, and contains a `bool` literal `true` or `false`. Such expressions can always be simplified. For example:
 
-| Complex                     | Simple        |
-| --------------------------- | ------------- |
-| `if x then true else false` | `x`           |
-| `if x then false else true` | `not x`       |
-| `if x then y else false`    | `x andalso y` |
-| `if x then true else y`     | `x orelse y`  |
-| `if true then x else y`     | `x`           |
-| `if false then x else y`    | `y`           |
-| `x orelse true`             | `(x; true)`   |
-| `x orelse false`            | `x`           |
-| `x andalso true`            | `x`           |
-| `x andalso false`           | `(x; false)`  |
-| `true orelse x`             | `true`        |
-| `false orelse x`            | `x`           |
-| `true andalso x`            | `x`           |
-| `false andalso x`           | `false`       |
+| Complex                     | Simple            |
+| --------------------------- | ----------------- |
+| `if x then true else false` | `x`               |
+| `if x then false else true` | `not x`           |
+| `if x then y else false`    | `x andalso y`     |
+| `if x then y else true`     | `not x orelse y`  |
+| `if x then true else y`     | `x orelse y`      |
+| `if x then false else y`    | `not x andalso y` |
+| `if true then x else y`     | `x`               |
+| `if false then x else y`    | `y`               |
+| `x orelse true`             | `(x; true)`       |
+| `x orelse false`            | `x`               |
+| `x andalso true`            | `x`               |
+| `x andalso false`           | `(x; false)`      |
+| `true orelse x`             | `true`            |
+| `false orelse x`            | `x`               |
+| `true andalso x`            | `x`               |
+| `false andalso x`           | `false`           |
 
 Note also for any `b`, `(x; b)` can be further simplified to `b` if evaluating `x` has no side effects.
 
