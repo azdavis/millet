@@ -955,3 +955,29 @@ end
 "#,
   );
 }
+
+#[test]
+fn sig_type_less_poly() {
+  check(
+    r#"
+signature SIG = sig
+  type t
+  val x : int t
+(**       ^^^^^ expected 0 type arguments, found 1 *)
+end
+"#,
+  );
+}
+
+#[test]
+fn sig_type_more_poly() {
+  check(
+    r#"
+signature SIG = sig
+  type 'a t
+  val x : t
+(**       ^ expected 1 type argument, found 0 *)
+end
+"#,
+  );
+}
