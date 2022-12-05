@@ -6,10 +6,11 @@ mod instance;
 mod realize;
 mod sharing_ty;
 mod ty_con_paths;
+mod where_ty;
 
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
-use crate::generalize::{generalize, generalize_fixed};
+use crate::generalize::generalize;
 use crate::get_env::{get_env_from_str_path, get_ty_info};
 use crate::types::{
   BasicOverload, Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme,
@@ -336,94 +337,10 @@ fn get_sig_exp(
       let marker = st.syms.mark();
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
-      get_where_kind(st, sig_exp.into(), bs, marker, ars, &mut inner_env, kind);
+      where_ty::get(st, sig_exp.into(), bs, marker, ars, &mut inner_env, kind);
       ac.append(&mut inner_env);
       ov
     }
-  }
-}
-
-fn get_where_kind(
-  st: &mut St,
-  idx: sml_hir::Idx,
-  bs: &Bs,
-  marker: SymsMarker,
-  ars: &sml_hir::Arenas,
-  inner_env: &mut Env,
-  kind: &sml_hir::WhereKind,
-) {
-  match kind {
-    sml_hir::WhereKind::Type(ty_vars, path, ty) => {
-      let mut cx = bs.as_cx();
-      let fixed = dec::add_fixed_ty_vars(st, idx, &mut cx, TyVarSrc::Ty, ty_vars);
-      let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
-      generalize_fixed(fixed, &mut ty_scheme);
-      match get_where_type(st, idx, marker, inner_env, path, ty_scheme) {
-        Ok(()) => {}
-        Err(e) => st.err(idx, e),
-      }
-    }
-    sml_hir::WhereKind::Structure(lhs, rhs) => {
-      let lhs_ty_cons = match ty_con_paths::get(inner_env, lhs) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err(idx, e);
-          return;
-        }
-      };
-      let rhs_ty_cons = match ty_con_paths::get(&bs.env, rhs) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err(idx, e);
-          return;
-        }
-      };
-      for ty_con in lhs_ty_cons {
-        if !rhs_ty_cons.contains(&ty_con) {
-          continue;
-        }
-        let lhs = join_paths(lhs, &ty_con);
-        let rhs = join_paths(rhs, &ty_con);
-        match get_ty_info(&bs.env, &rhs) {
-          Ok(ty_info) => {
-            let ty_scheme = ty_info.ty_scheme.clone();
-            // HACK: intentionally ignore CannotRealizeTy. I'm not exactly sure of the semantics of
-            // `where S = T` but this silences some errors seen in valid NJ-flavored SML.
-            match get_where_type(st, idx, marker, inner_env, &lhs, ty_scheme) {
-              Ok(()) | Err(ErrorKind::CannotRealizeTy(_, _)) => {}
-              Err(e) => st.err(idx, e),
-            }
-          }
-          Err(e) => st.err(idx, e),
-        }
-      }
-    }
-  }
-}
-
-fn get_where_type(
-  st: &mut St,
-  idx: sml_hir::Idx,
-  marker: SymsMarker,
-  inner_env: &mut Env,
-  path: &sml_hir::Path,
-  ty_scheme: TyScheme,
-) -> Result<(), ErrorKind> {
-  let ty_info = get_ty_info(inner_env, path)?;
-  match &ty_info.ty_scheme.ty {
-    Ty::None => Ok(()),
-    // TODO side condition for well-formed?
-    Ty::Con(_, sym) => {
-      if sym.generated_after(marker) {
-        realize::get_env(st, idx, &map([(*sym, ty_scheme)]), inner_env);
-        Ok(())
-      } else {
-        // @test(sig::impossible)
-        Err(ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone()))
-      }
-    }
-    // @test(sig::where_not_con)
-    _ => Err(ErrorKind::CannotRealizeTy(path.clone(), ty_info.ty_scheme.clone())),
   }
 }
 
@@ -584,8 +501,8 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
                 if !ty_cons_2.contains(&ty_con) {
                   continue;
                 }
-                let path_1 = join_paths(struct_1, &ty_con);
-                let path_2 = join_paths(struct_2, &ty_con);
+                let path_1 = ty_con_paths::join_paths(struct_1, &ty_con);
+                let path_2 = ty_con_paths::join_paths(struct_2, &ty_con);
                 sharing_ty::get(st, spec.into(), marker, &mut inner_env, &[path_1, path_2]);
               }
             }
@@ -624,10 +541,6 @@ fn append_no_dupe(st: &mut St, idx: sml_hir::Idx, ac: &mut Env, other: &mut Env)
       st.err(idx, e);
     }
   }
-}
-
-fn join_paths(p1: &sml_hir::Path, p2: &sml_hir::Path) -> sml_hir::Path {
-  sml_hir::Path::new(p1.all_names().chain(p2.prefix()).cloned(), p2.last().clone())
 }
 
 // @def(80)

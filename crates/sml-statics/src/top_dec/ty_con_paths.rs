@@ -22,3 +22,8 @@ fn go(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: 
     prefix.pop().unwrap();
   }
 }
+
+/// Joins two sequential paths into one.
+pub(crate) fn join_paths(p1: &sml_hir::Path, p2: &sml_hir::Path) -> sml_hir::Path {
+  sml_hir::Path::new(p1.all_names().chain(p2.prefix()).cloned(), p2.last().clone())
+}
