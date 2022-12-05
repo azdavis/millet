@@ -1,8 +1,8 @@
 //! Dealing with `sharing` and `sharing type`.
 
-use crate::types::{Sym, SymsMarker, Ty, TyScheme};
+use crate::types::{SymsMarker, Ty, TyScheme};
 use crate::{env::Env, equality, error::ErrorKind, get_env::get_ty_info, st::St, top_dec::realize};
-use fast_hash::set_with_capacity;
+use fast_hash::FxHashSet;
 
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
 pub(crate) fn get(
@@ -13,25 +13,24 @@ pub(crate) fn get(
   paths: &[sml_hir::Path],
 ) {
   let mut ac = None::<SharingTyScheme>;
-  let mut syms = set_with_capacity::<Sym>(paths.len());
-  for path in paths {
+  let syms = paths.iter().filter_map(|path| {
     let ty_scheme = match get_ty_info(inner_env, path) {
       Ok(x) => &x.ty_scheme,
       Err(e) => {
         st.err(idx, e);
-        continue;
+        return None;
       }
     };
     let sym = match &ty_scheme.ty {
       Ty::Con(_, x) => *x,
       _ => {
         st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_scheme.clone()));
-        continue;
+        return None;
       }
     };
     if !sym.generated_after(marker) {
       st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_scheme.clone()));
-      continue;
+      return None;
     }
     match &ac {
       None => ac = Some(SharingTyScheme::new(st, ty_scheme.clone())),
@@ -40,7 +39,7 @@ pub(crate) fn get(
         let got = ty_scheme.bound_vars.len();
         if want != got {
           st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
-          continue;
+          return None;
         }
         if !cur_ac.equality {
           let new = SharingTyScheme::new(st, ty_scheme.clone());
@@ -50,8 +49,9 @@ pub(crate) fn get(
         }
       }
     }
-    syms.insert(sym);
-  }
+    Some(sym)
+  });
+  let syms: FxHashSet<_> = syms.collect();
   match ac {
     Some(ac) => {
       let mut subst = realize::TyRealization::default();
