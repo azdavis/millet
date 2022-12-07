@@ -100,7 +100,7 @@ impl Analysis {
   /// Returns a Markdown string with information about this position.
   #[must_use]
   pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
-    let ft = self.get_file_and_token(pos)?;
+    let ft = get_file_and_token(&self.source_files, pos)?;
     let mut parts = Vec::<&str>::new();
     let ty_md: Option<String>;
     let range = match ft.get_ptr_and_idx() {
@@ -134,23 +134,23 @@ impl Analysis {
   /// Returns the range of the definition of the item at this position.
   #[must_use]
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
-    let ft = self.get_file_and_token(pos)?;
+    let ft = get_file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
-    self.def_to_path_and_range(ft.file.info.get_def(idx)?)
+    def_to_path_and_range(&self.source_files, ft.file.info.get_def(idx)?)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
   #[must_use]
   pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
-    let ft = self.get_file_and_token(pos)?;
+    let ft = get_file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
     Some(
       ft.file
         .info
         .get_ty_defs(&self.syms, idx)?
         .into_iter()
-        .filter_map(|def| self.def_to_path_and_range(def))
+        .filter_map(|def| def_to_path_and_range(&self.source_files, def))
         .collect(),
     )
   }
@@ -159,7 +159,7 @@ impl Analysis {
   /// all of the variants of the head's type.
   #[must_use]
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
-    let ft = self.get_file_and_token(pos)?;
+    let ft = get_file_and_token(&self.source_files, pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
     let ptr = ptr.cast::<ast::CaseExp>()?;
     let case = ptr.to_node(ft.file.syntax.parse.root.syntax());
@@ -189,38 +189,44 @@ impl Analysis {
     let buf = sml_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::Format)?;
     Ok((buf, file.syntax.pos_db.end_position()))
   }
+}
 
-  fn get_file_and_token(&self, pos: WithPath<Position>) -> Option<FileAndToken<'_>> {
-    let file = self.source_files.get(&pos.path)?;
-    let idx = file.syntax.pos_db.text_size(pos.val)?;
-    if !file.syntax.parse.root.syntax().text_range().contains(idx) {
-      return None;
-    }
-    let token = match file.syntax.parse.root.syntax().token_at_offset(idx) {
-      TokenAtOffset::None => return None,
-      TokenAtOffset::Single(t) => t,
-      TokenAtOffset::Between(t1, t2) => {
-        if priority(t1.kind()) >= priority(t2.kind()) {
-          t1
-        } else {
-          t2
-        }
+fn def_to_path_and_range(
+  source_files: &PathMap<mlb_statics::SourceFile>,
+  def: sml_statics::def::Def,
+) -> Option<WithPath<Range>> {
+  let (path, idx) = match def {
+    sml_statics::def::Def::Path(sml_statics::def::Path::Regular(a), b) => (a, b),
+    sml_statics::def::Def::Path(sml_statics::def::Path::BuiltinLib(_), _)
+    | sml_statics::def::Def::Primitive(_) => return None,
+  };
+  let def_file = source_files.get(&path)?;
+  let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx)?;
+  let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
+  Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
+}
+
+fn get_file_and_token(
+  source_files: &PathMap<mlb_statics::SourceFile>,
+  pos: WithPath<Position>,
+) -> Option<FileAndToken<'_>> {
+  let file = source_files.get(&pos.path)?;
+  let idx = file.syntax.pos_db.text_size(pos.val)?;
+  if !file.syntax.parse.root.syntax().text_range().contains(idx) {
+    return None;
+  }
+  let token = match file.syntax.parse.root.syntax().token_at_offset(idx) {
+    TokenAtOffset::None => return None,
+    TokenAtOffset::Single(t) => t,
+    TokenAtOffset::Between(t1, t2) => {
+      if priority(t1.kind()) >= priority(t2.kind()) {
+        t1
+      } else {
+        t2
       }
-    };
-    Some(FileAndToken { file, token })
-  }
-
-  fn def_to_path_and_range(&self, def: sml_statics::def::Def) -> Option<WithPath<Range>> {
-    let (path, idx) = match def {
-      sml_statics::def::Def::Path(sml_statics::def::Path::Regular(a), b) => (a, b),
-      sml_statics::def::Def::Path(sml_statics::def::Path::BuiltinLib(_), _)
-      | sml_statics::def::Def::Primitive(_) => return None,
-    };
-    let def_file = self.source_files.get(&path)?;
-    let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx)?;
-    let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
-    Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
-  }
+    }
+  };
+  Some(FileAndToken { file, token })
 }
 
 /// A std basis.
