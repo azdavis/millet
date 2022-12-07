@@ -16,6 +16,8 @@ The versioning system is basically the following:
 ## main
 
 - Add docs for `use`.
+- Improve primitive docs.
+- Remove ability to disable equality checks, since the checks seem to be working just fine.
 
 ## v0.6.3
 
