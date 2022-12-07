@@ -53,7 +53,6 @@ static MINIMAL: Lazy<StdBasis> = Lazy::new(|| get_std_basis(std::iter::empty()))
 static FULL: Lazy<StdBasis> = Lazy::new(|| {
   get_std_basis(
     std::iter::empty()
-      .chain(sml_libs::primitive::FILES)
       .chain(sml_libs::std_basis::FILES)
       .chain(sml_libs::std_basis_extra::FILES)
       .chain(sml_libs::smlnj_lib::FILES)
