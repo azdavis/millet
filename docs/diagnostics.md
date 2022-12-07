@@ -2433,7 +2433,7 @@ val _ = (fn x => x + 1) 3
 To fix, "inline" the literal, or use something like `let` or `case`.
 
 ```sml
-val inlined = 4
+val inlined = 3 + 1
 
 val usingLet =
   let
