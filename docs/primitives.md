@@ -2,6 +2,10 @@
 
 This is documentation for various SML primitive functions and types.
 
+## `::`
+
+The non-empty list constructor, pronounced "cons". Defaults to `infixr 5`.
+
 ## `bool`
 
 The built-in boolean type.
@@ -54,6 +58,10 @@ The `Char` structure provides operations on characters.
 val no = Char.isSpace #"g"
 ```
 
+## `false`
+
+The `bool` that represents logical falsity. Opposite of `true`.
+
 ## `int`
 
 The built-in integer type.
@@ -77,6 +85,49 @@ The `Int` structure provides operations on integers.
 ```sml
 val three = Int.min (3, 5)
 ```
+
+## `list`
+
+The built-in list type.
+
+There are two constructors for lists:
+
+- `nil`, the empty list.
+- `::`, pronounced "cons", a non-empty list.
+
+Cons takes an element `x` and a list `r` and returns the list that is that element `x` followed by `r`. `::` is an right-associative infix operator by default, so you may write `x :: r`.
+
+```sml
+fun sum (xs : int list) : int =
+  case xs of
+    nil => 0
+  | x :: r => x + sum r
+```
+
+There is syntax sugar for lists, written as:
+
+- A `[` to start the list
+- Comma-separated elements in the list
+- A `]` to close the list
+
+For example:
+
+| Thing                    | What                |
+| ------------------------ | ------------------- |
+| `[a, b, c]`              | Example list        |
+| `a :: b :: c :: nil`     | Desugar             |
+| `a :: (b :: (c :: nil))` | Right associativity |
+
+The `List` structure provides operations on lists.
+
+```sml
+fun even x = x mod 2 = 0
+fun allEven xs = List.all even xs
+```
+
+## `nil`
+
+The empty list constructor. Identical to `[]`.
 
 ## `real`
 
@@ -161,6 +212,10 @@ val yes = String.isSubstring "erica" "america"
 Strings are often thought of as ordered sequences of characters. Indeed, in SML, there is `String.explode` and `String.implode` to go from strings to list of characters and vice versa. However, the notion of "character" is [difficult to define][unicode].
 
 [unicode]: https://home.unicode.org
+
+## `true`
+
+The `bool` that represents logical truth. Opposite of `false`.
 
 ## `use`
 
