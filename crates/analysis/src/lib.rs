@@ -2,15 +2,15 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
-pub mod input;
+mod diagnostics;
 mod matcher;
 mod source_files;
+
+pub mod input;
 
 use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
-use sml_syntax::SyntaxNode;
-use std::fmt;
 use text_pos::{Position, Range};
 use text_size_util::TextRange;
 
@@ -18,7 +18,7 @@ use text_size_util::TextRange;
 #[derive(Debug)]
 pub struct Analysis {
   std_basis: mlb_statics::StdBasis,
-  diagnostics_options: DiagnosticsOptions,
+  diagnostics_options: diagnostics::Options,
   source_files: PathMap<mlb_statics::SourceFile>,
   syms: sml_statics::Syms,
   /// TODO(equality-checks) remove
@@ -37,7 +37,7 @@ impl Analysis {
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
-      diagnostics_options: DiagnosticsOptions { lines, filter, format },
+      diagnostics_options: diagnostics::Options { lines, filter, format },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
       equality_checks,
@@ -56,7 +56,7 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    source_file_diagnostics(&file, &syms, &input::Severities::default(), self.diagnostics_options)
+    diagnostics::source_file(&file, &syms, &input::Severities::default(), self.diagnostics_options)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -92,7 +92,7 @@ impl Analysis {
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
         let ds =
-          source_file_diagnostics(file, &self.syms, &input.severities, self.diagnostics_options);
+          diagnostics::source_file(file, &self.syms, &input.severities, self.diagnostics_options);
         (path, ds)
       }))
       .collect()
@@ -219,109 +219,4 @@ pub enum FormatError {
   NoFile,
   /// A formatting error.
   Format(sml_fmt::Error),
-}
-
-#[derive(Debug, Clone, Copy)]
-struct DiagnosticsOptions {
-  lines: config::ErrorLines,
-  filter: config::DiagnosticsFilter,
-  format: bool,
-}
-
-fn diagnostic<M>(
-  file: &mlb_statics::SourceFile,
-  severities: &input::Severities,
-  range: TextRange,
-  message: M,
-  code: diagnostic_util::Code,
-  severity: diagnostic_util::Severity,
-) -> Option<Diagnostic>
-where
-  M: fmt::Display,
-{
-  let severity = match severities.get(&code) {
-    Some(&Some(sev)) => sev,
-    Some(None) => return None,
-    None => severity,
-  };
-  Some(Diagnostic {
-    range: file.syntax.pos_db.range(range)?,
-    message: message.to_string(),
-    code,
-    severity,
-  })
-}
-
-/// TODO: we used to limit the max number of diagnostics per file, but now it's trickier because not
-/// all diagnostics are "errors", but it would be bad to hit the max number of diagnostics on
-/// entirely warnings and then not emit the actual diagnostics. We'd need to come up with a way to
-/// order the diagnostics.
-fn source_file_diagnostics(
-  file: &mlb_statics::SourceFile,
-  syms: &sml_statics::Syms,
-  severities: &input::Severities,
-  options: DiagnosticsOptions,
-) -> Vec<Diagnostic> {
-  let mut ret: Vec<_> = std::iter::empty()
-    .chain(file.syntax.lex_errors.iter().filter_map(|err| {
-      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
-    }))
-    .chain(file.syntax.parse.errors.iter().filter_map(|err| {
-      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
-    }))
-    .chain(file.syntax.lower.errors.iter().filter_map(|err| {
-      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
-    }))
-    .collect();
-  let no_filter = matches!(options.filter, config::DiagnosticsFilter::None);
-  let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic_util::Severity::Error));
-  if no_filter || !has_any_error {
-    ret.extend(file.statics_errors.iter().filter_map(|err| {
-      let idx = err.idx();
-      let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
-      let node = syntax.to_node(file.syntax.parse.root.syntax());
-      let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
-      let msg = err.display(syms, file.info.meta_vars(), options.lines);
-      diagnostic(file, severities, range, msg, err.code(), err.severity())
-    }));
-    if options.format {
-      if let Err(sml_fmt::Error::Comments(ranges)) = sml_fmt::check(&file.syntax.parse.root) {
-        ret.extend(ranges.into_iter().filter_map(|range| {
-          diagnostic(
-            file,
-            severities,
-            range,
-            "comment prevents formatting",
-            diagnostic_util::Code::n(6001),
-            diagnostic_util::Severity::Warning,
-          )
-        }));
-      }
-    }
-  }
-  ret
-}
-
-fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
-  if let Some(node) = ast::CaseExp::cast(node.clone()) {
-    let case_kw = node.case_kw()?;
-    let of_kw = node.of_kw()?;
-    return Some(TextRange::new(case_kw.text_range().start(), of_kw.text_range().end()));
-  }
-  if let Some(node) = ast::LetExp::cast(node.clone()) {
-    return Some(node.let_kw()?.text_range());
-  }
-  if let Some(node) = ast::LocalDec::cast(node.clone()) {
-    return Some(node.local_kw()?.text_range());
-  }
-  if let Some(node) = ast::LetStrExp::cast(node.clone()) {
-    return Some(node.let_kw()?.text_range());
-  }
-  if let Some(node) = ast::StructStrExp::cast(node.clone()) {
-    return Some(node.struct_kw()?.text_range());
-  }
-  if let Some(node) = ast::SigSigExp::cast(node) {
-    return Some(node.sig_kw()?.text_range());
-  }
-  None
 }
