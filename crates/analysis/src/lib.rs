@@ -100,7 +100,7 @@ impl Analysis {
   /// Returns a Markdown string with information about this position.
   #[must_use]
   pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
-    let ft = get_file_and_token(&self.source_files, pos)?;
+    let ft = file_and_token(&self.source_files, pos)?;
     let mut parts = Vec::<&str>::new();
     let ty_md: Option<String>;
     let range = match ft.get_ptr_and_idx() {
@@ -134,23 +134,23 @@ impl Analysis {
   /// Returns the range of the definition of the item at this position.
   #[must_use]
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
-    let ft = get_file_and_token(&self.source_files, pos)?;
+    let ft = file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
-    def_to_path_and_range(&self.source_files, ft.file.info.get_def(idx)?)
+    path_and_range(&self.source_files, ft.file.info.get_def(idx)?)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
   #[must_use]
   pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
-    let ft = get_file_and_token(&self.source_files, pos)?;
+    let ft = file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
     Some(
       ft.file
         .info
         .get_ty_defs(&self.syms, idx)?
         .into_iter()
-        .filter_map(|def| def_to_path_and_range(&self.source_files, def))
+        .filter_map(|def| path_and_range(&self.source_files, def))
         .collect(),
     )
   }
@@ -159,7 +159,7 @@ impl Analysis {
   /// all of the variants of the head's type.
   #[must_use]
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
-    let ft = get_file_and_token(&self.source_files, pos)?;
+    let ft = file_and_token(&self.source_files, pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
     let ptr = ptr.cast::<ast::CaseExp>()?;
     let case = ptr.to_node(ft.file.syntax.parse.root.syntax());
@@ -191,7 +191,7 @@ impl Analysis {
   }
 }
 
-fn def_to_path_and_range(
+fn path_and_range(
   source_files: &PathMap<mlb_statics::SourceFile>,
   def: sml_statics::def::Def,
 ) -> Option<WithPath<Range>> {
@@ -206,7 +206,7 @@ fn def_to_path_and_range(
   Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
 }
 
-fn get_file_and_token(
+fn file_and_token(
   source_files: &PathMap<mlb_statics::SourceFile>,
   pos: WithPath<Position>,
 ) -> Option<FileAndToken<'_>> {
