@@ -16,5 +16,6 @@ token = { git = "https://github.com/azdavis/language-util.git" }
 [build-dependencies]
 char-name = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { path = "../fast-hash" }
+code-h2-md-map = { path = "../code-h2-md-map" }
 identifier-case = { git = "https://github.com/azdavis/language-util.git" }
 syntax-gen = { git = "https://github.com/azdavis/language-util.git" }

@@ -1,6 +1,5 @@
 //! Generating Rust code from the ungrammar.
 
-use fast_hash::FxHashMap;
 use identifier_case::snake_to_pascal;
 use syntax_gen::{gen, Token, TokenKind};
 
@@ -14,32 +13,12 @@ const SPECIAL: [(&str, &str); 7] = [
   ("StringLit", "a string literal"),
 ];
 
-fn code_h2(s: &str) -> Option<&str> {
-  s.strip_prefix("## `")?.strip_suffix('`')
-}
-
 fn main() -> std::io::Result<()> {
-  let mut doc_map = FxHashMap::<&str, String>::default();
-  let mut key = None::<&str>;
-  let mut val = String::new();
-  for line in include_str!("../../docs/tokens.md").lines() {
-    match code_h2(line) {
-      Some(next) => {
-        if let Some(key) = key {
-          assert!(doc_map.insert(key, val).is_none());
-        }
-        key = Some(next);
-        // NOTE: this used to be a sml code block, but the VS Code markdown viewer doesn't do well
-        // with a horizontal rule followed by a code block.
-        val = format!("Token: `{next}`\n");
-      }
-      None => {
-        val.push('\n');
-        val.push_str(line);
-      }
-    }
-  }
-  assert!(doc_map.insert(key.unwrap(), val).is_none());
+  let doc_map = code_h2_md_map::get(include_str!("../../docs/tokens.md"), |tok| {
+    // NOTE: this used to be a sml code block, but the VS Code Markdown viewer doesn't do well with
+    // a horizontal rule followed by a code block.
+    format!("Token: `{tok}`\n")
+  });
   let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR should be set");
   gen(
     std::path::Path::new(out_dir.as_str()),

@@ -16,6 +16,7 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "cm-syntax",
+ "code-h2-md-map",
  "config",
  "diagnostic-util",
  "elapsed",
@@ -98,6 +99,13 @@ dependencies = [
  "paths",
  "str-util",
  "text-size-util",
+]
+
+[[package]]
+name = "code-h2-md-map"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
 ]
 
 [[package]]
@@ -681,6 +689,7 @@ name = "sml-syntax"
 version = "0.1.0"
 dependencies = [
  "char-name",
+ "code-h2-md-map",
  "fast-hash",
  "identifier-case",
  "rowan",

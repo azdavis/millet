@@ -232,6 +232,40 @@ A utility crate for an `Idx` type, a cheap copyable type that can index into sli
 
 A small utility crate for timing function calls.
 
+### `crates/code-h2-md-map`
+
+Converts a Markdown file with many level 2 headings with inline code, followed by arbitrary Markdown, into a mapping.
+
+Given a file like this:
+
+```md
+# Characters
+
+This is information about characters from _Castle in the Sky_.
+
+## `Sheeta`
+
+A girl who lived on a farm until her parents died, after which she was abducted by the government. She fell out of their airship, and was saved by her magic necklace and a boy, Pazu.
+
+## `Pazu`
+
+A boy who worked in the mines, until he met Sheeta after she fell from the sky. They then went on an adventure to the titular castle and defeated their enemy, Muska.
+
+## `Muska`
+
+An agent of the government, who wants Sheeta's necklace and the floating castle's power.
+```
+
+This crate will turn it into a mapping like this:
+
+```json
+{
+  "Sheeta": "A girl who lived on a farm...",
+  "Pazu": "A boy who worked in the mines...",
+  "Muska": "An agent of the government..."
+}
+```
+
 ## Overall crates
 
 These crates depend on many other crates to "unite" everything together.
