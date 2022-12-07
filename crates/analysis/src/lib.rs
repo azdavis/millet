@@ -4,11 +4,12 @@
 
 pub mod input;
 mod matcher;
+mod source_files;
 
 use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
-use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode, SyntaxToken};
+use sml_syntax::SyntaxNode;
 use std::fmt;
 use text_pos::{Position, Range};
 use text_size_util::TextRange;
@@ -100,7 +101,7 @@ impl Analysis {
   /// Returns a Markdown string with information about this position.
   #[must_use]
   pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
-    let ft = file_and_token(&self.source_files, pos)?;
+    let ft = source_files::file_and_token(&self.source_files, pos)?;
     let mut parts = Vec::<&str>::new();
     let ty_md: Option<String>;
     let range = match ft.get_ptr_and_idx() {
@@ -134,23 +135,23 @@ impl Analysis {
   /// Returns the range of the definition of the item at this position.
   #[must_use]
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
-    let ft = file_and_token(&self.source_files, pos)?;
+    let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
-    path_and_range(&self.source_files, ft.file.info.get_def(idx)?)
+    source_files::path_and_range(&self.source_files, ft.file.info.get_def(idx)?)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
   #[must_use]
   pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
-    let ft = file_and_token(&self.source_files, pos)?;
+    let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
     Some(
       ft.file
         .info
         .get_ty_defs(&self.syms, idx)?
         .into_iter()
-        .filter_map(|def| path_and_range(&self.source_files, def))
+        .filter_map(|def| source_files::path_and_range(&self.source_files, def))
         .collect(),
     )
   }
@@ -159,7 +160,7 @@ impl Analysis {
   /// all of the variants of the head's type.
   #[must_use]
   pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
-    let ft = file_and_token(&self.source_files, pos)?;
+    let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
     let ptr = ptr.cast::<ast::CaseExp>()?;
     let case = ptr.to_node(ft.file.syntax.parse.root.syntax());
@@ -191,44 +192,6 @@ impl Analysis {
   }
 }
 
-fn path_and_range(
-  source_files: &PathMap<mlb_statics::SourceFile>,
-  def: sml_statics::def::Def,
-) -> Option<WithPath<Range>> {
-  let (path, idx) = match def {
-    sml_statics::def::Def::Path(sml_statics::def::Path::Regular(a), b) => (a, b),
-    sml_statics::def::Def::Path(sml_statics::def::Path::BuiltinLib(_), _)
-    | sml_statics::def::Def::Primitive(_) => return None,
-  };
-  let def_file = source_files.get(&path)?;
-  let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx)?;
-  let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
-  Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
-}
-
-fn file_and_token(
-  source_files: &PathMap<mlb_statics::SourceFile>,
-  pos: WithPath<Position>,
-) -> Option<FileAndToken<'_>> {
-  let file = source_files.get(&pos.path)?;
-  let idx = file.syntax.pos_db.text_size(pos.val)?;
-  if !file.syntax.parse.root.syntax().text_range().contains(idx) {
-    return None;
-  }
-  let token = match file.syntax.parse.root.syntax().token_at_offset(idx) {
-    TokenAtOffset::None => return None,
-    TokenAtOffset::Single(t) => t,
-    TokenAtOffset::Between(t1, t2) => {
-      if priority(t1.kind()) >= priority(t2.kind()) {
-        t1
-      } else {
-        t2
-      }
-    }
-  };
-  Some(FileAndToken { file, token })
-}
-
 /// A std basis.
 #[derive(Debug, Clone, Copy)]
 pub enum StdBasis {
@@ -256,21 +219,6 @@ pub enum FormatError {
   NoFile,
   /// A formatting error.
   Format(sml_fmt::Error),
-}
-
-fn priority(kind: SyntaxKind) -> u8 {
-  match kind {
-    SyntaxKind::Name => 5,
-    SyntaxKind::OpKw => 4,
-    SyntaxKind::TyVar => 3,
-    SyntaxKind::CharLit
-    | SyntaxKind::IntLit
-    | SyntaxKind::RealLit
-    | SyntaxKind::StringLit
-    | SyntaxKind::WordLit => 2,
-    SyntaxKind::Whitespace | SyntaxKind::BlockComment | SyntaxKind::Invalid => 0,
-    _ => 1,
-  }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -376,22 +324,4 @@ fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
     return Some(node.sig_kw()?.text_range());
   }
   None
-}
-
-struct FileAndToken<'a> {
-  file: &'a mlb_statics::SourceFile,
-  token: SyntaxToken,
-}
-
-impl FileAndToken<'_> {
-  fn get_ptr_and_idx(&self) -> Option<(SyntaxNodePtr, sml_hir::Idx)> {
-    let mut node = self.token.parent()?;
-    loop {
-      let ptr = SyntaxNodePtr::new(&node);
-      match self.file.syntax.lower.ptrs.ast_to_hir(&ptr) {
-        Some(idx) => return Some((ptr, idx)),
-        None => node = node.parent()?,
-      }
-    }
-  }
 }
