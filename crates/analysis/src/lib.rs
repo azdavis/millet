@@ -22,8 +22,6 @@ pub struct Analysis {
   diagnostics_options: diagnostics::Options,
   source_files: PathMap<mlb_statics::SourceFile>,
   syms: sml_statics::Syms,
-  /// TODO(equality-checks) remove
-  equality_checks: bool,
 }
 
 impl Analysis {
@@ -34,14 +32,12 @@ impl Analysis {
     lines: config::ErrorLines,
     filter: config::DiagnosticsFilter,
     format: bool,
-    equality_checks: bool,
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
       diagnostics_options: diagnostics::Options { lines, filter, format },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
-      equality_checks,
     }
   }
 
@@ -51,7 +47,7 @@ impl Analysis {
     let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, contents);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
-    let mode = sml_statics::Mode::Regular(None, self.equality_checks);
+    let mode = sml_statics::Mode::Regular(None);
     let checked =
       sml_statics::get(&mut syms, &basis, mode, &syntax.lower.arenas, syntax.lower.root);
     let mut info = checked.info;
@@ -69,14 +65,7 @@ impl Analysis {
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {
-      mlb_statics::get(
-        syms,
-        basis,
-        &input.sources,
-        &groups,
-        &input.root_group_paths,
-        self.equality_checks,
-      )
+      mlb_statics::get(syms, basis, &input.sources, &groups, &input.root_group_paths)
     });
     self.source_files = res.sml;
     self.syms = res.syms;

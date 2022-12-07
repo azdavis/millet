@@ -45,7 +45,7 @@ where
 ///
 /// Also sets any non-constrained meta type variables to be equality type variables.
 pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
-  if !st.info.mode().equality_checks() {
+  if st.info.mode().is_path_order() {
     return Ok(());
   }
   match ty {
@@ -123,7 +123,7 @@ fn get_con(st: &mut St, args: &[Ty], sym: Sym) -> Result {
 }
 
 pub(crate) fn get_ty_scheme(st: &mut St, ty_scheme: TyScheme) -> Result {
-  if !st.info.mode().equality_checks() {
+  if st.info.mode().is_path_order() {
     return Ok(());
   }
   let ty = instantiate(st, Generalizable::Always, ty_scheme);
@@ -131,7 +131,7 @@ pub(crate) fn get_ty_scheme(st: &mut St, ty_scheme: TyScheme) -> Result {
 }
 
 pub(crate) fn get_ty_info(st: &mut St, ty_info: TyInfo) -> Result {
-  if !st.info.mode().equality_checks() {
+  if st.info.mode().is_path_order() {
     return Ok(());
   }
   let is_ref = match &ty_info.ty_scheme.ty {

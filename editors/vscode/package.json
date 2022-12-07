@@ -85,11 +85,6 @@
           "default": true,
           "markdownDescription": "Enable the language server."
         },
-        "millet.server.experimental.equalityChecks.enable": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Enable equality checks.\n\nThis setting is temporary, and will go away once we have confidence that equality checks work."
-        },
         "millet.server.hover.token.enable": {
           "type": "boolean",
           "default": true,

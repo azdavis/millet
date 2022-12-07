@@ -86,7 +86,7 @@ fn get_str_dec(
         let marker = st.syms.mark();
         let mut env = Env::with_def(st.def(str_dec.into()));
         let should_push = match st.info.mode() {
-          Mode::Regular(_, _) => true,
+          Mode::Regular(_) => true,
           // `datatype option` is well-known
           Mode::BuiltinLib(_) => sig_bind.name.as_str() != "OPTION",
           Mode::PathOrder => false,
@@ -215,7 +215,7 @@ fn get_str_exp(
       let mut to_add = sig.env.clone();
       let idx = sml_hir::Idx::from(str_exp);
       match st.info.mode() {
-        Mode::Regular(_, _) => {
+        Mode::Regular(_) => {
           instance::env_of_sig(st, idx, &mut subst, &str_exp_env, &sig);
           realize::get_env(&subst, &mut to_add);
           enrich::get_env(st, idx, &str_exp_env, &to_add);
@@ -324,7 +324,7 @@ fn get_sig_exp(
             "REAL" => Some(BasicOverload::Real),
             _ => None,
           },
-          Mode::Regular(_, _) | Mode::PathOrder => None,
+          Mode::Regular(_) | Mode::PathOrder => None,
         }
       }
       None => {
