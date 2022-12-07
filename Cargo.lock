@@ -24,6 +24,7 @@ dependencies = [
  "log",
  "mlb-statics",
  "mlb-syntax",
+ "once_cell",
  "paths",
  "sml-fmt",
  "sml-hir",

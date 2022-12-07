@@ -7,6 +7,7 @@ mod matcher;
 mod source_files;
 
 pub mod input;
+mod primitives;
 
 use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
@@ -117,7 +118,7 @@ impl Analysis {
             };
             info.get_doc(idx)
           }
-          sml_statics::def::Def::Primitive(_) => None,
+          sml_statics::def::Def::Primitive(name) => primitives::DOC.get(name).map(AsRef::as_ref),
         }));
         ptr.to_node(ft.file.syntax.parse.root.syntax()).text_range()
       }
