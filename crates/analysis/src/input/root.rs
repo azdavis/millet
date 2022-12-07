@@ -1,9 +1,9 @@
 //! Getting the root groups.
 
+use crate::diagnostics::Severities;
 use crate::input::util::{
   get_path_id, read_dir, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
 };
-use fast_hash::FxHashMap;
 use paths::slash_var_path::{EnvEntry, EnvEntryKind};
 use paths::PathId;
 use std::path::PathBuf;
@@ -75,8 +75,6 @@ impl Root {
     })
   }
 }
-
-pub(crate) type Severities = FxHashMap<diagnostic_util::Code, Option<diagnostic_util::Severity>>;
 
 #[derive(Default)]
 pub(crate) struct Config {

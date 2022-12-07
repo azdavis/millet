@@ -56,7 +56,8 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    diagnostics::source_file(&file, &syms, &input::Severities::default(), self.diagnostics_options)
+    let severities = diagnostics::Severities::default();
+    diagnostics::source_file(&file, &syms, &severities, self.diagnostics_options)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a

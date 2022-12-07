@@ -1,11 +1,13 @@
 //! Helpers for working with diagnostics.
 
-use crate::input::Severities;
 use diagnostic_util::Diagnostic;
+use fast_hash::FxHashMap;
 use sml_syntax::ast::{self, AstNode as _};
 use sml_syntax::SyntaxNode;
 use std::fmt;
 use text_size_util::TextRange;
+
+pub(crate) type Severities = FxHashMap<diagnostic_util::Code, Option<diagnostic_util::Severity>>;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {

@@ -6,10 +6,10 @@ mod root;
 mod topo;
 mod util;
 
+use crate::diagnostics::Severities;
 use paths::{PathId, PathMap, WithPath};
 use util::{ErrorKind, ErrorSource, GroupPathKind};
 
-pub(crate) use root::Severities;
 pub use util::Error;
 
 /// A result type defaulting to success = Input and error = Error.
