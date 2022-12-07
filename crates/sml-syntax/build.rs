@@ -14,34 +14,32 @@ const SPECIAL: [(&str, &str); 7] = [
   ("StringLit", "a string literal"),
 ];
 
-const TOKENS: &str = include_str!("../../docs/tokens.md");
-
 fn code_h2(s: &str) -> Option<&str> {
   s.strip_prefix("## `")?.strip_suffix('`')
 }
 
 fn main() -> std::io::Result<()> {
   let mut doc_map = FxHashMap::<&str, String>::default();
-  let mut s = String::new();
-  let mut tok = None::<&str>;
-  for line in TOKENS.lines() {
+  let mut key = None::<&str>;
+  let mut val = String::new();
+  for line in include_str!("../../docs/tokens.md").lines() {
     match code_h2(line) {
-      Some(new_tok) => {
-        if let Some(tok) = tok {
-          assert!(doc_map.insert(tok, s).is_none());
+      Some(next) => {
+        if let Some(key) = key {
+          assert!(doc_map.insert(key, val).is_none());
         }
-        tok = Some(new_tok);
+        key = Some(next);
         // NOTE: this used to be a sml code block, but the VS Code markdown viewer doesn't do well
         // with a horizontal rule followed by a code block.
-        s = format!("Token: `{new_tok}`\n");
+        val = format!("Token: `{next}`\n");
       }
       None => {
-        s.push('\n');
-        s.push_str(line);
+        val.push('\n');
+        val.push_str(line);
       }
     }
   }
-  assert!(doc_map.insert(tok.unwrap(), s).is_none());
+  assert!(doc_map.insert(key.unwrap(), val).is_none());
   let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR should be set");
   gen(
     std::path::Path::new(out_dir.as_str()),
