@@ -2447,6 +2447,8 @@ val usingLet =
 
 There was a usage of the top-level `use` function, which has implementation-defined semantics.
 
+<!-- @ignore use is defined in sml-libs -->
+
 ```sml
 val () = use "foo.sml"
 (**      ^^^^^^^^^^^^^ contains: `use` ignored *)
