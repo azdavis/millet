@@ -6,7 +6,7 @@ pub enum Def {
   /// A def contained at a path.
   Path(Path, sml_hir::Idx),
   /// A primitive, inherent def.
-  Primitive,
+  Primitive(&'static str),
 }
 
 /// A definition path.

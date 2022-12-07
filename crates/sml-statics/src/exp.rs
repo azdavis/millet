@@ -161,7 +161,7 @@ fn lint_app(
 ) -> Option<ErrorKind> {
   match &ars.exp[func?] {
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def? {
-      def::Def::Primitive => {
+      def::Def::Primitive(_) => {
         assert!(path.prefix().is_empty(), "primitives are at the top level");
         match path.last().as_str() {
           "=" | "<>" => lint_eq(cx, ars, argument),
@@ -210,7 +210,7 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
     };
     let vi = get_val_info(&cx.env, path).ok()??;
     match vi.def? {
-      def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive => {}
+      def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive(_) => {}
       def::Def::Path(def::Path::Regular(_), _) => return None,
     }
     match path.last().as_str() {

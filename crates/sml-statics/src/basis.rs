@@ -81,14 +81,14 @@ pub fn minimal() -> (Syms, Basis) {
   // @sync(special_sym_order)
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
-    insert_special(&mut syms, sym, basic_datatype(Ty::zero(sym), &[]));
+    insert_special(&mut syms, sym, basic_datatype(sym, &[]));
   }
   syms.overloads_mut().int.push(Sym::INT);
   syms.overloads_mut().word.push(Sym::WORD);
   syms.overloads_mut().real.push(Sym::REAL);
   syms.overloads_mut().char.push(Sym::CHAR);
   syms.overloads_mut().string.push(Sym::STRING);
-  insert_special(&mut syms, Sym::BOOL, basic_datatype(Ty::BOOL, &["true", "false"]));
+  insert_special(&mut syms, Sym::BOOL, basic_datatype(Sym::BOOL, &["true", "false"]));
   let list_info = {
     let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
     let alpha_list = TyScheme::one(|a| (list(a), None));
@@ -96,7 +96,7 @@ pub fn minimal() -> (Syms, Basis) {
     TyInfo {
       ty_scheme: alpha_list.clone(),
       val_env: datatype_ve([("nil", alpha_list), ("::", cons)]),
-      def: Some(Def::Primitive),
+      def: Some(Def::Primitive("list")),
     }
   };
   insert_special(&mut syms, Sym::LIST, list_info);
@@ -106,7 +106,7 @@ pub fn minimal() -> (Syms, Basis) {
     TyInfo {
       ty_scheme: TyScheme::one(|a| (ref_(a), None)),
       val_env: datatype_ve([("ref", con)]),
-      def: Some(Def::Primitive),
+      def: Some(Def::Primitive("ref")),
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
@@ -121,7 +121,7 @@ pub fn minimal() -> (Syms, Basis) {
       let ti = TyInfo {
         ty_scheme: TyScheme::zero(ty),
         val_env: ValEnv::default(),
-        def: Some(Def::Primitive),
+        def: Some(Def::Primitive(name)),
       };
       (str_util::Name::new(name), ti)
     }))
@@ -163,7 +163,7 @@ pub fn minimal() -> (Syms, Basis) {
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
     .chain(fns.into_iter().map(|(name, ty_scheme)| {
-      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: Some(Def::Primitive) };
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: Some(Def::Primitive(name)) };
       (str_util::Name::new(name), vi)
     }))
     .collect();
@@ -191,19 +191,19 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
   syms.finish(started, ty_info, equality);
 }
 
-fn basic_datatype(ty: Ty, ctors: &[&str]) -> TyInfo {
-  let ty_scheme = TyScheme::zero(ty);
+fn basic_datatype(sym: Sym, ctors: &'static [&'static str]) -> TyInfo {
+  let ty_scheme = TyScheme::zero(Ty::zero(sym));
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
-  TyInfo { ty_scheme, val_env, def: Some(Def::Primitive) }
+  TyInfo { ty_scheme, val_env, def: Some(Def::Primitive(sym.special().unwrap())) }
 }
 
-fn datatype_ve<'a, I>(xs: I) -> ValEnv
+fn datatype_ve<I>(xs: I) -> ValEnv
 where
-  I: IntoIterator<Item = (&'a str, TyScheme)>,
+  I: IntoIterator<Item = (&'static str, TyScheme)>,
 {
   xs.into_iter()
     .map(|(name, ty_scheme)| {
-      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, def: Some(Def::Primitive) };
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, def: Some(Def::Primitive(name)) };
       (str_util::Name::new(name), vi)
     })
     .collect()

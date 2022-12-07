@@ -115,7 +115,7 @@ impl Analysis {
             };
             info.get_doc(idx)
           }
-          sml_statics::def::Def::Primitive => None,
+          sml_statics::def::Def::Primitive(_) => None,
         }));
         ptr.to_node(ft.file.syntax.parse.root.syntax()).text_range()
       }
@@ -216,7 +216,7 @@ impl Analysis {
     let (path, idx) = match def {
       sml_statics::def::Def::Path(sml_statics::def::Path::Regular(a), b) => (a, b),
       sml_statics::def::Def::Path(sml_statics::def::Path::BuiltinLib(_), _)
-      | sml_statics::def::Def::Primitive => return None,
+      | sml_statics::def::Def::Primitive(_) => return None,
     };
     let def_file = self.source_files.get(&path)?;
     let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx)?;
