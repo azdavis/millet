@@ -3,9 +3,9 @@
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub mod input;
+mod matcher;
 
 use diagnostic_util::Diagnostic;
-use fmt_util::sep_seq;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxNode, SyntaxToken};
@@ -169,10 +169,8 @@ impl Analysis {
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
     let head = ft.file.syntax.lower.ptrs.ast_to_hir(&head_ptr)?;
     let variants = ft.file.info.get_variants(&self.syms, head)?;
-    let case = CaseDisplay {
-      needs_starting_bar: case.matcher().map_or(false, |x| x.match_rules().count() > 0),
-      variants: &variants,
-    };
+    let starting_bar = case.matcher().map_or(false, |x| x.match_rules().count() > 0);
+    let case = matcher::display(starting_bar, &variants);
     Some((range, case.to_string()))
   }
 
@@ -372,39 +370,6 @@ fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
     return Some(node.sig_kw()?.text_range());
   }
   None
-}
-
-struct CaseDisplay<'a> {
-  needs_starting_bar: bool,
-  variants: &'a [(str_util::Name, bool)],
-}
-
-impl fmt::Display for CaseDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "  ")?;
-    if self.needs_starting_bar {
-      write!(f, "| ")?;
-    } else {
-      write!(f, "  ")?;
-    }
-    let iter = self.variants.iter().map(|&(ref name, has_arg)| ArmDisplay { name, has_arg });
-    sep_seq(f, "\n  | ", iter)
-  }
-}
-
-struct ArmDisplay<'a> {
-  name: &'a str_util::Name,
-  has_arg: bool,
-}
-
-impl fmt::Display for ArmDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.name)?;
-    if self.has_arg {
-      write!(f, " _")?;
-    }
-    write!(f, " => _")
-  }
 }
 
 struct FileAndToken<'a> {
