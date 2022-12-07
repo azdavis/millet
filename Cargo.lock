@@ -630,7 +630,7 @@ dependencies = [
 [[package]]
 name = "sml-libs"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/sml-libs.git#9e5be395b8d3542d7b3dc470f59043d66d6dffd2"
+source = "git+https://github.com/azdavis/sml-libs.git#2976ae0175b037425a8fab5f39fd83c9f6ad829b"
 
 [[package]]
 name = "sml-lower"
