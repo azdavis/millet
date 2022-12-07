@@ -156,6 +156,7 @@ pub fn minimal() -> (Syms, Basis) {
       ("mod", wordint_pair_to_wordint),
       ("=", equality_pair_to_bool.clone()),
       ("<>", equality_pair_to_bool),
+      ("use", TyScheme::zero(Ty::fun(Ty::STRING, unit()))),
     ]
   };
   let val_env: ValEnv = ty_env

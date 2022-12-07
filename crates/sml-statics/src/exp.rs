@@ -165,6 +165,13 @@ fn lint_app(
         assert!(path.prefix().is_empty(), "primitives are at the top level");
         match path.last().as_str() {
           "=" | "<>" => lint_eq(cx, ars, argument),
+          "use" => {
+            let file_name = argument.and_then(|arg| match &ars.exp[arg] {
+              sml_hir::Exp::SCon(sml_hir::SCon::String(s)) => Some(s.clone()),
+              _ => None,
+            });
+            Some(ErrorKind::Use(file_name))
+          }
           _ => None,
         }
       }
@@ -174,15 +181,6 @@ fn lint_app(
         } else {
           None
         }
-      }
-      def::Def::Path(def::Path::BuiltinLib("primitive/use.sml"), _) => {
-        assert!(path.prefix().is_empty(), "everything in use.sml is at the top level");
-        assert_eq!(path.last().as_str(), "use", "use.sml defines only the `use` function");
-        let file_name = argument.and_then(|arg| match &ars.exp[arg] {
-          sml_hir::Exp::SCon(sml_hir::SCon::String(s)) => Some(s.clone()),
-          _ => None,
-        });
-        Some(ErrorKind::Use(file_name))
       }
       def::Def::Path(_, _) => None,
     },
