@@ -97,3 +97,7 @@ pub(crate) fn get<'a, I>(
     (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {ck}"),
   }
 }
+
+pub(crate) fn one_file_fs(s: &str) -> [(&str, &str); 2] {
+  [("f.sml", s), ("s.mlb", "f.sml")]
+}

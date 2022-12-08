@@ -39,7 +39,7 @@ use diagnostic_util::Severity;
 /// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
-  check_multi(one_file_fs(s));
+  check_multi(raw::one_file_fs(s));
 }
 
 /// Like [`check`], but allows multiple files.
@@ -72,13 +72,13 @@ pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  raw::get(one_file_fs(s), analysis::StdBasis::Minimal, raw::Outcome::Fail, Severity::Error);
+  raw::get(raw::one_file_fs(s), analysis::StdBasis::Minimal, raw::Outcome::Fail, Severity::Error);
 }
 
 /// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  raw::get(one_file_fs(s), analysis::StdBasis::Full, raw::Outcome::Pass, Severity::Error);
+  raw::get(raw::one_file_fs(s), analysis::StdBasis::Full, raw::Outcome::Pass, Severity::Error);
 }
 
 /// Asserts the input from the files generates an error at the given path containing the given
@@ -94,8 +94,4 @@ where
   assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
   let got_msg = e.display(input::ROOT.as_path()).to_string();
   assert!(got_msg.contains(msg), "want not contained in got\n  want: {msg}\n  got: {got_msg}");
-}
-
-fn one_file_fs(s: &str) -> [(&str, &str); 2] {
-  [("f.sml", s), ("s.mlb", "f.sml")]
 }
