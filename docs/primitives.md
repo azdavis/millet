@@ -110,13 +110,13 @@ There is syntax sugar for lists, written as:
 - Comma-separated elements in the list
 - A `]` to close the list
 
-For example:
+For example, all of these things are equivalent:
 
-| Thing                    | What                |
-| ------------------------ | ------------------- |
-| `[a, b, c]`              | Example list        |
-| `a :: b :: c :: nil`     | Desugar             |
-| `a :: (b :: (c :: nil))` | Right associativity |
+| Thing                    | What                         |
+| ------------------------ | ---------------------------- |
+| `[a, b, c]`              | Example list                 |
+| `a :: b :: c :: nil`     | Desugared                    |
+| `a :: (b :: (c :: nil))` | Explicit right associativity |
 
 The `List` structure provides operations on lists.
 
