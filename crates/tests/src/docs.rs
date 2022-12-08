@@ -5,7 +5,6 @@ use diagnostic_util::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
 const SML: &str = "sml";
-const MINI_STD_BASIS: &str = include_str!("mini-std-basis.sml");
 
 fn check_all(contents: &str) {
   let mut options = Options::empty();
@@ -24,12 +23,8 @@ fn check_all(contents: &str) {
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
         if lang.as_ref() == SML {
           if !ignore_next {
-            let files = [
-              ("std.sml", MINI_STD_BASIS),
-              ("prog.sml", ac.as_str()),
-              ("sources.mlb", ("std.sml prog.sml")),
-            ];
-            raw::get(files, analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Warning);
+            let files = raw::one_file_fs(ac.as_ref());
+            raw::get(files, analysis::StdBasis::Full, raw::Outcome::Pass, Severity::Warning);
           }
           ac.clear();
           inside = false;
