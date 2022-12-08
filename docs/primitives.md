@@ -239,6 +239,66 @@ val eight = !r1
 val three = !r2
 ```
 
+## `val ref`
+
+The sole constructor for the built-in reference type.
+
+## `val op *`
+
+Multiplies two numbers.
+
+## `val op +`
+
+Adds two numbers.
+
+## `val op -`
+
+Subtracts the right hand number from the left.
+
+## `val op /`
+
+Divides the left hand real number by the right.
+
+## `val op <`
+
+Returns whether the left hand number, string, or character is less than the right.
+
+## `val op <=`
+
+Returns whether the left hand number, string, or character is less than or equal to the right.
+
+## `val op >`
+
+Returns whether the left hand number, string, or character is greater than the right.
+
+## `val op >=`
+
+Returns whether the left hand number, string, or character is greater than or equal to the right.
+
+## `val op ~`
+
+Negates the number.
+
+## `val abs`
+
+Returns the absolute value of the number.
+
+## `val div`
+
+Divides the left hand number by the right, rounding towards negative infinity.
+
+## `val mod`
+
+Computes the modulus of the left hand number with the right.
+
+## `val op =`
+
+Returns whether the two operands are equal.
+
+## `val op <>`
+
+Returns whether the two operands are unequal.
+
 ## `val use`
 
 `use` is available in some SML implementations, like [SML/NJ][smlnj], but not others, like [MLton][].
