@@ -29,9 +29,14 @@ pub struct Primitive(PrimitiveKind);
 
 impl Primitive {
   /// Returns Markdown documentation for this.
+  ///
+  /// # Panics
+  ///
+  /// If there was no documentation for this.
   #[must_use]
-  pub fn doc(self) -> Option<&'static str> {
-    PRIMITIVE_DOC.get(&self.0).map(AsRef::as_ref)
+  pub fn doc(self) -> &'static str {
+    // @test(repo::primitives)
+    PRIMITIVE_DOC.get(&self.0).expect("no doc for this primitive").as_ref()
   }
 }
 
