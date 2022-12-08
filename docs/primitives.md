@@ -243,6 +243,14 @@ val three = !r2
 
 The sole constructor for the built-in reference type.
 
+## `type unit`
+
+An alias for `{}`, the empty record/tuple type. It has one value, written `()` or equivalently `{}`. Useful for when a function is called only for its side effects and has no useful information to return, like `print`.
+
+## `type exn`
+
+The type of exceptions, which can be `raise`d or `handle`d.
+
 ## `val op *`
 
 Multiplies two numbers.
