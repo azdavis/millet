@@ -226,6 +226,7 @@ fn main() -> Result<()> {
       let tag_arg: String = args.free_from_str()?;
       finish_args(args)?;
       tag(&sh, &tag_arg)?;
+      std::env::set_var("CI", "1");
       run_ci(&sh)?;
     }
   }
