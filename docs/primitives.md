@@ -175,6 +175,12 @@ There are two constructors for lists:
 Cons takes an element `x` and a list `r` and returns the list that is that element `x` followed by `r`. `::` is an right-associative infix operator by default, so you may write `x :: r`.
 
 ```sml
+val twoFourSix = 2 :: 4 :: 6 :: nil
+```
+
+Lists may be pattern-matched with `case` and similar constructs.
+
+```sml
 fun sum (xs : int list) : int =
   case xs of
     nil => 0
@@ -198,8 +204,8 @@ For example, all of these things are equivalent:
 The `List` structure provides operations on lists.
 
 ```sml
-fun even x = x mod 2 = 0
-fun allEven xs = List.all even xs
+val sizes = string list -> int list = List.map String.size
+val three = List.length [2, 4, 6]
 ```
 
 ## `val nil`
