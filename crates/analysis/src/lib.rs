@@ -107,7 +107,9 @@ impl Analysis {
             };
             info.get_doc(idx)
           }
-          sml_statics::def::Def::Primitive(name) => primitives::DOC.get(name).map(AsRef::as_ref),
+          sml_statics::def::Def::Primitive(prim) => {
+            primitives::DOC.get(prim.as_str()).map(AsRef::as_ref)
+          }
         }));
         ptr.to_node(ft.file.syntax.parse.root.syntax()).text_range()
       }

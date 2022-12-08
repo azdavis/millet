@@ -71,25 +71,25 @@ pub(crate) struct Sym(idx::Idx);
 impl fmt::Debug for Sym {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let mut dt = f.debug_tuple("Sym");
-    match self.special() {
+    match self.primitive() {
       None => dt.field(&self.0),
-      Some(x) => dt.field(&x),
+      Some(x) => dt.field(&x.as_str()),
     };
     dt.finish()
   }
 }
 
 macro_rules! mk_special_syms {
-  ($( ($idx:expr, $mk_ty:ident, $name:ident, $str:literal), )*) => {
+  ($( ($idx:expr, $mk_ty:ident, $name:ident, $prim:path), )*) => {
     impl Sym {
       $(
         pub(crate) const $name: Self = Self(idx::Idx::new_u32($idx));
       )*
 
-      pub(crate) fn special(&self) -> Option<&'static str> {
+      pub(crate) fn primitive(&self) -> Option<def::PrimitiveKind> {
         let s = match *self {
           $(
-            Self::$name => $str,
+            Self::$name => $prim,
           )*
           _ => return None,
         };
@@ -111,15 +111,15 @@ macro_rules! mk_special_syms {
 
 // @sync(special_sym_order)
 mk_special_syms![
-  (0, y, EXN, "exn"),
-  (1, y, INT, "int"),
-  (2, y, WORD, "word"),
-  (3, y, REAL, "real"),
-  (4, y, CHAR, "char"),
-  (5, y, STRING, "string"),
-  (6, y, BOOL, "bool"),
-  (7, n, LIST, "list"),
-  (8, n, REF, "ref"),
+  (0, y, EXN, def::PrimitiveKind::Exn),
+  (1, y, INT, def::PrimitiveKind::Int),
+  (2, y, WORD, def::PrimitiveKind::Word),
+  (3, y, REAL, def::PrimitiveKind::Real),
+  (4, y, CHAR, def::PrimitiveKind::Char),
+  (5, y, STRING, def::PrimitiveKind::String),
+  (6, y, BOOL, def::PrimitiveKind::Bool),
+  (7, n, LIST, def::PrimitiveKind::List),
+  (8, n, REF, def::PrimitiveKind::RefTy),
 ];
 
 impl Sym {

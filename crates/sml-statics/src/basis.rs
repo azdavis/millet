@@ -1,6 +1,6 @@
 //! Bases. (The plural of "basis".)
 
-use crate::def::Def;
+use crate::def::PrimitiveKind;
 use crate::env::{Bs, Env, EnvLike as _, EnvStack, FunEnv, SigEnv, StrEnv};
 use crate::types::{
   BasicOverload, CompositeOverload, Equality, IdStatus, Overload, RecordTy, Sym, Syms, Ty, TyEnv,
@@ -88,15 +88,19 @@ pub fn minimal() -> (Syms, Basis) {
   syms.overloads_mut().real.push(Sym::REAL);
   syms.overloads_mut().char.push(Sym::CHAR);
   syms.overloads_mut().string.push(Sym::STRING);
-  insert_special(&mut syms, Sym::BOOL, basic_datatype(Sym::BOOL, &["true", "false"]));
+  insert_special(
+    &mut syms,
+    Sym::BOOL,
+    basic_datatype(Sym::BOOL, &[PrimitiveKind::True, PrimitiveKind::False]),
+  );
   let list_info = {
     let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
     let alpha_list = TyScheme::one(|a| (list(a), None));
     let cons = TyScheme::one(|a| (Ty::fun(pair(a.clone(), list(a.clone())), list(a)), None));
     TyInfo {
       ty_scheme: alpha_list.clone(),
-      val_env: datatype_ve([("nil", alpha_list), ("::", cons)]),
-      def: Some(Def::Primitive("list")),
+      val_env: datatype_ve([(PrimitiveKind::Nil, alpha_list), (PrimitiveKind::Cons, cons)]),
+      def: Some(PrimitiveKind::List.into()),
     }
   };
   insert_special(&mut syms, Sym::LIST, list_info);
@@ -105,12 +109,12 @@ pub fn minimal() -> (Syms, Basis) {
     let con = TyScheme::one(|a| (Ty::fun(a.clone(), ref_(a)), None));
     TyInfo {
       ty_scheme: TyScheme::one(|a| (ref_(a), None)),
-      val_env: datatype_ve([("ref", con)]),
-      def: Some(Def::Primitive("ref")),
+      val_env: datatype_ve([(PrimitiveKind::RefVal, con)]),
+      def: Some(PrimitiveKind::RefTy.into()),
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
-  let aliases = [("unit", unit()), ("exn", Ty::EXN)];
+  let aliases = [(PrimitiveKind::Unit, unit()), (PrimitiveKind::Exn, Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter_syms()
     .map(|sym_info| {
@@ -121,9 +125,9 @@ pub fn minimal() -> (Syms, Basis) {
       let ti = TyInfo {
         ty_scheme: TyScheme::zero(ty),
         val_env: ValEnv::default(),
-        def: Some(Def::Primitive(name)),
+        def: Some(name.into()),
       };
-      (str_util::Name::new(name), ti)
+      (str_util::Name::new(name.as_str()), ti)
     }))
     .collect();
   let fns = {
@@ -142,29 +146,29 @@ pub fn minimal() -> (Syms, Basis) {
       (t, Some(TyVarKind::Equality))
     });
     [
-      ("*", num_pair_to_num.clone()),
-      ("+", num_pair_to_num.clone()),
-      ("-", num_pair_to_num),
-      ("/", real_pair_to_real),
-      ("<", numtxt_pair_to_bool.clone()),
-      ("<=", numtxt_pair_to_bool.clone()),
-      (">", numtxt_pair_to_bool.clone()),
-      (">=", numtxt_pair_to_bool),
-      ("~", realint_to_realint.clone()),
-      ("abs", realint_to_realint),
-      ("div", wordint_pair_to_wordint.clone()),
-      ("mod", wordint_pair_to_wordint),
-      ("=", equality_pair_to_bool.clone()),
-      ("<>", equality_pair_to_bool),
-      ("use", TyScheme::zero(Ty::fun(Ty::STRING, unit()))),
+      (PrimitiveKind::Mul, num_pair_to_num.clone()),
+      (PrimitiveKind::Add, num_pair_to_num.clone()),
+      (PrimitiveKind::Sub, num_pair_to_num),
+      (PrimitiveKind::RealDiv, real_pair_to_real),
+      (PrimitiveKind::Lt, numtxt_pair_to_bool.clone()),
+      (PrimitiveKind::LtEq, numtxt_pair_to_bool.clone()),
+      (PrimitiveKind::Gt, numtxt_pair_to_bool.clone()),
+      (PrimitiveKind::GtEq, numtxt_pair_to_bool),
+      (PrimitiveKind::Neg, realint_to_realint.clone()),
+      (PrimitiveKind::Abs, realint_to_realint),
+      (PrimitiveKind::Div, wordint_pair_to_wordint.clone()),
+      (PrimitiveKind::Mod, wordint_pair_to_wordint),
+      (PrimitiveKind::Eq, equality_pair_to_bool.clone()),
+      (PrimitiveKind::Neq, equality_pair_to_bool),
+      (PrimitiveKind::Use, TyScheme::zero(Ty::fun(Ty::STRING, unit()))),
     ]
   };
   let val_env: ValEnv = ty_env
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
     .chain(fns.into_iter().map(|(name, ty_scheme)| {
-      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: Some(Def::Primitive(name)) };
-      (str_util::Name::new(name), vi)
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: Some(name.into()) };
+      (str_util::Name::new(name.as_str()), vi)
     }))
     .collect();
   let basis = Basis {
@@ -186,25 +190,26 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
   } else {
     Equality::Sometimes
   };
-  let started = syms.start(sml_hir::Path::one(str_util::Name::new(sym.special().unwrap())));
+  let started =
+    syms.start(sml_hir::Path::one(str_util::Name::new(sym.primitive().unwrap().as_str())));
   assert_eq!(sym, started.sym());
   syms.finish(started, ty_info, equality);
 }
 
-fn basic_datatype(sym: Sym, ctors: &'static [&'static str]) -> TyInfo {
+fn basic_datatype(sym: Sym, ctors: &'static [PrimitiveKind]) -> TyInfo {
   let ty_scheme = TyScheme::zero(Ty::zero(sym));
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
-  TyInfo { ty_scheme, val_env, def: Some(Def::Primitive(sym.special().unwrap())) }
+  TyInfo { ty_scheme, val_env, def: Some(sym.primitive().unwrap().into()) }
 }
 
 fn datatype_ve<I>(xs: I) -> ValEnv
 where
-  I: IntoIterator<Item = (&'static str, TyScheme)>,
+  I: IntoIterator<Item = (PrimitiveKind, TyScheme)>,
 {
   xs.into_iter()
     .map(|(name, ty_scheme)| {
-      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, def: Some(Def::Primitive(name)) };
-      (str_util::Name::new(name), vi)
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, def: Some(name.into()) };
+      (str_util::Name::new(name.as_str()), vi)
     })
     .collect()
 }
