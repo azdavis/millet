@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.6.4
 
 - Add docs for all primitives, including `use`.
 - Remove ability to disable equality checks, since the checks seem to be working just fine.
