@@ -2,9 +2,128 @@
 
 This is documentation for various SML primitive functions and types.
 
-## `val op ::`
+## `type int`
 
-The non-empty list constructor, pronounced "cons". Defaults to `infixr 5`.
+The built-in integer type.
+
+Integers may be positive, negative, or 0. They are usually written with decimal digits.
+
+```sml
+val pos = 4
+val neg = ~8
+val zero = 0
+```
+
+They can also be written in hex, with the prefix `0x`.
+
+```sml
+val hex = 0x123beef
+```
+
+The `Int` structure provides operations on integers.
+
+```sml
+val three = Int.min (3, 5)
+```
+
+## `type word`
+
+The built-in word type.
+
+Words are unsigned integers. They are written in decimal digits with the prefix `0w`.
+
+```sml
+val dec = 0w123
+```
+
+They can also be written in hex with the prefix `0wx`.
+
+```sml
+val hex = 0wx123beef
+```
+
+The `Word` structure provides operations on words.
+
+```sml
+val nine = Word.max (0w4, 0w9)
+```
+
+## `type real`
+
+The built-in real number type.
+
+This type approximates the "mathematical" real numbers by using [floating-point arithmetic][fp].
+
+```sml
+val r = 1.4
+val closeToZeroPoint3 = 0.1 + 0.2
+```
+
+Literals can have an exponent with an `e` or `E` following the base.
+
+```sml
+val withExp = 1.4e5
+```
+
+The `Real` structure provides operations on reals.
+
+```sml
+val four = Real.sqrt 16.0
+```
+
+## `type char`
+
+The built-in character type.
+
+Literals are written like string literals (delimited with `"`), except they must:
+
+- Have length 1.
+- Have a leading `#`.
+
+```sml
+val percent = #"%"
+val space = #" "
+```
+
+Millet, and SML in general, has limited support for extended character sets beyond ASCII.
+
+The `Char` structure provides operations on characters.
+
+```sml
+val no = Char.isSpace #"g"
+```
+
+## `type string`
+
+The built-in string type.
+
+Literals are delimited with double quotes, `"`.
+
+```sml
+val message = "hello, world!"
+```
+
+There are various string escapes available, all of which start with `\`.
+
+```sml
+val () = print "hi\n"
+```
+
+Strings can be concatenated with `^`.
+
+```sml
+val foobar = "foo" ^ "bar"
+```
+
+The `String` structure provides operations on strings.
+
+```sml
+val yes = String.isSubstring "erica" "america"
+```
+
+Strings are often thought of as ordered sequences of characters. Indeed, in SML, there is `String.explode` and `String.implode` to go from strings to list of characters and vice versa. However, the notion of "character" is [difficult to define][unicode].
+
+[unicode]: https://home.unicode.org
 
 ## `type bool`
 
@@ -36,55 +155,13 @@ The `Bool` structure provides operations on booleans.
 val s = Bool.toString false
 ```
 
-## `type char`
+## `val true`
 
-The built-in character type.
-
-Literals are written like string literals (delimited with `"`), except they must:
-
-- Have length 1.
-- Have a leading `#`.
-
-```sml
-val percent = #"%"
-val space = #" "
-```
-
-Millet, and SML in general, has limited support for extended character sets beyond ASCII.
-
-The `Char` structure provides operations on characters.
-
-```sml
-val no = Char.isSpace #"g"
-```
+The `bool` that represents logical truth. Opposite of `false`.
 
 ## `val false`
 
 The `bool` that represents logical falsity. Opposite of `true`.
-
-## `type int`
-
-The built-in integer type.
-
-Integers may be positive, negative, or 0. They are usually written with decimal digits.
-
-```sml
-val pos = 4
-val neg = ~8
-val zero = 0
-```
-
-They can also be written in hex, with the prefix `0x`.
-
-```sml
-val hex = 0x123beef
-```
-
-The `Int` structure provides operations on integers.
-
-```sml
-val three = Int.min (3, 5)
-```
 
 ## `type 'a list`
 
@@ -129,28 +206,9 @@ fun allEven xs = List.all even xs
 
 The empty list constructor. Identical to `[]`.
 
-## `type real`
+## `val op ::`
 
-The built-in real number type.
-
-This type approximates the "mathematical" real numbers by using [floating-point arithmetic][fp].
-
-```sml
-val r = 1.4
-val closeToZeroPoint3 = 0.1 + 0.2
-```
-
-Literals can have an exponent with an `e` or `E` following the base.
-
-```sml
-val withExp = 1.4e5
-```
-
-The `Real` structure provides operations on reals.
-
-```sml
-val four = Real.sqrt 16.0
-```
+The non-empty list constructor, pronounced "cons". Defaults to `infixr 5`.
 
 [fp]: https://0.30000000000000004.com
 
@@ -181,42 +239,6 @@ val eight = !r1
 val three = !r2
 ```
 
-## `type string`
-
-The built-in string type.
-
-Literals are delimited with double quotes, `"`.
-
-```sml
-val message = "hello, world!"
-```
-
-There are various string escapes available, all of which start with `\`.
-
-```sml
-val () = print "hi\n"
-```
-
-Strings can be concatenated with `^`.
-
-```sml
-val foobar = "foo" ^ "bar"
-```
-
-The `String` structure provides operations on strings.
-
-```sml
-val yes = String.isSubstring "erica" "america"
-```
-
-Strings are often thought of as ordered sequences of characters. Indeed, in SML, there is `String.explode` and `String.implode` to go from strings to list of characters and vice versa. However, the notion of "character" is [difficult to define][unicode].
-
-[unicode]: https://home.unicode.org
-
-## `val true`
-
-The `bool` that represents logical truth. Opposite of `false`.
-
 ## `val use`
 
 `use` is available in some SML implementations, like [SML/NJ][smlnj], but not others, like [MLton][].
@@ -242,25 +264,3 @@ val y = x + 4
 [mlton]: http://mlton.org
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [mlb]: http://mlton.org/MLBasis
-
-## `type word`
-
-The built-in word type.
-
-Words are unsigned integers. They are written in decimal digits with the prefix `0w`.
-
-```sml
-val dec = 0w123
-```
-
-They can also be written in hex with the prefix `0wx`.
-
-```sml
-val hex = 0wx123beef
-```
-
-The `Word` structure provides operations on words.
-
-```sml
-val nine = Word.max (0w4, 0w9)
-```
