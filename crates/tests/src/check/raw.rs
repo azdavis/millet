@@ -18,6 +18,10 @@ pub(crate) fn get<'a, I>(
 ) where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
+  if matches!(std_basis, analysis::StdBasis::Full) && !env_var_enabled("CI") {
+    log::info!("skipping slow tests");
+    return;
+  }
   // ignore the Err if we already initialized logging, since that's fine.
   let (input, store) = input::get(files);
   let input = input.expect("unexpectedly bad input");
@@ -100,4 +104,8 @@ pub(crate) fn get<'a, I>(
 
 pub(crate) fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("f.sml", s), ("s.mlb", "f.sml")]
+}
+
+fn env_var_enabled(s: &str) -> bool {
+  std::env::var_os(s).map_or(false, |x| x == "1")
 }
