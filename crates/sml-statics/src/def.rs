@@ -121,6 +121,7 @@ impl std::str::FromStr for PrimitiveKind {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let ret = match s {
+      // @primitives(start)
       "type int" => Self::Int,
       "type word" => Self::Word,
       "type real" => Self::Real,
@@ -151,6 +152,7 @@ impl std::str::FromStr for PrimitiveKind {
       "val op =" => Self::Eq,
       "val op <>" => Self::Neq,
       "val use" => Self::Use,
+      // @primitives(end)
       _ => return Err(s.to_owned()),
     };
     Ok(ret)

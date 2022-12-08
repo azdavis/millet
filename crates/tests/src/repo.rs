@@ -380,3 +380,27 @@ fn rs_file_comments() {
     .collect();
   empty_set(&no_doc, "rust files without doc comment at top");
 }
+
+#[test]
+fn primitives() {
+  let mut lines = include_str!("../../../crates/sml-statics/src/def.rs").lines();
+  for line in lines.by_ref() {
+    if line.trim() == "// @primitives(start)" {
+      break;
+    }
+  }
+  let mut in_rs = Vec::<&str>::new();
+  for line in lines {
+    let line = line.trim();
+    if line == "// @primitives(end)" {
+      break;
+    }
+    let (fst, _) = line.split_once("\" => ").unwrap();
+    in_rs.push(fst.strip_prefix('"').unwrap());
+  }
+  let in_md: Vec<_> = include_str!("../../../docs/primitives.md")
+    .lines()
+    .filter_map(|line| line.strip_prefix("## `")?.strip_suffix('`'))
+    .collect();
+  pretty_assertions::assert_eq!(in_rs, in_md);
+}
