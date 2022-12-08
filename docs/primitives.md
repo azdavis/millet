@@ -68,7 +68,7 @@ val withExp = 1.4e5
 The `Real` structure provides operations on reals.
 
 ```sml
-val four = Real.sqrt 16.0
+val fourPointSeven = Real.min (5.2, 4.7)
 ```
 
 ## `type char`
@@ -204,7 +204,7 @@ For example, all of these things are equivalent:
 The `List` structure provides operations on lists.
 
 ```sml
-val sizes = string list -> int list = List.map String.size
+val sizes : string list -> int list = List.map String.size
 val three = List.length [2, 4, 6]
 ```
 
@@ -320,6 +320,8 @@ Returns whether the two operands are unequal.
 When it is available, usually, the approximate semantics of calling `use f2` from a file `f1` is to "load" the contents of `f2`, and bring everything defined by that file `f2` into the scope of `f1`.
 
 A small example:
+
+<!-- @ignore generates warnings in Millet -->
 
 ```sml
 (* f1.sml *)

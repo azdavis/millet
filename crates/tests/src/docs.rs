@@ -55,3 +55,8 @@ fn diagnostics() {
 fn tokens() {
   check_all(include_str!("../../../docs/tokens.md"));
 }
+
+#[test]
+fn primitives() {
+  check_all(include_str!("../../../docs/primitives.md"));
+}
