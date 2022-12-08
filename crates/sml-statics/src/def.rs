@@ -1,5 +1,8 @@
 //! Def-related types.
 
+use fast_hash::FxHashMap;
+use once_cell::sync::Lazy;
+
 /// A definition site.
 #[derive(Debug, Clone, Copy)]
 pub enum Def {
@@ -25,14 +28,19 @@ pub enum Path {
 pub struct Primitive(PrimitiveKind);
 
 impl Primitive {
-  /// Returns this as a str.
+  /// Returns Markdown documentation for this.
   #[must_use]
-  pub fn as_str(self) -> &'static str {
-    self.0.as_str()
+  pub fn doc(self) -> Option<&'static str> {
+    PRIMITIVE_DOC.get(&self.0).map(AsRef::as_ref)
   }
 }
 
-#[derive(Debug, Clone, Copy)]
+static PRIMITIVE_DOC: Lazy<FxHashMap<PrimitiveKind, String>> = Lazy::new(|| {
+  let raw = code_h2_md_map::get(include_str!("../../../docs/primitives.md"), |_| String::new());
+  raw.into_iter().map(|(k, v)| (k.parse().expect("not a primitive kind"), v)).collect()
+});
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum PrimitiveKind {
   Int,
   Word,
@@ -105,5 +113,46 @@ impl PrimitiveKind {
 impl From<PrimitiveKind> for Def {
   fn from(val: PrimitiveKind) -> Self {
     Self::Primitive(Primitive(val))
+  }
+}
+
+impl std::str::FromStr for PrimitiveKind {
+  type Err = String;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let ret = match s {
+      "type int" => Self::Int,
+      "type word" => Self::Word,
+      "type real" => Self::Real,
+      "type char" => Self::Char,
+      "type string" => Self::String,
+      "type bool" => Self::Bool,
+      "val true" => Self::True,
+      "val false" => Self::False,
+      "type 'a list" => Self::List,
+      "val nil" => Self::Nil,
+      "val op ::" => Self::Cons,
+      "type 'a ref" => Self::RefTy,
+      "val ref" => Self::RefVal,
+      "type unit" => Self::Unit,
+      "type exn" => Self::Exn,
+      "val op *" => Self::Mul,
+      "val op +" => Self::Add,
+      "val op -" => Self::Sub,
+      "val op /" => Self::RealDiv,
+      "val op <" => Self::Lt,
+      "val op <=" => Self::LtEq,
+      "val op >" => Self::Gt,
+      "val op >=" => Self::GtEq,
+      "val op ~" => Self::Neg,
+      "val abs" => Self::Abs,
+      "val div" => Self::Div,
+      "val mod" => Self::Mod,
+      "val op =" => Self::Eq,
+      "val op <>" => Self::Neq,
+      "val use" => Self::Use,
+      _ => return Err(s.to_owned()),
+    };
+    Ok(ret)
   }
 }

@@ -16,7 +16,6 @@ name = "analysis"
 version = "0.1.0"
 dependencies = [
  "cm-syntax",
- "code-h2-md-map",
  "config",
  "diagnostic-util",
  "elapsed",
@@ -25,7 +24,6 @@ dependencies = [
  "log",
  "mlb-statics",
  "mlb-syntax",
- "once_cell",
  "paths",
  "sml-fmt",
  "sml-hir",
@@ -670,6 +668,7 @@ dependencies = [
 name = "sml-statics"
 version = "0.1.0"
 dependencies = [
+ "code-h2-md-map",
  "config",
  "diagnostic-util",
  "drop_bomb",
@@ -677,6 +676,7 @@ dependencies = [
  "fmt-util",
  "idx",
  "log",
+ "once_cell",
  "paths",
  "pattern-match",
  "sml-hir",

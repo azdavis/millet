@@ -2,11 +2,11 @@
 
 This is documentation for various SML primitive functions and types.
 
-## `::`
+## `val op ::`
 
 The non-empty list constructor, pronounced "cons". Defaults to `infixr 5`.
 
-## `bool`
+## `type bool`
 
 The built-in boolean type.
 
@@ -36,7 +36,7 @@ The `Bool` structure provides operations on booleans.
 val s = Bool.toString false
 ```
 
-## `char`
+## `type char`
 
 The built-in character type.
 
@@ -58,11 +58,11 @@ The `Char` structure provides operations on characters.
 val no = Char.isSpace #"g"
 ```
 
-## `false`
+## `val false`
 
 The `bool` that represents logical falsity. Opposite of `true`.
 
-## `int`
+## `type int`
 
 The built-in integer type.
 
@@ -86,7 +86,7 @@ The `Int` structure provides operations on integers.
 val three = Int.min (3, 5)
 ```
 
-## `list`
+## `type 'a list`
 
 The built-in list type.
 
@@ -125,11 +125,11 @@ fun even x = x mod 2 = 0
 fun allEven xs = List.all even xs
 ```
 
-## `nil`
+## `val nil`
 
 The empty list constructor. Identical to `[]`.
 
-## `real`
+## `type real`
 
 The built-in real number type.
 
@@ -154,7 +154,7 @@ val four = Real.sqrt 16.0
 
 [fp]: https://0.30000000000000004.com
 
-## `ref`
+## `type 'a ref`
 
 The built-in reference type.
 
@@ -181,7 +181,7 @@ val eight = !r1
 val three = !r2
 ```
 
-## `string`
+## `type string`
 
 The built-in string type.
 
@@ -213,11 +213,11 @@ Strings are often thought of as ordered sequences of characters. Indeed, in SML,
 
 [unicode]: https://home.unicode.org
 
-## `true`
+## `val true`
 
 The `bool` that represents logical truth. Opposite of `false`.
 
-## `use`
+## `val use`
 
 `use` is available in some SML implementations, like [SML/NJ][smlnj], but not others, like [MLton][].
 
@@ -243,7 +243,7 @@ val y = x + 4
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [mlb]: http://mlton.org/MLBasis
 
-## `word`
+## `type word`
 
 The built-in word type.
 

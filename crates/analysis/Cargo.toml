@@ -19,10 +19,8 @@ fmt-util = { path = "../fmt-util" }
 log = "0.4"
 mlb-statics = { path = "../mlb-statics" }
 mlb-syntax = { path = "../mlb-syntax" }
-once_cell = "1"
 paths = { path = "../paths" }
 sml-fmt = { path = "../sml-fmt" }
-code-h2-md-map = { path = "../code-h2-md-map" }
 sml-hir = { path = "../sml-hir" }
 sml-parse = { path = "../sml-parse" }
 sml-statics = { path = "../sml-statics" }
