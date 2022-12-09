@@ -77,8 +77,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
       ErrorKind::Circularity(mv, ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(ty);
         let mv = Ty::MetaVar(*mv);
+        mvs.extend_for(ty);
+        mvs.extend_for(&mv);
         let mv = mv.display(&mvs, self.syms);
         let ty = ty.display(&mvs, self.syms);
         write!(f, "circular type: {mv} occurs in {ty}")
