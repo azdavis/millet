@@ -232,8 +232,6 @@ fn licenses() {
   assert!(new_licenses.is_empty(), "found {} new licenses", new_licenses.len());
 }
 
-/// deprecated (do not use, but keep in this comment so it'll be picked up by the `git grep`):
-/// - `Code::n(5007)`
 #[test]
 fn error_codes() {
   let sh = shell();

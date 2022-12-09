@@ -363,6 +363,10 @@ impl Error {
   }
 
   /// Return the code for this.
+  ///
+  /// No longer used:
+  ///
+  /// - `Code::n(5007)`
   #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
