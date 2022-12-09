@@ -5,7 +5,7 @@ use paths::FileSystem as _;
 fn usage() {
   let current_exe_name = std::env::current_exe()
     .ok()
-    .and_then(|x| x.file_name().map(|x| x.to_string_lossy().into_owned()))
+    .and_then(|x| Some(x.file_name()?.to_str()?.to_owned()))
     .unwrap_or_else(|| "<unknown>".to_owned());
   println!("usage:");
   println!("  {current_exe_name} [options] <path>");
