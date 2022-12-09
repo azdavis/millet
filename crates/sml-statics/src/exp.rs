@@ -1,13 +1,11 @@
 //! Checking expressions.
 
-use crate::config::Cfg;
 use crate::env::{Cx, Env, EnvLike as _};
 use crate::error::{AppendArg, ErrorKind, Item};
 use crate::get_env::get_val_info;
-use crate::info::TyEntry;
-use crate::pat_match::Pat;
 use crate::types::{Generalizable, Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::util::{apply, get_scon, instantiate, record};
+use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
 use crate::{dec, def, pat, st::St, ty, unify::unify};
 
 pub(crate) fn get_and_check_ty_escape(

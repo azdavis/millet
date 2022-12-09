@@ -6,8 +6,7 @@
 //! 2. may contain path variables starting with `$`
 
 use fast_hash::FxHashMap;
-use std::fmt;
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 use str_util::SmolStr;
 
 /// An error when parsing a slash var path.

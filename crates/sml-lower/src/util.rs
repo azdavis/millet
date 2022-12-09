@@ -2,8 +2,7 @@
 
 use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
-use sml_syntax::ast::SyntaxNodePtr;
-use sml_syntax::rowan::TextRange;
+use sml_syntax::{ast::SyntaxNodePtr, rowan::TextRange};
 use std::fmt;
 
 /// Pointers between the AST and the HIR.

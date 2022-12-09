@@ -3,9 +3,7 @@
 use diagnostic_util::{Code, Severity};
 use fast_hash::{map_with_capacity, FxHashMap};
 use once_cell::sync::Lazy;
-use sml_syntax::rowan::TextRange;
-use sml_syntax::token::Token;
-use sml_syntax::{SyntaxKind as SK, SyntaxNode};
+use sml_syntax::{rowan::TextRange, token::Token, SyntaxKind as SK, SyntaxNode};
 use std::fmt;
 
 pub(crate) use event_parse::{Entered, Exited, Save};

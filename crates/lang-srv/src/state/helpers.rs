@@ -3,8 +3,7 @@
 use anyhow::{anyhow, bail, Context as _, Result};
 use lsp_server::{ExtractError, Notification, Request, RequestId};
 use lsp_types::Url;
-use std::fmt;
-use std::ops::ControlFlow;
+use std::{fmt, ops::ControlFlow};
 
 pub(crate) fn canonical_path_buf<F>(fs: &F, url: &Url) -> Result<paths::CanonicalPathBuf>
 where

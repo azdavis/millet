@@ -1,13 +1,11 @@
 //! Parsing expressions.
 
-use crate::dec::dec;
 use crate::parser::{ErrorKind, Exited, Expected, Infix, ParensExpFlavor, Parser};
-use crate::pat::pat;
-use crate::ty::ty;
 use crate::util::{
   comma_sep, lab, many_sep, must, name_star_eq, path_infix, path_no_infix, scon, should_break,
   InfixErr,
 };
+use crate::{dec::dec, pat::pat, ty::ty};
 use sml_syntax::SyntaxKind as SK;
 
 /// if no parse, emit error

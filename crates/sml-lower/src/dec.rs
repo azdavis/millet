@@ -6,9 +6,9 @@
 #![allow(clippy::too_many_lines)]
 
 use crate::common::{get_name, get_path};
-use crate::pat::tuple;
+use crate::pat::{self, tuple};
 use crate::util::{Cx, ErrorKind};
-use crate::{exp, pat, ty};
+use crate::{exp, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 fn get_dec_flavor<T, G, S>(cx: &mut Cx, dec: Option<ast::Dec>, g: G, s: S) -> Option<T>

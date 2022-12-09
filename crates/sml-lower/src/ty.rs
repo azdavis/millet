@@ -1,8 +1,7 @@
 //! Lowering types.
 
 use crate::common::{get_lab, get_path};
-use crate::util::Cx;
-use crate::util::ErrorKind;
+use crate::util::{Cx, ErrorKind};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> sml_hir::TyIdx {

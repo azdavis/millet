@@ -6,6 +6,7 @@ mod reason;
 mod show;
 
 pub(crate) mod raw;
+
 use diagnostic_util::Severity;
 
 /// Given the string of an SML program with some expectation comments, panics iff the expectation

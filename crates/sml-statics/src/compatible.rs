@@ -1,11 +1,8 @@
 //! Checking whether type schemes are compatible with each other.
 
-use crate::error::ErrorKind;
-use crate::fmt_util::ty_var_name;
-use crate::st::St;
 use crate::types::{BoundTyVars, Generalizable, Ty, TyScheme, TyVarKind, TyVarSrc};
-use crate::unify::unify_no_emit;
 use crate::util::{apply_bv, instantiate};
+use crate::{error::ErrorKind, fmt_util::ty_var_name, st::St, unify::unify_no_emit};
 
 type Result = std::result::Result<(), ErrorKind>;
 

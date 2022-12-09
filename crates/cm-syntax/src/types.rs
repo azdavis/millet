@@ -1,8 +1,7 @@
 //! Types for the rest of the crate.
 
-use std::fmt;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 use str_util::Name;
 use text_size_util::{TextRange, WithRange};
 
