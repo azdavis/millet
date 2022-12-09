@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Emit an error for non-UTF-8 paths.
+
 ## v0.6.4
 
 - Add docs for all primitives, including `use`.
