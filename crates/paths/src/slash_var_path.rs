@@ -7,7 +7,7 @@
 
 use fast_hash::FxHashMap;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use str_util::SmolStr;
 
 /// An error when parsing a slash var path.
@@ -59,13 +59,21 @@ pub enum EnvEntryKind {
 
 /// Resolves an environment.
 #[must_use]
-pub fn resolve_env(parent: &Path, env: UnresolvedEnv) -> Env {
+pub fn resolve_env(parent: &str, env: UnresolvedEnv) -> Env {
   env
     .into_iter()
     .map(|(k, v)| {
       let v = match v.kind {
         EnvEntryKind::Value => v.suffix,
-        EnvEntryKind::WorkspacePath => parent.join(v.suffix.as_str()).to_string_lossy().into(),
+        EnvEntryKind::WorkspacePath => {
+          let mut val = parent.to_owned();
+          // slash is a path separator on most platforms.
+          if !val.ends_with('/') {
+            val.push('/');
+          }
+          val.push_str(v.suffix.as_str());
+          val.into()
+        }
       };
       (k, v)
     })

@@ -2,7 +2,7 @@
 
 use crate::diagnostics::Severities;
 use crate::input::util::{
-  get_path_id, read_dir, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
+  get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
 };
 use paths::slash_var_path::{EnvEntry, EnvEntryKind};
 use paths::PathId;
@@ -114,8 +114,8 @@ impl ConfigFromFile {
     }
     if let Some(ws) = parsed.workspace {
       if let Some(root_path_glob) = ws.root {
-        let glob = root.as_path().join(root_path_glob.as_str());
-        let glob = glob.as_os_str().to_string_lossy();
+        let path = root.as_path().join(root_path_glob.as_str());
+        let glob = str_path(ErrorSource { path: Some(ret.path.clone()), range: None }, &path)?;
         let paths = match fs.glob(glob.as_ref()) {
           Ok(x) => x,
           Err(e) => {
@@ -160,8 +160,9 @@ impl ConfigFromFile {
           let (kind, suffix) = match val {
             config::PathVar::Value(val) => (EnvEntryKind::Value, val),
             config::PathVar::Path(val) => {
+              let path = root.as_path().join(val.as_str());
               let val: str_util::SmolStr =
-                root.as_path().join(val.as_str()).to_string_lossy().into();
+                str_path(ErrorSource { path: Some(ret.path.clone()), range: None }, &path)?.into();
               (EnvEntryKind::Value, val)
             }
             config::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),

@@ -23,6 +23,7 @@ pub(crate) enum ErrorKind {
   GlobPattern(paths::PatternError),
   EmptyGlob(str_util::SmolStr),
   FunSig,
+  NonUtf8Path,
 }
 
 struct ErrorDisplay<'a> {
@@ -54,6 +55,7 @@ impl fmt::Display for ErrorDisplay<'_> {
       ErrorKind::GlobPattern(e) => write!(f, "glob pattern error: {e}"),
       ErrorKind::EmptyGlob(pat) => write!(f, "glob pattern matched no paths: {pat}"),
       ErrorKind::FunSig => f.write_str("unsupported export kind `funsig`"),
+      ErrorKind::NonUtf8Path => f.write_str("invalid UTF-8 found in path"),
     }
   }
 }
@@ -129,6 +131,8 @@ impl Error {
       ErrorKind::GlobPattern(_) => Code::n(1014),
       ErrorKind::EmptyGlob(_) => Code::n(1015),
       ErrorKind::FunSig => Code::n(1016),
+      // other errors not here have 1017-1019
+      ErrorKind::NonUtf8Path => Code::n(1020),
     }
   }
 
@@ -216,6 +220,13 @@ where
   F: paths::FileSystem,
 {
   fs.read_dir(path).map_err(|e| Error::new(source, path.to_owned(), ErrorKind::Io(e)))
+}
+
+pub(crate) fn str_path(source: ErrorSource, path: &Path) -> Result<&str> {
+  path
+    .as_os_str()
+    .to_str()
+    .ok_or_else(|| Error::new(source, path.to_owned(), ErrorKind::NonUtf8Path))
 }
 
 #[derive(Debug, Clone, Copy)]

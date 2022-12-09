@@ -197,6 +197,14 @@ When run as a CLI, there was an invalid or missing argument or option.
 
 To fix, run `--help` to see permitted options and arguments.
 
+## 1020
+
+A filesystem path had invalid UTF-8.
+
+In general, paths on most modern systems can be almost arbitrary byte sequences, save for treating path separators like `/` specially and disallowing NUL bytes. However, in various places in Millet, we depend on paths being valid UTF-8.
+
+To fix, rename the implicated file to a valid UTF-8 filename.
+
 ## 2001
 
 There was an invalid character in the source file.
