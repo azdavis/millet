@@ -213,7 +213,7 @@ fn licenses() {
     "Zlib OR Apache-2.0 OR MIT",
   ]);
   let sh = shell();
-  let output = cmd!(sh, "cargo metadata --format-version 1").read().unwrap();
+  let output = cmd!(sh, "cargo metadata --format-version 1").ignore_stderr().read().unwrap();
   let json: serde_json::Value = serde_json::from_str(&output).unwrap();
   let packages = json.as_object().unwrap().get("packages").unwrap().as_array().unwrap();
   let mut new_licenses = FxHashMap::<&str, FxHashSet<&str>>::default();
