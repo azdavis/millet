@@ -145,9 +145,10 @@ impl Infix {
 
 /// Associativity for infix operators.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(missing_docs)]
 pub enum Assoc {
+  /// `infix`
   Left,
+  /// `infixr`
   Right,
 }
 

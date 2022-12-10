@@ -27,10 +27,12 @@ pub struct MlbStatics {
 
 /// A source file.
 #[derive(Debug)]
-#[allow(missing_docs)]
 pub struct SourceFile {
+  /// The syntax of the source file.
   pub syntax: SourceFileSyntax,
+  /// Statics errors from the file.
   pub statics_errors: Vec<sml_statics::Error>,
+  /// Statics information from the file.
   pub info: sml_statics::Info,
 }
 
@@ -366,15 +368,20 @@ pub fn add_all_doc_comments(
 
 /// A basis declaration.
 #[derive(Debug)]
-#[allow(missing_docs)]
 pub enum BasDec {
+  /// `basis <name> = <exp>`
   Basis(WithRange<str_util::Name>, Box<BasExp>),
+  /// `open <name>`
   Open(WithRange<str_util::Name>),
+  /// `local <dec> in <dec> end`
   Local(Box<BasDec>, Box<BasDec>),
+  /// `structure <name>`, etc.
   Export(sml_statics::basis::Namespace, WithRange<str_util::Name>, WithRange<str_util::Name>),
+  /// A sequence of declarations.
   Seq(Vec<BasDec>),
+  /// A file path.
   Path(paths::PathId, PathKind),
-  /// Used by CM.
+  /// Used by CM only.
   SourcePathSet(FxHashSet<paths::PathId>),
 }
 
@@ -396,10 +403,12 @@ impl BasDec {
 
 /// A basis expression.
 #[derive(Debug)]
-#[allow(missing_docs)]
 pub enum BasExp {
+  /// `bas <dec> end`
   Bas(BasDec),
+  /// `Foo`, etc.
   Name(WithRange<str_util::Name>),
+  /// `let <dec> in <exp> end`
   Let(BasDec, Box<BasExp>),
 }
 

@@ -60,10 +60,12 @@ impl Basis {
 
 /// A namespace for an export.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[allow(missing_docs)]
 pub enum Namespace {
+  /// `structure`
   Structure,
+  /// `signature`
   Signature,
+  /// `functor`
   Functor,
 }
 

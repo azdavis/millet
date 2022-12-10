@@ -1,7 +1,6 @@
 //! Types for working with paths.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-#![allow(clippy::single_match_else)]
 
 pub mod slash_var_path;
 
@@ -26,6 +25,7 @@ impl Store {
 
   /// Returns an ID for this path.
   pub fn get_id(&mut self, path: &CanonicalPathBuf) -> PathId {
+    #![allow(clippy::single_match_else)]
     match self.path_to_id.get(path) {
       Some(x) => *x,
       None => {

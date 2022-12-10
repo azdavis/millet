@@ -99,23 +99,31 @@ pub type NamesSeq = Vec<(WithRange<Name>, Option<WithRange<Name>>)>;
 
 /// A basis declaration.
 #[derive(Debug)]
-#[allow(missing_docs)]
 pub enum BasDec {
+  /// `basis <name> = <exp>`
   Basis(Vec<(WithRange<Name>, BasExp)>),
+  /// `open <name>`
   Open(Vec<WithRange<Name>>),
+  /// `local <dec> in <dec> end`
   Local(Box<BasDec>, Box<BasDec>),
+  /// `structure <name>`, etc
   Export(Namespace, NamesSeq),
+  /// A file path.
   Path(WithRange<ParsedPath>),
+  /// `ann <str> in <dec> end`
   Ann(WithRange<String>, Box<BasDec>),
+  /// A sequence of declarations.
   Seq(Vec<BasDec>),
 }
 
 /// A kind of export.
 #[derive(Debug, Clone, Copy)]
-#[allow(missing_docs)]
 pub enum Namespace {
+  /// `structure`
   Structure,
+  /// `signature`
   Signature,
+  /// `functor`
   Functor,
 }
 

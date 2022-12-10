@@ -255,7 +255,6 @@ pub(crate) enum IncompatibleTysFlavor {
   OverloadHeadMismatch(Overload, Ty),
   UnresolvedRecordMissingRow(sml_hir::Lab),
   UnresolvedRecordHeadMismatch(RecordTy, Ty),
-  #[allow(dead_code)]
   NotEqTy(Ty, equality::NotEqTy),
 }
 

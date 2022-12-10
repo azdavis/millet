@@ -108,9 +108,10 @@ pub struct CmFile {
 
 /// A kind of path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(missing_docs)]
 pub enum PathKind {
+  /// SML files.
   Sml,
+  /// CM files.
   Cm,
 }
 
@@ -177,11 +178,14 @@ pub enum PathOrMinus {
 
 /// A namespace, like `structure` in `structure S`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(missing_docs)]
 pub enum Namespace {
+  /// `structure`
   Structure,
+  /// `signature`
   Signature,
+  /// `functor`
   Functor,
+  /// `funsig`
   FunSig,
 }
 
@@ -201,10 +205,12 @@ impl Member {
 
 /// A class of file that may appear in a CM file.
 #[derive(Debug, Clone)]
-#[allow(missing_docs)]
 pub enum Class {
+  /// SML files.
   Sml,
+  /// CM files.
   Cm,
+  /// Some other class.
   Other(String),
 }
 
