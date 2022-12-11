@@ -108,12 +108,12 @@ fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
     Some(x) => vec!["--target", x],
     None => vec![],
   };
-  cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin lang-srv").run()?;
+  cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin millet-ls").run()?;
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
   let kind = if release { "release" } else { "debug" };
-  let lang_srv_name = format!("lang-srv{}", std::env::consts::EXE_SUFFIX);
+  let lang_srv_name = format!("millet-ls{}", std::env::consts::EXE_SUFFIX);
   let lang_srv: PathBuf =
     std::iter::once("target").chain(target).chain([kind, lang_srv_name.as_str()]).collect();
   sh.copy_file(&lang_srv, &dir)?;

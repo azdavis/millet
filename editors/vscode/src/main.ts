@@ -22,7 +22,7 @@ export async function activate(cx: vscode.ExtensionContext) {
     command:
       typeof configPath === "string" && configPath.length !== 0
         ? configPath
-        : cx.asAbsolutePath(path.join("out", `lang-srv${ext}`)),
+        : cx.asAbsolutePath(path.join("out", `millet-ls${ext}`)),
   };
   const clientOpts: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "sml" }],

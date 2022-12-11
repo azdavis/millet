@@ -274,11 +274,11 @@ These crates depend on many other crates to "unite" everything together.
 
 Unifies all the passes into one single API.
 
-### `crates/lang-srv`
+### `crates/millet-ls`
 
 Depends on `analysis` and a bunch of third party crates to implement a language server. This is one of two binary targets. Note that only binary targets may perform IO.
 
-### `crates/cli`
+### `crates/millet-cli`
 
 A CLI wrapper around `analysis`. It basically does one full analysis of the input, prints any errors to stdout, and exits, much like a conventional compiler or linter.
 

@@ -93,7 +93,7 @@
         "millet.server.path": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `lang-srv` executable.\n\nWhen set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
+          "markdownDescription": "Path to the `millet-ls` executable.\n\nWhen set to the empty string `\"\"` (the default), use the path to the one that's pre-built and bundled with the extension."
         }
       }
     },

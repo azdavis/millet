@@ -19,8 +19,8 @@ Install the extension from the [VS Code marketplace][vs-code-ext].
 ### Other editors
 
 1. Clone the repository.
-2. Build from source with `cargo build --release --bin lang-srv`.
-3. Put the compiled `target/release/lang-srv` binary somewhere your editor can find it.
+2. Build from source with `cargo build --release --bin millet-ls`.
+3. Put the compiled `target/release/millet-ls` binary somewhere your editor can find it.
 4. Set up your editor to use that binary to process SML files.
 
 ## Usage
@@ -163,7 +163,7 @@ Show information about tokens on hover.
 
 #### `millet.server.path`
 
-Path to the `lang-srv` executable.
+Path to the `millet-ls` executable.
 
 When set to the empty string `""` (the default), use the path to the one that's pre-built and bundled with the extension.
 
