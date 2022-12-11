@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Emit an error for non-UTF-8 paths.
+- Parse multiple ML Basis annotations.
 
 ## v0.6.4
 

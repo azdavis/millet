@@ -64,16 +64,6 @@ impl<'a> Parser<'a> {
       _ => self.err(ErrorKind::ExpectedName),
     }
   }
-
-  fn string(&self) -> Result<WithRange<&'a str>> {
-    match self.cur_tok() {
-      Some(tok) => match tok.val {
-        Token::String(s) => Ok(tok.wrap(s)),
-        _ => self.err(ErrorKind::ExpectedName),
-      },
-      _ => self.err(ErrorKind::ExpectedName),
-    }
-  }
 }
 
 fn bas_dec(p: &mut Parser<'_>) -> Result<BasDec> {
@@ -170,13 +160,19 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
     }
     Token::Ann => {
       p.bump();
-      let s = p.string()?;
-      let s = s.wrap(s.val.to_owned());
-      p.bump();
+      let mut annotations = Vec::<WithRange<String>>::new();
+      while let Some(tok) = p.cur_tok() {
+        let s = match tok.val {
+          Token::String(s) => tok.wrap(s.to_owned()),
+          _ => break,
+        };
+        annotations.push(s);
+        p.bump();
+      }
       p.eat(Token::In)?;
       let bd = bas_dec(p)?;
       p.eat(Token::End)?;
-      BasDec::Ann(s, bd.into())
+      BasDec::Ann(annotations, bd.into())
     }
     _ => return Ok(BasDecOne::NoStartTok),
   };

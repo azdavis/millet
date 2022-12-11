@@ -331,3 +331,15 @@ is
 "#;
   check_bad_input("a.cm", "not in file list", [("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
+
+#[test]
+fn multi_ann() {
+  let mlb = r#"
+ann
+  "foo bar"
+  "baz"
+in
+end
+"#;
+  check_multi([("s.mlb", mlb)]);
+}

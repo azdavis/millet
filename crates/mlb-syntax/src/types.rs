@@ -110,8 +110,8 @@ pub enum BasDec {
   Export(Namespace, NamesSeq),
   /// A file path.
   Path(WithRange<ParsedPath>),
-  /// `ann <str> in <dec> end`
-  Ann(WithRange<String>, Box<BasDec>),
+  /// `ann <str>* in <dec> end`
+  Ann(Vec<WithRange<String>>, Box<BasDec>),
   /// A sequence of declarations.
   Seq(Vec<BasDec>),
 }
