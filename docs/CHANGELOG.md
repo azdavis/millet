@@ -16,7 +16,8 @@ The versioning system is basically the following:
 ## main
 
 - Emit an error for non-UTF-8 paths.
-- Parse multiple ML Basis annotations.
+- Rename the binary targets from `cli` and `lang-srv` to `millet-cli` and `millet-ls`.
+- Parse (but ignore) multiple ML Basis annotations.
 
 ## v0.6.4
 
