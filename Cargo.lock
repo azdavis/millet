@@ -644,6 +644,7 @@ dependencies = [
 name = "sml-file-syntax"
 version = "0.1.0"
 dependencies = [
+ "elapsed",
  "sml-fixity",
  "sml-lex",
  "sml-lower",
@@ -730,6 +731,7 @@ dependencies = [
  "config",
  "diagnostic-util",
  "drop_bomb",
+ "elapsed",
  "fast-hash",
  "fmt-util",
  "idx",

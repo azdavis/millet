@@ -14,6 +14,7 @@ code-h2-md-map = { path = "../code-h2-md-map" }
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 drop_bomb = "0.1"
+elapsed = { path = "../elapsed" }
 fast-hash = { path = "../fast-hash" }
 fmt-util = { path = "../fmt-util" }
 idx = { path = "../idx" }

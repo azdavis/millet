@@ -10,6 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
+elapsed = { path = "../elapsed" }
 sml-fixity = { path = "../sml-fixity" }
 sml-lex = { path = "../sml-lex" }
 sml-lower = { path = "../sml-lower" }
