@@ -6,8 +6,8 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [lib]
-doctest = false
 test = false
+doctest = false
 
 [dependencies]
 diagnostic-util = { path = "../diagnostic-util" }

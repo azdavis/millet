@@ -6,8 +6,8 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [lib]
-doctest = false
 test = false
+doctest = false
 
 [dependencies]
 rowan = "0.15"
