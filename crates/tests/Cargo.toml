@@ -15,6 +15,7 @@ config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 env_logger = { version = "0.9" }
 fast-hash = { path = "../fast-hash" }
+input = { path = "../input" }
 log = "0.4"
 mlb-syntax = { path = "../mlb-syntax" }
 once_cell = "1"

@@ -18,6 +18,7 @@ diagnostic-util = { path = "../diagnostic-util" }
 elapsed = { path = "../elapsed" }
 env_logger = { version = "0.9" }
 fast-hash = { path = "../fast-hash" }
+input = { path = "../input" }
 log = "0.4"
 lsp-server = "0.6"
 lsp-types = "0.93"

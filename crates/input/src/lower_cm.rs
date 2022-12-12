@@ -1,10 +1,10 @@
 //! Lower a CM file into paths and exports.
 
-use crate::input::util::{
+use crate::types::Group;
+use crate::util::{
   get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
   StartedGroup,
 };
-use crate::input::Group;
 use fast_hash::FxHashSet;
 use paths::PathMap;
 use std::collections::BTreeMap;

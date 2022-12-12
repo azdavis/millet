@@ -6,8 +6,6 @@ mod diagnostics;
 mod matcher;
 mod source_files;
 
-pub mod input;
-
 use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -52,7 +50,7 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    let severities = diagnostics::Severities::default();
+    let severities = input::Severities::default();
     diagnostics::source_file(&file, &syms, &severities, self.diagnostics_options)
   }
 

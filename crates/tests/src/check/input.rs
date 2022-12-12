@@ -4,7 +4,7 @@ use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
 use paths::FileSystem as _;
 
-pub(crate) fn get<'a, I>(files: I) -> (analysis::input::Result, paths::Store)
+pub(crate) fn get<'a, I>(files: I) -> (input::Result, paths::Store)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
@@ -19,7 +19,7 @@ where
     .collect();
   let fs = paths::MemoryFileSystem::new(map);
   let mut store = paths::Store::new();
-  let input = analysis::input::Input::new(&fs, &mut store, &ROOT);
+  let input = input::Input::new(&fs, &mut store, &ROOT);
   (input, store)
 }
 

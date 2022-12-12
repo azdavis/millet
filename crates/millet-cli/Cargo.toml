@@ -14,5 +14,6 @@ analysis = { path = "../analysis" }
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 env_logger = { version = "0.9" }
+input = { path = "../input" }
 paths = { path = "../paths" }
 pico-args = "0.5"

@@ -1,7 +1,7 @@
 //! Getting the root groups.
 
-use crate::diagnostics::Severities;
-use crate::input::util::{
+use crate::types::Severities;
+use crate::util::{
   get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
 };
 use paths::slash_var_path::{EnvEntry, EnvEntryKind};

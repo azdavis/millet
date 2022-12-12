@@ -15,15 +15,12 @@ dependencies = [
 name = "analysis"
 version = "0.1.0"
 dependencies = [
- "cm-syntax",
  "config",
  "diagnostic-util",
  "elapsed",
- "fast-hash",
  "fmt-util",
- "log",
+ "input",
  "mlb-statics",
- "mlb-syntax",
  "paths",
  "sml-fmt",
  "sml-hir",
@@ -33,8 +30,6 @@ dependencies = [
  "str-util",
  "text-pos",
  "text-size-util",
- "toml",
- "topo-sort",
 ]
 
 [[package]]
@@ -263,6 +258,27 @@ name = "idx"
 version = "0.1.0"
 
 [[package]]
+name = "input"
+version = "0.1.0"
+dependencies = [
+ "cm-syntax",
+ "config",
+ "diagnostic-util",
+ "fast-hash",
+ "mlb-statics",
+ "mlb-syntax",
+ "paths",
+ "sml-parse",
+ "sml-statics",
+ "sml-syntax",
+ "str-util",
+ "text-pos",
+ "text-size-util",
+ "toml",
+ "topo-sort",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -341,6 +357,7 @@ dependencies = [
  "config",
  "diagnostic-util",
  "env_logger",
+ "input",
  "paths",
  "pico-args",
 ]
@@ -357,6 +374,7 @@ dependencies = [
  "elapsed",
  "env_logger",
  "fast-hash",
+ "input",
  "log",
  "lsp-server",
  "lsp-types",
@@ -763,6 +781,7 @@ dependencies = [
  "diagnostic-util",
  "env_logger",
  "fast-hash",
+ "input",
  "log",
  "mlb-syntax",
  "once_cell",

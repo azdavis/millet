@@ -1,5 +1,5 @@
 [package]
-name = "analysis"
+name = "input"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -10,18 +10,18 @@ test = false
 doctest = false
 
 [dependencies]
+cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
-elapsed = { path = "../elapsed" }
-fmt-util = { path = "../fmt-util" }
-input = { path = "../input" }
+fast-hash = { path = "../fast-hash" }
 mlb-statics = { path = "../mlb-statics" }
+mlb-syntax = { path = "../mlb-syntax" }
 paths = { path = "../paths" }
-sml-fmt = { path = "../sml-fmt" }
-sml-hir = { path = "../sml-hir" }
 sml-parse = { path = "../sml-parse" }
 sml-statics = { path = "../sml-statics" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { path = "../str-util" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 text-size-util = { path = "../text-size-util" }
+toml = "0.5"
+topo-sort = { git = "https://github.com/azdavis/language-util.git" }

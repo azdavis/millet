@@ -1,15 +1,18 @@
 //! Input to analysis.
 
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+
 mod lower_cm;
 mod lower_mlb;
 mod root;
 mod topo;
+mod types;
 mod util;
 
-use crate::diagnostics::Severities;
 use paths::{PathId, PathMap, WithPath};
 use util::{ErrorKind, ErrorSource, GroupPathKind};
 
+pub use types::{Group, Severities};
 pub use util::Error;
 
 /// A result type defaulting to success = Input and error = Error.
@@ -19,13 +22,13 @@ pub type Result<T = Input, E = Error> = std::result::Result<T, E>;
 #[derive(Debug)]
 pub struct Input {
   /// A map from source paths to their contents.
-  pub(crate) sources: PathMap<String>,
+  pub sources: PathMap<String>,
   /// A map from group paths to their (parsed) contents.
-  pub(crate) groups: PathMap<Group>,
+  pub groups: PathMap<types::Group>,
   /// The root group id.
-  pub(crate) root_group_paths: Vec<PathId>,
+  pub root_group_paths: Vec<PathId>,
   /// Severities to override.
-  pub(crate) severities: Severities,
+  pub severities: types::Severities,
 }
 
 impl Input {
@@ -77,13 +80,4 @@ impl Input {
   pub fn get_mut_source(&mut self, path: PathId) -> Option<&mut String> {
     self.sources.get_mut(&path)
   }
-}
-
-/// A description of how to check a group of source files.
-#[derive(Debug)]
-pub(crate) struct Group {
-  /// A lowered BasDec, describing the group.
-  pub(crate) bas_dec: mlb_statics::BasDec,
-  /// A position DB for the group file that yielded the dec.
-  pub(crate) pos_db: text_pos::PositionDb,
 }

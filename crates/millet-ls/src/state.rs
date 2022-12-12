@@ -388,7 +388,7 @@ enum Mode {
 
 struct Root {
   path: paths::CanonicalPathBuf,
-  input: Option<analysis::input::Input>,
+  input: Option<input::Input>,
 }
 
 /// Semi-Permanent state. Some things on this are totally immutable after initialization. Other
@@ -456,10 +456,9 @@ impl SPState {
     &mut self,
     root: &paths::CanonicalPathBuf,
     has_diagnostics: &mut FxHashSet<Url>,
-  ) -> Option<analysis::input::Input> {
-    let input = elapsed::log("Input::new", || {
-      analysis::input::Input::new(&self.file_system, &mut self.store, root)
-    });
+  ) -> Option<input::Input> {
+    let input =
+      elapsed::log("Input::new", || input::Input::new(&self.file_system, &mut self.store, root));
     let err = match input {
       Ok(x) => return Some(x),
       Err(x) => x,

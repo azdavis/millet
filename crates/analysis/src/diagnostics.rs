@@ -1,13 +1,10 @@
 //! Helpers for working with diagnostics.
 
 use diagnostic_util::Diagnostic;
-use fast_hash::FxHashMap;
 use sml_syntax::ast::{self, AstNode as _};
 use sml_syntax::SyntaxNode;
 use std::fmt;
 use text_size_util::TextRange;
-
-pub(crate) type Severities = FxHashMap<diagnostic_util::Code, Option<diagnostic_util::Severity>>;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {
@@ -18,7 +15,7 @@ pub(crate) struct Options {
 
 fn diagnostic<M>(
   file: &mlb_statics::SourceFile,
-  severities: &Severities,
+  severities: &input::Severities,
   range: TextRange,
   message: M,
   code: diagnostic_util::Code,
@@ -47,7 +44,7 @@ where
 pub(crate) fn source_file(
   file: &mlb_statics::SourceFile,
   syms: &sml_statics::Syms,
-  severities: &Severities,
+  severities: &input::Severities,
   options: Options,
 ) -> Vec<Diagnostic> {
   let mut ret: Vec<_> = std::iter::empty()

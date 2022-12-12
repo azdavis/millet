@@ -48,12 +48,12 @@ fn run() -> usize {
   let root = match fs.canonicalize(root) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(root, analysis::input::Error::from_io(root.to_owned(), e));
+      handle_input_error(root, input::Error::from_io(root.to_owned(), e));
       return 1;
     }
   };
   let mut store = paths::Store::new();
-  let inp = match analysis::input::Input::new(&fs, &mut store, &root) {
+  let inp = match input::Input::new(&fs, &mut store, &root) {
     Ok(x) => x,
     Err(e) => {
       handle_input_error(root.as_path(), e);
@@ -78,7 +78,7 @@ fn run() -> usize {
   num_errors
 }
 
-fn handle_input_error(root: &std::path::Path, e: analysis::input::Error) {
+fn handle_input_error(root: &std::path::Path, e: input::Error) {
   print!("{}", e.maybe_rel_path(root).display());
   if let Some(r) = e.range() {
     print!(":{}", r.start);

@@ -68,7 +68,7 @@ type ExpIdx = Option<Idx<Exp>>;
 
 These crates are the main "passes" on SML code. Together they form essentially a SML compiler frontend.
 
-Notably, passes that can produce errors have the approximate shape
+Notably, most passes that can produce errors have the approximate shape
 
 ```rs
 Input -> (Output, Vec<Error>)
@@ -84,6 +84,14 @@ That is to say, we always produce _both_ as best an output we could make _and_ a
 
 The latter is more common in "regular" compilers, but we're a language server. In the case of a language server, we want to analyze as much of the code as possible as far as possible, even if the information we have is imperfect.
 
+### `crates/input`
+
+```rs
+&Path -> Result<Input, InputError>
+```
+
+Get input from a filesystem.
+
 ### `crates/sml-lex`
 
 ```rs
@@ -95,7 +103,7 @@ Lex (aka tokenize) a string into tokens.
 ### `crates/sml-parse`
 
 ```rs
-Vec<sml_syntax::Token> -> (sml_syntax::ast::Root, Vec<ParseError>)
+&[sml_syntax::Token] -> (sml_syntax::ast::Root, Vec<ParseError>)
 ```
 
 Parses a sequence of tokens into a sequence of "events". Events are like:
@@ -110,7 +118,7 @@ Then processes those events to build a lossless syntax tree, wrapped in the AST 
 ### `crates/sml-lower`
 
 ```rs
-sml_syntax::ast::Root -> (sml_hir::Root, TwoWayPointers, Vec<LowerError>)
+&sml_syntax::ast::Root -> (sml_hir::Root, TwoWayPointers, Vec<LowerError>)
 ```
 
 Lowers ("elaborates") AST into HIR.
