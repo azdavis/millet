@@ -127,40 +127,42 @@ impl St {
   pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {
     let lang = Lang { syms: self.syms };
     let mut errors = self.errors;
-    for (mv, idx) in self.holes {
-      let mut ty = Ty::MetaVar(mv);
-      apply(&self.subst, &mut ty);
-      errors.push(Error { idx, kind: ErrorKind::ExpHole(ty) });
-    }
-    for mut m in self.matches {
-      apply(&self.subst, &mut m.want);
-      match m.kind {
-        MatchKind::Bind(pat) => {
-          let missing = get_match(&mut errors, &lang, vec![pat], m.want);
-          if !missing.is_empty() {
-            errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveBinding(missing) });
+    if !self.info.mode().is_path_order() {
+      for (mv, idx) in self.holes {
+        let mut ty = Ty::MetaVar(mv);
+        apply(&self.subst, &mut ty);
+        errors.push(Error { idx, kind: ErrorKind::ExpHole(ty) });
+      }
+      for mut m in self.matches {
+        apply(&self.subst, &mut m.want);
+        match m.kind {
+          MatchKind::Bind(pat) => {
+            let missing = get_match(&mut errors, &lang, vec![pat], m.want);
+            if !missing.is_empty() {
+              errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveBinding(missing) });
+            }
+          }
+          MatchKind::Case(pats) => {
+            let missing = get_match(&mut errors, &lang, pats, m.want);
+            if !missing.is_empty() {
+              errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveCase(missing) });
+            }
+          }
+          MatchKind::Handle(pats) => {
+            get_match(&mut errors, &lang, pats, m.want);
           }
         }
-        MatchKind::Case(pats) => {
-          let missing = get_match(&mut errors, &lang, pats, m.want);
-          if !missing.is_empty() {
-            errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveCase(missing) });
-          }
-        }
-        MatchKind::Handle(pats) => {
-          get_match(&mut errors, &lang, pats, m.want);
+      }
+      for (idx, name) in self.defined {
+        if !self.used.contains(&idx) {
+          errors.push(Error { idx, kind: ErrorKind::Unused(name) });
         }
       }
-    }
-    for (idx, name) in self.defined {
-      if !self.used.contains(&idx) {
-        errors.push(Error { idx, kind: ErrorKind::Unused(name) });
+      for ty in self.info.tys_mut() {
+        apply(&self.subst, ty);
       }
+      self.info.meta_vars = self.subst.into_meta_var_info();
     }
-    for ty in self.info.tys_mut() {
-      apply(&self.subst, ty);
-    }
-    self.info.meta_vars = self.subst.into_meta_var_info();
     (lang.syms, errors, self.info)
   }
 }
