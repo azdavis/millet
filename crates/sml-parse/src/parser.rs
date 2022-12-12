@@ -1,44 +1,20 @@
 //! The parser. A thin wrapper around event-parse, with operator precedence.
 
 use diagnostic_util::{Code, Severity};
-use fast_hash::{map_with_capacity, FxHashMap};
-use once_cell::sync::Lazy;
 use sml_syntax::{rowan::TextRange, token::Token, SyntaxKind as SK, SyntaxNode};
 use std::fmt;
 
 pub(crate) use event_parse::{Entered, Exited, Save};
 
-/// A mapping from names to (in)fixities.
-pub type FixEnv = FxHashMap<str_util::Name, Infix>;
-
-/// The default infix operators in the std basis.
-pub static STD_BASIS: Lazy<FixEnv> = Lazy::new(|| {
-  let ops_arr: [(Infix, &[&str]); 6] = [
-    (Infix::left(7), &["*", "/", "div", "mod"]),
-    (Infix::left(6), &["+", "-", "^"]),
-    (Infix::right(5), &["::", "@"]),
-    (Infix::left(4), &["=", "<>", ">", ">=", "<", "<="]),
-    (Infix::left(3), &[":=", "o"]),
-    (Infix::left(0), &["before"]),
-  ];
-  let mut ret = map_with_capacity(ops_arr.iter().map(|(_, names)| names.len()).sum());
-  for (info, names) in ops_arr {
-    for &name in names {
-      ret.insert(str_util::Name::new(name), info);
-    }
-  }
-  ret
-});
-
 /// A event-based parser for SML.
 #[derive(Debug)]
 pub(crate) struct Parser<'a> {
   inner: event_parse::Parser<'a, SK, ErrorKind>,
-  fix_env: &'a mut FixEnv,
+  fix_env: &'a mut sml_fixity::Env,
 }
 
 impl<'a> Parser<'a> {
-  pub(crate) fn new(tokens: &'a [Token<'a, SK>], fix_env: &'a mut FixEnv) -> Self {
+  pub(crate) fn new(tokens: &'a [Token<'a, SK>], fix_env: &'a mut sml_fixity::Env) -> Self {
     Self { inner: event_parse::Parser::new(tokens), fix_env }
   }
 
@@ -103,11 +79,11 @@ impl<'a> Parser<'a> {
 
   // sml-specific methods //
 
-  pub(crate) fn insert_infix(&mut self, name: &str, info: Infix) {
+  pub(crate) fn insert_infix(&mut self, name: &str, info: sml_fixity::Infix) {
     self.fix_env.insert(str_util::Name::new(name), info);
   }
 
-  pub(crate) fn get_infix(&mut self, name: &str) -> Option<Infix> {
+  pub(crate) fn get_infix(&mut self, name: &str) -> Option<sml_fixity::Infix> {
     self.fix_env.get(name).copied()
   }
 
@@ -121,36 +97,6 @@ impl<'a> Parser<'a> {
 }
 
 // sml-specific types //
-
-/// Information about an infix name.
-#[derive(Debug, Clone, Copy)]
-pub struct Infix {
-  /// The precedence.
-  pub prec: u16,
-  /// The associativity.
-  pub assoc: Assoc,
-}
-
-impl Infix {
-  /// Returns a new Infix with left associativity.
-  pub(crate) fn left(prec: u16) -> Self {
-    Self { prec, assoc: Assoc::Left }
-  }
-
-  /// Returns a new Infix with right associativity.
-  pub(crate) fn right(prec: u16) -> Self {
-    Self { prec, assoc: Assoc::Right }
-  }
-}
-
-/// Associativity for infix operators.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Assoc {
-  /// `infix`
-  Left,
-  /// `infixr`
-  Right,
-}
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {

@@ -9,7 +9,7 @@ pub type Severities = FxHashMap<diagnostic_util::Code, Option<diagnostic_util::S
 #[derive(Debug)]
 pub struct Group {
   /// A lowered BasDec, describing the group.
-  pub bas_dec: mlb_statics::BasDec,
+  pub bas_dec: mlb_hir::BasDec,
   /// A position DB for the group file that yielded the dec.
   pub pos_db: text_pos::PositionDb,
 }

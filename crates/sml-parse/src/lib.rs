@@ -28,7 +28,7 @@ pub struct Parse {
 /// # Panics
 ///
 /// If casting the root node to a Root failed (an internal error).
-pub fn get<'a>(tokens: &'a [Token<'a, SK>], fix_env: &'a mut parser::FixEnv) -> Parse {
+pub fn get<'a>(tokens: &'a [Token<'a, SK>], fix_env: &'a mut sml_fixity::Env) -> Parse {
   let mut p = parser::Parser::new(tokens, fix_env);
   root::root(&mut p);
   let (node, errors) = p.finish();

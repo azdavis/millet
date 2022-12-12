@@ -8,7 +8,7 @@ mod lex;
 mod parse;
 mod types;
 
-pub use types::{BasDec, BasExp, Error, NamesSeq, Namespace, ParsedPath, PathKind, Result};
+pub use types::{BasDec, BasExp, Error, NamesSeq, ParsedPath, PathKind, Result};
 
 /// Process the contents of a ML Basis file.
 ///

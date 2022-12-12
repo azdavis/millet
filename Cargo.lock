@@ -22,9 +22,10 @@ dependencies = [
  "input",
  "mlb-statics",
  "paths",
+ "sml-file-syntax",
+ "sml-fixity",
  "sml-fmt",
  "sml-hir",
- "sml-parse",
  "sml-statics",
  "sml-syntax",
  "str-util",
@@ -265,11 +266,12 @@ dependencies = [
  "config",
  "diagnostic-util",
  "fast-hash",
- "mlb-statics",
+ "mlb-hir",
  "mlb-syntax",
  "paths",
- "sml-parse",
- "sml-statics",
+ "sml-file-syntax",
+ "sml-fixity",
+ "sml-namespace",
  "sml-syntax",
  "str-util",
  "text-pos",
@@ -385,23 +387,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlb-hir"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "paths",
+ "sml-namespace",
+ "str-util",
+ "text-size-util",
+]
+
+[[package]]
 name = "mlb-statics"
 version = "0.1.0"
 dependencies = [
  "config",
  "diagnostic-util",
  "fast-hash",
+ "mlb-hir",
  "once_cell",
  "paths",
  "sml-comment",
+ "sml-file-syntax",
+ "sml-fixity",
  "sml-hir",
- "sml-lex",
  "sml-libs",
  "sml-lower",
- "sml-parse",
+ "sml-namespace",
  "sml-statics",
  "sml-syntax",
- "sml-ty-var-scope",
  "str-util",
  "text-pos",
  "text-size-util",
@@ -413,6 +427,7 @@ version = "0.1.0"
 dependencies = [
  "lex-util",
  "paths",
+ "sml-namespace",
  "str-util",
  "text-size-util",
 ]
@@ -626,6 +641,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-file-syntax"
+version = "0.1.0"
+dependencies = [
+ "sml-fixity",
+ "sml-lex",
+ "sml-lower",
+ "sml-parse",
+ "sml-ty-var-scope",
+ "text-pos",
+]
+
+[[package]]
+name = "sml-fixity"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "once_cell",
+ "str-util",
+]
+
+[[package]]
 name = "sml-fmt"
 version = "0.1.0"
 dependencies = [
@@ -671,13 +707,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-namespace"
+version = "0.1.0"
+
+[[package]]
 name = "sml-parse"
 version = "0.1.0"
 dependencies = [
  "diagnostic-util",
  "event-parse",
  "fast-hash",
- "once_cell",
+ "sml-fixity",
  "sml-syntax",
  "str-util",
 ]
@@ -698,6 +738,7 @@ dependencies = [
  "paths",
  "pattern-match",
  "sml-hir",
+ "sml-namespace",
  "str-util",
  "uniq",
 ]

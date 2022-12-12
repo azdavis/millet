@@ -1,5 +1,5 @@
 [package]
-name = "mlb-syntax"
+name = "mlb-hir"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -10,7 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
-lex-util = { path = "../lex-util" }
+fast-hash = { path = "../fast-hash" }
 paths = { path = "../paths" }
 sml-namespace = { path = "../sml-namespace" }
 str-util = { path = "../str-util" }

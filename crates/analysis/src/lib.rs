@@ -40,8 +40,8 @@ impl Analysis {
 
   /// Given the contents of one isolated file, return the diagnostics for it.
   pub fn get_one(&self, contents: &str) -> Vec<Diagnostic> {
-    let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-    let syntax = mlb_statics::SourceFileSyntax::new(&mut fix_env, contents);
+    let mut fix_env = sml_fixity::STD_BASIS.clone();
+    let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, contents);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
     let mode = sml_statics::Mode::Regular(None);

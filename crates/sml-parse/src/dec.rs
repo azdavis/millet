@@ -3,7 +3,7 @@
 //! Note that we parse specifications as declarations and separate them out later.
 
 use crate::exp::{eq_exp, exp, exp_opt};
-use crate::parser::{ErrorKind, Exited, Expected, Infix, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path, InfixErr};
@@ -138,12 +138,12 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   } else if p.at(SK::InfixKw) {
     p.bump();
     let num = fixity(p);
-    names_star_eq(p, |p, name| p.insert_infix(name, Infix::left(num)));
+    names_star_eq(p, |p, name| p.insert_infix(name, sml_fixity::Infix::left(num)));
     p.exit(en, SK::InfixDec);
   } else if p.at(SK::InfixrKw) {
     p.bump();
     let num = fixity(p);
-    names_star_eq(p, |p, name| p.insert_infix(name, Infix::right(num)));
+    names_star_eq(p, |p, name| p.insert_infix(name, sml_fixity::Infix::right(num)));
     p.exit(en, SK::InfixrDec);
   } else if p.at(SK::NonfixKw) {
     p.bump();

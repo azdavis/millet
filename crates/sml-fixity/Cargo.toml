@@ -1,0 +1,15 @@
+[package]
+name = "sml-fixity"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+fast-hash = { path = "../fast-hash" }
+once_cell = "1"
+str-util = { path = "../str-util" }

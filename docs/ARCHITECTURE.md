@@ -173,6 +173,14 @@ Naively format SML files.
 
 Extract interesting comments from above SML syntax nodes, like doc comments.
 
+### `crates/sml-fixity`
+
+Types relating to SML infix operators.
+
+### `crates/sml-namespace`
+
+A type representing the various SML structure-level namespaces.
+
 ### `crates/lex-util`
 
 Some common lex utilities used in multiple lexing crates, like:
@@ -191,6 +199,10 @@ Processes the syntax of SML/NJ Compilation Manager (`.cm`) files.
 ### `crates/mlb-syntax`
 
 Processes the syntax of ML Basis (`.mlb`) files into AST values.
+
+### `crates/mlb-hir`
+
+HIR for MLB.
 
 ### `crates/mlb-statics`
 
@@ -278,9 +290,13 @@ This crate will turn it into a mapping like this:
 
 These crates depend on many other crates to "unite" everything together.
 
+### `crates/sml-file-syntax`
+
+Unites all of the purely syntactical SML passes into one single API.
+
 ### `crates/analysis`
 
-Unifies all the passes into one single API.
+Unifies ~all of the passes into one single API.
 
 ### `crates/millet-ls`
 

@@ -1,6 +1,6 @@
 //! Parsing patterns.
 
-use crate::parser::{Entered, ErrorKind, Exited, Expected, Infix, Parser};
+use crate::parser::{Entered, ErrorKind, Exited, Expected, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{
   comma_sep, eat_name_star, lab, must, name_star, path, path_infix, path_no_infix, scon,
@@ -32,7 +32,7 @@ enum AtPatHd {
   /// corresponds to `ConPatState::Entered`.
   ConPatArg(Entered),
   /// we're parsing an infix pat.
-  Infix(ConPatState, Infix),
+  Infix(ConPatState, sml_fixity::Infix),
 }
 
 /// kind of gross for the tricky ones.
@@ -63,7 +63,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec, infix: InfixErr) -> Option<Ex
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
             ConPatState::Exited(_) => {
               p.error(ErrorKind::NotInfix);
-              AtPatHd::Infix(state, Infix::left(0))
+              AtPatHd::Infix(state, sml_fixity::Infix::left(0))
             }
           },
           Some(op_info) => AtPatHd::Infix(state, op_info),
@@ -137,7 +137,7 @@ fn pat_prec(p: &mut Parser<'_>, min_prec: PatPrec, infix: InfixErr) -> Option<Ex
 enum PatPrec {
   Min,
   Or,
-  Infix(Infix),
+  Infix(sml_fixity::Infix),
 }
 
 /// when adding more cases to this, update [`at_pat_hd`].

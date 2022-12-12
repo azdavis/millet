@@ -1,0 +1,18 @@
+[package]
+name = "sml-file-syntax"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+sml-fixity = { path = "../sml-fixity" }
+sml-lex = { path = "../sml-lex" }
+sml-lower = { path = "../sml-lower" }
+sml-parse = { path = "../sml-parse" }
+sml-ty-var-scope = { path = "../sml-ty-var-scope" }
+text-pos = { git = "https://github.com/azdavis/language-util.git" }

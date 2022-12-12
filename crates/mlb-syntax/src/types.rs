@@ -107,34 +107,13 @@ pub enum BasDec {
   /// `local <dec> in <dec> end`
   Local(Box<BasDec>, Box<BasDec>),
   /// `structure <name>`, etc
-  Export(Namespace, NamesSeq),
+  Export(sml_namespace::Namespace, NamesSeq),
   /// A file path.
   Path(WithRange<ParsedPath>),
   /// `ann <str>* in <dec> end`
   Ann(Vec<WithRange<String>>, Box<BasDec>),
   /// A sequence of declarations.
   Seq(Vec<BasDec>),
-}
-
-/// A kind of export.
-#[derive(Debug, Clone, Copy)]
-pub enum Namespace {
-  /// `structure`
-  Structure,
-  /// `signature`
-  Signature,
-  /// `functor`
-  Functor,
-}
-
-impl fmt::Display for Namespace {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Namespace::Structure => f.write_str("structure"),
-      Namespace::Signature => f.write_str("signature"),
-      Namespace::Functor => f.write_str("functor"),
-    }
-  }
 }
 
 /// A basis expression.

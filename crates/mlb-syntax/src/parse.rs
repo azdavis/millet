@@ -1,7 +1,7 @@
 //! Parse MLB tokens into a syntax tree.
 
 use crate::types::{
-  BasDec, BasExp, Error, ErrorKind, NamesSeq, Namespace, ParsedPath, PathKind, Result, Token,
+  BasDec, BasExp, Error, ErrorKind, NamesSeq, ParsedPath, PathKind, Result, Token,
 };
 use std::path::Path;
 use str_util::Name;
@@ -127,15 +127,15 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
     }
     Token::Structure => {
       p.bump();
-      BasDec::Export(Namespace::Structure, names_seq(p)?)
+      BasDec::Export(sml_namespace::Namespace::Structure, names_seq(p)?)
     }
     Token::Signature => {
       p.bump();
-      BasDec::Export(Namespace::Signature, names_seq(p)?)
+      BasDec::Export(sml_namespace::Namespace::Signature, names_seq(p)?)
     }
     Token::Functor => {
       p.bump();
-      BasDec::Export(Namespace::Functor, names_seq(p)?)
+      BasDec::Export(sml_namespace::Namespace::Functor, names_seq(p)?)
     }
     // TODO allow string paths as well
     Token::BarePath(path) => {

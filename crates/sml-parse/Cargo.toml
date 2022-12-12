@@ -13,6 +13,6 @@ test = false
 diagnostic-util = { path = "../diagnostic-util" }
 event-parse = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { path = "../fast-hash" }
-once_cell = "1"
+sml-fixity = { path = "../sml-fixity" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { path = "../str-util" }

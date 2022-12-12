@@ -24,13 +24,13 @@ impl Basis {
   /// returns `false` if this was not possible.
   pub fn add(
     &mut self,
-    ns: Namespace,
+    ns: sml_namespace::Namespace,
     name: str_util::Name,
     other: &Self,
     other_name: &str_util::Name,
   ) -> bool {
     match ns {
-      Namespace::Structure => match other.inner.env.get_str(other_name) {
+      sml_namespace::Namespace::Structure => match other.inner.env.get_str(other_name) {
         Some(env) => {
           let env = Env { str_env: map([(name, env.clone())]), ..Default::default() };
           self.inner.env.push(env);
@@ -38,7 +38,7 @@ impl Basis {
         }
         None => false,
       },
-      Namespace::Signature => match other.inner.sig_env.get(other_name) {
+      sml_namespace::Namespace::Signature => match other.inner.sig_env.get(other_name) {
         Some(env) => {
           let env = env.clone();
           self.inner.as_mut_sig_env().insert(name, env);
@@ -46,7 +46,7 @@ impl Basis {
         }
         None => false,
       },
-      Namespace::Functor => match other.inner.fun_env.get(other_name) {
+      sml_namespace::Namespace::Functor => match other.inner.fun_env.get(other_name) {
         Some(env) => {
           let env = env.clone();
           self.inner.as_mut_fun_env().insert(name, env);
@@ -56,17 +56,6 @@ impl Basis {
       },
     }
   }
-}
-
-/// A namespace for an export.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Namespace {
-  /// `structure`
-  Structure,
-  /// `signature`
-  Signature,
-  /// `functor`
-  Functor,
 }
 
 /// Returns the minimal basis and symbols.

@@ -1,6 +1,6 @@
 //! Parse utilities.
 
-use crate::parser::{Assoc, ErrorKind, Exited, Expected, Infix, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, Parser};
 use sml_syntax::{token::Token, SyntaxKind as SK};
 
 /// whether to emit errors for infix violations
@@ -100,14 +100,18 @@ where
   ret
 }
 
-pub(crate) fn should_break(p: &mut Parser<'_>, op_info: Infix, min_prec: Infix) -> bool {
+pub(crate) fn should_break(
+  p: &mut Parser<'_>,
+  op_info: sml_fixity::Infix,
+  min_prec: sml_fixity::Infix,
+) -> bool {
   if op_info.prec == min_prec.prec && op_info.assoc != min_prec.assoc {
     p.error(ErrorKind::SameFixityDiffAssoc);
     false
   } else {
     match min_prec.assoc {
-      Assoc::Left => op_info.prec <= min_prec.prec,
-      Assoc::Right => op_info.prec < min_prec.prec,
+      sml_fixity::Assoc::Left => op_info.prec <= min_prec.prec,
+      sml_fixity::Assoc::Right => op_info.prec < min_prec.prec,
     }
   }
 }

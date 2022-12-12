@@ -1,6 +1,6 @@
 //! Parsing expressions.
 
-use crate::parser::{ErrorKind, Exited, Expected, Infix, ParensExpFlavor, Parser};
+use crate::parser::{ErrorKind, Exited, Expected, ParensExpFlavor, Parser};
 use crate::util::{
   comma_sep, lab, many_sep, must, name_star_eq, path_infix, path_no_infix, scon, should_break,
   InfixErr,
@@ -281,7 +281,7 @@ enum ExpPrec {
   Min,
   Orelse,
   Andalso,
-  Infix(Infix),
+  Infix(sml_fixity::Infix),
 }
 
 fn should_break_exp(p: &mut Parser<'_>, prec: ExpPrec, min_prec: ExpPrec) -> bool {

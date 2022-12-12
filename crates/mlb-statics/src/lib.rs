@@ -5,10 +5,10 @@
 mod std_basis;
 
 use diagnostic_util::{Code, Severity};
-use fast_hash::{FxHashMap, FxHashSet};
-use sml_syntax::ast::AstNode;
+use fast_hash::FxHashMap;
+use sml_file_syntax::SourceFileSyntax;
+use sml_syntax::ast::AstNode as _;
 use std::fmt;
-use text_size_util::WithRange;
 
 pub use std_basis::StdBasis;
 
@@ -117,13 +117,13 @@ impl Cx {
 #[derive(Debug, Clone, Copy)]
 struct Files<'a> {
   sml: &'a paths::PathMap<String>,
-  mlb: &'a paths::PathMap<&'a BasDec>,
+  mlb: &'a paths::PathMap<&'a mlb_hir::BasDec>,
   std_basis: &'a MBasis,
 }
 
 #[derive(Debug, Default, Clone)]
 struct MBasis {
-  fix_env: sml_parse::parser::FixEnv,
+  fix_env: sml_fixity::Env,
   bas_env: FxHashMap<str_util::Name, MBasis>,
   basis: sml_statics::basis::Basis,
 }
@@ -143,7 +143,7 @@ pub fn get(
   syms: sml_statics::Syms,
   basis: &sml_statics::basis::Basis,
   sml: &paths::PathMap<String>,
-  mlb: &paths::PathMap<&BasDec>,
+  mlb: &paths::PathMap<&mlb_hir::BasDec>,
   root_group_paths: &[paths::PathId],
 ) -> MlbStatics {
   let mut cx = Cx {
@@ -154,7 +154,7 @@ pub fn get(
   };
   for &path in root_group_paths {
     let std_basis = MBasis {
-      fix_env: sml_parse::parser::STD_BASIS.clone(),
+      fix_env: sml_fixity::STD_BASIS.clone(),
       bas_env: FxHashMap::default(),
       basis: basis.clone(),
     };
@@ -170,15 +170,15 @@ fn get_bas_exp(
   path: paths::PathId,
   scope: &MBasis,
   ac: &mut MBasis,
-  exp: &BasExp,
+  exp: &mlb_hir::BasExp,
 ) {
   match exp {
-    BasExp::Bas(dec) => get_bas_dec(cx, files, path, scope, ac, dec),
-    BasExp::Name(name) => match scope.bas_env.get(&name.val) {
+    mlb_hir::BasExp::Bas(dec) => get_bas_dec(cx, files, path, scope, ac, dec),
+    mlb_hir::BasExp::Name(name) => match scope.bas_env.get(&name.val) {
       None => cx.undef(path, Item::Basis, name.clone()),
       Some(mb) => ac.append(mb.clone()),
     },
-    BasExp::Let(dec, exp) => {
+    mlb_hir::BasExp::Let(dec, exp) => {
       let mut let_m_basis = MBasis::default();
       get_bas_dec(cx, files, path, scope, &mut let_m_basis, dec);
       let mut scope = scope.clone();
@@ -194,19 +194,19 @@ fn get_bas_dec(
   path: paths::PathId,
   scope: &MBasis,
   ac: &mut MBasis,
-  dec: &BasDec,
+  dec: &mlb_hir::BasDec,
 ) {
   match dec {
-    BasDec::Basis(name, exp) => {
+    mlb_hir::BasDec::Basis(name, exp) => {
       let mut exp_m_basis = MBasis::default();
       get_bas_exp(cx, files, path, scope, &mut exp_m_basis, exp);
       ac.bas_env.insert(name.val.clone(), exp_m_basis);
     }
-    BasDec::Open(name) => match scope.bas_env.get(&name.val) {
+    mlb_hir::BasDec::Open(name) => match scope.bas_env.get(&name.val) {
       None => cx.undef(path, Item::Basis, name.clone()),
       Some(mb) => ac.append(mb.clone()),
     },
-    BasDec::Local(local_dec, in_dec) => {
+    mlb_hir::BasDec::Local(local_dec, in_dec) => {
       let mut local_m_basis = MBasis::default();
       get_bas_dec(cx, files, path, scope, &mut local_m_basis, local_dec);
       let mut scope = scope.clone();
@@ -215,17 +215,17 @@ fn get_bas_dec(
     }
     // NOTE this doesn't do any of the stuff with the side conditions with the ty names and whatnot.
     // those might be necessary.
-    BasDec::Export(ns, lhs, rhs) => {
+    mlb_hir::BasDec::Export(ns, lhs, rhs) => {
       if !ac.basis.add(*ns, lhs.val.clone(), &scope.basis, &rhs.val) {
         let item = match ns {
-          sml_statics::basis::Namespace::Structure => Item::Structure,
-          sml_statics::basis::Namespace::Signature => Item::Signature,
-          sml_statics::basis::Namespace::Functor => Item::Functor,
+          sml_namespace::Namespace::Structure => Item::Structure,
+          sml_namespace::Namespace::Signature => Item::Signature,
+          sml_namespace::Namespace::Functor => Item::Functor,
         };
         cx.undef(path, item, rhs.clone());
       }
     }
-    BasDec::Seq(decs) => {
+    mlb_hir::BasDec::Seq(decs) => {
       let mut scope = scope.clone();
       for dec in decs {
         let mut one_m_basis = MBasis::default();
@@ -234,19 +234,19 @@ fn get_bas_dec(
         ac.append(one_m_basis);
       }
     }
-    BasDec::Path(path, kind) => match kind {
-      PathKind::Source => {
+    mlb_hir::BasDec::Path(path, kind) => match kind {
+      mlb_hir::PathKind::Source => {
         let contents = files.sml.get(path).expect("no sml file for path id");
         let mut fix_env = scope.fix_env.clone();
         let syntax = SourceFileSyntax::new(&mut fix_env, contents);
         get_source_file(cx, *path, scope, ac, fix_env, syntax);
       }
-      PathKind::Group => match cx.cache.get(path) {
+      mlb_hir::PathKind::Group => match cx.cache.get(path) {
         Some(mb) => ac.append(mb.clone()),
         None => get_group_file(cx, files, ac, *path),
       },
     },
-    BasDec::SourcePathSet(paths) => {
+    mlb_hir::BasDec::SourcePathSet(paths) => {
       let mut syntaxes: paths::PathMap<_> = paths
         .iter()
         .map(|path| {
@@ -283,7 +283,7 @@ fn get_source_file(
   path: paths::PathId,
   scope: &MBasis,
   ac: &mut MBasis,
-  fix_env: sml_parse::parser::FixEnv,
+  fix_env: sml_fixity::Env,
   syntax: SourceFileSyntax,
 ) {
   let mode = sml_statics::Mode::Regular(Some(path));
@@ -303,39 +303,6 @@ fn get_source_file(
   //
   // this drops the errors from any previous analyses of this file on the floor.
   cx.sml.insert(path, file);
-}
-
-/// A source file analyzed at the purely syntactic level.
-#[derive(Debug)]
-pub struct SourceFileSyntax {
-  /// The position database for this file.
-  pub pos_db: text_pos::PositionDb,
-  /// Lex errors from the file.
-  pub lex_errors: Vec<sml_lex::Error>,
-  /// The lossless concrete syntax tree.
-  pub parse: sml_parse::Parse,
-  /// The lowered HIR.
-  pub lower: sml_lower::Lower,
-}
-
-impl SourceFileSyntax {
-  /// Starts processing a single source file.
-  pub fn new(fix_env: &mut sml_parse::parser::FixEnv, contents: &str) -> Self {
-    let (lex_errors, parse) = Self::lex_and_parse(fix_env, contents);
-    let mut lower = sml_lower::get(&parse.root);
-    sml_ty_var_scope::get(&mut lower.arenas, lower.root);
-    Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower }
-  }
-
-  /// Lex and parse a source file.
-  pub fn lex_and_parse(
-    fix_env: &mut sml_parse::parser::FixEnv,
-    contents: &str,
-  ) -> (Vec<sml_lex::Error>, sml_parse::Parse) {
-    let lexed = sml_lex::get(contents);
-    let parse = sml_parse::get(&lexed.tokens, fix_env);
-    (lexed.errors, parse)
-  }
 }
 
 /// Processes a single group file.
@@ -364,59 +331,4 @@ pub fn add_all_doc_comments(
       info.add_doc(idx, doc);
     }
   }
-}
-
-/// A basis declaration.
-#[derive(Debug)]
-pub enum BasDec {
-  /// `basis <name> = <exp>`
-  Basis(WithRange<str_util::Name>, Box<BasExp>),
-  /// `open <name>`
-  Open(WithRange<str_util::Name>),
-  /// `local <dec> in <dec> end`
-  Local(Box<BasDec>, Box<BasDec>),
-  /// `structure <name>`, etc.
-  Export(sml_statics::basis::Namespace, WithRange<str_util::Name>, WithRange<str_util::Name>),
-  /// A sequence of declarations.
-  Seq(Vec<BasDec>),
-  /// A file path.
-  Path(paths::PathId, PathKind),
-  /// Used by CM only.
-  SourcePathSet(FxHashSet<paths::PathId>),
-}
-
-impl BasDec {
-  /// Returns a sequence of decs.
-  ///
-  /// # Panics
-  ///
-  /// If there was an internal error.
-  #[must_use]
-  pub fn seq(mut decs: Vec<Self>) -> Self {
-    if decs.len() == 1 {
-      decs.pop().unwrap()
-    } else {
-      Self::Seq(decs)
-    }
-  }
-}
-
-/// A basis expression.
-#[derive(Debug)]
-pub enum BasExp {
-  /// `bas <dec> end`
-  Bas(BasDec),
-  /// `Foo`, etc.
-  Name(WithRange<str_util::Name>),
-  /// `let <dec> in <exp> end`
-  Let(BasDec, Box<BasExp>),
-}
-
-/// A kind of path.
-#[derive(Debug, Clone, Copy)]
-pub enum PathKind {
-  /// An SML source path.
-  Source,
-  /// A group path, like MLB or CM.
-  Group,
 }

@@ -17,9 +17,10 @@ fmt-util = { path = "../fmt-util" }
 input = { path = "../input" }
 mlb-statics = { path = "../mlb-statics" }
 paths = { path = "../paths" }
+sml-file-syntax = { path = "../sml-file-syntax" }
+sml-fixity = { path = "../sml-fixity" }
 sml-fmt = { path = "../sml-fmt" }
 sml-hir = { path = "../sml-hir" }
-sml-parse = { path = "../sml-parse" }
 sml-statics = { path = "../sml-statics" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { path = "../str-util" }

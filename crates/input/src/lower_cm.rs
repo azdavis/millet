@@ -30,18 +30,18 @@ where
       .into_iter()
       .map(|(ex, range)| {
         let name = WithRange { val: ex.name, range };
-        mlb_statics::BasDec::Export(ex.namespace, name.clone(), name)
+        mlb_hir::BasDec::Export(ex.namespace, name.clone(), name)
       })
       .collect();
     let path_decs: Vec<_> = cm_file
       .cm_paths
       .iter()
-      .map(|&p| mlb_statics::BasDec::Path(p, mlb_statics::PathKind::Group))
-      .chain(std::iter::once(mlb_statics::BasDec::SourcePathSet(cm_file.sml_paths)))
+      .map(|&p| mlb_hir::BasDec::Path(p, mlb_hir::PathKind::Group))
+      .chain(std::iter::once(mlb_hir::BasDec::SourcePathSet(cm_file.sml_paths)))
       .collect();
-    let bas_dec = mlb_statics::BasDec::Local(
-      mlb_statics::BasDec::seq(path_decs).into(),
-      mlb_statics::BasDec::seq(exports).into(),
+    let bas_dec = mlb_hir::BasDec::Local(
+      mlb_hir::BasDec::seq(path_decs).into(),
+      mlb_hir::BasDec::seq(exports).into(),
     );
     let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
     groups.insert(path, group);
@@ -72,7 +72,7 @@ type NameExports = BTreeMap<NameExport, TextRange>;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct NameExport {
-  namespace: sml_statics::basis::Namespace,
+  namespace: sml_namespace::Namespace,
   name: str_util::Name,
 }
 
@@ -147,9 +147,9 @@ where
   match export {
     cm_syntax::Export::Name(ns, name) => {
       let namespace = match ns.val {
-        cm_syntax::Namespace::Structure => sml_statics::basis::Namespace::Structure,
-        cm_syntax::Namespace::Signature => sml_statics::basis::Namespace::Signature,
-        cm_syntax::Namespace::Functor => sml_statics::basis::Namespace::Functor,
+        cm_syntax::Namespace::Structure => sml_namespace::Namespace::Structure,
+        cm_syntax::Namespace::Signature => sml_namespace::Namespace::Signature,
+        cm_syntax::Namespace::Functor => sml_namespace::Namespace::Functor,
         cm_syntax::Namespace::FunSig => {
           return Err(Error::new(
             ErrorSource { path: None, range: cx.group.pos_db.range(ns.range) },
@@ -255,8 +255,8 @@ where
 
 /// it's pretty annoying to have to do this here, but not sure if there's a better option.
 fn get_top_defs(contents: &str, ac: &mut NameExports, range: TextRange) {
-  let mut fix_env = sml_parse::parser::STD_BASIS.clone();
-  let (_, parse) = mlb_statics::SourceFileSyntax::lex_and_parse(&mut fix_env, contents);
+  let mut fix_env = sml_fixity::STD_BASIS.clone();
+  let (_, parse) = sml_file_syntax::SourceFileSyntax::lex_and_parse(&mut fix_env, contents);
   get_top_defs_dec(ac, parse.root.dec(), range);
 }
 
@@ -275,7 +275,7 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
       sml_syntax::ast::DecOne::StructureDec(dec) => {
         ac.extend(dec.str_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_statics::basis::Namespace::Structure,
+            namespace: sml_namespace::Namespace::Structure,
             name: str_util::Name::new(x.name()?.text()),
           };
           Some((export, range))
@@ -284,7 +284,7 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
       sml_syntax::ast::DecOne::SignatureDec(dec) => {
         ac.extend(dec.sig_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_statics::basis::Namespace::Signature,
+            namespace: sml_namespace::Namespace::Signature,
             name: str_util::Name::new(x.name()?.text()),
           };
           Some((export, range))
@@ -293,7 +293,7 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
       sml_syntax::ast::DecOne::FunctorDec(dec) => {
         ac.extend(dec.functor_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_statics::basis::Namespace::Functor,
+            namespace: sml_namespace::Namespace::Functor,
             name: str_util::Name::new(x.functor_name()?.text()),
           };
           Some((export, range))

@@ -102,7 +102,7 @@ where
         owned_contents = lines.join("\n");
         contents = &owned_contents;
       }
-      let mut fix_env = sml_parse::parser::STD_BASIS.clone();
+      let mut fix_env = sml_fixity::STD_BASIS.clone();
       let started = SourceFileSyntax::new(&mut fix_env, contents);
       if let Some(e) = started.lex_errors.first() {
         panic!("{name}: lex error: {}", e.display());

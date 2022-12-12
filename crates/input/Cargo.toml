@@ -14,11 +14,12 @@ cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
 diagnostic-util = { path = "../diagnostic-util" }
 fast-hash = { path = "../fast-hash" }
-mlb-statics = { path = "../mlb-statics" }
+mlb-hir = { path = "../mlb-hir" }
 mlb-syntax = { path = "../mlb-syntax" }
 paths = { path = "../paths" }
-sml-parse = { path = "../sml-parse" }
-sml-statics = { path = "../sml-statics" }
+sml-file-syntax = { path = "../sml-file-syntax" }
+sml-fixity = { path = "../sml-fixity" }
+sml-namespace = { path = "../sml-namespace" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { path = "../str-util" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
