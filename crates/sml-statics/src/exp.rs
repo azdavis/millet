@@ -118,19 +118,8 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       if let Ty::Con(arguments, sym) = &param {
         if *sym == Sym::BOOL {
           assert!(arguments.is_empty(), "bool should have no ty args");
-          match flavor {
-            sml_hir::FnFlavor::BoolBinOp | sml_hir::FnFlavor::If | sml_hir::FnFlavor::While => {
-              log::info!("these are expected to operate on bool");
-            }
-            sml_hir::FnFlavor::Selector => {
-              log::info!("should have emitted a type error for selector on bool");
-            }
-            sml_hir::FnFlavor::Fun | sml_hir::FnFlavor::Seq | sml_hir::FnFlavor::Fn => {
-              log::info!("not linting for Fun, Seq, or Fn on bool");
-            }
-            sml_hir::FnFlavor::Case => {
-              st.err(exp, ErrorKind::BoolCase);
-            }
+          if matches!(flavor, sml_hir::FnFlavor::Case) {
+            st.err(exp, ErrorKind::BoolCase);
           }
         }
       }

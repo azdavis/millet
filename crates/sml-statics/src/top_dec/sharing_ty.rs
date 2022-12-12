@@ -52,16 +52,15 @@ pub(crate) fn get(
     Some(sym)
   });
   let syms: FxHashSet<_> = syms.collect();
-  match ac {
-    Some(ac) => {
-      let mut subst = realize::TyRealization::default();
-      for sym in syms {
-        subst.insert(sym, ac.ty_scheme.clone());
-      }
-      realize::get_env(&subst, inner_env);
+  // the None case is possible, but we should have errored already.
+  //
+  // @test(deviations::smlnj::sharing_via_abbreviation_short)
+  if let Some(ac) = ac {
+    let mut subst = realize::TyRealization::default();
+    for sym in syms {
+      subst.insert(sym, ac.ty_scheme.clone());
     }
-    // @test(deviations::smlnj::sharing_via_abbreviation_short)
-    None => log::info!("should have already errored"),
+    realize::get_env(&subst, inner_env);
   }
 }
 
