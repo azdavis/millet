@@ -73,7 +73,7 @@ jobs:
         with:
           node-version: 18.x
       - name: Make dist
-        run: cargo xtask dist --release --target ${{ matrix.rust }}
+        run: cargo xtask dist --release --editor vs-code --target ${{ matrix.rust }}
       - name: Package vsix
         run: npx --no-install vsce package --target ${{ matrix.vscode }} -o millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode

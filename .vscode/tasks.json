@@ -5,7 +5,7 @@
       "label": "build extension",
       "group": "build",
       "type": "shell",
-      "command": "cargo xtask dist",
+      "command": "cargo xtask dist --editor vs-code",
       "presentation": {
         "reveal": "silent"
       }

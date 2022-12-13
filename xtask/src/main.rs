@@ -32,6 +32,10 @@ impl Cmd {
         desc: "make artifacts for distribution",
         options: &[
           ("--release", "build for release"),
+          (
+            "--editor <editor>",
+            "also make extra stuff for the given <editor> (possible values: vs-code)",
+          ),
           ("--target <target>", "build for the <target> triple"),
         ],
         args: &[],
@@ -55,6 +59,22 @@ impl std::str::FromStr for Cmd {
       .find(|c| c.spec().name == s)
       .copied()
       .ok_or_else(|| anyhow!("couldn't parse {s} into a command"))
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Editor {
+  VsCode,
+}
+
+impl std::str::FromStr for Editor {
+  type Err = anyhow::Error;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "vs-code" => Ok(Self::VsCode),
+      _ => bail!("unknown editor: {s}"),
+    }
   }
 }
 
@@ -102,8 +122,10 @@ fn run_ci(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
+#[derive(Debug)]
 struct DistArgs {
   release: bool,
+  editor: Option<Editor>,
   target: Option<String>,
 }
 
@@ -114,6 +136,10 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
     None => vec![],
   };
   cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin millet-ls").run()?;
+  match args.editor {
+    None => return Ok(()),
+    Some(Editor::VsCode) => {}
+  }
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
@@ -226,6 +252,7 @@ fn main() -> Result<()> {
     Cmd::Dist => {
       let dist_args = DistArgs {
         release: args.contains("--release"),
+        editor: args.opt_value_from_str("--editor")?,
         target: args.opt_value_from_str("--target")?,
       };
       finish_args(args)?;
