@@ -11,7 +11,7 @@ Millet analyzes SML code without running it, and provides information like:
 Note that Millet does not actually run SML code. To do that, you'll need an installation of SML, like [SML/NJ][smlnj] or [MLton][mlton].
 
 - Check out the [blog post][blog] introducing the project.
-- Refer to the [manual][] for information about setup, usage, and features.
+- Refer to the [manual][] for information about setup, configuration, and features.
 - See the full [documentation][] for other information, like explanations for diagnostics and project policies.
 
 ## Usage
