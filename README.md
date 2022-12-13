@@ -21,13 +21,17 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 - There is a [VS Code][vscode] extension on the [marketplace][].
 - The same extension is also published on [Open VSX][ovsx].
 
-VS Code and compatible editors are the only editors for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
+VS Code and compatible editors like [VSCodium][] are the only editors for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
 
 ## Community
 
 Millet is affiliated with Project Savanna, a project whose goal is to improve tooling for Standard ML.
 
 There is a [Discord server][discord] for Project Savanna, and Millet has its own channel there. You can get support and discuss the project there.
+
+## Contributing
+
+We encourage contributions of all kinds. Please read the [contributing][] guide.
 
 ## Development
 
@@ -67,6 +71,7 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 
 [blog]: https://azdavis.net/posts/millet/
 [cmu150]: http://www.cs.cmu.edu/~15150/
+[contributing]: /docs/CONTRIBUTING.md
 [discord]: https://discord.gg/hgPSUby2Ny
 [documentation]: /docs/README.md
 [manual]: /docs/manual.md
@@ -78,4 +83,5 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [sml]: https://smlfamily.github.io
 [smlnj]: https://www.smlnj.org
 [vscode]: https://code.visualstudio.com
+[vscodium]: https://vscodium.com
 [yixin]: https://yixinhe.me

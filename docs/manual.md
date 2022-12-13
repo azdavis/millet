@@ -10,11 +10,15 @@ We provide an official [VS Code][vs-code] extension, but it should be possible t
 
 Some features are provided by the VS Code extension, not the language server.
 
+Note also that when we say "VS Code", we really mean "VS Code or any similar compatible editor". VS Code is technically Microsoft's custom distribution of the open-source "Code - OSS" project, upon which things like [VSCodium][] are built.
+
+Only Microsoft's VS Code is allowed to use the extension marketplace, so Millet is also available on [Open VSX][ovsx] for VS Code-compatible editors like VSCodium.
+
 ## Setup
 
 ### VS Code
 
-Install the extension from the [VS Code marketplace][vs-code-ext].
+Install the extension from the [VS Code marketplace][marketplace].
 
 ### Other editors
 
@@ -60,8 +64,9 @@ version = 1
 [workspace]
 root = "foo.cm"
 [workspace.path-vars]
-FOO = { value = "bar" }
-QUZ = { path = "lib" }
+FOO = { value = "woof" }
+BAR = { path = "bork" }
+QUZ = { workspace-path = "pant" }
 [diagnostics]
 5011.severity = "warning"
 4015.severity = "error"
@@ -106,7 +111,7 @@ Overrides the default severity for this diagnostic. The acceptable values are:
 
 - `"ignore"`: the diagnostic is not reported.
 - `"warning"`: the diagnostic is reported as a warning.
-- `"error"`: the diagnostic is reported with maximum severity.
+- `"error"`: the diagnostic is reported as an error.
 
 ### VS Code settings
 
@@ -130,7 +135,7 @@ What diagnostics to send per file.
 - Type: `string`
 - Default: `"syntax"`
 - Valid values:
-  - `"none"`: No filter, i.e. available diagnostics are sent.
+  - `"none"`: No filter, i.e. all available diagnostics are sent.
   - `"syntax"`: If there are syntax errors (lex, parse, etc), send only those, and do not send e.g. statics diagnostics.
 
 #### `millet.server.diagnostics.moreInfoHint.enable`
@@ -178,7 +183,7 @@ Millet has a bevy of features to help you read, write, and understand SML code.
 
 ### (VS Code only) Syntax highlighting
 
-Keywords, literals, comments, etc are highlighted in these files:
+VS Code will highlight keywords, literals, comments, etc in these files:
 
 | Full name                  | Short name | Extensions             |
 | -------------------------- | ---------- | ---------------------- |
@@ -188,16 +193,16 @@ Keywords, literals, comments, etc are highlighted in these files:
 
 ### (VS Code only) Bracket and comment configuration
 
-All of the above files types also have settings to inform VS Code what the comment delimiters are, and what kinds of brackets should be auto-matched (like `[]`).
+VS Code knows about things like comment delimiters and what kinds of brackets should be auto-matched in these files.
 
-This allows things like:
+This allows for features like:
 
 - Use the "toggle comment" keybinding in these files to comment out a line.
 - Type e.g. a `{`, and the editor will auto-insert the matching `}`.
 
 ### (VS Code only) Snippets
 
-All of the above files have some pre-defined snippets. These can be triggered by typing the "prefix" word and then hitting a "commit character" (like tab).
+In VS Code, all of the above files have some pre-defined snippets. These can be triggered by typing the "prefix" word and then hitting a "commit character" (like tab).
 
 The snippets provided are:
 
@@ -356,6 +361,8 @@ There are no options to configure the formatter (other than to enable it or not)
 This is by design. More options means more ability to have different formatting styles.
 
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
+[marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [mlb]: http://mlton.org/MLBasis
-[vs-code-ext]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
+[ovsx]: https://open-vsx.org/extension/azdavis/millet
 [vs-code]: https://code.visualstudio.com
+[vscodium]: https://vscodium.com
