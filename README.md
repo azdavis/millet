@@ -35,10 +35,10 @@ The project is mostly written in Rust, so you will almost certainly need a Rust 
 
 Install the dependencies:
 
-| What            | Version | Why                   |
-| --------------- | ------- | --------------------- |
-| [Rust][rust]    | Stable  | Build Rust code       |
-| [Node.js][node] | 18      | Build TypeScript code |
+| What            | Version       | Why                   |
+| --------------- | ------------- | --------------------- |
+| [Rust][rust]    | Latest stable | Build Rust code       |
+| [Node.js][node] | 18            | Build TypeScript code |
 
 Then, download/clone the repo and run `cargo xtask ci` inside it. This will build the project and run tests.
 
