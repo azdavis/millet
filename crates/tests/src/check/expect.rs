@@ -122,7 +122,7 @@ impl fmt::Display for Kind {
     match self {
       Kind::ErrorExact => f.write_str("error (exact)"),
       Kind::ErrorContains => f.write_str("error (contains)"),
-      Kind::Hover => f.write_str("hover (contains"),
+      Kind::Hover => f.write_str("hover (contains)"),
     }
   }
 }
