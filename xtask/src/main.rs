@@ -102,9 +102,14 @@ fn run_ci(sh: &Shell) -> Result<()> {
   Ok(())
 }
 
-fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
-  let release_arg = release.then_some("--release");
-  let target_arg = match target {
+struct DistArgs {
+  release: bool,
+  target: Option<String>,
+}
+
+fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
+  let release_arg = args.release.then_some("--release");
+  let target_arg = match &args.target {
     Some(x) => vec!["--target", x],
     None => vec![],
   };
@@ -112,10 +117,12 @@ fn dist(sh: &Shell, release: bool, target: Option<&str>) -> Result<()> {
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
-  let kind = if release { "release" } else { "debug" };
+  let kind = if args.release { "release" } else { "debug" };
   let lang_srv_name = format!("millet-ls{}", std::env::consts::EXE_SUFFIX);
-  let lang_srv: PathBuf =
-    std::iter::once("target").chain(target).chain([kind, lang_srv_name.as_str()]).collect();
+  let lang_srv: PathBuf = std::iter::once("target")
+    .chain(args.target.as_deref())
+    .chain([kind, lang_srv_name.as_str()])
+    .collect();
   sh.copy_file(&lang_srv, &dir)?;
   assert!(dir.pop());
   let license_header =
@@ -217,10 +224,12 @@ fn main() -> Result<()> {
       run_ci(&sh)?;
     }
     Cmd::Dist => {
-      let release = args.contains("--release");
-      let target: Option<String> = args.opt_value_from_str("--target")?;
+      let dist_args = DistArgs {
+        release: args.contains("--release"),
+        target: args.opt_value_from_str("--target")?,
+      };
       finish_args(args)?;
-      dist(&sh, release, target.as_deref())?;
+      dist(&sh, dist_args)?;
     }
     Cmd::Tag => {
       let tag_arg: String = args.free_from_str()?;
