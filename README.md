@@ -31,10 +31,14 @@ There is a [Discord server][discord] for Project Savanna, and Millet has its own
 
 ## Development
 
+The project is mostly written in Rust, so you will almost certainly need a Rust installation. If you want to build the VS Code extension as well, you should also install Node.js.
+
 Install the dependencies:
 
-- [rust][] (i.e. `rustc` and `cargo`), to build Rust code.
-- [nodejs][] (i.e. `node` and `npm`), to build the VS Code extension in TypeScript.
+| What            | Version | Why                   |
+| --------------- | ------- | --------------------- |
+| [Rust][rust]    | Stable  | Build Rust code       |
+| [Node.js][node] | 18      | Build TypeScript code |
 
 Then, download/clone the repo and run `cargo xtask ci` inside it. This will build the project and run tests.
 
@@ -68,7 +72,7 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [manual]: /docs/manual.md
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
 [mlton]: http://mlton.org
-[nodejs]: https://nodejs.org/en/
+[node]: https://nodejs.org/en/
 [ovsx]: https://open-vsx.org/extension/azdavis/millet
 [rust]: https://rustup.rs
 [sml]: https://smlfamily.github.io
