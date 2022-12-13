@@ -1,10 +1,11 @@
 {
-  "millet.server.enable": false,
   "editor.rulers": [100],
   "files.exclude": {
     "editors/vscode/node_modules": true,
     "editors/vscode/out": true,
     "target": true
   },
+  "markdown.validate.enabled": true,
+  "millet.server.enable": false,
   "rust-analyzer.checkOnSave.command": "clippy"
 }
