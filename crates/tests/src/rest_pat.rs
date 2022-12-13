@@ -90,7 +90,7 @@ fun f x =
     val _ = #foo x + 1
   in
     if #foo x then 1 else 2
-(**    ^^^^^^ contains: expected bool, found int *)
+(**    ^^^^^^ expected bool, found int *)
   end
 "#,
   );

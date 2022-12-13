@@ -94,13 +94,13 @@ pub(crate) struct Expect {
 
 impl Expect {
   fn new(msg: &str) -> Self {
-    if let Some(msg) = msg.strip_prefix("contains: ") {
-      return Self { msg: msg.to_owned(), kind: Kind::ErrorContains };
+    if let Some(msg) = msg.strip_prefix("exact: ") {
+      return Self { msg: msg.to_owned(), kind: Kind::ErrorExact };
     }
     if let Some(msg) = msg.strip_prefix("hover: ") {
       return Self { msg: msg.to_owned(), kind: Kind::Hover };
     }
-    Self { msg: msg.to_owned(), kind: Kind::ErrorExact }
+    Self { msg: msg.to_owned(), kind: Kind::ErrorContains }
   }
 }
 

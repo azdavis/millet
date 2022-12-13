@@ -22,8 +22,8 @@ use diagnostic_util::Severity;
 ///
 /// The expectation messages have a certain format:
 ///
-/// - Error expects that must match **exactly** have no prefix.
-/// - Error expects that must merely be **contained** begin with `contains: `.
+/// - Error expects that must merely be **contained** have no prefix.
+/// - Error expects that must match **exactly** begin with `exact: `.
 /// - Hover expects begin with `hover: `, and the actual hover must merely contain the expectation.
 ///
 /// To construct the string to pass without worrying about Rust string escape sequences, use the raw
@@ -58,7 +58,7 @@ pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
 /// ```ignore
 /// fail(r#"
 /// val _ = 1 + 2
-/// (**     ^^^^^ contains: expected bool, found int *)
+/// (**     ^^^^^ expected bool, found int *)
 /// "#);
 /// ```
 ///

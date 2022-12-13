@@ -59,7 +59,7 @@ fun 'a foo (x: 'a) =
     exception Poly of 'a
   in
     raise Poly x; raise Poly 3; ()
-(**                          ^ contains: expected 'a, found int *)
+(**                          ^ expected 'a, found int *)
   end
 "#,
   );

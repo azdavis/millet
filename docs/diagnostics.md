@@ -1368,7 +1368,7 @@ Millet tries to report which type was "expected" and which was "found". For inst
 
 ```sml
 val x : int = "no"
-(** + contains: expected int, found string *)
+(** + expected int, found string *)
 ```
 
 This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
@@ -1380,7 +1380,7 @@ This error commonly occurs when applying a function to an argument, but the argu
 ```sml
 fun choose x = if x then "sosuke" else "pazu"
 val _ = choose 4
-(**            ^ contains: expected bool, found int *)
+(**            ^ expected bool, found int *)
 ```
 
 ### Fully qualified names
@@ -1401,7 +1401,7 @@ structure Foo :> FOO = struct
 end
 
 val _ = Foo.x : unit
-(**     ^^^^^^^^^^^^ contains: expected unit, found FOO.t *)
+(**     ^^^^^^^^^^^^ expected unit, found FOO.t *)
 ```
 
 ### Overloads
@@ -1416,7 +1416,7 @@ Part of checking for type compatibility is ensuring that the equality attribute 
 
 ```sml
 val _ = 1.2 = 3.4
-(**     ^^^^^^^^^ contains: not an equality type *)
+(**     ^^^^^^^^^ not an equality type *)
 ```
 
 ### Reporting types with invalid syntax
@@ -2457,7 +2457,7 @@ There was a usage of the top-level `use` function, which has implementation-defi
 
 ```sml
 val () = use "foo.sml"
-(**      ^^^^^^^^^^^^^ contains: `use` ignored *)
+(**      ^^^^^^^^^^^^^ `use` ignored *)
 val x = Foo.bar + 3
 ```
 

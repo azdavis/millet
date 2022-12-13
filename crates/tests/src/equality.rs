@@ -7,7 +7,7 @@ fn real_no() {
   check(
     r#"
 val _ = 2.2 = 3.3
-(**     ^^^^^^^^^ contains: not an equality type *)
+(**     ^^^^^^^^^ not an equality type *)
 "#,
   );
 }
@@ -35,7 +35,7 @@ end :> sig
   val y : t
 end
 val _ = S.x = S.y
-(**     ^^^^^^^^^ contains: not an equality type *)
+(**     ^^^^^^^^^ not an equality type *)
 "#,
   );
 }
@@ -66,7 +66,7 @@ datatype 'a t = A of 'a | B of int | C of string | D
 val _ = B 3 = C "hi"
 val _ = A () = D
 val _ = A 3.3 = D
-(**     ^^^^^^^^^ contains: not an equality type *)
+(**     ^^^^^^^^^ not an equality type *)
 "#,
   );
 }
@@ -78,7 +78,7 @@ fn datatype_sometimes_2() {
 datatype 'a t = A of 'a | B of int | C of string | D
 fun ''a eq (x : ''a t) (y : ''a t) : bool = x = y
 fun 'a eq (x : 'a t) (y : 'a t) : bool = x = y
-(** + contains: contains a fixed non-equality type variable *)
+(** + contains a fixed non-equality type variable *)
 "#,
   );
 }
@@ -100,7 +100,7 @@ fn datatype_eq_ty_var_2() {
     r#"
 datatype ''a t = A of ''a | B
 fun 'a no (x : 'a) : 'a t = A x
-(** + contains: not an equality type *)
+(** + not an equality type *)
 "#,
   );
 }
@@ -111,7 +111,7 @@ fn datatype_eq_ty_var_3() {
     r#"
 datatype ''a t = A of ''a | B
 fun 'a no (x : 'a) : 'a t = B
-(** + contains: not an equality type *)
+(** + not an equality type *)
 "#,
   );
 }
@@ -133,7 +133,7 @@ fn datatype_no_real() {
     r#"
 datatype t = B of real | C of string | D
 val _ = C "hi" = D
-(**     ^^^^^^^^^^ contains: not an equality type *)
+(**     ^^^^^^^^^^ not an equality type *)
 "#,
   );
 }
