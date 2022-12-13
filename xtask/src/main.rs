@@ -119,7 +119,15 @@ fn run_ci(sh: &Shell) -> Result<()> {
   cmd!(sh, "cargo fmt -- --check").run()?;
   cmd!(sh, "cargo clippy").run()?;
   cmd!(sh, "cargo test --locked").run()?;
+  if !env_var_enabled("CI") {
+    println!("note: CI env var was not set to 1");
+    println!("note: this means some slower tests were skipped (but appear as passed)");
+  }
   Ok(())
+}
+
+fn env_var_enabled(s: &str) -> bool {
+  std::env::var_os(s).map_or(false, |x| x == "1")
 }
 
 #[derive(Debug)]
