@@ -38,12 +38,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at:
 
-(lowercase first name).z.(lowercase last name)@icloud.com
-
-where:
-
-- first name is "Ariel"
-- last name is "Davis"
+ariel DOT z DOT davis AT icloud DOT com
 
 All complaints will be reviewed and investigated promptly and fairly.
 

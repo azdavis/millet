@@ -6,9 +6,4 @@ A user could probably "DOS" themselves by asking Millet to analyze a massive or 
 
 That being said, if there is a security issue with Millet, let us know at:
 
-(lowercase first name).z.(lowercase last name)@icloud.com
-
-where:
-
-- first name is "Ariel"
-- last name is "Davis"
+ariel DOT z DOT davis AT icloud DOT com
