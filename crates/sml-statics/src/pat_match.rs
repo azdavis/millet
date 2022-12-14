@@ -33,17 +33,8 @@ impl pattern_match::Lang for Lang {
         Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => {
           vec![Con::Any]
         }
-        Ty::Con(_, ty_name) => {
-          let ty_info = match self.syms.get(*ty_name) {
-            // we can't know how many variants of exn there are, since it's EXteNsible.
-            None => return Ok(vec![Con::Any]),
-            Some(sym_info) => &sym_info.ty_info,
-          };
-          let all_cons: Vec<_> = ty_info
-            .val_env
-            .keys()
-            .map(|name| Con::Variant(*ty_name, VariantName::Name(name.clone())))
-            .collect();
+        Ty::Con(_, sym) => {
+          let all_cons = cons_for_sym(&self.syms, *sym).unwrap_or_else(|| vec![Con::Any]);
           let cur_cons: FxHashSet<_> = cons.collect();
           if all_cons.iter().any(|c| cur_cons.contains(c)) {
             all_cons
@@ -123,4 +114,26 @@ pub(crate) enum Con {
 pub(crate) enum VariantName {
   Name(str_util::Name),
   Exn(Exn),
+}
+
+const NON_EXN_INFINITE: [Sym; 5] = [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING];
+
+/// returns the value constructors for the symbol.
+///
+/// - if `sym` has finite constructors, this returns Some of all of them.
+/// - if `sym` has infinite constructors, this returns None.
+/// - if `sym` is an opaque type, this returns Some([]). see e.g. `@test(sig::monoid_opaque)`
+fn cons_for_sym(syms: &Syms, sym: Sym) -> Option<Vec<Con>> {
+  let sym_info = syms.get(sym)?;
+  // we just returned None above for exn.
+  if NON_EXN_INFINITE.contains(&sym) {
+    return None;
+  }
+  let ret: Vec<_> = sym_info
+    .ty_info
+    .val_env
+    .keys()
+    .map(|name| Con::Variant(sym, VariantName::Name(name.clone())))
+    .collect();
+  Some(ret)
 }
