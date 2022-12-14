@@ -322,3 +322,17 @@ val x = S.toString ()
 "#,
   );
 }
+
+#[test]
+fn match_opaque_smoke() {
+  check(
+    r#"
+functor F (type t) = struct
+  fun hm (xs : t list) =
+    case xs of
+      nil => 1
+    | _ :: ys => hm ys
+end
+"#,
+  );
+}
