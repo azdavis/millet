@@ -280,7 +280,7 @@ fun f xs =
 }
 
 #[test]
-fn list_missing_cons() {
+fn list_missing_cons_smoke() {
   check(
     r#"
 fun f xs =
