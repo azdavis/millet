@@ -39,14 +39,14 @@ impl pattern_match::Lang for Lang {
             None => return Ok(vec![Con::Any]),
             Some(sym_info) => &sym_info.ty_info,
           };
-          let all: Vec<_> = ty_info
+          let all_cons: Vec<_> = ty_info
             .val_env
             .keys()
             .map(|name| Con::Variant(*ty_name, VariantName::Name(name.clone())))
             .collect();
-          let set: FxHashSet<_> = cons.collect();
-          if all.iter().any(|c| set.contains(c)) {
-            all
+          let cur_cons: FxHashSet<_> = cons.collect();
+          if all_cons.iter().any(|c| cur_cons.contains(c)) {
+            all_cons
           } else {
             vec![Con::Any]
           }
