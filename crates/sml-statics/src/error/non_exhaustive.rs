@@ -1,9 +1,9 @@
 //! Displaying non-exhaustive errors with witnesses.
 
-use crate::pat_match::{Con, Pat, VariantName};
+use crate::pat_match::{Con, Lang, Pat, VariantName};
 use crate::types::Syms;
 use fmt_util::{comma_seq, sep_seq};
-use pattern_match::RawPat;
+use pattern_match::{ConPat, RawPat};
 use std::fmt;
 
 pub(crate) fn get(
@@ -25,6 +25,13 @@ pub(crate) fn get(
   Ok(())
 }
 
+fn unwrap_non_or(pat: &Pat) -> &ConPat<Lang> {
+  match &pat.raw {
+    RawPat::Con(c) => c,
+    RawPat::Or(_) => unreachable!("witness to non-exhaustive should not be Or"),
+  }
+}
+
 struct PatDisplay<'a> {
   pat: &'a Pat,
   syms: &'a Syms,
@@ -33,111 +40,111 @@ struct PatDisplay<'a> {
 
 impl fmt::Display for PatDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &self.pat.raw {
-      RawPat::Con(con, args) => match con {
-        Con::Any => {
-          assert!(args.is_empty());
-          f.write_str("_")?;
+    ConPatDisplay { pat: unwrap_non_or(self.pat), syms: self.syms, prec: self.prec }.fmt(f)
+  }
+}
+
+struct ConPatDisplay<'a> {
+  pat: &'a ConPat<Lang>,
+  syms: &'a Syms,
+  prec: PatPrec,
+}
+
+impl fmt::Display for ConPatDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let args = self.pat.args.as_slice();
+    match &self.pat.con {
+      Con::Any => {
+        assert!(args.is_empty());
+        f.write_str("_")?;
+      }
+      Con::Int(i) => {
+        assert!(args.is_empty());
+        write!(f, "{i}")?;
+      }
+      Con::Word(w) => {
+        assert!(args.is_empty());
+        write!(f, "0w{w}")?;
+      }
+      Con::Char(c) => {
+        assert!(args.is_empty());
+        write!(f, "#\"{c}\"")?;
+      }
+      Con::String(s) => {
+        assert!(args.is_empty());
+        f.write_str(s.as_str())?;
+      }
+      Con::Record { labels, allows_other } => {
+        assert_eq!(labels.len(), args.len());
+        let is_tuple = !*allows_other
+          && labels.iter().enumerate().all(|(idx, lab)| sml_hir::Lab::tuple(idx) == *lab);
+        if is_tuple {
+          f.write_str("(")?;
+          let pats = args.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min });
+          comma_seq(f, pats)?;
+          f.write_str(")")?;
+        } else {
+          f.write_str("{")?;
+          let rows = labels
+            .iter()
+            .zip(args)
+            .map(|(lab, pat)| RowDisplay::Row { lab, pat, syms: self.syms })
+            .chain(allows_other.then_some(RowDisplay::Rest));
+          comma_seq(f, rows)?;
+          f.write_str("}")?;
         }
-        Con::Int(i) => {
-          assert!(args.is_empty());
-          write!(f, "{i}")?;
-        }
-        Con::Word(w) => {
-          assert!(args.is_empty());
-          write!(f, "0w{w}")?;
-        }
-        Con::Char(c) => {
-          assert!(args.is_empty());
-          write!(f, "#\"{c}\"")?;
-        }
-        Con::String(s) => {
-          assert!(args.is_empty());
-          f.write_str(s.as_str())?;
-        }
-        Con::Record { labels, allows_other } => {
-          assert_eq!(labels.len(), args.len());
-          let is_tuple = !*allows_other
-            && labels.iter().enumerate().all(|(idx, lab)| sml_hir::Lab::tuple(idx) == *lab);
-          if is_tuple {
+      }
+      Con::Variant(_, name) => {
+        let name = match name {
+          VariantName::Name(name) => name.as_str(),
+          VariantName::Exn(exn) => self.syms.get_exn(*exn).path.last().as_str(),
+        };
+        let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
+        // these names are guaranteed not to be rebound, so they always are list constructors.
+        if matches!(name, "nil" | "::") {
+          let mut ac = Vec::new();
+          match list_pat(&mut ac, self.pat) {
+            // does not need paren because list literal patterns are atomic
+            ListPatLen::Known => {
+              f.write_str("[")?;
+              let pats = ac.into_iter().map(|pat| ConPatDisplay {
+                pat,
+                syms: self.syms,
+                prec: PatPrec::Min,
+              });
+              comma_seq(f, pats)?;
+              f.write_str("]")?;
+            }
+            ListPatLen::Unknown => {
+              if needs_paren {
+                f.write_str("(")?;
+              }
+              let pats = ac.into_iter().map(|pat| ConPatDisplay {
+                pat,
+                syms: self.syms,
+                prec: PatPrec::App,
+              });
+              sep_seq(f, " :: ", pats)?;
+              if needs_paren {
+                f.write_str(")")?;
+              }
+            }
+          }
+        } else {
+          if needs_paren {
             f.write_str("(")?;
-            comma_seq(
-              f,
-              args.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min }),
-            )?;
+          }
+          f.write_str(name)?;
+          if !args.is_empty() {
+            f.write_str(" ")?;
+            let pats =
+              args.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::App });
+            comma_seq(f, pats)?;
+          }
+          if needs_paren {
             f.write_str(")")?;
-          } else {
-            f.write_str("{")?;
-            comma_seq(
-              f,
-              labels
-                .iter()
-                .zip(args)
-                .map(|(lab, pat)| RowDisplay::Row { lab, pat, syms: self.syms })
-                .chain(allows_other.then_some(RowDisplay::Rest)),
-            )?;
-            f.write_str("}")?;
           }
         }
-        Con::Variant(_, name) => {
-          let name = match name {
-            VariantName::Name(name) => name.as_str(),
-            VariantName::Exn(exn) => self.syms.get_exn(*exn).path.last().as_str(),
-          };
-          let needs_paren = !args.is_empty() && matches!(self.prec, PatPrec::App);
-          // these names are guaranteed not to be rebound, so they always are list constructors.
-          if matches!(name, "nil" | "::") {
-            let mut ac = Vec::new();
-            match list_pat(&mut ac, self.pat) {
-              // does not need paren because list literal patterns are atomic
-              ListPatLen::Known => {
-                f.write_str("[")?;
-                comma_seq(
-                  f,
-                  ac.into_iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min }),
-                )?;
-                f.write_str("]")?;
-              }
-              ListPatLen::Unknown => {
-                if needs_paren {
-                  f.write_str("(")?;
-                }
-                sep_seq(
-                  f,
-                  " :: ",
-                  ac.into_iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::App }),
-                )?;
-                if needs_paren {
-                  f.write_str(")")?;
-                }
-              }
-            }
-          } else {
-            if needs_paren {
-              f.write_str("(")?;
-            }
-            f.write_str(name)?;
-            if !args.is_empty() {
-              f.write_str(" ")?;
-              comma_seq(
-                f,
-                args.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::App }),
-              )?;
-            }
-            if needs_paren {
-              f.write_str(")")?;
-            }
-          }
-        }
-      },
-      RawPat::Or(pats) => {
-        f.write_str("(")?;
-        sep_seq(
-          f,
-          " | ",
-          pats.iter().map(|pat| PatDisplay { pat, syms: self.syms, prec: PatPrec::Min }),
-        )?;
-        f.write_str(")")?;
       }
     }
     Ok(())
@@ -149,15 +156,8 @@ enum ListPatLen {
   Unknown,
 }
 
-fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
-  let (con, args) = match &pat.raw {
-    RawPat::Con(a, b) => (a, b),
-    RawPat::Or(_) => {
-      ac.push(pat);
-      return ListPatLen::Unknown;
-    }
-  };
-  let name = match con {
+fn list_pat<'p>(ac: &mut Vec<&'p ConPat<Lang>>, pat: &'p ConPat<Lang>) -> ListPatLen {
+  let name = match &pat.con {
     Con::Any => {
       ac.push(pat);
       return ListPatLen::Unknown;
@@ -167,16 +167,16 @@ fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
   };
   match name {
     "nil" => {
-      assert!(args.is_empty());
+      assert!(pat.args.is_empty());
       ListPatLen::Known
     }
     "::" => {
-      assert_eq!(args.len(), 1, ":: has an argument");
-      let (con, args) = match &args.first().unwrap().raw {
-        RawPat::Con(a, b) => (a, b),
+      assert_eq!(pat.args.len(), 1, ":: has 1 argument");
+      let arg_pat = match &pat.args.first().unwrap().raw {
+        RawPat::Con(x) => x,
         RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
       };
-      let labels = match con {
+      let labels = match &arg_pat.con {
         Con::Record { allows_other: false, labels } => labels,
         _ => unreachable!("the argument to :: is a record that does not allow others"),
       };
@@ -184,8 +184,8 @@ fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
         labels.len() == 2 && (0..2).all(|x| labels.contains(&sml_hir::Lab::tuple(x))),
         "the argument to :: is a 2-tuple"
       );
-      let (hd, tl) = match &args[..] {
-        [a, b] => (a, b),
+      let (hd, tl) = match &arg_pat.args[..] {
+        [a, b] => (unwrap_non_or(a), unwrap_non_or(b)),
         _ => unreachable!("the argument to :: is a 2-tuple"),
       };
       ac.push(hd);
@@ -195,6 +195,7 @@ fn list_pat<'p>(ac: &mut Vec<&'p Pat>, pat: &'p Pat) -> ListPatLen {
   }
 }
 
+#[derive(Debug, Clone, Copy)]
 enum PatPrec {
   Min,
   App,

@@ -71,7 +71,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 
 [[package]]
 name = "cm-syntax"
@@ -176,7 +176,7 @@ dependencies = [
 [[package]]
 name = "event-parse"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 dependencies = [
  "drop_bomb",
  "rowan",
@@ -242,7 +242,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 
 [[package]]
 name = "idna"
@@ -490,7 +490,7 @@ dependencies = [
 [[package]]
 name = "pattern-match"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 dependencies = [
  "rustc-hash",
 ]
@@ -593,18 +593,18 @@ checksum = "4501abdff3ae82a1c1b477a17252eb69cee9e66eb915c1abaa4f44d873df9f09"
 
 [[package]]
 name = "serde"
-version = "1.0.149"
+version = "1.0.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "256b9932320c590e707b94576e3cc1f7c9024d0ee6612dfbcf1cb106cbe8e055"
+checksum = "e326c9ec8042f1b5da33252c8a37e9ffbd2c9bef0155215b6e6c80c790e05f91"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.149"
+version = "1.0.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4eae9b04cbffdfd550eb462ed33bc6a1b68c935127d008b27444d08380f94e4"
+checksum = "42a3df25b0713732468deadad63ab9da1f1fd75a48a15024b50363f128db627e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -796,7 +796,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -841,7 +841,7 @@ dependencies = [
 [[package]]
 name = "text-pos"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 dependencies = [
  "text-size",
 ]
@@ -877,7 +877,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 
 [[package]]
 name = "toml"
@@ -891,7 +891,7 @@ dependencies = [
 [[package]]
 name = "topo-sort"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 
 [[package]]
 name = "ungrammar"
@@ -938,7 +938,7 @@ checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
 [[package]]
 name = "uniq"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-util.git#23f69e507d3b3b95289964cf563229c64db435d7"
+source = "git+https://github.com/azdavis/language-util.git#17bd884bf94b732c2ca78912ee459a592b601204"
 
 [[package]]
 name = "url"
