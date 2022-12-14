@@ -36,10 +36,10 @@ impl pattern_match::Lang for Lang {
         Ty::Con(_, sym) => {
           let all_cons = cons_for_sym(&self.syms, *sym).unwrap_or_else(|| vec![Con::Any]);
           let cur_cons: FxHashSet<_> = cons.collect();
-          if all_cons.iter().any(|c| cur_cons.contains(c)) {
-            all_cons
-          } else {
+          if all_cons.iter().all(|c| !cur_cons.contains(c)) {
             vec![Con::Any]
+          } else {
+            all_cons
           }
         }
         Ty::Record(fs) => {
