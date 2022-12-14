@@ -19,14 +19,14 @@ impl pattern_match::Lang for Lang {
 
   type Ty = Ty;
 
-  fn any(&self) -> Self::Con {
+  fn any(&self) -> Con {
     Con::Any
   }
 
-  fn split<'a, I>(&self, ty: &Self::Ty, con: &Self::Con, cons: I) -> Result<Vec<Self::Con>>
+  fn split<'a, I>(&self, ty: &Ty, con: &Con, cons: I, depth: usize) -> Result<Vec<Con>>
   where
-    Self::Con: 'a,
-    I: Iterator<Item = &'a Self::Con>,
+    Con: 'a,
+    I: Iterator<Item = &'a Con>,
   {
     let ret = match con {
       Con::Any => match ty {
@@ -36,13 +36,29 @@ impl pattern_match::Lang for Lang {
         Ty::Con(_, sym) => {
           let all_cons = cons_for_sym(&self.syms, *sym).unwrap_or_else(|| vec![Con::Any]);
           let cur_cons: FxHashSet<_> = cons.collect();
-          let old_style_use_any = all_cons.iter().all(|c| !cur_cons.contains(c));
-          // TODO use this over the current one, should improve performance. we'll need to change
-          // how we report the witnesses. maybe take cues from rust-lang's Missing constructor?
-          let _new_style_use_any = all_cons.is_empty()
-            || cur_cons.iter().any(|c| **c == Con::Any)
-            || all_cons.iter().any(|c| !cur_cons.contains(c));
-          if old_style_use_any {
+          // this is... a little strange.
+          //
+          // the depth chosen here is somewhat arbitrary. it guards against us recursing too far and
+          // generating too many witnesses. if the depth is small, we choose a method that will
+          // allow us to use all_cons more (and therefore generate better witnesses), but if not, we
+          // start being more conservative and use all_cons less.
+          //
+          // although we call it "depth", it's not even really the nested-ness of the patterns, but
+          // rather how many calls deep in the pattern matching checking code we are. so for
+          // instance @test(matching::list_missing_len_3) will fail if you tweak this threshold on
+          // the RHS down a little, then, if you tweak it down more, the similar
+          // @test(matching::list_missing_len_1) will fail too.
+          //
+          // see also @test(matching::parser). were it not for this depth check we would be
+          // generating tens of thousands of witnesses.
+          let use_any = if depth < 10 {
+            all_cons.iter().all(|c| !cur_cons.contains(c))
+          } else {
+            all_cons.is_empty()
+              || cur_cons.iter().any(|c| **c == Con::Any)
+              || all_cons.iter().any(|c| !cur_cons.contains(c))
+          };
+          if use_any {
             vec![Con::Any]
           } else {
             all_cons
@@ -64,7 +80,7 @@ impl pattern_match::Lang for Lang {
     Ok(ret)
   }
 
-  fn get_arg_tys(&self, ty: &Self::Ty, con: &Self::Con) -> Result<Vec<Self::Ty>> {
+  fn get_arg_tys(&self, ty: &Ty, con: &Con) -> Result<Vec<Ty>> {
     let ret = match ty {
       Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => Vec::new(),
       Ty::Record(rows) => rows.iter().map(|(_, t)| t.clone()).collect(),
@@ -99,7 +115,7 @@ impl pattern_match::Lang for Lang {
     Ok(ret)
   }
 
-  fn covers(&self, lhs: &Self::Con, rhs: &Self::Con) -> bool {
+  fn covers(&self, lhs: &Con, rhs: &Con) -> bool {
     matches!((lhs, rhs), (Con::Record { allows_other: true, .. }, Con::Record { .. },))
       || (lhs == rhs)
   }

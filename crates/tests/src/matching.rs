@@ -491,3 +491,58 @@ fun f x =
 "#,
   );
 }
+
+#[test]
+fn parser() {
+  check(
+    r#"
+datatype tok =
+  A | B | C | D | E | F | G | H | I | J | K | L | M
+| N | O | P | Q | R | S | T | U | V | W | X | Y | Z
+
+datatype item =
+  Tok of tok
+| Alpha
+| Bravo
+| Charlie
+| Delta
+| Echo
+| Foxtrot
+| Golf
+| Hotel
+| India
+| Juliet
+| Kilo
+| Lima
+| Mike
+| November
+| Oscar
+| Papa
+| Quebec
+| Romeo
+| Sierra
+| Tango
+| Uniform
+| Victor
+| Whiskey
+| Xray
+| Yankee
+| Zulu
+
+datatype stack =
+  BOTTOM
+| $ of stack * item
+
+infix $
+
+fun parse xs =
+  case xs of
+(** + and 29 others *)
+    _ $ Tok I $ Tok F $ Bar $ Tok B => 1
+  | _ $ Tok C $ Tok F $ Quz $ Tok B $ Tok F $ _ => 2
+  | _ $ Tok G $ Tok F $ Bar $ Tok A $ Tok H $ _ => 3
+  | _ $ Tok A $ Tok B $ Bar $ Tok C $ Quz $ _ => 4
+  | _ $ Tok F $ Tok D $ Tok A $ Foo $ Quz $ _ => 4
+"#,
+  );
+}
