@@ -371,7 +371,7 @@ val _ = 3 handle E (_, _) => 2
 }
 
 #[test]
-fn char() {
+fn char_digit() {
   check(
     r#"
 exception NotDigit
