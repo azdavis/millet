@@ -156,42 +156,44 @@ enum ListPatLen {
   Unknown,
 }
 
-fn list_pat<'p>(ac: &mut Vec<&'p ConPat<Lang>>, pat: &'p ConPat<Lang>) -> ListPatLen {
-  let name = match &pat.con {
-    Con::Any => {
-      ac.push(pat);
-      return ListPatLen::Unknown;
+fn list_pat<'p>(ac: &mut Vec<&'p ConPat<Lang>>, mut pat: &'p ConPat<Lang>) -> ListPatLen {
+  loop {
+    let name = match &pat.con {
+      Con::Any => {
+        ac.push(pat);
+        return ListPatLen::Unknown;
+      }
+      Con::Variant(_, VariantName::Name(name)) => name.as_str(),
+      _ => unreachable!("only Any and Variant cons can have list type"),
+    };
+    match name {
+      "nil" => {
+        assert!(pat.args.is_empty());
+        return ListPatLen::Known;
+      }
+      "::" => {
+        assert_eq!(pat.args.len(), 1, ":: has 1 argument");
+        let arg_pat = match &pat.args.first().unwrap().raw {
+          RawPat::Con(x) => x,
+          RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
+        };
+        let labels = match &arg_pat.con {
+          Con::Record { allows_other: false, labels } => labels,
+          _ => unreachable!("the argument to :: is a record that does not allow others"),
+        };
+        assert!(
+          labels.len() == 2 && (0..2).all(|x| labels.contains(&sml_hir::Lab::tuple(x))),
+          "the argument to :: is a 2-tuple"
+        );
+        let (hd, tl) = match &arg_pat.args[..] {
+          [a, b] => (unwrap_non_or(a), unwrap_non_or(b)),
+          _ => unreachable!("the argument to :: is a 2-tuple"),
+        };
+        ac.push(hd);
+        pat = tl;
+      }
+      _ => unreachable!("the list constructors are nil and ::"),
     }
-    Con::Variant(_, VariantName::Name(name)) => name.as_str(),
-    _ => unreachable!("only Any and Variant cons can have list type"),
-  };
-  match name {
-    "nil" => {
-      assert!(pat.args.is_empty());
-      ListPatLen::Known
-    }
-    "::" => {
-      assert_eq!(pat.args.len(), 1, ":: has 1 argument");
-      let arg_pat = match &pat.args.first().unwrap().raw {
-        RawPat::Con(x) => x,
-        RawPat::Or(_) => unreachable!("the argument to :: is a con pat"),
-      };
-      let labels = match &arg_pat.con {
-        Con::Record { allows_other: false, labels } => labels,
-        _ => unreachable!("the argument to :: is a record that does not allow others"),
-      };
-      assert!(
-        labels.len() == 2 && (0..2).all(|x| labels.contains(&sml_hir::Lab::tuple(x))),
-        "the argument to :: is a 2-tuple"
-      );
-      let (hd, tl) = match &arg_pat.args[..] {
-        [a, b] => (unwrap_non_or(a), unwrap_non_or(b)),
-        _ => unreachable!("the argument to :: is a 2-tuple"),
-      };
-      ac.push(hd);
-      list_pat(ac, tl)
-    }
-    _ => unreachable!("the list constructors are nil and ::"),
   }
 }
 
