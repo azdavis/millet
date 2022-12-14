@@ -36,7 +36,13 @@ impl pattern_match::Lang for Lang {
         Ty::Con(_, sym) => {
           let all_cons = cons_for_sym(&self.syms, *sym).unwrap_or_else(|| vec![Con::Any]);
           let cur_cons: FxHashSet<_> = cons.collect();
-          if all_cons.iter().all(|c| !cur_cons.contains(c)) {
+          let old_style_use_any = all_cons.iter().all(|c| !cur_cons.contains(c));
+          // TODO use this over the current one, should improve performance. we'll need to change
+          // how we report the witnesses. maybe take cues from rust-lang's Missing constructor?
+          let _new_style_use_any = all_cons.is_empty()
+            || cur_cons.iter().any(|c| **c == Con::Any)
+            || all_cons.iter().any(|c| !cur_cons.contains(c));
+          if old_style_use_any {
             vec![Con::Any]
           } else {
             all_cons
