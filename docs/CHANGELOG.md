@@ -15,6 +15,7 @@ The versioning system is basically the following:
 
 ## main
 
+- Improve token docs.
 - Emit an error for non-UTF-8 paths.
 - Rename the binary targets from `cli` and `lang-srv` to `millet-cli` and `millet-ls`.
 - Parse (but ignore) multiple ML Basis annotations.

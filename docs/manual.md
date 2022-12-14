@@ -220,7 +220,7 @@ The snippets provided are:
   - `handle` exp tail
   - `local` dec
   - `datatype` dec
-  - `function` dec
+  - `fun` dec
   - `structure` dec
   - `signature` dec
   - `functor` dec

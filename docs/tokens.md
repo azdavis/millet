@@ -4,7 +4,7 @@ This is documentation for all the tokens in SML, and what they mean.
 
 ## `exception`
 
-Define an exception.
+Begin an exception declaration.
 
 Exception declarations define new exception constructors.
 
@@ -20,7 +20,7 @@ In this example:
 
 ## `signature`
 
-Define a signature.
+Begin a signature declaration.
 
 Signatures describe the interface to structures.
 
@@ -31,26 +31,31 @@ signature SIG = sig
 end
 ```
 
-Compare with `sig`, which starts a signature expression.
+Compare with `sig`, which begins a signature expression.
 
 ## `structure`
 
-Define a structure.
+Begin a structure declaration.
 
 Structures are collections of declarations.
 
 ```sml
-structure Str = struct
-  val x = 3
-  val y = "hi"
+structure S = struct
+  val num = 3
+  val msg = "hi"
 end
+
+val _ = S.num + 5
+val _ = print S.msg
 ```
 
-Compare with `struct`, which starts a structure expression.
+Compare with `struct`, which begins a structure expression.
 
 ## `datatype`
 
-Define a new type and its constructors.
+Begin a datatype declaration.
+
+A datatype declaration defines a new type and its constructors.
 
 ```sml
 datatype debug = On | Off | Level of int
@@ -74,7 +79,7 @@ withtype 'a front = unit -> 'a stream
 
 ## `abstype`
 
-Define an abstract type.
+Begin an abstract type declaration.
 
 This is not really used in modern SML. Prefer a mix of:
 
@@ -99,9 +104,7 @@ Compare with `and`, which permits declaring multiple things at once.
 
 ## `functor`
 
-Define a functor.
-
-Functors are structure-level functions.
+Begin a functor declaration.
 
 ```sml
 functor F (A : sig
@@ -111,8 +114,9 @@ end) = struct
 end
 ```
 
-- Regular functions (with `fun` or `fn`) take in values and return values.
-- Functors take in structures and return structures.
+Regular, "value-level" functions (with `fun` or `fn`) take in values and return values.
+
+By contrast, functors, aka "structure-level" functions, take in structures and return structures.
 
 Compare with `fun`, which is for value-level functions.
 
@@ -218,7 +222,7 @@ Because of this special short-circuiting behavior, it is not a regular infix ope
 
 ## `struct`
 
-Define a structure expression.
+Begin a structure literal expression.
 
 Structure expressions are often used as:
 
@@ -372,7 +376,7 @@ fun choose x =
 
 ## `type`
 
-Define a type alias.
+Begin a type alias declaration.
 
 ```sml
 type point = int * int
@@ -412,7 +416,7 @@ Mark the end of various constructs, like:
 
 ## `fun`
 
-Define a function.
+Begin a function declaration, which may be recursive.
 
 ```sml
 fun inc x = x + 1
@@ -422,12 +426,12 @@ Functions are the unit of abstraction.
 
 Compare with:
 
-- `fn`, which begins a function (aka lambda) expression.
-- `functor`, which defines a functor (structure-level function).
+- `fn`, which begins a function expression, aka a lambda.
+- `functor`, which defines a functor, aka a structure-level function.
 
 ## `let`
 
-Define a let expression.
+Begin a let expression.
 
 ```sml
 val _ =
@@ -439,11 +443,13 @@ val _ =
   end
 ```
 
-- In the `let ... in`, there is a sequence of declarations.
-- In the `in ... end`, there is an sequence of expressions (at least 1), separated by `;`.
-- The `let` first defines the declarations in the `let ... in`, then evaluates the expressions in the `in ... end`.
-- The expressions may use bindings from the declarations.
-- The value of the whole `let` is the value of the last expression in the `in ... end`.
+In the `let ... in`, there is a sequence of declarations. Then, in the `in ... end`, there is an sequence of expressions, separated by `;`.
+
+The sequence of declarations may be empty, but that's not very useful. The sequence of expressions may not be empty, but often there's just one.
+
+The `let` expression first defines the declarations in the `let ... in` in sequence, then evaluates the expressions in the `in ... end`.
+
+Each successive declaration in the `let ... in` may use the bindings from the previous declaration. The expressions in the `in ... end` may use all of the bindings from all the declarations.
 
 Compare with `local`, which is a declaration.
 
@@ -457,7 +463,7 @@ val rec fact = fn
 | n => n * fact (n - 1)
 ```
 
-Usually, `fun` is preferred.
+Usually, `fun` is preferred. (`fun` is syntax sugar for `val rec` and `fn`.)
 
 ```sml
 fun fact 0 = 1
@@ -466,7 +472,7 @@ fun fact 0 = 1
 
 ## `sig`
 
-Define a signature expression.
+Begin a signature literal expression.
 
 Signature expressions are often used as:
 
@@ -480,11 +486,11 @@ signature SIG = sig
 end
 ```
 
-Compare with `signature`, which starts a signature declaration.
+Compare with `signature`, which begins a signature declaration.
 
 ## `val`
 
-Define value bindings from an expression.
+Begin a val declaration.
 
 A value declaration evaluates the expression on the right, then matches it with the pattern on the left, and introduces new bindings produced by the pattern.
 
@@ -492,6 +498,8 @@ A value declaration evaluates the expression on the right, then matches it with 
 val y = 6
 val (_, x) = ("ignored", "bound to x")
 ```
+
+Val declarations may be made recursive with `rec`, but only if the expression is a `fn` literal. In this case, usually `fun` is preferred anyway.
 
 ## `as`
 
@@ -518,7 +526,7 @@ val _ = while true do print "y\n"
 
 ## `fn`
 
-Define a function (aka "lambda") expression.
+Begin a function expression, aka a lambda.
 
 ```sml
 val _ = List.map (fn x => x + 1) [1, 3, 8]
@@ -606,11 +614,13 @@ Also used as a expression/type/declaration "hole", though this is not legal SML.
 
 ## `->`
 
-Denote a function type.
+Separate the parameter type from the result type in a function type.
 
 ```sml
 type realToInt = real -> int
 ```
+
+In this example, `real -> int` is the type of functions that take a `real` and return an `int`.
 
 The arrow is right associative. This means `t1` and `t2` are the same type, and both are distinct from `t3`:
 
@@ -679,6 +689,13 @@ val movie = { name = "Castle in the Sky", year = 1986 }
 val s : string = #name movie
 val tup = (false, 5)
 val n : int = #2 tup
+```
+
+Often, pattern matching is preferred.
+
+```sml
+fun fst (x, _) = x
+val three = fst (1 + 2, "hi")
 ```
 
 ## `(`
