@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Change the invalid `@` diagnostic from an error to a warning.
+
 ## v0.6.5
 
 - Emit an error for non-UTF-8 paths.

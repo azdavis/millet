@@ -417,6 +417,7 @@ impl Error {
       ErrorKind::Unused(_)
       | ErrorKind::InvalidEq(_)
       | ErrorKind::MismatchedFunctorSugar(_)
+      | ErrorKind::InvalidAppend(_)
       | ErrorKind::BoolCase
       | ErrorKind::AppFn
       | ErrorKind::Use(_) => Severity::Warning,
