@@ -1,6 +1,7 @@
 //! A language server for Standard ML.
 
 mod capabilities;
+mod helpers;
 mod state;
 
 fn run(conn: lsp_server::Connection, init: lsp_types::InitializeParams) -> anyhow::Result<()> {

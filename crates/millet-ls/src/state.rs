@@ -1,7 +1,6 @@
 //! The main mutable state of the language server.
 
-mod helpers;
-
+use crate::helpers;
 use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use diagnostic_util::Code;
