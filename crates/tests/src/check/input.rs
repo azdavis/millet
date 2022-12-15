@@ -23,7 +23,7 @@ where
   (input, store)
 }
 
-/// The real, canonical root file system path, aka `/`. Performs IO on first access. But this
+/// The real, canonical root file system path, aka `/`. Performs I/O on first access. But this
 /// shouldn't fail because the root should be readable. (Otherwise, where are these tests being
 /// run?)
 pub(crate) static ROOT: Lazy<paths::CanonicalPathBuf> =
