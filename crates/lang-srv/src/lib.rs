@@ -4,8 +4,13 @@
 #![allow(clippy::single_match_else)]
 
 mod capabilities;
+mod cx;
+mod diagnostics;
 mod helpers;
-mod sp_state;
+mod init;
+mod notification;
+mod request;
+mod response;
 mod state;
 
 fn run_inner(
@@ -13,7 +18,7 @@ fn run_inner(
   init: lsp_types::InitializeParams,
 ) -> anyhow::Result<()> {
   log::info!("start up main loop: {init:#?}");
-  let mut state = state::State::new(init, conn.sender.clone());
+  let mut st = init::init(init, conn.sender.clone());
   for msg in conn.receiver.iter() {
     match msg {
       lsp_server::Message::Request(req) => {
@@ -21,21 +26,21 @@ fn run_inner(
           log::info!("shut down main loop");
           return Ok(());
         }
-        state.handle_request(req);
+        request::handle(&mut st, req);
       }
-      lsp_server::Message::Response(res) => state.handle_response(res),
-      lsp_server::Message::Notification(notif) => state.handle_notification(notif),
+      lsp_server::Message::Response(res) => response::handle(&mut st, res),
+      lsp_server::Message::Notification(notif) => notification::handle(&mut st, notif),
     }
   }
   Ok(())
 }
 
-/// Run the language server over stdio.
+/// Runs the language server over stdio.
 ///
 /// # Errors
 ///
 /// If the language server encountered an error.
-pub fn run() -> anyhow::Result<()> {
+pub fn run_stdio() -> anyhow::Result<()> {
   let (connection, io_threads) = lsp_server::Connection::stdio();
   let params = connection.initialize(serde_json::to_value(&capabilities::get())?)?;
   run_inner(&connection, serde_json::from_value(params)?)?;

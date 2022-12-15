@@ -1,4 +1,4 @@
-//! See [`SPState`].
+//! See [`Cx`].
 
 use crate::helpers;
 use crossbeam_channel::Sender;
@@ -9,10 +9,12 @@ use lsp_types::Url;
 
 pub(crate) const LEARN_MORE: &str = "Learn more";
 
-/// Semi-Permanent state. Some things on this are totally immutable after initialization. Other
-/// things are mutable, but nothing on this will ever get "replaced" entirely; instead, _if_ it's
-/// mutable, _when_ it's mutate, it'll only be "tweaked" a bit.
-pub(crate) struct SPState {
+/// The context, kind of like "semi-permanent" state.
+///
+/// Some things on this are totally immutable after initialization. Other things are mutable, but
+/// nothing on this will ever get "replaced" entirely; instead, _if_ it's mutable, _when_ it's
+/// mutate, it'll only be "tweaked" a bit.
+pub(crate) struct Cx {
   pub(crate) options: config::Options,
   pub(crate) registered_for_watched_files: bool,
   pub(crate) store: paths::Store,
@@ -21,7 +23,7 @@ pub(crate) struct SPState {
   pub(crate) req_queue: ReqQueue<(), Option<Code>>,
 }
 
-impl SPState {
+impl Cx {
   pub(crate) fn send(&self, msg: Message) {
     log::info!("sending {msg:?}");
     self.sender.send(msg).unwrap();
