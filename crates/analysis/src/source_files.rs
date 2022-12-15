@@ -19,6 +19,7 @@ pub(crate) fn path_and_range(
   let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
   Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
 }
+
 pub(crate) fn file_and_token(
   source_files: &PathMap<mlb_statics::SourceFile>,
   pos: WithPath<Position>,
