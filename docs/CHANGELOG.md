@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Change the invalid `@` diagnostic from an error to a warning.
+- Allow patterns to have `op` and parentheses without warning.
 
 ## v0.6.5
 

@@ -203,7 +203,7 @@ fn warn_unnecessary_parens(pat: &ast::Pat) -> bool {
     | ast::Pat::TuplePat(_)
     | ast::Pat::ListPat(_)
     | ast::Pat::VectorPat(_) => true,
-    ast::Pat::ConPat(pat) => pat.pat().is_none(),
+    ast::Pat::ConPat(pat) => pat.pat().is_none() && pat.op_kw().is_none(),
     ast::Pat::InfixPat(_) | ast::Pat::TypedPat(_) | ast::Pat::AsPat(_) | ast::Pat::OrPat(_) => {
       false
     }
