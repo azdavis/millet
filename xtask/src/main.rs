@@ -157,7 +157,7 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
     .chain(args.target.as_deref())
     .chain([kind, lang_srv_name.as_str()])
     .collect();
-  sh.copy_file(&lang_srv, &dir)?;
+  sh.copy_file(lang_srv, &dir)?;
   assert!(dir.pop());
   let license_header =
     "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";

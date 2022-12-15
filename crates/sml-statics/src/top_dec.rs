@@ -128,7 +128,7 @@ fn get_str_dec(
         });
         let mut body_env = Env::with_def(st.def(str_dec.into()));
         let marker = st.syms.mark();
-        st.push_prefix(str_util::Name::new(&format!("{}(...)", fun_bind.functor_name)));
+        st.push_prefix(str_util::Name::new(format!("{}(...)", fun_bind.functor_name)));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
         st.pop_prefix();
         let mut body_ty_names = TyNameSet::default();

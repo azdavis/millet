@@ -79,7 +79,7 @@ impl fmt::Display for Region {
     // don't add 1 for the line because the check strings usually have the first line blank.
     match self {
       Region::Exact { line, col_start, col_end } => {
-        write!(f, "{}:{}..{}", line, col_start + 1, col_end + 1)
+        write!(f, "{line}:{}..{}", col_start + 1, col_end + 1)
       }
       Region::Line(line) => write!(f, "{line}"),
     }

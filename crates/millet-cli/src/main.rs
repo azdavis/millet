@@ -66,7 +66,7 @@ fn run() -> usize {
     false,
   );
   let got = an.get_many(&inp);
-  let num_errors: usize = got.iter().map(|(_, es)| es.len()).sum();
+  let num_errors: usize = got.values().map(|es| es.len()).sum();
   for (path, errors) in got {
     for e in errors {
       let path = store.get_path(path);
