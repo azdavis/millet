@@ -298,13 +298,9 @@ Unites all of the purely syntactical SML passes into one single API.
 
 Unifies ~all of the passes into one single API.
 
-### `crates/millet-ls`
+### `crates/lang-srv`
 
-Depends on `analysis` and a bunch of third party crates to implement a language server. This is one of two binary targets. Note that only binary targets may perform IO.
-
-### `crates/millet-cli`
-
-A CLI wrapper around `analysis`. It basically does one full analysis of the input, prints any errors to stdout, and exits, much like a conventional compiler or linter.
+Depends on `analysis` and a bunch of third party crates to implement a language server based on `analysis`. Has a fair amount of "glue code" to convert between analysis types and LSP types.
 
 ## Other crates
 
@@ -335,6 +331,18 @@ val _ = nope
   );
 }
 ```
+
+## Binary crates
+
+These crates are the only ones that produce executable binaries. Every other crate is only compiled to a library.
+
+### `crates/millet-ls`
+
+Depends on `lang-srv` and actually runs it.
+
+### `crates/millet-cli`
+
+A thin CLI wrapper around `analysis`. It basically does one full analysis of the input, prints any errors to stdout, and exits, much like a conventional compiler or linter.
 
 ## Other code
 

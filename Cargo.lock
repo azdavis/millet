@@ -293,6 +293,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d43db9f547ba2787bdeac81ef97ccc80784f385b3b39b4d50344270629a2bee3"
 
 [[package]]
+name = "lang-srv"
+version = "0.1.0"
+dependencies = [
+ "analysis",
+ "anyhow",
+ "config",
+ "crossbeam-channel",
+ "diagnostic-util",
+ "elapsed",
+ "fast-hash",
+ "input",
+ "log",
+ "lsp-server",
+ "lsp-types",
+ "paths",
+ "serde",
+ "serde_json",
+ "text-pos",
+]
+
+[[package]]
 name = "lex-util"
 version = "0.1.0"
 
@@ -368,22 +389,10 @@ dependencies = [
 name = "millet-ls"
 version = "0.1.0"
 dependencies = [
- "analysis",
  "anyhow",
- "config",
- "crossbeam-channel",
- "diagnostic-util",
- "elapsed",
  "env_logger",
- "fast-hash",
- "input",
+ "lang-srv",
  "log",
- "lsp-server",
- "lsp-types",
- "paths",
- "serde",
- "serde_json",
- "text-pos",
 ]
 
 [[package]]

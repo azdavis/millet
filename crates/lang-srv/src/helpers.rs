@@ -124,7 +124,7 @@ where
 pub(crate) fn text_doc_pos_params<F>(
   fs: &F,
   store: &mut paths::Store,
-  params: lsp_types::TextDocumentPositionParams,
+  params: &lsp_types::TextDocumentPositionParams,
 ) -> Result<paths::WithPath<text_pos::Position>>
 where
   F: paths::FileSystem,

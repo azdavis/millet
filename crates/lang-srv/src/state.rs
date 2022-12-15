@@ -12,7 +12,7 @@ use std::ops::ControlFlow;
 const LEARN_MORE: &str = "Learn more";
 
 /// The state.
-pub(crate) struct State {
+pub struct State {
   mode: Mode,
   sp: SPState,
   analysis: analysis::Analysis,
@@ -112,7 +112,7 @@ impl State {
   fn handle_request_(&mut self, mut r: Request) -> ControlFlow<Result<()>, Request> {
     r = helpers::try_req::<lsp_types::request::HoverRequest, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
+      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, &params)?;
       let res =
         self.analysis.get_md(pos, self.sp.options.show_token_hover).map(|(value, range)| {
           lsp_types::Hover {
@@ -128,7 +128,7 @@ impl State {
     })?;
     r = helpers::try_req::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
+      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, &params)?;
       let res = self.analysis.get_def(pos).and_then(|range| {
         helpers::lsp_location(&self.sp.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
       });
@@ -137,7 +137,7 @@ impl State {
     })?;
     r = helpers::try_req::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
       let params = params.text_document_position_params;
-      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, params)?;
+      let pos = helpers::text_doc_pos_params(&self.sp.file_system, &mut self.sp.store, &params)?;
       let locs: Vec<_> = self
         .analysis
         .get_ty_defs(pos)
@@ -405,7 +405,7 @@ struct SPState {
 impl SPState {
   fn send(&self, msg: Message) {
     log::info!("sending {msg:?}");
-    self.sender.send(msg).unwrap()
+    self.sender.send(msg).unwrap();
   }
 
   fn send_request<R>(&mut self, params: R::Params, data: Option<Code>)
@@ -413,7 +413,7 @@ impl SPState {
     R: lsp_types::request::Request,
   {
     let req = self.req_queue.outgoing.register(R::METHOD.to_owned(), params, data);
-    self.send(req.into())
+    self.send(req.into());
   }
 
   fn send_response(&mut self, res: Response) {
@@ -428,7 +428,7 @@ impl SPState {
     N: lsp_types::notification::Notification,
   {
     let notif = Notification::new(N::METHOD.to_owned(), params);
-    self.send(notif.into())
+    self.send(notif.into());
   }
 
   fn send_diagnostics(&mut self, url: Url, diagnostics: Vec<lsp_types::Diagnostic>) {
@@ -444,7 +444,7 @@ impl SPState {
         message,
         actions: Some(vec![lsp_types::MessageActionItem {
           title: LEARN_MORE.to_owned(),
-          properties: Default::default(),
+          properties: std::collections::HashMap::new(),
         }]),
       },
       Some(code),
