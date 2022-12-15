@@ -36,7 +36,7 @@ fn run() -> usize {
     usage();
     return 0;
   }
-  let root: String = match args.free_from_str() {
+  let root: std::path::PathBuf = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
       println!("error[{}]: {}", diagnostic_util::Code::n(1019), e);
@@ -44,11 +44,10 @@ fn run() -> usize {
     }
   };
   let fs = paths::RealFileSystem::default();
-  let root = std::path::Path::new(root.as_str());
-  let root = match fs.canonicalize(root) {
+  let root = match fs.canonicalize(root.as_path()) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(root, input::Error::from_io(root.to_owned(), e));
+      handle_input_error(root.as_path(), input::Error::from_io(root.to_owned(), e));
       return 1;
     }
   };
