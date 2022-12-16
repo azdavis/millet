@@ -13,10 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.6.6
 
 - Change the invalid `@` diagnostic from an error to a warning.
 - Allow patterns to have `op` and parentheses without warning.
+- Fix a bug with equality types and `<numtxt>` overloading.
 
 ## v0.6.5
 
