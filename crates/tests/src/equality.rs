@@ -1,6 +1,6 @@
 //! Equality types.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn real_no() {
@@ -134,6 +134,15 @@ fn datatype_no_real() {
 datatype t = B of real | C of string | D
 val _ = C "hi" = D
 (**     ^^^^^^^^^^ not an equality type *)
+"#,
+  );
+}
+
+#[test]
+fn cmp_eq() {
+  fail(
+    r#"
+fun f x y = (x < y, x = 0)
 "#,
   );
 }
