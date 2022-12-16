@@ -1,7 +1,7 @@
 //! See [`Info`].
 
 use crate::types::{MetaVarInfo, Syms, Ty, TyScheme};
-use crate::{def, display::MetaVarNames, util::ty_syms};
+use crate::{def, display::MetaVarNames, mode::Mode, util::ty_syms};
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
 
@@ -146,30 +146,5 @@ impl Info {
       .collect();
     ret.sort_unstable();
     Some(ret)
-  }
-}
-
-/// The mode for checking.
-#[derive(Debug, Clone, Copy)]
-pub enum Mode {
-  /// Regular checking. The default.
-  Regular(Option<paths::PathId>),
-  /// Built-in library checking. Notably, ascription structure expressions will not check to see if
-  /// they actually match the signature.
-  ///
-  /// The string is the name of the built-in library file.
-  BuiltinLib(&'static str),
-  /// Only used for path ordering.
-  ///
-  /// Since path ordering only cares about structure-level name resolution, we can skip lots of
-  /// statics checks in this mode for better performance. We probably don't actually skip all the
-  /// checks that we conceivably could skip, but that's ok from a correctness standpoint.
-  PathOrder,
-}
-
-impl Mode {
-  #[must_use]
-  pub(crate) fn is_path_order(&self) -> bool {
-    matches!(self, Mode::PathOrder)
   }
 }

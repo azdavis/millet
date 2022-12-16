@@ -44,7 +44,7 @@ impl Analysis {
     let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, contents);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
-    let mode = sml_statics::Mode::Regular(None);
+    let mode = sml_statics::mode::Mode::Regular(None);
     let checked =
       sml_statics::get(&mut syms, &basis, mode, &syntax.lower.arenas, syntax.lower.root);
     let mut info = checked.info;

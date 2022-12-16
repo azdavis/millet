@@ -33,7 +33,7 @@ pub struct SourceFile {
   /// Statics errors from the file.
   pub statics_errors: Vec<sml_statics::Error>,
   /// Statics information from the file.
-  pub info: sml_statics::Info,
+  pub info: sml_statics::info::Info,
 }
 
 /// An error.
@@ -286,7 +286,7 @@ fn get_source_file(
   fix_env: sml_fixity::Env,
   syntax: SourceFileSyntax,
 ) {
-  let mode = sml_statics::Mode::Regular(Some(path));
+  let mode = sml_statics::mode::Mode::Regular(Some(path));
   let checked =
     sml_statics::get(&mut cx.syms, &scope.basis, mode, &syntax.lower.arenas, syntax.lower.root);
   let mut info = checked.info;
@@ -318,7 +318,7 @@ fn get_group_file(cx: &mut Cx, files: Files<'_>, ac: &mut MBasis, path: paths::P
 pub fn add_all_doc_comments(
   root: &sml_syntax::SyntaxNode,
   low: &sml_lower::Lower,
-  info: &mut sml_statics::Info,
+  info: &mut sml_statics::info::Info,
 ) {
   let indices = std::iter::empty()
     .chain(low.arenas.pat.iter().map(|(x, _)| sml_hir::Idx::Pat(x)))

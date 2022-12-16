@@ -42,7 +42,7 @@
 //! unification.
 
 use crate::env::{Bs, Env, EnvLike as _, EnvStack, FunEnv, SigEnv};
-use crate::{basis::Basis, info::Mode, st::St, top_dec, types::Syms};
+use crate::{basis::Basis, mode::Mode, st::St, top_dec, types::Syms};
 
 /// An unordered map from paths to HIR ready for analysis.
 pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, sml_hir::StrDecIdx)>;

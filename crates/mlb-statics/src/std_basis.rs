@@ -4,7 +4,7 @@
 use crate::{add_all_doc_comments, SourceFileSyntax};
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
-use sml_statics::{basis, Info, Syms};
+use sml_statics::{basis, info::Info, Syms};
 use sml_syntax::ast::AstNode as _;
 
 /// A standard basis.
@@ -113,7 +113,7 @@ where
       if let Some(e) = started.lower.errors.first() {
         panic!("{name}: lower error: {}", e.display());
       }
-      let mode = sml_statics::Mode::BuiltinLib(name);
+      let mode = sml_statics::mode::Mode::BuiltinLib(name);
       let low = started.lower;
       let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
       basis.append(checked.basis);

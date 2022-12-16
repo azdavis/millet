@@ -1,10 +1,9 @@
 //! See [`St`].
 
 use crate::error::{Error, ErrorKind, Item};
-use crate::info::{Info, Mode};
 use crate::pat_match::{Lang, Pat};
 use crate::types::{FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
-use crate::{def, util::apply};
+use crate::{def, info::Info, mode::Mode, util::apply};
 use fast_hash::FxHashSet;
 
 /// The mutable state.

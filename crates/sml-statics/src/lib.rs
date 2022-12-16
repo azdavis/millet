@@ -18,7 +18,6 @@ mod exp;
 mod fmt_util;
 mod generalize;
 mod get_env;
-mod info;
 mod pat;
 mod pat_match;
 mod st;
@@ -30,17 +29,18 @@ mod util;
 
 pub mod basis;
 pub mod def;
+pub mod info;
+pub mod mode;
 pub mod path_order;
 
 pub use error::Error;
-pub use info::{Info, Mode};
 pub use types::{MetaVarInfo, Syms};
 
 /// The result of statics.
 #[derive(Debug)]
 pub struct Statics {
   /// The information about the top decs.
-  pub info: Info,
+  pub info: info::Info,
   /// The errors from the top decs.
   pub errors: Vec<Error>,
   /// The new items defined by the given root.
@@ -51,7 +51,7 @@ pub struct Statics {
 pub fn get(
   syms: &mut Syms,
   basis: &basis::Basis,
-  mode: Mode,
+  mode: mode::Mode,
   arenas: &sml_hir::Arenas,
   root: sml_hir::StrDecIdx,
 ) -> Statics {

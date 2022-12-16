@@ -17,7 +17,7 @@ use crate::types::{
   TyVarKind, TyVarSrc, ValEnv, ValInfo,
 };
 use crate::util::{ins_check_name, ins_no_dupe};
-use crate::{config::Cfg, dec, info::Mode, st::St, ty};
+use crate::{config::Cfg, dec, mode::Mode, st::St, ty};
 use fast_hash::{map, FxHashSet};
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
