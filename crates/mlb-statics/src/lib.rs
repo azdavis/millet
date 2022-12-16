@@ -98,8 +98,8 @@ impl fmt::Display for Item {
 
 struct Cx {
   syms: sml_statics::Syms,
-  cache: paths::PathMap<MBasis>,
-  sml: paths::PathMap<SourceFile>,
+  bases: paths::PathMap<MBasis>,
+  source_files: paths::PathMap<SourceFile>,
   mlb_errors: Vec<Error>,
 }
 
@@ -116,8 +116,8 @@ impl Cx {
 
 #[derive(Debug, Clone, Copy)]
 struct Files<'a> {
-  sml: &'a paths::PathMap<String>,
-  mlb: &'a paths::PathMap<&'a mlb_hir::BasDec>,
+  source_file_contents: &'a paths::PathMap<String>,
+  bas_decs: &'a paths::PathMap<&'a mlb_hir::BasDec>,
   std_basis: &'a MBasis,
 }
 
@@ -142,14 +142,14 @@ impl MBasis {
 pub fn get(
   syms: sml_statics::Syms,
   basis: &sml_statics::basis::Basis,
-  sml: &paths::PathMap<String>,
-  mlb: &paths::PathMap<&mlb_hir::BasDec>,
+  source_file_contents: &paths::PathMap<String>,
+  bas_decs: &paths::PathMap<&mlb_hir::BasDec>,
   root_group_paths: &[paths::PathId],
 ) -> MlbStatics {
   let mut cx = Cx {
     syms,
-    cache: paths::PathMap::default(),
-    sml: paths::PathMap::default(),
+    bases: paths::PathMap::default(),
+    source_files: paths::PathMap::default(),
     mlb_errors: Vec::new(),
   };
   for &path in root_group_paths {
@@ -158,10 +158,10 @@ pub fn get(
       bas_env: FxHashMap::default(),
       basis: basis.clone(),
     };
-    let files = Files { sml, mlb, std_basis: &std_basis };
+    let files = Files { source_file_contents, bas_decs, std_basis: &std_basis };
     get_group_file(&mut cx, files, &mut MBasis::default(), path);
   }
-  MlbStatics { mlb_errors: cx.mlb_errors, syms: cx.syms, sml: cx.sml }
+  MlbStatics { mlb_errors: cx.mlb_errors, syms: cx.syms, sml: cx.source_files }
 }
 
 fn get_bas_exp(
@@ -236,12 +236,12 @@ fn get_bas_dec(
     }
     mlb_hir::BasDec::Path(path, kind) => match kind {
       mlb_hir::PathKind::Source => {
-        let contents = files.sml.get(path).expect("no sml file for path id");
+        let contents = files.source_file_contents.get(path).expect("no source file");
         let mut fix_env = scope.fix_env.clone();
         let syntax = SourceFileSyntax::new(&mut fix_env, contents);
         get_source_file(cx, *path, scope, ac, fix_env, syntax);
       }
-      mlb_hir::PathKind::Group => match cx.cache.get(path) {
+      mlb_hir::PathKind::Group => match cx.bases.get(path) {
         Some(mb) => ac.append(mb.clone()),
         None => get_group_file(cx, files, ac, *path),
       },
@@ -251,7 +251,7 @@ fn get_bas_dec(
         .iter()
         .map(|path| {
           let mut fix_env = scope.fix_env.clone();
-          let contents = files.sml.get(path).expect("no sml file for path id");
+          let contents = files.source_file_contents.get(path).expect("no source file");
           let syntax = SourceFileSyntax::new(&mut fix_env, contents);
           (*path, (fix_env, syntax))
         })
@@ -302,15 +302,15 @@ fn get_source_file(
   // analyses, on the same file.)
   //
   // this drops the errors from any previous analyses of this file on the floor.
-  cx.sml.insert(path, file);
+  cx.source_files.insert(path, file);
 }
 
 /// Processes a single group file.
 fn get_group_file(cx: &mut Cx, files: Files<'_>, ac: &mut MBasis, path: paths::PathId) {
-  let dec = files.mlb.get(&path).expect("no mlb file for path id");
+  let dec = files.bas_decs.get(&path).expect("no bas dec");
   let mut path_ac = MBasis::default();
   get_bas_dec(cx, files, path, files.std_basis, &mut path_ac, dec);
-  cx.cache.insert(path, path_ac.clone());
+  cx.bases.insert(path, path_ac.clone());
   ac.append(path_ac);
 }
 
