@@ -72,7 +72,7 @@ type NameExports = BTreeMap<NameExport, TextRange>;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct NameExport {
-  namespace: sml_namespace::Namespace,
+  namespace: sml_namespace::Module,
   name: str_util::Name,
 }
 
@@ -147,9 +147,9 @@ where
   match export {
     cm_syntax::Export::Name(ns, name) => {
       let namespace = match ns.val {
-        cm_syntax::Namespace::Structure => sml_namespace::Namespace::Structure,
-        cm_syntax::Namespace::Signature => sml_namespace::Namespace::Signature,
-        cm_syntax::Namespace::Functor => sml_namespace::Namespace::Functor,
+        cm_syntax::Namespace::Structure => sml_namespace::Module::Structure,
+        cm_syntax::Namespace::Signature => sml_namespace::Module::Signature,
+        cm_syntax::Namespace::Functor => sml_namespace::Module::Functor,
         cm_syntax::Namespace::FunSig => {
           return Err(Error::new(
             ErrorSource { path: None, range: cx.group.pos_db.range(ns.range) },
@@ -275,7 +275,7 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
       sml_syntax::ast::DecOne::StructureDec(dec) => {
         ac.extend(dec.str_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_namespace::Namespace::Structure,
+            namespace: sml_namespace::Module::Structure,
             name: str_util::Name::new(x.name()?.text()),
           };
           Some((export, range))
@@ -284,7 +284,7 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
       sml_syntax::ast::DecOne::SignatureDec(dec) => {
         ac.extend(dec.sig_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_namespace::Namespace::Signature,
+            namespace: sml_namespace::Module::Signature,
             name: str_util::Name::new(x.name()?.text()),
           };
           Some((export, range))
@@ -293,7 +293,7 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
       sml_syntax::ast::DecOne::FunctorDec(dec) => {
         ac.extend(dec.functor_binds().filter_map(|x| {
           let export = NameExport {
-            namespace: sml_namespace::Namespace::Functor,
+            namespace: sml_namespace::Module::Functor,
             name: str_util::Name::new(x.functor_name()?.text()),
           };
           Some((export, range))

@@ -127,15 +127,15 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
     }
     Token::Structure => {
       p.bump();
-      BasDec::Export(sml_namespace::Namespace::Structure, names_seq(p)?)
+      BasDec::Export(sml_namespace::Module::Structure, names_seq(p)?)
     }
     Token::Signature => {
       p.bump();
-      BasDec::Export(sml_namespace::Namespace::Signature, names_seq(p)?)
+      BasDec::Export(sml_namespace::Module::Signature, names_seq(p)?)
     }
     Token::Functor => {
       p.bump();
-      BasDec::Export(sml_namespace::Namespace::Functor, names_seq(p)?)
+      BasDec::Export(sml_namespace::Module::Functor, names_seq(p)?)
     }
     // TODO allow string paths as well
     Token::BarePath(path) => {

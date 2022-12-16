@@ -3,7 +3,7 @@
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use fast_hash::FxHashSet;
-use sml_namespace::Namespace;
+use sml_namespace::Module;
 use text_size_util::WithRange;
 
 /// A basis declaration.
@@ -16,7 +16,7 @@ pub enum BasDec {
   /// `local <dec> in <dec> end`
   Local(Box<BasDec>, Box<BasDec>),
   /// `structure <name>`, etc.
-  Export(Namespace, WithRange<str_util::Name>, WithRange<str_util::Name>),
+  Export(Module, WithRange<str_util::Name>, WithRange<str_util::Name>),
   /// A sequence of declarations.
   Seq(Vec<BasDec>),
   /// A file path.

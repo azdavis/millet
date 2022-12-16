@@ -218,9 +218,9 @@ fn get_bas_dec(
     mlb_hir::BasDec::Export(ns, lhs, rhs) => {
       if !ac.basis.add(*ns, lhs.val.clone(), &scope.basis, &rhs.val) {
         let item = match ns {
-          sml_namespace::Namespace::Structure => Item::Structure,
-          sml_namespace::Namespace::Signature => Item::Signature,
-          sml_namespace::Namespace::Functor => Item::Functor,
+          sml_namespace::Module::Structure => Item::Structure,
+          sml_namespace::Module::Signature => Item::Signature,
+          sml_namespace::Module::Functor => Item::Functor,
         };
         cx.undef(path, item, rhs.clone());
       }

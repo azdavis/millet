@@ -107,7 +107,7 @@ pub enum BasDec {
   /// `local <dec> in <dec> end`
   Local(Box<BasDec>, Box<BasDec>),
   /// `structure <name>`, etc
-  Export(sml_namespace::Namespace, NamesSeq),
+  Export(sml_namespace::Module, NamesSeq),
   /// A file path.
   Path(WithRange<ParsedPath>),
   /// `ann <str>* in <dec> end`

@@ -1,12 +1,12 @@
-//! See [`Namespace`].
+//! Different namespaces for various SML language definition constructs.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use std::fmt;
 
-/// A namespace for "structure-level" items.
+/// A namespace for "module-level" items.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Namespace {
+pub enum Module {
   /// `structure`
   Structure,
   /// `signature`
@@ -15,12 +15,12 @@ pub enum Namespace {
   Functor,
 }
 
-impl fmt::Display for Namespace {
+impl fmt::Display for Module {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Namespace::Structure => f.write_str("structure"),
-      Namespace::Signature => f.write_str("signature"),
-      Namespace::Functor => f.write_str("functor"),
+      Module::Structure => f.write_str("structure"),
+      Module::Signature => f.write_str("signature"),
+      Module::Functor => f.write_str("functor"),
     }
   }
 }
