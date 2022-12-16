@@ -3,7 +3,7 @@
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum BasicOverload {
+pub(crate) enum Basic {
   Int,
   Real,
   Word,
@@ -11,26 +11,26 @@ pub(crate) enum BasicOverload {
   Char,
 }
 
-impl BasicOverload {
+impl Basic {
   pub(crate) fn as_str(self) -> &'static str {
     match self {
-      BasicOverload::Int => "int",
-      BasicOverload::Real => "real",
-      BasicOverload::Word => "word",
-      BasicOverload::String => "string",
-      BasicOverload::Char => "char",
+      Basic::Int => "int",
+      Basic::Real => "real",
+      Basic::Word => "word",
+      Basic::String => "string",
+      Basic::Char => "char",
     }
   }
 }
 
-impl fmt::Display for BasicOverload {
+impl fmt::Display for Basic {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str(self.as_str())
   }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum CompositeOverload {
+pub(crate) enum Composite {
   WordInt,
   RealInt,
   Num,
@@ -39,22 +39,14 @@ pub(crate) enum CompositeOverload {
   NumTxtEq,
 }
 
-impl CompositeOverload {
-  pub(crate) fn as_basics(self) -> &'static [BasicOverload] {
+impl Composite {
+  pub(crate) fn as_basics(self) -> &'static [Basic] {
     match self {
-      Self::WordInt => &[BasicOverload::Word, BasicOverload::Int],
-      Self::RealInt => &[BasicOverload::Real, BasicOverload::Int],
-      Self::Num => &[BasicOverload::Word, BasicOverload::Real, BasicOverload::Int],
-      Self::NumTxt => &[
-        BasicOverload::Word,
-        BasicOverload::Real,
-        BasicOverload::Int,
-        BasicOverload::String,
-        BasicOverload::Char,
-      ],
-      Self::NumTxtEq => {
-        &[BasicOverload::Word, BasicOverload::Int, BasicOverload::String, BasicOverload::Char]
-      }
+      Self::WordInt => &[Basic::Word, Basic::Int],
+      Self::RealInt => &[Basic::Real, Basic::Int],
+      Self::Num => &[Basic::Word, Basic::Real, Basic::Int],
+      Self::NumTxt => &[Basic::Word, Basic::Real, Basic::Int, Basic::String, Basic::Char],
+      Self::NumTxtEq => &[Basic::Word, Basic::Int, Basic::String, Basic::Char],
     }
   }
 
@@ -64,7 +56,7 @@ impl CompositeOverload {
       (Self::WordInt, Self::WordInt | Self::Num | Self::NumTxt)
       | (Self::Num | Self::NumTxt, Self::WordInt) => Overload::Composite(Self::WordInt),
       (Self::WordInt | Self::NumTxtEq, Self::RealInt)
-      | (Self::RealInt, Self::WordInt | Self::NumTxtEq) => Overload::Basic(BasicOverload::Int),
+      | (Self::RealInt, Self::WordInt | Self::NumTxtEq) => Overload::Basic(Basic::Int),
       (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
       | (Self::Num | Self::NumTxt, Self::RealInt) => Overload::Composite(Self::RealInt),
       (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => {
@@ -81,26 +73,26 @@ impl CompositeOverload {
   }
 }
 
-impl fmt::Display for CompositeOverload {
+impl fmt::Display for Composite {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      CompositeOverload::WordInt => f.write_str("<wordint>"),
-      CompositeOverload::RealInt => f.write_str("<realint>"),
-      CompositeOverload::Num => f.write_str("<num>"),
-      CompositeOverload::NumTxt => f.write_str("<numtxt>"),
-      CompositeOverload::NumTxtEq => f.write_str("<numtxteq>"),
+      Composite::WordInt => f.write_str("<wordint>"),
+      Composite::RealInt => f.write_str("<realint>"),
+      Composite::Num => f.write_str("<num>"),
+      Composite::NumTxt => f.write_str("<numtxt>"),
+      Composite::NumTxtEq => f.write_str("<numtxteq>"),
     }
   }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Overload {
-  Basic(BasicOverload),
-  Composite(CompositeOverload),
+  Basic(Basic),
+  Composite(Composite),
 }
 
 impl Overload {
-  pub(crate) fn as_basics(&self) -> &[BasicOverload] {
+  pub(crate) fn as_basics(&self) -> &[Basic] {
     match self {
       Overload::Basic(b) => std::slice::from_ref(b),
       Overload::Composite(c) => c.as_basics(),

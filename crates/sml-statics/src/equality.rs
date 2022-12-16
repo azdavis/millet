@@ -1,8 +1,8 @@
 //! Checking if various structures respect/admit equality.
 
 use crate::types::{
-  BasicOverload, CompositeOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym,
-  Ty, TyInfo, TyScheme, TyVarKind,
+  Basic, Composite, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyInfo,
+  TyScheme, TyVarKind,
 };
 use crate::{st::St, util::instantiate};
 use std::fmt;
@@ -90,15 +90,11 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
 }
 
 /// returns the "equality version" of this overload.
-fn equality_composite(comp: CompositeOverload) -> Overload {
+fn equality_composite(comp: Composite) -> Overload {
   match comp {
-    CompositeOverload::WordInt | CompositeOverload::Num => {
-      Overload::Composite(CompositeOverload::WordInt)
-    }
-    CompositeOverload::RealInt => Overload::Basic(BasicOverload::Int),
-    CompositeOverload::NumTxt | CompositeOverload::NumTxtEq => {
-      Overload::Composite(CompositeOverload::NumTxtEq)
-    }
+    Composite::WordInt | Composite::Num => Overload::Composite(Composite::WordInt),
+    Composite::RealInt => Overload::Basic(Basic::Int),
+    Composite::NumTxt | Composite::NumTxtEq => Overload::Composite(Composite::NumTxtEq),
   }
 }
 
@@ -106,7 +102,7 @@ fn get_record(st: &mut St, rows: &RecordTy) -> Result {
   all(rows.values().map(|ty| get_ty(st, ty)))
 }
 
-fn get_basic(st: &mut St, ov: BasicOverload) -> Result {
+fn get_basic(st: &mut St, ov: Basic) -> Result {
   let ret = get_basic_opt(ov);
   // NOTE: this should always succeed because the signatures `INTEGER`, `WORD`, `STRING`, and `CHAR`
   // all have their primary types (e.g. `int` for `INTEGER`) as `eqtype`s.
@@ -115,16 +111,14 @@ fn get_basic(st: &mut St, ov: BasicOverload) -> Result {
 }
 
 /// optimized but ideally logically equivalent form of [`get_basic_naive`].
-fn get_basic_opt(ov: BasicOverload) -> Result {
+fn get_basic_opt(ov: Basic) -> Result {
   match ov {
-    BasicOverload::Int | BasicOverload::Word | BasicOverload::String | BasicOverload::Char => {
-      Ok(())
-    }
-    BasicOverload::Real => Err(NotEqTy::Sym),
+    Basic::Int | Basic::Word | Basic::String | Basic::Char => Ok(()),
+    Basic::Real => Err(NotEqTy::Sym),
   }
 }
 
-fn get_basic_naive(st: &mut St, ov: BasicOverload) -> Result {
+fn get_basic_naive(st: &mut St, ov: Basic) -> Result {
   let syms = st.syms.overloads()[ov].clone();
   all(syms.into_iter().map(|sym| get_con(st, &[], sym)))
 }

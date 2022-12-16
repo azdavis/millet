@@ -16,7 +16,7 @@ use std::{collections::BTreeMap, fmt};
 pub(crate) use bound_var::BoundTyVar;
 pub(crate) use fixed_var::{FixedTyVar, FixedTyVarGen, TyVarSrc};
 pub(crate) use meta_var::{Generalizable, MetaTyVar, MetaTyVarGen, MetaTyVarGeneralizer};
-pub(crate) use overload::{BasicOverload, CompositeOverload, Overload};
+pub(crate) use overload::{Basic, Composite, Overload};
 
 /// Definition: Type
 #[derive(Debug, Clone)]
@@ -236,28 +236,28 @@ pub(crate) struct Overloads {
   pub(crate) char: Vec<Sym>,
 }
 
-impl std::ops::Index<BasicOverload> for Overloads {
+impl std::ops::Index<Basic> for Overloads {
   type Output = Vec<Sym>;
 
-  fn index(&self, index: BasicOverload) -> &Self::Output {
+  fn index(&self, index: Basic) -> &Self::Output {
     match index {
-      BasicOverload::Int => &self.int,
-      BasicOverload::Real => &self.real,
-      BasicOverload::Word => &self.word,
-      BasicOverload::String => &self.string,
-      BasicOverload::Char => &self.char,
+      Basic::Int => &self.int,
+      Basic::Real => &self.real,
+      Basic::Word => &self.word,
+      Basic::String => &self.string,
+      Basic::Char => &self.char,
     }
   }
 }
 
-impl std::ops::IndexMut<BasicOverload> for Overloads {
-  fn index_mut(&mut self, index: BasicOverload) -> &mut Self::Output {
+impl std::ops::IndexMut<Basic> for Overloads {
+  fn index_mut(&mut self, index: Basic) -> &mut Self::Output {
     match index {
-      BasicOverload::Int => &mut self.int,
-      BasicOverload::Real => &mut self.real,
-      BasicOverload::Word => &mut self.word,
-      BasicOverload::String => &mut self.string,
-      BasicOverload::Char => &mut self.char,
+      Basic::Int => &mut self.int,
+      Basic::Real => &mut self.real,
+      Basic::Word => &mut self.word,
+      Basic::String => &mut self.string,
+      Basic::Char => &mut self.char,
     }
   }
 }

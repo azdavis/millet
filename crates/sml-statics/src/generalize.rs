@@ -1,8 +1,8 @@
 //! Generalization, one of the fundamental operations on types for the inference algorithm.
 
 use crate::types::{
-  BasicOverload, BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer, Overload,
-  Subst, SubstEntry, Ty, TyScheme, TyVarKind,
+  Basic, BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer, Overload, Subst,
+  SubstEntry, Ty, TyScheme, TyVarKind,
 };
 use crate::util::meta_vars;
 use fast_hash::FxHashMap;
@@ -166,11 +166,11 @@ fn handle_bv(
     None => match kind {
       Some(TyVarKind::Overloaded(ov)) => match ov {
         Overload::Basic(b) => match b {
-          BasicOverload::Int => Ty::INT,
-          BasicOverload::Real => Ty::REAL,
-          BasicOverload::Word => Ty::WORD,
-          BasicOverload::String => Ty::STRING,
-          BasicOverload::Char => Ty::CHAR,
+          Basic::Int => Ty::INT,
+          Basic::Real => Ty::REAL,
+          Basic::Word => Ty::WORD,
+          Basic::String => Ty::STRING,
+          Basic::Char => Ty::CHAR,
         },
         // all composite overloads contain, and default to, int.
         Overload::Composite(_) => Ty::INT,
