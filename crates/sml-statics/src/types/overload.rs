@@ -54,20 +54,18 @@ impl Composite {
   pub(crate) fn unify(self, other: Self) -> Overload {
     match (self, other) {
       (Self::WordInt, Self::WordInt | Self::Num | Self::NumTxt)
-      | (Self::Num | Self::NumTxt, Self::WordInt) => Overload::Composite(Self::WordInt),
+      | (Self::Num | Self::NumTxt, Self::WordInt) => Self::WordInt.into(),
       (Self::WordInt | Self::NumTxtEq, Self::RealInt)
-      | (Self::RealInt, Self::WordInt | Self::NumTxtEq) => Overload::Basic(Basic::Int),
+      | (Self::RealInt, Self::WordInt | Self::NumTxtEq) => Basic::Int.into(),
       (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
-      | (Self::Num | Self::NumTxt, Self::RealInt) => Overload::Composite(Self::RealInt),
-      (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => {
-        Overload::Composite(Self::Num)
-      }
-      (Self::NumTxt, Self::NumTxt) => Overload::Composite(Self::NumTxt),
+      | (Self::Num | Self::NumTxt, Self::RealInt) => Self::RealInt.into(),
+      (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => Self::Num.into(),
+      (Self::NumTxt, Self::NumTxt) => Self::NumTxt.into(),
       (Self::NumTxtEq, Self::NumTxtEq | Self::NumTxt) | (Self::NumTxt, Self::NumTxtEq) => {
-        Overload::Composite(Self::NumTxtEq)
+        Self::NumTxtEq.into()
       }
       (Self::NumTxtEq, Self::WordInt | Self::Num) | (Self::WordInt | Self::Num, Self::NumTxtEq) => {
-        Overload::Composite(Self::WordInt)
+        Self::WordInt.into()
       }
     }
   }
@@ -114,6 +112,18 @@ impl Overload {
       }
       (Self::Composite(c1), Self::Composite(c2)) => Some(c1.unify(c2)),
     }
+  }
+}
+
+impl From<Basic> for Overload {
+  fn from(val: Basic) -> Self {
+    Self::Basic(val)
+  }
+}
+
+impl From<Composite> for Overload {
+  fn from(val: Composite) -> Self {
+    Self::Composite(val)
   }
 }
 

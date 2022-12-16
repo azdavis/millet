@@ -92,9 +92,9 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
 /// returns the "equality version" of this overload.
 fn equality_composite(comp: Composite) -> Overload {
   match comp {
-    Composite::WordInt | Composite::Num => Overload::Composite(Composite::WordInt),
-    Composite::RealInt => Overload::Basic(Basic::Int),
-    Composite::NumTxt | Composite::NumTxtEq => Overload::Composite(Composite::NumTxtEq),
+    Composite::WordInt | Composite::Num => Composite::WordInt.into(),
+    Composite::RealInt => Basic::Int.into(),
+    Composite::NumTxt | Composite::NumTxtEq => Composite::NumTxtEq.into(),
   }
 }
 

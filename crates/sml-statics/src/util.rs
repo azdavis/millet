@@ -3,8 +3,7 @@
 use crate::error::{ErrorKind, Item};
 use crate::st::St;
 use crate::types::{
-  Basic, Generalizable, MetaTyVar, Overload, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme,
-  TyVarKind,
+  Basic, Generalizable, MetaTyVar, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
 };
 use fast_hash::FxHashMap;
 
@@ -22,7 +21,7 @@ pub(crate) fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon) -> T
 
 fn basic_overload(st: &mut St, g: Generalizable, b: Basic) -> Ty {
   let mv = st.meta_gen.gen(g);
-  let entry = SubstEntry::Kind(TyVarKind::Overloaded(Overload::Basic(b)));
+  let entry = SubstEntry::Kind(TyVarKind::Overloaded(b.into()));
   st.subst.insert(mv, entry);
   Ty::MetaVar(mv)
 }
