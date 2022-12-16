@@ -12,9 +12,9 @@ pub(crate) trait EnvLike {
   fn get_val(&self, name: &str_util::Name) -> Option<&ValInfo>;
   /// empties other into self.
   fn append(&mut self, other: &mut Env);
-  fn all_str(&self) -> Vec<&Env>;
-  fn all_ty(&self) -> Vec<&TyInfo>;
-  fn all_val(&self) -> Vec<&ValInfo>;
+  fn all_str(&self) -> FxHashMap<&str_util::Name, &Env>;
+  fn all_ty(&self) -> FxHashMap<&str_util::Name, &TyInfo>;
+  fn all_val(&self) -> FxHashMap<&str_util::Name, &ValInfo>;
   fn into_env(self) -> Env;
 }
 
@@ -55,16 +55,16 @@ impl EnvLike for Env {
     self.val_env.extend(other.val_env.drain());
   }
 
-  fn all_str(&self) -> Vec<&Env> {
-    self.str_env.values().collect()
+  fn all_str(&self) -> FxHashMap<&str_util::Name, &Env> {
+    self.str_env.iter().collect()
   }
 
-  fn all_ty(&self) -> Vec<&TyInfo> {
-    self.ty_env.values().collect()
+  fn all_ty(&self) -> FxHashMap<&str_util::Name, &TyInfo> {
+    self.ty_env.iter().collect()
   }
 
-  fn all_val(&self) -> Vec<&ValInfo> {
-    self.val_env.values().collect()
+  fn all_val(&self) -> FxHashMap<&str_util::Name, &ValInfo> {
+    self.val_env.iter().collect()
   }
 
   fn into_env(self) -> Env {
@@ -106,37 +106,28 @@ impl EnvLike for EnvStack {
     self.push(env);
   }
 
-  fn all_str(&self) -> Vec<&Env> {
-    let mut names = FxHashSet::<&str_util::Name>::default();
-    self
-      .0
-      .iter()
-      .rev()
-      .flat_map(|env| env.str_env.iter())
-      .filter_map(|(name, val)| names.insert(name).then_some(val))
-      .collect()
+  fn all_str(&self) -> FxHashMap<&str_util::Name, &Env> {
+    let mut ret = FxHashMap::<&str_util::Name, &Env>::default();
+    for env in &self.0 {
+      ret.extend(env.str_env.iter());
+    }
+    ret
   }
 
-  fn all_ty(&self) -> Vec<&TyInfo> {
-    let mut names = FxHashSet::<&str_util::Name>::default();
-    self
-      .0
-      .iter()
-      .rev()
-      .flat_map(|env| env.ty_env.iter())
-      .filter_map(|(name, val)| names.insert(name).then_some(val))
-      .collect()
+  fn all_ty(&self) -> FxHashMap<&str_util::Name, &TyInfo> {
+    let mut ret = FxHashMap::<&str_util::Name, &TyInfo>::default();
+    for env in &self.0 {
+      ret.extend(env.ty_env.iter());
+    }
+    ret
   }
 
-  fn all_val(&self) -> Vec<&ValInfo> {
-    let mut names = FxHashSet::<&str_util::Name>::default();
-    self
-      .0
-      .iter()
-      .rev()
-      .flat_map(|env| env.val_env.iter())
-      .filter_map(|(name, val)| names.insert(name).then_some(val))
-      .collect()
+  fn all_val(&self) -> FxHashMap<&str_util::Name, &ValInfo> {
+    let mut ret = FxHashMap::<&str_util::Name, &ValInfo>::default();
+    for env in &self.0 {
+      ret.extend(env.val_env.iter());
+    }
+    ret
   }
 
   fn into_env(mut self) -> Env {

@@ -12,14 +12,14 @@ where
   E: EnvLike,
   F: FnMut(Sym),
 {
-  for env in env.all_str() {
+  for (_, env) in env.all_str() {
     get(env, f);
   }
-  for ty_info in env.all_ty() {
+  for (_, ty_info) in env.all_ty() {
     ty_syms(&ty_info.ty_scheme.ty, f);
     val_env_syms(&ty_info.val_env, f);
   }
-  for val_info in env.all_val() {
+  for (_, val_info) in env.all_val() {
     ty_syms(&val_info.ty_scheme.ty, f);
   }
 }
