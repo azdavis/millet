@@ -1,6 +1,6 @@
 //! Equality types.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn real_no() {
@@ -140,7 +140,7 @@ val _ = C "hi" = D
 
 #[test]
 fn cmp_eq() {
-  fail(
+  check(
     r#"
 fun f x y = (x < y, x = 0)
 "#,

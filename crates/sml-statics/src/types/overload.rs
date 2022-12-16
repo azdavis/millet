@@ -35,6 +35,8 @@ pub(crate) enum CompositeOverload {
   RealInt,
   Num,
   NumTxt,
+  /// equality-only subset of NumTxt. used only for unification
+  NumTxtEq,
 }
 
 impl CompositeOverload {
@@ -50,22 +52,31 @@ impl CompositeOverload {
         BasicOverload::String,
         BasicOverload::Char,
       ],
+      Self::NumTxtEq => {
+        &[BasicOverload::Word, BasicOverload::Int, BasicOverload::String, BasicOverload::Char]
+      }
     }
   }
 
+  /// we could also probably use `as_basics`, set intersection, then a "reverse" `as_basics` here.
   pub(crate) fn unify(self, other: Self) -> Overload {
     match (self, other) {
       (Self::WordInt, Self::WordInt | Self::Num | Self::NumTxt)
       | (Self::Num | Self::NumTxt, Self::WordInt) => Overload::Composite(Self::WordInt),
-      (Self::WordInt, Self::RealInt) | (Self::RealInt, Self::WordInt) => {
-        Overload::Basic(BasicOverload::Int)
-      }
+      (Self::WordInt | Self::NumTxtEq, Self::RealInt)
+      | (Self::RealInt, Self::WordInt | Self::NumTxtEq) => Overload::Basic(BasicOverload::Int),
       (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
       | (Self::Num | Self::NumTxt, Self::RealInt) => Overload::Composite(Self::RealInt),
       (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => {
         Overload::Composite(Self::Num)
       }
       (Self::NumTxt, Self::NumTxt) => Overload::Composite(Self::NumTxt),
+      (Self::NumTxtEq, Self::NumTxtEq | Self::NumTxt) | (Self::NumTxt, Self::NumTxtEq) => {
+        Overload::Composite(Self::NumTxtEq)
+      }
+      (Self::NumTxtEq, Self::WordInt | Self::Num) | (Self::WordInt | Self::Num, Self::NumTxtEq) => {
+        Overload::Composite(Self::WordInt)
+      }
     }
   }
 }
@@ -77,6 +88,7 @@ impl fmt::Display for CompositeOverload {
       CompositeOverload::RealInt => f.write_str("<realint>"),
       CompositeOverload::Num => f.write_str("<num>"),
       CompositeOverload::NumTxt => f.write_str("<numtxt>"),
+      CompositeOverload::NumTxtEq => f.write_str("<numtxteq>"),
     }
   }
 }

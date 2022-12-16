@@ -1423,12 +1423,13 @@ val _ = 1.2 = 3.4
 
 Millet reports overloaded types with intentionally invalid SML syntax. Here is what they mean:
 
-| Overload    | Meaning                                 |
-| ----------- | --------------------------------------- |
-| `<wordint>` | `word`, `int`                           |
-| `<realint>` | `real`, `int`                           |
-| `<num>`     | `word`, `real`, `int`                   |
-| `<numtxt>`  | `word`, `real`, `int`, `string`, `char` |
+| Overload     | Meaning                                 |
+| ------------ | --------------------------------------- |
+| `<wordint>`  | `word`, `int`                           |
+| `<realint>`  | `real`, `int`                           |
+| `<num>`      | `word`, `real`, `int`                   |
+| `<numtxt>`   | `word`, `real`, `int`, `string`, `char` |
+| `<numtxteq>` | `word`, `int`, `string`, `char`         |
 
 Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax.
 

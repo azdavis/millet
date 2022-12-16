@@ -1,8 +1,8 @@
 //! Checking if various structures respect/admit equality.
 
 use crate::types::{
-  BasicOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyInfo,
-  TyScheme, TyVarKind,
+  BasicOverload, CompositeOverload, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym,
+  Ty, TyInfo, TyScheme, TyVarKind,
 };
 use crate::{st::St, util::instantiate};
 use std::fmt;
@@ -40,10 +40,14 @@ where
 /// Returns whether `ty` admits equality. That is:
 ///
 /// - If it **is** an equality type, returns Ok.
-/// - If it **is not** an equality type, returns Err with the first kind of type contained in it that
-///   makes it not an equality type.
+/// - If it **is not** an equality type, returns Err with the first kind of type contained in it
+///   that makes it not an equality type.
 ///
-/// Also sets any non-constrained meta type variables to be equality type variables.
+/// Also sets:
+///
+/// - Any non-constrained meta type variables to be equality type variables.
+/// - Any overloaded meta type variables to be overloaded at a equality-only version of that
+///   overload.
 pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
   if st.info.mode().is_path_order() {
     return Ok(());
@@ -63,7 +67,9 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
           TyVarKind::Overloaded(ov) => match ov {
             Overload::Basic(basic) => get_basic(st, basic),
             Overload::Composite(comp) => {
-              all(comp.as_basics().iter().map(|&basic| get_basic(st, basic)))
+              let ov = equality_composite(comp);
+              st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
+              Ok(())
             }
           },
           TyVarKind::Record(rows) => get_record(st, &rows),
@@ -80,6 +86,19 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
     Ty::Record(rows) => get_record(st, rows),
     Ty::Con(args, sym) => get_con(st, args, *sym),
     Ty::Fn(_, _) => Err(NotEqTy::Fn),
+  }
+}
+
+/// returns the "equality version" of this overload.
+fn equality_composite(comp: CompositeOverload) -> Overload {
+  match comp {
+    CompositeOverload::WordInt | CompositeOverload::Num => {
+      Overload::Composite(CompositeOverload::WordInt)
+    }
+    CompositeOverload::RealInt => Overload::Basic(BasicOverload::Int),
+    CompositeOverload::NumTxt | CompositeOverload::NumTxtEq => {
+      Overload::Composite(CompositeOverload::NumTxtEq)
+    }
   }
 }
 
