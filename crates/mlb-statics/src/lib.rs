@@ -22,7 +22,7 @@ pub struct MlbStatics {
   /// A mapping from source file paths to information about them, including errors.
   ///
   /// NOTE see comment in impl about having files analyzed more than once.
-  pub sml: paths::PathMap<SourceFile>,
+  pub source_files: paths::PathMap<SourceFile>,
 }
 
 /// A source file.
@@ -161,7 +161,7 @@ pub fn get(
     let files = Files { source_file_contents, bas_decs, std_basis: &std_basis };
     get_group_file(&mut cx, files, &mut MBasis::default(), path);
   }
-  MlbStatics { mlb_errors: cx.mlb_errors, syms: cx.syms, sml: cx.source_files }
+  MlbStatics { mlb_errors: cx.mlb_errors, syms: cx.syms, source_files: cx.source_files }
 }
 
 fn get_bas_exp(

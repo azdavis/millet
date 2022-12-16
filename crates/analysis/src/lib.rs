@@ -64,7 +64,7 @@ impl Analysis {
     let res = elapsed::log("mlb_statics::get", || {
       mlb_statics::get(syms, basis, &input.sources, &groups, &input.root_group_paths)
     });
-    self.source_files = res.sml;
+    self.source_files = res.source_files;
     self.syms = res.syms;
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
