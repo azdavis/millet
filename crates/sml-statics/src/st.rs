@@ -160,7 +160,7 @@ impl St {
       for ty in self.info.tys_mut() {
         apply(&self.subst, ty);
       }
-      self.info.meta_vars = self.subst.into_meta_var_info();
+      self.info.set_meta_vars(self.subst.into_meta_var_info());
     }
     (lang.syms, errors, self.info)
   }

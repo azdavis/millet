@@ -9,8 +9,8 @@ use std::fmt::Write as _;
 #[derive(Debug, Clone)]
 pub struct Info {
   mode: Mode,
-  store: FxHashMap<sml_hir::Idx, InfoEntry>,
-  pub(crate) meta_vars: MetaVarInfo,
+  indices: FxHashMap<sml_hir::Idx, IdxEntry>,
+  meta_vars: MetaVarInfo,
 }
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,7 @@ pub(crate) struct TyEntry {
 }
 
 #[derive(Debug, Default, Clone)]
-struct InfoEntry {
+struct IdxEntry {
   ty_entry: Option<TyEntry>,
   def: Option<def::Def>,
   doc: Option<String>,
@@ -28,7 +28,7 @@ struct InfoEntry {
 
 impl Info {
   pub(crate) fn new(mode: Mode) -> Self {
-    Self { mode, store: FxHashMap::default(), meta_vars: MetaVarInfo::default() }
+    Self { mode, indices: FxHashMap::default(), meta_vars: MetaVarInfo::default() }
   }
 
   pub(crate) fn insert(
@@ -38,7 +38,7 @@ impl Info {
     def: Option<def::Def>,
   ) {
     // ignore ty schemes that bind no vars
-    let entry = InfoEntry {
+    let entry = IdxEntry {
       ty_entry: ty_entry.map(|mut ty_entry| {
         ty_entry.ty_scheme =
           ty_entry.ty_scheme.and_then(|x| (!x.bound_vars.is_empty()).then_some(x));
@@ -47,16 +47,16 @@ impl Info {
       def,
       doc: None,
     };
-    assert!(self.store.insert(idx, entry).is_none());
+    assert!(self.indices.insert(idx, entry).is_none());
   }
 
   /// Add documentation to an index. Returns the old doc.
   pub fn add_doc(&mut self, idx: sml_hir::Idx, doc: String) -> Option<String> {
-    self.store.entry(idx).or_default().doc.replace(doc)
+    self.indices.entry(idx).or_default().doc.replace(doc)
   }
 
   pub(crate) fn tys_mut(&mut self) -> impl Iterator<Item = &mut Ty> {
-    self.store.values_mut().filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
+    self.indices.values_mut().filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
   }
 
   pub(crate) fn mode(&self) -> Mode {
@@ -69,6 +69,10 @@ impl Info {
     &self.meta_vars
   }
 
+  pub(crate) fn set_meta_vars(&mut self, mv: MetaVarInfo) {
+    self.meta_vars = mv;
+  }
+
   /// Returns a Markdown string with type information associated with this index.
   #[must_use]
   pub fn get_ty_md(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<String> {
@@ -78,7 +82,7 @@ impl Info {
   }
 
   fn get_ty_md_(&self, s: &mut String, syms: &Syms, idx: sml_hir::Idx) -> Option<()> {
-    let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
+    let ty_entry = self.indices.get(&idx)?.ty_entry.as_ref()?;
     let mut mvs = MetaVarNames::new(&self.meta_vars);
     mvs.extend_for(&ty_entry.ty);
     writeln!(s, "```sml").unwrap();
@@ -98,19 +102,19 @@ impl Info {
   /// Returns documentation for this index.
   #[must_use]
   pub fn get_doc(&self, idx: sml_hir::Idx) -> Option<&str> {
-    self.store.get(&idx)?.doc.as_deref()
+    self.indices.get(&idx)?.doc.as_deref()
   }
 
   /// Returns the definition site of the idx.
   #[must_use]
   pub fn get_def(&self, idx: sml_hir::Idx) -> Option<def::Def> {
-    self.store.get(&idx)?.def
+    self.indices.get(&idx)?.def
   }
 
   /// Returns the definition site of the type for the idx.
   #[must_use]
   pub fn get_ty_defs(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<Vec<def::Def>> {
-    let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
+    let ty_entry = self.indices.get(&idx)?.ty_entry.as_ref()?;
     let mut ret = Vec::<def::Def>::new();
     ty_syms(&ty_entry.ty, &mut |sym| match syms.get(sym) {
       None => {}
@@ -129,7 +133,7 @@ impl Info {
     syms: &Syms,
     idx: sml_hir::Idx,
   ) -> Option<Vec<(str_util::Name, bool)>> {
-    let ty_entry = self.store.get(&idx)?.ty_entry.as_ref()?;
+    let ty_entry = self.indices.get(&idx)?.ty_entry.as_ref()?;
     let sym = match ty_entry.ty {
       Ty::Con(_, x) => x,
       _ => return None,
