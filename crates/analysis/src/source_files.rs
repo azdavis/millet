@@ -7,17 +7,12 @@ use text_pos::{Position, Range};
 
 pub(crate) fn path_and_range(
   source_files: &PathMap<mlb_statics::SourceFile>,
-  def: sml_statics::def::Def,
+  idx: WithPath<sml_hir::Idx>,
 ) -> Option<WithPath<Range>> {
-  let (path, idx) = match def {
-    sml_statics::def::Def::Path(sml_statics::def::Path::Regular(a), b) => (a, b),
-    sml_statics::def::Def::Path(sml_statics::def::Path::BuiltinLib(_), _)
-    | sml_statics::def::Def::Primitive(_) => return None,
-  };
-  let def_file = source_files.get(&path)?;
-  let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx)?;
+  let def_file = source_files.get(&idx.path)?;
+  let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx.val)?;
   let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
-  Some(path.wrap(def_file.syntax.pos_db.range(def_range)?))
+  Some(idx.path.wrap(def_file.syntax.pos_db.range(def_range)?))
 }
 
 pub(crate) fn file_and_token(

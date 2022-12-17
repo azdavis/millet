@@ -12,6 +12,20 @@ pub enum Def {
   Primitive(Primitive),
 }
 
+impl Def {
+  /// Returns this as a SML HIR idx at a regular path.
+  #[must_use]
+  pub fn to_regular_idx(self) -> Option<paths::WithPath<sml_hir::Idx>> {
+    match self {
+      Def::Path(p, idx) => match p {
+        Path::Regular(p) => Some(p.wrap(idx)),
+        Path::BuiltinLib(_) => None,
+      },
+      Def::Primitive(_) => None,
+    }
+  }
+}
+
 /// A definition path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Path {

@@ -125,7 +125,7 @@ impl Analysis {
   pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
-    source_files::path_and_range(&self.source_files, ft.file.info.get_def(idx)?)
+    source_files::path_and_range(&self.source_files, ft.file.info.get_def(idx)?.to_regular_idx()?)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
@@ -139,7 +139,7 @@ impl Analysis {
         .info
         .get_ty_defs(&self.syms, idx)?
         .into_iter()
-        .filter_map(|def| source_files::path_and_range(&self.source_files, def))
+        .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?))
         .collect(),
     )
   }
