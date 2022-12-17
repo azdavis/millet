@@ -13,9 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.6.7
 
 - Add support for document symbols.
+- Support go to definition for exception aliases.
 - Add support for find all references.
 
 ## v0.6.6
