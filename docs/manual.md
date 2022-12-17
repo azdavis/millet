@@ -271,6 +271,10 @@ This allows writing "example" code that actually parses. In the case of expressi
 
 When your cursor is over the `case` or `of` keywords of a `case` expression, Millet can fill in the case with arms for each variant of the type of the head expression.
 
+### Document symbols
+
+Millet can show all the symbols in a document, and information about those symbols.
+
 ### Formatter
 
 **WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
