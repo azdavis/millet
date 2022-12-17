@@ -167,15 +167,15 @@ impl Info {
   /// You also have to pass down the `path` that this `Info` is for. It's slightly odd, but we
   /// need it to know which `Def`s we should actually include in the return value.
   #[must_use]
-  pub fn symbols(&self, syms: &Syms, path: paths::PathId) -> Vec<Symbol> {
+  pub fn document_symbols(&self, syms: &Syms, path: paths::PathId) -> Vec<DocumentSymbol> {
     let bs = &self.basis.inner;
     let mut mvs = MetaVarNames::new(self.meta_vars());
-    let mut ret = Vec::<Symbol>::new();
+    let mut ret = Vec::<DocumentSymbol>::new();
     ret.extend(bs.fun_env.iter().filter_map(|(name, fun_sig)| {
       let idx = def_idx(path, fun_sig.body_env.def?)?;
-      let mut children = Vec::<Symbol>::new();
+      let mut children = Vec::<DocumentSymbol>::new();
       env_syms(&mut children, &mut mvs, syms, path, &fun_sig.body_env);
-      Some(Symbol {
+      Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Functor,
         detail: None,
@@ -185,9 +185,9 @@ impl Info {
     }));
     ret.extend(bs.sig_env.iter().filter_map(|(name, sig)| {
       let idx = def_idx(path, sig.env.def?)?;
-      let mut children = Vec::<Symbol>::new();
+      let mut children = Vec::<DocumentSymbol>::new();
       env_syms(&mut children, &mut mvs, syms, path, &sig.env);
-      Some(Symbol {
+      Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Signature,
         detail: None,
@@ -203,7 +203,7 @@ impl Info {
 
 /// need to do extend instead of a big chain of chains because of the borrow checker.
 fn env_syms<E: EnvLike>(
-  ac: &mut Vec<Symbol>,
+  ac: &mut Vec<DocumentSymbol>,
   mvs: &mut MetaVarNames<'_>,
   syms: &Syms,
   path: paths::PathId,
@@ -211,9 +211,9 @@ fn env_syms<E: EnvLike>(
 ) {
   ac.extend(env.all_str().into_iter().filter_map(|(name, env)| {
     let idx = def_idx(path, env.def?)?;
-    let mut children = Vec::<Symbol>::new();
+    let mut children = Vec::<DocumentSymbol>::new();
     env_syms(&mut children, mvs, syms, path, env);
-    Some(Symbol {
+    Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Structure,
       detail: None,
@@ -225,7 +225,7 @@ fn env_syms<E: EnvLike>(
     mvs.clear();
     mvs.extend_for(&ty_info.ty_scheme.ty);
     let idx = def_idx(path, ty_info.def?)?;
-    Some(Symbol {
+    Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Type,
       detail: Some(ty_info.ty_scheme.display(mvs, syms).to_string()),
@@ -245,7 +245,7 @@ fn env_syms<E: EnvLike>(
         _ => sml_namespace::SymbolKind::Value,
       },
     };
-    Some(Symbol {
+    Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind,
       detail: Some(val_info.ty_scheme.display(mvs, syms).to_string()),
@@ -265,9 +265,9 @@ fn def_idx(path: paths::PathId, def: def::Def) -> Option<sml_hir::Idx> {
   }
 }
 
-/// A symbol.
+/// A document symbol.
 #[derive(Debug)]
-pub struct Symbol {
+pub struct DocumentSymbol {
   /// The name of the symbol.
   pub name: String,
   /// What kind of symbol this is.
@@ -277,5 +277,5 @@ pub struct Symbol {
   /// The index of the symbol.
   pub idx: sml_hir::Idx,
   /// Children of this symbol.
-  pub children: Vec<Symbol>,
+  pub children: Vec<DocumentSymbol>,
 }

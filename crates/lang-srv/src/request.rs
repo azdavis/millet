@@ -83,8 +83,10 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::DocumentSymbolRequest, _>(r, |id, params| {
     let url = params.text_document.uri;
     let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
-    let res: Option<Vec<_>> =
-      st.analysis.symbols(path).map(|xs| xs.into_iter().map(helpers::document_symbol).collect());
+    let res: Option<Vec<_>> = st
+      .analysis
+      .document_symbols(path)
+      .map(|xs| xs.into_iter().map(helpers::document_symbol).collect());
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;

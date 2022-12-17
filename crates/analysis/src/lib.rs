@@ -165,11 +165,11 @@ impl Analysis {
 
   /// Returns the symbols for the file.
   #[must_use]
-  pub fn symbols(&self, path: PathId) -> Option<Vec<Symbol>> {
+  pub fn document_symbols(&self, path: PathId) -> Option<Vec<DocumentSymbol>> {
     let file = self.source_files.get(&path)?;
     let ret: Vec<_> = file
       .info
-      .symbols(&self.syms, path)
+      .document_symbols(&self.syms, path)
       .into_iter()
       .filter_map(|s| symbol(&file.syntax, s))
       .collect();
@@ -224,7 +224,7 @@ pub enum FormatError {
 
 /// A symbol.
 #[derive(Debug)]
-pub struct Symbol {
+pub struct DocumentSymbol {
   /// The name of the symbol.
   pub name: String,
   /// What kind of symbol this is.
@@ -236,16 +236,16 @@ pub struct Symbol {
   /// The range of just the name.
   pub selection_range: text_pos::Range,
   /// Children of this symbol.
-  pub children: Vec<Symbol>,
+  pub children: Vec<DocumentSymbol>,
 }
 
 fn symbol(
   file: &sml_file_syntax::SourceFileSyntax,
-  sym: sml_statics::info::Symbol,
-) -> Option<Symbol> {
+  sym: sml_statics::info::DocumentSymbol,
+) -> Option<DocumentSymbol> {
   let text_range = file.lower.ptrs.hir_to_ast(sym.idx)?.text_range();
   let range = file.pos_db.range(text_range)?;
-  Some(Symbol {
+  Some(DocumentSymbol {
     name: sym.name,
     kind: sym.kind,
     detail: sym.detail,
