@@ -20,6 +20,7 @@ pub(crate) fn get() -> lsp_types::ServerCapabilities {
     code_action_provider: Some(lsp_types::CodeActionProviderCapability::Simple(true)),
     document_formatting_provider: Some(lsp_types::OneOf::Left(true)),
     document_symbol_provider: Some(lsp_types::OneOf::Left(true)),
+    references_provider: Some(lsp_types::OneOf::Left(true)),
     ..Default::default()
   }
 }

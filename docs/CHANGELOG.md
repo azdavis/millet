@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Add support for document symbols.
+- Add support for find all references.
 
 ## v0.6.6
 

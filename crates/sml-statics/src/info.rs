@@ -199,6 +199,14 @@ impl Info {
     // order doesn't seem to matter. at least vs code displays the symbols in source order.
     ret
   }
+
+  /// Returns indices that have the given definition.
+  pub fn get_with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
+    self
+      .indices
+      .iter()
+      .filter_map(move |(&idx, entry)| entry.def.map_or(false, |d| d == def).then_some(idx))
+  }
 }
 
 /// need to do extend instead of a big chain of chains because of the borrow checker.

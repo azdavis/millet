@@ -90,5 +90,14 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;
+  r = helpers::try_req::<lsp_types::request::References, _>(r, |id, params| {
+    let params = params.text_document_position;
+    let pos = helpers::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
+    let res: Option<Vec<_>> = st.analysis.find_all_references(pos).map(|locs| {
+      locs.into_iter().filter_map(|loc| helpers::lsp_location(&st.cx.store, loc)).collect()
+    });
+    st.cx.send_response(Response::new_ok(id, res));
+    Ok(())
+  })?;
   ControlFlow::Continue(r)
 }
