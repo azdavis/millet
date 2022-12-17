@@ -174,7 +174,7 @@ pub(crate) fn quick_fix(
   })
 }
 
-pub(crate) fn symbol(sym: analysis::Symbol) -> lsp_types::DocumentSymbol {
+pub(crate) fn document_symbol(sym: analysis::Symbol) -> lsp_types::DocumentSymbol {
   #[allow(deprecated)]
   lsp_types::DocumentSymbol {
     name: sym.name,
@@ -194,7 +194,7 @@ pub(crate) fn symbol(sym: analysis::Symbol) -> lsp_types::DocumentSymbol {
     deprecated: None,
     range: lsp_range(sym.range),
     selection_range: lsp_range(sym.selection_range),
-    children: Some(sym.children.into_iter().map(symbol).collect()),
+    children: Some(sym.children.into_iter().map(document_symbol).collect()),
   }
 }
 
