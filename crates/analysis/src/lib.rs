@@ -196,19 +196,17 @@ impl Analysis {
   #[must_use]
   pub fn find_all_references(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
-    let (_, idx) = ft.get_ptr_and_idx()?;
-    let def = sml_statics::def::Def::Path(sml_statics::def::Path::Regular(pos.path), idx);
-    let ret: Vec<_> = self
-      .source_files
-      .iter()
-      .flat_map(|(&path, sf)| {
+    let (_, indices) = ft.get_ptr_and_indices()?;
+    let ret = indices.iter().flat_map(|&idx| {
+      let def = sml_statics::def::Def::Path(sml_statics::def::Path::Regular(pos.path), idx);
+      self.source_files.iter().flat_map(move |(&path, sf)| {
         sf.info.get_with_def(def).filter_map(move |idx| {
           let ptr = sf.syntax.lower.ptrs.hir_to_ast(idx)?;
           Some(path.wrap(sf.syntax.pos_db.range(ptr.text_range())?))
         })
       })
-      .collect();
-    Some(ret)
+    });
+    Some(ret.collect())
   }
 }
 

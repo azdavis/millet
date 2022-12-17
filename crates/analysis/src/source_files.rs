@@ -53,6 +53,17 @@ impl FileAndToken<'_> {
       }
     }
   }
+
+  pub(crate) fn get_ptr_and_indices(&self) -> Option<(SyntaxNodePtr, &[sml_hir::Idx])> {
+    let mut node = self.token.parent()?;
+    loop {
+      let ptr = SyntaxNodePtr::new(&node);
+      match self.file.syntax.lower.ptrs.ast_to_hir_all(&ptr) {
+        Some(indices) => return Some((ptr, indices)),
+        None => node = node.parent()?,
+      }
+    }
+  }
 }
 
 fn priority(kind: SyntaxKind) -> u8 {

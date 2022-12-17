@@ -3,14 +3,14 @@
 use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::{ast::SyntaxNodePtr, rowan::TextRange};
-use std::collections::hash_map::Entry;
 use std::fmt;
 
 /// Pointers between the AST and the HIR.
 #[derive(Debug, Default)]
 pub struct Ptrs {
   hir_to_ast: FxHashMap<sml_hir::Idx, SyntaxNodePtr>,
-  ast_to_hir: FxHashMap<SyntaxNodePtr, sml_hir::Idx>,
+  /// allow a multi mapping for this direction
+  ast_to_hir: FxHashMap<SyntaxNodePtr, Vec<sml_hir::Idx>>,
 }
 
 impl Ptrs {
@@ -23,18 +23,19 @@ impl Ptrs {
   /// Returns one of possibly many HIR indices for the syntax pointer.
   #[must_use]
   pub fn ast_to_hir(&self, ptr: &SyntaxNodePtr) -> Option<sml_hir::Idx> {
-    self.ast_to_hir.get(ptr).copied()
+    // prefer older
+    self.ast_to_hir.get(ptr)?.first().copied()
+  }
+
+  /// Returns all of the possibly many HIR indices for the syntax pointer.
+  #[must_use]
+  pub fn ast_to_hir_all(&self, ptr: &SyntaxNodePtr) -> Option<&[sml_hir::Idx]> {
+    self.ast_to_hir.get(ptr).map(Vec::as_slice)
   }
 
   fn insert(&mut self, idx: sml_hir::Idx, ptr: SyntaxNodePtr) {
     assert!(self.hir_to_ast.insert(idx, ptr.clone()).is_none());
-    // cannot assert is none, but prefer older
-    match self.ast_to_hir.entry(ptr) {
-      Entry::Occupied(_) => {}
-      Entry::Vacant(entry) => {
-        entry.insert(idx);
-      }
-    }
+    self.ast_to_hir.entry(ptr).or_default().push(idx);
   }
 }
 
