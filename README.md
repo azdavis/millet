@@ -9,6 +9,8 @@ Millet analyzes SML code without running it, and provides information like:
 - Inline diagnostics
 - Hover for type/documentation
 - Jump to definition
+- Document symbols
+- Find all references
 
 Note that Millet does not actually run SML code. To do that, you'll need an installation of SML, like [SML/NJ][smlnj] or [MLton][mlton].
 

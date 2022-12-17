@@ -275,6 +275,10 @@ When your cursor is over the `case` or `of` keywords of a `case` expression, Mil
 
 Millet can show all the symbols in a document, and information about those symbols.
 
+### Find all references
+
+Millet supports finding references to a symbol.
+
 ### Formatter
 
 **WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
