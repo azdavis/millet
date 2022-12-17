@@ -3,6 +3,7 @@
 use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::{ast::SyntaxNodePtr, rowan::TextRange};
+use std::collections::hash_map::Entry;
 use std::fmt;
 
 /// Pointers between the AST and the HIR.
@@ -27,8 +28,13 @@ impl Ptrs {
 
   fn insert(&mut self, idx: sml_hir::Idx, ptr: SyntaxNodePtr) {
     assert!(self.hir_to_ast.insert(idx, ptr.clone()).is_none());
-    // cannot assert is none
-    self.ast_to_hir.insert(ptr, idx);
+    // cannot assert is none, but prefer older
+    match self.ast_to_hir.entry(ptr) {
+      Entry::Occupied(_) => {}
+      Entry::Vacant(entry) => {
+        entry.insert(idx);
+      }
+    }
   }
 }
 
