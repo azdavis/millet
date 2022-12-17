@@ -198,6 +198,43 @@ pub(crate) fn document_symbol(sym: analysis::DocumentSymbol) -> lsp_types::Docum
   }
 }
 
+pub(crate) fn completion_item(item: analysis::CompletionItem) -> lsp_types::CompletionItem {
+  lsp_types::CompletionItem {
+    label: item.label,
+    kind: Some(match item.kind {
+      sml_namespace::SymbolKind::Signature => lsp_types::CompletionItemKind::INTERFACE,
+      sml_namespace::SymbolKind::Structure => lsp_types::CompletionItemKind::MODULE,
+      sml_namespace::SymbolKind::Functor | sml_namespace::SymbolKind::Function => {
+        lsp_types::CompletionItemKind::FUNCTION
+      }
+      sml_namespace::SymbolKind::Value => lsp_types::CompletionItemKind::VARIABLE,
+      sml_namespace::SymbolKind::Type => lsp_types::CompletionItemKind::CLASS,
+      sml_namespace::SymbolKind::Constructor => lsp_types::CompletionItemKind::CONSTRUCTOR,
+      sml_namespace::SymbolKind::Exception => lsp_types::CompletionItemKind::EVENT,
+    }),
+    detail: item.detail,
+    documentation: item.documentation.map(|value| {
+      lsp_types::Documentation::MarkupContent(lsp_types::MarkupContent {
+        kind: lsp_types::MarkupKind::Markdown,
+        value,
+      })
+    }),
+    deprecated: None,
+    preselect: None,
+    sort_text: None,
+    filter_text: None,
+    insert_text: None,
+    insert_text_format: None,
+    insert_text_mode: None,
+    text_edit: None,
+    additional_text_edits: None,
+    command: None,
+    commit_characters: None,
+    data: None,
+    tags: None,
+  }
+}
+
 pub(crate) fn try_req<R, F>(req: Request, f: F) -> ControlFlow<Result<()>, Request>
 where
   R: lsp_types::request::Request,

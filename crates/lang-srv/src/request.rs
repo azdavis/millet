@@ -15,6 +15,7 @@ pub(crate) fn handle(st: &mut St, req: Request) {
   }
 }
 
+#[allow(clippy::too_many_lines)]
 fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::HoverRequest, _>(r, |id, params| {
     let params = params.text_document_position_params;
@@ -96,6 +97,14 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
     let res: Option<Vec<_>> = st.analysis.find_all_references(pos).map(|locs| {
       locs.into_iter().filter_map(|loc| helpers::lsp_location(&st.cx.store, loc)).collect()
     });
+    st.cx.send_response(Response::new_ok(id, res));
+    Ok(())
+  })?;
+  r = helpers::try_req::<lsp_types::request::Completion, _>(r, |id, params| {
+    let params = params.text_document_position;
+    let pos = helpers::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
+    let res: Option<Vec<_>> =
+      st.analysis.completions(pos).map(|cs| cs.into_iter().map(helpers::completion_item).collect());
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;

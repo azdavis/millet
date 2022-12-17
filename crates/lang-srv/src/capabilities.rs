@@ -21,6 +21,7 @@ pub(crate) fn get() -> lsp_types::ServerCapabilities {
     document_formatting_provider: Some(lsp_types::OneOf::Left(true)),
     document_symbol_provider: Some(lsp_types::OneOf::Left(true)),
     references_provider: Some(lsp_types::OneOf::Left(true)),
+    completion_provider: Some(lsp_types::CompletionOptions::default()),
     ..Default::default()
   }
 }

@@ -1,6 +1,6 @@
 //! See [`Info`].
 
-use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme};
+use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme, ValInfo};
 use crate::{basis::Basis, def, display::MetaVarNames, env::EnvLike, mode::Mode, util::ty_syms};
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
@@ -207,6 +207,25 @@ impl Info {
       .iter()
       .filter_map(move |(&idx, entry)| entry.def.map_or(false, |d| d == def).then_some(idx))
   }
+
+  /// Returns the completions for this file.
+  #[must_use]
+  pub fn completions(&self, syms: &Syms) -> Vec<CompletionItem> {
+    let mut ret = Vec::<CompletionItem>::new();
+    let mut mvs = MetaVarNames::new(self.meta_vars());
+    ret.extend(self.basis.inner.env.all_val().into_iter().map(|(name, val_info)| {
+      mvs.clear();
+      mvs.extend_for(&val_info.ty_scheme.ty);
+      CompletionItem {
+        label: name.as_str().to_owned(),
+        kind: val_info_symbol_kind(val_info),
+        detail: Some(val_info.ty_scheme.display(&mvs, syms).to_string()),
+        // TODO improve? might need to reorganize where documentation is stored
+        documentation: None,
+      }
+    }));
+    ret
+  }
 }
 
 /// need to do extend instead of a big chain of chains because of the borrow checker.
@@ -245,17 +264,9 @@ fn env_syms<E: EnvLike>(
     mvs.clear();
     mvs.extend_for(&val_info.ty_scheme.ty);
     let idx = def_idx(path, val_info.def?)?;
-    let kind = match val_info.id_status {
-      IdStatus::Con => sml_namespace::SymbolKind::Constructor,
-      IdStatus::Exn(_) => sml_namespace::SymbolKind::Exception,
-      IdStatus::Val => match val_info.ty_scheme.ty {
-        Ty::Fn(_, _) => sml_namespace::SymbolKind::Function,
-        _ => sml_namespace::SymbolKind::Value,
-      },
-    };
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
-      kind,
+      kind: val_info_symbol_kind(val_info),
       detail: Some(val_info.ty_scheme.display(mvs, syms).to_string()),
       idx,
       children: Vec::new(),
@@ -273,6 +284,17 @@ fn def_idx(path: paths::PathId, def: def::Def) -> Option<sml_hir::Idx> {
   }
 }
 
+fn val_info_symbol_kind(val_info: &ValInfo) -> sml_namespace::SymbolKind {
+  match val_info.id_status {
+    IdStatus::Con => sml_namespace::SymbolKind::Constructor,
+    IdStatus::Exn(_) => sml_namespace::SymbolKind::Exception,
+    IdStatus::Val => match val_info.ty_scheme.ty {
+      Ty::Fn(_, _) => sml_namespace::SymbolKind::Function,
+      _ => sml_namespace::SymbolKind::Value,
+    },
+  }
+}
+
 /// A document symbol.
 #[derive(Debug)]
 pub struct DocumentSymbol {
@@ -286,4 +308,17 @@ pub struct DocumentSymbol {
   pub idx: sml_hir::Idx,
   /// Children of this symbol.
   pub children: Vec<DocumentSymbol>,
+}
+
+/// A completion item.
+#[derive(Debug)]
+pub struct CompletionItem {
+  /// The label.
+  pub label: String,
+  /// The kind.
+  pub kind: sml_namespace::SymbolKind,
+  /// Detail about it.
+  pub detail: Option<String>,
+  /// Markdown documentation for it.
+  pub documentation: Option<String>,
 }
