@@ -163,19 +163,6 @@ impl Analysis {
     Some((range, case.to_string()))
   }
 
-  /// Returns the symbols for the file.
-  #[must_use]
-  pub fn document_symbols(&self, path: PathId) -> Option<Vec<DocumentSymbol>> {
-    let file = self.source_files.get(&path)?;
-    let ret: Vec<_> = file
-      .info
-      .document_symbols(&self.syms, path)
-      .into_iter()
-      .filter_map(|s| symbol(&file.syntax, s))
-      .collect();
-    Some(ret)
-  }
-
   /// Format the given file, and return the end position of the file.
   ///
   /// # Errors
@@ -190,6 +177,19 @@ impl Analysis {
     let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
     let buf = sml_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::Format)?;
     Ok((buf, file.syntax.pos_db.end_position()))
+  }
+
+  /// Returns the symbols for the file.
+  #[must_use]
+  pub fn document_symbols(&self, path: PathId) -> Option<Vec<DocumentSymbol>> {
+    let file = self.source_files.get(&path)?;
+    let ret: Vec<_> = file
+      .info
+      .document_symbols(&self.syms, path)
+      .into_iter()
+      .filter_map(|s| symbol(&file.syntax, s))
+      .collect();
+    Some(ret)
   }
 }
 
