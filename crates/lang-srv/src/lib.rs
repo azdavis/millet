@@ -4,6 +4,7 @@
 #![allow(clippy::single_match_else)]
 
 mod capabilities;
+mod convert;
 mod cx;
 mod diagnostics;
 mod helpers;

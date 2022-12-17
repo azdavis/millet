@@ -1,6 +1,6 @@
 //! Publish diagnostics.
 
-use crate::helpers;
+use crate::convert;
 use crate::state::{Mode, St};
 use fast_hash::FxHashSet;
 use lsp_types::Url;
@@ -18,14 +18,14 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
   let mut has_diagnostics = FxHashSet::<Url>::default();
   for (path_id, errors) in got_many {
     let path = st.cx.store.get_path(path_id);
-    let url = match helpers::file_url(path.as_path()) {
+    let url = match convert::file_url(path.as_path()) {
       Ok(x) => x,
       Err(e) => {
         log::error!("couldn't get path as a file url: {e:#}");
         continue;
       }
     };
-    let ds = helpers::diagnostics(errors, st.cx.options.diagnostics_more_info_hint);
+    let ds = convert::diagnostics(errors, st.cx.options.diagnostics_more_info_hint);
     if ds.is_empty() {
       continue;
     }

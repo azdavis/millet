@@ -1,7 +1,7 @@
 //! Handle notifications.
 
 use crate::state::{Mode, St};
-use crate::{diagnostics, helpers};
+use crate::{convert, diagnostics, helpers};
 use anyhow::{bail, Result};
 use lsp_server::Notification;
 use std::ops::ControlFlow;
@@ -28,7 +28,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
   })?;
   n = helpers::try_notif::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
     let url = params.text_document.uri;
-    let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+    let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
     match &mut st.mode {
       Mode::Root(root) => {
         let input = match &mut root.input {
@@ -52,7 +52,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
         Some(text) => {
           helpers::apply_changes(text, params.content_changes);
           if st.cx.options.diagnostics_on_change {
-            let ds = helpers::diagnostics(
+            let ds = convert::diagnostics(
               st.analysis.get_one(text),
               st.cx.options.diagnostics_more_info_hint,
             );
@@ -68,9 +68,9 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
     if let Mode::NoRoot(open_files) = &mut st.mode {
       let url = params.text_document.uri;
       let text = params.text_document.text;
-      let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+      let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
       let ds =
-        helpers::diagnostics(st.analysis.get_one(&text), st.cx.options.diagnostics_more_info_hint);
+        convert::diagnostics(st.analysis.get_one(&text), st.cx.options.diagnostics_more_info_hint);
       st.cx.send_diagnostics(url, ds);
       open_files.insert(path, text);
     }
@@ -91,10 +91,10 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           log::warn!("got text for DidSaveTextDocument");
         }
         let url = params.text_document.uri;
-        let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+        let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
         match open_files.get(&path) {
           Some(text) => {
-            let ds = helpers::diagnostics(
+            let ds = convert::diagnostics(
               st.analysis.get_one(text),
               st.cx.options.diagnostics_more_info_hint,
             );
@@ -109,7 +109,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
   n = helpers::try_notif::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
     if let Mode::NoRoot(open_files) = &mut st.mode {
       let url = params.text_document.uri;
-      let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+      let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
       open_files.remove(&path);
       st.cx.send_diagnostics(url, Vec::new());
     }

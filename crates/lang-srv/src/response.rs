@@ -1,8 +1,6 @@
 //! Respond to requests.
 
-use crate::cx::LEARN_MORE;
-use crate::helpers;
-use crate::state::St;
+use crate::{convert, cx::LEARN_MORE, state::St};
 use lsp_server::Response;
 
 pub(crate) fn handle(st: &mut St, res: Response) {
@@ -41,7 +39,7 @@ pub(crate) fn handle(st: &mut St, res: Response) {
   }
   st.cx.send_request::<lsp_types::request::ShowDocument>(
     lsp_types::ShowDocumentParams {
-      uri: helpers::error_url(code),
+      uri: convert::error_url(code),
       external: Some(true),
       take_focus: Some(true),
       selection: None,

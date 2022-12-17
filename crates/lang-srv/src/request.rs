@@ -1,6 +1,6 @@
 //! Handle requests.
 
-use crate::{helpers, state::St};
+use crate::{convert, helpers, state::St};
 use anyhow::Result;
 use lsp_server::{Request, Response};
 use std::ops::ControlFlow;
@@ -19,14 +19,14 @@ pub(crate) fn handle(st: &mut St, req: Request) {
 fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::HoverRequest, _>(r, |id, params| {
     let params = params.text_document_position_params;
-    let pos = helpers::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
+    let pos = convert::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
     let res = st.analysis.get_md(pos, st.cx.options.show_token_hover).map(|(value, range)| {
       lsp_types::Hover {
         contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
           kind: lsp_types::MarkupKind::Markdown,
           value,
         }),
-        range: Some(helpers::lsp_range(range)),
+        range: Some(convert::lsp_range(range)),
       }
     });
     st.cx.send_response(Response::new_ok(id, res));
@@ -34,22 +34,22 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
     let params = params.text_document_position_params;
-    let pos = helpers::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
+    let pos = convert::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
     let res = st.analysis.get_def(pos).and_then(|range| {
-      helpers::lsp_location(&st.cx.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
+      convert::lsp_location(&st.cx.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
     });
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;
   r = helpers::try_req::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {
     let params = params.text_document_position_params;
-    let pos = helpers::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
+    let pos = convert::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
     let locs: Vec<_> = st
       .analysis
       .get_ty_defs(pos)
       .into_iter()
       .flatten()
-      .filter_map(|range| helpers::lsp_location(&st.cx.store, range))
+      .filter_map(|range| convert::lsp_location(&st.cx.store, range))
       .collect();
     let res = (!locs.is_empty()).then_some(lsp_types::GotoDefinitionResponse::Array(locs));
     st.cx.send_response(Response::new_ok(id, res));
@@ -57,23 +57,23 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::CodeActionRequest, _>(r, |id, params| {
     let url = params.text_document.uri;
-    let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
-    let range = helpers::analysis_range(params.range);
+    let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+    let range = convert::analysis_range(params.range);
     let mut actions = Vec::<lsp_types::CodeActionOrCommand>::new();
     if let Some((range, new_text)) = st.analysis.fill_case(path.wrap(range.start)) {
-      actions.push(helpers::quick_fix("Fill case".to_owned(), url, range, new_text));
+      actions.push(convert::quick_fix("Fill case".to_owned(), url, range, new_text));
     }
     st.cx.send_response(Response::new_ok(id, actions));
     Ok(())
   })?;
   r = helpers::try_req::<lsp_types::request::Formatting, _>(r, |id, params| {
     let url = params.text_document.uri;
-    let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+    let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
     let res = st.analysis.format(path, params.options.tab_size).ok().map(|(new_text, end)| {
       vec![lsp_types::TextEdit {
         range: lsp_types::Range {
           start: lsp_types::Position { line: 0, character: 0 },
-          end: helpers::lsp_position(end),
+          end: convert::lsp_position(end),
         },
         new_text,
       }]
@@ -83,28 +83,28 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   })?;
   r = helpers::try_req::<lsp_types::request::DocumentSymbolRequest, _>(r, |id, params| {
     let url = params.text_document.uri;
-    let path = helpers::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+    let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
     let res: Option<Vec<_>> = st
       .analysis
       .document_symbols(path)
-      .map(|xs| xs.into_iter().map(helpers::document_symbol).collect());
+      .map(|xs| xs.into_iter().map(convert::document_symbol).collect());
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;
   r = helpers::try_req::<lsp_types::request::References, _>(r, |id, params| {
     let params = params.text_document_position;
-    let pos = helpers::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
+    let pos = convert::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
     let res: Option<Vec<_>> = st.analysis.find_all_references(pos).map(|locs| {
-      locs.into_iter().filter_map(|loc| helpers::lsp_location(&st.cx.store, loc)).collect()
+      locs.into_iter().filter_map(|loc| convert::lsp_location(&st.cx.store, loc)).collect()
     });
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;
   r = helpers::try_req::<lsp_types::request::Completion, _>(r, |id, params| {
     let params = params.text_document_position;
-    let pos = helpers::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
+    let pos = convert::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
     let res: Option<Vec<_>> =
-      st.analysis.completions(pos).map(|cs| cs.into_iter().map(helpers::completion_item).collect());
+      st.analysis.completions(pos).map(|cs| cs.into_iter().map(convert::completion_item).collect());
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;

@@ -1,8 +1,7 @@
 //! Initialize a new server.
 
-use crate::cx::Cx;
 use crate::state::{Mode, Root, St};
-use crate::{diagnostics, helpers};
+use crate::{convert, cx::Cx, diagnostics};
 use crossbeam_channel::Sender;
 use diagnostic_util::Code;
 use fast_hash::{FxHashMap, FxHashSet};
@@ -36,7 +35,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
   };
   let mut root = init
     .root_uri
-    .map(|url| helpers::canonical_path_buf(&sp.file_system, &url).map_err(|e| (e, url)))
+    .map(|url| convert::canonical_path_buf(&sp.file_system, &url).map_err(|e| (e, url)))
     .transpose();
   let mut has_diagnostics = FxHashSet::<Url>::default();
   let mut ret = St {
@@ -68,7 +67,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
         format!("{}/**/*.{{sml,sig,fun,cm,mlb,toml}}", root.path.as_path().display());
       let watchers = vec![lsp_types::FileSystemWatcher { glob_pattern, kind: None }];
       let did_changed_registration =
-        helpers::registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
+        convert::registration::<lsp_types::notification::DidChangeWatchedFiles, _>(
           lsp_types::DidChangeWatchedFilesRegistrationOptions { watchers },
         );
       ret.cx.send_request::<lsp_types::request::RegisterCapability>(
