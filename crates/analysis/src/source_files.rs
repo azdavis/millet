@@ -11,8 +11,7 @@ pub(crate) fn path_and_range(
 ) -> Option<WithPath<Range>> {
   let def_file = source_files.get(&idx.path)?;
   let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx.val)?;
-  let def_range = ptr.to_node(def_file.syntax.parse.root.syntax()).text_range();
-  Some(idx.path.wrap(def_file.syntax.pos_db.range(def_range)?))
+  Some(idx.path.wrap(def_file.syntax.pos_db.range(ptr.text_range())?))
 }
 
 pub(crate) fn file_and_token(
