@@ -196,6 +196,11 @@ impl<'a> MetaVarNames<'a> {
     Self { next_idx: 0, map: FxHashMap::default(), info }
   }
 
+  pub(crate) fn clear(&mut self) {
+    self.next_idx = 0;
+    self.map.clear();
+  }
+
   pub(crate) fn extend_for(&mut self, ty: &Ty) {
     meta_vars(
       &Subst::default(),

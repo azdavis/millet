@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Add support for document symbols.
+
 ## v0.6.6
 
 - Change the invalid `@` diagnostic from an error to a warning.

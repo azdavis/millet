@@ -174,6 +174,30 @@ pub(crate) fn quick_fix(
   })
 }
 
+pub(crate) fn symbol(sym: analysis::Symbol) -> lsp_types::DocumentSymbol {
+  #[allow(deprecated)]
+  lsp_types::DocumentSymbol {
+    name: sym.name,
+    detail: sym.detail,
+    kind: match sym.kind {
+      sml_namespace::SymbolKind::Signature => lsp_types::SymbolKind::INTERFACE,
+      sml_namespace::SymbolKind::Structure => lsp_types::SymbolKind::MODULE,
+      sml_namespace::SymbolKind::Functor | sml_namespace::SymbolKind::Function => {
+        lsp_types::SymbolKind::FUNCTION
+      }
+      sml_namespace::SymbolKind::Value => lsp_types::SymbolKind::VARIABLE,
+      sml_namespace::SymbolKind::Type => lsp_types::SymbolKind::CLASS,
+      sml_namespace::SymbolKind::Constructor => lsp_types::SymbolKind::CONSTRUCTOR,
+      sml_namespace::SymbolKind::Exception => lsp_types::SymbolKind::EVENT,
+    },
+    tags: None,
+    deprecated: None,
+    range: lsp_range(sym.range),
+    selection_range: lsp_range(sym.selection_range),
+    children: Some(sym.children.into_iter().map(symbol).collect()),
+  }
+}
+
 pub(crate) fn try_req<R, F>(req: Request, f: F) -> ControlFlow<Result<()>, Request>
 where
   R: lsp_types::request::Request,

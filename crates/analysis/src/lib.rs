@@ -163,6 +163,19 @@ impl Analysis {
     Some((range, case.to_string()))
   }
 
+  /// Returns the symbols for the file.
+  #[must_use]
+  pub fn symbols(&self, path: PathId) -> Option<Vec<Symbol>> {
+    let file = self.source_files.get(&path)?;
+    let ret: Vec<_> = file
+      .info
+      .symbols(&self.syms, path)
+      .into_iter()
+      .filter_map(|s| symbol(&file.syntax, s))
+      .collect();
+    Some(ret)
+  }
+
   /// Format the given file, and return the end position of the file.
   ///
   /// # Errors
@@ -207,4 +220,38 @@ pub enum FormatError {
   NoFile,
   /// A formatting error.
   Format(sml_fmt::Error),
+}
+
+/// A symbol.
+#[derive(Debug)]
+pub struct Symbol {
+  /// The name of the symbol.
+  pub name: String,
+  /// What kind of symbol this is.
+  pub kind: sml_namespace::SymbolKind,
+  /// Detail about this symbol.
+  pub detail: Option<String>,
+  /// The range of the whole symbol.
+  pub range: text_pos::Range,
+  /// The range of just the name.
+  pub selection_range: text_pos::Range,
+  /// Children of this symbol.
+  pub children: Vec<Symbol>,
+}
+
+fn symbol(
+  file: &sml_file_syntax::SourceFileSyntax,
+  sym: sml_statics::info::Symbol,
+) -> Option<Symbol> {
+  let text_range = file.lower.ptrs.hir_to_ast(sym.idx)?.text_range();
+  let range = file.pos_db.range(text_range)?;
+  Some(Symbol {
+    name: sym.name,
+    kind: sym.kind,
+    detail: sym.detail,
+    range,
+    // TODO improve
+    selection_range: range,
+    children: sym.children.into_iter().filter_map(|s| symbol(file, s)).collect(),
+  })
 }

@@ -1,7 +1,7 @@
 //! See [`Info`].
 
-use crate::types::{MetaVarInfo, Syms, Ty, TyScheme};
-use crate::{def, display::MetaVarNames, mode::Mode, util::ty_syms};
+use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme};
+use crate::{basis::Basis, def, display::MetaVarNames, env::EnvLike, mode::Mode, util::ty_syms};
 use fast_hash::FxHashMap;
 use std::fmt::Write as _;
 
@@ -11,6 +11,7 @@ pub struct Info {
   mode: Mode,
   indices: FxHashMap<sml_hir::Idx, IdxEntry>,
   meta_vars: MetaVarInfo,
+  basis: Basis,
 }
 
 #[derive(Debug, Clone)]
@@ -28,7 +29,12 @@ struct IdxEntry {
 
 impl Info {
   pub(crate) fn new(mode: Mode) -> Self {
-    Self { mode, indices: FxHashMap::default(), meta_vars: MetaVarInfo::default() }
+    Self {
+      mode,
+      indices: FxHashMap::default(),
+      meta_vars: MetaVarInfo::default(),
+      basis: Basis::default(),
+    }
   }
 
   pub(crate) fn insert(
@@ -151,4 +157,125 @@ impl Info {
     ret.sort_unstable();
     Some(ret)
   }
+
+  pub(crate) fn set_basis(&mut self, basis: Basis) {
+    self.basis = basis;
+  }
+
+  /// Returns the symbols for this file.
+  ///
+  /// You also have to pass down the `path` that this `Info` is for. It's slightly odd, but we
+  /// need it to know which `Def`s we should actually include in the return value.
+  #[must_use]
+  pub fn symbols(&self, syms: &Syms, path: paths::PathId) -> Vec<Symbol> {
+    let bs = &self.basis.inner;
+    let mut mvs = MetaVarNames::new(self.meta_vars());
+    let mut ret = Vec::<Symbol>::new();
+    ret.extend(bs.fun_env.iter().filter_map(|(name, fun_sig)| {
+      let idx = def_idx(path, fun_sig.body_env.def?)?;
+      let mut children = Vec::<Symbol>::new();
+      env_syms(&mut children, &mut mvs, syms, path, &fun_sig.body_env);
+      Some(Symbol {
+        name: name.as_str().to_owned(),
+        kind: sml_namespace::SymbolKind::Functor,
+        detail: None,
+        idx,
+        children,
+      })
+    }));
+    ret.extend(bs.sig_env.iter().filter_map(|(name, sig)| {
+      let idx = def_idx(path, sig.env.def?)?;
+      let mut children = Vec::<Symbol>::new();
+      env_syms(&mut children, &mut mvs, syms, path, &sig.env);
+      Some(Symbol {
+        name: name.as_str().to_owned(),
+        kind: sml_namespace::SymbolKind::Signature,
+        detail: None,
+        idx,
+        children,
+      })
+    }));
+    env_syms(&mut ret, &mut mvs, syms, path, &bs.env);
+    // order doesn't seem to matter. at least vs code displays the symbols in source order.
+    ret
+  }
+}
+
+/// need to do extend instead of a big chain of chains because of the borrow checker.
+fn env_syms<E: EnvLike>(
+  ac: &mut Vec<Symbol>,
+  mvs: &mut MetaVarNames<'_>,
+  syms: &Syms,
+  path: paths::PathId,
+  env: &E,
+) {
+  ac.extend(env.all_str().into_iter().filter_map(|(name, env)| {
+    let idx = def_idx(path, env.def?)?;
+    let mut children = Vec::<Symbol>::new();
+    env_syms(&mut children, mvs, syms, path, env);
+    Some(Symbol {
+      name: name.as_str().to_owned(),
+      kind: sml_namespace::SymbolKind::Structure,
+      detail: None,
+      idx,
+      children,
+    })
+  }));
+  ac.extend(env.all_ty().into_iter().filter_map(|(name, ty_info)| {
+    mvs.clear();
+    mvs.extend_for(&ty_info.ty_scheme.ty);
+    let idx = def_idx(path, ty_info.def?)?;
+    Some(Symbol {
+      name: name.as_str().to_owned(),
+      kind: sml_namespace::SymbolKind::Type,
+      detail: Some(ty_info.ty_scheme.display(mvs, syms).to_string()),
+      idx,
+      children: Vec::new(),
+    })
+  }));
+  ac.extend(env.all_val().into_iter().filter_map(|(name, val_info)| {
+    mvs.clear();
+    mvs.extend_for(&val_info.ty_scheme.ty);
+    let idx = def_idx(path, val_info.def?)?;
+    let kind = match val_info.id_status {
+      IdStatus::Con => sml_namespace::SymbolKind::Constructor,
+      IdStatus::Exn(_) => sml_namespace::SymbolKind::Exception,
+      IdStatus::Val => match val_info.ty_scheme.ty {
+        Ty::Fn(_, _) => sml_namespace::SymbolKind::Function,
+        _ => sml_namespace::SymbolKind::Value,
+      },
+    };
+    Some(Symbol {
+      name: name.as_str().to_owned(),
+      kind,
+      detail: Some(val_info.ty_scheme.display(mvs, syms).to_string()),
+      idx,
+      children: Vec::new(),
+    })
+  }));
+}
+
+fn def_idx(path: paths::PathId, def: def::Def) -> Option<sml_hir::Idx> {
+  match def {
+    def::Def::Path(p, idx) => match p {
+      def::Path::Regular(p) => (p == path).then_some(idx),
+      def::Path::BuiltinLib(_) => None,
+    },
+    def::Def::Primitive(_) => None,
+  }
+}
+
+/// A symbol.
+#[derive(Debug)]
+pub struct Symbol {
+  /// The name of the symbol.
+  pub name: String,
+  /// What kind of symbol this is.
+  pub kind: sml_namespace::SymbolKind,
+  /// Detail about this symbol.
+  pub detail: Option<String>,
+  /// The index of the symbol.
+  pub idx: sml_hir::Idx,
+  /// Children of this symbol.
+  pub children: Vec<Symbol>,
 }

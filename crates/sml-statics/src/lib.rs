@@ -58,8 +58,10 @@ pub fn get(
   elapsed::log("sml_statics::get", || {
     let mut st = st::St::new(mode, std::mem::take(syms));
     let inner = top_dec::get(&mut st, &basis.inner, arenas, root);
-    let (new_syms, errors, info) = st.finish();
+    let basis = basis::Basis { inner };
+    let (new_syms, errors, mut info) = st.finish();
+    info.set_basis(basis.clone());
     *syms = new_syms;
-    Statics { info, errors, basis: basis::Basis { inner } }
+    Statics { info, errors, basis }
   })
 }

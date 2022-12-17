@@ -21,6 +21,7 @@ sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
 sml-fmt = { path = "../sml-fmt" }
 sml-hir = { path = "../sml-hir" }
+sml-namespace = { path = "../sml-namespace" }
 sml-statics = { path = "../sml-statics" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { path = "../str-util" }

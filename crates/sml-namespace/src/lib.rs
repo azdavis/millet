@@ -24,3 +24,24 @@ impl fmt::Display for Module {
     }
   }
 }
+
+/// A kind of symbol.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum SymbolKind {
+  /// A `structure`.
+  Structure,
+  /// A `signature`.
+  Signature,
+  /// A `functor`.
+  Functor,
+  /// A `type` or `datatype`.
+  Type,
+  /// A `datatype` constructor.
+  Constructor,
+  /// An `exception`.
+  Exception,
+  /// A value with function type.
+  Function,
+  /// A regular value.
+  Value,
+}
