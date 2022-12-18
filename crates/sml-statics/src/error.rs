@@ -88,16 +88,17 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(want);
         mvs.extend_for(got);
+        flavor.extend_meta_var_names(&mut mvs);
         let flavor = flavor.display(&mvs, self.syms);
+        write!(f, "incompatible types: {flavor}")?;
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
         match self.lines {
           config::ErrorLines::One => {
-            write!(f, "incompatible types: {flavor}: expected {want}, found {got}")
+            write!(f, ": expected {want}, found {got}")
           }
           config::ErrorLines::Many => {
-            writeln!(f, "incompatible types: {flavor}")?;
-            writeln!(f, "  expected {want}")?;
+            writeln!(f, "\n  expected {want}")?;
             write!(f, "     found {got}")
           }
         }
@@ -266,12 +267,39 @@ impl IncompatibleTysFlavor {
   ) -> IncompatibleTysFlavorDisplay<'a> {
     IncompatibleTysFlavorDisplay { flavor: self, meta_vars, syms }
   }
+
+  fn extend_meta_var_names(&self, meta_vars: &mut MetaVarNames<'_>) {
+    match self {
+      Self::BoundTyVar(_, _)
+      | Self::FixedTyVar(_, _)
+      | Self::MissingRow(_)
+      | Self::Con(_, _)
+      | Self::OverloadCon(_, _)
+      | Self::OverloadUnify(_, _)
+      | Self::UnresolvedRecordMissingRow(_) => {}
+      Self::ExtraRows(record) | Self::OverloadRecord(record, _) => {
+        for ty in record.values() {
+          meta_vars.extend_for(ty);
+        }
+      }
+      Self::OverloadHeadMismatch(_, ty) | Self::NotEqTy(ty, _) => meta_vars.extend_for(ty),
+      Self::UnresolvedRecordHeadMismatch(record, ty) => {
+        for ty in record.values() {
+          meta_vars.extend_for(ty);
+        }
+        meta_vars.extend_for(ty);
+      }
+      Self::Head(ty1, ty2) => {
+        meta_vars.extend_for(ty1);
+        meta_vars.extend_for(ty2);
+      }
+    }
+  }
 }
 
 struct IncompatibleTysFlavorDisplay<'a> {
   flavor: &'a IncompatibleTysFlavor,
-  /// NOTE: all types contained inside the IncompatibleTysFlavor should be cloned off of the "main"
-  /// 2 types in the containing ErrorKind, so we'll already have extended the MetaVarNames for them.
+  /// need this to be mut so we can extend for any tys inside the flavor
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
 }
