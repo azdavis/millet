@@ -503,7 +503,7 @@ structure val platinum = 3
 (**       ^^^ expected a name *)
 ```
 
-This is the most common kind of parse error. It's not easy to give general advice for how to fix it.
+This is probably the most common kind of parse error.
 
 One bit of advice is this: Since the parser tries to continue parsing a file even in the face of errors, it may find further errors after the first one. But these errors may be all ultimately because of that first error. So, try looking at the first error in the file first.
 
@@ -1360,7 +1360,7 @@ Substituting, we have `?a = ?a -> ?b`. That is, we are setting a type variable, 
 
 Two types that were supposed to be compatible were not.
 
-This is probably the most common typechecking error, so it's hard to give general advice for how to fix it.
+This is probably the most common typechecking error.
 
 ### Expected and found
 
@@ -1387,7 +1387,7 @@ val _ = choose 4
 
 Millet reports types defined in structures and signatures prefixed with the names of the relevant structures or signatures. This is sometimes called a "fully qualified name" or "FQN".
 
-Because of how signature matching works and internal Millet design decisions, Millet reports the type `t` in this example as `FOO.t` instead of `Foo.t`:
+Because of internal Millet design decisions, Millet reports the type `t` in this example as `FOO.t` instead of `Foo.t`:
 
 ```sml
 signature FOO = sig
@@ -1406,17 +1406,17 @@ val _ = Foo.x : unit
 
 ### Overloads
 
-Certain built-in functions, like `+`, `<`, and `abs` are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
+Certain built-in functions, like `+`, `<`, and `abs`, are overloaded, which means they may work with a certain fixed number of types. For instance, `+` works with `int`, `word`, and `real`, while `<` works for those as well as `string` and `char`.
 
 When using overloaded functions, there must exist a single actual type being used. For instance, `+` works with `word`, `real`, and `int`. However, `+` cannot add a `real` to a `word`, or an `int` to a `real`, or any such similar combination. It can only add two `word`s, or two `real`s, or two `int`s.
 
 ### Equality
 
-Part of checking for type compatibility is ensuring that the equality attribute of types is respected. For instance, `=` compares two equality types, and `real` is not an equality type, so the following fails.
+Part of checking for type compatibility is ensuring that the equality attribute of types is respected. For instance, `=` and `<>` compare expressions whose type must be an equality types, and `real` is not an equality type, so the following fails.
 
 ```sml
-val _ = 1.2 = 3.4
-(**     ^^^^^^^^^ not an equality type *)
+val _ = 1.2 <> 3.4
+(**     ^^^^^^^^^^ not an equality type *)
 ```
 
 ### Reporting types with invalid syntax
@@ -1428,8 +1428,8 @@ Millet reports overloaded types with intentionally invalid SML syntax. Here is w
 | `<wordint>`  | `word`, `int`                           |
 | `<realint>`  | `real`, `int`                           |
 | `<num>`      | `word`, `real`, `int`                   |
-| `<numtxt>`   | `word`, `real`, `int`, `string`, `char` |
 | `<numtxteq>` | `word`, `int`, `string`, `char`         |
+| `<numtxt>`   | `word`, `real`, `int`, `string`, `char` |
 
 Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax.
 
