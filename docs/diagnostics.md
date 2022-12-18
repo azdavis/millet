@@ -1412,7 +1412,7 @@ When using overloaded functions, there must exist a single actual type being use
 
 ### Equality
 
-Part of checking for type compatibility is ensuring that the equality attribute of types is respected. For instance, `=` and `<>` compare expressions whose type must be an equality types, and `real` is not an equality type, so the following fails.
+Part of checking for type compatibility is ensuring that the equality attribute of types is respected. For instance, `=` and `<>` compare expressions whose type must be an equality type, and `real` is not an equality type, so the following fails.
 
 ```sml
 val _ = 1.2 <> 3.4
