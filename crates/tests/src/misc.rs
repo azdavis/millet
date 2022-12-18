@@ -767,3 +767,36 @@ functor MkThing
 "#,
   );
 }
+
+#[test]
+fn op_plus_reduce() {
+  check(
+    r#"
+datatype 'a tree = Empty | Node of 'a tree * 'a * 'a tree
+fun reduce (op +) z t =
+  case t of
+    Empty => z
+  | Node (l, x, r) => reduce (op +) z l + x + reduce (op +) z r
+"#,
+  );
+}
+
+#[test]
+fn apply_eq() {
+  check(
+    r#"
+fun apply_eq (op =) a b = a = b
+(** + cannot re-bind name: = *)
+"#,
+  );
+}
+
+#[test]
+fn op_false() {
+  check(
+    r#"
+fun wot (op false) = ()
+(** + missing true *)
+"#,
+  );
+}
