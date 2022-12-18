@@ -82,6 +82,12 @@ pub(crate) fn check_with_std_basis(s: &str) {
   raw::get(raw::one_file_fs(s), analysis::StdBasis::Full, raw::Outcome::Pass, Severity::Error);
 }
 
+/// Like [`check`] but with warnings.
+#[track_caller]
+pub(crate) fn check_with_warnings(s: &str) {
+  raw::get(raw::one_file_fs(s), analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Warning);
+}
+
 /// Asserts the input from the files generates an error at the given path containing the given
 /// message.
 #[track_caller]

@@ -1,7 +1,6 @@
 //! Miscellaneous tests. If unsure where to put a test, put it here.
 
-use crate::check::{check, raw};
-use diagnostic_util::Severity;
+use crate::check::{check, check_with_warnings};
 
 #[test]
 fn apply() {
@@ -714,17 +713,12 @@ fun foo x =
 
 #[test]
 fn unused_var() {
-  let files = [
-    (
-      "a.sml",
-      r#"
+  check_with_warnings(
+    r#"
 fun f x = ()
 (**   ^ unused value: x *)
 "#,
-    ),
-    ("sources.mlb", "a.sml"),
-  ];
-  raw::get(files, analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Warning);
+  );
 }
 
 #[test]
@@ -797,6 +791,27 @@ fn op_false() {
     r#"
 fun wot (op false) = ()
 (** + missing true *)
+"#,
+  );
+}
+
+#[test]
+fn use_literal() {
+  check_with_warnings(
+    r#"
+val () = use "foo.sml"
+(**      ^^^^^^^^^^^^^ no additional definitions from "foo.sml" brought into scope *)
+"#,
+  );
+}
+
+#[test]
+fn use_non_literal() {
+  check_with_warnings(
+    r#"
+val s = "bar.sml"
+val () = use s
+(**      ^^^^^ no additional definitions brought into scope *)
 "#,
   );
 }
