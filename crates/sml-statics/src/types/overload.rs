@@ -52,10 +52,11 @@ impl Composite {
 
   /// we could also probably use `as_basics`, set intersection, then a "reverse" `as_basics` here.
   pub(crate) fn unify(self, other: Self) -> Overload {
-    #[allow(clippy::match_same_arms)]
     match (self, other) {
       (Self::WordInt, Self::WordInt | Self::Num | Self::NumTxt)
-      | (Self::Num | Self::NumTxt, Self::WordInt) => Self::WordInt.into(),
+      | (Self::Num | Self::NumTxt, Self::WordInt)
+      | (Self::WordIntTxt, Self::WordInt | Self::Num)
+      | (Self::WordInt | Self::Num, Self::WordIntTxt) => Self::WordInt.into(),
       (Self::WordInt | Self::WordIntTxt, Self::RealInt)
       | (Self::RealInt, Self::WordInt | Self::WordIntTxt) => Basic::Int.into(),
       (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
@@ -65,8 +66,6 @@ impl Composite {
       (Self::WordIntTxt, Self::WordIntTxt | Self::NumTxt) | (Self::NumTxt, Self::WordIntTxt) => {
         Self::WordIntTxt.into()
       }
-      (Self::WordIntTxt, Self::WordInt | Self::Num)
-      | (Self::WordInt | Self::Num, Self::WordIntTxt) => Self::WordInt.into(),
     }
   }
 }
