@@ -1490,10 +1490,8 @@ val eps = 0.01
 fun f (x : real) : int =
   if Real.abs (x - 1.2) <= eps then
     3
-  else if Real.abs (x - 1.4) <= eps then
-    5
   else
-    6
+    4
 ```
 
 Usage of `Real.==` to check for equality between reals is discouraged, due to [limitations](https://0.30000000000000004.com) around representing floating-point (aka, `real`) numbers on most architectures.
