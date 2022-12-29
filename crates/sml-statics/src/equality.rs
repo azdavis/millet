@@ -94,7 +94,7 @@ fn equality_composite(comp: Composite) -> Overload {
   match comp {
     Composite::WordInt | Composite::Num => Composite::WordInt.into(),
     Composite::RealInt => Basic::Int.into(),
-    Composite::NumTxt | Composite::NumTxtEq => Composite::NumTxtEq.into(),
+    Composite::NumTxt | Composite::WordIntTxt => Composite::WordIntTxt.into(),
   }
 }
 

@@ -36,7 +36,7 @@ pub(crate) enum Composite {
   Num,
   NumTxt,
   /// equality-only subset of NumTxt. used only for unification
-  NumTxtEq,
+  WordIntTxt,
 }
 
 impl Composite {
@@ -46,27 +46,27 @@ impl Composite {
       Self::RealInt => &[Basic::Real, Basic::Int],
       Self::Num => &[Basic::Word, Basic::Real, Basic::Int],
       Self::NumTxt => &[Basic::Word, Basic::Real, Basic::Int, Basic::String, Basic::Char],
-      Self::NumTxtEq => &[Basic::Word, Basic::Int, Basic::String, Basic::Char],
+      Self::WordIntTxt => &[Basic::Word, Basic::Int, Basic::String, Basic::Char],
     }
   }
 
   /// we could also probably use `as_basics`, set intersection, then a "reverse" `as_basics` here.
   pub(crate) fn unify(self, other: Self) -> Overload {
+    #[allow(clippy::match_same_arms)]
     match (self, other) {
       (Self::WordInt, Self::WordInt | Self::Num | Self::NumTxt)
       | (Self::Num | Self::NumTxt, Self::WordInt) => Self::WordInt.into(),
-      (Self::WordInt | Self::NumTxtEq, Self::RealInt)
-      | (Self::RealInt, Self::WordInt | Self::NumTxtEq) => Basic::Int.into(),
+      (Self::WordInt | Self::WordIntTxt, Self::RealInt)
+      | (Self::RealInt, Self::WordInt | Self::WordIntTxt) => Basic::Int.into(),
       (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
       | (Self::Num | Self::NumTxt, Self::RealInt) => Self::RealInt.into(),
       (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => Self::Num.into(),
       (Self::NumTxt, Self::NumTxt) => Self::NumTxt.into(),
-      (Self::NumTxtEq, Self::NumTxtEq | Self::NumTxt) | (Self::NumTxt, Self::NumTxtEq) => {
-        Self::NumTxtEq.into()
+      (Self::WordIntTxt, Self::WordIntTxt | Self::NumTxt) | (Self::NumTxt, Self::WordIntTxt) => {
+        Self::WordIntTxt.into()
       }
-      (Self::NumTxtEq, Self::WordInt | Self::Num) | (Self::WordInt | Self::Num, Self::NumTxtEq) => {
-        Self::WordInt.into()
-      }
+      (Self::WordIntTxt, Self::WordInt | Self::Num)
+      | (Self::WordInt | Self::Num, Self::WordIntTxt) => Self::WordInt.into(),
     }
   }
 }
@@ -78,7 +78,7 @@ impl fmt::Display for Composite {
       Composite::RealInt => f.write_str("<realint>"),
       Composite::Num => f.write_str("<num>"),
       Composite::NumTxt => f.write_str("<numtxt>"),
-      Composite::NumTxtEq => f.write_str("<numtxteq>"),
+      Composite::WordIntTxt => f.write_str("<wordinttxt>"),
     }
   }
 }

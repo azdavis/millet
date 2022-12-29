@@ -64,7 +64,6 @@
     "nonfix",
     "notif",
     "numtxt",
-    "numtxteq",
     "okabe",
     "onefifty",
     "orelse",
@@ -117,6 +116,7 @@
     "walkdir",
     "withtype",
     "wordint",
+    "wordinttxt",
     "xshell",
     "xtask",
     "yixin"
