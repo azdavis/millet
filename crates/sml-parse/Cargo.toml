@@ -10,9 +10,9 @@ doctest = false
 test = false
 
 [dependencies]
-diagnostic-util = { path = "../diagnostic-util" }
+diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
 event-parse = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { path = "../fast-hash" }
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 sml-fixity = { path = "../sml-fixity" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { path = "../str-util" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }

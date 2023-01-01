@@ -10,6 +10,6 @@ test = false
 doctest = false
 
 [dependencies]
-diagnostic-util = { path = "../diagnostic-util" }
+diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
 lex-util = { path = "../lex-util" }
 sml-syntax = { path = "../sml-syntax" }

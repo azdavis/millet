@@ -12,17 +12,17 @@ doctest = false
 [dependencies]
 cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
-diagnostic-util = { path = "../diagnostic-util" }
-fast-hash = { path = "../fast-hash" }
+diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 mlb-hir = { path = "../mlb-hir" }
 mlb-syntax = { path = "../mlb-syntax" }
-paths = { path = "../paths" }
+paths = { git = "https://github.com/azdavis/language-util.git" }
 sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
 sml-namespace = { path = "../sml-namespace" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { path = "../str-util" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
-text-size-util = { path = "../text-size-util" }
+text-size-util = { git = "https://github.com/azdavis/language-util.git" }
 toml = "0.5"
 topo-sort = { git = "https://github.com/azdavis/language-util.git" }

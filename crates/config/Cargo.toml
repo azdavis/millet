@@ -10,6 +10,6 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { path = "../fast-hash" }
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 serde = { version = "1", features = ["derive"] }
-str-util = { path = "../str-util" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }

@@ -10,8 +10,8 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { path = "../fast-hash" }
-paths = { path = "../paths" }
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+paths = { git = "https://github.com/azdavis/language-util.git" }
 sml-namespace = { path = "../sml-namespace" }
-str-util = { path = "../str-util" }
-text-size-util = { path = "../text-size-util" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }
+text-size-util = { git = "https://github.com/azdavis/language-util.git" }

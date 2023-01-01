@@ -12,8 +12,8 @@ test = false
 [dependencies]
 analysis = { path = "../analysis" }
 config = { path = "../config" }
-diagnostic-util = { path = "../diagnostic-util" }
+diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
 env_logger = { version = "0.9" }
 input = { path = "../input" }
-paths = { path = "../paths" }
+paths = { git = "https://github.com/azdavis/language-util.git" }
 pico-args = "0.5"

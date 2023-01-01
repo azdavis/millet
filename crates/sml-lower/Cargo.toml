@@ -10,10 +10,10 @@ doctest = false
 test = false
 
 [dependencies]
-diagnostic-util = { path = "../diagnostic-util" }
-fast-hash = { path = "../fast-hash" }
+diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 lex-util = { path = "../lex-util" }
 num-traits = "0.2"
 sml-hir = { path = "../sml-hir" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { path = "../str-util" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }

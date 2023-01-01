@@ -11,6 +11,6 @@ doctest = false
 
 [dependencies]
 lex-util = { path = "../lex-util" }
-paths = { path = "../paths" }
-str-util = { path = "../str-util" }
-text-size-util = { path = "../text-size-util" }
+paths = { git = "https://github.com/azdavis/language-util.git" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }
+text-size-util = { git = "https://github.com/azdavis/language-util.git" }

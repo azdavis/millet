@@ -10,6 +10,6 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { path = "../fast-hash" }
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 sml-comment = { path = "../sml-comment" }
 sml-syntax = { path = "../sml-syntax" }

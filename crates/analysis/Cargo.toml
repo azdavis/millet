@@ -11,12 +11,12 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
-diagnostic-util = { path = "../diagnostic-util" }
-elapsed = { path = "../elapsed" }
-fmt-util = { path = "../fmt-util" }
+diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
+elapsed = { git = "https://github.com/azdavis/language-util.git" }
+fmt-util = { git = "https://github.com/azdavis/language-util.git" }
 input = { path = "../input" }
 mlb-statics = { path = "../mlb-statics" }
-paths = { path = "../paths" }
+paths = { git = "https://github.com/azdavis/language-util.git" }
 sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
 sml-fmt = { path = "../sml-fmt" }
@@ -24,6 +24,6 @@ sml-hir = { path = "../sml-hir" }
 sml-namespace = { path = "../sml-namespace" }
 sml-statics = { path = "../sml-statics" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { path = "../str-util" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
-text-size-util = { path = "../text-size-util" }
+text-size-util = { git = "https://github.com/azdavis/language-util.git" }

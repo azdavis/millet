@@ -10,6 +10,6 @@ doctest = false
 test = false
 
 [dependencies]
-fast-hash = { path = "../fast-hash" }
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 once_cell = "1"
-str-util = { path = "../str-util" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }
