@@ -19,7 +19,7 @@ pub(crate) enum ErrorKind {
   ExpectedExport,
   UnsupportedClass(PathBuf, String),
   CouldNotDetermineClass(PathBuf),
-  SlashVarPathError(paths::slash_var_path::Error),
+  SlashVarPathError(slash_var_path::Error),
 }
 
 /// An error when processing a CM file.

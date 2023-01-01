@@ -188,6 +188,10 @@ Some common lex utilities used in multiple lexing crates, like:
 - Handling `(* ... *)` style block comments with nesting.
 - Handling whitespace.
 
+### `crates/slash-var-path`
+
+Handle paths with `$(FOO)` or `$BAR` style variables in them, as in MLB and CM files.
+
 ## SML group file crates
 
 These crates are related to "group files" in the SML ecosystem, namely SML/NJ Compilation Manager and ML Basis.

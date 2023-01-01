@@ -2,9 +2,9 @@
 
 #[track_caller]
 fn check(s: &str, env: &[(&str, &str)], want: &[&str]) {
-  let env: paths::slash_var_path::Env = env.iter().map(|&(k, v)| (k.into(), v.into())).collect();
+  let env: slash_var_path::Env = env.iter().map(|&(k, v)| (k.into(), v.into())).collect();
   let want: std::path::PathBuf = want.iter().collect();
-  let got = paths::slash_var_path::get(s, &env).unwrap();
+  let got = slash_var_path::get(s, &env).unwrap();
   assert_eq!(want, got);
 }
 

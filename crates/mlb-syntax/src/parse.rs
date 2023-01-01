@@ -7,10 +7,7 @@ use std::path::Path;
 use str_util::Name;
 use text_size_util::{TextRange, WithRange};
 
-pub(crate) fn get(
-  tokens: &[WithRange<Token<'_>>],
-  env: &paths::slash_var_path::Env,
-) -> Result<BasDec> {
+pub(crate) fn get(tokens: &[WithRange<Token<'_>>], env: &slash_var_path::Env) -> Result<BasDec> {
   let mut p = Parser { tokens, idx: 0, last_range: TextRange::default(), env };
   let ret = bas_dec(&mut p)?;
   match p.cur_tok() {
@@ -23,7 +20,7 @@ struct Parser<'a> {
   tokens: &'a [WithRange<Token<'a>>],
   idx: usize,
   last_range: TextRange,
-  env: &'a paths::slash_var_path::Env,
+  env: &'a slash_var_path::Env,
 }
 
 impl<'a> Parser<'a> {
@@ -140,10 +137,10 @@ fn bas_dec_one(p: &mut Parser<'_>) -> Result<BasDecOne> {
     // TODO allow string paths as well
     Token::BarePath(path) => {
       p.bump();
-      let path = match paths::slash_var_path::get(path, p.env) {
+      let path = match slash_var_path::get(path, p.env) {
         Ok(x) => x,
         Err(e) => {
-          if let paths::slash_var_path::Error::Undefined(var) = &e {
+          if let slash_var_path::Error::Undefined(var) = &e {
             // ignore the sml lib paths (http://mlton.org/MLBasisPathMap) since they're baked in.
             if var == "SML_LIB" {
               return Ok(BasDecOne::StdBasisPath);

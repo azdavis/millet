@@ -52,7 +52,7 @@ impl Input {
       let path = store.get_path(group.path).as_path();
       let parent = path.parent().expect("group path with no parent");
       let parent = util::str_path(ErrorSource::default(), parent)?;
-      let path_var_env = paths::slash_var_path::resolve_env(parent, root.config.path_vars.clone());
+      let path_var_env = slash_var_path::resolve_env(parent, root.config.path_vars.clone());
       let f = match group.kind {
         GroupPathKind::Cm => lower_cm::get,
         GroupPathKind::Mlb => lower_mlb::get,

@@ -12,6 +12,7 @@ doctest = false
 [dependencies]
 lex-util = { path = "../lex-util" }
 paths = { git = "https://github.com/azdavis/language-util.git" }
+slash-var-path = { path = "../slash-var-path" }
 sml-namespace = { path = "../sml-namespace" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-size-util = { git = "https://github.com/azdavis/language-util.git" }

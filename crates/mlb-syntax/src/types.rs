@@ -17,7 +17,7 @@ pub(crate) enum ErrorKind {
   ExpectedBasDec,
   ExpectedName,
   PathNotSmlOrMlb,
-  SlashVarPathError(paths::slash_var_path::Error),
+  SlashVarPathError(slash_var_path::Error),
 }
 
 /// An error when processing a ML Basis file.

@@ -15,7 +15,7 @@ pub(crate) fn get<F>(
   sources: &mut PathMap<String>,
   groups: &mut PathMap<Group>,
   store: &mut paths::Store,
-  path_vars: &paths::slash_var_path::Env,
+  path_vars: &slash_var_path::Env,
   path: paths::PathId,
 ) -> Result<()>
 where
@@ -52,7 +52,7 @@ where
 struct St<'a, F> {
   fs: &'a F,
   store: &'a mut paths::Store,
-  path_vars: &'a paths::slash_var_path::Env,
+  path_vars: &'a slash_var_path::Env,
   sources: &'a mut PathMap<String>,
   cm_files: PathMap<CmFile>,
 }

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use str_util::Name;
 
 fn check(s: &str, want_exports: Vec<RawExport>, want_paths: &[(&str, PathKind)]) {
-  let file = cm_syntax::get(s, &paths::slash_var_path::Env::default()).unwrap();
+  let file = cm_syntax::get(s, &slash_var_path::Env::default()).unwrap();
   let want_paths: Vec<_> = want_paths.iter().map(|&(s, kind)| (mk_path_buf(s), kind)).collect();
   let got_export = RawExport::from(file.export);
   let got_paths: Vec<_> =
@@ -53,7 +53,7 @@ fn mk_library(name: &str) -> RawExport {
 }
 
 fn mk_path_buf(s: &str) -> PathBuf {
-  paths::slash_var_path::get(s, &paths::slash_var_path::Env::default()).unwrap()
+  slash_var_path::get(s, &slash_var_path::Env::default()).unwrap()
 }
 
 #[test]
@@ -129,7 +129,7 @@ is
 
 #[test]
 fn unknown_class() {
-  let e = cm_syntax::get(r#"Group is foo.sml : succ-ml"#, &paths::slash_var_path::Env::default())
-    .unwrap_err();
+  let e =
+    cm_syntax::get(r#"Group is foo.sml : succ-ml"#, &slash_var_path::Env::default()).unwrap_err();
   assert!(e.to_string().contains("unsupported class: succ-ml"));
 }

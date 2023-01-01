@@ -17,6 +17,7 @@ fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 mlb-hir = { path = "../mlb-hir" }
 mlb-syntax = { path = "../mlb-syntax" }
 paths = { git = "https://github.com/azdavis/language-util.git" }
+slash-var-path = { path = "../slash-var-path" }
 sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
 sml-namespace = { path = "../sml-namespace" }

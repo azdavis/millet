@@ -13,7 +13,7 @@ pub(crate) fn get<F>(
   sources: &mut PathMap<String>,
   groups: &mut PathMap<Group>,
   store: &mut paths::Store,
-  path_vars: &paths::slash_var_path::Env,
+  path_vars: &slash_var_path::Env,
   path: paths::PathId,
 ) -> Result<()>
 where

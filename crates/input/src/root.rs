@@ -4,8 +4,8 @@ use crate::types::Severities;
 use crate::util::{
   get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
 };
-use paths::slash_var_path::{EnvEntry, EnvEntryKind};
 use paths::PathId;
+use slash_var_path::{EnvEntry, EnvEntryKind};
 use std::path::PathBuf;
 
 pub(crate) struct RootGroup {
@@ -78,7 +78,7 @@ impl Root {
 
 #[derive(Default)]
 pub(crate) struct Config {
-  pub(crate) path_vars: paths::slash_var_path::UnresolvedEnv,
+  pub(crate) path_vars: slash_var_path::UnresolvedEnv,
   pub(crate) severities: Severities,
 }
 

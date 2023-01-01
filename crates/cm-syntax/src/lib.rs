@@ -20,7 +20,7 @@ pub use types::{
 /// # Errors
 ///
 /// If the CM file contents was invalid, or the env didn't define all the path variables.
-pub fn get(s: &str, env: &paths::slash_var_path::Env) -> Result<CmFile> {
+pub fn get(s: &str, env: &slash_var_path::Env) -> Result<CmFile> {
   let tokens = lex::get(s)?;
   let root = parse::get(&tokens, env)?;
   let file = lower::get(root)?;

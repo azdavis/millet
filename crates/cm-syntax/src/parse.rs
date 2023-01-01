@@ -6,10 +6,7 @@ use crate::types::{
 };
 use text_size_util::{TextRange, WithRange};
 
-pub(crate) fn get(
-  tokens: &[WithRange<Token<'_>>],
-  env: &paths::slash_var_path::Env,
-) -> Result<ParseRoot> {
+pub(crate) fn get(tokens: &[WithRange<Token<'_>>], env: &slash_var_path::Env) -> Result<ParseRoot> {
   let mut p = Parser { tokens, idx: 0, last_range: TextRange::default(), env };
   root(&mut p)
 }
@@ -18,7 +15,7 @@ struct Parser<'a> {
   tokens: &'a [WithRange<Token<'a>>],
   idx: usize,
   last_range: TextRange,
-  env: &'a paths::slash_var_path::Env,
+  env: &'a slash_var_path::Env,
 }
 
 impl<'a> Parser<'a> {
@@ -253,10 +250,10 @@ fn path_or_minus(p: &mut Parser<'_>) -> Result<PathOrMinus> {
 }
 
 fn path(p: &Parser<'_>, s: &str) -> Result<PathOrStdBasis> {
-  match paths::slash_var_path::get(s, p.env) {
+  match slash_var_path::get(s, p.env) {
     Ok(x) => Ok(PathOrStdBasis::Path(x)),
     Err(e) => {
-      if let paths::slash_var_path::Error::Undefined(var) = &e {
+      if let slash_var_path::Error::Undefined(var) = &e {
         if matches!(var.as_str(), "" | "SMLNJ-LIB") {
           return Ok(PathOrStdBasis::StdBasis);
         }

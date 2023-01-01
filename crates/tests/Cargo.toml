@@ -23,6 +23,7 @@ paths = { git = "https://github.com/azdavis/language-util.git" }
 pretty_assertions = "1"
 pulldown-cmark = "0.9"
 serde_json = "1"
+slash-var-path = { path = "../slash-var-path" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
