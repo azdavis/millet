@@ -1,5 +1,8 @@
 //! See [`get`].
 
+/// TODO set to true, then remove
+const COMPLETIONS: bool = false;
+
 /// Returns the capabilities of the server.
 pub(crate) fn get() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
@@ -21,7 +24,7 @@ pub(crate) fn get() -> lsp_types::ServerCapabilities {
     document_formatting_provider: Some(lsp_types::OneOf::Left(true)),
     document_symbol_provider: Some(lsp_types::OneOf::Left(true)),
     references_provider: Some(lsp_types::OneOf::Left(true)),
-    completion_provider: Some(lsp_types::CompletionOptions::default()),
+    completion_provider: COMPLETIONS.then(lsp_types::CompletionOptions::default),
     ..Default::default()
   }
 }
