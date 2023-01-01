@@ -1,6 +1,6 @@
 # Millet
 
-A language server for [Standard ML][sml] (SML).
+A [language server][lang-srv] for [Standard ML][sml] (SML).
 
 ![Millet logo](./editors/vscode/icon.png)
 
@@ -85,3 +85,4 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [vscode]: https://code.visualstudio.com
 [vscodium]: https://vscodium.com
 [yixin]: https://yixinhe.me
+[lang-srv]: https://microsoft.github.io/language-server-protocol/
