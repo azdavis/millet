@@ -264,10 +264,12 @@ impl IncompatibleTysFlavor {
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
-  ) -> IncompatibleTysFlavorDisplay<'a> {
+  ) -> impl fmt::Display + 'a {
     IncompatibleTysFlavorDisplay { flavor: self, meta_vars, syms }
   }
 
+  /// need to have this be separate from the Display impl so that the mutable borrow doesn't last
+  /// too long.
   fn extend_meta_var_names(&self, meta_vars: &mut MetaVarNames<'_>) {
     match self {
       Self::BoundTyVar(_, _)
@@ -299,7 +301,6 @@ impl IncompatibleTysFlavor {
 
 struct IncompatibleTysFlavorDisplay<'a> {
   flavor: &'a IncompatibleTysFlavor,
-  /// need this to be mut so we can extend for any tys inside the flavor
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
 }
