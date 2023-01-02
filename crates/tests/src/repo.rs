@@ -306,10 +306,11 @@ impl fmt::Display for ConfigProperty<'_> {
   }
 }
 
+const PACKAGE_JSON: &str = include_str!("../../../editors/vscode/package.json");
+
 #[test]
 fn vs_code_config() {
-  let package_json = include_str!("../../../editors/vscode/package.json");
-  let package_json: serde_json::Value = serde_json::from_str(package_json).unwrap();
+  let package_json: serde_json::Value = serde_json::from_str(PACKAGE_JSON).unwrap();
   let properties = package_json
     .as_object()
     .unwrap()
@@ -361,6 +362,42 @@ fn vs_code_config() {
     iter.take_while(|x| x.trim() != "<!-- @end vscode-config -->").collect();
   let got_doc = got_doc_lines.join("\n");
   pretty_assertions::assert_str_eq!(got_doc.trim(), want_doc.trim(),);
+}
+
+#[test]
+fn node_version() {
+  let version = "18";
+  let package_json: serde_json::Value = serde_json::from_str(PACKAGE_JSON).unwrap();
+  let build_base = package_json
+    .as_object()
+    .unwrap()
+    .get("scripts")
+    .unwrap()
+    .as_object()
+    .unwrap()
+    .get("build-base")
+    .unwrap()
+    .as_str()
+    .unwrap();
+  let mut split = build_base.split("--target=node");
+  split.next().unwrap();
+  assert_eq!(split.next().unwrap(), version);
+  assert!(split.next().is_none());
+  let readme = include_str!("../../../README.md");
+  let (_, readme_table_line) =
+    readme.lines().find_map(|line| line.split_once("| [Node.js][node] | ")).unwrap();
+  let mut split = readme_table_line.split_ascii_whitespace();
+  assert_eq!(split.next().unwrap(), version);
+  let ci = include_str!("../../../.github/workflows/ci.yaml");
+  let ci_version = ci
+    .lines()
+    .filter_map(|line| {
+      let (_, rest) = line.split_once("node-version: ")?;
+      let (v, _) = rest.split_once(".x")?;
+      Some(v)
+    })
+    .all(|v| v == version);
+  assert!(ci_version);
 }
 
 #[test]
