@@ -34,7 +34,7 @@ pub(crate) fn diagnostics(
 }
 
 pub(crate) fn error_url(code: diagnostic_util::Code) -> Url {
-  Url::parse(&format!("{}#{code}", diagnostic_util::URL)).expect("couldn't parse error URL")
+  Url::parse(&format!("{}#{code}", analysis::URL)).expect("couldn't parse error URL")
 }
 
 struct ClickCodeHint {

@@ -14,6 +14,9 @@ use text_size_util::TextRange;
 
 pub use sml_statics::info::CompletionItem;
 
+/// The url to go to for information about diagnostics.
+pub const URL: &str = "https://github.com/azdavis/millet/blob/main/docs/diagnostics.md";
+
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
