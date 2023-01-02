@@ -22,7 +22,7 @@
   ],
   "main": "out/main.js",
   "scripts": {
-    "build-base": "esbuild src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16",
+    "build-base": "esbuild src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node18",
     "build-debug": "npm run build-base -- --sourcemap",
     "build-release": "npm run build-base -- --minify",
     "check": "tsc"
