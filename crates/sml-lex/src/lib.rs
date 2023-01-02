@@ -106,7 +106,7 @@ pub fn get(s: &str) -> Lex<'_> {
     let start = cx.i;
     let kind = go(&mut cx, bs);
     assert!(start < cx.i, "lexer failed to advance");
-    let text = std::str::from_utf8(&bs[start..cx.i]).unwrap();
+    let text = std::str::from_utf8(&bs[start..cx.i]).expect("not a str");
     tokens.push(Token { kind, text });
   }
   Lex { tokens, errors: cx.errors }
