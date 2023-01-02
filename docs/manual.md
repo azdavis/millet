@@ -57,7 +57,7 @@ There are two places where Millet can be configured:
 
 ### Project-wide settings
 
-Millet can be configured with a `millet.toml` in the workspace root. It has the following format:
+Millet can be configured with a `millet.toml` in the workspace root. It is a [TOML][] file with the following format:
 
 ```toml
 version = 1
@@ -115,7 +115,7 @@ Overrides the default severity for this diagnostic. The acceptable values are:
 
 ### VS Code settings
 
-Millet offers the following configuration options via VS Code settings:
+Millet offers the following configuration options via VS Code settings, which are stored as [JSON][]:
 
 <!-- @begin vscode-config -->
 
@@ -374,3 +374,5 @@ This is by design. More options means more ability to have different formatting 
 [ovsx]: https://open-vsx.org/extension/azdavis/millet
 [vs-code]: https://code.visualstudio.com
 [vscodium]: https://vscodium.com
+[toml]: https://toml.io/en/
+[json]: https://www.json.org/json-en.html
