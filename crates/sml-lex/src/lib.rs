@@ -260,11 +260,11 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       .unwrap_or(SK::Name);
   }
   // punctuation
-  for &(sk_text, sk) in &SK::PUNCTUATION {
-    if bs.get(cx.i..cx.i + sk_text.len()) == Some(sk_text) {
-      cx.i += sk_text.len();
-      return sk;
-    }
+  if let Some(&(sk_bs, sk)) =
+    SK::PUNCTUATION.iter().find(|&&(sk_bs, _)| bs.get(cx.i..cx.i + sk_bs.len()) == Some(sk_bs))
+  {
+    cx.i += sk_bs.len();
+    return sk;
   }
   // invalid char. go until we find a valid str. this should terminate before
   // cx.i goes past the end of bs because bs comes from a str.
