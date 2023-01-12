@@ -1,4 +1,4 @@
-//! Trailing `,` and `;`.
+//! Trailing separators.
 
 use crate::check::check;
 
