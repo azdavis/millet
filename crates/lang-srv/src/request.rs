@@ -15,6 +15,9 @@ pub(crate) fn handle(st: &mut St, req: Request) {
   }
 }
 
+/// TODO replace with constant from lsp types after it's updated with 3.17
+const REQUEST_FAILED: i32 = -32803;
+
 #[allow(clippy::too_many_lines)]
 fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::HoverRequest, _>(r, |id, params| {
@@ -69,16 +72,27 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::Formatting, _>(r, |id, params| {
     let url = params.text_document.uri;
     let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
-    let res = st.analysis.format(path, params.options.tab_size).ok().map(|(new_text, end)| {
-      vec![lsp_types::TextEdit {
-        range: lsp_types::Range {
-          start: lsp_types::Position { line: 0, character: 0 },
-          end: convert::lsp_position(end),
-        },
-        new_text,
-      }]
-    });
-    st.cx.send_response(Response::new_ok(id, res));
+    let res = match st.analysis.format(path, params.options.tab_size) {
+      Ok((new_text, end)) => {
+        let edits = vec![lsp_types::TextEdit {
+          range: lsp_types::Range {
+            start: lsp_types::Position { line: 0, character: 0 },
+            end: convert::lsp_position(end),
+          },
+          new_text,
+        }];
+        Response::new_ok(id, edits)
+      }
+      Err(e) => match e {
+        analysis::FormatError::NoFile
+        | analysis::FormatError::Disabled
+        | analysis::FormatError::NaiveFmt(_)
+        | analysis::FormatError::Smlfmt(_) => Response::new_ok(id, None::<()>),
+        analysis::FormatError::Io(e) => Response::new_err(id, REQUEST_FAILED, e.to_string()),
+        analysis::FormatError::Utf8(e) => Response::new_err(id, REQUEST_FAILED, e.to_string()),
+      },
+    };
+    st.cx.send_response(res);
     Ok(())
   })?;
   r = helpers::try_req::<lsp_types::request::DocumentSymbolRequest, _>(r, |id, params| {
