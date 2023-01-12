@@ -76,8 +76,6 @@ pub enum ErrorLines {
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DiagnosticsFilter {
-  /// No filter, i.e. available diagnostics are sent.
-  None,
   /// If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics
   /// diagnostics.
   Syntax,
@@ -87,8 +85,6 @@ pub enum DiagnosticsFilter {
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum FormatEngine {
-  /// No formatting.
-  None,
   /// Naive formatting.
   Naive,
   /// Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt).
@@ -102,9 +98,9 @@ pub enum FormatEngine {
 pub struct Options {
   pub show_token_hover: bool,
   pub diagnostics_on_change: bool,
-  pub diagnostics_filter: DiagnosticsFilter,
+  pub diagnostics_filter: Option<DiagnosticsFilter>,
   pub diagnostics_more_info_hint: bool,
-  pub format: FormatEngine,
+  pub format: Option<FormatEngine>,
 }
 
 impl Default for Options {
@@ -112,9 +108,9 @@ impl Default for Options {
     Self {
       show_token_hover: true,
       diagnostics_on_change: false,
-      diagnostics_filter: DiagnosticsFilter::Syntax,
+      diagnostics_filter: Some(DiagnosticsFilter::Syntax),
       diagnostics_more_info_hint: true,
-      format: FormatEngine::None,
+      format: None,
     }
   }
 }

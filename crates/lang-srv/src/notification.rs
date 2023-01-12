@@ -42,7 +42,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
         helpers::apply_changes(text, params.content_changes);
         if st.cx.options.diagnostics_on_change {
           diagnostics::try_publish(st);
-        } else if !matches!(st.cx.options.format, config::FormatEngine::None) {
+        } else if st.cx.options.format.is_some() {
           // TODO this is expensive, but currently necessary to make formatting work. can we
           // make it just do it for formatting (i.e. syntax) only (no statics)?
           st.analysis.get_many(input);

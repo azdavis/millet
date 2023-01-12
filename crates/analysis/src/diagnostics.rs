@@ -9,8 +9,8 @@ use text_size_util::TextRange;
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {
   pub(crate) lines: config::ErrorLines,
-  pub(crate) filter: config::DiagnosticsFilter,
-  pub(crate) format: config::FormatEngine,
+  pub(crate) filter: Option<config::DiagnosticsFilter>,
+  pub(crate) format: Option<config::FormatEngine>,
 }
 
 fn diagnostic<M>(
@@ -58,9 +58,8 @@ pub(crate) fn source_file(
       diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
     }))
     .collect();
-  let no_filter = matches!(options.filter, config::DiagnosticsFilter::None);
   let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic_util::Severity::Error));
-  if no_filter || !has_any_error {
+  if options.filter.is_none() || !has_any_error {
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
@@ -69,7 +68,7 @@ pub(crate) fn source_file(
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
       diagnostic(file, severities, range, msg, err.code(), err.severity())
     }));
-    if matches!(options.format, config::FormatEngine::Naive) {
+    if matches!(options.format, Some(config::FormatEngine::Naive)) {
       if let Err(sml_naive_fmt::Error::Comments(ranges)) =
         sml_naive_fmt::check(&file.syntax.parse.root)
       {

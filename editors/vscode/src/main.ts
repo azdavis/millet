@@ -10,6 +10,10 @@ let client: LanguageClient | null = null;
 
 const channel = vscode.window.createOutputChannel("millet client");
 
+function mkNone(s: string | undefined): string | null {
+  return s === undefined || s === "none" ? null : s;
+}
+
 export async function activate(cx: vscode.ExtensionContext) {
   channel.appendLine("start up millet client");
   const config = vscode.workspace.getConfiguration("millet");
@@ -29,11 +33,11 @@ export async function activate(cx: vscode.ExtensionContext) {
     initializationOptions: {
       show_token_hover: config.get("server.hover.token.enable"),
       diagnostics_on_change: config.get("server.diagnostics.onChange.enable"),
-      diagnostics_filter: config.get("server.diagnostics.filter"),
+      diagnostics_filter: mkNone(config.get("server.diagnostics.filter")),
       diagnostics_more_info_hint: config.get(
         "server.diagnostics.moreInfoHint.enable",
       ),
-      format: config.get("format.engine"),
+      format: mkNone(config.get("format.engine")),
     },
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);

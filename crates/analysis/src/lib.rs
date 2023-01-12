@@ -34,8 +34,8 @@ impl Analysis {
   pub fn new(
     std_basis: StdBasis,
     lines: config::ErrorLines,
-    filter: config::DiagnosticsFilter,
-    format: config::FormatEngine,
+    filter: Option<config::DiagnosticsFilter>,
+    format: Option<config::FormatEngine>,
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
@@ -180,16 +180,16 @@ impl Analysis {
   ///
   /// Upton internal error.
   pub fn format(&self, path: PathId, tab_size: u32) -> Result<(String, Position), FormatError> {
-    match self.diagnostics_options.format {
-      config::FormatEngine::None => Err(FormatError::Disabled),
+    let engine = match self.diagnostics_options.format {
+      None => return Err(FormatError::Disabled),
+      Some(x) => x,
+    };
+    let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
+    let buf = match engine {
       config::FormatEngine::Naive => {
-        let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
-        let buf =
-          sml_naive_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::NaiveFmt)?;
-        Ok((buf, file.syntax.pos_db.end_position()))
+        sml_naive_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::NaiveFmt)?
       }
       config::FormatEngine::Smlfmt => {
-        let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
         let contents = file.syntax.parse.root.syntax().to_string();
         let mut prog = Command::new("smlfmt")
           .arg("--stdio")
@@ -205,10 +205,10 @@ impl Analysis {
         if !output.status.success() {
           return Err(FormatError::Smlfmt(output.stderr));
         }
-        let buf = String::from_utf8(output.stdout).map_err(FormatError::Utf8)?;
-        Ok((buf, file.syntax.pos_db.end_position()))
+        String::from_utf8(output.stdout).map_err(FormatError::Utf8)?
       }
-    }
+    };
+    Ok((buf, file.syntax.pos_db.end_position()))
   }
 
   /// Returns the symbols for the file.
