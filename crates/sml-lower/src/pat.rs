@@ -232,6 +232,6 @@ where
 {
   let rows: Vec<_> =
     ps.into_iter().enumerate().map(|(idx, p)| (sml_hir::Lab::tuple(idx), p)).collect();
-  assert_ne!(rows.len(), 1);
+  // see @test(trailing::pat_arg_1) for why we can't assert rows.len() != 1
   sml_hir::Pat::Record { rows, allows_other: false }
 }
