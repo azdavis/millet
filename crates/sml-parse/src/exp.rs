@@ -2,8 +2,8 @@
 
 use crate::parser::{ErrorKind, Exited, Expected, ParensExpFlavor, Parser};
 use crate::util::{
-  comma_sep, lab, many_sep, must, name_star_eq, path_infix, path_no_infix, scon, should_break,
-  InfixErr,
+  comma_sep, end_sep, lab, many_sep, must, name_star_eq, path_infix, path_no_infix, scon,
+  should_break, InfixErr,
 };
 use crate::{dec::dec, pat::pat, ty::ty};
 use sml_syntax::SyntaxKind as SK;
@@ -220,25 +220,16 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
     }
     return SK::ParenExp;
   }
-  let kind = p.bump().kind;
-  let (wrap, overall) = match kind {
+  let sep = p.bump().kind;
+  let (wrap, overall) = match sep {
     SK::Semicolon => (SK::ExpInSeq, SK::SeqExp),
     SK::Comma => (SK::ExpArg, SK::TupleExp),
     _ => unreachable!("just checked at either ; or , above"),
   };
   p.exit(en, wrap);
-  loop {
-    let en = p.enter();
+  end_sep(p, wrap, sep, SK::RRound, |p| {
     exp(p);
-    if p.at(kind) {
-      p.bump();
-      p.exit(en, wrap);
-    } else {
-      p.exit(en, wrap);
-      p.eat(SK::RRound);
-      break;
-    }
-  }
+  });
   overall
 }
 

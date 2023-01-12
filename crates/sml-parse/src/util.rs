@@ -46,12 +46,19 @@ where
   }
 }
 
+pub(crate) fn comma_sep<'a, F>(p: &mut Parser<'a>, end: SK, wrap: SK, f: F)
+where
+  F: FnMut(&mut Parser<'a>),
+{
+  end_sep(p, wrap, SK::Comma, end, f);
+}
+
 /// similar to `many_sep`, but:
 ///
-/// - always uses `,` as the separator
 /// - allows 0 occurrences of `f`
+/// - `f` is assumed to always consume tokens (doesn't need to return a bool indicating anything)
 /// - returns only after eating `end`
-pub(crate) fn comma_sep<'a, F>(p: &mut Parser<'a>, end: SK, wrap: SK, mut f: F)
+pub(crate) fn end_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, sep: SK, end: SK, mut f: F)
 where
   F: FnMut(&mut Parser<'a>),
 {
@@ -62,7 +69,7 @@ where
   loop {
     let en = p.enter();
     f(p);
-    if p.at(SK::Comma) {
+    if p.at(sep) {
       p.bump();
       p.exit(en, wrap);
     } else {
