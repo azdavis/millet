@@ -119,14 +119,17 @@ Millet offers the following configuration options via VS Code settings, which ar
 
 <!-- @begin vscode-config -->
 
-#### `millet.format.enable`
+#### `millet.format.engine`
 
 **WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
 
-Naively format open SML files on save.
+How to format open SML files on save.
 
-- Type: `boolean`
-- Default: `false`
+- Type: `string`
+- Default: `"none"`
+- Valid values:
+  - `"none"`: No formatting.
+  - `"naive"`: Naive formatting.
 
 #### `millet.server.diagnostics.filter`
 
@@ -283,7 +286,7 @@ Millet supports finding references to a symbol.
 
 **WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
 
-Millet can automatically format your open SML files. Set `millet.format.enable` to true in your settings, then reload your editor. Now, when saving an open file, Millet will format.
+Millet can automatically format your open SML files. Set `millet.format.engine` to something other than `"none"` in your settings, then reload your editor. Now, when saving an open file, Millet will format.
 
 There are some caveats, however.
 
@@ -309,7 +312,7 @@ So, the formatter is disabled by default, and great care should be taken when us
 
 #### Long lines
 
-The Millet formatter employs exceedingly unsophisticated strategies to break code across many lines. What this means is that large expressions (e.g. a function call expression with many long arguments) may be formatted all on one line.
+The naive Millet formatter employs exceedingly unsophisticated strategies to break code across many lines. What this means is that large expressions (e.g. a function call expression with many long arguments) may be formatted all on one line.
 
 The suggested workaround is to use a `let ... in ... end` expression and split out sub-expressions into variables. So instead of
 
@@ -335,7 +338,7 @@ An arguably good thing about this is that it might improve readability anyway.
 
 #### Comments
 
-The formatter completely gives up on formatting the file if a comment appears in a place that the formatter doesn't know how to deal with.
+The naive formatter completely gives up on formatting the file if a comment appears in a place that the formatter doesn't know how to deal with.
 
 The **only** kind of comment the formatter even **attempts** to deal with are comments above declarations, like this:
 
@@ -364,7 +367,7 @@ When the formatter cannot format a file, it simply does nothing, and the file wi
 
 #### Configuration
 
-There are no options to configure the formatter (other than to enable it or not).
+There are no options to configure the naive formatter (other than to enable it or not).
 
 This is by design. More options means more ability to have different formatting styles.
 

@@ -48,7 +48,7 @@ pub(crate) fn get<'a, I>(
     std_basis,
     config::ErrorLines::One,
     config::DiagnosticsFilter::None,
-    false,
+    config::FormatEngine::None,
   );
   let err = an
     .get_many(&input)

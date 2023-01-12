@@ -33,7 +33,7 @@ export async function activate(cx: vscode.ExtensionContext) {
       diagnostics_more_info_hint: config.get(
         "server.diagnostics.moreInfoHint.enable",
       ),
-      format: config.get("format.enable"),
+      format: config.get("format.engine"),
     },
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);

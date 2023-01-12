@@ -52,10 +52,18 @@
       "type": "object",
       "title": "Millet",
       "properties": {
-        "millet.format.enable": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nNaively format open SML files on save."
+        "millet.format.engine": {
+          "type": "string",
+          "default": "none",
+          "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nHow to format open SML files on save.",
+          "enum": [
+            "none",
+            "naive"
+          ],
+          "markdownEnumDescriptions": [
+            "No formatting.",
+            "Naive formatting."
+          ]
         },
         "millet.server.diagnostics.filter": {
           "type": "string",

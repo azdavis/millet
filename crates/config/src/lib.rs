@@ -83,6 +83,16 @@ pub enum DiagnosticsFilter {
   Syntax,
 }
 
+/// How to format open SML files on save.
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum FormatEngine {
+  /// No formatting.
+  None,
+  /// Naive formatting.
+  Naive,
+}
+
 /// Optional settings for the server.
 #[derive(Debug, Deserialize)]
 #[allow(missing_docs)]
@@ -92,7 +102,7 @@ pub struct Options {
   pub diagnostics_on_change: bool,
   pub diagnostics_filter: DiagnosticsFilter,
   pub diagnostics_more_info_hint: bool,
-  pub format: bool,
+  pub format: FormatEngine,
 }
 
 impl Default for Options {
@@ -102,7 +112,7 @@ impl Default for Options {
       diagnostics_on_change: false,
       diagnostics_filter: DiagnosticsFilter::Syntax,
       diagnostics_more_info_hint: true,
-      format: false,
+      format: FormatEngine::None,
     }
   }
 }

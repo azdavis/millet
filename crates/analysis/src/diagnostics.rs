@@ -10,7 +10,7 @@ use text_size_util::TextRange;
 pub(crate) struct Options {
   pub(crate) lines: config::ErrorLines,
   pub(crate) filter: config::DiagnosticsFilter,
-  pub(crate) format: bool,
+  pub(crate) format: config::FormatEngine,
 }
 
 fn diagnostic<M>(
@@ -69,7 +69,7 @@ pub(crate) fn source_file(
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
       diagnostic(file, severities, range, msg, err.code(), err.severity())
     }));
-    if options.format {
+    if matches!(options.format, config::FormatEngine::Naive) {
       if let Err(sml_fmt::Error::Comments(ranges)) = sml_fmt::check(&file.syntax.parse.root) {
         ret.extend(ranges.into_iter().filter_map(|range| {
           diagnostic(

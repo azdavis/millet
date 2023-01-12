@@ -33,7 +33,7 @@ impl Analysis {
     std_basis: StdBasis,
     lines: config::ErrorLines,
     filter: config::DiagnosticsFilter,
-    format: bool,
+    format: config::FormatEngine,
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
@@ -176,12 +176,14 @@ impl Analysis {
   /// - There was no file to format
   /// - Formatting the file failed
   pub fn format(&self, path: PathId, tab_size: u32) -> Result<(String, Position), FormatError> {
-    if !self.diagnostics_options.format {
-      return Err(FormatError::Disabled);
+    match self.diagnostics_options.format {
+      config::FormatEngine::None => Err(FormatError::Disabled),
+      config::FormatEngine::Naive => {
+        let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
+        let buf = sml_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::Format)?;
+        Ok((buf, file.syntax.pos_db.end_position()))
+      }
     }
-    let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
-    let buf = sml_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::Format)?;
-    Ok((buf, file.syntax.pos_db.end_position()))
   }
 
   /// Returns the symbols for the file.
