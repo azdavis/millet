@@ -165,7 +165,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, SK::PathExp)
   } else if p.at(SK::LCurly) {
     p.bump();
-    comma_sep(p, SK::RCurly, SK::ExpRow, |p| {
+    comma_sep(p, SK::ExpRow, SK::RCurly, |p| {
       lab(p);
       eq_exp(p);
     });
@@ -265,7 +265,7 @@ fn at_exp_hd(p: &mut Parser<'_>) -> bool {
 }
 
 fn exp_args(p: &mut Parser<'_>) {
-  comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
+  comma_sep(p, SK::ExpArg, SK::RSquare, |p| {
     exp(p);
   });
 }

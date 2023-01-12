@@ -162,7 +162,7 @@ pub(crate) fn at_pat(p: &mut Parser<'_>, infix: InfixErr) -> Option<Exited> {
     p.exit(en, SK::ConPat)
   } else if p.at(SK::LCurly) {
     p.bump();
-    comma_sep(p, SK::RCurly, SK::PatRow, |p| {
+    comma_sep(p, SK::PatRow, SK::RCurly, |p| {
       let en = p.enter();
       if p.at(SK::DotDotDot) {
         p.bump();
@@ -244,7 +244,7 @@ fn as_pat_tl(p: &mut Parser<'_>, infix: InfixErr) -> Option<Exited> {
 }
 
 fn pat_args(p: &mut Parser<'_>, end: SK, infix: InfixErr) {
-  comma_sep(p, end, SK::PatArg, |p| {
+  comma_sep(p, SK::PatArg, end, |p| {
     must(p, |p| pat(p, infix), Expected::Pat);
   });
 }

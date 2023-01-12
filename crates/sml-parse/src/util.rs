@@ -46,7 +46,7 @@ where
   }
 }
 
-pub(crate) fn comma_sep<'a, F>(p: &mut Parser<'a>, end: SK, wrap: SK, f: F)
+pub(crate) fn comma_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, end: SK, f: F)
 where
   F: FnMut(&mut Parser<'a>),
 {

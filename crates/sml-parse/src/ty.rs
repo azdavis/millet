@@ -21,7 +21,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     p.exit(en, SK::TyVarTy)
   } else if p.at(SK::LCurly) {
     p.bump();
-    comma_sep(p, SK::RCurly, SK::TyRow, |p| {
+    comma_sep(p, SK::TyRow, SK::RCurly, |p| {
       lab(p);
       p.eat(SK::Colon);
       ty(p);
@@ -40,7 +40,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     } else {
       p.eat(SK::Comma);
       p.exit(ty_arg, SK::TyArg);
-      comma_sep(p, SK::RRound, SK::TyArg, ty);
+      comma_sep(p, SK::TyArg, SK::RRound, ty);
       p.exit(ty_seq, SK::TySeq);
       must(p, path, Expected::Path);
       p.exit(en, SK::ConTy)
@@ -103,7 +103,7 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> bool {
   } else if p.at(SK::LRound) && p.at_n(1, SK::TyVar) {
     ret = true;
     p.bump();
-    comma_sep(p, SK::RRound, SK::TyVarArg, |p| {
+    comma_sep(p, SK::TyVarArg, SK::RRound, |p| {
       p.eat(SK::TyVar);
     });
   }
