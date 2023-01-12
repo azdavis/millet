@@ -40,18 +40,7 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     } else {
       p.eat(SK::Comma);
       p.exit(ty_arg, SK::TyArg);
-      loop {
-        let en = p.enter();
-        ty(p);
-        if p.at(SK::Comma) {
-          p.bump();
-          p.exit(en, SK::TyArg);
-        } else {
-          p.exit(en, SK::TyArg);
-          p.eat(SK::RRound);
-          break;
-        }
-      }
+      comma_sep(p, SK::RRound, SK::TyArg, ty);
       p.exit(ty_seq, SK::TySeq);
       must(p, path, Expected::Path);
       p.exit(en, SK::ConTy)
