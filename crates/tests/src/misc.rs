@@ -1,6 +1,6 @@
 //! Miscellaneous tests. If unsure where to put a test, put it here.
 
-use crate::check::{check, check_with_warnings};
+use crate::check::{check, check_with_warnings, fail};
 
 #[test]
 fn apply() {
@@ -622,7 +622,7 @@ fn empty_open() {
 
 #[test]
 fn empty_let() {
-  check(
+  fail(
     r#"
 val _ = let in end
 (**            ^^^ expected an expression *)

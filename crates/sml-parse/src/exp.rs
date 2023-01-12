@@ -194,8 +194,9 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     dec(p, InfixErr::Yes);
     p.eat(SK::InKw);
-    many_sep(p, SK::Semicolon, SK::ExpInSeq, exp);
-    p.eat(SK::EndKw);
+    end_sep(p, SK::ExpInSeq, SK::Semicolon, SK::EndKw, |p| {
+      exp(p);
+    });
     p.exit(en, SK::LetExp)
   } else {
     p.abandon(en);
