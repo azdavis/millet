@@ -1190,7 +1190,7 @@ There was a `fun` with no parameters.
 
 ```sml
 fun totoro = 3
-(** + `fun` with no parameters *)
+(** + requires at least 1 parameter *)
 ```
 
 To fix, add some parameters.

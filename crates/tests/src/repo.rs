@@ -233,7 +233,7 @@ fn licenses() {
 }
 
 #[test]
-fn error_codes() {
+fn diagnostic_codes() {
   let sh = shell();
   let output = cmd!(sh, "git grep -h -o -E 'Code::n\\([[:digit:]]+\\)'").read().unwrap();
   let in_doc = no_dupes(

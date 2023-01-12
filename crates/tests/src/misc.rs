@@ -593,7 +593,7 @@ fn empty_fun() {
   check(
     r#"
     fun f = 3
-(** ^^^^^^^^^ `fun` with no parameters *)
+(** ^^^^^^^^^ `fun` requires at least 1 parameter *)
 "#,
   );
 }

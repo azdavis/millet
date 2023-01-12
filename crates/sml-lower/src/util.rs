@@ -114,7 +114,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::PatNameIsNameOfContainingFun(flavor) => {
         write!(f, "name bound in pattern inside a `{flavor}` matches name of a `fun` that contains the `{flavor}`")
       }
-      ErrorKind::EmptyFun => f.write_str("`fun` with no parameters"),
+      ErrorKind::EmptyFun => f.write_str("`fun` requires at least 1 parameter"),
       ErrorKind::EmptyExpSemiSeq => {
         f.write_str("`;`-separated sequence requires at least 1 expression")
       }
