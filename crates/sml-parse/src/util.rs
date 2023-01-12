@@ -65,15 +65,17 @@ where
   loop {
     if p.at(end) {
       p.bump();
-      return;
+      break;
     }
     let en = p.enter();
     f(p);
-    if p.at(sep) {
+    let mut saw = false;
+    while p.at(sep) {
       p.bump();
-      p.exit(en, wrap);
-    } else {
-      p.exit(en, wrap);
+      saw = true;
+    }
+    p.exit(en, wrap);
+    if !saw {
       p.eat(end);
       break;
     }

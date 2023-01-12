@@ -1224,7 +1224,22 @@ val _ = (1, 2,)
 (**          ^ trailing `,` *)
 ```
 
-To fix, remove the trailing punctuation.
+To fix, remove the trailing separator.
+
+```sml
+val _ = (1, 2)
+```
+
+## 4029
+
+There was an extra comma or semicolon.
+
+```sml
+val _ = (1,, 2)
+(**        ^ extra `,` *)
+```
+
+To fix, remove the extra separator.
 
 ```sml
 val _ = (1, 2)

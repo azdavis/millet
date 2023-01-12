@@ -72,7 +72,8 @@ pub(crate) enum ErrorKind {
   PatNameIsNameOfContainingFun(MatcherFlavor),
   EmptyFun,
   EmptyExpSemiSeq,
-  Trailing(Trailing),
+  Trailing(Sep),
+  Extra(Sep),
 }
 
 impl fmt::Display for ErrorKind {
@@ -119,7 +120,8 @@ impl fmt::Display for ErrorKind {
       ErrorKind::EmptyExpSemiSeq => {
         f.write_str("`;`-separated sequence requires at least 1 expression")
       }
-      ErrorKind::Trailing(t) => write!(f, "trailing `{t}`"),
+      ErrorKind::Trailing(s) => write!(f, "trailing `{s}`"),
+      ErrorKind::Extra(s) => write!(f, "extra `{s}`"),
     }
   }
 }
@@ -142,16 +144,16 @@ impl fmt::Display for MatcherFlavor {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum Trailing {
+pub(crate) enum Sep {
   Comma,
   Semi,
 }
 
-impl fmt::Display for Trailing {
+impl fmt::Display for Sep {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Trailing::Comma => f.write_str(","),
-      Trailing::Semi => f.write_str(";"),
+      Sep::Comma => f.write_str(","),
+      Sep::Semi => f.write_str(";"),
     }
   }
 }
@@ -209,6 +211,7 @@ impl Error {
       ErrorKind::EmptyFun => Code::n(4026),
       ErrorKind::EmptyExpSemiSeq => Code::n(4027),
       ErrorKind::Trailing(_) => Code::n(4028),
+      ErrorKind::Extra(_) => Code::n(4029),
     }
   }
 

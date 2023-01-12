@@ -19,6 +19,7 @@ The versioning system is basically the following:
 - Allow using [smlfmt][].
 - Suggest `=` for `==` and similar.
 - Emit specific errors for trailing `,` and `;`.
+- Emit specific errors for extra `,` and `;`.
 
 ## v0.6.7
 

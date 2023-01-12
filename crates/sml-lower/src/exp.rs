@@ -1,7 +1,7 @@
 //! Lowering expressions.
 
-use crate::common::{get_lab, get_path, get_scon};
-use crate::util::{Cx, ErrorKind, MatcherFlavor, Trailing};
+use crate::common::{ck_separators, get_lab, get_path, get_scon};
+use crate::util::{Cx, ErrorKind, MatcherFlavor, Sep};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
@@ -18,9 +18,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     ast::Exp::SConExp(exp) => sml_hir::Exp::SCon(get_scon(cx, exp.s_con()?)?),
     ast::Exp::PathExp(exp) => sml_hir::Exp::Path(get_path(exp.path()?)?),
     ast::Exp::RecordExp(exp) => {
-      if let Some(comma) = exp.exp_rows().last().and_then(|x| x.comma()) {
-        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
-      }
+      ck_separators(cx, Sep::Comma, exp.exp_rows().map(|x| x.commas()));
       let rows = exp.exp_rows().filter_map(|row| {
         let lab_ast = row.lab()?;
         let lab_tr = lab_ast.token.text_range();
@@ -63,15 +61,11 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       return get(cx, inner);
     }
     ast::Exp::TupleExp(exp) => {
-      if let Some(comma) = exp.exp_args().last().and_then(|x| x.comma()) {
-        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
-      }
+      ck_separators(cx, Sep::Comma, exp.exp_args().map(|x| x.commas()));
       tuple(exp.exp_args().map(|e| get(cx, e.exp())))
     }
     ast::Exp::ListExp(exp) => {
-      if let Some(comma) = exp.exp_args().last().and_then(|x| x.comma()) {
-        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
-      }
+      ck_separators(cx, Sep::Comma, exp.exp_args().map(|x| x.commas()));
       // need to rev()
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|x| get(cx, x.exp())).collect();
@@ -85,10 +79,16 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       cx.err(exp.syntax().text_range(), ErrorKind::Unsupported("vector expressions"));
       return None;
     }
-    ast::Exp::SeqExp(exp) => return exps_in_seq(cx, exp.exps_in_seq(), &ptr),
+    ast::Exp::SeqExp(exp) => {
+      ck_separators(cx, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolons()));
+      let exps: Vec<_> = exp.exps_in_seq().map(|x| get(cx, x.exp())).collect();
+      return exp_idx_in_seq(cx, exps, &ptr);
+    }
     ast::Exp::LetExp(exp) => {
       let dec = dec::get(cx, exp.dec());
-      let exp = exps_in_seq(cx, exp.exps_in_seq(), &ptr);
+      ck_separators(cx, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolons()));
+      let exps: Vec<_> = exp.exps_in_seq().map(|x| get(cx, x.exp())).collect();
+      let exp = exp_idx_in_seq(cx, exps, &ptr);
       sml_hir::Exp::Let(dec, exp)
     }
     ast::Exp::AppExp(exp) => sml_hir::Exp::App(get(cx, exp.func()), get(cx, exp.arg())),
@@ -243,17 +243,6 @@ fn call_unit_fn(cx: &mut Cx, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hi
   let vid_exp = cx.exp(name(vid.as_str()), ptr.clone());
   let arg_exp = cx.exp(sml_hir::Exp::Record(vec![]), ptr.clone());
   cx.exp(sml_hir::Exp::App(vid_exp, arg_exp), ptr)
-}
-
-fn exps_in_seq<I>(cx: &mut Cx, exps: I, ptr: &SyntaxNodePtr) -> sml_hir::ExpIdx
-where
-  I: Iterator<Item = ast::ExpInSeq>,
-{
-  let exps: Vec<_> = exps.map(|e| (get(cx, e.exp()), e.semicolon())).collect();
-  if let Some(comma) = exps.last().and_then(|(_, x)| x.as_ref()) {
-    cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Semi));
-  }
-  exp_idx_in_seq(cx, exps.into_iter().map(|(x, _)| x), ptr)
 }
 
 /// lowers 1 into 2. (which is then lowered into 3.)

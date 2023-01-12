@@ -1,7 +1,7 @@
 //! Lowering types.
 
-use crate::common::{get_lab, get_path};
-use crate::util::{Cx, ErrorKind, Trailing};
+use crate::common::{ck_separators, get_lab, get_path};
+use crate::util::{Cx, ErrorKind, Sep};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
@@ -11,19 +11,14 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
     ast::Ty::HoleTy(_) | ast::Ty::WildcardTy(_) => sml_hir::Ty::Hole,
     ast::Ty::TyVarTy(ty) => sml_hir::Ty::Var(sml_hir::TyVar::new(ty.ty_var()?.text())),
     ast::Ty::RecordTy(ty) => {
-      if let Some(comma) = ty.ty_rows().last().and_then(|x| x.comma()) {
-        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
-      }
+      ck_separators(cx, Sep::Comma, ty.ty_rows().map(|x| x.commas()));
       let rows = ty.ty_rows().filter_map(|row| Some((get_lab(cx, row.lab()?), get(cx, row.ty()))));
       sml_hir::Ty::Record(rows.collect())
     }
     ast::Ty::ConTy(ty) => {
       let path = get_path(ty.path()?)?;
-      if let Some(comma) =
-        ty.ty_seq().into_iter().flat_map(|x| x.ty_args()).last().and_then(|x| x.comma())
-      {
-        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
-      }
+      let separators = ty.ty_seq().into_iter().flat_map(|x| x.ty_args()).map(|x| x.commas());
+      ck_separators(cx, Sep::Comma, separators);
       let ty_args = ty.ty_seq().into_iter().flat_map(|x| x.ty_args()).map(|x| get(cx, x.ty()));
       sml_hir::Ty::Con(ty_args.collect(), path)
     }
@@ -65,11 +60,8 @@ fn warn_unnecessary_parens(ty: &ast::Ty) -> bool {
 }
 
 pub(crate) fn var_seq(cx: &mut Cx, tvs: Option<ast::TyVarSeq>) -> Vec<sml_hir::TyVar> {
-  if let Some(comma) =
-    tvs.iter().flat_map(ast::TyVarSeq::ty_var_args).last().and_then(|x| x.comma())
-  {
-    cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
-  }
+  let separators = tvs.iter().flat_map(ast::TyVarSeq::ty_var_args).map(|x| x.commas());
+  ck_separators(cx, Sep::Comma, separators);
   tvs
     .into_iter()
     .flat_map(|x| x.ty_var_args())

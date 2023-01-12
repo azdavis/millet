@@ -2,9 +2,9 @@
 
 #![allow(clippy::needless_pass_by_value)]
 
-use crate::util::{Cx, ErrorKind};
+use crate::util::{Cx, ErrorKind, Sep};
 use num_traits::Num as _;
-use sml_syntax::ast;
+use sml_syntax::{ast, SyntaxToken};
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
 /// carried to here. so we must do it again.
@@ -124,5 +124,22 @@ pub(crate) fn get_lab(cx: &mut Cx, lab: ast::Lab) -> sml_hir::Lab {
       }
       sml_hir::Lab::Num(n)
     }
+  }
+}
+
+pub(crate) fn ck_separators<I, C>(cx: &mut Cx, sep: Sep, iter: I)
+where
+  I: Iterator<Item = C>,
+  C: Iterator<Item = SyntaxToken>,
+{
+  let mut fst = None::<SyntaxToken>;
+  for mut seps in iter {
+    fst = seps.next();
+    for s in seps {
+      cx.err(s.text_range(), ErrorKind::Extra(sep));
+    }
+  }
+  if let Some(s) = fst {
+    cx.err(s.text_range(), ErrorKind::Trailing(sep));
   }
 }

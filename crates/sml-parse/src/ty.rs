@@ -39,6 +39,9 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       p.exit(en, SK::ParenTy)
     } else {
       p.eat(SK::Comma);
+      while p.at(SK::Comma) {
+        p.bump();
+      }
       p.exit(ty_arg, SK::TyArg);
       comma_sep(p, SK::TyArg, SK::RRound, ty);
       p.exit(ty_seq, SK::TySeq);

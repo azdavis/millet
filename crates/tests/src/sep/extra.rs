@@ -1,10 +1,10 @@
 //! Extra separators.
 
-use crate::check::fail;
+use crate::check::check;
 
 #[test]
 fn exp_arg() {
-  fail(
+  check(
     r#"
 val _ = (1,,2)
 (**        ^ extra `,` *)
@@ -14,17 +14,17 @@ val _ = (1,,2)
 
 #[test]
 fn exp_row() {
-  fail(
+  check(
     r#"
 val _ = {a = 1,, b = 2}
-(**           ^ extra `,` *)
+(**            ^ extra `,` *)
 "#,
   );
 }
 
 #[test]
 fn pat_arg() {
-  fail(
+  check(
     r#"
 val _ = fn (x,,y) => ()
 (**           ^ extra `,` *)
@@ -34,7 +34,7 @@ val _ = fn (x,,y) => ()
 
 #[test]
 fn pat_row() {
-  fail(
+  check(
     r#"
 val _ = fn {a = _,, b = _} => ()
 (**               ^ extra `,` *)
@@ -44,7 +44,7 @@ val _ = fn {a = _,, b = _} => ()
 
 #[test]
 fn ty_arg() {
-  fail(
+  check(
     r#"
 type ('a, 'b) foo = unit
 val _ : (int,, string) foo = ()
@@ -55,7 +55,7 @@ val _ : (int,, string) foo = ()
 
 #[test]
 fn ty_row() {
-  fail(
+  check(
     r#"
 val _ : {a: int,, b: int} = {a = 1, b = 2}
 (**             ^ extra `,` *)
@@ -65,7 +65,7 @@ val _ : {a: int,, b: int} = {a = 1, b = 2}
 
 #[test]
 fn ty_var() {
-  fail(
+  check(
     r#"
 type ('a,,'b) foo = unit
 (**      ^ extra `,` *)
@@ -75,7 +75,7 @@ type ('a,,'b) foo = unit
 
 #[test]
 fn let_exp() {
-  fail(
+  check(
     r#"
 val _ = let in 1;; 2 end
 (**              ^ extra `;` *)
@@ -85,7 +85,7 @@ val _ = let in 1;; 2 end
 
 #[test]
 fn seq_exp() {
-  fail(
+  check(
     r#"
 val _ = (1;; 2)
 (**        ^ extra `;` *)
