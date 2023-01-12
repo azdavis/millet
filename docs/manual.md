@@ -130,6 +130,7 @@ How to format open SML files on save.
 - Valid values:
   - `"none"`: No formatting.
   - `"naive"`: Naive formatting.
+  - `"smlfmt"`: Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt).
 
 #### `millet.server.diagnostics.filter`
 

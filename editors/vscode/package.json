@@ -58,11 +58,13 @@
           "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nHow to format open SML files on save.",
           "enum": [
             "none",
-            "naive"
+            "naive",
+            "smlfmt"
           ],
           "markdownEnumDescriptions": [
             "No formatting.",
-            "Naive formatting."
+            "Naive formatting.",
+            "Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt)."
           ]
         },
         "millet.server.diagnostics.filter": {

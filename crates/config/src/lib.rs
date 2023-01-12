@@ -91,6 +91,8 @@ pub enum FormatEngine {
   None,
   /// Naive formatting.
   Naive,
+  /// Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt).
+  Smlfmt,
 }
 
 /// Optional settings for the server.

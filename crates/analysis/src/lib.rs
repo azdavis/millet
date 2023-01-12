@@ -9,6 +9,8 @@ mod source_files;
 use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
+use std::io::Write as _;
+use std::process::{Command, Stdio};
 use text_pos::{Position, Range};
 use text_size_util::TextRange;
 
@@ -172,15 +174,37 @@ impl Analysis {
   ///
   /// # Errors
   ///
-  /// - Formatting is disabled
-  /// - There was no file to format
-  /// - Formatting the file failed
+  /// When formatting the file failed.
+  ///
+  /// # Panics
+  ///
+  /// Upton internal error.
   pub fn format(&self, path: PathId, tab_size: u32) -> Result<(String, Position), FormatError> {
     match self.diagnostics_options.format {
       config::FormatEngine::None => Err(FormatError::Disabled),
       config::FormatEngine::Naive => {
         let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
         let buf = sml_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::Format)?;
+        Ok((buf, file.syntax.pos_db.end_position()))
+      }
+      config::FormatEngine::Smlfmt => {
+        let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
+        let contents = file.syntax.parse.root.syntax().to_string();
+        let mut prog = Command::new("smlfmt")
+          .arg("--stdio")
+          .stdin(Stdio::piped())
+          .stdout(Stdio::piped())
+          .spawn()
+          .map_err(FormatError::Io)?;
+        let mut stdin = prog.stdin.take().unwrap();
+        stdin.write_all(contents.as_bytes()).map_err(FormatError::Io)?;
+        // explicitly drop to close it
+        drop(stdin);
+        let output = prog.wait_with_output().map_err(FormatError::Io)?;
+        if !output.status.success() {
+          return Err(FormatError::Smlfmt(output.stderr));
+        }
+        let buf = String::from_utf8(output.stdout).map_err(FormatError::Utf8)?;
         Ok((buf, file.syntax.pos_db.end_position()))
       }
     }
@@ -251,6 +275,12 @@ pub enum FormatError {
   NoFile,
   /// A formatting error.
   Format(sml_fmt::Error),
+  /// An I/O error.
+  Io(std::io::Error),
+  /// `smlfmt` failed with stderr.
+  Smlfmt(Vec<u8>),
+  /// There was a UTF-8 conversion error.
+  Utf8(std::string::FromUtf8Error),
 }
 
 /// A symbol.
