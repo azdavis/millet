@@ -16,6 +16,8 @@ The versioning system is basically the following:
 ## main
 
 - Rename an overload.
+- Allow using [smlfmt][].
+- Suggest `=` for `==` and similar.
 
 ## v0.6.7
 
@@ -477,3 +479,4 @@ Although this is the first release with working CI to build and release the exte
 [sml-nj-doc]: https://www.smlnj.org/doc/smlnj-lib/index.html
 [yixin]: https://yixinhe.me
 [zero-ver]: https://0ver.org
+[smlfmt]: https://github.com/shwestrick/smlfmt
