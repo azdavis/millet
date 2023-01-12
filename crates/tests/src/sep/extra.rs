@@ -7,7 +7,7 @@ fn exp_arg() {
   check(
     r#"
 val _ = (1,,2)
-(**        ^ extra `,` *)
+(**        ^ expected an expression *)
 "#,
   );
 }
@@ -17,7 +17,7 @@ fn exp_row() {
   check(
     r#"
 val _ = {a = 1,, b = 2}
-(**            ^ extra `,` *)
+(**            ^ expected a label *)
 "#,
   );
 }
@@ -27,7 +27,7 @@ fn pat_arg() {
   check(
     r#"
 val _ = fn (x,,y) => ()
-(**           ^ extra `,` *)
+(**           ^ expected a pattern *)
 "#,
   );
 }
@@ -37,7 +37,7 @@ fn pat_row() {
   check(
     r#"
 val _ = fn {a = _,, b = _} => ()
-(**               ^ extra `,` *)
+(**               ^ expected a name *)
 "#,
   );
 }
@@ -48,7 +48,7 @@ fn ty_arg() {
     r#"
 type ('a, 'b) foo = unit
 val _ : (int,, string) foo = ()
-(**          ^ extra `,` *)
+(**          ^ expected a type *)
 "#,
   );
 }
@@ -58,7 +58,7 @@ fn ty_row() {
   check(
     r#"
 val _ : {a: int,, b: int} = {a = 1, b = 2}
-(**             ^ extra `,` *)
+(**             ^ expected a label *)
 "#,
   );
 }
@@ -68,7 +68,7 @@ fn ty_var() {
   check(
     r#"
 type ('a,,'b) foo = unit
-(**      ^ extra `,` *)
+(**      ^ expected a type variable *)
 "#,
   );
 }
@@ -78,7 +78,7 @@ fn let_exp() {
   check(
     r#"
 val _ = let in 1;; 2 end
-(**              ^ extra `;` *)
+(**              ^ expected an expression *)
 "#,
   );
 }
@@ -88,7 +88,7 @@ fn seq_exp() {
   check(
     r#"
 val _ = (1;; 2)
-(**        ^ extra `;` *)
+(**        ^ expected an expression *)
 "#,
   );
 }

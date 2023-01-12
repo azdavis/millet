@@ -173,9 +173,9 @@ WhileExp = 'while' cond:Exp 'do' body:Exp
 CaseExp = 'case' Exp 'of' Matcher
 FnExp = 'fn' Matcher
 
-ExpRow = Lab EqExp? ','*
-ExpArg = Exp ','*
-ExpInSeq = Exp ';'*
+ExpRow = Lab EqExp? ','?
+ExpArg = Exp ','?
+ExpInSeq = Exp ';'?
 
 // call it this instead of Match to avoid clash with rust kw
 Matcher = '|'? MatchRule*
@@ -208,7 +208,7 @@ TypedPat = Pat ':' Ty
 AsPat = Pat AsPatTail
 OrPat = lhs:Pat '|' rhs:Pat
 
-PatRow = PatRowInner ','*
+PatRow = PatRowInner ','?
 PatRowInner =
   RestPatRow
 | LabAndPatPatRow
@@ -219,7 +219,7 @@ LabAndPatPatRow = Lab '=' Pat
 LabPatRow = NameStarEq TyAnnotation? AsPatTail?
 
 AsPatTail = 'as' Pat
-PatArg = Pat ','*
+PatArg = Pat ','?
 
 Ty =
   HoleTy
@@ -244,7 +244,7 @@ FnTy = param:Ty '->' res:Ty
 ParenTy = '(' Ty ')'
 
 StarTy = '*' Ty
-TyRow = Lab ':' Ty ','*
+TyRow = Lab ':' Ty ','?
 
 OfTy = 'of' Ty
 TyAnnotation = ':' Ty
@@ -253,10 +253,10 @@ Path = NameStarEqDot*
 NameStarEqDot = NameStarEq '.'?
 
 TySeq = '(' TyArg* ')'
-TyArg = Ty ','*
+TyArg = Ty ','?
 
 TyVarSeq = '('? TyVarArg* ')'?
-TyVarArg = 'TyVar' ','*
+TyVarArg = 'TyVar' ','?
 
 Lab = 'Name' | '*' | 'IntLit'
 

@@ -1,6 +1,6 @@
 //! Lowering patterns.
 
-use crate::common::{ck_separators, get_lab, get_path, get_scon};
+use crate::common::{ck_trailing, get_lab, get_path, get_scon};
 use crate::ty;
 use crate::util::{Cx, ErrorKind, MatcherFlavor, Sep};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -37,7 +37,7 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
       sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(cx, flavor, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {
-      ck_separators(cx, Sep::Comma, pat.pat_rows().map(|x| x.commas()));
+      ck_trailing(cx, Sep::Comma, pat.pat_rows().map(|x| x.comma()));
       let mut rest_pat_row = None::<RestPatRowState>;
       let rows: Vec<_> = pat
         .pat_rows()
@@ -93,11 +93,11 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
       return get_or(cx, flavor, inner);
     }
     ast::Pat::TuplePat(pat) => {
-      ck_separators(cx, Sep::Comma, pat.pat_args().map(|x| x.commas()));
+      ck_trailing(cx, Sep::Comma, pat.pat_args().map(|x| x.comma()));
       tuple(pat.pat_args().map(|x| get(cx, flavor, x.pat())))
     }
     ast::Pat::ListPat(pat) => {
-      ck_separators(cx, Sep::Comma, pat.pat_args().map(|x| x.commas()));
+      ck_trailing(cx, Sep::Comma, pat.pat_args().map(|x| x.comma()));
       // need to rev()
       #[allow(clippy::needless_collect)]
       let pats: Vec<_> = pat.pat_args().map(|x| get(cx, flavor, x.pat())).collect();

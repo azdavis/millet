@@ -70,7 +70,7 @@ where
     let en = p.enter();
     f(p);
     let mut saw = false;
-    while p.at(sep) {
+    if p.at(sep) {
       p.bump();
       saw = true;
     }

@@ -127,19 +127,11 @@ pub(crate) fn get_lab(cx: &mut Cx, lab: ast::Lab) -> sml_hir::Lab {
   }
 }
 
-pub(crate) fn ck_separators<I, C>(cx: &mut Cx, sep: Sep, iter: I)
+pub(crate) fn ck_trailing<I>(cx: &mut Cx, sep: Sep, iter: I)
 where
-  I: Iterator<Item = C>,
-  C: Iterator<Item = SyntaxToken>,
+  I: Iterator<Item = Option<SyntaxToken>>,
 {
-  let mut fst = None::<SyntaxToken>;
-  for mut seps in iter {
-    fst = seps.next();
-    for s in seps {
-      cx.err(s.text_range(), ErrorKind::Extra(sep));
-    }
-  }
-  if let Some(s) = fst {
+  if let Some(s) = iter.last().flatten() {
     cx.err(s.text_range(), ErrorKind::Trailing(sep));
   }
 }

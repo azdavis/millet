@@ -73,7 +73,6 @@ pub(crate) enum ErrorKind {
   EmptyFun,
   EmptyExpSemiSeq,
   Trailing(Sep),
-  Extra(Sep),
 }
 
 impl fmt::Display for ErrorKind {
@@ -121,7 +120,6 @@ impl fmt::Display for ErrorKind {
         f.write_str("`;`-separated sequence requires at least 1 expression")
       }
       ErrorKind::Trailing(s) => write!(f, "trailing `{s}`"),
-      ErrorKind::Extra(s) => write!(f, "extra `{s}`"),
     }
   }
 }
@@ -211,7 +209,6 @@ impl Error {
       ErrorKind::EmptyFun => Code::n(4026),
       ErrorKind::EmptyExpSemiSeq => Code::n(4027),
       ErrorKind::Trailing(_) => Code::n(4028),
-      ErrorKind::Extra(_) => Code::n(4029),
     }
   }
 

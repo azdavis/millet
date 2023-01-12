@@ -227,9 +227,6 @@ fn at_pat_l_round(p: &mut Parser<'_>, infix: InfixErr) -> SK {
     return SK::ParenPat;
   }
   p.eat(SK::Comma);
-  while p.at(SK::Comma) {
-    p.bump();
-  }
   p.exit(en, SK::PatArg);
   pat_args(p, SK::RRound, infix);
   SK::TuplePat

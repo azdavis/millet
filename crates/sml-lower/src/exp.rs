@@ -1,6 +1,6 @@
 //! Lowering expressions.
 
-use crate::common::{ck_separators, get_lab, get_path, get_scon};
+use crate::common::{ck_trailing, get_lab, get_path, get_scon};
 use crate::util::{Cx, ErrorKind, MatcherFlavor, Sep};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -18,7 +18,7 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     ast::Exp::SConExp(exp) => sml_hir::Exp::SCon(get_scon(cx, exp.s_con()?)?),
     ast::Exp::PathExp(exp) => sml_hir::Exp::Path(get_path(exp.path()?)?),
     ast::Exp::RecordExp(exp) => {
-      ck_separators(cx, Sep::Comma, exp.exp_rows().map(|x| x.commas()));
+      ck_trailing(cx, Sep::Comma, exp.exp_rows().map(|x| x.comma()));
       let rows = exp.exp_rows().filter_map(|row| {
         let lab_ast = row.lab()?;
         let lab_tr = lab_ast.token.text_range();
@@ -61,11 +61,11 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       return get(cx, inner);
     }
     ast::Exp::TupleExp(exp) => {
-      ck_separators(cx, Sep::Comma, exp.exp_args().map(|x| x.commas()));
+      ck_trailing(cx, Sep::Comma, exp.exp_args().map(|x| x.comma()));
       tuple(exp.exp_args().map(|e| get(cx, e.exp())))
     }
     ast::Exp::ListExp(exp) => {
-      ck_separators(cx, Sep::Comma, exp.exp_args().map(|x| x.commas()));
+      ck_trailing(cx, Sep::Comma, exp.exp_args().map(|x| x.comma()));
       // need to rev()
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|x| get(cx, x.exp())).collect();
@@ -80,13 +80,13 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       return None;
     }
     ast::Exp::SeqExp(exp) => {
-      ck_separators(cx, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolons()));
+      ck_trailing(cx, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(cx, x.exp())).collect();
       return exp_idx_in_seq(cx, exps, &ptr);
     }
     ast::Exp::LetExp(exp) => {
       let dec = dec::get(cx, exp.dec());
-      ck_separators(cx, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolons()));
+      ck_trailing(cx, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(cx, x.exp())).collect();
       let exp = exp_idx_in_seq(cx, exps, &ptr);
       sml_hir::Exp::Let(dec, exp)

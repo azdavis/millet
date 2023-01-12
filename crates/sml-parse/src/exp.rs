@@ -227,9 +227,6 @@ fn at_exp_l_round(p: &mut Parser<'_>) -> SK {
     SK::Comma => (SK::ExpArg, SK::TupleExp),
     _ => unreachable!("just checked at either ; or , above"),
   };
-  while p.at(sep) {
-    p.bump();
-  }
   p.exit(en, wrap);
   end_sep(p, wrap, sep, SK::RRound, |p| {
     exp(p);
