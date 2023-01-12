@@ -189,7 +189,7 @@ fn get_sig_exp(cx: &mut Cx, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
     ast::SigExp::WhereTypeSigExp(sig_exp) => sml_hir::SigExp::Where(
       get_sig_exp(cx, sig_exp.sig_exp()),
       sml_hir::WhereKind::Type(
-        ty::var_seq(sig_exp.ty_var_seq()),
+        ty::var_seq(cx, sig_exp.ty_var_seq()),
         get_path(sig_exp.path()?)?,
         ty::get(cx, sig_exp.ty()),
       ),
@@ -313,7 +313,7 @@ fn get_spec_one(cx: &mut Cx, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> 
       dec
         .ty_binds()
         .filter_map(|ty_desc| {
-          let ty_vars = ty::var_seq(ty_desc.ty_var_seq());
+          let ty_vars = ty::var_seq(cx, ty_desc.ty_var_seq());
           let name = get_name(ty_desc.name())?;
           let mut ret = f(sml_hir::TyDesc { name: name.clone(), ty_vars: ty_vars.clone() });
           if let Some(ty) = ty_desc.eq_ty() {
@@ -463,7 +463,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
       return None;
     }
     ast::DecOne::ValDec(dec) => sml_hir::Dec::Val(
-      ty::var_seq(dec.ty_var_seq()),
+      ty::var_seq(cx, dec.ty_var_seq()),
       dec
         .val_binds()
         .map(|val_bind| {
@@ -480,7 +480,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
         .collect(),
     ),
     ast::DecOne::FunDec(dec) => {
-      let ty_vars = ty::var_seq(dec.ty_var_seq());
+      let ty_vars = ty::var_seq(cx, dec.ty_var_seq());
       let val_binds: Vec<_> = dec
         .fun_binds()
         .map(|fun_bind| {
@@ -695,7 +695,7 @@ where
       }
     };
     Some(sml_hir::DatBind {
-      ty_vars: ty::var_seq(dat_bind.ty_var_seq()),
+      ty_vars: ty::var_seq(cx, dat_bind.ty_var_seq()),
       name: get_name(dat_bind.name())?,
       cons,
     })
@@ -714,7 +714,7 @@ where
         cx.err(ty_bind.syntax().text_range(), ErrorKind::MissingRhs);
       }
       Some(sml_hir::TyBind {
-        ty_vars: ty::var_seq(ty_bind.ty_var_seq()),
+        ty_vars: ty::var_seq(cx, ty_bind.ty_var_seq()),
         name,
         ty: ty::get(cx, ty),
       })

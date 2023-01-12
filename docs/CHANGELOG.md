@@ -18,6 +18,7 @@ The versioning system is basically the following:
 - Rename an overload.
 - Allow using [smlfmt][].
 - Suggest `=` for `==` and similar.
+- Emit specific errors for trailing `,` and `;`.
 
 ## v0.6.7
 

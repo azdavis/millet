@@ -62,11 +62,11 @@ pub(crate) fn end_sep<'a, F>(p: &mut Parser<'a>, wrap: SK, sep: SK, end: SK, mut
 where
   F: FnMut(&mut Parser<'a>),
 {
-  if p.at(end) {
-    p.bump();
-    return;
-  }
   loop {
+    if p.at(end) {
+      p.bump();
+      return;
+    }
     let en = p.enter();
     f(p);
     if p.at(sep) {

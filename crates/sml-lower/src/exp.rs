@@ -1,7 +1,7 @@
 //! Lowering expressions.
 
 use crate::common::{get_lab, get_path, get_scon};
-use crate::util::{Cx, ErrorKind, MatcherFlavor};
+use crate::util::{Cx, ErrorKind, MatcherFlavor, Trailing};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
@@ -17,33 +17,34 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::SConExp(exp) => sml_hir::Exp::SCon(get_scon(cx, exp.s_con()?)?),
     ast::Exp::PathExp(exp) => sml_hir::Exp::Path(get_path(exp.path()?)?),
-    ast::Exp::RecordExp(exp) => sml_hir::Exp::Record(
-      exp
-        .exp_rows()
-        .filter_map(|row| {
-          let lab_ast = row.lab()?;
-          let lab_tr = lab_ast.token.text_range();
-          let lab = get_lab(cx, lab_ast);
-          let exp = match row.eq_exp() {
-            Some(eq_exp) => get(cx, eq_exp.exp()),
-            None => match &lab {
-              sml_hir::Lab::Name(name) => {
-                cx.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
-                cx.exp(sml_hir::Exp::Path(sml_hir::Path::one(name.clone())), ptr.clone())
-              }
-              sml_hir::Lab::Num(_) => {
-                // NOTE: we explicitly duplicate the `err` call in both branches, to remind us that
-                // if we ever actually accepted expression row punning, we should add a separate
-                // error here rejecting the attempt to pun with a int label.
-                cx.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
-                None
-              }
-            },
-          };
-          Some((lab, exp))
-        })
-        .collect(),
-    ),
+    ast::Exp::RecordExp(exp) => {
+      if let Some(comma) = exp.exp_rows().last().and_then(|x| x.comma()) {
+        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
+      }
+      let rows = exp.exp_rows().filter_map(|row| {
+        let lab_ast = row.lab()?;
+        let lab_tr = lab_ast.token.text_range();
+        let lab = get_lab(cx, lab_ast);
+        let exp = match row.eq_exp() {
+          Some(eq_exp) => get(cx, eq_exp.exp()),
+          None => match &lab {
+            sml_hir::Lab::Name(name) => {
+              cx.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
+              cx.exp(sml_hir::Exp::Path(sml_hir::Path::one(name.clone())), ptr.clone())
+            }
+            sml_hir::Lab::Num(_) => {
+              // NOTE: we explicitly duplicate the `err` call in both branches, to remind us that
+              // if we ever actually accepted expression row punning, we should add a separate
+              // error here rejecting the attempt to pun with a int label.
+              cx.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
+              None
+            }
+          },
+        };
+        Some((lab, exp))
+      });
+      sml_hir::Exp::Record(rows.collect())
+    }
     ast::Exp::SelectorExp(exp) => {
       let lab = get_lab(cx, exp.lab()?);
       let fresh = cx.fresh();
@@ -61,8 +62,16 @@ pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       }
       return get(cx, inner);
     }
-    ast::Exp::TupleExp(exp) => tuple(exp.exp_args().map(|e| get(cx, e.exp()))),
+    ast::Exp::TupleExp(exp) => {
+      if let Some(comma) = exp.exp_args().last().and_then(|x| x.comma()) {
+        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
+      }
+      tuple(exp.exp_args().map(|e| get(cx, e.exp())))
+    }
     ast::Exp::ListExp(exp) => {
+      if let Some(comma) = exp.exp_args().last().and_then(|x| x.comma()) {
+        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
+      }
       // need to rev()
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|x| get(cx, x.exp())).collect();
@@ -240,8 +249,11 @@ fn exps_in_seq<I>(cx: &mut Cx, exps: I, ptr: &SyntaxNodePtr) -> sml_hir::ExpIdx
 where
   I: Iterator<Item = ast::ExpInSeq>,
 {
-  let exps: Vec<_> = exps.into_iter().map(|e| get(cx, e.exp())).collect();
-  exp_idx_in_seq(cx, exps, ptr)
+  let exps: Vec<_> = exps.map(|e| (get(cx, e.exp()), e.semicolon())).collect();
+  if let Some(comma) = exps.last().and_then(|(_, x)| x.as_ref()) {
+    cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Semi));
+  }
+  exp_idx_in_seq(cx, exps.into_iter().map(|(x, _)| x), ptr)
 }
 
 /// lowers 1 into 2. (which is then lowered into 3.)

@@ -2,7 +2,7 @@
 
 use crate::common::{get_lab, get_path, get_scon};
 use crate::ty;
-use crate::util::{Cx, ErrorKind, MatcherFlavor};
+use crate::util::{Cx, ErrorKind, MatcherFlavor, Trailing};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(
@@ -37,6 +37,9 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
       sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(cx, flavor, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {
+      if let Some(comma) = pat.pat_rows().last().and_then(|x| x.comma()) {
+        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
+      }
       let mut rest_pat_row = None::<RestPatRowState>;
       let rows: Vec<_> = pat
         .pat_rows()
@@ -91,8 +94,16 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
       }
       return get_or(cx, flavor, inner);
     }
-    ast::Pat::TuplePat(pat) => tuple(pat.pat_args().map(|x| get(cx, flavor, x.pat()))),
+    ast::Pat::TuplePat(pat) => {
+      if let Some(comma) = pat.pat_args().last().and_then(|x| x.comma()) {
+        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
+      }
+      tuple(pat.pat_args().map(|x| get(cx, flavor, x.pat())))
+    }
     ast::Pat::ListPat(pat) => {
+      if let Some(comma) = pat.pat_args().last().and_then(|x| x.comma()) {
+        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
+      }
       // need to rev()
       #[allow(clippy::needless_collect)]
       let pats: Vec<_> = pat.pat_args().map(|x| get(cx, flavor, x.pat())).collect();
@@ -103,6 +114,11 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
       })
     }
     ast::Pat::VectorPat(pat) => {
+      if let Some(comma) =
+        pat.list_pat().into_iter().flat_map(|x| x.pat_args()).last().and_then(|x| x.comma())
+      {
+        cx.err(comma.text_range(), ErrorKind::Trailing(Trailing::Comma));
+      }
       cx.err(pat.syntax().text_range(), ErrorKind::Unsupported("vector patterns"));
       return None;
     }

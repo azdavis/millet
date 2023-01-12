@@ -1215,6 +1215,21 @@ val _ = let in 1 end
 val _ = let in 1; 2; 3 end
 ```
 
+## 4028
+
+There was a trailing comma or semicolon.
+
+```sml
+val _ = (1, 2,)
+(**          ^ trailing `,` *)
+```
+
+To fix, remove the trailing punctuation.
+
+```sml
+val _ = (1, 2)
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
