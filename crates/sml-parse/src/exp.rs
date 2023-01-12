@@ -175,9 +175,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     if p.at(SK::LSquare) {
       let list = p.enter();
       p.bump();
-      comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
-        exp(p);
-      });
+      exp_args(p);
       p.exit(list, SK::ListExp);
       p.exit(en, SK::VectorExp)
     } else {
@@ -190,9 +188,7 @@ fn at_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.exit(en, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
-    comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
-      exp(p);
-    });
+    exp_args(p);
     p.exit(en, SK::ListExp)
   } else if p.at(SK::LetKw) {
     p.bump();
@@ -274,6 +270,12 @@ fn at_exp_hd(p: &mut Parser<'_>) -> bool {
     || p.at(SK::LRound)
     || p.at(SK::LSquare)
     || p.at(SK::LetKw)
+}
+
+fn exp_args(p: &mut Parser<'_>) {
+  comma_sep(p, SK::RSquare, SK::ExpArg, |p| {
+    exp(p);
+  });
 }
 
 #[derive(Debug, Clone, Copy)]

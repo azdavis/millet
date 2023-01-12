@@ -186,17 +186,13 @@ pub(crate) fn at_pat(p: &mut Parser<'_>, infix: InfixErr) -> Option<Exited> {
     p.exit(en, kind)
   } else if p.at(SK::LSquare) {
     p.bump();
-    comma_sep(p, SK::RSquare, SK::PatArg, |p| {
-      must(p, |p| pat(p, infix), Expected::Pat);
-    });
+    pat_args(p, infix);
     p.exit(en, SK::ListPat)
   } else if p.at(SK::Hash) {
     p.bump();
     let list = p.enter();
     p.eat(SK::LSquare);
-    comma_sep(p, SK::RSquare, SK::PatArg, |p| {
-      must(p, |p| pat(p, infix), Expected::Pat);
-    });
+    pat_args(p, infix);
     p.exit(list, SK::ListPat);
     p.exit(en, SK::VectorPat)
   } else {
@@ -256,4 +252,10 @@ fn as_pat_tl(p: &mut Parser<'_>, infix: InfixErr) -> Option<Exited> {
   } else {
     None
   }
+}
+
+fn pat_args(p: &mut Parser<'_>, infix: InfixErr) {
+  comma_sep(p, SK::RSquare, SK::PatArg, |p| {
+    must(p, |p| pat(p, infix), Expected::Pat);
+  });
 }
