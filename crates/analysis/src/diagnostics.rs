@@ -70,7 +70,9 @@ pub(crate) fn source_file(
       diagnostic(file, severities, range, msg, err.code(), err.severity())
     }));
     if matches!(options.format, config::FormatEngine::Naive) {
-      if let Err(sml_fmt::Error::Comments(ranges)) = sml_fmt::check(&file.syntax.parse.root) {
+      if let Err(sml_naive_fmt::Error::Comments(ranges)) =
+        sml_naive_fmt::check(&file.syntax.parse.root)
+      {
         ret.extend(ranges.into_iter().filter_map(|range| {
           diagnostic(
             file,

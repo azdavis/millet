@@ -184,7 +184,8 @@ impl Analysis {
       config::FormatEngine::None => Err(FormatError::Disabled),
       config::FormatEngine::Naive => {
         let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
-        let buf = sml_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::Format)?;
+        let buf =
+          sml_naive_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::NaiveFmt)?;
         Ok((buf, file.syntax.pos_db.end_position()))
       }
       config::FormatEngine::Smlfmt => {
@@ -273,8 +274,8 @@ pub enum FormatError {
   Disabled,
   /// There was no file to format.
   NoFile,
-  /// A formatting error.
-  Format(sml_fmt::Error),
+  /// A naive formatting error.
+  NaiveFmt(sml_naive_fmt::Error),
   /// An I/O error.
   Io(std::io::Error),
   /// `smlfmt` failed with stderr.

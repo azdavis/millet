@@ -165,7 +165,7 @@ In the future we could add more to this `Idx`, like "the name of the third con b
 
 These crates do interesting things related to SML files, but aren't really full "passes".
 
-### `crates/sml-fmt`
+### `crates/sml-naive-fmt`
 
 Naively format SML files.
 

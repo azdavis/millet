@@ -24,8 +24,8 @@ dependencies = [
  "paths",
  "sml-file-syntax",
  "sml-fixity",
- "sml-fmt",
  "sml-hir",
+ "sml-naive-fmt",
  "sml-namespace",
  "sml-statics",
  "sml-syntax",
@@ -692,15 +692,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sml-fmt"
-version = "0.1.0"
-dependencies = [
- "fast-hash",
- "sml-comment",
- "sml-syntax",
-]
-
-[[package]]
 name = "sml-hir"
 version = "0.1.0"
 dependencies = [
@@ -734,6 +725,15 @@ dependencies = [
  "sml-hir",
  "sml-syntax",
  "str-util",
+]
+
+[[package]]
+name = "sml-naive-fmt"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "sml-comment",
+ "sml-syntax",
 ]
 
 [[package]]

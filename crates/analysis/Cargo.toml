@@ -19,7 +19,7 @@ mlb-statics = { path = "../mlb-statics" }
 paths = { git = "https://github.com/azdavis/language-util.git" }
 sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
-sml-fmt = { path = "../sml-fmt" }
+sml-naive-fmt = { path = "../sml-naive-fmt" }
 sml-hir = { path = "../sml-hir" }
 sml-namespace = { path = "../sml-namespace" }
 sml-statics = { path = "../sml-statics" }
