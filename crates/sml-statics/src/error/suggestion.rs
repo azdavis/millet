@@ -32,6 +32,8 @@ pub(crate) fn get(s: &str) -> Option<&'static str> {
     "some" | "Some" | "Just" => "SOME",
     "True" | "TRUE" | "YES" => "true",
     "False" | "FALSE" | "NO" => "false",
+    "==" | "===" => "=",
+    "!=" | "!==" => "<>",
     _ => return None,
   };
   Some(ret)
