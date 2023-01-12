@@ -256,15 +256,15 @@ where
   A: IntoIterator<IntoIter = B>,
   B: DoubleEndedIterator<Item = sml_hir::ExpIdx>,
 {
-  exps
-    .into_iter()
-    .rev()
-    .reduce(|ac, x| {
-      let wild = cx.pat(sml_hir::Pat::Wild, ptr.clone());
-      let c = case(cx, x, vec![(wild, ac)], ptr.clone(), sml_hir::FnFlavor::Seq);
-      cx.exp(c, ptr.clone())
-    })
-    .flatten()
+  let ret = exps.into_iter().rev().reduce(|ac, x| {
+    let wild = cx.pat(sml_hir::Pat::Wild, ptr.clone());
+    let c = case(cx, x, vec![(wild, ac)], ptr.clone(), sml_hir::FnFlavor::Seq);
+    cx.exp(c, ptr.clone())
+  });
+  if ret.is_none() {
+    cx.err(ptr.text_range(), ErrorKind::EmptyExpSemiSeq);
+  }
+  ret.flatten()
 }
 
 fn if_(

@@ -1199,6 +1199,22 @@ To fix, add some parameters.
 fun totoro x = x + 3
 ```
 
+## 4027
+
+There was an expression sequence with no expressions.
+
+```sml
+val _ = let in end
+(** + requires at least 1 expression *)
+```
+
+To fix, add some expressions.
+
+```sml
+val _ = let in 1 end
+val _ = let in 1; 2; 3 end
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

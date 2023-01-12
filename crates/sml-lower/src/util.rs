@@ -71,6 +71,7 @@ pub(crate) enum ErrorKind {
   AsPatLhsNotName,
   PatNameIsNameOfContainingFun(MatcherFlavor),
   EmptyFun,
+  EmptyExpSemiSeq,
 }
 
 impl fmt::Display for ErrorKind {
@@ -114,6 +115,9 @@ impl fmt::Display for ErrorKind {
         write!(f, "name bound in pattern inside a `{flavor}` matches name of a `fun` that contains the `{flavor}`")
       }
       ErrorKind::EmptyFun => f.write_str("`fun` with no parameters"),
+      ErrorKind::EmptyExpSemiSeq => {
+        f.write_str("`;`-separated sequence requires at least 1 expression")
+      }
     }
   }
 }
@@ -186,6 +190,7 @@ impl Error {
       ErrorKind::AsPatLhsNotName => Code::n(4024),
       ErrorKind::PatNameIsNameOfContainingFun(_) => Code::n(4025),
       ErrorKind::EmptyFun => Code::n(4026),
+      ErrorKind::EmptyExpSemiSeq => Code::n(4027),
     }
   }
 
