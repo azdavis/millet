@@ -13,12 +13,13 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.7.0
 
 - Rename an overload.
 - Allow using [smlfmt][].
 - Suggest `=` for `==` and similar.
 - Emit specific errors for trailing `,` and `;`.
+- Track scope of fixity declarations.
 
 ## v0.6.7
 
