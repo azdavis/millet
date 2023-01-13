@@ -1,6 +1,6 @@
 //! Miscellaneous tests. If unsure where to put a test, put it here.
 
-use crate::check::{check, check_with_warnings, fail};
+use crate::check::{check, check_with_warnings};
 
 #[test]
 fn apply() {
@@ -818,7 +818,7 @@ val () = use s
 
 #[test]
 fn infix_scope() {
-  fail(
+  check(
     r#"
 fun add (a, b) = a + b
 

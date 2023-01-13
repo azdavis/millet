@@ -243,18 +243,20 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
   true
 }
 
-fn str_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
+fn str_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::StructKw) {
     p.bump();
-    dec(p, fe, InfixErr::Yes);
+    let mut fe = fe.clone();
+    dec(p, &mut fe, InfixErr::Yes);
     p.eat(SK::EndKw);
     p.exit(en, SK::StructStrExp)
   } else if p.at(SK::LetKw) {
     p.bump();
-    dec(p, fe, InfixErr::Yes);
+    let mut fe = fe.clone();
+    dec(p, &mut fe, InfixErr::Yes);
     p.eat(SK::InKw);
-    if str_exp(p, fe).is_none() {
+    if str_exp(p, &fe).is_none() {
       p.error(ErrorKind::Expected(Expected::StrExp));
     }
     p.eat(SK::EndKw);
@@ -270,7 +272,8 @@ fn str_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
       p.exit(arg, SK::AppStrExpArgStrExp);
     } else {
       p.abandon(arg);
-      dec(p, fe, InfixErr::Yes);
+      let mut fe = fe.clone();
+      dec(p, &mut fe, InfixErr::Yes);
     }
     p.eat(SK::RRound);
     p.exit(en, SK::AppStrExp)
@@ -291,7 +294,7 @@ fn ascription(p: &mut Parser<'_>) -> bool {
 }
 
 /// should have just gotten `true` from [`ascription`]
-fn ascription_tail(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Exited {
+fn ascription_tail(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Exited {
   let en = p.enter();
   p.bump();
   if sig_exp(p, fe).is_none() {
@@ -300,11 +303,12 @@ fn ascription_tail(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Exited {
   p.exit(en, SK::AscriptionTail)
 }
 
-fn sig_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
+fn sig_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::SigKw) {
     p.bump();
-    dec(p, fe, InfixErr::No);
+    let mut fe = fe.clone();
+    dec(p, &mut fe, InfixErr::No);
     p.eat(SK::EndKw);
     p.exit(en, SK::SigSigExp)
   } else if p.at(SK::Name) {

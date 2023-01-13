@@ -9,17 +9,17 @@ use crate::{dec::dec, pat::pat, ty::ty};
 use sml_syntax::SyntaxKind as SK;
 
 /// if no parse, emit error
-pub(crate) fn exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> bool {
+pub(crate) fn exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> bool {
   must(p, |p| exp_prec(p, fe, ExpPrec::Min), Expected::Exp)
 }
 
 /// if no parse, do nothing
-pub(crate) fn exp_opt(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> bool {
+pub(crate) fn exp_opt(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> bool {
   exp_prec(p, fe, ExpPrec::Min).is_some()
 }
 
 /// if no parse, do nothing
-pub(crate) fn eq_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) {
+pub(crate) fn eq_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   if p.at(SK::Eq) {
     let en = p.enter();
     p.bump();
@@ -29,7 +29,7 @@ pub(crate) fn eq_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) {
 }
 
 #[allow(clippy::too_many_lines)]
-fn exp_prec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, min_prec: ExpPrec) -> Option<Exited> {
+fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Option<Exited> {
   let en = p.enter();
   let infix = matches!(min_prec, ExpPrec::Infix(_));
   let ex = if p.at(SK::RaiseKw) {
@@ -138,7 +138,7 @@ fn exp_prec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, min_prec: ExpPrec) -> 
 }
 
 /// when adding more cases to this, update [`at_exp_hd`].
-fn at_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
+fn at_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
   let en = p.enter();
   let ex = if p.at(SK::DotDotDot) {
     p.bump();
@@ -194,10 +194,11 @@ fn at_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
     p.exit(en, SK::ListExp)
   } else if p.at(SK::LetKw) {
     p.bump();
-    dec(p, fe, InfixErr::Yes);
+    let mut fe = fe.clone();
+    dec(p, &mut fe, InfixErr::Yes);
     p.eat(SK::InKw);
     end_sep(p, SK::ExpInSeq, SK::Semicolon, SK::EndKw, |p| {
-      exp(p, fe);
+      exp(p, &fe);
     });
     p.exit(en, SK::LetExp)
   } else {
@@ -207,7 +208,7 @@ fn at_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
   Some(ex)
 }
 
-fn at_exp_l_round(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> SK {
+fn at_exp_l_round(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> SK {
   if p.at(SK::RRound) {
     p.bump();
     return SK::TupleExp;
@@ -236,7 +237,7 @@ fn at_exp_l_round(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> SK {
   overall
 }
 
-fn matcher(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) {
+fn matcher(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   let en = p.enter();
   if p.at(SK::Bar) {
     p.bump();
@@ -266,7 +267,7 @@ fn at_exp_hd(p: &mut Parser<'_>) -> bool {
     || p.at(SK::LetKw)
 }
 
-fn exp_args(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) {
+fn exp_args(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   comma_sep(p, SK::ExpArg, SK::RSquare, |p| {
     exp(p, fe);
   });
