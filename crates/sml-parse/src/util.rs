@@ -148,10 +148,10 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
 
 /// requires we just saw (but did not bump) an `op` kw. errors if this parses a path that is not
 /// infix.
-pub(crate) fn path_infix(p: &mut Parser<'_>) {
+pub(crate) fn path_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   let bad = !p.at_n(2, SK::Dot)
     && p.peek_n(1).map_or(false, |tok| {
-      matches!(tok.kind, SK::Name | SK::Eq | SK::Star) && !p.is_infix(tok.text)
+      matches!(tok.kind, SK::Name | SK::Eq | SK::Star) && !fe.contains_key(tok.text)
     });
   if bad {
     p.error(ErrorKind::UnnecessaryOp);
@@ -161,10 +161,11 @@ pub(crate) fn path_infix(p: &mut Parser<'_>) {
 }
 
 /// requires we just got a true `name_star_eq(p)`. parses a path. errors if the path is infix.
-pub(crate) fn path_no_infix(p: &mut Parser<'_>) {
+pub(crate) fn path_no_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   let cur = p.peek().unwrap();
-  let bad =
-    !p.at_n(1, SK::Dot) && matches!(cur.kind, SK::Name | SK::Eq | SK::Star) && p.is_infix(cur.text);
+  let bad = !p.at_n(1, SK::Dot)
+    && matches!(cur.kind, SK::Name | SK::Eq | SK::Star)
+    && fe.contains_key(cur.text);
   if bad {
     p.error(ErrorKind::InfixWithoutOp);
   }

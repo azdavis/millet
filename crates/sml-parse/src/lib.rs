@@ -28,9 +28,11 @@ pub struct Parse {
 /// # Panics
 ///
 /// If casting the root node to a Root failed (an internal error).
-pub fn get<'a>(tokens: &'a [Token<'a, SK>], fix_env: &'a mut sml_fixity::Env) -> Parse {
-  let mut p = parser::Parser::new(tokens, fix_env);
-  root::root(&mut p);
-  let (node, errors) = p.finish();
-  Parse { root: Root::cast(node).unwrap(), errors }
+pub fn get(tokens: &[Token<'_, SK>], fe: &mut sml_fixity::Env) -> Parse {
+  let mut p = parser::Parser::new(tokens);
+  root::root(&mut p, fe);
+  let mut sink = event_parse::rowan_sink::RowanSink::default();
+  p.finish(&mut sink);
+  let (node, errors) = sink.finish();
+  Parse { root: Root::cast(node).unwrap(), errors: errors.into_iter().map(parser::Error).collect() }
 }

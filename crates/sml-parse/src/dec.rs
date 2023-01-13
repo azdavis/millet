@@ -9,15 +9,15 @@ use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path, InfixErr};
 use sml_syntax::SyntaxKind as SK;
 
-pub(crate) fn dec(p: &mut Parser<'_>, infix: InfixErr) -> bool {
+pub(crate) fn dec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
   let en = p.enter();
-  let ret = maybe_semi_sep(p, SK::DecWithTailInSeq, |p| dec_with_tail(p, infix));
+  let ret = maybe_semi_sep(p, SK::DecWithTailInSeq, |p| dec_with_tail(p, fe, infix));
   p.exit(en, SK::Dec);
   ret
 }
 
 #[allow(clippy::too_many_lines)]
-fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
+fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
   let en = p.enter();
   if p.at(SK::DotDotDot) {
     p.bump();
@@ -31,11 +31,11 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
         p.bump();
         got = true;
       }
-      got |= must(p, |p| pat(p, infix), Expected::Pat);
+      got |= must(p, |p| pat(p, fe, infix), Expected::Pat);
       if !got {
         return false;
       }
-      eq_exp(p);
+      eq_exp(p, fe);
       true
     });
     p.exit(en, SK::ValDec);
@@ -49,7 +49,7 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
       many_sep(p, SK::Bar, SK::FunBindCase, |p| {
         let en = p.enter();
         let save = p.save();
-        infix_fun_bind_case_head_inner(p, infix);
+        infix_fun_bind_case_head_inner(p, fe, infix);
         if p.ok_since(save) {
           p.exit(en, SK::InfixFunBindCaseHead);
           // this is the case where the () around the infix fun bind case head are dropped. thus,
@@ -57,14 +57,14 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
         } else {
           if p.at(SK::LRound) {
             p.bump();
-            infix_fun_bind_case_head_inner(p, infix);
+            infix_fun_bind_case_head_inner(p, fe, infix);
             p.eat(SK::RRound);
             p.exit(en, SK::InfixFunBindCaseHead);
           } else {
             let saw_op = p.at(SK::OpKw);
             let name = p.peek_n(usize::from(saw_op));
             let is_name_star = name.map_or(false, |tok| matches!(tok.kind, SK::Name | SK::Star));
-            let is_infix = name.map_or(false, |tok| p.is_infix(tok.text));
+            let is_infix = name.map_or(false, |tok| fe.contains_key(tok.text));
             if saw_op {
               if is_name_star && !is_infix {
                 p.error(ErrorKind::UnnecessaryOp);
@@ -81,12 +81,12 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
             }
             p.exit(en, SK::PrefixFunBindCaseHead);
           }
-          while at_pat(p, infix).is_some() {
+          while at_pat(p, fe, infix).is_some() {
             // no body
           }
         }
         let _ = ty_annotation(p);
-        eq_exp(p);
+        eq_exp(p, fe);
         true
       })
     });
@@ -104,7 +104,7 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
     p.bump();
     dat_binds(p, true);
     p.eat(SK::WithKw);
-    dec(p, infix);
+    dec(p, fe, infix);
     p.eat(SK::EndKw);
     p.exit(en, SK::AbstypeDec);
   } else if p.at(SK::ExceptionKw) {
@@ -138,26 +138,32 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   } else if p.at(SK::InfixKw) {
     p.bump();
     let num = fixity(p);
-    names_star_eq(p, |p, name| p.insert_infix(name, sml_fixity::Infix::left(num)));
+    names_star_eq(p, |name| {
+      fe.insert(str_util::Name::new(name), sml_fixity::Infix::left(num));
+    });
     p.exit(en, SK::InfixDec);
   } else if p.at(SK::InfixrKw) {
     p.bump();
     let num = fixity(p);
-    names_star_eq(p, |p, name| p.insert_infix(name, sml_fixity::Infix::right(num)));
+    names_star_eq(p, |name| {
+      fe.insert(str_util::Name::new(name), sml_fixity::Infix::right(num));
+    });
     p.exit(en, SK::InfixrDec);
   } else if p.at(SK::NonfixKw) {
     p.bump();
-    names_star_eq(p, Parser::remove_infix);
+    names_star_eq(p, |name| {
+      fe.remove(name);
+    });
     p.exit(en, SK::NonfixDec);
   } else if p.at(SK::DoKw) {
     p.bump();
-    exp(p);
+    exp(p, fe);
     p.exit(en, SK::DoDec);
   } else if p.at(SK::LocalKw) {
     p.bump();
-    dec(p, infix);
+    dec(p, fe, infix);
     p.eat(SK::InKw);
-    dec(p, infix);
+    dec(p, fe, infix);
     p.eat(SK::EndKw);
     p.exit(en, SK::LocalDec);
   } else if p.at(SK::StructureKw) {
@@ -167,12 +173,14 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
         return false;
       }
       if ascription(p) {
-        ascription_tail(p);
+        ascription_tail(p, fe);
       }
       if p.at(SK::Eq) {
         let en = p.enter();
         p.bump();
-        must(p, str_exp, Expected::StrExp);
+        if str_exp(p, fe).is_none() {
+          p.error(ErrorKind::Expected(Expected::StrExp));
+        }
         p.exit(en, SK::EqStrExp);
       }
       true
@@ -185,7 +193,9 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
         return false;
       }
       p.eat(SK::Eq);
-      must(p, sig_exp, Expected::SigExp);
+      if sig_exp(p, fe).is_none() {
+        p.error(ErrorKind::Expected(Expected::SigExp));
+      }
       true
     });
     p.exit(en, SK::SignatureDec);
@@ -200,25 +210,29 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
         let en = p.enter();
         p.bump();
         p.eat(SK::Colon);
-        must(p, sig_exp, Expected::SigExp);
+        if sig_exp(p, fe).is_none() {
+          p.error(ErrorKind::Expected(Expected::SigExp));
+        }
         p.exit(en, SK::FunctorArgNameSigExp);
       } else {
-        dec(p, InfixErr::No);
+        dec(p, fe, InfixErr::No);
       }
       p.eat(SK::RRound);
       if ascription(p) {
-        ascription_tail(p);
+        ascription_tail(p, fe);
       }
       p.eat(SK::Eq);
-      must(p, str_exp, Expected::StrExp);
+      if str_exp(p, fe).is_none() {
+        p.error(ErrorKind::Expected(Expected::StrExp));
+      }
       true
     });
     p.exit(en, SK::FunctorDec);
-  } else if exp_opt(p) {
+  } else if exp_opt(p, fe) {
     p.exit(en, SK::ExpDec);
   } else if p.at(SK::IncludeKw) {
     p.bump();
-    while sig_exp(p).is_some() {
+    while sig_exp(p, fe).is_some() {
       // no body
     }
     p.exit(en, SK::IncludeDec);
@@ -229,18 +243,20 @@ fn dec_one(p: &mut Parser<'_>, infix: InfixErr) -> bool {
   true
 }
 
-fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
+fn str_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::StructKw) {
     p.bump();
-    dec(p, InfixErr::Yes);
+    dec(p, fe, InfixErr::Yes);
     p.eat(SK::EndKw);
     p.exit(en, SK::StructStrExp)
   } else if p.at(SK::LetKw) {
     p.bump();
-    dec(p, InfixErr::Yes);
+    dec(p, fe, InfixErr::Yes);
     p.eat(SK::InKw);
-    must(p, str_exp, Expected::StrExp);
+    if str_exp(p, fe).is_none() {
+      p.error(ErrorKind::Expected(Expected::StrExp));
+    }
     p.eat(SK::EndKw);
     p.exit(en, SK::LetStrExp)
   } else if p.at(SK::Name) && !p.at_n(1, SK::LRound) {
@@ -250,11 +266,11 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
     p.bump();
     p.eat(SK::LRound);
     let arg = p.enter();
-    if str_exp(p).is_some() {
+    if str_exp(p, fe).is_some() {
       p.exit(arg, SK::AppStrExpArgStrExp);
     } else {
       p.abandon(arg);
-      dec(p, InfixErr::Yes);
+      dec(p, fe, InfixErr::Yes);
     }
     p.eat(SK::RRound);
     p.exit(en, SK::AppStrExp)
@@ -264,7 +280,7 @@ fn str_exp(p: &mut Parser<'_>) -> Option<Exited> {
   };
   while ascription(p) {
     let en = p.precede(ex);
-    ascription_tail(p);
+    ascription_tail(p, fe);
     ex = p.exit(en, SK::AscriptionStrExp);
   }
   Some(ex)
@@ -275,18 +291,20 @@ fn ascription(p: &mut Parser<'_>) -> bool {
 }
 
 /// should have just gotten `true` from [`ascription`]
-fn ascription_tail(p: &mut Parser<'_>) -> Exited {
+fn ascription_tail(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Exited {
   let en = p.enter();
   p.bump();
-  must(p, sig_exp, Expected::SigExp);
+  if sig_exp(p, fe).is_none() {
+    p.error(ErrorKind::Expected(Expected::SigExp));
+  }
   p.exit(en, SK::AscriptionTail)
 }
 
-fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
+fn sig_exp(p: &mut Parser<'_>, fe: &mut sml_fixity::Env) -> Option<Exited> {
   let en = p.enter();
   let mut ex = if p.at(SK::SigKw) {
     p.bump();
-    dec(p, InfixErr::No);
+    dec(p, fe, InfixErr::No);
     p.eat(SK::EndKw);
     p.exit(en, SK::SigSigExp)
   } else if p.at(SK::Name) {
@@ -320,9 +338,9 @@ fn sig_exp(p: &mut Parser<'_>) -> Option<Exited> {
   Some(ex)
 }
 
-fn dec_with_tail(p: &mut Parser<'_>, infix: InfixErr) -> bool {
+fn dec_with_tail(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
   let en = p.enter();
-  let mut ret = maybe_semi_sep(p, SK::DecInSeq, |p| dec_one(p, infix));
+  let mut ret = maybe_semi_sep(p, SK::DecInSeq, |p| dec_one(p, fe, infix));
   while p.at(SK::SharingKw) {
     ret = true;
     let en = p.enter();
@@ -356,13 +374,13 @@ fn fixity(p: &mut Parser<'_>) -> u16 {
   ret
 }
 
-fn names_star_eq<'a, F>(p: &mut Parser<'a>, mut f: F)
+fn names_star_eq<F>(p: &mut Parser<'_>, mut f: F)
 where
-  F: FnMut(&mut Parser<'a>, &'a str),
+  F: FnMut(&str),
 {
   while name_star_eq(p) {
     let text = p.bump().text;
-    f(p, text);
+    f(text);
   }
 }
 
@@ -440,12 +458,12 @@ fn ty_binds(p: &mut Parser<'_>) {
   });
 }
 
-fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>, infix: InfixErr) {
-  must(p, |p| at_pat(p, infix), Expected::Pat);
+fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) {
+  must(p, |p| at_pat(p, fe, infix), Expected::Pat);
   if let Some(name) = eat_name_star(p) {
-    if !p.is_infix(name.text) {
+    if !fe.contains_key(name.text) {
       p.error(ErrorKind::NotInfix);
     }
   }
-  must(p, |p| at_pat(p, infix), Expected::Pat);
+  must(p, |p| at_pat(p, fe, infix), Expected::Pat);
 }

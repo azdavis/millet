@@ -1,100 +1,12 @@
 //! The parser. A thin wrapper around event-parse, with operator precedence.
 
 use diagnostic_util::{Code, Severity};
-use sml_syntax::{rowan::TextRange, token::Token, SyntaxKind as SK, SyntaxNode};
+use sml_syntax::{rowan::TextRange, SyntaxKind};
 use std::fmt;
 
-pub(crate) use event_parse::{Entered, Exited, Save};
+pub(crate) use event_parse::{Entered, Exited};
 
-/// A event-based parser for SML.
-#[derive(Debug)]
-pub(crate) struct Parser<'a> {
-  inner: event_parse::Parser<'a, SK, ErrorKind>,
-  fix_env: &'a mut sml_fixity::Env,
-}
-
-impl<'a> Parser<'a> {
-  pub(crate) fn new(tokens: &'a [Token<'a, SK>], fix_env: &'a mut sml_fixity::Env) -> Self {
-    Self { inner: event_parse::Parser::new(tokens), fix_env }
-  }
-
-  pub(crate) fn enter(&mut self) -> Entered {
-    self.inner.enter()
-  }
-
-  pub(crate) fn abandon(&mut self, en: Entered) {
-    self.inner.abandon(en);
-  }
-
-  pub(crate) fn exit(&mut self, en: Entered, kind: SK) -> Exited {
-    self.inner.exit(en, kind)
-  }
-
-  pub(crate) fn precede(&mut self, ex: Exited) -> Entered {
-    self.inner.precede(ex)
-  }
-
-  pub(crate) fn peek(&mut self) -> Option<Token<'a, SK>> {
-    self.inner.peek()
-  }
-
-  pub(crate) fn peek_n(&mut self, n: usize) -> Option<Token<'a, SK>> {
-    self.inner.peek_n(n)
-  }
-
-  pub(crate) fn bump(&mut self) -> Token<'a, SK> {
-    self.inner.bump()
-  }
-
-  pub(crate) fn error(&mut self, kind: ErrorKind) {
-    self.inner.error(kind);
-  }
-
-  pub(crate) fn finish(self) -> (SyntaxNode, Vec<Error>) {
-    let mut sink = event_parse::rowan_sink::RowanSink::default();
-    self.inner.finish(&mut sink);
-    let (a, b) = sink.finish::<sml_syntax::SML>();
-    (a, b.into_iter().map(Error).collect())
-  }
-
-  pub(crate) fn at(&mut self, kind: SK) -> bool {
-    self.inner.at(kind)
-  }
-
-  pub(crate) fn at_n(&mut self, n: usize, kind: SK) -> bool {
-    self.inner.at_n(n, kind)
-  }
-
-  pub(crate) fn eat(&mut self, kind: SK) -> Option<Token<'a, SK>> {
-    self.inner.eat(kind)
-  }
-
-  pub(crate) fn save(&self) -> Save {
-    self.inner.save()
-  }
-
-  pub(crate) fn ok_since(&mut self, save: Save) -> bool {
-    self.inner.ok_since(save)
-  }
-
-  // sml-specific methods //
-
-  pub(crate) fn insert_infix(&mut self, name: &str, info: sml_fixity::Infix) {
-    self.fix_env.insert(str_util::Name::new(name), info);
-  }
-
-  pub(crate) fn get_infix(&mut self, name: &str) -> Option<sml_fixity::Infix> {
-    self.fix_env.get(name).copied()
-  }
-
-  pub(crate) fn is_infix(&mut self, name: &str) -> bool {
-    self.fix_env.contains_key(name)
-  }
-
-  pub(crate) fn remove_infix(&mut self, name: &str) {
-    self.fix_env.remove(name);
-  }
-}
+pub(crate) type Parser<'a> = event_parse::Parser<'a, SyntaxKind, ErrorKind>;
 
 // sml-specific types //
 
@@ -131,8 +43,8 @@ impl fmt::Display for ErrorKind {
   }
 }
 
-impl event_parse::Expected<SK> for ErrorKind {
-  fn expected(kind: SK) -> Self {
+impl event_parse::Expected<SyntaxKind> for ErrorKind {
+  fn expected(kind: SyntaxKind) -> Self {
     Self::Expected(Expected::Kind(kind))
   }
 }
@@ -170,7 +82,7 @@ pub(crate) enum Expected {
   LRoundExpTail,
   Item,
   NameOrInt,
-  Kind(SK),
+  Kind(SyntaxKind),
 }
 
 impl fmt::Display for Expected {
@@ -193,7 +105,7 @@ impl fmt::Display for Expected {
 
 /// A parse error.
 #[derive(Debug)]
-pub struct Error(event_parse::rowan_sink::Error<ErrorKind>);
+pub struct Error(pub(crate) event_parse::rowan_sink::Error<ErrorKind>);
 
 impl Error {
   /// Returns the range for this.
