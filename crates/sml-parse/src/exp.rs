@@ -2,15 +2,19 @@
 
 use crate::parser::{ErrorKind, Exited, Expected, ParensExpFlavor, Parser};
 use crate::util::{
-  comma_sep, end_sep, lab, many_sep, must, name_star_eq, path_infix, path_no_infix, scon,
-  should_break, InfixErr,
+  comma_sep, end_sep, lab, many_sep, name_star_eq, path_infix, path_no_infix, scon, should_break,
+  InfixErr,
 };
 use crate::{dec::dec, pat::pat, ty::ty};
 use sml_syntax::SyntaxKind as SK;
 
 /// if no parse, emit error
 pub(crate) fn exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> bool {
-  must(p, |p| exp_prec(p, fe, ExpPrec::Min), Expected::Exp)
+  let got = exp_prec(p, fe, ExpPrec::Min).is_some();
+  if !got {
+    p.error(ErrorKind::Expected(Expected::Exp));
+  }
+  got
 }
 
 /// if no parse, do nothing
@@ -90,7 +94,9 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
         }
         let en = p.precede(ex);
         p.bump();
-        must(p, |p| exp_prec(p, fe, ExpPrec::Infix(op_info)), Expected::Exp);
+        if exp_prec(p, fe, ExpPrec::Infix(op_info)).is_none() {
+          p.error(ErrorKind::Expected(Expected::Exp));
+        }
         p.exit(en, SK::InfixExp)
       } else if p.at(SK::Colon) {
         if matches!(min_prec, ExpPrec::Infix(_)) {
@@ -106,7 +112,9 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
         }
         let en = p.precede(ex);
         p.bump();
-        must(p, |p| exp_prec(p, fe, ExpPrec::Andalso), Expected::Exp);
+        if exp_prec(p, fe, ExpPrec::Andalso).is_none() {
+          p.error(ErrorKind::Expected(Expected::Exp));
+        }
         p.exit(en, SK::AndalsoExp)
       } else if p.at(SK::OrelseKw) {
         if should_break_exp(p, ExpPrec::Orelse, min_prec) {
@@ -114,7 +122,9 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
         }
         let en = p.precede(ex);
         p.bump();
-        must(p, |p| exp_prec(p, fe, ExpPrec::Orelse), Expected::Exp);
+        if exp_prec(p, fe, ExpPrec::Orelse).is_none() {
+          p.error(ErrorKind::Expected(Expected::Exp));
+        }
         p.exit(en, SK::OrelseExp)
       } else if p.at(SK::HandleKw) {
         let en = p.precede(ex);
@@ -242,7 +252,8 @@ fn matcher(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
     p.bump();
   }
   many_sep(p, SK::Bar, SK::MatchRule, |p| {
-    if !must(p, |p| pat(p, fe, InfixErr::Yes), Expected::Pat) {
+    if pat(p, fe, InfixErr::Yes).is_none() {
+      p.error(ErrorKind::Expected(Expected::Pat));
       return false;
     }
     p.eat(SK::EqGt);

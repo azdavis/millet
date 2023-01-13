@@ -1,11 +1,13 @@
 //! Parsing types.
 
-use crate::parser::{Exited, Expected, Parser};
-use crate::util::{comma_sep, lab, must, path};
+use crate::parser::{ErrorKind, Exited, Expected, Parser};
+use crate::util::{comma_sep, lab, path_must};
 use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn ty(p: &mut Parser<'_>) {
-  must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty);
+  if ty_prec(p, TyPrec::Arrow).is_none() {
+    p.error(ErrorKind::Expected(Expected::Ty));
+  }
 }
 
 fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
@@ -42,11 +44,11 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       p.exit(ty_arg, SK::TyArg);
       comma_sep(p, SK::TyArg, SK::RRound, ty);
       p.exit(ty_seq, SK::TySeq);
-      must(p, path, Expected::Path);
+      path_must(p);
       p.exit(en, SK::ConTy)
     }
   } else if p.at(SK::Name) {
-    must(p, path, Expected::Path);
+    path_must(p);
     p.exit(en, SK::ConTy)
   } else {
     p.abandon(en);
@@ -59,7 +61,9 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       }
       let en = p.precede(ex);
       p.bump();
-      must(p, |p| ty_prec(p, TyPrec::Arrow), Expected::Ty);
+      if ty_prec(p, TyPrec::Arrow).is_none() {
+        p.error(ErrorKind::Expected(Expected::Ty));
+      }
       p.exit(en, SK::FnTy)
     } else if p.at(SK::Star) {
       if TyPrec::Star < min_prec {
@@ -69,13 +73,15 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
       while p.at(SK::Star) {
         let en = p.enter();
         p.bump();
-        must(p, |p| ty_prec(p, TyPrec::App), Expected::Ty);
+        if ty_prec(p, TyPrec::App).is_none() {
+          p.error(ErrorKind::Expected(Expected::Ty));
+        }
         p.exit(en, SK::StarTy);
       }
       p.exit(en, SK::TupleTy)
     } else if p.at(SK::Name) {
       let en = p.precede(ex);
-      must(p, path, Expected::Path);
+      path_must(p);
       p.exit(en, SK::OneArgConTy)
     } else {
       break;

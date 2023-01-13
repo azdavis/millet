@@ -10,18 +10,6 @@ pub(crate) enum InfixErr {
   Yes,
 }
 
-/// emits an error and returns false if `f` failed. otherwise returns `true`.
-pub(crate) fn must<'a, F>(p: &mut Parser<'a>, f: F, e: Expected) -> bool
-where
-  F: FnOnce(&mut Parser<'a>) -> Option<Exited>,
-{
-  let ret = f(p).is_some();
-  if !ret {
-    p.error(ErrorKind::Expected(e));
-  }
-  ret
-}
-
 /// similar to `many_sep`, but:
 /// - always uses `;` as the separator
 /// - allows the separator to not be present
@@ -146,6 +134,14 @@ pub(crate) fn path(p: &mut Parser<'_>) -> Option<Exited> {
   Some(p.exit(en, SK::Path))
 }
 
+pub(crate) fn path_must(p: &mut Parser<'_>) -> bool {
+  let ret = path(p).is_some();
+  if !ret {
+    p.error(ErrorKind::Expected(Expected::Path));
+  }
+  ret
+}
+
 /// requires we just saw (but did not bump) an `op` kw. errors if this parses a path that is not
 /// infix.
 pub(crate) fn path_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
@@ -157,7 +153,7 @@ pub(crate) fn path_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
     p.error(ErrorKind::UnnecessaryOp);
   }
   p.eat(SK::OpKw);
-  must(p, path, Expected::Path);
+  path_must(p);
 }
 
 /// requires we just got a true `name_star_eq(p)`. parses a path. errors if the path is infix.
@@ -169,7 +165,7 @@ pub(crate) fn path_no_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   if bad {
     p.error(ErrorKind::InfixWithoutOp);
   }
-  must(p, path, Expected::Path);
+  path_must(p);
 }
 
 pub(crate) fn scon(p: &mut Parser<'_>) -> bool {

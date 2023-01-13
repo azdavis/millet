@@ -3,8 +3,8 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{
-  comma_sep, eat_name_star, lab, must, name_star, path, path_infix, path_no_infix, scon,
-  should_break, InfixErr,
+  comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, scon, should_break,
+  InfixErr,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -81,7 +81,9 @@ fn pat_prec(
       };
       match at_pat_hd {
         AtPatHd::ConPatArg(en) => {
-          must(p, |p| at_pat(p, fe, infix), Expected::Pat);
+          if at_pat(p, fe, infix).is_none() {
+            p.error(ErrorKind::Expected(Expected::Pat));
+          }
           p.exit(en, SK::ConPat)
         }
         AtPatHd::Infix(st, op_info) => {
@@ -97,7 +99,9 @@ fn pat_prec(
           let ex = state.exit(p);
           let en = p.precede(ex);
           p.bump();
-          must(p, |p| pat_prec(p, fe, PatPrec::Infix(op_info), infix), Expected::Pat);
+          if pat_prec(p, fe, PatPrec::Infix(op_info), infix).is_none() {
+            p.error(ErrorKind::Expected(Expected::Pat));
+          }
           p.exit(en, SK::InfixPat)
         }
       }
@@ -109,7 +113,9 @@ fn pat_prec(
       let ex = state.exit(p);
       let en = p.precede(ex);
       p.bump();
-      must(p, |p| pat_prec(p, fe, PatPrec::Or, infix), Expected::Pat);
+      if pat_prec(p, fe, PatPrec::Or, infix).is_none() {
+        p.error(ErrorKind::Expected(Expected::Pat));
+      }
       p.exit(en, SK::OrPat)
     } else if p.at(SK::Colon) {
       match min_prec {
@@ -128,7 +134,9 @@ fn pat_prec(
       }
       let ex = state.exit(p);
       let en = p.precede(ex);
-      must(p, |p| as_pat_tl(p, fe, infix), Expected::Pat);
+      if as_pat_tl(p, fe, infix).is_none() {
+        p.error(ErrorKind::Expected(Expected::Pat));
+      }
       p.exit(en, SK::AsPat)
     } else {
       break;
@@ -175,7 +183,9 @@ pub(crate) fn at_pat(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) 
       } else if p.at_n(1, SK::Eq) {
         lab(p);
         p.eat(SK::Eq);
-        must(p, |p| pat(p, fe, infix), Expected::Pat);
+        if pat(p, fe, infix).is_none() {
+          p.error(ErrorKind::Expected(Expected::Pat));
+        }
         p.exit(en, SK::LabAndPatPatRow);
       } else {
         eat_name_star(p);
@@ -225,7 +235,9 @@ fn at_pat_l_round(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> 
     return SK::TuplePat;
   }
   let en = p.enter();
-  must(p, |p| pat(p, fe, infix), Expected::Pat);
+  if pat(p, fe, infix).is_none() {
+    p.error(ErrorKind::Expected(Expected::Pat));
+  }
   if p.at(SK::RRound) {
     p.abandon(en);
     p.bump();
@@ -241,7 +253,9 @@ fn as_pat_tl(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> Optio
   if p.at(SK::AsKw) {
     let en = p.enter();
     p.bump();
-    must(p, |p| pat(p, fe, infix), Expected::Pat);
+    if pat(p, fe, infix).is_none() {
+      p.error(ErrorKind::Expected(Expected::Pat));
+    }
     Some(p.exit(en, SK::AsPatTail))
   } else {
     None
@@ -250,6 +264,8 @@ fn as_pat_tl(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> Optio
 
 fn pat_args(p: &mut Parser<'_>, fe: &sml_fixity::Env, end: SK, infix: InfixErr) {
   comma_sep(p, SK::PatArg, end, |p| {
-    must(p, |p| pat(p, fe, infix), Expected::Pat);
+    if pat(p, fe, infix).is_none() {
+      p.error(ErrorKind::Expected(Expected::Pat));
+    }
   });
 }

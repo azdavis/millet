@@ -6,7 +6,9 @@ use crate::exp::{eq_exp, exp, exp_opt};
 use crate::parser::{ErrorKind, Exited, Expected, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
-use crate::util::{eat_name_star, many_sep, maybe_semi_sep, must, name_star_eq, path, InfixErr};
+use crate::util::{
+  eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path, path_must, InfixErr,
+};
 use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
@@ -30,7 +32,11 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
         p.bump();
         got = true;
       }
-      got |= must(p, |p| pat(p, fe, infix), Expected::Pat);
+      if pat(p, fe, infix).is_some() {
+        got = true;
+      } else {
+        p.error(ErrorKind::Expected(Expected::Pat));
+      }
       if !got {
         return false;
       }
@@ -122,7 +128,7 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
       if of_ty(p).is_none() && p.at(SK::Eq) {
         let en = p.enter();
         p.bump();
-        must(p, path, Expected::Path);
+        path_must(p);
         p.exit(en, SK::EqPath);
       }
       true
@@ -261,7 +267,7 @@ fn str_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
     p.eat(SK::EndKw);
     p.exit(en, SK::LetStrExp)
   } else if p.at(SK::Name) && !p.at_n(1, SK::LRound) {
-    must(p, path, Expected::Path);
+    path_must(p);
     p.exit(en, SK::PathStrExp)
   } else if p.at(SK::Name) {
     p.bump();
@@ -327,14 +333,14 @@ fn sig_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
     if p.at(SK::TypeKw) {
       p.bump();
       ty_var_seq(p);
-      must(p, path, Expected::Path);
+      path_must(p);
       p.eat(SK::Eq);
       ty(p);
       ex = p.exit(en, SK::WhereTypeSigExp);
     } else {
-      must(p, path, Expected::Path);
+      path_must(p);
       p.eat(SK::Eq);
-      must(p, path, Expected::Path);
+      path_must(p);
       ex = p.exit(en, SK::WhereSigExp);
     }
   }
@@ -351,7 +357,7 @@ fn dec_with_tail(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) 
     if p.at(SK::TypeKw) {
       p.bump();
     }
-    many_sep(p, SK::Eq, SK::PathEq, |p| must(p, path, Expected::Path));
+    many_sep(p, SK::Eq, SK::PathEq, path_must);
     p.exit(en, SK::SharingTail);
   }
   p.exit(en, SK::DecWithTail);
@@ -399,7 +405,7 @@ fn datatype(p: &mut Parser<'_>, allow_op: bool) -> Datatype {
     p.eat(SK::Name);
     p.eat(SK::Eq);
     p.eat(SK::DatatypeKw);
-    must(p, path, Expected::Path);
+    path_must(p);
     Datatype::Copy
   } else {
     dat_binds(p, allow_op);
@@ -462,11 +468,15 @@ fn ty_binds(p: &mut Parser<'_>) {
 }
 
 fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) {
-  must(p, |p| at_pat(p, fe, infix), Expected::Pat);
+  if at_pat(p, fe, infix).is_none() {
+    p.error(ErrorKind::Expected(Expected::Pat));
+  }
   if let Some(name) = eat_name_star(p) {
     if !fe.contains_key(name.text) {
       p.error(ErrorKind::NotInfix);
     }
   }
-  must(p, |p| at_pat(p, fe, infix), Expected::Pat);
+  if at_pat(p, fe, infix).is_none() {
+    p.error(ErrorKind::Expected(Expected::Pat));
+  }
 }
