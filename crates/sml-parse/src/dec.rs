@@ -16,7 +16,6 @@ pub(crate) fn dec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr)
   ret
 }
 
-#[allow(clippy::too_many_lines)]
 fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
   let en = p.enter();
   if p.at(SK::DotDotDot) {

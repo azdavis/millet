@@ -20,7 +20,6 @@ pub(crate) fn get(
   }
 }
 
-#[allow(clippy::too_many_lines)]
 fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<sml_hir::OrPat> {
   let ptr = SyntaxNodePtr::new(pat.syntax());
   let ret = match pat {
@@ -150,12 +149,11 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
 }
 
 fn get_pat_name(cx: &mut Cx, pat: ast::Pat) -> Option<str_util::Name> {
-  let pat = match pat {
-    ast::Pat::ConPat(pat) => pat,
-    _ => {
-      cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
-      return None;
-    }
+  let pat = if let ast::Pat::ConPat(pat) = pat {
+    pat
+  } else {
+    cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    return None;
   };
   if pat.pat().is_some() {
     cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);

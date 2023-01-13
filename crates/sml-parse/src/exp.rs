@@ -28,7 +28,6 @@ pub(crate) fn eq_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   }
 }
 
-#[allow(clippy::too_many_lines)]
 fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Option<Exited> {
   let en = p.enter();
   let infix = matches!(min_prec, ExpPrec::Infix(_));

@@ -3,8 +3,6 @@
 //! This is where AST declarations become various other things. They can be lowered into HIR
 //! declarations or other HIR things.
 
-#![allow(clippy::too_many_lines)]
-
 use crate::common::{get_name, get_path};
 use crate::pat::{self, tuple};
 use crate::util::{Cx, ErrorKind};

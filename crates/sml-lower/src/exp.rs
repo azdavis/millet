@@ -5,7 +5,6 @@ use crate::util::{Cx, ErrorKind, MatcherFlavor, Sep};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-#[allow(clippy::too_many_lines)]
 pub(crate) fn get(cx: &mut Cx, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
   let exp = exp?;
   let ptr = SyntaxNodePtr::new(exp.syntax());
