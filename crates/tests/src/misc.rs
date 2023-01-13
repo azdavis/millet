@@ -1,6 +1,6 @@
 //! Miscellaneous tests. If unsure where to put a test, put it here.
 
-use crate::check::{check, check_with_warnings};
+use crate::check::{check, check_with_warnings, fail};
 
 #[test]
 fn apply() {
@@ -812,6 +812,25 @@ fn use_non_literal() {
 val s = "bar.sml"
 val () = use s
 (**      ^^^^^ no additional definitions brought into scope *)
+"#,
+  );
+}
+
+#[test]
+fn infix_scope() {
+  fail(
+    r#"
+fun add (a, b) = a + b
+
+val _ = add (1, 2)
+
+structure S = struct
+  infix add
+  val _ = 3 add 4
+  val _ = op add (5, 6)
+end
+
+val _ = add (7, 8)
 "#,
   );
 }
