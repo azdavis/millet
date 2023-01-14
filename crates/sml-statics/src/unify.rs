@@ -163,7 +163,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
                 None => return Err(IncompatibleTysFlavor::OverloadUnify(ov, *ov_other).into()),
               },
               // no overloaded type is a record.
-              TyVarKind::Record(rows) => {
+              TyVarKind::Record(rows, _) => {
                 return Err(IncompatibleTysFlavor::OverloadRecord(rows.clone(), ov).into())
               }
             },
@@ -178,7 +178,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
       },
       // mv was a record ty var (i.e. from a `...` pattern). ty must have the rows gotten so
       // far.
-      TyVarKind::Record(mut want_rows) => match ty {
+      TyVarKind::Record(mut want_rows, idx) => match ty {
         // don't emit more errors for None.
         Ty::None => {}
         // ty was a record. it should have every label in the wanted rows, and the types should
@@ -213,7 +213,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
               }
               // mv2 was another record ty var. merge the rows, and for those that appear in
               // both, unify the types.
-              TyVarKind::Record(other_rows) => {
+              TyVarKind::Record(other_rows, _) => {
                 for (lab, mut want) in other_rows.clone() {
                   if let Some(got) = want_rows.get(&lab) {
                     unify_(st, want.clone(), got.clone())?;
@@ -225,7 +225,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             },
           }
           // set the entry to make mv2 a record ty var.
-          let k = SubstEntry::Kind(TyVarKind::Record(want_rows));
+          let k = SubstEntry::Kind(TyVarKind::Record(want_rows, idx));
           st.subst.insert(mv2, k);
         }
         // none of these are record types.

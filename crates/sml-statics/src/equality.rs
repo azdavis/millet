@@ -72,7 +72,7 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
               Ok(())
             }
           },
-          TyVarKind::Record(rows) => get_record(st, &rows),
+          TyVarKind::Record(rows, _) => get_record(st, &rows),
         },
       },
     },

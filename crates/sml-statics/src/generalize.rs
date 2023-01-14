@@ -23,7 +23,7 @@ pub(crate) fn generalize(
   subst: &Subst,
   fixed: FixedTyVars,
   ty_scheme: &mut TyScheme,
-) -> Result<(), HasRecordMetaVars> {
+) -> Result<(), HasRecordMetaVar> {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
   // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
@@ -42,20 +42,19 @@ pub(crate) fn generalize(
     subst,
     fixed,
     meta,
-    var_state: VarState { bound_vars: BoundTyVars::default(), has_record_meta_var: false },
+    var_state: VarState { bound_vars: BoundTyVars::default(), record_meta_var: None },
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.var_state.bound_vars;
-  if g.var_state.has_record_meta_var {
-    Err(HasRecordMetaVars)
-  } else {
-    Ok(())
+  match g.var_state.record_meta_var {
+    Some(x) => Err(HasRecordMetaVar(x)),
+    None => Ok(()),
   }
 }
 
 /// a marker for when a type contained record meta vars.
 #[derive(Debug)]
-pub(crate) struct HasRecordMetaVars;
+pub(crate) struct HasRecordMetaVar(pub(crate) sml_hir::Idx);
 
 /// like [`generalize`], but:
 ///
@@ -81,12 +80,12 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
     subst: &Subst::default(),
     fixed,
     meta: FxHashMap::default(),
-    var_state: VarState { bound_vars, has_record_meta_var: false },
+    var_state: VarState { bound_vars, record_meta_var: None },
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.var_state.bound_vars;
   assert!(
-    !g.var_state.has_record_meta_var,
+    g.var_state.record_meta_var.is_none(),
     "there should be no meta vars at all, much less record ones"
   );
 }
@@ -100,7 +99,7 @@ struct Generalizer<'a> {
 
 struct VarState {
   bound_vars: BoundTyVars,
-  has_record_meta_var: bool,
+  record_meta_var: Option<sml_hir::Idx>,
 }
 
 impl Generalizer<'_> {
@@ -166,8 +165,10 @@ fn handle_bv(
         // all composite overloads contain, and default to, int.
         Overload::Composite(_) => Ty::INT,
       },
-      Some(TyVarKind::Record(_)) => {
-        var_state.has_record_meta_var = true;
+      Some(TyVarKind::Record(_, idx)) => {
+        if var_state.record_meta_var.is_none() {
+          var_state.record_meta_var = Some(idx);
+        }
         Ty::None
       }
       None | Some(TyVarKind::Equality) => {

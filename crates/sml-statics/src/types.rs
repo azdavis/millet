@@ -323,7 +323,7 @@ impl TyScheme {
 pub(crate) enum TyVarKind {
   Equality,
   Overloaded(Overload),
-  Record(RecordTy),
+  Record(RecordTy, sml_hir::Idx),
 }
 
 /// Definition: `TyStr`

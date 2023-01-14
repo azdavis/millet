@@ -45,8 +45,8 @@ val f = fn x as {b, ...} => combine x + 4 + b
 fn unresolved_smoke() {
   check(
     r#"
-    val f = #foo
-(** ^^^^^^^^^^^^ cannot resolve record type containing `...` *)
+val f = #foo
+(**     ^^^^ cannot resolve record type containing `...` *)
 "#,
   );
 }
@@ -55,8 +55,8 @@ fn unresolved_smoke() {
 fn unresolved_complex() {
   check(
     r#"
-    fun f x = #foo x + #bar x + 1.1
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot resolve record type containing `...` *)
+fun f x = #foo x + #bar x + 1.1
+(**                ^^^^ cannot resolve record type containing `...` *)
 "#,
   );
 }

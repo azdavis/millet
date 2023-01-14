@@ -171,7 +171,7 @@ fn get_(
       let ty = if *allows_other {
         // @def(38)
         let mv = st.meta_gen.gen(cfg.gen);
-        let k = SubstEntry::Kind(TyVarKind::Record(rows));
+        let k = SubstEntry::Kind(TyVarKind::Record(rows, pat_idx.into()));
         assert!(st.subst.insert(mv, k).is_none());
         Ty::MetaVar(mv)
       } else {

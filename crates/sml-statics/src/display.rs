@@ -222,7 +222,7 @@ impl<'a> MetaVarNames<'a> {
       .get(mv)
       .and_then(|kind| match kind {
         TyVarKind::Overloaded(ov) => Some(MetaVarName::Overload(*ov)),
-        TyVarKind::Equality | TyVarKind::Record(_) => None,
+        TyVarKind::Equality | TyVarKind::Record(_, _) => None,
       })
       .or_else(|| self.map.get(&mv).copied())
   }

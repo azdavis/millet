@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Improve error location for unresolved `...` type errors.
+
 ## v0.7.0
 
 - Rename an overload.
