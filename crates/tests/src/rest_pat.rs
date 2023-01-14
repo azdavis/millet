@@ -1,6 +1,6 @@
 //! `{a, ...}` patterns, as used in `#a`.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn multi_rest() {
@@ -92,6 +92,17 @@ fun f x =
     if #foo x then 1 else 2
 (**    ^^^^^^ expected bool, found int *)
   end
+"#,
+  );
+}
+
+#[test]
+fn infer_across_decs() {
+  fail(
+    r#"
+type bar = {x: int, y: string}
+fun f b = #x bar
+fun g (b : bar) = f b
 "#,
   );
 }
