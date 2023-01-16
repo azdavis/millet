@@ -63,7 +63,7 @@ pub(crate) fn source_file(
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
-      let node = syntax.to_node(file.syntax.parse.root.syntax());
+      let node = syntax.try_to_node(file.syntax.parse.root.syntax())?;
       let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
       diagnostic(file, severities, range, msg, err.code(), err.severity())

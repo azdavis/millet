@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Improve error location for unresolved `...` type errors.
+- Don't crash on unresolved syntax pointers.
 
 ## v0.7.0
 

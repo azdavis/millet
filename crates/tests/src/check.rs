@@ -18,7 +18,7 @@ use diagnostic_util::Severity;
 /// - start with `(**`
 /// - point at either:
 ///   - the specific things that should have errors with `^` or `v`
-///   - lines on which an error should begin (but not necessarily end) with `+`
+///   - lines on which an error should begin (but not necessarily end) with `+` or `-`
 ///
 /// The expectation messages have a certain format:
 ///

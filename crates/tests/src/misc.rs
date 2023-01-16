@@ -751,14 +751,14 @@ fn eqtype_dec() {
   );
 }
 
-// TODO fix https://github.com/rust-analyzer/rowan/issues/144
+// see https://github.com/rust-analyzer/rowan/issues/144, which we used to panic on but now don't
+// because we just return None when we couldn't find the syntax node
 #[test]
-#[should_panic = "can't resolve local ptr to SyntaxNode"]
 fn rowan_panic() {
   check(
     r#"
-functor MkThing
-"#,
+(** - expected `(` *)
+functor MkThing"#,
   );
 }
 

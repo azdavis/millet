@@ -10,7 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
-rowan = "0.15"
+rowan = { git = "https://github.com/azdavis/rowan.git" }
 token = { git = "https://github.com/azdavis/language-util.git" }
 
 [build-dependencies]

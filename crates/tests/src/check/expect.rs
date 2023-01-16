@@ -32,9 +32,9 @@ const COMMENT_START: &str = "(**";
 /// - zero or more of any character
 /// - the string `COMMENT_START` (the comment start)
 /// - zero or more spaces
-/// - one of `^` or `v` (the arrow character)
+/// - one arrow character (^, +, v, -)
 /// - zero or more non-spaces (the column range for the arrow. usually these are all the same as the
-///   arrow character)
+///   arrow character.)
 /// - one space
 /// - one or more of any character (the message)
 /// - zero or more spaces
@@ -55,6 +55,7 @@ fn get_one(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
     '^' => (line_n - 1, true),
     '+' => (line_n - 1, false),
     'v' => (line_n + 1, true),
+    '-' => (line_n + 1, false),
     c => panic!("invalid arrow: {c}"),
   };
   let line = u32::try_from(line).ok()?;
