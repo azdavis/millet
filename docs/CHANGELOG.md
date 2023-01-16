@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.7.1
 
 - Improve error location for unresolved `...` type errors.
 - Don't crash on unresolved syntax pointers.
