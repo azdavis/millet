@@ -1,16 +1,68 @@
 //! Test for getting documentation on hover.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
-fn doc() {
+fn val() {
   check(
     r#"
 (*!
- * My favorite number.
+ * Some docs.
  *)
 val foo = 3
-(** ^^^ hover: My favorite number. *)
+(** ^^^ hover: Some docs. *)
+"#,
+  );
+}
+
+#[test]
+fn fun() {
+  check(
+    r#"
+(*!
+ * Some docs.
+ *)
+fun foo () = ()
+(** ^^^ hover: Some docs. *)
+"#,
+  );
+}
+
+#[test]
+fn typ() {
+  fail(
+    r#"
+(*!
+ * Some docs.
+ *)
+type t = int
+(**  ^ hover: Some docs. *)
+"#,
+  );
+}
+
+#[test]
+fn datatype() {
+  fail(
+    r#"
+(*!
+ * Some docs.
+ *)
+datatype d = D
+(**      ^ hover: Some docs. *)
+"#,
+  );
+}
+
+#[test]
+fn exception() {
+  fail(
+    r#"
+(*!
+ * Some docs.
+ *)
+exception E
+(**       ^ hover: Some docs. *)
 "#,
   );
 }
