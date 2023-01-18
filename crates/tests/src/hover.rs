@@ -1,6 +1,6 @@
 //! Hover tests.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke() {
@@ -30,6 +30,29 @@ fn fully_qualified() {
 structure Foo = struct datatype bar = baz end
 val _ = Foo.baz
 (**     ^ hover: Foo.bar *)
+"#,
+  );
+}
+
+#[test]
+fn doc() {
+  fail(
+    r#"
+(*!
+ * My favorite number.
+ *)
+val foo = 3
+(** ^^^ hover: My favorite number. *)
+"#,
+  );
+}
+
+#[test]
+fn fun() {
+  fail(
+    r#"
+fun foo x y = x + (if y then 3 else 4)
+(** ^^^ hover: int -> bool -> int *)
 "#,
   );
 }
