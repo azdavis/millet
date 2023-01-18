@@ -1,6 +1,6 @@
 //! Hover tests.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke() {
@@ -36,7 +36,7 @@ val _ = Foo.baz
 
 #[test]
 fn doc() {
-  fail(
+  check(
     r#"
 (*!
  * My favorite number.

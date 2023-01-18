@@ -95,6 +95,7 @@ fn get_(
       // @def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
+        def = st.def(pat_idx.into());
         insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty.clone());
         return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, def });
       }
