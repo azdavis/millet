@@ -49,7 +49,7 @@ val foo = 3
 
 #[test]
 fn fun() {
-  fail(
+  check(
     r#"
 fun foo x y = x + (if y then 3 else 4)
 (** ^^^ hover: int -> bool -> int *)

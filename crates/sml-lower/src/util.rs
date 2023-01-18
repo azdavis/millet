@@ -23,8 +23,8 @@ impl Ptrs {
   /// Returns one of possibly many HIR indices for the syntax pointer.
   #[must_use]
   pub fn ast_to_hir(&self, ptr: &SyntaxNodePtr) -> Option<sml_hir::Idx> {
-    // prefer older
-    self.ast_to_hir.get(ptr)?.first().copied()
+    // prefer newer
+    self.ast_to_hir.get(ptr)?.last().copied()
   }
 
   /// Returns all of the possibly many HIR indices for the syntax pointer.
