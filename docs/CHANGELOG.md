@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.7.2
+
+- Fix hover for `fun` types.
+- Show documentation on `val` and `fun` definition sites when on hover.
+
 ## v0.7.1
 
 - Improve error location for unresolved `...` type errors.
