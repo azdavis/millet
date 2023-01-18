@@ -561,7 +561,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
             .collect();
           // not the greatest, since we have no body at all if the ptrs are None. but if they were
           // both None, then something's very strange about the fun_bind_cases anyway.
-          if let Some(0) = num_pats {
+          if num_pats == Some(0) {
             cx.err(dec.syntax().text_range(), ErrorKind::EmptyFun);
           }
           let exp = {
