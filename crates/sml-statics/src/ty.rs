@@ -56,21 +56,21 @@ pub(crate) fn get(
     // @def(46)
     sml_hir::Ty::Con(arguments, path) => match get_ty_info(&cx.env, path) {
       Ok(ty_info) => {
-        ty_scheme = Some(ty_info.ty_scheme.clone());
-        def = ty_info.def;
         let want_len = ty_info.ty_scheme.bound_vars.len();
-        let mut ret = Ty::None;
         if want_len == arguments.len() {
+          ty_scheme = Some(ty_info.ty_scheme.clone());
+          def = ty_info.def;
+          let mut ret = ty_info.ty_scheme.ty.clone();
           let arguments: Vec<_> = arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
-          ret = ty_info.ty_scheme.ty.clone();
           apply_bv(&arguments, &mut ret);
+          // NOTE: just because `ty` was a `sml_hir::Ty::Con` doesn't mean `ret` is ultimately a
+          // `Ty::Con`. there could have been a type alias. e.g. `type unit = {}` (which indeed is
+          // provided by the standard basis).
+          ret
         } else {
           st.err(ty, ErrorKind::WrongNumTyArgs(want_len, arguments.len()));
+          Ty::None
         }
-        // NOTE: just because `ty` was a `sml_hir::Ty::Con` doesn't mean `ret` is ultimately a
-        // `Ty::Con`. there could have been a type alias. e.g. `type unit = {}` (which indeed is
-        // provided by the standard basis).
-        ret
       }
       Err(e) => {
         st.err(ty, e);
