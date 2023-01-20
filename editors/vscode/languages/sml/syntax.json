@@ -2,7 +2,8 @@
   "scopeName": "source.sml",
   "patterns": [
     { "include": "#blockComment" },
-    { "include": "#real" },
+    { "include": "#realWithPointAndMaybeExp" },
+    { "include": "#realWithNoPointAndExp" },
     { "include": "#decInt" },
     { "include": "#hexInt" },
     { "include": "#decWord" },
@@ -23,9 +24,13 @@
       "end": "\\*\\)",
       "patterns": [{ "include": "#blockComment" }]
     },
-    "real": {
+    "realWithPointAndMaybeExp": {
       "name": "constant.numeric.float.decimal.sml",
       "match": "(\\b|~)[0-9]+\\.[0-9]+([Ee]~?[0-9]+)?\\b"
+    },
+    "realWithNoPointAndExp": {
+      "name": "constant.numeric.float.decimal.sml",
+      "match": "(\\b|~)[0-9]+[Ee]~?[0-9]+\\b"
     },
     "decInt": {
       "name": "constant.numeric.integer.decimal.sml",
