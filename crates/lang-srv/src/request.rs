@@ -87,9 +87,10 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
         analysis::FormatError::NoFile
         | analysis::FormatError::Disabled
         | analysis::FormatError::NaiveFmt(_)
-        | analysis::FormatError::Smlfmt(_) => Response::new_ok(id, None::<()>),
-        analysis::FormatError::Io(e) => Response::new_err(id, REQUEST_FAILED, e.to_string()),
-        analysis::FormatError::Utf8(e) => Response::new_err(id, REQUEST_FAILED, e.to_string()),
+        | analysis::FormatError::Smlfmt(analysis::SmlfmtError::Unsuccessful(_)) => {
+          Response::new_ok(id, None::<()>)
+        }
+        analysis::FormatError::Smlfmt(e) => Response::new_err(id, REQUEST_FAILED, format!("{e:#}")),
       },
     };
     st.cx.send_response(res);

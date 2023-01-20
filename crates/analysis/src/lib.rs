@@ -9,8 +9,9 @@ mod source_files;
 use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
-use std::io::Write as _;
+use std::error::Error;
 use std::process::{Command, Stdio};
+use std::{fmt, io::Write as _};
 use text_pos::{Position, Range};
 use text_size_util::TextRange;
 
@@ -196,16 +197,16 @@ impl Analysis {
           .stdin(Stdio::piped())
           .stdout(Stdio::piped())
           .spawn()
-          .map_err(FormatError::Io)?;
+          .map_err(SmlfmtError::Spawn)?;
         let mut stdin = prog.stdin.take().unwrap();
-        stdin.write_all(contents.as_bytes()).map_err(FormatError::Io)?;
+        stdin.write_all(contents.as_bytes()).map_err(SmlfmtError::WriteAll)?;
         // explicitly drop to close it
         drop(stdin);
-        let output = prog.wait_with_output().map_err(FormatError::Io)?;
+        let output = prog.wait_with_output().map_err(SmlfmtError::Wait)?;
         if !output.status.success() {
-          return Err(FormatError::Smlfmt(output.stderr));
+          return Err(SmlfmtError::Unsuccessful(output.stderr).into());
         }
-        String::from_utf8(output.stdout).map_err(FormatError::Utf8)?
+        String::from_utf8(output.stdout).map_err(SmlfmtError::Utf8)?
       }
     };
     Ok((buf, file.syntax.pos_db.end_position()))
@@ -276,12 +277,59 @@ pub enum FormatError {
   NoFile,
   /// A naive formatting error.
   NaiveFmt(sml_naive_fmt::Error),
-  /// An I/O error.
-  Io(std::io::Error),
-  /// `smlfmt` failed with stderr.
-  Smlfmt(Vec<u8>),
+  /// A smlfmt error.
+  Smlfmt(SmlfmtError),
+}
+
+/// An error when running [`smlfmt`][1] as an external process.
+///
+/// [1]: https://github.com/shwestrick/smlfmt
+#[derive(Debug)]
+pub enum SmlfmtError {
+  /// Couldn't spawn the process.
+  Spawn(std::io::Error),
+  /// Couldn't write the contents of the file to the process.
+  WriteAll(std::io::Error),
+  /// Couldn't wait for the process to return the result back.
+  Wait(std::io::Error),
+  /// The process terminated unsuccessfully, and outputted stderr.
+  Unsuccessful(Vec<u8>),
   /// There was a UTF-8 conversion error.
   Utf8(std::string::FromUtf8Error),
+}
+
+impl From<SmlfmtError> for FormatError {
+  fn from(e: SmlfmtError) -> Self {
+    Self::Smlfmt(e)
+  }
+}
+
+impl fmt::Display for SmlfmtError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      SmlfmtError::Spawn(_) => f.write_str("couldn't spawn smlfmt")?,
+      SmlfmtError::WriteAll(_) => f.write_str("couldn't write data to smlfmt")?,
+      SmlfmtError::Wait(_) => f.write_str("couldn't read data from smlfmt")?,
+      SmlfmtError::Unsuccessful(_) => f.write_str("smlfmt exited unsuccessfully")?,
+      SmlfmtError::Utf8(_) => f.write_str("couldn't convert smlfmt output to UTF-8")?,
+    }
+    if f.alternate() {
+      if let Some(e) = self.source() {
+        write!(f, ": {e}")?;
+      }
+    }
+    Ok(())
+  }
+}
+
+impl std::error::Error for SmlfmtError {
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      SmlfmtError::Spawn(e) | SmlfmtError::WriteAll(e) | SmlfmtError::Wait(e) => Some(e),
+      SmlfmtError::Utf8(e) => Some(e),
+      SmlfmtError::Unsuccessful(_) => None,
+    }
+  }
 }
 
 /// A symbol.
