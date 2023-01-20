@@ -10,7 +10,7 @@ use text_pos::Range;
 pub(crate) enum ErrorKind {
   Io(std::io::Error),
   MultipleRoots(PathBuf, PathBuf),
-  NoRoot,
+  NoRoot(bool),
   NotGroup,
   CouldNotParseConfig(toml::de::Error),
   InvalidConfigVersion(u16),
@@ -40,7 +40,14 @@ impl fmt::Display for ErrorDisplay<'_> {
         let b = maybe_rel_to_root(self.root, b);
         write!(f, "multiple root group files: {} and {}", a.display(), b.display())
       }
-      ErrorKind::NoRoot => f.write_str("no root group file"),
+      ErrorKind::NoRoot(had_config_file) => {
+        let s = if *had_config_file {
+          "no *.cm or *.mlb files found, and no `workspace.root` specified in millet.toml"
+        } else {
+          "no *.cm, *.mlb, or millet.toml files found"
+        };
+        f.write_str(s)
+      }
       ErrorKind::NotGroup => f.write_str("not a group file path"),
       ErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
       ErrorKind::InvalidConfigVersion(n) => {
@@ -118,7 +125,7 @@ impl Error {
     match *self.kind {
       ErrorKind::Io(_) => Code::n(1001),
       ErrorKind::MultipleRoots(_, _) => Code::n(1003),
-      ErrorKind::NoRoot => Code::n(1004),
+      ErrorKind::NoRoot(_) => Code::n(1004),
       ErrorKind::NotGroup => Code::n(1005),
       ErrorKind::CouldNotParseConfig(_) => Code::n(1006),
       ErrorKind::InvalidConfigVersion(_) => Code::n(1007),

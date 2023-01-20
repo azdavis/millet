@@ -15,12 +15,12 @@ fn arbitrary_root_group() {
 
 #[test]
 fn no_root_group_empty() {
-  check_bad_input("", "no root group file", []);
+  check_bad_input("", "no *.cm, *.mlb", []);
 }
 
 #[test]
 fn no_root_group_wrong_ext() {
-  check_bad_input("", "no root group file", [("foo.txt", "hi there"), ("foo.rs", "fn main() {}")]);
+  check_bad_input("", "no *.cm, *.mlb", [("foo.txt", "hi there"), ("foo.rs", "fn main() {}")]);
 }
 
 #[test]

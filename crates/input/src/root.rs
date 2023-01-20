@@ -30,7 +30,9 @@ impl Root {
     let mut root_group_source = ErrorSource::default();
     let mut root_group_paths = Vec::<GroupPathBuf>::new();
     let config_path = root.as_path().join(config::FILE_NAME);
-    let config = match fs.read_to_string(&config_path) {
+    let config_file = fs.read_to_string(&config_path);
+    let had_config_file = config_file.is_ok();
+    let config = match config_file {
       Ok(contents) => {
         let cff =
           ConfigFromFile::new(fs, &mut root_group_paths, root, config_path, contents.as_str())?;
@@ -59,7 +61,11 @@ impl Root {
       }
     }
     if root_group_paths.is_empty() {
-      return Err(Error::new(ErrorSource::default(), root.as_path().to_owned(), ErrorKind::NoRoot));
+      return Err(Error::new(
+        ErrorSource::default(),
+        root.as_path().to_owned(),
+        ErrorKind::NoRoot(had_config_file),
+      ));
     }
     Ok(Self {
       groups: root_group_paths
