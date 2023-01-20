@@ -44,9 +44,12 @@ A "group file" is either
 
 These file types list out SML source files and other group files to organize the project.
 
-For more exotic projects, you may wish to create an optional `millet.toml`.
+For more exotic projects, you may wish to create an optional `millet.toml`. Read on to see how that works.
 
-**NOTE:** If a file is not transitively reachable from the root group file, it will not be analyzed.
+Some important notes:
+
+- A group file, or a `millet.toml` file pointing to a group file, **must** be present **directly** in the directory that you open VS Code onto. It can't be in subdirectories, because Millet will not look in subdirectories, unless you tell it to via `millet.toml`.
+- If a file is not transitively reachable from the root group file, it **will not** be analyzed.
 
 ## Configuration
 
