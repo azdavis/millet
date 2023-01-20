@@ -95,7 +95,7 @@ fn get_where_type(
         // @test(sig::impossible)
         if emit_cannot_realize {
           st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), path_ty_scheme.clone()));
-        };
+        }
       }
     }
     // @test(sig::where_not_con)
