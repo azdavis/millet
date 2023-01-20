@@ -292,7 +292,10 @@ Millet supports finding references to a symbol.
 
 Millet can automatically format your open SML files. Set `millet.format.engine` to something other than `"none"` in your settings, then reload your editor. Now, when saving an open file, Millet will format.
 
-There are some caveats, however.
+- If you use `"naive"`, the formatter is built-in to Millet.
+- If you use `"smlfmt"`, you'll need to install [`smlfmt`][smlfmt] in your `PATH`.
+
+There are some other caveats.
 
 #### Experimental
 
@@ -383,3 +386,4 @@ This is by design. More options means more ability to have different formatting 
 [vscodium]: https://vscodium.com
 [toml]: https://toml.io/en/
 [json]: https://www.json.org/json-en.html
+[smlfmt]: https://github.com/shwestrick/smlfmt
