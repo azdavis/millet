@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.7.3
+
+- Improve "no root" error.
+
 ## v0.7.2
 
 - Fix hover for `fun` types.
