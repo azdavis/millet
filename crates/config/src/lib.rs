@@ -79,6 +79,8 @@ pub enum DiagnosticsFilter {
   /// If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics
   /// diagnostics.
   Syntax,
+  /// All diagnostics are filtered out, i.e. no diagnostics are sent.
+  All,
 }
 
 /// How to format open SML files on save.

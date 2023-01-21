@@ -144,6 +144,7 @@ What diagnostics to send per file.
 - Valid values:
   - `"none"`: No filter, i.e. all available diagnostics are sent.
   - `"syntax"`: If there are syntax errors (lex, parse, etc), send only those, and do not send e.g. statics diagnostics.
+  - `"all"`: All diagnostics are filtered out, i.e. no diagnostics are sent.
 
 #### `millet.server.diagnostics.moreInfoHint.enable`
 
@@ -236,6 +237,8 @@ The snippets provided are:
 ### Inline diagnostics
 
 Millet will analyze source (SML) and group (MLB/CM) files and report diagnostics directly on the offending area of the file.
+
+This can be disabled by setting `millet.server.diagnostics.filter` to `"all"` in VS Code settings.
 
 ### Hover for info
 

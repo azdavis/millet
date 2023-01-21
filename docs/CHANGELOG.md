@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Allow turning off diagnostics by setting `millet.server.diagnostics.filter` to `"all"`.
+
 ## v0.7.3
 
 - Improve "no root" error.

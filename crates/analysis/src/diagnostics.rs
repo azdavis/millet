@@ -47,6 +47,13 @@ pub(crate) fn source_file(
   severities: &input::Severities,
   options: Options,
 ) -> Vec<Diagnostic> {
+  let syntax_filter = match options.filter {
+    None => false,
+    Some(filter) => match filter {
+      config::DiagnosticsFilter::Syntax => true,
+      config::DiagnosticsFilter::All => return Vec::new(),
+    },
+  };
   let mut ret: Vec<_> = std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
       diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
@@ -59,7 +66,7 @@ pub(crate) fn source_file(
     }))
     .collect();
   let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic_util::Severity::Error));
-  if options.filter.is_none() || !has_any_error {
+  if !syntax_filter || !has_any_error {
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");

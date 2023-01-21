@@ -73,11 +73,13 @@
           "markdownDescription": "What diagnostics to send per file.",
           "enum": [
             "none",
-            "syntax"
+            "syntax",
+            "all"
           ],
           "markdownEnumDescriptions": [
             "No filter, i.e. all available diagnostics are sent.",
-            "If there are syntax errors (lex, parse, etc), send only those, and do not send e.g. statics diagnostics."
+            "If there are syntax errors (lex, parse, etc), send only those, and do not send e.g. statics diagnostics.",
+            "All diagnostics are filtered out, i.e. no diagnostics are sent."
           ]
         },
         "millet.server.diagnostics.moreInfoHint.enable": {
