@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.7.5
+
+- Fix some crashes with Unicode characters.
+
 ## v0.7.4
 
 - Allow turning off diagnostics by setting `millet.server.diagnostics.filter` to `"all"`.
