@@ -37,8 +37,7 @@ pub(crate) fn get(
       let mut idx = 0usize;
       let mut ve = ValEnv::default();
       let mut src_exp = FxHashMap::<str_util::Name, sml_hir::ExpIdx>::default();
-      let mut exp_cfg = cfg;
-      exp_cfg.mark_defined = true;
+      let exp_cfg = Cfg { mark_defined: true };
       let mut pat_cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
       let marker = st.syms.mark();
       while let Some(val_bind) = val_binds.get(idx) {
