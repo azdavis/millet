@@ -1,6 +1,8 @@
 //! Extracting interesting comments from SML files.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+// TODO remove once rustfmt support lands
+#![allow(clippy::manual_let_else)]
 
 use sml_syntax::{SyntaxKind as SK, SyntaxNode, SyntaxToken};
 

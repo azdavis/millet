@@ -5,6 +5,8 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
+// TODO remove once rustfmt support lands
+#![allow(clippy::manual_let_else)]
 
 use fast_hash::FxHashSet;
 use sml_syntax::ast::{self, AstNode as _};

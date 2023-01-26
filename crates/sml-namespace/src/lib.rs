@@ -1,6 +1,8 @@
 //! Different namespaces for various SML language definition constructs.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+// TODO remove once rustfmt support lands
+#![allow(clippy::manual_let_else)]
 
 use std::fmt;
 

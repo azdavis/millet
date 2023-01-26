@@ -2,6 +2,8 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![allow(clippy::too_many_lines)]
+// TODO remove once rustfmt support lands
+#![allow(clippy::manual_let_else)]
 
 mod common;
 mod dec;

@@ -160,7 +160,7 @@ impl Error {
 
 pub(crate) type Result<T, E = Error> = std::result::Result<T, E>;
 
-fn maybe_rel_to_root<'a, 'r>(root: &'r Path, path: &'a Path) -> &'a Path {
+fn maybe_rel_to_root<'a>(root: &Path, path: &'a Path) -> &'a Path {
   match path.strip_prefix(root) {
     Ok(x) => {
       if x.as_os_str().is_empty() {
