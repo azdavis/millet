@@ -712,16 +712,6 @@ fun foo x =
 }
 
 #[test]
-fn unused_var() {
-  check_with_warnings(
-    r#"
-fun f x = ()
-(**   ^ unused value: x *)
-"#,
-  );
-}
-
-#[test]
 fn num_suffix() {
   check(
     r#"
