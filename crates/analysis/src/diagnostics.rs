@@ -37,7 +37,7 @@ where
   })
 }
 
-/// TODO: we used to limit the max number of diagnostics per file, but now it's trickier because not
+/// NOTE: we used to limit the max number of diagnostics per file, but now it's trickier because not
 /// all diagnostics are "errors", but it would be bad to hit the max number of diagnostics on
 /// entirely warnings and then not emit the actual diagnostics. We'd need to come up with a way to
 /// order the diagnostics.
