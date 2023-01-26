@@ -1,17 +1,6 @@
 //! Miscellaneous tests. If unsure where to put a test, put it here.
 
-use crate::check::{check, check_with_warnings};
-
-#[test]
-fn apply() {
-  check(
-    r#"
-val apply = fn (f, x) => f x
-val _ = apply: unit
-(**     ^^^^^^^^^^^ expected unit, found (?a -> ?b) * ?a -> ?b *)
-"#,
-  );
-}
+use crate::check::check;
 
 #[test]
 fn arrow_ty_arg() {
@@ -32,103 +21,12 @@ val _ = fn f => fn x =>
 }
 
 #[test]
-fn circularity_1() {
-  check(
-    r#"
-    fun f _ = f
-(** ^^^^^^^^^^^ circular type: ?b occurs in ?a -> ?b *)
-"#,
-  );
-}
-
-#[test]
-fn circularity_2() {
-  check(
-    r#"
-fun f x = x x
-(**       ^ circular type: ?a occurs in ?a -> ?b *)
-"#,
-  );
-}
-
-#[test]
-fn cps() {
-  check(
-    r#"
-datatype 'a tree = Empty | Node of 'a tree * 'a * 'a tree
-fun find t p ok err =
-  case t of
-    Empty => err ()
-  | Node (left, x, right) =>
-      if p x then
-        ok x
-      else
-        find left p ok (fn () => find right p ok err)
-    val _ : unit = find
-(** ^^^^^^^^^^^^^^^^^^^ expected unit, found ?a tree -> (?a -> bool) -> (?a -> ?b) -> (unit -> ?b) -> ?b *)
-"#,
-  );
-}
-
-#[test]
-fn equality() {
-  check(
-    r#"
-val _ = 2 = 3
-val _ = false = true
-val _ = 0w0 = 0w1
-val _ = "foo" = "bar"
-val _ = #"a" = #"b"
-"#,
-  );
-}
-
-#[test]
 fn exhaustive_binding() {
   check(
     r#"
 datatype t = C of int * bool
 val C (a, b) = C (1, false)
 val _ = if b then a + 2 else a - 4
-"#,
-  );
-}
-
-#[test]
-fn fact() {
-  check(
-    r#"
-fun fact (0 : int) : int = 1
-  | fact n = n * fact (n - 1)
-"#,
-  );
-}
-
-#[test]
-fn forbidden_binding() {
-  check(
-    r#"
-    datatype no = ref
-(** ^^^^^^^^^^^^^^^^^ cannot re-bind name: ref *)
-"#,
-  );
-}
-
-#[test]
-fn list_fns() {
-  check(
-    r#"
-exception Empty
-fun append [] ys = ys
-  | append (x :: xs) ys = x :: append xs ys
-and head [] = raise Empty
-  | head (x :: _) = x
-and tail [] = raise Empty
-  | tail [x] = x
-  | tail (_ :: xs) = tail xs
-val x = head [1, 2, 3]
-and y = tail [false, true, false]
-and z = append [1, 2, 3] [7, 8, 9]
 "#,
   );
 }
@@ -170,45 +68,6 @@ val _ =
 }
 
 #[test]
-fn id() {
-  check(
-    r#"
-val id = fn x => x
-val a = id 3
-val b = id "hey"
-val _ = if id false then id 1 + 1 else id (2 + 2)
-"#,
-  );
-}
-
-#[test]
-fn inc() {
-  check(
-    r#"
-val inc = fn x => x + 1
-val _ = inc 3
-val _ = inc "nope"
-(**         ^^^^^^ expected int, found string *)
-"#,
-  );
-}
-
-#[test]
-fn list_map() {
-  check(
-    r#"
-fun map f xs =
-  case xs of
-    [] => []
-  | x :: xs => f x :: map f xs
-
-val _ = map: unit
-(**     ^^^^^^^^^ expected unit, found (?a -> ?b) -> ?a list -> ?b list *)
-"#,
-  );
-}
-
-#[test]
 fn non_var_in_as() {
   check(
     r#"
@@ -228,28 +87,6 @@ fn not_arrow_ty() {
     r#"
 val _ = "foo" 3
 (**     ^^^^^ expected int -> ?b, found string *)
-"#,
-  );
-}
-
-#[test]
-fn basic_std_lib_types() {
-  check(
-    r#"
-val _: int = 3 + 3
-and _: real = 3.3 + 3.3
-(* what's this? *)
-and _: word = 0w0 + 0w0
-and _: bool list = [3 > 3]
-and _ = "foo" > "bar"
-val (a, b: real) = (123, 2.34)
-val _ = #"e" > (#"f": char)
-val _ = 3 = 4
-val _ = ref
-and f = op+
-val _ = f (a, 2)
-and _: real = b / b
-and _: int = 3 div 0
 "#,
   );
 }
@@ -291,27 +128,6 @@ fn wrong_num_ty_args() {
     r#"
 val _: (int, bool) list = []
 (**    ^^^^^^^^^^^^^^^^ expected 1 type argument, found 2 *)
-"#,
-  );
-}
-
-#[test]
-fn curry() {
-  check(
-    r#"
-fun curry f x y = f (x, y)
-
-val eq : int -> int -> bool = curry op=
-val add = curry op+
-val mul = curry op*
-
-val _: bool = eq 1 2
-val _: int = add 3 4
-val _: int = mul 5 6
-
-val f = add 7
-val g = mul 5
-val _: bool = eq (f 3) (g 5)
 "#,
   );
 }
@@ -368,51 +184,6 @@ val _ = 3: real phantom
 }
 
 #[test]
-fn symbol_ident_sig() {
-  check(
-    r#"
-signature INT = sig
-  val ~ : int -> int
-  val + : int * int -> int
-  val - : int * int -> int
-  val * : int * int -> int
-  val div : int * int -> int
-  val mod : int * int -> int
-  val quot : int * int -> int
-  val rem : int * int -> int
-  val >  : int * int -> bool
-  val >= : int * int -> bool
-  val <  : int * int -> bool
-  val <= : int * int -> bool
-end
-"#,
-  );
-}
-
-#[test]
-fn type_alias_in_sig() {
-  check(
-    r#"
-signature THING = sig
-  type 'a t
-  type 'a thing = 'a t
-  val uh: 'a -> 'a thing
-  type guy = { foo: int, bar: string }
-  val hi: guy
-end
-
-structure Thing :> THING = struct
-  type 'a t = 'a list
-  type 'a thing = 'a t
-  val uh = fn x => [x]
-  type guy = { foo: int, bar: string }
-  val hi = { foo = 4, bar = "yes" }
-end
-"#,
-  );
-}
-
-#[test]
 fn subst_inside() {
   check(
     r#"
@@ -426,68 +197,6 @@ structure Str :> SIG = struct
   fun join (D (D x)) = x
 end
 "#,
-  );
-}
-
-#[test]
-fn poly_exn_sig() {
-  check(
-    r#"
-signature S = sig
-  exception E of 'a
-(**              ^^ undefined type variable: 'a *)
-end
-"#,
-  );
-}
-
-#[test]
-fn sharing_in_seq() {
-  check(
-    r#"
-signature FOO = sig type t structure S: sig type t end end
-signature BAR = sig structure Foo : FOO end
-signature QUZ = sig structure Foo : FOO end
-
-signature SIG = sig
-  structure Foo : FOO
-  structure Bar : BAR
-  structure Quz : QUZ
-  sharing Foo = Bar.Foo = Quz.Foo
-  val x : Foo.S.t
-end
-
-functor F (
-  structure Foo : FOO
-  structure Bar : BAR
-  structure Quz : QUZ
-  sharing Foo = Bar.Foo = Quz.Foo
-  val x : Foo.S.t
-) = struct end
-"#,
-  );
-}
-
-#[test]
-fn sig_ty_eq_undef() {
-  check(
-    r#"
-signature S = sig
-  type 'a t = 'a uh
-(**           ^^^^^ undefined type: uh *)
-end"#,
-  );
-}
-
-#[test]
-fn sig_ty_eq_wrong_num_ty_args() {
-  check(
-    r#"
-signature S = sig
-  datatype uh = Uh
-  type 'a t = 'a uh
-(**           ^^^^^ expected 0 type arguments, found 1 *)
-end"#,
   );
 }
 
@@ -554,93 +263,6 @@ fn ty_var_order_2() {
     r#"
 fun ('a, 'b) pair (x: 'a) (y: 'b) = (y, x)
 val _ = pair 1 "hi" : string * int
-"#,
-  );
-}
-
-#[test]
-fn where_not_all_ty_vars() {
-  check(
-    r#"
-signature SIG = sig
-  type 'a t
-  val f : 'a t -> 'a t
-end
-
-structure Str :> SIG where type 'a t = int = struct
-  type 'a t = int
-  fun f x = x
-end
-
-val _ = Str.f 3 : int
-"#,
-  );
-}
-
-#[test]
-fn either() {
-  check(
-    r#"
-datatype ('a, 'b) either = INL of 'a | INR of 'b
-val _ = INL 3 : (int, unit) either
-val _ = INR 3 : (unit, int) either
-"#,
-  );
-}
-
-#[test]
-fn empty_fun() {
-  check(
-    r#"
-    fun f = 3
-(** ^^^^^^^^^ `fun` requires at least 1 parameter *)
-"#,
-  );
-}
-
-#[test]
-fn empty_include() {
-  check(
-    r#"
-signature S = sig
-    include
-(** ^^^^^^^ requires at least 1 operand *)
-end
-"#,
-  );
-}
-
-#[test]
-fn empty_open() {
-  check(
-    r#"
-    open
-(** ^^^^ requires at least 1 operand *)
-"#,
-  );
-}
-
-#[test]
-fn empty_let() {
-  check(
-    r#"
-val _ = let in end
-(**     ^^^^^^^^^^ requires at least 1 expression *)
-"#,
-  );
-}
-
-#[test]
-fn doc_comment() {
-  check(
-    r#"
-(*!
- * Returns the number incremented.
- *)
-fun inc x = x + 1
-
-val _ = inc
-(**     ^^^ hover: Returns the number incremented. *)
 "#,
   );
 }
@@ -766,42 +388,11 @@ fun reduce (op +) z t =
 }
 
 #[test]
-fn apply_eq() {
-  check(
-    r#"
-fun apply_eq (op =) a b = a = b
-(** + cannot re-bind name: = *)
-"#,
-  );
-}
-
-#[test]
 fn op_false() {
   check(
     r#"
 fun wot (op false) = ()
 (** + missing true *)
-"#,
-  );
-}
-
-#[test]
-fn use_literal() {
-  check_with_warnings(
-    r#"
-val () = use "foo.sml"
-(**      ^^^^^^^^^^^^^ no additional definitions from "foo.sml" brought into scope *)
-"#,
-  );
-}
-
-#[test]
-fn use_non_literal() {
-  check_with_warnings(
-    r#"
-val s = "bar.sml"
-val () = use s
-(**      ^^^^^ no additional definitions brought into scope *)
 "#,
   );
 }

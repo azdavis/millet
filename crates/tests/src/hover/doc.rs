@@ -66,3 +66,18 @@ exception E
 "#,
   );
 }
+
+#[test]
+fn fun_doc_usage() {
+  check(
+    r#"
+(*!
+ * Returns the number incremented.
+ *)
+fun inc x = x + 1
+
+val _ = inc
+(**     ^^^ hover: Returns the number incremented. *)
+"#,
+  );
+}

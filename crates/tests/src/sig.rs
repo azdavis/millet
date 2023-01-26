@@ -981,3 +981,129 @@ end
 "#,
   );
 }
+
+#[test]
+fn symbol_ident() {
+  check(
+    r#"
+signature INT = sig
+  val ~ : int -> int
+  val + : int * int -> int
+  val - : int * int -> int
+  val * : int * int -> int
+  val div : int * int -> int
+  val mod : int * int -> int
+  val quot : int * int -> int
+  val rem : int * int -> int
+  val >  : int * int -> bool
+  val >= : int * int -> bool
+  val <  : int * int -> bool
+  val <= : int * int -> bool
+end
+"#,
+  );
+}
+
+#[test]
+fn type_alias() {
+  check(
+    r#"
+signature THING = sig
+  type 'a t
+  type 'a thing = 'a t
+  val uh: 'a -> 'a thing
+  type guy = { foo: int, bar: string }
+  val hi: guy
+end
+
+structure Thing :> THING = struct
+  type 'a t = 'a list
+  type 'a thing = 'a t
+  val uh = fn x => [x]
+  type guy = { foo: int, bar: string }
+  val hi = { foo = 4, bar = "yes" }
+end
+"#,
+  );
+}
+
+#[test]
+fn poly_exn() {
+  check(
+    r#"
+signature S = sig
+  exception E of 'a
+(**              ^^ undefined type variable: 'a *)
+end
+"#,
+  );
+}
+
+#[test]
+fn sharing_in_seq() {
+  check(
+    r#"
+signature FOO = sig type t structure S: sig type t end end
+signature BAR = sig structure Foo : FOO end
+signature QUZ = sig structure Foo : FOO end
+
+signature SIG = sig
+  structure Foo : FOO
+  structure Bar : BAR
+  structure Quz : QUZ
+  sharing Foo = Bar.Foo = Quz.Foo
+  val x : Foo.S.t
+end
+
+functor F (
+  structure Foo : FOO
+  structure Bar : BAR
+  structure Quz : QUZ
+  sharing Foo = Bar.Foo = Quz.Foo
+  val x : Foo.S.t
+) = struct end
+"#,
+  );
+}
+
+#[test]
+fn ty_eq_undef() {
+  check(
+    r#"
+signature S = sig
+  type 'a t = 'a uh
+(**           ^^^^^ undefined type: uh *)
+end"#,
+  );
+}
+
+#[test]
+fn ty_eq_wrong_num_ty_args() {
+  check(
+    r#"
+signature S = sig
+  datatype uh = Uh
+  type 'a t = 'a uh
+(**           ^^^^^ expected 0 type arguments, found 1 *)
+end"#,
+  );
+}
+
+#[test]
+fn where_not_all_ty_vars() {
+  check(
+    r#"
+signature SIG = sig
+  type 'a t
+  val f : 'a t -> 'a t
+end
+
+structure Str :> SIG where type 'a t = int = struct
+  type 'a t = int
+  fun f x = x
+end
+
+val _ = Str.f 3 : int
+"#,
+  );
+}

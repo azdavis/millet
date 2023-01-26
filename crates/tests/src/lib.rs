@@ -7,11 +7,15 @@
 #![deny(clippy::pedantic, rust_2018_idioms)]
 
 mod big;
+mod cannot_rebind;
 mod check;
+mod circularity;
+mod common;
 mod datatype_copy;
 mod deviations;
 mod docs;
 mod dupe;
+mod empty;
 mod equality;
 mod exn;
 mod fixity;
@@ -40,3 +44,4 @@ mod symbolic;
 mod ty_escape;
 mod ty_var;
 mod unused;
+mod use_builtin;
