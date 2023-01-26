@@ -1452,7 +1452,9 @@ val _ = 1.2 <> 3.4
 
 ### Reporting types with invalid syntax
 
-Millet reports overloaded types with intentionally invalid SML syntax. Here is what they mean:
+Millet uses pseudo-syntax that is not technically valid SML syntax to report some more exotic types.
+
+It reports overloaded types as the following:
 
 | Overload       | Meaning                                 |
 | -------------- | --------------------------------------- |
@@ -1462,9 +1464,13 @@ Millet reports overloaded types with intentionally invalid SML syntax. Here is w
 | `<wordinttxt>` | `word`, `int`, `string`, `char`         |
 | `<numtxt>`     | `word`, `real`, `int`, `string`, `char` |
 
-Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax. Unsolved equality type variables will begin with two `?`, rather like real SML type variables, which begin with two `'` when they are equality type variables.
+It will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc.
 
-If Millet encounters an invalid expression, like a variable that was undefined, it will report the type `_`. Although Millet is able to parse `_` as a type "hole" if written in code, this again is not valid SML syntax.
+Unsolved equality type variables will begin with two `?`, rather like real SML type variables, which begin with two `'` when they are equality type variables.
+
+Unsolved record types that may have other fields, which often arise with usages of `#` selectors, will be reported as record types with an extra `...` row.
+
+If Millet encounters an invalid expression, like a variable that was undefined, it will report the type `_`.
 
 ## 5007
 
