@@ -69,8 +69,8 @@ impl fmt::Display for TyDisplay<'_> {
         let &idx = self.cx.meta_vars.map.get(mv).ok_or(fmt::Error)?;
         match self.cx.meta_vars.info.get(*mv) {
           Some(TyVarKind::Overloaded(ov)) => ov.fmt(f)?,
-          Some(TyVarKind::Equality) => display_mv_idx(f, idx, "??")?,
-          Some(TyVarKind::Record(_, _)) | None => display_mv_idx(f, idx, "?")?,
+          Some(TyVarKind::Equality) => meta_var_idx(f, idx, "??")?,
+          Some(TyVarKind::Record(_, _)) | None => meta_var_idx(f, idx, "?")?,
         }
       }
       Ty::FixedVar(fv) => fv.fmt(f)?,
@@ -208,7 +208,7 @@ impl<'a> MetaVarNames<'a> {
   }
 }
 
-fn display_mv_idx(f: &mut fmt::Formatter<'_>, idx: idx::Idx, s: &str) -> fmt::Result {
+fn meta_var_idx(f: &mut fmt::Formatter<'_>, idx: idx::Idx, s: &str) -> fmt::Result {
   f.write_str(s)?;
   for c in idx_to_name(idx.to_usize()) {
     write!(f, "{c}")?;
