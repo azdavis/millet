@@ -6,7 +6,6 @@ use crate::types::{
   Basic, Composite, Equality, IdStatus, Overload, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme,
   TyVarKind, ValEnv, ValInfo,
 };
-use fast_hash::map;
 
 /// A basis.
 #[derive(Debug, Default, Clone)]
@@ -32,7 +31,7 @@ impl Basis {
     match ns {
       sml_namespace::Module::Structure => match other.inner.env.get_str(other_name) {
         Some(env) => {
-          let env = Env { str_env: map([(name, env.clone())]), ..Default::default() };
+          let env = Env { str_env: fast_hash::map([(name, env.clone())]), ..Default::default() };
           self.inner.env.push(env);
           true
         }
