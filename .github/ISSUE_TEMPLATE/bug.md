@@ -6,9 +6,9 @@ labels: bug
 
 ## Environment
 
-- Millet version:
-- Editor version: <!-- e.g. VS Code -->
-- OS version:
+- Millet version: <!-- e.g. X.Y.Z -->
+- Editor version: <!-- e.g. VS Code X.Y.Z -->
+- OS version: <!-- e.g. macOS X.Y.Z -->
 
 ## Steps to reproduce
 
