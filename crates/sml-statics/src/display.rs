@@ -199,9 +199,9 @@ impl<'a> MetaVarNames<'a> {
   pub(crate) fn extend_for(&mut self, ty: &Ty) {
     meta_vars(
       &Subst::default(),
-      &mut |x, kind| {
-        self.map.entry(x).or_insert_with(|| {
-          assert!(kind.is_none(), "the Subst was empty");
+      &mut |mv, kind| {
+        assert!(kind.is_none(), "the Subst was empty");
+        self.map.entry(mv).or_insert_with(|| {
           let ret = idx::Idx::new(self.next_idx);
           self.next_idx += 1;
           ret
