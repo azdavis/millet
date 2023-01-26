@@ -1,7 +1,7 @@
 //! Displaying some types.
 
 use crate::types::{
-  BoundTyVars, MetaTyVar, MetaVarInfo, Overload, Subst, Sym, Syms, Ty, TyScheme, TyVarKind,
+  BoundTyVars, MetaTyVar, MetaVarInfo, Subst, Sym, Syms, Ty, TyScheme, TyVarKind,
 };
 use crate::{fmt_util::idx_to_name, util::meta_vars};
 use fast_hash::FxHashMap;
@@ -184,10 +184,11 @@ impl fmt::Display for SymDisplay<'_> {
   }
 }
 
+/// Gives names to meta variables, like `?a` or `<wordint>` or `int`.
 #[derive(Debug)]
 pub(crate) struct MetaVarNames<'a> {
   next_idx: usize,
-  map: FxHashMap<MetaTyVar, MetaVarName>,
+  map: FxHashMap<MetaTyVar, idx::Idx>,
   info: &'a MetaVarInfo,
 }
 
@@ -204,9 +205,10 @@ impl<'a> MetaVarNames<'a> {
   pub(crate) fn extend_for(&mut self, ty: &Ty) {
     meta_vars(
       &Subst::default(),
-      &mut |x, _| {
+      &mut |x, kind| {
         self.map.entry(x).or_insert_with(|| {
-          let ret = MetaVarName::Idx(idx::Idx::new(self.next_idx));
+          assert!(kind.is_none(), "the Subst was empty");
+          let ret = idx::Idx::new(self.next_idx);
           self.next_idx += 1;
           ret
         });
@@ -215,36 +217,29 @@ impl<'a> MetaVarNames<'a> {
     );
   }
 
-  /// tries the [`MetaVarInfo`] first, then fall back to a generated name like `?a`, `?b`, etc.
-  fn get(&self, mv: MetaTyVar) -> Option<MetaVarName> {
-    self
-      .info
-      .get(mv)
-      .and_then(|kind| match kind {
-        TyVarKind::Overloaded(ov) => Some(MetaVarName::Overload(*ov)),
-        TyVarKind::Equality | TyVarKind::Record(_, _) => None,
-      })
-      .or_else(|| self.map.get(&mv).copied())
+  fn get(&self, mv: MetaTyVar) -> Option<MetaVarDisplay<'_>> {
+    let &idx = self.map.get(&mv)?;
+    Some(MetaVarDisplay { idx, kind: self.info.get(mv) })
   }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum MetaVarName {
-  Idx(idx::Idx),
-  Overload(Overload),
+#[derive(Debug, Clone)]
+struct MetaVarDisplay<'a> {
+  idx: idx::Idx,
+  kind: Option<&'a TyVarKind>,
 }
 
-impl fmt::Display for MetaVarName {
+impl fmt::Display for MetaVarDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match *self {
-      MetaVarName::Idx(idx) => {
+    match self.kind {
+      Some(TyVarKind::Overloaded(ov)) => ov.fmt(f),
+      Some(_) | None => {
         f.write_str("?")?;
-        for c in idx_to_name(idx.to_usize()) {
+        for c in idx_to_name(self.idx.to_usize()) {
           write!(f, "{c}")?;
         }
         Ok(())
       }
-      MetaVarName::Overload(ov) => ov.fmt(f),
     }
   }
 }
