@@ -41,7 +41,7 @@ pub(crate) enum ErrorKind {
   ExpHole(Ty),
   TyHole,
   BindPolymorphicExpansiveExp,
-  Unused(str_util::Name),
+  Unused(Item, str_util::Name),
   TyVarNotAllowedForTyRhs,
   CannotShareTy(sml_hir::Path, TyScheme),
   CannotRealizeTy(sml_hir::Path, TyScheme),
@@ -141,8 +141,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::BindPolymorphicExpansiveExp => {
         f.write_str("cannot bind expansive polymorphic expression")
       }
-      ErrorKind::Unused(name) => {
-        let item = Item::Val;
+      ErrorKind::Unused(item, name) => {
         write!(f, "unused {item}: {name}")
       }
       ErrorKind::TyVarNotAllowedForTyRhs => {
@@ -426,7 +425,7 @@ impl Error {
       ErrorKind::ExpHole(_) => Code::n(5026),
       ErrorKind::TyHole => Code::n(5027),
       ErrorKind::BindPolymorphicExpansiveExp => Code::n(5028),
-      ErrorKind::Unused(_) => Code::n(5029),
+      ErrorKind::Unused(_, _) => Code::n(5029),
       ErrorKind::TyVarNotAllowedForTyRhs => Code::n(5030),
       ErrorKind::CannotShareTy(_, _) => Code::n(5031),
       ErrorKind::CannotRealizeTy(_, _) => Code::n(5032),
@@ -443,7 +442,7 @@ impl Error {
   #[must_use]
   pub fn severity(&self) -> Severity {
     match self.kind {
-      ErrorKind::Unused(_)
+      ErrorKind::Unused(_, _)
       | ErrorKind::InvalidEq(_)
       | ErrorKind::MismatchedFunctorSugar(_)
       | ErrorKind::InvalidAppend(_)

@@ -154,7 +154,7 @@ impl St {
       }
       for (idx, name) in self.defined {
         if !self.used.contains(&idx) {
-          errors.push(Error { idx, kind: ErrorKind::Unused(name) });
+          errors.push(Error { idx, kind: ErrorKind::Unused(Item::Val, name) });
         }
       }
       for ty in self.info.tys_mut() {
