@@ -260,7 +260,7 @@ fn env_syms<E: EnvLike>(
     mvs.clear();
     mvs.extend_for(&val_info.ty_scheme.ty);
     let detail = val_info.ty_scheme.display(mvs, syms).to_string();
-    val_info.def.iter().filter_map(move |&def| {
+    val_info.defs.iter().filter_map(move |&def| {
       let idx = def_idx(path, def)?;
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),

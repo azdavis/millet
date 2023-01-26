@@ -273,7 +273,7 @@ fn get_str_exp(
         }
         for val_info in to_add.val_env.values_mut() {
           // TODO add to the set?
-          val_info.def = def.into_iter().collect();
+          val_info.defs = def.into_iter().collect();
         }
         st.info.insert(idx, None, fun_sig.body_env.def.into_iter().collect());
         ac.append(&mut to_add);
@@ -393,7 +393,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         let vi = ValInfo {
           ty_scheme,
           id_status: IdStatus::Val,
-          def: st.def(spec.into()).into_iter().collect(),
+          defs: st.def(spec.into()).into_iter().collect(),
         };
         let name = &val_desc.name;
         if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
@@ -454,7 +454,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
-        def: st.def(spec.into()).into_iter().collect(),
+        defs: st.def(spec.into()).into_iter().collect(),
       };
       if let Some(e) = ins_check_name(&mut ac.val_env, ex_desc.name.clone(), vi, Item::Val) {
         st.err(spec, e);

@@ -37,11 +37,11 @@ pub(crate) fn get(
       pm_pat: Pat::zero(Con::Any, pat),
       ty: Ty::MetaVar(st.meta_gen.gen(cfg.gen)),
       ty_scheme: None,
-      def: FxHashSet::default(),
+      defs: FxHashSet::default(),
     },
   };
   let ty_entry = TyEntry { ty: ret.ty.clone(), ty_scheme: ret.ty_scheme };
-  st.info.insert(pat_.into(), Some(ty_entry), ret.def);
+  st.info.insert(pat_.into(), Some(ty_entry), ret.defs);
   (ret.pm_pat, ret.ty)
 }
 
@@ -49,7 +49,7 @@ struct PatRet {
   pm_pat: Pat,
   ty: Ty,
   ty_scheme: Option<TyScheme>,
-  def: FxHashSet<def::Def>,
+  defs: FxHashSet<def::Def>,
 }
 
 fn get_(
@@ -62,7 +62,7 @@ fn get_(
 ) -> Option<PatRet> {
   let pat = Some(pat_idx);
   let mut ty_scheme = None::<TyScheme>;
-  let mut def = FxHashSet::<def::Def>::default();
+  let mut defs = FxHashSet::<def::Def>::default();
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
     // @def(32)
     sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), Ty::MetaVar(st.meta_gen.gen(cfg.gen))),
@@ -96,9 +96,9 @@ fn get_(
       // @def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
-        def.extend(st.def(pat_idx.into()));
+        defs.extend(st.def(pat_idx.into()));
         insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty.clone());
-        return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, def });
+        return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, defs });
       }
       let val_info = match maybe_val_info {
         Some(x) => x,
@@ -120,7 +120,7 @@ fn get_(
       let (sym, arguments, ty) = match ty {
         Ty::Con(_, sym) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
-          def.extend(val_info.def.iter().copied());
+          defs.extend(val_info.defs.iter().copied());
           if argument.is_some() {
             st.err(pat_idx, ErrorKind::ConPatMustNotHaveArg);
           }
@@ -135,7 +135,7 @@ fn get_(
               _ => return None,
             },
           });
-          def.extend(val_info.def.iter().copied());
+          defs.extend(val_info.defs.iter().copied());
           let sym = match res_ty.as_ref() {
             Ty::Con(_, x) => *x,
             // @test(pat::weird_pat_fn_2)
@@ -234,7 +234,7 @@ fn get_(
       (Pat::or(pm_pats, pat), ty)
     }
   };
-  Some(PatRet { pm_pat, ty, ty_scheme, def })
+  Some(PatRet { pm_pat, ty, ty_scheme, defs })
 }
 
 fn ok_val_info(vi: Option<&ValInfo>) -> bool {
@@ -252,7 +252,7 @@ fn insert_name(
   let vi = ValInfo {
     ty_scheme: TyScheme::zero(ty),
     id_status: IdStatus::Val,
-    def: st.def(idx).into_iter().collect(),
+    defs: st.def(idx).into_iter().collect(),
   };
   match st.info.mode() {
     Mode::Regular(Some(_)) => {

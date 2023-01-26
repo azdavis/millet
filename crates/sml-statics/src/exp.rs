@@ -31,7 +31,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut definition = FxHashSet::<def::Def>::default();
+  let mut defs = FxHashSet::<def::Def>::default();
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.meta_gen.gen(Generalizable::Always);
@@ -44,10 +44,10 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
-        definition.reserve(val_info.def.len());
-        for &def in &val_info.def {
+        defs.reserve(val_info.defs.len());
+        for &def in &val_info.defs {
           if let def::Def::Path(_, idx) = def {
-            definition.insert(def);
+            defs.insert(def);
             st.mark_used(idx);
           }
         }
@@ -140,7 +140,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
   };
   let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
-  st.info.insert(exp.into(), Some(ty_entry), definition);
+  st.info.insert(exp.into(), Some(ty_entry), defs);
   ret
 }
 
@@ -153,7 +153,7 @@ fn lint_app(
   match &ars.exp[func?] {
     // just use iter().next() because if it's something we care about (a primitive path or builtin
     // lib path), the exp should only have one def anyway.
-    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def.iter().next()? {
+    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.defs.iter().next()? {
       def::Def::Primitive(_) => {
         assert!(path.prefix().is_empty(), "primitives are at the top level");
         match path.last().as_str() {
@@ -202,7 +202,7 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
       _ => return None,
     };
     let vi = get_val_info(&cx.env, path).ok()??;
-    match vi.def.iter().next()? {
+    match vi.defs.iter().next()? {
       def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive(_) => {}
       def::Def::Path(def::Path::Regular(_), _) => return None,
     }

@@ -346,7 +346,7 @@ pub(crate) struct ValInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) id_status: IdStatus,
   /// a set, because we can have or patterns
-  pub(crate) def: FxHashSet<def::Def>,
+  pub(crate) defs: FxHashSet<def::Def>,
 }
 
 /// Definition: `IdStatus`

@@ -153,7 +153,7 @@ pub fn minimal() -> (Syms, Basis) {
     .values()
     .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
     .chain(fns.into_iter().map(|(name, ty_scheme)| {
-      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: fast_hash::set([name.into()]) };
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, defs: fast_hash::set([name.into()]) };
       (str_util::Name::new(name.as_str()), vi)
     }))
     .collect();
@@ -194,7 +194,7 @@ where
 {
   xs.into_iter()
     .map(|(name, ty_scheme)| {
-      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, def: fast_hash::set([name.into()]) };
+      let vi = ValInfo { ty_scheme, id_status: IdStatus::Con, defs: fast_hash::set([name.into()]) };
       (str_util::Name::new(name.as_str()), vi)
     })
     .collect()

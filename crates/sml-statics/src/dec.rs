@@ -147,7 +147,7 @@ pub(crate) fn get(
             let vi = ValInfo {
               ty_scheme: TyScheme::zero(ty),
               id_status: IdStatus::Exn(exn),
-              def: st.def(dec.into()).into_iter().collect(),
+              defs: st.def(dec.into()).into_iter().collect(),
             };
             if let Some(e) = ins_check_name(&mut val_env, name.clone(), vi, Item::Val) {
               st.err(dec, e);
@@ -158,7 +158,7 @@ pub(crate) fn get(
             Ok(Some(val_info)) => match val_info.id_status {
               IdStatus::Exn(_) => {
                 match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
-                  None => st.info.insert(dec.into(), None, val_info.def.clone()),
+                  None => st.info.insert(dec.into(), None, val_info.defs.clone()),
                   Some(e) => st.err(dec, e),
                 }
               }
@@ -348,7 +348,7 @@ pub(crate) fn get_dat_binds(
       // every fixed var.
       generalize_fixed(datatype.fixed.clone(), &mut ty_scheme);
       let vi =
-        ValInfo { ty_scheme, id_status: IdStatus::Con, def: st.def(idx).into_iter().collect() };
+        ValInfo { ty_scheme, id_status: IdStatus::Con, defs: st.def(idx).into_iter().collect() };
       if let Some(e) = ins_check_name(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
         st.err(idx, e);
       }
