@@ -210,7 +210,7 @@ fn get_(
         let idx = sml_hir::Idx::from(pat.unwrap_or(pat_idx));
         unify(st, idx, ty.clone(), rest_ty);
         apply(&st.subst, &mut ty);
-        for (name, fst_val_info) in &fst_ve {
+        for (name, fst_val_info) in &mut fst_ve {
           let rest_val_info = match rest_ve.remove(name) {
             Some(x) => x,
             None => {
@@ -220,6 +220,7 @@ fn get_(
           };
           assert!(fst_val_info.id_status.same_kind_as(IdStatus::Val));
           assert!(rest_val_info.id_status.same_kind_as(IdStatus::Val));
+          fst_val_info.defs.extend(rest_val_info.defs);
           let rest_ty_scheme = rest_val_info.ty_scheme.clone();
           match eq_ty_scheme(st, &fst_val_info.ty_scheme, rest_ty_scheme) {
             Ok(()) => {}

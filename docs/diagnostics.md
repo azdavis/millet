@@ -1977,8 +1977,6 @@ fun toInt (x : t) : int =
 
 To fix, ensure all alternatives bind the same names. The types must also match.
 
-<!-- @ignore TODO this warns the y from Bar is unused -->
-
 ```sml
 datatype t = Foo of int | Bar of int
 

@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Show unsolved equality type variables with two `?`.
+- Show all def sites associated with variables bound in or patterns.
+
 ## v0.7.5
 
 - Fix some crashes with Unicode characters.
