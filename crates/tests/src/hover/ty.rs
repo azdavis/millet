@@ -63,3 +63,25 @@ fun eq x y = x = y
 "#,
   );
 }
+
+#[test]
+fn unsolved_overload() {
+  check(
+    r#"
+fun add x y = x + y
+(**           ^ hover: <num> *)
+"#,
+  );
+}
+
+/// not the greatest
+#[test]
+fn unsolved_record() {
+  check(
+    r#"
+(**               vvvv cannot resolve `...` in type: { foo : ?a, ... } *)
+fun getFoo x = if #foo x then 3 else 4
+(**                    ^ hover: { foo : ?b, ... } *)
+"#,
+  );
+}
