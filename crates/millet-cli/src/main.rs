@@ -71,7 +71,7 @@ fn run() -> usize {
     for e in errors {
       let path = store.get_path(path);
       let path = path.as_path().strip_prefix(root.as_path()).unwrap_or(path.as_path());
-      println!("{}:{}: error[{}]: {}", path.display(), e.range.start, e.code, e.message);
+      println!("{}:{}: error[{}]: {}", path.display(), e.range, e.code, e.message);
     }
   }
   num_errors

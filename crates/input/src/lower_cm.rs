@@ -93,7 +93,7 @@ where
     Ok(x) => x,
     Err(e) => {
       return Err(Error::new(
-        ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
+        ErrorSource { path: None, range: group.pos_db.range_utf16(e.text_range()) },
         group.path.as_path().to_owned(),
         ErrorKind::Cm(e),
       ))
@@ -152,7 +152,7 @@ where
         cm_syntax::Namespace::Functor => sml_namespace::Module::Functor,
         cm_syntax::Namespace::FunSig => {
           return Err(Error::new(
-            ErrorSource { path: None, range: cx.group.pos_db.range(ns.range) },
+            ErrorSource { path: None, range: cx.group.pos_db.range_utf16(ns.range) },
             cx.group.path.as_path().to_owned(),
             ErrorKind::FunSig,
           ))

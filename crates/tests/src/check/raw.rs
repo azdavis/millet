@@ -57,7 +57,7 @@ pub(crate) fn get<'a, I>(
       if matches!(expect.kind, expect::Kind::Hover) {
         let pos = match region {
           expect::Region::Exact { line, col_start, .. } => {
-            text_pos::Position { line, character: col_start }
+            text_pos::PositionUtf16 { line, col: col_start }
           }
           expect::Region::Line(n) => {
             ck.reasons.push(reason::Reason::InexactHover(path.wrap(n)));

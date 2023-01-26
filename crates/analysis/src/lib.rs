@@ -12,7 +12,7 @@ use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::error::Error;
 use std::process::{Command, Stdio};
 use std::{fmt, io::Write as _};
-use text_pos::{Position, Range};
+use text_pos::{PositionUtf16, RangeUtf16};
 use text_size_util::TextRange;
 
 pub use sml_statics::info::CompletionItem;
@@ -79,7 +79,7 @@ impl Analysis {
         let path = err.path();
         let group = input.groups.get(&path).expect("no such group");
         let err = Diagnostic {
-          range: group.pos_db.range(err.range())?,
+          range: group.pos_db.range_utf16(err.range())?,
           message: err.to_string(),
           code: err.code(),
           severity: err.severity(),
@@ -96,7 +96,7 @@ impl Analysis {
 
   /// Returns a Markdown string with information about this position.
   #[must_use]
-  pub fn get_md(&self, pos: WithPath<Position>, token: bool) -> Option<(String, Range)> {
+  pub fn get_md(&self, pos: WithPath<PositionUtf16>, token: bool) -> Option<(String, RangeUtf16)> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let mut parts = Vec::<&str>::new();
     let ty_md: Option<String>;
@@ -124,13 +124,13 @@ impl Analysis {
     if parts.is_empty() {
       return None;
     }
-    let range = ft.file.syntax.pos_db.range(range)?;
+    let range = ft.file.syntax.pos_db.range_utf16(range)?;
     Some((parts.join("\n\n---\n\n"), range))
   }
 
   /// Returns the range of the definition of the item at this position.
   #[must_use]
-  pub fn get_def(&self, pos: WithPath<Position>) -> Option<WithPath<Range>> {
+  pub fn get_def(&self, pos: WithPath<PositionUtf16>) -> Option<WithPath<RangeUtf16>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
     source_files::path_and_range(&self.source_files, ft.file.info.get_def(idx)?.to_regular_idx()?)
@@ -139,7 +139,7 @@ impl Analysis {
   /// Returns the ranges of the definitions of the types involved in the type of the item at this
   /// position.
   #[must_use]
-  pub fn get_ty_defs(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
+  pub fn get_ty_defs(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<WithPath<RangeUtf16>>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
     Some(
@@ -155,13 +155,13 @@ impl Analysis {
   /// Given a position on a `case` expression, return the code and its range to fill the case with
   /// all of the variants of the head's type.
   #[must_use]
-  pub fn fill_case(&self, pos: WithPath<Position>) -> Option<(Range, String)> {
+  pub fn fill_case(&self, pos: WithPath<PositionUtf16>) -> Option<(RangeUtf16, String)> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
     let ptr = ptr.cast::<ast::CaseExp>()?;
     let case = ptr.try_to_node(ft.file.syntax.parse.root.syntax())?;
     let range = TextRange::empty(case.syntax().text_range().end());
-    let range = ft.file.syntax.pos_db.range(range)?;
+    let range = ft.file.syntax.pos_db.range_utf16(range)?;
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
     let head = ft.file.syntax.lower.ptrs.ast_to_hir(&head_ptr)?;
@@ -180,7 +180,11 @@ impl Analysis {
   /// # Panics
   ///
   /// Upton internal error.
-  pub fn format(&self, path: PathId, tab_size: u32) -> Result<(String, Position), FormatError> {
+  pub fn format(
+    &self,
+    path: PathId,
+    tab_size: u32,
+  ) -> Result<(String, PositionUtf16), FormatError> {
     let engine = match self.diagnostics_options.format {
       None => return Err(FormatError::Disabled),
       Some(x) => x,
@@ -209,7 +213,7 @@ impl Analysis {
         String::from_utf8(output.stdout).map_err(SmlfmtError::Utf8)?
       }
     };
-    Ok((buf, file.syntax.pos_db.end_position()))
+    Ok((buf, file.syntax.pos_db.end_position_utf16()))
   }
 
   /// Returns the symbols for the file.
@@ -227,7 +231,10 @@ impl Analysis {
 
   /// Returns all references to the position.
   #[must_use]
-  pub fn find_all_references(&self, pos: WithPath<Position>) -> Option<Vec<WithPath<Range>>> {
+  pub fn find_all_references(
+    &self,
+    pos: WithPath<PositionUtf16>,
+  ) -> Option<Vec<WithPath<RangeUtf16>>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, indices) = ft.get_ptr_and_indices()?;
     let ret = indices.iter().flat_map(|&idx| {
@@ -235,7 +242,7 @@ impl Analysis {
       self.source_files.iter().flat_map(move |(&path, sf)| {
         sf.info.get_with_def(def).filter_map(move |idx| {
           let ptr = sf.syntax.lower.ptrs.hir_to_ast(idx)?;
-          Some(path.wrap(sf.syntax.pos_db.range(ptr.text_range())?))
+          Some(path.wrap(sf.syntax.pos_db.range_utf16(ptr.text_range())?))
         })
       })
     });
@@ -244,7 +251,7 @@ impl Analysis {
 
   /// Returns all completions for the position.
   #[must_use]
-  pub fn completions(&self, pos: WithPath<Position>) -> Option<Vec<CompletionItem>> {
+  pub fn completions(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<CompletionItem>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     Some(ft.file.info.completions(&self.syms))
   }
@@ -342,9 +349,9 @@ pub struct DocumentSymbol {
   /// Detail about this symbol.
   pub detail: Option<String>,
   /// The range of the whole symbol.
-  pub range: text_pos::Range,
+  pub range: text_pos::RangeUtf16,
   /// The range of just the name.
-  pub selection_range: text_pos::Range,
+  pub selection_range: text_pos::RangeUtf16,
   /// Children of this symbol.
   pub children: Vec<DocumentSymbol>,
 }
@@ -354,7 +361,7 @@ fn symbol(
   sym: sml_statics::info::DocumentSymbol,
 ) -> Option<DocumentSymbol> {
   let text_range = file.lower.ptrs.hir_to_ast(sym.idx)?.text_range();
-  let range = file.pos_db.range(text_range)?;
+  let range = file.pos_db.range_utf16(text_range)?;
   Some(DocumentSymbol {
     name: sym.name,
     kind: sym.kind,

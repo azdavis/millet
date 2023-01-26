@@ -30,7 +30,7 @@ where
     None => severity,
   };
   Some(Diagnostic {
-    range: file.syntax.pos_db.range(range)?,
+    range: file.syntax.pos_db.range_utf16(range)?,
     message: message.to_string(),
     code,
     severity,

@@ -4,7 +4,7 @@ use diagnostic_util::{Code, Severity};
 use paths::PathId;
 use std::fmt;
 use std::path::{Path, PathBuf};
-use text_pos::Range;
+use text_pos::RangeUtf16;
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
@@ -70,7 +70,7 @@ impl fmt::Display for ErrorDisplay<'_> {
 #[derive(Debug, Default, Clone)]
 pub(crate) struct ErrorSource {
   pub(crate) path: Option<PathBuf>,
-  pub(crate) range: Option<Range>,
+  pub(crate) range: Option<RangeUtf16>,
 }
 
 /// An error when getting input.
@@ -105,7 +105,7 @@ impl Error {
 
   /// Returns a range for this error in `path`.
   #[must_use]
-  pub fn range(&self) -> Option<Range> {
+  pub fn range(&self) -> Option<RangeUtf16> {
     self.source.range
   }
 
@@ -196,8 +196,10 @@ pub(crate) fn get_path_id_in_group<F>(
 where
   F: paths::FileSystem,
 {
-  let source =
-    ErrorSource { path: Some(group.path.as_path().to_owned()), range: group.pos_db.range(range) };
+  let source = ErrorSource {
+    path: Some(group.path.as_path().to_owned()),
+    range: group.pos_db.range_utf16(range),
+  };
   let path = group.path.as_path().parent().expect("group path with no parent").join(path);
   let canonical = canonicalize(fs, path.as_path(), source.clone())?;
   let id = store.get_id(&canonical);
@@ -241,7 +243,7 @@ pub(crate) struct GroupPathToProcess {
   /// the path that led us to `path`.
   pub(crate) parent: PathId,
   /// the range in the file at `parent` that led us to `path`, if any.
-  pub(crate) range: Option<Range>,
+  pub(crate) range: Option<RangeUtf16>,
   /// the path to process.
   pub(crate) path: PathId,
 }

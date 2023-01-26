@@ -49,7 +49,7 @@ pub(crate) fn apply_changes(
         if up_to_line.map_or(false, |utl| utl <= range.end.line) {
           pos_db = text_pos::PositionDb::new(text);
         }
-        match pos_db.text_range(analysis_range(range)) {
+        match pos_db.text_range_utf16(analysis_range(range)) {
           Some(text_range) => {
             text.replace_range(std::ops::Range::<usize>::from(text_range), &change.text);
             up_to_line = Some(range.start.line);

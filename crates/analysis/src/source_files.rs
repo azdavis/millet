@@ -3,23 +3,23 @@
 use paths::{PathMap, WithPath};
 use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
 use sml_syntax::{rowan::TokenAtOffset, SyntaxKind, SyntaxToken};
-use text_pos::{Position, Range};
+use text_pos::{PositionUtf16, RangeUtf16};
 
 pub(crate) fn path_and_range(
   source_files: &PathMap<mlb_statics::SourceFile>,
   idx: WithPath<sml_hir::Idx>,
-) -> Option<WithPath<Range>> {
+) -> Option<WithPath<RangeUtf16>> {
   let def_file = source_files.get(&idx.path)?;
   let ptr = def_file.syntax.lower.ptrs.hir_to_ast(idx.val)?;
-  Some(idx.path.wrap(def_file.syntax.pos_db.range(ptr.text_range())?))
+  Some(idx.path.wrap(def_file.syntax.pos_db.range_utf16(ptr.text_range())?))
 }
 
 pub(crate) fn file_and_token(
   source_files: &PathMap<mlb_statics::SourceFile>,
-  pos: WithPath<Position>,
+  pos: WithPath<PositionUtf16>,
 ) -> Option<FileAndToken<'_>> {
   let file = source_files.get(&pos.path)?;
-  let idx = file.syntax.pos_db.text_size(pos.val)?;
+  let idx = file.syntax.pos_db.text_size_utf16(pos.val)?;
   if !file.syntax.parse.root.syntax().text_range().contains(idx) {
     return None;
   }

@@ -30,7 +30,7 @@ where
       Ok(x) => x,
       Err(e) => {
         return Err(Error::new(
-          ErrorSource { path: None, range: group.pos_db.range(e.text_range()) },
+          ErrorSource { path: None, range: group.pos_db.range_utf16(e.text_range()) },
           group.path.as_path().to_owned(),
           ErrorKind::Mlb(e),
         ));
@@ -67,7 +67,7 @@ where
         .map(|(name, exp)| {
           if !names.insert(name.val.clone()) {
             return Err(Error::new(
-              ErrorSource { path: None, range: cx.group.pos_db.range(name.range) },
+              ErrorSource { path: None, range: cx.group.pos_db.range_utf16(name.range) },
               cx.group.path.as_path().to_owned(),
               ErrorKind::Duplicate(name.val),
             ));
@@ -92,7 +92,7 @@ where
         .map(|(lhs, rhs)| {
           if !names.insert(lhs.val.clone()) {
             return Err(Error::new(
-              ErrorSource { path: None, range: cx.group.pos_db.range(lhs.range) },
+              ErrorSource { path: None, range: cx.group.pos_db.range_utf16(lhs.range) },
               cx.group.path.as_path().to_owned(),
               ErrorKind::Duplicate(lhs.val),
             ));

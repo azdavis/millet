@@ -52,7 +52,7 @@ impl fmt::Display for ClickCodeHint {
 
 pub(crate) fn diagnostic(
   message: String,
-  range: Option<text_pos::Range>,
+  range: Option<text_pos::RangeUtf16>,
   code: diagnostic_util::Code,
   severity: diagnostic_util::Severity,
   more_info_hint: bool,
@@ -80,17 +80,17 @@ pub(crate) fn diagnostic(
   }
 }
 
-pub(crate) fn lsp_range(range: text_pos::Range) -> lsp_types::Range {
+pub(crate) fn lsp_range(range: text_pos::RangeUtf16) -> lsp_types::Range {
   lsp_types::Range { start: lsp_position(range.start), end: lsp_position(range.end) }
 }
 
-pub(crate) fn lsp_position(pos: text_pos::Position) -> lsp_types::Position {
-  lsp_types::Position { line: pos.line, character: pos.character }
+pub(crate) fn lsp_position(pos: text_pos::PositionUtf16) -> lsp_types::Position {
+  lsp_types::Position { line: pos.line, character: pos.col }
 }
 
 pub(crate) fn lsp_location(
   store: &paths::Store,
-  range: paths::WithPath<text_pos::Range>,
+  range: paths::WithPath<text_pos::RangeUtf16>,
 ) -> Option<lsp_types::Location> {
   let uri = match file_url(store.get_path(range.path).as_path()) {
     Ok(x) => x,
@@ -102,12 +102,12 @@ pub(crate) fn lsp_location(
   Some(lsp_types::Location { uri, range: lsp_range(range.val) })
 }
 
-fn analysis_position(pos: lsp_types::Position) -> text_pos::Position {
-  text_pos::Position { line: pos.line, character: pos.character }
+fn analysis_position(pos: lsp_types::Position) -> text_pos::PositionUtf16 {
+  text_pos::PositionUtf16 { line: pos.line, col: pos.character }
 }
 
-pub(crate) fn analysis_range(range: lsp_types::Range) -> text_pos::Range {
-  text_pos::Range { start: analysis_position(range.start), end: analysis_position(range.end) }
+pub(crate) fn analysis_range(range: lsp_types::Range) -> text_pos::RangeUtf16 {
+  text_pos::RangeUtf16 { start: analysis_position(range.start), end: analysis_position(range.end) }
 }
 
 pub(crate) fn url_to_path_id<F>(
@@ -125,7 +125,7 @@ pub(crate) fn text_doc_pos_params<F>(
   fs: &F,
   store: &mut paths::Store,
   params: &lsp_types::TextDocumentPositionParams,
-) -> Result<paths::WithPath<text_pos::Position>>
+) -> Result<paths::WithPath<text_pos::PositionUtf16>>
 where
   F: paths::FileSystem,
 {
@@ -149,7 +149,7 @@ where
 pub(crate) fn quick_fix(
   title: String,
   url: Url,
-  range: text_pos::Range,
+  range: text_pos::RangeUtf16,
   new_text: String,
 ) -> lsp_types::CodeActionOrCommand {
   lsp_types::CodeActionOrCommand::CodeAction(lsp_types::CodeAction {

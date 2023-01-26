@@ -13,15 +13,15 @@ pub(crate) enum Reason {
 pub(crate) fn get(
   files: &paths::PathMap<expect::File>,
   path: paths::PathId,
-  range: text_pos::Range,
+  range: text_pos::RangeUtf16,
   got: String,
 ) -> Result<(), Reason> {
   let file = &files[&path];
   if range.start.line == range.end.line {
     let region = expect::Region::Exact {
       line: range.start.line,
-      col_start: range.start.character,
-      col_end: range.end.character,
+      col_start: range.start.col,
+      col_end: range.end.col,
     };
     if try_region(file, path.wrap(region), got.as_str())? {
       return Ok(());
