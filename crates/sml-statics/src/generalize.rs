@@ -29,15 +29,11 @@ pub(crate) fn generalize(
   // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
   // if we did not, we would have to traverse the whole `Env` to know what ty vars are present in
   // it, and subtract those vars from the vars in `ty_scheme.ty`.
-  meta_vars(
-    subst,
-    &mut |x, _| {
-      if mv_generalizer.is_generalizable(x) {
-        meta.insert(x, None);
-      }
-    },
-    &ty_scheme.ty,
-  );
+  meta_vars(subst, &ty_scheme.ty, &mut |mv, _| {
+    if mv_generalizer.is_generalizable(mv) {
+      meta.insert(mv, None);
+    }
+  });
   let mut g = Generalizer {
     subst,
     fixed,

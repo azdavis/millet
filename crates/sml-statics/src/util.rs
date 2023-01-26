@@ -167,7 +167,7 @@ pub(crate) fn ty_syms<F: FnMut(Sym)>(ty: &Ty, f: &mut F) {
   }
 }
 
-pub(crate) fn meta_vars<F>(subst: &Subst, f: &mut F, ty: &Ty)
+pub(crate) fn meta_vars<F>(subst: &Subst, ty: &Ty, f: &mut F)
 where
   F: FnMut(MetaTyVar, Option<&TyVarKind>),
 {
@@ -176,21 +176,21 @@ where
     Ty::MetaVar(mv) => match subst.get(*mv) {
       None => f(*mv, None),
       Some(SubstEntry::Kind(k)) => f(*mv, Some(k)),
-      Some(SubstEntry::Solved(ty)) => meta_vars(subst, f, ty),
+      Some(SubstEntry::Solved(ty)) => meta_vars(subst, ty, f),
     },
     Ty::Record(rows) => {
       for ty in rows.values() {
-        meta_vars(subst, f, ty);
+        meta_vars(subst, ty, f);
       }
     }
     Ty::Con(args, _) => {
       for ty in args.iter() {
-        meta_vars(subst, f, ty);
+        meta_vars(subst, ty, f);
       }
     }
     Ty::Fn(param, res) => {
-      meta_vars(subst, f, param);
-      meta_vars(subst, f, res);
+      meta_vars(subst, param, f);
+      meta_vars(subst, res, f);
     }
   }
 }

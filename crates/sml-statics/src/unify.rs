@@ -102,16 +102,12 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
   }
   // tweak down the rank of all other meta vars in the ty.
   let mut map = FxHashMap::<MetaTyVar, (MetaTyVar, Option<TyVarKind>)>::default();
-  meta_vars(
-    &st.subst,
-    &mut |x, k| {
-      // this is crucial!
-      if mv.rank_lt(x) {
-        map.insert(x, (st.meta_gen.gen_same_rank(mv), k.cloned()));
-      }
-    },
-    &ty,
-  );
+  meta_vars(&st.subst, &ty, &mut |mv2, k| {
+    // this is crucial!
+    if mv.rank_lt(mv2) {
+      map.insert(mv2, (st.meta_gen.gen_same_rank(mv), k.cloned()));
+    }
+  });
   for (k, (v, kind)) in map {
     st.subst.insert(k, SubstEntry::Solved(Ty::MetaVar(v)));
     if let Some(kind) = kind {
