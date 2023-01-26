@@ -323,6 +323,7 @@ impl TyScheme {
 pub(crate) enum TyVarKind {
   Equality,
   Overloaded(Overload),
+  /// The `Idx` is just for better error reporting.
   Record(RecordTy, sml_hir::Idx),
 }
 
