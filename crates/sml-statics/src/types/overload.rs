@@ -35,7 +35,8 @@ pub(crate) enum Composite {
   RealInt,
   Num,
   NumTxt,
-  /// equality-only subset of NumTxt. used only for unification
+  /// equality-only subset of NumTxt. not explicitly mentioned in the Definition. used only for
+  /// unification.
   WordIntTxt,
 }
 
