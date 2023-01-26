@@ -14,7 +14,11 @@ impl Ty {
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
   ) -> impl fmt::Display + 'a {
-    TyDisplay { ty: self, bound_vars: None, meta_vars, syms, prec: TyPrec::Arrow }
+    TyDisplay {
+      cx: TyDisplayCx { bound_vars: None, meta_vars, syms },
+      ty: self,
+      prec: TyPrec::Arrow,
+    }
   }
 }
 
@@ -25,26 +29,29 @@ impl TyScheme {
     syms: &'a Syms,
   ) -> impl fmt::Display + 'a {
     TyDisplay {
+      cx: TyDisplayCx { bound_vars: Some(&self.bound_vars), meta_vars, syms },
       ty: &self.ty,
-      bound_vars: Some(&self.bound_vars),
-      meta_vars,
-      syms,
       prec: TyPrec::Arrow,
     }
   }
 }
 
-struct TyDisplay<'a> {
-  ty: &'a Ty,
+#[derive(Clone, Copy)]
+struct TyDisplayCx<'a> {
   bound_vars: Option<&'a BoundTyVars>,
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
+}
+
+struct TyDisplay<'a> {
+  cx: TyDisplayCx<'a>,
+  ty: &'a Ty,
   prec: TyPrec,
 }
 
 impl<'a> TyDisplay<'a> {
   fn with(&self, ty: &'a Ty, prec: TyPrec) -> Self {
-    Self { ty, bound_vars: self.bound_vars, meta_vars: self.meta_vars, syms: self.syms, prec }
+    Self { ty, cx: self.cx, prec }
   }
 }
 
@@ -53,13 +60,13 @@ impl fmt::Display for TyDisplay<'_> {
     match self.ty {
       Ty::None => f.write_str("_")?,
       Ty::BoundVar(bv) => {
-        let vars = self.bound_vars.expect("bound ty var without a BoundTyVars");
+        let vars = self.cx.bound_vars.expect("bound ty var without a BoundTyVars");
         let equality = matches!(bv.index_into(vars), Some(TyVarKind::Equality));
         let name = bv.name(equality);
         write!(f, "{name}")?;
       }
       Ty::MetaVar(mv) => {
-        let name = self.meta_vars.get(*mv).ok_or(fmt::Error)?;
+        let name = self.cx.meta_vars.get(*mv).ok_or(fmt::Error)?;
         write!(f, "{name}")?;
       }
       Ty::FixedVar(fv) => fv.fmt(f)?,
@@ -86,16 +93,7 @@ impl fmt::Display for TyDisplay<'_> {
           }
         } else {
           f.write_str("{ ")?;
-          comma_seq(
-            f,
-            rows.iter().map(|(lab, ty)| RowDisplay {
-              bound_vars: self.bound_vars,
-              meta_vars: self.meta_vars,
-              syms: self.syms,
-              lab,
-              ty,
-            }),
-          )?;
+          comma_seq(f, rows.iter().map(|(lab, ty)| RowDisplay { cx: self.cx, lab, ty }))?;
           f.write_str(" }")?;
         }
       }
@@ -115,7 +113,7 @@ impl fmt::Display for TyDisplay<'_> {
           }
           f.write_str(" ")?;
         }
-        SymDisplay { sym: *sym, syms: self.syms }.fmt(f)?;
+        SymDisplay { sym: *sym, syms: self.cx.syms }.fmt(f)?;
       }
       Ty::Fn(param, res) => {
         let needs_parens = self.prec > TyPrec::Arrow;
@@ -142,9 +140,7 @@ enum TyPrec {
 }
 
 struct RowDisplay<'a> {
-  bound_vars: Option<&'a BoundTyVars>,
-  meta_vars: &'a MetaVarNames<'a>,
-  syms: &'a Syms,
+  cx: TyDisplayCx<'a>,
   lab: &'a sml_hir::Lab,
   ty: &'a Ty,
 }
@@ -153,13 +149,7 @@ impl fmt::Display for RowDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     fmt::Display::fmt(self.lab, f)?;
     f.write_str(" : ")?;
-    let td = TyDisplay {
-      ty: self.ty,
-      bound_vars: self.bound_vars,
-      meta_vars: self.meta_vars,
-      syms: self.syms,
-      prec: TyPrec::Arrow,
-    };
+    let td = TyDisplay { cx: self.cx, ty: self.ty, prec: TyPrec::Arrow };
     fmt::Display::fmt(&td, f)
   }
 }
