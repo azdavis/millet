@@ -1,7 +1,7 @@
 //! Displaying some types.
 
 use crate::types::{
-  BoundTyVars, MetaTyVar, MetaVarInfo, Subst, Sym, Syms, Ty, TyScheme, TyVarKind,
+  BoundTyVars, MetaTyVar, MetaVarInfo, RecordTy, Subst, Sym, Syms, Ty, TyScheme, TyVarKind,
 };
 use crate::{fmt_util::idx_to_name, util::meta_vars};
 use fast_hash::FxHashMap;
@@ -70,7 +70,10 @@ impl fmt::Display for TyDisplay<'_> {
         match self.cx.meta_vars.info.get(*mv) {
           Some(TyVarKind::Overloaded(ov)) => ov.fmt(f)?,
           Some(TyVarKind::Equality) => meta_var_idx(f, idx, "??")?,
-          Some(TyVarKind::Record(_, _)) | None => meta_var_idx(f, idx, "?")?,
+          Some(TyVarKind::Record(rows, _)) => {
+            RecordMetaVarDisplay { cx: self.cx, rows }.fmt(f)?;
+          }
+          None => meta_var_idx(f, idx, "?")?,
         }
       }
       Ty::FixedVar(fv) => fv.fmt(f)?,
@@ -204,6 +207,11 @@ impl<'a> MetaVarNames<'a> {
         self.next_idx += 1;
         ret
       });
+      if let Some(TyVarKind::Record(rows, _)) = self.info.get(mv) {
+        for ty in rows.values() {
+          self.extend_for(ty);
+        }
+      }
     });
   }
 }
@@ -214,4 +222,20 @@ fn meta_var_idx(f: &mut fmt::Formatter<'_>, idx: idx::Idx, s: &str) -> fmt::Resu
     write!(f, "{c}")?;
   }
   Ok(())
+}
+
+struct RecordMetaVarDisplay<'a> {
+  cx: TyDisplayCx<'a>,
+  rows: &'a RecordTy,
+}
+
+impl fmt::Display for RecordMetaVarDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str("{ ")?;
+    for (lab, ty) in self.rows {
+      RowDisplay { cx: self.cx, lab, ty }.fmt(f)?;
+      f.write_str(", ")?;
+    }
+    f.write_str("... }")
+  }
 }
