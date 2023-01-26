@@ -133,7 +133,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
           mvs.extend_for(ty);
         }
         let ty = record_meta_var(&mvs, self.syms, rows);
-        write!(f, "cannot resolve `...` in type: {ty}")
+        write!(f, "cannot resolve `...` in record type: {ty}")
       }
       ErrorKind::OrPatNotSameBindings(name) => {
         write!(f, "{name} was bound in one alternative, but not in another")

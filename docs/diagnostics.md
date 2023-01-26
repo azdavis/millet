@@ -1937,7 +1937,7 @@ A record type couldn't be fully resolved, due to the use of a `...` pattern row 
 
 ```sml
 fun getX {x, ...} = x
-(** + cannot resolve record type containing `...` *)
+(** + cannot resolve `...` in record type: { x : ?a, ... } *)
 ```
 
 SML lacks row polymorphism, so the above example function does not typecheck.
@@ -1953,7 +1953,7 @@ This error may arise when using `#` selectors.
 
 ```sml
 fun addFooBar x = #foo x + #bar x
-(** + cannot resolve record type containing `...` *)
+(** + cannot resolve `...` in record type: { bar : <num>, foo : <num>, ... } *)
 ```
 
 Again, the fix is usually to add a type annotation. Though, an alternative would be to avoid `...` pattern rows altogether.
