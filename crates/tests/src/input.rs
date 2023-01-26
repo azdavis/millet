@@ -69,7 +69,7 @@ workspace.root = "nope.cm"
 
 #[test]
 fn config_parse_err() {
-  check_bad_input(config::FILE_NAME, "unexpected character", [(config::FILE_NAME, "岡部倫太郎")]);
+  check_bad_input(config::FILE_NAME, "couldn't parse config", [(config::FILE_NAME, "岡部倫太郎")]);
 }
 
 #[test]

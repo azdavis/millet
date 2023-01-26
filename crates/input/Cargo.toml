@@ -25,5 +25,5 @@ sml-syntax = { path = "../sml-syntax" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 text-size-util = { git = "https://github.com/azdavis/language-util.git" }
-toml = "0.5"
+toml = "0.6"
 topo-sort = { git = "https://github.com/azdavis/language-util.git" }
