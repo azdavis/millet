@@ -43,3 +43,23 @@ fun foo x y = x + (if y then 3 else 4)
 "#,
   );
 }
+
+#[test]
+fn unsolved_general() {
+  check(
+    r#"
+fun id x = x
+(**        ^ hover: ?a *)
+"#,
+  );
+}
+
+#[test]
+fn unsolved_equality() {
+  check(
+    r#"
+fun eq x y = x = y
+(**          ^ hover: ??a *)
+"#,
+  );
+}
