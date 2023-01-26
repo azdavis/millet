@@ -1462,7 +1462,7 @@ Millet reports overloaded types with intentionally invalid SML syntax. Here is w
 | `<wordinttxt>` | `word`, `int`, `string`, `char`         |
 | `<numtxt>`     | `word`, `real`, `int`, `string`, `char` |
 
-Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax.
+Millet will report type variables that haven't been "solved" yet with the syntax `?a`, `?b`, etc, which is, again, intentionally invalid SML syntax. Unsolved equality type variables will begin with two `?`, rather like real SML type variables, which begin with two `'` when they are equality type variables.
 
 If Millet encounters an invalid expression, like a variable that was undefined, it will report the type `_`. Although Millet is able to parse `_` as a type "hole" if written in code, this again is not valid SML syntax.
 

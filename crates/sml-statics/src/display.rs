@@ -233,13 +233,16 @@ impl fmt::Display for MetaVarDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.kind {
       Some(TyVarKind::Overloaded(ov)) => ov.fmt(f),
-      Some(_) | None => {
-        f.write_str("?")?;
-        for c in idx_to_name(self.idx.to_usize()) {
-          write!(f, "{c}")?;
-        }
-        Ok(())
-      }
+      Some(TyVarKind::Equality) => display_mv_idx(f, self.idx, "??"),
+      Some(TyVarKind::Record(_, _)) | None => display_mv_idx(f, self.idx, "?"),
     }
   }
+}
+
+fn display_mv_idx(f: &mut fmt::Formatter<'_>, idx: idx::Idx, s: &str) -> fmt::Result {
+  f.write_str(s)?;
+  for c in idx_to_name(idx.to_usize()) {
+    write!(f, "{c}")?;
+  }
+  Ok(())
 }
