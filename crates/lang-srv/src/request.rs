@@ -38,10 +38,14 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::GotoDefinition, _>(r, |id, params| {
     let params = params.text_document_position_params;
     let pos = convert::text_doc_pos_params(&st.cx.file_system, &mut st.cx.store, &params)?;
-    let res = st.analysis.get_def(pos).and_then(|range| {
-      convert::lsp_location(&st.cx.store, range).map(lsp_types::GotoDefinitionResponse::Scalar)
-    });
-    st.cx.send_response(Response::new_ok(id, res));
+    let res: Vec<_> = st
+      .analysis
+      .get_defs(pos)
+      .into_iter()
+      .flatten()
+      .filter_map(|range| convert::lsp_location(&st.cx.store, range))
+      .collect();
+    st.cx.send_response(Response::new_ok(id, lsp_types::GotoDefinitionResponse::Array(res)));
     Ok(())
   })?;
   r = helpers::try_req::<lsp_types::request::GotoTypeDefinition, _>(r, |id, params| {

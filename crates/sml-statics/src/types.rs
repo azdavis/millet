@@ -10,7 +10,7 @@ mod overload;
 
 use crate::def;
 use drop_bomb::DropBomb;
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use std::{collections::BTreeMap, fmt};
 
 pub(crate) use bound_var::BoundTyVar;
@@ -344,7 +344,8 @@ pub(crate) type ValEnv = FxHashMap<str_util::Name, ValInfo>;
 pub(crate) struct ValInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) id_status: IdStatus,
-  pub(crate) def: Option<def::Def>,
+  /// a set, because we can have or patterns
+  pub(crate) def: FxHashSet<def::Def>,
 }
 
 /// Definition: `IdStatus`

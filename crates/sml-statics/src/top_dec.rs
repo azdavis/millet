@@ -198,7 +198,7 @@ fn get_str_exp(
     // @def(51)
     sml_hir::StrExp::Path(path) => match get_env_from_str_path(&bs.env, path) {
       Ok(got_env) => {
-        st.info.insert(str_exp.into(), None, got_env.def);
+        st.info.insert(str_exp.into(), None, got_env.def.into_iter().collect());
         ac.append(&mut got_env.clone());
       }
       Err(e) => st.err(str_exp, e),
@@ -272,9 +272,10 @@ fn get_str_exp(
           ty_env.def = def;
         }
         for val_info in to_add.val_env.values_mut() {
-          val_info.def = def;
+          // TODO add to the set?
+          val_info.def = def.into_iter().collect();
         }
-        st.info.insert(idx, None, fun_sig.body_env.def);
+        st.info.insert(idx, None, fun_sig.body_env.def.into_iter().collect());
         ac.append(&mut to_add);
       }
       None => st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone())),
@@ -315,7 +316,7 @@ fn get_sig_exp(
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
         let mut sig_env = sig.env.clone();
         realize::get_env(&subst, &mut sig_env);
-        st.info.insert(idx, None, sig.env.def);
+        st.info.insert(idx, None, sig.env.def.into_iter().collect());
         ac.append(&mut sig_env);
         match st.info.mode() {
           Mode::BuiltinLib(_) => match name.as_str() {
@@ -389,7 +390,11 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         let mv_g = st.meta_gen.generalizer();
         generalize(mv_g, &st.subst, fixed.clone(), &mut ty_scheme)
           .expect("a type cannot have record meta vars because it has no patterns");
-        let vi = ValInfo { ty_scheme, id_status: IdStatus::Val, def: st.def(spec.into()) };
+        let vi = ValInfo {
+          ty_scheme,
+          id_status: IdStatus::Val,
+          def: st.def(spec.into()).into_iter().collect(),
+        };
         let name = &val_desc.name;
         if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
           st.err(spec, e);
@@ -449,7 +454,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
-        def: st.def(spec.into()),
+        def: st.def(spec.into()).into_iter().collect(),
       };
       if let Some(e) = ins_check_name(&mut ac.val_env, ex_desc.name.clone(), vi, Item::Val) {
         st.err(spec, e);

@@ -104,7 +104,7 @@ impl Analysis {
       Some((ptr, idx)) => {
         ty_md = ft.file.info.get_ty_md(&self.syms, idx);
         parts.extend(ty_md.as_deref());
-        parts.extend(ft.file.info.get_def(idx).and_then(|def| match def {
+        parts.extend(ft.file.info.get_defs(idx).filter_map(|def| match def {
           sml_statics::def::Def::Path(path, idx) => {
             let info = match path {
               sml_statics::def::Path::Regular(path) => &self.source_files.get(&path)?.info,
@@ -130,10 +130,16 @@ impl Analysis {
 
   /// Returns the range of the definition of the item at this position.
   #[must_use]
-  pub fn get_def(&self, pos: WithPath<PositionUtf16>) -> Option<WithPath<RangeUtf16>> {
+  pub fn get_defs(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<WithPath<RangeUtf16>>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, idx) = ft.get_ptr_and_idx()?;
-    source_files::path_and_range(&self.source_files, ft.file.info.get_def(idx)?.to_regular_idx()?)
+    let ret: Vec<_> = ft
+      .file
+      .info
+      .get_defs(idx)
+      .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?))
+      .collect();
+    Some(ret)
   }
 
   /// Returns the ranges of the definitions of the types involved in the type of the item at this

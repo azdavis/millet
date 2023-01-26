@@ -7,6 +7,7 @@ use crate::types::{Generalizable, Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
 use crate::{dec, def, pat, st::St, ty, unify::unify};
+use fast_hash::FxHashSet;
 
 pub(crate) fn get_and_check_ty_escape(
   st: &mut St,
@@ -30,7 +31,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
-  let mut definition = None::<def::Def>;
+  let mut definition = FxHashSet::<def::Def>::default();
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.meta_gen.gen(Generalizable::Always);
@@ -43,9 +44,12 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
       Ok(Some(val_info)) => {
         ty_scheme = Some(val_info.ty_scheme.clone());
-        definition = val_info.def;
-        if let Some(def::Def::Path(_, idx)) = val_info.def {
-          st.mark_used(idx);
+        definition.reserve(val_info.def.len());
+        for &def in &val_info.def {
+          if let def::Def::Path(_, idx) = def {
+            definition.insert(def);
+            st.mark_used(idx);
+          }
         }
         instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
       }
@@ -147,7 +151,9 @@ fn lint_app(
   argument: sml_hir::ExpIdx,
 ) -> Option<ErrorKind> {
   match &ars.exp[func?] {
-    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def? {
+    // just use iter().next() because if it's something we care about (a primitive path or builtin
+    // lib path), the exp should only have one def anyway.
+    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.def.iter().next()? {
       def::Def::Primitive(_) => {
         assert!(path.prefix().is_empty(), "primitives are at the top level");
         match path.last().as_str() {
@@ -196,7 +202,7 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
       _ => return None,
     };
     let vi = get_val_info(&cx.env, path).ok()??;
-    match vi.def? {
+    match vi.def.iter().next()? {
       def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive(_) => {}
       def::Def::Path(def::Path::Regular(_), _) => return None,
     }

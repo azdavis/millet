@@ -4,7 +4,7 @@ use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
 
 /// A definition site.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Def {
   /// A def contained at a path.
   Path(Path, sml_hir::Idx),
@@ -38,7 +38,7 @@ pub enum Path {
 }
 
 /// A primitive definition, often not expressible in real SML.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Primitive(PrimitiveKind);
 
 impl Primitive {

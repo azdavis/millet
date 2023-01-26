@@ -2,7 +2,7 @@
 
 use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme, ValInfo};
 use crate::{basis::Basis, def, display::MetaVarNames, env::EnvLike, mode::Mode, util::ty_syms};
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt::Write as _;
 
 /// Information about HIR indices.
@@ -23,7 +23,7 @@ pub(crate) struct TyEntry {
 #[derive(Debug, Default, Clone)]
 struct IdxEntry {
   ty_entry: Option<TyEntry>,
-  def: Option<def::Def>,
+  defs: FxHashSet<def::Def>,
   doc: Option<String>,
 }
 
@@ -41,7 +41,7 @@ impl Info {
     &mut self,
     idx: sml_hir::Idx,
     ty_entry: Option<TyEntry>,
-    def: Option<def::Def>,
+    defs: FxHashSet<def::Def>,
   ) {
     // ignore ty schemes that bind no vars
     let entry = IdxEntry {
@@ -50,7 +50,7 @@ impl Info {
           ty_entry.ty_scheme.and_then(|x| (!x.bound_vars.is_empty()).then_some(x));
         ty_entry
       }),
-      def,
+      defs,
       doc: None,
     };
     assert!(self.indices.insert(idx, entry).is_none());
@@ -111,10 +111,9 @@ impl Info {
     self.indices.get(&idx)?.doc.as_deref()
   }
 
-  /// Returns the definition site of the idx.
-  #[must_use]
-  pub fn get_def(&self, idx: sml_hir::Idx) -> Option<def::Def> {
-    self.indices.get(&idx)?.def
+  /// Returns the definition sites of the idx.
+  pub fn get_defs(&self, idx: sml_hir::Idx) -> impl Iterator<Item = def::Def> + '_ {
+    self.indices.get(&idx).into_iter().flat_map(|x| &x.defs).copied()
   }
 
   /// Returns the definition site of the type for the idx.
@@ -202,10 +201,7 @@ impl Info {
 
   /// Returns indices that have the given definition.
   pub fn get_with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
-    self
-      .indices
-      .iter()
-      .filter_map(move |(&idx, entry)| entry.def.map_or(false, |d| d == def).then_some(idx))
+    self.indices.iter().filter_map(move |(&idx, entry)| entry.defs.contains(&def).then_some(idx))
   }
 
   /// Returns the completions for this file.
@@ -260,16 +256,19 @@ fn env_syms<E: EnvLike>(
       children: Vec::new(),
     })
   }));
-  ac.extend(env.all_val().into_iter().filter_map(|(name, val_info)| {
+  ac.extend(env.all_val().into_iter().flat_map(|(name, val_info)| {
     mvs.clear();
     mvs.extend_for(&val_info.ty_scheme.ty);
-    let idx = def_idx(path, val_info.def?)?;
-    Some(DocumentSymbol {
-      name: name.as_str().to_owned(),
-      kind: val_info_symbol_kind(val_info),
-      detail: Some(val_info.ty_scheme.display(mvs, syms).to_string()),
-      idx,
-      children: Vec::new(),
+    let detail = val_info.ty_scheme.display(mvs, syms).to_string();
+    val_info.def.iter().filter_map(move |&def| {
+      let idx = def_idx(path, def)?;
+      Some(DocumentSymbol {
+        name: name.as_str().to_owned(),
+        kind: val_info_symbol_kind(val_info),
+        detail: Some(detail.clone()),
+        idx,
+        children: Vec::new(),
+      })
     })
   }));
 }
