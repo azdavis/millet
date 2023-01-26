@@ -3,10 +3,11 @@
 mod non_exhaustive;
 mod suggestion;
 
+use crate::display::{record_meta_var, MetaVarNames};
 use crate::types::{
   BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, Overload, RecordTy, Sym, Syms, Ty, TyScheme,
 };
-use crate::{display::MetaVarNames, equality, pat_match::Pat};
+use crate::{equality, pat_match::Pat};
 use diagnostic_util::{Code, Severity};
 use std::fmt;
 
@@ -35,7 +36,7 @@ pub(crate) enum ErrorKind {
   ExnCopyNotExnIdStatus(sml_hir::Path),
   InvalidRebindName(str_util::Name),
   WrongIdStatus(str_util::Name),
-  UnresolvedRecordTy,
+  UnresolvedRecordTy(RecordTy),
   OrPatNotSameBindings(str_util::Name),
   DecNotAllowedHere,
   ExpHole(Ty),
@@ -126,7 +127,14 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ExnCopyNotExnIdStatus(path) => write!(f, "not an exception: {path}"),
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
-      ErrorKind::UnresolvedRecordTy => f.write_str("cannot resolve record type containing `...`"),
+      ErrorKind::UnresolvedRecordTy(rows) => {
+        let mut mvs = MetaVarNames::new(self.mv_info);
+        for ty in rows.values() {
+          mvs.extend_for(ty);
+        }
+        let ty = record_meta_var(&mvs, self.syms, rows);
+        write!(f, "cannot resolve `...` in type: {ty}")
+      }
       ErrorKind::OrPatNotSameBindings(name) => {
         write!(f, "{name} was bound in one alternative, but not in another")
       }
@@ -419,7 +427,7 @@ impl Error {
       ErrorKind::ExnCopyNotExnIdStatus(_) => Code::n(5020),
       ErrorKind::InvalidRebindName(_) => Code::n(5021),
       ErrorKind::WrongIdStatus(_) => Code::n(5022),
-      ErrorKind::UnresolvedRecordTy => Code::n(5023),
+      ErrorKind::UnresolvedRecordTy(_) => Code::n(5023),
       ErrorKind::OrPatNotSameBindings(_) => Code::n(5024),
       ErrorKind::DecNotAllowedHere => Code::n(5025),
       ErrorKind::ExpHole(_) => Code::n(5026),

@@ -1,8 +1,8 @@
 //! Generalization, one of the fundamental operations on types for the inference algorithm.
 
 use crate::types::{
-  Basic, BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer, Overload, Subst,
-  SubstEntry, Ty, TyScheme, TyVarKind,
+  Basic, BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer, Overload, RecordTy,
+  Subst, SubstEntry, Ty, TyScheme, TyVarKind,
 };
 use crate::util::meta_vars;
 use fast_hash::FxHashMap;
@@ -49,6 +49,7 @@ pub(crate) fn generalize(
 #[derive(Debug)]
 pub(crate) struct RecordMetaVar {
   pub(crate) idx: sml_hir::Idx,
+  pub(crate) rows: RecordTy,
 }
 
 /// like [`generalize`], but:
@@ -157,9 +158,9 @@ fn handle_bv(
         // all composite overloads contain, and default to, int.
         Overload::Composite(_) => Ty::INT,
       },
-      Some(TyVarKind::Record(_, idx)) => {
+      Some(TyVarKind::Record(rows, idx)) => {
         if var_state.ret.is_ok() {
-          var_state.ret = Err(RecordMetaVar { idx });
+          var_state.ret = Err(RecordMetaVar { idx, rows });
         }
         Ty::None
       }

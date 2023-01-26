@@ -99,8 +99,8 @@ pub(crate) fn get(
             ErrorKind::BindPolymorphicExpansiveExp,
           );
         }
-        if let Err(RecordMetaVar { idx }) = g {
-          st.err(idx, ErrorKind::UnresolvedRecordTy);
+        if let Err(RecordMetaVar { idx, rows }) = g {
+          st.err(idx, ErrorKind::UnresolvedRecordTy(rows));
         }
       }
       // extend the overall env with that.

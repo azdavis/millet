@@ -224,6 +224,14 @@ fn meta_var_idx(f: &mut fmt::Formatter<'_>, idx: idx::Idx, s: &str) -> fmt::Resu
   Ok(())
 }
 
+pub(crate) fn record_meta_var<'a>(
+  meta_vars: &'a MetaVarNames<'a>,
+  syms: &'a Syms,
+  rows: &'a RecordTy,
+) -> impl fmt::Display + 'a {
+  RecordMetaVarDisplay { cx: TyDisplayCx { bound_vars: None, meta_vars, syms }, rows }
+}
+
 struct RecordMetaVarDisplay<'a> {
   cx: TyDisplayCx<'a>,
   rows: &'a RecordTy,
