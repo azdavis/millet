@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Show unsolved equality type variables with two `?`.
+- Show unsolved record type variables with `{ ... }`.
 - Show all def sites associated with variables bound in or patterns.
 
 ## v0.7.5
