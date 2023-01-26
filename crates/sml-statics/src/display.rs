@@ -66,8 +66,12 @@ impl fmt::Display for TyDisplay<'_> {
         write!(f, "{name}")?;
       }
       Ty::MetaVar(mv) => {
-        let name = self.cx.meta_vars.get(*mv).ok_or(fmt::Error)?;
-        write!(f, "{name}")?;
+        let &idx = self.cx.meta_vars.map.get(mv).ok_or(fmt::Error)?;
+        match self.cx.meta_vars.info.get(*mv) {
+          Some(TyVarKind::Overloaded(ov)) => ov.fmt(f)?,
+          Some(TyVarKind::Equality) => display_mv_idx(f, idx, "??")?,
+          Some(TyVarKind::Record(_, _)) | None => display_mv_idx(f, idx, "?")?,
+        }
       }
       Ty::FixedVar(fv) => fv.fmt(f)?,
       Ty::Record(rows) => {
@@ -205,27 +209,6 @@ impl<'a> MetaVarNames<'a> {
       },
       ty,
     );
-  }
-
-  fn get(&self, mv: MetaTyVar) -> Option<MetaVarDisplay<'_>> {
-    let &idx = self.map.get(&mv)?;
-    Some(MetaVarDisplay { idx, kind: self.info.get(mv) })
-  }
-}
-
-#[derive(Debug, Clone)]
-struct MetaVarDisplay<'a> {
-  idx: idx::Idx,
-  kind: Option<&'a TyVarKind>,
-}
-
-impl fmt::Display for MetaVarDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.kind {
-      Some(TyVarKind::Overloaded(ov)) => ov.fmt(f),
-      Some(TyVarKind::Equality) => display_mv_idx(f, self.idx, "??"),
-      Some(TyVarKind::Record(_, _)) | None => display_mv_idx(f, self.idx, "?"),
-    }
   }
 }
 
