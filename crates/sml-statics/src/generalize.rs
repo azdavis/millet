@@ -23,7 +23,7 @@ pub(crate) fn generalize(
   subst: &Subst,
   fixed: FixedTyVars,
   ty_scheme: &mut TyScheme,
-) -> Result<(), HasRecordMetaVar> {
+) -> Result<(), RecordMetaVar> {
   assert!(ty_scheme.bound_vars.is_empty());
   let mut meta = FxHashMap::<MetaTyVar, Option<BoundTyVar>>::default();
   // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
@@ -38,19 +38,18 @@ pub(crate) fn generalize(
     subst,
     fixed,
     meta,
-    var_state: VarState { bound_vars: BoundTyVars::default(), record_meta_var: None },
+    var_state: VarState { bound_vars: BoundTyVars::default(), ret: Ok(()) },
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.var_state.bound_vars;
-  match g.var_state.record_meta_var {
-    Some(x) => Err(HasRecordMetaVar(x)),
-    None => Ok(()),
-  }
+  g.var_state.ret
 }
 
 /// a marker for when a type contained record meta vars.
 #[derive(Debug)]
-pub(crate) struct HasRecordMetaVar(pub(crate) sml_hir::Idx);
+pub(crate) struct RecordMetaVar {
+  pub(crate) idx: sml_hir::Idx,
+}
 
 /// like [`generalize`], but:
 ///
@@ -76,14 +75,11 @@ pub(crate) fn generalize_fixed(mut fixed: FixedTyVars, ty_scheme: &mut TyScheme)
     subst: &Subst::default(),
     fixed,
     meta: FxHashMap::default(),
-    var_state: VarState { bound_vars, record_meta_var: None },
+    var_state: VarState { bound_vars, ret: Ok(()) },
   };
   g.go(&mut ty_scheme.ty);
   ty_scheme.bound_vars = g.var_state.bound_vars;
-  assert!(
-    g.var_state.record_meta_var.is_none(),
-    "there should be no meta vars at all, much less record ones"
-  );
+  assert!(g.var_state.ret.is_ok(), "there should be no meta vars at all, much less record ones");
 }
 
 struct Generalizer<'a> {
@@ -95,7 +91,7 @@ struct Generalizer<'a> {
 
 struct VarState {
   bound_vars: BoundTyVars,
-  record_meta_var: Option<sml_hir::Idx>,
+  ret: Result<(), RecordMetaVar>,
 }
 
 impl Generalizer<'_> {
@@ -162,8 +158,8 @@ fn handle_bv(
         Overload::Composite(_) => Ty::INT,
       },
       Some(TyVarKind::Record(_, idx)) => {
-        if var_state.record_meta_var.is_none() {
-          var_state.record_meta_var = Some(idx);
+        if var_state.ret.is_ok() {
+          var_state.ret = Err(RecordMetaVar { idx });
         }
         Ty::None
       }

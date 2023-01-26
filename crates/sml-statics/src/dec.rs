@@ -2,7 +2,7 @@
 
 use crate::env::{Cx, Env, EnvLike as _};
 use crate::error::{ErrorKind, Item};
-use crate::generalize::{generalize, generalize_fixed, HasRecordMetaVar};
+use crate::generalize::{generalize, generalize_fixed, RecordMetaVar};
 use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
 use crate::types::{
   Equality, FixedTyVars, Generalizable, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme,
@@ -99,7 +99,7 @@ pub(crate) fn get(
             ErrorKind::BindPolymorphicExpansiveExp,
           );
         }
-        if let Err(HasRecordMetaVar(idx)) = g {
+        if let Err(RecordMetaVar { idx }) = g {
           st.err(idx, ErrorKind::UnresolvedRecordTy);
         }
       }
