@@ -1,5 +1,7 @@
 # The Apache License, version 2.0
 
+Copyright 2020 Ariel Davis.
+
 ## Definitions
 
 - "License" shall mean the terms and conditions for use, reproduction, and distribution as defined by Sections 1 through 9 of this document.
