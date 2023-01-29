@@ -16,6 +16,7 @@ fn check_all(contents: &str) {
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Full,
     outcome: raw::Outcome::Pass,
+    limit: raw::Limit::First,
     min_severity: Severity::Warning,
   };
   for ev in parser {

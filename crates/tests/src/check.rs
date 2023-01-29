@@ -49,6 +49,7 @@ pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
+    limit: raw::Limit::First,
     min_severity: Severity::Error,
   };
   raw::get(files, opts);
@@ -81,6 +82,7 @@ pub(crate) fn fail(s: &str) {
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Minimal,
     outcome: raw::Outcome::Fail,
+    limit: raw::Limit::First,
     min_severity: Severity::Error,
   };
   raw::get(raw::one_file_fs(s), opts);
@@ -92,6 +94,7 @@ pub(crate) fn check_with_std_basis(s: &str) {
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Full,
     outcome: raw::Outcome::Pass,
+    limit: raw::Limit::First,
     min_severity: Severity::Error,
   };
   raw::get(raw::one_file_fs(s), opts);
@@ -103,6 +106,7 @@ pub(crate) fn check_with_warnings(s: &str) {
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
+    limit: raw::Limit::First,
     min_severity: Severity::Warning,
   };
   raw::get(raw::one_file_fs(s), opts);

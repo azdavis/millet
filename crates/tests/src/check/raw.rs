@@ -9,11 +9,19 @@ pub(crate) enum Outcome {
   Fail,
 }
 
+/// How to limit checking errors.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Limit {
+  /// Only check the first.
+  First,
+}
+
 /// Options for checking.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Opts {
   pub(crate) std_basis: analysis::StdBasis,
   pub(crate) outcome: Outcome,
+  pub(crate) limit: Limit,
   pub(crate) min_severity: diagnostic_util::Severity,
 }
 
@@ -49,13 +57,12 @@ where
   // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
   // only one expectation is actually used.
   let mut an = analysis::Analysis::new(opts.std_basis, config::ErrorLines::One, None, None);
-  let err = an
-    .get_many(&input)
-    .into_iter()
-    .flat_map(|(id, errors)| {
-      errors.into_iter().filter_map(move |e| (e.severity >= opts.min_severity).then_some((id, e)))
-    })
-    .next();
+  let iter = an.get_many(&input).into_iter().flat_map(|(id, errors)| {
+    errors.into_iter().filter_map(move |e| (e.severity >= opts.min_severity).then_some((id, e)))
+  });
+  let errors: Vec<_> = match opts.limit {
+    Limit::First => iter.take(1).collect(),
+  };
   for (&path, file) in &ck.files {
     for (&region, expect) in file.iter() {
       if matches!(expect.kind, expect::Kind::Hover) {
@@ -81,18 +88,14 @@ where
       }
     }
   }
-  let had_error = match err {
-    Some((id, e)) => {
-      match reason::get(&ck.files, id, e.range, e.message) {
-        Ok(()) => {}
-        Err(r) => ck.reasons.push(r),
-      }
-      true
-    }
-    None => false,
-  };
-  if !had_error && want_err_len != 0 {
+  if errors.is_empty() && want_err_len != 0 {
     ck.reasons.push(reason::Reason::NoErrorsEmitted(want_err_len));
+  }
+  for (id, e) in errors {
+    match reason::get(&ck.files, id, e.range, e.message) {
+      Ok(()) => {}
+      Err(r) => ck.reasons.push(r),
+    }
   }
   match (opts.outcome, ck.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}

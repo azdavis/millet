@@ -136,6 +136,7 @@ fun err s = if s = "bad" then raise Bad else ()
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
+    limit: raw::Limit::First,
     min_severity: Severity::Error,
   };
   raw::get(files, opts);
