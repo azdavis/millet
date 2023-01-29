@@ -133,7 +133,12 @@ fun err s = if s = "bad" then raise Bad else ()
     ),
     ("sources.mlb", "a.sml b.sml"),
   ];
-  raw::get(files, analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Error);
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    min_severity: Severity::Error,
+  };
+  raw::get(files, opts);
 }
 
 #[test]

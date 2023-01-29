@@ -46,7 +46,12 @@ pub(crate) fn check(s: &str) {
 /// Like [`check`], but allows multiple files.
 #[track_caller]
 pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
-  raw::get(files, analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Error);
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    min_severity: Severity::Error,
+  };
+  raw::get(files, opts);
 }
 
 /// Like [`check`], but the expectation comments should be not satisfied.
@@ -73,19 +78,34 @@ pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
 #[allow(dead_code)]
 #[track_caller]
 pub(crate) fn fail(s: &str) {
-  raw::get(raw::one_file_fs(s), analysis::StdBasis::Minimal, raw::Outcome::Fail, Severity::Error);
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Fail,
+    min_severity: Severity::Error,
+  };
+  raw::get(raw::one_file_fs(s), opts);
 }
 
 /// Like [`check`], but includes the full std basis.
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
-  raw::get(raw::one_file_fs(s), analysis::StdBasis::Full, raw::Outcome::Pass, Severity::Error);
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Full,
+    outcome: raw::Outcome::Pass,
+    min_severity: Severity::Error,
+  };
+  raw::get(raw::one_file_fs(s), opts);
 }
 
 /// Like [`check`] but with warnings.
 #[track_caller]
 pub(crate) fn check_with_warnings(s: &str) {
-  raw::get(raw::one_file_fs(s), analysis::StdBasis::Minimal, raw::Outcome::Pass, Severity::Warning);
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    min_severity: Severity::Warning,
+  };
+  raw::get(raw::one_file_fs(s), opts);
 }
 
 /// Asserts the input from the files generates an error at the given path containing the given

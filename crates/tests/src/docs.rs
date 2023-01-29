@@ -13,6 +13,11 @@ fn check_all(contents: &str) {
   let mut inside = false;
   let mut ignore_next = false;
   let mut ac = String::new();
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Full,
+    outcome: raw::Outcome::Pass,
+    min_severity: Severity::Warning,
+  };
   for ev in parser {
     match ev {
       Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
@@ -23,8 +28,7 @@ fn check_all(contents: &str) {
       Event::End(Tag::CodeBlock(CodeBlockKind::Fenced(lang))) => {
         if lang.as_ref() == SML {
           if !ignore_next {
-            let files = raw::one_file_fs(ac.as_ref());
-            raw::get(files, analysis::StdBasis::Full, raw::Outcome::Pass, Severity::Warning);
+            raw::get(raw::one_file_fs(ac.as_ref()), opts);
           }
           ac.clear();
           inside = false;

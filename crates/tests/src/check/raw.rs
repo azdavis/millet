@@ -3,22 +3,26 @@
 use crate::check::{expect, input, reason, show};
 
 /// An expected outcome from a test.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum Outcome {
   Pass,
   Fail,
 }
 
+/// Options for checking.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Opts {
+  pub(crate) std_basis: analysis::StdBasis,
+  pub(crate) outcome: Outcome,
+  pub(crate) min_severity: diagnostic_util::Severity,
+}
+
 /// The low-level impl that almost all top-level functions delegate to.
-pub(crate) fn get<'a, I>(
-  files: I,
-  std_basis: analysis::StdBasis,
-  want: Outcome,
-  min_severity: diagnostic_util::Severity,
-) where
+pub(crate) fn get<'a, I>(files: I, opts: Opts)
+where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
-  if matches!(std_basis, analysis::StdBasis::Full) && !env_var_enabled("CI") {
+  if matches!(opts.std_basis, analysis::StdBasis::Full) && !env_var_enabled("CI") {
     log::info!("skipping slow tests");
     return;
   }
@@ -44,12 +48,12 @@ pub(crate) fn get<'a, I>(
   // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
   // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
   // only one expectation is actually used.
-  let mut an = analysis::Analysis::new(std_basis, config::ErrorLines::One, None, None);
+  let mut an = analysis::Analysis::new(opts.std_basis, config::ErrorLines::One, None, None);
   let err = an
     .get_many(&input)
     .into_iter()
     .flat_map(|(id, errors)| {
-      errors.into_iter().filter_map(move |e| (e.severity >= min_severity).then_some((id, e)))
+      errors.into_iter().filter_map(move |e| (e.severity >= opts.min_severity).then_some((id, e)))
     })
     .next();
   for (&path, file) in &ck.files {
@@ -90,7 +94,7 @@ pub(crate) fn get<'a, I>(
   if !had_error && want_err_len != 0 {
     ck.reasons.push(reason::Reason::NoErrorsEmitted(want_err_len));
   }
-  match (want, ck.reasons.is_empty()) {
+  match (opts.outcome, ck.reasons.is_empty()) {
     (Outcome::Pass, true) | (Outcome::Fail, false) => {}
     (Outcome::Pass, false) => panic!("UNEXPECTED FAIL: {ck}"),
     (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {ck}"),
