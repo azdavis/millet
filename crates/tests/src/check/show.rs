@@ -57,9 +57,10 @@ impl fmt::Display for Show {
       f.write_str(" <empty>")?;
     } else {
       f.write_str("\n")?;
-      for file in self.files.values() {
+      for (&path, file) in &self.files {
+        let path = self.store.get_path(path).as_path().display();
         for (region, expect) in file.iter() {
-          writeln!(f, "  - {region}: {expect}")?;
+          writeln!(f, "  - {path}:{region}: {expect}")?;
         }
       }
     }
