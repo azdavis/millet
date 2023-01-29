@@ -19,12 +19,12 @@ pub enum BasDec {
   Local(Box<BasDec>, Box<BasDec>),
   /// `structure <name>`, etc.
   Export(Module, WithRange<str_util::Name>, WithRange<str_util::Name>),
-  /// A sequence of declarations.
-  Seq(Vec<BasDec>),
   /// A file path.
   Path(paths::PathId, PathKind),
   /// Used by CM only.
   SourcePathSet(FxHashSet<paths::PathId>),
+  /// A sequence of declarations.
+  Seq(Vec<BasDec>),
 }
 
 impl BasDec {

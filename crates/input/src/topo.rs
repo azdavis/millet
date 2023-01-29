@@ -24,6 +24,7 @@ fn bas_dec_paths(ac: &mut BTreeSet<PathId>, dec: &mlb_hir::BasDec) {
     mlb_hir::BasDec::Path(p, _) => {
       ac.insert(*p);
     }
+    mlb_hir::BasDec::SourcePathSet(paths) => ac.extend(paths.iter().copied()),
     mlb_hir::BasDec::Basis(_, exp) => bas_exp_paths(ac, exp),
     mlb_hir::BasDec::Local(local_dec, in_dec) => {
       bas_dec_paths(ac, local_dec);
@@ -34,7 +35,6 @@ fn bas_dec_paths(ac: &mut BTreeSet<PathId>, dec: &mlb_hir::BasDec) {
         bas_dec_paths(ac, dec);
       }
     }
-    mlb_hir::BasDec::SourcePathSet(paths) => ac.extend(paths.iter().copied()),
   }
 }
 

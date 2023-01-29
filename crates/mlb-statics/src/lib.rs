@@ -227,15 +227,6 @@ fn get_bas_dec(
         cx.undef(path, item, rhs.clone());
       }
     }
-    mlb_hir::BasDec::Seq(decs) => {
-      let mut scope = scope.clone();
-      for dec in decs {
-        let mut one_m_basis = MBasis::default();
-        get_bas_dec(cx, files, path, &scope, &mut one_m_basis, dec);
-        scope.append(one_m_basis.clone());
-        ac.append(one_m_basis);
-      }
-    }
     mlb_hir::BasDec::Path(path, kind) => match kind {
       mlb_hir::PathKind::Source => {
         let contents = files.source_file_contents.get(path).expect("no source file");
@@ -273,6 +264,15 @@ fn get_bas_dec(
         let mut one_m_basis = MBasis::default();
         let (fix_env, syntax) = syntaxes.remove(&path).expect("path from order is in syntaxes");
         get_source_file(cx, path, &scope, &mut one_m_basis, fix_env, syntax);
+        scope.append(one_m_basis.clone());
+        ac.append(one_m_basis);
+      }
+    }
+    mlb_hir::BasDec::Seq(decs) => {
+      let mut scope = scope.clone();
+      for dec in decs {
+        let mut one_m_basis = MBasis::default();
+        get_bas_dec(cx, files, path, &scope, &mut one_m_basis, dec);
         scope.append(one_m_basis.clone());
         ac.append(one_m_basis);
       }
