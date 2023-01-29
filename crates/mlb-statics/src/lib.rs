@@ -291,17 +291,16 @@ fn get_source_file(
   let mode = sml_statics::mode::Mode::Regular(Some(path));
   let checked =
     sml_statics::get(&mut st.syms, &scope.basis, mode, &syntax.lower.arenas, syntax.lower.root);
+  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
   let file = SourceFile { syntax, statics_errors: checked.errors, info };
-  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
-  // NOTE: we would like to assert that the insert returns None, but actually it may not
-  // always.
+  // NOTE: we would like to assert that the insert returns None, but actually it may not always.
   //
-  // this is because a single source file might be included by two different groups. in such a
-  // case, it's not actually clear what errors we should emit. (it might be confusing to
-  // re-emit some of the same errors, but also maybe have different errors from different
-  // analyses, on the same file.)
+  // this is because a single source file might be included by two different groups. in such a case,
+  // it's not actually clear what errors we should emit. it might be confusing to re-emit some of
+  // the same errors, but also maybe have different errors from different analyses, on the same
+  // file.
   //
   // this drops the errors from any previous analyses of this file on the floor.
   st.source_files.insert(path, file);
