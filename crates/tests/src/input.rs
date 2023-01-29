@@ -350,7 +350,6 @@ end
 }
 
 #[test]
-#[should_panic]
 fn ann_diagnostics_filter_all() {
   let mlb = r#"
 a.sml

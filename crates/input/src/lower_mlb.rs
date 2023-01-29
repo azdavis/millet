@@ -123,7 +123,18 @@ where
       };
       mlb_hir::BasDec::Path(path_id, kind)
     }
-    mlb_syntax::BasDec::Ann(_, dec) => get_bas_dec(st, cx, *dec)?,
+    mlb_syntax::BasDec::Ann(annotations, dec) => {
+      let diagnostics_filter_all = annotations.iter().any(|x| {
+        let s = x.val.as_str().trim_matches('"').trim();
+        s == "milletDiagnosticsFilter all"
+      });
+      let inner = get_bas_dec(st, cx, *dec)?;
+      if diagnostics_filter_all {
+        mlb_hir::BasDec::Ann(mlb_hir::Annotation::DiagnosticsFilterAll, inner.into())
+      } else {
+        inner
+      }
+    }
     mlb_syntax::BasDec::Seq(decs) => mlb_hir::BasDec::seq(
       decs.into_iter().map(|dec| get_bas_dec(st, cx, dec)).collect::<Result<Vec<_>>>()?,
     ),

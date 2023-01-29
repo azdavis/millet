@@ -103,6 +103,7 @@ struct St {
   bases: paths::PathMap<MBasis>,
   source_files: paths::PathMap<SourceFile>,
   mlb_errors: Vec<Error>,
+  report_diagnostics: bool,
 }
 
 impl St {
@@ -112,7 +113,9 @@ impl St {
     item: Item,
     name: text_size_util::WithRange<str_util::Name>,
   ) {
-    self.mlb_errors.push(Error { path, item, name });
+    if self.report_diagnostics {
+      self.mlb_errors.push(Error { path, item, name });
+    }
   }
 }
 
@@ -153,6 +156,7 @@ pub fn get(
     bases: paths::PathMap::default(),
     source_files: paths::PathMap::default(),
     mlb_errors: Vec::new(),
+    report_diagnostics: true,
   };
   for &path in root_group_paths {
     let std_basis = MBasis {
@@ -227,6 +231,14 @@ fn get_bas_dec(
         st.undef(path, item, rhs.clone());
       }
     }
+    mlb_hir::BasDec::Ann(ann, dec) => match ann {
+      mlb_hir::Annotation::DiagnosticsFilterAll => {
+        let old = st.report_diagnostics;
+        st.report_diagnostics = false;
+        get_bas_dec(st, files, path, scope, ac, dec);
+        st.report_diagnostics = old;
+      }
+    },
     mlb_hir::BasDec::Path(path, kind) => match kind {
       mlb_hir::PathKind::Source => {
         let contents = files.source_file_contents.get(path).expect("no source file");
@@ -294,7 +306,13 @@ fn get_source_file(
   ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
-  let file = SourceFile { syntax, statics_errors: checked.errors, info };
+  let mut file = SourceFile { syntax, statics_errors: checked.errors, info };
+  if !st.report_diagnostics {
+    file.syntax.lex_errors = Vec::new();
+    file.syntax.parse.errors = Vec::new();
+    file.syntax.lower.errors = Vec::new();
+    file.statics_errors = Vec::new();
+  }
   // NOTE: we would like to assert that the insert returns None, but actually it may not always.
   //
   // this is because a single source file might be included by two different groups. in such a case,

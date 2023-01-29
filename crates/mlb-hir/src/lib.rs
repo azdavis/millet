@@ -19,6 +19,8 @@ pub enum BasDec {
   Local(Box<BasDec>, Box<BasDec>),
   /// `structure <name>`, etc.
   Export(Module, WithRange<str_util::Name>, WithRange<str_util::Name>),
+  /// `ann <ann> in <dec> end`
+  Ann(Annotation, Box<BasDec>),
   /// A file path.
   Path(paths::PathId, PathKind),
   /// Used by CM only.
@@ -61,4 +63,11 @@ pub enum PathKind {
   Source,
   /// A group path, like MLB or CM.
   Group,
+}
+
+/// An annotation Millet knows about.
+#[derive(Debug, Clone, Copy)]
+pub enum Annotation {
+  /// Filter out (i.e. ignore) all diagnostics.
+  DiagnosticsFilterAll,
 }

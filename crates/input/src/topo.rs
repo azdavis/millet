@@ -30,6 +30,7 @@ fn bas_dec_paths(ac: &mut BTreeSet<PathId>, dec: &mlb_hir::BasDec) {
       bas_dec_paths(ac, local_dec);
       bas_dec_paths(ac, in_dec);
     }
+    mlb_hir::BasDec::Ann(_, dec) => bas_dec_paths(ac, dec),
     mlb_hir::BasDec::Seq(decs) => {
       for dec in decs {
         bas_dec_paths(ac, dec);

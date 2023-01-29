@@ -53,10 +53,11 @@ Some important notes:
 
 ## Configuration
 
-There are two places where Millet can be configured:
+There are three places where Millet can be configured:
 
 - `millet.toml`. This is for project-wide settings.
 - VS Code extension settings. This is for user-specific settings.
+- Annotations in ML Basis files. This is for specific files.
 
 ### Project-wide settings
 
@@ -184,6 +185,18 @@ When set to the empty string `""` (the default), use the path to the one that's 
 - Default: `""`
 
 <!-- @end vscode-config -->
+
+### ML Basis files
+
+Millet knows about some [ML Basis annotations][mlb-ann]. The ones not mentioned here are ignored.
+
+#### `milletDiagnosticsFilter`
+
+How to filter diagnostics for the files in the annotated basis declaration.
+
+Possible arguments:
+
+- `all`: Filter out (i.e. ignore) all diagnostics.
 
 ## Features
 
@@ -390,3 +403,4 @@ This is by design. More options means more ability to have different formatting 
 [toml]: https://toml.io/en/
 [json]: https://www.json.org/json-en.html
 [smlfmt]: https://github.com/shwestrick/smlfmt
+[mlb-ann]: http://mlton.org/MLBasisAnnotations
