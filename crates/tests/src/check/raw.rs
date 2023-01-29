@@ -12,6 +12,8 @@ pub(crate) enum Outcome {
 /// How to limit checking errors.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Limit {
+  /// No limit, i.e. check all.
+  None,
   /// Only check the first.
   First,
 }
@@ -61,6 +63,7 @@ where
     errors.into_iter().filter_map(move |e| (e.severity >= opts.min_severity).then_some((id, e)))
   });
   let errors: Vec<_> = match opts.limit {
+    Limit::None => iter.collect(),
     Limit::First => iter.take(1).collect(),
   };
   for (&path, file) in &ck.files {

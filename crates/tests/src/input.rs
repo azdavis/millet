@@ -4,7 +4,7 @@ mod cm;
 mod mlb;
 mod slash_var_path;
 
-use crate::check::{check_bad_input, check_multi};
+use crate::check::{check_bad_input, check_multi, raw};
 
 const EMPTY_CM: &str = "Group is";
 
@@ -347,4 +347,31 @@ in
 end
 "#;
   check_multi([("s.mlb", mlb)]);
+}
+
+#[test]
+#[should_panic]
+fn ann_diagnostics_filter_all() {
+  let mlb = r#"
+a.sml
+ann "milletDiagnosticsFilter all" in
+  b.sml
+end
+c.sml
+"#;
+  let reported = r#"
+val _ = foo
+(**     ^^^ undefined value: foo *)
+"#;
+  let ignored = r#"
+val _ = foo
+"#;
+  let files = [("s.mlb", mlb), ("a.sml", reported), ("b.sml", ignored), ("c.sml", reported)];
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    limit: raw::Limit::None,
+    min_severity: diagnostic_util::Severity::Error,
+  };
+  raw::get(files, opts);
 }
