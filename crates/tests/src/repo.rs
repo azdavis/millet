@@ -307,6 +307,7 @@ impl fmt::Display for ConfigProperty<'_> {
 }
 
 const PACKAGE_JSON: &str = include_str!("../../../editors/vscode/package.json");
+const MANUAL: &str = include_str!("../../../docs/manual.md");
 
 #[test]
 fn vs_code_config() {
@@ -355,8 +356,7 @@ fn vs_code_config() {
     let config_property = ConfigProperty { name, desc, type_and_default };
     writeln!(want_doc, "{config_property}").unwrap();
   }
-  let manual = include_str!("../../../docs/manual.md");
-  let mut iter = manual.lines();
+  let mut iter = MANUAL.lines();
   iter.find(|x| x.trim() == "<!-- @begin vscode-config -->");
   let got_doc_lines: Vec<_> =
     iter.take_while(|x| x.trim() != "<!-- @end vscode-config -->").collect();
