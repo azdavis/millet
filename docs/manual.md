@@ -44,7 +44,7 @@ A "group file" is either
 
 These file types list out SML source files and other group files to organize the project.
 
-For more exotic projects, you may wish to create an optional `millet.toml`. Read on to see how that works.
+For more exotic projects, you may wish to create an optional [`millet.toml`](#millettoml).
 
 Some important notes:
 
@@ -55,11 +55,11 @@ Some important notes:
 
 There are three places where Millet can be configured:
 
-- `millet.toml`. This is for project-wide settings.
-- VS Code extension settings. This is for user-specific settings.
-- Annotations in ML Basis files. This is for specific files.
+- [`millet.toml`](#millettoml). This is for project-wide settings.
+- [VS Code settings](#vs-code-settings). This is for user-specific settings.
+- [ML Basis annotations](#ml-basis-annotations). This is for specific files.
 
-### Project-wide settings
+### `millet.toml`
 
 Millet can be configured with a `millet.toml` in the workspace root. It is a [TOML][] file with the following format:
 
@@ -119,7 +119,7 @@ Overrides the default severity for this [diagnostic](#inline-diagnostics). The a
 
 ### VS Code settings
 
-Millet offers the following configuration options via VS Code settings, which are stored as [JSON][]:
+Millet offers the following configuration options via VS Code settings, which are stored as [JSON][], often in `.vscode/settings.json`:
 
 <!-- @begin vscode-config -->
 
@@ -127,7 +127,7 @@ Millet offers the following configuration options via VS Code settings, which ar
 
 **WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**
 
-How to format open SML files on save.
+How to [format](#formatter) open SML files on save.
 
 - Type: `string`
 - Default: `"none"`
@@ -186,7 +186,7 @@ When set to the empty string `""` (the default), use the path to the one that's 
 
 <!-- @end vscode-config -->
 
-### ML Basis files
+### ML Basis annotations
 
 Millet knows about some [ML Basis annotations][mlb-ann]. The ones not mentioned here are ignored.
 
@@ -288,17 +288,18 @@ In VS Code, all of the above files have some pre-defined snippets. These can be 
 
 Millet will analyze source (SML) and group (MLB/CM) files and report diagnostics directly on the offending area of the file.
 
-Each diagnostics has a default severity, e.g. "error" or "warning". This can be overridden with `diagnostics.<code>.severity` in `millet.toml`. A severity of "ignore" ignores (i.e. disables) the diagnostic.
+Each diagnostics has a default severity, e.g. "error" or "warning". This can be overridden with [`diagnostics.<code>.severity`](#diagnosticscodeseverity) in `millet.toml`. A severity of "ignore" ignores (i.e. disables) the diagnostic.
 
-Diagnostics can be ignored for an entire file or set of files with the `milletDiagnosticsIgnore` ML Basis annotation. Use:
+Diagnostics can be ignored for an entire file or set of files with the [`milletDiagnosticsIgnore`](#milletdiagnosticsignore) ML Basis annotation. Use:
 
 ```
-ann  "milletDiagnosticsIgnore all" in
-  <files to ignore diagnostics>
+ann "milletDiagnosticsIgnore all" in
+  foo.sml
+  bar.sml
 end
 ```
 
-Diagnostics can be ignored for all files with the `millet.server.diagnostics.ignore` VS Code setting.
+Diagnostics can be ignored for all files with the [`millet.server.diagnostics.ignore`](#milletserverdiagnosticsignore) VS Code setting.
 
 ### Hover for info
 
@@ -316,7 +317,7 @@ In SML files, Millet allows jumping to or peeking the definition of named items,
 
 ### Doc comments
 
-Related to the "hover" feature, Millet allows defining doc comments on items to be shown on hover.
+Millet allows defining documentation comments on items to be shown on hover.
 
 Use this comment style:
 

@@ -55,7 +55,7 @@
         "millet.format.engine": {
           "type": "string",
           "default": "none",
-          "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nHow to format open SML files on save.",
+          "markdownDescription": "**WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL. IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.**\n\nHow to [format](#formatter) open SML files on save.",
           "enum": [
             "none",
             "naive",
