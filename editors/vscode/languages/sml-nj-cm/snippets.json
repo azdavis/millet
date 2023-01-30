@@ -1,9 +1,9 @@
 {
-  "group desc": {
+  "`group` desc": {
     "prefix": "group",
     "body": ["Group is", "  ${1:members}"]
   },
-  "library desc": {
+  "`library` desc": {
     "prefix": "library",
     "body": ["Library", "  ${1:exports}", "is", "  ${2:members}"]
   }

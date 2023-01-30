@@ -1,9 +1,9 @@
 {
-  "let exp": {
+  "`let` exp": {
     "prefix": "let",
     "body": ["let", "  ${1:dec}", "in", "  ${2:exp}", "end"]
   },
-  "case exp": {
+  "`case` exp": {
     "prefix": "case",
     "body": [
       "case ${1:exp} of",
@@ -11,35 +11,35 @@
       "| ${4:pat} => ${5:exp}"
     ]
   },
-  "if exp": {
+  "`if` exp": {
     "prefix": "if",
     "body": ["if ${1:exp} then", "  ${2:exp}", "else", "  ${3:exp}"]
   },
-  "handle exp tail": {
+  "`handle` exp tail": {
     "prefix": "handle",
     "body": ["handle", "  ${2:pat} => ${3:exp}", "| ${4:pat} => ${5:exp}"]
   },
-  "local dec": {
+  "`local` dec": {
     "prefix": "local",
     "body": ["local", "  ${1:dec}", "in", "  ${2:dec}", "end"]
   },
-  "datatype dec": {
+  "`datatype` dec": {
     "prefix": "datatype",
     "body": ["datatype ${1:name} = ${2:Name} | ${3:Name of ty}"]
   },
-  "function dec": {
+  "`function` dec": {
     "prefix": "fun",
     "body": ["fun ${1:name} (${2:pat} : ${3:ty}) : ${4:ty} = ${5:exp}"]
   },
-  "structure dec": {
+  "`structure` dec": {
     "prefix": "structure",
     "body": ["structure ${1:Name} = struct", "  ${2:dec}", "end"]
   },
-  "signature dec": {
+  "`signature` dec": {
     "prefix": "signature",
     "body": ["signature ${1:NAME} = sig", "  ${2:dec}", "end"]
   },
-  "functor dec": {
+  "`functor` dec": {
     "prefix": "functor",
     "body": [
       "functor ${1:Name} (${2:Name}: ${3:SIG}) = struct",
@@ -47,7 +47,7 @@
       "end"
     ]
   },
-  "print with newline exp": {
+  "`print` with newline exp": {
     "prefix": "println",
     "body": ["print (${1:exp} ^ \"\\n\")"]
   }
