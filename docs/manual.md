@@ -117,6 +117,11 @@ Overrides the default severity for this diagnostic. The acceptable values are:
 - `"warning"`: the diagnostic is reported as a warning.
 - `"error"`: the diagnostic is reported as an error.
 
+See also:
+
+- The `milletDiagnosticsIgnore` ML Basis annotation
+- The `millet.server.diagnostics.ignore` VS Code setting
+
 ### VS Code settings
 
 Millet offers the following configuration options via VS Code settings, which are stored as [JSON][]:
@@ -139,6 +144,11 @@ How to format open SML files on save.
 #### `millet.server.diagnostics.ignore`
 
 What diagnostics to ignore.
+
+See also:
+
+- The `milletDiagnosticsIgnore` ML Basis annotation
+- `diagnostics.<code>.severity = "ignore"` in `millet.toml`
 
 - Type: `string`
 - Default: `"after-syntax"`
@@ -197,6 +207,11 @@ How to ignore diagnostics for the files in the annotated basis declaration.
 Possible arguments:
 
 - `all`: Ignore all diagnostics.
+
+See also:
+
+- The `millet.server.diagnostics.ignore` VS Code setting
+- `diagnostics.<code>.severity = "ignore"` in `millet.toml`
 
 ## Features
 
