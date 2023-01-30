@@ -219,7 +219,7 @@ val _ = b
 val _ = c
 ```
 
-Given this root ML Basis file, errors are reported on `a.sml` and `c.sml` but not `b.sml`:
+Even though `a`, `b`, and `c` are all not defined, given the following root ML Basis file, undefined variable errors are reported in `a.sml` and `c.sml` only, and not `b.sml`:
 
 ```mlb
 a.sml
