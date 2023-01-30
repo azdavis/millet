@@ -13,10 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.7.7
 
 - Allow ignoring all diagnostics on certain files with the `milletDiagnosticsIgnore all` ML Basis annotation.
 - Rename `millet.server.diagnostics.filter` to `millet.server.diagnostics.ignore` and its setting `"syntax"` to `"after-syntax"`.
+- Add `ann` snippet.
 
 ## v0.7.6
 
