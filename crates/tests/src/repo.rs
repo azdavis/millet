@@ -309,6 +309,12 @@ impl fmt::Display for ConfigProperty<'_> {
 const PACKAGE_JSON: &str = include_str!("../../../editors/vscode/package.json");
 const MANUAL: &str = include_str!("../../../docs/manual.md");
 
+fn get_vscode_config() -> impl Iterator<Item = &'static str> {
+  let mut iter = MANUAL.lines();
+  iter.find(|x| x.trim() == "<!-- @begin vscode-config -->");
+  iter.take_while(|x| x.trim() != "<!-- @end vscode-config -->")
+}
+
 #[test]
 fn vs_code_config() {
   let package_json: serde_json::Value = serde_json::from_str(PACKAGE_JSON).unwrap();
@@ -356,10 +362,7 @@ fn vs_code_config() {
     let config_property = ConfigProperty { name, desc, type_and_default };
     writeln!(want_doc, "{config_property}").unwrap();
   }
-  let mut iter = MANUAL.lines();
-  iter.find(|x| x.trim() == "<!-- @begin vscode-config -->");
-  let got_doc_lines: Vec<_> =
-    iter.take_while(|x| x.trim() != "<!-- @end vscode-config -->").collect();
+  let got_doc_lines: Vec<_> = get_vscode_config().collect();
   let got_doc = got_doc_lines.join("\n");
   pretty_assertions::assert_str_eq!(got_doc.trim(), want_doc.trim(),);
 }
