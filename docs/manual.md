@@ -111,16 +111,11 @@ Configuration for the diagnostic with code number `<code>`. It must be a positiv
 
 #### `diagnostics.<code>.severity`
 
-Overrides the default severity for this diagnostic. The acceptable values are:
+Overrides the default severity for this [diagnostic](#inline-diagnostics). The acceptable values are:
 
 - `"ignore"`: the diagnostic is not reported.
 - `"warning"`: the diagnostic is reported as a warning.
 - `"error"`: the diagnostic is reported as an error.
-
-See also:
-
-- The `milletDiagnosticsIgnore` ML Basis annotation
-- The `millet.server.diagnostics.ignore` VS Code setting
 
 ### VS Code settings
 
@@ -143,12 +138,7 @@ How to format open SML files on save.
 
 #### `millet.server.diagnostics.ignore`
 
-What diagnostics to ignore.
-
-See also:
-
-- The `milletDiagnosticsIgnore` ML Basis annotation
-- `diagnostics.<code>.severity = "ignore"` in `millet.toml`
+What [diagnostics](#inline-diagnostics) to ignore.
 
 - Type: `string`
 - Default: `"after-syntax"`
@@ -202,7 +192,7 @@ Millet knows about some [ML Basis annotations][mlb-ann]. The ones not mentioned 
 
 #### `milletDiagnosticsIgnore`
 
-How to ignore diagnostics for the files in the annotated basis declaration.
+How to ignore [diagnostics](#inline-diagnostics) for the files in the annotated basis declaration.
 
 Possible arguments:
 
@@ -228,11 +218,6 @@ ann "milletDiagnosticsIgnore all" in
 end
 c.sml
 ```
-
-See also:
-
-- The `millet.server.diagnostics.ignore` VS Code setting
-- `diagnostics.<code>.severity = "ignore"` in `millet.toml`
 
 ## Features
 

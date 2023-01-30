@@ -70,7 +70,7 @@
         "millet.server.diagnostics.ignore": {
           "type": "string",
           "default": "after-syntax",
-          "markdownDescription": "What diagnostics to ignore.\n\nSee also:\n\n- The `milletDiagnosticsIgnore` ML Basis annotation\n- `diagnostics.<code>.severity = \"ignore\"` in `millet.toml`",
+          "markdownDescription": "What [diagnostics](#inline-diagnostics) to ignore.",
           "enum": [
             "none",
             "after-syntax",
