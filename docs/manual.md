@@ -225,27 +225,30 @@ This allows for features like:
 
 In VS Code, all of the above files have some pre-defined snippets. These can be triggered by typing the "prefix" word and then hitting a "commit character" (like tab).
 
-The snippets provided are:
+#### ML Basis
 
-- MLB
-  - `let` exp
-  - `bas` exp
-  - `local` dec
-- CM
-  - `group` desc
-  - `library` desc
-- SML
-  - `let` exp
-  - `case` exp
-  - `if` exp
-  - `handle` exp tail
-  - `local` dec
-  - `datatype` dec
-  - `fun` dec
-  - `structure` dec
-  - `signature` dec
-  - `functor` dec
-  - `println` exp
+- `let` exp
+- `bas` exp
+- `local` dec
+
+#### SML/NJ CM
+
+- `group` desc
+- `library` desc
+
+#### SML
+
+- `let` exp
+- `case` exp
+- `if` exp
+- `handle` exp tail
+- `local` dec
+- `datatype` dec
+- `fun` dec
+- `structure` dec
+- `signature` dec
+- `functor` dec
+- `println` exp
 
 ### Inline diagnostics
 
