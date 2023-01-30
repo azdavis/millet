@@ -308,11 +308,19 @@ impl fmt::Display for ConfigProperty<'_> {
 
 const PACKAGE_JSON: &str = include_str!("../../../editors/vscode/package.json");
 const MANUAL: &str = include_str!("../../../docs/manual.md");
+const COMMENT_CLOSE: &str = " -->";
 
-fn get_vscode_config() -> impl Iterator<Item = &'static str> {
+fn is_section_comment(s: &str, comment_open: &str, section: &str) -> bool {
+  s.trim()
+    .strip_prefix(comment_open)
+    .and_then(|s| s.strip_suffix(COMMENT_CLOSE))
+    .map_or(false, |s| s == section)
+}
+
+fn get_manual_section(section: &str) -> impl Iterator<Item = &'static str> + '_ {
   let mut iter = MANUAL.lines();
-  iter.find(|x| x.trim() == "<!-- @begin vscode-config -->");
-  iter.take_while(|x| x.trim() != "<!-- @end vscode-config -->")
+  iter.find(|s| is_section_comment(s, "<!-- @begin ", section));
+  iter.take_while(|s| !is_section_comment(s, "<!-- @end ", section))
 }
 
 #[test]
@@ -362,7 +370,7 @@ fn vs_code_config() {
     let config_property = ConfigProperty { name, desc, type_and_default };
     writeln!(want_doc, "{config_property}").unwrap();
   }
-  let got_doc_lines: Vec<_> = get_vscode_config().collect();
+  let got_doc_lines: Vec<_> = get_manual_section("vscode-config").collect();
   let got_doc = got_doc_lines.join("\n");
   pretty_assertions::assert_str_eq!(got_doc.trim(), want_doc.trim(),);
 }
