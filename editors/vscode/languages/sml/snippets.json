@@ -27,7 +27,7 @@
     "prefix": "datatype",
     "body": ["datatype ${1:name} = ${2:Name} | ${3:Name of ty}"]
   },
-  "`function` dec": {
+  "`fun` dec": {
     "prefix": "fun",
     "body": ["fun ${1:name} (${2:pat} : ${3:ty}) : ${4:ty} = ${5:exp}"]
   },

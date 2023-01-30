@@ -450,3 +450,23 @@ fn primitives() {
     .collect();
   pretty_assertions::assert_eq!(in_rs, in_md);
 }
+
+#[test]
+fn snippets() {
+  let mlb = include_str!("../../../editors/vscode/languages/mlb/snippets.json");
+  let sml = include_str!("../../../editors/vscode/languages/sml/snippets.json");
+  let sml_nj_cm = include_str!("../../../editors/vscode/languages/sml-nj-cm/snippets.json");
+  let all = [("mlb-snippets", mlb), ("sml-nj-cm-snippets", sml_nj_cm), ("sml-snippets", sml)];
+  for (section, json) in all {
+    let json: serde_json::Value = serde_json::from_str(json).unwrap();
+    let from_json: BTreeSet<_> = json.as_object().unwrap().keys().map(String::as_str).collect();
+    let from_manual: BTreeSet<_> =
+      get_manual_section(section).filter_map(|s| s.strip_prefix("- ")).collect();
+    eq_sets(
+      &from_json,
+      &from_manual,
+      "snippets only in json",
+      "snippets only documented in manual",
+    );
+  }
+}

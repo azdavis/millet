@@ -227,17 +227,27 @@ In VS Code, all of the above files have some pre-defined snippets. These can be 
 
 #### ML Basis
 
+<!-- @begin mlb-snippets -->
+
 - `let` exp
 - `bas` exp
 - `local` dec
 - `ann` dec
 
+<!-- @end mlb-snippets -->
+
 #### SML/NJ CM
+
+<!-- @begin sml-nj-cm-snippets -->
 
 - `group` desc
 - `library` desc
 
+<!-- @end sml-nj-cm-snippets -->
+
 #### SML
+
+<!-- @begin sml-snippets -->
 
 - `let` exp
 - `case` exp
@@ -249,7 +259,9 @@ In VS Code, all of the above files have some pre-defined snippets. These can be 
 - `structure` dec
 - `signature` dec
 - `functor` dec
-- `println` exp
+- `print` with newline exp
+
+<!-- @end sml-snippets -->
 
 ### Inline diagnostics
 
