@@ -10,5 +10,9 @@
   "local dec": {
     "prefix": "local",
     "body": ["local", "  ${1:dec}", "in", "  ${2:dec}", "end"]
+  },
+  "ann dec": {
+    "prefix": "ann",
+    "body": ["ann \"${1:ann}\" in", "  ${2:dec}", "end"]
   }
 }

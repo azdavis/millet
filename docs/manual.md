@@ -230,6 +230,7 @@ In VS Code, all of the above files have some pre-defined snippets. These can be 
 - `let` exp
 - `bas` exp
 - `local` dec
+- `ann` dec
 
 #### SML/NJ CM
 
