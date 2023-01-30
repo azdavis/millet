@@ -437,9 +437,9 @@ When the formatter cannot format a file, it simply does nothing, and the file wi
 
 #### Configuration
 
-There are no options to configure the naive formatter (other than to enable it or not).
+There are no options to configure the formatter.
 
-This is by design. More options means more ability to have different formatting styles.
+This is by design. More options means more [bikeshedding][bike-shed].
 
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
@@ -451,3 +451,4 @@ This is by design. More options means more ability to have different formatting 
 [json]: https://www.json.org/json-en.html
 [smlfmt]: https://github.com/shwestrick/smlfmt
 [mlb-ann]: http://mlton.org/MLBasisAnnotations
+[bike-shed]: https://en.wikipedia.org/wiki/Law_of_triviality
