@@ -303,7 +303,17 @@ In VS Code, all of the above files have some pre-defined snippets. These can be 
 
 Millet will analyze source (SML) and group (MLB/CM) files and report diagnostics directly on the offending area of the file.
 
-This can be disabled by setting `millet.server.diagnostics.ignore` to `"all"` in VS Code settings.
+Each diagnostics has a default severity, e.g. "error" or "warning". This can be overridden with `diagnostics.<code>.severity` in `millet.toml`. A severity of "ignore" ignores (i.e. disables) the diagnostic.
+
+Diagnostics can be ignored for an entire file or set of files with the `milletDiagnosticsIgnore` ML Basis annotation. Use:
+
+```
+ann  "milletDiagnosticsIgnore all" in
+  <files to ignore diagnostics>
+end
+```
+
+Diagnostics can be ignored for all files with the `millet.server.diagnostics.ignore` VS Code setting.
 
 ### Hover for info
 
