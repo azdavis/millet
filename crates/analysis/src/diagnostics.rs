@@ -9,7 +9,7 @@ use text_size_util::TextRange;
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {
   pub(crate) lines: config::ErrorLines,
-  pub(crate) filter: Option<config::DiagnosticsFilter>,
+  pub(crate) ignore: Option<config::DiagnosticsIgnore>,
   pub(crate) format: Option<config::FormatEngine>,
 }
 
@@ -47,11 +47,11 @@ pub(crate) fn source_file(
   severities: &input::Severities,
   options: Options,
 ) -> Vec<Diagnostic> {
-  let syntax_filter = match options.filter {
+  let ignore_after_syntax = match options.ignore {
     None => false,
     Some(filter) => match filter {
-      config::DiagnosticsFilter::Syntax => true,
-      config::DiagnosticsFilter::All => return Vec::new(),
+      config::DiagnosticsIgnore::AfterSyntax => true,
+      config::DiagnosticsIgnore::All => return Vec::new(),
     },
   };
   let mut ret: Vec<_> = std::iter::empty()
@@ -66,7 +66,7 @@ pub(crate) fn source_file(
     }))
     .collect();
   let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic_util::Severity::Error));
-  if !syntax_filter || !has_any_error {
+  if !ignore_after_syntax || !has_any_error {
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");

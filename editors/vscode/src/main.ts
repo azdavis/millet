@@ -33,7 +33,7 @@ export async function activate(cx: vscode.ExtensionContext) {
     initializationOptions: {
       show_token_hover: config.get("server.hover.token.enable"),
       diagnostics_on_change: config.get("server.diagnostics.onChange.enable"),
-      diagnostics_filter: mkNone(config.get("server.diagnostics.filter")),
+      diagnostics_ignore: mkNone(config.get("server.diagnostics.ignore")),
       diagnostics_more_info_hint: config.get(
         "server.diagnostics.moreInfoHint.enable",
       ),

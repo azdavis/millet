@@ -136,16 +136,16 @@ How to format open SML files on save.
   - `"naive"`: Naive formatting.
   - `"smlfmt"`: Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt).
 
-#### `millet.server.diagnostics.filter`
+#### `millet.server.diagnostics.ignore`
 
-What diagnostics to send per file.
+What diagnostics to ignore.
 
 - Type: `string`
-- Default: `"syntax"`
+- Default: `"after-syntax"`
 - Valid values:
-  - `"none"`: No filter, i.e. all available diagnostics are sent.
-  - `"syntax"`: If there are syntax errors (lex, parse, etc), send only those, and do not send e.g. statics diagnostics.
-  - `"all"`: All diagnostics are filtered out, i.e. no diagnostics are sent.
+  - `"none"`: Ignore no diagnostics, i.e. send all diagnostics.
+  - `"after-syntax"`: If there are syntax diagnostics (lex error, parse error, etc), send only those, and ignore e.g. statics diagnostics.
+  - `"all"`: Ignore all diagnostics.
 
 #### `millet.server.diagnostics.moreInfoHint.enable`
 
@@ -190,13 +190,13 @@ When set to the empty string `""` (the default), use the path to the one that's 
 
 Millet knows about some [ML Basis annotations][mlb-ann]. The ones not mentioned here are ignored.
 
-#### `milletDiagnosticsFilter`
+#### `milletDiagnosticsIgnore`
 
-How to filter diagnostics for the files in the annotated basis declaration.
+How to ignore diagnostics for the files in the annotated basis declaration.
 
 Possible arguments:
 
-- `all`: Filter out (i.e. ignore) all diagnostics.
+- `all`: Ignore all diagnostics.
 
 ## Features
 
@@ -251,7 +251,7 @@ The snippets provided are:
 
 Millet will analyze source (SML) and group (MLB/CM) files and report diagnostics directly on the offending area of the file.
 
-This can be disabled by setting `millet.server.diagnostics.filter` to `"all"` in VS Code settings.
+This can be disabled by setting `millet.server.diagnostics.ignore` to `"all"` in VS Code settings.
 
 ### Hover for info
 

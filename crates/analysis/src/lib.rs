@@ -37,12 +37,12 @@ impl Analysis {
   pub fn new(
     std_basis: StdBasis,
     lines: config::ErrorLines,
-    filter: Option<config::DiagnosticsFilter>,
+    ignore: Option<config::DiagnosticsIgnore>,
     format: Option<config::FormatEngine>,
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
-      diagnostics_options: diagnostics::Options { lines, filter, format },
+      diagnostics_options: diagnostics::Options { lines, ignore, format },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
     }

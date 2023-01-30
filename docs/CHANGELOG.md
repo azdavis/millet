@@ -15,7 +15,8 @@ The versioning system is basically the following:
 
 ## main
 
-- Allow filtering out (i.e. ignoring) all diagnostics on certain files with the `milletDiagnosticsFilter all` ML Basis annotation.
+- Allow ignoring all diagnostics on certain files with the `milletDiagnosticsIgnore all` ML Basis annotation.
+- Rename `millet.server.diagnostics.filter` to `millet.server.diagnostics.ignore` and its setting `"syntax"` to `"after-syntax"`.
 
 ## v0.7.6
 

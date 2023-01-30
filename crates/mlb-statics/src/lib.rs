@@ -232,7 +232,7 @@ fn get_bas_dec(
       }
     }
     mlb_hir::BasDec::Ann(ann, dec) => match ann {
-      mlb_hir::Annotation::DiagnosticsFilterAll => {
+      mlb_hir::Annotation::DiagnosticsIgnoreAll => {
         let old = st.report_diagnostics;
         st.report_diagnostics = false;
         get_bas_dec(st, files, path, scope, ac, dec);

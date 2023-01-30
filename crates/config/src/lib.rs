@@ -77,10 +77,10 @@ pub enum ErrorLines {
 /// What diagnostics to send per file.
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum DiagnosticsFilter {
-  /// If there are syntax diagnostics (lex, parse, etc), send only those. Do not send e.g. statics
-  /// diagnostics.
-  Syntax,
+pub enum DiagnosticsIgnore {
+  /// If there are syntax diagnostics (lex error, parse error, etc), send only those, and ignore
+  /// e.g. statics diagnostics.
+  AfterSyntax,
   /// All diagnostics are filtered out, i.e. no diagnostics are sent.
   All,
 }
@@ -102,7 +102,7 @@ pub enum FormatEngine {
 pub struct Options {
   pub show_token_hover: bool,
   pub diagnostics_on_change: bool,
-  pub diagnostics_filter: Option<DiagnosticsFilter>,
+  pub diagnostics_ignore: Option<DiagnosticsIgnore>,
   pub diagnostics_more_info_hint: bool,
   pub format: Option<FormatEngine>,
 }
@@ -112,7 +112,7 @@ impl Default for Options {
     Self {
       show_token_hover: true,
       diagnostics_on_change: false,
-      diagnostics_filter: Some(DiagnosticsFilter::Syntax),
+      diagnostics_ignore: Some(DiagnosticsIgnore::AfterSyntax),
       diagnostics_more_info_hint: true,
       format: None,
     }

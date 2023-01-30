@@ -350,10 +350,10 @@ end
 }
 
 #[test]
-fn ann_diagnostics_filter_all() {
+fn ann_diagnostics_ignore_all() {
   let mlb = r#"
 a.sml
-ann "milletDiagnosticsFilter all" in
+ann "milletDiagnosticsIgnore all" in
   b.sml
 end
 c.sml

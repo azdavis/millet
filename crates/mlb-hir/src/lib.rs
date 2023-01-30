@@ -68,6 +68,6 @@ pub enum PathKind {
 /// An annotation Millet knows about.
 #[derive(Debug, Clone, Copy)]
 pub enum Annotation {
-  /// Filter out (i.e. ignore) all diagnostics.
-  DiagnosticsFilterAll,
+  /// Ignore all diagnostics.
+  DiagnosticsIgnoreAll,
 }

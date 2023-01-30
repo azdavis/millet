@@ -124,13 +124,13 @@ where
       mlb_hir::BasDec::Path(path_id, kind)
     }
     mlb_syntax::BasDec::Ann(annotations, dec) => {
-      let diagnostics_filter_all = annotations.iter().any(|x| {
+      let diagnostics_ignore_all = annotations.iter().any(|x| {
         let s = x.val.as_str().trim_matches('"').trim();
-        s == "milletDiagnosticsFilter all"
+        s == "milletDiagnosticsIgnore all"
       });
       let inner = get_bas_dec(st, cx, *dec)?;
-      if diagnostics_filter_all {
-        mlb_hir::BasDec::Ann(mlb_hir::Annotation::DiagnosticsFilterAll, inner.into())
+      if diagnostics_ignore_all {
+        mlb_hir::BasDec::Ann(mlb_hir::Annotation::DiagnosticsIgnoreAll, inner.into())
       } else {
         inner
       }

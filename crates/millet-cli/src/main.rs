@@ -62,7 +62,7 @@ fn run() -> usize {
   let mut an = analysis::Analysis::new(
     analysis::StdBasis::Full,
     config::ErrorLines::One,
-    Some(config::DiagnosticsFilter::Syntax),
+    Some(config::DiagnosticsIgnore::AfterSyntax),
     None,
   );
   let got = an.get_many(&inp);
