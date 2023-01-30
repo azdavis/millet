@@ -208,6 +208,27 @@ Possible arguments:
 
 - `all`: Ignore all diagnostics.
 
+For example, suppose three files `a.sml`, `b.sml`, and `c.sml` all have similar contents:
+
+```sml
+(* a.sml *)
+val _ = a
+(* b.sml *)
+val _ = b
+(* c.sml *)
+val _ = c
+```
+
+Given this root ML Basis file, errors are reported on `a.sml` and `c.sml` but not `b.sml`:
+
+```mlb
+a.sml
+ann "milletDiagnosticsIgnore all" in
+  b.sml
+end
+c.sml
+```
+
 See also:
 
 - The `millet.server.diagnostics.ignore` VS Code setting
