@@ -222,6 +222,30 @@ impl Info {
     }));
     ret
   }
+
+  /// Returns some type annotation bits.
+  pub fn show_ty_annot<'a>(
+    &'a self,
+    syms: &'a Syms,
+  ) -> impl Iterator<Item = (sml_hir::la_arena::Idx<sml_hir::Pat>, String)> + 'a {
+    self.indices.iter().filter_map(|(&idx, entry)| match idx {
+      sml_hir::Idx::Pat(pat) => {
+        let self_def = entry.defs.iter().any(|&d| match d {
+          def::Def::Path(_, ref_idx) => idx == ref_idx,
+          def::Def::Primitive(_) => false,
+        });
+        if !self_def {
+          return None;
+        }
+        let mut mvs = MetaVarNames::new(&self.meta_vars);
+        let ty_entry = entry.ty_entry.as_ref()?;
+        mvs.extend_for(&ty_entry.ty);
+        let ty = ty_entry.ty.display(&mvs, syms);
+        Some((pat, format!(" : {ty})")))
+      }
+      _ => None,
+    })
+  }
 }
 
 /// need to do extend instead of a big chain of chains because of the borrow checker.

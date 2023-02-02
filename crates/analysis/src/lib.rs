@@ -265,8 +265,31 @@ impl Analysis {
 
   /// Returns all inlay hints for the range.
   #[must_use]
-  pub fn inlay_hints(&self, _: WithPath<RangeUtf16>) -> Option<Vec<InlayHint>> {
-    None
+  pub fn inlay_hints(
+    &self,
+    range: WithPath<RangeUtf16>,
+  ) -> Option<impl Iterator<Item = InlayHint> + '_> {
+    let file = self.source_files.get(&range.path)?;
+    let ret = file.info.show_ty_annot(&self.syms).filter_map(|(hint, ty_annot)| {
+      let idx = sml_hir::Idx::from(hint);
+      let ptr = file.syntax.lower.ptrs.hir_to_ast(idx)?;
+      // ignore patterns that are not from this exact source
+      if file.syntax.lower.ptrs.ast_to_hir_all(&ptr)? != [idx] {
+        return None;
+      }
+      let node = ptr.to_node(file.syntax.parse.root.syntax());
+      let parent_kind = node.parent()?.kind();
+      // ignore type-annotated patterns
+      if sml_syntax::ast::TypedPat::can_cast(parent_kind) {
+        return None;
+      }
+      let range = file.syntax.pos_db.range_utf16(ptr.text_range())?;
+      Some([
+        InlayHint { position: range.start, label: "(".to_owned(), kind: InlayHintKind::Ty },
+        InlayHint { position: range.end, label: ty_annot, kind: InlayHintKind::Ty },
+      ])
+    });
+    Some(ret.flatten())
   }
 }
 
