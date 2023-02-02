@@ -127,5 +127,18 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;
+  r = helpers::try_req::<lsp_types::request::InlayHintRequest, _>(r, |id, params| {
+    let url = params.text_document.uri;
+    let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
+    let range = convert::analysis_range(params.range);
+    let res: Vec<_> = st
+      .analysis
+      .inlay_hints(path.wrap(range))
+      .into_iter()
+      .flat_map(|xs| xs.into_iter().map(convert::inlay_hint))
+      .collect();
+    st.cx.send_response(Response::new_ok(id, res));
+    Ok(())
+  })?;
   ControlFlow::Continue(r)
 }

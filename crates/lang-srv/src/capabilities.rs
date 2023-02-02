@@ -3,6 +3,9 @@
 /// TODO set to true, then remove
 const COMPLETIONS: bool = false;
 
+/// TODO set to true, then remove
+const INLAY_HINTS: bool = false;
+
 /// Returns the capabilities of the server.
 pub(crate) fn get() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
@@ -25,6 +28,7 @@ pub(crate) fn get() -> lsp_types::ServerCapabilities {
     document_symbol_provider: Some(lsp_types::OneOf::Left(true)),
     references_provider: Some(lsp_types::OneOf::Left(true)),
     completion_provider: COMPLETIONS.then(lsp_types::CompletionOptions::default),
+    inlay_hint_provider: INLAY_HINTS.then_some(lsp_types::OneOf::Left(true)),
     ..Default::default()
   }
 }

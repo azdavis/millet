@@ -262,6 +262,12 @@ impl Analysis {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     Some(ft.file.info.completions(&self.syms))
   }
+
+  /// Returns all inlay hints for the range.
+  #[must_use]
+  pub fn inlay_hints(&self, _: WithPath<RangeUtf16>) -> Option<Vec<InlayHint>> {
+    None
+  }
 }
 
 /// A std basis.
@@ -378,4 +384,24 @@ fn symbol(
     selection_range: range,
     children: sym.children.into_iter().filter_map(|s| symbol(file, s)).collect(),
   })
+}
+
+/// An inlay hint.
+#[derive(Debug)]
+pub struct InlayHint {
+  /// The position.
+  pub position: text_pos::PositionUtf16,
+  /// The label.
+  pub label: String,
+  /// The kind.
+  pub kind: InlayHintKind,
+}
+
+/// An inlay hint kind.
+#[derive(Debug, Clone, Copy)]
+pub enum InlayHintKind {
+  /// A parameter.
+  Param,
+  /// A type.
+  Ty,
 }
