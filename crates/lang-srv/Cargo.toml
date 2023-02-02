@@ -19,7 +19,7 @@ elapsed = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 input = { path = "../input" }
 log = "0.4"
-lsp-server = "0.6"
+lsp-server = "0.7"
 lsp-types = "0.93"
 paths = { git = "https://github.com/azdavis/language-util.git" }
 serde = { version = "1", features = ["derive"] }

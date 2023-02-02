@@ -13,7 +13,7 @@ analysis = { path = "../analysis" }
 cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
 diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
-env_logger = { version = "0.9" }
+env_logger = "0.10"
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 input = { path = "../input" }
 log = "0.4"

@@ -13,7 +13,7 @@ test = false
 analysis = { path = "../analysis" }
 config = { path = "../config" }
 diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
-env_logger = { version = "0.9" }
+env_logger = "0.10"
 input = { path = "../input" }
 paths = { git = "https://github.com/azdavis/language-util.git" }
 pico-args = "0.5"
