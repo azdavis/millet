@@ -232,5 +232,6 @@ pub(crate) fn completion_item(item: analysis::CompletionItem) -> lsp_types::Comp
     commit_characters: None,
     data: None,
     tags: None,
+    label_details: None,
   }
 }
