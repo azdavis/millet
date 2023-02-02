@@ -19,11 +19,11 @@ pub(crate) fn file_and_token(
   pos: WithPath<PositionUtf16>,
 ) -> Option<FileAndToken<'_>> {
   let file = source_files.get(&pos.path)?;
-  let idx = file.syntax.pos_db.text_size_utf16(pos.val)?;
-  if !file.syntax.parse.root.syntax().text_range().contains(idx) {
+  let offset = file.syntax.pos_db.text_size_utf16(pos.val)?;
+  if !file.syntax.parse.root.syntax().text_range().contains(offset) {
     return None;
   }
-  let token = match file.syntax.parse.root.syntax().token_at_offset(idx) {
+  let token = match file.syntax.parse.root.syntax().token_at_offset(offset) {
     TokenAtOffset::None => return None,
     TokenAtOffset::Single(t) => t,
     TokenAtOffset::Between(t1, t2) => {
