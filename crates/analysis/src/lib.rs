@@ -11,9 +11,8 @@ mod source_files;
 use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
-use std::error::Error;
 use std::process::{Command, Stdio};
-use std::{fmt, io::Write as _};
+use std::{error::Error, fmt, io::Write as _};
 use text_pos::{PositionUtf16, RangeUtf16};
 use text_size_util::TextRange;
 
@@ -337,8 +336,8 @@ impl fmt::Display for SmlfmtError {
   }
 }
 
-impl std::error::Error for SmlfmtError {
-  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl Error for SmlfmtError {
+  fn source(&self) -> Option<&(dyn Error + 'static)> {
     match self {
       SmlfmtError::Spawn(e) | SmlfmtError::WriteAll(e) | SmlfmtError::Wait(e) => Some(e),
       SmlfmtError::Utf8(e) => Some(e),
