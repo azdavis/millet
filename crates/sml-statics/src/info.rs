@@ -168,7 +168,7 @@ impl Info {
   #[must_use]
   pub fn document_symbols(&self, syms: &Syms, path: paths::PathId) -> Vec<DocumentSymbol> {
     let bs = &self.basis.inner;
-    let mut mvs = MetaVarNames::new(self.meta_vars());
+    let mut mvs = MetaVarNames::new(&self.meta_vars);
     let mut ret = Vec::<DocumentSymbol>::new();
     ret.extend(bs.fun_env.iter().filter_map(|(name, fun_sig)| {
       let idx = def_idx(path, fun_sig.body_env.def?)?;
@@ -208,7 +208,7 @@ impl Info {
   #[must_use]
   pub fn completions(&self, syms: &Syms) -> Vec<CompletionItem> {
     let mut ret = Vec::<CompletionItem>::new();
-    let mut mvs = MetaVarNames::new(self.meta_vars());
+    let mut mvs = MetaVarNames::new(&self.meta_vars);
     ret.extend(self.basis.inner.env.all_val().into_iter().map(|(name, val_info)| {
       mvs.clear();
       mvs.extend_for(&val_info.ty_scheme.ty);
