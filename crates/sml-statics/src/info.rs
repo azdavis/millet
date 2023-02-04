@@ -3,7 +3,7 @@
 use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme, ValInfo};
 use crate::{basis::Basis, def, display::MetaVarNames, env::EnvLike, mode::Mode, util::ty_syms};
 use fast_hash::{FxHashMap, FxHashSet};
-use std::fmt::Write as _;
+use std::fmt;
 
 /// Information about HIR indices.
 #[derive(Debug, Clone)]
@@ -52,27 +52,9 @@ impl Info {
   /// Returns a Markdown string with type information associated with this index.
   #[must_use]
   pub fn get_ty_md(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<String> {
-    let mut ret = String::new();
-    self.get_ty_md_(&mut ret, syms, idx)?;
-    Some(ret)
-  }
-
-  fn get_ty_md_(&self, s: &mut String, syms: &Syms, idx: sml_hir::Idx) -> Option<()> {
     let ty_entry = self.indices.get(&idx)?.ty_entry.as_ref()?;
-    let mut mvs = MetaVarNames::new(&self.meta_vars);
-    mvs.extend_for(&ty_entry.ty);
-    writeln!(s, "```sml").unwrap();
-    if let Some(ty_scheme) = &ty_entry.ty_scheme {
-      mvs.extend_for(&ty_scheme.ty);
-      let ty_scheme = ty_scheme.display(&mvs, syms);
-      writeln!(s, "(* most general *)").unwrap();
-      writeln!(s, "{ty_scheme}").unwrap();
-      writeln!(s, "(* this usage *)").unwrap();
-    }
-    let ty = ty_entry.ty.display(&mvs, syms);
-    writeln!(s, "{ty}").unwrap();
-    writeln!(s, "```").unwrap();
-    Some(())
+    let ty_entry = TyEntryDisplay { ty_entry, syms, meta_vars: &self.meta_vars };
+    Some(ty_entry.to_string())
   }
 
   /// Returns documentation for this index.
@@ -231,6 +213,31 @@ pub(crate) struct TyEntry {
 impl TyEntry {
   pub(crate) fn new(ty: Ty, ty_scheme: Option<TyScheme>) -> Self {
     Self { ty, ty_scheme: ty_scheme.and_then(|ts| (!ts.bound_vars.is_empty()).then_some(ts)) }
+  }
+}
+
+struct TyEntryDisplay<'a> {
+  ty_entry: &'a TyEntry,
+  syms: &'a Syms,
+  meta_vars: &'a MetaVarInfo,
+}
+
+impl fmt::Display for TyEntryDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let mut mvs = MetaVarNames::new(self.meta_vars);
+    mvs.extend_for(&self.ty_entry.ty);
+    writeln!(f, "```sml")?;
+    if let Some(ty_scheme) = &self.ty_entry.ty_scheme {
+      mvs.extend_for(&ty_scheme.ty);
+      let ty_scheme = ty_scheme.display(&mvs, self.syms);
+      writeln!(f, "(* most general *)")?;
+      writeln!(f, "{ty_scheme}")?;
+      writeln!(f, "(* this usage *)")?;
+    }
+    let ty = self.ty_entry.ty.display(&mvs, self.syms);
+    writeln!(f, "{ty}")?;
+    writeln!(f, "```")?;
+    Ok(())
   }
 }
 
