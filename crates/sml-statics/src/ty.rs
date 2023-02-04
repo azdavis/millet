@@ -84,7 +84,7 @@ pub(crate) fn get(
       Ty::fun(param, res)
     }
   };
-  let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
+  let ty_entry = TyEntry::new(ret.clone(), ty_scheme);
   st.info.insert(ty.into(), Some(ty_entry), def.into_iter().collect());
   ret
 }

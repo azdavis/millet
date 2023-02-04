@@ -7,8 +7,15 @@ use std::fmt::Write as _;
 
 #[derive(Debug, Clone)]
 pub(crate) struct TyEntry {
-  pub(crate) ty: Ty,
-  pub(crate) ty_scheme: Option<TyScheme>,
+  ty: Ty,
+  /// invariant: if this is Some(_), the ty scheme has non-empty bound ty vars.
+  ty_scheme: Option<TyScheme>,
+}
+
+impl TyEntry {
+  pub(crate) fn new(ty: Ty, ty_scheme: Option<TyScheme>) -> Self {
+    Self { ty, ty_scheme: ty_scheme.and_then(|ts| (!ts.bound_vars.is_empty()).then_some(ts)) }
+  }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -43,16 +50,7 @@ impl Info {
     ty_entry: Option<TyEntry>,
     defs: FxHashSet<def::Def>,
   ) {
-    // ignore ty schemes that bind no vars
-    let entry = IdxEntry {
-      ty_entry: ty_entry.map(|mut ty_entry| {
-        ty_entry.ty_scheme =
-          ty_entry.ty_scheme.and_then(|x| (!x.bound_vars.is_empty()).then_some(x));
-        ty_entry
-      }),
-      defs,
-      doc: None,
-    };
+    let entry = IdxEntry { ty_entry, defs, doc: None };
     assert!(self.indices.insert(idx, entry).is_none());
   }
 

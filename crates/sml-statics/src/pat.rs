@@ -40,7 +40,7 @@ pub(crate) fn get(
       defs: FxHashSet::default(),
     },
   };
-  let ty_entry = TyEntry { ty: ret.ty.clone(), ty_scheme: ret.ty_scheme };
+  let ty_entry = TyEntry::new(ret.ty.clone(), ret.ty_scheme);
   st.info.insert(pat_.into(), Some(ty_entry), ret.defs);
   (ret.pm_pat, ret.ty)
 }

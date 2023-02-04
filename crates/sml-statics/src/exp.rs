@@ -139,7 +139,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       want
     }
   };
-  let ty_entry = TyEntry { ty: ret.clone(), ty_scheme };
+  let ty_entry = TyEntry::new(ret.clone(), ty_scheme);
   st.info.insert(exp.into(), Some(ty_entry), defs);
   ret
 }
