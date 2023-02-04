@@ -5,15 +5,6 @@ use crate::{basis::Basis, def, display::MetaVarNames, env::EnvLike, mode::Mode, 
 use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt::Write as _;
 
-/// Information about HIR indices.
-#[derive(Debug, Clone)]
-pub struct Info {
-  mode: Mode,
-  indices: FxHashMap<sml_hir::Idx, IdxEntry>,
-  meta_vars: MetaVarInfo,
-  basis: Basis,
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct TyEntry {
   pub(crate) ty: Ty,
@@ -25,6 +16,15 @@ struct IdxEntry {
   ty_entry: Option<TyEntry>,
   defs: FxHashSet<def::Def>,
   doc: Option<String>,
+}
+
+/// Information about HIR indices.
+#[derive(Debug, Clone)]
+pub struct Info {
+  mode: Mode,
+  indices: FxHashMap<sml_hir::Idx, IdxEntry>,
+  meta_vars: MetaVarInfo,
+  basis: Basis,
 }
 
 impl Info {
