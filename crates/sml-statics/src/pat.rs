@@ -255,7 +255,7 @@ fn insert_name(
     id_status: IdStatus::Val,
     defs: st.def(idx).into_iter().collect(),
   };
-  match st.info.mode() {
+  match st.info.mode {
     Mode::Regular(Some(_)) => {
       if cfg.mark_defined {
         st.mark_defined(idx, name.clone());

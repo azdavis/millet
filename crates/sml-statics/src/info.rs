@@ -19,7 +19,7 @@ impl TyEntry {
 }
 
 #[derive(Debug, Default, Clone)]
-struct IdxEntry {
+pub(crate) struct IdxEntry {
   ty_entry: Option<TyEntry>,
   defs: FxHashSet<def::Def>,
   doc: Option<String>,
@@ -28,10 +28,10 @@ struct IdxEntry {
 /// Information about HIR indices.
 #[derive(Debug, Clone)]
 pub struct Info {
-  mode: Mode,
-  indices: FxHashMap<sml_hir::Idx, IdxEntry>,
-  meta_vars: MetaVarInfo,
-  basis: Basis,
+  pub(crate) mode: Mode,
+  pub(crate) indices: FxHashMap<sml_hir::Idx, IdxEntry>,
+  pub(crate) meta_vars: MetaVarInfo,
+  pub(crate) basis: Basis,
 }
 
 impl Info {
@@ -63,18 +63,10 @@ impl Info {
     self.indices.values_mut().filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
   }
 
-  pub(crate) fn mode(&self) -> Mode {
-    self.mode
-  }
-
   /// Returns information about meta type variables.
   #[must_use]
   pub fn meta_vars(&self) -> &MetaVarInfo {
     &self.meta_vars
-  }
-
-  pub(crate) fn set_meta_vars(&mut self, mv: MetaVarInfo) {
-    self.meta_vars = mv;
   }
 
   /// Returns a Markdown string with type information associated with this index.
@@ -153,10 +145,6 @@ impl Info {
       .collect();
     ret.sort_unstable();
     Some(ret)
-  }
-
-  pub(crate) fn set_basis(&mut self, basis: Basis) {
-    self.basis = basis;
   }
 
   /// Returns the symbols for this file.

@@ -62,7 +62,7 @@ pub fn get(
     let inner = top_dec::get(&mut st, &basis.inner, arenas, root);
     let basis = basis::Basis { inner };
     let (new_syms, errors, mut info) = st.finish();
-    info.set_basis(basis.clone());
+    info.basis = basis.clone();
     *syms = new_syms;
     Statics { info, errors, basis }
   })

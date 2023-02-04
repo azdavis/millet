@@ -45,7 +45,7 @@ impl St {
   }
 
   pub(crate) fn def(&self, idx: sml_hir::Idx) -> Option<def::Def> {
-    let path = match self.info.mode() {
+    let path = match self.info.mode {
       Mode::Regular(p) => def::Path::Regular(p?),
       Mode::BuiltinLib(p) => def::Path::BuiltinLib(p),
       Mode::PathOrder => return None,
@@ -57,7 +57,7 @@ impl St {
   where
     I: Into<sml_hir::Idx>,
   {
-    match (self.info.mode(), &kind) {
+    match (self.info.mode, &kind) {
       (Mode::PathOrder, ErrorKind::Undefined(Item::Struct | Item::Sig | Item::Functor, _))
       | (Mode::Regular(_) | Mode::BuiltinLib(_), _) => {
         self.errors.push(Error { idx: idx.into(), kind });
@@ -67,28 +67,28 @@ impl St {
   }
 
   pub(crate) fn insert_bind(&mut self, idx: sml_hir::Idx, pat: Pat, want: Ty) {
-    if self.info.mode().is_path_order() {
+    if self.info.mode.is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Bind(pat), want, idx });
   }
 
   pub(crate) fn insert_handle(&mut self, idx: sml_hir::Idx, pats: Vec<Pat>, want: Ty) {
-    if self.info.mode().is_path_order() {
+    if self.info.mode.is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx });
   }
 
   pub(crate) fn insert_case(&mut self, idx: sml_hir::Idx, pats: Vec<Pat>, want: Ty) {
-    if self.info.mode().is_path_order() {
+    if self.info.mode.is_path_order() {
       return;
     }
     self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
   pub(crate) fn insert_hole(&mut self, idx: sml_hir::Idx, mv: MetaTyVar) {
-    if self.info.mode().is_path_order() {
+    if self.info.mode.is_path_order() {
       return;
     }
     self.holes.push((mv, idx));
@@ -99,21 +99,21 @@ impl St {
   }
 
   pub(crate) fn mark_used(&mut self, idx: sml_hir::Idx) {
-    if self.info.mode().is_path_order() {
+    if self.info.mode.is_path_order() {
       return;
     }
     self.used.insert(idx);
   }
 
   pub(crate) fn push_prefix(&mut self, name: str_util::Name) {
-    if self.info.mode().is_path_order() {
+    if self.info.mode.is_path_order() {
       return;
     }
     self.cur_prefix.push(name);
   }
 
   pub(crate) fn pop_prefix(&mut self) {
-    if self.info.mode().is_path_order() {
+    if self.info.mode.is_path_order() {
       return;
     }
     self.cur_prefix.pop().expect("no matching push_structure");
@@ -126,7 +126,7 @@ impl St {
   pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {
     let lang = Lang { syms: self.syms };
     let mut errors = self.errors;
-    if !self.info.mode().is_path_order() {
+    if !self.info.mode.is_path_order() {
       for (mv, idx) in self.holes {
         let mut ty = Ty::MetaVar(mv);
         apply(&self.subst, &mut ty);
@@ -160,7 +160,7 @@ impl St {
       for ty in self.info.tys_mut() {
         apply(&self.subst, ty);
       }
-      self.info.set_meta_vars(self.subst.into_meta_var_info());
+      self.info.meta_vars = self.subst.into_meta_var_info();
     }
     (lang.syms, errors, self.info)
   }

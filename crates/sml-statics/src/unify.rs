@@ -14,7 +14,7 @@ pub(crate) fn unify(st: &mut St, idx: sml_hir::Idx, want: Ty, got: Ty) {
 }
 
 pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorKind> {
-  if st.info.mode().is_path_order() {
+  if st.info.mode.is_path_order() {
     return Ok(());
   }
   unify_(st, want.clone(), got.clone()).map_err(|err| match err {
