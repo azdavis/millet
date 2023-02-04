@@ -5,26 +5,6 @@ use crate::{basis::Basis, def, display::MetaVarNames, env::EnvLike, mode::Mode, 
 use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt::Write as _;
 
-#[derive(Debug, Clone)]
-pub(crate) struct TyEntry {
-  ty: Ty,
-  /// invariant: if this is Some(_), the ty scheme has non-empty bound ty vars.
-  ty_scheme: Option<TyScheme>,
-}
-
-impl TyEntry {
-  pub(crate) fn new(ty: Ty, ty_scheme: Option<TyScheme>) -> Self {
-    Self { ty, ty_scheme: ty_scheme.and_then(|ts| (!ts.bound_vars.is_empty()).then_some(ts)) }
-  }
-}
-
-#[derive(Debug, Default, Clone)]
-pub(crate) struct IdxEntry {
-  ty_entry: Option<TyEntry>,
-  defs: FxHashSet<def::Def>,
-  doc: Option<String>,
-}
-
 /// Information about HIR indices.
 #[derive(Debug, Clone)]
 pub struct Info {
@@ -232,6 +212,26 @@ impl Info {
       _ => None,
     })
   }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct TyEntry {
+  ty: Ty,
+  /// invariant: if this is Some(_), the ty scheme has non-empty bound ty vars.
+  ty_scheme: Option<TyScheme>,
+}
+
+impl TyEntry {
+  pub(crate) fn new(ty: Ty, ty_scheme: Option<TyScheme>) -> Self {
+    Self { ty, ty_scheme: ty_scheme.and_then(|ts| (!ts.bound_vars.is_empty()).then_some(ts)) }
+  }
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct IdxEntry {
+  ty_entry: Option<TyEntry>,
+  defs: FxHashSet<def::Def>,
+  doc: Option<String>,
 }
 
 /// need to do extend instead of a big chain of chains because of the borrow checker.
