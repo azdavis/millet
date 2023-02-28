@@ -189,6 +189,8 @@ fn is_bool_lit(exp: &Option<ast::Exp>) -> bool {
       is_true_or_false && iter.next().is_none()
     }),
     ast::Exp::ParenExp(exp) => is_bool_lit(&exp.exp()),
+    ast::Exp::TypedExp(exp) => is_bool_lit(&exp.exp()),
+    ast::Exp::HandleExp(exp) => is_bool_lit(&exp.exp()),
     _ => false,
   }
 }
