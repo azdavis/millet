@@ -186,7 +186,7 @@ impl Analysis {
   ///
   /// # Panics
   ///
-  /// Upton internal error.
+  /// Upon internal error.
   pub fn format(
     &self,
     path: PathId,
