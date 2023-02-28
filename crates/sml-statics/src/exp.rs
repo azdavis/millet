@@ -256,30 +256,11 @@ fn maybe_raises(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
     sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => false,
     sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| maybe_raises(ars, exp)),
     sml_hir::Exp::Typed(exp, _) => maybe_raises(ars, *exp),
-    sml_hir::Exp::Let(dec, exp) => maybe_raises_dec(ars, *dec) || maybe_raises(ars, *exp),
+    sml_hir::Exp::Let(dec, exp) => dec::maybe_raises(ars, *dec) || maybe_raises(ars, *exp),
     sml_hir::Exp::Hole
     | sml_hir::Exp::App(_, _)
     | sml_hir::Exp::Handle(_, _)
     | sml_hir::Exp::Raise(_) => true,
-  }
-}
-
-fn maybe_raises_dec(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
-  let dec = match dec {
-    Some(x) => x,
-    None => return true,
-  };
-  match &ars.dec[dec] {
-    // even if the expression doesn't raise, the pattern match binding might fail.
-    sml_hir::Dec::Val(_, _) => true,
-    sml_hir::Dec::Ty(_)
-    | sml_hir::Dec::Datatype(_, _)
-    | sml_hir::Dec::DatatypeCopy(_, _)
-    | sml_hir::Dec::Exception(_)
-    | sml_hir::Dec::Open(_) => false,
-    sml_hir::Dec::Abstype(_, _, dec) => maybe_raises_dec(ars, *dec),
-    sml_hir::Dec::Local(fst, snd) => maybe_raises_dec(ars, *fst) || maybe_raises_dec(ars, *snd),
-    sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| maybe_raises_dec(ars, dec)),
   }
 }
 
