@@ -27,6 +27,9 @@ pub(crate) fn get(
   match &ars.dec[dec] {
     // @def(15)
     sml_hir::Dec::Val(ty_vars, val_binds) => {
+      if !maybe_effectful_val(ars, val_binds) {
+        st.err(dec, ErrorKind::DecWithoutEffect);
+      }
       let mut cx = cx.clone();
       let fixed = add_fixed_ty_vars(st, dec.into(), &mut cx, TyVarSrc::Val, ty_vars);
       // we actually resort to indexing logic because this is a little weird:
@@ -422,9 +425,7 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bo
     None => return true,
   };
   match &ars.dec[dec] {
-    sml_hir::Dec::Val(_, val_binds) => val_binds.iter().any(|val_bind| {
-      exp::maybe_effectful(ars, val_bind.exp) || pat::maybe_refutable(ars, val_bind.pat)
-    }),
+    sml_hir::Dec::Val(_, val_binds) => maybe_effectful_val(ars, val_binds),
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
     | sml_hir::Dec::DatatypeCopy(_, _)
@@ -434,4 +435,10 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bo
     sml_hir::Dec::Local(fst, snd) => maybe_effectful(ars, *fst) || maybe_effectful(ars, *snd),
     sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| maybe_effectful(ars, dec)),
   }
+}
+
+fn maybe_effectful_val(ars: &sml_hir::Arenas, val_binds: &[sml_hir::ValBind]) -> bool {
+  val_binds.iter().any(|val_bind| {
+    exp::maybe_effectful(ars, val_bind.exp) || pat::maybe_refutable(ars, val_bind.pat)
+  })
 }

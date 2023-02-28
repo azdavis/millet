@@ -2519,6 +2519,36 @@ val b = (4 + 123123123) handle Overflow => 5
 val c = 4
 ```
 
+## 5040
+
+There was a declaration with no effect.
+
+If a declaration is known to never introduce any bindings or cause a side effect, then it has no effect.
+
+```sml
+val _ = 4
+(** + no effect *)
+```
+
+To fix, cause the declaration to have an effect, or remove it.
+
+```sml
+(* has an effect because it adds a binding *)
+val a = 4
+
+(* has an effect because it might raise (a side effect) *)
+val _ = 123123123 + 456456456
+
+(* has an effect because it prints to stdout (a side effect) *)
+val _ = print "hi"
+
+(* has an effect because it adds a binding *)
+fun loop () = loop ()
+
+(* has an effect because it loops forever (a side effect) *)
+val _ = loop ()
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.

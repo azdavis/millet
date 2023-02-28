@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Improve unreachable handle linting.
+- Add simple linting for declarations with no effect.
+
 ## v0.7.8
 
 - Improve linting for boolean literals.
