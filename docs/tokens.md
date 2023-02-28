@@ -180,7 +180,7 @@ end
 Handle exceptions.
 
 ```sml
-val _ = 15 + 150 handle Overflow => 0
+val _ = (15 + 150) handle Overflow => 0
 ```
 
 - If the head expression **does not** raise, the whole expression (i.e. the head expression plus the `handle` clause) evaluates to whatever the head expression did.

@@ -101,6 +101,9 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
     // @def(10)
     sml_hir::Exp::Handle(inner, matcher) => {
+      if !might_raise(ars, *inner) {
+        st.err(exp, ErrorKind::UnreachableHandle);
+      }
       let mut exp_ty = get(st, cfg, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
       let idx = inner.unwrap_or(exp);
@@ -242,6 +245,42 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
     }
   }
   None
+}
+
+fn might_raise(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
+  let exp = match exp {
+    Some(x) => x,
+    None => return true,
+  };
+  match &ars.exp[exp] {
+    sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => false,
+    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| might_raise(ars, exp)),
+    sml_hir::Exp::Typed(exp, _) => might_raise(ars, *exp),
+    sml_hir::Exp::Let(dec, exp) => might_raise_dec(ars, *dec) || might_raise(ars, *exp),
+    sml_hir::Exp::Hole
+    | sml_hir::Exp::App(_, _)
+    | sml_hir::Exp::Handle(_, _)
+    | sml_hir::Exp::Raise(_) => true,
+  }
+}
+
+fn might_raise_dec(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
+  let dec = match dec {
+    Some(x) => x,
+    None => return true,
+  };
+  match &ars.dec[dec] {
+    // even if the expression doesn't raise, the pattern match binding might fail.
+    sml_hir::Dec::Val(_, _) => true,
+    sml_hir::Dec::Ty(_)
+    | sml_hir::Dec::Datatype(_, _)
+    | sml_hir::Dec::DatatypeCopy(_, _)
+    | sml_hir::Dec::Exception(_)
+    | sml_hir::Dec::Open(_) => false,
+    sml_hir::Dec::Abstype(_, _, dec) => might_raise_dec(ars, *dec),
+    sml_hir::Dec::Local(fst, snd) => might_raise_dec(ars, *fst) || might_raise_dec(ars, *snd),
+    sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| might_raise_dec(ars, dec)),
+  }
 }
 
 /// @def(13)

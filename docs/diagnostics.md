@@ -2503,6 +2503,22 @@ To fix, use group files to inform Millet about the dependencies between SML file
 
 If you wish to also compile and run your SML project with group files, you can remove the calls to `use`. If, however, you only want to use group files for Millet, and still want to use `use` when compiling your project, you can ignore this error in your `millet.toml`.
 
+## 5039
+
+An expression that will never `raise` was surrounded with a `handle`. This means none of the arms of the `handle` will be reachable.
+
+```sml
+val a = 4 handle Overflow => 5
+(**     ^^^^^^^^^^^^^^^^^^^^^^ unreachable `handle` *)
+```
+
+To fix, make the handled expression actually (possibly) raise something, or remove the `handle`.
+
+```sml
+val b = (4 + 123123123) handle Overflow => 5
+val c = 4
+```
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.

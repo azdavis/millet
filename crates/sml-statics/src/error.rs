@@ -53,6 +53,7 @@ pub(crate) enum ErrorKind {
   BoolCase,
   AppFn,
   Use(Option<str_util::SmolStr>),
+  UnreachableHandle,
 }
 
 struct ErrorKindDisplay<'a> {
@@ -182,6 +183,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         }
         f.write_str("brought into scope")
       }
+      ErrorKind::UnreachableHandle => f.write_str("unreachable `handle`"),
     }
   }
 }
@@ -443,6 +445,7 @@ impl Error {
       ErrorKind::BoolCase => Code::n(5036),
       ErrorKind::AppFn => Code::n(5037),
       ErrorKind::Use(_) => Code::n(5038),
+      ErrorKind::UnreachableHandle => Code::n(5039),
     }
   }
 
@@ -456,7 +459,8 @@ impl Error {
       | ErrorKind::InvalidAppend(_)
       | ErrorKind::BoolCase
       | ErrorKind::AppFn
-      | ErrorKind::Use(_) => Severity::Warning,
+      | ErrorKind::Use(_)
+      | ErrorKind::UnreachableHandle => Severity::Warning,
       _ => Severity::Error,
     }
   }
