@@ -37,14 +37,46 @@ We encourage contributions of all kinds. Please read the [contributing][] guide.
 
 ## Development
 
-The project is mostly written in Rust, so you will need a Rust installation. If you want to build the VS Code extension in TypeScript as well, you should also install Node.js.
+### Dependencies
+
+The project is mostly written in Rust, so you will need a Rust installation. It should have Cargo, Rust's package manager and build system.
+
+If you want to build the VS Code extension in TypeScript as well, you should also install Node.js.
 
 | What            | Version       | Why                   |
 | --------------- | ------------- | --------------------- |
 | [Rust][rust]    | Latest stable | Build Rust code       |
 | [Node.js][node] | 18            | Build TypeScript code |
 
-After installing the dependencies, download/clone the repo and run `cargo xtask ci` inside it. This will build the project and run tests.
+As noted above, the MSRV (minimum support Rust version) is the latest stable.
+
+If your editor (e.g. VS Code) supports it, we also recommend installing [rust-analyzer][ra], a language server for Rust.
+
+### Building/testing
+
+This is a regular Rust project, so the usual commands
+
+```sh
+$ cargo build
+$ cargo test
+```
+
+will work.
+
+We also use clippy and rustfmt, which can be run with cargo as well:
+
+```sh
+$ cargo fmt
+$ cargo clippy
+```
+
+These can all be run together as they are in CI with:
+
+```sh
+$ cargo xtask ci
+```
+
+### VS Code
 
 If you're using VS Code, you can try out the VS Code extension:
 
@@ -86,3 +118,4 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [vscodium]: https://vscodium.com
 [yixin]: https://yixinhe.me
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
+[ra]: https://rust-analyzer.github.io
