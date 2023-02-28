@@ -25,7 +25,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     options.diagnostics_ignore,
     options.format,
   );
-  let mut sp = Cx {
+  let mut cx = Cx {
     options,
     registered_for_watched_files: false,
     store: paths::Store::new(),
@@ -35,19 +35,19 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
   };
   let mut root = init
     .root_uri
-    .map(|url| convert::canonical_path_buf(&sp.file_system, &url).map_err(|e| (e, url)))
+    .map(|url| convert::canonical_path_buf(&cx.file_system, &url).map_err(|e| (e, url)))
     .transpose();
   let mut has_diagnostics = FxHashSet::<Url>::default();
   let mut ret = St {
     // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
     mode: match root.as_mut().ok().and_then(Option::take) {
       Some(path) => {
-        let input = sp.try_get_input(&path, &mut has_diagnostics);
+        let input = cx.try_get_input(&path, &mut has_diagnostics);
         Mode::Root(Root { path, input })
       }
       None => Mode::NoRoot(FxHashMap::default()),
     },
-    cx: sp,
+    cx,
     analysis,
     has_diagnostics,
   };
