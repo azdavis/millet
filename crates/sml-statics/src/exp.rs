@@ -101,7 +101,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
     // @def(10)
     sml_hir::Exp::Handle(inner, matcher) => {
-      if !might_raise(ars, *inner) {
+      if !maybe_raises(ars, *inner) {
         st.err(exp, ErrorKind::UnreachableHandle);
       }
       let mut exp_ty = get(st, cfg, cx, ars, *inner);
@@ -247,16 +247,16 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
   None
 }
 
-fn might_raise(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
+fn maybe_raises(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
   let exp = match exp {
     Some(x) => x,
     None => return true,
   };
   match &ars.exp[exp] {
     sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => false,
-    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| might_raise(ars, exp)),
-    sml_hir::Exp::Typed(exp, _) => might_raise(ars, *exp),
-    sml_hir::Exp::Let(dec, exp) => might_raise_dec(ars, *dec) || might_raise(ars, *exp),
+    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| maybe_raises(ars, exp)),
+    sml_hir::Exp::Typed(exp, _) => maybe_raises(ars, *exp),
+    sml_hir::Exp::Let(dec, exp) => maybe_raises_dec(ars, *dec) || maybe_raises(ars, *exp),
     sml_hir::Exp::Hole
     | sml_hir::Exp::App(_, _)
     | sml_hir::Exp::Handle(_, _)
@@ -264,7 +264,7 @@ fn might_raise(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
   }
 }
 
-fn might_raise_dec(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
+fn maybe_raises_dec(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
   let dec = match dec {
     Some(x) => x,
     None => return true,
@@ -277,9 +277,9 @@ fn might_raise_dec(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
     | sml_hir::Dec::DatatypeCopy(_, _)
     | sml_hir::Dec::Exception(_)
     | sml_hir::Dec::Open(_) => false,
-    sml_hir::Dec::Abstype(_, _, dec) => might_raise_dec(ars, *dec),
-    sml_hir::Dec::Local(fst, snd) => might_raise_dec(ars, *fst) || might_raise_dec(ars, *snd),
-    sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| might_raise_dec(ars, dec)),
+    sml_hir::Dec::Abstype(_, _, dec) => maybe_raises_dec(ars, *dec),
+    sml_hir::Dec::Local(fst, snd) => maybe_raises_dec(ars, *fst) || maybe_raises_dec(ars, *snd),
+    sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| maybe_raises_dec(ars, dec)),
   }
 }
 
