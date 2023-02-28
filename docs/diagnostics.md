@@ -2519,6 +2519,15 @@ val b = (4 + 123123123) handle Overflow => 5
 val c = 4
 ```
 
+Note that the analysis is not sophisticated.
+
+```sml
+fun four () = 4
+
+(* won't actually raise, but we don't warn for the unreachable `handle` *)
+val _ = four () handle Overflow => 5
+```
+
 ## 5040
 
 There was a declaration with no effect.
@@ -2547,6 +2556,15 @@ fun loop () = loop ()
 
 (* has an effect because it loops forever (a side effect) *)
 val _ = loop ()
+```
+
+Note that the analysis is not sophisicated.
+
+```sml
+fun four () = 4
+
+(* won't actually have an effect, but we don't warn for no effect *)
+val _ = four ()
 ```
 
 ## 5999
