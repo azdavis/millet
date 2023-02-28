@@ -347,7 +347,7 @@ val z : real = 1e123
 A string escape was invalid.
 
 ```sml
-val _ = "this doesn't work: \c"
+val s = "this doesn't work: \c"
 (**     ^^^^^^^^^^^^^^^^^^^^^ invalid string escape *)
 ```
 
@@ -374,7 +374,7 @@ Valid complex escapes are:
 To fix, only use valid escapes.
 
 ```sml
-val _ = "this has\na newline"
+val s = "this has\na newline"
 ```
 
 ## 2009
@@ -384,7 +384,7 @@ There was a non-whitespace character in a string continuation.
 <!-- @ignore too hard to point at the string continuations across lines -->
 
 ```sml
-val _ =
+val s =
   "this string is\  not
   \ valid because there\ are
   \ non-whitespace\ characters
@@ -396,7 +396,7 @@ String literals permit the sequence `\...\`, where `...` represents 1 or more wh
 To fix, ensure the string continuations contain only whitespace. Millet recognizes all characters defined in the Definition as whitespace, as well as some others, like carriage return (common on Windows).
 
 ```sml
-val _ =
+val s =
   "this string is\
   \ valid because there are only\
   \ whitespace characters\
@@ -595,14 +595,14 @@ fun muska 1 = 2
 An integer (`int` or `word`) literal was invalid. This can happen when it is too large.
 
 ```sml
-val _ = 0w123456789123456789123456789
+val n = 0w123456789123456789123456789
 (**     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ invalid literal: number too large to fit in target type *)
 ```
 
 To fix, use smaller literals.
 
 ```sml
-val _ = 0w123456789
+val n = 0w123456789
 ```
 
 ## 4004
@@ -616,14 +616,14 @@ A real literal was invalid.
 A numeric label (as for a record) was invalid. This can happen when it was non-positive (i.e. negative or zero), or too large.
 
 ```sml
-val _ = { 123456789123456789123456789 = "hi" }
+val x = { 123456789123456789123456789 = "hi" }
 (**       ^^^^^^^^^^^^^^^^^^^^^^^^^^^ invalid numeric label: number too large to fit in target type *)
 ```
 
 To fix, use small positive numbers for labels.
 
 ```sml
-val _ = { 3 = "hi" }
+val x = { 3 = "hi" }
 ```
 
 ## 4006
@@ -886,7 +886,7 @@ end
 There were unnecessary parentheses around something.
 
 ```sml
-val _ = (3)
+val n = (3)
 (**     ^^^ unnecessary parentheses *)
 fun inc (x) = x + 1
 (**     ^^^ unnecessary parentheses *)
@@ -910,7 +910,7 @@ Note that e.g. `op +` is technically atomic, but this error is not issued for pa
 To fix, remove the parentheses.
 
 ```sml
-val _ = 3
+val n = 3
 fun inc x = x + 1
 type t = int
 ```
@@ -1211,8 +1211,8 @@ val _ = let in end
 To fix, add some expressions.
 
 ```sml
-val _ = let in 1 end
-val _ = let in 1; 2; 3 end
+val a = let in 1 end
+val b = let in 1; 2; 3 end
 ```
 
 ## 4028
@@ -1220,14 +1220,14 @@ val _ = let in 1; 2; 3 end
 There was a trailing comma or semicolon.
 
 ```sml
-val _ = (1, 2,)
+val x = (1, 2,)
 (**          ^ trailing `,` *)
 ```
 
 To fix, remove the trailing separator.
 
 ```sml
-val _ = (1, 2)
+val x = (1, 2)
 ```
 
 ## 4999
@@ -1258,8 +1258,8 @@ To fix, avoid such constructs.
 A name was referenced, but it was not defined in that scope.
 
 ```sml
-val _ = foo
-(**     ^^^ undefined value: foo *)
+val bar = foo
+(**       ^^^ undefined value: foo *)
 ```
 
 To fix, try any of the following:
@@ -1288,7 +1288,7 @@ To fix, try any of the following:
     val bar = "hi"
   end
 
-  val _ = Str.bar
+  val s = Str.bar
   (**     ^^^^^^^ undefined value: bar *)
   ```
 
@@ -1431,7 +1431,7 @@ structure Foo :> FOO = struct
   val x = 3
 end
 
-val _ = Foo.x : unit
+val y = Foo.x : unit
 (**     ^^^^^^^^^^^^ expected unit, found FOO.t *)
 ```
 
@@ -1496,15 +1496,15 @@ To fix, only apply functions to arguments.
 There was a duplicate label.
 
 ```sml
-val _ = { a = 1, a = 2 }
+val x = { a = 1, a = 2 }
 (**     ^^^^^^^^^^^^^^^^ duplicate label: a *)
 ```
 
 To fix, use differently named labels, or remove one of the record rows.
 
 ```sml
-val _ = { a = 1, b = 2 }
-val _ = { a = 1 }
+val x = { a = 1, b = 2 }
+val x = { a = 1 }
 ```
 
 ## 5009

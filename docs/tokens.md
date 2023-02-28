@@ -305,7 +305,7 @@ struct
   val x = 3
 end
 
-val _ = S.x : int
+val y = S.x : int
 ```
 
 ## `while`
@@ -736,8 +736,8 @@ The companion of `(`.
 Separate things, like tuple elements, list elements, and type arguments.
 
 ```sml
-val _ = (false, 5)
-val _ = [1, 4, 3]
+val tup = (false, 5)
+val lst = [1, 4, 3]
 type ('a, 'b) parser = 'a -> ('a * 'b) option
 ```
 
