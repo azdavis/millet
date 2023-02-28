@@ -416,22 +416,22 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
   }
 }
 
-pub(crate) fn maybe_raises(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
+pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
   let dec = match dec {
     Some(x) => x,
     None => return true,
   };
   match &ars.dec[dec] {
     sml_hir::Dec::Val(_, val_binds) => val_binds.iter().any(|val_bind| {
-      exp::maybe_raises(ars, val_bind.exp) || pat::maybe_refutable(ars, val_bind.pat)
+      exp::maybe_effectful(ars, val_bind.exp) || pat::maybe_refutable(ars, val_bind.pat)
     }),
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
     | sml_hir::Dec::DatatypeCopy(_, _)
     | sml_hir::Dec::Exception(_)
     | sml_hir::Dec::Open(_) => false,
-    sml_hir::Dec::Abstype(_, _, dec) => maybe_raises(ars, *dec),
-    sml_hir::Dec::Local(fst, snd) => maybe_raises(ars, *fst) || maybe_raises(ars, *snd),
-    sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| maybe_raises(ars, dec)),
+    sml_hir::Dec::Abstype(_, _, dec) => maybe_effectful(ars, *dec),
+    sml_hir::Dec::Local(fst, snd) => maybe_effectful(ars, *fst) || maybe_effectful(ars, *snd),
+    sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| maybe_effectful(ars, dec)),
   }
 }

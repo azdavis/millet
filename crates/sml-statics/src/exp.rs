@@ -101,7 +101,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
     // @def(10)
     sml_hir::Exp::Handle(inner, matcher) => {
-      if !maybe_raises(ars, *inner) {
+      if !maybe_effectful(ars, *inner) {
         st.err(exp, ErrorKind::UnreachableHandle);
       }
       let mut exp_ty = get(st, cfg, cx, ars, *inner);
@@ -247,16 +247,16 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
   None
 }
 
-pub(crate) fn maybe_raises(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
+pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
   let exp = match exp {
     Some(x) => x,
     None => return true,
   };
   match &ars.exp[exp] {
     sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => false,
-    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| maybe_raises(ars, exp)),
-    sml_hir::Exp::Typed(exp, _) => maybe_raises(ars, *exp),
-    sml_hir::Exp::Let(dec, exp) => dec::maybe_raises(ars, *dec) || maybe_raises(ars, *exp),
+    sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| maybe_effectful(ars, exp)),
+    sml_hir::Exp::Typed(exp, _) => maybe_effectful(ars, *exp),
+    sml_hir::Exp::Let(dec, exp) => dec::maybe_effectful(ars, *dec) || maybe_effectful(ars, *exp),
     sml_hir::Exp::Hole
     | sml_hir::Exp::App(_, _)
     | sml_hir::Exp::Handle(_, _)
