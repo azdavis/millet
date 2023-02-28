@@ -247,7 +247,7 @@ fn lint_append(ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<Error
   None
 }
 
-fn maybe_raises(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
+pub(crate) fn maybe_raises(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
   let exp = match exp {
     Some(x) => x,
     None => return true,

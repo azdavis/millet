@@ -267,3 +267,19 @@ fn insert_name(
     st.err(idx, e);
   }
 }
+
+pub(crate) fn maybe_refutable(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> bool {
+  let pat = match pat {
+    Some(x) => x,
+    None => return true,
+  };
+  match &ars.pat[pat] {
+    sml_hir::Pat::Wild => false,
+    sml_hir::Pat::SCon(_) | sml_hir::Pat::Con(_, _) => true,
+    sml_hir::Pat::Record { rows, .. } => rows.iter().any(|&(_, pat)| maybe_refutable(ars, pat)),
+    sml_hir::Pat::Typed(pat, _) | sml_hir::Pat::As(_, pat) => maybe_refutable(ars, *pat),
+    sml_hir::Pat::Or(or) => {
+      maybe_refutable(ars, or.first) || or.rest.iter().any(|&pat| maybe_refutable(ars, pat))
+    }
+  }
+}

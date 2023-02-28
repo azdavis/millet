@@ -422,8 +422,9 @@ pub(crate) fn maybe_raises(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool 
     None => return true,
   };
   match &ars.dec[dec] {
-    // even if the expression doesn't raise, the pattern match binding might fail.
-    sml_hir::Dec::Val(_, _) => true,
+    sml_hir::Dec::Val(_, val_binds) => val_binds.iter().any(|val_bind| {
+      exp::maybe_raises(ars, val_bind.exp) || pat::maybe_refutable(ars, val_bind.pat)
+    }),
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
     | sml_hir::Dec::DatatypeCopy(_, _)
