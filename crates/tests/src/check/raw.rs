@@ -111,6 +111,6 @@ pub(crate) fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("f.sml", s), ("s.mlb", "f.sml")]
 }
 
-fn env_var_enabled(s: &str) -> bool {
+pub(crate) fn env_var_enabled(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
 }

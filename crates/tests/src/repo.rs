@@ -1,5 +1,6 @@
 //! Tests about the repository itself.
 
+use crate::check::raw::env_var_enabled;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
 use std::fmt::{self, Write as _};
@@ -180,7 +181,7 @@ fn no_debugging() {
 
 #[test]
 fn changelog() {
-  if option_env!("CI") == Some("1") {
+  if env_var_enabled("CI") {
     return;
   }
   let sh = shell();
