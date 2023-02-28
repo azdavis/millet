@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.7.8
+
+- Improve linting for boolean literals.
+- Add simple linting for unreachable `handle`.
+
 ## v0.7.7
 
 - Allow ignoring all diagnostics on certain files with the `milletDiagnosticsIgnore all` ML Basis annotation.
