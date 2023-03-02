@@ -4,6 +4,7 @@ use crate::convert;
 use crate::state::{Mode, St};
 use fast_hash::FxHashSet;
 use lsp_types::Url;
+use paths::FileSystem as _;
 
 pub(crate) fn try_publish(st: &mut St) -> bool {
   let root = match &mut st.mode {
@@ -13,7 +14,7 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
   let got_many = st.analysis.get_many(&root.input);
   let mut has_diagnostics = FxHashSet::<Url>::default();
   for err in &root.input.errors {
-    let did_send_as_diagnostic = if err.abs_path().is_file() {
+    let did_send_as_diagnostic = if st.cx.fs.is_file(err.abs_path()) {
       match convert::file_url(err.abs_path()) {
         Ok(url) => {
           has_diagnostics.insert(url.clone());
