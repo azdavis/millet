@@ -10,12 +10,41 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
     Mode::Root(x) => x,
     Mode::NoRoot(_) => return false,
   };
-  let input = match &mut root.input {
-    Some(x) => x,
-    None => return false,
-  };
-  let got_many = st.analysis.get_many(input);
+  let got_many = st.analysis.get_many(&root.input);
   let mut has_diagnostics = FxHashSet::<Url>::default();
+  for err in &root.input.errors {
+    let did_send_as_diagnostic = if err.abs_path().is_file() {
+      match convert::file_url(err.abs_path()) {
+        Ok(url) => {
+          has_diagnostics.insert(url.clone());
+          st.cx.send_diagnostics(
+            url,
+            vec![convert::diagnostic(
+              err.display(root.path.as_path()).to_string(),
+              err.range(),
+              err.code(),
+              err.severity(),
+              st.cx.options.diagnostics_more_info_hint,
+            )],
+          );
+          true
+        }
+        Err(_) => false,
+      }
+    } else {
+      false
+    };
+    if !did_send_as_diagnostic {
+      st.cx.show_error(
+        format!(
+          "{}: {}",
+          err.maybe_rel_path(root.path.as_path()).display(),
+          err.display(root.path.as_path())
+        ),
+        err.code(),
+      );
+    }
+  }
   for (path_id, errors) in got_many {
     let path = st.cx.store.get_path(path_id);
     let url = match convert::file_url(path.as_path()) {

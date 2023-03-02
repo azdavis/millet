@@ -19,7 +19,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
   n = helpers::try_notif::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
     match &mut st.mode {
       Mode::Root(root) => {
-        root.input = st.cx.try_get_input(&root.path, &mut st.has_diagnostics);
+        root.input = st.cx.get_input(&root.path);
         diagnostics::try_publish(st);
       }
       Mode::NoRoot(_) => log::warn!("ignoring DidChangeWatchedFiles with NoRoot"),
@@ -31,11 +31,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
     let path = convert::url_to_path_id(&st.cx.file_system, &mut st.cx.store, &url)?;
     match &mut st.mode {
       Mode::Root(root) => {
-        let input = match &mut root.input {
-          Some(x) => x,
-          None => bail!("no input for DidChangeTextDocument"),
-        };
-        let text = match input.get_mut_source(path) {
+        let text = match root.input.get_mut_source(path) {
           Some(x) => x,
           None => bail!("no source in the input for DidChangeTextDocument"),
         };
@@ -45,7 +41,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
         } else if st.cx.options.format.is_some() {
           // TODO this is expensive, but currently necessary to make formatting work. can we
           // make it just do it for formatting (i.e. syntax) only (no statics)?
-          st.analysis.get_many(input);
+          st.analysis.get_many(&root.input);
         }
       }
       Mode::NoRoot(open_files) => match open_files.get_mut(&path) {
@@ -82,7 +78,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
         if st.cx.registered_for_watched_files {
           log::warn!("ignoring DidSaveTextDocument since we registered for watched file events");
         } else {
-          root.input = st.cx.try_get_input(&root.path, &mut st.has_diagnostics);
+          root.input = st.cx.get_input(&root.path);
           diagnostics::try_publish(st);
         }
       }

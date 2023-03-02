@@ -1,9 +1,7 @@
 //! See [`Cx`].
 
-use crate::convert;
 use crossbeam_channel::Sender;
 use diagnostic_util::Code;
-use fast_hash::FxHashSet;
 use lsp_server::{Message, Notification, ReqQueue, Response};
 use lsp_types::Url;
 
@@ -72,54 +70,7 @@ impl Cx {
     );
   }
 
-  pub(crate) fn try_get_input(
-    &mut self,
-    root: &paths::CanonicalPathBuf,
-    has_diagnostics: &mut FxHashSet<Url>,
-  ) -> Option<input::Input> {
-    let input =
-      elapsed::log("Input::new", || input::Input::new(&self.file_system, &mut self.store, root));
-    if input.errors.is_empty() {
-      return Some(input);
-    }
-    // clear all current diagnostics. if there are errors getting input, they are the only errors.
-    // TODO improve.
-    for url in std::mem::take(has_diagnostics) {
-      self.send_diagnostics(url, Vec::new());
-    }
-    for err in input.errors {
-      let did_send_as_diagnostic = if err.abs_path().is_file() {
-        match convert::file_url(err.abs_path()) {
-          Ok(url) => {
-            has_diagnostics.insert(url.clone());
-            self.send_diagnostics(
-              url,
-              vec![convert::diagnostic(
-                err.display(root.as_path()).to_string(),
-                err.range(),
-                err.code(),
-                err.severity(),
-                self.options.diagnostics_more_info_hint,
-              )],
-            );
-            true
-          }
-          Err(_) => false,
-        }
-      } else {
-        false
-      };
-      if !did_send_as_diagnostic {
-        self.show_error(
-          format!(
-            "{}: {}",
-            err.maybe_rel_path(root.as_path()).display(),
-            err.display(root.as_path())
-          ),
-          err.code(),
-        );
-      }
-    }
-    None
+  pub(crate) fn get_input(&mut self, root: &paths::CanonicalPathBuf) -> input::Input {
+    elapsed::log("Input::new", || input::Input::new(&self.file_system, &mut self.store, root))
   }
 }

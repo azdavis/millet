@@ -6,7 +6,6 @@ use crossbeam_channel::Sender;
 use diagnostic_util::Code;
 use fast_hash::{FxHashMap, FxHashSet};
 use lsp_server::{Message, ReqQueue};
-use lsp_types::Url;
 
 pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -> St {
   let options: config::Options = init
@@ -37,19 +36,18 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     .root_uri
     .map(|url| convert::canonical_path_buf(&cx.file_system, &url).map_err(|e| (e, url)))
     .transpose();
-  let mut has_diagnostics = FxHashSet::<Url>::default();
   let mut ret = St {
     // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
     mode: match root.as_mut().ok().and_then(Option::take) {
       Some(path) => {
-        let input = cx.try_get_input(&path, &mut has_diagnostics);
+        let input = cx.get_input(&path);
         Mode::Root(Root { path, input })
       }
       None => Mode::NoRoot(FxHashMap::default()),
     },
     cx,
     analysis,
-    has_diagnostics,
+    has_diagnostics: FxHashSet::default(),
   };
   if let Err((e, url)) = root {
     ret.cx.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1018));
