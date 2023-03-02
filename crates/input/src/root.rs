@@ -6,7 +6,7 @@ use crate::util::{
 };
 use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub(crate) struct Root {
@@ -31,12 +31,12 @@ impl Root {
     let had_config_file = config_file.is_ok();
     let config = match config_file {
       Ok(contents) => {
-        match ConfigFromFile::new(fs, &mut root_group_paths, root, config_path, contents.as_str()) {
-          Ok(cff) => {
+        match Config::from_file(fs, &mut root_group_paths, root, &config_path, contents.as_str()) {
+          Ok(config) => {
             if !root_group_paths.is_empty() {
-              root_group_source.path = Some(cff.path);
+              root_group_source.path = Some(config_path);
             }
-            cff.config
+            config
           }
           Err(e) => {
             errors.push(e);
@@ -97,44 +97,49 @@ pub(crate) struct Config {
   pub(crate) severities: Severities,
 }
 
-struct ConfigFromFile {
-  path: PathBuf,
-  config: Config,
-}
-
-impl ConfigFromFile {
-  fn new<F>(
+impl Config {
+  #[allow(clippy::too_many_lines)]
+  fn from_file<F>(
     fs: &F,
     root_group_paths: &mut Vec<GroupPathBuf>,
     root: &paths::CanonicalPathBuf,
-    config_path: PathBuf,
+    config_path: &Path,
     contents: &str,
   ) -> Result<Self>
   where
     F: paths::FileSystem,
   {
-    let mut ret = Self { path: config_path, config: Config::default() };
+    let mut ret = Config::default();
     let parsed: config::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
-        return Err(Error::new(ErrorSource::default(), ret.path, ErrorKind::CouldNotParseConfig(e)))
+        return Err(Error::new(
+          ErrorSource::default(),
+          config_path.to_owned(),
+          ErrorKind::CouldNotParseConfig(e),
+        ))
       }
     };
     if parsed.version != 1 {
       return Err(Error::new(
         ErrorSource::default(),
-        ret.path,
+        config_path.to_owned(),
         ErrorKind::InvalidConfigVersion(parsed.version),
       ));
     }
     if let Some(ws) = parsed.workspace {
       if let Some(root_path_glob) = ws.root {
         let path = root.as_path().join(root_path_glob.as_str());
-        let glob = str_path(ErrorSource { path: Some(ret.path.clone()), range: None }, &path)?;
+        let glob =
+          str_path(ErrorSource { path: Some(config_path.to_owned()), range: None }, &path)?;
         let paths = match fs.glob(glob.as_ref()) {
           Ok(x) => x,
           Err(e) => {
-            return Err(Error::new(ErrorSource::default(), ret.path, ErrorKind::GlobPattern(e)))
+            return Err(Error::new(
+              ErrorSource::default(),
+              config_path.to_owned(),
+              ErrorKind::GlobPattern(e),
+            ))
           }
         };
         for path in paths {
@@ -143,7 +148,7 @@ impl ConfigFromFile {
             Err(e) => {
               return Err(Error::new(
                 ErrorSource::default(),
-                ret.path,
+                config_path.to_owned(),
                 ErrorKind::Io(e.into_error()),
               ))
             }
@@ -153,7 +158,7 @@ impl ConfigFromFile {
             Some(path) => root_group_paths.push(path),
             None => {
               return Err(Error::new(
-                ErrorSource { path: Some(ret.path), range: None },
+                ErrorSource { path: Some(config_path.to_owned()), range: None },
                 path,
                 ErrorKind::NotGroup,
               ))
@@ -163,7 +168,7 @@ impl ConfigFromFile {
         if root_group_paths.is_empty() {
           return Err(Error::new(
             ErrorSource::default(),
-            ret.path,
+            config_path.to_owned(),
             ErrorKind::EmptyGlob(root_path_glob),
           ));
         }
@@ -177,12 +182,13 @@ impl ConfigFromFile {
             config::PathVar::Path(val) => {
               let path = root.as_path().join(val.as_str());
               let val: str_util::SmolStr =
-                str_path(ErrorSource { path: Some(ret.path.clone()), range: None }, &path)?.into();
+                str_path(ErrorSource { path: Some(config_path.to_owned()), range: None }, &path)?
+                  .into();
               (EnvEntryKind::Value, val)
             }
             config::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),
           };
-          ret.config.path_vars.insert(key, EnvEntry { kind, suffix });
+          ret.path_vars.insert(key, EnvEntry { kind, suffix });
         }
       }
     }
@@ -192,7 +198,7 @@ impl ConfigFromFile {
         Err(e) => {
           return Err(Error::new(
             ErrorSource::default(),
-            ret.path,
+            config_path.to_owned(),
             ErrorKind::InvalidErrorCode(code, e),
           ));
         }
@@ -203,7 +209,7 @@ impl ConfigFromFile {
           config::Severity::Warning => Some(diagnostic_util::Severity::Warning),
           config::Severity::Error => Some(diagnostic_util::Severity::Error),
         };
-        ret.config.severities.insert(code, sev);
+        ret.severities.insert(code, sev);
       }
     }
     Ok(ret)
