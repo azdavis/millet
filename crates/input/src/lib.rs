@@ -60,10 +60,8 @@ impl Input {
         GroupPathKind::Cm => lower_cm::get,
         GroupPathKind::Mlb => lower_mlb::get,
       };
-      match f(fs, &mut ret.sources, &mut ret.groups, store, &path_var_env, group.path) {
-        Ok(()) => ret.root_group_paths.push(group.path),
-        Err(e) => ret.errors.push(e),
-      }
+      f(fs, &mut ret.sources, &mut ret.groups, store, &path_var_env, group.path, &mut ret.errors);
+      ret.root_group_paths.push(group.path);
     }
     let bas_decs = ret.groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {

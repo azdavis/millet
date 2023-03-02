@@ -2,8 +2,7 @@
 
 use crate::types::Group;
 use crate::util::{
-  get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, Result,
-  StartedGroup,
+  get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, StartedGroup,
 };
 use fast_hash::FxHashSet;
 use paths::PathMap;
@@ -17,13 +16,13 @@ pub(crate) fn get<F>(
   store: &mut paths::Store,
   path_vars: &slash_var_path::Env,
   path: paths::PathId,
-) -> Result<()>
-where
+  errors: &mut Vec<Error>,
+) where
   F: paths::FileSystem,
 {
-  let mut st = St { fs, store, path_vars, sources, cm_files: PathMap::<CmFile>::default() };
+  let mut st = St { fs, store, path_vars, sources, cm_files: PathMap::<CmFile>::default(), errors };
   let init = GroupPathToProcess { parent: path, range: None, path };
-  get_one(&mut st, init)?;
+  get_one(&mut st, init);
   for (path, cm_file) in st.cm_files {
     let exports: Vec<_> = cm_file
       .exports
@@ -46,7 +45,6 @@ where
     let group = Group { bas_dec, pos_db: cm_file.pos_db.expect("no pos db") };
     groups.insert(path, group);
   }
-  Ok(())
 }
 
 struct St<'a, F> {
@@ -55,6 +53,7 @@ struct St<'a, F> {
   path_vars: &'a slash_var_path::Env,
   sources: &'a mut PathMap<String>,
   cm_files: PathMap<CmFile>,
+  errors: &'a mut Vec<Error>,
 }
 
 /// only derives default because we need to mark in-progress files as visited to prevent infinite
@@ -78,53 +77,76 @@ struct NameExport {
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
 /// of a given library path on demand.
-fn get_one<F>(st: &mut St<'_, F>, cur: GroupPathToProcess) -> Result<()>
+fn get_one<F>(st: &mut St<'_, F>, cur: GroupPathToProcess)
 where
   F: paths::FileSystem,
 {
   if st.cm_files.contains_key(&cur.path) {
-    return Ok(());
+    return;
   }
   // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
   st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
-  let group = StartedGroup::new(st.store, cur, st.fs)?;
-  let cm = match cm_syntax::get(group.contents.as_str(), st.path_vars) {
+  let group = match StartedGroup::new(st.store, cur, st.fs) {
     Ok(x) => x,
     Err(e) => {
-      return Err(Error::new(
+      st.errors.push(e);
+      return;
+    }
+  };
+  match cm_syntax::get(group.contents.as_str(), st.path_vars) {
+    Ok(cm) => get_one_cm_file(st, &mut ret, cur.path, &group, cm),
+    Err(e) => {
+      st.errors.push(Error::new(
         ErrorSource { path: None, range: group.pos_db.range_utf16(e.text_range()) },
         group.path.as_path().to_owned(),
         ErrorKind::Cm(e),
-      ))
+      ));
     }
-  };
+  }
+  ret.pos_db = Some(group.pos_db);
+  st.cm_files.insert(cur.path, ret);
+}
+
+fn get_one_cm_file<F>(
+  st: &mut St<'_, F>,
+  ret: &mut CmFile,
+  cur_path_id: paths::PathId,
+  group: &StartedGroup,
+  cm: cm_syntax::CmFile,
+) where
+  F: paths::FileSystem,
+{
   for pp in cm.paths {
     let (path_id, path, source) =
-      get_path_id_in_group(st.fs, st.store, &group, pp.val.as_path(), pp.range)?;
+      match get_path_id_in_group(st.fs, st.store, group, pp.val.as_path(), pp.range) {
+        Ok(x) => x,
+        Err(e) => {
+          st.errors.push(e);
+          continue;
+        }
+      };
     match pp.val.kind() {
       cm_syntax::PathKind::Sml => {
-        let contents = read_file(st.fs, source, path.as_path())?;
+        let contents = match read_file(st.fs, source, path.as_path()) {
+          Ok(x) => x,
+          Err(e) => {
+            st.errors.push(e);
+            continue;
+          }
+        };
         st.sources.insert(path_id, contents);
         ret.sml_paths.insert(path_id);
       }
       cm_syntax::PathKind::Cm => {
-        let cur = GroupPathToProcess { parent: cur.path, range: source.range, path: path_id };
-        get_one(st, cur)?;
+        let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
+        get_one(st, cur);
         ret.cm_paths.push(path_id);
       }
     }
   }
-  let cx = ExportCx {
-    group: &group,
-    cm_paths: &ret.cm_paths,
-    sml_paths: &ret.sml_paths,
-    cur_path_id: cur.path,
-  };
-  get_export(st, cx, &mut ret.exports, cm.export)?;
-  ret.pos_db = Some(group.pos_db);
-  st.cm_files.insert(cur.path, ret);
-  Ok(())
+  let cx = ExportCx { group, cm_paths: &ret.cm_paths, sml_paths: &ret.sml_paths, cur_path_id };
+  get_export(st, cx, &mut ret.exports, cm.export);
 }
 
 #[derive(Clone, Copy)]
@@ -140,8 +162,7 @@ fn get_export<F>(
   cx: ExportCx<'_>,
   ac: &mut NameExports,
   export: cm_syntax::Export,
-) -> Result<()>
-where
+) where
   F: paths::FileSystem,
 {
   match export {
@@ -151,11 +172,12 @@ where
         cm_syntax::Namespace::Signature => sml_namespace::Module::Signature,
         cm_syntax::Namespace::Functor => sml_namespace::Module::Functor,
         cm_syntax::Namespace::FunSig => {
-          return Err(Error::new(
+          st.errors.push(Error::new(
             ErrorSource { path: None, range: cx.group.pos_db.range_utf16(ns.range) },
             cx.group.path.as_path().to_owned(),
             ErrorKind::FunSig,
-          ))
+          ));
+          return;
         }
       };
       ac.insert(NameExport { namespace, name: name.val }, name.range);
@@ -163,25 +185,28 @@ where
     cm_syntax::Export::Library(lib) => {
       let p = match &lib.val {
         cm_syntax::PathOrStdBasis::Path(p) => p,
-        cm_syntax::PathOrStdBasis::StdBasis => return Ok(()),
+        cm_syntax::PathOrStdBasis::StdBasis => return,
       };
-      get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), lib.range, ac)?;
+      get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), lib.range, ac);
     }
     cm_syntax::Export::Source(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        let (path_id, _, source) =
-          get_path_id_in_group(st.fs, st.store, cx.group, p.as_path(), path.range)?;
-        let contents = match st.sources.get(&path_id) {
-          Some(x) => x.as_str(),
-          None => {
-            return Err(Error::new(
-              source,
-              cx.group.path.as_path().to_owned(),
-              ErrorKind::SourcePathNotInFiles,
-            ))
+        let path_id = get_path_id_in_group(st.fs, st.store, cx.group, p.as_path(), path.range);
+        let (path_id, _, source) = match path_id {
+          Ok(x) => x,
+          Err(e) => {
+            st.errors.push(e);
+            return;
           }
         };
-        get_top_defs(contents, ac, path.range);
+        match st.sources.get(&path_id) {
+          Some(contents) => get_top_defs(contents.as_str(), ac, path.range),
+          None => st.errors.push(Error::new(
+            source,
+            cx.group.path.as_path().to_owned(),
+            ErrorKind::SourcePathNotInFiles,
+          )),
+        }
       }
       cm_syntax::PathOrMinus::Minus => {
         for path_id in cx.sml_paths {
@@ -192,7 +217,7 @@ where
     },
     cm_syntax::Export::Group(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), path.range, ac)?;
+        get_one_and_extend_with(st, cx.group, cx.cur_path_id, p.as_path(), path.range, ac);
       }
       cm_syntax::PathOrMinus::Minus => {
         for &path_id in cx.cm_paths {
@@ -202,14 +227,14 @@ where
     },
     cm_syntax::Export::Union(exports) => {
       for export in exports {
-        get_export(st, cx, ac, export)?;
+        get_export(st, cx, ac, export);
       }
     }
     cm_syntax::Export::Difference(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
-      get_export(st, cx, &mut lhs_ac, *lhs)?;
-      get_export(st, cx, &mut rhs_ac, *rhs)?;
+      get_export(st, cx, &mut lhs_ac, *lhs);
+      get_export(st, cx, &mut rhs_ac, *rhs);
       // keep only those that ARE NOT in rhs.
       lhs_ac.retain(|k, _| !rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
@@ -217,14 +242,13 @@ where
     cm_syntax::Export::Intersection(lhs, rhs) => {
       let mut lhs_ac = NameExports::new();
       let mut rhs_ac = NameExports::new();
-      get_export(st, cx, &mut lhs_ac, *lhs)?;
-      get_export(st, cx, &mut rhs_ac, *rhs)?;
+      get_export(st, cx, &mut lhs_ac, *lhs);
+      get_export(st, cx, &mut rhs_ac, *rhs);
       // keep only those that ARE in rhs. only 1 character of difference from the Difference case!
       lhs_ac.retain(|k, _| rhs_ac.contains_key(k));
       ac.extend(lhs_ac);
     }
   }
-  Ok(())
 }
 
 fn get_one_and_extend_with<F>(
@@ -234,15 +258,19 @@ fn get_one_and_extend_with<F>(
   path: &std::path::Path,
   range: TextRange,
   ac: &mut NameExports,
-) -> Result<()>
-where
+) where
   F: paths::FileSystem,
 {
-  let (path_id, _, source) = get_path_id_in_group(st.fs, st.store, group, path, range)?;
+  let (path_id, _, source) = match get_path_id_in_group(st.fs, st.store, group, path, range) {
+    Ok(x) => x,
+    Err(e) => {
+      st.errors.push(e);
+      return;
+    }
+  };
   let cur = GroupPathToProcess { parent, range: source.range, path: path_id };
-  get_one(st, cur)?;
+  get_one(st, cur);
   extend_with(st, cur.path, range, ac);
-  Ok(())
 }
 
 fn extend_with<F>(st: &mut St<'_, F>, path: paths::PathId, range: TextRange, ac: &mut NameExports)
