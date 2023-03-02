@@ -28,13 +28,13 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     options,
     registered_for_watched_files: false,
     store: paths::Store::new(),
-    file_system: paths::RealFileSystem::default(),
+    fs: paths::RealFileSystem::default(),
     sender,
     req_queue: ReqQueue::default(),
   };
   let mut root = init
     .root_uri
-    .map(|url| convert::canonical_path_buf(&cx.file_system, &url).map_err(|e| (e, url)))
+    .map(|url| convert::canonical_path_buf(&cx.fs, &url).map_err(|e| (e, url)))
     .transpose();
   let mut ret = St {
     // do this convoluted incantation because we need `ret` to show the error in the `Err` case.
