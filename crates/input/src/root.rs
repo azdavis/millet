@@ -1,9 +1,7 @@
 //! Getting the root groups.
 
 use crate::types::Severities;
-use crate::util::{
-  get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, Result,
-};
+use crate::util::{get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind};
 use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
 use std::path::{Path, PathBuf};
@@ -30,19 +28,12 @@ impl Root {
     let config_file = fs.read_to_string(&config_path);
     let had_config_file = config_file.is_ok();
     let config = match config_file {
-      Ok(contents) => {
-        match Config::from_file(fs, &mut root_group_paths, root, &config_path, contents.as_str()) {
-          Ok(config) => {
-            if !root_group_paths.is_empty() {
-              root_group_source.path = Some(config_path);
-            }
-            config
-          }
-          Err(e) => {
-            errors.push(e);
-            Config::default()
-          }
+      Ok(s) => {
+        let config = Config::from_file(fs, &mut root_group_paths, root, &config_path, &s, errors);
+        if !root_group_paths.is_empty() {
+          root_group_source.path = Some(config_path);
         }
+        config
       }
       Err(_) => Config::default(),
     };
@@ -105,7 +96,8 @@ impl Config {
     root: &paths::CanonicalPathBuf,
     config_path: &Path,
     contents: &str,
-  ) -> Result<Self>
+    errors: &mut Vec<Error>,
+  ) -> Config
   where
     F: paths::FileSystem,
   {
@@ -113,15 +105,16 @@ impl Config {
     let parsed: config::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
-        return Err(Error::new(
+        errors.push(Error::new(
           ErrorSource::default(),
           config_path.to_owned(),
           ErrorKind::CouldNotParseConfig(e),
-        ))
+        ));
+        return ret;
       }
     };
     if parsed.version != 1 {
-      return Err(Error::new(
+      errors.push(Error::new(
         ErrorSource::default(),
         config_path.to_owned(),
         ErrorKind::InvalidConfigVersion(parsed.version),
@@ -130,43 +123,9 @@ impl Config {
     if let Some(ws) = parsed.workspace {
       if let Some(root_path_glob) = ws.root {
         let path = root.as_path().join(root_path_glob.as_str());
-        let glob =
-          str_path(ErrorSource { path: Some(config_path.to_owned()), range: None }, &path)?;
-        let paths = match fs.glob(glob.as_ref()) {
-          Ok(x) => x,
-          Err(e) => {
-            return Err(Error::new(
-              ErrorSource::default(),
-              config_path.to_owned(),
-              ErrorKind::GlobPattern(e),
-            ))
-          }
-        };
-        for path in paths {
-          let path = match path {
-            Ok(x) => x,
-            Err(e) => {
-              return Err(Error::new(
-                ErrorSource::default(),
-                config_path.to_owned(),
-                ErrorKind::Io(e.into_error()),
-              ))
-            }
-          };
-          let path = root.as_path().join(path);
-          match GroupPathBuf::new(fs, path.clone()) {
-            Some(path) => root_group_paths.push(path),
-            None => {
-              return Err(Error::new(
-                ErrorSource { path: Some(config_path.to_owned()), range: None },
-                path,
-                ErrorKind::NotGroup,
-              ))
-            }
-          }
-        }
+        glob_root_group_paths(fs, root_group_paths, root, &path, config_path, errors);
         if root_group_paths.is_empty() {
-          return Err(Error::new(
+          errors.push(Error::new(
             ErrorSource::default(),
             config_path.to_owned(),
             ErrorKind::EmptyGlob(root_path_glob),
@@ -181,9 +140,14 @@ impl Config {
             config::PathVar::Value(val) => (EnvEntryKind::Value, val),
             config::PathVar::Path(val) => {
               let path = root.as_path().join(val.as_str());
-              let val: str_util::SmolStr =
-                str_path(ErrorSource { path: Some(config_path.to_owned()), range: None }, &path)?
-                  .into();
+              let source = ErrorSource { path: Some(config_path.to_owned()), range: None };
+              let val = match str_path(source, &path) {
+                Ok(x) => str_util::SmolStr::from(x),
+                Err(e) => {
+                  errors.push(e);
+                  continue;
+                }
+              };
               (EnvEntryKind::Value, val)
             }
             config::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),
@@ -196,11 +160,12 @@ impl Config {
       let code = match code.parse::<diagnostic_util::Code>() {
         Ok(x) => x,
         Err(e) => {
-          return Err(Error::new(
+          errors.push(Error::new(
             ErrorSource::default(),
             config_path.to_owned(),
             ErrorKind::InvalidErrorCode(code, e),
           ));
+          continue;
         }
       };
       if let Some(sev) = config.severity {
@@ -212,7 +177,56 @@ impl Config {
         ret.severities.insert(code, sev);
       }
     }
-    Ok(ret)
+    ret
+  }
+}
+
+fn glob_root_group_paths<F>(
+  fs: &F,
+  root_group_paths: &mut Vec<GroupPathBuf>,
+  root: &paths::CanonicalPathBuf,
+  path: &Path,
+  config_path: &Path,
+  errors: &mut Vec<Error>,
+) where
+  F: paths::FileSystem,
+{
+  let glob = str_path(ErrorSource { path: Some(config_path.to_owned()), range: None }, path);
+  let glob = match glob {
+    Ok(x) => x,
+    Err(e) => {
+      errors.push(e);
+      return;
+    }
+  };
+  let paths = match fs.glob(glob) {
+    Ok(x) => x,
+    Err(e) => {
+      errors.push(Error::new(
+        ErrorSource::default(),
+        config_path.to_owned(),
+        ErrorKind::GlobPattern(e),
+      ));
+      return;
+    }
+  };
+  for path in paths {
+    let path = match path {
+      Ok(x) => x,
+      Err(e) => {
+        errors.push(Error::from_io(config_path.to_owned(), e.into_error()));
+        continue;
+      }
+    };
+    let path = root.as_path().join(path);
+    match GroupPathBuf::new(fs, path.clone()) {
+      Some(path) => root_group_paths.push(path),
+      None => errors.push(Error::new(
+        ErrorSource { path: Some(config_path.to_owned()), range: None },
+        path,
+        ErrorKind::NotGroup,
+      )),
+    }
   }
 }
 
