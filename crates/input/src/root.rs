@@ -8,11 +8,7 @@ use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
 use std::path::PathBuf;
 
-pub(crate) struct RootGroup {
-  pub(crate) path: PathId,
-  pub(crate) kind: GroupPathKind,
-}
-
+#[derive(Debug, Default)]
 pub(crate) struct Root {
   pub(crate) groups: Vec<RootGroup>,
   pub(crate) config: Config,
@@ -82,7 +78,13 @@ impl Root {
   }
 }
 
-#[derive(Default)]
+#[derive(Debug)]
+pub(crate) struct RootGroup {
+  pub(crate) path: PathId,
+  pub(crate) kind: GroupPathKind,
+}
+
+#[derive(Debug, Default)]
 pub(crate) struct Config {
   pub(crate) path_vars: slash_var_path::UnresolvedEnv,
   pub(crate) severities: Severities,
