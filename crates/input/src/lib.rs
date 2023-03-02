@@ -27,7 +27,7 @@ pub struct Input {
   pub sources: PathMap<String>,
   /// A map from group paths to their (parsed) contents.
   pub groups: PathMap<types::Group>,
-  /// The root group id.
+  /// The root group ids.
   pub root_group_paths: Vec<PathId>,
   /// Severities to override.
   pub severities: types::Severities,
