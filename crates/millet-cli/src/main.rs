@@ -52,13 +52,13 @@ fn run() -> usize {
     }
   };
   let mut store = paths::Store::new();
-  let inp = match input::Input::new(&fs, &mut store, &root) {
-    Ok(x) => x,
-    Err(e) => {
-      handle_input_error(root.as_path(), e);
-      return 1;
+  let inp = input::Input::new(&fs, &mut store, &root);
+  if !inp.errors.is_empty() {
+    for err in inp.errors {
+      handle_input_error(root.as_path(), err);
     }
-  };
+    return 1;
+  }
   let mut an = analysis::Analysis::new(
     analysis::StdBasis::Full,
     config::ErrorLines::One,

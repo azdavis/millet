@@ -17,11 +17,8 @@ use util::{ErrorKind, ErrorSource, GroupPathKind};
 pub use types::{Group, Severities};
 pub use util::Error;
 
-/// A result type defaulting to success = Input and error = Error.
-pub type Result<T = Input, E = Error> = std::result::Result<T, E>;
-
 /// The input to analysis.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Input {
   /// A map from source paths to their contents.
   pub sources: PathMap<String>,
@@ -31,6 +28,8 @@ pub struct Input {
   pub root_group_paths: Vec<PathId>,
   /// Severities to override.
   pub severities: types::Severities,
+  /// Errors when getting input.
+  pub errors: Vec<Error>,
 }
 
 impl Input {
@@ -39,38 +38,48 @@ impl Input {
   /// # Errors
   ///
   /// When getting input failed.
-  pub fn new<F>(fs: &F, store: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Result
+  pub fn new<F>(fs: &F, store: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Input
   where
     F: paths::FileSystem,
   {
-    let root = root::Root::new(fs, store, root)?;
-    let mut ret = Self {
-      sources: PathMap::default(),
-      groups: PathMap::default(),
-      root_group_paths: Vec::new(),
-      severities: root.config.severities,
+    let mut ret = Input::default();
+    let root = match root::Root::new(fs, store, root) {
+      Ok(x) => x,
+      Err(e) => {
+        ret.errors.push(e);
+        return ret;
+      }
     };
+    ret.severities = root.config.severities;
     for group in root.groups {
       let path = store.get_path(group.path).as_path();
       let parent = path.parent().expect("group path with no parent");
-      let parent = util::str_path(ErrorSource::default(), parent)?;
+      let parent = match util::str_path(ErrorSource::default(), parent) {
+        Ok(x) => x,
+        Err(e) => {
+          ret.errors.push(e);
+          continue;
+        }
+      };
       let path_var_env = slash_var_path::resolve_env(parent, root.config.path_vars.clone());
       let f = match group.kind {
         GroupPathKind::Cm => lower_cm::get,
         GroupPathKind::Mlb => lower_mlb::get,
       };
-      f(fs, &mut ret.sources, &mut ret.groups, store, &path_var_env, group.path)?;
-      ret.root_group_paths.push(group.path);
+      match f(fs, &mut ret.sources, &mut ret.groups, store, &path_var_env, group.path) {
+        Ok(()) => ret.root_group_paths.push(group.path),
+        Err(e) => ret.errors.push(e),
+      }
     }
     let bas_decs = ret.groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
-      return Err(Error::new(
+      ret.errors.push(Error::new(
         ErrorSource::default(),
         store.get_path(err.witness()).as_path().to_owned(),
         ErrorKind::Cycle,
       ));
     }
-    Ok(ret)
+    ret
   }
 
   /// Return an iterator over the source paths.

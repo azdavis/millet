@@ -120,7 +120,7 @@ where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
   let (input, _) = input::get(files);
-  let e = input.expect_err("unexpectedly good input");
+  let e = input.errors.first().expect("unexpectedly good input");
   let got_path = e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip prefix");
   assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
   let got_msg = e.display(input::ROOT.as_path()).to_string();

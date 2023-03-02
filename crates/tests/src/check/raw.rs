@@ -38,7 +38,9 @@ where
   }
   // ignore the Err if we already initialized logging, since that's fine.
   let (input, store) = input::get(files);
-  let input = input.expect("unexpectedly bad input");
+  if let Some(e) = input.errors.first() {
+    panic!("unexpectedly bad input: {e:?}");
+  }
   let mut ck = show::Show::new(
     store,
     input.iter_sources().map(|s| {
