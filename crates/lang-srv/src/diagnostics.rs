@@ -2,7 +2,7 @@
 
 use crate::convert;
 use crate::state::{Mode, St};
-use fast_hash::FxHashSet;
+use fast_hash::{FxHashMap, FxHashSet};
 use lsp_types::Url;
 use paths::FileSystem as _;
 
@@ -11,26 +11,25 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
     Mode::Root(x) => x,
     Mode::NoRoot(_) => return false,
   };
-  let got_many = st.analysis.get_many(&root.input);
-  let mut has_diagnostics = FxHashSet::<Url>::default();
+  let mut input_diagnostics = FxHashMap::<Url, Vec<lsp_types::Diagnostic>>::default();
   for err in &root.input.errors {
     let did_send_as_diagnostic = if st.cx.fs.is_file(err.abs_path()) {
       match convert::file_url(err.abs_path()) {
         Ok(url) => {
-          has_diagnostics.insert(url.clone());
-          st.cx.send_diagnostics(
-            url,
-            vec![convert::diagnostic(
-              err.display(root.path.as_path()).to_string(),
-              err.range(),
-              err.code(),
-              err.severity(),
-              st.cx.options.diagnostics_more_info_hint,
-            )],
+          let d = convert::diagnostic(
+            err.display(root.path.as_path()).to_string(),
+            err.range(),
+            err.code(),
+            err.severity(),
+            st.cx.options.diagnostics_more_info_hint,
           );
+          input_diagnostics.entry(url).or_default().push(d);
           true
         }
-        Err(_) => false,
+        Err(e) => {
+          log::error!("couldn't get path as a file url: {e:#}");
+          false
+        }
       }
     } else {
       false
@@ -46,6 +45,12 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
       );
     }
   }
+  let mut has_diagnostics = FxHashSet::<Url>::default();
+  for (url, ds) in input_diagnostics {
+    has_diagnostics.insert(url.clone());
+    st.cx.send_diagnostics(url, ds);
+  }
+  let got_many = st.analysis.get_many(&root.input);
   for (path_id, errors) in got_many {
     let path = st.cx.store.get_path(path_id);
     let url = match convert::file_url(path.as_path()) {
