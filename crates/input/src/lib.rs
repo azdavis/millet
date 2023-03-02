@@ -43,13 +43,7 @@ impl Input {
     F: paths::FileSystem,
   {
     let mut ret = Input::default();
-    let root = match root::Root::new(fs, store, root) {
-      Ok(x) => x,
-      Err(e) => {
-        ret.errors.push(e);
-        return ret;
-      }
-    };
+    let root = root::Root::new(fs, store, root, &mut ret.errors);
     ret.severities = root.config.severities;
     for group in root.groups {
       let path = store.get_path(group.path).as_path();

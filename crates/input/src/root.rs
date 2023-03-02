@@ -8,7 +8,7 @@ use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
 use std::path::PathBuf;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct Root {
   pub(crate) groups: Vec<RootGroup>,
   pub(crate) config: Config,
@@ -19,7 +19,8 @@ impl Root {
     fs: &F,
     store: &mut paths::Store,
     root: &paths::CanonicalPathBuf,
-  ) -> Result<Self>
+    errors: &mut Vec<Error>,
+  ) -> Root
   where
     F: paths::FileSystem,
   {
@@ -30,51 +31,57 @@ impl Root {
     let had_config_file = config_file.is_ok();
     let config = match config_file {
       Ok(contents) => {
-        let cff =
-          ConfigFromFile::new(fs, &mut root_group_paths, root, config_path, contents.as_str())?;
-        if !root_group_paths.is_empty() {
-          root_group_source.path = Some(cff.path);
+        match ConfigFromFile::new(fs, &mut root_group_paths, root, config_path, contents.as_str()) {
+          Ok(cff) => {
+            if !root_group_paths.is_empty() {
+              root_group_source.path = Some(cff.path);
+            }
+            cff.config
+          }
+          Err(e) => {
+            errors.push(e);
+            Config::default()
+          }
         }
-        cff.config
       }
       Err(_) => Config::default(),
     };
     if root_group_paths.is_empty() {
-      let dir_entries = read_dir(fs, ErrorSource::default(), root.as_path())?;
+      let dir_entries = match read_dir(fs, ErrorSource::default(), root.as_path()) {
+        Ok(x) => x,
+        Err(e) => {
+          errors.push(e);
+          vec![]
+        }
+      };
       for entry in dir_entries {
         if let Some(group_path) = GroupPathBuf::new(fs, entry.clone()) {
           match root_group_paths.first() {
-            Some(rgp) => {
-              return Err(Error::new(
-                ErrorSource { path: Some(rgp.path.clone()), range: None },
-                entry.clone(),
-                ErrorKind::MultipleRoots(rgp.path.clone(), entry),
-              ))
-            }
+            Some(rgp) => errors.push(Error::new(
+              ErrorSource { path: Some(rgp.path.clone()), range: None },
+              entry.clone(),
+              ErrorKind::MultipleRoots(rgp.path.clone(), entry),
+            )),
             None => root_group_paths.push(group_path),
           }
         }
       }
     }
     if root_group_paths.is_empty() {
-      return Err(Error::new(
+      errors.push(Error::new(
         ErrorSource::default(),
         root.as_path().to_owned(),
         ErrorKind::NoRoot(had_config_file),
       ));
     }
-    Ok(Self {
-      groups: root_group_paths
-        .into_iter()
-        .map(|root_group_path| {
-          Ok(RootGroup {
-            path: get_path_id(fs, store, root_group_source.clone(), &root_group_path.path)?,
-            kind: root_group_path.kind,
-          })
-        })
-        .collect::<Result<Vec<_>>>()?,
-      config,
-    })
+    let mut ret = Root { groups: Vec::new(), config };
+    for root_group_path in root_group_paths {
+      match get_path_id(fs, store, root_group_source.clone(), &root_group_path.path) {
+        Ok(path) => ret.groups.push(RootGroup { path, kind: root_group_path.kind }),
+        Err(e) => errors.push(e),
+      }
+    }
+    ret
   }
 }
 
