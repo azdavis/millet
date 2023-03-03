@@ -1,6 +1,6 @@
 //! Exceptions.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn many() {
@@ -73,6 +73,30 @@ exception E
 val x = raise E
 (**     ^^^^^^^ cannot bind expansive polymorphic expression *)
 val y = x x
+"#,
+  );
+}
+
+#[test]
+fn raise_prec() {
+  check(
+    r#"
+exception A and B and C
+fun f () = raise if 3 < 4 then A else B
+fun g n = raise case n of 1 => A | 2 => B | _ => C
+"#,
+  );
+}
+
+#[test]
+fn handle_prec() {
+  fail(
+    r#"
+infix &&
+fun (b && ()) = if b then 1 else 2
+val _ = (false && ()) handle _ => 3
+val _ = false && (() handle _ => ())
+val _ = false && () handle _ => 3
 "#,
   );
 }
