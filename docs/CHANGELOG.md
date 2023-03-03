@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.8.1
+
+- Fix a `handle` precedence issue.
+
 ## v0.8.0
 
 - Analyze various malformed inputs further.
