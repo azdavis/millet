@@ -1,6 +1,6 @@
 //! Exceptions.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn many() {
@@ -90,7 +90,7 @@ fun g n = raise case n of 1 => A | 2 => B | _ => C
 
 #[test]
 fn handle_prec() {
-  fail(
+  check(
     r#"
 infix &&
 fun (b && ()) = if b then 1 else 2

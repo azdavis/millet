@@ -99,7 +99,7 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
         }
         p.exit(en, SK::InfixExp)
       } else if p.at(SK::Colon) {
-        if matches!(min_prec, ExpPrec::Infix(_)) {
+        if should_break_exp(p, ExpPrec::Colon, min_prec) {
           break;
         }
         let en = p.precede(ex);
@@ -127,6 +127,9 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
         }
         p.exit(en, SK::OrelseExp)
       } else if p.at(SK::HandleKw) {
+        if should_break_exp(p, ExpPrec::Handle, min_prec) {
+          break;
+        }
         let en = p.precede(ex);
         p.bump();
         matcher(p, fe);
@@ -286,18 +289,24 @@ fn exp_args(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
 #[derive(Debug, Clone, Copy)]
 enum ExpPrec {
   Min,
+  Handle,
   Orelse,
   Andalso,
+  Colon,
   Infix(sml_fixity::Infix),
 }
 
 fn should_break_exp(p: &mut Parser<'_>, prec: ExpPrec, min_prec: ExpPrec) -> bool {
   match (prec, min_prec) {
+    (_, ExpPrec::Handle | ExpPrec::Colon) => unreachable!("Handle and Colon are never a min_prec"),
+    (ExpPrec::Min, _) => unreachable!("Min is always a min_prec"),
     (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(p, prec, min_prec),
-    (_, ExpPrec::Min) | (ExpPrec::Infix(_), _) | (ExpPrec::Andalso, ExpPrec::Orelse) => false,
+    (_, ExpPrec::Min)
+    | (ExpPrec::Infix(_), _)
+    | (ExpPrec::Colon, ExpPrec::Andalso | ExpPrec::Orelse)
+    | (ExpPrec::Andalso, ExpPrec::Orelse) => false,
     (_, ExpPrec::Infix(_))
     | (ExpPrec::Andalso, ExpPrec::Andalso)
-    | (ExpPrec::Orelse, ExpPrec::Orelse | ExpPrec::Andalso) => true,
-    (ExpPrec::Min, _) => unreachable!("Min is only ever the starting prec, not a new prec"),
+    | (ExpPrec::Orelse | ExpPrec::Handle, ExpPrec::Andalso | ExpPrec::Orelse) => true,
   }
 }
