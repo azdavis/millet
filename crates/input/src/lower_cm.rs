@@ -96,13 +96,11 @@ where
   };
   match cm_syntax::get(group.contents.as_str(), st.path_vars) {
     Ok(cm) => get_one_cm_file(st, &mut ret, cur.path, &group, cm),
-    Err(e) => {
-      st.errors.push(Error::new(
-        ErrorSource { path: None, range: group.pos_db.range_utf16(e.text_range()) },
-        group.path.as_path().to_owned(),
-        ErrorKind::Cm(e),
-      ));
-    }
+    Err(e) => st.errors.push(Error::new(
+      ErrorSource { path: None, range: group.pos_db.range_utf16(e.text_range()) },
+      group.path.as_path().to_owned(),
+      ErrorKind::Cm(e),
+    )),
   }
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
@@ -297,36 +295,28 @@ fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, ran
     .filter_map(|x| x.dec_one());
   for dec in iter {
     match dec {
-      sml_syntax::ast::DecOne::LocalDec(dec) => {
-        get_top_defs_dec(ac, dec.in_dec(), range);
-      }
-      sml_syntax::ast::DecOne::StructureDec(dec) => {
-        ac.extend(dec.str_binds().filter_map(|x| {
-          let export = NameExport {
-            namespace: sml_namespace::Module::Structure,
-            name: str_util::Name::new(x.name()?.text()),
-          };
-          Some((export, range))
-        }));
-      }
-      sml_syntax::ast::DecOne::SignatureDec(dec) => {
-        ac.extend(dec.sig_binds().filter_map(|x| {
-          let export = NameExport {
-            namespace: sml_namespace::Module::Signature,
-            name: str_util::Name::new(x.name()?.text()),
-          };
-          Some((export, range))
-        }));
-      }
-      sml_syntax::ast::DecOne::FunctorDec(dec) => {
-        ac.extend(dec.functor_binds().filter_map(|x| {
-          let export = NameExport {
-            namespace: sml_namespace::Module::Functor,
-            name: str_util::Name::new(x.functor_name()?.text()),
-          };
-          Some((export, range))
-        }));
-      }
+      sml_syntax::ast::DecOne::LocalDec(dec) => get_top_defs_dec(ac, dec.in_dec(), range),
+      sml_syntax::ast::DecOne::StructureDec(dec) => ac.extend(dec.str_binds().filter_map(|x| {
+        let export = NameExport {
+          namespace: sml_namespace::Module::Structure,
+          name: str_util::Name::new(x.name()?.text()),
+        };
+        Some((export, range))
+      })),
+      sml_syntax::ast::DecOne::SignatureDec(dec) => ac.extend(dec.sig_binds().filter_map(|x| {
+        let export = NameExport {
+          namespace: sml_namespace::Module::Signature,
+          name: str_util::Name::new(x.name()?.text()),
+        };
+        Some((export, range))
+      })),
+      sml_syntax::ast::DecOne::FunctorDec(dec) => ac.extend(dec.functor_binds().filter_map(|x| {
+        let export = NameExport {
+          namespace: sml_namespace::Module::Functor,
+          name: str_util::Name::new(x.functor_name()?.text()),
+        };
+        Some((export, range))
+      })),
       _ => {}
     }
   }

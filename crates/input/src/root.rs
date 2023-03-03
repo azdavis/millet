@@ -46,15 +46,17 @@ impl Root {
         }
       };
       for entry in dir_entries {
-        if let Some(group_path) = GroupPathBuf::new(fs, entry.clone()) {
-          match root_group_paths.first() {
-            Some(rgp) => errors.push(Error::new(
-              ErrorSource { path: Some(rgp.path.clone()), range: None },
-              entry.clone(),
-              ErrorKind::MultipleRoots(rgp.path.clone(), entry),
-            )),
-            None => root_group_paths.push(group_path),
-          }
+        let group_path = match GroupPathBuf::new(fs, entry.clone()) {
+          Some(x) => x,
+          None => continue,
+        };
+        match root_group_paths.first() {
+          Some(rgp) => errors.push(Error::new(
+            ErrorSource { path: Some(rgp.path.clone()), range: None },
+            entry.clone(),
+            ErrorKind::MultipleRoots(rgp.path.clone(), entry),
+          )),
+          None => root_group_paths.push(group_path),
         }
       }
     }
