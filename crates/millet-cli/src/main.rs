@@ -47,18 +47,12 @@ fn run() -> usize {
   let root = match fs.canonicalize(root.as_path()) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(root.as_path(), input::Error::from_io(root.to_owned(), e));
+      handle_input_error(root.as_path(), &input::Error::from_io(root.to_owned(), e));
       return 1;
     }
   };
   let mut store = paths::Store::new();
   let inp = input::Input::new(&fs, &mut store, &root);
-  if !inp.errors.is_empty() {
-    for err in inp.errors {
-      handle_input_error(root.as_path(), err);
-    }
-    return 1;
-  }
   let mut an = analysis::Analysis::new(
     analysis::StdBasis::Full,
     config::ErrorLines::One,
@@ -66,18 +60,20 @@ fn run() -> usize {
     None,
   );
   let got = an.get_many(&inp);
-  let num_errors: usize = got.values().map(|es| es.len()).sum();
-  for (path, errors) in got {
-    for e in errors {
-      let path = store.get_path(path);
+  for err in &inp.errors {
+    handle_input_error(root.as_path(), err);
+  }
+  for (path, errors) in &got {
+    for err in errors {
+      let path = store.get_path(*path);
       let path = path.as_path().strip_prefix(root.as_path()).unwrap_or(path.as_path());
-      println!("{}:{}: error[{}]: {}", path.display(), e.range, e.code, e.message);
+      println!("{}:{}: error[{}]: {}", path.display(), err.range, err.code, err.message);
     }
   }
-  num_errors
+  inp.errors.len() + got.values().map(|es| es.len()).sum::<usize>()
 }
 
-fn handle_input_error(root: &std::path::Path, e: input::Error) {
+fn handle_input_error(root: &std::path::Path, e: &input::Error) {
   print!("{}", e.maybe_rel_path(root).display());
   if let Some(r) = e.range() {
     print!(":{}", r.start);
