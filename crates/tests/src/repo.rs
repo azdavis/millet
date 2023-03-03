@@ -397,9 +397,10 @@ fn node_version() {
   assert_eq!(split.next().unwrap(), version);
   assert!(split.next().is_none());
   let readme = include_str!("../../../README.md");
-  let (_, readme_table_line) =
-    readme.lines().find_map(|line| line.split_once("| [Node.js][node] | ")).unwrap();
+  let readme_table_line =
+    readme.lines().find_map(|line| line.strip_prefix("| [Node.js][node]")).unwrap();
   let mut split = readme_table_line.split_ascii_whitespace();
+  assert_eq!(split.next().unwrap(), "|");
   assert_eq!(split.next().unwrap(), version);
   let ci = include_str!("../../../.github/workflows/ci.yaml");
   let ci_version = ci

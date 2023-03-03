@@ -39,18 +39,24 @@ We encourage contributions of all kinds. Please read the [contributing][] guide.
 
 ### Dependencies
 
-The project is mostly written in Rust, so you will need a Rust installation. It should have Cargo, Rust's package manager and build system.
+| What                | Version       | Why                      | Required |
+| ------------------- | ------------- | ------------------------ | -------- |
+| [Rust][rust]        | Latest stable | Build Rust code          | Yes      |
+| [Node.js][node]     | 18            | Build TypeScript code    | No       |
+| [Rust Analyzer][ra] | Latest        | Good Rust dev experience | No       |
+
+The project is mostly written in Rust, so you will need a Rust installation. It should include:
+
+- `rustc`, a Rust compiler
+- `cargo`, a Rust package manager and build system
+- `rustfmt`, a Rust formatter
+- `clippy`, a Rust linter
+
+The MSRV (minimum supported Rust version) is the latest stable.
 
 If you want to build the VS Code extension in TypeScript as well, you should also install Node.js.
 
-| What            | Version       | Why                   |
-| --------------- | ------------- | --------------------- |
-| [Rust][rust]    | Latest stable | Build Rust code       |
-| [Node.js][node] | 18            | Build TypeScript code |
-
-As noted above, the MSRV (minimum support Rust version) is the latest stable.
-
-If your editor (e.g. VS Code) supports it, we also recommend installing [rust-analyzer][ra], a language server for Rust.
+If your editor supports it, we also recommend installing Rust Analyzer, a language server for Rust.
 
 ### Building/testing
 
@@ -87,15 +93,12 @@ If you're using VS Code, you can try out the VS Code extension:
 
 ## Naming
 
-"Millet" has the letters M and L in it, in that order. So does "Standard ML".
+- "Millet" has the letters M and L in it, in that order. So does "Standard ML".
+- Birds eat millet. A bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course, which is taught in Standard ML.
 
-Also:
+## Logo
 
-- Birds eat millet.
-- A bird named Polly Morphism is the mascot for [15-150][cmu150], Carnegie Mellon's introductory functional programming course.
-- 15-150 is taught in Standard ML.
-
-Note also that Polly is featured in the logo, which was drawn by [Yixin He][yixin].
+The logo features Polly Morphism, wearing a 15-150 style T-shirt, writing SML on a Millet-branded laptop, encircled with millet. It was drawn by [Yixin He][yixin].
 
 ## License
 

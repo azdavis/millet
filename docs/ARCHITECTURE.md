@@ -87,18 +87,23 @@ The latter is more common in "regular" compilers, but we're a language server. I
 ### `crates/input`
 
 ```rs
-&Path -> Result<Input, InputError>
+&Path -> (Input, Vec<InputError>)
 ```
 
 Get input from a filesystem.
 
+The most important thing in the input is a mapping from file names to either:
+
+- raw (string) contents, for SML source files
+- parsed and processed contents, for CM/MLB "group" files
+
 ### `crates/sml-lex`
 
 ```rs
-String -> (Vec<sml_syntax::Token>, Vec<LexError>)
+&str -> (Vec<sml_syntax::Token<'_>>, Vec<LexError>)
 ```
 
-Lex (aka tokenize) a string into tokens.
+Lex (aka tokenize) a string of an SML program into tokens.
 
 ### `crates/sml-parse`
 
@@ -169,6 +174,8 @@ These crates do interesting things related to SML files, but aren't really full 
 
 Naively format SML files.
 
+Doesn't handle comments or line length.
+
 ### `crates/sml-comment`
 
 Extract interesting comments from above SML syntax nodes, like doc comments.
@@ -179,14 +186,14 @@ Types relating to SML infix operators.
 
 ### `crates/sml-namespace`
 
-A type representing the various SML structure-level namespaces.
+Types representing various SML namespaces.
 
 ### `crates/lex-util`
 
 Some common lex utilities used in multiple lexing crates, like:
 
 - Handling `(* ... *)` style block comments with nesting.
-- Handling whitespace.
+- Handling SML's definition of whitespace. (We actually consider a superset of the SML definition to be whitespace.)
 
 ### `crates/slash-var-path`
 
