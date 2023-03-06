@@ -800,7 +800,7 @@ In fact, you can do this in Python as well.
 
 ```py
 def foo(x):
-    y = 3 if x == 4 else 5
+    y = 5 if x == 4 else 3
     return y + x
 ```
 
