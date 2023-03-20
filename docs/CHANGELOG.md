@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Allow specifying what kinds of expressions are permitted.
+
 ## v0.8.1
 
 - Fix a `handle` precedence issue.
