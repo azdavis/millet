@@ -5,7 +5,7 @@ use crate::util::{ErrorKind, MatcherFlavor, Sep, St};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-pub(crate) fn get(st: &mut St, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
+pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
   let exp = exp?;
   let ptr = SyntaxNodePtr::new(exp.syntax());
   let ret = match exp {
@@ -240,7 +240,7 @@ where
   sml_hir::Exp::Record(rows)
 }
 
-fn call_unit_fn(st: &mut St, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx {
+fn call_unit_fn(st: &mut St<'_>, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx {
   let vid_exp = st.exp(name(vid.as_str()), ptr.clone());
   let arg_exp = st.exp(sml_hir::Exp::Record(vec![]), ptr.clone());
   st.exp(sml_hir::Exp::App(vid_exp, arg_exp), ptr)
@@ -253,7 +253,7 @@ fn call_unit_fn(st: &mut St, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sml_hi
 /// 3. `((fn _ => ... (fn _ => (fn _ => e) en) ...) e1)`
 ///
 /// the vec must not be empty, since we need a last expression `e`.
-fn exp_idx_in_seq<A, B>(st: &mut St, exps: A, ptr: &SyntaxNodePtr) -> sml_hir::ExpIdx
+fn exp_idx_in_seq<A, B>(st: &mut St<'_>, exps: A, ptr: &SyntaxNodePtr) -> sml_hir::ExpIdx
 where
   A: IntoIterator<IntoIter = B>,
   B: DoubleEndedIterator<Item = sml_hir::ExpIdx>,
@@ -270,7 +270,7 @@ where
 }
 
 fn if_(
-  st: &mut St,
+  st: &mut St<'_>,
   cond: sml_hir::ExpIdx,
   yes: sml_hir::ExpIdx,
   no: sml_hir::ExpIdx,
@@ -283,7 +283,7 @@ fn if_(
 }
 
 pub(crate) fn case(
-  st: &mut St,
+  st: &mut St<'_>,
   head: sml_hir::ExpIdx,
   arms: Vec<(sml_hir::PatIdx, sml_hir::ExpIdx)>,
   ptr: SyntaxNodePtr,
@@ -293,7 +293,7 @@ pub(crate) fn case(
 }
 
 fn matcher(
-  st: &mut St,
+  st: &mut St<'_>,
   flavor: Option<MatcherFlavor>,
   matcher: Option<ast::Matcher>,
 ) -> Vec<(sml_hir::PatIdx, sml_hir::ExpIdx)> {

@@ -4,7 +4,7 @@ use crate::common::{ck_trailing, get_lab, get_path};
 use crate::util::{ErrorKind, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-pub(crate) fn get(st: &mut St, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
+pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
   let ty = ty?;
   let ptr = SyntaxNodePtr::new(ty.syntax());
   let ret = match ty {
@@ -59,7 +59,7 @@ fn warn_unnecessary_parens(ty: &ast::Ty) -> bool {
   }
 }
 
-pub(crate) fn var_seq(st: &mut St, tvs: Option<ast::TyVarSeq>) -> Vec<sml_hir::TyVar> {
+pub(crate) fn var_seq(st: &mut St<'_>, tvs: Option<ast::TyVarSeq>) -> Vec<sml_hir::TyVar> {
   let separators = tvs.iter().flat_map(ast::TyVarSeq::ty_var_args).map(|x| x.comma());
   ck_trailing(st, Sep::Comma, separators);
   tvs

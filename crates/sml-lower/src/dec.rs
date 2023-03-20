@@ -9,10 +9,10 @@ use crate::util::{ErrorKind, St};
 use crate::{exp, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-fn get_dec_flavor<T, G, S>(st: &mut St, dec: Option<ast::Dec>, g: G, s: S) -> Option<T>
+fn get_dec_flavor<T, G, S>(st: &mut St<'_>, dec: Option<ast::Dec>, g: G, s: S) -> Option<T>
 where
-  G: Fn(&mut St, ast::DecOne) -> Option<T>,
-  S: FnOnce(&mut St, Vec<Option<T>>, SyntaxNodePtr) -> Option<T>,
+  G: Fn(&mut St<'_>, ast::DecOne) -> Option<T>,
+  S: FnOnce(&mut St<'_>, Vec<Option<T>>, SyntaxNodePtr) -> Option<T>,
 {
   let dec = dec?;
   let mut decs = Vec::<Option<T>>::new();
@@ -41,13 +41,13 @@ where
   }
 }
 
-pub(crate) fn get_top_dec(st: &mut St, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
+pub(crate) fn get_top_dec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
   get_dec_flavor(st, dec, get_top_dec_one, |st, decs, ptr| {
     st.str_dec(sml_hir::StrDec::Seq(decs), ptr)
   })
 }
 
-fn get_top_dec_one(st: &mut St, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
+fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
   match top_dec {
     ast::DecOne::ExpDec(top_dec) => {
       let ptr = SyntaxNodePtr::new(top_dec.syntax());
@@ -80,13 +80,13 @@ fn get_top_dec_one(st: &mut St, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
   }
 }
 
-fn get_str_dec(st: &mut St, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
+fn get_str_dec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
   get_dec_flavor(st, dec, get_str_dec_one, |st, decs, ptr| {
     st.str_dec(sml_hir::StrDec::Seq(decs), ptr)
   })
 }
 
-fn get_str_dec_one(st: &mut St, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
+fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
   let ptr = SyntaxNodePtr::new(str_dec.syntax());
   let res = match str_dec {
     ast::DecOne::StructureDec(str_dec) => sml_hir::StrDec::Structure(
@@ -149,7 +149,7 @@ fn get_str_dec_one(st: &mut St, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
   st.str_dec(res, ptr)
 }
 
-fn get_str_exp(st: &mut St, str_exp: Option<ast::StrExp>) -> sml_hir::StrExpIdx {
+fn get_str_exp(st: &mut St<'_>, str_exp: Option<ast::StrExp>) -> sml_hir::StrExpIdx {
   let str_exp = str_exp?;
   let ptr = SyntaxNodePtr::new(str_exp.syntax());
   let ret = match str_exp {
@@ -178,7 +178,7 @@ fn get_str_exp(st: &mut St, str_exp: Option<ast::StrExp>) -> sml_hir::StrExpIdx 
   st.str_exp(ret, ptr)
 }
 
-fn get_sig_exp(st: &mut St, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx {
+fn get_sig_exp(st: &mut St<'_>, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx {
   let sig_exp = sig_exp?;
   let ptr = SyntaxNodePtr::new(sig_exp.syntax());
   let ret = match sig_exp {
@@ -200,7 +200,7 @@ fn get_sig_exp(st: &mut St, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExpIdx 
   st.sig_exp(ret, ptr)
 }
 
-fn get_spec(st: &mut St, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
+fn get_spec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
   let dec = dec?;
   let mut specs = Vec::<sml_hir::SpecIdx>::new();
   for dwt_in_seq in dec.dec_with_tail_in_seqs() {
@@ -243,7 +243,7 @@ fn get_spec(st: &mut St, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
 
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
 /// to for `type t = u` specifications.
-fn get_spec_one(st: &mut St, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> {
+fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> {
   let dec = match dec {
     Some(x) => x,
     None => return vec![],
@@ -418,7 +418,7 @@ fn get_spec_one(st: &mut St, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> 
 }
 
 fn ascription_tail(
-  st: &mut St,
+  st: &mut St<'_>,
   tail: Option<ast::AscriptionTail>,
 ) -> (sml_hir::Ascription, sml_hir::SigExpIdx) {
   let kind = tail.as_ref().and_then(sml_syntax::ast::AscriptionTail::ascription).map_or(
@@ -432,7 +432,7 @@ fn ascription_tail(
 }
 
 fn with_ascription_tail(
-  st: &mut St,
+  st: &mut St<'_>,
   str_exp: Option<ast::StrExp>,
   tail: Option<ast::AscriptionTail>,
 ) -> sml_hir::StrExpIdx {
@@ -447,11 +447,11 @@ fn with_ascription_tail(
   ret
 }
 
-pub(crate) fn get(st: &mut St, dec: Option<ast::Dec>) -> sml_hir::DecIdx {
+pub(crate) fn get(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::DecIdx {
   get_dec_flavor(st, dec, get_one, |st, decs, ptr| st.dec(sml_hir::Dec::Seq(decs), ptr))
 }
 
-fn get_one(st: &mut St, dec: ast::DecOne) -> sml_hir::DecIdx {
+fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
   let ptr = SyntaxNodePtr::new(dec.syntax());
   let ret = match dec {
     ast::DecOne::HoleDec(_) => {
@@ -665,7 +665,7 @@ fn get_one(st: &mut St, dec: ast::DecOne) -> sml_hir::DecIdx {
   st.dec(ret, ptr)
 }
 
-fn dat_binds<I>(st: &mut St, iter: I) -> Vec<sml_hir::DatBind>
+fn dat_binds<I>(st: &mut St<'_>, iter: I) -> Vec<sml_hir::DatBind>
 where
   I: Iterator<Item = ast::DatBind>,
 {
@@ -699,7 +699,7 @@ where
   iter.collect()
 }
 
-fn ty_binds<I>(st: &mut St, iter: I) -> Vec<sml_hir::TyBind>
+fn ty_binds<I>(st: &mut St<'_>, iter: I) -> Vec<sml_hir::TyBind>
 where
   I: Iterator<Item = ast::TyBind>,
 {

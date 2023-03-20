@@ -240,17 +240,29 @@ pub struct Lower {
   pub root: sml_hir::StrDecIdx,
 }
 
-#[derive(Debug, Default)]
-pub(crate) struct St {
+#[derive(Debug)]
+pub(crate) struct St<'a> {
   fresh_idx: u32,
   errors: Vec<Error>,
   arenas: sml_hir::Arenas,
   ptrs: Ptrs,
   fun_names: Vec<str_util::Name>,
+  lang: &'a (),
 }
 
 #[allow(clippy::unnecessary_wraps)]
-impl St {
+impl<'a> St<'a> {
+  pub(crate) fn new(lang: &'a ()) -> St<'a> {
+    St {
+      fresh_idx: 0,
+      errors: Vec::new(),
+      arenas: sml_hir::Arenas::default(),
+      ptrs: Ptrs::default(),
+      fun_names: Vec::new(),
+      lang,
+    }
+  }
+
   /// Returns a `Name` that is both:
   /// - not writeable in user code, and will thus not collide with any identifiers in user code;
   /// - distinct from all other `Name`s returned from self thus far, and will thus not collide

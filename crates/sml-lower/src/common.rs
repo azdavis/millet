@@ -8,7 +8,7 @@ use sml_syntax::{ast, SyntaxToken};
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
 /// carried to here. so we must do it again.
-pub(crate) fn get_scon(st: &mut St, scon: ast::SCon) -> Option<sml_hir::SCon> {
+pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon> {
   let tok = scon.token;
   let ret = match scon.kind {
     ast::SConKind::IntLit => {
@@ -106,7 +106,7 @@ pub(crate) fn get_path(p: ast::Path) -> Option<sml_hir::Path> {
   )
 }
 
-pub(crate) fn get_lab(st: &mut St, lab: ast::Lab) -> sml_hir::Lab {
+pub(crate) fn get_lab(st: &mut St<'_>, lab: ast::Lab) -> sml_hir::Lab {
   match lab.kind {
     ast::LabKind::Name | ast::LabKind::Star => {
       sml_hir::Lab::Name(str_util::Name::new(lab.token.text()))
@@ -127,7 +127,7 @@ pub(crate) fn get_lab(st: &mut St, lab: ast::Lab) -> sml_hir::Lab {
   }
 }
 
-pub(crate) fn ck_trailing<I>(st: &mut St, sep: Sep, iter: I)
+pub(crate) fn ck_trailing<I>(st: &mut St<'_>, sep: Sep, iter: I)
 where
   I: Iterator<Item = Option<SyntaxToken>>,
 {

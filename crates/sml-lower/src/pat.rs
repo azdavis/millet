@@ -6,7 +6,7 @@ use crate::util::{ErrorKind, MatcherFlavor, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(
-  st: &mut St,
+  st: &mut St<'_>,
   flavor: Option<MatcherFlavor>,
   pat: Option<ast::Pat>,
 ) -> sml_hir::PatIdx {
@@ -20,7 +20,7 @@ pub(crate) fn get(
   }
 }
 
-fn get_or(st: &mut St, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<sml_hir::OrPat> {
+fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<sml_hir::OrPat> {
   let ptr = SyntaxNodePtr::new(pat.syntax());
   let ret = match pat {
     ast::Pat::WildcardPat(_) => sml_hir::Pat::Wild,
@@ -148,7 +148,7 @@ fn get_or(st: &mut St, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
   Some(sml_hir::OrPat { first: st.pat(ret, ptr), rest: Vec::new() })
 }
 
-fn get_pat_name(st: &mut St, pat: ast::Pat) -> Option<str_util::Name> {
+fn get_pat_name(st: &mut St<'_>, pat: ast::Pat) -> Option<str_util::Name> {
   let pat = if let ast::Pat::ConPat(pat) = pat {
     pat
   } else {
