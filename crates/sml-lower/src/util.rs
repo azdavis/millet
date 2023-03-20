@@ -167,7 +167,7 @@ pub(crate) enum Item {
 impl fmt::Display for Item {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Item::Exp(s) => write!(f, "expression: {s}`"),
+      Item::Exp(s) => write!(f, "expression: {s}"),
     }
   }
 }
