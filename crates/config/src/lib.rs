@@ -18,7 +18,7 @@ pub struct Root {
   /// The version. Should be 1.
   pub version: u16,
   /// The workspace config.
-  pub workspace: Option<Workspace>,
+  pub workspace: Option<WorkspaceConfig>,
   /// The diagnostics config.
   pub diagnostics: Option<FxHashMap<SmolStr, ErrorConfig>>,
 }
@@ -26,7 +26,7 @@ pub struct Root {
 /// The workspace config.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Workspace {
+pub struct WorkspaceConfig {
   /// The root group filename.
   pub root: Option<SmolStr>,
   /// Path vars, for expansion in MLB/CM paths.
