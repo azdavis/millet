@@ -703,18 +703,17 @@ fn ty_binds<I>(cx: &mut Cx, iter: I) -> Vec<sml_hir::TyBind>
 where
   I: Iterator<Item = ast::TyBind>,
 {
-  iter
-    .filter_map(|ty_bind| {
-      let name = get_name(ty_bind.name())?;
-      let ty = ty_bind.eq_ty().and_then(|x| x.ty());
-      if ty.is_none() {
-        cx.err(ty_bind.syntax().text_range(), ErrorKind::MissingRhs);
-      }
-      Some(sml_hir::TyBind {
-        ty_vars: ty::var_seq(cx, ty_bind.ty_var_seq()),
-        name,
-        ty: ty::get(cx, ty),
-      })
+  let iter = iter.filter_map(|ty_bind| {
+    let name = get_name(ty_bind.name())?;
+    let ty = ty_bind.eq_ty().and_then(|x| x.ty());
+    if ty.is_none() {
+      cx.err(ty_bind.syntax().text_range(), ErrorKind::MissingRhs);
+    }
+    Some(sml_hir::TyBind {
+      ty_vars: ty::var_seq(cx, ty_bind.ty_var_seq()),
+      name,
+      ty: ty::get(cx, ty),
     })
-    .collect()
+  });
+  iter.collect()
 }
