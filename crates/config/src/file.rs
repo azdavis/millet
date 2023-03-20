@@ -70,4 +70,80 @@ pub enum Severity {
 /// Configuration for the language.
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Language {}
+pub struct Language {
+  /// Configuration for expressions.
+  #[serde(default)]
+  pub exp: Exp,
+}
+
+/// Configuration for expressions.
+#[derive(Debug, Default, Clone, Deserialize)]
+#[allow(clippy::struct_excessive_bools)]
+#[allow(missing_docs)]
+pub struct Exp {
+  #[serde(rename = "int-lit", default)]
+  pub int_lit: Tool,
+  #[serde(rename = "real-lit", default)]
+  pub real_lit: Tool,
+  #[serde(rename = "word-lit", default)]
+  pub word_lit: Tool,
+  #[serde(rename = "char-lit", default)]
+  pub char_lit: Tool,
+  #[serde(rename = "string-lit", default)]
+  pub string_lit: Tool,
+  #[serde(default)]
+  pub path: Tool,
+  #[serde(default)]
+  pub record: Tool,
+  #[serde(default)]
+  pub selector: Tool,
+  #[serde(default)]
+  pub paren: Tool,
+  #[serde(default)]
+  pub tuple: Tool,
+  #[serde(default)]
+  pub list: Tool,
+  #[serde(default)]
+  pub seq: Tool,
+  #[serde(rename = "let", default)]
+  pub let_: Tool,
+  #[serde(default)]
+  pub app: Tool,
+  #[serde(default)]
+  pub infix: Tool,
+  #[serde(default)]
+  pub typed: Tool,
+  #[serde(default)]
+  pub andalso: Tool,
+  #[serde(default)]
+  pub orelse: Tool,
+  #[serde(default)]
+  pub handle: Tool,
+  #[serde(default)]
+  pub raise: Tool,
+  #[serde(rename = "if", default)]
+  pub if_: Tool,
+  #[serde(rename = "while", default)]
+  pub while_: Tool,
+  #[serde(default)]
+  pub case: Tool,
+  #[serde(rename = "fn", default)]
+  pub fn_: Tool,
+}
+
+/// A default-`true` `bool`.
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct Tool(pub bool);
+
+impl Default for Tool {
+  fn default() -> Self {
+    Self(true)
+  }
+}
+
+impl std::ops::Not for Tool {
+  type Output = bool;
+  fn not(self) -> Self::Output {
+    !self.0
+  }
+}

@@ -47,6 +47,7 @@ impl Input {
     let mut ret = Input::default();
     let root = root::Root::new(fs, store, root, &mut ret.errors);
     ret.severities = root.config.severities;
+    ret.lang = root.config.lang;
     for group in root.groups {
       let path = store.get_path(group.path).as_path();
       let parent = path.parent().expect("group path with no parent");

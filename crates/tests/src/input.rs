@@ -378,3 +378,28 @@ val _ = foo
   };
   raw::get(files, opts);
 }
+
+#[test]
+fn disallowed_exp() {
+  let config = r#"
+version = 1
+language.exp.while = false
+"#;
+  let mlb = r#"
+a.sml
+"#;
+  let sml = r#"
+val _ = 4
+val _ = while true do ()
+(**     ^^^^^^^^^^^^^^^^ disallowed expression: while *)
+val _ = "hi"
+"#;
+  let files = [(config::file::NAME, config), ("s.mlb", mlb), ("a.sml", sml)];
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    limit: raw::Limit::None,
+    min_severity: diagnostic_util::Severity::Error,
+  };
+  raw::get(files, opts);
+}

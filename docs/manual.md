@@ -75,6 +75,8 @@ QUZ = { workspace-path = "pant" }
 5011.severity = "warning"
 4015.severity = "error"
 5029.severity = "ignore"
+[language.exp]
+while = false
 ```
 
 #### `version`
@@ -120,6 +122,41 @@ Overrides the default severity for this [diagnostic](#inline-diagnostics). The a
 #### `language`
 
 Configuration for the language.
+
+#### `language.exp`
+
+What kind of expressions are permitted.
+
+#### `language.exp.<kind>`
+
+Whether the `<kind>` of expression is allowed.
+
+Valid `<kind>`s:
+
+- `int-lit`
+- `real-lit`
+- `word-lit`
+- `char-lit`
+- `string-lit`
+- `path`
+- `record`
+- `selector`
+- `paren`
+- `tuple`
+- `list`
+- `seq`
+- `let`
+- `app`
+- `infix`
+- `typed`
+- `andalso`
+- `orelse`
+- `handle`
+- `raise`
+- `if`
+- `while`
+- `case`
+- `fn`
 
 ### VS Code settings
 

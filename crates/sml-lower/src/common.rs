@@ -2,7 +2,7 @@
 
 #![allow(clippy::needless_pass_by_value)]
 
-use crate::util::{ErrorKind, Sep, St};
+use crate::util::{ErrorKind, Item, Sep, St};
 use num_traits::Num as _;
 use sml_syntax::{ast, SyntaxToken};
 
@@ -12,6 +12,9 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
   let tok = scon.token;
   let ret = match scon.kind {
     ast::SConKind::IntLit => {
+      if !st.lang().exp.int_lit {
+        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`int` literal")));
+      }
       let chars = tok.text();
       let mut chars = chars.chars();
       let neg = chars.as_str().starts_with('~');
@@ -39,6 +42,9 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       sml_hir::SCon::Int(n)
     }
     ast::SConKind::RealLit => {
+      if !st.lang().exp.real_lit {
+        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`real` literal")));
+      }
       let owned: String;
       let mut text = tok.text();
       // only alloc if needed
@@ -56,6 +62,9 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       sml_hir::SCon::Real(n)
     }
     ast::SConKind::WordLit => {
+      if !st.lang().exp.word_lit {
+        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`word` literal")));
+      }
       let mut chars = tok.text().chars();
       // 0
       chars.next();
@@ -77,9 +86,17 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       sml_hir::SCon::Word(n)
     }
     ast::SConKind::CharLit => {
+      if !st.lang().exp.char_lit {
+        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`char` literal")));
+      }
       sml_hir::SCon::Char(sml_string(tok.text().strip_prefix('#')?)?.chars().next()?)
     }
-    ast::SConKind::StringLit => sml_hir::SCon::String(sml_string(tok.text())?.into()),
+    ast::SConKind::StringLit => {
+      if !st.lang().exp.string_lit {
+        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`string` literal")));
+      }
+      sml_hir::SCon::String(sml_string(tok.text())?.into())
+    }
   };
   Some(ret)
 }

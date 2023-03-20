@@ -74,6 +74,7 @@ pub(crate) enum ErrorKind {
   EmptyFun,
   EmptyExpSemiSeq,
   Trailing(Sep),
+  Disallowed(Item),
 }
 
 impl fmt::Display for ErrorKind {
@@ -121,6 +122,7 @@ impl fmt::Display for ErrorKind {
         f.write_str("`;`-separated sequence requires at least 1 expression")
       }
       ErrorKind::Trailing(s) => write!(f, "trailing `{s}`"),
+      ErrorKind::Disallowed(item) => write!(f, "disallowed {item}"),
     }
   }
 }
@@ -153,6 +155,19 @@ impl fmt::Display for Sep {
     match self {
       Sep::Comma => f.write_str(","),
       Sep::Semi => f.write_str(";"),
+    }
+  }
+}
+
+#[derive(Debug)]
+pub(crate) enum Item {
+  Exp(&'static str),
+}
+
+impl fmt::Display for Item {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Item::Exp(s) => write!(f, "expression: {s}`"),
     }
   }
 }
@@ -210,6 +225,7 @@ impl Error {
       ErrorKind::EmptyFun => Code::n(4026),
       ErrorKind::EmptyExpSemiSeq => Code::n(4027),
       ErrorKind::Trailing(_) => Code::n(4028),
+      ErrorKind::Disallowed(_) => Code::n(4029),
     }
   }
 
@@ -340,5 +356,9 @@ impl<'a> St<'a> {
 
   pub(crate) fn is_name_of_cur_fun(&self, name: &str) -> bool {
     self.fun_names.iter().any(|x| x.as_str() == name)
+  }
+
+  pub(crate) fn lang(&self) -> &'a Language {
+    self.lang
   }
 }

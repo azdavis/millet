@@ -1230,6 +1230,12 @@ To fix, remove the trailing separator.
 val x = (1, 2)
 ```
 
+## 4029
+
+There was an occurrence of something that had been explicitly disallowed in the Millet configuration file, `millet.toml`.
+
+To fix, allow the thing in your configuration, or remove the occurrence of the thing.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
