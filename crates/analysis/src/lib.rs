@@ -36,8 +36,8 @@ impl Analysis {
   pub fn new(
     std_basis: StdBasis,
     lines: config::ErrorLines,
-    ignore: Option<config::DiagnosticsIgnore>,
-    format: Option<config::FormatEngine>,
+    ignore: Option<config::init::DiagnosticsIgnore>,
+    format: Option<config::init::FormatEngine>,
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
@@ -198,10 +198,10 @@ impl Analysis {
     };
     let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
     let buf = match engine {
-      config::FormatEngine::Naive => {
+      config::init::FormatEngine::Naive => {
         sml_naive_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::NaiveFmt)?
       }
-      config::FormatEngine::Smlfmt => {
+      config::init::FormatEngine::Smlfmt => {
         let contents = file.syntax.parse.root.syntax().to_string();
         let mut prog = Command::new("smlfmt")
           .arg("--stdio")

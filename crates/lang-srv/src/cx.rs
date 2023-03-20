@@ -13,7 +13,7 @@ pub(crate) const LEARN_MORE: &str = "Learn more";
 /// nothing on this will ever get "replaced" entirely; instead, _if_ it's mutable, _when_ it's
 /// mutate, it'll only be "tweaked" a bit.
 pub(crate) struct Cx {
-  pub(crate) options: config::Options,
+  pub(crate) options: config::init::Options,
   pub(crate) registered_for_watched_files: bool,
   pub(crate) store: paths::Store,
   pub(crate) fs: paths::RealFileSystem,

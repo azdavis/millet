@@ -9,8 +9,8 @@ use text_size_util::TextRange;
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {
   pub(crate) lines: config::ErrorLines,
-  pub(crate) ignore: Option<config::DiagnosticsIgnore>,
-  pub(crate) format: Option<config::FormatEngine>,
+  pub(crate) ignore: Option<config::init::DiagnosticsIgnore>,
+  pub(crate) format: Option<config::init::FormatEngine>,
 }
 
 fn diagnostic<M>(
@@ -50,8 +50,8 @@ pub(crate) fn source_file(
   let ignore_after_syntax = match options.ignore {
     None => false,
     Some(filter) => match filter {
-      config::DiagnosticsIgnore::AfterSyntax => true,
-      config::DiagnosticsIgnore::All => return Vec::new(),
+      config::init::DiagnosticsIgnore::AfterSyntax => true,
+      config::init::DiagnosticsIgnore::All => return Vec::new(),
     },
   };
   let mut ret: Vec<_> = std::iter::empty()
@@ -75,7 +75,7 @@ pub(crate) fn source_file(
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
       diagnostic(file, severities, range, msg, err.code(), err.severity())
     }));
-    if matches!(options.format, Some(config::FormatEngine::Naive)) {
+    if matches!(options.format, Some(config::init::FormatEngine::Naive)) {
       if let Err(sml_naive_fmt::Error::Comments(ranges)) =
         sml_naive_fmt::check(&file.syntax.parse.root)
       {

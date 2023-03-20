@@ -8,7 +8,7 @@ use fast_hash::{FxHashMap, FxHashSet};
 use lsp_server::{Message, ReqQueue};
 
 pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -> St {
-  let options: config::Options = init
+  let options: config::init::Options = init
     .initialization_options
     .and_then(|v| match serde_json::from_value(v) {
       Ok(x) => Some(x),

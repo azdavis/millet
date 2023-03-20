@@ -24,7 +24,7 @@ impl Root {
   {
     let mut root_group_source = ErrorSource::default();
     let mut root_group_paths = Vec::<GroupPathBuf>::new();
-    let config_path = root.as_path().join(config::FILE_NAME);
+    let config_path = root.as_path().join(config::file::NAME);
     let config_file = fs.read_to_string(&config_path);
     let had_config_file = config_file.is_ok();
     let config = match config_file {
@@ -104,7 +104,7 @@ impl Config {
     F: paths::FileSystem,
   {
     let mut ret = Config::default();
-    let parsed: config::Root = match toml::from_str(contents) {
+    let parsed: config::file::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
         errors.push(Error::new(
@@ -139,8 +139,8 @@ impl Config {
           // we resolve config-root-relative paths here, but we have to wait until later to resolve
           // workspace-root-relative paths.
           let (kind, suffix) = match val {
-            config::PathVar::Value(val) => (EnvEntryKind::Value, val),
-            config::PathVar::Path(val) => {
+            config::file::PathVar::Value(val) => (EnvEntryKind::Value, val),
+            config::file::PathVar::Path(val) => {
               let path = root.as_path().join(val.as_str());
               let source = ErrorSource { path: Some(config_path.to_owned()), range: None };
               let val = match str_path(source, &path) {
@@ -152,7 +152,7 @@ impl Config {
               };
               (EnvEntryKind::Value, val)
             }
-            config::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),
+            config::file::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),
           };
           ret.path_vars.insert(key, EnvEntry { kind, suffix });
         }
@@ -172,9 +172,9 @@ impl Config {
       };
       if let Some(sev) = config.severity {
         let sev = match sev {
-          config::Severity::Ignore => None,
-          config::Severity::Warning => Some(diagnostic_util::Severity::Warning),
-          config::Severity::Error => Some(diagnostic_util::Severity::Error),
+          config::file::Severity::Ignore => None,
+          config::file::Severity::Warning => Some(diagnostic_util::Severity::Warning),
+          config::file::Severity::Error => Some(diagnostic_util::Severity::Error),
         };
         ret.severities.insert(code, sev);
       }
