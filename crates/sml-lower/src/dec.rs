@@ -89,61 +89,56 @@ fn get_str_dec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
 fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
   let ptr = SyntaxNodePtr::new(str_dec.syntax());
   let res = match str_dec {
-    ast::DecOne::StructureDec(str_dec) => sml_hir::StrDec::Structure(
-      str_dec
-        .str_binds()
-        .filter_map(|str_bind| {
-          let str_exp = str_bind.eq_str_exp().and_then(|x| x.str_exp());
-          if str_exp.is_none() {
-            st.err(str_bind.syntax().text_range(), ErrorKind::MissingRhs);
+    ast::DecOne::StructureDec(str_dec) => {
+      let iter = str_dec.str_binds().filter_map(|str_bind| {
+        let str_exp = str_bind.eq_str_exp().and_then(|x| x.str_exp());
+        if str_exp.is_none() {
+          st.err(str_bind.syntax().text_range(), ErrorKind::MissingRhs);
+        }
+        Some(sml_hir::StrBind {
+          name: get_name(str_bind.name())?,
+          str_exp: with_ascription_tail(st, str_exp, str_bind.ascription_tail()),
+        })
+      });
+      sml_hir::StrDec::Structure(iter.collect())
+    }
+    ast::DecOne::SignatureDec(str_dec) => {
+      let iter = str_dec.sig_binds().filter_map(|sig_bind| {
+        Some(sml_hir::SigBind {
+          name: get_name(sig_bind.name())?,
+          sig_exp: get_sig_exp(st, sig_bind.sig_exp()),
+        })
+      });
+      sml_hir::StrDec::Signature(iter.collect())
+    }
+    ast::DecOne::FunctorDec(str_dec) => {
+      let iter = str_dec.functor_binds().filter_map(|fun_bind| {
+        let functor_name = get_name(fun_bind.functor_name())?;
+        let body = with_ascription_tail(st, fun_bind.body(), fun_bind.ascription_tail());
+        let (param_name, param_sig, body, flavor) = match fun_bind.functor_arg()? {
+          ast::FunctorArg::FunctorArgNameSigExp(arg) => {
+            (get_name(arg.name())?, get_sig_exp(st, arg.sig_exp()), body, sml_hir::Flavor::Plain)
           }
-          Some(sml_hir::StrBind {
-            name: get_name(str_bind.name())?,
-            str_exp: with_ascription_tail(st, str_exp, str_bind.ascription_tail()),
-          })
-        })
-        .collect(),
-    ),
-    ast::DecOne::SignatureDec(str_dec) => sml_hir::StrDec::Signature(
-      str_dec
-        .sig_binds()
-        .filter_map(|sig_bind| {
-          Some(sml_hir::SigBind {
-            name: get_name(sig_bind.name())?,
-            sig_exp: get_sig_exp(st, sig_bind.sig_exp()),
-          })
-        })
-        .collect(),
-    ),
-    ast::DecOne::FunctorDec(str_dec) => sml_hir::StrDec::Functor(
-      str_dec
-        .functor_binds()
-        .filter_map(|fun_bind| {
-          let functor_name = get_name(fun_bind.functor_name())?;
-          let body = with_ascription_tail(st, fun_bind.body(), fun_bind.ascription_tail());
-          let (param_name, param_sig, body, flavor) = match fun_bind.functor_arg()? {
-            ast::FunctorArg::FunctorArgNameSigExp(arg) => {
-              (get_name(arg.name())?, get_sig_exp(st, arg.sig_exp()), body, sml_hir::Flavor::Plain)
-            }
-            ast::FunctorArg::Dec(arg) => {
-              let param_name = st.fresh();
-              let param_sig = sml_hir::SigExp::Spec(get_spec(st, Some(arg)));
-              let param_sig = st.sig_exp(param_sig, ptr.clone());
-              let dec = st
-                .dec(sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]), ptr.clone());
-              let str_dec = st.str_dec(sml_hir::StrDec::Dec(dec), ptr.clone());
-              let body = st.str_exp(sml_hir::StrExp::Let(str_dec, body), ptr.clone());
-              (param_name, param_sig, body, sml_hir::Flavor::Sugared)
-            }
-          };
-          Some(sml_hir::FunctorBind { functor_name, param_name, param_sig, body, flavor })
-        })
-        .collect(),
-    ),
-    ast::DecOne::LocalDec(str_dec) => sml_hir::StrDec::Local(
-      get_str_dec(st, str_dec.local_dec()),
-      get_str_dec(st, str_dec.in_dec()),
-    ),
+          ast::FunctorArg::Dec(arg) => {
+            let param_name = st.fresh();
+            let param_sig = sml_hir::SigExp::Spec(get_spec(st, Some(arg)));
+            let param_sig = st.sig_exp(param_sig, ptr.clone());
+            let dec =
+              st.dec(sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]), ptr.clone());
+            let str_dec = st.str_dec(sml_hir::StrDec::Dec(dec), ptr.clone());
+            let body = st.str_exp(sml_hir::StrExp::Let(str_dec, body), ptr.clone());
+            (param_name, param_sig, body, sml_hir::Flavor::Sugared)
+          }
+        };
+        Some(sml_hir::FunctorBind { functor_name, param_name, param_sig, body, flavor })
+      });
+      sml_hir::StrDec::Functor(iter.collect())
+    }
+    ast::DecOne::LocalDec(str_dec) => {
+      let fst = get_str_dec(st, str_dec.local_dec());
+      let snd = get_str_dec(st, str_dec.in_dec());
+      sml_hir::StrDec::Local(fst, snd)
+    }
     _ => sml_hir::StrDec::Dec(get_one(st, str_dec)),
   };
   st.str_dec(res, ptr)
@@ -258,47 +253,45 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       if let Some(tvs) = dec.ty_var_seq() {
         st.err(tvs.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
       }
-      let descs: Vec<_> = dec
-        .val_binds()
-        .filter_map(|val_bind| {
-          if let Some(x) = val_bind.eq_exp() {
-            st.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
-          }
-          if let Some(x) = val_bind.rec_kw() {
-            st.err(x.text_range(), ErrorKind::NonSpecDecSyntax);
-          }
-          match val_bind.pat()? {
-            ast::Pat::TypedPat(ty_pat) => match ty_pat.pat()? {
-              ast::Pat::ConPat(con_pat) => {
-                if let Some(x) = con_pat.op_kw() {
-                  st.err(x.text_range(), ErrorKind::NonSpecDecSyntax);
-                }
-                if let Some(x) = con_pat.pat() {
-                  st.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
-                }
-                let path = con_pat.path()?;
-                let mut iter = path.name_star_eq_dots();
-                let fst = iter.next()?;
-                if iter.next().is_some() {
-                  st.err(path.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
-                }
-                let name = str_util::Name::new(fst.name_star_eq()?.token.text());
-                let ty = ty::get(st, ty_pat.ty());
-                Some(sml_hir::ValDesc { name, ty })
+      let iter = dec.val_binds().filter_map(|val_bind| {
+        if let Some(x) = val_bind.eq_exp() {
+          st.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
+        }
+        if let Some(x) = val_bind.rec_kw() {
+          st.err(x.text_range(), ErrorKind::NonSpecDecSyntax);
+        }
+        match val_bind.pat()? {
+          ast::Pat::TypedPat(ty_pat) => match ty_pat.pat()? {
+            ast::Pat::ConPat(con_pat) => {
+              if let Some(x) = con_pat.op_kw() {
+                st.err(x.text_range(), ErrorKind::NonSpecDecSyntax);
               }
-              pat => {
-                st.err(pat.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
-                None
+              if let Some(x) = con_pat.pat() {
+                st.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
               }
-            },
+              let path = con_pat.path()?;
+              let mut iter = path.name_star_eq_dots();
+              let fst = iter.next()?;
+              if iter.next().is_some() {
+                st.err(path.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
+              }
+              let name = str_util::Name::new(fst.name_star_eq()?.token.text());
+              let ty = ty::get(st, ty_pat.ty());
+              Some(sml_hir::ValDesc { name, ty })
+            }
             pat => {
               st.err(pat.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
               None
             }
+          },
+          pat => {
+            st.err(pat.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
+            None
           }
-        })
-        .collect();
-      vec![st.spec(sml_hir::Spec::Val(vec![], descs), ptr)]
+        }
+      });
+      let val = sml_hir::Spec::Val(vec![], iter.collect());
+      vec![st.spec(val, ptr)]
     }
     ast::DecOne::TyDec(dec) => {
       let f = match dec.ty_head() {
@@ -308,28 +301,26 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
           ast::TyHeadKind::EqtypeKw => sml_hir::Spec::EqTy,
         },
       };
-      dec
-        .ty_binds()
-        .filter_map(|ty_desc| {
-          let ty_vars = ty::var_seq(st, ty_desc.ty_var_seq());
-          let name = get_name(ty_desc.name())?;
-          let mut ret = f(sml_hir::TyDesc { name: name.clone(), ty_vars: ty_vars.clone() });
-          if let Some(ty) = ty_desc.eq_ty() {
-            let ty = ty::get(st, ty.ty());
-            let spec_idx = st.spec(ret, ptr.clone());
-            let sig_exp = st.sig_exp(sml_hir::SigExp::Spec(spec_idx), ptr.clone());
-            let sig_exp = st.sig_exp(
-              sml_hir::SigExp::Where(
-                sig_exp,
-                sml_hir::WhereKind::Type(ty_vars, sml_hir::Path::one(name), ty),
-              ),
-              ptr.clone(),
-            );
-            ret = sml_hir::Spec::Include(sig_exp);
-          }
-          Some(st.spec(ret, ptr.clone()))
-        })
-        .collect()
+      let iter = dec.ty_binds().filter_map(|ty_desc| {
+        let ty_vars = ty::var_seq(st, ty_desc.ty_var_seq());
+        let name = get_name(ty_desc.name())?;
+        let mut ret = f(sml_hir::TyDesc { name: name.clone(), ty_vars: ty_vars.clone() });
+        if let Some(ty) = ty_desc.eq_ty() {
+          let ty = ty::get(st, ty.ty());
+          let spec_idx = st.spec(ret, ptr.clone());
+          let sig_exp = st.sig_exp(sml_hir::SigExp::Spec(spec_idx), ptr.clone());
+          let sig_exp = st.sig_exp(
+            sml_hir::SigExp::Where(
+              sig_exp,
+              sml_hir::WhereKind::Type(ty_vars, sml_hir::Path::one(name), ty),
+            ),
+            ptr.clone(),
+          );
+          ret = sml_hir::Spec::Include(sig_exp);
+        }
+        Some(st.spec(ret, ptr.clone()))
+      });
+      iter.collect()
     }
     ast::DecOne::DatDec(dec) => {
       if let Some(with_type) = dec.with_type() {
@@ -345,9 +336,8 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       .zip(dec.path().and_then(get_path))
       .map(|(name, path)| vec![st.spec(sml_hir::Spec::DatatypeCopy(name, path), ptr)])
       .unwrap_or_default(),
-    ast::DecOne::ExDec(dec) => dec
-      .ex_binds()
-      .filter_map(|ex_bind| {
+    ast::DecOne::ExDec(dec) => {
+      let iter = dec.ex_binds().filter_map(|ex_bind| {
         let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
         let ty = ex_bind.ex_bind_inner().map(|inner| match inner {
           ast::ExBindInner::OfTy(of_ty) => ty::get(st, of_ty.ty()),
@@ -357,11 +347,11 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
           }
         });
         Some(st.spec(sml_hir::Spec::Exception(sml_hir::ExDesc { name, ty }), ptr.clone()))
-      })
-      .collect(),
-    ast::DecOne::StructureDec(dec) => dec
-      .str_binds()
-      .filter_map(|str_bind| {
+      });
+      iter.collect()
+    }
+    ast::DecOne::StructureDec(dec) => {
+      let iter = dec.str_binds().filter_map(|str_bind| {
         if let Some(x) = str_bind.eq_str_exp() {
           st.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
         }
@@ -385,16 +375,15 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
         };
         let spec = sml_hir::Spec::Str(sml_hir::StrDesc { name, sig_exp });
         Some(st.spec(spec, ptr.clone()))
-      })
-      .collect(),
+      });
+      iter.collect()
+    }
     ast::DecOne::IncludeDec(dec) => {
-      let specs: Vec<_> = dec
-        .sig_exps()
-        .map(|x| {
-          let spec = sml_hir::Spec::Include(get_sig_exp(st, Some(x)));
-          st.spec(spec, ptr.clone())
-        })
-        .collect();
+      let iter = dec.sig_exps().map(|x| {
+        let spec = sml_hir::Spec::Include(get_sig_exp(st, Some(x)));
+        st.spec(spec, ptr.clone())
+      });
+      let specs: Vec<_> = iter.collect();
       if specs.is_empty() {
         st.err(dec.syntax().text_range(), ErrorKind::RequiresOperand);
       }
@@ -458,134 +447,127 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       st.err(dec.syntax().text_range(), ErrorKind::DecHole);
       return None;
     }
-    ast::DecOne::ValDec(dec) => sml_hir::Dec::Val(
-      ty::var_seq(st, dec.ty_var_seq()),
-      dec
-        .val_binds()
-        .map(|val_bind| {
-          let exp = val_bind.eq_exp().and_then(|x| x.exp());
-          if exp.is_none() {
-            st.err(val_bind.syntax().text_range(), ErrorKind::MissingRhs);
-          }
-          sml_hir::ValBind {
-            rec: val_bind.rec_kw().is_some(),
-            pat: pat::get(st, None, val_bind.pat()),
-            exp: exp::get(st, exp),
-          }
-        })
-        .collect(),
-    ),
+    ast::DecOne::ValDec(dec) => {
+      let ty_vars = ty::var_seq(st, dec.ty_var_seq());
+      let iter = dec.val_binds().map(|val_bind| {
+        let exp = val_bind.eq_exp().and_then(|x| x.exp());
+        if exp.is_none() {
+          st.err(val_bind.syntax().text_range(), ErrorKind::MissingRhs);
+        }
+        sml_hir::ValBind {
+          rec: val_bind.rec_kw().is_some(),
+          pat: pat::get(st, None, val_bind.pat()),
+          exp: exp::get(st, exp),
+        }
+      });
+      sml_hir::Dec::Val(ty_vars, iter.collect())
+    }
     ast::DecOne::FunDec(dec) => {
       let ty_vars = ty::var_seq(st, dec.ty_var_seq());
-      let val_binds: Vec<_> = dec
-        .fun_binds()
-        .map(|fun_bind| {
-          if let Some(bar) = fun_bind.bar() {
-            st.err(bar.text_range(), ErrorKind::PrecedingBar);
-          }
-          let ptr = SyntaxNodePtr::new(fun_bind.syntax());
-          let mut name = None::<sml_syntax::SyntaxToken>;
-          let mut num_pats = None::<usize>;
-          let arms: Vec<_> = fun_bind
-            .fun_bind_cases()
-            .map(|case| {
-              let mut pats = Vec::<sml_hir::PatIdx>::with_capacity(1);
-              let head_name = case
-                .fun_bind_case_head()
-                .and_then(|head| match head {
-                  ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => head.name_star_eq(),
-                  ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
-                    let lhs = head.lhs();
-                    let rhs = head.rhs();
-                    let tup = tuple([pat::get(st, None, lhs), pat::get(st, None, rhs)]);
-                    pats.push(st.pat(tup, ptr.clone()));
-                    head.name_star_eq()
-                  }
-                })
-                .map(|x| x.token);
-              match (name.as_ref(), head_name) {
-                (_, None) => {}
-                (None, Some(head_name)) => name = Some(head_name),
-                (Some(name), Some(head_name)) => {
-                  if name.text() != head_name.text() {
-                    st.err(
-                      head_name.text_range(),
-                      ErrorKind::FunBindMismatchedName(
-                        name.text().to_owned(),
-                        head_name.text().to_owned(),
-                      ),
-                    );
-                  }
-                }
+      let iter = dec.fun_binds().map(|fun_bind| {
+        if let Some(bar) = fun_bind.bar() {
+          st.err(bar.text_range(), ErrorKind::PrecedingBar);
+        }
+        let ptr = SyntaxNodePtr::new(fun_bind.syntax());
+        let mut name = None::<sml_syntax::SyntaxToken>;
+        let mut num_pats = None::<usize>;
+        let iter = fun_bind.fun_bind_cases().map(|case| {
+          let mut pats = Vec::<sml_hir::PatIdx>::with_capacity(1);
+          let head_name = case
+            .fun_bind_case_head()
+            .and_then(|head| match head {
+              ast::FunBindCaseHead::PrefixFunBindCaseHead(head) => head.name_star_eq(),
+              ast::FunBindCaseHead::InfixFunBindCaseHead(head) => {
+                let lhs = head.lhs();
+                let rhs = head.rhs();
+                let tup = tuple([pat::get(st, None, lhs), pat::get(st, None, rhs)]);
+                pats.push(st.pat(tup, ptr.clone()));
+                head.name_star_eq()
               }
-              pats.extend(case.pats().map(|pat| pat::get(st, None, Some(pat))));
-              match num_pats {
-                None => num_pats = Some(pats.len()),
-                Some(num_pats) => {
-                  if num_pats != pats.len() {
-                    st.err(
-                      case.syntax().text_range(),
-                      ErrorKind::FunBindWrongNumPats(num_pats, pats.len()),
-                    );
-                  }
-                }
-              }
-              let pat = if pats.len() == 1 {
-                pats.pop().unwrap()
-              } else {
-                st.pat(pat::tuple(pats), ptr.clone())
-              };
-              let ty = case.ty_annotation().map(|x| ty::get(st, x.ty()));
-              let body = case.eq_exp().and_then(|x| x.exp());
-              if body.is_none() {
-                st.err(dec.syntax().text_range(), ErrorKind::MissingRhs);
-              }
-              if let Some(name) = &name {
-                st.push_fun_name(str_util::Name::new(name.text()));
-              }
-              let body = body.and_then(|body| {
-                let ptr = SyntaxNodePtr::new(body.syntax());
-                let mut body = exp::get(st, Some(body));
-                if let Some(ty) = ty {
-                  body = st.exp(sml_hir::Exp::Typed(body, ty), ptr);
-                }
-                body
-              });
-              if name.is_some() {
-                st.pop_fun_name();
-              }
-              (pat, body)
             })
-            .collect();
-          // not the greatest, since we have no body at all if the ptrs are None. but if they were
-          // both None, then something's very strange about the fun_bind_cases anyway.
-          if num_pats == Some(0) {
-            st.err(dec.syntax().text_range(), ErrorKind::EmptyFun);
+            .map(|x| x.token);
+          match (name.as_ref(), head_name) {
+            (_, None) => {}
+            (None, Some(head_name)) => name = Some(head_name),
+            (Some(name), Some(head_name)) => {
+              if name.text() != head_name.text() {
+                st.err(
+                  head_name.text_range(),
+                  ErrorKind::FunBindMismatchedName(
+                    name.text().to_owned(),
+                    head_name.text().to_owned(),
+                  ),
+                );
+              }
+            }
           }
-          let exp = {
-            let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| st.fresh()).collect();
-            let mut arg_exprs =
-              arg_names.iter().map(|name| st.exp(exp::name(name.as_str()), ptr.clone()));
-            let head = if arg_exprs.len() == 1 {
-              arg_exprs.next().unwrap()
-            } else {
-              let tup = exp::tuple(arg_exprs);
-              st.exp(tup, ptr.clone())
-            };
-            let case = exp::case(st, head, arms, ptr.clone(), sml_hir::FnFlavor::Fun);
-            arg_names.into_iter().rev().fold(st.exp(case, ptr.clone()), |body, name| {
-              let pat = st.pat(pat::name(name.as_str()), ptr.clone());
-              st.exp(sml_hir::Exp::Fn(vec![(pat, body)], sml_hir::FnFlavor::Fun), ptr.clone())
-            })
+          pats.extend(case.pats().map(|pat| pat::get(st, None, Some(pat))));
+          match num_pats {
+            None => num_pats = Some(pats.len()),
+            Some(num_pats) => {
+              if num_pats != pats.len() {
+                st.err(
+                  case.syntax().text_range(),
+                  ErrorKind::FunBindWrongNumPats(num_pats, pats.len()),
+                );
+              }
+            }
+          }
+          let pat = if pats.len() == 1 {
+            pats.pop().unwrap()
+          } else {
+            st.pat(pat::tuple(pats), ptr.clone())
           };
-          sml_hir::ValBind {
-            rec: true,
-            pat: name.and_then(|name| st.pat(pat::name(name.text()), ptr)),
-            exp,
+          let ty = case.ty_annotation().map(|x| ty::get(st, x.ty()));
+          let body = case.eq_exp().and_then(|x| x.exp());
+          if body.is_none() {
+            st.err(dec.syntax().text_range(), ErrorKind::MissingRhs);
           }
-        })
-        .collect();
-      sml_hir::Dec::Val(ty_vars, val_binds)
+          if let Some(name) = &name {
+            st.push_fun_name(str_util::Name::new(name.text()));
+          }
+          let body = body.and_then(|body| {
+            let ptr = SyntaxNodePtr::new(body.syntax());
+            let mut body = exp::get(st, Some(body));
+            if let Some(ty) = ty {
+              body = st.exp(sml_hir::Exp::Typed(body, ty), ptr);
+            }
+            body
+          });
+          if name.is_some() {
+            st.pop_fun_name();
+          }
+          (pat, body)
+        });
+        let arms: Vec<_> = iter.collect();
+        // not the greatest, since we have no body at all if the ptrs are None. but if they were
+        // both None, then something's very strange about the fun_bind_cases anyway.
+        if num_pats == Some(0) {
+          st.err(dec.syntax().text_range(), ErrorKind::EmptyFun);
+        }
+        let exp = {
+          let arg_names: Vec<_> = (0..num_pats.unwrap_or(1)).map(|_| st.fresh()).collect();
+          let mut arg_exprs =
+            arg_names.iter().map(|name| st.exp(exp::name(name.as_str()), ptr.clone()));
+          let head = if arg_exprs.len() == 1 {
+            arg_exprs.next().unwrap()
+          } else {
+            let tup = exp::tuple(arg_exprs);
+            st.exp(tup, ptr.clone())
+          };
+          let case = exp::case(st, head, arms, ptr.clone(), sml_hir::FnFlavor::Fun);
+          arg_names.into_iter().rev().fold(st.exp(case, ptr.clone()), |body, name| {
+            let pat = st.pat(pat::name(name.as_str()), ptr.clone());
+            st.exp(sml_hir::Exp::Fn(vec![(pat, body)], sml_hir::FnFlavor::Fun), ptr.clone())
+          })
+        };
+        sml_hir::ValBind {
+          rec: true,
+          pat: name.and_then(|name| st.pat(pat::name(name.text()), ptr)),
+          exp,
+        }
+      });
+      sml_hir::Dec::Val(ty_vars, iter.collect())
     }
     ast::DecOne::TyDec(dec) => {
       let hd = dec.ty_head()?;
@@ -609,22 +591,18 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       let inner = get(st, dec.dec());
       sml_hir::Dec::Abstype(d_binds, t_binds, inner)
     }
-    ast::DecOne::ExDec(dec) => sml_hir::Dec::Exception(
-      dec
-        .ex_binds()
-        .filter_map(|ex_bind| {
-          let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
-          let ret = match ex_bind.ex_bind_inner() {
-            None => sml_hir::ExBind::New(name, None),
-            Some(ast::ExBindInner::OfTy(x)) => {
-              sml_hir::ExBind::New(name, Some(ty::get(st, x.ty())))
-            }
-            Some(ast::ExBindInner::EqPath(x)) => sml_hir::ExBind::Copy(name, get_path(x.path()?)?),
-          };
-          Some(ret)
-        })
-        .collect(),
-    ),
+    ast::DecOne::ExDec(dec) => {
+      let iter = dec.ex_binds().filter_map(|ex_bind| {
+        let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
+        let ret = match ex_bind.ex_bind_inner() {
+          None => sml_hir::ExBind::New(name, None),
+          Some(ast::ExBindInner::OfTy(x)) => sml_hir::ExBind::New(name, Some(ty::get(st, x.ty()))),
+          Some(ast::ExBindInner::EqPath(x)) => sml_hir::ExBind::Copy(name, get_path(x.path()?)?),
+        };
+        Some(ret)
+      });
+      sml_hir::Dec::Exception(iter.collect())
+    }
     ast::DecOne::LocalDec(dec) => {
       sml_hir::Dec::Local(get(st, dec.local_dec()), get(st, dec.in_dec()))
     }
@@ -679,15 +657,13 @@ where
         if let Some(bar) = eq_con_binds.bar() {
           st.err(bar.text_range(), ErrorKind::PrecedingBar);
         }
-        eq_con_binds
-          .con_binds()
-          .filter_map(|con_bind| {
-            Some(sml_hir::ConBind {
-              name: str_util::Name::new(con_bind.name_star_eq()?.token.text()),
-              ty: con_bind.of_ty().map(|x| ty::get(st, x.ty())),
-            })
+        let iter = eq_con_binds.con_binds().filter_map(|con_bind| {
+          Some(sml_hir::ConBind {
+            name: str_util::Name::new(con_bind.name_star_eq()?.token.text()),
+            ty: con_bind.of_ty().map(|x| ty::get(st, x.ty())),
           })
-          .collect()
+        });
+        iter.collect()
       }
     };
     Some(sml_hir::DatBind {
