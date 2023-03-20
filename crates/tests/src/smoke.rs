@@ -115,24 +115,15 @@ val _: int = S.x
 
 #[test]
 fn multi() {
-  let files = [
-    (
-      "a.sml",
-      r#"
+  let a = r#"
 val a = 3
 exception Bad
-"#,
-    ),
-    (
-      "b.sml",
-      r#"
+"#;
+  let b = r#"
 val b = a + 4
 fun err s = if s = "bad" then raise Bad else ()
-"#,
-    ),
-    ("sources.mlb", "a.sml b.sml"),
-  ];
-  check_multi(files);
+"#;
+  check_multi([("s.mlb", "a.sml b.sml"), ("a.sml", a), ("b.sml", b)]);
 }
 
 #[test]
