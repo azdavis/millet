@@ -686,7 +686,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       }
     }
     ast::Exp::WhileExp(exp) => {
-      st.write("while");
+      st.write("while ");
       get_exp(st, cfg, exp.cond()?)?;
       st.write(" do ");
       get_exp(st, cfg, exp.body()?)?;
