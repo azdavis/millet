@@ -1,7 +1,9 @@
 //! Getting the root groups.
 
 use crate::types::Severities;
-use crate::util::{get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind};
+use crate::util::{
+  get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, NoRootFlavor,
+};
 use config::file::Language;
 use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
@@ -27,17 +29,24 @@ impl Root {
     let mut root_group_paths = Vec::<GroupPathBuf>::new();
     let config_path = root.as_path().join(config::file::NAME);
     let config_file = fs.read_to_string(&config_path);
-    let had_config_file = config_file.is_ok();
-    let config = match config_file {
-      Ok(s) => {
-        let config = Config::from_file(fs, &mut root_group_paths, root, &config_path, &s, errors);
-        if !root_group_paths.is_empty() {
-          root_group_source.path = Some(config_path);
-        }
-        config
-      }
-      Err(_) => Config::default(),
+    let ((config, glob), mut flavor) = match config_file {
+      Ok(s) => (Config::from_file(root, &config_path, &s, errors), NoRootFlavor::NoGlob),
+      Err(_) => ((Config::default(), None), NoRootFlavor::NoFile),
     };
+    if let Some(glob) = glob {
+      let path = root.as_path().join(glob.as_str());
+      glob_root_group_paths(fs, &mut root_group_paths, root, &path, &config_path, errors);
+      if root_group_paths.is_empty() {
+        errors.push(Error::new(
+          ErrorSource::default(),
+          config_path.clone(),
+          ErrorKind::EmptyGlob(glob.clone()),
+        ));
+        flavor = NoRootFlavor::EmptyGlob(glob);
+      } else {
+        root_group_source.path = Some(config_path);
+      }
+    }
     if root_group_paths.is_empty() {
       let dir_entries = match read_dir(fs, ErrorSource::default(), root.as_path()) {
         Ok(x) => x,
@@ -65,7 +74,7 @@ impl Root {
       errors.push(Error::new(
         ErrorSource::default(),
         root.as_path().to_owned(),
-        ErrorKind::NoRoot(had_config_file),
+        ErrorKind::NoRoot(flavor),
       ));
     }
     let mut ret = Root { groups: Vec::new(), config };
@@ -93,18 +102,12 @@ pub(crate) struct Config {
 }
 
 impl Config {
-  #[allow(clippy::too_many_lines)]
-  fn from_file<F>(
-    fs: &F,
-    root_group_paths: &mut Vec<GroupPathBuf>,
+  fn from_file(
     root: &paths::CanonicalPathBuf,
     config_path: &Path,
     contents: &str,
     errors: &mut Vec<Error>,
-  ) -> Config
-  where
-    F: paths::FileSystem,
-  {
+  ) -> (Config, Option<str_util::SmolStr>) {
     let mut ret = Config::default();
     let parsed: config::file::Root = match toml::from_str(contents) {
       Ok(x) => x,
@@ -114,7 +117,7 @@ impl Config {
           config_path.to_owned(),
           ErrorKind::CouldNotParseConfig(e),
         ));
-        return ret;
+        return (ret, None);
       }
     };
     if parsed.version != 1 {
@@ -123,17 +126,6 @@ impl Config {
         config_path.to_owned(),
         ErrorKind::InvalidConfigVersion(parsed.version),
       ));
-    }
-    if let Some(root_path_glob) = parsed.workspace.root {
-      let path = root.as_path().join(root_path_glob.as_str());
-      glob_root_group_paths(fs, root_group_paths, root, &path, config_path, errors);
-      if root_group_paths.is_empty() {
-        errors.push(Error::new(
-          ErrorSource::default(),
-          config_path.to_owned(),
-          ErrorKind::EmptyGlob(root_path_glob),
-        ));
-      }
     }
     for (key, val) in parsed.workspace.path_vars {
       // we resolve config-root-relative paths here, but we have to wait until later to resolve
@@ -177,7 +169,7 @@ impl Config {
       ret.severities.insert(code, sev);
     }
     ret.lang = parsed.language;
-    ret
+    (ret, parsed.workspace.root)
   }
 }
 

@@ -10,7 +10,7 @@ use text_pos::RangeUtf16;
 pub(crate) enum ErrorKind {
   Io(std::io::Error),
   MultipleRoots(PathBuf, PathBuf),
-  NoRoot(bool),
+  NoRoot(NoRootFlavor),
   NotGroup,
   CouldNotParseConfig(toml::de::Error),
   InvalidConfigVersion(u16),
@@ -24,6 +24,13 @@ pub(crate) enum ErrorKind {
   EmptyGlob(str_util::SmolStr),
   FunSig,
   NonUtf8Path,
+}
+
+#[derive(Debug)]
+pub(crate) enum NoRootFlavor {
+  NoFile,
+  NoGlob,
+  EmptyGlob(str_util::SmolStr),
 }
 
 struct ErrorDisplay<'a> {
@@ -40,14 +47,15 @@ impl fmt::Display for ErrorDisplay<'_> {
         let b = maybe_rel_to_root(self.root, b);
         write!(f, "multiple root group files: {} and {}", a.display(), b.display())
       }
-      ErrorKind::NoRoot(had_config_file) => {
-        let s = if *had_config_file {
-          "no *.cm or *.mlb files found, and no `workspace.root` specified in millet.toml"
-        } else {
-          "no *.cm, *.mlb, or millet.toml files found"
-        };
-        f.write_str(s)
-      }
+      ErrorKind::NoRoot(flavor) => match flavor {
+        NoRootFlavor::NoFile => f.write_str("no *.cm, *.mlb, or millet.toml files found in the root"),
+        NoRootFlavor::NoGlob => f.write_str(
+          "no *.cm or *.mlb files found in the root, and no `workspace.root` glob pattern specified in millet.toml",
+        ),
+        NoRootFlavor::EmptyGlob(pat) => write!(f,
+          "no *.cm or *.mlb files found in the root or via the `workspace.root` glob pattern: {pat}",
+        ),
+      },
       ErrorKind::NotGroup => f.write_str("not a group file path"),
       ErrorKind::CouldNotParseConfig(e) => write!(f, "couldn't parse config: {e}"),
       ErrorKind::InvalidConfigVersion(n) => {

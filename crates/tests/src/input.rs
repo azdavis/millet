@@ -20,7 +20,11 @@ fn no_root_group_empty() {
 
 #[test]
 fn no_root_group_empty_millet_toml() {
-  check_bad_input("", "no `workspace.root` specified", [(config::file::NAME, "version = 1")]);
+  check_bad_input(
+    "",
+    "and no `workspace.root` glob pattern",
+    [(config::file::NAME, "version = 1")],
+  );
 }
 
 #[test]
@@ -64,7 +68,11 @@ fn config_path_not_exist() {
 version = 1
 workspace.root = "nope.cm"
 "#;
-  check_bad_input(config::file::NAME, "pattern matched no paths:", [(config::file::NAME, config)]);
+  check_bad_input(
+    config::file::NAME,
+    "glob pattern matched no paths:",
+    [(config::file::NAME, config)],
+  );
 }
 
 #[test]
