@@ -338,9 +338,7 @@ fn get_spec_one(cx: &mut Cx, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecIdx> 
           ErrorKind::Unsupported("`withtype` in specifications"),
         );
       }
-      // need to collect to end the exclusive borrow on `cx`
-      #[allow(clippy::needless_collect)]
-      let binds: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
+      let binds = dat_binds(cx, dec.dat_binds());
       binds.into_iter().map(|x| cx.spec(sml_hir::Spec::Datatype(x), ptr.clone())).collect()
     }
     ast::DecOne::DatCopyDec(dec) => get_name(dec.name())
@@ -598,7 +596,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Ty(ty_binds(cx, dec.ty_binds()))
     }
     ast::DecOne::DatDec(dec) => {
-      let d_binds: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
+      let d_binds = dat_binds(cx, dec.dat_binds());
       let t_binds = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
       sml_hir::Dec::Datatype(d_binds, t_binds)
     }
@@ -606,7 +604,7 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
     ast::DecOne::AbstypeDec(dec) => {
-      let d_binds: Vec<_> = dat_binds(cx, dec.dat_binds()).collect();
+      let d_binds = dat_binds(cx, dec.dat_binds());
       let t_binds = ty_binds(cx, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
       let inner = get(cx, dec.dec());
       sml_hir::Dec::Abstype(d_binds, t_binds, inner)
@@ -667,11 +665,11 @@ fn get_one(cx: &mut Cx, dec: ast::DecOne) -> sml_hir::DecIdx {
   cx.dec(ret, ptr)
 }
 
-fn dat_binds<'a, I>(cx: &'a mut Cx, iter: I) -> impl Iterator<Item = sml_hir::DatBind> + 'a
+fn dat_binds<I>(cx: &mut Cx, iter: I) -> Vec<sml_hir::DatBind>
 where
-  I: Iterator<Item = ast::DatBind> + 'a,
+  I: Iterator<Item = ast::DatBind>,
 {
-  iter.filter_map(|dat_bind| {
+  let iter = iter.filter_map(|dat_bind| {
     let cons: Vec<sml_hir::ConBind> = match dat_bind.eq_con_binds() {
       None => {
         cx.err(dat_bind.syntax().text_range(), ErrorKind::MissingRhs);
@@ -697,7 +695,8 @@ where
       name: get_name(dat_bind.name())?,
       cons,
     })
-  })
+  });
+  iter.collect()
 }
 
 fn ty_binds<I>(cx: &mut Cx, iter: I) -> Vec<sml_hir::TyBind>
