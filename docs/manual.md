@@ -117,6 +117,10 @@ Overrides the default severity for this [diagnostic](#inline-diagnostics). The a
 - `"warning"`: the diagnostic is reported as a warning.
 - `"error"`: the diagnostic is reported as an error.
 
+#### `language`
+
+Configuration for the language.
+
 ### VS Code settings
 
 Millet offers the following configuration options via VS Code settings, which are stored as [JSON][], often in `.vscode/settings.json`:

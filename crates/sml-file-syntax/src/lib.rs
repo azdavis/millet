@@ -19,10 +19,10 @@ pub struct SourceFileSyntax {
 
 impl SourceFileSyntax {
   /// Starts processing a single source file.
-  pub fn new(fix_env: &mut sml_fixity::Env, contents: &str) -> Self {
+  pub fn new(fix_env: &mut sml_fixity::Env, lang: &config::file::Language, contents: &str) -> Self {
     elapsed::log("SourceFileSyntax::new", || {
       let (lex_errors, parse) = Self::lex_and_parse(fix_env, contents);
-      let mut lower = sml_lower::get(&parse.root);
+      let mut lower = sml_lower::get(lang, &parse.root);
       sml_ty_var_scope::get(&mut lower.arenas, lower.root);
       Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower }
     })

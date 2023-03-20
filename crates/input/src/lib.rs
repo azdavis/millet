@@ -28,6 +28,8 @@ pub struct Input {
   pub root_group_paths: Vec<PathId>,
   /// Severities to override.
   pub severities: types::Severities,
+  /// The language config.
+  pub lang: config::file::Language,
   /// Errors when getting input.
   pub errors: Vec<Error>,
 }

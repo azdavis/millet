@@ -124,6 +124,7 @@ struct Cx<'a> {
   source_file_contents: &'a paths::PathMap<String>,
   bas_decs: &'a paths::PathMap<&'a mlb_hir::BasDec>,
   std_basis: &'a MBasis,
+  lang: &'a config::file::Language,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -146,6 +147,7 @@ impl MBasis {
 #[must_use]
 pub fn get(
   syms: sml_statics::Syms,
+  lang: &config::file::Language,
   basis: &sml_statics::basis::Basis,
   source_file_contents: &paths::PathMap<String>,
   bas_decs: &paths::PathMap<&mlb_hir::BasDec>,
@@ -164,7 +166,7 @@ pub fn get(
       bas_env: FxHashMap::default(),
       basis: basis.clone(),
     };
-    let cx = Cx { source_file_contents, bas_decs, std_basis: &std_basis };
+    let cx = Cx { source_file_contents, bas_decs, std_basis: &std_basis, lang };
     get_group_file(&mut st, cx, &mut MBasis::default(), path);
   }
   MlbStatics { mlb_errors: st.mlb_errors, syms: st.syms, source_files: st.source_files }
@@ -243,7 +245,7 @@ fn get_bas_dec(
       mlb_hir::PathKind::Source => {
         let contents = cx.source_file_contents.get(path).expect("no source file");
         let mut fix_env = scope.fix_env.clone();
-        let syntax = SourceFileSyntax::new(&mut fix_env, contents);
+        let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
         get_source_file(st, *path, scope, ac, fix_env, syntax);
       }
       mlb_hir::PathKind::Group => match st.bases.get(path) {
@@ -257,7 +259,7 @@ fn get_bas_dec(
         .map(|path| {
           let mut fix_env = scope.fix_env.clone();
           let contents = cx.source_file_contents.get(path).expect("no source file");
-          let syntax = SourceFileSyntax::new(&mut fix_env, contents);
+          let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
           (*path, (fix_env, syntax))
         })
         .collect();

@@ -746,6 +746,7 @@ dependencies = [
 name = "sml-file-syntax"
 version = "0.1.0"
 dependencies = [
+ "config",
  "elapsed",
  "sml-fixity",
  "sml-lex",
@@ -791,6 +792,7 @@ source = "git+https://github.com/azdavis/sml-libs.git#07a772374caa2b0e3acda920f7
 name = "sml-lower"
 version = "0.1.0"
 dependencies = [
+ "config",
  "diagnostic-util",
  "fast-hash",
  "lex-util",

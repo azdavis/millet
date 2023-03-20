@@ -1,5 +1,6 @@
 //! Utilities.
 
+use config::file::Language;
 use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::{ast::SyntaxNodePtr, rowan::TextRange};
@@ -247,12 +248,12 @@ pub(crate) struct St<'a> {
   arenas: sml_hir::Arenas,
   ptrs: Ptrs,
   fun_names: Vec<str_util::Name>,
-  lang: &'a (),
+  lang: &'a Language,
 }
 
 #[allow(clippy::unnecessary_wraps)]
 impl<'a> St<'a> {
-  pub(crate) fn new(lang: &'a ()) -> St<'a> {
+  pub(crate) fn new(lang: &'a Language) -> St<'a> {
     St {
       fresh_idx: 0,
       errors: Vec::new(),

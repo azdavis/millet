@@ -50,7 +50,8 @@ impl Analysis {
   /// Given the contents of one isolated file, return the diagnostics for it.
   pub fn get_one(&self, contents: &str) -> Vec<Diagnostic> {
     let mut fix_env = sml_fixity::STD_BASIS.clone();
-    let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, contents);
+    let lang = config::file::Language::default();
+    let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, contents);
     let mut syms = self.std_basis.syms().clone();
     let basis = self.std_basis.basis().clone();
     let mode = sml_statics::mode::Mode::Regular(None);
@@ -71,7 +72,7 @@ impl Analysis {
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {
-      mlb_statics::get(syms, basis, &input.sources, &groups, &input.root_group_paths)
+      mlb_statics::get(syms, &input.lang, basis, &input.sources, &groups, &input.root_group_paths)
     });
     self.source_files = res.source_files;
     self.syms = res.syms;

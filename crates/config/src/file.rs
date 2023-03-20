@@ -19,6 +19,9 @@ pub struct Root {
   /// The diagnostics config.
   #[serde(default)]
   pub diagnostics: FxHashMap<SmolStr, Diagnostic>,
+  /// The language config.
+  #[serde(default)]
+  pub language: Language,
 }
 
 /// The workspace config.
@@ -63,3 +66,8 @@ pub enum Severity {
   /// Error. The maximum.
   Error,
 }
+
+/// Configuration for the language.
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct Language {}

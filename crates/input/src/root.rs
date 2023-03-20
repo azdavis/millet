@@ -2,6 +2,7 @@
 
 use crate::types::Severities;
 use crate::util::{get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind};
+use config::file::Language;
 use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
 use std::path::{Path, PathBuf};
@@ -88,6 +89,7 @@ pub(crate) struct RootGroup {
 pub(crate) struct Config {
   pub(crate) path_vars: slash_var_path::UnresolvedEnv,
   pub(crate) severities: Severities,
+  pub(crate) lang: Language,
 }
 
 impl Config {
@@ -174,6 +176,7 @@ impl Config {
       };
       ret.severities.insert(code, sev);
     }
+    ret.lang = parsed.language;
     ret
   }
 }

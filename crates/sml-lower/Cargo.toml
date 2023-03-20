@@ -10,6 +10,7 @@ doctest = false
 test = false
 
 [dependencies]
+config = { path = "../config" }
 diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 lex-util = { path = "../lex-util" }

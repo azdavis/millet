@@ -76,6 +76,7 @@ where
 {
   let (mut syms, mut basis) = basis::minimal();
   let mut imperative_io_hack = None::<String>;
+  let lang = config::file::Language::default();
   let info: FxHashMap<_, _> = files
     .map(|(name, mut contents)| {
       if name == "std_basis/imperative-io.sml" {
@@ -103,7 +104,7 @@ where
         contents = &owned_contents;
       }
       let mut fix_env = sml_fixity::STD_BASIS.clone();
-      let started = SourceFileSyntax::new(&mut fix_env, contents);
+      let started = SourceFileSyntax::new(&mut fix_env, &lang, contents);
       if let Some(e) = started.lex_errors.first() {
         panic!("{name}: lex error: {}", e.display());
       }
