@@ -51,28 +51,26 @@ fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx 
   match top_dec {
     ast::DecOne::ExpDec(top_dec) => {
       let ptr = SyntaxNodePtr::new(top_dec.syntax());
-      let dec = sml_hir::Dec::Val(
-        Vec::new(),
-        vec![sml_hir::ValBind {
-          rec: false,
-          // the pat should technically be the variable pattern `it`, but allowing that would
-          // require threading through the state of "are we actually allowed to re-bind the special
-          // `it` variable", which is possible but annoying.
-          //
-          // I also don't really want to encourage actually using `it` in source files. like, it's
-          // technically allowed to do
-          //
-          // ```sml
-          // 2;
-          // val x = it + it
-          // ```
-          //
-          // to have `4` be bound to `x`, but that's weird to do _in a source file_. at a REPL it's
-          // fine, but millet doesn't check a REPL, it checks source files.
-          pat: st.pat(sml_hir::Pat::Wild, ptr.clone()),
-          exp: exp::get(st, top_dec.exp()),
-        }],
-      );
+      let bind = sml_hir::ValBind {
+        rec: false,
+        // the pat should technically be the variable pattern `it`, but allowing that would
+        // require threading through the state of "are we actually allowed to re-bind the special
+        // `it` variable", which is possible but annoying.
+        //
+        // I also don't really want to encourage actually using `it` in source files. like, it's
+        // technically allowed to do
+        //
+        // ```sml
+        // 2;
+        // val x = it + it
+        // ```
+        //
+        // to have `4` be bound to `x`, but that's weird to do _in a source file_. at a REPL it's
+        // fine, but millet doesn't check a REPL, it checks source files.
+        pat: st.pat(sml_hir::Pat::Wild, ptr.clone()),
+        exp: exp::get(st, top_dec.exp()),
+      };
+      let dec = sml_hir::Dec::Val(Vec::new(), vec![bind]);
       let dec = st.dec(dec, ptr.clone());
       st.str_dec(sml_hir::StrDec::Dec(dec), ptr)
     }
