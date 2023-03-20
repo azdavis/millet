@@ -122,43 +122,40 @@ impl Config {
         ErrorKind::InvalidConfigVersion(parsed.version),
       ));
     }
-    if let Some(ws) = parsed.workspace {
-      if let Some(root_path_glob) = ws.root {
-        let path = root.as_path().join(root_path_glob.as_str());
-        glob_root_group_paths(fs, root_group_paths, root, &path, config_path, errors);
-        if root_group_paths.is_empty() {
-          errors.push(Error::new(
-            ErrorSource::default(),
-            config_path.to_owned(),
-            ErrorKind::EmptyGlob(root_path_glob),
-          ));
-        }
-      }
-      if let Some(ws_path_vars) = ws.path_vars {
-        for (key, val) in ws_path_vars {
-          // we resolve config-root-relative paths here, but we have to wait until later to resolve
-          // workspace-root-relative paths.
-          let (kind, suffix) = match val {
-            config::file::PathVar::Value(val) => (EnvEntryKind::Value, val),
-            config::file::PathVar::Path(val) => {
-              let path = root.as_path().join(val.as_str());
-              let source = ErrorSource { path: Some(config_path.to_owned()), range: None };
-              let val = match str_path(source, &path) {
-                Ok(x) => str_util::SmolStr::from(x),
-                Err(e) => {
-                  errors.push(e);
-                  continue;
-                }
-              };
-              (EnvEntryKind::Value, val)
-            }
-            config::file::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),
-          };
-          ret.path_vars.insert(key, EnvEntry { kind, suffix });
-        }
+    if let Some(root_path_glob) = parsed.workspace.root {
+      let path = root.as_path().join(root_path_glob.as_str());
+      glob_root_group_paths(fs, root_group_paths, root, &path, config_path, errors);
+      if root_group_paths.is_empty() {
+        errors.push(Error::new(
+          ErrorSource::default(),
+          config_path.to_owned(),
+          ErrorKind::EmptyGlob(root_path_glob),
+        ));
       }
     }
-    for (code, config) in parsed.diagnostics.into_iter().flatten() {
+    for (key, val) in parsed.workspace.path_vars {
+      // we resolve config-root-relative paths here, but we have to wait until later to resolve
+      // workspace-root-relative paths.
+      let (kind, suffix) = match val {
+        config::file::PathVar::Value(val) => (EnvEntryKind::Value, val),
+        config::file::PathVar::Path(val) => {
+          let path = root.as_path().join(val.as_str());
+          let source = ErrorSource { path: Some(config_path.to_owned()), range: None };
+          let val = match str_path(source, &path) {
+            Ok(x) => str_util::SmolStr::from(x),
+            Err(e) => {
+              errors.push(e);
+              continue;
+            }
+          };
+          (EnvEntryKind::Value, val)
+        }
+        config::file::PathVar::WorkspacePath(val) => (EnvEntryKind::WorkspacePath, val),
+      };
+      ret.path_vars.insert(key, EnvEntry { kind, suffix });
+    }
+
+    for (code, config) in parsed.diagnostics {
       let code = match code.parse::<diagnostic_util::Code>() {
         Ok(x) => x,
         Err(e) => {
@@ -170,14 +167,12 @@ impl Config {
           continue;
         }
       };
-      if let Some(sev) = config.severity {
-        let sev = match sev {
-          config::file::Severity::Ignore => None,
-          config::file::Severity::Warning => Some(diagnostic_util::Severity::Warning),
-          config::file::Severity::Error => Some(diagnostic_util::Severity::Error),
-        };
-        ret.severities.insert(code, sev);
-      }
+      let sev = match config.severity {
+        config::file::Severity::Ignore => None,
+        config::file::Severity::Warning => Some(diagnostic_util::Severity::Warning),
+        config::file::Severity::Error => Some(diagnostic_util::Severity::Error),
+      };
+      ret.severities.insert(code, sev);
     }
     ret
   }

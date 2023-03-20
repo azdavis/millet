@@ -14,19 +14,22 @@ pub struct Root {
   /// The version. Should be 1.
   pub version: u16,
   /// The workspace config.
-  pub workspace: Option<Workspace>,
+  #[serde(default)]
+  pub workspace: Workspace,
   /// The diagnostics config.
-  pub diagnostics: Option<FxHashMap<SmolStr, Diagnostic>>,
+  #[serde(default)]
+  pub diagnostics: FxHashMap<SmolStr, Diagnostic>,
 }
 
 /// The workspace config.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Workspace {
   /// The root group filename.
   pub root: Option<SmolStr>,
   /// Path vars, for expansion in MLB/CM paths.
-  pub path_vars: Option<FxHashMap<SmolStr, PathVar>>,
+  #[serde(default)]
+  pub path_vars: FxHashMap<SmolStr, PathVar>,
 }
 
 /// A path var setting.
@@ -46,7 +49,7 @@ pub enum PathVar {
 #[serde(rename_all = "kebab-case")]
 pub struct Diagnostic {
   /// The severity to display this error code at.
-  pub severity: Option<Severity>,
+  pub severity: Severity,
 }
 
 /// A severity for an error.
