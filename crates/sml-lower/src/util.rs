@@ -241,7 +241,7 @@ pub struct Lower {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct Cx {
+pub(crate) struct St {
   fresh_idx: u32,
   errors: Vec<Error>,
   arenas: sml_hir::Arenas,
@@ -250,7 +250,7 @@ pub(crate) struct Cx {
 }
 
 #[allow(clippy::unnecessary_wraps)]
-impl Cx {
+impl St {
   /// Returns a `Name` that is both:
   /// - not writeable in user code, and will thus not collide with any identifiers in user code;
   /// - distinct from all other `Name`s returned from self thus far, and will thus not collide

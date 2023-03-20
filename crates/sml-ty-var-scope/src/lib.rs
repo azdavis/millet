@@ -40,15 +40,15 @@ use fast_hash::{FxHashMap, FxHashSet};
 /// the dec arena needs to be mutable, and that causes all sorts of unhappiness since we need to
 /// traverse it. Traversing and mutating a thing at the same time is not easy.
 pub fn get(ars: &mut sml_hir::Arenas, root: sml_hir::StrDecIdx) {
-  let mut cx = Cx::default();
-  get_str_dec(&mut cx, ars, root);
-  for (dec, implicit) in cx.val_dec {
+  let mut st = St::default();
+  get_str_dec(&mut st, ars, root);
+  for (dec, implicit) in st.val_dec {
     match &mut ars.dec[dec] {
       sml_hir::Dec::Val(ty_vars, _) => ty_vars.extend(implicit),
       _ => unreachable!("only val may implicitly bind ty vars"),
     }
   }
-  for (spec, implicit) in cx.val_spec {
+  for (spec, implicit) in st.val_spec {
     match &mut ars.spec[spec] {
       sml_hir::Spec::Val(ty_vars, _) => ty_vars.extend(implicit),
       _ => unreachable!("only val may implicitly bind ty vars"),
@@ -58,14 +58,14 @@ pub fn get(ars: &mut sml_hir::Arenas, root: sml_hir::StrDecIdx) {
 
 /// The `val` decs/specs and the type variables they implicitly bind.
 #[derive(Debug, Default)]
-struct Cx {
+struct St {
   val_dec: FxHashMap<sml_hir::la_arena::Idx<sml_hir::Dec>, TyVarSet>,
   val_spec: FxHashMap<sml_hir::la_arena::Idx<sml_hir::Spec>, TyVarSet>,
 }
 
 type TyVarSet = FxHashSet<sml_hir::TyVar>;
 
-fn get_str_dec(cx: &mut Cx, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) {
+fn get_str_dec(st: &mut St, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) {
   let str_dec = match str_dec {
     Some(x) => x,
     None => return,
@@ -73,73 +73,73 @@ fn get_str_dec(cx: &mut Cx, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) 
   match &ars.str_dec[str_dec] {
     sml_hir::StrDec::Dec(dec) => {
       let mut mode = Mode::Get(TyVarSet::default());
-      get_dec(cx, ars, &TyVarSet::default(), &mut mode, *dec);
+      get_dec(st, ars, &TyVarSet::default(), &mut mode, *dec);
       mode = Mode::Set;
-      get_dec(cx, ars, &TyVarSet::default(), &mut mode, *dec);
+      get_dec(st, ars, &TyVarSet::default(), &mut mode, *dec);
     }
     sml_hir::StrDec::Structure(str_binds) => {
       for str_bind in str_binds {
-        get_str_exp(cx, ars, str_bind.str_exp);
+        get_str_exp(st, ars, str_bind.str_exp);
       }
     }
     sml_hir::StrDec::Signature(sig_binds) => {
       for sig_bind in sig_binds {
-        get_sig_exp(cx, ars, sig_bind.sig_exp);
+        get_sig_exp(st, ars, sig_bind.sig_exp);
       }
     }
     sml_hir::StrDec::Functor(fun_binds) => {
       for fun_bind in fun_binds {
-        get_sig_exp(cx, ars, fun_bind.param_sig);
-        get_str_exp(cx, ars, fun_bind.body);
+        get_sig_exp(st, ars, fun_bind.param_sig);
+        get_str_exp(st, ars, fun_bind.body);
       }
     }
     sml_hir::StrDec::Local(local_dec, in_dec) => {
-      get_str_dec(cx, ars, *local_dec);
-      get_str_dec(cx, ars, *in_dec);
+      get_str_dec(st, ars, *local_dec);
+      get_str_dec(st, ars, *in_dec);
     }
     sml_hir::StrDec::Seq(str_decs) => {
       for &str_dec in str_decs {
-        get_str_dec(cx, ars, str_dec);
+        get_str_dec(st, ars, str_dec);
       }
     }
   }
 }
 
-fn get_str_exp(cx: &mut Cx, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) {
+fn get_str_exp(st: &mut St, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) {
   let str_exp = match str_exp {
     Some(x) => x,
     None => return,
   };
   match &ars.str_exp[str_exp] {
-    sml_hir::StrExp::Struct(str_dec) => get_str_dec(cx, ars, *str_dec),
+    sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, ars, *str_dec),
     sml_hir::StrExp::Path(_) => {}
     sml_hir::StrExp::Ascription(str_exp, _, sig_exp) => {
-      get_str_exp(cx, ars, *str_exp);
-      get_sig_exp(cx, ars, *sig_exp);
+      get_str_exp(st, ars, *str_exp);
+      get_sig_exp(st, ars, *sig_exp);
     }
-    sml_hir::StrExp::App(_, str_exp, _) => get_str_exp(cx, ars, *str_exp),
+    sml_hir::StrExp::App(_, str_exp, _) => get_str_exp(st, ars, *str_exp),
     sml_hir::StrExp::Let(str_dec, str_exp) => {
-      get_str_dec(cx, ars, *str_dec);
-      get_str_exp(cx, ars, *str_exp);
+      get_str_dec(st, ars, *str_dec);
+      get_str_exp(st, ars, *str_exp);
     }
   }
 }
 
-fn get_sig_exp(cx: &mut Cx, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) {
+fn get_sig_exp(st: &mut St, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) {
   let sig_exp = match sig_exp {
     Some(x) => x,
     None => return,
   };
   match &ars.sig_exp[sig_exp] {
-    sml_hir::SigExp::Spec(spec) => get_spec(cx, ars, *spec),
+    sml_hir::SigExp::Spec(spec) => get_spec(st, ars, *spec),
     sml_hir::SigExp::Name(_) => {}
     sml_hir::SigExp::Where(sig_exp, _) => {
-      get_sig_exp(cx, ars, *sig_exp);
+      get_sig_exp(st, ars, *sig_exp);
     }
   }
 }
 
-fn get_spec(cx: &mut Cx, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
+fn get_spec(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
   let spec = match spec {
     Some(x) => x,
     None => return,
@@ -150,14 +150,14 @@ fn get_spec(cx: &mut Cx, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
       for val_desc in val_descs {
         get_ty(ars, &mut ac, val_desc.ty);
       }
-      assert!(cx.val_spec.insert(spec, ac).is_none());
+      assert!(st.val_spec.insert(spec, ac).is_none());
     }
-    sml_hir::Spec::Str(str_desc) => get_sig_exp(cx, ars, str_desc.sig_exp),
-    sml_hir::Spec::Include(sig_exp) => get_sig_exp(cx, ars, *sig_exp),
-    sml_hir::Spec::Sharing(spec, _, _) => get_spec(cx, ars, *spec),
+    sml_hir::Spec::Str(str_desc) => get_sig_exp(st, ars, str_desc.sig_exp),
+    sml_hir::Spec::Include(sig_exp) => get_sig_exp(st, ars, *sig_exp),
+    sml_hir::Spec::Sharing(spec, _, _) => get_spec(st, ars, *spec),
     sml_hir::Spec::Seq(specs) => {
       for &spec in specs {
-        get_spec(cx, ars, spec);
+        get_spec(st, ars, spec);
       }
     }
     sml_hir::Spec::Ty(_)
@@ -192,7 +192,7 @@ enum Mode {
 
 /// `scope` is already bound variables.
 fn get_dec(
-  cx: &mut Cx,
+  st: &mut St,
   ars: &sml_hir::Arenas,
   scope: &TyVarSet,
   mode: &mut Mode,
@@ -214,7 +214,7 @@ fn get_dec(
               Mode::Get(ac) => get_pat(ars, ac, val_bind.pat),
               Mode::Set => unreachable!("mode changed to Set"),
             }
-            get_exp(cx, ars, &scope, &mut mode, val_bind.exp);
+            get_exp(st, ars, &scope, &mut mode, val_bind.exp);
           }
           let mut ac = match mode {
             Mode::Get(ac) => ac,
@@ -223,28 +223,28 @@ fn get_dec(
           for x in &scope {
             ac.remove(x);
           }
-          assert!(cx.val_dec.insert(dec, ac).is_none());
+          assert!(st.val_dec.insert(dec, ac).is_none());
         }
         Mode::Set => {
-          let unguarded = cx.val_dec.get_mut(&dec).expect("should have been set in the Get pass");
+          let unguarded = st.val_dec.get_mut(&dec).expect("should have been set in the Get pass");
           for x in &scope {
             unguarded.remove(x);
           }
           scope.extend(unguarded.iter().cloned());
           for val_bind in val_binds {
-            get_exp(cx, ars, &scope, mode, val_bind.exp);
+            get_exp(st, ars, &scope, mode, val_bind.exp);
           }
         }
       }
     }
-    sml_hir::Dec::Abstype(_, _, dec) => get_dec(cx, ars, scope, mode, *dec),
+    sml_hir::Dec::Abstype(_, _, dec) => get_dec(st, ars, scope, mode, *dec),
     sml_hir::Dec::Local(local_dec, in_dec) => {
-      get_dec(cx, ars, scope, mode, *local_dec);
-      get_dec(cx, ars, scope, mode, *in_dec);
+      get_dec(st, ars, scope, mode, *local_dec);
+      get_dec(st, ars, scope, mode, *in_dec);
     }
     sml_hir::Dec::Seq(decs) => {
       for &dec in decs {
-        get_dec(cx, ars, scope, mode, dec);
+        get_dec(st, ars, scope, mode, dec);
       }
     }
     sml_hir::Dec::Ty(_)
@@ -256,7 +256,7 @@ fn get_dec(
 }
 
 fn get_exp(
-  cx: &mut Cx,
+  st: &mut St,
   ars: &sml_hir::Arenas,
   scope: &TyVarSet,
   mode: &mut Mode,
@@ -270,39 +270,39 @@ fn get_exp(
     sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) => {}
     sml_hir::Exp::Record(rows) => {
       for &(_, exp) in rows {
-        get_exp(cx, ars, scope, mode, exp);
+        get_exp(st, ars, scope, mode, exp);
       }
     }
     sml_hir::Exp::Let(dec, exp) => {
-      get_dec(cx, ars, scope, mode, *dec);
-      get_exp(cx, ars, scope, mode, *exp);
+      get_dec(st, ars, scope, mode, *dec);
+      get_exp(st, ars, scope, mode, *exp);
     }
     sml_hir::Exp::App(func, argument) => {
-      get_exp(cx, ars, scope, mode, *func);
-      get_exp(cx, ars, scope, mode, *argument);
+      get_exp(st, ars, scope, mode, *func);
+      get_exp(st, ars, scope, mode, *argument);
     }
     sml_hir::Exp::Handle(head, matcher_arms) => {
-      get_exp(cx, ars, scope, mode, *head);
+      get_exp(st, ars, scope, mode, *head);
       for &(pat, exp) in matcher_arms {
         match mode {
           Mode::Get(ac) => get_pat(ars, ac, pat),
           Mode::Set => {}
         }
-        get_exp(cx, ars, scope, mode, exp);
+        get_exp(st, ars, scope, mode, exp);
       }
     }
-    sml_hir::Exp::Raise(exp) => get_exp(cx, ars, scope, mode, *exp),
+    sml_hir::Exp::Raise(exp) => get_exp(st, ars, scope, mode, *exp),
     sml_hir::Exp::Fn(matcher_arms, _) => {
       for &(pat, exp) in matcher_arms {
         match mode {
           Mode::Get(ac) => get_pat(ars, ac, pat),
           Mode::Set => {}
         }
-        get_exp(cx, ars, scope, mode, exp);
+        get_exp(st, ars, scope, mode, exp);
       }
     }
     sml_hir::Exp::Typed(exp, ty) => {
-      get_exp(cx, ars, scope, mode, *exp);
+      get_exp(st, ars, scope, mode, *exp);
       match mode {
         Mode::Get(ac) => get_ty(ars, ac, *ty),
         Mode::Set => {}

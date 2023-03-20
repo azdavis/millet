@@ -103,103 +103,103 @@ impl Error {
 pub fn get(s: &str) -> Lex<'_> {
   let bs = s.as_bytes();
   let mut tokens = Vec::new();
-  let mut cx = Cx::default();
-  while cx.i < bs.len() {
-    let start = cx.i;
-    let kind = go(&mut cx, bs);
-    assert!(start < cx.i, "lexer failed to advance");
-    let text = std::str::from_utf8(&bs[start..cx.i]).expect("not a str");
+  let mut st = St::default();
+  while st.i < bs.len() {
+    let start = st.i;
+    let kind = go(&mut st, bs);
+    assert!(start < st.i, "lexer failed to advance");
+    let text = std::str::from_utf8(&bs[start..st.i]).expect("not a str");
     tokens.push(Token { kind, text });
   }
-  Lex { tokens, errors: cx.errors }
+  Lex { tokens, errors: st.errors }
 }
 
 /// The context.
 #[derive(Default)]
-struct Cx {
+struct St {
   errors: Vec<Error>,
   i: usize,
 }
 
-/// requires `bs` is a valid `&str`. if `start` is the value of `cx.i` on entry to this function,
-/// this returns `sk` and updates `cx.i` to `end` such that `bs[start..end]` is a `str` and `sk` is
+/// requires `bs` is a valid `&str`. if `start` is the value of `st.i` on entry to this function,
+/// this returns `sk` and updates `st.i` to `end` such that `bs[start..end]` is a `str` and `sk` is
 /// the kind for that `str`.
 #[allow(clippy::too_many_lines)]
-fn go(cx: &mut Cx, bs: &[u8]) -> SK {
-  let b = bs[cx.i];
-  let start = cx.i;
+fn go(st: &mut St, bs: &[u8]) -> SK {
+  let b = bs[st.i];
+  let start = st.i;
   // block comments
-  match block_comment::get(&mut cx.i, b, bs) {
+  match block_comment::get(&mut st.i, b, bs) {
     Ok(None) => {}
     Ok(Some(block_comment::Consumed)) => return SK::BlockComment,
     Err(block_comment::UnclosedError) => {
-      err(cx, start, ErrorKind::UnclosedComment);
+      err(st, start, ErrorKind::UnclosedComment);
       return SK::BlockComment;
     }
   }
   // whitespace
   if is_whitespace(b) {
-    cx.i += 1;
-    advance_while(&mut cx.i, bs, is_whitespace);
+    st.i += 1;
+    advance_while(&mut st.i, bs, is_whitespace);
     return SK::Whitespace;
   }
   // alphanumeric identifiers (include type variables) and keywords
   match alpha_num(b) {
     Some(AlphaNum::Prime) => {
-      cx.i += 1;
-      advance_while(&mut cx.i, bs, |b| alpha_num(b).is_some());
-      if start + 1 == cx.i {
-        err(cx, start, ErrorKind::IncompleteTyVar);
+      st.i += 1;
+      advance_while(&mut st.i, bs, |b| alpha_num(b).is_some());
+      if start + 1 == st.i {
+        err(st, start, ErrorKind::IncompleteTyVar);
       }
       return SK::TyVar;
     }
     Some(AlphaNum::Alpha) => {
-      cx.i += 1;
-      advance_while(&mut cx.i, bs, |b| alpha_num(b).is_some());
-      return SK::keyword(&bs[start..cx.i]).unwrap_or(SK::Name);
+      st.i += 1;
+      advance_while(&mut st.i, bs, |b| alpha_num(b).is_some());
+      return SK::keyword(&bs[start..st.i]).unwrap_or(SK::Name);
     }
     Some(AlphaNum::NumOrUnderscore) | None => {}
   }
   // num lit. note e.g. `~3` is one token but `~ 3` is two
-  if b.is_ascii_digit() || (b == b'~' && bs.get(cx.i + 1).map_or(false, u8::is_ascii_digit)) {
+  if b.is_ascii_digit() || (b == b'~' && bs.get(st.i + 1).map_or(false, u8::is_ascii_digit)) {
     let neg = b == b'~';
     let b = if neg {
-      cx.i += 1;
-      bs[cx.i]
+      st.i += 1;
+      bs[st.i]
     } else {
       b
     };
     if b == b'0' {
-      cx.i += 1;
-      match bs.get(cx.i) {
+      st.i += 1;
+      match bs.get(st.i) {
         None => return SK::IntLit,
         // word
         Some(&b'w') => {
-          cx.i += 1;
-          let valid_digit = match bs.get(cx.i) {
+          st.i += 1;
+          let valid_digit = match bs.get(st.i) {
             Some(&b'x') => {
-              cx.i += 1;
+              st.i += 1;
               u8::is_ascii_hexdigit
             }
             _ => u8::is_ascii_digit,
           };
-          let s = cx.i;
-          advance_while(&mut cx.i, bs, |b| valid_digit(&b));
-          if s == cx.i {
-            err(cx, start, ErrorKind::MissingDigitsInNumLit);
+          let s = st.i;
+          advance_while(&mut st.i, bs, |b| valid_digit(&b));
+          if s == st.i {
+            err(st, start, ErrorKind::MissingDigitsInNumLit);
           }
           if neg {
-            err(cx, start, ErrorKind::NegativeWordLit);
+            err(st, start, ErrorKind::NegativeWordLit);
           }
           return SK::WordLit;
         }
         // hex int
         Some(&b'x') => {
-          cx.i += 1;
-          let s = cx.i;
-          advance_while(&mut cx.i, bs, |b| b.is_ascii_hexdigit());
-          if s == cx.i {
-            err(cx, start, ErrorKind::MissingDigitsInNumLit);
+          st.i += 1;
+          let s = st.i;
+          advance_while(&mut st.i, bs, |b| b.is_ascii_hexdigit());
+          if s == st.i {
+            err(st, start, ErrorKind::MissingDigitsInNumLit);
           }
           return SK::IntLit;
         }
@@ -207,52 +207,52 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         Some(_) => {}
       }
     }
-    advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
+    advance_while(&mut st.i, bs, |b| b.is_ascii_digit());
     let mut kind = SK::IntLit;
-    if let Some(&b'.') = bs.get(cx.i) {
+    if let Some(&b'.') = bs.get(st.i) {
       kind = SK::RealLit;
-      cx.i += 1;
-      let s = cx.i;
-      advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
-      if s == cx.i {
-        err(cx, start, ErrorKind::MissingDigitsInNumLit);
+      st.i += 1;
+      let s = st.i;
+      advance_while(&mut st.i, bs, |b| b.is_ascii_digit());
+      if s == st.i {
+        err(st, start, ErrorKind::MissingDigitsInNumLit);
       }
     }
-    if let Some(&b'e' | &b'E') = bs.get(cx.i) {
+    if let Some(&b'e' | &b'E') = bs.get(st.i) {
       kind = SK::RealLit;
-      cx.i += 1;
-      if bs.get(cx.i) == Some(&b'~') {
-        cx.i += 1;
+      st.i += 1;
+      if bs.get(st.i) == Some(&b'~') {
+        st.i += 1;
       }
-      let s = cx.i;
-      advance_while(&mut cx.i, bs, |b| b.is_ascii_digit());
-      if s == cx.i {
-        err(cx, start, ErrorKind::MissingDigitsInNumLit);
+      let s = st.i;
+      advance_while(&mut st.i, bs, |b| b.is_ascii_digit());
+      if s == st.i {
+        err(st, start, ErrorKind::MissingDigitsInNumLit);
       }
     }
     // @test(misc::num_suffix)
-    advance_while(&mut cx.i, bs, |b| b.is_ascii_alphanumeric());
+    advance_while(&mut st.i, bs, |b| b.is_ascii_alphanumeric());
     return kind;
   }
   // string lit
   if b == b'"' {
-    get_string(start, cx, bs);
+    get_string(start, st, bs);
     return SK::StringLit;
   }
   // char lit
-  if b == b'#' && bs.get(cx.i + 1) == Some(&b'"') {
-    cx.i += 1;
-    let s = get_string(start, cx, bs);
+  if b == b'#' && bs.get(st.i + 1) == Some(&b'"') {
+    st.i += 1;
+    let s = get_string(start, st, bs);
     if s.map_or(false, |x| x.len() != 1) {
-      err(cx, start, ErrorKind::WrongLenCharLit);
+      err(st, start, ErrorKind::WrongLenCharLit);
     }
     return SK::CharLit;
   }
   // symbolic identifiers. must come before punctuation...
   if is_symbolic(b) {
-    cx.i += 1;
-    advance_while(&mut cx.i, bs, is_symbolic);
-    let got = &bs[start..cx.i];
+    st.i += 1;
+    advance_while(&mut st.i, bs, is_symbolic);
+    let got = &bs[start..st.i];
     // ...but we must check if the 'symbolic identifier' was actually a punctuation token. NOTE: this
     // could be a bit quicker if we divide the punctuation tokens into those that 'look like'
     // symbolic identifiers (like `:` and `#`) and those that can't possibly be (like `{` or `,`).
@@ -263,27 +263,27 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   }
   // punctuation
   if let Some(&(sk_bs, sk)) =
-    SK::PUNCTUATION.iter().find(|&&(sk_bs, _)| bs.get(cx.i..cx.i + sk_bs.len()) == Some(sk_bs))
+    SK::PUNCTUATION.iter().find(|&&(sk_bs, _)| bs.get(st.i..st.i + sk_bs.len()) == Some(sk_bs))
   {
-    cx.i += sk_bs.len();
+    st.i += sk_bs.len();
     return sk;
   }
   // invalid char. go until we find a valid str. this should terminate before
-  // cx.i goes past the end of bs because bs comes from a str.
+  // st.i goes past the end of bs because bs comes from a str.
   loop {
-    cx.i += 1;
-    if std::str::from_utf8(&bs[start..cx.i]).is_ok() {
+    st.i += 1;
+    if std::str::from_utf8(&bs[start..st.i]).is_ok() {
       break;
     }
   }
-  err(cx, start, ErrorKind::InvalidSource);
+  err(st, start, ErrorKind::InvalidSource);
   SK::Invalid
 }
 
-fn get_string(start: usize, cx: &mut Cx, bs: &[u8]) -> Option<String> {
-  let res = string::get(&mut cx.i, bs);
+fn get_string(start: usize, st: &mut St, bs: &[u8]) -> Option<String> {
+  let res = string::get(&mut st.i, bs);
   for (idx, e) in res.errors {
-    cx.errors.push(Error { range: range(start, idx), kind: ErrorKind::String(e) });
+    st.errors.push(Error { range: range(start, idx), kind: ErrorKind::String(e) });
   }
   res.actual
 }
@@ -332,8 +332,8 @@ fn is_symbolic(b: u8) -> bool {
   )
 }
 
-fn err(cx: &mut Cx, start: usize, kind: ErrorKind) {
-  cx.errors.push(Error { range: range(start, cx.i), kind });
+fn err(st: &mut St, start: usize, kind: ErrorKind) {
+  st.errors.push(Error { range: range(start, st.i), kind });
 }
 
 fn range(start: usize, end: usize) -> TextRange {

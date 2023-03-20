@@ -2,41 +2,41 @@
 
 use crate::common::{ck_trailing, get_lab, get_path, get_scon};
 use crate::ty;
-use crate::util::{Cx, ErrorKind, MatcherFlavor, Sep};
+use crate::util::{ErrorKind, MatcherFlavor, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(
-  cx: &mut Cx,
+  st: &mut St,
   flavor: Option<MatcherFlavor>,
   pat: Option<ast::Pat>,
 ) -> sml_hir::PatIdx {
   let pat = pat?;
   let ptr = SyntaxNodePtr::new(pat.syntax());
-  let or_pat = get_or(cx, flavor, pat)?;
+  let or_pat = get_or(st, flavor, pat)?;
   if or_pat.rest.is_empty() {
     or_pat.first
   } else {
-    cx.pat(sml_hir::Pat::Or(or_pat), ptr)
+    st.pat(sml_hir::Pat::Or(or_pat), ptr)
   }
 }
 
-fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<sml_hir::OrPat> {
+fn get_or(st: &mut St, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<sml_hir::OrPat> {
   let ptr = SyntaxNodePtr::new(pat.syntax());
   let ret = match pat {
     ast::Pat::WildcardPat(_) => sml_hir::Pat::Wild,
-    ast::Pat::SConPat(pat) => sml_hir::Pat::SCon(get_scon(cx, pat.s_con()?)?),
+    ast::Pat::SConPat(pat) => sml_hir::Pat::SCon(get_scon(st, pat.s_con()?)?),
     ast::Pat::ConPat(pat) => {
       if let Some(flavor) = flavor {
         let mut iter = pat.path()?.name_star_eq_dots();
         let name = iter.next()?.name_star_eq()?.token;
-        if iter.next().is_none() && cx.is_name_of_cur_fun(name.text()) {
-          cx.err(name.text_range(), ErrorKind::PatNameIsNameOfContainingFun(flavor));
+        if iter.next().is_none() && st.is_name_of_cur_fun(name.text()) {
+          st.err(name.text_range(), ErrorKind::PatNameIsNameOfContainingFun(flavor));
         }
       }
-      sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(cx, flavor, Some(x))))
+      sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(st, flavor, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {
-      ck_trailing(cx, Sep::Comma, pat.pat_rows().map(|x| x.comma()));
+      ck_trailing(st, Sep::Comma, pat.pat_rows().map(|x| x.comma()));
       let mut rest_pat_row = None::<RestPatRowState>;
       let rows: Vec<_> = pat
         .pat_rows()
@@ -52,33 +52,33 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
             if let Some(r) = &mut rest_pat_row {
               r.last = false;
             }
-            Some((get_lab(cx, row.lab()?), get(cx, flavor, row.pat())))
+            Some((get_lab(st, row.lab()?), get(st, flavor, row.pat())))
           }
           ast::PatRowInner::LabPatRow(row) => {
             if let Some(r) = &mut rest_pat_row {
               r.last = false;
             }
             let lab = str_util::Name::new(row.name_star_eq()?.token.text());
-            let ty_ann = row.ty_annotation().map(|x| ty::get(cx, x.ty()));
-            let as_tail = row.as_pat_tail().map(|x| get(cx, flavor, x.pat()));
+            let ty_ann = row.ty_annotation().map(|x| ty::get(st, x.ty()));
+            let as_tail = row.as_pat_tail().map(|x| get(st, flavor, x.pat()));
             let pat = match (ty_ann, as_tail) {
               (Some(ty), Some(pat)) => {
-                sml_hir::Pat::As(lab.clone(), cx.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()))
+                sml_hir::Pat::As(lab.clone(), st.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()))
               }
-              (Some(ty), None) => sml_hir::Pat::Typed(cx.pat(name(lab.as_str()), ptr.clone()), ty),
+              (Some(ty), None) => sml_hir::Pat::Typed(st.pat(name(lab.as_str()), ptr.clone()), ty),
               (None, Some(pat)) => sml_hir::Pat::As(lab.clone(), pat),
               (None, None) => name(lab.as_str()),
             };
-            Some((sml_hir::Lab::Name(lab), cx.pat(pat, ptr.clone())))
+            Some((sml_hir::Lab::Name(lab), st.pat(pat, ptr.clone())))
           }
         })
         .collect();
       if let Some(r) = &rest_pat_row {
         if r.multiple {
-          cx.err(pat.syntax().text_range(), ErrorKind::MultipleRestPatRows);
+          st.err(pat.syntax().text_range(), ErrorKind::MultipleRestPatRows);
         }
         if !r.last {
-          cx.err(pat.syntax().text_range(), ErrorKind::RestPatRowNotLast);
+          st.err(pat.syntax().text_range(), ErrorKind::RestPatRowNotLast);
         }
       }
       sml_hir::Pat::Record { rows, allows_other: rest_pat_row.is_some() }
@@ -87,82 +87,82 @@ fn get_or(cx: &mut Cx, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Option<s
     ast::Pat::ParenPat(pat) => {
       let inner = pat.pat()?;
       if warn_unnecessary_parens(&inner) {
-        cx.err(pat.syntax().text_range(), ErrorKind::UnnecessaryParens);
+        st.err(pat.syntax().text_range(), ErrorKind::UnnecessaryParens);
       }
-      return get_or(cx, flavor, inner);
+      return get_or(st, flavor, inner);
     }
     ast::Pat::TuplePat(pat) => {
-      ck_trailing(cx, Sep::Comma, pat.pat_args().map(|x| x.comma()));
-      tuple(pat.pat_args().map(|x| get(cx, flavor, x.pat())))
+      ck_trailing(st, Sep::Comma, pat.pat_args().map(|x| x.comma()));
+      tuple(pat.pat_args().map(|x| get(st, flavor, x.pat())))
     }
     ast::Pat::ListPat(pat) => {
-      ck_trailing(cx, Sep::Comma, pat.pat_args().map(|x| x.comma()));
+      ck_trailing(st, Sep::Comma, pat.pat_args().map(|x| x.comma()));
       // need to rev()
       #[allow(clippy::needless_collect)]
-      let pats: Vec<_> = pat.pat_args().map(|x| get(cx, flavor, x.pat())).collect();
+      let pats: Vec<_> = pat.pat_args().map(|x| get(st, flavor, x.pat())).collect();
       pats.into_iter().rev().fold(name("nil"), |ac, x| {
         let cons = sml_hir::Path::one(str_util::Name::new("::"));
-        let ac = cx.pat(ac, ptr.clone());
-        sml_hir::Pat::Con(cons, Some(cx.pat(tuple([x, ac]), ptr.clone())))
+        let ac = st.pat(ac, ptr.clone());
+        sml_hir::Pat::Con(cons, Some(st.pat(tuple([x, ac]), ptr.clone())))
       })
     }
     ast::Pat::VectorPat(pat) => {
-      cx.err(pat.syntax().text_range(), ErrorKind::Unsupported("vector patterns"));
+      st.err(pat.syntax().text_range(), ErrorKind::Unsupported("vector patterns"));
       return None;
     }
     ast::Pat::InfixPat(pat) => {
       let func = sml_hir::Path::one(str_util::Name::new(pat.name_star_eq()?.token.text()));
-      let lhs = get(cx, flavor, pat.lhs());
-      let rhs = get(cx, flavor, pat.rhs());
-      let arg = cx.pat(tuple([lhs, rhs]), ptr.clone());
+      let lhs = get(st, flavor, pat.lhs());
+      let rhs = get(st, flavor, pat.rhs());
+      let arg = st.pat(tuple([lhs, rhs]), ptr.clone());
       sml_hir::Pat::Con(func, Some(arg))
     }
     ast::Pat::TypedPat(pat) => {
       if pat.pat().map_or(false, has_types) {
-        cx.err(pat.syntax().text_range(), ErrorKind::MultipleTypedPat);
+        st.err(pat.syntax().text_range(), ErrorKind::MultipleTypedPat);
       }
-      sml_hir::Pat::Typed(get(cx, flavor, pat.pat()), ty::get(cx, pat.ty()))
+      sml_hir::Pat::Typed(get(st, flavor, pat.pat()), ty::get(st, pat.ty()))
     }
     ast::Pat::AsPat(pat) => {
-      let mut rhs = pat.as_pat_tail()?.pat().and_then(|pat| get(cx, flavor, Some(pat)));
+      let mut rhs = pat.as_pat_tail()?.pat().and_then(|pat| get(st, flavor, Some(pat)));
       let lhs = pat.pat()?;
       let name = match lhs {
         ast::Pat::TypedPat(pat) => {
-          let ty = ty::get(cx, pat.ty());
-          rhs = cx.pat(sml_hir::Pat::Typed(rhs, ty), ptr.clone());
-          get_pat_name(cx, pat.pat()?)?
+          let ty = ty::get(st, pat.ty());
+          rhs = st.pat(sml_hir::Pat::Typed(rhs, ty), ptr.clone());
+          get_pat_name(st, pat.pat()?)?
         }
-        pat => get_pat_name(cx, pat)?,
+        pat => get_pat_name(st, pat)?,
       };
       sml_hir::Pat::As(name, rhs)
     }
     ast::Pat::OrPat(pat) => {
       // flatten or pats.
-      let mut lhs = get_or(cx, flavor, pat.lhs()?)?;
-      let rhs = get_or(cx, flavor, pat.rhs()?)?;
+      let mut lhs = get_or(st, flavor, pat.lhs()?)?;
+      let rhs = get_or(st, flavor, pat.rhs()?)?;
       lhs.rest.push(rhs.first);
       lhs.rest.extend(rhs.rest);
       return Some(lhs);
     }
   };
-  Some(sml_hir::OrPat { first: cx.pat(ret, ptr), rest: Vec::new() })
+  Some(sml_hir::OrPat { first: st.pat(ret, ptr), rest: Vec::new() })
 }
 
-fn get_pat_name(cx: &mut Cx, pat: ast::Pat) -> Option<str_util::Name> {
+fn get_pat_name(st: &mut St, pat: ast::Pat) -> Option<str_util::Name> {
   let pat = if let ast::Pat::ConPat(pat) = pat {
     pat
   } else {
-    cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    st.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
     return None;
   };
   if pat.pat().is_some() {
-    cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    st.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
     return None;
   }
   let mut iter = pat.path()?.name_star_eq_dots();
   let name = str_util::Name::new(iter.next()?.name_star_eq()?.token.text());
   if iter.next().is_some() {
-    cx.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    st.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
     return None;
   }
   Some(name)

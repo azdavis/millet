@@ -2,13 +2,13 @@
 
 #![allow(clippy::needless_pass_by_value)]
 
-use crate::util::{Cx, ErrorKind, Sep};
+use crate::util::{ErrorKind, Sep, St};
 use num_traits::Num as _;
 use sml_syntax::{ast, SyntaxToken};
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
 /// carried to here. so we must do it again.
-pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<sml_hir::SCon> {
+pub(crate) fn get_scon(st: &mut St, scon: ast::SCon) -> Option<sml_hir::SCon> {
   let tok = scon.token;
   let ret = match scon.kind {
     ast::SConKind::IntLit => {
@@ -31,7 +31,7 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<sml_hir::SCon> {
         Err(_) => match sml_hir::BigInt::from_str_radix(chars.as_str(), radix) {
           Ok(x) => sml_hir::Int::Big(x),
           Err(e) => {
-            cx.err(tok.text_range(), ErrorKind::InvalidBigIntLit(e));
+            st.err(tok.text_range(), ErrorKind::InvalidBigIntLit(e));
             sml_hir::Int::Finite(0)
           }
         },
@@ -49,7 +49,7 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<sml_hir::SCon> {
       let n = match text.parse() {
         Ok(x) => x,
         Err(e) => {
-          cx.err(tok.text_range(), ErrorKind::InvalidRealLit(e));
+          st.err(tok.text_range(), ErrorKind::InvalidRealLit(e));
           0.0
         }
       };
@@ -70,7 +70,7 @@ pub(crate) fn get_scon(cx: &mut Cx, scon: ast::SCon) -> Option<sml_hir::SCon> {
       let n = match u64::from_str_radix(chars.as_str(), radix) {
         Ok(x) => x,
         Err(e) => {
-          cx.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
+          st.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
           0
         }
       };
@@ -106,7 +106,7 @@ pub(crate) fn get_path(p: ast::Path) -> Option<sml_hir::Path> {
   )
 }
 
-pub(crate) fn get_lab(cx: &mut Cx, lab: ast::Lab) -> sml_hir::Lab {
+pub(crate) fn get_lab(st: &mut St, lab: ast::Lab) -> sml_hir::Lab {
   match lab.kind {
     ast::LabKind::Name | ast::LabKind::Star => {
       sml_hir::Lab::Name(str_util::Name::new(lab.token.text()))
@@ -115,23 +115,23 @@ pub(crate) fn get_lab(cx: &mut Cx, lab: ast::Lab) -> sml_hir::Lab {
       let n = match lab.token.text().parse::<usize>() {
         Ok(n) => n,
         Err(e) => {
-          cx.err(lab.token.text_range(), ErrorKind::InvalidNumLab(e));
+          st.err(lab.token.text_range(), ErrorKind::InvalidNumLab(e));
           1
         }
       };
       if n == 0 {
-        cx.err(lab.token.text_range(), ErrorKind::ZeroNumLab);
+        st.err(lab.token.text_range(), ErrorKind::ZeroNumLab);
       }
       sml_hir::Lab::Num(n)
     }
   }
 }
 
-pub(crate) fn ck_trailing<I>(cx: &mut Cx, sep: Sep, iter: I)
+pub(crate) fn ck_trailing<I>(st: &mut St, sep: Sep, iter: I)
 where
   I: Iterator<Item = Option<SyntaxToken>>,
 {
   if let Some(s) = iter.last().flatten() {
-    cx.err(s.text_range(), ErrorKind::Trailing(sep));
+    st.err(s.text_range(), ErrorKind::Trailing(sep));
   }
 }
