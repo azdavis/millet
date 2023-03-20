@@ -70,6 +70,7 @@
     "orelse",
     "outfile",
     "ovsx",
+    "paren",
     "pathconfig",
     "pazu",
     "peekable",
