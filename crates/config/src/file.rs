@@ -71,9 +71,47 @@ pub enum Severity {
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Language {
+  /// Configuration for declarations.
+  #[serde(default)]
+  pub dec: Dec,
   /// Configuration for expressions.
   #[serde(default)]
   pub exp: Exp,
+}
+
+/// Configuration for declarations.
+#[derive(Debug, Default, Clone, Deserialize)]
+#[allow(clippy::struct_excessive_bools)]
+#[allow(missing_docs)]
+pub struct Dec {
+  #[serde(default)]
+  pub val: Tool,
+  #[serde(default)]
+  pub fun: Tool,
+  #[serde(default, rename = "type")]
+  pub type_: Tool,
+  #[serde(default)]
+  pub datatype: Tool,
+  #[serde(default, rename = "datatype-copy")]
+  pub datatype_copy: Tool,
+  #[serde(default)]
+  pub exception: Tool,
+  #[serde(default)]
+  pub open: Tool,
+  #[serde(default)]
+  pub fixity: Tool,
+  #[serde(default)]
+  pub local: Tool,
+  #[serde(default)]
+  pub structure: Tool,
+  #[serde(default)]
+  pub signature: Tool,
+  #[serde(default)]
+  pub functor: Tool,
+  #[serde(default)]
+  pub exp: Tool,
+  #[serde(default)]
+  pub include: Tool,
 }
 
 /// Configuration for expressions.

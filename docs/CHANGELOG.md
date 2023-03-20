@@ -15,7 +15,7 @@ The versioning system is basically the following:
 
 ## main
 
-- Allow specifying what kinds of expressions are permitted.
+- Allow specifying what kinds of expressions/declarations/specifications are permitted.
 
 ## v0.8.1
 

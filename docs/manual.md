@@ -123,6 +123,31 @@ Overrides the default severity for this [diagnostic](#inline-diagnostics). The a
 
 Configuration for the language.
 
+#### `language.dec`
+
+What kinds of declarations/specifications are permitted.
+
+#### `language.dec.<kind>`
+
+Whether the `<kind>` of declaration/specification is allowed.
+
+Valid `<kind>`s:
+
+- `val`
+- `fun`
+- `type`
+- `datatype`
+- `datatype-copy`
+- `exception`
+- `open`
+- `fixity` (covers `infix`, `infixr`, and `nonfix`)
+- `local`
+- `structure`
+- `signature`
+- `functor`
+- `exp` (expression declarations)
+- `include` (technically a specification, not a declaration)
+
 #### `language.exp`
 
 What kind of expressions are permitted.

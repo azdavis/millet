@@ -162,12 +162,14 @@ impl fmt::Display for Sep {
 #[derive(Debug)]
 pub(crate) enum Item {
   Exp(&'static str),
+  Dec(&'static str),
 }
 
 impl fmt::Display for Item {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Item::Exp(s) => write!(f, "expression: {s}"),
+      Item::Dec(s) => write!(f, "declaration: {s}"),
     }
   }
 }

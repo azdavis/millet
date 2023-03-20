@@ -5,7 +5,7 @@
 
 use crate::common::{get_name, get_path};
 use crate::pat::{self, tuple};
-use crate::util::{ErrorKind, St};
+use crate::util::{ErrorKind, Item, St};
 use crate::{exp, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
@@ -51,6 +51,9 @@ fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx 
   match top_dec {
     ast::DecOne::ExpDec(top_dec) => {
       let ptr = SyntaxNodePtr::new(top_dec.syntax());
+      if !st.lang().dec.exp {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("expression")));
+      }
       let bind = sml_hir::ValBind {
         rec: false,
         // the pat should technically be the variable pattern `it`, but allowing that would
@@ -88,6 +91,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
   let ptr = SyntaxNodePtr::new(str_dec.syntax());
   let res = match str_dec {
     ast::DecOne::StructureDec(str_dec) => {
+      if !st.lang().dec.structure {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("structure")));
+      }
       let iter = str_dec.str_binds().filter_map(|str_bind| {
         let str_exp = str_bind.eq_str_exp().and_then(|x| x.str_exp());
         if str_exp.is_none() {
@@ -101,6 +107,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       sml_hir::StrDec::Structure(iter.collect())
     }
     ast::DecOne::SignatureDec(str_dec) => {
+      if !st.lang().dec.signature {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("signature")));
+      }
       let iter = str_dec.sig_binds().filter_map(|sig_bind| {
         Some(sml_hir::SigBind {
           name: get_name(sig_bind.name())?,
@@ -110,6 +119,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       sml_hir::StrDec::Signature(iter.collect())
     }
     ast::DecOne::FunctorDec(str_dec) => {
+      if !st.lang().dec.functor {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("functor")));
+      }
       let iter = str_dec.functor_binds().filter_map(|fun_bind| {
         let functor_name = get_name(fun_bind.functor_name())?;
         let body = with_ascription_tail(st, fun_bind.body(), fun_bind.ascription_tail());
@@ -133,6 +145,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       sml_hir::StrDec::Functor(iter.collect())
     }
     ast::DecOne::LocalDec(str_dec) => {
+      if !st.lang().dec.local {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("local")));
+      }
       let fst = get_str_dec(st, str_dec.local_dec());
       let snd = get_str_dec(st, str_dec.in_dec());
       sml_hir::StrDec::Local(fst, snd)
@@ -248,6 +263,9 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       vec![]
     }
     ast::DecOne::ValDec(dec) => {
+      if !st.lang().dec.val {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("val")));
+      }
       if let Some(tvs) = dec.ty_var_seq() {
         st.err(tvs.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
       }
@@ -292,6 +310,9 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       vec![st.spec(val, ptr)]
     }
     ast::DecOne::TyDec(dec) => {
+      if !st.lang().dec.type_ {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("type")));
+      }
       let f = match dec.ty_head() {
         None => return vec![],
         Some(head) => match head.kind {
@@ -321,6 +342,9 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       iter.collect()
     }
     ast::DecOne::DatDec(dec) => {
+      if !st.lang().dec.datatype {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("datatype")));
+      }
       if let Some(with_type) = dec.with_type() {
         st.err(
           with_type.syntax().text_range(),
@@ -330,11 +354,19 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       let binds = dat_binds(st, dec.dat_binds());
       binds.into_iter().map(|x| st.spec(sml_hir::Spec::Datatype(x), ptr.clone())).collect()
     }
-    ast::DecOne::DatCopyDec(dec) => get_name(dec.name())
-      .zip(dec.path().and_then(get_path))
-      .map(|(name, path)| vec![st.spec(sml_hir::Spec::DatatypeCopy(name, path), ptr)])
-      .unwrap_or_default(),
+    ast::DecOne::DatCopyDec(dec) => {
+      if !st.lang().dec.datatype_copy {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("datatype copy")));
+      }
+      get_name(dec.name())
+        .zip(dec.path().and_then(get_path))
+        .map(|(name, path)| vec![st.spec(sml_hir::Spec::DatatypeCopy(name, path), ptr)])
+        .unwrap_or_default()
+    }
     ast::DecOne::ExDec(dec) => {
+      if !st.lang().dec.exception {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("exception")));
+      }
       let iter = dec.ex_binds().filter_map(|ex_bind| {
         let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
         let ty = ex_bind.ex_bind_inner().map(|inner| match inner {
@@ -349,6 +381,9 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       iter.collect()
     }
     ast::DecOne::StructureDec(dec) => {
+      if !st.lang().dec.structure {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("structure")));
+      }
       let iter = dec.str_binds().filter_map(|str_bind| {
         if let Some(x) = str_bind.eq_str_exp() {
           st.err(x.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
@@ -377,6 +412,9 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
       iter.collect()
     }
     ast::DecOne::IncludeDec(dec) => {
+      if !st.lang().dec.include {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("include")));
+      }
       let iter = dec.sig_exps().map(|x| {
         let spec = sml_hir::Spec::Include(get_sig_exp(st, Some(x)));
         st.spec(spec, ptr.clone())
@@ -446,6 +484,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       return None;
     }
     ast::DecOne::ValDec(dec) => {
+      if !st.lang().dec.val {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("val")));
+      }
       let ty_vars = ty::var_seq(st, dec.ty_var_seq());
       let iter = dec.val_binds().map(|val_bind| {
         let exp = val_bind.eq_exp().and_then(|x| x.exp());
@@ -461,6 +502,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Val(ty_vars, iter.collect())
     }
     ast::DecOne::FunDec(dec) => {
+      if !st.lang().dec.fun {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("fun")));
+      }
       let ty_vars = ty::var_seq(st, dec.ty_var_seq());
       let iter = dec.fun_binds().map(|fun_bind| {
         if let Some(bar) = fun_bind.bar() {
@@ -568,6 +612,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Val(ty_vars, iter.collect())
     }
     ast::DecOne::TyDec(dec) => {
+      if !st.lang().dec.type_ {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("type")));
+      }
       let hd = dec.ty_head()?;
       match hd.kind {
         ast::TyHeadKind::TypeKw => {}
@@ -576,11 +623,17 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Ty(ty_binds(st, dec.ty_binds()))
     }
     ast::DecOne::DatDec(dec) => {
+      if !st.lang().dec.datatype {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("datatype")));
+      }
       let d_binds = dat_binds(st, dec.dat_binds());
       let t_binds = ty_binds(st, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
       sml_hir::Dec::Datatype(d_binds, t_binds)
     }
     ast::DecOne::DatCopyDec(dec) => {
+      if !st.lang().dec.datatype_copy {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("datatype copy")));
+      }
       sml_hir::Dec::DatatypeCopy(get_name(dec.name())?, get_path(dec.path()?)?)
     }
     ast::DecOne::AbstypeDec(dec) => {
@@ -590,6 +643,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Abstype(d_binds, t_binds, inner)
     }
     ast::DecOne::ExDec(dec) => {
+      if !st.lang().dec.exception {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("exception")));
+      }
       let iter = dec.ex_binds().filter_map(|ex_bind| {
         let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
         let ret = match ex_bind.ex_bind_inner() {
@@ -602,9 +658,15 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Exception(iter.collect())
     }
     ast::DecOne::LocalDec(dec) => {
+      if !st.lang().dec.local {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("local")));
+      }
       sml_hir::Dec::Local(get(st, dec.local_dec()), get(st, dec.in_dec()))
     }
     ast::DecOne::OpenDec(dec) => {
+      if !st.lang().dec.open {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("open")));
+      }
       let paths: Vec<_> = dec.paths().filter_map(get_path).collect();
       if paths.is_empty() {
         st.err(dec.syntax().text_range(), ErrorKind::RequiresOperand);
@@ -612,7 +674,10 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       sml_hir::Dec::Open(paths)
     }
     ast::DecOne::InfixDec(_) | ast::DecOne::InfixrDec(_) | ast::DecOne::NonfixDec(_) => {
-      return None
+      if !st.lang().dec.fixity {
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("fixity")));
+      }
+      return None;
     }
     ast::DecOne::DoDec(ref inner) => {
       // emit an error, but lower anyway.
