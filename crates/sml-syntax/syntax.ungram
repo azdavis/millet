@@ -26,7 +26,7 @@ DecOne =
 | SignatureDec
 | FunctorDec
 // expressions are not actually decs, but we can parse them, accept them at only the top level, and
-// reject them everywhere else with a good error mesage.
+// reject them everywhere else with a good error message.
 | ExpDec
 // not actually a dec.
 | IncludeDec
