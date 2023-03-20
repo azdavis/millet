@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Fix `while` formatting.
+- Fix primitive documentation.
 
 ## v0.8.2
 

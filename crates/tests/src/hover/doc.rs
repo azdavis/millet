@@ -81,3 +81,13 @@ val _ = inc
 "#,
   );
 }
+
+#[test]
+fn primitive() {
+  check(
+    r#"
+val _ = false
+(**     ^^^^^ hover: represents logical falsity *)
+"#,
+  );
+}

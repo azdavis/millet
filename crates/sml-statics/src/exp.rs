@@ -46,8 +46,8 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
         ty_scheme = Some(val_info.ty_scheme.clone());
         defs.reserve(val_info.defs.len());
         for &def in &val_info.defs {
+          defs.insert(def);
           if let def::Def::Path(_, idx) = def {
-            defs.insert(def);
             st.mark_used(idx);
           }
         }
