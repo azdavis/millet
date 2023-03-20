@@ -1,4 +1,4 @@
-//! Static semantics for ML Basis files.
+//! Static semantics for ML Basis cx.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 // TODO remove once rustfmt support lands
@@ -14,16 +14,16 @@ use std::fmt;
 
 pub use std_basis::StdBasis;
 
-/// The result of analyzing MLB and source files.
+/// The result of analyzing MLB and source cx.
 #[derive(Debug)]
 pub struct MlbStatics {
-  /// The errors found in MLB files.
+  /// The errors found in MLB cx.
   pub mlb_errors: Vec<Error>,
   /// The generated symbols (types and exceptions and such).
   pub syms: sml_statics::Syms,
   /// A mapping from source file paths to information about them, including errors.
   ///
-  /// NOTE see comment in impl about having files analyzed more than once.
+  /// NOTE see comment in impl about having cx analyzed more than once.
   pub source_files: paths::PathMap<SourceFile>,
 }
 
@@ -120,7 +120,7 @@ impl St {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct Files<'a> {
+struct Cx<'a> {
   source_file_contents: &'a paths::PathMap<String>,
   bas_decs: &'a paths::PathMap<&'a mlb_hir::BasDec>,
   std_basis: &'a MBasis,
@@ -164,39 +164,39 @@ pub fn get(
       bas_env: FxHashMap::default(),
       basis: basis.clone(),
     };
-    let files = Files { source_file_contents, bas_decs, std_basis: &std_basis };
-    get_group_file(&mut st, files, &mut MBasis::default(), path);
+    let cx = Cx { source_file_contents, bas_decs, std_basis: &std_basis };
+    get_group_file(&mut st, cx, &mut MBasis::default(), path);
   }
   MlbStatics { mlb_errors: st.mlb_errors, syms: st.syms, source_files: st.source_files }
 }
 
 fn get_bas_exp(
   st: &mut St,
-  files: Files<'_>,
+  cx: Cx<'_>,
   path: paths::PathId,
   scope: &MBasis,
   ac: &mut MBasis,
   exp: &mlb_hir::BasExp,
 ) {
   match exp {
-    mlb_hir::BasExp::Bas(dec) => get_bas_dec(st, files, path, scope, ac, dec),
+    mlb_hir::BasExp::Bas(dec) => get_bas_dec(st, cx, path, scope, ac, dec),
     mlb_hir::BasExp::Name(name) => match scope.bas_env.get(&name.val) {
       None => st.undef(path, Item::Basis, name.clone()),
       Some(mb) => ac.append(mb.clone()),
     },
     mlb_hir::BasExp::Let(dec, exp) => {
       let mut let_m_basis = MBasis::default();
-      get_bas_dec(st, files, path, scope, &mut let_m_basis, dec);
+      get_bas_dec(st, cx, path, scope, &mut let_m_basis, dec);
       let mut scope = scope.clone();
       scope.append(let_m_basis);
-      get_bas_exp(st, files, path, &scope, ac, exp);
+      get_bas_exp(st, cx, path, &scope, ac, exp);
     }
   }
 }
 
 fn get_bas_dec(
   st: &mut St,
-  files: Files<'_>,
+  cx: Cx<'_>,
   path: paths::PathId,
   scope: &MBasis,
   ac: &mut MBasis,
@@ -205,7 +205,7 @@ fn get_bas_dec(
   match dec {
     mlb_hir::BasDec::Basis(name, exp) => {
       let mut exp_m_basis = MBasis::default();
-      get_bas_exp(st, files, path, scope, &mut exp_m_basis, exp);
+      get_bas_exp(st, cx, path, scope, &mut exp_m_basis, exp);
       ac.bas_env.insert(name.val.clone(), exp_m_basis);
     }
     mlb_hir::BasDec::Open(name) => match scope.bas_env.get(&name.val) {
@@ -214,10 +214,10 @@ fn get_bas_dec(
     },
     mlb_hir::BasDec::Local(local_dec, in_dec) => {
       let mut local_m_basis = MBasis::default();
-      get_bas_dec(st, files, path, scope, &mut local_m_basis, local_dec);
+      get_bas_dec(st, cx, path, scope, &mut local_m_basis, local_dec);
       let mut scope = scope.clone();
       scope.append(local_m_basis);
-      get_bas_dec(st, files, path, &scope, ac, in_dec);
+      get_bas_dec(st, cx, path, &scope, ac, in_dec);
     }
     // NOTE this doesn't do any of the stuff with the side conditions with the ty names and whatnot.
     // those might be necessary.
@@ -235,20 +235,20 @@ fn get_bas_dec(
       mlb_hir::Annotation::DiagnosticsIgnoreAll => {
         let old = st.report_diagnostics;
         st.report_diagnostics = false;
-        get_bas_dec(st, files, path, scope, ac, dec);
+        get_bas_dec(st, cx, path, scope, ac, dec);
         st.report_diagnostics = old;
       }
     },
     mlb_hir::BasDec::Path(path, kind) => match kind {
       mlb_hir::PathKind::Source => {
-        let contents = files.source_file_contents.get(path).expect("no source file");
+        let contents = cx.source_file_contents.get(path).expect("no source file");
         let mut fix_env = scope.fix_env.clone();
         let syntax = SourceFileSyntax::new(&mut fix_env, contents);
         get_source_file(st, *path, scope, ac, fix_env, syntax);
       }
       mlb_hir::PathKind::Group => match st.bases.get(path) {
         Some(mb) => ac.append(mb.clone()),
-        None => get_group_file(st, files, ac, *path),
+        None => get_group_file(st, cx, ac, *path),
       },
     },
     mlb_hir::BasDec::SourcePathSet(paths) => {
@@ -256,7 +256,7 @@ fn get_bas_dec(
         .iter()
         .map(|path| {
           let mut fix_env = scope.fix_env.clone();
-          let contents = files.source_file_contents.get(path).expect("no source file");
+          let contents = cx.source_file_contents.get(path).expect("no source file");
           let syntax = SourceFileSyntax::new(&mut fix_env, contents);
           (*path, (fix_env, syntax))
         })
@@ -284,7 +284,7 @@ fn get_bas_dec(
       let mut scope = scope.clone();
       for dec in decs {
         let mut one_m_basis = MBasis::default();
-        get_bas_dec(st, files, path, &scope, &mut one_m_basis, dec);
+        get_bas_dec(st, cx, path, &scope, &mut one_m_basis, dec);
         scope.append(one_m_basis.clone());
         ac.append(one_m_basis);
       }
@@ -325,10 +325,10 @@ fn get_source_file(
 }
 
 /// Processes a single group file.
-fn get_group_file(st: &mut St, files: Files<'_>, ac: &mut MBasis, path: paths::PathId) {
-  let dec = files.bas_decs.get(&path).expect("no bas dec");
+fn get_group_file(st: &mut St, cx: Cx<'_>, ac: &mut MBasis, path: paths::PathId) {
+  let dec = cx.bas_decs.get(&path).expect("no bas dec");
   let mut path_ac = MBasis::default();
-  get_bas_dec(st, files, path, files.std_basis, &mut path_ac, dec);
+  get_bas_dec(st, cx, path, cx.std_basis, &mut path_ac, dec);
   st.bases.insert(path, path_ac.clone());
   ac.append(path_ac);
 }
