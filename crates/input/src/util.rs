@@ -45,7 +45,7 @@ impl fmt::Display for ErrorDisplay<'_> {
       ErrorKind::MultipleRoots(a, b) => {
         let a = maybe_rel_to_root(self.root, a);
         let b = maybe_rel_to_root(self.root, b);
-        write!(f, "multiple root group files: {} and {}", a.display(), b.display())
+        write!(f, "multiple *.cm or *.mlb files: {} and {}", a.display(), b.display())
       }
       ErrorKind::NoRoot(flavor) => match flavor {
         NoRootFlavor::NoFile => f.write_str("no *.cm, *.mlb, or millet.toml files found in the root"),

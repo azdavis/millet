@@ -34,7 +34,7 @@ fn no_root_group_wrong_ext() {
 
 #[test]
 fn multiple_root_groups_err() {
-  check_bad_input("b.cm", "multiple root group files", [("a.cm", EMPTY_CM), ("b.cm", EMPTY_CM)]);
+  check_bad_input("b.cm", "multiple *.cm or *.mlb files", [("a.cm", EMPTY_CM), ("b.cm", EMPTY_CM)]);
 }
 
 #[test]
@@ -161,7 +161,7 @@ fn mlb() {
 
 #[test]
 fn mlb_cm_err() {
-  check_bad_input("a.cm", "multiple root group files", [("a.cm", EMPTY_CM), ("a.mlb", "")]);
+  check_bad_input("a.cm", "multiple *.cm or *.mlb files", [("a.cm", EMPTY_CM), ("a.mlb", "")]);
 }
 
 #[test]
