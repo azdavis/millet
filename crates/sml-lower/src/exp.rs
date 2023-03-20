@@ -170,10 +170,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.handle {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("handle")));
       }
-      sml_hir::Exp::Handle(
-        get(st, exp.exp()),
-        matcher(st, Some(MatcherFlavor::Handle), exp.matcher()),
-      )
+      let head = get(st, exp.exp());
+      let m = matcher(st, Some(MatcherFlavor::Handle), exp.matcher());
+      sml_hir::Exp::Handle(head, m)
     }
     ast::Exp::RaiseExp(exp) => {
       if !st.lang().exp.raise {
@@ -214,10 +213,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let fn_exp =
         st.exp(sml_hir::Exp::Fn(vec![(arg_pat, fn_body)], sml_hir::FnFlavor::While), ptr.clone());
       let vid_pat = st.pat(pat::name(vid.as_str()), ptr.clone());
-      let val = st.dec(
-        sml_hir::Dec::Val(vec![], vec![sml_hir::ValBind { rec: true, pat: vid_pat, exp: fn_exp }]),
-        ptr.clone(),
-      );
+      let val =
+        sml_hir::Dec::Val(vec![], vec![sml_hir::ValBind { rec: true, pat: vid_pat, exp: fn_exp }]);
+      let val = st.dec(val, ptr.clone());
       sml_hir::Exp::Let(val, call_unit_fn(st, &vid, ptr.clone()))
     }
     ast::Exp::CaseExp(exp) => {
