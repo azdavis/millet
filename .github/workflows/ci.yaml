@@ -115,7 +115,7 @@ jobs:
         with:
           files: |
             binary/*
-            editors/vscode/*
+            editors/vscode/*.vsix
       - name: Publish to VS Code Marketplace
         run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath *.vsix
         working-directory: editors/vscode
