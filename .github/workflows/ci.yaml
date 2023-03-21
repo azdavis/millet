@@ -74,13 +74,13 @@ jobs:
           node-version: 18.x
       - name: Make dist
         run: cargo xtask dist --release --editor vs-code --target ${{ matrix.rust }}
-      - name: Package vsix
+      - name: Package VSIX
         run: npx --no-install vsce package --target ${{ matrix.vscode }} -o millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode
-      - name: Upload artifacts
+      - name: Upload VSIX artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: vscode
+          name: vsix
           path: editors/vscode/millet-${{ matrix.vscode }}.vsix
   release:
     needs: dist
@@ -95,10 +95,10 @@ jobs:
       - name: Install node dependencies
         run: npm ci
         working-directory: editors/vscode
-      - name: Download artifacts
+      - name: Download VSIX artifacts
         uses: actions/download-artifact@v3
         with:
-          name: vscode
+          name: vsix
           path: editors/vscode
       - name: Publish to VS Code Marketplace
         run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath *.vsix
