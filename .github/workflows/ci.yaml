@@ -74,19 +74,21 @@ jobs:
           node-version: 18.x
       - name: Make dist
         run: cargo xtask dist --release --editor vs-code --target ${{ matrix.rust }}
+      - name: Make VSIX directory
+        run: mkdir -p editors/vscode/vsix
       - name: Package VSIX
-        run: npx --no-install vsce package --target ${{ matrix.vscode }} -o millet-${{ matrix.vscode }}.vsix
+        run: npx --no-install vsce package --target ${{ matrix.vscode }} -o vsix/millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v3
         with:
           name: binary
-          path: millet-ls-${{ matrix.rust }}
+          path: binary/millet-ls-${{ matrix.rust }}
       - name: Upload VSIX artifacts
         uses: actions/upload-artifact@v3
         with:
           name: vsix
-          path: editors/vscode/millet-${{ matrix.vscode }}.vsix
+          path: editors/vscode/vsix/millet-${{ matrix.vscode }}.vsix
   release:
     needs: dist
     runs-on: ubuntu-latest
@@ -109,16 +111,16 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: vsix
-          path: editors/vscode
+          path: editors/vscode/vsix
       - name: Make GitHub release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             binary/*
-            editors/vscode/*.vsix
+            editors/vscode/vsix/*
       - name: Publish to VS Code Marketplace
-        run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath *.vsix
+        run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath vsix/*
         working-directory: editors/vscode
       - name: Publish to Open VSX
-        run: npx --no-install ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }} --packagePath *.vsix
+        run: npx --no-install ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }} --packagePath vsix/*
         working-directory: editors/vscode
