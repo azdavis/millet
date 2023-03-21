@@ -146,6 +146,11 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
     None => vec![],
   };
   cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin {LANG_SRV_NAME}").run()?;
+  let kind = if args.release { "release" } else { "debug" };
+  let lang_srv_out: PathBuf = std::iter::once("target")
+    .chain(args.target.as_deref())
+    .chain([kind, format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX).as_str()])
+    .collect();
   match args.editor {
     None => return Ok(()),
     Some(Editor::VsCode) => {}
@@ -153,11 +158,6 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
-  let kind = if args.release { "release" } else { "debug" };
-  let lang_srv_out: PathBuf = std::iter::once("target")
-    .chain(args.target.as_deref())
-    .chain([kind, format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX).as_str()])
-    .collect();
   sh.copy_file(lang_srv_out, &dir)?;
   assert!(dir.pop());
   let license_header =
