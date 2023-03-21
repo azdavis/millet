@@ -151,15 +151,14 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
     .chain(args.target.as_deref())
     .chain([kind, format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX).as_str()])
     .collect();
-  let mut lang_srv_with_target = LANG_SRV_NAME.to_owned();
+  let mut dir: PathBuf;
   if let Some(x) = &args.target {
-    lang_srv_with_target.push('-');
-    lang_srv_with_target.push_str(x);
+    dir = PathBuf::from("binary");
+    sh.create_dir(&dir)?;
+    let lang_srv_with_target = format!("{LANG_SRV_NAME}-{x}");
+    dir.push(lang_srv_with_target.as_str());
+    sh.copy_file(&lang_srv_out, &dir)?;
   }
-  let mut dir = PathBuf::from("binary");
-  sh.create_dir(&dir)?;
-  dir.push(lang_srv_with_target.as_str());
-  sh.copy_file(&lang_srv_out, &dir)?;
   match args.editor {
     None => return Ok(()),
     Some(Editor::VsCode) => {}
