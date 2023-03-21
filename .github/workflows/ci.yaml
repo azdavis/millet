@@ -77,6 +77,11 @@ jobs:
       - name: Package VSIX
         run: npx --no-install vsce package --target ${{ matrix.vscode }} -o millet-${{ matrix.vscode }}.vsix
         working-directory: editors/vscode
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: binary
+          path: millet-ls-${{ matrix.rust }}
       - name: Upload VSIX artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -95,11 +100,22 @@ jobs:
       - name: Install node dependencies
         run: npm ci
         working-directory: editors/vscode
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: binary
+          path: binary
       - name: Download VSIX artifacts
         uses: actions/download-artifact@v3
         with:
           name: vsix
           path: editors/vscode
+      - name: Make GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            binary/*
+            editors/vscode/*
       - name: Publish to VS Code Marketplace
         run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath *.vsix
         working-directory: editors/vscode
