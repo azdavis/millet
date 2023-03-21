@@ -80,7 +80,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: dist
+          name: vscode
           path: editors/vscode/millet-${{ matrix.vscode }}.vsix
   release:
     needs: dist
@@ -98,11 +98,11 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
-          name: dist
-          path: editors/vscode/dist
+          name: vscode
+          path: editors/vscode
       - name: Publish to VS Code Marketplace
-        run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath dist/*
+        run: npx --no-install vsce publish --pat ${{ secrets.AZURE_MARKETPLACE_TOKEN }} --packagePath *.vsix
         working-directory: editors/vscode
       - name: Publish to Open VSX
-        run: npx --no-install ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }} --packagePath dist/*
+        run: npx --no-install ovsx publish --pat ${{ secrets.OPEN_VSX_TOKEN }} --packagePath *.vsix
         working-directory: editors/vscode
