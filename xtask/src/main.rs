@@ -137,13 +137,15 @@ struct DistArgs {
   target: Option<String>,
 }
 
+const LANG_SRV_NAME: &str = "millet-ls";
+
 fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
   let release_arg = args.release.then_some("--release");
   let target_arg = match &args.target {
     Some(x) => vec!["--target", x],
     None => vec![],
   };
-  cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin millet-ls").run()?;
+  cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin {LANG_SRV_NAME}").run()?;
   match args.editor {
     None => return Ok(()),
     Some(Editor::VsCode) => {}
@@ -152,12 +154,11 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
   let kind = if args.release { "release" } else { "debug" };
-  let lang_srv_name = format!("millet-ls{}", std::env::consts::EXE_SUFFIX);
-  let lang_srv: PathBuf = std::iter::once("target")
+  let lang_srv_out: PathBuf = std::iter::once("target")
     .chain(args.target.as_deref())
-    .chain([kind, lang_srv_name.as_str()])
+    .chain([kind, format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX).as_str()])
     .collect();
-  sh.copy_file(lang_srv, &dir)?;
+  sh.copy_file(lang_srv_out, &dir)?;
   assert!(dir.pop());
   let license_header =
     "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";
