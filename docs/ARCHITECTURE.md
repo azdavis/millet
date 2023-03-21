@@ -108,7 +108,7 @@ Lex (aka tokenize) a string of an SML program into tokens.
 ### `crates/sml-parse`
 
 ```rs
-&[sml_syntax::Token] -> (sml_syntax::ast::Root, Vec<ParseError>)
+&[sml_syntax::Token<'_>] -> (sml_syntax::ast::Root, Vec<ParseError>)
 ```
 
 Parses a sequence of tokens into a sequence of "events". Events are like:
