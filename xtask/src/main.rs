@@ -151,6 +151,12 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
     .chain(args.target.as_deref())
     .chain([kind, format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX).as_str()])
     .collect();
+  let mut lang_srv_with_target = LANG_SRV_NAME.to_owned();
+  if let Some(x) = &args.target {
+    lang_srv_with_target.push('-');
+    lang_srv_with_target.push_str(x);
+  }
+  sh.copy_file(lang_srv_out.as_path(), lang_srv_with_target)?;
   match args.editor {
     None => return Ok(()),
     Some(Editor::VsCode) => {}
@@ -158,7 +164,7 @@ fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
   let mut dir: PathBuf = ["editors", "vscode", "out"].iter().collect();
   sh.remove_path(&dir)?;
   sh.create_dir(&dir)?;
-  sh.copy_file(lang_srv_out, &dir)?;
+  sh.copy_file(lang_srv_out.as_path(), &dir)?;
   assert!(dir.pop());
   let license_header =
     "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";
