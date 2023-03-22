@@ -116,14 +116,14 @@ fn get_one_cm_file<F>(
   F: paths::FileSystem,
 {
   for pp in cm.paths {
-    let (path_id, path, source) =
-      match get_path_id_in_group(st.fs, st.store, group, pp.val.as_path(), pp.range) {
-        Ok(x) => x,
-        Err(e) => {
-          st.errors.push(e);
-          continue;
-        }
-      };
+    let pid = get_path_id_in_group(st.fs, st.store, group, pp.val.as_path(), pp.range);
+    let (path_id, path, source) = match pid {
+      Ok(x) => x,
+      Err(e) => {
+        st.errors.push(e);
+        continue;
+      }
+    };
     match pp.val.kind() {
       cm_syntax::PathKind::Sml => {
         let contents = match read_file(st.fs, source, path.as_path()) {
@@ -189,8 +189,8 @@ fn get_export<F>(
     }
     cm_syntax::Export::Source(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        let path_id = get_path_id_in_group(st.fs, st.store, cx.group, p.as_path(), path.range);
-        let (path_id, _, source) = match path_id {
+        let pid = get_path_id_in_group(st.fs, st.store, cx.group, p.as_path(), path.range);
+        let (path_id, _, source) = match pid {
           Ok(x) => x,
           Err(e) => {
             st.errors.push(e);
@@ -259,7 +259,8 @@ fn get_one_and_extend_with<F>(
 ) where
   F: paths::FileSystem,
 {
-  let (path_id, _, source) = match get_path_id_in_group(st.fs, st.store, group, path, range) {
+  let pid = get_path_id_in_group(st.fs, st.store, group, path, range);
+  let (path_id, _, source) = match pid {
     Ok(x) => x,
     Err(e) => {
       st.errors.push(e);
