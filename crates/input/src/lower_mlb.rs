@@ -116,7 +116,7 @@ where
         Ok(x) => x,
         Err(e) => {
           st.errors.push(e);
-          // NOTE a bit hacky.
+          // @test(input::mlb::no_path)
           return mlb_hir::BasDec::seq(Vec::new());
         }
       };
