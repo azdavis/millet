@@ -3,18 +3,16 @@
 use crate::check::{check_bad_input, check_multi};
 use crate::input::cm;
 
+const EMPTY: &str = "version = 1";
+
 #[test]
 fn no_root_group_in_config_err() {
-  check_bad_input(
-    "",
-    "and no `workspace.root` glob pattern",
-    [(config::file::PATH, "version = 1")],
-  );
+  check_bad_input("", "and no `workspace.root` glob pattern", [(config::file::PATH, EMPTY)]);
 }
 
 #[test]
 fn no_root_group_in_config_ok() {
-  check_multi([("a.cm", cm::EMPTY), (config::file::PATH, "version = 1")]);
+  check_multi([("a.cm", cm::EMPTY), (config::file::PATH, EMPTY)]);
 }
 
 #[test]
