@@ -33,6 +33,20 @@ fn mlb_cm_err() {
 
 #[test]
 #[should_panic = "no bas dec"]
-fn undefined_path_var() {
+fn undefined_path_var_root() {
   check_bad_input("s.mlb", "undefined path variable: FOO", [("s.mlb", "$(FOO).sml")]);
+}
+
+#[test]
+#[should_panic = "no bas dec"]
+fn undefined_path_var_import() {
+  let config = r#"
+version = 1
+workspace.root = "a.mlb"
+"#;
+  check_bad_input(
+    "b.mlb",
+    "undefined path variable: BAR",
+    [(config::file::PATH, config), ("a.mlb", "b.mlb"), ("b.mlb", "$(BAR).sml")],
+  );
 }
