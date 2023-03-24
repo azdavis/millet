@@ -39,7 +39,8 @@ pub(crate) fn get<F>(
           group.path.as_path().to_owned(),
           ErrorKind::Mlb(e),
         ));
-        continue;
+        // see e.g. @test(input::misc::undefined_path_var_import) for why we don't `continue` here
+        mlb_syntax::BasDec::Seq(Vec::new())
       }
     };
     let cx = Cx { group, path_id: cur.path };
