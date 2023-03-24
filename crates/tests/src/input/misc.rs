@@ -32,13 +32,11 @@ fn mlb_cm_err() {
 }
 
 #[test]
-#[should_panic = "no bas dec"]
 fn undefined_path_var_root() {
   check_bad_input("s.mlb", "undefined path variable: FOO", [("s.mlb", "$(FOO).sml")]);
 }
 
 #[test]
-#[should_panic = "no bas dec"]
 fn undefined_path_var_import() {
   let config = r#"
 version = 1
