@@ -101,14 +101,17 @@ fn test_refs() {
   empty_set(&ref_not_defined, "tests referenced but not defined");
 }
 
+fn attr_test(word: &str) {
+  let sh = shell();
+  let out = cmd!(sh, "git grep -F -n -e #[{word}").ignore_status().output().unwrap();
+  let out = String::from_utf8(out.stdout).unwrap();
+  let set: BTreeSet<_> = out.lines().collect();
+  empty_set(&set, format!("files with {word} attribute").as_str());
+}
+
 #[test]
 fn no_ignore() {
-  let sh = shell();
-  let word = "ignore";
-  let has_ignore = cmd!(sh, "git grep -F -n -e #[{word}").ignore_status().output().unwrap();
-  let out = String::from_utf8(has_ignore.stdout).unwrap();
-  let set: BTreeSet<_> = out.lines().collect();
-  empty_set(&set, "files with ignore");
+  attr_test("ignore");
 }
 
 #[test]
