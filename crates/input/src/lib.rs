@@ -73,6 +73,10 @@ impl Input {
         store.get_path(err.witness()).as_path().to_owned(),
         ErrorKind::Cycle,
       ));
+      // TODO only clear out the problematic files
+      ret.sources.clear();
+      ret.groups.clear();
+      ret.root_group_paths.clear();
     }
     ret
   }

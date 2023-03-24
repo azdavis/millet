@@ -32,6 +32,7 @@ fn mlb_cm_err() {
 }
 
 #[test]
+#[should_panic = "no bas dec"]
 fn undefined_path_var() {
   check_bad_input("s.mlb", "undefined path variable: FOO", [("s.mlb", "$(FOO).sml")]);
 }

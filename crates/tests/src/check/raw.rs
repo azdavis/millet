@@ -59,8 +59,6 @@ where
       assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
       let got_msg = e.display(input::ROOT.as_path()).to_string();
       assert!(got_msg.contains(msg), "want not contained in got\n  want: {msg}\n  got: {got_msg}");
-      // TODO remove
-      return;
     }
   }
   let mut ck = show::Show::new(
