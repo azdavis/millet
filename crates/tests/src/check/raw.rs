@@ -43,7 +43,6 @@ where
     log::info!("skipping slow tests");
     return;
   }
-  // ignore the Err if we already initialized logging, since that's fine.
   let (input, store) = input::get(files);
   match (opts.expected_input, input.errors.first()) {
     (ExpectedInput::Good, None) => {}
