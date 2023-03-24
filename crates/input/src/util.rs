@@ -281,6 +281,7 @@ impl IoError {
 }
 
 impl StartedGroup {
+  /// This must only return [`IoError`] in the error case.
   pub(crate) fn new<F>(
     store: &mut paths::Store,
     cur: GroupPathToProcess,

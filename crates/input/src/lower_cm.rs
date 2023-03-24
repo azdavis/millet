@@ -2,7 +2,8 @@
 
 use crate::types::Group;
 use crate::util::{
-  get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, StartedGroup,
+  get_path_id_in_group, read_file, Error, ErrorKind, ErrorSource, GroupPathToProcess, IoError,
+  StartedGroup,
 };
 use fast_hash::FxHashSet;
 use paths::PathMap;
@@ -22,7 +23,9 @@ pub(crate) fn get<F>(
 {
   let mut st = St { fs, store, path_vars, sources, cm_files: PathMap::<CmFile>::default(), errors };
   let init = GroupPathToProcess { parent: path, range: None, path };
-  get_one(&mut st, init);
+  if let Err(e) = get_one(&mut st, init) {
+    st.errors.push(e.into_error());
+  }
   for (path, cm_file) in st.cm_files {
     let exports: Vec<_> = cm_file
       .exports
@@ -77,23 +80,19 @@ struct NameExport {
 
 /// only recursive to support library exports, which ~necessitates the ability to know the exports
 /// of a given library path on demand.
-fn get_one<F>(st: &mut St<'_, F>, cur: GroupPathToProcess)
+//
+// iff this returns `Ok(())`, then `cur.path` is in `st.cm_files`.
+fn get_one<F>(st: &mut St<'_, F>, cur: GroupPathToProcess) -> Result<(), IoError>
 where
   F: paths::FileSystem,
 {
   if st.cm_files.contains_key(&cur.path) {
-    return;
+    return Ok(());
   }
   // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
   st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
-  let group = match StartedGroup::new(st.store, cur, st.fs) {
-    Ok(x) => x,
-    Err(e) => {
-      st.errors.push(e.into_error());
-      return;
-    }
-  };
+  let group = StartedGroup::new(st.store, cur, st.fs)?;
   match cm_syntax::get(group.contents.as_str(), st.path_vars) {
     Ok(cm) => get_one_cm_file(st, &mut ret, cur.path, &group, cm),
     Err(e) => st.errors.push(Error::new(
@@ -104,6 +103,7 @@ where
   }
   ret.pos_db = Some(group.pos_db);
   st.cm_files.insert(cur.path, ret);
+  Ok(())
 }
 
 fn get_one_cm_file<F>(
@@ -138,8 +138,10 @@ fn get_one_cm_file<F>(
       }
       cm_syntax::PathKind::Cm => {
         let cur = GroupPathToProcess { parent: cur_path_id, range: source.range, path: path_id };
-        get_one(st, cur);
-        ret.cm_paths.push(path_id);
+        match get_one(st, cur) {
+          Ok(()) => ret.cm_paths.push(path_id),
+          Err(e) => st.errors.push(e.into_error()),
+        }
       }
     }
   }
@@ -268,15 +270,17 @@ fn get_one_and_extend_with<F>(
     }
   };
   let cur = GroupPathToProcess { parent, range: source.range, path: path_id };
-  get_one(st, cur);
-  extend_with(st, cur.path, range, ac);
+  match get_one(st, cur) {
+    Ok(()) => extend_with(st, cur.path, range, ac),
+    Err(e) => st.errors.push(e.into_error()),
+  }
 }
 
 fn extend_with<F>(st: &mut St<'_, F>, path: paths::PathId, range: TextRange, ac: &mut NameExports)
 where
   F: paths::FileSystem,
 {
-  let other = st.cm_files.get(&path).expect("cm file should be set after get");
+  let other = st.cm_files.get(&path).expect("cm file should be set after successful get_one");
   ac.extend(other.exports.keys().map(|ex| (ex.clone(), range)));
 }
 
