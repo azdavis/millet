@@ -262,15 +262,45 @@ pub(crate) struct StartedGroup {
   pub(crate) pos_db: text_pos::PositionDb,
 }
 
+/// A type which can be converted into an [`Error`], but is known to be an I/O error.
+pub(crate) struct IoError {
+  error_path: paths::CanonicalPathBuf,
+  source_path: paths::CanonicalPathBuf,
+  range: Option<RangeUtf16>,
+  inner: std::io::Error,
+}
+
+impl IoError {
+  pub(crate) fn into_error(self) -> Error {
+    Error::new(
+      ErrorSource { path: Some(self.source_path.into_path_buf()), range: self.range },
+      self.error_path.into_path_buf(),
+      ErrorKind::Io(self.inner),
+    )
+  }
+}
+
 impl StartedGroup {
-  pub(crate) fn new<F>(store: &mut paths::Store, cur: GroupPathToProcess, fs: &F) -> Result<Self>
+  pub(crate) fn new<F>(
+    store: &mut paths::Store,
+    cur: GroupPathToProcess,
+    fs: &F,
+  ) -> Result<Self, IoError>
   where
     F: paths::FileSystem,
   {
     let path = store.get_path(cur.path).clone();
-    let containing_path = store.get_path(cur.parent).as_path().to_owned();
-    let source = ErrorSource { path: Some(containing_path), range: cur.range };
-    let contents = read_file(fs, source, path.as_path())?;
+    let contents = match fs.read_to_string(path.as_path()) {
+      Ok(x) => x,
+      Err(inner) => {
+        return Err(IoError {
+          error_path: path,
+          source_path: store.get_path(cur.parent).clone(),
+          range: cur.range,
+          inner,
+        })
+      }
+    };
     let pos_db = text_pos::PositionDb::new(&contents);
     Ok(Self { path, contents, pos_db })
   }

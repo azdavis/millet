@@ -27,7 +27,7 @@ pub(crate) fn get<F>(
     let group = match StartedGroup::new(st.store, cur, fs) {
       Ok(x) => x,
       Err(e) => {
-        st.errors.push(e);
+        st.errors.push(e.into_error());
         continue;
       }
     };

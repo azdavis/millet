@@ -90,7 +90,7 @@ where
   let group = match StartedGroup::new(st.store, cur, st.fs) {
     Ok(x) => x,
     Err(e) => {
-      st.errors.push(e);
+      st.errors.push(e.into_error());
       return;
     }
   };
