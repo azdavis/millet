@@ -389,5 +389,5 @@ val _ = foo
 
 #[test]
 fn undefined_path_var() {
-  check_bad_input("s.mlb", "undefined path variable", [("s.mlb", "$(FOO).sml")]);
+  check_bad_input("s.mlb", "undefined path variable: FOO", [("s.mlb", "$(FOO).sml")]);
 }
