@@ -112,6 +112,11 @@ fn no_ignore() {
 }
 
 #[test]
+fn no_should_panic() {
+  attr_test("should_panic");
+}
+
+#[test]
 fn architecture() {
   let sh = shell();
   let in_doc: BTreeSet<_> = include_str!("../../../docs/ARCHITECTURE.md")
