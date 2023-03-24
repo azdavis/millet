@@ -6,13 +6,6 @@ mod slash_var_path;
 
 use crate::check::{check_bad_input, check_multi, raw};
 
-const EMPTY_CM: &str = "Group is";
-
-#[test]
-fn arbitrary_root_group() {
-  check_multi([("a.cm", EMPTY_CM)]);
-}
-
 #[test]
 fn no_root_group_empty() {
   check_bad_input("", "no *.cm, *.mlb", []);
@@ -34,7 +27,11 @@ fn no_root_group_wrong_ext() {
 
 #[test]
 fn multiple_root_groups_err() {
-  check_bad_input("b.cm", "multiple *.cm or *.mlb files", [("a.cm", EMPTY_CM), ("b.cm", EMPTY_CM)]);
+  check_bad_input(
+    "b.cm",
+    "multiple *.cm or *.mlb files",
+    [("a.cm", cm::EMPTY), ("b.cm", cm::EMPTY)],
+  );
 }
 
 #[test]
@@ -45,12 +42,12 @@ version = 1
 # prefer foo over bar
 root = "a.cm"
 "#;
-  check_multi([("a.cm", EMPTY_CM), ("b.cm", EMPTY_CM), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), ("b.cm", cm::EMPTY), (config::file::NAME, config)]);
 }
 
 #[test]
 fn no_root_group_in_config_ok() {
-  check_multi([("a.cm", EMPTY_CM), (config::file::NAME, "version = 1")]);
+  check_multi([("a.cm", cm::EMPTY), (config::file::NAME, "version = 1")]);
 }
 
 #[test]
@@ -112,7 +109,7 @@ workspace.root = "nope.txt"
   check_bad_input(
     config::file::NAME,
     "pattern matched no paths",
-    [("a.cm", EMPTY_CM), (config::file::NAME, config)],
+    [("a.cm", cm::EMPTY), (config::file::NAME, config)],
   );
 }
 
@@ -125,7 +122,7 @@ workspace.woofer = "bark.txt"
 [quz]
 chihiro = true
 "#;
-  check_multi([("a.cm", EMPTY_CM), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), (config::file::NAME, config)]);
 }
 
 #[test]
@@ -137,7 +134,7 @@ okabe = { value = "rintarou" }
 shiina = { path = "mayuri" }
 hashida = { workspace-path = "itaru" }
 "#;
-  check_multi([("a.cm", EMPTY_CM), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), (config::file::NAME, config)]);
 }
 
 #[test]
@@ -150,7 +147,7 @@ makise = { christina = "kurisu" }
   check_bad_input(
     config::file::NAME,
     "unknown variant `christina`",
-    [("a.cm", EMPTY_CM), (config::file::NAME, config)],
+    [("a.cm", cm::EMPTY), (config::file::NAME, config)],
   );
 }
 
@@ -161,7 +158,7 @@ fn mlb() {
 
 #[test]
 fn mlb_cm_err() {
-  check_bad_input("a.cm", "multiple *.cm or *.mlb files", [("a.cm", EMPTY_CM), ("a.mlb", "")]);
+  check_bad_input("a.cm", "multiple *.cm or *.mlb files", [("a.cm", cm::EMPTY), ("a.mlb", "")]);
 }
 
 #[test]
@@ -171,7 +168,7 @@ version = 1
 [workspace]
 root = "a.cm"
 "#;
-  check_multi([("a.cm", EMPTY_CM), ("a.mlb", ""), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), ("a.mlb", ""), (config::file::NAME, config)]);
 }
 
 #[test]
@@ -180,7 +177,7 @@ fn mlb_cm_config_mlb_ok() {
 version = 1
 workspace.root = "a.mlb"
 "#;
-  check_multi([("a.cm", EMPTY_CM), ("a.mlb", ""), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), ("a.mlb", ""), (config::file::NAME, config)]);
 }
 
 #[test]
@@ -210,44 +207,6 @@ version = 1
 }
 
 #[test]
-fn std_basis_export() {
-  let cm = r#"
-Library
-  library($/basis.cm)
-is
-  $/basis.cm
-"#;
-  check_multi([("a.cm", cm)]);
-}
-
-#[test]
-fn std_basis_group() {
-  let cm = r#"
-Library
-  group($/basis.cm)
-is
-  $/basis.cm
-"#;
-  check_bad_input("a.cm", "expected a regular path or `-`", [("a.cm", cm)]);
-}
-
-#[test]
-fn cm_ident() {
-  let cm = r#"
-Library
-  structure FOO_BAR_QUZ
-  signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234
-is
-  a.sml
-"#;
-  let sml = r#"
-structure FOO_BAR_QUZ = struct end
-signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234 = sig end
-"#;
-  check_multi([("a.cm", cm), ("a.sml", sml)]);
-}
-
-#[test]
 fn mlb_ident() {
   let mlb = r#"
 local
@@ -262,91 +221,6 @@ structure FOO_BAR_QUZ = struct end
 signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234 = sig end
 "#;
   check_multi([("sources.mlb", mlb), ("a.sml", sml)]);
-}
-
-#[test]
-fn cm_union() {
-  let cm = r#"
-Library
-  structure FOO
-  (
-    signature BAR
-    signature QUZ
-  )
-is
-  a.sml
-"#;
-  let sml = r#"
-structure FOO = struct end
-signature BAR = sig end
-signature QUZ = sig end
-"#;
-  check_multi([("a.cm", cm), ("a.sml", sml)]);
-}
-
-#[test]
-fn cm_intersection() {
-  let cm = r#"
-Library
-  structure FOO * signature BAR
-is
-  a.sml
-"#;
-  let sml = r#"
-structure FOO = struct end
-signature BAR = sig end
-"#;
-  check_multi([("a.cm", cm), ("a.sml", sml)]);
-}
-
-#[test]
-fn cm_difference() {
-  let cm = r#"
-Library
-  structure FOO - signature BAR
-is
-  a.sml
-"#;
-  let sml = r#"
-structure FOO = struct end
-signature BAR = sig end
-"#;
-  check_multi([("a.cm", cm), ("a.sml", sml)]);
-}
-
-#[test]
-fn cm_source_file() {
-  let cm = r#"
-Library
-  source(foo.sml)
-is
-  foo.sml
-  bar.sml
-"#;
-  check_multi([("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
-}
-
-#[test]
-fn cm_source_dash() {
-  let cm = r#"
-Library
-  source(-)
-is
-  foo.sml
-  bar.sml
-"#;
-  check_multi([("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
-}
-
-#[test]
-fn cm_source_not_in_files() {
-  let cm = r#"
-Library
-  source(foo.sml)
-is
-  bar.sml
-"#;
-  check_bad_input("a.cm", "not in file list", [("a.cm", cm), ("foo.sml", ""), ("bar.sml", "")]);
 }
 
 #[test]
