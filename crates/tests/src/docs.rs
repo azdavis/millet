@@ -18,6 +18,7 @@ fn check_all(contents: &str) {
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Warning,
+    expected_input: raw::ExpectedInput::Good,
   };
   for ev in parser {
     match ev {

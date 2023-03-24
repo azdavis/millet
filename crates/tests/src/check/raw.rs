@@ -18,17 +18,24 @@ pub(crate) enum Limit {
   First,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ExpectedInput<'a> {
+  Good,
+  Bad { path: &'a str, msg: &'a str },
+}
+
 /// Options for checking.
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct Opts {
+pub(crate) struct Opts<'a> {
   pub(crate) std_basis: analysis::StdBasis,
   pub(crate) outcome: Outcome,
   pub(crate) limit: Limit,
   pub(crate) min_severity: diagnostic_util::Severity,
+  pub(crate) expected_input: ExpectedInput<'a>,
 }
 
 /// The low-level impl that almost all top-level functions delegate to.
-pub(crate) fn get<'a, I>(files: I, opts: Opts)
+pub(crate) fn get<'a, I>(files: I, opts: Opts<'_>)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
@@ -38,8 +45,23 @@ where
   }
   // ignore the Err if we already initialized logging, since that's fine.
   let (input, store) = input::get(files);
-  if let Some(e) = input.errors.first() {
-    panic!("unexpectedly bad input: {e:?}");
+  match (opts.expected_input, input.errors.first()) {
+    (ExpectedInput::Good, None) => {}
+    (ExpectedInput::Good, Some(e)) => {
+      panic!("unexpectedly bad input: {e:?}");
+    }
+    (ExpectedInput::Bad { path, msg }, None) => {
+      panic!("unexpectedly good input: no error at {path} with {msg}");
+    }
+    (ExpectedInput::Bad { path, msg }, Some(e)) => {
+      let got_path =
+        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip prefix");
+      assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
+      let got_msg = e.display(input::ROOT.as_path()).to_string();
+      assert!(got_msg.contains(msg), "want not contained in got\n  want: {msg}\n  got: {got_msg}");
+      // TODO remove
+      return;
+    }
   }
   let mut ck = show::Show::new(
     store,

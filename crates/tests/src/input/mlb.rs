@@ -81,6 +81,7 @@ val _ = foo
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::None,
     min_severity: diagnostic_util::Severity::Error,
+    expected_input: raw::ExpectedInput::Good,
   };
   raw::get(files, opts);
 }

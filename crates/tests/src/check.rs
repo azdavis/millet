@@ -51,6 +51,7 @@ pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Error,
+    expected_input: raw::ExpectedInput::Good,
   };
   raw::get(files, opts);
 }
@@ -84,6 +85,7 @@ pub(crate) fn fail(s: &str) {
     outcome: raw::Outcome::Fail,
     limit: raw::Limit::First,
     min_severity: Severity::Error,
+    expected_input: raw::ExpectedInput::Good,
   };
   raw::get(raw::one_file_fs(s), opts);
 }
@@ -96,6 +98,7 @@ pub(crate) fn check_with_std_basis(s: &str) {
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Error,
+    expected_input: raw::ExpectedInput::Good,
   };
   raw::get(raw::one_file_fs(s), opts);
 }
@@ -108,6 +111,7 @@ pub(crate) fn check_with_warnings(s: &str) {
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Warning,
+    expected_input: raw::ExpectedInput::Good,
   };
   raw::get(raw::one_file_fs(s), opts);
 }
@@ -119,10 +123,12 @@ pub(crate) fn check_bad_input<'a, I>(path: &str, msg: &str, files: I)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
-  let (input, _) = input::get(files);
-  let e = input.errors.first().expect("unexpectedly good input");
-  let got_path = e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip prefix");
-  assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
-  let got_msg = e.display(input::ROOT.as_path()).to_string();
-  assert!(got_msg.contains(msg), "want not contained in got\n  want: {msg}\n  got: {got_msg}");
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    limit: raw::Limit::First,
+    min_severity: Severity::Warning,
+    expected_input: raw::ExpectedInput::Bad { path, msg },
+  };
+  raw::get(files, opts);
 }
