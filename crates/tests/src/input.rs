@@ -386,3 +386,8 @@ val _ = foo
   };
   raw::get(files, opts);
 }
+
+#[test]
+fn undefined_path_var() {
+  check_bad_input("s.mlb", "undefined path variable", [("s.mlb", "$(FOO).sml")]);
+}
