@@ -110,15 +110,15 @@ where
       mlb_hir::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(pp) => {
-      let (path_id, path, source) =
-        match get_path_id_in_group(st.fs, st.store, &cx.group, pp.val.as_path(), pp.range) {
-          Ok(x) => x,
-          Err(e) => {
-            st.errors.push(e);
-            // NOTE a bit hacky.
-            return mlb_hir::BasDec::seq(vec![]);
-          }
-        };
+      let pid = get_path_id_in_group(st.fs, st.store, &cx.group, pp.val.as_path(), pp.range);
+      let (path_id, path, source) = match pid {
+        Ok(x) => x,
+        Err(e) => {
+          st.errors.push(e);
+          // NOTE a bit hacky.
+          return mlb_hir::BasDec::seq(Vec::new());
+        }
+      };
       let kind = match pp.val.kind() {
         mlb_syntax::PathKind::Sml => {
           let contents = match read_file(st.fs, source, path.as_path()) {
