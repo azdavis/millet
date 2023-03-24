@@ -4,7 +4,7 @@ mod cm;
 mod mlb;
 mod slash_var_path;
 
-use crate::check::{check_bad_input, check_multi, raw};
+use crate::check::{check_bad_input, check_multi};
 
 #[test]
 fn no_root_group_empty() {
@@ -152,11 +152,6 @@ makise = { christina = "kurisu" }
 }
 
 #[test]
-fn mlb() {
-  check_multi([("a.mlb", "")]);
-}
-
-#[test]
 fn mlb_cm_err() {
   check_bad_input("a.cm", "multiple *.cm or *.mlb files", [("a.cm", cm::EMPTY), ("a.mlb", "")]);
 }
@@ -204,61 +199,6 @@ version = 1
     "unknown variant `Warning`",
     [("a.mlb", ""), (config::file::NAME, config)],
   );
-}
-
-#[test]
-fn mlb_ident() {
-  let mlb = r#"
-local
-  a.sml
-in
-  structure FOO_BAR_QUZ
-  signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234
-end
-"#;
-  let sml = r#"
-structure FOO_BAR_QUZ = struct end
-signature F__13123123123_FOO_BAR435QUZ6345FOO_BAR____WTF____1234234 = sig end
-"#;
-  check_multi([("sources.mlb", mlb), ("a.sml", sml)]);
-}
-
-#[test]
-fn multi_ann() {
-  let mlb = r#"
-ann
-  "foo bar"
-  "baz"
-in
-end
-"#;
-  check_multi([("s.mlb", mlb)]);
-}
-
-#[test]
-fn ann_diagnostics_ignore_all() {
-  let mlb = r#"
-a.sml
-ann "milletDiagnosticsIgnore all" in
-  b.sml
-end
-c.sml
-"#;
-  let reported = r#"
-val _ = foo
-(**     ^^^ undefined value: foo *)
-"#;
-  let ignored = r#"
-val _ = foo
-"#;
-  let files = [("s.mlb", mlb), ("a.sml", reported), ("b.sml", ignored), ("c.sml", reported)];
-  let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
-    outcome: raw::Outcome::Pass,
-    limit: raw::Limit::None,
-    min_severity: diagnostic_util::Severity::Error,
-  };
-  raw::get(files, opts);
 }
 
 #[test]
