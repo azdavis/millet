@@ -4,7 +4,7 @@ use crate::check::raw::env_var_enabled;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
 use std::fmt::{self, Write as _};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use xshell::{cmd, Shell};
 
 fn eq_sets<T>(lhs: &BTreeSet<T>, rhs: &BTreeSet<T>, only_lhs: &str, only_rhs: &str)
@@ -46,9 +46,7 @@ fn shell() -> Shell {
 #[test]
 fn sml_def() {
   let sh = shell();
-  let dirs: [PathBuf; 3] =
-    ["sml-hir", "sml-lower", "sml-statics"].map(|x| ["crates", x, "src"].iter().collect());
-  let out = cmd!(sh, "git grep -h -o -E '@def\\(([[:digit:]]+)\\)' {dirs...}").output().unwrap();
+  let out = cmd!(sh, "git grep -h -o -E '@def\\(([[:digit:]]+)\\)'").output().unwrap();
   let got: BTreeSet<u16> = String::from_utf8(out.stdout)
     .unwrap()
     .lines()
