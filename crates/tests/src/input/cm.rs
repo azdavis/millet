@@ -133,3 +133,20 @@ is
 "#;
   check_bad_input("a.cm", "expected a regular path or `-`", [("a.cm", cm)]);
 }
+
+#[test]
+fn group_undef_path_var() {
+  let config = r#"
+version = 1
+workspace.root = "a.cm"
+"#;
+  check_bad_input(
+    "a.cm",
+    "undefined path variable: BAD",
+    [
+      (config::file::PATH, config),
+      ("a.cm", "Library group($BAD.cm) is b.cm"),
+      ("b.cm", "Group is"),
+    ],
+  );
+}
