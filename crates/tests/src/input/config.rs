@@ -8,13 +8,13 @@ fn no_root_group_in_config_err() {
   check_bad_input(
     "",
     "and no `workspace.root` glob pattern",
-    [(config::file::NAME, "version = 1")],
+    [(config::file::PATH, "version = 1")],
   );
 }
 
 #[test]
 fn no_root_group_in_config_ok() {
-  check_multi([("a.cm", cm::EMPTY), (config::file::NAME, "version = 1")]);
+  check_multi([("a.cm", cm::EMPTY), (config::file::PATH, "version = 1")]);
 }
 
 #[test]
@@ -25,7 +25,7 @@ version = 1
 # prefer foo over bar
 root = "a.cm"
 "#;
-  check_multi([("a.cm", cm::EMPTY), ("b.cm", cm::EMPTY), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), ("b.cm", cm::EMPTY), (config::file::PATH, config)]);
 }
 
 #[test]
@@ -35,7 +35,7 @@ version = 1
 [workspace]
 root = "a.cm"
 "#;
-  check_multi([("a.cm", cm::EMPTY), ("a.mlb", ""), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), ("a.mlb", ""), (config::file::PATH, config)]);
 }
 
 #[test]
@@ -44,15 +44,15 @@ fn mlb_cm_config_mlb_ok() {
 version = 1
 workspace.root = "a.mlb"
 "#;
-  check_multi([("a.cm", cm::EMPTY), ("a.mlb", ""), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), ("a.mlb", ""), (config::file::PATH, config)]);
 }
 
 #[test]
 fn invalid_version() {
   check_bad_input(
-    config::file::NAME,
+    config::file::PATH,
     "invalid config version",
-    [(config::file::NAME, "version = 123")],
+    [(config::file::PATH, "version = 123")],
   );
 }
 
@@ -63,18 +63,18 @@ version = 1
 workspace.root = "nope.cm"
 "#;
   check_bad_input(
-    config::file::NAME,
+    config::file::PATH,
     "glob pattern matched no paths:",
-    [(config::file::NAME, config)],
+    [(config::file::PATH, config)],
   );
 }
 
 #[test]
 fn parse_err() {
   check_bad_input(
-    config::file::NAME,
+    config::file::PATH,
     "couldn't parse config",
-    [(config::file::NAME, "岡部倫太郎")],
+    [(config::file::PATH, "岡部倫太郎")],
   );
 }
 
@@ -88,7 +88,7 @@ root = "a.cm"
   check_bad_input(
     "b.cm",
     "there is a cycle",
-    [("a.cm", "Group is b.cm"), ("b.cm", "Group is a.cm"), (config::file::NAME, config)],
+    [("a.cm", "Group is b.cm"), ("b.cm", "Group is a.cm"), (config::file::PATH, config)],
   );
 }
 
@@ -99,9 +99,9 @@ version = 1
 workspace.root = "nope.txt"
 "#;
   check_bad_input(
-    config::file::NAME,
+    config::file::PATH,
     "pattern matched no paths",
-    [("a.cm", cm::EMPTY), (config::file::NAME, config)],
+    [("a.cm", cm::EMPTY), (config::file::PATH, config)],
   );
 }
 
@@ -114,7 +114,7 @@ workspace.woofer = "bark.txt"
 [quz]
 chihiro = true
 "#;
-  check_multi([("a.cm", cm::EMPTY), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), (config::file::PATH, config)]);
 }
 
 #[test]
@@ -126,7 +126,7 @@ okabe = { value = "rintarou" }
 shiina = { path = "mayuri" }
 hashida = { workspace-path = "itaru" }
 "#;
-  check_multi([("a.cm", cm::EMPTY), (config::file::NAME, config)]);
+  check_multi([("a.cm", cm::EMPTY), (config::file::PATH, config)]);
 }
 
 #[test]
@@ -137,9 +137,9 @@ version = 1
 makise = { christina = "kurisu" }
 "#;
   check_bad_input(
-    config::file::NAME,
+    config::file::PATH,
     "unknown variant `christina`",
-    [("a.cm", cm::EMPTY), (config::file::NAME, config)],
+    [("a.cm", cm::EMPTY), (config::file::PATH, config)],
   );
 }
 
@@ -152,7 +152,7 @@ version = 1
 1002.severity = "warning"
 1003.severity = "ignore"
 "#;
-  check_multi([("a.mlb", ""), (config::file::NAME, config)]);
+  check_multi([("a.mlb", ""), (config::file::PATH, config)]);
 }
 
 #[test]
@@ -163,8 +163,8 @@ version = 1
 1001.severity = "Warning"
 "#;
   check_bad_input(
-    config::file::NAME,
+    config::file::PATH,
     "unknown variant `Warning`",
-    [("a.mlb", ""), (config::file::NAME, config)],
+    [("a.mlb", ""), (config::file::PATH, config)],
   );
 }

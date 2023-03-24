@@ -14,7 +14,7 @@ val _ = while true do ()
 (**     ^^^^^^^^^^^^^^^^ disallowed expression: while *)
 val _ = "hi"
 "#;
-  check_multi([(config::file::NAME, config), ("s.mlb", "a.sml"), ("a.sml", sml)]);
+  check_multi([(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]);
 }
 
 #[test]
@@ -29,5 +29,5 @@ signature SIG = sig end
 (** + disallowed declaration: signature *)
 functor F() = struct end
 "#;
-  check_multi([(config::file::NAME, config), ("s.mlb", "a.sml"), ("a.sml", sml)]);
+  check_multi([(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]);
 }

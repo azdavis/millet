@@ -4,8 +4,8 @@ use fast_hash::FxHashMap;
 use serde::Deserialize;
 use str_util::SmolStr;
 
-/// The name of the config file.
-pub const NAME: &str = "millet.toml";
+/// The path of the config file.
+pub const PATH: &str = "millet.toml";
 
 /// The root config.
 #[derive(Debug, Deserialize)]
