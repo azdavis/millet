@@ -150,3 +150,8 @@ workspace.root = "a.cm"
     ],
   );
 }
+
+#[test]
+fn no_path() {
+  check_bad_input("s.cm", "couldn't perform file I/O", [("s.cm", "Group is no.cm")]);
+}

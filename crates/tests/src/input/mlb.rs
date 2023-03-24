@@ -1,6 +1,6 @@
 //! Tests for ML Basis (MLB).
 
-use crate::check::{check_multi, raw};
+use crate::check::{check_bad_input, check_multi, raw};
 
 #[test]
 fn smoke_ok() {
@@ -84,4 +84,9 @@ val _ = foo
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(files, opts);
+}
+
+#[test]
+fn no_path() {
+  check_bad_input("s.mlb", "couldn't perform file I/O", [("s.mlb", "no.mlb")]);
 }
