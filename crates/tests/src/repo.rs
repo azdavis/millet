@@ -83,8 +83,7 @@ fn sync() {
 #[test]
 fn test_refs() {
   let sh = shell();
-  let dir: PathBuf = ["crates", "sml-statics", "src"].into_iter().collect();
-  let out = cmd!(sh, "git grep -h -o -E '@test\\(([a-z0-9_:]+)\\)' {dir}").output().unwrap();
+  let out = cmd!(sh, "git grep -h -o -E '@test\\(([a-z0-9_:]+)\\)'").output().unwrap();
   let out = String::from_utf8(out.stdout).unwrap();
   let referenced: BTreeSet<_> = out
     .lines()
