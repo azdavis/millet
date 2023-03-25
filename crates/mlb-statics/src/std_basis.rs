@@ -77,55 +77,53 @@ where
   let (mut syms, mut basis) = basis::minimal();
   let mut imperative_io_hack = None::<String>;
   let lang = config::file::Language::default();
-  let info: FxHashMap<_, _> = files
-    .map(|(name, mut contents)| {
-      if name == "std_basis/imperative-io.sml" {
-        let mut lines: Vec<_> = contents
-          .lines()
-          .skip(5)
-          .map(|line| if line == STREAM_IO_REGULAR { STREAM_IO_TEXT } else { line })
-          .collect();
-        assert_eq!(lines.pop().unwrap(), "end");
-        imperative_io_hack = Some(lines.join("\n"));
-      }
-      let owned_contents: String;
-      if name == "std_basis/text-io.sml" {
-        let lines: Vec<_> = contents
-          .lines()
-          .map(|line| {
-            if line == INCLUDE_IMPERATIVE_IO_HACK {
-              imperative_io_hack.as_deref().unwrap()
-            } else {
-              line
-            }
-          })
-          .collect();
-        owned_contents = lines.join("\n");
-        contents = &owned_contents;
-      }
-      let mut fix_env = sml_fixity::STD_BASIS.clone();
-      let started = SourceFileSyntax::new(&mut fix_env, &lang, contents);
-      if let Some(e) = started.lex_errors.first() {
-        panic!("{name}: lex error: {}", e.display());
-      }
-      if let Some(e) = started.parse.errors.first() {
-        panic!("{name}: parse error: {}", e.display());
-      }
-      if let Some(e) = started.lower.errors.first() {
-        panic!("{name}: lower error: {}", e.display());
-      }
-      let mode = sml_statics::mode::Mode::BuiltinLib(name);
-      let low = started.lower;
-      let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
-      basis.append(checked.basis);
-      if let Some(e) = checked.errors.first() {
-        let e = e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One);
-        panic!("{name}: statics error: {e}");
-      }
-      let mut info = checked.info;
-      add_all_doc_comments(started.parse.root.syntax(), &low, &mut info);
-      (name, info)
-    })
-    .collect();
-  StdBasis { syms, basis, info }
+  let iter = files.map(|(name, mut contents)| {
+    if name == "std_basis/imperative-io.sml" {
+      let mut lines: Vec<_> = contents
+        .lines()
+        .skip(5)
+        .map(|line| if line == STREAM_IO_REGULAR { STREAM_IO_TEXT } else { line })
+        .collect();
+      assert_eq!(lines.pop().unwrap(), "end");
+      imperative_io_hack = Some(lines.join("\n"));
+    }
+    let owned_contents: String;
+    if name == "std_basis/text-io.sml" {
+      let lines: Vec<_> = contents
+        .lines()
+        .map(|line| {
+          if line == INCLUDE_IMPERATIVE_IO_HACK {
+            imperative_io_hack.as_deref().unwrap()
+          } else {
+            line
+          }
+        })
+        .collect();
+      owned_contents = lines.join("\n");
+      contents = &owned_contents;
+    }
+    let mut fix_env = sml_fixity::STD_BASIS.clone();
+    let started = SourceFileSyntax::new(&mut fix_env, &lang, contents);
+    if let Some(e) = started.lex_errors.first() {
+      panic!("{name}: lex error: {}", e.display());
+    }
+    if let Some(e) = started.parse.errors.first() {
+      panic!("{name}: parse error: {}", e.display());
+    }
+    if let Some(e) = started.lower.errors.first() {
+      panic!("{name}: lower error: {}", e.display());
+    }
+    let mode = sml_statics::mode::Mode::BuiltinLib(name);
+    let low = started.lower;
+    let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
+    basis.append(checked.basis);
+    if let Some(e) = checked.errors.first() {
+      let e = e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One);
+      panic!("{name}: statics error: {e}");
+    }
+    let mut info = checked.info;
+    add_all_doc_comments(started.parse.root.syntax(), &low, &mut info);
+    (name, info)
+  });
+  StdBasis { info: iter.collect(), syms, basis }
 }
