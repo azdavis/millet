@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Warn on top-level `open`.
+
 ## v0.8.4
 
 - Fix a panic involving invalid input.

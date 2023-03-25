@@ -31,6 +31,7 @@ mod local;
 mod matching;
 mod misc;
 mod num_record;
+mod open;
 mod overload;
 mod pat;
 mod repo;

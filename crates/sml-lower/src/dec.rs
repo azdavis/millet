@@ -94,6 +94,7 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       if !st.lang().dec.structure {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("structure")));
       }
+      st.inc_level();
       let iter = str_dec.str_binds().filter_map(|str_bind| {
         let str_exp = str_bind.eq_str_exp().and_then(|x| x.str_exp());
         if str_exp.is_none() {
@@ -104,7 +105,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
           str_exp: with_ascription_tail(st, str_exp, str_bind.ascription_tail()),
         })
       });
-      sml_hir::StrDec::Structure(iter.collect())
+      let binds: Vec<_> = iter.collect();
+      st.dec_level();
+      sml_hir::StrDec::Structure(binds)
     }
     ast::DecOne::SignatureDec(str_dec) => {
       if !st.lang().dec.signature {
@@ -122,6 +125,7 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       if !st.lang().dec.functor {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("functor")));
       }
+      st.inc_level();
       let iter = str_dec.functor_binds().filter_map(|fun_bind| {
         let functor_name = get_name(fun_bind.functor_name())?;
         let body = with_ascription_tail(st, fun_bind.body(), fun_bind.ascription_tail());
@@ -142,13 +146,17 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
         };
         Some(sml_hir::FunctorBind { functor_name, param_name, param_sig, body, flavor })
       });
-      sml_hir::StrDec::Functor(iter.collect())
+      let binds: Vec<_> = iter.collect();
+      st.dec_level();
+      sml_hir::StrDec::Functor(binds)
     }
     ast::DecOne::LocalDec(str_dec) => {
       if !st.lang().dec.local {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("local")));
       }
+      st.inc_level();
       let fst = get_str_dec(st, str_dec.local_dec());
+      st.dec_level();
       let snd = get_str_dec(st, str_dec.in_dec());
       sml_hir::StrDec::Local(fst, snd)
     }
@@ -661,13 +669,17 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       if !st.lang().dec.local {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("local")));
       }
+      st.inc_level();
       let fst = get(st, dec.local_dec());
+      st.dec_level();
       let snd = get(st, dec.in_dec());
       sml_hir::Dec::Local(fst, snd)
     }
     ast::DecOne::OpenDec(dec) => {
       if !st.lang().dec.open {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("open")));
+      } else if st.is_top_level() {
+        st.err(ptr.text_range(), ErrorKind::TopLevelOpen);
       }
       let paths: Vec<_> = dec.paths().filter_map(get_path).collect();
       if paths.is_empty() {

@@ -75,6 +75,7 @@ pub(crate) enum ErrorKind {
   EmptyExpSemiSeq,
   Trailing(Sep),
   Disallowed(Item),
+  TopLevelOpen,
 }
 
 impl fmt::Display for ErrorKind {
@@ -123,6 +124,7 @@ impl fmt::Display for ErrorKind {
       }
       ErrorKind::Trailing(s) => write!(f, "trailing `{s}`"),
       ErrorKind::Disallowed(item) => write!(f, "disallowed {item}"),
+      ErrorKind::TopLevelOpen => write!(f, "top-level `open`"),
     }
   }
 }
@@ -228,6 +230,7 @@ impl Error {
       ErrorKind::EmptyExpSemiSeq => Code::n(4027),
       ErrorKind::Trailing(_) => Code::n(4028),
       ErrorKind::Disallowed(_) => Code::n(4029),
+      ErrorKind::TopLevelOpen => Code::n(4030),
     }
   }
 
@@ -240,7 +243,8 @@ impl Error {
       | ErrorKind::OneArmedCase
       | ErrorKind::UnnecessarySemicolon
       | ErrorKind::MultipleTypedPat
-      | ErrorKind::PatNameIsNameOfContainingFun(_) => Severity::Warning,
+      | ErrorKind::PatNameIsNameOfContainingFun(_)
+      | ErrorKind::TopLevelOpen => Severity::Warning,
       _ => Severity::Error,
     }
   }
@@ -267,6 +271,7 @@ pub(crate) struct St<'a> {
   ptrs: Ptrs,
   fun_names: Vec<str_util::Name>,
   lang: &'a Language,
+  level: usize,
 }
 
 #[allow(clippy::unnecessary_wraps)]
@@ -279,6 +284,7 @@ impl<'a> St<'a> {
       ptrs: Ptrs::default(),
       fun_names: Vec::new(),
       lang,
+      level: 0,
     }
   }
 
@@ -362,5 +368,17 @@ impl<'a> St<'a> {
 
   pub(crate) fn lang(&self) -> &'a Language {
     self.lang
+  }
+
+  pub(crate) fn inc_level(&mut self) {
+    self.level += 1;
+  }
+
+  pub(crate) fn dec_level(&mut self) {
+    self.level = self.level.checked_sub(1).expect("already at top level");
+  }
+
+  pub(crate) fn is_top_level(&self) -> bool {
+    self.level == 0
   }
 }

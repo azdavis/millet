@@ -1236,6 +1236,30 @@ There was an occurrence of something that had been explicitly disallowed in the 
 
 To fix, allow the thing in your configuration, or remove the occurrence of the thing.
 
+## 4030
+
+There was an `open` at the top level.
+
+```sml
+open List
+(** + top-level `open` *)
+val xs = filter (fn x => x > 10) [1988, 4, 16]
+```
+
+This is not allowed when using SML/NJ Compilation Manager (CM), and is generally discouraged anyway.
+
+To fix, contain the scope of the `open`, or use qualified names.
+
+```sml
+local
+  open List
+in
+  val xs = filter (fn x => x > 10) [1988, 4, 16]
+end
+
+val ys = List.filter (fn x => x < 10) [1988, 4, 16]
+```
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.
