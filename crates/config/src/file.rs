@@ -77,6 +77,9 @@ pub struct Language {
   /// Configuration for expressions.
   #[serde(default)]
   pub exp: Exp,
+  /// Configuration for values.
+  #[serde(default)]
+  pub val: FxHashMap<SmolStr, bool>,
 }
 
 /// Configuration for declarations.

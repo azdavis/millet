@@ -35,3 +35,25 @@ functor F() = struct end
 "#;
   check_multi(files(config, sml));
 }
+
+#[test]
+fn val() {
+  let config = r#"
+version = 1
+[language.val]
+"List.hd" = false
+"#;
+  let sml = r#"
+val _ = List.hd
+(**     ^^^^^^^ disallowed *)
+"#;
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Full,
+    // TODO fix
+    outcome: raw::Outcome::Fail,
+    limit: raw::Limit::First,
+    min_severity: diagnostic_util::Severity::Error,
+    expected_input: raw::ExpectedInput::Good,
+  };
+  raw::get(files(config, sml), opts);
+}
