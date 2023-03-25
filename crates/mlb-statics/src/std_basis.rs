@@ -112,7 +112,9 @@ where
     }
     if let Some(e) = started.lower.errors.first() {
       let e = e.display().to_string();
-      let allowed = name == "std_basis/general.sml" && e.contains("top-level `open`");
+      let allowed = started.lower.errors.len() == 1
+        && name == "std_basis/general.sml"
+        && e == "top-level `open`";
       assert!(allowed, "{name}: lower error: {e}");
     }
     let mode = sml_statics::mode::Mode::BuiltinLib(name);
