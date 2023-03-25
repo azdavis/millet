@@ -661,7 +661,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       if !st.lang().dec.local {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("local")));
       }
-      sml_hir::Dec::Local(get(st, dec.local_dec()), get(st, dec.in_dec()))
+      let fst = get(st, dec.local_dec());
+      let snd = get(st, dec.in_dec());
+      sml_hir::Dec::Local(fst, snd)
     }
     ast::DecOne::OpenDec(dec) => {
       if !st.lang().dec.open {
