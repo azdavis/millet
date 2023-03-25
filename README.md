@@ -22,6 +22,7 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 
 - There is a [VS Code][vscode] extension on the [marketplace][].
 - The same extension is also published on [Open VSX][ovsx].
+- Pre-built releases for many popular platforms are on the [releases page][rel].
 
 VS Code and compatible editors like [VSCodium][] are the only editors for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
 
@@ -122,3 +123,4 @@ Millet is dual-licensed under the terms of both the MIT license and the Apache l
 [yixin]: https://yixinhe.me
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [ra]: https://rust-analyzer.github.io
+[rel]: https://github.com/azdavis/millet/releases/
