@@ -41,7 +41,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     mode: match root.as_mut().ok().and_then(Option::take) {
       Some(path) => {
         let input = cx.get_input(&path);
-        Mode::Root(Root { path, input })
+        Mode::Root(Box::new(Root { path, input }))
       }
       None => Mode::NoRoot(FxHashMap::default()),
     },

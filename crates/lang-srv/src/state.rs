@@ -6,7 +6,7 @@ use lsp_types::Url;
 
 pub(crate) enum Mode {
   /// We have a workspace root.
-  Root(Root),
+  Root(Box<Root>),
   /// We have no workspace root. We track the open files.
   NoRoot(FxHashMap<paths::PathId, String>),
 }
