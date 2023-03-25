@@ -1,6 +1,10 @@
 //! Disallowing parts of the language.
 
-use crate::check::check_multi;
+use crate::check::{check_multi, raw};
+
+fn files<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
+  [(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]
+}
 
 #[test]
 fn exp() {
@@ -14,7 +18,7 @@ val _ = while true do ()
 (**     ^^^^^^^^^^^^^^^^ disallowed expression: while *)
 val _ = "hi"
 "#;
-  check_multi([(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]);
+  check_multi(files(config, sml));
 }
 
 #[test]
@@ -29,5 +33,5 @@ signature SIG = sig end
 (** + disallowed declaration: signature *)
 functor F() = struct end
 "#;
-  check_multi([(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]);
+  check_multi(files(config, sml));
 }
