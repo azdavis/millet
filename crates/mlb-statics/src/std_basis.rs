@@ -111,7 +111,9 @@ where
       panic!("{name}: parse error: {}", e.display());
     }
     if let Some(e) = started.lower.errors.first() {
-      panic!("{name}: lower error: {}", e.display());
+      let e = e.display().to_string();
+      let allowed = name == "std_basis/general.sml" && e.contains("top-level `open`");
+      assert!(allowed, "{name}: lower error: {e}");
     }
     let mode = sml_statics::mode::Mode::BuiltinLib(name);
     let low = started.lower;

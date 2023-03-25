@@ -358,12 +358,19 @@ structure S = struct
   val x = 5
 end
 
-val a = S.x
-open S
-val b = x
+val five = S.x
+
+val ten =
+  let
+    open S
+  in
+    x + x
+  end
 ```
 
 Compare with `include`, which is kind of like `open` but for signatures.
+
+Top-level `open` is usually discouraged.
 
 ## `then`
 

@@ -684,18 +684,23 @@ datatype d =
 There was an `open` or `include` without operands.
 
 ```sml
-    open
-(** ^^^^ requires at least 1 operand *)
+signature S = sig
+  include
+(** + requires at least 1 operand *)
+end
 ```
 
 To fix, give them some operands, or delete the empty `open` or `include`.
 
 ```sml
-structure S = struct
-  val x = 3
+signature A = sig
+  val x : int
 end
 
-open S
+signature S = sig
+  include A
+  val y : string
+end
 ```
 
 ## 4010
