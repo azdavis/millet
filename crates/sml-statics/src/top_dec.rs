@@ -8,7 +8,7 @@ mod sharing_ty;
 mod ty_con_paths;
 mod where_ty;
 
-use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
+use crate::env::{Bs, Env, EnvLike, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::generalize::generalize;
 use crate::get_env::{get_env, get_ty_info};
@@ -21,21 +21,21 @@ use crate::{config::Cfg, dec, mode::Mode, st::St, ty};
 use fast_hash::{map, FxHashSet};
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
-  let mut ac = Bs::<Env>::default();
+  let mut ac = Bs::default();
   get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), top_dec);
-  Bs { fun_env: ac.fun_env, sig_env: ac.sig_env, env: EnvStack::one(ac.env) }
+  Bs { fun_env: ac.fun_env, sig_env: ac.sig_env, env: ac.env }
 }
 
 enum StrDecAc<'a> {
   Env(&'a mut Env),
-  Bs(&'a mut Bs<Env>),
+  Bs(&'a mut Bs),
 }
 
 impl StrDecAc<'_> {
   fn as_mut_env(&mut self) -> &mut Env {
     match self {
       StrDecAc::Env(env) => env,
-      StrDecAc::Bs(bs) => &mut bs.env,
+      StrDecAc::Bs(bs) => bs.env.as_one_mut(),
     }
   }
 }

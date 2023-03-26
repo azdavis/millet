@@ -91,6 +91,11 @@ impl EnvStack {
     self.rest.push(Arc::new(old_top));
   }
 
+  pub(crate) fn as_one_mut(&mut self) -> &mut Env {
+    assert!(self.rest.is_empty());
+    &mut self.top
+  }
+
   fn all_env(&self) -> impl DoubleEndedIterator<Item = &Env> + '_ {
     self.rest.iter().map(AsRef::as_ref).chain(std::iter::once(&self.top))
   }
@@ -191,8 +196,8 @@ pub(crate) type FunEnv = FxHashMap<str_util::Name, FunSig>;
 
 /// Definition: Basis
 #[derive(Debug, Default, Clone)]
-pub(crate) struct Bs<E = EnvStack> {
-  pub(crate) env: E,
+pub(crate) struct Bs {
+  pub(crate) env: EnvStack,
   pub(crate) sig_env: Arc<SigEnv>,
   pub(crate) fun_env: Arc<FunEnv>,
 }
@@ -201,9 +206,7 @@ impl Bs {
   pub(crate) fn as_cx(&self) -> Cx {
     Cx { env: self.env.clone(), fixed: FxHashMap::default() }
   }
-}
 
-impl<E: EnvLike> Bs<E> {
   pub(crate) fn as_mut_fun_env(&mut self) -> &mut FunEnv {
     Arc::make_mut(&mut self.fun_env)
   }
@@ -212,7 +215,7 @@ impl<E: EnvLike> Bs<E> {
     Arc::make_mut(&mut self.sig_env)
   }
 
-  pub(crate) fn append<E2: EnvLike>(&mut self, mut other: Bs<E2>) {
+  pub(crate) fn append(&mut self, mut other: Bs) {
     self.as_mut_sig_env().extend(other.as_mut_sig_env().drain());
     self.as_mut_fun_env().extend(other.as_mut_fun_env().drain());
     self.env.append(&mut other.env.into_env());
