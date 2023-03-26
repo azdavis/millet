@@ -76,29 +76,41 @@ impl EnvLike for Env {
 /// A wrapper around a stack of [`Env`]s. Acts like a single `Env` in most respects, but is faster
 /// to `Clone`.
 #[derive(Debug, Default, Clone)]
-pub(crate) struct EnvStack(Vec<Arc<Env>>);
+pub(crate) struct EnvStack {
+  rest: Vec<Arc<Env>>,
+  top: Env,
+}
 
 impl EnvStack {
   pub(crate) fn one(env: Env) -> Self {
-    Self(vec![Arc::new(env)])
+    Self { rest: Vec::new(), top: env }
   }
 
   pub(crate) fn push(&mut self, other: Env) {
-    self.0.push(Arc::new(other));
+    let old_top = std::mem::replace(&mut self.top, other);
+    self.rest.push(Arc::new(old_top));
+  }
+
+  fn all_env(&self) -> impl DoubleEndedIterator<Item = &Env> + '_ {
+    self.rest.iter().map(AsRef::as_ref).chain(std::iter::once(&self.top))
+  }
+
+  fn all_env_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut Env> + '_ {
+    self.rest.iter_mut().map(Arc::make_mut).chain(std::iter::once(&mut self.top))
   }
 }
 
 impl EnvLike for EnvStack {
   fn get_str(&self, name: &str_util::Name) -> Option<&Env> {
-    self.0.iter().rev().find_map(|env| env.str_env.get(name))
+    self.all_env().rev().find_map(|env| env.str_env.get(name))
   }
 
   fn get_ty(&self, name: &str_util::Name) -> Option<&TyInfo> {
-    self.0.iter().rev().find_map(|env| env.ty_env.get(name))
+    self.all_env().rev().find_map(|env| env.ty_env.get(name))
   }
 
   fn get_val(&self, name: &str_util::Name) -> Option<&ValInfo> {
-    self.0.iter().rev().find_map(|env| env.val_env.get(name))
+    self.all_env().rev().find_map(|env| env.val_env.get(name))
   }
 
   fn append(&mut self, other: &mut Env) {
@@ -109,7 +121,7 @@ impl EnvLike for EnvStack {
 
   fn all_str(&self) -> FxHashMap<&str_util::Name, &Env> {
     let mut ret = FxHashMap::<&str_util::Name, &Env>::default();
-    for env in &self.0 {
+    for env in self.all_env() {
       ret.extend(env.str_env.iter());
     }
     ret
@@ -117,7 +129,7 @@ impl EnvLike for EnvStack {
 
   fn all_ty(&self) -> FxHashMap<&str_util::Name, &TyInfo> {
     let mut ret = FxHashMap::<&str_util::Name, &TyInfo>::default();
-    for env in &self.0 {
+    for env in self.all_env() {
       ret.extend(env.ty_env.iter());
     }
     ret
@@ -125,7 +137,7 @@ impl EnvLike for EnvStack {
 
   fn all_val(&self) -> FxHashMap<&str_util::Name, &ValInfo> {
     let mut ret = FxHashMap::<&str_util::Name, &ValInfo>::default();
-    for env in &self.0 {
+    for env in self.all_env() {
       ret.extend(env.val_env.iter());
     }
     ret
@@ -133,8 +145,8 @@ impl EnvLike for EnvStack {
 
   fn into_env(mut self) -> Env {
     let mut env = Env::default();
-    for mut other in self.0.drain(..) {
-      env.append(Arc::make_mut(&mut other));
+    for other in self.all_env_mut() {
+      env.append(other);
     }
     env
   }
