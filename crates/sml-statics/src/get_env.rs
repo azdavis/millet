@@ -47,6 +47,9 @@ where
     }
     Some(x) => x,
   };
+  if let Some(d) = &env.disallow {
+    ret.errors.push(ErrorKind::Disallowed(Item::Struct, d.clone(), name.clone()));
+  }
   for name in names {
     match env.str_env.get(name) {
       None => {
@@ -55,12 +58,15 @@ where
       }
       Some(x) => env = x,
     }
+    if let Some(d) = &env.disallow {
+      ret.errors.push(ErrorKind::Disallowed(Item::Struct, d.clone(), name.clone()));
+    }
   }
   ret.val = Some(env);
   ret
 }
 
-/// does contain the err if there was no `path.last()`
+/// does contain the undef err if there was no `path.last()`
 pub(crate) fn get_ty_info<'e, E>(env: &'e E, path: &sml_hir::Path) -> MaybeWithErrors<&'e TyInfo>
 where
   E: EnvLike,
@@ -68,7 +74,7 @@ where
   get_ty_info_raw(env, path.prefix().iter(), path.last())
 }
 
-/// does contain the err if there was no `last`
+/// does contain the undef err if there was no `last`
 pub(crate) fn get_ty_info_raw<'e, 'n, S, E>(
   env: &'e E,
   prefix: S,
@@ -83,21 +89,31 @@ where
     Some(env) => env.ty_env.get(last),
     None => env.get_ty(last),
   };
-  if ty_info.is_none() {
-    got_env.errors.push(ErrorKind::Undefined(Item::Ty, last.clone()));
+  match ty_info {
+    None => got_env.errors.push(ErrorKind::Undefined(Item::Ty, last.clone())),
+    Some(ty_info) => {
+      if let Some(d) = &ty_info.disallow {
+        got_env.errors.push(ErrorKind::Disallowed(Item::Ty, d.clone(), last.clone()));
+      }
+    }
   }
   MaybeWithErrors { val: ty_info, errors: got_env.errors }
 }
 
-/// doesn't contain the err if there was no `path.last()`
+/// doesn't contain the undef err if there was no `path.last()`
 pub(crate) fn get_val_info<'e, E>(env: &'e E, path: &sml_hir::Path) -> MaybeWithErrors<&'e ValInfo>
 where
   E: EnvLike,
 {
-  let got_env = get_env(env, path.prefix());
+  let mut got_env = get_env(env, path.prefix());
   let val = match got_env.val {
     Some(e) => e.val_env.get(path.last()),
     None => env.get_val(path.last()),
   };
+  if let Some(val_info) = val {
+    if let Some(d) = &val_info.disallow {
+      got_env.errors.push(ErrorKind::Disallowed(Item::Val, d.clone(), path.last().clone()));
+    }
+  }
   MaybeWithErrors { val, errors: got_env.errors }
 }

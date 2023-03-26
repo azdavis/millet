@@ -252,6 +252,9 @@ fn get_str_exp(
     // @def(54)
     sml_hir::StrExp::App(fun_name, arg_str_exp, flavor) => match bs.fun_env.get(fun_name) {
       Some(fun_sig) => {
+        if let Some(d) = &fun_sig.disallow {
+          st.err(str_exp, ErrorKind::Disallowed(Item::Functor, d.clone(), fun_name.clone()));
+        }
         let idx = sml_hir::Idx::from(str_exp);
         let sugar_user = match (fun_sig.flavor, flavor) {
           (sml_hir::Flavor::Plain, sml_hir::Flavor::Plain)
@@ -326,6 +329,9 @@ fn get_sig_exp(
           return None;
         }
       };
+      if let Some(d) = &sig.disallow {
+        st.err(sig_exp, ErrorKind::Disallowed(Item::Sig, d.clone(), name.clone()));
+      }
       let mut subst = realize::TyRealization::default();
       let idx = sml_hir::Idx::from(sig_exp);
       gen_fresh_syms(st, &mut subst, &sig.ty_names);
