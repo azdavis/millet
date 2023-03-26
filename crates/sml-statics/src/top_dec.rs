@@ -309,30 +309,31 @@ fn get_sig_exp(
       None
     }
     // @def(63)
-    sml_hir::SigExp::Name(name) => match bs.sig_env.get(name) {
-      Some(sig) => {
-        let mut subst = realize::TyRealization::default();
-        let idx = sml_hir::Idx::from(sig_exp);
-        gen_fresh_syms(st, &mut subst, &sig.ty_names);
-        let mut sig_env = sig.env.clone();
-        realize::get_env(&subst, &mut sig_env);
-        st.info.insert(idx, None, sig.env.def.into_iter().collect());
-        ac.append(&mut sig_env);
-        match st.info.mode {
-          Mode::BuiltinLib(_) => match name.as_str() {
-            "WORD" => Some(Basic::Word),
-            "INTEGER" | "INT_INF" => Some(Basic::Int),
-            "REAL" => Some(Basic::Real),
-            _ => None,
-          },
-          Mode::Regular(_) | Mode::PathOrder => None,
+    sml_hir::SigExp::Name(name) => {
+      let sig = match bs.sig_env.get(name) {
+        Some(x) => x,
+        None => {
+          st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone()));
+          return None;
         }
+      };
+      let mut subst = realize::TyRealization::default();
+      let idx = sml_hir::Idx::from(sig_exp);
+      gen_fresh_syms(st, &mut subst, &sig.ty_names);
+      let mut sig_env = sig.env.clone();
+      realize::get_env(&subst, &mut sig_env);
+      st.info.insert(idx, None, sig.env.def.into_iter().collect());
+      ac.append(&mut sig_env);
+      match st.info.mode {
+        Mode::BuiltinLib(_) => match name.as_str() {
+          "WORD" => Some(Basic::Word),
+          "INTEGER" | "INT_INF" => Some(Basic::Int),
+          "REAL" => Some(Basic::Real),
+          _ => None,
+        },
+        Mode::Regular(_) | Mode::PathOrder => None,
       }
-      None => {
-        st.err(sig_exp, ErrorKind::Undefined(Item::Sig, name.clone()));
-        None
-      }
-    },
+    }
     // @def(64)
     sml_hir::SigExp::Where(inner, kind) => {
       let marker = st.syms.mark();
