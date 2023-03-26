@@ -1,13 +1,13 @@
 //! Collect all the paths to ty cons in an env.
 
 use crate::env::{Env, EnvLike};
-use crate::get_env::{get_env, MaybeWithErrors};
+use crate::get_env::{get_env, GetEnvResult};
 use fast_hash::FxHashSet;
 
 pub(crate) fn get<E: EnvLike>(
   env: &E,
   path: &sml_hir::Path,
-) -> MaybeWithErrors<FxHashSet<sml_hir::Path>> {
+) -> GetEnvResult<FxHashSet<sml_hir::Path>> {
   get_env(env, path.all_names()).map(|env| {
     let mut ty_cons = FxHashSet::<sml_hir::Path>::default();
     go(&mut Vec::new(), &mut ty_cons, env);
