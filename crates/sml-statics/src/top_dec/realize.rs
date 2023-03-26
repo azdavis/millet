@@ -24,10 +24,10 @@ impl TyRealization {
 }
 
 pub(crate) fn get_env(subst: &TyRealization, env: &mut Env) {
-  for env in env.str_env.values_mut() {
+  for (_, env) in env.str_env.iter_mut() {
     get_env(subst, env);
   }
-  for ty_info in env.ty_env.values_mut() {
+  for (_, ty_info) in env.ty_env.iter_mut() {
     get_ty(subst, &mut ty_info.ty_scheme.ty);
     get_val_env(subst, &mut ty_info.val_env);
   }
@@ -35,7 +35,7 @@ pub(crate) fn get_env(subst: &TyRealization, env: &mut Env) {
 }
 
 pub(crate) fn get_val_env(subst: &TyRealization, val_env: &mut ValEnv) {
-  for val_info in val_env.values_mut() {
+  for (_, val_info) in val_env.iter_mut() {
     get_ty(subst, &mut val_info.ty_scheme.ty);
   }
 }

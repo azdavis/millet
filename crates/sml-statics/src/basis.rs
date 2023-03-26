@@ -153,8 +153,8 @@ pub fn minimal() -> (Syms, Basis) {
     ]
   };
   let val_env: ValEnv = ty_env
-    .values()
-    .flat_map(|ti| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
+    .iter()
+    .flat_map(|(_, ti)| ti.val_env.iter().map(|(a, b)| (a.clone(), b.clone())))
     .chain(fns.into_iter().map(|(name, ty_scheme)| {
       let vi = ValInfo {
         ty_scheme,

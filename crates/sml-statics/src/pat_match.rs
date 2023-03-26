@@ -154,8 +154,8 @@ fn cons_for_sym(syms: &Syms, sym: Sym) -> Option<Vec<Con>> {
   let ret: Vec<_> = sym_info
     .ty_info
     .val_env
-    .keys()
-    .map(|name| Con::Variant(sym, VariantName::Name(name.clone())))
+    .iter()
+    .map(|(name, _)| Con::Variant(sym, VariantName::Name(name.clone())))
     .collect();
   Some(ret)
 }

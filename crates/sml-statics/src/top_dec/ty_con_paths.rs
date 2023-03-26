@@ -16,8 +16,8 @@ pub(crate) fn get<E: EnvLike>(
 }
 
 fn go(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_hir::Path>, env: &Env) {
-  ac.extend(env.ty_env.keys().map(|name| sml_hir::Path::new(prefix.clone(), name.clone())));
-  for (name, env) in &env.str_env {
+  ac.extend(env.ty_env.iter().map(|(name, _)| sml_hir::Path::new(prefix.clone(), name.clone())));
+  for (name, env) in env.str_env.iter() {
     prefix.push(name.clone());
     go(prefix, ac, env);
     prefix.pop().unwrap();

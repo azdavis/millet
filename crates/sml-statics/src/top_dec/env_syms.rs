@@ -25,7 +25,7 @@ where
 }
 
 fn val_env_syms<F: FnMut(Sym)>(val_env: &ValEnv, f: &mut F) {
-  for val_info in val_env.values() {
+  for (_, val_info) in val_env.iter() {
     ty_syms(&val_info.ty_scheme.ty, f);
   }
 }

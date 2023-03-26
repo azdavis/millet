@@ -207,7 +207,7 @@ fn get_(
         let idx = sml_hir::Idx::from(pat.unwrap_or(pat_idx));
         unify(st, idx, ty.clone(), rest_ty);
         apply(&st.subst, &mut ty);
-        for (name, fst_val_info) in &mut fst_ve {
+        for (name, fst_val_info) in fst_ve.iter_mut() {
           let rest_val_info = match rest_ve.remove(name) {
             Some(x) => x,
             None => {
@@ -224,7 +224,7 @@ fn get_(
             Err(e) => st.err(idx, e),
           }
         }
-        if let Some(name) = rest_ve.into_keys().next() {
+        if let Some((name, _)) = rest_ve.into_iter().next() {
           st.err(idx, ErrorKind::OrPatNotSameBindings(name));
         }
       }

@@ -60,13 +60,13 @@ fn bound_ty_name_to_path<'e>(
   env: &'e Env,
   ty_scheme: &TyScheme,
 ) -> bool {
-  for (name, ty_info) in &env.ty_env {
+  for (name, ty_info) in env.ty_env.iter() {
     if eq_ty_fn_no_emit(st, ty_info.ty_scheme.clone(), ty_scheme.clone()).is_ok() {
       ac.push(name);
       return true;
     }
   }
-  for (name, env) in &env.str_env {
+  for (name, env) in env.str_env.iter() {
     ac.push(name);
     if bound_ty_name_to_path(st, ac, env, ty_scheme) {
       return true;

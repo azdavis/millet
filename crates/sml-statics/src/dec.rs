@@ -68,7 +68,7 @@ pub(crate) fn get(
         })
         .collect();
       // merge the recursive and non-recursive ValEnvs, making sure they don't clash.
-      for (name, val_info) in &rec_ve {
+      for (name, val_info) in rec_ve.iter() {
         if let Some(e) = ins_no_dupe(&mut ve, name.clone(), val_info.clone(), Item::Val) {
           st.err(dec, e);
         }
@@ -89,7 +89,7 @@ pub(crate) fn get(
       }
       let mut generalized = FxHashSet::<sml_hir::ExpIdx>::default();
       // generalize the entire merged ValEnv.
-      for (name, val_info) in &mut ve {
+      for (name, val_info) in ve.iter_mut() {
         let &exp = src_exp.get(name).expect("should have an exp for every bound name");
         if !generalized.insert(exp) {
           continue;
@@ -231,7 +231,7 @@ fn get_pat_and_src_exp(
   st.meta_gen.inc_rank();
   let ret = pat::get(st, cfg, ars, cx, ve, val_bind.pat);
   st.meta_gen.dec_rank();
-  for name in ve.keys() {
+  for (name, _) in ve.iter() {
     if !src_exp.contains_key(name) {
       src_exp.insert(name.clone(), val_bind.exp);
     }
@@ -333,7 +333,7 @@ pub(crate) fn get_dat_binds(
   let mut ty_env = TyEnv::default();
   get_ty_binds(st, idx, &mut cx, ars, &mut ty_env, with_types);
   // make sure the types did not conflict with the datatypes.
-  for (name, val) in &ty_env {
+  for (name, val) in ty_env.iter() {
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, name.clone(), val.clone(), Item::Ty) {
       st.err(idx, e);
     }

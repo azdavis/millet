@@ -283,13 +283,13 @@ fn get_str_exp(
       realize::get_env(&subst, &mut param_env);
       enrich::get_env(st, arg_idx, &arg_env, &param_env);
       let def = st.def(idx);
-      for env in to_add.str_env.values_mut() {
+      for (_, env) in to_add.str_env.iter_mut() {
         env.def = def;
       }
-      for ty_env in to_add.ty_env.values_mut() {
+      for (_, ty_env) in to_add.ty_env.iter_mut() {
         ty_env.def = def;
       }
-      for val_info in to_add.val_env.values_mut() {
+      for (_, val_info) in to_add.val_env.iter_mut() {
         // TODO add to the set?
         val_info.defs = def.into_iter().collect();
       }
@@ -457,7 +457,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         if let Some(e) = ins {
           st.err(spec, e);
         }
-        for (name, val_info) in &ty_info.val_env {
+        for (name, val_info) in ty_info.val_env.iter() {
           let ins = ins_no_dupe(&mut ac.val_env, name.clone(), val_info.clone(), Item::Val);
           if let Some(e) = ins {
             st.err(spec, e);

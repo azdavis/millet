@@ -155,7 +155,7 @@ pub(crate) fn get_ty_info(st: &mut St, ty_info: TyInfo) -> Result {
   if is_ref {
     Ok(())
   } else {
-    all(ty_info.val_env.into_values().map(|vi| match vi.ty_scheme.ty {
+    all(ty_info.val_env.into_iter().map(|(_, vi)| match vi.ty_scheme.ty {
       Ty::Fn(param, _) => {
         let param_ty_scheme = TyScheme { bound_vars: vi.ty_scheme.bound_vars, ty: *param };
         get_ty_scheme(st, param_ty_scheme)
