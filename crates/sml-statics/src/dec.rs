@@ -151,6 +151,7 @@ pub(crate) fn get(
               ty_scheme: TyScheme::zero(ty),
               id_status: IdStatus::Exn(exn),
               defs: st.def(dec.into()).into_iter().collect(),
+              disallow: None,
             };
             if let Some(e) = ins_check_name(&mut val_env, name.clone(), vi, Item::Val) {
               st.err(dec, e);
@@ -258,7 +259,8 @@ fn get_ty_binds(
     let fixed = add_fixed_ty_vars(st, idx, cx, TyVarSrc::Ty, &ty_bind.ty_vars);
     let mut ty_scheme = TyScheme::zero(ty::get(st, cx, ars, ty::Mode::TyRhs, ty_bind.ty));
     generalize_fixed(fixed, &mut ty_scheme);
-    let ty_info = TyInfo { ty_scheme, val_env: ValEnv::default(), def: st.def(idx) };
+    let ty_info =
+      TyInfo { ty_scheme, val_env: ValEnv::default(), def: st.def(idx), disallow: None };
     if let Some(e) = ins_no_dupe(ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);
     }
@@ -303,8 +305,12 @@ pub(crate) fn get_dat_binds(
       generalize_fixed(fixed.clone(), &mut res);
       res
     };
-    let ty_info =
-      TyInfo { ty_scheme: ty_scheme.clone(), val_env: ValEnv::default(), def: st.def(idx) };
+    let ty_info = TyInfo {
+      ty_scheme: ty_scheme.clone(),
+      val_env: ValEnv::default(),
+      def: st.def(idx),
+      disallow: None,
+    };
     if let Some(e) = ins_no_dupe(&mut fake_ty_env, dat_bind.name.clone(), ty_info, Item::Ty) {
       st.err(idx, e);
     }
@@ -350,15 +356,20 @@ pub(crate) fn get_dat_binds(
       // just `generalize` would also work, because `ty_scheme` contains `out_ty`, which mentions
       // every fixed var.
       generalize_fixed(datatype.fixed.clone(), &mut ty_scheme);
-      let vi =
-        ValInfo { ty_scheme, id_status: IdStatus::Con, defs: st.def(idx).into_iter().collect() };
+      let vi = ValInfo {
+        ty_scheme,
+        id_status: IdStatus::Con,
+        defs: st.def(idx).into_iter().collect(),
+        disallow: None,
+      };
       if let Some(e) = ins_check_name(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
         st.err(idx, e);
       }
     }
     // NOTE: no checking for duplicates here
     big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
-    let ty_info = TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx) };
+    let ty_info =
+      TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx), disallow: None };
     let equality = match equality::get_ty_info(st, ty_info.clone()) {
       Ok(()) => Equality::Sometimes,
       Err(_) => Equality::Never,

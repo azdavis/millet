@@ -1,7 +1,7 @@
 //! Environments and types that contain them.
 
-use crate::def;
 use crate::types::{FixedTyVar, Sym, TyEnv, TyInfo, ValEnv, ValInfo};
+use crate::{def, disallow::Disallow};
 use fast_hash::{FxHashMap, FxHashSet};
 use std::sync::Arc;
 
@@ -28,6 +28,7 @@ pub(crate) struct Env {
   pub(crate) ty_env: TyEnv,
   pub(crate) val_env: ValEnv,
   pub(crate) def: Option<def::Def>,
+  pub(crate) disallow: Option<Disallow>,
 }
 
 impl Env {
@@ -160,6 +161,7 @@ pub(crate) type TyNameSet = FxHashSet<Sym>;
 pub(crate) struct Sig {
   pub(crate) ty_names: TyNameSet,
   pub(crate) env: Env,
+  pub(crate) disallow: Option<Disallow>,
 }
 
 /// Definition: `FunSig`
@@ -169,6 +171,7 @@ pub(crate) struct FunSig {
   pub(crate) body_ty_names: TyNameSet,
   pub(crate) body_env: Env,
   pub(crate) flavor: sml_hir::Flavor,
+  pub(crate) disallow: Option<Disallow>,
 }
 
 pub(crate) type SigEnv = FxHashMap<str_util::Name, Sig>;

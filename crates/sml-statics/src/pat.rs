@@ -254,6 +254,7 @@ fn insert_name(
     ty_scheme: TyScheme::zero(ty),
     id_status: IdStatus::Val,
     defs: st.def(idx).into_iter().collect(),
+    disallow: None,
   };
   match st.info.mode {
     Mode::Regular(Some(_)) => {

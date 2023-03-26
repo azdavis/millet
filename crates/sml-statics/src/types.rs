@@ -8,7 +8,7 @@ mod fixed_var;
 mod meta_var;
 mod overload;
 
-use crate::def;
+use crate::{def, disallow::Disallow};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::{collections::BTreeMap, fmt};
@@ -172,8 +172,12 @@ pub struct Syms {
 
 impl Syms {
   pub(crate) fn start(&mut self, path: sml_hir::Path) -> StartedSym {
-    let ty_info =
-      TyInfo { ty_scheme: TyScheme::zero(Ty::None), val_env: ValEnv::default(), def: None };
+    let ty_info = TyInfo {
+      ty_scheme: TyScheme::zero(Ty::None),
+      val_env: ValEnv::default(),
+      def: None,
+      disallow: None,
+    };
     // must start with sometimes equality, as an assumption for constructing datatypes. we may
     // realize that it should actually be never equality based on arguments to constructors.
     self.syms.push(SymInfo { path, ty_info, equality: Equality::Sometimes });
@@ -333,6 +337,7 @@ pub(crate) struct TyInfo {
   pub(crate) ty_scheme: TyScheme,
   pub(crate) val_env: ValEnv,
   pub(crate) def: Option<def::Def>,
+  pub(crate) disallow: Option<Disallow>,
 }
 
 /// Definition: `TyEnv`
@@ -347,6 +352,7 @@ pub(crate) struct ValInfo {
   pub(crate) id_status: IdStatus,
   /// a set, because we can have or patterns
   pub(crate) defs: FxHashSet<def::Def>,
+  pub(crate) disallow: Option<Disallow>,
 }
 
 /// Definition: `IdStatus`

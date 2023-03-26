@@ -141,7 +141,13 @@ fn get_str_dec(
           body_ty_names.remove(sym);
         }
         let fun_name = fun_bind.functor_name.clone();
-        let fun_sig = FunSig { param: param_sig, body_ty_names, body_env, flavor: fun_bind.flavor };
+        let fun_sig = FunSig {
+          param: param_sig,
+          body_ty_names,
+          body_env,
+          flavor: fun_bind.flavor,
+          disallow: None,
+        };
         if let Some(e) = ins_no_dupe(&mut fun_env, fun_name, fun_sig, Item::Functor) {
           st.err(str_dec, e);
         }
@@ -372,7 +378,7 @@ fn env_to_sig(env: Env, marker: SymsMarker) -> Sig {
       ty_names.insert(x);
     }
   });
-  Sig { ty_names, env }
+  Sig { ty_names, env, disallow: None }
 }
 
 fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml_hir::SpecIdx) {
@@ -395,6 +401,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
           ty_scheme,
           id_status: IdStatus::Val,
           defs: st.def(spec.into()).into_iter().collect(),
+          disallow: None,
         };
         let name = &val_desc.name;
         if let Some(e) = ins_check_name(&mut ac.val_env, name.clone(), vi, Item::Val) {
@@ -456,6 +463,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
         defs: st.def(spec.into()).into_iter().collect(),
+        disallow: None,
       };
       if let Some(e) = ins_check_name(&mut ac.val_env, ex_desc.name.clone(), vi, Item::Val) {
         st.err(spec, e);
@@ -567,6 +575,7 @@ fn get_ty_desc(
     ),
     val_env: ValEnv::default(),
     def: st.def(idx),
+    disallow: None,
   };
   st.syms.finish(started, ty_info.clone(), equality);
   if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {

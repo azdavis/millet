@@ -12,6 +12,7 @@
 mod compatible;
 mod config;
 mod dec;
+mod disallow;
 mod display;
 mod env;
 mod equality;

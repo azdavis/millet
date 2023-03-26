@@ -3,6 +3,7 @@
 mod non_exhaustive;
 mod suggestion;
 
+use crate::disallow::Disallow;
 use crate::display::{record_meta_var, MetaVarNames};
 use crate::types::{
   BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, Overload, RecordTy, Sym, Syms, Ty, TyScheme,
@@ -55,6 +56,7 @@ pub(crate) enum ErrorKind {
   Use(Option<str_util::SmolStr>),
   UnreachableHandle,
   DecWithoutEffect,
+  Disallowed(Item, Disallow),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -186,6 +188,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::UnreachableHandle => f.write_str("unreachable `handle`"),
       ErrorKind::DecWithoutEffect => f.write_str("declaration with no effect"),
+      ErrorKind::Disallowed(item, d) => write!(f, "{item} is disallowed {d}"),
     }
   }
 }
@@ -449,6 +452,7 @@ impl Error {
       ErrorKind::Use(_) => Code::n(5038),
       ErrorKind::UnreachableHandle => Code::n(5039),
       ErrorKind::DecWithoutEffect => Code::n(5040),
+      ErrorKind::Disallowed(_, _) => Code::n(5041),
     }
   }
 

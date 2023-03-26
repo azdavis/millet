@@ -2602,6 +2602,12 @@ fun four () = 4
 val _ = four ()
 ```
 
+## 5041
+
+**NOTE:** This error is not yet emitted.
+
+An item was disallowed in the Millet config file.
+
 ## 5999
 
 There was an occurrence of an unsupported SML construct.
