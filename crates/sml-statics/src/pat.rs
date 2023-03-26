@@ -83,16 +83,13 @@ fn get_(
     }
     sml_hir::Pat::Con(path, argument) => {
       let argument = argument.map(|x| get(st, cfg, ars, cx, ve, x));
-      let maybe_val_info = match get_val_info(&cx.env, path) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err(pat_idx, e);
-          return None;
-        }
-      };
+      let val_info = get_val_info(&cx.env, path);
+      for e in val_info.errors {
+        st.err(pat_idx, e);
+      }
       // @test(deviations::mlton::rebind_ctor)
       let is_var =
-        argument.is_none() && path.prefix().is_empty() && (ok_val_info(maybe_val_info) || cfg.rec);
+        argument.is_none() && path.prefix().is_empty() && (ok_val_info(val_info.val) || cfg.rec);
       // @def(34)
       if is_var {
         let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
@@ -100,7 +97,7 @@ fn get_(
         insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty.clone());
         return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, defs });
       }
-      let val_info = match maybe_val_info {
+      let val_info = match val_info.val {
         Some(x) => x,
         None => {
           st.err(pat_idx, ErrorKind::Undefined(Item::Val, path.last().clone()));

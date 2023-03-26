@@ -41,27 +41,29 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     // @def(1)
     sml_hir::Exp::SCon(scon) => get_scon(st, Generalizable::Always, scon),
     // @def(2)
-    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path) {
-      Ok(Some(val_info)) => {
-        ty_scheme = Some(val_info.ty_scheme.clone());
-        defs.reserve(val_info.defs.len());
-        for &def in &val_info.defs {
-          defs.insert(def);
-          if let def::Def::Path(_, idx) = def {
-            st.mark_used(idx);
-          }
-        }
-        instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
-      }
-      Ok(None) => {
-        st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
-        Ty::None
-      }
-      Err(e) => {
+    sml_hir::Exp::Path(path) => {
+      let val_info = get_val_info(&cx.env, path);
+      for e in val_info.errors {
         st.err(exp, e);
-        Ty::None
       }
-    },
+      match val_info.val {
+        Some(val_info) => {
+          ty_scheme = Some(val_info.ty_scheme.clone());
+          defs.reserve(val_info.defs.len());
+          for &def in &val_info.defs {
+            defs.insert(def);
+            if let def::Def::Path(_, idx) = def {
+              st.mark_used(idx);
+            }
+          }
+          instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
+        }
+        None => {
+          st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
+          Ty::None
+        }
+      }
+    }
     // @def(3)
     sml_hir::Exp::Record(rows) => {
       let rows = record(st, exp.into(), rows, |st, _, exp| get(st, cfg, cx, ars, exp));
@@ -156,7 +158,7 @@ fn lint_app(
   match &ars.exp[func?] {
     // just use iter().next() because if it's something we care about (a primitive path or builtin
     // lib path), the exp should only have one def anyway.
-    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).ok()??.defs.iter().next()? {
+    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).val?.defs.iter().next()? {
       def::Def::Primitive(_) => {
         assert!(path.prefix().is_empty(), "primitives are at the top level");
         match path.last().as_str() {
@@ -204,7 +206,7 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
       sml_hir::Exp::Path(p) => p,
       _ => return None,
     };
-    let vi = get_val_info(&cx.env, path).ok()??;
+    let vi = get_val_info(&cx.env, path).val?;
     match vi.defs.iter().next()? {
       def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive(_) => {}
       def::Def::Path(def::Path::Regular(_), _) => return None,

@@ -26,19 +26,21 @@ pub(crate) fn get(
       get_where_type(st, idx, marker, inner_env, path, ty_scheme, true);
     }
     sml_hir::WhereKind::Structure(lhs, rhs) => {
-      let lhs_ty_cons = match ty_con_paths::get(inner_env, lhs) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err(idx, e);
-          return;
-        }
+      let lhs_ty_cons = ty_con_paths::get(inner_env, lhs);
+      for e in lhs_ty_cons.errors {
+        st.err(idx, e);
+      }
+      let lhs_ty_cons = match lhs_ty_cons.val {
+        Some(x) => x,
+        None => return,
       };
-      let rhs_ty_cons = match ty_con_paths::get(&bs.env, rhs) {
-        Ok(x) => x,
-        Err(e) => {
-          st.err(idx, e);
-          return;
-        }
+      let rhs_ty_cons = ty_con_paths::get(&bs.env, rhs);
+      for e in rhs_ty_cons.errors {
+        st.err(idx, e);
+      }
+      let rhs_ty_cons = match rhs_ty_cons.val {
+        Some(x) => x,
+        None => return,
       };
       for ty_con in lhs_ty_cons {
         if !rhs_ty_cons.contains(&ty_con) {
@@ -46,12 +48,13 @@ pub(crate) fn get(
         }
         let lhs = ty_con_paths::join_paths(lhs, &ty_con);
         let rhs = ty_con_paths::join_paths(rhs, &ty_con);
-        match get_ty_info(&bs.env, &rhs) {
-          Ok(ty_info) => {
-            let ty_scheme = ty_info.ty_scheme.clone();
-            get_where_type(st, idx, marker, inner_env, &lhs, ty_scheme, false);
-          }
-          Err(e) => st.err(idx, e),
+        let ty_info = get_ty_info(&bs.env, &rhs);
+        for e in ty_info.errors {
+          st.err(idx, e);
+        }
+        if let Some(ty_info) = ty_info.val {
+          let ty_scheme = ty_info.ty_scheme.clone();
+          get_where_type(st, idx, marker, inner_env, &lhs, ty_scheme, false);
         }
       }
     }
@@ -69,12 +72,13 @@ fn get_where_type(
   ty_scheme: TyScheme,
   emit_cannot_realize: bool,
 ) {
-  let path_ty_scheme = match get_ty_info(inner_env, path) {
-    Ok(x) => &x.ty_scheme,
-    Err(e) => {
-      st.err(idx, e);
-      return;
-    }
+  let ty_info = get_ty_info(inner_env, path);
+  for e in ty_info.errors {
+    st.err(idx, e);
+  }
+  let path_ty_scheme = match ty_info.val {
+    Some(x) => &x.ty_scheme,
+    None => return,
   };
   let want = path_ty_scheme.bound_vars.len();
   let got = ty_scheme.bound_vars.len();

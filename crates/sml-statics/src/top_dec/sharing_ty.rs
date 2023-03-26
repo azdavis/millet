@@ -14,13 +14,11 @@ pub(crate) fn get(
 ) {
   let mut ac = None::<SharingTyScheme>;
   let syms = paths.iter().filter_map(|path| {
-    let ty_scheme = match get_ty_info(inner_env, path) {
-      Ok(x) => &x.ty_scheme,
-      Err(e) => {
-        st.err(idx, e);
-        return None;
-      }
-    };
+    let ty_info = get_ty_info(inner_env, path);
+    for e in ty_info.errors {
+      st.err(idx, e);
+    }
+    let ty_scheme = &ty_info.val?.ty_scheme;
     let sym = match &ty_scheme.ty {
       Ty::Con(_, x) => *x,
       _ => {

@@ -3,7 +3,7 @@
 use crate::env::{Cx, Env, EnvLike as _};
 use crate::error::{ErrorKind, Item};
 use crate::generalize::{generalize, generalize_fixed, RecordMetaVar};
-use crate::get_env::{get_env_from_str_path, get_ty_info, get_val_info};
+use crate::get_env::{get_env, get_ty_info, get_val_info};
 use crate::types::{
   Equality, FixedTyVars, Generalizable, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme,
   TyVarSrc, ValEnv, ValInfo,
@@ -125,13 +125,16 @@ pub(crate) fn get(
       env.val_env.extend(big_val_env);
     }
     // @def(18)
-    sml_hir::Dec::DatatypeCopy(name, path) => match get_ty_info(&cx.env, path) {
-      Ok(ty_info) => {
+    sml_hir::Dec::DatatypeCopy(name, path) => {
+      let ty_info = get_ty_info(&cx.env, path);
+      for e in ty_info.errors {
+        st.err(dec, e);
+      }
+      if let Some(ty_info) = ty_info.val {
         env.ty_env.insert(name.clone(), ty_info.clone());
         env.val_env.extend(ty_info.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
       }
-      Err(e) => st.err(dec, e),
-    },
+    }
     // @def(19)
     sml_hir::Dec::Abstype(_, _, _) => st.err(dec, ErrorKind::Unsupported("`abstype` declarations")),
     // @def(20)
@@ -158,19 +161,24 @@ pub(crate) fn get(
             }
           }
           // @def(31)
-          sml_hir::ExBind::Copy(name, path) => match get_val_info(&cx.env, path) {
-            Ok(Some(val_info)) => match val_info.id_status {
-              IdStatus::Exn(_) => {
-                match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
-                  None => st.info.insert(dec.into(), None, val_info.defs.clone()),
-                  Some(e) => st.err(dec, e),
+          sml_hir::ExBind::Copy(name, path) => {
+            let val_info = get_val_info(&cx.env, path);
+            for e in val_info.errors {
+              st.err(dec, e);
+            }
+            match val_info.val {
+              Some(val_info) => match val_info.id_status {
+                IdStatus::Exn(_) => {
+                  match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
+                    None => st.info.insert(dec.into(), None, val_info.defs.clone()),
+                    Some(e) => st.err(dec, e),
+                  }
                 }
-              }
-              _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone())),
-            },
-            Ok(None) => st.err(dec, ErrorKind::Undefined(Item::Val, path.last().clone())),
-            Err(e) => st.err(dec, e),
-          },
+                _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone())),
+              },
+              None => st.err(dec, ErrorKind::Undefined(Item::Val, path.last().clone())),
+            }
+          }
         }
       }
       env.val_env.extend(val_env);
@@ -186,9 +194,12 @@ pub(crate) fn get(
     // @def(22)
     sml_hir::Dec::Open(paths) => {
       for path in paths {
-        match get_env_from_str_path(&cx.env, path) {
-          Ok(got_env) => env.append(&mut got_env.clone()),
-          Err(e) => st.err(dec, e),
+        let got_env = get_env(&cx.env, path.all_names());
+        for e in got_env.errors {
+          st.err(dec, e);
+        }
+        if let Some(got_env) = got_env.val {
+          env.append(&mut got_env.clone());
         }
       }
     }
@@ -422,10 +433,8 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
       if path.prefix().is_empty() && path.last().as_str() == "ref" {
         return false;
       }
-      match get_val_info(&cx.env, path) {
-        Ok(Some(x)) => matches!(x.id_status, IdStatus::Con | IdStatus::Exn(_)),
-        Ok(None) | Err(_) => true,
-      }
+      let val_info = get_val_info(&cx.env, path);
+      val_info.val.map_or(true, |x| matches!(x.id_status, IdStatus::Con | IdStatus::Exn(_)))
     }
   }
 }

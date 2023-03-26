@@ -54,29 +54,33 @@ pub(crate) fn get(
       Ty::Record(rows)
     }
     // @def(46)
-    sml_hir::Ty::Con(arguments, path) => match get_ty_info(&cx.env, path) {
-      Ok(ty_info) => {
-        let want_len = ty_info.ty_scheme.bound_vars.len();
-        if want_len == arguments.len() {
-          ty_scheme = Some(ty_info.ty_scheme.clone());
-          def = ty_info.def;
-          let mut ret = ty_info.ty_scheme.ty.clone();
-          let arguments: Vec<_> = arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
-          apply_bv(&arguments, &mut ret);
-          // NOTE: just because `ty` was a `sml_hir::Ty::Con` doesn't mean `ret` is ultimately a
-          // `Ty::Con`. there could have been a type alias. e.g. `type unit = {}` (which indeed is
-          // provided by the standard basis).
-          ret
-        } else {
-          st.err(ty, ErrorKind::WrongNumTyArgs(want_len, arguments.len()));
-          Ty::None
-        }
-      }
-      Err(e) => {
+    sml_hir::Ty::Con(arguments, path) => {
+      let ty_info = get_ty_info(&cx.env, path);
+      for e in ty_info.errors {
         st.err(ty, e);
-        Ty::None
       }
-    },
+      match ty_info.val {
+        Some(ty_info) => {
+          let want_len = ty_info.ty_scheme.bound_vars.len();
+          if want_len == arguments.len() {
+            ty_scheme = Some(ty_info.ty_scheme.clone());
+            def = ty_info.def;
+            let mut ret = ty_info.ty_scheme.ty.clone();
+            let arguments: Vec<_> =
+              arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
+            apply_bv(&arguments, &mut ret);
+            // NOTE: just because `ty` was a `sml_hir::Ty::Con` doesn't mean `ret` is ultimately a
+            // `Ty::Con`. there could have been a type alias. e.g. `type unit = {}` (which indeed is
+            // provided by the standard basis).
+            ret
+          } else {
+            st.err(ty, ErrorKind::WrongNumTyArgs(want_len, arguments.len()));
+            Ty::None
+          }
+        }
+        None => Ty::None,
+      }
+    }
     // @def(47)
     sml_hir::Ty::Fn(param, res) => {
       let param = get(st, cx, ars, mode, *param);

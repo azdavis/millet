@@ -11,7 +11,7 @@ mod where_ty;
 use crate::env::{Bs, Env, EnvLike, EnvStack, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::generalize::generalize;
-use crate::get_env::{get_env_from_str_path, get_ty_info};
+use crate::get_env::{get_env, get_ty_info};
 use crate::types::{
   Basic, Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind,
   TyVarSrc, ValEnv, ValInfo,
@@ -202,13 +202,16 @@ fn get_str_exp(
     // @def(50)
     sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), *str_dec),
     // @def(51)
-    sml_hir::StrExp::Path(path) => match get_env_from_str_path(&bs.env, path) {
-      Ok(got_env) => {
+    sml_hir::StrExp::Path(path) => {
+      let got_env = get_env(&bs.env, path.all_names());
+      for e in got_env.errors {
+        st.err(str_exp, e);
+      }
+      if let Some(got_env) = got_env.val {
         st.info.insert(str_exp.into(), None, got_env.def.into_iter().collect());
         ac.append(&mut got_env.clone());
       }
-      Err(e) => st.err(str_exp, e),
-    },
+    }
     // @def(52), @def(53)
     sml_hir::StrExp::Ascription(inner_str_exp, asc, sig_exp) => {
       let mut str_exp_env = Env::default();
@@ -434,8 +437,12 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
       }
     }
     // @def(72)
-    sml_hir::Spec::DatatypeCopy(name, path) => match get_ty_info(&bs.env, path) {
-      Ok(ty_info) => {
+    sml_hir::Spec::DatatypeCopy(name, path) => {
+      let ty_info = get_ty_info(&bs.env, path);
+      for e in ty_info.errors {
+        st.err(spec, e);
+      }
+      if let Some(ty_info) = ty_info.val {
         let ins = ins_no_dupe(&mut ac.ty_env, name.clone(), ty_info.clone(), Item::Ty);
         if let Some(e) = ins {
           st.err(spec, e);
@@ -447,8 +454,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
           }
         }
       }
-      Err(e) => st.err(spec, e),
-    },
+    }
     // @def(73), @def(83)
     sml_hir::Spec::Exception(ex_desc) => {
       let cx = bs.as_cx();
@@ -496,12 +502,12 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         sml_hir::SharingKind::Derived => {
           let mut all: Vec<_> = paths
             .iter()
-            .filter_map(|path| match ty_con_paths::get(&inner_env, path) {
-              Ok(ty_cons) => Some((path, ty_cons)),
-              Err(e) => {
+            .filter_map(|path| {
+              let ty_con_paths = ty_con_paths::get(&inner_env, path);
+              for e in ty_con_paths.errors {
                 st.err(spec, e);
-                None
               }
+              ty_con_paths.val.map(|x| (path, x))
             })
             .collect();
           while let Some((struct_1, ty_cons_1)) = all.pop() {
