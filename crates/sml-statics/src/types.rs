@@ -11,6 +11,7 @@ mod overload;
 use crate::{def, disallow::Disallow};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
+use stack_map::StackMap;
 use std::{collections::BTreeMap, fmt};
 
 pub(crate) use bound_var::BoundTyVar;
@@ -341,10 +342,10 @@ pub(crate) struct TyInfo {
 }
 
 /// Definition: `TyEnv`
-pub(crate) type TyEnv = FxHashMap<str_util::Name, TyInfo>;
+pub(crate) type TyEnv = StackMap<str_util::Name, TyInfo>;
 
 /// Definition: `ValEnv`
-pub(crate) type ValEnv = FxHashMap<str_util::Name, ValInfo>;
+pub(crate) type ValEnv = StackMap<str_util::Name, ValInfo>;
 
 #[derive(Debug, Clone)]
 pub(crate) struct ValInfo {

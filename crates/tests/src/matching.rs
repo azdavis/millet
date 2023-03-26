@@ -42,7 +42,7 @@ fn big_datatype_missing() {
 datatype hmm = A | B of int | C of hmm | D of string
 val _ =
     case A of
-(** ^^^^^^^^^ non-exhaustive case: missing C (C (C _)), C (C (B _)), C (C (D _)), and 2 others *)
+(** ^^^^^^^^^ non-exhaustive case: missing C (D _), C (C (D _)), C (C (C _)), and 2 others *)
     A => 0
   | B 1 => 1
   | B 3 => 2

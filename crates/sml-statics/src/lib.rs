@@ -8,8 +8,6 @@
 #![allow(clippy::too_many_lines, clippy::single_match_else)]
 // TODO remove once rustfmt support lands
 #![allow(clippy::manual_let_else)]
-// TODO remove
-#![allow(clippy::explicit_iter_loop)]
 
 mod compatible;
 mod config;

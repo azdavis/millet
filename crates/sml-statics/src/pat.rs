@@ -1,6 +1,6 @@
 //! Checking patterns.
 
-use crate::env::{Cx, EnvLike as _};
+use crate::env::Cx;
 use crate::error::{ErrorKind, Item};
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::{Generalizable, IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo};
@@ -225,10 +225,10 @@ fn get_(
           }
         }
         if let Some((name, _)) = rest_ve.into_iter().next() {
-          st.err(idx, ErrorKind::OrPatNotSameBindings(name));
+          st.err(idx, ErrorKind::OrPatNotSameBindings(name.clone()));
         }
       }
-      ve.extend(fst_ve);
+      ve.append(&mut fst_ve);
       (Pat::or(pm_pats, pat), ty)
     }
   };

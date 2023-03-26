@@ -1,0 +1,14 @@
+[package]
+name = "stack-map"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }

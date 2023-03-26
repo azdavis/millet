@@ -1,15 +1,15 @@
 //! Traversing the `Sym`s in an `EnvLike`.
 
+use crate::env::Env;
 use crate::types::{Sym, ValEnv};
-use crate::{env::EnvLike, util::ty_syms};
+use crate::util::ty_syms;
 
 /// Calls `f` for every sym in the env.
 ///
 /// Putting `f` last allows calls with the closure constructed at the call site to be formatted
 /// across fewer lines.
-pub(crate) fn get<E, F>(env: &E, f: &mut F)
+pub(crate) fn get<F>(env: &Env, f: &mut F)
 where
-  E: EnvLike,
   F: FnMut(Sym),
 {
   for (_, env) in env.all_str() {

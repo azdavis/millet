@@ -1,7 +1,8 @@
 //! See [`Info`].
 
+use crate::env::Env;
 use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme, ValInfo};
-use crate::{basis::Basis, def, display::MetaVarNames, env::EnvLike, mode::Mode, util::ty_syms};
+use crate::{basis::Basis, def, display::MetaVarNames, mode::Mode, util::ty_syms};
 use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt;
 
@@ -242,12 +243,12 @@ impl fmt::Display for TyEntryDisplay<'_> {
 }
 
 /// need to do extend instead of a big chain of chains because of the borrow checker.
-fn env_syms<E: EnvLike>(
+fn env_syms(
   ac: &mut Vec<DocumentSymbol>,
   mvs: &mut MetaVarNames<'_>,
   syms: &Syms,
   path: paths::PathId,
-  env: &E,
+  env: &Env,
 ) {
   ac.extend(env.all_str().into_iter().filter_map(|(name, env)| {
     let idx = def_idx(path, env.def?)?;

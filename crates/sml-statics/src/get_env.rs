@@ -1,7 +1,7 @@
 //! Getting information from environments.
 
 use crate::disallow::Disallow;
-use crate::env::{Env, EnvLike};
+use crate::env::Env;
 use crate::error::{ErrorKind, Item};
 use crate::types::{TyInfo, ValInfo};
 
@@ -40,10 +40,9 @@ impl Iterator for Errors {
 }
 
 /// uses the `names` to traverse through the `StrEnv`s of successive `env`s.
-pub(crate) fn get_env<'e, 'n, I, E>(env: &'e E, names: I) -> GetEnvResult<&'e Env>
+pub(crate) fn get_env<'e, 'n, I>(env: &'e Env, names: I) -> GetEnvResult<&'e Env>
 where
   I: IntoIterator<Item = &'n str_util::Name>,
-  E: EnvLike,
 {
   let mut errors = Errors::default();
   let mut names = names.into_iter();
@@ -77,22 +76,18 @@ where
 }
 
 /// does contain the undef err if there was no `path.last()`
-pub(crate) fn get_ty_info<'e, E>(env: &'e E, path: &sml_hir::Path) -> GetEnvResult<&'e TyInfo>
-where
-  E: EnvLike,
-{
+pub(crate) fn get_ty_info<'e>(env: &'e Env, path: &sml_hir::Path) -> GetEnvResult<&'e TyInfo> {
   get_ty_info_raw(env, path.prefix().iter(), path.last())
 }
 
 /// does contain the undef err if there was no `last`
-pub(crate) fn get_ty_info_raw<'e, 'n, S, E>(
-  env: &'e E,
+pub(crate) fn get_ty_info_raw<'e, 'n, S>(
+  env: &'e Env,
   prefix: S,
   last: &'n str_util::Name,
 ) -> GetEnvResult<&'e TyInfo>
 where
   S: IntoIterator<Item = &'n str_util::Name>,
-  E: EnvLike,
 {
   let got_env = get_env(env, prefix);
   let mut errors = got_env.errors;
@@ -115,10 +110,7 @@ where
 }
 
 /// doesn't contain the undef err if there was no `path.last()`
-pub(crate) fn get_val_info<'e, E>(env: &'e E, path: &sml_hir::Path) -> GetEnvResult<&'e ValInfo>
-where
-  E: EnvLike,
-{
+pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_hir::Path) -> GetEnvResult<&'e ValInfo> {
   let got_env = get_env(env, path.prefix());
   let mut errors = got_env.errors;
   if errors.undefined.is_some() {

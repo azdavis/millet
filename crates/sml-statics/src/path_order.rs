@@ -41,7 +41,7 @@
 //! except name resolution. That means we can skip things like exhaustiveness checking and type
 //! unification.
 
-use crate::env::{Bs, Env, EnvLike as _, EnvStack, FunEnv, SigEnv};
+use crate::env::{Bs, Env, FunEnv, SigEnv};
 use crate::{basis::Basis, mode::Mode, st::St, top_dec, types::Syms};
 
 /// An unordered map from paths to HIR ready for analysis.
@@ -52,19 +52,13 @@ pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, sml_hir::StrDecI
 pub fn get(mut syms: Syms, mut basis: Basis, mut paths: SmlHirPaths<'_>) -> Vec<paths::PathId> {
   let mut ok_paths = Vec::<paths::PathId>::new();
   basis = {
-    let mut env = basis.inner.env.into_env();
-    let mut sig_env = basis.inner.sig_env.as_ref().clone();
-    let mut fun_env = basis.inner.fun_env.as_ref().clone();
+    let mut env = basis.inner.env;
+    let mut sig_env = basis.inner.sig_env;
+    let mut fun_env = basis.inner.fun_env;
     for &(arenas, root) in paths.values() {
       rm_top_level_defs(&mut env, &mut sig_env, &mut fun_env, arenas, root);
     }
-    Basis {
-      inner: Bs {
-        env: EnvStack::one(env),
-        fun_env: std::sync::Arc::new(fun_env),
-        sig_env: std::sync::Arc::new(sig_env),
-      },
-    }
+    Basis { inner: Bs { env, sig_env, fun_env } }
   };
   loop {
     let old_ok_paths_len = ok_paths.len();

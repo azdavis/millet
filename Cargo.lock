@@ -846,6 +846,7 @@ dependencies = [
  "pattern-match",
  "sml-hir",
  "sml-namespace",
+ "stack-map",
  "str-util",
  "uniq",
 ]
@@ -878,6 +879,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fad6c857cbab2627dcf01ec85a623ca4e7dcb5691cbaa3d7fb7653671f0d09c9"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "stack-map"
+version = "0.1.0"
+dependencies = [
+ "fast-hash",
+ "str-util",
 ]
 
 [[package]]

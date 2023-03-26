@@ -1,6 +1,6 @@
 //! Checking declarations.
 
-use crate::env::{Cx, Env, EnvLike as _};
+use crate::env::{Cx, Env};
 use crate::error::{ErrorKind, Item};
 use crate::generalize::{generalize, generalize_fixed, RecordMetaVar};
 use crate::get_env::{get_env, get_ty_info, get_val_info};
@@ -74,7 +74,7 @@ pub(crate) fn get(
         }
       }
       // extend the cx with only the recursive ValEnv.
-      cx.env.push(Env { val_env: rec_ve, ..Default::default() });
+      cx.env.val_env.append(&mut rec_ve);
       for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
         // @def(26)
         if let Some(exp) = val_bind.exp {
@@ -107,7 +107,7 @@ pub(crate) fn get(
         }
       }
       // extend the overall env with that.
-      env.val_env.extend(ve);
+      env.val_env.append(&mut ve);
     }
     // @def(16)
     sml_hir::Dec::Ty(ty_binds) => {
@@ -115,14 +115,14 @@ pub(crate) fn get(
       let mut ty_env = TyEnv::default();
       // @def(27)
       get_ty_binds(st, dec.into(), &mut cx, ars, &mut ty_env, ty_binds);
-      env.ty_env.extend(ty_env);
+      env.ty_env.append(&mut ty_env);
     }
     // @def(17)
     sml_hir::Dec::Datatype(dat_binds, with_types) => {
-      let (ty_env, big_val_env) =
+      let (mut ty_env, mut big_val_env) =
         get_dat_binds(st, dec.into(), cx.clone(), ars, dat_binds, with_types);
-      env.ty_env.extend(ty_env);
-      env.val_env.extend(big_val_env);
+      env.ty_env.append(&mut ty_env);
+      env.val_env.append(&mut big_val_env);
     }
     // @def(18)
     sml_hir::Dec::DatatypeCopy(name, path) => {
@@ -181,7 +181,7 @@ pub(crate) fn get(
           }
         }
       }
-      env.val_env.extend(val_env);
+      env.val_env.append(&mut val_env);
     }
     // @def(21)
     sml_hir::Dec::Local(local_dec, in_dec) => {
@@ -209,7 +209,7 @@ pub(crate) fn get(
       let mut one_env = Env::default();
       for &dec in decs {
         get(st, cfg, &cx, ars, &mut one_env, dec);
-        cx.env.push(one_env.clone());
+        cx.env.append(&mut one_env.clone());
         env.append(&mut one_env);
       }
     }
@@ -328,7 +328,7 @@ pub(crate) fn get_dat_binds(
     datatypes.push(Datatype { started, fixed, out_ty, ty_scheme });
   }
   // bring all the datatypes into scope.
-  cx.env.push(Env { ty_env: fake_ty_env.clone(), ..Default::default() });
+  cx.env.ty_env.append(&mut fake_ty_env.clone());
   // now get the `withtype`s. this `ty_env` will be the ultimate one we return.
   let mut ty_env = TyEnv::default();
   get_ty_binds(st, idx, &mut cx, ars, &mut ty_env, with_types);
@@ -339,7 +339,7 @@ pub(crate) fn get_dat_binds(
     }
   }
   // bring all the types into scope.
-  cx.env.push(Env { ty_env: ty_env.clone(), ..Default::default() });
+  cx.env.ty_env.append(&mut ty_env.clone());
   // datatypes and types are now in scope. now get the datatype constructors.
   let mut big_val_env = ValEnv::default();
   assert_eq!(

@@ -8,7 +8,7 @@ mod sharing_ty;
 mod ty_con_paths;
 mod where_ty;
 
-use crate::env::{Bs, Env, EnvLike, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
+use crate::env::{Bs, Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::generalize::generalize;
 use crate::get_env::{get_env, get_ty_info};
@@ -18,7 +18,7 @@ use crate::types::{
 };
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, dec, mode::Mode, st::St, ty};
-use fast_hash::{map, FxHashSet};
+use fast_hash::FxHashSet;
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
   let mut ac = Bs::default();
@@ -35,7 +35,7 @@ impl StrDecAc<'_> {
   fn as_mut_env(&mut self) -> &mut Env {
     match self {
       StrDecAc::Env(env) => env,
-      StrDecAc::Bs(bs) => bs.env.as_one_mut(),
+      StrDecAc::Bs(bs) => &mut bs.env,
     }
   }
 }
@@ -69,7 +69,7 @@ fn get_str_dec(
           st.err(str_dec, e);
         }
       }
-      ac.as_mut_env().str_env.extend(str_env);
+      ac.as_mut_env().str_env.append(&mut str_env);
     }
     // @def(66), @def(88)
     sml_hir::StrDec::Signature(sig_binds) => {
@@ -103,7 +103,7 @@ fn get_str_dec(
           st.err(str_dec, e);
         }
       }
-      ac.as_mut_sig_env().extend(sig_env);
+      ac.sig_env.append(&mut sig_env);
     }
     // @def(85), @def(89)
     sml_hir::StrDec::Functor(fun_binds) => {
@@ -122,10 +122,7 @@ fn get_str_dec(
         get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
         let param_sig = env_to_sig(param_env, marker);
         let mut bs_clone = bs.clone();
-        bs_clone.env.push(Env {
-          str_env: map([(fun_bind.param_name.clone(), param_sig.env.clone())]),
-          ..Default::default()
-        });
+        bs_clone.env.str_env.insert(fun_bind.param_name.clone(), param_sig.env.clone());
         let mut body_env = Env::with_def(st.def(str_dec.into()));
         let marker = st.syms.mark();
         st.push_prefix(str_util::Name::new(format!("{}(...)", fun_bind.functor_name)));
@@ -152,7 +149,7 @@ fn get_str_dec(
           st.err(str_dec, e);
         }
       }
-      ac.as_mut_fun_env().extend(fun_env);
+      ac.fun_env.append(&mut fun_env);
     }
     // @def(58)
     sml_hir::StrDec::Local(local_dec, in_dec) => {
@@ -170,7 +167,7 @@ fn get_str_dec(
           let mut one_env = Env::default();
           for &str_dec in str_decs {
             get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-            bs.env.push(one_env.clone());
+            bs.env.append(&mut one_env.clone());
             ac.append(&mut one_env);
           }
         }

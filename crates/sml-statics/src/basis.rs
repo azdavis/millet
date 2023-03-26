@@ -1,7 +1,7 @@
 //! Bases. (The plural of "basis".)
 
 use crate::def::PrimitiveKind;
-use crate::env::{Bs, Env, EnvLike as _, EnvStack, FunEnv, SigEnv, StrEnv};
+use crate::env::{Bs, Env, FunEnv, SigEnv, StrEnv};
 use crate::types::{
   Basic, Composite, Equality, IdStatus, Overload, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme,
   TyVarKind, ValEnv, ValInfo,
@@ -31,8 +31,7 @@ impl Basis {
     match ns {
       sml_namespace::Module::Structure => match other.inner.env.get_str(other_name) {
         Some(env) => {
-          let env = Env { str_env: fast_hash::map([(name, env.clone())]), ..Default::default() };
-          self.inner.env.push(env);
+          self.inner.env.str_env.insert(name, env.clone());
           true
         }
         None => false,
@@ -40,7 +39,7 @@ impl Basis {
       sml_namespace::Module::Signature => match other.inner.sig_env.get(other_name) {
         Some(env) => {
           let env = env.clone();
-          self.inner.as_mut_sig_env().insert(name, env);
+          self.inner.sig_env.insert(name, env);
           true
         }
         None => false,
@@ -48,7 +47,7 @@ impl Basis {
       sml_namespace::Module::Functor => match other.inner.fun_env.get(other_name) {
         Some(env) => {
           let env = env.clone();
-          self.inner.as_mut_fun_env().insert(name, env);
+          self.inner.fun_env.insert(name, env);
           true
         }
         None => false,
@@ -167,15 +166,9 @@ pub fn minimal() -> (Syms, Basis) {
     .collect();
   let basis = Basis {
     inner: Bs {
-      fun_env: FunEnv::default().into(),
-      sig_env: SigEnv::default().into(),
-      env: EnvStack::one(Env {
-        str_env: StrEnv::default(),
-        ty_env,
-        val_env,
-        def: None,
-        disallow: None,
-      }),
+      fun_env: FunEnv::default(),
+      sig_env: SigEnv::default(),
+      env: Env { str_env: StrEnv::default(), ty_env, val_env, def: None, disallow: None },
     },
   };
   (syms, basis)

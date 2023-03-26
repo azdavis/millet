@@ -241,6 +241,10 @@ Depends on `analysis` and a bunch of third party crates to implement a language 
 
 These crates don't really fit in anywhere else.
 
+### `crates/stack-map`
+
+A map optimized for the use-case of cloning and adding a few elements onto the clone. Used in the statics.
+
 ### `crates/config`
 
 The format for the optional Millet configuration file.

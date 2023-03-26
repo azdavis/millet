@@ -1,6 +1,6 @@
 //! Checking expressions.
 
-use crate::env::{Cx, Env, EnvLike as _};
+use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind, Item};
 use crate::get_env::get_val_info;
 use crate::types::{Generalizable, Sym, SymsMarker, Ty, TyScheme, ValEnv};
@@ -285,7 +285,7 @@ fn get_matcher(
     let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
     let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, pat);
     let mut cx = cx.clone();
-    cx.env.push(Env { val_env: ve, ..Default::default() });
+    cx.env.val_env.append(&mut ve);
     let exp_ty = get(st, cfg.cfg, &cx, ars, exp);
     unify(st, pat.map_or(idx, Into::into), param_ty.clone(), pat_ty);
     unify(st, exp.map_or(idx, Into::into), res_ty.clone(), exp_ty);
