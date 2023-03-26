@@ -250,48 +250,52 @@ fn get_str_exp(
       ac.append(&mut to_add);
     }
     // @def(54)
-    sml_hir::StrExp::App(fun_name, arg_str_exp, flavor) => match bs.fun_env.get(fun_name) {
-      Some(fun_sig) => {
-        if let Some(d) = &fun_sig.disallow {
-          st.err(str_exp, ErrorKind::Disallowed(Item::Functor, d.clone(), fun_name.clone()));
+    sml_hir::StrExp::App(fun_name, arg_str_exp, flavor) => {
+      let fun_sig = match bs.fun_env.get(fun_name) {
+        Some(x) => x,
+        None => {
+          st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone()));
+          return;
         }
-        let idx = sml_hir::Idx::from(str_exp);
-        let sugar_user = match (fun_sig.flavor, flavor) {
-          (sml_hir::Flavor::Plain, sml_hir::Flavor::Plain)
-          | (sml_hir::Flavor::Sugared, sml_hir::Flavor::Sugared) => None,
-          (sml_hir::Flavor::Plain, sml_hir::Flavor::Sugared) => Some(FunctorSugarUser::App),
-          (sml_hir::Flavor::Sugared, sml_hir::Flavor::Plain) => Some(FunctorSugarUser::Def),
-        };
-        if let Some(sugar_user) = sugar_user {
-          st.err(str_exp, ErrorKind::MismatchedFunctorSugar(sugar_user));
-        }
-        let mut arg_env = Env::default();
-        get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
-        let mut subst = realize::TyRealization::default();
-        let mut to_add = fun_sig.body_env.clone();
-        let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
-        instance::env_of_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
-        gen_fresh_syms(st, &mut subst, &fun_sig.body_ty_names);
-        realize::get_env(&subst, &mut to_add);
-        let mut param_env = fun_sig.param.env.clone();
-        realize::get_env(&subst, &mut param_env);
-        enrich::get_env(st, arg_idx, &arg_env, &param_env);
-        let def = st.def(idx);
-        for env in to_add.str_env.values_mut() {
-          env.def = def;
-        }
-        for ty_env in to_add.ty_env.values_mut() {
-          ty_env.def = def;
-        }
-        for val_info in to_add.val_env.values_mut() {
-          // TODO add to the set?
-          val_info.defs = def.into_iter().collect();
-        }
-        st.info.insert(idx, None, fun_sig.body_env.def.into_iter().collect());
-        ac.append(&mut to_add);
+      };
+      if let Some(d) = &fun_sig.disallow {
+        st.err(str_exp, ErrorKind::Disallowed(Item::Functor, d.clone(), fun_name.clone()));
       }
-      None => st.err(str_exp, ErrorKind::Undefined(Item::Functor, fun_name.clone())),
-    },
+      let idx = sml_hir::Idx::from(str_exp);
+      let sugar_user = match (fun_sig.flavor, flavor) {
+        (sml_hir::Flavor::Plain, sml_hir::Flavor::Plain)
+        | (sml_hir::Flavor::Sugared, sml_hir::Flavor::Sugared) => None,
+        (sml_hir::Flavor::Plain, sml_hir::Flavor::Sugared) => Some(FunctorSugarUser::App),
+        (sml_hir::Flavor::Sugared, sml_hir::Flavor::Plain) => Some(FunctorSugarUser::Def),
+      };
+      if let Some(sugar_user) = sugar_user {
+        st.err(str_exp, ErrorKind::MismatchedFunctorSugar(sugar_user));
+      }
+      let mut arg_env = Env::default();
+      get_str_exp(st, bs, ars, &mut arg_env, *arg_str_exp);
+      let mut subst = realize::TyRealization::default();
+      let mut to_add = fun_sig.body_env.clone();
+      let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
+      instance::env_of_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
+      gen_fresh_syms(st, &mut subst, &fun_sig.body_ty_names);
+      realize::get_env(&subst, &mut to_add);
+      let mut param_env = fun_sig.param.env.clone();
+      realize::get_env(&subst, &mut param_env);
+      enrich::get_env(st, arg_idx, &arg_env, &param_env);
+      let def = st.def(idx);
+      for env in to_add.str_env.values_mut() {
+        env.def = def;
+      }
+      for ty_env in to_add.ty_env.values_mut() {
+        ty_env.def = def;
+      }
+      for val_info in to_add.val_env.values_mut() {
+        // TODO add to the set?
+        val_info.defs = def.into_iter().collect();
+      }
+      st.info.insert(idx, None, fun_sig.body_env.def.into_iter().collect());
+      ac.append(&mut to_add);
+    }
     // @def(55)
     sml_hir::StrExp::Let(str_dec, str_exp) => {
       let mut let_env = Env::default();
