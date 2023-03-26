@@ -2593,7 +2593,7 @@ fun loop () = loop ()
 val _ = loop ()
 ```
 
-Note that the analysis is not sophisicated.
+Note that the analysis is not sophisticated.
 
 ```sml
 fun four () = 4
