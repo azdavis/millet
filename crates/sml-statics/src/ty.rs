@@ -1,9 +1,9 @@
 //! Checking types.
 
 use crate::error::{ErrorKind, Item};
-use crate::types::{Ty, TyScheme, TyVarSrc};
+use crate::types::{Ty, TyScheme};
 use crate::util::{apply_bv, record};
-use crate::{def, env::Cx, get_env::get_ty_info, info::TyEntry, st::St};
+use crate::{def, env::Cx, get_env::get_ty_info, info::TyEntry, st::St, ty_var::fixed::TyVarSrc};
 
 /// The mode for how we're checking this type.
 #[derive(Debug, Clone, Copy)]

@@ -2,8 +2,9 @@
 
 use crate::error::{Error, ErrorKind, Item};
 use crate::pat_match::{Lang, Pat};
-use crate::types::{FixedTyVarGen, MetaTyVar, MetaTyVarGen, Subst, Syms, Ty};
-use crate::{def, info::Info, mode::Mode, util::apply};
+use crate::ty_var::meta::{MetaTyVar, MetaTyVarGen};
+use crate::types::{Subst, Syms, Ty};
+use crate::{def, info::Info, mode::Mode, ty_var::fixed::FixedTyVarGen, util::apply};
 use fast_hash::FxHashSet;
 
 /// The mutable state.

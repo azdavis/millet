@@ -10,15 +10,16 @@ mod where_ty;
 
 use crate::env::{Bs, Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
-use crate::generalize::generalize;
 use crate::get_env::{get_env, get_ty_info};
-use crate::overload;
 use crate::types::{
-  Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, TyVarSrc,
-  ValEnv, ValInfo,
+  Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv,
+  ValInfo,
 };
 use crate::util::{ins_check_name, ins_no_dupe};
-use crate::{config::Cfg, dec, mode::Mode, st::St, ty};
+use crate::{
+  config::Cfg, dec, generalize::generalize, mode::Mode, overload, st::St, ty,
+  ty_var::fixed::TyVarSrc,
+};
 use fast_hash::FxHashSet;
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {

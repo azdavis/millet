@@ -27,6 +27,7 @@ mod pat_match;
 mod st;
 mod top_dec;
 mod ty;
+mod ty_var;
 mod types;
 mod unify;
 mod util;

@@ -5,9 +5,8 @@ mod suggestion;
 
 use crate::disallow::Disallow;
 use crate::display::{record_meta_var, MetaVarNames};
-use crate::types::{
-  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, RecordTy, Sym, Syms, Ty, TyScheme,
-};
+use crate::ty_var::{bound::BoundTyVar, fixed::FixedTyVar, meta::MetaTyVar};
+use crate::types::{MetaVarInfo, RecordTy, Sym, Syms, Ty, TyScheme};
 use crate::{equality, overload, pat_match::Pat};
 use diagnostic_util::{Code, Severity};
 use std::fmt;

@@ -1,9 +1,7 @@
 //! Displaying some types.
 
-use crate::types::{
-  BoundTyVars, MetaTyVar, MetaVarInfo, RecordTy, Subst, Sym, Syms, Ty, TyScheme, TyVarKind,
-};
-use crate::{fmt_util::idx_to_name, util::meta_vars};
+use crate::types::{BoundTyVars, MetaVarInfo, RecordTy, Subst, Sym, Syms, Ty, TyScheme, TyVarKind};
+use crate::{fmt_util::idx_to_name, ty_var::meta::MetaTyVar, util::meta_vars};
 use fast_hash::FxHashMap;
 use fmt_util::comma_seq;
 use std::fmt;

@@ -3,19 +3,12 @@
 //! Probably the single most important file in this crate. Lots of types used pervasively across
 //! this crate are defined here.
 
-mod bound_var;
-mod fixed_var;
-mod meta_var;
-
+use crate::ty_var::{bound::BoundTyVar, fixed::FixedTyVar, meta::MetaTyVar};
 use crate::{def, disallow::Disallow, overload};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use stack_map::StackMap;
 use std::{collections::BTreeMap, fmt};
-
-pub(crate) use bound_var::BoundTyVar;
-pub(crate) use fixed_var::{FixedTyVar, FixedTyVarGen, TyVarSrc};
-pub(crate) use meta_var::{Generalizable, MetaTyVar, MetaTyVarGen, MetaTyVarGeneralizer};
 
 /// Definition: Type
 #[derive(Debug, Clone)]

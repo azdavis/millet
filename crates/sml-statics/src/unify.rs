@@ -1,9 +1,9 @@
 //! Unification: given two types, figuring out whether they are "compatible", and if so, how.
 
 use crate::error::{ErrorKind, IncompatibleTysFlavor};
-use crate::types::{MetaTyVar, SubstEntry, Ty, TyVarKind};
+use crate::types::{SubstEntry, Ty, TyVarKind};
 use crate::util::{apply, meta_vars};
-use crate::{equality, st::St};
+use crate::{equality, st::St, ty_var::meta::MetaTyVar};
 use fast_hash::FxHashMap;
 
 pub(crate) fn unify(st: &mut St, idx: sml_hir::Idx, want: Ty, got: Ty) {
