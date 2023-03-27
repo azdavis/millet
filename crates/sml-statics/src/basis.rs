@@ -38,16 +38,14 @@ impl Basis {
       },
       sml_namespace::Module::Signature => match other.inner.sig_env.get(other_name) {
         Some(env) => {
-          let env = env.clone();
-          self.inner.sig_env.insert(name, env);
+          self.inner.sig_env.insert(name, env.clone());
           true
         }
         None => false,
       },
       sml_namespace::Module::Functor => match other.inner.fun_env.get(other_name) {
         Some(env) => {
-          let env = env.clone();
-          self.inner.fun_env.insert(name, env);
+          self.inner.fun_env.insert(name, env.clone());
           true
         }
         None => false,
