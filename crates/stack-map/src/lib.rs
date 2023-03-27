@@ -73,23 +73,27 @@ where
     Q: ?Sized + Hash + Eq,
     K: Borrow<Q>,
   {
-    self.consolidate().remove(k)
+    self.consolidate_().remove(k)
   }
 
   /// Returns an iterator over the keys and mutable values.
   pub fn iter_mut(&mut self) -> impl Iterator<Item = (&K, &mut V)> {
-    self.consolidate().iter_mut()
+    self.consolidate_().iter_mut()
   }
 
   /// Returns a draining iterator over the keys and values.
   pub fn drain(&mut self) -> impl Iterator<Item = (K, V)> + '_ {
-    self.consolidate().drain()
+    self.consolidate_().drain()
   }
 
   /// Consolidates this to make it faster to clone next time.
   ///
   /// This itself might be pretty expensive.
-  fn consolidate(&mut self) -> &mut FxHashMap<K, V> {
+  pub fn consolidate(&mut self) {
+    self.consolidate_();
+  }
+
+  fn consolidate_(&mut self) -> &mut FxHashMap<K, V> {
     if self.stack.len() != 1 {
       let mut one = FxHashMap::<K, V>::default();
       for m in self.stack.drain(..) {
@@ -147,7 +151,7 @@ where
   type IntoIter = IntoIter<K, V>;
 
   fn into_iter(mut self) -> Self::IntoIter {
-    IntoIter(std::mem::take(self.consolidate()).into_iter())
+    IntoIter(std::mem::take(self.consolidate_()).into_iter())
   }
 }
 
