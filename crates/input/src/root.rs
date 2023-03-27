@@ -169,6 +169,25 @@ impl Config {
     }
     ret.lang.dec = parsed.language.dec;
     ret.lang.exp = parsed.language.exp;
+    for (path, allowed) in parsed.language.val {
+      if allowed {
+        continue;
+      }
+      let parts: Option<Vec<_>> = path.split('.').map(str_util::Name::try_new).collect();
+      let parts = match parts {
+        Some(x) => x,
+        None => {
+          errors.push(Error::new(
+            ErrorSource::default(),
+            config_path.to_owned(),
+            ErrorKind::EmptyStrInPath(path),
+          ));
+          continue;
+        }
+      };
+      let p = sml_path::Path::try_new(parts).expect("split always returns non-empty iter");
+      ret.lang.val.insert(p);
+    }
     (ret, parsed.workspace.root)
   }
 }

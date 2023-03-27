@@ -205,6 +205,14 @@ In general, paths on most modern systems can be almost arbitrary byte sequences,
 
 To fix, rename the implicated file to a valid UTF-8 filename.
 
+## 1021
+
+A SML path specified in the Millet config file had an empty component.
+
+SML paths should be a non-empty string of characters separated by `.`, and there should not be nothing between consecutive `.`. So a path like `Foo.Bar..Quz.flub` will trigger this error. The empty path will also trigger this error.
+
+To fix, avoid consecutive `.` or the empty string.
+
 ## 2001
 
 There was an invalid character in the source file.

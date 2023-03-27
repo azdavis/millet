@@ -94,6 +94,7 @@ version = "0.1.0"
 dependencies = [
  "fast-hash",
  "serde",
+ "sml-path",
  "str-util",
 ]
 
@@ -304,6 +305,7 @@ dependencies = [
  "sml-file-syntax",
  "sml-fixity",
  "sml-namespace",
+ "sml-path",
  "sml-syntax",
  "str-util",
  "text-pos",

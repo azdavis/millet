@@ -13,3 +13,4 @@ doctest = false
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 serde = { version = "1", features = ["derive"] }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
+sml-path = { path = "../sml-path" }

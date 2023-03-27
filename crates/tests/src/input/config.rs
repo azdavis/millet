@@ -166,3 +166,31 @@ version = 1
     [("a.mlb", ""), (config::file::PATH, config)],
   );
 }
+
+#[test]
+fn disallowed_empty_path_component() {
+  let config = r#"
+version = 1
+[language.val]
+"Foo..bar" = false
+"#;
+  check_bad_input(
+    config::file::PATH,
+    "empty string in dot-separated path: `Foo..bar`",
+    [("a.mlb", ""), (config::file::PATH, config)],
+  );
+}
+
+#[test]
+fn disallowed_empty_path() {
+  let config = r#"
+version = 1
+[language.val]
+"" = false
+"#;
+  check_bad_input(
+    config::file::PATH,
+    "empty string in dot-separated path: ``",
+    [("a.mlb", ""), (config::file::PATH, config)],
+  );
+}
