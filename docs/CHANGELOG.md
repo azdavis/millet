@@ -13,9 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.8.5
 
 - Warn on top-level `open`.
+- Improve performance of cloning some key data structures even more.
 
 ## v0.8.4
 
