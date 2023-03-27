@@ -132,7 +132,7 @@ pub(crate) fn get(
       }
       if let Some(ty_info) = ty_info.val {
         env.ty_env.insert(name.clone(), ty_info.clone());
-        env.val_env.extend(ty_info.val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
+        env.val_env.append(&mut ty_info.val_env.clone());
       }
     }
     // @def(19)
@@ -378,7 +378,7 @@ pub(crate) fn get_dat_binds(
       }
     }
     // NOTE: no checking for duplicates here
-    big_val_env.extend(val_env.iter().map(|(a, b)| (a.clone(), b.clone())));
+    big_val_env.append(&mut val_env.clone());
     let ty_info =
       TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx), disallow: None };
     let equality = match equality::get_ty_info(st, ty_info.clone()) {
