@@ -79,7 +79,6 @@ where
   if errors.undefined.is_some() {
     return GetEnvResult { val: None, errors };
   }
-  // TODO same
   let ty_info = got_env.val.unwrap_or(env).ty_env.get(last);
   match ty_info {
     None => errors.undefined = Some((Item::Ty, last.clone())),
@@ -99,7 +98,6 @@ pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_hir::Path) -> GetEnvResu
   if errors.undefined.is_some() {
     return GetEnvResult { val: None, errors };
   }
-  // TODO same
   let val = got_env.val.unwrap_or(env).val_env.get(path.last());
   if let Some(val_info) = val {
     if let Some(d) = &val_info.disallow {
