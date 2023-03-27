@@ -119,8 +119,8 @@ fn run_ci(sh: &Shell) -> Result<()> {
   cmd!(sh, "cargo fmt -- --check").run()?;
   cmd!(sh, "cargo clippy").run()?;
   cmd!(sh, "cargo test --locked").run()?;
-  if !env_var_enabled("CI") {
-    println!("note: CI env var was not set to 1");
+  if env_var_enabled("SKIP_FULL_STD_BASIS") {
+    println!("note: SKIP_FULL_STD_BASIS env var was set to 1");
     println!("note: this means some slower tests were skipped (but appear as passed)");
   }
   Ok(())
@@ -279,7 +279,6 @@ fn main() -> Result<()> {
       let tag_arg: String = args.free_from_str()?;
       finish_args(args)?;
       tag(&sh, &tag_arg)?;
-      std::env::set_var("CI", "1");
       run_ci(&sh)?;
     }
   }

@@ -39,8 +39,8 @@ pub(crate) fn get<'a, I>(files: I, opts: Opts<'_>)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
-  if matches!(opts.std_basis, analysis::StdBasis::Full) && !env_var_enabled("CI") {
-    log::info!("skipping slow tests");
+  if matches!(opts.std_basis, analysis::StdBasis::Full) && env_var_enabled("SKIP_FULL_STD_BASIS") {
+    log::info!("skipping full std basis tests");
     return;
   }
   let (input, store) = input::get(files);
