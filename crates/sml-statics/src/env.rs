@@ -23,7 +23,7 @@ impl Env {
     Self { def, ..Default::default() }
   }
 
-  pub fn append(&mut self, other: &mut Self) {
+  pub(crate) fn append(&mut self, other: &mut Self) {
     self.str_env.append(&mut other.str_env);
     self.ty_env.append(&mut other.ty_env);
     self.val_env.append(&mut other.val_env);
@@ -81,8 +81,8 @@ impl Bs {
   }
 
   pub(crate) fn append(&mut self, mut other: Bs) {
+    self.env.append(&mut other.env);
     self.sig_env.append(&mut other.sig_env);
     self.fun_env.append(&mut other.fun_env);
-    self.env.append(&mut other.env);
   }
 }
