@@ -19,6 +19,11 @@ impl Basis {
     self.inner.append(other.inner);
   }
 
+  /// Consolidates internal memory for this, so that it will be faster to clone next time.
+  pub fn consolidate(&mut self) {
+    self.inner.consolidate();
+  }
+
   /// Adds the item named `other_name` from `other` into `self` with the name `name`, or
   /// returns `false` if this was not possible.
   pub fn add(

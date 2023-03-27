@@ -129,5 +129,7 @@ where
     add_all_doc_comments(started.parse.root.syntax(), &low, &mut info);
     (name, info)
   });
-  StdBasis { info: iter.collect(), syms, basis }
+  let info: FxHashMap<_, _> = iter.collect();
+  basis.consolidate();
+  StdBasis { syms, basis, info }
 }

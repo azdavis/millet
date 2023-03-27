@@ -28,6 +28,12 @@ impl Env {
     self.ty_env.append(&mut other.ty_env);
     self.val_env.append(&mut other.val_env);
   }
+
+  pub(crate) fn consolidate(&mut self) {
+    self.str_env.consolidate();
+    self.ty_env.consolidate();
+    self.val_env.consolidate();
+  }
 }
 
 /// Definition: Context
@@ -84,5 +90,11 @@ impl Bs {
     self.env.append(&mut other.env);
     self.sig_env.append(&mut other.sig_env);
     self.fun_env.append(&mut other.fun_env);
+  }
+
+  pub(crate) fn consolidate(&mut self) {
+    self.env.consolidate();
+    self.sig_env.consolidate();
+    self.fun_env.consolidate();
   }
 }
