@@ -68,11 +68,15 @@ impl Analysis {
   /// mapping from source paths to diagnostics.
   pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Diagnostic>> {
     let syms = self.std_basis.syms().clone();
-    let basis = self.std_basis.basis();
+    let mut basis = self.std_basis.basis().clone();
+    for path in &input.lang.val {
+      // TODO do not ignore failed disallow
+      basis.disallow_val(path);
+    }
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {
-      mlb_statics::get(syms, &input.lang, basis, &input.sources, &groups, &input.root_group_paths)
+      mlb_statics::get(syms, &input.lang, &basis, &input.sources, &groups, &input.root_group_paths)
     });
     self.source_files = res.source_files;
     self.syms = res.syms;

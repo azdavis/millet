@@ -67,6 +67,15 @@ where
   K: Hash + Eq + Clone,
   V: Clone,
 {
+  /// Gets the mutable value at the key.
+  pub fn get_mut<Q>(&mut self, k: &Q) -> Option<&mut V>
+  where
+    Q: ?Sized + Hash + Eq,
+    K: Borrow<Q>,
+  {
+    self.consolidate_().get_mut(k)
+  }
+
   /// Removes the value at the key. Returns the old value.
   pub fn remove<Q>(&mut self, k: &Q) -> Option<V>
   where

@@ -67,6 +67,24 @@ impl Bs {
       },
     }
   }
+
+  /// Disallow a value.
+  pub fn disallow_val(&mut self, val: &sml_path::Path) -> Option<()> {
+    let env = get_mut_env(&mut self.env, val.prefix())?;
+    let val_info = env.val_env.get_mut(val.last())?;
+    val_info.disallow = Some(crate::disallow::Disallow::Directly);
+    Some(())
+  }
+}
+
+fn get_mut_env<'e, 'n, I>(mut env: &'e mut Env, names: I) -> Option<&'e mut Env>
+where
+  I: IntoIterator<Item = &'n str_util::Name>,
+{
+  for name in names {
+    env = env.str_env.get_mut(name)?;
+  }
+  Some(env)
 }
 
 /// Returns the minimal basis and symbols.

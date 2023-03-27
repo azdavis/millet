@@ -49,8 +49,7 @@ val _ = List.hd
 "#;
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Full,
-    // TODO fix
-    outcome: raw::Outcome::Fail,
+    outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: diagnostic_util::Severity::Error,
     expected_input: raw::ExpectedInput::Good,
