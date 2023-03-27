@@ -57,6 +57,10 @@ val _ = List.hd
   raw::get(files(config, sml), opts);
 }
 
+fn with_config(config: &str) -> [(&str, &str); 2] {
+  [("a.mlb", ""), (config::file::PATH, config)]
+}
+
 #[test]
 fn empty_path_component() {
   let config = r#"
@@ -67,7 +71,7 @@ version = 1
   check_bad_input(
     config::file::PATH,
     "empty string in dot-separated path: `Foo..bar`",
-    [("a.mlb", ""), (config::file::PATH, config)],
+    with_config(config),
   );
 }
 
@@ -81,6 +85,6 @@ version = 1
   check_bad_input(
     config::file::PATH,
     "empty string in dot-separated path: ``",
-    [("a.mlb", ""), (config::file::PATH, config)],
+    with_config(config),
   );
 }
