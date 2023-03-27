@@ -88,3 +88,21 @@ version = 1
     with_config(config),
   );
 }
+
+#[test]
+fn no_such_path() {
+  let config = r#"
+version = 1
+[language.val]
+"Foo.bar" = false
+"#;
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    // TODO remove and use `check_bad_input`
+    outcome: raw::Outcome::Fail,
+    limit: raw::Limit::First,
+    min_severity: diagnostic_util::Severity::Warning,
+    expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
+  };
+  raw::get(with_config(config), opts);
+}
