@@ -97,7 +97,8 @@ where
     if self.stack.len() != 1 {
       let mut one = FxHashMap::<K, V>::default();
       for m in self.stack.drain(..) {
-        one.extend((*m).clone());
+        let m = Arc::try_unwrap(m).unwrap_or_else(|m| (*m).clone());
+        one.extend(m);
       }
       self.stack.push(Arc::new(one));
     }
