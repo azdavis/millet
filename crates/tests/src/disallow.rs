@@ -80,7 +80,7 @@ fn empty_path() {
   let config = r#"
 version = 1
 [language.val]
-"" = false
+"" = true
 "#;
   check_bad_input(
     config::file::PATH,
