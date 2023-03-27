@@ -1,6 +1,6 @@
 //! Disallowing parts of the language.
 
-use crate::check::{check_multi, raw};
+use crate::check::{check_bad_input, check_multi, raw};
 
 fn files<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
   [(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]
@@ -55,4 +55,32 @@ val _ = List.hd
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(files(config, sml), opts);
+}
+
+#[test]
+fn empty_path_component() {
+  let config = r#"
+version = 1
+[language.val]
+"Foo..bar" = false
+"#;
+  check_bad_input(
+    config::file::PATH,
+    "empty string in dot-separated path: `Foo..bar`",
+    [("a.mlb", ""), (config::file::PATH, config)],
+  );
+}
+
+#[test]
+fn empty_path() {
+  let config = r#"
+version = 1
+[language.val]
+"" = false
+"#;
+  check_bad_input(
+    config::file::PATH,
+    "empty string in dot-separated path: ``",
+    [("a.mlb", ""), (config::file::PATH, config)],
+  );
 }

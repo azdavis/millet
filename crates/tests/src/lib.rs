@@ -13,7 +13,7 @@ mod circularity;
 mod common;
 mod datatype_copy;
 mod deviations;
-mod disallowed;
+mod disallow;
 mod docs;
 mod dupe;
 mod empty;
