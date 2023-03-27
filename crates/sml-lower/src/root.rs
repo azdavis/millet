@@ -5,7 +5,7 @@ use sml_syntax::ast;
 
 /// Does the conversion.
 #[must_use]
-pub fn get(lang: &config::file::Language, root: &ast::Root) -> Lower {
+pub fn get(lang: &config::lang::Language, root: &ast::Root) -> Lower {
   let mut st = St::new(lang);
   let idx = crate::dec::get_top_dec(&mut st, root.dec());
   st.finish(idx)

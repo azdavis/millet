@@ -1,6 +1,6 @@
 //! Utilities.
 
-use config::file::Language;
+use config::lang::Language;
 use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::{ast::SyntaxNodePtr, rowan::TextRange};

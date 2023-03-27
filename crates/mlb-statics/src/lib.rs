@@ -6,6 +6,7 @@
 
 mod std_basis;
 
+use config::lang::Language;
 use diagnostic_util::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_file_syntax::SourceFileSyntax;
@@ -124,7 +125,7 @@ struct Cx<'a> {
   source_file_contents: &'a paths::PathMap<String>,
   bas_decs: &'a paths::PathMap<&'a mlb_hir::BasDec>,
   std_basis: &'a MBasis,
-  lang: &'a config::file::Language,
+  lang: &'a Language,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -147,7 +148,7 @@ impl MBasis {
 #[must_use]
 pub fn get(
   syms: sml_statics::Syms,
-  lang: &config::file::Language,
+  lang: &Language,
   bs: &sml_statics::basis::Bs,
   source_file_contents: &paths::PathMap<String>,
   bas_decs: &paths::PathMap<&mlb_hir::BasDec>,

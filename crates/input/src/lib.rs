@@ -29,7 +29,7 @@ pub struct Input {
   /// Severities to override.
   pub severities: types::Severities,
   /// The language config.
-  pub lang: config::file::Language,
+  pub lang: config::lang::Language,
   /// Errors when getting input.
   pub errors: Vec<Error>,
 }

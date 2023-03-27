@@ -76,7 +76,7 @@ where
 {
   let (mut syms, mut bs) = basis::minimal();
   let mut imperative_io_hack = None::<String>;
-  let lang = config::file::Language::default();
+  let lang = config::lang::Language::default();
   let iter = files.map(|(name, mut contents)| {
     if name == "std_basis/imperative-io.sml" {
       let mut lines: Vec<_> = contents
