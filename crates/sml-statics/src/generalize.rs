@@ -1,10 +1,10 @@
 //! Generalization, one of the fundamental operations on types for the inference algorithm.
 
 use crate::types::{
-  Basic, BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer, Overload, RecordTy,
-  Subst, SubstEntry, Ty, TyScheme, TyVarKind,
+  BoundTyVar, BoundTyVars, FixedTyVars, MetaTyVar, MetaTyVarGeneralizer, RecordTy, Subst,
+  SubstEntry, Ty, TyScheme, TyVarKind,
 };
-use crate::util::meta_vars;
+use crate::{overload, util::meta_vars};
 use fast_hash::FxHashMap;
 
 /// given a type scheme that binds no vars, mutate it and the type to be generalized.
@@ -148,15 +148,15 @@ fn handle_bv(
     Some(bv) => Ty::BoundVar(*bv),
     None => match kind {
       Some(TyVarKind::Overloaded(ov)) => match ov {
-        Overload::Basic(b) => match b {
-          Basic::Int => Ty::INT,
-          Basic::Real => Ty::REAL,
-          Basic::Word => Ty::WORD,
-          Basic::String => Ty::STRING,
-          Basic::Char => Ty::CHAR,
+        overload::Overload::Basic(b) => match b {
+          overload::Basic::Int => Ty::INT,
+          overload::Basic::Real => Ty::REAL,
+          overload::Basic::Word => Ty::WORD,
+          overload::Basic::String => Ty::STRING,
+          overload::Basic::Char => Ty::CHAR,
         },
         // all composite overloads contain, and default to, int.
-        Overload::Composite(_) => Ty::INT,
+        overload::Overload::Composite(_) => Ty::INT,
       },
       Some(TyVarKind::Record(rows, idx)) => {
         if var_state.ret.is_ok() {

@@ -1,10 +1,9 @@
 //! Checking if various structures respect/admit equality.
 
 use crate::types::{
-  Basic, Composite, Equality, Generalizable, Overload, RecordTy, SubstEntry, Sym, Ty, TyInfo,
-  TyScheme, TyVarKind,
+  Equality, Generalizable, RecordTy, SubstEntry, Sym, Ty, TyInfo, TyScheme, TyVarKind,
 };
-use crate::{st::St, util::instantiate};
+use crate::{overload, st::St, util::instantiate};
 use std::fmt;
 
 pub(crate) type Result<T = (), E = NotEqTy> = std::result::Result<T, E>;
@@ -65,8 +64,8 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
         SubstEntry::Kind(kind) => match kind {
           TyVarKind::Equality => Ok(()),
           TyVarKind::Overloaded(ov) => match ov {
-            Overload::Basic(basic) => get_basic(st, basic),
-            Overload::Composite(comp) => {
+            overload::Overload::Basic(basic) => get_basic(st, basic),
+            overload::Overload::Composite(comp) => {
               let ov = equality_composite(comp);
               st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
               Ok(())
@@ -90,11 +89,13 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
 }
 
 /// returns the "equality version" of this overload.
-fn equality_composite(comp: Composite) -> Overload {
+fn equality_composite(comp: overload::Composite) -> overload::Overload {
   match comp {
-    Composite::WordInt | Composite::Num => Composite::WordInt.into(),
-    Composite::RealInt => Basic::Int.into(),
-    Composite::NumTxt | Composite::WordIntTxt => Composite::WordIntTxt.into(),
+    overload::Composite::WordInt | overload::Composite::Num => overload::Composite::WordInt.into(),
+    overload::Composite::RealInt => overload::Basic::Int.into(),
+    overload::Composite::NumTxt | overload::Composite::WordIntTxt => {
+      overload::Composite::WordIntTxt.into()
+    }
   }
 }
 
@@ -102,7 +103,7 @@ fn get_record(st: &mut St, rows: &RecordTy) -> Result {
   all(rows.values().map(|ty| get_ty(st, ty)))
 }
 
-fn get_basic(st: &mut St, ov: Basic) -> Result {
+fn get_basic(st: &mut St, ov: overload::Basic) -> Result {
   let ret = get_basic_opt(ov);
   // NOTE: this should always succeed because the signatures `INTEGER`, `WORD`, `STRING`, and `CHAR`
   // all have their primary types (e.g. `int` for `INTEGER`) as `eqtype`s.
@@ -111,14 +112,17 @@ fn get_basic(st: &mut St, ov: Basic) -> Result {
 }
 
 /// optimized but ideally logically equivalent form of [`get_basic_naive`].
-fn get_basic_opt(ov: Basic) -> Result {
+fn get_basic_opt(ov: overload::Basic) -> Result {
   match ov {
-    Basic::Int | Basic::Word | Basic::String | Basic::Char => Ok(()),
-    Basic::Real => Err(NotEqTy::Sym),
+    overload::Basic::Int
+    | overload::Basic::Word
+    | overload::Basic::String
+    | overload::Basic::Char => Ok(()),
+    overload::Basic::Real => Err(NotEqTy::Sym),
   }
 }
 
-fn get_basic_naive(st: &mut St, ov: Basic) -> Result {
+fn get_basic_naive(st: &mut St, ov: overload::Basic) -> Result {
   let syms = st.syms.overloads()[ov].clone();
   all(syms.into_iter().map(|sym| get_con(st, &[], sym)))
 }

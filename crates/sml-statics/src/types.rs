@@ -6,9 +6,8 @@
 mod bound_var;
 mod fixed_var;
 mod meta_var;
-mod overload;
 
-use crate::{def, disallow::Disallow};
+use crate::{def, disallow::Disallow, overload};
 use drop_bomb::DropBomb;
 use fast_hash::{FxHashMap, FxHashSet};
 use stack_map::StackMap;
@@ -17,7 +16,6 @@ use std::{collections::BTreeMap, fmt};
 pub(crate) use bound_var::BoundTyVar;
 pub(crate) use fixed_var::{FixedTyVar, FixedTyVarGen, TyVarSrc};
 pub(crate) use meta_var::{Generalizable, MetaTyVar, MetaTyVarGen, MetaTyVarGeneralizer};
-pub(crate) use overload::{Basic, Composite, Overload};
 
 /// Definition: Type
 #[derive(Debug, Clone)]
@@ -241,28 +239,28 @@ pub(crate) struct Overloads {
   pub(crate) char: Vec<Sym>,
 }
 
-impl std::ops::Index<Basic> for Overloads {
+impl std::ops::Index<overload::Basic> for Overloads {
   type Output = Vec<Sym>;
 
-  fn index(&self, index: Basic) -> &Self::Output {
+  fn index(&self, index: overload::Basic) -> &Self::Output {
     match index {
-      Basic::Int => &self.int,
-      Basic::Real => &self.real,
-      Basic::Word => &self.word,
-      Basic::String => &self.string,
-      Basic::Char => &self.char,
+      overload::Basic::Int => &self.int,
+      overload::Basic::Real => &self.real,
+      overload::Basic::Word => &self.word,
+      overload::Basic::String => &self.string,
+      overload::Basic::Char => &self.char,
     }
   }
 }
 
-impl std::ops::IndexMut<Basic> for Overloads {
-  fn index_mut(&mut self, index: Basic) -> &mut Self::Output {
+impl std::ops::IndexMut<overload::Basic> for Overloads {
+  fn index_mut(&mut self, index: overload::Basic) -> &mut Self::Output {
     match index {
-      Basic::Int => &mut self.int,
-      Basic::Real => &mut self.real,
-      Basic::Word => &mut self.word,
-      Basic::String => &mut self.string,
-      Basic::Char => &mut self.char,
+      overload::Basic::Int => &mut self.int,
+      overload::Basic::Real => &mut self.real,
+      overload::Basic::Word => &mut self.word,
+      overload::Basic::String => &mut self.string,
+      overload::Basic::Char => &mut self.char,
     }
   }
 }
@@ -327,7 +325,7 @@ impl TyScheme {
 #[derive(Debug, Clone)]
 pub(crate) enum TyVarKind {
   Equality,
-  Overloaded(Overload),
+  Overloaded(overload::Overload),
   /// The `Idx` is just for better error reporting.
   Record(RecordTy, sml_hir::Idx),
 }

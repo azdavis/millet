@@ -6,9 +6,9 @@ mod suggestion;
 use crate::disallow::Disallow;
 use crate::display::{record_meta_var, MetaVarNames};
 use crate::types::{
-  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, Overload, RecordTy, Sym, Syms, Ty, TyScheme,
+  BoundTyVar, FixedTyVar, MetaTyVar, MetaVarInfo, RecordTy, Sym, Syms, Ty, TyScheme,
 };
-use crate::{equality, pat_match::Pat};
+use crate::{equality, overload, pat_match::Pat};
 use diagnostic_util::{Code, Severity};
 use std::fmt;
 
@@ -264,10 +264,10 @@ pub(crate) enum IncompatibleTysFlavor {
   ExtraRows(RecordTy),
   Con(Sym, Sym),
   Head(Ty, Ty),
-  OverloadCon(Overload, Sym),
-  OverloadUnify(Overload, Overload),
-  OverloadRecord(RecordTy, Overload),
-  OverloadHeadMismatch(Overload, Ty),
+  OverloadCon(overload::Overload, Sym),
+  OverloadUnify(overload::Overload, overload::Overload),
+  OverloadRecord(RecordTy, overload::Overload),
+  OverloadHeadMismatch(overload::Overload, Ty),
   UnresolvedRecordMissingRow(sml_hir::Lab),
   UnresolvedRecordHeadMismatch(RecordTy, Ty),
   NotEqTy(Ty, equality::NotEqTy),

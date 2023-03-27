@@ -12,9 +12,10 @@ use crate::env::{Bs, Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::generalize::generalize;
 use crate::get_env::{get_env, get_ty_info};
+use crate::overload;
 use crate::types::{
-  Basic, Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind,
-  TyVarSrc, ValEnv, ValInfo,
+  Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, TyVarSrc,
+  ValEnv, ValInfo,
 };
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, dec, mode::Mode, st::St, ty};
@@ -310,7 +311,7 @@ fn get_sig_exp(
   ars: &sml_hir::Arenas,
   ac: &mut Env,
   sig_exp: sml_hir::SigExpIdx,
-) -> Option<Basic> {
+) -> Option<overload::Basic> {
   let sig_exp = match sig_exp {
     Some(x) => x,
     None => return None,
@@ -342,9 +343,9 @@ fn get_sig_exp(
       ac.append(&mut sig_env);
       match st.info.mode {
         Mode::BuiltinLib(_) => match name.as_str() {
-          "WORD" => Some(Basic::Word),
-          "INTEGER" | "INT_INF" => Some(Basic::Int),
-          "REAL" => Some(Basic::Real),
+          "WORD" => Some(overload::Basic::Word),
+          "INTEGER" | "INT_INF" => Some(overload::Basic::Int),
+          "REAL" => Some(overload::Basic::Real),
           _ => None,
         },
         Mode::Regular(_) | Mode::PathOrder => None,

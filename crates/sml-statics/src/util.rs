@@ -1,25 +1,25 @@
 //! Utilities.
 
 use crate::error::{ErrorKind, Item};
-use crate::st::St;
 use crate::types::{
-  Basic, Generalizable, MetaTyVar, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
+  Generalizable, MetaTyVar, RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind,
 };
+use crate::{overload, st::St};
 use stack_map::StackMap;
 
 pub(crate) fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
   // we could have all of these return the basic overloads, but some of them will all only allow the
   // default types anyway.
   match scon {
-    sml_hir::SCon::Int(_) => basic_overload(st, g, Basic::Int),
-    sml_hir::SCon::Real(_) => basic_overload(st, g, Basic::Real),
-    sml_hir::SCon::Word(_) => basic_overload(st, g, Basic::Word),
+    sml_hir::SCon::Int(_) => basic_overload(st, g, overload::Basic::Int),
+    sml_hir::SCon::Real(_) => basic_overload(st, g, overload::Basic::Real),
+    sml_hir::SCon::Word(_) => basic_overload(st, g, overload::Basic::Word),
     sml_hir::SCon::Char(_) => Ty::CHAR,
     sml_hir::SCon::String(_) => Ty::STRING,
   }
 }
 
-fn basic_overload(st: &mut St, g: Generalizable, b: Basic) -> Ty {
+fn basic_overload(st: &mut St, g: Generalizable, b: overload::Basic) -> Ty {
   let mv = st.meta_gen.gen(g);
   let entry = SubstEntry::Kind(TyVarKind::Overloaded(b.into()));
   st.subst.insert(mv, entry);

@@ -1,11 +1,10 @@
 //! Bases. (The plural of "basis".)
 
-use crate::def::PrimitiveKind;
 use crate::env::{Bs, Env, FunEnv, SigEnv, StrEnv};
 use crate::types::{
-  Basic, Composite, Equality, IdStatus, Overload, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme,
-  TyVarKind, ValEnv, ValInfo,
+  Equality, IdStatus, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
+use crate::{def::PrimitiveKind, overload};
 
 /// A basis.
 #[derive(Debug, Default, Clone)]
@@ -126,12 +125,16 @@ pub fn minimal() -> (Syms, Basis) {
     }))
     .collect();
   let fns = {
-    let num_pair_to_num = overloaded(Composite::Num.into(), |a| Ty::fun(dup(a.clone()), a));
-    let real_pair_to_real = overloaded(Basic::Real.into(), |a| Ty::fun(dup(a.clone()), a));
-    let numtxt_pair_to_bool = overloaded(Composite::NumTxt.into(), |a| Ty::fun(dup(a), Ty::BOOL));
-    let realint_to_realint = overloaded(Composite::RealInt.into(), |a| Ty::fun(a.clone(), a));
+    let num_pair_to_num =
+      overloaded(overload::Composite::Num.into(), |a| Ty::fun(dup(a.clone()), a));
+    let real_pair_to_real =
+      overloaded(overload::Basic::Real.into(), |a| Ty::fun(dup(a.clone()), a));
+    let numtxt_pair_to_bool =
+      overloaded(overload::Composite::NumTxt.into(), |a| Ty::fun(dup(a), Ty::BOOL));
+    let realint_to_realint =
+      overloaded(overload::Composite::RealInt.into(), |a| Ty::fun(a.clone(), a));
     let wordint_pair_to_wordint =
-      overloaded(Composite::WordInt.into(), |a| Ty::fun(dup(a.clone()), a));
+      overloaded(overload::Composite::WordInt.into(), |a| Ty::fun(dup(a.clone()), a));
     let equality_pair_to_bool = TyScheme::one(|a| {
       let t = Ty::fun(dup(a), Ty::BOOL);
       (t, Some(TyVarKind::Equality))
@@ -215,7 +218,7 @@ where
     .collect()
 }
 
-fn overloaded<F>(ov: Overload, f: F) -> TyScheme
+fn overloaded<F>(ov: overload::Overload, f: F) -> TyScheme
 where
   F: FnOnce(Ty) -> Ty,
 {
