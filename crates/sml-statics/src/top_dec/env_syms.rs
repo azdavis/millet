@@ -12,14 +12,14 @@ pub(crate) fn get<F>(env: &Env, f: &mut F)
 where
   F: FnMut(Sym),
 {
-  for (_, env) in env.all_str() {
+  for (_, env) in env.str_env.iter() {
     get(env, f);
   }
-  for (_, ty_info) in env.all_ty() {
+  for (_, ty_info) in env.ty_env.iter() {
     ty_syms(&ty_info.ty_scheme.ty, f);
     val_env_syms(&ty_info.val_env, f);
   }
-  for (_, val_info) in env.all_val() {
+  for (_, val_info) in env.val_env.iter() {
     ty_syms(&val_info.ty_scheme.ty, f);
   }
 }

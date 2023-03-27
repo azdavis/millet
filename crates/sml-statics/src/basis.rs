@@ -29,7 +29,7 @@ impl Basis {
     other_name: &str_util::Name,
   ) -> bool {
     match ns {
-      sml_namespace::Module::Structure => match other.inner.env.get_str(other_name) {
+      sml_namespace::Module::Structure => match other.inner.env.str_env.get(other_name) {
         Some(env) => {
           self.inner.env.str_env.insert(name, env.clone());
           true

@@ -190,7 +190,7 @@ fn get_(
     // @def(43)
     sml_hir::Pat::As(name, pat) => {
       let (pm_pat, ty) = get(st, cfg, ars, cx, ve, *pat);
-      if !ok_val_info(cx.env.get_val(name)) {
+      if !ok_val_info(cx.env.val_env.get(name)) {
         st.err(pat_idx, ErrorKind::InvalidAsPatName(name.clone()));
       }
       insert_name(st, pat_idx.into(), cfg.cfg, ve, name.clone(), ty.clone());

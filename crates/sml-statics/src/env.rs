@@ -1,6 +1,6 @@
 //! Environments and types that contain them.
 
-use crate::types::{FixedTyVar, Sym, TyEnv, TyInfo, ValEnv, ValInfo};
+use crate::types::{FixedTyVar, Sym, TyEnv, ValEnv};
 use crate::{def, disallow::Disallow};
 use fast_hash::{FxHashMap, FxHashSet};
 use stack_map::StackMap;
@@ -23,34 +23,10 @@ impl Env {
     Self { def, ..Default::default() }
   }
 
-  pub fn get_str(&self, name: &str_util::Name) -> Option<&Env> {
-    self.str_env.get(name)
-  }
-
-  pub fn get_ty(&self, name: &str_util::Name) -> Option<&TyInfo> {
-    self.ty_env.get(name)
-  }
-
-  pub fn get_val(&self, name: &str_util::Name) -> Option<&ValInfo> {
-    self.val_env.get(name)
-  }
-
   pub fn append(&mut self, other: &mut Self) {
     self.str_env.append(&mut other.str_env);
     self.ty_env.append(&mut other.ty_env);
     self.val_env.append(&mut other.val_env);
-  }
-
-  pub fn all_str(&self) -> FxHashMap<&str_util::Name, &Env> {
-    self.str_env.iter().collect()
-  }
-
-  pub fn all_ty(&self) -> FxHashMap<&str_util::Name, &TyInfo> {
-    self.ty_env.iter().collect()
-  }
-
-  pub fn all_val(&self) -> FxHashMap<&str_util::Name, &ValInfo> {
-    self.val_env.iter().collect()
   }
 }
 

@@ -40,26 +40,11 @@ impl Iterator for Errors {
 }
 
 /// uses the `names` to traverse through the `StrEnv`s of successive `env`s.
-pub(crate) fn get_env<'e, 'n, I>(env: &'e Env, names: I) -> GetEnvResult<&'e Env>
+pub(crate) fn get_env<'e, 'n, I>(mut env: &'e Env, names: I) -> GetEnvResult<&'e Env>
 where
   I: IntoIterator<Item = &'n str_util::Name>,
 {
   let mut errors = Errors::default();
-  let mut names = names.into_iter();
-  let name = match names.next() {
-    None => return GetEnvResult { val: None, errors },
-    Some(x) => x,
-  };
-  let mut env = match env.get_str(name) {
-    None => {
-      errors.undefined = Some((Item::Struct, name.clone()));
-      return GetEnvResult { val: None, errors };
-    }
-    Some(x) => x,
-  };
-  if let Some(d) = &env.disallow {
-    errors.disallow.push((Item::Struct, d.clone(), name.clone()));
-  }
   for name in names {
     env = match env.str_env.get(name) {
       None => {
@@ -94,10 +79,8 @@ where
   if errors.undefined.is_some() {
     return GetEnvResult { val: None, errors };
   }
-  let ty_info = match got_env.val {
-    Some(env) => env.ty_env.get(last),
-    None => env.get_ty(last),
-  };
+  // TODO same
+  let ty_info = got_env.val.unwrap_or(env).ty_env.get(last);
   match ty_info {
     None => errors.undefined = Some((Item::Ty, last.clone())),
     Some(ty_info) => {
@@ -116,10 +99,8 @@ pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_hir::Path) -> GetEnvResu
   if errors.undefined.is_some() {
     return GetEnvResult { val: None, errors };
   }
-  let val = match got_env.val {
-    Some(e) => e.val_env.get(path.last()),
-    None => env.get_val(path.last()),
-  };
+  // TODO same
+  let val = got_env.val.unwrap_or(env).val_env.get(path.last());
   if let Some(val_info) = val {
     if let Some(d) = &val_info.disallow {
       errors.disallow.push((Item::Val, d.clone(), path.last().clone()));

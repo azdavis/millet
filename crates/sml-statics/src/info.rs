@@ -158,7 +158,7 @@ impl Info {
   pub fn completions(&self, syms: &Syms) -> Vec<CompletionItem> {
     let mut ret = Vec::<CompletionItem>::new();
     let mut mvs = MetaVarNames::new(&self.meta_vars);
-    ret.extend(self.basis.inner.env.all_val().into_iter().map(|(name, val_info)| {
+    ret.extend(self.basis.inner.env.val_env.iter().map(|(name, val_info)| {
       mvs.clear();
       mvs.extend_for(&val_info.ty_scheme.ty);
       CompletionItem {
@@ -250,7 +250,7 @@ fn env_syms(
   path: paths::PathId,
   env: &Env,
 ) {
-  ac.extend(env.all_str().into_iter().filter_map(|(name, env)| {
+  ac.extend(env.str_env.iter().filter_map(|(name, env)| {
     let idx = def_idx(path, env.def?)?;
     let mut children = Vec::<DocumentSymbol>::new();
     env_syms(&mut children, mvs, syms, path, env);
@@ -262,7 +262,7 @@ fn env_syms(
       children,
     })
   }));
-  ac.extend(env.all_ty().into_iter().filter_map(|(name, ty_info)| {
+  ac.extend(env.ty_env.iter().filter_map(|(name, ty_info)| {
     mvs.clear();
     mvs.extend_for(&ty_info.ty_scheme.ty);
     let idx = def_idx(path, ty_info.def?)?;
@@ -274,7 +274,7 @@ fn env_syms(
       children: Vec::new(),
     })
   }));
-  ac.extend(env.all_val().into_iter().flat_map(|(name, val_info)| {
+  ac.extend(env.val_env.iter().flat_map(|(name, val_info)| {
     mvs.clear();
     mvs.extend_for(&val_info.ty_scheme.ty);
     let detail = val_info.ty_scheme.display(mvs, syms).to_string();
