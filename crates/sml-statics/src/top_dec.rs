@@ -8,7 +8,7 @@ mod sharing_ty;
 mod ty_con_paths;
 mod where_ty;
 
-use crate::env::{Bs, Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
+use crate::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser, Item};
 use crate::get_env::{get_env, get_ty_info};
 use crate::types::{
@@ -17,7 +17,7 @@ use crate::types::{
 };
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{
-  config::Cfg, dec, generalize::generalize, mode::Mode, overload, st::St, ty,
+  basis::Bs, config::Cfg, dec, generalize::generalize, mode::Mode, overload, st::St, ty,
   ty_var::fixed::TyVarSrc,
 };
 use fast_hash::FxHashSet;

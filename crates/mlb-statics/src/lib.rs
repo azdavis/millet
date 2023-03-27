@@ -131,7 +131,7 @@ struct Cx<'a> {
 struct MBasis {
   fix_env: sml_fixity::Env,
   bas_env: FxHashMap<str_util::Name, MBasis>,
-  basis: sml_statics::basis::Basis,
+  bs: sml_statics::basis::Bs,
 }
 
 impl MBasis {
@@ -139,7 +139,7 @@ impl MBasis {
   fn append(&mut self, other: Self) {
     self.fix_env.extend(other.fix_env);
     self.bas_env.extend(other.bas_env);
-    self.basis.append(other.basis);
+    self.bs.append(other.bs);
   }
 }
 
@@ -148,7 +148,7 @@ impl MBasis {
 pub fn get(
   syms: sml_statics::Syms,
   lang: &config::file::Language,
-  basis: &sml_statics::basis::Basis,
+  bs: &sml_statics::basis::Bs,
   source_file_contents: &paths::PathMap<String>,
   bas_decs: &paths::PathMap<&mlb_hir::BasDec>,
   root_group_paths: &[paths::PathId],
@@ -164,7 +164,7 @@ pub fn get(
     let std_basis = MBasis {
       fix_env: sml_fixity::STD_BASIS.clone(),
       bas_env: FxHashMap::default(),
-      basis: basis.clone(),
+      bs: bs.clone(),
     };
     let cx = Cx { source_file_contents, bas_decs, std_basis: &std_basis, lang };
     get_group_file(&mut st, cx, &mut MBasis::default(), path);
@@ -224,7 +224,7 @@ fn get_bas_dec(
     // NOTE this doesn't do any of the stuff with the side conditions with the ty names and whatnot.
     // those might be necessary.
     mlb_hir::BasDec::Export(ns, lhs, rhs) => {
-      if !ac.basis.add(*ns, lhs.val.clone(), &scope.basis, &rhs.val) {
+      if !ac.bs.add(*ns, lhs.val.clone(), &scope.bs, &rhs.val) {
         let item = match ns {
           sml_namespace::Module::Structure => Item::Structure,
           sml_namespace::Module::Signature => Item::Signature,
@@ -268,7 +268,7 @@ fn get_bas_dec(
         .map(|(&path, (_, syntax))| (path, (&syntax.lower.arenas, syntax.lower.root)))
         .collect();
       assert_eq!(syntaxes.len(), hir_roots.len());
-      let order = sml_statics::path_order::get(st.syms.clone(), scope.basis.clone(), hir_roots);
+      let order = sml_statics::path_order::get(st.syms.clone(), scope.bs.clone(), hir_roots);
       assert_eq!(syntaxes.len(), order.len());
       // we could make a sequence of source path defs from the order and recurse on that, but doing
       // it like this lets us avoid re-parsing the syntax. it is a little un-DRY though in the sense
@@ -304,8 +304,8 @@ fn get_source_file(
 ) {
   let mode = sml_statics::mode::Mode::Regular(Some(path));
   let checked =
-    sml_statics::get(&mut st.syms, &scope.basis, mode, &syntax.lower.arenas, syntax.lower.root);
-  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), basis: checked.basis });
+    sml_statics::get(&mut st.syms, &scope.bs, mode, &syntax.lower.arenas, syntax.lower.root);
+  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.bs });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
   let mut file = SourceFile { syntax, statics_errors: checked.errors, info };

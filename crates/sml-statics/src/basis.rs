@@ -1,26 +1,37 @@
 //! Bases. (The plural of "basis".)
 
-use crate::env::{Bs, Env, FunEnv, SigEnv, StrEnv};
+use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use crate::types::{
   Equality, IdStatus, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
 use crate::{def::PrimitiveKind, overload};
+use fast_hash::FxHashMap;
 
 /// A basis.
 #[derive(Debug, Default, Clone)]
-pub struct Basis {
-  pub(crate) inner: Bs,
+pub struct Bs {
+  pub(crate) env: Env,
+  pub(crate) sig_env: SigEnv,
+  pub(crate) fun_env: FunEnv,
 }
 
-impl Basis {
-  /// Append other onto self.
-  pub fn append(&mut self, other: Self) {
-    self.inner.append(other.inner);
+impl Bs {
+  pub(crate) fn as_cx(&self) -> Cx {
+    Cx { env: self.env.clone(), fixed: FxHashMap::default() }
+  }
+
+  /// Append other onto self, emptying other.
+  pub fn append(&mut self, mut other: Bs) {
+    self.env.append(&mut other.env);
+    self.sig_env.append(&mut other.sig_env);
+    self.fun_env.append(&mut other.fun_env);
   }
 
   /// Consolidates internal memory for this, so that it will be faster to clone next time.
   pub fn consolidate(&mut self) {
-    self.inner.consolidate();
+    self.env.consolidate();
+    self.sig_env.consolidate();
+    self.fun_env.consolidate();
   }
 
   /// Adds the item named `other_name` from `other` into `self` with the name `name`, or
@@ -33,23 +44,23 @@ impl Basis {
     other_name: &str_util::Name,
   ) -> bool {
     match ns {
-      sml_namespace::Module::Structure => match other.inner.env.str_env.get(other_name) {
+      sml_namespace::Module::Structure => match other.env.str_env.get(other_name) {
         Some(env) => {
-          self.inner.env.str_env.insert(name, env.clone());
+          self.env.str_env.insert(name, env.clone());
           true
         }
         None => false,
       },
-      sml_namespace::Module::Signature => match other.inner.sig_env.get(other_name) {
+      sml_namespace::Module::Signature => match other.sig_env.get(other_name) {
         Some(env) => {
-          self.inner.sig_env.insert(name, env.clone());
+          self.sig_env.insert(name, env.clone());
           true
         }
         None => false,
       },
-      sml_namespace::Module::Functor => match other.inner.fun_env.get(other_name) {
+      sml_namespace::Module::Functor => match other.fun_env.get(other_name) {
         Some(env) => {
-          self.inner.fun_env.insert(name, env.clone());
+          self.fun_env.insert(name, env.clone());
           true
         }
         None => false,
@@ -68,7 +79,7 @@ impl Basis {
 ///
 /// Upon internal error.
 #[must_use]
-pub fn minimal() -> (Syms, Basis) {
+pub fn minimal() -> (Syms, Bs) {
   // @sync(special_sym_order)
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
@@ -170,14 +181,12 @@ pub fn minimal() -> (Syms, Basis) {
       (str_util::Name::new(name.as_str()), vi)
     }))
     .collect();
-  let basis = Basis {
-    inner: Bs {
-      fun_env: FunEnv::default(),
-      sig_env: SigEnv::default(),
-      env: Env { str_env: StrEnv::default(), ty_env, val_env, def: None, disallow: None },
-    },
+  let bs = Bs {
+    fun_env: FunEnv::default(),
+    sig_env: SigEnv::default(),
+    env: Env { str_env: StrEnv::default(), ty_env, val_env, def: None, disallow: None },
   };
-  (syms, basis)
+  (syms, bs)
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {

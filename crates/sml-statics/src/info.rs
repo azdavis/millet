@@ -2,7 +2,7 @@
 
 use crate::env::Env;
 use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme, ValInfo};
-use crate::{basis::Basis, def, display::MetaVarNames, mode::Mode, util::ty_syms};
+use crate::{basis::Bs, def, display::MetaVarNames, mode::Mode, util::ty_syms};
 use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt;
 
@@ -12,7 +12,7 @@ pub struct Info {
   pub(crate) mode: Mode,
   pub(crate) indices: FxHashMap<sml_hir::Idx, IdxEntry>,
   pub(crate) meta_vars: MetaVarInfo,
-  pub(crate) basis: Basis,
+  pub(crate) bs: Bs,
 }
 
 impl Info {
@@ -21,7 +21,7 @@ impl Info {
       mode,
       indices: FxHashMap::default(),
       meta_vars: MetaVarInfo::default(),
-      basis: Basis::default(),
+      bs: Bs::default(),
     }
   }
 
@@ -116,10 +116,10 @@ impl Info {
   /// need it to know which `Def`s we should actually include in the return value.
   #[must_use]
   pub fn document_symbols(&self, syms: &Syms, path: paths::PathId) -> Vec<DocumentSymbol> {
-    let bs = &self.basis.inner;
+    // let bs = &self.basis;
     let mut mvs = MetaVarNames::new(&self.meta_vars);
     let mut ret = Vec::<DocumentSymbol>::new();
-    ret.extend(bs.fun_env.iter().filter_map(|(name, fun_sig)| {
+    ret.extend(self.bs.fun_env.iter().filter_map(|(name, fun_sig)| {
       let idx = def_idx(path, fun_sig.body_env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
       env_syms(&mut children, &mut mvs, syms, path, &fun_sig.body_env);
@@ -131,7 +131,7 @@ impl Info {
         children,
       })
     }));
-    ret.extend(bs.sig_env.iter().filter_map(|(name, sig)| {
+    ret.extend(self.bs.sig_env.iter().filter_map(|(name, sig)| {
       let idx = def_idx(path, sig.env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
       env_syms(&mut children, &mut mvs, syms, path, &sig.env);
@@ -143,7 +143,7 @@ impl Info {
         children,
       })
     }));
-    env_syms(&mut ret, &mut mvs, syms, path, &bs.env);
+    env_syms(&mut ret, &mut mvs, syms, path, &self.bs.env);
     // order doesn't seem to matter. at least vs code displays the symbols in source order.
     ret
   }
@@ -158,7 +158,7 @@ impl Info {
   pub fn completions(&self, syms: &Syms) -> Vec<CompletionItem> {
     let mut ret = Vec::<CompletionItem>::new();
     let mut mvs = MetaVarNames::new(&self.meta_vars);
-    ret.extend(self.basis.inner.env.val_env.iter().map(|(name, val_info)| {
+    ret.extend(self.bs.env.val_env.iter().map(|(name, val_info)| {
       mvs.clear();
       mvs.extend_for(&val_info.ty_scheme.ty);
       CompletionItem {

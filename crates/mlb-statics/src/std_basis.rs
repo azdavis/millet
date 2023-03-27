@@ -11,7 +11,7 @@ use sml_syntax::ast::AstNode as _;
 #[derive(Debug, Clone)]
 pub struct StdBasis {
   syms: Syms,
-  basis: basis::Basis,
+  bs: basis::Bs,
   info: FxHashMap<&'static str, Info>,
 }
 
@@ -37,8 +37,8 @@ impl StdBasis {
 
   /// Returns the basis for this.
   #[must_use]
-  pub fn basis(&self) -> &basis::Basis {
-    &self.basis
+  pub fn basis(&self) -> &basis::Bs {
+    &self.bs
   }
 
   /// Look up a std basis file's info.
@@ -74,7 +74,7 @@ fn get_std_basis<I>(files: I) -> StdBasis
 where
   I: Iterator<Item = (&'static str, &'static str)>,
 {
-  let (mut syms, mut basis) = basis::minimal();
+  let (mut syms, mut bs) = basis::minimal();
   let mut imperative_io_hack = None::<String>;
   let lang = config::file::Language::default();
   let iter = files.map(|(name, mut contents)| {
@@ -119,8 +119,8 @@ where
     }
     let mode = sml_statics::mode::Mode::BuiltinLib(name);
     let low = started.lower;
-    let checked = sml_statics::get(&mut syms, &basis, mode, &low.arenas, low.root);
-    basis.append(checked.basis);
+    let checked = sml_statics::get(&mut syms, &bs, mode, &low.arenas, low.root);
+    bs.append(checked.bs);
     if let Some(e) = checked.errors.first() {
       let e = e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One);
       panic!("{name}: statics error: {e}");
@@ -130,6 +130,6 @@ where
     (name, info)
   });
   let info: FxHashMap<_, _> = iter.collect();
-  basis.consolidate();
-  StdBasis { syms, basis, info }
+  bs.consolidate();
+  StdBasis { syms, bs, info }
 }

@@ -41,25 +41,18 @@
 //! except name resolution. That means we can skip things like exhaustiveness checking and type
 //! unification.
 
-use crate::env::{Bs, Env, FunEnv, SigEnv};
-use crate::{basis::Basis, mode::Mode, st::St, top_dec, types::Syms};
+use crate::{basis::Bs, mode::Mode, st::St, top_dec, types::Syms};
 
 /// An unordered map from paths to HIR ready for analysis.
 pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, sml_hir::StrDecIdx)>;
 
 /// Get the ordering.
 #[must_use]
-pub fn get(mut syms: Syms, mut basis: Basis, mut paths: SmlHirPaths<'_>) -> Vec<paths::PathId> {
+pub fn get(mut syms: Syms, mut bs: Bs, mut paths: SmlHirPaths<'_>) -> Vec<paths::PathId> {
   let mut ok_paths = Vec::<paths::PathId>::new();
-  basis = {
-    let mut env = basis.inner.env;
-    let mut sig_env = basis.inner.sig_env;
-    let mut fun_env = basis.inner.fun_env;
-    for &(arenas, root) in paths.values() {
-      rm_top_level_defs(&mut env, &mut sig_env, &mut fun_env, arenas, root);
-    }
-    Basis { inner: Bs { env, sig_env, fun_env } }
-  };
+  for &(arenas, root) in paths.values() {
+    rm_top_level_defs(&mut bs, arenas, root);
+  }
   loop {
     let old_ok_paths_len = ok_paths.len();
     let mut new_paths: SmlHirPaths<'_> = fast_hash::map_with_capacity(paths.len());
@@ -67,11 +60,11 @@ pub fn get(mut syms: Syms, mut basis: Basis, mut paths: SmlHirPaths<'_>) -> Vec<
       // NOTE: this inner loop body runs O(n^2) times. to make this hurt less, we use a special path
       // order mode for statics, which reduces the number of checks we do.
       let mut st = St::new(Mode::PathOrder, syms);
-      let inner = top_dec::get(&mut st, &basis.inner, arenas, root);
+      let new_bs = top_dec::get(&mut st, &bs, arenas, root);
       let (new_syms, errors, _) = st.finish();
       syms = new_syms;
       if errors.is_empty() {
-        basis.append(Basis { inner });
+        bs.append(new_bs);
         ok_paths.push(path);
       } else {
         new_paths.insert(path, (arenas, root));
@@ -96,13 +89,7 @@ pub fn get(mut syms: Syms, mut basis: Basis, mut paths: SmlHirPaths<'_>) -> Vec<
   }
 }
 
-fn rm_top_level_defs(
-  env: &mut Env,
-  sig_env: &mut SigEnv,
-  fun_env: &mut FunEnv,
-  ars: &sml_hir::Arenas,
-  dec: sml_hir::StrDecIdx,
-) {
+fn rm_top_level_defs(bs: &mut Bs, ars: &sml_hir::Arenas, dec: sml_hir::StrDecIdx) {
   let dec = match dec {
     Some(x) => x,
     None => return,
@@ -111,23 +98,23 @@ fn rm_top_level_defs(
     sml_hir::StrDec::Dec(_) => {}
     sml_hir::StrDec::Structure(binds) => {
       for bind in binds {
-        env.str_env.remove(&bind.name);
+        bs.env.str_env.remove(&bind.name);
       }
     }
     sml_hir::StrDec::Signature(binds) => {
       for bind in binds {
-        sig_env.remove(&bind.name);
+        bs.sig_env.remove(&bind.name);
       }
     }
     sml_hir::StrDec::Functor(binds) => {
       for bind in binds {
-        fun_env.remove(&bind.functor_name);
+        bs.fun_env.remove(&bind.functor_name);
       }
     }
-    sml_hir::StrDec::Local(_, in_dec) => rm_top_level_defs(env, sig_env, fun_env, ars, *in_dec),
+    sml_hir::StrDec::Local(_, in_dec) => rm_top_level_defs(bs, ars, *in_dec),
     sml_hir::StrDec::Seq(decs) => {
       for &dec in decs {
-        rm_top_level_defs(env, sig_env, fun_env, ars, dec);
+        rm_top_level_defs(bs, ars, dec);
       }
     }
   }

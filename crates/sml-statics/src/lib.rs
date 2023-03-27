@@ -49,24 +49,23 @@ pub struct Statics {
   /// The errors from the top decs.
   pub errors: Vec<Error>,
   /// The new items defined by the given root.
-  pub basis: basis::Basis,
+  pub bs: basis::Bs,
 }
 
 /// Does the checks on the root.
 pub fn get(
   syms: &mut Syms,
-  basis: &basis::Basis,
+  bs: &basis::Bs,
   mode: mode::Mode,
   arenas: &sml_hir::Arenas,
   root: sml_hir::StrDecIdx,
 ) -> Statics {
   elapsed::log("sml_statics::get", || {
     let mut st = st::St::new(mode, std::mem::take(syms));
-    let inner = top_dec::get(&mut st, &basis.inner, arenas, root);
-    let basis = basis::Basis { inner };
+    let bs = top_dec::get(&mut st, bs, arenas, root);
     let (new_syms, errors, mut info) = st.finish();
-    info.basis = basis.clone();
+    info.bs = bs.clone();
     *syms = new_syms;
-    Statics { info, errors, basis }
+    Statics { info, errors, bs }
   })
 }

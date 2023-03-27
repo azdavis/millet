@@ -72,29 +72,3 @@ pub(crate) struct FunSig {
 
 pub(crate) type SigEnv = StackMap<str_util::Name, Sig>;
 pub(crate) type FunEnv = StackMap<str_util::Name, FunSig>;
-
-/// Definition: Basis
-#[derive(Debug, Default, Clone)]
-pub(crate) struct Bs {
-  pub(crate) env: Env,
-  pub(crate) sig_env: SigEnv,
-  pub(crate) fun_env: FunEnv,
-}
-
-impl Bs {
-  pub(crate) fn as_cx(&self) -> Cx {
-    Cx { env: self.env.clone(), fixed: FxHashMap::default() }
-  }
-
-  pub(crate) fn append(&mut self, mut other: Bs) {
-    self.env.append(&mut other.env);
-    self.sig_env.append(&mut other.sig_env);
-    self.fun_env.append(&mut other.fun_env);
-  }
-
-  pub(crate) fn consolidate(&mut self) {
-    self.env.consolidate();
-    self.sig_env.consolidate();
-    self.fun_env.consolidate();
-  }
-}
