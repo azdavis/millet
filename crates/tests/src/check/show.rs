@@ -50,6 +50,24 @@ impl fmt::Display for Show {
           let line = line.val;
           writeln!(f, "{path}:{line}: inexact arrows for hover")?;
         }
+        reason::Reason::UnexpectedlyBadInput(path, s) => {
+          let path = path.display();
+          writeln!(f, "{path}: unexpectedly bad input: {s}")?;
+        }
+        reason::Reason::UnexpectedlyGoodInput { path, msg } => {
+          writeln!(f, "{path}: unexpectedly good input: no error with message: {msg}")?;
+        }
+        reason::Reason::WrongInputErrPath(want, got) => {
+          let want = want.display();
+          let got = got.display();
+          writeln!(f, "{got}: wrong input error path: wanted {want}")?;
+        }
+        reason::Reason::InputErrMismatch(path, want, got) => {
+          let path = path.display();
+          writeln!(f, "{path}: mismatched input error")?;
+          writeln!(f, "    - want: {want}")?;
+          writeln!(f, "    - got:  {got}")?;
+        }
       }
     }
     f.write_str("\n  want:")?;

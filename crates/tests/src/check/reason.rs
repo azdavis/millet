@@ -1,6 +1,7 @@
 //! Reasons for why a check failed.
 
 use crate::check::expect;
+use std::path::PathBuf;
 
 pub(crate) enum Reason {
   NoErrorsEmitted(usize),
@@ -8,6 +9,10 @@ pub(crate) enum Reason {
   Mismatched(paths::WithPath<expect::Region>, String, String),
   NoHover(paths::WithPath<expect::Region>),
   InexactHover(paths::WithPath<u32>),
+  UnexpectedlyBadInput(PathBuf, String),
+  UnexpectedlyGoodInput { path: String, msg: String },
+  WrongInputErrPath(PathBuf, PathBuf),
+  InputErrMismatch(PathBuf, String, String),
 }
 
 pub(crate) fn get(

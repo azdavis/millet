@@ -44,22 +44,6 @@ where
     return;
   }
   let (input, store) = input::get(files);
-  match (opts.expected_input, input.errors.first()) {
-    (ExpectedInput::Good, None) => {}
-    (ExpectedInput::Good, Some(e)) => {
-      panic!("unexpectedly bad input: {e:?}");
-    }
-    (ExpectedInput::Bad { path, msg }, None) => {
-      panic!("unexpectedly good input: no error at {path} with {msg}");
-    }
-    (ExpectedInput::Bad { path, msg }, Some(e)) => {
-      let got_path =
-        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip prefix");
-      assert_eq!(std::path::Path::new(path), got_path, "wrong path with errors");
-      let got_msg = e.display(input::ROOT.as_path()).to_string();
-      assert!(got_msg.contains(msg), "want not contained in got\n  want: {msg}\n  got: {got_msg}");
-    }
-  }
   let mut ck = show::Show::new(
     store,
     input.iter_sources().map(|s| {
@@ -67,6 +51,36 @@ where
       (s.path, file)
     }),
   );
+  match (opts.expected_input, input.errors.first()) {
+    (ExpectedInput::Good, None) => {}
+    (ExpectedInput::Good, Some(e)) => {
+      let got_path =
+        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip ROOT prefix");
+      let msg = e.display(input::ROOT.as_path()).to_string();
+      ck.reasons.push(reason::Reason::UnexpectedlyBadInput(got_path.to_owned(), msg));
+    }
+    (ExpectedInput::Bad { path, msg }, None) => {
+      let path = path.to_owned();
+      let msg = msg.to_owned();
+      ck.reasons.push(reason::Reason::UnexpectedlyGoodInput { path, msg });
+    }
+    (ExpectedInput::Bad { path, msg }, Some(e)) => {
+      let got_path =
+        e.abs_path().strip_prefix(input::ROOT.as_path()).expect("could not strip ROOT prefix");
+      let path = std::path::Path::new(path);
+      if path != got_path {
+        ck.reasons.push(reason::Reason::WrongInputErrPath(path.to_owned(), got_path.to_owned()));
+      }
+      let got_msg = e.display(input::ROOT.as_path()).to_string();
+      if !got_msg.contains(msg) {
+        ck.reasons.push(reason::Reason::InputErrMismatch(
+          got_path.to_owned(),
+          msg.to_owned(),
+          got_msg,
+        ));
+      }
+    }
+  }
   let want_err_len: usize = ck
     .files
     .values()
