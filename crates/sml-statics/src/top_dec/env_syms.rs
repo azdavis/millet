@@ -1,4 +1,4 @@
-//! Traversing the `Sym`s in an `EnvLike`.
+//! Traversing the `Sym`s in an `Env`.
 
 use crate::env::Env;
 use crate::types::{Sym, ValEnv};
