@@ -180,6 +180,10 @@ Doesn't handle comments or line length.
 
 Extract interesting comments from above SML syntax nodes, like doc comments.
 
+### `crates/sml-path`
+
+A type representing a "path", aka a non-empty sequence of names.
+
 ### `crates/sml-fixity`
 
 Types relating to SML infix operators.

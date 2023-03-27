@@ -115,8 +115,8 @@ pub(crate) fn get_name(n: Option<sml_syntax::SyntaxToken>) -> Option<str_util::N
   n.map(|tok| str_util::Name::new(tok.text()))
 }
 
-pub(crate) fn get_path(p: ast::Path) -> Option<sml_hir::Path> {
-  sml_hir::Path::try_new(
+pub(crate) fn get_path(p: ast::Path) -> Option<sml_path::Path> {
+  sml_path::Path::try_new(
     p.name_star_eq_dots()
       .filter_map(|x| Some(str_util::Name::new(x.name_star_eq()?.token.text())))
       .collect(),

@@ -68,7 +68,7 @@ fn get_where_type(
   idx: sml_hir::Idx,
   marker: SymsMarker,
   inner_env: &mut Env,
-  path: &sml_hir::Path,
+  path: &sml_path::Path,
   ty_scheme: TyScheme,
   emit_cannot_realize: bool,
 ) {

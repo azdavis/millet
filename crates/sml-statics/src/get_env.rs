@@ -61,7 +61,7 @@ where
 }
 
 /// does contain the undef err if there was no `path.last()`
-pub(crate) fn get_ty_info<'e>(env: &'e Env, path: &sml_hir::Path) -> GetEnvResult<&'e TyInfo> {
+pub(crate) fn get_ty_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvResult<&'e TyInfo> {
   get_ty_info_raw(env, path.prefix().iter(), path.last())
 }
 
@@ -92,7 +92,7 @@ where
 }
 
 /// doesn't contain the undef err if there was no `path.last()`
-pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_hir::Path) -> GetEnvResult<&'e ValInfo> {
+pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvResult<&'e ValInfo> {
   let got_env = get_env(env, path.prefix());
   let mut errors = got_env.errors;
   if errors.undefined.is_some() {

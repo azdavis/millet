@@ -101,7 +101,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       #[allow(clippy::needless_collect)]
       let pats: Vec<_> = pat.pat_args().map(|x| get(st, flavor, x.pat())).collect();
       pats.into_iter().rev().fold(name("nil"), |ac, x| {
-        let cons = sml_hir::Path::one(str_util::Name::new("::"));
+        let cons = sml_path::Path::one(str_util::Name::new("::"));
         let ac = st.pat(ac, ptr.clone());
         sml_hir::Pat::Con(cons, Some(st.pat(tuple([x, ac]), ptr.clone())))
       })
@@ -111,7 +111,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       return None;
     }
     ast::Pat::InfixPat(pat) => {
-      let func = sml_hir::Path::one(str_util::Name::new(pat.name_star_eq()?.token.text()));
+      let func = sml_path::Path::one(str_util::Name::new(pat.name_star_eq()?.token.text()));
       let lhs = get(st, flavor, pat.lhs());
       let rhs = get(st, flavor, pat.rhs());
       let arg = st.pat(tuple([lhs, rhs]), ptr.clone());
@@ -226,7 +226,7 @@ impl Default for RestPatRowState {
 }
 
 pub(crate) fn name(s: &str) -> sml_hir::Pat {
-  sml_hir::Pat::Con(sml_hir::Path::one(str_util::Name::new(s)), None)
+  sml_hir::Pat::Con(sml_path::Path::one(str_util::Name::new(s)), None)
 }
 
 pub(crate) fn tuple<I>(ps: I) -> sml_hir::Pat

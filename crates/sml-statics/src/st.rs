@@ -120,8 +120,8 @@ impl St {
     self.cur_prefix.pop().expect("no matching push_structure");
   }
 
-  pub(crate) fn mk_path(&self, last: str_util::Name) -> sml_hir::Path {
-    sml_hir::Path::new(self.cur_prefix.iter().cloned(), last)
+  pub(crate) fn mk_path(&self, last: str_util::Name) -> sml_path::Path {
+    sml_path::Path::new(self.cur_prefix.iter().cloned(), last)
   }
 
   pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {

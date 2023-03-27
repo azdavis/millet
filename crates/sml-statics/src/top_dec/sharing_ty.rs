@@ -10,7 +10,7 @@ pub(crate) fn get(
   idx: sml_hir::Idx,
   marker: SymsMarker,
   inner_env: &mut Env,
-  paths: &[sml_hir::Path],
+  paths: &[sml_path::Path],
 ) {
   let mut ac = None::<SharingTyScheme>;
   let syms = paths.iter().filter_map(|path| {

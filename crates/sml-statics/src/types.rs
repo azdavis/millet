@@ -139,14 +139,14 @@ pub(crate) enum Equality {
 
 #[derive(Debug, Clone)]
 pub(crate) struct SymInfo {
-  pub(crate) path: sml_hir::Path,
+  pub(crate) path: sml_path::Path,
   pub(crate) ty_info: TyInfo,
   pub(crate) equality: Equality,
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct ExnInfo {
-  pub(crate) path: sml_hir::Path,
+  pub(crate) path: sml_path::Path,
   pub(crate) param: Option<Ty>,
 }
 
@@ -163,7 +163,7 @@ pub struct Syms {
 }
 
 impl Syms {
-  pub(crate) fn start(&mut self, path: sml_hir::Path) -> StartedSym {
+  pub(crate) fn start(&mut self, path: sml_path::Path) -> StartedSym {
     let ty_info = TyInfo {
       ty_scheme: TyScheme::zero(Ty::None),
       val_env: ValEnv::default(),
@@ -195,7 +195,7 @@ impl Syms {
     self.syms.get(sym.idx())
   }
 
-  pub(crate) fn insert_exn(&mut self, path: sml_hir::Path, param: Option<Ty>) -> Exn {
+  pub(crate) fn insert_exn(&mut self, path: sml_path::Path, param: Option<Ty>) -> Exn {
     let ret = Exn(idx::Idx::new(self.exns.len()));
     self.exns.push(ExnInfo { path, param });
     ret

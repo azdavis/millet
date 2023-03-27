@@ -35,7 +35,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
           None => match &lab {
             sml_hir::Lab::Name(name) => {
               st.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
-              st.exp(sml_hir::Exp::Path(sml_hir::Path::one(name.clone())), ptr.clone())
+              st.exp(sml_hir::Exp::Path(sml_path::Path::one(name.clone())), ptr.clone())
             }
             sml_hir::Lab::Num(_) => {
               // NOTE: we explicitly duplicate the `err` call in both branches, to remind us that
@@ -294,7 +294,7 @@ fn warn_unnecessary_parens(exp: &ast::Exp) -> bool {
 }
 
 pub(crate) fn name(s: &str) -> sml_hir::Exp {
-  sml_hir::Exp::Path(sml_hir::Path::one(str_util::Name::new(s)))
+  sml_hir::Exp::Path(sml_path::Path::one(str_util::Name::new(s)))
 }
 
 pub(crate) fn tuple<I>(es: I) -> sml_hir::Exp

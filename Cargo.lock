@@ -772,6 +772,7 @@ version = "0.1.0"
 dependencies = [
  "la-arena",
  "num-bigint",
+ "sml-path",
  "str-util",
 ]
 
@@ -799,6 +800,7 @@ dependencies = [
  "lex-util",
  "num-traits",
  "sml-hir",
+ "sml-path",
  "sml-syntax",
  "str-util",
 ]
@@ -829,6 +831,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-path"
+version = "0.1.0"
+dependencies = [
+ "str-util",
+]
+
+[[package]]
 name = "sml-statics"
 version = "0.1.0"
 dependencies = [
@@ -846,6 +855,7 @@ dependencies = [
  "pattern-match",
  "sml-hir",
  "sml-namespace",
+ "sml-path",
  "stack-map",
  "str-util",
  "uniq",

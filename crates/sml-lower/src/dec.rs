@@ -137,8 +137,8 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
             let param_name = st.fresh();
             let param_sig = sml_hir::SigExp::Spec(get_spec(st, Some(arg)));
             let param_sig = st.sig_exp(param_sig, ptr.clone());
-            let dec =
-              st.dec(sml_hir::Dec::Open(vec![sml_hir::Path::one(param_name.clone())]), ptr.clone());
+            let dec = st
+              .dec(sml_hir::Dec::Open(vec![sml_path::Path::one(param_name.clone())]), ptr.clone());
             let str_dec = st.str_dec(sml_hir::StrDec::Dec(dec), ptr.clone());
             let body = st.str_exp(sml_hir::StrExp::Let(str_dec, body), ptr.clone());
             (param_name, param_sig, body, sml_hir::Flavor::Sugared)
@@ -339,7 +339,7 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
           let sig_exp = st.sig_exp(
             sml_hir::SigExp::Where(
               sig_exp,
-              sml_hir::WhereKind::Type(ty_vars, sml_hir::Path::one(name), ty),
+              sml_hir::WhereKind::Type(ty_vars, sml_path::Path::one(name), ty),
             ),
             ptr.clone(),
           );

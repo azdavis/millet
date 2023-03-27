@@ -1,5 +1,5 @@
 [package]
-name = "sml-hir"
+name = "sml-path"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -10,7 +10,4 @@ doctest = false
 test = false
 
 [dependencies]
-la-arena = "0.3"
-num-bigint = "0.4"
 str-util = { git = "https://github.com/azdavis/language-util.git" }
-sml-path = { path = "../sml-path" }

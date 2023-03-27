@@ -24,6 +24,7 @@ paths = { git = "https://github.com/azdavis/language-util.git" }
 pattern-match = { git = "https://github.com/azdavis/language-util.git" }
 stack-map = { path = "../stack-map" }
 sml-hir = { path = "../sml-hir" }
+sml-path = { path = "../sml-path" }
 sml-namespace = { path = "../sml-namespace" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }
