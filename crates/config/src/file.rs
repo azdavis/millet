@@ -84,7 +84,6 @@ pub struct Language {
 
 /// Configuration for declarations.
 #[derive(Debug, Default, Clone, Deserialize)]
-#[allow(clippy::struct_excessive_bools)]
 #[allow(missing_docs)]
 pub struct Dec {
   #[serde(default)]
@@ -119,7 +118,6 @@ pub struct Dec {
 
 /// Configuration for expressions.
 #[derive(Debug, Default, Clone, Deserialize)]
-#[allow(clippy::struct_excessive_bools)]
 #[allow(missing_docs)]
 pub struct Exp {
   #[serde(rename = "int-lit", default)]
