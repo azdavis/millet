@@ -50,11 +50,12 @@ where
 
   /// Returns an iterator over the keys and values.
   pub fn iter(&self) -> impl Iterator<Item = (&K, &V)> {
+    let is_len_one = self.stack.len() == 1;
     let mut iter = self.stack.iter().rev().flat_map(|x| x.iter());
     let mut seen = FxHashSet::<&K>::default();
     std::iter::from_fn(move || loop {
       let (k, v) = iter.next()?;
-      if seen.insert(k) {
+      if is_len_one || seen.insert(k) {
         return Some((k, v));
       }
     })
