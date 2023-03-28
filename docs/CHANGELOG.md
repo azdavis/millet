@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.8.6
+
+- Allow specifying what values from the standard basis library are not permitted.
+
 ## v0.8.5
 
 - Warn on top-level `open`.
