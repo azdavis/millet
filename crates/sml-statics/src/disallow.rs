@@ -21,6 +21,15 @@ impl fmt::Display for Disallow {
 #[derive(Debug)]
 pub struct Error(ErrorKind);
 
+impl fmt::Display for Error {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match &self.0 {
+      ErrorKind::Undefined(item, name) => write!(f, "undefined {item}: {name}"),
+      ErrorKind::Already(d) => write!(f, "already disallowed {d}"),
+    }
+  }
+}
+
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   Undefined(Item, str_util::Name),
