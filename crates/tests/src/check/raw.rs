@@ -44,13 +44,8 @@ where
     return;
   }
   let (input, store) = input::get(files);
-  let mut ck = show::Show::new(
-    store,
-    input.iter_sources().map(|s| {
-      let file = expect::File::new(s.val);
-      (s.path, file)
-    }),
-  );
+  let mut ck =
+    show::Show::new(store, input.iter_sources().map(|s| (s.path, expect::File::new(s.val))));
   match (opts.expected_input, input.errors.first()) {
     (ExpectedInput::Good, None) => {}
     (ExpectedInput::Good, Some(e)) => {
