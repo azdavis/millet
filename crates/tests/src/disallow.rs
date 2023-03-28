@@ -89,6 +89,20 @@ version = 1
   );
 }
 
+fn fail_bad_input<'a, I>(files: I)
+where
+  I: IntoIterator<Item = (&'a str, &'a str)>,
+{
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Fail,
+    limit: raw::Limit::First,
+    min_severity: diagnostic_util::Severity::Warning,
+    expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
+  };
+  raw::get(files, opts);
+}
+
 #[test]
 fn no_such_path() {
   let config = r#"
@@ -96,13 +110,5 @@ version = 1
 [language.val]
 "Foo.bar" = false
 "#;
-  let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
-    // TODO remove and use `check_bad_input`
-    outcome: raw::Outcome::Fail,
-    limit: raw::Limit::First,
-    min_severity: diagnostic_util::Severity::Warning,
-    expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
-  };
-  raw::get(with_config(config), opts);
+  fail_bad_input(with_config(config));
 }
