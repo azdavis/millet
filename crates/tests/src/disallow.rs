@@ -2,8 +2,34 @@
 
 use crate::check::{check_bad_input, check_multi, raw};
 
-fn files<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
+fn empty(config: &str) -> [(&str, &str); 2] {
+  [("a.mlb", ""), (config::file::PATH, config)]
+}
+
+fn singleton<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
   [(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]
+}
+
+fn fail_no_such_path<const N: usize>(singleton: [(&str, &str); N]) {
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Fail,
+    limit: raw::Limit::First,
+    min_severity: diagnostic_util::Severity::Warning,
+    expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
+  };
+  raw::get(singleton, opts);
+}
+
+fn multi_std_basis<const N: usize>(outcome: raw::Outcome, singleton: [(&str, &str); N]) {
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Full,
+    outcome,
+    limit: raw::Limit::First,
+    min_severity: diagnostic_util::Severity::Warning,
+    expected_input: raw::ExpectedInput::Good,
+  };
+  raw::get(singleton, opts);
 }
 
 #[test]
@@ -18,7 +44,7 @@ val _ = while true do ()
 (**     ^^^^^^^^^^^^^^^^ disallowed expression: while *)
 val _ = "hi"
 "#;
-  check_multi(files(config, sml));
+  check_multi(singleton(config, sml));
 }
 
 #[test]
@@ -33,7 +59,7 @@ signature SIG = sig end
 (** + disallowed declaration: signature *)
 functor F() = struct end
 "#;
-  check_multi(files(config, sml));
+  check_multi(singleton(config, sml));
 }
 
 #[test]
@@ -44,21 +70,10 @@ version = 1
 "List.hd" = false
 "#;
   let sml = r#"
-val _ = List.hd
+val h = List.hd
 (**     ^^^^^^^ disallowed *)
 "#;
-  let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Full,
-    outcome: raw::Outcome::Pass,
-    limit: raw::Limit::First,
-    min_severity: diagnostic_util::Severity::Error,
-    expected_input: raw::ExpectedInput::Good,
-  };
-  raw::get(files(config, sml), opts);
-}
-
-fn with_config(config: &str) -> [(&str, &str); 2] {
-  [("a.mlb", ""), (config::file::PATH, config)]
+  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
 }
 
 #[test]
@@ -71,7 +86,7 @@ version = 1
   check_bad_input(
     config::file::PATH,
     "empty string in dot-separated path: `Foo..bar`",
-    with_config(config),
+    empty(config),
   );
 }
 
@@ -82,25 +97,7 @@ version = 1
 [language.val]
 "" = true
 "#;
-  check_bad_input(
-    config::file::PATH,
-    "empty string in dot-separated path: ``",
-    with_config(config),
-  );
-}
-
-fn fail_bad_input<'a, I>(files: I)
-where
-  I: IntoIterator<Item = (&'a str, &'a str)>,
-{
-  let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
-    outcome: raw::Outcome::Fail,
-    limit: raw::Limit::First,
-    min_severity: diagnostic_util::Severity::Warning,
-    expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
-  };
-  raw::get(files, opts);
+  check_bad_input(config::file::PATH, "empty string in dot-separated path: ``", empty(config));
 }
 
 #[test]
@@ -110,5 +107,84 @@ version = 1
 [language.val]
 "Foo.bar" = false
 "#;
-  fail_bad_input(with_config(config));
+  fail_no_such_path(empty(config));
+}
+
+#[test]
+fn disallow_fqn_disallows_alias() {
+  let config = r#"
+version = 1
+[language.val]
+"List.hd" = false
+"#;
+  let sml = r#"
+val h = hd
+(**     ^^ disallowed *)
+"#;
+  multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
+}
+
+#[test]
+fn disallow_alias_disallows_fqn() {
+  let config = r#"
+version = 1
+[language.val]
+"hd" = false
+"#;
+  let sml = r#"
+val h = List.hd
+(**     ^^^^^^^ disallowed *)
+"#;
+  multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
+}
+
+#[test]
+fn shadow_fqn() {
+  let config = r#"
+version = 1
+[language.val]
+"List.hd" = false
+"#;
+  let sml = r#"
+structure List = struct
+  val hd = 3
+end
+val n = List.hd + 4
+"#;
+  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+}
+
+#[test]
+fn shadow_alias() {
+  let config = r#"
+version = 1
+[language.val]
+"hd" = false
+"#;
+  let sml = r#"
+val hd = 3
+val n = hd + 4
+"#;
+  multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
+}
+
+#[test]
+fn shadow_multi_file() {
+  let config = r#"
+version = 1
+[language.val]
+"List.hd" = false
+"#;
+  let a = r#"
+structure List = struct
+  val hd = 3
+end
+"#;
+  let b = r#"
+val n = List.hd + 4
+"#;
+  multi_std_basis(
+    raw::Outcome::Pass,
+    [(config::file::PATH, config), ("s.mlb", "a.sml b.sml"), ("a.sml", a), ("b.sml", b)],
+  );
 }
