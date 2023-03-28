@@ -77,6 +77,10 @@ QUZ = { workspace-path = "pant" }
 5029.severity = "ignore"
 [language.exp]
 while = false
+[language.dec]
+functor = true
+[language.val]
+"=" = false
 ```
 
 #### `version`
@@ -182,6 +186,22 @@ Valid `<kind>`s:
 - `while`
 - `case`
 - `fn`
+
+#### `language.val`
+
+Configuration for values.
+
+#### `language.val.<path>`
+
+Whether the `<path>` is allowed.
+
+The path must be a valid, fully qualified path in the standard basis library, like `Real.==` or `+`.
+
+Because paths can have special characters in them, namely `.`, you may need to use TOML's quoted path syntax.
+
+Note that some standard basis library declarations are re-declared at different paths. To disallow them entirely, you must (currently) specify all possible paths. For instance, you should specify both `hd` and `List.hd` to disallow usage of the list head function.
+
+No error is currently emitted when disallowing a path that does not exist. To be sure you spelled the path correctly, try running Millet with the given config file, and see if errors are correctly emitted when you try to use the value.
 
 ### VS Code settings
 
