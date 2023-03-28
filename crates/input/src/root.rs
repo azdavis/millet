@@ -28,9 +28,13 @@ impl Root {
     let mut root_group_paths = Vec::<GroupPathBuf>::new();
     let config_path = root.as_path().join(config::file::PATH);
     let config_file = fs.read_to_string(&config_path);
-    let ((config, glob), mut flavor) = match config_file {
-      Ok(s) => (Config::from_file(root, &config_path, &s, errors), NoRootFlavor::NoGlob),
-      Err(_) => ((Config::default(), None), NoRootFlavor::NoFile),
+    let mut flavor = NoRootFlavor::NoFile;
+    let (config, glob) = match config_file {
+      Ok(s) => {
+        flavor = NoRootFlavor::NoGlob;
+        Config::from_file(root, &config_path, &s, errors)
+      }
+      Err(_) => (Config::default(), None),
     };
     if let Some(glob) = glob {
       let path = root.as_path().join(glob.as_str());
