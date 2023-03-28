@@ -168,7 +168,7 @@ version = 1
 }
 
 #[test]
-fn override_severity_ignore_op_andalso() {
+fn ignore_op_andalso() {
   let config = r#"
 version = 1
 [diagnostics]
@@ -178,11 +178,25 @@ version = 1
 }
 
 #[test]
-fn override_severity_ignore_mlb_undefined() {
+fn ignore_mlb_undefined() {
   let config = r#"
 version = 1
 [diagnostics]
 1017.severity = "ignore"
 "#;
   check_multi([(config::file::PATH, config), ("a.mlb", "structure Foo")]);
+}
+
+#[test]
+fn error_paren() {
+  let config = r#"
+version = 1
+[diagnostics]
+4014.severity = "error"
+"#;
+  let sml = r#"
+val _ = (1)
+(**     ^^^ unnecessary parentheses *)
+"#;
+  check_multi([(config::file::PATH, config), ("a.mlb", "a.sml"), ("a.sml", sml)]);
 }
