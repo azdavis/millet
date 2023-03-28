@@ -60,8 +60,7 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    let severities = input::Severities::default();
-    diagnostics::source_file(&file, &syms, &severities, self.diagnostics_options)
+    diagnostics::source_file(&file, &syms, self.diagnostics_options)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -93,10 +92,20 @@ impl Analysis {
         Some((path, vec![err]))
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
-        let ds =
-          diagnostics::source_file(file, &self.syms, &input.severities, self.diagnostics_options);
+        let ds = diagnostics::source_file(file, &self.syms, self.diagnostics_options);
         (path, ds)
       }))
+      .map(|(p, ds)| {
+        let iter = ds.into_iter().filter_map(|mut d| {
+          match input.severities.get(&d.code) {
+            Some(&Some(sev)) => d.severity = sev,
+            Some(None) => return None,
+            None => {}
+          }
+          Some(d)
+        });
+        (p, iter.collect())
+      })
       .collect()
   }
 

@@ -15,7 +15,6 @@ pub(crate) struct Options {
 
 fn diagnostic<M>(
   file: &mlb_statics::SourceFile,
-  severities: &input::Severities,
   range: TextRange,
   message: M,
   code: diagnostic_util::Code,
@@ -24,11 +23,6 @@ fn diagnostic<M>(
 where
   M: fmt::Display,
 {
-  let severity = match severities.get(&code) {
-    Some(&Some(sev)) => sev,
-    Some(None) => return None,
-    None => severity,
-  };
   Some(Diagnostic {
     range: file.syntax.pos_db.range_utf16(range)?,
     message: message.to_string(),
@@ -44,7 +38,6 @@ where
 pub(crate) fn source_file(
   file: &mlb_statics::SourceFile,
   syms: &sml_statics::Syms,
-  severities: &input::Severities,
   options: Options,
 ) -> Vec<Diagnostic> {
   let ignore_after_syntax = match options.ignore {
@@ -56,13 +49,16 @@ pub(crate) fn source_file(
   };
   let mut ret: Vec<_> = std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
-      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
+      // textually identical closures, but types are different
+      diagnostic(file, err.range(), err.display(), err.code(), err.severity())
     }))
     .chain(file.syntax.parse.errors.iter().filter_map(|err| {
-      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
+      // textually identical closures, but types are different
+      diagnostic(file, err.range(), err.display(), err.code(), err.severity())
     }))
     .chain(file.syntax.lower.errors.iter().filter_map(|err| {
-      diagnostic(file, severities, err.range(), err.display(), err.code(), err.severity())
+      // textually identical closures, but types are different
+      diagnostic(file, err.range(), err.display(), err.code(), err.severity())
     }))
     .collect();
   let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic_util::Severity::Error));
@@ -73,7 +69,7 @@ pub(crate) fn source_file(
       let node = syntax.try_to_node(file.syntax.parse.root.syntax())?;
       let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
       let msg = err.display(syms, file.info.meta_vars(), options.lines);
-      diagnostic(file, severities, range, msg, err.code(), err.severity())
+      diagnostic(file, range, msg, err.code(), err.severity())
     }));
     if matches!(options.format, Some(config::init::FormatEngine::Naive)) {
       if let Err(sml_naive_fmt::Error::Comments(ranges)) =
@@ -82,7 +78,6 @@ pub(crate) fn source_file(
         ret.extend(ranges.into_iter().filter_map(|range| {
           diagnostic(
             file,
-            severities,
             range,
             "comment prevents formatting",
             diagnostic_util::Code::n(6001),
