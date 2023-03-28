@@ -26,6 +26,7 @@ pub struct Error(ErrorKind);
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
   Undefined(Item, str_util::Name),
+  Already(Disallow),
 }
 
 impl From<ErrorKind> for Error {

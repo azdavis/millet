@@ -83,8 +83,13 @@ impl Bs {
       Some(x) => x,
       None => return Err(disallow::ErrorKind::Undefined(Item::Val, val.last().clone()).into()),
     };
-    val_info.disallow = Some(Disallow::Directly);
-    Ok(())
+    match &val_info.disallow {
+      None => {
+        val_info.disallow = Some(Disallow::Directly);
+        Ok(())
+      }
+      Some(x) => Err(disallow::ErrorKind::Already(x.clone()).into()),
+    }
   }
 }
 
