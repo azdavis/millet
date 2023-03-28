@@ -104,3 +104,19 @@ pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvRes
   }
   GetEnvResult { val, errors }
 }
+
+pub(crate) fn get_mut_env<'e, 'n, I>(
+  mut env: &'e mut Env,
+  names: I,
+) -> Result<&'e mut Env, &'n str_util::Name>
+where
+  I: IntoIterator<Item = &'n str_util::Name>,
+{
+  for name in names {
+    env = match env.str_env.get_mut(name) {
+      Some(x) => x,
+      None => return Err(name),
+    }
+  }
+  Ok(env)
+}

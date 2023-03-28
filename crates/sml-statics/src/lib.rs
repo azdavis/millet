@@ -12,7 +12,6 @@
 mod compatible;
 mod config;
 mod dec;
-mod disallow;
 mod display;
 mod env;
 mod equality;
@@ -35,6 +34,7 @@ mod util;
 
 pub mod basis;
 pub mod def;
+pub mod disallow;
 pub mod info;
 pub mod mode;
 pub mod path_order;

@@ -1,10 +1,11 @@
 //! Bases. (The plural of "basis".)
 
+use crate::disallow::{self, Disallow};
 use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use crate::types::{
   Equality, IdStatus, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::{def::PrimitiveKind, disallow::Disallow, overload};
+use crate::{def::PrimitiveKind, get_env::get_mut_env, item::Item, overload};
 use fast_hash::FxHashMap;
 
 /// A basis.
@@ -69,22 +70,22 @@ impl Bs {
   }
 
   /// Disallow a value.
-  pub fn disallow_val(&mut self, val: &sml_path::Path) -> Option<()> {
-    let env = get_mut_env(&mut self.env, val.prefix())?;
-    let val_info = env.val_env.get_mut(val.last())?;
+  ///
+  /// # Errors
+  ///
+  /// If the path couldn't be disallowed.
+  pub fn disallow_val(&mut self, val: &sml_path::Path) -> Result<(), disallow::Error> {
+    let env = match get_mut_env(&mut self.env, val.prefix()) {
+      Ok(x) => x,
+      Err(n) => return Err(disallow::ErrorKind::Undefined(Item::Struct, n.clone()).into()),
+    };
+    let val_info = match env.val_env.get_mut(val.last()) {
+      Some(x) => x,
+      None => return Err(disallow::ErrorKind::Undefined(Item::Val, val.last().clone()).into()),
+    };
     val_info.disallow = Some(Disallow::Directly);
-    Some(())
+    Ok(())
   }
-}
-
-fn get_mut_env<'e, 'n, I>(mut env: &'e mut Env, names: I) -> Option<&'e mut Env>
-where
-  I: IntoIterator<Item = &'n str_util::Name>,
-{
-  for name in names {
-    env = env.str_env.get_mut(name)?;
-  }
-  Some(env)
 }
 
 /// Returns the minimal basis and symbols.

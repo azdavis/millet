@@ -18,3 +18,18 @@ impl fmt::Display for Disallow {
     }
   }
 }
+
+/// An error when trying to disallow a path.
+#[derive(Debug)]
+pub struct Error(ErrorKind);
+
+#[derive(Debug)]
+pub(crate) enum ErrorKind {
+  Undefined(Item, str_util::Name),
+}
+
+impl From<ErrorKind> for Error {
+  fn from(value: ErrorKind) -> Self {
+    Error(value)
+  }
+}
