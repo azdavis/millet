@@ -1,5 +1,6 @@
-//! See [`Disallow`]
+//! See [`Disallow`].
 
+use crate::item::Item;
 use std::fmt;
 
 /// A way in which something is not allowed.

@@ -1,9 +1,7 @@
 //! Getting information from environments.
 
-use crate::disallow::Disallow;
-use crate::env::Env;
-use crate::error::{ErrorKind, Item};
 use crate::types::{TyInfo, ValInfo};
+use crate::{disallow::Disallow, env::Env, error::ErrorKind, item::Item};
 
 #[derive(Debug)]
 pub(crate) struct GetEnvResult<T> {

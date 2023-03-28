@@ -1,13 +1,11 @@
 //! Checking patterns.
 
-use crate::env::Cx;
-use crate::error::{ErrorKind, Item};
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::types::{IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo};
 use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
 use crate::{
-  compatible::eq_ty_scheme, config, def, get_env::get_val_info, info::TyEntry, mode::Mode, st::St,
-  ty, ty_var::meta::Generalizable, unify::unify,
+  compatible::eq_ty_scheme, config, def, env::Cx, error::ErrorKind, get_env::get_val_info,
+  info::TyEntry, item::Item, mode::Mode, st::St, ty, ty_var::meta::Generalizable, unify::unify,
 };
 use fast_hash::FxHashSet;
 use std::collections::BTreeSet;

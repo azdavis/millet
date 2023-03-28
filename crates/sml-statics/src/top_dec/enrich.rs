@@ -5,9 +5,8 @@
 //! env only for use here that has the indices?
 
 use crate::compatible::{eq_ty_fn, generalizes};
-use crate::error::{ErrorKind, Item};
 use crate::types::{IdStatus, TyInfo, ValInfo};
-use crate::{env::Env, st::St};
+use crate::{env::Env, error::ErrorKind, item::Item, st::St};
 
 pub(crate) fn get_env(st: &mut St, idx: sml_hir::Idx, general: &Env, specific: &Env) {
   for (name, specific) in specific.str_env.iter() {

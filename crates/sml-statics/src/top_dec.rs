@@ -9,7 +9,7 @@ mod ty_con_paths;
 mod where_ty;
 
 use crate::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
-use crate::error::{ErrorKind, FunctorSugarUser, Item};
+use crate::error::{ErrorKind, FunctorSugarUser};
 use crate::get_env::{get_env, get_ty_info};
 use crate::types::{
   Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv,
@@ -17,8 +17,8 @@ use crate::types::{
 };
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{
-  basis::Bs, config::Cfg, dec, generalize::generalize, mode::Mode, overload, st::St, ty,
-  ty_var::fixed::TyVarSrc,
+  basis::Bs, config::Cfg, dec, generalize::generalize, item::Item, mode::Mode, overload, st::St,
+  ty, ty_var::fixed::TyVarSrc,
 };
 use fast_hash::FxHashSet;
 

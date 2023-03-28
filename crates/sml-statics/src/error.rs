@@ -3,10 +3,10 @@
 mod non_exhaustive;
 mod suggestion;
 
-use crate::disallow::Disallow;
 use crate::display::{record_meta_var, MetaVarNames};
 use crate::ty_var::{bound::BoundTyVar, fixed::FixedTyVar, meta::MetaTyVar};
 use crate::types::{MetaVarInfo, RecordTy, Sym, Syms, Ty, TyScheme};
+use crate::{disallow::Disallow, item::Item};
 use crate::{equality, overload, pat_match::Pat};
 use diagnostic_util::{Code, Severity};
 use std::fmt;
@@ -227,29 +227,6 @@ impl fmt::Display for AppendArg {
     match self {
       AppendArg::Empty => f.write_str("an empty list"),
       AppendArg::Singleton => f.write_str("a singleton list"),
-    }
-  }
-}
-
-#[derive(Debug)]
-pub(crate) enum Item {
-  Val,
-  Ty,
-  TyVar,
-  Struct,
-  Sig,
-  Functor,
-}
-
-impl fmt::Display for Item {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Item::Val => f.write_str("value"),
-      Item::Ty => f.write_str("type"),
-      Item::TyVar => f.write_str("type variable"),
-      Item::Struct => f.write_str("structure"),
-      Item::Sig => f.write_str("signature"),
-      Item::Functor => f.write_str("functor"),
     }
   }
 }

@@ -1,9 +1,8 @@
 //! Utilities.
 
-use crate::error::{ErrorKind, Item};
 use crate::ty_var::meta::{Generalizable, MetaTyVar};
 use crate::types::{RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind};
-use crate::{overload, st::St};
+use crate::{error::ErrorKind, item::Item, overload, st::St};
 use stack_map::StackMap;
 
 pub(crate) fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon) -> Ty {

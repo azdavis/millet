@@ -21,6 +21,7 @@ mod exp;
 mod fmt_util;
 mod generalize;
 mod get_env;
+mod item;
 mod overload;
 mod pat;
 mod pat_match;

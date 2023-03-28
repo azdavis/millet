@@ -1,12 +1,13 @@
 //! Checking expressions.
 
 use crate::env::{Cx, Env};
-use crate::error::{AppendArg, ErrorKind, Item};
+use crate::error::{AppendArg, ErrorKind};
 use crate::types::{Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
 use crate::{
-  dec, def, get_env::get_val_info, pat, st::St, ty, ty_var::meta::Generalizable, unify::unify,
+  dec, def, get_env::get_val_info, item::Item, pat, st::St, ty, ty_var::meta::Generalizable,
+  unify::unify,
 };
 use fast_hash::FxHashSet;
 

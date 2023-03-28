@@ -1,7 +1,7 @@
 //! Checking declarations.
 
 use crate::env::{Cx, Env};
-use crate::error::{ErrorKind, Item};
+use crate::error::ErrorKind;
 use crate::generalize::{generalize, generalize_fixed, RecordMetaVar};
 use crate::get_env::{get_env, get_ty_info, get_val_info};
 use crate::ty_var::{fixed::TyVarSrc, meta::Generalizable};
@@ -9,7 +9,9 @@ use crate::types::{
   Equality, FixedTyVars, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
 };
 use crate::util::{apply, ins_check_name, ins_no_dupe};
-use crate::{config::Cfg, equality, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
+use crate::{
+  config::Cfg, equality, exp, item::Item, pat, pat_match::Pat, st::St, ty, unify::unify,
+};
 use fast_hash::{FxHashMap, FxHashSet};
 
 pub(crate) fn get(
