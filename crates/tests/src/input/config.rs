@@ -166,3 +166,23 @@ version = 1
     [("a.mlb", ""), (config::file::PATH, config)],
   );
 }
+
+#[test]
+fn override_severity_ignore_op_andalso() {
+  let config = r#"
+version = 1
+[diagnostics]
+4011.severity = "ignore"
+"#;
+  check_multi([(config::file::PATH, config), ("a.mlb", "a.sml"), ("a.sml", "val _ = op andalso")]);
+}
+
+#[test]
+fn override_severity_ignore_mlb_undefined() {
+  let config = r#"
+version = 1
+[diagnostics]
+1017.severity = "ignore"
+"#;
+  check_multi([(config::file::PATH, config), ("a.mlb", "structure Foo")]);
+}
