@@ -4,7 +4,7 @@ use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use crate::types::{
   Equality, IdStatus, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
 };
-use crate::{def::PrimitiveKind, overload};
+use crate::{def::PrimitiveKind, disallow::Disallow, overload};
 use fast_hash::FxHashMap;
 
 /// A basis.
@@ -72,7 +72,7 @@ impl Bs {
   pub fn disallow_val(&mut self, val: &sml_path::Path) -> Option<()> {
     let env = get_mut_env(&mut self.env, val.prefix())?;
     let val_info = env.val_env.get_mut(val.last())?;
-    val_info.disallow = Some(crate::disallow::Disallow::Directly);
+    val_info.disallow = Some(Disallow::Directly);
     Some(())
   }
 }
