@@ -6,8 +6,6 @@ use std::fmt;
 /// A way in which something is not allowed.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Disallow {
-  /// TODO remove
-  #[allow(dead_code)]
   Directly,
 }
 
