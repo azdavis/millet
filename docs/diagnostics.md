@@ -2612,9 +2612,39 @@ val _ = four ()
 
 ## 5041
 
-**NOTE:** This error is not yet emitted.
-
 An item was disallowed in the Millet config file.
+
+For instance, given this Millet config file:
+
+```toml
+version = 1
+[language.val]
+"List.tabulate" = false
+```
+
+<!-- @ignore uses millet.toml -->
+
+The following SML file will error:
+
+```sml
+val tab = List.tabulate
+(**       ^^^^^^^^^^^^^ disallowed *)
+```
+
+This will also error:
+
+<!-- @ignore uses millet.toml -->
+
+```sml
+local
+  open List
+in
+  val tab = tabulate
+(**         ^^^^^^^^ disallowed *)
+end
+```
+
+To fix, do not reference disallowed items.
 
 ## 5999
 
