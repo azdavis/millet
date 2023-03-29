@@ -68,11 +68,7 @@ val () = "if you see a type error, Millet is working!"
 
 Millet is affiliated with Project Savanna, a project whose goal is to improve tooling for Standard ML.
 
-There is a [Discord server][discord] for Project Savanna, in which Millet has its own channel. You can get support and discuss the project there.
-
-## License
-
-Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.
+There is a [Discord server][discord] for Project Savanna. The server has a channel for Millet support and discussion.
 
 [blog]: https://azdavis.net/posts/millet/
 [cm]: https://www.smlnj.org/doc/CM/new.pdf

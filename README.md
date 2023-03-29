@@ -22,7 +22,7 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 
 - There is a [VS Code][vscode] extension on the [marketplace][].
 - The same extension is also published on [Open VSX][ovsx].
-- Pre-built releases for many popular platforms are on the [releases page][rel].
+- Pre-built binaries for many popular platforms are on the [releases page][rel].
 
 VS Code and compatible editors like [VSCodium][] are the only editors for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
 
@@ -30,7 +30,7 @@ VS Code and compatible editors like [VSCodium][] are the only editors for which 
 
 Millet is affiliated with Project Savanna, a project whose goal is to improve tooling for Standard ML.
 
-There is a [Discord server][discord] for Project Savanna, and Millet has its own channel there. You can get support and discuss the project there.
+There is a [Discord server][discord] for Project Savanna. The server has a channel for Millet support and discussion.
 
 ## Contributing
 
@@ -53,7 +53,7 @@ The project is mostly written in Rust, so you will need a Rust installation. It 
 - `rustfmt`, a Rust formatter
 - `clippy`, a Rust linter
 
-The MSRV (minimum supported Rust version) is the latest stable.
+The minimum supported Rust version (MSRV) is the latest stable.
 
 If you want to build the VS Code extension in TypeScript as well, you should also install Node.js.
 
