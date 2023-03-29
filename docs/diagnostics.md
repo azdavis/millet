@@ -571,7 +571,7 @@ In a `fun` binding with multiple cases, the cases did not all name the same func
 ```sml
 fun jonathan 1 = 2
   | dio _ = 3
-(** ^^^ expected a function clause for jonathan, found one for dio *)
+(** ^^^ expected a function clause for `jonathan`, found one for `dio` *)
 ```
 
 To fix, use a consistent name for the function.

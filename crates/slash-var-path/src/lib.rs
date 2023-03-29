@@ -29,7 +29,7 @@ impl fmt::Display for Error {
     match self {
       Error::ExpectedCharAfterDollar => f.write_str("expected a character after `$`"),
       Error::ExpectedRRound => f.write_str("expected `)`"),
-      Error::Undefined(s) => write!(f, "undefined path variable: {s}"),
+      Error::Undefined(s) => write!(f, "undefined path variable: `{s}`"),
     }
   }
 }

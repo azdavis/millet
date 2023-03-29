@@ -364,11 +364,11 @@ impl From<SmlfmtError> for FormatError {
 impl fmt::Display for SmlfmtError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      SmlfmtError::Spawn(_) => f.write_str("couldn't spawn smlfmt")?,
-      SmlfmtError::WriteAll(_) => f.write_str("couldn't write data to smlfmt")?,
-      SmlfmtError::Wait(_) => f.write_str("couldn't read data from smlfmt")?,
-      SmlfmtError::Unsuccessful(_) => f.write_str("smlfmt exited unsuccessfully")?,
-      SmlfmtError::Utf8(_) => f.write_str("couldn't convert smlfmt output to UTF-8")?,
+      SmlfmtError::Spawn(_) => f.write_str("couldn't spawn `smlfmt`")?,
+      SmlfmtError::WriteAll(_) => f.write_str("couldn't write data to `smlfmt`")?,
+      SmlfmtError::Wait(_) => f.write_str("couldn't read data from `smlfmt`")?,
+      SmlfmtError::Unsuccessful(_) => f.write_str("`smlfmt` exited unsuccessfully")?,
+      SmlfmtError::Utf8(_) => f.write_str("couldn't convert `smlfmt` output to UTF-8")?,
     }
     if f.alternate() {
       if let Some(e) = self.source() {

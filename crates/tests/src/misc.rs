@@ -37,7 +37,7 @@ fn fun_dec_name_mismatch() {
     r#"
 fun f 1 = 1
   | g _ = 2
-(** ^ expected a function clause for f, found one for g *)
+(** ^ expected a function clause for `f`, found one for `g` *)
 "#,
   );
 }

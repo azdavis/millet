@@ -131,5 +131,5 @@ is
 fn unknown_class() {
   let e =
     cm_syntax::get(r#"Group is foo.sml : succ-ml"#, &slash_var_path::Env::default()).unwrap_err();
-  assert!(e.to_string().contains("unsupported class: succ-ml"));
+  assert!(e.to_string().contains("unsupported class: `succ-ml`"));
 }

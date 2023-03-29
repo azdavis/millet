@@ -48,7 +48,7 @@ impl fmt::Display for Error {
       ErrorKind::ExpectedDesc => f.write_str("expected `Group` or `Library`"),
       ErrorKind::ExpectedPathOrMinus => f.write_str("expected a regular path or `-`"),
       ErrorKind::ExpectedExport => f.write_str("expected an export"),
-      ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: {c}", p.display()),
+      ErrorKind::UnsupportedClass(p, c) => write!(f, "{}: unsupported class: `{c}`", p.display()),
       ErrorKind::CouldNotDetermineClass(p) => {
         write!(f, "{}: couldn't determine class", p.display())
       }

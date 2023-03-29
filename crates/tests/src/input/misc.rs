@@ -33,7 +33,7 @@ fn mlb_cm_err() {
 
 #[test]
 fn undefined_path_var_root() {
-  check_bad_input("s.mlb", "undefined path variable: FOO", [("s.mlb", "$(FOO).sml")]);
+  check_bad_input("s.mlb", "undefined path variable: `FOO`", [("s.mlb", "$(FOO).sml")]);
 }
 
 #[test]
@@ -44,7 +44,7 @@ workspace.root = "a.mlb"
 "#;
   check_bad_input(
     "b.mlb",
-    "undefined path variable: BAR",
+    "undefined path variable: `BAR`",
     [(config::file::PATH, config), ("a.mlb", "b.mlb"), ("b.mlb", "$(BAR).sml")],
   );
 }

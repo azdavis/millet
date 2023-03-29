@@ -83,7 +83,7 @@ impl fmt::Display for ErrorKind {
     match self {
       ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
-        write!(f, "expected a function clause for {want}, found one for {got}")
+        write!(f, "expected a function clause for `{want}`, found one for `{got}`")
       }
       ErrorKind::FunBindWrongNumPats(want, got) => {
         let s = if *want == 1 { "" } else { "s" };

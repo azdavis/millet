@@ -142,7 +142,7 @@ workspace.root = "a.cm"
 "#;
   check_bad_input(
     "a.cm",
-    "undefined path variable: BAD",
+    "undefined path variable: `BAD`",
     [
       (config::file::PATH, config),
       ("a.cm", "Library group($BAD.cm) is b.cm"),
