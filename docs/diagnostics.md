@@ -2456,7 +2456,7 @@ This will error. To fix, do not use the syntax sugar at the call site.
 
 ## 5035
 
-There was a call to `@`, the list append function, with a discouraged first argument.
+There was a call to `@`, the list append function, with a discouraged argument.
 
 <!-- @ignore this check does not work with mini std basis -->
 
