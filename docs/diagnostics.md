@@ -673,10 +673,10 @@ There was a bar (aka `|`) before the first:
 - Constructor in a `datatype` declaration or case.
 
 ```sml
-    datatype d =
-    | Chihiro
-(** ^ preceding `|` *)
-    | Sheeta
+datatype d =
+| Chihiro
+(** + preceding `|` *)
+| Sheeta
 ```
 
 To fix, remove the bar.
