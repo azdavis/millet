@@ -63,15 +63,33 @@ functor F() = struct end
 }
 
 #[test]
-fn val() {
+fn val_smoke() {
   let config = r#"
 version = 1
 [language.val]
-"List.hd" = false
+"List.tabulate" = false
 "#;
   let sml = r#"
-val h = List.hd
-(**     ^^^^^^^ disallowed *)
+val tab = List.tabulate
+(**       ^^^^^^^^^^^^^ disallowed *)
+"#;
+  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+}
+
+#[test]
+fn val_open() {
+  let config = r#"
+version = 1
+[language.val]
+"List.tabulate" = false
+"#;
+  let sml = r#"
+local
+  open List
+in
+  val tab = tabulate
+(**         ^^^^^^^^ disallowed *)
+end
 "#;
   multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
 }
