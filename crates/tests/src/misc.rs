@@ -12,7 +12,7 @@ val _ = fn f => fn x =>
     f x;
     f x x x andalso false;
     f 3;
-(** ^ expected int -> ?b, found unit *)
+(** ^ expected `int -> ?b`, found `unit` *)
     f: unit;
     false
   )
@@ -61,7 +61,7 @@ val _ =
   case 0 of
     1 => 1
   | (2, 2) => 2
-(** ^^^^^^ expected int, found int * int *)
+(** ^^^^^^ expected `int`, found `int * int` *)
   | _ => 3
 "#,
   );
@@ -86,7 +86,7 @@ fn not_arrow_ty() {
   check(
     r#"
 val _ = "foo" 3
-(**     ^^^^^ expected int -> ?b, found string *)
+(**     ^^^^^ expected `int -> ?b`, found `string` *)
 "#,
   );
 }
@@ -96,7 +96,7 @@ fn ty_var_fixed() {
   check(
     r#"
 val _ = fn id => (id 3; id "nope")
-(**                  ^ expected string, found int *)
+(**                  ^ expected `string`, found `int` *)
 "#,
   );
 }
@@ -107,7 +107,7 @@ fn useless_ty_var() {
     r#"
 fun 'a f () = 3
 val _ = f: unit
-(**     ^^^^^^^ expected unit, found unit -> int *)
+(**     ^^^^^^^ expected `unit`, found `unit -> int` *)
 "#,
   );
 }

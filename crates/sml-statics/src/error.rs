@@ -99,11 +99,11 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let got = got.display(&mvs, self.syms);
         match self.lines {
           config::ErrorLines::One => {
-            write!(f, ": expected {want}, found {got}")
+            write!(f, ": expected `{want}`, found `{got}`")
           }
           config::ErrorLines::Many => {
-            writeln!(f, "\n  expected {want}")?;
-            write!(f, "     found {got}")
+            writeln!(f, "\n  expected `{want}`")?;
+            write!(f, "     found `{got}`")
           }
         }
       }
@@ -300,56 +300,56 @@ impl fmt::Display for IncompatibleTysFlavorDisplay<'_> {
     match self.flavor {
       IncompatibleTysFlavor::BoundTyVar(_, _) => f.write_str("type variables are different"),
       IncompatibleTysFlavor::FixedTyVar(a, b) => {
-        write!(f, "{a} and {b} are different type variables")
+        write!(f, "`{a}` and `{b}` are different type variables")
       }
       IncompatibleTysFlavor::MissingRow(lab) => {
-        write!(f, "record or tuple type is missing field: {lab}")
+        write!(f, "record type is missing field: `{lab}`")
       }
       IncompatibleTysFlavor::ExtraRows(rows) => {
-        write!(f, "record or tuple type has extra fields: ")?;
+        write!(f, "record type has extra fields: ")?;
         fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| lab))
       }
       IncompatibleTysFlavor::Con(a, b) => {
         let a = a.display(self.syms);
         let b = b.display(self.syms);
-        write!(f, "{a} and {b} are different type constructors")
+        write!(f, "`{a}` and `{b}` are different type constructors")
       }
       IncompatibleTysFlavor::Head(a, b) => {
         let a_display = a.display(self.meta_vars, self.syms);
         let b_display = b.display(self.meta_vars, self.syms);
         let a_desc = a.desc();
         let b_desc = b.desc();
-        write!(f, "{a_display} is {a_desc}, but {b_display} is {b_desc}")
+        write!(f, "`{a_display}` is {a_desc}, but `{b_display}` is {b_desc}")
       }
       IncompatibleTysFlavor::OverloadCon(ov, s) => {
         let s = s.display(self.syms);
-        write!(f, "{s} is not compatible with the {ov} overload")
+        write!(f, "`{s}` is not compatible with the `{ov}` overload")
       }
       IncompatibleTysFlavor::OverloadUnify(want, got) => {
-        write!(f, "{want} and {got} are incompatible overloads")
+        write!(f, "`{want}` and `{got}` are incompatible overloads")
       }
       IncompatibleTysFlavor::OverloadRecord(_, ov) => {
-        write!(f, "record types is not compatible with the {ov} overload")
+        write!(f, "record types are not compatible with the `{ov}` overload")
       }
       IncompatibleTysFlavor::OverloadHeadMismatch(ov, ty) => {
         let ty_display = ty.display(self.meta_vars, self.syms);
         let ty_desc = ty.desc();
-        write!(f, "{ov} is not compatible with {ty_display}, which is {ty_desc}")
+        write!(f, "`{ov}` is not compatible with `{ty_display}`, which is {ty_desc}")
       }
       IncompatibleTysFlavor::UnresolvedRecordMissingRow(lab) => {
-        write!(f, "unresolved record or tuple type is missing field: {lab}")
+        write!(f, "unresolved record type is missing field: `{lab}`")
       }
       IncompatibleTysFlavor::UnresolvedRecordHeadMismatch(_, ty) => {
         let ty_display = ty.display(self.meta_vars, self.syms);
         let ty_desc = ty.desc();
         write!(
           f,
-          "unresolved record or tuple type is not compatible with {ty_display}, which is {ty_desc}"
+          "unresolved record type is not compatible with `{ty_display}`, which is {ty_desc}"
         )
       }
       IncompatibleTysFlavor::NotEqTy(ty, not_eq) => {
         let ty = ty.display(self.meta_vars, self.syms);
-        write!(f, "not an equality type because it contains {not_eq}: {ty}")
+        write!(f, "not an equality type because it contains {not_eq}: `{ty}`")
       }
     }
   }

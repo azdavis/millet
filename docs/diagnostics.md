@@ -1442,7 +1442,7 @@ Millet tries to report which type was "expected" and which was "found". For inst
 
 ```sml
 val x : int = "no"
-(** + expected int, found string *)
+(** + expected `int`, found `string` *)
 ```
 
 This hints at a possible strategy for debugging this kind of error: if the expected and found types are confusing, try adding more type annotations.
@@ -1454,7 +1454,7 @@ This error commonly occurs when applying a function to an argument, but the argu
 ```sml
 fun choose x = if x then "sosuke" else "pazu"
 val _ = choose 4
-(**            ^ expected bool, found int *)
+(**            ^ expected `bool`, found `int` *)
 ```
 
 ### Fully qualified names
@@ -1475,7 +1475,7 @@ structure Foo :> FOO = struct
 end
 
 val y = Foo.x : unit
-(**     ^^^^^^^^^^^^ expected unit, found FOO.t *)
+(**     ^^^^^^^^^^^^ expected `unit`, found `FOO.t` *)
 ```
 
 ### Overloads

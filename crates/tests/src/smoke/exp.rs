@@ -156,7 +156,7 @@ fn if_() {
     r#"
 val _ = fn (a, b, c) => if a then b 1 else c 2
 val _ = if 1 then 2 else 3
-(**        ^ expected bool, found int *)
+(**        ^ expected `bool`, found `int` *)
 "#,
   );
 }
