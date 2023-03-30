@@ -1614,7 +1614,7 @@ datatype d = A of string | B of int | C of bool
 
 fun f (x : d) : int =
     case x of
-(** ^^^^^^^^^ non-exhaustive case: missing A _ *)
+(** ^^^^^^^^^ non-exhaustive case: missing `A _` *)
       B y => y
     | C z => if z then 1 else 2
 ```
@@ -1633,7 +1633,7 @@ datatype d = A of string | B of int | C of bool
 fun f (x : d) : string =
   let
     val A y = x
-(**     ^^^ non-exhaustive binding: missing C _, B _ *)
+(**     ^^^ non-exhaustive binding: missing `C _`, `B _` *)
   in
     y
   end

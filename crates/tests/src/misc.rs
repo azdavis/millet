@@ -392,7 +392,7 @@ fn op_false() {
   check(
     r#"
 fun wot (op false) = ()
-(** + missing true *)
+(** + missing `true` *)
 "#,
   );
 }

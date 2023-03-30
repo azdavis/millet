@@ -8,7 +8,7 @@ fn smoke_case() {
     r#"
 val _ =
     case 3 of
-(** ^^^^^^^^^ non-exhaustive case: missing _ *)
+(** ^^^^^^^^^ non-exhaustive case: missing `_` *)
     4 => 5
 "#,
   );
@@ -19,7 +19,7 @@ fn smoke_binding_int() {
   check(
     r#"
 val 3 = 1 + 2
-(** ^ non-exhaustive binding: missing _ *)
+(** ^ non-exhaustive binding: missing `_` *)
 "#,
   );
 }
@@ -30,7 +30,7 @@ fn smoke_binding_datatype() {
     r#"
 datatype bin = Zero | One
 val One = One
-(** ^^^ non-exhaustive binding: missing Zero *)
+(** ^^^ non-exhaustive binding: missing `Zero` *)
 "#,
   );
 }
@@ -42,7 +42,7 @@ fn big_datatype_missing() {
 datatype hmm = A | B of int | C of hmm | D of string
 val _ =
     case A of
-(** ^^^^^^^^^ non-exhaustive case: missing C (D _), C (C (D _)), C (C (C _)), and 2 others *)
+(** ^^^^^^^^^ non-exhaustive case: missing `C (D _)`, `C (C (D _))`, `C (C (C _))`, and 2 others *)
     A => 0
   | B 1 => 1
   | B 3 => 2
@@ -68,7 +68,7 @@ fn int_tuple() {
     r#"
 val _ =
     case (1, 2) of
-(** ^^^^^^^^^^^^^^ non-exhaustive case: missing (_, _) *)
+(** ^^^^^^^^^^^^^^ non-exhaustive case: missing `(_, _)` *)
     (3, 4) => 0
   | (x, 6) => x
 "#,
@@ -102,7 +102,7 @@ fn bool_tuple() {
     r#"
 val _ =
     case (true, false) of
-(** ^^^^^^^^^^^^^^^^^^^^^ non-exhaustive case: missing (false, true) *)
+(** ^^^^^^^^^^^^^^^^^^^^^ non-exhaustive case: missing `(false, true)` *)
     (true, _) => 0
   | (_, false) => 1
 "#,
@@ -243,7 +243,7 @@ datatype ab = A | B
 datatype cd = C | D
 val x =
     case (A, C, A) of
-(** ^^^^^^^^^^^^^^^^^ non-exhaustive case: missing (A, D, B) *)
+(** ^^^^^^^^^^^^^^^^^ non-exhaustive case: missing `(A, D, B)` *)
     (A, C, _) => 0
   | (B, _, _) => 1
   | (_, _, A) => 4
@@ -273,7 +273,7 @@ fn list_missing_nil() {
     r#"
 fun f xs =
     case xs of
-(** ^^^^^^^^^^ non-exhaustive case: missing [] *)
+(** ^^^^^^^^^^ non-exhaustive case: missing `[]` *)
     _ :: _ => 0
 "#,
   );
@@ -285,7 +285,7 @@ fn list_missing_cons_smoke() {
     r#"
 fun f xs =
     case xs of
-(** ^^^^^^^^^^ non-exhaustive case: missing _ :: _ *)
+(** ^^^^^^^^^^ non-exhaustive case: missing `_ :: _` *)
     [] => 0
 "#,
   );
@@ -297,7 +297,7 @@ fn list_missing_len_1() {
     r#"
 fun f xs =
     case xs of
-(** ^^^^^^^^^^ non-exhaustive case: missing [_] *)
+(** ^^^^^^^^^^ non-exhaustive case: missing `[_]` *)
     [] => 0
   | _ :: _ :: _ => 1
 "#,
@@ -310,7 +310,7 @@ fn list_missing_len_3() {
     r#"
 fun f xs =
     case xs of
-(** ^^^^^^^^^^ non-exhaustive case: missing [_, _, _] *)
+(** ^^^^^^^^^^ non-exhaustive case: missing `[_, _, _]` *)
     [] => 0
   | [_] => 1
   | [_, _] => 2
@@ -325,7 +325,7 @@ fn list_missing_true_singleton() {
     r#"
 fun f xs =
     case xs of
-(** ^^^^^^^^^^ non-exhaustive case: missing [true] *)
+(** ^^^^^^^^^^ non-exhaustive case: missing `[true]` *)
     [] => 0
   | [false] => 1
   | _ :: _ :: _ => 2
@@ -339,7 +339,7 @@ fn list_missing_cons_prec() {
     r#"
 fun append xs ys =
     case xs of
-(** ^^^^^^^^^^ non-exhaustive case: missing (_ :: _) :: _ *)
+(** ^^^^^^^^^^ non-exhaustive case: missing `(_ :: _) :: _` *)
     [] => ys
   | [] :: ys => ys
 "#,
@@ -413,7 +413,7 @@ end
 
 fun f (x : Str.d): int =
     case x of
-(** ^^^^^^^^^ non-exhaustive case: missing B *)
+(** ^^^^^^^^^ non-exhaustive case: missing `B` *)
     Str.A => 1
 "#,
   );
@@ -433,7 +433,7 @@ end
 
 fun f (x : Str.d): int =
     case x of
-(** ^^^^^^^^^ non-exhaustive case: missing B *)
+(** ^^^^^^^^^ non-exhaustive case: missing `B` *)
     Str.A => 1
 "#,
   );
@@ -445,7 +445,7 @@ fn rest_non_exhaustive() {
     r#"
 fun f x =
     case x of
-(** ^^^^^^^^^ non-exhaustive case: missing {a = _, b = _} *)
+(** ^^^^^^^^^ non-exhaustive case: missing `{a = _, b = _}` *)
     {a = 3, ...} => 1
   | {b = 5, ...} => 2
   | {a = 1, b = 2} => 3

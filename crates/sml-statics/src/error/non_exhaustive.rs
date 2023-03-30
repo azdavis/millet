@@ -15,7 +15,8 @@ pub(crate) fn get(
   write!(f, "non-exhaustive {kind}: missing ")?;
   assert!(!pats.is_empty());
   let max_len = 3usize;
-  let iter = pats.iter().take(max_len).map(|pat| PatDisplay { pat, syms, prec: PatPrec::Min });
+  let iter =
+    pats.iter().take(max_len).map(|pat| Backticks(PatDisplay { pat, syms, prec: PatPrec::Min }));
   comma_seq(f, iter)?;
   if let Some(n) = pats.len().checked_sub(max_len) {
     if n != 0 {
@@ -219,5 +220,16 @@ impl fmt::Display for RowDisplay<'_> {
       }
       RowDisplay::Rest => f.write_str("..."),
     }
+  }
+}
+
+struct Backticks<T>(T);
+
+impl<T> fmt::Display for Backticks<T>
+where
+  T: fmt::Display,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "`{}`", self.0)
   }
 }
