@@ -119,7 +119,7 @@ fn label() {
   check(
     r#"
 val _ = { a = 3, a = 4 }
-(**     ^^^^^^^^^^^^^^^^ duplicate label: a *)
+(**     ^^^^^^^^^^^^^^^^ duplicate label: `a` *)
 "#,
   );
 }

@@ -7,7 +7,7 @@ fn apply_eq() {
   check(
     r#"
 fun apply_eq (op =) a b = a = b
-(** + cannot re-bind name: = *)
+(** + cannot re-bind name: `=` *)
 "#,
   );
 }
@@ -17,7 +17,7 @@ fn ref_ctor() {
   check(
     r#"
 datatype no = ref
-(** + cannot re-bind name: ref *)
+(** + cannot re-bind name: `ref` *)
 "#,
   );
 }
@@ -27,7 +27,7 @@ fn val_it() {
   check(
     r#"
 val it = 3
-(** + cannot re-bind name: it *)
+(** + cannot re-bind name: `it` *)
 "#,
   );
 }

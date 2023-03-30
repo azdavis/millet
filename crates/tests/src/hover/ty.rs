@@ -79,7 +79,7 @@ fun add x y = x + y
 fn unsolved_record() {
   check(
     r#"
-(**               vvvv cannot resolve `...` in record type: { foo : ?a, ... } *)
+(**               vvvv cannot resolve `...` in record type: `{ foo : ?a, ... }` *)
 fun getFoo x = if #foo x then 3 else 4
 (**                    ^ hover: { foo : ?b, ... } *)
 "#,

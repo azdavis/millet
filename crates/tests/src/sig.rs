@@ -51,7 +51,7 @@ exception Foo
 structure S: sig
   exception E
 end = struct
-(**   ^^^^^^ incompatible identifier statuses: E *)
+(**   ^^^^^^ incompatible identifier statuses: `E` *)
   val E = Foo
 end
 "#,

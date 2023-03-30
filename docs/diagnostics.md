@@ -1410,7 +1410,7 @@ Consider this example:
 
 ```sml
 fun f x = x x
-(**       ^ circular type: ?a occurs in ?a -> ?b *)
+(**       ^ circular type: `?a` occurs in `?a -> ?b` *)
 ```
 
 When typechecking `f`, Millet does the following:
@@ -1540,7 +1540,7 @@ There was a duplicate label.
 
 ```sml
 val x = { a = 1, a = 2 }
-(**     ^^^^^^^^^^^^^^^^ duplicate label: a *)
+(**     ^^^^^^^^^^^^^^^^ duplicate label: `a` *)
 ```
 
 To fix, use differently named labels, or remove one of the record rows.
@@ -1768,7 +1768,7 @@ exception e
 fun f x =
   case x of
     e as [_] => 1 :: e
-(** ^^^^^^^^ invalid `as` pat name: e *)
+(** ^^^^^^^^ invalid `as` pat name: `e` *)
   | _ => []
 ```
 
@@ -1791,14 +1791,14 @@ Here, the type `d` is only available for the scope of the `let` expression, but 
 ```sml
 val x =
     let datatype d = D in D end
-(** ^^^ type escapes its scope: d *)
+(** ^^^ type escapes its scope: `d` *)
 ```
 
 This can also occur for explicit type variables, as in this example:
 
 ```sml
 fun f b x =
-(** + type escapes its scope: 'a *)
+(** + type escapes its scope: `'a` *)
   let
     fun g (y : 'a) = if b then x else y
   in
@@ -1920,7 +1920,7 @@ In an exception copy declaration, the right hand side was not an exception.
 ```sml
 val e = 3
 exception Nope = e
-(** + not an exception: e *)
+(** + not an exception: `e` *)
 ```
 
 To fix, only use exceptions on the right hand side.
@@ -1946,7 +1946,7 @@ Certain names in certain namespaces may not be rebound. These names are:
 
 ```sml
 val it = 3
-(** ^^ cannot re-bind name: it *)
+(** ^^ cannot re-bind name: `it` *)
 ```
 
 To fix, do not attempt to rebind these names.
@@ -1967,7 +1967,7 @@ exception Foo
 structure S
   : sig    exception E       end
   = struct val       E = Foo end
-(** ^^^^^^ incompatible identifier statuses: E *)
+(** ^^^^^^ incompatible identifier statuses: `E` *)
 ```
 
 To fix, ensure the names have compatible statuses.
@@ -1986,7 +1986,7 @@ A record type couldn't be fully resolved, due to the use of a `...` pattern row 
 
 ```sml
 fun getX {x, ...} = x
-(** + cannot resolve `...` in record type: { x : ?a, ... } *)
+(** + cannot resolve `...` in record type: `{ x : ?a, ... }` *)
 ```
 
 SML lacks row polymorphism, so the above example function does not typecheck.
@@ -2002,7 +2002,7 @@ This error may arise when using `#` selectors.
 
 ```sml
 fun addFooBar x = #foo x + #bar x
-(** + cannot resolve `...` in record type: { bar : <num>, foo : <num>, ... } *)
+(** + cannot resolve `...` in record type: `{ bar : <num>, foo : <num>, ... }` *)
 ```
 
 Again, the fix is usually to add a type annotation. Though, an alternative would be to avoid `...` pattern rows altogether.

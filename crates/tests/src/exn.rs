@@ -45,7 +45,7 @@ fn alias_not_exn() {
     r#"
 val x = 3
     exception Bad = x
-(** ^^^^^^^^^^^^^^^^^ not an exception: x *)
+(** ^^^^^^^^^^^^^^^^^ not an exception: `x` *)
 "#,
   );
 }

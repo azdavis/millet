@@ -75,7 +75,7 @@ exception Bad
 val _ =
   case 3 of
     Bad as _ => 1
-(** ^^^^^^^^ invalid `as` pat name: Bad *)
+(** ^^^^^^^^ invalid `as` pat name: `Bad` *)
   | _ => 2
 "#,
   );

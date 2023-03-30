@@ -32,7 +32,7 @@ fn rebind_eq() {
   check(
     r#"
 val op = = 13
-(** ^^^^ cannot re-bind name: = *)
+(** ^^^^ cannot re-bind name: `=` *)
 "#,
   );
 }
@@ -42,7 +42,7 @@ fn rebind_true() {
   check(
     r#"
 fun true () = ()
-(** ^^^^^^^^^^^^ cannot re-bind name: true *)
+(** ^^^^^^^^^^^^ cannot re-bind name: `true` *)
 "#,
   );
 }
@@ -52,7 +52,7 @@ fn rebind_false() {
   check(
     r#"
 fun false () = ()
-(** ^^^^^^^^^^^^^ cannot re-bind name: false *)
+(** ^^^^^^^^^^^^^ cannot re-bind name: `false` *)
 "#,
   );
 }
@@ -62,7 +62,7 @@ fn rebind_nil() {
   check(
     r#"
 fun nil () = ()
-(** ^^^^^^^^^^^ cannot re-bind name: nil *)
+(** ^^^^^^^^^^^ cannot re-bind name: `nil` *)
 "#,
   );
 }
@@ -72,7 +72,7 @@ fn rebind_cons() {
   check(
     r#"
 fun op :: () = ()
-(** ^^^^^^^^^^^^^ cannot re-bind name: :: *)
+(** ^^^^^^^^^^^^^ cannot re-bind name: `::` *)
 "#,
   );
 }
@@ -82,7 +82,7 @@ fn rebind_ref() {
   check(
     r#"
 fun ref () = ()
-(** ^^^^^^^^^^^ cannot re-bind name: ref *)
+(** ^^^^^^^^^^^ cannot re-bind name: `ref` *)
 "#,
   );
 }

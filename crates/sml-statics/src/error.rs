@@ -86,7 +86,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mvs.extend_for(&mv);
         let mv = mv.display(&mvs, self.syms);
         let ty = ty.display(&mvs, self.syms);
-        write!(f, "circular type: {mv} occurs in {ty}")
+        write!(f, "circular type: `{mv}` occurs in `{ty}`")
       }
       ErrorKind::IncompatibleTys(flavor, want, got) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
@@ -107,7 +107,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
           }
         }
       }
-      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: {lab}"),
+      ErrorKind::DuplicateLab(lab) => write!(f, "duplicate label: `{lab}`"),
       ErrorKind::RealPat => f.write_str("real literal used as a pattern"),
       ErrorKind::UnreachablePattern => f.write_str("unreachable pattern"),
       ErrorKind::NonExhaustiveCase(pats) => non_exhaustive::get(f, self.syms, pats, "case"),
@@ -115,28 +115,28 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::PatValIdStatus => f.write_str("value binding used as a pattern"),
       ErrorKind::ConPatMustNotHaveArg => f.write_str("unexpected argument for constructor pattern"),
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
-      ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: {name}"),
+      ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: `{name}`"),
       ErrorKind::TyEscape(ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);
         let ty = ty.display(&mvs, self.syms);
-        write!(f, "type escapes its scope: {ty}")
+        write!(f, "type escapes its scope: `{ty}`")
       }
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
       ErrorKind::WrongNumTyArgs(want, got) => {
         let s = if *want == 1 { "" } else { "s" };
         write!(f, "expected {want} type argument{s}, found {got}")
       }
-      ErrorKind::ExnCopyNotExnIdStatus(path) => write!(f, "not an exception: {path}"),
-      ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: {name}"),
-      ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: {name}"),
+      ErrorKind::ExnCopyNotExnIdStatus(path) => write!(f, "not an exception: `{path}`"),
+      ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: `{name}`"),
+      ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: `{name}`"),
       ErrorKind::UnresolvedRecordTy(rows) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         for ty in rows.values() {
           mvs.extend_for(ty);
         }
         let ty = record_meta_var(&mvs, self.syms, rows);
-        write!(f, "cannot resolve `...` in record type: {ty}")
+        write!(f, "cannot resolve `...` in record type: `{ty}`")
       }
       ErrorKind::OrPatNotSameBindings(name) => {
         write!(f, "{name} was bound in one alternative, but not in another")

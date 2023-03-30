@@ -240,7 +240,7 @@ fn inner_fun_scope_implicit() {
   check(
     r#"
 fun f x = let fun g (y : 'a) = if true then x else y in () end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: `'a` *)
 "#,
   );
 }
@@ -250,7 +250,7 @@ fn inner_fun_scope_explicit() {
   check(
     r#"
 fun f x = let fun 'a g (y : 'a) = if true then x else y in () end
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ type escapes its scope: `'a` *)
 "#,
   );
 }

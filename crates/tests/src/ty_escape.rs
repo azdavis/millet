@@ -7,7 +7,7 @@ fn smoke() {
   check(
     r#"
 val _ = let datatype bad = guh in guh end
-(**     ^^^ type escapes its scope: bad *)
+(**     ^^^ type escapes its scope: `bad` *)
 "#,
   );
 }
@@ -17,7 +17,7 @@ fn seq() {
   check(
     r#"
 val _ = let datatype foo = bar val quz = bar in (bar; 3 + 3; quz) end
-(**     ^^^ type escapes its scope: foo *)
+(**     ^^^ type escapes its scope: `foo` *)
 "#,
   );
 }
@@ -36,7 +36,7 @@ fn branch() {
   check(
     r#"
 val _ = let datatype d = D in if 3 < 4 then [] else [(3, D, "hi")] end
-(**     ^^^ type escapes its scope: d *)
+(**     ^^^ type escapes its scope: `d` *)
 "#,
   );
 }
@@ -47,7 +47,7 @@ fn shadow() {
     r#"
 datatype t = One
 val _ = let datatype t = Two in Two end
-(**     ^^^ type escapes its scope: t *)
+(**     ^^^ type escapes its scope: `t` *)
 "#,
   );
 }
