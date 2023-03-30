@@ -3,20 +3,19 @@
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
 use paths::FileSystem as _;
+use std::path::PathBuf;
 
-pub(crate) fn get<'a, I>(files: I) -> (input::Input, paths::Store)
+pub(crate) fn get<'a, I>(iter: I) -> (input::Input, paths::Store)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
   let _ = env_logger::builder().is_test(true).try_init();
-  let map: FxHashMap<_, _> = files
-    .into_iter()
-    .map(|(name, contents)| {
-      let mut buf = ROOT.as_path().to_owned();
-      buf.push(name);
-      (buf, contents.to_owned())
-    })
-    .collect();
+  let mut map = FxHashMap::<PathBuf, String>::default();
+  for (name, contents) in iter {
+    let mut buf = ROOT.as_path().to_owned();
+    buf.push(name);
+    assert!(map.insert(buf, contents.to_owned()).is_none(), "duplicate key: {name}");
+  }
   let fs = paths::MemoryFileSystem::new(map);
   let mut store = paths::Store::new();
   let input = input::Input::new(&fs, &mut store, &ROOT);
