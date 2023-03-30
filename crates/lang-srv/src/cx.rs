@@ -1,7 +1,7 @@
 //! See [`Cx`].
 
 use crossbeam_channel::Sender;
-use diagnostic_util::Code;
+use diagnostic::Code;
 use lsp_server::{Message, Notification, ReqQueue, Response};
 use lsp_types::Url;
 

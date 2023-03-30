@@ -11,7 +11,7 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
-diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 elapsed = { git = "https://github.com/azdavis/language-util.git" }
 fmt-util = { git = "https://github.com/azdavis/language-util.git" }
 input = { path = "../input" }

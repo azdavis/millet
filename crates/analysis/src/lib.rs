@@ -4,11 +4,10 @@
 // TODO remove once rustfmt support lands
 #![allow(clippy::manual_let_else)]
 
-mod diagnostics;
+mod diagnostic;
 mod matcher;
 mod source_files;
 
-use diagnostic_util::Diagnostic;
 use paths::{PathId, PathMap, WithPath};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::process::{Command, Stdio};
@@ -16,6 +15,7 @@ use std::{error::Error, fmt, io::Write as _};
 use text_pos::{PositionUtf16, RangeUtf16};
 use text_size_util::TextRange;
 
+pub use crate::diagnostic::Diagnostic;
 pub use sml_statics::info::CompletionItem;
 
 /// The url to go to for information about diagnostics.
@@ -25,7 +25,7 @@ pub const URL: &str = "https://github.com/azdavis/millet/blob/main/docs/diagnost
 #[derive(Debug)]
 pub struct Analysis {
   std_basis: mlb_statics::StdBasis,
-  diagnostics_options: diagnostics::Options,
+  diagnostics_options: diagnostic::Options,
   source_files: PathMap<mlb_statics::SourceFile>,
   syms: sml_statics::Syms,
 }
@@ -41,7 +41,7 @@ impl Analysis {
   ) -> Self {
     Self {
       std_basis: std_basis.to_mlb_statics(),
-      diagnostics_options: diagnostics::Options { lines, ignore, format },
+      diagnostics_options: diagnostic::Options { lines, ignore, format },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
     }
@@ -60,7 +60,7 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    diagnostics::source_file(&file, &syms, self.diagnostics_options)
+    diagnostic::source_file(&file, &syms, self.diagnostics_options)
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
@@ -92,7 +92,7 @@ impl Analysis {
         Some((path, vec![err]))
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
-        let ds = diagnostics::source_file(file, &self.syms, self.diagnostics_options);
+        let ds = diagnostic::source_file(file, &self.syms, self.diagnostics_options);
         (path, ds)
       }))
       .map(|(p, ds)| {

@@ -1,6 +1,6 @@
 //! Pervasive utilities.
 
-use diagnostic_util::{Code, Severity};
+use diagnostic::{Code, Severity};
 use paths::PathId;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -18,7 +18,7 @@ pub(crate) enum ErrorKind {
   Mlb(mlb_syntax::Error),
   Cycle,
   Duplicate(str_util::Name),
-  InvalidErrorCode(str_util::SmolStr, diagnostic_util::ParseCodeError),
+  InvalidErrorCode(str_util::SmolStr, diagnostic::ParseCodeError),
   SourcePathNotInFiles,
   GlobPattern(paths::PatternError),
   EmptyGlob(str_util::SmolStr),

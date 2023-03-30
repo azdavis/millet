@@ -15,7 +15,7 @@ fn fail_no_such_path<const N: usize>(singleton: [(&str, &str); N]) {
     std_basis: analysis::StdBasis::Minimal,
     outcome: raw::Outcome::Fail,
     limit: raw::Limit::First,
-    min_severity: diagnostic_util::Severity::Warning,
+    min_severity: diagnostic::Severity::Warning,
     expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
   };
   raw::get(singleton, opts);
@@ -26,7 +26,7 @@ fn multi_std_basis<const N: usize>(outcome: raw::Outcome, singleton: [(&str, &st
     std_basis: analysis::StdBasis::Full,
     outcome,
     limit: raw::Limit::First,
-    min_severity: diagnostic_util::Severity::Warning,
+    min_severity: diagnostic::Severity::Warning,
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(singleton, opts);

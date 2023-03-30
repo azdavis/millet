@@ -153,7 +153,7 @@ impl Config {
     }
 
     for (code, config) in parsed.diagnostics {
-      let code = match code.parse::<diagnostic_util::Code>() {
+      let code = match code.parse::<diagnostic::Code>() {
         Ok(x) => x,
         Err(e) => {
           errors.push(Error::new(
@@ -166,8 +166,8 @@ impl Config {
       };
       let sev = match config.severity {
         config::file::Severity::Ignore => None,
-        config::file::Severity::Warning => Some(diagnostic_util::Severity::Warning),
-        config::file::Severity::Error => Some(diagnostic_util::Severity::Error),
+        config::file::Severity::Warning => Some(diagnostic::Severity::Warning),
+        config::file::Severity::Error => Some(diagnostic::Severity::Error),
       };
       ret.severities.insert(code, sev);
     }

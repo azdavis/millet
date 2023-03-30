@@ -80,7 +80,7 @@ val _ = foo
     std_basis: analysis::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::None,
-    min_severity: diagnostic_util::Severity::Error,
+    min_severity: diagnostic::Severity::Error,
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(files, opts);

@@ -1,7 +1,7 @@
 //! Utilities.
 
 use config::lang::Language;
-use diagnostic_util::{Code, Severity};
+use diagnostic::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_syntax::{ast::SyntaxNodePtr, rowan::TextRange};
 use std::fmt;

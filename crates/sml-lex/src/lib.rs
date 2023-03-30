@@ -4,7 +4,7 @@
 // TODO remove once rustfmt support lands
 #![allow(clippy::manual_let_else)]
 
-use diagnostic_util::{Code, Severity};
+use diagnostic::{Code, Severity};
 use lex_util::{advance_while, block_comment, is_whitespace, string};
 use sml_syntax::rowan::{TextRange, TextSize};
 use sml_syntax::{token::Token, SyntaxKind as SK};

@@ -1,6 +1,6 @@
 //! The parser. A thin wrapper around event-parse, with operator precedence.
 
-use diagnostic_util::{Code, Severity};
+use diagnostic::{Code, Severity};
 use sml_syntax::{rowan::TextRange, SyntaxKind};
 use std::fmt;
 

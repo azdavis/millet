@@ -8,7 +8,7 @@ use crate::ty_var::{bound::BoundTyVar, fixed::FixedTyVar, meta::MetaTyVar};
 use crate::types::{MetaVarInfo, RecordTy, Sym, Syms, Ty, TyScheme};
 use crate::{disallow::Disallow, item::Item};
 use crate::{equality, overload, pat_match::Pat};
-use diagnostic_util::{Code, Severity};
+use diagnostic::{Code, Severity};
 use std::fmt;
 
 #[derive(Debug)]

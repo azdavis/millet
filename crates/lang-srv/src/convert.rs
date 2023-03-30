@@ -24,7 +24,7 @@ pub(crate) fn file_url(path: &std::path::Path) -> Result<Url> {
 }
 
 pub(crate) fn diagnostics(
-  errors: Vec<diagnostic_util::Diagnostic>,
+  errors: Vec<analysis::Diagnostic>,
   more_info_hint: bool,
 ) -> Vec<lsp_types::Diagnostic> {
   errors
@@ -33,12 +33,12 @@ pub(crate) fn diagnostics(
     .collect()
 }
 
-pub(crate) fn error_url(code: diagnostic_util::Code) -> Url {
+pub(crate) fn error_url(code: diagnostic::Code) -> Url {
   Url::parse(&format!("{}#{code}", analysis::URL)).expect("couldn't parse error URL")
 }
 
 struct ClickCodeHint {
-  code: diagnostic_util::Code,
+  code: diagnostic::Code,
 }
 
 impl fmt::Display for ClickCodeHint {
@@ -53,8 +53,8 @@ impl fmt::Display for ClickCodeHint {
 pub(crate) fn diagnostic(
   message: String,
   range: Option<text_pos::RangeUtf16>,
-  code: diagnostic_util::Code,
-  severity: diagnostic_util::Severity,
+  code: diagnostic::Code,
+  severity: diagnostic::Severity,
   more_info_hint: bool,
 ) -> lsp_types::Diagnostic {
   let url = error_url(code);
@@ -67,8 +67,8 @@ pub(crate) fn diagnostic(
   lsp_types::Diagnostic {
     range: range.map(lsp_range).unwrap_or_default(),
     severity: Some(match severity {
-      diagnostic_util::Severity::Warning => lsp_types::DiagnosticSeverity::WARNING,
-      diagnostic_util::Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
+      diagnostic::Severity::Warning => lsp_types::DiagnosticSeverity::WARNING,
+      diagnostic::Severity::Error => lsp_types::DiagnosticSeverity::ERROR,
     }),
     code: Some(lsp_types::NumberOrString::Number(code.as_i32())),
     code_description: Some(lsp_types::CodeDescription { href: url }),

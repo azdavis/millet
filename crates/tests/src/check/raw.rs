@@ -30,7 +30,7 @@ pub(crate) struct Opts<'a> {
   pub(crate) std_basis: analysis::StdBasis,
   pub(crate) outcome: Outcome,
   pub(crate) limit: Limit,
-  pub(crate) min_severity: diagnostic_util::Severity,
+  pub(crate) min_severity: diagnostic::Severity,
   pub(crate) expected_input: ExpectedInput<'a>,
 }
 

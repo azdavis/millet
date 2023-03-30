@@ -11,7 +11,7 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
-diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 mlb-hir = { path = "../mlb-hir" }
 once_cell = "1"

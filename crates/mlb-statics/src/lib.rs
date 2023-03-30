@@ -7,7 +7,7 @@
 mod std_basis;
 
 use config::lang::Language;
-use diagnostic_util::{Code, Severity};
+use diagnostic::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_file_syntax::SourceFileSyntax;
 use sml_syntax::ast::AstNode as _;

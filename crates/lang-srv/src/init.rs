@@ -3,7 +3,7 @@
 use crate::state::{Mode, Root, St};
 use crate::{convert, cx::Cx, diagnostics};
 use crossbeam_channel::Sender;
-use diagnostic_util::Code;
+use diagnostic::Code;
 use fast_hash::{FxHashMap, FxHashSet};
 use lsp_server::{Message, ReqQueue};
 

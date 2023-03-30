@@ -14,7 +14,7 @@ analysis = { path = "../analysis" }
 anyhow = "1"
 config = { path = "../config" }
 crossbeam-channel = "0.5"
-diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 elapsed = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 input = { path = "../input" }

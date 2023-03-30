@@ -12,7 +12,7 @@ doctest = false
 analysis = { path = "../analysis" }
 cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
-diagnostic-util = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 env_logger = "0.10"
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 input = { path = "../input" }

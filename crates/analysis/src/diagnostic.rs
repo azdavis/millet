@@ -1,10 +1,22 @@
 //! Helpers for working with diagnostics.
 
-use diagnostic_util::Diagnostic;
 use sml_syntax::ast::{self, AstNode as _};
 use sml_syntax::SyntaxNode;
 use std::fmt;
 use text_size_util::TextRange;
+
+/// A diagnostic.
+#[derive(Debug)]
+pub struct Diagnostic {
+  /// The range.
+  pub range: text_pos::RangeUtf16,
+  /// The message.
+  pub message: String,
+  /// The code.
+  pub code: diagnostic::Code,
+  /// The severity.
+  pub severity: diagnostic::Severity,
+}
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {
@@ -17,8 +29,8 @@ fn diagnostic<M>(
   file: &mlb_statics::SourceFile,
   range: TextRange,
   message: M,
-  code: diagnostic_util::Code,
-  severity: diagnostic_util::Severity,
+  code: diagnostic::Code,
+  severity: diagnostic::Severity,
 ) -> Option<Diagnostic>
 where
   M: fmt::Display,
@@ -61,7 +73,7 @@ pub(crate) fn source_file(
       diagnostic(file, err.range(), err.display(), err.code(), err.severity())
     }))
     .collect();
-  let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic_util::Severity::Error));
+  let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic::Severity::Error));
   if !ignore_after_syntax || !has_any_error {
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
@@ -80,8 +92,8 @@ pub(crate) fn source_file(
             file,
             range,
             "comment prevents formatting",
-            diagnostic_util::Code::n(6001),
-            diagnostic_util::Severity::Warning,
+            diagnostic::Code::n(6001),
+            diagnostic::Severity::Warning,
           )
         }));
       }

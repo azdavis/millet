@@ -3,7 +3,7 @@
 use fast_hash::FxHashMap;
 
 /// A mapping to override diagnostic severity.
-pub type Severities = FxHashMap<diagnostic_util::Code, Option<diagnostic_util::Severity>>;
+pub type Severities = FxHashMap<diagnostic::Code, Option<diagnostic::Severity>>;
 
 /// A description of how to check a group of source files.
 #[derive(Debug)]

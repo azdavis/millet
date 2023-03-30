@@ -1,7 +1,7 @@
 //! Tests to make sure Millet behaves as expected on the public documentation.
 
 use crate::check::raw;
-use diagnostic_util::Severity;
+use diagnostic::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
 const SML: &str = "sml";
