@@ -8,7 +8,7 @@ fn val() {
     r#"
 signature S = sig
   val x: int val x: int
-(**          ^^^^^^^^^^ duplicate value: x *)
+(**          ^^^^^^^^^^ duplicate value: `x` *)
 end
 "#,
   );
@@ -20,7 +20,7 @@ fn ty() {
     r#"
 signature S = sig
   type t type t
-(**      ^^^^^^ duplicate type: t *)
+(**      ^^^^^^ duplicate type: `t` *)
 end
 "#,
   );
@@ -32,7 +32,7 @@ fn eq_ty() {
     r#"
 signature S = sig
   eqtype t eqtype t
-(**        ^^^^^^^^ duplicate type: t *)
+(**        ^^^^^^^^ duplicate type: `t` *)
 end
 "#,
   );
@@ -44,7 +44,7 @@ fn datatype() {
     r#"
 signature S = sig
   datatype t = A datatype t = B
-(**              ^^^^^^^^^^^^^^ duplicate type: t *)
+(**              ^^^^^^^^^^^^^^ duplicate type: `t` *)
 end
 "#,
   );
@@ -56,7 +56,7 @@ fn exception() {
     r#"
 signature S = sig
   exception E exception E
-(**           ^^^^^^^^^^^ duplicate value: E *)
+(**           ^^^^^^^^^^^ duplicate value: `E` *)
 end
 "#,
   );
@@ -68,7 +68,7 @@ fn structure() {
     r#"
 signature S = sig
   structure A : sig end structure A : sig end
-(**                     ^^^^^^^^^^^^^^^^^^^^^ duplicate structure: A *)
+(**                     ^^^^^^^^^^^^^^^^^^^^^ duplicate structure: `A` *)
 end
 "#,
   );

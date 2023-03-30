@@ -9,7 +9,7 @@ fn datatype() {
   check(
     r#"
     datatype t = A and t = B
-(** ^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type: t *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type: `t` *)
 "#,
   );
 }
@@ -19,7 +19,7 @@ fn exn() {
   check(
     r#"
     exception E and E
-(** ^^^^^^^^^^^^^^^^^ duplicate value: E *)
+(** ^^^^^^^^^^^^^^^^^ duplicate value: `E` *)
 "#,
   );
 }
@@ -29,7 +29,7 @@ fn ty_var_datatype() {
   check(
     r#"
     datatype ('a, 'a) t = A of 'a
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: `'a` *)
 "#,
   );
 }
@@ -39,7 +39,7 @@ fn ty_var_fun() {
   check(
     r#"
     fun ('a, 'a) f (x: 'a) = 3
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: `'a` *)
 "#,
   );
 }
@@ -49,7 +49,7 @@ fn ty_var_type() {
   check(
     r#"
     type ('a, 'a) foo = int
-(** ^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: `'a` *)
 "#,
   );
 }
@@ -59,7 +59,7 @@ fn ty_var_val() {
   check(
     r#"
     val ('a, 'a) _: 'a list = []
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: `'a` *)
 "#,
   );
 }
@@ -69,7 +69,7 @@ fn type_() {
   check(
     r#"
     type t = int and t = string
-(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type: t *)
+(** ^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate type: `t` *)
 "#,
   );
 }
@@ -79,7 +79,7 @@ fn val() {
   check(
     r#"
 val x = 3 and x = 4
-(**           ^ duplicate value: x *)
+(**           ^ duplicate value: `x` *)
 "#,
   );
 }
@@ -89,7 +89,7 @@ fn var_fn() {
   check(
     r#"
 val _ = fn (x, x) => 3
-(**            ^ duplicate value: x *)
+(**            ^ duplicate value: `x` *)
 "#,
   );
 }
@@ -99,7 +99,7 @@ fn var_fun() {
   check(
     r#"
 fun f (x, x) = 3
-(**       ^ duplicate value: x *)
+(**       ^ duplicate value: `x` *)
 "#,
   );
 }
@@ -109,7 +109,7 @@ fn var_val() {
   check(
     r#"
 val (x, x) = (1, 2)
-(**     ^ duplicate value: x *)
+(**     ^ duplicate value: `x` *)
 "#,
   );
 }

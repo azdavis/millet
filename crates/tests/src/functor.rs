@@ -274,7 +274,7 @@ structure A = F (type t = int val x = 3)
 structure B = F (type t = string val x = "hi")
 structure C = F (type t = unit val x = ())
 structure D = F (type t = bool)
-(**           ^^^^^^^^^^^^^^^^^ missing value required by signature: x *)
+(**           ^^^^^^^^^^^^^^^^^ missing value required by signature: `x` *)
 "#,
   );
 }

@@ -196,7 +196,7 @@ end
 signature SIG = sig
   include SIG1
     include SIG2
-(** ^^^^^^^^^^^^ duplicate type: t *)
+(** ^^^^^^^^^^^^ duplicate type: `t` *)
 end
 "#,
   );

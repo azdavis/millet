@@ -76,9 +76,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         }
         Ok(())
       }
-      ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: {name}"),
-      ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: {name}"),
-      ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: {name}"),
+      ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: `{name}`"),
+      ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: `{name}`"),
+      ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: `{name}`"),
       ErrorKind::Circularity(mv, ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         let mv = Ty::MetaVar(*mv);

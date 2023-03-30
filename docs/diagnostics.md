@@ -1344,14 +1344,14 @@ This may occur when using `and` to declare many things at once.
 ```sml
 val x = 3
 and x = 4
-(** ^ duplicate value: x *)
+(** ^ duplicate value: `x` *)
 ```
 
 It may also occur when binding the same name more than once in a pattern.
 
 ```sml
 fun add (x, x) = x + x
-(**         ^ duplicate value: x *)
+(**         ^ duplicate value: `x` *)
 ```
 
 To fix, use different names, or avoid `and`. (The latter induces shadowing.)
@@ -1372,7 +1372,7 @@ signature SIG = sig
 end
 
 structure Str : SIG = struct
-(**                   ^^^^^^ missing value required by signature: x *)
+(**                   ^^^^^^ missing value required by signature: `x` *)
   val y = "oops"
 end
 ```
@@ -1391,7 +1391,7 @@ Usually, this is allowed, but it is forbidden for `datatype` declarations.
 structure S
   : sig    datatype d = Pazu          end
   = struct datatype d = Pazu | Sosuke end
-(** ^^^^^^ extra value not present in signature: Sosuke *)
+(** ^^^^^^ extra value not present in signature: `Sosuke` *)
 ```
 
 To fix, ensure only the requested items are defined.

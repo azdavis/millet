@@ -37,7 +37,7 @@ fn not_in_struct() {
 structure S: sig
   val x: int
 end = struct end
-(**   ^^^^^^ missing value required by signature: x *)
+(**   ^^^^^^ missing value required by signature: `x` *)
 "#,
   );
 }
@@ -96,7 +96,7 @@ fn datatype_missing_ctor() {
 structure S: sig
   datatype d = A | B
 end = struct
-(**   ^^^^^^ missing value required by signature: B *)
+(**   ^^^^^^ missing value required by signature: `B` *)
   datatype d = A
 end
 "#,
@@ -110,7 +110,7 @@ fn datatype_extra_ctor() {
 structure S: sig
   datatype d = A
 end = struct
-(**   ^^^^^^ extra value not present in signature: B *)
+(**   ^^^^^^ extra value not present in signature: `B` *)
   datatype d = A | B
 end
 "#,
@@ -750,7 +750,7 @@ fn no_path_to_sym() {
     r#"
 signature FOO = sig type t end
 signature BAR = sig type t val x : t include FOO end
-(**                                  ^^^^^^^^^^^ duplicate type: t *)
+(**                                  ^^^^^^^^^^^ duplicate type: `t` *)
 structure Bar :> BAR = struct type t = unit val x = () end
 "#,
   );

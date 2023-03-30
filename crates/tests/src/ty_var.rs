@@ -262,7 +262,7 @@ fn already_in_scope_explicit() {
 fun 'a f (x : 'a) =
   let
     fun 'a g (y : 'a) = y
-(** ^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: `'a` *)
   in
     ()
   end
@@ -277,7 +277,7 @@ fn already_in_scope_implicit() {
 fun f (x : 'a) =
   let
     fun 'a g (y : 'a) = y
-(** ^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: 'a *)
+(** ^^^^^^^^^^^^^^^^^^^^^ duplicate type variable: `'a` *)
   in
     ()
   end
