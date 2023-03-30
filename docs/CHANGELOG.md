@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Add backticks around user-written code in error messuages.
+
 ## v0.8.6
 
 - Allow specifying what values from the standard basis library are not permitted.
