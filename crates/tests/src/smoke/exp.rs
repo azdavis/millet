@@ -218,7 +218,7 @@ fn hole() {
   check(
     r#"
 val _ = if _ then "yes" else "no"
-(**        ^ expression hole with type bool *)
+(**        ^ expression hole with type `bool` *)
 "#,
   );
 }

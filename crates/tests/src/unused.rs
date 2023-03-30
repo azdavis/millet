@@ -7,7 +7,7 @@ fn smoke() {
   check_with_warnings(
     r#"
 fun f x = ()
-(**   ^ unused value: x *)
+(**   ^ unused value: `x` *)
 "#,
   );
 }

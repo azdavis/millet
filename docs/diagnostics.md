@@ -2020,7 +2020,7 @@ datatype t = Foo of int | Bar of int
 
 fun toInt (x : t) : int =
   let val (Foo y | Bar _) = x
-(**                ^^^^^ y was bound in one alternative, but not in another *)
+(**                ^^^^^ `y` was bound in one alternative, but not in another *)
   in y end
 ```
 
@@ -2075,7 +2075,7 @@ There was an expression hole.
 
 ```sml
 val answer = if ... then "yes" else "no"
-(**             ^^^ expression hole with type bool *)
+(**             ^^^ expression hole with type `bool` *)
 ```
 
 The error message contains information about the type of the hole given the surrounding context. For instance, in the above example, the hole is reported to have type `bool` because it is being used as the condition to an `if` expression.
@@ -2084,7 +2084,7 @@ Expression holes can either be `...` or `_`.
 
 ```sml
 fun f x = _ + 5
-(**       ^ expression hole with type int *)
+(**       ^ expression hole with type `int` *)
 val ans = f 3
 ```
 
@@ -2191,7 +2191,7 @@ There was an unused variable.
 
 ```sml
 fun ignoreArg x = 3
-(**           ^ unused value: x *)
+(**           ^ unused value: `x` *)
 ```
 
 To fix, use the variable, or do not define it.
@@ -2233,7 +2233,7 @@ A `sharing type` was invalid.
 ```sml
 signature SIG = sig
   type a = int
-(**    + cannot share type a as int *)
+(**    + cannot share type `a` as `int` *)
   type b = int
   sharing type a = b
 end
@@ -2245,7 +2245,7 @@ A `where type` was invalid.
 
 ```sml
 signature BAD = sig
-(**             + cannot realize type t as int *)
+(**             + cannot realize type `t` as `int` *)
   type t
 end
   where type t = int
@@ -2256,7 +2256,7 @@ This error also arises when using `type a = b` in signatures, because that is sy
 
 ```sml
 signature BAD = sig
-(**             + cannot realize type t as int *)
+(**             + cannot realize type `t` as `int` *)
   type t = int
 end
   where type t = string
@@ -2268,7 +2268,7 @@ The equality function `=` or the inequality function `<>` was applied to a disco
 
 ```sml
 fun isEmpty xs = xs = []
-(**              ^^^^^^^ calling `=` or `<>` on nil *)
+(**              ^^^^^^^ calling `=` or `<>` on `nil` *)
 ```
 
 Using `=` or `<>` may unnecessarily restrict the type to be an "equality" type. Millet will report the type of `isEmpty` above as `''a list -> bool` instead of the perhaps expected `'a list -> bool`.
@@ -2291,14 +2291,14 @@ Before:
 ```sml
 fun sum xs =
   if xs = [] then
-(**  ^^^^^^^ calling `=` or `<>` on nil *)
+(**  ^^^^^^^ calling `=` or `<>` on `nil` *)
     0
   else
     hd xs + sum (tl xs)
 
 fun foo opt =
   if opt = NONE then
-(**  ^^^^^^^^^^ calling `=` or `<>` on NONE *)
+(**  ^^^^^^^^^^ calling `=` or `<>` on `NONE` *)
     "hi"
   else
     valOf opt ^ "!"
@@ -2325,14 +2325,14 @@ Before:
 ```sml
 fun reportList xs =
   if xs = [] then
-(**  ^^^^^^^ calling `=` or `<>` on nil *)
+(**  ^^^^^^^ calling `=` or `<>` on `nil` *)
     "empty list"
   else
     "non empty list"
 
 fun reportOption opt =
   if opt = NONE then
-(**  ^^^^^^^^^^ calling `=` or `<>` on NONE *)
+(**  ^^^^^^^^^^ calling `=` or `<>` on `NONE` *)
     "nothing"
   else
     "something inside"
@@ -2363,7 +2363,7 @@ This example triggers the warning:
 ```sml
 functor Func (val x : int) = struct end
 structure S = Func (struct val x = 3 end)
-(**           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ the functor definition uses syntax sugar, but the functor application does not *)
+(**           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `functor` definition uses syntax sugar, but the `functor` application does not *)
 ```
 
 This example triggers a warning, and also other errors:

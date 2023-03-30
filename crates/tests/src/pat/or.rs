@@ -20,7 +20,7 @@ fn not_all_same_name() {
     r#"
 datatype t = A of int | B of int
 fun f (A x | B y) = x
-(**          ^^^ x was bound in one alternative, but not in another *)
+(**          ^^^ `x` was bound in one alternative, but not in another *)
 "#,
   );
 }

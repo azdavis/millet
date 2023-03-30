@@ -139,21 +139,21 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "cannot resolve `...` in record type: `{ty}`")
       }
       ErrorKind::OrPatNotSameBindings(name) => {
-        write!(f, "{name} was bound in one alternative, but not in another")
+        write!(f, "`{name}` was bound in one alternative, but not in another")
       }
       ErrorKind::DecNotAllowedHere => f.write_str("`signature` or `functor` not allowed here"),
       ErrorKind::ExpHole(ty) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(ty);
         let ty = ty.display(&mvs, self.syms);
-        write!(f, "expression hole with type {ty}")
+        write!(f, "expression hole with type `{ty}`")
       }
       ErrorKind::TyHole => f.write_str("type hole"),
       ErrorKind::BindPolymorphicExpansiveExp => {
         f.write_str("cannot bind expansive polymorphic expression")
       }
       ErrorKind::Unused(item, name) => {
-        write!(f, "unused {item}: {name}")
+        write!(f, "unused {item}: `{name}`")
       }
       ErrorKind::TyVarNotAllowedForTyRhs => {
         f.write_str("type variable bound at `val` or `fun` not allowed here")
@@ -162,15 +162,15 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(&ts.ty);
         let ts = ts.display(&mvs, self.syms);
-        write!(f, "cannot share type {path} as {ts}")
+        write!(f, "cannot share type `{path}` as `{ts}`")
       }
       ErrorKind::CannotRealizeTy(path, ts) => {
         let mut mvs = MetaVarNames::new(self.mv_info);
         mvs.extend_for(&ts.ty);
         let ts = ts.display(&mvs, self.syms);
-        write!(f, "cannot realize type {path} as {ts}")
+        write!(f, "cannot realize type `{path}` as `{ts}`")
       }
-      ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on {name}"),
+      ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on `{name}`"),
       ErrorKind::MismatchedFunctorSugar(sugary) => {
         let other = sugary.other();
         write!(f, "the {sugary} uses syntax sugar, but the {other} does not")
@@ -187,7 +187,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::UnreachableHandle => f.write_str("unreachable `handle`"),
       ErrorKind::DecWithoutEffect => f.write_str("declaration with no effect"),
-      ErrorKind::Disallowed(item, d, name) => write!(f, "{item} is disallowed {d}: {name}"),
+      ErrorKind::Disallowed(item, d, name) => write!(f, "{item} is disallowed {d}: `{name}`"),
     }
   }
 }
@@ -210,8 +210,8 @@ impl FunctorSugarUser {
 impl fmt::Display for FunctorSugarUser {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      FunctorSugarUser::Def => f.write_str("functor definition"),
-      FunctorSugarUser::App => f.write_str("functor application"),
+      FunctorSugarUser::Def => f.write_str("`functor` definition"),
+      FunctorSugarUser::App => f.write_str("`functor` application"),
     }
   }
 }

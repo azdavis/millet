@@ -207,7 +207,7 @@ fn sharing_via_abbreviation_short() {
   check(
     r#"
 signature SIG = sig type a = int type b = int sharing type a = b end
-(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type a as int *)
+(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `a` as `int` *)
 "#,
   );
 }
@@ -217,7 +217,7 @@ fn sharing_via_abbreviation_long() {
   check(
     r#"
 signature SIG = sig type a = int * int type b = int * int sharing type a = b end
-(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type a as int * int *)
+(**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `a` as `int * int` *)
 "#,
   );
 }
@@ -227,7 +227,7 @@ fn sharing_via_abbreviation_fst() {
   check(
     r#"
 signature S = sig type a = int * int type b sharing type a = b end
-(**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type a as int * int *)
+(**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `a` as `int * int` *)
 "#,
   );
 }
@@ -237,7 +237,7 @@ fn sharing_via_abbreviation_snd() {
   check(
     r#"
 signature S = sig type a type b = int * int sharing type a = b end
-(**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type b as int * int *)
+(**               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `b` as `int * int` *)
 "#,
   );
 }

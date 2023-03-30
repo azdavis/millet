@@ -724,7 +724,7 @@ end
 functor MkThing (
   structure Arg : HAS_FOO where type Foo.t = FooUnit.t
 ) :> THING where type HasFoo.Foo.t = Arg.Foo.t =
-(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type HasFoo.Foo.t as unit *)
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `HasFoo.Foo.t` as `unit` *)
 struct
   structure HasFoo = Arg
 end
@@ -739,7 +739,7 @@ fn impossible() {
 signature HAS_T = sig type t end
 signature HAS_INT = HAS_T where type t = int
 signature BAD = HAS_INT where type t = string
-(**             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type t as int *)
+(**             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `t` as `int` *)
 "#,
   );
 }
@@ -772,7 +772,7 @@ signature QUZ = sig
 end
 
 structure Quz : QUZ
-(**             + cannot realize type B.bar as d *)
+(**             + cannot realize type `B.bar` as `d` *)
   where type F.foo = Foo.foo
   where type B.bar = Bar.bar
 = struct
@@ -798,7 +798,7 @@ signature QUZ = sig
 end
 
 structure Quz : QUZ
-(**             + cannot realize type B.bar as d *)
+(**             + cannot realize type `B.bar` as `d` *)
   where type F.foo = Foo.foo
   where type B.bar = Bar.bar
 = struct
@@ -849,7 +849,7 @@ end
 
 structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
-(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as FOO.foo *)
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `FOO.foo` *)
   =  struct structure F = Foo structure B = Bar end
 "#,
   );
@@ -873,7 +873,7 @@ end
 
 structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
-(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as unit *)
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `unit` *)
   =  struct structure F = Foo structure B = Bar end
 "#,
   );
@@ -897,7 +897,7 @@ end
 
 structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
-(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type B.bar as int *)
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `int` *)
   =  struct structure F = Foo structure B = Bar end
 "#,
   );
