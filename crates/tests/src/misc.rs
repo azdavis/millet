@@ -287,7 +287,7 @@ fn suggest_kw() {
   check(
     r#"
 val lam = lambda x: x + 1
-(**       ^^^^^^ undefined value: lambda (did you mean `fn`?) *)
+(**       ^^^^^^ undefined value: `lambda` (did you mean `fn`?) *)
 "#,
   );
 }

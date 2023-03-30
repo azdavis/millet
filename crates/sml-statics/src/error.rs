@@ -70,7 +70,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
     match self.kind {
       ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
       ErrorKind::Undefined(item, name) => {
-        write!(f, "undefined {item}: {name}")?;
+        write!(f, "undefined {item}: `{name}`")?;
         if let Some(sug) = suggestion::get(name.as_str()) {
           write!(f, " (did you mean `{sug}`?)")?;
         }

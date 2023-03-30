@@ -155,7 +155,7 @@ end
 structure A = S4
 structure B = S7
 signature C = SIG
-(**           ^^^ undefined signature: SIG *)
+(**           ^^^ undefined signature: `SIG` *)
 "#,
   );
 }
@@ -174,7 +174,7 @@ end
 structure A = S4
 structure B = S7
 structure C = Func(val x = 8)
-(**           ^^^^^^^^^^^^^^^ undefined functor: Func *)
+(**           ^^^^^^^^^^^^^^^ undefined functor: `Func` *)
 "#,
   );
 }

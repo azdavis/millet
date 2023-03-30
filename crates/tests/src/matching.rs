@@ -351,7 +351,7 @@ fn undef_type_datatype() {
   check(
     r#"
 datatype d = D of t
-(**               ^ undefined type: t *)
+(**               ^ undefined type: `t` *)
 fun f x =
   case x of
     D (_, _) => 1
@@ -364,7 +364,7 @@ fn undef_type_exn() {
   check(
     r#"
 exception E of t
-(**            ^ undefined type: t *)
+(**            ^ undefined type: `t` *)
 val _ = 3 handle E (_, _) => 2
 "#,
   );

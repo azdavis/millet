@@ -70,7 +70,7 @@ c.sml
 "#;
   let reported = r#"
 val _ = foo
-(**     ^^^ undefined value: foo *)
+(**     ^^^ undefined value: `foo` *)
 "#;
   let ignored = r#"
 val _ = foo

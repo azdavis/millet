@@ -1302,7 +1302,7 @@ A name was referenced, but it was not defined in that scope.
 
 ```sml
 val bar = foo
-(**       ^^^ undefined value: foo *)
+(**       ^^^ undefined value: `foo` *)
 ```
 
 To fix, try any of the following:
@@ -1316,7 +1316,7 @@ To fix, try any of the following:
   ```sml
   val x = 4
   val y : x = 5
-  (**     ^ undefined type: x *)
+  (**     ^ undefined type: `x` *)
   ```
 
 - Check that the name is not explicitly forbidden from being accessed by a signature ascription. Ascribing a structure to a more restrictive signature prohibits accessing the "extra" items inside the structure.
@@ -1332,7 +1332,7 @@ To fix, try any of the following:
   end
 
   val s = Str.bar
-  (**     ^^^^^^^ undefined value: bar *)
+  (**     ^^^^^^^ undefined value: `bar` *)
   ```
 
 ## 5002

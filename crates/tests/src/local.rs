@@ -33,7 +33,7 @@ val _ =
     end
   in
     x
-(** ^ undefined value: x *)
+(** ^ undefined value: `x` *)
   end
 "#,
   );
@@ -63,7 +63,7 @@ local
 in
 end
 val _ = x
-(**     ^ undefined value: x *)
+(**     ^ undefined value: `x` *)
 "#,
   );
 }

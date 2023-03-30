@@ -25,7 +25,7 @@ end = struct
   val x = 3
 end
 val _: int = S.x
-(**          ^^^ undefined value: x *)
+(**          ^^^ undefined value: `x` *)
 "#,
   );
 }
@@ -1033,7 +1033,7 @@ fn poly_exn() {
     r#"
 signature S = sig
   exception E of 'a
-(**              ^^ undefined type variable: 'a *)
+(**              ^^ undefined type variable: `'a` *)
 end
 "#,
   );
@@ -1072,7 +1072,7 @@ fn ty_eq_undef() {
     r#"
 signature S = sig
   type 'a t = 'a uh
-(**           ^^^^^ undefined type: uh *)
+(**           ^^^^^ undefined type: `uh` *)
 end"#,
   );
 }

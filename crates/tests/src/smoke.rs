@@ -15,7 +15,7 @@ fn undefined() {
   check(
     r#"
 val _ = nope
-(**     ^^^^ undefined value: nope *)
+(**     ^^^^ undefined value: `nope` *)
 "#,
   );
 }

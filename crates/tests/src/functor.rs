@@ -20,7 +20,7 @@ functor F (A: sig
   type t
 end) = struct end
 structure S = F (struct end)
-(**              ^^^^^^ undefined type: t *)
+(**              ^^^^^^ undefined type: `t` *)
 "#,
   );
 }
@@ -88,7 +88,7 @@ structure Guy = Id (struct
 end)
 
 val _: int = Guy.x
-(**          ^^^^^ undefined value: x *)
+(**          ^^^^^ undefined value: `x` *)
 "#,
   );
 }
@@ -108,7 +108,7 @@ structure S = F (struct
 end)
 
 val _ = S.x
-(**     ^^^ undefined value: x *)
+(**     ^^^ undefined value: `x` *)
 "#,
   );
 }
@@ -220,7 +220,7 @@ structure R = F (A)
 
 val _ = A.T
 val _ = R.T
-(**     ^^^ undefined value: T *)
+(**     ^^^ undefined value: `T` *)
 "#,
   );
 }
