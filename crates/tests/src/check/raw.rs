@@ -35,6 +35,7 @@ pub(crate) struct Opts<'a> {
 }
 
 /// The low-level impl that almost all top-level functions delegate to.
+#[track_caller]
 pub(crate) fn get<'a, I>(files: I, opts: Opts<'_>)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
