@@ -87,10 +87,7 @@ pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvRes
     Ok(got_env) => got_env.val_env.get(path.last()),
     Err(e) => return GetEnvResult { val: Err(e), disallow },
   };
-  let val = match val_info {
-    None => Err(UndefinedError(Item::Val, path.last().clone())),
-    Some(val_info) => Ok(val_info),
-  };
+  let val = val_info.ok_or_else(|| UndefinedError(Item::Val, path.last().clone()));
   GetEnvResult { val, disallow }
 }
 
