@@ -178,6 +178,9 @@ pub(crate) fn get(
                 return;
               }
             };
+            if let Some(d) = &val_info.disallow {
+              st.err(dec, ErrorKind::Disallowed(Item::Val, d.clone(), path.last().clone()));
+            }
             match val_info.id_status {
               IdStatus::Exn(_) => {
                 match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {

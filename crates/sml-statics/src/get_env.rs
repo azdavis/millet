@@ -47,10 +47,12 @@ where
   GetEnvResult { val: Ok(env), disallow }
 }
 
+/// DOES include [`DisallowError`] from the [`TyInfo`]
 pub(crate) fn get_ty_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvResult<&'e TyInfo> {
   get_ty_info_raw(env, path.prefix().iter(), path.last())
 }
 
+/// DOES include [`DisallowError`] from the [`TyInfo`]
 pub(crate) fn get_ty_info_raw<'e, 'n, S>(
   env: &'e Env,
   prefix: S,
@@ -77,21 +79,17 @@ where
   GetEnvResult { val, disallow }
 }
 
+/// DOES NOT include [`DisallowError`] from the [`ValInfo`]
 pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvResult<&'e ValInfo> {
   let got_env = get_env(env, path.prefix());
-  let mut disallow = got_env.disallow;
+  let disallow = got_env.disallow;
   let val_info = match got_env.val {
     Ok(got_env) => got_env.val_env.get(path.last()),
     Err(e) => return GetEnvResult { val: Err(e), disallow },
   };
   let val = match val_info {
     None => Err(UndefinedError(Item::Val, path.last().clone())),
-    Some(val_info) => {
-      if let Some(d) = &val_info.disallow {
-        disallow.push(DisallowError(Item::Val, d.clone(), path.last().clone()));
-      }
-      Ok(val_info)
-    }
+    Some(val_info) => Ok(val_info),
   };
   GetEnvResult { val, disallow }
 }

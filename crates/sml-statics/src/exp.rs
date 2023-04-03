@@ -6,7 +6,7 @@ use crate::get_env::{get_env_raw, get_val_info};
 use crate::types::{Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
-use crate::{dec, def, pat, st::St, ty, ty_var::meta::Generalizable, unify::unify};
+use crate::{dec, def, item::Item, pat, st::St, ty, ty_var::meta::Generalizable, unify::unify};
 use fast_hash::FxHashSet;
 
 pub(crate) fn get_and_check_ty_escape(
@@ -52,6 +52,9 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
           Ty::None
         }
         Ok(val_info) => {
+          if let Some(d) = &val_info.disallow {
+            st.err(exp, ErrorKind::Disallowed(Item::Val, d.clone(), path.last().clone()));
+          }
           ty_scheme = Some(val_info.ty_scheme.clone());
           defs.reserve(val_info.defs.len());
           for &def in &val_info.defs {

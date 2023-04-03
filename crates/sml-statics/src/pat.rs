@@ -103,6 +103,9 @@ fn get_(
           return None;
         }
       };
+      if let Some(d) = &val_info.disallow {
+        st.err(pat_idx, ErrorKind::Disallowed(Item::Val, d.clone(), path.last().clone()));
+      }
       let variant_name = match &val_info.id_status {
         IdStatus::Val => {
           st.err(pat_idx, ErrorKind::PatValIdStatus);

@@ -179,7 +179,7 @@ version = 1
 val hd = 3
 val n = hd + 4
 "#;
-  multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
 }
 
 #[test]
