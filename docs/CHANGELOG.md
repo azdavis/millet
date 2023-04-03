@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.8.7
 
 - Add backticks around user-written code in error messages.
 - Fix spurious disallow val error in patterns.
