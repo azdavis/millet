@@ -15,7 +15,8 @@ The versioning system is basically the following:
 
 ## main
 
-- Add backticks around user-written code in error messuages.
+- Add backticks around user-written code in error messages.
+- Fix spurious disallow val error in patterns.
 
 ## v0.8.6
 
