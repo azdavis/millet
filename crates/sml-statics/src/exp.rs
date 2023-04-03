@@ -48,6 +48,10 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
         st.err(exp, e.into());
       }
       match val_info.val {
+        Err(e) => {
+          st.err(exp, e.into());
+          Ty::None
+        }
         Ok(val_info) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
           defs.reserve(val_info.defs.len());
@@ -58,10 +62,6 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
             }
           }
           instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
-        }
-        Err(e) => {
-          st.err(exp, e.into());
-          Ty::None
         }
       }
     }

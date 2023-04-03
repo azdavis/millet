@@ -171,17 +171,21 @@ pub(crate) fn get(
             for e in val_info.disallow {
               st.err(dec, e.into());
             }
-            match val_info.val {
-              Ok(val_info) => match val_info.id_status {
-                IdStatus::Exn(_) => {
-                  match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
-                    None => st.info.insert(dec.into(), None, val_info.defs.clone()),
-                    Some(e) => st.err(dec, e),
-                  }
+            let val_info = match val_info.val {
+              Ok(x) => x,
+              Err(e) => {
+                st.err(dec, e.into());
+                return;
+              }
+            };
+            match val_info.id_status {
+              IdStatus::Exn(_) => {
+                match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
+                  None => st.info.insert(dec.into(), None, val_info.defs.clone()),
+                  Some(e) => st.err(dec, e),
                 }
-                _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone())),
-              },
-              Err(e) => st.err(dec, e.into()),
+              }
+              _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone())),
             }
           }
         }
