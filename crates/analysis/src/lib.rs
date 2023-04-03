@@ -48,7 +48,7 @@ impl Analysis {
   }
 
   /// Given the contents of one isolated file, return the diagnostics for it.
-  pub fn get_one(&self, contents: &str) -> Vec<Diagnostic> {
+  pub fn get_one(&self, contents: &str) -> Vec<Diagnostic<text_pos::RangeUtf16>> {
     let mut fix_env = sml_fixity::STD_BASIS.clone();
     let lang = config::lang::Language::default();
     let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, contents);
@@ -60,12 +60,27 @@ impl Analysis {
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    diagnostic::source_file(&file, &syms, self.diagnostics_options)
+    diagnostic::source_file(
+      &file,
+      &syms,
+      self.diagnostics_options,
+      text_pos::PositionDb::range_utf16,
+    )
   }
 
   /// Given information about many interdependent source files and their groupings, returns a
   /// mapping from source paths to diagnostics.
-  pub fn get_many(&mut self, input: &input::Input) -> PathMap<Vec<Diagnostic>> {
+  pub fn get_many(
+    &mut self,
+    input: &input::Input,
+  ) -> PathMap<Vec<Diagnostic<text_pos::RangeUtf16>>> {
+    self.get_many_impl(input, text_pos::PositionDb::range_utf16)
+  }
+
+  fn get_many_impl<F, R>(&mut self, input: &input::Input, f: F) -> PathMap<Vec<Diagnostic<R>>>
+  where
+    F: Fn(&text_pos::PositionDb, text_size_util::TextRange) -> Option<R>,
+  {
     let syms = self.std_basis.syms().clone();
     let mut basis = self.std_basis.basis().clone();
     for path in &input.lang.val {
@@ -84,7 +99,7 @@ impl Analysis {
         let path = err.path();
         let group = input.groups.get(&path).expect("no such group");
         let err = Diagnostic {
-          range: group.pos_db.range_utf16(err.range())?,
+          range: f(&group.pos_db, err.range())?,
           message: err.to_string(),
           code: err.code(),
           severity: err.severity(),
@@ -92,7 +107,7 @@ impl Analysis {
         Some((path, vec![err]))
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
-        let ds = diagnostic::source_file(file, &self.syms, self.diagnostics_options);
+        let ds = diagnostic::source_file(file, &self.syms, self.diagnostics_options, &f);
         (path, ds)
       }))
       .map(|(p, ds)| {

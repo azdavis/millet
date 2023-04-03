@@ -2,14 +2,13 @@
 
 use sml_syntax::ast::{self, AstNode as _};
 use sml_syntax::SyntaxNode;
-use std::fmt;
 use text_size_util::TextRange;
 
 /// A diagnostic.
 #[derive(Debug)]
-pub struct Diagnostic {
+pub struct Diagnostic<R> {
   /// The range.
-  pub range: text_pos::RangeUtf16,
+  pub range: R,
   /// The message.
   pub message: String,
   /// The code.
@@ -25,33 +24,19 @@ pub(crate) struct Options {
   pub(crate) format: Option<config::init::FormatEngine>,
 }
 
-fn diagnostic<M>(
-  file: &mlb_statics::SourceFile,
-  range: TextRange,
-  message: M,
-  code: diagnostic::Code,
-  severity: diagnostic::Severity,
-) -> Option<Diagnostic>
-where
-  M: fmt::Display,
-{
-  Some(Diagnostic {
-    range: file.syntax.pos_db.range_utf16(range)?,
-    message: message.to_string(),
-    code,
-    severity,
-  })
-}
-
 /// NOTE: we used to limit the max number of diagnostics per file, but now it's trickier because not
 /// all diagnostics are "errors", but it would be bad to hit the max number of diagnostics on
 /// entirely warnings and then not emit the actual diagnostics. We'd need to come up with a way to
 /// order the diagnostics.
-pub(crate) fn source_file(
+pub(crate) fn source_file<F, R>(
   file: &mlb_statics::SourceFile,
   syms: &sml_statics::Syms,
   options: Options,
-) -> Vec<Diagnostic> {
+  f: F,
+) -> Vec<Diagnostic<R>>
+where
+  F: Fn(&text_pos::PositionDb, text_size_util::TextRange) -> Option<R>,
+{
   let ignore_after_syntax = match options.ignore {
     None => false,
     Some(filter) => match filter {
@@ -61,16 +46,19 @@ pub(crate) fn source_file(
   };
   let mut ret: Vec<_> = std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
-      // textually identical closures, but types are different
-      diagnostic(file, err.range(), err.display(), err.code(), err.severity())
+      let range = f(&file.syntax.pos_db, err.range())?;
+      let message = err.display().to_string();
+      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }))
     .chain(file.syntax.parse.errors.iter().filter_map(|err| {
-      // textually identical closures, but types are different
-      diagnostic(file, err.range(), err.display(), err.code(), err.severity())
+      let range = f(&file.syntax.pos_db, err.range())?;
+      let message = err.display().to_string();
+      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }))
     .chain(file.syntax.lower.errors.iter().filter_map(|err| {
-      // textually identical closures, but types are different
-      diagnostic(file, err.range(), err.display(), err.code(), err.severity())
+      let range = f(&file.syntax.pos_db, err.range())?;
+      let message = err.display().to_string();
+      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }))
     .collect();
   let has_any_error = ret.iter().any(|x| matches!(x.severity, diagnostic::Severity::Error));
@@ -80,21 +68,23 @@ pub(crate) fn source_file(
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
       let node = syntax.try_to_node(file.syntax.parse.root.syntax())?;
       let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
-      let msg = err.display(syms, file.info.meta_vars(), options.lines);
-      diagnostic(file, range, msg, err.code(), err.severity())
+      let range = f(&file.syntax.pos_db, range)?;
+      let message = err.display(syms, file.info.meta_vars(), options.lines).to_string();
+      Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }));
     if matches!(options.format, Some(config::init::FormatEngine::Naive)) {
       if let Err(sml_naive_fmt::Error::Comments(ranges)) =
         sml_naive_fmt::check(&file.syntax.parse.root)
       {
         ret.extend(ranges.into_iter().filter_map(|range| {
-          diagnostic(
-            file,
+          let range = f(&file.syntax.pos_db, range)?;
+          let message = "comment prevents formatting".to_owned();
+          Some(Diagnostic {
             range,
-            "comment prevents formatting",
-            diagnostic::Code::n(6001),
-            diagnostic::Severity::Warning,
-          )
+            message,
+            code: diagnostic::Code::n(6001),
+            severity: diagnostic::Severity::Warning,
+          })
         }));
       }
     }

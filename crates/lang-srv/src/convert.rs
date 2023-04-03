@@ -24,7 +24,7 @@ pub(crate) fn file_url(path: &std::path::Path) -> Result<Url> {
 }
 
 pub(crate) fn diagnostics(
-  errors: Vec<analysis::Diagnostic>,
+  errors: Vec<analysis::Diagnostic<text_pos::RangeUtf16>>,
   more_info_hint: bool,
 ) -> Vec<lsp_types::Diagnostic> {
   errors
