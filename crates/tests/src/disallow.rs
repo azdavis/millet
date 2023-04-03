@@ -10,17 +10,6 @@ fn singleton<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
   [(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]
 }
 
-fn fail_no_such_path<const N: usize>(singleton: [(&str, &str); N]) {
-  let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
-    outcome: raw::Outcome::Fail,
-    limit: raw::Limit::First,
-    min_severity: diagnostic::Severity::Warning,
-    expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
-  };
-  raw::get(singleton, opts);
-}
-
 fn multi_std_basis<const N: usize>(outcome: raw::Outcome, singleton: [(&str, &str); N]) {
   let opts = raw::Opts {
     std_basis: analysis::StdBasis::Full,
@@ -125,7 +114,14 @@ version = 1
 [language.val]
 "Foo.bar" = false
 "#;
-  fail_no_such_path(empty(config));
+  let opts = raw::Opts {
+    std_basis: analysis::StdBasis::Minimal,
+    outcome: raw::Outcome::Fail,
+    limit: raw::Limit::First,
+    min_severity: diagnostic::Severity::Warning,
+    expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
+  };
+  raw::get(empty(config), opts);
 }
 
 #[test]
