@@ -3,7 +3,7 @@
 use crate::env::{Cx, Env};
 use crate::error::ErrorKind;
 use crate::generalize::{generalize, generalize_fixed, RecordMetaVar};
-use crate::get_env::{get_env, get_ty_info, get_val_info};
+use crate::get_env::{get_env, get_env_raw, get_ty_info, get_val_info};
 use crate::ty_var::{fixed::TyVarSrc, meta::Generalizable};
 use crate::types::{
   Equality, FixedTyVars, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
@@ -443,8 +443,9 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
       if path.prefix().is_empty() && path.last().as_str() == "ref" {
         return false;
       }
-      let val_info = get_val_info(&cx.env, path);
-      val_info.val.map_or(true, |x| matches!(x.id_status, IdStatus::Con | IdStatus::Exn(_)))
+      let val_info =
+        get_env_raw(&cx.env, path.prefix()).ok().and_then(|env| env.val_env.get(path.last()));
+      val_info.map_or(true, |x| matches!(x.id_status, IdStatus::Con | IdStatus::Exn(_)))
     }
   }
 }

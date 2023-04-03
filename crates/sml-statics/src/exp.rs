@@ -2,12 +2,11 @@
 
 use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind};
+use crate::get_env::{get_env_raw, get_val_info};
 use crate::types::{Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
-use crate::{
-  dec, def, get_env::get_val_info, pat, st::St, ty, ty_var::meta::Generalizable, unify::unify,
-};
+use crate::{dec, def, pat, st::St, ty, ty_var::meta::Generalizable, unify::unify};
 use fast_hash::FxHashSet;
 
 pub(crate) fn get_and_check_ty_escape(
@@ -157,32 +156,35 @@ fn lint_app(
   argument: sml_hir::ExpIdx,
 ) -> Option<ErrorKind> {
   match &ars.exp[func?] {
-    // just use iter().next() because if it's something we care about (a primitive path or builtin
-    // lib path), the exp should only have one def anyway.
-    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).val.ok()?.defs.iter().next()? {
-      def::Def::Primitive(_) => {
-        assert!(path.prefix().is_empty(), "primitives are at the top level");
-        match path.last().as_str() {
-          "=" | "<>" => lint_eq(cx, ars, argument),
-          "use" => {
-            let file_name = argument.and_then(|arg| match &ars.exp[arg] {
-              sml_hir::Exp::SCon(sml_hir::SCon::String(s)) => Some(s.clone()),
-              _ => None,
-            });
-            Some(ErrorKind::Use(file_name))
+    sml_hir::Exp::Path(path) => {
+      let mut iter =
+        get_env_raw(&cx.env, path.prefix()).ok()?.val_env.get(path.last())?.defs.iter();
+      match iter.next()? {
+        def::Def::Primitive(_) => {
+          assert!(iter.next().is_none(), "primitives should have exactly one def");
+          assert!(path.prefix().is_empty(), "primitives are at the top level");
+          match path.last().as_str() {
+            "=" | "<>" => lint_eq(cx, ars, argument),
+            "use" => {
+              let file_name = argument.and_then(|arg| match &ars.exp[arg] {
+                sml_hir::Exp::SCon(sml_hir::SCon::String(s)) => Some(s.clone()),
+                _ => None,
+              });
+              Some(ErrorKind::Use(file_name))
+            }
+            _ => None,
           }
-          _ => None,
         }
-      }
-      def::Def::Path(def::Path::BuiltinLib("std_basis/list.sml"), _) => {
-        if path.last().as_str() == "@" {
-          lint_append(ars, argument)
-        } else {
-          None
+        def::Def::Path(def::Path::BuiltinLib("std_basis/list.sml"), _) => {
+          if path.last().as_str() == "@" {
+            lint_append(ars, argument)
+          } else {
+            None
+          }
         }
+        def::Def::Path(_, _) => None,
       }
-      def::Def::Path(_, _) => None,
-    },
+    }
     sml_hir::Exp::Fn(_, sml_hir::FnFlavor::Fn) => Some(ErrorKind::AppFn),
     _ => None,
   }
@@ -207,7 +209,7 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
       sml_hir::Exp::Path(p) => p,
       _ => return None,
     };
-    let vi = get_val_info(&cx.env, path).val.ok()?;
+    let vi = get_env_raw(&cx.env, path.prefix()).ok()?.val_env.get(path.last())?;
     match vi.defs.iter().next()? {
       def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive(_) => {}
       def::Def::Path(def::Path::Regular(_), _) => return None,

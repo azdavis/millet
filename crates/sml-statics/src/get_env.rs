@@ -111,3 +111,19 @@ where
   }
   Ok(env)
 }
+
+pub(crate) fn get_env_raw<'e, 'n, I>(
+  mut env: &'e Env,
+  names: I,
+) -> Result<&'e Env, &'n str_util::Name>
+where
+  I: IntoIterator<Item = &'n str_util::Name>,
+{
+  for name in names {
+    env = match env.str_env.get(name) {
+      Some(x) => x,
+      None => return Err(name),
+    }
+  }
+  Ok(env)
+}
