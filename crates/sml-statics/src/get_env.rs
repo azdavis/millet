@@ -5,35 +5,25 @@ use crate::{disallow::Disallow, env::Env, error::ErrorKind, item::Item};
 
 #[derive(Debug)]
 pub(crate) struct GetEnvResult<T> {
-  pub(crate) val: Option<T>,
-  pub(crate) errors: Errors,
+  pub(crate) val: Result<T, UndefinedError>,
+  pub(crate) disallow: Vec<DisallowError>,
 }
 
-impl<T> GetEnvResult<T> {
-  pub(crate) fn map<F, U>(self, f: F) -> GetEnvResult<U>
-  where
-    F: FnOnce(T) -> U,
-  {
-    GetEnvResult { val: self.val.map(f), errors: self.errors }
+#[derive(Debug)]
+pub(crate) struct UndefinedError(Item, str_util::Name);
+
+impl From<UndefinedError> for ErrorKind {
+  fn from(val: UndefinedError) -> ErrorKind {
+    ErrorKind::Undefined(val.0, val.1)
   }
 }
 
-#[derive(Debug, Default)]
-pub(crate) struct Errors {
-  undefined: Option<(Item, str_util::Name)>,
-  disallow: Vec<(Item, Disallow, str_util::Name)>,
-}
+#[derive(Debug)]
+pub(crate) struct DisallowError(Item, Disallow, str_util::Name);
 
-impl Iterator for Errors {
-  type Item = ErrorKind;
-  fn next(&mut self) -> Option<Self::Item> {
-    if let Some((a, b)) = self.undefined.take() {
-      return Some(ErrorKind::Undefined(a, b));
-    }
-    if let Some((a, b, c)) = self.disallow.pop() {
-      return Some(ErrorKind::Disallowed(a, b, c));
-    }
-    None
+impl From<DisallowError> for ErrorKind {
+  fn from(val: DisallowError) -> ErrorKind {
+    ErrorKind::Disallowed(val.0, val.1, val.2)
   }
 }
 
@@ -42,28 +32,25 @@ pub(crate) fn get_env<'e, 'n, I>(mut env: &'e Env, names: I) -> GetEnvResult<&'e
 where
   I: IntoIterator<Item = &'n str_util::Name>,
 {
-  let mut errors = Errors::default();
+  let mut disallow = Vec::<DisallowError>::new();
   for name in names {
     env = match env.str_env.get(name) {
       None => {
-        errors.undefined = Some((Item::Struct, name.clone()));
-        return GetEnvResult { val: None, errors };
+        return GetEnvResult { val: Err(UndefinedError(Item::Struct, name.clone())), disallow }
       }
       Some(x) => x,
     };
     if let Some(d) = &env.disallow {
-      errors.disallow.push((Item::Struct, d.clone(), name.clone()));
+      disallow.push(DisallowError(Item::Struct, d.clone(), name.clone()));
     }
   }
-  GetEnvResult { val: Some(env), errors }
+  GetEnvResult { val: Ok(env), disallow }
 }
 
-/// does contain the undef err if there was no `path.last()`
 pub(crate) fn get_ty_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvResult<&'e TyInfo> {
   get_ty_info_raw(env, path.prefix().iter(), path.last())
 }
 
-/// does contain the undef err if there was no `last`
 pub(crate) fn get_ty_info_raw<'e, 'n, S>(
   env: &'e Env,
   prefix: S,
@@ -73,36 +60,40 @@ where
   S: IntoIterator<Item = &'n str_util::Name>,
 {
   let got_env = get_env(env, prefix);
-  let mut errors = got_env.errors;
-  if errors.undefined.is_some() {
-    return GetEnvResult { val: None, errors };
-  }
-  let ty_info = got_env.val.unwrap_or(env).ty_env.get(last);
-  match ty_info {
-    None => errors.undefined = Some((Item::Ty, last.clone())),
+  let mut disallow = got_env.disallow;
+  let ty_info = match got_env.val {
+    Ok(got_env) => got_env.ty_env.get(last),
+    Err(e) => return GetEnvResult { val: Err(e), disallow },
+  };
+  let val = match ty_info {
+    None => Err(UndefinedError(Item::Ty, last.clone())),
     Some(ty_info) => {
       if let Some(d) = &ty_info.disallow {
-        errors.disallow.push((Item::Ty, d.clone(), last.clone()));
+        disallow.push(DisallowError(Item::Ty, d.clone(), last.clone()));
       }
+      Ok(ty_info)
     }
   };
-  GetEnvResult { val: ty_info, errors }
+  GetEnvResult { val, disallow }
 }
 
-/// doesn't contain the undef err if there was no `path.last()`
 pub(crate) fn get_val_info<'e>(env: &'e Env, path: &sml_path::Path) -> GetEnvResult<&'e ValInfo> {
   let got_env = get_env(env, path.prefix());
-  let mut errors = got_env.errors;
-  if errors.undefined.is_some() {
-    return GetEnvResult { val: None, errors };
-  }
-  let val = got_env.val.unwrap_or(env).val_env.get(path.last());
-  if let Some(val_info) = val {
-    if let Some(d) = &val_info.disallow {
-      errors.disallow.push((Item::Val, d.clone(), path.last().clone()));
+  let mut disallow = got_env.disallow;
+  let val_info = match got_env.val {
+    Ok(got_env) => got_env.val_env.get(path.last()),
+    Err(e) => return GetEnvResult { val: Err(e), disallow },
+  };
+  let val = match val_info {
+    None => Err(UndefinedError(Item::Val, path.last().clone())),
+    Some(val_info) => {
+      if let Some(d) = &val_info.disallow {
+        disallow.push(DisallowError(Item::Ty, d.clone(), path.last().clone()));
+      }
+      Ok(val_info)
     }
-  }
-  GetEnvResult { val, errors }
+  };
+  GetEnvResult { val, disallow }
 }
 
 pub(crate) fn get_mut_env<'e, 'n, I>(

@@ -58,11 +58,11 @@ pub(crate) fn get(
     // @def(46)
     sml_hir::Ty::Con(arguments, path) => {
       let ty_info = get_ty_info(&cx.env, path);
-      for e in ty_info.errors {
-        st.err(ty, e);
+      for e in ty_info.disallow {
+        st.err(ty, e.into());
       }
       match ty_info.val {
-        Some(ty_info) => {
+        Ok(ty_info) => {
           let want_len = ty_info.ty_scheme.bound_vars.len();
           if want_len == arguments.len() {
             ty_scheme = Some(ty_info.ty_scheme.clone());
@@ -80,7 +80,10 @@ pub(crate) fn get(
             Ty::None
           }
         }
-        None => Ty::None,
+        Err(e) => {
+          st.err(ty, e.into());
+          Ty::None
+        }
       }
     }
     // @def(47)

@@ -129,12 +129,15 @@ pub(crate) fn get(
     // @def(18)
     sml_hir::Dec::DatatypeCopy(name, path) => {
       let ty_info = get_ty_info(&cx.env, path);
-      for e in ty_info.errors {
-        st.err(dec, e);
+      for e in ty_info.disallow {
+        st.err(dec, e.into());
       }
-      if let Some(ty_info) = ty_info.val {
-        env.ty_env.insert(name.clone(), ty_info.clone());
-        env.val_env.append(&mut ty_info.val_env.clone());
+      match ty_info.val {
+        Ok(ty_info) => {
+          env.ty_env.insert(name.clone(), ty_info.clone());
+          env.val_env.append(&mut ty_info.val_env.clone());
+        }
+        Err(e) => st.err(dec, e.into()),
       }
     }
     // @def(19)
@@ -165,11 +168,11 @@ pub(crate) fn get(
           // @def(31)
           sml_hir::ExBind::Copy(name, path) => {
             let val_info = get_val_info(&cx.env, path);
-            for e in val_info.errors {
-              st.err(dec, e);
+            for e in val_info.disallow {
+              st.err(dec, e.into());
             }
             match val_info.val {
-              Some(val_info) => match val_info.id_status {
+              Ok(val_info) => match val_info.id_status {
                 IdStatus::Exn(_) => {
                   match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
                     None => st.info.insert(dec.into(), None, val_info.defs.clone()),
@@ -178,7 +181,7 @@ pub(crate) fn get(
                 }
                 _ => st.err(dec, ErrorKind::ExnCopyNotExnIdStatus(path.clone())),
               },
-              None => st.err(dec, ErrorKind::Undefined(Item::Val, path.last().clone())),
+              Err(e) => st.err(dec, e.into()),
             }
           }
         }
@@ -197,11 +200,12 @@ pub(crate) fn get(
     sml_hir::Dec::Open(paths) => {
       for path in paths {
         let got_env = get_env(&cx.env, path.all_names());
-        for e in got_env.errors {
-          st.err(dec, e);
+        for e in got_env.disallow {
+          st.err(dec, e.into());
         }
-        if let Some(got_env) = got_env.val {
-          env.append(&mut got_env.clone());
+        match got_env.val {
+          Ok(got_env) => env.append(&mut got_env.clone()),
+          Err(e) => st.err(dec, e.into()),
         }
       }
     }

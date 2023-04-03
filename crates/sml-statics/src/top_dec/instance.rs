@@ -25,16 +25,19 @@ pub(crate) fn env_of_sig(
     let last = path.pop().unwrap();
     let want = ty_scheme.bound_vars.len();
     let ty_info = get_ty_info_raw(env, path, last);
-    for e in ty_info.errors {
-      st.err(idx, e);
+    for e in ty_info.disallow {
+      st.err(idx, e.into());
     }
-    if let Some(ty_info) = ty_info.val {
-      let got = ty_info.ty_scheme.bound_vars.len();
-      if want == got {
-        subst.insert(sym, ty_info.ty_scheme.clone());
-      } else {
-        st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
+    match ty_info.val {
+      Ok(ty_info) => {
+        let got = ty_info.ty_scheme.bound_vars.len();
+        if want == got {
+          subst.insert(sym, ty_info.ty_scheme.clone());
+        } else {
+          st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
+        }
       }
+      Err(e) => st.err(idx, e.into()),
     }
   }
 }

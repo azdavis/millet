@@ -203,12 +203,15 @@ fn get_str_exp(
     // @def(51)
     sml_hir::StrExp::Path(path) => {
       let got_env = get_env(&bs.env, path.all_names());
-      for e in got_env.errors {
-        st.err(str_exp, e);
+      for e in got_env.disallow {
+        st.err(str_exp, e.into());
       }
-      if let Some(got_env) = got_env.val {
-        st.info.insert(str_exp.into(), None, got_env.def.into_iter().collect());
-        ac.append(&mut got_env.clone());
+      match got_env.val {
+        Ok(got_env) => {
+          st.info.insert(str_exp.into(), None, got_env.def.into_iter().collect());
+          ac.append(&mut got_env.clone());
+        }
+        Err(e) => st.err(str_exp, e.into()),
       }
     }
     // @def(52), @def(53)
@@ -448,20 +451,23 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     // @def(72)
     sml_hir::Spec::DatatypeCopy(name, path) => {
       let ty_info = get_ty_info(&bs.env, path);
-      for e in ty_info.errors {
-        st.err(spec, e);
+      for e in ty_info.disallow {
+        st.err(spec, e.into());
       }
-      if let Some(ty_info) = ty_info.val {
-        let ins = ins_no_dupe(&mut ac.ty_env, name.clone(), ty_info.clone(), Item::Ty);
-        if let Some(e) = ins {
-          st.err(spec, e);
-        }
-        for (name, val_info) in ty_info.val_env.iter() {
-          let ins = ins_no_dupe(&mut ac.val_env, name.clone(), val_info.clone(), Item::Val);
+      match ty_info.val {
+        Ok(ty_info) => {
+          let ins = ins_no_dupe(&mut ac.ty_env, name.clone(), ty_info.clone(), Item::Ty);
           if let Some(e) = ins {
             st.err(spec, e);
           }
+          for (name, val_info) in ty_info.val_env.iter() {
+            let ins = ins_no_dupe(&mut ac.val_env, name.clone(), val_info.clone(), Item::Val);
+            if let Some(e) = ins {
+              st.err(spec, e);
+            }
+          }
         }
+        Err(e) => st.err(spec, e.into()),
       }
     }
     // @def(73), @def(83)
@@ -513,10 +519,16 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
             .iter()
             .filter_map(|path| {
               let ty_con_paths = ty_con_paths::get(&inner_env, path);
-              for e in ty_con_paths.errors {
-                st.err(spec, e);
+              for e in ty_con_paths.disallow {
+                st.err(spec, e.into());
               }
-              ty_con_paths.val.map(|x| (path, x))
+              match ty_con_paths.val {
+                Ok(x) => Some((path, x)),
+                Err(e) => {
+                  st.err(spec, e.into());
+                  None
+                }
+              }
             })
             .collect();
           while let Some((struct_1, ty_cons_1)) = all.pop() {

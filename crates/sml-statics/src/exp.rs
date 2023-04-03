@@ -6,8 +6,7 @@ use crate::types::{Sym, SymsMarker, Ty, TyScheme, ValEnv};
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
 use crate::{
-  dec, def, get_env::get_val_info, item::Item, pat, st::St, ty, ty_var::meta::Generalizable,
-  unify::unify,
+  dec, def, get_env::get_val_info, pat, st::St, ty, ty_var::meta::Generalizable, unify::unify,
 };
 use fast_hash::FxHashSet;
 
@@ -45,11 +44,11 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     // @def(2)
     sml_hir::Exp::Path(path) => {
       let val_info = get_val_info(&cx.env, path);
-      for e in val_info.errors {
-        st.err(exp, e);
+      for e in val_info.disallow {
+        st.err(exp, e.into());
       }
       match val_info.val {
-        Some(val_info) => {
+        Ok(val_info) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
           defs.reserve(val_info.defs.len());
           for &def in &val_info.defs {
@@ -60,8 +59,8 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
           }
           instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
         }
-        None => {
-          st.err(exp, ErrorKind::Undefined(Item::Val, path.last().clone()));
+        Err(e) => {
+          st.err(exp, e.into());
           Ty::None
         }
       }
@@ -160,7 +159,7 @@ fn lint_app(
   match &ars.exp[func?] {
     // just use iter().next() because if it's something we care about (a primitive path or builtin
     // lib path), the exp should only have one def anyway.
-    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).val?.defs.iter().next()? {
+    sml_hir::Exp::Path(path) => match get_val_info(&cx.env, path).val.ok()?.defs.iter().next()? {
       def::Def::Primitive(_) => {
         assert!(path.prefix().is_empty(), "primitives are at the top level");
         match path.last().as_str() {
@@ -208,7 +207,7 @@ fn lint_eq(cx: &Cx, ars: &sml_hir::Arenas, argument: sml_hir::ExpIdx) -> Option<
       sml_hir::Exp::Path(p) => p,
       _ => return None,
     };
-    let vi = get_val_info(&cx.env, path).val?;
+    let vi = get_val_info(&cx.env, path).val.ok()?;
     match vi.defs.iter().next()? {
       def::Def::Path(def::Path::BuiltinLib(_), _) | def::Def::Primitive(_) => {}
       def::Def::Path(def::Path::Regular(_), _) => return None,

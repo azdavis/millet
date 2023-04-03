@@ -5,11 +5,13 @@ use crate::get_env::{get_env, GetEnvResult};
 use fast_hash::FxHashSet;
 
 pub(crate) fn get(env: &Env, path: &sml_path::Path) -> GetEnvResult<FxHashSet<sml_path::Path>> {
-  get_env(env, path.all_names()).map(|env| {
+  let got_env = get_env(env, path.all_names());
+  let val = got_env.val.map(|env| {
     let mut ty_cons = FxHashSet::<sml_path::Path>::default();
     go(&mut Vec::new(), &mut ty_cons, env);
     ty_cons
-  })
+  });
+  GetEnvResult { val, disallow: got_env.disallow }
 }
 
 fn go(prefix: &mut Vec<str_util::Name>, ac: &mut FxHashSet<sml_path::Path>, env: &Env) {
