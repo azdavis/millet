@@ -139,7 +139,7 @@ where
 }
 
 pub(crate) fn one_file_fs(s: &str) -> [(&str, &str); 2] {
-  [("f.sml", s), ("s.mlb", "f.sml")]
+  [("s.mlb", "f.sml"), ("f.sml", s)]
 }
 
 pub(crate) fn env_var_enabled(s: &str) -> bool {
