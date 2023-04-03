@@ -313,6 +313,7 @@ impl fmt::Display for ConfigProperty<'_> {
 }
 
 const PACKAGE_JSON: &str = include_str!("../../../editors/vscode/package.json");
+const PACKAGE_LOCK_JSON: &str = include_str!("../../../editors/vscode/package-lock.json");
 const MANUAL: &str = include_str!("../../../docs/manual.md");
 const COMMENT_CLOSE: &str = " -->";
 
@@ -482,4 +483,31 @@ fn sml_nj_cm_snippets() {
 fn sml_snippets() {
   let json = include_str!("../../../editors/vscode/languages/sml/snippets.json");
   snippets("sml-snippets", json);
+}
+
+#[test]
+fn version() {
+  let package_json: serde_json::Value = serde_json::from_str(PACKAGE_JSON).unwrap();
+  let package_lock_json: serde_json::Value = serde_json::from_str(PACKAGE_LOCK_JSON).unwrap();
+  let package_lock_json = package_lock_json.as_object().unwrap();
+  let a = package_json.as_object().unwrap().get("version").unwrap().as_str().unwrap();
+  let b = package_lock_json.get("version").unwrap().as_str().unwrap();
+  let c = package_lock_json
+    .get("packages")
+    .unwrap()
+    .as_object()
+    .unwrap()
+    .get("")
+    .unwrap()
+    .as_object()
+    .unwrap()
+    .get("version")
+    .unwrap()
+    .as_str()
+    .unwrap();
+  assert_eq!(a, b);
+  assert_eq!(a, c);
+  if let Some(d) = option_env!("GITHUB_REF_NAME").and_then(|r| r.strip_prefix('v')) {
+    assert_eq!(a, d);
+  }
 }

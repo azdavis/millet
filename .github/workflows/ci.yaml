@@ -24,6 +24,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Run tests
         run: cargo xtask ci
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
   dist:
     needs: test
     if: success() && github.repository == 'azdavis/millet' && startsWith(github.ref, 'refs/tags/v')
