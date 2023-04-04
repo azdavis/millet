@@ -3,7 +3,7 @@
 use anyhow::{anyhow, bail, Result};
 use pico_args::Arguments;
 use std::path::{Path, PathBuf};
-use xshell::{cmd, Shell};
+use std::{env, fs, process::Command};
 
 #[derive(Debug, Clone, Copy)]
 enum Cmd {
@@ -114,11 +114,19 @@ fn finish_args(args: Arguments) -> Result<()> {
   Ok(())
 }
 
-fn run_ci(sh: &Shell) -> Result<()> {
-  cmd!(sh, "cargo build --locked").run()?;
-  cmd!(sh, "cargo fmt -- --check").run()?;
-  cmd!(sh, "cargo clippy").run()?;
-  cmd!(sh, "cargo test --locked").run()?;
+fn run(c: &mut Command) -> Result<()> {
+  if c.spawn()?.wait()?.success() {
+    Ok(())
+  } else {
+    bail!("unsuccessful")
+  }
+}
+
+fn run_ci() -> Result<()> {
+  run(Command::new("cargo").args(["build", "--locked"]))?;
+  run(Command::new("cargo").args(["fmt", "--", "--check"]))?;
+  run(Command::new("cargo").args(["clippy"]))?;
+  run(Command::new("cargo").args(["test", "--locked"]))?;
   if env_var_enabled("SKIP_FULL_STD_BASIS") {
     println!("note: SKIP_FULL_STD_BASIS env var was set to 1");
     println!("note: this means some slower tests were skipped (but appear as passed)");
@@ -139,62 +147,67 @@ struct DistArgs {
 
 const LANG_SRV_NAME: &str = "millet-ls";
 
-fn dist(sh: &Shell, args: DistArgs) -> Result<()> {
-  let release_arg = args.release.then_some("--release");
-  let target_arg = match &args.target {
-    Some(x) => vec!["--target", x],
-    None => vec![],
-  };
-  cmd!(sh, "cargo build {release_arg...} {target_arg...} --locked --bin {LANG_SRV_NAME}").run()?;
+fn cmd_exe(fst: &str) -> Command {
+  if cfg!(windows) {
+    let mut ret = Command::new("cmd.exe");
+    ret.arg("/c").arg(fst);
+    ret
+  } else {
+    Command::new(fst)
+  }
+}
+
+fn dist(args: DistArgs) -> Result<()> {
+  let mut c = Command::new("cargo");
+  c.args(["build", "--locked", "--bin", LANG_SRV_NAME]);
+  if args.release {
+    c.arg("--release");
+  }
+  if let Some(target) = &args.target {
+    c.args(["--target", target.as_str()]);
+  }
+  run(&mut c)?;
   let kind = if args.release { "release" } else { "debug" };
   let lang_srv_out: PathBuf = std::iter::once("target")
     .chain(args.target.as_deref())
     .chain([kind, format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX).as_str()])
     .collect();
-  let mut dir: PathBuf;
-  if let Some(x) = &args.target {
-    dir = PathBuf::from("binary");
-    sh.create_dir(&dir)?;
-    let lang_srv_with_target = format!("{LANG_SRV_NAME}-{x}");
-    dir.push(lang_srv_with_target.as_str());
-    sh.copy_file(&lang_srv_out, &dir)?;
+  let mut path: PathBuf;
+  if let Some(target) = &args.target {
+    path = PathBuf::from("binary");
+    fs::create_dir(&path)?;
+    let lang_srv_with_target = format!("{LANG_SRV_NAME}-{target}");
+    path.push(lang_srv_with_target.as_str());
+    fs::copy(&lang_srv_out, &path)?;
   }
   match args.editor {
     None => return Ok(()),
     Some(Editor::VsCode) => {}
   }
-  dir = ["editors", "vscode", "out"].iter().collect();
-  sh.remove_path(&dir)?;
-  sh.create_dir(&dir)?;
-  sh.copy_file(&lang_srv_out, &dir)?;
-  assert!(dir.pop());
+  path = ["editors", "vscode", "out"].iter().collect();
+  fs::remove_dir_all(&path)?;
+  fs::create_dir_all(&path)?;
+  fs::copy(&lang_srv_out, &path)?;
+  assert!(path.pop());
   let license_header =
     "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";
-  let license_apache = sh.read_file("LICENSE-APACHE.md")?;
-  let license_mit = sh.read_file("LICENSE-MIT.md")?;
+  let license_apache = include_str!("../../LICENSE-APACHE.md");
+  let license_mit = include_str!("../../LICENSE-MIT.md");
   let license_text = format!("{license_header}\n\n{license_apache}\n{license_mit}");
-  dir.push("LICENSE.md");
-  sh.write_file(&dir, license_text)?;
-  assert!(dir.pop());
-  let _d = sh.push_dir(&dir);
-  if !sh.path_exists("node_modules") {
-    if cfg!(windows) {
-      cmd!(sh, "cmd.exe /c npm ci").run()?;
-    } else {
-      cmd!(sh, "npm ci").run()?;
-    }
+  path.push("LICENSE.md");
+  fs::write(&path, license_text)?;
+  assert!(path.pop());
+  env::set_current_dir(&path)?;
+  if fs::metadata("node_modules").is_err() {
+    run(cmd_exe("npm").arg("ci"))?;
   }
-  if cfg!(windows) {
-    cmd!(sh, "cmd.exe /c npm run check").run()?;
-    cmd!(sh, "cmd.exe /c npm run build-{kind}").run()?;
-  } else {
-    cmd!(sh, "npm run check").run()?;
-    cmd!(sh, "npm run build-{kind}").run()?;
-  }
+  run(cmd_exe("npm").args(["run", "check"]))?;
+  let build = format!("build-{kind}");
+  run(cmd_exe("npm").args(["run", build.as_str()]))?;
   Ok(())
 }
 
-fn tag(sh: &Shell, tag_arg: &str) -> Result<()> {
+fn tag(tag_arg: &str) -> Result<()> {
   let version = match tag_arg.strip_prefix('v') {
     Some(x) => x,
     None => bail!("tag must start with v"),
@@ -214,7 +227,7 @@ fn tag(sh: &Shell, tag_arg: &str) -> Result<()> {
     .map(|p| ["editors", "vscode", p].into_iter().collect())
     .collect();
   for path in paths.iter() {
-    let contents = sh.read_file(path)?;
+    let contents = fs::read_to_string(path)?;
     let mut out = String::with_capacity(contents.len());
     for (idx, line) in contents.lines().enumerate() {
       if idx >= 15 {
@@ -236,18 +249,17 @@ fn tag(sh: &Shell, tag_arg: &str) -> Result<()> {
       }
       out.push('\n');
     }
-    sh.write_file(path, out)?;
+    fs::write(path, out)?;
   }
-  cmd!(sh, "git add {paths...}").run()?;
+  run(Command::new("git").arg("add").args(paths))?;
   let msg = format!("Release {tag_arg}");
-  cmd!(sh, "git commit -m {msg} --no-verify").run()?;
-  cmd!(sh, "git tag {tag_arg}").run()?;
+  run(Command::new("git").args(["commit", "-m", msg.as_str(), "--no-verify"]))?;
+  run(Command::new("git").arg("tag").arg(tag_arg))?;
   Ok(())
 }
 
 fn main() -> Result<()> {
   let mut args = Arguments::from_env();
-  let sh = Shell::new()?;
   if args.contains(["-h", "--help"]) {
     show_help();
     return Ok(());
@@ -259,12 +271,12 @@ fn main() -> Result<()> {
       return Ok(());
     }
   };
-  let _d = sh.push_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap());
+  env::set_current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())?;
   match cmd {
     Cmd::Help => show_help(),
     Cmd::Ci => {
       finish_args(args)?;
-      run_ci(&sh)?;
+      run_ci()?;
     }
     Cmd::Dist => {
       let dist_args = DistArgs {
@@ -273,13 +285,13 @@ fn main() -> Result<()> {
         target: args.opt_value_from_str("--target")?,
       };
       finish_args(args)?;
-      dist(&sh, dist_args)?;
+      dist(dist_args)?;
     }
     Cmd::Tag => {
       let tag_arg: String = args.free_from_str()?;
       finish_args(args)?;
-      tag(&sh, &tag_arg)?;
-      run_ci(&sh)?;
+      tag(&tag_arg)?;
+      run_ci()?;
     }
   }
   Ok(())
