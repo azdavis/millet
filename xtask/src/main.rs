@@ -168,9 +168,10 @@ fn dist(args: DistArgs) -> Result<()> {
   }
   run(&mut c)?;
   let kind = if args.release { "release" } else { "debug" };
+  let lang_srv_exe = format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX);
   let lang_srv_out: PathBuf = std::iter::once("target")
     .chain(args.target.as_deref())
-    .chain([kind, format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX).as_str()])
+    .chain([kind, lang_srv_exe.as_str()])
     .collect();
   let mut path: PathBuf;
   if let Some(target) = &args.target {
