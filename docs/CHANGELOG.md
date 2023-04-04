@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Highlight type variable names.
+
 ## v0.8.7
 
 - Add backticks around user-written code in error messages.

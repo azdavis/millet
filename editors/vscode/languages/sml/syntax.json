@@ -10,6 +10,7 @@
     { "include": "#hexWord" },
     { "include": "#char" },
     { "include": "#string" },
+    { "include": "#tyVarName" },
     { "include": "#specialName" },
     { "include": "#symbolicName" },
     { "include": "#upperName" },
@@ -83,6 +84,10 @@
     "uEscape": {
       "name": "constant.character.escape.sml",
       "match": "\\\\u[0-9A-Fa-f]{4}"
+    },
+    "tyVarName": {
+      "name": "variable.other.constant.sml",
+      "match": "['?][A-Za-z0-9_']+\\b"
     },
     "specialName": {
       "name": "constant.language.sml",
