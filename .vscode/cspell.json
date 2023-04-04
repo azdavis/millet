@@ -31,6 +31,7 @@
     "esbuild",
     "exns",
     "finalizable",
+    "flate",
     "foldl",
     "foldr",
     "forall",

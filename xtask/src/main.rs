@@ -1,9 +1,10 @@
 //! See the [xtask spec](https://github.com/matklad/cargo-xtask).
 
 use anyhow::{anyhow, bail, Result};
+use flate2::{write::GzEncoder, Compression};
 use pico_args::Arguments;
 use std::path::{Path, PathBuf};
-use std::{env, fs, process::Command};
+use std::{env, fs, io, process::Command};
 
 #[derive(Debug, Clone, Copy)]
 enum Cmd {
@@ -177,9 +178,9 @@ fn dist(args: DistArgs) -> Result<()> {
   if let Some(target) = &args.target {
     path = PathBuf::from("binary");
     fs::create_dir(&path)?;
-    let lang_srv_with_target = format!("{LANG_SRV_NAME}-{target}");
+    let lang_srv_with_target = format!("{LANG_SRV_NAME}-{target}.gz");
     path.push(lang_srv_with_target.as_str());
-    fs::copy(&lang_srv_out, &path)?;
+    gzip(&lang_srv_out, &path)?;
   }
   match args.editor {
     None => return Ok(()),
@@ -205,6 +206,14 @@ fn dist(args: DistArgs) -> Result<()> {
   run(cmd_exe("npm").args(["run", "check"]))?;
   let build = format!("build-{kind}");
   run(cmd_exe("npm").args(["run", build.as_str()]))?;
+  Ok(())
+}
+
+fn gzip(src: &Path, dest: &Path) -> anyhow::Result<()> {
+  let mut encoder = GzEncoder::new(fs::File::create(dest)?, Compression::best());
+  let mut input = io::BufReader::new(fs::File::open(src)?);
+  io::copy(&mut input, &mut encoder)?;
+  encoder.finish()?;
   Ok(())
 }
 

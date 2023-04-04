@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Highlight type variable names.
+- Gzip release binaries.
 
 ## v0.8.7
 

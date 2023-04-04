@@ -11,4 +11,5 @@ test = false
 
 [dependencies]
 anyhow = "1"
+flate2 = "1"
 pico-args = "0.5"
