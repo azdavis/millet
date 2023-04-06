@@ -1,7 +1,7 @@
 //! Environments and types that contain them.
 
-use crate::types::{Sym, TyEnv, ValEnv};
-use crate::{def, disallow::Disallow, ty_var::fixed::FixedTyVar};
+use crate::types::{TyEnv, ValEnv};
+use crate::{def, disallow::Disallow, sym::Sym, ty_var::fixed::FixedTyVar};
 use fast_hash::{FxHashMap, FxHashSet};
 use stack_map::StackMap;
 

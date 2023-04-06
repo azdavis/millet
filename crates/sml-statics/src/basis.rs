@@ -2,9 +2,8 @@
 
 use crate::disallow::{self, Disallow};
 use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
-use crate::types::{
-  Equality, IdStatus, RecordTy, Sym, Syms, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo,
-};
+use crate::sym::{Equality, Sym, Syms};
+use crate::types::{IdStatus, RecordTy, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo};
 use crate::{def::PrimitiveKind, get_env::get_mut_env, item::Item, overload};
 use fast_hash::FxHashMap;
 

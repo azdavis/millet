@@ -1,7 +1,7 @@
 //! Type realizations.
 
-use crate::types::{Sym, Ty, TyScheme, ValEnv};
-use crate::{env::Env, util::apply_bv};
+use crate::types::{Ty, TyScheme, ValEnv};
+use crate::{env::Env, sym::Sym, util::apply_bv};
 use fast_hash::FxHashMap;
 
 /// A type realization.

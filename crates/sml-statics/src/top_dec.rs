@@ -11,10 +11,8 @@ mod where_ty;
 use crate::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser};
 use crate::get_env::{get_env, get_ty_info};
-use crate::types::{
-  Equality, IdStatus, StartedSym, SymsMarker, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv,
-  ValInfo,
-};
+use crate::sym::{Equality, StartedSym, SymsMarker};
+use crate::types::{IdStatus, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo};
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{
   basis::Bs, config::Cfg, dec, generalize::generalize, item::Item, mode::Mode, overload, st::St,

@@ -1,7 +1,7 @@
 //! Glue code to talk to [`pattern_match`].
 
-use crate::types::{Exn, Sym, Syms, Ty};
-use crate::util::apply_bv;
+use crate::sym::{Exn, Sym, Syms};
+use crate::{types::Ty, util::apply_bv};
 use fast_hash::FxHashSet;
 use pattern_match::{CheckError, Result};
 use std::collections::BTreeSet;

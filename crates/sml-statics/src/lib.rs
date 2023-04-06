@@ -38,9 +38,11 @@ pub mod disallow;
 pub mod info;
 pub mod mode;
 pub mod path_order;
+mod sym;
 
 pub use error::Error;
-pub use types::{MetaVarInfo, Syms};
+pub use sym::Syms;
+pub use types::MetaVarInfo;
 
 /// The result of statics.
 #[derive(Debug)]

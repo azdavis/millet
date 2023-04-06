@@ -4,8 +4,9 @@ mod non_exhaustive;
 mod suggestion;
 
 use crate::display::{record_meta_var, MetaVarNames};
+use crate::sym::{Sym, Syms};
 use crate::ty_var::{bound::BoundTyVar, fixed::FixedTyVar, meta::MetaTyVar};
-use crate::types::{MetaVarInfo, RecordTy, Sym, Syms, Ty, TyScheme};
+use crate::types::{MetaVarInfo, RecordTy, Ty, TyScheme};
 use crate::{disallow::Disallow, item::Item};
 use crate::{equality, overload, pat_match::Pat};
 use diagnostic::{Code, Severity};

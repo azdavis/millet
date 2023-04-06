@@ -3,7 +3,8 @@
 use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind};
 use crate::get_env::{get_env_raw, get_val_info};
-use crate::types::{Sym, SymsMarker, Ty, TyScheme, ValEnv};
+use crate::sym::{Sym, SymsMarker};
+use crate::types::{Ty, TyScheme, ValEnv};
 use crate::util::{apply, get_scon, instantiate, record};
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
 use crate::{dec, def, item::Item, pat, st::St, ty, ty_var::meta::Generalizable, unify::unify};

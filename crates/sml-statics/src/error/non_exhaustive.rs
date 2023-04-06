@@ -1,7 +1,7 @@
 //! Displaying non-exhaustive errors with witnesses.
 
 use crate::pat_match::{Con, Lang, Pat, VariantName};
-use crate::types::Syms;
+use crate::sym::Syms;
 use fmt_util::{comma_seq, sep_seq};
 use pattern_match::{ConPat, RawPat};
 use std::fmt;

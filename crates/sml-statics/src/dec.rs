@@ -4,10 +4,9 @@ use crate::env::{Cx, Env};
 use crate::error::ErrorKind;
 use crate::generalize::{generalize, generalize_fixed, RecordMetaVar};
 use crate::get_env::{get_env, get_env_raw, get_ty_info, get_val_info};
+use crate::sym::{Equality, StartedSym};
 use crate::ty_var::{fixed::TyVarSrc, meta::Generalizable};
-use crate::types::{
-  Equality, FixedTyVars, IdStatus, StartedSym, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo,
-};
+use crate::types::{FixedTyVars, IdStatus, Ty, TyEnv, TyInfo, TyScheme, ValEnv, ValInfo};
 use crate::util::{apply, ins_check_name, ins_no_dupe};
 use crate::{
   config::Cfg, equality, exp, item::Item, pat, pat_match::Pat, st::St, ty, unify::unify,

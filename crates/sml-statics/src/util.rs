@@ -1,7 +1,8 @@
 //! Utilities.
 
+use crate::sym::Sym;
 use crate::ty_var::meta::{Generalizable, MetaTyVar};
-use crate::types::{RecordTy, Subst, SubstEntry, Sym, Ty, TyScheme, TyVarKind};
+use crate::types::{RecordTy, Subst, SubstEntry, Ty, TyScheme, TyVarKind};
 use crate::{error::ErrorKind, item::Item, overload, st::St};
 use stack_map::StackMap;
 

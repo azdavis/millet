@@ -1,7 +1,10 @@
 //! Dealing with `sharing` and `sharing type`.
 
-use crate::types::{SymsMarker, Ty, TyScheme};
-use crate::{env::Env, equality, error::ErrorKind, get_env::get_ty_info, st::St, top_dec::realize};
+use crate::types::{Ty, TyScheme};
+use crate::{
+  env::Env, equality, error::ErrorKind, get_env::get_ty_info, st::St, sym::SymsMarker,
+  top_dec::realize,
+};
 use fast_hash::FxHashSet;
 
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.

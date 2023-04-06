@@ -2,10 +2,10 @@
 
 use crate::env::Env;
 use crate::top_dec::{realize, ty_con_paths};
-use crate::types::{SymsMarker, Ty, TyScheme};
+use crate::types::{Ty, TyScheme};
 use crate::{
   basis::Bs, dec::add_fixed_ty_vars, error::ErrorKind, generalize::generalize_fixed,
-  get_env::get_ty_info, st::St, ty, ty_var::fixed::TyVarSrc,
+  get_env::get_ty_info, st::St, sym::SymsMarker, ty, ty_var::fixed::TyVarSrc,
 };
 
 pub(crate) fn get(

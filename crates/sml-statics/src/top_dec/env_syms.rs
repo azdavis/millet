@@ -1,8 +1,6 @@
 //! Traversing the `Sym`s in an `Env`.
 
-use crate::env::Env;
-use crate::types::{Sym, ValEnv};
-use crate::util::ty_syms;
+use crate::{env::Env, sym::Sym, types::ValEnv, util::ty_syms};
 
 /// Calls `f` for every sym in the env.
 ///

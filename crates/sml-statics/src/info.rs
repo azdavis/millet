@@ -1,8 +1,8 @@
 //! See [`Info`].
 
-use crate::env::Env;
-use crate::types::{IdStatus, MetaVarInfo, Syms, Ty, TyScheme, ValInfo};
+use crate::types::{IdStatus, MetaVarInfo, Ty, TyScheme, ValInfo};
 use crate::{basis::Bs, def, display::MetaVarNames, mode::Mode, util::ty_syms};
+use crate::{env::Env, sym::Syms};
 use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt;
 
