@@ -1,9 +1,10 @@
 //! Bases. (The plural of "basis".)
 
+use crate::core_info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use crate::disallow::{self, Disallow};
 use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use crate::sym::{Equality, Sym, Syms};
-use crate::types::{IdStatus, RecordTy, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo};
+use crate::types::{RecordTy, Ty, TyScheme, TyVarKind};
 use crate::{def::PrimitiveKind, get_env::get_mut_env, item::Item, overload};
 use fast_hash::FxHashMap;
 

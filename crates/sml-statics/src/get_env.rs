@@ -1,6 +1,6 @@
 //! Getting information from environments.
 
-use crate::types::{TyInfo, ValInfo};
+use crate::core_info::{TyInfo, ValInfo};
 use crate::{disallow::Disallow, env::Env, error::ErrorKind, item::Item};
 
 #[derive(Debug)]

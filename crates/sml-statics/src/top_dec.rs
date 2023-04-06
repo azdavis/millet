@@ -8,11 +8,12 @@ mod sharing_ty;
 mod ty_con_paths;
 mod where_ty;
 
+use crate::core_info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use crate::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser};
 use crate::get_env::{get_env, get_ty_info};
 use crate::sym::{Equality, StartedSym, SymsMarker};
-use crate::types::{IdStatus, Ty, TyEnv, TyInfo, TyScheme, TyVarKind, ValEnv, ValInfo};
+use crate::types::{Ty, TyScheme, TyVarKind};
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{
   basis::Bs, config::Cfg, dec, generalize::generalize, item::Item, mode::Mode, overload, st::St,

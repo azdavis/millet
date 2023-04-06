@@ -1,8 +1,8 @@
 //! Checking if various structures respect/admit equality.
 
 use crate::sym::{Equality, Sym};
-use crate::types::{RecordTy, SubstEntry, Ty, TyInfo, TyScheme, TyVarKind};
-use crate::{overload, st::St, ty_var::meta::Generalizable, util::instantiate};
+use crate::types::{RecordTy, SubstEntry, Ty, TyScheme, TyVarKind};
+use crate::{core_info::TyInfo, overload, st::St, ty_var::meta::Generalizable, util::instantiate};
 use std::fmt;
 
 pub(crate) type Result<T = (), E = NotEqTy> = std::result::Result<T, E>;

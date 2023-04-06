@@ -1,6 +1,7 @@
 //! See [`Info`].
 
-use crate::types::{IdStatus, MetaVarInfo, Ty, TyScheme, ValInfo};
+use crate::core_info::{IdStatus, ValInfo};
+use crate::types::{MetaVarInfo, Ty, TyScheme};
 use crate::{basis::Bs, def, display::MetaVarNames, mode::Mode, util::ty_syms};
 use crate::{env::Env, sym::Syms};
 use fast_hash::{FxHashMap, FxHashSet};

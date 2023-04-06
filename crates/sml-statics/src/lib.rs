@@ -33,6 +33,7 @@ mod unify;
 mod util;
 
 pub mod basis;
+mod core_info;
 pub mod def;
 pub mod disallow;
 pub mod info;

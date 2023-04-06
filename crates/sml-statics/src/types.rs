@@ -1,13 +1,9 @@
-//! Types.
-//!
-//! Probably the single most important file in this crate. Lots of types used pervasively across
-//! this crate are defined here.
+//! Types and type schemes.
 
-use crate::sym::{Exn, Sym};
+use crate::overload;
+use crate::sym::Sym;
 use crate::ty_var::{bound::BoundTyVar, fixed::FixedTyVar, meta::MetaTyVar};
-use crate::{def, disallow::Disallow, overload};
-use fast_hash::{FxHashMap, FxHashSet};
-use stack_map::StackMap;
+use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
 
 /// Definition: Type
@@ -101,47 +97,6 @@ pub(crate) enum TyVarKind {
   Overloaded(overload::Overload),
   /// The `Idx` is just for better error reporting.
   Record(RecordTy, sml_hir::Idx),
-}
-
-/// Definition: `TyStr`
-#[derive(Debug, Clone)]
-pub(crate) struct TyInfo {
-  pub(crate) ty_scheme: TyScheme,
-  pub(crate) val_env: ValEnv,
-  pub(crate) def: Option<def::Def>,
-  pub(crate) disallow: Option<Disallow>,
-}
-
-/// Definition: `TyEnv`
-pub(crate) type TyEnv = StackMap<str_util::Name, TyInfo>;
-
-/// Definition: `ValEnv`
-pub(crate) type ValEnv = StackMap<str_util::Name, ValInfo>;
-
-#[derive(Debug, Clone)]
-pub(crate) struct ValInfo {
-  pub(crate) ty_scheme: TyScheme,
-  pub(crate) id_status: IdStatus,
-  /// a set, because we can have or patterns
-  pub(crate) defs: FxHashSet<def::Def>,
-  pub(crate) disallow: Option<Disallow>,
-}
-
-/// Definition: `IdStatus`
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum IdStatus {
-  Con,
-  Exn(Exn),
-  Val,
-}
-
-impl IdStatus {
-  pub(crate) fn same_kind_as(self, other: Self) -> bool {
-    matches!(
-      (self, other),
-      (Self::Con, Self::Con) | (Self::Exn(_), Self::Exn(_)) | (Self::Val, Self::Val)
-    )
-  }
 }
 
 /// Information about meta type variables.

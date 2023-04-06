@@ -1,7 +1,8 @@
 //! Checking patterns.
 
+use crate::core_info::{IdStatus, ValEnv, ValInfo};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{IdStatus, SubstEntry, Ty, TyScheme, TyVarKind, ValEnv, ValInfo};
+use crate::types::{SubstEntry, Ty, TyScheme, TyVarKind};
 use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
 use crate::{
   compatible::eq_ty_scheme, config, def, env::Cx, error::ErrorKind, get_env::get_val_info,

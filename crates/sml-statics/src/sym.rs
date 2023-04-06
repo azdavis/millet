@@ -1,6 +1,7 @@
 //! `Sym`s, aka symbols, aka type names, aka generated types. And exceptions.
 
-use crate::types::{Ty, TyInfo, TyScheme, ValEnv};
+use crate::core_info::{TyInfo, ValEnv};
+use crate::types::{Ty, TyScheme};
 use crate::{def, overload};
 use drop_bomb::DropBomb;
 use std::fmt;
