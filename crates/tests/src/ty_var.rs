@@ -3,11 +3,22 @@
 use crate::check::check;
 
 #[test]
-fn across_var() {
+fn across_var_1() {
   check(
     r#"
 fun 'a f (x: 'a) = let val y = x in y false; y end
 (**                                 ^ expected `bool -> ?a`, found `'a` *)
+"#,
+  );
+}
+
+#[test]
+fn across_var_2() {
+  check(
+    r#"
+fun id' x = let val y = x in y end
+(**     vvv hover: 'a -> 'a *)
+val f = id'
 "#,
   );
 }
