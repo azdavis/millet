@@ -2,12 +2,12 @@
 
 /// Generated, and to be solved for a real type, by the inference algorithm.
 ///
-/// Should eventually be solved in a [`Subst`], but before that, it may be "restricted" by the
+/// Should eventually be solved in a `Subst`, but before that, it may be "restricted" by the
 /// `Subst` without yet being fully solved to a type.
 ///
 /// Internally contains a "rank" to know when it should be generalizable; see "Efficient ML Type
 /// Inference Using Ranked Type Variables" (doi:10.1145/1292535.1292538)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct MetaTyVar {
   id: u32,
   rank: MetaTyVarRank,
