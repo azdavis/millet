@@ -3,7 +3,7 @@
 use crate::fmt_util;
 
 /// Basically a de Bruijn index.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct BoundTyVar(idx::Idx);
 
 impl BoundTyVar {

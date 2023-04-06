@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum Basic {
   Int,
   Real,
@@ -29,7 +29,7 @@ impl fmt::Display for Basic {
   }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum Composite {
   WordInt,
   RealInt,
@@ -83,7 +83,7 @@ impl fmt::Display for Composite {
   }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum Overload {
   Basic(Basic),
   Composite(Composite),
