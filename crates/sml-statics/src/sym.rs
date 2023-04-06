@@ -1,11 +1,11 @@
-//! `Sym`s, aka symbols, aka type names, aka generated types.
+//! `Sym`s, aka symbols, aka type names, aka generated types. And exceptions.
 
 use crate::types::{Ty, TyInfo, TyScheme, ValEnv};
 use crate::{def, overload};
 use drop_bomb::DropBomb;
 use std::fmt;
 
-/// Definition: `TyName`
+/// A symbol, aka a type name. Definition: `TyName`
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Sym(idx::Idx);
 
@@ -79,6 +79,11 @@ impl Sym {
   }
 }
 
+/// An exception.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct Exn(idx::Idx);
+
+/// Whether this `Sym` admits equality.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Equality {
   Always,
@@ -86,6 +91,7 @@ pub(crate) enum Equality {
   Never,
 }
 
+/// Information about a `Sym`.
 #[derive(Debug, Clone)]
 pub(crate) struct SymInfo {
   pub(crate) path: sml_path::Path,
@@ -93,82 +99,11 @@ pub(crate) struct SymInfo {
   pub(crate) equality: Equality,
 }
 
+/// Information about an `Exn`.
 #[derive(Debug, Clone)]
 pub(crate) struct ExnInfo {
   pub(crate) path: sml_path::Path,
   pub(crate) param: Option<Ty>,
-}
-
-/// Information about generated types, generated exceptions, and overload types.
-///
-/// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
-/// even built-in items like `type int` and `exception Bind`.
-#[derive(Debug, Default, Clone)]
-pub struct Syms {
-  /// always use Sym::idx to index
-  syms: Vec<SymInfo>,
-  exns: Vec<ExnInfo>,
-  overloads: Overloads,
-}
-
-impl Syms {
-  pub(crate) fn start(&mut self, path: sml_path::Path) -> StartedSym {
-    let ty_info = TyInfo {
-      ty_scheme: TyScheme::zero(Ty::None),
-      val_env: ValEnv::default(),
-      def: None,
-      disallow: None,
-    };
-    // must start with sometimes equality, as an assumption for constructing datatypes. we may
-    // realize that it should actually be never equality based on arguments to constructors.
-    self.syms.push(SymInfo { path, ty_info, equality: Equality::Sometimes });
-    StartedSym {
-      bomb: DropBomb::new("must be passed to Syms::finish"),
-      // calculate len after push, because we sub 1 in get, because of Sym::EXN.
-      sym: Sym(idx::Idx::new(self.syms.len())),
-    }
-  }
-
-  pub(crate) fn finish(&mut self, mut started: StartedSym, ty_info: TyInfo, equality: Equality) {
-    started.bomb.defuse();
-    let sym_info = &mut self.syms[started.sym.idx()];
-    sym_info.ty_info = ty_info;
-    sym_info.equality = equality;
-  }
-
-  /// Returns `None` iff passed `Sym::EXN`.
-  pub(crate) fn get(&self, sym: Sym) -> Option<&SymInfo> {
-    if sym == Sym::EXN {
-      return None;
-    }
-    self.syms.get(sym.idx())
-  }
-
-  pub(crate) fn insert_exn(&mut self, path: sml_path::Path, param: Option<Ty>) -> Exn {
-    let ret = Exn(idx::Idx::new(self.exns.len()));
-    self.exns.push(ExnInfo { path, param });
-    ret
-  }
-
-  pub(crate) fn get_exn(&self, exn: Exn) -> &ExnInfo {
-    self.exns.get(exn.0.to_usize()).unwrap()
-  }
-
-  pub(crate) fn mark(&self) -> SymsMarker {
-    SymsMarker(self.syms.len())
-  }
-
-  pub(crate) fn iter_syms(&self) -> impl Iterator<Item = &SymInfo> {
-    self.syms.iter()
-  }
-
-  pub(crate) fn overloads(&self) -> &Overloads {
-    &self.overloads
-  }
-
-  pub(crate) fn overloads_mut(&mut self) -> &mut Overloads {
-    &mut self.overloads
-  }
 }
 
 /// Information about overloads.
@@ -206,12 +141,90 @@ impl std::ops::IndexMut<overload::Basic> for Overloads {
     }
   }
 }
+
+/// Information about generated types, generated exceptions, and overload types.
+///
+/// Note the `Default` impl is "fake", in that it returns a totally empty `Syms`, which will lack
+/// even built-in items like `type int` and `exception Bind`.
+#[derive(Debug, Default, Clone)]
+pub struct Syms {
+  /// always use Sym::idx to index
+  syms: Vec<SymInfo>,
+  exns: Vec<ExnInfo>,
+  overloads: Overloads,
+}
+
+impl Syms {
+  /// Start constructing a `Sym`.
+  pub(crate) fn start(&mut self, path: sml_path::Path) -> StartedSym {
+    let ty_info = TyInfo {
+      ty_scheme: TyScheme::zero(Ty::None),
+      val_env: ValEnv::default(),
+      def: None,
+      disallow: None,
+    };
+    // must start with sometimes equality, as an assumption for constructing datatypes. we may
+    // realize that it should actually be never equality based on arguments to constructors.
+    self.syms.push(SymInfo { path, ty_info, equality: Equality::Sometimes });
+    StartedSym {
+      bomb: DropBomb::new("must be passed to Syms::finish"),
+      // calculate len after push, because we sub 1 in get, because of Sym::EXN.
+      sym: Sym(idx::Idx::new(self.syms.len())),
+    }
+  }
+
+  /// Finish constructing a `Sym`.
+  pub(crate) fn finish(&mut self, mut started: StartedSym, ty_info: TyInfo, equality: Equality) {
+    started.bomb.defuse();
+    let sym_info = &mut self.syms[started.sym.idx()];
+    sym_info.ty_info = ty_info;
+    sym_info.equality = equality;
+  }
+
+  /// Returns `None` if and only if passed `Sym::EXN`.
+  pub(crate) fn get(&self, sym: Sym) -> Option<&SymInfo> {
+    if sym == Sym::EXN {
+      return None;
+    }
+    Some(self.syms.get(sym.idx()).unwrap())
+  }
+
+  /// Inserts a new exception.
+  pub(crate) fn insert_exn(&mut self, path: sml_path::Path, param: Option<Ty>) -> Exn {
+    let ret = Exn(idx::Idx::new(self.exns.len()));
+    self.exns.push(ExnInfo { path, param });
+    ret
+  }
+
+  /// Gets information about an exception.
+  pub(crate) fn get_exn(&self, exn: Exn) -> &ExnInfo {
+    self.exns.get(exn.0.to_usize()).unwrap()
+  }
+
+  /// Return a marker, so we may later whether a `Sym` has been generated after this marker.
+  pub(crate) fn mark(&self) -> SymsMarker {
+    SymsMarker(self.syms.len())
+  }
+
+  /// Iterate over the `Syms`'s info.
+  pub(crate) fn iter_syms(&self) -> impl Iterator<Item = &SymInfo> {
+    self.syms.iter()
+  }
+
+  /// Returns the overloads.
+  pub(crate) fn overloads(&self) -> &Overloads {
+    &self.overloads
+  }
+
+  /// Returns the mutable overloads.
+  pub(crate) fn overloads_mut(&mut self) -> &mut Overloads {
+    &mut self.overloads
+  }
+}
+
 /// A marker to determine when a `Sym` was generated.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct SymsMarker(usize);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct Exn(idx::Idx);
 
 /// A helper to construct information about [`Syms`]s.
 pub(crate) struct StartedSym {
