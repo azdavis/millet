@@ -268,9 +268,10 @@ fn tag(tag_arg: &str) -> Result<()> {
     }
     fs::write(path, out)?;
   }
-  let cargo_toml = fs::read_to_string("Cargo.toml")?;
-  let mut out = String::with_capacity(cargo_toml.len());
-  for line in cargo_toml.lines() {
+  let cargo_toml = "Cargo.toml";
+  let contents = fs::read_to_string(cargo_toml)?;
+  let mut out = String::with_capacity(contents.len());
+  for line in contents.lines() {
     match line.strip_prefix("version = \"").and_then(|x| x.strip_suffix('"')) {
       None => out.push_str(line),
       Some(_) => {
@@ -282,6 +283,7 @@ fn tag(tag_arg: &str) -> Result<()> {
     }
     out.push('\n');
   }
+  fs::write(cargo_toml, out)?;
   // to update Cargo.lock
   run(Command::new("cargo").arg("build"))?;
   run(Command::new("git").arg("add").args(paths).args(["Cargo.toml", "Cargo.lock"]))?;
