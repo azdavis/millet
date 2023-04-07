@@ -20,7 +20,7 @@ arguments:
   <path>
     path of the project to analyze. the path is a directory containing either:
     - a single .cm or .mlb file
-    - a millet.toml config file specifying a single .cm or .mlb file
+    - a millet.toml config file
 "#;
   print!("{rest_of_usage}");
 }
