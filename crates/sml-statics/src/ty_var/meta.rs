@@ -1,5 +1,7 @@
 //! Meta type variables, as constructed by the type inference engine.
 
+use uniq::{Uniq, UniqGen};
+
 /// Generated, and to be solved for a real type, by the inference algorithm.
 ///
 /// Should eventually be solved in a `Subst`, but before that, it may be "restricted" by the
@@ -9,7 +11,7 @@
 /// Inference Using Ranked Type Variables" (doi:10.1145/1292535.1292538)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct MetaTyVar {
-  id: u32,
+  id: Uniq,
   rank: MetaTyVarRank,
 }
 
@@ -33,21 +35,19 @@ pub(crate) enum Generalizable {
 
 #[derive(Debug, Default)]
 pub(crate) struct MetaTyVarGen {
-  id: u32,
+  id_gen: UniqGen,
   rank: u16,
 }
 
 impl MetaTyVarGen {
   pub(crate) fn gen(&mut self, g: Generalizable) -> MetaTyVar {
-    let ret = MetaTyVar {
-      id: self.id,
+    MetaTyVar {
+      id: self.id_gen.gen(),
       rank: match g {
         Generalizable::Sometimes => MetaTyVarRank::Finite(self.rank),
         Generalizable::Always => MetaTyVarRank::Infinite,
       },
-    };
-    self.id += 1;
-    ret
+    }
   }
 
   pub(crate) fn inc_rank(&mut self) {
@@ -63,9 +63,7 @@ impl MetaTyVarGen {
   }
 
   pub(crate) fn gen_same_rank(&mut self, mv: MetaTyVar) -> MetaTyVar {
-    let ret = MetaTyVar { id: self.id, rank: mv.rank };
-    self.id += 1;
-    ret
+    MetaTyVar { id: self.id_gen.gen(), rank: mv.rank }
   }
 }
 
