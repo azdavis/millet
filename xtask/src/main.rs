@@ -1,5 +1,10 @@
 //! See the [xtask spec](https://github.com/matklad/cargo-xtask).
 
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![allow(clippy::single_match_else)]
+// TODO remove once rustfmt support lands
+#![allow(clippy::manual_let_else)]
+
 use anyhow::{anyhow, bail, Result};
 use flate2::{write::GzEncoder, Compression};
 use pico_args::Arguments;
@@ -24,7 +29,7 @@ struct CmdSpec {
 impl Cmd {
   const VALUES: [Cmd; 4] = [Cmd::Help, Cmd::Ci, Cmd::Dist, Cmd::Tag];
 
-  fn spec(&self) -> CmdSpec {
+  fn spec(self) -> CmdSpec {
     match self {
       Cmd::Help => CmdSpec { name: "help", desc: "show this help", options: &[], args: &[] },
       Cmd::Ci => CmdSpec { name: "ci", desc: "run various tests", options: &[], args: &[] },
@@ -158,7 +163,7 @@ fn cmd_exe(fst: &str) -> Command {
   }
 }
 
-fn dist(args: DistArgs) -> Result<()> {
+fn dist(args: &DistArgs) -> Result<()> {
   let mut c = Command::new("cargo");
   c.args(["build", "--locked", "--bin", LANG_SRV_NAME]);
   if args.release {
@@ -236,7 +241,7 @@ fn tag(tag_arg: &str) -> Result<()> {
     .into_iter()
     .map(|p| ["editors", "vscode", p].into_iter().collect())
     .collect();
-  for path in paths.iter() {
+  for path in &paths {
     let contents = fs::read_to_string(path)?;
     let mut out = String::with_capacity(contents.len());
     for (idx, line) in contents.lines().enumerate() {
@@ -295,7 +300,7 @@ fn main() -> Result<()> {
         target: args.opt_value_from_str("--target")?,
       };
       finish_args(args)?;
-      dist(dist_args)?;
+      dist(&dist_args)?;
     }
     Cmd::Tag => {
       let tag_arg: String = args.free_from_str()?;

@@ -1,5 +1,7 @@
 //! A thin CLI front-end for running Millet once over some files.
 
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+
 use paths::FileSystem as _;
 
 fn usage() {
@@ -47,7 +49,7 @@ fn run() -> usize {
   let root = match fs.canonicalize(root.as_path()) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(root.as_path(), &input::Error::from_io(root.to_owned(), e));
+      handle_input_error(root.as_path(), &input::Error::from_io(root.clone(), e));
       return 1;
     }
   };
@@ -70,7 +72,7 @@ fn run() -> usize {
       println!("{}:{}: error[{}]: {}", path.display(), err.range, err.code, err.message);
     }
   }
-  inp.errors.len() + got.values().map(|es| es.len()).sum::<usize>()
+  inp.errors.len() + got.values().map(Vec::len).sum::<usize>()
 }
 
 fn handle_input_error(root: &std::path::Path, e: &input::Error) {
