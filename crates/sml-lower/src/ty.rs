@@ -1,6 +1,6 @@
 //! Lowering types.
 
-use crate::common::{ck_trailing, get_lab, get_path};
+use crate::common::{ck_trailing, forbid_opaque_asc, get_lab, get_path};
 use crate::util::{ErrorKind, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
@@ -12,7 +12,12 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
     ast::Ty::TyVarTy(ty) => sml_hir::Ty::Var(sml_hir::TyVar::new(ty.ty_var()?.text())),
     ast::Ty::RecordTy(ty) => {
       ck_trailing(st, Sep::Comma, ty.ty_rows().map(|x| x.comma()));
-      let rows = ty.ty_rows().filter_map(|row| Some((get_lab(st, row.lab()?), get(st, row.ty()))));
+      let rows = ty.ty_rows().filter_map(|row| {
+        forbid_opaque_asc(st, row.ascription());
+        let lab = get_lab(st, row.lab()?);
+        let ty = get(st, row.ty());
+        Some((lab, ty))
+      });
       sml_hir::Ty::Record(rows.collect())
     }
     ast::Ty::ConTy(ty) => {

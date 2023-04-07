@@ -3,8 +3,8 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{
-  comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, scon, should_break,
-  InfixErr,
+  ascription, comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, scon,
+  should_break, InfixErr,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -117,7 +117,7 @@ fn pat_prec(
         p.error(ErrorKind::Expected(Expected::Pat));
       }
       p.exit(en, SK::OrPat)
-    } else if p.at(SK::Colon) {
+    } else if ascription(p) {
       match min_prec {
         PatPrec::Min | PatPrec::Or => {}
         PatPrec::Infix(_) => break,

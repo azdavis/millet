@@ -76,6 +76,7 @@ pub(crate) enum ErrorKind {
   Trailing(Sep),
   Disallowed(Item),
   TopLevelOpen,
+  InvalidOpaqueAscription,
 }
 
 impl fmt::Display for ErrorKind {
@@ -125,6 +126,7 @@ impl fmt::Display for ErrorKind {
       ErrorKind::Trailing(s) => write!(f, "trailing `{s}`"),
       ErrorKind::Disallowed(item) => write!(f, "disallowed {item}"),
       ErrorKind::TopLevelOpen => write!(f, "top-level `open`"),
+      ErrorKind::InvalidOpaqueAscription => f.write_str("opaque ascription not allowed here"),
     }
   }
 }
@@ -231,6 +233,7 @@ impl Error {
       ErrorKind::Trailing(_) => Code::n(4028),
       ErrorKind::Disallowed(_) => Code::n(4029),
       ErrorKind::TopLevelOpen => Code::n(4030),
+      ErrorKind::InvalidOpaqueAscription => Code::n(4031),
     }
   }
 

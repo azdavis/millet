@@ -7,7 +7,7 @@ use crate::parser::{ErrorKind, Exited, Expected, Parser};
 use crate::pat::{at_pat, pat};
 use crate::ty::{of_ty, ty, ty_annotation, ty_var_seq};
 use crate::util::{
-  eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path, path_must, InfixErr,
+  ascription, eat_name_star, many_sep, maybe_semi_sep, name_star_eq, path, path_must, InfixErr,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -214,7 +214,9 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
       if p.at(SK::Name) {
         let en = p.enter();
         p.bump();
-        p.eat(SK::Colon);
+        if ascription(p) {
+          p.bump();
+        }
         if sig_exp(p, fe).is_none() {
           p.error(ErrorKind::Expected(Expected::SigExp));
         }
@@ -292,10 +294,6 @@ fn str_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
     ex = p.exit(en, SK::AscriptionStrExp);
   }
   Some(ex)
-}
-
-fn ascription(p: &mut Parser<'_>) -> bool {
-  p.at(SK::Colon) || p.at(SK::ColonGt)
 }
 
 /// should have just gotten `true` from [`ascription`]

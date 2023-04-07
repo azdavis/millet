@@ -3,7 +3,7 @@
 //! This is where AST declarations become various other things. They can be lowered into HIR
 //! declarations or other HIR things.
 
-use crate::common::{get_name, get_path};
+use crate::common::{forbid_opaque_asc, get_name, get_path};
 use crate::pat::{self, tuple};
 use crate::util::{ErrorKind, Item, St};
 use crate::{exp, ty};
@@ -131,6 +131,7 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
         let body = with_ascription_tail(st, fun_bind.body(), fun_bind.ascription_tail());
         let (param_name, param_sig, body, flavor) = match fun_bind.functor_arg()? {
           ast::FunctorArg::FunctorArgNameSigExp(arg) => {
+            forbid_opaque_asc(st, arg.ascription());
             (get_name(arg.name())?, get_sig_exp(st, arg.sig_exp()), body, sml_hir::Flavor::Plain)
           }
           ast::FunctorArg::Dec(arg) => {
@@ -568,7 +569,10 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
           } else {
             st.pat(pat::tuple(pats), ptr.clone())
           };
-          let ty = case.ty_annotation().map(|x| ty::get(st, x.ty()));
+          let ty = case.ty_annotation().map(|ty_ann| {
+            forbid_opaque_asc(st, ty_ann.ascription());
+            ty::get(st, ty_ann.ty())
+          });
           let body = case.eq_exp().and_then(|x| x.exp());
           if body.is_none() {
             st.err(dec.syntax().text_range(), ErrorKind::MissingRhs);

@@ -1,6 +1,6 @@
 //! Lowering patterns.
 
-use crate::common::{ck_trailing, get_lab, get_path, get_scon};
+use crate::common::{ck_trailing, forbid_opaque_asc, get_lab, get_path, get_scon};
 use crate::ty;
 use crate::util::{ErrorKind, MatcherFlavor, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -59,7 +59,10 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
               r.last = false;
             }
             let lab = str_util::Name::new(row.name_star_eq()?.token.text());
-            let ty_ann = row.ty_annotation().map(|x| ty::get(st, x.ty()));
+            let ty_ann = row.ty_annotation().map(|ty_ann| {
+              forbid_opaque_asc(st, ty_ann.ascription());
+              ty::get(st, ty_ann.ty())
+            });
             let as_tail = row.as_pat_tail().map(|x| get(st, flavor, x.pat()));
             let pat = match (ty_ann, as_tail) {
               (Some(ty), Some(pat)) => {
@@ -121,6 +124,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       if pat.pat().map_or(false, has_types) {
         st.err(pat.syntax().text_range(), ErrorKind::MultipleTypedPat);
       }
+      forbid_opaque_asc(st, pat.ascription());
       sml_hir::Pat::Typed(get(st, flavor, pat.pat()), ty::get(st, pat.ty()))
     }
     ast::Pat::AsPat(pat) => {

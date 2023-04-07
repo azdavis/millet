@@ -21,6 +21,7 @@ mod empty;
 mod equality;
 mod exn;
 mod fixity;
+mod forbid_opaque_asc;
 mod functor;
 mod generalize;
 mod goto_def;

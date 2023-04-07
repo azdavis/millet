@@ -152,3 +152,13 @@ where
     st.err(s.text_range(), ErrorKind::Trailing(sep));
   }
 }
+
+pub(crate) fn forbid_opaque_asc(st: &mut St<'_>, asc: Option<ast::Ascription>) {
+  let asc = match asc {
+    None => return,
+    Some(x) => x,
+  };
+  if matches!(asc.kind, ast::AscriptionKind::ColonGt) {
+    st.err(asc.token.text_range(), ErrorKind::InvalidOpaqueAscription);
+  }
+}

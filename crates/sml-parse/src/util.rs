@@ -203,3 +203,8 @@ pub(crate) fn eat_name_star<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
     None
   }
 }
+
+/// `:` or `:>`. in many contexts only `:` is acceptable but we handle that in lowering.
+pub(crate) fn ascription(p: &mut Parser<'_>) -> bool {
+  p.at(SK::Colon) || p.at(SK::ColonGt)
+}

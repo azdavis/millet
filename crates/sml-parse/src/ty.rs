@@ -1,7 +1,7 @@
 //! Parsing types.
 
 use crate::parser::{ErrorKind, Exited, Expected, Parser};
-use crate::util::{comma_sep, lab, path_must};
+use crate::util::{ascription, comma_sep, lab, path_must};
 use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn ty(p: &mut Parser<'_>) {
@@ -25,7 +25,9 @@ fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
     p.bump();
     comma_sep(p, SK::TyRow, SK::RCurly, |p| {
       lab(p);
-      p.eat(SK::Colon);
+      if ascription(p) {
+        p.bump();
+      }
       ty(p);
     });
     p.exit(en, SK::RecordTy)
@@ -122,19 +124,22 @@ pub(crate) fn ty_var_seq(p: &mut Parser<'_>) -> bool {
 }
 
 pub(crate) fn of_ty(p: &mut Parser<'_>) -> Option<Exited> {
-  tok_ty(p, SK::OfKw, SK::OfTy)
-}
-
-pub(crate) fn ty_annotation(p: &mut Parser<'_>) -> Option<Exited> {
-  tok_ty(p, SK::Colon, SK::TyAnnotation)
-}
-
-fn tok_ty(p: &mut Parser<'_>, tok: SK, wrap: SK) -> Option<Exited> {
-  if p.at(tok) {
+  if p.at(SK::OfKw) {
     let en = p.enter();
     p.bump();
     ty(p);
-    Some(p.exit(en, wrap))
+    Some(p.exit(en, SK::OfTy))
+  } else {
+    None
+  }
+}
+
+pub(crate) fn ty_annotation(p: &mut Parser<'_>) -> Option<Exited> {
+  if ascription(p) {
+    let en = p.enter();
+    p.bump();
+    ty(p);
+    Some(p.exit(en, SK::TyAnnotation))
   } else {
     None
   }

@@ -1,6 +1,6 @@
 //! Lowering expressions.
 
-use crate::common::{ck_trailing, get_lab, get_path, get_scon};
+use crate::common::{ck_trailing, forbid_opaque_asc, get_lab, get_path, get_scon};
 use crate::util::{ErrorKind, Item, MatcherFlavor, Sep, St};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -138,6 +138,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.typed {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("typed")));
       }
+      forbid_opaque_asc(st, exp.ascription());
       sml_hir::Exp::Typed(get(st, exp.exp()), ty::get(st, exp.ty()))
     }
     ast::Exp::AndalsoExp(exp) => {

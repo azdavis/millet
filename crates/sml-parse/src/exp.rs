@@ -2,8 +2,8 @@
 
 use crate::parser::{ErrorKind, Exited, Expected, ParensExpFlavor, Parser};
 use crate::util::{
-  comma_sep, end_sep, lab, many_sep, name_star_eq, path_infix, path_no_infix, scon, should_break,
-  InfixErr,
+  ascription, comma_sep, end_sep, lab, many_sep, name_star_eq, path_infix, path_no_infix, scon,
+  should_break, InfixErr,
 };
 use crate::{dec::dec, pat::pat, ty::ty};
 use sml_syntax::SyntaxKind as SK;
@@ -98,8 +98,8 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
           p.error(ErrorKind::Expected(Expected::Exp));
         }
         p.exit(en, SK::InfixExp)
-      } else if p.at(SK::Colon) {
-        if should_break_exp(p, ExpPrec::Colon, min_prec) {
+      } else if ascription(p) {
+        if should_break_exp(p, ExpPrec::Ascription, min_prec) {
           break;
         }
         let en = p.precede(ex);
@@ -292,18 +292,20 @@ enum ExpPrec {
   Handle,
   Orelse,
   Andalso,
-  Colon,
+  Ascription,
   Infix(sml_fixity::Infix),
 }
 
 fn should_break_exp(p: &mut Parser<'_>, prec: ExpPrec, min_prec: ExpPrec) -> bool {
   match (prec, min_prec) {
-    (_, ExpPrec::Handle | ExpPrec::Colon) => unreachable!("Handle and Colon are never a min_prec"),
+    (_, ExpPrec::Handle | ExpPrec::Ascription) => {
+      unreachable!("Handle and Ascription are never a min_prec")
+    }
     (ExpPrec::Min, _) => unreachable!("Min is always a min_prec"),
     (ExpPrec::Infix(prec), ExpPrec::Infix(min_prec)) => should_break(p, prec, min_prec),
     (_, ExpPrec::Min)
     | (ExpPrec::Infix(_), _)
-    | (ExpPrec::Colon, ExpPrec::Andalso | ExpPrec::Orelse)
+    | (ExpPrec::Ascription, ExpPrec::Andalso | ExpPrec::Orelse)
     | (ExpPrec::Andalso, ExpPrec::Orelse) => false,
     (_, ExpPrec::Infix(_))
     | (ExpPrec::Andalso, ExpPrec::Andalso)

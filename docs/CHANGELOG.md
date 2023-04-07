@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Emit better error for invalid `:>` where only `:` is allowed.
+
 ## v0.8.8
 
 - Highlight type variable names.

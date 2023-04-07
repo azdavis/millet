@@ -1273,6 +1273,21 @@ end
 val ys = List.filter (fn x => x < 10) [1988, 4, 16]
 ```
 
+## 4031
+
+There was an occurrence of `:>` in a context where only `:` is expected.
+
+```sml
+val x :> int = 3
+(**   ^^ not allowed here *)
+```
+
+`:>` is for opaque ascription, which only applies to structures and signatures in certain contexts. `:` is for both transparent ascription as well as type annotation.
+
+Functor arguments can only be transparently ascribed, and values and patterns can only be annotated with types, not be ascribed opaquely (or transparently, for that matter). Thus, in those contexts, only `:` is appropriate, not `:>`.
+
+To fix, use `:` instead.
+
 ## 4999
 
 There was an occurrence of an unsupported SML construct.

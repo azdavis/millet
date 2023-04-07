@@ -82,7 +82,7 @@ EqPath = '=' Path
 WithType = 'withtype' TyBind*
 
 FunctorArg = FunctorArgNameSigExp | Dec
-FunctorArgNameSigExp = 'Name' ':' SigExp
+FunctorArgNameSigExp = 'Name' Ascription SigExp
 
 StrExp =
   StructStrExp
@@ -163,7 +163,7 @@ SeqExp = '(' exps_in_seq:ExpInSeq* ')'
 LetExp = 'let' Dec 'in' exps_in_seq:ExpInSeq* 'end'
 AppExp = func:Exp arg:Exp
 InfixExp = lhs:Exp NameStarEq rhs:Exp
-TypedExp = Exp ':' Ty
+TypedExp = Exp Ascription Ty
 AndalsoExp = lhs:Exp 'andalso' rhs:Exp
 OrelseExp = lhs:Exp 'orelse' rhs:Exp
 HandleExp = Exp 'handle' Matcher
@@ -204,7 +204,7 @@ TuplePat = '(' PatArg* ')'
 ListPat = '[' PatArg* ']'
 VectorPat = '#' ListPat
 InfixPat = lhs:Pat NameStarEq rhs:Pat
-TypedPat = Pat ':' Ty
+TypedPat = Pat Ascription Ty
 AsPat = Pat AsPatTail
 OrPat = lhs:Pat '|' rhs:Pat
 
@@ -244,10 +244,10 @@ FnTy = param:Ty '->' res:Ty
 ParenTy = '(' Ty ')'
 
 StarTy = '*' Ty
-TyRow = Lab ':' Ty ','?
+TyRow = Lab Ascription Ty ','?
 
 OfTy = 'of' Ty
-TyAnnotation = ':' Ty
+TyAnnotation = Ascription Ty
 
 Path = NameStarEqDot*
 NameStarEqDot = NameStarEq '.'?
