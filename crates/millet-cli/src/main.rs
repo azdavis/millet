@@ -85,6 +85,7 @@ fn handle_input_error(root: &std::path::Path, e: &input::Error) {
 }
 
 fn main() {
+  panic_hook::install();
   match run() {
     0 => println!("no errors"),
     n => {

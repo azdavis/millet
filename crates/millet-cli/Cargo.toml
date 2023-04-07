@@ -15,5 +15,6 @@ config = { path = "../config" }
 diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 env_logger = "0.10"
 input = { path = "../input" }
+panic-hook = { path = "../panic-hook" }
 paths = { git = "https://github.com/azdavis/language-util.git" }
 pico-args = "0.5"

@@ -245,6 +245,10 @@ Depends on `analysis` and a bunch of third party crates to implement a language 
 
 These crates don't really fit in anywhere else.
 
+### `crates/panic-hook`
+
+A good default panic hook that shows backtraces and exhorts the reader to file a bug report.
+
 ### `crates/stack-map`
 
 A map optimized for the use-case of cloning and adding a few elements onto the clone. Used in the statics.

@@ -1,0 +1,13 @@
+[package]
+name = "panic-hook"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+better-panic = "0.3"
