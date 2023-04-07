@@ -143,7 +143,7 @@ fn run_ci() -> Result<()> {
 }
 
 fn env_var_enabled(s: &str) -> bool {
-  std::env::var_os(s).map_or(false, |x| x == "1")
+  env::var_os(s).map_or(false, |x| x == "1")
 }
 
 #[derive(Debug)]
@@ -176,7 +176,7 @@ fn dist(args: &DistArgs) -> Result<()> {
   }
   run(&mut c)?;
   let kind = if args.release { "release" } else { "debug" };
-  let lang_srv_exe = format!("{LANG_SRV_NAME}{}", std::env::consts::EXE_SUFFIX);
+  let lang_srv_exe = format!("{LANG_SRV_NAME}{}", env::consts::EXE_SUFFIX);
   let lang_srv_out: PathBuf = std::iter::once("target")
     .chain(args.target.as_deref())
     .chain([kind, lang_srv_exe.as_str()])
