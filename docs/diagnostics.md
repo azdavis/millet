@@ -1665,21 +1665,39 @@ fun f y =
   | _ => 6
 ```
 
-To fix check for equality another way, for instance with `=`.
+This error is emitted when a path (in this example `S.x`) is encountered, but the path is a value binding, not a constructor.
 
-```sml
-structure S = struct
-  val x = 3
-end
+Only values that are known to be constructors are allowed in patterns. All constructors are values, but not all values are constructors.
 
-fun f y =
-  if y = S.x then
-    1
-  else if y = 4 then
-    5
-  else
-    6
-```
+In this example, SML does not, for instance, enter the case arm for `1` if `y` is equal to whatever value got bound to `S.x` (in this case `3`).
+
+To fix, try one of the following:
+
+- If the value is known to be a particular constructor, use that constructor verbatim in the pattern match.
+
+  ```sml
+  fun f y =
+    case y of
+      3 => 1
+    | 4 => 5
+    | _ => 6
+  ```
+
+- Check for equality another way, for instance with `=`.
+
+  ```sml
+  structure S = struct
+    val x = 3
+  end
+
+  fun f y =
+    if y = S.x then
+      1
+    else if y = 4 then
+      5
+    else
+      6
+  ```
 
 ## 5014
 
