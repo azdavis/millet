@@ -47,6 +47,7 @@ pub(crate) struct Opts<'a> {
 
 /// The low-level impl that almost all top-level "check" functions delegate to.
 #[track_caller]
+#[allow(clippy::too_many_lines)]
 pub(crate) fn get<'a, I>(files: I, opts: Opts<'_>)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
@@ -94,14 +95,6 @@ where
     .flat_map(expect::File::iter)
     .filter(|(_, e)| matches!(e.kind, expect::Kind::Exact | expect::Kind::Contains))
     .count();
-  let def_use = ck.files.iter().find_map(|(p, f)| {
-    f.iter().find_map(|(&r, e)| {
-      matches!(e.kind, expect::Kind::Def | expect::Kind::Use).then(|| p.wrap(r))
-    })
-  });
-  if let Some(r) = def_use {
-    ck.reasons.push(reason::Reason::UnimplementedKind(r));
-  }
   // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
   // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
   // only one expectation is actually used.
@@ -115,26 +108,32 @@ where
   };
   for (&path, file) in &ck.files {
     for (&region, expect) in file.iter() {
-      if matches!(expect.kind, expect::Kind::Hover) {
-        let pos = match region {
-          expect::Region::Exact { line, col_start, .. } => {
-            text_pos::PositionUtf16 { line, col: col_start }
-          }
-          expect::Region::Line(n) => {
-            ck.reasons.push(reason::Reason::InexactHover(path.wrap(n)));
-            continue;
-          }
-        };
-        let r = match an.get_md(path.wrap(pos), true) {
-          None => reason::Reason::NoHover(path.wrap(region)),
-          Some((got, _)) => {
-            if got.contains(&expect.msg) {
+      match expect.kind {
+        expect::Kind::Hover => {
+          let pos = match region {
+            expect::Region::Exact { line, col_start, .. } => {
+              text_pos::PositionUtf16 { line, col: col_start }
+            }
+            expect::Region::Line(n) => {
+              ck.reasons.push(reason::Reason::InexactHover(path.wrap(n)));
               continue;
             }
-            reason::Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
-          }
-        };
-        ck.reasons.push(r);
+          };
+          let r = match an.get_md(path.wrap(pos), true) {
+            None => reason::Reason::NoHover(path.wrap(region)),
+            Some((got, _)) => {
+              if got.contains(&expect.msg) {
+                continue;
+              }
+              reason::Reason::Mismatched(path.wrap(region), expect.msg.clone(), got)
+            }
+          };
+          ck.reasons.push(r);
+        }
+        expect::Kind::Def | expect::Kind::Use => {
+          ck.reasons.push(reason::Reason::UnimplementedKind(path.wrap(region)));
+        }
+        expect::Kind::Exact | expect::Kind::Contains => {}
       }
     }
   }
