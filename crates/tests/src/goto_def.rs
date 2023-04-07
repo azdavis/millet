@@ -37,3 +37,45 @@ val y : bar = 3
 "#,
   );
 }
+
+#[test]
+fn datatype_con() {
+  check(
+    r#"
+datatype foo = Bar | Quz of int
+(** + def: Bar *)
+val y = Bar
+(**     ^^^ use: Bar *)
+"#,
+  );
+}
+
+#[test]
+fn structure() {
+  check(
+    r#"
+structure A = struct end
+(** + def: A *)
+structure B = A
+(**           ^ use: A *)
+"#,
+  );
+}
+
+#[test]
+fn structure_open() {
+  check(
+    r#"
+structure A1 = struct
+  structure A2 = struct end
+  (** + def: A2 *)
+end
+
+structure B1 = struct
+  open A1
+  structure B2 = A2
+(**              ^^ use: A2 *)
+end
+"#,
+  );
+}
