@@ -192,7 +192,7 @@ fn dist(args: &DistArgs) -> Result<()> {
   let mut path: PathBuf;
   if let Some(target) = &args.target {
     path = PathBuf::from("binary");
-    fs::create_dir(&path).with_context(|| format!("create dir {}", path.display()))?;
+    fs::create_dir_all(&path).with_context(|| format!("create dir {}", path.display()))?;
     let lang_srv_with_target = format!("{LANG_SRV_NAME}-{target}.gz");
     path.push(lang_srv_with_target.as_str());
     gzip(&lang_srv_out, &path)?;
@@ -202,7 +202,9 @@ fn dist(args: &DistArgs) -> Result<()> {
     Some(Editor::VsCode) => {}
   }
   path = ["editors", "vscode", "out"].iter().collect();
-  fs::remove_dir_all(&path).with_context(|| format!("remove dir {}", path.display()))?;
+  // ignore errors if it exists already. if we have permission errors we're about to report them
+  // with the create_dir_all anyway
+  let _ = fs::remove_dir_all(&path);
   fs::create_dir_all(&path).with_context(|| format!("create dir {}", path.display()))?;
   path.push(lang_srv_exe.as_str());
   fs::copy(&lang_srv_out, &path)
