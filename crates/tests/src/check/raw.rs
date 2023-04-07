@@ -156,7 +156,7 @@ where
               text_pos::PositionUtf16 { line, col: col_start }
             }
             expect::Region::Line(n) => {
-              ck.reasons.push(reason::Reason::InvalidInexact(path.wrap(n), expect::Kind::Def));
+              ck.reasons.push(reason::Reason::InvalidInexact(path.wrap(n), expect::Kind::Use));
               continue;
             }
           };
