@@ -13,3 +13,27 @@ val y = x
 "#,
   );
 }
+
+#[test]
+fn fun() {
+  check(
+    r#"
+fun foo () = ()
+(** ^^^^^^^^^^^ def: foo *)
+val y = foo
+(**     ^^^ use: foo *)
+"#,
+  );
+}
+
+#[test]
+fn type_() {
+  check(
+    r#"
+    type bar = int
+(** ^^^^^^^^^^^^^^ def: bar *)
+val y : bar = 3
+(**     ^^^ use: bar *)
+"#,
+  );
+}
