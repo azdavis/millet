@@ -492,6 +492,7 @@ fn version() {
   let package_json: serde_json::Value = serde_json::from_str(PACKAGE_JSON).unwrap();
   let package_lock_json: serde_json::Value = serde_json::from_str(PACKAGE_LOCK_JSON).unwrap();
   let package_lock_json = package_lock_json.as_object().unwrap();
+  let cargo_toml = include_str!("../../../Cargo.toml");
   let a = package_json.as_object().unwrap().get("version").unwrap().as_str().unwrap();
   let b = package_lock_json.get("version").unwrap().as_str().unwrap();
   let c = package_lock_json
@@ -507,9 +508,14 @@ fn version() {
     .unwrap()
     .as_str()
     .unwrap();
+  let d = cargo_toml
+    .lines()
+    .find_map(|line| line.strip_prefix("version = \"")?.strip_suffix('"'))
+    .unwrap();
   assert_eq!(a, b);
   assert_eq!(a, c);
-  if let Some(d) = option_env!("GITHUB_REF_NAME").and_then(|r| r.strip_prefix('v')) {
-    assert_eq!(a, d);
+  assert_eq!(a, d);
+  if let Some(e) = option_env!("GITHUB_REF_NAME").and_then(|r| r.strip_prefix('v')) {
+    assert_eq!(a, e);
   }
 }

@@ -269,7 +269,7 @@ fn tag(tag_arg: &str) -> Result<()> {
   let cargo_toml = fs::read_to_string("Cargo.toml")?;
   let mut out = String::with_capacity(cargo_toml.len());
   for line in cargo_toml.lines() {
-    match line.strip_prefix("version = ") {
+    match line.strip_prefix("version = \"").and_then(|x| x.strip_suffix('"')) {
       None => out.push_str(line),
       Some(_) => {
         out.push_str("version = ");
