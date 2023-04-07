@@ -165,6 +165,14 @@ fn cmd_exe(fst: &str) -> Command {
   }
 }
 
+fn pop_path_buf(p: &mut PathBuf) -> Result<()> {
+  if p.pop() {
+    Ok(())
+  } else {
+    bail!("path had no parent")
+  }
+}
+
 fn dist(args: &DistArgs) -> Result<()> {
   let mut c = Command::new("cargo");
   c.args(["build", "--locked", "--bin", LANG_SRV_NAME]);
@@ -196,11 +204,11 @@ fn dist(args: &DistArgs) -> Result<()> {
   path = ["editors", "vscode", "out"].iter().collect();
   fs::remove_dir_all(&path).with_context(|| format!("remove dir {}", path.display()))?;
   fs::create_dir_all(&path).with_context(|| format!("create dir {}", path.display()))?;
+  path.push(lang_srv_exe.as_str());
   fs::copy(&lang_srv_out, &path)
     .with_context(|| format!("copy {} to {}", lang_srv_out.display(), path.display()))?;
-  if !path.pop() {
-    bail!("path had no parent");
-  }
+  pop_path_buf(&mut path)?;
+  pop_path_buf(&mut path)?;
   let license_header =
     "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";
   let license_apache = include_str!("../../LICENSE-APACHE.md");
@@ -208,9 +216,7 @@ fn dist(args: &DistArgs) -> Result<()> {
   let license_text = format!("{license_header}\n\n{license_apache}\n{license_mit}");
   path.push("LICENSE.md");
   fs::write(&path, license_text).with_context(|| format!("write {}", path.display()))?;
-  if !path.pop() {
-    bail!("path had no parent");
-  }
+  pop_path_buf(&mut path)?;
   env::set_current_dir(&path).with_context(|| format!("set current dir to {}", path.display()))?;
   if fs::metadata("node_modules").is_err() {
     run(cmd_exe("npm").arg("ci"))?;
