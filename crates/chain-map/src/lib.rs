@@ -9,13 +9,13 @@ use std::borrow::Borrow;
 use std::hash::Hash;
 use std::sync::Arc;
 
-/// A stack map.
+/// A chain map.
 #[derive(Debug, Clone)]
-pub struct StackMap<K, V> {
+pub struct ChainMap<K, V> {
   stack: Vec<Arc<FxHashMap<K, V>>>,
 }
 
-impl<K, V> StackMap<K, V> {
+impl<K, V> ChainMap<K, V> {
   /// Returns whether this is empty.
   #[must_use]
   pub fn is_empty(&self) -> bool {
@@ -28,7 +28,7 @@ impl<K, V> StackMap<K, V> {
   }
 }
 
-impl<K, V> StackMap<K, V>
+impl<K, V> ChainMap<K, V>
 where
   K: Hash + Eq,
 {
@@ -62,7 +62,7 @@ where
   }
 }
 
-impl<K, V> StackMap<K, V>
+impl<K, V> ChainMap<K, V>
 where
   K: Hash + Eq + Clone,
   V: Clone,
@@ -115,13 +115,13 @@ where
   }
 }
 
-impl<K, V> Default for StackMap<K, V> {
+impl<K, V> Default for ChainMap<K, V> {
   fn default() -> Self {
     Self { stack: Vec::new() }
   }
 }
 
-impl<K, V> Extend<(K, V)> for StackMap<K, V>
+impl<K, V> Extend<(K, V)> for ChainMap<K, V>
 where
   K: Hash + Eq,
 {
@@ -131,7 +131,7 @@ where
   }
 }
 
-impl<K, V> FromIterator<(K, V)> for StackMap<K, V>
+impl<K, V> FromIterator<(K, V)> for ChainMap<K, V>
 where
   K: Hash + Eq,
 {
@@ -142,7 +142,7 @@ where
   }
 }
 
-impl<K, V, const N: usize> From<[(K, V); N]> for StackMap<K, V>
+impl<K, V, const N: usize> From<[(K, V); N]> for ChainMap<K, V>
 where
   K: Hash + Eq,
 {
@@ -151,7 +151,7 @@ where
   }
 }
 
-impl<K, V> IntoIterator for StackMap<K, V>
+impl<K, V> IntoIterator for ChainMap<K, V>
 where
   K: Hash + Eq + Clone,
   V: Clone,

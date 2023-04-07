@@ -2,11 +2,11 @@
 
 use crate::core_info::{TyEnv, ValEnv};
 use crate::{def, disallow::Disallow, sym::Sym, ty_var::fixed::FixedTyVar};
+use chain_map::ChainMap;
 use fast_hash::{FxHashMap, FxHashSet};
-use stack_map::StackMap;
 
 /// Definition: `StrEnv`
-pub(crate) type StrEnv = StackMap<str_util::Name, Env>;
+pub(crate) type StrEnv = ChainMap<str_util::Name, Env>;
 
 /// Definition: Env
 #[derive(Debug, Default, Clone)]
@@ -70,5 +70,5 @@ pub(crate) struct FunSig {
   pub(crate) disallow: Option<Disallow>,
 }
 
-pub(crate) type SigEnv = StackMap<str_util::Name, Sig>;
-pub(crate) type FunEnv = StackMap<str_util::Name, FunSig>;
+pub(crate) type SigEnv = ChainMap<str_util::Name, Sig>;
+pub(crate) type FunEnv = ChainMap<str_util::Name, FunSig>;

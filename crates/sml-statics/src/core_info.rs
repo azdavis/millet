@@ -3,8 +3,8 @@
 use crate::sym::Exn;
 use crate::types::TyScheme;
 use crate::{def, disallow::Disallow};
+use chain_map::ChainMap;
 use fast_hash::FxHashSet;
-use stack_map::StackMap;
 
 /// Definition: `TyStr`
 #[derive(Debug, Clone)]
@@ -16,10 +16,10 @@ pub(crate) struct TyInfo {
 }
 
 /// Definition: `TyEnv`
-pub(crate) type TyEnv = StackMap<str_util::Name, TyInfo>;
+pub(crate) type TyEnv = ChainMap<str_util::Name, TyInfo>;
 
 /// Definition: `ValEnv`
-pub(crate) type ValEnv = StackMap<str_util::Name, ValInfo>;
+pub(crate) type ValEnv = ChainMap<str_util::Name, ValInfo>;
 
 #[derive(Debug, Clone)]
 pub(crate) struct ValInfo {

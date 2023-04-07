@@ -4,7 +4,7 @@ use crate::sym::Sym;
 use crate::ty_var::meta::{Generalizable, MetaTyVar};
 use crate::types::{RecordTy, Subst, SubstEntry, Ty, TyScheme, TyVarKind};
 use crate::{error::ErrorKind, item::Item, overload, st::St};
-use stack_map::StackMap;
+use chain_map::ChainMap;
 
 pub(crate) fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
   // we could have all of these return the basic overloads, but some of them will all only allow the
@@ -126,7 +126,7 @@ pub(crate) fn apply_bv(subst: &[Ty], ty: &mut Ty) {
 /// inserts (name, val) into the map, but returns Some(e) if name was already a key, where e is an
 /// error describing this transgression.
 pub(crate) fn ins_no_dupe<V>(
-  map: &mut StackMap<str_util::Name, V>,
+  map: &mut ChainMap<str_util::Name, V>,
   name: str_util::Name,
   val: V,
   item: Item,
@@ -135,7 +135,7 @@ pub(crate) fn ins_no_dupe<V>(
 }
 
 pub(crate) fn ins_check_name<V>(
-  map: &mut StackMap<str_util::Name, V>,
+  map: &mut ChainMap<str_util::Name, V>,
   name: str_util::Name,
   val: V,
   item: Item,

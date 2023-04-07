@@ -105,6 +105,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chain-map"
+version = "0.8.8"
+dependencies = [
+ "fast-hash",
+ "str-util",
+]
+
+[[package]]
 name = "char-name"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/language-util.git#14721e8e4c56b2eaffb259a8845653b898bf4caa"
@@ -962,6 +970,7 @@ dependencies = [
 name = "sml-statics"
 version = "0.8.8"
 dependencies = [
+ "chain-map",
  "code-h2-md-map",
  "config",
  "diagnostic",
@@ -977,7 +986,6 @@ dependencies = [
  "sml-hir",
  "sml-namespace",
  "sml-path",
- "stack-map",
  "str-util",
  "uniq",
 ]
@@ -1010,14 +1018,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fad6c857cbab2627dcf01ec85a623ca4e7dcb5691cbaa3d7fb7653671f0d09c9"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "stack-map"
-version = "0.8.8"
-dependencies = [
- "fast-hash",
- "str-util",
 ]
 
 [[package]]
