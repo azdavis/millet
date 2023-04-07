@@ -4,23 +4,28 @@ use std::{collections::BTreeMap, fmt};
 
 /// A map from regions to expectations.
 #[derive(Debug)]
-pub(crate) struct File(BTreeMap<Region, Expect>);
+pub(crate) struct File {
+  /// this is a BTreeMap because the iteration order matters for defs and uses.
+  inner: BTreeMap<Region, Expect>,
+}
 
 impl File {
   pub(crate) fn new(s: &str) -> Self {
-    Self(s.lines().enumerate().filter_map(|(line_n, line_s)| get_one(line_n, line_s)).collect())
+    Self {
+      inner: s.lines().enumerate().filter_map(|(line_n, line_s)| get_one(line_n, line_s)).collect(),
+    }
   }
 
   pub(crate) fn get(&self, r: Region) -> Option<&Expect> {
-    self.0.get(&r)
+    self.inner.get(&r)
   }
 
   pub fn is_empty(&self) -> bool {
-    self.0.is_empty()
+    self.inner.is_empty()
   }
 
   pub fn iter(&self) -> impl Iterator<Item = (&Region, &Expect)> + '_ {
-    self.0.iter()
+    self.inner.iter()
   }
 }
 
@@ -73,6 +78,9 @@ fn get_one(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum Region {
   /// An entire line.
+  ///
+  /// This comes first in the `enum` so that the `PartialOrd` derivation has it first, so that
+  /// approximate def sites get defined before exact usage sites for def and use checking.
   Line(u32),
   /// An exact part of a line.
   Exact { line: u32, col_start: u32, col_end: u32 },
