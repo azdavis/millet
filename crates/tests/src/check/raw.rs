@@ -88,15 +88,12 @@ where
       }
     }
   }
-  let want_err_len: usize = ck
+  let want_err_len = ck
     .files
     .values()
-    .map(|x| {
-      x.iter()
-        .filter(|(_, e)| matches!(e.kind, expect::Kind::Exact | expect::Kind::Contains))
-        .count()
-    })
-    .sum();
+    .flat_map(expect::File::iter)
+    .filter(|(_, e)| matches!(e.kind, expect::Kind::Exact | expect::Kind::Contains))
+    .count();
   // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
   // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
   // only one expectation is actually used.
