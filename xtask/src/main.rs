@@ -224,6 +224,20 @@ fn gzip(src: &Path, dest: &Path) -> anyhow::Result<()> {
   Ok(())
 }
 
+fn modify_each_line<P, F>(path: P, mut f: F) -> io::Result<()>
+where
+  P: AsRef<Path>,
+  F: FnMut(&mut String, usize, &str),
+{
+  let contents = fs::read_to_string(path.as_ref())?;
+  let mut out = String::with_capacity(contents.len());
+  for (idx, line) in contents.lines().enumerate() {
+    f(&mut out, idx, line);
+    out.push('\n');
+  }
+  fs::write(path.as_ref(), out)
+}
+
 fn tag(tag_arg: &str) -> Result<()> {
   let version = match tag_arg.strip_prefix('v') {
     Some(x) => x,
@@ -244,9 +258,7 @@ fn tag(tag_arg: &str) -> Result<()> {
     .map(|p| ["editors", "vscode", p].into_iter().collect())
     .collect();
   for path in &paths {
-    let contents = fs::read_to_string(path)?;
-    let mut out = String::with_capacity(contents.len());
-    for (idx, line) in contents.lines().enumerate() {
+    modify_each_line(path, |out, idx, line| {
       if idx >= 15 {
         out.push_str(line);
       } else {
@@ -264,14 +276,10 @@ fn tag(tag_arg: &str) -> Result<()> {
           }
         }
       }
-      out.push('\n');
-    }
-    fs::write(path, out)?;
+    })?;
   }
   let cargo_toml = "Cargo.toml";
-  let contents = fs::read_to_string(cargo_toml)?;
-  let mut out = String::with_capacity(contents.len());
-  for line in contents.lines() {
+  modify_each_line(cargo_toml, |out, _, line| {
     match line.strip_prefix("version = \"").and_then(|x| x.strip_suffix('"')) {
       None => out.push_str(line),
       Some(_) => {
@@ -281,9 +289,7 @@ fn tag(tag_arg: &str) -> Result<()> {
         out.push('"');
       }
     }
-    out.push('\n');
-  }
-  fs::write(cargo_toml, out)?;
+  })?;
   // to update Cargo.lock
   run(Command::new("cargo").arg("build"))?;
   run(Command::new("git").arg("add").args(paths).args(["Cargo.toml", "Cargo.lock"]))?;
