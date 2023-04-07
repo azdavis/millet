@@ -5,6 +5,7 @@ use once_cell::sync::Lazy;
 use paths::FileSystem as _;
 use std::path::PathBuf;
 
+/// Get an input and path store from an iterator of (filename, contents).
 pub(crate) fn get<'a, I>(iter: I) -> (input::Input, paths::Store)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,

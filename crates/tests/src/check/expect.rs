@@ -3,6 +3,7 @@
 use fast_hash::FxHashMap;
 use std::fmt;
 
+/// A map from regions to expectations.
 #[derive(Debug)]
 pub(crate) struct File(FxHashMap<Region, Expect>);
 
@@ -69,9 +70,12 @@ fn get_one(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
   Some((region, Expect::new(msg)))
 }
 
+/// A region that an expectation comment can point at.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum Region {
+  /// An exact part of a line.
   Exact { line: u32, col_start: u32, col_end: u32 },
+  /// An entire line.
   Line(u32),
 }
 
@@ -87,21 +91,24 @@ impl fmt::Display for Region {
   }
 }
 
+/// Something expected in a source file.
 #[derive(Debug)]
 pub(crate) struct Expect {
-  pub(crate) msg: String,
+  /// The kind of expectation.
   pub(crate) kind: Kind,
+  /// The message for it.
+  pub(crate) msg: String,
 }
 
 impl Expect {
   fn new(msg: &str) -> Self {
     if let Some(msg) = msg.strip_prefix("hover: ") {
-      return Self { msg: msg.to_owned(), kind: Kind::Hover };
+      return Self { kind: Kind::Hover, msg: msg.to_owned() };
     }
     if let Some(msg) = msg.strip_prefix("exact: ") {
-      return Self { msg: msg.to_owned(), kind: Kind::Exact };
+      return Self { kind: Kind::Exact, msg: msg.to_owned() };
     }
-    Self { msg: msg.to_owned(), kind: Kind::Contains }
+    Self { kind: Kind::Contains, msg: msg.to_owned() }
   }
 }
 
@@ -111,10 +118,14 @@ impl fmt::Display for Expect {
   }
 }
 
+/// A kind of expectation.
 #[derive(Debug)]
 pub(crate) enum Kind {
+  /// Hovering over this should show something.
   Hover,
+  /// There should be an error that exactly matches the given message.
   Exact,
+  /// There should be an error that contains the message.
   Contains,
 }
 

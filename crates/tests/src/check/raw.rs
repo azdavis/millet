@@ -5,7 +5,13 @@ use crate::check::{expect, input, reason, show};
 /// An expected outcome from a test.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Outcome {
+  /// The test should pass.
   Pass,
+  /// The test should fail.
+  ///
+  /// We don't actually want tests to fail. But this is useful for recording that there's a known
+  /// bug or unimplemented bit. Then if we implement it, the test expecting failure will fail, i.e.
+  /// it'll pass, and we'll be reminded to update the test.
   Fail,
 }
 
@@ -18,9 +24,14 @@ pub(crate) enum Limit {
   First,
 }
 
+/// What we expect the input to be.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum ExpectedInput<'a> {
+  /// The input itself is good.
+  ///
+  /// Most tests use this, since we're usually testing later "stages" (parsing, typechecking, etc).
   Good,
+  /// The input is bad. There should be an error about a certain path containing a certain message.
   Bad { path: &'a str, msg: &'a str },
 }
 
@@ -34,7 +45,7 @@ pub(crate) struct Opts<'a> {
   pub(crate) expected_input: ExpectedInput<'a>,
 }
 
-/// The low-level impl that almost all top-level functions delegate to.
+/// The low-level impl that almost all top-level "check" functions delegate to.
 #[track_caller]
 pub(crate) fn get<'a, I>(files: I, opts: Opts<'_>)
 where
@@ -138,10 +149,13 @@ where
   }
 }
 
+/// Returns a simple "filesystem" of a single source file and a single group file pointing to that
+/// source file.
 pub(crate) fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("s.mlb", "f.sml"), ("f.sml", s)]
 }
 
+/// Returns whether the env var is set to `1`.
 pub(crate) fn env_var_enabled(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
 }
