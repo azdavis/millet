@@ -11,9 +11,6 @@ publish = false
 [profile.release]
 codegen-units = 1
 lto = "fat"
-strip = "symbols"
-
-[profile.release-debug]
-inherits = "release"
+# for backtraces
+debug = 1
 strip = "none"
-debug = true
