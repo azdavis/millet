@@ -48,7 +48,7 @@ fn try_region(
   match file.get(region.val) {
     None => Ok(false),
     Some(exp) => match exp.kind {
-      expect::Kind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
+      expect::Kind::Hover => Ok(false),
       expect::Kind::Exact => {
         if exp.msg == got {
           Ok(true)
