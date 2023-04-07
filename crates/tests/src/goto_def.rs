@@ -1,10 +1,10 @@
 //! Tests for go to def.
 
-use crate::check::fail;
+use crate::check::check;
 
 #[test]
 fn val() {
-  fail(
+  check(
     r#"
 val x = 3
 (** ^ def: x *)

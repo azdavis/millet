@@ -45,10 +45,10 @@ impl fmt::Display for Show {
           let range = r.val;
           writeln!(f, "{path}:{range}: wanted a hover, but got none")?;
         }
-        reason::Reason::InexactHover(line) => {
+        reason::Reason::InvalidInexact(line, kind) => {
           let path = self.store.get_path(line.path).as_path().display();
           let line = line.val;
-          writeln!(f, "{path}:{line}: inexact arrows for hover")?;
+          writeln!(f, "{path}:{line}: inexact arrows for {kind}")?;
         }
         reason::Reason::UnexpectedlyBadInput(path, s) => {
           let path = path.display();
@@ -68,10 +68,20 @@ impl fmt::Display for Show {
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
-        reason::Reason::UnimplementedKind(r) => {
+        reason::Reason::DuplicateDef(r, d) => {
           let path = self.store.get_path(r.path).as_path().display();
           let range = r.val;
-          writeln!(f, "{path}:{range}: don't know how to handle this kind of expectation comment")?;
+          writeln!(f, "{path}:{range}: duplicate def for `{d}`")?;
+        }
+        reason::Reason::Undef(r, d) => {
+          let path = self.store.get_path(r.path).as_path().display();
+          let range = r.val;
+          writeln!(f, "{path}:{range}: `{d}` not marked as a def by any expectation comments")?;
+        }
+        reason::Reason::NoMatchingDef(r, d) => {
+          let path = self.store.get_path(r.path).as_path().display();
+          let range = r.val;
+          writeln!(f, "{path}:{range}: no def here matched the def for `{d}`")?;
         }
       }
     }

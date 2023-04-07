@@ -1,5 +1,7 @@
 //! The "raw" test runner. Usually we use various convenient shortcuts on top of this.
 
+use fast_hash::FxHashMap;
+
 use crate::check::{expect, input, reason, show};
 
 /// An expected outcome from a test.
@@ -106,7 +108,9 @@ where
     Limit::None => iter.collect(),
     Limit::First => iter.take(1).collect(),
   };
+  let mut defs = FxHashMap::<&str, text_pos::RangeUtf16>::default();
   for (&path, file) in &ck.files {
+    defs.clear();
     for (&region, expect) in file.iter() {
       match expect.kind {
         expect::Kind::Hover => {
@@ -115,7 +119,7 @@ where
               text_pos::PositionUtf16 { line, col: col_start }
             }
             expect::Region::Line(n) => {
-              ck.reasons.push(reason::Reason::InexactHover(path.wrap(n)));
+              ck.reasons.push(reason::Reason::InvalidInexact(path.wrap(n), expect::Kind::Hover));
               continue;
             }
           };
@@ -130,8 +134,46 @@ where
           };
           ck.reasons.push(r);
         }
-        expect::Kind::Def | expect::Kind::Use => {
-          ck.reasons.push(reason::Reason::UnimplementedKind(path.wrap(region)));
+        expect::Kind::Def => {
+          let range = match region {
+            expect::Region::Exact { line, col_start, col_end } => text_pos::RangeUtf16 {
+              start: text_pos::PositionUtf16 { line, col: col_start },
+              end: text_pos::PositionUtf16 { line, col: col_end },
+            },
+            expect::Region::Line(n) => {
+              ck.reasons.push(reason::Reason::InvalidInexact(path.wrap(n), expect::Kind::Def));
+              continue;
+            }
+          };
+          if defs.insert(expect.msg.as_str(), range).is_some() {
+            let r = reason::Reason::DuplicateDef(path.wrap(region), expect.msg.clone());
+            ck.reasons.push(r);
+          }
+        }
+        expect::Kind::Use => {
+          let pos = match region {
+            expect::Region::Exact { line, col_start, .. } => {
+              text_pos::PositionUtf16 { line, col: col_start }
+            }
+            expect::Region::Line(n) => {
+              ck.reasons.push(reason::Reason::InvalidInexact(path.wrap(n), expect::Kind::Def));
+              continue;
+            }
+          };
+          let got_defs = an.get_defs(path.wrap(pos));
+          match defs.get(expect.msg.as_str()) {
+            Some(&def) => {
+              let def = path.wrap(def);
+              if !got_defs.iter().flatten().any(|&gd| gd == def) {
+                let r = reason::Reason::NoMatchingDef(path.wrap(region), expect.msg.clone());
+                ck.reasons.push(r);
+              }
+            }
+            None => {
+              let r = reason::Reason::Undef(path.wrap(region), expect.msg.clone());
+              ck.reasons.push(r);
+            }
+          }
         }
         expect::Kind::Exact | expect::Kind::Contains => {}
       }

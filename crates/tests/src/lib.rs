@@ -5,6 +5,7 @@
 
 #![cfg(test)]
 #![deny(clippy::pedantic, rust_2018_idioms)]
+#![allow(clippy::single_match_else)]
 
 mod big;
 mod cannot_rebind;

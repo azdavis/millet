@@ -8,12 +8,14 @@ pub(crate) enum Reason {
   GotButNotWanted(paths::WithPath<expect::Region>, String),
   Mismatched(paths::WithPath<expect::Region>, String, String),
   NoHover(paths::WithPath<expect::Region>),
-  InexactHover(paths::WithPath<u32>),
+  InvalidInexact(paths::WithPath<u32>, expect::Kind),
   UnexpectedlyBadInput(PathBuf, String),
   UnexpectedlyGoodInput { path: String, msg: String },
   WrongInputErrPath(PathBuf, PathBuf),
   InputErrMismatch(PathBuf, String, String),
-  UnimplementedKind(paths::WithPath<expect::Region>),
+  DuplicateDef(paths::WithPath<expect::Region>, String),
+  Undef(paths::WithPath<expect::Region>, String),
+  NoMatchingDef(paths::WithPath<expect::Region>, String),
 }
 
 pub(crate) fn get(
@@ -49,8 +51,7 @@ fn try_region(
   match file.get(region.val) {
     None => Ok(false),
     Some(exp) => match exp.kind {
-      expect::Kind::Hover => Ok(false),
-      expect::Kind::Def | expect::Kind::Use => Err(Reason::UnimplementedKind(region)),
+      expect::Kind::Hover | expect::Kind::Def | expect::Kind::Use => Ok(false),
       expect::Kind::Exact => {
         if exp.msg == got {
           Ok(true)

@@ -1,11 +1,10 @@
 //! Expectations.
 
-use fast_hash::FxHashMap;
-use std::fmt;
+use std::{collections::BTreeMap, fmt};
 
 /// A map from regions to expectations.
 #[derive(Debug)]
-pub(crate) struct File(FxHashMap<Region, Expect>);
+pub(crate) struct File(BTreeMap<Region, Expect>);
 
 impl File {
   pub(crate) fn new(s: &str) -> Self {
@@ -71,7 +70,7 @@ fn get_one(line_n: usize, line_s: &str) -> Option<(Region, Expect)> {
 }
 
 /// A region that an expectation comment can point at.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum Region {
   /// An exact part of a line.
   Exact { line: u32, col_start: u32, col_end: u32 },
