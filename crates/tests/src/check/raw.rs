@@ -108,7 +108,7 @@ where
     Limit::None => iter.collect(),
     Limit::First => iter.take(1).collect(),
   };
-  let mut defs = FxHashMap::<&str, text_pos::RangeUtf16>::default();
+  let mut defs = FxHashMap::<&str, expect::Region>::default();
   for (&path, file) in &ck.files {
     defs.clear();
     for (&region, expect) in file.iter() {
@@ -135,17 +135,7 @@ where
           ck.reasons.push(r);
         }
         expect::Kind::Def => {
-          let range = match region {
-            expect::Region::Exact { line, col_start, col_end } => text_pos::RangeUtf16 {
-              start: text_pos::PositionUtf16 { line, col: col_start },
-              end: text_pos::PositionUtf16 { line, col: col_end },
-            },
-            expect::Region::Line(n) => {
-              ck.reasons.push(reason::Reason::InvalidInexact(path.wrap(n), expect::Kind::Def));
-              continue;
-            }
-          };
-          if defs.insert(expect.msg.as_str(), range).is_some() {
+          if defs.insert(expect.msg.as_str(), region).is_some() {
             let r = reason::Reason::DuplicateDef(path.wrap(region), expect.msg.clone());
             ck.reasons.push(r);
           }
@@ -163,8 +153,23 @@ where
           let got_defs = an.get_defs(path.wrap(pos));
           match defs.get(expect.msg.as_str()) {
             Some(&def) => {
-              let def = path.wrap(def);
-              if !got_defs.iter().flatten().any(|&gd| gd == def) {
+              let any_def_matches = got_defs.iter().flatten().any(|&gd| {
+                if gd.path != path {
+                  return false;
+                }
+                let start = gd.val.start;
+                let end = gd.val.end;
+                match def {
+                  expect::Region::Exact { line, col_start, col_end } => {
+                    start.line == line
+                      && end.line == line
+                      && start.col == col_start
+                      && end.col == col_end
+                  }
+                  expect::Region::Line(n) => start.line == n && end.line == n,
+                }
+              });
+              if !any_def_matches {
                 let r = reason::Reason::NoMatchingDef(path.wrap(region), expect.msg.clone());
                 ck.reasons.push(r);
               }

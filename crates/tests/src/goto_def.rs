@@ -30,8 +30,8 @@ val y = foo
 fn type_() {
   check(
     r#"
-    type bar = int
-(** ^^^^^^^^^^^^^^ def: bar *)
+type bar = int
+(** + def: bar *)
 val y : bar = 3
 (**     ^^^ use: bar *)
 "#,
