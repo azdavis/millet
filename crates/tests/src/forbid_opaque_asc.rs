@@ -54,3 +54,13 @@ fun f {a :> int as b} = a + b
 "#,
   );
 }
+
+#[test]
+fn functor_arg() {
+  check(
+    r#"
+functor F (S :> sig end) = struct end
+(**          ^^ not allowed here *)
+"#,
+  );
+}
