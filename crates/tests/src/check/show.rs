@@ -68,6 +68,11 @@ impl fmt::Display for Show {
           writeln!(f, "    - want: {want}")?;
           writeln!(f, "    - got:  {got}")?;
         }
+        reason::Reason::UnimplementedKind(r) => {
+          let path = self.store.get_path(r.path).as_path().display();
+          let range = r.val;
+          writeln!(f, "{path}:{range}: don't know how to handle this kind of expectation comment")?;
+        }
       }
     }
     f.write_str("\n  want:")?;

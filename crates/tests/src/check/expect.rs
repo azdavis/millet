@@ -105,6 +105,12 @@ impl Expect {
     if let Some(msg) = msg.strip_prefix("hover: ") {
       return Self { kind: Kind::Hover, msg: msg.to_owned() };
     }
+    if let Some(msg) = msg.strip_prefix("def: ") {
+      return Self { kind: Kind::Def, msg: msg.to_owned() };
+    }
+    if let Some(msg) = msg.strip_prefix("use: ") {
+      return Self { kind: Kind::Use, msg: msg.to_owned() };
+    }
     if let Some(msg) = msg.strip_prefix("exact: ") {
       return Self { kind: Kind::Exact, msg: msg.to_owned() };
     }
@@ -123,6 +129,10 @@ impl fmt::Display for Expect {
 pub(crate) enum Kind {
   /// Hovering over this should show something.
   Hover,
+  /// This points at a definition site for something.
+  Def,
+  /// This points at a usage site for something.
+  Use,
   /// There should be an error that exactly matches the given message.
   Exact,
   /// There should be an error that contains the message.
@@ -134,6 +144,8 @@ impl fmt::Display for Kind {
     match self {
       Kind::Hover => f.write_str("hover"),
       Kind::Exact => f.write_str("exact"),
+      Kind::Def => f.write_str("def"),
+      Kind::Use => f.write_str("use"),
       Kind::Contains => f.write_str("contains"),
     }
   }

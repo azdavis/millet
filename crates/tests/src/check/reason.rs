@@ -13,6 +13,7 @@ pub(crate) enum Reason {
   UnexpectedlyGoodInput { path: String, msg: String },
   WrongInputErrPath(PathBuf, PathBuf),
   InputErrMismatch(PathBuf, String, String),
+  UnimplementedKind(paths::WithPath<expect::Region>),
 }
 
 pub(crate) fn get(
@@ -49,6 +50,7 @@ fn try_region(
     None => Ok(false),
     Some(exp) => match exp.kind {
       expect::Kind::Hover => Ok(false),
+      expect::Kind::Def | expect::Kind::Use => Err(Reason::UnimplementedKind(region)),
       expect::Kind::Exact => {
         if exp.msg == got {
           Ok(true)
