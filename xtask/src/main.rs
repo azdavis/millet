@@ -5,7 +5,7 @@
 // TODO remove once rustfmt support lands
 #![allow(clippy::manual_let_else)]
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, Context as _, Result};
 use flate2::{write::GzEncoder, Compression};
 use pico_args::Arguments;
 use std::path::{Path, PathBuf};
@@ -121,12 +121,12 @@ fn finish_args(args: Arguments) -> Result<()> {
 }
 
 fn run(c: &mut Command) -> Result<()> {
-  if c.spawn()?.wait()?.success() {
+  let mut sp = c.spawn().with_context(|| format!("spawn {c:?}"))?;
+  let w = sp.wait().with_context(|| format!("wait for {c:?}"))?;
+  if w.success() {
     Ok(())
   } else {
-    let prog = c.get_program();
-    let args: Vec<_> = c.get_args().collect();
-    bail!("command return error: {prog:?} {args:?}")
+    bail!("unsuccessful {c:?}")
   }
 }
 
@@ -184,7 +184,7 @@ fn dist(args: &DistArgs) -> Result<()> {
   let mut path: PathBuf;
   if let Some(target) = &args.target {
     path = PathBuf::from("binary");
-    fs::create_dir(&path)?;
+    fs::create_dir(&path).with_context(|| format!("create dir {}", path.display()))?;
     let lang_srv_with_target = format!("{LANG_SRV_NAME}-{target}.gz");
     path.push(lang_srv_with_target.as_str());
     gzip(&lang_srv_out, &path)?;
@@ -194,19 +194,24 @@ fn dist(args: &DistArgs) -> Result<()> {
     Some(Editor::VsCode) => {}
   }
   path = ["editors", "vscode", "out"].iter().collect();
-  fs::remove_dir_all(&path)?;
-  fs::create_dir_all(&path)?;
-  fs::copy(&lang_srv_out, &path)?;
-  assert!(path.pop());
+  fs::remove_dir_all(&path).with_context(|| format!("remove dir {}", path.display()))?;
+  fs::create_dir_all(&path).with_context(|| format!("create dir {}", path.display()))?;
+  fs::copy(&lang_srv_out, &path)
+    .with_context(|| format!("copy {} to {}", lang_srv_out.display(), path.display()))?;
+  if !path.pop() {
+    bail!("path had no parent");
+  }
   let license_header =
     "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";
   let license_apache = include_str!("../../LICENSE-APACHE.md");
   let license_mit = include_str!("../../LICENSE-MIT.md");
   let license_text = format!("{license_header}\n\n{license_apache}\n{license_mit}");
   path.push("LICENSE.md");
-  fs::write(&path, license_text)?;
-  assert!(path.pop());
-  env::set_current_dir(&path)?;
+  fs::write(&path, license_text).with_context(|| format!("write {}", path.display()))?;
+  if !path.pop() {
+    bail!("path had no parent");
+  }
+  env::set_current_dir(&path).with_context(|| format!("set current dir to {}", path.display()))?;
   if fs::metadata("node_modules").is_err() {
     run(cmd_exe("npm").arg("ci"))?;
   }
@@ -216,26 +221,30 @@ fn dist(args: &DistArgs) -> Result<()> {
   Ok(())
 }
 
-fn gzip(src: &Path, dest: &Path) -> anyhow::Result<()> {
-  let mut encoder = GzEncoder::new(fs::File::create(dest)?, Compression::best());
-  let mut input = io::BufReader::new(fs::File::open(src)?);
-  io::copy(&mut input, &mut encoder)?;
-  encoder.finish()?;
+fn gzip(src: &Path, dst: &Path) -> anyhow::Result<()> {
+  let dst_file = fs::File::create(dst).with_context(|| format!("create {}", dst.display()))?;
+  let mut encoder = GzEncoder::new(dst_file, Compression::best());
+  let src_file = fs::File::open(src).with_context(|| format!("open {}", src.display()))?;
+  let mut input = io::BufReader::new(src_file);
+  io::copy(&mut input, &mut encoder)
+    .with_context(|| format!("gzip {} to {}", src.display(), dst.display()))?;
+  encoder.finish().with_context(|| "finish gzip encoding")?;
   Ok(())
 }
 
-fn modify_each_line<P, F>(path: P, mut f: F) -> io::Result<()>
+fn modify_each_line<P, F>(path: P, mut f: F) -> Result<()>
 where
   P: AsRef<Path>,
   F: FnMut(&mut String, usize, &str),
 {
-  let contents = fs::read_to_string(path.as_ref())?;
+  let contents = fs::read_to_string(path.as_ref())
+    .with_context(|| format!("read {}", path.as_ref().display()))?;
   let mut out = String::with_capacity(contents.len());
   for (idx, line) in contents.lines().enumerate() {
     f(&mut out, idx, line);
     out.push('\n');
   }
-  fs::write(path.as_ref(), out)
+  fs::write(path.as_ref(), out).with_context(|| format!("write {}", path.as_ref().display()))
 }
 
 fn tag(tag_arg: &str) -> Result<()> {
@@ -246,11 +255,11 @@ fn tag(tag_arg: &str) -> Result<()> {
   let version_parts: Vec<_> = version.split('.').collect();
   let num_parts = version_parts.len();
   if num_parts != 3 {
-    bail!("version must have 3 dot-separated parts (got {num_parts})")
+    bail!("version must have 3 dot-separated parts (got {num_parts})");
   }
   for part in version_parts {
     if let Err(e) = part.parse::<u16>() {
-      bail!("{part}: not a non-negative 16-bit integer: {e}")
+      bail!("{part}: not a non-negative 16-bit integer: {e}");
     }
   }
   let paths: Vec<PathBuf> = ["package.json", "package-lock.json"]
