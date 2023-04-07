@@ -21,7 +21,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       if neg {
         chars.next();
       }
-      let mul = if neg { -1 } else { 1 };
+      let mul: i32 = if neg { -1 } else { 1 };
       let radix: u32 = if chars.as_str().starts_with("0x") {
         chars.next();
         chars.next();
