@@ -266,7 +266,23 @@ fn tag(tag_arg: &str) -> Result<()> {
     }
     fs::write(path, out)?;
   }
-  run(Command::new("git").arg("add").args(paths))?;
+  let cargo_toml = fs::read_to_string("Cargo.toml")?;
+  let mut out = String::with_capacity(cargo_toml.len());
+  for line in cargo_toml.lines() {
+    match line.strip_prefix("version = ") {
+      None => out.push_str(line),
+      Some(_) => {
+        out.push_str("version = ");
+        out.push('"');
+        out.push_str(version);
+        out.push('"');
+      }
+    }
+    out.push('\n');
+  }
+  // to update Cargo.lock
+  run(Command::new("cargo").arg("build"))?;
+  run(Command::new("git").arg("add").args(paths).args(["Cargo.toml", "Cargo.lock"]))?;
   let msg = format!("Release {tag_arg}");
   run(Command::new("git").args(["commit", "-m", msg.as_str(), "--no-verify"]))?;
   run(Command::new("git").arg("tag").arg(tag_arg))?;
