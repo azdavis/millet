@@ -124,7 +124,9 @@ fn run(c: &mut Command) -> Result<()> {
   if c.spawn()?.wait()?.success() {
     Ok(())
   } else {
-    bail!("unsuccessful")
+    let prog = c.get_program();
+    let args: Vec<_> = c.get_args().collect();
+    bail!("command return error: {prog:?} {args:?}")
   }
 }
 
