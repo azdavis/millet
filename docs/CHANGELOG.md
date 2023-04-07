@@ -17,6 +17,7 @@ The versioning system is basically the following:
 
 - Highlight type variable names.
 - Gzip release binaries.
+- Improve panic backtraces.
 
 ## v0.8.7
 
