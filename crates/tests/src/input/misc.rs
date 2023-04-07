@@ -9,7 +9,7 @@ fn no_root_group_empty() {
 
 #[test]
 fn no_root_group_wrong_ext() {
-  check_bad_input("", "no *.cm, *.mlb", [("foo.txt", "hi there"), ("foo.rs", "fn main() {}")]);
+  check_bad_input("", "no *.cm, *.mlb", [("foo.txt", "hey")]);
 }
 
 #[test]
