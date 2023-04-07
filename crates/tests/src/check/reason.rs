@@ -48,21 +48,21 @@ fn try_region(
   match file.get(region.val) {
     None => Ok(false),
     Some(exp) => match exp.kind {
-      expect::Kind::ErrorExact => {
+      expect::Kind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
+      expect::Kind::Exact => {
         if exp.msg == got {
           Ok(true)
         } else {
           Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
         }
       }
-      expect::Kind::ErrorContains => {
+      expect::Kind::Contains => {
         if got.contains(&exp.msg) {
           Ok(true)
         } else {
           Err(Reason::Mismatched(region, exp.msg.clone(), got.to_owned()))
         }
       }
-      expect::Kind::Hover => Err(Reason::GotButNotWanted(region, got.to_owned())),
     },
   }
 }

@@ -82,7 +82,7 @@ where
     .values()
     .map(|x| {
       x.iter()
-        .filter(|(_, e)| matches!(e.kind, expect::Kind::ErrorExact | expect::Kind::ErrorContains))
+        .filter(|(_, e)| matches!(e.kind, expect::Kind::Exact | expect::Kind::Contains))
         .count()
     })
     .sum();

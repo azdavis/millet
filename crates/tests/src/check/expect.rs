@@ -95,13 +95,13 @@ pub(crate) struct Expect {
 
 impl Expect {
   fn new(msg: &str) -> Self {
-    if let Some(msg) = msg.strip_prefix("exact: ") {
-      return Self { msg: msg.to_owned(), kind: Kind::ErrorExact };
-    }
     if let Some(msg) = msg.strip_prefix("hover: ") {
       return Self { msg: msg.to_owned(), kind: Kind::Hover };
     }
-    Self { msg: msg.to_owned(), kind: Kind::ErrorContains }
+    if let Some(msg) = msg.strip_prefix("exact: ") {
+      return Self { msg: msg.to_owned(), kind: Kind::Exact };
+    }
+    Self { msg: msg.to_owned(), kind: Kind::Contains }
   }
 }
 
@@ -113,17 +113,17 @@ impl fmt::Display for Expect {
 
 #[derive(Debug)]
 pub(crate) enum Kind {
-  ErrorExact,
-  ErrorContains,
   Hover,
+  Exact,
+  Contains,
 }
 
 impl fmt::Display for Kind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Kind::ErrorExact => f.write_str("error (exact)"),
-      Kind::ErrorContains => f.write_str("error (contains)"),
-      Kind::Hover => f.write_str("hover (contains)"),
+      Kind::Hover => f.write_str("hover"),
+      Kind::Exact => f.write_str("exact"),
+      Kind::Contains => f.write_str("contains"),
     }
   }
 }
