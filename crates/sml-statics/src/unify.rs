@@ -1,7 +1,7 @@
 //! Unification: given two types, figuring out whether they are "compatible", and if so, how.
 
 use crate::error::{ErrorKind, IncompatibleTysFlavor};
-use crate::types::{SubstEntry, Ty, TyVarKind};
+use crate::types::{MetaTyVarKind, SubstEntry, Ty, TyVarKind};
 use crate::util::{apply, meta_vars};
 use crate::{equality, st::St, ty_var::meta::MetaTyVar};
 use fast_hash::FxHashMap;
@@ -101,7 +101,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
     return Err(UnifyError::Circularity(mv, ty));
   }
   // tweak down the rank of all other meta vars in the ty.
-  let mut map = FxHashMap::<MetaTyVar, (MetaTyVar, Option<TyVarKind>)>::default();
+  let mut map = FxHashMap::<MetaTyVar, (MetaTyVar, Option<MetaTyVarKind>)>::default();
   meta_vars(&st.subst, &ty, &mut |mv2, k| {
     // this is crucial!
     if mv.rank_lt(mv2) {
@@ -122,12 +122,12 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
     // unreachable because we applied upon entry.
     Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
     Some(SubstEntry::Kind(kind)) => match kind {
-      TyVarKind::Equality => match equality::get_ty(st, &ty) {
+      MetaTyVarKind::TyVarKind(TyVarKind::Equality) => match equality::get_ty(st, &ty) {
         Ok(()) => {}
         Err(not_eq) => return Err(IncompatibleTysFlavor::NotEqTy(ty.clone(), not_eq).into()),
       },
       // mv was an overloaded ty var. ty must conform to that overload.
-      TyVarKind::Overloaded(ov) => match ty {
+      MetaTyVarKind::TyVarKind(TyVarKind::Overloaded(ov)) => match ty {
         // don't emit more errors for None.
         Ty::None => {}
         // the simple case. check the sym is in the overload.
@@ -147,24 +147,28 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
-              TyVarKind::Equality => match equality::get_ty(st, &Ty::MetaVar(mv)) {
-                Ok(()) => ov,
-                Err(not_eq) => {
-                  return Err(IncompatibleTysFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
+              MetaTyVarKind::TyVarKind(TyVarKind::Equality) => {
+                match equality::get_ty(st, &Ty::MetaVar(mv)) {
+                  Ok(()) => ov,
+                  Err(not_eq) => {
+                    return Err(IncompatibleTysFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
+                  }
                 }
-              },
+              }
               // it too was an overload. attempt to unify the two overloads.
-              TyVarKind::Overloaded(ov_other) => match ov.unify(*ov_other) {
-                Some(ov) => ov,
-                None => return Err(IncompatibleTysFlavor::OverloadUnify(ov, *ov_other).into()),
-              },
+              MetaTyVarKind::TyVarKind(TyVarKind::Overloaded(ov_other)) => {
+                match ov.unify(*ov_other) {
+                  Some(ov) => ov,
+                  None => return Err(IncompatibleTysFlavor::OverloadUnify(ov, *ov_other).into()),
+                }
+              }
               // no overloaded type is a record.
-              TyVarKind::Record(rows, _) => {
+              MetaTyVarKind::Record(rows, _) => {
                 return Err(IncompatibleTysFlavor::OverloadRecord(rows.clone(), ov).into())
               }
             },
           };
-          let k = SubstEntry::Kind(TyVarKind::Overloaded(ov));
+          let k = SubstEntry::Kind(TyVarKind::Overloaded(ov).into());
           st.subst.insert(mv2, k);
         }
         // none of these are overloaded types.
@@ -174,7 +178,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
       },
       // mv was a record ty var (i.e. from a `...` pattern). ty must have the rows gotten so
       // far.
-      TyVarKind::Record(mut want_rows, idx) => match ty {
+      MetaTyVarKind::Record(mut want_rows, idx) => match ty {
         // don't emit more errors for None.
         Ty::None => {}
         // ty was a record. it should have every label in the wanted rows, and the types should
@@ -197,19 +201,21 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
             Some(SubstEntry::Kind(kind)) => match kind {
-              TyVarKind::Equality => match equality::get_ty(st, &Ty::MetaVar(mv)) {
-                Ok(()) => {}
-                Err(not_eq) => {
-                  return Err(IncompatibleTysFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
+              MetaTyVarKind::TyVarKind(TyVarKind::Equality) => {
+                match equality::get_ty(st, &Ty::MetaVar(mv)) {
+                  Ok(()) => {}
+                  Err(not_eq) => {
+                    return Err(IncompatibleTysFlavor::NotEqTy(Ty::MetaVar(mv), not_eq).into())
+                  }
                 }
-              },
+              }
               // no overloaded type is a record type.
-              TyVarKind::Overloaded(ov) => {
+              MetaTyVarKind::TyVarKind(TyVarKind::Overloaded(ov)) => {
                 return Err(IncompatibleTysFlavor::OverloadRecord(want_rows, *ov).into())
               }
               // mv2 was another record ty var. merge the rows, and for those that appear in
               // both, unify the types.
-              TyVarKind::Record(other_rows, _) => {
+              MetaTyVarKind::Record(other_rows, _) => {
                 for (lab, mut want) in other_rows.clone() {
                   if let Some(got) = want_rows.get(&lab) {
                     unify_(st, want.clone(), got.clone())?;
@@ -221,7 +227,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
             },
           }
           // set the entry to make mv2 a record ty var.
-          let k = SubstEntry::Kind(TyVarKind::Record(want_rows, idx));
+          let k = SubstEntry::Kind(MetaTyVarKind::Record(want_rows, idx));
           st.subst.insert(mv2, k);
         }
         // none of these are record types.

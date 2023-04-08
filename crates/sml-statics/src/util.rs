@@ -2,7 +2,7 @@
 
 use crate::sym::Sym;
 use crate::ty_var::meta::{Generalizable, MetaTyVar};
-use crate::types::{RecordTy, Subst, SubstEntry, Ty, TyScheme, TyVarKind};
+use crate::types::{MetaTyVarKind, RecordTy, Subst, SubstEntry, Ty, TyScheme, TyVarKind};
 use crate::{error::ErrorKind, item::Item, overload, st::St};
 use chain_map::ChainMap;
 
@@ -20,7 +20,7 @@ pub(crate) fn get_scon(st: &mut St, g: Generalizable, scon: &sml_hir::SCon) -> T
 
 fn basic_overload(st: &mut St, g: Generalizable, b: overload::Basic) -> Ty {
   let mv = st.meta_gen.gen(g);
-  let entry = SubstEntry::Kind(TyVarKind::Overloaded(b.into()));
+  let entry = SubstEntry::Kind(TyVarKind::Overloaded(b.into()).into());
   st.subst.insert(mv, entry);
   Ty::MetaVar(mv)
 }
@@ -87,7 +87,7 @@ pub(crate) fn instantiate(st: &mut St, g: Generalizable, ty_scheme: TyScheme) ->
     .map(|x| {
       let mv = st.meta_gen.gen(g);
       if let Some(k) = x {
-        let k = SubstEntry::Kind(k.clone());
+        let k = SubstEntry::Kind(k.clone().into());
         assert!(st.subst.insert(mv, k).is_none());
       }
       Ty::MetaVar(mv)
@@ -168,7 +168,7 @@ pub(crate) fn ty_syms<F: FnMut(Sym)>(ty: &Ty, f: &mut F) {
 
 pub(crate) fn meta_vars<F>(subst: &Subst, ty: &Ty, f: &mut F)
 where
-  F: FnMut(MetaTyVar, Option<&TyVarKind>),
+  F: FnMut(MetaTyVar, Option<&MetaTyVarKind>),
 {
   match ty {
     Ty::None | Ty::BoundVar(_) | Ty::FixedVar(_) => {}

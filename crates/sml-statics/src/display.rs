@@ -1,7 +1,9 @@
 //! Displaying some types.
 
 use crate::sym::{Sym, Syms};
-use crate::types::{BoundTyVars, MetaVarInfo, RecordTy, Subst, Ty, TyScheme, TyVarKind};
+use crate::types::{
+  BoundTyVars, MetaTyVarKind, MetaVarInfo, RecordTy, Subst, Ty, TyScheme, TyVarKind,
+};
 use crate::{fmt_util::idx_to_name, ty_var::meta::MetaTyVar, util::meta_vars};
 use fast_hash::FxHashMap;
 use fmt_util::comma_seq;
@@ -67,9 +69,11 @@ impl fmt::Display for TyDisplay<'_> {
       Ty::MetaVar(mv) => {
         let &idx = self.cx.meta_vars.map.get(mv).ok_or(fmt::Error)?;
         match self.cx.meta_vars.info.get(*mv) {
-          Some(TyVarKind::Overloaded(ov)) => ov.fmt(f)?,
-          Some(TyVarKind::Equality) => meta_var_idx(f, idx, "??")?,
-          Some(TyVarKind::Record(rows, _)) => {
+          Some(MetaTyVarKind::TyVarKind(k)) => match k {
+            TyVarKind::Equality => meta_var_idx(f, idx, "??")?,
+            TyVarKind::Overloaded(ov) => ov.fmt(f)?,
+          },
+          Some(MetaTyVarKind::Record(rows, _)) => {
             RecordMetaVarDisplay { cx: self.cx, rows }.fmt(f)?;
           }
           None => meta_var_idx(f, idx, "?")?,
@@ -206,7 +210,7 @@ impl<'a> MetaVarNames<'a> {
         self.next_idx += 1;
         ret
       });
-      if let Some(TyVarKind::Record(rows, _)) = self.info.get(mv) {
+      if let Some(MetaTyVarKind::Record(rows, _)) = self.info.get(mv) {
         for ty in rows.values() {
           self.extend_for(ty);
         }

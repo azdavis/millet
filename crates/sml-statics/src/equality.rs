@@ -1,7 +1,7 @@
 //! Checking if various structures respect/admit equality.
 
 use crate::sym::{Equality, Sym};
-use crate::types::{RecordTy, SubstEntry, Ty, TyScheme, TyVarKind};
+use crate::types::{MetaTyVarKind, RecordTy, SubstEntry, Ty, TyScheme, TyVarKind};
 use crate::{core_info::TyInfo, overload, st::St, ty_var::meta::Generalizable, util::instantiate};
 use std::fmt;
 
@@ -55,22 +55,24 @@ pub(crate) fn get_ty(st: &mut St, ty: &Ty) -> Result {
     Ty::BoundVar(_) => unreachable!("bound vars should be instantiated"),
     Ty::MetaVar(mv) => match st.subst.get(*mv) {
       None => {
-        st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality));
+        st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Equality.into()));
         Ok(())
       }
       Some(entry) => match entry.clone() {
         SubstEntry::Solved(ty) => get_ty(st, &ty),
         SubstEntry::Kind(kind) => match kind {
-          TyVarKind::Equality => Ok(()),
-          TyVarKind::Overloaded(ov) => match ov {
-            overload::Overload::Basic(basic) => get_basic(st, basic),
-            overload::Overload::Composite(comp) => {
-              let ov = equality_composite(comp);
-              st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Overloaded(ov)));
-              Ok(())
-            }
+          MetaTyVarKind::TyVarKind(kind) => match kind {
+            TyVarKind::Equality => Ok(()),
+            TyVarKind::Overloaded(ov) => match ov {
+              overload::Overload::Basic(basic) => get_basic(st, basic),
+              overload::Overload::Composite(comp) => {
+                let ov = equality_composite(comp);
+                st.subst.insert(*mv, SubstEntry::Kind(TyVarKind::Overloaded(ov).into()));
+                Ok(())
+              }
+            },
           },
-          TyVarKind::Record(rows, _) => get_record(st, &rows),
+          MetaTyVarKind::Record(rows, _) => get_record(st, &rows),
         },
       },
     },

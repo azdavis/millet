@@ -95,16 +95,27 @@ impl TyScheme {
 pub(crate) enum TyVarKind {
   Equality,
   Overloaded(overload::Overload),
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum MetaTyVarKind {
+  TyVarKind(TyVarKind),
   /// The `Idx` is just for better error reporting.
   Record(RecordTy, sml_hir::Idx),
 }
 
+impl From<TyVarKind> for MetaTyVarKind {
+  fn from(val: TyVarKind) -> Self {
+    Self::TyVarKind(val)
+  }
+}
+
 /// Information about meta type variables.
 #[derive(Debug, Default, Clone)]
-pub struct MetaVarInfo(FxHashMap<MetaTyVar, TyVarKind>);
+pub struct MetaVarInfo(FxHashMap<MetaTyVar, MetaTyVarKind>);
 
 impl MetaVarInfo {
-  pub(crate) fn get(&self, mv: MetaTyVar) -> Option<&TyVarKind> {
+  pub(crate) fn get(&self, mv: MetaTyVar) -> Option<&MetaTyVarKind> {
     self.0.get(&mv)
   }
 }
@@ -141,7 +152,7 @@ pub(crate) enum SubstEntry {
   Solved(Ty),
   /// This meta var is a special type variable, into which only certain kinds of types can be
   /// substituted.
-  Kind(TyVarKind),
+  Kind(MetaTyVarKind),
 }
 
 /// Used to be a newtype, but we ended up wanting to use many fundamental vec operations.

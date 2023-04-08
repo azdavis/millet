@@ -2,7 +2,7 @@
 
 use crate::core_info::{IdStatus, ValEnv, ValInfo};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{SubstEntry, Ty, TyScheme, TyVarKind};
+use crate::types::{MetaTyVarKind, SubstEntry, Ty, TyScheme};
 use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
 use crate::{
   compatible::eq_ty_scheme, config, def, env::Cx, error::ErrorKind, get_env::get_val_info,
@@ -173,7 +173,7 @@ fn get_(
       let ty = if *allows_other {
         // @def(38)
         let mv = st.meta_gen.gen(cfg.gen);
-        let k = SubstEntry::Kind(TyVarKind::Record(rows, pat_idx.into()));
+        let k = SubstEntry::Kind(MetaTyVarKind::Record(rows, pat_idx.into()));
         assert!(st.subst.insert(mv, k).is_none());
         Ty::MetaVar(mv)
       } else {

@@ -2,7 +2,7 @@
 
 use crate::ty_var::meta::{MetaTyVar, MetaTyVarGeneralizer};
 use crate::types::{
-  BoundTyVars, FixedTyVars, RecordTy, Subst, SubstEntry, Ty, TyScheme, TyVarKind,
+  BoundTyVars, FixedTyVars, MetaTyVarKind, RecordTy, Subst, SubstEntry, Ty, TyScheme, TyVarKind,
 };
 use crate::{overload, ty_var::bound::BoundTyVar, util::meta_vars};
 use fast_hash::FxHashMap;
@@ -113,7 +113,8 @@ impl Generalizer<'_> {
         },
       },
       Ty::FixedVar(fv) => {
-        let k = fv.ty_var().is_equality().then_some(TyVarKind::Equality);
+        let k: Option<MetaTyVarKind> =
+          fv.ty_var().is_equality().then(|| TyVarKind::Equality.into());
         handle_bv(self.fixed.get_mut(fv), &mut self.var_state, k, ty);
       }
       Ty::Record(rows) => {
@@ -137,7 +138,7 @@ impl Generalizer<'_> {
 fn handle_bv(
   bv: Option<&mut Option<BoundTyVar>>,
   var_state: &mut VarState,
-  kind: Option<TyVarKind>,
+  kind: Option<MetaTyVarKind>,
   ty: &mut Ty,
 ) {
   let bv = match bv {
@@ -147,7 +148,7 @@ fn handle_bv(
   *ty = match bv {
     Some(bv) => Ty::BoundVar(*bv),
     None => match kind {
-      Some(TyVarKind::Overloaded(ov)) => match ov {
+      Some(MetaTyVarKind::TyVarKind(TyVarKind::Overloaded(ov))) => match ov {
         overload::Overload::Basic(b) => match b {
           overload::Basic::Int => Ty::INT,
           overload::Basic::Real => Ty::REAL,
@@ -158,14 +159,20 @@ fn handle_bv(
         // all composite overloads contain, and default to, int.
         overload::Overload::Composite(_) => Ty::INT,
       },
-      Some(TyVarKind::Record(rows, idx)) => {
+      Some(MetaTyVarKind::Record(rows, idx)) => {
         if var_state.ret.is_ok() {
           var_state.ret = Err(RecordMetaVar { idx, rows });
         }
         Ty::None
       }
-      None | Some(TyVarKind::Equality) => {
-        let new_bv = BoundTyVar::add_to_binder(&mut var_state.bound_vars, |_| kind);
+      Some(MetaTyVarKind::TyVarKind(TyVarKind::Equality)) => {
+        let new_bv =
+          BoundTyVar::add_to_binder(&mut var_state.bound_vars, |_| Some(TyVarKind::Equality));
+        *bv = Some(new_bv);
+        Ty::BoundVar(new_bv)
+      }
+      None => {
+        let new_bv = BoundTyVar::add_to_binder(&mut var_state.bound_vars, |_| None);
         *bv = Some(new_bv);
         Ty::BoundVar(new_bv)
       }
