@@ -11,6 +11,7 @@
 
 mod compatible;
 mod config;
+mod core_info;
 mod dec;
 mod display;
 mod env;
@@ -25,6 +26,7 @@ mod overload;
 mod pat;
 mod pat_match;
 mod st;
+mod sym;
 mod top_dec;
 mod ty;
 mod ty_var;
@@ -33,13 +35,11 @@ mod unify;
 mod util;
 
 pub mod basis;
-mod core_info;
 pub mod def;
 pub mod disallow;
 pub mod info;
 pub mod mode;
 pub mod path_order;
-mod sym;
 
 pub use error::Error;
 pub use sym::Syms;
