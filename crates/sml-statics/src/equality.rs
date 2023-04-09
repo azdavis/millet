@@ -152,20 +152,12 @@ pub(crate) fn get_ty_info(st: &mut St, ty_info: TyInfo) -> Result {
   if st.info.mode.is_path_order() {
     return Ok(());
   }
-  let is_ref = match &ty_info.ty_scheme.ty {
-    Ty::Con(args, sym) => args.is_empty() && *sym == Sym::REF,
-    _ => false,
-  };
   get_ty_scheme(st, ty_info.ty_scheme)?;
-  if is_ref {
-    Ok(())
-  } else {
-    all(ty_info.val_env.into_iter().map(|(_, vi)| match vi.ty_scheme.ty {
-      Ty::Fn(param, _) => {
-        let param_ty_scheme = TyScheme { bound_vars: vi.ty_scheme.bound_vars, ty: *param };
-        get_ty_scheme(st, param_ty_scheme)
-      }
-      _ => Ok(()),
-    }))
-  }
+  all(ty_info.val_env.into_iter().map(|(_, vi)| match vi.ty_scheme.ty {
+    Ty::Fn(param, _) => {
+      let param_ty_scheme = TyScheme { bound_vars: vi.ty_scheme.bound_vars, ty: *param };
+      get_ty_scheme(st, param_ty_scheme)
+    }
+    _ => Ok(()),
+  }))
 }
