@@ -87,7 +87,7 @@
     },
     "tyVarName": {
       "name": "variable.other.constant.sml",
-      "match": "['?][A-Za-z0-9_']+\\b"
+      "match": "['?]\\??[A-Za-z0-9_']+\\b"
     },
     "specialName": {
       "name": "constant.language.sml",
