@@ -141,7 +141,7 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
         // we solved mv = mv2. now we give mv2 mv's old entry, to make it an overloaded ty var.
         // but mv2 itself may also have an entry.
         Ty::MetaVar(mv2) => {
-          let ov = match &mut st.subst.get(mv2) {
+          let ov = match st.subst.get(mv2) {
             // it didn't have an entry.
             None => ov,
             // unreachable because of apply.
@@ -195,11 +195,12 @@ fn unify_mv(st: &mut St, mv: MetaTyVar, mut ty: Ty) -> Result<(), UnifyError> {
         // setting mv2's entry to mv's old entry, which specifies the rows for this record ty
         // var.
         Ty::MetaVar(mv2) => {
-          match &mut st.subst.get(mv2) {
+          match st.subst.get(mv2) {
             // there was no entry.
             None => {}
             // unreachable because of apply.
             Some(SubstEntry::Solved(ty)) => unreachable!("meta var already solved to {ty:?}"),
+            // need to check that the record we know for mv so far is equality.
             Some(SubstEntry::Kind(kind)) => match kind {
               MetaTyVarKind::TyVarKind(TyVarKind::Equality) => {
                 match equality::get_ty(st, &Ty::MetaVar(mv)) {
