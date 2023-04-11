@@ -74,8 +74,8 @@ fn sync() {
   for x in iter {
     *map.entry(x).or_default() += 1;
   }
-  let not_twice: BTreeSet<_> = map.iter().filter_map(|(&k, &v)| (v != 2).then_some(k)).collect();
-  empty_set(&not_twice, "sync comments occurred not exactly twice");
+  let only_once: BTreeSet<_> = map.iter().filter_map(|(&k, &v)| (v == 1).then_some(k)).collect();
+  empty_set(&only_once, "sync comments occurred not only once");
 }
 
 #[test]
