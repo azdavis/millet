@@ -5,7 +5,7 @@ mod suggestion;
 
 use crate::display::{record_meta_var, MetaVarNames};
 use crate::sym::{Sym, Syms};
-use crate::ty_var::{bound::BoundTyVar, fixed::FixedTyVar, meta::MetaTyVar};
+use crate::ty_var::{fixed::FixedTyVar, meta::MetaTyVar};
 use crate::types::{MetaVarInfo, RecordTy, Ty, TyScheme};
 use crate::{disallow::Disallow, item::Item};
 use crate::{equality, overload, pat_match::Pat};
@@ -234,8 +234,6 @@ impl fmt::Display for AppendArg {
 
 #[derive(Debug)]
 pub(crate) enum IncompatibleTysFlavor {
-  /// NOTE: this might never happen.
-  BoundTyVar(BoundTyVar, BoundTyVar),
   FixedTyVar(FixedTyVar, FixedTyVar),
   MissingRow(sml_hir::Lab),
   ExtraRows(RecordTy),
@@ -263,8 +261,7 @@ impl IncompatibleTysFlavor {
   /// too long.
   fn extend_meta_var_names(&self, meta_vars: &mut MetaVarNames<'_>) {
     match self {
-      Self::BoundTyVar(_, _)
-      | Self::FixedTyVar(_, _)
+      Self::FixedTyVar(_, _)
       | Self::MissingRow(_)
       | Self::Con(_, _)
       | Self::OverloadCon(_, _)
@@ -299,7 +296,6 @@ struct IncompatibleTysFlavorDisplay<'a> {
 impl fmt::Display for IncompatibleTysFlavorDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.flavor {
-      IncompatibleTysFlavor::BoundTyVar(_, _) => f.write_str("type variables are different"),
       IncompatibleTysFlavor::FixedTyVar(a, b) => {
         write!(f, "`{a}` and `{b}` are different type variables")
       }

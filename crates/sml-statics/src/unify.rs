@@ -43,12 +43,8 @@ fn unify_(st: &mut St, mut want: Ty, mut got: Ty) -> Result<(), UnifyError> {
   apply(&st.subst, &mut got);
   match (want, got) {
     (Ty::None, _) | (_, Ty::None) => Ok(()),
-    (Ty::BoundVar(want), Ty::BoundVar(got)) => {
-      if want == got {
-        Ok(())
-      } else {
-        Err(IncompatibleTysFlavor::BoundTyVar(want, got).into())
-      }
+    (Ty::BoundVar(_), _) | (_, Ty::BoundVar(_)) => {
+      unreachable!("bound vars should be instantiated")
     }
     (Ty::MetaVar(mv), ty) | (ty, Ty::MetaVar(mv)) => unify_mv(st, mv, ty),
     (Ty::FixedVar(want), Ty::FixedVar(got)) => {
