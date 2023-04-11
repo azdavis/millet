@@ -66,16 +66,15 @@ impl TyScheme {
   }
 
   /// one as in this type scheme binds one variable.
-  pub(crate) fn one<F>(f: F) -> Self
+  pub(crate) fn one<F>(kind: Option<TyVarKind>, f: F) -> Self
   where
-    F: FnOnce(Ty) -> (Ty, Option<TyVarKind>),
+    F: FnOnce(Ty) -> Ty,
   {
     let mut bound_vars = BoundTyVars::new();
     let mut ty = None::<Ty>;
     BoundTyVar::add_to_binder(&mut bound_vars, |x| {
-      let res = f(Ty::BoundVar(x));
-      ty = Some(res.0);
-      res.1
+      ty = Some(f(Ty::BoundVar(x)));
+      kind
     });
     Self { bound_vars, ty: ty.unwrap() }
   }

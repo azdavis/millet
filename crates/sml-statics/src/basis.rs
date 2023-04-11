@@ -121,8 +121,8 @@ pub fn minimal() -> (Syms, Bs) {
   );
   let list_info = {
     let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
-    let alpha_list = TyScheme::one(|a| (list(a), None));
-    let cons = TyScheme::one(|a| (Ty::fun(pair(a.clone(), list(a.clone())), list(a)), None));
+    let alpha_list = TyScheme::one(None, list);
+    let cons = TyScheme::one(None, |a| Ty::fun(pair(a.clone(), list(a.clone())), list(a)));
     TyInfo {
       ty_scheme: alpha_list.clone(),
       val_env: datatype_ve([(PrimitiveKind::Nil, alpha_list), (PrimitiveKind::Cons, cons)]),
@@ -133,9 +133,9 @@ pub fn minimal() -> (Syms, Bs) {
   insert_special(&mut syms, Sym::LIST, list_info);
   let ref_info = {
     let ref_ = |a: Ty| Ty::Con(vec![a], Sym::REF);
-    let con = TyScheme::one(|a| (Ty::fun(a.clone(), ref_(a)), None));
+    let con = TyScheme::one(None, |a| Ty::fun(a.clone(), ref_(a)));
     TyInfo {
-      ty_scheme: TyScheme::one(|a| (ref_(a), None)),
+      ty_scheme: TyScheme::one(None, ref_),
       val_env: datatype_ve([(PrimitiveKind::RefVal, con)]),
       def: Some(PrimitiveKind::RefTy.into()),
       disallow: None,
@@ -170,10 +170,8 @@ pub fn minimal() -> (Syms, Bs) {
       overloaded(overload::Composite::RealInt.into(), |a| Ty::fun(a.clone(), a));
     let wordint_pair_to_wordint =
       overloaded(overload::Composite::WordInt.into(), |a| Ty::fun(dup(a.clone()), a));
-    let equality_pair_to_bool = TyScheme::one(|a| {
-      let t = Ty::fun(dup(a), Ty::BOOL);
-      (t, Some(TyVarKind::Equality))
-    });
+    let equality_pair_to_bool =
+      TyScheme::one(Some(TyVarKind::Equality), |a| Ty::fun(dup(a), Ty::BOOL));
     [
       (PrimitiveKind::Mul, num_pair_to_num.clone()),
       (PrimitiveKind::Add, num_pair_to_num.clone()),
@@ -255,7 +253,7 @@ fn overloaded<F>(ov: overload::Overload, f: F) -> TyScheme
 where
   F: FnOnce(Ty) -> Ty,
 {
-  TyScheme::one(|a| (f(a), Some(TyVarKind::Overloaded(ov))))
+  TyScheme::one(Some(TyVarKind::Overloaded(ov)), f)
 }
 
 fn dup(ty: Ty) -> Ty {
