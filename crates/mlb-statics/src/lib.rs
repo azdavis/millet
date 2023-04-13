@@ -348,8 +348,8 @@ pub fn add_all_doc_comments(
     .chain(low.arenas.spec.iter().map(|(x, _)| sml_hir::Idx::Spec(x)));
   for idx in indices {
     let ptr = low.ptrs.hir_to_ast(idx).expect("no syntax ptr");
-    let doc = ptr.try_to_node(root).and_then(|node| sml_comment::doc_comment_above(&node));
-    if let Some(doc) = doc {
+    let node = ptr.to_node(root);
+    if let Some(doc) = sml_comment::doc_comment_above(&node) {
       info.add_doc(idx, doc);
     }
   }

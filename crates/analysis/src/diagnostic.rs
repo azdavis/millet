@@ -66,7 +66,7 @@ where
     ret.extend(file.statics_errors.iter().filter_map(|err| {
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
-      let node = syntax.try_to_node(file.syntax.parse.root.syntax())?;
+      let node = syntax.to_node(file.syntax.parse.root.syntax());
       let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
       let range = f(&file.syntax.pos_db, range)?;
       let message = err.display(syms, file.info.meta_vars(), options.lines).to_string();

@@ -363,10 +363,11 @@ fn eqtype_dec() {
   );
 }
 
-// see https://github.com/rust-analyzer/rowan/issues/144, which we used to panic on but now don't
-// because we just return None when we couldn't find the syntax node
+// see https://github.com/rust-analyzer/rowan/issues/144, which we used to panic on, but then didn't
+// because we just forked rowan to return None when we couldn't find the syntax node. but now we
+// don't panic because we don't use empty nodes, which are not supported by rowan anyway.
 #[test]
-fn rowan_panic() {
+fn old_rowan_panic() {
   check(
     r#"
 (** - expected `(` *)

@@ -195,7 +195,7 @@ impl Analysis {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (ptr, _) = ft.get_ptr_and_idx()?;
     let ptr = ptr.cast::<ast::CaseExp>()?;
-    let case = ptr.try_to_node(ft.file.syntax.parse.root.syntax())?;
+    let case = ptr.to_node(ft.file.syntax.parse.root.syntax());
     let range = TextRange::empty(case.syntax().text_range().end());
     let range = ft.file.syntax.pos_db.range_utf16(range)?;
     let head_ast = case.exp()?;
