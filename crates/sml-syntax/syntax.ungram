@@ -1,7 +1,6 @@
-Root = Dec
+Root = Dec*
 
-Dec = DecWithTailInSeq*
-DecWithTailInSeq = DecWithTail ';'?
+Dec = DecWithTail ';'?
 DecWithTail = DecInSeq* SharingTail*
 DecInSeq = DecOne ';'?
 
@@ -37,20 +36,22 @@ FunDec = 'fun' TyVarSeq FunBind*
 TyDec = TyHead TyBind*
 DatDec = 'datatype' DatBind* WithType?
 DatCopyDec = lhs_kw:'datatype' 'Name' '=' rhs_kw:'datatype' Path
-AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec 'end'
+AbstypeDec = 'abstype' DatBind* WithType? 'with' Dec* 'end'
 ExDec = 'exception' ExBind*
 OpenDec = 'open' Path*
 InfixDec = 'infix' 'IntLit'? NameStarEq*
 InfixrDec = 'infixr' 'IntLit'? NameStarEq*
 NonfixDec = 'nonfix' NameStarEq*
 DoDec = 'do' Exp
-LocalDec = 'local' local_dec:Dec 'in' in_dec:Dec 'end'
+LocalDec = LocalDecHd LocalDecTl 'end'
 StructureDec = 'structure' StrBind*
 SignatureDec = 'signature' SigBind*
 FunctorDec = 'functor' FunctorBind*
 ExpDec = Exp
 IncludeDec = 'include' SigExp*
 
+LocalDecHd = 'local' Dec*
+LocalDecTl = 'in' Dec*
 TyHead = 'type' | 'eqtype'
 ValBind = 'rec'? Pat EqExp? 'and'?
 TyBind = TyVarSeq 'Name' EqTy? 'and'?
@@ -65,9 +66,10 @@ ConBind = 'op'? NameStarEq OfTy? '|'?
 ExBind = 'op'? NameStarEq ExBindInner? 'and'?
 StrBind = 'Name' AscriptionTail? EqStrExp? 'and'?
 SigBind = 'Name' '=' SigExp 'and'?
+// use * to allow empty
 FunctorBind =
   functor_name:'Name'
-  '(' FunctorArg ')' AscriptionTail?
+  '(' FunctorArg* ')' AscriptionTail?
   '=' body:StrExp 'and'?
 
 EqExp = '=' Exp
@@ -81,6 +83,7 @@ ExBindInner = OfTy | EqPath
 EqPath = '=' Path
 WithType = 'withtype' TyBind*
 
+// a bit weird
 FunctorArg = FunctorArgNameSigExp | Dec
 FunctorArgNameSigExp = 'Name' Ascription SigExp
 
@@ -91,13 +94,14 @@ StrExp =
 | AppStrExp
 | LetStrExp
 
-StructStrExp = 'struct' Dec 'end'
+StructStrExp = 'struct' Dec* 'end'
 PathStrExp = Path
 AscriptionStrExp = StrExp AscriptionTail
-AppStrExp = 'Name' '(' AppStrExpArg ')'
-LetStrExp = 'let' Dec 'in' StrExp 'end'
+// use * to allow empty
+AppStrExp = 'Name' '(' AppStrExpArg* ')'
+LetStrExp = 'let' Dec* 'in' StrExp 'end'
 
-// a bit annoying, but that's what my rudimentary syntax-gen requires.
+// a bit weird
 AppStrExpArg = AppStrExpArgStrExp | Dec
 AppStrExpArgStrExp = StrExp
 
@@ -110,7 +114,7 @@ SigExp =
 | WhereTypeSigExp
 | WhereSigExp
 
-SigSigExp = 'sig' Dec 'end'
+SigSigExp = 'sig' Dec* 'end'
 NameSigExp = 'Name'
 WhereTypeSigExp = SigExp WhereOrAnd 'type' TyVarSeq Path '=' Ty
 WhereSigExp = SigExp WhereOrAnd lhs:Path '=' rhs:Path
@@ -160,7 +164,7 @@ TupleExp = '(' ExpArg* ')'
 ListExp = '[' ExpArg* ']'
 VectorExp = '#' ListExp
 SeqExp = '(' exps_in_seq:ExpInSeq* ')'
-LetExp = 'let' Dec 'in' exps_in_seq:ExpInSeq* 'end'
+LetExp = 'let' Dec* 'in' exps_in_seq:ExpInSeq* 'end'
 AppExp = func:Exp arg:Exp
 InfixExp = lhs:Exp NameStarEq rhs:Exp
 TypedExp = Exp Ascription Ty

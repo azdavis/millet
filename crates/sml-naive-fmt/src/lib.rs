@@ -48,7 +48,7 @@ fn go(mode: Mode, root: &ast::Root, tab_size: u32) -> Result<Mode, Error> {
       })
       .collect(),
   };
-  match root.dec().and_then(|d| get_dec(&mut st, Cfg::new(tab_size), d)) {
+  match get_dec(&mut st, Cfg::new(tab_size), root.decs()) {
     Some(()) => {
       if st.comment_ranges.is_empty() {
         Ok(st.mode)
@@ -119,8 +119,11 @@ impl Cfg {
   }
 }
 
-fn get_dec(st: &mut St, cfg: Cfg, dec: ast::Dec) -> Res {
-  sep_with_lines(st, cfg, "", dec.dec_with_tail_in_seqs(), |st, dwt_in_seq| {
+fn get_dec<I>(st: &mut St, cfg: Cfg, iter: I) -> Res
+where
+  I: Iterator<Item = ast::Dec>,
+{
+  sep_with_lines(st, cfg, "", iter, |st, dwt_in_seq| {
     let dwt = dwt_in_seq.dec_with_tail()?;
     sep_with_lines(st, cfg, "", dwt.dec_in_seqs(), |st, dec_in_seq| {
       get_dec_one(st, cfg.extra_blank(false), dec_in_seq.dec_one()?)?;
@@ -233,7 +236,7 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
         ty_binds(st, cfg, withtype.ty_binds())?;
       }
       st.write(" with ");
-      get_dec(st, cfg, dec.dec()?)?;
+      get_dec(st, cfg, dec.decs())?;
       st.write(" end");
     }
     ast::DecOne::ExDec(dec) => {
@@ -287,8 +290,8 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       st,
       cfg,
       "local",
-      |st, cfg| get_dec(st, cfg, dec.local_dec()?),
-      |st, cfg| get_dec(st, cfg, dec.in_dec()?),
+      |st, cfg| get_dec(st, cfg, dec.local_dec_hd().into_iter().flat_map(|x| x.decs())),
+      |st, cfg| get_dec(st, cfg, dec.local_dec_tl().into_iter().flat_map(|x| x.decs())),
     )?,
     ast::DecOne::StructureDec(dec) => {
       st.write("structure ");
@@ -317,18 +320,20 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
       sep_with_lines(st, cfg, "and ", dec.functor_binds(), |st, functor_bind| {
         st.write(functor_bind.functor_name()?.text());
         st.write(" (");
-        match functor_bind.functor_arg()? {
-          ast::FunctorArg::FunctorArgNameSigExp(arg) => {
-            st.write(arg.name()?.text());
-            st.write(" : ");
-            get_sig_exp(st, cfg, arg.sig_exp()?)?;
-          }
-          ast::FunctorArg::Dec(dec) => {
-            st.write("\n");
-            let new_cfg = cfg.indented();
-            new_cfg.output_indent(st);
-            get_dec(st, new_cfg, dec)?;
-            st.write("\n");
+        for arg in functor_bind.functor_args() {
+          match arg {
+            ast::FunctorArg::FunctorArgNameSigExp(arg) => {
+              st.write(arg.name()?.text());
+              st.write(" : ");
+              get_sig_exp(st, cfg, arg.sig_exp()?)?;
+            }
+            ast::FunctorArg::Dec(arg) => {
+              st.write("\n");
+              let new_cfg = cfg.indented();
+              new_cfg.output_indent(st);
+              get_dec(st, new_cfg, std::iter::once(arg))?;
+              st.write("\n");
+            }
           }
         }
         st.write(")");
@@ -399,7 +404,7 @@ fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
       st.write("struct\n");
       let new_cfg = cfg.indented().extra_blank(true);
       new_cfg.output_indent(st);
-      get_dec(st, new_cfg, exp.dec()?)?;
+      get_dec(st, new_cfg, exp.decs())?;
       st.write("\n");
       cfg.output_indent(st);
       st.write("end");
@@ -412,14 +417,16 @@ fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
     ast::StrExp::AppStrExp(exp) => {
       st.write(exp.name()?.text());
       st.write(" (");
-      match exp.app_str_exp_arg()? {
-        ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(st, cfg, arg.str_exp()?)?,
-        ast::AppStrExpArg::Dec(arg) => {
-          st.write("\n");
-          let new_cfg = cfg.indented();
-          new_cfg.output_indent(st);
-          get_dec(st, new_cfg, arg)?;
-          st.write("\n");
+      for arg in exp.app_str_exp_args() {
+        match arg {
+          ast::AppStrExpArg::AppStrExpArgStrExp(arg) => get_str_exp(st, cfg, arg.str_exp()?)?,
+          ast::AppStrExpArg::Dec(arg) => {
+            st.write("\n");
+            let new_cfg = cfg.indented();
+            new_cfg.output_indent(st);
+            get_dec(st, new_cfg, std::iter::once(arg))?;
+            st.write("\n");
+          }
         }
       }
       st.write(")");
@@ -428,7 +435,7 @@ fn get_str_exp(st: &mut St, cfg: Cfg, str_exp: ast::StrExp) -> Res {
       st,
       cfg,
       "let",
-      |st, cfg| get_dec(st, cfg, exp.dec()?),
+      |st, cfg| get_dec(st, cfg, exp.decs()),
       |st, cfg| get_str_exp(st, cfg, exp.str_exp()?),
     )?,
   }
@@ -441,7 +448,7 @@ fn get_sig_exp(st: &mut St, cfg: Cfg, sig_exp: ast::SigExp) -> Res {
       st.write("sig\n");
       let new_cfg = cfg.indented();
       new_cfg.output_indent(st);
-      get_dec(st, new_cfg, exp.dec()?)?;
+      get_dec(st, new_cfg, exp.decs())?;
       st.write("\n");
       cfg.output_indent(st);
       st.write("end");
@@ -599,7 +606,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       st,
       cfg,
       "let",
-      |st, cfg| get_dec(st, cfg, exp.dec()?),
+      |st, cfg| get_dec(st, cfg, exp.decs()),
       |st, cfg| exp_semi_seq(st, cfg, exp.exps_in_seq()),
     )?,
     ast::Exp::AppExp(exp) => {

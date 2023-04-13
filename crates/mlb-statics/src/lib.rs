@@ -266,7 +266,7 @@ fn get_bas_dec(
         .collect();
       let hir_roots: paths::PathMap<_> = syntaxes
         .iter()
-        .map(|(&path, (_, syntax))| (path, (&syntax.lower.arenas, syntax.lower.root)))
+        .map(|(&path, (_, syntax))| (path, (&syntax.lower.arenas, syntax.lower.root.as_slice())))
         .collect();
       assert_eq!(syntaxes.len(), hir_roots.len());
       let order = sml_statics::path_order::get(st.syms.clone(), scope.bs.clone(), hir_roots);
@@ -305,7 +305,7 @@ fn get_source_file(
 ) {
   let mode = sml_statics::mode::Mode::Regular(Some(path));
   let checked =
-    sml_statics::get(&mut st.syms, &scope.bs, mode, &syntax.lower.arenas, syntax.lower.root);
+    sml_statics::get(&mut st.syms, &scope.bs, mode, &syntax.lower.arenas, &syntax.lower.root);
   ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.bs });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);

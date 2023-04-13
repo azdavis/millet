@@ -262,8 +262,8 @@ pub struct Lower {
   pub arenas: sml_hir::Arenas,
   /// The pointers.
   pub ptrs: Ptrs,
-  /// The single top declaration. Often a sequence of decs.
-  pub root: sml_hir::StrDecIdx,
+  /// The top declarations.
+  pub root: sml_hir::StrDecSeq,
 }
 
 #[derive(Debug)]
@@ -305,14 +305,14 @@ impl<'a> St<'a> {
     self.errors.push(Error { range, kind });
   }
 
-  pub(crate) fn finish(self, root: sml_hir::StrDecIdx) -> Lower {
+  pub(crate) fn finish(self, root: sml_hir::StrDecSeq) -> Lower {
     Lower { errors: self.errors, arenas: self.arenas, ptrs: self.ptrs, root }
   }
 
   pub(crate) fn str_dec(&mut self, val: sml_hir::StrDec, ptr: SyntaxNodePtr) -> sml_hir::StrDecIdx {
     let idx = self.arenas.str_dec.alloc(val);
     self.ptrs.insert(idx.into(), ptr);
-    Some(idx)
+    idx
   }
 
   pub(crate) fn str_exp(&mut self, val: sml_hir::StrExp, ptr: SyntaxNodePtr) -> sml_hir::StrExpIdx {
@@ -330,7 +330,7 @@ impl<'a> St<'a> {
   pub(crate) fn spec(&mut self, val: sml_hir::Spec, ptr: SyntaxNodePtr) -> sml_hir::SpecIdx {
     let idx = self.arenas.spec.alloc(val);
     self.ptrs.insert(idx.into(), ptr);
-    Some(idx)
+    idx
   }
 
   pub(crate) fn exp(&mut self, val: sml_hir::Exp, ptr: SyntaxNodePtr) -> sml_hir::ExpIdx {
@@ -342,7 +342,7 @@ impl<'a> St<'a> {
   pub(crate) fn dec(&mut self, val: sml_hir::Dec, ptr: SyntaxNodePtr) -> sml_hir::DecIdx {
     let idx = self.arenas.dec.alloc(val);
     self.ptrs.insert(idx.into(), ptr);
-    Some(idx)
+    idx
   }
 
   pub(crate) fn pat(&mut self, val: sml_hir::Pat, ptr: SyntaxNodePtr) -> sml_hir::PatIdx {

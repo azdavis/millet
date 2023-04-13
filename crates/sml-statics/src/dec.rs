@@ -20,12 +20,34 @@ pub(crate) fn get(
   cx: &Cx,
   ars: &sml_hir::Arenas,
   env: &mut Env,
+  decs: &[sml_hir::DecIdx],
+) {
+  match decs[..] {
+    [] => return,
+    [x] => {
+      get_one(st, cfg, cx, ars, env, x);
+      return;
+    }
+    _ => {}
+  }
+  // @def(23), @def(24)
+  let mut cx = cx.clone();
+  let mut one_env = Env::default();
+  for &dec in decs {
+    get_one(st, cfg, &cx, ars, &mut one_env, dec);
+    cx.env.append(&mut one_env.clone());
+    env.append(&mut one_env);
+  }
+}
+
+fn get_one(
+  st: &mut St,
+  cfg: Cfg,
+  cx: &Cx,
+  ars: &sml_hir::Arenas,
+  env: &mut Env,
   dec: sml_hir::DecIdx,
 ) {
-  let dec = match dec {
-    Some(x) => x,
-    None => return,
-  };
   match &ars.dec[dec] {
     // @def(15)
     sml_hir::Dec::Val(ty_vars, val_binds) => {
@@ -198,10 +220,10 @@ pub(crate) fn get(
     // @def(21)
     sml_hir::Dec::Local(local_dec, in_dec) => {
       let mut local_env = Env::default();
-      get(st, cfg, cx, ars, &mut local_env, *local_dec);
+      get(st, cfg, cx, ars, &mut local_env, local_dec);
       let mut cx = cx.clone();
       cx.env.append(&mut local_env);
-      get(st, cfg, &cx, ars, env, *in_dec);
+      get(st, cfg, &cx, ars, env, in_dec);
     }
     // @def(22)
     sml_hir::Dec::Open(paths) => {
@@ -214,16 +236,6 @@ pub(crate) fn get(
           Ok(got_env) => env.append(&mut got_env.clone()),
           Err(e) => st.err(dec, e.into()),
         }
-      }
-    }
-    // @def(23), @def(24)
-    sml_hir::Dec::Seq(decs) => {
-      let mut cx = cx.clone();
-      let mut one_env = Env::default();
-      for &dec in decs {
-        get(st, cfg, &cx, ars, &mut one_env, dec);
-        cx.env.append(&mut one_env.clone());
-        env.append(&mut one_env);
       }
     }
   }
@@ -453,11 +465,11 @@ fn constructor(cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bool {
   }
 }
 
-pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
-  let dec = match dec {
-    Some(x) => x,
-    None => return true,
-  };
+pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, decs: &[sml_hir::DecIdx]) -> bool {
+  decs.iter().any(|&dec| maybe_effectful_one(ars, dec))
+}
+
+pub(crate) fn maybe_effectful_one(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
   match &ars.dec[dec] {
     sml_hir::Dec::Val(_, val_binds) => maybe_effectful_val(ars, val_binds),
     sml_hir::Dec::Ty(_)
@@ -465,9 +477,8 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bo
     | sml_hir::Dec::DatatypeCopy(_, _)
     | sml_hir::Dec::Exception(_)
     | sml_hir::Dec::Open(_) => false,
-    sml_hir::Dec::Abstype(_, _, dec) => maybe_effectful(ars, *dec),
-    sml_hir::Dec::Local(fst, snd) => maybe_effectful(ars, *fst) || maybe_effectful(ars, *snd),
-    sml_hir::Dec::Seq(decs) => decs.iter().any(|&dec| maybe_effectful(ars, dec)),
+    sml_hir::Dec::Abstype(_, _, dec) => maybe_effectful(ars, dec),
+    sml_hir::Dec::Local(fst, snd) => maybe_effectful(ars, fst) || maybe_effectful(ars, snd),
   }
 }
 

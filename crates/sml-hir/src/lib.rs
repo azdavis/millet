@@ -45,6 +45,7 @@ macro_rules! mk_idx {
 mk_idx![StrDec, StrExp, SigExp, Spec, Exp, Dec, Pat, Ty];
 
 pub type OptIdx<T> = Option<la_arena::Idx<T>>;
+pub type Seq<T> = Vec<la_arena::Idx<T>>;
 
 // modules //
 
@@ -75,20 +76,20 @@ pub struct FunctorBind {
   pub flavor: Flavor,
 }
 
-pub type StrDecIdx = OptIdx<StrDec>;
+pub type StrDecSeq = Seq<StrDec>;
+pub type StrDecIdx = la_arena::Idx<StrDec>;
 pub type StrDecArena = Arena<StrDec>;
 
 /// @def(87) is handled by not distinguishing between top decs and str decs.
 #[derive(Debug)]
 pub enum StrDec {
-  Dec(DecIdx),
+  Dec(DecSeq),
   Structure(Vec<StrBind>),
   /// technically a top dec in the Definition.
   Signature(Vec<SigBind>),
   /// technically a top dec in the Definition.
   Functor(Vec<FunctorBind>),
-  Local(StrDecIdx, StrDecIdx),
-  Seq(Vec<StrDecIdx>),
+  Local(StrDecSeq, StrDecSeq),
 }
 
 #[derive(Debug)]
@@ -102,11 +103,11 @@ pub type StrExpArena = Arena<StrExp>;
 
 #[derive(Debug)]
 pub enum StrExp {
-  Struct(StrDecIdx),
+  Struct(StrDecSeq),
   Path(Path),
   Ascription(StrExpIdx, Ascription, SigExpIdx),
   App(Name, StrExpIdx, Flavor),
-  Let(StrDecIdx, StrExpIdx),
+  Let(StrDecSeq, StrExpIdx),
 }
 
 #[derive(Debug)]
@@ -120,7 +121,7 @@ pub type SigExpArena = Arena<SigExp>;
 
 #[derive(Debug)]
 pub enum SigExp {
-  Spec(SpecIdx),
+  Spec(SpecSeq),
   Name(Name),
   Where(SigExpIdx, WhereKind),
 }
@@ -131,7 +132,8 @@ pub enum WhereKind {
   Structure(Path, Path),
 }
 
-pub type SpecIdx = OptIdx<Spec>;
+pub type SpecSeq = Seq<Spec>;
+pub type SpecIdx = la_arena::Idx<Spec>;
 pub type SpecArena = Arena<Spec>;
 
 #[derive(Debug)]
@@ -145,8 +147,7 @@ pub enum Spec {
   Exception(ExDesc),
   Str(StrDesc),
   Include(SigExpIdx),
-  Sharing(SpecIdx, SharingKind, Vec<Path>),
-  Seq(Vec<SpecIdx>),
+  Sharing(SpecSeq, SharingKind, Vec<Path>),
 }
 
 #[derive(Debug)]
@@ -197,7 +198,7 @@ pub enum Exp {
   SCon(SCon),
   Path(Path),
   Record(Vec<(Lab, ExpIdx)>),
-  Let(DecIdx, ExpIdx),
+  Let(DecSeq, ExpIdx),
   App(ExpIdx, ExpIdx),
   Handle(ExpIdx, Vec<(PatIdx, ExpIdx)>),
   Raise(ExpIdx),
@@ -229,7 +230,8 @@ pub enum FnFlavor {
   Fn,
 }
 
-pub type DecIdx = OptIdx<Dec>;
+pub type DecSeq = Seq<Dec>;
+pub type DecIdx = la_arena::Idx<Dec>;
 pub type DecArena = Arena<Dec>;
 
 #[derive(Debug)]
@@ -240,11 +242,10 @@ pub enum Dec {
   Datatype(Vec<DatBind>, Vec<TyBind>),
   DatatypeCopy(Name, Path),
   /// The TyBinds are from `withtype`, since it's easier to process in statics than lower.
-  Abstype(Vec<DatBind>, Vec<TyBind>, DecIdx),
+  Abstype(Vec<DatBind>, Vec<TyBind>, DecSeq),
   Exception(Vec<ExBind>),
-  Local(DecIdx, DecIdx),
+  Local(DecSeq, DecSeq),
   Open(Vec<Path>),
-  Seq(Vec<DecIdx>),
 }
 
 #[derive(Debug)]

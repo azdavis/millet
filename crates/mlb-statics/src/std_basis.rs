@@ -119,7 +119,7 @@ where
     }
     let mode = sml_statics::mode::Mode::BuiltinLib(name);
     let low = started.lower;
-    let checked = sml_statics::get(&mut syms, &bs, mode, &low.arenas, low.root);
+    let checked = sml_statics::get(&mut syms, &bs, mode, &low.arenas, &low.root);
     bs.append(checked.bs);
     if let Some(e) = checked.errors.first() {
       let e = e.display(&syms, checked.info.meta_vars(), config::ErrorLines::One);

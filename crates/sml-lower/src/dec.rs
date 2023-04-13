@@ -9,18 +9,17 @@ use crate::util::{ErrorKind, Item, St};
 use crate::{exp, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
-fn get_dec_flavor<T, G, S>(st: &mut St<'_>, dec: Option<ast::Dec>, g: G, s: S) -> Option<T>
+fn get_dec_flavor<T, F, I>(st: &mut St<'_>, iter: I, f: F) -> Vec<T>
 where
-  G: Fn(&mut St<'_>, ast::DecOne) -> Option<T>,
-  S: FnOnce(&mut St<'_>, Vec<Option<T>>, SyntaxNodePtr) -> Option<T>,
+  F: Fn(&mut St<'_>, ast::DecOne) -> Option<T>,
+  I: Iterator<Item = ast::Dec>,
 {
-  let dec = dec?;
-  let mut decs = Vec::<Option<T>>::new();
-  for dwt_in_seq in dec.dec_with_tail_in_seqs() {
-    if let Some(semi) = dwt_in_seq.semicolon() {
+  let mut ret = Vec::<T>::new();
+  for dec in iter {
+    if let Some(semi) = dec.semicolon() {
       st.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
     }
-    let dwt = match dwt_in_seq.dec_with_tail() {
+    let dwt = match dec.dec_with_tail() {
       Some(x) => x,
       None => continue,
     };
@@ -31,20 +30,14 @@ where
       if let Some(semi) = dec.semicolon() {
         st.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
       }
-      decs.push(g(st, dec.dec_one()?));
+      ret.extend(dec.dec_one().and_then(|dec_one| f(st, dec_one)));
     }
   }
-  if decs.len() == 1 {
-    decs.pop().unwrap()
-  } else {
-    s(st, decs, SyntaxNodePtr::new(dec.syntax()))
-  }
+  ret
 }
 
-pub(crate) fn get_top_dec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
-  get_dec_flavor(st, dec, get_top_dec_one, |st, decs, ptr| {
-    st.str_dec(sml_hir::StrDec::Seq(decs), ptr)
-  })
+pub(crate) fn get_top_dec(st: &mut St<'_>, root: &ast::Root) -> sml_hir::StrDecSeq {
+  get_dec_flavor(st, root.decs(), |a, b| Some(get_top_dec_one(a, b)))
 }
 
 fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx {
@@ -75,16 +68,17 @@ fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       };
       let dec = sml_hir::Dec::Val(Vec::new(), vec![bind]);
       let dec = st.dec(dec, ptr.clone());
-      st.str_dec(sml_hir::StrDec::Dec(dec), ptr)
+      st.str_dec(sml_hir::StrDec::Dec(vec![dec]), ptr)
     }
     _ => get_str_dec_one(st, top_dec),
   }
 }
 
-fn get_str_dec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::StrDecIdx {
-  get_dec_flavor(st, dec, get_str_dec_one, |st, decs, ptr| {
-    st.str_dec(sml_hir::StrDec::Seq(decs), ptr)
-  })
+fn get_str_dec<I>(st: &mut St<'_>, iter: I) -> sml_hir::StrDecSeq
+where
+  I: Iterator<Item = ast::Dec>,
+{
+  get_dec_flavor(st, iter, |a, b| Some(get_str_dec_one(a, b)))
 }
 
 fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx {
@@ -129,19 +123,24 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       let iter = str_dec.functor_binds().filter_map(|fun_bind| {
         let functor_name = get_name(fun_bind.functor_name())?;
         let body = with_ascription_tail(st, fun_bind.body(), fun_bind.ascription_tail());
-        let (param_name, param_sig, body, flavor) = match fun_bind.functor_arg()? {
-          ast::FunctorArg::FunctorArgNameSigExp(arg) => {
+        let mut iter = fun_bind.functor_args().peekable();
+        let (param_name, param_sig, body, flavor) = match iter.peek() {
+          Some(ast::FunctorArg::FunctorArgNameSigExp(arg)) => {
             forbid_opaque_asc(st, arg.ascription());
             (get_name(arg.name())?, get_sig_exp(st, arg.sig_exp()), body, sml_hir::Flavor::Plain)
           }
-          ast::FunctorArg::Dec(arg) => {
+          None | Some(ast::FunctorArg::Dec(_)) => {
+            let decs = iter.filter_map(|x| match x {
+              ast::FunctorArg::Dec(x) => Some(x),
+              ast::FunctorArg::FunctorArgNameSigExp(_) => None,
+            });
             let param_name = st.fresh();
-            let param_sig = sml_hir::SigExp::Spec(get_spec(st, Some(arg)));
+            let param_sig = sml_hir::SigExp::Spec(get_spec(st, decs));
             let param_sig = st.sig_exp(param_sig, ptr.clone());
             let dec = st
               .dec(sml_hir::Dec::Open(vec![sml_path::Path::one(param_name.clone())]), ptr.clone());
-            let str_dec = st.str_dec(sml_hir::StrDec::Dec(dec), ptr.clone());
-            let body = st.str_exp(sml_hir::StrExp::Let(str_dec, body), ptr.clone());
+            let str_dec = st.str_dec(sml_hir::StrDec::Dec(vec![dec]), ptr.clone());
+            let body = st.str_exp(sml_hir::StrExp::Let(vec![str_dec], body), ptr.clone());
             (param_name, param_sig, body, sml_hir::Flavor::Sugared)
           }
         };
@@ -156,12 +155,12 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("local")));
       }
       st.inc_level();
-      let fst = get_str_dec(st, str_dec.local_dec());
+      let fst = get_str_dec(st, str_dec.local_dec_hd().into_iter().flat_map(|x| x.decs()));
       st.dec_level();
-      let snd = get_str_dec(st, str_dec.in_dec());
+      let snd = get_str_dec(st, str_dec.local_dec_tl().into_iter().flat_map(|x| x.decs()));
       sml_hir::StrDec::Local(fst, snd)
     }
-    _ => sml_hir::StrDec::Dec(get_one(st, str_dec)),
+    _ => sml_hir::StrDec::Dec(get_one(st, str_dec).into_iter().collect()),
   };
   st.str_dec(res, ptr)
 }
@@ -170,26 +169,31 @@ fn get_str_exp(st: &mut St<'_>, str_exp: Option<ast::StrExp>) -> sml_hir::StrExp
   let str_exp = str_exp?;
   let ptr = SyntaxNodePtr::new(str_exp.syntax());
   let ret = match str_exp {
-    ast::StrExp::StructStrExp(str_exp) => sml_hir::StrExp::Struct(get_str_dec(st, str_exp.dec())),
+    ast::StrExp::StructStrExp(str_exp) => sml_hir::StrExp::Struct(get_str_dec(st, str_exp.decs())),
     ast::StrExp::PathStrExp(str_exp) => sml_hir::StrExp::Path(get_path(str_exp.path()?)?),
     ast::StrExp::AscriptionStrExp(str_exp) => {
       let (kind, sig_exp) = ascription_tail(st, str_exp.ascription_tail());
       sml_hir::StrExp::Ascription(get_str_exp(st, str_exp.str_exp()), kind, sig_exp)
     }
     ast::StrExp::AppStrExp(str_exp) => {
-      let (arg, flavor) = match str_exp.app_str_exp_arg()? {
-        ast::AppStrExpArg::AppStrExpArgStrExp(arg) => {
+      let mut iter = str_exp.app_str_exp_args().peekable();
+      let (arg, flavor) = match iter.peek() {
+        Some(ast::AppStrExpArg::AppStrExpArgStrExp(arg)) => {
           (get_str_exp(st, arg.str_exp()), sml_hir::Flavor::Plain)
         }
-        ast::AppStrExpArg::Dec(arg) => {
-          let sd = get_str_dec(st, Some(arg));
+        None | Some(ast::AppStrExpArg::Dec(_)) => {
+          let decs = iter.filter_map(|x| match x {
+            ast::AppStrExpArg::AppStrExpArgStrExp(_) => None,
+            ast::AppStrExpArg::Dec(x) => Some(x),
+          });
+          let sd = get_str_dec(st, decs);
           (st.str_exp(sml_hir::StrExp::Struct(sd), ptr.clone()), sml_hir::Flavor::Sugared)
         }
       };
       sml_hir::StrExp::App(get_name(str_exp.name())?, arg, flavor)
     }
     ast::StrExp::LetStrExp(str_exp) => {
-      sml_hir::StrExp::Let(get_str_dec(st, str_exp.dec()), get_str_exp(st, str_exp.str_exp()))
+      sml_hir::StrExp::Let(get_str_dec(st, str_exp.decs()), get_str_exp(st, str_exp.str_exp()))
     }
   };
   st.str_exp(ret, ptr)
@@ -199,7 +203,7 @@ fn get_sig_exp(st: &mut St<'_>, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExp
   let sig_exp = sig_exp?;
   let ptr = SyntaxNodePtr::new(sig_exp.syntax());
   let ret = match sig_exp {
-    ast::SigExp::SigSigExp(sig_exp) => sml_hir::SigExp::Spec(get_spec(st, sig_exp.dec())),
+    ast::SigExp::SigSigExp(sig_exp) => sml_hir::SigExp::Spec(get_spec(st, sig_exp.decs())),
     ast::SigExp::NameSigExp(sig_exp) => sml_hir::SigExp::Name(get_name(sig_exp.name())?),
     ast::SigExp::WhereTypeSigExp(sig_exp) => sml_hir::SigExp::Where(
       get_sig_exp(st, sig_exp.sig_exp()),
@@ -217,14 +221,16 @@ fn get_sig_exp(st: &mut St<'_>, sig_exp: Option<ast::SigExp>) -> sml_hir::SigExp
   st.sig_exp(ret, ptr)
 }
 
-fn get_spec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
-  let dec = dec?;
+fn get_spec<I>(st: &mut St<'_>, iter: I) -> sml_hir::SpecSeq
+where
+  I: Iterator<Item = ast::Dec>,
+{
   let mut specs = Vec::<sml_hir::SpecIdx>::new();
-  for dwt_in_seq in dec.dec_with_tail_in_seqs() {
-    if let Some(semi) = dwt_in_seq.semicolon() {
+  for dec in iter {
+    if let Some(semi) = dec.semicolon() {
       st.err(semi.text_range(), ErrorKind::UnnecessarySemicolon);
     }
-    let dwt = match dwt_in_seq.dec_with_tail() {
+    let dwt = match dec.dec_with_tail() {
       Some(x) => x,
       None => continue,
     };
@@ -236,26 +242,17 @@ fn get_spec(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::SpecIdx {
       }
       inner_specs.extend(get_spec_one(st, dec.dec_one()));
     }
-    let inner = if inner_specs.len() == 1 {
-      inner_specs.pop().unwrap()
-    } else {
-      st.spec(sml_hir::Spec::Seq(inner_specs), ptr.clone())
-    };
-    specs.push(dwt.sharing_tails().fold(inner, |ac, tail| {
+    specs.extend(dwt.sharing_tails().fold(inner_specs, |ac, tail| {
       let kind = if tail.type_kw().is_some() {
         sml_hir::SharingKind::Regular
       } else {
         sml_hir::SharingKind::Derived
       };
       let paths_eq: Vec<_> = tail.path_eqs().filter_map(|x| get_path(x.path()?)).collect();
-      st.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())
+      vec![st.spec(sml_hir::Spec::Sharing(ac, kind, paths_eq), ptr.clone())]
     }));
   }
-  if specs.len() == 1 {
-    specs.pop().unwrap()
-  } else {
-    st.spec(sml_hir::Spec::Seq(specs), SyntaxNodePtr::new(dec.syntax()))
-  }
+  specs
 }
 
 /// the Definition doesn't ask us to lower `and` into `seq` but we mostly do anyway, since we have
@@ -336,7 +333,7 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
         if let Some(ty) = ty_desc.eq_ty() {
           let ty = ty::get(st, ty.ty());
           let spec_idx = st.spec(ret, ptr.clone());
-          let sig_exp = st.sig_exp(sml_hir::SigExp::Spec(spec_idx), ptr.clone());
+          let sig_exp = st.sig_exp(sml_hir::SigExp::Spec(vec![spec_idx]), ptr.clone());
           let sig_exp = st.sig_exp(
             sml_hir::SigExp::Where(
               sig_exp,
@@ -481,11 +478,14 @@ fn with_ascription_tail(
   ret
 }
 
-pub(crate) fn get(st: &mut St<'_>, dec: Option<ast::Dec>) -> sml_hir::DecIdx {
-  get_dec_flavor(st, dec, get_one, |st, decs, ptr| st.dec(sml_hir::Dec::Seq(decs), ptr))
+pub(crate) fn get<I>(st: &mut St<'_>, iter: I) -> sml_hir::DecSeq
+where
+  I: Iterator<Item = ast::Dec>,
+{
+  get_dec_flavor(st, iter, get_one)
 }
 
-fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
+fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
   let ptr = SyntaxNodePtr::new(dec.syntax());
   let ret = match dec {
     ast::DecOne::HoleDec(_) => {
@@ -651,7 +651,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
     ast::DecOne::AbstypeDec(dec) => {
       let d_binds = dat_binds(st, dec.dat_binds());
       let t_binds = ty_binds(st, dec.with_type().into_iter().flat_map(|x| x.ty_binds()));
-      let inner = get(st, dec.dec());
+      let inner = get(st, dec.decs());
       sml_hir::Dec::Abstype(d_binds, t_binds, inner)
     }
     ast::DecOne::ExDec(dec) => {
@@ -674,9 +674,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Dec("local")));
       }
       st.inc_level();
-      let fst = get(st, dec.local_dec());
+      let fst = get(st, dec.local_dec_hd().into_iter().flat_map(|x| x.decs()));
       st.dec_level();
-      let snd = get(st, dec.in_dec());
+      let snd = get(st, dec.local_dec_tl().into_iter().flat_map(|x| x.decs()));
       sml_hir::Dec::Local(fst, snd)
     }
     ast::DecOne::OpenDec(dec) => {
@@ -721,7 +721,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> sml_hir::DecIdx {
       return None;
     }
   };
-  st.dec(ret, ptr)
+  Some(st.dec(ret, ptr))
 }
 
 fn dat_binds<I>(st: &mut St<'_>, iter: I) -> Vec<sml_hir::DatBind>

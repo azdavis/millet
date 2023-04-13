@@ -288,41 +288,49 @@ where
 fn get_top_defs(contents: &str, ac: &mut NameExports, range: TextRange) {
   let mut fix_env = sml_fixity::STD_BASIS.clone();
   let (_, parse) = sml_file_syntax::SourceFileSyntax::lex_and_parse(&mut fix_env, contents);
-  get_top_defs_dec(ac, parse.root.dec(), range);
+  get_top_defs_dec(ac, parse.root.decs(), range);
 }
 
-fn get_top_defs_dec(ac: &mut NameExports, dec: Option<sml_syntax::ast::Dec>, range: TextRange) {
-  let iter = dec
-    .into_iter()
-    .flat_map(|x| x.dec_with_tail_in_seqs())
+fn get_top_defs_dec<I>(ac: &mut NameExports, iter: I, range: TextRange)
+where
+  I: Iterator<Item = sml_syntax::ast::Dec>,
+{
+  let iter = iter
     .filter_map(|x| x.dec_with_tail())
     .flat_map(|x| x.dec_in_seqs())
     .filter_map(|x| x.dec_one());
   for dec in iter {
-    match dec {
-      sml_syntax::ast::DecOne::LocalDec(dec) => get_top_defs_dec(ac, dec.in_dec(), range),
-      sml_syntax::ast::DecOne::StructureDec(dec) => ac.extend(dec.str_binds().filter_map(|x| {
-        let export = NameExport {
-          namespace: sml_namespace::Module::Structure,
-          name: str_util::Name::new(x.name()?.text()),
-        };
-        Some((export, range))
-      })),
-      sml_syntax::ast::DecOne::SignatureDec(dec) => ac.extend(dec.sig_binds().filter_map(|x| {
-        let export = NameExport {
-          namespace: sml_namespace::Module::Signature,
-          name: str_util::Name::new(x.name()?.text()),
-        };
-        Some((export, range))
-      })),
-      sml_syntax::ast::DecOne::FunctorDec(dec) => ac.extend(dec.functor_binds().filter_map(|x| {
-        let export = NameExport {
-          namespace: sml_namespace::Module::Functor,
-          name: str_util::Name::new(x.functor_name()?.text()),
-        };
-        Some((export, range))
-      })),
-      _ => {}
+    get_top_defs_dec_one(ac, dec, range);
+  }
+}
+
+fn get_top_defs_dec_one(ac: &mut NameExports, dec: sml_syntax::ast::DecOne, range: TextRange) {
+  match dec {
+    sml_syntax::ast::DecOne::LocalDec(dec) => {
+      let decs = dec.local_dec_tl().into_iter().flat_map(|x| x.decs());
+      get_top_defs_dec(ac, decs, range);
     }
+    sml_syntax::ast::DecOne::StructureDec(dec) => ac.extend(dec.str_binds().filter_map(|x| {
+      let export = NameExport {
+        namespace: sml_namespace::Module::Structure,
+        name: str_util::Name::new(x.name()?.text()),
+      };
+      Some((export, range))
+    })),
+    sml_syntax::ast::DecOne::SignatureDec(dec) => ac.extend(dec.sig_binds().filter_map(|x| {
+      let export = NameExport {
+        namespace: sml_namespace::Module::Signature,
+        name: str_util::Name::new(x.name()?.text()),
+      };
+      Some((export, range))
+    })),
+    sml_syntax::ast::DecOne::FunctorDec(dec) => ac.extend(dec.functor_binds().filter_map(|x| {
+      let export = NameExport {
+        namespace: sml_namespace::Module::Functor,
+        name: str_util::Name::new(x.functor_name()?.text()),
+      };
+      Some((export, range))
+    })),
+    _ => {}
   }
 }

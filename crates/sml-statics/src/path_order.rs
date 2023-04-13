@@ -44,7 +44,7 @@
 use crate::{basis::Bs, mode::Mode, st::St, sym::Syms, top_dec};
 
 /// An unordered map from paths to HIR ready for analysis.
-pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, sml_hir::StrDecIdx)>;
+pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, &'a [sml_hir::StrDecIdx])>;
 
 /// Get the ordering.
 #[must_use]
@@ -89,33 +89,26 @@ pub fn get(mut syms: Syms, mut bs: Bs, mut paths: SmlHirPaths<'_>) -> Vec<paths:
   }
 }
 
-fn rm_top_level_defs(bs: &mut Bs, ars: &sml_hir::Arenas, dec: sml_hir::StrDecIdx) {
-  let dec = match dec {
-    Some(x) => x,
-    None => return,
-  };
-  match &ars.str_dec[dec] {
-    sml_hir::StrDec::Dec(_) => {}
-    sml_hir::StrDec::Structure(binds) => {
-      for bind in binds {
-        bs.env.str_env.remove(&bind.name);
+fn rm_top_level_defs(bs: &mut Bs, ars: &sml_hir::Arenas, decs: &[sml_hir::StrDecIdx]) {
+  for &dec in decs {
+    match &ars.str_dec[dec] {
+      sml_hir::StrDec::Dec(_) => {}
+      sml_hir::StrDec::Structure(binds) => {
+        for bind in binds {
+          bs.env.str_env.remove(&bind.name);
+        }
       }
-    }
-    sml_hir::StrDec::Signature(binds) => {
-      for bind in binds {
-        bs.sig_env.remove(&bind.name);
+      sml_hir::StrDec::Signature(binds) => {
+        for bind in binds {
+          bs.sig_env.remove(&bind.name);
+        }
       }
-    }
-    sml_hir::StrDec::Functor(binds) => {
-      for bind in binds {
-        bs.fun_env.remove(&bind.functor_name);
+      sml_hir::StrDec::Functor(binds) => {
+        for bind in binds {
+          bs.fun_env.remove(&bind.functor_name);
+        }
       }
-    }
-    sml_hir::StrDec::Local(_, in_dec) => rm_top_level_defs(bs, ars, *in_dec),
-    sml_hir::StrDec::Seq(decs) => {
-      for &dec in decs {
-        rm_top_level_defs(bs, ars, dec);
-      }
+      sml_hir::StrDec::Local(_, in_dec) => rm_top_level_defs(bs, ars, in_dec),
     }
   }
 }

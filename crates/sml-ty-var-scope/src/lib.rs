@@ -39,7 +39,7 @@ use fast_hash::{FxHashMap, FxHashSet};
 /// It is somewhat troublesome to try to actually add the type variables as we traverse, since then
 /// the dec arena needs to be mutable, and that causes all sorts of unhappiness since we need to
 /// traverse it. Traversing and mutating a thing at the same time is not easy.
-pub fn get(ars: &mut sml_hir::Arenas, root: sml_hir::StrDecIdx) {
+pub fn get(ars: &mut sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) {
   let mut st = St::default();
   get_str_dec(&mut st, ars, root);
   for (dec, implicit) in st.val_dec {
@@ -65,17 +65,19 @@ struct St {
 
 type TyVarSet = FxHashSet<sml_hir::TyVar>;
 
-fn get_str_dec(st: &mut St, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) {
-  let str_dec = match str_dec {
-    Some(x) => x,
-    None => return,
-  };
+fn get_str_dec(st: &mut St, ars: &sml_hir::Arenas, str_decs: &[sml_hir::StrDecIdx]) {
+  for &str_dec in str_decs {
+    get_str_dec_one(st, ars, str_dec);
+  }
+}
+
+fn get_str_dec_one(st: &mut St, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) {
   match &ars.str_dec[str_dec] {
     sml_hir::StrDec::Dec(dec) => {
       let mut mode = Mode::Get(TyVarSet::default());
-      get_dec(st, ars, &TyVarSet::default(), &mut mode, *dec);
+      get_dec(st, ars, &TyVarSet::default(), &mut mode, dec);
       mode = Mode::Set;
-      get_dec(st, ars, &TyVarSet::default(), &mut mode, *dec);
+      get_dec(st, ars, &TyVarSet::default(), &mut mode, dec);
     }
     sml_hir::StrDec::Structure(str_binds) => {
       for str_bind in str_binds {
@@ -94,13 +96,8 @@ fn get_str_dec(st: &mut St, ars: &sml_hir::Arenas, str_dec: sml_hir::StrDecIdx) 
       }
     }
     sml_hir::StrDec::Local(local_dec, in_dec) => {
-      get_str_dec(st, ars, *local_dec);
-      get_str_dec(st, ars, *in_dec);
-    }
-    sml_hir::StrDec::Seq(str_decs) => {
-      for &str_dec in str_decs {
-        get_str_dec(st, ars, str_dec);
-      }
+      get_str_dec(st, ars, local_dec);
+      get_str_dec(st, ars, in_dec);
     }
   }
 }
@@ -111,7 +108,7 @@ fn get_str_exp(st: &mut St, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) 
     None => return,
   };
   match &ars.str_exp[str_exp] {
-    sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, ars, *str_dec),
+    sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, ars, str_dec),
     sml_hir::StrExp::Path(_) => {}
     sml_hir::StrExp::Ascription(str_exp, _, sig_exp) => {
       get_str_exp(st, ars, *str_exp);
@@ -119,7 +116,7 @@ fn get_str_exp(st: &mut St, ars: &sml_hir::Arenas, str_exp: sml_hir::StrExpIdx) 
     }
     sml_hir::StrExp::App(_, str_exp, _) => get_str_exp(st, ars, *str_exp),
     sml_hir::StrExp::Let(str_dec, str_exp) => {
-      get_str_dec(st, ars, *str_dec);
+      get_str_dec(st, ars, str_dec);
       get_str_exp(st, ars, *str_exp);
     }
   }
@@ -131,7 +128,7 @@ fn get_sig_exp(st: &mut St, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) 
     None => return,
   };
   match &ars.sig_exp[sig_exp] {
-    sml_hir::SigExp::Spec(spec) => get_spec(st, ars, *spec),
+    sml_hir::SigExp::Spec(spec) => get_spec(st, ars, spec),
     sml_hir::SigExp::Name(_) => {}
     sml_hir::SigExp::Where(sig_exp, _) => {
       get_sig_exp(st, ars, *sig_exp);
@@ -139,11 +136,13 @@ fn get_sig_exp(st: &mut St, ars: &sml_hir::Arenas, sig_exp: sml_hir::SigExpIdx) 
   }
 }
 
-fn get_spec(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
-  let spec = match spec {
-    Some(x) => x,
-    None => return,
-  };
+fn get_spec(st: &mut St, ars: &sml_hir::Arenas, specs: &[sml_hir::SpecIdx]) {
+  for &spec in specs {
+    get_spec_one(st, ars, spec);
+  }
+}
+
+fn get_spec_one(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
   match &ars.spec[spec] {
     sml_hir::Spec::Val(_, val_descs) => {
       let mut ac = TyVarSet::default();
@@ -154,12 +153,7 @@ fn get_spec(st: &mut St, ars: &sml_hir::Arenas, spec: sml_hir::SpecIdx) {
     }
     sml_hir::Spec::Str(str_desc) => get_sig_exp(st, ars, str_desc.sig_exp),
     sml_hir::Spec::Include(sig_exp) => get_sig_exp(st, ars, *sig_exp),
-    sml_hir::Spec::Sharing(spec, _, _) => get_spec(st, ars, *spec),
-    sml_hir::Spec::Seq(specs) => {
-      for &spec in specs {
-        get_spec(st, ars, spec);
-      }
-    }
+    sml_hir::Spec::Sharing(spec, _, _) => get_spec(st, ars, spec),
     sml_hir::Spec::Ty(_)
     | sml_hir::Spec::EqTy(_)
     | sml_hir::Spec::Datatype(_)
@@ -196,12 +190,20 @@ fn get_dec(
   ars: &sml_hir::Arenas,
   scope: &TyVarSet,
   mode: &mut Mode,
+  decs: &[sml_hir::DecIdx],
+) {
+  for &dec in decs {
+    get_dec_one(st, ars, scope, mode, dec);
+  }
+}
+
+fn get_dec_one(
+  st: &mut St,
+  ars: &sml_hir::Arenas,
+  scope: &TyVarSet,
+  mode: &mut Mode,
   dec: sml_hir::DecIdx,
 ) {
-  let dec = match dec {
-    Some(x) => x,
-    None => return,
-  };
   match &ars.dec[dec] {
     sml_hir::Dec::Val(ty_vars, val_binds) => {
       let mut scope = scope.clone();
@@ -237,15 +239,10 @@ fn get_dec(
         }
       }
     }
-    sml_hir::Dec::Abstype(_, _, dec) => get_dec(st, ars, scope, mode, *dec),
+    sml_hir::Dec::Abstype(_, _, dec) => get_dec(st, ars, scope, mode, dec),
     sml_hir::Dec::Local(local_dec, in_dec) => {
-      get_dec(st, ars, scope, mode, *local_dec);
-      get_dec(st, ars, scope, mode, *in_dec);
-    }
-    sml_hir::Dec::Seq(decs) => {
-      for &dec in decs {
-        get_dec(st, ars, scope, mode, dec);
-      }
+      get_dec(st, ars, scope, mode, local_dec);
+      get_dec(st, ars, scope, mode, in_dec);
     }
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
@@ -274,7 +271,7 @@ fn get_exp(
       }
     }
     sml_hir::Exp::Let(dec, exp) => {
-      get_dec(st, ars, scope, mode, *dec);
+      get_dec(st, ars, scope, mode, dec);
       get_exp(st, ars, scope, mode, *exp);
     }
     sml_hir::Exp::App(func, argument) => {

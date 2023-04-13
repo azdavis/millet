@@ -62,7 +62,7 @@ pub fn get(
   bs: &basis::Bs,
   mode: mode::Mode,
   arenas: &sml_hir::Arenas,
-  root: sml_hir::StrDecIdx,
+  root: &[sml_hir::StrDecIdx],
 ) -> Statics {
   elapsed::log("sml_statics::get", || {
     let mut st = st::St::new(mode, std::mem::take(syms));

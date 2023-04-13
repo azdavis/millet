@@ -23,7 +23,7 @@ impl SourceFileSyntax {
     elapsed::log("SourceFileSyntax::new", || {
       let (lex_errors, parse) = Self::lex_and_parse(fix_env, contents);
       let mut lower = sml_lower::get(lang, &parse.root);
-      sml_ty_var_scope::get(&mut lower.arenas, lower.root);
+      sml_ty_var_scope::get(&mut lower.arenas, &lower.root);
       Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower }
     })
   }

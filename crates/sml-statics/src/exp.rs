@@ -79,7 +79,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     // @def(4)
     sml_hir::Exp::Let(dec, inner) => {
       let mut let_env = Env::default();
-      dec::get(st, cfg, cx, ars, &mut let_env, *dec);
+      dec::get(st, cfg, cx, ars, &mut let_env, dec);
       let mut cx = cx.clone();
       cx.env.append(&mut let_env);
       get(st, cfg, &cx, ars, *inner)
@@ -268,7 +268,7 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bo
     sml_hir::Exp::SCon(_) | sml_hir::Exp::Path(_) | sml_hir::Exp::Fn(_, _) => false,
     sml_hir::Exp::Record(rows) => rows.iter().any(|&(_, exp)| maybe_effectful(ars, exp)),
     sml_hir::Exp::Typed(exp, _) => maybe_effectful(ars, *exp),
-    sml_hir::Exp::Let(dec, exp) => dec::maybe_effectful(ars, *dec) || maybe_effectful(ars, *exp),
+    sml_hir::Exp::Let(dec, exp) => dec::maybe_effectful(ars, dec) || maybe_effectful(ars, *exp),
     sml_hir::Exp::Hole
     | sml_hir::Exp::App(_, _)
     | sml_hir::Exp::Handle(_, _)

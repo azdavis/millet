@@ -102,7 +102,7 @@ fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
     return Some(node.let_kw()?.text_range());
   }
   if let Some(node) = ast::LocalDec::cast(node.clone()) {
-    return Some(node.local_kw()?.text_range());
+    return Some(node.local_dec_hd()?.local_kw()?.text_range());
   }
   if let Some(node) = ast::LetStrExp::cast(node.clone()) {
     return Some(node.let_kw()?.text_range());

@@ -111,7 +111,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("let")));
       }
       st.inc_level();
-      let dec = dec::get(st, exp.dec());
+      let dec = dec::get(st, exp.decs());
       st.dec_level();
       ck_trailing(st, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
@@ -219,7 +219,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let val =
         sml_hir::Dec::Val(vec![], vec![sml_hir::ValBind { rec: true, pat: vid_pat, exp: fn_exp }]);
       let val = st.dec(val, ptr.clone());
-      sml_hir::Exp::Let(val, call_unit_fn(st, &vid, ptr.clone()))
+      sml_hir::Exp::Let(vec![val], call_unit_fn(st, &vid, ptr.clone()))
     }
     ast::Exp::CaseExp(exp) => {
       if !st.lang().exp.case {

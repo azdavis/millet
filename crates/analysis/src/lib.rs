@@ -56,7 +56,7 @@ impl Analysis {
     let basis = self.std_basis.basis().clone();
     let mode = sml_statics::mode::Mode::Regular(None);
     let checked =
-      sml_statics::get(&mut syms, &basis, mode, &syntax.lower.arenas, syntax.lower.root);
+      sml_statics::get(&mut syms, &basis, mode, &syntax.lower.arenas, &syntax.lower.root);
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };

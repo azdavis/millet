@@ -12,10 +12,7 @@ use crate::util::{
 use sml_syntax::SyntaxKind as SK;
 
 pub(crate) fn dec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
-  let en = p.enter();
-  let ret = maybe_semi_sep(p, SK::DecWithTailInSeq, |p| dec_with_tail(p, fe, infix));
-  p.exit(en, SK::Dec);
-  ret
+  maybe_semi_sep(p, SK::Dec, |p| dec_with_tail(p, fe, infix))
 }
 
 fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
@@ -165,10 +162,14 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
     exp(p, fe);
     p.exit(en, SK::DoDec);
   } else if p.at(SK::LocalKw) {
+    let inner = p.enter();
     p.bump();
     dec(p, fe, infix);
+    p.exit(inner, SK::LocalDecHd);
+    let inner = p.enter();
     p.eat(SK::InKw);
     dec(p, fe, infix);
+    p.exit(inner, SK::LocalDecTl);
     p.eat(SK::EndKw);
     p.exit(en, SK::LocalDec);
   } else if p.at(SK::StructureKw) {

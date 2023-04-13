@@ -7,6 +7,6 @@ use sml_syntax::ast;
 #[must_use]
 pub fn get(lang: &config::lang::Language, root: &ast::Root) -> Lower {
   let mut st = St::new(lang);
-  let idx = crate::dec::get_top_dec(&mut st, root.dec());
+  let idx = crate::dec::get_top_dec(&mut st, root);
   st.finish(idx)
 }

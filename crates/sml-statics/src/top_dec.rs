@@ -21,9 +21,9 @@ use crate::{
 };
 use fast_hash::FxHashSet;
 
-pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, top_dec: sml_hir::StrDecIdx) -> Bs {
+pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) -> Bs {
   let mut ac = Bs::default();
-  get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), top_dec);
+  get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), root);
   Bs { fun_env: ac.fun_env, sig_env: ac.sig_env, env: ac.env }
 }
 
@@ -45,17 +45,50 @@ fn get_str_dec(
   st: &mut St,
   bs: &Bs,
   ars: &sml_hir::Arenas,
+  ac: StrDecAc<'_>,
+  str_decs: &[sml_hir::StrDecIdx],
+) {
+  match str_decs[..] {
+    [] => return,
+    [x] => {
+      get_str_dec_one(st, bs, ars, ac, x);
+      return;
+    }
+    _ => {}
+  }
+  // @def(59), @def(60)
+  let mut bs = bs.clone();
+  match ac {
+    StrDecAc::Env(ac) => {
+      let mut one_env = Env::default();
+      for &str_dec in str_decs {
+        get_str_dec_one(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
+        bs.env.append(&mut one_env.clone());
+        ac.append(&mut one_env);
+      }
+    }
+    StrDecAc::Bs(ac) => {
+      for &str_dec in str_decs {
+        let mut one_bs = Bs::default();
+        get_str_dec_one(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
+        bs.append(one_bs.clone());
+        ac.append(one_bs);
+      }
+    }
+  }
+}
+
+fn get_str_dec_one(
+  st: &mut St,
+  bs: &Bs,
+  ars: &sml_hir::Arenas,
   mut ac: StrDecAc<'_>,
   str_dec: sml_hir::StrDecIdx,
 ) {
-  let str_dec = match str_dec {
-    Some(x) => x,
-    None => return,
-  };
   match &ars.str_dec[str_dec] {
     // @def(56)
     sml_hir::StrDec::Dec(dec) => {
-      dec::get(st, Cfg::default(), &bs.as_cx(), ars, ac.as_mut_env(), *dec);
+      dec::get(st, Cfg::default(), &bs.as_cx(), ars, ac.as_mut_env(), dec);
     }
     // @def(57)
     sml_hir::StrDec::Structure(str_binds) => {
@@ -155,32 +188,10 @@ fn get_str_dec(
     // @def(58)
     sml_hir::StrDec::Local(local_dec, in_dec) => {
       let mut local_bs = Bs::default();
-      get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), *local_dec);
+      get_str_dec(st, bs, ars, StrDecAc::Bs(&mut local_bs), local_dec);
       let mut bs = bs.clone();
       bs.append(local_bs);
-      get_str_dec(st, &bs, ars, ac, *in_dec);
-    }
-    // @def(59), @def(60)
-    sml_hir::StrDec::Seq(str_decs) => {
-      let mut bs = bs.clone();
-      match ac {
-        StrDecAc::Env(ac) => {
-          let mut one_env = Env::default();
-          for &str_dec in str_decs {
-            get_str_dec(st, &bs, ars, StrDecAc::Env(&mut one_env), str_dec);
-            bs.env.append(&mut one_env.clone());
-            ac.append(&mut one_env);
-          }
-        }
-        StrDecAc::Bs(ac) => {
-          for &str_dec in str_decs {
-            let mut one_bs = Bs::default();
-            get_str_dec(st, &bs, ars, StrDecAc::Bs(&mut one_bs), str_dec);
-            bs.append(one_bs.clone());
-            ac.append(one_bs);
-          }
-        }
-      }
+      get_str_dec(st, &bs, ars, ac, in_dec);
     }
   }
 }
@@ -198,7 +209,7 @@ fn get_str_exp(
   };
   match &ars.str_exp[str_exp] {
     // @def(50)
-    sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), *str_dec),
+    sml_hir::StrExp::Struct(str_dec) => get_str_dec(st, bs, ars, StrDecAc::Env(ac), str_dec),
     // @def(51)
     sml_hir::StrExp::Path(path) => {
       let got_env = get_env(&bs.env, path.all_names());
@@ -300,7 +311,7 @@ fn get_str_exp(
     // @def(55)
     sml_hir::StrExp::Let(str_dec, str_exp) => {
       let mut let_env = Env::default();
-      get_str_dec(st, bs, ars, StrDecAc::Env(&mut let_env), *str_dec);
+      get_str_dec(st, bs, ars, StrDecAc::Env(&mut let_env), str_dec);
       let mut bs = bs.clone();
       bs.env.append(&mut let_env);
       get_str_exp(st, &bs, ars, ac, *str_exp);
@@ -322,7 +333,7 @@ fn get_sig_exp(
   match &ars.sig_exp[sig_exp] {
     // @def(62)
     sml_hir::SigExp::Spec(spec) => {
-      get_spec(st, bs, ars, ac, *spec);
+      get_spec(st, bs, ars, ac, spec);
       None
     }
     // @def(63)
@@ -395,11 +406,26 @@ fn env_to_sig(env: Env, marker: SymsMarker) -> Sig {
   Sig { ty_names, env, disallow: None }
 }
 
-fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml_hir::SpecIdx) {
-  let spec = match spec {
-    Some(x) => x,
-    None => return,
-  };
+fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, specs: &[sml_hir::SpecIdx]) {
+  match specs[..] {
+    [] => return,
+    [x] => {
+      get_spec_one(st, bs, ars, ac, x);
+      return;
+    }
+    _ => {}
+  }
+  // @def(76), @def(77)
+  let mut bs = bs.clone();
+  let mut one_env = Env::default();
+  for &seq_spec in specs {
+    get_spec_one(st, &bs, ars, &mut one_env, seq_spec);
+    bs.env.append(&mut one_env.clone());
+    append_no_dupe(st, seq_spec.into(), ac, &mut one_env);
+  }
+}
+
+fn get_spec_one(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml_hir::SpecIdx) {
   match &ars.spec[spec] {
     // @def(68)
     sml_hir::Spec::Val(ty_vars, val_descs) => {
@@ -508,7 +534,7 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
     sml_hir::Spec::Sharing(inner, kind, paths) => {
       let marker = st.syms.mark();
       let mut inner_env = Env::default();
-      get_spec(st, bs, ars, &mut inner_env, *inner);
+      get_spec(st, bs, ars, &mut inner_env, inner);
       match kind {
         sml_hir::SharingKind::Regular => {
           sharing_ty::get(st, spec.into(), marker, &mut inner_env, paths);
@@ -545,16 +571,6 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml
         }
       }
       append_no_dupe(st, spec.into(), ac, &mut inner_env);
-    }
-    // @def(76), @def(77)
-    sml_hir::Spec::Seq(specs) => {
-      let mut bs = bs.clone();
-      let mut one_env = Env::default();
-      for &seq_spec in specs {
-        get_spec(st, &bs, ars, &mut one_env, seq_spec);
-        bs.env.append(&mut one_env.clone());
-        append_no_dupe(st, seq_spec.unwrap_or(spec).into(), ac, &mut one_env);
-      }
     }
   }
 }
