@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.9.0
 
 - Emit better error for invalid `:>` where only `:` is allowed.
 - Highlight unsolved equality variables. (Not real SML syntax.)
