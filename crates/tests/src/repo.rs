@@ -4,8 +4,7 @@ use crate::check::raw::env_var_enabled;
 use fast_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
 use std::fmt::{self, Write as _};
-use std::path::Path;
-use xshell::{cmd, Shell};
+use std::{env, fs, path::Path, process::Command};
 
 fn eq_sets<T>(lhs: &BTreeSet<T>, rhs: &BTreeSet<T>, only_lhs: &str, only_rhs: &str)
 where
@@ -36,35 +35,38 @@ where
   ret
 }
 
-fn shell() -> Shell {
-  let sh = Shell::new().unwrap();
+fn cd_root() {
   let root_dir = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
-  sh.change_dir(root_dir);
-  sh
+  env::set_current_dir(root_dir).expect("couldn't cd");
+}
+
+fn output(c: &mut Command) -> String {
+  let out = c.output().unwrap();
+  assert!(out.status.success());
+  String::from_utf8(out.stdout).unwrap()
 }
 
 #[test]
 fn sml_def() {
-  let sh = shell();
-  let out = cmd!(sh, "git grep -h -o -E '@def\\(([[:digit:]]+)\\)'").output().unwrap();
-  let got: BTreeSet<u16> = String::from_utf8(out.stdout)
-    .unwrap()
-    .lines()
-    .filter_map(|line| {
-      let (_, inner) = line.split_once('(')?;
-      let (num, _) = inner.split_once(')')?;
-      num.parse().ok()
-    })
-    .collect();
+  cd_root();
+  let got: BTreeSet<u16> =
+    output(Command::new("git").args(["grep", "-hoE", "@def\\(([[:digit:]]+)\\)"]))
+      .lines()
+      .filter_map(|line| {
+        let (_, inner) = line.split_once('(')?;
+        let (num, _) = inner.split_once(')')?;
+        num.parse().ok()
+      })
+      .collect();
   let want: BTreeSet<_> = (1u16..=89).collect();
   eq_sets(&want, &got, "missing sml definition references", "extra sml definition references");
 }
 
 #[test]
 fn sync() {
-  let sh = shell();
-  let out = cmd!(sh, "git grep -h -o -E '@sync\\(([a-z_]+)\\)'").output().unwrap();
-  let out = String::from_utf8(out.stdout).unwrap();
+  cd_root();
+  let mut cmd = Command::new("git");
+  let out = output(cmd.args(["grep", "-hoE", "@sync\\(([a-z_]+)\\)"]));
   let iter = out.lines().filter_map(|line| {
     let (_, inner) = line.split_once("@sync(")?;
     let (s, _) = inner.split_once(')')?;
@@ -80,9 +82,9 @@ fn sync() {
 
 #[test]
 fn test_refs() {
-  let sh = shell();
-  let out = cmd!(sh, "git grep -h -o -E '@test\\(([a-z0-9_:]+)\\)'").output().unwrap();
-  let out = String::from_utf8(out.stdout).unwrap();
+  cd_root();
+  let mut cmd = Command::new("git");
+  let out = output(cmd.args(["grep", "-hoE", "@test\\(([a-z0-9_:]+)\\)"]));
   let referenced: BTreeSet<_> = out
     .lines()
     .filter_map(|line| {
@@ -91,17 +93,19 @@ fn test_refs() {
       Some(name)
     })
     .collect();
-  let out = cmd!(sh, "cargo test -p tests -- --list").output().unwrap();
-  let out = String::from_utf8(out.stdout).unwrap();
+  cmd = Command::new("cargo");
+  let out = output(cmd.args(["test", "-p", "tests", "--", "--list"]));
   let defined: BTreeSet<_> = out.lines().filter_map(|line| line.strip_suffix(": test")).collect();
   let ref_not_defined: BTreeSet<_> = referenced.difference(&defined).copied().collect();
   empty_set(&ref_not_defined, "tests referenced but not defined");
 }
 
 fn attr_test(word: &str) {
-  let sh = shell();
-  let out = cmd!(sh, "git grep -F -n -e #[{word}").ignore_status().output().unwrap();
-  let out = String::from_utf8(out.stdout).unwrap();
+  cd_root();
+  let word_attr = format!("#[{word}");
+  let mut cmd = Command::new("git");
+  cmd.args(["grep", "-Fne", word_attr.as_str()]);
+  let out = String::from_utf8(cmd.output().unwrap().stdout).unwrap();
   let set: BTreeSet<_> = out.lines().collect();
   empty_set(&set, format!("files with {word} attribute").as_str());
 }
@@ -118,24 +122,26 @@ fn no_should_panic() {
 
 #[test]
 fn architecture() {
-  let sh = shell();
+  cd_root();
   let in_doc: BTreeSet<_> = include_str!("../../../docs/ARCHITECTURE.md")
     .lines()
     .filter_map(|line| Some(line.strip_prefix("### `")?.strip_suffix('`')?.to_owned()))
     .collect();
   let mut no_doc = BTreeSet::from(["crates", "LICENSE-APACHE.md", "LICENSE-MIT.md", "README.md"]);
+
   let on_fs: BTreeSet<_> = std::iter::empty()
-    .chain(sh.read_dir("crates").unwrap().into_iter().filter_map(|x| {
-      let file_name = x.file_name()?.to_str()?;
+    .chain(fs::read_dir("crates").unwrap().filter_map(|x| {
+      let file_name = x.ok()?.file_name();
+      let file_name = file_name.to_str()?;
       Some(format!("crates/{file_name}"))
     }))
-    .chain(sh.read_dir("editors").unwrap().into_iter().filter_map(|x| {
-      let file_name = x.file_name()?.to_str()?;
+    .chain(fs::read_dir("editors").unwrap().filter_map(|x| {
+      let file_name = x.ok()?.file_name();
+      let file_name = file_name.to_str()?;
       Some(format!("editors/{file_name}"))
     }))
     .chain(
-      String::from_utf8(cmd!(sh, "git ls-tree --name-only HEAD").output().unwrap().stdout)
-        .unwrap()
+      output(Command::new("git").args(["ls-tree", "--name-only", "HEAD"]))
         .lines()
         .filter_map(|x| if no_doc.remove(x) { None } else { Some(x.to_owned()) }),
     )
@@ -146,7 +152,7 @@ fn architecture() {
 
 #[test]
 fn docs_readme() {
-  let sh = shell();
+  cd_root();
   let in_doc: BTreeSet<_> = include_str!("../../../docs/README.md")
     .lines()
     .filter_map(|x| {
@@ -156,13 +162,12 @@ fn docs_readme() {
       Some(x.to_owned())
     })
     .collect();
-  let on_fs: BTreeSet<_> = sh
-    .read_dir("docs")
+  let on_fs: BTreeSet<_> = fs::read_dir("docs")
     .unwrap()
-    .into_iter()
-    .filter_map(|x| {
-      let x = x.file_name()?.to_str()?;
-      (x != "README.md").then(|| x.to_owned())
+    .filter_map(|entry| {
+      let entry = entry.ok()?;
+      let fname = entry.file_name();
+      (fname.to_str() != Some("README.md")).then(|| fname.to_str().unwrap().to_owned())
     })
     .collect();
   eq_sets(&in_doc, &on_fs, "in README, but doesn't exist", "not in README, but exists");
@@ -170,16 +175,16 @@ fn docs_readme() {
 
 #[test]
 fn no_debugging() {
-  let sh = shell();
+  cd_root();
   // the uppercase + to_ascii_lowercase is to prevent git grep from triggering on this file.
   let fst = "DBG".to_ascii_lowercase();
   let snd = "EPRINT".to_ascii_lowercase();
   let thd = "CONSOLE.LOG".to_ascii_lowercase();
   // ignore status because if no results (which is desired), git grep returns non-zero.
-  let got =
-    cmd!(sh, "git grep -F -n -e {fst} -e {snd} -e {thd}").ignore_status().output().unwrap().stdout;
-  let got = String::from_utf8(got).unwrap();
-  let got: BTreeSet<_> = got.lines().collect();
+  let mut cmd = Command::new("git");
+  cmd.args(["grep", "-Fne", fst.as_str(), snd.as_str(), thd.as_str()]);
+  let out = String::from_utf8(cmd.output().unwrap().stdout).unwrap();
+  let got: BTreeSet<_> = out.lines().collect();
   empty_set(&got, "not allowed to have debugging");
 }
 
@@ -188,8 +193,8 @@ fn changelog() {
   if env_var_enabled("CI") {
     return;
   }
-  let sh = shell();
-  let tag_out = String::from_utf8(cmd!(sh, "git tag").output().unwrap().stdout).unwrap();
+  cd_root();
+  let tag_out = output(Command::new("git").arg("tag"));
   let in_git: BTreeSet<_> = tag_out.lines().filter(|x| x.starts_with('v')).collect();
   let in_doc: BTreeSet<_> = include_str!("../../../docs/CHANGELOG.md")
     .lines()
@@ -220,9 +225,9 @@ fn licenses() {
     "Unlicense/MIT",
     "Zlib OR Apache-2.0 OR MIT",
   ]);
-  let sh = shell();
-  let output = cmd!(sh, "cargo metadata --format-version 1").ignore_stderr().read().unwrap();
-  let json: serde_json::Value = serde_json::from_str(&output).unwrap();
+  cd_root();
+  let out = output(Command::new("cargo").args(["metadata", "--format-version", "1"]));
+  let json: serde_json::Value = serde_json::from_str(&out).unwrap();
   let packages = json.as_object().unwrap().get("packages").unwrap().as_array().unwrap();
   let mut new_licenses = FxHashMap::<&str, FxHashSet<&str>>::default();
   for package in packages {
@@ -242,14 +247,14 @@ fn licenses() {
 
 #[test]
 fn diagnostic_codes() {
-  let sh = shell();
-  let output = cmd!(sh, "git grep -h -o -E 'Code::n\\([[:digit:]]+\\)'").read().unwrap();
+  cd_root();
+  let out = output(Command::new("git").args(["grep", "-hoE", "Code::n\\([[:digit:]]+\\)"]));
   let in_doc = no_dupes(
     include_str!("../../../docs/diagnostics.md")
       .lines()
       .filter_map(|line| Some(line.strip_prefix("## ")?.parse::<u16>().unwrap())),
   );
-  let in_code = no_dupes(output.lines().map(|line| {
+  let in_code = no_dupes(out.lines().map(|line| {
     line.strip_prefix("Code::n(").unwrap().strip_suffix(')').unwrap().parse::<u16>().unwrap()
   }));
   eq_sets(&in_doc, &in_code, "diagnostics documented but not used", "diagnostics not documented");
@@ -423,13 +428,12 @@ fn node_version() {
 
 #[test]
 fn rs_file_comments() {
-  let sh = shell();
-  let files =
-    String::from_utf8(cmd!(sh, "git ls-files '**/*.rs'").output().unwrap().stdout).unwrap();
-  let no_doc: BTreeSet<_> = files
+  cd_root();
+  let out = output(Command::new("git").args(["ls-files", "**/*.rs"]));
+  let no_doc: BTreeSet<_> = out
     .lines()
     .filter_map(|file| {
-      let out = sh.read_file(file).unwrap();
+      let out = fs::read_to_string(file).unwrap();
       let fst = out.lines().next().unwrap();
       (!fst.starts_with("//! ")).then_some(file)
     })
