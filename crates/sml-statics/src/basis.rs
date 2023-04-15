@@ -148,8 +148,7 @@ pub fn minimal() -> (Syms, Tys, Bs) {
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
-  let unit = tys.record(RecordData::new());
-  let aliases = [(PrimitiveKind::Unit, unit), (PrimitiveKind::Exn, Ty::EXN)];
+  let aliases = [(PrimitiveKind::Unit, Ty::UNIT), (PrimitiveKind::Exn, Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter_syms()
     .map(|sym_info| {
@@ -195,7 +194,7 @@ pub fn minimal() -> (Syms, Tys, Bs) {
       (PrimitiveKind::Mod, wordint_pair_to_wordint),
       (PrimitiveKind::Eq, equality_pair_to_bool.clone()),
       (PrimitiveKind::Neq, equality_pair_to_bool),
-      (PrimitiveKind::Use, TyScheme::zero(tys.fun(Ty::STRING, unit))),
+      (PrimitiveKind::Use, TyScheme::zero(tys.fun(Ty::STRING, Ty::UNIT))),
     ]
   };
   let val_env: ValEnv = ty_env

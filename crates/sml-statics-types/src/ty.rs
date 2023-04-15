@@ -41,6 +41,8 @@ impl Default for Tys {
     ] {
       assert_eq!(ret.con(Vec::new(), sym), ty);
     }
+    // @sync(pre_make_unit)
+    assert_eq!(ret.record(RecordData::new()), Ty::UNIT);
     ret
   }
 }
@@ -211,6 +213,10 @@ impl Ty {
   /// The special none "type". Things like undefined variables and invalid constructs can say they
   /// have this "type".
   pub const NONE: Self = Self { kind: TyKind::None, idx: idx::Idx::new_u32(0) };
+
+  /// The unit type, aka the empty tuple or record, aka `{}`.
+  // @sync(pre_make_unit)
+  pub const UNIT: Self = Self { kind: TyKind::Record, idx: idx::Idx::new_u32(0) };
 
   /// Returns a type for the bound variable.
   #[must_use]
