@@ -137,9 +137,7 @@ impl Tys {
       // interesting case
       TyKind::MetaVar => match &self.meta_var_data[ty.idx.to_usize()] {
         // recur for solved meta vars
-        MetaTyVarData::Solved(new_ty) => {
-          self.unsolved_meta_vars(*new_ty, f);
-        }
+        MetaTyVarData::Solved(new_ty) => self.unsolved_meta_vars(*new_ty, f),
         MetaTyVarData::Unsolved(data) => f(ty, data),
       },
       // trivial base cases
