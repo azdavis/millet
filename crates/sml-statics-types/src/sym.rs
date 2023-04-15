@@ -3,7 +3,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::info::{TyInfo, ValEnv};
-use crate::ty::{Ty, TyScheme};
+use crate::ty::{Ty, TyKind, TyScheme};
 use crate::{def, overload};
 use drop_bomb::DropBomb;
 use std::fmt;
@@ -24,7 +24,7 @@ impl fmt::Debug for Sym {
 }
 
 macro_rules! mk_special_syms {
-  ($( ($idx:expr, $name:ident, $prim:path), )*) => {
+  ($( ($idx:expr, $mk_ty:ident, $name:ident, $prim:path), )*) => {
     impl Sym {
       $(
         #[allow(missing_docs)]
@@ -44,20 +44,30 @@ macro_rules! mk_special_syms {
       }
     }
 
+    impl Ty {
+      $(
+        mk_special_syms!(@mk_ty, $mk_ty, $name, $idx);
+      )*
+    }
   };
+  (@mk_ty, y, $name:ident, $idx:expr) => {
+    #[allow(missing_docs)]
+    pub const $name: Self = Self { kind: TyKind::Con, idx: idx::Idx::new_u32($idx) };
+  };
+  (@mk_ty, n, $name:ident, $idx:expr) => {};
 }
 
 // @sync(special_sym_order)
 mk_special_syms![
-  (0, EXN, def::PrimitiveKind::Exn),
-  (1, INT, def::PrimitiveKind::Int),
-  (2, WORD, def::PrimitiveKind::Word),
-  (3, REAL, def::PrimitiveKind::Real),
-  (4, CHAR, def::PrimitiveKind::Char),
-  (5, STRING, def::PrimitiveKind::String),
-  (6, BOOL, def::PrimitiveKind::Bool),
-  (7, LIST, def::PrimitiveKind::List),
-  (8, REF, def::PrimitiveKind::RefTy),
+  (0, y, EXN, def::PrimitiveKind::Exn),
+  (1, y, INT, def::PrimitiveKind::Int),
+  (2, y, WORD, def::PrimitiveKind::Word),
+  (3, y, REAL, def::PrimitiveKind::Real),
+  (4, y, CHAR, def::PrimitiveKind::Char),
+  (5, y, STRING, def::PrimitiveKind::String),
+  (6, y, BOOL, def::PrimitiveKind::Bool),
+  (7, n, LIST, def::PrimitiveKind::List),
+  (8, n, REF, def::PrimitiveKind::RefTy),
 ];
 
 impl Sym {

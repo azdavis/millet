@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 ///
 /// - TODO should this really implement Clone?
 /// - TODO should we merge this with Syms?
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct Tys {
   meta_var_rank: u16,
   pub(crate) meta_var_data: Vec<MetaTyVarData>,
@@ -17,6 +17,32 @@ pub struct Tys {
   record: data::Map<RecordData>,
   con: data::Map<ConData>,
   fn_: data::Map<FnData>,
+}
+
+impl Default for Tys {
+  fn default() -> Self {
+    let mut ret = Self {
+      meta_var_rank: 0,
+      meta_var_data: Vec::new(),
+      fixed_var_data: Vec::new(),
+      record: data::Map::default(),
+      con: data::Map::default(),
+      fn_: data::Map::default(),
+    };
+    // @sync(special_sym_order)
+    for (sym, ty) in [
+      (Sym::EXN, Ty::EXN),
+      (Sym::INT, Ty::INT),
+      (Sym::WORD, Ty::WORD),
+      (Sym::REAL, Ty::REAL),
+      (Sym::CHAR, Ty::CHAR),
+      (Sym::STRING, Ty::STRING),
+      (Sym::BOOL, Ty::BOOL),
+    ] {
+      assert_eq!(ret.con(Vec::new(), sym), ty);
+    }
+    ret
+  }
 }
 
 impl Tys {
