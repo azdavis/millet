@@ -1,11 +1,11 @@
 //! See [`St`].
 
 use crate::error::{Error, ErrorKind};
+use crate::info::Info;
 use crate::pat_match::{Lang, Pat};
-use crate::sym::Syms;
-use crate::types::ty::{Ty, Tys};
-use crate::{def, info::Info, item::Item, mode::Mode};
 use fast_hash::FxHashSet;
+use sml_statics_types::ty::{Ty, Tys};
+use sml_statics_types::{def, item::Item, mode::Mode, sym::Syms};
 
 /// The mutable state.
 ///

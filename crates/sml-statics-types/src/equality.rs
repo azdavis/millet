@@ -1,22 +1,26 @@
 //! Checking if various structures respect/admit equality.
 
-use crate::core_info::TyInfo;
+use crate::info::TyInfo;
 use crate::mode::Mode;
 use crate::overload;
 use crate::sym::{Equality, Sym, Syms};
-use crate::types::ty::{
+use crate::ty::{
   Generalizable, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys, UnsolvedMetaTyVarKind,
 };
-use crate::types::util::instantiate;
+use crate::util::instantiate;
 use std::fmt;
 
-pub(crate) type Result<T = (), E = NotEqTy> = std::result::Result<T, E>;
+/// The result type for this module.
+pub type Result<T = (), E = NotEqTy> = std::result::Result<T, E>;
 
 /// A type that is not equality.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) enum NotEqTy {
+pub enum NotEqTy {
+  /// A fixed (non-equality) type variable.
   FixedTyVar,
+  /// A symbol.
   Sym,
+  /// A function.
   Fn,
 }
 
@@ -53,7 +57,7 @@ where
 ///   overload.
 ///
 /// TODO expose a version of this that does not take a mode?
-pub(in crate::types) fn get_ty(mode: Mode, syms: &Syms, tys: &mut Tys, ty: Ty) -> Result {
+pub(crate) fn get_ty(mode: Mode, syms: &Syms, tys: &mut Tys, ty: Ty) -> Result {
   if mode.is_path_order() {
     return Ok(());
   }
@@ -142,12 +146,12 @@ fn get_con(mode: Mode, syms: &Syms, tys: &mut Tys, args: &[Ty], sym: Sym) -> Res
   }
 }
 
-pub(crate) fn get_ty_scheme(
-  mode: Mode,
-  syms: &Syms,
-  tys: &mut Tys,
-  ty_scheme: &TyScheme,
-) -> Result {
+/// Checks the ty scheme.
+///
+/// # Errors
+///
+/// If it doesn't respect equality.
+pub fn get_ty_scheme(mode: Mode, syms: &Syms, tys: &mut Tys, ty_scheme: &TyScheme) -> Result {
   if mode.is_path_order() {
     return Ok(());
   }
@@ -155,7 +159,12 @@ pub(crate) fn get_ty_scheme(
   get_ty(mode, syms, tys, ty)
 }
 
-pub(crate) fn get_ty_info(mode: Mode, syms: &Syms, tys: &mut Tys, ty_info: TyInfo) -> Result {
+/// Checks the ty info.
+///
+/// # Errors
+///
+/// If it doesn't respect equality.
+pub fn get_ty_info(mode: Mode, syms: &Syms, tys: &mut Tys, ty_info: TyInfo) -> Result {
   if mode.is_path_order() {
     return Ok(());
   }

@@ -1,14 +1,16 @@
 //! Checking patterns.
 
-use crate::core_info::{IdStatus, ValEnv, ValInfo};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::ty::{Generalizable, Ty, TyData, TyScheme};
-use crate::types::util::{get_scon, ins_check_name, instantiate, record};
+use crate::util::{ins_check_name, record};
 use crate::{
-  compatible::eq_ty_scheme, config, def, env::Cx, error::ErrorKind, get_env::get_val_info,
-  info::TyEntry, item::Item, mode::Mode, st::St, ty, unify::unify,
+  compatible::eq_ty_scheme, config, env::Cx, error::ErrorKind, get_env::get_val_info,
+  info::TyEntry, st::St, ty, unify::unify,
 };
 use fast_hash::FxHashSet;
+use sml_statics_types::info::{IdStatus, ValEnv, ValInfo};
+use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme};
+use sml_statics_types::util::{get_scon, instantiate};
+use sml_statics_types::{def, item::Item, mode::Mode};
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Copy)]

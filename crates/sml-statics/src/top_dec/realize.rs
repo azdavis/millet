@@ -1,9 +1,9 @@
 //! Type realizations.
 
-use crate::types::ty::{Ty, TyData, TyScheme, Tys};
-use crate::types::util::apply_bv;
-use crate::{core_info::ValEnv, env::Env, sym::Sym};
+use crate::env::Env;
 use fast_hash::FxHashMap;
+use sml_statics_types::ty::{Ty, TyData, TyScheme, Tys};
+use sml_statics_types::{info::ValEnv, sym::Sym, util::apply_bv};
 
 /// A type realization.
 #[derive(Debug, Default)]

@@ -1,13 +1,10 @@
 //! Utilities.
 
-use crate::sym::Sym;
-use crate::types::ty::{
-  BoundTyVar, BoundTyVars, Generalizable, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys,
-};
-use crate::{error::ErrorKind, item::Item, overload, st::St};
-use chain_map::ChainMap;
+use crate::ty::{BoundTyVar, BoundTyVars, Generalizable, Ty, TyData, TyScheme, TyVarKind, Tys};
+use crate::{overload, sym::Sym};
 
-pub(crate) fn get_scon(tys: &mut Tys, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
+/// Gets the type from a special constructor aka literal.
+pub fn get_scon(tys: &mut Tys, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
   // we could have all of these return the basic overloads, but there are no overloads for `char` or
   // `string`, so just return the primitive types themselves for those.
   match scon {
@@ -28,31 +25,9 @@ pub(crate) fn get_scon(tys: &mut Tys, g: Generalizable, scon: &sml_hir::SCon) ->
   }
 }
 
-/// @def(6), @def(39), @def(49)
-pub(crate) fn record<T, F>(
-  st: &mut St,
-  idx: sml_hir::Idx,
-  rows: &[(sml_hir::Lab, T)],
-  mut f: F,
-) -> RecordData
-where
-  T: Copy,
-  F: FnMut(&mut St, &sml_hir::Lab, T) -> Ty,
-{
-  let mut ty_rows = RecordData::new();
-  for (lab, val) in rows {
-    let ty = f(st, lab, *val);
-    match ty_rows.insert(lab.clone(), ty) {
-      None => {}
-      Some(_) => st.err(idx, ErrorKind::DuplicateLab(lab.clone())),
-    }
-  }
-  ty_rows
-}
-
-/// instantiates the type scheme's type with new meta type vars, according to the bound vars of the
+/// Instantiates the type scheme's type with new meta type vars, according to the bound vars of the
 /// type scheme.
-pub(crate) fn instantiate(tys: &mut Tys, g: Generalizable, ty_scheme: &TyScheme) -> Ty {
+pub fn instantiate(tys: &mut Tys, g: Generalizable, ty_scheme: &TyScheme) -> Ty {
   let subst: Vec<_> =
     ty_scheme.bound_vars.iter().map(|kind| tys.meta_var_kind(g, kind.clone())).collect();
   let mut ret = ty_scheme.ty;
@@ -60,8 +35,8 @@ pub(crate) fn instantiate(tys: &mut Tys, g: Generalizable, ty_scheme: &TyScheme)
   ret
 }
 
-/// apply the subst for bound type variables. all bound variables must be defined by the subst.
-pub(crate) fn apply_bv(tys: &mut Tys, subst: &[Ty], ty: &mut Ty) {
+/// Apply the subst for bound type variables. All bound variables must be defined by the subst.
+pub fn apply_bv(tys: &mut Tys, subst: &[Ty], ty: &mut Ty) {
   match tys.data(*ty) {
     // interesting case
     TyData::BoundVar(bv) => *ty = *bv.index_into(subst),
@@ -88,30 +63,8 @@ pub(crate) fn apply_bv(tys: &mut Tys, subst: &[Ty], ty: &mut Ty) {
   }
 }
 
-/// inserts `(name, val)` into the map, but returns `Some(e)` if `name` was already a key, where `e`
-/// is an error describing this transgression.
-pub(crate) fn ins_no_dupe<V>(
-  map: &mut ChainMap<str_util::Name, V>,
-  name: str_util::Name,
-  val: V,
-  item: Item,
-) -> Option<ErrorKind> {
-  (!map.insert(name.clone(), val)).then_some(ErrorKind::Duplicate(item, name))
-}
-
-/// inerts a name that is not one of the special reserved names like `true`.
-pub(crate) fn ins_check_name<V>(
-  map: &mut ChainMap<str_util::Name, V>,
-  name: str_util::Name,
-  val: V,
-  item: Item,
-) -> Option<ErrorKind> {
-  let no = matches!(name.as_str(), "true" | "false" | "nil" | "::" | "ref" | "=" | "it");
-  no.then(|| ErrorKind::InvalidRebindName(name.clone()))
-    .or_else(|| ins_no_dupe(map, name, val, item))
-}
-
-pub(crate) fn ty_syms<F: FnMut(Sym)>(tys: &Tys, ty: Ty, f: &mut F) {
+/// Calls `f` for each `Sym` in `ty`.
+pub fn ty_syms<F: FnMut(Sym)>(tys: &Tys, ty: Ty, f: &mut F) {
   match tys.data(ty) {
     // interesting case
     TyData::Con(data) => {
@@ -135,7 +88,9 @@ pub(crate) fn ty_syms<F: FnMut(Sym)>(tys: &Tys, ty: Ty, f: &mut F) {
   }
 }
 
-pub(crate) fn n_ary_con(tys: &mut Tys, bound_vars: BoundTyVars, sym: Sym) -> TyScheme {
+/// Returns a ty scheme with the given bound vars, whose type is the constructor type given by the
+/// symbol applied to the bound vars as the arguments.
+pub fn n_ary_con(tys: &mut Tys, bound_vars: BoundTyVars, sym: Sym) -> TyScheme {
   let args: Vec<_> =
     BoundTyVar::iter_for(bound_vars.iter()).map(|(bv, _)| Ty::bound_var(bv)).collect();
   let ty = tys.con(args, sym);

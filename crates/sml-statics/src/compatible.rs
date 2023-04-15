@@ -1,8 +1,9 @@
 //! Checking whether type schemes are compatible with each other.
 
-use crate::types::ty::{BoundTyVars, Generalizable, Ty, TyScheme, TyVarKind, TyVarSrc};
-use crate::types::util::{apply_bv, instantiate};
-use crate::{error::ErrorKind, fmt_util::ty_var_name, st::St, unify::unify_no_emit};
+use crate::{error::ErrorKind, st::St, unify::unify_no_emit};
+use sml_statics_types::fmt_util::ty_var_name;
+use sml_statics_types::ty::{BoundTyVars, Generalizable, Ty, TyScheme, TyVarKind, TyVarSrc};
+use sml_statics_types::util::{apply_bv, instantiate};
 
 type Result = std::result::Result<(), ErrorKind>;
 

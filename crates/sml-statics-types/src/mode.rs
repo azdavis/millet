@@ -19,8 +19,9 @@ pub enum Mode {
 }
 
 impl Mode {
+  /// Returns whether this is the "path order" mode.
   #[must_use]
-  pub(crate) fn is_path_order(&self) -> bool {
+  pub fn is_path_order(&self) -> bool {
     matches!(self, Mode::PathOrder)
   }
 }

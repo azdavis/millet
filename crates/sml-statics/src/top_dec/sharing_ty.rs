@@ -1,11 +1,9 @@
 //! Dealing with `sharing` and `sharing type`.
 
-use crate::types::equality;
-use crate::types::ty::{TyData, TyScheme};
-use crate::{
-  env::Env, error::ErrorKind, get_env::get_ty_info, st::St, sym::SymsMarker, top_dec::realize,
-};
+use crate::{env::Env, error::ErrorKind, get_env::get_ty_info, st::St, top_dec::realize};
 use fast_hash::FxHashSet;
+use sml_statics_types::ty::{TyData, TyScheme};
+use sml_statics_types::{equality, sym::SymsMarker};
 
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
 pub(crate) fn get(

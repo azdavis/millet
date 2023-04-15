@@ -2,8 +2,8 @@
 
 use crate::error::ErrorKind;
 use crate::st::St;
-use crate::types::ty::Ty;
-use crate::types::unify::{self, UnifyError};
+use sml_statics_types::ty::Ty;
+use sml_statics_types::unify;
 
 pub(crate) fn unify(st: &mut St, idx: sml_hir::Idx, want: Ty, got: Ty) {
   match unify_no_emit(st, want, got) {
@@ -17,7 +17,7 @@ pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorK
     return Ok(());
   }
   unify::unify(&mut st.tys, &st.syms, want, got).map_err(|err| match err {
-    UnifyError::Circularity(circ) => ErrorKind::Circularity(circ),
-    UnifyError::Incompatible(reason) => ErrorKind::IncompatibleTys(reason, want, got),
+    unify::Error::Circularity(circ) => ErrorKind::Circularity(circ),
+    unify::Error::Incompatible(reason) => ErrorKind::IncompatibleTys(reason, want, got),
   })
 }

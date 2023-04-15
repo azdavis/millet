@@ -1,12 +1,13 @@
 //! Bases. (The plural of "basis".)
 
-use crate::core_info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
-use crate::disallow::{self, Disallow};
 use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
-use crate::sym::{Equality, Sym, Syms};
-use crate::types::ty::{BoundTyVar, RecordData, Ty, TyScheme, TyVarKind, Tys};
-use crate::{def::PrimitiveKind, get_env::get_mut_env, item::Item, overload};
+use crate::get_env::get_mut_env;
 use fast_hash::FxHashMap;
+use sml_statics_types::disallow::{self, Disallow};
+use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
+use sml_statics_types::sym::{Equality, Sym, Syms};
+use sml_statics_types::ty::{BoundTyVar, RecordData, Ty, TyScheme, TyVarKind, Tys};
+use sml_statics_types::{def::PrimitiveKind, item::Item, overload};
 
 /// A basis.
 #[derive(Debug, Default, Clone)]
@@ -77,18 +78,18 @@ impl Bs {
   pub fn disallow_val(&mut self, val: &sml_path::Path) -> Result<(), disallow::Error> {
     let env = match get_mut_env(&mut self.env, val.prefix()) {
       Ok(x) => x,
-      Err(n) => return Err(disallow::ErrorKind::Undefined(Item::Struct, n.clone()).into()),
+      Err(n) => return Err(disallow::Error::Undefined(Item::Struct, n.clone())),
     };
     let val_info = match env.val_env.get_mut(val.last()) {
       Some(x) => x,
-      None => return Err(disallow::ErrorKind::Undefined(Item::Val, val.last().clone()).into()),
+      None => return Err(disallow::Error::Undefined(Item::Val, val.last().clone())),
     };
     match &val_info.disallow {
       None => {
         val_info.disallow = Some(Disallow::Directly);
         Ok(())
       }
-      Some(x) => Err(disallow::ErrorKind::Already(x.clone()).into()),
+      Some(x) => Err(disallow::Error::Already(x.clone())),
     }
   }
 }

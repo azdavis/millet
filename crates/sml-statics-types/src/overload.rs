@@ -2,17 +2,27 @@
 
 use std::fmt;
 
+/// A basic overload.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum Basic {
+pub enum Basic {
+  /// The int overload, e.g. `Int32`, `Int64`.
   Int,
+  /// The real overload, e.g. `Real32`, `Real64`.
   Real,
+  /// The word overload, e.g. `Word8`, `Word16`.
   Word,
+  /// The string overload. There is only one actual string type, but it is used in other overloads
+  /// like `<numtxt>`.
   String,
+  /// The string overload. There is only one actual char type, but it is used in other overloads
+  /// like `<numtxt>`.
   Char,
 }
 
 impl Basic {
-  pub(crate) fn as_str(self) -> &'static str {
+  /// Returns this as a string.
+  #[must_use]
+  pub fn as_str(self) -> &'static str {
     match self {
       Basic::Int => "int",
       Basic::Real => "real",
@@ -29,11 +39,16 @@ impl fmt::Display for Basic {
   }
 }
 
+/// A composite overload.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum Composite {
+pub enum Composite {
+  /// Words and ints.
   WordInt,
+  /// Reals and ints.
   RealInt,
+  /// All kinds of numbers.
   Num,
+  /// All kinds of numbers and textual types (char and string).
   NumTxt,
   /// equality-only subset of NumTxt. not explicitly mentioned in the Definition. used only for
   /// unification.
@@ -83,9 +98,12 @@ impl fmt::Display for Composite {
   }
 }
 
+/// An overload.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum Overload {
+pub enum Overload {
+  /// A basic overload, like `int`.
   Basic(Basic),
+  /// A composite overload, like `<numtxt>`.
   Composite(Composite),
 }
 

@@ -3,13 +3,19 @@
 use std::fmt;
 
 /// A kind of SML language construct.
-#[derive(Debug)]
-pub(crate) enum Item {
+#[derive(Debug, Clone, Copy)]
+pub enum Item {
+  /// A value.
   Val,
+  /// A type.
   Ty,
+  /// A type variable.
   TyVar,
+  /// A structure.
   Struct,
+  /// A signature.
   Sig,
+  /// A functor.
   Functor,
 }
 

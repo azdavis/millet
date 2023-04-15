@@ -1,7 +1,7 @@
 //! Generalization, one of the fundamental operations on types for the inference algorithm.
 
 use crate::overload;
-use crate::types::ty::{
+use crate::ty::{
   BoundTyVar, BoundTyVars, RecordData, Ty, TyData, TyKind, TyScheme, TyVarKind, Tys,
   UnresolvedRecordMetaTyVar, UnsolvedMetaTyVarKind,
 };
@@ -10,31 +10,40 @@ use std::collections::BTreeMap;
 
 pub(crate) type Result<T, E = UnresolvedRecordMetaTyVar> = std::result::Result<T, E>;
 
+/// A sequence of fixed type variables, e.g. the `('foo, 'bar)` in `val ('foo, 'bar) quz = ...`
 #[derive(Debug, Default, Clone)]
-pub(crate) struct FixedTyVars(BTreeMap<idx::Idx, Option<BoundTyVar>>);
+pub struct FixedTyVars(BTreeMap<idx::Idx, Option<BoundTyVar>>);
 
 impl FixedTyVars {
-  pub(crate) fn push(&mut self, fv: Ty) {
+  /// Pushes the fixed ty var to this.
+  ///
+  /// # Panics
+  ///
+  /// If this is not a fixed ty var or if it was already inserted.
+  pub fn push(&mut self, fv: Ty) {
     assert!(matches!(fv.kind, TyKind::FixedVar));
     assert!(self.0.insert(fv.idx, None).is_none());
   }
 
-  pub(crate) fn iter(&self) -> impl Iterator<Item = Ty> + '_ {
+  /// Iterates over the fixed ty vars.
+  pub fn iter(&self) -> impl Iterator<Item = Ty> + '_ {
     self.0.iter().map(|(&idx, _)| Ty { kind: TyKind::FixedVar, idx })
   }
 }
 
-/// given a type scheme that binds no vars, mutate it and the type to be generalized.
+/// Given a type, generalize it into a type scheme.
 ///
-/// replaces:
+/// Replaces:
 ///
 /// - any fixed vars from `fixed_vars`
-/// - any meta vars not already solved by `subst` which were generated after the `mv_marker`
+/// - any meta vars not already solved
 ///
 /// in the type with bound vars, and updates the type scheme to bind those vars.
 ///
-/// panics if the type scheme already binds vars.
-pub(crate) fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
+/// # Errors
+///
+/// If we couldn't generalize because there was an unresolved record meta ty var.
+pub fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
   let mut meta = FxHashMap::<Ty, Option<BoundTyVar>>::default();
   // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
   // if we did not, we would have to traverse a whole `Env` to know what ty vars are present in it,
@@ -49,17 +58,22 @@ pub(crate) fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<Ty
   Ok(TyScheme { bound_vars: st.bound, ty })
 }
 
-/// like [`generalize`], but:
+/// Like [`generalize`], but:
 ///
-/// - doesn't allow meta vars
-/// - always generalizes exactly the given fixed vars, even if they don't appear in the
+/// - Doesn't allow meta vars
+/// - Always generalizes exactly the given fixed vars, even if they don't appear in the
 ///   `ty_scheme.ty`
 ///
-/// use this to:
+/// Use this to:
 ///
-/// - explicitly create a ty scheme with the written arity, e.g. to support phantom types.
-/// - preserve the order of fixed type vars for the bound ty var binders.
-pub(crate) fn generalize_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
+/// - Explicitly create a ty scheme with the written arity, e.g. to support phantom types.
+/// - Preserve the order of fixed type vars for the bound ty var binders.
+///
+/// # Panics
+///
+/// When it has a bug.
+#[allow(clippy::module_name_repetitions)]
+pub fn generalize_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
   let mut bound = Vec::with_capacity(fixed.0.len());
   for (&fv, bv) in &mut fixed.0 {
     assert!(bv.is_none());

@@ -2,12 +2,15 @@
 
 use std::fmt;
 
-/// returns a char iterator that when collected could be a name for a type variable.
-pub(crate) fn ty_var_name(equality: bool, idx: usize) -> TyVarName {
+/// Returns a char iterator that when collected could be a name for a type variable.
+pub fn ty_var_name(equality: bool, idx: usize) -> TyVarName {
   TyVarName { equality, idx }
 }
 
-pub(crate) struct TyVarName {
+/// A char iterator for a type variable name.
+#[derive(Debug)]
+#[must_use]
+pub struct TyVarName {
   equality: bool,
   idx: usize,
 }

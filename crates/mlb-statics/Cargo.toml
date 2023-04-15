@@ -24,6 +24,7 @@ sml-libs = { git = "https://github.com/azdavis/sml-libs.git" }
 sml-lower = { path = "../sml-lower" }
 sml-namespace = { path = "../sml-namespace" }
 sml-statics = { path = "../sml-statics" }
+sml-statics-types = { path = "../sml-statics-types" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }

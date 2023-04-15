@@ -11,35 +11,24 @@
 
 mod compatible;
 mod config;
-mod core_info;
 mod dec;
-mod display;
 mod env;
 mod error;
 mod exp;
-mod fmt_util;
 mod get_env;
-mod item;
-mod overload;
 mod pat;
 mod pat_match;
 mod st;
-mod sym;
 mod top_dec;
 mod ty;
-mod types;
+mod unify;
+mod util;
 
 pub mod basis;
-pub mod def;
-pub mod disallow;
 pub mod info;
-pub mod mode;
 pub mod path_order;
-mod unify;
 
 pub use error::Error;
-pub use sym::Syms;
-pub use types::ty::Tys;
 
 /// The result of statics.
 #[derive(Debug)]
@@ -54,10 +43,10 @@ pub struct Statics {
 
 /// Does the checks on the root.
 pub fn get(
-  syms: &mut Syms,
-  tys: &mut Tys,
+  syms: &mut sml_statics_types::sym::Syms,
+  tys: &mut sml_statics_types::ty::Tys,
   bs: &basis::Bs,
-  mode: mode::Mode,
+  mode: sml_statics_types::mode::Mode,
   arenas: &sml_hir::Arenas,
   root: &[sml_hir::StrDecIdx],
 ) -> Statics {

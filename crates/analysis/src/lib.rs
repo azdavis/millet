@@ -9,6 +9,7 @@ mod matcher;
 mod source_files;
 
 use paths::{PathId, PathMap, WithPath};
+use sml_statics_types::{def, mode::Mode, sym::Syms, ty::Tys};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::process::{Command, Stdio};
 use std::{error::Error, fmt, io::Write as _};
@@ -27,8 +28,8 @@ pub struct Analysis {
   std_basis: mlb_statics::StdBasis,
   diagnostics_options: diagnostic::Options,
   source_files: PathMap<mlb_statics::SourceFile>,
-  syms: sml_statics::Syms,
-  tys: sml_statics::Tys,
+  syms: Syms,
+  tys: Tys,
 }
 
 impl Analysis {
@@ -44,8 +45,8 @@ impl Analysis {
       std_basis: std_basis.to_mlb_statics(),
       diagnostics_options: diagnostic::Options { lines, ignore, format },
       source_files: PathMap::default(),
-      syms: sml_statics::Syms::default(),
-      tys: sml_statics::Tys::default(),
+      syms: Syms::default(),
+      tys: Tys::default(),
     }
   }
 
@@ -57,7 +58,7 @@ impl Analysis {
     let mut syms = self.std_basis.syms().clone();
     let mut tys = self.std_basis.tys().clone();
     let basis = self.std_basis.basis().clone();
-    let mode = sml_statics::mode::Mode::Regular(None);
+    let mode = Mode::Regular(None);
     let checked =
       sml_statics::get(&mut syms, &mut tys, &basis, mode, &syntax.lower.arenas, &syntax.lower.root);
     let mut info = checked.info;
@@ -149,14 +150,14 @@ impl Analysis {
         ty_md = ft.file.info.get_ty_md(&self.syms, &self.tys, idx);
         parts.extend(ty_md.as_deref());
         parts.extend(ft.file.info.get_defs(idx).filter_map(|def| match def {
-          sml_statics::def::Def::Path(path, idx) => {
+          def::Def::Path(path, idx) => {
             let info = match path {
-              sml_statics::def::Path::Regular(path) => &self.source_files.get(&path)?.info,
-              sml_statics::def::Path::BuiltinLib(name) => self.std_basis.get_info(name)?,
+              def::Path::Regular(path) => &self.source_files.get(&path)?.info,
+              def::Path::BuiltinLib(name) => self.std_basis.get_info(name)?,
             };
             info.get_doc(idx)
           }
-          sml_statics::def::Def::Primitive(prim) => Some(prim.doc()),
+          def::Def::Primitive(prim) => Some(prim.doc()),
         }));
         ptr.text_range()
       }
@@ -288,7 +289,7 @@ impl Analysis {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let (_, indices) = ft.get_ptr_and_indices()?;
     let ret = indices.iter().flat_map(|&idx| {
-      let def = sml_statics::def::Def::Path(sml_statics::def::Path::Regular(pos.path), idx);
+      let def = def::Def::Path(def::Path::Regular(pos.path), idx);
       self.source_files.iter().flat_map(move |(&path, sf)| {
         sf.info.get_with_def(def).filter_map(move |idx| {
           let ptr = sf.syntax.lower.ptrs.hir_to_ast(idx)?;

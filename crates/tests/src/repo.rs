@@ -439,7 +439,7 @@ fn rs_file_comments() {
 
 #[test]
 fn primitives() {
-  let mut lines = include_str!("../../../crates/sml-statics/src/def.rs").lines();
+  let mut lines = include_str!("../../../crates/sml-statics-types/src/def.rs").lines();
   for line in lines.by_ref() {
     if line.trim() == "// @primitives(start)" {
       break;

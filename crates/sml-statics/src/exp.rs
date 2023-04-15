@@ -3,12 +3,14 @@
 use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind};
 use crate::get_env::{get_env_raw, get_val_info};
-use crate::sym::{Sym, SymsMarker};
-use crate::types::ty::{Generalizable, Ty, TyData, TyScheme, Tys};
-use crate::types::util::{get_scon, instantiate, record};
+use crate::util::record;
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
-use crate::{core_info::ValEnv, dec, def, item::Item, pat, st::St, ty, unify::unify};
+use crate::{dec, pat, st::St, ty, unify::unify};
 use fast_hash::FxHashSet;
+use sml_statics_types::sym::{Sym, SymsMarker};
+use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, Tys};
+use sml_statics_types::util::{get_scon, instantiate};
+use sml_statics_types::{def, info::ValEnv, item::Item};
 
 pub(crate) fn get_and_check_ty_escape(
   st: &mut St,

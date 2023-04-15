@@ -170,6 +170,12 @@ In the future we could add more to this `Idx`, like "the name of the third con b
 
 These crates do interesting things related to SML files, but aren't really full "passes".
 
+### `crates/sml-statics-types`
+
+Important types and operations on those types for static analysis.
+
+This used to be a part of statics itself, but the types involved for statics are complicated and plentiful enough that this was made its own crate.
+
 ### `crates/sml-naive-fmt`
 
 Naively format SML files.

@@ -1,31 +1,34 @@
 //! Unification: given two types, figuring out whether they are "compatible", and if so, how.
 
-use crate::mode::Mode;
-use crate::overload;
 use crate::sym::{Sym, Syms};
-use crate::types::equality;
-use crate::types::ty::{
+use crate::ty::{
   MetaTyVarData, RecordData, Ty, TyData, TyKind, TyVarKind, Tys, UnsolvedMetaTyVarData,
   UnsolvedMetaTyVarKind,
 };
+use crate::{equality, mode::Mode, overload};
 
+/// An error when unifying.
 #[derive(Debug)]
-pub(crate) enum UnifyError {
+pub enum Error {
+  /// A circularity error.
   Circularity(Circularity),
+  /// A incompatible error.
   Incompatible(Incompatible),
 }
 
+/// A type was circular.
 #[derive(Debug)]
-pub(crate) struct Circularity {
+pub struct Circularity {
   /// This ty, a meta var, appears in `ty`.
-  pub(crate) meta_var: Ty,
+  pub meta_var: Ty,
   /// Contains `meta_var`, but is not equal to `meta_var`.
-  pub(crate) ty: Ty,
+  pub ty: Ty,
 }
 
-/// A reason why types were incompatible. TODO move to error
+/// A reason why types were incompatible.
 #[derive(Debug)]
-pub(crate) enum Incompatible {
+#[allow(missing_docs)]
+pub enum Incompatible {
   FixedTyVar(sml_hir::TyVar, sml_hir::TyVar),
   MissingRow(sml_hir::Lab),
   ExtraRows(RecordData),
@@ -40,16 +43,22 @@ pub(crate) enum Incompatible {
   NotEqTy(Ty, equality::NotEqTy),
 }
 
-impl From<Incompatible> for UnifyError {
+impl From<Incompatible> for Error {
   fn from(val: Incompatible) -> Self {
     Self::Incompatible(val)
   }
 }
 
-/// does not emit any errors to the `st`, instead returns an error (if any).
+/// Unifies two types, updating `tys` as necessary to record how.
 ///
-/// `want` and `got` will have `subst` applied to them upon entry to this function.
-pub(crate) fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), UnifyError> {
+/// # Errors
+///
+/// If the types couldn't be unified.
+///
+/// # Panics
+///
+/// If the types contain bound variables.
+pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error> {
   let (want, want_data) = tys.canonicalize(want);
   let (got, got_data) = tys.canonicalize(got);
   // if `Ty`s are `==`, they are semantically the same type, because of interning.
@@ -105,7 +114,7 @@ fn unify_mv(
   mv: Ty,
   umv: UnsolvedMetaTyVarData,
   mut ty: Ty,
-) -> Result<(), UnifyError> {
+) -> Result<(), Error> {
   assert!(matches!(tys.data(mv), TyData::UnsolvedMetaVar(_)), "unify_mv where mv was not unsolved");
   // make sure we're trying to solve the right ty.
   while let TyKind::MetaVar = ty.kind {
@@ -121,7 +130,7 @@ fn unify_mv(
   // adjust the ranks for meta vars in ty, and also fail if the occurs check fails.
   match adjust_mv_ranks(tys, mv, &umv, ty) {
     Ok(()) => {}
-    Err(()) => return Err(UnifyError::Circularity(Circularity { meta_var: mv, ty })),
+    Err(()) => return Err(Error::Circularity(Circularity { meta_var: mv, ty })),
   }
   // check the solution is allowed.
   check_mv_solution(tys, syms, mv, umv.kind, ty)?;
@@ -197,7 +206,7 @@ fn check_mv_solution(
   mv: Ty,
   mv_kind: UnsolvedMetaTyVarKind,
   ty: Ty,
-) -> Result<(), UnifyError> {
+) -> Result<(), Error> {
   match mv_kind {
     UnsolvedMetaTyVarKind::Kind(kind) => match kind {
       // mv is a regular meta var, allowing all types.
@@ -270,7 +279,7 @@ fn new_overload(
   kind: UnsolvedMetaTyVarKind,
   mv: Ty,
   ov: overload::Overload,
-) -> Result<overload::Overload, UnifyError> {
+) -> Result<overload::Overload, Error> {
   match kind {
     UnsolvedMetaTyVarKind::Kind(kind) => match kind {
       // ty is a regular meta var, allowing all types.
@@ -299,7 +308,7 @@ fn new_solved_rows(
   kind: UnsolvedMetaTyVarKind,
   mv: Ty,
   mut rows: RecordData,
-) -> Result<RecordData, UnifyError> {
+) -> Result<RecordData, Error> {
   match kind {
     UnsolvedMetaTyVarKind::Kind(kind) => match kind {
       // ty is a regular meta var, allowing all types.

@@ -4,7 +4,8 @@
 use crate::{add_all_doc_comments, SourceFileSyntax};
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
-use sml_statics::{basis, info::Info, Syms, Tys};
+use sml_statics::{basis, info::Info};
+use sml_statics_types::{sym::Syms, ty::Tys};
 use sml_syntax::ast::AstNode as _;
 
 /// A standard basis.
@@ -124,7 +125,7 @@ where
         && e == "top-level `open`";
       assert!(allowed, "{name}: lower error: {e}");
     }
-    let mode = sml_statics::mode::Mode::BuiltinLib(name);
+    let mode = sml_statics_types::mode::Mode::BuiltinLib(name);
     let low = started.lower;
     let checked = sml_statics::get(&mut syms, &mut tys, &bs, mode, &low.arenas, &low.root);
     bs.append(checked.bs);

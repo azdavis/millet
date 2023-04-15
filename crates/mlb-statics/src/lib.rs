@@ -10,6 +10,7 @@ use config::lang::Language;
 use diagnostic::{Code, Severity};
 use fast_hash::FxHashMap;
 use sml_file_syntax::SourceFileSyntax;
+use sml_statics_types::{sym::Syms, ty::Tys};
 use sml_syntax::ast::AstNode as _;
 use std::fmt;
 
@@ -21,9 +22,9 @@ pub struct MlbStatics {
   /// The errors found in MLB cx.
   pub mlb_errors: Vec<Error>,
   /// The generated symbols (types and exceptions and such).
-  pub syms: sml_statics::Syms,
+  pub syms: Syms,
   /// The generated types.
-  pub tys: sml_statics::Tys,
+  pub tys: Tys,
   /// A mapping from source file paths to information about them, including errors.
   ///
   /// NOTE see comment in impl about having cx analyzed more than once.
@@ -102,8 +103,8 @@ impl fmt::Display for Item {
 }
 
 struct St {
-  syms: sml_statics::Syms,
-  tys: sml_statics::Tys,
+  syms: Syms,
+  tys: Tys,
   bases: paths::PathMap<MBasis>,
   source_files: paths::PathMap<SourceFile>,
   mlb_errors: Vec<Error>,
@@ -150,8 +151,8 @@ impl MBasis {
 /// Runs analysis.
 #[must_use]
 pub fn get(
-  syms: sml_statics::Syms,
-  tys: sml_statics::Tys,
+  syms: Syms,
+  tys: Tys,
   lang: &Language,
   bs: &sml_statics::basis::Bs,
   source_file_contents: &paths::PathMap<String>,
@@ -314,7 +315,7 @@ fn get_source_file(
   fix_env: sml_fixity::Env,
   syntax: SourceFileSyntax,
 ) {
-  let mode = sml_statics::mode::Mode::Regular(Some(path));
+  let mode = sml_statics_types::mode::Mode::Regular(Some(path));
   let checked = sml_statics::get(
     &mut st.syms,
     &mut st.tys,

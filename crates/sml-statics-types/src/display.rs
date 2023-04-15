@@ -2,16 +2,18 @@
 
 use crate::fmt_util::idx_to_name;
 use crate::sym::{Sym, Syms};
-use crate::types::ty::{
+use crate::ty::{
   BoundTyVars, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys, UnsolvedMetaTyVarKind,
 };
-use crate::types::unify::Incompatible;
+use crate::unify::Incompatible;
 use fast_hash::FxHashMap;
 use fmt_util::comma_seq;
 use std::fmt;
 
 impl Ty {
-  pub(crate) fn display<'a>(
+  /// Returns a value that displays this.
+  #[must_use]
+  pub fn display<'a>(
     self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
@@ -25,7 +27,9 @@ impl Ty {
 }
 
 impl TyScheme {
-  pub(crate) fn display<'a>(
+  /// Returns a value that displays this.
+  #[must_use]
+  pub fn display<'a>(
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
@@ -191,23 +195,27 @@ impl fmt::Display for SymDisplay<'_> {
 
 /// Gives names to meta variables, like `?a` or `<wordint>` or `int`.
 #[derive(Debug)]
-pub(crate) struct MetaVarNames<'a> {
+pub struct MetaVarNames<'a> {
   next_idx: usize,
   map: FxHashMap<Ty, idx::Idx>,
   tys: &'a Tys,
 }
 
 impl<'a> MetaVarNames<'a> {
-  pub(crate) fn new(tys: &'a Tys) -> Self {
+  /// Returns a new one of this.
+  #[must_use]
+  pub fn new(tys: &'a Tys) -> Self {
     Self { next_idx: 0, map: FxHashMap::default(), tys }
   }
 
-  pub(crate) fn clear(&mut self) {
+  /// Clears this of all the names.
+  pub fn clear(&mut self) {
     self.next_idx = 0;
     self.map.clear();
   }
 
-  pub(crate) fn extend_for(&mut self, ty: Ty) {
+  /// Adds names for all the unsolved meta vars in `ty` that need names.
+  pub fn extend_for(&mut self, ty: Ty) {
     self.tys.unsolved_meta_vars(ty, &mut |mv, data| match &data.kind {
       UnsolvedMetaTyVarKind::Kind(kind) => match kind {
         TyVarKind::Regular | TyVarKind::Equality => {
@@ -236,7 +244,9 @@ fn meta_var_idx(f: &mut fmt::Formatter<'_>, idx: idx::Idx, s: &str) -> fmt::Resu
   Ok(())
 }
 
-pub(crate) fn record_meta_var<'a>(
+/// Returns a value that displays this unresolved record meta var.
+#[must_use]
+pub fn record_meta_var<'a>(
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
   rows: &'a RecordData,
@@ -261,7 +271,9 @@ impl fmt::Display for RecordMetaVarDisplay<'_> {
 }
 
 impl Incompatible {
-  pub(crate) fn display<'a>(
+  /// Returns a value that displays this.
+  #[must_use]
+  pub fn display<'a>(
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
@@ -269,9 +281,11 @@ impl Incompatible {
     IncompatibleDisplay { flavor: self, meta_vars, syms }
   }
 
-  /// need to have this be separate from the Display impl so that the mutable borrow doesn't last
+  /// Extends the meta var names for all the types in this.
+  ///
+  /// Need to have this be separate from the Display impl so that the mutable borrow doesn't last
   /// too long.
-  pub(crate) fn extend_meta_var_names(&self, meta_vars: &mut MetaVarNames<'_>) {
+  pub fn extend_meta_var_names(&self, meta_vars: &mut MetaVarNames<'_>) {
     match self {
       Self::FixedTyVar(_, _)
       | Self::MissingRow(_)

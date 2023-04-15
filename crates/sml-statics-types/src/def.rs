@@ -59,8 +59,10 @@ static PRIMITIVE_DOC: Lazy<FxHashMap<PrimitiveKind, String>> = Lazy::new(|| {
   raw.into_iter().map(|(k, v)| (k.parse().expect("not a primitive kind"), v)).collect()
 });
 
+/// What kind of primitive definition this is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum PrimitiveKind {
+#[allow(missing_docs)]
+pub enum PrimitiveKind {
   Int,
   Word,
   Real,
@@ -94,7 +96,9 @@ pub(crate) enum PrimitiveKind {
 }
 
 impl PrimitiveKind {
-  pub(crate) fn as_str(self) -> &'static str {
+  /// Returns this as a string.
+  #[must_use]
+  pub fn as_str(self) -> &'static str {
     match self {
       Self::Int => "int",
       Self::Word => "word",

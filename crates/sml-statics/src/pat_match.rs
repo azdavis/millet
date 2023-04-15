@@ -1,10 +1,10 @@
 //! Glue code to talk to [`pattern_match`].
 
-use crate::sym::{Exn, Sym, Syms};
-use crate::types::ty::{Ty, TyData, Tys};
-use crate::types::util::apply_bv;
 use fast_hash::FxHashSet;
 use pattern_match::{CheckError, Result};
+use sml_statics_types::sym::{Exn, Sym, Syms};
+use sml_statics_types::ty::{Ty, TyData, Tys};
+use sml_statics_types::util::apply_bv;
 use std::collections::BTreeSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;

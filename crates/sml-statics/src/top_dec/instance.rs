@@ -2,11 +2,8 @@
 
 use crate::env::{Env, Sig};
 use crate::error::ErrorKind;
-use crate::types::util::n_ary_con;
-use crate::{
-  compatible::eq_ty_fn_no_emit, get_env::get_ty_info_raw, st::St, top_dec::realize,
-  types::ty::TyScheme,
-};
+use crate::{compatible::eq_ty_fn_no_emit, get_env::get_ty_info_raw, st::St, top_dec::realize};
+use sml_statics_types::{ty::TyScheme, util::n_ary_con};
 
 pub(crate) fn env_of_sig(
   st: &mut St,

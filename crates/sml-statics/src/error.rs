@@ -3,11 +3,12 @@
 mod non_exhaustive;
 mod suggestion;
 
-use crate::display::{record_meta_var, MetaVarNames};
-use crate::types::ty::{RecordData, Ty, TyScheme, Tys};
-use crate::types::unify::{Circularity, Incompatible};
-use crate::{disallow::Disallow, item::Item, pat_match::Pat, sym::Syms};
+use crate::pat_match::Pat;
 use diagnostic::{Code, Severity};
+use sml_statics_types::display::{record_meta_var, MetaVarNames};
+use sml_statics_types::ty::{RecordData, Ty, TyScheme, Tys};
+use sml_statics_types::unify::{Circularity, Incompatible};
+use sml_statics_types::{disallow::Disallow, item::Item, sym::Syms};
 use std::fmt;
 
 #[derive(Debug)]

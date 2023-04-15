@@ -8,16 +8,17 @@ mod sharing_ty;
 mod ty_con_paths;
 mod where_ty;
 
-use crate::core_info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use crate::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser};
 use crate::get_env::{get_env, get_ty_info};
-use crate::sym::{Equality, StartedSym, SymsMarker};
-use crate::types::generalize::generalize;
-use crate::types::ty::{TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
-use crate::types::util::{ins_check_name, ins_no_dupe, n_ary_con};
-use crate::{basis::Bs, config::Cfg, dec, item::Item, mode::Mode, overload, st::St, ty};
+use crate::util::{ins_check_name, ins_no_dupe};
+use crate::{basis::Bs, config::Cfg, dec, st::St, ty};
 use fast_hash::FxHashSet;
+use sml_statics_types::generalize::generalize;
+use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
+use sml_statics_types::sym::{Equality, StartedSym, SymsMarker};
+use sml_statics_types::ty::{TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
+use sml_statics_types::{item::Item, mode::Mode, overload, util::n_ary_con};
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) -> Bs {
   let mut ac = Bs::default();

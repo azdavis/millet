@@ -1,10 +1,10 @@
 //! Environments and types that contain them.
 
-use crate::core_info::{TyEnv, ValEnv};
-use crate::types::ty::Ty;
-use crate::{def, disallow::Disallow, sym::Sym};
 use chain_map::ChainMap;
 use fast_hash::{FxHashMap, FxHashSet};
+use sml_statics_types::info::{TyEnv, ValEnv};
+use sml_statics_types::ty::Ty;
+use sml_statics_types::{def, disallow::Disallow, sym::Sym};
 
 /// Definition: `StrEnv`
 pub(crate) type StrEnv = ChainMap<str_util::Name, Env>;

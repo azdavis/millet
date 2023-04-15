@@ -30,8 +30,8 @@ pub(crate) struct Options {
 /// order the diagnostics.
 pub(crate) fn source_file<F, R>(
   file: &mlb_statics::SourceFile,
-  syms: &sml_statics::Syms,
-  tys: &sml_statics::Tys,
+  syms: &sml_statics_types::sym::Syms,
+  tys: &sml_statics_types::ty::Tys,
   options: Options,
   f: F,
 ) -> Vec<Diagnostic<R>>

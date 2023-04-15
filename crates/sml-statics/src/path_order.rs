@@ -41,8 +41,8 @@
 //! except name resolution. That means we can skip things like exhaustiveness checking and type
 //! unification.
 
-use crate::types::ty::Tys;
-use crate::{basis::Bs, mode::Mode, st::St, sym::Syms, top_dec};
+use crate::{basis::Bs, st::St, top_dec};
+use sml_statics_types::{mode::Mode, sym::Syms, ty::Tys};
 
 /// An unordered map from paths to HIR ready for analysis.
 pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, &'a [sml_hir::StrDecIdx])>;

@@ -43,6 +43,7 @@ dependencies = [
  "sml-naive-fmt",
  "sml-namespace",
  "sml-statics",
+ "sml-statics-types",
  "sml-syntax",
  "str-util",
  "text-pos",
@@ -593,6 +594,7 @@ dependencies = [
  "sml-lower",
  "sml-namespace",
  "sml-statics",
+ "sml-statics-types",
  "sml-syntax",
  "str-util",
  "text-pos",
@@ -972,23 +974,37 @@ name = "sml-statics"
 version = "0.8.8"
 dependencies = [
  "chain-map",
- "code-h2-md-map",
  "config",
  "diagnostic",
- "drop_bomb",
  "elapsed",
  "fast-hash",
  "fmt-util",
- "idx",
  "log",
- "once_cell",
  "paths",
  "pattern-match",
  "sml-hir",
  "sml-namespace",
  "sml-path",
+ "sml-statics-types",
  "str-util",
  "uniq",
+]
+
+[[package]]
+name = "sml-statics-types"
+version = "0.8.8"
+dependencies = [
+ "chain-map",
+ "code-h2-md-map",
+ "drop_bomb",
+ "fast-hash",
+ "fmt-util",
+ "idx",
+ "once_cell",
+ "paths",
+ "sml-hir",
+ "sml-path",
+ "str-util",
 ]
 
 [[package]]

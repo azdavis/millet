@@ -23,6 +23,7 @@ sml-naive-fmt = { path = "../sml-naive-fmt" }
 sml-hir = { path = "../sml-hir" }
 sml-namespace = { path = "../sml-namespace" }
 sml-statics = { path = "../sml-statics" }
+sml-statics-types = { path = "../sml-statics-types" }
 sml-syntax = { path = "../sml-syntax" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }

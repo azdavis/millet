@@ -1,11 +1,11 @@
 //! See [`Info`].
 
-use crate::core_info::{IdStatus, ValInfo};
-use crate::types::ty::{Ty, TyData, TyScheme, Tys};
-use crate::types::util::ty_syms;
-use crate::{basis::Bs, def, display::MetaVarNames, mode::Mode};
-use crate::{env::Env, sym::Syms};
+use crate::{basis::Bs, env::Env};
 use fast_hash::{FxHashMap, FxHashSet};
+use sml_statics_types::info::{IdStatus, ValInfo};
+use sml_statics_types::ty::{Ty, TyData, TyScheme, Tys};
+use sml_statics_types::util::ty_syms;
+use sml_statics_types::{def, display::MetaVarNames, mode::Mode, sym::Syms};
 use std::fmt;
 
 /// Information about HIR indices.

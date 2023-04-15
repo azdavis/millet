@@ -2,12 +2,12 @@
 
 use crate::env::Env;
 use crate::top_dec::{realize, ty_con_paths};
-use crate::types::generalize::generalize_fixed;
-use crate::types::ty::{TyData, TyScheme, TyVarSrc};
 use crate::{
-  basis::Bs, dec::add_fixed_ty_vars, error::ErrorKind, get_env::get_ty_info, st::St,
-  sym::SymsMarker, ty,
+  basis::Bs, dec::add_fixed_ty_vars, error::ErrorKind, get_env::get_ty_info, st::St, ty,
 };
+use sml_statics_types::generalize::generalize_fixed;
+use sml_statics_types::sym::SymsMarker;
+use sml_statics_types::ty::{TyData, TyScheme, TyVarSrc};
 
 pub(crate) fn get(
   st: &mut St,
