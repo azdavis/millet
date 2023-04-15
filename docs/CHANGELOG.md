@@ -16,6 +16,8 @@ The versioning system is basically the following:
 ## main
 
 - Emit better error for invalid `:>` where only `:` is allowed.
+- Highlight unsolved equality variables. (Not real SML syntax.)
+- Implement significant internal improvements.
 
 ## v0.8.8
 
