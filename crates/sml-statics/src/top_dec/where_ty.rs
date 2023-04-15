@@ -2,10 +2,11 @@
 
 use crate::env::Env;
 use crate::top_dec::{realize, ty_con_paths};
-use crate::types::{Ty, TyScheme};
+use crate::types::generalize::generalize_fixed;
+use crate::types::ty::{TyData, TyScheme, TyVarSrc};
 use crate::{
-  basis::Bs, dec::add_fixed_ty_vars, error::ErrorKind, generalize::generalize_fixed,
-  get_env::get_ty_info, st::St, sym::SymsMarker, ty, ty_var::fixed::TyVarSrc,
+  basis::Bs, dec::add_fixed_ty_vars, error::ErrorKind, get_env::get_ty_info, st::St,
+  sym::SymsMarker, ty,
 };
 
 pub(crate) fn get(
@@ -21,8 +22,8 @@ pub(crate) fn get(
     sml_hir::WhereKind::Type(ty_vars, path, ty) => {
       let mut cx = bs.as_cx();
       let fixed = add_fixed_ty_vars(st, idx, &mut cx, TyVarSrc::Ty, ty_vars);
-      let mut ty_scheme = TyScheme::zero(ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty));
-      generalize_fixed(fixed, &mut ty_scheme);
+      let ty = ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty);
+      let ty_scheme = generalize_fixed(&mut st.tys, fixed, ty);
       get_where_type(st, idx, marker, inner_env, path, ty_scheme, true);
     }
     sml_hir::WhereKind::Structure(lhs, rhs) => {
@@ -98,15 +99,15 @@ fn get_where_type(
     st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
     return;
   }
-  match &path_ty_scheme.ty {
-    Ty::None => {}
-    Ty::Con(_, sym) => {
+  match st.tys.data(path_ty_scheme.ty) {
+    TyData::None => {}
+    TyData::Con(data) => {
       // TODO well-formed check - need to check every ty info in the resulting env has either empty
       // val env or the ty scheme is a Con?
-      if sym.generated_after(marker) {
+      if data.sym.generated_after(marker) {
         let mut subst = realize::TyRealization::default();
-        subst.insert(*sym, ty_scheme);
-        realize::get_env(&subst, inner_env);
+        subst.insert(data.sym, ty_scheme);
+        realize::get_env(&mut st.tys, &subst, inner_env);
       } else {
         // @test(sig::impossible)
         if emit_cannot_realize {

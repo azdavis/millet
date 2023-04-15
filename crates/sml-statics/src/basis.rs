@@ -4,7 +4,7 @@ use crate::core_info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use crate::disallow::{self, Disallow};
 use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use crate::sym::{Equality, Sym, Syms};
-use crate::types::{RecordTy, Ty, TyScheme, TyVarKind};
+use crate::types::ty::{BoundTyVar, RecordData, Ty, TyScheme, TyVarKind, Tys};
 use crate::{def::PrimitiveKind, get_env::get_mut_env, item::Item, overload};
 use fast_hash::FxHashMap;
 
@@ -103,26 +103,28 @@ impl Bs {
 ///
 /// Upon internal error.
 #[must_use]
-pub fn minimal() -> (Syms, Bs) {
+pub fn minimal() -> (Syms, Tys, Bs) {
+  let mut tys = Tys::default();
   // @sync(special_sym_order)
   let mut syms = Syms::default();
   for sym in [Sym::INT, Sym::WORD, Sym::REAL, Sym::CHAR, Sym::STRING] {
-    insert_special(&mut syms, sym, basic_datatype(sym, &[]));
+    insert_special(&mut syms, sym, basic_datatype(&mut tys, sym, &[]));
   }
   syms.overloads_mut().int.push(Sym::INT);
   syms.overloads_mut().word.push(Sym::WORD);
   syms.overloads_mut().real.push(Sym::REAL);
   syms.overloads_mut().char.push(Sym::CHAR);
   syms.overloads_mut().string.push(Sym::STRING);
-  insert_special(
-    &mut syms,
-    Sym::BOOL,
-    basic_datatype(Sym::BOOL, &[PrimitiveKind::True, PrimitiveKind::False]),
-  );
+  let bool_info = basic_datatype(&mut tys, Sym::BOOL, &[PrimitiveKind::True, PrimitiveKind::False]);
+  insert_special(&mut syms, Sym::BOOL, bool_info);
   let list_info = {
-    let list = |a: Ty| Ty::Con(vec![a], Sym::LIST);
-    let alpha_list = TyScheme::one(None, list);
-    let cons = TyScheme::one(None, |a| Ty::fun(pair(a.clone(), list(a.clone())), list(a)));
+    let list = |tys: &mut Tys, a: Ty| tys.con(vec![a], Sym::LIST);
+    let alpha_list = ty_scheme_one(&mut tys, TyVarKind::Regular, list);
+    let cons = ty_scheme_one(&mut tys, TyVarKind::Regular, |tys, a| {
+      let a_list = list(tys, a);
+      let pair_a_a_list = pair(tys, a, a_list);
+      tys.fun(pair_a_a_list, a_list)
+    });
     TyInfo {
       ty_scheme: alpha_list.clone(),
       val_env: datatype_ve([(PrimitiveKind::Nil, alpha_list), (PrimitiveKind::Cons, cons)]),
@@ -132,17 +134,21 @@ pub fn minimal() -> (Syms, Bs) {
   };
   insert_special(&mut syms, Sym::LIST, list_info);
   let ref_info = {
-    let ref_ = |a: Ty| Ty::Con(vec![a], Sym::REF);
-    let con = TyScheme::one(None, |a| Ty::fun(a.clone(), ref_(a)));
+    let ref_ = |tys: &mut Tys, a: Ty| tys.con(vec![a], Sym::REF);
+    let con = ty_scheme_one(&mut tys, TyVarKind::Regular, |tys, a| {
+      let a_ref = ref_(tys, a);
+      tys.fun(a, a_ref)
+    });
     TyInfo {
-      ty_scheme: TyScheme::one(None, ref_),
+      ty_scheme: ty_scheme_one(&mut tys, TyVarKind::Regular, ref_),
       val_env: datatype_ve([(PrimitiveKind::RefVal, con)]),
       def: Some(PrimitiveKind::RefTy.into()),
       disallow: None,
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
-  let aliases = [(PrimitiveKind::Unit, unit()), (PrimitiveKind::Exn, Ty::EXN)];
+  let unit = tys.record(RecordData::new());
+  let aliases = [(PrimitiveKind::Unit, unit), (PrimitiveKind::Exn, tys.exn())];
   let ty_env: TyEnv = syms
     .iter_syms()
     .map(|sym_info| {
@@ -161,17 +167,20 @@ pub fn minimal() -> (Syms, Bs) {
     .collect();
   let fns = {
     let num_pair_to_num =
-      overloaded(overload::Composite::Num.into(), |a| Ty::fun(dup(a.clone()), a));
+      ov_fn(&mut tys, overload::Composite::Num.into(), |tys, a| (dup(tys, a), a));
     let real_pair_to_real =
-      overloaded(overload::Basic::Real.into(), |a| Ty::fun(dup(a.clone()), a));
+      ov_fn(&mut tys, overload::Basic::Real.into(), |tys, a| (dup(tys, a), a));
     let numtxt_pair_to_bool =
-      overloaded(overload::Composite::NumTxt.into(), |a| Ty::fun(dup(a), Ty::BOOL));
-    let realint_to_realint =
-      overloaded(overload::Composite::RealInt.into(), |a| Ty::fun(a.clone(), a));
+      ov_fn(&mut tys, overload::Composite::NumTxt.into(), |tys, a| (dup(tys, a), tys.bool()));
+    let realint_to_realint = ov_fn(&mut tys, overload::Composite::RealInt.into(), |_, a| (a, a));
     let wordint_pair_to_wordint =
-      overloaded(overload::Composite::WordInt.into(), |a| Ty::fun(dup(a.clone()), a));
-    let equality_pair_to_bool =
-      TyScheme::one(Some(TyVarKind::Equality), |a| Ty::fun(dup(a), Ty::BOOL));
+      ov_fn(&mut tys, overload::Composite::WordInt.into(), |tys, a| (dup(tys, a), a));
+    let equality_pair_to_bool = ty_scheme_one(&mut tys, TyVarKind::Equality, |tys, a| {
+      let a_a = dup(tys, a);
+      let b = tys.bool();
+      tys.fun(a_a, b)
+    });
+    let s = tys.string();
     [
       (PrimitiveKind::Mul, num_pair_to_num.clone()),
       (PrimitiveKind::Add, num_pair_to_num.clone()),
@@ -187,7 +196,7 @@ pub fn minimal() -> (Syms, Bs) {
       (PrimitiveKind::Mod, wordint_pair_to_wordint),
       (PrimitiveKind::Eq, equality_pair_to_bool.clone()),
       (PrimitiveKind::Neq, equality_pair_to_bool),
-      (PrimitiveKind::Use, TyScheme::zero(Ty::fun(Ty::STRING, unit()))),
+      (PrimitiveKind::Use, TyScheme::zero(tys.fun(s, unit))),
     ]
   };
   let val_env: ValEnv = ty_env
@@ -208,7 +217,7 @@ pub fn minimal() -> (Syms, Bs) {
     sig_env: SigEnv::default(),
     env: Env { str_env: StrEnv::default(), ty_env, val_env, def: None, disallow: None },
   };
-  (syms, bs)
+  (syms, tys, bs)
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
@@ -226,8 +235,8 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
   syms.finish(started, ty_info, equality);
 }
 
-fn basic_datatype(sym: Sym, ctors: &'static [PrimitiveKind]) -> TyInfo {
-  let ty_scheme = TyScheme::zero(Ty::zero(sym));
+fn basic_datatype(tys: &mut Tys, sym: Sym, ctors: &'static [PrimitiveKind]) -> TyInfo {
+  let ty_scheme = TyScheme::zero(tys.con(Vec::new(), sym));
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
   TyInfo { ty_scheme, val_env, def: Some(sym.primitive().unwrap().into()), disallow: None }
 }
@@ -249,21 +258,33 @@ where
     .collect()
 }
 
-fn overloaded<F>(ov: overload::Overload, f: F) -> TyScheme
+fn dup(tys: &mut Tys, ty: Ty) -> Ty {
+  pair(tys, ty, ty)
+}
+
+fn pair(tys: &mut Tys, t1: Ty, t2: Ty) -> Ty {
+  tys.record(RecordData::from([(sml_hir::Lab::Num(1), t1), (sml_hir::Lab::Num(2), t2)]))
+}
+
+fn ov_fn<F>(tys: &mut Tys, ov: overload::Overload, f: F) -> TyScheme
 where
-  F: FnOnce(Ty) -> Ty,
+  F: FnOnce(&mut Tys, Ty) -> (Ty, Ty),
 {
-  TyScheme::one(Some(TyVarKind::Overloaded(ov)), f)
+  ty_scheme_one(tys, TyVarKind::Overloaded(ov), |tys, a| {
+    let (a, b) = f(tys, a);
+    tys.fun(a, b)
+  })
 }
 
-fn dup(ty: Ty) -> Ty {
-  pair(ty.clone(), ty)
-}
-
-fn pair(t1: Ty, t2: Ty) -> Ty {
-  Ty::Record(RecordTy::from([(sml_hir::Lab::Num(1), t1), (sml_hir::Lab::Num(2), t2)]))
-}
-
-fn unit() -> Ty {
-  Ty::Record(RecordTy::new())
+fn ty_scheme_one<F>(tys: &mut Tys, k: TyVarKind, f: F) -> TyScheme
+where
+  F: FnOnce(&mut Tys, Ty) -> Ty,
+{
+  let mut bound_vars = Vec::<TyVarKind>::new();
+  let mut ty = None::<Ty>;
+  BoundTyVar::add_to_binder(&mut bound_vars, |bv| {
+    ty = Some(Ty::bound_var(bv));
+    k
+  });
+  TyScheme { bound_vars, ty: f(tys, ty.unwrap()) }
 }

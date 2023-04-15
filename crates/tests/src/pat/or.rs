@@ -31,7 +31,7 @@ fn not_all_same_ty() {
     r#"
 datatype t = A of int | B of string
 fun f (A x | B x) = x
-(**          ^^^ expected `?a`, found `int` *)
+(**          ^^^ expected `string`, found `int` *)
 "#,
   );
 }

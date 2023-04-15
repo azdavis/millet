@@ -1,9 +1,9 @@
 //! Dealing with `sharing` and `sharing type`.
 
-use crate::types::{Ty, TyScheme};
+use crate::types::equality;
+use crate::types::ty::{TyData, TyScheme};
 use crate::{
-  env::Env, equality, error::ErrorKind, get_env::get_ty_info, st::St, sym::SymsMarker,
-  top_dec::realize,
+  env::Env, error::ErrorKind, get_env::get_ty_info, st::St, sym::SymsMarker, top_dec::realize,
 };
 use fast_hash::FxHashSet;
 
@@ -22,8 +22,8 @@ pub(crate) fn get(
       st.err(idx, e.into());
     }
     let ty_scheme = &ty_info.val.ok()?.ty_scheme;
-    let sym = match &ty_scheme.ty {
-      Ty::Con(_, x) => *x,
+    let sym = match st.tys.data(ty_scheme.ty) {
+      TyData::Con(data) => data.sym,
       _ => {
         st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_scheme.clone()));
         return None;
@@ -61,7 +61,7 @@ pub(crate) fn get(
     for sym in syms {
       subst.insert(sym, ac.ty_scheme.clone());
     }
-    realize::get_env(&subst, inner_env);
+    realize::get_env(&mut st.tys, &subst, inner_env);
   }
 }
 
@@ -72,7 +72,7 @@ struct SharingTyScheme {
 
 impl SharingTyScheme {
   fn new(st: &mut St, ty_scheme: TyScheme) -> Self {
-    let equality = equality::get_ty_scheme(st, ty_scheme.clone()).is_ok();
+    let equality = equality::get_ty_scheme(st.info.mode, &st.syms, &mut st.tys, &ty_scheme).is_ok();
     Self { ty_scheme, equality }
   }
 }

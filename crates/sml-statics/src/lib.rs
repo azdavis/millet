@@ -15,11 +15,9 @@ mod core_info;
 mod dec;
 mod display;
 mod env;
-mod equality;
 mod error;
 mod exp;
 mod fmt_util;
-mod generalize;
 mod get_env;
 mod item;
 mod overload;
@@ -29,10 +27,7 @@ mod st;
 mod sym;
 mod top_dec;
 mod ty;
-mod ty_var;
 mod types;
-mod unify;
-mod util;
 
 pub mod basis;
 pub mod def;
@@ -40,10 +35,11 @@ pub mod disallow;
 pub mod info;
 pub mod mode;
 pub mod path_order;
+mod unify;
 
 pub use error::Error;
 pub use sym::Syms;
-pub use types::MetaVarInfo;
+pub use types::ty::Tys;
 
 /// The result of statics.
 #[derive(Debug)]
@@ -59,17 +55,19 @@ pub struct Statics {
 /// Does the checks on the root.
 pub fn get(
   syms: &mut Syms,
+  tys: &mut Tys,
   bs: &basis::Bs,
   mode: mode::Mode,
   arenas: &sml_hir::Arenas,
   root: &[sml_hir::StrDecIdx],
 ) -> Statics {
   elapsed::log("sml_statics::get", || {
-    let mut st = st::St::new(mode, std::mem::take(syms));
+    let mut st = st::St::new(mode, std::mem::take(syms), std::mem::take(tys));
     let bs = top_dec::get(&mut st, bs, arenas, root);
-    let (new_syms, errors, mut info) = st.finish();
+    let (new_syms, new_tys, errors, mut info) = st.finish();
     info.bs = bs.clone();
     *syms = new_syms;
+    *tys = new_tys;
     Statics { info, errors, bs }
   })
 }

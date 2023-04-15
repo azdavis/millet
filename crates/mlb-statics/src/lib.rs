@@ -22,6 +22,8 @@ pub struct MlbStatics {
   pub mlb_errors: Vec<Error>,
   /// The generated symbols (types and exceptions and such).
   pub syms: sml_statics::Syms,
+  /// The generated types.
+  pub tys: sml_statics::Tys,
   /// A mapping from source file paths to information about them, including errors.
   ///
   /// NOTE see comment in impl about having cx analyzed more than once.
@@ -101,6 +103,7 @@ impl fmt::Display for Item {
 
 struct St {
   syms: sml_statics::Syms,
+  tys: sml_statics::Tys,
   bases: paths::PathMap<MBasis>,
   source_files: paths::PathMap<SourceFile>,
   mlb_errors: Vec<Error>,
@@ -148,6 +151,7 @@ impl MBasis {
 #[must_use]
 pub fn get(
   syms: sml_statics::Syms,
+  tys: sml_statics::Tys,
   lang: &Language,
   bs: &sml_statics::basis::Bs,
   source_file_contents: &paths::PathMap<String>,
@@ -156,6 +160,7 @@ pub fn get(
 ) -> MlbStatics {
   let mut st = St {
     syms,
+    tys,
     bases: paths::PathMap::default(),
     source_files: paths::PathMap::default(),
     mlb_errors: Vec::new(),
@@ -170,7 +175,12 @@ pub fn get(
     let cx = Cx { source_file_contents, bas_decs, std_basis: &std_basis, lang };
     get_group_file(&mut st, cx, &mut MBasis::default(), path);
   }
-  MlbStatics { mlb_errors: st.mlb_errors, syms: st.syms, source_files: st.source_files }
+  MlbStatics {
+    mlb_errors: st.mlb_errors,
+    syms: st.syms,
+    tys: st.tys,
+    source_files: st.source_files,
+  }
 }
 
 fn get_bas_exp(
@@ -269,7 +279,8 @@ fn get_bas_dec(
         .map(|(&path, (_, syntax))| (path, (&syntax.lower.arenas, syntax.lower.root.as_slice())))
         .collect();
       assert_eq!(syntaxes.len(), hir_roots.len());
-      let order = sml_statics::path_order::get(st.syms.clone(), scope.bs.clone(), hir_roots);
+      let order =
+        sml_statics::path_order::get(st.syms.clone(), st.tys.clone(), scope.bs.clone(), hir_roots);
       assert_eq!(syntaxes.len(), order.len());
       // we could make a sequence of source path defs from the order and recurse on that, but doing
       // it like this lets us avoid re-parsing the syntax. it is a little un-DRY though in the sense
@@ -304,8 +315,14 @@ fn get_source_file(
   syntax: SourceFileSyntax,
 ) {
   let mode = sml_statics::mode::Mode::Regular(Some(path));
-  let checked =
-    sml_statics::get(&mut st.syms, &scope.bs, mode, &syntax.lower.arenas, &syntax.lower.root);
+  let checked = sml_statics::get(
+    &mut st.syms,
+    &mut st.tys,
+    &scope.bs,
+    mode,
+    &syntax.lower.arenas,
+    &syntax.lower.root,
+  );
   ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.bs });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);

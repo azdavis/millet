@@ -4,11 +4,9 @@ mod non_exhaustive;
 mod suggestion;
 
 use crate::display::{record_meta_var, MetaVarNames};
-use crate::sym::{Sym, Syms};
-use crate::ty_var::{fixed::FixedTyVar, meta::MetaTyVar};
-use crate::types::{MetaVarInfo, RecordTy, Ty, TyScheme};
-use crate::{disallow::Disallow, item::Item};
-use crate::{equality, overload, pat_match::Pat};
+use crate::types::ty::{RecordData, Ty, TyScheme, Tys};
+use crate::types::unify::{Circularity, Incompatible};
+use crate::{disallow::Disallow, item::Item, pat_match::Pat, sym::Syms};
 use diagnostic::{Code, Severity};
 use std::fmt;
 
@@ -20,8 +18,8 @@ pub(crate) enum ErrorKind {
   Duplicate(Item, str_util::Name),
   Missing(Item, str_util::Name),
   Extra(Item, str_util::Name),
-  Circularity(MetaTyVar, Ty),
-  IncompatibleTys(IncompatibleTysFlavor, Ty, Ty),
+  Circularity(Circularity),
+  IncompatibleTys(Incompatible, Ty, Ty),
   DuplicateLab(sml_hir::Lab),
   RealPat,
   UnreachablePattern,
@@ -37,7 +35,7 @@ pub(crate) enum ErrorKind {
   ExnCopyNotExnIdStatus(sml_path::Path),
   InvalidRebindName(str_util::Name),
   WrongIdStatus(str_util::Name),
-  UnresolvedRecordTy(RecordTy),
+  UnresolvedRecordTy(RecordData),
   OrPatNotSameBindings(str_util::Name),
   DecNotAllowedHere,
   ExpHole(Ty),
@@ -62,7 +60,7 @@ pub(crate) enum ErrorKind {
 struct ErrorKindDisplay<'a> {
   kind: &'a ErrorKind,
   syms: &'a Syms,
-  mv_info: &'a MetaVarInfo,
+  tys: &'a Tys,
   lines: config::ErrorLines,
 }
 
@@ -80,22 +78,21 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Duplicate(item, name) => write!(f, "duplicate {item}: `{name}`"),
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: `{name}`"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: `{name}`"),
-      ErrorKind::Circularity(mv, ty) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        let mv = Ty::MetaVar(*mv);
-        mvs.extend_for(ty);
-        mvs.extend_for(&mv);
-        let mv = mv.display(&mvs, self.syms);
-        let ty = ty.display(&mvs, self.syms);
+      ErrorKind::Circularity(circ) => {
+        let mut mvs = MetaVarNames::new(self.tys);
+        mvs.extend_for(circ.ty);
+        mvs.extend_for(circ.meta_var);
+        let mv = circ.meta_var.display(&mvs, self.syms);
+        let ty = circ.ty.display(&mvs, self.syms);
         write!(f, "circular type: `{mv}` occurs in `{ty}`")
       }
-      ErrorKind::IncompatibleTys(flavor, want, got) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(want);
-        mvs.extend_for(got);
-        flavor.extend_meta_var_names(&mut mvs);
-        let flavor = flavor.display(&mvs, self.syms);
-        write!(f, "incompatible types: {flavor}")?;
+      ErrorKind::IncompatibleTys(reason, want, got) => {
+        let mut mvs = MetaVarNames::new(self.tys);
+        mvs.extend_for(*want);
+        mvs.extend_for(*got);
+        reason.extend_meta_var_names(&mut mvs);
+        let reason = reason.display(&mvs, self.syms);
+        write!(f, "incompatible types: {reason}")?;
         let want = want.display(&mvs, self.syms);
         let got = got.display(&mvs, self.syms);
         match self.lines {
@@ -118,8 +115,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
       ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: `{name}`"),
       ErrorKind::TyEscape(ty) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(ty);
+        let mut mvs = MetaVarNames::new(self.tys);
+        mvs.extend_for(*ty);
         let ty = ty.display(&mvs, self.syms);
         write!(f, "type escapes its scope: `{ty}`")
       }
@@ -132,8 +129,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: `{name}`"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: `{name}`"),
       ErrorKind::UnresolvedRecordTy(rows) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        for ty in rows.values() {
+        let mut mvs = MetaVarNames::new(self.tys);
+        for &ty in rows.values() {
           mvs.extend_for(ty);
         }
         let ty = record_meta_var(&mvs, self.syms, rows);
@@ -144,8 +141,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::DecNotAllowedHere => f.write_str("`signature` or `functor` not allowed here"),
       ErrorKind::ExpHole(ty) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(ty);
+        let mut mvs = MetaVarNames::new(self.tys);
+        mvs.extend_for(*ty);
         let ty = ty.display(&mvs, self.syms);
         write!(f, "expression hole with type `{ty}`")
       }
@@ -160,14 +157,14 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         f.write_str("type variable bound at `val` or `fun` not allowed here")
       }
       ErrorKind::CannotShareTy(path, ts) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(&ts.ty);
+        let mut mvs = MetaVarNames::new(self.tys);
+        mvs.extend_for(ts.ty);
         let ts = ts.display(&mvs, self.syms);
         write!(f, "cannot share type `{path}` as `{ts}`")
       }
       ErrorKind::CannotRealizeTy(path, ts) => {
-        let mut mvs = MetaVarNames::new(self.mv_info);
-        mvs.extend_for(&ts.ty);
+        let mut mvs = MetaVarNames::new(self.tys);
+        mvs.extend_for(ts.ty);
         let ts = ts.display(&mvs, self.syms);
         write!(f, "cannot realize type `{path}` as `{ts}`")
       }
@@ -232,126 +229,6 @@ impl fmt::Display for AppendArg {
   }
 }
 
-#[derive(Debug)]
-pub(crate) enum IncompatibleTysFlavor {
-  FixedTyVar(FixedTyVar, FixedTyVar),
-  MissingRow(sml_hir::Lab),
-  ExtraRows(RecordTy),
-  Con(Sym, Sym),
-  Head(Ty, Ty),
-  OverloadCon(overload::Overload, Sym),
-  OverloadUnify(overload::Overload, overload::Overload),
-  OverloadRecord(RecordTy, overload::Overload),
-  OverloadHeadMismatch(overload::Overload, Ty),
-  UnresolvedRecordMissingRow(sml_hir::Lab),
-  UnresolvedRecordHeadMismatch(RecordTy, Ty),
-  NotEqTy(Ty, equality::NotEqTy),
-}
-
-impl IncompatibleTysFlavor {
-  fn display<'a>(
-    &'a self,
-    meta_vars: &'a MetaVarNames<'a>,
-    syms: &'a Syms,
-  ) -> impl fmt::Display + 'a {
-    IncompatibleTysFlavorDisplay { flavor: self, meta_vars, syms }
-  }
-
-  /// need to have this be separate from the Display impl so that the mutable borrow doesn't last
-  /// too long.
-  fn extend_meta_var_names(&self, meta_vars: &mut MetaVarNames<'_>) {
-    match self {
-      Self::FixedTyVar(_, _)
-      | Self::MissingRow(_)
-      | Self::Con(_, _)
-      | Self::OverloadCon(_, _)
-      | Self::OverloadUnify(_, _)
-      | Self::UnresolvedRecordMissingRow(_) => {}
-      Self::ExtraRows(record) | Self::OverloadRecord(record, _) => {
-        for ty in record.values() {
-          meta_vars.extend_for(ty);
-        }
-      }
-      Self::OverloadHeadMismatch(_, ty) | Self::NotEqTy(ty, _) => meta_vars.extend_for(ty),
-      Self::UnresolvedRecordHeadMismatch(record, ty) => {
-        for ty in record.values() {
-          meta_vars.extend_for(ty);
-        }
-        meta_vars.extend_for(ty);
-      }
-      Self::Head(ty1, ty2) => {
-        meta_vars.extend_for(ty1);
-        meta_vars.extend_for(ty2);
-      }
-    }
-  }
-}
-
-struct IncompatibleTysFlavorDisplay<'a> {
-  flavor: &'a IncompatibleTysFlavor,
-  meta_vars: &'a MetaVarNames<'a>,
-  syms: &'a Syms,
-}
-
-impl fmt::Display for IncompatibleTysFlavorDisplay<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.flavor {
-      IncompatibleTysFlavor::FixedTyVar(a, b) => {
-        write!(f, "`{a}` and `{b}` are different type variables")
-      }
-      IncompatibleTysFlavor::MissingRow(lab) => {
-        write!(f, "record type is missing field: `{lab}`")
-      }
-      IncompatibleTysFlavor::ExtraRows(rows) => {
-        write!(f, "record type has extra fields: ")?;
-        fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| lab))
-      }
-      IncompatibleTysFlavor::Con(a, b) => {
-        let a = a.display(self.syms);
-        let b = b.display(self.syms);
-        write!(f, "`{a}` and `{b}` are different type constructors")
-      }
-      IncompatibleTysFlavor::Head(a, b) => {
-        let a_display = a.display(self.meta_vars, self.syms);
-        let b_display = b.display(self.meta_vars, self.syms);
-        let a_desc = a.desc();
-        let b_desc = b.desc();
-        write!(f, "`{a_display}` is {a_desc}, but `{b_display}` is {b_desc}")
-      }
-      IncompatibleTysFlavor::OverloadCon(ov, s) => {
-        let s = s.display(self.syms);
-        write!(f, "`{s}` is not compatible with the `{ov}` overload")
-      }
-      IncompatibleTysFlavor::OverloadUnify(want, got) => {
-        write!(f, "`{want}` and `{got}` are incompatible overloads")
-      }
-      IncompatibleTysFlavor::OverloadRecord(_, ov) => {
-        write!(f, "record types are not compatible with the `{ov}` overload")
-      }
-      IncompatibleTysFlavor::OverloadHeadMismatch(ov, ty) => {
-        let ty_display = ty.display(self.meta_vars, self.syms);
-        let ty_desc = ty.desc();
-        write!(f, "`{ov}` is not compatible with `{ty_display}`, which is {ty_desc}")
-      }
-      IncompatibleTysFlavor::UnresolvedRecordMissingRow(lab) => {
-        write!(f, "unresolved record type is missing field: `{lab}`")
-      }
-      IncompatibleTysFlavor::UnresolvedRecordHeadMismatch(_, ty) => {
-        let ty_display = ty.display(self.meta_vars, self.syms);
-        let ty_desc = ty.desc();
-        write!(
-          f,
-          "unresolved record type is not compatible with `{ty_display}`, which is {ty_desc}"
-        )
-      }
-      IncompatibleTysFlavor::NotEqTy(ty, not_eq) => {
-        let ty = ty.display(self.meta_vars, self.syms);
-        write!(f, "not an equality type because it contains {not_eq}: `{ty}`")
-      }
-    }
-  }
-}
-
 /// A statics error.
 #[derive(Debug)]
 pub struct Error {
@@ -371,10 +248,10 @@ impl Error {
   pub fn display<'a>(
     &'a self,
     syms: &'a Syms,
-    mv_info: &'a MetaVarInfo,
+    tys: &'a Tys,
     lines: config::ErrorLines,
   ) -> impl fmt::Display + 'a {
-    ErrorKindDisplay { kind: &self.kind, syms, mv_info, lines }
+    ErrorKindDisplay { kind: &self.kind, syms, tys, lines }
   }
 
   /// Return the code for this.
@@ -390,7 +267,7 @@ impl Error {
       ErrorKind::Duplicate(_, _) => Code::n(5002),
       ErrorKind::Missing(_, _) => Code::n(5003),
       ErrorKind::Extra(_, _) => Code::n(5004),
-      ErrorKind::Circularity(_, _) => Code::n(5005),
+      ErrorKind::Circularity(_) => Code::n(5005),
       ErrorKind::IncompatibleTys(_, _, _) => Code::n(5006),
       ErrorKind::DuplicateLab(_) => Code::n(5008),
       ErrorKind::RealPat => Code::n(5009),

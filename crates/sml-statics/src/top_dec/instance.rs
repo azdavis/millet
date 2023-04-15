@@ -2,8 +2,10 @@
 
 use crate::env::{Env, Sig};
 use crate::error::ErrorKind;
+use crate::types::util::n_ary_con;
 use crate::{
-  compatible::eq_ty_fn_no_emit, get_env::get_ty_info_raw, st::St, top_dec::realize, types::TyScheme,
+  compatible::eq_ty_fn_no_emit, get_env::get_ty_info_raw, st::St, top_dec::realize,
+  types::ty::TyScheme,
 };
 
 pub(crate) fn env_of_sig(
@@ -15,8 +17,8 @@ pub(crate) fn env_of_sig(
 ) {
   for &sym in &sig.ty_names {
     let mut path = Vec::<&str_util::Name>::new();
-    let ty_scheme =
-      TyScheme::n_ary(st.syms.get(sym).unwrap().ty_info.ty_scheme.bound_vars.iter().cloned(), sym);
+    let bound_vars = st.syms.get(sym).unwrap().ty_info.ty_scheme.bound_vars.clone();
+    let ty_scheme = n_ary_con(&mut st.tys, bound_vars, sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
       // @test(sig::no_path_to_sym). there should have already been an error emitted for this
       log::warn!("no path to sym");

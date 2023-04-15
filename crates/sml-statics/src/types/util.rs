@@ -1,0 +1,143 @@
+//! Utilities.
+
+use crate::sym::Sym;
+use crate::types::ty::{
+  BoundTyVar, BoundTyVars, Generalizable, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys,
+};
+use crate::{error::ErrorKind, item::Item, overload, st::St};
+use chain_map::ChainMap;
+
+pub(crate) fn get_scon(tys: &mut Tys, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
+  // we could have all of these return the basic overloads, but there are no overloads for `char` or
+  // `string`, so just return the primitive types themselves for those.
+  match scon {
+    sml_hir::SCon::Int(_) => {
+      let kind = TyVarKind::Overloaded(overload::Basic::Int.into());
+      tys.meta_var_kind(g, kind)
+    }
+    sml_hir::SCon::Real(_) => {
+      let kind = TyVarKind::Overloaded(overload::Basic::Real.into());
+      tys.meta_var_kind(g, kind)
+    }
+    sml_hir::SCon::Word(_) => {
+      let kind = TyVarKind::Overloaded(overload::Basic::Word.into());
+      tys.meta_var_kind(g, kind)
+    }
+    sml_hir::SCon::Char(_) => tys.char(),
+    sml_hir::SCon::String(_) => tys.string(),
+  }
+}
+
+/// @def(6), @def(39), @def(49)
+pub(crate) fn record<T, F>(
+  st: &mut St,
+  idx: sml_hir::Idx,
+  rows: &[(sml_hir::Lab, T)],
+  mut f: F,
+) -> RecordData
+where
+  T: Copy,
+  F: FnMut(&mut St, &sml_hir::Lab, T) -> Ty,
+{
+  let mut ty_rows = RecordData::new();
+  for (lab, val) in rows {
+    let ty = f(st, lab, *val);
+    match ty_rows.insert(lab.clone(), ty) {
+      None => {}
+      Some(_) => st.err(idx, ErrorKind::DuplicateLab(lab.clone())),
+    }
+  }
+  ty_rows
+}
+
+/// instantiates the type scheme's type with new meta type vars, according to the bound vars of the
+/// type scheme.
+pub(crate) fn instantiate(tys: &mut Tys, g: Generalizable, ty_scheme: &TyScheme) -> Ty {
+  let subst: Vec<_> =
+    ty_scheme.bound_vars.iter().map(|kind| tys.meta_var_kind(g, kind.clone())).collect();
+  let mut ret = ty_scheme.ty;
+  apply_bv(tys, &subst, &mut ret);
+  ret
+}
+
+/// apply the subst for bound type variables. all bound variables must be defined by the subst.
+pub(crate) fn apply_bv(tys: &mut Tys, subst: &[Ty], ty: &mut Ty) {
+  match tys.data(*ty) {
+    // interesting case
+    TyData::BoundVar(bv) => *ty = *bv.index_into(subst),
+    // trivial base cases
+    TyData::None | TyData::UnsolvedMetaVar(_) | TyData::FixedVar(_) => {}
+    // recursive cases
+    TyData::Record(mut rows) => {
+      for ty in rows.values_mut() {
+        apply_bv(tys, subst, ty);
+      }
+      *ty = tys.record(rows);
+    }
+    TyData::Con(mut data) => {
+      for ty in &mut data.args {
+        apply_bv(tys, subst, ty);
+      }
+      *ty = tys.con(data.args, data.sym);
+    }
+    TyData::Fn(mut data) => {
+      apply_bv(tys, subst, &mut data.param);
+      apply_bv(tys, subst, &mut data.res);
+      *ty = tys.fun(data.param, data.res);
+    }
+  }
+}
+
+/// inserts `(name, val)` into the map, but returns `Some(e)` if `name` was already a key, where `e`
+/// is an error describing this transgression.
+pub(crate) fn ins_no_dupe<V>(
+  map: &mut ChainMap<str_util::Name, V>,
+  name: str_util::Name,
+  val: V,
+  item: Item,
+) -> Option<ErrorKind> {
+  (!map.insert(name.clone(), val)).then_some(ErrorKind::Duplicate(item, name))
+}
+
+/// inerts a name that is not one of the special reserved names like `true`.
+pub(crate) fn ins_check_name<V>(
+  map: &mut ChainMap<str_util::Name, V>,
+  name: str_util::Name,
+  val: V,
+  item: Item,
+) -> Option<ErrorKind> {
+  let no = matches!(name.as_str(), "true" | "false" | "nil" | "::" | "ref" | "=" | "it");
+  no.then(|| ErrorKind::InvalidRebindName(name.clone()))
+    .or_else(|| ins_no_dupe(map, name, val, item))
+}
+
+pub(crate) fn ty_syms<F: FnMut(Sym)>(tys: &Tys, ty: Ty, f: &mut F) {
+  match tys.data(ty) {
+    // interesting case
+    TyData::Con(data) => {
+      for &ty in &data.args {
+        ty_syms(tys, ty, f);
+      }
+      f(data.sym);
+    }
+    // trivial base cases
+    TyData::None | TyData::BoundVar(_) | TyData::UnsolvedMetaVar(_) | TyData::FixedVar(_) => {}
+    // recursive cases
+    TyData::Record(rows) => {
+      for &ty in rows.values() {
+        ty_syms(tys, ty, f);
+      }
+    }
+    TyData::Fn(data) => {
+      ty_syms(tys, data.param, f);
+      ty_syms(tys, data.res, f);
+    }
+  }
+}
+
+pub(crate) fn n_ary_con(tys: &mut Tys, bound_vars: BoundTyVars, sym: Sym) -> TyScheme {
+  let args: Vec<_> =
+    BoundTyVar::iter_for(bound_vars.iter()).map(|(bv, _)| Ty::bound_var(bv)).collect();
+  let ty = tys.con(args, sym);
+  TyScheme { bound_vars, ty }
+}

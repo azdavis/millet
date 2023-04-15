@@ -1,7 +1,8 @@
 //! Environments and types that contain them.
 
 use crate::core_info::{TyEnv, ValEnv};
-use crate::{def, disallow::Disallow, sym::Sym, ty_var::fixed::FixedTyVar};
+use crate::types::ty::Ty;
+use crate::{def, disallow::Disallow, sym::Sym};
 use chain_map::ChainMap;
 use fast_hash::{FxHashMap, FxHashSet};
 
@@ -46,7 +47,7 @@ pub(crate) struct Cx {
   /// the Definition has this as a set, but we have it as a mapping.
   ///
   /// this isn't really `ty_vars(C)` as in the definition, since it's just fixed ty vars.
-  pub(crate) fixed: FxHashMap<sml_hir::TyVar, FixedTyVar>,
+  pub(crate) fixed: FxHashMap<sml_hir::TyVar, Ty>,
 }
 
 /// Definition: `TyNameSet`

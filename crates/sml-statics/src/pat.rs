@@ -2,11 +2,11 @@
 
 use crate::core_info::{IdStatus, ValEnv, ValInfo};
 use crate::pat_match::{Con, Pat, VariantName};
-use crate::types::{MetaTyVarKind, SubstEntry, Ty, TyScheme};
-use crate::util::{apply, get_scon, ins_check_name, instantiate, record};
+use crate::types::ty::{Generalizable, Ty, TyData, TyScheme};
+use crate::types::util::{get_scon, ins_check_name, instantiate, record};
 use crate::{
   compatible::eq_ty_scheme, config, def, env::Cx, error::ErrorKind, get_env::get_val_info,
-  info::TyEntry, item::Item, mode::Mode, st::St, ty, ty_var::meta::Generalizable, unify::unify,
+  info::TyEntry, item::Item, mode::Mode, st::St, ty, unify::unify,
 };
 use fast_hash::FxHashSet;
 use std::collections::BTreeSet;
@@ -28,18 +28,18 @@ pub(crate) fn get(
 ) -> (Pat, Ty) {
   let pat_ = match pat {
     Some(x) => x,
-    None => return (Pat::zero(Con::Any, pat), Ty::None),
+    None => return (Pat::zero(Con::Any, pat), Ty::NONE),
   };
   let ret = match get_(st, cfg, ars, cx, ve, pat_) {
     Some(x) => x,
     None => PatRet {
       pm_pat: Pat::zero(Con::Any, pat),
-      ty: Ty::MetaVar(st.meta_gen.gen(cfg.gen)),
+      ty: st.tys.meta_var(cfg.gen),
       ty_scheme: None,
       defs: FxHashSet::default(),
     },
   };
-  let ty_entry = TyEntry::new(ret.ty.clone(), ret.ty_scheme);
+  let ty_entry = TyEntry::new(ret.ty, ret.ty_scheme);
   st.info.insert(pat_.into(), Some(ty_entry), ret.defs);
   (ret.pm_pat, ret.ty)
 }
@@ -64,7 +64,7 @@ fn get_(
   let mut defs = FxHashSet::<def::Def>::default();
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
     // @def(32)
-    sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), Ty::MetaVar(st.meta_gen.gen(cfg.gen))),
+    sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), st.tys.meta_var(cfg.gen)),
     // @def(33)
     sml_hir::Pat::SCon(special_con) => {
       let con = match special_con {
@@ -77,7 +77,7 @@ fn get_(
         sml_hir::SCon::Char(c) => Con::Char(*c),
         sml_hir::SCon::String(s) => Con::String(s.clone()),
       };
-      let t = get_scon(st, cfg.gen, special_con);
+      let t = get_scon(&mut st.tys, cfg.gen, special_con);
       (Pat::zero(con, pat), t)
     }
     sml_hir::Pat::Con(path, argument) => {
@@ -92,9 +92,9 @@ fn get_(
         && (ok_val_info(val_info.val.as_ref().ok().copied()) || cfg.rec);
       // @def(34)
       if is_var {
-        let ty = Ty::MetaVar(st.meta_gen.gen(cfg.gen));
+        let ty = st.tys.meta_var(cfg.gen);
         defs.extend(st.def(pat_idx.into()));
-        insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty.clone());
+        insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty);
         return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, defs });
       }
       let val_info = match val_info.val {
@@ -115,29 +115,29 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
-      let ty = instantiate(st, cfg.gen, val_info.ty_scheme.clone());
+      let ty = instantiate(&mut st.tys, cfg.gen, &val_info.ty_scheme);
       // @def(35), @def(41)
-      let (sym, arguments, ty) = match ty {
-        Ty::Con(_, sym) => {
+      let (sym, arguments, ty) = match st.tys.data(ty) {
+        TyData::Con(data) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
           defs.extend(val_info.defs.iter().copied());
           if argument.is_some() {
             st.err(pat_idx, ErrorKind::ConPatMustNotHaveArg);
           }
-          (sym, Vec::new(), ty)
+          (data.sym, Vec::new(), ty)
         }
-        Ty::Fn(param_ty, mut res_ty) => {
+        TyData::Fn(data) => {
           ty_scheme = Some(TyScheme {
             bound_vars: val_info.ty_scheme.bound_vars.clone(),
-            ty: match &val_info.ty_scheme.ty {
-              Ty::Fn(_, res_ty) => res_ty.as_ref().clone(),
+            ty: match st.tys.data(val_info.ty_scheme.ty) {
+              TyData::Fn(data) => data.res,
               // @test(pat::weird_pat_fn_1)
               _ => return None,
             },
           });
           defs.extend(val_info.defs.iter().copied());
-          let sym = match res_ty.as_ref() {
-            Ty::Con(_, x) => *x,
+          let sym = match st.tys.data(data.res) {
+            TyData::Con(data) => data.sym,
             // @test(pat::weird_pat_fn_2)
             _ => return None,
           };
@@ -147,12 +147,11 @@ fn get_(
               Pat::zero(Con::Any, pat)
             }
             Some((arg_pat, arg_ty)) => {
-              unify(st, pat_idx.into(), *param_ty, arg_ty);
-              apply(&st.subst, &mut res_ty);
+              unify(st, pat_idx.into(), data.param, arg_ty);
               arg_pat
             }
           };
-          (sym, vec![arg_pat], *res_ty)
+          (sym, vec![arg_pat], data.res)
         }
         // should have already errored
         _ => return None,
@@ -172,12 +171,9 @@ fn get_(
       });
       let ty = if *allows_other {
         // @def(38)
-        let mv = st.meta_gen.gen(cfg.gen);
-        let k = SubstEntry::Kind(MetaTyVarKind::Record(rows, pat_idx.into()));
-        assert!(st.subst.insert(mv, k).is_none());
-        Ty::MetaVar(mv)
+        st.tys.unresolved_record(cfg.gen, rows, pat_idx.into())
       } else {
-        Ty::Record(rows)
+        st.tys.record(rows)
       };
       let con = Con::Record { labels, allows_other: *allows_other };
       (Pat::con(con, pats, pat), ty)
@@ -185,9 +181,8 @@ fn get_(
     // @def(42)
     sml_hir::Pat::Typed(inner, want) => {
       let (pm_pat, got) = get(st, cfg, ars, cx, ve, *inner);
-      let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
-      unify(st, inner.unwrap_or(pat_idx).into(), want.clone(), got);
-      apply(&st.subst, &mut want);
+      let want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
+      unify(st, inner.unwrap_or(pat_idx).into(), want, got);
       (pm_pat, want)
     }
     // @def(43)
@@ -196,20 +191,19 @@ fn get_(
       if !ok_val_info(cx.env.val_env.get(name)) {
         st.err(pat_idx, ErrorKind::InvalidAsPatName(name.clone()));
       }
-      insert_name(st, pat_idx.into(), cfg.cfg, ve, name.clone(), ty.clone());
+      insert_name(st, pat_idx.into(), cfg.cfg, ve, name.clone(), ty);
       (pm_pat, ty)
     }
     sml_hir::Pat::Or(or_pat) => {
       let mut fst_ve = ValEnv::default();
-      let (fst_pm_pat, mut ty) = get(st, cfg, ars, cx, &mut fst_ve, or_pat.first);
+      let (fst_pm_pat, ty) = get(st, cfg, ars, cx, &mut fst_ve, or_pat.first);
       let mut pm_pats = vec![fst_pm_pat];
       for &pat in &or_pat.rest {
         let mut rest_ve = ValEnv::default();
         let (rest_pm_pat, rest_ty) = get(st, cfg, ars, cx, &mut rest_ve, pat);
         pm_pats.push(rest_pm_pat);
         let idx = sml_hir::Idx::from(pat.unwrap_or(pat_idx));
-        unify(st, idx, ty.clone(), rest_ty);
-        apply(&st.subst, &mut ty);
+        unify(st, idx, ty, rest_ty);
         for (name, fst_val_info) in fst_ve.iter_mut() {
           let rest_val_info = match rest_ve.remove(name) {
             Some(x) => x,
@@ -222,7 +216,7 @@ fn get_(
           assert!(rest_val_info.id_status.same_kind_as(IdStatus::Val));
           fst_val_info.defs.extend(rest_val_info.defs);
           let rest_ty_scheme = rest_val_info.ty_scheme.clone();
-          match eq_ty_scheme(st, &fst_val_info.ty_scheme, rest_ty_scheme) {
+          match eq_ty_scheme(st, &fst_val_info.ty_scheme, &rest_ty_scheme) {
             Ok(()) => {}
             Err(e) => st.err(idx, e),
           }

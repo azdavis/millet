@@ -1,15 +1,20 @@
 //! Glue code to talk to [`pattern_match`].
 
 use crate::sym::{Exn, Sym, Syms};
-use crate::{types::Ty, util::apply_bv};
+use crate::types::ty::{Ty, TyData, Tys};
+use crate::types::util::apply_bv;
 use fast_hash::FxHashSet;
 use pattern_match::{CheckError, Result};
 use std::collections::BTreeSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
 
+// TODO this really shouldn't take ownership of either of these, but having this have a lifetime
+// makes `Pat` weird. maybe should rethink the pattern_match API. Maybe a new associated type on the
+// trait for "context"?
 pub(crate) struct Lang {
   pub(crate) syms: Syms,
+  pub(crate) tys: std::cell::RefCell<Tys>,
 }
 
 impl pattern_match::Lang for Lang {
@@ -29,12 +34,16 @@ impl pattern_match::Lang for Lang {
     I: Iterator<Item = &'a Con>,
   {
     let ret = match con {
-      Con::Any => match ty {
-        Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => {
+      Con::Any => match self.tys.borrow().data(*ty) {
+        TyData::None
+        | TyData::BoundVar(_)
+        | TyData::UnsolvedMetaVar(_)
+        | TyData::FixedVar(_)
+        | TyData::Fn(_) => {
           vec![Con::Any]
         }
-        Ty::Con(_, sym) => {
-          let all_cons = cons_for_sym(&self.syms, *sym).unwrap_or_else(|| vec![Con::Any]);
+        TyData::Con(data) => {
+          let all_cons = cons_for_sym(&self.syms, data.sym).unwrap_or_else(|| vec![Con::Any]);
           let cur_cons: FxHashSet<_> = cons.collect();
           // this is... a little strange.
           //
@@ -64,8 +73,8 @@ impl pattern_match::Lang for Lang {
             all_cons
           }
         }
-        Ty::Record(fs) => {
-          vec![Con::Record { labels: fs.keys().cloned().collect(), allows_other: false }]
+        TyData::Record(rows) => {
+          vec![Con::Record { labels: rows.keys().cloned().collect(), allows_other: false }]
         }
       },
       Con::Int(_)
@@ -81,27 +90,33 @@ impl pattern_match::Lang for Lang {
   }
 
   fn get_arg_tys(&self, ty: &Ty, con: &Con) -> Result<Vec<Ty>> {
-    let ret = match ty {
-      Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) | Ty::Fn(_, _) => Vec::new(),
-      Ty::Record(rows) => rows.iter().map(|(_, t)| t.clone()).collect(),
-      Ty::Con(args, ty_name) => match con {
+    let data = self.tys.borrow().data(*ty);
+    let ret = match data {
+      TyData::None
+      | TyData::BoundVar(_)
+      | TyData::UnsolvedMetaVar(_)
+      | TyData::FixedVar(_)
+      | TyData::Fn(_) => Vec::new(),
+      TyData::Record(rows) => rows.values().copied().collect(),
+      TyData::Con(data) => match con {
         Con::Any | Con::Int(_) | Con::Word(_) | Con::Char(_) | Con::String(_) => Vec::new(),
-        Con::Variant(ty_name_2, variant_name) => {
-          if ty_name != ty_name_2 {
+        Con::Variant(sym, variant_name) => {
+          if data.sym != *sym {
             return Err(CheckError);
           }
-          match (variant_name, self.syms.get(*ty_name)) {
+          match (variant_name, self.syms.get(data.sym)) {
             (VariantName::Exn(exn), None) => {
-              self.syms.get_exn(*exn).param.iter().cloned().collect()
+              self.syms.get_exn(*exn).param.iter().copied().collect()
             }
             (VariantName::Name(name), Some(sym_info)) => {
               let val_info = sym_info.ty_info.val_env.get(name).ok_or(CheckError)?;
-              match &val_info.ty_scheme.ty {
-                Ty::Con(_, _) => Vec::new(),
-                Ty::Fn(arg, _) => {
-                  let mut arg = arg.as_ref().clone();
-                  apply_bv(args, &mut arg);
-                  vec![arg]
+              let val_data = self.tys.borrow().data(val_info.ty_scheme.ty);
+              match val_data {
+                TyData::Con(_) => Vec::new(),
+                TyData::Fn(fn_data) => {
+                  let mut param = fn_data.param;
+                  apply_bv(&mut self.tys.borrow_mut(), &data.args, &mut param);
+                  vec![param]
                 }
                 _ => return Err(CheckError),
               }

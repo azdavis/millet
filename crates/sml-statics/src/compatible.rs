@@ -1,8 +1,7 @@
 //! Checking whether type schemes are compatible with each other.
 
-use crate::ty_var::{fixed::TyVarSrc, meta::Generalizable};
-use crate::types::{BoundTyVars, Ty, TyScheme, TyVarKind};
-use crate::util::{apply_bv, instantiate};
+use crate::types::ty::{BoundTyVars, Generalizable, Ty, TyScheme, TyVarKind, TyVarSrc};
+use crate::types::util::{apply_bv, instantiate};
 use crate::{error::ErrorKind, fmt_util::ty_var_name, st::St, unify::unify_no_emit};
 
 type Result = std::result::Result<(), ErrorKind>;
@@ -14,8 +13,8 @@ pub(crate) fn eq_ty_fn_no_emit(st: &mut St, mut lhs: TyScheme, mut rhs: TyScheme
     return Err(ErrorKind::WrongNumTyArgs(lhs.bound_vars.len(), rhs.bound_vars.len()));
   }
   let subst = fixed_var_subst(st, &lhs.bound_vars);
-  apply_bv(&subst, &mut lhs.ty);
-  apply_bv(&subst, &mut rhs.ty);
+  apply_bv(&mut st.tys, &subst, &mut lhs.ty);
+  apply_bv(&mut st.tys, &subst, &mut rhs.ty);
   unify_no_emit(st, lhs.ty, rhs.ty)
 }
 
@@ -28,8 +27,8 @@ pub(crate) fn eq_ty_fn(st: &mut St, idx: sml_hir::Idx, lhs: TyScheme, rhs: TySch
 }
 
 /// returns `Ok(())` iff the ty schemes are equal.
-pub(crate) fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: TyScheme) -> Result {
-  generalizes_no_emit(st, lhs.clone(), &rhs)?;
+pub(crate) fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: &TyScheme) -> Result {
+  generalizes_no_emit(st, lhs, rhs)?;
   generalizes_no_emit(st, rhs, lhs)?;
   Ok(())
 }
@@ -39,23 +38,23 @@ fn fixed_var_subst(st: &mut St, bound_vars: &BoundTyVars) -> Vec<Ty> {
     .iter()
     .enumerate()
     .map(|(idx, kind)| {
-      let equality = matches!(kind, Some(TyVarKind::Equality));
+      let equality = matches!(kind, TyVarKind::Equality);
       let ty_var = ty_var_name(equality, idx).to_string();
-      Ty::FixedVar(st.fixed_gen.gen(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty))
+      st.tys.fixed_var(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty)
     })
     .collect()
 }
 
-fn generalizes_no_emit(st: &mut St, general: TyScheme, specific: &TyScheme) -> Result {
-  let general = instantiate(st, Generalizable::Always, general);
+fn generalizes_no_emit(st: &mut St, general: &TyScheme, specific: &TyScheme) -> Result {
+  let general = instantiate(&mut st.tys, Generalizable::Always, general);
   let subst = fixed_var_subst(st, &specific.bound_vars);
-  let mut specific = specific.ty.clone();
-  apply_bv(&subst, &mut specific);
+  let mut specific = specific.ty;
+  apply_bv(&mut st.tys, &subst, &mut specific);
   unify_no_emit(st, specific, general)
 }
 
 /// emits no error iff `general` generalizes `specific`.
-pub(crate) fn generalizes(st: &mut St, idx: sml_hir::Idx, general: TyScheme, specific: &TyScheme) {
+pub(crate) fn generalizes(st: &mut St, idx: sml_hir::Idx, general: &TyScheme, specific: &TyScheme) {
   match generalizes_no_emit(st, general, specific) {
     Ok(()) => {}
     Err(e) => st.err(idx, e),

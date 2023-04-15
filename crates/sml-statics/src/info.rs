@@ -1,8 +1,9 @@
 //! See [`Info`].
 
 use crate::core_info::{IdStatus, ValInfo};
-use crate::types::{MetaVarInfo, Ty, TyScheme};
-use crate::{basis::Bs, def, display::MetaVarNames, mode::Mode, util::ty_syms};
+use crate::types::ty::{Ty, TyData, TyScheme, Tys};
+use crate::types::util::ty_syms;
+use crate::{basis::Bs, def, display::MetaVarNames, mode::Mode};
 use crate::{env::Env, sym::Syms};
 use fast_hash::{FxHashMap, FxHashSet};
 use std::fmt;
@@ -12,18 +13,12 @@ use std::fmt;
 pub struct Info {
   pub(crate) mode: Mode,
   pub(crate) indices: FxHashMap<sml_hir::Idx, IdxEntry>,
-  pub(crate) meta_vars: MetaVarInfo,
   pub(crate) bs: Bs,
 }
 
 impl Info {
   pub(crate) fn new(mode: Mode) -> Self {
-    Self {
-      mode,
-      indices: FxHashMap::default(),
-      meta_vars: MetaVarInfo::default(),
-      bs: Bs::default(),
-    }
+    Self { mode, indices: FxHashMap::default(), bs: Bs::default() }
   }
 
   pub(crate) fn insert(
@@ -41,21 +36,11 @@ impl Info {
     self.indices.entry(idx).or_default().doc.replace(doc)
   }
 
-  pub(crate) fn tys_mut(&mut self) -> impl Iterator<Item = &mut Ty> {
-    self.indices.values_mut().filter_map(|entry| entry.ty_entry.as_mut().map(|x| &mut x.ty))
-  }
-
-  /// Returns information about meta type variables.
-  #[must_use]
-  pub fn meta_vars(&self) -> &MetaVarInfo {
-    &self.meta_vars
-  }
-
   /// Returns a Markdown string with type information associated with this index.
   #[must_use]
-  pub fn get_ty_md(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<String> {
+  pub fn get_ty_md(&self, syms: &Syms, tys: &Tys, idx: sml_hir::Idx) -> Option<String> {
     let ty_entry = self.indices.get(&idx)?.ty_entry.as_ref()?;
-    let ty_entry = TyEntryDisplay { ty_entry, syms, meta_vars: &self.meta_vars };
+    let ty_entry = TyEntryDisplay { ty_entry, syms, tys };
     Some(ty_entry.to_string())
   }
 
@@ -72,10 +57,10 @@ impl Info {
 
   /// Returns the definition site of the type for the idx.
   #[must_use]
-  pub fn get_ty_defs(&self, syms: &Syms, idx: sml_hir::Idx) -> Option<Vec<def::Def>> {
+  pub fn get_ty_defs(&self, syms: &Syms, tys: &Tys, idx: sml_hir::Idx) -> Option<Vec<def::Def>> {
     let ty_entry = self.indices.get(&idx)?.ty_entry.as_ref()?;
     let mut ret = Vec::<def::Def>::new();
-    ty_syms(&ty_entry.ty, &mut |sym| match syms.get(sym) {
+    ty_syms(tys, ty_entry.ty, &mut |sym| match syms.get(sym) {
       None => {}
       Some(sym_info) => match sym_info.ty_info.def {
         None => {}
@@ -90,11 +75,12 @@ impl Info {
   pub fn get_variants(
     &self,
     syms: &Syms,
+    tys: &Tys,
     idx: sml_hir::Idx,
   ) -> Option<Vec<(str_util::Name, bool)>> {
     let ty_entry = self.indices.get(&idx)?.ty_entry.as_ref()?;
-    let sym = match ty_entry.ty {
-      Ty::Con(_, x) => x,
+    let sym = match tys.data(ty_entry.ty) {
+      TyData::Con(data) => data.sym,
       _ => return None,
     };
     let mut ret: Vec<_> = syms
@@ -103,7 +89,7 @@ impl Info {
       .val_env
       .iter()
       .map(|(name, val_info)| {
-        let has_arg = matches!(val_info.ty_scheme.ty, Ty::Fn(_, _));
+        let has_arg = matches!(tys.data(val_info.ty_scheme.ty), TyData::Fn(_));
         (name.clone(), has_arg)
       })
       .collect();
@@ -116,14 +102,18 @@ impl Info {
   /// You also have to pass down the `path` that this `Info` is for. It's slightly odd, but we
   /// need it to know which `Def`s we should actually include in the return value.
   #[must_use]
-  pub fn document_symbols(&self, syms: &Syms, path: paths::PathId) -> Vec<DocumentSymbol> {
-    // let bs = &self.basis;
-    let mut mvs = MetaVarNames::new(&self.meta_vars);
+  pub fn document_symbols(
+    &self,
+    syms: &Syms,
+    tys: &Tys,
+    path: paths::PathId,
+  ) -> Vec<DocumentSymbol> {
+    let mut mvs = MetaVarNames::new(tys);
     let mut ret = Vec::<DocumentSymbol>::new();
     ret.extend(self.bs.fun_env.iter().filter_map(|(name, fun_sig)| {
       let idx = def_idx(path, fun_sig.body_env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, &mut mvs, syms, path, &fun_sig.body_env);
+      env_syms(&mut children, &mut mvs, syms, tys, path, &fun_sig.body_env);
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Functor,
@@ -135,7 +125,7 @@ impl Info {
     ret.extend(self.bs.sig_env.iter().filter_map(|(name, sig)| {
       let idx = def_idx(path, sig.env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, &mut mvs, syms, path, &sig.env);
+      env_syms(&mut children, &mut mvs, syms, tys, path, &sig.env);
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Signature,
@@ -144,7 +134,7 @@ impl Info {
         children,
       })
     }));
-    env_syms(&mut ret, &mut mvs, syms, path, &self.bs.env);
+    env_syms(&mut ret, &mut mvs, syms, tys, path, &self.bs.env);
     // order doesn't seem to matter. at least vs code displays the symbols in source order.
     ret
   }
@@ -156,15 +146,15 @@ impl Info {
 
   /// Returns the completions for this file.
   #[must_use]
-  pub fn completions(&self, syms: &Syms) -> Vec<CompletionItem> {
+  pub fn completions(&self, syms: &Syms, tys: &Tys) -> Vec<CompletionItem> {
     let mut ret = Vec::<CompletionItem>::new();
-    let mut mvs = MetaVarNames::new(&self.meta_vars);
+    let mut mvs = MetaVarNames::new(tys);
     ret.extend(self.bs.env.val_env.iter().map(|(name, val_info)| {
       mvs.clear();
-      mvs.extend_for(&val_info.ty_scheme.ty);
+      mvs.extend_for(val_info.ty_scheme.ty);
       CompletionItem {
         label: name.as_str().to_owned(),
-        kind: val_info_symbol_kind(val_info),
+        kind: val_info_symbol_kind(tys, val_info),
         detail: Some(val_info.ty_scheme.display(&mvs, syms).to_string()),
         // TODO improve? might need to reorganize where documentation is stored
         documentation: None,
@@ -177,6 +167,7 @@ impl Info {
   pub fn show_ty_annot<'a>(
     &'a self,
     syms: &'a Syms,
+    tys: &'a Tys,
   ) -> impl Iterator<Item = (sml_hir::la_arena::Idx<sml_hir::Pat>, String)> + 'a {
     self.indices.iter().filter_map(|(&idx, entry)| match idx {
       sml_hir::Idx::Pat(pat) => {
@@ -187,9 +178,9 @@ impl Info {
         if !self_def {
           return None;
         }
-        let mut mvs = MetaVarNames::new(&self.meta_vars);
+        let mut mvs = MetaVarNames::new(tys);
         let ty_entry = entry.ty_entry.as_ref()?;
-        mvs.extend_for(&ty_entry.ty);
+        mvs.extend_for(ty_entry.ty);
         let ty = ty_entry.ty.display(&mvs, syms);
         Some((pat, format!(" : {ty})")))
       }
@@ -221,16 +212,16 @@ impl TyEntry {
 struct TyEntryDisplay<'a> {
   ty_entry: &'a TyEntry,
   syms: &'a Syms,
-  meta_vars: &'a MetaVarInfo,
+  tys: &'a Tys,
 }
 
 impl fmt::Display for TyEntryDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut mvs = MetaVarNames::new(self.meta_vars);
-    mvs.extend_for(&self.ty_entry.ty);
+    let mut mvs = MetaVarNames::new(self.tys);
+    mvs.extend_for(self.ty_entry.ty);
     writeln!(f, "```sml")?;
     if let Some(ty_scheme) = &self.ty_entry.ty_scheme {
-      mvs.extend_for(&ty_scheme.ty);
+      mvs.extend_for(ty_scheme.ty);
       let ty_scheme = ty_scheme.display(&mvs, self.syms);
       writeln!(f, "(* most general *)")?;
       writeln!(f, "{ty_scheme}")?;
@@ -248,13 +239,14 @@ fn env_syms(
   ac: &mut Vec<DocumentSymbol>,
   mvs: &mut MetaVarNames<'_>,
   syms: &Syms,
+  tys: &Tys,
   path: paths::PathId,
   env: &Env,
 ) {
   ac.extend(env.str_env.iter().filter_map(|(name, env)| {
     let idx = def_idx(path, env.def?)?;
     let mut children = Vec::<DocumentSymbol>::new();
-    env_syms(&mut children, mvs, syms, path, env);
+    env_syms(&mut children, mvs, syms, tys, path, env);
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Structure,
@@ -265,7 +257,7 @@ fn env_syms(
   }));
   ac.extend(env.ty_env.iter().filter_map(|(name, ty_info)| {
     mvs.clear();
-    mvs.extend_for(&ty_info.ty_scheme.ty);
+    mvs.extend_for(ty_info.ty_scheme.ty);
     let idx = def_idx(path, ty_info.def?)?;
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
@@ -277,13 +269,13 @@ fn env_syms(
   }));
   ac.extend(env.val_env.iter().flat_map(|(name, val_info)| {
     mvs.clear();
-    mvs.extend_for(&val_info.ty_scheme.ty);
+    mvs.extend_for(val_info.ty_scheme.ty);
     let detail = val_info.ty_scheme.display(mvs, syms).to_string();
     val_info.defs.iter().filter_map(move |&def| {
       let idx = def_idx(path, def)?;
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
-        kind: val_info_symbol_kind(val_info),
+        kind: val_info_symbol_kind(tys, val_info),
         detail: Some(detail.clone()),
         idx,
         children: Vec::new(),
@@ -302,12 +294,12 @@ fn def_idx(path: paths::PathId, def: def::Def) -> Option<sml_hir::Idx> {
   }
 }
 
-fn val_info_symbol_kind(val_info: &ValInfo) -> sml_namespace::SymbolKind {
+fn val_info_symbol_kind(tys: &Tys, val_info: &ValInfo) -> sml_namespace::SymbolKind {
   match val_info.id_status {
     IdStatus::Con => sml_namespace::SymbolKind::Constructor,
     IdStatus::Exn(_) => sml_namespace::SymbolKind::Exception,
-    IdStatus::Val => match val_info.ty_scheme.ty {
-      Ty::Fn(_, _) => sml_namespace::SymbolKind::Function,
+    IdStatus::Val => match tys.data(val_info.ty_scheme.ty) {
+      TyData::Fn(_) => sml_namespace::SymbolKind::Function,
       _ => sml_namespace::SymbolKind::Value,
     },
   }

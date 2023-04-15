@@ -41,6 +41,7 @@
 //! except name resolution. That means we can skip things like exhaustiveness checking and type
 //! unification.
 
+use crate::types::ty::Tys;
 use crate::{basis::Bs, mode::Mode, st::St, sym::Syms, top_dec};
 
 /// An unordered map from paths to HIR ready for analysis.
@@ -48,7 +49,12 @@ pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, &'a [sml_hir::St
 
 /// Get the ordering.
 #[must_use]
-pub fn get(mut syms: Syms, mut bs: Bs, mut paths: SmlHirPaths<'_>) -> Vec<paths::PathId> {
+pub fn get(
+  mut syms: Syms,
+  mut tys: Tys,
+  mut bs: Bs,
+  mut paths: SmlHirPaths<'_>,
+) -> Vec<paths::PathId> {
   let mut ok_paths = Vec::<paths::PathId>::new();
   for &(arenas, root) in paths.values() {
     rm_top_level_defs(&mut bs, arenas, root);
@@ -59,10 +65,11 @@ pub fn get(mut syms: Syms, mut bs: Bs, mut paths: SmlHirPaths<'_>) -> Vec<paths:
     for (path, (arenas, root)) in paths {
       // NOTE: this inner loop body runs O(n^2) times. to make this hurt less, we use a special path
       // order mode for statics, which reduces the number of checks we do.
-      let mut st = St::new(Mode::PathOrder, syms);
+      let mut st = St::new(Mode::PathOrder, syms, tys);
       let new_bs = top_dec::get(&mut st, &bs, arenas, root);
-      let (new_syms, errors, _) = st.finish();
+      let (new_syms, new_tys, errors, _) = st.finish();
       syms = new_syms;
+      tys = new_tys;
       if errors.is_empty() {
         bs.append(new_bs);
         ok_paths.push(path);

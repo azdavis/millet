@@ -28,6 +28,7 @@ pub struct Analysis {
   diagnostics_options: diagnostic::Options,
   source_files: PathMap<mlb_statics::SourceFile>,
   syms: sml_statics::Syms,
+  tys: sml_statics::Tys,
 }
 
 impl Analysis {
@@ -44,6 +45,7 @@ impl Analysis {
       diagnostics_options: diagnostic::Options { lines, ignore, format },
       source_files: PathMap::default(),
       syms: sml_statics::Syms::default(),
+      tys: sml_statics::Tys::default(),
     }
   }
 
@@ -53,16 +55,18 @@ impl Analysis {
     let lang = config::lang::Language::default();
     let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, contents);
     let mut syms = self.std_basis.syms().clone();
+    let mut tys = self.std_basis.tys().clone();
     let basis = self.std_basis.basis().clone();
     let mode = sml_statics::mode::Mode::Regular(None);
     let checked =
-      sml_statics::get(&mut syms, &basis, mode, &syntax.lower.arenas, &syntax.lower.root);
+      sml_statics::get(&mut syms, &mut tys, &basis, mode, &syntax.lower.arenas, &syntax.lower.root);
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
     diagnostic::source_file(
       &file,
       &syms,
+      &tys,
       self.diagnostics_options,
       text_pos::PositionDb::range_utf16,
     )
@@ -82,6 +86,7 @@ impl Analysis {
     F: Fn(&text_pos::PositionDb, text_size_util::TextRange) -> Option<R>,
   {
     let syms = self.std_basis.syms().clone();
+    let tys = self.std_basis.tys().clone();
     let mut basis = self.std_basis.basis().clone();
     for path in &input.lang.val {
       // TODO do not ignore failed disallow
@@ -90,10 +95,19 @@ impl Analysis {
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {
-      mlb_statics::get(syms, &input.lang, &basis, &input.sources, &groups, &input.root_group_paths)
+      mlb_statics::get(
+        syms,
+        tys,
+        &input.lang,
+        &basis,
+        &input.sources,
+        &groups,
+        &input.root_group_paths,
+      )
     });
     self.source_files = res.source_files;
     self.syms = res.syms;
+    self.tys = res.tys;
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
         let path = err.path();
@@ -107,7 +121,7 @@ impl Analysis {
         Some((path, vec![err]))
       }))
       .chain(self.source_files.iter().map(|(&path, file)| {
-        let ds = diagnostic::source_file(file, &self.syms, self.diagnostics_options, &f);
+        let ds = diagnostic::source_file(file, &self.syms, &self.tys, self.diagnostics_options, &f);
         (path, ds)
       }))
       .map(|(p, ds)| {
@@ -132,7 +146,7 @@ impl Analysis {
     let ty_md: Option<String>;
     let range = match ft.get_ptr_and_idx() {
       Some((ptr, idx)) => {
-        ty_md = ft.file.info.get_ty_md(&self.syms, idx);
+        ty_md = ft.file.info.get_ty_md(&self.syms, &self.tys, idx);
         parts.extend(ty_md.as_deref());
         parts.extend(ft.file.info.get_defs(idx).filter_map(|def| match def {
           sml_statics::def::Def::Path(path, idx) => {
@@ -181,7 +195,7 @@ impl Analysis {
     Some(
       ft.file
         .info
-        .get_ty_defs(&self.syms, idx)?
+        .get_ty_defs(&self.syms, &self.tys, idx)?
         .into_iter()
         .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?))
         .collect(),
@@ -201,7 +215,7 @@ impl Analysis {
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
     let head = ft.file.syntax.lower.ptrs.ast_to_hir(&head_ptr)?;
-    let variants = ft.file.info.get_variants(&self.syms, head)?;
+    let variants = ft.file.info.get_variants(&self.syms, &self.tys, head)?;
     let starting_bar = case.matcher().map_or(false, |x| x.match_rules().count() > 0);
     let case = matcher::display(starting_bar, &variants);
     Some((range, case.to_string()))
@@ -258,7 +272,7 @@ impl Analysis {
     let file = self.source_files.get(&path)?;
     let ret: Vec<_> = file
       .info
-      .document_symbols(&self.syms, path)
+      .document_symbols(&self.syms, &self.tys, path)
       .into_iter()
       .filter_map(|s| symbol(&file.syntax, s))
       .collect();
@@ -289,7 +303,7 @@ impl Analysis {
   #[must_use]
   pub fn completions(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<CompletionItem>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
-    Some(ft.file.info.completions(&self.syms))
+    Some(ft.file.info.completions(&self.syms, &self.tys))
   }
 
   /// Returns all inlay hints for the range.
@@ -299,7 +313,7 @@ impl Analysis {
     range: WithPath<RangeUtf16>,
   ) -> Option<impl Iterator<Item = InlayHint> + '_> {
     let file = self.source_files.get(&range.path)?;
-    let ret = file.info.show_ty_annot(&self.syms).filter_map(|(hint, ty_annot)| {
+    let ret = file.info.show_ty_annot(&self.syms, &self.tys).filter_map(|(hint, ty_annot)| {
       let idx = sml_hir::Idx::from(hint);
       let ptr = file.syntax.lower.ptrs.hir_to_ast(idx)?;
       // ignore patterns that are not from this exact source

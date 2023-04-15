@@ -1,7 +1,7 @@
 //! `Sym`s, aka symbols, aka type names, aka generated types. And exceptions.
 
 use crate::core_info::{TyInfo, ValEnv};
-use crate::types::{Ty, TyScheme};
+use crate::types::ty::{Ty, TyScheme};
 use crate::{def, overload};
 use drop_bomb::DropBomb;
 use std::fmt;
@@ -22,7 +22,7 @@ impl fmt::Debug for Sym {
 }
 
 macro_rules! mk_special_syms {
-  ($( ($idx:expr, $mk_ty:ident, $name:ident, $prim:path), )*) => {
+  ($( ($idx:expr, $name:ident, $prim:path), )*) => {
     impl Sym {
       $(
         pub(crate) const $name: Self = Self(idx::Idx::new_u32($idx));
@@ -39,29 +39,20 @@ macro_rules! mk_special_syms {
       }
     }
 
-    impl Ty {
-      $(
-        mk_special_syms!(@mk_ty, $mk_ty, $name, $idx);
-      )*
-    }
   };
-  (@mk_ty, y, $name:ident, $idx:expr) => {
-    pub(crate) const $name: Ty = Ty::zero(Sym::$name);
-  };
-  (@mk_ty, n, $name:ident, $idx:expr) => {};
 }
 
 // @sync(special_sym_order)
 mk_special_syms![
-  (0, y, EXN, def::PrimitiveKind::Exn),
-  (1, y, INT, def::PrimitiveKind::Int),
-  (2, y, WORD, def::PrimitiveKind::Word),
-  (3, y, REAL, def::PrimitiveKind::Real),
-  (4, y, CHAR, def::PrimitiveKind::Char),
-  (5, y, STRING, def::PrimitiveKind::String),
-  (6, y, BOOL, def::PrimitiveKind::Bool),
-  (7, n, LIST, def::PrimitiveKind::List),
-  (8, n, REF, def::PrimitiveKind::RefTy),
+  (0, EXN, def::PrimitiveKind::Exn),
+  (1, INT, def::PrimitiveKind::Int),
+  (2, WORD, def::PrimitiveKind::Word),
+  (3, REAL, def::PrimitiveKind::Real),
+  (4, CHAR, def::PrimitiveKind::Char),
+  (5, STRING, def::PrimitiveKind::String),
+  (6, BOOL, def::PrimitiveKind::Bool),
+  (7, LIST, def::PrimitiveKind::List),
+  (8, REF, def::PrimitiveKind::RefTy),
 ];
 
 impl Sym {
@@ -159,7 +150,7 @@ impl Syms {
   /// Start constructing a `Sym`.
   pub(crate) fn start(&mut self, path: sml_path::Path) -> StartedSym {
     let ty_info = TyInfo {
-      ty_scheme: TyScheme::zero(Ty::None),
+      ty_scheme: TyScheme::zero(Ty::NONE),
       val_env: ValEnv::default(),
       def: None,
       disallow: None,

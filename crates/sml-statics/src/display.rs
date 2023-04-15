@@ -1,17 +1,18 @@
 //! Displaying some types.
 
+use crate::fmt_util::idx_to_name;
 use crate::sym::{Sym, Syms};
-use crate::types::{
-  BoundTyVars, MetaTyVarKind, MetaVarInfo, RecordTy, Subst, Ty, TyScheme, TyVarKind,
+use crate::types::ty::{
+  BoundTyVars, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys, UnsolvedMetaTyVarKind,
 };
-use crate::{fmt_util::idx_to_name, ty_var::meta::MetaTyVar, util::meta_vars};
+use crate::types::unify::Incompatible;
 use fast_hash::FxHashMap;
 use fmt_util::comma_seq;
 use std::fmt;
 
 impl Ty {
   pub(crate) fn display<'a>(
-    &'a self,
+    self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
   ) -> impl fmt::Display + 'a {
@@ -31,7 +32,7 @@ impl TyScheme {
   ) -> impl fmt::Display + 'a {
     TyDisplay {
       cx: TyDisplayCx { bound_vars: Some(&self.bound_vars), meta_vars, syms },
-      ty: &self.ty,
+      ty: self.ty,
       prec: TyPrec::Arrow,
     }
   }
@@ -46,41 +47,45 @@ struct TyDisplayCx<'a> {
 
 struct TyDisplay<'a> {
   cx: TyDisplayCx<'a>,
-  ty: &'a Ty,
+  ty: Ty,
   prec: TyPrec,
 }
 
 impl<'a> TyDisplay<'a> {
-  fn with(&self, ty: &'a Ty, prec: TyPrec) -> Self {
+  fn with(&self, ty: Ty, prec: TyPrec) -> Self {
     Self { ty, cx: self.cx, prec }
   }
 }
 
 impl fmt::Display for TyDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.ty {
-      Ty::None => f.write_str("_")?,
-      Ty::BoundVar(bv) => {
+    let (ty, data) = self.cx.meta_vars.tys.canonicalize(self.ty);
+    match data {
+      TyData::None => f.write_str("_")?,
+      TyData::BoundVar(bv) => {
         let vars = self.cx.bound_vars.expect("bound ty var without a BoundTyVars");
-        let equality = matches!(bv.index_into(vars), Some(TyVarKind::Equality));
+        let equality = matches!(bv.index_into(vars), TyVarKind::Equality);
         let name = bv.name(equality);
         write!(f, "{name}")?;
       }
-      Ty::MetaVar(mv) => {
-        let &idx = self.cx.meta_vars.map.get(mv).ok_or(fmt::Error)?;
-        match self.cx.meta_vars.info.get(*mv) {
-          Some(MetaTyVarKind::TyVarKind(k)) => match k {
-            TyVarKind::Equality => meta_var_idx(f, idx, "??")?,
-            TyVarKind::Overloaded(ov) => ov.fmt(f)?,
-          },
-          Some(MetaTyVarKind::Record(rows, _)) => {
-            RecordMetaVarDisplay { cx: self.cx, rows }.fmt(f)?;
+      TyData::UnsolvedMetaVar(mv) => match &mv.kind {
+        UnsolvedMetaTyVarKind::Kind(kind) => match kind {
+          TyVarKind::Regular => {
+            let &idx = self.cx.meta_vars.map.get(&ty).ok_or(fmt::Error)?;
+            meta_var_idx(f, idx, "?")?;
           }
-          None => meta_var_idx(f, idx, "?")?,
+          TyVarKind::Equality => {
+            let &idx = self.cx.meta_vars.map.get(&ty).ok_or(fmt::Error)?;
+            meta_var_idx(f, idx, "??")?;
+          }
+          TyVarKind::Overloaded(ov) => ov.fmt(f)?,
+        },
+        UnsolvedMetaTyVarKind::UnresolvedRecord(ur) => {
+          RecordMetaVarDisplay { cx: self.cx, rows: &ur.rows }.fmt(f)?;
         }
-      }
-      Ty::FixedVar(fv) => fv.fmt(f)?,
-      Ty::Record(rows) => {
+      },
+      TyData::FixedVar(fv) => fv.ty_var.fmt(f)?,
+      TyData::Record(rows) => {
         if rows.is_empty() {
           return f.write_str("unit");
         }
@@ -92,9 +97,9 @@ impl fmt::Display for TyDisplay<'_> {
             f.write_str("(")?;
           }
           let mut tys = rows.values();
-          let ty = tys.next().unwrap();
+          let &ty = tys.next().unwrap();
           self.with(ty, TyPrec::App).fmt(f)?;
-          for ty in tys {
+          for &ty in tys {
             f.write_str(" * ")?;
             self.with(ty, TyPrec::App).fmt(f)?;
           }
@@ -103,19 +108,19 @@ impl fmt::Display for TyDisplay<'_> {
           }
         } else {
           f.write_str("{ ")?;
-          comma_seq(f, rows.iter().map(|(lab, ty)| RowDisplay { cx: self.cx, lab, ty }))?;
+          comma_seq(f, rows.iter().map(|(lab, &ty)| RowDisplay { cx: self.cx, lab, ty }))?;
           f.write_str(" }")?;
         }
       }
-      Ty::Con(args, sym) => {
-        let mut args_iter = args.iter();
-        if let Some(arg) = args_iter.next() {
-          if args.len() == 1 {
+      TyData::Con(data) => {
+        let mut args_iter = data.args.iter();
+        if let Some(&arg) = args_iter.next() {
+          if data.args.len() == 1 {
             self.with(arg, TyPrec::App).fmt(f)?;
           } else {
             f.write_str("(")?;
             self.with(arg, TyPrec::Arrow).fmt(f)?;
-            for arg in args_iter {
+            for &arg in args_iter {
               f.write_str(", ")?;
               self.with(arg, TyPrec::Arrow).fmt(f)?;
             }
@@ -123,16 +128,16 @@ impl fmt::Display for TyDisplay<'_> {
           }
           f.write_str(" ")?;
         }
-        SymDisplay { sym: *sym, syms: self.cx.syms }.fmt(f)?;
+        SymDisplay { sym: data.sym, syms: self.cx.syms }.fmt(f)?;
       }
-      Ty::Fn(param, res) => {
+      TyData::Fn(data) => {
         let needs_parens = self.prec > TyPrec::Arrow;
         if needs_parens {
           f.write_str("(")?;
         }
-        self.with(param, TyPrec::Star).fmt(f)?;
+        self.with(data.param, TyPrec::Star).fmt(f)?;
         f.write_str(" -> ")?;
-        self.with(res, TyPrec::Arrow).fmt(f)?;
+        self.with(data.res, TyPrec::Arrow).fmt(f)?;
         if needs_parens {
           f.write_str(")")?;
         }
@@ -152,7 +157,7 @@ enum TyPrec {
 struct RowDisplay<'a> {
   cx: TyDisplayCx<'a>,
   lab: &'a sml_hir::Lab,
-  ty: &'a Ty,
+  ty: Ty,
 }
 
 impl fmt::Display for RowDisplay<'_> {
@@ -188,13 +193,13 @@ impl fmt::Display for SymDisplay<'_> {
 #[derive(Debug)]
 pub(crate) struct MetaVarNames<'a> {
   next_idx: usize,
-  map: FxHashMap<MetaTyVar, idx::Idx>,
-  info: &'a MetaVarInfo,
+  map: FxHashMap<Ty, idx::Idx>,
+  tys: &'a Tys,
 }
 
 impl<'a> MetaVarNames<'a> {
-  pub(crate) fn new(info: &'a MetaVarInfo) -> Self {
-    Self { next_idx: 0, map: FxHashMap::default(), info }
+  pub(crate) fn new(tys: &'a Tys) -> Self {
+    Self { next_idx: 0, map: FxHashMap::default(), tys }
   }
 
   pub(crate) fn clear(&mut self) {
@@ -202,16 +207,20 @@ impl<'a> MetaVarNames<'a> {
     self.map.clear();
   }
 
-  pub(crate) fn extend_for(&mut self, ty: &Ty) {
-    meta_vars(&Subst::default(), ty, &mut |mv, kind| {
-      assert!(kind.is_none(), "the Subst was empty");
-      self.map.entry(mv).or_insert_with(|| {
-        let ret = idx::Idx::new(self.next_idx);
-        self.next_idx += 1;
-        ret
-      });
-      if let Some(MetaTyVarKind::Record(rows, _)) = self.info.get(mv) {
-        for ty in rows.values() {
+  pub(crate) fn extend_for(&mut self, ty: Ty) {
+    self.tys.unsolved_meta_vars(ty, &mut |mv, data| match &data.kind {
+      UnsolvedMetaTyVarKind::Kind(kind) => match kind {
+        TyVarKind::Regular | TyVarKind::Equality => {
+          self.map.entry(mv).or_insert_with(|| {
+            let ret = idx::Idx::new(self.next_idx);
+            self.next_idx += 1;
+            ret
+          });
+        }
+        TyVarKind::Overloaded(_) => {}
+      },
+      UnsolvedMetaTyVarKind::UnresolvedRecord(ur) => {
+        for &ty in ur.rows.values() {
           self.extend_for(ty);
         }
       }
@@ -230,23 +239,127 @@ fn meta_var_idx(f: &mut fmt::Formatter<'_>, idx: idx::Idx, s: &str) -> fmt::Resu
 pub(crate) fn record_meta_var<'a>(
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
-  rows: &'a RecordTy,
+  rows: &'a RecordData,
 ) -> impl fmt::Display + 'a {
   RecordMetaVarDisplay { cx: TyDisplayCx { bound_vars: None, meta_vars, syms }, rows }
 }
 
 struct RecordMetaVarDisplay<'a> {
   cx: TyDisplayCx<'a>,
-  rows: &'a RecordTy,
+  rows: &'a RecordData,
 }
 
 impl fmt::Display for RecordMetaVarDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str("{ ")?;
-    for (lab, ty) in self.rows {
+    for (lab, &ty) in self.rows {
       RowDisplay { cx: self.cx, lab, ty }.fmt(f)?;
       f.write_str(", ")?;
     }
     f.write_str("... }")
+  }
+}
+
+impl Incompatible {
+  pub(crate) fn display<'a>(
+    &'a self,
+    meta_vars: &'a MetaVarNames<'a>,
+    syms: &'a Syms,
+  ) -> impl fmt::Display + 'a {
+    IncompatibleDisplay { flavor: self, meta_vars, syms }
+  }
+
+  /// need to have this be separate from the Display impl so that the mutable borrow doesn't last
+  /// too long.
+  pub(crate) fn extend_meta_var_names(&self, meta_vars: &mut MetaVarNames<'_>) {
+    match self {
+      Self::FixedTyVar(_, _)
+      | Self::MissingRow(_)
+      | Self::Con(_, _)
+      | Self::OverloadCon(_, _)
+      | Self::OverloadUnify(_, _)
+      | Self::UnresolvedRecordMissingRow(_) => {}
+      Self::ExtraRows(record) | Self::OverloadRecord(_, record) => {
+        for &ty in record.values() {
+          meta_vars.extend_for(ty);
+        }
+      }
+      Self::OverloadHeadMismatch(_, ty) | Self::NotEqTy(ty, _) => meta_vars.extend_for(*ty),
+      Self::UnresolvedRecordHeadMismatch(record, ty) => {
+        for &ty in record.values() {
+          meta_vars.extend_for(ty);
+        }
+        meta_vars.extend_for(*ty);
+      }
+      Self::Head(ty1, ty2) => {
+        meta_vars.extend_for(*ty1);
+        meta_vars.extend_for(*ty2);
+      }
+    }
+  }
+}
+
+struct IncompatibleDisplay<'a> {
+  flavor: &'a Incompatible,
+  meta_vars: &'a MetaVarNames<'a>,
+  syms: &'a Syms,
+}
+
+impl fmt::Display for IncompatibleDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.flavor {
+      Incompatible::FixedTyVar(a, b) => {
+        write!(f, "`{a}` and `{b}` are different type variables")
+      }
+      Incompatible::MissingRow(lab) => {
+        write!(f, "record type is missing field: `{lab}`")
+      }
+      Incompatible::ExtraRows(rows) => {
+        write!(f, "record type has extra fields: ")?;
+        fmt_util::comma_seq(f, rows.iter().map(|(lab, _)| lab))
+      }
+      Incompatible::Con(a, b) => {
+        let a = a.display(self.syms);
+        let b = b.display(self.syms);
+        write!(f, "`{a}` and `{b}` are different type constructors")
+      }
+      Incompatible::Head(a, b) => {
+        let a_display = a.display(self.meta_vars, self.syms);
+        let b_display = b.display(self.meta_vars, self.syms);
+        let a_desc = a.desc();
+        let b_desc = b.desc();
+        write!(f, "`{a_display}` is {a_desc}, but `{b_display}` is {b_desc}")
+      }
+      Incompatible::OverloadCon(ov, s) => {
+        let s = s.display(self.syms);
+        write!(f, "`{s}` is not compatible with the `{ov}` overload")
+      }
+      Incompatible::OverloadUnify(want, got) => {
+        write!(f, "`{want}` and `{got}` are incompatible overloads")
+      }
+      Incompatible::OverloadRecord(ov, _) => {
+        write!(f, "record types are not compatible with the `{ov}` overload")
+      }
+      Incompatible::OverloadHeadMismatch(ov, ty) => {
+        let ty_display = ty.display(self.meta_vars, self.syms);
+        let ty_desc = ty.desc();
+        write!(f, "`{ov}` is not compatible with `{ty_display}`, which is {ty_desc}")
+      }
+      Incompatible::UnresolvedRecordMissingRow(lab) => {
+        write!(f, "unresolved record type is missing field: `{lab}`")
+      }
+      Incompatible::UnresolvedRecordHeadMismatch(_, ty) => {
+        let ty_display = ty.display(self.meta_vars, self.syms);
+        let ty_desc = ty.desc();
+        write!(
+          f,
+          "unresolved record type is not compatible with `{ty_display}`, which is {ty_desc}"
+        )
+      }
+      Incompatible::NotEqTy(ty, not_eq) => {
+        let ty = ty.display(self.meta_vars, self.syms);
+        write!(f, "not an equality type because it contains {not_eq}: `{ty}`")
+      }
+    }
   }
 }

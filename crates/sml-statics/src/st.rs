@@ -3,9 +3,8 @@
 use crate::error::{Error, ErrorKind};
 use crate::pat_match::{Lang, Pat};
 use crate::sym::Syms;
-use crate::ty_var::meta::{MetaTyVar, MetaTyVarGen};
-use crate::types::{Subst, Ty};
-use crate::{def, info::Info, item::Item, mode::Mode, ty_var::fixed::FixedTyVarGen, util::apply};
+use crate::types::ty::{Ty, Tys};
+use crate::{def, info::Info, item::Item, mode::Mode};
 use fast_hash::FxHashSet;
 
 /// The mutable state.
@@ -13,14 +12,13 @@ use fast_hash::FxHashSet;
 /// Usually I call this `Cx` but the Definition defines a 'Context' already.
 #[derive(Debug)]
 pub(crate) struct St {
-  pub(crate) subst: Subst,
-  pub(crate) meta_gen: MetaTyVarGen,
-  pub(crate) fixed_gen: FixedTyVarGen,
   pub(crate) info: Info,
   pub(crate) syms: Syms,
+  pub(crate) tys: Tys,
   errors: Vec<Error>,
   matches: Vec<Match>,
-  holes: Vec<(MetaTyVar, sml_hir::Idx)>,
+  /// TODO no need to delay this until the end because of auto subst with the tys.
+  holes: Vec<(Ty, sml_hir::Idx)>,
   /// a subset of all things that have definition sites. currently, only local value variables to a
   /// function.
   defined: Vec<(sml_hir::Idx, str_util::Name)>,
@@ -30,12 +28,10 @@ pub(crate) struct St {
 }
 
 impl St {
-  pub(crate) fn new(mode: Mode, syms: Syms) -> Self {
+  pub(crate) fn new(mode: Mode, syms: Syms, tys: Tys) -> Self {
     Self {
-      subst: Subst::default(),
-      meta_gen: MetaTyVarGen::default(),
-      fixed_gen: FixedTyVarGen::default(),
       info: Info::new(mode),
+      tys,
       syms,
       errors: Vec::new(),
       matches: Vec::new(),
@@ -89,7 +85,7 @@ impl St {
     self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
-  pub(crate) fn insert_hole(&mut self, idx: sml_hir::Idx, mv: MetaTyVar) {
+  pub(crate) fn insert_hole(&mut self, idx: sml_hir::Idx, mv: Ty) {
     if self.info.mode.is_path_order() {
       return;
     }
@@ -125,17 +121,14 @@ impl St {
     sml_path::Path::new(self.cur_prefix.iter().cloned(), last)
   }
 
-  pub(crate) fn finish(mut self) -> (Syms, Vec<Error>, Info) {
-    let lang = Lang { syms: self.syms };
+  pub(crate) fn finish(self) -> (Syms, Tys, Vec<Error>, Info) {
+    let lang = Lang { syms: self.syms, tys: std::cell::RefCell::new(self.tys) };
     let mut errors = self.errors;
     if !self.info.mode.is_path_order() {
-      for (mv, idx) in self.holes {
-        let mut ty = Ty::MetaVar(mv);
-        apply(&self.subst, &mut ty);
+      for (ty, idx) in self.holes {
         errors.push(Error { idx, kind: ErrorKind::ExpHole(ty) });
       }
-      for mut m in self.matches {
-        apply(&self.subst, &mut m.want);
+      for m in self.matches {
         match m.kind {
           MatchKind::Bind(pat) => {
             let missing = get_match(&mut errors, &lang, vec![pat], m.want);
@@ -159,12 +152,8 @@ impl St {
           errors.push(Error { idx, kind: ErrorKind::Unused(Item::Val, name) });
         }
       }
-      for ty in self.info.tys_mut() {
-        apply(&self.subst, ty);
-      }
-      self.info.meta_vars = self.subst.into_meta_var_info();
     }
-    (lang.syms, errors, self.info)
+    (lang.syms, lang.tys.into_inner(), errors, self.info)
   }
 }
 

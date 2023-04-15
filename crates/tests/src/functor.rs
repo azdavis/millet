@@ -40,6 +40,23 @@ structure S = F (struct val Foo = Bar end)
 }
 
 #[test]
+fn medium() {
+  check(
+    r#"
+datatype 'a box = Box of 'a
+
+functor F (type t) = struct
+  type t_box = t box
+end
+
+structure S = F (type t = string)
+
+val xs : S.t_box = Box "hi"
+"#,
+  );
+}
+
+#[test]
 fn big() {
   check(
     r#"

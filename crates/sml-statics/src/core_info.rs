@@ -1,7 +1,7 @@
 //! Information about SML Core constructs.
 
 use crate::sym::Exn;
-use crate::types::TyScheme;
+use crate::types::ty::TyScheme;
 use crate::{def, disallow::Disallow};
 use chain_map::ChainMap;
 use fast_hash::FxHashSet;

@@ -23,7 +23,7 @@ pub(crate) fn get_env(st: &mut St, idx: sml_hir::Idx, general: &Env, specific: &
   }
   for (name, specific) in specific.val_env.iter() {
     match general.val_env.get(name) {
-      Some(general) => get_val_info(st, idx, general.clone(), specific, name),
+      Some(general) => get_val_info(st, idx, general, specific, name),
       None => st.err(idx, ErrorKind::Missing(Item::Val, name.clone())),
     }
   }
@@ -53,11 +53,11 @@ fn get_ty_info(st: &mut St, idx: sml_hir::Idx, mut general: TyInfo, specific: Ty
 fn get_val_info(
   st: &mut St,
   idx: sml_hir::Idx,
-  general: ValInfo,
+  general: &ValInfo,
   specific: &ValInfo,
   name: &str_util::Name,
 ) {
-  generalizes(st, idx, general.ty_scheme, &specific.ty_scheme);
+  generalizes(st, idx, &general.ty_scheme, &specific.ty_scheme);
   if !general.id_status.same_kind_as(specific.id_status)
     && !matches!(specific.id_status, IdStatus::Val)
   {

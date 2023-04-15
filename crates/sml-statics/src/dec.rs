@@ -3,15 +3,13 @@
 use crate::core_info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use crate::env::{Cx, Env};
 use crate::error::ErrorKind;
-use crate::generalize::{generalize, generalize_fixed, RecordMetaVar};
 use crate::get_env::{get_env, get_env_raw, get_ty_info, get_val_info};
 use crate::sym::{Equality, StartedSym};
-use crate::ty_var::{fixed::TyVarSrc, meta::Generalizable};
-use crate::types::{FixedTyVars, Ty, TyScheme};
-use crate::util::{apply, ins_check_name, ins_no_dupe};
-use crate::{
-  config::Cfg, equality, exp, item::Item, pat, pat_match::Pat, st::St, ty, unify::unify,
-};
+use crate::types::equality;
+use crate::types::generalize::{generalize, generalize_fixed, FixedTyVars};
+use crate::types::ty::{Generalizable, Ty, TyData, TyScheme, TyVarSrc};
+use crate::types::util::{ins_check_name, ins_no_dupe};
+use crate::{config::Cfg, exp, item::Item, pat, pat_match::Pat, st::St, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
 
 pub(crate) fn get(
@@ -74,11 +72,10 @@ fn get_one(
         }
         idx += 1;
         // @def(25)
-        let (pm_pat, mut want) =
+        let (pm_pat, want) =
           get_pat_and_src_exp(st, pat_cfg, &cx, ars, &mut ve, val_bind, &mut src_exp);
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
-        unify(st, dec.into(), want.clone(), got);
-        apply(&st.subst, &mut want);
+        unify(st, dec.into(), want, got);
         st.insert_bind(val_bind.pat.map_or(sml_hir::Idx::from(dec), Into::into), pm_pat, want);
       }
       // deal with the recursive ones. first do all the patterns so we can update the ValEnv. we
@@ -99,7 +96,7 @@ fn get_one(
       }
       // extend the cx with only the recursive ValEnv.
       cx.env.val_env.append(&mut rec_ve);
-      for (val_bind, (pm_pat, mut want)) in val_binds[idx..].iter().zip(got_pats) {
+      for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
         // @def(26)
         if let Some(exp) = val_bind.exp {
           if !matches!(ars.exp[exp], sml_hir::Exp::Fn(_, _)) {
@@ -107,8 +104,7 @@ fn get_one(
           }
         }
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
-        unify(st, dec.into(), want.clone(), got);
-        apply(&st.subst, &mut want);
+        unify(st, dec.into(), want, got);
         st.insert_bind(dec.into(), pm_pat, want);
       }
       let mut generalized = FxHashSet::<sml_hir::ExpIdx>::default();
@@ -118,16 +114,15 @@ fn get_one(
         if !generalized.insert(exp) {
           continue;
         }
-        let mv_g = st.meta_gen.generalizer();
-        let g = generalize(mv_g, &st.subst, fixed.clone(), &mut val_info.ty_scheme);
+        match generalize(&mut st.tys, fixed.clone(), val_info.ty_scheme.ty) {
+          Ok(ts) => val_info.ty_scheme = ts,
+          Err(ur) => st.err(ur.idx, ErrorKind::UnresolvedRecordTy(ur.rows)),
+        }
         if expansive(&cx, ars, exp) && !val_info.ty_scheme.bound_vars.is_empty() {
           st.err(
             exp.map_or(sml_hir::Idx::Dec(dec), sml_hir::Idx::Exp),
             ErrorKind::BindPolymorphicExpansiveExp,
           );
-        }
-        if let Err(RecordMetaVar { idx, rows }) = g {
-          st.err(idx, ErrorKind::UnresolvedRecordTy(rows));
         }
       }
       // extend the overall env with that.
@@ -171,10 +166,10 @@ fn get_one(
         match ex_bind {
           // @def(30)
           sml_hir::ExBind::New(name, param) => {
-            let mut ty = Ty::EXN;
+            let mut ty = st.tys.exn();
             let param = param.map(|param| ty::get(st, cx, ars, ty::Mode::Regular, param));
-            if let Some(ref param) = param {
-              ty = Ty::fun(param.clone(), ty);
+            if let Some(param) = param {
+              ty = st.tys.fun(param, ty);
             }
             let exn = st.syms.insert_exn(st.mk_path(name.clone()), param);
             let vi = ValInfo {
@@ -253,9 +248,9 @@ fn get_pat_and_src_exp(
   // this makes the rank of the bindings from the pat in a `val` the same as the variables bound by
   // any fns on the exp, so we don't generalize a recursive call inside the exp, but we can
   // generalize outside.
-  st.meta_gen.inc_rank();
+  st.tys.inc_meta_var_rank();
   let ret = pat::get(st, cfg, ars, cx, ve, val_bind.pat);
-  st.meta_gen.dec_rank();
+  st.tys.dec_meta_var_rank();
   for (name, _) in ve.iter() {
     if !src_exp.contains_key(name) {
       src_exp.insert(name.clone(), val_bind.exp);
@@ -273,12 +268,12 @@ pub(crate) fn add_fixed_ty_vars(
 ) -> FixedTyVars {
   let mut ret = FixedTyVars::default();
   for ty_var in ty_vars.iter() {
-    let fv = st.fixed_gen.gen(ty_var.clone(), src);
-    if cx.fixed.insert(ty_var.clone(), fv.clone()).is_some() {
+    let fv = st.tys.fixed_var(ty_var.clone(), src);
+    if cx.fixed.insert(ty_var.clone(), fv).is_some() {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
       st.err(idx, e);
     }
-    ret.insert(fv, None);
+    ret.push(fv);
   }
   ret
 }
@@ -293,8 +288,8 @@ fn get_ty_binds(
 ) {
   for ty_bind in ty_binds {
     let fixed = add_fixed_ty_vars(st, idx, cx, TyVarSrc::Ty, &ty_bind.ty_vars);
-    let mut ty_scheme = TyScheme::zero(ty::get(st, cx, ars, ty::Mode::TyRhs, ty_bind.ty));
-    generalize_fixed(fixed, &mut ty_scheme);
+    let ty = ty::get(st, cx, ars, ty::Mode::TyRhs, ty_bind.ty);
+    let ty_scheme = generalize_fixed(&mut st.tys, fixed, ty);
     let ty_info =
       TyInfo { ty_scheme, val_env: ValEnv::default(), def: st.def(idx), disallow: None };
     if let Some(e) = ins_no_dupe(ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
@@ -332,15 +327,13 @@ pub(crate) fn get_dat_binds(
     // just create the fixed ty vars, do not bring them into the scope of the cx yet.
     let mut fixed = FixedTyVars::default();
     for ty_var in &dat_bind.ty_vars {
-      fixed.insert(st.fixed_gen.gen(ty_var.clone(), TyVarSrc::Ty), None);
+      let fv = st.tys.fixed_var(ty_var.clone(), TyVarSrc::Ty);
+      fixed.push(fv);
     }
-    let out_ty = Ty::Con(fixed.keys().map(|x| Ty::FixedVar(x.clone())).collect(), started.sym());
-    let ty_scheme = {
-      let mut res = TyScheme::zero(out_ty.clone());
-      // just `generalize` would also work, because `out_ty` mentions every fixed var.
-      generalize_fixed(fixed.clone(), &mut res);
-      res
-    };
+    let out_args: Vec<_> = fixed.iter().collect();
+    let out_ty = st.tys.con(out_args, started.sym());
+    // just `generalize` would also work, because `out_ty` mentions every fixed var.
+    let ty_scheme = generalize_fixed(&mut st.tys, fixed.clone(), out_ty);
     let ty_info = TyInfo {
       ty_scheme: ty_scheme.clone(),
       val_env: ValEnv::default(),
@@ -375,23 +368,27 @@ pub(crate) fn get_dat_binds(
   // @def(28), @def(81)
   for (dat_bind, datatype) in dat_binds.iter().zip(datatypes) {
     // bring the type variables for this datatype into scope.
-    for fv in datatype.fixed.keys() {
-      if cx.fixed.insert(fv.ty_var().clone(), fv.clone()).is_some() {
-        let e = ErrorKind::Duplicate(Item::TyVar, fv.ty_var().as_name().clone());
+    for fv in datatype.fixed.iter() {
+      let ty_var = match st.tys.data(fv) {
+        TyData::FixedVar(fv) => fv.ty_var.clone(),
+        _ => unreachable!("not a fixed var"),
+      };
+      if cx.fixed.insert(ty_var.clone(), fv).is_some() {
+        let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
         st.err(idx, e);
       }
     }
     let mut val_env = ValEnv::default();
     // @def(29), @def(82)
     for con_bind in &dat_bind.cons {
-      let mut ty = datatype.out_ty.clone();
+      let mut ty = datatype.out_ty;
       if let Some(of_ty) = con_bind.ty {
-        ty = Ty::fun(ty::get(st, &cx, ars, ty::Mode::TyRhs, of_ty), ty);
+        let param = ty::get(st, &cx, ars, ty::Mode::TyRhs, of_ty);
+        ty = st.tys.fun(param, ty);
       };
-      let mut ty_scheme = TyScheme::zero(ty);
       // just `generalize` would also work, because `ty_scheme` contains `out_ty`, which mentions
       // every fixed var.
-      generalize_fixed(datatype.fixed.clone(), &mut ty_scheme);
+      let ty_scheme = generalize_fixed(&mut st.tys, datatype.fixed.clone(), ty);
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Con,
@@ -406,7 +403,8 @@ pub(crate) fn get_dat_binds(
     big_val_env.append(&mut val_env.clone());
     let ty_info =
       TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx), disallow: None };
-    let equality = match equality::get_ty_info(st, ty_info.clone()) {
+    let equality = equality::get_ty_info(st.info.mode, &st.syms, &mut st.tys, ty_info.clone());
+    let equality = match equality {
       Ok(()) => Equality::Sometimes,
       Err(_) => Equality::Never,
     };

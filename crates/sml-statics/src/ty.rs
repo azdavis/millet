@@ -1,11 +1,9 @@
 //! Checking types.
 
 use crate::error::ErrorKind;
-use crate::types::{Ty, TyScheme};
-use crate::util::{apply_bv, record};
-use crate::{
-  def, env::Cx, get_env::get_ty_info, info::TyEntry, item::Item, st::St, ty_var::fixed::TyVarSrc,
-};
+use crate::types::ty::{Ty, TyData, TyScheme, TyVarSrc};
+use crate::types::util::{apply_bv, record};
+use crate::{def, env::Cx, get_env::get_ty_info, info::TyEntry, item::Item, st::St};
 
 /// The mode for how we're checking this type.
 #[derive(Debug, Clone, Copy)]
@@ -25,7 +23,7 @@ pub(crate) fn get(
 ) -> Ty {
   let ty = match ty {
     Some(x) => x,
-    None => return Ty::None,
+    None => return Ty::NONE,
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
@@ -33,27 +31,33 @@ pub(crate) fn get(
   let ret = match &ars.ty[ty] {
     sml_hir::Ty::Hole => {
       st.err(ty, ErrorKind::TyHole);
-      Ty::None
+      Ty::NONE
     }
     // @def(44)
     sml_hir::Ty::Var(v) => match cx.fixed.get(v) {
       None => {
         st.err(ty, ErrorKind::Undefined(Item::TyVar, v.as_name().clone()));
-        Ty::None
+        Ty::NONE
       }
-      Some(fv) => match (mode, fv.src()) {
-        // regular mode allows all ty var types, and ty vars bound at types are always valid.
-        (Mode::Regular, _) | (_, TyVarSrc::Ty) => Ty::FixedVar(fv.clone()),
-        (Mode::TyRhs, TyVarSrc::Val) => {
-          st.err(ty, ErrorKind::TyVarNotAllowedForTyRhs);
-          Ty::None
+      Some(fv) => {
+        let fv_data = match st.tys.data(*fv) {
+          TyData::FixedVar(fv) => fv,
+          _ => unreachable!("not a fixed var"),
+        };
+        match (mode, fv_data.src) {
+          // regular mode allows all ty var types, and ty vars bound at types are always valid.
+          (Mode::Regular, _) | (_, TyVarSrc::Ty) => *fv,
+          (Mode::TyRhs, TyVarSrc::Val) => {
+            st.err(ty, ErrorKind::TyVarNotAllowedForTyRhs);
+            Ty::NONE
+          }
         }
-      },
+      }
     },
     // @def(45)
     sml_hir::Ty::Record(rows) => {
       let rows = record(st, ty.into(), rows, |st, _, ty| get(st, cx, ars, mode, ty));
-      Ty::Record(rows)
+      st.tys.record(rows)
     }
     // @def(46)
     sml_hir::Ty::Con(arguments, path) => {
@@ -67,22 +71,21 @@ pub(crate) fn get(
           if want_len == arguments.len() {
             ty_scheme = Some(ty_info.ty_scheme.clone());
             def = ty_info.def;
-            let mut ret = ty_info.ty_scheme.ty.clone();
-            let arguments: Vec<_> =
-              arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
-            apply_bv(&arguments, &mut ret);
+            let mut ret = ty_info.ty_scheme.ty;
+            let subst: Vec<_> = arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
+            apply_bv(&mut st.tys, &subst, &mut ret);
             // NOTE: just because `ty` was a `sml_hir::Ty::Con` doesn't mean `ret` is ultimately a
             // `Ty::Con`. there could have been a type alias. e.g. `type unit = {}` (which indeed is
             // provided by the standard basis).
             ret
           } else {
             st.err(ty, ErrorKind::WrongNumTyArgs(want_len, arguments.len()));
-            Ty::None
+            Ty::NONE
           }
         }
         Err(e) => {
           st.err(ty, e.into());
-          Ty::None
+          Ty::NONE
         }
       }
     }
@@ -90,10 +93,10 @@ pub(crate) fn get(
     sml_hir::Ty::Fn(param, res) => {
       let param = get(st, cx, ars, mode, *param);
       let res = get(st, cx, ars, mode, *res);
-      Ty::fun(param, res)
+      st.tys.fun(param, res)
     }
   };
-  let ty_entry = TyEntry::new(ret.clone(), ty_scheme);
+  let ty_entry = TyEntry::new(ret, ty_scheme);
   st.info.insert(ty.into(), Some(ty_entry), def.into_iter().collect());
   ret
 }

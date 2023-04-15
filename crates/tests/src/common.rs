@@ -1,4 +1,5 @@
 //! Common examples that come up a lot.
+
 use crate::check::check;
 
 #[test]

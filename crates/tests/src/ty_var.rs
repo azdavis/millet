@@ -73,7 +73,7 @@ fn apply() {
     r#"
 fun ('t, 'u) apply (f: 't -> 'u) (x: 't): 'u = f x
 val _ = apply op+ (1, false)
-(**               ^^^^^^^^^^ expected `<num> * <num>`, found `int * bool` *)
+(**               ^^^^^^^^^^ expected `int * int`, found `int * bool` *)
 "#,
   );
 }
@@ -84,7 +84,7 @@ fn different_vars() {
     r#"
 fun ('a, 'b) f (xs: 'a list) (x: 'b) =
     x :: xs
-(** ^^^^^^^ expected `?a * ?a list`, found `'b * 'a list` *)
+(** ^^^^^^^ expected `'b * 'b list`, found `'b * 'a list` *)
 "#,
   );
 }

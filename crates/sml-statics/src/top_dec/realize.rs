@@ -1,7 +1,8 @@
 //! Type realizations.
 
-use crate::types::{Ty, TyScheme};
-use crate::{core_info::ValEnv, env::Env, sym::Sym, util::apply_bv};
+use crate::types::ty::{Ty, TyData, TyScheme, Tys};
+use crate::types::util::apply_bv;
+use crate::{core_info::ValEnv, env::Env, sym::Sym};
 use fast_hash::FxHashMap;
 
 /// A type realization.
@@ -23,50 +24,57 @@ impl TyRealization {
   }
 }
 
-pub(crate) fn get_env(subst: &TyRealization, env: &mut Env) {
+pub(crate) fn get_env(tys: &mut Tys, subst: &TyRealization, env: &mut Env) {
   for (_, env) in env.str_env.iter_mut() {
-    get_env(subst, env);
+    get_env(tys, subst, env);
   }
   for (_, ty_info) in env.ty_env.iter_mut() {
-    get_ty(subst, &mut ty_info.ty_scheme.ty);
-    get_val_env(subst, &mut ty_info.val_env);
+    get_ty(tys, subst, &mut ty_info.ty_scheme.ty);
+    get_val_env(tys, subst, &mut ty_info.val_env);
   }
-  get_val_env(subst, &mut env.val_env);
+  get_val_env(tys, subst, &mut env.val_env);
 }
 
-pub(crate) fn get_val_env(subst: &TyRealization, val_env: &mut ValEnv) {
+pub(crate) fn get_val_env(tys: &mut Tys, subst: &TyRealization, val_env: &mut ValEnv) {
   for (_, val_info) in val_env.iter_mut() {
-    get_ty(subst, &mut val_info.ty_scheme.ty);
+    get_ty(tys, subst, &mut val_info.ty_scheme.ty);
   }
 }
 
-fn get_ty(subst: &TyRealization, ty: &mut Ty) {
-  match ty {
-    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) | Ty::FixedVar(_) => {}
-    Ty::Record(rows) => {
-      for ty in rows.values_mut() {
-        get_ty(subst, ty);
+fn get_ty(tys: &mut Tys, subst: &TyRealization, ty: &mut Ty) {
+  match tys.data(*ty) {
+    // interesting case
+    TyData::Con(mut data) => {
+      for ty in &mut data.args {
+        get_ty(tys, subst, ty);
       }
-    }
-    Ty::Con(args, sym) => {
-      for ty in args.iter_mut() {
-        get_ty(subst, ty);
-      }
-      if let Some(ty_scheme) = subst.0.get(sym) {
-        if args.len() == ty_scheme.bound_vars.len() {
-          let mut ty_scheme_ty = ty_scheme.ty.clone();
-          apply_bv(args, &mut ty_scheme_ty);
-          *ty = ty_scheme_ty;
-        } else if cfg!(debug_assertions) {
-          // not sure if this is actually reachable given how we construct the `TyRealization` and
-          // how we've checked everything that were now applying the realization to.
-          unreachable!("malformed TyRealization");
+      match subst.0.get(&data.sym) {
+        None => *ty = tys.con(data.args, data.sym),
+        Some(ty_scheme) => {
+          if data.args.len() == ty_scheme.bound_vars.len() {
+            *ty = ty_scheme.ty;
+            apply_bv(tys, &data.args, ty);
+          } else if cfg!(debug_assertions) {
+            // not sure if this is actually reachable given how we construct the `TyRealization` and
+            // how we've checked everything that were now applying the realization to.
+            unreachable!("malformed TyRealization");
+          }
         }
       }
     }
-    Ty::Fn(param, res) => {
-      get_ty(subst, param);
-      get_ty(subst, res);
+    // trivial base cases
+    TyData::None | TyData::BoundVar(_) | TyData::UnsolvedMetaVar(_) | TyData::FixedVar(_) => {}
+    // recursive cases
+    TyData::Record(mut rows) => {
+      for ty in rows.values_mut() {
+        get_ty(tys, subst, ty);
+      }
+      *ty = tys.record(rows);
+    }
+    TyData::Fn(mut data) => {
+      get_ty(tys, subst, &mut data.param);
+      get_ty(tys, subst, &mut data.res);
+      *ty = tys.fun(data.param, data.res);
     }
   }
 }

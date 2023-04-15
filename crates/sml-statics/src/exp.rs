@@ -4,13 +4,10 @@ use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind};
 use crate::get_env::{get_env_raw, get_val_info};
 use crate::sym::{Sym, SymsMarker};
-use crate::types::{Ty, TyScheme};
-use crate::util::{apply, get_scon, instantiate, record};
+use crate::types::ty::{Generalizable, Ty, TyData, TyScheme, Tys};
+use crate::types::util::{get_scon, instantiate, record};
 use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
-use crate::{
-  core_info::ValEnv, dec, def, item::Item, pat, st::St, ty, ty_var::meta::Generalizable,
-  unify::unify,
-};
+use crate::{core_info::ValEnv, dec, def, item::Item, pat, st::St, ty, unify::unify};
 use fast_hash::FxHashSet;
 
 pub(crate) fn get_and_check_ty_escape(
@@ -22,7 +19,7 @@ pub(crate) fn get_and_check_ty_escape(
   exp: sml_hir::ExpIdx,
 ) -> Ty {
   let ret = get(st, cfg, cx, ars, exp);
-  if let (Some(exp), Some(ty)) = (exp, ty_escape(cx, marker, &ret)) {
+  if let (Some(exp), Some(ty)) = (exp, ty_escape(&st.tys, cx, marker, ret)) {
     st.err(exp, ErrorKind::TyEscape(ty));
   }
   ret
@@ -31,19 +28,19 @@ pub(crate) fn get_and_check_ty_escape(
 fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> Ty {
   let exp = match exp {
     Some(x) => x,
-    None => return Ty::None,
+    None => return Ty::NONE,
   };
   // NOTE: do not early return, since we add to the Info at the bottom.
   let mut ty_scheme = None::<TyScheme>;
   let mut defs = FxHashSet::<def::Def>::default();
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
-      let mv = st.meta_gen.gen(Generalizable::Always);
+      let mv = st.tys.meta_var(Generalizable::Always);
       st.insert_hole(exp.into(), mv);
-      Ty::MetaVar(mv)
+      mv
     }
     // @def(1)
-    sml_hir::Exp::SCon(scon) => get_scon(st, Generalizable::Always, scon),
+    sml_hir::Exp::SCon(scon) => get_scon(&mut st.tys, Generalizable::Always, scon),
     // @def(2)
     sml_hir::Exp::Path(path) => {
       let val_info = get_val_info(&cx.env, path);
@@ -53,7 +50,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       match val_info.val {
         Err(e) => {
           st.err(exp, e.into());
-          Ty::None
+          Ty::NONE
         }
         Ok(val_info) => {
           if let Some(d) = &val_info.disallow {
@@ -67,14 +64,14 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
               st.mark_used(idx);
             }
           }
-          instantiate(st, Generalizable::Always, val_info.ty_scheme.clone())
+          instantiate(&mut st.tys, Generalizable::Always, &val_info.ty_scheme)
         }
       }
     }
     // @def(3)
     sml_hir::Exp::Record(rows) => {
       let rows = record(st, exp.into(), rows, |st, _, exp| get(st, cfg, cx, ars, exp));
-      Ty::Record(rows)
+      st.tys.record(rows)
     }
     // @def(4)
     sml_hir::Exp::Let(dec, inner) => {
@@ -93,17 +90,15 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       let arg_ty = get(st, cfg, cx, ars, *argument);
       // we could use the `_` case always, but it's slightly nicer if we know the function is
       // already a function type to just unify the parameter with the argument.
-      match func_ty {
-        Ty::Fn(param_ty, mut ret) => {
-          unify(st, argument.unwrap_or(exp).into(), *param_ty, arg_ty);
-          apply(&st.subst, ret.as_mut());
-          *ret
+      match st.tys.data(func_ty) {
+        TyData::Fn(data) => {
+          unify(st, argument.unwrap_or(exp).into(), data.param, arg_ty);
+          data.res
         }
         _ => {
-          let mut ret = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
-          let want = Ty::fun(arg_ty, ret.clone());
+          let ret = st.tys.meta_var(Generalizable::Always);
+          let want = st.tys.fun(arg_ty, ret);
           unify(st, func.unwrap_or(exp).into(), want, func_ty);
-          apply(&st.subst, &mut ret);
           ret
         }
       }
@@ -113,45 +108,45 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       if !maybe_effectful(ars, *inner) {
         st.err(exp, ErrorKind::UnreachableHandle);
       }
-      let mut exp_ty = get(st, cfg, cx, ars, *inner);
+      let exp_ty = get(st, cfg, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
       let idx = inner.unwrap_or(exp);
-      unify(st, idx.into(), Ty::EXN, param.clone());
-      unify(st, idx.into(), exp_ty.clone(), res);
-      apply(&st.subst, &mut exp_ty);
+      let exception = st.tys.exn();
+      unify(st, idx.into(), exception, param);
+      unify(st, idx.into(), exp_ty, res);
       st.insert_handle(idx.into(), pats, param);
       exp_ty
     }
     // @def(11)
     sml_hir::Exp::Raise(inner) => {
       let got = get(st, cfg, cx, ars, *inner);
-      unify(st, inner.unwrap_or(exp).into(), Ty::EXN, got);
-      Ty::MetaVar(st.meta_gen.gen(Generalizable::Always))
+      let exception = st.tys.exn();
+      unify(st, inner.unwrap_or(exp).into(), exception, got);
+      st.tys.meta_var(Generalizable::Always)
     }
     // @def(12)
     sml_hir::Exp::Fn(matcher, flavor) => {
       let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
-      if let Ty::Con(arguments, sym) = &param {
-        if *sym == Sym::BOOL {
-          assert!(arguments.is_empty(), "bool should have no ty args");
+      if let TyData::Con(data) = st.tys.data(param) {
+        if data.sym == Sym::BOOL {
+          assert!(data.args.is_empty(), "bool should have no ty args");
           if matches!(flavor, sml_hir::FnFlavor::Case) {
             st.err(exp, ErrorKind::BoolCase);
           }
         }
       }
-      st.insert_case(exp.into(), pats, param.clone());
-      Ty::fun(param, res)
+      st.insert_case(exp.into(), pats, param);
+      st.tys.fun(param, res)
     }
     // @def(9)
     sml_hir::Exp::Typed(inner, want) => {
       let got = get(st, cfg, cx, ars, *inner);
-      let mut want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
-      unify(st, exp.into(), want.clone(), got);
-      apply(&st.subst, &mut want);
+      let want = ty::get(st, cx, ars, ty::Mode::Regular, *want);
+      unify(st, exp.into(), want, got);
       want
     }
   };
-  let ty_entry = TyEntry::new(ret.clone(), ty_scheme);
+  let ty_entry = TyEntry::new(ret, ty_scheme);
   st.info.insert(exp.into(), Some(ty_entry), defs);
   ret
 }
@@ -285,10 +280,10 @@ fn get_matcher(
   ars: &sml_hir::Arenas,
   matcher: &[(sml_hir::PatIdx, sml_hir::ExpIdx)],
 ) -> (Vec<Pat>, Ty, Ty) {
-  let mut param_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
-  let mut res_ty = Ty::MetaVar(st.meta_gen.gen(Generalizable::Always));
+  let param_ty = st.tys.meta_var(Generalizable::Always);
+  let res_ty = st.tys.meta_var(Generalizable::Always);
   let mut pats = Vec::<Pat>::new();
-  st.meta_gen.inc_rank();
+  st.tys.inc_meta_var_rank();
   // @def(14)
   for &(pat, exp) in matcher {
     let mut ve = ValEnv::default();
@@ -297,25 +292,26 @@ fn get_matcher(
     let mut cx = cx.clone();
     cx.env.val_env.append(&mut ve);
     let exp_ty = get(st, cfg.cfg, &cx, ars, exp);
-    unify(st, pat.map_or(idx, Into::into), param_ty.clone(), pat_ty);
-    unify(st, exp.map_or(idx, Into::into), res_ty.clone(), exp_ty);
-    apply(&st.subst, &mut param_ty);
-    apply(&st.subst, &mut res_ty);
+    unify(st, pat.map_or(idx, Into::into), param_ty, pat_ty);
+    unify(st, exp.map_or(idx, Into::into), res_ty, exp_ty);
     pats.push(pm_pat);
   }
-  st.meta_gen.dec_rank();
+  st.tys.dec_meta_var_rank();
   (pats, param_ty, res_ty)
 }
 
-fn ty_escape(cx: &Cx, m: SymsMarker, ty: &Ty) -> Option<Ty> {
-  match ty {
-    Ty::None | Ty::BoundVar(_) | Ty::MetaVar(_) => None,
-    Ty::FixedVar(fv) => (!cx.fixed.contains_key(fv.ty_var())).then(|| ty.clone()),
-    Ty::Record(rows) => rows.values().find_map(|ty| ty_escape(cx, m, ty)),
-    Ty::Con(args, sym) => sym
+fn ty_escape(tys: &Tys, cx: &Cx, m: SymsMarker, ty: Ty) -> Option<Ty> {
+  match tys.data(ty) {
+    TyData::None | TyData::BoundVar(_) | TyData::UnsolvedMetaVar(_) => None,
+    TyData::FixedVar(fv) => (!cx.fixed.contains_key(&fv.ty_var)).then_some(ty),
+    TyData::Record(rows) => rows.values().find_map(|&ty| ty_escape(tys, cx, m, ty)),
+    TyData::Con(data) => data
+      .sym
       .generated_after(m)
-      .then(|| ty.clone())
-      .or_else(|| args.iter().find_map(|ty| ty_escape(cx, m, ty))),
-    Ty::Fn(param, res) => ty_escape(cx, m, param).or_else(|| ty_escape(cx, m, res)),
+      .then_some(ty)
+      .or_else(|| data.args.iter().find_map(|&ty| ty_escape(tys, cx, m, ty))),
+    TyData::Fn(data) => {
+      ty_escape(tys, cx, m, data.param).or_else(|| ty_escape(tys, cx, m, data.res))
+    }
   }
 }

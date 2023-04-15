@@ -134,7 +134,7 @@ fn must_solve_to_single_overloaded_type() {
   check(
     r#"
 val _ = 1.1 + 1
-(**     ^^^^^^^ expected `<num> * <num>`, found `real * int` *)
+(**     ^^^^^^^ expected `real * real`, found `real * int` *)
 "#,
   );
 }
