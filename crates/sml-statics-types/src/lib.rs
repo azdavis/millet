@@ -5,7 +5,8 @@
 // TODO remove once rustfmt support lands
 #![allow(clippy::manual_let_else)]
 
-pub mod data;
+mod data;
+
 pub mod def;
 pub mod disallow;
 pub mod display;
