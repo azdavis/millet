@@ -113,8 +113,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       let exp_ty = get(st, cfg, cx, ars, *inner);
       let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
       let idx = inner.unwrap_or(exp);
-      let exception = st.tys.exn();
-      unify(st, idx.into(), exception, param);
+      unify(st, idx.into(), Ty::EXN, param);
       unify(st, idx.into(), exp_ty, res);
       st.insert_handle(idx.into(), pats, param);
       exp_ty
@@ -122,8 +121,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     // @def(11)
     sml_hir::Exp::Raise(inner) => {
       let got = get(st, cfg, cx, ars, *inner);
-      let exception = st.tys.exn();
-      unify(st, inner.unwrap_or(exp).into(), exception, got);
+      unify(st, inner.unwrap_or(exp).into(), Ty::EXN, got);
       st.tys.meta_var(Generalizable::Always)
     }
     // @def(12)

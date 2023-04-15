@@ -149,7 +149,7 @@ pub fn minimal() -> (Syms, Tys, Bs) {
   };
   insert_special(&mut syms, Sym::REF, ref_info);
   let unit = tys.record(RecordData::new());
-  let aliases = [(PrimitiveKind::Unit, unit), (PrimitiveKind::Exn, tys.exn())];
+  let aliases = [(PrimitiveKind::Unit, unit), (PrimitiveKind::Exn, Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter_syms()
     .map(|sym_info| {
@@ -172,16 +172,14 @@ pub fn minimal() -> (Syms, Tys, Bs) {
     let real_pair_to_real =
       ov_fn(&mut tys, overload::Basic::Real.into(), |tys, a| (dup(tys, a), a));
     let numtxt_pair_to_bool =
-      ov_fn(&mut tys, overload::Composite::NumTxt.into(), |tys, a| (dup(tys, a), tys.bool()));
+      ov_fn(&mut tys, overload::Composite::NumTxt.into(), |tys, a| (dup(tys, a), Ty::BOOL));
     let realint_to_realint = ov_fn(&mut tys, overload::Composite::RealInt.into(), |_, a| (a, a));
     let wordint_pair_to_wordint =
       ov_fn(&mut tys, overload::Composite::WordInt.into(), |tys, a| (dup(tys, a), a));
     let equality_pair_to_bool = ty_scheme_one(&mut tys, TyVarKind::Equality, |tys, a| {
       let a_a = dup(tys, a);
-      let b = tys.bool();
-      tys.fun(a_a, b)
+      tys.fun(a_a, Ty::BOOL)
     });
-    let s = tys.string();
     [
       (PrimitiveKind::Mul, num_pair_to_num.clone()),
       (PrimitiveKind::Add, num_pair_to_num.clone()),
@@ -197,7 +195,7 @@ pub fn minimal() -> (Syms, Tys, Bs) {
       (PrimitiveKind::Mod, wordint_pair_to_wordint),
       (PrimitiveKind::Eq, equality_pair_to_bool.clone()),
       (PrimitiveKind::Neq, equality_pair_to_bool),
-      (PrimitiveKind::Use, TyScheme::zero(tys.fun(s, unit))),
+      (PrimitiveKind::Use, TyScheme::zero(tys.fun(Ty::STRING, unit))),
     ]
   };
   let val_env: ValEnv = ty_env

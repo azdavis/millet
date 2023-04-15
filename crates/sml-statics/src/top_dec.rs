@@ -17,7 +17,7 @@ use fast_hash::FxHashSet;
 use sml_statics_types::generalize::generalize;
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use sml_statics_types::sym::{Equality, StartedSym, SymsMarker};
-use sml_statics_types::ty::{TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
+use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
 use sml_statics_types::{item::Item, mode::Mode, overload, util::n_ary_con};
 
 pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) -> Bs {
@@ -498,7 +498,7 @@ fn get_spec_one(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec:
     sml_hir::Spec::Exception(ex_desc) => {
       let cx = bs.as_cx();
       // almost the same as the logic in dec::get, save for the check for ty vars.
-      let mut ty = st.tys.exn();
+      let mut ty = Ty::EXN;
       let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, ty::Mode::Regular, param));
       if let Some(param) = param {
         ty = st.tys.fun(param, ty);

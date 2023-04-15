@@ -103,13 +103,13 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
     // interesting cases
     TyData::UnsolvedMetaVar(umv) => {
       let bv = st.meta.get_mut(&ty);
-      go_bv(st.tys, bv, &mut st.bound, umv.kind, ty)
+      go_bv(bv, &mut st.bound, umv.kind, ty)
     }
     TyData::FixedVar(fv) => {
       let k = if fv.ty_var.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular };
       let k = UnsolvedMetaTyVarKind::Kind(k);
       let bv = st.fixed.0.get_mut(&ty.idx);
-      go_bv(st.tys, bv, &mut st.bound, k, ty)
+      go_bv(bv, &mut st.bound, k, ty)
     }
     // trivial base cases
     TyData::BoundVar(_) => unreachable!("bound vars should be instantiated"),
@@ -133,7 +133,6 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
 }
 
 fn go_bv(
-  tys: &mut Tys,
   bv: Option<&mut Option<BoundTyVar>>,
   bound: &mut BoundTyVars,
   kind: UnsolvedMetaTyVarKind,
@@ -156,14 +155,14 @@ fn go_bv(
       }
       TyVarKind::Overloaded(ov) => match ov {
         overload::Overload::Basic(b) => match b {
-          overload::Basic::Int => Ok(tys.int()),
-          overload::Basic::Real => Ok(tys.real()),
-          overload::Basic::Word => Ok(tys.word()),
-          overload::Basic::String => Ok(tys.string()),
-          overload::Basic::Char => Ok(tys.char()),
+          overload::Basic::Int => Ok(Ty::INT),
+          overload::Basic::Real => Ok(Ty::REAL),
+          overload::Basic::Word => Ok(Ty::WORD),
+          overload::Basic::String => Ok(Ty::STRING),
+          overload::Basic::Char => Ok(Ty::CHAR),
         },
         // all composite overloads contain, and default to, int.
-        overload::Overload::Composite(_) => Ok(tys.int()),
+        overload::Overload::Composite(_) => Ok(Ty::INT),
       },
     },
     // it is a user error if these haven't been solved by now.

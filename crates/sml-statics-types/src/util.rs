@@ -20,8 +20,8 @@ pub fn get_scon(tys: &mut Tys, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
       let kind = TyVarKind::Overloaded(overload::Basic::Word.into());
       tys.meta_var_kind(g, kind)
     }
-    sml_hir::SCon::Char(_) => tys.char(),
-    sml_hir::SCon::String(_) => tys.string(),
+    sml_hir::SCon::Char(_) => Ty::CHAR,
+    sml_hir::SCon::String(_) => Ty::STRING,
   }
 }
 

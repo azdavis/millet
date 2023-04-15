@@ -194,43 +194,6 @@ impl Tys {
       MetaTyVarRank::Infinite => true,
     }
   }
-
-  // TODO replace these with consts on `Ty`?
-
-  /// Returns the primitive `exn` type.
-  pub fn exn(&mut self) -> Ty {
-    self.con(Vec::new(), Sym::EXN)
-  }
-
-  /// Returns the primitive `int` type.
-  pub fn int(&mut self) -> Ty {
-    self.con(Vec::new(), Sym::INT)
-  }
-
-  /// Returns the primitive `word` type.
-  pub fn word(&mut self) -> Ty {
-    self.con(Vec::new(), Sym::WORD)
-  }
-
-  /// Returns the primitive `real` type.
-  pub fn real(&mut self) -> Ty {
-    self.con(Vec::new(), Sym::REAL)
-  }
-
-  /// Returns the primitive `char` type.
-  pub fn char(&mut self) -> Ty {
-    self.con(Vec::new(), Sym::CHAR)
-  }
-
-  /// Returns the primitive `string` type.
-  pub fn string(&mut self) -> Ty {
-    self.con(Vec::new(), Sym::STRING)
-  }
-
-  /// Returns the primitive `bool` type.
-  pub fn bool(&mut self) -> Ty {
-    self.con(Vec::new(), Sym::BOOL)
-  }
 }
 
 /// A type.

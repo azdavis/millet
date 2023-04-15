@@ -166,7 +166,7 @@ fn get_one(
         match ex_bind {
           // @def(30)
           sml_hir::ExBind::New(name, param) => {
-            let mut ty = st.tys.exn();
+            let mut ty = Ty::EXN;
             let param = param.map(|param| ty::get(st, cx, ars, ty::Mode::Regular, param));
             if let Some(param) = param {
               ty = st.tys.fun(param, ty);
