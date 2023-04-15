@@ -11,20 +11,13 @@ doctest = false
 
 [dependencies]
 code-h2-md-map = { git = "https://github.com/azdavis/language-util.git" }
-# config = { path = "../config" }
-# diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 drop_bomb = "0.1"
-# elapsed = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 fmt-util = { git = "https://github.com/azdavis/language-util.git" }
 idx = { git = "https://github.com/azdavis/language-util.git" }
-# log = "0.4"
 once_cell = "1"
 paths = { git = "https://github.com/azdavis/language-util.git" }
-# pattern-match = { git = "https://github.com/azdavis/language-util.git" }
 chain-map = { path = "../chain-map" }
 sml-hir = { path = "../sml-hir" }
 sml-path = { path = "../sml-path" }
-# sml-namespace = { path = "../sml-namespace" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
-# uniq = { git = "https://github.com/azdavis/language-util.git" }
