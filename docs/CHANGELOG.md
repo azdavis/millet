@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.9.1
+
+- Improve performance slightly.
+
 ## v0.9.0
 
 - Emit better error for invalid `:>` where only `:` is allowed.
