@@ -31,14 +31,8 @@ impl FixedTyVars {
   }
 }
 
-/// Given a type, generalize it into a type scheme.
-///
-/// Replaces:
-///
-/// - any fixed vars from `fixed_vars`
-/// - any meta vars not already solved
-///
-/// in the type with bound vars, and updates the type scheme to bind those vars.
+/// Generalizes a type into a type scheme, by replacing (any fixed vars from `fixed`) and (any meta
+/// vars not already solved) that appear in the type with bound vars.
 ///
 /// # Errors
 ///
@@ -58,11 +52,9 @@ pub fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme>
   Ok(TyScheme { bound_vars: st.bound, ty })
 }
 
-/// Like [`generalize`], but:
-///
-/// - Doesn't allow meta vars
-/// - Always generalizes exactly the given fixed vars, even if they don't appear in the
-///   `ty_scheme.ty`
+/// Generalizes a type **without meta vars** into a type scheme, by replacing any fixed vars from
+/// `fixed` in the type with bound vars. Note that the returned type scheme always quantifies
+/// **exactly** the vars from `fixed`, even if they do not appear in the type.
 ///
 /// Use this to:
 ///
@@ -71,7 +63,7 @@ pub fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme>
 ///
 /// # Panics
 ///
-/// When it has a bug.
+/// If it has a bug.
 #[allow(clippy::module_name_repetitions)]
 pub fn generalize_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
   let mut bound = Vec::with_capacity(fixed.0.len());

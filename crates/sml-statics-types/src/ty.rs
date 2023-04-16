@@ -1,4 +1,4 @@
-//! Semantic types and unification.
+//! Semantic types.
 
 #![allow(clippy::module_name_repetitions)]
 
