@@ -33,7 +33,7 @@ macro_rules! mk_special_syms {
 
       #[doc = "Returns the primitive kind for this sym."]
       #[must_use]
-      pub fn primitive(&self) -> Option<def::PrimitiveKind> {
+      pub fn primitive(&self) -> Option<def::Primitive> {
         let s = match *self {
           $(
             Self::$name => $prim,
@@ -59,15 +59,15 @@ macro_rules! mk_special_syms {
 
 // @sync(special_sym_order)
 mk_special_syms![
-  (0, y, EXN, def::PrimitiveKind::Exn),
-  (1, y, INT, def::PrimitiveKind::Int),
-  (2, y, WORD, def::PrimitiveKind::Word),
-  (3, y, REAL, def::PrimitiveKind::Real),
-  (4, y, CHAR, def::PrimitiveKind::Char),
-  (5, y, STRING, def::PrimitiveKind::String),
-  (6, y, BOOL, def::PrimitiveKind::Bool),
-  (7, n, LIST, def::PrimitiveKind::List),
-  (8, n, REF, def::PrimitiveKind::RefTy),
+  (0, y, EXN, def::Primitive::Exn),
+  (1, y, INT, def::Primitive::Int),
+  (2, y, WORD, def::Primitive::Word),
+  (3, y, REAL, def::Primitive::Real),
+  (4, y, CHAR, def::Primitive::Char),
+  (5, y, STRING, def::Primitive::String),
+  (6, y, BOOL, def::Primitive::Bool),
+  (7, n, LIST, def::Primitive::List),
+  (8, n, REF, def::Primitive::RefTy),
 ];
 
 impl Sym {

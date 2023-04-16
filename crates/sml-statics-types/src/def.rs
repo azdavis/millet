@@ -39,30 +39,8 @@ pub enum Path {
 
 /// A primitive definition, often not expressible in real SML.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Primitive(PrimitiveKind);
-
-impl Primitive {
-  /// Returns Markdown documentation for this.
-  ///
-  /// # Panics
-  ///
-  /// If there was no documentation for this.
-  #[must_use]
-  pub fn doc(self) -> &'static str {
-    // @test(repo::primitives)
-    PRIMITIVE_DOC.get(&self.0).expect("no doc for this primitive").as_ref()
-  }
-}
-
-static PRIMITIVE_DOC: Lazy<FxHashMap<PrimitiveKind, String>> = Lazy::new(|| {
-  let raw = code_h2_md_map::get(include_str!("../../../docs/primitives.md"), |_| String::new());
-  raw.into_iter().map(|(k, v)| (k.parse().expect("not a primitive kind"), v)).collect()
-});
-
-/// What kind of primitive definition this is.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(missing_docs)]
-pub enum PrimitiveKind {
+pub enum Primitive {
   Int,
   Word,
   Real,
@@ -95,7 +73,7 @@ pub enum PrimitiveKind {
   Use,
 }
 
-impl PrimitiveKind {
+impl Primitive {
   /// Returns this as a string.
   #[must_use]
   pub fn as_str(self) -> &'static str {
@@ -133,13 +111,31 @@ impl PrimitiveKind {
   }
 }
 
-impl From<PrimitiveKind> for Def {
-  fn from(val: PrimitiveKind) -> Self {
-    Self::Primitive(Primitive(val))
+impl Primitive {
+  /// Returns Markdown documentation for this.
+  ///
+  /// # Panics
+  ///
+  /// If there was no documentation for this.
+  #[must_use]
+  pub fn doc(self) -> &'static str {
+    // @test(repo::primitives)
+    PRIMITIVE_DOC.get(&self).expect("no doc for this primitive").as_ref()
   }
 }
 
-impl std::str::FromStr for PrimitiveKind {
+static PRIMITIVE_DOC: Lazy<FxHashMap<Primitive, String>> = Lazy::new(|| {
+  let raw = code_h2_md_map::get(include_str!("../../../docs/primitives.md"), |_| String::new());
+  raw.into_iter().map(|(k, v)| (k.parse().expect("not a primitive kind"), v)).collect()
+});
+
+impl From<Primitive> for Def {
+  fn from(val: Primitive) -> Self {
+    Self::Primitive(val)
+  }
+}
+
+impl std::str::FromStr for Primitive {
   type Err = String;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
