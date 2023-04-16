@@ -38,7 +38,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
       let mv = st.tys.meta_var(Generalizable::Always);
-      st.insert_hole(exp.into(), mv);
+      st.err(exp, ErrorKind::ExpHole(mv));
       mv
     }
     // @def(1)

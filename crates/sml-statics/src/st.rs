@@ -17,8 +17,6 @@ pub(crate) struct St {
   pub(crate) tys: Tys,
   errors: Vec<Error>,
   matches: Vec<Match>,
-  /// TODO no need to delay this until the end because of auto subst with the tys.
-  holes: Vec<(Ty, sml_hir::Idx)>,
   /// a subset of all things that have definition sites. currently, only local value variables to a
   /// function.
   defined: Vec<(sml_hir::Idx, str_util::Name)>,
@@ -35,7 +33,6 @@ impl St {
       syms,
       errors: Vec::new(),
       matches: Vec::new(),
-      holes: Vec::new(),
       defined: Vec::new(),
       used: FxHashSet::default(),
       cur_prefix: Vec::new(),
@@ -85,13 +82,6 @@ impl St {
     self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
   }
 
-  pub(crate) fn insert_hole(&mut self, idx: sml_hir::Idx, mv: Ty) {
-    if self.info.mode.is_path_order() {
-      return;
-    }
-    self.holes.push((mv, idx));
-  }
-
   pub(crate) fn mark_defined(&mut self, idx: sml_hir::Idx, name: str_util::Name) {
     self.defined.push((idx, name));
   }
@@ -123,9 +113,6 @@ impl St {
 
   pub(crate) fn finish(mut self) -> (Syms, Tys, Vec<Error>, Info) {
     if !self.info.mode.is_path_order() {
-      for (ty, idx) in self.holes {
-        self.errors.push(Error { idx, kind: ErrorKind::ExpHole(ty) });
-      }
       for m in self.matches {
         match m.kind {
           MatchKind::Bind(pat) => {
