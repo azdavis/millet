@@ -124,12 +124,16 @@ pub struct ExnInfo {
 
 /// Information about overloads.
 #[derive(Debug, Default, Clone)]
-#[allow(missing_docs)]
 pub struct Overloads {
+  /// Overloads for `int`, like `Int16.int`.
   pub int: Vec<Sym>,
+  /// Overloads for `real`, like `Real64.real`.
   pub real: Vec<Sym>,
+  /// Overloads for `word`, like `Word8.word`.
   pub word: Vec<Sym>,
+  /// Overloads for `string`. Usually just 1.
   pub string: Vec<Sym>,
+  /// Overloads for `char`. Usually just 1.
   pub char: Vec<Sym>,
 }
 

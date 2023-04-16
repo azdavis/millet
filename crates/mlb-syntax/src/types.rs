@@ -118,10 +118,12 @@ pub enum BasDec {
 
 /// A basis expression.
 #[derive(Debug)]
-#[allow(missing_docs)]
 pub enum BasExp {
+  /// A basis declaration wrapped in `bas ... end`.
   Bas(BasDec),
+  /// A name. This is pretty common.
   Name(WithRange<Name>),
+  /// A `let ... in ... end` expression.
   Let(BasDec, Box<BasExp>),
 }
 
