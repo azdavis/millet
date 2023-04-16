@@ -113,20 +113,18 @@ impl St {
 
   pub(crate) fn finish(mut self) -> (Syms, Tys, Vec<Error>, Info) {
     if !self.info.mode.is_path_order() {
-      for m in self.matches {
+      for m in std::mem::take(&mut self.matches) {
         match m.kind {
           MatchKind::Bind(pat) => {
             let missing = get_match(&mut self.errors, &self.syms, &mut self.tys, vec![pat], m.want);
             if !missing.is_empty() {
-              self
-                .errors
-                .push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveBinding(missing) });
+              self.err(m.idx, ErrorKind::NonExhaustiveBinding(missing));
             }
           }
           MatchKind::Case(pats) => {
             let missing = get_match(&mut self.errors, &self.syms, &mut self.tys, pats, m.want);
             if !missing.is_empty() {
-              self.errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveCase(missing) });
+              self.err(m.idx, ErrorKind::NonExhaustiveCase(missing));
             }
           }
           MatchKind::Handle(pats) => {
@@ -134,9 +132,9 @@ impl St {
           }
         }
       }
-      for (idx, name) in self.defined {
+      for (idx, name) in std::mem::take(&mut self.defined) {
         if !self.used.contains(&idx) {
-          self.errors.push(Error { idx, kind: ErrorKind::Unused(Item::Val, name) });
+          self.err(idx, ErrorKind::Unused(Item::Val, name));
         }
       }
     }
