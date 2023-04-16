@@ -349,7 +349,7 @@ impl Lab {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SCon {
   Int(Int),
   Real(f64),
