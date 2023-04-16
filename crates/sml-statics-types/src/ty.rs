@@ -208,7 +208,6 @@ pub struct Ty {
   pub(crate) idx: idx::Idx,
 }
 
-// TODO add consts for the special tys
 impl Ty {
   /// The special none "type". Things like undefined variables and invalid constructs can say they
   /// have this "type".

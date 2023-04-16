@@ -44,7 +44,7 @@ where
   Ok(())
 }
 
-/// Returns whether `ty` admits equality. That is:
+/// Returns whether `ty` admits equality.
 ///
 /// - If it **is** an equality type, returns Ok.
 /// - If it **is not** an equality type, returns Err with the first kind of type contained in it
@@ -55,8 +55,6 @@ where
 /// - Any non-constrained meta type variables to be equality type variables.
 /// - Any overloaded meta type variables to be overloaded at a equality-only version of that
 ///   overload.
-///
-/// TODO expose a version of this that does not take a mode?
 pub(crate) fn get_ty(mode: Mode, syms: &Syms, tys: &mut Tys, ty: Ty) -> Result {
   if mode.is_path_order() {
     return Ok(());
