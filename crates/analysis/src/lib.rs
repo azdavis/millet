@@ -249,7 +249,6 @@ impl Analysis {
       config::init::FormatEngine::Smlfmt => {
         let contents = file.syntax.parse.root.syntax().to_string();
         let mut prog = Command::new("smlfmt")
-          .arg("--stdio")
           .stdin(Stdio::piped())
           .stdout(Stdio::piped())
           .spawn()
