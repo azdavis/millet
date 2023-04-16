@@ -9,32 +9,33 @@ use std::collections::BTreeSet;
 
 pub(crate) type Pat = pattern_match::Pat<Lang>;
 
-// TODO this really shouldn't take ownership of either of these, but having this have a lifetime
-// makes `Pat` weird. maybe should rethink the pattern_match API. Maybe a new associated type on the
-// trait for "context"?
-pub(crate) struct Lang {
-  pub(crate) syms: Syms,
-  pub(crate) tys: std::cell::RefCell<Tys>,
+pub(crate) struct Lang;
+
+pub(crate) struct Cx<'a> {
+  pub(crate) syms: &'a Syms,
+  pub(crate) tys: &'a mut Tys,
 }
 
 impl pattern_match::Lang for Lang {
+  type Cx<'a> = Cx<'a>;
+
   type PatIdx = sml_hir::PatIdx;
 
   type Con = Con;
 
   type Ty = Ty;
 
-  fn any(&self) -> Con {
+  fn any() -> Con {
     Con::Any
   }
 
-  fn split<'a, I>(&self, ty: &Ty, con: &Con, cons: I, depth: usize) -> Result<Vec<Con>>
+  fn split<'a, I>(cx: &mut Cx<'_>, ty: &Ty, con: &Con, cons: I, depth: usize) -> Result<Vec<Con>>
   where
     Con: 'a,
     I: Iterator<Item = &'a Con>,
   {
     let ret = match con {
-      Con::Any => match self.tys.borrow().data(*ty) {
+      Con::Any => match cx.tys.data(*ty) {
         TyData::None
         | TyData::BoundVar(_)
         | TyData::UnsolvedMetaVar(_)
@@ -43,7 +44,7 @@ impl pattern_match::Lang for Lang {
           vec![Con::Any]
         }
         TyData::Con(data) => {
-          let all_cons = cons_for_sym(&self.syms, data.sym).unwrap_or_else(|| vec![Con::Any]);
+          let all_cons = cons_for_sym(cx.syms, data.sym).unwrap_or_else(|| vec![Con::Any]);
           let cur_cons: FxHashSet<_> = cons.collect();
           // this is... a little strange.
           //
@@ -89,9 +90,8 @@ impl pattern_match::Lang for Lang {
     Ok(ret)
   }
 
-  fn get_arg_tys(&self, ty: &Ty, con: &Con) -> Result<Vec<Ty>> {
-    let data = self.tys.borrow().data(*ty);
-    let ret = match data {
+  fn get_arg_tys(cx: &mut Cx<'_>, ty: &Ty, con: &Con) -> Result<Vec<Ty>> {
+    let ret = match cx.tys.data(*ty) {
       TyData::None
       | TyData::BoundVar(_)
       | TyData::UnsolvedMetaVar(_)
@@ -104,18 +104,15 @@ impl pattern_match::Lang for Lang {
           if data.sym != *sym {
             return Err(CheckError);
           }
-          match (variant_name, self.syms.get(data.sym)) {
-            (VariantName::Exn(exn), None) => {
-              self.syms.get_exn(*exn).param.iter().copied().collect()
-            }
+          match (variant_name, cx.syms.get(data.sym)) {
+            (VariantName::Exn(exn), None) => cx.syms.get_exn(*exn).param.iter().copied().collect(),
             (VariantName::Name(name), Some(sym_info)) => {
               let val_info = sym_info.ty_info.val_env.get(name).ok_or(CheckError)?;
-              let val_data = self.tys.borrow().data(val_info.ty_scheme.ty);
-              match val_data {
+              match cx.tys.data(val_info.ty_scheme.ty) {
                 TyData::Con(_) => Vec::new(),
                 TyData::Fn(fn_data) => {
                   let mut param = fn_data.param;
-                  apply_bv(&mut self.tys.borrow_mut(), &data.args, &mut param);
+                  apply_bv(cx.tys, &data.args, &mut param);
                   vec![param]
                 }
                 _ => return Err(CheckError),
@@ -130,7 +127,7 @@ impl pattern_match::Lang for Lang {
     Ok(ret)
   }
 
-  fn covers(&self, lhs: &Con, rhs: &Con) -> bool {
+  fn covers(lhs: &Con, rhs: &Con) -> bool {
     matches!((lhs, rhs), (Con::Record { allows_other: true, .. }, Con::Record { .. },))
       || (lhs == rhs)
   }

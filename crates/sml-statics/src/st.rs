@@ -2,7 +2,7 @@
 
 use crate::error::{Error, ErrorKind};
 use crate::info::Info;
-use crate::pat_match::{Lang, Pat};
+use crate::pat_match::{self, Pat};
 use fast_hash::FxHashSet;
 use sml_statics_types::ty::{Ty, Tys};
 use sml_statics_types::{def, item::Item, mode::Mode, sym::Syms};
@@ -121,45 +121,54 @@ impl St {
     sml_path::Path::new(self.cur_prefix.iter().cloned(), last)
   }
 
-  pub(crate) fn finish(self) -> (Syms, Tys, Vec<Error>, Info) {
-    let lang = Lang { syms: self.syms, tys: std::cell::RefCell::new(self.tys) };
-    let mut errors = self.errors;
+  pub(crate) fn finish(mut self) -> (Syms, Tys, Vec<Error>, Info) {
     if !self.info.mode.is_path_order() {
       for (ty, idx) in self.holes {
-        errors.push(Error { idx, kind: ErrorKind::ExpHole(ty) });
+        self.errors.push(Error { idx, kind: ErrorKind::ExpHole(ty) });
       }
       for m in self.matches {
         match m.kind {
           MatchKind::Bind(pat) => {
-            let missing = get_match(&mut errors, &lang, vec![pat], m.want);
+            let missing = get_match(&mut self.errors, &self.syms, &mut self.tys, vec![pat], m.want);
             if !missing.is_empty() {
-              errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveBinding(missing) });
+              self
+                .errors
+                .push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveBinding(missing) });
             }
           }
           MatchKind::Case(pats) => {
-            let missing = get_match(&mut errors, &lang, pats, m.want);
+            let missing = get_match(&mut self.errors, &self.syms, &mut self.tys, pats, m.want);
             if !missing.is_empty() {
-              errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveCase(missing) });
+              self.errors.push(Error { idx: m.idx, kind: ErrorKind::NonExhaustiveCase(missing) });
             }
           }
           MatchKind::Handle(pats) => {
-            get_match(&mut errors, &lang, pats, m.want);
+            get_match(&mut self.errors, &self.syms, &mut self.tys, pats, m.want);
           }
         }
       }
       for (idx, name) in self.defined {
         if !self.used.contains(&idx) {
-          errors.push(Error { idx, kind: ErrorKind::Unused(Item::Val, name) });
+          self.errors.push(Error { idx, kind: ErrorKind::Unused(Item::Val, name) });
         }
       }
     }
-    (lang.syms, lang.tys.into_inner(), errors, self.info)
+    (self.syms, self.tys, self.errors, self.info)
   }
 }
 
 /// returns the missing pats.
-fn get_match(errors: &mut Vec<Error>, lang: &Lang, pats: Vec<Pat>, ty: Ty) -> Vec<Pat> {
-  let ck = elapsed::log("pattern_match::check", || pattern_match::check(lang, pats, ty));
+fn get_match(
+  errors: &mut Vec<Error>,
+  syms: &Syms,
+  tys: &mut Tys,
+  pats: Vec<Pat>,
+  ty: Ty,
+) -> Vec<Pat> {
+  let ck = elapsed::log("pattern_match::check", || {
+    let mut cx = pat_match::Cx { syms, tys };
+    pattern_match::check::<pat_match::Lang>(&mut cx, pats, ty)
+  });
   let ck = match ck {
     Ok(x) => x,
     // we already should have emitted other errors in this case.
