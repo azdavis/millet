@@ -115,7 +115,7 @@ fn unify_mv(
   umv: UnsolvedMetaTyVarData,
   mut ty: Ty,
 ) -> Result<(), Error> {
-  assert!(matches!(tys.data(mv), TyData::UnsolvedMetaVar(_)), "unify_mv where mv was not unsolved");
+  debug_assert!(matches!(tys.data(mv), TyData::UnsolvedMetaVar(_)),);
   // make sure we're trying to solve the right ty.
   while let TyKind::MetaVar = ty.kind {
     match &tys.meta_var_data[ty.idx.to_usize()] {
