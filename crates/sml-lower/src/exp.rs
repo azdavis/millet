@@ -60,7 +60,8 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let param =
         st.pat(sml_hir::Pat::Record { rows: vec![(lab, pat)], allows_other: true }, ptr.clone());
       let body = st.exp(name(fresh.as_str()), ptr.clone());
-      sml_hir::Exp::Fn(vec![(param, body)], sml_hir::FnFlavor::Selector)
+      let arm = sml_hir::Arm { pat: param, exp: body };
+      sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::Selector)
     }
     // @def(5)
     ast::Exp::ParenExp(exp) => {
@@ -213,8 +214,8 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         st.exp(fn_body, ptr.clone())
       };
       let arg_pat = st.pat(pat::tuple([]), ptr.clone());
-      let fn_exp =
-        st.exp(sml_hir::Exp::Fn(vec![(arg_pat, fn_body)], sml_hir::FnFlavor::While), ptr.clone());
+      let arm = sml_hir::Arm { pat: arg_pat, exp: fn_body };
+      let fn_exp = st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::While), ptr.clone());
       let vid_pat = st.pat(pat::name(vid.as_str()), ptr.clone());
       let val =
         sml_hir::Dec::Val(vec![], vec![sml_hir::ValBind { rec: true, pat: vid_pat, exp: fn_exp }]);
@@ -328,7 +329,8 @@ where
 {
   let ret = exps.into_iter().rev().reduce(|ac, x| {
     let wild = st.pat(sml_hir::Pat::Wild, ptr.clone());
-    let c = case(st, x, vec![(wild, ac)], ptr.clone(), sml_hir::FnFlavor::Seq);
+    let arm = sml_hir::Arm { pat: wild, exp: ac };
+    let c = case(st, x, vec![arm], ptr.clone(), sml_hir::FnFlavor::Seq);
     st.exp(c, ptr.clone())
   });
   if ret.is_none() {
@@ -347,13 +349,15 @@ fn if_(
 ) -> sml_hir::Exp {
   let yes_pat = st.pat(pat::name("true"), ptr.clone());
   let no_pat = st.pat(pat::name("false"), ptr.clone());
-  case(st, cond, vec![(yes_pat, yes), (no_pat, no)], ptr, flavor)
+  let yes_arm = sml_hir::Arm { pat: yes_pat, exp: yes };
+  let no_arm = sml_hir::Arm { pat: no_pat, exp: no };
+  case(st, cond, vec![yes_arm, no_arm], ptr, flavor)
 }
 
 pub(crate) fn case(
   st: &mut St<'_>,
   head: sml_hir::ExpIdx,
-  arms: Vec<(sml_hir::PatIdx, sml_hir::ExpIdx)>,
+  arms: Vec<sml_hir::Arm>,
   ptr: SyntaxNodePtr,
   flavor: sml_hir::FnFlavor,
 ) -> sml_hir::Exp {
@@ -364,13 +368,17 @@ fn matcher(
   st: &mut St<'_>,
   flavor: Option<MatcherFlavor>,
   matcher: Option<ast::Matcher>,
-) -> Vec<(sml_hir::PatIdx, sml_hir::ExpIdx)> {
+) -> Vec<sml_hir::Arm> {
   if let Some(bar) = matcher.as_ref().and_then(sml_syntax::ast::Matcher::bar) {
     st.err(bar.text_range(), ErrorKind::PrecedingBar);
   }
   matcher
     .into_iter()
-    .flat_map(|x| x.match_rules())
-    .map(|arm| (pat::get(st, flavor, arm.pat()), get(st, arm.exp())))
+    .flat_map(|x| x.arms())
+    .map(|arm| {
+      let pat = pat::get(st, flavor, arm.pat());
+      let exp = get(st, arm.exp());
+      sml_hir::Arm { pat, exp }
+    })
     .collect()
 }

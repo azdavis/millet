@@ -182,8 +182,8 @@ ExpArg = Exp ','?
 ExpInSeq = Exp ';'?
 
 // call it this instead of Match to avoid clash with rust kw
-Matcher = '|'? MatchRule*
-MatchRule = Pat '=>' Exp '|'?
+Matcher = '|'? Arm*
+Arm = Pat '=>' Exp '|'?
 
 Pat =
   WildcardPat

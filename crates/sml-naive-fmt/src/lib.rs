@@ -706,7 +706,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
     }
     ast::Exp::FnExp(exp) => {
       st.write("fn ");
-      sep(st, " | ", exp.matcher()?.match_rules(), |st, arm| get_matcher_arm(st, cfg, arm))?;
+      sep(st, " | ", exp.matcher()?.arms(), |st, arm| get_matcher_arm(st, cfg, arm))?;
     }
   }
   Some(())
@@ -714,10 +714,10 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
 
 fn get_matcher_across_lines(st: &mut St, cfg: Cfg, matcher: ast::Matcher) -> Res {
   cfg.indented().output_indent(st);
-  sep_with_lines(st, cfg, "| ", matcher.match_rules(), |st, arm| get_matcher_arm(st, cfg, arm))
+  sep_with_lines(st, cfg, "| ", matcher.arms(), |st, arm| get_matcher_arm(st, cfg, arm))
 }
 
-fn get_matcher_arm(st: &mut St, cfg: Cfg, arm: ast::MatchRule) -> Res {
+fn get_matcher_arm(st: &mut St, cfg: Cfg, arm: ast::Arm) -> Res {
   get_pat(st, arm.pat()?)?;
   st.write(" =>");
   get_body_exp(st, cfg, arm.exp()?)

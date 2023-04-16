@@ -254,7 +254,7 @@ fn matcher(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   if p.at(SK::Bar) {
     p.bump();
   }
-  many_sep(p, SK::Bar, SK::MatchRule, |p| {
+  many_sep(p, SK::Bar, SK::Arm, |p| {
     if pat(p, fe, InfixErr::Yes).is_none() {
       p.error(ErrorKind::Expected(Expected::Pat));
       return false;

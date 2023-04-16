@@ -591,7 +591,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           if name.is_some() {
             st.pop_fun_name();
           }
-          (pat, body)
+          sml_hir::Arm { pat, exp: body }
         });
         let arms: Vec<_> = iter.collect();
         // not the greatest, since we have no body at all if the ptrs are None. but if they were
@@ -612,7 +612,8 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           let case = exp::case(st, head, arms, ptr.clone(), sml_hir::FnFlavor::Fun);
           arg_names.into_iter().rev().fold(st.exp(case, ptr.clone()), |body, name| {
             let pat = st.pat(pat::name(name.as_str()), ptr.clone());
-            st.exp(sml_hir::Exp::Fn(vec![(pat, body)], sml_hir::FnFlavor::Fun), ptr.clone())
+            let arm = sml_hir::Arm { pat, exp: body };
+            st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::Fun), ptr.clone())
           })
         };
         sml_hir::ValBind {

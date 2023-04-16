@@ -217,7 +217,7 @@ impl Analysis {
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
     let head = ft.file.syntax.lower.ptrs.ast_to_hir(&head_ptr)?;
     let variants = ft.file.info.get_variants(&self.syms, &self.tys, head)?;
-    let starting_bar = case.matcher().map_or(false, |x| x.match_rules().count() > 0);
+    let starting_bar = case.matcher().map_or(false, |x| x.arms().count() > 0);
     let case = matcher::display(starting_bar, &variants);
     Some((range, case.to_string()))
   }

@@ -280,22 +280,22 @@ fn get_exp(
     }
     sml_hir::Exp::Handle(head, matcher_arms) => {
       get_exp(st, ars, scope, mode, *head);
-      for &(pat, exp) in matcher_arms {
+      for arm in matcher_arms {
         match mode {
-          Mode::Get(ac) => get_pat(ars, ac, pat),
+          Mode::Get(ac) => get_pat(ars, ac, arm.pat),
           Mode::Set => {}
         }
-        get_exp(st, ars, scope, mode, exp);
+        get_exp(st, ars, scope, mode, arm.exp);
       }
     }
     sml_hir::Exp::Raise(exp) => get_exp(st, ars, scope, mode, *exp),
     sml_hir::Exp::Fn(matcher_arms, _) => {
-      for &(pat, exp) in matcher_arms {
+      for arm in matcher_arms {
         match mode {
-          Mode::Get(ac) => get_pat(ars, ac, pat),
+          Mode::Get(ac) => get_pat(ars, ac, arm.pat),
           Mode::Set => {}
         }
-        get_exp(st, ars, scope, mode, exp);
+        get_exp(st, ars, scope, mode, arm.exp);
       }
     }
     sml_hir::Exp::Typed(exp, ty) => {

@@ -200,10 +200,16 @@ pub enum Exp {
   Record(Vec<(Lab, ExpIdx)>),
   Let(DecSeq, ExpIdx),
   App(ExpIdx, ExpIdx),
-  Handle(ExpIdx, Vec<(PatIdx, ExpIdx)>),
+  Handle(ExpIdx, Vec<Arm>),
   Raise(ExpIdx),
-  Fn(Vec<(PatIdx, ExpIdx)>, FnFlavor),
+  Fn(Vec<Arm>, FnFlavor),
   Typed(ExpIdx, TyIdx),
+}
+
+#[derive(Debug)]
+pub struct Arm {
+  pub pat: PatIdx,
+  pub exp: ExpIdx,
 }
 
 /// The original bit of syntax that got eventually lowered to stuff involving `fn`.

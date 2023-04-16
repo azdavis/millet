@@ -278,22 +278,22 @@ fn get_matcher(
   cfg: Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
-  matcher: &[(sml_hir::PatIdx, sml_hir::ExpIdx)],
+  matcher: &[sml_hir::Arm],
 ) -> (Vec<Pat>, Ty, Ty) {
   let param_ty = st.tys.meta_var(Generalizable::Always);
   let res_ty = st.tys.meta_var(Generalizable::Always);
   let mut pats = Vec::<Pat>::new();
   st.tys.inc_meta_var_rank();
   // @def(14)
-  for &(pat, exp) in matcher {
+  for arm in matcher {
     let mut ve = ValEnv::default();
     let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
-    let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, pat);
+    let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, arm.pat);
     let mut cx = cx.clone();
     cx.env.val_env.append(&mut ve);
-    let exp_ty = get(st, cfg.cfg, &cx, ars, exp);
-    unify(st, pat.map_or(idx, Into::into), param_ty, pat_ty);
-    unify(st, exp.map_or(idx, Into::into), res_ty, exp_ty);
+    let exp_ty = get(st, cfg.cfg, &cx, ars, arm.exp);
+    unify(st, arm.pat.map_or(idx, Into::into), param_ty, pat_ty);
+    unify(st, arm.exp.map_or(idx, Into::into), res_ty, exp_ty);
     pats.push(pm_pat);
   }
   st.tys.dec_meta_var_rank();
