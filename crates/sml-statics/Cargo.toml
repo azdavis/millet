@@ -25,3 +25,6 @@ sml-namespace = { path = "../sml-namespace" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }
 sml-statics-types = { path = "../sml-statics-types" }
+
+[features]
+sync = ["chain-map/sync"]

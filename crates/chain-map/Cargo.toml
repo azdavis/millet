@@ -12,3 +12,6 @@ doctest = false
 [dependencies]
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
+
+[features]
+sync = []

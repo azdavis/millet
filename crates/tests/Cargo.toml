@@ -9,7 +9,7 @@ publish.workspace = true
 doctest = false
 
 [dev-dependencies]
-analysis = { path = "../analysis" }
+analysis = { path = "../analysis", features = ["sync"] }
 cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
 diagnostic = { git = "https://github.com/azdavis/language-util.git" }

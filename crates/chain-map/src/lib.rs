@@ -7,12 +7,16 @@
 use fast_hash::{map, FxHashMap, FxHashSet};
 use std::borrow::Borrow;
 use std::hash::Hash;
-use std::sync::Arc;
+
+#[cfg(not(feature = "sync"))]
+type Rc<T> = std::rc::Rc<T>;
+#[cfg(feature = "sync")]
+type Rc<T> = std::sync::Arc<T>;
 
 /// A chain map.
 #[derive(Debug, Clone)]
 pub struct ChainMap<K, V> {
-  stack: Vec<Arc<FxHashMap<K, V>>>,
+  stack: Vec<Rc<FxHashMap<K, V>>>,
 }
 
 impl<K, V> ChainMap<K, V> {
@@ -35,7 +39,7 @@ where
   /// Inserts a new key-value pair into the map. Returns whether the value was newly inserted.
   pub fn insert(&mut self, k: K, v: V) -> bool {
     let is_new = self.stack.iter().all(|m| !m.contains_key(&k));
-    self.stack.push(Arc::new(map([(k, v)])));
+    self.stack.push(Rc::new(map([(k, v)])));
     is_new
   }
 
@@ -106,12 +110,12 @@ where
     if self.stack.len() != 1 {
       let mut one = FxHashMap::<K, V>::default();
       for m in self.stack.drain(..) {
-        let m = Arc::try_unwrap(m).unwrap_or_else(|m| (*m).clone());
+        let m = Rc::try_unwrap(m).unwrap_or_else(|m| (*m).clone());
         one.extend(m);
       }
-      self.stack.push(Arc::new(one));
+      self.stack.push(Rc::new(one));
     }
-    Arc::make_mut(self.stack.first_mut().unwrap())
+    Rc::make_mut(self.stack.first_mut().unwrap())
   }
 }
 
@@ -127,7 +131,7 @@ where
 {
   fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
     let top: FxHashMap<_, _> = iter.into_iter().collect();
-    self.stack.push(Arc::new(top));
+    self.stack.push(Rc::new(top));
   }
 }
 

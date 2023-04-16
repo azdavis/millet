@@ -28,3 +28,6 @@ sml-syntax = { path = "../sml-syntax" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 text-pos = { git = "https://github.com/azdavis/language-util.git" }
 text-size-util = { git = "https://github.com/azdavis/language-util.git" }
+
+[features]
+sync = ["mlb-statics/sync", "sml-statics/sync", "sml-statics-types/sync"]
