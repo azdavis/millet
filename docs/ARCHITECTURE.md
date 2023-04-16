@@ -156,11 +156,11 @@ Handles adding implicitly-scoped type variables to their `val` declaration/speci
 (State, Basis, sml_hir::Root) -> (State, Basis, Info, Vec<StaticsError>)
 ```
 
-Does static analysis ("typechecking") on HIR.
+Does static analysis ("typechecking") on HIR, according to the statics semantics of SML from its Definition.
 
 The other passes thus far operate on single files, but this one is meant to be run "across" many files. So we take in and give out updated state.
 
-This crate contains the implementation of most of the rules of the statics for SML from the Definition. (Some trivial ones like the rules for parenthesized expressions are handled implicitly when lowering). Relevant code is tagged with the special comment `@def(N)` for statics rule N.
+This crate contains the implementation of most of the rules of the static semantics for SML from the Definition. (Some trivial ones like the rules for parenthesized expressions are handled implicitly when lowering). Relevant code is tagged with the special comment `@def(N)` for statics rule N.
 
 Statics errors use an abstract `Idx`, and this index gets turned into an actual text range with the `TwoWayPointers` from lower.
 
