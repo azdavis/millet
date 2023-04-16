@@ -47,7 +47,7 @@ pub(crate) fn check(s: &str) {
 #[track_caller]
 pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
+    std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Error,
@@ -81,7 +81,7 @@ pub(crate) fn check_multi<const N: usize>(files: [(&str, &str); N]) {
 #[track_caller]
 pub(crate) fn fail(s: &str) {
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
+    std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Fail,
     limit: raw::Limit::First,
     min_severity: Severity::Error,
@@ -94,7 +94,7 @@ pub(crate) fn fail(s: &str) {
 #[track_caller]
 pub(crate) fn check_with_std_basis(s: &str) {
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Full,
+    std_basis: raw::StdBasis::Full,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Error,
@@ -107,7 +107,7 @@ pub(crate) fn check_with_std_basis(s: &str) {
 #[track_caller]
 pub(crate) fn check_with_warnings(s: &str) {
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
+    std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Warning,
@@ -124,7 +124,7 @@ where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
+    std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Warning,

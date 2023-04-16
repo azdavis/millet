@@ -1,8 +1,18 @@
 //! The "raw" test runner. Usually we use various convenient shortcuts on top of this.
 
 use fast_hash::FxHashMap;
+use once_cell::sync::Lazy;
 
 use crate::check::{expect, input, reason, show};
+
+/// A std basis.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum StdBasis {
+  /// The minimal one.
+  Minimal,
+  /// The full one.
+  Full,
+}
 
 /// An expected outcome from a test.
 #[derive(Debug, Clone, Copy)]
@@ -40,7 +50,7 @@ pub(crate) enum ExpectedInput<'a> {
 /// Options for checking.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Opts<'a> {
-  pub(crate) std_basis: analysis::StdBasis,
+  pub(crate) std_basis: StdBasis,
   pub(crate) outcome: Outcome,
   pub(crate) limit: Limit,
   pub(crate) min_severity: diagnostic::Severity,
@@ -54,7 +64,7 @@ pub(crate) fn get<'a, I>(files: I, opts: Opts<'_>)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
-  if matches!(opts.std_basis, analysis::StdBasis::Full) && env_var_enabled("SKIP_FULL_STD_BASIS") {
+  if matches!(opts.std_basis, StdBasis::Full) && env_var_enabled("SKIP_FULL_STD_BASIS") {
     log::info!("skipping full std basis tests");
     return;
   }
@@ -97,10 +107,14 @@ where
     .flat_map(expect::File::iter)
     .filter(|(_, e)| matches!(e.kind, expect::Kind::Exact | expect::Kind::Contains))
     .count();
+  let std_basis = match opts.std_basis {
+    StdBasis::Minimal => analysis::StdBasis::minimal(),
+    StdBasis::Full => FULL.clone(),
+  };
   // NOTE: we used to emit an error here if want_err_len was not 0 or 1 but no longer. this
   // allows us to write multiple error expectations. e.g. in the diagnostics tests. but note that
   // only one expectation is actually used.
-  let mut an = analysis::Analysis::new(opts.std_basis, config::ErrorLines::One, None, None);
+  let mut an = analysis::Analysis::new(std_basis, config::ErrorLines::One, None, None);
   let iter = an.get_many(&input).into_iter().flat_map(|(id, errors)| {
     errors.into_iter().filter_map(move |e| (e.severity >= opts.min_severity).then_some((id, e)))
   });
@@ -210,3 +224,5 @@ pub(crate) fn one_file_fs(s: &str) -> [(&str, &str); 2] {
 pub(crate) fn env_var_enabled(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
 }
+
+static FULL: Lazy<analysis::StdBasis> = Lazy::new(analysis::StdBasis::full);

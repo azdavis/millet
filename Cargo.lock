@@ -584,7 +584,6 @@ dependencies = [
  "diagnostic",
  "fast-hash",
  "mlb-hir",
- "once_cell",
  "paths",
  "sml-comment",
  "sml-file-syntax",

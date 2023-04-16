@@ -17,6 +17,7 @@ use text_pos::{PositionUtf16, RangeUtf16};
 use text_size_util::TextRange;
 
 pub use crate::diagnostic::Diagnostic;
+pub use mlb_statics::StdBasis;
 pub use sml_statics::info::CompletionItem;
 
 /// The url to go to for information about diagnostics.
@@ -25,7 +26,7 @@ pub const URL: &str = "https://github.com/azdavis/millet/blob/main/docs/diagnost
 /// Performs analysis.
 #[derive(Debug)]
 pub struct Analysis {
-  std_basis: mlb_statics::StdBasis,
+  std_basis: StdBasis,
   diagnostics_options: diagnostic::Options,
   source_files: PathMap<mlb_statics::SourceFile>,
   syms: Syms,
@@ -42,7 +43,7 @@ impl Analysis {
     format: Option<config::init::FormatEngine>,
   ) -> Self {
     Self {
-      std_basis: std_basis.to_mlb_statics(),
+      std_basis,
       diagnostics_options: diagnostic::Options { lines, ignore, format },
       source_files: PathMap::default(),
       syms: Syms::default(),
@@ -334,24 +335,6 @@ impl Analysis {
       ])
     });
     Some(ret.flatten())
-  }
-}
-
-/// A std basis.
-#[derive(Debug, Clone, Copy)]
-pub enum StdBasis {
-  /// The minimal one.
-  Minimal,
-  /// The full one.
-  Full,
-}
-
-impl StdBasis {
-  fn to_mlb_statics(self) -> mlb_statics::StdBasis {
-    match self {
-      StdBasis::Minimal => mlb_statics::StdBasis::minimal(),
-      StdBasis::Full => mlb_statics::StdBasis::full(),
-    }
   }
 }
 

@@ -14,7 +14,7 @@ fn check_all(contents: &str) {
   let mut ignore_next = false;
   let mut ac = String::new();
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Full,
+    std_basis: raw::StdBasis::Full,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::First,
     min_severity: Severity::Warning,

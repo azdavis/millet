@@ -77,7 +77,7 @@ val _ = foo
 "#;
   let files = [("s.mlb", mlb), ("a.sml", reported), ("b.sml", ignored), ("c.sml", reported)];
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
+    std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
     limit: raw::Limit::None,
     min_severity: diagnostic::Severity::Error,

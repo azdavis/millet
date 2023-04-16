@@ -3,7 +3,6 @@
 
 use crate::{add_all_doc_comments, SourceFileSyntax};
 use fast_hash::FxHashMap;
-use once_cell::sync::Lazy;
 use sml_statics::{basis, info::Info};
 use sml_statics_types::{sym::Syms, ty::Tys};
 use sml_syntax::ast::AstNode as _;
@@ -22,13 +21,22 @@ impl StdBasis {
   /// `real`, `ref`, `<`, etc.
   #[must_use]
   pub fn minimal() -> Self {
-    MINIMAL.clone()
+    get_std_basis(std::iter::empty())
   }
 
   /// The full standard basis, as documented in the public SML basis library docs.
+  ///
+  /// This is expensive to compute.
   #[must_use]
   pub fn full() -> Self {
-    FULL.clone()
+    let iter = std::iter::empty()
+      .chain(sml_libs::std_basis::FILES)
+      .chain(sml_libs::std_basis_extra::FILES)
+      .chain(sml_libs::smlnj_lib::FILES)
+      .chain(sml_libs::sml_of_nj::FILES)
+      .chain(sml_libs::mlton::FILES)
+      .copied();
+    get_std_basis(iter)
   }
 
   /// Returns the symbols for this.
@@ -55,20 +63,6 @@ impl StdBasis {
     self.info.get(s)
   }
 }
-
-static MINIMAL: Lazy<StdBasis> = Lazy::new(|| get_std_basis(std::iter::empty()));
-
-static FULL: Lazy<StdBasis> = Lazy::new(|| {
-  get_std_basis(
-    std::iter::empty()
-      .chain(sml_libs::std_basis::FILES)
-      .chain(sml_libs::std_basis_extra::FILES)
-      .chain(sml_libs::smlnj_lib::FILES)
-      .chain(sml_libs::sml_of_nj::FILES)
-      .chain(sml_libs::mlton::FILES)
-      .copied(),
-  )
-});
 
 const STREAM_IO_REGULAR: &str = "  structure StreamIO : STREAM_IO";
 const STREAM_IO_TEXT: &str = r#"  structure StreamIO : TEXT_STREAM_IO

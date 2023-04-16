@@ -19,7 +19,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
     })
     .unwrap_or_default();
   let analysis = analysis::Analysis::new(
-    analysis::StdBasis::Full,
+    analysis::StdBasis::full(),
     config::ErrorLines::Many,
     options.diagnostics_ignore,
     options.format,

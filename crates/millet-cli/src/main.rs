@@ -56,7 +56,7 @@ fn run() -> usize {
   let mut store = paths::Store::new();
   let inp = input::Input::new(&fs, &mut store, &root);
   let mut an = analysis::Analysis::new(
-    analysis::StdBasis::Full,
+    analysis::StdBasis::full(),
     config::ErrorLines::One,
     Some(config::init::DiagnosticsIgnore::AfterSyntax),
     None,

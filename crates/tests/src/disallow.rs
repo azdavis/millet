@@ -12,7 +12,7 @@ fn singleton<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
 
 fn multi_std_basis<const N: usize>(outcome: raw::Outcome, singleton: [(&str, &str); N]) {
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Full,
+    std_basis: raw::StdBasis::Full,
     outcome,
     limit: raw::Limit::First,
     min_severity: diagnostic::Severity::Warning,
@@ -115,7 +115,7 @@ version = 1
 "Foo.bar" = false
 "#;
   let opts = raw::Opts {
-    std_basis: analysis::StdBasis::Minimal,
+    std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Fail,
     limit: raw::Limit::First,
     min_severity: diagnostic::Severity::Warning,
