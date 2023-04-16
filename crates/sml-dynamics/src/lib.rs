@@ -17,9 +17,9 @@ enum Exp {
   Record(BTreeMap<sml_hir::Lab, Exp>),
   Let(Vec<Dec>, Box<Exp>),
   App(Box<Exp>, Box<Exp>),
-  Handle(Box<Exp>, Vec<(Pat, Exp)>),
+  Handle(Box<Exp>, Vec<Arm>),
   Raise(Box<Exp>),
-  Fn(Vec<(Pat, Exp)>),
+  Fn(Vec<Arm>),
 }
 
 #[derive(Debug)]
@@ -70,7 +70,7 @@ enum Pat {
   Wild,
   SCon(sml_hir::SCon),
   Con(Path, Option<Box<Pat>>),
-  Record { rows: Vec<(sml_hir::Lab, Pat)>, allows_other: bool },
+  Record { rows: BTreeMap<sml_hir::Lab, Pat>, allows_other: bool },
   As(Name, Box<Pat>),
   Or(Box<Pat>, Vec<Pat>),
 }
