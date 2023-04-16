@@ -876,6 +876,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-dynamics"
+version = "0.9.0"
+
+[[package]]
 name = "sml-file-syntax"
 version = "0.9.0"
 dependencies = [
