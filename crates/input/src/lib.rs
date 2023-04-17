@@ -12,7 +12,7 @@ mod topo;
 mod types;
 mod util;
 
-use paths::{PathId, PathMap, WithPath};
+use paths::{PathId, PathMap};
 use util::{ErrorKind, ErrorSource, GroupPathKind};
 
 pub use types::{Group, Severities};
@@ -80,15 +80,5 @@ impl Input {
       ret.root_group_paths.clear();
     }
     ret
-  }
-
-  /// Return an iterator over the source paths.
-  pub fn iter_sources(&self) -> impl Iterator<Item = WithPath<&str>> + '_ {
-    self.sources.iter().map(|(&path, s)| path.wrap(s.as_str()))
-  }
-
-  /// Returns a mutable ref to the source for this path.
-  pub fn get_mut_source(&mut self, path: PathId) -> Option<&mut String> {
-    self.sources.get_mut(&path)
   }
 }

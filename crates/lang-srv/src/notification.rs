@@ -31,7 +31,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
     let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
     match &mut st.mode {
       Mode::Root(root) => {
-        let text = match root.input.get_mut_source(path) {
+        let text = match root.input.sources.get_mut(&path) {
           Some(x) => x,
           None => bail!("no source in the input for DidChangeTextDocument"),
         };
