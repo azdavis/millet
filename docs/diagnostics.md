@@ -2394,20 +2394,35 @@ A functor application did not use the declaration "syntax sugar" when the functo
 This example triggers the warning:
 
 ```sml
-functor Func (val x : int) = struct end
+functor Func (
+  val x : int
+) = struct
+  (* ... *)
+end
+
 structure S = Func (struct val x = 3 end)
-(**           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `functor` definition uses syntax sugar, but the `functor` application does not *)
+(**           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `functor` definition uses syntax sugar *)
 ```
 
 This example triggers a warning, and also other errors:
 
-<!-- @ignore declaration hole -->
-
 ```sml
-signature SIG = sig type t end
-functor Func (structure Param : SIG) = struct ... end
-structure Arg : SIG = struct type t = unit end
+signature HAS_T = sig
+  type t
+end
+
+functor Func (
+  structure Param : HAS_T
+) = struct
+  (* ... *)
+end
+
+structure Arg : HAS_T = struct
+  type t = unit
+end
+
 structure S = Func (Arg)
+(**           ^^^^^^^^^^ the `functor` definition uses syntax sugar *)
 ```
 
 This is invalid, but the reason why is subtle. Before we explain the reason, note that the bottom line is that the call site of `Func` must be changed:
@@ -2421,45 +2436,55 @@ The fact that both the definition site and the corrected call site for `Func` ha
 
 The key is in the definition of `Func`. We use the syntax:
 
-<!-- @ignore invalid syntax -->
+<!-- @ignore invalid syntax, fragment of a functor dec -->
 
 ```sml
-functor Func (structure Param : SIG)
+functor Func (
+  structure Param : HAS_T
+)
 ```
 
 which has a distinct meaning from:
 
-<!-- @ignore invalid syntax -->
+<!-- @ignore invalid syntax, fragment of a functor dec -->
 
 ```sml
-functor Func (Param : SIG)
+functor Func (
+  Param : SIG
+)
 ```
 
 Both forms are legal SML. The first form is syntax sugar. This means it is extra "helper" syntax that is fully defined in terms of the second, more "fundamental" syntax.
 
-In the example, the sugar is expanded in the following manner:
+In the example, the sugar is expanded approximately in the following manner:
 
-<!-- @ignore invalid syntax -->
+<!-- @ignore builds off of previous example, HAS_T is not defined -->
 
 ```sml
 (* original *)
-functor Func (structure Param : SIG) = struct ... end
+functor Func (
+  structure Param : HAS_T
+) = struct
+  (* ... *)
+end
 
 (* desugared *)
-functor Func (<<FuncArg>> : sig
-  structure Param : SIG
-end) = let
-  open <<FuncArg>>
-in
-  struct ... end
+functor Func (Anonymous : sig
+  structure Param : HAS_T
+end) = struct
+  open Anonymous
+  (* ... *)
 end
 ```
 
-Note the invalid SML syntax for the name of the functor argument `<<FuncArg>>`. This is to emphasize that when expanding the syntax sugar, an SML implementation will generate an unnameable, unique structure name. This name is then used exclusively in the `open`.
+A few caveats (thus the "approximately"):
+
+- In this illustration, we've named the desugared functor argument `Anonymous`. This is to emphasize that when expanding the syntax sugar, an SML implementation will generate an anonymous, unutterable[,][accursed] unique structure name for the argument. This name is then used exclusively in the `open`, and cannot, for instance, be referenced in the `(* ... *)` region.
+- The true desugaring uses a `let` structure expression for the functor body, to avoid modifying the original `struct (* ... *) end` body. But since `let` structure expression are somewhat rare, in this illustration, to (hopefully) avoid confusing the reader, we instead modify the `struct (* ... *) end` to first `open Anonymous` before the `(* ... *)` region, which is equivalent.
 
 Similarly, once we modify the call site, we are using more syntax sugar, which also expands:
 
-<!-- @ignore syntax sugar example -->
+<!-- @ignore build off of previous example, Func is not defined -->
 
 ```sml
 (* original *)
@@ -2469,15 +2494,25 @@ structure S = Func (structure Param = Arg)
 structure S = Func (struct structure Param = Arg end)
 ```
 
-A similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
-
-<!-- @ignore declaration hole -->
+Thus, a similar but "opposite" error may occur if the definition site does not use the syntax sugar, but the call site does. As in:
 
 ```sml
-signature SIG = sig type t end
-functor Func (Param : SIG) = struct ... end
-structure Arg : SIG = struct type t = unit end
+signature HAS_T = sig
+  type t
+end
+
+functor Func (
+  Param : HAS_T
+) = struct
+  (* ... *)
+end
+
+structure Arg : HAS_T = struct
+  type t = unit
+end
+
 structure S = Func (structure Param = Arg)
+(**           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `functor` application uses syntax sugar *)
 ```
 
 This will error. To fix, do not use the syntax sugar at the call site.
@@ -2702,3 +2737,4 @@ To fix, try one of the following:
 - Disable automatic formatting.
 
 [config]: /docs/manual.md#configuration
+[accursed]: https://free.cofree.io/2020/07/20/perform-io/
