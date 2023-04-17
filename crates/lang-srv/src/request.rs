@@ -78,29 +78,33 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
     let url = params.text_document.uri;
     let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
     let res = match &st.mode {
-      Mode::Root(_) => match st.analysis.format(path, params.options.tab_size) {
-        Ok((new_text, end)) => {
-          let edits = vec![lsp_types::TextEdit {
-            range: lsp_types::Range {
-              start: lsp_types::Position { line: 0, character: 0 },
-              end: convert::lsp_position(end),
-            },
-            new_text,
-          }];
-          Response::new_ok(id, edits)
+      Mode::Root(root) => {
+        // need to re-compute the internal parse tree etc
+        st.analysis.get_many(&root.input);
+        match st.analysis.format(path, params.options.tab_size) {
+          Ok((new_text, end)) => {
+            let edit = lsp_types::TextEdit {
+              range: lsp_types::Range {
+                start: lsp_types::Position { line: 0, character: 0 },
+                end: convert::lsp_position(end),
+              },
+              new_text,
+            };
+            Response::new_ok(id, vec![edit])
+          }
+          Err(e) => match e {
+            analysis::FormatError::NoFile
+            | analysis::FormatError::Disabled
+            | analysis::FormatError::NaiveFmt(_)
+            | analysis::FormatError::Smlfmt(analysis::SmlfmtError::Unsuccessful(_)) => {
+              Response::new_ok(id, None::<()>)
+            }
+            analysis::FormatError::Smlfmt(e) => {
+              Response::new_err(id, REQUEST_FAILED, format!("{e:#}"))
+            }
+          },
         }
-        Err(e) => match e {
-          analysis::FormatError::NoFile
-          | analysis::FormatError::Disabled
-          | analysis::FormatError::NaiveFmt(_)
-          | analysis::FormatError::Smlfmt(analysis::SmlfmtError::Unsuccessful(_)) => {
-            Response::new_ok(id, None::<()>)
-          }
-          analysis::FormatError::Smlfmt(e) => {
-            Response::new_err(id, REQUEST_FAILED, format!("{e:#}"))
-          }
-        },
-      },
+      }
       Mode::NoRoot(_) => Response::new_ok(id, None::<()>),
     };
     st.cx.send_response(res);
