@@ -1,6 +1,7 @@
 //! Handle requests.
 
-use crate::{convert, helpers, state::St};
+use crate::state::{Mode, St};
+use crate::{convert, helpers};
 use anyhow::Result;
 use lsp_server::{Request, Response};
 use std::ops::ControlFlow;
@@ -76,26 +77,31 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::Formatting, _>(r, |id, params| {
     let url = params.text_document.uri;
     let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
-    let res = match st.analysis.format(path, params.options.tab_size) {
-      Ok((new_text, end)) => {
-        let edits = vec![lsp_types::TextEdit {
-          range: lsp_types::Range {
-            start: lsp_types::Position { line: 0, character: 0 },
-            end: convert::lsp_position(end),
-          },
-          new_text,
-        }];
-        Response::new_ok(id, edits)
-      }
-      Err(e) => match e {
-        analysis::FormatError::NoFile
-        | analysis::FormatError::Disabled
-        | analysis::FormatError::NaiveFmt(_)
-        | analysis::FormatError::Smlfmt(analysis::SmlfmtError::Unsuccessful(_)) => {
-          Response::new_ok(id, None::<()>)
+    let res = match &st.mode {
+      Mode::Root(_) => match st.analysis.format(path, params.options.tab_size) {
+        Ok((new_text, end)) => {
+          let edits = vec![lsp_types::TextEdit {
+            range: lsp_types::Range {
+              start: lsp_types::Position { line: 0, character: 0 },
+              end: convert::lsp_position(end),
+            },
+            new_text,
+          }];
+          Response::new_ok(id, edits)
         }
-        analysis::FormatError::Smlfmt(e) => Response::new_err(id, REQUEST_FAILED, format!("{e:#}")),
+        Err(e) => match e {
+          analysis::FormatError::NoFile
+          | analysis::FormatError::Disabled
+          | analysis::FormatError::NaiveFmt(_)
+          | analysis::FormatError::Smlfmt(analysis::SmlfmtError::Unsuccessful(_)) => {
+            Response::new_ok(id, None::<()>)
+          }
+          analysis::FormatError::Smlfmt(e) => {
+            Response::new_err(id, REQUEST_FAILED, format!("{e:#}"))
+          }
+        },
       },
+      Mode::NoRoot(_) => Response::new_ok(id, None::<()>),
     };
     st.cx.send_response(res);
     Ok(())
