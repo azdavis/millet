@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.9.2
+
+- Avoid re-computing diagnostics every time a file changes when formatting is enabled.
+
 ## v0.9.1
 
 - Improve performance slightly.
