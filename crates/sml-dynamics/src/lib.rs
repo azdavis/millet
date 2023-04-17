@@ -10,7 +10,7 @@ use sml_path::Path;
 use std::collections::BTreeMap;
 use str_util::Name;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Exp {
   SCon(sml_hir::SCon),
   Path(Path),
@@ -22,13 +22,13 @@ enum Exp {
   Fn(Vec<Arm>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Arm {
   pat: Pat,
   exp: Exp,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Dec {
   Val(Vec<ValBind>),
   Datatype(Vec<DatBind>),
@@ -38,34 +38,34 @@ enum Dec {
   Open(Vec<Path>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ValBind {
   rec: bool,
   pat: Pat,
   exp: Exp,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct DatBind {
   ty_vars: usize,
   name: Name,
   cons: Vec<ConBind>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ConBind {
   name: Name,
   ty: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum ExBind {
   /// The bool is whether this has an `of ty`.
   New(Name, bool),
   Copy(Name, Path),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Pat {
   Wild,
   SCon(sml_hir::SCon),
@@ -195,5 +195,112 @@ fn get_pat(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> Option<Pat> {
       let rest = or.rest.iter().map(|&pat| get_pat(ars, pat)).collect::<Option<Vec<_>>>()?;
       Some(Pat::Or(Box::new(first), rest))
     }
+  }
+}
+
+/// An environment.
+#[derive(Debug, Clone)]
+struct Env {
+  val: ValEnv,
+  str: StrEnv,
+}
+
+/// Uses [`BTreeMap`] for stable order.
+type ValEnv = BTreeMap<Name, Exp>;
+
+/// Uses [`BTreeMap`] for stable order.
+type StrEnv = BTreeMap<Name, Env>;
+
+impl Env {
+  fn get<'e, 'p>(&'e self, path: &'p Path) -> Result<&'e Env, &'p Name> {
+    let mut ret = self;
+    for name in path.prefix() {
+      ret = match ret.str.get(name) {
+        Some(x) => x,
+        None => return Err(name),
+      };
+    }
+    Ok(ret)
+  }
+}
+
+enum Eval {
+  Step(Exp),
+  Val(Exp),
+}
+
+struct Raise(Exp);
+
+fn step_exp(env: &Env, exp: Exp) -> Result<Eval, Raise> {
+  match exp {
+    Exp::SCon(scon) => Ok(Eval::Val(Exp::SCon(scon))),
+    Exp::Path(path) => {
+      let env = env.get(&path).unwrap();
+      let val = env.val.get(path.last()).unwrap().clone();
+      Ok(Eval::Val(val))
+    }
+    Exp::Record(rows) => {
+      let mut new_rows = BTreeMap::<sml_hir::Lab, Exp>::new();
+      let mut iter = rows.into_iter();
+      for (lab, exp) in iter.by_ref() {
+        match step_exp(env, exp)? {
+          Eval::Step(exp) => {
+            new_rows.insert(lab, exp);
+            new_rows.extend(iter);
+            return Ok(Eval::Step(Exp::Record(new_rows)));
+          }
+          Eval::Val(exp) => {
+            new_rows.insert(lab, exp);
+          }
+        }
+      }
+      Ok(Eval::Val(Exp::Record(new_rows)))
+    }
+    Exp::Let(_, _) => todo!(),
+    Exp::App(func, arg) => match step_exp(env, *func)? {
+      Eval::Step(func) => Ok(Eval::Step(Exp::App(Box::new(func), arg))),
+      Eval::Val(func) => match step_exp(env, *arg)? {
+        Eval::Step(arg) => Ok(Eval::Step(Exp::App(Box::new(func), Box::new(arg)))),
+        Eval::Val(arg) => match func {
+          Exp::Fn(matcher) => {
+            for arm in matcher {
+              let mut ac = ValEnv::default();
+              if pat_match(env, &mut ac, arm.pat, &arg) {
+                // TODO update the env!
+                return Ok(Eval::Step(arm.exp));
+              }
+            }
+            Err(Raise(Exp::Path(Path::one(Name::new("Match")))))
+          }
+          _ => unreachable!("app func not Fn"),
+        },
+      },
+    },
+    Exp::Handle(head, matcher) => match step_exp(env, *head) {
+      Ok(x) => Ok(x),
+      Err(r) => {
+        for arm in matcher {
+          let mut ac = ValEnv::default();
+          if pat_match(env, &mut ac, arm.pat, &r.0) {
+            // TODO update the env!
+            return Ok(Eval::Step(arm.exp));
+          }
+        }
+        Err(r)
+      }
+    },
+    Exp::Raise(exp) => match step_exp(env, *exp)? {
+      Eval::Step(exp) => Ok(Eval::Step(Exp::Raise(Box::new(exp)))),
+      Eval::Val(exp) => Err(Raise(exp)),
+    },
+    // TODO **closures** are values (store the env)
+    Exp::Fn(matcher) => Ok(Eval::Val(Exp::Fn(matcher))),
+  }
+}
+
+fn pat_match(_: &Env, _: &mut ValEnv, pat: Pat, exp: &Exp) -> bool {
+  match (pat, exp) {
+    (Pat::Wild, _) => true,
+    _ => todo!(),
   }
 }
