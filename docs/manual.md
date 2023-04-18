@@ -220,7 +220,7 @@ How to [format](#formatter) open SML files on save.
 - Valid values:
   - `"none"`: No formatting.
   - `"naive"`: Naive formatting.
-  - `"smlfmt"`: Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt).
+  - `"smlfmt"`: Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt), which must be installed in your `$PATH`.
 
 #### `millet.server.diagnostics.ignore`
 

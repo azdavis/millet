@@ -64,7 +64,7 @@
           "markdownEnumDescriptions": [
             "No formatting.",
             "Naive formatting.",
-            "Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt)."
+            "Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt), which must be installed in your `$PATH`."
           ]
         },
         "millet.server.diagnostics.ignore": {
