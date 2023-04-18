@@ -2450,7 +2450,7 @@ which has a distinct meaning from:
 
 ```sml
 functor Func (
-  Param : SIG
+  Param : HAS_T
 )
 ```
 
