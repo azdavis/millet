@@ -47,7 +47,7 @@ pub(crate) enum ErrorKind {
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
   InvalidIntLit(std::num::ParseIntError),
-  InvalidBigIntLit(sml_hir::ParseBigIntError),
+  InvalidBigIntLit(sml_hir::ParseIntError),
   InvalidRealLit(std::num::ParseFloatError),
   InvalidNumLab(std::num::ParseIntError),
   ZeroNumLab,

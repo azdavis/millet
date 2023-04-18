@@ -3,7 +3,6 @@
 #![allow(clippy::needless_pass_by_value)]
 
 use crate::util::{ErrorKind, Item, Sep, St};
-use num_traits::Num as _;
 use sml_syntax::{ast, SyntaxToken};
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
@@ -29,15 +28,12 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       } else {
         10
       };
-      let n = match i32::from_str_radix(chars.as_str(), radix) {
-        Ok(x) => sml_hir::Int::Finite(mul * x),
-        Err(_) => match sml_hir::BigInt::from_str_radix(chars.as_str(), radix) {
-          Ok(x) => sml_hir::Int::Big(x),
-          Err(e) => {
-            st.err(tok.text_range(), ErrorKind::InvalidBigIntLit(e));
-            sml_hir::Int::Finite(0)
-          }
-        },
+      let n = match sml_hir::Int::from_str_radix(chars.as_str(), radix) {
+        Ok(x) => x * mul,
+        Err(e) => {
+          st.err(tok.text_range(), ErrorKind::InvalidBigIntLit(e));
+          sml_hir::Int::from(0i32)
+        }
       };
       sml_hir::SCon::Int(n)
     }

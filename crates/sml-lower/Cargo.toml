@@ -14,7 +14,6 @@ config = { path = "../config" }
 diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
 lex-util = { path = "../lex-util" }
-num-traits = "0.2"
 sml-hir = { path = "../sml-hir" }
 sml-path = { path = "../sml-path" }
 sml-syntax = { path = "../sml-syntax" }

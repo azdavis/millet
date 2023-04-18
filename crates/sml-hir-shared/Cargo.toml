@@ -1,5 +1,5 @@
 [package]
-name = "sml-hir"
+name = "sml-hir-shared"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,7 +10,6 @@ doctest = false
 test = false
 
 [dependencies]
-la-arena = "0.3"
+num-bigint = "0.4"
+num-traits = "0.2"
 str-util = { git = "https://github.com/azdavis/language-util.git" }
-sml-path = { path = "../sml-path" }
-sml-hir-shared = { path = "../sml-hir-shared" }

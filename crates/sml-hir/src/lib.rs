@@ -10,7 +10,7 @@ use std::fmt;
 use str_util::{Name, SmolStr};
 
 pub use la_arena;
-pub use num_bigint::{BigInt, ParseBigIntError};
+pub use sml_hir_shared::{Int, Lab, ParseIntError, SCon};
 
 #[derive(Debug, Default)]
 pub struct Arenas {
@@ -325,52 +325,6 @@ pub enum Ty {
   Record(Vec<(Lab, TyIdx)>),
   Con(Vec<TyIdx>, Path),
   Fn(TyIdx, TyIdx),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Lab {
-  Name(Name),
-  Num(usize),
-}
-
-impl fmt::Display for Lab {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::Name(name) => name.fmt(f),
-      Self::Num(n) => n.fmt(f),
-    }
-  }
-}
-
-impl Lab {
-  #[must_use]
-  pub fn tuple(idx: usize) -> Self {
-    Self::Num(idx + 1)
-  }
-}
-
-#[derive(Debug, Clone)]
-pub enum SCon {
-  Int(Int),
-  Real(f64),
-  Word(u64),
-  Char(char),
-  String(SmolStr),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Int {
-  Finite(i32),
-  Big(num_bigint::BigInt),
-}
-
-impl fmt::Display for Int {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Int::Finite(x) => x.fmt(f),
-      Int::Big(x) => x.fmt(f),
-    }
-  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

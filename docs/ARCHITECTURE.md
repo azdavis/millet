@@ -174,6 +174,10 @@ Runs a program, according to the dynamic semantics of SML from its Definition. T
 
 These crates do interesting things related to SML files, but aren't really full "passes".
 
+### `crates/sml-hir-shared`
+
+Some things like `Lab` and `Int` which are shared across both HIR and dynamics.
+
 ### `crates/sml-statics-types`
 
 Important types and operations on those types for static analysis.

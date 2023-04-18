@@ -86,6 +86,7 @@
     "ptrs",
     "quickfix",
     "realint",
+    "Repr",
     "rintarou",
     "rlimit",
     "rosso",
