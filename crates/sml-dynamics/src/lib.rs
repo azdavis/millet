@@ -190,11 +190,12 @@ fn pat_match(ac: &mut ValEnv, pat: Pat, val: &Val) -> bool {
     }
     (_, Val::Closure(_, _)) => unreachable!("match non-(Wild or Var) with Closure"),
     (Pat::SCon(pat_sc), Val::SCon(val_sc)) => match (pat_sc, val_sc) {
+      (SCon::Real(_), _) => unreachable!("Real pattern"),
+      (_, SCon::Real(_)) => unreachable!("match non-(Wild or Var) with Real"),
       (SCon::Int(pat_int), SCon::Int(val_int)) => pat_int == *val_int,
       (SCon::Word(pat_word), SCon::Word(val_word)) => pat_word == *val_word,
       (SCon::Char(pat_char), SCon::Char(val_char)) => pat_char == *val_char,
       (SCon::String(pat_str), SCon::String(val_str)) => pat_str == *val_str,
-      (SCon::Real(_), _) | (_, SCon::Real(_)) => unreachable!("Real pattern"),
       (SCon::Int(_) | SCon::Word(_) | SCon::Char(_) | SCon::String(_), _) => {
         unreachable!("SCon types do not match")
       }
@@ -203,7 +204,7 @@ fn pat_match(ac: &mut ValEnv, pat: Pat, val: &Val) -> bool {
       unreachable!("match SCon with (Con or Record")
     }
     (Pat::Con(pat_name, pat_arg), Val::Con(val_name, val_arg)) => {
-      unreachable!("match Con {pat_name:?} {pat_arg:?} {val_name:?} {val_arg:?}")
+      todo!("match Con {pat_name:?} {pat_arg:?} {val_name:?} {val_arg:?}")
     }
     (Pat::Con(_, _), Val::SCon(_) | Val::Record(_)) => {
       unreachable!("match Con with (SCon or Record)")
