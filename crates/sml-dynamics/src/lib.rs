@@ -134,7 +134,10 @@ fn step_exp(env: &ValEnv, exp: Exp) -> Result<Eval, Raise> {
       }
       Ok(Eval::Val(Val::Record(new_rows.into_iter().collect())))
     }
-    Exp::Let(_, _) => todo!("let"),
+    Exp::Let(_, exp) => {
+      // TODO the decs??
+      step_exp(env, *exp)
+    }
     Exp::App(func, arg) => match step_exp(env, *func)? {
       Eval::Step(func) => Ok(Eval::Step(Exp::App(Box::new(func), arg))),
       Eval::Val(func) => match step_exp(env, *arg)? {
@@ -144,7 +147,7 @@ fn step_exp(env: &ValEnv, exp: Exp) -> Result<Eval, Raise> {
           Val::Closure(_, matcher) => {
             for arm in matcher {
               let mut ac = ValEnv::default();
-              if pat_match(&mut ac, arm.pat, &arg) {
+              if pat_match(&mut ac, &arm.pat, &arg) {
                 // TODO update the env!
                 return Ok(Eval::Step(arm.exp));
               }
@@ -165,7 +168,7 @@ fn step_exp(env: &ValEnv, exp: Exp) -> Result<Eval, Raise> {
       Err(r) => {
         for arm in matcher {
           let mut ac = ValEnv::default();
-          if pat_match(&mut ac, arm.pat, &r.0) {
+          if pat_match(&mut ac, &arm.pat, &r.0) {
             // TODO update the env!
             return Ok(Eval::Step(arm.exp));
           }
@@ -181,21 +184,21 @@ fn step_exp(env: &ValEnv, exp: Exp) -> Result<Eval, Raise> {
   }
 }
 
-fn pat_match(ac: &mut ValEnv, pat: Pat, val: &Val) -> bool {
+fn pat_match(ac: &mut ValEnv, pat: &Pat, val: &Val) -> bool {
   match (pat, val) {
     (Pat::Wild, _) => true,
     (Pat::Var(name), _) => {
-      assert!(ac.insert(name, val.clone()).is_none());
+      assert!(ac.insert(*name, val.clone()).is_none());
       true
     }
     (_, Val::Closure(_, _)) => unreachable!("match non-(Wild or Var) with Closure"),
     (Pat::SCon(pat_sc), Val::SCon(val_sc)) => match (pat_sc, val_sc) {
       (SCon::Real(_), _) => unreachable!("Real pattern"),
       (_, SCon::Real(_)) => unreachable!("match non-(Wild or Var) with Real"),
-      (SCon::Int(pat_int), SCon::Int(val_int)) => pat_int == *val_int,
-      (SCon::Word(pat_word), SCon::Word(val_word)) => pat_word == *val_word,
-      (SCon::Char(pat_char), SCon::Char(val_char)) => pat_char == *val_char,
-      (SCon::String(pat_str), SCon::String(val_str)) => pat_str == *val_str,
+      (SCon::Int(pat_int), SCon::Int(val_int)) => pat_int == val_int,
+      (SCon::Word(pat_word), SCon::Word(val_word)) => pat_word == val_word,
+      (SCon::Char(pat_char), SCon::Char(val_char)) => pat_char == val_char,
+      (SCon::String(pat_str), SCon::String(val_str)) => pat_str == val_str,
       (SCon::Int(_) | SCon::Word(_) | SCon::Char(_) | SCon::String(_), _) => {
         unreachable!("SCon types do not match")
       }
@@ -204,22 +207,42 @@ fn pat_match(ac: &mut ValEnv, pat: Pat, val: &Val) -> bool {
       unreachable!("match SCon with (Con or Record")
     }
     (Pat::Con(pat_name, pat_arg), Val::Con(val_name, val_arg)) => {
-      todo!("match Con {pat_name:?} {pat_arg:?} {val_name:?} {val_arg:?}")
+      if pat_name != val_name {
+        return false;
+      }
+      match (pat_arg, val_arg) {
+        (None, None) => true,
+        (Some(pat_arg), Some(val_arg)) => pat_match(ac, pat_arg.as_ref(), val_arg.as_ref()),
+        (Some(_), None) => unreachable!("pat Con has arg but val does not"),
+        (None, Some(_)) => unreachable!("pat Con has no arg but val does"),
+      }
     }
     (Pat::Con(_, _), Val::SCon(_) | Val::Record(_)) => {
       unreachable!("match Con with (SCon or Record)")
     }
     (Pat::Record { rows: pat_rows, allows_other: _ }, Val::Record(val_rows)) => {
-      todo!("match Record {pat_rows:?} {val_rows:?}")
+      pat_rows.iter().all(|(lab, pat)| pat_match(ac, pat, &val_rows[lab]))
     }
     (Pat::Record { .. }, Val::SCon(_) | Val::Con(_, _)) => {
       unreachable!("match Record with (SCon or Con")
     }
-    (Pat::As(_, _), _) => {
-      todo!("match As")
+    (Pat::As(name, pat), val) => {
+      assert!(ac.insert(*name, val.clone()).is_none());
+      pat_match(ac, pat, val)
     }
-    (Pat::Or(_, _), _) => {
-      todo!("match Or")
+    (Pat::Or(fst, rest), val) => {
+      let mut or_ac = ValEnv::default();
+      for pat in std::iter::once(fst.as_ref()).chain(rest) {
+        if !pat_match(&mut or_ac, pat, val) {
+          or_ac.clear();
+          continue;
+        }
+        for (name, val) in or_ac {
+          assert!(ac.insert(name, val.clone()).is_none());
+        }
+        return true;
+      }
+      false
     }
   }
 }
