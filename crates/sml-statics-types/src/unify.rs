@@ -33,7 +33,7 @@ pub enum Incompatible {
   MissingRow(sml_hir::Lab),
   ExtraRows(RecordData),
   Con(Sym, Sym),
-  Head(Ty, Ty),
+  HeadMismatch(Ty, Ty),
   OverloadCon(overload::Overload, Sym),
   OverloadUnify(overload::Overload, overload::Overload),
   OverloadRecord(overload::Overload, RecordData),
@@ -103,7 +103,7 @@ pub fn unify(tys: &mut Tys, syms: &Syms, want: Ty, got: Ty) -> Result<(), Error>
       unify(tys, syms, want.param, got.param)?;
       unify(tys, syms, want.res, got.res)
     }
-    _ => Err(Incompatible::Head(want, got).into()),
+    _ => Err(Incompatible::HeadMismatch(want, got).into()),
   }
 }
 

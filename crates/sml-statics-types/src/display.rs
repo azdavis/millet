@@ -305,7 +305,7 @@ impl Incompatible {
         }
         meta_vars.extend_for(*ty);
       }
-      Self::Head(ty1, ty2) => {
+      Self::HeadMismatch(ty1, ty2) => {
         meta_vars.extend_for(*ty1);
         meta_vars.extend_for(*ty2);
       }
@@ -337,7 +337,7 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         let b = b.display(self.syms);
         write!(f, "`{a}` and `{b}` are different type constructors")
       }
-      Incompatible::Head(a, b) => {
+      Incompatible::HeadMismatch(a, b) => {
         let a_display = a.display(self.meta_vars, self.syms);
         let b_display = b.display(self.meta_vars, self.syms);
         let a_desc = a.desc();
@@ -357,18 +357,16 @@ impl fmt::Display for IncompatibleDisplay<'_> {
       Incompatible::OverloadHeadMismatch(ov, ty) => {
         let ty_display = ty.display(self.meta_vars, self.syms);
         let ty_desc = ty.desc();
-        write!(f, "`{ov}` is not compatible with `{ty_display}`, which is {ty_desc}")
+        write!(f, "`{ov}` is an overloaded type, but `{ty_display}` is {ty_desc}")
       }
       Incompatible::UnresolvedRecordMissingRow(lab) => {
         write!(f, "unresolved record type is missing field: `{lab}`")
       }
-      Incompatible::UnresolvedRecordHeadMismatch(_, ty) => {
+      Incompatible::UnresolvedRecordHeadMismatch(rows, ty) => {
         let ty_display = ty.display(self.meta_vars, self.syms);
         let ty_desc = ty.desc();
-        write!(
-          f,
-          "unresolved record type is not compatible with `{ty_display}`, which is {ty_desc}"
-        )
+        let rows = record_meta_var(self.meta_vars, self.syms, rows);
+        write!(f, "`{rows}` is an unresolved record type, but `{ty_display}` is {ty_desc}")
       }
       Incompatible::NotEqTy(ty, not_eq) => {
         let ty = ty.display(self.meta_vars, self.syms);
