@@ -31,7 +31,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       let n = match sml_hir::Int::from_str_radix(chars.as_str(), radix) {
         Ok(x) => x * mul,
         Err(e) => {
-          st.err(tok.text_range(), ErrorKind::InvalidBigIntLit(e));
+          st.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
           sml_hir::Int::from(0i32)
         }
       };
@@ -75,7 +75,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       let n = match u64::from_str_radix(chars.as_str(), radix) {
         Ok(x) => x,
         Err(e) => {
-          st.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
+          st.err(tok.text_range(), ErrorKind::InvalidWordLit(e));
           0
         }
       };
