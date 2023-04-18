@@ -878,9 +878,10 @@ dependencies = [
 name = "sml-dynamics"
 version = "0.9.2"
 dependencies = [
+ "fast-hash",
  "sml-hir",
- "sml-path",
  "str-util",
+ "uniq",
 ]
 
 [[package]]

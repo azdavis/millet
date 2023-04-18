@@ -6,15 +6,17 @@
 // TODO remove
 #![allow(dead_code)]
 
-use sml_path::Path;
+use fast_hash::FxHashMap;
+use sml_hir::{Lab, SCon};
 use std::collections::BTreeMap;
-use str_util::Name;
+use uniq::Uniq;
 
 #[derive(Debug, Clone)]
 enum Exp {
-  SCon(sml_hir::SCon),
-  Path(Path),
-  Record(BTreeMap<sml_hir::Lab, Exp>),
+  SCon(SCon),
+  Var(Uniq),
+  Con(Uniq),
+  Record(BTreeMap<Lab, Exp>),
   Let(Vec<Dec>, Box<Exp>),
   App(Box<Exp>, Box<Exp>),
   Handle(Box<Exp>, Vec<Arm>),
@@ -32,10 +34,9 @@ struct Arm {
 enum Dec {
   Val(Vec<ValBind>),
   Datatype(Vec<DatBind>),
-  DatatypeCopy(Name, Path),
+  DatatypeCopy(Uniq, Uniq),
   Exception(Vec<ExBind>),
   Local(Vec<Dec>, Vec<Dec>),
-  Open(Vec<Path>),
 }
 
 #[derive(Debug, Clone)]
@@ -48,231 +49,115 @@ struct ValBind {
 #[derive(Debug, Clone)]
 struct DatBind {
   ty_vars: usize,
-  name: Name,
+  name: Uniq,
   cons: Vec<ConBind>,
 }
 
 #[derive(Debug, Clone)]
 struct ConBind {
-  name: Name,
+  name: Uniq,
   ty: bool,
 }
 
 #[derive(Debug, Clone)]
 enum ExBind {
   /// The bool is whether this has an `of ty`.
-  New(Name, bool),
-  Copy(Name, Path),
+  New(Uniq, bool),
+  Copy(Uniq, Uniq),
 }
 
 #[derive(Debug, Clone)]
 enum Pat {
   Wild,
-  SCon(sml_hir::SCon),
-  Con(Path, Option<Box<Pat>>),
-  Record { rows: BTreeMap<sml_hir::Lab, Pat>, allows_other: bool },
-  As(Name, Box<Pat>),
+  Var(Uniq),
+  SCon(SCon),
+  Con(Uniq, Option<Box<Pat>>),
+  Record { rows: BTreeMap<Lab, Pat>, allows_other: bool },
+  As(Uniq, Box<Pat>),
   Or(Box<Pat>, Vec<Pat>),
 }
 
-fn get_exp(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> Option<Exp> {
-  match &ars.exp[exp?] {
-    sml_hir::Exp::Hole => None,
-    sml_hir::Exp::SCon(scon) => Some(Exp::SCon(scon.clone())),
-    sml_hir::Exp::Path(path) => Some(Exp::Path(path.clone())),
-    sml_hir::Exp::Record(rows) => {
-      let rows = rows
-        .iter()
-        .map(|(lab, exp)| Some((lab.clone(), get_exp(ars, *exp)?)))
-        .collect::<Option<BTreeMap<_, _>>>()?;
-      Some(Exp::Record(rows))
-    }
-    sml_hir::Exp::Let(decs, exp) => {
-      let decs: Vec<_> = decs.iter().filter_map(|&d| get_dec(ars, d)).collect();
-      let exp = get_exp(ars, *exp)?;
-      Some(Exp::Let(decs, Box::new(exp)))
-    }
-    sml_hir::Exp::App(func, argument) => {
-      let func = get_exp(ars, *func)?;
-      let argument = get_exp(ars, *argument)?;
-      Some(Exp::App(Box::new(func), Box::new(argument)))
-    }
-    sml_hir::Exp::Handle(exp, matcher) => {
-      let exp = get_exp(ars, *exp)?;
-      let matcher = get_matcher(ars, matcher)?;
-      Some(Exp::Handle(Box::new(exp), matcher))
-    }
-    sml_hir::Exp::Raise(exp) => Some(Exp::Raise(Box::new(get_exp(ars, *exp)?))),
-    sml_hir::Exp::Fn(matcher, _) => Some(Exp::Fn(get_matcher(ars, matcher)?)),
-    sml_hir::Exp::Typed(exp, _) => get_exp(ars, *exp),
-  }
-}
-
-fn get_matcher(ars: &sml_hir::Arenas, matcher: &[sml_hir::Arm]) -> Option<Vec<Arm>> {
-  matcher
-    .iter()
-    .map(|arm| {
-      let pat = get_pat(ars, arm.pat)?;
-      let exp = get_exp(ars, arm.exp)?;
-      Some(Arm { pat, exp })
-    })
-    .collect()
-}
-
-fn get_dec(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> Option<Dec> {
-  match &ars.dec[dec] {
-    sml_hir::Dec::Ty(_) | sml_hir::Dec::Abstype(_, _, _) => None,
-    sml_hir::Dec::Val(_, val_binds) => {
-      let val_binds = val_binds
-        .iter()
-        .map(|vb| {
-          let pat = get_pat(ars, vb.pat)?;
-          let exp = get_exp(ars, vb.exp)?;
-          Some(ValBind { rec: vb.rec, pat, exp })
-        })
-        .collect::<Option<Vec<_>>>()?;
-      Some(Dec::Val(val_binds))
-    }
-    sml_hir::Dec::Datatype(dat_binds, _) => {
-      let dat_binds = dat_binds
-        .iter()
-        .map(|db| {
-          let cons = db
-            .cons
-            .iter()
-            .map(|cb| ConBind { name: cb.name.clone(), ty: cb.ty.is_some() })
-            .collect();
-          Some(DatBind { ty_vars: db.ty_vars.len(), name: db.name.clone(), cons })
-        })
-        .collect::<Option<Vec<_>>>()?;
-      Some(Dec::Datatype(dat_binds))
-    }
-    sml_hir::Dec::DatatypeCopy(name, path) => Some(Dec::DatatypeCopy(name.clone(), path.clone())),
-    sml_hir::Dec::Exception(ex_binds) => {
-      let ex_binds = ex_binds
-        .iter()
-        .map(|eb| match eb {
-          sml_hir::ExBind::New(name, ty) => ExBind::New(name.clone(), ty.is_some()),
-          sml_hir::ExBind::Copy(name, path) => ExBind::Copy(name.clone(), path.clone()),
-        })
-        .collect();
-      Some(Dec::Exception(ex_binds))
-    }
-    sml_hir::Dec::Local(local_decs, in_decs) => {
-      let local_decs: Vec<_> = local_decs.iter().filter_map(|&dec| get_dec(ars, dec)).collect();
-      let in_decs: Vec<_> = in_decs.iter().filter_map(|&dec| get_dec(ars, dec)).collect();
-      Some(Dec::Local(local_decs, in_decs))
-    }
-    sml_hir::Dec::Open(paths) => Some(Dec::Open(paths.clone())),
-  }
-}
-
-fn get_pat(ars: &sml_hir::Arenas, pat: sml_hir::PatIdx) -> Option<Pat> {
-  match &ars.pat[pat?] {
-    sml_hir::Pat::Wild => Some(Pat::Wild),
-    sml_hir::Pat::SCon(scon) => Some(Pat::SCon(scon.clone())),
-    sml_hir::Pat::Con(path, pat) => {
-      let pat = match *pat {
-        None => None,
-        Some(pat) => Some(Box::new(get_pat(ars, pat)?)),
-      };
-      Some(Pat::Con(path.clone(), pat))
-    }
-    sml_hir::Pat::Record { rows, allows_other } => {
-      let rows = rows
-        .iter()
-        .map(|(lab, pat)| Some((lab.clone(), get_pat(ars, *pat)?)))
-        .collect::<Option<BTreeMap<_, _>>>()?;
-      Some(Pat::Record { rows, allows_other: *allows_other })
-    }
-    sml_hir::Pat::Typed(pat, _) => get_pat(ars, *pat),
-    sml_hir::Pat::As(name, pat) => {
-      let pat = get_pat(ars, *pat)?;
-      Some(Pat::As(name.clone(), Box::new(pat)))
-    }
-    sml_hir::Pat::Or(or) => {
-      let first = get_pat(ars, or.first)?;
-      let rest = or.rest.iter().map(|&pat| get_pat(ars, pat)).collect::<Option<Vec<_>>>()?;
-      Some(Pat::Or(Box::new(first), rest))
-    }
-  }
-}
-
-/// An environment.
 #[derive(Debug, Clone)]
-struct Env {
-  val: ValEnv,
-  str: StrEnv,
+enum Val {
+  SCon(SCon),
+  Con(Uniq, Option<Box<Val>>),
+  Record(BTreeMap<Lab, Val>),
+  Closure(ValEnv, Vec<Arm>),
 }
 
-/// Uses [`BTreeMap`] for stable order.
-type ValEnv = BTreeMap<Name, Exp>;
-
-/// Uses [`BTreeMap`] for stable order.
-type StrEnv = BTreeMap<Name, Env>;
-
-impl Env {
-  fn get<'e, 'p>(&'e self, path: &'p Path) -> Result<&'e Env, &'p Name> {
-    let mut ret = self;
-    for name in path.prefix() {
-      ret = match ret.str.get(name) {
-        Some(x) => x,
-        None => return Err(name),
-      };
+impl From<Val> for Exp {
+  fn from(val: Val) -> Self {
+    match val {
+      Val::SCon(scon) => Exp::SCon(scon),
+      Val::Con(name, arg) => match arg {
+        Some(val) => Exp::App(Box::new(Exp::Con(name)), Box::new(Exp::from(*val))),
+        None => Exp::Con(name),
+      },
+      Val::Record(rows) => Exp::Record(exp_rows_from_val_rows(rows)),
+      Val::Closure(_, matcher) => Exp::Fn(matcher),
     }
-    Ok(ret)
   }
 }
+
+fn exp_rows_from_val_rows(rows: BTreeMap<Lab, Val>) -> BTreeMap<Lab, Exp> {
+  rows.into_iter().map(|(lab, val)| (lab, Exp::from(val))).collect()
+}
+
+type ValEnv = FxHashMap<Uniq, Val>;
 
 enum Eval {
   Step(Exp),
-  Val(Exp),
+  Val(Val),
 }
 
-struct Raise(Exp);
+struct Raise(Val);
 
-fn step_exp(env: &Env, exp: Exp) -> Result<Eval, Raise> {
+fn step_exp(env: &ValEnv, exp: Exp) -> Result<Eval, Raise> {
   match exp {
-    Exp::SCon(scon) => Ok(Eval::Val(Exp::SCon(scon))),
-    Exp::Path(path) => {
-      let env = env.get(&path).unwrap();
-      let val = env.val.get(path.last()).unwrap().clone();
-      Ok(Eval::Val(val))
-    }
+    Exp::SCon(scon) => Ok(Eval::Val(Val::SCon(scon))),
+    Exp::Var(name) => Ok(Eval::Val(env.get(&name).unwrap().clone())),
+    Exp::Con(name) => Ok(Eval::Val(Val::Con(name, None))),
     Exp::Record(rows) => {
-      let mut new_rows = BTreeMap::<sml_hir::Lab, Exp>::new();
+      let mut new_rows = BTreeMap::<Lab, Val>::new();
       let mut iter = rows.into_iter();
       for (lab, exp) in iter.by_ref() {
         match step_exp(env, exp)? {
           Eval::Step(exp) => {
+            let mut new_rows = exp_rows_from_val_rows(new_rows);
             new_rows.insert(lab, exp);
             new_rows.extend(iter);
             return Ok(Eval::Step(Exp::Record(new_rows)));
           }
-          Eval::Val(exp) => {
-            new_rows.insert(lab, exp);
+          Eval::Val(val) => {
+            new_rows.insert(lab, val);
           }
         }
       }
-      Ok(Eval::Val(Exp::Record(new_rows)))
+      Ok(Eval::Val(Val::Record(new_rows)))
     }
-    Exp::Let(_, _) => todo!(),
+    Exp::Let(_, _) => todo!("let"),
     Exp::App(func, arg) => match step_exp(env, *func)? {
       Eval::Step(func) => Ok(Eval::Step(Exp::App(Box::new(func), arg))),
       Eval::Val(func) => match step_exp(env, *arg)? {
-        Eval::Step(arg) => Ok(Eval::Step(Exp::App(Box::new(func), Box::new(arg)))),
+        Eval::Step(arg) => Ok(Eval::Step(Exp::App(Box::new(func.into()), Box::new(arg)))),
         Eval::Val(arg) => match func {
-          Exp::Fn(matcher) => {
+          // TODO use the closure env!
+          Val::Closure(_, matcher) => {
             for arm in matcher {
               let mut ac = ValEnv::default();
-              if pat_match(env, &mut ac, arm.pat, &arg) {
+              if pat_match(&mut ac, arm.pat, &arg) {
                 // TODO update the env!
                 return Ok(Eval::Step(arm.exp));
               }
             }
-            Err(Raise(Exp::Path(Path::one(Name::new("Match")))))
+            // TODO generate a con for Match to return here
+            todo!("non-exhaustive match")
           }
-          _ => unreachable!("app func not Fn"),
+          Val::Con(name, con_arg) => match con_arg {
+            None => Ok(Eval::Val(Val::Con(name, Some(Box::new(arg))))),
+            Some(_) => unreachable!("app func Con with arg"),
+          },
+          _ => unreachable!("app func not Fn or Con"),
         },
       },
     },
@@ -281,7 +166,7 @@ fn step_exp(env: &Env, exp: Exp) -> Result<Eval, Raise> {
       Err(r) => {
         for arm in matcher {
           let mut ac = ValEnv::default();
-          if pat_match(env, &mut ac, arm.pat, &r.0) {
+          if pat_match(&mut ac, arm.pat, &r.0) {
             // TODO update the env!
             return Ok(Eval::Step(arm.exp));
           }
@@ -293,14 +178,48 @@ fn step_exp(env: &Env, exp: Exp) -> Result<Eval, Raise> {
       Eval::Step(exp) => Ok(Eval::Step(Exp::Raise(Box::new(exp)))),
       Eval::Val(exp) => Err(Raise(exp)),
     },
-    // TODO **closures** are values (store the env)
-    Exp::Fn(matcher) => Ok(Eval::Val(Exp::Fn(matcher))),
+    Exp::Fn(matcher) => Ok(Eval::Val(Val::Closure(env.clone(), matcher))),
   }
 }
 
-fn pat_match(_: &Env, _: &mut ValEnv, pat: Pat, exp: &Exp) -> bool {
-  match (pat, exp) {
+fn pat_match(ac: &mut ValEnv, pat: Pat, val: &Val) -> bool {
+  match (pat, val) {
     (Pat::Wild, _) => true,
-    _ => todo!(),
+    (Pat::Var(name), _) => {
+      assert!(ac.insert(name, val.clone()).is_none());
+      true
+    }
+    (_, Val::Closure(_, _)) => unreachable!("match non-(Wild or Var) with Closure"),
+    (Pat::SCon(pat_sc), Val::SCon(val_sc)) => match (pat_sc, val_sc) {
+      (SCon::Int(pat_int), SCon::Int(val_int)) => pat_int == *val_int,
+      (SCon::Word(pat_word), SCon::Word(val_word)) => pat_word == *val_word,
+      (SCon::Char(pat_char), SCon::Char(val_char)) => pat_char == *val_char,
+      (SCon::String(pat_str), SCon::String(val_str)) => pat_str == *val_str,
+      (SCon::Real(_), _) | (_, SCon::Real(_)) => unreachable!("Real pattern"),
+      (SCon::Int(_) | SCon::Word(_) | SCon::Char(_) | SCon::String(_), _) => {
+        unreachable!("SCon types do not match")
+      }
+    },
+    (Pat::SCon(_), Val::Con(_, _) | Val::Record(_)) => {
+      unreachable!("match SCon with (Con or Record")
+    }
+    (Pat::Con(pat_name, pat_arg), Val::Con(val_name, val_arg)) => {
+      unreachable!("match Con {pat_name:?} {pat_arg:?} {val_name:?} {val_arg:?}")
+    }
+    (Pat::Con(_, _), Val::SCon(_) | Val::Record(_)) => {
+      unreachable!("match Con with (SCon or Record)")
+    }
+    (Pat::Record { rows: pat_rows, allows_other: _ }, Val::Record(val_rows)) => {
+      todo!("match Record {pat_rows:?} {val_rows:?}")
+    }
+    (Pat::Record { .. }, Val::SCon(_) | Val::Con(_, _)) => {
+      unreachable!("match Record with (SCon or Con")
+    }
+    (Pat::As(_, _), _) => {
+      todo!("match As")
+    }
+    (Pat::Or(_, _), _) => {
+      todo!("match Or")
+    }
   }
 }
