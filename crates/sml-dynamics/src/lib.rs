@@ -16,7 +16,7 @@ enum Exp {
   SCon(SCon),
   Var(Uniq),
   Con(Uniq),
-  Record(BTreeMap<Lab, Exp>),
+  Record(Vec<(Lab, Exp)>),
   Let(Vec<Dec>, Box<Exp>),
   App(Box<Exp>, Box<Exp>),
   Handle(Box<Exp>, Vec<Arm>),
@@ -93,14 +93,12 @@ impl From<Val> for Exp {
         Some(val) => Exp::App(Box::new(Exp::Con(name)), Box::new(Exp::from(*val))),
         None => Exp::Con(name),
       },
-      Val::Record(rows) => Exp::Record(exp_rows_from_val_rows(rows)),
+      Val::Record(rows) => {
+        Exp::Record(rows.into_iter().map(|(lab, val)| (lab, Exp::from(val))).collect())
+      }
       Val::Closure(_, matcher) => Exp::Fn(matcher),
     }
   }
-}
-
-fn exp_rows_from_val_rows(rows: BTreeMap<Lab, Val>) -> BTreeMap<Lab, Exp> {
-  rows.into_iter().map(|(lab, val)| (lab, Exp::from(val))).collect()
 }
 
 type ValEnv = FxHashMap<Uniq, Val>;
@@ -118,22 +116,23 @@ fn step_exp(env: &ValEnv, exp: Exp) -> Result<Eval, Raise> {
     Exp::Var(name) => Ok(Eval::Val(env.get(&name).unwrap().clone())),
     Exp::Con(name) => Ok(Eval::Val(Val::Con(name, None))),
     Exp::Record(rows) => {
-      let mut new_rows = BTreeMap::<Lab, Val>::new();
+      let mut new_rows = Vec::<(Lab, Val)>::new();
       let mut iter = rows.into_iter();
       for (lab, exp) in iter.by_ref() {
         match step_exp(env, exp)? {
           Eval::Step(exp) => {
-            let mut new_rows = exp_rows_from_val_rows(new_rows);
-            new_rows.insert(lab, exp);
+            let mut new_rows: Vec<_> =
+              new_rows.into_iter().map(|(lab, val)| (lab, Exp::from(val))).collect();
+            new_rows.push((lab, exp));
             new_rows.extend(iter);
             return Ok(Eval::Step(Exp::Record(new_rows)));
           }
           Eval::Val(val) => {
-            new_rows.insert(lab, val);
+            new_rows.push((lab, val));
           }
         }
       }
-      Ok(Eval::Val(Val::Record(new_rows)))
+      Ok(Eval::Val(Val::Record(new_rows.into_iter().collect())))
     }
     Exp::Let(_, _) => todo!("let"),
     Exp::App(func, arg) => match step_exp(env, *func)? {
