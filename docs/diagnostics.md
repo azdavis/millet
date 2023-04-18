@@ -2471,16 +2471,18 @@ end
 (* desugared *)
 functor Func (Anonymous : sig
   structure Param : HAS_T
-end) = struct
+end) = let
   open Anonymous
-  (* ... *)
+in
+  struct
+    (* ... *)
+  end
 end
 ```
 
-A few caveats (thus the "approximately"):
+Note that in this illustration, we've named the desugared functor argument `Anonymous`. This is to emphasize that when expanding the syntax sugar, an SML implementation will generate an anonymous, unutterable[,][accursed] unique structure name for the argument.
 
-- In this illustration, we've named the desugared functor argument `Anonymous`. This is to emphasize that when expanding the syntax sugar, an SML implementation will generate an anonymous, unutterable[,][accursed] unique structure name for the argument. This name is then used exclusively in the `open`, and cannot, for instance, be referenced in the `(* ... *)` region.
-- The true desugaring uses a `let` structure expression for the functor body, to avoid modifying the original `struct (* ... *) end` body. But since `let` structure expression are somewhat rare, in this illustration, to (hopefully) avoid confusing the reader, we instead modify the `struct (* ... *) end` to first `open Anonymous` before the `(* ... *)` region, which is equivalent.
+Note also that functor body uses `let` to open this anonymous structure, allowing the `struct (* ... *) end` region to use the names that were in the anonymous structure (like `Param`, in this case).
 
 Similarly, once we modify the call site, we are using more syntax sugar, which also expands:
 
