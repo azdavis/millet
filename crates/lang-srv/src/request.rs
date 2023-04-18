@@ -24,15 +24,14 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
   r = helpers::try_req::<lsp_types::request::HoverRequest, _>(r, |id, params| {
     let params = params.text_document_position_params;
     let pos = convert::text_doc_pos_params(&st.cx.fs, &mut st.cx.store, &params)?;
-    let res = st.analysis.get_md(pos, st.cx.options.show_token_hover).map(|(value, range)| {
-      lsp_types::Hover {
+    let res =
+      st.analysis.get_md(pos, st.cx.options.token_hover).map(|(value, range)| lsp_types::Hover {
         contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
           kind: lsp_types::MarkupKind::Markdown,
           value,
         }),
         range: Some(convert::lsp_range(range)),
-      }
-    });
+      });
     st.cx.send_response(Response::new_ok(id, res));
     Ok(())
   })?;

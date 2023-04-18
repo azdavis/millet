@@ -3,26 +3,33 @@
 use serde::Deserialize;
 
 /// Settings for the server.
+//
+/// @sync(init-options)
 #[derive(Debug, Deserialize)]
 #[allow(missing_docs)]
-#[allow(clippy::struct_excessive_bools)]
 pub struct Options {
-  pub show_token_hover: bool,
-  pub diagnostics_on_change: bool,
-  pub diagnostics_ignore: Option<DiagnosticsIgnore>,
-  pub diagnostics_more_info_hint: bool,
+  pub token_hover: bool,
   pub format: Option<FormatEngine>,
+  pub diagnostics: DiagnosticsOptions,
 }
 
 impl Default for Options {
   fn default() -> Self {
-    Self {
-      show_token_hover: true,
-      diagnostics_on_change: false,
-      diagnostics_ignore: Some(DiagnosticsIgnore::AfterSyntax),
-      diagnostics_more_info_hint: true,
-      format: None,
-    }
+    Self { token_hover: true, format: None, diagnostics: DiagnosticsOptions::default() }
+  }
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(missing_docs)]
+pub struct DiagnosticsOptions {
+  pub on_change: bool,
+  pub more_info_hint: bool,
+  pub ignore: Option<DiagnosticsIgnore>,
+}
+
+impl Default for DiagnosticsOptions {
+  fn default() -> Self {
+    Self { on_change: false, more_info_hint: true, ignore: Some(DiagnosticsIgnore::AfterSyntax) }
   }
 }
 

@@ -36,17 +36,17 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           None => bail!("no source in the input for DidChangeTextDocument"),
         };
         helpers::apply_changes(text, params.content_changes);
-        if st.cx.options.diagnostics_on_change {
+        if st.cx.options.diagnostics.on_change {
           diagnostics::try_publish(st);
         }
       }
       Mode::NoRoot(open_files) => match open_files.get_mut(&path) {
         Some(text) => {
           helpers::apply_changes(text, params.content_changes);
-          if st.cx.options.diagnostics_on_change {
+          if st.cx.options.diagnostics.on_change {
             let ds = convert::diagnostics(
               st.analysis.get_one(text),
-              st.cx.options.diagnostics_more_info_hint,
+              st.cx.options.diagnostics.more_info_hint,
             );
             st.cx.send_diagnostics(url, ds);
           }
@@ -62,7 +62,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
       let text = params.text_document.text;
       let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
       let ds =
-        convert::diagnostics(st.analysis.get_one(&text), st.cx.options.diagnostics_more_info_hint);
+        convert::diagnostics(st.analysis.get_one(&text), st.cx.options.diagnostics.more_info_hint);
       st.cx.send_diagnostics(url, ds);
       open_files.insert(path, text);
     }
@@ -88,7 +88,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           Some(text) => {
             let ds = convert::diagnostics(
               st.analysis.get_one(text),
-              st.cx.options.diagnostics_more_info_hint,
+              st.cx.options.diagnostics.more_info_hint,
             );
             st.cx.send_diagnostics(url, ds);
           }

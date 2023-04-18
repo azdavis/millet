@@ -28,17 +28,19 @@ export async function activate(cx: vscode.ExtensionContext) {
         ? configPath
         : cx.asAbsolutePath(path.join("out", `millet-ls${ext}`)),
   };
+  // @sync(init-options)
+  const initializationOptions = {
+    token_hover: config.get("server.hover.token.enable"),
+    format: mkNone(config.get("format.engine")),
+    diagnostics: {
+      on_change: config.get("server.diagnostics.onChange.enable"),
+      more_info_hint: config.get("server.diagnostics.moreInfoHint.enable"),
+      ignore: mkNone(config.get("server.diagnostics.ignore")),
+    },
+  };
   const clientOpts: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "sml" }],
-    initializationOptions: {
-      show_token_hover: config.get("server.hover.token.enable"),
-      diagnostics_on_change: config.get("server.diagnostics.onChange.enable"),
-      diagnostics_ignore: mkNone(config.get("server.diagnostics.ignore")),
-      diagnostics_more_info_hint: config.get(
-        "server.diagnostics.moreInfoHint.enable",
-      ),
-      format: mkNone(config.get("format.engine")),
-    },
+    initializationOptions,
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);
   client.start();

@@ -21,7 +21,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
   let analysis = analysis::Analysis::new(
     analysis::StdBasis::full(),
     config::ErrorLines::Many,
-    options.diagnostics_ignore,
+    options.diagnostics.ignore,
     options.format,
   );
   let mut cx = Cx {
