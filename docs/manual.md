@@ -284,18 +284,15 @@ Possible arguments:
 
 - `all`: Ignore all diagnostics.
 
-For example, suppose three files `a.sml`, `b.sml`, and `c.sml` all have similar contents:
+For example, suppose we have 3 files, each quite similar, and each containing a type error:
 
-```sml
-(* a.sml *)
-val _ = a
-(* b.sml *)
-val _ = b
-(* c.sml *)
-val _ = c
-```
+| Filename | Contents       |
+| -------- | -------------- |
+| `a.sml`  | `val () = "a"` |
+| `b.sml`  | `val () = "b"` |
+| `c.sml`  | `val () = "c"` |
 
-Even though `a`, `b`, and `c` are all not defined, given the following root ML Basis file, undefined variable errors are reported in `a.sml` and `c.sml` only, and not `b.sml`:
+Even though each file would normally emit a type error, given the following root ML Basis file, the errors are reported in `a.sml` and `c.sml` only, and not `b.sml`:
 
 ```mlb
 a.sml
