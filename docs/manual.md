@@ -197,7 +197,12 @@ Whether the `<path>` is allowed.
 
 The path must be a valid, fully qualified path in the standard basis library, like `Real.==` or `+`.
 
-Because paths can have special characters in them, namely `.`, you may need to use TOML's quoted path syntax.
+Because paths can have special characters in them, namely `.`, you may need to use TOML's quoted path syntax. Like this:
+
+```toml
+[language.val]
+"List.tabulate" = false
+```
 
 Note that some standard basis library declarations are re-declared at different paths. To disallow them entirely, you must (currently) specify all possible paths. For instance, you should specify both `hd` and `List.hd` to disallow usage of the list head function.
 
@@ -371,7 +376,7 @@ In VS Code, all of the above files have some pre-defined snippets. These can be 
 
 Millet will analyze source (SML) and group (MLB/CM) files and report diagnostics directly on the offending area of the file.
 
-Each diagnostics has a default severity, e.g. "error" or "warning". This can be overridden with [`diagnostics.<code>.severity`](#diagnosticscodeseverity) in `millet.toml`. A severity of "ignore" ignores (i.e. disables) the diagnostic.
+Each diagnostics has a default severity, e.g. "error" or "warning". This can be overridden with [`diagnostics.<code>.severity`](#diagnosticscodeseverity) in `millet.toml`. A severity of `"ignore"` ignores (i.e. disables) the diagnostic.
 
 Diagnostics can be ignored for an entire file or set of files with the [`milletDiagnosticsIgnore`](#milletdiagnosticsignore) ML Basis annotation. Use:
 
@@ -405,12 +410,10 @@ Millet allows defining documentation comments on items to be shown on hover.
 Use this comment style:
 
 ```sml
-structure Math = struct
-  (*!
-   * `inc x` increments the given number.
-   *)
-  fun inc x = x + 1
-end
+(*!
+ * `inc x` returns one more than `x`.
+ *)
+fun inc x = x + 1
 ```
 
 So, put `(*!` on its own line, then the doc comment in Markdown with leading `*` on each line, and then `*)` on its own line.
@@ -494,18 +497,20 @@ An arguably good thing about this is that it might improve readability anyway.
 
 The naive formatter completely gives up on formatting the file if a comment appears in a place that the formatter doesn't know how to deal with.
 
-The **only** kind of comment the formatter even **attempts** to deal with are comments above declarations, like this:
+The **only** kind of comment the formatter even **attempts** to deal with are comments directly above declarations, like these:
 
 ```sml
-(* i'm above a declaration *)
+(* a is the first letter *)
 val a = 1
-(* and so am i *)
+
+(* id x returns x unchanged *)
 fun id x = x
-(* and i as well *)
+
+(* isomorphic to bool *)
 datatype dayKind = Weekday | Weekend
 ```
 
-Comments in other positions, like inside expressions, are not supported.
+Comments in other positions, like inside expressions, are not supported:
 
 ```sml
 val uh =
@@ -517,13 +522,15 @@ val uh =
     quz
 ```
 
-When the formatter cannot format a file, it simply does nothing, and the file will not be formatted.
+When the formatter cannot format a file, it simply does nothing, and the file will not be formatted. It emits warnings pointing at the comments that prevented formatting.
 
 #### Configuration
 
 There are no options to configure the formatter.
 
 This is by design. More options means more [bikeshedding][bike-shed].
+
+The formatter does, however, respect the editor-configured tab size.
 
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=azdavis.millet
