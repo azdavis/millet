@@ -47,6 +47,8 @@ pub fn run_stdio() -> anyhow::Result<()> {
   let (connection, io_threads) = lsp_server::Connection::stdio();
   let params = connection.initialize(serde_json::to_value(capabilities::get())?)?;
   run_inner(&connection, serde_json::from_value(params)?)?;
+  // if we don't drop this, then the join hangs
+  drop(connection);
   io_threads.join()?;
   Ok(())
 }
