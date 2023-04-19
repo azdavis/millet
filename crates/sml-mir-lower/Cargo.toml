@@ -1,0 +1,15 @@
+[package]
+name = "sml-mir-lower"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+sml-hir = { path = "../sml-hir" }
+sml-mir = { path = "../sml-mir" }
+uniq = { git = "https://github.com/azdavis/language-util.git" }

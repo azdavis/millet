@@ -962,6 +962,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-mir-lower"
+version = "0.9.3"
+dependencies = [
+ "sml-hir",
+ "sml-mir",
+ "uniq",
+]
+
+[[package]]
 name = "sml-naive-fmt"
 version = "0.9.3"
 dependencies = [

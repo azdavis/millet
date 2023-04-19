@@ -198,6 +198,10 @@ Statics errors use an abstract `Idx`, and this index gets turned into an actual 
 
 In the future we could add more to this `Idx`, like "the name of the third con bind in the second dat bind of this datatype dec".
 
+### `crates/sml-mir-lower`
+
+Lowers HIR to MIR, for the dynamics.
+
 ### `crates/sml-dynamics`
 
 Runs a program, according to the dynamic semantics of SML from its Definition. The program should have been typechecked with the statics already.
