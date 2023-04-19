@@ -37,7 +37,7 @@ impl From<Val> for Exp {
 
 type ValEnv = FxHashMap<Uniq, Val>;
 
-enum Top {
+enum Step {
   Exp(Exp),
   Val(Val),
   Raise(Val),
@@ -65,65 +65,65 @@ enum FrameKind {
 fn eval(exp: Exp) -> Result<Val, Val> {
   let mut env = ValEnv::default();
   let mut frames = Vec::<Frame>::new();
-  let mut top = Top::Exp(exp);
+  let mut s = Step::Exp(exp);
   loop {
-    top = step(&mut env, &mut frames, top);
+    s = step(&mut env, &mut frames, s);
     if frames.is_empty() {
       break;
     }
   }
-  match top {
-    Top::Exp(_) => unreachable!("stuck exp"),
-    Top::Val(v) => Ok(v),
-    Top::Raise(v) => Err(v),
+  match s {
+    Step::Exp(_) => unreachable!("stuck exp"),
+    Step::Val(v) => Ok(v),
+    Step::Raise(v) => Err(v),
   }
 }
 
 /// i think this is called a "stack machine". it is NOT recursive.
-fn step(env: &mut ValEnv, frames: &mut Vec<Frame>, top: Top) -> Top {
-  match top {
-    Top::Exp(e) => match e {
-      Exp::SCon(scon) => Top::Val(Val::SCon(scon)),
-      Exp::Var(name) => Top::Val(env.get(&name).unwrap().clone()),
-      Exp::Con(name) => Top::Val(Val::Con(name, None)),
+fn step(env: &mut ValEnv, frames: &mut Vec<Frame>, step: Step) -> Step {
+  match step {
+    Step::Exp(e) => match e {
+      Exp::SCon(scon) => Step::Val(Val::SCon(scon)),
+      Exp::Var(name) => Step::Val(env.get(&name).unwrap().clone()),
+      Exp::Con(name) => Step::Val(Val::Con(name, None)),
       Exp::Record(exp_rows) => {
         let mut exp_rows = exp_rows.into_iter();
         match exp_rows.next() {
-          None => Top::Val(Val::Record(BTreeMap::new())),
+          None => Step::Val(Val::Record(BTreeMap::new())),
           Some((lab, exp)) => {
             frames.push(Frame::new(env.clone(), FrameKind::Record(exp_rows, lab, BTreeMap::new())));
-            Top::Exp(exp)
+            Step::Exp(exp)
           }
         }
       }
       Exp::Let(_, _) => todo!(),
       Exp::App(func, arg) => {
         frames.push(Frame::new(env.clone(), FrameKind::AppFunc(*arg)));
-        Top::Exp(*func)
+        Step::Exp(*func)
       }
       Exp::Handle(exp, matcher) => {
         frames.push(Frame::new(env.clone(), FrameKind::Handle(matcher)));
-        Top::Exp(*exp)
+        Step::Exp(*exp)
       }
       Exp::Raise(exp) => {
         // maybe don't care about the env for raise?
         frames.push(Frame::new(ValEnv::default(), FrameKind::Raise));
-        Top::Exp(*exp)
+        Step::Exp(*exp)
       }
-      Exp::Fn(matcher) => Top::Val(Val::Closure(env.clone(), matcher)),
+      Exp::Fn(matcher) => Step::Val(Val::Closure(env.clone(), matcher)),
     },
-    Top::Val(val) => match frames.pop() {
+    Step::Val(val) => match frames.pop() {
       // done evaluating
-      None => Top::Val(val),
+      None => Step::Val(val),
       Some(frame) => match frame.kind {
         FrameKind::Record(mut exp_rows, lab, mut val_rows) => {
           assert!(val_rows.insert(lab, val).is_none());
           match exp_rows.next() {
-            None => Top::Val(Val::Record(val_rows)),
+            None => Step::Val(Val::Record(val_rows)),
             Some((lab, exp)) => {
               *env = frame.env.clone();
               frames.push(Frame::new(frame.env, FrameKind::Record(exp_rows, lab, val_rows)));
-              Top::Exp(exp)
+              Step::Exp(exp)
             }
           }
         }
@@ -131,7 +131,7 @@ fn step(env: &mut ValEnv, frames: &mut Vec<Frame>, top: Top) -> Top {
           Val::Closure(clos_env, matcher) => {
             *env = frame.env;
             frames.push(Frame::new(clos_env, FrameKind::AppArg(matcher)));
-            Top::Exp(arg)
+            Step::Exp(arg)
           }
           _ => unreachable!("fun val not closure"),
         },
@@ -141,19 +141,19 @@ fn step(env: &mut ValEnv, frames: &mut Vec<Frame>, top: Top) -> Top {
             if pat_match(&mut ac, &arm.pat, &val) {
               *env = frame.env;
               env.extend(ac);
-              return Top::Exp(arm.exp);
+              return Step::Exp(arm.exp);
             }
           }
           todo!("non-exhaustive fn match")
         }
-        FrameKind::Raise => Top::Raise(val),
+        FrameKind::Raise => Step::Raise(val),
         // handle wasn't needed, as head didn't raise
-        FrameKind::Handle(_) => Top::Val(val),
+        FrameKind::Handle(_) => Step::Val(val),
       },
     },
-    Top::Raise(val) => match frames.pop() {
+    Step::Raise(val) => match frames.pop() {
       // unhandled exception
-      None => Top::Raise(val),
+      None => Step::Raise(val),
       Some(frame) => match frame.kind {
         FrameKind::Handle(matcher) => {
           let mut ac = ValEnv::default();
@@ -161,14 +161,14 @@ fn step(env: &mut ValEnv, frames: &mut Vec<Frame>, top: Top) -> Top {
             if pat_match(&mut ac, &arm.pat, &val) {
               *env = frame.env;
               env.extend(ac);
-              return Top::Exp(arm.exp);
+              return Step::Exp(arm.exp);
             }
           }
           // handle didn't catch the exception. keep bubbling up
-          Top::Raise(val)
+          Step::Raise(val)
         }
         // for all other frames, the exception continues to bubble up
-        _ => Top::Raise(val),
+        _ => Step::Raise(val),
       },
     },
   }
