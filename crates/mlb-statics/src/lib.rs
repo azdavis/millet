@@ -357,7 +357,7 @@ fn get_group_file(st: &mut St, cx: Cx<'_>, ac: &mut MBasis, path: paths::PathId)
 /// Adds doc comments in the `root` to the `info`.
 pub fn add_all_doc_comments(
   root: &sml_syntax::SyntaxNode,
-  low: &sml_lower::Lower,
+  low: &sml_hir_lower::Lower,
   info: &mut sml_statics::info::Info,
 ) {
   let indices = std::iter::empty()

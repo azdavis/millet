@@ -152,7 +152,7 @@ Parses a sequence of tokens into a sequence of "events". Events are like:
 
 Then processes those events to build a lossless syntax tree, wrapped in the AST API.
 
-### `crates/sml-lower`
+### `crates/sml-hir-lower`
 
 ```rs
 &sml_syntax::ast::Root -> (sml_hir::Root, TwoWayPointers, Vec<LowerError>)

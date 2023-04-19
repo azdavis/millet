@@ -589,8 +589,8 @@ dependencies = [
  "sml-file-syntax",
  "sml-fixity",
  "sml-hir",
+ "sml-hir-lower",
  "sml-libs",
- "sml-lower",
  "sml-namespace",
  "sml-statics",
  "sml-statics-types",
@@ -890,8 +890,8 @@ dependencies = [
  "config",
  "elapsed",
  "sml-fixity",
+ "sml-hir-lower",
  "sml-lex",
- "sml-lower",
  "sml-parse",
  "sml-ty-var-scope",
  "text-pos",
@@ -918,6 +918,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-hir-lower"
+version = "0.9.2"
+dependencies = [
+ "config",
+ "diagnostic",
+ "fast-hash",
+ "lex-util",
+ "sml-hir",
+ "sml-path",
+ "sml-syntax",
+ "str-util",
+]
+
+[[package]]
 name = "sml-lab"
 version = "0.9.2"
 dependencies = [
@@ -937,20 +951,6 @@ dependencies = [
 name = "sml-libs"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/sml-libs.git#360d865bfe1e8afc4f8e483e0ac8f53da0593041"
-
-[[package]]
-name = "sml-lower"
-version = "0.9.2"
-dependencies = [
- "config",
- "diagnostic",
- "fast-hash",
- "lex-util",
- "sml-hir",
- "sml-path",
- "sml-syntax",
- "str-util",
-]
 
 [[package]]
 name = "sml-mir"

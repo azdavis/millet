@@ -14,7 +14,7 @@ pub struct SourceFileSyntax {
   /// The lossless concrete syntax tree.
   pub parse: sml_parse::Parse,
   /// The lowered HIR.
-  pub lower: sml_lower::Lower,
+  pub lower: sml_hir_lower::Lower,
 }
 
 impl SourceFileSyntax {
@@ -22,7 +22,7 @@ impl SourceFileSyntax {
   pub fn new(fix_env: &mut sml_fixity::Env, lang: &config::lang::Language, contents: &str) -> Self {
     elapsed::log("SourceFileSyntax::new", || {
       let (lex_errors, parse) = Self::lex_and_parse(fix_env, contents);
-      let mut lower = sml_lower::get(lang, &parse.root);
+      let mut lower = sml_hir_lower::get(lang, &parse.root);
       sml_ty_var_scope::get(&mut lower.arenas, &lower.root);
       Self { pos_db: text_pos::PositionDb::new(contents), lex_errors, parse, lower }
     })
