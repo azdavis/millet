@@ -10,7 +10,8 @@ use std::fmt;
 use str_util::{Name, SmolStr};
 
 pub use la_arena;
-pub use sml_hir_shared::{Int, Lab, ParseIntError, SCon};
+pub use sml_lab::Lab;
+pub use sml_scon::{Int, ParseIntError, SCon};
 
 #[derive(Debug, Default)]
 pub struct Arenas {

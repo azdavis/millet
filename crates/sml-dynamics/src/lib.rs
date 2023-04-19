@@ -7,7 +7,8 @@
 #![allow(dead_code)]
 
 use fast_hash::FxHashMap;
-use sml_hir_shared::{Lab, SCon};
+use sml_lab::Lab;
+use sml_scon::SCon;
 use std::collections::BTreeMap;
 use uniq::Uniq;
 

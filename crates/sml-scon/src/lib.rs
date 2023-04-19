@@ -1,38 +1,12 @@
-//! Some shared types.
+//! [`SCon`], a special value constructor.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use num_traits::Num as _;
 use std::fmt;
-use str_util::{Name, SmolStr};
+use str_util::SmolStr;
 
-/// A record/tuple label.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Lab {
-  /// A named label.
-  Name(Name),
-  /// A numeric label.
-  Num(usize),
-}
-
-impl fmt::Display for Lab {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::Name(name) => name.fmt(f),
-      Self::Num(n) => n.fmt(f),
-    }
-  }
-}
-
-impl Lab {
-  /// Return the numeric label for one greater than the number passed.
-  #[must_use]
-  pub fn tuple(idx: usize) -> Self {
-    Self::Num(idx + 1)
-  }
-}
-
-/// A special constructor, aka a literal.
+/// A special constructor, also called a "literal".
 #[derive(Debug, Clone)]
 pub enum SCon {
   /// An int literal.

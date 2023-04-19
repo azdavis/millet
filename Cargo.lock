@@ -879,7 +879,8 @@ name = "sml-dynamics"
 version = "0.9.2"
 dependencies = [
  "fast-hash",
- "sml-hir-shared",
+ "sml-lab",
+ "sml-scon",
  "str-util",
  "uniq",
 ]
@@ -912,17 +913,16 @@ name = "sml-hir"
 version = "0.9.2"
 dependencies = [
  "la-arena",
- "sml-hir-shared",
+ "sml-lab",
  "sml-path",
+ "sml-scon",
  "str-util",
 ]
 
 [[package]]
-name = "sml-hir-shared"
+name = "sml-lab"
 version = "0.9.2"
 dependencies = [
- "num-bigint",
- "num-traits",
  "str-util",
 ]
 
@@ -983,6 +983,15 @@ dependencies = [
 name = "sml-path"
 version = "0.9.2"
 dependencies = [
+ "str-util",
+]
+
+[[package]]
+name = "sml-scon"
+version = "0.9.2"
+dependencies = [
+ "num-bigint",
+ "num-traits",
  "str-util",
 ]
 

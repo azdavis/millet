@@ -10,7 +10,8 @@ test = false
 doctest = false
 
 [dependencies]
-sml-hir-shared = { path = "../sml-hir-shared" }
+sml-lab = { path = "../sml-lab" }
+sml-scon = { path = "../sml-scon" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }
