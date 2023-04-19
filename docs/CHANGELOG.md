@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.9.3
+
+- Actually exit the `millet-ls` process after the LSP client signals shutdown.
+
 ## v0.9.2
 
 - Avoid re-computing diagnostics every time a file changes when formatting is enabled.
