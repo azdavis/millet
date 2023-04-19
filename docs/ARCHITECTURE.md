@@ -70,6 +70,32 @@ Mid-level Intermediate Representation.
 
 Used for the dynamics.
 
+### `crates/sml-lab`
+
+`Lab`, a label for tuples/records.
+
+### `crates/sml-scon`
+
+`SCon`, a special value constructor (aka "literal") for primitive types (`int`, `string`, etc).
+
+### `crates/sml-path`
+
+A type representing a "path", aka a non-empty sequence of names.
+
+### `crates/sml-fixity`
+
+Types relating to SML infix operators.
+
+### `crates/sml-namespace`
+
+Types representing various SML namespaces.
+
+### `crates/sml-statics-types`
+
+Important types and operations on those types for static analysis.
+
+This used to be a part of statics itself, but the types involved for statics are complicated and plentiful enough that this was made its own crate.
+
 ## Passes crates
 
 These crates are the main "passes" on SML code. Together they form essentially a SML compiler frontend.
@@ -93,7 +119,7 @@ The latter is more common in "regular" compilers, but we're a language server. I
 ### `crates/input`
 
 ```rs
-&Path -> (Input, Vec<InputError>)
+&std::path::Path -> (Input, Vec<InputError>)
 ```
 
 Get input from a filesystem.
@@ -180,20 +206,6 @@ Runs a program, according to the dynamic semantics of SML from its Definition. T
 
 These crates do interesting things related to SML files, but aren't really full "passes".
 
-### `crates/sml-lab`
-
-`Lab`, a label for tuples/records.
-
-### `crates/sml-scon`
-
-`SCon`, a special value constructor (aka "literal") for primitive types (`int`, `string`, etc).
-
-### `crates/sml-statics-types`
-
-Important types and operations on those types for static analysis.
-
-This used to be a part of statics itself, but the types involved for statics are complicated and plentiful enough that this was made its own crate.
-
 ### `crates/sml-naive-fmt`
 
 Naively format SML files.
@@ -203,18 +215,6 @@ Doesn't handle comments or line length.
 ### `crates/sml-comment`
 
 Extract interesting comments from above SML syntax nodes, like doc comments.
-
-### `crates/sml-path`
-
-A type representing a "path", aka a non-empty sequence of names.
-
-### `crates/sml-fixity`
-
-Types relating to SML infix operators.
-
-### `crates/sml-namespace`
-
-Types representing various SML namespaces.
 
 ### `crates/lex-util`
 
