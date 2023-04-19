@@ -64,6 +64,12 @@ The "almost" is because: since we need to represent partial nodes (from a partia
 type ExpIdx = Option<Idx<Exp>>;
 ```
 
+### `crates/sml-mir`
+
+Mid-level Intermediate Representation.
+
+Used for the dynamics.
+
 ## Passes crates
 
 These crates are the main "passes" on SML code. Together they form essentially a SML compiler frontend.

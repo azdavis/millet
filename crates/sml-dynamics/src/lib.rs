@@ -7,76 +7,9 @@
 #![allow(dead_code)]
 
 use fast_hash::FxHashMap;
-use sml_lab::Lab;
-use sml_scon::SCon;
+use sml_mir::{Arm, Exp, Lab, Pat, SCon};
 use std::collections::BTreeMap;
 use uniq::Uniq;
-
-#[derive(Debug, Clone)]
-enum Exp {
-  SCon(SCon),
-  Var(Uniq),
-  Con(Uniq),
-  Record(Vec<(Lab, Exp)>),
-  Let(Vec<Dec>, Box<Exp>),
-  App(Box<Exp>, Box<Exp>),
-  Handle(Box<Exp>, Vec<Arm>),
-  Raise(Box<Exp>),
-  Fn(Vec<Arm>),
-}
-
-#[derive(Debug, Clone)]
-struct Arm {
-  pat: Pat,
-  exp: Exp,
-}
-
-#[derive(Debug, Clone)]
-enum Dec {
-  Val(Vec<ValBind>),
-  Datatype(Vec<DatBind>),
-  DatatypeCopy(Uniq, Uniq),
-  Exception(Vec<ExBind>),
-  Local(Vec<Dec>, Vec<Dec>),
-}
-
-#[derive(Debug, Clone)]
-struct ValBind {
-  rec: bool,
-  pat: Pat,
-  exp: Exp,
-}
-
-#[derive(Debug, Clone)]
-struct DatBind {
-  ty_vars: usize,
-  name: Uniq,
-  cons: Vec<ConBind>,
-}
-
-#[derive(Debug, Clone)]
-struct ConBind {
-  name: Uniq,
-  ty: bool,
-}
-
-#[derive(Debug, Clone)]
-enum ExBind {
-  /// The bool is whether this has an `of ty`.
-  New(Uniq, bool),
-  Copy(Uniq, Uniq),
-}
-
-#[derive(Debug, Clone)]
-enum Pat {
-  Wild,
-  Var(Uniq),
-  SCon(SCon),
-  Con(Uniq, Option<Box<Pat>>),
-  Record { rows: BTreeMap<Lab, Pat>, allows_other: bool },
-  As(Uniq, Box<Pat>),
-  Or(Box<Pat>, Vec<Pat>),
-}
 
 #[derive(Debug, Clone)]
 enum Val {

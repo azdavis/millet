@@ -1,5 +1,5 @@
 [package]
-name = "sml-dynamics"
+name = "sml-mir"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,6 +10,6 @@ test = false
 doctest = false
 
 [dependencies]
-sml-mir = { path = "../sml-mir" }
+sml-lab = { path = "../sml-lab" }
+sml-scon = { path = "../sml-scon" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
