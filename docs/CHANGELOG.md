@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Allow documentation on more declaration types.
+
 ## v0.9.3
 
 - Actually exit the `millet-ls` process after the LSP client signals shutdown.
