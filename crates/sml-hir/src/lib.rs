@@ -43,7 +43,7 @@ macro_rules! mk_idx {
   };
 }
 
-mk_idx![StrDec, StrExp, SigExp, Spec, Exp, Dec, Pat, Ty];
+mk_idx![StrDec, StrExp, SigExp, Spec, Dec, Exp, Pat, Ty];
 
 pub type OptIdx<T> = Option<la_arena::Idx<T>>;
 pub type Seq<T> = Vec<la_arena::Idx<T>>;
