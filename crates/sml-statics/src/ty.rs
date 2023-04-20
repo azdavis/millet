@@ -1,5 +1,6 @@
 //! Checking types.
 
+use crate::info::IdxEntry;
 use crate::{env::Cx, get_env::get_ty_info, info::TyEntry, st::St};
 use crate::{error::ErrorKind, util::record};
 use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarSrc};
@@ -97,6 +98,7 @@ pub(crate) fn get(
     }
   };
   let ty_entry = TyEntry::new(ret, ty_scheme);
-  st.info.insert(ty.into(), Some(ty_entry), def.into_iter().collect());
+  let entry = IdxEntry::new(Some(ty_entry), def.into_iter().collect());
+  st.info.entries.ty.insert(ty, entry);
   ret
 }

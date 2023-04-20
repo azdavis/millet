@@ -11,6 +11,7 @@ mod where_ty;
 use crate::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser};
 use crate::get_env::{get_env, get_ty_info};
+use crate::info::IdxEntry;
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{basis::Bs, config::Cfg, dec, st::St, ty};
 use fast_hash::FxHashSet;
@@ -217,7 +218,8 @@ fn get_str_exp(
       }
       match got_env.val {
         Ok(got_env) => {
-          st.info.insert(str_exp.into(), None, got_env.def.into_iter().collect());
+          let entry = IdxEntry::new(None, got_env.def.into_iter().collect());
+          st.info.entries.str_exp.insert(str_exp, entry);
           ac.append(&mut got_env.clone());
         }
         Err(e) => st.err(str_exp, e.into()),
@@ -304,7 +306,8 @@ fn get_str_exp(
         // TODO add to the set?
         val_info.defs = def.into_iter().collect();
       }
-      st.info.insert(idx, None, fun_sig.body_env.def.into_iter().collect());
+      let entry = IdxEntry::new(None, fun_sig.body_env.def.into_iter().collect());
+      st.info.entries.str_exp.insert(str_exp, entry);
       ac.append(&mut to_add);
     }
     // @def(55)
@@ -348,11 +351,11 @@ fn get_sig_exp(
         st.err(sig_exp, ErrorKind::Disallowed(Item::Sig, d.clone(), name.clone()));
       }
       let mut subst = realize::TyRealization::default();
-      let idx = sml_hir::Idx::from(sig_exp);
       gen_fresh_syms(st, &mut subst, &sig.ty_names);
       let mut sig_env = sig.env.clone();
       realize::get_env(&mut st.tys, &subst, &mut sig_env);
-      st.info.insert(idx, None, sig.env.def.into_iter().collect());
+      let entry = IdxEntry::new(None, sig.env.def.into_iter().collect());
+      st.info.entries.sig_exp.insert(sig_exp, entry);
       ac.append(&mut sig_env);
       match st.info.mode {
         Mode::BuiltinLib(_) => match name.as_str() {

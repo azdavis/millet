@@ -3,6 +3,7 @@
 use crate::env::{Cx, Env};
 use crate::error::ErrorKind;
 use crate::get_env::{get_env, get_env_raw, get_ty_info, get_val_info};
+use crate::info::IdxEntry;
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
@@ -201,7 +202,9 @@ fn get_one(
             match val_info.id_status {
               IdStatus::Exn(_) => {
                 match ins_no_dupe(&mut val_env, name.clone(), val_info.clone(), Item::Val) {
-                  None => st.info.insert(dec.into(), None, val_info.defs.clone()),
+                  None => {
+                    st.info.entries.dec.insert(dec, IdxEntry::new(None, val_info.defs.clone()));
+                  }
                   Some(e) => st.err(dec, e),
                 }
               }

@@ -3,8 +3,9 @@
 use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind};
 use crate::get_env::{get_env_raw, get_val_info};
+use crate::info::{IdxEntry, TyEntry};
 use crate::util::record;
-use crate::{config::Cfg, info::TyEntry, pat_match::Pat};
+use crate::{config::Cfg, pat_match::Pat};
 use crate::{dec, pat, st::St, ty, unify::unify};
 use fast_hash::FxHashSet;
 use sml_statics_types::sym::{Sym, SymsMarker};
@@ -147,7 +148,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     }
   };
   let ty_entry = TyEntry::new(ret, ty_scheme);
-  st.info.insert(exp.into(), Some(ty_entry), defs);
+  st.info.entries.exp.insert(exp, IdxEntry::new(Some(ty_entry), defs));
   ret
 }
 

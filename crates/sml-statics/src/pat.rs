@@ -1,10 +1,11 @@
 //! Checking patterns.
 
+use crate::info::{IdxEntry, TyEntry};
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::util::{ins_check_name, record};
 use crate::{
-  compatible::eq_ty_scheme, config, env::Cx, error::ErrorKind, get_env::get_val_info,
-  info::TyEntry, st::St, ty, unify::unify,
+  compatible::eq_ty_scheme, config, env::Cx, error::ErrorKind, get_env::get_val_info, st::St, ty,
+  unify::unify,
 };
 use fast_hash::FxHashSet;
 use sml_statics_types::info::{IdStatus, ValEnv, ValInfo};
@@ -42,7 +43,7 @@ pub(crate) fn get(
     },
   };
   let ty_entry = TyEntry::new(ret.ty, ret.ty_scheme);
-  st.info.insert(pat_.into(), Some(ty_entry), ret.defs);
+  st.info.entries.pat.insert(pat_, IdxEntry::new(Some(ty_entry), ret.defs));
   (ret.pm_pat, ret.ty)
 }
 
