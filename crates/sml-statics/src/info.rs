@@ -289,7 +289,7 @@ impl Info {
 #[derive(Debug, Clone)]
 pub(crate) struct TyEntry {
   ty: Ty,
-  /// invariant: if this is Some(_), the ty scheme has non-empty bound ty vars.
+  /// invariant: if this is `Some`, the ty scheme has non-empty bound ty vars.
   ty_scheme: Option<TyScheme>,
 }
 
