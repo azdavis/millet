@@ -9,45 +9,110 @@ use sml_statics_types::util::ty_syms;
 use sml_statics_types::{def, display::MetaVarNames, mode::Mode, sym::Syms};
 use std::fmt;
 
-pub(crate) type EntryMap<T> = la_arena::ArenaMap<la_arena::Idx<T>, IdxEntry>;
+pub(crate) type IdxMap<K, V> = la_arena::ArenaMap<la_arena::Idx<K>, V>;
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct Entries {
-  pub(crate) str_dec: EntryMap<sml_hir::StrDec>,
-  pub(crate) str_exp: EntryMap<sml_hir::StrExp>,
-  pub(crate) sig_exp: EntryMap<sml_hir::SigExp>,
-  pub(crate) spec: EntryMap<sml_hir::Spec>,
-  pub(crate) exp: EntryMap<sml_hir::Exp>,
-  pub(crate) dec: EntryMap<sml_hir::Dec>,
-  pub(crate) pat: EntryMap<sml_hir::Pat>,
-  pub(crate) ty: EntryMap<sml_hir::Ty>,
+pub(crate) struct Defs {
+  pub(crate) str_dec: IdxMap<sml_hir::StrDec, def::Def>,
+  pub(crate) str_exp: IdxMap<sml_hir::StrExp, def::Def>,
+  pub(crate) sig_exp: IdxMap<sml_hir::SigExp, def::Def>,
+  pub(crate) spec: IdxMap<sml_hir::Spec, def::Def>,
+  pub(crate) dec: IdxMap<sml_hir::Dec, def::Def>,
+  pub(crate) exp: IdxMap<sml_hir::Exp, FxHashSet<def::Def>>,
+  pub(crate) pat: IdxMap<sml_hir::Pat, FxHashSet<def::Def>>,
+  pub(crate) ty: IdxMap<sml_hir::Ty, def::Def>,
 }
 
-impl Entries {
-  fn get(&self, idx: sml_hir::Idx) -> Option<&IdxEntry> {
+impl Defs {
+  fn get(&self, idx: sml_hir::Idx) -> FxHashSet<def::Def> {
     match idx {
-      sml_hir::Idx::StrDec(x) => self.str_dec.get(x),
-      sml_hir::Idx::StrExp(x) => self.str_exp.get(x),
-      sml_hir::Idx::SigExp(x) => self.sig_exp.get(x),
-      sml_hir::Idx::Spec(x) => self.spec.get(x),
-      sml_hir::Idx::Exp(x) => self.exp.get(x),
-      sml_hir::Idx::Dec(x) => self.dec.get(x),
-      sml_hir::Idx::Pat(x) => self.pat.get(x),
-      sml_hir::Idx::Ty(x) => self.ty.get(x),
+      sml_hir::Idx::StrDec(idx) => self.str_dec.get(idx).into_iter().copied().collect(),
+      sml_hir::Idx::StrExp(idx) => self.str_exp.get(idx).into_iter().copied().collect(),
+      sml_hir::Idx::SigExp(idx) => self.sig_exp.get(idx).into_iter().copied().collect(),
+      sml_hir::Idx::Spec(idx) => self.spec.get(idx).into_iter().copied().collect(),
+      sml_hir::Idx::Dec(idx) => self.dec.get(idx).into_iter().copied().collect(),
+      sml_hir::Idx::Exp(idx) => self.exp.get(idx).into_iter().flatten().copied().collect(),
+      sml_hir::Idx::Pat(idx) => self.pat.get(idx).into_iter().flatten().copied().collect(),
+      sml_hir::Idx::Ty(idx) => self.ty.get(idx).into_iter().copied().collect(),
     }
   }
 
-  fn iter(&self) -> impl Iterator<Item = (sml_hir::Idx, &IdxEntry)> + '_ {
-    std::iter::empty()
-      .chain(self.str_dec.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
-      .chain(self.str_exp.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
-      .chain(self.sig_exp.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
-      .chain(self.spec.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
-      .chain(self.exp.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
-      .chain(self.dec.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
-      .chain(self.pat.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
-      .chain(self.ty.iter().map(|(k, v)| (sml_hir::Idx::from(k), v)))
+  fn with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
+    std::iter::empty::<(sml_hir::Idx, def::Def)>()
+      .chain(self.str_dec.iter().map(|(idx, &d)| (idx.into(), d)))
+      .chain(self.str_exp.iter().map(|(idx, &d)| (idx.into(), d)))
+      .chain(self.sig_exp.iter().map(|(idx, &d)| (idx.into(), d)))
+      .chain(self.spec.iter().map(|(idx, &d)| (idx.into(), d)))
+      .chain(self.dec.iter().map(|(idx, &d)| (idx.into(), d)))
+      .chain(self.ty.iter().map(|(idx, &d)| (idx.into(), d)))
+      .chain(self.exp.iter().flat_map(|(idx, ds)| ds.iter().map(move |&d| (idx.into(), d))))
+      .chain(self.pat.iter().flat_map(|(idx, ds)| ds.iter().map(move |&d| (idx.into(), d))))
+      .filter_map(move |(idx, d)| (d == def).then_some(idx))
   }
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct Docs {
+  pub(crate) str_dec: IdxMap<sml_hir::StrDec, String>,
+  pub(crate) spec: IdxMap<sml_hir::Spec, String>,
+  pub(crate) dec: IdxMap<sml_hir::Dec, String>,
+  pub(crate) pat: IdxMap<sml_hir::Pat, String>,
+}
+
+impl Docs {
+  fn get(&self, idx: sml_hir::Idx) -> Option<&str> {
+    let ret = match idx {
+      sml_hir::Idx::StrDec(idx) => self.str_dec.get(idx)?,
+      sml_hir::Idx::Spec(idx) => self.spec.get(idx)?,
+      sml_hir::Idx::Dec(idx) => self.dec.get(idx)?,
+      sml_hir::Idx::Pat(idx) => self.pat.get(idx)?,
+      _ => return None,
+    };
+    Some(ret.as_str())
+  }
+
+  fn try_insert(&mut self, idx: sml_hir::Idx, doc: String) {
+    match idx {
+      sml_hir::Idx::StrDec(idx) => {
+        self.str_dec.insert(idx, doc);
+      }
+      sml_hir::Idx::Spec(idx) => {
+        self.spec.insert(idx, doc);
+      }
+      sml_hir::Idx::Dec(idx) => {
+        self.dec.insert(idx, doc);
+      }
+      sml_hir::Idx::Pat(idx) => {
+        self.pat.insert(idx, doc);
+      }
+      _ => {}
+    }
+  }
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct TyEntries {
+  pub(crate) exp: IdxMap<sml_hir::Exp, TyEntry>,
+  pub(crate) pat: IdxMap<sml_hir::Pat, TyEntry>,
+  pub(crate) ty: IdxMap<sml_hir::Ty, TyEntry>,
+}
+
+impl TyEntries {
+  fn get(&self, idx: sml_hir::Idx) -> Option<&TyEntry> {
+    match idx {
+      sml_hir::Idx::Exp(idx) => self.exp.get(idx),
+      sml_hir::Idx::Pat(idx) => self.pat.get(idx),
+      sml_hir::Idx::Ty(idx) => self.ty.get(idx),
+      _ => None,
+    }
+  }
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct Entries {
+  pub(crate) defs: Defs,
+  pub(crate) docs: Docs,
+  pub(crate) tys: TyEntries,
 }
 
 /// Information about HIR indices.
@@ -63,25 +128,15 @@ impl Info {
     Self { mode, entries: Entries::default(), bs: Bs::default() }
   }
 
-  /// Add documentation to an index.
+  /// Adds documentation for the index.
   pub fn add_doc(&mut self, idx: sml_hir::Idx, doc: String) {
-    let entry = match idx {
-      sml_hir::Idx::StrDec(x) => self.entries.str_dec.entry(x).or_default(),
-      sml_hir::Idx::StrExp(x) => self.entries.str_exp.entry(x).or_default(),
-      sml_hir::Idx::SigExp(x) => self.entries.sig_exp.entry(x).or_default(),
-      sml_hir::Idx::Spec(x) => self.entries.spec.entry(x).or_default(),
-      sml_hir::Idx::Exp(x) => self.entries.exp.entry(x).or_default(),
-      sml_hir::Idx::Dec(x) => self.entries.dec.entry(x).or_default(),
-      sml_hir::Idx::Pat(x) => self.entries.pat.entry(x).or_default(),
-      sml_hir::Idx::Ty(x) => self.entries.ty.entry(x).or_default(),
-    };
-    entry.doc.replace(doc);
+    self.entries.docs.try_insert(idx, doc);
   }
 
   /// Returns a Markdown string with type information associated with this index.
   #[must_use]
   pub fn get_ty_md(&self, syms: &Syms, tys: &Tys, idx: sml_hir::Idx) -> Option<String> {
-    let ty_entry = self.entries.get(idx)?.ty_entry.as_ref()?;
+    let ty_entry = self.entries.tys.get(idx)?;
     let ty_entry = TyEntryDisplay { ty_entry, syms, tys };
     Some(ty_entry.to_string())
   }
@@ -89,18 +144,19 @@ impl Info {
   /// Returns documentation for this index.
   #[must_use]
   pub fn get_doc(&self, idx: sml_hir::Idx) -> Option<&str> {
-    self.entries.get(idx)?.doc.as_deref()
+    self.entries.docs.get(idx)
   }
 
   /// Returns the definition sites of the idx.
-  pub fn get_defs(&self, idx: sml_hir::Idx) -> impl Iterator<Item = def::Def> + '_ {
-    self.entries.get(idx).into_iter().flat_map(|x| &x.defs).copied()
+  #[must_use]
+  pub fn get_defs(&self, idx: sml_hir::Idx) -> FxHashSet<def::Def> {
+    self.entries.defs.get(idx)
   }
 
   /// Returns the definition site of the type for the idx.
   #[must_use]
   pub fn get_ty_defs(&self, syms: &Syms, tys: &Tys, idx: sml_hir::Idx) -> Option<Vec<def::Def>> {
-    let ty_entry = self.entries.get(idx)?.ty_entry.as_ref()?;
+    let ty_entry = self.entries.tys.get(idx)?;
     let mut ret = Vec::<def::Def>::new();
     ty_syms(tys, ty_entry.ty, &mut |sym| match syms.get(sym) {
       None => {}
@@ -120,7 +176,7 @@ impl Info {
     tys: &Tys,
     idx: sml_hir::Idx,
   ) -> Option<Vec<(str_util::Name, bool)>> {
-    let ty_entry = self.entries.get(idx)?.ty_entry.as_ref()?;
+    let ty_entry = self.entries.tys.get(idx)?;
     let sym = match tys.data(ty_entry.ty) {
       TyData::Con(data) => data.sym,
       _ => return None,
@@ -183,7 +239,7 @@ impl Info {
 
   /// Returns indices that have the given definition.
   pub fn get_with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
-    self.entries.iter().filter_map(move |(idx, entry)| entry.defs.contains(&def).then_some(idx))
+    self.entries.defs.with_def(def)
   }
 
   /// Returns the completions for this file.
@@ -211,8 +267,8 @@ impl Info {
     syms: &'a Syms,
     tys: &'a Tys,
   ) -> impl Iterator<Item = (sml_hir::la_arena::Idx<sml_hir::Pat>, String)> + 'a {
-    self.entries.pat.iter().filter_map(|(pat, entry)| {
-      let self_def = entry.defs.iter().any(|&d| match d {
+    self.entries.tys.pat.iter().filter_map(|(pat, ty_entry)| {
+      let self_def = self.entries.defs.pat.get(pat)?.iter().any(|&d| match d {
         def::Def::Path(_, ref_idx) => match ref_idx {
           sml_hir::Idx::Pat(ref_pat) => pat == ref_pat,
           _ => false,
@@ -223,24 +279,10 @@ impl Info {
         return None;
       }
       let mut mvs = MetaVarNames::new(tys);
-      let ty_entry = entry.ty_entry.as_ref()?;
       mvs.extend_for(ty_entry.ty);
       let ty = ty_entry.ty.display(&mvs, syms);
       Some((pat, format!(" : {ty})")))
     })
-  }
-}
-
-#[derive(Debug, Default, Clone)]
-pub(crate) struct IdxEntry {
-  ty_entry: Option<TyEntry>,
-  defs: FxHashSet<def::Def>,
-  doc: Option<String>,
-}
-
-impl IdxEntry {
-  pub(crate) fn new(ty_entry: Option<TyEntry>, defs: FxHashSet<def::Def>) -> Self {
-    Self { ty_entry, defs, doc: None }
   }
 }
 

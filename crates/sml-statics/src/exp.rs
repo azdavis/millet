@@ -3,7 +3,7 @@
 use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind};
 use crate::get_env::{get_env_raw, get_val_info};
-use crate::info::{IdxEntry, TyEntry};
+use crate::info::TyEntry;
 use crate::util::record;
 use crate::{config::Cfg, pat_match::Pat};
 use crate::{dec, pat, st::St, ty, unify::unify};
@@ -147,8 +147,10 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       want
     }
   };
-  let ty_entry = TyEntry::new(ret, ty_scheme);
-  st.info.entries.exp.insert(exp, IdxEntry::new(Some(ty_entry), defs));
+  st.info.entries.tys.exp.insert(exp, TyEntry::new(ret, ty_scheme));
+  if !defs.is_empty() {
+    st.info.entries.defs.exp.insert(exp, defs);
+  }
   ret
 }
 

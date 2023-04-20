@@ -150,7 +150,7 @@ impl Analysis {
       Some((ptr, idx)) => {
         ty_md = ft.file.info.get_ty_md(&self.syms, &self.tys, idx);
         parts.extend(ty_md.as_deref());
-        parts.extend(ft.file.info.get_defs(idx).filter_map(|def| match def {
+        parts.extend(ft.file.info.get_defs(idx).into_iter().filter_map(|def| match def {
           def::Def::Path(path, idx) => {
             let info = match path {
               def::Path::Regular(path) => &self.source_files.get(&path)?.info,
@@ -183,6 +183,7 @@ impl Analysis {
       .file
       .info
       .get_defs(idx)
+      .into_iter()
       .filter_map(|def| source_files::path_and_range(&self.source_files, def.to_regular_idx()?))
       .collect();
     Some(ret)

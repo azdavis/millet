@@ -1,6 +1,6 @@
 //! Checking patterns.
 
-use crate::info::{IdxEntry, TyEntry};
+use crate::info::TyEntry;
 use crate::pat_match::{Con, Pat, VariantName};
 use crate::util::{ins_check_name, record};
 use crate::{
@@ -42,8 +42,10 @@ pub(crate) fn get(
       defs: FxHashSet::default(),
     },
   };
-  let ty_entry = TyEntry::new(ret.ty, ret.ty_scheme);
-  st.info.entries.pat.insert(pat_, IdxEntry::new(Some(ty_entry), ret.defs));
+  st.info.entries.tys.pat.insert(pat_, TyEntry::new(ret.ty, ret.ty_scheme));
+  if !ret.defs.is_empty() {
+    st.info.entries.defs.pat.insert(pat_, ret.defs);
+  }
   (ret.pm_pat, ret.ty)
 }
 
