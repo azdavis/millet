@@ -10,6 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
-sml-mir = { path = "../sml-mir" }
-uniq = { git = "https://github.com/azdavis/language-util.git" }
+sml-hir = { path = "../sml-hir" }
+sml-statics-types = { path = "../sml-statics-types" }
+str-util = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }

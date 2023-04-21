@@ -880,8 +880,9 @@ name = "sml-dynamics"
 version = "0.9.4"
 dependencies = [
  "fast-hash",
- "sml-mir",
- "uniq",
+ "sml-hir",
+ "sml-statics-types",
+ "str-util",
 ]
 
 [[package]]
@@ -952,24 +953,6 @@ dependencies = [
 name = "sml-libs"
 version = "0.1.0"
 source = "git+https://github.com/azdavis/sml-libs.git#7ae671a607a143fd8529e34019f96f6fb275df45"
-
-[[package]]
-name = "sml-mir"
-version = "0.9.4"
-dependencies = [
- "sml-lab",
- "sml-scon",
- "uniq",
-]
-
-[[package]]
-name = "sml-mir-lower"
-version = "0.9.4"
-dependencies = [
- "sml-hir",
- "sml-mir",
- "uniq",
-]
 
 [[package]]
 name = "sml-naive-fmt"

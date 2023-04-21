@@ -64,12 +64,6 @@ The "almost" is because: since we need to represent partial nodes (from a partia
 type ExpIdx = Option<Idx<Exp>>;
 ```
 
-### `crates/sml-mir`
-
-Mid-level Intermediate Representation.
-
-Used for the dynamics.
-
 ### `crates/sml-lab`
 
 `Lab`, a label for tuples/records.
@@ -197,10 +191,6 @@ This crate contains the implementation of most of the rules of the static semant
 Statics errors use an abstract `Idx`, and this index gets turned into an actual text range with the `TwoWayPointers` from lower.
 
 In the future we could add more to this `Idx`, like "the name of the third con bind in the second dat bind of this datatype dec".
-
-### `crates/sml-mir-lower`
-
-Lowers HIR to MIR, for the dynamics.
 
 ### `crates/sml-dynamics`
 
