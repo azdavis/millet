@@ -8,7 +8,8 @@
 
 use fast_hash::FxHashMap;
 use sml_hir::{la_arena, Lab, SCon};
-use sml_statics_types::{info::IdStatus, sym::Exn};
+use sml_statics_types::info::{IdStatus, IdStatusMap};
+use sml_statics_types::sym::Exn;
 use std::collections::BTreeMap;
 use str_util::Name;
 
@@ -97,8 +98,8 @@ enum FrameKind {
 #[derive(Debug, Clone, Copy)]
 struct Cx<'a> {
   ars: &'a sml_hir::Arenas,
-  exp: &'a la_arena::ArenaMap<la_arena::Idx<sml_hir::Exp>, IdStatus>,
-  pat: &'a la_arena::ArenaMap<la_arena::Idx<sml_hir::Pat>, IdStatus>,
+  exp: &'a IdStatusMap<sml_hir::Exp>,
+  pat: &'a IdStatusMap<sml_hir::Pat>,
 }
 
 fn eval(cx: Cx<'_>, exp: sml_hir::ExpIdx) -> Result<Val, Val> {

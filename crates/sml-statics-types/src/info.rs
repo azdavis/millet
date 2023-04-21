@@ -42,6 +42,8 @@ pub struct ValInfo {
   pub disallow: Option<Disallow>,
 }
 
+/// An identifier status, denoting what kind of value this is.
+///
 /// Definition: `IdStatus`
 #[derive(Debug, Clone, Copy)]
 pub enum IdStatus {
@@ -63,3 +65,6 @@ impl IdStatus {
     )
   }
 }
+
+/// A map from an arena index to id status.
+pub type IdStatusMap<T> = sml_hir::la_arena::ArenaMap<sml_hir::la_arena::Idx<T>, IdStatus>;
