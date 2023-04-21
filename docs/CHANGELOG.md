@@ -15,7 +15,10 @@ The versioning system is basically the following:
 
 ## main
 
-- Allow documentation on more declaration types.
+- Allow doc comments on more declaration types.
+- Improve docs for some SML of NJ items.
+- Fix `GraphSCCFn` signature from SML of NJ.
+- Fix `MLTON_RLIMIT` signature.
 
 ## v0.9.3
 
