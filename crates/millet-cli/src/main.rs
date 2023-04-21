@@ -49,7 +49,7 @@ fn run() -> usize {
   let root = match fs.canonicalize(root.as_path()) {
     Ok(x) => x,
     Err(e) => {
-      handle_input_error(root.as_path(), &input::Error::from_io(root.clone(), e));
+      show_input_error(root.as_path(), &input::Error::from_io(root.clone(), e));
       return 1;
     }
   };
@@ -63,25 +63,32 @@ fn run() -> usize {
   );
   let got = an.get_many(&inp);
   for err in &inp.errors {
-    handle_input_error(root.as_path(), err);
+    show_input_error(root.as_path(), err);
   }
-  for (path, errors) in &got {
-    for err in errors {
-      let path = store.get_path(*path);
-      let path = path.as_path().strip_prefix(root.as_path()).unwrap_or(path.as_path());
-      println!("{}:{}: error[{}]: {}", path.display(), err.range, err.code, err.message);
+  for (&path, ds) in &got {
+    let path = store.get_path(path);
+    for d in ds {
+      show_diagnostic(root.as_path(), path.as_path(), d);
     }
   }
   inp.errors.len() + got.values().map(Vec::len).sum::<usize>()
 }
 
-fn handle_input_error(root: &std::path::Path, e: &input::Error) {
+fn show_input_error(root: &std::path::Path, e: &input::Error) {
   print!("{}", e.maybe_rel_path(root).display());
   if let Some(r) = e.range() {
     print!(":{}", r.start);
   }
   let code = e.code();
   println!(": error[{code}]: {}", e.display(root));
+}
+
+fn show_diagnostic<R>(root: &std::path::Path, path: &std::path::Path, d: &analysis::Diagnostic<R>)
+where
+  R: std::fmt::Display,
+{
+  let path = path.strip_prefix(root).unwrap_or(path);
+  println!("{}:{}: {}[{}]: {}", path.display(), d.range, d.severity, d.code, d.message);
 }
 
 fn main() {
