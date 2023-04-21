@@ -309,7 +309,11 @@ fn tag(tag_arg: &str) -> Result<()> {
   })?;
   // to update Cargo.lock
   run(Command::new("cargo").arg("build"))?;
-  run(Command::new("git").arg("add").args(paths).args(["Cargo.toml", "Cargo.lock"]))?;
+  run(Command::new("git").arg("add").args(paths).args([
+    "Cargo.toml",
+    "Cargo.lock",
+    "docs/CHANGELOG.md",
+  ]))?;
   let msg = format!("Release {tag_arg}");
   run(Command::new("git").args(["commit", "-m", msg.as_str(), "--no-verify"]))?;
   run(Command::new("git").arg("tag").arg(tag_arg))?;
