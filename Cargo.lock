@@ -951,7 +951,7 @@ dependencies = [
 [[package]]
 name = "sml-libs"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/sml-libs.git#360d865bfe1e8afc4f8e483e0ac8f53da0593041"
+source = "git+https://github.com/azdavis/sml-libs.git#7ae671a607a143fd8529e34019f96f6fb275df45"
 
 [[package]]
 name = "sml-mir"
