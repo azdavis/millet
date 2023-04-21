@@ -15,6 +15,8 @@ fn usage() {
 options:
   -h, --help
     show this help
+  --format
+    format all of the SML files
 
 arguments:
   <path>
@@ -38,6 +40,7 @@ fn run() -> usize {
     usage();
     return 0;
   }
+  let format = args.contains("--format");
   let root: std::path::PathBuf = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
@@ -59,7 +62,7 @@ fn run() -> usize {
     analysis::StdBasis::full(),
     config::ErrorLines::One,
     Some(config::init::DiagnosticsIgnore::AfterSyntax),
-    None,
+    format.then_some(config::init::FormatEngine::Naive),
   );
   let got = an.get_many(&inp);
   for err in &inp.errors {
@@ -71,7 +74,44 @@ fn run() -> usize {
       show_diagnostic(root.as_path(), path.as_path(), d);
     }
   }
-  inp.errors.len() + got.values().map(Vec::len).sum::<usize>()
+  let mut format_errors = 0usize;
+  if format {
+    for &id in inp.sources.keys() {
+      let path = store.get_path(id);
+      match an.format(id, 2) {
+        Ok((contents, _)) => match std::fs::write(path.as_path(), contents.as_str()) {
+          Ok(()) => {}
+          Err(e) => {
+            let e = input::Error::from_io(path.as_path().to_owned(), e);
+            show_input_error(path.as_path(), &e);
+            format_errors += 1;
+          }
+        },
+        Err(e) => match e {
+          analysis::FormatError::NaiveFmt(e) => match e {
+            // should have already reported an error
+            sml_naive_fmt::Error::Syntax => {}
+            sml_naive_fmt::Error::Comments(ranges) => {
+              for range in ranges {
+                let range = an.source_range_utf16(id, range).expect("no range");
+                let d = analysis::Diagnostic::naive_fmt_comment(range);
+                show_diagnostic(root.as_path(), path.as_path(), &d);
+                format_errors += 1;
+              }
+            }
+          },
+          analysis::FormatError::Disabled => {
+            unreachable!("we enabled formatting if `format` is true")
+          }
+          analysis::FormatError::NoFile => {
+            unreachable!("formatting a file from `inp` should exist")
+          }
+          analysis::FormatError::Smlfmt(_) => unreachable!("we're not using `smlfmt`"),
+        },
+      }
+    }
+  }
+  format_errors + inp.errors.len() + got.values().map(Vec::len).sum::<usize>()
 }
 
 fn show_input_error(root: &std::path::Path, e: &input::Error) {

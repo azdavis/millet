@@ -543,6 +543,7 @@ dependencies = [
  "panic-hook",
  "paths",
  "pico-args",
+ "sml-naive-fmt",
 ]
 
 [[package]]

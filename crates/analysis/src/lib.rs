@@ -268,6 +268,12 @@ impl Analysis {
     Ok((buf, file.syntax.pos_db.end_position_utf16()))
   }
 
+  /// Returns the `RangeUtf16` for the `TextRange` in this `path`.
+  #[must_use]
+  pub fn source_range_utf16(&self, path: PathId, range: TextRange) -> Option<RangeUtf16> {
+    self.source_files.get(&path)?.syntax.pos_db.range_utf16(range)
+  }
+
   /// Returns the symbols for the file.
   #[must_use]
   pub fn document_symbols(&self, path: PathId) -> Option<Vec<DocumentSymbol>> {

@@ -11,6 +11,7 @@ test = false
 
 [dependencies]
 analysis = { path = "../analysis" }
+sml-naive-fmt = { path = "../sml-naive-fmt" }
 config = { path = "../config" }
 diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 env_logger = "0.10"
