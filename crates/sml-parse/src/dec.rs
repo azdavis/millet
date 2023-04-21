@@ -87,7 +87,7 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
             // no body
           }
         }
-        let _ = ty_annotation(p);
+        _ = ty_annotation(p);
         eq_exp(p, fe);
         true
       })
@@ -435,7 +435,7 @@ fn dat_binds(p: &mut Parser<'_>, allow_op: bool) {
         if !got {
           return false;
         }
-        let _ = of_ty(p);
+        _ = of_ty(p);
         true
       });
       p.exit(en, SK::EqConBinds);

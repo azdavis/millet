@@ -10,7 +10,7 @@ pub(crate) fn get<'a, I>(iter: I) -> (input::Input, paths::Store)
 where
   I: IntoIterator<Item = (&'a str, &'a str)>,
 {
-  let _ = env_logger::builder().is_test(true).try_init();
+  _ = env_logger::builder().is_test(true).try_init();
   let mut map = FxHashMap::<PathBuf, String>::default();
   for (name, contents) in iter {
     let mut buf = ROOT.as_path().to_owned();

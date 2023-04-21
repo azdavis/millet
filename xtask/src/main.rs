@@ -204,7 +204,7 @@ fn dist(args: &DistArgs) -> Result<()> {
   path = ["editors", "vscode", "out"].iter().collect();
   // ignore errors if it exists already. if we have permission errors we're about to report them
   // with the create_dir_all anyway
-  let _ = fs::remove_dir_all(&path);
+  _ = fs::remove_dir_all(&path);
   fs::create_dir_all(&path).with_context(|| format!("create dir {}", path.display()))?;
   path.push(lang_srv_exe.as_str());
   fs::copy(&lang_srv_out, &path)

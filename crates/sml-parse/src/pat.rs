@@ -189,8 +189,8 @@ pub(crate) fn at_pat(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) 
         p.exit(en, SK::LabAndPatPatRow);
       } else {
         eat_name_star(p);
-        let _ = ty_annotation(p);
-        let _ = as_pat_tl(p, fe, infix);
+        _ = ty_annotation(p);
+        _ = as_pat_tl(p, fe, infix);
         p.exit(en, SK::LabPatRow);
       }
     });

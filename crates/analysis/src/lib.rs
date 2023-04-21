@@ -92,7 +92,7 @@ impl Analysis {
     let mut basis = self.std_basis.basis().clone();
     for path in &input.lang.val {
       // TODO do not ignore failed disallow
-      let _ = basis.disallow_val(path);
+      _ = basis.disallow_val(path);
     }
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
