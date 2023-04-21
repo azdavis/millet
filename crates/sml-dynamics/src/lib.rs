@@ -64,6 +64,7 @@ impl Env {
 type StrEnv = FxHashMap<Name, Env>;
 type ValEnv = FxHashMap<Name, Val>;
 
+#[derive(Debug)]
 enum Step {
   Exp(la_arena::Idx<sml_hir::Exp>),
   Val(Val),
@@ -76,6 +77,7 @@ impl Step {
   }
 }
 
+#[derive(Debug)]
 struct Frame {
   env: Env,
   kind: FrameKind,
@@ -87,6 +89,7 @@ impl Frame {
   }
 }
 
+#[derive(Debug)]
 enum FrameKind {
   Record(std::vec::IntoIter<(Lab, sml_hir::ExpIdx)>, Lab, BTreeMap<Lab, Val>),
   AppFunc(sml_hir::ExpIdx),
@@ -103,12 +106,11 @@ struct Cx<'a> {
 }
 
 fn eval(cx: Cx<'_>, exp: sml_hir::ExpIdx) -> Result<Val, Val> {
-  let mut env = Env::default();
-  let mut frames = Vec::<Frame>::new();
+  let mut st = St::default();
   let mut s = Step::exp(exp);
   loop {
-    s = step(&mut env, &mut frames, cx, s);
-    if frames.is_empty() {
+    s = step(&mut st, cx, s);
+    if st.frames.is_empty() {
       break;
     }
   }
@@ -119,9 +121,22 @@ fn eval(cx: Cx<'_>, exp: sml_hir::ExpIdx) -> Result<Val, Val> {
   }
 }
 
+#[derive(Debug, Default)]
+struct St {
+  env: Env,
+  frames: Vec<Frame>,
+}
+
+impl St {
+  fn push_with_cur_env(&mut self, kind: FrameKind) {
+    let env = self.env.clone();
+    self.frames.push(Frame::new(env, kind));
+  }
+}
+
 /// i think this is called a "stack machine". it is NOT recursive.
 #[allow(clippy::too_many_lines)]
-fn step(env: &mut Env, frames: &mut Vec<Frame>, cx: Cx<'_>, s: Step) -> Step {
+fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
   match s {
     Step::Exp(exp) => match &cx.ars.exp[exp] {
       sml_hir::Exp::Hole => unreachable!("exp hole"),
@@ -132,7 +147,7 @@ fn step(env: &mut Env, frames: &mut Vec<Frame>, cx: Cx<'_>, s: Step) -> Step {
           Step::Val(Val::Con(Con::empty(ConKind::Exn(path.last().clone(), except))))
         }
         IdStatus::Val => {
-          let env = env.get(path.prefix().iter()).expect("no prefix");
+          let env = st.env.get(path.prefix().iter()).expect("no prefix");
           Step::Val(env.val[path.last()].clone())
         }
       },
@@ -141,29 +156,29 @@ fn step(env: &mut Env, frames: &mut Vec<Frame>, cx: Cx<'_>, s: Step) -> Step {
         match exp_rows.next() {
           None => Step::Val(Val::Record(BTreeMap::new())),
           Some((lab, exp)) => {
-            frames.push(Frame::new(env.clone(), FrameKind::Record(exp_rows, lab, BTreeMap::new())));
+            st.push_with_cur_env(FrameKind::Record(exp_rows, lab, BTreeMap::new()));
             Step::exp(exp)
           }
         }
       }
       sml_hir::Exp::Let(_, _) => todo!(),
       sml_hir::Exp::App(func, arg) => {
-        frames.push(Frame::new(env.clone(), FrameKind::AppFunc(*arg)));
+        st.push_with_cur_env(FrameKind::AppFunc(*arg));
         Step::exp(*func)
       }
       sml_hir::Exp::Handle(exp, matcher) => {
-        frames.push(Frame::new(env.clone(), FrameKind::Handle(matcher.clone())));
+        st.push_with_cur_env(FrameKind::Handle(matcher.clone()));
         Step::exp(*exp)
       }
       sml_hir::Exp::Raise(exp) => {
         // maybe don't care about the env for raise?
-        frames.push(Frame::new(Env::default(), FrameKind::Raise));
+        st.frames.push(Frame::new(Env::default(), FrameKind::Raise));
         Step::exp(*exp)
       }
-      sml_hir::Exp::Fn(matcher, _) => Step::Val(Val::Closure(env.clone(), matcher.clone())),
+      sml_hir::Exp::Fn(matcher, _) => Step::Val(Val::Closure(st.env.clone(), matcher.clone())),
       sml_hir::Exp::Typed(exp, _) => Step::exp(*exp),
     },
-    Step::Val(val) => match frames.pop() {
+    Step::Val(val) => match st.frames.pop() {
       // done evaluating
       None => Step::Val(val),
       Some(frame) => match frame.kind {
@@ -172,16 +187,16 @@ fn step(env: &mut Env, frames: &mut Vec<Frame>, cx: Cx<'_>, s: Step) -> Step {
           match exp_rows.next() {
             None => Step::Val(Val::Record(val_rows)),
             Some((lab, exp)) => {
-              *env = frame.env.clone();
-              frames.push(Frame::new(frame.env, FrameKind::Record(exp_rows, lab, val_rows)));
+              st.env = frame.env;
+              st.push_with_cur_env(FrameKind::Record(exp_rows, lab, val_rows));
               Step::exp(exp)
             }
           }
         }
         FrameKind::AppFunc(arg) => match val {
           Val::Closure(clos_env, matcher) => {
-            *env = frame.env;
-            frames.push(Frame::new(clos_env, FrameKind::AppArg(matcher)));
+            st.env = frame.env;
+            st.frames.push(Frame::new(clos_env, FrameKind::AppArg(matcher)));
             Step::exp(arg)
           }
           _ => unreachable!("fun val not closure"),
@@ -190,8 +205,8 @@ fn step(env: &mut Env, frames: &mut Vec<Frame>, cx: Cx<'_>, s: Step) -> Step {
           let mut ac = ValEnv::default();
           for arm in matcher {
             if pat_match(&mut ac, cx, arm.pat, &val) {
-              *env = frame.env;
-              env.val.extend(ac);
+              st.env = frame.env;
+              st.env.val.extend(ac);
               return Step::exp(arm.exp);
             }
           }
@@ -202,7 +217,7 @@ fn step(env: &mut Env, frames: &mut Vec<Frame>, cx: Cx<'_>, s: Step) -> Step {
         FrameKind::Handle(_) => Step::Val(val),
       },
     },
-    Step::Raise(val) => match frames.pop() {
+    Step::Raise(val) => match st.frames.pop() {
       // unhandled exception
       None => Step::Raise(val),
       Some(frame) => match frame.kind {
@@ -210,8 +225,8 @@ fn step(env: &mut Env, frames: &mut Vec<Frame>, cx: Cx<'_>, s: Step) -> Step {
           let mut ac = ValEnv::default();
           for arm in matcher {
             if pat_match(&mut ac, cx, arm.pat, &val) {
-              *env = frame.env;
-              env.val.extend(ac);
+              st.env = frame.env;
+              st.env.val.extend(ac);
               return Step::exp(arm.exp);
             }
           }
