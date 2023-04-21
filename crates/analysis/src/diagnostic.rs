@@ -17,6 +17,19 @@ pub struct Diagnostic<R> {
   pub severity: diagnostic::Severity,
 }
 
+impl<R> Diagnostic<R> {
+  /// Returns a diagnostic for the naive formatter being unable to format due to a comment at the
+  /// given range.
+  pub fn naive_fmt_comment(range: R) -> Diagnostic<R> {
+    Diagnostic {
+      range,
+      message: "comment prevents formatting".to_owned(),
+      code: diagnostic::Code::n(6001),
+      severity: diagnostic::Severity::Warning,
+    }
+  }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {
   pub(crate) lines: config::ErrorLines,
@@ -79,13 +92,7 @@ where
       {
         ret.extend(ranges.into_iter().filter_map(|range| {
           let range = f(&file.syntax.pos_db, range)?;
-          let message = "comment prevents formatting".to_owned();
-          Some(Diagnostic {
-            range,
-            message,
-            code: diagnostic::Code::n(6001),
-            severity: diagnostic::Severity::Warning,
-          })
+          Some(Diagnostic::naive_fmt_comment(range))
         }));
       }
     }
