@@ -15,7 +15,9 @@ fn usage() {
 options:
   -h, --help
     show this help
-  --format
+  --unsafe-format
+    WARNING: THE FORMATTER IS HIGHLY EXPERIMENTAL.
+    IT MAY IRREVOCABLY DESTROY SOME OR ALL OF YOUR CODE.
     format all of the SML files
 
 arguments:
@@ -40,7 +42,7 @@ fn run() -> usize {
     usage();
     return 0;
   }
-  let format = args.contains("--format");
+  let format = args.contains("--unsafe-format");
   let root: std::path::PathBuf = match args.free_from_str() {
     Ok(x) => x,
     Err(e) => {
