@@ -68,12 +68,37 @@ type ValEnv = FxHashMap<Name, Val>;
 enum Step {
   Exp(la_arena::Idx<sml_hir::Exp>),
   Val(Val),
-  Raise(Val),
+  Raise(Exception),
 }
 
 impl Step {
   fn exp(idx: sml_hir::ExpIdx) -> Self {
     Self::Exp(idx.expect("no exp"))
+  }
+}
+
+#[derive(Debug, Clone)]
+struct Exception {
+  name: Name,
+  exn: Exn,
+  arg: Option<Box<Val>>,
+}
+
+impl TryFrom<Con> for Exception {
+  type Error = (Name, Option<Box<Val>>);
+
+  fn try_from(con: Con) -> Result<Self, Self::Error> {
+    let arg = con.arg;
+    match con.kind {
+      ConKind::Dat(name) => Err((name, arg)),
+      ConKind::Exn(name, exn) => Ok(Self { name, exn, arg }),
+    }
+  }
+}
+
+impl From<Exception> for Con {
+  fn from(exn: Exception) -> Self {
+    Con { kind: ConKind::Exn(exn.name, exn.exn), arg: exn.arg }
   }
 }
 
@@ -105,7 +130,7 @@ struct Cx<'a> {
   pat: &'a IdStatusMap<sml_hir::Pat>,
 }
 
-fn eval(cx: Cx<'_>, exp: sml_hir::ExpIdx) -> Result<Val, Val> {
+fn eval(cx: Cx<'_>, exp: sml_hir::ExpIdx) -> Result<Val, Exception> {
   let mut st = St::default();
   let mut s = Step::exp(exp);
   loop {
@@ -212,17 +237,21 @@ fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
           }
           todo!("non-exhaustive fn match")
         }
-        FrameKind::Raise => Step::Raise(val),
+        FrameKind::Raise => match val {
+          Val::Con(con) => Step::Raise(con.try_into().expect("Raise Con but not Exception")),
+          _ => unreachable!("Raise not Con"),
+        },
         // handle wasn't needed, as head didn't raise
         FrameKind::Handle(_) => Step::Val(val),
       },
     },
-    Step::Raise(val) => match st.frames.pop() {
+    Step::Raise(exception) => match st.frames.pop() {
       // unhandled exception
-      None => Step::Raise(val),
+      None => Step::Raise(exception),
       Some(frame) => match frame.kind {
         FrameKind::Handle(matcher) => {
           let mut ac = ValEnv::default();
+          let val = Val::Con(exception.clone().into());
           for arm in matcher {
             if pat_match(&mut ac, cx, arm.pat, &val) {
               st.env = frame.env;
@@ -231,10 +260,10 @@ fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
             }
           }
           // handle didn't catch the exception. keep bubbling up
-          Step::Raise(val)
+          Step::Raise(exception)
         }
         // for all other frames, the exception continues to bubble up
-        _ => Step::Raise(val),
+        _ => Step::Raise(exception),
       },
     },
   }
