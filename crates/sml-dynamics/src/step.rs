@@ -28,7 +28,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         match exp_rows.pop() {
           None => Step::Val(Val::Record(BTreeMap::new())),
           Some((lab, exp)) => {
-            st.push_with_cur_env(FrameKind::Record(exp_rows, lab, BTreeMap::new()));
+            st.push_with_cur_env(FrameKind::Record(BTreeMap::new(), lab, exp_rows));
             Step::exp(exp)
           }
         }
@@ -59,13 +59,13 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
       // done evaluating
       None => Step::Val(val),
       Some(frame) => match frame.kind {
-        FrameKind::Record(mut exp_rows, lab, mut val_rows) => {
+        FrameKind::Record(mut val_rows, lab, mut exp_rows) => {
           assert!(val_rows.insert(lab, val).is_none());
           match exp_rows.pop() {
             None => Step::Val(Val::Record(val_rows)),
             Some((lab, exp)) => {
               st.env = frame.env;
-              st.push_with_cur_env(FrameKind::Record(exp_rows, lab, val_rows));
+              st.push_with_cur_env(FrameKind::Record(val_rows, lab, exp_rows));
               Step::exp(exp)
             }
           }

@@ -108,7 +108,7 @@ impl Frame {
 
 #[derive(Debug)]
 pub(crate) enum FrameKind {
-  Record(Vec<(Lab, sml_hir::ExpIdx)>, Lab, BTreeMap<Lab, Val>),
+  Record(BTreeMap<Lab, Val>, Lab, Vec<(Lab, sml_hir::ExpIdx)>),
   AppFunc(sml_hir::ExpIdx),
   AppArg(Vec<sml_hir::Arm>),
   Raise,
