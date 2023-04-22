@@ -14,11 +14,11 @@ pub struct Dynamics<'a> {
 impl<'a> Dynamics<'a> {
   /// Returns a new dynamics for these decs, or `None` if `decs` is empty.
   #[must_use]
-  pub fn new(cx: Cx<'a>, decs: Vec<sml_hir::DecIdx>) -> Option<Self> {
+  pub fn new(cx: Cx<'a>, mut decs: Vec<sml_hir::DecIdx>) -> Option<Self> {
     let mut st = St::default();
-    let mut decs = decs.into_iter();
-    let dec = decs.next()?;
-    st.push_with_cur_env(FrameKind::Local(decs, Vec::new().into_iter()));
+    decs.reverse();
+    let dec = decs.pop()?;
+    st.push_with_cur_env(FrameKind::Local(decs, Vec::new()));
     Some(Self { cx, st, step: Some(Step::Dec(dec)) })
   }
 

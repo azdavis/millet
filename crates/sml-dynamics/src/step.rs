@@ -23,8 +23,9 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         }
       },
       sml_hir::Exp::Record(exp_rows) => {
-        let mut exp_rows = exp_rows.clone().into_iter();
-        match exp_rows.next() {
+        let mut exp_rows = exp_rows.clone();
+        exp_rows.reverse();
+        match exp_rows.pop() {
           None => Step::Val(Val::Record(BTreeMap::new())),
           Some((lab, exp)) => {
             st.push_with_cur_env(FrameKind::Record(exp_rows, lab, BTreeMap::new()));
@@ -33,7 +34,8 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         }
       }
       sml_hir::Exp::Let(decs, exp) => {
-        let decs = decs.clone().into_iter();
+        let mut decs = decs.clone();
+        decs.reverse();
         st.push_with_cur_env(FrameKind::Let(decs, *exp));
         step_dec(st)
       }
@@ -59,7 +61,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
       Some(frame) => match frame.kind {
         FrameKind::Record(mut exp_rows, lab, mut val_rows) => {
           assert!(val_rows.insert(lab, val).is_none());
-          match exp_rows.next() {
+          match exp_rows.pop() {
             None => Step::Val(Val::Record(val_rows)),
             Some((lab, exp)) => {
               st.env = frame.env;
@@ -105,7 +107,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
             FrameKind::Let(d, e) => (d, e),
             _ => unreachable!("ValBind frame not Let"),
           };
-          match decs.next() {
+          match decs.pop() {
             Some(dec) => {
               st.frames.push(Frame::new(frame.env, FrameKind::Let(decs, exp)));
               Step::Dec(dec)
@@ -153,8 +155,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
       | sml_hir::Dec::Exception(_)
       | sml_hir::Dec::Open(_) => step_dec(st),
       sml_hir::Dec::Local(local_decs, in_decs) => {
-        let local_decs = local_decs.clone().into_iter();
-        let in_decs = in_decs.clone().into_iter();
+        let mut local_decs = local_decs.clone();
+        let mut in_decs = in_decs.clone();
+        local_decs.reverse();
+        in_decs.reverse();
         st.push_with_cur_env(FrameKind::Local(local_decs, in_decs));
         step_dec(st)
       }
@@ -171,15 +175,15 @@ fn step_dec(st: &mut St) -> Step {
       | FrameKind::Raise
       | FrameKind::Handle(_)
       | FrameKind::ValBind(_) => unreachable!("bad surrounding frame for Dec"),
-      FrameKind::Let(mut decs, exp) => match decs.next() {
+      FrameKind::Let(mut decs, exp) => match decs.pop() {
         None => return Step::exp(exp),
         Some(dec) => {
           st.push_with_cur_env(FrameKind::Let(decs, exp));
           return Step::Dec(dec);
         }
       },
-      FrameKind::Local(mut local_decs, mut in_decs) => match local_decs.next() {
-        None => match in_decs.next() {
+      FrameKind::Local(mut local_decs, mut in_decs) => match local_decs.pop() {
+        None => match in_decs.pop() {
           // keep popping
           None => {}
           Some(dec) => {

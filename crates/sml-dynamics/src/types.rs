@@ -108,14 +108,14 @@ impl Frame {
 
 #[derive(Debug)]
 pub(crate) enum FrameKind {
-  Record(std::vec::IntoIter<(Lab, sml_hir::ExpIdx)>, Lab, BTreeMap<Lab, Val>),
+  Record(Vec<(Lab, sml_hir::ExpIdx)>, Lab, BTreeMap<Lab, Val>),
   AppFunc(sml_hir::ExpIdx),
   AppArg(Vec<sml_hir::Arm>),
   Raise,
   Handle(Vec<sml_hir::Arm>),
-  Let(std::vec::IntoIter<sml_hir::DecIdx>, sml_hir::ExpIdx),
+  Let(Vec<sml_hir::DecIdx>, sml_hir::ExpIdx),
   ValBind(sml_hir::PatIdx),
-  Local(std::vec::IntoIter<sml_hir::DecIdx>, std::vec::IntoIter<sml_hir::DecIdx>),
+  Local(Vec<sml_hir::DecIdx>, Vec<sml_hir::DecIdx>),
 }
 
 /// A context under which we run dynamics.
