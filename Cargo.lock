@@ -880,6 +880,7 @@ name = "sml-dynamics"
 version = "0.9.4"
 dependencies = [
  "fast-hash",
+ "fmt-util",
  "sml-hir",
  "sml-statics-types",
  "str-util",

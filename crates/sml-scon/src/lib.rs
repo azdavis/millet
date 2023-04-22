@@ -21,6 +21,23 @@ pub enum SCon {
   String(SmolStr),
 }
 
+impl fmt::Display for SCon {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      // TODO doesn't preserve hex/not hex info
+      SCon::Int(int) => int.fmt(f),
+      // TODO doesn't really show exp
+      SCon::Real(r) => r.fmt(f),
+      // TODO doesn't preserve hex/not hex info
+      SCon::Word(w) => write!(f, "0w{w}"),
+      // TODO not totally accurate with escapes
+      SCon::Char(c) => write!(f, "#\"{c}\""),
+      // TODO not totally accurate with escapes
+      SCon::String(s) => write!(f, "\"{s}\""),
+    }
+  }
+}
+
 /// An int.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Int(IntRepr);
