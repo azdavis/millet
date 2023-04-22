@@ -2,11 +2,10 @@
 
 #![allow(dead_code)]
 
-use sml_hir::Lab;
-
 use crate::dynamics::Dynamics;
 use crate::types::{Con, ConKind, Frame, FrameKind, Val};
-use std::fmt::{self, Display};
+use sml_hir::Lab;
+use std::fmt;
 
 impl fmt::Display for Dynamics<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -26,7 +25,7 @@ where
     FrameKind::Record(vs, lab, _) => {
       f.write_str("{ ")?;
       fmt_util::comma_seq(f, vs.iter().map(|(lab, val)| ValRowDisplay { lab, val }))?;
-      lab.fmt(f)?;
+      fmt::Display::fmt(lab, f)?;
       f.write_str(" = ")?;
       // TODO next frame/step
       f.write_str("_")?;
