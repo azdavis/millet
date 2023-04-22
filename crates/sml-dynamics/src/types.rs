@@ -139,7 +139,7 @@ impl Cx<'_> {
   }
 
   pub(crate) fn bind_exn(&self) -> Exception {
-    Exception { name: Name::new("Match"), exn: self.bind, arg: None }
+    Exception { name: Name::new("Bind"), exn: self.bind, arg: None }
   }
 }
 
