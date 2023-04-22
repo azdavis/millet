@@ -6,9 +6,9 @@ use crate::types::{Cx, FrameKind, St, Step};
 /// A runner of the dynamics.
 #[derive(Debug)]
 pub struct Dynamics<'a> {
-  cx: Cx<'a>,
-  st: St,
-  step: Option<Step>,
+  pub(crate) cx: Cx<'a>,
+  pub(crate) st: St,
+  pub(crate) step: Option<Step>,
 }
 
 impl<'a> Dynamics<'a> {

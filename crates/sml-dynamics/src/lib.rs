@@ -4,6 +4,7 @@
 // TODO remove once rustfmt support lands
 #![allow(clippy::manual_let_else)]
 
+mod display;
 mod dynamics;
 mod pat_match;
 mod step;
