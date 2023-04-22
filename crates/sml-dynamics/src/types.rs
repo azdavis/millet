@@ -118,13 +118,19 @@ pub(crate) enum FrameKind {
   Local(std::vec::IntoIter<sml_hir::DecIdx>, std::vec::IntoIter<sml_hir::DecIdx>),
 }
 
+/// A context under which we run dynamics.
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct Cx<'a> {
-  pub(crate) ars: &'a sml_hir::Arenas,
-  pub(crate) exp: &'a IdStatusMap<sml_hir::Exp>,
-  pub(crate) pat: &'a IdStatusMap<sml_hir::Pat>,
-  pub(crate) bind: Exn,
-  pub(crate) match_: Exn,
+pub struct Cx<'a> {
+  /// The arenas for HIR.
+  pub ars: &'a sml_hir::Arenas,
+  /// A mapping from path expressions to what kind of identifier status those paths are.
+  pub exp: &'a IdStatusMap<sml_hir::Exp>,
+  /// A mapping from path patterns to what kind of identifier status those paths are.
+  pub pat: &'a IdStatusMap<sml_hir::Pat>,
+  /// The built-in `Bind` exception.
+  pub bind: Exn,
+  /// The built-in `Match` exception.
+  pub match_: Exn,
 }
 
 impl Cx<'_> {

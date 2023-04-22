@@ -1,26 +1,9 @@
 //! Stepping a stack machine.
 
 use crate::pat_match;
-use crate::types::{Con, ConKind, Cx, Env, Exception, Frame, FrameKind, St, Step, Val, ValEnv};
+use crate::types::{Con, ConKind, Cx, Env, Frame, FrameKind, St, Step, Val, ValEnv};
 use sml_statics_types::info::IdStatus;
 use std::collections::BTreeMap;
-
-pub(crate) fn eval(cx: Cx<'_>, exp: sml_hir::ExpIdx) -> Result<Val, Exception> {
-  let mut st = St::default();
-  let mut s = Step::exp(exp);
-  loop {
-    s = step(&mut st, cx, s);
-    if st.frames.is_empty() {
-      break;
-    }
-  }
-  match s {
-    Step::Exp(_) => unreachable!("stuck exp"),
-    Step::Dec(_) => unreachable!("stepped an exp to a dec"),
-    Step::Val(v) => Ok(v),
-    Step::Raise(v) => Err(v),
-  }
-}
 
 /// i think this is called a "stack machine". it is NOT recursive.
 #[allow(clippy::too_many_lines)]
