@@ -116,6 +116,7 @@ pub(crate) enum FrameKind {
   Let(Vec<sml_hir::DecIdx>, sml_hir::ExpIdx),
   ValBind(sml_hir::PatIdx),
   Local(Vec<sml_hir::DecIdx>, Vec<sml_hir::DecIdx>),
+  In(Vec<sml_hir::DecIdx>),
 }
 
 /// A context under which we run dynamics.
