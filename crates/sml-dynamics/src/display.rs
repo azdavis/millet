@@ -64,11 +64,13 @@ where
         ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
         f.write_str(" end")
       }
-      FrameKind::ValBind(pat) => {
+      FrameKind::ValBind(pat, val_binds) => {
         f.write_str("val ")?;
         PatDisplay { pat: pat.ok_or(fmt::Error)?, ars }.fmt(f)?;
         f.write_str(" = ")?;
-        go(iter, ars, step, f)
+        go(iter, ars, step, f)?;
+        let val_binds = val_binds.iter().rev().map(|&val_bind| ValBindDisplay { val_bind, ars });
+        fmt_util::sep_seq(f, " ", val_binds)
       }
       FrameKind::Local(local_decs, in_decs) => {
         f.write_str("local ")?;
@@ -118,6 +120,19 @@ impl fmt::Display for ValDisplay<'_> {
   }
 }
 
+struct ValBindDisplay<'a> {
+  val_bind: sml_hir::ValBind,
+  ars: &'a sml_hir::Arenas,
+}
+
+impl fmt::Display for ValBindDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str("val ")?;
+    PatDisplay { pat: self.val_bind.pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+    f.write_str(" = ")?;
+    ExpDisplay { exp: self.val_bind.exp.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
+  }
+}
 struct FnDisplay<'a> {
   matcher: &'a [sml_hir::Arm],
   ars: &'a sml_hir::Arenas,
@@ -175,9 +190,23 @@ impl fmt::Display for ExpDisplay<'_> {
         fmt_util::comma_seq(f, rows)?;
         f.write_str(" }")
       }
-      sml_hir::Exp::Let(_, _) => todo!(),
-      sml_hir::Exp::App(_, _) => todo!(),
-      sml_hir::Exp::Handle(_, _) => todo!(),
+      sml_hir::Exp::Let(decs, exp) => {
+        f.write_str("let ")?;
+        fmt_util::sep_seq(f, " ", decs.iter().rev().map(|&dec| DecDisplay { dec, ars: self.ars }))?;
+        f.write_str(" in ")?;
+        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+        f.write_str(" end")
+      }
+      sml_hir::Exp::App(func, argument) => {
+        ExpDisplay { exp: func.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+        f.write_str(" ")?;
+        ExpDisplay { exp: argument.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
+      }
+      sml_hir::Exp::Handle(exp, matcher) => {
+        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+        f.write_str(" handle ")?;
+        fmt_util::sep_seq(f, " | ", matcher.iter().map(|arm| ArmDisplay { arm, ars: self.ars }))
+      }
       sml_hir::Exp::Raise(exp) => {
         f.write_str("raise ")?;
         ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
@@ -221,11 +250,46 @@ impl fmt::Display for PatDisplay<'_> {
         }
         Ok(())
       }
-      sml_hir::Pat::Record { .. } => todo!(),
-      sml_hir::Pat::Typed(_, _) => todo!(),
-      sml_hir::Pat::As(_, _) => todo!(),
-      sml_hir::Pat::Or(_) => todo!(),
+      sml_hir::Pat::Record { rows, allows_other } => {
+        f.write_str("{ ")?;
+        let rows = rows.iter().map(|&(ref lab, pat)| PatRowDisplay { lab, pat, ars: self.ars });
+        fmt_util::comma_seq(f, rows)?;
+        if *allows_other {
+          f.write_str(", ...")?;
+        }
+        f.write_str(" }")
+      }
+      sml_hir::Pat::Typed(pat, _) => {
+        PatDisplay { pat: pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
+      }
+      sml_hir::Pat::As(name, pat) => {
+        name.fmt(f)?;
+        f.write_str(" as ")?;
+        PatDisplay { pat: pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
+      }
+      sml_hir::Pat::Or(or_pat) => {
+        PatDisplay { pat: or_pat.first.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+        for pat in &or_pat.rest {
+          f.write_str(" | ")?;
+          PatDisplay { pat: pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+        }
+        Ok(())
+      }
     }
+  }
+}
+
+struct PatRowDisplay<'a> {
+  lab: &'a Lab,
+  pat: sml_hir::PatIdx,
+  ars: &'a sml_hir::Arenas,
+}
+
+impl fmt::Display for PatRowDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.lab.fmt(f)?;
+    f.write_str(" = ")?;
+    PatDisplay { pat: self.pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
   }
 }
 
@@ -269,14 +333,24 @@ struct DecDisplay<'a> {
 impl fmt::Display for DecDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.ars.dec[self.dec] {
-      sml_hir::Dec::Val(_, _) => todo!(),
+      sml_hir::Dec::Val(_, val_binds) => {
+        let val_binds =
+          val_binds.iter().map(|&val_bind| ValBindDisplay { val_bind, ars: self.ars });
+        fmt_util::sep_seq(f, " ", val_binds)
+      }
       sml_hir::Dec::Ty(_) => f.write_str("type ..."),
       sml_hir::Dec::Datatype(_, _) | sml_hir::Dec::DatatypeCopy(_, _) => {
         f.write_str("datatype ...")
       }
       sml_hir::Dec::Abstype(_, _, _) => Err(fmt::Error),
       sml_hir::Dec::Exception(_) => f.write_str("exception ..."),
-      sml_hir::Dec::Local(_, _) => todo!(),
+      sml_hir::Dec::Local(local_decs, in_decs) => {
+        f.write_str("local ")?;
+        fmt_util::sep_seq(f, " ", local_decs.iter().map(|&dec| DecDisplay { dec, ars: self.ars }))?;
+        f.write_str(" in ")?;
+        fmt_util::sep_seq(f, " ", in_decs.iter().map(|&dec| DecDisplay { dec, ars: self.ars }))?;
+        f.write_str(" end")
+      }
       sml_hir::Dec::Open(_) => f.write_str("open ..."),
     }
   }

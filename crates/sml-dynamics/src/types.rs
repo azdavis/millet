@@ -114,7 +114,7 @@ pub(crate) enum FrameKind {
   Raise,
   Handle(Vec<sml_hir::Arm>),
   Let(Vec<sml_hir::DecIdx>, sml_hir::ExpIdx),
-  ValBind(sml_hir::PatIdx),
+  ValBind(sml_hir::PatIdx, Vec<sml_hir::ValBind>),
   Local(Vec<sml_hir::DecIdx>, Vec<sml_hir::DecIdx>),
   In(Vec<sml_hir::DecIdx>),
 }

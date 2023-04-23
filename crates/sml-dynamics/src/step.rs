@@ -95,24 +95,19 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         },
         // handle wasn't needed, as head didn't raise
         FrameKind::Handle(_) => Step::Val(val),
-        FrameKind::ValBind(pat) => {
+        FrameKind::ValBind(pat, mut val_binds) => {
           let mut ac = ValEnv::default();
           if !pat_match::get(&mut ac, cx, pat, &val) {
             return Step::Raise(cx.bind_exn());
           }
           st.env = frame.env;
           st.env.val.extend(ac);
-          let frame = st.frames.pop().expect("ValBind with no frame");
-          let (mut decs, exp) = match frame.kind {
-            FrameKind::Let(d, e) => (d, e),
-            _ => unreachable!("ValBind frame not Let"),
-          };
-          match decs.pop() {
-            Some(dec) => {
-              st.frames.push(Frame::new(frame.env, FrameKind::Let(decs, exp)));
-              Step::Dec(dec)
+          match val_binds.pop() {
+            Some(vb) => {
+              st.push_with_cur_env(FrameKind::ValBind(vb.pat, val_binds));
+              Step::exp(vb.exp)
             }
-            None => Step::exp(exp),
+            None => step_dec(st),
           }
         }
         FrameKind::Let(_, _) | FrameKind::Local(_, _) | FrameKind::In(_) => {
@@ -143,9 +138,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
     },
     Step::Dec(dec) => match &cx.ars.dec[dec] {
       sml_hir::Dec::Val(_, val_binds) => {
-        let mut val_bind = val_binds.clone().into_iter();
-        let vb = val_bind.next().unwrap();
-        st.push_with_cur_env(FrameKind::ValBind(vb.pat));
+        let mut val_binds = val_binds.clone();
+        val_binds.reverse();
+        let vb = val_binds.pop().unwrap();
+        st.push_with_cur_env(FrameKind::ValBind(vb.pat, val_binds));
         Step::exp(vb.exp)
       }
       sml_hir::Dec::Ty(_)
@@ -174,7 +170,7 @@ fn step_dec(st: &mut St) -> Step {
       | FrameKind::AppArg(_)
       | FrameKind::Raise
       | FrameKind::Handle(_)
-      | FrameKind::ValBind(_) => unreachable!("bad surrounding frame for Dec"),
+      | FrameKind::ValBind(_, _) => unreachable!("bad surrounding frame for Dec"),
       FrameKind::Let(mut decs, exp) => match decs.pop() {
         None => return Step::exp(exp),
         Some(dec) => {

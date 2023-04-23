@@ -255,7 +255,7 @@ pub enum Dec {
   Open(Vec<Path>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ValBind {
   pub rec: bool,
   pub pat: PatIdx,
