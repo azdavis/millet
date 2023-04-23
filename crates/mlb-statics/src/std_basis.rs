@@ -107,13 +107,13 @@ where
     let mut fix_env = sml_fixity::STD_BASIS.clone();
     let started = SourceFileSyntax::new(&mut fix_env, &lang, contents);
     if let Some(e) = started.lex_errors.first() {
-      panic!("{name}: lex error: {}", e.display());
+      panic!("{name}: lex error: {e}");
     }
     if let Some(e) = started.parse.errors.first() {
-      panic!("{name}: parse error: {}", e.display());
+      panic!("{name}: parse error: {e}");
     }
     if let Some(e) = started.lower.errors.first() {
-      let e = e.display().to_string();
+      let e = e.to_string();
       let allowed = started.lower.errors.len() == 1
         && name == "std_basis/general.sml"
         && e == "top-level `open`";

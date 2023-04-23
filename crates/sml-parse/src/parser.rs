@@ -23,9 +23,9 @@ pub(crate) enum ErrorKind {
   NeedParensAroundExpHere(ParensExpFlavor),
 }
 
-impl fmt::Display for ErrorKind {
+impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
+    match &self.0.kind {
       ErrorKind::NotInfix => f.write_str("non-infix name used as infix"),
       ErrorKind::InfixWithoutOp => f.write_str("infix name used as non-infix without `op`"),
       ErrorKind::InvalidFixity(e) => write!(f, "invalid fixity: {e}"),
@@ -112,12 +112,6 @@ impl Error {
   #[must_use]
   pub fn range(&self) -> TextRange {
     self.0.range
-  }
-
-  /// Returns a value that displays the message.
-  #[must_use]
-  pub fn display(&self) -> impl fmt::Display + '_ {
-    &self.0.kind
   }
 
   /// Returns the code for this.

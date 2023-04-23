@@ -79,9 +79,9 @@ pub(crate) enum ErrorKind {
   InvalidOpaqueAscription,
 }
 
-impl fmt::Display for ErrorKind {
+impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
+    match &self.kind {
       ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
         write!(f, "expected a function clause for `{want}`, found one for `{got}`")
@@ -190,12 +190,6 @@ impl Error {
   #[must_use]
   pub fn range(&self) -> TextRange {
     self.range
-  }
-
-  /// Returns a value that displays the message.
-  #[must_use]
-  pub fn display(&self) -> impl fmt::Display + '_ {
-    &self.kind
   }
 
   /// Returns the code for this.

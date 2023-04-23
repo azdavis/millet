@@ -61,17 +61,17 @@ where
   let mut ret: Vec<_> = std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
       let range = f(&file.syntax.pos_db, err.range())?;
-      let message = err.display().to_string();
+      let message = err.to_string();
       Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }))
     .chain(file.syntax.parse.errors.iter().filter_map(|err| {
       let range = f(&file.syntax.pos_db, err.range())?;
-      let message = err.display().to_string();
+      let message = err.to_string();
       Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }))
     .chain(file.syntax.lower.errors.iter().filter_map(|err| {
       let range = f(&file.syntax.pos_db, err.range())?;
-      let message = err.display().to_string();
+      let message = err.to_string();
       Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }))
     .collect();

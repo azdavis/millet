@@ -33,9 +33,9 @@ enum ErrorKind {
   String(string::Error),
 }
 
-impl fmt::Display for ErrorKind {
+impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
+    match &self.kind {
       ErrorKind::InvalidSource => f.write_str("invalid source character"),
       ErrorKind::UnclosedComment => f.write_str("unclosed comment"),
       ErrorKind::IncompleteTyVar => f.write_str("incomplete type variable"),
@@ -63,12 +63,6 @@ impl Error {
   #[must_use]
   pub fn range(&self) -> TextRange {
     self.range
-  }
-
-  /// Returns a value that displays the message.
-  #[must_use]
-  pub fn display(&self) -> impl fmt::Display + '_ {
-    &self.kind
   }
 
   /// Returns the code for this.
