@@ -67,9 +67,9 @@ pub fn get(
       // order mode for statics, which reduces the number of checks we do.
       let mut st = St::new(Mode::PathOrder, syms, tys);
       let new_bs = top_dec::get(&mut st, &bs, arenas, root);
-      let (new_syms, new_tys, errors, _) = st.finish();
-      syms = new_syms;
-      tys = new_tys;
+      let errors = st.finish();
+      syms = st.syms;
+      tys = st.tys;
       if errors.is_empty() {
         bs.append(new_bs);
         ok_paths.push(path);

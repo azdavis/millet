@@ -299,6 +299,10 @@ val _ = nope
 }
 ```
 
+### `crates/sml-dynamics-tests`
+
+Tests for the WIP dynamics.
+
 ## Binary crates
 
 These crates are the only ones that produce executable binaries. Every other crate is only compiled to a library.

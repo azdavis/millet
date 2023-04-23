@@ -16,6 +16,8 @@ pub enum Mode {
   /// statics checks in this mode for better performance. We probably don't actually skip all the
   /// checks that we conceivably could skip, but that's ok from a correctness standpoint.
   PathOrder,
+  /// Populate extra info for running the dynamics.
+  Dynamics,
 }
 
 impl Mode {

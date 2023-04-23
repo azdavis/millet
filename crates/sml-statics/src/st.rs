@@ -23,6 +23,8 @@ pub(crate) struct St {
   used: FxHashSet<sml_hir::Idx>,
   /// for making fully qualified names.
   cur_prefix: Vec<str_util::Name>,
+  pub(crate) exp_id_statuses: sml_statics_types::info::IdStatusMap<sml_hir::Exp>,
+  pub(crate) pat_id_statuses: sml_statics_types::info::IdStatusMap<sml_hir::Pat>,
 }
 
 impl St {
@@ -36,6 +38,8 @@ impl St {
       defined: Vec::new(),
       used: FxHashSet::default(),
       cur_prefix: Vec::new(),
+      exp_id_statuses: sml_statics_types::info::IdStatusMap::default(),
+      pat_id_statuses: sml_statics_types::info::IdStatusMap::default(),
     }
   }
 
@@ -43,7 +47,7 @@ impl St {
     let path = match self.info.mode {
       Mode::Regular(p) => def::Path::Regular(p?),
       Mode::BuiltinLib(p) => def::Path::BuiltinLib(p),
-      Mode::PathOrder => return None,
+      Mode::PathOrder | Mode::Dynamics => return None,
     };
     Some(def::Def::Path(path, idx))
   }
@@ -54,7 +58,7 @@ impl St {
   {
     match (self.info.mode, &kind) {
       (Mode::PathOrder, ErrorKind::Undefined(Item::Struct | Item::Sig | Item::Functor, _))
-      | (Mode::Regular(_) | Mode::BuiltinLib(_), _) => {
+      | (Mode::Regular(_) | Mode::BuiltinLib(_) | Mode::Dynamics, _) => {
         self.errors.push(Error { idx: idx.into(), kind });
       }
       (Mode::PathOrder, _) => {}
@@ -111,7 +115,7 @@ impl St {
     sml_path::Path::new(self.cur_prefix.iter().cloned(), last)
   }
 
-  pub(crate) fn finish(mut self) -> (Syms, Tys, Vec<Error>, Info) {
+  pub(crate) fn finish(&mut self) -> Vec<Error> {
     if !self.info.mode.is_path_order() {
       for m in std::mem::take(&mut self.matches) {
         match m.kind {
@@ -138,7 +142,7 @@ impl St {
         }
       }
     }
-    (self.syms, self.tys, self.errors, self.info)
+    std::mem::take(&mut self.errors)
   }
 }
 

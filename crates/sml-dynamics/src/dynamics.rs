@@ -22,9 +22,30 @@ impl<'a> Dynamics<'a> {
     Some(Self { cx, st, step: Some(Step::Dec(dec)) })
   }
 
-  /// Takes a step, or no-ops if it's done.
-  pub fn step(&mut self) {
-    let s = self.step.take().expect("no step");
-    self.step = Some(step(&mut self.st, self.cx, s));
+  /// Takes a step. Panics if this was already finished.
+  pub fn step(&mut self) -> Progress {
+    let mut s = self.step.take().expect("already done");
+    s = step(&mut self.st, self.cx, s);
+    if self.st.frames.is_empty() {
+      match s {
+        Step::Val(_) => Progress::Val,
+        Step::Raise(_) => Progress::Raise,
+        Step::Exp(_) | Step::Dec(_) => unreachable!("can't be done with Exp or Dec"),
+      }
+    } else {
+      self.step = Some(s);
+      Progress::Still
+    }
   }
+}
+
+/// A way for the dynamics to progress
+#[derive(Debug, Clone, Copy)]
+pub enum Progress {
+  /// Still evaluating.
+  Still,
+  /// Returned a value.
+  Val,
+  /// Raised an exception.
+  Raise,
 }

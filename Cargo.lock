@@ -887,6 +887,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sml-dynamics-tests"
+version = "0.9.4"
+dependencies = [
+ "config",
+ "sml-dynamics",
+ "sml-file-syntax",
+ "sml-fixity",
+ "sml-hir",
+ "sml-path",
+ "sml-statics",
+ "sml-statics-types",
+ "str-util",
+]
+
+[[package]]
 name = "sml-file-syntax"
 version = "0.9.4"
 dependencies = [
