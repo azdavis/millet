@@ -20,11 +20,20 @@ Note that Millet does not actually run SML code. To do that, you'll need an inst
 
 ## Install
 
+### Official sources
+
 - There is a [VS Code][vscode] extension on the [marketplace][].
 - The same extension is also published on [Open VSX][ovsx].
-- Pre-built binaries for many popular platforms are on the [releases page][rel].
+- Pre-built binaries are on the [releases page][rel].
 
 VS Code and compatible editors like [VSCodium][] are the only editors for which we provide an "official" extension. However, because Millet is a language server, it should be able to be adapted to work with any editor that supports language servers.
+
+### Unofficial sources
+
+Millet is also available in various other package managers and repositories. These are maintained by the community and are **not** official, so they may be out of date.
+
+- [nixpkgs][]
+- [aur][]
 
 ## Community
 
@@ -124,3 +133,5 @@ Like [Rust][rust] itself and many other projects in the Rust community, Millet i
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [ra]: https://rust-analyzer.github.io
 [rel]: https://github.com/azdavis/millet/releases/
+[nixpkgs]: https://search.nixos.org/packages?channel=unstable&show=millet
+[aur]: https://aur.archlinux.org/packages/millet
