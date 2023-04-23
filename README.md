@@ -103,7 +103,7 @@ The logo features Polly Morphism, wearing a 15-150 style T-shirt, writing SML on
 
 ## License
 
-Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.
+Like [Rust][rust] itself and many other projects in the Rust community, Millet is licensed under either the MIT license or the Apache license v2.0, at your option.
 
 [blog]: https://azdavis.net/posts/millet/
 [cmu150]: http://www.cs.cmu.edu/~15150/

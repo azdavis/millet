@@ -212,7 +212,7 @@ fn dist(args: &DistArgs) -> Result<()> {
   pop_path_buf(&mut path)?;
   pop_path_buf(&mut path)?;
   let license_header =
-    "Millet is dual-licensed under the terms of both the MIT license and the Apache license v2.0.";
+    "Millet is licensed under either the MIT license or the Apache license v2.0, at your option.";
   let license_apache = include_str!("../../LICENSE-APACHE.md");
   let license_mit = include_str!("../../LICENSE-MIT.md");
   let license_text = format!("{license_header}\n\n{license_apache}\n{license_mit}");
