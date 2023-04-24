@@ -31,7 +31,7 @@ impl fmt::Display for Dynamics<'_> {
           f.write_str(" = ")?;
         }
         FrameKind::Local(_, _) => f.write_str("local ")?,
-        FrameKind::In(_) => f.write_str("local in")?,
+        FrameKind::In(_) => f.write_str("local in ")?,
       }
     }
     match self.step.as_ref().ok_or(fmt::Error)? {
@@ -62,23 +62,37 @@ impl fmt::Display for Dynamics<'_> {
           fmt_util::sep_seq(f, " | ", matcher.iter().map(|arm| ArmDisplay { arm, ars }))?;
         }
         FrameKind::Let(decs, exp) => {
-          fmt_util::sep_seq(f, " ", decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
+          for &dec in decs.iter().rev() {
+            f.write_str(" ")?;
+            DecDisplay { dec, ars }.fmt(f)?;
+          }
           f.write_str(" in ")?;
           ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
           f.write_str(" end")?;
         }
         FrameKind::ValBind(_, val_binds) => {
-          let val_binds = val_binds.iter().rev().map(|&val_bind| ValBindDisplay { val_bind, ars });
-          fmt_util::sep_seq(f, " ", val_binds)?;
+          for &val_bind in val_binds.iter().rev() {
+            f.write_str(" ")?;
+            ValBindDisplay { val_bind, ars }.fmt(f)?;
+          }
         }
         FrameKind::Local(local_decs, in_decs) => {
-          fmt_util::sep_seq(f, " ", local_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
-          f.write_str(" in ")?;
-          fmt_util::sep_seq(f, " ", in_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
+          for &dec in local_decs.iter().rev() {
+            f.write_str(" ")?;
+            DecDisplay { dec, ars }.fmt(f)?;
+          }
+          f.write_str(" in")?;
+          for &dec in in_decs.iter().rev() {
+            f.write_str(" ")?;
+            DecDisplay { dec, ars }.fmt(f)?;
+          }
           f.write_str(" end")?;
         }
         FrameKind::In(in_decs) => {
-          fmt_util::sep_seq(f, " ", in_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
+          for &dec in in_decs.iter().rev() {
+            f.write_str(" ")?;
+            DecDisplay { dec, ars }.fmt(f)?;
+          }
           f.write_str("end")?;
         }
       }
@@ -236,6 +250,7 @@ impl fmt::Display for PatDisplay<'_> {
       sml_hir::Pat::Con(path, arg) => {
         path.last().fmt(f)?;
         if let Some(arg) = arg {
+          f.write_str(" ")?;
           PatDisplay { pat: arg.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
         }
         Ok(())
@@ -294,6 +309,7 @@ impl fmt::Display for ConDisplay<'_> {
       ConKind::Dat(name) | ConKind::Exn(name, _) => name.fmt(f)?,
     }
     if let Some(val) = &self.con.arg {
+      f.write_str(" ")?;
       ValDisplay { val: val.as_ref(), ars: self.ars }.fmt(f)?;
     }
     Ok(())
@@ -309,6 +325,7 @@ impl fmt::Display for ExceptionDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.exception.name.fmt(f)?;
     if let Some(val) = &self.exception.arg {
+      f.write_str(" ")?;
       ValDisplay { val: val.as_ref(), ars: self.ars }.fmt(f)?;
     }
     Ok(())
