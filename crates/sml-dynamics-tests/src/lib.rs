@@ -3,7 +3,7 @@
 #![cfg(test)]
 #![deny(clippy::pedantic, rust_2018_idioms)]
 
-use std::io::BufRead;
+use std::io::BufRead as _;
 
 #[allow(dead_code)]
 fn check(s: &str) {
