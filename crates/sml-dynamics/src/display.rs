@@ -3,99 +3,88 @@
 // TODO fix prec everywhere
 
 use crate::dynamics::Dynamics;
-use crate::types::{Con, ConKind, Exception, Frame, FrameKind, Step, Val};
+use crate::types::{Con, ConKind, Exception, FrameKind, Step, Val};
 use sml_hir::Lab;
-use std::fmt::{self, Display as _};
+use std::fmt;
 
 impl fmt::Display for Dynamics<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut iter = self.st.frames.iter();
-    go(&mut iter, self.cx.ars, self.step.as_ref().ok_or(fmt::Error)?, f)
-  }
-}
-
-fn go<'a, I>(
-  iter: &mut I,
-  ars: &sml_hir::Arenas,
-  step: &Step,
-  f: &mut fmt::Formatter<'_>,
-) -> fmt::Result
-where
-  I: Iterator<Item = &'a Frame>,
-{
-  match iter.next() {
-    Some(frame) => match &frame.kind {
-      FrameKind::Record(vs, lab, es) => {
-        f.write_str("{ ")?;
-        fmt_util::comma_seq(f, vs.iter().map(|(lab, val)| ValRowDisplay { lab, val, ars }))?;
-        lab.fmt(f)?;
-        f.write_str(" = ")?;
-        go(iter, ars, step, f)?;
-        if !es.is_empty() {
-          f.write_str(", ")?;
+    let ars = &self.cx.ars;
+    for frame in &self.st.frames {
+      match &frame.kind {
+        FrameKind::AppFunc(_) | FrameKind::Handle(_) => {}
+        FrameKind::Record(vs, lab, _) => {
+          f.write_str("{ ")?;
+          fmt_util::comma_seq(f, vs.iter().map(|(lab, val)| ValRowDisplay { lab, val, ars }))?;
+          lab.fmt(f)?;
+          f.write_str(" = ")?;
         }
-        fmt_util::comma_seq(f, es.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars }))?;
-        f.write_str(" }")
+        FrameKind::AppArg(matcher) => {
+          FnDisplay { matcher, ars }.fmt(f)?;
+          f.write_str(" ")?;
+        }
+        FrameKind::Raise => f.write_str("raise ")?,
+        FrameKind::Let(_, _) => f.write_str("let ")?,
+        FrameKind::ValBind(pat, _) => {
+          f.write_str("val ")?;
+          PatDisplay { pat: pat.ok_or(fmt::Error)?, ars }.fmt(f)?;
+          f.write_str(" = ")?;
+        }
+        FrameKind::Local(_, _) => f.write_str("local ")?,
+        FrameKind::In(_) => f.write_str("local in")?,
       }
-      FrameKind::AppFunc(exp) => {
-        go(iter, ars, step, f)?;
-        f.write_str(" ")?;
-        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)
-      }
-      FrameKind::AppArg(matcher) => {
-        FnDisplay { matcher, ars }.fmt(f)?;
-        f.write_str(" ")?;
-        go(iter, ars, step, f)
-      }
-      FrameKind::Raise => {
-        f.write_str("raise ")?;
-        go(iter, ars, step, f)
-      }
-      FrameKind::Handle(matcher) => {
-        go(iter, ars, step, f)?;
-        f.write_str(" handle ")?;
-        fmt_util::sep_seq(f, " | ", matcher.iter().map(|arm| ArmDisplay { arm, ars }))
-      }
-      FrameKind::Let(decs, exp) => {
-        f.write_str("let ")?;
-        go(iter, ars, step, f)?;
-        fmt_util::sep_seq(f, " ", decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
-        f.write_str(" in ")?;
-        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
-        f.write_str(" end")
-      }
-      FrameKind::ValBind(pat, val_binds) => {
-        f.write_str("val ")?;
-        PatDisplay { pat: pat.ok_or(fmt::Error)?, ars }.fmt(f)?;
-        f.write_str(" = ")?;
-        go(iter, ars, step, f)?;
-        let val_binds = val_binds.iter().rev().map(|&val_bind| ValBindDisplay { val_bind, ars });
-        fmt_util::sep_seq(f, " ", val_binds)
-      }
-      FrameKind::Local(local_decs, in_decs) => {
-        f.write_str("local ")?;
-        go(iter, ars, step, f)?;
-        fmt_util::sep_seq(f, " ", local_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
-        f.write_str(" in ")?;
-        fmt_util::sep_seq(f, " ", in_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
-        f.write_str(" end")
-      }
-      FrameKind::In(in_decs) => {
-        f.write_str("local in")?;
-        go(iter, ars, step, f)?;
-        fmt_util::sep_seq(f, " ", in_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
-        f.write_str("end")
-      }
-    },
-    None => match step {
-      Step::Exp(exp) => ExpDisplay { exp: *exp, ars }.fmt(f),
-      Step::Val(val) => ValDisplay { val, ars }.fmt(f),
+    }
+    match self.step.as_ref().ok_or(fmt::Error)? {
+      Step::Exp(exp) => ExpDisplay { exp: *exp, ars }.fmt(f)?,
+      Step::Val(val) => ValDisplay { val, ars }.fmt(f)?,
       Step::Raise(exception) => {
         f.write_str("raise ")?;
-        ExceptionDisplay { exception, ars }.fmt(f)
+        ExceptionDisplay { exception, ars }.fmt(f)?;
       }
-      Step::Dec(dec) => DecDisplay { dec: *dec, ars }.fmt(f),
-    },
+      Step::Dec(dec) => DecDisplay { dec: *dec, ars }.fmt(f)?,
+    }
+    for frame in self.st.frames.iter().rev() {
+      match &frame.kind {
+        FrameKind::AppArg(_) | FrameKind::Raise => {}
+        FrameKind::Record(_, _, es) => {
+          if !es.is_empty() {
+            f.write_str(", ")?;
+          }
+          fmt_util::comma_seq(f, es.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars }))?;
+          f.write_str(" }")?;
+        }
+        FrameKind::AppFunc(exp) => {
+          f.write_str(" ")?;
+          ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
+        }
+        FrameKind::Handle(matcher) => {
+          f.write_str(" handle ")?;
+          fmt_util::sep_seq(f, " | ", matcher.iter().map(|arm| ArmDisplay { arm, ars }))?;
+        }
+        FrameKind::Let(decs, exp) => {
+          fmt_util::sep_seq(f, " ", decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
+          f.write_str(" in ")?;
+          ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
+          f.write_str(" end")?;
+        }
+        FrameKind::ValBind(_, val_binds) => {
+          let val_binds = val_binds.iter().rev().map(|&val_bind| ValBindDisplay { val_bind, ars });
+          fmt_util::sep_seq(f, " ", val_binds)?;
+        }
+        FrameKind::Local(local_decs, in_decs) => {
+          fmt_util::sep_seq(f, " ", local_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
+          f.write_str(" in ")?;
+          fmt_util::sep_seq(f, " ", in_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
+          f.write_str(" end")?;
+        }
+        FrameKind::In(in_decs) => {
+          fmt_util::sep_seq(f, " ", in_decs.iter().rev().map(|&dec| DecDisplay { dec, ars }))?;
+          f.write_str("end")?;
+        }
+      }
+    }
+    Ok(())
+    // go(&mut iter, self.cx.ars, self.step.as_ref().ok_or(fmt::Error)?, f)
   }
 }
 
@@ -133,6 +122,7 @@ impl fmt::Display for ValBindDisplay<'_> {
     ExpDisplay { exp: self.val_bind.exp.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
   }
 }
+
 struct FnDisplay<'a> {
   matcher: &'a [sml_hir::Arm],
   ars: &'a sml_hir::Arenas,
