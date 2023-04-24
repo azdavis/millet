@@ -45,13 +45,12 @@ fn check(s: &str) {
   let mut dynamics = sml_dynamics::Dynamics::new(cx, decs).expect("no decs");
   let mut stdin = std::io::stdin().lock();
   let mut buf = String::new();
-  let mut s = sml_dynamics::Progress::Still;
   loop {
     println!("==>");
     println!("{dynamics}");
     stdin.read_line(&mut buf).expect("couldn't read");
     buf.clear();
-    match s {
+    match dynamics.step() {
       sml_dynamics::Progress::Still => {}
       sml_dynamics::Progress::Done => {
         println!("done");
@@ -62,7 +61,6 @@ fn check(s: &str) {
         break;
       }
     }
-    s = dynamics.step();
   }
 }
 
