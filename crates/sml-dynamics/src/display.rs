@@ -19,8 +19,12 @@ impl fmt::Display for Dynamics<'_> {
           lab.fmt(f)?;
           f.write_str(" = ")?;
         }
-        FrameKind::AppArg(matcher) => {
+        FrameKind::AppClosureArg(matcher) => {
           FnDisplay { matcher, ars }.fmt(f)?;
+          f.write_str(" ")?;
+        }
+        FrameKind::AppConArg(kind) => {
+          kind.fmt(f)?;
           f.write_str(" ")?;
         }
         FrameKind::Raise => f.write_str("raise ")?,
@@ -45,7 +49,7 @@ impl fmt::Display for Dynamics<'_> {
     }
     for frame in self.st.frames.iter().rev() {
       match &frame.kind {
-        FrameKind::AppArg(_) | FrameKind::Raise => {}
+        FrameKind::AppClosureArg(_) | FrameKind::AppConArg(_) | FrameKind::Raise => {}
         FrameKind::Record(_, _, es) => {
           if !es.is_empty() {
             f.write_str(", ")?;
@@ -305,14 +309,20 @@ struct ConDisplay<'a> {
 
 impl fmt::Display for ConDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &self.con.kind {
-      ConKind::Dat(name) | ConKind::Exn(name, _) => name.fmt(f)?,
-    }
+    self.con.kind.fmt(f)?;
     if let Some(val) = &self.con.arg {
       f.write_str(" ")?;
       ValDisplay { val: val.as_ref(), ars: self.ars }.fmt(f)?;
     }
     Ok(())
+  }
+}
+
+impl fmt::Display for ConKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ConKind::Dat(name) | ConKind::Exn(name, _) => name.fmt(f),
+    }
   }
 }
 

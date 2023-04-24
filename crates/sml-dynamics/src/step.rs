@@ -73,12 +73,18 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         FrameKind::AppFunc(arg) => match val {
           Val::Closure(clos_env, matcher) => {
             st.env = frame.env;
-            st.frames.push(Frame::new(clos_env, FrameKind::AppArg(matcher)));
+            st.frames.push(Frame::new(clos_env, FrameKind::AppClosureArg(matcher)));
             Step::exp(arg)
           }
-          _ => unreachable!("fun val not closure"),
+          Val::Con(con) => {
+            assert!(con.arg.is_none(), "Con already has arg");
+            st.env = frame.env;
+            st.push_with_cur_env(FrameKind::AppConArg(con.kind));
+            Step::exp(arg)
+          }
+          _ => unreachable!("AppFunc not Closure or Con"),
         },
-        FrameKind::AppArg(matcher) => {
+        FrameKind::AppClosureArg(matcher) => {
           let mut ac = ValEnv::default();
           for arm in matcher {
             if pat_match::get(&mut ac, cx, arm.pat, &val) {
@@ -89,6 +95,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
           }
           Step::Raise(cx.match_exn())
         }
+        FrameKind::AppConArg(kind) => Step::Val(Val::Con(Con { kind, arg: Some(Box::new(val)) })),
         FrameKind::Raise => match val {
           Val::Con(con) => Step::Raise(con.try_into().expect("Raise Con but not Exception")),
           _ => unreachable!("Raise not Con"),
@@ -167,7 +174,8 @@ fn step_dec(st: &mut St) -> Step {
     match frame.kind {
       FrameKind::Record(_, _, _)
       | FrameKind::AppFunc(_)
-      | FrameKind::AppArg(_)
+      | FrameKind::AppClosureArg(_)
+      | FrameKind::AppConArg(_)
       | FrameKind::Raise
       | FrameKind::Handle(_)
       | FrameKind::ValBind(_, _) => unreachable!("bad surrounding frame for Dec"),

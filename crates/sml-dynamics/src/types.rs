@@ -110,7 +110,8 @@ impl Frame {
 pub(crate) enum FrameKind {
   Record(BTreeMap<Lab, Val>, Lab, Vec<(Lab, sml_hir::ExpIdx)>),
   AppFunc(sml_hir::ExpIdx),
-  AppArg(Vec<sml_hir::Arm>),
+  AppClosureArg(Vec<sml_hir::Arm>),
+  AppConArg(ConKind),
   Raise,
   Handle(Vec<sml_hir::Arm>),
   Let(Vec<sml_hir::DecIdx>, sml_hir::ExpIdx),
