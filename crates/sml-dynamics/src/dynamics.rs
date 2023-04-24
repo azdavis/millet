@@ -23,8 +23,9 @@ impl<'a> Dynamics<'a> {
   }
 
   /// Takes a step. Panics if this was already finished.
-  pub fn step(&mut self) -> Progress {
-    let mut s = self.step.take().expect("already done");
+  #[must_use]
+  pub fn step(mut self) -> Progress<'a> {
+    let mut s = self.step.take().expect("no step");
     s = step(&mut self.st, self.cx, s);
     if self.st.frames.is_empty() {
       match s {
@@ -34,16 +35,16 @@ impl<'a> Dynamics<'a> {
       }
     } else {
       self.step = Some(s);
-      Progress::Still
+      Progress::Still(self)
     }
   }
 }
 
-/// A way for the dynamics to progress
-#[derive(Debug, Clone, Copy)]
-pub enum Progress {
+/// A way for the dynamics to progress.
+#[derive(Debug)]
+pub enum Progress<'a> {
   /// Still evaluating.
-  Still,
+  Still(Dynamics<'a>),
   /// Done evaluating.
   Done,
   /// Raised an exception.

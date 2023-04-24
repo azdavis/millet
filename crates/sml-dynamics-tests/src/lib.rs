@@ -51,7 +51,7 @@ fn check(s: &str) {
     stdin.read_line(&mut buf).expect("couldn't read");
     buf.clear();
     match dynamics.step() {
-      sml_dynamics::Progress::Still => {}
+      sml_dynamics::Progress::Still(d) => dynamics = d,
       sml_dynamics::Progress::Done => {
         println!("done");
         break;
