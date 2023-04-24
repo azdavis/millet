@@ -11,7 +11,7 @@ use fast_hash::FxHashSet;
 use sml_statics_types::sym::{Sym, SymsMarker};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, Tys};
 use sml_statics_types::util::{get_scon, instantiate};
-use sml_statics_types::{def, info::ValEnv, item::Item};
+use sml_statics_types::{def, info::ValEnv, item::Item, mode::Mode};
 
 pub(crate) fn get_and_check_ty_escape(
   st: &mut St,
@@ -58,6 +58,9 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
         Ok(val_info) => {
           if let Some(d) = &val_info.disallow {
             st.err(exp, ErrorKind::Disallowed(Item::Val, d.clone(), path.last().clone()));
+          }
+          if let Mode::Dynamics = st.info.mode {
+            assert!(st.exp_id_statuses.insert(exp, val_info.id_status).is_none());
           }
           ty_scheme = Some(val_info.ty_scheme.clone());
           defs.reserve(val_info.defs.len());

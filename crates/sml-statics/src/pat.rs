@@ -100,6 +100,10 @@ fn get_(
         let ty = st.tys.meta_var(cfg.gen);
         defs.extend(st.def(pat_idx.into()));
         insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty);
+        // a little WET with ok_val_info
+        if let Mode::Dynamics = st.info.mode {
+          assert!(st.pat_id_statuses.insert(pat_idx, IdStatus::Val).is_none());
+        }
         return Some(PatRet { pm_pat: Pat::zero(Con::Any, pat), ty, ty_scheme, defs });
       }
       let val_info = match val_info.val {
@@ -111,6 +115,9 @@ fn get_(
       };
       if let Some(d) = &val_info.disallow {
         st.err(pat_idx, ErrorKind::Disallowed(Item::Val, d.clone(), path.last().clone()));
+      }
+      if let Mode::Dynamics = st.info.mode {
+        assert!(st.pat_id_statuses.insert(pat_idx, val_info.id_status).is_none());
       }
       let variant_name = match &val_info.id_status {
         IdStatus::Val => {
