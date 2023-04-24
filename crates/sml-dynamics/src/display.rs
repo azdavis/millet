@@ -2,6 +2,8 @@
 
 // TODO fix prec everywhere
 
+#![allow(clippy::too_many_lines)]
+
 use crate::dynamics::Dynamics;
 use crate::types::{Con, ConKind, Env, Exception, FrameKind, Step, Val};
 use sml_hir::Lab;
@@ -25,12 +27,13 @@ impl fmt::Display for Dynamics<'_> {
           f.write_str(" = ")?;
         }
         FrameKind::AppClosureArg(matcher) => {
+          f.write_str("(")?;
           FnDisplay { matcher, ars }.fmt(f)?;
-          f.write_str(" ")?;
+          f.write_str(") (")?;
         }
         FrameKind::AppConArg(kind) => {
           kind.fmt(f)?;
-          f.write_str(" ")?;
+          f.write_str(" (")?;
         }
         FrameKind::Raise => f.write_str("raise ")?,
         FrameKind::Let(_, _) => f.write_str("let ")?,
@@ -56,7 +59,7 @@ impl fmt::Display for Dynamics<'_> {
     f.write_str(" (* << *)")?;
     for frame in self.st.frames.iter().rev() {
       match &frame.kind {
-        FrameKind::AppClosureArg(_) | FrameKind::AppConArg(_) | FrameKind::Raise => {}
+        FrameKind::Raise => {}
         FrameKind::Record(_, _, es) => {
           if !es.is_empty() {
             f.write_str(", ")?;
@@ -64,6 +67,7 @@ impl fmt::Display for Dynamics<'_> {
           fmt_util::comma_seq(f, es.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars }))?;
           f.write_str(" }")?;
         }
+        FrameKind::AppClosureArg(_) | FrameKind::AppConArg(_) => f.write_str(")")?,
         FrameKind::AppFunc(exp) => {
           f.write_str(" ")?;
           ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
