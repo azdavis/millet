@@ -3,13 +3,18 @@
 // TODO fix prec everywhere
 
 use crate::dynamics::Dynamics;
-use crate::types::{Con, ConKind, Exception, FrameKind, Step, Val};
+use crate::types::{Con, ConKind, Env, Exception, FrameKind, Step, Val};
 use sml_hir::Lab;
 use std::fmt;
 
 impl fmt::Display for Dynamics<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let ars = &self.cx.ars;
+    f.write_str("(* env:\n")?;
+    if let Some(frame) = self.st.frames.last() {
+      EnvDisplay { env: &frame.env, ars, indent: 0 }.fmt(f)?;
+    }
+    f.write_str("*)\n")?;
     for frame in &self.st.frames {
       match &frame.kind {
         FrameKind::AppFunc(_) | FrameKind::Handle(_) => {}
@@ -38,6 +43,7 @@ impl fmt::Display for Dynamics<'_> {
         FrameKind::In(_) => f.write_str("local in ")?,
       }
     }
+    f.write_str("(* >> *) ")?;
     match self.step.as_ref().ok_or(fmt::Error)? {
       Step::Exp(exp) => ExpDisplay { exp: *exp, ars }.fmt(f)?,
       Step::Val(val) => ValDisplay { val, ars }.fmt(f)?,
@@ -47,6 +53,7 @@ impl fmt::Display for Dynamics<'_> {
       }
       Step::Dec(dec) => DecDisplay { dec: *dec, ars }.fmt(f)?,
     }
+    f.write_str(" (* << *)")?;
     for frame in self.st.frames.iter().rev() {
       match &frame.kind {
         FrameKind::AppClosureArg(_) | FrameKind::AppConArg(_) | FrameKind::Raise => {}
@@ -102,7 +109,6 @@ impl fmt::Display for Dynamics<'_> {
       }
     }
     Ok(())
-    // go(&mut iter, self.cx.ars, self.step.as_ref().ok_or(fmt::Error)?, f)
   }
 }
 
@@ -370,5 +376,34 @@ impl fmt::Display for DecDisplay<'_> {
       }
       sml_hir::Dec::Open(_) => f.write_str("open ..."),
     }
+  }
+}
+
+struct EnvDisplay<'a> {
+  env: &'a Env,
+  ars: &'a sml_hir::Arenas,
+  indent: usize,
+}
+
+impl fmt::Display for EnvDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    for (name, env) in &self.env.str {
+      for _ in 0..self.indent {
+        f.write_str("  ")?;
+      }
+      name.fmt(f)?;
+      f.write_str(":\n")?;
+      EnvDisplay { env, ars: self.ars, indent: self.indent + 1 }.fmt(f)?;
+    }
+    for (name, val) in &self.env.val {
+      for _ in 0..self.indent {
+        f.write_str("  ")?;
+      }
+      name.fmt(f)?;
+      f.write_str(": ")?;
+      ValDisplay { val, ars: self.ars }.fmt(f)?;
+      f.write_str("\n")?;
+    }
+    Ok(())
   }
 }
