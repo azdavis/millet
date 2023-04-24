@@ -32,8 +32,9 @@ VS Code and compatible editors like [VSCodium][] are the only editors for which 
 
 Millet is also available in various other package managers and repositories. These are maintained by the community and are **not** official, so they may be out of date.
 
-- [nixpkgs][]
-- [aur][]
+- [AUR][]
+- [Homebrew][]
+- [Nixpkgs][]
 
 ## Community
 
@@ -133,5 +134,6 @@ Like [Rust][rust] itself and many other projects in the Rust community, Millet i
 [lang-srv]: https://microsoft.github.io/language-server-protocol/
 [ra]: https://rust-analyzer.github.io
 [rel]: https://github.com/azdavis/millet/releases/
-[nixpkgs]: https://search.nixos.org/packages?channel=unstable&show=millet
 [aur]: https://aur.archlinux.org/packages/millet
+[nixpkgs]: https://search.nixos.org/packages?channel=unstable&show=millet
+[homebrew]: https://formulae.brew.sh/formula/millet#default
