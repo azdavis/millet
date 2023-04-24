@@ -71,14 +71,12 @@ If your editor supports it, we also recommend installing Rust Analyzer, a langua
 
 ### Building/testing
 
-This is a regular Rust project, so the usual commands
+This is a regular Rust project, so the usual Cargo commands will work:
 
 ```sh
 $ cargo build
 $ cargo test
 ```
-
-will work.
 
 We also use clippy and rustfmt, which can be run with cargo as well:
 
@@ -87,7 +85,7 @@ $ cargo fmt
 $ cargo clippy
 ```
 
-These can all be run together as they are in CI with:
+These can all be run together as they are in CI:
 
 ```sh
 $ cargo xtask ci
@@ -113,7 +111,7 @@ The logo features Polly Morphism, wearing a 15-150 style T-shirt, writing SML on
 
 ## License
 
-Like [Rust][rust] itself and many other projects in the Rust community, Millet is licensed under either the MIT license or the Apache license v2.0, at your option.
+Like Rust itself and many other projects in the Rust community, Millet is licensed under either the MIT license or the Apache license v2.0, at your option.
 
 [blog]: https://azdavis.net/posts/millet/
 [cmu150]: http://www.cs.cmu.edu/~15150/
