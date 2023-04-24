@@ -55,6 +55,7 @@ impl fmt::Display for Dynamics<'_> {
         ExceptionDisplay { exception, ars }.fmt(f)?;
       }
       Step::Dec(dec) => DecDisplay { dec: *dec, ars }.fmt(f)?,
+      Step::DecDone => {}
     }
     f.write_str(" (* << *)")?;
     for frame in self.st.frames.iter().rev() {

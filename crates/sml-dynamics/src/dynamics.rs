@@ -28,9 +28,9 @@ impl<'a> Dynamics<'a> {
     s = step(&mut self.st, self.cx, s);
     if self.st.frames.is_empty() {
       match s {
-        Step::Val(_) => Progress::Val,
         Step::Raise(_) => Progress::Raise,
-        Step::Exp(_) | Step::Dec(_) => unreachable!("can't be done with Exp or Dec"),
+        Step::Val(_) | Step::Exp(_) | Step::Dec(_) => unreachable!("not done, but no frames"),
+        Step::DecDone => Progress::Done,
       }
     } else {
       self.step = Some(s);
@@ -44,8 +44,8 @@ impl<'a> Dynamics<'a> {
 pub enum Progress {
   /// Still evaluating.
   Still,
-  /// Returned a value.
-  Val,
+  /// Done evaluating.
+  Done,
   /// Raised an exception.
   Raise,
 }

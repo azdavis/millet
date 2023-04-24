@@ -61,6 +61,7 @@ pub(crate) enum Step {
   Val(Val),
   Raise(Exception),
   Dec(sml_hir::DecIdx),
+  DecDone,
 }
 
 impl Step {

@@ -53,8 +53,8 @@ fn check(s: &str) {
     buf.clear();
     match s {
       sml_dynamics::Progress::Still => {}
-      sml_dynamics::Progress::Val => {
-        println!("stepped to a value");
+      sml_dynamics::Progress::Done => {
+        println!("done");
         break;
       }
       sml_dynamics::Progress::Raise => {

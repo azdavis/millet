@@ -166,6 +166,8 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         step_dec(st)
       }
     },
+    // done with a dec
+    Step::DecDone => Step::DecDone,
   }
 }
 
@@ -204,5 +206,5 @@ fn step_dec(st: &mut St) -> Step {
       },
     }
   }
-  unreachable!("ran out of frames")
+  Step::DecDone
 }
