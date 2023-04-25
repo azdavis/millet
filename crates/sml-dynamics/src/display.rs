@@ -1,7 +1,5 @@
 //! Displaying some types.
 
-// TODO fix prec everywhere
-
 #![allow(clippy::too_many_lines)]
 
 use crate::dynamics::Dynamics;
@@ -125,9 +123,9 @@ impl fmt::Display for Dynamics<'_> {
           f.write_str("end")?;
         }
         FrameKind::ValBind(_, _, val_binds) => {
-          for &val_bind in val_binds.iter().rev() {
+          for (idx, &val_bind) in val_binds.iter().rev().enumerate() {
             write_nl_indent(indent, f)?;
-            ValBindDisplay { val_bind, ars }.fmt(f)?;
+            ValBindDisplay { val_bind, ars, first: idx == 0 }.fmt(f)?;
           }
         }
         FrameKind::Local(local_decs, in_decs) => {
@@ -214,11 +212,12 @@ impl fmt::Display for ValDisplay<'_> {
 struct ValBindDisplay<'a> {
   val_bind: sml_hir::ValBind,
   ars: &'a sml_hir::Arenas,
+  first: bool,
 }
 
 impl fmt::Display for ValBindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.write_str("val ")?;
+    f.write_str(if self.first { "val " } else { "and " })?;
     if self.val_bind.rec {
       f.write_str("rec ")?;
     }
@@ -522,8 +521,11 @@ impl fmt::Display for DecDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.ars.dec[self.dec] {
       sml_hir::Dec::Val(_, val_binds) => {
-        let val_binds =
-          val_binds.iter().map(|&val_bind| ValBindDisplay { val_bind, ars: self.ars });
+        let val_binds = val_binds.iter().enumerate().map(|(idx, &val_bind)| ValBindDisplay {
+          val_bind,
+          ars: self.ars,
+          first: idx == 0,
+        });
         fmt_util::sep_seq(f, " ", val_binds)
       }
       sml_hir::Dec::Ty(_) => f.write_str("type ..."),
