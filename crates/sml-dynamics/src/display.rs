@@ -36,14 +36,14 @@ impl fmt::Display for Dynamics<'_> {
           f.write_str(" (")?;
         }
         FrameKind::Raise => f.write_str("raise ")?,
-        FrameKind::Let(_, _) => f.write_str("let ")?,
+        FrameKind::Let(_, _) => f.write_str("let\n")?,
         FrameKind::ValBind(pat, _) => {
           f.write_str("val ")?;
           PatDisplay { pat: pat.ok_or(fmt::Error)?, ars }.fmt(f)?;
           f.write_str(" = ")?;
         }
-        FrameKind::Local(_, _) => f.write_str("local ")?,
-        FrameKind::In(_) => f.write_str("local in ")?,
+        FrameKind::Local(_, _) => f.write_str("local\n")?,
+        FrameKind::In(_) => f.write_str("local in\n")?,
       }
     }
     f.write_str("(* >> *) ")?;
@@ -79,37 +79,37 @@ impl fmt::Display for Dynamics<'_> {
         }
         FrameKind::Let(decs, exp) => {
           for &dec in decs.iter().rev() {
-            f.write_str(" ")?;
+            f.write_str("\n")?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str(" in ")?;
+          f.write_str("\nin\n")?;
           ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
-          f.write_str(" end")?;
+          f.write_str("\nend")?;
         }
         FrameKind::ValBind(_, val_binds) => {
           for &val_bind in val_binds.iter().rev() {
-            f.write_str(" ")?;
+            f.write_str("\n")?;
             ValBindDisplay { val_bind, ars }.fmt(f)?;
           }
         }
         FrameKind::Local(local_decs, in_decs) => {
           for &dec in local_decs.iter().rev() {
-            f.write_str(" ")?;
+            f.write_str("\n")?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str(" in")?;
+          f.write_str("\nin")?;
           for &dec in in_decs.iter().rev() {
-            f.write_str(" ")?;
+            f.write_str("\n")?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str(" end")?;
+          f.write_str("\nend")?;
         }
         FrameKind::In(in_decs) => {
           for &dec in in_decs.iter().rev() {
-            f.write_str(" ")?;
+            f.write_str("\n")?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str("end")?;
+          f.write_str("\nend")?;
         }
       }
     }
