@@ -44,8 +44,11 @@ impl fmt::Display for Dynamics<'_> {
           indent += 1;
           write_nl_indent(indent, f)?;
         }
-        FrameKind::ValBind(pat, _) => {
+        FrameKind::ValBind(recursive, pat, _) => {
           f.write_str("val ")?;
+          if *recursive {
+            f.write_str("rec ")?;
+          }
           PatDisplay { pat: pat.ok_or(fmt::Error)?, ars }.fmt(f)?;
           f.write_str(" = ")?;
         }
@@ -105,7 +108,7 @@ impl fmt::Display for Dynamics<'_> {
           write_nl_indent(indent, f)?;
           f.write_str("end")?;
         }
-        FrameKind::ValBind(_, val_binds) => {
+        FrameKind::ValBind(_, _, val_binds) => {
           for &val_bind in val_binds.iter().rev() {
             write_nl_indent(indent, f)?;
             ValBindDisplay { val_bind, ars }.fmt(f)?;
@@ -177,12 +180,12 @@ impl fmt::Display for ValDisplay<'_> {
         fmt_util::comma_seq(f, rows)?;
         f.write_str(" }")
       }
-      Val::Closure(_, matcher) => {
+      Val::Closure(clos) => {
         let needs_paren = matches!(self.prec, Prec::App | Prec::Matcher | Prec::Atomic);
         if needs_paren {
           f.write_str("(")?;
         }
-        FnDisplay { matcher, ars: self.ars }.fmt(f)?;
+        FnDisplay { matcher: &clos.matcher, ars: self.ars }.fmt(f)?;
         if needs_paren {
           f.write_str(")")?;
         }

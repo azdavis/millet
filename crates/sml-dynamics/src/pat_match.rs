@@ -24,7 +24,7 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
         true
       }
     },
-    (_, Val::Closure(_, _)) => unreachable!("match non-(Wild or Con) with Closure"),
+    (_, Val::Closure { .. }) => unreachable!("match non-(Wild or Con) with Closure"),
     (sml_hir::Pat::SCon(pat_sc), Val::SCon(val_sc)) => match (pat_sc, val_sc) {
       (SCon::Real(_), _) => unreachable!("Real pattern"),
       (_, SCon::Real(_)) => unreachable!("match non-(Wild or Con) with Real"),

@@ -1,6 +1,6 @@
 //! Dynamics types.
 
-use fast_hash::FxHashMap;
+use fast_hash::{FxHashMap, FxHashSet};
 use sml_hir::{la_arena, Lab, SCon};
 use sml_statics_types::info::IdStatusMap;
 use sml_statics_types::sym::Exn;
@@ -12,7 +12,14 @@ pub(crate) enum Val {
   SCon(SCon),
   Con(Con),
   Record(BTreeMap<Lab, Val>),
-  Closure(Env, Vec<sml_hir::Arm>),
+  Closure(Closure),
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct Closure {
+  pub(crate) env: Env,
+  pub(crate) this: FxHashSet<Name>,
+  pub(crate) matcher: Vec<sml_hir::Arm>,
 }
 
 #[derive(Debug, Clone)]
@@ -116,7 +123,7 @@ pub(crate) enum FrameKind {
   Raise,
   Handle(Vec<sml_hir::Arm>),
   Let(Vec<sml_hir::DecIdx>, sml_hir::ExpIdx),
-  ValBind(sml_hir::PatIdx, Vec<sml_hir::ValBind>),
+  ValBind(bool, sml_hir::PatIdx, Vec<sml_hir::ValBind>),
   Local(Vec<sml_hir::DecIdx>, Vec<sml_hir::DecIdx>),
   In(Vec<sml_hir::DecIdx>),
 }

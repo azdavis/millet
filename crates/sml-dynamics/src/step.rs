@@ -1,9 +1,11 @@
 //! Stepping a stack machine.
 
 use crate::pat_match;
-use crate::types::{Con, ConKind, Cx, Env, Frame, FrameKind, St, Step, Val, ValEnv};
+use crate::types::{Closure, Con, ConKind, Cx, Env, Frame, FrameKind, St, Step, Val, ValEnv};
+use fast_hash::FxHashSet;
 use sml_statics_types::info::IdStatus;
 use std::collections::BTreeMap;
+use str_util::Name;
 
 /// i think this is called a "stack machine". it is NOT recursive.
 #[allow(clippy::too_many_lines)]
@@ -52,7 +54,11 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         st.frames.push(Frame::new(Env::default(), FrameKind::Raise));
         Step::exp(*exp)
       }
-      sml_hir::Exp::Fn(matcher, _) => Step::Val(Val::Closure(st.env.clone(), matcher.clone())),
+      sml_hir::Exp::Fn(matcher, _) => {
+        let clos =
+          Closure { env: st.env.clone(), this: FxHashSet::default(), matcher: matcher.clone() };
+        Step::Val(Val::Closure(clos))
+      }
       sml_hir::Exp::Typed(exp, _) => Step::exp(*exp),
     },
     Step::Val(val) => match st.frames.pop() {
@@ -71,9 +77,14 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
           }
         }
         FrameKind::AppFunc(arg) => match val {
-          Val::Closure(clos_env, matcher) => {
+          Val::Closure(clos) => {
             st.env = frame.env;
-            st.frames.push(Frame::new(clos_env, FrameKind::AppClosureArg(matcher)));
+            let mut env = clos.env.clone();
+            // recursion!
+            for name in &clos.this {
+              env.val.insert(name.clone(), Val::Closure(clos.clone()));
+            }
+            st.frames.push(Frame::new(env, FrameKind::AppClosureArg(clos.matcher)));
             Step::exp(arg)
           }
           Val::Con(con) => {
@@ -102,16 +113,28 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         },
         // handle wasn't needed, as head didn't raise
         FrameKind::Handle(_) => Step::Val(val),
-        FrameKind::ValBind(pat, mut val_binds) => {
+        FrameKind::ValBind(recursive, pat, mut val_binds) => {
           let mut ac = ValEnv::default();
-          if !pat_match::get(&mut ac, cx, pat, &val) {
+          if recursive {
+            let mut this = FxHashSet::<Name>::default();
+            rec_fn_names(cx.ars, &mut this, pat);
+            let mut clos = match val {
+              Val::Closure(x) => x,
+              _ => unreachable!("val rec value must be Closure"),
+            };
+            assert!(clos.this.is_empty());
+            clos.this = this.clone();
+            for name in this {
+              ac.insert(name, Val::Closure(clos.clone()));
+            }
+          } else if !pat_match::get(&mut ac, cx, pat, &val) {
             return Step::Raise(cx.bind_exn());
           }
           st.env = frame.env;
           st.env.val.extend(ac);
           match val_binds.pop() {
             Some(vb) => {
-              st.push_with_cur_env(FrameKind::ValBind(vb.pat, val_binds));
+              st.push_with_cur_env(FrameKind::ValBind(vb.rec, vb.pat, val_binds));
               Step::exp(vb.exp)
             }
             None => step_dec(st),
@@ -148,7 +171,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         let mut val_binds = val_binds.clone();
         val_binds.reverse();
         let vb = val_binds.pop().unwrap();
-        st.push_with_cur_env(FrameKind::ValBind(vb.pat, val_binds));
+        st.push_with_cur_env(FrameKind::ValBind(vb.rec, vb.pat, val_binds));
         Step::exp(vb.exp)
       }
       sml_hir::Dec::Ty(_)
@@ -183,7 +206,7 @@ fn step_dec(st: &mut St) -> Step {
       | FrameKind::AppConArg(_)
       | FrameKind::Raise
       | FrameKind::Handle(_)
-      | FrameKind::ValBind(_, _) => unreachable!("bad surrounding frame for Dec"),
+      | FrameKind::ValBind(_, _, _) => unreachable!("bad surrounding frame for Dec"),
       FrameKind::Let(mut decs, exp) => match decs.pop() {
         None => return Step::exp(exp),
         Some(dec) => {
@@ -210,4 +233,23 @@ fn step_dec(st: &mut St) -> Step {
     }
   }
   Step::DecDone
+}
+
+fn rec_fn_names(ars: &sml_hir::Arenas, ac: &mut FxHashSet<Name>, pat: sml_hir::PatIdx) {
+  match &ars.pat[pat.expect("no pat")] {
+    sml_hir::Pat::Wild => {}
+    sml_hir::Pat::SCon(_) => unreachable!("SCon pat cannot match fn"),
+    sml_hir::Pat::Con(path, argument) => {
+      assert!(argument.is_none(), "Con pat with arg cannot match fn");
+      assert!(path.prefix().is_empty(), "Con pat cannot match fn");
+      ac.insert(path.last().clone());
+    }
+    sml_hir::Pat::Record { .. } => unreachable!("Record pat cannot match fn"),
+    sml_hir::Pat::Typed(pat, _) => rec_fn_names(ars, ac, *pat),
+    sml_hir::Pat::As(name, pat) => {
+      ac.insert(name.clone());
+      rec_fn_names(ars, ac, *pat);
+    }
+    sml_hir::Pat::Or(_) => unreachable!("Or pat should have been denied with unreachable pattern"),
+  }
 }
