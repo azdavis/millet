@@ -17,6 +17,7 @@ impl fmt::Display for Dynamics<'_> {
       EnvDisplay { env: &frame.env, ars, indent: 0 }.fmt(f)?;
     }
     f.write_str("*)\n")?;
+    let mut indent = 0usize;
     for frame in &self.st.frames {
       match &frame.kind {
         FrameKind::AppFunc(_) | FrameKind::Handle(_) => {}
@@ -36,14 +37,26 @@ impl fmt::Display for Dynamics<'_> {
           f.write_str(" (")?;
         }
         FrameKind::Raise => f.write_str("raise ")?,
-        FrameKind::Let(_, _) => f.write_str("let\n")?,
+        FrameKind::Let(_, _) => {
+          f.write_str("let")?;
+          indent += 1;
+          write_nl_indent(indent, f)?;
+        }
         FrameKind::ValBind(pat, _) => {
           f.write_str("val ")?;
           PatDisplay { pat: pat.ok_or(fmt::Error)?, ars }.fmt(f)?;
           f.write_str(" = ")?;
         }
-        FrameKind::Local(_, _) => f.write_str("local\n")?,
-        FrameKind::In(_) => f.write_str("local in\n")?,
+        FrameKind::Local(_, _) => {
+          f.write_str("local")?;
+          indent += 1;
+          write_nl_indent(indent, f)?;
+        }
+        FrameKind::In(_) => {
+          f.write_str("local in")?;
+          indent += 1;
+          write_nl_indent(indent, f)?;
+        }
       }
     }
     f.write_str("(* >> *) ")?;
@@ -79,42 +92,59 @@ impl fmt::Display for Dynamics<'_> {
         }
         FrameKind::Let(decs, exp) => {
           for &dec in decs.iter().rev() {
-            f.write_str("\n")?;
+            write_nl_indent(indent, f)?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str("\nin\n")?;
+          write_nl_indent(indent - 1, f)?;
+          f.write_str("in")?;
+          write_nl_indent(indent, f)?;
           ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars }.fmt(f)?;
-          f.write_str("\nend")?;
+          indent -= 1;
+          write_nl_indent(indent, f)?;
+          f.write_str("end")?;
         }
         FrameKind::ValBind(_, val_binds) => {
           for &val_bind in val_binds.iter().rev() {
-            f.write_str("\n")?;
+            write_nl_indent(indent, f)?;
             ValBindDisplay { val_bind, ars }.fmt(f)?;
           }
         }
         FrameKind::Local(local_decs, in_decs) => {
           for &dec in local_decs.iter().rev() {
-            f.write_str("\n")?;
+            write_nl_indent(indent, f)?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str("\nin")?;
+          write_nl_indent(indent - 1, f)?;
+          f.write_str("in")?;
           for &dec in in_decs.iter().rev() {
-            f.write_str("\n")?;
+            write_nl_indent(indent, f)?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str("\nend")?;
+          indent -= 1;
+          write_nl_indent(indent, f)?;
+          f.write_str("end")?;
         }
         FrameKind::In(in_decs) => {
           for &dec in in_decs.iter().rev() {
-            f.write_str("\n")?;
+            write_nl_indent(indent, f)?;
             DecDisplay { dec, ars }.fmt(f)?;
           }
-          f.write_str("\nend")?;
+          indent -= 1;
+          write_nl_indent(indent, f)?;
+          f.write_str("end")?;
         }
       }
     }
     Ok(())
   }
+}
+
+fn write_nl_indent(indent: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+  f.write_str("\n")?;
+  for _ in 0..indent {
+    f.write_str("  ")?;
+  }
+  Ok(())
 }
 
 struct ValDisplay<'a> {
