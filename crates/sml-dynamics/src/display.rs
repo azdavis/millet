@@ -168,7 +168,9 @@ impl fmt::Display for ValDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.val {
       Val::SCon(scon) => scon.fmt(f),
-      Val::Con(con) => ConDisplay { con, ars: self.ars }.fmt(f),
+      Val::Con(con) => {
+        ConDisplay { con, ars: self.ars, atomic: matches!(self.prec, Prec::Atomic) }.fmt(f)
+      }
       Val::Record(vs) => {
         f.write_str("{ ")?;
         let rows = vs.iter().map(|(lab, val)| ValRowDisplay { lab, val, ars: self.ars });
@@ -407,14 +409,22 @@ impl fmt::Display for PatRowDisplay<'_> {
 struct ConDisplay<'a> {
   con: &'a Con,
   ars: &'a sml_hir::Arenas,
+  atomic: bool,
 }
 
 impl fmt::Display for ConDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let needs_paren = self.atomic && self.con.arg.is_some();
+    if needs_paren {
+      f.write_str("(")?;
+    }
     self.con.kind.fmt(f)?;
     if let Some(val) = &self.con.arg {
       f.write_str(" ")?;
-      ValDisplay { val: val.as_ref(), ars: self.ars, prec: Prec::App }.fmt(f)?;
+      ValDisplay { val: val.as_ref(), ars: self.ars, prec: Prec::Atomic }.fmt(f)?;
+    }
+    if needs_paren {
+      f.write_str(")")?;
     }
     Ok(())
   }
