@@ -167,7 +167,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
       }
     },
     // done with a dec
-    Step::DecDone => Step::DecDone,
+    Step::DecDone => {
+      assert!(st.frames.is_empty(), "can't be done but still have frames");
+      Step::DecDone
+    }
   }
 }
 
