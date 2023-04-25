@@ -3,6 +3,7 @@
 use crate::pat_match;
 use crate::types::{Closure, Con, ConKind, Cx, Env, Frame, FrameKind, St, Step, Val, ValEnv};
 use fast_hash::FxHashSet;
+use sml_hir::Lab;
 use sml_statics_types::info::IdStatus;
 use std::collections::BTreeMap;
 use str_util::Name;
@@ -26,11 +27,13 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
       },
       sml_hir::Exp::Record(exp_rows) => {
         let mut exp_rows = exp_rows.clone();
+        let is_tuple = exp_rows.len() != 1
+          && exp_rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
         exp_rows.reverse();
         match exp_rows.pop() {
           None => Step::Val(Val::Record(BTreeMap::new())),
           Some((lab, exp)) => {
-            st.push_with_cur_env(FrameKind::Record(BTreeMap::new(), lab, exp_rows));
+            st.push_with_cur_env(FrameKind::Record(is_tuple, BTreeMap::new(), lab, exp_rows));
             Step::exp(exp)
           }
         }
@@ -65,13 +68,13 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
       // done evaluating
       None => Step::Val(val),
       Some(frame) => match frame.kind {
-        FrameKind::Record(mut val_rows, lab, mut exp_rows) => {
+        FrameKind::Record(is_tuple, mut val_rows, lab, mut exp_rows) => {
           assert!(val_rows.insert(lab, val).is_none());
           match exp_rows.pop() {
             None => Step::Val(Val::Record(val_rows)),
             Some((lab, exp)) => {
               st.env = frame.env;
-              st.push_with_cur_env(FrameKind::Record(val_rows, lab, exp_rows));
+              st.push_with_cur_env(FrameKind::Record(is_tuple, val_rows, lab, exp_rows));
               Step::exp(exp)
             }
           }
@@ -200,7 +203,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
 fn step_dec(st: &mut St) -> Step {
   while let Some(frame) = st.frames.pop() {
     match frame.kind {
-      FrameKind::Record(_, _, _)
+      FrameKind::Record(_, _, _, _)
       | FrameKind::AppFunc(_)
       | FrameKind::AppClosureArg(_)
       | FrameKind::AppConArg(_)

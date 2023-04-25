@@ -116,13 +116,15 @@ impl Frame {
 
 #[derive(Debug)]
 pub(crate) enum FrameKind {
-  Record(BTreeMap<Lab, Val>, Lab, Vec<(Lab, sml_hir::ExpIdx)>),
+  /// The bool is whether this is actually a tuple.
+  Record(bool, BTreeMap<Lab, Val>, Lab, Vec<(Lab, sml_hir::ExpIdx)>),
   AppFunc(sml_hir::ExpIdx),
   AppClosureArg(Vec<sml_hir::Arm>),
   AppConArg(ConKind),
   Raise,
   Handle(Vec<sml_hir::Arm>),
   Let(Vec<sml_hir::DecIdx>, sml_hir::ExpIdx),
+  /// The bool is whether this is recursive.
   ValBind(bool, sml_hir::PatIdx, Vec<sml_hir::ValBind>),
   Local(Vec<sml_hir::DecIdx>, Vec<sml_hir::DecIdx>),
   In(Vec<sml_hir::DecIdx>),

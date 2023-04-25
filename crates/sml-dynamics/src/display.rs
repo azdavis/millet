@@ -23,14 +23,22 @@ impl fmt::Display for Dynamics<'_> {
     for frame in &self.st.frames {
       match &frame.kind {
         FrameKind::AppFunc(_) | FrameKind::Handle(_) => {}
-        FrameKind::Record(vs, lab, _) => {
-          f.write_str("{ ")?;
-          for (lab, val) in vs {
-            ValRowDisplay { lab, val, ars }.fmt(f)?;
-            f.write_str(", ")?;
+        FrameKind::Record(is_tuple, vs, lab, _) => {
+          if *is_tuple {
+            f.write_str("(")?;
+            for val in vs.values() {
+              ValDisplay { val, ars, prec: Prec::Min }.fmt(f)?;
+              f.write_str(", ")?;
+            }
+          } else {
+            f.write_str("{ ")?;
+            for (lab, val) in vs {
+              ValRowDisplay { lab, val, ars }.fmt(f)?;
+              f.write_str(", ")?;
+            }
+            lab.fmt(f)?;
+            f.write_str(" = ")?;
           }
-          lab.fmt(f)?;
-          f.write_str(" = ")?;
         }
         FrameKind::AppClosureArg(matcher) => {
           f.write_str("(")?;
@@ -52,7 +60,7 @@ impl fmt::Display for Dynamics<'_> {
           if *recursive {
             f.write_str("rec ")?;
           }
-          PatDisplay { pat: pat.ok_or(fmt::Error)?, ars }.fmt(f)?;
+          PatDisplay { pat: *pat, ars }.fmt(f)?;
           f.write_str(" = ")?;
         }
         FrameKind::Local(_, _) => {
@@ -69,7 +77,7 @@ impl fmt::Display for Dynamics<'_> {
     }
     f.write_str("(* >> *) ")?;
     match self.step.as_ref().ok_or(fmt::Error)? {
-      Step::Exp(exp) => ExpDisplay { exp: *exp, ars, prec }.fmt(f)?,
+      Step::Exp(exp) => ExpDisplay { exp: Some(*exp), ars, prec }.fmt(f)?,
       Step::Val(val) => ValDisplay { val, ars, prec }.fmt(f)?,
       Step::Raise(exception) => {
         f.write_str("raise ")?;
@@ -82,15 +90,22 @@ impl fmt::Display for Dynamics<'_> {
     for frame in self.st.frames.iter().rev() {
       match &frame.kind {
         FrameKind::Raise => {}
-        FrameKind::Record(_, _, es) => {
+        FrameKind::Record(is_tuple, _, _, es) => {
           f.write_str(", ")?;
-          fmt_util::comma_seq(f, es.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars }))?;
-          f.write_str(" }")?;
+          if *is_tuple {
+            let rows = es.iter().map(|&(_, exp)| ExpDisplay { exp, ars, prec: Prec::Min });
+            fmt_util::comma_seq(f, rows.into_iter())?;
+            f.write_str(")")?;
+          } else {
+            let rows = es.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars });
+            fmt_util::comma_seq(f, rows)?;
+            f.write_str(" }")?;
+          }
         }
         FrameKind::AppClosureArg(_) | FrameKind::AppConArg(_) => f.write_str(")")?,
         FrameKind::AppFunc(exp) => {
           f.write_str(" ")?;
-          ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars, prec: Prec::Atomic }.fmt(f)?;
+          ExpDisplay { exp: *exp, ars, prec: Prec::Atomic }.fmt(f)?;
         }
         FrameKind::Handle(matcher) => {
           f.write_str(" handle ")?;
@@ -104,7 +119,7 @@ impl fmt::Display for Dynamics<'_> {
           write_nl_indent(indent - 1, f)?;
           f.write_str("in")?;
           write_nl_indent(indent, f)?;
-          ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars, prec: Prec::Min }.fmt(f)?;
+          ExpDisplay { exp: *exp, ars, prec: Prec::Min }.fmt(f)?;
           indent -= 1;
           write_nl_indent(indent, f)?;
           f.write_str("end")?;
@@ -207,9 +222,9 @@ impl fmt::Display for ValBindDisplay<'_> {
     if self.val_bind.rec {
       f.write_str("rec ")?;
     }
-    PatDisplay { pat: self.val_bind.pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+    PatDisplay { pat: self.val_bind.pat, ars: self.ars }.fmt(f)?;
     f.write_str(" = ")?;
-    ExpDisplay { exp: self.val_bind.exp.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::Min }.fmt(f)
+    ExpDisplay { exp: self.val_bind.exp, ars: self.ars, prec: Prec::Min }.fmt(f)
   }
 }
 
@@ -247,35 +262,45 @@ struct ArmDisplay<'a> {
 
 impl fmt::Display for ArmDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    PatDisplay { pat: self.arm.pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+    PatDisplay { pat: self.arm.pat, ars: self.ars }.fmt(f)?;
     f.write_str(" => ")?;
-    ExpDisplay { exp: self.arm.exp.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::Min }.fmt(f)
+    ExpDisplay { exp: self.arm.exp, ars: self.ars, prec: Prec::Min }.fmt(f)
   }
 }
 
 struct ExpDisplay<'a> {
-  exp: sml_hir::la_arena::Idx<sml_hir::Exp>,
+  exp: sml_hir::ExpIdx,
   ars: &'a sml_hir::Arenas,
   prec: Prec,
 }
 
 impl fmt::Display for ExpDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &self.ars.exp[self.exp] {
+    match &self.ars.exp[self.exp.ok_or(fmt::Error)?] {
       sml_hir::Exp::Hole => f.write_str("_"),
       sml_hir::Exp::SCon(scon) => scon.fmt(f),
       sml_hir::Exp::Path(path) => path.fmt(f),
       sml_hir::Exp::Record(rows) => {
-        f.write_str("{ ")?;
-        let rows = rows.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars: self.ars });
-        fmt_util::comma_seq(f, rows)?;
-        f.write_str(" }")
+        let is_tuple =
+          rows.len() != 1 && rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
+        if is_tuple {
+          f.write_str("(")?;
+          let rows =
+            rows.iter().map(|&(_, exp)| ExpDisplay { exp, ars: self.ars, prec: Prec::Min });
+          fmt_util::comma_seq(f, rows)?;
+          f.write_str(")")
+        } else {
+          f.write_str("{ ")?;
+          let rows = rows.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars: self.ars });
+          fmt_util::comma_seq(f, rows)?;
+          f.write_str(" }")
+        }
       }
       sml_hir::Exp::Let(decs, exp) => {
         f.write_str("let ")?;
         fmt_util::sep_seq(f, " ", decs.iter().rev().map(|&dec| DecDisplay { dec, ars: self.ars }))?;
         f.write_str(" in ")?;
-        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::Min }.fmt(f)?;
+        ExpDisplay { exp: *exp, ars: self.ars, prec: Prec::Min }.fmt(f)?;
         f.write_str(" end")
       }
       sml_hir::Exp::App(func, argument) => {
@@ -283,10 +308,9 @@ impl fmt::Display for ExpDisplay<'_> {
         if needs_paren {
           f.write_str("(")?;
         }
-        ExpDisplay { exp: func.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::App }.fmt(f)?;
+        ExpDisplay { exp: *func, ars: self.ars, prec: Prec::App }.fmt(f)?;
         f.write_str(" ")?;
-        ExpDisplay { exp: argument.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::Atomic }
-          .fmt(f)?;
+        ExpDisplay { exp: *argument, ars: self.ars, prec: Prec::Atomic }.fmt(f)?;
         if needs_paren {
           f.write_str(")")?;
         }
@@ -297,7 +321,7 @@ impl fmt::Display for ExpDisplay<'_> {
         if needs_paren {
           f.write_str(")")?;
         }
-        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::Matcher }.fmt(f)?;
+        ExpDisplay { exp: *exp, ars: self.ars, prec: Prec::Matcher }.fmt(f)?;
         f.write_str(" handle ")?;
         fmt_util::sep_seq(f, " | ", matcher.iter().map(|arm| ArmDisplay { arm, ars: self.ars }))?;
         if needs_paren {
@@ -311,7 +335,7 @@ impl fmt::Display for ExpDisplay<'_> {
           f.write_str("(")?;
         }
         f.write_str("raise ")?;
-        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::Min }.fmt(f)?;
+        ExpDisplay { exp: *exp, ars: self.ars, prec: Prec::Min }.fmt(f)?;
         if needs_paren {
           f.write_str("(")?;
         }
@@ -329,7 +353,7 @@ impl fmt::Display for ExpDisplay<'_> {
         Ok(())
       }
       sml_hir::Exp::Typed(exp, _) => {
-        ExpDisplay { exp: exp.ok_or(fmt::Error)?, ars: self.ars, prec: self.prec }.fmt(f)
+        ExpDisplay { exp: *exp, ars: self.ars, prec: self.prec }.fmt(f)
       }
     }
   }
@@ -345,50 +369,58 @@ impl fmt::Display for ExpRowDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.lab.fmt(f)?;
     f.write_str(" = ")?;
-    ExpDisplay { exp: self.exp.ok_or(fmt::Error)?, ars: self.ars, prec: Prec::Min }.fmt(f)
+    ExpDisplay { exp: self.exp, ars: self.ars, prec: Prec::Min }.fmt(f)
   }
 }
 
 struct PatDisplay<'a> {
-  pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
+  pat: sml_hir::PatIdx,
   ars: &'a sml_hir::Arenas,
 }
 
 impl fmt::Display for PatDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match &self.ars.pat[self.pat] {
+    match &self.ars.pat[self.pat.ok_or(fmt::Error)?] {
       sml_hir::Pat::Wild => f.write_str("_"),
       sml_hir::Pat::SCon(scon) => scon.fmt(f),
       sml_hir::Pat::Con(path, arg) => {
         path.last().fmt(f)?;
-        if let Some(arg) = arg {
+        if let Some(pat) = *arg {
           f.write_str(" ")?;
-          PatDisplay { pat: arg.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+          PatDisplay { pat, ars: self.ars }.fmt(f)?;
         }
         Ok(())
       }
       sml_hir::Pat::Record { rows, allows_other } => {
-        f.write_str("{ ")?;
-        let rows = rows.iter().map(|&(ref lab, pat)| PatRowDisplay { lab, pat, ars: self.ars });
-        fmt_util::comma_seq(f, rows)?;
-        if *allows_other {
-          f.write_str(", ...")?;
+        let is_tuple = !allows_other
+          && rows.len() != 1
+          && rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
+        if is_tuple {
+          f.write_str("(")?;
+          let rows = rows.iter().map(|&(_, pat)| PatDisplay { pat, ars: self.ars });
+          fmt_util::comma_seq(f, rows)?;
+          f.write_str(")")
+        } else {
+          f.write_str("{ ")?;
+          let rows = rows.iter().map(|&(ref lab, pat)| PatRowDisplay { lab, pat, ars: self.ars });
+          fmt_util::comma_seq(f, rows)?;
+          if *allows_other {
+            f.write_str(", ...")?;
+          }
+          f.write_str(" }")
         }
-        f.write_str(" }")
       }
-      sml_hir::Pat::Typed(pat, _) => {
-        PatDisplay { pat: pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
-      }
+      sml_hir::Pat::Typed(pat, _) => PatDisplay { pat: *pat, ars: self.ars }.fmt(f),
       sml_hir::Pat::As(name, pat) => {
         name.fmt(f)?;
         f.write_str(" as ")?;
-        PatDisplay { pat: pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
+        PatDisplay { pat: *pat, ars: self.ars }.fmt(f)
       }
       sml_hir::Pat::Or(or_pat) => {
-        PatDisplay { pat: or_pat.first.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
-        for pat in &or_pat.rest {
+        PatDisplay { pat: or_pat.first, ars: self.ars }.fmt(f)?;
+        for &pat in &or_pat.rest {
           f.write_str(" | ")?;
-          PatDisplay { pat: pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)?;
+          PatDisplay { pat, ars: self.ars }.fmt(f)?;
         }
         Ok(())
       }
@@ -406,7 +438,7 @@ impl fmt::Display for PatRowDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.lab.fmt(f)?;
     f.write_str(" = ")?;
-    PatDisplay { pat: self.pat.ok_or(fmt::Error)?, ars: self.ars }.fmt(f)
+    PatDisplay { pat: self.pat, ars: self.ars }.fmt(f)
   }
 }
 
