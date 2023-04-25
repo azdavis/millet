@@ -290,7 +290,7 @@ impl<'a> St<'a> {
   /// - distinct from all other `Name`s returned from self thus far, and will thus not collide
   ///   with any of those.
   pub(crate) fn fresh(&mut self) -> str_util::Name {
-    let ret = str_util::Name::new(format!("{{{}}}", self.fresh_idx));
+    let ret = str_util::Name::new(format!("'{}", self.fresh_idx));
     self.fresh_idx += 1;
     ret
   }
