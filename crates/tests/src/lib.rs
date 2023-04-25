@@ -50,3 +50,4 @@ mod ty_escape;
 mod ty_var;
 mod unused;
 mod use_builtin;
+mod val_rec;

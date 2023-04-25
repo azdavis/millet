@@ -98,10 +98,8 @@ fn get_one(
       cx.env.val_env.append(&mut rec_ve);
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
         // @def(26)
-        if let Some(exp) = val_bind.exp {
-          if !matches!(ars.exp[exp], sml_hir::Exp::Fn(_, _)) {
-            st.err(dec, ErrorKind::ValRecExpNotFn);
-          }
+        if !maybe_fn(&ars.exp, val_bind.exp) {
+          st.err(dec, ErrorKind::ValRecExpNotFn);
         }
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
         unify(st, dec.into(), want, got);
@@ -488,4 +486,23 @@ fn maybe_effectful_val(ars: &sml_hir::Arenas, val_binds: &[sml_hir::ValBind]) ->
   val_binds.iter().any(|val_bind| {
     exp::maybe_effectful(ars, val_bind.exp) || pat::maybe_refutable(ars, val_bind.pat)
   })
+}
+
+/// "maybe" because it's more liberal (i.e. if it's a hole or not there at all, return true).
+fn maybe_fn(ar: &sml_hir::ExpArena, exp: sml_hir::ExpIdx) -> bool {
+  let exp = match exp {
+    Some(x) => x,
+    None => return true,
+  };
+  match &ar[exp] {
+    sml_hir::Exp::Hole | sml_hir::Exp::Fn(_, _) => true,
+    sml_hir::Exp::SCon(_)
+    | sml_hir::Exp::Path(_)
+    | sml_hir::Exp::Record(_)
+    | sml_hir::Exp::Let(_, _)
+    | sml_hir::Exp::App(_, _)
+    | sml_hir::Exp::Handle(_, _)
+    | sml_hir::Exp::Raise(_) => false,
+    sml_hir::Exp::Typed(exp, _) => maybe_fn(ar, *exp),
+  }
 }
