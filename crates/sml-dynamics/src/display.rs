@@ -25,7 +25,10 @@ impl fmt::Display for Dynamics<'_> {
         FrameKind::AppFunc(_) | FrameKind::Handle(_) => {}
         FrameKind::Record(vs, lab, _) => {
           f.write_str("{ ")?;
-          fmt_util::comma_seq(f, vs.iter().map(|(lab, val)| ValRowDisplay { lab, val, ars }))?;
+          for (lab, val) in vs {
+            ValRowDisplay { lab, val, ars }.fmt(f)?;
+            f.write_str(", ")?;
+          }
           lab.fmt(f)?;
           f.write_str(" = ")?;
         }
@@ -80,9 +83,7 @@ impl fmt::Display for Dynamics<'_> {
       match &frame.kind {
         FrameKind::Raise => {}
         FrameKind::Record(_, _, es) => {
-          if !es.is_empty() {
-            f.write_str(", ")?;
-          }
+          f.write_str(", ")?;
           fmt_util::comma_seq(f, es.iter().map(|&(ref lab, exp)| ExpRowDisplay { lab, exp, ars }))?;
           f.write_str(" }")?;
         }
