@@ -157,6 +157,9 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
     ast::DecOne::ValDec(dec) => {
       st.write("val ");
       sep_with_lines(st, cfg, "and ", dec.val_binds(), |st, val_bind| {
+        if val_bind.rec_kw().is_some() {
+          st.write("rec ");
+        }
         get_pat(st, val_bind.pat()?)?;
         if let Some(eq_exp) = val_bind.eq_exp() {
           st.write(" =");
