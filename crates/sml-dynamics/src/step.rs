@@ -8,21 +8,23 @@ use sml_statics_types::info::IdStatus;
 use std::collections::BTreeMap;
 use str_util::Name;
 
-/// i think this is called a "stack machine". it is NOT recursive.
+/// this is NOT recursive. the bool is whether this was a 'visible' change.
 #[allow(clippy::too_many_lines)]
-pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
+pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
   match s {
     Step::Exp(exp) => match &cx.ars.exp[exp] {
       sml_hir::Exp::Hole => unreachable!("exp hole"),
-      sml_hir::Exp::SCon(scon) => Step::Val(Val::SCon(scon.clone())),
+      sml_hir::Exp::SCon(scon) => (Step::Val(Val::SCon(scon.clone())), false),
       sml_hir::Exp::Path(path) => match cx.exp[exp] {
-        IdStatus::Con => Step::Val(Val::Con(Con::empty(ConKind::Dat(path.last().clone())))),
+        IdStatus::Con => {
+          (Step::Val(Val::Con(Con::empty(ConKind::Dat(path.last().clone())))), false)
+        }
         IdStatus::Exn(except) => {
-          Step::Val(Val::Con(Con::empty(ConKind::Exn(path.last().clone(), except))))
+          (Step::Val(Val::Con(Con::empty(ConKind::Exn(path.last().clone(), except)))), false)
         }
         IdStatus::Val => {
           let env = st.env.get(path.prefix()).expect("no prefix");
-          Step::Val(env.val[path.last()].clone())
+          (Step::Val(env.val[path.last()].clone()), true)
         }
       },
       sml_hir::Exp::Record(exp_rows) => {
@@ -31,10 +33,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
           && exp_rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
         exp_rows.reverse();
         match exp_rows.pop() {
-          None => Step::Val(Val::Record(BTreeMap::new())),
+          None => (Step::Val(Val::Record(BTreeMap::new())), false),
           Some((lab, exp)) => {
             st.push_with_cur_env(FrameKind::Record(is_tuple, BTreeMap::new(), lab, exp_rows));
-            Step::exp(exp)
+            (Step::exp(exp), false)
           }
         }
       }
@@ -46,36 +48,36 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
       }
       sml_hir::Exp::App(func, arg) => {
         st.push_with_cur_env(FrameKind::AppFunc(*arg));
-        Step::exp(*func)
+        (Step::exp(*func), false)
       }
       sml_hir::Exp::Handle(exp, matcher) => {
         st.push_with_cur_env(FrameKind::Handle(matcher.clone()));
-        Step::exp(*exp)
+        (Step::exp(*exp), false)
       }
       sml_hir::Exp::Raise(exp) => {
         // don't care about the env for raise
         st.frames.push(Frame::new(Env::default(), FrameKind::Raise));
-        Step::exp(*exp)
+        (Step::exp(*exp), false)
       }
       sml_hir::Exp::Fn(matcher, _) => {
         let clos =
           Closure { env: st.env.clone(), this: FxHashSet::default(), matcher: matcher.clone() };
-        Step::Val(Val::Closure(clos))
+        (Step::Val(Val::Closure(clos)), false)
       }
-      sml_hir::Exp::Typed(exp, _) => Step::exp(*exp),
+      sml_hir::Exp::Typed(exp, _) => (Step::exp(*exp), false),
     },
     Step::Val(val) => match st.frames.pop() {
       // done evaluating
-      None => Step::Val(val),
+      None => (Step::Val(val), false),
       Some(frame) => match frame.kind {
         FrameKind::Record(is_tuple, mut val_rows, lab, mut exp_rows) => {
           assert!(val_rows.insert(lab, val).is_none());
           match exp_rows.pop() {
-            None => Step::Val(Val::Record(val_rows)),
+            None => (Step::Val(Val::Record(val_rows)), true),
             Some((lab, exp)) => {
               st.env = frame.env;
               st.push_with_cur_env(FrameKind::Record(is_tuple, val_rows, lab, exp_rows));
-              Step::exp(exp)
+              (Step::exp(exp), false)
             }
           }
         }
@@ -88,13 +90,13 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
               env.val.insert(name.clone(), Val::Closure(clos.clone()));
             }
             st.frames.push(Frame::new(env, FrameKind::AppClosureArg(clos.matcher)));
-            Step::exp(arg)
+            (Step::exp(arg), false)
           }
           Val::Con(con) => {
             assert!(con.arg.is_none(), "Con already has arg");
             st.env = frame.env;
             st.push_with_cur_env(FrameKind::AppConArg(con.kind));
-            Step::exp(arg)
+            (Step::exp(arg), false)
           }
           _ => unreachable!("AppFunc not Closure or Con"),
         },
@@ -104,18 +106,22 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
             if pat_match::get(&mut ac, cx, arm.pat, &val) {
               st.env = frame.env;
               st.env.val.extend(ac);
-              return Step::exp(arm.exp);
+              return (Step::exp(arm.exp), true);
             }
           }
-          Step::Raise(cx.match_exn())
+          (Step::Raise(cx.match_exn()), true)
         }
-        FrameKind::AppConArg(kind) => Step::Val(Val::Con(Con { kind, arg: Some(Box::new(val)) })),
+        FrameKind::AppConArg(kind) => {
+          (Step::Val(Val::Con(Con { kind, arg: Some(Box::new(val)) })), false)
+        }
         FrameKind::Raise => match val {
-          Val::Con(con) => Step::Raise(con.try_into().expect("Raise Con but not Exception")),
+          Val::Con(con) => {
+            (Step::Raise(con.try_into().expect("Raise Con but not Exception")), false)
+          }
           _ => unreachable!("Raise not Con"),
         },
         // handle wasn't needed, as head didn't raise
-        FrameKind::Handle(_) => Step::Val(val),
+        FrameKind::Handle(_) => (Step::Val(val), true),
         FrameKind::ValBind(recursive, pat, mut val_binds) => {
           let mut ac = ValEnv::default();
           if recursive {
@@ -131,14 +137,14 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
               ac.insert(name, Val::Closure(clos.clone()));
             }
           } else if !pat_match::get(&mut ac, cx, pat, &val) {
-            return Step::Raise(cx.bind_exn());
+            return (Step::Raise(cx.bind_exn()), true);
           }
           st.env = frame.env;
           st.env.val.extend(ac);
           match val_binds.pop() {
             Some(vb) => {
               st.push_with_cur_env(FrameKind::ValBind(vb.rec, vb.pat, val_binds));
-              Step::exp(vb.exp)
+              (Step::exp(vb.exp), false)
             }
             None => step_dec(st),
           }
@@ -150,7 +156,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
     },
     Step::Raise(exception) => match st.frames.pop() {
       // unhandled exception
-      None => Step::Raise(exception),
+      None => (Step::Raise(exception), true),
       Some(frame) => match frame.kind {
         FrameKind::Handle(matcher) => {
           let mut ac = ValEnv::default();
@@ -159,14 +165,14 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
             if pat_match::get(&mut ac, cx, arm.pat, &val) {
               st.env = frame.env;
               st.env.val.extend(ac);
-              return Step::exp(arm.exp);
+              return (Step::exp(arm.exp), true);
             }
           }
           // handle didn't catch the exception. keep bubbling up
-          Step::Raise(exception)
+          (Step::Raise(exception), true)
         }
         // for all other frames, the exception continues to bubble up
-        _ => Step::Raise(exception),
+        _ => (Step::Raise(exception), true),
       },
     },
     Step::Dec(dec) => match &cx.ars.dec[dec] {
@@ -175,7 +181,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
         val_binds.reverse();
         let vb = val_binds.pop().unwrap();
         st.push_with_cur_env(FrameKind::ValBind(vb.rec, vb.pat, val_binds));
-        Step::exp(vb.exp)
+        (Step::exp(vb.exp), false)
       }
       sml_hir::Dec::Ty(_)
       | sml_hir::Dec::Datatype(_, _)
@@ -195,12 +201,13 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> Step {
     // done with a dec
     Step::DecDone => {
       assert!(st.frames.is_empty(), "can't be done but still have frames");
-      Step::DecDone
+      (Step::DecDone, false)
     }
   }
 }
 
-fn step_dec(st: &mut St) -> Step {
+fn step_dec(st: &mut St) -> (Step, bool) {
+  let mut change = false;
   while let Some(frame) = st.frames.pop() {
     match frame.kind {
       FrameKind::Record(_, _, _, _)
@@ -211,10 +218,10 @@ fn step_dec(st: &mut St) -> Step {
       | FrameKind::Handle(_)
       | FrameKind::ValBind(_, _, _) => unreachable!("bad surrounding frame for Dec"),
       FrameKind::Let(mut decs, exp) => match decs.pop() {
-        None => return Step::exp(exp),
+        None => return (Step::exp(exp), change),
         Some(dec) => {
           st.push_with_cur_env(FrameKind::Let(decs, exp));
-          return Step::Dec(dec);
+          return (Step::Dec(dec), change);
         }
       },
       FrameKind::Local(mut local_decs, in_decs) => match local_decs.pop() {
@@ -222,20 +229,20 @@ fn step_dec(st: &mut St) -> Step {
         None => st.push_with_cur_env(FrameKind::In(in_decs)),
         Some(dec) => {
           st.push_with_cur_env(FrameKind::Local(local_decs, in_decs));
-          return Step::Dec(dec);
+          return (Step::Dec(dec), change);
         }
       },
       FrameKind::In(mut in_decs) => match in_decs.pop() {
         // keep popping
-        None => {}
+        None => change = true,
         Some(dec) => {
           st.push_with_cur_env(FrameKind::In(in_decs));
-          return Step::Dec(dec);
+          return (Step::Dec(dec), change);
         }
       },
     }
   }
-  Step::DecDone
+  (Step::DecDone, change)
 }
 
 fn rec_fn_names(ars: &sml_hir::Arenas, ac: &mut FxHashSet<Name>, pat: sml_hir::PatIdx) {

@@ -26,17 +26,22 @@ impl<'a> Dynamics<'a> {
   #[must_use]
   pub fn step(mut self) -> Progress<'a> {
     let mut s = self.step.take().expect("no step");
-    s = step(&mut self.st, self.cx, s);
-    if self.st.frames.is_empty() {
-      match s {
-        Step::Raise(_) => Progress::Raise,
-        Step::Val(_) | Step::Exp(_) | Step::Dec(_) => unreachable!("not done, but no frames"),
-        Step::DecDone => Progress::Done,
+    loop {
+      let (new_s, change) = step(&mut self.st, self.cx, s);
+      s = new_s;
+      if self.st.frames.is_empty() {
+        return match s {
+          Step::Val(_) | Step::Exp(_) | Step::Dec(_) => unreachable!("not done, but no frames"),
+          Step::Raise(_) => Progress::Raise,
+          Step::DecDone => Progress::Done,
+        };
       }
-    } else {
-      self.step = Some(s);
-      Progress::Still(self)
+      if change {
+        break;
+      }
     }
+    self.step = Some(s);
+    Progress::Still(self)
   }
 }
 
