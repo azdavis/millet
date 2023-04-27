@@ -73,7 +73,6 @@ impl fmt::Display for Dynamics<'_> {
         }
       }
     }
-    f.write_str("(* >> *) ")?;
     match self.step.as_ref().ok_or(fmt::Error)? {
       Step::Exp(exp) => ExpDisplay { exp: Some(*exp), ars, prec, indent }.fmt(f)?,
       Step::Val(val) => ValDisplay { val, ars, prec, indent }.fmt(f)?,
@@ -84,7 +83,6 @@ impl fmt::Display for Dynamics<'_> {
       Step::Dec(dec) => DecDisplay { dec: *dec, ars, indent }.fmt(f)?,
       Step::DecDone => {}
     }
-    f.write_str(" (* << *)")?;
     for frame in self.st.frames.iter().rev() {
       match &frame.kind {
         FrameKind::Raise => {}
