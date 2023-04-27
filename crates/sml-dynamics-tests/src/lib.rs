@@ -71,7 +71,6 @@ fn check(s: &str) {
   }
 }
 
-/*
 #[test]
 fn smoke() {
   check(
@@ -87,4 +86,3 @@ val five = add (S (S Z)) (S (S (S Z)))
 "#,
   );
 }
- */
