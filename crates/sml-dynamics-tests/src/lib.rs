@@ -45,19 +45,26 @@ fn check(s: &str) {
   let mut dynamics = sml_dynamics::Dynamics::new(cx, decs).expect("no decs");
   let mut stdin = std::io::stdin().lock();
   let mut buf = String::new();
+  let debug = std::env::var_os("MILLET_DEBUG").map_or(false, |x| x == "1");
   loop {
-    println!("==>");
-    println!("{dynamics}");
-    stdin.read_line(&mut buf).expect("couldn't read");
-    buf.clear();
+    if debug {
+      println!("==>");
+      println!("{dynamics}");
+      stdin.read_line(&mut buf).expect("couldn't read");
+      buf.clear();
+    }
     match dynamics.step() {
       sml_dynamics::Progress::Still(d) => dynamics = d,
       sml_dynamics::Progress::Done => {
-        println!("done");
+        if debug {
+          println!("done");
+        }
         break;
       }
       sml_dynamics::Progress::Raise => {
-        println!("raised an exception");
+        if debug {
+          println!("raised an exception");
+        }
         break;
       }
     }
