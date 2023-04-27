@@ -11,82 +11,95 @@ pub(crate) fn ty(p: &mut Parser<'_>) {
 }
 
 fn ty_prec(p: &mut Parser<'_>, min_prec: TyPrec) -> Option<Exited> {
+  let kind = p.peek()?.kind;
   let en = p.enter();
-  let mut ex = if p.at(SK::DotDotDot) {
-    p.bump();
-    p.exit(en, SK::HoleTy)
-  } else if p.at(SK::Underscore) {
-    p.bump();
-    p.exit(en, SK::WildcardTy)
-  } else if p.at(SK::TyVar) {
-    p.bump();
-    p.exit(en, SK::TyVarTy)
-  } else if p.at(SK::LCurly) {
-    p.bump();
-    comma_sep(p, SK::TyRow, SK::RCurly, |p| {
-      lab(p);
-      if ascription(p) {
-        p.bump();
-      }
-      ty(p);
-    });
-    p.exit(en, SK::RecordTy)
-  } else if p.at(SK::LRound) {
-    let ty_seq = p.enter();
-    p.bump();
-    let ty_arg = p.enter();
-    ty(p);
-    if p.at(SK::RRound) {
-      p.abandon(ty_arg);
-      p.abandon(ty_seq);
+  let kind = match kind {
+    SK::DotDotDot => {
       p.bump();
-      p.exit(en, SK::ParenTy)
-    } else {
-      p.eat(SK::Comma);
-      p.exit(ty_arg, SK::TyArg);
-      comma_sep(p, SK::TyArg, SK::RRound, ty);
-      p.exit(ty_seq, SK::TySeq);
-      path_must(p);
-      p.exit(en, SK::ConTy)
+      SK::HoleTy
     }
-  } else if p.at(SK::Name) {
-    path_must(p);
-    p.exit(en, SK::ConTy)
-  } else {
-    p.abandon(en);
-    return None;
-  };
-  loop {
-    ex = if p.at(SK::MinusGt) {
-      if TyPrec::Arrow < min_prec {
-        break;
-      }
-      let en = p.precede(ex);
+    SK::Underscore => {
       p.bump();
-      if ty_prec(p, TyPrec::Arrow).is_none() {
-        p.error(ErrorKind::Expected(Expected::Ty));
-      }
-      p.exit(en, SK::FnTy)
-    } else if p.at(SK::Star) {
-      if TyPrec::Star < min_prec {
-        break;
-      }
-      let en = p.precede(ex);
-      while p.at(SK::Star) {
-        let en = p.enter();
+      SK::WildcardTy
+    }
+    SK::TyVar => {
+      p.bump();
+      SK::TyVarTy
+    }
+    SK::LCurly => {
+      p.bump();
+      comma_sep(p, SK::TyRow, SK::RCurly, |p| {
+        lab(p);
+        if ascription(p) {
+          p.bump();
+        }
+        ty(p);
+      });
+      SK::RecordTy
+    }
+    SK::LRound => {
+      let ty_seq = p.enter();
+      p.bump();
+      let ty_arg = p.enter();
+      ty(p);
+      if p.at(SK::RRound) {
+        p.abandon(ty_arg);
+        p.abandon(ty_seq);
         p.bump();
-        if ty_prec(p, TyPrec::App).is_none() {
+        SK::ParenTy
+      } else {
+        p.eat(SK::Comma);
+        p.exit(ty_arg, SK::TyArg);
+        comma_sep(p, SK::TyArg, SK::RRound, ty);
+        p.exit(ty_seq, SK::TySeq);
+        path_must(p);
+        SK::ConTy
+      }
+    }
+    SK::Name => {
+      path_must(p);
+      SK::ConTy
+    }
+    _ => {
+      p.abandon(en);
+      return None;
+    }
+  };
+  let mut ex = p.exit(en, kind);
+  while let Some(tok) = p.peek() {
+    ex = match tok.kind {
+      SK::MinusGt => {
+        if TyPrec::Arrow < min_prec {
+          break;
+        }
+        let en = p.precede(ex);
+        p.bump();
+        if ty_prec(p, TyPrec::Arrow).is_none() {
           p.error(ErrorKind::Expected(Expected::Ty));
         }
-        p.exit(en, SK::StarTy);
+        p.exit(en, SK::FnTy)
       }
-      p.exit(en, SK::TupleTy)
-    } else if p.at(SK::Name) {
-      let en = p.precede(ex);
-      path_must(p);
-      p.exit(en, SK::OneArgConTy)
-    } else {
-      break;
+      SK::Star => {
+        if TyPrec::Star < min_prec {
+          break;
+        }
+        let en = p.precede(ex);
+        while p.at(SK::Star) {
+          let en = p.enter();
+          p.bump();
+          if ty_prec(p, TyPrec::App).is_none() {
+            p.error(ErrorKind::Expected(Expected::Ty));
+          }
+          p.exit(en, SK::StarTy);
+        }
+        p.exit(en, SK::TupleTy)
+      }
+      SK::Name => {
+        let en = p.precede(ex);
+        path_must(p);
+        p.exit(en, SK::OneArgConTy)
+      }
+      _ => break,
     };
   }
   Some(ex)

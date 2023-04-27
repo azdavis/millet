@@ -155,66 +155,76 @@ enum PatPrec {
 
 /// when adding more cases to this, update [`at_pat_hd`].
 pub(crate) fn at_pat(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> Option<Exited> {
+  let kind = p.peek()?.kind;
   let en = p.enter();
-  let ex = if scon(p) {
-    p.bump();
-    p.exit(en, SK::SConPat)
-  } else if p.at(SK::Underscore) {
-    p.bump();
-    p.exit(en, SK::WildcardPat)
-  } else if p.at(SK::OpKw) {
-    path_infix(p, fe);
-    p.exit(en, SK::ConPat)
-  } else if name_star(p, 0) {
-    match infix {
-      InfixErr::No => {
-        path(p);
-      }
-      InfixErr::Yes => path_no_infix(p, fe),
+  let kind = match kind {
+    SK::IntLit | SK::RealLit | SK::WordLit | SK::CharLit | SK::StringLit => {
+      p.bump();
+      SK::SConPat
     }
-    p.exit(en, SK::ConPat)
-  } else if p.at(SK::LCurly) {
-    p.bump();
-    comma_sep(p, SK::PatRow, SK::RCurly, |p| {
-      let en = p.enter();
-      if p.at(SK::DotDotDot) {
-        p.bump();
-        p.exit(en, SK::RestPatRow);
-      } else if p.at_n(1, SK::Eq) {
-        lab(p);
-        p.eat(SK::Eq);
-        if pat(p, fe, infix).is_none() {
-          p.error(ErrorKind::Expected(Expected::Pat));
+    SK::Underscore => {
+      p.bump();
+      SK::WildcardPat
+    }
+    SK::OpKw => {
+      path_infix(p, fe);
+      SK::ConPat
+    }
+    SK::Name | SK::Star => {
+      match infix {
+        InfixErr::No => {
+          path(p);
         }
-        p.exit(en, SK::LabAndPatPatRow);
-      } else {
-        eat_name_star(p);
-        _ = ty_annotation(p);
-        _ = as_pat_tl(p, fe, infix);
-        p.exit(en, SK::LabPatRow);
+        InfixErr::Yes => path_no_infix(p, fe),
       }
-    });
-    p.exit(en, SK::RecordPat)
-  } else if p.at(SK::LRound) {
-    p.bump();
-    let kind = at_pat_l_round(p, fe, infix);
-    p.exit(en, kind)
-  } else if p.at(SK::LSquare) {
-    p.bump();
-    pat_args(p, fe, SK::RSquare, infix);
-    p.exit(en, SK::ListPat)
-  } else if p.at(SK::Hash) {
-    p.bump();
-    let list = p.enter();
-    p.eat(SK::LSquare);
-    pat_args(p, fe, SK::RSquare, infix);
-    p.exit(list, SK::ListPat);
-    p.exit(en, SK::VectorPat)
-  } else {
-    p.abandon(en);
-    return None;
+      SK::ConPat
+    }
+    SK::LCurly => {
+      p.bump();
+      comma_sep(p, SK::PatRow, SK::RCurly, |p| {
+        let en = p.enter();
+        if p.at(SK::DotDotDot) {
+          p.bump();
+          p.exit(en, SK::RestPatRow);
+        } else if p.at_n(1, SK::Eq) {
+          lab(p);
+          p.eat(SK::Eq);
+          if pat(p, fe, infix).is_none() {
+            p.error(ErrorKind::Expected(Expected::Pat));
+          }
+          p.exit(en, SK::LabAndPatPatRow);
+        } else {
+          eat_name_star(p);
+          _ = ty_annotation(p);
+          _ = as_pat_tl(p, fe, infix);
+          p.exit(en, SK::LabPatRow);
+        }
+      });
+      SK::RecordPat
+    }
+    SK::LRound => {
+      p.bump();
+      at_pat_l_round(p, fe, infix)
+    }
+    SK::LSquare => {
+      p.bump();
+      pat_args(p, fe, SK::RSquare, infix);
+      SK::ListPat
+    }
+    SK::Hash => {
+      p.bump();
+      let list = p.enter();
+      p.eat(SK::LSquare);
+      pat_args(p, fe, SK::RSquare, infix);
+      p.exit(list, SK::ListPat);
+      SK::VectorPat
+    }
+    _ => {
+      p.abandon(en);
+      return None;
+    }
   };
-  Some(ex)
+  Some(p.exit(en, kind))
 }
 
 /// see [`at_pat`].

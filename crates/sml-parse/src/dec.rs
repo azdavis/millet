@@ -16,279 +16,312 @@ pub(crate) fn dec(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr)
 }
 
 fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> bool {
+  let kind = match p.peek() {
+    Some(t) => t.kind,
+    None => return false,
+  };
   let en = p.enter();
-  if p.at(SK::DotDotDot) {
-    p.bump();
-    p.exit(en, SK::HoleDec);
-  } else if p.at(SK::ValKw) {
-    p.bump();
-    ty_var_seq(p);
-    many_sep(p, SK::AndKw, SK::ValBind, |p| {
-      let mut got = false;
-      if p.at(SK::RecKw) {
-        p.bump();
-        got = true;
-      }
-      if pat(p, fe, infix).is_some() {
-        got = true;
-      } else {
-        p.error(ErrorKind::Expected(Expected::Pat));
-      }
-      if !got {
-        return false;
-      }
-      eq_exp(p, fe);
-      true
-    });
-    p.exit(en, SK::ValDec);
-  } else if p.at(SK::FunKw) {
-    p.bump();
-    ty_var_seq(p);
-    many_sep(p, SK::AndKw, SK::FunBind, |p| {
-      if p.at(SK::Bar) {
-        p.bump();
-      }
-      many_sep(p, SK::Bar, SK::FunBindCase, |p| {
-        let en = p.enter();
-        let save = p.save();
-        infix_fun_bind_case_head_inner(p, fe, infix);
-        if p.ok_since(save) {
-          p.exit(en, SK::InfixFunBindCaseHead);
-          // this is the case where the () around the infix fun bind case head are dropped. thus,
-          // there are no other at_pats allowed. `ty_annotation` or `=` must immediately follow.
-        } else {
-          if p.at(SK::LRound) {
-            p.bump();
-            infix_fun_bind_case_head_inner(p, fe, infix);
-            p.eat(SK::RRound);
-            p.exit(en, SK::InfixFunBindCaseHead);
-          } else {
-            let saw_op = p.at(SK::OpKw);
-            let name = p.peek_n(usize::from(saw_op));
-            let is_name_star = name.map_or(false, |tok| matches!(tok.kind, SK::Name | SK::Star));
-            let is_infix = name.map_or(false, |tok| fe.contains_key(tok.text));
-            if saw_op {
-              if is_name_star && !is_infix {
-                p.error(ErrorKind::UnnecessaryOp);
-              }
-              p.bump();
-            }
-            if is_name_star {
-              if !saw_op && is_infix {
-                p.error(ErrorKind::InfixWithoutOp);
-              }
-              p.bump();
-            } else {
-              p.error(ErrorKind::Expected(Expected::Kind(SK::Name)));
-            }
-            p.exit(en, SK::PrefixFunBindCaseHead);
-          }
-          while at_pat(p, fe, infix).is_some() {
-            // no body
-          }
+  let kind = match kind {
+    SK::DotDotDot => {
+      p.bump();
+      SK::HoleDec
+    }
+    SK::ValKw => {
+      p.bump();
+      ty_var_seq(p);
+      many_sep(p, SK::AndKw, SK::ValBind, |p| {
+        let mut got = false;
+        if p.at(SK::RecKw) {
+          p.bump();
+          got = true;
         }
-        _ = ty_annotation(p);
+        if pat(p, fe, infix).is_some() {
+          got = true;
+        } else {
+          p.error(ErrorKind::Expected(Expected::Pat));
+        }
+        if !got {
+          return false;
+        }
         eq_exp(p, fe);
         true
-      })
-    });
-    p.exit(en, SK::FunDec);
-  } else if p.at(SK::TypeKw) || p.at(SK::EqtypeKw) {
-    p.bump();
-    ty_binds(p);
-    p.exit(en, SK::TyDec);
-  } else if p.at(SK::DatatypeKw) {
-    match datatype(p, true) {
-      Datatype::Regular => p.exit(en, SK::DatDec),
-      Datatype::Copy => p.exit(en, SK::DatCopyDec),
-    };
-  } else if p.at(SK::AbstypeKw) {
-    p.bump();
-    dat_binds(p, true);
-    p.eat(SK::WithKw);
-    dec(p, fe, infix);
-    p.eat(SK::EndKw);
-    p.exit(en, SK::AbstypeDec);
-  } else if p.at(SK::ExceptionKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::ExBind, |p| {
-      let mut got = false;
-      if p.at(SK::OpKw) {
-        p.error(ErrorKind::UnnecessaryOp);
-        p.bump();
-        got = true;
-      }
-      got |= eat_name_star(p).is_some();
-      if !got {
-        return false;
-      }
-      if of_ty(p).is_none() && p.at(SK::Eq) {
-        let en = p.enter();
-        p.bump();
-        path_must(p);
-        p.exit(en, SK::EqPath);
-      }
-      true
-    });
-    p.exit(en, SK::ExDec);
-  } else if p.at(SK::OpenKw) {
-    p.bump();
-    while path(p).is_some() {
-      // no body
+      });
+      SK::ValDec
     }
-    p.exit(en, SK::OpenDec);
-  } else if p.at(SK::InfixKw) {
-    p.bump();
-    let num = fixity(p);
-    names_star_eq(p, |name| {
-      fe.insert(str_util::Name::new(name), sml_fixity::Infix::left(num));
-    });
-    p.exit(en, SK::InfixDec);
-  } else if p.at(SK::InfixrKw) {
-    p.bump();
-    let num = fixity(p);
-    names_star_eq(p, |name| {
-      fe.insert(str_util::Name::new(name), sml_fixity::Infix::right(num));
-    });
-    p.exit(en, SK::InfixrDec);
-  } else if p.at(SK::NonfixKw) {
-    p.bump();
-    names_star_eq(p, |name| {
-      fe.remove(name);
-    });
-    p.exit(en, SK::NonfixDec);
-  } else if p.at(SK::DoKw) {
-    p.bump();
-    exp(p, fe);
-    p.exit(en, SK::DoDec);
-  } else if p.at(SK::LocalKw) {
-    let inner = p.enter();
-    p.bump();
-    dec(p, fe, infix);
-    p.exit(inner, SK::LocalDecHd);
-    let inner = p.enter();
-    p.eat(SK::InKw);
-    dec(p, fe, infix);
-    p.exit(inner, SK::LocalDecTl);
-    p.eat(SK::EndKw);
-    p.exit(en, SK::LocalDec);
-  } else if p.at(SK::StructureKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::StrBind, |p| {
-      if p.eat(SK::Name).is_none() {
-        return false;
-      }
-      if ascription(p) {
-        ascription_tail(p, fe);
-      }
-      if p.at(SK::Eq) {
-        let en = p.enter();
-        p.bump();
-        if str_exp(p, fe).is_none() {
-          p.error(ErrorKind::Expected(Expected::StrExp));
-        }
-        p.exit(en, SK::EqStrExp);
-      }
-      true
-    });
-    p.exit(en, SK::StructureDec);
-  } else if p.at(SK::SignatureKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::SigBind, |p| {
-      if p.eat(SK::Name).is_none() {
-        return false;
-      }
-      p.eat(SK::Eq);
-      if sig_exp(p, fe).is_none() {
-        p.error(ErrorKind::Expected(Expected::SigExp));
-      }
-      true
-    });
-    p.exit(en, SK::SignatureDec);
-  } else if p.at(SK::FunctorKw) {
-    p.bump();
-    many_sep(p, SK::AndKw, SK::FunctorBind, |p| {
-      if p.eat(SK::Name).is_none() {
-        return false;
-      }
-      p.eat(SK::LRound);
-      if p.at(SK::Name) {
-        let en = p.enter();
-        p.bump();
-        if ascription(p) {
+    SK::FunKw => {
+      p.bump();
+      ty_var_seq(p);
+      many_sep(p, SK::AndKw, SK::FunBind, |p| {
+        if p.at(SK::Bar) {
           p.bump();
         }
+        many_sep(p, SK::Bar, SK::FunBindCase, |p| {
+          let en = p.enter();
+          let save = p.save();
+          infix_fun_bind_case_head_inner(p, fe, infix);
+          if p.ok_since(save) {
+            p.exit(en, SK::InfixFunBindCaseHead);
+            // this is the case where the () around the infix fun bind case head are dropped. thus,
+            // there are no other at_pats allowed. `ty_annotation` or `=` must immediately follow.
+          } else {
+            if p.at(SK::LRound) {
+              p.bump();
+              infix_fun_bind_case_head_inner(p, fe, infix);
+              p.eat(SK::RRound);
+              p.exit(en, SK::InfixFunBindCaseHead);
+            } else {
+              let saw_op = p.at(SK::OpKw);
+              let name = p.peek_n(usize::from(saw_op));
+              let is_name_star = name.map_or(false, |tok| matches!(tok.kind, SK::Name | SK::Star));
+              let is_infix = name.map_or(false, |tok| fe.contains_key(tok.text));
+              if saw_op {
+                if is_name_star && !is_infix {
+                  p.error(ErrorKind::UnnecessaryOp);
+                }
+                p.bump();
+              }
+              if is_name_star {
+                if !saw_op && is_infix {
+                  p.error(ErrorKind::InfixWithoutOp);
+                }
+                p.bump();
+              } else {
+                p.error(ErrorKind::Expected(Expected::Kind(SK::Name)));
+              }
+              p.exit(en, SK::PrefixFunBindCaseHead);
+            }
+            while at_pat(p, fe, infix).is_some() {
+              // no body
+            }
+          }
+          _ = ty_annotation(p);
+          eq_exp(p, fe);
+          true
+        })
+      });
+      SK::FunDec
+    }
+    SK::TypeKw | SK::EqtypeKw => {
+      p.bump();
+      ty_binds(p);
+      SK::TyDec
+    }
+    SK::DatatypeKw => match datatype(p, true) {
+      Datatype::Regular => SK::DatDec,
+      Datatype::Copy => SK::DatCopyDec,
+    },
+    SK::AbstypeKw => {
+      p.bump();
+      dat_binds(p, true);
+      p.eat(SK::WithKw);
+      dec(p, fe, infix);
+      p.eat(SK::EndKw);
+      SK::AbstypeDec
+    }
+    SK::ExceptionKw => {
+      p.bump();
+      many_sep(p, SK::AndKw, SK::ExBind, |p| {
+        let mut got = false;
+        if p.at(SK::OpKw) {
+          p.error(ErrorKind::UnnecessaryOp);
+          p.bump();
+          got = true;
+        }
+        got |= eat_name_star(p).is_some();
+        if !got {
+          return false;
+        }
+        if of_ty(p).is_none() && p.at(SK::Eq) {
+          let en = p.enter();
+          p.bump();
+          path_must(p);
+          p.exit(en, SK::EqPath);
+        }
+        true
+      });
+      SK::ExDec
+    }
+    SK::OpenKw => {
+      p.bump();
+      while path(p).is_some() {
+        // no body
+      }
+      SK::OpenDec
+    }
+    SK::InfixKw => {
+      p.bump();
+      let num = fixity(p);
+      names_star_eq(p, |name| {
+        fe.insert(str_util::Name::new(name), sml_fixity::Infix::left(num));
+      });
+      SK::InfixDec
+    }
+    SK::InfixrKw => {
+      p.bump();
+      let num = fixity(p);
+      names_star_eq(p, |name| {
+        fe.insert(str_util::Name::new(name), sml_fixity::Infix::right(num));
+      });
+      SK::InfixrDec
+    }
+    SK::NonfixKw => {
+      p.bump();
+      names_star_eq(p, |name| {
+        fe.remove(name);
+      });
+      SK::NonfixDec
+    }
+    SK::DoKw => {
+      p.bump();
+      exp(p, fe);
+      SK::DoDec
+    }
+    SK::LocalKw => {
+      let inner = p.enter();
+      p.bump();
+      dec(p, fe, infix);
+      p.exit(inner, SK::LocalDecHd);
+      let inner = p.enter();
+      p.eat(SK::InKw);
+      dec(p, fe, infix);
+      p.exit(inner, SK::LocalDecTl);
+      p.eat(SK::EndKw);
+      SK::LocalDec
+    }
+    SK::StructureKw => {
+      p.bump();
+      many_sep(p, SK::AndKw, SK::StrBind, |p| {
+        if p.eat(SK::Name).is_none() {
+          return false;
+        }
+        if ascription(p) {
+          ascription_tail(p, fe);
+        }
+        if p.at(SK::Eq) {
+          let en = p.enter();
+          p.bump();
+          if str_exp(p, fe).is_none() {
+            p.error(ErrorKind::Expected(Expected::StrExp));
+          }
+          p.exit(en, SK::EqStrExp);
+        }
+        true
+      });
+      SK::StructureDec
+    }
+    SK::SignatureKw => {
+      p.bump();
+      many_sep(p, SK::AndKw, SK::SigBind, |p| {
+        if p.eat(SK::Name).is_none() {
+          return false;
+        }
+        p.eat(SK::Eq);
         if sig_exp(p, fe).is_none() {
           p.error(ErrorKind::Expected(Expected::SigExp));
         }
-        p.exit(en, SK::FunctorArgNameSigExp);
-      } else {
-        dec(p, fe, InfixErr::No);
-      }
-      p.eat(SK::RRound);
-      if ascription(p) {
-        ascription_tail(p, fe);
-      }
-      p.eat(SK::Eq);
-      if str_exp(p, fe).is_none() {
-        p.error(ErrorKind::Expected(Expected::StrExp));
-      }
-      true
-    });
-    p.exit(en, SK::FunctorDec);
-  } else if exp_opt(p, fe) {
-    p.exit(en, SK::ExpDec);
-  } else if p.at(SK::IncludeKw) {
-    p.bump();
-    while sig_exp(p, fe).is_some() {
-      // no body
+        true
+      });
+      SK::SignatureDec
     }
-    p.exit(en, SK::IncludeDec);
-  } else {
-    p.abandon(en);
-    return false;
-  }
+    SK::FunctorKw => {
+      p.bump();
+      many_sep(p, SK::AndKw, SK::FunctorBind, |p| {
+        if p.eat(SK::Name).is_none() {
+          return false;
+        }
+        p.eat(SK::LRound);
+        if p.at(SK::Name) {
+          let en = p.enter();
+          p.bump();
+          if ascription(p) {
+            p.bump();
+          }
+          if sig_exp(p, fe).is_none() {
+            p.error(ErrorKind::Expected(Expected::SigExp));
+          }
+          p.exit(en, SK::FunctorArgNameSigExp);
+        } else {
+          dec(p, fe, InfixErr::No);
+        }
+        p.eat(SK::RRound);
+        if ascription(p) {
+          ascription_tail(p, fe);
+        }
+        p.eat(SK::Eq);
+        if str_exp(p, fe).is_none() {
+          p.error(ErrorKind::Expected(Expected::StrExp));
+        }
+        true
+      });
+      SK::FunctorDec
+    }
+    SK::IncludeKw => {
+      p.bump();
+      while sig_exp(p, fe).is_some() {
+        // no body
+      }
+      SK::IncludeDec
+    }
+    _ => {
+      if exp_opt(p, fe) {
+        SK::ExpDec
+      } else {
+        p.abandon(en);
+        return false;
+      }
+    }
+  };
+  p.exit(en, kind);
   true
 }
 
 fn str_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
+  let kind = p.peek()?.kind;
   let en = p.enter();
-  let mut ex = if p.at(SK::StructKw) {
-    p.bump();
-    let mut fe = fe.clone();
-    dec(p, &mut fe, InfixErr::Yes);
-    p.eat(SK::EndKw);
-    p.exit(en, SK::StructStrExp)
-  } else if p.at(SK::LetKw) {
-    p.bump();
-    let mut fe = fe.clone();
-    dec(p, &mut fe, InfixErr::Yes);
-    p.eat(SK::InKw);
-    if str_exp(p, &fe).is_none() {
-      p.error(ErrorKind::Expected(Expected::StrExp));
-    }
-    p.eat(SK::EndKw);
-    p.exit(en, SK::LetStrExp)
-  } else if p.at(SK::Name) && !p.at_n(1, SK::LRound) {
-    path_must(p);
-    p.exit(en, SK::PathStrExp)
-  } else if p.at(SK::Name) {
-    p.bump();
-    p.eat(SK::LRound);
-    let arg = p.enter();
-    if str_exp(p, fe).is_some() {
-      p.exit(arg, SK::AppStrExpArgStrExp);
-    } else {
-      p.abandon(arg);
+  let kind = match kind {
+    SK::StructKw => {
+      p.bump();
       let mut fe = fe.clone();
       dec(p, &mut fe, InfixErr::Yes);
+      p.eat(SK::EndKw);
+      SK::StructStrExp
     }
-    p.eat(SK::RRound);
-    p.exit(en, SK::AppStrExp)
-  } else {
-    p.abandon(en);
-    return None;
+    SK::LetKw => {
+      p.bump();
+      let mut fe = fe.clone();
+      dec(p, &mut fe, InfixErr::Yes);
+      p.eat(SK::InKw);
+      if str_exp(p, &fe).is_none() {
+        p.error(ErrorKind::Expected(Expected::StrExp));
+      }
+      p.eat(SK::EndKw);
+      SK::LetStrExp
+    }
+    SK::Name => {
+      if p.at_n(1, SK::LRound) {
+        p.bump();
+        p.eat(SK::LRound);
+        let arg = p.enter();
+        if str_exp(p, fe).is_some() {
+          p.exit(arg, SK::AppStrExpArgStrExp);
+        } else {
+          p.abandon(arg);
+          let mut fe = fe.clone();
+          dec(p, &mut fe, InfixErr::Yes);
+        }
+        p.eat(SK::RRound);
+        SK::AppStrExp
+      } else {
+        path_must(p);
+        SK::PathStrExp
+      }
+    }
+    _ => {
+      p.abandon(en);
+      return None;
+    }
   };
+  let mut ex = p.exit(en, kind);
   while ascription(p) {
     let en = p.precede(ex);
     ascription_tail(p, fe);
@@ -308,20 +341,26 @@ fn ascription_tail(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Exited {
 }
 
 fn sig_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
+  let kind = p.peek()?.kind;
   let en = p.enter();
-  let mut ex = if p.at(SK::SigKw) {
-    p.bump();
-    let mut fe = fe.clone();
-    dec(p, &mut fe, InfixErr::No);
-    p.eat(SK::EndKw);
-    p.exit(en, SK::SigSigExp)
-  } else if p.at(SK::Name) {
-    p.bump();
-    p.exit(en, SK::NameSigExp)
-  } else {
-    p.abandon(en);
-    return None;
+  let kind = match kind {
+    SK::SigKw => {
+      p.bump();
+      let mut fe = fe.clone();
+      dec(p, &mut fe, InfixErr::No);
+      p.eat(SK::EndKw);
+      SK::SigSigExp
+    }
+    SK::Name => {
+      p.bump();
+      SK::NameSigExp
+    }
+    _ => {
+      p.abandon(en);
+      return None;
+    }
   };
+  let mut ex = p.exit(en, kind);
   // the first 'where' must actually be 'where', but further ones can be 'and'.
   if !p.at(SK::WhereKw) {
     return Some(ex);
