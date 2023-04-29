@@ -2,8 +2,7 @@
 
 use crate::parser::{ErrorKind, Exited, Expected, ParensExpFlavor, Parser};
 use crate::util::{
-  ascription, comma_sep, end_sep, lab, many_sep, name_star_eq, path_infix, path_no_infix, scon,
-  should_break, InfixErr,
+  comma_sep, end_sep, lab, many_sep, path_infix, path_no_infix, should_break, InfixErr,
 };
 use crate::{dec::dec, pat::pat, ty::ty};
 use sml_syntax::SyntaxKind as SK;
@@ -87,15 +86,27 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
     }
     _ => {
       p.abandon(en);
-      let mut ex = at_exp(p, fe)?;
-      loop {
-        let op_info = if name_star_eq(p) {
-          let text = p.peek().unwrap().text;
-          fe.get(text).copied()
-        } else {
-          None
-        };
-        ex = if let Some(op_info) = op_info {
+      let ex = at_exp(p, fe)?;
+      exp_prec_loop(p, fe, min_prec, ex)
+    }
+  };
+  Some(ex)
+}
+
+fn exp_prec_loop(
+  p: &mut Parser<'_>,
+  fe: &sml_fixity::Env,
+  min_prec: ExpPrec,
+  mut ex: Exited,
+) -> Exited {
+  loop {
+    let tok = match p.peek() {
+      None => break,
+      Some(tok) => tok,
+    };
+    ex = match tok.kind {
+      SK::Name | SK::Star | SK::Eq => match fe.get(tok.text) {
+        Some(&op_info) => {
           if should_break_exp(p, ExpPrec::Infix(op_info), min_prec) {
             break;
           }
@@ -105,59 +116,76 @@ fn exp_prec(p: &mut Parser<'_>, fe: &sml_fixity::Env, min_prec: ExpPrec) -> Opti
             p.error(ErrorKind::Expected(Expected::Exp));
           }
           p.exit(en, SK::InfixExp)
-        } else if ascription(p) {
-          if should_break_exp(p, ExpPrec::Ascription, min_prec) {
-            break;
-          }
-          let en = p.precede(ex);
-          p.bump();
-          ty(p);
-          p.exit(en, SK::TypedExp)
-        } else if p.at(SK::AndalsoKw) {
-          if should_break_exp(p, ExpPrec::Andalso, min_prec) {
-            break;
-          }
-          let en = p.precede(ex);
-          p.bump();
-          if exp_prec(p, fe, ExpPrec::Andalso).is_none() {
-            p.error(ErrorKind::Expected(Expected::Exp));
-          }
-          p.exit(en, SK::AndalsoExp)
-        } else if p.at(SK::OrelseKw) {
-          if should_break_exp(p, ExpPrec::Orelse, min_prec) {
-            break;
-          }
-          let en = p.precede(ex);
-          p.bump();
-          if exp_prec(p, fe, ExpPrec::Orelse).is_none() {
-            p.error(ErrorKind::Expected(Expected::Exp));
-          }
-          p.exit(en, SK::OrelseExp)
-        } else if p.at(SK::HandleKw) {
-          if should_break_exp(p, ExpPrec::Handle, min_prec) {
-            break;
-          }
-          let en = p.precede(ex);
-          p.bump();
-          matcher(p, fe);
-          p.exit(en, SK::HandleExp)
-        } else if at_exp_hd(p) {
-          let en = p.precede(ex);
-          if at_exp(p, fe).is_none() {
-            p.error(ErrorKind::Expected(Expected::Exp));
-          }
-          p.exit(en, SK::AppExp)
-        } else {
+        }
+        None => app_exp(p, fe, ex),
+      },
+      SK::Colon | SK::ColonGt => {
+        if should_break_exp(p, ExpPrec::Ascription, min_prec) {
           break;
-        };
+        }
+        let en = p.precede(ex);
+        p.bump();
+        ty(p);
+        p.exit(en, SK::TypedExp)
       }
-      ex
-    }
-  };
-  Some(ex)
+      SK::AndalsoKw => {
+        if should_break_exp(p, ExpPrec::Andalso, min_prec) {
+          break;
+        }
+        let en = p.precede(ex);
+        p.bump();
+        if exp_prec(p, fe, ExpPrec::Andalso).is_none() {
+          p.error(ErrorKind::Expected(Expected::Exp));
+        }
+        p.exit(en, SK::AndalsoExp)
+      }
+      SK::OrelseKw => {
+        if should_break_exp(p, ExpPrec::Orelse, min_prec) {
+          break;
+        }
+        let en = p.precede(ex);
+        p.bump();
+        if exp_prec(p, fe, ExpPrec::Orelse).is_none() {
+          p.error(ErrorKind::Expected(Expected::Exp));
+        }
+        p.exit(en, SK::OrelseExp)
+      }
+      SK::HandleKw => {
+        if should_break_exp(p, ExpPrec::Handle, min_prec) {
+          break;
+        }
+        let en = p.precede(ex);
+        p.bump();
+        matcher(p, fe);
+        p.exit(en, SK::HandleExp)
+      }
+      SK::DotDotDot
+      | SK::Underscore
+      | SK::IntLit
+      | SK::RealLit
+      | SK::WordLit
+      | SK::CharLit
+      | SK::StringLit
+      | SK::OpKw
+      | SK::LCurly
+      | SK::Hash
+      | SK::LRound
+      | SK::LSquare
+      | SK::LetKw => app_exp(p, fe, ex),
+      _ => break,
+    };
+  }
+  ex
 }
 
-/// when adding more cases to this, update [`at_exp_hd`].
+fn app_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env, ex: Exited) -> Exited {
+  let en = p.precede(ex);
+  if at_exp(p, fe).is_none() {
+    p.error(ErrorKind::Expected(Expected::Exp));
+  }
+  p.exit(en, SK::AppExp)
+}
+
 fn at_exp(p: &mut Parser<'_>, fe: &sml_fixity::Env) -> Option<Exited> {
   let kind = p.peek()?.kind;
   let en = p.enter();
@@ -284,20 +312,6 @@ fn matcher(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
     true
   });
   p.exit(en, SK::Matcher);
-}
-
-/// see [`at_exp`]. need this for app expressions to know whether to precede or not.
-fn at_exp_hd(p: &mut Parser<'_>) -> bool {
-  p.at(SK::DotDotDot)
-    || p.at(SK::Underscore)
-    || scon(p)
-    || p.at(SK::OpKw)
-    || name_star_eq(p)
-    || p.at(SK::LCurly)
-    || p.at(SK::Hash)
-    || p.at(SK::LRound)
-    || p.at(SK::LSquare)
-    || p.at(SK::LetKw)
 }
 
 fn exp_args(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
