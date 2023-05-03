@@ -99,11 +99,7 @@ fn exp_prec_loop(
   min_prec: ExpPrec,
   mut ex: Exited,
 ) -> Exited {
-  loop {
-    let tok = match p.peek() {
-      None => break,
-      Some(tok) => tok,
-    };
+  while let Some(tok) = p.peek() {
     ex = match tok.kind {
       SK::Name | SK::Star | SK::Eq => match fe.get(tok.text) {
         Some(&op_info) => {
