@@ -66,7 +66,7 @@ fn pat_prec(
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
             ConPatState::Exited(_) => {
               p.error(ErrorKind::NotInfix);
-              AtPatHd::Infix(state, sml_fixity::Infix::left(0))
+              break;
             }
           },
           Some(&op_info) => AtPatHd::Infix(state, op_info),
