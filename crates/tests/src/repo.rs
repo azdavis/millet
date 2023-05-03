@@ -170,7 +170,8 @@ fn docs_readme() {
     .filter_map(|entry| {
       let entry = entry.ok()?;
       let fname = entry.file_name();
-      (fname.to_str() != Some("README.md")).then(|| fname.to_str().unwrap().to_owned())
+      let fname = fname.to_str()?;
+      (fname != "README.md").then(|| fname.to_owned())
     })
     .collect();
   eq_sets(&in_doc, &on_fs, "in README, but doesn't exist", "not in README, but exists");
