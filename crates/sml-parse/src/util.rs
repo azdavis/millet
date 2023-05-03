@@ -168,14 +168,6 @@ pub(crate) fn path_no_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
   path_must(p);
 }
 
-pub(crate) fn scon(p: &mut Parser<'_>) -> bool {
-  p.at(SK::IntLit)
-    || p.at(SK::RealLit)
-    || p.at(SK::WordLit)
-    || p.at(SK::CharLit)
-    || p.at(SK::StringLit)
-}
-
 pub(crate) fn lab(p: &mut Parser<'_>) {
   if p.at(SK::Name) || p.at(SK::Star) || p.at(SK::IntLit) {
     p.bump();

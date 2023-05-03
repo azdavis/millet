@@ -3,8 +3,7 @@
 use crate::parser::{Entered, ErrorKind, Exited, Expected, Parser};
 use crate::ty::{ty, ty_annotation};
 use crate::util::{
-  ascription, comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, scon,
-  should_break, InfixErr,
+  comma_sep, eat_name_star, lab, name_star, path, path_infix, path_no_infix, should_break, InfixErr,
 };
 use sml_syntax::SyntaxKind as SK;
 
@@ -59,87 +58,102 @@ fn pat_prec(
   } else {
     ConPatState::Exited(at_pat(p, fe, infix)?)
   };
-  loop {
-    let ex = if at_pat_hd(p) {
-      let at_pat_hd = if name_star(p, 0) {
-        let tok = p.peek().unwrap();
-        match fe.get(tok.text) {
-          None => match state {
-            ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
-            ConPatState::Exited(_) => {
-              p.error(ErrorKind::NotInfix);
-              AtPatHd::Infix(state, sml_fixity::Infix::left(0))
-            }
-          },
-          Some(&op_info) => AtPatHd::Infix(state, op_info),
-        }
-      } else {
-        match state {
-          ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
-          ConPatState::Exited(_) => break,
-        }
-      };
-      match at_pat_hd {
-        AtPatHd::ConPatArg(en) => {
-          if at_pat(p, fe, infix).is_none() {
-            p.error(ErrorKind::Expected(Expected::Pat));
+  while let Some(tok) = p.peek() {
+    let ex = match tok.kind {
+      SK::IntLit
+      | SK::RealLit
+      | SK::WordLit
+      | SK::CharLit
+      | SK::StringLit
+      | SK::Underscore
+      | SK::OpKw
+      | SK::Name
+      | SK::Star
+      | SK::LCurly
+      | SK::LRound
+      | SK::LSquare
+      | SK::Hash => {
+        let at_pat_hd = if name_star(p, 0) {
+          match fe.get(tok.text) {
+            None => match state {
+              ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
+              ConPatState::Exited(_) => {
+                p.error(ErrorKind::NotInfix);
+                AtPatHd::Infix(state, sml_fixity::Infix::left(0))
+              }
+            },
+            Some(&op_info) => AtPatHd::Infix(state, op_info),
           }
-          p.exit(en, SK::ConPat)
-        }
-        AtPatHd::Infix(st, op_info) => {
-          state = st;
-          match min_prec {
-            PatPrec::Min | PatPrec::Or => {}
-            PatPrec::Infix(min_prec) => {
-              if should_break(p, op_info, min_prec) {
-                break;
+        } else {
+          match state {
+            ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
+            ConPatState::Exited(_) => break,
+          }
+        };
+        match at_pat_hd {
+          AtPatHd::ConPatArg(en) => {
+            if at_pat(p, fe, infix).is_none() {
+              p.error(ErrorKind::Expected(Expected::Pat));
+            }
+            p.exit(en, SK::ConPat)
+          }
+          AtPatHd::Infix(st, op_info) => {
+            state = st;
+            match min_prec {
+              PatPrec::Min | PatPrec::Or => {}
+              PatPrec::Infix(min_prec) => {
+                if should_break(p, op_info, min_prec) {
+                  break;
+                }
               }
             }
+            let ex = state.exit(p);
+            let en = p.precede(ex);
+            p.bump();
+            if pat_prec(p, fe, PatPrec::Infix(op_info), infix).is_none() {
+              p.error(ErrorKind::Expected(Expected::Pat));
+            }
+            p.exit(en, SK::InfixPat)
           }
-          let ex = state.exit(p);
-          let en = p.precede(ex);
-          p.bump();
-          if pat_prec(p, fe, PatPrec::Infix(op_info), infix).is_none() {
-            p.error(ErrorKind::Expected(Expected::Pat));
-          }
-          p.exit(en, SK::InfixPat)
         }
       }
-    } else if p.at(SK::Bar) {
-      match min_prec {
-        PatPrec::Min => {}
-        PatPrec::Or | PatPrec::Infix(_) => break,
+      SK::Bar => {
+        match min_prec {
+          PatPrec::Min => {}
+          PatPrec::Or | PatPrec::Infix(_) => break,
+        }
+        let ex = state.exit(p);
+        let en = p.precede(ex);
+        p.bump();
+        if pat_prec(p, fe, PatPrec::Or, infix).is_none() {
+          p.error(ErrorKind::Expected(Expected::Pat));
+        }
+        p.exit(en, SK::OrPat)
       }
-      let ex = state.exit(p);
-      let en = p.precede(ex);
-      p.bump();
-      if pat_prec(p, fe, PatPrec::Or, infix).is_none() {
-        p.error(ErrorKind::Expected(Expected::Pat));
+      SK::Colon | SK::ColonGt => {
+        match min_prec {
+          PatPrec::Min | PatPrec::Or => {}
+          PatPrec::Infix(_) => break,
+        }
+        let ex = state.exit(p);
+        let en = p.precede(ex);
+        p.bump();
+        ty(p);
+        p.exit(en, SK::TypedPat)
       }
-      p.exit(en, SK::OrPat)
-    } else if ascription(p) {
-      match min_prec {
-        PatPrec::Min | PatPrec::Or => {}
-        PatPrec::Infix(_) => break,
+      SK::AsKw => {
+        match min_prec {
+          PatPrec::Min | PatPrec::Or => {}
+          PatPrec::Infix(_) => break,
+        }
+        let ex = state.exit(p);
+        let en = p.precede(ex);
+        if as_pat_tl(p, fe, infix).is_none() {
+          p.error(ErrorKind::Expected(Expected::Pat));
+        }
+        p.exit(en, SK::AsPat)
       }
-      let ex = state.exit(p);
-      let en = p.precede(ex);
-      p.bump();
-      ty(p);
-      p.exit(en, SK::TypedPat)
-    } else if p.at(SK::AsKw) {
-      match min_prec {
-        PatPrec::Min | PatPrec::Or => {}
-        PatPrec::Infix(_) => break,
-      }
-      let ex = state.exit(p);
-      let en = p.precede(ex);
-      if as_pat_tl(p, fe, infix).is_none() {
-        p.error(ErrorKind::Expected(Expected::Pat));
-      }
-      p.exit(en, SK::AsPat)
-    } else {
-      break;
+      _ => break,
     };
     state = ConPatState::Exited(ex);
   }
@@ -225,18 +239,6 @@ pub(crate) fn at_pat(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) 
     }
   };
   Some(p.exit(en, kind))
-}
-
-/// see [`at_pat`].
-fn at_pat_hd(p: &mut Parser<'_>) -> bool {
-  scon(p)
-    || p.at(SK::Underscore)
-    || p.at(SK::OpKw)
-    || name_star(p, 0)
-    || p.at(SK::LCurly)
-    || p.at(SK::LRound)
-    || p.at(SK::LSquare)
-    || p.at(SK::Hash)
 }
 
 fn at_pat_l_round(p: &mut Parser<'_>, fe: &sml_fixity::Env, infix: InfixErr) -> SK {
