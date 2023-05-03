@@ -169,7 +169,7 @@ pub(crate) fn path_no_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
 }
 
 pub(crate) fn lab(p: &mut Parser<'_>) {
-  if p.at(SK::Name) || p.at(SK::Star) || p.at(SK::IntLit) {
+  if p.peek().map_or(false, |x| matches!(x.kind, SK::Name | SK::Star | SK::IntLit)) {
     p.bump();
   } else {
     p.error(ErrorKind::Expected(Expected::Lab));
@@ -178,12 +178,12 @@ pub(crate) fn lab(p: &mut Parser<'_>) {
 
 /// kind of badly named. it means Name, * or =
 pub(crate) fn name_star_eq(p: &mut Parser<'_>) -> bool {
-  name_star(p, 0) || p.at(SK::Eq)
+  p.peek().map_or(false, |x| matches!(x.kind, SK::Name | SK::Star | SK::Eq))
 }
 
 /// kind of badly named. it means `Name` or `*`. the `n` is how far to look ahead.
 pub(crate) fn name_star(p: &mut Parser<'_>, n: usize) -> bool {
-  p.at_n(n, SK::Name) || p.at_n(n, SK::Star)
+  p.peek_n(n).map_or(false, |x| matches!(x.kind, SK::Name | SK::Star))
 }
 
 /// see [`name_star`].
@@ -198,5 +198,5 @@ pub(crate) fn eat_name_star<'a>(p: &mut Parser<'a>) -> Option<Token<'a, SK>> {
 
 /// `:` or `:>`. in many contexts only `:` is acceptable but we handle that in lowering.
 pub(crate) fn ascription(p: &mut Parser<'_>) -> bool {
-  p.at(SK::Colon) || p.at(SK::ColonGt)
+  p.peek().map_or(false, |x| matches!(x.kind, SK::Colon | SK::ColonGt))
 }
