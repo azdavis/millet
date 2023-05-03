@@ -247,15 +247,15 @@ fn licenses() {
 
 #[test]
 fn diagnostic_codes() {
+  let in_doc = include_str!("../../../docs/diagnostics.md")
+    .lines()
+    .filter_map(|line| Some(line.strip_prefix("## ")?.parse::<u16>().unwrap()));
+  let in_doc = no_dupes(in_doc);
   let out = output(root_cmd("git").args(["grep", "-hoE", "Code::n\\([[:digit:]]+\\)"]));
-  let in_doc = no_dupes(
-    include_str!("../../../docs/diagnostics.md")
-      .lines()
-      .filter_map(|line| Some(line.strip_prefix("## ")?.parse::<u16>().unwrap())),
-  );
-  let in_code = no_dupes(out.lines().map(|line| {
+  let in_code = out.lines().map(|line| {
     line.strip_prefix("Code::n(").unwrap().strip_suffix(')').unwrap().parse::<u16>().unwrap()
-  }));
+  });
+  let in_code = no_dupes(in_code);
   eq_sets(&in_doc, &in_code, "diagnostics documented but not used", "diagnostics not documented");
 }
 
