@@ -170,7 +170,8 @@ fn docs_readme() {
       let entry = entry.ok()?;
       let fname = entry.file_name();
       let fname = fname.to_str()?;
-      (fname != "README.md").then(|| fname.to_owned())
+      let ignore = matches!(fname, "README.md" | "diagnostics.md");
+      (!ignore).then(|| fname.to_owned())
     })
     .collect();
   eq_sets(&in_doc, &on_fs, "in README, but doesn't exist", "not in README, but exists");
@@ -247,9 +248,9 @@ fn licenses() {
 
 #[test]
 fn diagnostic_codes() {
-  let in_doc = include_str!("../../../docs/diagnostics.md")
-    .lines()
-    .filter_map(|line| Some(line.strip_prefix("## ")?.parse::<u16>().unwrap()));
+  let in_doc = fs::read_dir(root_dir().join("docs").join("diagnostics")).unwrap().map(|x| {
+    x.unwrap().file_name().to_str().unwrap().strip_suffix(".md").unwrap().parse::<u16>().unwrap()
+  });
   let in_doc = no_dupes(in_doc);
   let out = output(root_cmd("git").args(["grep", "-hoE", "Code::n\\([[:digit:]]+\\)"]));
   let in_code = out.lines().map(|line| {

@@ -1,6 +1,6 @@
 //! Tests to make sure Millet behaves as expected on the public documentation.
 
-use crate::check::raw;
+use crate::{check::raw, repo::root_dir};
 use diagnostic::Severity;
 use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag};
 
@@ -54,7 +54,11 @@ fn check_all(contents: &str) {
 
 #[test]
 fn diagnostics() {
-  check_all(include_str!("../../../docs/diagnostics.md"));
+  for entry in std::fs::read_dir(root_dir().join("docs").join("diagnostics")).unwrap() {
+    let entry = entry.unwrap();
+    let contents = std::fs::read_to_string(entry.path()).unwrap();
+    check_all(&contents);
+  }
 }
 
 #[test]
