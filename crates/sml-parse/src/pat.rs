@@ -60,35 +60,16 @@ fn pat_prec(
   };
   while let Some(tok) = p.peek() {
     let ex = match tok.kind {
-      SK::IntLit
-      | SK::RealLit
-      | SK::WordLit
-      | SK::CharLit
-      | SK::StringLit
-      | SK::Underscore
-      | SK::OpKw
-      | SK::Name
-      | SK::Star
-      | SK::LCurly
-      | SK::LRound
-      | SK::LSquare
-      | SK::Hash => {
-        let at_pat_hd = if name_star(p, 0) {
-          match fe.get(tok.text) {
-            None => match state {
-              ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
-              ConPatState::Exited(_) => {
-                p.error(ErrorKind::NotInfix);
-                AtPatHd::Infix(state, sml_fixity::Infix::left(0))
-              }
-            },
-            Some(&op_info) => AtPatHd::Infix(state, op_info),
-          }
-        } else {
-          match state {
+      SK::Name | SK::Star => {
+        let at_pat_hd = match fe.get(tok.text) {
+          None => match state {
             ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
-            ConPatState::Exited(_) => break,
-          }
+            ConPatState::Exited(_) => {
+              p.error(ErrorKind::NotInfix);
+              AtPatHd::Infix(state, sml_fixity::Infix::left(0))
+            }
+          },
+          Some(&op_info) => AtPatHd::Infix(state, op_info),
         };
         match at_pat_hd {
           AtPatHd::ConPatArg(en) => {
@@ -116,6 +97,26 @@ fn pat_prec(
             p.exit(en, SK::InfixPat)
           }
         }
+      }
+      SK::IntLit
+      | SK::RealLit
+      | SK::WordLit
+      | SK::CharLit
+      | SK::StringLit
+      | SK::Underscore
+      | SK::OpKw
+      | SK::LCurly
+      | SK::LRound
+      | SK::LSquare
+      | SK::Hash => {
+        let en = match state {
+          ConPatState::Entered(en) => en,
+          ConPatState::Exited(_) => break,
+        };
+        if at_pat(p, fe, infix).is_none() {
+          p.error(ErrorKind::Expected(Expected::Pat));
+        }
+        p.exit(en, SK::ConPat)
       }
       SK::Bar => {
         match min_prec {
