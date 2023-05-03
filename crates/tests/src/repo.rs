@@ -35,9 +35,12 @@ where
   ret
 }
 
+pub(crate) fn root_dir() -> &'static Path {
+  Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap()
+}
+
 fn cd_root() {
-  let root_dir = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
-  env::set_current_dir(root_dir).expect("couldn't cd");
+  env::set_current_dir(root_dir()).expect("couldn't cd to root");
 }
 
 fn output(c: &mut Command) -> String {
