@@ -27,13 +27,6 @@ impl ConPatState {
   }
 }
 
-enum AtPatHd {
-  /// corresponds to `ConPatState::Entered`.
-  ConPatArg(Entered),
-  /// we're parsing an infix pat.
-  Infix(ConPatState, sml_fixity::Infix),
-}
-
 /// kind of gross for the tricky ones.
 fn pat_prec(
   p: &mut Parser<'_>,
@@ -60,44 +53,37 @@ fn pat_prec(
   };
   while let Some(tok) = p.peek() {
     let ex = match tok.kind {
-      SK::Name | SK::Star => {
-        let at_pat_hd = match fe.get(tok.text) {
-          None => match state {
-            ConPatState::Entered(en) => AtPatHd::ConPatArg(en),
-            ConPatState::Exited(_) => {
-              p.error(ErrorKind::NotInfix);
-              break;
-            }
-          },
-          Some(&op_info) => AtPatHd::Infix(state, op_info),
-        };
-        match at_pat_hd {
-          AtPatHd::ConPatArg(en) => {
+      SK::Name | SK::Star => match fe.get(tok.text) {
+        None => match state {
+          ConPatState::Entered(en) => {
             if at_pat(p, fe, infix).is_none() {
               p.error(ErrorKind::Expected(Expected::Pat));
             }
             p.exit(en, SK::ConPat)
           }
-          AtPatHd::Infix(st, op_info) => {
-            state = st;
-            match min_prec {
-              PatPrec::Min | PatPrec::Or => {}
-              PatPrec::Infix(min_prec) => {
-                if should_break(p, op_info, min_prec) {
-                  break;
-                }
+          ConPatState::Exited(_) => {
+            p.error(ErrorKind::NotInfix);
+            break;
+          }
+        },
+        Some(&op_info) => {
+          match min_prec {
+            PatPrec::Min | PatPrec::Or => {}
+            PatPrec::Infix(min_prec) => {
+              if should_break(p, op_info, min_prec) {
+                break;
               }
             }
-            let ex = state.exit(p);
-            let en = p.precede(ex);
-            p.bump();
-            if pat_prec(p, fe, PatPrec::Infix(op_info), infix).is_none() {
-              p.error(ErrorKind::Expected(Expected::Pat));
-            }
-            p.exit(en, SK::InfixPat)
           }
+          let ex = state.exit(p);
+          let en = p.precede(ex);
+          p.bump();
+          if pat_prec(p, fe, PatPrec::Infix(op_info), infix).is_none() {
+            p.error(ErrorKind::Expected(Expected::Pat));
+          }
+          p.exit(en, SK::InfixPat)
         }
-      }
+      },
       SK::IntLit
       | SK::RealLit
       | SK::WordLit
