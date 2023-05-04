@@ -617,7 +617,7 @@ Ignore the rest of the rows in a record pattern.
 val {b, ...} = {a = 1, b = 4}
 ```
 
-Also used as a expression/type/declaration "hole", though this is not legal SML.
+Also used as a expression/type/declaration "hole", though this is not valid SML.
 
 ## `->`
 
@@ -833,7 +833,7 @@ Discard whatever matches the pattern.
 val (_, a) = (4, "hi")
 ```
 
-Also used as a expression/type "hole", though this is not legal SML.
+Also used as a expression/type "hole", though this is not valid SML.
 
 ## `{`
 
