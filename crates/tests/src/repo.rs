@@ -260,6 +260,18 @@ fn diagnostic_codes() {
   eq_sets(&in_doc, &in_code, "diagnostics documented but not used", "diagnostics not documented");
 }
 
+#[test]
+fn diagnostic_header() {
+  for entry in fs::read_dir(root_dir().join("docs").join("diagnostics")).unwrap() {
+    let entry = entry.unwrap();
+    let fname = entry.file_name();
+    let num = fname.to_str().unwrap().strip_suffix(".md").unwrap();
+    let contents = std::fs::read_to_string(entry.path()).unwrap();
+    let first_line = contents.lines().next().unwrap().strip_prefix("# ").unwrap();
+    assert_eq!(num, first_line);
+  }
+}
+
 #[derive(Debug)]
 struct EnumVariant<'a> {
   name: &'a str,
