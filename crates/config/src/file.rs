@@ -120,15 +120,15 @@ pub struct Dec {
 #[derive(Debug, Default, Clone, Deserialize)]
 #[allow(missing_docs)]
 pub struct Exp {
-  #[serde(rename = "int-lit", default)]
+  #[serde(default, rename = "int-lit")]
   pub int_lit: Tool,
-  #[serde(rename = "real-lit", default)]
+  #[serde(default, rename = "real-lit")]
   pub real_lit: Tool,
-  #[serde(rename = "word-lit", default)]
+  #[serde(default, rename = "word-lit")]
   pub word_lit: Tool,
-  #[serde(rename = "char-lit", default)]
+  #[serde(default, rename = "char-lit")]
   pub char_lit: Tool,
-  #[serde(rename = "string-lit", default)]
+  #[serde(default, rename = "string-lit")]
   pub string_lit: Tool,
   #[serde(default)]
   pub path: Tool,
@@ -144,7 +144,7 @@ pub struct Exp {
   pub list: Tool,
   #[serde(default)]
   pub seq: Tool,
-  #[serde(rename = "let", default)]
+  #[serde(default, rename = "let")]
   pub let_: Tool,
   #[serde(default)]
   pub app: Tool,
@@ -160,13 +160,13 @@ pub struct Exp {
   pub handle: Tool,
   #[serde(default)]
   pub raise: Tool,
-  #[serde(rename = "if", default)]
+  #[serde(default, rename = "if")]
   pub if_: Tool,
-  #[serde(rename = "while", default)]
+  #[serde(default, rename = "while")]
   pub while_: Tool,
   #[serde(default)]
   pub case: Tool,
-  #[serde(rename = "fn", default)]
+  #[serde(default, rename = "fn")]
   pub fn_: Tool,
 }
 
