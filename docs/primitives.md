@@ -85,13 +85,28 @@ val percent = #"%"
 val space = #" "
 ```
 
-Millet, and SML in general, has limited support for extended character sets beyond ASCII.
-
 The `Char` structure provides operations on characters.
 
 ```sml
 val no = Char.isSpace #"g"
 ```
+
+The notion of "character" is difficult to define. C programmers may be used to "character" being synonymous with "byte", aka "octet", aka "8 bits", but this is not always the case.
+
+See, for instance, the discussion on the Rust language's primitive [character type][rust-char], or the Unicode standard's [definition of "character"][unicode-char].
+
+The relevant section of the Definition of Standard ML prescribes that the underlying encoding used in an SML implementation must agree with ASCII:
+
+> We assume an underlying alphabet of N characters (N ≥ 256), numbered 0 to N − 1, which agrees with the ASCII character set on the characters numbered 0 to 127.
+
+The common [UTF-8 encoding][utf8-everywhere] is one such encoding that has this property. Millet, implemented in Rust, requires SML source files be valid UTF-8, because [strings in Rust][rust-str] are required to always be valid UTF-8.
+
+For maximum portability, however, an SML program should only use character literals that are ASCII, since the Definition prescribes no further restrictions on the underlying character set other than it must agree with ASCII.
+
+[unicode-char]: https://www.unicode.org/glossary/#character
+[rust-char]: https://doc.rust-lang.org/stable/std/primitive.char.html
+[rust-str]: https://doc.rust-lang.org/stable/std/primitive.str.html
+[utf8-everywhere]: http://utf8everywhere.org
 
 ## `type string`
 
@@ -120,10 +135,6 @@ The `String` structure provides operations on strings.
 ```sml
 val yes = String.isSubstring "erica" "america"
 ```
-
-Strings are often thought of as ordered sequences of characters. Indeed, in SML, there is `String.explode` and `String.implode` to go from strings to list of characters and vice versa. However, the notion of "character" is [difficult to define][unicode].
-
-[unicode]: https://home.unicode.org
 
 ## `type bool`
 
