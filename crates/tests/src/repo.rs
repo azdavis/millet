@@ -2,6 +2,7 @@
 
 use crate::check::raw::env_var_enabled;
 use fast_hash::{FxHashMap, FxHashSet};
+use once_cell::sync::Lazy;
 use std::collections::BTreeSet;
 use std::fmt::{self, Write as _};
 use std::{env, fs, path::Path, process::Command};
@@ -209,6 +210,11 @@ fn changelog() {
   eq_sets(&in_git, &in_doc, "tags that have no changelog entry", "changelog entries without a tag");
 }
 
+static METADATA: Lazy<serde_json::Map<String, serde_json::Value>> = Lazy::new(|| {
+  let out = output(root_cmd("cargo").args(["metadata", "--format-version", "1"]));
+  serde_json::from_str(&out).unwrap()
+});
+
 #[test]
 fn licenses() {
   let allowed = fast_hash::set([
@@ -227,9 +233,7 @@ fn licenses() {
     "Unlicense/MIT",
     "Zlib OR Apache-2.0 OR MIT",
   ]);
-  let out = output(root_cmd("cargo").args(["metadata", "--format-version", "1"]));
-  let json: serde_json::Value = serde_json::from_str(&out).unwrap();
-  let packages = json.as_object().unwrap().get("packages").unwrap().as_array().unwrap();
+  let packages = METADATA.get("packages").unwrap().as_array().unwrap();
   let mut new_licenses = FxHashMap::<&str, FxHashSet<&str>>::default();
   for package in packages {
     let package = package.as_object().unwrap();
