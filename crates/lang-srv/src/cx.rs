@@ -15,7 +15,7 @@ pub(crate) const LEARN_MORE: &str = "Learn more";
 pub(crate) struct Cx {
   pub(crate) options: config::init::Options,
   pub(crate) registered_for_watched_files: bool,
-  pub(crate) store: paths::Store,
+  pub(crate) paths: paths::Store,
   pub(crate) fs: paths::RealFileSystem,
   pub(crate) sender: Sender<Message>,
   pub(crate) req_queue: ReqQueue<(), Option<Code>>,
@@ -71,6 +71,6 @@ impl Cx {
   }
 
   pub(crate) fn get_input(&mut self, root: &paths::CanonicalPathBuf) -> input::Input {
-    elapsed::log("Input::new", || input::Input::new(&self.fs, &mut self.store, root))
+    elapsed::log("Input::new", || input::Input::new(&self.fs, &mut self.paths, root))
   }
 }

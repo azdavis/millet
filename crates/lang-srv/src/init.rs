@@ -27,7 +27,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
   let mut cx = Cx {
     options,
     registered_for_watched_files: false,
-    store: paths::Store::new(),
+    paths: paths::Store::new(),
     fs: paths::RealFileSystem::default(),
     sender,
     req_queue: ReqQueue::default(),

@@ -186,7 +186,7 @@ fn maybe_rel_to_root<'a>(root: &Path, path: &'a Path) -> &'a Path {
 
 pub(crate) fn get_path_id<F>(
   fs: &F,
-  store: &mut paths::Store,
+  paths: &mut paths::Store,
   source: ErrorSource,
   path: &Path,
 ) -> Result<paths::PathId>
@@ -194,12 +194,12 @@ where
   F: paths::FileSystem,
 {
   let canonical = canonicalize(fs, path, source)?;
-  Ok(store.get_id(&canonical))
+  Ok(paths.get_id(&canonical))
 }
 
 pub(crate) fn get_path_id_in_group<F>(
   fs: &F,
-  store: &mut paths::Store,
+  paths: &mut paths::Store,
   group: &StartedGroup,
   path: &Path,
   range: text_size_util::TextRange,
@@ -213,7 +213,7 @@ where
   };
   let path = group.path.as_path().parent().expect("group path with no parent").join(path);
   let canonical = canonicalize(fs, path.as_path(), source.clone())?;
-  let id = store.get_id(&canonical);
+  let id = paths.get_id(&canonical);
   Ok((id, canonical, source))
 }
 
@@ -286,20 +286,20 @@ impl IoError {
 impl StartedGroup {
   /// This must only return [`IoError`] in the error case.
   pub(crate) fn new<F>(
-    store: &mut paths::Store,
+    paths: &mut paths::Store,
     cur: GroupPathToProcess,
     fs: &F,
   ) -> Result<Self, IoError>
   where
     F: paths::FileSystem,
   {
-    let path = store.get_path(cur.path).clone();
+    let path = paths.get_path(cur.path).clone();
     let contents = match fs.read_to_string(path.as_path()) {
       Ok(x) => x,
       Err(inner) => {
         return Err(IoError {
           error_path: path,
-          source_path: store.get_path(cur.parent).clone(),
+          source_path: paths.get_path(cur.parent).clone(),
           range: cur.range,
           inner,
         })

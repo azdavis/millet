@@ -11,7 +11,7 @@ pub(crate) fn get<F>(
   fs: &F,
   sources: &mut PathMap<String>,
   groups: &mut PathMap<Group>,
-  store: &mut paths::Store,
+  paths: &mut paths::Store,
   path_vars: &slash_var_path::Env,
   path: paths::PathId,
   errors: &mut Vec<Error>,
@@ -19,12 +19,12 @@ pub(crate) fn get<F>(
   F: paths::FileSystem,
 {
   let init = GroupPathToProcess { parent: path, range: None, path };
-  let mut st = St { fs, store, sources, stack: vec![init], errors };
+  let mut st = St { fs, paths, sources, stack: vec![init], errors };
   while let Some(cur) = st.stack.pop() {
     if groups.contains_key(&cur.path) {
       continue;
     }
-    let group = match StartedGroup::new(st.store, cur, fs) {
+    let group = match StartedGroup::new(st.paths, cur, fs) {
       Ok(x) => x,
       Err(e) => {
         st.errors.push(e.into_error());
@@ -51,7 +51,7 @@ pub(crate) fn get<F>(
 
 struct St<'a, F> {
   fs: &'a F,
-  store: &'a mut paths::Store,
+  paths: &'a mut paths::Store,
   sources: &'a mut PathMap<String>,
   stack: Vec<GroupPathToProcess>,
   errors: &'a mut Vec<Error>,
@@ -111,7 +111,7 @@ where
       mlb_hir::BasDec::seq(binds)
     }
     mlb_syntax::BasDec::Path(pp) => {
-      let pid = get_path_id_in_group(st.fs, st.store, &cx.group, pp.val.as_path(), pp.range);
+      let pid = get_path_id_in_group(st.fs, st.paths, &cx.group, pp.val.as_path(), pp.range);
       let (path_id, path, source) = match pid {
         Ok(x) => x,
         Err(e) => {

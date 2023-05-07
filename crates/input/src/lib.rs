@@ -41,16 +41,16 @@ impl Input {
   /// # Errors
   ///
   /// When getting input failed.
-  pub fn new<F>(fs: &F, store: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Input
+  pub fn new<F>(fs: &F, paths: &mut paths::Store, root: &paths::CanonicalPathBuf) -> Input
   where
     F: paths::FileSystem,
   {
     let mut ret = Input::default();
-    let root = root::Root::new(fs, store, root, &mut ret.errors);
+    let root = root::Root::new(fs, paths, root, &mut ret.errors);
     ret.severities = root.config.severities;
     ret.lang = root.config.lang;
     for group in root.groups {
-      let path = store.get_path(group.path).as_path();
+      let path = paths.get_path(group.path).as_path();
       let parent = path.parent().expect("group path with no parent");
       let parent = match util::str_path(ErrorSource::default(), parent) {
         Ok(x) => x,
@@ -64,14 +64,14 @@ impl Input {
         GroupPathKind::Cm => lower_cm::get,
         GroupPathKind::Mlb => lower_mlb::get,
       };
-      f(fs, &mut ret.sources, &mut ret.groups, store, &path_var_env, group.path, &mut ret.errors);
+      f(fs, &mut ret.sources, &mut ret.groups, paths, &path_var_env, group.path, &mut ret.errors);
       ret.root_group_paths.push(group.path);
     }
     let bas_decs = ret.groups.iter().map(|(&a, b)| (a, &b.bas_dec));
     if let Err(err) = topo::check(bas_decs) {
       ret.errors.push(Error::new(
         ErrorSource::default(),
-        store.get_path(err.witness()).as_path().to_owned(),
+        paths.get_path(err.witness()).as_path().to_owned(),
         ErrorKind::Cycle,
       ));
       // TODO only clear out the problematic files

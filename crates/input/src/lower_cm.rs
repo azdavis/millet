@@ -14,14 +14,14 @@ pub(crate) fn get<F>(
   fs: &F,
   sources: &mut PathMap<String>,
   groups: &mut PathMap<Group>,
-  store: &mut paths::Store,
+  paths: &mut paths::Store,
   path_vars: &slash_var_path::Env,
   path: paths::PathId,
   errors: &mut Vec<Error>,
 ) where
   F: paths::FileSystem,
 {
-  let mut st = St { fs, store, path_vars, sources, cm_files: PathMap::<CmFile>::default(), errors };
+  let mut st = St { fs, paths, path_vars, sources, cm_files: PathMap::<CmFile>::default(), errors };
   let init = GroupPathToProcess { parent: path, range: None, path };
   if let Err(e) = get_one(&mut st, init) {
     st.errors.push(e.into_error());
@@ -52,7 +52,7 @@ pub(crate) fn get<F>(
 
 struct St<'a, F> {
   fs: &'a F,
-  store: &'a mut paths::Store,
+  paths: &'a mut paths::Store,
   path_vars: &'a slash_var_path::Env,
   sources: &'a mut PathMap<String>,
   cm_files: PathMap<CmFile>,
@@ -92,7 +92,7 @@ where
   // HACK: fake it so we don't infinitely recurse. this will be overwritten later.
   st.cm_files.insert(cur.path, CmFile::default());
   let mut ret = CmFile::default();
-  let group = StartedGroup::new(st.store, cur, st.fs)?;
+  let group = StartedGroup::new(st.paths, cur, st.fs)?;
   match cm_syntax::get(group.contents.as_str(), st.path_vars) {
     Ok(cm) => get_one_cm_file(st, &mut ret, cur.path, &group, cm),
     Err(e) => st.errors.push(Error::new(
@@ -116,7 +116,7 @@ fn get_one_cm_file<F>(
   F: paths::FileSystem,
 {
   for pp in cm.paths {
-    let pid = get_path_id_in_group(st.fs, st.store, group, pp.val.as_path(), pp.range);
+    let pid = get_path_id_in_group(st.fs, st.paths, group, pp.val.as_path(), pp.range);
     let (path_id, path, source) = match pid {
       Ok(x) => x,
       Err(e) => {
@@ -191,7 +191,7 @@ fn get_export<F>(
     }
     cm_syntax::Export::Source(path) => match path.val {
       cm_syntax::PathOrMinus::Path(p) => {
-        let pid = get_path_id_in_group(st.fs, st.store, cx.group, p.as_path(), path.range);
+        let pid = get_path_id_in_group(st.fs, st.paths, cx.group, p.as_path(), path.range);
         let (path_id, _, source) = match pid {
           Ok(x) => x,
           Err(e) => {
@@ -261,7 +261,7 @@ fn get_one_and_extend_with<F>(
 ) where
   F: paths::FileSystem,
 {
-  let pid = get_path_id_in_group(st.fs, st.store, group, path, range);
+  let pid = get_path_id_in_group(st.fs, st.paths, group, path, range);
   let (path_id, _, source) = match pid {
     Ok(x) => x,
     Err(e) => {

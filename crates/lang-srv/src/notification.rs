@@ -28,7 +28,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
   })?;
   n = helpers::try_notif::<lsp_types::notification::DidChangeTextDocument, _>(n, |params| {
     let url = params.text_document.uri;
-    let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
+    let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
     match &mut st.mode {
       Mode::Root(root) => {
         let text = match root.input.sources.get_mut(&path) {
@@ -60,7 +60,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
     if let Mode::NoRoot(open_files) = &mut st.mode {
       let url = params.text_document.uri;
       let text = params.text_document.text;
-      let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
+      let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
       let ds =
         convert::diagnostics(st.analysis.get_one(&text), st.cx.options.diagnostics.more_info_hint);
       st.cx.send_diagnostics(url, ds);
@@ -83,7 +83,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           log::warn!("got text for DidSaveTextDocument");
         }
         let url = params.text_document.uri;
-        let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
+        let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
         match open_files.get(&path) {
           Some(text) => {
             let ds = convert::diagnostics(
@@ -101,7 +101,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
   n = helpers::try_notif::<lsp_types::notification::DidCloseTextDocument, _>(n, |params| {
     if let Mode::NoRoot(open_files) = &mut st.mode {
       let url = params.text_document.uri;
-      let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.store, &url)?;
+      let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
       open_files.remove(&path);
       st.cx.send_diagnostics(url, Vec::new());
     }

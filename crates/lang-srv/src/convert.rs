@@ -89,10 +89,10 @@ pub(crate) fn lsp_position(pos: text_pos::PositionUtf16) -> lsp_types::Position 
 }
 
 pub(crate) fn lsp_location(
-  store: &paths::Store,
+  paths: &paths::Store,
   range: paths::WithPath<text_pos::RangeUtf16>,
 ) -> Option<lsp_types::Location> {
-  let uri = match file_url(store.get_path(range.path).as_path()) {
+  let uri = match file_url(paths.get_path(range.path).as_path()) {
     Ok(x) => x,
     Err(e) => {
       log::error!("couldn't get path as a file url: {e:#}");
@@ -112,24 +112,24 @@ pub(crate) fn analysis_range(range: lsp_types::Range) -> text_pos::RangeUtf16 {
 
 pub(crate) fn url_to_path_id<F>(
   fs: &F,
-  store: &mut paths::Store,
+  paths: &mut paths::Store,
   url: &Url,
 ) -> Result<paths::PathId>
 where
   F: paths::FileSystem,
 {
-  Ok(store.get_id(&canonical_path_buf(fs, url)?))
+  Ok(paths.get_id(&canonical_path_buf(fs, url)?))
 }
 
 pub(crate) fn text_doc_pos_params<F>(
   fs: &F,
-  store: &mut paths::Store,
+  paths: &mut paths::Store,
   params: &lsp_types::TextDocumentPositionParams,
 ) -> Result<paths::WithPath<text_pos::PositionUtf16>>
 where
   F: paths::FileSystem,
 {
-  let path = url_to_path_id(fs, store, &params.text_document.uri)?;
+  let path = url_to_path_id(fs, paths, &params.text_document.uri)?;
   let pos = analysis_position(params.position);
   Ok(path.wrap(pos))
 }

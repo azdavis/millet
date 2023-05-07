@@ -52,7 +52,7 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
   }
   let got_many = st.analysis.get_many(&root.input);
   for (path_id, errors) in got_many {
-    let path = st.cx.store.get_path(path_id);
+    let path = st.cx.paths.get_path(path_id);
     let url = match convert::file_url(path.as_path()) {
       Ok(x) => x,
       Err(e) => {

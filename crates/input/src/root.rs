@@ -17,7 +17,7 @@ pub(crate) struct Root {
 impl Root {
   pub(crate) fn new<F>(
     fs: &F,
-    store: &mut paths::Store,
+    paths: &mut paths::Store,
     root: &paths::CanonicalPathBuf,
     errors: &mut Vec<Error>,
   ) -> Root
@@ -82,7 +82,7 @@ impl Root {
     }
     let mut ret = Root { groups: Vec::new(), config };
     for root_group_path in root_group_paths {
-      match get_path_id(fs, store, root_group_source.clone(), &root_group_path.path) {
+      match get_path_id(fs, paths, root_group_source.clone(), &root_group_path.path) {
         Ok(path) => ret.groups.push(RootGroup { path, kind: root_group_path.kind }),
         Err(e) => errors.push(e),
       }
