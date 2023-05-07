@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.9.6
+
+- Improve internals for responding to file changes.
+
 ## v0.9.5
 
 - Move diagnostic docs to one per file.
