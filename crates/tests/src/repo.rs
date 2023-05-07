@@ -512,9 +512,9 @@ fn version() {
   let package_lock_json: serde_json::Value = serde_json::from_str(PACKAGE_LOCK_JSON).unwrap();
   let package_lock_json = package_lock_json.as_object().unwrap();
   let cargo_toml = include_str!("../../../Cargo.toml");
-  let a = package_json.as_object().unwrap().get("version").unwrap().as_str().unwrap();
-  let b = package_lock_json.get("version").unwrap().as_str().unwrap();
-  let c = package_lock_json
+  let pkg_json_ver = package_json.as_object().unwrap().get("version").unwrap().as_str().unwrap();
+  let pkg_lk_json_ver = package_lock_json.get("version").unwrap().as_str().unwrap();
+  let pkg_lk_json_self_ver = package_lock_json
     .get("packages")
     .unwrap()
     .as_object()
@@ -527,14 +527,25 @@ fn version() {
     .unwrap()
     .as_str()
     .unwrap();
-  let d = cargo_toml
+  let cargo_toml_ver = cargo_toml
     .lines()
     .find_map(|line| line.strip_prefix("version = \"")?.strip_suffix('"'))
     .unwrap();
-  assert_eq!(a, b);
-  assert_eq!(a, c);
-  assert_eq!(a, d);
-  if let Some(e) = option_env!("GITHUB_REF_NAME").and_then(|r| r.strip_prefix('v')) {
-    assert_eq!(a, e);
+
+  assert_eq!(pkg_json_ver, pkg_lk_json_ver);
+  assert_eq!(pkg_json_ver, pkg_lk_json_self_ver);
+  assert_eq!(pkg_json_ver, cargo_toml_ver);
+
+  for member in METADATA.get("workspace_members").unwrap().as_array().unwrap() {
+    let member = member.as_str().unwrap();
+    let mut iter = member.split_ascii_whitespace();
+    // package name
+    iter.next();
+    let member_version = iter.next().unwrap();
+    assert_eq!(pkg_json_ver, member_version);
+  }
+
+  if let Some(github_ref_v) = option_env!("GITHUB_REF_NAME").and_then(|r| r.strip_prefix('v')) {
+    assert_eq!(pkg_json_ver, github_ref_v);
   }
 }
