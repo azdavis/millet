@@ -38,28 +38,48 @@ fn extract_error<T>(e: ExtractError<T>) -> ControlFlow<Result<()>, T> {
 
 /// adapted from rust-analyzer.
 pub(crate) fn apply_changes(
-  text: &mut String,
-  changes: Vec<lsp_types::TextDocumentContentChangeEvent>,
+  contents: &mut String,
+  mut content_changes: Vec<lsp_types::TextDocumentContentChangeEvent>,
 ) {
-  let mut pos_db = text_pos::PositionDb::new(text);
-  let mut up_to_line = u32::MAX;
-  for change in changes {
-    match change.range {
-      Some(range) => {
-        if up_to_line <= range.end.line {
-          pos_db = text_pos::PositionDb::new(text);
-        }
-        match pos_db.text_range_utf16(analysis_range(range)) {
-          Some(text_range) => {
-            text.replace_range(std::ops::Range::<usize>::from(text_range), &change.text);
-            up_to_line = range.start.line;
-          }
-          None => log::error!("unable to apply text document change {change:?}"),
-        }
+  // Skip to the last full document change, as it invalidates all previous changes anyways.
+  let mut start = content_changes
+    .iter()
+    .rev()
+    .position(|change| change.range.is_none())
+    .map_or(0, |idx| content_changes.len() - idx - 1);
+
+  match content_changes.get_mut(start) {
+    // peek at the first content change as an optimization
+    Some(lsp_types::TextDocumentContentChangeEvent { range: None, text, .. }) => {
+      *contents = std::mem::take(text);
+      start += 1;
+
+      // The only change is a full document update
+      if start == content_changes.len() {
+        return;
       }
-      None => {
-        *text = change.text;
-        up_to_line = 0;
+    }
+    Some(_) => {}
+    // we received no content changes
+    None => return,
+  }
+
+  let mut pos_db = text_pos::PositionDb::new(contents);
+
+  // The changes we got must be applied sequentially, but can cross lines so we have to keep our
+  // line index updated. Some clients (e.g. Code) sort the ranges in reverse. As an optimization, we
+  // remember the last valid line in the index and only rebuild it if needed. The VFS will normalize
+  // the end of lines to `\n`.
+  let mut index_valid = u32::MAX;
+  for change in content_changes {
+    // The None case can't happen as we have handled it above already
+    if let Some(range) = change.range {
+      if index_valid <= range.end.line {
+        pos_db = text_pos::PositionDb::new(contents);
+      }
+      index_valid = range.start.line;
+      if let Some(range) = pos_db.text_range_utf16(analysis_range(range)) {
+        contents.replace_range(std::ops::Range::<usize>::from(range), &change.text);
       }
     }
   }
