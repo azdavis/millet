@@ -4,7 +4,7 @@ use crate::state::{Mode, Root, St};
 use crate::{convert, cx::Cx, diagnostics};
 use crossbeam_channel::Sender;
 use diagnostic::Code;
-use fast_hash::{FxHashMap, FxHashSet};
+use fast_hash::FxHashSet;
 use lsp_server::{Message, ReqQueue};
 
 pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -> St {
@@ -43,7 +43,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
         let input = cx.get_input(&path);
         Mode::Root(Box::new(Root { path, input }))
       }
-      None => Mode::NoRoot(FxHashMap::default()),
+      None => Mode::NoRoot(paths::PathMap::default()),
     },
     cx,
     analysis,

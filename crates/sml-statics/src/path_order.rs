@@ -61,7 +61,10 @@ pub fn get(
   }
   loop {
     let old_ok_paths_len = ok_paths.len();
-    let mut new_paths: SmlHirPaths<'_> = fast_hash::map_with_capacity(paths.len());
+    let mut new_paths: SmlHirPaths<'_> = std::collections::HashMap::with_capacity_and_hasher(
+      paths.len(),
+      std::hash::BuildHasherDefault::default(),
+    );
     for (path, (arenas, root)) in paths {
       // NOTE: this inner loop body runs O(n^2) times. to make this hurt less, we use a special path
       // order mode for statics, which reduces the number of checks we do.
