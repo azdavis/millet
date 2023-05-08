@@ -122,7 +122,7 @@ where
     let mode = sml_statics_types::mode::Mode::BuiltinLib(name);
     let low = started.lower;
     let checked = sml_statics::get(&mut syms, &mut tys, &bs, mode, &low.arenas, &low.root);
-    bs.append(checked.bs);
+    bs.append(checked.info.basis().clone());
     if let Some(e) = checked.errors.first() {
       let e = e.display(&syms, &tys, config::ErrorLines::One);
       panic!("{name}: statics error: {e}");

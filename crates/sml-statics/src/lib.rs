@@ -37,8 +37,6 @@ pub struct Statics {
   pub info: info::Info,
   /// The errors from the top decs.
   pub errors: Vec<Error>,
-  /// The new items defined by the given root.
-  pub bs: basis::Bs,
   /// Id statuses for path expressions. Only populated when the mode is Dynamics.
   pub exp_id_statuses: sml_statics_types::info::IdStatusMap<sml_hir::Exp>,
   /// Id statuses for path patterns. Only populated when the mode is Dynamics.
@@ -56,15 +54,13 @@ pub fn get(
 ) -> Statics {
   elapsed::log("sml_statics::get", || {
     let mut st = st::St::new(mode, std::mem::take(syms), std::mem::take(tys));
-    let bs = top_dec::get(&mut st, bs, arenas, root);
+    st.info.bs = top_dec::get(&mut st, bs, arenas, root);
     let errors = st.finish();
-    st.info.bs = bs.clone();
     *syms = st.syms;
     *tys = st.tys;
     Statics {
       info: st.info,
       errors,
-      bs,
       exp_id_statuses: st.exp_id_statuses,
       pat_id_statuses: st.pat_id_statuses,
     }

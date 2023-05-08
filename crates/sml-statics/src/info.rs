@@ -128,6 +128,12 @@ impl Info {
     Self { mode, entries: Entries::default(), bs: Bs::default() }
   }
 
+  /// Returns the basis.
+  #[must_use]
+  pub fn basis(&self) -> &Bs {
+    &self.bs
+  }
+
   /// Adds documentation for the index.
   pub fn add_doc(&mut self, idx: sml_hir::Idx, doc: String) {
     self.entries.docs.try_insert(idx, doc);

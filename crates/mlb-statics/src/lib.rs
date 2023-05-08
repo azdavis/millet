@@ -324,7 +324,7 @@ fn get_source_file(
     &syntax.lower.arenas,
     &syntax.lower.root,
   );
-  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.bs });
+  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.info.basis().clone() });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
   let mut file = SourceFile { syntax, statics_errors: checked.errors, info };
