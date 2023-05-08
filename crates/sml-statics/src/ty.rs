@@ -40,7 +40,7 @@ pub(crate) fn get(
         Ty::NONE
       }
       Some(fv) => {
-        let fv_data = match st.tys.data(*fv) {
+        let fv_data = match st.syms_tys.tys.data(*fv) {
           TyData::FixedVar(fv) => fv,
           _ => unreachable!("not a fixed var"),
         };
@@ -57,7 +57,7 @@ pub(crate) fn get(
     // @def(45)
     sml_hir::Ty::Record(rows) => {
       let rows = record(st, ty.into(), rows, |st, _, ty| get(st, cx, ars, mode, ty));
-      st.tys.record(rows)
+      st.syms_tys.tys.record(rows)
     }
     // @def(46)
     sml_hir::Ty::Con(arguments, path) => {
@@ -73,7 +73,7 @@ pub(crate) fn get(
             def = ty_info.def;
             let mut ret = ty_info.ty_scheme.ty;
             let subst: Vec<_> = arguments.iter().map(|&ty| get(st, cx, ars, mode, ty)).collect();
-            apply_bv(&mut st.tys, &subst, &mut ret);
+            apply_bv(&mut st.syms_tys.tys, &subst, &mut ret);
             // NOTE: just because `ty` was a `sml_hir::Ty::Con` doesn't mean `ret` is ultimately a
             // `Ty::Con`. there could have been a type alias. e.g. `type unit = {}` (which indeed is
             // provided by the standard basis).
@@ -93,7 +93,7 @@ pub(crate) fn get(
     sml_hir::Ty::Fn(param, res) => {
       let param = get(st, cx, ars, mode, *param);
       let res = get(st, cx, ars, mode, *res);
-      st.tys.fun(param, res)
+      st.syms_tys.tys.fun(param, res)
     }
   };
   st.info.entries.tys.ty.insert(ty, TyEntry::new(ret, ty_scheme));

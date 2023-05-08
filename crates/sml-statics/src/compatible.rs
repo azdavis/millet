@@ -14,8 +14,8 @@ pub(crate) fn eq_ty_fn_no_emit(st: &mut St, mut lhs: TyScheme, mut rhs: TyScheme
     return Err(ErrorKind::WrongNumTyArgs(lhs.bound_vars.len(), rhs.bound_vars.len()));
   }
   let subst = fixed_var_subst(st, &lhs.bound_vars);
-  apply_bv(&mut st.tys, &subst, &mut lhs.ty);
-  apply_bv(&mut st.tys, &subst, &mut rhs.ty);
+  apply_bv(&mut st.syms_tys.tys, &subst, &mut lhs.ty);
+  apply_bv(&mut st.syms_tys.tys, &subst, &mut rhs.ty);
   unify_no_emit(st, lhs.ty, rhs.ty)
 }
 
@@ -41,16 +41,16 @@ fn fixed_var_subst(st: &mut St, bound_vars: &BoundTyVars) -> Vec<Ty> {
     .map(|(idx, kind)| {
       let equality = matches!(kind, TyVarKind::Equality);
       let ty_var = ty_var_name(equality, idx).to_string();
-      st.tys.fixed_var(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty)
+      st.syms_tys.tys.fixed_var(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty)
     })
     .collect()
 }
 
 fn generalizes_no_emit(st: &mut St, general: &TyScheme, specific: &TyScheme) -> Result {
-  let general = instantiate(&mut st.tys, Generalizable::Always, general);
+  let general = instantiate(&mut st.syms_tys.tys, Generalizable::Always, general);
   let subst = fixed_var_subst(st, &specific.bound_vars);
   let mut specific = specific.ty;
-  apply_bv(&mut st.tys, &subst, &mut specific);
+  apply_bv(&mut st.syms_tys.tys, &subst, &mut specific);
   unify_no_emit(st, specific, general)
 }
 

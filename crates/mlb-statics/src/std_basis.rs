@@ -4,14 +4,12 @@
 use crate::{add_all_doc_comments, SourceFileSyntax};
 use fast_hash::FxHashMap;
 use sml_statics::{basis, info::Info};
-use sml_statics_types::{sym::Syms, ty::Tys};
 use sml_syntax::ast::AstNode as _;
 
 /// A standard basis.
 #[derive(Debug, Clone)]
 pub struct StdBasis {
-  syms: Syms,
-  tys: Tys,
+  syms_tys: sml_statics_types::St,
   bs: basis::Bs,
   info: FxHashMap<&'static str, Info>,
 }
@@ -39,16 +37,10 @@ impl StdBasis {
     get_std_basis(iter)
   }
 
-  /// Returns the symbols for this.
+  /// Returns the symbols and types for this.
   #[must_use]
-  pub fn syms(&self) -> &Syms {
-    &self.syms
-  }
-
-  /// Returns the symbols for this.
-  #[must_use]
-  pub fn tys(&self) -> &Tys {
-    &self.tys
+  pub fn syms_tys(&self) -> &sml_statics_types::St {
+    &self.syms_tys
   }
 
   /// Returns the basis for this.
@@ -76,7 +68,7 @@ fn get_std_basis<I>(files: I) -> StdBasis
 where
   I: Iterator<Item = (&'static str, &'static str)>,
 {
-  let (mut syms, mut tys, mut bs) = basis::minimal();
+  let (mut syms_tys, mut bs) = basis::minimal();
   let mut imperative_io_hack = None::<String>;
   let lang = config::lang::Language::default();
   let iter = files.map(|(name, mut contents)| {
@@ -121,10 +113,10 @@ where
     }
     let mode = sml_statics_types::mode::Mode::BuiltinLib(name);
     let low = started.lower;
-    let checked = sml_statics::get(&mut syms, &mut tys, &bs, mode, &low.arenas, &low.root);
+    let checked = sml_statics::get(&mut syms_tys, &bs, mode, &low.arenas, &low.root);
     bs.append(checked.info.basis().clone());
     if let Some(e) = checked.errors.first() {
-      let e = e.display(&syms, &tys, config::ErrorLines::One);
+      let e = e.display(&syms_tys, config::ErrorLines::One);
       panic!("{name}: statics error: {e}");
     }
     let mut info = checked.info;
@@ -133,5 +125,5 @@ where
   });
   let info: FxHashMap<_, _> = iter.collect();
   bs.consolidate();
-  StdBasis { syms, tys, bs, info }
+  StdBasis { syms_tys, bs, info }
 }

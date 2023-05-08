@@ -20,7 +20,7 @@ pub(crate) fn get(
       st.err(idx, e.into());
     }
     let ty_scheme = &ty_info.val.ok()?.ty_scheme;
-    let sym = match st.tys.data(ty_scheme.ty) {
+    let sym = match st.syms_tys.tys.data(ty_scheme.ty) {
       TyData::Con(data) => data.sym,
       _ => {
         st.err(idx, ErrorKind::CannotShareTy(path.clone(), ty_scheme.clone()));
@@ -59,7 +59,7 @@ pub(crate) fn get(
     for sym in syms {
       subst.insert(sym, ac.ty_scheme.clone());
     }
-    realize::get_env(&mut st.tys, &subst, inner_env);
+    realize::get_env(&mut st.syms_tys.tys, &subst, inner_env);
   }
 }
 
@@ -70,7 +70,9 @@ struct SharingTyScheme {
 
 impl SharingTyScheme {
   fn new(st: &mut St, ty_scheme: TyScheme) -> Self {
-    let equality = equality::get_ty_scheme(st.info.mode, &st.syms, &mut st.tys, &ty_scheme).is_ok();
+    let equality =
+      equality::get_ty_scheme(st.info.mode, &st.syms_tys.syms, &mut st.syms_tys.tys, &ty_scheme)
+        .is_ok();
     Self { ty_scheme, equality }
   }
 }

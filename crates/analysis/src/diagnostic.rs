@@ -43,8 +43,7 @@ pub(crate) struct Options {
 /// order the diagnostics.
 pub(crate) fn source_file<F, R>(
   file: &mlb_statics::SourceFile,
-  syms: &sml_statics_types::sym::Syms,
-  tys: &sml_statics_types::ty::Tys,
+  syms_tys: &sml_statics_types::St,
   options: Options,
   f: F,
 ) -> Vec<Diagnostic<R>>
@@ -83,7 +82,7 @@ where
       let node = syntax.to_node(file.syntax.parse.root.syntax());
       let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
       let range = f(&file.syntax.pos_db, range)?;
-      let message = err.display(syms, tys, options.lines).to_string();
+      let message = err.display(syms_tys, options.lines).to_string();
       Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }));
     if matches!(options.format, Some(config::init::FormatEngine::Naive)) {

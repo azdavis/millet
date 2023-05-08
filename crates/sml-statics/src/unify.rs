@@ -16,7 +16,7 @@ pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorK
   if st.info.mode.is_path_order() {
     return Ok(());
   }
-  unify::unify(&mut st.tys, &st.syms, want, got).map_err(|err| match err {
+  unify::unify(&mut st.syms_tys.tys, &st.syms_tys.syms, want, got).map_err(|err| match err {
     unify::Error::Circularity(circ) => ErrorKind::Circularity(circ),
     unify::Error::Incompatible(reason) => ErrorKind::IncompatibleTys(reason, want, got),
   })

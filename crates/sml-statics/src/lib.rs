@@ -45,19 +45,17 @@ pub struct Statics {
 
 /// Does the checks on the root.
 pub fn get(
-  syms: &mut sml_statics_types::sym::Syms,
-  tys: &mut sml_statics_types::ty::Tys,
+  syms_tys: &mut sml_statics_types::St,
   bs: &basis::Bs,
   mode: sml_statics_types::mode::Mode,
   arenas: &sml_hir::Arenas,
   root: &[sml_hir::StrDecIdx],
 ) -> Statics {
   elapsed::log("sml_statics::get", || {
-    let mut st = st::St::new(mode, std::mem::take(syms), std::mem::take(tys));
+    let mut st = st::St::new(mode, std::mem::take(syms_tys));
     st.info.bs = top_dec::get(&mut st, bs, arenas, root);
     let errors = st.finish();
-    *syms = st.syms;
-    *tys = st.tys;
+    *syms_tys = st.syms_tys;
     Statics {
       info: st.info,
       errors,

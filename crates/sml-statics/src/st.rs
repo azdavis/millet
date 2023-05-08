@@ -4,17 +4,14 @@ use crate::error::{Error, ErrorKind};
 use crate::info::Info;
 use crate::pat_match::{self, Pat};
 use fast_hash::FxHashSet;
-use sml_statics_types::ty::{Ty, Tys};
-use sml_statics_types::{def, item::Item, mode::Mode, sym::Syms};
+use sml_statics_types::ty::Ty;
+use sml_statics_types::{def, item::Item, mode::Mode};
 
 /// The mutable state.
-///
-/// Usually I call this `Cx` but the Definition defines a 'Context' already.
 #[derive(Debug)]
 pub(crate) struct St {
   pub(crate) info: Info,
-  pub(crate) syms: Syms,
-  pub(crate) tys: Tys,
+  pub(crate) syms_tys: sml_statics_types::St,
   errors: Vec<Error>,
   matches: Vec<Match>,
   /// a subset of all things that have definition sites. currently, only local value variables to a
@@ -28,11 +25,10 @@ pub(crate) struct St {
 }
 
 impl St {
-  pub(crate) fn new(mode: Mode, syms: Syms, tys: Tys) -> Self {
+  pub(crate) fn new(mode: Mode, syms_tys: sml_statics_types::St) -> Self {
     Self {
       info: Info::new(mode),
-      tys,
-      syms,
+      syms_tys,
       errors: Vec::new(),
       matches: Vec::new(),
       defined: Vec::new(),
@@ -120,19 +116,19 @@ impl St {
       for m in std::mem::take(&mut self.matches) {
         match m.kind {
           MatchKind::Bind(pat) => {
-            let missing = get_match(&mut self.errors, &self.syms, &mut self.tys, vec![pat], m.want);
+            let missing = get_match(&mut self.errors, &mut self.syms_tys, vec![pat], m.want);
             if !missing.is_empty() {
               self.err(m.idx, ErrorKind::NonExhaustiveBinding(missing));
             }
           }
           MatchKind::Case(pats) => {
-            let missing = get_match(&mut self.errors, &self.syms, &mut self.tys, pats, m.want);
+            let missing = get_match(&mut self.errors, &mut self.syms_tys, pats, m.want);
             if !missing.is_empty() {
               self.err(m.idx, ErrorKind::NonExhaustiveCase(missing));
             }
           }
           MatchKind::Handle(pats) => {
-            get_match(&mut self.errors, &self.syms, &mut self.tys, pats, m.want);
+            get_match(&mut self.errors, &mut self.syms_tys, pats, m.want);
           }
         }
       }
@@ -149,13 +145,12 @@ impl St {
 /// returns the missing pats.
 fn get_match(
   errors: &mut Vec<Error>,
-  syms: &Syms,
-  tys: &mut Tys,
+  syms_tys: &mut sml_statics_types::St,
   pats: Vec<Pat>,
   ty: Ty,
 ) -> Vec<Pat> {
   let ck = elapsed::log("pattern_match::check", || {
-    let mut cx = pat_match::Cx { syms, tys };
+    let mut cx = pat_match::Cx { syms: &syms_tys.syms, tys: &mut syms_tys.tys };
     pattern_match::check::<pat_match::Lang>(&mut cx, pats, ty)
   });
   let ck = match ck {

@@ -23,7 +23,7 @@ pub(crate) fn get(
       let mut cx = bs.as_cx();
       let fixed = add_fixed_ty_vars(st, idx, &mut cx, TyVarSrc::Ty, ty_vars);
       let ty = ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty);
-      let ty_scheme = generalize_fixed(&mut st.tys, fixed, ty);
+      let ty_scheme = generalize_fixed(&mut st.syms_tys.tys, fixed, ty);
       get_where_type(st, idx, marker, inner_env, path, ty_scheme, true);
     }
     sml_hir::WhereKind::Structure(lhs, rhs) => {
@@ -99,7 +99,7 @@ fn get_where_type(
     st.err(idx, ErrorKind::WrongNumTyArgs(want, got));
     return;
   }
-  match st.tys.data(path_ty_scheme.ty) {
+  match st.syms_tys.tys.data(path_ty_scheme.ty) {
     TyData::None => {}
     TyData::Con(data) => {
       // TODO well-formed check - need to check every ty info in the resulting env has either empty
@@ -107,7 +107,7 @@ fn get_where_type(
       if data.sym.generated_after(marker) {
         let mut subst = realize::TyRealization::default();
         subst.insert(data.sym, ty_scheme);
-        realize::get_env(&mut st.tys, &subst, inner_env);
+        realize::get_env(&mut st.syms_tys.tys, &subst, inner_env);
       } else {
         // @test(sig::impossible)
         if emit_cannot_realize {

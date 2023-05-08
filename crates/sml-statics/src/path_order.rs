@@ -42,7 +42,7 @@
 //! unification.
 
 use crate::{basis::Bs, st::St, top_dec};
-use sml_statics_types::{mode::Mode, sym::Syms, ty::Tys};
+use sml_statics_types::mode::Mode;
 
 /// An unordered map from paths to HIR ready for analysis.
 pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, &'a [sml_hir::StrDecIdx])>;
@@ -50,8 +50,7 @@ pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, &'a [sml_hir::St
 /// Get the ordering.
 #[must_use]
 pub fn get(
-  mut syms: Syms,
-  mut tys: Tys,
+  mut syms_tys: sml_statics_types::St,
   mut bs: Bs,
   mut paths: SmlHirPaths<'_>,
 ) -> Vec<paths::PathId> {
@@ -68,11 +67,10 @@ pub fn get(
     for (path, (arenas, root)) in paths {
       // NOTE: this inner loop body runs O(n^2) times. to make this hurt less, we use a special path
       // order mode for statics, which reduces the number of checks we do.
-      let mut st = St::new(Mode::PathOrder, syms, tys);
+      let mut st = St::new(Mode::PathOrder, syms_tys);
       let new_bs = top_dec::get(&mut st, &bs, arenas, root);
       let errors = st.finish();
-      syms = st.syms;
-      tys = st.tys;
+      syms_tys = st.syms_tys;
       if errors.is_empty() {
         bs.append(new_bs);
         ok_paths.push(path);

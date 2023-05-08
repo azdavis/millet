@@ -6,7 +6,7 @@ use sml_hir::la_arena;
 use sml_statics_types::info::{IdStatus, ValInfo};
 use sml_statics_types::ty::{Ty, TyData, TyScheme, Tys};
 use sml_statics_types::util::ty_syms;
-use sml_statics_types::{def, display::MetaVarNames, mode::Mode, sym::Syms};
+use sml_statics_types::{def, display::MetaVarNames, mode::Mode};
 use std::fmt;
 
 pub(crate) type IdxMap<K, V> = la_arena::ArenaMap<la_arena::Idx<K>, V>;
@@ -141,9 +141,9 @@ impl Info {
 
   /// Returns a Markdown string with type information associated with this index.
   #[must_use]
-  pub fn get_ty_md(&self, syms: &Syms, tys: &Tys, idx: sml_hir::Idx) -> Option<String> {
+  pub fn get_ty_md(&self, st: &sml_statics_types::St, idx: sml_hir::Idx) -> Option<String> {
     let ty_entry = self.entries.tys.get(idx)?;
-    let ty_entry = TyEntryDisplay { ty_entry, syms, tys };
+    let ty_entry = TyEntryDisplay { ty_entry, st };
     Some(ty_entry.to_string())
   }
 
@@ -161,10 +161,14 @@ impl Info {
 
   /// Returns the definition site of the type for the idx.
   #[must_use]
-  pub fn get_ty_defs(&self, syms: &Syms, tys: &Tys, idx: sml_hir::Idx) -> Option<Vec<def::Def>> {
+  pub fn get_ty_defs(
+    &self,
+    st: &sml_statics_types::St,
+    idx: sml_hir::Idx,
+  ) -> Option<Vec<def::Def>> {
     let ty_entry = self.entries.tys.get(idx)?;
     let mut ret = Vec::<def::Def>::new();
-    ty_syms(tys, ty_entry.ty, &mut |sym| match syms.get(sym) {
+    ty_syms(&st.tys, ty_entry.ty, &mut |sym| match st.syms.get(sym) {
       None => {}
       Some(sym_info) => match sym_info.ty_info.def {
         None => {}
@@ -178,22 +182,22 @@ impl Info {
   #[must_use]
   pub fn get_variants(
     &self,
-    syms: &Syms,
-    tys: &Tys,
+    st: &sml_statics_types::St,
     idx: sml_hir::Idx,
   ) -> Option<Vec<(str_util::Name, bool)>> {
     let ty_entry = self.entries.tys.get(idx)?;
-    let sym = match tys.data(ty_entry.ty) {
+    let sym = match st.tys.data(ty_entry.ty) {
       TyData::Con(data) => data.sym,
       _ => return None,
     };
-    let mut ret: Vec<_> = syms
+    let mut ret: Vec<_> = st
+      .syms
       .get(sym)?
       .ty_info
       .val_env
       .iter()
       .map(|(name, val_info)| {
-        let has_arg = matches!(tys.data(val_info.ty_scheme.ty), TyData::Fn(_));
+        let has_arg = matches!(st.tys.data(val_info.ty_scheme.ty), TyData::Fn(_));
         (name.clone(), has_arg)
       })
       .collect();
@@ -208,16 +212,15 @@ impl Info {
   #[must_use]
   pub fn document_symbols(
     &self,
-    syms: &Syms,
-    tys: &Tys,
+    st: &sml_statics_types::St,
     path: paths::PathId,
   ) -> Vec<DocumentSymbol> {
-    let mut mvs = MetaVarNames::new(tys);
+    let mut mvs = MetaVarNames::new(&st.tys);
     let mut ret = Vec::<DocumentSymbol>::new();
     ret.extend(self.bs.fun_env.iter().filter_map(|(name, fun_sig)| {
       let idx = def_idx(path, fun_sig.body_env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, &mut mvs, syms, tys, path, &fun_sig.body_env);
+      env_syms(&mut children, &mut mvs, st, path, &fun_sig.body_env);
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Functor,
@@ -229,7 +232,7 @@ impl Info {
     ret.extend(self.bs.sig_env.iter().filter_map(|(name, sig)| {
       let idx = def_idx(path, sig.env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, &mut mvs, syms, tys, path, &sig.env);
+      env_syms(&mut children, &mut mvs, st, path, &sig.env);
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Signature,
@@ -238,7 +241,7 @@ impl Info {
         children,
       })
     }));
-    env_syms(&mut ret, &mut mvs, syms, tys, path, &self.bs.env);
+    env_syms(&mut ret, &mut mvs, st, path, &self.bs.env);
     // order doesn't seem to matter. at least vs code displays the symbols in source order.
     ret
   }
@@ -250,16 +253,16 @@ impl Info {
 
   /// Returns the completions for this file.
   #[must_use]
-  pub fn completions(&self, syms: &Syms, tys: &Tys) -> Vec<CompletionItem> {
+  pub fn completions(&self, st: &sml_statics_types::St) -> Vec<CompletionItem> {
     let mut ret = Vec::<CompletionItem>::new();
-    let mut mvs = MetaVarNames::new(tys);
+    let mut mvs = MetaVarNames::new(&st.tys);
     ret.extend(self.bs.env.val_env.iter().map(|(name, val_info)| {
       mvs.clear();
       mvs.extend_for(val_info.ty_scheme.ty);
       CompletionItem {
         label: name.as_str().to_owned(),
-        kind: val_info_symbol_kind(tys, val_info),
-        detail: Some(val_info.ty_scheme.display(&mvs, syms).to_string()),
+        kind: val_info_symbol_kind(&st.tys, val_info),
+        detail: Some(val_info.ty_scheme.display(&mvs, &st.syms).to_string()),
         // TODO improve? might need to reorganize where documentation is stored
         documentation: None,
       }
@@ -270,8 +273,7 @@ impl Info {
   /// Returns some type annotation bits.
   pub fn show_ty_annot<'a>(
     &'a self,
-    syms: &'a Syms,
-    tys: &'a Tys,
+    st: &'a sml_statics_types::St,
   ) -> impl Iterator<Item = (sml_hir::la_arena::Idx<sml_hir::Pat>, String)> + 'a {
     self.entries.tys.pat.iter().filter_map(|(pat, ty_entry)| {
       let self_def = self.entries.defs.pat.get(pat)?.iter().any(|&d| match d {
@@ -284,9 +286,9 @@ impl Info {
       if !self_def {
         return None;
       }
-      let mut mvs = MetaVarNames::new(tys);
+      let mut mvs = MetaVarNames::new(&st.tys);
       mvs.extend_for(ty_entry.ty);
-      let ty = ty_entry.ty.display(&mvs, syms);
+      let ty = ty_entry.ty.display(&mvs, &st.syms);
       Some((pat, format!(" : {ty})")))
     })
   }
@@ -307,23 +309,22 @@ impl TyEntry {
 
 struct TyEntryDisplay<'a> {
   ty_entry: &'a TyEntry,
-  syms: &'a Syms,
-  tys: &'a Tys,
+  st: &'a sml_statics_types::St,
 }
 
 impl fmt::Display for TyEntryDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut mvs = MetaVarNames::new(self.tys);
+    let mut mvs = MetaVarNames::new(&self.st.tys);
     mvs.extend_for(self.ty_entry.ty);
     writeln!(f, "```sml")?;
     if let Some(ty_scheme) = &self.ty_entry.ty_scheme {
       mvs.extend_for(ty_scheme.ty);
-      let ty_scheme = ty_scheme.display(&mvs, self.syms);
+      let ty_scheme = ty_scheme.display(&mvs, &self.st.syms);
       writeln!(f, "(* most general *)")?;
       writeln!(f, "{ty_scheme}")?;
       writeln!(f, "(* this usage *)")?;
     }
-    let ty = self.ty_entry.ty.display(&mvs, self.syms);
+    let ty = self.ty_entry.ty.display(&mvs, &self.st.syms);
     writeln!(f, "{ty}")?;
     writeln!(f, "```")?;
     Ok(())
@@ -334,15 +335,14 @@ impl fmt::Display for TyEntryDisplay<'_> {
 fn env_syms(
   ac: &mut Vec<DocumentSymbol>,
   mvs: &mut MetaVarNames<'_>,
-  syms: &Syms,
-  tys: &Tys,
+  st: &sml_statics_types::St,
   path: paths::PathId,
   env: &Env,
 ) {
   ac.extend(env.str_env.iter().filter_map(|(name, env)| {
     let idx = def_idx(path, env.def?)?;
     let mut children = Vec::<DocumentSymbol>::new();
-    env_syms(&mut children, mvs, syms, tys, path, env);
+    env_syms(&mut children, mvs, st, path, env);
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Structure,
@@ -358,7 +358,7 @@ fn env_syms(
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Type,
-      detail: Some(ty_info.ty_scheme.display(mvs, syms).to_string()),
+      detail: Some(ty_info.ty_scheme.display(mvs, &st.syms).to_string()),
       idx,
       children: Vec::new(),
     })
@@ -366,12 +366,12 @@ fn env_syms(
   ac.extend(env.val_env.iter().flat_map(|(name, val_info)| {
     mvs.clear();
     mvs.extend_for(val_info.ty_scheme.ty);
-    let detail = val_info.ty_scheme.display(mvs, syms).to_string();
+    let detail = val_info.ty_scheme.display(mvs, &st.syms).to_string();
     val_info.defs.iter().filter_map(move |&def| {
       let idx = def_idx(path, def)?;
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
-        kind: val_info_symbol_kind(tys, val_info),
+        kind: val_info_symbol_kind(&st.tys, val_info),
         detail: Some(detail.clone()),
         idx,
         children: Vec::new(),

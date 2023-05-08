@@ -22,7 +22,7 @@ pub(crate) fn get_and_check_ty_escape(
   exp: sml_hir::ExpIdx,
 ) -> Ty {
   let ret = get(st, cfg, cx, ars, exp);
-  if let (Some(exp), Some(ty)) = (exp, ty_escape(&st.tys, cx, marker, ret)) {
+  if let (Some(exp), Some(ty)) = (exp, ty_escape(&st.syms_tys.tys, cx, marker, ret)) {
     st.err(exp, ErrorKind::TyEscape(ty));
   }
   ret
@@ -38,12 +38,12 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
   let mut defs = FxHashSet::<def::Def>::default();
   let ret = match &ars.exp[exp] {
     sml_hir::Exp::Hole => {
-      let mv = st.tys.meta_var(Generalizable::Always);
+      let mv = st.syms_tys.tys.meta_var(Generalizable::Always);
       st.err(exp, ErrorKind::ExpHole(mv));
       mv
     }
     // @def(1)
-    sml_hir::Exp::SCon(scon) => get_scon(&mut st.tys, Generalizable::Always, scon),
+    sml_hir::Exp::SCon(scon) => get_scon(&mut st.syms_tys.tys, Generalizable::Always, scon),
     // @def(2)
     sml_hir::Exp::Path(path) => {
       let val_info = get_val_info(&cx.env, path);
@@ -70,14 +70,14 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
               st.mark_used(idx);
             }
           }
-          instantiate(&mut st.tys, Generalizable::Always, &val_info.ty_scheme)
+          instantiate(&mut st.syms_tys.tys, Generalizable::Always, &val_info.ty_scheme)
         }
       }
     }
     // @def(3)
     sml_hir::Exp::Record(rows) => {
       let rows = record(st, exp.into(), rows, |st, _, exp| get(st, cfg, cx, ars, exp));
-      st.tys.record(rows)
+      st.syms_tys.tys.record(rows)
     }
     // @def(4)
     sml_hir::Exp::Let(dec, inner) => {
@@ -96,14 +96,14 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
       let arg_ty = get(st, cfg, cx, ars, *argument);
       // we could use the `_` case always, but it's slightly nicer if we know the function is
       // already a function type to just unify the parameter with the argument.
-      match st.tys.data(func_ty) {
+      match st.syms_tys.tys.data(func_ty) {
         TyData::Fn(data) => {
           unify(st, argument.unwrap_or(exp).into(), data.param, arg_ty);
           data.res
         }
         _ => {
-          let ret = st.tys.meta_var(Generalizable::Always);
-          let want = st.tys.fun(arg_ty, ret);
+          let ret = st.syms_tys.tys.meta_var(Generalizable::Always);
+          let want = st.syms_tys.tys.fun(arg_ty, ret);
           unify(st, func.unwrap_or(exp).into(), want, func_ty);
           ret
         }
@@ -126,12 +126,12 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
     sml_hir::Exp::Raise(inner) => {
       let got = get(st, cfg, cx, ars, *inner);
       unify(st, inner.unwrap_or(exp).into(), Ty::EXN, got);
-      st.tys.meta_var(Generalizable::Always)
+      st.syms_tys.tys.meta_var(Generalizable::Always)
     }
     // @def(12)
     sml_hir::Exp::Fn(matcher, flavor) => {
       let (pats, param, res) = get_matcher(st, exp.into(), cfg, cx, ars, matcher);
-      if let TyData::Con(data) = st.tys.data(param) {
+      if let TyData::Con(data) = st.syms_tys.tys.data(param) {
         if data.sym == Sym::BOOL {
           assert!(data.args.is_empty(), "bool should have no ty args");
           if matches!(flavor, sml_hir::FnFlavor::Case) {
@@ -140,7 +140,7 @@ fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpI
         }
       }
       st.insert_case(exp.into(), pats, param);
-      st.tys.fun(param, res)
+      st.syms_tys.tys.fun(param, res)
     }
     // @def(9)
     sml_hir::Exp::Typed(inner, want) => {
@@ -286,10 +286,10 @@ fn get_matcher(
   ars: &sml_hir::Arenas,
   matcher: &[sml_hir::Arm],
 ) -> (Vec<Pat>, Ty, Ty) {
-  let param_ty = st.tys.meta_var(Generalizable::Always);
-  let res_ty = st.tys.meta_var(Generalizable::Always);
+  let param_ty = st.syms_tys.tys.meta_var(Generalizable::Always);
+  let res_ty = st.syms_tys.tys.meta_var(Generalizable::Always);
   let mut pats = Vec::<Pat>::new();
-  st.tys.inc_meta_var_rank();
+  st.syms_tys.tys.inc_meta_var_rank();
   // @def(14)
   for arm in matcher {
     let mut ve = ValEnv::default();
@@ -302,7 +302,7 @@ fn get_matcher(
     unify(st, arm.exp.map_or(idx, Into::into), res_ty, exp_ty);
     pats.push(pm_pat);
   }
-  st.tys.dec_meta_var_rank();
+  st.syms_tys.tys.dec_meta_var_rank();
   (pats, param_ty, res_ty)
 }
 

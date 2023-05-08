@@ -104,7 +104,7 @@ impl Bs {
 ///
 /// Upon internal error.
 #[must_use]
-pub fn minimal() -> (Syms, Tys, Bs) {
+pub fn minimal() -> (sml_statics_types::St, Bs) {
   let mut tys = Tys::default();
   // @sync(special_sym_order)
   let mut syms = Syms::default();
@@ -215,7 +215,7 @@ pub fn minimal() -> (Syms, Tys, Bs) {
     sig_env: SigEnv::default(),
     env: Env { str_env: StrEnv::default(), ty_env, val_env, def: None, disallow: None },
   };
-  (syms, tys, bs)
+  (sml_statics_types::St { syms, tys }, bs)
 }
 
 fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {

@@ -19,15 +19,15 @@ fn check(s: &str) {
   if let Some(e) = sf.lower.errors.first() {
     panic!("lower error: {e}");
   }
-  let (mut syms, mut tys, bs) = sml_statics::basis::minimal();
+  let (mut syms_tys, bs) = sml_statics::basis::minimal();
   let mode = sml_statics_types::mode::Mode::Dynamics;
-  let statics = sml_statics::get(&mut syms, &mut tys, &bs, mode, &sf.lower.arenas, &sf.lower.root);
+  let statics = sml_statics::get(&mut syms_tys, &bs, mode, &sf.lower.arenas, &sf.lower.root);
   if let Some(e) = statics.errors.first() {
-    panic!("statics error: {}", e.display(&syms, &tys, config::ErrorLines::One));
+    panic!("statics error: {}", e.display(&syms_tys, config::ErrorLines::One));
   }
   // TODO have these be the same as the ones from the std basis
-  let match_ = syms.insert_exn(sml_path::Path::one(str_util::Name::new("Match")), None);
-  let bind = syms.insert_exn(sml_path::Path::one(str_util::Name::new("Bind")), None);
+  let match_ = syms_tys.syms.insert_exn(sml_path::Path::one(str_util::Name::new("Match")), None);
+  let bind = syms_tys.syms.insert_exn(sml_path::Path::one(str_util::Name::new("Bind")), None);
   let mut decs = Vec::<sml_hir::DecIdx>::new();
   for &str_dec in &sf.lower.root {
     match &sf.lower.arenas.str_dec[str_dec] {

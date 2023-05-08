@@ -21,3 +21,15 @@ pub mod sym;
 pub mod ty;
 pub mod unify;
 pub mod util;
+
+/// The overall mutable state when typechecking.
+///
+/// Called `St` as a short for `State`, as is common, but also conveniently contains exactly two
+/// fields: the `Syms` (S) and the `Tys` (T).
+#[derive(Debug, Default, Clone)]
+pub struct St {
+  /// The syms.
+  pub syms: sym::Syms,
+  /// The tys.
+  pub tys: ty::Tys,
+}

@@ -116,7 +116,7 @@ fn get_str_dec_one(
       let mut sig_env = SigEnv::default();
       // @def(67)
       for sig_bind in sig_binds {
-        let marker = st.syms.mark();
+        let marker = st.syms_tys.syms.mark();
         let mut env = Env::with_def(st.def(str_dec.into()));
         let should_push = match st.info.mode {
           Mode::Regular(_) | Mode::Dynamics => true,
@@ -131,7 +131,7 @@ fn get_str_dec_one(
         if should_push {
           st.pop_prefix();
         }
-        let sig = env_to_sig(&st.tys, env, marker);
+        let sig = env_to_sig(&st.syms_tys.tys, env, marker);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);
         }
@@ -151,18 +151,18 @@ fn get_str_dec_one(
       // @def(86)
       for fun_bind in fun_binds {
         let mut param_env = Env::default();
-        let marker = st.syms.mark();
+        let marker = st.syms_tys.syms.mark();
         get_sig_exp(st, bs, ars, &mut param_env, fun_bind.param_sig);
-        let param_sig = env_to_sig(&st.tys, param_env, marker);
+        let param_sig = env_to_sig(&st.syms_tys.tys, param_env, marker);
         let mut bs_clone = bs.clone();
         bs_clone.env.str_env.insert(fun_bind.param_name.clone(), param_sig.env.clone());
         let mut body_env = Env::with_def(st.def(str_dec.into()));
-        let marker = st.syms.mark();
+        let marker = st.syms_tys.syms.mark();
         st.push_prefix(str_util::Name::new(format!("{}(...)", fun_bind.functor_name)));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);
         st.pop_prefix();
         let mut body_ty_names = TyNameSet::default();
-        env_syms::get(&st.tys, &body_env, &mut |x| {
+        env_syms::get(&st.syms_tys.tys, &body_env, &mut |x| {
           if x.generated_after(marker) {
             body_ty_names.insert(x);
           }
@@ -230,16 +230,16 @@ fn get_str_exp(
       let mut str_exp_env = Env::default();
       get_str_exp(st, bs, ars, &mut str_exp_env, *inner_str_exp);
       let mut sig_exp_env = Env::default();
-      let marker = st.syms.mark();
+      let marker = st.syms_tys.syms.mark();
       let ov = get_sig_exp(st, bs, ars, &mut sig_exp_env, *sig_exp);
-      let sig = env_to_sig(&st.tys, sig_exp_env, marker);
+      let sig = env_to_sig(&st.syms_tys.tys, sig_exp_env, marker);
       let mut subst = realize::TyRealization::default();
       let mut to_add = sig.env.clone();
       let idx = sml_hir::Idx::from(str_exp);
       match st.info.mode {
         Mode::Regular(_) | Mode::Dynamics => {
           instance::env_of_sig(st, idx, &mut subst, &str_exp_env, &sig);
-          realize::get_env(&mut st.tys, &subst, &mut to_add);
+          realize::get_env(&mut st.syms_tys.tys, &subst, &mut to_add);
           enrich::get_env(st, idx, &str_exp_env, &to_add);
         }
         Mode::BuiltinLib(_) | Mode::PathOrder => {}
@@ -248,14 +248,14 @@ fn get_str_exp(
         subst.clear();
         gen_fresh_syms(st, &mut subst, &sig.ty_names);
         to_add = sig.env.clone();
-        realize::get_env(&mut st.tys, &subst, &mut to_add);
+        realize::get_env(&mut st.syms_tys.tys, &subst, &mut to_add);
       }
       if let Some(ov) = ov {
         let ty_info = to_add.ty_env.get(ov.as_str()).expect("no overloaded ty");
-        match st.tys.data(ty_info.ty_scheme.ty) {
+        match st.syms_tys.tys.data(ty_info.ty_scheme.ty) {
           TyData::Con(data) => {
             assert!(data.args.is_empty());
-            st.syms.overloads_mut()[ov].push(data.sym);
+            st.syms_tys.syms.overloads_mut()[ov].push(data.sym);
           }
           t => unreachable!("overload not a Con: {t:?}"),
         }
@@ -291,9 +291,9 @@ fn get_str_exp(
       let arg_idx = sml_hir::Idx::from(arg_str_exp.unwrap_or(str_exp));
       instance::env_of_sig(st, arg_idx, &mut subst, &arg_env, &fun_sig.param);
       gen_fresh_syms(st, &mut subst, &fun_sig.body_ty_names);
-      realize::get_env(&mut st.tys, &subst, &mut to_add);
+      realize::get_env(&mut st.syms_tys.tys, &subst, &mut to_add);
       let mut param_env = fun_sig.param.env.clone();
-      realize::get_env(&mut st.tys, &subst, &mut param_env);
+      realize::get_env(&mut st.syms_tys.tys, &subst, &mut param_env);
       enrich::get_env(st, arg_idx, &arg_env, &param_env);
       let def = st.def(idx);
       for (_, env) in to_add.str_env.iter_mut() {
@@ -354,7 +354,7 @@ fn get_sig_exp(
       let mut subst = realize::TyRealization::default();
       gen_fresh_syms(st, &mut subst, &sig.ty_names);
       let mut sig_env = sig.env.clone();
-      realize::get_env(&mut st.tys, &subst, &mut sig_env);
+      realize::get_env(&mut st.syms_tys.tys, &subst, &mut sig_env);
       if let Some(def) = sig.env.def {
         st.info.entries.defs.sig_exp.insert(sig_exp, def);
       }
@@ -371,7 +371,7 @@ fn get_sig_exp(
     }
     // @def(64)
     sml_hir::SigExp::Where(inner, kind) => {
-      let marker = st.syms.mark();
+      let marker = st.syms_tys.syms.mark();
       let mut inner_env = Env::default();
       let ov = get_sig_exp(st, bs, ars, &mut inner_env, *inner);
       where_ty::get(st, sig_exp.into(), bs, marker, ars, &mut inner_env, kind);
@@ -384,19 +384,19 @@ fn get_sig_exp(
 fn gen_fresh_syms(st: &mut St, subst: &mut realize::TyRealization, ty_names: &TyNameSet) {
   let mut ac = Vec::<(StartedSym, TyInfo, Equality)>::new();
   for &sym in ty_names.iter() {
-    let sym_info = st.syms.get(sym).unwrap();
+    let sym_info = st.syms_tys.syms.get(sym).unwrap();
     let mut ty_info = sym_info.ty_info.clone();
     let equality = sym_info.equality;
-    let started = st.syms.start(sym_info.path.clone());
+    let started = st.syms_tys.syms.start(sym_info.path.clone());
     let bound_vars = ty_info.ty_scheme.bound_vars.clone();
-    let ty_scheme = n_ary_con(&mut st.tys, bound_vars, started.sym());
+    let ty_scheme = n_ary_con(&mut st.syms_tys.tys, bound_vars, started.sym());
     ty_info.ty_scheme = ty_scheme.clone();
     ac.push((started, ty_info, equality));
     subst.insert(sym, ty_scheme);
   }
   for (started, mut ty_info, equality) in ac {
-    realize::get_val_env(&mut st.tys, subst, &mut ty_info.val_env);
-    st.syms.finish(started, ty_info, equality);
+    realize::get_val_env(&mut st.syms_tys.tys, subst, &mut ty_info.val_env);
+    st.syms_tys.syms.finish(started, ty_info, equality);
   }
 }
 
@@ -439,7 +439,7 @@ fn get_spec_one(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec:
       let fixed = dec::add_fixed_ty_vars(st, spec.into(), &mut cx, TyVarSrc::Val, ty_vars);
       for val_desc in val_descs {
         let ty = ty::get(st, &cx, ars, ty::Mode::Regular, val_desc.ty);
-        let ty_scheme = generalize(&mut st.tys, fixed.clone(), ty)
+        let ty_scheme = generalize(&mut st.syms_tys.tys, fixed.clone(), ty)
           .expect("no record meta vars because no patterns in specs");
         let vi = ValInfo {
           ty_scheme,
@@ -506,9 +506,9 @@ fn get_spec_one(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec:
       let mut ty = Ty::EXN;
       let param = ex_desc.ty.map(|param| ty::get(st, &cx, ars, ty::Mode::Regular, param));
       if let Some(param) = param {
-        ty = st.tys.fun(param, ty);
+        ty = st.syms_tys.tys.fun(param, ty);
       }
-      let exn = st.syms.insert_exn(st.mk_path(ex_desc.name.clone()), param);
+      let exn = st.syms_tys.syms.insert_exn(st.mk_path(ex_desc.name.clone()), param);
       let vi = ValInfo {
         ty_scheme: TyScheme::zero(ty),
         id_status: IdStatus::Exn(exn),
@@ -536,7 +536,7 @@ fn get_spec_one(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec:
     }
     // @def(78)
     sml_hir::Spec::Sharing(inner, kind, paths) => {
-      let marker = st.syms.mark();
+      let marker = st.syms_tys.syms.mark();
       let mut inner_env = Env::default();
       get_spec(st, bs, ars, &mut inner_env, inner);
       match kind {
@@ -607,7 +607,7 @@ fn get_ty_desc(
   equality: Equality,
 ) {
   let mut ty_vars = FxHashSet::<&sml_hir::TyVar>::default();
-  let started = st.syms.start(st.mk_path(ty_desc.name.clone()));
+  let started = st.syms_tys.syms.start(st.mk_path(ty_desc.name.clone()));
   for ty_var in &ty_desc.ty_vars {
     if !ty_vars.insert(ty_var) {
       let e = ErrorKind::Duplicate(Item::TyVar, ty_var.as_name().clone());
@@ -620,12 +620,12 @@ fn get_ty_desc(
     .map(|x| if x.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular })
     .collect();
   let ty_info = TyInfo {
-    ty_scheme: n_ary_con(&mut st.tys, bound_vars, started.sym()),
+    ty_scheme: n_ary_con(&mut st.syms_tys.tys, bound_vars, started.sym()),
     val_env: ValEnv::default(),
     def: st.def(idx),
     disallow: None,
   };
-  st.syms.finish(started, ty_info.clone(), equality);
+  st.syms_tys.syms.finish(started, ty_info.clone(), equality);
   if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
     st.err(idx, e);
   }

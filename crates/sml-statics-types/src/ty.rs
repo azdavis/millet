@@ -8,7 +8,6 @@ use std::collections::BTreeMap;
 /// Storage of all the semantic types.
 ///
 /// - TODO should this really implement Clone?
-/// - TODO should we merge this with Syms?
 #[derive(Debug, Clone)]
 pub struct Tys {
   meta_var_rank: u16,

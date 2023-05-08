@@ -37,7 +37,7 @@ pub(crate) fn get(
     Some(x) => x,
     None => PatRet {
       pm_pat: Pat::zero(Con::Any, pat),
-      ty: st.tys.meta_var(cfg.gen),
+      ty: st.syms_tys.tys.meta_var(cfg.gen),
       ty_scheme: None,
       defs: FxHashSet::default(),
     },
@@ -69,7 +69,7 @@ fn get_(
   let mut defs = FxHashSet::<def::Def>::default();
   let (pm_pat, ty) = match &ars.pat[pat_idx] {
     // @def(32)
-    sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), st.tys.meta_var(cfg.gen)),
+    sml_hir::Pat::Wild => (Pat::zero(Con::Any, pat), st.syms_tys.tys.meta_var(cfg.gen)),
     // @def(33)
     sml_hir::Pat::SCon(special_con) => {
       let con = match special_con {
@@ -82,7 +82,7 @@ fn get_(
         sml_hir::SCon::Char(c) => Con::Char(*c),
         sml_hir::SCon::String(s) => Con::String(s.clone()),
       };
-      let t = get_scon(&mut st.tys, cfg.gen, special_con);
+      let t = get_scon(&mut st.syms_tys.tys, cfg.gen, special_con);
       (Pat::zero(con, pat), t)
     }
     sml_hir::Pat::Con(path, argument) => {
@@ -97,7 +97,7 @@ fn get_(
         && (ok_val_info(val_info.val.as_ref().ok().copied()) || cfg.rec);
       // @def(34)
       if is_var {
-        let ty = st.tys.meta_var(cfg.gen);
+        let ty = st.syms_tys.tys.meta_var(cfg.gen);
         defs.extend(st.def(pat_idx.into()));
         insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty);
         // a little WET with ok_val_info
@@ -127,9 +127,9 @@ fn get_(
         IdStatus::Con => VariantName::Name(path.last().clone()),
         IdStatus::Exn(exn) => VariantName::Exn(*exn),
       };
-      let ty = instantiate(&mut st.tys, cfg.gen, &val_info.ty_scheme);
+      let ty = instantiate(&mut st.syms_tys.tys, cfg.gen, &val_info.ty_scheme);
       // @def(35), @def(41)
-      let (sym, arguments, ty) = match st.tys.data(ty) {
+      let (sym, arguments, ty) = match st.syms_tys.tys.data(ty) {
         TyData::Con(data) => {
           ty_scheme = Some(val_info.ty_scheme.clone());
           defs.extend(val_info.defs.iter().copied());
@@ -141,14 +141,14 @@ fn get_(
         TyData::Fn(data) => {
           ty_scheme = Some(TyScheme {
             bound_vars: val_info.ty_scheme.bound_vars.clone(),
-            ty: match st.tys.data(val_info.ty_scheme.ty) {
+            ty: match st.syms_tys.tys.data(val_info.ty_scheme.ty) {
               TyData::Fn(data) => data.res,
               // @test(pat::weird_pat_fn_1)
               _ => return None,
             },
           });
           defs.extend(val_info.defs.iter().copied());
-          let sym = match st.tys.data(data.res) {
+          let sym = match st.syms_tys.tys.data(data.res) {
             TyData::Con(data) => data.sym,
             // @test(pat::weird_pat_fn_2)
             _ => return None,
@@ -183,9 +183,9 @@ fn get_(
       });
       let ty = if *allows_other {
         // @def(38)
-        st.tys.unresolved_record(cfg.gen, rows, pat_idx.into())
+        st.syms_tys.tys.unresolved_record(cfg.gen, rows, pat_idx.into())
       } else {
-        st.tys.record(rows)
+        st.syms_tys.tys.record(rows)
       };
       let con = Con::Record { labels, allows_other: *allows_other };
       (Pat::con(con, pats, pat), ty)
