@@ -1,9 +1,12 @@
 //! Handle notifications.
 
+use crate::cx::Cx;
 use crate::state::{Mode, St};
 use crate::{convert, diagnostics, helpers};
 use anyhow::{bail, Result};
 use lsp_server::Notification;
+use paths::FileSystem as _;
+use std::collections::hash_map::Entry;
 use std::ops::ControlFlow;
 
 pub(crate) fn handle(st: &mut St, notif: Notification) {
@@ -15,14 +18,50 @@ pub(crate) fn handle(st: &mut St, notif: Notification) {
   }
 }
 
+/// try to incrementally update the input instead of throwing away and re-computing the whole input.
+///
+/// only handles some common cases.
+fn try_update_input(
+  cx: &mut Cx,
+  input: &mut input::Input,
+  changes: Vec<lsp_types::FileEvent>,
+) -> Result<()> {
+  for change in changes {
+    let path = convert::canonical_path_buf(&cx.fs, &change.uri)?;
+    let path_id = cx.paths.get_id(&path);
+    let mut entry = match input.sources.entry(path_id) {
+      Entry::Occupied(x) => x,
+      Entry::Vacant(_) => bail!("file {} was not a pre-existing source", path.as_path().display()),
+    };
+    if change.typ == lsp_types::FileChangeType::CREATED
+      || change.typ == lsp_types::FileChangeType::CHANGED
+    {
+      let new_contents = cx.fs.read_to_string(path.as_path())?;
+      entry.insert(new_contents);
+    } else if change.typ == lsp_types::FileChangeType::DELETED {
+      entry.remove();
+    } else {
+      bail!("unknown file change type {:?}", change.typ);
+    }
+  }
+  Ok(())
+}
+
 fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
-  n = helpers::try_notif::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |_| {
-    match &mut st.mode {
-      Mode::Root(root) => {
-        root.input = st.cx.get_input(&root.path);
+  n = helpers::try_notif::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |params| {
+    match st.mode.take() {
+      Mode::Root(mut root) => {
+        match try_update_input(&mut st.cx, &mut root.input, params.changes) {
+          Ok(()) => {}
+          Err(_) => root.input = st.cx.get_input(&root.path),
+        }
+        st.mode = Mode::Root(root);
         diagnostics::try_publish(st);
       }
-      Mode::NoRoot(_) => log::warn!("ignoring DidChangeWatchedFiles with NoRoot"),
+      Mode::NoRoot(nr) => {
+        st.mode = Mode::NoRoot(nr);
+        bail!("unexpected DidChangeWatchedFiles with NoRoot");
+      }
     }
     Ok(())
   })?;

@@ -11,6 +11,13 @@ pub(crate) enum Mode {
   NoRoot(paths::PathMap<String>),
 }
 
+impl Mode {
+  /// Replaces `self` with an empty `NoRoot` mode, and returns the old `self`.
+  pub(crate) fn take(&mut self) -> Self {
+    std::mem::replace(self, Mode::NoRoot(paths::PathMap::default()))
+  }
+}
+
 pub(crate) struct Root {
   pub(crate) path: paths::CanonicalPathBuf,
   pub(crate) input: input::Input,
