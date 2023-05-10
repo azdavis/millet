@@ -52,6 +52,19 @@ fn output(c: &mut Command) -> String {
   String::from_utf8(out.stdout).unwrap()
 }
 
+fn empty_git_grep(patterns: &[&str], msg: &str) {
+  let mut cmd = root_cmd("git");
+  cmd.args(["grep", "-Fn"]);
+  for pattern in patterns {
+    cmd.args(["-e", pattern]);
+  }
+  let out = cmd.output().unwrap();
+  assert!(out.stderr.is_empty());
+  let out = String::from_utf8(out.stdout).unwrap();
+  let lines: Vec<_> = out.lines().collect();
+  assert!(lines.is_empty(), "{msg}: {lines:#?}");
+}
+
 #[test]
 fn sml_def() {
   let got: BTreeSet<u16> =
@@ -105,11 +118,7 @@ fn test_refs() {
 
 fn attr_test(word: &str) {
   let word_attr = format!("#[{word}");
-  let mut cmd = root_cmd("git");
-  cmd.args(["grep", "-Fne", word_attr.as_str()]);
-  let out = String::from_utf8(cmd.output().unwrap().stdout).unwrap();
-  let set: BTreeSet<_> = out.lines().collect();
-  empty_set(&set, format!("files with {word} attribute").as_str());
+  empty_git_grep(&[word_attr.as_str()], format!("files with {word} attribute").as_str());
 }
 
 #[test]
@@ -184,12 +193,7 @@ fn no_debugging() {
   let fst = "DBG".to_ascii_lowercase();
   let snd = "EPRINT".to_ascii_lowercase();
   let thd = "CONSOLE.LOG".to_ascii_lowercase();
-  // ignore status because if no results (which is desired), git grep returns non-zero.
-  let mut cmd = root_cmd("git");
-  cmd.args(["grep", "-Fne", fst.as_str(), snd.as_str(), thd.as_str()]);
-  let out = String::from_utf8(cmd.output().unwrap().stdout).unwrap();
-  let got: BTreeSet<_> = out.lines().collect();
-  empty_set(&got, "not allowed to have debugging");
+  empty_git_grep(&[fst.as_str(), snd.as_str(), thd.as_str()], "files with debugging");
 }
 
 #[test]
