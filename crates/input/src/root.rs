@@ -4,6 +4,7 @@ use crate::types::Severities;
 use crate::util::{
   get_path_id, read_dir, str_path, Error, ErrorKind, ErrorSource, GroupPathKind, NoRootFlavor,
 };
+use fast_hash::{FxHashMap, FxHashSet};
 use paths::PathId;
 use slash_var_path::{EnvEntry, EnvEntryKind};
 use std::path::{Path, PathBuf};
@@ -173,25 +174,34 @@ impl Config {
     }
     ret.lang.dec = parsed.language.dec;
     ret.lang.exp = parsed.language.exp;
-    for (path, allowed) in parsed.language.val {
-      let parts: Option<Vec<_>> = path.split('.').map(str_util::Name::try_new).collect();
-      let parts = match parts {
-        Some(x) => x,
-        None => {
-          errors.push(Error::new(
-            ErrorSource::default(),
-            config_path.to_owned(),
-            ErrorKind::EmptyStrInPath(path),
-          ));
-          continue;
-        }
-      };
-      if !allowed {
-        let p = sml_path::Path::try_new(parts).expect("split always returns non-empty iter");
-        ret.lang.val.insert(p);
-      }
-    }
+    disallow(errors, config_path, parsed.language.val, &mut ret.lang.val);
     (ret, parsed.workspace.root)
+  }
+}
+
+fn disallow(
+  errors: &mut Vec<Error>,
+  config_path: &Path,
+  map: FxHashMap<str_util::SmolStr, bool>,
+  set: &mut FxHashSet<sml_path::Path>,
+) {
+  for (path, allowed) in map {
+    let parts: Option<Vec<_>> = path.split('.').map(str_util::Name::try_new).collect();
+    let parts = match parts {
+      Some(x) => x,
+      None => {
+        errors.push(Error::new(
+          ErrorSource::default(),
+          config_path.to_owned(),
+          ErrorKind::EmptyStrInPath(path),
+        ));
+        continue;
+      }
+    };
+    if !allowed {
+      let p = sml_path::Path::try_new(parts).expect("split always returns non-empty iter");
+      set.insert(p);
+    }
   }
 }
 
