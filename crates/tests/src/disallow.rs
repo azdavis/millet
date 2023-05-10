@@ -60,7 +60,7 @@ version = 1
 "#;
   let sml = r#"
 val tab = List.tabulate
-(**       ^^^^^^^^^^^^^ disallowed *)
+(**       ^^^^^^^^^^^^^ disallowed value: `tabulate` *)
 "#;
   multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
 }
@@ -77,7 +77,7 @@ local
   open List
 in
   val tab = tabulate
-(**         ^^^^^^^^ disallowed *)
+(**         ^^^^^^^^ disallowed value: `tabulate` *)
 end
 "#;
   multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
@@ -133,7 +133,7 @@ version = 1
 "#;
   let sml = r#"
 val h = hd
-(**     ^^ disallowed *)
+(**     ^^ disallowed value: `hd` *)
 "#;
   multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
 }
@@ -147,10 +147,17 @@ version = 1
 "#;
   let sml = r#"
 val h = List.hd
-(**     ^^^^^^^ disallowed *)
+(**     ^^^^^^^ disallowed value: `hd` *)
 "#;
   multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
 }
+
+const LIST_SHADOW: &str = r#"
+structure List = struct
+  val hd = 3
+end
+val n = List.hd + 4
+"#;
 
 #[test]
 fn shadow_fqn() {
@@ -159,13 +166,7 @@ version = 1
 [language.val]
 "List.hd" = false
 "#;
-  let sml = r#"
-structure List = struct
-  val hd = 3
-end
-val n = List.hd + 4
-"#;
-  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Pass, singleton(config, LIST_SHADOW));
 }
 
 #[test]
