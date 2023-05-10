@@ -187,7 +187,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::UnreachableHandle => f.write_str("unreachable `handle`"),
       ErrorKind::DecWithoutEffect => f.write_str("declaration with no effect"),
-      ErrorKind::Disallowed(item, d, name) => write!(f, "{item} is disallowed {d}: `{name}`"),
+      ErrorKind::Disallowed(item, d, name) => write!(f, "{d} disallowed {item}: `{name}`"),
     }
   }
 }
