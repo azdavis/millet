@@ -52,7 +52,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::SelectorExp(exp) => {
       if !st.lang().exp.selector {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("selector")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`#` selector")));
       }
       let lab = get_lab(st, exp.lab()?);
       let fresh = st.fresh();
@@ -66,7 +66,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     // @def(5)
     ast::Exp::ParenExp(exp) => {
       if !st.lang().exp.paren {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("paren")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("parentheses")));
       }
       let inner = exp.exp();
       if inner.as_ref().map_or(false, warn_unnecessary_parens) {
@@ -101,7 +101,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::SeqExp(exp) => {
       if !st.lang().exp.seq {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("seq")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("sequence")));
       }
       ck_trailing(st, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
@@ -109,7 +109,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::LetExp(exp) => {
       if !st.lang().exp.let_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("let")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`let`")));
       }
       st.inc_level();
       let dec = dec::get(st, exp.decs());
@@ -121,13 +121,13 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::AppExp(exp) => {
       if !st.lang().exp.app {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("app")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("function application")));
       }
       sml_hir::Exp::App(get(st, exp.func()), get(st, exp.arg()))
     }
     ast::Exp::InfixExp(exp) => {
       if !st.lang().exp.infix {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("infix")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("infix application")));
       }
       let func = exp.name_star_eq().and_then(|x| st.exp(name(x.token.text()), ptr.clone()));
       let lhs = get(st, exp.lhs());
@@ -144,7 +144,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::AndalsoExp(exp) => {
       if !st.lang().exp.andalso {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("andalso")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`andalso`")));
       }
       let lhs = exp.lhs();
       let rhs = exp.rhs();
@@ -158,7 +158,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::OrelseExp(exp) => {
       if !st.lang().exp.orelse {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("orelse")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`orelse`")));
       }
       let lhs = exp.lhs();
       let rhs = exp.rhs();
@@ -172,7 +172,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::HandleExp(exp) => {
       if !st.lang().exp.handle {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("handle")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`handle`")));
       }
       let head = get(st, exp.exp());
       let m = matcher(st, Some(MatcherFlavor::Handle), exp.matcher());
@@ -180,13 +180,13 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::RaiseExp(exp) => {
       if !st.lang().exp.raise {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("raise")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`raise`")));
       }
       sml_hir::Exp::Raise(get(st, exp.exp()))
     }
     ast::Exp::IfExp(exp) => {
       if !st.lang().exp.if_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("if")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`if`")));
       }
       let cond = exp.cond();
       let yes = exp.yes();
@@ -201,7 +201,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::WhileExp(exp) => {
       if !st.lang().exp.while_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("while")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`while`")));
       }
       let vid = st.fresh();
       let fn_body = {
@@ -224,7 +224,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::CaseExp(exp) => {
       if !st.lang().exp.case {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("case")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`case`")));
       }
       let head = get(st, exp.exp());
       let arms = matcher(st, Some(MatcherFlavor::Case), exp.matcher());
@@ -235,7 +235,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::FnExp(exp) => {
       if !st.lang().exp.fn_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("fn")));
+        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`fn`")));
       }
       sml_hir::Exp::Fn(matcher(st, Some(MatcherFlavor::Fn), exp.matcher()), sml_hir::FnFlavor::Fn)
     }

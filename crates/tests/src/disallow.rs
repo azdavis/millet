@@ -30,7 +30,7 @@ language.exp.while = false
   let sml = r#"
 val _ = 4
 val _ = while true do ()
-(**     ^^^^^^^^^^^^^^^^ disallowed expression: while *)
+(**     ^^^^^^^^^^^^^^^^ disallowed expression: `while` *)
 val _ = "hi"
 "#;
   check_multi(singleton(config, sml));
@@ -45,7 +45,7 @@ language.dec.signature = false
   let sml = r#"
 structure Str = struct end
 signature SIG = sig end
-(** + disallowed declaration: signature *)
+(** + disallowed declaration: `signature` *)
 functor F() = struct end
 "#;
   check_multi(singleton(config, sml));
