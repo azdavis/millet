@@ -92,6 +92,29 @@ impl Bs {
       Some(x) => Err(disallow::Error::Already(x.clone())),
     }
   }
+
+  /// Disallow a structure, transitively including all of its items.
+  ///
+  /// # Errors
+  ///
+  /// If the path couldn't be disallowed.
+  pub fn disallow_str(&mut self, val: &sml_path::Path) -> Result<(), disallow::Error> {
+    let env = match get_mut_env(&mut self.env, val.prefix()) {
+      Ok(x) => x,
+      Err(n) => return Err(disallow::Error::Undefined(Item::Struct, n.clone())),
+    };
+    let env = match env.str_env.get_mut(val.last()) {
+      Some(x) => x,
+      None => return Err(disallow::Error::Undefined(Item::Struct, val.last().clone())),
+    };
+    match &env.disallow {
+      None => {
+        env.disallow = Some(Disallow::Directly);
+        Ok(())
+      }
+      Some(x) => Err(disallow::Error::Already(x.clone())),
+    }
+  }
 }
 
 /// Returns the minimal basis and symbols.

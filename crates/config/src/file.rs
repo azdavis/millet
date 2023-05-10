@@ -80,6 +80,9 @@ pub struct Language {
   /// Configuration for values.
   #[serde(default)]
   pub val: FxHashMap<SmolStr, bool>,
+  /// Configuration for structures.
+  #[serde(default)]
+  pub structure: FxHashMap<SmolStr, bool>,
 }
 
 /// Configuration for declarations.

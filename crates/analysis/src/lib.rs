@@ -89,6 +89,10 @@ impl Analysis {
       // TODO do not ignore failed disallow
       _ = basis.disallow_val(path);
     }
+    for path in &input.lang.structure {
+      // TODO do not ignore failed disallow
+      _ = basis.disallow_str(path);
+    }
     let groups: paths::PathMap<_> =
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {

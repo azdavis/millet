@@ -203,3 +203,64 @@ val n = List.hd + 4
     [(config::file::PATH, config), ("s.mlb", "a.sml b.sml"), ("a.sml", a), ("b.sml", b)],
   );
 }
+
+fn no_list(sml: &str) {
+  let config = r#"
+version = 1
+[language.structure]
+"List" = false
+"#;
+  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+}
+
+#[test]
+fn str_smoke() {
+  let sml = r#"
+structure L = List
+(**           ^^^^ disallowed structure: `List` *)
+"#;
+  no_list(sml);
+}
+
+#[test]
+fn str_val() {
+  let sml = r#"
+val tab = List.tabulate
+(**       ^^^^^^^^^^^^^ disallowed structure: `List` *)
+"#;
+  no_list(sml);
+}
+
+#[test]
+fn str_open() {
+  let sml = r#"
+structure S = struct
+  open List
+(**  + disallowed structure: `List` *)
+end
+"#;
+  no_list(sml);
+}
+
+#[test]
+fn str_type() {
+  let sml = r#"
+type 'a seq = 'a List.list
+(**           ^^^^^^^^^^^^ disallowed structure: `List` *)
+"#;
+  no_list(sml);
+}
+
+#[test]
+fn str_exn() {
+  let sml = r#"
+exception Sub = List.Subscript
+(** + disallowed structure: `List` *)
+"#;
+  no_list(sml);
+}
+
+#[test]
+fn str_shadow() {
+  no_list(LIST_SHADOW);
+}

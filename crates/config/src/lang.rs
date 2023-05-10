@@ -12,4 +12,6 @@ pub struct Language {
   pub exp: file::Exp,
   /// Disallowed value paths.
   pub val: FxHashSet<sml_path::Path>,
+  /// Disallowed structure paths.
+  pub structure: FxHashSet<sml_path::Path>,
 }
