@@ -81,6 +81,8 @@ while = false
 functor = true
 [language.val]
 "=" = false
+[language.structure]
+"Ref" = false
 ```
 
 #### `version`
@@ -207,6 +209,16 @@ Because paths can have special characters in them, namely `.`, you may need to u
 Note that some standard basis library declarations are re-declared at different paths. To disallow them entirely, you must (currently) specify all possible paths. For instance, you should specify both `hd` and `List.hd` to disallow usage of the list head function.
 
 No error is currently emitted when disallowing a path that does not exist. To be sure you spelled the path correctly, try running Millet with the given config file, and see if errors are correctly emitted when you try to use the value.
+
+#### `language.structure`
+
+Configuration for structures.
+
+#### `language.structure.<path>`
+
+Whether the `<path>` is allowed.
+
+See docs for [`language.val.<path>`](#languagevalpath).
 
 ### VS Code settings
 
