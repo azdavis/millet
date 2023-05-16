@@ -1,4 +1,4 @@
-//! Displaying a matcher, for the `fill case` code action
+//! Displaying a matcher, for the `fill case` code action.
 
 use fmt_util::sep_seq;
 use std::fmt;
@@ -24,7 +24,8 @@ impl fmt::Display for CaseDisplay<'_> {
       write!(f, "  ")?;
     }
     let iter = self.variants.iter().map(|&(ref name, has_arg)| ArmDisplay { name, has_arg });
-    sep_seq(f, "\n  | ", iter)
+    sep_seq(f, "\n  | ", iter)?;
+    writeln!(f)
   }
 }
 
