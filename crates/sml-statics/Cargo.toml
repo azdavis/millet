@@ -27,4 +27,4 @@ uniq = { git = "https://github.com/azdavis/language-util.git" }
 sml-statics-types = { path = "../sml-statics-types" }
 
 [features]
-sync = ["chain-map/sync"]
+sync = ["chain-map/sync", "sml-statics-types/sync"]
