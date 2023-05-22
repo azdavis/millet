@@ -123,6 +123,8 @@ pub struct ExnInfo {
 }
 
 /// Information about overloads.
+///
+/// Each field is a non-empty vec of symbols.
 #[derive(Debug, Default, Clone)]
 pub struct Overloads {
   /// Overloads for `int`, like `Int16.int`.
@@ -131,9 +133,13 @@ pub struct Overloads {
   pub real: Vec<Sym>,
   /// Overloads for `word`, like `Word8.word`.
   pub word: Vec<Sym>,
-  /// Overloads for `string`. Usually just 1.
+  /// Overloads for `string`.
+  ///
+  /// Usually this has length 1, since there is only one.
   pub string: Vec<Sym>,
-  /// Overloads for `char`. Usually just 1.
+  /// Overloads for `char`.
+  ///
+  /// Usually this has length 1, since there is only one.
   pub char: Vec<Sym>,
 }
 
