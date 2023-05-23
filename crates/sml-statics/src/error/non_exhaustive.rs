@@ -20,7 +20,8 @@ pub(crate) fn get(
   comma_seq(f, iter)?;
   if let Some(n) = pats.len().checked_sub(max_len) {
     if n != 0 {
-      write!(f, ", and {n} others")?;
+      let s = if n == 1 { "" } else { "s" };
+      write!(f, ", and {n} other{s}")?;
     }
   }
   Ok(())
