@@ -13,6 +13,12 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.9.8
+
+- Add a newline at the end of the "fill case" text.
+- Preserve the order of datatype constructors in the "fill case" text.
+- Improve some error messages and documentation.
+
 ## v0.9.7
 
 - Reduce redundant file I/O when updating input in some cases.
