@@ -6,6 +6,7 @@ use crate::info::{TyInfo, ValEnv, ValInfo};
 use crate::ty::{Ty, TyKind, TyScheme};
 use crate::{def, overload};
 use drop_bomb::DropBomb;
+use fast_hash::FxHashMap;
 use std::fmt;
 
 /// A symbol, aka a type name. Definition: `TyName`
@@ -105,39 +106,37 @@ pub enum Equality {
 /// A value environment for `SymInfo`.
 #[derive(Debug, Default, Clone)]
 pub struct SymValEnv {
-  inner: Vec<(str_util::Name, ValInfo)>,
+  /// insertion order. invariant: forall (k, v) in map, k in order
+  order: Vec<str_util::Name>,
+  /// actual mapping
+  map: FxHashMap<str_util::Name, ValInfo>,
 }
 
 impl SymValEnv {
   /// Inserts the key-val mapping into this. Returns whether the key was newly inserted.
   pub fn insert(&mut self, key: str_util::Name, val: ValInfo) -> bool {
-    match self.inner.iter().position(|(n, _)| *n == key) {
-      None => {
-        self.inner.push((key, val));
-        true
-      }
-      Some(pos) => {
-        self.inner[pos] = (key, val);
-        false
-      }
+    if self.map.insert(key.clone(), val).is_some() {
+      false
+    } else {
+      self.order.push(key);
+      true
     }
   }
 
   /// Returns the val for this key.
   #[must_use]
   pub fn get(&self, key: &str_util::Name) -> Option<&ValInfo> {
-    self.inner.iter().find_map(|(k, v)| (k == key).then_some(v))
+    self.map.get(key)
   }
 
   /// Returns an iterator over the key-value pairs in insertion order.
   pub fn iter(&self) -> impl Iterator<Item = (&str_util::Name, &ValInfo)> + '_ {
-    self.inner.iter().map(|(k, v)| (k, v))
+    self.order.iter().map(|k| (k, &self.map[k]))
   }
 
-  /// Returns an iterator over the key and mutable value pairs in insertion order.
+  /// Returns an iterator over the key and mutable value pairs in an arbitrary order.
   pub fn iter_mut(&mut self) -> impl Iterator<Item = (&str_util::Name, &mut ValInfo)> + '_ {
-    // re-borrow key
-    self.inner.iter_mut().map(|(k, v)| (&*k, v))
+    self.map.iter_mut()
   }
 }
 
@@ -153,7 +152,7 @@ impl FromIterator<(str_util::Name, ValInfo)> for SymValEnv {
 
 impl From<SymValEnv> for ValEnv {
   fn from(value: SymValEnv) -> Self {
-    value.inner.into_iter().collect()
+    value.map.into_iter().collect()
   }
 }
 
