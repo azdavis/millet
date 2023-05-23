@@ -43,7 +43,7 @@ workspace.root = "sources.mlb"
 
 ### `sources.mlb`
 
-```mlb
+```text
 a.sml
 b.sml
 ```

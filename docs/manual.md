@@ -311,7 +311,7 @@ For example, suppose we have 3 files, each quite similar, and each containing a 
 
 Even though each file would normally emit a type error, given the following root ML Basis file, the errors are reported in `a.sml` and `c.sml` only, and not `b.sml`:
 
-```mlb
+```text
 a.sml
 ann "milletDiagnosticsIgnore all" in
   b.sml
