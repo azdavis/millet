@@ -190,7 +190,7 @@ impl Info {
       TyData::Con(data) => data.sym,
       _ => return None,
     };
-    let mut ret: Vec<_> = st
+    let ret: Vec<_> = st
       .syms
       .get(sym)?
       .ty_info
@@ -201,7 +201,6 @@ impl Info {
         (name.clone(), has_arg)
       })
       .collect();
-    ret.sort_unstable();
     Some(ret)
   }
 

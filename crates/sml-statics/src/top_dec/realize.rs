@@ -2,6 +2,7 @@
 
 use crate::env::Env;
 use fast_hash::FxHashMap;
+use sml_statics_types::sym::SymValEnv;
 use sml_statics_types::ty::{Ty, TyData, TyScheme, Tys};
 use sml_statics_types::{info::ValEnv, sym::Sym, util::apply_bv};
 
@@ -36,6 +37,12 @@ pub(crate) fn get_env(tys: &mut Tys, subst: &TyRealization, env: &mut Env) {
 }
 
 pub(crate) fn get_val_env(tys: &mut Tys, subst: &TyRealization, val_env: &mut ValEnv) {
+  for (_, val_info) in val_env.iter_mut() {
+    get_ty(tys, subst, &mut val_info.ty_scheme.ty);
+  }
+}
+
+pub(crate) fn get_sym_val_env(tys: &mut Tys, subst: &TyRealization, val_env: &mut SymValEnv) {
   for (_, val_info) in val_env.iter_mut() {
     get_ty(tys, subst, &mut val_info.ty_scheme.ty);
   }

@@ -12,15 +12,30 @@ use fast_hash::FxHashSet;
 ///
 /// Definition: `TyStr`
 #[derive(Debug, Clone)]
-pub struct TyInfo {
+pub struct TyInfo<VE = ValEnv> {
   /// The type scheme.
   pub ty_scheme: TyScheme,
   /// The val environment.
-  pub val_env: ValEnv,
+  pub val_env: VE,
   /// The def.
   pub def: Option<def::Def>,
   /// Whether this is disallowed.
   pub disallow: Option<Disallow>,
+}
+
+impl<VE> TyInfo<VE>
+where
+  VE: Into<ValEnv>,
+{
+  /// Returns this with the default kind of val env.
+  pub fn with_default_val_env(self) -> TyInfo<ValEnv> {
+    TyInfo {
+      ty_scheme: self.ty_scheme,
+      val_env: self.val_env.into(),
+      def: self.def,
+      disallow: self.disallow,
+    }
+  }
 }
 
 /// Definition: `TyEnv`

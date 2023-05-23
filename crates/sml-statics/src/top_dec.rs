@@ -15,8 +15,8 @@ use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{basis::Bs, config::Cfg, dec, st::St, ty};
 use fast_hash::FxHashSet;
 use sml_statics_types::generalize::generalize;
-use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
-use sml_statics_types::sym::{Equality, StartedSym, SymsMarker};
+use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValInfo};
+use sml_statics_types::sym::{Equality, StartedSym, SymTyInfo, SymValEnv, SymsMarker};
 use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
 use sml_statics_types::{item::Item, mode::Mode, overload, util::n_ary_con};
 
@@ -382,7 +382,7 @@ fn get_sig_exp(
 }
 
 fn gen_fresh_syms(st: &mut St, subst: &mut realize::TyRealization, ty_names: &TyNameSet) {
-  let mut ac = Vec::<(StartedSym, TyInfo, Equality)>::new();
+  let mut ac = Vec::<(StartedSym, SymTyInfo, Equality)>::new();
   for &sym in ty_names.iter() {
     let sym_info = st.syms_tys.syms.get(sym).unwrap();
     let mut ty_info = sym_info.ty_info.clone();
@@ -395,7 +395,7 @@ fn gen_fresh_syms(st: &mut St, subst: &mut realize::TyRealization, ty_names: &Ty
     subst.insert(sym, ty_scheme);
   }
   for (started, mut ty_info, equality) in ac {
-    realize::get_val_env(&mut st.syms_tys.tys, subst, &mut ty_info.val_env);
+    realize::get_sym_val_env(&mut st.syms_tys.tys, subst, &mut ty_info.val_env);
     st.syms_tys.syms.finish(started, ty_info, equality);
   }
 }
@@ -621,12 +621,13 @@ fn get_ty_desc(
     .collect();
   let ty_info = TyInfo {
     ty_scheme: n_ary_con(&mut st.syms_tys.tys, bound_vars, started.sym()),
-    val_env: ValEnv::default(),
+    val_env: SymValEnv::default(),
     def: st.def(idx),
     disallow: None,
   };
   st.syms_tys.syms.finish(started, ty_info.clone(), equality);
-  if let Some(e) = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info, Item::Ty) {
+  let e = ins_no_dupe(ty_env, ty_desc.name.clone(), ty_info.with_default_val_env(), Item::Ty);
+  if let Some(e) = e {
     st.err(idx, e);
   }
 }

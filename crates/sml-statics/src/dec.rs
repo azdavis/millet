@@ -3,12 +3,12 @@
 use crate::env::{Cx, Env};
 use crate::error::ErrorKind;
 use crate::get_env::{get_env, get_env_raw, get_ty_info, get_val_info};
-use crate::util::{ins_check_name, ins_no_dupe};
+use crate::util::{check_name, ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
 use sml_statics_types::generalize::{generalize, generalize_fixed, FixedTyVars};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
-use sml_statics_types::sym::{Equality, StartedSym};
+use sml_statics_types::sym::{Equality, StartedSym, SymValEnv};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, TyVarSrc};
 use sml_statics_types::{equality, item::Item};
 
@@ -380,7 +380,7 @@ pub(crate) fn get_dat_binds(
         st.err(idx, e);
       }
     }
-    let mut val_env = ValEnv::default();
+    let mut val_env = SymValEnv::default();
     // @def(29), @def(82)
     for con_bind in &dat_bind.cons {
       let mut ty = datatype.out_ty;
@@ -397,22 +397,31 @@ pub(crate) fn get_dat_binds(
         defs: st.def(idx).into_iter().collect(),
         disallow: None,
       };
-      if let Some(e) = ins_check_name(&mut val_env, con_bind.name.clone(), vi, Item::Val) {
+      let e = check_name(&con_bind.name).or_else(|| {
+        (!val_env.insert(con_bind.name.clone(), vi))
+          .then(|| ErrorKind::Duplicate(Item::Val, con_bind.name.clone()))
+      });
+      if let Some(e) = e {
         st.err(idx, e);
       }
     }
     // NOTE: no checking for duplicates here
-    big_val_env.append(&mut val_env.clone());
+    big_val_env.append(&mut val_env.clone().into());
     let ty_info =
       TyInfo { ty_scheme: datatype.ty_scheme, val_env, def: st.def(idx), disallow: None };
-    let equality =
-      equality::get_ty_info(st.info.mode, &st.syms_tys.syms, &mut st.syms_tys.tys, ty_info.clone());
+    let ty_info_dve = ty_info.clone().with_default_val_env();
+    let equality = equality::get_ty_info(
+      st.info.mode,
+      &st.syms_tys.syms,
+      &mut st.syms_tys.tys,
+      ty_info_dve.clone(),
+    );
     let equality = match equality {
       Ok(()) => Equality::Sometimes,
       Err(_) => Equality::Never,
     };
-    st.syms_tys.syms.finish(datatype.started, ty_info.clone(), equality);
-    ty_env.insert(dat_bind.name.clone(), ty_info);
+    st.syms_tys.syms.finish(datatype.started, ty_info, equality);
+    ty_env.insert(dat_bind.name.clone(), ty_info_dve);
     for ty_var in &dat_bind.ty_vars {
       cx.fixed.remove(ty_var);
     }

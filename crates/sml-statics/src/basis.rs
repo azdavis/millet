@@ -5,7 +5,7 @@ use crate::get_env::get_mut_env;
 use fast_hash::FxHashMap;
 use sml_statics_types::disallow::{self, Disallow};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
-use sml_statics_types::sym::{Equality, Sym, Syms};
+use sml_statics_types::sym::{Equality, Sym, SymTyInfo, SymValEnv, Syms};
 use sml_statics_types::ty::{BoundTyVar, RecordData, Ty, TyScheme, TyVarKind, Tys};
 use sml_statics_types::{def::Primitive, item::Item, overload};
 
@@ -176,7 +176,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
     .iter_syms()
     .map(|sym_info| {
       assert!(sym_info.path.prefix().is_empty(), "only built-in types are currently in this Syms");
-      (sym_info.path.last().clone(), sym_info.ty_info.clone())
+      (sym_info.path.last().clone(), sym_info.ty_info.clone().with_default_val_env())
     })
     .chain(aliases.into_iter().map(|(name, ty)| {
       let ti = TyInfo {
@@ -241,7 +241,7 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
   (sml_statics_types::St { syms, tys }, bs)
 }
 
-fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
+fn insert_special(syms: &mut Syms, sym: Sym, ty_info: SymTyInfo) {
   assert_ne!(sym, Sym::EXN);
   let equality = if sym == Sym::REF {
     Equality::Always
@@ -256,13 +256,13 @@ fn insert_special(syms: &mut Syms, sym: Sym, ty_info: TyInfo) {
   syms.finish(started, ty_info, equality);
 }
 
-fn basic_datatype(tys: &mut Tys, sym: Sym, ctors: &'static [Primitive]) -> TyInfo {
+fn basic_datatype(tys: &mut Tys, sym: Sym, ctors: &'static [Primitive]) -> SymTyInfo {
   let ty_scheme = TyScheme::zero(tys.con(Vec::new(), sym));
   let val_env = datatype_ve(ctors.iter().map(|&x| (x, ty_scheme.clone())));
   TyInfo { ty_scheme, val_env, def: Some(sym.primitive().unwrap().into()), disallow: None }
 }
 
-fn datatype_ve<I>(xs: I) -> ValEnv
+fn datatype_ve<I>(xs: I) -> SymValEnv
 where
   I: IntoIterator<Item = (Primitive, TyScheme)>,
 {

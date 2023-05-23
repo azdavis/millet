@@ -45,7 +45,11 @@ pub(crate) fn ins_check_name<V>(
   val: V,
   item: Item,
 ) -> Option<ErrorKind> {
+  check_name(&name).or_else(|| ins_no_dupe(map, name, val, item))
+}
+
+/// returns an error iff this name is not allowed to be (re)bound
+pub(crate) fn check_name(name: &str_util::Name) -> Option<ErrorKind> {
   let no = matches!(name.as_str(), "true" | "false" | "nil" | "::" | "ref" | "=" | "it");
   no.then(|| ErrorKind::InvalidRebindName(name.clone()))
-    .or_else(|| ins_no_dupe(map, name, val, item))
 }
