@@ -18,7 +18,6 @@ use text_size_util::TextRange;
 
 pub use crate::diagnostic::Diagnostic;
 pub use mlb_statics::StdBasis;
-pub use sml_statics::info::CompletionItem;
 
 /// The url to go to for information about diagnostics.
 pub const URL: &str = "https://github.com/azdavis/millet/blob/main/docs/diagnostics";
@@ -474,4 +473,17 @@ pub enum InlayHintKind {
   Param,
   /// A type.
   Ty,
+}
+
+/// A completion item.
+#[derive(Debug)]
+pub struct CompletionItem {
+  /// The label.
+  pub label: String,
+  /// The kind.
+  pub kind: sml_namespace::SymbolKind,
+  /// Detail about it.
+  pub detail: Option<String>,
+  /// Markdown documentation for it.
+  pub documentation: Option<String>,
 }

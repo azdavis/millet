@@ -383,16 +383,3 @@ pub struct DocumentSymbol {
   /// Children of this symbol.
   pub children: Vec<DocumentSymbol>,
 }
-
-/// A completion item.
-#[derive(Debug)]
-pub struct CompletionItem {
-  /// The label.
-  pub label: String,
-  /// The kind.
-  pub kind: sml_namespace::SymbolKind,
-  /// Detail about it.
-  pub detail: Option<String>,
-  /// Markdown documentation for it.
-  pub documentation: Option<String>,
-}
