@@ -10,8 +10,7 @@ mod source_files;
 
 use paths::{PathId, PathMap, WithPath};
 use sml_statics::basis::Bs;
-use sml_statics_types::display::MetaVarNames;
-use sml_statics_types::{def, mode::Mode};
+use sml_statics_types::{def, display::MetaVarNames, mode::Mode};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::process::{Command, Stdio};
 use std::{error::Error, fmt, io::Write as _};
