@@ -27,7 +27,10 @@ pub(crate) fn get() -> lsp_types::ServerCapabilities {
     document_formatting_provider: Some(lsp_types::OneOf::Left(true)),
     document_symbol_provider: Some(lsp_types::OneOf::Left(true)),
     references_provider: Some(lsp_types::OneOf::Left(true)),
-    completion_provider: COMPLETIONS.then(lsp_types::CompletionOptions::default),
+    completion_provider: COMPLETIONS.then(|| lsp_types::CompletionOptions {
+      trigger_characters: Some(vec![".".to_owned()]),
+      ..lsp_types::CompletionOptions::default()
+    }),
     inlay_hint_provider: INLAY_HINTS.then_some(lsp_types::OneOf::Left(true)),
     ..Default::default()
   }
