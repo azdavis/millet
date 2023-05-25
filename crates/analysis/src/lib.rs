@@ -9,6 +9,8 @@ mod matcher;
 mod source_files;
 
 use paths::{PathId, PathMap, WithPath};
+use sml_statics::basis::Bs;
+use sml_statics_types::display::MetaVarNames;
 use sml_statics_types::{def, mode::Mode};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::process::{Command, Stdio};
@@ -312,19 +314,38 @@ impl Analysis {
   pub fn completions(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<CompletionItem>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let mut ret = Vec::<CompletionItem>::new();
-    let mut mvs = sml_statics_types::display::MetaVarNames::new(&self.syms_tys.tys);
-    ret.extend(ft.file.info.basis().env.val_env.iter().map(|(name, val_info)| {
+    let mut mvs = MetaVarNames::new(&self.syms_tys.tys);
+    self.bs_completions(self.std_basis.basis(), &mut mvs, &mut ret);
+    self.bs_completions(ft.file.info.basis(), &mut mvs, &mut ret);
+    Some(ret)
+  }
+
+  fn bs_completions(&self, bs: &Bs, mvs: &mut MetaVarNames<'_>, ac: &mut Vec<CompletionItem>) {
+    ac.extend(bs.env.str_env.iter().map(|(name, env)| CompletionItem {
+      label: name.as_str().to_owned(),
+      kind: sml_namespace::SymbolKind::Structure,
+      detail: None,
+      documentation: env.def.and_then(|d| self.get_doc(d)).map(ToOwned::to_owned),
+    }));
+    ac.extend(bs.env.val_env.iter().map(|(name, val_info)| {
       mvs.clear();
       mvs.extend_for(val_info.ty_scheme.ty);
       CompletionItem {
         label: name.as_str().to_owned(),
         kind: sml_symbol_kind::get(&self.syms_tys.tys, val_info),
-        detail: Some(val_info.ty_scheme.display(&mvs, &self.syms_tys.syms).to_string()),
-        // TODO improve? might need to reorganize where documentation is stored
-        documentation: None,
+        detail: Some(val_info.ty_scheme.display(mvs, &self.syms_tys.syms).to_string()),
+        documentation: val_info.defs.iter().filter_map(|&x| self.get_doc(x)).fold(None, |ac, x| {
+          match ac {
+            None => Some(x.to_owned()),
+            Some(mut ac) => {
+              ac.push_str("\n\n---\n\n");
+              ac.push_str(x);
+              Some(ac)
+            }
+          }
+        }),
       }
     }));
-    Some(ret)
   }
 
   /// Returns all inlay hints for the range.
