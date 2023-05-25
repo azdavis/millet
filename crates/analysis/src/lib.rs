@@ -147,16 +147,7 @@ impl Analysis {
       Some((ptr, idx)) => {
         ty_md = ft.file.info.get_ty_md(&self.syms_tys, idx);
         parts.extend(ty_md.as_deref());
-        parts.extend(ft.file.info.get_defs(idx).into_iter().filter_map(|def| match def {
-          def::Def::Path(path, idx) => {
-            let info = match path {
-              def::Path::Regular(path) => &self.source_files.get(&path)?.info,
-              def::Path::BuiltinLib(name) => self.std_basis.get_info(name)?,
-            };
-            info.get_doc(idx)
-          }
-          def::Def::Primitive(prim) => Some(prim.doc()),
-        }));
+        parts.extend(ft.file.info.get_defs(idx).into_iter().filter_map(|def| self.get_doc(def)));
         ptr.text_range()
       }
       None => ft.token.text_range(),
@@ -169,6 +160,19 @@ impl Analysis {
     }
     let range = ft.file.syntax.pos_db.range_utf16(range)?;
     Some((parts.join("\n\n---\n\n"), range))
+  }
+
+  fn get_doc(&self, def: def::Def) -> Option<&str> {
+    match def {
+      def::Def::Path(path, idx) => {
+        let info = match path {
+          def::Path::Regular(path) => &self.source_files.get(&path)?.info,
+          def::Path::BuiltinLib(name) => self.std_basis.get_info(name)?,
+        };
+        info.get_doc(idx)
+      }
+      def::Def::Primitive(prim) => Some(prim.doc()),
+    }
   }
 
   /// Returns the range of the definition of the item at this position.
