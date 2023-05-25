@@ -12,9 +12,12 @@ use sml_statics_types::{def::Primitive, item::Item, overload};
 /// A basis.
 #[derive(Debug, Default, Clone)]
 pub struct Bs {
-  pub(crate) env: Env,
-  pub(crate) sig_env: SigEnv,
-  pub(crate) fun_env: FunEnv,
+  /// The env.
+  pub env: Env,
+  /// The sig env.
+  pub sig_env: SigEnv,
+  /// The functor env.
+  pub fun_env: FunEnv,
 }
 
 impl Bs {
