@@ -69,7 +69,7 @@ impl FileAndToken<'_> {
 fn priority(kind: SyntaxKind) -> u8 {
   match kind {
     SyntaxKind::Name => 5,
-    SyntaxKind::OpKw => 4,
+    SyntaxKind::OpKw | SyntaxKind::Dot => 4,
     SyntaxKind::TyVar => 3,
     SyntaxKind::CharLit
     | SyntaxKind::IntLit
