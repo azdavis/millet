@@ -1,9 +1,9 @@
 //! Checking types.
 
-use crate::{env::Cx, get_env::get_ty_info, info::TyEntry, st::St};
 use crate::{error::ErrorKind, util::record};
+use crate::{get_env::get_ty_info, info::TyEntry, st::St};
 use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarSrc};
-use sml_statics_types::{def, item::Item, util::apply_bv};
+use sml_statics_types::{def, env::Cx, item::Item, util::apply_bv};
 
 /// The mode for how we're checking this type.
 #[derive(Debug, Clone, Copy)]

@@ -8,12 +8,12 @@ mod sharing_ty;
 mod ty_con_paths;
 mod where_ty;
 
-use crate::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use crate::error::{ErrorKind, FunctorSugarUser};
 use crate::get_env::{get_env, get_ty_info};
 use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{basis::Bs, config::Cfg, dec, st::St, ty};
 use fast_hash::FxHashSet;
+use sml_statics_types::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use sml_statics_types::generalize::generalize;
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValInfo};
 use sml_statics_types::sym::{Equality, StartedSym, SymTyInfo, SymValEnv, SymsMarker};
@@ -94,7 +94,7 @@ fn get_str_dec_one(
       // @def(61)
       let mut str_env = StrEnv::default();
       for str_bind in str_binds {
-        let mut env = Env::with_def(st.def(str_dec.into()));
+        let mut env = Env::new(st.def(str_dec.into()));
         st.push_prefix(str_bind.name.clone());
         get_str_exp(st, bs, ars, &mut env, str_bind.str_exp);
         st.pop_prefix();
@@ -117,7 +117,7 @@ fn get_str_dec_one(
       // @def(67)
       for sig_bind in sig_binds {
         let marker = st.syms_tys.syms.mark();
-        let mut env = Env::with_def(st.def(str_dec.into()));
+        let mut env = Env::new(st.def(str_dec.into()));
         let should_push = match st.info.mode {
           Mode::Regular(_) | Mode::Dynamics => true,
           // `datatype option` is well-known
@@ -156,7 +156,7 @@ fn get_str_dec_one(
         let param_sig = env_to_sig(&st.syms_tys.tys, param_env, marker);
         let mut bs_clone = bs.clone();
         bs_clone.env.str_env.insert(fun_bind.param_name.clone(), param_sig.env.clone());
-        let mut body_env = Env::with_def(st.def(str_dec.into()));
+        let mut body_env = Env::new(st.def(str_dec.into()));
         let marker = st.syms_tys.syms.mark();
         st.push_prefix(str_util::Name::new(format!("{}(...)", fun_bind.functor_name)));
         get_str_exp(st, &bs_clone, ars, &mut body_env, fun_bind.body);

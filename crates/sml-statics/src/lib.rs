@@ -12,7 +12,6 @@
 mod compatible;
 mod config;
 mod dec;
-mod env;
 mod error;
 mod exp;
 mod get_env;

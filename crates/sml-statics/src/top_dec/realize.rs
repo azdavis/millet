@@ -1,7 +1,7 @@
 //! Type realizations.
 
-use crate::env::Env;
 use fast_hash::FxHashMap;
+use sml_statics_types::env::Env;
 use sml_statics_types::sym::SymValEnv;
 use sml_statics_types::ty::{Ty, TyData, TyScheme, Tys};
 use sml_statics_types::{info::ValEnv, sym::Sym, util::apply_bv};

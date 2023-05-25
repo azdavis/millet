@@ -1,11 +1,11 @@
 //! Checking declarations.
 
-use crate::env::{Cx, Env};
 use crate::error::ErrorKind;
 use crate::get_env::{get_env, get_env_raw, get_ty_info, get_val_info};
 use crate::util::{check_name, ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
+use sml_statics_types::env::{Cx, Env};
 use sml_statics_types::generalize::{generalize, generalize_fixed, FixedTyVars};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use sml_statics_types::sym::{Equality, StartedSym, SymValEnv};

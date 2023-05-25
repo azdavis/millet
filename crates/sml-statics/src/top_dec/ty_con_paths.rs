@@ -1,8 +1,8 @@
 //! Collect all the paths to ty cons in an env.
 
-use crate::env::Env;
 use crate::get_env::{get_env, GetEnvResult};
 use fast_hash::FxHashSet;
+use sml_statics_types::env::Env;
 
 pub(crate) fn get(env: &Env, path: &sml_path::Path) -> GetEnvResult<FxHashSet<sml_path::Path>> {
   let got_env = get_env(env, path.all_names());

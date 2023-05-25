@@ -1,10 +1,10 @@
 //! Dealing with `where` and `where type`.
 
-use crate::env::Env;
 use crate::top_dec::{realize, ty_con_paths};
 use crate::{
   basis::Bs, dec::add_fixed_ty_vars, error::ErrorKind, get_env::get_ty_info, st::St, ty,
 };
+use sml_statics_types::env::Env;
 use sml_statics_types::generalize::generalize_fixed;
 use sml_statics_types::sym::SymsMarker;
 use sml_statics_types::ty::{TyData, TyScheme, TyVarSrc};

@@ -1,8 +1,8 @@
 //! Signature instantiation.
 
-use crate::env::{Env, Sig};
 use crate::error::ErrorKind;
 use crate::{compatible::eq_ty_fn_no_emit, get_env::get_ty_info_raw, st::St, top_dec::realize};
+use sml_statics_types::env::{Env, Sig};
 use sml_statics_types::{ty::TyScheme, util::n_ary_con};
 
 pub(crate) fn env_of_sig(

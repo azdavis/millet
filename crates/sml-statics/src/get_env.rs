@@ -1,8 +1,8 @@
 //! Getting information from environments.
 
-use crate::{env::Env, error::ErrorKind};
+use crate::error::ErrorKind;
 use sml_statics_types::info::{TyInfo, ValInfo};
-use sml_statics_types::{disallow::Disallow, item::Item};
+use sml_statics_types::{disallow::Disallow, env::Env, item::Item};
 
 #[derive(Debug)]
 pub(crate) struct GetEnvResult<T> {

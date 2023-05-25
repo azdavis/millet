@@ -1,6 +1,5 @@
 //! Checking expressions.
 
-use crate::env::{Cx, Env};
 use crate::error::{AppendArg, ErrorKind};
 use crate::get_env::{get_env_raw, get_val_info};
 use crate::info::TyEntry;
@@ -8,6 +7,7 @@ use crate::util::record;
 use crate::{config::Cfg, pat_match::Pat};
 use crate::{dec, pat, st::St, ty, unify::unify};
 use fast_hash::FxHashSet;
+use sml_statics_types::env::{Cx, Env};
 use sml_statics_types::sym::{Sym, SymsMarker};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, Tys};
 use sml_statics_types::util::{get_scon, instantiate};

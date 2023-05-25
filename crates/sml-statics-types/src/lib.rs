@@ -10,6 +10,7 @@ mod data;
 pub mod def;
 pub mod disallow;
 pub mod display;
+pub mod env;
 pub mod equality;
 pub mod fmt_util;
 pub mod generalize;

@@ -1,9 +1,9 @@
 //! Bases. (The plural of "basis".)
 
-use crate::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use crate::get_env::get_mut_env;
 use fast_hash::FxHashMap;
 use sml_statics_types::disallow::{self, Disallow};
+use sml_statics_types::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use sml_statics_types::sym::{Equality, Sym, SymTyInfo, SymValEnv, Syms};
 use sml_statics_types::ty::{BoundTyVar, RecordData, Ty, TyScheme, TyVarKind, Tys};

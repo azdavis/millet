@@ -1,12 +1,12 @@
 //! See [`Info`].
 
-use crate::{basis::Bs, env::Env};
+use crate::basis::Bs;
 use fast_hash::FxHashSet;
 use sml_hir::la_arena;
 use sml_statics_types::info::{IdStatus, ValInfo};
 use sml_statics_types::ty::{Ty, TyData, TyScheme, Tys};
 use sml_statics_types::util::ty_syms;
-use sml_statics_types::{def, display::MetaVarNames, mode::Mode};
+use sml_statics_types::{def, display::MetaVarNames, env::Env, mode::Mode};
 use std::fmt;
 
 pub(crate) type IdxMap<K, V> = la_arena::ArenaMap<la_arena::Idx<K>, V>;

@@ -1,7 +1,6 @@
 //! Traversing the `Sym`s in an `Env`.
 
-use crate::env::Env;
-use sml_statics_types::{info::ValEnv, sym::Sym, ty::Tys, util::ty_syms};
+use sml_statics_types::{env::Env, info::ValEnv, sym::Sym, ty::Tys, util::ty_syms};
 
 /// Calls `f` for every sym in the env.
 ///
