@@ -3,8 +3,7 @@
 use crate::basis::Bs;
 use fast_hash::FxHashSet;
 use sml_hir::la_arena;
-use sml_statics_types::info::{IdStatus, ValInfo};
-use sml_statics_types::ty::{Ty, TyData, TyScheme, Tys};
+use sml_statics_types::ty::{Ty, TyData, TyScheme};
 use sml_statics_types::util::ty_syms;
 use sml_statics_types::{def, display::MetaVarNames, env::Env, mode::Mode};
 use std::fmt;
@@ -250,25 +249,6 @@ impl Info {
     self.entries.defs.with_def(def)
   }
 
-  /// Returns the completions for this file.
-  #[must_use]
-  pub fn completions(&self, st: &sml_statics_types::St) -> Vec<CompletionItem> {
-    let mut ret = Vec::<CompletionItem>::new();
-    let mut mvs = MetaVarNames::new(&st.tys);
-    ret.extend(self.bs.env.val_env.iter().map(|(name, val_info)| {
-      mvs.clear();
-      mvs.extend_for(val_info.ty_scheme.ty);
-      CompletionItem {
-        label: name.as_str().to_owned(),
-        kind: val_info_symbol_kind(&st.tys, val_info),
-        detail: Some(val_info.ty_scheme.display(&mvs, &st.syms).to_string()),
-        // TODO improve? might need to reorganize where documentation is stored
-        documentation: None,
-      }
-    }));
-    ret
-  }
-
   /// Returns some type annotation bits.
   pub fn show_ty_annot<'a>(
     &'a self,
@@ -370,7 +350,7 @@ fn env_syms(
       let idx = def_idx(path, def)?;
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
-        kind: val_info_symbol_kind(&st.tys, val_info),
+        kind: sml_symbol_kind::get(&st.tys, val_info),
         detail: Some(detail.clone()),
         idx,
         children: Vec::new(),
@@ -386,17 +366,6 @@ fn def_idx(path: paths::PathId, def: def::Def) -> Option<sml_hir::Idx> {
       def::Path::BuiltinLib(_) => None,
     },
     def::Def::Primitive(_) => None,
-  }
-}
-
-fn val_info_symbol_kind(tys: &Tys, val_info: &ValInfo) -> sml_namespace::SymbolKind {
-  match val_info.id_status {
-    IdStatus::Con => sml_namespace::SymbolKind::Constructor,
-    IdStatus::Exn(_) => sml_namespace::SymbolKind::Exception,
-    IdStatus::Val => match tys.data(val_info.ty_scheme.ty) {
-      TyData::Fn(_) => sml_namespace::SymbolKind::Function,
-      _ => sml_namespace::SymbolKind::Value,
-    },
   }
 }
 

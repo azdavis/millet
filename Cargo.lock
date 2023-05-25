@@ -44,6 +44,7 @@ dependencies = [
  "sml-namespace",
  "sml-statics",
  "sml-statics-types",
+ "sml-symbol-kind",
  "sml-syntax",
  "str-util",
  "text-pos",
@@ -1057,6 +1058,7 @@ dependencies = [
  "sml-namespace",
  "sml-path",
  "sml-statics-types",
+ "sml-symbol-kind",
  "str-util",
  "uniq",
 ]
@@ -1076,6 +1078,14 @@ dependencies = [
  "sml-hir",
  "sml-path",
  "str-util",
+]
+
+[[package]]
+name = "sml-symbol-kind"
+version = "0.9.8"
+dependencies = [
+ "sml-namespace",
+ "sml-statics-types",
 ]
 
 [[package]]

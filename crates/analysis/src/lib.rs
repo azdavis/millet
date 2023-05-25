@@ -312,7 +312,20 @@ impl Analysis {
   #[must_use]
   pub fn completions(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<CompletionItem>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
-    Some(ft.file.info.completions(&self.syms_tys))
+    let mut ret = Vec::<CompletionItem>::new();
+    let mut mvs = sml_statics_types::display::MetaVarNames::new(&self.syms_tys.tys);
+    ret.extend(ft.file.info.basis().env.val_env.iter().map(|(name, val_info)| {
+      mvs.clear();
+      mvs.extend_for(val_info.ty_scheme.ty);
+      CompletionItem {
+        label: name.as_str().to_owned(),
+        kind: sml_symbol_kind::get(&self.syms_tys.tys, val_info),
+        detail: Some(val_info.ty_scheme.display(&mvs, &self.syms_tys.syms).to_string()),
+        // TODO improve? might need to reorganize where documentation is stored
+        documentation: None,
+      }
+    }));
+    Some(ret)
   }
 
   /// Returns all inlay hints for the range.

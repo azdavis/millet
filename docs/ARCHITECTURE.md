@@ -210,6 +210,10 @@ Doesn't handle comments or line length.
 
 Extract interesting comments from above SML syntax nodes, like doc comments.
 
+### `crates/sml-symbol-kind`
+
+Given information about a value, returns what kind of symbol it is.
+
 ### `crates/lex-util`
 
 Some common lex utilities used in multiple lexing crates, like:

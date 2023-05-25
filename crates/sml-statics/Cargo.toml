@@ -22,9 +22,10 @@ chain-map = { path = "../chain-map" }
 sml-hir = { path = "../sml-hir" }
 sml-path = { path = "../sml-path" }
 sml-namespace = { path = "../sml-namespace" }
+sml-symbol-kind = { path = "../sml-symbol-kind" }
 str-util = { git = "https://github.com/azdavis/language-util.git" }
 uniq = { git = "https://github.com/azdavis/language-util.git" }
 sml-statics-types = { path = "../sml-statics-types" }
 
 [features]
-sync = ["chain-map/sync", "sml-statics-types/sync"]
+sync = ["chain-map/sync", "sml-statics-types/sync", "sml-symbol-kind/sync"]
