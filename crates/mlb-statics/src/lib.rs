@@ -1,4 +1,4 @@
-//! Static semantics for ML Basis cx.
+//! Static semantics for ML Basis files.
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 // TODO remove once rustfmt support lands
@@ -15,16 +15,16 @@ use std::fmt;
 
 pub use std_basis::StdBasis;
 
-/// The result of analyzing MLB and source cx.
+/// The result of analyzing MLB and source files.
 #[derive(Debug)]
 pub struct MlbStatics {
-  /// The errors found in MLB cx.
+  /// The errors found in MLB files.
   pub mlb_errors: Vec<Error>,
   /// The state from sml statics.
   pub syms_tys: sml_statics_types::St,
   /// A mapping from source file paths to information about them, including errors.
   ///
-  /// NOTE see comment in impl about having cx analyzed more than once.
+  /// NOTE see comment in impl about having files analyzed more than once.
   pub source_files: paths::PathMap<SourceFile>,
 }
 
