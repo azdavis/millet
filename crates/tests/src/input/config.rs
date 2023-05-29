@@ -140,3 +140,57 @@ makise = { christina = "kurisu" }
     [("a.cm", cm::EMPTY), (config::file::PATH, config)],
   );
 }
+
+#[test]
+fn fixity_across_files_default_off() {
+  let config = r#"
+version = 1
+"#;
+  let uses_infix_bad = r#"
+fun (a %%% b) = a + b
+(** + non-infix name used as infix: `%%%` *)
+"#;
+  check_multi([
+    (config::file::PATH, config),
+    ("s.mlb", "a.sml b.sml"),
+    ("a.sml", "infix %%%"),
+    ("b.sml", uses_infix_bad),
+  ]);
+}
+
+#[test]
+fn fixity_across_files_config_off() {
+  let config = r#"
+version = 1
+[language]
+fixity-across-files = false
+"#;
+  let uses_infix_bad = r#"
+fun (a %%% b) = a + b
+(** + non-infix name used as infix: `%%%` *)
+"#;
+  check_multi([
+    (config::file::PATH, config),
+    ("s.mlb", "a.sml b.sml"),
+    ("a.sml", "infix %%%"),
+    ("b.sml", uses_infix_bad),
+  ]);
+}
+
+#[test]
+fn fixity_across_files_config_on() {
+  let config = r#"
+version = 1
+[language]
+fixity-across-files = true
+"#;
+  let uses_infix_good = r#"
+fun (a %%% b) = a + b
+"#;
+  check_multi([
+    (config::file::PATH, config),
+    ("s.mlb", "a.sml b.sml"),
+    ("a.sml", "infix %%%"),
+    ("b.sml", uses_infix_good),
+  ]);
+}
