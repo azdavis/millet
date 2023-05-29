@@ -62,7 +62,7 @@ fn pat_prec(
             p.exit(en, SK::ConPat)
           }
           ConPatState::Exited(_) => {
-            p.error(ErrorKind::NotInfix);
+            p.error(ErrorKind::NotInfix(str_util::Name::new(tok.text)));
             break;
           }
         },

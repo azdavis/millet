@@ -73,16 +73,19 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
               let saw_op = p.at(SK::OpKw);
               let name = p.peek_n(usize::from(saw_op));
               let is_name_star = name.map_or(false, |tok| matches!(tok.kind, SK::Name | SK::Star));
-              let is_infix = name.map_or(false, |tok| fe.contains_key(tok.text));
+              let infix_name = name
+                .and_then(|tok| fe.contains_key(tok.text).then(|| str_util::Name::new(tok.text)));
               if saw_op {
-                if is_name_star && !is_infix {
+                if is_name_star && infix_name.is_none() {
                   p.error(ErrorKind::UnnecessaryOp);
                 }
                 p.bump();
               }
               if is_name_star {
-                if !saw_op && is_infix {
-                  p.error(ErrorKind::InfixWithoutOp);
+                if !saw_op {
+                  if let Some(name) = infix_name {
+                    p.error(ErrorKind::InfixWithoutOp(name));
+                  }
                 }
                 p.bump();
               } else {
@@ -511,7 +514,7 @@ fn infix_fun_bind_case_head_inner(p: &mut Parser<'_>, fe: &sml_fixity::Env, infi
   }
   if let Some(name) = eat_name_star(p) {
     if !fe.contains_key(name.text) {
-      p.error(ErrorKind::NotInfix);
+      p.error(ErrorKind::NotInfix(str_util::Name::new(name.text)));
     }
   }
   if at_pat(p, fe, infix).is_none() {

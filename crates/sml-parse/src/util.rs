@@ -163,7 +163,7 @@ pub(crate) fn path_no_infix(p: &mut Parser<'_>, fe: &sml_fixity::Env) {
     && matches!(cur.kind, SK::Name | SK::Eq | SK::Star)
     && fe.contains_key(cur.text);
   if bad {
-    p.error(ErrorKind::InfixWithoutOp);
+    p.error(ErrorKind::InfixWithoutOp(str_util::Name::new(cur.text)));
   }
   path_must(p);
 }

@@ -10,7 +10,7 @@ datatype d = D of int * string
 val D _ = D (3, "hi")
 infix D
 val _ D _ = D (3, "hi")
-(**         ^ infix name used as non-infix without `op` *)
+(**         ^ infix name used as non-infix without `op`: `D` *)
 "#,
   );
 }

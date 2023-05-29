@@ -12,8 +12,8 @@ pub(crate) type Parser<'a> = event_parse::Parser<'a, SyntaxKind, ErrorKind>;
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
-  NotInfix,
-  InfixWithoutOp,
+  NotInfix(str_util::Name),
+  InfixWithoutOp(str_util::Name),
   InvalidFixity(std::num::ParseIntError),
   NegativeFixity,
   SameFixityDiffAssoc,
@@ -26,8 +26,10 @@ pub(crate) enum ErrorKind {
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.0.kind {
-      ErrorKind::NotInfix => f.write_str("non-infix name used as infix"),
-      ErrorKind::InfixWithoutOp => f.write_str("infix name used as non-infix without `op`"),
+      ErrorKind::NotInfix(name) => write!(f, "non-infix name used as infix: `{name}`"),
+      ErrorKind::InfixWithoutOp(name) => {
+        write!(f, "infix name used as non-infix without `op`: `{name}`")
+      }
       ErrorKind::InvalidFixity(e) => write!(f, "invalid fixity: {e}"),
       ErrorKind::NegativeFixity => f.write_str("fixity is negative"),
       ErrorKind::SameFixityDiffAssoc => {
@@ -118,8 +120,8 @@ impl Error {
   #[must_use]
   pub fn code(&self) -> Code {
     match self.0.kind {
-      ErrorKind::NotInfix => Code::n(3001),
-      ErrorKind::InfixWithoutOp => Code::n(3002),
+      ErrorKind::NotInfix(_) => Code::n(3001),
+      ErrorKind::InfixWithoutOp(_) => Code::n(3002),
       ErrorKind::InvalidFixity(_) => Code::n(3003),
       ErrorKind::NegativeFixity => Code::n(3004),
       ErrorKind::SameFixityDiffAssoc => Code::n(3005),
