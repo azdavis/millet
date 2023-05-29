@@ -9,9 +9,9 @@ use sml_statics_types::{def, item::Item, mode::Mode};
 
 /// The mutable state.
 #[derive(Debug)]
-pub(crate) struct St {
+pub(crate) struct St<'a> {
   pub(crate) info: Info,
-  pub(crate) syms_tys: sml_statics_types::St,
+  pub(crate) syms_tys: &'a mut sml_statics_types::St,
   errors: Vec<Error>,
   matches: Vec<Match>,
   /// a subset of all things that have definition sites. currently, only local value variables to a
@@ -24,8 +24,8 @@ pub(crate) struct St {
   pub(crate) pat_id_statuses: sml_statics_types::info::IdStatusMap<sml_hir::Pat>,
 }
 
-impl St {
-  pub(crate) fn new(mode: Mode, syms_tys: sml_statics_types::St) -> Self {
+impl<'a> St<'a> {
+  pub(crate) fn new(mode: Mode, syms_tys: &'a mut sml_statics_types::St) -> St<'a> {
     Self {
       info: Info::new(mode),
       syms_tys,

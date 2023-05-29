@@ -9,7 +9,7 @@ type Result = std::result::Result<(), ErrorKind>;
 
 /// returns `Ok(())` iff the ty fns are equal. (this is distinct from equal ty schemes because the
 /// order of bound variables is significant.)
-pub(crate) fn eq_ty_fn_no_emit(st: &mut St, mut lhs: TyScheme, mut rhs: TyScheme) -> Result {
+pub(crate) fn eq_ty_fn_no_emit(st: &mut St<'_>, mut lhs: TyScheme, mut rhs: TyScheme) -> Result {
   if lhs.bound_vars.len() != rhs.bound_vars.len() {
     return Err(ErrorKind::WrongNumTyArgs(lhs.bound_vars.len(), rhs.bound_vars.len()));
   }

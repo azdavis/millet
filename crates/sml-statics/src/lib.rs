@@ -51,10 +51,9 @@ pub fn get(
   root: &[sml_hir::StrDecIdx],
 ) -> Statics {
   elapsed::log("sml_statics::get", || {
-    let mut st = st::St::new(mode, std::mem::take(syms_tys));
+    let mut st = st::St::new(mode, syms_tys);
     st.info.bs = top_dec::get(&mut st, bs, arenas, root);
     let errors = st.finish();
-    *syms_tys = st.syms_tys;
     Statics {
       info: st.info,
       errors,
