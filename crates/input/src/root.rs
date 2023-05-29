@@ -152,7 +152,6 @@ impl Config {
       };
       ret.path_vars.insert(key, EnvEntry { kind, suffix });
     }
-
     for (code, config) in parsed.diagnostics {
       let code = match code.parse::<diagnostic::Code>() {
         Ok(x) => x,
@@ -172,6 +171,7 @@ impl Config {
       };
       ret.severities.insert(code, sev);
     }
+    ret.lang.fixity_across_files = parsed.language.fixity_across_files;
     ret.lang.dec = parsed.language.dec;
     ret.lang.exp = parsed.language.exp;
     disallow(errors, config_path, parsed.language.val, &mut ret.lang.val);

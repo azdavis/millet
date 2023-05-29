@@ -75,6 +75,8 @@ QUZ = { workspace-path = "pant" }
 5011.severity = "warning"
 4015.severity = "error"
 5029.severity = "ignore"
+[language]
+fixity-across-files = true
 [language.exp]
 while = false
 [language.dec]
@@ -128,6 +130,12 @@ Overrides the default severity for this [diagnostic](#inline-diagnostics). The a
 #### `language`
 
 Configuration for the language.
+
+#### `language.fixity-across-files`
+
+Whether fixity declarations (`infix`, `infixr`, and `nonfix`) can take effect across files. Defaults to false.
+
+When this is false, each file is parsed starting with the default fixity environment provided by the standard basis. This means we can incrementally re-parse files and/or parse files in parallel since there are no inter-file dependencies when parsing.
 
 #### `language.dec`
 

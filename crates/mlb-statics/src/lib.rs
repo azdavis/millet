@@ -130,6 +130,7 @@ struct Cx<'a> {
 
 #[derive(Debug, Default, Clone)]
 struct MBasis {
+  /// only used when `cx.lang.fixity_across_files` is true
   fix_env: sml_fixity::Env,
   bas_env: FxHashMap<str_util::Name, MBasis>,
   bs: sml_statics::basis::Bs,
@@ -245,7 +246,11 @@ fn get_bas_dec(
     mlb_hir::BasDec::Path(path, kind) => match kind {
       mlb_hir::PathKind::Source => {
         let contents = cx.source_file_contents.get(path).expect("no source file");
-        let mut fix_env = scope.fix_env.clone();
+        let mut fix_env = if cx.lang.fixity_across_files {
+          scope.fix_env.clone()
+        } else {
+          sml_fixity::STD_BASIS.clone()
+        };
         let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
         get_source_file(st, *path, scope, ac, fix_env, syntax);
       }
@@ -258,7 +263,11 @@ fn get_bas_dec(
       let mut syntaxes: paths::PathMap<_> = paths
         .iter()
         .map(|path| {
-          let mut fix_env = scope.fix_env.clone();
+          let mut fix_env = if cx.lang.fixity_across_files {
+            scope.fix_env.clone()
+          } else {
+            sml_fixity::STD_BASIS.clone()
+          };
           let contents = cx.source_file_contents.get(path).expect("no source file");
           let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
           (*path, (fix_env, syntax))

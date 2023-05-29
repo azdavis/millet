@@ -71,6 +71,9 @@ pub enum Severity {
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Language {
+  /// Whether fixity declarations can take effect across files.
+  #[serde(default)]
+  pub fixity_across_files: bool,
   /// Configuration for declarations.
   #[serde(default)]
   pub dec: Dec,
