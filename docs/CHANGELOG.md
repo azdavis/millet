@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Show implicated names in fixity errors.
+- Add configuration for permitting fixity declarations to take effect across files, defaulting to false.
+
 ## v0.9.8
 
 - Add a newline at the end of the "fill case" text.
