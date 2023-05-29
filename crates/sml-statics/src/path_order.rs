@@ -50,7 +50,7 @@ pub type SmlHirPaths<'a> = paths::PathMap<(&'a sml_hir::Arenas, &'a [sml_hir::St
 /// Get the ordering.
 #[must_use]
 pub fn get(
-  mut syms_tys: sml_statics_types::St,
+  syms_tys: &mut sml_statics_types::St,
   mut bs: Bs,
   mut paths: SmlHirPaths<'_>,
 ) -> Vec<paths::PathId> {
@@ -70,7 +70,6 @@ pub fn get(
       let mut st = St::new(Mode::PathOrder, syms_tys);
       let new_bs = top_dec::get(&mut st, &bs, arenas, root);
       let errors = st.finish();
-      syms_tys = st.syms_tys;
       if errors.is_empty() {
         bs.append(new_bs);
         ok_paths.push(path);

@@ -6,7 +6,7 @@ use sml_statics_types::env::{Env, Sig};
 use sml_statics_types::{ty::TyScheme, util::n_ary_con};
 
 pub(crate) fn env_of_sig(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   subst: &mut realize::TyRealization,
   env: &Env,
@@ -57,7 +57,7 @@ pub(crate) fn env_of_sig(
 /// this seems slightly questionable, but I'm not actually sure if it's an issue. I mean, it says
 /// right there that they should be equal anyway.
 fn bound_ty_name_to_path<'e>(
-  st: &mut St,
+  st: &mut St<'_>,
   ac: &mut Vec<&'e str_util::Name>,
   env: &'e Env,
   ty_scheme: &TyScheme,

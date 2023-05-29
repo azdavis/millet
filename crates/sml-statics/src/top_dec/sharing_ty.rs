@@ -7,7 +7,7 @@ use sml_statics_types::{env::Env, equality, sym::SymsMarker};
 
 /// `sharing type` directly uses this, and the `sharing` derived form eventually uses this.
 pub(crate) fn get(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   marker: SymsMarker,
   inner_env: &mut Env,
@@ -69,7 +69,7 @@ struct SharingTyScheme {
 }
 
 impl SharingTyScheme {
-  fn new(st: &mut St, ty_scheme: TyScheme) -> Self {
+  fn new(st: &mut St<'_>, ty_scheme: TyScheme) -> Self {
     let equality =
       equality::get_ty_scheme(st.info.mode, &st.syms_tys.syms, &mut st.syms_tys.tys, &ty_scheme)
         .is_ok();

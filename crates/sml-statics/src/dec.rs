@@ -13,7 +13,7 @@ use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, TyVarSrc};
 use sml_statics_types::{equality, item::Item};
 
 pub(crate) fn get(
-  st: &mut St,
+  st: &mut St<'_>,
   cfg: Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
@@ -39,7 +39,7 @@ pub(crate) fn get(
 }
 
 fn get_one(
-  st: &mut St,
+  st: &mut St<'_>,
   cfg: Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
@@ -239,7 +239,7 @@ fn get_one(
 }
 
 fn get_pat_and_src_exp(
-  st: &mut St,
+  st: &mut St<'_>,
   cfg: pat::Cfg,
   cx: &Cx,
   ars: &sml_hir::Arenas,
@@ -262,7 +262,7 @@ fn get_pat_and_src_exp(
 }
 
 pub(crate) fn add_fixed_ty_vars(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   cx: &mut Cx,
   src: TyVarSrc,
@@ -281,7 +281,7 @@ pub(crate) fn add_fixed_ty_vars(
 }
 
 fn get_ty_binds(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   cx: &mut Cx,
   ars: &sml_hir::Arenas,
@@ -311,7 +311,7 @@ struct Datatype {
 }
 
 pub(crate) fn get_dat_binds(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   mut cx: Cx,
   ars: &sml_hir::Arenas,

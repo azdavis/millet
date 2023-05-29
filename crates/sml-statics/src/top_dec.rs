@@ -20,7 +20,12 @@ use sml_statics_types::sym::{Equality, StartedSym, SymTyInfo, SymValEnv, SymsMar
 use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
 use sml_statics_types::{item::Item, mode::Mode, overload, util::n_ary_con};
 
-pub(crate) fn get(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) -> Bs {
+pub(crate) fn get(
+  st: &mut St<'_>,
+  bs: &Bs,
+  ars: &sml_hir::Arenas,
+  root: &[sml_hir::StrDecIdx],
+) -> Bs {
   let mut ac = Bs::default();
   get_str_dec(st, bs, ars, StrDecAc::Bs(&mut ac), root);
   Bs { fun_env: ac.fun_env, sig_env: ac.sig_env, env: ac.env }
@@ -41,7 +46,7 @@ impl StrDecAc<'_> {
 }
 
 fn get_str_dec(
-  st: &mut St,
+  st: &mut St<'_>,
   bs: &Bs,
   ars: &sml_hir::Arenas,
   ac: StrDecAc<'_>,
@@ -78,7 +83,7 @@ fn get_str_dec(
 }
 
 fn get_str_dec_one(
-  st: &mut St,
+  st: &mut St<'_>,
   bs: &Bs,
   ars: &sml_hir::Arenas,
   mut ac: StrDecAc<'_>,
@@ -196,7 +201,7 @@ fn get_str_dec_one(
 }
 
 fn get_str_exp(
-  st: &mut St,
+  st: &mut St<'_>,
   bs: &Bs,
   ars: &sml_hir::Arenas,
   ac: &mut Env,
@@ -323,7 +328,7 @@ fn get_str_exp(
 }
 
 fn get_sig_exp(
-  st: &mut St,
+  st: &mut St<'_>,
   bs: &Bs,
   ars: &sml_hir::Arenas,
   ac: &mut Env,
@@ -381,7 +386,7 @@ fn get_sig_exp(
   }
 }
 
-fn gen_fresh_syms(st: &mut St, subst: &mut realize::TyRealization, ty_names: &TyNameSet) {
+fn gen_fresh_syms(st: &mut St<'_>, subst: &mut realize::TyRealization, ty_names: &TyNameSet) {
   let mut ac = Vec::<(StartedSym, SymTyInfo, Equality)>::new();
   for &sym in ty_names.iter() {
     let sym_info = st.syms_tys.syms.get(sym).unwrap();
@@ -411,7 +416,13 @@ fn env_to_sig(tys: &Tys, env: Env, marker: SymsMarker) -> Sig {
   Sig { ty_names, env, disallow: None }
 }
 
-fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, specs: &[sml_hir::SpecIdx]) {
+fn get_spec(
+  st: &mut St<'_>,
+  bs: &Bs,
+  ars: &sml_hir::Arenas,
+  ac: &mut Env,
+  specs: &[sml_hir::SpecIdx],
+) {
   match specs[..] {
     [] => return,
     [x] => {
@@ -430,7 +441,13 @@ fn get_spec(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, specs: &[
   }
 }
 
-fn get_spec_one(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec: sml_hir::SpecIdx) {
+fn get_spec_one(
+  st: &mut St<'_>,
+  bs: &Bs,
+  ars: &sml_hir::Arenas,
+  ac: &mut Env,
+  spec: sml_hir::SpecIdx,
+) {
   match &ars.spec[spec] {
     // @def(68)
     sml_hir::Spec::Val(ty_vars, val_descs) => {
@@ -580,7 +597,7 @@ fn get_spec_one(st: &mut St, bs: &Bs, ars: &sml_hir::Arenas, ac: &mut Env, spec:
 }
 
 /// empties other into ac, while checking for dupes.
-fn append_no_dupe(st: &mut St, idx: sml_hir::Idx, ac: &mut Env, other: &mut Env) {
+fn append_no_dupe(st: &mut St<'_>, idx: sml_hir::Idx, ac: &mut Env, other: &mut Env) {
   for (name, val) in other.str_env.drain() {
     if let Some(e) = ins_no_dupe(&mut ac.str_env, name, val, Item::Struct) {
       st.err(idx, e);
@@ -600,7 +617,7 @@ fn append_no_dupe(st: &mut St, idx: sml_hir::Idx, ac: &mut Env, other: &mut Env)
 
 // @def(80)
 fn get_ty_desc(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   ty_env: &mut TyEnv,
   ty_desc: &sml_hir::TyDesc,

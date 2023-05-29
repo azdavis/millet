@@ -14,7 +14,7 @@ use sml_statics_types::util::{get_scon, instantiate};
 use sml_statics_types::{def, info::ValEnv, item::Item, mode::Mode};
 
 pub(crate) fn get_and_check_ty_escape(
-  st: &mut St,
+  st: &mut St<'_>,
   cfg: Cfg,
   cx: &Cx,
   marker: SymsMarker,
@@ -28,7 +28,7 @@ pub(crate) fn get_and_check_ty_escape(
   ret
 }
 
-fn get(st: &mut St, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> Ty {
+fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> Ty {
   let exp = match exp {
     Some(x) => x,
     None => return Ty::NONE,
@@ -279,7 +279,7 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, exp: sml_hir::ExpIdx) -> bo
 
 /// @def(13)
 fn get_matcher(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   cfg: Cfg,
   cx: &Cx,

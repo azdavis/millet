@@ -10,7 +10,7 @@ use sml_statics_types::sym::SymsMarker;
 use sml_statics_types::ty::{TyData, TyScheme, TyVarSrc};
 
 pub(crate) fn get(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   bs: &Bs,
   marker: SymsMarker,
@@ -74,7 +74,7 @@ pub(crate) fn get(
 /// HACK: we allow intentionally ignoring cannot realize ty errors. I'm not exactly sure of the
 /// semantics of `where S = T` but this silences some errors seen in valid NJ-flavored SML.
 fn get_where_type(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   marker: SymsMarker,
   inner_env: &mut Env,

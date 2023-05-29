@@ -7,14 +7,14 @@ use sml_statics_types::ty::{RecordData, Ty};
 
 /// @def(6), @def(39), @def(49)
 pub(crate) fn record<T, F>(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   rows: &[(sml_hir::Lab, T)],
   mut f: F,
 ) -> RecordData
 where
   T: Copy,
-  F: FnMut(&mut St, &sml_hir::Lab, T) -> Ty,
+  F: FnMut(&mut St<'_>, &sml_hir::Lab, T) -> Ty,
 {
   let mut ty_rows = RecordData::new();
   for (lab, val) in rows {

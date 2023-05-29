@@ -9,7 +9,7 @@ use crate::{error::ErrorKind, st::St};
 use sml_statics_types::info::{IdStatus, TyInfo, ValInfo};
 use sml_statics_types::{env::Env, item::Item};
 
-pub(crate) fn get_env(st: &mut St, idx: sml_hir::Idx, general: &Env, specific: &Env) {
+pub(crate) fn get_env(st: &mut St<'_>, idx: sml_hir::Idx, general: &Env, specific: &Env) {
   for (name, specific) in specific.str_env.iter() {
     match general.str_env.get(name) {
       Some(general) => get_env(st, idx, general, specific),
@@ -30,7 +30,7 @@ pub(crate) fn get_env(st: &mut St, idx: sml_hir::Idx, general: &Env, specific: &
   }
 }
 
-fn get_ty_info(st: &mut St, idx: sml_hir::Idx, mut general: TyInfo, specific: TyInfo) {
+fn get_ty_info(st: &mut St<'_>, idx: sml_hir::Idx, mut general: TyInfo, specific: TyInfo) {
   eq_ty_fn(st, idx, specific.ty_scheme, general.ty_scheme.clone());
   if specific.val_env.is_empty() {
     return;
@@ -52,7 +52,7 @@ fn get_ty_info(st: &mut St, idx: sml_hir::Idx, mut general: TyInfo, specific: Ty
 }
 
 fn get_val_info(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   general: &ValInfo,
   specific: &ValInfo,

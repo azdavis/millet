@@ -20,7 +20,7 @@ pub(crate) fn eq_ty_fn_no_emit(st: &mut St<'_>, mut lhs: TyScheme, mut rhs: TySc
 }
 
 /// emits no error iff the ty fns are equal.
-pub(crate) fn eq_ty_fn(st: &mut St, idx: sml_hir::Idx, lhs: TyScheme, rhs: TyScheme) {
+pub(crate) fn eq_ty_fn(st: &mut St<'_>, idx: sml_hir::Idx, lhs: TyScheme, rhs: TyScheme) {
   match eq_ty_fn_no_emit(st, lhs, rhs) {
     Ok(()) => {}
     Err(e) => st.err(idx, e),
@@ -28,13 +28,13 @@ pub(crate) fn eq_ty_fn(st: &mut St, idx: sml_hir::Idx, lhs: TyScheme, rhs: TySch
 }
 
 /// returns `Ok(())` iff the ty schemes are equal.
-pub(crate) fn eq_ty_scheme(st: &mut St, lhs: &TyScheme, rhs: &TyScheme) -> Result {
+pub(crate) fn eq_ty_scheme(st: &mut St<'_>, lhs: &TyScheme, rhs: &TyScheme) -> Result {
   generalizes_no_emit(st, lhs, rhs)?;
   generalizes_no_emit(st, rhs, lhs)?;
   Ok(())
 }
 
-fn fixed_var_subst(st: &mut St, bound_vars: &BoundTyVars) -> Vec<Ty> {
+fn fixed_var_subst(st: &mut St<'_>, bound_vars: &BoundTyVars) -> Vec<Ty> {
   bound_vars
     .iter()
     .enumerate()
@@ -46,7 +46,7 @@ fn fixed_var_subst(st: &mut St, bound_vars: &BoundTyVars) -> Vec<Ty> {
     .collect()
 }
 
-fn generalizes_no_emit(st: &mut St, general: &TyScheme, specific: &TyScheme) -> Result {
+fn generalizes_no_emit(st: &mut St<'_>, general: &TyScheme, specific: &TyScheme) -> Result {
   let general = instantiate(&mut st.syms_tys.tys, Generalizable::Always, general);
   let subst = fixed_var_subst(st, &specific.bound_vars);
   let mut specific = specific.ty;
@@ -55,7 +55,12 @@ fn generalizes_no_emit(st: &mut St, general: &TyScheme, specific: &TyScheme) -> 
 }
 
 /// emits no error iff `general` generalizes `specific`.
-pub(crate) fn generalizes(st: &mut St, idx: sml_hir::Idx, general: &TyScheme, specific: &TyScheme) {
+pub(crate) fn generalizes(
+  st: &mut St<'_>,
+  idx: sml_hir::Idx,
+  general: &TyScheme,
+  specific: &TyScheme,
+) {
   match generalizes_no_emit(st, general, specific) {
     Ok(()) => {}
     Err(e) => st.err(idx, e),

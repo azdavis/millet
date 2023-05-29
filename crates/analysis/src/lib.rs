@@ -83,7 +83,7 @@ impl Analysis {
   where
     F: Fn(&text_pos::PositionDb, text_size_util::TextRange) -> Option<R>,
   {
-    let syms_tys = self.std_basis.syms_tys().clone();
+    let mut syms_tys = self.std_basis.syms_tys().clone();
     let mut basis = self.std_basis.basis().clone();
     for path in &input.lang.val {
       // TODO do not ignore failed disallow
@@ -97,7 +97,7 @@ impl Analysis {
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {
       mlb_statics::get(
-        syms_tys,
+        &mut syms_tys,
         &input.lang,
         &basis,
         &input.sources,
@@ -106,7 +106,7 @@ impl Analysis {
       )
     });
     self.source_files = res.source_files;
-    self.syms_tys = res.syms_tys;
+    self.syms_tys = syms_tys;
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
         let path = err.path();

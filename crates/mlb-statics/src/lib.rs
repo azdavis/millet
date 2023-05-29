@@ -20,8 +20,6 @@ pub use std_basis::StdBasis;
 pub struct MlbStatics {
   /// The errors found in MLB files.
   pub mlb_errors: Vec<Error>,
-  /// The state from sml statics.
-  pub syms_tys: sml_statics_types::St,
   /// A mapping from source file paths to information about them, including errors.
   ///
   /// NOTE see comment in impl about having files analyzed more than once.
@@ -99,15 +97,15 @@ impl fmt::Display for Item {
   }
 }
 
-struct St {
-  syms_tys: sml_statics_types::St,
+struct St<'a> {
+  syms_tys: &'a mut sml_statics_types::St,
   bases: paths::PathMap<MBasis>,
   source_files: paths::PathMap<SourceFile>,
   mlb_errors: Vec<Error>,
   report_diagnostics: bool,
 }
 
-impl St {
+impl<'a> St<'a> {
   fn undef(
     &mut self,
     path: paths::PathId,
@@ -148,7 +146,7 @@ impl MBasis {
 /// Runs analysis.
 #[must_use]
 pub fn get(
-  syms_tys: sml_statics_types::St,
+  syms_tys: &mut sml_statics_types::St,
   lang: &Language,
   bs: &sml_statics::basis::Bs,
   source_file_contents: &paths::PathMap<String>,
@@ -175,11 +173,11 @@ pub fn get(
     let cx = Cx { source_file_contents, bas_decs, std_basis: &std_basis, lang };
     get_group_file(&mut st, cx, &mut MBasis::default(), path);
   }
-  MlbStatics { mlb_errors: st.mlb_errors, syms_tys: st.syms_tys, source_files: st.source_files }
+  MlbStatics { mlb_errors: st.mlb_errors, source_files: st.source_files }
 }
 
 fn get_bas_exp(
-  st: &mut St,
+  st: &mut St<'_>,
   cx: Cx<'_>,
   path: paths::PathId,
   scope: &MBasis,
@@ -203,7 +201,7 @@ fn get_bas_exp(
 }
 
 fn get_bas_dec(
-  st: &mut St,
+  st: &mut St<'_>,
   cx: Cx<'_>,
   path: paths::PathId,
   scope: &MBasis,
@@ -288,7 +286,7 @@ fn get_bas_dec(
         .map(|(&path, (_, syntax))| (path, (&syntax.lower.arenas, syntax.lower.root.as_slice())))
         .collect();
       assert_eq!(syntaxes.len(), hir_roots.len());
-      let order = sml_statics::path_order::get(st.syms_tys.clone(), scope.bs.clone(), hir_roots);
+      let order = sml_statics::path_order::get(st.syms_tys, scope.bs.clone(), hir_roots);
       assert_eq!(syntaxes.len(), order.len());
       // we could make a sequence of source path defs from the order and recurse on that, but doing
       // it like this lets us avoid re-parsing the syntax. it is a little un-DRY though in the sense
@@ -315,7 +313,7 @@ fn get_bas_dec(
 }
 
 fn get_source_file(
-  st: &mut St,
+  st: &mut St<'_>,
   path: paths::PathId,
   scope: &MBasis,
   ac: &mut MBasis,
@@ -324,7 +322,7 @@ fn get_source_file(
 ) {
   let mode = sml_statics_types::mode::Mode::Regular(Some(path));
   let checked =
-    sml_statics::get(&mut st.syms_tys, &scope.bs, mode, &syntax.lower.arenas, &syntax.lower.root);
+    sml_statics::get(st.syms_tys, &scope.bs, mode, &syntax.lower.arenas, &syntax.lower.root);
   ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.info.basis().clone() });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
@@ -347,7 +345,7 @@ fn get_source_file(
 }
 
 /// Processes a single group file.
-fn get_group_file(st: &mut St, cx: Cx<'_>, ac: &mut MBasis, path: paths::PathId) {
+fn get_group_file(st: &mut St<'_>, cx: Cx<'_>, ac: &mut MBasis, path: paths::PathId) {
   let dec = cx.bas_decs.get(&path).expect("no bas dec");
   let mut path_ac = MBasis::default();
   get_bas_dec(st, cx, path, cx.std_basis, &mut path_ac, dec);

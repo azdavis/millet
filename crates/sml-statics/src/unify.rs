@@ -5,14 +5,14 @@ use crate::st::St;
 use sml_statics_types::ty::Ty;
 use sml_statics_types::unify;
 
-pub(crate) fn unify(st: &mut St, idx: sml_hir::Idx, want: Ty, got: Ty) {
+pub(crate) fn unify(st: &mut St<'_>, idx: sml_hir::Idx, want: Ty, got: Ty) {
   match unify_no_emit(st, want, got) {
     Ok(()) => {}
     Err(e) => st.err(idx, e),
   }
 }
 
-pub(crate) fn unify_no_emit(st: &mut St, want: Ty, got: Ty) -> Result<(), ErrorKind> {
+pub(crate) fn unify_no_emit(st: &mut St<'_>, want: Ty, got: Ty) -> Result<(), ErrorKind> {
   if st.info.mode.is_path_order() {
     return Ok(());
   }

@@ -116,19 +116,19 @@ impl<'a> St<'a> {
       for m in std::mem::take(&mut self.matches) {
         match m.kind {
           MatchKind::Bind(pat) => {
-            let missing = get_match(&mut self.errors, &mut self.syms_tys, vec![pat], m.want);
+            let missing = get_match(&mut self.errors, self.syms_tys, vec![pat], m.want);
             if !missing.is_empty() {
               self.err(m.idx, ErrorKind::NonExhaustiveBinding(missing));
             }
           }
           MatchKind::Case(pats) => {
-            let missing = get_match(&mut self.errors, &mut self.syms_tys, pats, m.want);
+            let missing = get_match(&mut self.errors, self.syms_tys, pats, m.want);
             if !missing.is_empty() {
               self.err(m.idx, ErrorKind::NonExhaustiveCase(missing));
             }
           }
           MatchKind::Handle(pats) => {
-            get_match(&mut self.errors, &mut self.syms_tys, pats, m.want);
+            get_match(&mut self.errors, self.syms_tys, pats, m.want);
           }
         }
       }

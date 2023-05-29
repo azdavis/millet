@@ -22,7 +22,7 @@ pub(crate) struct Cfg {
 }
 
 pub(crate) fn get(
-  st: &mut St,
+  st: &mut St<'_>,
   cfg: Cfg,
   ars: &sml_hir::Arenas,
   cx: &Cx,
@@ -57,7 +57,7 @@ struct PatRet {
 }
 
 fn get_(
-  st: &mut St,
+  st: &mut St<'_>,
   cfg: Cfg,
   ars: &sml_hir::Arenas,
   cx: &Cx,
@@ -249,7 +249,7 @@ fn ok_val_info(vi: Option<&ValInfo>) -> bool {
 }
 
 fn insert_name(
-  st: &mut St,
+  st: &mut St<'_>,
   idx: sml_hir::Idx,
   cfg: config::Cfg,
   ve: &mut ValEnv,

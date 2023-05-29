@@ -15,7 +15,7 @@ pub(crate) enum Mode {
 }
 
 pub(crate) fn get(
-  st: &mut St,
+  st: &mut St<'_>,
   cx: &Cx,
   ars: &sml_hir::Arenas,
   mode: Mode,
