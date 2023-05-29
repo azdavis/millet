@@ -22,7 +22,7 @@ Install the extension from the [VS Code marketplace][marketplace].
 
 ### Other editors
 
-1. Clone the repository.
+1. Clone or download the repository.
 2. Build from source with `cargo build --release --bin millet-ls`.
 3. Put the compiled `target/release/millet-ls` binary somewhere your editor can find it.
 4. Set up your editor to use that binary to process SML files.
