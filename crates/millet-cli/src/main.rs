@@ -66,14 +66,19 @@ fn run() -> usize {
     Some(config::init::DiagnosticsIgnore::AfterSyntax),
     format.then_some(config::init::FormatEngine::Naive),
   );
-  let got = an.get_many(&inp);
+  let got = an.get_many_text_range(&inp);
   for err in &inp.errors {
     show_input_error(root.as_path(), err);
   }
+  let mut stderr = codespan_reporting::term::termcolor::StandardStream::stderr(
+    codespan_reporting::term::termcolor::ColorChoice::Auto,
+  );
+  let config = codespan_reporting::term::Config::default();
+  let files = Files { store: &store, input: &inp, analysis: &an };
   for (&path, ds) in &got {
-    let path = store.get_path(path);
     for d in ds {
-      show_diagnostic(root.as_path(), path.as_path(), d);
+      let d = mk_diagnostic(path, d);
+      codespan_reporting::term::emit(&mut stderr, &config, &files, &d).unwrap();
     }
   }
   let mut format_errors = 0usize;
@@ -95,9 +100,9 @@ fn run() -> usize {
             sml_naive_fmt::Error::Syntax => {}
             sml_naive_fmt::Error::Comments(ranges) => {
               for range in ranges {
-                let range = an.source_range_utf16(id, range).expect("no range");
                 let d = analysis::Diagnostic::naive_fmt_comment(range);
-                show_diagnostic(root.as_path(), path.as_path(), &d);
+                let d = mk_diagnostic(id, &d);
+                codespan_reporting::term::emit(&mut stderr, &config, &files, &d).unwrap();
                 format_errors += 1;
               }
             }
@@ -125,12 +130,26 @@ fn show_input_error(root: &std::path::Path, e: &input::Error) {
   println!(": error[{code}]: {}", e.display(root));
 }
 
-fn show_diagnostic<R>(root: &std::path::Path, path: &std::path::Path, d: &analysis::Diagnostic<R>)
+fn mk_diagnostic<R>(
+  path: paths::PathId,
+  d: &analysis::Diagnostic<R>,
+) -> codespan_reporting::diagnostic::Diagnostic<paths::PathId>
 where
-  R: std::fmt::Display,
+  R: Copy + Into<std::ops::Range<usize>>,
 {
-  let path = path.strip_prefix(root).unwrap_or(path);
-  println!("{}:{}: {}[{}]: {}", path.display(), d.range, d.severity, d.code, d.message);
+  let sev = match d.severity {
+    diagnostic::Severity::Warning => codespan_reporting::diagnostic::Severity::Warning,
+    diagnostic::Severity::Error => codespan_reporting::diagnostic::Severity::Error,
+  };
+  let lab = codespan_reporting::diagnostic::Label::new(
+    codespan_reporting::diagnostic::LabelStyle::Primary,
+    path,
+    d.range,
+  );
+  codespan_reporting::diagnostic::Diagnostic::new(sev)
+    .with_code(d.code.to_string())
+    .with_message(d.message.clone())
+    .with_labels(vec![lab])
 }
 
 fn main() {
@@ -142,5 +161,54 @@ fn main() {
       println!("{n} error{suffix}. see {} for more information", analysis::URL);
       std::process::exit(1)
     }
+  }
+}
+
+struct Files<'a> {
+  store: &'a paths::Store,
+  input: &'a input::Input,
+  analysis: &'a analysis::Analysis,
+}
+
+impl<'a> codespan_reporting::files::Files<'a> for Files<'a> {
+  type FileId = paths::PathId;
+
+  type Name = std::path::Display<'a>;
+
+  type Source = &'a str;
+
+  fn name(&'a self, id: Self::FileId) -> Result<Self::Name, codespan_reporting::files::Error> {
+    Ok(self.store.get_path(id).as_path().display())
+  }
+
+  fn source(&'a self, id: Self::FileId) -> Result<Self::Source, codespan_reporting::files::Error> {
+    match self.input.sources.get(&id) {
+      Some(x) => Ok(x.as_str()),
+      None => Err(codespan_reporting::files::Error::FileMissing),
+    }
+  }
+
+  fn line_index(
+    &'a self,
+    id: Self::FileId,
+    byte_index: usize,
+  ) -> Result<usize, codespan_reporting::files::Error> {
+    let db =
+      self.analysis.source_pos_db(id).ok_or(codespan_reporting::files::Error::FileMissing)?;
+    let ts = text_size_util::TextSize::try_from(byte_index).unwrap();
+    let pos = db.position_utf16(ts).unwrap_or(db.end_position_utf16());
+    Ok(pos.line.try_into().unwrap())
+  }
+
+  fn line_range(
+    &'a self,
+    id: Self::FileId,
+    line_index: usize,
+  ) -> Result<std::ops::Range<usize>, codespan_reporting::files::Error> {
+    let db =
+      self.analysis.source_pos_db(id).ok_or(codespan_reporting::files::Error::FileMissing)?;
+    let start = text_pos::PositionUtf16 { line: line_index.try_into().unwrap(), col: 0 };
+    let end = text_pos::PositionUtf16 { line: start.line + 1, col: 0 };
+    Ok(db.text_range_utf16(text_pos::RangeUtf16 { start, end }).unwrap().into())
   }
 }

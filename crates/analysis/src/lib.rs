@@ -14,7 +14,7 @@ use sml_statics_types::{def, display::MetaVarNames, mode::Mode};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::process::{Command, Stdio};
 use std::{error::Error, fmt, io::Write as _};
-use text_pos::{PositionUtf16, RangeUtf16};
+use text_pos::{PositionDb, PositionUtf16, RangeUtf16};
 use text_size_util::TextRange;
 
 pub use crate::diagnostic::Diagnostic;
@@ -77,6 +77,15 @@ impl Analysis {
     input: &input::Input,
   ) -> PathMap<Vec<Diagnostic<text_pos::RangeUtf16>>> {
     self.get_many_impl(input, text_pos::PositionDb::range_utf16)
+  }
+
+  /// Given information about many interdependent source files and their groupings, returns a
+  /// mapping from source paths to diagnostics.
+  pub fn get_many_text_range(
+    &mut self,
+    input: &input::Input,
+  ) -> PathMap<Vec<Diagnostic<TextRange>>> {
+    self.get_many_impl(input, |_, b| Some(b))
   }
 
   fn get_many_impl<F, R>(&mut self, input: &input::Input, f: F) -> PathMap<Vec<Diagnostic<R>>>
@@ -269,10 +278,10 @@ impl Analysis {
     Ok((buf, file.syntax.pos_db.end_position_utf16()))
   }
 
-  /// Returns the `RangeUtf16` for the `TextRange` in this `path`.
+  /// Returns the `PositionDb` for the source `path`.
   #[must_use]
-  pub fn source_range_utf16(&self, path: PathId, range: TextRange) -> Option<RangeUtf16> {
-    self.source_files.get(&path)?.syntax.pos_db.range_utf16(range)
+  pub fn source_pos_db(&self, path: PathId) -> Option<&PositionDb> {
+    Some(&self.source_files.get(&path)?.syntax.pos_db)
   }
 
   /// Returns the symbols for the file.
