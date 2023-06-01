@@ -13,6 +13,8 @@ Millet analyzes SML code without running it, and provides information like:
 - Document symbols
 - Find all references
 
+Millet also supports SML/NJ Compilation Manager (CM) and ML Basis (MLB), allowing for analysis of multi-file SML projects.
+
 Note that Millet does not actually run SML code. To do that, you'll need an installation of SML, like [SML/NJ][smlnj] or [MLton][mlton].
 
 - Check out the [blog post][blog] introducing the project.
