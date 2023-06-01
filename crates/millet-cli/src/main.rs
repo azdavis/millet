@@ -208,7 +208,13 @@ impl<'a> codespan_reporting::files::Files<'a> for Files<'a> {
     let db =
       self.analysis.source_pos_db(id).ok_or(codespan_reporting::files::Error::FileMissing)?;
     let start = text_pos::PositionUtf16 { line: line_index.try_into().unwrap(), col: 0 };
-    let end = text_pos::PositionUtf16 { line: start.line + 1, col: 0 };
-    Ok(db.text_range_utf16(text_pos::RangeUtf16 { start, end }).unwrap().into())
+    let mut end = text_pos::PositionUtf16 { line: start.line + 1, col: 0 };
+    let file_end = db.end_position_utf16();
+    if end.line > file_end.line || end.line == file_end.line && end.col > file_end.col {
+      end = file_end;
+    }
+    let tr =
+      db.text_range_utf16(text_pos::RangeUtf16 { start, end }).expect("line range out of range");
+    Ok(tr.into())
   }
 }
