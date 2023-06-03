@@ -49,12 +49,12 @@ impl fmt::Display for ErrorDisplay<'_> {
         write!(f, "multiple *.cm or *.mlb files: {} and {}", a.display(), b.display())
       }
       ErrorKind::NoRoot(flavor) => match flavor {
-        NoRootFlavor::NoFile => f.write_str("no *.cm, *.mlb, or millet.toml files found in the root"),
+        NoRootFlavor::NoFile => f.write_str("no *.cm, *.mlb, or millet.toml files found in this directory"),
         NoRootFlavor::NoGlob => f.write_str(
-          "no *.cm or *.mlb files found in the root, and no `workspace.root` glob pattern specified in millet.toml",
+          "no *.cm or *.mlb files found in this directory, and no `workspace.root` glob pattern specified in millet.toml",
         ),
         NoRootFlavor::EmptyGlob(pat) => write!(f,
-          "no *.cm or *.mlb files found in the root or via the `workspace.root` glob pattern: {pat}",
+          "no *.cm or *.mlb files found in this directory or via the `workspace.root` glob pattern: {pat}",
         ),
       },
       ErrorKind::NotGroup => f.write_str("not a group file path"),
