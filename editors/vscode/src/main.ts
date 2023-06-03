@@ -31,6 +31,7 @@ export async function activate(cx: vscode.ExtensionContext) {
   // @sync(init-options)
   const initializationOptions = {
     token_hover: config.get("server.hover.token.enable"),
+    fs_watcher: config.get("server.fileSystemWatcher.enable"),
     format: mkNone(config.get("format.engine")),
     diagnostics: {
       on_change: config.get("server.diagnostics.onChange.enable"),

@@ -9,13 +9,19 @@ use serde::Deserialize;
 #[allow(missing_docs)]
 pub struct Options {
   pub token_hover: bool,
+  pub fs_watcher: bool,
   pub format: Option<FormatEngine>,
   pub diagnostics: DiagnosticsOptions,
 }
 
 impl Default for Options {
   fn default() -> Self {
-    Self { token_hover: true, format: None, diagnostics: DiagnosticsOptions::default() }
+    Self {
+      token_hover: true,
+      fs_watcher: true,
+      format: None,
+      diagnostics: DiagnosticsOptions::default(),
+    }
   }
 }
 

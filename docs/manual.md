@@ -279,6 +279,13 @@ Enable the language server.
 - Type: `boolean`
 - Default: `true`
 
+#### `millet.server.fileSystemWatcher.enable`
+
+Use a file system watcher to send events when files change, if one is available.
+
+- Type: `boolean`
+- Default: `true`
+
 #### `millet.server.hover.token.enable`
 
 Show information about tokens on hover.

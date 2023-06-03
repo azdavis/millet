@@ -97,6 +97,11 @@
           "default": true,
           "markdownDescription": "Enable the language server."
         },
+        "millet.server.fileSystemWatcher.enable": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Use a file system watcher to send events when files change, if one is available."
+        },
         "millet.server.hover.token.enable": {
           "type": "boolean",
           "default": true,
