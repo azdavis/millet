@@ -1,5 +1,6 @@
 //! Configuration stored in a config file.
 
+use crate::tool::Tool;
 use fast_hash::FxHashMap;
 use serde::Deserialize;
 use str_util::SmolStr;
@@ -174,21 +175,4 @@ pub struct Exp {
   pub case: Tool,
   #[serde(default, rename = "fn")]
   pub fn_: Tool,
-}
-
-/// A default-`true` `bool`.
-#[derive(Debug, Clone, Copy, Deserialize)]
-pub struct Tool(pub bool);
-
-impl Default for Tool {
-  fn default() -> Self {
-    Self(true)
-  }
-}
-
-impl std::ops::Not for Tool {
-  type Output = bool;
-  fn not(self) -> Self::Output {
-    !self.0
-  }
 }

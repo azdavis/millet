@@ -7,6 +7,7 @@
 pub mod file;
 pub mod init;
 pub mod lang;
+pub mod tool;
 
 /// How many lines an error message may have.
 #[derive(Debug, Clone, Copy)]
