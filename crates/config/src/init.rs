@@ -1,13 +1,17 @@
 //! Configuration options sent when the language server starts.
+//!
+//! The initialization options are a subset of the VS Code config, but rearranged and renamed
+//! slightly. Consult the implementation of the VS Code extension to see what options are sent.
+//! Additionally, consult the documentation for the VS Code configuration to see what types the
+//! configuration options must be.
+
+#![allow(missing_docs)]
 
 use crate::tool::Tool;
 use serde::Deserialize;
 
-/// Settings for the server.
-//
 /// @sync(init-options)
 #[derive(Debug, Default, Deserialize)]
-#[allow(missing_docs)]
 pub struct Options {
   #[serde(default)]
   pub token_hover: Tool,
@@ -20,7 +24,6 @@ pub struct Options {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[allow(missing_docs)]
 pub struct DiagnosticsOptions {
   #[serde(default)]
   pub on_change: bool,
@@ -30,29 +33,20 @@ pub struct DiagnosticsOptions {
   pub ignore: DiagnosticsIgnore,
 }
 
-/// What diagnostics to send per file.
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DiagnosticsIgnore {
-  /// Ignore no diagnostics, i.e. send all diagnostics.
   None,
-  /// If there are syntax diagnostics (lex error, parse error, etc), send only those, and ignore
-  /// e.g. statics diagnostics.
   #[default]
   AfterSyntax,
-  /// All diagnostics are filtered out, i.e. no diagnostics are sent.
   All,
 }
 
-/// How to format open SML files on save.
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum FormatEngine {
-  /// No formatting.
   #[default]
   None,
-  /// Naive formatting.
   Naive,
-  /// Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt).
   Smlfmt,
 }
