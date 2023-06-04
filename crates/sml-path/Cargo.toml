@@ -10,4 +10,4 @@ doctest = false
 test = false
 
 [dependencies]
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true

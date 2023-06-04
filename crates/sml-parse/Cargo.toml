@@ -10,9 +10,9 @@ doctest = false
 test = false
 
 [dependencies]
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
-event-parse = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
+event-parse.workspace = true
+fast-hash.workspace = true
 sml-fixity = { path = "../sml-fixity" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true

@@ -11,11 +11,11 @@ test = false
 
 [dependencies]
 config = { path = "../config" }
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
+fast-hash.workspace = true
 lex-util = { path = "../lex-util" }
 cov-mark = { path = "../cov-mark" }
 sml-hir = { path = "../sml-hir" }
 sml-path = { path = "../sml-path" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true

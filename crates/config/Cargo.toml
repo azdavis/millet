@@ -10,7 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash.workspace = true
 serde = { version = "1", features = ["derive"] }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true
 sml-path = { path = "../sml-path" }

@@ -11,4 +11,4 @@ doctest = false
 
 [dependencies]
 once_cell = "1"
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash.workspace = true

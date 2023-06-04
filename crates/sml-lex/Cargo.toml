@@ -10,7 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
 lex-util = { path = "../lex-util" }
 cov-mark = { path = "../cov-mark" }
 sml-syntax = { path = "../sml-syntax" }

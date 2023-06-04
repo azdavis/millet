@@ -12,4 +12,4 @@ test = false
 [dependencies]
 num-bigint = "0.4"
 num-traits = "0.2"
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true

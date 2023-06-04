@@ -13,12 +13,12 @@ test = false
 analysis = { path = "../analysis" }
 codespan-reporting = "0.11"
 config = { path = "../config" }
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
 env_logger = "0.10"
 input = { path = "../input" }
 panic-hook = { path = "../panic-hook" }
-paths = { git = "https://github.com/azdavis/language-util.git" }
+paths.workspace = true
 pico-args = "0.5"
 sml-naive-fmt = { path = "../sml-naive-fmt" }
-text-pos = { git = "https://github.com/azdavis/language-util.git" }
-text-size-util = { git = "https://github.com/azdavis/language-util.git" }
+text-pos.workspace = true
+text-size-util.workspace = true

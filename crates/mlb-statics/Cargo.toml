@@ -11,10 +11,10 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
+fast-hash.workspace = true
 mlb-hir = { path = "../mlb-hir" }
-paths = { git = "https://github.com/azdavis/language-util.git" }
+paths.workspace = true
 sml-comment = { path = "../sml-comment" }
 sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
@@ -25,9 +25,9 @@ sml-namespace = { path = "../sml-namespace" }
 sml-statics = { path = "../sml-statics" }
 sml-statics-types = { path = "../sml-statics-types" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
-text-pos = { git = "https://github.com/azdavis/language-util.git" }
-text-size-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true
+text-pos.workspace = true
+text-size-util.workspace = true
 
 [features]
 sync = ["sml-statics/sync", "sml-statics-types/sync"]

@@ -10,8 +10,8 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
-paths = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash.workspace = true
+paths.workspace = true
 sml-namespace = { path = "../sml-namespace" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
-text-size-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true
+text-size-util.workspace = true

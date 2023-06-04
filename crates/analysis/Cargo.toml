@@ -11,12 +11,12 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
-elapsed = { git = "https://github.com/azdavis/language-util.git" }
-fmt-util = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
+elapsed.workspace = true
+fmt-util.workspace = true
 input = { path = "../input" }
 mlb-statics = { path = "../mlb-statics" }
-paths = { git = "https://github.com/azdavis/language-util.git" }
+paths.workspace = true
 sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
 sml-naive-fmt = { path = "../sml-naive-fmt" }
@@ -26,9 +26,9 @@ sml-statics = { path = "../sml-statics" }
 sml-statics-types = { path = "../sml-statics-types" }
 sml-symbol-kind = { path = "../sml-symbol-kind" }
 sml-syntax = { path = "../sml-syntax" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
-text-pos = { git = "https://github.com/azdavis/language-util.git" }
-text-size-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true
+text-pos.workspace = true
+text-size-util.workspace = true
 
 [features]
 sync = [

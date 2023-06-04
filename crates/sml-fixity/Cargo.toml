@@ -10,6 +10,6 @@ doctest = false
 test = false
 
 [dependencies]
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash.workspace = true
 once_cell = "1"
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true

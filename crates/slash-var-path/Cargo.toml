@@ -10,5 +10,5 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+fast-hash.workspace = true
+str-util.workspace = true

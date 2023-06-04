@@ -13,19 +13,19 @@ doctest = false
 cov-mark = { path = "../cov-mark" }
 cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
+fast-hash.workspace = true
 mlb-hir = { path = "../mlb-hir" }
 mlb-syntax = { path = "../mlb-syntax" }
-paths = { git = "https://github.com/azdavis/language-util.git" }
+paths.workspace = true
 slash-var-path = { path = "../slash-var-path" }
 sml-file-syntax = { path = "../sml-file-syntax" }
 sml-fixity = { path = "../sml-fixity" }
 sml-namespace = { path = "../sml-namespace" }
 sml-syntax = { path = "../sml-syntax" }
 sml-path = { path = "../sml-path" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
-text-pos = { git = "https://github.com/azdavis/language-util.git" }
-text-size-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true
+text-pos.workspace = true
+text-size-util.workspace = true
 toml = "0.7"
-topo-sort = { git = "https://github.com/azdavis/language-util.git" }
+topo-sort.workspace = true

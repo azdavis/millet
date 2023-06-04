@@ -12,20 +12,20 @@ doctest = false
 [dependencies]
 config = { path = "../config" }
 cov-mark = { path = "../cov-mark" }
-diagnostic = { git = "https://github.com/azdavis/language-util.git" }
-elapsed = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
-fmt-util = { git = "https://github.com/azdavis/language-util.git" }
+diagnostic.workspace = true
+elapsed.workspace = true
+fast-hash.workspace = true
+fmt-util.workspace = true
 log = "0.4"
-paths = { git = "https://github.com/azdavis/language-util.git" }
-pattern-match = { git = "https://github.com/azdavis/language-util.git" }
+paths.workspace = true
+pattern-match.workspace = true
 chain-map = { path = "../chain-map" }
 sml-hir = { path = "../sml-hir" }
 sml-path = { path = "../sml-path" }
 sml-namespace = { path = "../sml-namespace" }
 sml-symbol-kind = { path = "../sml-symbol-kind" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
-uniq = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true
+uniq.workspace = true
 sml-statics-types = { path = "../sml-statics-types" }
 
 [features]

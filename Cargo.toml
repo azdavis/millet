@@ -8,6 +8,27 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 publish = false
 
+[workspace.dependencies]
+# git
+char-name.git = "https://github.com/azdavis/language-util.git"
+code-h2-md-map.git = "https://github.com/azdavis/language-util.git"
+diagnostic.git = "https://github.com/azdavis/language-util.git"
+elapsed.git = "https://github.com/azdavis/language-util.git"
+event-parse.git = "https://github.com/azdavis/language-util.git"
+fast-hash.git = "https://github.com/azdavis/language-util.git"
+fmt-util.git = "https://github.com/azdavis/language-util.git"
+identifier-case.git = "https://github.com/azdavis/language-util.git"
+idx.git = "https://github.com/azdavis/language-util.git"
+paths.git = "https://github.com/azdavis/language-util.git"
+pattern-match.git = "https://github.com/azdavis/language-util.git"
+str-util.git = "https://github.com/azdavis/language-util.git"
+syntax-gen.git = "https://github.com/azdavis/language-util.git"
+text-pos.git = "https://github.com/azdavis/language-util.git"
+text-size-util.git = "https://github.com/azdavis/language-util.git"
+token.git = "https://github.com/azdavis/language-util.git"
+topo-sort.git = "https://github.com/azdavis/language-util.git"
+uniq.git = "https://github.com/azdavis/language-util.git"
+
 [profile.release]
 codegen-units = 1
 lto = "fat"

@@ -17,4 +17,4 @@ sml-hir = { path = "../sml-hir" }
 sml-path = { path = "../sml-path" }
 config = { path = "../config" }
 sml-dynamics = { path = "../sml-dynamics" }
-str-util = { git = "https://github.com/azdavis/language-util.git" }
+str-util.workspace = true

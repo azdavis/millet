@@ -11,11 +11,11 @@ doctest = false
 
 [dependencies]
 rowan = "0.15"
-token = { git = "https://github.com/azdavis/language-util.git" }
+token.workspace = true
 
 [build-dependencies]
-char-name = { git = "https://github.com/azdavis/language-util.git" }
-fast-hash = { git = "https://github.com/azdavis/language-util.git" }
-code-h2-md-map = { git = "https://github.com/azdavis/language-util.git" }
-identifier-case = { git = "https://github.com/azdavis/language-util.git" }
-syntax-gen = { git = "https://github.com/azdavis/language-util.git" }
+char-name.workspace = true
+fast-hash.workspace = true
+code-h2-md-map.workspace = true
+identifier-case.workspace = true
+syntax-gen.workspace = true
