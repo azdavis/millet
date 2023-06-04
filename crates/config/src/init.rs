@@ -9,9 +9,13 @@ use serde::Deserialize;
 #[derive(Debug, Default, Deserialize)]
 #[allow(missing_docs)]
 pub struct Options {
+  #[serde(default)]
   pub token_hover: Tool,
+  #[serde(default)]
   pub fs_watcher: Tool,
+  #[serde(default)]
   pub format: Option<FormatEngine>,
+  #[serde(default)]
   pub diagnostics: DiagnosticsOptions,
 }
 
