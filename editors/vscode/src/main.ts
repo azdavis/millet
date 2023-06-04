@@ -9,8 +9,11 @@ import {
 let client: LanguageClient | null = null;
 
 export async function activate(cx: vscode.ExtensionContext) {
+  if (client !== null) {
+    return;
+  }
   const config = vscode.workspace.getConfiguration("millet");
-  if (!config.get("server.enable") || client !== null) {
+  if (!config.get("server.enable")) {
     return;
   }
   const ext = process.platform === "win32" ? ".exe" : "";
