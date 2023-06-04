@@ -25,7 +25,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
     let params = params.text_document_position_params;
     let pos = convert::text_doc_pos_params(&st.cx.fs, &mut st.cx.paths, &params)?;
     let res =
-      st.analysis.get_md(pos, st.cx.options.token_hover).map(|(value, range)| lsp_types::Hover {
+      st.analysis.get_md(pos, st.cx.options.token_hover.0).map(|(value, range)| lsp_types::Hover {
         contents: lsp_types::HoverContents::Markup(lsp_types::MarkupContent {
           kind: lsp_types::MarkupKind::Markdown,
           value,

@@ -52,7 +52,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
   if let Err((e, url)) = root {
     ret.cx.show_error(format!("cannot initialize workspace root {url}: {e:#}"), Code::n(1018));
   }
-  let want_file_ops = ret.cx.options.fs_watcher
+  let want_file_ops = ret.cx.options.fs_watcher.0
     && init
       .capabilities
       .workspace

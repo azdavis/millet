@@ -1,28 +1,18 @@
 //! Configuration options sent when the language server starts.
 
+use crate::tool::Tool;
 use serde::Deserialize;
 
 /// Settings for the server.
 //
 /// @sync(init-options)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[allow(missing_docs)]
 pub struct Options {
-  pub token_hover: bool,
-  pub fs_watcher: bool,
+  pub token_hover: Tool,
+  pub fs_watcher: Tool,
   pub format: Option<FormatEngine>,
   pub diagnostics: DiagnosticsOptions,
-}
-
-impl Default for Options {
-  fn default() -> Self {
-    Self {
-      token_hover: true,
-      fs_watcher: true,
-      format: None,
-      diagnostics: DiagnosticsOptions::default(),
-    }
-  }
 }
 
 #[derive(Debug, Deserialize)]
