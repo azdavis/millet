@@ -10,8 +10,8 @@ test = false
 doctest = false
 
 [dependencies]
-lex-util = { path = "../lex-util" }
+lex-util.path = "../lex-util"
 paths.workspace = true
-slash-var-path = { path = "../slash-var-path" }
+slash-var-path.path = "../slash-var-path"
 str-util.workspace = true
 text-size-util.workspace = true

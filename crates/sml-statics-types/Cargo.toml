@@ -17,10 +17,10 @@ fmt-util.workspace = true
 idx.workspace = true
 once_cell = "1"
 paths.workspace = true
-chain-map = { path = "../chain-map" }
-cov-mark = { path = "../cov-mark" }
-sml-hir = { path = "../sml-hir" }
-sml-path = { path = "../sml-path" }
+chain-map.path = "../chain-map"
+cov-mark.path = "../cov-mark"
+sml-hir.path = "../sml-hir"
+sml-path.path = "../sml-path"
 str-util.workspace = true
 
 [features]

@@ -11,4 +11,4 @@ doctest = false
 
 [dependencies]
 fast-hash.workspace = true
-sml-hir = { path = "../sml-hir" }
+sml-hir.path = "../sml-hir"

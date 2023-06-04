@@ -10,11 +10,11 @@ test = false
 doctest = false
 
 [dependencies]
-config = { path = "../config" }
+config.path = "../config"
 elapsed.workspace = true
-sml-fixity = { path = "../sml-fixity" }
-sml-lex = { path = "../sml-lex" }
-sml-hir-lower = { path = "../sml-hir-lower" }
-sml-parse = { path = "../sml-parse" }
-sml-ty-var-scope = { path = "../sml-ty-var-scope" }
+sml-fixity.path = "../sml-fixity"
+sml-lex.path = "../sml-lex"
+sml-hir-lower.path = "../sml-hir-lower"
+sml-parse.path = "../sml-parse"
+sml-ty-var-scope.path = "../sml-ty-var-scope"
 text-pos.workspace = true

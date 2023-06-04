@@ -12,6 +12,6 @@ doctest = false
 [dependencies]
 fast-hash.workspace = true
 paths.workspace = true
-sml-namespace = { path = "../sml-namespace" }
+sml-namespace.path = "../sml-namespace"
 str-util.workspace = true
 text-size-util.workspace = true

@@ -13,4 +13,4 @@ doctest = false
 fast-hash.workspace = true
 serde = { version = "1", features = ["derive"] }
 str-util.workspace = true
-sml-path = { path = "../sml-path" }
+sml-path.path = "../sml-path"

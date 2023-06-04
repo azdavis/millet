@@ -10,22 +10,22 @@ test = false
 doctest = false
 
 [dependencies]
-config = { path = "../config" }
+config.path = "../config"
 diagnostic.workspace = true
 elapsed.workspace = true
 fmt-util.workspace = true
-input = { path = "../input" }
-mlb-statics = { path = "../mlb-statics" }
+input.path = "../input"
+mlb-statics.path = "../mlb-statics"
 paths.workspace = true
-sml-file-syntax = { path = "../sml-file-syntax" }
-sml-fixity = { path = "../sml-fixity" }
-sml-naive-fmt = { path = "../sml-naive-fmt" }
-sml-hir = { path = "../sml-hir" }
-sml-namespace = { path = "../sml-namespace" }
-sml-statics = { path = "../sml-statics" }
-sml-statics-types = { path = "../sml-statics-types" }
-sml-symbol-kind = { path = "../sml-symbol-kind" }
-sml-syntax = { path = "../sml-syntax" }
+sml-file-syntax.path = "../sml-file-syntax"
+sml-fixity.path = "../sml-fixity"
+sml-naive-fmt.path = "../sml-naive-fmt"
+sml-hir.path = "../sml-hir"
+sml-namespace.path = "../sml-namespace"
+sml-statics.path = "../sml-statics"
+sml-statics-types.path = "../sml-statics-types"
+sml-symbol-kind.path = "../sml-symbol-kind"
+sml-syntax.path = "../sml-syntax"
 str-util.workspace = true
 text-pos.workspace = true
 text-size-util.workspace = true

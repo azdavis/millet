@@ -10,4 +10,4 @@ test = false
 doctest = false
 
 [dependencies]
-sml-syntax = { path = "../sml-syntax" }
+sml-syntax.path = "../sml-syntax"

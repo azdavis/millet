@@ -12,6 +12,6 @@ test = false
 [dependencies]
 anyhow = "1"
 env_logger = "0.10"
-lang-srv = { path = "../lang-srv" }
+lang-srv.path = "../lang-srv"
 log = "0.4"
-panic-hook = { path = "../panic-hook" }
+panic-hook.path = "../panic-hook"

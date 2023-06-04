@@ -10,15 +10,15 @@ name = "millet-cli"
 test = false
 
 [dependencies]
-analysis = { path = "../analysis" }
+analysis.path = "../analysis"
 codespan-reporting = "0.11"
-config = { path = "../config" }
+config.path = "../config"
 diagnostic.workspace = true
 env_logger = "0.10"
-input = { path = "../input" }
-panic-hook = { path = "../panic-hook" }
+input.path = "../input"
+panic-hook.path = "../panic-hook"
 paths.workspace = true
 pico-args = "0.5"
-sml-naive-fmt = { path = "../sml-naive-fmt" }
+sml-naive-fmt.path = "../sml-naive-fmt"
 text-pos.workspace = true
 text-size-util.workspace = true

@@ -10,21 +10,21 @@ test = false
 doctest = false
 
 [dependencies]
-config = { path = "../config" }
+config.path = "../config"
 diagnostic.workspace = true
 fast-hash.workspace = true
-mlb-hir = { path = "../mlb-hir" }
+mlb-hir.path = "../mlb-hir"
 paths.workspace = true
-sml-comment = { path = "../sml-comment" }
-sml-file-syntax = { path = "../sml-file-syntax" }
-sml-fixity = { path = "../sml-fixity" }
-sml-hir = { path = "../sml-hir" }
+sml-comment.path = "../sml-comment"
+sml-file-syntax.path = "../sml-file-syntax"
+sml-fixity.path = "../sml-fixity"
+sml-hir.path = "../sml-hir"
 sml-libs = { git = "https://github.com/azdavis/sml-libs.git" }
-sml-hir-lower = { path = "../sml-hir-lower" }
-sml-namespace = { path = "../sml-namespace" }
-sml-statics = { path = "../sml-statics" }
-sml-statics-types = { path = "../sml-statics-types" }
-sml-syntax = { path = "../sml-syntax" }
+sml-hir-lower.path = "../sml-hir-lower"
+sml-namespace.path = "../sml-namespace"
+sml-statics.path = "../sml-statics"
+sml-statics-types.path = "../sml-statics-types"
+sml-syntax.path = "../sml-syntax"
 str-util.workspace = true
 text-pos.workspace = true
 text-size-util.workspace = true

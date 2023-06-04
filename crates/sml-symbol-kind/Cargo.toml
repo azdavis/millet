@@ -10,8 +10,8 @@ doctest = false
 test = false
 
 [dependencies]
-sml-namespace = { path = "../sml-namespace" }
-sml-statics-types = { path = "../sml-statics-types" }
+sml-namespace.path = "../sml-namespace"
+sml-statics-types.path = "../sml-statics-types"
 
 [features]
 sync = ["sml-statics-types/sync"]

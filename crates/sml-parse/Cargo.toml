@@ -13,6 +13,6 @@ test = false
 diagnostic.workspace = true
 event-parse.workspace = true
 fast-hash.workspace = true
-sml-fixity = { path = "../sml-fixity" }
-sml-syntax = { path = "../sml-syntax" }
+sml-fixity.path = "../sml-fixity"
+sml-syntax.path = "../sml-syntax"
 str-util.workspace = true
