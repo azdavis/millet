@@ -13,6 +13,13 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.10.1
+
+- Show errors from the Millet CLI much more prettily.
+- Tweak a common error message to stop talking about the "root".
+- Add `millet.server.fileSystemWatcher.enable` VS Code config, defaulting to true.
+- Document how to send LSP init options for non-VS-Code editors.
+
 ## v0.10.0
 
 - Show implicated names in fixity errors.
