@@ -507,13 +507,13 @@ So, the formatter is disabled by default, and great care should be taken when us
 
 The naive Millet formatter employs exceedingly unsophisticated strategies to break code across many lines. What this means is that large expressions (e.g. a function call expression with many long arguments) may be formatted all on one line.
 
-The suggested workaround is to use a `let ... in ... end` expression and split out sub-expressions into variables. So instead of
+The suggested workaround is to use a `let ... in ... end` expression and split out sub-expressions into variables. So instead of:
 
 ```sml
 Boop.beep (if bar x then quz y else Fee.Fi.Fo.fum z) (fn res => s (blab :: res)) (fn () => k []) (fn (x, ac) => ac andalso x) (xs @ ys @ zs)
 ```
 
-Try something like
+Try something like:
 
 ```sml
 let
