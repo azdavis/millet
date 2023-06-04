@@ -1,13 +1,12 @@
 //! Displaying some types.
 
-#![allow(clippy::too_many_lines)]
-
 use crate::dynamics::Dynamics;
 use crate::types::{Con, ConKind, Env, Exception, FrameKind, Step, Val};
 use sml_hir::Lab;
 use std::fmt;
 
 impl fmt::Display for Dynamics<'_> {
+  #[allow(clippy::too_many_lines)]
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let ars = &self.cx.ars;
     f.write_str("(* env:\n")?;
