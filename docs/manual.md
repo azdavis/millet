@@ -231,7 +231,7 @@ See docs for [`language.val.<path>`](#languagevalpath).
 
 ### VS Code settings
 
-Millet offers the following configuration options via VS Code settings, which are stored as [JSON][], often in `.vscode/settings.json`:
+Millet has VS Code specific settings, which are stored as [JSON][]. You may need to reload VS Code and/or Millet to pick up the changes.
 
 <!-- @begin vscode-config -->
 
