@@ -53,10 +53,11 @@ Some important notes:
 
 ## Configuration
 
-There are three places where Millet can be configured:
+There are four places where Millet can be configured:
 
 - [`millet.toml`](#millettoml). This is for project-wide settings.
 - [VS Code settings](#vs-code-settings). This is for user-specific settings.
+- [Language server initialization](#language-server-initialization). This is for advanced use-cases and/or non-VS-Code editors.
 - [ML Basis annotations](#ml-basis-annotations). This is for specific files.
 
 ### `millet.toml`
@@ -303,6 +304,14 @@ When set to the empty string `""` (the default), use the path to the one that's 
 - Default: `""`
 
 <!-- @end vscode-config -->
+
+### Language server initialization
+
+If you're using VS Code, the VS Code extension automatically passes the appropriate required custom initialization options to the language server process when starting it up.
+
+If you're not using VS Code, you will have to arrange to pass these initialization options through some other editor-specific means.
+
+The initialization options are a subset of the VS Code config, but rearranged and renamed slightly. Consult the implementation of the VS Code extension to see what options are sent. Additionally, consult the documentation for the VS Code configuration to see what types the configuration options must be.
 
 ### ML Basis annotations
 
