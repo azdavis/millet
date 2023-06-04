@@ -38,8 +38,8 @@ impl Analysis {
   pub fn new(
     std_basis: StdBasis,
     lines: config::ErrorLines,
-    ignore: Option<config::init::DiagnosticsIgnore>,
-    format: Option<config::init::FormatEngine>,
+    ignore: config::init::DiagnosticsIgnore,
+    format: config::init::FormatEngine,
   ) -> Self {
     Self {
       std_basis,
@@ -248,12 +248,9 @@ impl Analysis {
     path: PathId,
     tab_size: u32,
   ) -> Result<(String, PositionUtf16), FormatError> {
-    let engine = match self.diagnostics_options.format {
-      None => return Err(FormatError::Disabled),
-      Some(x) => x,
-    };
     let file = self.source_files.get(&path).ok_or(FormatError::NoFile)?;
-    let buf = match engine {
+    let buf = match self.diagnostics_options.format {
+      config::init::FormatEngine::None => return Err(FormatError::Disabled),
       config::init::FormatEngine::Naive => {
         sml_naive_fmt::get(&file.syntax.parse.root, tab_size).map_err(FormatError::NaiveFmt)?
       }

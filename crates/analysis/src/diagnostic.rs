@@ -33,8 +33,8 @@ impl<R> Diagnostic<R> {
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Options {
   pub(crate) lines: config::ErrorLines,
-  pub(crate) ignore: Option<config::init::DiagnosticsIgnore>,
-  pub(crate) format: Option<config::init::FormatEngine>,
+  pub(crate) ignore: config::init::DiagnosticsIgnore,
+  pub(crate) format: config::init::FormatEngine,
 }
 
 /// NOTE: we used to limit the max number of diagnostics per file, but now it's trickier because not
@@ -51,11 +51,9 @@ where
   F: Fn(&text_pos::PositionDb, text_size_util::TextRange) -> Option<R>,
 {
   let ignore_after_syntax = match options.ignore {
-    None => false,
-    Some(filter) => match filter {
-      config::init::DiagnosticsIgnore::AfterSyntax => true,
-      config::init::DiagnosticsIgnore::All => return Vec::new(),
-    },
+    config::init::DiagnosticsIgnore::None => false,
+    config::init::DiagnosticsIgnore::AfterSyntax => true,
+    config::init::DiagnosticsIgnore::All => return Vec::new(),
   };
   let mut ret: Vec<_> = std::iter::empty()
     .chain(file.syntax.lex_errors.iter().filter_map(|err| {
@@ -85,7 +83,7 @@ where
       let message = err.display(syms_tys, options.lines).to_string();
       Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }));
-    if matches!(options.format, Some(config::init::FormatEngine::Naive)) {
+    if matches!(options.format, config::init::FormatEngine::Naive) {
       if let Err(sml_naive_fmt::Error::Comments(ranges)) =
         sml_naive_fmt::check(&file.syntax.parse.root)
       {

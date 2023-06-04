@@ -14,48 +14,43 @@ pub struct Options {
   #[serde(default)]
   pub fs_watcher: Tool,
   #[serde(default)]
-  pub format: Option<FormatEngine>,
+  pub format: FormatEngine,
   #[serde(default)]
   pub diagnostics: DiagnosticsOptions,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[allow(missing_docs)]
 pub struct DiagnosticsOptions {
   #[serde(default)]
   pub on_change: bool,
   #[serde(default)]
   pub more_info_hint: Tool,
-  #[serde(default = "after_syntax")]
-  pub ignore: Option<DiagnosticsIgnore>,
-}
-
-impl Default for DiagnosticsOptions {
-  fn default() -> Self {
-    Self { on_change: false, more_info_hint: Tool::default(), ignore: after_syntax() }
-  }
-}
-
-#[allow(clippy::unnecessary_wraps)]
-fn after_syntax() -> Option<DiagnosticsIgnore> {
-  Some(DiagnosticsIgnore::AfterSyntax)
+  #[serde(default)]
+  pub ignore: DiagnosticsIgnore,
 }
 
 /// What diagnostics to send per file.
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DiagnosticsIgnore {
+  /// Ignore no diagnostics, i.e. send all diagnostics.
+  None,
   /// If there are syntax diagnostics (lex error, parse error, etc), send only those, and ignore
   /// e.g. statics diagnostics.
+  #[default]
   AfterSyntax,
   /// All diagnostics are filtered out, i.e. no diagnostics are sent.
   All,
 }
 
 /// How to format open SML files on save.
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum FormatEngine {
+  /// No formatting.
+  #[default]
+  None,
   /// Naive formatting.
   Naive,
   /// Formatting provided by [`smlfmt`](https://github.com/shwestrick/smlfmt).

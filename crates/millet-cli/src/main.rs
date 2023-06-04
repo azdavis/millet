@@ -60,11 +60,13 @@ fn run() -> usize {
   };
   let mut store = paths::Store::new();
   let inp = input::Input::new(&fs, &mut store, &root);
+  let engine =
+    if format { config::init::FormatEngine::Naive } else { config::init::FormatEngine::None };
   let mut an = analysis::Analysis::new(
     analysis::StdBasis::full(),
     config::ErrorLines::One,
-    Some(config::init::DiagnosticsIgnore::AfterSyntax),
-    format.then_some(config::init::FormatEngine::Naive),
+    config::init::DiagnosticsIgnore::AfterSyntax,
+    engine,
   );
   let got = an.get_many_text_range(&inp);
   for err in &inp.errors {
