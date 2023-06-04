@@ -47,6 +47,7 @@ fn try_update_input(
   Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification> {
   n = helpers::try_notif::<lsp_types::notification::DidChangeWatchedFiles, _>(n, |params| {
     match st.mode.take() {
@@ -85,7 +86,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           if st.cx.options.diagnostics.on_change {
             let ds = convert::diagnostics(
               st.analysis.get_one(text),
-              st.cx.options.diagnostics.more_info_hint,
+              st.cx.options.diagnostics.more_info_hint.0,
             );
             st.cx.send_diagnostics(url, ds);
           }
@@ -100,8 +101,10 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
       let url = params.text_document.uri;
       let text = params.text_document.text;
       let path = convert::url_to_path_id(&st.cx.fs, &mut st.cx.paths, &url)?;
-      let ds =
-        convert::diagnostics(st.analysis.get_one(&text), st.cx.options.diagnostics.more_info_hint);
+      let ds = convert::diagnostics(
+        st.analysis.get_one(&text),
+        st.cx.options.diagnostics.more_info_hint.0,
+      );
       st.cx.send_diagnostics(url, ds);
       open_files.insert(path, text);
     }
@@ -127,7 +130,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
           Some(text) => {
             let ds = convert::diagnostics(
               st.analysis.get_one(text),
-              st.cx.options.diagnostics.more_info_hint,
+              st.cx.options.diagnostics.more_info_hint.0,
             );
             st.cx.send_diagnostics(url, ds);
           }

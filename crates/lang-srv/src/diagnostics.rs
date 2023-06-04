@@ -21,7 +21,7 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
             err.range(),
             err.code(),
             err.severity(),
-            st.cx.options.diagnostics.more_info_hint,
+            st.cx.options.diagnostics.more_info_hint.0,
           );
           input_diagnostics.entry(url).or_default().push(d);
           true
@@ -60,7 +60,7 @@ pub(crate) fn try_publish(st: &mut St) -> bool {
         continue;
       }
     };
-    let ds = convert::diagnostics(errors, st.cx.options.diagnostics.more_info_hint);
+    let ds = convert::diagnostics(errors, st.cx.options.diagnostics.more_info_hint.0);
     if ds.is_empty() {
       continue;
     }

@@ -22,15 +22,23 @@ pub struct Options {
 #[derive(Debug, Deserialize)]
 #[allow(missing_docs)]
 pub struct DiagnosticsOptions {
+  #[serde(default)]
   pub on_change: bool,
-  pub more_info_hint: bool,
+  #[serde(default)]
+  pub more_info_hint: Tool,
+  #[serde(default = "after_syntax")]
   pub ignore: Option<DiagnosticsIgnore>,
 }
 
 impl Default for DiagnosticsOptions {
   fn default() -> Self {
-    Self { on_change: false, more_info_hint: true, ignore: Some(DiagnosticsIgnore::AfterSyntax) }
+    Self { on_change: false, more_info_hint: Tool::default(), ignore: after_syntax() }
   }
+}
+
+#[allow(clippy::unnecessary_wraps)]
+fn after_syntax() -> Option<DiagnosticsIgnore> {
+  Some(DiagnosticsIgnore::AfterSyntax)
 }
 
 /// What diagnostics to send per file.
