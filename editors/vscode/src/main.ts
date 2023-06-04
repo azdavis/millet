@@ -39,7 +39,7 @@ export async function activate(cx: vscode.ExtensionContext) {
     },
   };
   client = new LanguageClient("millet", serverOpts, clientOpts);
-  client.start();
+  await client.start();
 }
 
 export async function deactivate() {
