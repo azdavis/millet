@@ -52,8 +52,7 @@ pub(crate) fn get(
   });
   let syms: FxHashSet<_> = syms.collect();
   // the None case is possible, but we should have errored already.
-  //
-  // @test(deviations::smlnj::sharing_via_abbreviation_short)
+  cov_mark::hit("sharing_via_abbreviation_short");
   if let Some(ac) = ac {
     let mut subst = realize::TyRealization::default();
     for sym in syms {

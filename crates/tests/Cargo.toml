@@ -11,6 +11,7 @@ doctest = false
 [dev-dependencies]
 analysis = { path = "../analysis", features = ["sync"] }
 cm-syntax = { path = "../cm-syntax" }
+cov-mark = { path = "../cov-mark" }
 config = { path = "../config" }
 diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 env_logger = "0.10"

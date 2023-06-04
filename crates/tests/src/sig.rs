@@ -730,10 +730,11 @@ struct
 end
 "#,
   );
+  cov_mark::check("where_not_con");
 }
 
 #[test]
-fn impossible() {
+fn where_con_not_gen_after() {
   check(
     r#"
 signature HAS_T = sig type t end
@@ -742,6 +743,7 @@ signature BAD = HAS_INT where type t = string
 (**             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `t` as `int` *)
 "#,
   );
+  cov_mark::check("where_con_not_gen_after");
 }
 
 #[test]
@@ -754,6 +756,7 @@ signature BAR = sig type t val x : t include FOO end
 structure Bar :> BAR = struct type t = unit val x = () end
 "#,
   );
+  cov_mark::check("no_path_to_sym");
 }
 
 #[test]

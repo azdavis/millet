@@ -109,14 +109,14 @@ fn get_where_type(
         subst.insert(data.sym, ty_scheme);
         realize::get_env(&mut st.syms_tys.tys, &subst, inner_env);
       } else {
-        // @test(sig::impossible)
+        cov_mark::hit("where_con_not_gen_after");
         if emit_cannot_realize {
           st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), path_ty_scheme.clone()));
         }
       }
     }
-    // @test(sig::where_not_con)
     _ => {
+      cov_mark::hit("where_not_con");
       if emit_cannot_realize {
         st.err(idx, ErrorKind::CannotRealizeTy(path.clone(), path_ty_scheme.clone()));
       }

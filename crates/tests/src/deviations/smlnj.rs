@@ -210,6 +210,7 @@ signature SIG = sig type a = int type b = int sharing type a = b end
 (**                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot share type `a` as `int` *)
 "#,
   );
+  cov_mark::hit("sharing_via_abbreviation_short");
 }
 
 #[test]

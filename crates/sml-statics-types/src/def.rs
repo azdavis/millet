@@ -119,7 +119,7 @@ impl Primitive {
   /// If there was no documentation for this.
   #[must_use]
   pub fn doc(self) -> &'static str {
-    // @test(repo::primitives)
+    cov_mark::hit("primitive_doc");
     PRIMITIVE_DOC.get(&self).expect("no doc for this primitive").as_ref()
   }
 }

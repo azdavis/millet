@@ -17,8 +17,8 @@ pub(crate) fn env_of_sig(
     let bound_vars = st.syms_tys.syms.get(sym).unwrap().ty_info.ty_scheme.bound_vars.clone();
     let ty_scheme = n_ary_con(&mut st.syms_tys.tys, bound_vars, sym);
     if !bound_ty_name_to_path(st, &mut path, &sig.env, &ty_scheme) {
-      // @test(sig::no_path_to_sym). there should have already been an error emitted for this
-      log::warn!("no path to sym");
+      // there should have already been an error emitted for this
+      cov_mark::hit("no_path_to_sym");
       return;
     }
     let last = path.pop().unwrap();

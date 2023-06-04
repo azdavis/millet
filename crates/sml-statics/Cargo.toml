@@ -11,6 +11,7 @@ doctest = false
 
 [dependencies]
 config = { path = "../config" }
+cov-mark = { path = "../cov-mark" }
 diagnostic = { git = "https://github.com/azdavis/language-util.git" }
 elapsed = { git = "https://github.com/azdavis/language-util.git" }
 fast-hash = { git = "https://github.com/azdavis/language-util.git" }

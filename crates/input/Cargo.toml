@@ -10,6 +10,7 @@ test = false
 doctest = false
 
 [dependencies]
+cov-mark = { path = "../cov-mark" }
 cm-syntax = { path = "../cm-syntax" }
 config = { path = "../config" }
 diagnostic = { git = "https://github.com/azdavis/language-util.git" }

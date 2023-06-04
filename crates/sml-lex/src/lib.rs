@@ -224,7 +224,7 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
         err(st, start, ErrorKind::MissingDigitsInNumLit);
       }
     }
-    // @test(misc::num_suffix)
+    cov_mark::hit("num_suffix");
     advance_while(&mut st.i, bs, |b| b.is_ascii_alphanumeric());
     return kind;
   }

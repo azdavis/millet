@@ -341,6 +341,7 @@ val _ = 3and _ = 4
 (**     ^^^^ invalid literal: invalid digit found in string *)
 "#,
   );
+  cov_mark::hit("num_suffix");
 }
 
 #[test]

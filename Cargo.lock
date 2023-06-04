@@ -177,6 +177,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7704b5fdd17b18ae31c4c1da5a2e0305a2bf17b5249300a9ee9ed7b72114c636"
 
 [[package]]
+name = "cov-mark"
+version = "0.10.1"
+dependencies = [
+ "fast-hash",
+ "once_cell",
+]
+
+[[package]]
 name = "crc32fast"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -399,6 +407,7 @@ version = "0.10.1"
 dependencies = [
  "cm-syntax",
  "config",
+ "cov-mark",
  "diagnostic",
  "fast-hash",
  "mlb-hir",
@@ -983,6 +992,7 @@ name = "sml-hir-lower"
 version = "0.10.1"
 dependencies = [
  "config",
+ "cov-mark",
  "diagnostic",
  "fast-hash",
  "lex-util",
@@ -1003,6 +1013,7 @@ dependencies = [
 name = "sml-lex"
 version = "0.10.1"
 dependencies = [
+ "cov-mark",
  "diagnostic",
  "lex-util",
  "sml-syntax",
@@ -1060,6 +1071,7 @@ version = "0.10.1"
 dependencies = [
  "chain-map",
  "config",
+ "cov-mark",
  "diagnostic",
  "elapsed",
  "fast-hash",
@@ -1082,6 +1094,7 @@ version = "0.10.1"
 dependencies = [
  "chain-map",
  "code-h2-md-map",
+ "cov-mark",
  "drop_bomb",
  "fast-hash",
  "fmt-util",
@@ -1189,6 +1202,7 @@ dependencies = [
  "analysis",
  "cm-syntax",
  "config",
+ "cov-mark",
  "diagnostic",
  "env_logger",
  "fast-hash",

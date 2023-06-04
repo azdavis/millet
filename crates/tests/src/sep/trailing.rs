@@ -10,6 +10,7 @@ val _ = (1,)
 (**       ^ trailing `,` *)
 "#,
   );
+  cov_mark::check("trailing_exp_arg");
 }
 
 #[test]
@@ -50,6 +51,7 @@ val _ = fn (x,) => ()
 (**          ^ trailing `,` *)
 "#,
   );
+  cov_mark::check("trailing_pat_arg");
 }
 
 #[test]

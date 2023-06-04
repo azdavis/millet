@@ -26,6 +26,7 @@ datatype uh = Uh
 val rec Uh = fn () => ()
 "#,
   );
+  cov_mark::check("rebind_ctor");
 }
 
 #[test]

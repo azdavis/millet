@@ -305,7 +305,8 @@ where
 {
   let rows: Vec<_> =
     es.into_iter().enumerate().map(|(idx, e)| (sml_hir::Lab::tuple(idx), e)).collect();
-  // see @test(sep::trailing::exp_arg_1) for why we can't assert rows.len() != 1
+  // can't assert rows.len() != 1 because of this
+  cov_mark::hit("trailing_exp_arg");
   sml_hir::Exp::Record(rows)
 }
 

@@ -89,4 +89,5 @@ val _ = foo
 #[test]
 fn no_path() {
   check_bad_input("s.mlb", "couldn't perform file I/O", [("s.mlb", "no.mlb")]);
+  cov_mark::check("no_path");
 }

@@ -267,6 +267,10 @@ Depends on `analysis` and a bunch of third party crates to implement a language 
 
 These crates don't really fit in anywhere else.
 
+### `crates/cov-mark`
+
+Inspired by the [cov-mark crate](https://docs.rs/cov-mark/latest/cov_mark/), but doesn't use linker shenanigans.
+
 ### `crates/panic-hook`
 
 A good default panic hook that shows backtraces and exhorts the reader to file a bug report.

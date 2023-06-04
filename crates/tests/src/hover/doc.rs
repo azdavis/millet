@@ -90,4 +90,5 @@ val _ = false
 (**     ^^^^^ hover: represents logical falsity *)
 "#,
   );
+  cov_mark::check("primitive_doc");
 }

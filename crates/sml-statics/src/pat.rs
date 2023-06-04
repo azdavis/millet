@@ -91,7 +91,7 @@ fn get_(
       for e in val_info.disallow {
         st.err(pat_idx, e.into());
       }
-      // @test(deviations::mlton::rebind_ctor)
+      cov_mark::hit("rebind_ctor");
       let is_var = argument.is_none()
         && path.prefix().is_empty()
         && (ok_val_info(val_info.val.as_ref().ok().copied()) || cfg.rec);
@@ -143,15 +143,23 @@ fn get_(
             bound_vars: val_info.ty_scheme.bound_vars.clone(),
             ty: match st.syms_tys.tys.data(val_info.ty_scheme.ty) {
               TyData::Fn(data) => data.res,
-              // @test(pat::weird_pat_fn_1)
-              _ => return None,
+              _ => {
+                // NOTE: @test(pat::weird_pat_fn_1) was supposed to exercise this code path, but
+                // after adding `cov_mark` it became clear that the test does not actually exercise
+                // this code path. changing this `return None` to an unreachable!() currently passes
+                // all tests. would be good to find and add a cov mark for a test that actually hits
+                // this path.
+                return None;
+              }
             },
           });
           defs.extend(val_info.defs.iter().copied());
           let sym = match st.syms_tys.tys.data(data.res) {
             TyData::Con(data) => data.sym,
-            // @test(pat::weird_pat_fn_2)
-            _ => return None,
+            _ => {
+              cov_mark::hit("weird_pat_fn_2");
+              return None;
+            }
           };
           let arg_pat = match argument {
             None => {

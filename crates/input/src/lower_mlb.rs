@@ -39,7 +39,7 @@ pub(crate) fn get<F>(
           group.path.as_path().to_owned(),
           ErrorKind::Mlb(e),
         ));
-        // see e.g. @test(input::misc::undefined_path_var_import) for why we don't `continue` here
+        cov_mark::hit("undefined_path_var_import");
         mlb_syntax::BasDec::Seq(Vec::new())
       }
     };
@@ -116,7 +116,7 @@ where
         Ok(x) => x,
         Err(e) => {
           st.errors.push(e);
-          // @test(input::mlb::no_path)
+          cov_mark::hit("no_path");
           return mlb_hir::BasDec::seq(Vec::new());
         }
       };

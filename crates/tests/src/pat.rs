@@ -168,4 +168,5 @@ val _ =
 (**          ^^^^ value binding used as a pattern *)
 "#,
   );
+  cov_mark::check("weird_pat_fn_2");
 }

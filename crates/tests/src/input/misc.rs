@@ -47,4 +47,5 @@ workspace.root = "a.mlb"
     "undefined path variable: `BAR`",
     [(config::file::PATH, config), ("a.mlb", "b.mlb"), ("b.mlb", "$(BAR).sml")],
   );
+  cov_mark::check("undefined_path_var_import");
 }
