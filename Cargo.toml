@@ -9,7 +9,29 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [workspace.dependencies]
-# git
+# third-party
+anyhow = "1"
+better-panic = "0.3"
+codespan-reporting = "0.11"
+crossbeam-channel = "0.5"
+drop_bomb = "0.1"
+env_logger = "0.10"
+flate2 = "1"
+la-arena = "0.3"
+log = "0.4"
+lsp-server = "0.7"
+lsp-types = { version = "0.93", features = ["proposed"] }
+num-bigint = "0.4"
+num-traits = "0.2"
+once_cell = "1"
+pico-args = "0.5"
+pretty_assertions = "1"
+pulldown-cmark = "0.9"
+rowan = "0.15"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.7"
+# language-util
 char-name.git = "https://github.com/azdavis/language-util.git"
 code-h2-md-map.git = "https://github.com/azdavis/language-util.git"
 diagnostic.git = "https://github.com/azdavis/language-util.git"
@@ -28,6 +50,8 @@ text-size-util.git = "https://github.com/azdavis/language-util.git"
 token.git = "https://github.com/azdavis/language-util.git"
 topo-sort.git = "https://github.com/azdavis/language-util.git"
 uniq.git = "https://github.com/azdavis/language-util.git"
+# sml-libs
+sml-libs.git = "https://github.com/azdavis/sml-libs.git"
 
 [profile.release]
 codegen-units = 1

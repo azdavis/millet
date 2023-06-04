@@ -10,19 +10,20 @@ test = false
 doctest = false
 
 [dependencies]
-analysis.path = "../analysis"
-anyhow = "1"
-config.path = "../config"
-crossbeam-channel = "0.5"
+anyhow.workspace = true
+crossbeam-channel.workspace = true
 diagnostic.workspace = true
 elapsed.workspace = true
 fast-hash.workspace = true
-input.path = "../input"
-log = "0.4"
-lsp-server = "0.7"
-lsp-types = { version = "0.93", features = ["proposed"] }
+log.workspace = true
+lsp-server.workspace = true
+lsp-types.workspace = true
 paths.workspace = true
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-sml-namespace.path = "../sml-namespace"
+serde_json.workspace = true
+serde.workspace = true
 text-pos.workspace = true
+
+analysis.path = "../analysis"
+config.path = "../config"
+input.path = "../input"
+sml-namespace.path = "../sml-namespace"

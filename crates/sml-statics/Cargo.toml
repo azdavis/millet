@@ -10,23 +10,24 @@ test = false
 doctest = false
 
 [dependencies]
-config.path = "../config"
-cov-mark.path = "../cov-mark"
 diagnostic.workspace = true
 elapsed.workspace = true
 fast-hash.workspace = true
 fmt-util.workspace = true
-log = "0.4"
+log.workspace = true
 paths.workspace = true
 pattern-match.workspace = true
-chain-map.path = "../chain-map"
-sml-hir.path = "../sml-hir"
-sml-path.path = "../sml-path"
-sml-namespace.path = "../sml-namespace"
-sml-symbol-kind.path = "../sml-symbol-kind"
 str-util.workspace = true
 uniq.workspace = true
+
+chain-map.path = "../chain-map"
+config.path = "../config"
+cov-mark.path = "../cov-mark"
+sml-hir.path = "../sml-hir"
+sml-namespace.path = "../sml-namespace"
+sml-path.path = "../sml-path"
 sml-statics-types.path = "../sml-statics-types"
+sml-symbol-kind.path = "../sml-symbol-kind"
 
 [features]
 sync = ["chain-map/sync", "sml-statics-types/sync", "sml-symbol-kind/sync"]

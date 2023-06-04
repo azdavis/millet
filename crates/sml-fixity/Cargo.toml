@@ -11,5 +11,5 @@ test = false
 
 [dependencies]
 fast-hash.workspace = true
-once_cell = "1"
+once_cell.workspace = true
 str-util.workspace = true

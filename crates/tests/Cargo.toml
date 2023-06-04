@@ -9,22 +9,24 @@ publish.workspace = true
 doctest = false
 
 [dev-dependencies]
-analysis = { path = "../analysis", features = ["sync"] }
-cm-syntax.path = "../cm-syntax"
-cov-mark.path = "../cov-mark"
-config.path = "../config"
 diagnostic.workspace = true
-env_logger = "0.10"
 fast-hash.workspace = true
-input.path = "../input"
-log = "0.4"
-mlb-syntax.path = "../mlb-syntax"
-once_cell = "1"
+log.workspace = true
+once_cell.workspace = true
 paths.workspace = true
-pretty_assertions = "1"
-pulldown-cmark = "0.9"
-serde_json = "1"
-slash-var-path.path = "../slash-var-path"
-sml-syntax.path = "../sml-syntax"
+pretty_assertions.workspace = true
+pulldown-cmark.workspace = true
+serde_json.workspace = true
 str-util.workspace = true
 text-pos.workspace = true
+
+# an exception to the rule, to allow for the sync feature for testing
+analysis = { path = "../analysis", features = ["sync"] }
+cm-syntax.path = "../cm-syntax"
+config.path = "../config"
+cov-mark.path = "../cov-mark"
+env_logger = "0.10"
+input.path = "../input"
+mlb-syntax.path = "../mlb-syntax"
+slash-var-path.path = "../slash-var-path"
+sml-syntax.path = "../sml-syntax"

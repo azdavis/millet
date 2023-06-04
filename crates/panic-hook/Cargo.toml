@@ -10,4 +10,4 @@ test = false
 doctest = false
 
 [dependencies]
-better-panic = "0.3"
+better-panic.workspace = true

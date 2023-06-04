@@ -11,6 +11,7 @@ doctest = false
 
 [dependencies]
 diagnostic.workspace = true
-lex-util.path = "../lex-util"
+
 cov-mark.path = "../cov-mark"
+lex-util.path = "../lex-util"
 sml-syntax.path = "../sml-syntax"

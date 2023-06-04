@@ -10,8 +10,9 @@ doctest = false
 test = false
 
 [dependencies]
-la-arena = "0.3"
+la-arena.workspace = true
 str-util.workspace = true
-sml-path.path = "../sml-path"
+
 sml-lab.path = "../sml-lab"
+sml-path.path = "../sml-path"
 sml-scon.path = "../sml-scon"

@@ -10,5 +10,5 @@ test = false
 doctest = false
 
 [dependencies]
-once_cell = "1"
 fast-hash.workspace = true
+once_cell.workspace = true

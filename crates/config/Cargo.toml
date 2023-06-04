@@ -11,6 +11,7 @@ doctest = false
 
 [dependencies]
 fast-hash.workspace = true
-serde = { version = "1", features = ["derive"] }
+serde.workspace = true
 str-util.workspace = true
+
 sml-path.path = "../sml-path"

@@ -10,12 +10,12 @@ test = false
 doctest = false
 
 [dependencies]
-rowan = "0.15"
+rowan.workspace = true
 token.workspace = true
 
 [build-dependencies]
 char-name.workspace = true
-fast-hash.workspace = true
 code-h2-md-map.workspace = true
+fast-hash.workspace = true
 identifier-case.workspace = true
 syntax-gen.workspace = true
