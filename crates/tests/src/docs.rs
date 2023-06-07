@@ -56,7 +56,8 @@ fn check_all(contents: &str) {
 fn diagnostics() {
   for entry in std::fs::read_dir(root_dir().join("docs").join("diagnostics")).unwrap() {
     let entry = entry.unwrap();
-    let contents = std::fs::read_to_string(entry.path()).unwrap();
+    let path = entry.path();
+    let contents = std::fs::read_to_string(&path).unwrap();
     check_all(&contents);
   }
 }
