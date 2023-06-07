@@ -230,13 +230,13 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
   }
   // string lit
   if b == b'"' {
-    get_string(start, st, bs);
+    get_string(st, bs);
     return SK::StringLit;
   }
   // char lit
   if b == b'#' && bs.get(st.i + 1) == Some(&b'"') {
     st.i += 1;
-    let s = get_string(start, st, bs);
+    let s = get_string(st, bs);
     if s.map_or(false, |x| x.len() != 1) {
       err(st, start, ErrorKind::WrongLenCharLit);
     }
@@ -274,10 +274,10 @@ fn go(st: &mut St, bs: &[u8]) -> SK {
   SK::Invalid
 }
 
-fn get_string(start: usize, st: &mut St, bs: &[u8]) -> Option<String> {
+fn get_string(st: &mut St, bs: &[u8]) -> Option<String> {
   let res = string::get(&mut st.i, bs);
   for (idx, e) in res.errors {
-    st.errors.push(Error { range: range(start, idx), kind: ErrorKind::String(e) });
+    st.errors.push(Error { range: range(idx, idx + 1), kind: ErrorKind::String(e) });
   }
   res.actual
 }

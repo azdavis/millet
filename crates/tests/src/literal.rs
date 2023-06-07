@@ -23,7 +23,7 @@ val _ = #""
 }
 
 #[test]
-fn int() {
+fn int_big() {
   check(
     r#"
 val _ = 123123123123123123123123132131
@@ -32,7 +32,7 @@ val _ = 123123123123123123123123132131
 }
 
 #[test]
-fn real() {
+fn real_missing_digits() {
   check(
     r#"
 val _ = 123.
@@ -42,11 +42,11 @@ val _ = 123.
 }
 
 #[test]
-fn string() {
+fn string_continuation_non_whitespace() {
   check(
     r#"
 val _ = "bad \ bad \ bad"
-(**     ^^^^^^^ non-whitespace in string continuation *)
+(**            ^ non-whitespace in string continuation *)
 "#,
   );
 }
@@ -62,11 +62,11 @@ val _ = ~0w1
 }
 
 #[test]
-fn unclosed_string() {
+fn string_unclosed() {
   check(
     r#"
 val _ = "bad
-(**     ^^^^ unclosed string literal *)
+(** + unclosed string literal *)
 "#,
   );
 }
