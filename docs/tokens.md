@@ -795,7 +795,7 @@ Can also be used to separate declarations, but this is unnecessary.
 
 Also indicates the end of input when in a REPL.
 
-Compare with `,`, which can also separate expression, but constructs tuples or lists (when used with `()` and `[]` respectively).
+Compare with `,`, which can also separate expressions, but constructs tuples or lists (when used with `()` and `[]` respectively).
 
 ## `=`
 
