@@ -116,8 +116,14 @@ impl Config {
     let parsed: config::file::Root = match toml::from_str(contents) {
       Ok(x) => x,
       Err(e) => {
+        let range = e.span().and_then(|span| {
+          let db = text_pos::PositionDb::new(contents);
+          let text_range =
+            text_size_util::TextRange::new(span.start.try_into().ok()?, span.end.try_into().ok()?);
+          db.range_utf16(text_range)
+        });
         errors.push(Error::new(
-          ErrorSource::default(),
+          ErrorSource { path: None, range },
           config_path.to_owned(),
           ErrorKind::CouldNotParseConfig(e),
         ));
