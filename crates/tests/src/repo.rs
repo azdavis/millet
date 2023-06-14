@@ -464,11 +464,7 @@ fn rs_file_comments() {
 #[test]
 fn primitives() {
   let mut lines = include_str!("../../../crates/sml-statics-types/src/def.rs").lines();
-  for line in lines.by_ref() {
-    if line.trim() == "// @primitives(start)" {
-      break;
-    }
-  }
+  lines.by_ref().find(|line| line.trim() == "// @primitives(start)").unwrap();
   let mut in_rs = Vec::<&str>::new();
   for line in lines {
     let line = line.trim();
