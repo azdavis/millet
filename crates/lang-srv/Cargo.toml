@@ -19,8 +19,8 @@ log.workspace = true
 lsp-server.workspace = true
 lsp-types.workspace = true
 paths.workspace = true
-serde_json.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 text-pos.workspace = true
 
 analysis.path = "../analysis"

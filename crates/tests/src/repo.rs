@@ -550,3 +550,50 @@ fn version() {
     assert_eq!(pkg_json_ver, github_ref_v);
   }
 }
+
+#[test]
+fn cargo_toml() {
+  for entry in std::fs::read_dir(root_dir().join("crates")).unwrap() {
+    let entry = entry.unwrap();
+    let mut path = entry.path();
+    path.push("Cargo.toml");
+    let contents = std::fs::read_to_string(&path).unwrap();
+    let mut lines = contents.lines();
+    if !lines.by_ref().any(|line| matches!(line, "[dependencies]" | "[dev-dependencies]")) {
+      continue;
+    }
+    let mut workspace = true;
+    let mut ps = Vec::<&str>::new();
+    for line in lines {
+      if line.starts_with('[') || line.ends_with("# @ignore") {
+        break;
+      }
+      if line.is_empty() {
+        workspace = false;
+        continue;
+      }
+      let (lhs, rhs) = line.split_once(" = ").unwrap();
+      let (pkg, dot_what) = lhs.split_once('.').unwrap();
+      match dot_what {
+        "path" => {
+          let mut ps_sorted = ps.clone();
+          ps_sorted.sort_unstable();
+          assert_eq!(ps, ps_sorted);
+          ps.clear();
+          workspace = false;
+          let basename = rhs.strip_prefix("\"../").unwrap().strip_suffix('\"').unwrap();
+          assert_eq!(pkg, basename);
+        }
+        "workspace" => {
+          assert!(workspace);
+          assert_eq!(rhs, "true");
+        }
+        _ => unreachable!("unknown dot_what: {dot_what}"),
+      }
+      ps.push(pkg);
+    }
+    let mut ps_sorted = ps.clone();
+    ps_sorted.sort_unstable();
+    assert_eq!(ps, ps_sorted);
+  }
+}

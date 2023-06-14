@@ -20,8 +20,7 @@ serde_json.workspace = true
 str-util.workspace = true
 text-pos.workspace = true
 
-# an exception to the rule, to allow for the sync feature for testing
-analysis = { path = "../analysis", features = ["sync"] }
+analysis = { path = "../analysis", features = ["sync"] } # @ignore
 cm-syntax.path = "../cm-syntax"
 config.path = "../config"
 cov-mark.path = "../cov-mark"
