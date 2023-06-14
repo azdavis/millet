@@ -43,7 +43,7 @@ fn check_all(contents: &str) {
         }
       }
       Event::Html(s) => {
-        if s.trim_start().starts_with("<!-- @ignore ") {
+        if s.trim().strip_prefix("<!-- @ignore ").and_then(|s| s.strip_suffix(" -->")).is_some() {
           ignore_next = true;
         }
       }
