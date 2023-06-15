@@ -35,6 +35,8 @@ pub struct SourceFile {
   pub statics_errors: Vec<sml_statics::Error>,
   /// Statics information from the file.
   pub info: sml_statics::info::Info,
+  /// The scope this file was (or should be, when updating it) static-checked under.
+  scope: sml_statics::basis::Bs,
 }
 
 /// An error.
@@ -326,7 +328,7 @@ fn get_source_file(
   ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.info.basis().clone() });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
-  let mut file = SourceFile { syntax, statics_errors: checked.errors, info };
+  let mut file = SourceFile { syntax, statics_errors: checked.errors, info, scope: scope.clone() };
   if !st.report_diagnostics {
     file.syntax.lex_errors = Vec::new();
     file.syntax.parse.errors = Vec::new();
@@ -371,4 +373,20 @@ pub fn add_all_doc_comments(
       info.add_doc(idx, doc);
     }
   }
+}
+
+/// Update a single source file.
+pub fn update_one(
+  syms_tys: &mut sml_statics_types::St,
+  lang: &Language,
+  sf: &mut SourceFile,
+  path: paths::PathId,
+  contents: &str,
+) {
+  let mut fix_env = sml_fixity::STD_BASIS.clone();
+  sf.syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, lang, contents);
+  let mode = sml_statics_types::mode::Mode::Regular(Some(path));
+  let checked =
+    sml_statics::get(syms_tys, &sf.scope, mode, &sf.syntax.lower.arenas, &sf.syntax.lower.root);
+  sf.info = checked.info;
 }

@@ -118,6 +118,17 @@ impl Analysis {
       .collect()
   }
 
+  /// Update only the give path to have the new text, not recalculating diagnostics or anything in
+  /// any other paths.
+  ///
+  /// Parses the text with the default fixity environment, so this only works if fixity-across-files
+  /// is off.
+  pub fn update_one(&mut self, input: &input::Input, path: paths::PathId) {
+    let source_file = self.source_files.get_mut(&path).expect("no source file");
+    let contents = input.sources.get(&path).expect("no contents");
+    mlb_statics::update_one(&mut self.syms_tys, &input.lang, source_file, path, contents);
+  }
+
   /// Returns a Markdown string with information about this position.
   #[must_use]
   pub fn get_md(&self, pos: WithPath<PositionUtf16>, token: bool) -> Option<(String, RangeUtf16)> {
