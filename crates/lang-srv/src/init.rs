@@ -43,7 +43,7 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
         let input = cx.get_input(&path);
         Mode::Root(Box::new(Root { path, input }))
       }
-      None => Mode::NoRoot(paths::PathMap::default()),
+      None => Mode::NoRoot,
     },
     cx,
     analysis,

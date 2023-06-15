@@ -7,15 +7,8 @@ use lsp_types::Url;
 pub(crate) enum Mode {
   /// We have a workspace root.
   Root(Box<Root>),
-  /// We have no workspace root. We track the open files.
-  NoRoot(paths::PathMap<String>),
-}
-
-impl Mode {
-  /// Replaces `self` with an empty `NoRoot` mode, and returns the old `self`.
-  pub(crate) fn take(&mut self) -> Self {
-    std::mem::replace(self, Mode::NoRoot(paths::PathMap::default()))
-  }
+  /// We have no workspace root.
+  NoRoot,
 }
 
 pub(crate) struct Root {

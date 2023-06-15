@@ -10,7 +10,7 @@ mod source_files;
 
 use paths::{PathId, PathMap, WithPath};
 use sml_statics::basis::Bs;
-use sml_statics_types::{def, display::MetaVarNames, mode::Mode};
+use sml_statics_types::{def, display::MetaVarNames};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::process::{Command, Stdio};
 use std::{error::Error, fmt, io::Write as _};
@@ -42,26 +42,6 @@ impl Analysis {
       diagnostics_options,
       source_files: PathMap::default(),
     }
-  }
-
-  /// Given the contents of one isolated file, return the diagnostics for it.
-  pub fn get_one(&mut self, contents: &str) -> Vec<Diagnostic<text_pos::RangeUtf16>> {
-    let mut fix_env = sml_fixity::STD_BASIS.clone();
-    let lang = config::lang::Language::default();
-    let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, contents);
-    let basis = self.std_basis.basis().clone();
-    let mode = Mode::Regular(None);
-    let checked =
-      sml_statics::get(&mut self.syms_tys, &basis, mode, &syntax.lower.arenas, &syntax.lower.root);
-    let mut info = checked.info;
-    mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
-    let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
-    diagnostic::source_file(
-      &file,
-      &self.syms_tys,
-      self.diagnostics_options,
-      text_pos::PositionDb::range_utf16,
-    )
   }
 
   /// Given information about many interdependent source files and their groupings, returns a

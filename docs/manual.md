@@ -31,25 +31,24 @@ Install the extension from the [VS Code marketplace][marketplace].
 
 ### On a file
 
-When VS Code is not opened onto a folder, Millet analyzes each SML file open in the editor in isolation.
+When VS Code is not opened onto a folder, Millet only provides basic analysis of individual SML files. For project-wide analysis and access to the most features, open VS Code onto a folder instead.
 
 ### On a folder
 
-Most of the time, you'll probably want to use Millet to analyze an entire SML project. After opening VS Code onto a folder containing a project, Millet will look for a "group file" directly contained that folder.
+After opening VS Code onto a folder, Millet will look for a "group file" directly contained in that folder.
 
-A "group file" is either
+A group file is either
 
 - a [ML Basis][mlb] file (`.mlb`), or
 - a [SML/NJ Compilation Manager][cm] file (`.cm`).
 
-These file types list out SML source files and other group files to organize the project.
+These files list out SML source files and other group files to organize the project.
 
 For more exotic projects, you may wish to create an optional [`millet.toml`](#millettoml).
 
-Some important notes:
+Note that a group file, or a `millet.toml` file pointing to a group file, **must** be present **directly** in the directory that you open VS Code onto. It can't be in subdirectories, because Millet will not look in subdirectories, unless you tell it to via `millet.toml`.
 
-- A group file, or a `millet.toml` file pointing to a group file, **must** be present **directly** in the directory that you open VS Code onto. It can't be in subdirectories, because Millet will not look in subdirectories, unless you tell it to via `millet.toml`.
-- If a file is not transitively reachable from the root group file, it **will not** be analyzed.
+If a file is not transitively reachable from the root group file, it **will not** be analyzed.
 
 ## Configuration
 

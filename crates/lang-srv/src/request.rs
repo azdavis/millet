@@ -104,7 +104,7 @@ fn go(st: &mut St, mut r: Request) -> ControlFlow<Result<()>, Request> {
           },
         }
       }
-      Mode::NoRoot(_) => Response::new_ok(id, None::<()>),
+      Mode::NoRoot => Response::new_ok(id, None::<()>),
     };
     st.cx.send_response(res);
     Ok(())
