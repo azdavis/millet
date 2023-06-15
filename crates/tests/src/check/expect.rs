@@ -150,9 +150,9 @@ impl fmt::Display for Kind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Kind::Hover => f.write_str("hover"),
-      Kind::Exact => f.write_str("exact"),
       Kind::Def => f.write_str("def"),
       Kind::Use => f.write_str("use"),
+      Kind::Exact => f.write_str("exact"),
       Kind::Contains => f.write_str("contains"),
     }
   }
