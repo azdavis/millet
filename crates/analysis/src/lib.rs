@@ -303,7 +303,7 @@ impl Analysis {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let mut ret = Vec::<CompletionItem>::new();
     let mut mvs = MetaVarNames::new(&self.syms_tys.tys);
-    self.bs_completions(self.std_basis.basis(), &mut mvs, &mut ret);
+    self.bs_completions(&ft.file.scope, &mut mvs, &mut ret);
     self.bs_completions(ft.file.info.basis(), &mut mvs, &mut ret);
     Some(ret)
   }

@@ -36,7 +36,7 @@ pub struct SourceFile {
   /// Statics information from the file.
   pub info: sml_statics::info::Info,
   /// The scope this file was (or should be, when updating it) static-checked under.
-  scope: sml_statics::basis::Bs,
+  pub scope: sml_statics::basis::Bs,
 }
 
 /// An error.
