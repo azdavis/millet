@@ -37,29 +37,28 @@ impl Analysis {
   #[must_use]
   pub fn new(std_basis: StdBasis, diagnostics_options: diagnostic::Options) -> Self {
     Self {
+      syms_tys: std_basis.syms_tys().clone(),
       std_basis,
       diagnostics_options,
       source_files: PathMap::default(),
-      syms_tys: sml_statics_types::St::default(),
     }
   }
 
   /// Given the contents of one isolated file, return the diagnostics for it.
-  pub fn get_one(&self, contents: &str) -> Vec<Diagnostic<text_pos::RangeUtf16>> {
+  pub fn get_one(&mut self, contents: &str) -> Vec<Diagnostic<text_pos::RangeUtf16>> {
     let mut fix_env = sml_fixity::STD_BASIS.clone();
     let lang = config::lang::Language::default();
     let syntax = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, contents);
-    let mut syms_tys = self.std_basis.syms_tys().clone();
     let basis = self.std_basis.basis().clone();
     let mode = Mode::Regular(None);
     let checked =
-      sml_statics::get(&mut syms_tys, &basis, mode, &syntax.lower.arenas, &syntax.lower.root);
+      sml_statics::get(&mut self.syms_tys, &basis, mode, &syntax.lower.arenas, &syntax.lower.root);
     let mut info = checked.info;
     mlb_statics::add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
     let file = mlb_statics::SourceFile { syntax, statics_errors: checked.errors, info };
     diagnostic::source_file(
       &file,
-      &syms_tys,
+      &self.syms_tys,
       self.diagnostics_options,
       text_pos::PositionDb::range_utf16,
     )
@@ -87,7 +86,6 @@ impl Analysis {
   where
     F: Fn(&text_pos::PositionDb, text_size_util::TextRange) -> Option<R>,
   {
-    let mut syms_tys = self.std_basis.syms_tys().clone();
     let mut basis = self.std_basis.basis().clone();
     for path in &input.lang.val {
       // TODO do not ignore failed disallow
@@ -101,7 +99,7 @@ impl Analysis {
       input.groups.iter().map(|(&path, group)| (path, &group.bas_dec)).collect();
     let res = elapsed::log("mlb_statics::get", || {
       mlb_statics::get(
-        &mut syms_tys,
+        &mut self.syms_tys,
         &input.lang,
         &basis,
         &input.sources,
@@ -110,7 +108,6 @@ impl Analysis {
       )
     });
     self.source_files = res.source_files;
-    self.syms_tys = syms_tys;
     std::iter::empty()
       .chain(res.mlb_errors.into_iter().filter_map(|err| {
         let path = err.path();
