@@ -257,7 +257,7 @@ fn get_bas_dec(
         if !cx.lang.fixity_across_files {
           fix_env = sml_fixity::Env::default();
         }
-        get_source_file(st, *path, scope, ac, fix_env, syntax);
+        get_source_file(st, *path, &scope.bs, ac, fix_env, syntax);
       }
       mlb_hir::PathKind::Group => match st.bases.get(path) {
         Some(mb) => ac.append(mb.clone()),
@@ -295,7 +295,7 @@ fn get_bas_dec(
       for path in order {
         let mut one_m_basis = MBasis::default();
         let (fix_env, syntax) = syntaxes.remove(&path).expect("path from order is in syntaxes");
-        get_source_file(st, path, &scope, &mut one_m_basis, fix_env, syntax);
+        get_source_file(st, path, &scope.bs, &mut one_m_basis, fix_env, syntax);
         scope.append(one_m_basis.clone());
         ac.append(one_m_basis);
       }
@@ -315,14 +315,14 @@ fn get_bas_dec(
 fn get_source_file(
   st: &mut St<'_>,
   path: paths::PathId,
-  scope: &MBasis,
+  scope: &sml_statics::basis::Bs,
   ac: &mut MBasis,
   fix_env: sml_fixity::Env,
   syntax: SourceFileSyntax,
 ) {
   let mode = sml_statics_types::mode::Mode::Regular(Some(path));
   let checked =
-    sml_statics::get(st.syms_tys, &scope.bs, mode, &syntax.lower.arenas, &syntax.lower.root);
+    sml_statics::get(st.syms_tys, scope, mode, &syntax.lower.arenas, &syntax.lower.root);
   ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.info.basis().clone() });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
