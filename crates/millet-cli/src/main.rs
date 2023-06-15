@@ -60,14 +60,16 @@ fn run() -> usize {
   };
   let mut store = paths::Store::new();
   let inp = input::Input::new(&fs, &mut store, &root);
-  let engine =
-    if format { config::init::FormatEngine::Naive } else { config::init::FormatEngine::None };
-  let mut an = analysis::Analysis::new(
-    analysis::StdBasis::full(),
-    config::ErrorLines::One,
-    config::init::DiagnosticsIgnore::AfterSyntax,
-    engine,
-  );
+  let options = analysis::Options {
+    lines: config::ErrorLines::One,
+    ignore: config::init::DiagnosticsIgnore::AfterSyntax,
+    format: if format {
+      config::init::FormatEngine::Naive
+    } else {
+      config::init::FormatEngine::None
+    },
+  };
+  let mut an = analysis::Analysis::new(analysis::StdBasis::full(), options);
   let got = an.get_many_text_range(&inp);
   for err in &inp.errors {
     show_input_error(root.as_path(), err);

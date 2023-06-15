@@ -30,11 +30,15 @@ impl<R> Diagnostic<R> {
   }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct Options {
-  pub(crate) lines: config::ErrorLines,
-  pub(crate) ignore: config::init::DiagnosticsIgnore,
-  pub(crate) format: config::init::FormatEngine,
+/// Options for diagnostics.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Options {
+  /// How many lines diagnostics should ideally be spread across.
+  pub lines: config::ErrorLines,
+  /// What diagnostics to ignore.
+  pub ignore: config::init::DiagnosticsIgnore,
+  /// What formatter should be used.
+  pub format: config::init::FormatEngine,
 }
 
 /// NOTE: we used to limit the max number of diagnostics per file, but now it's trickier because not

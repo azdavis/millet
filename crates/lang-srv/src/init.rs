@@ -18,12 +18,12 @@ pub(crate) fn init(init: lsp_types::InitializeParams, sender: Sender<Message>) -
       }
     })
     .unwrap_or_default();
-  let analysis = analysis::Analysis::new(
-    analysis::StdBasis::full(),
-    config::ErrorLines::Many,
-    options.diagnostics.ignore,
-    options.format,
-  );
+  let analysis_options = analysis::Options {
+    lines: config::ErrorLines::Many,
+    ignore: options.diagnostics.ignore,
+    format: options.format,
+  };
+  let analysis = analysis::Analysis::new(analysis::StdBasis::full(), analysis_options);
   let mut cx = Cx {
     options,
     registered_for_watched_files: false,

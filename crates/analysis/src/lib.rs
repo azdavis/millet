@@ -17,7 +17,7 @@ use std::{error::Error, fmt, io::Write as _};
 use text_pos::{PositionDb, PositionUtf16, RangeUtf16};
 use text_size_util::TextRange;
 
-pub use crate::diagnostic::Diagnostic;
+pub use crate::diagnostic::{Diagnostic, Options};
 pub use mlb_statics::StdBasis;
 
 /// The url to go to for information about diagnostics.
@@ -35,15 +35,10 @@ pub struct Analysis {
 impl Analysis {
   /// Returns a new `Analysis`.
   #[must_use]
-  pub fn new(
-    std_basis: StdBasis,
-    lines: config::ErrorLines,
-    ignore: config::init::DiagnosticsIgnore,
-    format: config::init::FormatEngine,
-  ) -> Self {
+  pub fn new(std_basis: StdBasis, diagnostics_options: diagnostic::Options) -> Self {
     Self {
       std_basis,
-      diagnostics_options: diagnostic::Options { lines, ignore, format },
+      diagnostics_options,
       source_files: PathMap::default(),
       syms_tys: sml_statics_types::St::default(),
     }

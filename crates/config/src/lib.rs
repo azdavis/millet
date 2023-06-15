@@ -10,9 +10,10 @@ pub mod lang;
 pub mod tool;
 
 /// How many lines an error message may have.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub enum ErrorLines {
   /// Error messages may not have newlines.
+  #[default]
   One,
   /// Error messages may (or may not) have newlines.
   Many,
