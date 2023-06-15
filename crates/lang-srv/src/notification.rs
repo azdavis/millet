@@ -25,10 +25,12 @@ fn try_update_input(
   cx: &mut Cx,
   input: &mut input::Input,
   changes: Vec<lsp_types::FileEvent>,
-) -> Result<()> {
+) -> Result<Vec<paths::PathId>> {
+  let mut ret = Vec::<paths::PathId>::with_capacity(changes.len());
   for change in changes {
     let path = convert::canonical_path_buf(&cx.fs, &change.uri)?;
     let path_id = cx.paths.get_id(&path);
+    ret.push(path_id);
     let mut entry = match input.sources.entry(path_id) {
       Entry::Occupied(x) => x,
       Entry::Vacant(_) => bail!("file {} was not a pre-existing source", path.as_path().display()),
@@ -44,7 +46,8 @@ fn try_update_input(
       bail!("unknown file change type {:?}", change.typ);
     }
   }
-  Ok(())
+  ret.shrink_to_fit();
+  Ok(ret)
 }
 
 #[allow(clippy::too_many_lines)]
@@ -53,7 +56,9 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
     match st.mode.take() {
       Mode::Root(mut root) => {
         match try_update_input(&mut st.cx, &mut root.input, params.changes) {
-          Ok(()) => {}
+          Ok(_) => {
+            // TODO use path ids
+          }
           Err(_) => root.input = st.cx.get_input(&root.path),
         }
         st.mode = Mode::Root(root);
