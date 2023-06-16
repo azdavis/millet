@@ -12,6 +12,7 @@ mod cannot_rebind;
 mod check;
 mod circularity;
 mod common;
+mod completions;
 mod datatype_copy;
 mod deviations;
 mod disallow;

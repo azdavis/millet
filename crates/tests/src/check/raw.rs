@@ -194,6 +194,9 @@ where
             }
           }
         }
+        expect::Kind::Completions => {
+          ck.reasons.push(reason::Reason::CompletionsTodo);
+        }
         expect::Kind::Exact | expect::Kind::Contains => {}
       }
     }

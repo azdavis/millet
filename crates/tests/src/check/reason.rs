@@ -16,6 +16,7 @@ pub(crate) enum Reason {
   DuplicateDef(paths::WithPath<expect::Region>, String),
   Undef(paths::WithPath<expect::Region>, String),
   NoMatchingDef(paths::WithPath<expect::Region>, String),
+  CompletionsTodo,
 }
 
 pub(crate) fn get(
@@ -51,7 +52,9 @@ fn try_region(
   match file.get(region.val) {
     None => Ok(false),
     Some(exp) => match exp.kind {
-      expect::Kind::Hover | expect::Kind::Def | expect::Kind::Use => Ok(false),
+      expect::Kind::Hover | expect::Kind::Def | expect::Kind::Use | expect::Kind::Completions => {
+        Ok(false)
+      }
       expect::Kind::Exact => {
         if exp.msg == got {
           Ok(true)

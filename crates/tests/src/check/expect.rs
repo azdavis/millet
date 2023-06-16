@@ -118,6 +118,9 @@ impl Expect {
     if let Some(msg) = msg.strip_prefix("use: ") {
       return Self { kind: Kind::Use, msg: msg.to_owned() };
     }
+    if let Some(msg) = msg.strip_prefix("completions: ") {
+      return Self { kind: Kind::Completions, msg: msg.to_owned() };
+    }
     if let Some(msg) = msg.strip_prefix("exact: ") {
       return Self { kind: Kind::Exact, msg: msg.to_owned() };
     }
@@ -140,6 +143,8 @@ pub(crate) enum Kind {
   Def,
   /// This points at a usage site for something.
   Use,
+  /// The listed completions should be available at this region.
+  Completions,
   /// There should be an error that exactly matches the given message.
   Exact,
   /// There should be an error that contains the message.
@@ -152,6 +157,7 @@ impl fmt::Display for Kind {
       Kind::Hover => f.write_str("hover"),
       Kind::Def => f.write_str("def"),
       Kind::Use => f.write_str("use"),
+      Kind::Completions => f.write_str("completions"),
       Kind::Exact => f.write_str("exact"),
       Kind::Contains => f.write_str("contains"),
     }

@@ -83,6 +83,7 @@ impl fmt::Display for Show {
           let range = r.val;
           writeln!(f, "{path}:{range}: no def here matched the def for `{d}`")?;
         }
+        reason::Reason::CompletionsTodo => writeln!(f, "completions are TODO")?,
       }
     }
     f.write_str("\n  want:")?;
