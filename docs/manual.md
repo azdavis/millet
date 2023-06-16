@@ -434,6 +434,8 @@ Millet shows things like:
 - Documentation for an item.
 - Documentation for tokens.
 
+See the section on [doc comments](#doc-comments) to provide your own documentation for items.
+
 ### Jump/peek definition
 
 In SML files, Millet allows jumping to or peeking the definition of named items, like variables.
