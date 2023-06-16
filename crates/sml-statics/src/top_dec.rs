@@ -123,17 +123,17 @@ fn get_str_dec_one(
       for sig_bind in sig_binds {
         let marker = st.syms_tys.syms.mark();
         let mut env = Env::new(st.def(str_dec.into()));
-        let should_push = match st.info.mode {
+        let add_prefix = match st.info.mode {
           Mode::Regular(_) | Mode::Dynamics => true,
           // `datatype option` is well-known
           Mode::BuiltinLib(_) => sig_bind.name.as_str() != "OPTION",
           Mode::PathOrder => false,
         };
-        if should_push {
+        if add_prefix {
           st.push_prefix(sig_bind.name.clone());
         }
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
-        if should_push {
+        if add_prefix {
           st.pop_prefix();
         }
         let sig = env_to_sig(&st.syms_tys.tys, env, marker);
