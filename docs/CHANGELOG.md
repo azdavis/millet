@@ -13,9 +13,12 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.11.0
 
 - Improve error range for TOML parse errors.
+- Do not analyze individual SML files when not open on a folder.
+- Show more accurate hover info, etc after changing a file.
+- Add support for completions.
 
 ## v0.10.1
 
