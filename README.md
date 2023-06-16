@@ -111,7 +111,7 @@ If you're using VS Code, you can try out the VS Code extension:
 
 ## Logo
 
-The logo features Polly Morphism, wearing a 15-150 style T-shirt, writing SML on a Millet-branded laptop, encircled with millet. It was drawn by [Yixin He][yixin].
+The logo features Polly Morphism, wearing a 15-150 style T-shirt, writing SML on a Millet-branded laptop, encircled with millet. [Yixin He][yixin] drew the logo.
 
 ## License
 
