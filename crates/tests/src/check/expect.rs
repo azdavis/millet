@@ -135,7 +135,7 @@ impl fmt::Display for Expect {
 }
 
 /// A kind of expectation.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum Kind {
   /// Hovering over this should show something.
   Hover,
