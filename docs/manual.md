@@ -438,6 +438,22 @@ Millet shows things like:
 
 In SML files, Millet allows jumping to or peeking the definition of named items, like variables.
 
+### Completions
+
+Millet provides completions for the current cursor location. Completions can be triggered by typing a regular name or `.` after a name. When typing `.`, Millet will traverse the existing path.
+
+In this example, Millet provides the given completions at the given cursor location.
+
+```sml
+structure Foo = struct
+  val bar = 3
+  val quz = "hi"
+end
+
+val _ = Foo.
+(**         ^ completions: bar, quz *)
+```
+
 ### Doc comments
 
 Millet allows defining documentation comments on items to be shown on hover.

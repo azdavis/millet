@@ -10,6 +10,7 @@ Millet analyzes SML code without running it, and provides information like:
 - Inline diagnostics
 - Hover for type/documentation
 - Jump to definition
+- Code completions
 - Document symbols
 - Find all references
 
