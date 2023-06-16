@@ -389,4 +389,5 @@ pub fn update_one(
   let checked =
     sml_statics::get(syms_tys, &sf.scope, mode, &sf.syntax.lower.arenas, &sf.syntax.lower.root);
   sf.info = checked.info;
+  add_all_doc_comments(sf.syntax.parse.root.syntax(), &sf.syntax.lower, &mut sf.info);
 }
