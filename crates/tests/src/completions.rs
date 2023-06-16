@@ -28,3 +28,20 @@ val _ = Foo.
 "#,
   );
 }
+
+#[test]
+fn nested() {
+  fail(
+    r#"
+structure A = struct
+  val x = 3
+  structure B = struct
+    val y = 4
+  end
+end
+
+val _ = A.B.
+(**        ^ completions: y *)
+"#,
+  );
+}
