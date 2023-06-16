@@ -1,37 +1,39 @@
 //! Tests for completions.
 
-use crate::check::fail;
+use crate::check::check;
 
 #[test]
 fn smoke() {
-  fail(
+  check(
     r#"
 val foo = 3
 
-val _ =
-(**   ^ completions: foo *)
+(**      vvv expected an expression *)
+val _ =  val
+(**     ^ completions(with-std): foo *)
 "#,
   );
 }
 
 #[test]
 fn in_struct() {
-  fail(
+  check(
     r#"
 structure Foo = struct
   val bar = 3
   val quz = "hi"
 end
 
-val _ = Foo.
-(**        ^ completions: bar, quz *)
+(**          vvv expected a name *)
+val _ = Foo. val
+(**         ^ completions: bar, quz *)
 "#,
   );
 }
 
 #[test]
 fn nested() {
-  fail(
+  check(
     r#"
 structure A = struct
   val x = 3
@@ -40,8 +42,9 @@ structure A = struct
   end
 end
 
-val _ = A.B.
-(**        ^ completions: y *)
+(**          vvv expected a name *)
+val _ = A.B. val
+(**         ^ completions: y *)
 "#,
   );
 }

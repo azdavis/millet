@@ -1,7 +1,7 @@
 //! Reasons for why a check failed.
 
 use crate::check::expect;
-use std::path::PathBuf;
+use std::{collections::BTreeSet, path::PathBuf};
 
 pub(crate) enum Reason {
   NoErrorsEmitted(usize),
@@ -16,7 +16,7 @@ pub(crate) enum Reason {
   DuplicateDef(paths::WithPath<expect::Region>, String),
   Undef(paths::WithPath<expect::Region>, String),
   NoMatchingDef(paths::WithPath<expect::Region>, String),
-  CompletionsTodo,
+  MismatchedCompletions(paths::WithPath<expect::Region>, BTreeSet<String>, BTreeSet<String>),
 }
 
 pub(crate) fn get(
@@ -52,9 +52,10 @@ fn try_region(
   match file.get(region.val) {
     None => Ok(false),
     Some(exp) => match exp.kind {
-      expect::Kind::Hover | expect::Kind::Def | expect::Kind::Use | expect::Kind::Completions => {
-        Ok(false)
-      }
+      expect::Kind::Hover
+      | expect::Kind::Def
+      | expect::Kind::Use
+      | expect::Kind::Completions { .. } => Ok(false),
       expect::Kind::Exact => {
         if exp.msg == got {
           Ok(true)

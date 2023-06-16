@@ -83,7 +83,13 @@ impl fmt::Display for Show {
           let range = r.val;
           writeln!(f, "{path}:{range}: no def here matched the def for `{d}`")?;
         }
-        reason::Reason::CompletionsTodo => writeln!(f, "completions are TODO")?,
+        reason::Reason::MismatchedCompletions(r, want, got) => {
+          let path = self.paths.get_path(r.path).as_path().display();
+          let range = r.val;
+          writeln!(f, "{path}:{range}: mismatched completions")?;
+          writeln!(f, "    - want: {want:?}")?;
+          writeln!(f, "    - got:  {got:?}")?;
+        }
       }
     }
     f.write_str("\n  want:")?;

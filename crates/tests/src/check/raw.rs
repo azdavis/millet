@@ -1,9 +1,9 @@
 //! The "raw" test runner. Usually we use various convenient shortcuts on top of this.
 
+use crate::check::{expect, input, reason, show};
 use fast_hash::FxHashMap;
 use once_cell::sync::Lazy;
-
-use crate::check::{expect, input, reason, show};
+use std::collections::BTreeSet;
 
 /// A std basis.
 #[derive(Debug, Clone, Copy)]
@@ -194,8 +194,29 @@ where
             }
           }
         }
-        expect::Kind::Completions => {
-          ck.reasons.push(reason::Reason::CompletionsTodo);
+        expect::Kind::Completions { with_std } => {
+          let pos = match region {
+            expect::Region::Exact { line, col_start, .. } => {
+              text_pos::PositionUtf16 { line, col: col_start }
+            }
+            expect::Region::Line(n) => {
+              ck.reasons.push(reason::Reason::InvalidInexact(path.wrap(n), expect.kind));
+              continue;
+            }
+          };
+          let completion_items = an.completions(path.wrap(pos)).unwrap_or_default();
+          let mut want: BTreeSet<_> = if expect.msg == "<none>" {
+            BTreeSet::new()
+          } else {
+            expect.msg.split(", ").map(ToOwned::to_owned).collect()
+          };
+          if with_std {
+            want.extend(STD_NAMES.iter().map(|&x| x.to_owned()));
+          }
+          let got: BTreeSet<_> = completion_items.into_iter().map(|x| x.label).collect();
+          if want != got {
+            ck.reasons.push(reason::Reason::MismatchedCompletions(path.wrap(region), want, got));
+          }
         }
         expect::Kind::Exact | expect::Kind::Contains => {}
       }
@@ -216,6 +237,11 @@ where
     (Outcome::Fail, true) => panic!("UNEXPECTED PASS: {ck}"),
   }
 }
+
+const STD_NAMES: [&str; 20] = [
+  "*", "+", "-", "/", "::", "<", "<=", "<>", "=", ">", ">=", "abs", "div", "false", "mod", "nil",
+  "ref", "true", "use", "~",
+];
 
 /// Returns a simple "filesystem" of a single source file and a single group file pointing to that
 /// source file.

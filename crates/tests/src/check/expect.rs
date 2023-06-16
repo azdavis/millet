@@ -119,7 +119,10 @@ impl Expect {
       return Self { kind: Kind::Use, msg: msg.to_owned() };
     }
     if let Some(msg) = msg.strip_prefix("completions: ") {
-      return Self { kind: Kind::Completions, msg: msg.to_owned() };
+      return Self { kind: Kind::Completions { with_std: false }, msg: msg.to_owned() };
+    }
+    if let Some(msg) = msg.strip_prefix("completions(with-std): ") {
+      return Self { kind: Kind::Completions { with_std: true }, msg: msg.to_owned() };
     }
     if let Some(msg) = msg.strip_prefix("exact: ") {
       return Self { kind: Kind::Exact, msg: msg.to_owned() };
@@ -144,7 +147,7 @@ pub(crate) enum Kind {
   /// This points at a usage site for something.
   Use,
   /// The listed completions should be available at this region.
-  Completions,
+  Completions { with_std: bool },
   /// There should be an error that exactly matches the given message.
   Exact,
   /// There should be an error that contains the message.
@@ -157,7 +160,13 @@ impl fmt::Display for Kind {
       Kind::Hover => f.write_str("hover"),
       Kind::Def => f.write_str("def"),
       Kind::Use => f.write_str("use"),
-      Kind::Completions => f.write_str("completions"),
+      Kind::Completions { with_std } => {
+        f.write_str("completions")?;
+        if *with_std {
+          f.write_str("(with-std)")?;
+        }
+        Ok(())
+      }
       Kind::Exact => f.write_str("exact"),
       Kind::Contains => f.write_str("contains"),
     }
