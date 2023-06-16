@@ -17,14 +17,15 @@ use diagnostic::Severity;
 /// - are always on only one line
 /// - start with `(**`
 /// - point at either:
-///   - the specific things that should have errors with `^` or `v`
-///   - lines on which an error should begin (but not necessarily end) with `+` or `-`
+///   - specific things with `^` (above) or `v` (below)
+///   - entire with `+` (above) or `-` (below)
 ///
-/// The expectation messages have a certain format:
+/// The expectation messages sometimes have a certain prefix, like `hover: ` or `exact: `. These
+/// cause the message following that prefix to have different meanings. Consult the tests or
+/// implementation to see what prefixes are available.
 ///
-/// - Error expects that must merely be **contained** have no prefix.
-/// - Error expects that must match **exactly** begin with `exact: `.
-/// - Hover expects begin with `hover: `, and the actual hover must merely contain the expectation.
+/// Without a prefix, the expectation checks to see if there is a diagnostic emitted in the marked
+/// region whose message contains the given message.
 ///
 /// To construct the string to pass without worrying about Rust string escape sequences, use the raw
 /// string syntax: `r#"..."#`.
@@ -36,8 +37,6 @@ use diagnostic::Severity;
 /// (**           ^^^ hover: info about quz *)
 /// "#);
 /// ```
-///
-/// Note that this also sets up logging.
 #[track_caller]
 pub(crate) fn check(s: &str) {
   check_multi(raw::one_file_fs(s));
