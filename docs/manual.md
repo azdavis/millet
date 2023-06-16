@@ -454,6 +454,18 @@ val _ = Foo.
 (**         ^ completions: bar, quz *)
 ```
 
+### Code action: fill case
+
+When your cursor is over the `case` or `of` keywords of a `case` expression, Millet can fill in the case with arms for each variant of the type of the head expression.
+
+### Document symbols
+
+Millet can show all the symbols in a document, and information about those symbols.
+
+### Find all references
+
+Millet supports finding references to a symbol.
+
 ### Doc comments
 
 Millet allows defining documentation comments on items to be shown on hover.
@@ -474,18 +486,6 @@ So, put `(*!` on its own line, then the doc comment in Markdown with leading `*`
 Millet allows writing `...` or `_` as a "hole" in various contexts (expression, type, declaration, etc) in SML files. They are parsed, but rejected in later stages of analysis.
 
 This allows writing "example" code that actually parses. In the case of expression holes, the error message also reports the inferred type of the hole.
-
-### Code action: fill case
-
-When your cursor is over the `case` or `of` keywords of a `case` expression, Millet can fill in the case with arms for each variant of the type of the head expression.
-
-### Document symbols
-
-Millet can show all the symbols in a document, and information about those symbols.
-
-### Find all references
-
-Millet supports finding references to a symbol.
 
 ### Formatter
 
