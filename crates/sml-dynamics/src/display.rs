@@ -207,13 +207,15 @@ impl fmt::Display for ValDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self.val {
       Val::SCon(scon) => scon.fmt(f),
-      Val::Con(con) => ConDisplay {
-        con,
-        ars: self.ars,
-        atomic: matches!(self.prec, Prec::Atomic),
-        indent: self.indent,
+      Val::Con(con) => {
+        let con = ConDisplay {
+          con,
+          ars: self.ars,
+          atomic: matches!(self.prec, Prec::Atomic),
+          indent: self.indent,
+        };
+        con.fmt(f)
       }
-      .fmt(f),
       Val::Record(rows) => {
         let is_tuple =
           rows.len() != 1 && rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
