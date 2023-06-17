@@ -50,7 +50,7 @@ fn check(s: &str) {
     if debug {
       println!("==>");
       dynamics.show_debug();
-      println!("{dynamics}");
+      println!("{dynamics:#}");
       stdin.read_line(&mut buf).expect("couldn't read");
       buf.clear();
     }

@@ -9,11 +9,13 @@ impl fmt::Display for Dynamics<'_> {
   #[allow(clippy::too_many_lines)]
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let ars = &self.cx.ars;
-    f.write_str("(* env:\n")?;
-    if let Some(frame) = self.st.frames.last() {
-      EnvDisplay { env: &frame.env, ars, indent: 0 }.fmt(f)?;
+    if f.alternate() {
+      f.write_str("(* env:\n")?;
+      if let Some(frame) = self.st.frames.last() {
+        EnvDisplay { env: &frame.env, ars, indent: 0 }.fmt(f)?;
+      }
+      f.write_str("*)\n")?;
     }
-    f.write_str("*)\n")?;
     let mut indent = 0usize;
     let mut prec = Prec::Min;
     let mut frame_prec = Vec::<Prec>::new();
@@ -183,9 +185,13 @@ enum Prec {
 }
 
 fn write_nl_indent(indent: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-  f.write_str("\n")?;
-  for _ in 0..indent {
-    f.write_str("  ")?;
+  if f.alternate() {
+    f.write_str("\n")?;
+    for _ in 0..indent {
+      f.write_str("  ")?;
+    }
+  } else {
+    f.write_str(" ")?;
   }
   Ok(())
 }
