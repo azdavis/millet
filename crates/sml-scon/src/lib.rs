@@ -2,6 +2,7 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
+use num_bigint::BigInt;
 use num_traits::Num as _;
 use std::fmt;
 use str_util::SmolStr;
@@ -45,7 +46,7 @@ pub struct Int(IntRepr);
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum IntRepr {
   Finite(i32),
-  Big(num_bigint::BigInt),
+  Big(BigInt),
 }
 
 impl fmt::Display for Int {
@@ -88,7 +89,7 @@ impl Int {
   pub fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError> {
     match i32::from_str_radix(s, radix) {
       Ok(x) => Ok(Int(IntRepr::Finite(x))),
-      Err(_) => match num_bigint::BigInt::from_str_radix(s, radix) {
+      Err(_) => match BigInt::from_str_radix(s, radix) {
         Ok(x) => Ok(Int(IntRepr::Big(x))),
         Err(e) => Err(ParseIntError(e)),
       },
