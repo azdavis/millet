@@ -49,6 +49,7 @@ fn check(s: &str) {
   loop {
     if debug {
       println!("==>");
+      dynamics.show_debug();
       println!("{dynamics}");
       stdin.read_line(&mut buf).expect("couldn't read");
       buf.clear();

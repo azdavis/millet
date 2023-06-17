@@ -43,6 +43,14 @@ impl<'a> Dynamics<'a> {
     self.step = Some(s);
     Progress::Still(self)
   }
+
+  /// Prints debug output. TODO remove
+  pub fn show_debug(&self) {
+    for frame in &self.st.frames {
+      println!("frame: {:?}", frame.kind);
+    }
+    println!("step: {:?}", self.step);
+  }
 }
 
 /// A way for the dynamics to progress.
