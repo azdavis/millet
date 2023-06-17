@@ -15,7 +15,7 @@ impl<'a> Dynamics<'a> {
   /// Returns a new dynamics for these decs, or `None` if `decs` is empty.
   #[must_use]
   pub fn new(cx: Cx<'a>, mut decs: Vec<sml_hir::DecIdx>) -> Option<Self> {
-    let mut st = St::default();
+    let mut st = St::new_with_std_basis();
     decs.reverse();
     let dec = decs.pop()?;
     st.push_with_cur_env(FrameKind::Local(decs, Vec::new()));

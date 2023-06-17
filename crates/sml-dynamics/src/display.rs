@@ -42,6 +42,10 @@ impl fmt::Display for Dynamics<'_> {
           FnDisplay { matcher, ars, indent }.fmt(f)?;
           f.write_str(") (")?;
         }
+        FrameKind::AppBuiltinArg(builtin) => {
+          f.write_str(builtin.as_str())?;
+          f.write_str(" ")?;
+        }
         FrameKind::AppConArg(kind) => {
           kind.fmt(f)?;
           f.write_str(" (")?;
@@ -84,7 +88,7 @@ impl fmt::Display for Dynamics<'_> {
     }
     for frame in self.st.frames.iter().rev() {
       match &frame.kind {
-        FrameKind::Raise => {}
+        FrameKind::Raise | FrameKind::AppBuiltinArg(_) => {}
         FrameKind::Record(is_tuple, _, _, es) => {
           f.write_str(", ")?;
           if *is_tuple {
@@ -213,6 +217,7 @@ impl fmt::Display for ValDisplay<'_> {
         }
         Ok(())
       }
+      Val::Builtin(builtin) => f.write_str(builtin.as_str()),
     }
   }
 }

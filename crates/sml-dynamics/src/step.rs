@@ -1,7 +1,9 @@
 //! Stepping a stack machine.
 
 use crate::pat_match;
-use crate::types::{Closure, Con, ConKind, Cx, Env, Frame, FrameKind, St, Step, Val, ValEnv};
+use crate::types::{
+  Builtin, Closure, Con, ConKind, Cx, Env, Frame, FrameKind, St, Step, Val, ValEnv,
+};
 use fast_hash::FxHashSet;
 use sml_hir::Lab;
 use sml_statics_types::info::IdStatus;
@@ -24,7 +26,9 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         }
         IdStatus::Val => {
           let env = st.env.get(path.prefix()).expect("no prefix");
-          (Step::Val(env.val[path.last()].clone()), true)
+          let val = env.val[path.last()].clone();
+          let is_builtin = matches!(val, Val::Builtin(_));
+          (Step::Val(val), !is_builtin)
         }
       },
       sml_hir::Exp::Record(exp_rows) => {
@@ -56,7 +60,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
       }
       sml_hir::Exp::Raise(exp) => {
         // don't care about the env for raise
-        st.frames.push(Frame::new(Env::default(), FrameKind::Raise));
+        st.frames.push(Frame::new(Env::empty(), FrameKind::Raise));
         (Step::exp(*exp), false)
       }
       sml_hir::Exp::Fn(matcher, _) => {
@@ -98,6 +102,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
             st.push_with_cur_env(FrameKind::AppConArg(con.kind));
             (Step::exp(arg), false)
           }
+          Val::Builtin(b) => {
+            st.push_with_cur_env(FrameKind::AppBuiltinArg(b));
+            (Step::exp(arg), false)
+          }
           _ => unreachable!("AppFunc not Closure or Con"),
         },
         FrameKind::AppClosureArg(matcher) => {
@@ -111,6 +119,20 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           }
           (Step::Raise(cx.match_exn()), true)
         }
+        FrameKind::AppBuiltinArg(builtin) => match builtin {
+          Builtin::Add => {
+            let [x, y] = val.unwrap_pair().map(Val::unwrap_scon);
+            let res = match (x, y) {
+              // TODO raise for overflow
+              (sml_hir::SCon::Int(x), sml_hir::SCon::Int(y)) => sml_hir::SCon::Int(x + y),
+              (sml_hir::SCon::Real(x), sml_hir::SCon::Real(y)) => sml_hir::SCon::Real(x + y),
+              // TODO raise for overflow
+              (sml_hir::SCon::Word(x), sml_hir::SCon::Word(y)) => sml_hir::SCon::Word(x + y),
+              _ => unreachable!("bad scon types"),
+            };
+            (Step::Val(Val::SCon(res)), true)
+          }
+        },
         FrameKind::AppConArg(kind) => {
           (Step::Val(Val::Con(Con { kind, arg: Some(Box::new(val)) })), false)
         }
@@ -213,6 +235,7 @@ fn step_dec(st: &mut St) -> (Step, bool) {
       FrameKind::Record(_, _, _, _)
       | FrameKind::AppFunc(_)
       | FrameKind::AppClosureArg(_)
+      | FrameKind::AppBuiltinArg(_)
       | FrameKind::AppConArg(_)
       | FrameKind::Raise
       | FrameKind::Handle(_)

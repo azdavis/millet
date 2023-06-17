@@ -72,6 +72,16 @@ fn check(s: &str) {
 }
 
 #[test]
+fn builtin_add() {
+  check(
+    r#"
+val inc = fn x => 1 + x
+val three = inc 2
+"#,
+  );
+}
+
+#[test]
 fn nat_add() {
   check(
     r#"

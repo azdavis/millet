@@ -64,6 +64,23 @@ impl From<i32> for Int {
   }
 }
 
+impl std::ops::Add for Int {
+  type Output = Int;
+
+  fn add(self, rhs: Self) -> Self::Output {
+    let repr = match (self.0, rhs.0) {
+      (IntRepr::Finite(x), IntRepr::Finite(y)) => match x.checked_add(y) {
+        Some(z) => IntRepr::Finite(z),
+        None => IntRepr::Big(BigInt::from(x) + BigInt::from(y)),
+      },
+      (IntRepr::Big(x), IntRepr::Big(y)) => IntRepr::Big(x + y),
+      (IntRepr::Finite(x), IntRepr::Big(y)) => IntRepr::Big(BigInt::from(x) + y),
+      (IntRepr::Big(x), IntRepr::Finite(y)) => IntRepr::Big(x + BigInt::from(y)),
+    };
+    Self(repr)
+  }
+}
+
 impl std::ops::Mul<i32> for Int {
   type Output = Int;
 
