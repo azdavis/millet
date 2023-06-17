@@ -81,7 +81,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         FrameKind::Record(is_tuple, mut val_rows, lab, mut exp_rows) => {
           assert!(val_rows.insert(lab, val).is_none());
           match exp_rows.pop() {
-            None => (Step::Val(Val::Record(val_rows)), true),
+            None => (Step::Val(Val::Record(val_rows)), false),
             Some((lab, exp)) => {
               st.env = frame.env;
               st.push_with_cur_env(FrameKind::Record(is_tuple, val_rows, lab, exp_rows));
