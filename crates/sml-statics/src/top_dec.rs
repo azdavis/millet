@@ -247,7 +247,25 @@ fn get_str_exp(
           realize::get_env(&mut st.syms_tys.tys, &subst, &mut to_add);
           enrich::get_env(st, idx, &str_exp_env, &to_add);
         }
-        Mode::BuiltinLib(_) | Mode::PathOrder => {}
+        Mode::BuiltinLib(_) => {
+          // @test(hover::doc::std_basis_structure)
+          //
+          // this changes the def for `struct end :> SIG` or `struct end : SIG`, specifically in
+          // builtin lib files, which is a pattern we use to "conjure up" structures that ascribe to
+          // the sig.
+          //
+          // this, in conjunction with some extra hackery for "name" signature expressions (like
+          // `SIG`) in builtin lib files, lets us get the docs on the signature for that "conjured"
+          // structure as well.
+          if let Some(sml_hir::StrExp::Struct(decs)) = inner_str_exp.map(|x| &ars.str_exp[x]) {
+            if let Some(sml_hir::SigExp::Name(_)) = sig_exp.map(|x| &ars.sig_exp[x]) {
+              if decs.is_empty() {
+                ac.def = to_add.def;
+              }
+            }
+          }
+        }
+        Mode::PathOrder => {}
       }
       if matches!(asc, sml_hir::Ascription::Opaque) {
         subst.clear();
@@ -362,6 +380,10 @@ fn get_sig_exp(
       realize::get_env(&mut st.syms_tys.tys, &subst, &mut sig_env);
       if let Some(def) = sig.env.def {
         st.info.entries.defs.sig_exp.insert(sig_exp, def);
+        // @test(hover::doc::std_basis_structure)
+        if matches!(st.info.mode, Mode::BuiltinLib(_)) {
+          ac.def = sig_env.def;
+        }
       }
       ac.append(&mut sig_env);
       match st.info.mode {

@@ -102,3 +102,13 @@ val _ = List.Empty
 "#,
   );
 }
+
+#[test]
+fn std_basis_structure() {
+  check_with_std_basis(
+    r#"
+structure L = List
+(**           ^^^^ hover: a collection of utility functions for manipulating polymorphic lists *)
+"#,
+  );
+}
