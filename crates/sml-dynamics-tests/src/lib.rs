@@ -2,11 +2,12 @@
 
 #![cfg(test)]
 #![deny(clippy::pedantic, rust_2018_idioms)]
+#![allow(clippy::too_many_lines)]
 
 use std::io::BufRead as _;
 
 #[allow(dead_code)]
-fn check(s: &str) {
+fn check(s: &str, steps: &[&str]) {
   let mut fix_env = sml_fixity::STD_BASIS.clone();
   let lang = config::lang::Language::default();
   let sf = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, s);
@@ -46,6 +47,8 @@ fn check(s: &str) {
   let mut stdin = std::io::stdin().lock();
   let mut buf = String::new();
   let debug = std::env::var_os("MILLET_DEBUG").map_or(false, |x| x == "1");
+  let use_steps = std::env::var_os("MILLET_STEPS").map_or(false, |x| x == "1");
+  let mut steps = steps.iter();
   loop {
     if debug {
       println!("==>");
@@ -53,6 +56,11 @@ fn check(s: &str) {
       println!("{dynamics:#}");
       stdin.read_line(&mut buf).expect("couldn't read");
       buf.clear();
+    }
+    if use_steps {
+      let want = rm_whitespace(steps.next().expect("missing step").trim());
+      let got = rm_whitespace(&dynamics.to_string());
+      pretty_assertions::assert_str_eq!(want, got);
     }
     match dynamics.step() {
       sml_dynamics::Progress::Still(d) => dynamics = d,
@@ -70,6 +78,13 @@ fn check(s: &str) {
       }
     }
   }
+  if use_steps {
+    assert!(steps.next().is_none());
+  }
+}
+
+fn rm_whitespace(s: &str) -> String {
+  s.replace(char::is_whitespace, "")
 }
 
 #[test]
@@ -79,6 +94,7 @@ fn builtin_add() {
 val inc = fn x => 1 + x
 val three = inc 2
 "#,
+    &[],
   );
 }
 
@@ -95,5 +111,148 @@ fun add a b =
 
 val five = add (S (S Z)) (S (S (S Z)))
 "#,
+    &[
+      r#"
+local
+
+datatype ...
+
+val rec add = fn '0 => fn '1 =>
+  (fn (a, b) =>
+    (fn
+      Z => b
+    | S a => S (add a b)
+    ) a
+  ) ('0, '1)
+
+val five = add
+  (S (S Z))
+  (S (S (S Z)))
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  (
+    fn '0 => fn '1 =>
+    (fn (a, b) =>
+      (fn
+        Z => b
+      | S a => S (add a b)
+      ) a
+    ) ('0, '1)
+  )
+  (S (S Z))
+  (S (S (S Z)))
+
+in end
+"#,
+      // lazy substitution
+      r#"
+local
+
+val five =
+  (
+    fn '1 =>
+    (fn (a, b) =>
+      (fn
+        Z => b
+      | S a => S (add a b)
+      ) a
+    ) ('0, '1)
+  )
+  (S (S (S Z)))
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  (fn (a, b) =>
+    (fn
+      Z => b
+    | S a => S (add a b)
+    ) a
+  ) ('0, '1)
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  (fn (a, b) =>
+    (fn
+      Z => b
+    | S a => S (add a b)
+    ) a
+  ) (S (S Z), '1)
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  (fn (a, b) =>
+    (fn
+      Z => b
+    | S a => S (add a b)
+    ) a
+  ) (S (S Z), S (S (S Z)))
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  (fn
+    Z => b
+  | S a => S (add a b)
+  ) a
+
+in end
+"#,
+      // TODO
+      r#"
+local
+
+val five =
+  (fn
+    Z => b
+  | S a => S (add a b)
+  ) (S (S Z))
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  S (add a b)
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  S (add (S Z) b)
+
+in end
+"#,
+      r#"
+local
+
+val five =
+  S (add (S Z) (S (S (S Z))))
+
+in end
+"#,
+    ],
   );
 }

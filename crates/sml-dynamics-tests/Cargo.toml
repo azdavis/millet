@@ -9,6 +9,7 @@ publish.workspace = true
 doctest = false
 
 [dev-dependencies]
+pretty_assertions.workspace = true
 str-util.workspace = true
 
 config.path = "../config"

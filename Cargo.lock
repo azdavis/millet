@@ -943,6 +943,7 @@ name = "sml-dynamics-tests"
 version = "0.11.1"
 dependencies = [
  "config",
+ "pretty_assertions",
  "sml-dynamics",
  "sml-file-syntax",
  "sml-fixity",
