@@ -100,11 +100,12 @@ fn sync() {
 #[test]
 fn test_refs() {
   let mut cmd = root_cmd("git");
-  let out = output(cmd.args(["grep", "-hoE", "@test\\(([a-z0-9_:]+)\\)"]));
+  let out = output(cmd.args(["grep", "-hoE", "@test\\(([^)]+)\\)"]));
+  let split = "@TEST(".to_ascii_lowercase();
   let referenced: BTreeSet<_> = out
     .lines()
     .filter_map(|line| {
-      let (_, inner) = line.split_once("@test(")?;
+      let (_, inner) = line.split_once(split.as_str())?;
       let (name, _) = inner.split_once(')')?;
       Some(name)
     })
