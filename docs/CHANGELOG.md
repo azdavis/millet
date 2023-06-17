@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.11.1
 
 - Show doc comments when changing a file.
 - Show doc comments on built-in structures.
