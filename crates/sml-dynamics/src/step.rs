@@ -25,7 +25,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           (Step::Val(Val::Con(Con::empty(path.last().clone(), ConKind::Exn(except)))), false)
         }
         IdStatus::Val => {
-          let env = st.env.get(path.prefix()).expect("no prefix");
+          let env = st.env.get(path.prefix()).expect("no env");
           let val = env.val[path.last()].clone();
           let visible = match &val {
             Val::SCon(_) | Val::Record(_) | Val::Closure(_) => true,
