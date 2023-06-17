@@ -72,7 +72,7 @@ fn check(s: &str) {
 }
 
 #[test]
-fn smoke() {
+fn nat_add() {
   check(
     r#"
 datatype nat = Z | S of nat
