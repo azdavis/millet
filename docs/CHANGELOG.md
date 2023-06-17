@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Show doc comments when changing a file.
+- Show doc comments on built-in structures.
+
 ## v0.11.0
 
 - Improve error range for TOML parse errors.
