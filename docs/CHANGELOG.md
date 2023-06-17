@@ -17,6 +17,7 @@ The versioning system is basically the following:
 
 - Show doc comments when changing a file.
 - Show doc comments on built-in structures.
+- Improve completions when the cursor is at the end of the file.
 
 ## v0.11.0
 

@@ -20,19 +20,24 @@ pub(crate) fn file_and_token(
 ) -> Option<FileAndToken<'_>> {
   let file = source_files.get(&pos.path)?;
   let offset = file.syntax.pos_db.text_size_utf16(pos.val)?;
-  if !file.syntax.parse.root.syntax().text_range().contains(offset) {
-    return None;
-  }
-  let token = match file.syntax.parse.root.syntax().token_at_offset(offset) {
-    TokenAtOffset::None => return None,
-    TokenAtOffset::Single(t) => t,
-    TokenAtOffset::Between(t1, t2) => {
-      if priority(t1.kind()) >= priority(t2.kind()) {
-        t1
-      } else {
-        t2
+  let syntax = file.syntax.parse.root.syntax();
+  let tr = syntax.text_range();
+  let token = if tr.end() == offset {
+    syntax.last_token()?
+  } else if tr.contains(offset) {
+    match syntax.token_at_offset(offset) {
+      TokenAtOffset::None => return None,
+      TokenAtOffset::Single(t) => t,
+      TokenAtOffset::Between(t1, t2) => {
+        if priority(t1.kind()) >= priority(t2.kind()) {
+          t1
+        } else {
+          t2
+        }
       }
     }
+  } else {
+    return None;
   };
   Some(FileAndToken { file, token })
 }
