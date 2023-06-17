@@ -96,7 +96,9 @@ impl fmt::Display for Dynamics<'_> {
       match &frame.kind {
         FrameKind::Raise | FrameKind::AppBuiltinArg(_) => {}
         FrameKind::Record(is_tuple, _, _, es) => {
-          f.write_str(", ")?;
+          if !es.is_empty() {
+            f.write_str(", ")?;
+          }
           if *is_tuple {
             let rows = es.iter().map(|&(_, exp)| ExpDisplay { exp, ars, prec: Prec::Min, indent });
             fmt_util::comma_seq(f, rows.into_iter())?;
