@@ -19,10 +19,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
       sml_hir::Exp::SCon(scon) => (Step::Val(Val::SCon(scon.clone())), false),
       sml_hir::Exp::Path(path) => match cx.exp[exp] {
         IdStatus::Con => {
-          (Step::Val(Val::Con(Con::empty(ConKind::Dat(path.last().clone())))), false)
+          (Step::Val(Val::Con(Con::empty(path.last().clone(), ConKind::Dat))), false)
         }
         IdStatus::Exn(except) => {
-          (Step::Val(Val::Con(Con::empty(ConKind::Exn(path.last().clone(), except)))), false)
+          (Step::Val(Val::Con(Con::empty(path.last().clone(), ConKind::Exn(except)))), false)
         }
         IdStatus::Val => {
           let env = st.env.get(path.prefix()).expect("no prefix");
@@ -99,7 +99,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           Val::Con(con) => {
             assert!(con.arg.is_none(), "Con already has arg");
             st.env = frame.env;
-            st.push_with_cur_env(FrameKind::AppConArg(con.kind));
+            st.push_with_cur_env(FrameKind::AppConArg(con.name, con.kind));
             (Step::exp(arg), false)
           }
           Val::Builtin(b) => {
@@ -133,8 +133,8 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
             (Step::Val(Val::SCon(res)), true)
           }
         },
-        FrameKind::AppConArg(kind) => {
-          (Step::Val(Val::Con(Con { kind, arg: Some(Box::new(val)) })), false)
+        FrameKind::AppConArg(name, kind) => {
+          (Step::Val(Val::Con(Con { name, kind, arg: Some(Box::new(val)) })), false)
         }
         FrameKind::Raise => match val {
           Val::Con(con) => {
@@ -236,7 +236,7 @@ fn step_dec(st: &mut St) -> (Step, bool) {
       | FrameKind::AppFunc(_)
       | FrameKind::AppClosureArg(_)
       | FrameKind::AppBuiltinArg(_)
-      | FrameKind::AppConArg(_)
+      | FrameKind::AppConArg(_, _)
       | FrameKind::Raise
       | FrameKind::Handle(_)
       | FrameKind::ValBind(_, _, _) => unreachable!("bad surrounding frame for Dec"),

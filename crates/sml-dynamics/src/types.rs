@@ -59,19 +59,20 @@ pub(crate) struct Closure {
 
 #[derive(Debug, Clone)]
 pub(crate) enum ConKind {
-  Dat(Name),
-  Exn(Name, Exn),
+  Dat,
+  Exn(Exn),
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct Con {
+  pub(crate) name: Name,
   pub(crate) kind: ConKind,
   pub(crate) arg: Option<Box<Val>>,
 }
 
 impl Con {
-  pub(crate) fn empty(kind: ConKind) -> Self {
-    Self { kind, arg: None }
+  pub(crate) fn empty(name: Name, kind: ConKind) -> Self {
+    Self { name, kind, arg: None }
   }
 }
 
@@ -133,15 +134,15 @@ impl TryFrom<Con> for Exception {
   fn try_from(con: Con) -> Result<Self, Self::Error> {
     let arg = con.arg;
     match con.kind {
-      ConKind::Dat(name) => Err((name, arg)),
-      ConKind::Exn(name, exn) => Ok(Self { name, exn, arg }),
+      ConKind::Dat => Err((con.name, arg)),
+      ConKind::Exn(exn) => Ok(Self { name: con.name, exn, arg }),
     }
   }
 }
 
 impl From<Exception> for Con {
   fn from(exn: Exception) -> Self {
-    Con { kind: ConKind::Exn(exn.name, exn.exn), arg: exn.arg }
+    Con { name: exn.name, kind: ConKind::Exn(exn.exn), arg: exn.arg }
   }
 }
 
@@ -164,7 +165,7 @@ pub(crate) enum FrameKind {
   AppFunc(sml_hir::ExpIdx),
   AppClosureArg(Vec<sml_hir::Arm>),
   AppBuiltinArg(Builtin),
-  AppConArg(ConKind),
+  AppConArg(Name, ConKind),
   Raise,
   Handle(Vec<sml_hir::Arm>),
   Let(Vec<sml_hir::DecIdx>, sml_hir::ExpIdx),

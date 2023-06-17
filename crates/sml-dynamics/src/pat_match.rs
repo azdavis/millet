@@ -9,14 +9,8 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
   match (&cx.ars.pat[pat], val) {
     (sml_hir::Pat::Wild, _) => true,
     (sml_hir::Pat::Con(path, pat_arg), _) => match &cx.pat[pat] {
-      IdStatus::Con => {
-        let con_kind = ConKind::Dat(path.last().clone());
-        get_con(ac, cx, con_kind, *pat_arg, val)
-      }
-      IdStatus::Exn(exn) => {
-        let con_kind = ConKind::Exn(path.last().clone(), *exn);
-        get_con(ac, cx, con_kind, *pat_arg, val)
-      }
+      IdStatus::Con => get_con(ac, cx, path.last(), ConKind::Dat, *pat_arg, val),
+      IdStatus::Exn(exn) => get_con(ac, cx, path.last(), ConKind::Exn(*exn), *pat_arg, val),
       IdStatus::Val => {
         assert!(path.prefix().is_empty());
         assert!(pat_arg.is_none());
@@ -72,7 +66,8 @@ pub(crate) fn get(ac: &mut ValEnv, cx: Cx<'_>, pat: sml_hir::PatIdx, val: &Val) 
 fn get_con(
   ac: &mut ValEnv,
   cx: Cx<'_>,
-  con_kind: ConKind,
+  name: &str_util::Name,
+  kind: ConKind,
   pat_arg: Option<sml_hir::PatIdx>,
   val: &Val,
 ) -> bool {
@@ -80,10 +75,10 @@ fn get_con(
     Val::Con(x) => x,
     _ => unreachable!("match Con with non-Con"),
   };
-  let same_con = match (con_kind, &con.kind) {
-    (ConKind::Dat(d1), ConKind::Dat(d2)) => d1 == *d2,
-    (ConKind::Exn(_, e1), ConKind::Exn(_, e2)) => e1 == *e2,
-    (ConKind::Dat(_), ConKind::Exn(_, _)) | (ConKind::Exn(_, _), ConKind::Dat(_)) => false,
+  let same_con = match (kind, &con.kind) {
+    (ConKind::Dat, ConKind::Dat) => *name == con.name,
+    (ConKind::Exn(e1), ConKind::Exn(e2)) => e1 == *e2,
+    (ConKind::Dat, ConKind::Exn(_)) | (ConKind::Exn(_), ConKind::Dat) => false,
   };
   if !same_con {
     return false;

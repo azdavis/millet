@@ -1,7 +1,7 @@
 //! Displaying some types.
 
 use crate::dynamics::Dynamics;
-use crate::types::{Con, ConKind, Env, Exception, FrameKind, Step, Val};
+use crate::types::{Con, Env, Exception, FrameKind, Step, Val};
 use sml_hir::Lab;
 use std::fmt;
 
@@ -53,8 +53,8 @@ impl fmt::Display for Dynamics<'_> {
           f.write_str(builtin.as_str())?;
           f.write_str(" ")?;
         }
-        FrameKind::AppConArg(kind) => {
-          kind.fmt(f)?;
+        FrameKind::AppConArg(name, _) => {
+          name.fmt(f)?;
           f.write_str(" ")?;
           prec = Prec::App;
         }
@@ -101,7 +101,7 @@ impl fmt::Display for Dynamics<'_> {
         FrameKind::Raise
         | FrameKind::AppClosureArg(_)
         | FrameKind::AppBuiltinArg(_)
-        | FrameKind::AppConArg(_) => {}
+        | FrameKind::AppConArg(_, _) => {}
         FrameKind::Record(is_tuple, _, _, es) => {
           if !es.is_empty() {
             f.write_str(", ")?;
@@ -567,7 +567,7 @@ impl fmt::Display for ConDisplay<'_> {
     if needs_paren {
       f.write_str("(")?;
     }
-    self.con.kind.fmt(f)?;
+    self.con.name.fmt(f)?;
     if let Some(val) = &self.con.arg {
       f.write_str(" ")?;
       ValDisplay { val: val.as_ref(), ars: self.ars, prec: Prec::Atomic, indent: self.indent }
@@ -577,14 +577,6 @@ impl fmt::Display for ConDisplay<'_> {
       f.write_str(")")?;
     }
     Ok(())
-  }
-}
-
-impl fmt::Display for ConKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      ConKind::Dat(name) | ConKind::Exn(name, _) => name.fmt(f),
-    }
   }
 }
 
