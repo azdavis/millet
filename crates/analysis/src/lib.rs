@@ -138,7 +138,8 @@ impl Analysis {
       Some((ptr, idx)) => {
         ty_md = ft.file.info.get_ty_md(&self.syms_tys, idx);
         parts.extend(ty_md.as_deref());
-        parts.extend(ft.file.info.get_defs(idx).into_iter().filter_map(|def| self.get_doc(def)));
+        let defs = ft.file.info.get_defs(idx);
+        parts.extend(defs.into_iter().filter_map(|def| self.get_doc(def)));
         ptr.text_range()
       }
       None => ft.token.text_range(),
