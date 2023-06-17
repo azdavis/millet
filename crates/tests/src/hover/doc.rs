@@ -1,6 +1,6 @@
 //! Test for getting documentation on hover.
 
-use crate::check::{check, fail};
+use crate::check::{check, check_with_std_basis, fail};
 
 #[test]
 fn val() {
@@ -91,4 +91,14 @@ val _ = false
 "#,
   );
   cov_mark::check("primitive_doc");
+}
+
+#[test]
+fn std_basis() {
+  check_with_std_basis(
+    r#"
+val _ = List.Empty
+(**          ^^^^^ hover: indicates that an empty list was given as an argument *)
+"#,
+  );
 }
