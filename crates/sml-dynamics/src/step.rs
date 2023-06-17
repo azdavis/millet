@@ -27,8 +27,12 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         IdStatus::Val => {
           let env = st.env.get(path.prefix()).expect("no prefix");
           let val = env.val[path.last()].clone();
-          let is_builtin = matches!(val, Val::Builtin(_));
-          (Step::Val(val), !is_builtin)
+          let visible = match &val {
+            Val::SCon(_) | Val::Record(_) | Val::Closure(_) => true,
+            Val::Builtin(_) => false,
+            Val::Con(con) => !path.prefix().is_empty() || path.last() != &con.name,
+          };
+          (Step::Val(val), visible)
         }
       },
       sml_hir::Exp::Record(exp_rows) => {
