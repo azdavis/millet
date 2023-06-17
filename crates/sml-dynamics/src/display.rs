@@ -44,7 +44,8 @@ impl fmt::Display for Dynamics<'_> {
         FrameKind::AppClosureArg(matcher) => {
           f.write_str("(")?;
           FnDisplay { matcher, ars, indent }.fmt(f)?;
-          f.write_str(") (")?;
+          f.write_str(") ")?;
+          prec = Prec::App;
         }
         FrameKind::AppBuiltinArg(builtin) => {
           f.write_str(builtin.as_str())?;
@@ -52,7 +53,8 @@ impl fmt::Display for Dynamics<'_> {
         }
         FrameKind::AppConArg(kind) => {
           kind.fmt(f)?;
-          f.write_str(" (")?;
+          f.write_str(" ")?;
+          prec = Prec::App;
         }
         FrameKind::Raise => f.write_str("raise ")?,
         FrameKind::Let(_, _) => {
@@ -94,7 +96,10 @@ impl fmt::Display for Dynamics<'_> {
       // TODO use?
       frame_prec.pop().unwrap();
       match &frame.kind {
-        FrameKind::Raise | FrameKind::AppBuiltinArg(_) => {}
+        FrameKind::Raise
+        | FrameKind::AppClosureArg(_)
+        | FrameKind::AppBuiltinArg(_)
+        | FrameKind::AppConArg(_) => {}
         FrameKind::Record(is_tuple, _, _, es) => {
           if !es.is_empty() {
             f.write_str(", ")?;
@@ -109,7 +114,6 @@ impl fmt::Display for Dynamics<'_> {
             f.write_str(" }")?;
           }
         }
-        FrameKind::AppClosureArg(_) | FrameKind::AppConArg(_) => f.write_str(")")?,
         FrameKind::AppFunc(exp) => {
           f.write_str(" ")?;
           ExpDisplay { exp: *exp, ars, prec: Prec::Atomic, indent }.fmt(f)?;
