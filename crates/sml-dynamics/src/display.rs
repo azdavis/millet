@@ -214,16 +214,31 @@ impl fmt::Display for ValDisplay<'_> {
         indent: self.indent,
       }
       .fmt(f),
-      Val::Record(vs) => {
-        f.write_str("{ ")?;
-        let rows = vs.iter().map(|(lab, val)| ValRowDisplay {
-          lab,
-          val,
-          ars: self.ars,
-          indent: self.indent,
-        });
-        fmt_util::comma_seq(f, rows)?;
-        f.write_str(" }")
+      Val::Record(rows) => {
+        let is_tuple =
+          rows.len() != 1 && rows.iter().enumerate().all(|(idx, (lab, _))| Lab::tuple(idx) == *lab);
+        if is_tuple {
+          f.write_str("(")?;
+          let rows = rows.iter().map(|(_, val)| ValDisplay {
+            val,
+            ars: self.ars,
+            prec: Prec::Min,
+            indent: self.indent,
+          });
+          fmt_util::comma_seq(f, rows)?;
+          f.write_str(")")?;
+        } else {
+          f.write_str("{ ")?;
+          let rows = rows.iter().map(|(lab, val)| ValRowDisplay {
+            lab,
+            val,
+            ars: self.ars,
+            indent: self.indent,
+          });
+          fmt_util::comma_seq(f, rows)?;
+          f.write_str(" }")?;
+        }
+        Ok(())
       }
       Val::Closure(clos) => {
         let needs_paren = matches!(self.prec, Prec::App | Prec::Matcher | Prec::Atomic);
