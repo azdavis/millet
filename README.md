@@ -2,6 +2,8 @@
 
 A [language server][lang-srv] for [Standard ML][sml] (SML).
 
+You can install the [VS Code][vscode] extension [here][marketplace].
+
 ![Millet logo](./editors/vscode/icon.png)
 
 Millet analyzes SML code without running it, and provides information like:
