@@ -173,6 +173,7 @@ pub(crate) enum FrameKind {
   ValBind(bool, sml_hir::PatIdx, Vec<sml_hir::ValBind>),
   Local(Vec<sml_hir::DecIdx>, Vec<sml_hir::DecIdx>),
   In(Vec<sml_hir::DecIdx>),
+  Seq(Vec<sml_hir::DecIdx>),
 }
 
 /// A context under which we run dynamics.

@@ -113,8 +113,6 @@ val five = add (S (S Z)) (S (S (S Z)))
 "#,
     &[
       r#"
-local
-
 datatype ...
 
 val rec add = fn '0 => fn '1 =>
@@ -128,12 +126,8 @@ val rec add = fn '0 => fn '1 =>
 val five = add
   (S (S Z))
   (S (S (S Z)))
-
-in end
 "#,
       r#"
-local
-
 val five =
   (
     fn '0 => fn '1 =>
@@ -146,13 +140,9 @@ val five =
   )
   (S (S Z))
   (S (S (S Z)))
-
-in end
 "#,
       // lazy substitution
       r#"
-local
-
 val five =
   (
     fn '1 =>
@@ -164,12 +154,8 @@ val five =
     ) ('0, '1)
   )
   (S (S (S Z)))
-
-in end
 "#,
       r#"
-local
-
 val five =
   (fn (a, b) =>
     (fn
@@ -177,12 +163,8 @@ val five =
     | S a => S (add a b)
     ) a
   ) ('0, '1)
-
-in end
 "#,
       r#"
-local
-
 val five =
   (fn (a, b) =>
     (fn
@@ -190,12 +172,8 @@ val five =
     | S a => S (add a b)
     ) a
   ) (S (S Z), '1)
-
-in end
 "#,
       r#"
-local
-
 val five =
   (fn (a, b) =>
     (fn
@@ -203,55 +181,33 @@ val five =
     | S a => S (add a b)
     ) a
   ) (S (S Z), S (S (S Z)))
-
-in end
 "#,
       r#"
-local
-
 val five =
   (fn
     Z => b
   | S a => S (add a b)
   ) a
-
-in end
 "#,
       // TODO
       r#"
-local
-
 val five =
   (fn
     Z => b
   | S a => S (add a b)
   ) (S (S Z))
-
-in end
 "#,
       r#"
-local
-
 val five =
   S (add a b)
-
-in end
 "#,
       r#"
-local
-
 val five =
   S (add (S Z) b)
-
-in end
 "#,
       r#"
-local
-
 val five =
   S (add (S Z) (S (S (S Z))))
-
-in end
 "#,
     ],
   );

@@ -25,7 +25,7 @@ impl fmt::Display for Dynamics<'_> {
         FrameKind::AppFunc(_) => {
           prec = Prec::Matcher;
         }
-        FrameKind::Handle(_) => {}
+        FrameKind::Handle(_) | FrameKind::Seq(_) => {}
         FrameKind::Record(is_tuple, vs, lab, _) => {
           if *is_tuple {
             f.write_str("(")?;
@@ -167,6 +167,12 @@ impl fmt::Display for Dynamics<'_> {
           indent -= 1;
           write_nl_indent(indent, f)?;
           f.write_str("end")?;
+        }
+        FrameKind::Seq(decs) => {
+          for &dec in decs.iter().rev() {
+            write_nl_indent(indent, f)?;
+            DecDisplay { dec, ars, indent }.fmt(f)?;
+          }
         }
       }
     }
