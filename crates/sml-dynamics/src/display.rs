@@ -18,9 +18,7 @@ impl fmt::Display for Dynamics<'_> {
     }
     let mut indent = 0usize;
     let mut prec = Prec::Min;
-    let mut frame_prec = Vec::<Prec>::new();
     for frame in &self.st.frames {
-      frame_prec.push(prec);
       match &frame.kind {
         FrameKind::AppFunc(_) => {
           prec = Prec::Matcher;
@@ -95,8 +93,6 @@ impl fmt::Display for Dynamics<'_> {
       Step::DecDone => {}
     }
     for frame in self.st.frames.iter().rev() {
-      // TODO use?
-      frame_prec.pop().unwrap();
       match &frame.kind {
         FrameKind::Raise
         | FrameKind::AppClosureArg(_)
@@ -176,7 +172,6 @@ impl fmt::Display for Dynamics<'_> {
         }
       }
     }
-    assert!(frame_prec.is_empty());
     Ok(())
   }
 }
