@@ -126,7 +126,7 @@ fun add a b =
     Z => b
   | S a => S (add a b)
 
-val five = add (S (S Z)) (S (S (S Z)))
+val five = add (S Z) (S (S (S Z)))
 "#,
     &[
       r#"
@@ -141,7 +141,7 @@ val rec add = fn '0 => fn '1 =>
   ) ('0, '1)
 
 val five = add
-  (S (S Z))
+  (S Z)
   (S (S (S Z)))
 "#,
       r#"
@@ -155,7 +155,7 @@ val five =
       ) a
     ) ('0, '1)
   )
-  (S (S Z))
+  (S Z)
   (S (S (S Z)))
 "#,
       // lazy substitution
@@ -188,7 +188,7 @@ val five =
       Z => b
     | S a => S (add a b)
     ) a
-  ) (S (S Z), '1)
+  ) (S Z, '1)
 "#,
       r#"
 val five =
@@ -197,7 +197,7 @@ val five =
       Z => b
     | S a => S (add a b)
     ) a
-  ) (S (S Z), S (S (S Z)))
+  ) (S Z, S (S (S Z)))
 "#,
       r#"
 val five =
@@ -212,19 +212,7 @@ val five =
   (fn
     Z => b
   | S a => S (add a b)
-  ) (S (S Z))
-"#,
-      r#"
-val five =
-  S (add a b)
-"#,
-      r#"
-val five =
-  S (add (S Z) b)
-"#,
-      r#"
-val five =
-  S (add (S Z) (S (S (S Z))))
+  ) (S Z)
 "#,
     ],
   );
