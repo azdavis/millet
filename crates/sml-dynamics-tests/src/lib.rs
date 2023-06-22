@@ -94,7 +94,24 @@ fn builtin_add() {
 val inc = fn x => 1 + x
 val three = inc 2
 "#,
-    &[],
+    &[
+      r#"
+val inc = fn x => + (1, x)
+val three = inc 2
+"#,
+      r#"
+val three = (fn x => + (1, x)) 2
+"#,
+      r#"
+val three = + (1, x)
+"#,
+      r#"
+val three = + (1, 2)
+"#,
+      r#"
+val three = 3
+"#,
+    ],
   );
 }
 
