@@ -125,7 +125,7 @@ fn get_str_dec_one(
         let mut env = Env::new(st.def(str_dec.into()));
         let add_prefix = match st.info.mode {
           Mode::Regular(_) | Mode::Dynamics => true,
-          // `datatype option` is well-known
+          // `datatype 'a option` is well-known
           Mode::BuiltinLib(_) => sig_bind.name.as_str() != "OPTION",
           Mode::PathOrder => false,
         };
