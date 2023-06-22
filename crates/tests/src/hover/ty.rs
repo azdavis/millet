@@ -102,3 +102,83 @@ fun swap (a, b) = (b, a)
 "#,
   );
 }
+
+#[test]
+fn transparent_alias() {
+  check(
+    r#"
+signature SIG = sig
+  type t
+  val x : t
+end
+
+structure Str : SIG = struct
+  type t = unit
+  val x = ()
+end
+
+val _ = Str.x
+(**         ^ hover: unit *)
+"#,
+  );
+}
+
+#[test]
+fn transparent_datatype() {
+  check(
+    r#"
+signature SIG = sig
+  type t
+  val x : t
+end
+
+structure Str : SIG = struct
+  datatype t = D
+  val x = D
+end
+
+val _ = Str.x
+(**         ^ hover: Str.t *)
+"#,
+  );
+}
+
+#[test]
+fn opaque_alias() {
+  fail(
+    r#"
+signature SIG = sig
+  type t
+  val x : t
+end
+
+structure Str :> SIG = struct
+  type t = unit
+  val x = ()
+end
+
+val _ = Str.x
+(**         ^ hover: Str.t *)
+"#,
+  );
+}
+
+#[test]
+fn opaque_datatype() {
+  fail(
+    r#"
+signature SIG = sig
+  type t
+  val x : t
+end
+
+structure Str :> SIG = struct
+  datatype t = D
+  val x = D
+end
+
+val _ = Str.x
+(**         ^ hover: Str.t *)
+"#,
+  );
+}
