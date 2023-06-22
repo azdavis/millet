@@ -107,8 +107,25 @@ impl<'a> St<'a> {
     self.cur_prefix.pop().expect("no matching push_structure");
   }
 
+  // returns whether given the current mode and prefix, a type should be reported unqualified.
+  fn is_well_known_prefix(&self) -> bool {
+    match self.info.mode {
+      Mode::BuiltinLib(_) => {}
+      Mode::Regular(_) | Mode::PathOrder | Mode::Dynamics => return false,
+    }
+    let prefix = match &self.cur_prefix[..] {
+      [x] => x,
+      _ => return false,
+    };
+    prefix.as_str() == "Option"
+  }
+
   pub(crate) fn mk_path(&self, last: str_util::Name) -> sml_path::Path {
-    sml_path::Path::new(self.cur_prefix.iter().cloned(), last)
+    if self.is_well_known_prefix() {
+      sml_path::Path::one(last)
+    } else {
+      sml_path::Path::new(self.cur_prefix.iter().cloned(), last)
+    }
   }
 
   pub(crate) fn finish(&mut self) -> Vec<Error> {

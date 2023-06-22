@@ -123,19 +123,9 @@ fn get_str_dec_one(
       for sig_bind in sig_binds {
         let marker = st.syms_tys.syms.mark();
         let mut env = Env::new(st.def(str_dec.into()));
-        let add_prefix = match st.info.mode {
-          Mode::Regular(_) | Mode::Dynamics => true,
-          // `datatype 'a option` is well-known
-          Mode::BuiltinLib(_) => sig_bind.name.as_str() != "OPTION",
-          Mode::PathOrder => false,
-        };
-        if add_prefix {
-          st.push_prefix(sig_bind.name.clone());
-        }
+        st.push_prefix(sig_bind.name.clone());
         get_sig_exp(st, bs, ars, &mut env, sig_bind.sig_exp);
-        if add_prefix {
-          st.pop_prefix();
-        }
+        st.pop_prefix();
         let sig = env_to_sig(&st.syms_tys.tys, env, marker);
         if let Some(e) = ins_no_dupe(&mut sig_env, sig_bind.name.clone(), sig, Item::Sig) {
           st.err(str_dec, e);

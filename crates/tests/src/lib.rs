@@ -52,3 +52,4 @@ mod ty_var;
 mod unused;
 mod use_builtin;
 mod val_rec;
+mod well_known;
