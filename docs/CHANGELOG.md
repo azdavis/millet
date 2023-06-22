@@ -13,6 +13,12 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.11.2
+
+- Improve range and examples for wrong number of patterns error.
+- Report qualified type names with the structure instead of signature.
+- Report array and vector types unqualified.
+
 ## v0.11.1
 
 - Show doc comments when changing a file.
