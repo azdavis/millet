@@ -117,7 +117,7 @@ impl<'a> St<'a> {
       [x] => x,
       _ => return false,
     };
-    prefix.as_str() == "Option"
+    matches!(prefix.as_str(), "Option" | "Array" | "Vector")
   }
 
   pub(crate) fn mk_path(&self, last: str_util::Name) -> sml_path::Path {

@@ -11,3 +11,23 @@ val () = SOME ()
 "#,
   );
 }
+
+#[test]
+fn array() {
+  check_with_std_basis(
+    r#"
+val () = Array.array (1, ())
+(** + expected `unit`, found `unit array` *)
+"#,
+  );
+}
+
+#[test]
+fn vector() {
+  check_with_std_basis(
+    r#"
+val () = Vector.fromList [()]
+(** + expected `unit`, found `unit vector` *)
+"#,
+  );
+}
