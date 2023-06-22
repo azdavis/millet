@@ -14,7 +14,7 @@ fn env_var_enabled(s: &str) -> bool {
 fn check(s: &str, steps: &[&str]) {
   let show_debug = env_var_enabled("MILLET_SHOW_DEBUG");
   let manually_advance = env_var_enabled("MILLET_MANUALLY_ADVANCE");
-  let check_steps = env_var_enabled("MILLET_CHECK_STEPS");
+  let check_steps = !env_var_enabled("MILLET_NO_CHECK_STEPS");
   let mut fix_env = sml_fixity::STD_BASIS.clone();
   let lang = config::lang::Language::default();
   let sf = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, s);
@@ -86,7 +86,9 @@ fn check(s: &str, steps: &[&str]) {
     }
   }
   if check_steps {
-    assert!(steps.next().is_none());
+    if let Some(step) = steps.next() {
+      panic!("extra step: {step}");
+    }
   }
 }
 
