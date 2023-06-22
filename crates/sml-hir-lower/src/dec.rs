@@ -557,10 +557,8 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
             None => num_pats = Some(pats.len()),
             Some(num_pats) => {
               if num_pats != pats.len() {
-                st.err(
-                  case.syntax().text_range(),
-                  ErrorKind::FunBindWrongNumPats(num_pats, pats.len()),
-                );
+                let tr = pats_text_range(&case).unwrap_or_else(|| case.syntax().text_range());
+                st.err(tr, ErrorKind::FunBindWrongNumPats(num_pats, pats.len()));
               }
             }
           }
@@ -726,6 +724,19 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
     }
   };
   Some(st.dec(ret, ptr))
+}
+
+fn pats_text_range(case: &ast::FunBindCase) -> Option<sml_syntax::rowan::TextRange> {
+  let mut pats = case.pats();
+  let first = pats.next()?;
+  let mut last = pats.next()?;
+  loop {
+    last = match pats.next() {
+      Some(x) => x,
+      None => break,
+    }
+  }
+  Some(first.syntax().text_range().cover(last.syntax().text_range()))
 }
 
 fn dat_binds<I>(st: &mut St<'_>, iter: I) -> Vec<sml_hir::DatBind>
