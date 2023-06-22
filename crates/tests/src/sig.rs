@@ -246,9 +246,8 @@ end
 val _ = Add.add Add.zero Add.zero
 val _ = Mul.add Mul.zero Mul.zero
 
-(* TODO improve this error message *)
 val _ = Mul.add Mul.zero Add.zero
-(**                      ^^^^^^^^ expected `MONOID.t`, found `MONOID.t` *)
+(**                      ^^^^^^^^ expected `Mul.t`, found `Add.t` *)
 "#,
   );
 }
@@ -278,7 +277,7 @@ end
 val _ = A.bar A.foo = B.bar B.foo
 
 val _ = A.bar B.foo
-(**           ^^^^^ expected `SIG.t`, found `SIG.t` *)
+(**           ^^^^^ expected `A.t`, found `B.t` *)
 "#,
   );
 }
@@ -309,7 +308,7 @@ val _ = inc S.foo
 
 val _ = A.bar A.foo
 val _ = A.bar 123
-(**           ^^^ expected `SIG.t`, found `int` *)
+(**           ^^^ expected `A.t`, found `int` *)
 "#,
   );
 }
@@ -342,7 +341,7 @@ val _ = inc S.foo
 val _ = A.bar A.foo
 val _ = B.bar B.foo
 val _ = B.bar A.foo
-(**           ^^^^^ expected `SIG.t`, found `SIG.t` *)
+(**           ^^^^^ expected `B.t`, found `A.t` *)
 "#,
   );
 }
@@ -370,7 +369,7 @@ structure C:> SIG = Str
 structure D:> SIG = Str
 
 val _ = D.x: C.t
-(**     ^^^^^^^^ expected `SIG.t`, found `SIG.t` *)
+(**     ^^^^^^^^ expected `C.t`, found `D.t` *)
 "#,
   );
 }
@@ -391,7 +390,7 @@ end
 
 val _: S.t = S.x
 val _ = S.x: int
-(**     ^^^^^^^^ expected `int`, found `SIG.t` *)
+(**     ^^^^^^^^ expected `int`, found `S.t` *)
 "#,
   );
 }
@@ -452,7 +451,7 @@ fn where_in_functor() {
     r#"
 signature T = sig type t end
 functor Id (X : T) :> T where type t = int = X
-(**                                          ^ expected `int`, found `T.t` *)
+(**                                          ^ expected `int`, found `t` *)
 "#,
   );
 }
@@ -852,7 +851,7 @@ end
 
 structure Quz
   :> QUZ where type F.foo = Foo.foo where type B.bar = Bar.bar
-(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `FOO.foo` *)
+(**  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot realize type `B.bar` as `Foo.foo` *)
   =  struct structure F = Foo structure B = Bar end
 "#,
   );

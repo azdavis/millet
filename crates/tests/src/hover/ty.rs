@@ -145,7 +145,7 @@ val _ = Str.x
 
 #[test]
 fn opaque_alias() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t
@@ -165,7 +165,7 @@ val _ = Str.x
 
 #[test]
 fn opaque_datatype() {
-  fail(
+  check(
     r#"
 signature SIG = sig
   type t

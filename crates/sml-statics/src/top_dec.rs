@@ -414,7 +414,7 @@ fn gen_fresh_syms(st: &mut St<'_>, subst: &mut realize::TyRealization, ty_names:
     let sym_info = st.syms_tys.syms.get(sym).unwrap();
     let mut ty_info = sym_info.ty_info.clone();
     let equality = sym_info.equality;
-    let started = st.syms_tys.syms.start(sym_info.path.clone());
+    let started = st.syms_tys.syms.start(st.mk_path(sym_info.path.last().clone()));
     let bound_vars = ty_info.ty_scheme.bound_vars.clone();
     let ty_scheme = n_ary_con(&mut st.syms_tys.tys, bound_vars, started.sym());
     ty_info.ty_scheme = ty_scheme.clone();
