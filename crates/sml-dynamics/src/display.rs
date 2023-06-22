@@ -18,9 +18,14 @@ impl fmt::Display for Dynamics<'_> {
     }
     let mut indent = 0usize;
     let mut prec = Prec::Min;
+    let mut frame_prec = Vec::with_capacity(self.st.frames.len());
     for frame in &self.st.frames {
+      frame_prec.push(prec);
       match &frame.kind {
         FrameKind::AppFunc(_) => {
+          if matches!(prec, Prec::Atomic) {
+            f.write_str("(")?;
+          }
           prec = Prec::Matcher;
         }
         FrameKind::Handle(_) | FrameKind::Seq(_) => {}
@@ -40,23 +45,39 @@ impl fmt::Display for Dynamics<'_> {
             lab.fmt(f)?;
             f.write_str(" = ")?;
           }
+          prec = Prec::Min;
         }
         FrameKind::AppClosureArg(matcher) => {
+          if matches!(prec, Prec::Atomic) {
+            f.write_str("(")?;
+          }
           f.write_str("(")?;
           FnDisplay { matcher, ars, indent }.fmt(f)?;
           f.write_str(") ")?;
-          prec = Prec::App;
+          prec = Prec::Atomic;
         }
         FrameKind::AppBuiltinArg(builtin) => {
+          if matches!(prec, Prec::Atomic) {
+            f.write_str("(")?;
+          }
           f.write_str(builtin.as_str())?;
           f.write_str(" ")?;
+          prec = Prec::Atomic;
         }
         FrameKind::AppConArg(name, _) => {
+          if matches!(prec, Prec::Atomic) {
+            f.write_str("(")?;
+          }
           name.fmt(f)?;
           f.write_str(" ")?;
-          prec = Prec::App;
+          prec = Prec::Atomic;
         }
-        FrameKind::Raise => f.write_str("raise ")?,
+        FrameKind::Raise => {
+          if matches!(prec, Prec::Atomic) {
+            f.write_str("(")?;
+          }
+          f.write_str("raise ")?;
+        }
         FrameKind::Let(_, _) => {
           f.write_str("let")?;
           indent += 1;
@@ -69,6 +90,7 @@ impl fmt::Display for Dynamics<'_> {
           }
           PatDisplay { pat: *pat, ars, atomic: false }.fmt(f)?;
           f.write_str(" = ")?;
+          prec = Prec::Min;
         }
         FrameKind::Local(_, _) => {
           f.write_str("local")?;
@@ -93,11 +115,16 @@ impl fmt::Display for Dynamics<'_> {
       Step::DecDone => {}
     }
     for frame in self.st.frames.iter().rev() {
+      let prec = frame_prec.pop().unwrap();
       match &frame.kind {
         FrameKind::Raise
         | FrameKind::AppClosureArg(_)
         | FrameKind::AppBuiltinArg(_)
-        | FrameKind::AppConArg(_, _) => {}
+        | FrameKind::AppConArg(_, _) => {
+          if matches!(prec, Prec::Atomic) {
+            f.write_str(")")?;
+          }
+        }
         FrameKind::Record(is_tuple, _, _, es) => {
           if !es.is_empty() {
             f.write_str(", ")?;
@@ -115,6 +142,9 @@ impl fmt::Display for Dynamics<'_> {
         FrameKind::AppFunc(exp) => {
           f.write_str(" ")?;
           ExpDisplay { exp: *exp, ars, prec: Prec::Atomic, indent }.fmt(f)?;
+          if matches!(prec, Prec::Atomic) {
+            f.write_str(")")?;
+          }
         }
         FrameKind::Handle(matcher) => {
           f.write_str(" handle")?;
@@ -172,6 +202,7 @@ impl fmt::Display for Dynamics<'_> {
         }
       }
     }
+    assert!(frame_prec.is_empty());
     Ok(())
   }
 }

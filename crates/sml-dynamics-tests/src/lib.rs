@@ -133,7 +133,7 @@ fun add a b =
     Z => b
   | S a => S (add a b)
 
-val five = add (S Z) (S (S (S Z)))
+val four = add (S Z) (S (S (S Z)))
 "#,
     &[
       r#"
@@ -147,12 +147,12 @@ val rec add = fn '0 => fn '1 =>
     ) a
   ) ('0, '1)
 
-val five = add
+val four = add
   (S Z)
   (S (S (S Z)))
 "#,
       r#"
-val five =
+val four =
   (
     fn '0 => fn '1 =>
     (fn (a, b) =>
@@ -167,7 +167,7 @@ val five =
 "#,
       // lazy substitution
       r#"
-val five =
+val four =
   (
     fn '1 =>
     (fn (a, b) =>
@@ -180,7 +180,7 @@ val five =
   (S (S (S Z)))
 "#,
       r#"
-val five =
+val four =
   (fn (a, b) =>
     (fn
       Z => b
@@ -189,7 +189,7 @@ val five =
   ) ('0, '1)
 "#,
       r#"
-val five =
+val four =
   (fn (a, b) =>
     (fn
       Z => b
@@ -198,7 +198,7 @@ val five =
   ) (S Z, '1)
 "#,
       r#"
-val five =
+val four =
   (fn (a, b) =>
     (fn
       Z => b
@@ -207,19 +207,143 @@ val five =
   ) (S Z, S (S (S Z)))
 "#,
       r#"
-val five =
+val four =
   (fn
     Z => b
   | S a => S (add a b)
   ) a
 "#,
-      // TODO
       r#"
-val five =
+val four =
   (fn
     Z => b
   | S a => S (add a b)
   ) (S Z)
+"#,
+      r#"
+val four =
+  S (add a b)
+"#,
+      r#"
+val four =
+  S (
+      (
+        fn '0 => fn '1 =>
+        (fn (a, b) =>
+          (fn
+            Z => b
+          | S a => S (add a b)
+          ) a
+      ) ('0, '1)
+    )
+    a
+    b
+  )
+"#,
+      r#"
+val four =
+  S (
+      (
+        fn '0 => fn '1 =>
+        (fn (a, b) =>
+          (fn
+            Z => b
+          | S a => S (add a b)
+          ) a
+      ) ('0, '1)
+    )
+    Z
+    b
+  )
+"#,
+      r#"
+val four =
+  S (
+      (
+        fn '1 =>
+        (fn (a, b) =>
+          (fn
+            Z => b
+          | S a => S (add a b)
+          ) a
+      ) ('0, '1)
+    )
+    b
+  )
+"#,
+      r#"
+val four =
+  S (
+      (
+        fn '1 =>
+        (fn (a, b) =>
+          (fn
+            Z => b
+          | S a => S (add a b)
+          ) a
+      ) ('0, '1)
+    )
+    (S (S (S Z)))
+  )
+"#,
+      r#"
+val four =
+  S (
+    (fn (a, b) =>
+      (fn
+        Z => b
+      | S a => S (add a b)
+      ) a
+    ) ('0, '1)
+  )
+"#,
+      r#"
+val four =
+  S (
+    (fn (a, b) =>
+      (fn
+        Z => b
+      | S a => S (add a b)
+      ) a
+    ) (Z, '1)
+  )
+"#,
+      r#"
+val four =
+  S (
+    (fn (a, b) =>
+      (fn
+        Z => b
+      | S a => S (add a b)
+      ) a
+    ) (Z, S (S (S Z)))
+  )
+"#,
+      r#"
+val four =
+  S (
+    (fn
+      Z => b
+    | S a => S (add a b)
+    ) a
+  )
+"#,
+      r#"
+val four =
+  S (
+    (fn
+      Z => b
+    | S a => S (add a b)
+    ) Z
+  )
+"#,
+      r#"
+val four =
+  S b
+"#,
+      r#"
+val four =
+  S (S (S (S Z)))
 "#,
     ],
   );
