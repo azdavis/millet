@@ -6,8 +6,15 @@
 
 use std::io::BufRead as _;
 
+fn env_var_enabled(s: &str) -> bool {
+  std::env::var_os(s).map_or(false, |x| x == "1")
+}
+
 #[allow(dead_code)]
 fn check(s: &str, steps: &[&str]) {
+  let show_debug = env_var_enabled("MILLET_SHOW_DEBUG");
+  let manually_advance = env_var_enabled("MILLET_MANUALLY_ADVANCE");
+  let check_steps = env_var_enabled("MILLET_CHECK_STEPS");
   let mut fix_env = sml_fixity::STD_BASIS.clone();
   let lang = config::lang::Language::default();
   let sf = sml_file_syntax::SourceFileSyntax::new(&mut fix_env, &lang, s);
@@ -46,18 +53,18 @@ fn check(s: &str, steps: &[&str]) {
   let mut dynamics = sml_dynamics::Dynamics::new(cx, decs).expect("no decs");
   let mut stdin = std::io::stdin().lock();
   let mut buf = String::new();
-  let debug = std::env::var_os("MILLET_DEBUG").map_or(false, |x| x == "1");
-  let use_steps = std::env::var_os("MILLET_STEPS").map_or(false, |x| x == "1");
   let mut steps = steps.iter();
   loop {
-    if debug {
+    if show_debug {
       println!("==>");
       dynamics.show_debug();
       println!("{dynamics:#}");
+    }
+    if manually_advance {
       stdin.read_line(&mut buf).expect("couldn't read");
       buf.clear();
     }
-    if use_steps {
+    if check_steps {
       let want = rm_whitespace(steps.next().expect("missing step").trim());
       let got = rm_whitespace(&dynamics.to_string());
       pretty_assertions::assert_str_eq!(want, got);
@@ -65,20 +72,20 @@ fn check(s: &str, steps: &[&str]) {
     match dynamics.step() {
       sml_dynamics::Progress::Still(d) => dynamics = d,
       sml_dynamics::Progress::Done => {
-        if debug {
+        if show_debug {
           println!("done");
         }
         break;
       }
       sml_dynamics::Progress::Raise => {
-        if debug {
+        if show_debug {
           println!("raised an exception");
         }
         break;
       }
     }
   }
-  if use_steps {
+  if check_steps {
     assert!(steps.next().is_none());
   }
 }
