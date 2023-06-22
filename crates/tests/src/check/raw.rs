@@ -34,6 +34,8 @@ pub(crate) enum Limit {
   None,
   /// Only check the first.
   First,
+  /// Limit all, i.e. check no errors.
+  All,
 }
 
 /// What we expect the input to be.
@@ -121,6 +123,7 @@ where
   let errors: Vec<_> = match opts.limit {
     Limit::None => iter.collect(),
     Limit::First => iter.take(1).collect(),
+    Limit::All => Vec::new(),
   };
   let mut defs = FxHashMap::<&str, expect::Region>::default();
   for (&path, file) in &ck.files {

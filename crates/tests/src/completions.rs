@@ -1,6 +1,6 @@
 //! Tests for completions.
 
-use crate::check::check;
+use crate::check::{check, raw};
 
 #[test]
 fn smoke() {
@@ -47,4 +47,20 @@ val _ = A.B. val
 (**         ^ completions: y *)
 "#,
   );
+}
+
+#[test]
+fn eof() {
+  let sml = r#"
+val a = 1 and b = 2 and c = 3
+(**     v completions(with-std): a, b, c *)
+val _ = "#;
+  let opts = raw::Opts {
+    std_basis: raw::StdBasis::Minimal,
+    outcome: raw::Outcome::Pass,
+    limit: raw::Limit::All,
+    min_severity: diagnostic::Severity::Error,
+    expected_input: raw::ExpectedInput::Good,
+  };
+  raw::get(raw::one_file_fs(sml), opts);
 }
