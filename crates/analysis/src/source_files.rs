@@ -22,22 +22,19 @@ pub(crate) fn file_and_token(
   let offset = file.syntax.pos_db.text_size_utf16(pos.val)?;
   let syntax = file.syntax.parse.root.syntax();
   let tr = syntax.text_range();
-  let token = if tr.end() == offset {
-    syntax.last_token()?
-  } else if tr.contains(offset) {
-    match syntax.token_at_offset(offset) {
-      TokenAtOffset::None => return None,
-      TokenAtOffset::Single(t) => t,
-      TokenAtOffset::Between(t1, t2) => {
-        if priority(t1.kind()) >= priority(t2.kind()) {
-          t1
-        } else {
-          t2
-        }
+  if !tr.contains_inclusive(offset) {
+    return None;
+  }
+  let token = match syntax.token_at_offset(offset) {
+    TokenAtOffset::None => return None,
+    TokenAtOffset::Single(t) => t,
+    TokenAtOffset::Between(t1, t2) => {
+      if priority(t1.kind()) >= priority(t2.kind()) {
+        t1
+      } else {
+        t2
       }
     }
-  } else {
-    return None;
   };
   Some(FileAndToken { file, token })
 }
