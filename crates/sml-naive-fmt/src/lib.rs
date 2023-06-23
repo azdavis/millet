@@ -572,7 +572,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       path(st, exp.path()?)?;
     }
     ast::Exp::RecordExp(exp) => {
-      st.write("{");
+      st.write("{ ");
       sep(st, ", ", exp.exp_rows(), |st, row| {
         st.write(row.lab()?.token.text());
         if let Some(eq_exp) = row.eq_exp() {
@@ -581,7 +581,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
         }
         Some(())
       })?;
-      st.write("}");
+      st.write(" }");
     }
     ast::Exp::SelectorExp(exp) => {
       st.write("#");
@@ -752,7 +752,7 @@ fn get_pat(st: &mut St, pat: ast::Pat) -> Res {
       }
     }
     ast::Pat::RecordPat(pat) => {
-      st.write("{");
+      st.write("{ ");
       sep(st, ", ", pat.pat_rows(), |st, row| {
         match row.pat_row_inner()? {
           ast::PatRowInner::RestPatRow(_) => st.write("..."),
@@ -772,7 +772,7 @@ fn get_pat(st: &mut St, pat: ast::Pat) -> Res {
         }
         Some(())
       })?;
-      st.write("}");
+      st.write(" }");
     }
     ast::Pat::ParenPat(pat) => {
       st.write("(");
@@ -826,13 +826,13 @@ fn get_ty(st: &mut St, ty: ast::Ty) -> Res {
     ast::Ty::WildcardTy(_) => st.write("_"),
     ast::Ty::TyVarTy(ty) => st.write(ty.ty_var()?.text()),
     ast::Ty::RecordTy(ty) => {
-      st.write("{");
+      st.write("{ ");
       sep(st, ", ", ty.ty_rows(), |st, row| {
         st.write(row.lab()?.token.text());
         st.write(" : ");
         get_ty(st, row.ty()?)
       })?;
-      st.write("}");
+      st.write(" }");
     }
     ast::Ty::ConTy(ty) => {
       if let Some(ty_seq) = ty.ty_seq() {
