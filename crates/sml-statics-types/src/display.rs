@@ -42,6 +42,13 @@ impl TyScheme {
   }
 }
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum TyPrec {
+  Arrow,
+  Star,
+  App,
+}
+
 #[derive(Clone, Copy)]
 struct TyDisplayCx<'a> {
   bound_vars: Option<&'a BoundTyVars>,
@@ -149,13 +156,6 @@ impl fmt::Display for TyDisplay<'_> {
     }
     Ok(())
   }
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum TyPrec {
-  Arrow,
-  Star,
-  App,
 }
 
 struct RowDisplay<'a> {
