@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.11.3
+
+- Show big record types across multiple lines in some cases.
+
 ## v0.11.2
 
 - Improve range and examples for wrong number of patterns error.
