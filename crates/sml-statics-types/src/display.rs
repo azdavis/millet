@@ -166,10 +166,10 @@ struct RowDisplay<'a> {
 
 impl fmt::Display for RowDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    fmt::Display::fmt(self.lab, f)?;
+    self.lab.fmt(f)?;
     f.write_str(" : ")?;
     let td = TyDisplay { cx: self.cx, ty: self.ty, prec: TyPrec::Arrow };
-    fmt::Display::fmt(&td, f)
+    td.fmt(f)
   }
 }
 
