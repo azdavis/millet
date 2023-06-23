@@ -20,6 +20,7 @@ paths.workspace = true
 str-util.workspace = true
 
 chain-map.path = "../chain-map"
+config.path = "../config"
 cov-mark.path = "../cov-mark"
 sml-hir.path = "../sml-hir"
 sml-path.path = "../sml-path"

@@ -267,7 +267,7 @@ impl Info {
       }
       let mut mvs = MetaVarNames::new(&st.tys);
       mvs.extend_for(ty_entry.ty);
-      let ty = ty_entry.ty.display(&mvs, &st.syms);
+      let ty = ty_entry.ty.display(&mvs, &st.syms, config::ErrorLines::One);
       Some((pat, format!(" : {ty})")))
     })
   }
@@ -298,12 +298,12 @@ impl fmt::Display for TyEntryDisplay<'_> {
     writeln!(f, "```sml")?;
     if let Some(ty_scheme) = &self.ty_entry.ty_scheme {
       mvs.extend_for(ty_scheme.ty);
-      let ty_scheme = ty_scheme.display(&mvs, &self.st.syms);
+      let ty_scheme = ty_scheme.display(&mvs, &self.st.syms, config::ErrorLines::Many);
       writeln!(f, "(* most general *)")?;
       writeln!(f, "{ty_scheme}")?;
       writeln!(f, "(* this usage *)")?;
     }
-    let ty = self.ty_entry.ty.display(&mvs, &self.st.syms);
+    let ty = self.ty_entry.ty.display(&mvs, &self.st.syms, config::ErrorLines::Many);
     writeln!(f, "{ty}")?;
     writeln!(f, "```")?;
     Ok(())
@@ -337,7 +337,7 @@ fn env_syms(
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Type,
-      detail: Some(ty_info.ty_scheme.display(mvs, &st.syms).to_string()),
+      detail: Some(ty_info.ty_scheme.display(mvs, &st.syms, config::ErrorLines::Many).to_string()),
       idx,
       children: Vec::new(),
     })
@@ -345,7 +345,7 @@ fn env_syms(
   ac.extend(env.val_env.iter().flat_map(|(name, val_info)| {
     mvs.clear();
     mvs.extend_for(val_info.ty_scheme.ty);
-    let detail = val_info.ty_scheme.display(mvs, &st.syms).to_string();
+    let detail = val_info.ty_scheme.display(mvs, &st.syms, config::ErrorLines::Many).to_string();
     val_info.defs.iter().filter_map(move |&def| {
       let idx = def_idx(path, def)?;
       Some(DocumentSymbol {

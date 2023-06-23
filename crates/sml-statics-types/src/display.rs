@@ -17,11 +17,13 @@ impl Ty {
     self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
+    lines: config::ErrorLines,
   ) -> impl fmt::Display + 'a {
     TyDisplay {
       cx: TyDisplayCx { bound_vars: None, meta_vars, syms },
       ty: self,
       prec: TyPrec::Arrow,
+      pretty: Pretty::from_error_lines(lines),
     }
   }
 }
@@ -33,11 +35,13 @@ impl TyScheme {
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
+    lines: config::ErrorLines,
   ) -> impl fmt::Display + 'a {
     TyDisplay {
       cx: TyDisplayCx { bound_vars: Some(&self.bound_vars), meta_vars, syms },
       ty: self.ty,
       prec: TyPrec::Arrow,
+      pretty: Pretty::from_error_lines(lines),
     }
   }
 }
@@ -47,6 +51,23 @@ enum TyPrec {
   Arrow,
   Star,
   App,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+struct Pretty {
+  indent: u16,
+}
+
+impl Pretty {
+  const RECORD_ROWS: usize = 3;
+  const ROW_INDENT: u16 = 2;
+
+  fn from_error_lines(lines: config::ErrorLines) -> Option<Pretty> {
+    match lines {
+      config::ErrorLines::One => None,
+      config::ErrorLines::Many => Some(Pretty::default()),
+    }
+  }
 }
 
 #[derive(Clone, Copy)]
@@ -60,11 +81,12 @@ struct TyDisplay<'a> {
   cx: TyDisplayCx<'a>,
   ty: Ty,
   prec: TyPrec,
+  pretty: Option<Pretty>,
 }
 
 impl<'a> TyDisplay<'a> {
-  fn with(&self, ty: Ty, prec: TyPrec) -> Self {
-    Self { ty, cx: self.cx, prec }
+  fn with(&self, ty: Ty, prec: TyPrec, pretty: Option<Pretty>) -> Self {
+    Self { ty, cx: self.cx, prec, pretty }
   }
 }
 
@@ -92,7 +114,7 @@ impl fmt::Display for TyDisplay<'_> {
           TyVarKind::Overloaded(ov) => ov.fmt(f)?,
         },
         UnsolvedMetaTyVarKind::UnresolvedRecord(ur) => {
-          RecordMetaVarDisplay { cx: self.cx, rows: &ur.rows }.fmt(f)?;
+          RecordMetaVarDisplay { cx: self.cx, rows: &ur.rows, pretty: self.pretty }.fmt(f)?;
         }
       },
       TyData::FixedVar(fv) => fv.ty_var.fmt(f)?,
@@ -109,31 +131,57 @@ impl fmt::Display for TyDisplay<'_> {
           }
           let mut tys = rows.values();
           let &ty = tys.next().unwrap();
-          self.with(ty, TyPrec::App).fmt(f)?;
+          self.with(ty, TyPrec::App, None).fmt(f)?;
           for &ty in tys {
             f.write_str(" * ")?;
-            self.with(ty, TyPrec::App).fmt(f)?;
+            self.with(ty, TyPrec::App, None).fmt(f)?;
           }
           if needs_parens {
             f.write_str(")")?;
           }
         } else {
-          f.write_str("{ ")?;
-          comma_seq(f, rows.iter().map(|(lab, &ty)| RowDisplay { cx: self.cx, lab, ty }))?;
-          f.write_str(" }")?;
+          match (rows.len() >= Pretty::RECORD_ROWS, self.pretty) {
+            (true, Some(pretty)) => {
+              f.write_str("{")?;
+              let indent = pretty.indent + Pretty::ROW_INDENT;
+              write_nl_indent(f, indent)?;
+              let mut iter = rows.iter().map(|(lab, &ty)| RowDisplay {
+                cx: self.cx,
+                lab,
+                ty,
+                pretty: Some(Pretty { indent }),
+              });
+              let fst = iter.next().unwrap();
+              fst.fmt(f)?;
+              for row in iter {
+                f.write_str(",")?;
+                write_nl_indent(f, indent)?;
+                row.fmt(f)?;
+              }
+              write_nl_indent(f, pretty.indent)?;
+              f.write_str("}")?;
+            }
+            (false, _) | (_, None) => {
+              f.write_str("{ ")?;
+              let iter =
+                rows.iter().map(|(lab, &ty)| RowDisplay { cx: self.cx, lab, ty, pretty: None });
+              comma_seq(f, iter)?;
+              f.write_str(" }")?;
+            }
+          }
         }
       }
       TyData::Con(data) => {
         let mut args_iter = data.args.iter();
         if let Some(&arg) = args_iter.next() {
           if data.args.len() == 1 {
-            self.with(arg, TyPrec::App).fmt(f)?;
+            self.with(arg, TyPrec::App, None).fmt(f)?;
           } else {
             f.write_str("(")?;
-            self.with(arg, TyPrec::Arrow).fmt(f)?;
+            self.with(arg, TyPrec::Arrow, None).fmt(f)?;
             for &arg in args_iter {
               f.write_str(", ")?;
-              self.with(arg, TyPrec::Arrow).fmt(f)?;
+              self.with(arg, TyPrec::Arrow, None).fmt(f)?;
             }
             f.write_str(")")?;
           }
@@ -146,9 +194,9 @@ impl fmt::Display for TyDisplay<'_> {
         if needs_parens {
           f.write_str("(")?;
         }
-        self.with(data.param, TyPrec::Star).fmt(f)?;
+        self.with(data.param, TyPrec::Star, self.pretty).fmt(f)?;
         f.write_str(" -> ")?;
-        self.with(data.res, TyPrec::Arrow).fmt(f)?;
+        self.with(data.res, TyPrec::Arrow, self.pretty).fmt(f)?;
         if needs_parens {
           f.write_str(")")?;
         }
@@ -158,17 +206,26 @@ impl fmt::Display for TyDisplay<'_> {
   }
 }
 
+fn write_nl_indent(f: &mut fmt::Formatter<'_>, indent: u16) -> fmt::Result {
+  f.write_str("\n")?;
+  for _ in 0..indent {
+    f.write_str(" ")?;
+  }
+  Ok(())
+}
+
 struct RowDisplay<'a> {
   cx: TyDisplayCx<'a>,
   lab: &'a sml_hir::Lab,
   ty: Ty,
+  pretty: Option<Pretty>,
 }
 
 impl fmt::Display for RowDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.lab.fmt(f)?;
     f.write_str(" : ")?;
-    let td = TyDisplay { cx: self.cx, ty: self.ty, prec: TyPrec::Arrow };
+    let td = TyDisplay { cx: self.cx, ty: self.ty, prec: TyPrec::Arrow, pretty: self.pretty };
     td.fmt(f)
   }
 }
@@ -250,23 +307,47 @@ pub fn record_meta_var<'a>(
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
   rows: &'a RecordData,
+  lines: config::ErrorLines,
 ) -> impl fmt::Display + 'a {
-  RecordMetaVarDisplay { cx: TyDisplayCx { bound_vars: None, meta_vars, syms }, rows }
+  RecordMetaVarDisplay {
+    cx: TyDisplayCx { bound_vars: None, meta_vars, syms },
+    rows,
+    pretty: Pretty::from_error_lines(lines),
+  }
 }
 
 struct RecordMetaVarDisplay<'a> {
   cx: TyDisplayCx<'a>,
   rows: &'a RecordData,
+  pretty: Option<Pretty>,
 }
 
 impl fmt::Display for RecordMetaVarDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.write_str("{ ")?;
-    for (lab, &ty) in self.rows {
-      RowDisplay { cx: self.cx, lab, ty }.fmt(f)?;
-      f.write_str(", ")?;
+    // +1 for the `...` row
+    match (self.rows.len() + 1 >= Pretty::RECORD_ROWS, self.pretty) {
+      (true, Some(pretty)) => {
+        let indent = pretty.indent + Pretty::ROW_INDENT;
+        f.write_str("{")?;
+        for (lab, &ty) in self.rows {
+          write_nl_indent(f, indent)?;
+          RowDisplay { cx: self.cx, lab, ty, pretty: Some(Pretty { indent }) }.fmt(f)?;
+          f.write_str(",")?;
+        }
+        write_nl_indent(f, indent)?;
+        f.write_str("...")?;
+        write_nl_indent(f, pretty.indent)?;
+        f.write_str("}")
+      }
+      (false, _) | (_, None) => {
+        f.write_str("{ ")?;
+        for (lab, &ty) in self.rows {
+          RowDisplay { cx: self.cx, lab, ty, pretty: None }.fmt(f)?;
+          f.write_str(", ")?;
+        }
+        f.write_str("... }")
+      }
     }
-    f.write_str("... }")
   }
 }
 
@@ -277,8 +358,9 @@ impl Incompatible {
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
+    lines: config::ErrorLines,
   ) -> impl fmt::Display + 'a {
-    IncompatibleDisplay { flavor: self, meta_vars, syms }
+    IncompatibleDisplay { flavor: self, meta_vars, syms, lines }
   }
 
   /// Extends the meta var names for all the types in this.
@@ -317,6 +399,7 @@ struct IncompatibleDisplay<'a> {
   flavor: &'a Incompatible,
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
+  lines: config::ErrorLines,
 }
 
 impl fmt::Display for IncompatibleDisplay<'_> {
@@ -338,8 +421,8 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "`{a}` and `{b}` are different type constructors")
       }
       Incompatible::HeadMismatch(a, b) => {
-        let a_display = a.display(self.meta_vars, self.syms);
-        let b_display = b.display(self.meta_vars, self.syms);
+        let a_display = a.display(self.meta_vars, self.syms, self.lines);
+        let b_display = b.display(self.meta_vars, self.syms, self.lines);
         let a_desc = a.desc();
         let b_desc = b.desc();
         write!(f, "`{a_display}` is {a_desc}, but `{b_display}` is {b_desc}")
@@ -355,7 +438,7 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "record types are not compatible with the `{ov}` overload")
       }
       Incompatible::OverloadHeadMismatch(ov, ty) => {
-        let ty_display = ty.display(self.meta_vars, self.syms);
+        let ty_display = ty.display(self.meta_vars, self.syms, self.lines);
         let ty_desc = ty.desc();
         write!(f, "`{ov}` is an overloaded type, but `{ty_display}` is {ty_desc}")
       }
@@ -363,13 +446,13 @@ impl fmt::Display for IncompatibleDisplay<'_> {
         write!(f, "unresolved record type is missing field: `{lab}`")
       }
       Incompatible::UnresolvedRecordHeadMismatch(rows, ty) => {
-        let ty_display = ty.display(self.meta_vars, self.syms);
+        let ty_display = ty.display(self.meta_vars, self.syms, self.lines);
         let ty_desc = ty.desc();
-        let rows = record_meta_var(self.meta_vars, self.syms, rows);
+        let rows = record_meta_var(self.meta_vars, self.syms, rows, self.lines);
         write!(f, "`{rows}` is an unresolved record type, but `{ty_display}` is {ty_desc}")
       }
       Incompatible::NotEqTy(ty, not_eq) => {
-        let ty = ty.display(self.meta_vars, self.syms);
+        let ty = ty.display(self.meta_vars, self.syms, self.lines);
         write!(f, "not an equality type because it contains {not_eq}: `{ty}`")
       }
     }

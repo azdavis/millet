@@ -82,8 +82,8 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let mut mvs = MetaVarNames::new(&self.st.tys);
         mvs.extend_for(circ.ty);
         mvs.extend_for(circ.meta_var);
-        let mv = circ.meta_var.display(&mvs, &self.st.syms);
-        let ty = circ.ty.display(&mvs, &self.st.syms);
+        let mv = circ.meta_var.display(&mvs, &self.st.syms, self.lines);
+        let ty = circ.ty.display(&mvs, &self.st.syms, self.lines);
         write!(f, "circular type: `{mv}` occurs in `{ty}`")
       }
       ErrorKind::IncompatibleTys(reason, want, got) => {
@@ -91,10 +91,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         mvs.extend_for(*want);
         mvs.extend_for(*got);
         reason.extend_meta_var_names(&mut mvs);
-        let reason = reason.display(&mvs, &self.st.syms);
+        let reason = reason.display(&mvs, &self.st.syms, self.lines);
         write!(f, "incompatible types: {reason}")?;
-        let want = want.display(&mvs, &self.st.syms);
-        let got = got.display(&mvs, &self.st.syms);
+        let want = want.display(&mvs, &self.st.syms, self.lines);
+        let got = got.display(&mvs, &self.st.syms, self.lines);
         match self.lines {
           config::ErrorLines::One => {
             write!(f, ": expected `{want}`, found `{got}`")
@@ -119,7 +119,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::TyEscape(ty) => {
         let mut mvs = MetaVarNames::new(&self.st.tys);
         mvs.extend_for(*ty);
-        let ty = ty.display(&mvs, &self.st.syms);
+        let ty = ty.display(&mvs, &self.st.syms, self.lines);
         write!(f, "type escapes its scope: `{ty}`")
       }
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
@@ -135,7 +135,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         for &ty in rows.values() {
           mvs.extend_for(ty);
         }
-        let ty = record_meta_var(&mvs, &self.st.syms, rows);
+        let ty = record_meta_var(&mvs, &self.st.syms, rows, self.lines);
         write!(f, "cannot resolve `...` in record type: `{ty}`")
       }
       ErrorKind::OrPatNotSameBindings(name) => {
@@ -145,7 +145,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ExpHole(ty) => {
         let mut mvs = MetaVarNames::new(&self.st.tys);
         mvs.extend_for(*ty);
-        let ty = ty.display(&mvs, &self.st.syms);
+        let ty = ty.display(&mvs, &self.st.syms, self.lines);
         write!(f, "expression hole with type `{ty}`")
       }
       ErrorKind::TyHole => f.write_str("type hole"),
@@ -161,13 +161,13 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::CannotShareTy(path, ts) => {
         let mut mvs = MetaVarNames::new(&self.st.tys);
         mvs.extend_for(ts.ty);
-        let ts = ts.display(&mvs, &self.st.syms);
+        let ts = ts.display(&mvs, &self.st.syms, self.lines);
         write!(f, "cannot share type `{path}` as `{ts}`")
       }
       ErrorKind::CannotRealizeTy(path, ts) => {
         let mut mvs = MetaVarNames::new(&self.st.tys);
         mvs.extend_for(ts.ty);
-        let ts = ts.display(&mvs, &self.st.syms);
+        let ts = ts.display(&mvs, &self.st.syms, self.lines);
         write!(f, "cannot realize type `{path}` as `{ts}`")
       }
       ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on `{name}`"),

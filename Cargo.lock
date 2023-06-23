@@ -1092,6 +1092,7 @@ version = "0.11.2"
 dependencies = [
  "chain-map",
  "code-h2-md-map",
+ "config",
  "cov-mark",
  "drop_bomb",
  "fast-hash",

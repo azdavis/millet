@@ -331,10 +331,12 @@ impl Analysis {
     ac.extend(env.val_env.iter().map(|(name, val_info)| {
       mvs.clear();
       mvs.extend_for(val_info.ty_scheme.ty);
+      let ty_scheme =
+        val_info.ty_scheme.display(mvs, &self.syms_tys.syms, config::ErrorLines::Many);
       CompletionItem {
         label: name.as_str().to_owned(),
         kind: sml_symbol_kind::get(&self.syms_tys.tys, val_info),
-        detail: Some(val_info.ty_scheme.display(mvs, &self.syms_tys.syms).to_string()),
+        detail: Some(ty_scheme.to_string()),
         documentation: val_info.defs.iter().filter_map(|&x| self.get_doc(x)).fold(None, |ac, x| {
           match ac {
             None => Some(x.to_owned()),
