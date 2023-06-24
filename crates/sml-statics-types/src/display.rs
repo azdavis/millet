@@ -59,8 +59,8 @@ struct Pretty {
 }
 
 impl Pretty {
-  const RECORD_ROWS: usize = 3;
-  const ROW_INDENT: u16 = 2;
+  const RECORD_ROW_COUNT: usize = 3;
+  const RECORD_ROW_INDENT: u16 = 2;
 
   fn from_error_lines(lines: config::ErrorLines) -> Option<Pretty> {
     match lines {
@@ -140,10 +140,10 @@ impl fmt::Display for TyDisplay<'_> {
             f.write_str(")")?;
           }
         } else {
-          match (rows.len() >= Pretty::RECORD_ROWS, self.pretty) {
+          match (rows.len() >= Pretty::RECORD_ROW_COUNT, self.pretty) {
             (true, Some(pretty)) => {
               f.write_str("{")?;
-              let indent = pretty.indent + Pretty::ROW_INDENT;
+              let indent = pretty.indent + Pretty::RECORD_ROW_INDENT;
               write_nl_indent(f, indent)?;
               let mut iter = rows.iter().map(|(lab, &ty)| RowDisplay {
                 cx: self.cx,
@@ -325,9 +325,9 @@ struct RecordMetaVarDisplay<'a> {
 impl fmt::Display for RecordMetaVarDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     // +1 for the `...` row
-    match (self.rows.len() + 1 >= Pretty::RECORD_ROWS, self.pretty) {
+    match (self.rows.len() + 1 >= Pretty::RECORD_ROW_COUNT, self.pretty) {
       (true, Some(pretty)) => {
-        let indent = pretty.indent + Pretty::ROW_INDENT;
+        let indent = pretty.indent + Pretty::RECORD_ROW_INDENT;
         f.write_str("{")?;
         for (lab, &ty) in self.rows {
           write_nl_indent(f, indent)?;
