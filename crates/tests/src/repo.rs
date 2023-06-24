@@ -436,7 +436,7 @@ fn node_version() {
   let mut split = readme_table_line.split_ascii_whitespace();
   assert_eq!(split.next().unwrap(), "|");
   assert_eq!(split.next().unwrap(), version);
-  let ci = include_str!("../../../.github/workflows/ci.yaml");
+  let ci = include_str!("../../../.github/workflows/ci.yml");
   let ci_version = ci
     .lines()
     .filter_map(|line| {
