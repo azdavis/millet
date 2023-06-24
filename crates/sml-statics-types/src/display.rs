@@ -149,10 +149,11 @@ impl fmt::Display for TyDisplay<'_> {
           }
           let mut tys = rows.values();
           let &ty = tys.next().unwrap();
-          self.with(ty, TyPrec::App, None).fmt(f)?;
+          let pretty = self.pretty.map(Pretty::non_top);
+          self.with(ty, TyPrec::App, pretty).fmt(f)?;
           for &ty in tys {
             f.write_str(" * ")?;
-            self.with(ty, TyPrec::App, None).fmt(f)?;
+            self.with(ty, TyPrec::App, pretty).fmt(f)?;
           }
           if needs_parens {
             f.write_str(")")?;
@@ -188,16 +189,17 @@ impl fmt::Display for TyDisplay<'_> {
         }
       }
       TyData::Con(data) => {
+        let pretty = self.pretty.map(Pretty::non_top);
         let mut args_iter = data.args.iter();
         if let Some(&arg) = args_iter.next() {
           if data.args.len() == 1 {
-            self.with(arg, TyPrec::App, None).fmt(f)?;
+            self.with(arg, TyPrec::App, pretty).fmt(f)?;
           } else {
             f.write_str("(")?;
-            self.with(arg, TyPrec::Arrow, None).fmt(f)?;
+            self.with(arg, TyPrec::Arrow, pretty).fmt(f)?;
             for &arg in args_iter {
               f.write_str(", ")?;
-              self.with(arg, TyPrec::Arrow, None).fmt(f)?;
+              self.with(arg, TyPrec::Arrow, pretty).fmt(f)?;
             }
             f.write_str(")")?;
           }
