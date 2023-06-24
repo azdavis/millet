@@ -138,6 +138,8 @@ impl Analysis {
       Some((ptr, idx)) => {
         ty_md = ft.file.info.get_ty_md(&self.syms_tys, idx);
         parts.extend(ty_md.as_deref());
+        let this = def::Def::Path(def::Path::Regular(pos.path), idx);
+        parts.extend(self.get_doc(this));
         let defs = ft.file.info.get_defs(idx);
         parts.extend(defs.into_iter().filter_map(|def| self.get_doc(def)));
         ptr.text_range()

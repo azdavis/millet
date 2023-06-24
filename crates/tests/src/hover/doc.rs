@@ -1,6 +1,6 @@
 //! Test for getting documentation on hover.
 
-use crate::check::{check, check_with_std_basis, fail};
+use crate::check::{check, check_with_std_basis};
 
 #[test]
 fn val() {
@@ -30,7 +30,7 @@ fun foo () = ()
 
 #[test]
 fn typ() {
-  fail(
+  check(
     r#"
 (*!
  * Some docs.
@@ -43,7 +43,7 @@ type t = int
 
 #[test]
 fn datatype() {
-  fail(
+  check(
     r#"
 (*!
  * Some docs.
@@ -56,7 +56,7 @@ datatype d = D
 
 #[test]
 fn exception() {
-  fail(
+  check(
     r#"
 (*!
  * Some docs.
