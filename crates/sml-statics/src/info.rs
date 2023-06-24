@@ -12,10 +12,8 @@ pub(crate) type IdxMap<K, V> = la_arena::ArenaMap<la_arena::Idx<K>, V>;
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Defs {
-  pub(crate) str_dec: IdxMap<sml_hir::StrDec, def::Def>,
   pub(crate) str_exp: IdxMap<sml_hir::StrExp, def::Def>,
   pub(crate) sig_exp: IdxMap<sml_hir::SigExp, def::Def>,
-  pub(crate) spec: IdxMap<sml_hir::Spec, def::Def>,
   pub(crate) dec: IdxMap<sml_hir::Dec, def::Def>,
   pub(crate) exp: IdxMap<sml_hir::Exp, FxHashSet<def::Def>>,
   pub(crate) pat: IdxMap<sml_hir::Pat, FxHashSet<def::Def>>,
@@ -25,10 +23,9 @@ pub(crate) struct Defs {
 impl Defs {
   fn get(&self, idx: sml_hir::Idx) -> FxHashSet<def::Def> {
     match idx {
-      sml_hir::Idx::StrDec(idx) => self.str_dec.get(idx).into_iter().copied().collect(),
+      sml_hir::Idx::StrDec(_) | sml_hir::Idx::Spec(_) => FxHashSet::default(),
       sml_hir::Idx::StrExp(idx) => self.str_exp.get(idx).into_iter().copied().collect(),
       sml_hir::Idx::SigExp(idx) => self.sig_exp.get(idx).into_iter().copied().collect(),
-      sml_hir::Idx::Spec(idx) => self.spec.get(idx).into_iter().copied().collect(),
       sml_hir::Idx::Dec(idx) => self.dec.get(idx).into_iter().copied().collect(),
       sml_hir::Idx::Exp(idx) => self.exp.get(idx).into_iter().flatten().copied().collect(),
       sml_hir::Idx::Pat(idx) => self.pat.get(idx).into_iter().flatten().copied().collect(),
@@ -38,10 +35,8 @@ impl Defs {
 
   fn with_def(&self, def: def::Def) -> impl Iterator<Item = sml_hir::Idx> + '_ {
     std::iter::empty::<(sml_hir::Idx, def::Def)>()
-      .chain(self.str_dec.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.str_exp.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.sig_exp.iter().map(|(idx, &d)| (idx.into(), d)))
-      .chain(self.spec.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.dec.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.ty.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.exp.iter().flat_map(|(idx, ds)| ds.iter().map(move |&d| (idx.into(), d))))
