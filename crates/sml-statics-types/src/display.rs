@@ -216,17 +216,18 @@ impl fmt::Display for TyDisplay<'_> {
                 curried_tys.push(data.param);
                 cur = data.res;
               }
+              // +1 for cur
               if curried_tys.len() + 1 >= Pretty::FN_ARROW_COUNT {
                 let indent = Pretty::FN_ARROW.len();
                 for _ in 0..indent {
                   f.write_str(" ")?;
                 }
-                let pretty = Pretty::Record { indent };
-                self.with(data.param, TyPrec::Star, Some(pretty)).fmt(f)?;
+                let pretty = Some(Pretty::Record { indent });
+                self.with(data.param, TyPrec::Star, pretty).fmt(f)?;
                 for ty in curried_tys.into_iter().chain(std::iter::once(cur)) {
                   f.write_str("\n")?;
                   f.write_str(Pretty::FN_ARROW)?;
-                  self.with(ty, TyPrec::Star, Some(pretty)).fmt(f)?;
+                  self.with(ty, TyPrec::Star, pretty).fmt(f)?;
                 }
                 return Ok(());
               }
