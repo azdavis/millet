@@ -54,19 +54,36 @@ enum TyPrec {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
-struct Pretty {
-  indent: u16,
+enum Pretty {
+  #[default]
+  Top,
+  Record {
+    indent: usize,
+  },
 }
 
 impl Pretty {
   const RECORD_ROW_COUNT: usize = 3;
-  const RECORD_ROW_INDENT: u16 = 2;
+  const RECORD_ROW_INDENT: usize = 2;
+  const FN_ARROW_COUNT: usize = 2;
+  const FN_ARROW: &str = "-> ";
 
   fn from_diagnostic_lines(lines: config::DiagnosticLines) -> Option<Pretty> {
     match lines {
       config::DiagnosticLines::One => None,
       config::DiagnosticLines::Many => Some(Pretty::default()),
     }
+  }
+
+  fn record_indent(self) -> usize {
+    match self {
+      Pretty::Top => 0,
+      Pretty::Record { indent } => indent,
+    }
+  }
+
+  fn non_top(self) -> Self {
+    Self::Record { indent: self.record_indent() }
   }
 }
 
@@ -114,7 +131,8 @@ impl fmt::Display for TyDisplay<'_> {
           TyVarKind::Overloaded(ov) => ov.fmt(f)?,
         },
         UnsolvedMetaTyVarKind::UnresolvedRecord(ur) => {
-          RecordMetaVarDisplay { cx: self.cx, rows: &ur.rows, pretty: self.pretty }.fmt(f)?;
+          let pretty = self.pretty.map(Pretty::non_top);
+          RecordMetaVarDisplay { cx: self.cx, rows: &ur.rows, pretty }.fmt(f)?;
         }
       },
       TyData::FixedVar(fv) => fv.ty_var.fmt(f)?,
@@ -143,22 +161,20 @@ impl fmt::Display for TyDisplay<'_> {
           match (rows.len() >= Pretty::RECORD_ROW_COUNT, self.pretty) {
             (true, Some(pretty)) => {
               f.write_str("{")?;
-              let indent = pretty.indent + Pretty::RECORD_ROW_INDENT;
-              write_nl_indent(f, indent)?;
-              let mut iter = rows.iter().map(|(lab, &ty)| RowDisplay {
-                cx: self.cx,
-                lab,
-                ty,
-                pretty: Some(Pretty { indent }),
-              });
+              let old_indent = pretty.record_indent();
+              let new_indent = old_indent + Pretty::RECORD_ROW_INDENT;
+              write_nl_indent(f, new_indent)?;
+              let pretty = Some(Pretty::Record { indent: new_indent });
+              let mut iter =
+                rows.iter().map(|(lab, &ty)| RowDisplay { cx: self.cx, lab, ty, pretty });
               let fst = iter.next().unwrap();
               fst.fmt(f)?;
               for row in iter {
                 f.write_str(",")?;
-                write_nl_indent(f, indent)?;
+                write_nl_indent(f, new_indent)?;
                 row.fmt(f)?;
               }
-              write_nl_indent(f, pretty.indent)?;
+              write_nl_indent(f, old_indent)?;
               f.write_str("}")?;
             }
             (false, _) | (_, None) => {
@@ -191,12 +207,44 @@ impl fmt::Display for TyDisplay<'_> {
       }
       TyData::Fn(data) => {
         let needs_parens = self.prec > TyPrec::Arrow;
+        match (needs_parens, self.pretty) {
+          (false, Some(pretty)) => match pretty {
+            Pretty::Top => {
+              let mut curried_tys = Vec::<Ty>::new();
+              let mut cur = data.res;
+              while let TyData::Fn(data) = self.cx.meta_vars.tys.data(cur) {
+                curried_tys.push(data.param);
+                cur = data.res;
+              }
+              if curried_tys.len() + 1 >= Pretty::FN_ARROW_COUNT {
+                let indent = Pretty::FN_ARROW.len();
+                for _ in 0..indent {
+                  f.write_str(" ")?;
+                }
+                let pretty = Pretty::Record { indent };
+                self.with(data.param, TyPrec::Star, Some(pretty)).fmt(f)?;
+                for ty in curried_tys.into_iter().chain(std::iter::once(cur)) {
+                  f.write_str("\n")?;
+                  f.write_str(Pretty::FN_ARROW)?;
+                  self.with(ty, TyPrec::Star, Some(pretty)).fmt(f)?;
+                }
+                return Ok(());
+              }
+            }
+            Pretty::Record { .. } => {}
+          },
+          (true, Some(pretty)) => {
+            assert!(matches!(pretty, Pretty::Record { .. }), "cannot need parens for Fn at top");
+          }
+          (_, None) => {}
+        }
+        let pretty = self.pretty.map(Pretty::non_top);
         if needs_parens {
           f.write_str("(")?;
         }
-        self.with(data.param, TyPrec::Star, self.pretty).fmt(f)?;
+        self.with(data.param, TyPrec::Star, pretty).fmt(f)?;
         f.write_str(" -> ")?;
-        self.with(data.res, TyPrec::Arrow, self.pretty).fmt(f)?;
+        self.with(data.res, TyPrec::Arrow, pretty).fmt(f)?;
         if needs_parens {
           f.write_str(")")?;
         }
@@ -206,7 +254,7 @@ impl fmt::Display for TyDisplay<'_> {
   }
 }
 
-fn write_nl_indent(f: &mut fmt::Formatter<'_>, indent: u16) -> fmt::Result {
+fn write_nl_indent(f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
   f.write_str("\n")?;
   for _ in 0..indent {
     f.write_str(" ")?;
@@ -327,16 +375,18 @@ impl fmt::Display for RecordMetaVarDisplay<'_> {
     // +1 for the `...` row
     match (self.rows.len() + 1 >= Pretty::RECORD_ROW_COUNT, self.pretty) {
       (true, Some(pretty)) => {
-        let indent = pretty.indent + Pretty::RECORD_ROW_INDENT;
+        let old_indent = pretty.record_indent();
+        let new_indent = old_indent + Pretty::RECORD_ROW_INDENT;
         f.write_str("{")?;
+        let pretty = Some(Pretty::Record { indent: new_indent });
         for (lab, &ty) in self.rows {
-          write_nl_indent(f, indent)?;
-          RowDisplay { cx: self.cx, lab, ty, pretty: Some(Pretty { indent }) }.fmt(f)?;
+          write_nl_indent(f, new_indent)?;
+          RowDisplay { cx: self.cx, lab, ty, pretty }.fmt(f)?;
           f.write_str(",")?;
         }
-        write_nl_indent(f, indent)?;
+        write_nl_indent(f, new_indent)?;
         f.write_str("...")?;
-        write_nl_indent(f, pretty.indent)?;
+        write_nl_indent(f, old_indent)?;
         f.write_str("}")
       }
       (false, _) | (_, None) => {
