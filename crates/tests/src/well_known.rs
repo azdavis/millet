@@ -23,7 +23,7 @@ type 'a witness = 'a option
 fn array() {
   check_with_std_basis(
     r#"
-val () = Array.array (1, ())
+val () = Array.fromList [()]
 (** + expected `unit`, found `unit array` *)
 
 type 'a witness = 'a array

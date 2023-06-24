@@ -103,7 +103,7 @@
     },
     "commonBuiltinType": {
       "name": "entity.name.type.sml",
-      "match": "\\b(int|word|real|char|string|bool|unit|exn|list|option)\\b"
+      "match": "\\b(int|word|real|char|string|bool|unit|exn|list|option|array|vector)\\b"
     },
     "controlKeyword": {
       "name": "keyword.control.sml",
