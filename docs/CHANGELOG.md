@@ -13,6 +13,14 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.11.4
+
+- Improve hover for doc on various declarations.
+- Show big curried function types across multiple lines in some cases.
+- Show big record types across multiple lines in more cases.
+- Highlight `array` and `vector` as unqualified, built-in types.
+- Improve `Array`, `Vector`, and `Substring` docs.
+
 ## v0.11.3
 
 - Show big record types across multiple lines in some cases.
