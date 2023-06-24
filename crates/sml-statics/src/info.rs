@@ -38,9 +38,9 @@ impl Defs {
       .chain(self.str_exp.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.sig_exp.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.dec.iter().map(|(idx, &d)| (idx.into(), d)))
-      .chain(self.ty.iter().map(|(idx, &d)| (idx.into(), d)))
       .chain(self.exp.iter().flat_map(|(idx, ds)| ds.iter().map(move |&d| (idx.into(), d))))
       .chain(self.pat.iter().flat_map(|(idx, ds)| ds.iter().map(move |&d| (idx.into(), d))))
+      .chain(self.ty.iter().map(|(idx, &d)| (idx.into(), d)))
       .filter_map(move |(idx, d)| (d == def).then_some(idx))
   }
 }
