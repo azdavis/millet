@@ -136,7 +136,7 @@ impl Analysis {
     let ty_md: Option<String>;
     let range = match ft.get_ptr_and_idx() {
       Some((ptr, idx)) => {
-        ty_md = ft.file.info.get_ty_md(&self.syms_tys, idx);
+        ty_md = ft.file.info.get_ty_md(&self.syms_tys, idx, self.diagnostics_options.lines);
         parts.extend(ty_md.as_deref());
         let this = def::Def::Path(def::Path::Regular(pos.path), idx);
         parts.extend(self.get_doc(this));

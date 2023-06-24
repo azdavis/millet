@@ -135,9 +135,14 @@ impl Info {
 
   /// Returns a Markdown string with type information associated with this index.
   #[must_use]
-  pub fn get_ty_md(&self, st: &sml_statics_types::St, idx: sml_hir::Idx) -> Option<String> {
+  pub fn get_ty_md(
+    &self,
+    st: &sml_statics_types::St,
+    idx: sml_hir::Idx,
+    lines: config::ErrorLines,
+  ) -> Option<String> {
     let ty_entry = self.entries.tys.get(idx)?;
-    let ty_entry = TyEntryDisplay { ty_entry, st };
+    let ty_entry = TyEntryDisplay { ty_entry, st, lines };
     Some(ty_entry.to_string())
   }
 
@@ -284,6 +289,7 @@ impl TyEntry {
 struct TyEntryDisplay<'a> {
   ty_entry: &'a TyEntry,
   st: &'a sml_statics_types::St,
+  lines: config::ErrorLines,
 }
 
 impl fmt::Display for TyEntryDisplay<'_> {
@@ -293,12 +299,12 @@ impl fmt::Display for TyEntryDisplay<'_> {
     writeln!(f, "```sml")?;
     if let Some(ty_scheme) = &self.ty_entry.ty_scheme {
       mvs.extend_for(ty_scheme.ty);
-      let ty_scheme = ty_scheme.display(&mvs, &self.st.syms, config::ErrorLines::Many);
+      let ty_scheme = ty_scheme.display(&mvs, &self.st.syms, self.lines);
       writeln!(f, "(* most general *)")?;
       writeln!(f, "{ty_scheme}")?;
       writeln!(f, "(* this usage *)")?;
     }
-    let ty = self.ty_entry.ty.display(&mvs, &self.st.syms, config::ErrorLines::Many);
+    let ty = self.ty_entry.ty.display(&mvs, &self.st.syms, self.lines);
     writeln!(f, "{ty}")?;
     writeln!(f, "```")?;
     Ok(())
