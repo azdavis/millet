@@ -9,9 +9,9 @@ pub mod init;
 pub mod lang;
 pub mod tool;
 
-/// How many lines an error message may have.
+/// How many lines a diagnostic message may have.
 #[derive(Debug, Default, Clone, Copy)]
-pub enum ErrorLines {
+pub enum DiagnosticLines {
   /// Error messages may not have newlines.
   #[default]
   One,

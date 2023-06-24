@@ -34,7 +34,7 @@ impl<R> Diagnostic<R> {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
   /// How many lines diagnostics should ideally be spread across.
-  pub lines: config::ErrorLines,
+  pub lines: config::DiagnosticLines,
   /// What diagnostics to ignore.
   pub ignore: config::init::DiagnosticsIgnore,
   /// What formatter should be used.

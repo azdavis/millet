@@ -31,7 +31,7 @@ fn check(s: &str, steps: &[&str]) {
   let mode = sml_statics_types::mode::Mode::Dynamics;
   let statics = sml_statics::get(&mut syms_tys, &bs, mode, &sf.lower.arenas, &sf.lower.root);
   if let Some(e) = statics.errors.first() {
-    panic!("statics error: {}", e.display(&syms_tys, config::ErrorLines::One));
+    panic!("statics error: {}", e.display(&syms_tys, config::DiagnosticLines::One));
   }
   // TODO have these be the same as the ones from the std basis
   let match_ = syms_tys.syms.insert_exn(sml_path::Path::one(str_util::Name::new("Match")), None);

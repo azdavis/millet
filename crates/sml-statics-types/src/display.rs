@@ -17,13 +17,13 @@ impl Ty {
     self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
-    lines: config::ErrorLines,
+    lines: config::DiagnosticLines,
   ) -> impl fmt::Display + 'a {
     TyDisplay {
       cx: TyDisplayCx { bound_vars: None, meta_vars, syms },
       ty: self,
       prec: TyPrec::Arrow,
-      pretty: Pretty::from_error_lines(lines),
+      pretty: Pretty::from_diagnostic_lines(lines),
     }
   }
 }
@@ -35,13 +35,13 @@ impl TyScheme {
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
-    lines: config::ErrorLines,
+    lines: config::DiagnosticLines,
   ) -> impl fmt::Display + 'a {
     TyDisplay {
       cx: TyDisplayCx { bound_vars: Some(&self.bound_vars), meta_vars, syms },
       ty: self.ty,
       prec: TyPrec::Arrow,
-      pretty: Pretty::from_error_lines(lines),
+      pretty: Pretty::from_diagnostic_lines(lines),
     }
   }
 }
@@ -62,10 +62,10 @@ impl Pretty {
   const RECORD_ROW_COUNT: usize = 3;
   const RECORD_ROW_INDENT: u16 = 2;
 
-  fn from_error_lines(lines: config::ErrorLines) -> Option<Pretty> {
+  fn from_diagnostic_lines(lines: config::DiagnosticLines) -> Option<Pretty> {
     match lines {
-      config::ErrorLines::One => None,
-      config::ErrorLines::Many => Some(Pretty::default()),
+      config::DiagnosticLines::One => None,
+      config::DiagnosticLines::Many => Some(Pretty::default()),
     }
   }
 }
@@ -307,12 +307,12 @@ pub fn record_meta_var<'a>(
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
   rows: &'a RecordData,
-  lines: config::ErrorLines,
+  lines: config::DiagnosticLines,
 ) -> impl fmt::Display + 'a {
   RecordMetaVarDisplay {
     cx: TyDisplayCx { bound_vars: None, meta_vars, syms },
     rows,
-    pretty: Pretty::from_error_lines(lines),
+    pretty: Pretty::from_diagnostic_lines(lines),
   }
 }
 
@@ -358,7 +358,7 @@ impl Incompatible {
     &'a self,
     meta_vars: &'a MetaVarNames<'a>,
     syms: &'a Syms,
-    lines: config::ErrorLines,
+    lines: config::DiagnosticLines,
   ) -> impl fmt::Display + 'a {
     IncompatibleDisplay { flavor: self, meta_vars, syms, lines }
   }
@@ -399,7 +399,7 @@ struct IncompatibleDisplay<'a> {
   flavor: &'a Incompatible,
   meta_vars: &'a MetaVarNames<'a>,
   syms: &'a Syms,
-  lines: config::ErrorLines,
+  lines: config::DiagnosticLines,
 }
 
 impl fmt::Display for IncompatibleDisplay<'_> {

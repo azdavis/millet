@@ -334,7 +334,7 @@ impl Analysis {
       mvs.clear();
       mvs.extend_for(val_info.ty_scheme.ty);
       let ty_scheme =
-        val_info.ty_scheme.display(mvs, &self.syms_tys.syms, config::ErrorLines::Many);
+        val_info.ty_scheme.display(mvs, &self.syms_tys.syms, config::DiagnosticLines::Many);
       CompletionItem {
         label: name.as_str().to_owned(),
         kind: sml_symbol_kind::get(&self.syms_tys.tys, val_info),

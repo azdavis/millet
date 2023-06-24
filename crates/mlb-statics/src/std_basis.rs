@@ -116,7 +116,7 @@ where
     let checked = sml_statics::get(&mut syms_tys, &bs, mode, &low.arenas, &low.root);
     bs.append(checked.info.basis().clone());
     if let Some(e) = checked.errors.first() {
-      let e = e.display(&syms_tys, config::ErrorLines::One);
+      let e = e.display(&syms_tys, config::DiagnosticLines::One);
       panic!("{name}: statics error: {e}");
     }
     let mut info = checked.info;

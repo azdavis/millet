@@ -61,7 +61,7 @@ fn run() -> usize {
   let mut store = paths::Store::new();
   let inp = input::Input::new(&fs, &mut store, &root);
   let options = analysis::Options {
-    lines: config::ErrorLines::One,
+    lines: config::DiagnosticLines::One,
     ignore: config::init::DiagnosticsIgnore::AfterSyntax,
     format: if format {
       config::init::FormatEngine::Naive

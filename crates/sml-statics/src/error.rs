@@ -61,7 +61,7 @@ pub(crate) enum ErrorKind {
 struct ErrorKindDisplay<'a> {
   kind: &'a ErrorKind,
   st: &'a sml_statics_types::St,
-  lines: config::ErrorLines,
+  lines: config::DiagnosticLines,
 }
 
 impl fmt::Display for ErrorKindDisplay<'_> {
@@ -96,10 +96,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         let want = want.display(&mvs, &self.st.syms, self.lines);
         let got = got.display(&mvs, &self.st.syms, self.lines);
         match self.lines {
-          config::ErrorLines::One => {
+          config::DiagnosticLines::One => {
             write!(f, ": expected `{want}`, found `{got}`")
           }
-          config::ErrorLines::Many => {
+          config::DiagnosticLines::Many => {
             writeln!(f, "\n  expected `{want}`")?;
             write!(f, "     found `{got}`")
           }
@@ -250,7 +250,7 @@ impl Error {
   pub fn display<'a>(
     &'a self,
     st: &'a sml_statics_types::St,
-    lines: config::ErrorLines,
+    lines: config::DiagnosticLines,
   ) -> impl fmt::Display + 'a {
     ErrorKindDisplay { kind: &self.kind, st, lines }
   }
