@@ -1,6 +1,6 @@
 //! Test for getting documentation on hover.
 
-use crate::check::{check, check_with_std_basis};
+use crate::check::{check, check_with_std_basis, fail};
 
 #[test]
 fn val() {
@@ -11,6 +11,9 @@ fn val() {
  *)
 val foo = 3
 (** ^^^ hover: Some docs. *)
+
+val f = foo
+(**     ^^^ hover: Some docs. *)
 "#,
   );
 }
@@ -24,6 +27,9 @@ fn fun() {
  *)
 fun foo () = ()
 (** ^^^ hover: Some docs. *)
+
+val f = foo
+(**     ^^^ hover: Some docs. *)
 "#,
   );
 }
@@ -37,6 +43,9 @@ fn typ() {
  *)
 type t = int
 (**  ^ hover: Some docs. *)
+
+type u = t
+(**      ^ hover: Some docs. *)
 "#,
   );
 }
@@ -49,6 +58,9 @@ fn datatype() {
  * Some docs.
  *)
 datatype d = D
+(**      ^ hover: Some docs. *)
+
+type u = d
 (**      ^ hover: Some docs. *)
 "#,
   );
@@ -63,21 +75,25 @@ fn exception() {
  *)
 exception E
 (**       ^ hover: Some docs. *)
+
+val e = E
+(**     ^ hover: Some docs. *)
 "#,
   );
 }
 
 #[test]
-fn fun_doc_usage() {
-  check(
+fn exception_copy() {
+  fail(
     r#"
 (*!
- * Returns the number incremented.
+ * Some docs.
  *)
-fun inc x = x + 1
+exception E
+(**       ^ hover: Some docs. *)
 
-val _ = inc
-(**     ^^^ hover: Returns the number incremented. *)
+exception e = E
+(**           ^ hover: Some docs. *)
 "#,
   );
 }
