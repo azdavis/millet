@@ -133,9 +133,11 @@ Configuration for the language.
 
 #### `language.fixity-across-files`
 
-Whether fixity declarations (`infix`, `infixr`, and `nonfix`) can take effect across files. Defaults to false.
+Whether fixity declarations (`infix`, `infixr`, and `nonfix`) can take effect across files. Defaults to `false`.
 
 When this is false, each file is parsed starting with the default fixity environment provided by the standard basis. This means we can incrementally re-parse files and/or parse files in parallel since there are no inter-file dependencies when parsing.
+
+Note that at time of writing, turning this to `true` makes various features, like completions and hover info, much less reliable and useful.
 
 #### `language.dec`
 
