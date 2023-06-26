@@ -135,9 +135,9 @@ Configuration for the language.
 
 Whether fixity declarations (`infix`, `infixr`, and `nonfix`) can take effect across files. Defaults to `false`.
 
-When this is false, each file is parsed starting with the default fixity environment provided by the standard basis. This means we can incrementally re-parse files and/or parse files in parallel since there are no inter-file dependencies when parsing.
+When this is `false`, each file is parsed starting with the default fixity environment provided by the standard basis. This means we can incrementally re-parse files and/or parse files in parallel since there are no inter-file dependencies when parsing. (At time of writing, we do not currently do this.)
 
-Note that at time of writing, turning this to `true` makes various features, like completions and hover info, much less reliable and useful.
+When this is `true`, we cannot do the above things, and we must also use more memory to store the fixity environments used when parsing each file.
 
 #### `language.dec`
 

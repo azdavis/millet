@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## main
+
+- Improve completions and hover for info when using fixity across files.
+
 ## v0.11.4
 
 - Improve hover for doc on various declarations.

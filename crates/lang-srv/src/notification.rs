@@ -78,7 +78,7 @@ fn go(st: &mut St, mut n: Notification) -> ControlFlow<Result<()>, Notification>
       helpers::apply_changes(text, params.content_changes);
       if st.cx.options.diagnostics.on_change {
         diagnostics::try_publish(st);
-      } else if !root.input.lang.fixity_across_files {
+      } else {
         st.analysis.update_one(&root.input, path);
       }
     }
