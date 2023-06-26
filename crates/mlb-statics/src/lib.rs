@@ -35,6 +35,10 @@ pub struct SourceFile {
   pub statics_errors: Vec<sml_statics::Error>,
   /// Statics information from the file.
   pub info: sml_statics::info::Info,
+  /// The fixity env this file was (or should be, when updating it) parsed under.
+  ///
+  /// Empty when `fixity_across_files` is false.
+  pub fix_env: sml_fixity::Env,
   /// The scope this file was (or should be, when updating it) static-checked under.
   pub scope: sml_statics::basis::Bs,
 }
@@ -247,10 +251,7 @@ fn get_bas_dec(
         let contents = cx.source_file_contents.get(path).expect("no source file");
         let mut fix_env = scope.fix_env.clone();
         let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
-        if !cx.lang.fixity_across_files {
-          fix_env = sml_fixity::Env::default();
-        }
-        get_source_file(st, *path, &scope.bs, ac, fix_env, syntax);
+        get_source_file(st, cx.lang, *path, scope, ac, fix_env, syntax);
       }
       mlb_hir::PathKind::Group => match st.bases.get(path) {
         Some(mb) => ac.append(mb.clone()),
@@ -264,9 +265,6 @@ fn get_bas_dec(
           let contents = cx.source_file_contents.get(path).expect("no source file");
           let mut fix_env = scope.fix_env.clone();
           let syntax = SourceFileSyntax::new(&mut fix_env, cx.lang, contents);
-          if !cx.lang.fixity_across_files {
-            fix_env = sml_fixity::Env::default();
-          }
           (*path, (fix_env, syntax))
         })
         .collect();
@@ -284,7 +282,7 @@ fn get_bas_dec(
       for path in order {
         let mut one_m_basis = MBasis::default();
         let (fix_env, syntax) = syntaxes.remove(&path).expect("path from order is in syntaxes");
-        get_source_file(st, path, &scope.bs, &mut one_m_basis, fix_env, syntax);
+        get_source_file(st, cx.lang, path, &scope, &mut one_m_basis, fix_env, syntax);
         scope.append(one_m_basis.clone());
         ac.append(one_m_basis);
       }
@@ -303,19 +301,34 @@ fn get_bas_dec(
 
 fn get_source_file(
   st: &mut St<'_>,
+  lang: &Language,
   path: paths::PathId,
-  scope: &sml_statics::basis::Bs,
+  scope: &MBasis,
   ac: &mut MBasis,
   fix_env: sml_fixity::Env,
   syntax: SourceFileSyntax,
 ) {
   let mode = sml_statics_types::mode::Mode::Regular(Some(path));
   let checked =
-    sml_statics::get(st.syms_tys, scope, mode, &syntax.lower.arenas, &syntax.lower.root);
-  ac.append(MBasis { fix_env, bas_env: FxHashMap::default(), bs: checked.info.basis().clone() });
+    sml_statics::get(st.syms_tys, &scope.bs, mode, &syntax.lower.arenas, &syntax.lower.root);
+  ac.append(MBasis {
+    fix_env: if lang.fixity_across_files { fix_env } else { sml_fixity::Env::default() },
+    bas_env: FxHashMap::default(),
+    bs: checked.info.basis().clone(),
+  });
   let mut info = checked.info;
   add_all_doc_comments(syntax.parse.root.syntax(), &syntax.lower, &mut info);
-  let mut file = SourceFile { syntax, statics_errors: checked.errors, info, scope: scope.clone() };
+  let mut file = SourceFile {
+    syntax,
+    statics_errors: checked.errors,
+    info,
+    fix_env: if lang.fixity_across_files {
+      scope.fix_env.clone()
+    } else {
+      sml_fixity::Env::default()
+    },
+    scope: scope.bs.clone(),
+  };
   if !st.report_diagnostics {
     file.syntax.lex_errors = Vec::new();
     file.syntax.parse.errors = Vec::new();
