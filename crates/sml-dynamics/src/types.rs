@@ -113,6 +113,7 @@ pub(crate) enum Step {
   Raise(Exception),
   Dec(sml_hir::DecIdx),
   DecDone,
+  StrDec(sml_hir::StrDecIdx),
 }
 
 impl Step {
@@ -174,6 +175,7 @@ pub(crate) enum FrameKind {
   Local(Vec<sml_hir::DecIdx>, Vec<sml_hir::DecIdx>),
   In(Vec<sml_hir::DecIdx>),
   DecSeq(Vec<sml_hir::DecIdx>),
+  StrDecSeq(Vec<sml_hir::StrDecIdx>),
 }
 
 /// A context under which we run dynamics.

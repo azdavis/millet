@@ -36,13 +36,6 @@ fn check(s: &str, steps: &[&str]) {
   // TODO have these be the same as the ones from the std basis
   let match_ = syms_tys.syms.insert_exn(sml_path::Path::one(str_util::Name::new("Match")), None);
   let bind = syms_tys.syms.insert_exn(sml_path::Path::one(str_util::Name::new("Bind")), None);
-  let mut decs = Vec::<sml_hir::DecIdx>::new();
-  for &str_dec in &sf.lower.root {
-    match &sf.lower.arenas.str_dec[str_dec] {
-      sml_hir::StrDec::Dec(ds) => decs.extend(ds.iter().copied()),
-      sd => panic!("unsupported str dec for dynamics: {sd:?}"),
-    }
-  }
   let cx = sml_dynamics::Cx {
     ars: &sf.lower.arenas,
     exp: &statics.exp_id_statuses,
@@ -50,7 +43,7 @@ fn check(s: &str, steps: &[&str]) {
     bind,
     match_,
   };
-  let mut dynamics = sml_dynamics::Dynamics::new(cx, decs).expect("no decs");
+  let mut dynamics = sml_dynamics::Dynamics::new(cx, sf.lower.root.clone()).expect("no str decs");
   let mut stdin = std::io::stdin().lock();
   let mut buf = String::new();
   let mut steps = steps.iter();
@@ -109,6 +102,9 @@ val inc = fn x => + (1, x)
 val three = inc 2
 "#,
       r#"
+val three = inc 2
+"#,
+      r#"
 val three = (fn x => + (1, x)) 2
 "#,
       r#"
@@ -149,6 +145,24 @@ val rec add = fn '0 => fn '1 =>
     ) a
   ) ('0, '1)
 
+val four = add
+  (S Z)
+  (S (S (S Z)))
+"#,
+      r#"
+val rec add = fn '0 => fn '1 =>
+  (fn (a, b) =>
+    (fn
+      Z => b
+    | S a => S (add a b)
+    ) a
+  ) ('0, '1)
+
+val four = add
+  (S Z)
+  (S (S (S Z)))
+"#,
+      r#"
 val four = add
   (S Z)
   (S (S (S Z)))

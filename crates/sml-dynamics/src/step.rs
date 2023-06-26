@@ -178,7 +178,8 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         FrameKind::Let(_, _)
         | FrameKind::Local(_, _)
         | FrameKind::In(_)
-        | FrameKind::DecSeq(_) => {
+        | FrameKind::DecSeq(_)
+        | FrameKind::StrDecSeq(_) => {
           unreachable!("bad surrounding frame for Val")
         }
       },
@@ -227,6 +228,18 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
         step_dec(st)
       }
     },
+    Step::StrDec(str_dec) => match &cx.ars.str_dec[str_dec] {
+      sml_hir::StrDec::Dec(decs) => {
+        let mut decs = decs.clone();
+        decs.reverse();
+        st.push_with_cur_env(FrameKind::DecSeq(decs));
+        step_dec(st)
+      }
+      sml_hir::StrDec::Structure(_) => todo!(),
+      sml_hir::StrDec::Signature(_) => todo!(),
+      sml_hir::StrDec::Functor(_) => todo!(),
+      sml_hir::StrDec::Local(_, _) => todo!(),
+    },
     // done with a dec
     Step::DecDone => {
       assert!(st.frames.is_empty(), "can't be done but still have frames");
@@ -273,6 +286,13 @@ fn step_dec(st: &mut St) -> (Step, bool) {
         Some(dec) => {
           st.push_with_cur_env(FrameKind::DecSeq(decs));
           return (Step::Dec(dec), change);
+        }
+      },
+      FrameKind::StrDecSeq(mut str_decs) => match str_decs.pop() {
+        None => change = true,
+        Some(str_dec) => {
+          st.push_with_cur_env(FrameKind::StrDecSeq(str_decs));
+          return (Step::StrDec(str_dec), change);
         }
       },
     }

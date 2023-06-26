@@ -22,7 +22,7 @@ impl fmt::Display for Dynamics<'_> {
     for frame in &self.st.frames {
       frame_prec.push(prec);
       match &frame.kind {
-        FrameKind::Handle(_) | FrameKind::DecSeq(_) => {}
+        FrameKind::Handle(_) | FrameKind::DecSeq(_) | FrameKind::StrDecSeq(_) => {}
         FrameKind::AppFunc(_) => {
           if matches!(prec, Prec::Atomic) {
             f.write_str("(")?;
@@ -113,6 +113,7 @@ impl fmt::Display for Dynamics<'_> {
       }
       Step::Dec(dec) => DecDisplay { dec: *dec, ars, indent }.fmt(f)?,
       Step::DecDone => {}
+      Step::StrDec(str_dec) => StrDecDisplay { str_dec: *str_dec, ars, indent }.fmt(f)?,
     }
     for frame in self.st.frames.iter().rev() {
       let prec = frame_prec.pop().unwrap();
@@ -200,6 +201,12 @@ impl fmt::Display for Dynamics<'_> {
             DecDisplay { dec, ars, indent }.fmt(f)?;
           }
         }
+        FrameKind::StrDecSeq(str_decs) => {
+          for &str_dec in str_decs.iter().rev() {
+            write_nl_indent(indent, f)?;
+            StrDecDisplay { str_dec, ars, indent }.fmt(f)?;
+          }
+        }
       }
     }
     assert!(frame_prec.is_empty());
@@ -224,6 +231,20 @@ fn write_nl_indent(indent: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     }
   } else {
     f.write_str(" ")?;
+  }
+  Ok(())
+}
+
+fn nl_indent_sep<I, T>(indent: usize, f: &mut fmt::Formatter<'_>, mut iter: I) -> fmt::Result
+where
+  I: Iterator<Item = T>,
+  T: fmt::Display,
+{
+  let fst = iter.next().ok_or(fmt::Error)?;
+  fst.fmt(f)?;
+  for x in iter {
+    write_nl_indent(indent, f)?;
+    x.fmt(f)?;
   }
   Ok(())
 }
@@ -673,6 +694,27 @@ impl fmt::Display for DecDisplay<'_> {
         f.write_str("end")
       }
       sml_hir::Dec::Open(_) => f.write_str("open ..."),
+    }
+  }
+}
+
+struct StrDecDisplay<'a> {
+  str_dec: sml_hir::StrDecIdx,
+  ars: &'a sml_hir::Arenas,
+  indent: usize,
+}
+
+impl fmt::Display for StrDecDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match &self.ars.str_dec[self.str_dec] {
+      sml_hir::StrDec::Dec(decs) => {
+        let iter = decs.iter().map(|&dec| DecDisplay { dec, ars: self.ars, indent: self.indent });
+        nl_indent_sep(self.indent, f, iter)
+      }
+      sml_hir::StrDec::Structure(_) => todo!(),
+      sml_hir::StrDec::Signature(_) => todo!(),
+      sml_hir::StrDec::Functor(_) => todo!(),
+      sml_hir::StrDec::Local(_, _) => todo!(),
     }
   }
 }
