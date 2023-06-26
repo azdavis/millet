@@ -22,13 +22,13 @@ impl fmt::Display for Dynamics<'_> {
     for frame in &self.st.frames {
       frame_prec.push(prec);
       match &frame.kind {
+        FrameKind::Handle(_) | FrameKind::Seq(_) => {}
         FrameKind::AppFunc(_) => {
           if matches!(prec, Prec::Atomic) {
             f.write_str("(")?;
           }
           prec = Prec::Matcher;
         }
-        FrameKind::Handle(_) | FrameKind::Seq(_) => {}
         FrameKind::Record(is_tuple, vs, lab, _) => {
           if *is_tuple {
             f.write_str("(")?;
