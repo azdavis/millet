@@ -151,7 +151,7 @@ pub enum Spec {
   Sharing(SpecSeq, SharingKind, Vec<Path>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum SharingKind {
   /// The non-derived form, `sharing type`.
   Regular,
@@ -260,6 +260,26 @@ pub struct ValBind {
   pub rec: bool,
   pub pat: PatIdx,
   pub exp: ExpIdx,
+  pub flavor: ValFlavor,
+}
+
+/// The original bit of syntax that got eventually lowered to stuff involving `val`.
+///
+/// An implementation MUST NOT depend on this for semantics, e.g. type check differently based on
+/// the flavor. It MUST only be used for "niceties", e.g. to emit better error messages.
+#[derive(Debug, Clone, Copy)]
+pub enum ValFlavor {
+  /// A top-level expression `e` lowers to `val _ = e` (it should technically lower to `val it = e`
+  /// but see the comment.)
+  TopLevelExp,
+  /// `do e` lowers to `val () = e`.
+  Do,
+  /// Lowers to `fun`.
+  While,
+  /// Lowers to `val rec` + a `case`.
+  Fun,
+  /// Lowers to itself.
+  Val,
 }
 
 #[derive(Debug)]

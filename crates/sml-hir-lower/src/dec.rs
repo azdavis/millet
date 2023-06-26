@@ -65,6 +65,7 @@ fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx 
         // fine, but millet doesn't check a REPL, it checks source files.
         pat: st.pat(sml_hir::Pat::Wild, ptr.clone()),
         exp: exp::get(st, top_dec.exp()),
+        flavor: sml_hir::ValFlavor::TopLevelExp,
       };
       let dec = sml_hir::Dec::Val(Vec::new(), vec![bind]);
       let dec = st.dec(dec, ptr.clone());
@@ -506,6 +507,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           rec: val_bind.rec_kw().is_some(),
           pat: pat::get(st, None, val_bind.pat()),
           exp: exp::get(st, exp),
+          flavor: sml_hir::ValFlavor::Val,
         }
       });
       sml_hir::Dec::Val(ty_vars, iter.collect())
@@ -618,6 +620,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           rec: true,
           pat: name.and_then(|name| st.pat(pat::name(name.text()), ptr)),
           exp,
+          flavor: sml_hir::ValFlavor::Fun,
         }
       });
       sml_hir::Dec::Val(ty_vars, iter.collect())
@@ -708,6 +711,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           rec: false,
           pat: st.pat(pat::tuple([]), ptr.clone()),
           exp: exp::get(st, inner.exp()),
+          flavor: sml_hir::ValFlavor::Do,
         }],
       )
     }
