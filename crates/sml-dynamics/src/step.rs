@@ -255,7 +255,6 @@ fn step_dec(st: &mut St) -> (Step, bool) {
         }
       },
       FrameKind::Local(mut local_decs, in_decs) => match local_decs.pop() {
-        // return to top of loop
         None => st.push_with_cur_env(FrameKind::In(in_decs)),
         Some(dec) => {
           st.push_with_cur_env(FrameKind::Local(local_decs, in_decs));
@@ -263,7 +262,6 @@ fn step_dec(st: &mut St) -> (Step, bool) {
         }
       },
       FrameKind::In(mut in_decs) => match in_decs.pop() {
-        // keep popping
         None => change = true,
         Some(dec) => {
           st.push_with_cur_env(FrameKind::In(in_decs));
@@ -271,7 +269,6 @@ fn step_dec(st: &mut St) -> (Step, bool) {
         }
       },
       FrameKind::DecSeq(mut decs) => match decs.pop() {
-        // keep popping
         None => change = true,
         Some(dec) => {
           st.push_with_cur_env(FrameKind::DecSeq(decs));
