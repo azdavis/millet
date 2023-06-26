@@ -417,11 +417,9 @@ fn inlay_hint_pat(
   pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
 ) -> Option<(RangeUtf16, String)> {
   let want = match &file.syntax.lower.arenas.pat[pat] {
-    sml_hir::Pat::Typed(_, _) | sml_hir::Pat::SCon(_) => false,
-    sml_hir::Pat::Wild | sml_hir::Pat::Con(_, _) | sml_hir::Pat::Or(_) | sml_hir::Pat::As(_, _) => {
-      true
-    }
+    sml_hir::Pat::Typed(_, _) => false,
     sml_hir::Pat::Record { rows, allows_other } => rows.len() > 1 || *allows_other,
+    _ => true,
   };
   if !want {
     return None;
