@@ -34,6 +34,8 @@ pub(crate) fn get(s: &str) -> Option<&'static str> {
     "False" | "FALSE" | "NO" => "false",
     "==" | "===" => "=",
     "!=" | "!==" => "<>",
+    "&&" => "andalso",
+    "||" | "or" => "orelse",
     _ => return None,
   };
   Some(ret)
