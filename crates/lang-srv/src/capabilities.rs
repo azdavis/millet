@@ -1,8 +1,5 @@
 //! See [`get`].
 
-/// TODO set to true, then remove
-const INLAY_HINTS: bool = false;
-
 /// Returns the capabilities of the server.
 pub(crate) fn get() -> lsp_types::ServerCapabilities {
   lsp_types::ServerCapabilities {
@@ -28,7 +25,7 @@ pub(crate) fn get() -> lsp_types::ServerCapabilities {
       trigger_characters: Some(vec![".".to_owned()]),
       ..lsp_types::CompletionOptions::default()
     }),
-    inlay_hint_provider: INLAY_HINTS.then_some(lsp_types::OneOf::Left(true)),
+    inlay_hint_provider: Some(lsp_types::OneOf::Left(true)),
     ..Default::default()
   }
 }
