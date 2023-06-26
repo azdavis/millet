@@ -13,7 +13,7 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.12.0
 
 - Improve completions and hover for info when using fixity across files.
 - Show type annotation inlay hints.
