@@ -438,6 +438,12 @@ Millet shows things like:
 
 See the section on [doc comments](#doc-comments) to provide your own documentation for items.
 
+### Inlay hints
+
+In SML files, Millet can show inlay hints with type annotations.
+
+In VS Code, inlay hints can be enabled or disabled across the entire editor via `editor.inlayHints.enabled`.
+
 ### Jump/peek definition
 
 In SML files, Millet allows jumping to or peeking the definition of named items, like variables.

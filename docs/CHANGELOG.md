@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Improve completions and hover for info when using fixity across files.
+- Show type annotation inlay hints.
 
 ## v0.11.4
 
