@@ -18,7 +18,7 @@ impl<'a> Dynamics<'a> {
     let mut st = St::new_with_std_basis();
     decs.reverse();
     let dec = decs.pop()?;
-    st.push_with_cur_env(FrameKind::Seq(decs));
+    st.push_with_cur_env(FrameKind::DecSeq(decs));
     Some(Self { cx, st, step: Some(Step::Dec(dec)) })
   }
 

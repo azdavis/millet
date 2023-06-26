@@ -22,7 +22,7 @@ impl fmt::Display for Dynamics<'_> {
     for frame in &self.st.frames {
       frame_prec.push(prec);
       match &frame.kind {
-        FrameKind::Handle(_) | FrameKind::Seq(_) => {}
+        FrameKind::Handle(_) | FrameKind::DecSeq(_) => {}
         FrameKind::AppFunc(_) => {
           if matches!(prec, Prec::Atomic) {
             f.write_str("(")?;
@@ -194,7 +194,7 @@ impl fmt::Display for Dynamics<'_> {
           write_nl_indent(indent, f)?;
           f.write_str("end")?;
         }
-        FrameKind::Seq(decs) => {
+        FrameKind::DecSeq(decs) => {
           for &dec in decs.iter().rev() {
             write_nl_indent(indent, f)?;
             DecDisplay { dec, ars, indent }.fmt(f)?;

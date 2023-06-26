@@ -175,7 +175,10 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
             None => step_dec(st),
           }
         }
-        FrameKind::Let(_, _) | FrameKind::Local(_, _) | FrameKind::In(_) | FrameKind::Seq(_) => {
+        FrameKind::Let(_, _)
+        | FrameKind::Local(_, _)
+        | FrameKind::In(_)
+        | FrameKind::DecSeq(_) => {
           unreachable!("bad surrounding frame for Val")
         }
       },
@@ -267,11 +270,11 @@ fn step_dec(st: &mut St) -> (Step, bool) {
           return (Step::Dec(dec), change);
         }
       },
-      FrameKind::Seq(mut in_decs) => match in_decs.pop() {
+      FrameKind::DecSeq(mut decs) => match decs.pop() {
         // keep popping
         None => change = true,
         Some(dec) => {
-          st.push_with_cur_env(FrameKind::Seq(in_decs));
+          st.push_with_cur_env(FrameKind::DecSeq(decs));
           return (Step::Dec(dec), change);
         }
       },
