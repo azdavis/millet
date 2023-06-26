@@ -352,32 +352,84 @@ impl Analysis {
 
   /// Returns all inlay hints for the range.
   #[must_use]
-  pub fn inlay_hints(
-    &self,
-    range: WithPath<RangeUtf16>,
-  ) -> Option<impl Iterator<Item = InlayHint> + '_> {
+  pub fn inlay_hints(&self, range: WithPath<RangeUtf16>) -> Option<Vec<InlayHint>> {
     let file = self.source_files.get(&range.path)?;
-    let ret = file.info.show_ty_annot(&self.syms_tys).filter_map(|(hint, ty_annot)| {
-      let idx = sml_hir::Idx::from(hint);
-      let ptr = file.syntax.lower.ptrs.hir_to_ast(idx)?;
-      // ignore patterns that are not from this exact source
-      if file.syntax.lower.ptrs.ast_to_hir_all(&ptr)? != [idx] {
-        return None;
+    let arenas = &file.syntax.lower.arenas;
+    let val_bind_pats = arenas
+      .dec
+      .iter()
+      .filter_map(|(_, dec)| match dec {
+        sml_hir::Dec::Val(_, val_binds) => Some(val_binds),
+        _ => None,
+      })
+      .flatten()
+      .filter_map(|vb| match vb.flavor {
+        sml_hir::ValFlavor::Val => vb.pat,
+        _ => None,
+      });
+    // need to do two iters here because the FunCase tuple case yields many pats,but the Fn and
+    // FunCase non-tuple case yield only one.
+    let fun_case_tuple_pats = arenas
+      .exp
+      .iter()
+      .filter_map(|(_, exp)| match exp {
+        sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::FunCase { tuple: true }) => {
+          match &arenas.pat[cs.first()?.pat?] {
+            sml_hir::Pat::Record { rows, .. } => Some(rows.iter().filter_map(|&(_, pat)| pat)),
+            _ => unreachable!("non-Record pat for FunCase with tuple: true"),
+          }
+        }
+        _ => None,
+      })
+      .flatten();
+    let fn_and_fun_case_non_tuple_pats = arenas.exp.iter().filter_map(|(_, exp)| match exp {
+      sml_hir::Exp::Fn(cs, sml_hir::FnFlavor::Fn | sml_hir::FnFlavor::FunCase { tuple: false }) => {
+        cs.first()?.pat
       }
-      let node = ptr.to_node(file.syntax.parse.root.syntax());
-      let parent_kind = node.parent()?.kind();
-      // ignore type-annotated patterns
-      if sml_syntax::ast::TypedPat::can_cast(parent_kind) {
-        return None;
-      }
-      let range = file.syntax.pos_db.range_utf16(ptr.text_range())?;
-      Some([
-        InlayHint { position: range.start, label: "(".to_owned(), kind: InlayHintKind::Ty },
-        InlayHint { position: range.end, label: ty_annot, kind: InlayHintKind::Ty },
-      ])
+      _ => None,
     });
-    Some(ret.flatten())
+    let ty_hints = val_bind_pats.filter_map(|pat| {
+      let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
+      Some(InlayHint { position: range.end, label: ty_annot, kind: InlayHintKind::Ty })
+    });
+    let param_hints = std::iter::empty()
+      .chain(fun_case_tuple_pats)
+      .chain(fn_and_fun_case_non_tuple_pats)
+      .filter_map(|pat| {
+        let (range, ty_annot) = inlay_hint_pat(&self.syms_tys, file, pat)?;
+        Some([
+          InlayHint { position: range.start, label: "(".to_owned(), kind: InlayHintKind::Param },
+          InlayHint {
+            position: range.end,
+            label: format!("{ty_annot})"),
+            kind: InlayHintKind::Param,
+          },
+        ])
+      })
+      .flatten();
+    Some(std::iter::empty().chain(param_hints).chain(ty_hints).collect())
   }
+}
+
+fn inlay_hint_pat(
+  st: &sml_statics_types::St,
+  file: &mlb_statics::SourceFile,
+  pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
+) -> Option<(RangeUtf16, String)> {
+  let want = match &file.syntax.lower.arenas.pat[pat] {
+    sml_hir::Pat::Typed(_, _) | sml_hir::Pat::SCon(_) => false,
+    sml_hir::Pat::Wild | sml_hir::Pat::Con(_, _) | sml_hir::Pat::Or(_) | sml_hir::Pat::As(_, _) => {
+      true
+    }
+    sml_hir::Pat::Record { rows, allows_other } => rows.len() > 1 || *allows_other,
+  };
+  if !want {
+    return None;
+  }
+  let ty_annot = file.info.show_pat_ty_annot(st, pat)?;
+  let ptr = file.syntax.lower.ptrs.hir_to_ast(pat.into())?;
+  let range = file.syntax.pos_db.range_utf16(ptr.text_range())?;
+  Some((range, ty_annot))
 }
 
 /// An error when formatting a file.

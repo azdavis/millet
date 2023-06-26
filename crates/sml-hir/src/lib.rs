@@ -225,8 +225,10 @@ pub enum FnFlavor {
   If,
   /// Lowers to `fn` applied to the head.
   Case,
-  /// Lowers to `val rec` with a bunch of `fn`, then a `case` on a tuple.
-  Fun,
+  /// The `fn` that take in the `fun` arguments.
+  FunArg,
+  /// The `fn` that is lowered from the `case` on all of the `fun` arguments.
+  FunCase { tuple: bool },
   /// Lowers to `fn` with a record pattern with a `...` pattern row.
   Selector,
   /// Lowers to `fun` and `if`.

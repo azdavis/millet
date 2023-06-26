@@ -609,11 +609,12 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
             let tup = exp::tuple(arg_exprs);
             st.exp(tup, ptr.clone())
           };
-          let case = exp::case(st, head, arms, ptr.clone(), sml_hir::FnFlavor::Fun);
+          let flavor = sml_hir::FnFlavor::FunCase { tuple: num_pats.is_some_and(|x| x != 1) };
+          let case = exp::case(st, head, arms, ptr.clone(), flavor);
           arg_names.into_iter().rev().fold(st.exp(case, ptr.clone()), |body, name| {
             let pat = st.pat(pat::name(name.as_str()), ptr.clone());
             let arm = sml_hir::Arm { pat, exp: body };
-            st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::Fun), ptr.clone())
+            st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::FunArg), ptr.clone())
           })
         };
         sml_hir::ValBind {

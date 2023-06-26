@@ -249,27 +249,18 @@ impl Info {
     self.entries.defs.with_def(def)
   }
 
-  /// Returns some type annotation bits.
-  pub fn show_ty_annot<'a>(
-    &'a self,
-    st: &'a sml_statics_types::St,
-  ) -> impl Iterator<Item = (sml_hir::la_arena::Idx<sml_hir::Pat>, String)> + 'a {
-    self.entries.tys.pat.iter().filter_map(|(pat, ty_entry)| {
-      let self_def = self.entries.defs.pat.get(pat)?.iter().any(|&d| match d {
-        def::Def::Path(_, ref_idx) => match ref_idx {
-          sml_hir::Idx::Pat(ref_pat) => pat == ref_pat,
-          _ => false,
-        },
-        def::Def::Primitive(_) => false,
-      });
-      if !self_def {
-        return None;
-      }
-      let mut mvs = MetaVarNames::new(&st.tys);
-      mvs.extend_for(ty_entry.ty);
-      let ty = ty_entry.ty.display(&mvs, &st.syms, config::DiagnosticLines::One);
-      Some((pat, format!(" : {ty})")))
-    })
+  /// Returns a string representation of the type of the pattern.
+  #[must_use]
+  pub fn show_pat_ty_annot(
+    &self,
+    st: &sml_statics_types::St,
+    pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
+  ) -> Option<String> {
+    let ty_entry = self.entries.tys.pat.get(pat)?;
+    let mut mvs = MetaVarNames::new(&st.tys);
+    mvs.extend_for(ty_entry.ty);
+    let ty = ty_entry.ty.display(&mvs, &st.syms, config::DiagnosticLines::One);
+    Some(format!(" : {ty}"))
   }
 }
 
