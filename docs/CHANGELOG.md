@@ -17,6 +17,7 @@ The versioning system is basically the following:
 
 - Add suggestions for boolean operators.
 - Show function return type inlay hints.
+- Fix primitive documentation references.
 
 ## v0.12.0
 

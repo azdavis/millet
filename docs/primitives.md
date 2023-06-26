@@ -71,6 +71,8 @@ The `Real` structure provides operations on reals.
 val fourPointSeven = Real.min (5.2, 4.7)
 ```
 
+[fp]: https://0.30000000000000004.com
+
 ## `type char`
 
 The built-in character type.
@@ -103,10 +105,10 @@ The common [UTF-8 encoding][utf8-everywhere] is one such encoding that has this 
 
 For maximum portability, however, an SML program should only use character literals that are ASCII, since the Definition prescribes no further restrictions on the underlying character set other than it must agree with ASCII.
 
-[unicode-char]: https://www.unicode.org/glossary/#character
 [rust-char]: https://doc.rust-lang.org/stable/std/primitive.char.html
-[rust-str]: https://doc.rust-lang.org/stable/std/primitive.str.html
+[unicode-char]: https://www.unicode.org/glossary/#character
 [utf8-everywhere]: http://utf8everywhere.org
+[rust-str]: https://doc.rust-lang.org/stable/std/primitive.str.html
 
 ## `type string`
 
@@ -226,8 +228,6 @@ The empty list constructor. Identical to `[]`.
 ## `val op ::`
 
 The non-empty list constructor, pronounced "cons". Defaults to `infixr 5`.
-
-[fp]: https://0.30000000000000004.com
 
 ## `type 'a ref`
 
