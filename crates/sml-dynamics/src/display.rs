@@ -495,7 +495,7 @@ impl fmt::Display for ExpDisplay<'_> {
         }
         Ok(())
       }
-      sml_hir::Exp::Typed(exp, _) => {
+      sml_hir::Exp::Typed(exp, _, _) => {
         ExpDisplay { exp: *exp, ars: self.ars, prec: self.prec, indent: self.indent }.fmt(f)
       }
     }

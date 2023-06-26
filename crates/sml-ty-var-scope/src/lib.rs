@@ -298,7 +298,7 @@ fn get_exp(
         get_exp(st, ars, scope, mode, arm.exp);
       }
     }
-    sml_hir::Exp::Typed(exp, ty) => {
+    sml_hir::Exp::Typed(exp, ty, _) => {
       get_exp(st, ars, scope, mode, *exp);
       match mode {
         Mode::Get(ac) => get_ty(ars, ac, *ty),

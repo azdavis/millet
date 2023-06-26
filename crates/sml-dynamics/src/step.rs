@@ -72,7 +72,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
           Closure { env: st.env.clone(), this: FxHashSet::default(), matcher: matcher.clone() };
         (Step::Val(Val::Closure(clos)), false)
       }
-      sml_hir::Exp::Typed(exp, _) => (Step::exp(*exp), false),
+      sml_hir::Exp::Typed(exp, _, _) => (Step::exp(*exp), false),
     },
     Step::Val(val) => match st.frames.pop() {
       // done evaluating

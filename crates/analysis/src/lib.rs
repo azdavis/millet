@@ -363,6 +363,31 @@ impl Analysis {
         _ => None,
       })
       .flat_map(|xs| xs.iter().filter_map(|x| x.pat));
+    let fun_case_bodies = arenas
+      .dec
+      .iter()
+      .filter_map(|(_, dec)| match dec {
+        sml_hir::Dec::Val(_, val_binds, sml_hir::ValFlavor::Fun) => Some(val_binds),
+        _ => None,
+      })
+      .flat_map(|xs| xs.iter().filter_map(|x| x.exp))
+      .filter_map(|mut exp| {
+        let func = loop {
+          match &arenas.exp[exp] {
+            sml_hir::Exp::Fn(arms, sml_hir::FnFlavor::FunArg) => exp = arms.first()?.exp?,
+            sml_hir::Exp::App(func, _) => break (*func)?,
+            _ => unreachable!("non-(FunArg Fn) or App exp for Fun Val"),
+          }
+        };
+        let fst_arm_body = match &arenas.exp[func] {
+          sml_hir::Exp::Fn(arms, sml_hir::FnFlavor::FunCase { .. }) => arms.first()?.exp?,
+          _ => unreachable!("non-(FunCase Fn) for Fun Val App func"),
+        };
+        match &arenas.exp[fst_arm_body] {
+          sml_hir::Exp::Typed(_, _, sml_hir::TypedFlavor::Fun) => None,
+          _ => Some((exp, fst_arm_body)),
+        }
+      });
     // need to do two iters here because the FunCase tuple case yields many pats,but the Fn and
     // FunCase non-tuple case yield only one.
     let fun_case_tuple_pats = arenas
@@ -403,7 +428,21 @@ impl Analysis {
         ])
       })
       .flatten();
-    Some(std::iter::empty().chain(param_hints).chain(ty_hints).collect())
+    let fun_return_ty_hints = fun_case_bodies.filter_map(|(ptr_exp, exp)| {
+      let ptr = file.syntax.lower.ptrs.hir_to_ast(ptr_exp.into())?;
+      let fun_bind_ptr = ptr.cast::<sml_syntax::ast::FunBind>()?;
+      let fun_bind = fun_bind_ptr.to_node(file.syntax.parse.root.syntax());
+      let case = fun_bind.fun_bind_cases().next()?;
+      if case.ty_annotation().is_some() {
+        return None;
+      }
+      let end = case.pats().last()?.syntax().text_range().end();
+      let position = file.syntax.pos_db.position_utf16(end)?;
+      let label = file.info.show_ty_annot(&self.syms_tys, exp)?;
+      Some(InlayHint { position, label, kind: InlayHintKind::Ty })
+    });
+    let hints = std::iter::empty().chain(param_hints).chain(ty_hints).chain(fun_return_ty_hints);
+    Some(hints.collect())
   }
 }
 

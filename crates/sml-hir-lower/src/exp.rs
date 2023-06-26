@@ -140,7 +140,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("typed")));
       }
       forbid_opaque_asc(st, exp.ascription());
-      sml_hir::Exp::Typed(get(st, exp.exp()), ty::get(st, exp.ty()))
+      sml_hir::Exp::Typed(get(st, exp.exp()), ty::get(st, exp.ty()), sml_hir::TypedFlavor::Regular)
     }
     ast::Exp::AndalsoExp(exp) => {
       if !st.lang().exp.andalso {

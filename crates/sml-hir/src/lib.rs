@@ -1,4 +1,8 @@
 //! High-level Intermediate Representation.
+//!
+//! An implementation MUST NOT depend on the various "flavors" for semantics, e.g. type check
+//! differently based on the flavor. It MUST only be used for "niceties", e.g. to emit better error
+//! messages.
 
 #![deny(clippy::pedantic, missing_debug_implementations, rust_2018_idioms)]
 // TODO remove once rustfmt support lands
@@ -51,9 +55,6 @@ pub type Seq<T> = Vec<la_arena::Idx<T>>;
 // modules //
 
 /// Whether something used syntax sugar.
-///
-/// An implementation MUST NOT depend on this for semantics, e.g. type check differently based on
-/// the flavor. It MUST only be used for "niceties", e.g. to emit better error messages.
 #[derive(Debug, Clone, Copy)]
 pub enum Flavor {
   /// It used sugar.
@@ -204,7 +205,7 @@ pub enum Exp {
   Handle(ExpIdx, Vec<Arm>),
   Raise(ExpIdx),
   Fn(Vec<Arm>, FnFlavor),
-  Typed(ExpIdx, TyIdx),
+  Typed(ExpIdx, TyIdx, TypedFlavor),
 }
 
 #[derive(Debug, Clone)]
@@ -214,9 +215,6 @@ pub struct Arm {
 }
 
 /// The original bit of syntax that got eventually lowered to stuff involving `fn`.
-///
-/// An implementation MUST NOT depend on this for semantics, e.g. type check differently based on
-/// the flavor. It MUST only be used for "niceties", e.g. to emit better error messages.
 #[derive(Debug, Clone, Copy)]
 pub enum FnFlavor {
   /// i.e. `andalso`/`orelse`. Lowers to `if`.
@@ -237,6 +235,13 @@ pub enum FnFlavor {
   Seq,
   /// Lowers to itself!
   Fn,
+}
+
+/// The original bit of syntax that got eventually lowered to stuff involving `exp : ty`.
+#[derive(Debug, Clone, Copy)]
+pub enum TypedFlavor {
+  Fun,
+  Regular,
 }
 
 pub type DecSeq = Seq<Dec>;
@@ -265,9 +270,6 @@ pub struct ValBind {
 }
 
 /// The original bit of syntax that got eventually lowered to stuff involving `val`.
-///
-/// An implementation MUST NOT depend on this for semantics, e.g. type check differently based on
-/// the flavor. It MUST only be used for "niceties", e.g. to emit better error messages.
 #[derive(Debug, Clone, Copy)]
 pub enum ValFlavor {
   /// A top-level expression `e` lowers to `val _ = e` (it should technically lower to `val it = e`

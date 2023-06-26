@@ -582,7 +582,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
             let ptr = SyntaxNodePtr::new(body.syntax());
             let mut body = exp::get(st, Some(body));
             if let Some(ty) = ty {
-              body = st.exp(sml_hir::Exp::Typed(body, ty), ptr);
+              body = st.exp(sml_hir::Exp::Typed(body, ty, sml_hir::TypedFlavor::Fun), ptr);
             }
             body
           });

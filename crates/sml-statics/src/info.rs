@@ -249,7 +249,7 @@ impl Info {
     self.entries.defs.with_def(def)
   }
 
-  /// Returns a string representation of the type of the pattern.
+  /// Returns a string representation of a type annotation for the pattern.
   #[must_use]
   pub fn show_pat_ty_annot(
     &self,
@@ -257,6 +257,20 @@ impl Info {
     pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
   ) -> Option<String> {
     let ty_entry = self.entries.tys.pat.get(pat)?;
+    let mut mvs = MetaVarNames::new(&st.tys);
+    mvs.extend_for(ty_entry.ty);
+    let ty = ty_entry.ty.display(&mvs, &st.syms, config::DiagnosticLines::One);
+    Some(format!(" : {ty}"))
+  }
+
+  /// Returns a string representation of a type annotation for the expression.
+  #[must_use]
+  pub fn show_ty_annot(
+    &self,
+    st: &sml_statics_types::St,
+    exp: sml_hir::la_arena::Idx<sml_hir::Exp>,
+  ) -> Option<String> {
+    let ty_entry = self.entries.tys.exp.get(exp)?;
     let mut mvs = MetaVarNames::new(&st.tys);
     mvs.extend_for(ty_entry.ty);
     let ty = ty_entry.ty.display(&mvs, &st.syms, config::DiagnosticLines::One);
