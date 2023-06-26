@@ -48,7 +48,7 @@ fn get_one(
 ) {
   match &ars.dec[dec] {
     // @def(15)
-    sml_hir::Dec::Val(ty_vars, val_binds) => {
+    sml_hir::Dec::Val(ty_vars, val_binds, _) => {
       if !maybe_effectful_val(ars, val_binds) {
         st.err(dec, ErrorKind::DecWithoutEffect);
       }
@@ -481,7 +481,7 @@ pub(crate) fn maybe_effectful(ars: &sml_hir::Arenas, decs: &[sml_hir::DecIdx]) -
 
 pub(crate) fn maybe_effectful_one(ars: &sml_hir::Arenas, dec: sml_hir::DecIdx) -> bool {
   match &ars.dec[dec] {
-    sml_hir::Dec::Val(_, val_binds) => maybe_effectful_val(ars, val_binds),
+    sml_hir::Dec::Val(_, val_binds, _) => maybe_effectful_val(ars, val_binds),
     sml_hir::Dec::Ty(_)
     | sml_hir::Dec::Datatype(_, _)
     | sml_hir::Dec::DatatypeCopy(_, _)

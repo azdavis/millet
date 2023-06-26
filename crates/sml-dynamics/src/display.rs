@@ -662,7 +662,7 @@ struct DecDisplay<'a> {
 impl fmt::Display for DecDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.ars.dec[self.dec] {
-      sml_hir::Dec::Val(_, val_binds) => {
+      sml_hir::Dec::Val(_, val_binds, _) => {
         let mut iter = val_binds.iter();
         let &val_bind = iter.next().ok_or(fmt::Error)?;
         ValBindDisplay { val_bind, ars: self.ars, first: true, indent: self.indent }.fmt(f)?;

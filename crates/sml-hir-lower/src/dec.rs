@@ -65,9 +65,8 @@ fn get_top_dec_one(st: &mut St<'_>, top_dec: ast::DecOne) -> sml_hir::StrDecIdx 
         // fine, but millet doesn't check a REPL, it checks source files.
         pat: st.pat(sml_hir::Pat::Wild, ptr.clone()),
         exp: exp::get(st, top_dec.exp()),
-        flavor: sml_hir::ValFlavor::TopLevelExp,
       };
-      let dec = sml_hir::Dec::Val(Vec::new(), vec![bind]);
+      let dec = sml_hir::Dec::Val(Vec::new(), vec![bind], sml_hir::ValFlavor::TopLevelExp);
       let dec = st.dec(dec, ptr.clone());
       st.str_dec(sml_hir::StrDec::Dec(vec![dec]), ptr)
     }
@@ -507,10 +506,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           rec: val_bind.rec_kw().is_some(),
           pat: pat::get(st, None, val_bind.pat()),
           exp: exp::get(st, exp),
-          flavor: sml_hir::ValFlavor::Val,
         }
       });
-      sml_hir::Dec::Val(ty_vars, iter.collect())
+      sml_hir::Dec::Val(ty_vars, iter.collect(), sml_hir::ValFlavor::Val)
     }
     ast::DecOne::FunDec(dec) => {
       if !st.lang().dec.fun {
@@ -621,10 +619,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           rec: true,
           pat: name.and_then(|name| st.pat(pat::name(name.text()), ptr)),
           exp,
-          flavor: sml_hir::ValFlavor::Fun,
         }
       });
-      sml_hir::Dec::Val(ty_vars, iter.collect())
+      sml_hir::Dec::Val(ty_vars, iter.collect(), sml_hir::ValFlavor::Fun)
     }
     ast::DecOne::TyDec(dec) => {
       if !st.lang().dec.type_ {
@@ -706,15 +703,12 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
     ast::DecOne::DoDec(ref inner) => {
       // emit an error, but lower anyway.
       st.err(dec.syntax().text_range(), ErrorKind::Unsupported("`do` declarations"));
-      sml_hir::Dec::Val(
-        Vec::new(),
-        vec![sml_hir::ValBind {
-          rec: false,
-          pat: st.pat(pat::tuple([]), ptr.clone()),
-          exp: exp::get(st, inner.exp()),
-          flavor: sml_hir::ValFlavor::Do,
-        }],
-      )
+      let bind = sml_hir::ValBind {
+        rec: false,
+        pat: st.pat(pat::tuple([]), ptr.clone()),
+        exp: exp::get(st, inner.exp()),
+      };
+      sml_hir::Dec::Val(Vec::new(), vec![bind], sml_hir::ValFlavor::Do)
     }
     ast::DecOne::StructureDec(_)
     | ast::DecOne::SignatureDec(_)

@@ -206,7 +206,7 @@ pub(crate) fn step(st: &mut St, cx: Cx<'_>, s: Step) -> (Step, bool) {
       },
     },
     Step::Dec(dec) => match &cx.ars.dec[dec] {
-      sml_hir::Dec::Val(_, val_binds) => {
+      sml_hir::Dec::Val(_, val_binds, _) => {
         let mut val_binds = val_binds.clone();
         val_binds.reverse();
         let vb = val_binds.pop().unwrap();

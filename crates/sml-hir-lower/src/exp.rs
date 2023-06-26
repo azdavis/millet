@@ -217,13 +217,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       let arm = sml_hir::Arm { pat: arg_pat, exp: fn_body };
       let fn_exp = st.exp(sml_hir::Exp::Fn(vec![arm], sml_hir::FnFlavor::While), ptr.clone());
       let vid_pat = st.pat(pat::name(vid.as_str()), ptr.clone());
-      let vb = sml_hir::ValBind {
-        rec: true,
-        pat: vid_pat,
-        exp: fn_exp,
-        flavor: sml_hir::ValFlavor::While,
-      };
-      let val = st.dec(sml_hir::Dec::Val(vec![], vec![vb]), ptr.clone());
+      let bind = sml_hir::ValBind { rec: true, pat: vid_pat, exp: fn_exp };
+      let val =
+        st.dec(sml_hir::Dec::Val(vec![], vec![bind], sml_hir::ValFlavor::While), ptr.clone());
       sml_hir::Exp::Let(vec![val], call_unit_fn(st, &vid, ptr.clone()))
     }
     ast::Exp::CaseExp(exp) => {

@@ -359,14 +359,10 @@ impl Analysis {
       .dec
       .iter()
       .filter_map(|(_, dec)| match dec {
-        sml_hir::Dec::Val(_, val_binds) => Some(val_binds),
+        sml_hir::Dec::Val(_, val_binds, sml_hir::ValFlavor::Val) => Some(val_binds),
         _ => None,
       })
-      .flatten()
-      .filter_map(|vb| match vb.flavor {
-        sml_hir::ValFlavor::Val => vb.pat,
-        _ => None,
-      });
+      .flat_map(|xs| xs.iter().filter_map(|x| x.pat));
     // need to do two iters here because the FunCase tuple case yields many pats,but the Fn and
     // FunCase non-tuple case yield only one.
     let fun_case_tuple_pats = arenas

@@ -245,7 +245,7 @@ pub type DecArena = Arena<Dec>;
 
 #[derive(Debug)]
 pub enum Dec {
-  Val(Vec<TyVar>, Vec<ValBind>),
+  Val(Vec<TyVar>, Vec<ValBind>, ValFlavor),
   Ty(Vec<TyBind>),
   /// The TyBinds are from `withtype`, since it's easier to process in statics than lower.
   Datatype(Vec<DatBind>, Vec<TyBind>),
@@ -262,7 +262,6 @@ pub struct ValBind {
   pub rec: bool,
   pub pat: PatIdx,
   pub exp: ExpIdx,
-  pub flavor: ValFlavor,
 }
 
 /// The original bit of syntax that got eventually lowered to stuff involving `val`.

@@ -44,7 +44,7 @@ pub fn get(ars: &mut sml_hir::Arenas, root: &[sml_hir::StrDecIdx]) {
   get_str_dec(&mut st, ars, root);
   for (dec, implicit) in st.val_dec {
     match &mut ars.dec[dec] {
-      sml_hir::Dec::Val(ty_vars, _) => ty_vars.extend(implicit),
+      sml_hir::Dec::Val(ty_vars, _, _) => ty_vars.extend(implicit),
       _ => unreachable!("only val may implicitly bind ty vars"),
     }
   }
@@ -205,7 +205,7 @@ fn get_dec_one(
   dec: sml_hir::DecIdx,
 ) {
   match &ars.dec[dec] {
-    sml_hir::Dec::Val(ty_vars, val_binds) => {
+    sml_hir::Dec::Val(ty_vars, val_binds, _) => {
       let mut scope = scope.clone();
       match mode {
         Mode::Get(_) => {
