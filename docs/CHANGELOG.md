@@ -13,9 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
-## main
+## v0.12.1
 
 - Add suggestions for boolean operators.
+- Show inlay hints on literal patterns.
 - Show function return type inlay hints.
 - Fix primitive documentation references.
 
