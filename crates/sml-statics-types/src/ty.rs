@@ -346,7 +346,7 @@ pub struct UnresolvedRecordMetaTyVar {
 }
 
 /// A kind of type variable.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum TyVarKind {
   /// A regular type variable, like `'a`.
   Regular,
@@ -412,5 +412,22 @@ impl TyScheme {
   }
 }
 
+/// Data for a bound ty var.
+#[derive(Debug, Clone)]
+pub enum BoundTyVarData {
+  /// A kind of ty var, with a machine generated name.
+  Kind(TyVarKind),
+}
+
+impl BoundTyVarData {
+  /// Returns a ty var kind for this.
+  #[must_use]
+  pub fn ty_var_kind(&self) -> TyVarKind {
+    match self {
+      BoundTyVarData::Kind(kind) => *kind,
+    }
+  }
+}
+
 /// The bound type variables for a [`TyScheme`].
-pub type BoundTyVars = Vec<TyVarKind>;
+pub type BoundTyVars = Vec<BoundTyVarData>;

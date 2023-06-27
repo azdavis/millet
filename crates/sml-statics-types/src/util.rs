@@ -29,7 +29,7 @@ pub fn get_scon(tys: &mut Tys, g: Generalizable, scon: &sml_hir::SCon) -> Ty {
 /// type scheme.
 pub fn instantiate(tys: &mut Tys, g: Generalizable, ty_scheme: &TyScheme) -> Ty {
   let subst: Vec<_> =
-    ty_scheme.bound_vars.iter().map(|kind| tys.meta_var_kind(g, kind.clone())).collect();
+    ty_scheme.bound_vars.iter().map(|data| tys.meta_var_kind(g, data.ty_var_kind())).collect();
   let mut ret = ty_scheme.ty;
   apply_bv(tys, &subst, &mut ret);
   ret

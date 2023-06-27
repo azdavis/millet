@@ -114,7 +114,7 @@ impl fmt::Display for TyDisplay<'_> {
       TyData::None => f.write_str("_")?,
       TyData::BoundVar(bv) => {
         let vars = self.cx.bound_vars.expect("bound ty var without a BoundTyVars");
-        let equality = matches!(bv.index_into(vars), TyVarKind::Equality);
+        let equality = matches!(bv.index_into(vars).ty_var_kind(), TyVarKind::Equality);
         let name = bv.name(equality);
         write!(f, "{name}")?;
       }

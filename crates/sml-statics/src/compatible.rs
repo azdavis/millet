@@ -38,8 +38,8 @@ fn fixed_var_subst(st: &mut St<'_>, bound_vars: &BoundTyVars) -> Vec<Ty> {
   bound_vars
     .iter()
     .enumerate()
-    .map(|(idx, kind)| {
-      let equality = matches!(kind, TyVarKind::Equality);
+    .map(|(idx, data)| {
+      let equality = matches!(data.ty_var_kind(), TyVarKind::Equality);
       let ty_var = ty_var_name(equality, idx).to_string();
       st.syms_tys.tys.fixed_var(sml_hir::TyVar::new(ty_var), TyVarSrc::Ty)
     })

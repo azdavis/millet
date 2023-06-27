@@ -6,7 +6,7 @@ use sml_statics_types::disallow::{self, Disallow};
 use sml_statics_types::env::{Cx, Env, FunEnv, SigEnv, StrEnv};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use sml_statics_types::sym::{Equality, Sym, SymTyInfo, SymValEnv, Syms};
-use sml_statics_types::ty::{BoundTyVar, RecordData, Ty, TyScheme, TyVarKind, Tys};
+use sml_statics_types::ty::{BoundTyVar, BoundTyVarData, RecordData, Ty, TyScheme, TyVarKind, Tys};
 use sml_statics_types::{def::Primitive, item::Item, overload};
 
 /// A basis.
@@ -300,15 +300,15 @@ where
   })
 }
 
-fn ty_scheme_one<F>(tys: &mut Tys, k: TyVarKind, f: F) -> TyScheme
+fn ty_scheme_one<F>(tys: &mut Tys, kind: TyVarKind, f: F) -> TyScheme
 where
   F: FnOnce(&mut Tys, Ty) -> Ty,
 {
-  let mut bound_vars = Vec::<TyVarKind>::new();
+  let mut bound_vars = Vec::<BoundTyVarData>::new();
   let mut ty = None::<Ty>;
   BoundTyVar::add_to_binder(&mut bound_vars, |bv| {
     ty = Some(Ty::bound_var(bv));
-    k
+    BoundTyVarData::Kind(kind)
   });
   TyScheme { bound_vars, ty: f(tys, ty.unwrap()) }
 }

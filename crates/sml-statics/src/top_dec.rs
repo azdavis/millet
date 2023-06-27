@@ -16,7 +16,7 @@ use fast_hash::FxHashSet;
 use sml_statics_types::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValInfo};
 use sml_statics_types::sym::{Equality, StartedSym, SymTyInfo, SymValEnv, SymsMarker};
-use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
+use sml_statics_types::ty::{BoundTyVarData, Ty, TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
 use sml_statics_types::{generalize, item::Item, mode::Mode, overload, util::n_ary_con};
 
 pub(crate) fn get(
@@ -645,7 +645,10 @@ fn get_ty_desc(
   let bound_vars: Vec<_> = ty_desc
     .ty_vars
     .iter()
-    .map(|x| if x.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular })
+    .map(|ty_var| {
+      let kind = if ty_var.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular };
+      BoundTyVarData::Kind(kind)
+    })
     .collect();
   let ty_info = TyInfo {
     ty_scheme: n_ary_con(&mut st.syms_tys.tys, bound_vars, started.sym()),

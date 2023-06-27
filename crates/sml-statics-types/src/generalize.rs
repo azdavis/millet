@@ -2,8 +2,8 @@
 
 use crate::overload;
 use crate::ty::{
-  BoundTyVar, BoundTyVars, RecordData, Ty, TyData, TyKind, TyScheme, TyVarKind, Tys,
-  UnresolvedRecordMetaTyVar, UnsolvedMetaTyVarKind,
+  BoundTyVar, BoundTyVarData, BoundTyVars, RecordData, Ty, TyData, TyKind, TyScheme, TyVarKind,
+  Tys, UnresolvedRecordMetaTyVar, UnsolvedMetaTyVarKind,
 };
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
@@ -65,15 +65,15 @@ pub fn get(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
 ///
 /// If it has a bug.
 pub fn get_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
-  let mut bound = Vec::with_capacity(fixed.0.len());
+  let mut bound = Vec::<BoundTyVarData>::with_capacity(fixed.0.len());
   for (&fv, bv) in &mut fixed.0 {
     assert!(bv.is_none());
-    let k = if tys.fixed_var_data[fv.to_usize()].ty_var.is_equality() {
+    let kind = if tys.fixed_var_data[fv.to_usize()].ty_var.is_equality() {
       TyVarKind::Equality
     } else {
       TyVarKind::Regular
     };
-    let new_bv = BoundTyVar::add_to_binder(&mut bound, |_| k);
+    let new_bv = BoundTyVar::add_to_binder(&mut bound, |_| BoundTyVarData::Kind(kind));
     *bv = Some(new_bv);
   }
   let mut st = St { fixed, meta: FxHashMap::default(), bound, tys };
@@ -140,7 +140,7 @@ fn go_bv(
   match kind {
     UnsolvedMetaTyVarKind::Kind(kind) => match kind {
       TyVarKind::Regular | TyVarKind::Equality => {
-        let new_bv = BoundTyVar::add_to_binder(bound, |_| kind);
+        let new_bv = BoundTyVar::add_to_binder(bound, |_| BoundTyVarData::Kind(kind));
         *bv = Some(new_bv);
         Ok(Ty::bound_var(new_bv))
       }
