@@ -6,11 +6,10 @@ use crate::util::{check_name, ins_check_name, ins_no_dupe};
 use crate::{config::Cfg, exp, pat, pat_match::Pat, st::St, ty, unify::unify};
 use fast_hash::{FxHashMap, FxHashSet};
 use sml_statics_types::env::{Cx, Env};
-use sml_statics_types::generalize::{generalize, generalize_fixed, FixedTyVars};
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValEnv, ValInfo};
 use sml_statics_types::sym::{Equality, StartedSym, SymValEnv};
 use sml_statics_types::ty::{Generalizable, Ty, TyData, TyScheme, TyVarSrc};
-use sml_statics_types::{equality, item::Item};
+use sml_statics_types::{equality, generalize, item::Item};
 
 pub(crate) fn get(
   st: &mut St<'_>,
@@ -112,7 +111,7 @@ fn get_one(
         if !generalized.insert(exp) {
           continue;
         }
-        match generalize(&mut st.syms_tys.tys, fixed.clone(), val_info.ty_scheme.ty) {
+        match generalize::get(&mut st.syms_tys.tys, fixed.clone(), val_info.ty_scheme.ty) {
           Ok(ts) => val_info.ty_scheme = ts,
           Err(ur) => st.err(ur.idx, ErrorKind::UnresolvedRecordTy(ur.rows)),
         }
@@ -267,8 +266,8 @@ pub(crate) fn add_fixed_ty_vars(
   cx: &mut Cx,
   src: TyVarSrc,
   ty_vars: &[sml_hir::TyVar],
-) -> FixedTyVars {
-  let mut ret = FixedTyVars::default();
+) -> generalize::FixedTyVars {
+  let mut ret = generalize::FixedTyVars::default();
   for ty_var in ty_vars.iter() {
     let fv = st.syms_tys.tys.fixed_var(ty_var.clone(), src);
     if cx.fixed.insert(ty_var.clone(), fv).is_some() {
@@ -291,7 +290,7 @@ fn get_ty_binds(
   for ty_bind in ty_binds {
     let fixed = add_fixed_ty_vars(st, idx, cx, TyVarSrc::Ty, &ty_bind.ty_vars);
     let ty = ty::get(st, cx, ars, ty::Mode::TyRhs, ty_bind.ty);
-    let ty_scheme = generalize_fixed(&mut st.syms_tys.tys, fixed, ty);
+    let ty_scheme = generalize::get_fixed(&mut st.syms_tys.tys, fixed, ty);
     let ty_info =
       TyInfo { ty_scheme, val_env: ValEnv::default(), def: st.def(idx), disallow: None };
     if let Some(e) = ins_no_dupe(ty_env, ty_bind.name.clone(), ty_info, Item::Ty) {
@@ -305,7 +304,7 @@ fn get_ty_binds(
 
 struct Datatype {
   started: StartedSym,
-  fixed: FixedTyVars,
+  fixed: generalize::FixedTyVars,
   out_ty: Ty,
   ty_scheme: TyScheme,
 }
@@ -327,15 +326,15 @@ pub(crate) fn get_dat_binds(
   for dat_bind in dat_binds.iter() {
     let started = st.syms_tys.syms.start(st.mk_path(dat_bind.name.clone()));
     // just create the fixed ty vars, do not bring them into the scope of the cx yet.
-    let mut fixed = FixedTyVars::default();
+    let mut fixed = generalize::FixedTyVars::default();
     for ty_var in &dat_bind.ty_vars {
       let fv = st.syms_tys.tys.fixed_var(ty_var.clone(), TyVarSrc::Ty);
       fixed.push(fv);
     }
     let out_args: Vec<_> = fixed.iter().collect();
     let out_ty = st.syms_tys.tys.con(out_args, started.sym());
-    // just `generalize` would also work, because `out_ty` mentions every fixed var.
-    let ty_scheme = generalize_fixed(&mut st.syms_tys.tys, fixed.clone(), out_ty);
+    // just `get` would also work, because `out_ty` mentions every fixed var.
+    let ty_scheme = generalize::get_fixed(&mut st.syms_tys.tys, fixed.clone(), out_ty);
     let ty_info = TyInfo {
       ty_scheme: ty_scheme.clone(),
       val_env: ValEnv::default(),
@@ -388,9 +387,9 @@ pub(crate) fn get_dat_binds(
         let param = ty::get(st, &cx, ars, ty::Mode::TyRhs, of_ty);
         ty = st.syms_tys.tys.fun(param, ty);
       };
-      // just `generalize` would also work, because `ty_scheme` contains `out_ty`, which mentions
-      // every fixed var.
-      let ty_scheme = generalize_fixed(&mut st.syms_tys.tys, datatype.fixed.clone(), ty);
+      // just `get` would also work, because `ty_scheme` contains `out_ty`, which mentions every
+      // fixed var.
+      let ty_scheme = generalize::get_fixed(&mut st.syms_tys.tys, datatype.fixed.clone(), ty);
       let vi = ValInfo {
         ty_scheme,
         id_status: IdStatus::Con,

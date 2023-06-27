@@ -14,11 +14,10 @@ use crate::util::{ins_check_name, ins_no_dupe};
 use crate::{basis::Bs, config::Cfg, dec, st::St, ty};
 use fast_hash::FxHashSet;
 use sml_statics_types::env::{Env, FunEnv, FunSig, Sig, SigEnv, StrEnv, TyNameSet};
-use sml_statics_types::generalize::generalize;
 use sml_statics_types::info::{IdStatus, TyEnv, TyInfo, ValInfo};
 use sml_statics_types::sym::{Equality, StartedSym, SymTyInfo, SymValEnv, SymsMarker};
 use sml_statics_types::ty::{Ty, TyData, TyScheme, TyVarKind, TyVarSrc, Tys};
-use sml_statics_types::{item::Item, mode::Mode, overload, util::n_ary_con};
+use sml_statics_types::{generalize, item::Item, mode::Mode, overload, util::n_ary_con};
 
 pub(crate) fn get(
   st: &mut St<'_>,
@@ -468,7 +467,7 @@ fn get_spec_one(
       let fixed = dec::add_fixed_ty_vars(st, spec.into(), &mut cx, TyVarSrc::Val, ty_vars);
       for val_desc in val_descs {
         let ty = ty::get(st, &cx, ars, ty::Mode::Regular, val_desc.ty);
-        let ty_scheme = generalize(&mut st.syms_tys.tys, fixed.clone(), ty)
+        let ty_scheme = generalize::get(&mut st.syms_tys.tys, fixed.clone(), ty)
           .expect("no record meta vars because no patterns in specs");
         let vi = ValInfo {
           ty_scheme,

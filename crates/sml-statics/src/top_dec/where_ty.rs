@@ -5,9 +5,8 @@ use crate::{
   basis::Bs, dec::add_fixed_ty_vars, error::ErrorKind, get_env::get_ty_info, st::St, ty,
 };
 use sml_statics_types::env::Env;
-use sml_statics_types::generalize::generalize_fixed;
-use sml_statics_types::sym::SymsMarker;
 use sml_statics_types::ty::{TyData, TyScheme, TyVarSrc};
+use sml_statics_types::{generalize, sym::SymsMarker};
 
 pub(crate) fn get(
   st: &mut St<'_>,
@@ -23,7 +22,7 @@ pub(crate) fn get(
       let mut cx = bs.as_cx();
       let fixed = add_fixed_ty_vars(st, idx, &mut cx, TyVarSrc::Ty, ty_vars);
       let ty = ty::get(st, &cx, ars, ty::Mode::TyRhs, *ty);
-      let ty_scheme = generalize_fixed(&mut st.syms_tys.tys, fixed, ty);
+      let ty_scheme = generalize::get_fixed(&mut st.syms_tys.tys, fixed, ty);
       get_where_type(st, idx, marker, inner_env, path, ty_scheme, true);
     }
     sml_hir::WhereKind::Structure(lhs, rhs) => {

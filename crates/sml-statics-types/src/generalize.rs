@@ -37,7 +37,7 @@ impl FixedTyVars {
 /// # Errors
 ///
 /// If we couldn't generalize because there was an unresolved record meta ty var.
-pub fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
+pub fn get(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
   let mut meta = FxHashMap::<idx::Idx, Option<BoundTyVar>>::default();
   // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
   // if we did not, we would have to traverse a whole `Env` to know what ty vars are present in it,
@@ -64,8 +64,7 @@ pub fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme>
 /// # Panics
 ///
 /// If it has a bug.
-#[allow(clippy::module_name_repetitions)]
-pub fn generalize_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
+pub fn get_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
   let mut bound = Vec::with_capacity(fixed.0.len());
   for (&fv, bv) in &mut fixed.0 {
     assert!(bv.is_none());
