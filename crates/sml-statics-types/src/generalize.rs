@@ -129,7 +129,7 @@ fn go_bv(
   bound: &mut BoundTyVars,
   kind: UnsolvedMetaTyVarKind,
   ty: Ty,
-) -> Result<Ty, UnresolvedRecordMetaTyVar> {
+) -> Result<Ty> {
   let bv = match bv {
     Some(bv) => bv,
     None => return Ok(ty),
