@@ -38,13 +38,13 @@ impl FixedTyVars {
 ///
 /// If we couldn't generalize because there was an unresolved record meta ty var.
 pub fn generalize(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
-  let mut meta = FxHashMap::<Ty, Option<BoundTyVar>>::default();
+  let mut meta = FxHashMap::<idx::Idx, Option<BoundTyVar>>::default();
   // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
   // if we did not, we would have to traverse a whole `Env` to know what ty vars are present in it,
   // and subtract those vars from the vars in `ty`.
   tys.unsolved_meta_vars(ty, &mut |mv, data| {
     if tys.is_generalizable(data.rank) {
-      meta.insert(mv, None);
+      meta.insert(mv.idx, None);
     }
   });
   let mut st = St { fixed, meta, bound: Vec::new(), tys };
@@ -84,7 +84,7 @@ pub fn generalize_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TySche
 
 struct St<'a> {
   fixed: FixedTyVars,
-  meta: FxHashMap<Ty, Option<BoundTyVar>>,
+  meta: FxHashMap<idx::Idx, Option<BoundTyVar>>,
   bound: BoundTyVars,
   tys: &'a mut Tys,
 }
@@ -94,7 +94,7 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
   match data {
     // interesting cases
     TyData::UnsolvedMetaVar(umv) => {
-      let bv = st.meta.get_mut(&ty);
+      let bv = st.meta.get_mut(&ty.idx);
       go_bv(bv, &mut st.bound, umv.kind, ty)
     }
     TyData::FixedVar(fv) => {
