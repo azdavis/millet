@@ -3,7 +3,8 @@
 use crate::fmt_util::idx_to_name;
 use crate::sym::{Sym, Syms};
 use crate::ty::{
-  BoundTyVars, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys, UnsolvedMetaTyVarKind,
+  BoundTyVarData, BoundTyVars, RecordData, Ty, TyData, TyScheme, TyVarKind, Tys,
+  UnsolvedMetaTyVarKind,
 };
 use crate::unify::Incompatible;
 use fast_hash::FxHashMap;
@@ -114,9 +115,15 @@ impl fmt::Display for TyDisplay<'_> {
       TyData::None => f.write_str("_")?,
       TyData::BoundVar(bv) => {
         let vars = self.cx.bound_vars.expect("bound ty var without a BoundTyVars");
-        let equality = matches!(bv.index_into(vars).ty_var_kind(), TyVarKind::Equality);
-        let name = bv.name(equality);
-        write!(f, "{name}")?;
+        match bv.index_into(vars) {
+          BoundTyVarData::Kind(kind) => {
+            // NOTE this can clash with explicitly named ty vars, but currently they do not mix
+            let equality = matches!(kind, TyVarKind::Equality);
+            let name = bv.name(equality);
+            write!(f, "{name}")?;
+          }
+          BoundTyVarData::Named(name) => name.fmt(f)?,
+        }
       }
       TyData::UnsolvedMetaVar(mv) => match &mv.kind {
         UnsolvedMetaTyVarKind::Kind(kind) => match kind {
