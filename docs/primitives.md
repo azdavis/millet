@@ -338,7 +338,7 @@ A small example:
 (* f1.sml *)
 val x = 3
 (* f2.sml *)
-use "f1.sml";
+val () = use "f1.sml"
 val y = x + 4
 ```
 
