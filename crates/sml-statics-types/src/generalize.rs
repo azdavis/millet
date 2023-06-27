@@ -68,12 +68,8 @@ pub fn get_fixed(tys: &mut Tys, mut fixed: FixedTyVars, ty: Ty) -> TyScheme {
   let mut bound = Vec::<BoundTyVarData>::with_capacity(fixed.0.len());
   for (&fv, bv) in &mut fixed.0 {
     assert!(bv.is_none());
-    let kind = if tys.fixed_var_data[fv.to_usize()].ty_var.is_equality() {
-      TyVarKind::Equality
-    } else {
-      TyVarKind::Regular
-    };
-    let new_bv = BoundTyVar::add_to_binder(&mut bound, |_| BoundTyVarData::Kind(kind));
+    let ty_var = tys.fixed_var_data[fv.to_usize()].ty_var.clone();
+    let new_bv = BoundTyVar::add_to_binder(&mut bound, |_| BoundTyVarData::Named(ty_var));
     *bv = Some(new_bv);
   }
   let mut st = St { fixed, meta: FxHashMap::default(), bound, tys };

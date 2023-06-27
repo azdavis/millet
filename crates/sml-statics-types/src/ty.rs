@@ -417,6 +417,8 @@ impl TyScheme {
 pub enum BoundTyVarData {
   /// A kind of ty var, with a machine generated name.
   Kind(TyVarKind),
+  /// A named ty var, which can be equality.
+  Named(sml_hir::TyVar),
 }
 
 impl BoundTyVarData {
@@ -425,6 +427,13 @@ impl BoundTyVarData {
   pub fn ty_var_kind(&self) -> TyVarKind {
     match self {
       BoundTyVarData::Kind(kind) => *kind,
+      BoundTyVarData::Named(tv) => {
+        if tv.is_equality() {
+          TyVarKind::Equality
+        } else {
+          TyVarKind::Regular
+        }
+      }
     }
   }
 }
