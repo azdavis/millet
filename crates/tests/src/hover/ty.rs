@@ -182,3 +182,19 @@ val _ = Str.x
 "#,
   );
 }
+
+#[test]
+fn fixed_not_generalized() {
+  // mixing non-generalized fix ty vars with generalized bound ty vars can be problematic.
+  fail(
+    r#"
+fun foo (x : 'a) =
+  let
+    fun bar y = (x, y)
+  in
+    bar
+(** ^^^ hover: 'b -> 'a * 'b *)
+  end
+"#,
+  );
+}
