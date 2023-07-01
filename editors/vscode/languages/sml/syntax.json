@@ -11,6 +11,7 @@
     { "include": "#char" },
     { "include": "#string" },
     { "include": "#tyVarName" },
+    { "include": "#overloadedName" },
     { "include": "#specialName" },
     { "include": "#symbolicName" },
     { "include": "#upperName" },
@@ -88,6 +89,10 @@
     "tyVarName": {
       "name": "variable.other.constant.sml",
       "match": "['?]\\??[A-Za-z0-9_']+\\b"
+    },
+    "overloadedName": {
+      "name": "variable.other.constant.sml",
+      "match": "<(wordint|realint|num|wordinttxt|numtxt)>"
     },
     "specialName": {
       "name": "constant.language.sml",
