@@ -1,6 +1,6 @@
 //! Test for getting type information on hover.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn smoke() {
@@ -187,6 +187,25 @@ fun foo (x : 'a) =
   in
     bar
 (** ^^^ hover: ?b -> 'a * ?b *)
+  end
+"#,
+  );
+}
+
+#[test]
+fn nested_generalize() {
+  fail(
+    r#"
+fun foo x =
+(**     ^ hover: ?a *)
+  let
+    fun bar y =
+(**         ^ hover: ?b *)
+(**    v hover: ?a *)
+      (x, y)
+(**       ^ hover: ?b *)
+  in
+    bar
   end
 "#,
   );
