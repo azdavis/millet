@@ -25,7 +25,7 @@ impl fmt::Display for TyVarName {
   }
 }
 
-pub(crate) fn idx_to_name(idx: usize) -> impl Iterator<Item = char> {
+fn idx_to_name(idx: usize) -> impl Iterator<Item = char> {
   let alpha = 26usize;
   let quot = idx / alpha;
   let rem = u8::try_from(idx % alpha).unwrap();
