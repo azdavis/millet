@@ -109,15 +109,37 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
     TyData::UnsolvedMetaVar(umv) => match st.meta.get_mut(&ty.idx) {
       None => Ok(ty),
       Some(&mut Some(bv)) => Ok(Ty::bound_var(bv)),
-      Some(bv @ None) => go_bv(bv, &mut st.bound, umv.kind),
+      Some(bv @ None) => match umv.kind {
+        UnsolvedMetaTyVarKind::Kind(kind) => match kind {
+          TyVarKind::Regular | TyVarKind::Equality => {
+            let new_bv = BoundTyVar::add_to_binder(&mut st.bound, |_| BoundTyVarData::Kind(kind));
+            *bv = Some(new_bv);
+            Ok(Ty::bound_var(new_bv))
+          }
+          TyVarKind::Overloaded(ov) => match ov {
+            overload::Overload::Basic(b) => match b {
+              overload::Basic::Int => Ok(Ty::INT),
+              overload::Basic::Real => Ok(Ty::REAL),
+              overload::Basic::Word => Ok(Ty::WORD),
+              overload::Basic::String => Ok(Ty::STRING),
+              overload::Basic::Char => Ok(Ty::CHAR),
+            },
+            // all composite overloads contain, and default to, int.
+            overload::Overload::Composite(_) => Ok(Ty::INT),
+          },
+        },
+        // it is a user error if these haven't been solved by now.
+        UnsolvedMetaTyVarKind::UnresolvedRecord(ur_mv) => Err(ur_mv),
+      },
     },
     TyData::FixedVar(fv) => match st.fixed.0.get_mut(&ty.idx) {
       None => Ok(ty),
       Some(&mut Some(bv)) => Ok(Ty::bound_var(bv)),
       Some(bv @ None) => {
-        let k = if fv.ty_var.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular };
-        let k = UnsolvedMetaTyVarKind::Kind(k);
-        go_bv(bv, &mut st.bound, k)
+        let kind = if fv.ty_var.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular };
+        let new_bv = BoundTyVar::add_to_binder(&mut st.bound, |_| BoundTyVarData::Kind(kind));
+        *bv = Some(new_bv);
+        Ok(Ty::bound_var(new_bv))
       }
     },
     // trivial base cases
@@ -139,34 +161,5 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
       let res = go(st, data.res)?;
       Ok(st.tys.fun(param, res))
     }
-  }
-}
-
-fn go_bv(
-  bv: &mut Option<BoundTyVar>,
-  bound: &mut BoundTyVars,
-  kind: UnsolvedMetaTyVarKind,
-) -> Result<Ty> {
-  match kind {
-    UnsolvedMetaTyVarKind::Kind(kind) => match kind {
-      TyVarKind::Regular | TyVarKind::Equality => {
-        let new_bv = BoundTyVar::add_to_binder(bound, |_| BoundTyVarData::Kind(kind));
-        *bv = Some(new_bv);
-        Ok(Ty::bound_var(new_bv))
-      }
-      TyVarKind::Overloaded(ov) => match ov {
-        overload::Overload::Basic(b) => match b {
-          overload::Basic::Int => Ok(Ty::INT),
-          overload::Basic::Real => Ok(Ty::REAL),
-          overload::Basic::Word => Ok(Ty::WORD),
-          overload::Basic::String => Ok(Ty::STRING),
-          overload::Basic::Char => Ok(Ty::CHAR),
-        },
-        // all composite overloads contain, and default to, int.
-        overload::Overload::Composite(_) => Ok(Ty::INT),
-      },
-    },
-    // it is a user error if these haven't been solved by now.
-    UnsolvedMetaTyVarKind::UnresolvedRecord(ur_mv) => Err(ur_mv),
   }
 }
