@@ -88,12 +88,6 @@ fun getFoo x = if #foo x then 3 else 4
 
 #[test]
 fn swap() {
-  // to fix this test, we'd need to change how to report types to consider all of the unsolved type
-  // variables in the type that 'contains' the type of the thing we're hovering. but that notion
-  // might be hard to define.
-  //
-  // really, it might be better to not report unsolved types (like ?a or ?b) at all, and try to
-  // solve types down to their fully-known, generalized forms.
   check(
     r#"
 (**          v hover: 'b *)

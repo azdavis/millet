@@ -7,7 +7,7 @@ fn across_var_1() {
   check(
     r#"
 fun 'a f (x: 'a) = let val y = x in y false; y end
-(**                                 ^ expected `bool -> ?a`, found `'a` *)
+(**                                 ^ expected `bool -> _`, found `'a` *)
 "#,
   );
 }
@@ -62,7 +62,7 @@ type 'a heh = 'a list
 datatype 'a bad = Bad of 'a
 val _: int heh = [1]
 val _ = Bad: unit
-(**     ^^^^^^^^^ expected `unit`, found `?a -> ?a bad` *)
+(**     ^^^^^^^^^ expected `unit`, found `_ -> _ bad` *)
 "#,
   );
 }

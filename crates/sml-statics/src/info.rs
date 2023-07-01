@@ -5,7 +5,7 @@ use fast_hash::FxHashSet;
 use sml_hir::la_arena;
 use sml_statics_types::ty::{Ty, TyData, TyScheme};
 use sml_statics_types::util::ty_syms;
-use sml_statics_types::{def, display::MetaVarNames, env::Env, mode::Mode};
+use sml_statics_types::{def, env::Env, mode::Mode};
 use std::fmt;
 
 pub(crate) type IdxMap<K, V> = la_arena::ArenaMap<la_arena::Idx<K>, V>;
@@ -213,12 +213,11 @@ impl Info {
     st: &sml_statics_types::St,
     path: paths::PathId,
   ) -> Vec<DocumentSymbol> {
-    let mut mvs = MetaVarNames::new(&st.tys);
     let mut ret = Vec::<DocumentSymbol>::new();
     ret.extend(self.bs.fun_env.iter().filter_map(|(name, fun_sig)| {
       let idx = def_idx(path, fun_sig.body_env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, &mut mvs, st, path, &fun_sig.body_env);
+      env_syms(&mut children, st, path, &fun_sig.body_env);
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Functor,
@@ -230,7 +229,7 @@ impl Info {
     ret.extend(self.bs.sig_env.iter().filter_map(|(name, sig)| {
       let idx = def_idx(path, sig.env.def?)?;
       let mut children = Vec::<DocumentSymbol>::new();
-      env_syms(&mut children, &mut mvs, st, path, &sig.env);
+      env_syms(&mut children, st, path, &sig.env);
       Some(DocumentSymbol {
         name: name.as_str().to_owned(),
         kind: sml_namespace::SymbolKind::Signature,
@@ -239,7 +238,7 @@ impl Info {
         children,
       })
     }));
-    env_syms(&mut ret, &mut mvs, st, path, &self.bs.env);
+    env_syms(&mut ret, st, path, &self.bs.env);
     // order doesn't seem to matter. at least vs code displays the symbols in source order.
     ret
   }
@@ -257,9 +256,7 @@ impl Info {
     pat: sml_hir::la_arena::Idx<sml_hir::Pat>,
   ) -> Option<String> {
     let ty_entry = self.entries.tys.pat.get(pat)?;
-    let mut mvs = MetaVarNames::new(&st.tys);
-    mvs.extend_for(ty_entry.ty);
-    let ty = ty_entry.ty.display(&mvs, &st.syms, config::DiagnosticLines::One);
+    let ty = ty_entry.ty.display(st, config::DiagnosticLines::One);
     Some(format!(" : {ty}"))
   }
 
@@ -271,9 +268,7 @@ impl Info {
     exp: sml_hir::la_arena::Idx<sml_hir::Exp>,
   ) -> Option<String> {
     let ty_entry = self.entries.tys.exp.get(exp)?;
-    let mut mvs = MetaVarNames::new(&st.tys);
-    mvs.extend_for(ty_entry.ty);
-    let ty = ty_entry.ty.display(&mvs, &st.syms, config::DiagnosticLines::One);
+    let ty = ty_entry.ty.display(st, config::DiagnosticLines::One);
     Some(format!(" : {ty}"))
   }
 }
@@ -299,17 +294,14 @@ struct TyEntryDisplay<'a> {
 
 impl fmt::Display for TyEntryDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut mvs = MetaVarNames::new(&self.st.tys);
-    mvs.extend_for(self.ty_entry.ty);
     writeln!(f, "```sml")?;
     if let Some(ty_scheme) = &self.ty_entry.ty_scheme {
-      mvs.extend_for(ty_scheme.ty);
-      let ty_scheme = ty_scheme.display(&mvs, &self.st.syms, self.lines);
+      let ty_scheme = ty_scheme.display(self.st, self.lines);
       writeln!(f, "(* most general *)")?;
       writeln!(f, "{ty_scheme}")?;
       writeln!(f, "(* this usage *)")?;
     }
-    let ty = self.ty_entry.ty.display(&mvs, &self.st.syms, self.lines);
+    let ty = self.ty_entry.ty.display(self.st, self.lines);
     writeln!(f, "{ty}")?;
     writeln!(f, "```")?;
     Ok(())
@@ -319,7 +311,6 @@ impl fmt::Display for TyEntryDisplay<'_> {
 /// need to do extend instead of a big chain of chains because of the borrow checker.
 fn env_syms(
   ac: &mut Vec<DocumentSymbol>,
-  mvs: &mut MetaVarNames<'_>,
   st: &sml_statics_types::St,
   path: paths::PathId,
   env: &Env,
@@ -327,7 +318,7 @@ fn env_syms(
   ac.extend(env.str_env.iter().filter_map(|(name, env)| {
     let idx = def_idx(path, env.def?)?;
     let mut children = Vec::<DocumentSymbol>::new();
-    env_syms(&mut children, mvs, st, path, env);
+    env_syms(&mut children, st, path, env);
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Structure,
@@ -337,10 +328,8 @@ fn env_syms(
     })
   }));
   ac.extend(env.ty_env.iter().filter_map(|(name, ty_info)| {
-    mvs.clear();
-    mvs.extend_for(ty_info.ty_scheme.ty);
     let idx = def_idx(path, ty_info.def?)?;
-    let ty_scheme = ty_info.ty_scheme.display(mvs, &st.syms, config::DiagnosticLines::Many);
+    let ty_scheme = ty_info.ty_scheme.display(st, config::DiagnosticLines::Many);
     Some(DocumentSymbol {
       name: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Type,
@@ -350,10 +339,7 @@ fn env_syms(
     })
   }));
   ac.extend(env.val_env.iter().flat_map(|(name, val_info)| {
-    mvs.clear();
-    mvs.extend_for(val_info.ty_scheme.ty);
-    let detail =
-      val_info.ty_scheme.display(mvs, &st.syms, config::DiagnosticLines::Many).to_string();
+    let detail = val_info.ty_scheme.display(st, config::DiagnosticLines::Many).to_string();
     val_info.defs.iter().filter_map(move |&def| {
       let idx = def_idx(path, def)?;
       Some(DocumentSymbol {

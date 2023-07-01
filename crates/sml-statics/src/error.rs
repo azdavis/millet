@@ -5,7 +5,7 @@ mod suggestion;
 
 use crate::pat_match::Pat;
 use diagnostic::{Code, Severity};
-use sml_statics_types::display::{record_meta_var, MetaVarNames};
+use sml_statics_types::display::record_meta_var;
 use sml_statics_types::ty::{RecordData, Ty, TyScheme};
 use sml_statics_types::unify::{Circularity, Incompatible};
 use sml_statics_types::{disallow::Disallow, item::Item};
@@ -79,22 +79,15 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::Missing(item, name) => write!(f, "missing {item} required by signature: `{name}`"),
       ErrorKind::Extra(item, name) => write!(f, "extra {item} not present in signature: `{name}`"),
       ErrorKind::Circularity(circ) => {
-        let mut mvs = MetaVarNames::new(&self.st.tys);
-        mvs.extend_for(circ.ty);
-        mvs.extend_for(circ.meta_var);
-        let mv = circ.meta_var.display(&mvs, &self.st.syms, self.lines);
-        let ty = circ.ty.display(&mvs, &self.st.syms, self.lines);
+        let mv = circ.meta_var.display(self.st, self.lines);
+        let ty = circ.ty.display(self.st, self.lines);
         write!(f, "circular type: `{mv}` occurs in `{ty}`")
       }
       ErrorKind::IncompatibleTys(reason, want, got) => {
-        let mut mvs = MetaVarNames::new(&self.st.tys);
-        mvs.extend_for(*want);
-        mvs.extend_for(*got);
-        reason.extend_meta_var_names(&mut mvs);
-        let reason = reason.display(&mvs, &self.st.syms, self.lines);
+        let reason = reason.display(self.st, self.lines);
         write!(f, "incompatible types: {reason}")?;
-        let want = want.display(&mvs, &self.st.syms, self.lines);
-        let got = got.display(&mvs, &self.st.syms, self.lines);
+        let want = want.display(self.st, self.lines);
+        let got = got.display(self.st, self.lines);
         match self.lines {
           config::DiagnosticLines::One => {
             write!(f, ": expected `{want}`, found `{got}`")
@@ -117,9 +110,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::ConPatMustHaveArg => f.write_str("missing argument for constructor pattern"),
       ErrorKind::InvalidAsPatName(name) => write!(f, "invalid `as` pat name: `{name}`"),
       ErrorKind::TyEscape(ty) => {
-        let mut mvs = MetaVarNames::new(&self.st.tys);
-        mvs.extend_for(*ty);
-        let ty = ty.display(&mvs, &self.st.syms, self.lines);
+        let ty = ty.display(self.st, self.lines);
         write!(f, "type escapes its scope: `{ty}`")
       }
       ErrorKind::ValRecExpNotFn => f.write_str("the expression for a `val rec` was not a `fn`"),
@@ -131,11 +122,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::InvalidRebindName(name) => write!(f, "cannot re-bind name: `{name}`"),
       ErrorKind::WrongIdStatus(name) => write!(f, "incompatible identifier statuses: `{name}`"),
       ErrorKind::UnresolvedRecordTy(rows) => {
-        let mut mvs = MetaVarNames::new(&self.st.tys);
-        for &ty in rows.values() {
-          mvs.extend_for(ty);
-        }
-        let ty = record_meta_var(&mvs, &self.st.syms, rows, self.lines);
+        let ty = record_meta_var(self.st, rows, self.lines);
         write!(f, "cannot resolve `...` in record type: `{ty}`")
       }
       ErrorKind::OrPatNotSameBindings(name) => {
@@ -143,9 +130,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       }
       ErrorKind::DecNotAllowedHere => f.write_str("`signature` or `functor` not allowed here"),
       ErrorKind::ExpHole(ty) => {
-        let mut mvs = MetaVarNames::new(&self.st.tys);
-        mvs.extend_for(*ty);
-        let ty = ty.display(&mvs, &self.st.syms, self.lines);
+        let ty = ty.display(self.st, self.lines);
         write!(f, "expression hole with type `{ty}`")
       }
       ErrorKind::TyHole => f.write_str("type hole"),
@@ -159,15 +144,11 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         f.write_str("type variable bound at `val` or `fun` not allowed here")
       }
       ErrorKind::CannotShareTy(path, ts) => {
-        let mut mvs = MetaVarNames::new(&self.st.tys);
-        mvs.extend_for(ts.ty);
-        let ts = ts.display(&mvs, &self.st.syms, self.lines);
+        let ts = ts.display(self.st, self.lines);
         write!(f, "cannot share type `{path}` as `{ts}`")
       }
       ErrorKind::CannotRealizeTy(path, ts) => {
-        let mut mvs = MetaVarNames::new(&self.st.tys);
-        mvs.extend_for(ts.ty);
-        let ts = ts.display(&mvs, &self.st.syms, self.lines);
+        let ts = ts.display(self.st, self.lines);
         write!(f, "cannot realize type `{path}` as `{ts}`")
       }
       ErrorKind::InvalidEq(name) => write!(f, "calling `=` or `<>` on `{name}`"),

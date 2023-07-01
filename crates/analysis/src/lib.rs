@@ -9,7 +9,7 @@ mod matcher;
 mod source_files;
 
 use paths::{PathId, PathMap, WithPath};
-use sml_statics_types::{def, display::MetaVarNames, env::Env};
+use sml_statics_types::{def, env::Env};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 use std::process::{Command, Stdio};
 use std::{error::Error, fmt, io::Write as _};
@@ -312,15 +312,14 @@ impl Analysis {
       }
       _ => {}
     }
-    let mut mvs = MetaVarNames::new(&self.syms_tys.tys);
     let mut ret = Vec::<CompletionItem>::new();
     for env in envs.into_iter().flatten() {
-      self.env_completions(env, &mut mvs, &mut ret);
+      self.env_completions(env, &mut ret);
     }
     Some(ret)
   }
 
-  fn env_completions(&self, env: &Env, mvs: &mut MetaVarNames<'_>, ac: &mut Vec<CompletionItem>) {
+  fn env_completions(&self, env: &Env, ac: &mut Vec<CompletionItem>) {
     ac.extend(env.str_env.iter().map(|(name, env)| CompletionItem {
       label: name.as_str().to_owned(),
       kind: sml_namespace::SymbolKind::Structure,
@@ -328,10 +327,7 @@ impl Analysis {
       documentation: env.def.and_then(|d| self.get_doc(d)).map(ToOwned::to_owned),
     }));
     ac.extend(env.val_env.iter().map(|(name, val_info)| {
-      mvs.clear();
-      mvs.extend_for(val_info.ty_scheme.ty);
-      let ty_scheme =
-        val_info.ty_scheme.display(mvs, &self.syms_tys.syms, config::DiagnosticLines::Many);
+      let ty_scheme = val_info.ty_scheme.display(&self.syms_tys, config::DiagnosticLines::Many);
       CompletionItem {
         label: name.as_str().to_owned(),
         kind: sml_symbol_kind::get(&self.syms_tys.tys, val_info),

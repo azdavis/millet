@@ -46,7 +46,7 @@ fn unresolved_smoke() {
   check(
     r#"
 val f = #foo
-(**     ^^^^ cannot resolve `...` in record type: `{ foo : ?a, ... }` *)
+(**     ^^^^ cannot resolve `...` in record type: `{ foo : _, ... }` *)
 "#,
   );
 }

@@ -8,7 +8,7 @@ fn apply() {
     r#"
 val apply = fn (f, x) => f x
 val _ = apply: unit
-(**     ^^^^^^^^^^^ expected `unit`, found `(?a -> ?b) * ?a -> ?b` *)
+(**     ^^^^^^^^^^^ expected `unit`, found `(_ -> _) * _ -> _` *)
 "#,
   );
 }
@@ -27,7 +27,7 @@ fun find t p ok err =
       else
         find left p ok (fn () => find right p ok err)
     val _ : unit = find
-(** ^^^^^^^^^^^^^^^^^^^ expected `unit`, found `?a tree -> (?a -> bool) -> (?a -> ?b) -> (unit -> ?b) -> ?b` *)
+(** ^^^^^^^^^^^^^^^^^^^ expected `unit`, found `_ tree -> (_ -> bool) -> (_ -> _) -> (unit -> _) -> _` *)
 "#,
   );
 }
@@ -71,7 +71,7 @@ fun map f xs =
   | x :: xs => f x :: map f xs
 
 val _ = map: unit
-(**     ^^^^^^^^^ expected `unit`, found `(?a -> ?b) -> ?a list -> ?b list` *)
+(**     ^^^^^^^^^ expected `unit`, found `(_ -> _) -> _ list -> _ list` *)
 "#,
   );
 }
