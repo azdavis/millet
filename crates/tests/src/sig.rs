@@ -586,7 +586,7 @@ end
 
 structure Str :> SIG where type ('a, 'b) t = ('b, 'a) either =
     struct type ('a, 'b) t = ('a, 'b) either end
-(** ^^^^^^ expected `('b, 'a) either`, found `('a, 'b) either` *)
+(** ^^^^^^ expected `(?b, ?a) either`, found `(?a, ?b) either` *)
 "#,
   );
 }
@@ -603,7 +603,7 @@ end
 
 structure Str :> SIG where type ('a, 'b) t = ('a, 'b) either =
     struct type ('a, 'b) t = ('b, 'a) either end
-(** ^^^^^^ expected `('a, 'b) either`, found `('b, 'a) either` *)
+(** ^^^^^^ expected `(?a, ?b) either`, found `(?b, ?a) either` *)
 "#,
   );
 }
@@ -678,7 +678,7 @@ signature SIG = sig
 end
 
 structure Str :> SIG = struct
-(**                    ^^^^^^ expected `'a * 'b`, found `'b * 'a` *)
+(**                    ^^^^^^ expected `?a * ?b`, found `?b * ?a` *)
   type ('a, 'b) t = 'b * 'a
 end
 "#,
@@ -693,7 +693,7 @@ signature SIG = sig
   datatype ('a, 'b) t = T of 'a * 'b
 end
 structure Str :> SIG = struct
-(**                    ^^^^^^ expected `'a * 'b -> ('a, 'b) Str.t`, found `'b * 'a -> ('a, 'b) Str.t` *)
+(**                    ^^^^^^ expected `?a * ?b -> (?a, ?b) Str.t`, found `?b * ?a -> (?a, ?b) Str.t` *)
   datatype ('a, 'b) t = T of 'b * 'a
 end
 "#,

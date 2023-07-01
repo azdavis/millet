@@ -17,7 +17,7 @@ fn across_var_2() {
   check(
     r#"
 fun id' x = let val y = x in y end
-(**     vvv hover: 'a -> 'a *)
+(**     vvv hover: ?a -> ?a *)
 val f = id'
 "#,
   );

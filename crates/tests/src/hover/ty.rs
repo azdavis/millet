@@ -45,27 +45,27 @@ fun foo x y = x + (if y then 3 else 4)
 }
 
 #[test]
-fn unsolved_general() {
+fn ty_var_regular() {
   check(
     r#"
 fun id x = x
-(**        ^ hover: 'a *)
+(**        ^ hover: ?a *)
 "#,
   );
 }
 
 #[test]
-fn unsolved_equality() {
+fn ty_var_equality() {
   check(
     r#"
 fun eq x y = x = y
-(**          ^ hover: ''a *)
+(**          ^ hover: ??a *)
 "#,
   );
 }
 
 #[test]
-fn solved_overload() {
+fn ty_var_overload() {
   check(
     r#"
 fun add x y = x + y
@@ -90,9 +90,9 @@ fun getFoo x = if #foo x then 3 else 4
 fn swap() {
   check(
     r#"
-(**          v hover: 'b *)
+(**          v hover: ?b *)
 fun swap (a, b) = (b, a)
-(**       ^ hover: 'a *)
+(**       ^ hover: ?a *)
 "#,
   );
 }
@@ -179,7 +179,6 @@ val _ = Str.x
 
 #[test]
 fn fixed_not_generalized() {
-  // mixing non-generalized fix ty vars with generalized bound ty vars can be problematic.
   check(
     r#"
 fun foo (x : 'a) =
@@ -187,7 +186,7 @@ fun foo (x : 'a) =
     fun bar y = (x, y)
   in
     bar
-(** ^^^ hover: 'b -> 'a * 'b *)
+(** ^^^ hover: ?b -> 'a * ?b *)
   end
 "#,
   );

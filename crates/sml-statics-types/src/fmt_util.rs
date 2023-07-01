@@ -18,7 +18,7 @@ pub struct TyVarName {
 impl fmt::Display for TyVarName {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let ticks = if self.equality { 2 } else { 1 };
-    for c in std::iter::repeat('\'').take(ticks).chain(idx_to_name(self.idx)) {
+    for c in std::iter::repeat('?').take(ticks).chain(idx_to_name(self.idx)) {
       write!(f, "{c}")?;
     }
     Ok(())
