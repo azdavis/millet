@@ -1,6 +1,6 @@
 //! Overloaded operators and literals.
 
-use crate::check::check;
+use crate::check::{check, fail};
 
 #[test]
 fn curry_add() {
@@ -185,6 +185,17 @@ fn abs_sub_add() {
   check(
     r#"
 fun hm a b = (abs (a - b), a + b)
+"#,
+  );
+}
+
+#[test]
+fn hover() {
+  fail(
+    r#"
+(**       vvv hover: <num> * <num> -> <num> *)
+val add = op+
+(** ^^^ hover: int * int -> int *)
 "#,
   );
 }
