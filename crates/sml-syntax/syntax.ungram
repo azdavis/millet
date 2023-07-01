@@ -79,8 +79,7 @@ FunBindCaseHead = PrefixFunBindCaseHead | InfixFunBindCaseHead
 PrefixFunBindCaseHead = 'op'? NameStarEq
 InfixFunBindCaseHead = '('? lhs:Pat NameStarEq rhs:Pat ')'?
 
-ExBindInner = OfTy | EqPath
-EqPath = '=' Path
+ExBindInner = OfTy | EqExp
 WithType = 'withtype' TyBind*
 
 // a bit weird

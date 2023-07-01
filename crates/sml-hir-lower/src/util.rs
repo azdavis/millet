@@ -77,6 +77,7 @@ pub(crate) enum ErrorKind {
   Disallowed(Item),
   TopLevelOpen,
   InvalidOpaqueAscription,
+  ExceptionCopyRhsNotPath,
 }
 
 impl fmt::Display for Error {
@@ -127,6 +128,9 @@ impl fmt::Display for Error {
       ErrorKind::Disallowed(item) => write!(f, "disallowed {item}"),
       ErrorKind::TopLevelOpen => write!(f, "top-level `open`"),
       ErrorKind::InvalidOpaqueAscription => f.write_str("opaque ascription not allowed here"),
+      ErrorKind::ExceptionCopyRhsNotPath => {
+        f.write_str("right-hand side of `exception` copy declaration must be a path")
+      }
     }
   }
 }
@@ -228,6 +232,7 @@ impl Error {
       ErrorKind::Disallowed(_) => Code::n(4029),
       ErrorKind::TopLevelOpen => Code::n(4030),
       ErrorKind::InvalidOpaqueAscription => Code::n(4031),
+      ErrorKind::ExceptionCopyRhsNotPath => Code::n(4032),
     }
   }
 

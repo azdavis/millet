@@ -134,11 +134,8 @@ fn dec_one(p: &mut Parser<'_>, fe: &mut sml_fixity::Env, infix: InfixErr) -> boo
         if !got {
           return false;
         }
-        if of_ty(p).is_none() && p.at(SK::Eq) {
-          let en = p.enter();
-          p.bump();
-          path_must(p);
-          p.exit(en, SK::EqPath);
+        if of_ty(p).is_none() {
+          eq_exp(p, fe);
         }
         true
       });

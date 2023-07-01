@@ -252,9 +252,9 @@ fn get_dec_one(st: &mut St, cfg: Cfg, dec: ast::DecOne) -> Res {
               st.write(" of ");
               get_ty(st, of_ty.ty()?)
             }
-            ast::ExBindInner::EqPath(eq_path) => {
+            ast::ExBindInner::EqExp(eq_exp) => {
               st.write(" = ");
-              path(st, eq_path.path()?)
+              get_exp(st, cfg, eq_exp.exp()?)
             }
           },
           None => Some(()),

@@ -377,8 +377,8 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
         let name = str_util::Name::new(ex_bind.name_star_eq()?.token.text());
         let ty = ex_bind.ex_bind_inner().map(|inner| match inner {
           ast::ExBindInner::OfTy(of_ty) => ty::get(st, of_ty.ty()),
-          ast::ExBindInner::EqPath(eq_path) => {
-            st.err(eq_path.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
+          ast::ExBindInner::EqExp(eq_exp) => {
+            st.err(eq_exp.syntax().text_range(), ErrorKind::NonSpecDecSyntax);
             None
           }
         });
@@ -663,7 +663,13 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
         let ret = match ex_bind.ex_bind_inner() {
           None => sml_hir::ExBind::New(name, None),
           Some(ast::ExBindInner::OfTy(x)) => sml_hir::ExBind::New(name, Some(ty::get(st, x.ty()))),
-          Some(ast::ExBindInner::EqPath(x)) => sml_hir::ExBind::Copy(name, get_path(x.path()?)?),
+          Some(ast::ExBindInner::EqExp(x)) => match x.exp()? {
+            ast::Exp::PathExp(exp) => sml_hir::ExBind::Copy(name, get_path(exp.path()?)?),
+            exp => {
+              st.err(exp.syntax().text_range(), ErrorKind::ExceptionCopyRhsNotPath);
+              sml_hir::ExBind::New(name, None)
+            }
+          },
         };
         Some(ret)
       });
