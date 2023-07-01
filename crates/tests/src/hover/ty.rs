@@ -1,6 +1,6 @@
 //! Test for getting type information on hover.
 
-use crate::check::{check, fail};
+use crate::check::check;
 
 #[test]
 fn smoke() {
@@ -49,7 +49,7 @@ fn unsolved_general() {
   check(
     r#"
 fun id x = x
-(**        ^ hover: ?a *)
+(**        ^ hover: 'a *)
 "#,
   );
 }
@@ -59,7 +59,7 @@ fn unsolved_equality() {
   check(
     r#"
 fun eq x y = x = y
-(**          ^ hover: ??a *)
+(**          ^ hover: ''a *)
 "#,
   );
 }
@@ -94,11 +94,11 @@ fn swap() {
   //
   // really, it might be better to not report unsolved types (like ?a or ?b) at all, and try to
   // solve types down to their fully-known, generalized forms.
-  fail(
+  check(
     r#"
-(**          v hover: ?b *)
+(**          v hover: 'b *)
 fun swap (a, b) = (b, a)
-(**       ^ hover: ?a *)
+(**       ^ hover: 'a *)
 "#,
   );
 }
@@ -186,7 +186,7 @@ val _ = Str.x
 #[test]
 fn fixed_not_generalized() {
   // mixing non-generalized fix ty vars with generalized bound ty vars can be problematic.
-  fail(
+  check(
     r#"
 fun foo (x : 'a) =
   let

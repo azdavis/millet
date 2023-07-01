@@ -39,6 +39,7 @@ impl pattern_match::Lang for Lang {
         TyData::None
         | TyData::BoundVar(_)
         | TyData::UnsolvedMetaVar(_)
+        | TyData::GeneralizedMetaVar(_)
         | TyData::FixedVar(_)
         | TyData::Fn(_) => {
           vec![Con::Any]
@@ -95,6 +96,7 @@ impl pattern_match::Lang for Lang {
       TyData::None
       | TyData::BoundVar(_)
       | TyData::UnsolvedMetaVar(_)
+      | TyData::GeneralizedMetaVar(_)
       | TyData::FixedVar(_)
       | TyData::Fn(_) => Vec::new(),
       TyData::Record(rows) => rows.values().copied().collect(),

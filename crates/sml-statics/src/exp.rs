@@ -308,7 +308,10 @@ fn get_matcher(
 
 fn ty_escape(tys: &Tys, cx: &Cx, m: SymsMarker, ty: Ty) -> Option<Ty> {
   match tys.data(ty) {
-    TyData::None | TyData::BoundVar(_) | TyData::UnsolvedMetaVar(_) => None,
+    TyData::None
+    | TyData::BoundVar(_)
+    | TyData::UnsolvedMetaVar(_)
+    | TyData::GeneralizedMetaVar(_) => None,
     TyData::FixedVar(fv) => (!cx.fixed.contains_key(&fv.ty_var)).then_some(ty),
     TyData::Record(rows) => rows.values().find_map(|&ty| ty_escape(tys, cx, m, ty)),
     TyData::Con(data) => data

@@ -41,7 +41,10 @@ pub fn apply_bv(tys: &mut Tys, subst: &[Ty], ty: &mut Ty) {
     // interesting case
     TyData::BoundVar(bv) => *ty = *bv.index_into(subst),
     // trivial base cases
-    TyData::None | TyData::UnsolvedMetaVar(_) | TyData::FixedVar(_) => {}
+    TyData::None
+    | TyData::UnsolvedMetaVar(_)
+    | TyData::FixedVar(_)
+    | TyData::GeneralizedMetaVar(_) => {}
     // recursive cases
     TyData::Record(mut rows) => {
       for ty in rows.values_mut() {
@@ -74,7 +77,11 @@ pub fn ty_syms<F: FnMut(Sym)>(tys: &Tys, ty: Ty, f: &mut F) {
       f(data.sym);
     }
     // trivial base cases
-    TyData::None | TyData::BoundVar(_) | TyData::UnsolvedMetaVar(_) | TyData::FixedVar(_) => {}
+    TyData::None
+    | TyData::BoundVar(_)
+    | TyData::UnsolvedMetaVar(_)
+    | TyData::FixedVar(_)
+    | TyData::GeneralizedMetaVar(_) => {}
     // recursive cases
     TyData::Record(rows) => {
       for &ty in rows.values() {

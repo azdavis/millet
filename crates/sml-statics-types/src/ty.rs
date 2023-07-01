@@ -120,6 +120,7 @@ impl Tys {
             continue;
           }
           MetaTyVarData::Unsolved(data) => TyData::UnsolvedMetaVar(data.clone()),
+          MetaTyVarData::Generalized(data) => TyData::GeneralizedMetaVar(data.clone()),
         },
         TyKind::FixedVar => TyData::FixedVar(self.fixed_var_data[ty.idx.to_usize()].clone()),
         TyKind::Record => TyData::Record(self.record.get_data(ty.idx).clone()),
@@ -148,11 +149,12 @@ impl Tys {
       match &self.meta_var_data[ty.idx.to_usize()] {
         MetaTyVarData::Solved(new_ty) => ty = *new_ty,
         MetaTyVarData::Unsolved(_) => break,
+        MetaTyVarData::Generalized(_) => unreachable!(),
       }
     }
     match &mut self.meta_var_data[ty.idx.to_usize()] {
-      MetaTyVarData::Solved(_) => unreachable!(),
       MetaTyVarData::Unsolved(x) => x,
+      MetaTyVarData::Solved(_) | MetaTyVarData::Generalized(_) => unreachable!(),
     }
   }
 
@@ -166,6 +168,7 @@ impl Tys {
         // recur for solved meta vars
         MetaTyVarData::Solved(new_ty) => self.unsolved_meta_vars(*new_ty, f),
         MetaTyVarData::Unsolved(data) => f(ty, data),
+        MetaTyVarData::Generalized(_) => {}
       },
       // trivial base cases
       TyKind::None | TyKind::BoundVar | TyKind::FixedVar => {}
@@ -258,6 +261,7 @@ pub enum TyData {
   None,
   BoundVar(BoundTyVar),
   UnsolvedMetaVar(UnsolvedMetaTyVarData),
+  GeneralizedMetaVar(GeneralizedMetaTyVarData),
   FixedVar(FixedTyVarData),
   Record(RecordData),
   Con(ConData),
@@ -314,6 +318,8 @@ pub(crate) enum MetaTyVarData {
   /// This meta var hasn't been fully solved yet. It might, however, have restrictions on what types
   /// it could be eventually fully solved to.
   Unsolved(UnsolvedMetaTyVarData),
+  /// This meta var wasn't ever fully solved, and then it was generalized into a type scheme.
+  Generalized(GeneralizedMetaTyVarData),
 }
 
 /// Data about an unsolved meta ty var.
@@ -346,6 +352,18 @@ pub struct UnresolvedRecordMetaTyVar {
   pub rows: RecordData,
   /// For better error reporting.
   pub idx: sml_hir::Idx,
+}
+
+/// Data about a generalized meta ty var.
+///
+/// This data is not entirely de-normalized. That is, the data here is duplicated elsewhere
+/// (especially the equality bool field).
+#[derive(Debug, Clone)]
+pub struct GeneralizedMetaTyVarData {
+  /// The bound ty var that this was generalized to.
+  pub(crate) bound_var: BoundTyVar,
+  /// Whether the bound var is equality.
+  pub(crate) equality: bool,
 }
 
 /// A kind of type variable.

@@ -143,6 +143,10 @@ impl fmt::Display for TyDisplay<'_> {
           RecordMetaVarDisplay { cx: self.cx, rows: &ur.rows, pretty }.fmt(f)?;
         }
       },
+      TyData::GeneralizedMetaVar(data) => {
+        let name = data.bound_var.name(data.equality);
+        write!(f, "{name}")?;
+      }
       TyData::FixedVar(fv) => fv.ty_var.fmt(f)?,
       TyData::Record(rows) => {
         if rows.is_empty() {

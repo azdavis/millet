@@ -121,6 +121,7 @@ fn unify_mv(
     match &tys.meta_var_data[ty.idx.to_usize()] {
       MetaTyVarData::Solved(new_ty) => ty = *new_ty,
       MetaTyVarData::Unsolved(_) => break,
+      MetaTyVarData::Generalized(_) => unreachable!("should not try to unify generalized mv"),
     }
   }
   // allow solving to itself.
@@ -154,6 +155,7 @@ fn unify_mv(
         *cur_data = MetaTyVarData::Solved(ty);
         break;
       }
+      MetaTyVarData::Generalized(_) => unreachable!("should not try to unify generalized mv"),
     }
   }
   Ok(())
@@ -175,6 +177,7 @@ fn adjust_mv_ranks(tys: &mut Tys, mv: Ty, umv: &UnsolvedMetaTyVarData, ty: Ty) -
       }
       Ok(())
     }
+    TyData::GeneralizedMetaVar(_) => unreachable!("should not try to unify generalized mv"),
     // no-op base cases
     TyData::None | TyData::BoundVar(_) | TyData::FixedVar(_) => Ok(()),
     // recursive cases
@@ -220,6 +223,7 @@ fn check_mv_solution(
       TyVarKind::Overloaded(ov) => match tys.data(ty) {
         // ignore.
         TyData::None => Ok(()),
+        TyData::GeneralizedMetaVar(_) => unreachable!("should not try to unify generalized mv"),
         // none of these are overloaded types.
         TyData::BoundVar(_) | TyData::FixedVar(_) | TyData::Record(_) | TyData::Fn(_) => {
           Err(Incompatible::OverloadHeadMismatch(ov, ty).into())
@@ -248,6 +252,7 @@ fn check_mv_solution(
     UnsolvedMetaTyVarKind::UnresolvedRecord(mut want) => match tys.data(ty) {
       // ignore.
       TyData::None => Ok(()),
+      TyData::GeneralizedMetaVar(_) => unreachable!("should not try to unify generalized mv"),
       // none of these are record types.
       TyData::BoundVar(_) | TyData::FixedVar(_) | TyData::Con(_) | TyData::Fn(_) => {
         Err(Incompatible::UnresolvedRecordHeadMismatch(want.rows, ty).into())

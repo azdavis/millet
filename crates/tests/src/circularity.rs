@@ -7,7 +7,7 @@ fn return_self() {
   check(
     r#"
     fun f _ = f
-(** ^^^^^^^^^^^ circular type: `?b` occurs in `?a -> ?b` *)
+(** ^^^^^^^^^^^ circular type: `'a` occurs in `?a -> 'a` *)
 "#,
   );
 }
@@ -17,7 +17,7 @@ fn apply_self() {
   check(
     r#"
 fun f x = x x
-(**       ^ circular type: `?a` occurs in `?a -> ?b` *)
+(**       ^ circular type: `'a` occurs in `'a -> 'b` *)
 "#,
   );
 }

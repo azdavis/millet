@@ -2,8 +2,8 @@
 
 use crate::overload;
 use crate::ty::{
-  BoundTyVar, BoundTyVarData, BoundTyVars, RecordData, Ty, TyData, TyKind, TyScheme, TyVarKind,
-  Tys, UnresolvedRecordMetaTyVar, UnsolvedMetaTyVarKind,
+  BoundTyVar, BoundTyVarData, BoundTyVars, GeneralizedMetaTyVarData, MetaTyVarData, RecordData, Ty,
+  TyData, TyKind, TyScheme, TyVarKind, Tys, UnresolvedRecordMetaTyVar, UnsolvedMetaTyVarKind,
 };
 use fast_hash::FxHashMap;
 use std::collections::BTreeMap;
@@ -37,6 +37,10 @@ impl FixedTyVars {
 /// # Errors
 ///
 /// If we couldn't generalize because there was an unresolved record meta ty var.
+///
+/// # Panics
+///
+/// Upon internal error.
 pub fn get(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
   let mut meta = FxHashMap::<idx::Idx, Option<BoundTyVar>>::default();
   // assigning 'ranks' to meta vars is all in service of allowing `meta` to be computed efficiently.
@@ -49,6 +53,19 @@ pub fn get(tys: &mut Tys, fixed: FixedTyVars, ty: Ty) -> Result<TyScheme> {
   });
   let mut st = St { fixed, meta, bound: Vec::new(), tys };
   let ty = go(&mut st, ty)?;
+  for (mv, bv) in st.meta {
+    let bound_var = match bv {
+      Some(x) => x,
+      None => continue,
+    };
+    let equality = match bound_var.index_into(&st.bound).ty_var_kind() {
+      TyVarKind::Regular => false,
+      TyVarKind::Equality => true,
+      TyVarKind::Overloaded(_) => unreachable!("should have solved overloaded mv to default"),
+    };
+    let data = GeneralizedMetaTyVarData { bound_var, equality };
+    st.tys.meta_var_data[mv.to_usize()] = MetaTyVarData::Generalized(data);
+  }
   Ok(TyScheme { bound_vars: st.bound, ty })
 }
 
@@ -101,6 +118,7 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
     }
     // trivial base cases
     TyData::BoundVar(_) => unreachable!("bound vars should be instantiated"),
+    TyData::GeneralizedMetaVar(_) => unreachable!("should not try to re-generalize this mv"),
     TyData::None => Ok(Ty::NONE),
     // recursive cases
     TyData::Record(rows) => {
