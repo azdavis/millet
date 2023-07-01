@@ -65,11 +65,11 @@ fun eq x y = x = y
 }
 
 #[test]
-fn unsolved_overload() {
+fn solved_overload() {
   check(
     r#"
 fun add x y = x + y
-(**           ^ hover: <num> *)
+(**           ^ hover: int *)
 "#,
   );
 }

@@ -39,7 +39,7 @@ fn bound_at_fun_2() {
   check(
     r#"
 fun 'a f (id: 'a -> 'a) x = id x + 1
-(**                         ^^^^^^^^ expected `<num> * <num>`, found `'a * int` *)
+(**                         ^^^^^^^^ expected `int * int`, found `'a * int` *)
 "#,
   );
 }

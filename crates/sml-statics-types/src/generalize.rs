@@ -116,17 +116,22 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
             *bv = Some(new_bv);
             Ok(Ty::bound_var(new_bv))
           }
-          TyVarKind::Overloaded(ov) => match ov {
-            overload::Overload::Basic(b) => match b {
-              overload::Basic::Int => Ok(Ty::INT),
-              overload::Basic::Real => Ok(Ty::REAL),
-              overload::Basic::Word => Ok(Ty::WORD),
-              overload::Basic::String => Ok(Ty::STRING),
-              overload::Basic::Char => Ok(Ty::CHAR),
-            },
-            // all composite overloads contain, and default to, int.
-            overload::Overload::Composite(_) => Ok(Ty::INT),
-          },
+          TyVarKind::Overloaded(ov) => {
+            let default = match ov {
+              overload::Overload::Basic(b) => match b {
+                overload::Basic::Int => Ty::INT,
+                overload::Basic::Real => Ty::REAL,
+                overload::Basic::Word => Ty::WORD,
+                overload::Basic::String => Ty::STRING,
+                overload::Basic::Char => Ty::CHAR,
+              },
+              // all composite overloads contain, and default to, int.
+              overload::Overload::Composite(_) => Ty::INT,
+            };
+            // not necessary, but makes hover for ty better.
+            st.tys.meta_var_data[ty.idx.to_usize()] = MetaTyVarData::Solved(default);
+            Ok(default)
+          }
         },
         // it is a user error if these haven't been solved by now.
         UnsolvedMetaTyVarKind::UnresolvedRecord(ur_mv) => Err(ur_mv),
