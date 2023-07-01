@@ -106,16 +106,18 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
   let (ty, data) = st.tys.canonicalize(ty);
   match data {
     // interesting cases
-    TyData::UnsolvedMetaVar(umv) => {
-      let bv = st.meta.get_mut(&ty.idx);
-      go_bv(bv, &mut st.bound, umv.kind, ty)
-    }
-    TyData::FixedVar(fv) => {
-      let k = if fv.ty_var.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular };
-      let k = UnsolvedMetaTyVarKind::Kind(k);
-      let bv = st.fixed.0.get_mut(&ty.idx);
-      go_bv(bv, &mut st.bound, k, ty)
-    }
+    TyData::UnsolvedMetaVar(umv) => match st.meta.get_mut(&ty.idx) {
+      None => Ok(ty),
+      Some(bv) => go_bv(bv, &mut st.bound, umv.kind),
+    },
+    TyData::FixedVar(fv) => match st.fixed.0.get_mut(&ty.idx) {
+      None => Ok(ty),
+      Some(bv) => {
+        let k = if fv.ty_var.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular };
+        let k = UnsolvedMetaTyVarKind::Kind(k);
+        go_bv(bv, &mut st.bound, k)
+      }
+    },
     // trivial base cases
     TyData::BoundVar(_) => unreachable!("bound vars should be instantiated"),
     TyData::GeneralizedMetaVar(_) => unreachable!("should not try to re-generalize this mv"),
@@ -139,15 +141,10 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
 }
 
 fn go_bv(
-  bv: Option<&mut Option<BoundTyVar>>,
+  bv: &mut Option<BoundTyVar>,
   bound: &mut BoundTyVars,
   kind: UnsolvedMetaTyVarKind,
-  ty: Ty,
 ) -> Result<Ty> {
-  let bv = match bv {
-    Some(bv) => bv,
-    None => return Ok(ty),
-  };
   match bv {
     Some(bv) => return Ok(Ty::bound_var(*bv)),
     None => {}
