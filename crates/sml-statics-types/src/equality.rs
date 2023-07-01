@@ -99,7 +99,7 @@ fn equality_composite(comp: overload::Composite) -> overload::Overload {
   match comp {
     overload::Composite::WordInt | overload::Composite::Num => overload::Composite::WordInt.into(),
     overload::Composite::RealInt => overload::Basic::Int.into(),
-    overload::Composite::NumTxt | overload::Composite::WordIntTxt => {
+    overload::Composite::WordIntTxt | overload::Composite::NumTxt => {
       overload::Composite::WordIntTxt.into()
     }
   }

@@ -48,11 +48,11 @@ pub enum Composite {
   RealInt,
   /// All kinds of numbers.
   Num,
-  /// All kinds of numbers and textual types (char and string).
-  NumTxt,
   /// equality-only subset of NumTxt. not explicitly mentioned in the Definition. used only for
   /// unification.
   WordIntTxt,
+  /// All kinds of numbers and textual types (char and string).
+  NumTxt,
 }
 
 impl Composite {
@@ -61,8 +61,8 @@ impl Composite {
       Self::WordInt => &[Basic::Word, Basic::Int],
       Self::RealInt => &[Basic::Real, Basic::Int],
       Self::Num => &[Basic::Word, Basic::Real, Basic::Int],
-      Self::NumTxt => &[Basic::Word, Basic::Real, Basic::Int, Basic::String, Basic::Char],
       Self::WordIntTxt => &[Basic::Word, Basic::Int, Basic::String, Basic::Char],
+      Self::NumTxt => &[Basic::Word, Basic::Real, Basic::Int, Basic::String, Basic::Char],
     }
   }
 
@@ -78,10 +78,10 @@ impl Composite {
       (Self::RealInt, Self::RealInt | Self::Num | Self::NumTxt)
       | (Self::Num | Self::NumTxt, Self::RealInt) => Self::RealInt.into(),
       (Self::Num, Self::Num | Self::NumTxt) | (Self::NumTxt, Self::Num) => Self::Num.into(),
-      (Self::NumTxt, Self::NumTxt) => Self::NumTxt.into(),
       (Self::WordIntTxt, Self::WordIntTxt | Self::NumTxt) | (Self::NumTxt, Self::WordIntTxt) => {
         Self::WordIntTxt.into()
       }
+      (Self::NumTxt, Self::NumTxt) => Self::NumTxt.into(),
     }
   }
 }
@@ -92,8 +92,8 @@ impl fmt::Display for Composite {
       Composite::WordInt => f.write_str("<wordint>"),
       Composite::RealInt => f.write_str("<realint>"),
       Composite::Num => f.write_str("<num>"),
-      Composite::NumTxt => f.write_str("<numtxt>"),
       Composite::WordIntTxt => f.write_str("<wordinttxt>"),
+      Composite::NumTxt => f.write_str("<numtxt>"),
     }
   }
 }
