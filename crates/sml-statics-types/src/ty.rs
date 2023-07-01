@@ -309,7 +309,10 @@ pub enum Generalizable {
 /// Data about a meta ty var.
 #[derive(Debug, Clone)]
 pub(crate) enum MetaTyVarData {
+  /// This meta var was fully solved to a real type.
   Solved(Ty),
+  /// This meta var hasn't been fully solved yet. It might, however, have restrictions on what types
+  /// it could be eventually fully solved to.
   Unsolved(UnsolvedMetaTyVarData),
 }
 
