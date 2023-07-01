@@ -105,13 +105,18 @@ impl fmt::Display for TyDisplay<'_> {
       TyData::BoundVar(bv) => {
         let vars = self.cx.bound_vars.expect("bound ty var without a BoundTyVars");
         match bv.index_into(vars) {
-          BoundTyVarData::Kind(kind) => {
+          BoundTyVarData::Kind(kind) => match kind {
             // NOTE this can clash with explicitly named ty vars, but currently they do not mix
-            // NOTE this doesn't really consider overloaded ty vars
-            let equality = matches!(kind, TyVarKind::Equality);
-            let name = bv.name(equality);
-            write!(f, "{name}")?;
-          }
+            TyVarKind::Regular => {
+              let name = bv.name(false);
+              write!(f, "{name}")?;
+            }
+            TyVarKind::Equality => {
+              let name = bv.name(true);
+              write!(f, "{name}")?;
+            }
+            TyVarKind::Overloaded(ov) => ov.fmt(f)?,
+          },
           BoundTyVarData::Named(name) => name.fmt(f)?,
         }
       }
