@@ -108,11 +108,13 @@ fn go(st: &mut St<'_>, ty: Ty) -> Result<Ty> {
     // interesting cases
     TyData::UnsolvedMetaVar(umv) => match st.meta.get_mut(&ty.idx) {
       None => Ok(ty),
-      Some(bv) => go_bv(bv, &mut st.bound, umv.kind),
+      Some(&mut Some(bv)) => Ok(Ty::bound_var(bv)),
+      Some(bv @ None) => go_bv(bv, &mut st.bound, umv.kind),
     },
     TyData::FixedVar(fv) => match st.fixed.0.get_mut(&ty.idx) {
       None => Ok(ty),
-      Some(bv) => {
+      Some(&mut Some(bv)) => Ok(Ty::bound_var(bv)),
+      Some(bv @ None) => {
         let k = if fv.ty_var.is_equality() { TyVarKind::Equality } else { TyVarKind::Regular };
         let k = UnsolvedMetaTyVarKind::Kind(k);
         go_bv(bv, &mut st.bound, k)
@@ -145,10 +147,6 @@ fn go_bv(
   bound: &mut BoundTyVars,
   kind: UnsolvedMetaTyVarKind,
 ) -> Result<Ty> {
-  match bv {
-    Some(bv) => return Ok(Ty::bound_var(*bv)),
-    None => {}
-  }
   match kind {
     UnsolvedMetaTyVarKind::Kind(kind) => match kind {
       TyVarKind::Regular | TyVarKind::Equality => {
