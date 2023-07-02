@@ -302,7 +302,9 @@ impl Analysis {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
     let mut envs = [&ft.file.scope.env, &ft.file.info.basis().env].map(Some);
     match ft.token.kind() {
-      sml_syntax::SyntaxKind::BlockComment => return None,
+      sml_syntax::SyntaxKind::BlockComment
+      | sml_syntax::SyntaxKind::Underscore
+      | sml_syntax::SyntaxKind::DotDotDot => return None,
       sml_syntax::SyntaxKind::Dot => {
         let grandparent = ft.token.parent()?.parent()?;
         let path = sml_syntax::ast::Path::cast(grandparent)?;
