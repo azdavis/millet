@@ -210,3 +210,16 @@ fun foo x =
 "#,
   );
 }
+
+#[test]
+#[should_panic]
+fn mutual() {
+  check(
+    r#"
+fun f x = g x
+(** ^ hover: ?a -> ?b *)
+and g x = f x
+(** ^ hover: ?a -> ?b *)
+"#,
+  );
+}
