@@ -72,12 +72,8 @@ fn priority(kind: SyntaxKind) -> u8 {
   match kind {
     SyntaxKind::Name => 5,
     SyntaxKind::OpKw | SyntaxKind::Dot => 4,
-    SyntaxKind::TyVar => 3,
-    SyntaxKind::CharLit
-    | SyntaxKind::IntLit
-    | SyntaxKind::RealLit
-    | SyntaxKind::StringLit
-    | SyntaxKind::WordLit => 2,
+    SyntaxKind::LRound | SyntaxKind::RRound | SyntaxKind::LCurly | SyntaxKind::RCurly => 3,
+    SyntaxKind::Comma | SyntaxKind::Colon | SyntaxKind::Star | SyntaxKind::Eq => 2,
     SyntaxKind::Whitespace | SyntaxKind::BlockComment | SyntaxKind::Invalid => 0,
     _ => 1,
   }
