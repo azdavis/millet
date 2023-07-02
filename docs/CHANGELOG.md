@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.12.3
+
+- Rework the new better reporting of type variables to be even better by crashing less.
+
 ## v0.12.2
 
 - Report type variables better.
