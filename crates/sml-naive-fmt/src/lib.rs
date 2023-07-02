@@ -680,7 +680,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
     ast::Exp::HandleExp(exp) => {
       get_exp(st, cfg, exp.exp()?)?;
       st.write(" handle\n");
-      get_matcher_across_lines(st, cfg, exp.matcher()?)?;
+      get_matcher_across_lines(st, cfg, exp.matcher())?;
     }
     ast::Exp::RaiseExp(exp) => {
       st.write("raise ");
@@ -716,7 +716,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       st.write("case ");
       get_exp(st, cfg, exp.exp()?)?;
       st.write(" of\n");
-      get_matcher_across_lines(st, cfg, exp.matcher()?)?;
+      get_matcher_across_lines(st, cfg, exp.matcher())?;
     }
     ast::Exp::FnExp(exp) => {
       st.write("fn ");
@@ -726,7 +726,12 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
   Some(())
 }
 
-fn get_matcher_across_lines(st: &mut St, cfg: Cfg, matcher: ast::Matcher) -> Res {
+fn get_matcher_across_lines(st: &mut St, cfg: Cfg, matcher: Option<ast::Matcher>) -> Res {
+  let matcher = match matcher {
+    Some(x) => x,
+    // we allow formatting no matcher, even though it's a parse error.
+    None => return Some(()),
+  };
   cfg.indented().output_indent(st);
   sep_with_lines(st, cfg, "| ", matcher.arms(), |st, arm| get_matcher_arm(st, cfg, arm))
 }
