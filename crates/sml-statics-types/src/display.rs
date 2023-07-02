@@ -107,14 +107,8 @@ impl fmt::Display for TyDisplay<'_> {
         match bv.index_into(vars) {
           BoundTyVarData::Kind(kind) => match kind {
             // NOTE this can clash with explicitly named ty vars, but currently they do not mix
-            TyVarKind::Regular => {
-              let name = bv.name(false);
-              write!(f, "{name}")?;
-            }
-            TyVarKind::Equality => {
-              let name = bv.name(true);
-              write!(f, "{name}")?;
-            }
+            TyVarKind::Regular => bv.name(false).fmt(f)?,
+            TyVarKind::Equality => bv.name(true).fmt(f)?,
             TyVarKind::Overloaded(ov) => ov.fmt(f)?,
           },
           BoundTyVarData::Named(name) => name.fmt(f)?,
