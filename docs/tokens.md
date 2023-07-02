@@ -4,19 +4,34 @@ This is documentation for all the tokens in SML, and what they mean.
 
 ## `exception`
 
-Begin an exception declaration.
+Begin an exception declaration or specification.
 
-Exception declarations define new exception constructors.
+Exception declarations define new exception constructors, or define an alias for existing exception constructors.
 
 ```sml
 exception Foo
 exception Bar of string
+exception Quz = Foo
 ```
 
 In this example:
 
-- `Foo` has type `exn`
-- `Bar` has type `string -> exn`
+- `Foo` and `Quz` have type `exn`.
+- `Bar` has type `string -> exn`.
+- `Foo` and `Quz` are the same exception.
+- For some string `s`, `Foo` and `Bar s` are different exceptions.
+- For two strings `s1` and `s2`, iff `s1` and `s2` are the same, then `Bar s1` and `Bar s2` are the same.
+
+`exception` can also be used in signatures as a specification.
+
+```sml
+signature SIG = sig
+  exception A
+  exception B of int
+end
+```
+
+In specification context, exception aliases are not allowed.
 
 ## `signature`
 
@@ -28,6 +43,8 @@ Signatures describe the interface to structures.
 signature SIG = sig
   type t
   val x : t
+  exception E
+  datatype foo = Bar | Quz
 end
 ```
 
@@ -35,7 +52,7 @@ Compare with `sig`, which begins a signature expression.
 
 ## `structure`
 
-Begin a structure declaration.
+Begin a structure declaration or specification.
 
 Structures are collections of declarations.
 
@@ -49,11 +66,19 @@ val _ = S.num + 5
 val _ = print S.msg
 ```
 
+`structure` can also be used in signatures.
+
+```sml
+signature SIG = sig
+  structure S : LIST
+end
+```
+
 Compare with `struct`, which begins a structure expression.
 
 ## `datatype`
 
-Begin a datatype declaration.
+Begin a datatype declaration, datatype copy declaration, or datatype specification.
 
 A datatype declaration defines a new type and its constructors.
 
@@ -65,6 +90,38 @@ In this example:
 
 - `On` and `Off` have type `debug`.
 - `Level` has type `int -> debug`.
+
+`datatype` can also be used to both create a type alias with all type variables automatically filled in, and bring all constructors into scope. For instance:
+
+```sml
+structure Tree = struct
+  datatype 'a t =
+    Empty
+  | Node of 'a t * 'a * 'a t
+end
+
+datatype tree = datatype Tree.t
+
+fun treeSize (t : 'a tree) : int =
+  case t of
+    Empty => 0
+  | Node (l, _, r) => treeSize l + 1 + treeSize r
+```
+
+The datatype copy declaration has the effect of:
+
+- Defining a type alias (in this case `tree`), with all the right type variables in the right order.
+- Bringing all of the constructors from the right-hand side declaration (if any) into scope.
+
+`datatype` can also be used in signatures. The syntax is the same as the declaration form; datatype copy specifications are not allowed.
+
+```sml
+signature SIG = sig
+  datatype 'a t =
+    Empty
+  | Node of 'a t * 'a * 'a t
+end
+```
 
 Compare with `type`, which defines a type alias.
 
@@ -383,13 +440,24 @@ fun choose x =
 
 ## `type`
 
-Begin a type alias declaration.
+Begin a type alias declaration or type specification.
 
 ```sml
 type point = int * int
 ```
 
 Types defined with `type` are aliases, meaning no "new" types are defined. Rather, the new name is just an alternative name for the right-hand-side type, and aside from name, they are equivalent.
+
+`type` can also be used to define a type specification in a signature. In this context, the specification can have a right-hand side or not.
+
+```sml
+signature S = sig
+  type t
+  type u = t * t
+  val x : t
+  val y : u
+end
+```
 
 Compare with `datatype`, which defines a new type and its constructors.
 
@@ -497,7 +565,7 @@ Compare with `signature`, which begins a signature declaration.
 
 ## `val`
 
-Begin a val declaration.
+Begin a val declaration or specification.
 
 A value declaration evaluates the expression on the right, then matches it with the pattern on the left, and introduces new bindings produced by the pattern.
 
@@ -507,6 +575,8 @@ val (_, x) = ("ignored", "bound to x")
 ```
 
 Val declarations may be made recursive with `rec`, but only if the expression is a `fn` literal. In this case, usually `fun` is preferred anyway.
+
+`val` can also be used in signature specifications.
 
 ## `as`
 
