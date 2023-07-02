@@ -212,7 +212,6 @@ fun foo x =
 }
 
 #[test]
-#[should_panic]
 fn mutual() {
   check(
     r#"

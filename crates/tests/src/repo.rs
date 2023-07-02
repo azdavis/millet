@@ -127,10 +127,10 @@ fn no_ignore() {
   attr_test("ignore");
 }
 
-// #[test]
-// fn no_should_panic() {
-//   attr_test("should_panic");
-// }
+#[test]
+fn no_should_panic() {
+  attr_test("should_panic");
+}
 
 #[test]
 fn architecture() {

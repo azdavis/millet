@@ -69,7 +69,8 @@ impl Tys {
       Generalizable::Always => MetaTyVarRank::Infinite,
     };
     let ret = Ty { kind: TyKind::MetaVar, idx: idx::Idx::new(self.meta_var_data.len()) };
-    self.meta_var_data.push(MetaTyVarData::Unsolved(UnsolvedMetaTyVarData { rank, kind }));
+    let umv = UnsolvedMetaTyVarData { rank, display: MetaTyVarDisplayData::Unknown, kind };
+    self.meta_var_data.push(MetaTyVarData::Unsolved(umv));
     ret
   }
 
@@ -120,7 +121,6 @@ impl Tys {
             continue;
           }
           MetaTyVarData::Unsolved(data) => TyData::UnsolvedMetaVar(data.clone()),
-          MetaTyVarData::Generalized(data) => TyData::GeneralizedMetaVar(data.clone()),
         },
         TyKind::FixedVar => TyData::FixedVar(self.fixed_var_data[ty.idx.to_usize()].clone()),
         TyKind::Record => TyData::Record(self.record.get_data(ty.idx).clone()),
@@ -149,12 +149,11 @@ impl Tys {
       match &self.meta_var_data[ty.idx.to_usize()] {
         MetaTyVarData::Solved(new_ty) => ty = *new_ty,
         MetaTyVarData::Unsolved(_) => break,
-        MetaTyVarData::Generalized(_) => unreachable!(),
       }
     }
     match &mut self.meta_var_data[ty.idx.to_usize()] {
       MetaTyVarData::Unsolved(x) => x,
-      MetaTyVarData::Solved(_) | MetaTyVarData::Generalized(_) => unreachable!(),
+      MetaTyVarData::Solved(_) => unreachable!(),
     }
   }
 
@@ -168,7 +167,6 @@ impl Tys {
         // recur for solved meta vars
         MetaTyVarData::Solved(new_ty) => self.unsolved_meta_vars(*new_ty, f),
         MetaTyVarData::Unsolved(data) => f(ty, data),
-        MetaTyVarData::Generalized(_) => {}
       },
       // trivial base cases
       TyKind::None | TyKind::BoundVar | TyKind::FixedVar => {}
@@ -261,7 +259,6 @@ pub enum TyData {
   None,
   BoundVar(BoundTyVar),
   UnsolvedMetaVar(UnsolvedMetaTyVarData),
-  GeneralizedMetaVar(GeneralizedMetaTyVarData),
   FixedVar(FixedTyVarData),
   Record(RecordData),
   Con(ConData),
@@ -318,16 +315,22 @@ pub(crate) enum MetaTyVarData {
   /// This meta var hasn't been fully solved yet. It might, however, have restrictions on what types
   /// it could be eventually fully solved to.
   Unsolved(UnsolvedMetaTyVarData),
-  /// This meta var wasn't ever fully solved, and then it was generalized into a type scheme.
-  Generalized(GeneralizedMetaTyVarData),
 }
 
 /// Data about an unsolved meta ty var.
 #[derive(Debug, Clone)]
 pub struct UnsolvedMetaTyVarData {
   pub(crate) rank: MetaTyVarRank,
+  pub(crate) display: MetaTyVarDisplayData,
   /// What kind of unsolved meta ty var this is.
   pub kind: UnsolvedMetaTyVarKind,
+}
+
+/// MUST only be used to better display this meta var. MUST NOT be used for typechecking.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum MetaTyVarDisplayData {
+  Unknown,
+  Generalized(BoundTyVar),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -352,18 +355,6 @@ pub struct UnresolvedRecordMetaTyVar {
   pub rows: RecordData,
   /// For better error reporting.
   pub idx: sml_hir::Idx,
-}
-
-/// Data about a generalized meta ty var.
-///
-/// This data is not entirely de-normalized. That is, the data here is duplicated elsewhere
-/// (especially the equality bool field).
-#[derive(Debug, Clone)]
-pub struct GeneralizedMetaTyVarData {
-  /// The bound ty var that this was generalized to.
-  pub(crate) bound_var: BoundTyVar,
-  /// Whether the bound var is equality.
-  pub(crate) equality: bool,
 }
 
 /// A kind of type variable.

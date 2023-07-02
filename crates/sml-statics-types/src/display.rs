@@ -2,7 +2,8 @@
 
 use crate::sym::{Sym, Syms};
 use crate::ty::{
-  BoundTyVarData, BoundTyVars, RecordData, Ty, TyData, TyScheme, TyVarKind, UnsolvedMetaTyVarKind,
+  BoundTyVarData, BoundTyVars, MetaTyVarDisplayData, RecordData, Ty, TyData, TyScheme, TyVarKind,
+  UnsolvedMetaTyVarKind,
 };
 use crate::{unify::Incompatible, St};
 use fmt_util::comma_seq;
@@ -116,7 +117,8 @@ impl fmt::Display for TyDisplay<'_> {
       }
       TyData::UnsolvedMetaVar(mv) => match &mv.kind {
         UnsolvedMetaTyVarKind::Kind(kind) => match kind {
-          TyVarKind::Regular | TyVarKind::Equality => f.write_str("_")?,
+          TyVarKind::Regular => mv.display.display(false).fmt(f)?,
+          TyVarKind::Equality => mv.display.display(true).fmt(f)?,
           TyVarKind::Overloaded(ov) => ov.fmt(f)?,
         },
         UnsolvedMetaTyVarKind::UnresolvedRecord(ur) => {
@@ -124,10 +126,6 @@ impl fmt::Display for TyDisplay<'_> {
           RecordMetaVarDisplay { cx: self.cx, rows: &ur.rows, pretty }.fmt(f)?;
         }
       },
-      TyData::GeneralizedMetaVar(data) => {
-        let name = data.bound_var.name(data.equality);
-        write!(f, "{name}")?;
-      }
       TyData::FixedVar(fv) => fv.ty_var.fmt(f)?,
       TyData::Record(rows) => {
         if rows.is_empty() {
@@ -290,6 +288,26 @@ impl fmt::Display for SymDisplay<'_> {
     match self.syms.get(self.sym) {
       None => f.write_str("exn"),
       Some(sym_info) => sym_info.path.fmt(f),
+    }
+  }
+}
+
+impl MetaTyVarDisplayData {
+  fn display(self, equality: bool) -> impl fmt::Display {
+    MetaTyVarDisplay { data: self, equality }
+  }
+}
+
+struct MetaTyVarDisplay {
+  data: MetaTyVarDisplayData,
+  equality: bool,
+}
+
+impl fmt::Display for MetaTyVarDisplay {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self.data {
+      MetaTyVarDisplayData::Unknown => f.write_str("_"),
+      MetaTyVarDisplayData::Generalized(bv) => bv.name(self.equality).fmt(f),
     }
   }
 }

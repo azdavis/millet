@@ -62,7 +62,6 @@ pub(crate) fn get_ty(mode: Mode, syms: &Syms, tys: &mut Tys, ty: Ty) -> Result {
   match tys.data(ty) {
     TyData::None => Ok(()),
     TyData::BoundVar(_) => unreachable!("bound vars should be instantiated"),
-    TyData::GeneralizedMetaVar(_) => unreachable!("should not check equality of generalized mv"),
     TyData::UnsolvedMetaVar(umv) => match umv.kind {
       UnsolvedMetaTyVarKind::Kind(kind) => match kind {
         TyVarKind::Regular => {

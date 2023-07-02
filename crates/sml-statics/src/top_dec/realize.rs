@@ -70,11 +70,7 @@ fn get_ty(tys: &mut Tys, subst: &TyRealization, ty: &mut Ty) {
       }
     }
     // trivial base cases
-    TyData::None
-    | TyData::BoundVar(_)
-    | TyData::UnsolvedMetaVar(_)
-    | TyData::GeneralizedMetaVar(_)
-    | TyData::FixedVar(_) => {}
+    TyData::None | TyData::BoundVar(_) | TyData::UnsolvedMetaVar(_) | TyData::FixedVar(_) => {}
     // recursive cases
     TyData::Record(mut rows) => {
       for ty in rows.values_mut() {
