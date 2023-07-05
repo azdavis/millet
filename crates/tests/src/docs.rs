@@ -63,11 +63,11 @@ fn diagnostics() {
 }
 
 #[test]
-fn tokens() {
-  check_all(include_str!("../../../docs/tokens.md"));
+fn primitives() {
+  check_all(include_str!("../../../docs/primitives.md"));
 }
 
 #[test]
-fn primitives() {
-  check_all(include_str!("../../../docs/primitives.md"));
+fn tokens() {
+  check_all(include_str!("../../../docs/tokens.md"));
 }
