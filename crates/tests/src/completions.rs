@@ -1,6 +1,6 @@
 //! Tests for completions.
 
-use crate::check::{check, raw};
+use crate::check::{check, fail, raw};
 
 #[test]
 fn smoke() {
@@ -63,4 +63,21 @@ val _ = "#;
     expected_input: raw::ExpectedInput::Good,
   };
   raw::get(raw::one_file_fs(sml), opts);
+}
+
+#[test]
+fn in_path() {
+  // the completions should be auto-narrowed to just `foo` by the editor
+  fail(
+    r#"
+structure S = struct
+  val foo = ()
+  val bar = ()
+end
+
+(**     vvv undefined value: `f` *)
+val _ = S.f
+(**       ^ completions: foo, bar *)
+"#,
+  );
 }
