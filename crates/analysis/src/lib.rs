@@ -300,24 +300,20 @@ impl Analysis {
   #[must_use]
   pub fn completions(&self, pos: WithPath<PositionUtf16>) -> Option<Vec<CompletionItem>> {
     let ft = source_files::file_and_token(&self.source_files, pos)?;
-    let mut envs = vec![&ft.file.scope.env, &ft.file.info.basis().env];
     match ft.token.kind() {
-      sml_syntax::SyntaxKind::BlockComment
-      | sml_syntax::SyntaxKind::Underscore
-      | sml_syntax::SyntaxKind::DotDotDot => return None,
-      sml_syntax::SyntaxKind::Name | sml_syntax::SyntaxKind::Dot => {
-        let grandparent = ft.token.parent()?.parent()?;
-        let path = sml_syntax::ast::Path::cast(grandparent)?;
-        envs.retain_mut(|env| match get_env(env, &path) {
-          Some(e) => {
-            *env = e;
-            true
-          }
-          None => false,
-        });
-      }
-      _ => {}
+      sml_syntax::SyntaxKind::Name | sml_syntax::SyntaxKind::Dot => {}
+      _ => return None,
     }
+    let mut envs = vec![&ft.file.scope.env, &ft.file.info.basis().env];
+    let grandparent = ft.token.parent()?.parent()?;
+    let path = sml_syntax::ast::Path::cast(grandparent)?;
+    envs.retain_mut(|env| match get_env(env, &path) {
+      Some(e) => {
+        *env = e;
+        true
+      }
+      None => false,
+    });
     let mut ret = Vec::<CompletionItem>::new();
     for env in envs {
       self.env_completions(env, &mut ret);

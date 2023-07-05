@@ -8,8 +8,8 @@ fn smoke() {
     r#"
 val foo = 3
 
-(**      vvv expected an expression *)
-val _ =  val
+(**     vv undefined *)
+val _ = aa
 (**     ^ completions(with-std): foo *)
 "#,
   );
@@ -54,7 +54,7 @@ fn eof() {
   let sml = r#"
 val a = 1 and b = 2 and c = 3
 (**     v completions(with-std): a, b, c *)
-val _ = "#;
+val _ = x"#;
   let opts = raw::Opts {
     std_basis: raw::StdBasis::Minimal,
     outcome: raw::Outcome::Pass,
