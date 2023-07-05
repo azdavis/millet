@@ -1,6 +1,6 @@
 //! Tests for completions.
 
-use crate::check::{check, fail, raw};
+use crate::check::{check, raw};
 
 #[test]
 fn smoke() {
@@ -68,7 +68,7 @@ val _ = "#;
 #[test]
 fn in_path() {
   // the completions should be auto-narrowed to just `foo` by the editor
-  fail(
+  check(
     r#"
 structure S = struct
   val foo = ()

@@ -305,7 +305,7 @@ impl Analysis {
       sml_syntax::SyntaxKind::BlockComment
       | sml_syntax::SyntaxKind::Underscore
       | sml_syntax::SyntaxKind::DotDotDot => return None,
-      sml_syntax::SyntaxKind::Dot => {
+      sml_syntax::SyntaxKind::Name | sml_syntax::SyntaxKind::Dot => {
         let grandparent = ft.token.parent()?.parent()?;
         let path = sml_syntax::ast::Path::cast(grandparent)?;
         for env in &mut envs {
