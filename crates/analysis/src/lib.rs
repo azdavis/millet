@@ -596,6 +596,9 @@ pub struct CompletionItem {
 
 fn get_env<'e>(mut env: &'e Env, path: &sml_syntax::ast::Path) -> Option<&'e Env> {
   for part in path.name_star_eq_dots() {
+    if part.dot().is_none() {
+      break;
+    }
     let tok = part.name_star_eq()?.token;
     let name = tok.text();
     env = env.str_env.get(name)?;
