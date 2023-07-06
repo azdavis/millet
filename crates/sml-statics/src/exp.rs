@@ -139,14 +139,11 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
           }
         }
       }
-      if matches!(flavor, sml_hir::FnFlavor::Fn) && matcher.len() == 1 {
-        let fst = matcher.first().unwrap();
+      if let Some(name) = lint_eta_reduce(cx, ars, *flavor, matcher) {
         // TODO should we not emit this warning if this fn was the entire rhs of a val dec (could
         // need the eta expansion to work around the value restriction)? or just force people to use
         // `fun` (which is never linted by this)?
-        if let Some(name) = can_eta_reduce(cx, ars, fst.pat, fst.exp) {
-          st.err(exp, ErrorKind::CanEtaReduce(name));
-        }
+        st.err(exp, ErrorKind::CanEtaReduce(name));
       }
       st.insert_case(exp.into(), pats, param);
       st.syms_tys.tys.fun(param, res)
@@ -166,13 +163,17 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
   ret
 }
 
-fn can_eta_reduce(
+fn lint_eta_reduce(
   cx: &Cx,
   ars: &sml_hir::Arenas,
-  pat: sml_hir::PatIdx,
-  exp: sml_hir::ExpIdx,
+  flavor: sml_hir::FnFlavor,
+  matcher: &[sml_hir::Arm],
 ) -> Option<str_util::Name> {
-  let pat = match pat {
+  let fst = match (flavor, matcher) {
+    (sml_hir::FnFlavor::Fn, [x]) => *x,
+    _ => return None,
+  };
+  let pat = match fst.pat {
     Some(x) => x,
     None => return None,
   };
@@ -186,11 +187,10 @@ fn can_eta_reduce(
     }
     _ => return None,
   };
-  let val_info = cx.env.val_env.get(name);
-  if !pat::val_info_for_var(val_info) {
+  if !pat::val_info_for_var(cx.env.val_env.get(name)) {
     return None;
   }
-  let exp = match exp {
+  let exp = match fst.exp {
     Some(x) => x,
     None => return None,
   };

@@ -208,7 +208,7 @@ pub enum Exp {
   Typed(ExpIdx, TyIdx, TypedFlavor),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Arm {
   pub pat: PatIdx,
   pub exp: ExpIdx,
