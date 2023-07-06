@@ -139,13 +139,8 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
           }
         }
       }
-      if let Some(name) = lint_eta_reduce(cx, ars, *flavor, matcher) {
-        // TODO should we not emit this warning if this fn was the entire rhs of a val dec (could
-        // need the eta expansion to work around the value restriction)? or just force people to use
-        // `fun` (which is never linted by this)?
-        st.err(exp, ErrorKind::CanEtaReduce(name));
-      }
-      st.insert_case(exp.into(), pats, param);
+      let eta_reduce = lint_eta_reduce(cx, ars, *flavor, matcher);
+      st.insert_case(exp, pats, param, eta_reduce);
       st.syms_tys.tys.fun(param, res)
     }
     // @def(9)

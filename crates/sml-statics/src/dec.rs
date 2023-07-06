@@ -115,11 +115,16 @@ fn get_one(
           Ok(ts) => val_info.ty_scheme = ts,
           Err(ur) => st.err(ur.idx, ErrorKind::UnresolvedRecordTy(ur.rows)),
         }
-        if expansive(&cx, ars, exp) && !val_info.ty_scheme.bound_vars.is_empty() {
-          st.err(
-            exp.map_or(sml_hir::Idx::Dec(dec), sml_hir::Idx::Exp),
-            ErrorKind::BindPolymorphicExpansiveExp,
-          );
+        let e = match exp {
+          Some(e) => e,
+          None => continue,
+        };
+        if val_info.ty_scheme.bound_vars.is_empty() {
+          continue;
+        }
+        st.mark_eta_reduce_unable(e);
+        if expansive(&cx, ars, exp) {
+          st.err(e, ErrorKind::BindPolymorphicExpansiveExp);
         }
       }
       // extend the overall env with that.

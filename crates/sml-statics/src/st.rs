@@ -14,6 +14,7 @@ pub(crate) struct St<'a> {
   pub(crate) syms_tys: &'a mut sml_statics_types::St,
   errors: Vec<Error>,
   matches: Vec<Match>,
+  eta_reduce: sml_hir::la_arena::ArenaMap<sml_hir::la_arena::Idx<sml_hir::Exp>, str_util::Name>,
   /// a subset of all things that have definition sites. currently, only local value variables to a
   /// function.
   defined: Vec<(sml_hir::Idx, str_util::Name)>,
@@ -31,6 +32,7 @@ impl<'a> St<'a> {
       syms_tys,
       errors: Vec::new(),
       matches: Vec::new(),
+      eta_reduce: sml_hir::la_arena::ArenaMap::default(),
       defined: Vec::new(),
       used: FxHashSet::default(),
       cur_prefix: Vec::new(),
@@ -75,11 +77,24 @@ impl<'a> St<'a> {
     self.matches.push(Match { kind: MatchKind::Handle(pats), want, idx });
   }
 
-  pub(crate) fn insert_case(&mut self, idx: sml_hir::Idx, pats: Vec<Pat>, want: Ty) {
+  pub(crate) fn insert_case(
+    &mut self,
+    idx: sml_hir::la_arena::Idx<sml_hir::Exp>,
+    pats: Vec<Pat>,
+    want: Ty,
+    eta_reduce: Option<str_util::Name>,
+  ) {
     if self.info.mode.is_path_order() {
       return;
     }
-    self.matches.push(Match { kind: MatchKind::Case(pats), want, idx });
+    self.matches.push(Match { kind: MatchKind::Case(pats), want, idx: idx.into() });
+    if let Some(name) = eta_reduce {
+      self.eta_reduce.insert(idx, name);
+    }
+  }
+
+  pub(crate) fn mark_eta_reduce_unable(&mut self, idx: sml_hir::la_arena::Idx<sml_hir::Exp>) {
+    self.eta_reduce.remove(idx);
   }
 
   pub(crate) fn mark_defined(&mut self, idx: sml_hir::Idx, name: str_util::Name) {
@@ -153,6 +168,9 @@ impl<'a> St<'a> {
         if !self.used.contains(&idx) {
           self.err(idx, ErrorKind::Unused(Item::Val, name));
         }
+      }
+      for (idx, name) in std::mem::take(&mut self.eta_reduce) {
+        self.err(idx, ErrorKind::CanEtaReduce(name));
       }
     }
     std::mem::take(&mut self.errors)
