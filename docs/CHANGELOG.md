@@ -16,6 +16,7 @@ The versioning system is basically the following:
 ## main
 
 - Improve completions for fully-formed paths.
+- Lint on some eta reduction opportunities.
 
 ## v0.12.3
 

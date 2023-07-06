@@ -139,6 +139,12 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
           }
         }
       }
+      if matches!(flavor, sml_hir::FnFlavor::Fn) && matcher.len() == 1 {
+        let fst = matcher.first().unwrap();
+        if let Some(name) = can_eta_reduce(cx, ars, fst.pat, fst.exp) {
+          st.err(exp, ErrorKind::CanEtaReduce(name));
+        }
+      }
       st.insert_case(exp.into(), pats, param);
       st.syms_tys.tys.fun(param, res)
     }
@@ -155,6 +161,81 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
     st.info.entries.defs.exp.insert(exp, defs);
   }
   ret
+}
+
+fn can_eta_reduce(
+  cx: &Cx,
+  ars: &sml_hir::Arenas,
+  pat: sml_hir::PatIdx,
+  exp: sml_hir::ExpIdx,
+) -> Option<str_util::Name> {
+  let pat = match pat {
+    Some(x) => x,
+    None => return None,
+  };
+  let name = match &ars.pat[pat] {
+    sml_hir::Pat::Con(path, None) => {
+      if path.prefix().is_empty() {
+        path.last()
+      } else {
+        return None;
+      }
+    }
+    _ => return None,
+  };
+  let val_info = cx.env.val_env.get(name);
+  if !pat::val_info_for_var(val_info) {
+    return None;
+  }
+  let exp = match exp {
+    Some(x) => x,
+    None => return None,
+  };
+  let (func, argument) = match ars.exp[exp] {
+    sml_hir::Exp::App(x, Some(y)) => (x, y),
+    _ => return None,
+  };
+  match &ars.exp[argument] {
+    sml_hir::Exp::Path(path) => {
+      if !path.prefix().is_empty() || path.last() != name {
+        return None;
+      }
+    }
+    _ => return None,
+  }
+  if maybe_contains_free_var(ars, func, name) {
+    return None;
+  }
+  Some(name.clone())
+}
+
+fn maybe_contains_free_var(
+  ars: &sml_hir::Arenas,
+  exp: sml_hir::ExpIdx,
+  name: &str_util::Name,
+) -> bool {
+  let exp = match exp {
+    Some(x) => x,
+    None => return false,
+  };
+  match &ars.exp[exp] {
+    // base cases
+    sml_hir::Exp::Hole | sml_hir::Exp::SCon(_) => false,
+    // these introduce new bindings, so let's be conservative
+    sml_hir::Exp::Let(_, _) | sml_hir::Exp::Handle(_, _) | sml_hir::Exp::Fn(_, _) => true,
+    // interesting case
+    sml_hir::Exp::Path(path) => path.prefix().is_empty() && path.last() == name,
+    // recursive cases
+    sml_hir::Exp::Record(rows) => {
+      rows.iter().any(|&(_, exp)| maybe_contains_free_var(ars, exp, name))
+    }
+    sml_hir::Exp::App(func, argument) => {
+      maybe_contains_free_var(ars, *func, name) || maybe_contains_free_var(ars, *argument, name)
+    }
+    sml_hir::Exp::Raise(exp) | sml_hir::Exp::Typed(exp, _, _) => {
+      maybe_contains_free_var(ars, *exp, name)
+    }
+  }
 }
 
 fn lint_app(

@@ -56,6 +56,7 @@ pub(crate) enum ErrorKind {
   UnreachableHandle,
   DecWithoutEffect,
   Disallowed(Item, Disallow, str_util::Name),
+  CanEtaReduce(str_util::Name),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -169,6 +170,10 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::UnreachableHandle => f.write_str("unreachable `handle`"),
       ErrorKind::DecWithoutEffect => f.write_str("declaration with no effect"),
       ErrorKind::Disallowed(item, d, name) => write!(f, "{d} disallowed {item}: `{name}`"),
+      ErrorKind::CanEtaReduce(name) => {
+        f.write_str("this `fn` expression, of the form ")?;
+        write!(f, "`fn {name} => f {name}`, can be simplified to `f`")
+      }
     }
   }
 }
@@ -285,6 +290,7 @@ impl Error {
       ErrorKind::UnreachableHandle => Code::n(5039),
       ErrorKind::DecWithoutEffect => Code::n(5040),
       ErrorKind::Disallowed(_, _, _) => Code::n(5041),
+      ErrorKind::CanEtaReduce(_) => Code::n(5042),
     }
   }
 
@@ -300,7 +306,8 @@ impl Error {
       | ErrorKind::AppFn
       | ErrorKind::Use(_)
       | ErrorKind::UnreachableHandle
-      | ErrorKind::DecWithoutEffect => Severity::Warning,
+      | ErrorKind::DecWithoutEffect
+      | ErrorKind::CanEtaReduce(_) => Severity::Warning,
       _ => Severity::Error,
     }
   }
