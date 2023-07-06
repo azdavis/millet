@@ -141,6 +141,9 @@ fn get(st: &mut St<'_>, cfg: Cfg, cx: &Cx, ars: &sml_hir::Arenas, exp: sml_hir::
       }
       if matches!(flavor, sml_hir::FnFlavor::Fn) && matcher.len() == 1 {
         let fst = matcher.first().unwrap();
+        // TODO should we not emit this warning if this fn was the entire rhs of a val dec (could
+        // need the eta expansion to work around the value restriction)? or just force people to use
+        // `fun` (which is never linted by this)?
         if let Some(name) = can_eta_reduce(cx, ars, fst.pat, fst.exp) {
           st.err(exp, ErrorKind::CanEtaReduce(name));
         }
