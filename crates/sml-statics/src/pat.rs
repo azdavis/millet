@@ -94,12 +94,12 @@ fn get_(
       cov_mark::hit("rebind_ctor");
       let is_var = argument.is_none()
         && path.prefix().is_empty()
-        && (ok_val_info(val_info.val.as_ref().ok().copied()) || cfg.rec);
+        && (val_info_for_var(val_info.val.as_ref().ok().copied()) || cfg.rec);
       // @def(34)
       if is_var {
         let ty = st.syms_tys.tys.meta_var(cfg.gen);
         insert_name(st, pat_idx.into(), cfg.cfg, ve, path.last().clone(), ty);
-        // a little WET with ok_val_info
+        // a little WET with val_info_for_var
         if let Mode::Dynamics = st.info.mode {
           assert!(st.pat_id_statuses.insert(pat_idx, IdStatus::Val).is_none());
         }
@@ -207,7 +207,7 @@ fn get_(
     // @def(43)
     sml_hir::Pat::As(name, pat) => {
       let (pm_pat, ty) = get(st, cfg, ars, cx, ve, *pat);
-      if !ok_val_info(cx.env.val_env.get(name)) {
+      if !val_info_for_var(cx.env.val_env.get(name)) {
         st.err(pat_idx, ErrorKind::InvalidAsPatName(name.clone()));
       }
       insert_name(st, pat_idx.into(), cfg.cfg, ve, name.clone(), ty);
@@ -251,7 +251,7 @@ fn get_(
   Some(PatRet { pm_pat, ty, ty_scheme, defs })
 }
 
-fn ok_val_info(vi: Option<&ValInfo>) -> bool {
+pub(crate) fn val_info_for_var(vi: Option<&ValInfo>) -> bool {
   vi.map_or(true, |vi| matches!(vi.id_status, IdStatus::Val))
 }
 
