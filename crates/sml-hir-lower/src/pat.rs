@@ -38,44 +38,42 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
     ast::Pat::RecordPat(pat) => {
       ck_trailing(st, Sep::Comma, pat.pat_rows().map(|x| x.comma()));
       let mut rest_pat_row = None::<RestPatRowState>;
-      let rows: Vec<_> = pat
-        .pat_rows()
-        .filter_map(|row| match row.pat_row_inner()? {
-          ast::PatRowInner::RestPatRow(_) => {
-            match &mut rest_pat_row {
-              None => rest_pat_row = Some(RestPatRowState::default()),
-              Some(r) => r.multiple = true,
-            }
-            None
+      let rows = pat.pat_rows().filter_map(|row| match row.pat_row_inner()? {
+        ast::PatRowInner::RestPatRow(_) => {
+          match &mut rest_pat_row {
+            None => rest_pat_row = Some(RestPatRowState::default()),
+            Some(r) => r.multiple = true,
           }
-          ast::PatRowInner::LabAndPatPatRow(row) => {
-            if let Some(r) = &mut rest_pat_row {
-              r.last = false;
-            }
-            Some((get_lab(st, row.lab()?), get(st, flavor, row.pat())))
+          None
+        }
+        ast::PatRowInner::LabAndPatPatRow(row) => {
+          if let Some(r) = &mut rest_pat_row {
+            r.last = false;
           }
-          ast::PatRowInner::LabPatRow(row) => {
-            if let Some(r) = &mut rest_pat_row {
-              r.last = false;
-            }
-            let lab = str_util::Name::new(row.name_star_eq()?.token.text());
-            let ty_ann = row.ty_annotation().map(|ty_ann| {
-              forbid_opaque_asc(st, ty_ann.ascription());
-              ty::get(st, ty_ann.ty())
-            });
-            let as_tail = row.as_pat_tail().map(|x| get(st, flavor, x.pat()));
-            let pat = match (ty_ann, as_tail) {
-              (Some(ty), Some(pat)) => {
-                sml_hir::Pat::As(lab.clone(), st.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()))
-              }
-              (Some(ty), None) => sml_hir::Pat::Typed(st.pat(name(lab.as_str()), ptr.clone()), ty),
-              (None, Some(pat)) => sml_hir::Pat::As(lab.clone(), pat),
-              (None, None) => name(lab.as_str()),
-            };
-            Some((sml_hir::Lab::Name(lab), st.pat(pat, ptr.clone())))
+          Some((get_lab(st, row.lab()?), get(st, flavor, row.pat())))
+        }
+        ast::PatRowInner::LabPatRow(row) => {
+          if let Some(r) = &mut rest_pat_row {
+            r.last = false;
           }
-        })
-        .collect();
+          let lab = str_util::Name::new(row.name_star_eq()?.token.text());
+          let ty_ann = row.ty_annotation().map(|ty_ann| {
+            forbid_opaque_asc(st, ty_ann.ascription());
+            ty::get(st, ty_ann.ty())
+          });
+          let as_tail = row.as_pat_tail().map(|x| get(st, flavor, x.pat()));
+          let pat = match (ty_ann, as_tail) {
+            (Some(ty), Some(pat)) => {
+              sml_hir::Pat::As(lab.clone(), st.pat(sml_hir::Pat::Typed(pat, ty), ptr.clone()))
+            }
+            (Some(ty), None) => sml_hir::Pat::Typed(st.pat(name(lab.as_str()), ptr.clone()), ty),
+            (None, Some(pat)) => sml_hir::Pat::As(lab.clone(), pat),
+            (None, None) => name(lab.as_str()),
+          };
+          Some((sml_hir::Lab::Name(lab), st.pat(pat, ptr.clone())))
+        }
+      });
+      let rows: Vec<_> = rows.collect();
       if let Some(r) = &rest_pat_row {
         if r.multiple {
           st.err(pat.syntax().text_range(), ErrorKind::MultipleRestPatRows);
