@@ -78,6 +78,8 @@ pub(crate) enum ErrorKind {
   TopLevelOpen,
   InvalidOpaqueAscription,
   ExceptionCopyRhsNotPath,
+  EmptyLet,
+  EmptyLocal,
 }
 
 impl fmt::Display for Error {
@@ -130,6 +132,12 @@ impl fmt::Display for Error {
       ErrorKind::InvalidOpaqueAscription => f.write_str("opaque ascription not allowed here"),
       ErrorKind::ExceptionCopyRhsNotPath => {
         f.write_str("right-hand side of `exception` copy declaration must be a path")
+      }
+      ErrorKind::EmptyLet => {
+        f.write_str("overly complex `let` expression without declarations in the `let ... in`")
+      }
+      ErrorKind::EmptyLocal => {
+        f.write_str("overly complex `local` declaration without declarations in the `local ... in`")
       }
     }
   }
@@ -233,6 +241,8 @@ impl Error {
       ErrorKind::TopLevelOpen => Code::n(4030),
       ErrorKind::InvalidOpaqueAscription => Code::n(4031),
       ErrorKind::ExceptionCopyRhsNotPath => Code::n(4032),
+      ErrorKind::EmptyLet => Code::n(4033),
+      ErrorKind::EmptyLocal => Code::n(4034),
     }
   }
 
@@ -246,7 +256,9 @@ impl Error {
       | ErrorKind::UnnecessarySemicolon
       | ErrorKind::MultipleTypedPat
       | ErrorKind::PatNameIsNameOfContainingFun(_)
-      | ErrorKind::TopLevelOpen => Severity::Warning,
+      | ErrorKind::TopLevelOpen
+      | ErrorKind::EmptyLet
+      | ErrorKind::EmptyLocal => Severity::Warning,
       _ => Severity::Error,
     }
   }

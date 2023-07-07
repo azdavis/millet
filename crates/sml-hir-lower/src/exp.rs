@@ -114,6 +114,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       st.inc_level();
       let dec = dec::get(st, exp.decs());
       st.dec_level();
+      if dec.is_empty() {
+        st.err(ptr.text_range(), ErrorKind::EmptyLet);
+      }
       ck_trailing(st, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
       let exp = exp_idx_in_seq(st, exps, &ptr);

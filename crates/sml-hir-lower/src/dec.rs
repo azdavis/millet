@@ -158,6 +158,9 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       let fst = get_str_dec(st, str_dec.local_dec_hd().into_iter().flat_map(|x| x.decs()));
       st.dec_level();
       let snd = get_str_dec(st, str_dec.local_dec_tl().into_iter().flat_map(|x| x.decs()));
+      if fst.is_empty() {
+        st.err(ptr.text_range(), ErrorKind::EmptyLocal);
+      }
       sml_hir::StrDec::Local(fst, snd)
     }
     _ => sml_hir::StrDec::Dec(get_one(st, str_dec).into_iter().collect()),
@@ -193,7 +196,12 @@ fn get_str_exp(st: &mut St<'_>, str_exp: Option<ast::StrExp>) -> sml_hir::StrExp
       sml_hir::StrExp::App(get_name(str_exp.name())?, arg, flavor)
     }
     ast::StrExp::LetStrExp(str_exp) => {
-      sml_hir::StrExp::Let(get_str_dec(st, str_exp.decs()), get_str_exp(st, str_exp.str_exp()))
+      let fst = get_str_dec(st, str_exp.decs());
+      let snd = get_str_exp(st, str_exp.str_exp());
+      if fst.is_empty() {
+        st.err(ptr.text_range(), ErrorKind::EmptyLet);
+      }
+      sml_hir::StrExp::Let(fst, snd)
     }
   };
   st.str_exp(ret, ptr)
@@ -683,6 +691,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       let fst = get(st, dec.local_dec_hd().into_iter().flat_map(|x| x.decs()));
       st.dec_level();
       let snd = get(st, dec.local_dec_tl().into_iter().flat_map(|x| x.decs()));
+      if fst.is_empty() {
+        st.err(ptr.text_range(), ErrorKind::EmptyLocal);
+      }
       sml_hir::Dec::Local(fst, snd)
     }
     ast::DecOne::OpenDec(dec) => {

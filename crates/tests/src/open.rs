@@ -57,6 +57,7 @@ fn nested_in_ok() {
     r#"
 structure A = struct end
 local
+  val a = 3
 in
   local
     open A
@@ -73,6 +74,7 @@ fn nested_in_err() {
     r#"
 structure A = struct end
 local
+  val a = 3
 in
   local
   in
