@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.12.5
+
+- Only mark non-polymorphic `fn` as eta reducible.
+
 ## v0.12.4
 
 - Improve completions for fully-formed paths.
