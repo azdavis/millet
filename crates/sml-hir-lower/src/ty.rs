@@ -18,7 +18,11 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
         let ty = get(st, row.ty());
         Some((lab, ty))
       });
-      sml_hir::Ty::Record(rows.collect())
+      let rows: Vec<_> = rows.collect();
+      if rows.is_empty() {
+        st.err(ptr.text_range(), ErrorKind::EmptyRecordTy);
+      }
+      sml_hir::Ty::Record(rows)
     }
     ast::Ty::ConTy(ty) => {
       let path = get_path(ty.path()?)?;

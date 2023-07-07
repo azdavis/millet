@@ -80,6 +80,8 @@ pub(crate) enum ErrorKind {
   ExceptionCopyRhsNotPath,
   EmptyLet,
   EmptyLocal,
+  EmptyRecordPatOrExp,
+  EmptyRecordTy,
 }
 
 impl fmt::Display for Error {
@@ -138,6 +140,12 @@ impl fmt::Display for Error {
       }
       ErrorKind::EmptyLocal => {
         f.write_str("overly complex `local` declaration without declarations in the `local ... in`")
+      }
+      ErrorKind::EmptyRecordPatOrExp => {
+        f.write_str("the empty record/tuple is usually written as `()`")
+      }
+      ErrorKind::EmptyRecordTy => {
+        f.write_str("the empty record/tuple type is usually written as `unit`")
       }
     }
   }
@@ -243,6 +251,8 @@ impl Error {
       ErrorKind::ExceptionCopyRhsNotPath => Code::n(4032),
       ErrorKind::EmptyLet => Code::n(4033),
       ErrorKind::EmptyLocal => Code::n(4034),
+      ErrorKind::EmptyRecordPatOrExp => Code::n(4035),
+      ErrorKind::EmptyRecordTy => Code::n(4036),
     }
   }
 
@@ -258,7 +268,9 @@ impl Error {
       | ErrorKind::PatNameIsNameOfContainingFun(_)
       | ErrorKind::TopLevelOpen
       | ErrorKind::EmptyLet
-      | ErrorKind::EmptyLocal => Severity::Warning,
+      | ErrorKind::EmptyLocal
+      | ErrorKind::EmptyRecordPatOrExp
+      | ErrorKind::EmptyRecordTy => Severity::Warning,
       _ => Severity::Error,
     }
   }

@@ -48,7 +48,11 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         };
         Some((lab, exp))
       });
-      sml_hir::Exp::Record(rows.collect())
+      let rows: Vec<_> = rows.collect();
+      if rows.is_empty() {
+        st.err(ptr.text_range(), ErrorKind::EmptyRecordPatOrExp);
+      }
+      sml_hir::Exp::Record(rows)
     }
     ast::Exp::SelectorExp(exp) => {
       if !st.lang().exp.selector {

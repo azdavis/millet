@@ -88,3 +88,33 @@ val _ =
 "#,
   );
 }
+
+#[test]
+fn record_exp() {
+  check_with_warnings(
+    r#"
+val x = {}
+(**     ^^ usually written as `()` *)
+"#,
+  );
+}
+
+#[test]
+fn record_pat() {
+  check_with_warnings(
+    r#"
+fun get {} = 3
+(**     ^^ usually written as `()` *)
+"#,
+  );
+}
+
+#[test]
+fn record_ty() {
+  check_with_warnings(
+    r#"
+val x : {} = ()
+(**     ^^ usually written as `unit` *)
+"#,
+  );
+}

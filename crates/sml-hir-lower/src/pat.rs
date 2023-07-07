@@ -74,6 +74,9 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
         }
       });
       let rows: Vec<_> = rows.collect();
+      if rows.is_empty() {
+        st.err(ptr.text_range(), ErrorKind::EmptyRecordPatOrExp);
+      }
       if let Some(r) = &rest_pat_row {
         if r.multiple {
           st.err(pat.syntax().text_range(), ErrorKind::MultipleRestPatRows);
