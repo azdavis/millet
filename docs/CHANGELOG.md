@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.12.6
+
+- Lint for empty `let` and `local`.
+- Tweak ranges for diagnostics.
+
 ## v0.12.5
 
 - Only mark non-polymorphic `fn` as eta reducible.
