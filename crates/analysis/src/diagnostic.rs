@@ -1,8 +1,6 @@
 //! Helpers for working with diagnostics.
 
-use sml_syntax::ast::{self, AstNode as _};
-use sml_syntax::SyntaxNode;
-use text_size_util::TextRange;
+use sml_syntax::ast::AstNode as _;
 
 /// A diagnostic.
 #[derive(Debug)]
@@ -82,8 +80,7 @@ where
       let idx = err.idx();
       let syntax = file.syntax.lower.ptrs.hir_to_ast(idx).expect("no pointer for idx");
       let node = syntax.to_node(file.syntax.parse.root.syntax());
-      let range = custom_node_range(node.clone()).unwrap_or_else(|| node.text_range());
-      let range = f(&file.syntax.pos_db, range)?;
+      let range = f(&file.syntax.pos_db, sml_syntax::node_range(&node))?;
       let message = err.display(syms_tys, options.lines).to_string();
       Some(Diagnostic { range, message, code: err.code(), severity: err.severity() })
     }));
@@ -99,28 +96,4 @@ where
     }
   }
   ret
-}
-
-fn custom_node_range(node: SyntaxNode) -> Option<TextRange> {
-  if let Some(node) = ast::CaseExp::cast(node.clone()) {
-    let case_kw = node.case_kw()?;
-    let of_kw = node.of_kw()?;
-    return Some(TextRange::new(case_kw.text_range().start(), of_kw.text_range().end()));
-  }
-  if let Some(node) = ast::LetExp::cast(node.clone()) {
-    return Some(node.let_kw()?.text_range());
-  }
-  if let Some(node) = ast::LocalDec::cast(node.clone()) {
-    return Some(node.local_dec_hd()?.local_kw()?.text_range());
-  }
-  if let Some(node) = ast::LetStrExp::cast(node.clone()) {
-    return Some(node.let_kw()?.text_range());
-  }
-  if let Some(node) = ast::StructStrExp::cast(node.clone()) {
-    return Some(node.struct_kw()?.text_range());
-  }
-  if let Some(node) = ast::SigSigExp::cast(node) {
-    return Some(node.sig_kw()?.text_range());
-  }
-  None
 }
