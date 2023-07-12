@@ -39,7 +39,7 @@ fn let_in_end() {
   check(
     r#"
 val _ = let in end
-(**     ^^^^^^^^^^ requires at least 1 expression *)
+(**     ^^^ requires at least 1 expression *)
 "#,
   );
 }

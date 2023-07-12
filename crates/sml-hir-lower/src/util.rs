@@ -3,7 +3,8 @@
 use config::lang::Language;
 use diagnostic::{Code, Severity};
 use fast_hash::FxHashMap;
-use sml_syntax::{ast::SyntaxNodePtr, rowan::TextRange};
+use sml_syntax::ast::{AstNode as _, SyntaxNodePtr};
+use sml_syntax::rowan::TextRange;
 use std::fmt;
 
 /// Pointers between the AST and the HIR.
@@ -324,8 +325,22 @@ impl<'a> St<'a> {
     ret
   }
 
-  pub(crate) fn err(&mut self, range: TextRange, kind: ErrorKind) {
-    self.errors.push(Error { range, kind });
+  pub(crate) fn err(&mut self, node: &sml_syntax::SyntaxNode, kind: ErrorKind) {
+    self.errors.push(Error { range: sml_syntax::node_range(node), kind });
+  }
+
+  pub(crate) fn err_tok(&mut self, tok: &sml_syntax::SyntaxToken, kind: ErrorKind) {
+    self.errors.push(Error { range: tok.text_range(), kind });
+  }
+
+  pub(crate) fn err_wrong_num_pats(
+    &mut self,
+    case: &sml_syntax::ast::FunBindCase,
+    want: usize,
+    got: usize,
+  ) {
+    let range = pats_text_range(case).unwrap_or_else(|| case.syntax().text_range());
+    self.errors.push(Error { range, kind: ErrorKind::FunBindWrongNumPats(want, got) });
   }
 
   pub(crate) fn finish(self, root: sml_hir::StrDecSeq) -> Lower {
@@ -407,4 +422,17 @@ impl<'a> St<'a> {
   pub(crate) fn is_top_level(&self) -> bool {
     self.level == 0
   }
+}
+
+fn pats_text_range(case: &sml_syntax::ast::FunBindCase) -> Option<sml_syntax::rowan::TextRange> {
+  let mut pats = case.pats();
+  let first = pats.next()?;
+  let mut last = pats.next()?;
+  loop {
+    last = match pats.next() {
+      Some(x) => x,
+      None => break,
+    }
+  }
+  Some(first.syntax().text_range().cover(last.syntax().text_range()))
 }

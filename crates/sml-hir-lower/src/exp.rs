@@ -11,37 +11,37 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
   let ret = match exp {
     ast::Exp::HoleExp(_) | ast::Exp::WildcardExp(_) => sml_hir::Exp::Hole,
     ast::Exp::OpAndalsoExp(_) | ast::Exp::OpOrelseExp(_) => {
-      st.err(exp.syntax().text_range(), ErrorKind::OpBoolBinOp);
+      st.err(exp.syntax(), ErrorKind::OpBoolBinOp);
       return None;
     }
     ast::Exp::SConExp(exp) => sml_hir::Exp::SCon(get_scon(st, exp.s_con()?)?),
     ast::Exp::PathExp(exp) => {
       if !st.lang().exp.path {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("path")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("path")));
       }
       sml_hir::Exp::Path(get_path(exp.path()?)?)
     }
     ast::Exp::RecordExp(exp) => {
       if !st.lang().exp.record {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("record")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("record")));
       }
       ck_trailing(st, Sep::Comma, exp.exp_rows().map(|x| x.comma()));
       let rows = exp.exp_rows().filter_map(|row| {
         let lab_ast = row.lab()?;
-        let lab_tr = lab_ast.token.text_range();
+        let tok = row.lab()?.token;
         let lab = get_lab(st, lab_ast);
         let exp = match row.eq_exp() {
           Some(eq_exp) => get(st, eq_exp.exp()),
           None => match &lab {
             sml_hir::Lab::Name(name) => {
-              st.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
+              st.err_tok(&tok, ErrorKind::Unsupported("expression row punning"));
               st.exp(sml_hir::Exp::Path(sml_path::Path::one(name.clone())), ptr.clone())
             }
             sml_hir::Lab::Num(_) => {
               // NOTE: we explicitly duplicate the `err` call in both branches, to remind us that
               // if we ever actually accepted expression row punning, we should add a separate
               // error here rejecting the attempt to pun with a int label.
-              st.err(lab_tr, ErrorKind::Unsupported("expression row punning"));
+              st.err_tok(&tok, ErrorKind::Unsupported("expression row punning"));
               None
             }
           },
@@ -50,13 +50,13 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       });
       let rows: Vec<_> = rows.collect();
       if rows.is_empty() {
-        st.err(ptr.text_range(), ErrorKind::EmptyRecordPatOrExp);
+        st.err(exp.syntax(), ErrorKind::EmptyRecordPatOrExp);
       }
       sml_hir::Exp::Record(rows)
     }
     ast::Exp::SelectorExp(exp) => {
       if !st.lang().exp.selector {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`#` selector")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`#` selector")));
       }
       let lab = get_lab(st, exp.lab()?);
       let fresh = st.fresh();
@@ -70,24 +70,24 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     // @def(5)
     ast::Exp::ParenExp(exp) => {
       if !st.lang().exp.paren {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("parentheses")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("parentheses")));
       }
       let inner = exp.exp();
       if inner.as_ref().map_or(false, warn_unnecessary_parens) {
-        st.err(exp.syntax().text_range(), ErrorKind::UnnecessaryParens);
+        st.err(exp.syntax(), ErrorKind::UnnecessaryParens);
       }
       return get(st, inner);
     }
     ast::Exp::TupleExp(exp) => {
       if !st.lang().exp.tuple {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("tuple")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("tuple")));
       }
       ck_trailing(st, Sep::Comma, exp.exp_args().map(|x| x.comma()));
       tuple(exp.exp_args().map(|e| get(st, e.exp())))
     }
     ast::Exp::ListExp(exp) => {
       if !st.lang().exp.list {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("list")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("list")));
       }
       ck_trailing(st, Sep::Comma, exp.exp_args().map(|x| x.comma()));
       // need to rev()
@@ -100,41 +100,41 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       })
     }
     ast::Exp::VectorExp(exp) => {
-      st.err(exp.syntax().text_range(), ErrorKind::Unsupported("vector expressions"));
+      st.err(exp.syntax(), ErrorKind::Unsupported("vector expressions"));
       return None;
     }
     ast::Exp::SeqExp(exp) => {
       if !st.lang().exp.seq {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("sequence")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("sequence")));
       }
       ck_trailing(st, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
-      return exp_idx_in_seq(st, exps, &ptr);
+      return exp_idx_in_seq(st, exps, exp.syntax());
     }
     ast::Exp::LetExp(exp) => {
       if !st.lang().exp.let_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`let`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`let`")));
       }
       st.inc_level();
       let dec = dec::get(st, exp.decs());
       st.dec_level();
       if dec.is_empty() {
-        st.err(ptr.text_range(), ErrorKind::EmptyLet);
+        st.err(exp.syntax(), ErrorKind::EmptyLet);
       }
       ck_trailing(st, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
-      let exp = exp_idx_in_seq(st, exps, &ptr);
+      let exp = exp_idx_in_seq(st, exps, exp.syntax());
       sml_hir::Exp::Let(dec, exp)
     }
     ast::Exp::AppExp(exp) => {
       if !st.lang().exp.app {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("function application")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("function application")));
       }
       sml_hir::Exp::App(get(st, exp.func()), get(st, exp.arg()))
     }
     ast::Exp::InfixExp(exp) => {
       if !st.lang().exp.infix {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("infix application")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("infix application")));
       }
       let func = exp.name_star_eq().and_then(|x| st.exp(name(x.token.text()), ptr.clone()));
       let lhs = get(st, exp.lhs());
@@ -144,19 +144,19 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::TypedExp(exp) => {
       if !st.lang().exp.typed {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("typed")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("typed")));
       }
       forbid_opaque_asc(st, exp.ascription());
       sml_hir::Exp::Typed(get(st, exp.exp()), ty::get(st, exp.ty()), sml_hir::TypedFlavor::Regular)
     }
     ast::Exp::AndalsoExp(exp) => {
       if !st.lang().exp.andalso {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`andalso`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`andalso`")));
       }
       let lhs = exp.lhs();
       let rhs = exp.rhs();
       if is_bool_lit(&lhs) || is_bool_lit(&rhs) {
-        st.err(exp.syntax().text_range(), ErrorKind::ComplexBoolExp);
+        st.err(exp.syntax(), ErrorKind::ComplexBoolExp);
       }
       let cond = get(st, lhs);
       let yes = get(st, rhs);
@@ -165,12 +165,12 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::OrelseExp(exp) => {
       if !st.lang().exp.orelse {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`orelse`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`orelse`")));
       }
       let lhs = exp.lhs();
       let rhs = exp.rhs();
       if is_bool_lit(&lhs) || is_bool_lit(&rhs) {
-        st.err(exp.syntax().text_range(), ErrorKind::ComplexBoolExp);
+        st.err(exp.syntax(), ErrorKind::ComplexBoolExp);
       }
       let cond = get(st, lhs);
       let yes = st.exp(name("true"), ptr.clone());
@@ -179,7 +179,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::HandleExp(exp) => {
       if !st.lang().exp.handle {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`handle`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`handle`")));
       }
       let head = get(st, exp.exp());
       let m = matcher(st, Some(MatcherFlavor::Handle), exp.matcher());
@@ -187,19 +187,19 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::RaiseExp(exp) => {
       if !st.lang().exp.raise {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`raise`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`raise`")));
       }
       sml_hir::Exp::Raise(get(st, exp.exp()))
     }
     ast::Exp::IfExp(exp) => {
       if !st.lang().exp.if_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`if`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`if`")));
       }
       let cond = exp.cond();
       let yes = exp.yes();
       let no = exp.no();
       if is_bool_lit(&cond) || is_bool_lit(&yes) || is_bool_lit(&no) {
-        st.err(exp.syntax().text_range(), ErrorKind::ComplexBoolExp);
+        st.err(exp.syntax(), ErrorKind::ComplexBoolExp);
       }
       let cond = get(st, cond);
       let yes = get(st, yes);
@@ -208,14 +208,14 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::WhileExp(exp) => {
       if !st.lang().exp.while_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`while`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`while`")));
       }
       let vid = st.fresh();
       let fn_body = {
         let cond = get(st, exp.cond());
         let body = get(st, exp.body());
         let call = call_unit_fn(st, &vid, ptr.clone());
-        let yes = exp_idx_in_seq(st, [body, call], &ptr);
+        let yes = exp_idx_in_seq(st, [body, call], exp.syntax());
         let no = st.exp(tuple([]), ptr.clone());
         let fn_body = if_(st, cond, yes, no, ptr.clone(), sml_hir::FnFlavor::While);
         st.exp(fn_body, ptr.clone())
@@ -231,18 +231,18 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
     }
     ast::Exp::CaseExp(exp) => {
       if !st.lang().exp.case {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`case`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`case`")));
       }
       let head = get(st, exp.exp());
       let arms = matcher(st, Some(MatcherFlavor::Case), exp.matcher());
       if arms.len() == 1 {
-        st.err(exp.syntax().text_range(), ErrorKind::OneArmedCase);
+        st.err(exp.syntax(), ErrorKind::OneArmedCase);
       }
       case(st, head, arms, ptr.clone(), sml_hir::FnFlavor::Case)
     }
     ast::Exp::FnExp(exp) => {
       if !st.lang().exp.fn_ {
-        st.err(ptr.text_range(), ErrorKind::Disallowed(Item::Exp("`fn`")));
+        st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("`fn`")));
       }
       sml_hir::Exp::Fn(matcher(st, Some(MatcherFlavor::Fn), exp.matcher()), sml_hir::FnFlavor::Fn)
     }
@@ -330,11 +330,12 @@ fn call_unit_fn(st: &mut St<'_>, vid: &str_util::Name, ptr: SyntaxNodePtr) -> sm
 /// 3. `((fn _ => ... (fn _ => (fn _ => e) en) ...) e1)`
 ///
 /// the vec must not be empty, since we need a last expression `e`.
-fn exp_idx_in_seq<A, B>(st: &mut St<'_>, exps: A, ptr: &SyntaxNodePtr) -> sml_hir::ExpIdx
+fn exp_idx_in_seq<A, B>(st: &mut St<'_>, exps: A, exp: &sml_syntax::SyntaxNode) -> sml_hir::ExpIdx
 where
   A: IntoIterator<IntoIter = B>,
   B: DoubleEndedIterator<Item = sml_hir::ExpIdx>,
 {
+  let ptr = SyntaxNodePtr::new(exp);
   let ret = exps.into_iter().rev().reduce(|ac, x| {
     let wild = st.pat(sml_hir::Pat::Wild, ptr.clone());
     let arm = sml_hir::Arm { pat: wild, exp: ac };
@@ -342,7 +343,7 @@ where
     st.exp(c, ptr.clone())
   });
   if ret.is_none() {
-    st.err(ptr.text_range(), ErrorKind::EmptyExpSemiSeq);
+    st.err(exp, ErrorKind::EmptyExpSemiSeq);
   }
   ret.flatten()
 }
@@ -378,7 +379,7 @@ fn matcher(
   matcher: Option<ast::Matcher>,
 ) -> Vec<sml_hir::Arm> {
   if let Some(bar) = matcher.as_ref().and_then(sml_syntax::ast::Matcher::bar) {
-    st.err(bar.text_range(), ErrorKind::PrecedingBar);
+    st.err_tok(&bar, ErrorKind::PrecedingBar);
   }
   matcher
     .into_iter()

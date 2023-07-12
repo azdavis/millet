@@ -12,7 +12,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
   let ret = match scon.kind {
     ast::SConKind::IntLit => {
       if !st.lang().exp.int_lit {
-        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`int` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`int` literal")));
       }
       let chars = tok.text();
       let mut chars = chars.chars();
@@ -31,7 +31,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       let n = match sml_hir::Int::from_str_radix(chars.as_str(), radix) {
         Ok(x) => x * mul,
         Err(e) => {
-          st.err(tok.text_range(), ErrorKind::InvalidIntLit(e));
+          st.err_tok(&tok, ErrorKind::InvalidIntLit(e));
           sml_hir::Int::from(0i32)
         }
       };
@@ -39,7 +39,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
     }
     ast::SConKind::RealLit => {
       if !st.lang().exp.real_lit {
-        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`real` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`real` literal")));
       }
       let owned: String;
       let mut text = tok.text();
@@ -51,7 +51,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       let n = match text.parse() {
         Ok(x) => x,
         Err(e) => {
-          st.err(tok.text_range(), ErrorKind::InvalidRealLit(e));
+          st.err_tok(&tok, ErrorKind::InvalidRealLit(e));
           0.0
         }
       };
@@ -59,7 +59,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
     }
     ast::SConKind::WordLit => {
       if !st.lang().exp.word_lit {
-        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`word` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`word` literal")));
       }
       let mut chars = tok.text().chars();
       // 0
@@ -75,7 +75,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
       let n = match u64::from_str_radix(chars.as_str(), radix) {
         Ok(x) => x,
         Err(e) => {
-          st.err(tok.text_range(), ErrorKind::InvalidWordLit(e));
+          st.err_tok(&tok, ErrorKind::InvalidWordLit(e));
           0
         }
       };
@@ -83,13 +83,13 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
     }
     ast::SConKind::CharLit => {
       if !st.lang().exp.char_lit {
-        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`char` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`char` literal")));
       }
       sml_hir::SCon::Char(sml_string(tok.text().strip_prefix('#')?)?.chars().next()?)
     }
     ast::SConKind::StringLit => {
       if !st.lang().exp.string_lit {
-        st.err(tok.text_range(), ErrorKind::Disallowed(Item::Exp("`string` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`string` literal")));
       }
       sml_hir::SCon::String(sml_string(tok.text())?.into())
     }
@@ -128,12 +128,12 @@ pub(crate) fn get_lab(st: &mut St<'_>, lab: ast::Lab) -> sml_hir::Lab {
       let n = match lab.token.text().parse::<usize>() {
         Ok(n) => n,
         Err(e) => {
-          st.err(lab.token.text_range(), ErrorKind::InvalidNumLab(e));
+          st.err_tok(&lab.token, ErrorKind::InvalidNumLab(e));
           1
         }
       };
       if n == 0 {
-        st.err(lab.token.text_range(), ErrorKind::ZeroNumLab);
+        st.err_tok(&lab.token, ErrorKind::ZeroNumLab);
       }
       sml_hir::Lab::Num(n)
     }
@@ -145,7 +145,7 @@ where
   I: Iterator<Item = Option<SyntaxToken>>,
 {
   if let Some(s) = iter.last().flatten() {
-    st.err(s.text_range(), ErrorKind::Trailing(sep));
+    st.err_tok(&s, ErrorKind::Trailing(sep));
   }
 }
 
@@ -155,6 +155,6 @@ pub(crate) fn forbid_opaque_asc(st: &mut St<'_>, asc: Option<ast::Ascription>) {
     Some(x) => x,
   };
   if matches!(asc.kind, ast::AscriptionKind::ColonGt) {
-    st.err(asc.token.text_range(), ErrorKind::InvalidOpaqueAscription);
+    st.err_tok(&asc.token, ErrorKind::InvalidOpaqueAscription);
   }
 }

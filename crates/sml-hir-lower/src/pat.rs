@@ -30,7 +30,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
         let mut iter = pat.path()?.name_star_eq_dots();
         let name = iter.next()?.name_star_eq()?.token;
         if iter.next().is_none() && st.is_name_of_cur_fun(name.text()) {
-          st.err(name.text_range(), ErrorKind::PatNameIsNameOfContainingFun(flavor));
+          st.err_tok(&name, ErrorKind::PatNameIsNameOfContainingFun(flavor));
         }
       }
       sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(st, flavor, Some(x))))
@@ -75,14 +75,14 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       });
       let rows: Vec<_> = rows.collect();
       if rows.is_empty() {
-        st.err(ptr.text_range(), ErrorKind::EmptyRecordPatOrExp);
+        st.err(pat.syntax(), ErrorKind::EmptyRecordPatOrExp);
       }
       if let Some(r) = &rest_pat_row {
         if r.multiple {
-          st.err(pat.syntax().text_range(), ErrorKind::MultipleRestPatRows);
+          st.err(pat.syntax(), ErrorKind::MultipleRestPatRows);
         }
         if !r.last {
-          st.err(pat.syntax().text_range(), ErrorKind::RestPatRowNotLast);
+          st.err(pat.syntax(), ErrorKind::RestPatRowNotLast);
         }
       }
       sml_hir::Pat::Record { rows, allows_other: rest_pat_row.is_some() }
@@ -91,7 +91,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
     ast::Pat::ParenPat(pat) => {
       let inner = pat.pat()?;
       if warn_unnecessary_parens(&inner) {
-        st.err(pat.syntax().text_range(), ErrorKind::UnnecessaryParens);
+        st.err(pat.syntax(), ErrorKind::UnnecessaryParens);
       }
       return get_or(st, flavor, inner);
     }
@@ -111,7 +111,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       })
     }
     ast::Pat::VectorPat(pat) => {
-      st.err(pat.syntax().text_range(), ErrorKind::Unsupported("vector patterns"));
+      st.err(pat.syntax(), ErrorKind::Unsupported("vector patterns"));
       return None;
     }
     ast::Pat::InfixPat(pat) => {
@@ -123,7 +123,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
     }
     ast::Pat::TypedPat(pat) => {
       if pat.pat().map_or(false, has_types) {
-        st.err(pat.syntax().text_range(), ErrorKind::MultipleTypedPat);
+        st.err(pat.syntax(), ErrorKind::MultipleTypedPat);
       }
       forbid_opaque_asc(st, pat.ascription());
       sml_hir::Pat::Typed(get(st, flavor, pat.pat()), ty::get(st, pat.ty()))
@@ -157,17 +157,17 @@ fn get_pat_name(st: &mut St<'_>, pat: ast::Pat) -> Option<str_util::Name> {
   let pat = if let ast::Pat::ConPat(pat) = pat {
     pat
   } else {
-    st.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    st.err(pat.syntax(), ErrorKind::AsPatLhsNotName);
     return None;
   };
   if pat.pat().is_some() {
-    st.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    st.err(pat.syntax(), ErrorKind::AsPatLhsNotName);
     return None;
   }
   let mut iter = pat.path()?.name_star_eq_dots();
   let name = str_util::Name::new(iter.next()?.name_star_eq()?.token.text());
   if iter.next().is_some() {
-    st.err(pat.syntax().text_range(), ErrorKind::AsPatLhsNotName);
+    st.err(pat.syntax(), ErrorKind::AsPatLhsNotName);
     return None;
   }
   Some(name)

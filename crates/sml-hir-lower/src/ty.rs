@@ -20,7 +20,7 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
       });
       let rows: Vec<_> = rows.collect();
       if rows.is_empty() {
-        st.err(ptr.text_range(), ErrorKind::EmptyRecordTy);
+        st.err(ty.syntax(), ErrorKind::EmptyRecordTy);
       }
       sml_hir::Ty::Record(rows)
     }
@@ -47,7 +47,7 @@ pub(crate) fn get(st: &mut St<'_>, ty: Option<ast::Ty>) -> sml_hir::TyIdx {
     ast::Ty::ParenTy(ty) => {
       let inner = ty.ty();
       if inner.as_ref().map_or(false, warn_unnecessary_parens) {
-        st.err(ty.syntax().text_range(), ErrorKind::UnnecessaryParens);
+        st.err(ty.syntax(), ErrorKind::UnnecessaryParens);
       }
       return get(st, inner);
     }
