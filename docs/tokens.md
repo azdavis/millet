@@ -83,7 +83,10 @@ Begin a datatype declaration, datatype copy declaration, or datatype specificati
 A datatype declaration defines a new type and its constructors.
 
 ```sml
-datatype debug = On | Off | Level of int
+datatype debug =
+  On
+| Off
+| Level of int
 ```
 
 In this example:
@@ -494,7 +497,12 @@ Mark the end of various constructs, like:
 Begin a function declaration, which may be recursive.
 
 ```sml
-fun inc x = x + 1
+fun increment x = x + 1
+
+fun factorial n =
+  case n of
+    0 => 1
+  | _ => n * factorial (n - 1)
 ```
 
 Functions are the unit of abstraction.
@@ -533,16 +541,18 @@ Compare with `local`, which is a declaration.
 Allow a `fn` to be recursive.
 
 ```sml
-val rec fact = fn
+val rec factorial = fn
   0 => 1
-| n => n * fact (n - 1)
+| n => n * factorial (n - 1)
 ```
 
 Usually, `fun` is preferred. (`fun` is syntax sugar for `val rec` and `fn`.)
 
 ```sml
-fun fact 0 = 1
-  | fact n = n * fact (n - 1)
+fun factorial n =
+  case n of
+    0 => 1
+  | _ => n * factorial (n - 1)
 ```
 
 ## `sig`
@@ -598,7 +608,9 @@ val a : int as b = 3
 Separate a `while` loop condition from the loop body.
 
 ```sml
-val _ = while true do print "y\n"
+val () =
+  while true do
+    print "y\n"
 ```
 
 ## `fn`
@@ -618,7 +630,11 @@ Compare with `fun`, which is used in function declarations.
 Case on a `bool`.
 
 ```sml
-val _ = if 3 > 4 then "math is broken" else "okay good"
+val s =
+  if 3 > 4 then
+    "math is broken"
+  else
+    "this is fine"
 ```
 
 An if expression cases on a condition of type `bool`, and selects either the `then` expression if the condition was `true`, or the `else` if it was `false`.
@@ -656,7 +672,10 @@ val _ =
 2. Denote that a value or exception constructor takes an argument.
 
    ```sml
-   datatype ans = No | Yes | Custom of string
+   datatype answer =
+     No
+   | Yes
+   | Custom of string
    ```
 
 ## `op`
@@ -774,6 +793,9 @@ Often, pattern matching is preferred.
 ```sml
 fun fst (x, _) = x
 val three = fst (1 + 2, "hi")
+
+val tvShow = { name = "The Good Place", year = 2016 }
+val { year, ... } = tvShow
 ```
 
 ## `(`
@@ -859,7 +881,10 @@ val _ = Int.max (1, 5)
 Separate elements in a sequence, like expressions.
 
 ```sml
-val n : int = (print "hi"; 5)
+val n : int = (
+  print "about to give you an int";
+  5
+)
 ```
 
 Can also be used to separate declarations, but this is unnecessary.
