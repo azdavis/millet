@@ -44,6 +44,7 @@ idx.git = "https://github.com/azdavis/language-util.git"
 paths.git = "https://github.com/azdavis/language-util.git"
 pattern-match.git = "https://github.com/azdavis/language-util.git"
 str-util.git = "https://github.com/azdavis/language-util.git"
+str-util.features = ["serde"]
 syntax-gen.git = "https://github.com/azdavis/language-util.git"
 text-pos.git = "https://github.com/azdavis/language-util.git"
 text-size-util.git = "https://github.com/azdavis/language-util.git"
