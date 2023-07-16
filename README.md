@@ -2,7 +2,7 @@
 
 A [language server][lang-srv] for [Standard ML][sml] (SML).
 
-You can install the [VS Code][vscode] extension [here][marketplace].
+**Install for: [VS Code][marketplace] • [Open VSX][ovsx]**
 
 ![Millet logo](./editors/vscode/icon.png)
 
