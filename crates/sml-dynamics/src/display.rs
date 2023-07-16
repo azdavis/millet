@@ -411,7 +411,7 @@ impl fmt::Display for ExpDisplay<'_> {
       }
       sml_hir::Exp::Let(decs, exp) => {
         f.write_str("let")?;
-        for &dec in decs.iter().rev() {
+        for &dec in decs {
           write_nl_indent(self.cx.indent + 1, f)?;
           DecDisplay { dec, cx: self.cx.indented() }.fmt(f)?;
         }
@@ -682,10 +682,93 @@ impl fmt::Display for StrDecDisplay<'_> {
         let iter = decs.iter().map(|&dec| DecDisplay { dec, cx: self.cx });
         nl_indent_sep(self.cx.indent, f, iter)
       }
-      sml_hir::StrDec::Structure(_) => todo!(),
-      sml_hir::StrDec::Signature(_) => todo!(),
-      sml_hir::StrDec::Functor(_) => todo!(),
-      sml_hir::StrDec::Local(_, _) => todo!(),
+      sml_hir::StrDec::Structure(str_binds) => {
+        let mut iter = str_binds.iter();
+        let str_bind = iter.next().ok_or(fmt::Error)?;
+        StrBindDisplay { str_bind, first: true, cx: self.cx }.fmt(f)?;
+        for str_bind in iter {
+          write_nl_indent(self.cx.indent, f)?;
+          StrBindDisplay { str_bind, first: false, cx: self.cx }.fmt(f)?;
+        }
+        Ok(())
+      }
+      sml_hir::StrDec::Signature(_) => f.write_str("signature ..."),
+      sml_hir::StrDec::Functor(_) => f.write_str("functor ..."),
+      sml_hir::StrDec::Local(local_decs, in_decs) => {
+        f.write_str("local")?;
+        let cx_indented = self.cx.indented();
+        for &str_dec in local_decs {
+          write_nl_indent(cx_indented.indent, f)?;
+          StrDecDisplay { str_dec, cx: cx_indented }.fmt(f)?;
+        }
+        write_nl_indent(self.cx.indent, f)?;
+        f.write_str("in")?;
+        for &str_dec in in_decs {
+          write_nl_indent(cx_indented.indent, f)?;
+          StrDecDisplay { str_dec, cx: cx_indented }.fmt(f)?;
+        }
+        write_nl_indent(self.cx.indent, f)?;
+        f.write_str("end")
+      }
+    }
+  }
+}
+
+struct StrBindDisplay<'a> {
+  str_bind: &'a sml_hir::StrBind,
+  first: bool,
+  cx: DisplayCx<'a>,
+}
+
+impl fmt::Display for StrBindDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str(if self.first { "structure " } else { "and " })?;
+    f.write_str(self.str_bind.name.as_str())?;
+    f.write_str(" = ")?;
+    StrExpDisplay { str_exp: self.str_bind.str_exp, cx: self.cx }.fmt(f)
+  }
+}
+
+struct StrExpDisplay<'a> {
+  str_exp: sml_hir::StrExpIdx,
+  cx: DisplayCx<'a>,
+}
+
+impl fmt::Display for StrExpDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match &self.cx.ars.str_exp[self.str_exp.ok_or(fmt::Error)?] {
+      sml_hir::StrExp::Struct(str_decs) => {
+        f.write_str("struct")?;
+        for &str_dec in str_decs {
+          write_nl_indent(self.cx.indent + 1, f)?;
+          StrDecDisplay { str_dec, cx: self.cx.indented() }.fmt(f)?;
+        }
+        write_nl_indent(self.cx.indent, f)?;
+        f.write_str("end")
+      }
+      sml_hir::StrExp::Path(path) => path.fmt(f),
+      sml_hir::StrExp::Ascription(str_exp, _, _) => {
+        StrExpDisplay { str_exp: *str_exp, cx: self.cx }.fmt(f)
+      }
+      sml_hir::StrExp::App(name, str_exp, _) => {
+        name.fmt(f)?;
+        f.write_str("(")?;
+        StrExpDisplay { str_exp: *str_exp, cx: self.cx }.fmt(f)?;
+        f.write_str(")")
+      }
+      sml_hir::StrExp::Let(str_decs, str_exp) => {
+        f.write_str("let")?;
+        for &str_dec in str_decs {
+          write_nl_indent(self.cx.indent + 1, f)?;
+          StrDecDisplay { str_dec, cx: self.cx.indented() }.fmt(f)?;
+        }
+        write_nl_indent(self.cx.indent, f)?;
+        f.write_str("in")?;
+        write_nl_indent(self.cx.indent + 1, f)?;
+        StrExpDisplay { str_exp: *str_exp, cx: self.cx.indented() }.fmt(f)?;
+        write_nl_indent(self.cx.indent, f)?;
+        f.write_str("end")
+      }
     }
   }
 }
