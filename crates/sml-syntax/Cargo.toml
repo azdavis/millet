@@ -14,8 +14,6 @@ rowan.workspace = true
 token.workspace = true
 
 [build-dependencies]
-char-name.workspace = true
 code-h2-md-map.workspace = true
 fast-hash.workspace = true
-identifier-case.workspace = true
 syntax-gen.workspace = true
