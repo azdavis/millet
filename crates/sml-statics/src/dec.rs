@@ -95,12 +95,17 @@ fn get_one(
       }
       // extend the cx with only the recursive ValEnv.
       cx.env.val_env.append(&mut rec_ve);
+      // check each recursive expression with all of the recursive bindings in scope.
       for (val_bind, (pm_pat, want)) in val_binds[idx..].iter().zip(got_pats) {
         // @def(26)
         if !maybe_fn(&ars.exp, val_bind.exp) {
           st.err(dec, ErrorKind::ValRecExpNotFn);
         }
         let got = exp::get_and_check_ty_escape(st, exp_cfg, &cx, marker, ars, val_bind.exp);
+        // if it's recursive, it might be referencing itself in the `fn`, so don't lint this.
+        if let Some(e) = val_bind.exp {
+          st.mark_eta_reduce_unable(e);
+        }
         unify(st, dec.into(), want, got);
         st.insert_bind(dec.into(), pm_pat, want);
       }
