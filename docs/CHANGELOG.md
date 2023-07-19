@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.12.7
+
+- Do not mark `fn`s in `val rec` as eta reducible.
+
 ## v0.12.6
 
 - Lint for empty `let` and `local`.
