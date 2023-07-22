@@ -8,6 +8,7 @@ mod diagnostic;
 mod matcher;
 mod source_files;
 
+use fast_hash::FxHashSet;
 use paths::{PathId, PathMap, WithPath};
 use sml_statics_types::{def, env::Env};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -210,7 +211,23 @@ impl Analysis {
     let head_ast = case.exp()?;
     let head_ptr = SyntaxNodePtr::new(head_ast.syntax());
     let head = ft.file.syntax.lower.ptrs.ast_to_hir(&head_ptr)?;
-    let variants = ft.file.info.get_variants(&self.syms_tys, head)?;
+    let mut variants = ft.file.info.get_variants(&self.syms_tys, head)?;
+    // not 100% accurate: could have false negatives because the con pat could be nested (e.g.
+    // inside a typed pat), and false positives because there could be a variable named the same as
+    // an actual con but not a con due to scoping. but should work for many cases.
+    let con_names_already_present: FxHashSet<_> = case
+      .matcher()
+      .into_iter()
+      .flat_map(|matcher| matcher.arms())
+      .filter_map(|arm| match arm.pat()? {
+        ast::Pat::ConPat(pat) => {
+          let tok = pat.path()?.name_star_eq_dots().last()?.name_star_eq()?.token;
+          Some(str_util::Name::new(tok.text()))
+        }
+        _ => None,
+      })
+      .collect();
+    variants.retain(|(name, _)| !con_names_already_present.contains(name));
     let starting_bar = case.matcher().map_or(false, |x| x.arms().count() > 0);
     let case = matcher::display(starting_bar, &variants);
     Some((range, case.to_string()))

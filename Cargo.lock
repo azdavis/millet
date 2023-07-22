@@ -33,6 +33,7 @@ dependencies = [
  "config",
  "diagnostic",
  "elapsed",
+ "fast-hash",
  "fmt-util",
  "input",
  "mlb-statics",

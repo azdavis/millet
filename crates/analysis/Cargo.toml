@@ -12,6 +12,7 @@ doctest = false
 [dependencies]
 diagnostic.workspace = true
 elapsed.workspace = true
+fast-hash.workspace = true
 fmt-util.workspace = true
 paths.workspace = true
 str-util.workspace = true
