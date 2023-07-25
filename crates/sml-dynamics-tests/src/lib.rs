@@ -129,7 +129,7 @@ datatype nat = Z | S of nat
 fun add a b =
   case a of
     Z => b
-  | S a => S (add a b)
+  | S x => S (add x b)
 
 val four = add (S Z) (S (S (S Z)))
 "#,
@@ -141,7 +141,7 @@ val rec add = fn '0 => fn '1 =>
   (fn (a, b) =>
     (fn
       Z => b
-    | S a => S (add a b)
+    | S x => S (add x b)
     ) a
   ) ('0, '1)
 
@@ -154,7 +154,7 @@ val rec add = fn '0 => fn '1 =>
   (fn (a, b) =>
     (fn
       Z => b
-    | S a => S (add a b)
+    | S x => S (add x b)
     ) a
   ) ('0, '1)
 
@@ -174,7 +174,7 @@ val four =
     (fn (a, b) =>
       (fn
         Z => b
-      | S a => S (add a b)
+      | S x => S (add x b)
       ) a
     ) ('0, '1)
   )
@@ -189,7 +189,7 @@ val four =
     (fn (a, b) =>
       (fn
         Z => b
-      | S a => S (add a b)
+      | S x => S (add x b)
       ) a
     ) ('0, '1)
   )
@@ -200,7 +200,7 @@ val four =
   (fn (a, b) =>
     (fn
       Z => b
-    | S a => S (add a b)
+    | S x => S (add x b)
     ) a
   ) ('0, '1)
 "#,
@@ -209,7 +209,7 @@ val four =
   (fn (a, b) =>
     (fn
       Z => b
-    | S a => S (add a b)
+    | S x => S (add x b)
     ) a
   ) (S Z, '1)
 "#,
@@ -218,7 +218,7 @@ val four =
   (fn (a, b) =>
     (fn
       Z => b
-    | S a => S (add a b)
+    | S x => S (add x b)
     ) a
   ) (S Z, S (S (S Z)))
 "#,
@@ -226,19 +226,19 @@ val four =
 val four =
   (fn
     Z => b
-  | S a => S (add a b)
+  | S x => S (add x b)
   ) a
 "#,
       r#"
 val four =
   (fn
     Z => b
-  | S a => S (add a b)
+  | S x => S (add x b)
   ) (S Z)
 "#,
       r#"
 val four =
-  S (add a b)
+  S (add x b)
 "#,
       r#"
 val four =
@@ -248,11 +248,11 @@ val four =
         (fn (a, b) =>
           (fn
             Z => b
-          | S a => S (add a b)
+          | S x => S (add x b)
           ) a
       ) ('0, '1)
     )
-    a
+    x
     b
   )
 "#,
@@ -264,7 +264,7 @@ val four =
         (fn (a, b) =>
           (fn
             Z => b
-          | S a => S (add a b)
+          | S x => S (add x b)
           ) a
       ) ('0, '1)
     )
@@ -280,7 +280,7 @@ val four =
         (fn (a, b) =>
           (fn
             Z => b
-          | S a => S (add a b)
+          | S x => S (add x b)
           ) a
       ) ('0, '1)
     )
@@ -295,7 +295,7 @@ val four =
         (fn (a, b) =>
           (fn
             Z => b
-          | S a => S (add a b)
+          | S x => S (add x b)
           ) a
       ) ('0, '1)
     )
@@ -308,7 +308,7 @@ val four =
     (fn (a, b) =>
       (fn
         Z => b
-      | S a => S (add a b)
+      | S x => S (add x b)
       ) a
     ) ('0, '1)
   )
@@ -319,7 +319,7 @@ val four =
     (fn (a, b) =>
       (fn
         Z => b
-      | S a => S (add a b)
+      | S x => S (add x b)
       ) a
     ) (Z, '1)
   )
@@ -330,7 +330,7 @@ val four =
     (fn (a, b) =>
       (fn
         Z => b
-      | S a => S (add a b)
+      | S x => S (add x b)
       ) a
     ) (Z, S (S (S Z)))
   )
@@ -340,7 +340,7 @@ val four =
   S (
     (fn
       Z => b
-    | S a => S (add a b)
+    | S x => S (add x b)
     ) a
   )
 "#,
@@ -349,7 +349,7 @@ val four =
   S (
     (fn
       Z => b
-    | S a => S (add a b)
+    | S x => S (add x b)
     ) Z
   )
 "#,
