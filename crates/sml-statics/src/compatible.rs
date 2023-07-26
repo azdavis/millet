@@ -46,6 +46,7 @@ fn fixed_var_subst(st: &mut St<'_>, bound_vars: &BoundTyVars) -> Vec<Ty> {
     .collect()
 }
 
+/// returns `Ok(())` iff `general` generalizes `specific`.
 fn generalizes_no_emit(st: &mut St<'_>, general: &TyScheme, specific: &TyScheme) -> Result {
   let general = instantiate(&mut st.syms_tys.tys, Generalizable::Always, general);
   let subst = fixed_var_subst(st, &specific.bound_vars);
