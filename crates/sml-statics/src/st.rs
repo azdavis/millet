@@ -1,10 +1,11 @@
 //! See [`St`].
 
+use crate::compatible;
 use crate::error::{Error, ErrorKind};
 use crate::info::Info;
 use crate::pat_match::{self, Pat};
 use fast_hash::FxHashSet;
-use sml_statics_types::ty::Ty;
+use sml_statics_types::ty::{Ty, TyScheme};
 use sml_statics_types::{def, item::Item, mode::Mode};
 
 /// The mutable state.
@@ -21,6 +22,7 @@ pub(crate) struct St<'a> {
   used: FxHashSet<sml_hir::Idx>,
   /// for making fully qualified names.
   cur_prefix: Vec<str_util::Name>,
+  shadows: Vec<(sml_hir::Idx, str_util::Name, TyScheme, TyScheme)>,
   pub(crate) exp_id_statuses: sml_statics_types::info::IdStatusMap<sml_hir::Exp>,
   pub(crate) pat_id_statuses: sml_statics_types::info::IdStatusMap<sml_hir::Pat>,
 }
@@ -36,6 +38,7 @@ impl<'a> St<'a> {
       defined: Vec::new(),
       used: FxHashSet::default(),
       cur_prefix: Vec::new(),
+      shadows: Vec::new(),
       exp_id_statuses: sml_statics_types::info::IdStatusMap::default(),
       pat_id_statuses: sml_statics_types::info::IdStatusMap::default(),
     }
@@ -172,8 +175,29 @@ impl<'a> St<'a> {
       for (idx, name) in std::mem::take(&mut self.eta_reduce) {
         self.err(idx, ErrorKind::CanEtaReduce(name));
       }
+      for (idx, name, old, new) in std::mem::take(&mut self.shadows) {
+        if compatible::eq_ty_scheme(self, &old, &new).is_ok() {
+          self.err(idx, ErrorKind::ShadowInCaseWithSameTy(name, old));
+        }
+      }
     }
     std::mem::take(&mut self.errors)
+  }
+
+  /// NOTE: we use this to defer the compatible check between `old` and `new`, because if we do it
+  /// now, we add constraints on meta type variables in `new` that don't make sense.
+  pub(crate) fn insert_shadow(
+    &mut self,
+    idx: sml_hir::Idx,
+    name: str_util::Name,
+    old: TyScheme,
+    new: TyScheme,
+  ) {
+    assert!(new.bound_vars.is_empty());
+    if self.info.mode.is_path_order() {
+      return;
+    }
+    self.shadows.push((idx, name, old, new));
   }
 }
 

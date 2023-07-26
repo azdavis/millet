@@ -374,6 +374,14 @@ fn get_matcher(
     let mut ve = ValEnv::default();
     let cfg = pat::Cfg { cfg, gen: Generalizable::Sometimes, rec: false };
     let (pm_pat, pat_ty) = pat::get(st, cfg, ars, cx, &mut ve, arm.pat);
+    for (name, new_vi) in ve.iter() {
+      let old_vi = match cx.env.val_env.get(name) {
+        Some(x) => x,
+        None => continue,
+      };
+      let idx = arm.pat.map_or(idx, Into::into);
+      st.insert_shadow(idx, name.clone(), old_vi.ty_scheme.clone(), new_vi.ty_scheme.clone());
+    }
     let mut cx = cx.clone();
     cx.env.val_env.append(&mut ve);
     let exp_ty = get(st, cfg.cfg, &cx, ars, arm.exp);

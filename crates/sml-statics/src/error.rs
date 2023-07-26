@@ -57,6 +57,7 @@ pub(crate) enum ErrorKind {
   DecWithoutEffect,
   Disallowed(Item, Disallow, str_util::Name),
   CanEtaReduce(str_util::Name),
+  ShadowInCaseWithSameTy(str_util::Name, TyScheme),
 }
 
 struct ErrorKindDisplay<'a> {
@@ -173,6 +174,12 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::CanEtaReduce(name) => {
         f.write_str("this `fn` expression, of the form ")?;
         write!(f, "`fn {name} => f {name}`, can be simplified to `f`")
+      }
+      ErrorKind::ShadowInCaseWithSameTy(name, ty_scheme) => {
+        let ty_scheme = ty_scheme.display(self.st, self.lines);
+        write!(f, "this pattern, which binds `{name}` with type `{ty_scheme}`, ")?;
+        write!(f, "does not check any part of the matched expression for equality with the ")?;
+        write!(f, "existing `{name}`, which has the same type, and which was already in scope")
       }
     }
   }
@@ -291,6 +298,7 @@ impl Error {
       ErrorKind::DecWithoutEffect => Code::n(5040),
       ErrorKind::Disallowed(_, _, _) => Code::n(5041),
       ErrorKind::CanEtaReduce(_) => Code::n(5042),
+      ErrorKind::ShadowInCaseWithSameTy(_, _) => Code::n(5043),
     }
   }
 
@@ -307,7 +315,8 @@ impl Error {
       | ErrorKind::Use(_)
       | ErrorKind::UnreachableHandle
       | ErrorKind::DecWithoutEffect
-      | ErrorKind::CanEtaReduce(_) => Severity::Warning,
+      | ErrorKind::CanEtaReduce(_)
+      | ErrorKind::ShadowInCaseWithSameTy(_, _) => Severity::Warning,
       _ => Severity::Error,
     }
   }
