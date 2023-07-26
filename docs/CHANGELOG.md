@@ -13,6 +13,11 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.12.8
+
+- Exclude clearly already-present variants from "fill case".
+- Lint for suspicious pattern matches with bindings already in scope with the same type.
+
 ## v0.12.7
 
 - Do not mark `fn`s in `val rec` as eta reducible.
