@@ -85,7 +85,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: binary
-          path: binary/millet-ls-${{ matrix.rust }}.gz
+          path: |
+            binary/millet-ls-${{ matrix.rust }}.gz
+            binary/millet-cli-${{ matrix.rust }}.gz
       - name: Upload VSIX artifacts
         uses: actions/upload-artifact@v3
         with:
