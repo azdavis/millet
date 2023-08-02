@@ -180,13 +180,14 @@ fn dist(args: &DistArgs) -> Result<()> {
     fs::create_dir_all(&dst).with_context(|| format!("create dir {}", dst.display()))?;
     for name in [LANG_SRV_NAME, CLI_NAME] {
       let gz = format!("{name}-{target}.gz");
-      dst.push(gz.as_str());
       src.push(exe(name).as_str());
+      dst.push(gz.as_str());
       gzip(&src, &dst)?;
       pop_path_buf(&mut src)?;
+      pop_path_buf(&mut dst)?;
     }
   }
-  dst = ["editors", "vscode", "out"].iter().collect();
+  dst = ["editors", "vscode", "out"].into_iter().collect();
   // ignore errors if it exists already. if we have permission errors we're about to report them
   // with the create_dir_all anyway
   _ = fs::remove_dir_all(&dst);
