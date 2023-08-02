@@ -168,7 +168,6 @@ fn dist(args: &DistArgs) -> Result<()> {
   }
   run(&mut c)?;
   let kind = if args.release { "release" } else { "debug" };
-  let lang_srv_exe = exe(LANG_SRV_NAME);
   let mut src: PathBuf =
     std::iter::once("target").chain(args.target.as_deref()).chain(std::iter::once(kind)).collect();
   let mut dst: PathBuf;
@@ -177,7 +176,7 @@ fn dist(args: &DistArgs) -> Result<()> {
     fs::create_dir_all(&dst).with_context(|| format!("create dir {}", dst.display()))?;
     let gz = format!("{LANG_SRV_NAME}-{target}.gz");
     dst.push(gz.as_str());
-    src.push(lang_srv_exe.as_str());
+    src.push(exe(LANG_SRV_NAME).as_str());
     gzip(&src, &dst)?;
     pop_path_buf(&mut src)?;
   }
@@ -186,8 +185,8 @@ fn dist(args: &DistArgs) -> Result<()> {
   // with the create_dir_all anyway
   _ = fs::remove_dir_all(&dst);
   fs::create_dir_all(&dst).with_context(|| format!("create dir {}", dst.display()))?;
-  src.push(lang_srv_exe.as_str());
-  dst.push(lang_srv_exe.as_str());
+  src.push(exe(LANG_SRV_NAME).as_str());
+  dst.push(exe(LANG_SRV_NAME).as_str());
   fs::copy(&src, &dst).with_context(|| format!("copy {} to {}", src.display(), dst.display()))?;
   pop_path_buf(&mut dst)?;
   pop_path_buf(&mut dst)?;
