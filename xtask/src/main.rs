@@ -38,7 +38,10 @@ impl Cmd {
         desc: "make artifacts for distribution",
         options: &[
           ("--release", "build for release"),
-          ("--target <target>", "build for the <target> triple, and gzip"),
+          (
+            "--target <target>",
+            "build for the <target> triple, and gzip, and build the CLI as well",
+          ),
         ],
         args: &[],
       },
@@ -133,6 +136,7 @@ struct DistArgs {
 }
 
 const LANG_SRV_NAME: &str = "millet-ls";
+const CLI_NAME: &str = "millet-cli";
 
 fn cmd_exe(fst: &str) -> Command {
   if cfg!(windows) {
@@ -164,7 +168,7 @@ fn dist(args: &DistArgs) -> Result<()> {
     c.arg("--release");
   }
   if let Some(target) = &args.target {
-    c.args(["--target", target.as_str()]);
+    c.args(["--bin", CLI_NAME, "--target", target.as_str()]);
   }
   run(&mut c)?;
   let kind = if args.release { "release" } else { "debug" };
@@ -174,11 +178,13 @@ fn dist(args: &DistArgs) -> Result<()> {
   if let Some(target) = &args.target {
     dst = PathBuf::from("binary");
     fs::create_dir_all(&dst).with_context(|| format!("create dir {}", dst.display()))?;
-    let gz = format!("{LANG_SRV_NAME}-{target}.gz");
-    dst.push(gz.as_str());
-    src.push(exe(LANG_SRV_NAME).as_str());
-    gzip(&src, &dst)?;
-    pop_path_buf(&mut src)?;
+    for name in [LANG_SRV_NAME, CLI_NAME] {
+      let gz = format!("{name}-{target}.gz");
+      dst.push(gz.as_str());
+      src.push(exe(name).as_str());
+      gzip(&src, &dst)?;
+      pop_path_buf(&mut src)?;
+    }
   }
   dst = ["editors", "vscode", "out"].iter().collect();
   // ignore errors if it exists already. if we have permission errors we're about to report them
