@@ -38,7 +38,7 @@ impl Cmd {
         desc: "make artifacts for distribution",
         options: &[
           ("--release", "build for release"),
-          ("--target <target>", "build for the <target> triple"),
+          ("--target <target>", "build for the <target> triple, and gzip"),
         ],
         args: &[],
       },
