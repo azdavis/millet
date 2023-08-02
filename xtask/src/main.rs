@@ -201,8 +201,7 @@ fn dist(args: &DistArgs) -> Result<()> {
     run(cmd_exe("npm").arg("ci"))?;
   }
   run(cmd_exe("npm").args(["run", "check"]))?;
-  let build = format!("build-{kind}");
-  run(cmd_exe("npm").args(["run", build.as_str()]))?;
+  run(cmd_exe("npm").args(["run", format!("build-{kind}").as_str()]))?;
   Ok(())
 }
 
