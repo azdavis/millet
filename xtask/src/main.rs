@@ -186,11 +186,13 @@ fn dist(args: &DistArgs) -> Result<()> {
   fs::copy(&src, &dst).with_context(|| format!("copy {} to {}", src.display(), dst.display()))?;
   pop_path_buf(&mut dst)?;
   pop_path_buf(&mut dst)?;
-  let license_header =
-    "Millet is licensed under either the MIT license or the Apache license v2.0, at your option.";
-  let license_apache = include_str!("../../LICENSE-APACHE.md");
-  let license_mit = include_str!("../../LICENSE-MIT.md");
-  let license_text = format!("{license_header}\n\n{license_apache}\n{license_mit}");
+  let license_text = {
+    let header =
+      "Millet is licensed under either the MIT license or the Apache license v2.0, at your option.";
+    let apache = include_str!("../../LICENSE-APACHE.md");
+    let mit = include_str!("../../LICENSE-MIT.md");
+    format!("{header}\n\n{apache}\n{mit}")
+  };
   dst.push("LICENSE.md");
   fs::write(&dst, license_text).with_context(|| format!("write {}", dst.display()))?;
   pop_path_buf(&mut dst)?;
