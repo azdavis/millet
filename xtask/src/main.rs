@@ -38,10 +38,6 @@ impl Cmd {
         desc: "make artifacts for distribution",
         options: &[
           ("--release", "build for release"),
-          (
-            "--editor <editor>",
-            "also make extra stuff for the given <editor> (possible values: vs-code)",
-          ),
           ("--target <target>", "build for the <target> triple"),
         ],
         args: &[],
@@ -65,22 +61,6 @@ impl std::str::FromStr for Cmd {
       .find(|c| c.spec().name == s)
       .copied()
       .ok_or_else(|| anyhow!("couldn't parse {s} into a command"))
-  }
-}
-
-#[derive(Debug, Clone, Copy)]
-enum Editor {
-  VsCode,
-}
-
-impl std::str::FromStr for Editor {
-  type Err = anyhow::Error;
-
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      "vs-code" => Ok(Self::VsCode),
-      _ => bail!("unknown editor: {s}"),
-    }
   }
 }
 
@@ -149,7 +129,6 @@ fn env_var_enabled(s: &str) -> bool {
 #[derive(Debug)]
 struct DistArgs {
   release: bool,
-  editor: Option<Editor>,
   target: Option<String>,
 }
 
@@ -196,10 +175,6 @@ fn dist(args: &DistArgs) -> Result<()> {
     let lang_srv_with_target = format!("{LANG_SRV_NAME}-{target}.gz");
     path.push(lang_srv_with_target.as_str());
     gzip(&lang_srv_out, &path)?;
-  }
-  match args.editor {
-    None => return Ok(()),
-    Some(Editor::VsCode) => {}
   }
   path = ["editors", "vscode", "out"].iter().collect();
   // ignore errors if it exists already. if we have permission errors we're about to report them
@@ -343,7 +318,6 @@ fn main() -> Result<()> {
     Cmd::Dist => {
       let dist_args = DistArgs {
         release: args.contains("--release"),
-        editor: args.opt_value_from_str("--editor")?,
         target: args.opt_value_from_str("--target")?,
       };
       finish_args(args)?;
