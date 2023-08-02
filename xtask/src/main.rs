@@ -152,6 +152,11 @@ fn pop_path_buf(p: &mut PathBuf) -> Result<()> {
   }
 }
 
+fn exe(s: &str) -> String {
+  let suff = env::consts::EXE_SUFFIX;
+  format!("{s}{suff}")
+}
+
 fn dist(args: &DistArgs) -> Result<()> {
   let mut c = Command::new("cargo");
   c.args(["build", "--locked", "--bin", LANG_SRV_NAME]);
@@ -163,7 +168,7 @@ fn dist(args: &DistArgs) -> Result<()> {
   }
   run(&mut c)?;
   let kind = if args.release { "release" } else { "debug" };
-  let lang_srv_exe = format!("{LANG_SRV_NAME}{}", env::consts::EXE_SUFFIX);
+  let lang_srv_exe = exe(LANG_SRV_NAME);
   let mut src: PathBuf =
     std::iter::once("target").chain(args.target.as_deref()).chain(std::iter::once(kind)).collect();
   let mut dst: PathBuf;
