@@ -164,23 +164,24 @@ fn dist(args: &DistArgs) -> Result<()> {
   run(&mut c)?;
   let kind = if args.release { "release" } else { "debug" };
   let lang_srv_exe = format!("{LANG_SRV_NAME}{}", env::consts::EXE_SUFFIX);
-  let src: PathBuf = std::iter::once("target")
-    .chain(args.target.as_deref())
-    .chain([kind, lang_srv_exe.as_str()])
-    .collect();
+  let mut src: PathBuf =
+    std::iter::once("target").chain(args.target.as_deref()).chain(std::iter::once(kind)).collect();
   let mut dst: PathBuf;
   if let Some(target) = &args.target {
     dst = PathBuf::from("binary");
     fs::create_dir_all(&dst).with_context(|| format!("create dir {}", dst.display()))?;
-    let lang_srv_with_target = format!("{LANG_SRV_NAME}-{target}.gz");
-    dst.push(lang_srv_with_target.as_str());
+    let gz = format!("{LANG_SRV_NAME}-{target}.gz");
+    dst.push(gz.as_str());
+    src.push(lang_srv_exe.as_str());
     gzip(&src, &dst)?;
+    pop_path_buf(&mut src)?;
   }
   dst = ["editors", "vscode", "out"].iter().collect();
   // ignore errors if it exists already. if we have permission errors we're about to report them
   // with the create_dir_all anyway
   _ = fs::remove_dir_all(&dst);
   fs::create_dir_all(&dst).with_context(|| format!("create dir {}", dst.display()))?;
+  src.push(lang_srv_exe.as_str());
   dst.push(lang_srv_exe.as_str());
   fs::copy(&src, &dst).with_context(|| format!("copy {} to {}", src.display(), dst.display()))?;
   pop_path_buf(&mut dst)?;
