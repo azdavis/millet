@@ -13,6 +13,10 @@ The versioning system is basically the following:
   - If there's a really "big" change.
 - As mentioned, the "major" version is 0.
 
+## v0.12.9
+
+- Also package CLI binaries on the releases page.
+
 ## v0.12.8
 
 - Exclude clearly already-present variants from "fill case".
