@@ -131,6 +131,8 @@ The most important thing in the input is a mapping from file names to either:
 
 Lex (aka tokenize) a string of an SML program into tokens.
 
+Notably, we consider things like whitespace and comments as tokens, instead of ignoring/skipping them. This means that we can exactly reconstruct the input string from the output vec of tokens by concatenating all of the underlying token strings in order.
+
 ### `crates/sml-parse`
 
 ```rs
@@ -144,7 +146,7 @@ Parses a sequence of tokens into a sequence of "events". Events are like:
 - emit an error
 - finish a node
 
-Then processes those events to build a lossless syntax tree, wrapped in the AST API.
+Then processes those events to build a lossless CST.
 
 ### `crates/sml-hir-lower`
 
