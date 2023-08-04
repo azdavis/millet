@@ -13,6 +13,8 @@ fn env_var_enabled(s: &str) -> bool {
 #[allow(dead_code)]
 fn check(s: &str, steps: &[&str]) {
   let show_debug = env_var_enabled("MILLET_SHOW_DEBUG");
+  let show_steps = env_var_enabled("MILLET_SHOW_STEPS");
+  let show = show_debug || show_steps;
   let manually_advance = env_var_enabled("MILLET_MANUALLY_ADVANCE");
   let check_steps = !env_var_enabled("MILLET_NO_CHECK_STEPS");
   let mut fix_env = sml_fixity::STD_BASIS.clone();
@@ -48,9 +50,13 @@ fn check(s: &str, steps: &[&str]) {
   let mut buf = String::new();
   let mut steps = steps.iter();
   loop {
-    if show_debug {
+    if show {
       println!("==>");
+    }
+    if show_debug {
       dynamics.show_debug();
+    }
+    if show_steps {
       println!("{dynamics:#}");
     }
     if manually_advance {
@@ -65,14 +71,14 @@ fn check(s: &str, steps: &[&str]) {
     match dynamics.step() {
       sml_dynamics::Progress::Still(d) => dynamics = d,
       sml_dynamics::Progress::Done => {
-        if show_debug {
-          println!("done");
+        if show {
+          println!("==> done");
         }
         break;
       }
       sml_dynamics::Progress::Raise => {
-        if show_debug {
-          println!("raised an exception");
+        if show {
+          println!("==> raised an exception");
         }
         break;
       }
