@@ -2,7 +2,7 @@
 //!
 //! [1]: http://mlton.org/SuccessorML
 
-use crate::check::check;
+use crate::check::{check, check_multi, raw};
 
 #[test]
 fn do_dec() {
@@ -104,4 +104,41 @@ signature STREAM =
   end
 "#,
   );
+}
+
+#[test]
+fn or_pat() {
+  check(
+    r#"
+datatype d = A of int | B of int
+fun f (A x | B x) = x
+"#,
+  );
+}
+
+#[test]
+fn or_pat_config_allow() {
+  let config = r#"
+version = 1
+language.successor-ml.or-pat = true
+"#;
+  let sml = r#"
+datatype d = A of int | B of int
+fun f (A x | B x) = x
+"#;
+  check_multi(raw::singleton(config, sml));
+}
+
+#[test]
+fn or_pat_config_disallow() {
+  let config = r#"
+version = 1
+language.successor-ml.or-pat = false
+"#;
+  let sml = r#"
+datatype d = A of int | B of int
+fun f (A x | B x) = x
+(**    ^^^^^^^^^ disallowed Successor ML feature: or patterns *)
+"#;
+  check_multi(raw::singleton(config, sml));
 }

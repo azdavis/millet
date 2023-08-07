@@ -16,4 +16,6 @@ pub struct Language {
   pub val: FxHashSet<sml_path::Path>,
   /// Disallowed structure paths.
   pub structure: FxHashSet<sml_path::Path>,
+  /// Configuration for Successor ML features.
+  pub successor_ml: file::SuccessorMl,
 }

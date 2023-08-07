@@ -2,7 +2,7 @@
 
 use crate::common::{ck_trailing, forbid_opaque_asc, get_lab, get_path, get_scon};
 use crate::ty;
-use crate::util::{ErrorKind, MatcherFlavor, Sep, St};
+use crate::util::{ErrorKind, Item, MatcherFlavor, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(
@@ -142,6 +142,9 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       sml_hir::Pat::As(name, rhs)
     }
     ast::Pat::OrPat(pat) => {
+      if !st.lang().successor_ml.or_pat {
+        st.err(pat.syntax(), ErrorKind::Disallowed(Item::SuccessorMl("or patterns")));
+      }
       // flatten or pats.
       let mut lhs = get_or(st, flavor, pat.lhs()?)?;
       let rhs = get_or(st, flavor, pat.rhs()?)?;

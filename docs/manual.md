@@ -85,6 +85,8 @@ functor = true
 "=" = false
 [language.structure]
 "Ref" = false
+[language.successor-ml]
+or-pat = false
 ```
 
 #### `version`
@@ -229,6 +231,18 @@ Configuration for structures.
 Whether the `<path>` is allowed. All paths default to `true`.
 
 See docs for [`language.val.<path>`](#languagevalpath).
+
+#### `language.successor-ml`
+
+Configuration for [Successor ML][succ-ml] features.
+
+#### `language.successor-ml.<kind>`
+
+Whether the `<kind>` is allowed.
+
+| Valid `<kind>` | Default |
+| -------------- | ------- |
+| `or-pattern`   | `true`  |
 
 ### VS Code settings
 
@@ -604,3 +618,4 @@ The formatter does, however, respect the editor-configured tab size.
 [smlfmt]: https://github.com/shwestrick/smlfmt
 [mlb-ann]: http://mlton.org/MLBasisAnnotations
 [bike-shed]: https://en.wikipedia.org/wiki/Law_of_triviality
+[succ-ml]: http://mlton.org/SuccessorML

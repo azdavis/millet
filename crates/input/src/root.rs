@@ -180,6 +180,7 @@ impl Config {
     ret.lang.fixity_across_files = parsed.language.fixity_across_files;
     ret.lang.dec = parsed.language.dec;
     ret.lang.exp = parsed.language.exp;
+    ret.lang.successor_ml = parsed.language.successor_ml;
     disallow(errors, config_path, parsed.language.val, &mut ret.lang.val);
     disallow(errors, config_path, parsed.language.structure, &mut ret.lang.structure);
     (ret, parsed.workspace.root)

@@ -188,6 +188,7 @@ impl fmt::Display for Sep {
 pub(crate) enum Item {
   Exp(&'static str),
   Dec(&'static str),
+  SuccessorMl(&'static str),
 }
 
 impl fmt::Display for Item {
@@ -195,6 +196,7 @@ impl fmt::Display for Item {
     match self {
       Item::Exp(s) => write!(f, "expression: {s}"),
       Item::Dec(s) => write!(f, "declaration: {s}"),
+      Item::SuccessorMl(s) => write!(f, "Successor ML feature: {s}"),
     }
   }
 }

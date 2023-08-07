@@ -87,6 +87,9 @@ pub struct Language {
   /// Configuration for structures.
   #[serde(default)]
   pub structure: FxHashMap<SmolStr, bool>,
+  /// Configuration for Successor ML features.
+  #[serde(default)]
+  pub successor_ml: SuccessorMl,
 }
 
 /// Configuration for declarations.
@@ -175,4 +178,14 @@ pub struct Exp {
   pub case: Tool,
   #[serde(default, rename = "fn")]
   pub fn_: Tool,
+}
+
+/// Configuration for [Successor ML][1] features.
+///
+/// [1]: http://mlton.org/SuccessorML
+#[derive(Debug, Default, Clone, Deserialize)]
+#[allow(missing_docs)]
+#[serde(rename_all = "kebab-case")]
+pub struct SuccessorMl {
+  pub or_pat: Tool,
 }
