@@ -74,7 +74,7 @@ pub(crate) enum ErrorKind {
   EmptyFun,
   EmptyExpSemiSeq,
   Trailing(Sep),
-  Disallowed(Item),
+  Disallowed(Disallowed),
   TopLevelOpen,
   InvalidOpaqueAscription,
   ExceptionCopyRhsNotPath,
@@ -198,18 +198,18 @@ impl fmt::Display for Sep {
 }
 
 #[derive(Debug)]
-pub(crate) enum Item {
+pub(crate) enum Disallowed {
   Exp(&'static str),
   Dec(&'static str),
-  SuccessorMl(&'static str),
+  SuccMl(&'static str),
 }
 
-impl fmt::Display for Item {
+impl fmt::Display for Disallowed {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Item::Exp(s) => write!(f, "expression: {s}"),
-      Item::Dec(s) => write!(f, "declaration: {s}"),
-      Item::SuccessorMl(s) => write!(f, "Successor ML feature: {s}"),
+      Disallowed::Exp(s) => write!(f, "expression: {s}"),
+      Disallowed::Dec(s) => write!(f, "declaration: {s}"),
+      Disallowed::SuccMl(s) => write!(f, "Successor ML feature: {s}"),
     }
   }
 }

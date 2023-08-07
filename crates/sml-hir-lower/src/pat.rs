@@ -2,7 +2,7 @@
 
 use crate::common::{forbid_opaque_asc, get_lab, get_path, get_scon};
 use crate::ty;
-use crate::util::{ErrorKind, Item, MatcherFlavor, Sep, St};
+use crate::util::{Disallowed, ErrorKind, MatcherFlavor, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
 pub(crate) fn get(
@@ -117,7 +117,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       })
     }
     ast::Pat::VectorPat(pat) => {
-      st.err(pat.syntax(), ErrorKind::Disallowed(Item::SuccessorMl("vector patterns")));
+      st.err(pat.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("vector patterns")));
       return None;
     }
     ast::Pat::InfixPat(pat) => {
@@ -149,7 +149,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
     }
     ast::Pat::OrPat(pat) => {
       if !st.lang().successor_ml.or_pat {
-        st.err(pat.syntax(), ErrorKind::Disallowed(Item::SuccessorMl("or patterns")));
+        st.err(pat.syntax(), ErrorKind::Disallowed(Disallowed::SuccMl("or patterns")));
       }
       // flatten or pats.
       let mut lhs = get_or(st, flavor, pat.lhs()?)?;

@@ -2,7 +2,7 @@
 
 #![allow(clippy::needless_pass_by_value)]
 
-use crate::util::{ErrorKind, Item, St};
+use crate::util::{Disallowed, ErrorKind, St};
 use sml_syntax::ast;
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
@@ -12,7 +12,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
   let ret = match scon.kind {
     ast::SConKind::IntLit => {
       if !st.lang().exp.int_lit {
-        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`int` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`int` literal")));
       }
       let chars = tok.text();
       let mut chars = chars.chars();
@@ -39,7 +39,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
     }
     ast::SConKind::RealLit => {
       if !st.lang().exp.real_lit {
-        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`real` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`real` literal")));
       }
       let owned: String;
       let mut text = tok.text();
@@ -59,7 +59,7 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
     }
     ast::SConKind::WordLit => {
       if !st.lang().exp.word_lit {
-        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`word` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`word` literal")));
       }
       let mut chars = tok.text().chars();
       // 0
@@ -83,13 +83,13 @@ pub(crate) fn get_scon(st: &mut St<'_>, scon: ast::SCon) -> Option<sml_hir::SCon
     }
     ast::SConKind::CharLit => {
       if !st.lang().exp.char_lit {
-        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`char` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`char` literal")));
       }
       sml_hir::SCon::Char(sml_string(tok.text().strip_prefix('#')?)?.chars().next()?)
     }
     ast::SConKind::StringLit => {
       if !st.lang().exp.string_lit {
-        st.err_tok(&tok, ErrorKind::Disallowed(Item::Exp("`string` literal")));
+        st.err_tok(&tok, ErrorKind::Disallowed(Disallowed::Exp("`string` literal")));
       }
       sml_hir::SCon::String(sml_string(tok.text())?.into())
     }
