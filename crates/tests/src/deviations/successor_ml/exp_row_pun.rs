@@ -6,9 +6,8 @@ use crate::check::check;
 fn disallow() {
   check(
     r#"
-fun incB r =
-  case r of {a, b, c} => {a, b = b + 1, c}
-(**                       ^ unsupported: expression row punning *)
+fun incB {a, b, c} = {a, b = b + 1, c}
+(**                   ^ unsupported: expression row punning *)
 "#,
   );
 }
