@@ -145,7 +145,7 @@ What kinds of declarations/specifications are permitted.
 
 #### `language.dec.<kind>`
 
-Whether the `<kind>` of declaration/specification is allowed.
+Whether the `<kind>` of declaration/specification is allowed. Each defaults to `true`.
 
 Valid `<kind>`s:
 
@@ -170,7 +170,7 @@ What kind of expressions are permitted.
 
 #### `language.exp.<kind>`
 
-Whether the `<kind>` of expression is allowed.
+Whether the `<kind>` of expression is allowed. Each defaults to `true`.
 
 Valid `<kind>`s:
 
@@ -205,7 +205,7 @@ Configuration for values.
 
 #### `language.val.<path>`
 
-Whether the `<path>` is allowed.
+Whether the `<path>` is allowed. All paths default to `true`.
 
 The path must be a valid, fully qualified path in the standard basis library, like `Real.==` or `+`.
 
@@ -226,7 +226,7 @@ Configuration for structures.
 
 #### `language.structure.<path>`
 
-Whether the `<path>` is allowed.
+Whether the `<path>` is allowed. All paths default to `true`.
 
 See docs for [`language.val.<path>`](#languagevalpath).
 
