@@ -2,14 +2,6 @@
 
 use crate::check::{check_bad_input, check_multi, raw};
 
-fn empty(config: &str) -> [(&str, &str); 2] {
-  [("a.mlb", ""), (config::file::PATH, config)]
-}
-
-fn singleton<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
-  [(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]
-}
-
 fn multi_std_basis<const N: usize>(outcome: raw::Outcome, singleton: [(&str, &str); N]) {
   let opts = raw::Opts {
     std_basis: raw::StdBasis::Full,
@@ -33,7 +25,7 @@ val _ = while true do ()
 (**     ^^^^^^^^^^^^^^^^ disallowed expression: `while` *)
 val _ = "hi"
 "#;
-  check_multi(singleton(config, sml));
+  check_multi(raw::singleton(config, sml));
 }
 
 #[test]
@@ -48,7 +40,7 @@ signature SIG = sig end
 (** + disallowed declaration: `signature` *)
 functor F() = struct end
 "#;
-  check_multi(singleton(config, sml));
+  check_multi(raw::singleton(config, sml));
 }
 
 #[test]
@@ -62,7 +54,7 @@ version = 1
 val tab = List.tabulate
 (**       ^^^^^^^^^^^^^ disallowed value: `tabulate` *)
 "#;
-  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Pass, raw::singleton(config, sml));
 }
 
 #[test]
@@ -80,7 +72,7 @@ in
 (**         ^^^^^^^^ disallowed value: `tabulate` *)
 end
 "#;
-  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Pass, raw::singleton(config, sml));
 }
 
 #[test]
@@ -93,7 +85,7 @@ version = 1
   check_bad_input(
     config::file::PATH,
     "empty string in dot-separated path: `Foo..bar`",
-    empty(config),
+    raw::empty(config),
   );
 }
 
@@ -104,7 +96,7 @@ version = 1
 [language.val]
 "" = true
 "#;
-  check_bad_input(config::file::PATH, "empty string in dot-separated path: ``", empty(config));
+  check_bad_input(config::file::PATH, "empty string in dot-separated path: ``", raw::empty(config));
 }
 
 #[test]
@@ -121,7 +113,7 @@ version = 1
     min_severity: diagnostic::Severity::Warning,
     expected_input: raw::ExpectedInput::Bad { path: config::file::PATH, msg: "no such path" },
   };
-  raw::get(empty(config), opts);
+  raw::get(raw::empty(config), opts);
 }
 
 #[test]
@@ -135,7 +127,7 @@ version = 1
 val h = hd
 (**     ^^ disallowed value: `hd` *)
 "#;
-  multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Fail, raw::singleton(config, sml));
 }
 
 #[test]
@@ -149,7 +141,7 @@ version = 1
 val h = List.hd
 (**     ^^^^^^^ disallowed value: `hd` *)
 "#;
-  multi_std_basis(raw::Outcome::Fail, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Fail, raw::singleton(config, sml));
 }
 
 const LIST_SHADOW: &str = r#"
@@ -166,7 +158,7 @@ version = 1
 [language.val]
 "List.hd" = false
 "#;
-  multi_std_basis(raw::Outcome::Pass, singleton(config, LIST_SHADOW));
+  multi_std_basis(raw::Outcome::Pass, raw::singleton(config, LIST_SHADOW));
 }
 
 #[test]
@@ -180,7 +172,7 @@ version = 1
 val hd = 3
 val n = hd + 4
 "#;
-  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Pass, raw::singleton(config, sml));
 }
 
 #[test]
@@ -210,7 +202,7 @@ version = 1
 [language.structure]
 "List" = false
 "#;
-  multi_std_basis(raw::Outcome::Pass, singleton(config, sml));
+  multi_std_basis(raw::Outcome::Pass, raw::singleton(config, sml));
 }
 
 #[test]

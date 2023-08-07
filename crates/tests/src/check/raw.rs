@@ -252,6 +252,17 @@ pub(crate) fn one_file_fs(s: &str) -> [(&str, &str); 2] {
   [("s.mlb", "f.sml"), ("f.sml", s)]
 }
 
+/// Returns a "filesystem" of a config file and a root group file that points at nothing.
+pub(crate) fn empty(config: &str) -> [(&str, &str); 2] {
+  [("a.mlb", ""), (config::file::PATH, config)]
+}
+
+/// Returns a "filesystem" of a config file, a root group file that points at the one SML file, and
+/// the SML file.
+pub(crate) fn singleton<'a>(config: &'a str, sml: &'a str) -> [(&'a str, &'a str); 3] {
+  [(config::file::PATH, config), ("s.mlb", "a.sml"), ("a.sml", sml)]
+}
+
 /// Returns whether the env var is set to `1`.
 pub(crate) fn env_var_enabled(s: &str) -> bool {
   std::env::var_os(s).map_or(false, |x| x == "1")
