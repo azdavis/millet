@@ -106,7 +106,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       })
     }
     ast::Exp::VectorExp(exp) => {
-      st.err(exp.syntax(), ErrorKind::Unsupported("vector expressions"));
+      st.err(exp.syntax(), ErrorKind::Disallowed(Item::SuccessorMl("vector expressions")));
       return None;
     }
     ast::Exp::SeqExp(exp) => {

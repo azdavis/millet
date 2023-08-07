@@ -117,7 +117,7 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       })
     }
     ast::Pat::VectorPat(pat) => {
-      st.err(pat.syntax(), ErrorKind::Unsupported("vector patterns"));
+      st.err(pat.syntax(), ErrorKind::Disallowed(Item::SuccessorMl("vector patterns")));
       return None;
     }
     ast::Pat::InfixPat(pat) => {
