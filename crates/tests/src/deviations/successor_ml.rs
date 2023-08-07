@@ -5,7 +5,7 @@
 use crate::check::{check, check_multi, raw};
 
 #[test]
-fn do_dec() {
+fn do_dec_default_disallow() {
   check(
     r#"
     fun print _ = ()
@@ -56,7 +56,7 @@ do "hi"
 }
 
 #[test]
-fn preceding_bar_case() {
+fn preceding_bar_case_disallow() {
   check(
     r#"
   fun f x =
@@ -70,7 +70,7 @@ fn preceding_bar_case() {
 }
 
 #[test]
-fn preceding_bar_fn() {
+fn preceding_bar_fn_disallow() {
   check(
     r#"
     val f = fn
@@ -83,7 +83,7 @@ fn preceding_bar_fn() {
 }
 
 #[test]
-fn preceding_bar_handle() {
+fn preceding_bar_handle_disallow() {
   check(
     r#"
   exception A and B
@@ -96,7 +96,7 @@ fn preceding_bar_handle() {
 }
 
 #[test]
-fn preceding_bar_fun() {
+fn preceding_bar_fun_disallow() {
   check(
     r#"
     fun
@@ -109,7 +109,7 @@ fn preceding_bar_fun() {
 }
 
 #[test]
-fn preceding_bar_datatype() {
+fn preceding_bar_datatype_disallow() {
   check(
     r#"
     datatype t =
@@ -122,7 +122,7 @@ fn preceding_bar_datatype() {
 }
 
 #[test]
-fn exp_row_pun() {
+fn exp_row_pun_disallow() {
   check(
     r#"
 fun incB r =
@@ -133,7 +133,7 @@ fun incB r =
 }
 
 #[test]
-fn withtype_sig() {
+fn withtype_sig_disallow() {
   check(
     r#"
 signature STREAM =
@@ -147,7 +147,7 @@ signature STREAM =
 }
 
 #[test]
-fn or_pat() {
+fn or_pat_default_allow() {
   check(
     r#"
 datatype d = A of int | B of int
