@@ -53,8 +53,13 @@ do "hi"
   check_multi(raw::singleton(config, sml));
 }
 
+const OPT_BAR_ALLOW: &str = r#"
+version = 1
+language.successor-ml.opt-bar = true
+"#;
+
 #[test]
-fn preceding_bar_case_disallow() {
+fn opt_bar_case_default_disallow() {
   check(
     r#"
   fun f x =
@@ -68,7 +73,19 @@ fn preceding_bar_case_disallow() {
 }
 
 #[test]
-fn preceding_bar_fn_disallow() {
+fn opt_bar_case_config_allow() {
+  let sml = r#"
+  fun f x =
+    case x of
+    | 1 => 2
+    | 3 => 4
+    | _ => 5
+"#;
+  check_multi(raw::singleton(OPT_BAR_ALLOW, sml));
+}
+
+#[test]
+fn opt_bar_fn_default_disallow() {
   check(
     r#"
     val f = fn
@@ -81,7 +98,18 @@ fn preceding_bar_fn_disallow() {
 }
 
 #[test]
-fn preceding_bar_handle_disallow() {
+fn opt_bar_fn_config_allow() {
+  let sml = r#"
+    val f = fn
+    | 1 => 2
+    | 3 => 4
+    | _ => 5
+"#;
+  check_multi(raw::singleton(OPT_BAR_ALLOW, sml));
+}
+
+#[test]
+fn opt_bar_handle_default_disallow() {
   check(
     r#"
   exception A and B of int
@@ -94,7 +122,18 @@ fn preceding_bar_handle_disallow() {
 }
 
 #[test]
-fn preceding_bar_fun_disallow() {
+fn opt_bar_handle_config_allow() {
+  let sml = r#"
+  exception A and B of int
+  val _ = 1 handle
+    | A => 2
+    | B _ => 3
+"#;
+  check_multi(raw::singleton(OPT_BAR_ALLOW, sml));
+}
+
+#[test]
+fn opt_bar_fun_default_disallow() {
   check(
     r#"
     fun
@@ -107,7 +146,18 @@ fn preceding_bar_fun_disallow() {
 }
 
 #[test]
-fn preceding_bar_datatype_disallow() {
+fn opt_bar_fun_config_allow() {
+  let sml = r#"
+    fun
+    | f 1 = 2
+    | f 3 = 4
+    | f _ = 5
+"#;
+  check_multi(raw::singleton(OPT_BAR_ALLOW, sml));
+}
+
+#[test]
+fn opt_bar_datatype_default_disallow() {
   check(
     r#"
     datatype t =
@@ -118,6 +168,18 @@ fn preceding_bar_datatype_disallow() {
     | D of string
 "#,
   );
+}
+
+#[test]
+fn opt_bar_datatype_config_allow() {
+  let sml = r#"
+    datatype t =
+    | A
+    | B of int
+    | C
+    | D of string
+"#;
+  check_multi(raw::singleton(OPT_BAR_ALLOW, sml));
 }
 
 #[test]

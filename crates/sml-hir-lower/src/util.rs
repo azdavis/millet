@@ -54,7 +54,6 @@ pub(crate) enum ErrorKind {
   ZeroNumLab,
   MultipleRestPatRows,
   RestPatRowNotLast,
-  PrecedingBar,
   RequiresOperand,
   DecNotAllowedHere,
   OpBoolBinOp,
@@ -103,7 +102,6 @@ impl fmt::Display for Error {
       ErrorKind::ZeroNumLab => f.write_str("invalid numeric label: numeric labels start at 1"),
       ErrorKind::MultipleRestPatRows => f.write_str("multiple `...`"),
       ErrorKind::RestPatRowNotLast => f.write_str("`...` must come last"),
-      ErrorKind::PrecedingBar => f.write_str("preceding `|`"),
       ErrorKind::RequiresOperand => f.write_str("requires at least 1 operand"),
       ErrorKind::DecNotAllowedHere => f.write_str("structure-level declaration not allowed here"),
       ErrorKind::OpBoolBinOp => f.write_str("`andalso` and `orelse` not allowed with `op`"),
@@ -216,6 +214,10 @@ impl Error {
   }
 
   /// Returns the code for this.
+  ///
+  /// No longer in use:
+  ///
+  /// - `Code::n(4008)`
   #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
@@ -227,7 +229,6 @@ impl Error {
       ErrorKind::InvalidNumLab(_) | ErrorKind::ZeroNumLab => Code::n(4005),
       ErrorKind::MultipleRestPatRows => Code::n(4006),
       ErrorKind::RestPatRowNotLast => Code::n(4007),
-      ErrorKind::PrecedingBar => Code::n(4008),
       ErrorKind::RequiresOperand => Code::n(4009),
       ErrorKind::DecNotAllowedHere => Code::n(4010),
       ErrorKind::OpBoolBinOp => Code::n(4011),

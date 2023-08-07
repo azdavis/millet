@@ -523,8 +523,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       }
       let ty_vars = ty::var_seq(st, dec.ty_var_seq());
       let iter = dec.fun_binds().map(|fun_bind| {
-        if let Some(bar) = fun_bind.bar() {
-          st.err_tok(&bar, ErrorKind::PrecedingBar);
+        if let (false, Some(bar)) = (st.lang().successor_ml.opt_bar, fun_bind.bar()) {
+          let e = ErrorKind::Disallowed(Item::SuccessorMl("preceding `|` before first `fun` case"));
+          st.err_tok(&bar, e);
         }
         let ptr = SyntaxNodePtr::new(fun_bind.syntax());
         let mut name = None::<sml_syntax::SyntaxToken>;
@@ -747,8 +748,11 @@ where
         vec![]
       }
       Some(eq_con_binds) => {
-        if let Some(bar) = eq_con_binds.bar() {
-          st.err_tok(&bar, ErrorKind::PrecedingBar);
+        if let (false, Some(bar)) = (st.lang().successor_ml.opt_bar, eq_con_binds.bar()) {
+          let e = ErrorKind::Disallowed(Item::SuccessorMl(
+            "preceding `|` before first `datatype` constructor",
+          ));
+          st.err_tok(&bar, e);
         }
         let iter = eq_con_binds.con_binds().filter_map(|con_bind| {
           Some(sml_hir::ConBind {

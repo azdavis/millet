@@ -378,8 +378,12 @@ fn matcher(
   flavor: Option<MatcherFlavor>,
   matcher: Option<ast::Matcher>,
 ) -> Vec<sml_hir::Arm> {
-  if let Some(bar) = matcher.as_ref().and_then(sml_syntax::ast::Matcher::bar) {
-    st.err_tok(&bar, ErrorKind::PrecedingBar);
+  let bar = matcher.as_ref().and_then(sml_syntax::ast::Matcher::bar);
+  if let (false, Some(bar)) = (st.lang().successor_ml.opt_bar, bar) {
+    let e = ErrorKind::Disallowed(Item::SuccessorMl(
+      "preceding `|` before first arm in a `case`, `fn`, or `handle`",
+    ));
+    st.err_tok(&bar, e);
   }
   matcher
     .into_iter()

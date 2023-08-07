@@ -191,4 +191,6 @@ pub struct SuccessorMl {
   pub or_pat: Tool,
   #[serde(default)]
   pub do_dec: bool,
+  #[serde(default)]
+  pub opt_bar: bool,
 }
