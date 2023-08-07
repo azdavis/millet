@@ -605,13 +605,15 @@ val a : int as b = 3
 
 ## `do`
 
-Separate a `while` loop condition from the loop body.
+1. Separate a `while` loop condition from the loop body.
 
-```sml
-val () =
-  while true do
-    print "y\n"
-```
+   ```sml
+   val () =
+     while true do
+       print "y\n"
+   ```
+
+2. Begin a `do` declaration, only allowed in Successor ML. `do e` is equivalent to `val () = e`.
 
 ## `fn`
 
