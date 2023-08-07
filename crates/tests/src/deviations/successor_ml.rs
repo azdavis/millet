@@ -34,6 +34,8 @@ val x =
   in
     y * z * z
   end
+
+do ()
 "#;
   check_multi(raw::singleton(config, sml));
 }
@@ -45,10 +47,6 @@ version = 1
 language.successor-ml.do-dec = true
 "#;
   let sml = r#"
-do ()
-fun print _ = ()
-do print "hi"
-
 do "hi"
 (** + expected `unit`, found `string` *)
 "#;
