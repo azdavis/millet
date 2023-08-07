@@ -2,8 +2,8 @@
 
 #![allow(clippy::needless_pass_by_value)]
 
-use crate::util::{ErrorKind, Item, Sep, St};
-use sml_syntax::{ast, SyntaxToken};
+use crate::util::{ErrorKind, Item, St};
+use sml_syntax::ast;
 
 /// unfortunately, although we already kind of "parsed" these tokens in lex, that information is not
 /// carried to here. so we must do it again.
@@ -137,15 +137,6 @@ pub(crate) fn get_lab(st: &mut St<'_>, lab: ast::Lab) -> sml_hir::Lab {
       }
       sml_hir::Lab::Num(n)
     }
-  }
-}
-
-pub(crate) fn ck_trailing<I>(st: &mut St<'_>, sep: Sep, iter: I)
-where
-  I: Iterator<Item = Option<SyntaxToken>>,
-{
-  if let Some(s) = iter.last().flatten() {
-    st.err_tok(&s, ErrorKind::Trailing(sep));
   }
 }
 

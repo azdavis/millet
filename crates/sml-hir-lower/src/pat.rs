@@ -1,6 +1,6 @@
 //! Lowering patterns.
 
-use crate::common::{ck_trailing, forbid_opaque_asc, get_lab, get_path, get_scon};
+use crate::common::{forbid_opaque_asc, get_lab, get_path, get_scon};
 use crate::ty;
 use crate::util::{ErrorKind, Item, MatcherFlavor, Sep, St};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -36,7 +36,9 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       sml_hir::Pat::Con(get_path(pat.path()?)?, pat.pat().map(|x| get(st, flavor, Some(x))))
     }
     ast::Pat::RecordPat(pat) => {
-      ck_trailing(st, Sep::Comma, pat.pat_rows().map(|x| x.comma()));
+      if let Some(s) = pat.pat_rows().last().and_then(|x| x.comma()) {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
       let mut rest_pat_row = None::<RestPatRowState>;
       let rows = pat.pat_rows().filter_map(|row| match row.pat_row_inner()? {
         ast::PatRowInner::RestPatRow(_) => {
@@ -96,11 +98,15 @@ fn get_or(st: &mut St<'_>, flavor: Option<MatcherFlavor>, pat: ast::Pat) -> Opti
       return get_or(st, flavor, inner);
     }
     ast::Pat::TuplePat(pat) => {
-      ck_trailing(st, Sep::Comma, pat.pat_args().map(|x| x.comma()));
+      if let Some(s) = pat.pat_args().last().and_then(|x| x.comma()) {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
       tuple(pat.pat_args().map(|x| get(st, flavor, x.pat())))
     }
     ast::Pat::ListPat(pat) => {
-      ck_trailing(st, Sep::Comma, pat.pat_args().map(|x| x.comma()));
+      if let Some(s) = pat.pat_args().last().and_then(|x| x.comma()) {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
       // need to rev()
       #[allow(clippy::needless_collect)]
       let pats: Vec<_> = pat.pat_args().map(|x| get(st, flavor, x.pat())).collect();

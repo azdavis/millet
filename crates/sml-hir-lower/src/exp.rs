@@ -1,6 +1,6 @@
 //! Lowering expressions.
 
-use crate::common::{ck_trailing, forbid_opaque_asc, get_lab, get_path, get_scon};
+use crate::common::{forbid_opaque_asc, get_lab, get_path, get_scon};
 use crate::util::{ErrorKind, Item, MatcherFlavor, Sep, St};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
@@ -25,7 +25,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.record {
         st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("record")));
       }
-      ck_trailing(st, Sep::Comma, exp.exp_rows().map(|x| x.comma()));
+      if let Some(s) = exp.exp_rows().last().and_then(|x| x.comma()) {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
       let rows = exp.exp_rows().filter_map(|row| {
         let lab_ast = row.lab()?;
         let tok = row.lab()?.token;
@@ -82,14 +84,18 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.tuple {
         st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("tuple")));
       }
-      ck_trailing(st, Sep::Comma, exp.exp_args().map(|x| x.comma()));
+      if let Some(s) = exp.exp_args().last().and_then(|x| x.comma()) {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
       tuple(exp.exp_args().map(|e| get(st, e.exp())))
     }
     ast::Exp::ListExp(exp) => {
       if !st.lang().exp.list {
         st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("list")));
       }
-      ck_trailing(st, Sep::Comma, exp.exp_args().map(|x| x.comma()));
+      if let Some(s) = exp.exp_args().last().and_then(|x| x.comma()) {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Comma));
+      }
       // need to rev()
       #[allow(clippy::needless_collect)]
       let exps: Vec<_> = exp.exp_args().map(|x| get(st, x.exp())).collect();
@@ -107,7 +113,9 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if !st.lang().exp.seq {
         st.err(exp.syntax(), ErrorKind::Disallowed(Item::Exp("sequence")));
       }
-      ck_trailing(st, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
+      if let Some(s) = exp.exps_in_seq().last().and_then(|x| x.semicolon()) {
+        st.err_tok(&s, ErrorKind::Trailing(Sep::Semi));
+      }
       let exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
       return exp_idx_in_seq(st, exps, exp.syntax());
     }
@@ -122,7 +130,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
         st.err(exp.syntax(), ErrorKind::EmptyLet);
       }
       let mut exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
-      if let Some(s) = exp.exps_in_seq().map(|x| x.semicolon()).last().flatten() {
+      if let Some(s) = exp.exps_in_seq().last().and_then(|x| x.semicolon()) {
         if !st.lang().successor_ml.opt_semi {
           let e = ErrorKind::Disallowed(Item::SuccessorMl("trailing `;` in `let` expressions"));
           st.err_tok(&s, e);
