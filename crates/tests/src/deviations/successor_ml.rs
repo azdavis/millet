@@ -56,14 +56,15 @@ do "hi"
 }
 
 #[test]
-fn preceding_bar_fun() {
+fn preceding_bar_case() {
   check(
     r#"
-    fun
-    | f 1 = 2
+  fun f x =
+    case x of
+    | 1 => 2
 (** ^ preceding `|` *)
-    | f 3 = 4
-    | f _ = 5
+    | 3 => 4
+    | _ => 5
 "#,
   );
 }
@@ -82,20 +83,6 @@ fn preceding_bar_fn() {
 }
 
 #[test]
-fn preceding_bar_case() {
-  check(
-    r#"
-  fun f x =
-    case x of
-    | 1 => 2
-(** ^ preceding `|` *)
-    | 3 => 4
-    | _ => 5
-"#,
-  );
-}
-
-#[test]
 fn preceding_bar_handle() {
   check(
     r#"
@@ -104,6 +91,19 @@ fn preceding_bar_handle() {
     | A => 2
 (** ^ preceding `|` *)
     | B => 3
+"#,
+  );
+}
+
+#[test]
+fn preceding_bar_fun() {
+  check(
+    r#"
+    fun
+    | f 1 = 2
+(** ^ preceding `|` *)
+    | f 3 = 4
+    | f _ = 5
 "#,
   );
 }
