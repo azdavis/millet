@@ -611,7 +611,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       st.write("(\n");
       let new_cfg = cfg.indented();
       new_cfg.output_indent(st);
-      exp_semi_seq(st, new_cfg, exp.exps_in_seq())?;
+      exp_semi_seq(st, new_cfg, false, exp.exps_in_seq())?;
       st.write("\n");
       cfg.output_indent(st);
       st.write(")");
@@ -621,7 +621,7 @@ fn get_exp(st: &mut St, cfg: Cfg, exp: ast::Exp) -> Res {
       cfg,
       "let",
       |st, cfg| get_dec(st, cfg, exp.decs()),
-      |st, cfg| exp_semi_seq(st, cfg, exp.exps_in_seq()),
+      |st, cfg| exp_semi_seq(st, cfg, true, exp.exps_in_seq()),
     )?,
     ast::Exp::AppExp(exp) => {
       let func = exp.func()?;
@@ -950,17 +950,22 @@ where
   Some(())
 }
 
-fn exp_semi_seq<I>(st: &mut St, cfg: Cfg, mut iter: I) -> Res
+fn exp_semi_seq<I>(st: &mut St, cfg: Cfg, allow_last_semi: bool, mut iter: I) -> Res
 where
   I: Iterator<Item = ast::ExpInSeq>,
 {
   if let Some(e) = iter.next() {
     get_exp(st, cfg, e.exp()?)?;
   }
+  let mut last = false;
   for e in iter {
     st.write(";\n");
     cfg.output_indent(st);
     get_exp(st, cfg, e.exp()?)?;
+    last = e.semicolon().is_some();
+  }
+  if last && allow_last_semi {
+    st.write(";");
   }
   Some(())
 }
