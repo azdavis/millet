@@ -240,11 +240,12 @@ Configuration for [Successor ML][succ-ml] features.
 
 Whether the `<kind>` is allowed.
 
-| Valid `<kind>` | Default | Description                      |
-| -------------- | ------- | -------------------------------- |
-| `or-pat`       | `true`  | Or patterns                      |
-| `do-dec`       | `false` | `do` declarations                |
-| `opt-bar`      | `false` | Optional preceding vertical bars |
+| Valid `<kind>` | Default | Description                                |
+| -------------- | ------- | ------------------------------------------ |
+| `or-pat`       | `true`  | Or patterns                                |
+| `do-dec`       | `false` | `do` declarations                          |
+| `opt-bar`      | `false` | Optional preceding vertical bars           |
+| `opt-semi`     | `false` | Optional trailing `;` in `let` expressions |
 
 ### VS Code settings
 

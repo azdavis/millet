@@ -121,8 +121,14 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
       if dec.is_empty() {
         st.err(exp.syntax(), ErrorKind::EmptyLet);
       }
-      ck_trailing(st, Sep::Semi, exp.exps_in_seq().map(|x| x.semicolon()));
-      let exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
+      let mut exps: Vec<_> = exp.exps_in_seq().map(|x| get(st, x.exp())).collect();
+      if let Some(s) = exp.exps_in_seq().map(|x| x.semicolon()).last().flatten() {
+        if !st.lang().successor_ml.opt_semi {
+          let e = ErrorKind::Disallowed(Item::SuccessorMl("trailing `;` in `let` expressions"));
+          st.err_tok(&s, e);
+        }
+        exps.push(st.exp(tuple([]), ptr.clone()));
+      }
       let exp = exp_idx_in_seq(st, exps, exp.syntax());
       sml_hir::Exp::Let(dec, exp)
     }

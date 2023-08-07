@@ -147,26 +147,6 @@ type ('a, 'b,) foo = unit
 }
 
 #[test]
-fn let_exp_1() {
-  check(
-    r#"
-val _ = let in 1; end
-(**             ^ trailing `;` *)
-"#,
-  );
-}
-
-#[test]
-fn let_exp_2() {
-  check(
-    r#"
-val _ = let in 1; 2; end
-(**                ^ trailing `;` *)
-"#,
-  );
-}
-
-#[test]
 fn seq_exp_1() {
   check(
     r#"

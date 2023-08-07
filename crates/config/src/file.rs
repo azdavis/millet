@@ -193,4 +193,6 @@ pub struct SuccessorMl {
   pub do_dec: bool,
   #[serde(default)]
   pub opt_bar: bool,
+  #[serde(default)]
+  pub opt_semi: bool,
 }
