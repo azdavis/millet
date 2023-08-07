@@ -5,7 +5,7 @@
 
 use crate::common::{forbid_opaque_asc, get_name, get_path};
 use crate::pat::{self, tuple};
-use crate::util::{ErrorKind, Item, St};
+use crate::util::{ErrorKind, Item, MissingRhs, St};
 use crate::{exp, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
@@ -92,7 +92,7 @@ fn get_str_dec_one(st: &mut St<'_>, str_dec: ast::DecOne) -> sml_hir::StrDecIdx 
       let iter = str_dec.str_binds().filter_map(|str_bind| {
         let str_exp = str_bind.eq_str_exp().and_then(|x| x.str_exp());
         if str_exp.is_none() {
-          st.err(str_bind.syntax(), ErrorKind::MissingRhs);
+          st.err(str_bind.syntax(), ErrorKind::MissingRhs(MissingRhs::Dec));
         }
         Some(sml_hir::StrBind {
           name: get_name(str_bind.name())?,
@@ -507,7 +507,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       let iter = dec.val_binds().map(|val_bind| {
         let exp = val_bind.eq_exp().and_then(|x| x.exp());
         if exp.is_none() {
-          st.err(val_bind.syntax(), ErrorKind::MissingRhs);
+          st.err(val_bind.syntax(), ErrorKind::MissingRhs(MissingRhs::Dec));
         }
         sml_hir::ValBind {
           rec: val_bind.rec_kw().is_some(),
@@ -578,7 +578,7 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
           });
           let body = case.eq_exp().and_then(|x| x.exp());
           if body.is_none() {
-            st.err(dec.syntax(), ErrorKind::MissingRhs);
+            st.err(dec.syntax(), ErrorKind::MissingRhs(MissingRhs::Dec));
           }
           if let Some(name) = &name {
             st.push_fun_name(str_util::Name::new(name.text()));
@@ -744,7 +744,7 @@ where
   let iter = iter.filter_map(|dat_bind| {
     let cons: Vec<sml_hir::ConBind> = match dat_bind.eq_con_binds() {
       None => {
-        st.err(dat_bind.syntax(), ErrorKind::MissingRhs);
+        st.err(dat_bind.syntax(), ErrorKind::MissingRhs(MissingRhs::Dec));
         vec![]
       }
       Some(eq_con_binds) => {
@@ -780,7 +780,7 @@ where
     let name = get_name(ty_bind.name())?;
     let ty = ty_bind.eq_ty().and_then(|x| x.ty());
     if ty.is_none() {
-      st.err(ty_bind.syntax(), ErrorKind::MissingRhs);
+      st.err(ty_bind.syntax(), ErrorKind::MissingRhs(MissingRhs::Dec));
     }
     Some(sml_hir::TyBind {
       ty_vars: ty::var_seq(st, ty_bind.ty_var_seq()),

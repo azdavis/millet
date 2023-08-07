@@ -1,7 +1,7 @@
 //! Lowering expressions.
 
 use crate::common::{forbid_opaque_asc, get_lab, get_path, get_scon};
-use crate::util::{ErrorKind, Item, MatcherFlavor, Sep, St};
+use crate::util::{ErrorKind, Item, MatcherFlavor, MissingRhs, Sep, St};
 use crate::{dec, pat, ty};
 use sml_syntax::ast::{self, AstNode as _, SyntaxNodePtr};
 
@@ -40,10 +40,7 @@ pub(crate) fn get(st: &mut St<'_>, exp: Option<ast::Exp>) -> sml_hir::ExpIdx {
               st.exp(sml_hir::Exp::Path(sml_path::Path::one(name.clone())), ptr.clone())
             }
             sml_hir::Lab::Num(_) => {
-              // NOTE: we explicitly duplicate the `err` call in both branches, to remind us that
-              // if we ever actually accepted expression row punning, we should add a separate
-              // error here rejecting the attempt to pun with a int label.
-              st.err_tok(&tok, ErrorKind::Unsupported("expression row punning"));
+              st.err_tok(&tok, ErrorKind::MissingRhs(MissingRhs::ExpRow));
               None
             }
           },

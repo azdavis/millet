@@ -417,3 +417,13 @@ val _ = add (7, 8)
 "#,
   );
 }
+
+#[test]
+fn missing_rhs_int_lab() {
+  check(
+    r#"
+val _ = { 1 }
+(**       ^ missing right-hand side of record expression row *)
+"#,
+  );
+}

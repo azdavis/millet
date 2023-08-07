@@ -64,7 +64,7 @@ pub(crate) enum ErrorKind {
   OneArmedCase,
   UnnecessarySemicolon,
   MultipleTypedPat,
-  MissingRhs,
+  MissingRhs(MissingRhs),
   InvalidSharingType,
   InvalidEqtype,
   DecHole,
@@ -114,7 +114,7 @@ impl fmt::Display for Error {
       ErrorKind::OneArmedCase => f.write_str("`case` with only one arm"),
       ErrorKind::UnnecessarySemicolon => f.write_str("unnecessary `;`"),
       ErrorKind::MultipleTypedPat => f.write_str("multiple types on one pattern"),
-      ErrorKind::MissingRhs => f.write_str("missing right-hand side of declaration"),
+      ErrorKind::MissingRhs(x) => write!(f, "missing right-hand side of {x}"),
       ErrorKind::InvalidSharingType => f.write_str("`sharing type` not allowed here"),
       ErrorKind::InvalidEqtype => f.write_str("`eqtype` not allowed here"),
       ErrorKind::DecHole => f.write_str("declaration hole"),
@@ -146,6 +146,21 @@ impl fmt::Display for Error {
       ErrorKind::EmptyRecordTy => {
         f.write_str("the empty record/tuple type is usually written as `unit`")
       }
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum MissingRhs {
+  Dec,
+  ExpRow,
+}
+
+impl fmt::Display for MissingRhs {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      MissingRhs::Dec => f.write_str("declaration"),
+      MissingRhs::ExpRow => f.write_str("record expression row"),
     }
   }
 }
@@ -239,7 +254,7 @@ impl Error {
       ErrorKind::OneArmedCase => Code::n(4016),
       ErrorKind::UnnecessarySemicolon => Code::n(4017),
       ErrorKind::MultipleTypedPat => Code::n(4018),
-      ErrorKind::MissingRhs => Code::n(4019),
+      ErrorKind::MissingRhs(_) => Code::n(4019),
       ErrorKind::InvalidSharingType => Code::n(4020),
       ErrorKind::InvalidEqtype => Code::n(4021),
       ErrorKind::DecHole => Code::n(4022),
