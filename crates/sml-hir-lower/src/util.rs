@@ -43,8 +43,6 @@ impl Ptrs {
 
 #[derive(Debug)]
 pub(crate) enum ErrorKind {
-  /// must be first here, but have the highest error codes
-  Unsupported(&'static str),
   FunBindMismatchedName(String, String),
   FunBindWrongNumPats(usize, usize),
   InvalidIntLit(sml_hir::ParseIntError),
@@ -87,7 +85,6 @@ pub(crate) enum ErrorKind {
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &self.kind {
-      ErrorKind::Unsupported(s) => write!(f, "unsupported: {s}"),
       ErrorKind::FunBindMismatchedName(want, got) => {
         write!(f, "expected a function clause for `{want}`, found one for `{got}`")
       }
@@ -236,7 +233,6 @@ impl Error {
   #[must_use]
   pub fn code(&self) -> Code {
     match self.kind {
-      ErrorKind::Unsupported(_) => Code::n(4999),
       ErrorKind::FunBindMismatchedName(_, _) => Code::n(4001),
       ErrorKind::FunBindWrongNumPats(_, _) => Code::n(4002),
       ErrorKind::InvalidIntLit(_) | ErrorKind::InvalidWordLit(_) => Code::n(4003),

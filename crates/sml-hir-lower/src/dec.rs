@@ -360,7 +360,8 @@ fn get_spec_one(st: &mut St<'_>, dec: Option<ast::DecOne>) -> Vec<sml_hir::SpecI
         st.err(dec.syntax(), ErrorKind::Disallowed(Disallowed::Dec("`datatype`")));
       }
       if let Some(with_type) = dec.with_type() {
-        st.err(with_type.syntax(), ErrorKind::Unsupported("`withtype` in specifications"));
+        let e = ErrorKind::Disallowed(Disallowed::SuccMl("`withtype` in specifications"));
+        st.err(with_type.syntax(), e);
       }
       let binds = dat_binds(st, dec.dat_binds());
       binds.into_iter().map(|x| st.spec(sml_hir::Spec::Datatype(x), ptr.clone())).collect()
