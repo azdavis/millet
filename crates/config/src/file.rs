@@ -187,5 +187,8 @@ pub struct Exp {
 #[allow(missing_docs)]
 #[serde(rename_all = "kebab-case")]
 pub struct SuccessorMl {
+  #[serde(default)]
   pub or_pat: Tool,
+  #[serde(default)]
+  pub do_dec: bool,
 }

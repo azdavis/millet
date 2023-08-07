@@ -711,8 +711,9 @@ fn get_one(st: &mut St<'_>, dec: ast::DecOne) -> Option<sml_hir::DecIdx> {
       return None;
     }
     ast::DecOne::DoDec(ref inner) => {
-      // emit an error, but lower anyway.
-      st.err(dec.syntax(), ErrorKind::Unsupported("`do` declarations"));
+      if !st.lang().successor_ml.do_dec {
+        st.err(dec.syntax(), ErrorKind::Disallowed(Item::SuccessorMl("`do` declarations")));
+      }
       let bind = sml_hir::ValBind {
         rec: false,
         pat: st.pat(pat::tuple([]), ptr.clone()),

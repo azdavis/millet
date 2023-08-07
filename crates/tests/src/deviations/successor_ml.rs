@@ -10,9 +10,49 @@ fn do_dec() {
     r#"
     fun print _ = ()
     do print "hi"
-(** ^^^^^^^^^^^^^ unsupported: `do` declarations *)
+(** ^^^^^^^^^^^^^ disallowed *)
 "#,
   );
+}
+
+#[test]
+fn do_dec_config_allow() {
+  let config = r#"
+version = 1
+language.successor-ml.do-dec = true
+"#;
+  let sml = r#"
+fun print _ = ()
+do print "hi"
+
+val x =
+  let
+    val y = 4
+    do print "hi... "
+    val z = y + 2
+    do print "bye"
+  in
+    y * z * z
+  end
+"#;
+  check_multi(raw::singleton(config, sml));
+}
+
+#[test]
+fn do_dec_exp_must_be_unit() {
+  let config = r#"
+version = 1
+language.successor-ml.do-dec = true
+"#;
+  let sml = r#"
+do ()
+fun print _ = ()
+do print "hi"
+
+do "hi"
+(** + expected `unit`, found `string` *)
+"#;
+  check_multi(raw::singleton(config, sml));
 }
 
 #[test]
