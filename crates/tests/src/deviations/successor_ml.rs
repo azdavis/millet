@@ -84,11 +84,11 @@ fn preceding_bar_fn_disallow() {
 fn preceding_bar_handle_disallow() {
   check(
     r#"
-  exception A and B
+  exception A and B of int
   val _ = 1 handle
     | A => 2
 (** ^ preceding `|` *)
-    | B => 3
+    | B _ => 3
 "#,
   );
 }
@@ -113,8 +113,9 @@ fn preceding_bar_datatype_disallow() {
     datatype t =
     | A
 (** ^ preceding `|` *)
-    | B
+    | B of int
     | C
+    | D of string
 "#,
   );
 }
