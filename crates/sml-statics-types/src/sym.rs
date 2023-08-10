@@ -69,6 +69,7 @@ mk_special_syms![
   (6, y, BOOL, def::Primitive::Bool),
   (7, n, LIST, def::Primitive::List),
   (8, n, REF, def::Primitive::RefTy),
+  (9, n, VECTOR, def::Primitive::Vector),
 ];
 
 impl Sym {

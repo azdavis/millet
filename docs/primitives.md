@@ -351,3 +351,7 @@ val y = x + 4
 [mlton]: http://mlton.org
 [cm]: https://www.smlnj.org/doc/CM/new.pdf
 [mlb]: http://mlton.org/MLBasis
+
+## `type 'a vector`
+
+An immutable sequence with constant-time access.

@@ -174,6 +174,13 @@ pub fn minimal() -> (sml_statics_types::St, Bs) {
     }
   };
   insert_special(&mut syms, Sym::REF, ref_info);
+  let vector_info = TyInfo {
+    ty_scheme: ty_scheme_one(&mut tys, TyVarKind::Regular, |tys, a| tys.con(vec![a], Sym::VECTOR)),
+    val_env: SymValEnv::default(),
+    def: Some(Primitive::Vector.into()),
+    disallow: None,
+  };
+  insert_special(&mut syms, Sym::VECTOR, vector_info);
   let aliases = [(Primitive::Unit, Ty::UNIT), (Primitive::Exn, Ty::EXN)];
   let ty_env: TyEnv = syms
     .iter_syms()

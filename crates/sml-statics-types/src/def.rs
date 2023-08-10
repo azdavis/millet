@@ -71,6 +71,7 @@ pub enum Primitive {
   Eq,
   Neq,
   Use,
+  Vector,
 }
 
 impl Primitive {
@@ -107,6 +108,7 @@ impl Primitive {
       Self::Eq => "=",
       Self::Neq => "<>",
       Self::Use => "use",
+      Self::Vector => "vector",
     }
   }
 }
@@ -171,6 +173,7 @@ impl std::str::FromStr for Primitive {
       "val op =" => Self::Eq,
       "val op <>" => Self::Neq,
       "val use" => Self::Use,
+      "type 'a vector" => Self::Vector,
       // @primitives(end)
       _ => return Err(s.to_owned()),
     };

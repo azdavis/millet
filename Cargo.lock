@@ -1011,7 +1011,7 @@ dependencies = [
 [[package]]
 name = "sml-libs"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/sml-libs.git#3948485e5bf5649e50271caf3e58af01200af5b0"
+source = "git+https://github.com/azdavis/sml-libs.git#0d94e3ce13f2a489dff86151f74b26074affec2a"
 
 [[package]]
 name = "sml-naive-fmt"
